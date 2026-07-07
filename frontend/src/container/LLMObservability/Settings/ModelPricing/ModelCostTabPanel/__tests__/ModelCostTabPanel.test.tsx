@@ -279,4 +279,48 @@ describe('ModelCostTabPanel (integration)', () => {
 			pricing: { input: 3, output: 9 },
 		});
 	});
+
+	it('sends an updated payload when editing a rule', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		let body: Record<string, unknown> | null = null;
+		setupList();
+		server.use(
+			rest.put(LLM_PRICING_ENDPOINT, async (req, res, ctx) => {
+				body = await req.json();
+				return res(ctx.status(200), ctx.json({ status: 'success' }));
+			}),
+		);
+		render(<ModelCostTabPanel />);
+
+		await screen.findByTestId('model-cell-name-rule-openai');
+		await openRowMenu(user, 'rule-openai');
+		await user.click(await screen.findByText('Edit'));
+
+		// Model id + provider are locked in edit mode; change the prefilled input cost.
+		const inputCost = await screen.findByTestId('drawer-input-cost');
+		await user.clear(inputCost);
+		await user.type(inputCost, '5');
+		await user.click(screen.getByTestId('drawer-save-btn'));
+
+		await waitFor(() => expect(body).not.toBeNull());
+		const [payload] = (
+			body as unknown as {
+				rules: Record<string, unknown>[];
+			}
+		).rules;
+		// Edit carries the rule id; disabled model/provider are still submitted and
+		// the edited price flows through, while output keeps its prefilled value.
+		expect(payload).toMatchObject({
+			id: 'rule-openai',
+			modelName: 'gpt-4o',
+			provider: 'OpenAI',
+			isOverride: true,
+			enabled: true,
+			unit: UnitDTO.per_million_tokens,
+			pricing: { input: 5, output: 9 },
+		});
+		await waitFor(() =>
+			expect(toastSuccess).toHaveBeenCalledWith('Model cost updated'),
+		);
+	});
 });
