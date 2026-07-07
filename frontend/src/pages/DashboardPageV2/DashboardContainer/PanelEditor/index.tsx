@@ -143,9 +143,13 @@ function PanelEditorContainer({
 		onSelectUnit: seedFormattingUnit,
 	});
 
-	// Spec and query dirtiness are tracked independently so query re-serialization
-	// never false-dirties. A new panel is always savable (you're creating it).
-	const isDirty = isNew || isSpecDirty || isQueryDirty;
+	// A new panel is savable once it has a query to run — List auto-seeds one; other
+	// kinds open query-less, so there's nothing to save until the user builds one.
+	const isDirty = useMemo(
+		() => isSpecDirty || isQueryDirty || (isNew && draft.spec.queries.length > 0),
+		[isSpecDirty, isQueryDirty, isNew, draft.spec.queries.length],
+	);
+
 	const isListPanel = panelKind === 'signoz/ListPanel';
 	// The builder-query `signal` literal matches the TelemetrytypesSignalDTO enum
 	// values; cast at this boundary (as ConfigPane does) so the columns editor's
