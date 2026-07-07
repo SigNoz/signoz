@@ -401,9 +401,11 @@ function SpanDetailsContent({
 						</TabsTrigger>
 						<TabsTrigger value="events" variant="secondary">
 							<ScrollText size={14} /> Events
-							<Badge color="secondary" className={styles.eventsBadge}>
-								{eventsCount}
-							</Badge>
+							{eventsCount > 0 && (
+								<Badge color="secondary" className={styles.eventsBadge}>
+									{eventsCount}
+								</Badge>
+							)}
 						</TabsTrigger>
 						<TabsTrigger value="logs" variant="secondary">
 							<List size={14} /> Logs
