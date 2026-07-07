@@ -9,6 +9,7 @@ import {
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { FormatTimezoneAdjustedTimestamp } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
+import styles from './traceListColumns.module.scss';
 
 const keyToLabelMap: Record<string, string> = {
 	timestamp: 'Timestamp',
@@ -48,8 +49,9 @@ const getValueForKey = (data: Record<string, any>, key: string): any => {
 	const aliases = keyAliases[primaryKey];
 	if (aliases) {
 		for (const alias of aliases) {
-			if (data[alias] !== undefined) {
-				return data[alias];
+			const aliasedValue = data[alias] || data.resource?.[alias];
+			if (aliasedValue !== undefined) {
+				return aliasedValue;
 			}
 		}
 	}
@@ -91,11 +93,51 @@ export const getTraceListColumns = (
 					);
 				}
 
-				if (primaryKey === 'httpMethod' || primaryKey === 'responseStatusCode') {
+				if (primaryKey === 'httpMethod') {
+					const httpMethod = getValueForKey(itemData, key);
+
+					if (!httpMethod) {
+						return (
+							<BlockLink to={getTraceLink(itemData)} openInNewTab>
+								N/A
+							</BlockLink>
+						);
+					}
+
 					return (
 						<BlockLink to={getTraceLink(itemData)} openInNewTab>
-							<Badge data-testid={key} color="sakura">
+							<Badge data-testid={key} color="robin" className={styles.pointer}>
+								{httpMethod}
+							</Badge>
+						</BlockLink>
+					);
+				}
+
+				if (primaryKey === 'responseStatusCode') {
+					const httpCode = +getValueForKey(itemData, key);
+					const badgeColor =
+						httpCode >= 500
+							? 'error'
+							: httpCode >= 400
+								? 'sakura'
+								: httpCode >= 300
+									? 'warning'
+									: httpCode >= 200
+										? 'success'
+										: 'secondary';
+
+					if (Number.isNaN(httpCode)) {
+						return (
+							<BlockLink to={getTraceLink(itemData)} openInNewTab>
 								{getValueForKey(itemData, key)}
+							</BlockLink>
+						);
+					}
+
+					return (
+						<BlockLink to={getTraceLink(itemData)} openInNewTab>
+							<Badge data-testid={key} color={badgeColor} className={styles.pointer}>
+								{httpCode}
 							</Badge>
 						</BlockLink>
 					);
