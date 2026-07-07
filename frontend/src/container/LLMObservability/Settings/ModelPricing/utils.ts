@@ -161,3 +161,31 @@ export const validatePricing = (
 	}
 	return true;
 };
+
+const spanCountFormatter = new Intl.NumberFormat('en', {
+	notation: 'compact',
+	maximumFractionDigits: 1,
+});
+
+export const formatSpanCount = (count: number): string =>
+	spanCountFormatter.format(count);
+
+// Label for the "Map to billing model" dropdown, e.g. "openai:gpt-4o ($15.00/$60.00)".
+export const getRuleOptionLabel = (rule: PricingRule): string =>
+	`${getCanonicalId(rule)} (${formatPricePerMillion(
+		rule.pricing?.input,
+	)}/${formatPricePerMillion(rule.pricing?.output)})`;
+
+export const buildPatternMappingPayload = (
+	rule: PricingRule,
+	modelNames: string[],
+): LlmpricingruletypesUpdatableLLMPricingRuleDTO => {
+	const draft = draftFromRule(rule);
+	const patterns = [...draft.patterns];
+	modelNames.forEach((modelName) => {
+		if (!patterns.includes(modelName)) {
+			patterns.push(modelName);
+		}
+	});
+	return buildRulePayload({ ...draft, patterns });
+};
