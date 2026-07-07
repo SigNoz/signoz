@@ -13,6 +13,7 @@ import (
 
 	"github.com/dustin/go-humanize"
 	"golang.org/x/exp/maps"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -35,20 +36,21 @@ var (
 )
 
 type querier struct {
-	logger                    *slog.Logger
-	fl                        flagger.Flagger
-	telemetryStore            telemetrystore.TelemetryStore
-	metadataStore             telemetrytypes.MetadataStore
-	promEngine                prometheus.Prometheus
-	traceStmtBuilder          qbtypes.StatementBuilder[qbtypes.TraceAggregation]
-	logStmtBuilder            qbtypes.StatementBuilder[qbtypes.LogAggregation]
-	auditStmtBuilder          qbtypes.StatementBuilder[qbtypes.LogAggregation]
-	metricStmtBuilder         qbtypes.StatementBuilder[qbtypes.MetricAggregation]
-	meterStmtBuilder          qbtypes.StatementBuilder[qbtypes.MetricAggregation]
-	traceOperatorStmtBuilder  qbtypes.TraceOperatorStatementBuilder
-	bucketCache               BucketCache
-	liveDataRefresh           time.Duration
-	builderConfig             builderConfig
+	logger                   *slog.Logger
+	fl                       flagger.Flagger
+	telemetryStore           telemetrystore.TelemetryStore
+	metadataStore            telemetrytypes.MetadataStore
+	promEngine               prometheus.Prometheus
+	traceStmtBuilder         qbtypes.StatementBuilder[qbtypes.TraceAggregation]
+	logStmtBuilder           qbtypes.StatementBuilder[qbtypes.LogAggregation]
+	auditStmtBuilder         qbtypes.StatementBuilder[qbtypes.LogAggregation]
+	metricStmtBuilder        qbtypes.StatementBuilder[qbtypes.MetricAggregation]
+	meterStmtBuilder         qbtypes.StatementBuilder[qbtypes.MetricAggregation]
+	traceOperatorStmtBuilder qbtypes.TraceOperatorStatementBuilder
+	bucketCache              BucketCache
+	liveDataRefresh          time.Duration
+	builderConfig            builderConfig
+	maxConcurrentQueries     int
 }
 
 var _ Querier = (*querier)(nil)
@@ -67,25 +69,30 @@ func New(
 	bucketCache BucketCache,
 	flagger flagger.Flagger,
 	logTraceIDWindowPadding time.Duration,
+	maxConcurrentQueries int,
 ) *querier {
 	querierSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/querier")
+	if maxConcurrentQueries <= 0 {
+		maxConcurrentQueries = DefaultMaxConcurrentQueries
+	}
 	return &querier{
-		logger:                    querierSettings.Logger(),
-		fl:                        flagger,
-		telemetryStore:            telemetryStore,
-		metadataStore:             metadataStore,
-		promEngine:                promEngine,
-		traceStmtBuilder:          traceStmtBuilder,
-		logStmtBuilder:            logStmtBuilder,
-		auditStmtBuilder:          auditStmtBuilder,
-		metricStmtBuilder:         metricStmtBuilder,
-		meterStmtBuilder:          meterStmtBuilder,
-		traceOperatorStmtBuilder:  traceOperatorStmtBuilder,
-		bucketCache:               bucketCache,
-		liveDataRefresh:           5 * time.Second,
+		logger:                   querierSettings.Logger(),
+		fl:                       flagger,
+		telemetryStore:           telemetryStore,
+		metadataStore:            metadataStore,
+		promEngine:               promEngine,
+		traceStmtBuilder:         traceStmtBuilder,
+		logStmtBuilder:           logStmtBuilder,
+		auditStmtBuilder:         auditStmtBuilder,
+		metricStmtBuilder:        metricStmtBuilder,
+		meterStmtBuilder:         meterStmtBuilder,
+		traceOperatorStmtBuilder: traceOperatorStmtBuilder,
+		bucketCache:              bucketCache,
+		liveDataRefresh:          5 * time.Second,
 		builderConfig: builderConfig{
 			logTraceIDWindowPaddingMS: uint64(logTraceIDWindowPadding.Milliseconds()),
 		},
+		maxConcurrentQueries: maxConcurrentQueries,
 	}
 }
 
@@ -607,30 +614,40 @@ func (q *querier) run(
 		return false
 	}
 
-	for name, query := range qs {
-		// Skip cache if NoCache is set, or if cache is not available
-		if req.NoCache || q.bucketCache == nil || query.Fingerprint() == "" {
-			if req.NoCache {
-				q.logger.DebugContext(ctx, "NoCache flag set, bypassing cache", slog.String("query", name))
-			} else {
-				q.logger.InfoContext(ctx, "no bucket cache or fingerprint, executing query", slog.String("fingerprint", query.Fingerprint()))
+	names := maps.Keys(qs)
+	slices.Sort(names)
+	queryResults := make([]*qbtypes.Result, len(names))
+
+	// sem limits how many queries run at once for this request. The same
+	// limit covers the missing-range queries in executeWithCache. sem is held
+	// only while a query is running, never while waiting for other
+	// goroutines, so the two levels cannot deadlock.
+	sem := make(chan struct{}, q.maxConcurrentQueries)
+
+	eg, egCtx := errgroup.WithContext(ctx)
+	for i, name := range names {
+		query := qs[name]
+		eg.Go(func() error {
+			// Skip cache if NoCache is set, or if cache is not available
+			if req.NoCache || q.bucketCache == nil || query.Fingerprint() == "" {
+				if req.NoCache {
+					q.logger.DebugContext(egCtx, "NoCache flag set, bypassing cache", slog.String("query", name))
+				} else {
+					q.logger.InfoContext(egCtx, "no bucket cache or fingerprint, executing query", slog.String("fingerprint", query.Fingerprint()))
+				}
+				sem <- struct{}{}
+				result, err := query.Execute(egCtx)
+				<-sem
+				if err != nil {
+					return err
+				}
+				queryResults[i] = result
+				return nil
 			}
-			result, err := query.Execute(ctx)
-			qbEvent.HasData = qbEvent.HasData || hasData(result)
+
+			result, err := q.executeWithCache(egCtx, orgID, query, steps[name], sem)
 			if err != nil {
-				return nil, err
-			}
-			results[name] = result.Value
-			warnings = append(warnings, result.Warnings...)
-			warningsDocURL = result.WarningsDocURL
-			stats.RowsScanned += result.Stats.RowsScanned
-			stats.BytesScanned += result.Stats.BytesScanned
-			stats.DurationMS += result.Stats.DurationMS
-		} else {
-			result, err := q.executeWithCache(ctx, orgID, query, steps[name], req.NoCache)
-			qbEvent.HasData = qbEvent.HasData || hasData(result)
-			if err != nil {
-				return nil, err
+				return err
 			}
 			switch v := result.Value.(type) {
 			case *qbtypes.TimeSeriesData:
@@ -640,14 +657,23 @@ func (q *querier) run(
 			case *qbtypes.RawData:
 				v.QueryName = name
 			}
+			queryResults[i] = result
+			return nil
+		})
+	}
+	if err := eg.Wait(); err != nil {
+		return nil, err
+	}
 
-			results[name] = result.Value
-			warnings = append(warnings, result.Warnings...)
-			warningsDocURL = result.WarningsDocURL
-			stats.RowsScanned += result.Stats.RowsScanned
-			stats.BytesScanned += result.Stats.BytesScanned
-			stats.DurationMS += result.Stats.DurationMS
-		}
+	for i, name := range names {
+		result := queryResults[i]
+		qbEvent.HasData = qbEvent.HasData || hasData(result)
+		results[name] = result.Value
+		warnings = append(warnings, result.Warnings...)
+		warningsDocURL = result.WarningsDocURL
+		stats.RowsScanned += result.Stats.RowsScanned
+		stats.BytesScanned += result.Stats.BytesScanned
+		stats.DurationMS += result.Stats.DurationMS
 	}
 
 	gomaps.Copy(results, preseededResults)
@@ -707,8 +733,9 @@ func (q *querier) run(
 	return resp, nil
 }
 
-// executeWithCache executes a query using the bucket cache.
-func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query qbtypes.Query, step qbtypes.Step, _ bool) (*qbtypes.Result, error) {
+// executeWithCache executes a query using the bucket cache. sem limits how
+// many queries run at once for the whole request.
+func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query qbtypes.Query, step qbtypes.Step, sem chan struct{}) (*qbtypes.Result, error) {
 	// Get cached data and missing ranges
 	cachedResult, missingRanges := q.bucketCache.GetMissRanges(ctx, orgID, query, step)
 
@@ -721,7 +748,9 @@ func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query
 	if cachedResult == nil && len(missingRanges) == 1 {
 		startMs, endMs := query.Window()
 		if missingRanges[0].From == startMs && missingRanges[0].To == endMs {
+			sem <- struct{}{}
 			result, err := query.Execute(ctx)
+			<-sem
 			if err != nil {
 				return nil, err
 			}
@@ -740,7 +769,6 @@ func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query
 		slog.Int("missing_ranges_count", len(missingRanges)),
 		slog.Any("ranges", missingRanges))
 
-	sem := make(chan struct{}, 4)
 	var wg sync.WaitGroup
 
 	for i, timeRange := range missingRanges {
@@ -777,7 +805,9 @@ func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query
 		if err != nil {
 			// If any query failed, fall back to full execution
 			q.logger.ErrorContext(ctx, "parallel query execution failed", errors.Attr(err))
+			sem <- struct{}{}
 			result, err := query.Execute(ctx)
+			<-sem
 			if err != nil {
 				return nil, err
 			}
