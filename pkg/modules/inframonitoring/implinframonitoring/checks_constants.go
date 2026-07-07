@@ -235,6 +235,8 @@ var daemonsetsSpec = checkSpec{
 				"k8s.pod.phase",
 				"k8s.daemonset.desired_scheduled_nodes",
 				"k8s.daemonset.current_scheduled_nodes",
+				"k8s.daemonset.ready_nodes",
+				"k8s.daemonset.misscheduled_nodes",
 			},
 			OptionalMetrics: []string{
 				"k8s.pod.status_reason",
