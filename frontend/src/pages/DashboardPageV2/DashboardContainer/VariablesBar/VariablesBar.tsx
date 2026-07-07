@@ -61,7 +61,12 @@ function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 		return null;
 	}
 
-	const addVariableButton = isEditable ? (
+	const openAddVariable = (): void =>
+		requestSettings({ tab: 'Variables', addVariable: true });
+
+	// No variables yet: a full-width labelled button. Once variables exist it
+	// shrinks to a `+` icon (with the label on hover) that sits after them.
+	const addVariableFull = (
 		<Button
 			variant="outlined"
 			color="secondary"
@@ -69,13 +74,27 @@ function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 			className={styles.addVariable}
 			prefix={<Plus size={14} />}
 			testId="dashboard-variables-add"
-			onClick={(): void =>
-				requestSettings({ tab: 'Variables', addVariable: true })
-			}
+			onClick={openAddVariable}
 		>
 			Add variable
 		</Button>
-	) : null;
+	);
+
+	const addVariableIcon = (
+		<TooltipSimple side="top" title="Add variable">
+			<Button
+				variant="outlined"
+				color="secondary"
+				size="icon"
+				className={styles.addVariable}
+				aria-label="Add variable"
+				testId="dashboard-variables-add"
+				onClick={openAddVariable}
+			>
+				<Plus size={14} />
+			</Button>
+		</TooltipSimple>
+	);
 
 	const hasOverflow = overflowCount > 0;
 	const hiddenVariables =
@@ -95,9 +114,16 @@ function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 		</Button>
 	);
 
+	if (variables.length === 0) {
+		return (
+			<div className={styles.bar} data-testid="dashboard-variables-bar">
+				{addVariableFull}
+			</div>
+		);
+	}
+
 	return (
 		<div className={styles.bar} data-testid="dashboard-variables-bar">
-			{addVariableButton}
 			<div
 				ref={containerRef}
 				className={cx(styles.strip, { [styles.stripExpanded]: expanded })}
@@ -151,6 +177,7 @@ function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 					</span>
 				)}
 			</div>
+			{isEditable && addVariableIcon}
 		</div>
 	);
 }
