@@ -40,7 +40,7 @@ function DynamicVariableFields({
 	attributeError,
 }: DynamicVariableFieldsProps): JSX.Element {
 	const [search, setSearch] = useState('');
-	const debouncedSearch = useDebounce(search, 300);
+	const debouncedSearch = useDebounce(search, 500);
 	const apiSignal = signalForApi(signal);
 
 	const {
