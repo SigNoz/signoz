@@ -51,15 +51,14 @@ describe('LLMObservabilityAttributeMapping', () => {
 		).resolves.toBeInTheDocument();
 	});
 
-	it('disables the test tab', () => {
+	it('renders the header with its description and Save/Discard disabled by default', () => {
 		render(<LLMObservabilityAttributeMapping />);
 
-		expect(screen.getByRole('tab', { name: 'Test' })).toBeDisabled();
-	});
-
-	it('renders the header with Save/Discard disabled by default', () => {
-		render(<LLMObservabilityAttributeMapping />);
-
+		expect(
+			screen.getByText(
+				'Configure source-to-target attribute remapping for LLM traces',
+			),
+		).toBeInTheDocument();
 		expect(screen.getByTestId('save-changes-btn')).toBeDisabled();
 		expect(screen.getByTestId('discard-changes-btn')).toBeDisabled();
 		expect(screen.queryByTestId('unsaved-changes')).not.toBeInTheDocument();
