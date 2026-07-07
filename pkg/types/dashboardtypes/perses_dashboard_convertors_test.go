@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"unicode/utf8"
 
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
@@ -21,6 +22,7 @@ func newTestDashboardV2(t *testing.T, orgID valuer.UUID, source Source) *Dashboa
 	updatedAt := time.Date(2026, time.January, 2, 12, 0, 0, 0, time.UTC)
 
 	spec := DashboardSpec{
+		Display: Display{Name: "Test Dashboard"},
 		Panels: map[string]*Panel{
 			"p1": {
 				Kind: "Panel",
@@ -211,12 +213,95 @@ func TestDashboardV2ToPostableForCloning(t *testing.T) {
 	assert.True(t, postable.GenerateName, "internal name must be regenerated, not copied")
 	assert.Empty(t, postable.Name, "name must be empty so generateName can derive it")
 	assert.Equal(t, dashboard.DashboardV2MetadataBase, postable.DashboardV2MetadataBase, "schema version and image are carried over")
-	assert.Equal(t, dashboard.Spec, postable.Spec, "spec (incl. display name) is preserved verbatim")
+	assert.Equal(t, "Test Dashboard - Copy", postable.Spec.Display.Name, "clone appends a Copy suffix to the display name")
+
+	// The rest of the spec is carried over unchanged.
+	expectedSpec := dashboard.Spec
+	expectedSpec.Display.Name = "Test Dashboard - Copy"
+	assert.Equal(t, expectedSpec, postable.Spec)
+	assert.Equal(t, "Test Dashboard", dashboard.Spec.Display.Name, "the source dashboard's display name is not mutated")
 
 	require.Len(t, postable.Tags, len(dashboard.Tags))
 	for i, sourceTag := range dashboard.Tags {
 		assert.Equal(t, sourceTag.Key, postable.Tags[i].Key)
 		assert.Equal(t, sourceTag.Value, postable.Tags[i].Value)
+	}
+}
+
+// nextCloneDisplayName appends " - Copy", bumps an existing " - Copy (n)"
+// counter, and truncates an over-long base back to MaxDisplayNameLen while
+// keeping the suffix whole. The long cases are real-ish titles already at the
+// limit so the truncated output is legible; their literal expectations assume
+// the 128-character limit.
+func TestNextCloneDisplayName(t *testing.T) {
+	require.Equal(t, 128, MaxDisplayNameLen, "the literal expectations below are sized for a 128-character limit")
+
+	testCases := []struct {
+		scenario string
+		input    string
+		expected string
+	}{
+		{
+			scenario: "plain name gets a Copy suffix",
+			input:    "My Dashboard",
+			expected: "My Dashboard - Copy",
+		},
+		{
+			scenario: "Copy suffix bumps to (2)",
+			input:    "My Dashboard - Copy",
+			expected: "My Dashboard - Copy (2)",
+		},
+		{
+			scenario: "numbered suffix increments",
+			input:    "My Dashboard - Copy (2)",
+			expected: "My Dashboard - Copy (3)",
+		},
+		{
+			scenario: "multi-digit suffix increments",
+			input:    "svc - Copy (41)",
+			expected: "svc - Copy (42)",
+		},
+		{
+			scenario: "a name that merely contains Copy is not a suffix",
+			input:    "Copy of things",
+			expected: "Copy of things - Copy",
+		},
+		{
+			scenario: "only the trailing Copy marker is stripped",
+			input:    "Prod - Copy - Copy",
+			expected: "Prod - Copy - Copy (2)",
+		},
+		{
+			scenario: "empty name",
+			input:    "",
+			expected: " - Copy",
+		},
+		{
+			scenario: "first copy at the limit truncates the base, keeps the suffix",
+			input:    "Production Kubernetes Cluster Health: CPU, Memory, Disk I/O, and Network Saturation Across Every Namespace and Availability Zone",
+			expected: "Production Kubernetes Cluster Health: CPU, Memory, Disk I/O, and Network Saturation Across Every Namespace and Availabili - Copy",
+		},
+		{
+			scenario: "numbered copy at the limit increments then truncates",
+			input:    "API Gateway SLOs: p99 Latency, Error Budget Burn Rate, and Requests per Second by Route, Region, and Upstream Service - Copy (9)",
+			expected: "API Gateway SLOs: p99 Latency, Error Budget Burn Rate, and Requests per Second by Route, Region, and Upstream Servic - Copy (10)",
+		},
+		{
+			scenario: "truncation counts runes, not bytes (é and — are one rune each)",
+			input:    "Café Latency — p99 Response Times, Error Rates, and Saturation Across the Ordering, Kitchen, and Delivery Microservices Fleet",
+			expected: "Café Latency — p99 Response Times, Error Rates, and Saturation Across the Ordering, Kitchen, and Delivery Microservices F - Copy",
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.scenario, func(t *testing.T) {
+			require.LessOrEqual(t, utf8.RuneCountInString(testCase.input), MaxDisplayNameLen, "a saved source name never exceeds the limit")
+
+			result := nextCloneDisplayName(testCase.input)
+
+			assert.Equal(t, testCase.expected, result)
+			assert.LessOrEqual(t, utf8.RuneCountInString(result), MaxDisplayNameLen, "a clone name must fit the limit")
+		})
 	}
 }
 

@@ -26,18 +26,49 @@ type PodCountsByPhase struct {
 	Unknown   int `json:"unknown" required:"true"`
 }
 
+// PodCountsByStatus buckets pod counts by their latest kubectl-style display
+// status in the time window (see PodStatus). One field per derivable status.
+type PodCountsByStatus struct {
+	// Phase fallback.
+	Pending int `json:"pending" required:"true"`
+	Running int `json:"running" required:"true"`
+	Failed  int `json:"failed" required:"true"`
+	Unknown int `json:"unknown" required:"true"`
+
+	// Container-level reasons.
+	CrashLoopBackOff           int `json:"crashLoopBackOff" required:"true"`
+	ImagePullBackOff           int `json:"imagePullBackOff" required:"true"`
+	ErrImagePull               int `json:"errImagePull" required:"true"`
+	CreateContainerConfigError int `json:"createContainerConfigError" required:"true"`
+	ContainerCreating          int `json:"containerCreating" required:"true"`
+	OOMKilled                  int `json:"oomKilled" required:"true"`
+	Completed                  int `json:"completed" required:"true"`
+	Error                      int `json:"error" required:"true"`
+	ContainerCannotRun         int `json:"containerCannotRun" required:"true"`
+
+	// Pod-level reasons.
+	Evicted                  int `json:"evicted" required:"true"`
+	NodeAffinity             int `json:"nodeAffinity" required:"true"`
+	NodeLost                 int `json:"nodeLost" required:"true"`
+	Shutdown                 int `json:"shutdown" required:"true"`
+	UnexpectedAdmissionError int `json:"unexpectedAdmissionError" required:"true"`
+}
+
 type PodRecord struct {
-	PodUID           string            `json:"podUID" required:"true"`
-	PodCPU           float64           `json:"podCPU" required:"true"`
-	PodCPURequest    float64           `json:"podCPURequest" required:"true"`
-	PodCPULimit      float64           `json:"podCPULimit" required:"true"`
-	PodMemory        float64           `json:"podMemory" required:"true"`
-	PodMemoryRequest float64           `json:"podMemoryRequest" required:"true"`
-	PodMemoryLimit   float64           `json:"podMemoryLimit" required:"true"`
-	PodPhase         PodPhase          `json:"podPhase" required:"true"`
-	PodCountsByPhase PodCountsByPhase  `json:"podCountsByPhase" required:"true"`
-	PodAge           int64             `json:"podAge" required:"true"`
-	Meta             map[string]string `json:"meta" required:"true"`
+	PodUID            string            `json:"podUID" required:"true"`
+	PodCPU            float64           `json:"podCPU" required:"true"`
+	PodCPURequest     float64           `json:"podCPURequest" required:"true"`
+	PodCPULimit       float64           `json:"podCPULimit" required:"true"`
+	PodMemory         float64           `json:"podMemory" required:"true"`
+	PodMemoryRequest  float64           `json:"podMemoryRequest" required:"true"`
+	PodMemoryLimit    float64           `json:"podMemoryLimit" required:"true"`
+	PodPhase          PodPhase          `json:"podPhase" required:"true"`
+	PodCountsByPhase  PodCountsByPhase  `json:"podCountsByPhase" required:"true"`
+	PodStatus         PodStatus         `json:"podStatus" required:"true"`
+	PodCountsByStatus PodCountsByStatus `json:"podCountsByStatus" required:"true"`
+	PodRestarts       int64             `json:"podRestarts" required:"true"`
+	PodAge            int64             `json:"podAge" required:"true"`
+	Meta              map[string]string `json:"meta" required:"true"`
 }
 
 // PostablePods is the request body for the v2 pods list API.

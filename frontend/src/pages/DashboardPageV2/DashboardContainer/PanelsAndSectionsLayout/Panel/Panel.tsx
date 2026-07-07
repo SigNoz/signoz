@@ -3,11 +3,13 @@ import type {
 	DashboardtypesPanelDTO,
 	DashboardtypesTimePreferenceDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import ContextMenu from 'periscope/components/ContextMenu';
 import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/registry';
 import { panelTimePreferenceLabel } from 'pages/DashboardPageV2/DashboardContainer/hooks/resolvePanelTimeWindow';
 import { usePanelQuery } from 'pages/DashboardPageV2/DashboardContainer/hooks/usePanelQuery';
 
 import type { DashboardSection } from '../../utils';
+import { useDrilldown } from './hooks/useDrilldown';
 import { usePanelInteractions } from './hooks/usePanelInteractions';
 import PanelBody from './PanelBody/PanelBody';
 import PanelHeader from './PanelHeader/PanelHeader';
@@ -59,14 +61,16 @@ function Panel({
 	const searchable = !!panelDefinition?.actions.search;
 	const [searchTerm, setSearchTerm] = useState('');
 
-	const { data, isFetching, error, refetch, pagination } = usePanelQuery({
-		panel,
-		panelId,
-		// Lazy: fetch only once on screen (undefined → visible) and a renderer exists.
-		enabled: !!panelDefinition && isVisible !== false,
-	});
+	const { data, isFetching, isPreviousData, error, refetch, pagination } =
+		usePanelQuery({
+			panel,
+			panelId,
+			// Lazy: fetch only once on screen (undefined → visible) and a renderer exists.
+			enabled: !!panelDefinition && isVisible !== false,
+		});
 
 	const { onDragSelect, dashboardPreference } = usePanelInteractions();
+	const drilldown = useDrilldown(panel, panelId);
 
 	return (
 		<div
@@ -92,14 +96,18 @@ function Panel({
 					panelId={panelId}
 					data={data}
 					isFetching={isFetching}
+					isPreviousData={isPreviousData}
 					error={error}
 					refetch={refetch}
 					onDragSelect={onDragSelect}
 					dashboardPreference={dashboardPreference}
 					searchTerm={searchable ? searchTerm : undefined}
 					pagination={pagination}
+					onClick={drilldown.onPanelClick}
+					enableDrillDown={drilldown.enableDrillDown}
 				/>
 			)}
+			<ContextMenu {...drilldown.contextMenuProps} />
 		</div>
 	);
 }

@@ -37,6 +37,24 @@ describe('applyJsonPatch', () => {
 		expect(JSON.stringify(doc)).toBe(snapshot);
 	});
 
+	it('does not mutate the input ops when a later op targets a just-added node', () => {
+		// New-panel-on-empty-dashboard batch: add an empty section, then add an
+		// item into it. The item must not leak back into the section-add op's value
+		// (which is still queued for the network request) via a shared reference.
+		const ops = [
+			op(add, '/spec/layouts/-', { spec: { items: [] } }),
+			op(add, '/spec/layouts/0/spec/items/-', { x: 0, y: 0 }),
+		];
+		const empty = { spec: { layouts: [] } };
+		const next = applyJsonPatch(empty, ops);
+
+		// The section-add op's value stays empty — only the applied document grows.
+		expect((ops[0].value as any).spec.items).toStrictEqual([]);
+		expect((next.spec as any).layouts[0].spec.items).toStrictEqual([
+			{ x: 0, y: 0 },
+		]);
+	});
+
 	it('replaces a leaf string', () => {
 		const next = applyJsonPatch(spec(), [
 			op(replace, '/spec/layouts/0/spec/display/title', 'S1-renamed'),
