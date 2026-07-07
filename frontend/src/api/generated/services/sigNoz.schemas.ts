@@ -5685,6 +5685,11 @@ export type InframonitoringtypesClusterRecordDTOCounts = {
 	 * @type integer
 	 * @format int64
 	 */
+	nodes: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
 	statefulSets: number;
 };
 

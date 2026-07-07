@@ -29,6 +29,7 @@ type ClusterRecord struct {
 	PodCountsByPhase         PodCountsByPhase      `json:"podCountsByPhase" required:"true"`
 	PodCountsByStatus        PodCountsByStatus     `json:"podCountsByStatus" required:"true"`
 	Counts                   struct {
+		Nodes        int64 `json:"nodes" required:"true"`
 		Namespaces   int64 `json:"namespaces" required:"true"`
 		Deployments  int64 `json:"deployments" required:"true"`
 		DaemonSets   int64 `json:"daemonSets" required:"true"`

@@ -4266,10 +4266,14 @@ components:
             namespaces:
               format: int64
               type: integer
+            nodes:
+              format: int64
+              type: integer
             statefulSets:
               format: int64
               type: integer
           required:
+          - nodes
           - namespaces
           - deployments
           - daemonSets

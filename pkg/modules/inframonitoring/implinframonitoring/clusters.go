@@ -76,6 +76,7 @@ func buildClusterRecords(
 		}
 
 		if counts, ok := resourceCounts[compositeKey]; ok {
+			record.Counts.Nodes = counts[inframonitoringtypes.NodeNameAttrKey]
 			record.Counts.Namespaces = counts[inframonitoringtypes.NamespaceNameAttrKey]
 			record.Counts.Deployments = counts[inframonitoringtypes.DeploymentNameAttrKey]
 			record.Counts.DaemonSets = counts[inframonitoringtypes.DaemonSetNameAttrKey]
