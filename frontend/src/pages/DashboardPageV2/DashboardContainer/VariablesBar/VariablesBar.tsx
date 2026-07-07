@@ -51,7 +51,9 @@ function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 	const { containerRef, visibleCount, overflowCount } = useInlineOverflowCount({
 		itemCount: variables.length,
 		gap: 8,
-		reserveWidth: 48,
+		// Reserve the trailing line space: the "+N" trigger, plus the always-present
+		// add-variable "+" when editable, so the collapse math accounts for both.
+		reserveWidth: isEditable ? 88 : 48,
 		enabled: !expanded,
 	});
 
@@ -177,9 +179,10 @@ function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 					</span>
 				)}
 
-				{/* At the end of the list. Hidden while collapsed (the +N would clash);
-				    expand to reveal it, so the layout never breaks mid-wrap. */}
-				{isEditable && (!hasOverflow || expanded) && addVariableIcon}
+				{/* After the more/less trigger, in every state. Kept inline (not block)
+				    so the row still flows under the floated time selector, and always
+				    mounted so measuring never toggles it. */}
+				{isEditable && <span className={styles.addSlot}>{addVariableIcon}</span>}
 			</div>
 		</div>
 	);

@@ -1,7 +1,8 @@
+// Block (not flex) so the strip wraps around the floated time selector: one line
+// beside it when collapsed, and — via `.stripExpanded`'s `clear: both` — dropping
+// full-width below it when expanded. A flex `.bar` would be a BFC that sits beside
+// the float and makes the child strip's `clear` inert.
 .bar {
-	display: flex;
-	align-items: flex-start;
-	gap: 8px;
 	min-width: 0;
 }
 
@@ -24,7 +25,8 @@
 	clear: both;
 
 	.variableSlot,
-	.moreButton {
+	.moreButton,
+	.addSlot {
 		margin: 0;
 	}
 
@@ -57,6 +59,12 @@
 }
 
 .moreButton {
+	display: inline-flex;
+	margin-right: 8px;
+	vertical-align: top;
+}
+
+.addSlot {
 	display: inline-flex;
 	vertical-align: top;
 }
