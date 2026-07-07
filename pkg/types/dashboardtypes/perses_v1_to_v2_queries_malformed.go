@@ -68,6 +68,21 @@ func normalizePreV5LogTraceAggregations(query map[string]any) {
 	query["aggregations"] = out
 }
 
+// ensureDefaultAggregation defaults an empty logs/traces aggregations[] to count(),
+// mirroring the frontend. Callers gate this to aggregation panels. Metrics are skipped:
+// count() can't stand in for a missing metricName.
+func ensureDefaultAggregation(query map[string]any) {
+	switch signalFromDataSource(query["dataSource"]) {
+	case telemetrytypes.SignalLogs, telemetrytypes.SignalTraces:
+	default:
+		return
+	}
+	if aggs, ok := query["aggregations"].([]any); ok && len(aggs) > 0 {
+		return
+	}
+	query["aggregations"] = []any{map[string]any{"expression": "count()"}}
+}
+
 // parseAggregations pulls every func(args) (with inline or passed-through alias,
 // quotes stripped) out of a v1 expression. Mirrors the frontend's
 // parseAggregations; empty result if none.
