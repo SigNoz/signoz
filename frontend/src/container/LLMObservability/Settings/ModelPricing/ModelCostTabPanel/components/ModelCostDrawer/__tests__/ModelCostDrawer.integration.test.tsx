@@ -1,8 +1,8 @@
+import { makePricingRule } from 'container/LLMObservability/Settings/ModelPricing/__tests__/fixtures';
+import { EMPTY_DRAFT } from 'container/LLMObservability/Settings/ModelPricing/constants';
+import { draftFromRule } from 'container/LLMObservability/Settings/ModelPricing/utils';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
-import { makePricingRule } from '../../../../__tests__/fixtures';
-import { EMPTY_DRAFT } from '../../../../constants';
-import { draftFromRule } from '../../../../utils';
 import ModelCostDrawer from '../ModelCostDrawer';
 
 const editDraft = draftFromRule(

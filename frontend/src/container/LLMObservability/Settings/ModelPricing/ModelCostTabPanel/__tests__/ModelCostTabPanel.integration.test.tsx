@@ -1,13 +1,13 @@
 import { LlmpricingruletypesLLMPricingRuleUnitDTO as UnitDTO } from 'api/generated/services/sigNoz.schemas';
-import { rest, server } from 'mocks-server/server';
-import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
-
 import {
 	LLM_PRICING_ENDPOINT,
 	LLM_PRICING_RULE_ENDPOINT,
 	makeListResponse,
 	mockRules,
-} from '../../__tests__/fixtures';
+} from 'container/LLMObservability/Settings/ModelPricing/__tests__/fixtures';
+import { rest, server } from 'mocks-server/server';
+import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
+
 import ModelCostTabPanel from '../ModelCostTabPanel';
 
 const toastSuccess = jest.fn();
