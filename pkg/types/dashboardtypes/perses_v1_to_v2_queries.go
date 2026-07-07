@@ -78,6 +78,8 @@ func (d *v1Decoder) collectV1QueryEnvelopes(widget map[string]any, panelKind Pan
 		return nil, telemetrytypes.Signal{}
 	}
 	rowLimitPanel := panelKind == PanelKindList || panelKind == PanelKindTable
+	// Raw (list) panels legitimately have no aggregation; every other panel needs one.
+	needsAggregation := requestTypeForPanel(panelKind) != qb.RequestTypeRaw
 
 	queryType := d.readString(queryMap, "queryType")
 	switch queryType {
@@ -107,6 +109,9 @@ func (d *v1Decoder) collectV1QueryEnvelopes(widget map[string]any, panelKind Pan
 			normalizePreV5QueryData(q, widgetType)
 			normalizePreV5SelectColumns(q)
 			normalizePreV5PageSize(q, rowLimitPanel)
+			if needsAggregation {
+				ensureDefaultAggregation(q)
+			}
 			name := d.readString(q, "queryName")
 			out = append(out, qb.WrapInV5Envelope(name, q, string(qb.QueryTypeBuilder.StringValue())))
 			if signal.IsZero() {

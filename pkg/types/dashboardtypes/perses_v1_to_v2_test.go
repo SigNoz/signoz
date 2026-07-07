@@ -916,6 +916,107 @@ func TestConvertV1WidgetQueryRebuildsFlatLogsAggregation(t *testing.T) {
 	assert.Equal(t, "sum(bytes)", spec.Aggregations[0].Expression)
 }
 
+func TestConvertV1WidgetQueryInjectsCountForNoopOnAggregationPanel(t *testing.T) {
+	// A logs query with the list-style "noop" operator placed on an aggregation
+	// panel (graph). createAggregationsShapeSafe drops noop, leaving no aggregation;
+	// an aggregation panel requires one, so it must default to count() (mirrors the
+	// frontend's noop→count rewrite).
+	widget := map[string]any{
+		"id":         "l-1",
+		"panelTypes": "graph",
+		"query": map[string]any{
+			"queryType": "builder",
+			"builder": map[string]any{
+				"queryData": []any{
+					map[string]any{
+						"queryName":         "A",
+						"expression":        "A",
+						"dataSource":        "logs",
+						"aggregateOperator": "noop",
+					},
+				},
+			},
+		},
+	}
+
+	queries := (&v1Decoder{}).convertV1WidgetQuery(widget, PanelKindTimeSeries)
+	require.Len(t, queries, 1)
+
+	wrapper, ok := queries[0].Spec.Plugin.Spec.(*BuilderQuerySpec)
+	require.True(t, ok)
+	spec, ok := wrapper.Spec.(qb.QueryBuilderQuery[qb.LogAggregation])
+	require.True(t, ok, "logs query should dispatch to LogAggregation, got %T", wrapper.Spec)
+
+	require.Len(t, spec.Aggregations, 1, "noop on an aggregation panel should default to count()")
+	assert.Equal(t, "count()", spec.Aggregations[0].Expression)
+}
+
+func TestConvertV1WidgetQueryInjectsCountForMissingAggregation(t *testing.T) {
+	// A traces query with no aggregation fields at all on an aggregation panel:
+	// the migrator produces no aggregations[], which the v5 backend rejects. It must
+	// default to count().
+	widget := map[string]any{
+		"id":         "t-1",
+		"panelTypes": "graph",
+		"query": map[string]any{
+			"queryType": "builder",
+			"builder": map[string]any{
+				"queryData": []any{
+					map[string]any{
+						"queryName":  "A",
+						"expression": "A",
+						"dataSource": "traces",
+					},
+				},
+			},
+		},
+	}
+
+	queries := (&v1Decoder{}).convertV1WidgetQuery(widget, PanelKindTimeSeries)
+	require.Len(t, queries, 1)
+
+	wrapper, ok := queries[0].Spec.Plugin.Spec.(*BuilderQuerySpec)
+	require.True(t, ok)
+	spec, ok := wrapper.Spec.(qb.QueryBuilderQuery[qb.TraceAggregation])
+	require.True(t, ok, "traces query should dispatch to TraceAggregation, got %T", wrapper.Spec)
+
+	require.Len(t, spec.Aggregations, 1, "a missing aggregation on an aggregation panel should default to count()")
+	assert.Equal(t, "count()", spec.Aggregations[0].Expression)
+}
+
+func TestConvertV1WidgetQueryListPanelKeepsNoAggregation(t *testing.T) {
+	// A list panel legitimately has no aggregation; the default-count() injection must
+	// not touch it (the raw request type skips aggregation validation on the backend).
+	widget := map[string]any{
+		"id":         "l-1",
+		"panelTypes": "list",
+		"query": map[string]any{
+			"queryType": "builder",
+			"builder": map[string]any{
+				"queryData": []any{
+					map[string]any{
+						"queryName":         "A",
+						"expression":        "A",
+						"dataSource":        "logs",
+						"aggregateOperator": "noop",
+					},
+				},
+			},
+		},
+	}
+
+	queries := (&v1Decoder{}).convertV1WidgetQuery(widget, PanelKindList)
+	require.Len(t, queries, 1)
+	assert.Equal(t, qb.RequestTypeRaw, queries[0].Kind)
+
+	wrapper, ok := queries[0].Spec.Plugin.Spec.(*BuilderQuerySpec)
+	require.True(t, ok)
+	spec, ok := wrapper.Spec.(qb.QueryBuilderQuery[qb.LogAggregation])
+	require.True(t, ok, "list logs query should dispatch to LogAggregation, got %T", wrapper.Spec)
+
+	assert.Empty(t, spec.Aggregations, "a list panel must keep its bare (no-aggregation) query")
+}
+
 func TestConvertV1WidgetQueryNoQuery(t *testing.T) {
 	widget := map[string]any{"id": "x", "panelTypes": "graph"}
 	queries := (&v1Decoder{}).convertV1WidgetQuery(widget, PanelKindTimeSeries)
