@@ -198,9 +198,11 @@ describe('AttributeMappingsTab (integration)', () => {
 		const sources = within(mapperRow).getByTestId('mapper-sources-mapper-1');
 		expect(sources).toHaveTextContent('genai.model');
 		expect(sources).toHaveTextContent('llm.model');
-		// Writes-to field context + enabled status.
+		// Writes-to field context + enabled status (an inline Switch, not text).
 		expect(within(mapperRow).getByText('attribute')).toBeInTheDocument();
-		expect(within(mapperRow).getByText('Enabled')).toBeInTheDocument();
+		expect(
+			within(mapperRow).getByTestId('mapper-enabled-mapper-1'),
+		).toBeChecked();
 	});
 
 	it('shows the mappers error state when the mappers request fails', async () => {
@@ -310,5 +312,115 @@ describe('AttributeMappingsTab (integration)', () => {
 		expect(
 			screen.queryByTestId('mapper-target-mapper-1'),
 		).not.toBeInTheDocument();
+	});
+
+	// The mapper drawer is owned by MappersTable (it renders its own
+	// useMapperFormDrawer + MapperFormDrawer), so these flows reach it through the
+	// same store-backed harness by expanding a group first. Persistence is staged
+	// into the draft store, so the assertions are on the resulting table rows and
+	// the store's dirty state rather than any network call.
+	describe('mapper drawer', () => {
+		async function openGroupWithMapper(
+			user: ReturnType<typeof userEvent.setup>,
+		): Promise<void> {
+			setupGroups();
+			setupMappers([makeMapper({ id: 'mapper-1', name: 'gen_ai.request.model' })]);
+			render(<AttributeMappingHarness />);
+
+			await screen.findByTestId('group-name-group-1');
+			await expandGroup(user);
+			await screen.findByTestId('mapper-target-mapper-1');
+		}
+
+		it('opens the add-mapping drawer from a group\'s "Add mapping" button', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			await openGroupWithMapper(user);
+
+			expect(screen.queryByTestId('mapper-form-drawer')).not.toBeInTheDocument();
+			await user.click(screen.getByTestId('add-mapper-group-1'));
+
+			await expect(
+				screen.findByTestId('mapper-form-drawer'),
+			).resolves.toBeInTheDocument();
+			expect(screen.getByText('New custom mapping')).toBeInTheDocument();
+		});
+
+		it('opens the edit drawer prefilled and locks the target attribute', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			await openGroupWithMapper(user);
+
+			// DropdownMenuSimple drops the trigger's testId, so target it by its label.
+			await user.click(screen.getByRole('button', { name: 'Mapping actions' }));
+			await user.click(await screen.findByRole('menuitem', { name: 'Edit' }));
+
+			await expect(
+				screen.findByTestId('mapper-form-drawer'),
+			).resolves.toBeInTheDocument();
+			expect(screen.getByText('Edit mapping')).toBeInTheDocument();
+			const target = screen.getByTestId('mapper-form-target');
+			expect(target).toHaveValue('gen_ai.request.model');
+			// The target attribute is the mapper's identity — immutable after create.
+			expect(target).toBeDisabled();
+		});
+
+		it("toggles a mapper's enabled state through the store", async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			await openGroupWithMapper(user);
+
+			const toggle = screen.getByTestId('mapper-enabled-mapper-1');
+			expect(toggle).toBeChecked();
+
+			await user.click(toggle);
+
+			// The switch is driven by the draft, so a flip proves the store round-trip.
+			await waitFor(() =>
+				expect(screen.getByTestId('mapper-enabled-mapper-1')).not.toBeChecked(),
+			);
+		});
+
+		it('removes a mapper via the row action menu', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			await openGroupWithMapper(user);
+
+			await user.click(screen.getByRole('button', { name: 'Mapping actions' }));
+			await user.click(await screen.findByRole('menuitem', { name: 'Delete' }));
+
+			// The row is dropped from the draft; the group falls back to its empty state.
+			await waitFor(() =>
+				expect(
+					screen.queryByTestId('mapper-target-mapper-1'),
+				).not.toBeInTheDocument(),
+			);
+			expect(screen.getByTestId('mappers-empty-group-1')).toBeInTheDocument();
+		});
+
+		it('creates a new mapping through the drawer and appends it to the group', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			await openGroupWithMapper(user);
+
+			await user.click(screen.getByTestId('add-mapper-group-1'));
+			await screen.findByTestId('mapper-form-drawer');
+
+			// Create stays disabled until the draft has a target and a non-empty source.
+			expect(screen.getByTestId('mapper-form-save')).toBeDisabled();
+
+			await user.type(
+				screen.getByTestId('mapper-form-target'),
+				'gen_ai.response.model',
+			);
+			await user.type(screen.getByTestId('mapper-form-source-0'), 'raw.model');
+
+			const create = screen.getByTestId('mapper-form-save');
+			await waitFor(() => expect(create).toBeEnabled());
+			await user.click(create);
+
+			// Drawer closes and the new mapping shows up as a row in the group.
+			await waitFor(() =>
+				expect(screen.queryByTestId('mapper-form-drawer')).not.toBeInTheDocument(),
+			);
+			await expect(
+				screen.findByText('gen_ai.response.model'),
+			).resolves.toBeInTheDocument();
+		});
 	});
 });
