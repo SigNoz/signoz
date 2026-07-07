@@ -12,6 +12,7 @@ import { toAPIError } from 'utils/errorUtils';
 
 import { useAccumulatedTags } from '../../hooks/useAccumulatedTags';
 import { useActiveView } from '../../hooks/useActiveView';
+import { useCreatorOptions } from '../../hooks/useCreatorOptions';
 import { useDashboardFilters } from '../../hooks/useDashboardFilters';
 import {
 	usePage,
@@ -24,7 +25,6 @@ import { BuiltinViewId } from '../../types';
 import type { SelectedTag, UpdatedWindow } from '../../types';
 import type { DashboardListItem } from '../../utils/helpers';
 import { applyClientView } from '../../utils/views';
-import type { CreatorOption } from '../FilterZone/FilterChips';
 import FilterZone from '../FilterZone/FilterZone';
 import NewDashboardModal from '../NewDashboardModal/NewDashboardModal';
 import StatusBar from '../StatusBar/StatusBar';
@@ -194,24 +194,19 @@ function DashboardsList(): JSX.Element {
 	);
 	const total = clientView ? dashboards.length : (response?.data?.total ?? 0);
 
-	// Creator filter options: distinct authors on the loaded page plus the
-	// current user (so "me" is always selectable). Page-scoped until a members
-	// source backs this.
-	const creatorOptions = useMemo<CreatorOption[]>(() => {
-		const emails = new Set<string>();
-		if (user.email) {
-			emails.add(user.email);
-		}
-		rawDashboards.forEach((d) => {
-			if (d.createdBy) {
-				emails.add(d.createdBy);
-			}
-		});
-		return [...emails].sort().map((email) => ({
-			email,
-			label: email === user.email ? `${email} (me)` : email,
-		}));
-	}, [rawDashboards, user.email]);
+	// Authors present on the loaded page — a fallback for the creator filter until
+	// the org-wide user list resolves.
+	const pageAuthorEmails = useMemo<string[]>(
+		() =>
+			rawDashboards
+				.map((d) => d.createdBy)
+				.filter((email): email is string => !!email),
+		[rawDashboards],
+	);
+	const creatorOptions = useCreatorOptions({
+		currentUserEmail: user.email,
+		fallbackEmails: pageAuthorEmails,
+	});
 
 	// All key:value tags the API reports for the org's dashboards, powering the
 	// Tags filter chip and DSL key suggestions. Accumulated across refetches so
