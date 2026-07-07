@@ -1,5 +1,9 @@
 import { LlmpricingruletypesLLMPricingRuleUnitDTO as UnitDTO } from 'api/generated/services/sigNoz.schemas';
 import {
+	TOAST_MODEL_COST_DELETED,
+	TOAST_MODEL_COST_UPDATED,
+} from 'container/LLMObservability/Settings/ModelPricing/constants';
+import {
 	LLM_PRICING_ENDPOINT,
 	LLM_PRICING_RULE_ENDPOINT,
 	makeListResponse,
@@ -209,7 +213,7 @@ describe('ModelCostTabPanel (integration)', () => {
 
 		await waitFor(() => expect(deletedId).toBe('rule-openai'));
 		await waitFor(() =>
-			expect(toastSuccess).toHaveBeenCalledWith('Model cost deleted'),
+			expect(toastSuccess).toHaveBeenCalledWith(TOAST_MODEL_COST_DELETED),
 		);
 	});
 
@@ -316,7 +320,7 @@ describe('ModelCostTabPanel (integration)', () => {
 			pricing: { input: 5, output: 9 },
 		});
 		await waitFor(() =>
-			expect(toastSuccess).toHaveBeenCalledWith('Model cost updated'),
+			expect(toastSuccess).toHaveBeenCalledWith(TOAST_MODEL_COST_UPDATED),
 		);
 	});
 });

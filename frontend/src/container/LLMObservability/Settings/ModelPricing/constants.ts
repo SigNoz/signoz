@@ -51,6 +51,12 @@ export const CACHE_BUCKETS: CacheBucketDef[] = [
 	{ key: 'cacheWrite', label: 'cache_write', testId: 'cache-write' },
 ];
 
+// Toast copy for pricing-rule mutations. Shared so the hooks that fire the
+// toasts and the tests that assert them stay in lockstep.
+export const TOAST_MODEL_COST_ADDED = 'Model cost added';
+export const TOAST_MODEL_COST_UPDATED = 'Model cost updated';
+export const TOAST_MODEL_COST_DELETED = 'Model cost deleted';
+
 export const EMPTY_DRAFT: DrawerDraft = {
 	id: null,
 	sourceId: null,
