@@ -13,10 +13,16 @@ import {
 	createVariableSelectionSlice,
 	type VariableSelectionSlice,
 } from './slices/variableSelectionSlice';
+import {
+	createViewSessionSlice,
+	type ViewSessionSlice,
+} from './slices/viewSessionSlice';
+import type { ExtendTimeWindow } from '../Panels/components/NoData/extendWindow';
 
 export type DashboardStore = EditContextSlice &
 	CollapseSlice &
-	VariableSelectionSlice;
+	VariableSelectionSlice &
+	ViewSessionSlice;
 
 /**
  * V2 dashboard session store. Holds cross-cutting client state only — never the
@@ -24,6 +30,7 @@ export type DashboardStore = EditContextSlice &
  * - edit-context: dashboardId / isEditable / refetch (set once, not persisted).
  * - collapse: per-section open state (frontend-only, persisted to localStorage).
  * - variable-selection: runtime variable values (frontend-only, persisted).
+ * - view-session: the open View modal's extend-window behaviour (transient).
  */
 export const useDashboardStore = create<DashboardStore>()(
 	persist(
@@ -31,6 +38,7 @@ export const useDashboardStore = create<DashboardStore>()(
 			...createEditContextSlice(...a),
 			...createCollapseSlice(...a),
 			...createVariableSelectionSlice(...a),
+			...createViewSessionSlice(...a),
 		}),
 		{
 			name: '@signoz/dashboard-v2',
@@ -42,6 +50,11 @@ export const useDashboardStore = create<DashboardStore>()(
 		},
 	),
 );
+
+/** Selector: the open View modal's extend-window behaviour, or null when no modal is open. */
+export const selectViewPanelExtendWindow = (
+	state: DashboardStore,
+): ExtendTimeWindow | null => state.viewPanelExtendWindow;
 
 /** Selector: is a section open? Absent entry (or no dashboard) → open by default. */
 export const selectIsSectionOpen =
