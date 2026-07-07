@@ -238,6 +238,7 @@ function DashboardActions({
 					variant="solid"
 					color="secondary"
 					size="md"
+					className={styles.toolbarButton}
 					prefix={<Grid3X3 size="md" />}
 					testId="options"
 				>
@@ -253,6 +254,7 @@ function DashboardActions({
 						<Button
 							variant="solid"
 							color="secondary"
+							className={styles.toolbarButton}
 							prefix={<Configure size="md" />}
 							testId="show-drawer"
 							disabled={isLocked}
@@ -278,6 +280,7 @@ function DashboardActions({
 			<Button
 				variant="solid"
 				color="secondary"
+				className={styles.toolbarButton}
 				prefix={<Braces size="md" />}
 				testId="edit-json"
 				onClick={(): void => setIsJsonEditorOpen(true)}

@@ -5,3 +5,8 @@
 	justify-content: flex-end;
 	gap: 12px;
 }
+
+/* Actions / Configure / Edit-as-JSON: a more visible l3 outline. */
+.toolbarButton {
+	border-color: var(--l3-border) !important;
+}
