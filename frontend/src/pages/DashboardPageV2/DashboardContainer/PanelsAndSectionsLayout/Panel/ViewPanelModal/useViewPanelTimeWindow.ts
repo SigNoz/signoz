@@ -14,8 +14,7 @@ import { getNextZoomOutRange } from 'lib/zoomOutUtils';
 import type { PanelQueryTimeOverride } from 'pages/DashboardPageV2/DashboardContainer/hooks/usePanelQuery';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
-
-const NS_PER_MS = 1e6;
+import { NANO_SECOND_MULTIPLIER } from '@/store/globalTime';
 
 export interface ViewPanelTimeWindow {
 	/** Absolute window (epoch ms) to pass to usePanelQuery as a time override. */
@@ -52,8 +51,8 @@ export function useViewPanelTimeWindow(): ViewPanelTimeWindow {
 	>(selectedTime as Time);
 	const [timeOverride, setTimeOverride] = useState<PanelQueryTimeOverride>(
 		() => ({
-			startMs: Math.floor(minTime / NS_PER_MS),
-			endMs: Math.floor(maxTime / NS_PER_MS),
+			startMs: Math.floor(minTime / NANO_SECOND_MULTIPLIER),
+			endMs: Math.floor(maxTime / NANO_SECOND_MULTIPLIER),
 		}),
 	);
 
@@ -71,8 +70,8 @@ export function useViewPanelTimeWindow(): ViewPanelTimeWindow {
 			// GetMinMax returns nanoseconds — convert to the ms window we work in.
 			const { minTime: startNs, maxTime: endNs } = GetMinMax(interval);
 			setTimeOverride({
-				startMs: Math.floor(startNs / NS_PER_MS),
-				endMs: Math.floor(endNs / NS_PER_MS),
+				startMs: Math.floor(startNs / NANO_SECOND_MULTIPLIER),
+				endMs: Math.floor(endNs / NANO_SECOND_MULTIPLIER),
 			});
 		},
 		[],
@@ -85,8 +84,8 @@ export function useViewPanelTimeWindow(): ViewPanelTimeWindow {
 		}
 		const { minTime: startNs, maxTime: endNs } = GetMinMax(selectedInterval);
 		setTimeOverride({
-			startMs: Math.floor(startNs / NS_PER_MS),
-			endMs: Math.floor(endNs / NS_PER_MS),
+			startMs: Math.floor(startNs / NANO_SECOND_MULTIPLIER),
+			endMs: Math.floor(endNs / NANO_SECOND_MULTIPLIER),
 		});
 	}, [selectedInterval]);
 

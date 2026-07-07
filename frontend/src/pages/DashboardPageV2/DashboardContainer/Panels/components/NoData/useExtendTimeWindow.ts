@@ -6,8 +6,7 @@ import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { buildExtendWindow, ExtendTimeWindow } from './extendWindow';
-
-const NS_PER_MS = 1e6;
+import { NANO_SECOND_MULTIPLIER } from '@/store/globalTime';
 
 /**
  * Default empty-state extender: widen the dashboard's global time via the shared
@@ -20,8 +19,8 @@ export function useExtendTimeWindow(): ExtendTimeWindow {
 	);
 	const extend = useZoomOut();
 	const result = getNextZoomOutRange(
-		Math.floor(minTime / NS_PER_MS),
-		Math.floor(maxTime / NS_PER_MS),
+		Math.floor(minTime / NANO_SECOND_MULTIPLIER),
+		Math.floor(maxTime / NANO_SECOND_MULTIPLIER),
 	);
 	return buildExtendWindow(result, extend);
 }
