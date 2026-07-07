@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { CustomMultiSelect, CustomSelect } from 'components/NewSelect';
 import type { OptionData } from 'components/NewSelect/types';
-import { ALL_SELECT_VALUE } from 'container/DashboardContainer/utils';
 
 import type { VariableSelection } from '../selectionTypes';
 import styles from '../VariablesBar.module.scss';
@@ -36,8 +35,11 @@ function ValueSelector({
 	);
 
 	if (multiSelect) {
+		// All-selected → hand CustomMultiSelect the full option set so it engages its
+		// "all" path (overlay when closed, every option checked when open). Passing the
+		// scalar sentinel instead makes it render a literal `__ALL__` row.
 		const value = selection.allSelected
-			? ALL_SELECT_VALUE
+			? options
 			: (Array.isArray(selection.value) ? selection.value : []).map(String);
 		return (
 			<CustomMultiSelect

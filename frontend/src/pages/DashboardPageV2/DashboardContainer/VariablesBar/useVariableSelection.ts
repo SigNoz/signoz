@@ -33,13 +33,22 @@ export const variablesUrlParser = parseAsJson<
 );
 
 function defaultSelection(model: VariableFormModel): VariableSelection {
-	// `defaultValue` is a string | string[] on the wire.
 	const def = model.defaultValue;
+	// Explicit ALL sentinel, or a multi-select allowing ALL with no default → ALL.
+	if (
+		def === ALL_SELECTED ||
+		(Array.isArray(def) && def.length === 1 && def[0] === ALL_SELECTED)
+	) {
+		return { value: null, allSelected: true };
+	}
 	if (Array.isArray(def) && def.length > 0) {
 		return { value: def, allSelected: false };
 	}
 	if (typeof def === 'string' && def !== '') {
 		return { value: model.multiSelect ? [def] : def, allSelected: false };
+	}
+	if (model.multiSelect && model.showAllOption) {
+		return { value: null, allSelected: true };
 	}
 	return { value: model.multiSelect ? [] : '', allSelected: false };
 }
