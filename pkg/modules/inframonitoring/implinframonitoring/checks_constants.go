@@ -117,8 +117,16 @@ var podsSpec = checkSpec{
 			DocumentationLink: docLinkKubeletStatsReceiver,
 		},
 		{
-			Component:         componentK8sClusterReceiver,
-			DefaultMetrics:    []string{"k8s.pod.phase"},
+			Component: componentK8sClusterReceiver,
+			DefaultMetrics: []string{
+				"k8s.pod.phase",
+				"k8s.container.restarts", // pod restart count (default-on)
+			},
+			OptionalMetrics: []string{
+				// kubectl-style pod display status (default-off in the receiver).
+				"k8s.pod.status_reason",
+				"k8s.container.status.reason",
+			},
 			DocumentationLink: docLinkK8sClusterReceiver,
 		},
 		{
@@ -148,6 +156,10 @@ var nodesSpec = checkSpec{
 				"k8s.node.condition_ready", // # k8s.node.condition_* metrics (k8s.node.condition_ready, k8s.node.condition_memory_pressure, etc) are controlled# by node_conditions_to_report config option.
 				//  By default, only k8s.node.condition_ready is enabled. (Check https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/4f9a578b210a6dcb9f9bf47942f27208b5765298/receiver/k8sclusterreceiver/metadata.yaml#L802)
 				"k8s.pod.phase", // pod counts per node by phase
+			},
+			OptionalMetrics: []string{
+				"k8s.pod.status_reason",
+				"k8s.container.status.reason",
 			},
 			DocumentationLink: docLinkK8sClusterReceiver,
 		},
@@ -181,6 +193,10 @@ var deploymentsSpec = checkSpec{
 				"k8s.pod.phase",
 				"k8s.deployment.desired",
 				"k8s.deployment.available",
+			},
+			OptionalMetrics: []string{
+				"k8s.pod.status_reason",
+				"k8s.container.status.reason",
 			},
 			DocumentationLink: docLinkK8sClusterReceiver,
 		},
@@ -220,6 +236,10 @@ var daemonsetsSpec = checkSpec{
 				"k8s.daemonset.desired_scheduled_nodes",
 				"k8s.daemonset.current_scheduled_nodes",
 			},
+			OptionalMetrics: []string{
+				"k8s.pod.status_reason",
+				"k8s.container.status.reason",
+			},
 			DocumentationLink: docLinkK8sClusterReceiver,
 		},
 		{
@@ -257,6 +277,10 @@ var statefulsetsSpec = checkSpec{
 				"k8s.pod.phase",
 				"k8s.statefulset.desired_pods",
 				"k8s.statefulset.current_pods",
+			},
+			OptionalMetrics: []string{
+				"k8s.pod.status_reason",
+				"k8s.container.status.reason",
 			},
 			DocumentationLink: docLinkK8sClusterReceiver,
 		},
@@ -298,6 +322,10 @@ var jobsSpec = checkSpec{
 				"k8s.job.failed_pods",
 				"k8s.job.successful_pods",
 			},
+			OptionalMetrics: []string{
+				"k8s.pod.status_reason",
+				"k8s.container.status.reason",
+			},
 			DocumentationLink: docLinkK8sClusterReceiver,
 		},
 		{
@@ -324,8 +352,12 @@ var namespacesSpec = checkSpec{
 			DocumentationLink: docLinkKubeletStatsReceiver,
 		},
 		{
-			Component:         componentK8sClusterReceiver,
-			DefaultMetrics:    []string{"k8s.pod.phase"},
+			Component:      componentK8sClusterReceiver,
+			DefaultMetrics: []string{"k8s.pod.phase"},
+			OptionalMetrics: []string{
+				"k8s.pod.status_reason",
+				"k8s.container.status.reason",
+			},
 			DocumentationLink: docLinkK8sClusterReceiver,
 		},
 		{
@@ -359,6 +391,10 @@ var clustersSpec = checkSpec{
 				// controlled by allocatable_types_to_report config option (Check // https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/4f9a578b210a6dcb9f9bf47942f27208b5765298/receiver/k8sclusterreceiver/metadata.yaml#L805-L806)
 				"k8s.node.condition_ready", // node counts by readiness
 				"k8s.pod.phase",            // pod counts per cluster by phase
+			},
+			OptionalMetrics: []string{
+				"k8s.pod.status_reason",
+				"k8s.container.status.reason",
 			},
 			DocumentationLink: docLinkK8sClusterReceiver,
 		},

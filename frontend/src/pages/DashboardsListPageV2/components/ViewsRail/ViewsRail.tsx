@@ -3,12 +3,19 @@ import { Modal } from 'antd';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
-import { Bookmark, CircleAlert, Plus, Search, Trash2 } from '@signozhq/icons';
+import {
+	Bookmark,
+	CircleAlert,
+	PenLine,
+	Plus,
+	Search,
+	Trash2,
+} from '@signozhq/icons';
 import cx from 'classnames';
 
 import type { SavedView } from '../../types';
 import { type BuiltinView } from '../../utils/views';
-import SaveViewPopover from './SaveViewPopover';
+import ViewNamePopover from './ViewNamePopover';
 
 import styles from './ViewsRail.module.scss';
 
@@ -24,8 +31,8 @@ interface Props {
 	onSave: (name: string) => void;
 	onSaveChanges: () => void;
 	onReset: () => void;
-	onClearFilters: () => void;
 	onDelete: (id: string) => void;
+	onRename: (id: string, name: string) => void;
 }
 
 interface ViewRow {
@@ -49,10 +56,11 @@ function ViewsRail({
 	onSave,
 	onSaveChanges,
 	onReset,
-	onClearFilters,
 	onDelete,
+	onRename,
 }: Props): JSX.Element {
 	const [saveOpen, setSaveOpen] = useState(false);
+	const [renamingId, setRenamingId] = useState<string | null>(null);
 	const [query, setQuery] = useState('');
 	const [modal, contextHolder] = Modal.useModal();
 
@@ -122,20 +130,44 @@ function ViewsRail({
 					)}
 				</Button>
 				{row.deletable && (
-					<Button
-						variant="ghost"
-						color="secondary"
-						size="icon"
-						className={styles.itemAction}
-						aria-label="Delete view"
-						title="Delete view"
-						onClick={(e): void => {
-							e.stopPropagation();
-							confirmDelete(row.id, row.label);
-						}}
-					>
-						<Trash2 size={12} />
-					</Button>
+					<div className={styles.itemActions}>
+						<ViewNamePopover
+							open={renamingId === row.id}
+							onOpenChange={(open): void => setRenamingId(open ? row.id : null)}
+							onSubmit={(name): void => onRename(row.id, name)}
+							title="Rename view"
+							confirmLabel="Rename"
+							initialName={row.label}
+							testIdPrefix="rename-view"
+							trigger={
+								<Button
+									variant="ghost"
+									color="secondary"
+									size="icon"
+									className={styles.itemAction}
+									aria-label="Rename view"
+									title="Rename view"
+									onClick={(e): void => e.stopPropagation()}
+								>
+									<PenLine size={12} />
+								</Button>
+							}
+						/>
+						<Button
+							variant="ghost"
+							color="secondary"
+							size="icon"
+							className={cx(styles.itemAction, styles.itemActionDanger)}
+							aria-label="Delete view"
+							title="Delete view"
+							onClick={(e): void => {
+								e.stopPropagation();
+								confirmDelete(row.id, row.label);
+							}}
+						>
+							<Trash2 size={12} />
+						</Button>
+					</div>
 				)}
 			</div>
 		);
@@ -145,10 +177,13 @@ function ViewsRail({
 		<aside className={cx(styles.rail, { [styles.collapsed]: collapsed })}>
 			<div className={styles.header}>
 				<h4 className={styles.headerTitle}>Views</h4>
-				<SaveViewPopover
+				<ViewNamePopover
 					open={saveOpen}
 					onOpenChange={setSaveOpen}
-					onSave={onSave}
+					onSubmit={onSave}
+					title="Save as view"
+					confirmLabel="Save view"
+					testIdPrefix="save-view"
 					trigger={
 						<Button
 							variant="ghost"
@@ -268,13 +303,8 @@ function ViewsRail({
 						>
 							Save as new view
 						</Button>
-						<Button
-							variant="ghost"
-							color="secondary"
-							size="sm"
-							onClick={onClearFilters}
-						>
-							Clear
+						<Button variant="ghost" color="secondary" size="sm" onClick={onReset}>
+							Reset
 						</Button>
 					</div>
 				</div>
