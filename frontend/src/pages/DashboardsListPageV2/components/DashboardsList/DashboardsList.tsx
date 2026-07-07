@@ -299,6 +299,7 @@ function DashboardsList(): JSX.Element {
 								<CommandHeader
 									label={activeLabel}
 									count={total}
+									isModified={isModified}
 									canCreate={canCreateNewDashboard}
 									onCreate={openCreate}
 								/>
