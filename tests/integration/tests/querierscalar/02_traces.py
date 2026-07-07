@@ -4,8 +4,8 @@ from http import HTTPStatus
 
 from fixtures import querier, types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.logs import Logs
 from fixtures.querier import make_scalar_query_request
+from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCode
 
 log_or_trace_service_counts = {
     "service-a": 5,
@@ -15,24 +15,30 @@ log_or_trace_service_counts = {
 }
 
 
-def generate_logs_with_counts(
+def generate_traces_with_counts(
     now: datetime,
     service_counts: dict[str, int],
-) -> list[Logs]:
-    logs = []
+) -> list[Traces]:
+    traces = []
     for service, count in service_counts.items():
         for i in range(count):
-            logs.append(
-                Logs(
+            trace_id = TraceIdGenerator.trace_id()
+            span_id = TraceIdGenerator.span_id()
+            traces.append(
+                Traces(
                     timestamp=now - timedelta(seconds=i + 1),
+                    kind=TracesKind.SPAN_KIND_SERVER,
+                    status_code=TracesStatusCode.STATUS_CODE_OK,
+                    trace_id=trace_id,
+                    span_id=span_id,
                     resources={"service.name": service},
-                    body=f"{service} log {i}",
+                    name=f"{service} span {i}",
                 )
             )
-    return logs
+    return traces
 
 
-def build_logs_query(
+def build_traces_query(
     name: str = "A",
     aggregations: list[str] | None = None,
     group_by: list[str] | None = None,
@@ -48,7 +54,7 @@ def build_logs_query(
 
     return querier.build_scalar_query(
         name=name,
-        signal="logs",
+        signal="traces",
         aggregations=aggs,
         group_by=gb,
         order=order,
@@ -56,21 +62,21 @@ def build_logs_query(
     )
 
 
-def test_logs_scalar_group_by_single_agg_no_order(
+def test_traces_scalar_group_by_single_agg_no_order(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_logs: Callable[[list[Logs]], None],
+    insert_traces: Callable[[list[Traces]], None],
 ) -> None:
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-    insert_logs(generate_logs_with_counts(now, log_or_trace_service_counts))
+    insert_traces(generate_traces_with_counts(now, log_or_trace_service_counts))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     response = make_scalar_query_request(
         signoz,
         token,
         now,
-        [build_logs_query(group_by=["service.name"])],
+        [build_traces_query(group_by=["service.name"])],
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -80,25 +86,25 @@ def test_logs_scalar_group_by_single_agg_no_order(
     querier.assert_scalar_result_order(
         data,
         [("service-c", 7), ("service-a", 5), ("service-b", 3), ("service-d", 1)],
-        "Logs no order - default desc",
+        "Traces no order - default desc",
     )
 
 
-def test_logs_scalar_group_by_single_agg_order_by_agg_asc(
+def test_traces_scalar_group_by_single_agg_order_by_agg_asc(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_logs: Callable[[list[Logs]], None],
+    insert_traces: Callable[[list[Traces]], None],
 ) -> None:
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-    insert_logs(generate_logs_with_counts(now, log_or_trace_service_counts))
+    insert_traces(generate_traces_with_counts(now, log_or_trace_service_counts))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     response = make_scalar_query_request(
         signoz,
         token,
         now,
-        [build_logs_query(group_by=["service.name"], order_by=[("count()", "asc")])],
+        [build_traces_query(group_by=["service.name"], order_by=[("count()", "asc")])],
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -108,25 +114,25 @@ def test_logs_scalar_group_by_single_agg_order_by_agg_asc(
     querier.assert_scalar_result_order(
         data,
         [("service-d", 1), ("service-b", 3), ("service-a", 5), ("service-c", 7)],
-        "Logs order by agg asc",
+        "Traces order by agg asc",
     )
 
 
-def test_logs_scalar_group_by_single_agg_order_by_agg_desc(
+def test_traces_scalar_group_by_single_agg_order_by_agg_desc(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_logs: Callable[[list[Logs]], None],
+    insert_traces: Callable[[list[Traces]], None],
 ) -> None:
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-    insert_logs(generate_logs_with_counts(now, log_or_trace_service_counts))
+    insert_traces(generate_traces_with_counts(now, log_or_trace_service_counts))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     response = make_scalar_query_request(
         signoz,
         token,
         now,
-        [build_logs_query(group_by=["service.name"], order_by=[("count()", "desc")])],
+        [build_traces_query(group_by=["service.name"], order_by=[("count()", "desc")])],
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -136,25 +142,25 @@ def test_logs_scalar_group_by_single_agg_order_by_agg_desc(
     querier.assert_scalar_result_order(
         data,
         [("service-c", 7), ("service-a", 5), ("service-b", 3), ("service-d", 1)],
-        "Logs order by agg desc",
+        "Traces order by agg desc",
     )
 
 
-def test_logs_scalar_group_by_single_agg_order_by_grouping_key_asc(
+def test_traces_scalar_group_by_single_agg_order_by_grouping_key_asc(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_logs: Callable[[list[Logs]], None],
+    insert_traces: Callable[[list[Traces]], None],
 ) -> None:
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-    insert_logs(generate_logs_with_counts(now, log_or_trace_service_counts))
+    insert_traces(generate_traces_with_counts(now, log_or_trace_service_counts))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     response = make_scalar_query_request(
         signoz,
         token,
         now,
-        [build_logs_query(group_by=["service.name"], order_by=[("service.name", "asc")])],
+        [build_traces_query(group_by=["service.name"], order_by=[("service.name", "asc")])],
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -164,25 +170,25 @@ def test_logs_scalar_group_by_single_agg_order_by_grouping_key_asc(
     querier.assert_scalar_result_order(
         data,
         [("service-a", 5), ("service-b", 3), ("service-c", 7), ("service-d", 1)],
-        "Logs order by grouping key asc",
+        "Traces order by grouping key asc",
     )
 
 
-def test_logs_scalar_group_by_single_agg_order_by_grouping_key_desc(
+def test_traces_scalar_group_by_single_agg_order_by_grouping_key_desc(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_logs: Callable[[list[Logs]], None],
+    insert_traces: Callable[[list[Traces]], None],
 ) -> None:
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-    insert_logs(generate_logs_with_counts(now, log_or_trace_service_counts))
+    insert_traces(generate_traces_with_counts(now, log_or_trace_service_counts))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     response = make_scalar_query_request(
         signoz,
         token,
         now,
-        [build_logs_query(group_by=["service.name"], order_by=[("service.name", "desc")])],
+        [build_traces_query(group_by=["service.name"], order_by=[("service.name", "desc")])],
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -192,18 +198,18 @@ def test_logs_scalar_group_by_single_agg_order_by_grouping_key_desc(
     querier.assert_scalar_result_order(
         data,
         [("service-d", 1), ("service-c", 7), ("service-b", 3), ("service-a", 5)],
-        "Logs order by grouping key desc",
+        "Traces order by grouping key desc",
     )
 
 
-def test_logs_scalar_group_by_multiple_aggs_order_by_first_agg_asc(
+def test_traces_scalar_group_by_multiple_aggs_order_by_first_agg_asc(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_logs: Callable[[list[Logs]], None],
+    insert_traces: Callable[[list[Traces]], None],
 ) -> None:
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-    insert_logs(generate_logs_with_counts(now, log_or_trace_service_counts))
+    insert_traces(generate_traces_with_counts(now, log_or_trace_service_counts))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     response = make_scalar_query_request(
@@ -211,9 +217,9 @@ def test_logs_scalar_group_by_multiple_aggs_order_by_first_agg_asc(
         token,
         now,
         [
-            build_logs_query(
+            build_traces_query(
                 group_by=["service.name"],
-                aggregations=["count()", "count_distinct(body)"],
+                aggregations=["count()", "count_distinct(trace_id)"],
                 order_by=[("count()", "asc")],
             )
         ],
@@ -226,52 +232,21 @@ def test_logs_scalar_group_by_multiple_aggs_order_by_first_agg_asc(
     querier.assert_scalar_column_order(data, 0, ["service-d", "service-b", "service-a", "service-c"], "First column")
 
 
-def test_logs_scalar_group_by_multiple_aggs_order_by_second_agg_desc(
+def test_traces_scalar_group_by_single_agg_order_by_agg_asc_limit_2(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_logs: Callable[[list[Logs]], None],
+    insert_traces: Callable[[list[Traces]], None],
 ) -> None:
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-    insert_logs(generate_logs_with_counts(now, log_or_trace_service_counts))
+    insert_traces(generate_traces_with_counts(now, log_or_trace_service_counts))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     response = make_scalar_query_request(
         signoz,
         token,
         now,
-        [
-            build_logs_query(
-                group_by=["service.name"],
-                aggregations=["count()", "count_distinct(body)"],
-                order_by=[("count_distinct(body)", "desc")],
-            )
-        ],
-    )
-
-    assert response.status_code == HTTPStatus.OK
-    assert response.json()["status"] == "success"
-
-    data = querier.get_scalar_table_data(response.json())
-    # count_distinct(body) should equal count() since each log has unique body
-    querier.assert_scalar_column_order(data, 0, ["service-c", "service-a", "service-b", "service-d"], "First column")
-
-
-def test_logs_scalar_group_by_single_agg_order_by_agg_asc_limit_2(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    insert_logs: Callable[[list[Logs]], None],
-) -> None:
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-    insert_logs(generate_logs_with_counts(now, log_or_trace_service_counts))
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = make_scalar_query_request(
-        signoz,
-        token,
-        now,
-        [build_logs_query(group_by=["service.name"], order_by=[("count()", "asc")], limit=2)],
+        [build_traces_query(group_by=["service.name"], order_by=[("count()", "asc")], limit=2)],
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -281,25 +256,25 @@ def test_logs_scalar_group_by_single_agg_order_by_agg_asc_limit_2(
     querier.assert_scalar_result_order(
         data,
         [("service-d", 1), ("service-b", 3)],
-        "Logs order by agg asc with limit 2",
+        "Traces order by agg asc with limit 2",
     )
 
 
-def test_logs_scalar_group_by_single_agg_order_by_agg_desc_limit_3(
+def test_traces_scalar_group_by_single_agg_order_by_agg_desc_limit_3(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_logs: Callable[[list[Logs]], None],
+    insert_traces: Callable[[list[Traces]], None],
 ) -> None:
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-    insert_logs(generate_logs_with_counts(now, log_or_trace_service_counts))
+    insert_traces(generate_traces_with_counts(now, log_or_trace_service_counts))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     response = make_scalar_query_request(
         signoz,
         token,
         now,
-        [build_logs_query(group_by=["service.name"], order_by=[("count()", "desc")], limit=3)],
+        [build_traces_query(group_by=["service.name"], order_by=[("count()", "desc")], limit=3)],
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -309,25 +284,25 @@ def test_logs_scalar_group_by_single_agg_order_by_agg_desc_limit_3(
     querier.assert_scalar_result_order(
         data,
         [("service-c", 7), ("service-a", 5), ("service-b", 3)],
-        "Logs order by agg desc with limit 3",
+        "Traces order by agg desc with limit 3",
     )
 
 
-def test_logs_scalar_group_by_order_by_grouping_key_asc_limit_2(
+def test_traces_scalar_group_by_order_by_grouping_key_asc_limit_2(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_logs: Callable[[list[Logs]], None],
+    insert_traces: Callable[[list[Traces]], None],
 ) -> None:
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-    insert_logs(generate_logs_with_counts(now, log_or_trace_service_counts))
+    insert_traces(generate_traces_with_counts(now, log_or_trace_service_counts))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     response = make_scalar_query_request(
         signoz,
         token,
         now,
-        [build_logs_query(group_by=["service.name"], order_by=[("service.name", "asc")], limit=2)],
+        [build_traces_query(group_by=["service.name"], order_by=[("service.name", "asc")], limit=2)],
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -337,5 +312,5 @@ def test_logs_scalar_group_by_order_by_grouping_key_asc_limit_2(
     querier.assert_scalar_result_order(
         data,
         [("service-a", 5), ("service-b", 3)],
-        "Logs order by grouping key asc with limit 2",
+        "Traces order by grouping key asc with limit 2",
     )
