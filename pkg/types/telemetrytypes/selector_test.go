@@ -11,7 +11,7 @@ import (
 )
 
 func TestSelectorSegment(t *testing.T) {
-	assert.Len(t, selectorSegment("service.name = 'frontend'"), 16)
+	assert.Len(t, selectorSegment("service.name = 'frontend'"), 32)
 	assert.Equal(t,
 		selectorSegment("service.name    =  'frontend'"),
 		selectorSegment("service.name = 'frontend'"),

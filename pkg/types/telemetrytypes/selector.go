@@ -47,5 +47,5 @@ var PrefixSelector coretypes.SelectorFunc = func(_ context.Context, resource cor
 func selectorSegment(input string) string {
 	normalized := strings.Join(strings.Fields(input), " ")
 	sum := sha256.Sum256([]byte(normalized))
-	return hex.EncodeToString(sum[:8])
+	return hex.EncodeToString(sum[:16])
 }

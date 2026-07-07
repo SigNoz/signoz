@@ -23,5 +23,5 @@ var (
 	TypeRole              = Type{valuer.NewString("role"), regexp.MustCompile(`^([a-z-]{1,50}|\*)$`), []Verb{VerbAssignee, VerbCreate, VerbList, VerbRead, VerbUpdate, VerbDelete, VerbAttach, VerbDetach}}
 	TypeOrganization      = Type{valuer.NewString("organization"), regexp.MustCompile(`^(^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$|\*)$`), []Verb{VerbRead, VerbUpdate}}
 	TypeMetaResource      = Type{valuer.NewString("metaresource"), regexp.MustCompile(`^(^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$|\*)$`), []Verb{VerbCreate, VerbList, VerbRead, VerbUpdate, VerbDelete, VerbAttach, VerbDetach}}
-	TypeTelemetryResource = Type{valuer.NewString("telemetryresource"), regexp.MustCompile(`^(\*|(builder_query|builder_sub_query|builder_trace_operator|promql|clickhouse_sql)(/([a-f0-9]{16}|\*)){0,2})$`), []Verb{VerbRead}}
+	TypeTelemetryResource = Type{valuer.NewString("telemetryresource"), regexp.MustCompile(`^(\*|(builder_query|builder_sub_query|builder_trace_operator|promql|clickhouse_sql)(/([a-f0-9]{32}|\*)){0,2})$`), []Verb{VerbRead}}
 )

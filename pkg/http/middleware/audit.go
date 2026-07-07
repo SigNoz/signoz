@@ -119,7 +119,6 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 
 	for _, resource := range resolved {
 		if err := resource.Err(); err != nil {
-			middleware.logger.ErrorContext(req.Context(), "skipping audit event for unresolved resource", "route", routeTemplate, "error", err)
 			continue
 		}
 

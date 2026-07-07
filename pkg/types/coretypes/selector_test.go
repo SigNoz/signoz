@@ -7,7 +7,7 @@ import (
 )
 
 func TestTelemetryResourceSelectorRegex(t *testing.T) {
-	segment := "abcdef0123456789"
+	segment := "abcdef0123456789abcdef0123456789"
 
 	valid := []string{
 		"*",
