@@ -3,7 +3,7 @@ import { TooltipSimple } from '@signozhq/ui/tooltip';
 
 import styles from './EntityGroupHeader.module.scss';
 
-const DOCS_BASE_URL = 'https://signoz.io/docs';
+const DOCS_BASE_URL = `${process.env.DOCS_BASE_URL}/docs`;
 
 interface EntityGroupHeaderProps {
 	title: string;

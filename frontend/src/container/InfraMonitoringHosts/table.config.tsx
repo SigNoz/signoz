@@ -100,7 +100,11 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 	{
 		id: 'hostName',
 		header: (): React.ReactNode => (
-			<EntityGroupHeader title="Hostname" icon={<Container size={14} />} />
+			<EntityGroupHeader
+				title="Hostname"
+				icon={<Container size={14} />}
+				docPath="/infrastructure-monitoring/host-monitoring#hostname"
+			/>
 		),
 		accessorFn: (row): string => row.hostName ?? '',
 		width: { min: 290 },
@@ -222,7 +226,7 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.wait,
-		width: { min: 100, default: 100 },
+		width: { min: 120 },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
 			const wait = value as number;
@@ -248,7 +252,7 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.load15,
-		width: { min: 170, default: 100 },
+		width: { min: 200 },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
 			const load15 = Number(value);
@@ -272,7 +276,7 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.diskUsage,
-		width: { min: 220 },
+		width: { min: 160 },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
 			const diskUsage = value as number;

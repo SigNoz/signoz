@@ -201,7 +201,7 @@ export const k8sNodesColumnsConfig: NodeTableColumnConfig[] = [
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.nodeCPUAllocatable,
-		width: { min: 160, default: 180 },
+		width: { min: 160, default: 190 },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
 			const cpuAllocatable = Number(value);

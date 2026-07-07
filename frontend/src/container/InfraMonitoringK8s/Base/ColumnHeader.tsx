@@ -3,7 +3,8 @@ import { TooltipSimple } from '@signozhq/ui/tooltip';
 
 import styles from './ColumnHeader.module.scss';
 import cx from 'classnames';
-const DOCS_BASE_URL = 'https://signoz.io/docs';
+
+const DOCS_BASE_URL = `${process.env.DOCS_BASE_URL}/docs`;
 
 interface ColumnHeaderProps {
 	children?: React.ReactNode;
