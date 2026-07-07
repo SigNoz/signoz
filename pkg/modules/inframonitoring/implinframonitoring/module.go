@@ -528,6 +528,7 @@ func (m *module) ListNamespaces(ctx context.Context, orgID valuer.UUID, req *inf
 		phaseCounts      map[string]podPhaseCounts
 		podStatusCounts  map[string]podStatusCounts
 		podStatusWarning *qbtypes.QueryWarnData
+		resourceCounts   map[string]map[string]int64
 	)
 
 	g, gCtx := errgroup.WithContext(ctx)
@@ -547,12 +548,17 @@ func (m *module) ListNamespaces(ctx context.Context, orgID valuer.UUID, req *inf
 		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
 		return err
 	})
+	g.Go(func() error {
+		var err error
+		resourceCounts, err = m.getPerGroupDistinctCounts(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups, namespaceCountAttrKeys, podsTableMetricNamesList)
+		return err
+	})
 
 	if err := g.Wait(); err != nil {
 		return nil, err
 	}
 
-	resp.Records = buildNamespaceRecords(queryResp, pageGroups, req.GroupBy, metadataMap, phaseCounts, podStatusCounts)
+	resp.Records = buildNamespaceRecords(queryResp, pageGroups, req.GroupBy, metadataMap, phaseCounts, podStatusCounts, resourceCounts)
 	resp.Warning = mergeQueryWarnings(queryResp.Warning, podStatusWarning)
 
 	return resp, nil
@@ -628,6 +634,7 @@ func (m *module) ListClusters(ctx context.Context, orgID valuer.UUID, req *infra
 		podPhaseCountsMap      map[string]podPhaseCounts
 		podStatusCounts        map[string]podStatusCounts
 		podStatusWarning       *qbtypes.QueryWarnData
+		resourceCounts         map[string]map[string]int64
 	)
 
 	g, gCtx := errgroup.WithContext(ctx)
@@ -652,12 +659,17 @@ func (m *module) ListClusters(ctx context.Context, orgID valuer.UUID, req *infra
 		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
 		return err
 	})
+	g.Go(func() error {
+		var err error
+		resourceCounts, err = m.getPerGroupDistinctCounts(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups, clusterCountAttrKeys, podsTableMetricNamesList)
+		return err
+	})
 
 	if err := g.Wait(); err != nil {
 		return nil, err
 	}
 
-	resp.Records = buildClusterRecords(queryResp, pageGroups, req.GroupBy, metadataMap, nodeConditionCountsMap, podPhaseCountsMap, podStatusCounts)
+	resp.Records = buildClusterRecords(queryResp, pageGroups, req.GroupBy, metadataMap, nodeConditionCountsMap, podPhaseCountsMap, podStatusCounts, resourceCounts)
 	resp.Warning = mergeQueryWarnings(queryResp.Warning, podStatusWarning)
 
 	return resp, nil
