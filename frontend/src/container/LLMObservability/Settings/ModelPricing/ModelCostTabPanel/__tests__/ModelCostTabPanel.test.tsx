@@ -28,14 +28,10 @@ function setupList(items = mockRules, total = items.length): void {
 	);
 }
 
-// The list panel keeps page/search/source in the URL via nuqs, which reads
-// window.location. jsdom shares that across tests in a file, so reset it.
 function resetUrl(): void {
 	window.history.pushState(null, '', '/');
 }
 
-// The row kebab is a DropdownMenuSimple trigger; its testId isn't forwarded, so
-// select it as the row's only button and open the Edit/Delete menu.
 async function openRowMenu(
 	user: ReturnType<typeof userEvent.setup>,
 	ruleId: string,
