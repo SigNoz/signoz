@@ -2,8 +2,8 @@ import { CalendarRange, Clock, RotateCw } from '@signozhq/icons';
 
 import {
 	selectViewPanelExtendWindow,
-	useViewSessionStore,
-} from '../../../store/useViewSessionStore';
+	useViewPanelStore,
+} from '../../../store/useViewPanelStore';
 import PanelLoader from '../PanelLoader/PanelLoader';
 import PanelMessage, { PanelMessageAction } from '../PanelMessage/PanelMessage';
 import { useExtendTimeWindow } from './useExtendTimeWindow';
@@ -31,7 +31,7 @@ function NoData({
 	onRetry,
 	'data-testid': testId = 'panel-no-data',
 }: NoDataProps): JSX.Element {
-	const viewExtend = useViewSessionStore(selectViewPanelExtendWindow);
+	const viewExtend = useViewPanelStore(selectViewPanelExtendWindow);
 	const globalExtend = useExtendTimeWindow();
 	const { canExtend, actionLabel, extend } = viewExtend ?? globalExtend;
 

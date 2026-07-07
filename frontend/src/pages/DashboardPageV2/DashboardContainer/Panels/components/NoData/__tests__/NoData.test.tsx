@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
-import { useViewSessionStore } from '../../../../store/useViewSessionStore';
+import { useViewPanelStore } from '../../../../store/useViewPanelStore';
 import { ExtendTimeWindow } from '../extendWindow';
 import NoData from '../NoData';
 
@@ -27,7 +27,7 @@ function extender(over?: Partial<ExtendTimeWindow>): ExtendTimeWindow {
 describe('NoData', () => {
 	beforeEach(() => {
 		mockUseExtendTimeWindow.mockReturnValue(inert);
-		useViewSessionStore.setState({ viewPanelExtendWindow: null });
+		useViewPanelStore.setState({ viewPanelExtendWindow: null });
 	});
 
 	it('renders the empty-state title and hint', () => {
@@ -85,7 +85,7 @@ describe('NoData', () => {
 		const globalExtend = jest.fn();
 		const storeExtend = jest.fn();
 		mockUseExtendTimeWindow.mockReturnValue(extender({ extend: globalExtend }));
-		useViewSessionStore.setState({
+		useViewPanelStore.setState({
 			viewPanelExtendWindow: extender({ extend: storeExtend }),
 		});
 		render(<NoData />);
