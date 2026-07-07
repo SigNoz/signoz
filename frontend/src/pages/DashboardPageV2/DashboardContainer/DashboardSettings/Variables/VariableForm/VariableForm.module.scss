@@ -138,7 +138,7 @@
 	align-items: center;
 	gap: 6px;
 	min-height: 24px;
-	padding: 6px 14px;
+	padding: 4px 16px !important;
 	white-space: nowrap;
 	border-radius: 0;
 	color: var(--l2-foreground);
@@ -157,6 +157,7 @@
 
 .betaTag {
 	margin-left: 4px;
+	vertical-align: middle;
 }
 
 /* Query */
@@ -264,6 +265,7 @@
 	flex-flow: wrap;
 	gap: 8px;
 	padding: 4.5px 11px;
+	max-height: 120px;
 	overflow-y: auto;
 }
 
