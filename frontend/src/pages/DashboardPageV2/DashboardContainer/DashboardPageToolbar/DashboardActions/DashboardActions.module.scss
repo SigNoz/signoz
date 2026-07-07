@@ -6,7 +6,8 @@
 	gap: 12px;
 }
 
-/* Actions / Configure / Edit-as-JSON: a more visible l3 outline. */
+/* Actions / Configure / Edit-as-JSON: a flat l3 outline — no depth/shadow. */
 .toolbarButton {
-	border-color: var(--l3-border) !important;
+	border: 1px solid var(--l3-border) !important;
+	box-shadow: none !important;
 }

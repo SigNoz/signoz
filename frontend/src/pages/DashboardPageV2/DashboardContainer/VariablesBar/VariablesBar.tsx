@@ -176,8 +176,11 @@ function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 						)}
 					</span>
 				)}
+
+				{/* At the end of the list. Hidden while collapsed (the +N would clash);
+				    expand to reveal it, so the layout never breaks mid-wrap. */}
+				{isEditable && (!hasOverflow || expanded) && addVariableIcon}
 			</div>
-			{isEditable && addVariableIcon}
 		</div>
 	);
 }
