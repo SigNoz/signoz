@@ -1,31 +1,28 @@
 import { Route, Switch } from 'react-router-dom';
 import ROUTES from 'constants/routes';
+import { server } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
-import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
-import { mockUseAuthZGrantAll } from 'lib/authz/utils/authz-test-utils';
+import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 import { TooltipProvider } from '@signozhq/ui/tooltip';
 
 import CreateEditRolePage from '../CreateEditRolePage';
 
-jest.mock('lib/authz/hooks/useAuthZ/useAuthZ');
-const mockUseAuthZ = useAuthZ as jest.MockedFunction<typeof useAuthZ>;
-
 async function expandAllCards(): Promise<void> {
 	const user = userEvent.setup();
-	const expandButton = screen.getByTestId('expand-all-button');
+	const expandButton = await screen.findByTestId('expand-all-button');
 	await user.click(expandButton);
 }
 
 beforeEach(() => {
-	mockUseAuthZ.mockImplementation(mockUseAuthZGrantAll);
+	server.use(setupAuthzAdmin());
 });
 
 afterEach(() => {
-	jest.clearAllMocks();
+	server.resetHandlers();
 });
 
-function renderPage(): ReturnType<typeof render> {
-	return render(
+async function renderPage(): Promise<ReturnType<typeof render>> {
+	const result = render(
 		<TooltipProvider>
 			<Switch>
 				<Route path={ROUTES.ROLES_SETTINGS} exact>
@@ -39,18 +36,20 @@ function renderPage(): ReturnType<typeof render> {
 		undefined,
 		{ initialRoute: '/settings/roles/new' },
 	);
+	await screen.findByTestId('permission-editor');
+	return result;
 }
 
 describe('PermissionEditor', () => {
 	describe('mode toggle', () => {
-		it('renders permission editor with testId', () => {
-			renderPage();
+		it('renders permission editor with testId', async () => {
+			await renderPage();
 
 			expect(screen.getByTestId('permission-editor')).toBeInTheDocument();
 		});
 
-		it('defaults to interactive mode', () => {
-			renderPage();
+		it('defaults to interactive mode', async () => {
+			await renderPage();
 
 			const interactiveRadio = screen.getByTestId(
 				'permission-editor-mode-interactive',
@@ -60,7 +59,7 @@ describe('PermissionEditor', () => {
 
 		it('switches to JSON mode when clicked', async () => {
 			const user = userEvent.setup();
-			renderPage();
+			await renderPage();
 
 			const jsonRadio = screen.getByTestId('permission-editor-mode-json');
 			await user.click(jsonRadio);
@@ -71,7 +70,7 @@ describe('PermissionEditor', () => {
 
 		it('switches back to interactive mode', async () => {
 			const user = userEvent.setup();
-			renderPage();
+			await renderPage();
 
 			const jsonRadio = screen.getByTestId('permission-editor-mode-json');
 			await user.click(jsonRadio);
@@ -87,8 +86,8 @@ describe('PermissionEditor', () => {
 	});
 
 	describe('resource cards', () => {
-		it('renders all resource cards', () => {
-			renderPage();
+		it('renders all resource cards', async () => {
+			await renderPage();
 
 			expect(
 				screen.getByTestId('resource-card-factor-api-key'),
@@ -99,8 +98,8 @@ describe('PermissionEditor', () => {
 			).toBeInTheDocument();
 		});
 
-		it('resource cards are collapsed by default', () => {
-			renderPage();
+		it('resource cards are collapsed by default', async () => {
+			await renderPage();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
 			const header = within(apiKeyCard).getByTestId(
@@ -112,7 +111,7 @@ describe('PermissionEditor', () => {
 
 		it('expands resource card when header clicked', async () => {
 			const user = userEvent.setup();
-			renderPage();
+			await renderPage();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
 			const header = within(apiKeyCard).getByTestId(
@@ -126,7 +125,7 @@ describe('PermissionEditor', () => {
 
 		it('collapses expanded resource card when header clicked again', async () => {
 			const user = userEvent.setup();
-			renderPage();
+			await renderPage();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
 			const header = within(apiKeyCard).getByTestId(
@@ -140,7 +139,7 @@ describe('PermissionEditor', () => {
 		});
 
 		it('shows granted count in resource card header', async () => {
-			renderPage();
+			await renderPage();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
 			await expect(
@@ -151,7 +150,7 @@ describe('PermissionEditor', () => {
 
 	describe('action toggles', () => {
 		it('renders action toggles for each available action', async () => {
-			renderPage();
+			await renderPage();
 			await expandAllCards();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
@@ -170,7 +169,7 @@ describe('PermissionEditor', () => {
 		});
 
 		it('defaults all actions to None scope', async () => {
-			renderPage();
+			await renderPage();
 			await expandAllCards();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
@@ -188,7 +187,7 @@ describe('PermissionEditor', () => {
 
 		it('changes scope to All when clicked', async () => {
 			const user = userEvent.setup();
-			renderPage();
+			await renderPage();
 			await expandAllCards();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
@@ -209,7 +208,7 @@ describe('PermissionEditor', () => {
 
 		it('updates granted count when scope changed', async () => {
 			const user = userEvent.setup();
-			renderPage();
+			await renderPage();
 			await expandAllCards();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
@@ -228,7 +227,7 @@ describe('PermissionEditor', () => {
 	describe('Only Selected scope', () => {
 		it('shows item input selector when Only Selected is chosen', async () => {
 			const user = userEvent.setup();
-			renderPage();
+			await renderPage();
 			await expandAllCards();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
@@ -245,7 +244,7 @@ describe('PermissionEditor', () => {
 
 		it('adds item when typed and Enter pressed', async () => {
 			const user = userEvent.setup();
-			renderPage();
+			await renderPage();
 			await expandAllCards();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
@@ -263,7 +262,7 @@ describe('PermissionEditor', () => {
 
 		it('adds item when Add button clicked', async () => {
 			const user = userEvent.setup();
-			renderPage();
+			await renderPage();
 			await expandAllCards();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
@@ -284,7 +283,7 @@ describe('PermissionEditor', () => {
 
 		it('adds multiple items separated by comma', async () => {
 			const user = userEvent.setup();
-			renderPage();
+			await renderPage();
 			await expandAllCards();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
@@ -304,7 +303,7 @@ describe('PermissionEditor', () => {
 
 		it('adds multiple items separated by space', async () => {
 			const user = userEvent.setup();
-			renderPage();
+			await renderPage();
 			await expandAllCards();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
@@ -324,7 +323,7 @@ describe('PermissionEditor', () => {
 
 		it('does not add duplicate items', async () => {
 			const user = userEvent.setup();
-			renderPage();
+			await renderPage();
 			await expandAllCards();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
@@ -344,7 +343,7 @@ describe('PermissionEditor', () => {
 
 		it('removes item when X clicked', async () => {
 			const user = userEvent.setup();
-			renderPage();
+			await renderPage();
 			await expandAllCards();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
@@ -367,7 +366,7 @@ describe('PermissionEditor', () => {
 
 		it('shows Add button disabled when input is empty', async () => {
 			const user = userEvent.setup();
-			renderPage();
+			await renderPage();
 			await expandAllCards();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
@@ -385,7 +384,7 @@ describe('PermissionEditor', () => {
 	describe('scope change confirmation dialog', () => {
 		it('shows confirm dialog when leaving Only Selected with items', async () => {
 			const user = userEvent.setup();
-			renderPage();
+			await renderPage();
 			await expandAllCards();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
@@ -407,7 +406,7 @@ describe('PermissionEditor', () => {
 
 		it('clears items when confirmed', async () => {
 			const user = userEvent.setup();
-			renderPage();
+			await renderPage();
 			await expandAllCards();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
@@ -434,7 +433,7 @@ describe('PermissionEditor', () => {
 
 		it('keeps items when cancelled', async () => {
 			const user = userEvent.setup();
-			renderPage();
+			await renderPage();
 			await expandAllCards();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
@@ -461,7 +460,7 @@ describe('PermissionEditor', () => {
 
 		it('does not show dialog when leaving Only Selected with no items', async () => {
 			const user = userEvent.setup();
-			renderPage();
+			await renderPage();
 			await expandAllCards();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
@@ -480,7 +479,7 @@ describe('PermissionEditor', () => {
 
 	describe('verbs without Only Selected option', () => {
 		it('does not show Only Selected for list verb', async () => {
-			renderPage();
+			await renderPage();
 			await expandAllCards();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
@@ -501,8 +500,8 @@ describe('PermissionEditor', () => {
 	});
 
 	describe('collapse/expand all resources', () => {
-		it('shows expand/collapse toggle group', () => {
-			renderPage();
+		it('shows expand/collapse toggle group', async () => {
+			await renderPage();
 
 			expect(screen.getByTestId('toggle-all-group')).toBeInTheDocument();
 			expect(screen.getByTestId('expand-all-button')).toBeInTheDocument();
@@ -510,7 +509,7 @@ describe('PermissionEditor', () => {
 		});
 
 		it('expands all cards when expand button clicked', async () => {
-			renderPage();
+			await renderPage();
 			await expandAllCards();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
@@ -524,7 +523,7 @@ describe('PermissionEditor', () => {
 	describe('resource card error states', () => {
 		it('shows error border on collapsed card with validation error', async () => {
 			const user = userEvent.setup();
-			renderPage();
+			await renderPage();
 
 			const nameInput = screen.getByTestId('role-name-input');
 			await user.type(nameInput, 'valid-role');
@@ -554,7 +553,7 @@ describe('PermissionEditor', () => {
 
 		it('hides error border when card is expanded', async () => {
 			const user = userEvent.setup();
-			renderPage();
+			await renderPage();
 
 			const nameInput = screen.getByTestId('role-name-input');
 			await user.type(nameInput, 'valid-role');
@@ -591,7 +590,7 @@ describe('PermissionEditor', () => {
 
 		it('clears validation error when permission is changed', async () => {
 			const user = userEvent.setup();
-			renderPage();
+			await renderPage();
 
 			const nameInput = screen.getByTestId('role-name-input');
 			await user.type(nameInput, 'valid-role');
