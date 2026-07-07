@@ -31,7 +31,11 @@ describe('useDownloadPanelCsv', () => {
 		mockGetTableCsvRows.mockReturnValue([{ service: 'frontend', p99: '1ms' }]);
 
 		const { result } = renderHook(() =>
-			useDownloadPanelCsv({ panel: panelOf('signoz/TablePanel'), data }),
+			useDownloadPanelCsv({
+				panel: panelOf('signoz/TablePanel'),
+				data,
+				canDownloadCsv: true,
+			}),
 		);
 		result.current();
 
@@ -46,16 +50,24 @@ describe('useDownloadPanelCsv', () => {
 		mockGetTableCsvRows.mockReturnValue([]);
 
 		const { result } = renderHook(() =>
-			useDownloadPanelCsv({ panel: panelOf('signoz/TablePanel'), data }),
+			useDownloadPanelCsv({
+				panel: panelOf('signoz/TablePanel'),
+				data,
+				canDownloadCsv: true,
+			}),
 		);
 		result.current();
 
 		expect(mockDownloadCsv).not.toHaveBeenCalled();
 	});
 
-	it('no-ops for non-table kinds without building rows', () => {
+	it('no-ops when the kind cannot download CSV, without building rows', () => {
 		const { result } = renderHook(() =>
-			useDownloadPanelCsv({ panel: panelOf('signoz/TimeSeriesPanel'), data }),
+			useDownloadPanelCsv({
+				panel: panelOf('signoz/TimeSeriesPanel'),
+				data,
+				canDownloadCsv: false,
+			}),
 		);
 		result.current();
 

@@ -8,21 +8,28 @@ import type { PanelQueryData } from 'pages/DashboardPageV2/DashboardContainer/qu
 interface UseDownloadPanelCsvArgs {
 	panel: DashboardtypesPanelDTO;
 	data: PanelQueryData;
+	/**
+	 * Whether the kind's definition declares CSV as a downloadable format
+	 * (`actions.download.csv`). Only tables carry tabular data, so this is the
+	 * same gate the menu uses — kept here so the callback stays a no-op when
+	 * invoked for a kind that can't produce CSV.
+	 */
+	canDownloadCsv: boolean;
 }
 
 /**
- * Returns a callback that exports the panel's data as CSV. Only tables have
- * tabular data to export; other kinds get a no-op.
+ * Returns a callback that exports the panel's data as CSV, gated on the kind's
+ * declared download capability. Non-CSV kinds get a no-op.
  */
 export function useDownloadPanelCsv({
 	panel,
 	data,
+	canDownloadCsv,
 }: UseDownloadPanelCsvArgs): () => void {
-	const kind = panel.spec.plugin.kind;
 	const fileName = panel.spec.display.name;
 
 	return useCallback((): void => {
-		if (kind !== 'signoz/TablePanel') {
+		if (!canDownloadCsv) {
 			return;
 		}
 		const rows = getTableCsvRows(panel as PanelOfKind<'signoz/TablePanel'>, data);
@@ -30,5 +37,5 @@ export function useDownloadPanelCsv({
 			return;
 		}
 		downloadCsv(rows, fileName);
-	}, [kind, fileName, panel, data]);
+	}, [canDownloadCsv, fileName, panel, data]);
 }

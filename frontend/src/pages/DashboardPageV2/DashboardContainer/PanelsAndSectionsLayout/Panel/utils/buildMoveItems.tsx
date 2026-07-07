@@ -1,7 +1,7 @@
 import { FolderInput, FolderOutput } from '@signozhq/icons';
 import type { MenuItem } from '@signozhq/ui/dropdown-menu';
 
-import type { DashboardSection } from '../../../utils';
+import { findRootSection, type DashboardSection } from '../../../utils';
 import type { MovePanelArgs } from '../hooks/useMovePanelToSection';
 
 interface MoveItemsArgs {
@@ -47,7 +47,7 @@ export function buildMoveItems({
 		},
 	];
 
-	const rootSection = sections.find((s) => !s.title);
+	const rootSection = findRootSection(sections);
 	if (rootSection && rootSection.layoutIndex !== currentLayoutIndex) {
 		items.push({
 			key: 'move-to-root',

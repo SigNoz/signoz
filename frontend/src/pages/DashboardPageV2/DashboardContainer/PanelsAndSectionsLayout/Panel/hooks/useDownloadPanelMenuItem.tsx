@@ -29,7 +29,11 @@ export function useDownloadPanelMenuItem({
 	actions,
 }: UseDownloadPanelMenuItemArgs): MenuItem | null {
 	const panelName = panel.spec.display.name;
-	const downloadPanelCsv = useDownloadPanelCsv({ panel, data });
+	const downloadPanelCsv = useDownloadPanelCsv({
+		panel,
+		data,
+		canDownloadCsv: actions.download[DownloadFormat.CSV],
+	});
 	const { downloadPanelImage } = useDownloadPanelImage();
 
 	const onDownload = useCallback(
