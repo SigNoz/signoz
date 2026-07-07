@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronLeft, Plus } from '@signozhq/icons';
+import { ChevronLeft } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import cx from 'classnames';
@@ -7,6 +7,8 @@ import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/service
 import { useInlineOverflowCount } from 'hooks/useInlineOverflowCount';
 
 import { useDashboardStore } from '../store/useDashboardStore';
+import AddVariableFull from './AddVariableFull';
+import AddVariableIcon from './AddVariableIcon';
 import type { VariableSelection } from './selectionTypes';
 import { useVariableSelection } from './useVariableSelection';
 import VariableSelector from './VariableSelector';
@@ -46,7 +48,6 @@ function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 	const { variables, selection, setSelection, autoSelect } =
 		useVariableSelection(dashboard);
 	const isEditable = useDashboardStore((s) => s.isEditable);
-	const requestSettings = useDashboardStore((s) => s.requestSettings);
 	const [expanded, setExpanded] = useState(false);
 	const { containerRef, visibleCount, overflowCount } = useInlineOverflowCount({
 		itemCount: variables.length,
@@ -62,41 +63,6 @@ function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 	if (variables.length === 0 && !isEditable) {
 		return null;
 	}
-
-	const openAddVariable = (): void =>
-		requestSettings({ tab: 'Variables', addVariable: true });
-
-	// No variables yet: a full-width labelled button. Once variables exist it
-	// shrinks to a `+` icon (with the label on hover) that sits after them.
-	const addVariableFull = (
-		<Button
-			variant="outlined"
-			color="secondary"
-			size="md"
-			className={styles.addVariable}
-			prefix={<Plus size={14} />}
-			testId="dashboard-variables-add"
-			onClick={openAddVariable}
-		>
-			Add variable
-		</Button>
-	);
-
-	const addVariableIcon = (
-		<TooltipSimple side="top" title="Add variable">
-			<Button
-				variant="outlined"
-				color="secondary"
-				size="icon"
-				className={styles.addVariable}
-				aria-label="Add variable"
-				testId="dashboard-variables-add"
-				onClick={openAddVariable}
-			>
-				<Plus size={14} />
-			</Button>
-		</TooltipSimple>
-	);
 
 	const hasOverflow = overflowCount > 0;
 	const hiddenVariables =
@@ -119,7 +85,7 @@ function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 	if (variables.length === 0) {
 		return (
 			<div className={styles.bar} data-testid="dashboard-variables-bar">
-				{addVariableFull}
+				<AddVariableFull />
 			</div>
 		);
 	}
@@ -182,7 +148,11 @@ function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 				{/* After the more/less trigger, in every state. Kept inline (not block)
 				    so the row still flows under the floated time selector, and always
 				    mounted so measuring never toggles it. */}
-				{isEditable && <span className={styles.addSlot}>{addVariableIcon}</span>}
+				{isEditable && (
+					<span className={styles.addSlot}>
+						<AddVariableIcon />
+					</span>
+				)}
 			</div>
 		</div>
 	);
