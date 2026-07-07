@@ -1,21 +1,18 @@
 import { useMemo } from 'react';
-import { useGetDashboardV2 } from 'api/generated/services/dashboard';
-
-import { useDashboardStore } from '../store/useDashboardStore';
 import { type DashboardSection, layoutsToSections } from '../utils';
+import { useDashboardFetchRequired } from './useDashboardFetchRequired';
 
 /**
- * The current dashboard's sections, read from the already-loaded dashboard
- * query. The page fetches via useGetDashboardV2 keyed by id, so this reuses that
- * cache (no extra request) instead of prop-drilling the section list.
+ * The current dashboard's sections, derived from the guaranteed-loaded dashboard
+ * via useDashboardFetchRequired. That reuses the shared react-query cache (no extra
+ * request) instead of prop-drilling the section list.
  */
 export function useDashboardSections(): DashboardSection[] {
-	const dashboardId = useDashboardStore((s) => s.dashboardId);
-	const { data } = useGetDashboardV2({ id: dashboardId });
-	const spec = data?.data?.spec;
+	const { dashboard } = useDashboardFetchRequired();
+	const spec = dashboard.spec;
 
 	return useMemo(
-		() => layoutsToSections(spec?.layouts, spec?.panels),
-		[spec?.layouts, spec?.panels],
+		() => layoutsToSections(spec.layouts, spec.panels),
+		[spec.layouts, spec.panels],
 	);
 }

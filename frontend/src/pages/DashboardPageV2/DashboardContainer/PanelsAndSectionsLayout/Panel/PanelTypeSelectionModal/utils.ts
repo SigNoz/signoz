@@ -12,7 +12,7 @@ export function buildSectionOptions(
 	sections: DashboardSection[],
 ): SectionOption[] {
 	return sections.map((section) => {
-		const isRoot = !section.title;
+		const isRoot = !section.title && section.layoutIndex === 0;
 		return {
 			value: String(section.layoutIndex),
 			layoutIndex: section.layoutIndex,
