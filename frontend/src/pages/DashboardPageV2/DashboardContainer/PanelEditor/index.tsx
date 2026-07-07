@@ -13,6 +13,7 @@ import {
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
 import { getBuilderQueries } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/getBuilderQueries';
 
 import { getExecStats } from '../queryV5/v5ResponseData';
@@ -28,6 +29,7 @@ import { usePanelEditSession } from './hooks/usePanelEditSession';
 import { usePanelEditorSave } from './hooks/usePanelEditorSave';
 import { useSeedNewListColumns } from './hooks/useSeedNewListColumns';
 import { useSwitchColumnsOnSignalChange } from './hooks/useSwitchColumnsOnSignalChange';
+import { useSwitchToViewMode } from './hooks/useSwitchToViewMode';
 import { useTableColumns } from './hooks/useTableColumns';
 import ListColumnsEditor from './ListColumnsEditor/ListColumnsEditor';
 
@@ -188,6 +190,13 @@ function PanelEditorContainer({
 		return values.length ? Math.min(...values) : undefined;
 	}, [data.response]);
 
+	const onSwitchToView = useSwitchToViewMode({
+		dashboardId,
+		panelId,
+		panelType: PANEL_KIND_TO_PANEL_TYPE[panelKind],
+		query: currentQuery,
+	});
+
 	const onSave = useCallback(async (): Promise<void> => {
 		try {
 			// Bake the live query into the spec so unstaged edits are saved too.
@@ -204,7 +213,9 @@ function PanelEditorContainer({
 			<Header
 				isDirty={isDirty}
 				isSaving={isSaving}
+				showSwitchToView={!isNew}
 				onSave={onSave}
+				onSwitchToView={onSwitchToView}
 				onClose={onClose}
 			/>
 			<ResizablePanelGroup

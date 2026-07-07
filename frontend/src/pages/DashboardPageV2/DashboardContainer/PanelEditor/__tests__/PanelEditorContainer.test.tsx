@@ -48,6 +48,10 @@ jest.mock('../hooks/usePanelEditorSave', () => ({
 jest.mock('../hooks/useSwitchColumnsOnSignalChange', () => ({
 	useSwitchColumnsOnSignalChange: jest.fn(),
 }));
+const mockOnSwitchToView = jest.fn();
+jest.mock('../hooks/useSwitchToViewMode', () => ({
+	useSwitchToViewMode: (): (() => void) => mockOnSwitchToView,
+}));
 jest.mock('../hooks/useSeedNewListColumns', () => ({
 	useSeedNewListColumns: jest.fn(),
 }));
@@ -288,8 +292,28 @@ describe('PanelEditorContainer composition', () => {
 		await userEvent.click(screen.getByTestId('editor-save'));
 
 		await waitFor(() => expect(baseProps.onSaved).toHaveBeenCalled());
+
 		expect(mockBuildSaveSpec).toHaveBeenCalledWith(panel.spec);
 		expect(mockSave).toHaveBeenCalledWith(panel.spec);
+	});
+
+	it('offers Switch to View Mode for an existing panel', () => {
+		setup(makePanel('signoz/TimeSeriesPanel'));
+
+		expect(mockHeaderProps).toHaveBeenCalledWith(
+			expect.objectContaining({
+				showSwitchToView: true,
+				onSwitchToView: expect.any(Function),
+			}),
+		);
+	});
+
+	it('hides Switch to View Mode for a new (unsaved) panel', () => {
+		setup(makePanel('signoz/TimeSeriesPanel'), { isNew: true });
+
+		expect(mockHeaderProps).toHaveBeenCalledWith(
+			expect.objectContaining({ showSwitchToView: false }),
+		);
 	});
 
 	it('renders the list-columns editor only for list panels', () => {
