@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/swaggest/jsonschema-go"
@@ -64,6 +66,64 @@ type QueryRangeResponse struct {
 	QBEvent *QBEvent `json:"-"`
 }
 
+// QueryRangePreviewResponse is the dry-run output: one QueryPreview per query,
+// keyed by the request's query names.
+type QueryRangePreviewResponse struct {
+	CompositeQuery map[string]QueryPreview `json:"compositeQuery" required:"true" nullable:"true"`
+}
+
+// QueryRangePreviewOptions carries per-call options for the dry-run endpoint.
+type QueryRangePreviewOptions struct {
+	Verbose bool
+}
+
+// QueryRangePreviewParams are the query-string parameters of the dry-run endpoint.
+type QueryRangePreviewParams struct {
+	Verbose string `query:"verbose"`
+}
+
+// PrepareJSONSchema adds description to the QueryRangePreviewResponse schema.
+func (q *QueryRangePreviewResponse) PrepareJSONSchema(schema *jsonschema.Schema) error {
+	schema.WithDescription("Response from the v5 query range preview (dry-run) endpoint. For each query in the composite query, returns the underlying ClickHouse statement(s) it renders to without executing them (one per PromQL metric selector; exactly one for builder/ClickHouse/trace-operator queries), with the optional EXPLAIN ESTIMATE and granule analysis attached per statement when requested.")
+	return nil
+}
+
+// QueryPreview is the dry-run result for a single query.
+type QueryPreview struct {
+	Valid      bool               `json:"valid" required:"true" nullable:"false"`
+	Error      error              `json:"error" required:"true"`
+	Warnings   []string           `json:"warnings" required:"true" nullable:"false"`
+	Statements []PreviewStatement `json:"statements" required:"true" nullable:"false"`
+}
+
+// PreviewStatement is one rendered ClickHouse statement with its args and, when
+// requested, its EXPLAIN ESTIMATE and granule breakdown. The query/args JSON
+// keys follow the OpenTelemetry db.statement.* convention.
+type PreviewStatement struct {
+	Query    string                              `json:"db.statement.query" required:"true" nullable:"false"`
+	Args     []any                               `json:"db.statement.args" required:"true" nullable:"false"`
+	Estimate []telemetrystoretypes.EstimateEntry `json:"estimate" required:"true" nullable:"false"`
+	Granules *telemetrystoretypes.Granules       `json:"granules" required:"true" nullable:"true"`
+}
+
+// MarshalJSON renders Error in its structured form (code/message/suggestions)
+// rather than the empty object a bare error produces. The nullable:"false"
+// arrays are non-nil from the producer, so they marshal as [] rather than null.
+func (p QueryPreview) MarshalJSON() ([]byte, error) {
+	type alias QueryPreview
+	out := struct {
+		alias
+		Error *errors.JSON `json:"error"`
+	}{alias: alias(p)}
+	out.alias.Error = nil
+	// Derive the verdict so the two can't desync.
+	out.Valid = p.Error == nil
+	if p.Error != nil {
+		out.Error = errors.AsJSON(p.Error)
+	}
+	return json.Marshal(out)
+}
+
 var _ jsonschema.Preparer = &QueryRangeResponse{}
 
 // PrepareJSONSchema adds description to the QueryRangeResponse schema.
@@ -114,6 +174,26 @@ func (ts *TimeSeries) EvaluableValues() []*TimeSeriesValue {
 type Label struct {
 	Key   telemetrytypes.TelemetryFieldKey `json:"key"`
 	Value any                              `json:"value"`
+}
+
+var _ jsonschema.Preparer = Label{}
+
+// PrepareJSONSchema types `value` as a string/number/bool scalar instead of an
+// untyped {}. The Go field stays `any`; this only shapes the generated schema.
+func (Label) PrepareJSONSchema(s *jsonschema.Schema) error {
+	if _, ok := s.Properties["value"]; !ok {
+		return nil
+	}
+
+	value := jsonschema.Schema{}
+	value.OneOf = []jsonschema.SchemaOrBool{
+		jsonschema.String.ToSchemaOrBool(),
+		jsonschema.Number.ToSchemaOrBool(),
+		jsonschema.Boolean.ToSchemaOrBool(),
+	}
+	s.Properties["value"] = value.ToSchemaOrBool()
+
+	return nil
 }
 
 func GetUniqueSeriesKey(labels []*Label) string {
@@ -235,7 +315,6 @@ type RawStream struct {
 	Done  chan *bool
 	Error chan error
 }
-
 
 func roundToNonZeroDecimals(val float64, n int) float64 {
 	if val == 0 || math.IsNaN(val) || math.IsInf(val, 0) {

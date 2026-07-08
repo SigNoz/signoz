@@ -1,5 +1,5 @@
 import { useMemo, useRef } from 'react';
-import { Select, Table } from 'antd';
+import { Select, Skeleton, Table } from 'antd';
 import cx from 'classnames';
 import { Button } from '@signozhq/ui/button';
 import { ChevronLeft, ChevronRight } from '@signozhq/icons';
@@ -26,32 +26,31 @@ import { useListRowInteraction } from './useListRowInteraction';
 
 import styles from './ListPanel.module.scss';
 
-// `body` flexes to fill the remaining table width (module-level so the resize
-// hook's memo dependency stays referentially stable across renders).
+// `body` flexes to fill remaining width; module-level to stay referentially stable for the resize hook's memo.
 const BODY_FLEX_COLUMNS = ['body'];
 
 function ListPanelRenderer({
 	panelId,
 	panel,
 	data,
+	refetch,
 	searchTerm = '',
 	pagination,
+	isPreviousData = false,
 }: PanelRendererProps<'signoz/ListPanel'>): JSX.Element {
 	// Pin the header while the body scrolls (shared with the Table kind).
 	const containerRef = useRef<HTMLDivElement>(null);
 	const { height } = useResizeObserver(containerRef);
 	const { scrollY } = useMemo(() => computeTableLayout(height), [height]);
 
-	// The registry guarantees this Renderer only runs for `signoz/ListPanel`, so
-	// the cast is a documented boundary narrowing.
+	// `panel` is narrowed to this kind by PanelRendererProps, so no cast needed.
 	const spec = useMemo<DashboardtypesListPanelSpecDTO>(
-		() => (panel.spec.plugin.spec ?? {}) as DashboardtypesListPanelSpecDTO,
+		() => panel.spec.plugin.spec,
 		[panel.spec.plugin.spec],
 	);
 
-	// Telemetry signal of the panel's first builder query — drives data flattening,
-	// per-signal cell rendering, and the row-click behavior (log drawer vs trace
-	// navigation). Cast at this boundary (the query carries the same string values).
+	// Telemetry signal of the first builder query; drives flattening, cell rendering,
+	// and row-click behavior. Cast is safe — the query carries the same string values.
 	const signal = useMemo(
 		() =>
 			(getBuilderQueries(panel.spec.queries)[0]
@@ -83,7 +82,7 @@ function ListPanelRenderer({
 		[table, signal, formatTimezoneAdjustedTimestamp],
 	);
 
-	// User-resizable columns, persisted per panel; `body` flexes to fill width.
+	// User-resizable columns, persisted per panel.
 	const { columns: resizableColumns, components } = useResizableColumns({
 		panelId,
 		columns,
@@ -92,8 +91,7 @@ function ListPanelRenderer({
 
 	const dataSource = useMemo(() => table?.rows ?? [], [table]);
 
-	// Header search filters the current page client-side (V1 parity); paging
-	// across pages is server-side via `pagination`.
+	// Header search filters the current page client-side (V1 parity); cross-page paging is server-side via `pagination`.
 	const filteredDataSource = useMemo(
 		() => filterTableRows(dataSource, searchTerm),
 		[dataSource, searchTerm],
@@ -115,9 +113,27 @@ function ListPanelRenderer({
 		[spec.selectFields],
 	);
 
-	// Show the footer whenever the panel pages server-side (no explicit query
-	// limit), so the page-size picker is always reachable — V1 parity.
+	// Show the footer whenever the panel pages server-side, so the page-size picker stays reachable (V1 parity).
 	const showPager = !!pagination;
+
+	// While the next page loads, swap the stale rows (held by keepPreviousData) for skeleton bars,
+	// keeping the header + pager. Row count mirrors the page being left.
+	const skeletonRowCount = dataSource.length || pagination?.pageSize || 10;
+	const skeletonColumns = useMemo(
+		() =>
+			resizableColumns.map((col) => ({
+				...col,
+				render: (): JSX.Element => <Skeleton.Input active block size="small" />,
+			})),
+		[resizableColumns],
+	);
+	const skeletonRows = useMemo(
+		() =>
+			Array.from({ length: skeletonRowCount }, (_, index) => ({
+				key: `skeleton-${index}`,
+			})) as unknown as typeof filteredDataSource,
+		[skeletonRowCount],
+	);
 
 	return (
 		<div
@@ -126,7 +142,7 @@ function ListPanelRenderer({
 			className={PanelStyles.panelContainer}
 		>
 			{!table || dataSource.length === 0 ? (
-				<NoData />
+				<NoData onRetry={refetch} />
 			) : (
 				<>
 					<div
@@ -138,15 +154,13 @@ function ListPanelRenderer({
 						<Table
 							size="small"
 							tableLayout="fixed"
-							columns={resizableColumns}
+							columns={isPreviousData ? skeletonColumns : resizableColumns}
 							components={components}
-							dataSource={filteredDataSource}
+							dataSource={isPreviousData ? skeletonRows : filteredDataSource}
 							pagination={false}
-							// Scroll the body vertically only — no `x: 'max-content'`, which
-							// forced a content-width min and pushed columns off-screen;
-							// `tableLayout="fixed"` fits them to the available width.
+							// Vertical scroll only; `x: 'max-content'` forced a content-width min that pushed columns off-screen.
 							scroll={{ y: scrollY }}
-							onRow={onRow}
+							onRow={isPreviousData ? undefined : onRow}
 						/>
 					</div>
 					{showPager && pagination && (

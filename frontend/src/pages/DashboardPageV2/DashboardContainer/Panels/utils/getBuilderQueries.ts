@@ -1,4 +1,7 @@
-import type { DashboardtypesQueryDTO } from 'api/generated/services/sigNoz.schemas';
+import type {
+	DashboardtypesQueryDTO,
+	TelemetrytypesSignalDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import type { BuilderQuery } from 'types/api/v5/queryRange';
 
 /**
@@ -8,23 +11,17 @@ import type { BuilderQuery } from 'types/api/v5/queryRange';
  * downstream code needs. Returns the generated v5 `BuilderQuery` shape directly.
  */
 export function getBuilderQueries(
-	queries: DashboardtypesQueryDTO[] | null | undefined,
+	queries: DashboardtypesQueryDTO[],
 ): BuilderQuery[] {
-	if (!queries) {
-		return [];
-	}
 	const flattened: BuilderQuery[] = [];
 	queries.forEach((envelope) => {
-		const plugin = envelope?.spec?.plugin;
-		if (!plugin) {
-			return;
-		}
+		const plugin = envelope.spec.plugin;
 		if (plugin.kind === 'signoz/BuilderQuery') {
 			flattened.push(plugin.spec as BuilderQuery);
 			return;
 		}
 		if (plugin.kind === 'signoz/CompositeQuery') {
-			(plugin.spec.queries ?? []).forEach((sub) => {
+			(plugin.spec.queries || []).forEach((sub) => {
 				if (sub.type === 'builder_query') {
 					flattened.push(sub.spec as BuilderQuery);
 				}
@@ -32,4 +29,22 @@ export function getBuilderQueries(
 		}
 	});
 	return flattened;
+}
+
+/**
+ * Datasource signal scoping panel-type compatibility (List needs logs/traces, not
+ * metrics): the builder query's signal if present; else `defaultSignal` for a new
+ * panel (queries empty until edited); else undefined for PromQL/ClickHouse.
+ */
+export function resolveSignal(
+	queries: DashboardtypesQueryDTO[],
+	defaultSignal: TelemetrytypesSignalDTO,
+): TelemetrytypesSignalDTO | undefined {
+	const builderSignal = getBuilderQueries(queries)[0]?.signal as
+		| TelemetrytypesSignalDTO
+		| undefined;
+	if (builderSignal) {
+		return builderSignal;
+	}
+	return queries.length ? undefined : defaultSignal;
 }

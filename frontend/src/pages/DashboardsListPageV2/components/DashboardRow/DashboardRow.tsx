@@ -1,7 +1,8 @@
-import { Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
 import { Badge } from '@signozhq/ui/badge';
-import { CalendarClock, Star } from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Typography } from '@signozhq/ui/typography';
+import { CalendarClock, LockKeyhole, Pin, PinOff } from '@signozhq/icons';
 import cx from 'classnames';
 import logEvent from 'api/common/logEvent';
 import { generatePath } from 'react-router-dom';
@@ -12,9 +13,10 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useTimezone } from 'providers/Timezone';
 import { isModifierKeyPressed } from 'utils/app';
 
+import { usePinDashboard } from '../../hooks/usePinDashboard';
 import { useDashboardViewsStore } from '../../store/useDashboardViewsStore';
-import type { DashboardListItem } from '../../utils';
-import { lastUpdatedLabel, tagsToStrings } from '../../utils';
+import type { DashboardListItem } from '../../utils/helpers';
+import { lastUpdatedLabel, tagsToStrings } from '../../utils/helpers';
 import ActionsPopover from '../ActionsPopover/ActionsPopover';
 
 import styles from './DashboardRow.module.scss';
@@ -37,12 +39,10 @@ function DashboardRow({
 	const { safeNavigate } = useSafeNavigate();
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
-	const isFavorite = useDashboardViewsStore((s) =>
-		s.favorites.includes(dashboard.id),
-	);
-	const toggleFavorite = useDashboardViewsStore((s) => s.toggleFavorite);
 	const markViewed = useDashboardViewsStore((s) => s.markViewed);
+	const { togglePin, isUpdating } = usePinDashboard();
 
+	const isPinned = !!dashboard.pinned;
 	const id = dashboard.id;
 	const name = dashboard.spec?.display?.name ?? '';
 	const image = dashboard.image || Base64Icons[0];
@@ -69,30 +69,36 @@ function DashboardRow({
 		});
 	};
 
-	const onToggleFavorite = (event: React.MouseEvent<HTMLElement>): void => {
+	const onTogglePin = (event: React.MouseEvent<HTMLElement>): void => {
 		event.stopPropagation();
-		toggleFavorite(id);
+		togglePin(id, isPinned);
 	};
+
+	// Only long titles are truncated, so only they need the full-name tooltip;
+	// wrapping conditionally avoids an empty hanging tooltip for short names.
+	const titleLink = (
+		<div className={styles.titleLink} onClick={onClickHandler}>
+			<img src={image} alt="dashboard-image" className={styles.icon} />
+			<Typography.Text
+				data-testid={`dashboard-title-${index}`}
+				className={styles.title}
+			>
+				{name}
+			</Typography.Text>
+		</div>
+	);
 
 	return (
 		<div className={styles.row} onClick={onClickHandler}>
 			<div className={styles.titleWithAction}>
 				<div className={styles.titleBlock}>
-					<Tooltip
-						title={name.length > 50 ? name : ''}
-						placement="left"
-						overlayClassName="titleTooltipOverlay"
-					>
-						<div className={styles.titleLink} onClick={onClickHandler}>
-							<img src={image} alt="dashboard-image" className={styles.icon} />
-							<Typography.Text
-								data-testid={`dashboard-title-${index}`}
-								className={styles.title}
-							>
-								{name}
-							</Typography.Text>
-						</div>
-					</Tooltip>
+					{name.length > 50 ? (
+						<TooltipSimple title={name} side="bottom" disableHoverableContent>
+							{titleLink}
+						</TooltipSimple>
+					) : (
+						titleLink
+					)}
 				</div>
 
 				<div className={styles.tagsWithActions}>
@@ -105,23 +111,51 @@ function DashboardRow({
 							))}
 							{tags.length > 3 && (
 								<Badge className={styles.tag} key={tags[3]}>
-									+ <span> {tags.length - 3} </span>
+									+ <Typography.Text> {tags.length - 3} </Typography.Text>
 								</Badge>
 							)}
 						</div>
 					)}
 				</div>
 
-				<button
-					type="button"
-					className={cx(styles.favBtn, { [styles.favBtnOn]: isFavorite })}
-					aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-					title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-					data-testid={`dashboard-favorite-${index}`}
-					onClick={onToggleFavorite}
+				{isLocked && (
+					<TooltipSimple
+						title="This dashboard is locked"
+						side="top"
+						disableHoverableContent
+					>
+						<span className={styles.lockIcon} data-testid={`dashboard-lock-${index}`}>
+							<LockKeyhole size={14} />
+						</span>
+					</TooltipSimple>
+				)}
+
+				<TooltipSimple
+					title={isPinned ? 'Unpin dashboard' : 'Pin dashboard'}
+					side="top"
+					disableHoverableContent
 				>
-					<Star size={14} />
-				</button>
+					<Button
+						type="button"
+						variant="ghost"
+						color="secondary"
+						size="icon"
+						className={cx(styles.pinButton, { [styles.pinButtonOn]: isPinned })}
+						aria-label={isPinned ? 'Unpin dashboard' : 'Pin dashboard'}
+						data-testid={`dashboard-pin-${index}`}
+						disabled={isUpdating}
+						onClick={onTogglePin}
+					>
+						{isPinned ? (
+							<>
+								<Pin size={14} className={styles.pinnedIcon} />
+								<PinOff size={14} className={styles.unpinIcon} />
+							</>
+						) : (
+							<Pin size={14} />
+						)}
+					</Button>
+				</TooltipSimple>
 
 				{canAct && (
 					<ActionsPopover

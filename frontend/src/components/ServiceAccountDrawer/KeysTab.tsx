@@ -4,13 +4,13 @@ import { Button } from '@signozhq/ui/button';
 import { Skeleton, Table, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table/interface';
 import type { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
-import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import {
 	APIKeyCreatePermission,
 	buildAPIKeyDeletePermission,
 	buildSAAttachPermission,
 	buildSADetachPermission,
-} from 'hooks/useAuthZ/permissions/service-account.permissions';
+} from 'lib/authz/hooks/useAuthZ/permissions/service-account.permissions';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { parseAsBoolean, parseAsString, useQueryState } from 'nuqs';

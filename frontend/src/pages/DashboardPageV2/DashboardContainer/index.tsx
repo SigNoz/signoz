@@ -2,12 +2,12 @@ import { useEffect } from 'react';
 import { FullScreen, useFullScreenHandle } from 'react-full-screen';
 
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
-import PanelTypeSelectionModal from 'container/DashboardContainer/PanelTypeSelectionModal';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useAppContext } from 'providers/App/App';
 
 import DashboardPageToolbar from './DashboardPageToolbar';
 import PanelsAndSectionsLayout from './PanelsAndSectionsLayout';
+import { useResolvedVariables } from './hooks/useResolvedVariables';
 import { useDashboardStore } from './store/useDashboardStore';
 import styles from './DashboardContainer.module.scss';
 import DashboardPageHeader from './components/DashboardPageHeader/DashboardPageHeader';
@@ -51,6 +51,10 @@ function DashboardContainer({
 		setEditContext,
 	]);
 
+	// Resolve the variable selection into the V5 query payload and publish it to
+	// the store, so each panel's query substitutes the bar's selected values.
+	useResolvedVariables(dashboard);
+
 	const spec = dashboard.spec;
 	const image = dashboard.image || Base64Icons[0];
 	const name = spec.display.name;
@@ -66,9 +70,6 @@ function DashboardContainer({
 				/>
 				<PanelsAndSectionsLayout layouts={spec.layouts} panels={spec.panels} />
 			</div>
-			{/* Shared panel-type picker (V1 component): opened from any "New Panel"
-			    trigger; navigates to the widget editor route on selection. */}
-			<PanelTypeSelectionModal />
 		</FullScreen>
 	);
 }

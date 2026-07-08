@@ -31,9 +31,16 @@ type builderQuery[T any] struct {
 	fromMS uint64
 	toMS   uint64
 	kind   qbtypes.RequestType
+
+	builderConfig builderConfig
 }
 
 var _ qbtypes.Query = (*builderQuery[any])(nil)
+var _ qbtypes.StatementProvider = (*builderQuery[any])(nil)
+
+type builderConfig struct {
+	logTraceIDWindowPaddingMS uint64
+}
 
 func newBuilderQuery[T any](
 	logger *slog.Logger,
@@ -43,6 +50,7 @@ func newBuilderQuery[T any](
 	tr qbtypes.TimeRange,
 	kind qbtypes.RequestType,
 	variables map[string]qbtypes.VariableItem,
+	cfg builderConfig,
 ) *builderQuery[T] {
 	return &builderQuery[T]{
 		logger:         logger,
@@ -53,6 +61,7 @@ func newBuilderQuery[T any](
 		fromMS:         tr.From,
 		toMS:           tr.To,
 		kind:           kind,
+		builderConfig:  cfg,
 	}
 }
 
@@ -91,13 +100,22 @@ func (q *builderQuery[T]) Fingerprint() string {
 				if a.ComparisonSpaceAggregationParam != nil {
 					spaceAggParamStr = a.ComparisonSpaceAggregationParam.StringValue()
 				}
-				aggParts = append(aggParts, fmt.Sprintf("%s:%s:%s:%s:%s",
+				part := fmt.Sprintf("%s:%s:%s:%s:%s",
 					a.MetricName,
 					a.Temporality.StringValue(),
 					a.TimeAggregation.StringValue(),
 					a.SpaceAggregation.StringValue(),
 					spaceAggParamStr,
-				))
+				)
+				if a.Reduced {
+					oneDay := uint64(24 * time.Hour.Milliseconds())
+					route := "reduced"
+					if q.toMS-q.fromMS < oneDay && q.fromMS >= uint64(time.Now().UnixMilli())-oneDay {
+						route = "buffer"
+					}
+					part += ":" + route
+				}
+				aggParts = append(aggParts, part)
 			}
 		}
 		parts = append(parts, fmt.Sprintf("aggs=[%s]", strings.Join(aggParts, ",")))
@@ -194,6 +212,11 @@ func (q *builderQuery[T]) isWindowList() bool {
 	return true
 }
 
+// Statement renders the SQL without executing it, for the preview path.
+func (q *builderQuery[T]) Statement(ctx context.Context) (*qbtypes.Statement, error) {
+	return q.stmtBuilder.Build(ctx, q.fromMS, q.toMS, q.kind, q.spec, q.variables)
+}
+
 func (q *builderQuery[T]) Execute(ctx context.Context) (*qbtypes.Result, error) {
 
 	// can we do window based pagination?
@@ -277,9 +300,20 @@ func (q *builderQuery[T]) narrowWindowByTraceID(ctx context.Context, fromMS, toM
 		return fromMS, toMS, true, ""
 	}
 
+	// Logs can be flushed slightly after the span ends. The trace
+	// time range comes from the spans table, so for logs we widen it by the
+	// configured padding before clamping. Keep the actual recorded bounds for
+	// the user-facing warning so it reports where the trace truly lies, not the
+	// padded range.
+	actualStartMS, actualEndMS := traceStartMS, traceEndMS
+	if q.spec.Signal == telemetrytypes.SignalLogs {
+		traceStartMS -= q.builderConfig.logTraceIDWindowPaddingMS
+		traceEndMS += q.builderConfig.logTraceIDWindowPaddingMS
+	}
+
 	if traceStartMS > toMS || traceEndMS < fromMS {
-		traceStartUTC := time.UnixMilli(int64(traceStartMS)).UTC().Format(time.RFC3339)
-		traceEndUTC := time.UnixMilli(int64(traceEndMS)).UTC().Format(time.RFC3339)
+		traceStartUTC := time.UnixMilli(int64(actualStartMS)).UTC().Format(time.RFC3339)
+		traceEndUTC := time.UnixMilli(int64(actualEndMS)).UTC().Format(time.RFC3339)
 		return fromMS, toMS, false, fmt.Sprintf(traceOutsideRangeWarn, q.spec.Name, traceStartUTC, traceEndUTC)
 	}
 	if traceStartMS > fromMS {

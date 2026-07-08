@@ -1,0 +1,44 @@
+.jsonEditor {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+	flex: 1;
+	min-height: 0;
+}
+
+.jsonEditorContainer {
+	position: relative;
+	border: 1px solid var(--l2-border);
+	border-radius: 4px;
+	overflow: hidden;
+	flex: 1;
+	min-height: 200px;
+}
+
+.copyButton {
+	position: absolute;
+	top: 8px;
+	right: 24px;
+	z-index: 10;
+}
+
+.jsonEditorErrorWrapper {
+	min-height: 52px;
+}
+
+.jsonEditorError {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--spacing-2);
+	padding: var(--spacing-4) var(--spacing-6);
+	background: color-mix(in srgb, var(--danger-background) 10%, transparent);
+	border: 1px solid var(--danger-background);
+	border-radius: 4px;
+}
+
+.jsonEditorErrorMessage {
+	font-family:
+		Geist Mono,
+		monospace;
+	word-break: break-word;
+}

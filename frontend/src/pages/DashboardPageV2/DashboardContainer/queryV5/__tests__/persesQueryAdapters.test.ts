@@ -1,10 +1,13 @@
-import type { DashboardtypesQueryDTO } from 'api/generated/services/sigNoz.schemas';
+import type {
+	DashboardtypesQueryDTO,
+	Querybuildertypesv5QueryEnvelopeDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { fromPerses, toPerses } from '../persesQueryAdapters';
+import { envelopesToQuery, fromPerses, toPerses } from '../persesQueryAdapters';
 
 /** A bare perses query (single plugin, not wrapped in a CompositeQuery). */
 function bareQuery(
@@ -58,6 +61,26 @@ describe('persesQueryAdapters', () => {
 		});
 	});
 
+	describe('envelopesToQuery', () => {
+		it('returns the metrics default for an empty envelope list', () => {
+			expect(envelopesToQuery([], PANEL_TYPES.TIME_SERIES)).toStrictEqual(
+				initialQueriesMap[DataSource.METRICS],
+			);
+		});
+
+		it('maps a promql envelope to a PromQL query', () => {
+			const envelopes: Querybuildertypesv5QueryEnvelopeDTO[] = [
+				{
+					type: 'promql',
+					spec: { name: 'A', query: 'up', disabled: false },
+				} as unknown as Querybuildertypesv5QueryEnvelopeDTO,
+			];
+			expect(envelopesToQuery(envelopes, PANEL_TYPES.TIME_SERIES).queryType).toBe(
+				EQueryType.PROM,
+			);
+		});
+	});
+
 	describe('toPerses', () => {
 		it('wraps the query in a single signoz/CompositeQuery keyed to the panel request type', () => {
 			const result = toPerses(
@@ -87,6 +110,45 @@ describe('persesQueryAdapters', () => {
 			expect(result).toHaveLength(1);
 			expect(result[0].kind).toBe('raw');
 			expect(result[0].spec.plugin.kind).toBe('signoz/BuilderQuery');
+		});
+
+		it('drops the pageSize-promoted limit for a List query with no user limit (so it pages server-side)', () => {
+			// pageSize with no user limit would otherwise be folded into the V5 limit.
+			const withPageSize: Query = {
+				...initialQueriesMap[DataSource.LOGS],
+				builder: {
+					...initialQueriesMap[DataSource.LOGS].builder,
+					queryData: [
+						{
+							...initialQueriesMap[DataSource.LOGS].builder.queryData[0],
+							limit: null,
+							pageSize: 100,
+						},
+					],
+				},
+			};
+
+			const result = toPerses(withPageSize, PANEL_TYPES.LIST);
+
+			const spec = result[0].spec.plugin.spec as { limit?: number };
+			expect(spec.limit).toBeUndefined();
+		});
+
+		it('keeps an explicit user limit on a List query (V1 parity: static, unpaged cap)', () => {
+			const withLimit: Query = {
+				...initialQueriesMap[DataSource.LOGS],
+				builder: {
+					...initialQueriesMap[DataSource.LOGS].builder,
+					queryData: [
+						{ ...initialQueriesMap[DataSource.LOGS].builder.queryData[0], limit: 50 },
+					],
+				},
+			};
+
+			const result = toPerses(withLimit, PANEL_TYPES.LIST);
+
+			const spec = result[0].spec.plugin.spec as { limit?: number };
+			expect(spec.limit).toBe(50);
 		});
 	});
 

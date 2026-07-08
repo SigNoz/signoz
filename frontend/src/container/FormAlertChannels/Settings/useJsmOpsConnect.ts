@@ -7,7 +7,6 @@ import APIError from 'types/api/error';
 
 export interface ConnectedConnection {
 	id: string;
-	site?: string;
 }
 
 function getOAuthOrigin(): string {
@@ -52,7 +51,6 @@ export function useJsmOpsConnect(
 				setIsConnecting(false);
 				onConnectedRef.current({
 					id: event.data.connection_id,
-					site: event.data.site,
 				});
 			} else if (event.data.type === 'jsmops_oauth_error') {
 				setIsConnecting(false);

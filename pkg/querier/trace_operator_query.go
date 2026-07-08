@@ -23,6 +23,7 @@ type traceOperatorQuery struct {
 }
 
 var _ qbtypes.Query = (*traceOperatorQuery)(nil)
+var _ qbtypes.StatementProvider = (*traceOperatorQuery)(nil)
 
 func (q *traceOperatorQuery) Fingerprint() string {
 	return ""
@@ -30,6 +31,11 @@ func (q *traceOperatorQuery) Fingerprint() string {
 
 func (q *traceOperatorQuery) Window() (uint64, uint64) {
 	return q.fromMS, q.toMS
+}
+
+// Statement renders the SQL without executing it, for the preview path.
+func (q *traceOperatorQuery) Statement(ctx context.Context) (*qbtypes.Statement, error) {
+	return q.stmtBuilder.Build(ctx, q.fromMS, q.toMS, q.kind, q.spec, q.compositeQuery)
 }
 
 func (q *traceOperatorQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {

@@ -6,6 +6,7 @@ import pytest
 import requests
 
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
+from fixtures.metrics import Metrics
 from fixtures.types import Operation, SigNoz
 
 BASE_URL = "/api/v2/dashboards"
@@ -170,6 +171,149 @@ def test_create_rejects_too_many_tags(
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
     assert response.json()["error"]["code"] == "dashboard_invalid_input"
+
+
+def test_create_rejects_long_display_name(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    # Display names are bounded at 128 characters; one over must be rejected.
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={
+            "schemaVersion": "v6",
+            "name": "long-display-name",
+            "spec": {"display": {"name": "x" * 129}},
+        },
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.json()["error"]["code"] == "dashboard_invalid_input"
+    assert "spec.display.name: dashboard name must be at most 128 characters" in response.json()["error"]["message"]
+
+
+def test_create_rejects_invalid_grid_layout(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    def panel(name: str) -> dict:
+        return {
+            "kind": "Panel",
+            "spec": {
+                "display": {"name": name},
+                "plugin": {"kind": "signoz/TablePanel", "spec": {}},
+                "queries": [
+                    {
+                        "kind": "time_series",
+                        "spec": {
+                            "plugin": {
+                                "kind": "signoz/BuilderQuery",
+                                "spec": {
+                                    "name": "A",
+                                    "signal": "logs",
+                                    "aggregations": [{"expression": "count()"}],
+                                },
+                            }
+                        },
+                    }
+                ],
+            },
+        }
+
+    # Two grid items reference valid, distinct panels but share cells, so the
+    # overlap is the only violation.
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={
+            "schemaVersion": "v6",
+            "name": "rejects-overlap",
+            "spec": {
+                "display": {"name": "Rejects Overlap"},
+                "panels": {"p1": panel("P1"), "p2": panel("P2")},
+                "layouts": [
+                    {
+                        "kind": "Grid",
+                        "spec": {
+                            "items": [
+                                {"x": 0, "y": 0, "width": 6, "height": 6, "content": {"$ref": "#/spec/panels/p1"}},
+                                {"x": 3, "y": 3, "width": 6, "height": 6, "content": {"$ref": "#/spec/panels/p2"}},
+                            ]
+                        },
+                    }
+                ],
+            },
+            "tags": [],
+        },
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.json()["error"]["code"] == "dashboard_invalid_input"
+    assert "overlap" in response.json()["error"]["message"]
+
+    # One panel placed by two grid items (side by side, so they clear the overlap
+    # check first). The frontend keys grid items by panel id, so this is rejected.
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={
+            "schemaVersion": "v6",
+            "name": "rejects-multiref",
+            "spec": {
+                "display": {"name": "Rejects Multiref"},
+                "panels": {"p1": panel("P1")},
+                "layouts": [
+                    {
+                        "kind": "Grid",
+                        "spec": {
+                            "items": [
+                                {"x": 0, "y": 0, "width": 6, "height": 6, "content": {"$ref": "#/spec/panels/p1"}},
+                                {"x": 6, "y": 0, "width": 6, "height": 6, "content": {"$ref": "#/spec/panels/p1"}},
+                            ]
+                        },
+                    }
+                ],
+            },
+            "tags": [],
+        },
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.json()["error"]["code"] == "dashboard_invalid_input"
+    assert "already placed" in response.json()["error"]["message"]
+
+    # More grid items than allowed. The item-count check runs before the
+    # panel-ref check, so content-less items suffice here.
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={
+            "schemaVersion": "v6",
+            "name": "rejects-too-many-items",
+            "spec": {
+                "display": {"name": "Rejects Too Many"},
+                "layouts": [
+                    {
+                        "kind": "Grid",
+                        "spec": {"items": [{"x": 0, "y": 0, "width": 1, "height": 1} for _ in range(101)]},
+                    }
+                ],
+            },
+            "tags": [],
+        },
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.json()["error"]["code"] == "dashboard_invalid_input"
+    assert "maximum" in response.json()["error"]["message"]
 
 
 @pytest.mark.parametrize(
@@ -446,6 +590,28 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
         "Epsilon Metrics",
         "Zeta Overview",
     }
+    # top-level tags = org-wide distinct tag set, sorted case-insensitively
+    # by (key, value). Asserting the exact list (not a set) locks in the sort.
+    assert body["data"]["tags"] == [
+        {"key": "env", "value": "dev"},
+        {"key": "env", "value": "prod"},
+        {"key": "env", "value": "staging"},
+        {"key": "team", "value": "metrics"},
+        {"key": "team", "value": "pulse"},
+        {"key": "team", "value": "storage"},
+        {"key": "tier", "value": "critical"},
+    ]
+    # reserved keywords = the filterable column-level DSL keys, sorted
+    # alphabetically. Static (independent of the dashboards), so this is the
+    # full expected set.
+    assert body["data"]["reservedKeywords"] == [
+        "created_at",
+        "created_by",
+        "description",
+        "locked",
+        "name",
+        "updated_at",
+    ]
 
     # ── stage 4: filter DSL ──────────────────────────────────────────────────
     cases = [
@@ -746,7 +912,7 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
         "Zeta Overview",
     }
 
-    # ── stage 11: clone keeps the display name but mints a new, retrievable one ─
+    # ── stage 11: clone suffixes the display name and mints a new, retrievable one ─
     response = requests.post(
         signoz.self.host_configs["8080"].get(f"{BASE_URL}/{ids['lc-alpha']}/clone"),
         headers={"Authorization": f"Bearer {token}"},
@@ -756,7 +922,7 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
     clone = response.json()["data"]
     assert clone["id"] != ids["lc-alpha"]
     assert clone["name"] != "lc-alpha"  # internal name is regenerated
-    assert clone["spec"]["display"]["name"] == "Alpha Overview"  # display name preserved
+    assert clone["spec"]["display"]["name"] == "Alpha Overview - Copy"  # Copy suffix appended
     assert clone["source"] == "user"
     assert clone["locked"] is False
 
@@ -934,3 +1100,306 @@ def test_dashboard_v2_like_escaping(
         )
         assert response.status_code == HTTPStatus.OK, response.text
         assert {d["spec"]["display"]["name"] for d in response.json()["data"]["dashboards"]} == expected, query
+
+
+# ─── get dashboards by metric name (v3) ──────────────────────────────────────
+
+
+def test_dashboard_v2_get_by_metric_name(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_metrics: Callable[[list[Metrics]], None],
+) -> None:
+    """The v3 endpoint shortlists dashboards via a coarse data prefilter, then
+    confirms matches by parsing the typed v2 panels. It must find the metric in
+    builder, promql, and clickhouse queries, and must NOT report a dashboard where
+    the metric appears only in panel names (the prefilter matches but the parse
+    rejects it)."""
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    _wipe_all_dashboards(signoz, token)
+
+    target_metric = "system.network.dropped"
+    decoy_metric = "system.network.io"
+
+    # The endpoint gates on metric existence (checkMetricExists reads
+    # signoz_metrics.distributed_metadata), so seed the target metric there. A
+    # label is required for a metadata row to be written.
+    insert_metrics(
+        [
+            Metrics(
+                metric_name=target_metric,
+                labels={"host.name": "test-host"},
+                temporality="Cumulative",
+                value=1.0,
+            )
+        ]
+    )
+
+    # D1: a single builder query referencing the target metric.
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={
+            "schemaVersion": "v6",
+            "name": "by-metric-builder",
+            "spec": {
+                "display": {"name": "by-metric-builder"},
+                "panels": {
+                    "p-builder": {
+                        "kind": "Panel",
+                        "spec": {
+                            "display": {"name": "D1 builder target"},
+                            "plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
+                            "queries": [
+                                {
+                                    "kind": "time_series",
+                                    "spec": {
+                                        "plugin": {
+                                            "kind": "signoz/BuilderQuery",
+                                            "spec": {
+                                                "name": "A",
+                                                "signal": "metrics",
+                                                "aggregations": [
+                                                    {
+                                                        "metricName": target_metric,
+                                                        "timeAggregation": "rate",
+                                                        "spaceAggregation": "sum",
+                                                    }
+                                                ],
+                                            },
+                                        }
+                                    },
+                                }
+                            ],
+                        },
+                    }
+                },
+            },
+            "tags": [],
+        },
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    d1_id = response.json()["data"]["id"]
+
+    # D2: one clickhouse panel and one promql panel, both referencing the target
+    # metric (one query per panel is enforced by validation). Two matching panels
+    # in one dashboard also guards against a dashboard/widget being returned twice.
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={
+            "schemaVersion": "v6",
+            "name": "by-metric-ch-promql",
+            "spec": {
+                "display": {"name": "by-metric-ch-promql"},
+                "panels": {
+                    "p-ch": {
+                        "kind": "Panel",
+                        "spec": {
+                            "display": {"name": "D2 clickhouse target"},
+                            "plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
+                            "queries": [
+                                {
+                                    "kind": "time_series",
+                                    "spec": {
+                                        "plugin": {
+                                            "kind": "signoz/ClickHouseSQL",
+                                            "spec": {
+                                                "name": "A",
+                                                "query": f"select * from signoz_metrics.distributed_samples_v4 where metric_name IN ['{target_metric}']",
+                                            },
+                                        }
+                                    },
+                                }
+                            ],
+                        },
+                    },
+                    "p-promql": {
+                        "kind": "Panel",
+                        "spec": {
+                            "display": {"name": "D2 promql target"},
+                            "plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
+                            "queries": [
+                                {
+                                    "kind": "time_series",
+                                    "spec": {
+                                        "plugin": {
+                                            "kind": "signoz/PromQLQuery",
+                                            "spec": {
+                                                "name": "A",
+                                                "query": f'sum(rate({{"{target_metric}"}}[5m]))',
+                                            },
+                                        }
+                                    },
+                                }
+                            ],
+                        },
+                    },
+                },
+            },
+            "tags": [],
+        },
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    d2_id = response.json()["data"]["id"]
+
+    # D3: a promql-only dashboard referencing the target metric, so a promql
+    # extraction regression is caught independently of the clickhouse path above.
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={
+            "schemaVersion": "v6",
+            "name": "by-metric-promql",
+            "spec": {
+                "display": {"name": "by-metric-promql"},
+                "panels": {
+                    "p-promql": {
+                        "kind": "Panel",
+                        "spec": {
+                            "display": {"name": "D3 promql target"},
+                            "plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
+                            "queries": [
+                                {
+                                    "kind": "time_series",
+                                    "spec": {
+                                        "plugin": {
+                                            "kind": "signoz/PromQLQuery",
+                                            "spec": {
+                                                "name": "A",
+                                                "query": f'sum(rate({{"{target_metric}"}}[5m]))',
+                                            },
+                                        }
+                                    },
+                                }
+                            ],
+                        },
+                    }
+                },
+            },
+            "tags": [],
+        },
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    d3_id = response.json()["data"]["id"]
+
+    # D4: all three query types, but the target name appears only in the panel
+    # names; the queries reference a decoy metric. The data prefilter matches
+    # (panel names contain the target), but parsing the queries must not associate
+    # the target metric, so this dashboard must be excluded from the result.
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={
+            "schemaVersion": "v6",
+            "name": "by-metric-false-positive",
+            "spec": {
+                "display": {"name": "by-metric-false-positive"},
+                "panels": {
+                    "p-builder": {
+                        "kind": "Panel",
+                        "spec": {
+                            "display": {"name": f"{target_metric} builder"},
+                            "plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
+                            "queries": [
+                                {
+                                    "kind": "time_series",
+                                    "spec": {
+                                        "plugin": {
+                                            "kind": "signoz/BuilderQuery",
+                                            "spec": {
+                                                "name": "A",
+                                                "signal": "metrics",
+                                                "aggregations": [
+                                                    {
+                                                        "metricName": decoy_metric,
+                                                        "timeAggregation": "rate",
+                                                        "spaceAggregation": "sum",
+                                                    }
+                                                ],
+                                            },
+                                        }
+                                    },
+                                }
+                            ],
+                        },
+                    },
+                    "p-ch": {
+                        "kind": "Panel",
+                        "spec": {
+                            "display": {"name": f"{target_metric} clickhouse"},
+                            "plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
+                            "queries": [
+                                {
+                                    "kind": "time_series",
+                                    "spec": {
+                                        "plugin": {
+                                            "kind": "signoz/ClickHouseSQL",
+                                            "spec": {
+                                                "name": "A",
+                                                "query": f"select * from signoz_metrics.distributed_samples_v4 where metric_name IN ['{decoy_metric}']",
+                                            },
+                                        }
+                                    },
+                                }
+                            ],
+                        },
+                    },
+                    "p-promql": {
+                        "kind": "Panel",
+                        "spec": {
+                            "display": {"name": f"{target_metric} promql"},
+                            "plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
+                            "queries": [
+                                {
+                                    "kind": "time_series",
+                                    "spec": {
+                                        "plugin": {
+                                            "kind": "signoz/PromQLQuery",
+                                            "spec": {
+                                                "name": "A",
+                                                "query": f'sum(rate({{"{decoy_metric}"}}[5m]))',
+                                            },
+                                        }
+                                    },
+                                }
+                            ],
+                        },
+                    },
+                },
+            },
+            "tags": [],
+        },
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    d4_id = response.json()["data"]["id"]
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v3/metrics/dashboards"),
+        params={"metricName": target_metric},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    dashboards = response.json()["data"]["dashboards"]
+
+    # No dashboard/panel should be returned more than once.
+    pairs = [(d["dashboardId"], d["panelId"]) for d in dashboards]
+    assert len(pairs) == len(set(pairs))
+
+    # D1 (1 panel) + D2 (2 panels) + D3 (1 promql panel) match; D4 (target only in
+    # panel names) does not.
+    assert {d["dashboardId"] for d in dashboards} == {d1_id, d2_id, d3_id}
+    assert d4_id not in {d["dashboardId"] for d in dashboards}
+
+    by_dashboard: dict[str, list[str]] = {}
+    for d in dashboards:
+        by_dashboard.setdefault(d["dashboardId"], []).append(d["panelName"])
+    assert sorted(by_dashboard[d1_id]) == ["D1 builder target"]
+    assert sorted(by_dashboard[d2_id]) == ["D2 clickhouse target", "D2 promql target"]
+    assert sorted(by_dashboard[d3_id]) == ["D3 promql target"]

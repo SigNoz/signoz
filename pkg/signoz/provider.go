@@ -216,6 +216,9 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewRecreateUserDashboardPreferenceFactory(sqlstore, sqlschema),
 		sqlmigration.NewMigrateRecurrenceBoundsFactory(sqlstore),
 		sqlmigration.NewAddDashboardViewFactory(sqlstore, sqlschema),
+		sqlmigration.NewMigrateSSORoleMappingNamesFactory(sqlstore),
+		sqlmigration.NewAddMetricReductionRulesFactory(sqlstore, sqlschema),
+		sqlmigration.NewRemoveOrganizationTuplesFactory(sqlstore),
 	)
 }
 
@@ -296,6 +299,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			modules.Dashboard,
 			handlers.Dashboard,
 			handlers.MetricsExplorer,
+			handlers.MetricReductionRule,
 			handlers.InfraMonitoring,
 			handlers.GatewayHandler,
 			handlers.Fields,
