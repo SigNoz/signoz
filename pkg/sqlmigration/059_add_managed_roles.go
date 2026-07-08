@@ -62,25 +62,28 @@ func (migration *addManagedRoles) Up(ctx context.Context, db *bun.DB) error {
 		}
 
 		// signoz admin
-		signozAdminRole := authtypes.NewRole(authtypes.SigNozAdminRoleName, authtypes.SigNozAdminRoleDescription, authtypes.RoleTypeManaged, orgID)
+		signozAdminRole := authtypes.NewRole(authtypes.SigNozAdminRoleName, authtypes.SigNozAdminRoleDescription, authtypes.RoleTypeManaged, orgID, nil)
 		managedRoles = append(managedRoles, signozAdminRole)
 
 		// signoz editor
-		signozEditorRole := authtypes.NewRole(authtypes.SigNozEditorRoleName, authtypes.SigNozEditorRoleDescription, authtypes.RoleTypeManaged, orgID)
+		signozEditorRole := authtypes.NewRole(authtypes.SigNozEditorRoleName, authtypes.SigNozEditorRoleDescription, authtypes.RoleTypeManaged, orgID, nil)
 		managedRoles = append(managedRoles, signozEditorRole)
 
 		// signoz viewer
-		signozViewerRole := authtypes.NewRole(authtypes.SigNozViewerRoleName, authtypes.SigNozViewerRoleDescription, authtypes.RoleTypeManaged, orgID)
+		signozViewerRole := authtypes.NewRole(authtypes.SigNozViewerRoleName, authtypes.SigNozViewerRoleDescription, authtypes.RoleTypeManaged, orgID, nil)
 		managedRoles = append(managedRoles, signozViewerRole)
 
 		// signoz anonymous
-		signozAnonymousRole := authtypes.NewRole(authtypes.SigNozAnonymousRoleName, authtypes.SigNozAnonymousRoleDescription, authtypes.RoleTypeManaged, orgID)
+		signozAnonymousRole := authtypes.NewRole(authtypes.SigNozAnonymousRoleName, authtypes.SigNozAnonymousRoleDescription, authtypes.RoleTypeManaged, orgID, nil)
 		managedRoles = append(managedRoles, signozAnonymousRole)
 	}
 
 	if len(managedRoles) > 0 {
+		// Pin the columns that existed when this migration shipped so later
+		// additions to the live Role model don't break fresh installs.
 		_, err = tx.NewInsert().
 			Model(&managedRoles).
+			Column("id", "created_at", "updated_at", "name", "description", "type", "org_id").
 			On("CONFLICT (org_id, name) DO UPDATE").
 			Set("description = EXCLUDED.description, type = EXCLUDED.type, updated_at = EXCLUDED.updated_at").
 			Exec(ctx)

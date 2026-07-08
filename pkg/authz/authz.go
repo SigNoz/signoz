@@ -34,13 +34,13 @@ type AuthZ interface {
 	ListObjects(context.Context, string, authtypes.Relation, coretypes.Type) ([]*coretypes.Object, error)
 
 	// Creates the role with its transaction groups.
-	Create(context.Context, valuer.UUID, *authtypes.RoleWithTransactionGroups) error
+	Create(context.Context, valuer.UUID, *authtypes.Role) error
 
 	// Gets the role if it exists or creates one.
 	GetOrCreate(context.Context, valuer.UUID, *authtypes.Role) (*authtypes.Role, error)
 
 	// Updates the role's metadata and reconciles its transaction groups.
-	Update(context.Context, valuer.UUID, *authtypes.RoleWithTransactionGroups) error
+	Update(context.Context, valuer.UUID, *authtypes.Role) error
 
 	// Deletes the role and tuples in authorization server.
 	Delete(context.Context, valuer.UUID, valuer.UUID) error
@@ -49,7 +49,7 @@ type AuthZ interface {
 	Get(context.Context, valuer.UUID, valuer.UUID) (*authtypes.Role, error)
 
 	// Gets the role with transaction groups
-	GetWithTransactionGroups(context.Context, valuer.UUID, valuer.UUID) (*authtypes.RoleWithTransactionGroups, error)
+	GetWithTransactionGroups(context.Context, valuer.UUID, valuer.UUID) (*authtypes.Role, error)
 
 	// Gets the role by org_id and name
 	GetByOrgIDAndName(context.Context, valuer.UUID, string) (*authtypes.Role, error)
