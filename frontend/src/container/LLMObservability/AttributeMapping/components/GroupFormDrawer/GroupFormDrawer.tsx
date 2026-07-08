@@ -2,7 +2,6 @@ import { Button } from '@signozhq/ui/button';
 import { DrawerWrapper } from '@signozhq/ui/drawer';
 import { Input } from '@signozhq/ui/input';
 import { Switch } from '@signozhq/ui/switch';
-import { Trash2 } from '@signozhq/icons';
 
 import ConditionKeyList from './components/ConditionKeyList';
 import styles from './GroupFormDrawer.module.scss';
@@ -16,10 +15,6 @@ interface GroupFormDrawerProps {
 	setDraft: (next: GroupDraft) => void;
 	onClose: () => void;
 	onSave: () => void;
-	onDelete: () => void;
-	isSaving: boolean;
-	isDeleting: boolean;
-	saveError: string | null;
 }
 
 function GroupFormDrawer({
@@ -29,10 +24,6 @@ function GroupFormDrawer({
 	setDraft,
 	onClose,
 	onSave,
-	onDelete,
-	isSaving,
-	isDeleting,
-	saveError,
 }: GroupFormDrawerProps): JSX.Element {
 	const isEdit = mode === 'edit';
 	const isValid = isGroupDraftValid(draft);
@@ -51,38 +42,23 @@ function GroupFormDrawer({
 			testId="group-form-drawer"
 			footer={
 				<div className={styles.groupFormFooter}>
-					{isEdit && (
-						<Button
-							variant="ghost"
-							color="destructive"
-							prefix={<Trash2 size={14} />}
-							onClick={onDelete}
-							disabled={isDeleting}
-							testId="group-form-delete"
-						>
-							{isDeleting ? 'Deleting…' : 'Delete'}
-						</Button>
-					)}
-					<div className={styles.groupFormFooterActions}>
-						<Button
-							variant="ghost"
-							color="secondary"
-							onClick={onClose}
-							testId="group-form-cancel"
-						>
-							Cancel
-						</Button>
-						<Button
-							variant="solid"
-							color="primary"
-							onClick={onSave}
-							disabled={!isValid || isSaving}
-							testId="group-form-save"
-						>
-							{/* eslint-disable-next-line no-nested-ternary */}
-							{isSaving ? 'Saving…' : isEdit ? 'Save group' : 'Create group'}
-						</Button>
-					</div>
+					<Button
+						variant="ghost"
+						color="secondary"
+						onClick={onClose}
+						testId="group-form-cancel"
+					>
+						Cancel
+					</Button>
+					<Button
+						variant="solid"
+						color="primary"
+						onClick={onSave}
+						disabled={!isValid}
+						testId="group-form-save"
+					>
+						{isEdit ? 'Save group' : 'Create group'}
+					</Button>
 				</div>
 			}
 		>
@@ -133,12 +109,6 @@ function GroupFormDrawer({
 				<span className={styles.groupFormHint}>
 					Leave both empty to run this group on every span.
 				</span>
-
-				{saveError && (
-					<div className={styles.groupFormError} role="alert">
-						{saveError}
-					</div>
-				)}
 			</div>
 		</DrawerWrapper>
 	);

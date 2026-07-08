@@ -17,13 +17,6 @@ function LLMObservabilityAttributeMapping(): JSX.Element {
 		groupDrawer.close();
 	}, [store, groupDrawer]);
 
-	const handleGroupDelete = useCallback((): void => {
-		if (groupDrawer.draft.id) {
-			store.removeGroup(groupDrawer.draft.id);
-		}
-		groupDrawer.close();
-	}, [store, groupDrawer]);
-
 	const tabItems = [
 		{
 			key: 'attribute-mappings',
@@ -76,10 +69,6 @@ function LLMObservabilityAttributeMapping(): JSX.Element {
 					setDraft={groupDrawer.setDraft}
 					onClose={groupDrawer.close}
 					onSave={handleGroupSave}
-					onDelete={handleGroupDelete}
-					isSaving={false}
-					isDeleting={false}
-					saveError={null}
 				/>
 			)}
 		</div>

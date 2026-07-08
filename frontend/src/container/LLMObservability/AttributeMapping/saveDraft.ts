@@ -7,9 +7,6 @@ import {
 import { DraftGroup } from './types';
 import { buildPostableGroup, buildUpdatableGroup } from './utils';
 
-// Thin persistence surface the store wires to the generated mutations.
-// createGroup returns the new server id (mapper persistence is layered on in a
-// later PR).
 export interface SaveMutations {
 	createGroup: (data: SpantypesPostableSpanMapperGroupDTO) => Promise<string>;
 	updateGroup: (
@@ -40,9 +37,6 @@ function groupDraftOf(
 	};
 }
 
-// Diffs the staged groups against the server snapshot and issues the minimal
-// set of create/update/delete calls to reconcile them. Mapper reconciliation
-// is added in a later PR.
 export async function persistDraft(
 	snapshot: DraftGroup[],
 	draft: DraftGroup[],
