@@ -18,6 +18,19 @@ func NewHavingExpressionRewriter() *HavingExpressionRewriter {
 	}
 }
 
+// Rewrite rewrites and validates a HAVING expression against a caller-supplied
+// column map (user-facing name -> SQL identifier/expression). Values are inlined, so
+// the result is a bare SQL boolean expression with no bound args. Used by callers
+// that project their own aggregate columns (e.g. the AI trace list) rather than the
+// query's Aggregations.
+func (r *HavingExpressionRewriter) Rewrite(expression string, columnMap map[string]string) (string, error) {
+	if len(strings.TrimSpace(expression)) == 0 {
+		return "", nil
+	}
+	r.columnMap = columnMap
+	return r.rewriteAndValidate(expression)
+}
+
 // RewriteForTraces rewrites and validates the HAVING expression for a traces query.
 func (r *HavingExpressionRewriter) RewriteForTraces(expression string, aggregations []qbtypes.TraceAggregation) (string, error) {
 	if len(strings.TrimSpace(expression)) == 0 {

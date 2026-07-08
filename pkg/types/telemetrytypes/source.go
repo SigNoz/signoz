@@ -9,6 +9,7 @@ type Source struct {
 var (
 	SourceAudit       = Source{valuer.NewString("audit")}
 	SourceMeter       = Source{valuer.NewString("meter")}
+	SourceAI          = Source{valuer.NewString("ai")}
 	SourceUnspecified = Source{valuer.NewString("")}
 )
 
@@ -17,5 +18,6 @@ var (
 func (Source) Enum() []any {
 	return []any{
 		SourceMeter,
+		SourceAI,
 	}
 }
