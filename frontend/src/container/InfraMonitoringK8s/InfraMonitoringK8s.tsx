@@ -6,6 +6,7 @@ import logEvent from 'api/common/logEvent';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource } from 'components/QuickFilters/types';
 import { InfraMonitoringEvents } from 'constants/events';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import {
@@ -22,6 +23,8 @@ import {
 	Workflow,
 } from '@signozhq/icons';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
+import { ResizableBox } from 'periscope/components/ResizableBox';
+import usePanelWidth from 'periscope/components/ResizableBox/usePanelWidth';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { FeatureKeys } from '../../constants/features';
@@ -56,8 +59,22 @@ import K8sVolumesList from './Volumes/K8sVolumesList';
 
 import styles from './InfraMonitoringK8s.module.scss';
 
+const QUICK_FILTERS_DEFAULT_WIDTH = 280;
+const QUICK_FILTERS_MIN_WIDTH = 240;
+const QUICK_FILTERS_MAX_WIDTH = 500;
+
 export default function InfraMonitoringK8s(): JSX.Element {
 	const [showFilters, setShowFilters] = useState(true);
+
+	const {
+		initialWidth: quickFiltersInitialWidth,
+		persistWidth: persistQuickFiltersWidth,
+	} = usePanelWidth({
+		storageKey: LOCALSTORAGE.QUICK_FILTERS_WIDTH_INFRA,
+		defaultWidth: QUICK_FILTERS_DEFAULT_WIDTH,
+		minWidth: QUICK_FILTERS_MIN_WIDTH,
+		maxWidth: QUICK_FILTERS_MAX_WIDTH,
+	});
 
 	const [selectedCategory, setSelectedCategory] = useInfraMonitoringCategory();
 	const [urlFilters, setUrlFilters] = useInfraMonitoringFiltersK8s();
@@ -212,7 +229,18 @@ export default function InfraMonitoringK8s(): JSX.Element {
 			<div className={styles.infraMonitoringContainer}>
 				<div className={styles.infraContentRow}>
 					{showFilters && (
-						<div className={styles.quickFiltersContainer}>
+						<ResizableBox
+							handle="right"
+							defaultWidth={QUICK_FILTERS_DEFAULT_WIDTH}
+							initialWidth={quickFiltersInitialWidth}
+							minWidth={QUICK_FILTERS_MIN_WIDTH}
+							maxWidth={QUICK_FILTERS_MAX_WIDTH}
+							onResize={persistQuickFiltersWidth}
+							resetToDefaultOnDoubleClick
+							withHandle
+							className={styles.quickFiltersContainer}
+							handleTestId="quick-filters-resize-handle"
+						>
 							<div className={styles.categorySelectorSection}>
 								<div className={styles.sectionHeader} data-type="resource">
 									<Typography.Text className={styles.sectionLabel}>
@@ -265,7 +293,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 									/>
 								)}
 							</div>
-						</div>
+						</ResizableBox>
 					)}
 
 					<div

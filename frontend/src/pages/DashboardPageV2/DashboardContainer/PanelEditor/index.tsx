@@ -43,6 +43,10 @@ interface PanelEditorContainerProps {
 	isNew?: boolean;
 	/** Target section for a new panel; falls back to the last/new section. */
 	layoutIndex?: number;
+	/** The dashboard can be edited (unlocked + permission); gates Save. */
+	isEditable: boolean;
+	/** Why Save is disabled (locked / no permission); '' when editable. */
+	editDisabledReason: string;
 	/** Leave the editor (navigate back to the dashboard) without saving. */
 	onClose: () => void;
 	/** Called after a successful save — navigates back to the dashboard. */
@@ -60,6 +64,8 @@ function PanelEditorContainer({
 	panel,
 	isNew = false,
 	layoutIndex,
+	isEditable,
+	editDisabledReason,
 	onClose,
 	onSaved,
 }: PanelEditorContainerProps): JSX.Element {
@@ -198,6 +204,9 @@ function PanelEditorContainer({
 	});
 
 	const onSave = useCallback(async (): Promise<void> => {
+		if (!isEditable) {
+			return;
+		}
 		try {
 			// Bake the live query into the spec so unstaged edits are saved too.
 			await save(buildSaveSpec(draft.spec));
@@ -206,7 +215,7 @@ function PanelEditorContainer({
 		} catch {
 			toast.error('Failed to save panel');
 		}
-	}, [save, buildSaveSpec, draft.spec, onSaved]);
+	}, [isEditable, save, buildSaveSpec, draft.spec, onSaved]);
 
 	return (
 		<div className={styles.page} data-testid="panel-editor-v2">
@@ -214,6 +223,8 @@ function PanelEditorContainer({
 				isDirty={isDirty}
 				isSaving={isSaving}
 				showSwitchToView={!isNew}
+				readOnly={!isEditable}
+				readOnlyReason={editDisabledReason}
 				onSave={onSave}
 				onSwitchToView={onSwitchToView}
 				onClose={onClose}

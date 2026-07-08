@@ -20,7 +20,7 @@ export const definition: PanelDefinition<'signoz/PieChartPanel'> = {
 		view: true,
 		edit: true,
 		clone: true,
-		download: false,
+		download: { csv: false, png: true, svg: true },
 		createAlert: false,
 		search: false,
 		drilldown: true,

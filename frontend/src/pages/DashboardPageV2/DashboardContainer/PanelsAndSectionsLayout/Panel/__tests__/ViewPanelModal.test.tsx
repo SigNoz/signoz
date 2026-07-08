@@ -103,6 +103,7 @@ jest.mock('../ViewPanelModal/useViewPanelTimeWindow', () => ({
 		onTimeChange: jest.fn(),
 		refreshWindow: jest.fn(),
 		onDragSelect: jest.fn(),
+		extendWindow: { canExtend: false, actionLabel: null, extend: jest.fn() },
 	}),
 }));
 

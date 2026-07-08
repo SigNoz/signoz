@@ -40,7 +40,7 @@ function DynamicVariableFields({
 	attributeError,
 }: DynamicVariableFieldsProps): JSX.Element {
 	const [search, setSearch] = useState('');
-	const debouncedSearch = useDebounce(search, 300);
+	const debouncedSearch = useDebounce(search, 500);
 	const apiSignal = signalForApi(signal);
 
 	const {
@@ -82,38 +82,14 @@ function DynamicVariableFields({
 
 	return (
 		<>
-			<div className={cx(styles.row, styles.sortSection)}>
-				<div className={cx(styles.labelContainer, styles.sourceLabel)}>
-					<Typography.Text className={styles.label}>Source</Typography.Text>
-					<TextToolTip
-						text="By default, this searches across logs, traces, and metrics, which can be slow. Selecting a single source improves performance. Many fields share the same values across different signals (for example, `k8s.pod.name` is identical in logs, traces and metrics) making one source enough. Only use `All telemetry` when you need fields that have different values in different signal types."
-						useFilledIcon={false}
-						outlinedIcon={<Info size={14} />}
-					/>
-				</div>
-				<Select
-					className={styles.sortSelect}
-					popupMatchSelectWidth={false}
-					value={signal}
-					options={DYNAMIC_SIGNALS.map((s) => ({
-						label: DYNAMIC_SIGNAL_LABEL[s],
-						value: s,
-					}))}
-					onChange={(value): void =>
-						onChange({ dynamicSignal: value as DynamicSignalOption })
-					}
-					data-testid="variable-signal-select"
-				/>
-			</div>
-			<div className={cx(styles.row, styles.sortSection)}>
-				<div className={styles.labelContainer}>
-					<Typography.Text className={styles.label}>Attribute</Typography.Text>
-				</div>
+			{/* Combined row retained from V1: the field on the left, `from` + the
+			    telemetry source on the right. */}
+			<div className={cx(styles.row, styles.dynamicCombinedRow)}>
 				<CustomSelect
-					className={styles.searchSelect}
+					className={styles.dynamicFieldSelect}
 					showSearch
 					value={attribute || undefined}
-					placeholder="Select a telemetry field"
+					placeholder="Select a field"
 					loading={isLoading}
 					options={options}
 					onSearch={setSearch}
@@ -125,6 +101,25 @@ function DynamicVariableFields({
 					}}
 					showRetryButton={error ? isRetryableError(error) : true}
 					data-testid="variable-field-select"
+				/>
+				<Typography.Text className={styles.fromText}>from</Typography.Text>
+				<TextToolTip
+					text="By default, this searches across logs, traces, and metrics, which can be slow. Selecting a single source improves performance. Many fields share the same values across different signals (for example, `k8s.pod.name` is identical in logs, traces and metrics) making one source enough. Only use `All telemetry` when you need fields that have different values in different signal types."
+					useFilledIcon={false}
+					outlinedIcon={<Info size={14} />}
+				/>
+				<Select
+					className={styles.dynamicSourceSelect}
+					popupMatchSelectWidth={false}
+					value={signal}
+					options={DYNAMIC_SIGNALS.map((s) => ({
+						label: DYNAMIC_SIGNAL_LABEL[s],
+						value: s,
+					}))}
+					onChange={(value): void =>
+						onChange({ dynamicSignal: value as DynamicSignalOption })
+					}
+					data-testid="variable-signal-select"
 				/>
 			</div>
 			{attributeError ? (

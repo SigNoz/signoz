@@ -103,6 +103,7 @@ function PreviewPane({
 					<PanelHeader
 						panelId={panelId}
 						panel={panel}
+						data={data}
 						isFetching={isFetching}
 						error={error}
 						warning={data.response?.data?.warning}
