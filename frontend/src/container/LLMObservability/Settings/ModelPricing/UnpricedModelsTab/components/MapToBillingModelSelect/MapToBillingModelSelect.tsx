@@ -15,24 +15,18 @@ import { Plus } from '@signozhq/icons';
 import { Skeleton } from 'antd';
 
 import styles from './MapToBillingModelSelect.module.scss';
+import { RULE_OPTIONS_LIMIT } from 'container/LLMObservability/Settings/ModelPricing/constants';
 import type { PricingRule } from 'container/LLMObservability/Settings/ModelPricing/types';
 import { getRuleOptionLabel } from 'container/LLMObservability/Settings/ModelPricing/utils';
 import { usePendingMappingLabel } from 'container/LLMObservability/Settings/ModelPricing/UnpricedModelsTab/usePendingMappingStore';
 import { useMapToBillingModelSearch } from './useMapToBillingModelSearch';
 
-// Stable keys for the placeholder rows shown while options load.
-const SKELETON_ROW_KEYS = [
-	's1',
-	's2',
-	's3',
-	's4',
-	's5',
-	's6',
-	's7',
-	's8',
-	's9',
-	's10',
-];
+// One placeholder row per fetched option, so the skeleton height matches the
+// loaded list. Stable keys derived from the fetch limit.
+const SKELETON_ROW_KEYS = Array.from(
+	{ length: RULE_OPTIONS_LIMIT },
+	(_, index) => `skeleton-${index}`,
+);
 
 interface MapToBillingModelSelectProps {
 	modelName: string;
