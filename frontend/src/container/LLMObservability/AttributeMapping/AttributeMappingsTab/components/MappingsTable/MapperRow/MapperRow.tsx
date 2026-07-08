@@ -5,7 +5,7 @@ import { SpantypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas'
 import cx from 'classnames';
 import { motion, useReducedMotion } from 'motion/react';
 
-import { DraftMapper } from '../../../../types';
+import { Mapping } from '../../../../types';
 import styles from './MapperRow.module.scss';
 
 const MAX_VISIBLE_SOURCES = 3;
@@ -19,7 +19,7 @@ const MAX_STAGGERED_ROWS = 6;
 const STAGGER_STEP = 0.03;
 
 interface MapperRowProps {
-	mapper: DraftMapper;
+	mapper: Mapping;
 	// Position within the group, used to stagger the expand reveal.
 	index: number;
 }
@@ -37,7 +37,7 @@ function MapperRow({ mapper, index }: MapperRowProps): JSX.Element {
 	return (
 		<motion.tr
 			className={styles.mapperRow}
-			data-testid={`mapper-row-${mapper.localId}`}
+			data-testid={`mapper-row-${mapper.id}`}
 			initial={prefersReducedMotion ? false : { opacity: 0, y: -4 }}
 			animate={{ opacity: 1, y: 0 }}
 			transition={{
@@ -50,23 +50,20 @@ function MapperRow({ mapper, index }: MapperRowProps): JSX.Element {
 					weight="semibold"
 					truncate={1}
 					title={mapper.name}
-					data-testid={`mapper-target-${mapper.localId}`}
+					data-testid={`mapper-target-${mapper.id}`}
 				>
 					{mapper.name}
 				</Typography.Text>
 			</td>
 			<td className={styles.cell}>
 				{sources.length === 0 ? (
-					<span
-						className={styles.muted}
-						data-testid={`mapper-sources-${mapper.localId}`}
-					>
+					<span className={styles.muted} data-testid={`mapper-sources-${mapper.id}`}>
 						—
 					</span>
 				) : (
 					<div
 						className={styles.sources}
-						data-testid={`mapper-sources-${mapper.localId}`}
+						data-testid={`mapper-sources-${mapper.id}`}
 					>
 						{visibleSources.map((source) => (
 							<Badge
@@ -105,7 +102,7 @@ function MapperRow({ mapper, index }: MapperRowProps): JSX.Element {
 					<Switch
 						value={mapper.enabled}
 						disabled
-						testId={`mapper-enabled-${mapper.localId}`}
+						testId={`mapper-enabled-${mapper.id}`}
 					/>
 				</div>
 			</td>

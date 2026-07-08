@@ -3,13 +3,11 @@ import {
 	SpantypesSpanMapperGroupDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
-import { DraftGroup, DraftMapper, SourceConfig } from './types';
+import { MappingGroup, Mapping, SourceConfig } from './types';
 
 // Source configs for a mapper, highest priority first (first match wins at
 // evaluation time).
-export function getMapperSources(
-	mapper: SpantypesSpanMapperDTO,
-): SourceConfig[] {
+function getMapperSources(mapper: SpantypesSpanMapperDTO): SourceConfig[] {
 	const sources = mapper.config?.sources ?? [];
 	return [...sources]
 		.sort((a, b) => b.priority - a.priority)
@@ -20,12 +18,11 @@ export function getMapperSources(
 		}));
 }
 
-// ---- working-copy (draft tree) helpers ----
+// ---- listing view-model helpers ----
 
-export function buildDraftMapper(mapper: SpantypesSpanMapperDTO): DraftMapper {
+export function buildMapping(mapper: SpantypesSpanMapperDTO): Mapping {
 	return {
-		localId: mapper.id,
-		serverId: mapper.id,
+		id: mapper.id,
 		name: mapper.name,
 		fieldContext: mapper.fieldContext,
 		sources: getMapperSources(mapper),
@@ -33,17 +30,14 @@ export function buildDraftMapper(mapper: SpantypesSpanMapperDTO): DraftMapper {
 	};
 }
 
-export function buildDraftGroup(
+export function buildMappingGroup(
 	group: SpantypesSpanMapperGroupDTO,
-	mappers: SpantypesSpanMapperDTO[],
-): DraftGroup {
+): MappingGroup {
 	return {
-		localId: group.id,
-		serverId: group.id,
+		id: group.id,
 		name: group.name,
 		attributes: group.condition?.attributes ?? [],
 		resource: group.condition?.resource ?? [],
 		enabled: group.enabled,
-		mappers: mappers.map(buildDraftMapper),
 	};
 }

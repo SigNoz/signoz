@@ -1,10 +1,10 @@
 import { Switch } from '@signozhq/ui/switch';
 
-import { DraftGroup } from '../../../../types';
+import { MappingGroup } from '../../../../types';
 import styles from './GroupHeaderActions.module.scss';
 
 interface GroupHeaderActionsProps {
-	group: DraftGroup;
+	group: MappingGroup;
 }
 
 // The Collapse header's `extra` slot: the group's read-only enable indicator.
@@ -23,7 +23,7 @@ function GroupHeaderActions({ group }: GroupHeaderActionsProps): JSX.Element {
 			<Switch
 				value={group.enabled}
 				disabled
-				testId={`group-enabled-${group.localId}`}
+				testId={`group-enabled-${group.id}`}
 			/>
 		</div>
 	);

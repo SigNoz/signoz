@@ -29,7 +29,7 @@ function MappingsTable({ store }: MappingsTableProps): JSX.Element {
 	const isEmpty = !store.isLoading && store.groups.length === 0;
 
 	const items: CollapseProps['items'] = store.groups.map((group) => ({
-		key: group.localId,
+		key: group.id,
 		label: <GroupHeader group={group} />,
 		extra: <GroupHeaderActions group={group} />,
 		children: <GroupMappers group={group} />,

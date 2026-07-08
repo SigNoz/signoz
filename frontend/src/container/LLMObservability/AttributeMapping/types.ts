@@ -12,26 +12,23 @@ export interface SourceConfig {
 	operation: SpantypesSpanMapperOperationDTO;
 }
 
-// Working-copy node for a mapper. `localId` is a stable client key (the server
-// id once persisted, or a temporary id for not-yet-saved rows). `serverId` is
-// null until the row has been persisted.
-export interface DraftMapper {
-	localId: string;
-	serverId: string | null;
+// A mapper as shown in the read-only listing. `id` is the server id, used as a
+// stable React key / testid anchor.
+export interface Mapping {
+	id: string;
 	name: string;
 	fieldContext: SpantypesFieldContextDTO;
 	sources: SourceConfig[];
 	enabled: boolean;
 }
 
-// Working-copy node for a group, holding its mappers inline so the whole tree
-// can be staged locally and diffed against the server snapshot on save.
-export interface DraftGroup {
-	localId: string;
-	serverId: string | null;
+// A mapping group as shown in the read-only listing. `id` is the server id — a
+// stable React key / testid anchor, and the id used to lazily fetch the group's
+// mappers on expand (see GroupMappers). The mappers aren't held here.
+export interface MappingGroup {
+	id: string;
 	name: string;
 	attributes: string[];
 	resource: string[];
 	enabled: boolean;
-	mappers: DraftMapper[];
 }

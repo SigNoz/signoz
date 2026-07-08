@@ -1,8 +1,8 @@
-import { DraftGroup } from '../../../../types';
+import { MappingGroup } from '../../../../types';
 import styles from './GroupHeader.module.scss';
 
 interface GroupHeaderProps {
-	group: DraftGroup;
+	group: MappingGroup;
 }
 
 // Label content of a group's Collapse header: name plus condition count. The
@@ -19,17 +19,14 @@ function GroupHeader({ group }: GroupHeaderProps): JSX.Element {
 	return (
 		<div
 			className={styles.groupHeaderLabel}
-			data-testid={`group-expand-${group.localId}`}
+			data-testid={`group-expand-${group.id}`}
 		>
-			<span
-				className={styles.groupName}
-				data-testid={`group-name-${group.localId}`}
-			>
+			<span className={styles.groupName} data-testid={`group-name-${group.id}`}>
 				{group.name}
 			</span>
 			<span
 				className={styles.groupCount}
-				data-testid={`group-condition-count-${group.localId}`}
+				data-testid={`group-condition-count-${group.id}`}
 			>
 				· {conditionCount} {conditionCount === 1 ? 'condition' : 'conditions'}
 			</span>

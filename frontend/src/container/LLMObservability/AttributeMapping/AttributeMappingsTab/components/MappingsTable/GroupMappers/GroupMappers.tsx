@@ -10,8 +10,8 @@ import type { SpantypesSpanMapperDTO } from 'api/generated/services/sigNoz.schem
 import { useListSpanMappers } from 'api/generated/services/spanmapper';
 import { motion, useReducedMotion } from 'motion/react';
 
-import { DraftGroup, DraftMapper } from '../../../../types';
-import { buildDraftMapper } from '../../../../utils';
+import { MappingGroup, Mapping } from '../../../../types';
+import { buildMapping } from '../../../../utils';
 import { COLUMN_COUNT } from '../constants';
 import MapperRow, { MapperRowSkeleton } from '../MapperRow';
 import MappingsColgroup from '../MappingsColgroup';
@@ -29,7 +29,7 @@ const STATE_ROW_MOTION = {
 } as const;
 
 interface GroupMappersProps {
-	group: DraftGroup;
+	group: MappingGroup;
 }
 
 // A group's Collapse panel body: its mapper rows rendered in a table that
@@ -38,24 +38,25 @@ interface GroupMappersProps {
 // (destroyInactivePanel), so the fetch is lazy by construction — page load is
 // a single groups request rather than an N+1 fan-out. Rows render straight
 // from the react-query response (read-only listing); editing lands in a later
-// PR. New (unsaved) groups have no serverId, so they skip the fetch.
+// PR.
 function GroupMappers({ group }: GroupMappersProps): JSX.Element {
 	const prefersReducedMotion = useReducedMotion();
 	const stateRowMotion = prefersReducedMotion
 		? { initial: false as const }
 		: STATE_ROW_MOTION;
 
-	const { data, isLoading, isError } = useListSpanMappers(
-		{ groupId: group.serverId ?? '' },
-		{ query: { enabled: group.serverId !== null } },
-	);
+	// The panel mounts only while its group is expanded (destroyInactivePanel),
+	// so this fetch is lazy by construction — no `enabled` guard needed.
+	const { data, isLoading, isError } = useListSpanMappers({
+		groupId: group.id,
+	});
 
-	const mappers = useMemo<DraftMapper[]>(() => {
+	const mappers = useMemo<Mapping[]>(() => {
 		// The generated schema mis-types this list response with the groups DTO;
 		// the runtime payload is mappers.
 		const items = (data?.data?.items ??
 			[]) as unknown as SpantypesSpanMapperDTO[];
-		return items.map(buildDraftMapper);
+		return items.map(buildMapping);
 	}, [data]);
 
 	const skeletonRows = Array.from({ length: MAPPER_SKELETON_ROWS }).map(
@@ -70,7 +71,7 @@ function GroupMappers({ group }: GroupMappersProps): JSX.Element {
 			<td
 				colSpan={COLUMN_COUNT}
 				className={styles.stateCell}
-				data-testid={`mappers-error-${group.localId}`}
+				data-testid={`mappers-error-${group.id}`}
 			>
 				Failed to load mappings. Please try again.
 			</td>
@@ -82,7 +83,7 @@ function GroupMappers({ group }: GroupMappersProps): JSX.Element {
 			<td
 				colSpan={COLUMN_COUNT}
 				className={styles.stateCell}
-				data-testid={`mappers-empty-${group.localId}`}
+				data-testid={`mappers-empty-${group.id}`}
 			>
 				No mappings in this group yet.
 			</td>
@@ -90,7 +91,7 @@ function GroupMappers({ group }: GroupMappersProps): JSX.Element {
 	);
 
 	const mapperRows = mappers.map((mapper, index) => (
-		<MapperRow key={mapper.localId} mapper={mapper} index={index} />
+		<MapperRow key={mapper.id} mapper={mapper} index={index} />
 	));
 
 	let rows: JSX.Element[];
