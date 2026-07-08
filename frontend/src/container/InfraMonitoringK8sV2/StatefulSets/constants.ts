@@ -1,67 +1,58 @@
+import { InframonitoringtypesStatefulSetRecordDTO } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
-import {
-	createFilterItem,
-	K8sDetailsMetadataConfig,
-} from '../Base/K8sBaseDetails';
-import { QUERY_KEYS } from '../EntityDetailsUtils/utils';
-import { K8sStatefulSetsData } from './api';
+import { K8sDetailsMetadataConfig } from '../Base/K8sBaseDetails';
+import { formatValueForExpression } from 'components/QueryBuilderV2/utils';
+import { INFRA_MONITORING_ATTR_KEYS } from '../constants';
 
-export const k8sStatefulSetGetSelectedItemFilters = (
+export const k8sStatefulSetGetSelectedItemExpression = (
 	selectedItemId: string,
-): TagFilter => ({
-	op: 'AND',
-	items: [
-		{
-			id: 'k8s_statefulset_name',
-			key: {
-				key: 'k8s_statefulset_name',
-				type: null,
-			},
-			op: '=',
-			value: selectedItemId,
-		},
-	],
-});
+): string =>
+	`${INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME} = ${formatValueForExpression(selectedItemId)}`;
 
-export const k8sStatefulSetDetailsMetadataConfig: K8sDetailsMetadataConfig<K8sStatefulSetsData>[] =
+export const k8sStatefulSetDetailsMetadataConfig: K8sDetailsMetadataConfig<InframonitoringtypesStatefulSetRecordDTO>[] =
 	[
 		{
 			label: 'Statefulset Name',
-			getValue: (p): string => p.meta.k8s_statefulset_name,
+			getValue: (p): string =>
+				p.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME] ?? '',
 		},
 		{
 			label: 'Namespace Name',
-			getValue: (p): string => p.meta.k8s_namespace_name,
+			getValue: (p): string =>
+				p.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ?? '',
 		},
 	];
 
-export const k8sStatefulSetInitialEventsFilter = (
-	item: K8sStatefulSetsData,
-): ReturnType<typeof createFilterItem>[] => [
-	createFilterItem(QUERY_KEYS.K8S_OBJECT_KIND, 'StatefulSet'),
-	createFilterItem(QUERY_KEYS.K8S_OBJECT_NAME, item.meta.k8s_statefulset_name),
-];
+export const k8sStatefulSetInitialEventsExpression = (
+	item: InframonitoringtypesStatefulSetRecordDTO,
+): string => {
+	const objectName = formatValueForExpression(
+		item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME] ?? '',
+	);
+	return `${INFRA_MONITORING_ATTR_KEYS.K8S_OBJECT_KIND} = 'StatefulSet' AND ${INFRA_MONITORING_ATTR_KEYS.K8S_OBJECT_NAME} = ${objectName}`;
+};
 
-export const k8sStatefulSetInitialLogTracesFilter = (
-	item: K8sStatefulSetsData,
-): ReturnType<typeof createFilterItem>[] => [
-	createFilterItem(
-		QUERY_KEYS.K8S_STATEFUL_SET_NAME,
-		item.meta.k8s_statefulset_name,
-	),
-	createFilterItem(QUERY_KEYS.K8S_NAMESPACE_NAME, item.meta.k8s_namespace_name),
-];
+export const k8sStatefulSetInitialLogTracesExpression = (
+	item: InframonitoringtypesStatefulSetRecordDTO,
+): string => {
+	const statefulSetName = formatValueForExpression(
+		item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME] ?? '',
+	);
+	const namespaceName = formatValueForExpression(
+		item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ?? '',
+	);
+	return `${INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME} = ${statefulSetName} AND ${INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME} = ${namespaceName}`;
+};
 
 export const k8sStatefulSetGetEntityName = (
-	item: K8sStatefulSetsData,
-): string => item.meta.k8s_statefulset_name;
+	item: InframonitoringtypesStatefulSetRecordDTO,
+): string => item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME] ?? '';
 
 export const statefulSetWidgetInfo = [
 	{
@@ -91,16 +82,16 @@ export const statefulSetWidgetInfo = [
 ];
 
 export const getStatefulSetMetricsQueryPayload = (
-	statefulSet: K8sStatefulSetsData,
+	statefulSet: InframonitoringtypesStatefulSetRecordDTO,
 	start: number,
 	end: number,
 	dotMetricsEnabled: boolean,
 ): GetQueryResultsProps[] => {
 	const k8sStatefulSetNameKey = dotMetricsEnabled
-		? 'k8s.statefulset.name'
+		? INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME
 		: 'k8s_statefulset_name';
 	const k8sNamespaceNameKey = dotMetricsEnabled
-		? 'k8s.namespace.name'
+		? INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME
 		: 'k8s_namespace_name';
 	const k8sPodNameKey = dotMetricsEnabled ? 'k8s.pod.name' : 'k8s_pod_name';
 
@@ -172,7 +163,10 @@ export const getStatefulSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: statefulSet.meta.k8s_statefulset_name,
+										value:
+											statefulSet.meta?.[
+												INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME
+											] ?? '',
 									},
 									{
 										id: 'f2',
@@ -183,7 +177,9 @@ export const getStatefulSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: statefulSet.meta.k8s_namespace_name,
+										value:
+											statefulSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ??
+											'',
 									},
 								],
 								op: 'AND',
@@ -222,7 +218,10 @@ export const getStatefulSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: 'contains',
-										value: statefulSet.meta.k8s_statefulset_name,
+										value:
+											statefulSet.meta?.[
+												INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME
+											] ?? '',
 									},
 									{
 										id: 'f2',
@@ -233,7 +232,9 @@ export const getStatefulSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: statefulSet.meta.k8s_namespace_name,
+										value:
+											statefulSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ??
+											'',
 									},
 								],
 								op: 'AND',
@@ -272,7 +273,10 @@ export const getStatefulSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: 'contains',
-										value: statefulSet.meta.k8s_statefulset_name,
+										value:
+											statefulSet.meta?.[
+												INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME
+											] ?? '',
 									},
 									{
 										id: 'f2',
@@ -283,7 +287,9 @@ export const getStatefulSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: statefulSet.meta.k8s_namespace_name,
+										value:
+											statefulSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ??
+											'',
 									},
 								],
 								op: 'AND',
@@ -342,7 +348,10 @@ export const getStatefulSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: statefulSet.meta.k8s_statefulset_name,
+										value:
+											statefulSet.meta?.[
+												INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME
+											] ?? '',
 									},
 									{
 										id: 'f2',
@@ -353,7 +362,9 @@ export const getStatefulSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: statefulSet.meta.k8s_namespace_name,
+										value:
+											statefulSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ??
+											'',
 									},
 								],
 								op: 'AND',
@@ -392,7 +403,10 @@ export const getStatefulSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: statefulSet.meta.k8s_statefulset_name,
+										value:
+											statefulSet.meta?.[
+												INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME
+											] ?? '',
 									},
 									{
 										id: 'f2',
@@ -403,7 +417,9 @@ export const getStatefulSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: statefulSet.meta.k8s_namespace_name,
+										value:
+											statefulSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ??
+											'',
 									},
 								],
 								op: 'AND',
@@ -462,7 +478,10 @@ export const getStatefulSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: statefulSet.meta.k8s_statefulset_name,
+										value:
+											statefulSet.meta?.[
+												INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME
+											] ?? '',
 									},
 									{
 										id: 'f2',
@@ -473,7 +492,9 @@ export const getStatefulSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: statefulSet.meta.k8s_namespace_name,
+										value:
+											statefulSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ??
+											'',
 									},
 								],
 								op: 'AND',
@@ -512,7 +533,10 @@ export const getStatefulSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: 'contains',
-										value: statefulSet.meta.k8s_statefulset_name,
+										value:
+											statefulSet.meta?.[
+												INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME
+											] ?? '',
 									},
 									{
 										id: 'f2',
@@ -523,7 +547,9 @@ export const getStatefulSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: statefulSet.meta.k8s_namespace_name,
+										value:
+											statefulSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ??
+											'',
 									},
 								],
 								op: 'AND',
@@ -562,7 +588,10 @@ export const getStatefulSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: 'contains',
-										value: statefulSet.meta.k8s_statefulset_name,
+										value:
+											statefulSet.meta?.[
+												INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME
+											] ?? '',
 									},
 									{
 										id: 'f2',
@@ -573,7 +602,9 @@ export const getStatefulSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: statefulSet.meta.k8s_namespace_name,
+										value:
+											statefulSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ??
+											'',
 									},
 								],
 								op: 'AND',
@@ -632,7 +663,10 @@ export const getStatefulSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: statefulSet.meta.k8s_statefulset_name,
+										value:
+											statefulSet.meta?.[
+												INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME
+											] ?? '',
 									},
 									{
 										id: 'f2',
@@ -643,7 +677,9 @@ export const getStatefulSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: statefulSet.meta.k8s_namespace_name,
+										value:
+											statefulSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ??
+											'',
 									},
 								],
 								op: 'AND',
@@ -682,7 +718,10 @@ export const getStatefulSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: statefulSet.meta.k8s_statefulset_name,
+										value:
+											statefulSet.meta?.[
+												INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME
+											] ?? '',
 									},
 									{
 										id: 'f2',
@@ -693,7 +732,9 @@ export const getStatefulSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: statefulSet.meta.k8s_namespace_name,
+										value:
+											statefulSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ??
+											'',
 									},
 								],
 								op: 'AND',
@@ -752,7 +793,10 @@ export const getStatefulSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: statefulSet.meta.k8s_statefulset_name,
+										value:
+											statefulSet.meta?.[
+												INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME
+											] ?? '',
 									},
 									{
 										id: 'f2',
@@ -763,7 +807,9 @@ export const getStatefulSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: statefulSet.meta.k8s_namespace_name,
+										value:
+											statefulSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ??
+											'',
 									},
 								],
 								op: 'AND',
@@ -835,7 +881,10 @@ export const getStatefulSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: statefulSet.meta.k8s_statefulset_name,
+										value:
+											statefulSet.meta?.[
+												INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME
+											] ?? '',
 									},
 									{
 										id: 'f2',
@@ -846,7 +895,9 @@ export const getStatefulSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: statefulSet.meta.k8s_namespace_name,
+										value:
+											statefulSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ??
+											'',
 									},
 								],
 								op: 'AND',
