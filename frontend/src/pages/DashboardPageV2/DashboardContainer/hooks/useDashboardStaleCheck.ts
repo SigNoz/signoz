@@ -46,11 +46,18 @@ export function useDashboardStaleCheck(
 	);
 
 	const serverUpdatedAt = data?.data?.updatedAt;
+	// Prompt only when the server copy is STRICTLY NEWER than the one we're viewing —
+	// not merely different. Your own edits advance `loadedUpdatedAt` immediately (the
+	// optimistic patch writes the new updatedAt into the render cache), while the
+	// freshness query lags until the next window focus. A `!==` check reads that gap —
+	// "I moved ahead of the stale freshness copy" — as an external change, firing a
+	// false prompt on every save that persists across in-app navigation. "Newer than"
+	// only trips for a version we haven't loaded, i.e. a genuine external change.
 	const changed =
 		!isMutating &&
 		!!serverUpdatedAt &&
 		!!loadedUpdatedAt &&
-		serverUpdatedAt !== loadedUpdatedAt;
+		new Date(serverUpdatedAt).getTime() > new Date(loadedUpdatedAt).getTime();
 
 	const dismiss = useCallback(
 		(): void => setDismissedAt(serverUpdatedAt ?? null),

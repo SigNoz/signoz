@@ -40,6 +40,16 @@ describe('useDashboardStaleCheck', () => {
 		expect(result.current.showPrompt).toBe(false);
 	});
 
+	it('does not prompt when the loaded copy is newer than the freshness copy (own edit)', () => {
+		// Own save advanced the render cache to 10:00 while the freshness query still
+		// lags at 09:00; a newer-than check must not read this as an external change.
+		setServerUpdatedAt('2026-07-08T09:00:00Z');
+		const { result } = renderHook(() =>
+			useDashboardStaleCheck('d1', '2026-07-08T10:00:00Z', jest.fn()),
+		);
+		expect(result.current.showPrompt).toBe(false);
+	});
+
 	it('does not prompt while a mutation is in flight (optimistic save)', () => {
 		mockUseIsMutating.mockReturnValue(1);
 		setServerUpdatedAt('2026-07-08T10:00:00Z');
