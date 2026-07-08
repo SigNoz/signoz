@@ -18,22 +18,22 @@ func NewSqlAuthzStore(sqlstore sqlstore.SQLStore) authtypes.RoleStore {
 	return &store{sqlstore: sqlstore}
 }
 
-func (store *store) Create(ctx context.Context, role *authtypes.Role) error {
+func (store *store) Create(ctx context.Context, storableRole *authtypes.StorableRole) error {
 	_, err := store.
 		sqlstore.
 		BunDBCtx(ctx).
 		NewInsert().
-		Model(role).
+		Model(storableRole).
 		Exec(ctx)
 	if err != nil {
-		return store.sqlstore.WrapAlreadyExistsErrf(err, errors.CodeAlreadyExists, "role with name: %s already exists", role.Name)
+		return store.sqlstore.WrapAlreadyExistsErrf(err, errors.CodeAlreadyExists, "role with name: %s already exists", storableRole.Name)
 	}
 
 	return nil
 }
 
-func (store *store) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*authtypes.Role, error) {
-	role := new(authtypes.Role)
+func (store *store) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*authtypes.StorableRole, error) {
+	role := new(authtypes.StorableRole)
 	err := store.
 		sqlstore.
 		BunDBCtx(ctx).
@@ -49,8 +49,8 @@ func (store *store) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) 
 	return role, nil
 }
 
-func (store *store) GetByOrgIDAndName(ctx context.Context, orgID valuer.UUID, name string) (*authtypes.Role, error) {
-	role := new(authtypes.Role)
+func (store *store) GetByOrgIDAndName(ctx context.Context, orgID valuer.UUID, name string) (*authtypes.StorableRole, error) {
+	role := new(authtypes.StorableRole)
 	err := store.
 		sqlstore.
 		BunDBCtx(ctx).
@@ -66,8 +66,8 @@ func (store *store) GetByOrgIDAndName(ctx context.Context, orgID valuer.UUID, na
 	return role, nil
 }
 
-func (store *store) List(ctx context.Context, orgID valuer.UUID) ([]*authtypes.Role, error) {
-	roles := make([]*authtypes.Role, 0)
+func (store *store) List(ctx context.Context, orgID valuer.UUID) ([]*authtypes.StorableRole, error) {
+	roles := make([]*authtypes.StorableRole, 0)
 	err := store.
 		sqlstore.
 		BunDBCtx(ctx).
@@ -82,8 +82,8 @@ func (store *store) List(ctx context.Context, orgID valuer.UUID) ([]*authtypes.R
 	return roles, nil
 }
 
-func (store *store) ListByOrgIDAndNames(ctx context.Context, orgID valuer.UUID, names []string) ([]*authtypes.Role, error) {
-	roles := make([]*authtypes.Role, 0)
+func (store *store) ListByOrgIDAndNames(ctx context.Context, orgID valuer.UUID, names []string) ([]*authtypes.StorableRole, error) {
+	roles := make([]*authtypes.StorableRole, 0)
 	err := store.
 		sqlstore.
 		BunDBCtx(ctx).
@@ -103,8 +103,8 @@ func (store *store) ListByOrgIDAndNames(ctx context.Context, orgID valuer.UUID, 
 	return roles, nil
 }
 
-func (store *store) ListByOrgIDAndIDs(ctx context.Context, orgID valuer.UUID, ids []valuer.UUID) ([]*authtypes.Role, error) {
-	roles := make([]*authtypes.Role, 0)
+func (store *store) ListByOrgIDAndIDs(ctx context.Context, orgID valuer.UUID, ids []valuer.UUID) ([]*authtypes.StorableRole, error) {
+	roles := make([]*authtypes.StorableRole, 0)
 	err := store.
 		sqlstore.
 		BunDBCtx(ctx).
@@ -124,17 +124,17 @@ func (store *store) ListByOrgIDAndIDs(ctx context.Context, orgID valuer.UUID, id
 	return roles, nil
 }
 
-func (store *store) Update(ctx context.Context, orgID valuer.UUID, role *authtypes.Role) error {
+func (store *store) Update(ctx context.Context, orgID valuer.UUID, storableRole *authtypes.StorableRole) error {
 	_, err := store.
 		sqlstore.
 		BunDBCtx(ctx).
 		NewUpdate().
-		Model(role).
+		Model(storableRole).
 		WherePK().
 		Where("org_id = ?", orgID).
 		Exec(ctx)
 	if err != nil {
-		return store.sqlstore.WrapNotFoundErrf(err, errors.CodeAlreadyExists, "role with id %s doesn't exist", role.ID)
+		return store.sqlstore.WrapNotFoundErrf(err, errors.CodeAlreadyExists, "role with id %s doesn't exist", storableRole.ID)
 	}
 
 	return nil
@@ -145,7 +145,7 @@ func (store *store) Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUI
 		sqlstore.
 		BunDBCtx(ctx).
 		NewDelete().
-		Model(new(authtypes.Role)).
+		Model(new(authtypes.StorableRole)).
 		Where("org_id = ?", orgID).
 		Where("id = ?", id).
 		Exec(ctx)

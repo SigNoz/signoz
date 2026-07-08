@@ -200,11 +200,21 @@ func (provider *provider) Create(ctx context.Context, orgID valuer.UUID, role *a
 		return err
 	}
 
-	return provider.store.Create(ctx, role)
+	storableRole, err := authtypes.NewStorableRoleFromRole(role)
+	if err != nil {
+		return err
+	}
+
+	return provider.store.Create(ctx, storableRole)
 }
 
 func (provider *provider) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*authtypes.Role, error) {
-	return provider.store.Get(ctx, orgID, id)
+	storableRole, err := provider.store.Get(ctx, orgID, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return authtypes.NewRoleFromStorableRole(storableRole)
 }
 
 func (provider *provider) Update(ctx context.Context, orgID valuer.UUID, updatedRole *authtypes.Role) error {
@@ -240,7 +250,12 @@ func (provider *provider) Update(ctx context.Context, orgID valuer.UUID, updated
 		return err
 	}
 
-	return provider.store.Update(ctx, orgID, updatedRole)
+	storableRole, err := authtypes.NewStorableRoleFromRole(updatedRole)
+	if err != nil {
+		return err
+	}
+
+	return provider.store.Update(ctx, orgID, storableRole)
 }
 
 func (provider *provider) Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {

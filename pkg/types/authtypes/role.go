@@ -62,15 +62,25 @@ var (
 )
 
 type Role struct {
+	types.Identifiable
+	types.TimeAuditable
+	Name              string            `json:"name" required:"true"`
+	Description       string            `json:"description" required:"true"`
+	Type              valuer.String     `json:"type" required:"true"`
+	OrgID             valuer.UUID       `json:"orgId" required:"true"`
+	TransactionGroups TransactionGroups `json:"transactionGroups" required:"true" nullable:"false"`
+}
+
+type StorableRole struct {
 	bun.BaseModel `bun:"table:role"`
 
 	types.Identifiable
 	types.TimeAuditable
-	Name              string            `bun:"name,type:string" json:"name" required:"true"`
-	Description       string            `bun:"description,type:string"  json:"description" required:"true"`
-	Type              valuer.String     `bun:"type,type:string" json:"type" required:"true"`
-	OrgID             valuer.UUID       `bun:"org_id,type:string" json:"orgId" required:"true"`
-	TransactionGroups TransactionGroups `bun:"transaction_groups,type:text" json:"transactionGroups" required:"true" nullable:"false"`
+	Name              string        `bun:"name,type:string"`
+	Description       string        `bun:"description,type:string"`
+	Type              valuer.String `bun:"type,type:string"`
+	OrgID             valuer.UUID   `bun:"org_id,type:string"`
+	TransactionGroups string        `bun:"transaction_groups,type:text,nullzero"`
 }
 
 type GettableRole struct {
@@ -108,6 +118,62 @@ func NewRole(name, description string, roleType valuer.String, orgID valuer.UUID
 		OrgID:             orgID,
 		TransactionGroups: transactionGroups,
 	}
+}
+
+func NewStorableRoleFromRole(role *Role) (*StorableRole, error) {
+	transactionGroups := role.TransactionGroups
+	if transactionGroups == nil {
+		transactionGroups = make(TransactionGroups, 0)
+	}
+
+	data, err := json.Marshal(transactionGroups)
+	if err != nil {
+		return nil, err
+	}
+
+	return &StorableRole{
+		Identifiable:      role.Identifiable,
+		TimeAuditable:     role.TimeAuditable,
+		Name:              role.Name,
+		Description:       role.Description,
+		Type:              role.Type,
+		OrgID:             role.OrgID,
+		TransactionGroups: string(data),
+	}, nil
+}
+
+func NewRoleFromStorableRole(storableRole *StorableRole) (*Role, error) {
+	transactionGroups := make(TransactionGroups, 0)
+	if storableRole.TransactionGroups != "" {
+		var err error
+		transactionGroups, err = NewTransactionGroups([]byte(storableRole.TransactionGroups))
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &Role{
+		Identifiable:      storableRole.Identifiable,
+		TimeAuditable:     storableRole.TimeAuditable,
+		Name:              storableRole.Name,
+		Description:       storableRole.Description,
+		Type:              storableRole.Type,
+		OrgID:             storableRole.OrgID,
+		TransactionGroups: transactionGroups,
+	}, nil
+}
+
+func NewRolesFromStorableRoles(storableRoles []*StorableRole) ([]*Role, error) {
+	roles := make([]*Role, len(storableRoles))
+	for index, storableRole := range storableRoles {
+		role, err := NewRoleFromStorableRole(storableRole)
+		if err != nil {
+			return nil, err
+		}
+		roles[index] = role
+	}
+
+	return roles, nil
 }
 
 func NewGettableRolesFromRoles(roles []*Role) []*GettableRole {
@@ -259,13 +325,13 @@ func NormalizeRoleName(role string) string {
 }
 
 type RoleStore interface {
-	Create(context.Context, *Role) error
-	Get(context.Context, valuer.UUID, valuer.UUID) (*Role, error)
-	GetByOrgIDAndName(context.Context, valuer.UUID, string) (*Role, error)
-	List(context.Context, valuer.UUID) ([]*Role, error)
-	ListByOrgIDAndNames(context.Context, valuer.UUID, []string) ([]*Role, error)
-	ListByOrgIDAndIDs(context.Context, valuer.UUID, []valuer.UUID) ([]*Role, error)
-	Update(context.Context, valuer.UUID, *Role) error
+	Create(context.Context, *StorableRole) error
+	Get(context.Context, valuer.UUID, valuer.UUID) (*StorableRole, error)
+	GetByOrgIDAndName(context.Context, valuer.UUID, string) (*StorableRole, error)
+	List(context.Context, valuer.UUID) ([]*StorableRole, error)
+	ListByOrgIDAndNames(context.Context, valuer.UUID, []string) ([]*StorableRole, error)
+	ListByOrgIDAndIDs(context.Context, valuer.UUID, []valuer.UUID) ([]*StorableRole, error)
+	Update(context.Context, valuer.UUID, *StorableRole) error
 	Delete(context.Context, valuer.UUID, valuer.UUID) error
 	RunInTx(context.Context, func(ctx context.Context) error) error
 }

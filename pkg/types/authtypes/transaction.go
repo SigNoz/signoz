@@ -1,7 +1,6 @@
 package authtypes
 
 import (
-	"database/sql/driver"
 	"encoding/json"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -108,48 +107,6 @@ func NewGettableTransaction(results []*TransactionWithAuthorization) []*Gettable
 
 func (groups TransactionGroups) Diff(desired TransactionGroups) (additions, deletions TransactionGroups) {
 	return desired.subtract(groups), groups.subtract(desired)
-}
-
-func (groups TransactionGroups) MarshalJSON() ([]byte, error) {
-	if groups == nil {
-		return []byte("[]"), nil
-	}
-
-	return json.Marshal([]*TransactionGroup(groups))
-}
-
-func (groups TransactionGroups) Value() (driver.Value, error) {
-	data, err := json.Marshal(groups)
-	if err != nil {
-		return nil, err
-	}
-
-	return string(data), nil
-}
-
-func (groups *TransactionGroups) Scan(value any) error {
-	if value == nil {
-		*groups = nil
-		return nil
-	}
-
-	var data []byte
-	switch typed := value.(type) {
-	case string:
-		data = []byte(typed)
-	case []byte:
-		data = typed
-	default:
-		return errors.Newf(errors.TypeInternal, errors.CodeInternal, "unsupported type %T for transaction groups", value)
-	}
-
-	parsed, err := NewTransactionGroups(data)
-	if err != nil {
-		return err
-	}
-
-	*groups = parsed
-	return nil
 }
 
 func (transaction *Transaction) UnmarshalJSON(data []byte) error {
