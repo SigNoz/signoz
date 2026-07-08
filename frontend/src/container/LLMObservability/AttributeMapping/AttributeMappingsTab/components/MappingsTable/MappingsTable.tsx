@@ -31,8 +31,8 @@ function MappingsTable({ store }: MappingsTableProps): JSX.Element {
 	const items: CollapseProps['items'] = store.groups.map((group) => ({
 		key: group.localId,
 		label: <GroupHeader group={group} />,
-		extra: <GroupHeaderActions group={group} store={store} />,
-		children: <GroupMappers group={group} store={store} />,
+		extra: <GroupHeaderActions group={group} />,
+		children: <GroupMappers group={group} />,
 	}));
 
 	const skeletonBanners = (

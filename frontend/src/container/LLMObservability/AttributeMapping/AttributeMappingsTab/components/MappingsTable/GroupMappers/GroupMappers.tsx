@@ -2,16 +2,16 @@
  * jsx-a11y/control-has-associated-label mis-fires on non-interactive data-table
  * rows/cells whose content is a wrapping element (a flex container, badge, or
  * loading bar) rather than a direct text node — a `<tr>`/`<td>` is not a control,
- * and the real control here (the enable toggle) carries its own label.
+ * and the read-only status switch carries its own label.
  */
 /* eslint-disable jsx-a11y/control-has-associated-label */
-import { useEffect } from 'react';
+import { useMemo } from 'react';
 import type { SpantypesSpanMapperDTO } from 'api/generated/services/sigNoz.schemas';
 import { useListSpanMappers } from 'api/generated/services/spanmapper';
 import { motion, useReducedMotion } from 'motion/react';
 
-import { DraftGroup } from '../../../../types';
-import { AttributeMappingStore } from '../../../hooks/useAttributeMappingStore';
+import { DraftGroup, DraftMapper } from '../../../../types';
+import { buildDraftMapper } from '../../../../utils';
 import { COLUMN_COUNT } from '../constants';
 import MapperRow, { MapperRowSkeleton } from '../MapperRow';
 import MappingsColgroup from '../MappingsColgroup';
@@ -30,18 +30,16 @@ const STATE_ROW_MOTION = {
 
 interface GroupMappersProps {
 	group: DraftGroup;
-	store: AttributeMappingStore;
 }
 
 // A group's Collapse panel body: its mapper rows rendered in a table that
 // shares the listing's colgroup, so they align to the columns of the header
 // table above the Collapse. The panel only mounts while its group is expanded
 // (destroyInactivePanel), so the fetch is lazy by construction — page load is
-// a single groups request rather than an N+1 fan-out. The fetched mappers are
-// folded into the store's draft (once per group), which is what the rows and
-// their enable toggles are driven by.
-function GroupMappers({ group, store }: GroupMappersProps): JSX.Element {
-	const { hydrateGroupMappers, toggleMapper } = store;
+// a single groups request rather than an N+1 fan-out. Rows render straight
+// from the react-query response (read-only listing); editing lands in a later
+// PR. New (unsaved) groups have no serverId, so they skip the fetch.
+function GroupMappers({ group }: GroupMappersProps): JSX.Element {
 	const prefersReducedMotion = useReducedMotion();
 	const stateRowMotion = prefersReducedMotion
 		? { initial: false as const }
@@ -52,19 +50,13 @@ function GroupMappers({ group, store }: GroupMappersProps): JSX.Element {
 		{ query: { enabled: group.serverId !== null } },
 	);
 
-	useEffect(() => {
-		const items = data?.data?.items;
-		if (group.serverId && items) {
-			// The generated schema mis-types this list response with the groups DTO;
-			// the runtime payload is mappers.
-			hydrateGroupMappers(
-				group.serverId,
-				items as unknown as SpantypesSpanMapperDTO[],
-			);
-		}
-	}, [group.serverId, data, hydrateGroupMappers]);
-
-	const mapperCount = group.mappers.length;
+	const mappers = useMemo<DraftMapper[]>(() => {
+		// The generated schema mis-types this list response with the groups DTO;
+		// the runtime payload is mappers.
+		const items = (data?.data?.items ??
+			[]) as unknown as SpantypesSpanMapperDTO[];
+		return items.map(buildDraftMapper);
+	}, [data]);
 
 	const skeletonRows = Array.from({ length: MAPPER_SKELETON_ROWS }).map(
 		(_, index) => (
@@ -97,23 +89,16 @@ function GroupMappers({ group, store }: GroupMappersProps): JSX.Element {
 		</motion.tr>
 	);
 
-	const mapperRows = group.mappers.map((mapper, index) => (
-		<MapperRow
-			key={mapper.localId}
-			mapper={mapper}
-			index={index}
-			onToggle={(localId, enabled): void =>
-				toggleMapper(group.localId, localId, enabled)
-			}
-		/>
+	const mapperRows = mappers.map((mapper, index) => (
+		<MapperRow key={mapper.localId} mapper={mapper} index={index} />
 	));
 
 	let rows: JSX.Element[];
 	if (isError) {
 		rows = [errorRow];
-	} else if (isLoading && mapperCount === 0) {
+	} else if (isLoading) {
 		rows = skeletonRows;
-	} else if (mapperCount === 0) {
+	} else if (mappers.length === 0) {
 		rows = [emptyRow];
 	} else {
 		rows = mapperRows;

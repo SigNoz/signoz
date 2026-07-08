@@ -111,25 +111,15 @@ describe('AttributeMappingsTab (integration)', () => {
 		).not.toBeChecked();
 	});
 
-	it("toggles a group's enabled state without expanding its panel", async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+	it('renders the group enable state as a read-only switch', async () => {
 		setupGroups();
 		render(<AttributeMappingsTab />);
 
+		// The status switch reflects enabled state but is non-interactive in this
+		// read-only listing — editing lands in a later PR.
 		const toggle = await screen.findByTestId('group-enabled-group-1');
-		const header = screen
-			.getByTestId('group-expand-group-1')
-			.closest('.ant-collapse-header') as HTMLElement;
 		expect(toggle).toBeChecked();
-
-		await user.click(toggle);
-
-		// The flip is staged in the draft store; the header click must not leak
-		// into the Collapse toggle (GroupHeaderActions stops propagation).
-		await waitFor(() =>
-			expect(screen.getByTestId('group-enabled-group-1')).not.toBeChecked(),
-		);
-		expect(header).toHaveAttribute('aria-expanded', 'false');
+		expect(toggle).toBeDisabled();
 	});
 
 	it("reveals a group's mappers on expand and hides them on collapse", async () => {
@@ -189,7 +179,7 @@ describe('AttributeMappingsTab (integration)', () => {
 		).toBeChecked();
 	});
 
-	it("toggles a mapper's enabled state through the store", async () => {
+	it("renders a mapper's enable state as a read-only switch", async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		setupGroups();
 		setupMappers([makeMapper({ id: 'mapper-1', enabled: true })]);
@@ -198,47 +188,11 @@ describe('AttributeMappingsTab (integration)', () => {
 		await screen.findByTestId('group-name-group-1');
 		await expandGroup(user);
 
+		// Like the group switch, a mapper's status switch reflects state without
+		// accepting flips in this read-only listing.
 		const toggle = await screen.findByTestId('mapper-enabled-mapper-1');
 		expect(toggle).toBeChecked();
-
-		await user.click(toggle);
-
-		// The switch is driven by the draft, so a flip proves the store round-trip.
-		await waitFor(() =>
-			expect(screen.getByTestId('mapper-enabled-mapper-1')).not.toBeChecked(),
-		);
-	});
-
-	it('preserves a staged mapper toggle across collapse and re-expand', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		setupGroups();
-		// The server always reports this mapper as enabled; only the staged flip
-		// makes it disabled.
-		setupMappers([makeMapper({ id: 'mapper-1', enabled: true })]);
-		render(<AttributeMappingsTab />);
-
-		await screen.findByTestId('group-name-group-1');
-		await expandGroup(user);
-
-		// Flip it off, then collapse the panel (destroyInactivePanel unmounts it).
-		await user.click(await screen.findByTestId('mapper-enabled-mapper-1'));
-		await waitFor(() =>
-			expect(screen.getByTestId('mapper-enabled-mapper-1')).not.toBeChecked(),
-		);
-		await expandGroup(user);
-		await waitFor(() =>
-			expect(
-				screen.queryByTestId('mapper-enabled-mapper-1'),
-			).not.toBeInTheDocument(),
-		);
-
-		// Re-expand: the mappers query refetches (staleTime 0) and re-fires the
-		// hydrate effect, but the store's once-guard keeps the staged flip — the
-		// switch must stay off rather than snapping back to the server's enabled.
-		await expandGroup(user);
-		await expect(
-			screen.findByTestId('mapper-enabled-mapper-1'),
-		).resolves.not.toBeChecked();
+		expect(toggle).toBeDisabled();
 	});
 
 	it('shows the mappers error state when the mappers request fails', async () => {

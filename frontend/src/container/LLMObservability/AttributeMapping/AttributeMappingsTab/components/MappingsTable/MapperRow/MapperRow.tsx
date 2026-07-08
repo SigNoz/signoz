@@ -22,13 +22,13 @@ interface MapperRowProps {
 	mapper: DraftMapper;
 	// Position within the group, used to stagger the expand reveal.
 	index: number;
-	onToggle: (localId: string, enabled: boolean) => void;
 }
 
 // A single mapper row, aligned to the table's shared columns (Target / Sources /
 // Writes to / Status). Priority order is positional — top wins — so there's no
-// sortable affordance here.
-function MapperRow({ mapper, index, onToggle }: MapperRowProps): JSX.Element {
+// sortable affordance here. The status switch is read-only in this PR (editing
+// lands later); it reflects enabled state without accepting flips.
+function MapperRow({ mapper, index }: MapperRowProps): JSX.Element {
 	const prefersReducedMotion = useReducedMotion();
 	const sources = mapper.sources ?? [];
 	const visibleSources = sources.slice(0, MAX_VISIBLE_SOURCES);
@@ -104,7 +104,7 @@ function MapperRow({ mapper, index, onToggle }: MapperRowProps): JSX.Element {
 				<div className={styles.rowActions}>
 					<Switch
 						value={mapper.enabled}
-						onChange={(checked): void => onToggle(mapper.localId, checked)}
+						disabled
 						testId={`mapper-enabled-${mapper.localId}`}
 					/>
 				</div>
