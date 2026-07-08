@@ -216,8 +216,6 @@ function Hosts(): JSX.Element {
 				queryKeyPrefix="hosts"
 				tabsConfig={{
 					showEvents: false,
-					showContainers: true,
-					showProcesses: true,
 				}}
 			/>
 		</>
