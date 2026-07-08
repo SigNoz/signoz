@@ -63,6 +63,8 @@ function MapperRow({
 			<td className={cx(styles.cell, styles.targetCell)}>
 				<Typography.Text
 					weight="semibold"
+					truncate={1}
+					title={mapper.name}
 					data-testid={`mapper-target-${mapper.localId}`}
 				>
 					{mapper.name}
@@ -88,7 +90,9 @@ function MapperRow({
 								className={styles.sourceChip}
 								key={`${source.context}:${source.key}`}
 							>
-								{source.key}
+								<span className={styles.sourceChipText} title={source.key}>
+									{source.key}
+								</span>
 							</Badge>
 						))}
 						{remainingSources > 0 && (

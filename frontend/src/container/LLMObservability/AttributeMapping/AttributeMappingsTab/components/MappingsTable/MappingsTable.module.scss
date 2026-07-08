@@ -137,10 +137,16 @@
 }
 
 .sourceChip {
-	// Badge's outline/vanilla variant supplies border/background/radius/padding;
-	// this max-width lets long keys truncate rather than widen the column.
-	max-width: 220px;
+	// Badge's outline/vanilla variant supplies border/background/radius/padding.
 	font-family: var(--font-mono, monospace);
+}
+
+.sourceChipText {
+	display: block;
+	max-width: 220px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .sourceMore {
