@@ -11,10 +11,12 @@ import styles from './MappingsTable.module.scss';
 
 const MAX_VISIBLE_SOURCES = 3;
 
-// Rows mount when their group expands, so this entrance IS the expand reveal
-// (collapse unmounts the rows, so there's no exit to animate). A small per-row
-// stagger, capped so a long group doesn't cascade for too long.
+// Rows mount when their group expands, so this entrance IS the expand reveal.
+// A small per-row stagger, capped so a long group doesn't cascade for too long.
+// On collapse the row is kept mounted by AnimatePresence long enough to run the
+// exit fade-up, so expand and collapse mirror each other as one accordion.
 const ROW_TRANSITION = { duration: 0.18, ease: 'easeOut' } as const;
+const ROW_EXIT_TRANSITION = { duration: 0.12, ease: 'easeIn' } as const;
 const MAX_STAGGERED_ROWS = 6;
 const STAGGER_STEP = 0.03;
 
@@ -48,6 +50,11 @@ function MapperRow({
 			data-testid={`mapper-row-${mapper.localId}`}
 			initial={prefersReducedMotion ? false : { opacity: 0, y: -4 }}
 			animate={{ opacity: 1, y: 0 }}
+			exit={
+				prefersReducedMotion
+					? undefined
+					: { opacity: 0, y: -4, transition: ROW_EXIT_TRANSITION }
+			}
 			transition={{
 				...ROW_TRANSITION,
 				delay: Math.min(index, MAX_STAGGERED_ROWS) * STAGGER_STEP,

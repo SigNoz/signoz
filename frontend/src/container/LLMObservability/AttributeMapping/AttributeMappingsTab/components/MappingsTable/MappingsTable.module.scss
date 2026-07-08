@@ -172,21 +172,25 @@
 	font-size: var(--periscope-font-size-base);
 }
 
-.skeletonBar {
-	height: var(--spacing-5);
-	width: 40%;
-	border-radius: var(--radius-2);
-	background: var(--l3-background);
-	animation: pulse 1.4s ease-in-out infinite;
+.skeletonGroupHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--spacing-4);
+	padding: var(--spacing-3) var(--spacing-6);
 }
 
-@keyframes pulse {
-	0%,
-	100% {
-		opacity: 0.4;
-	}
+.skeletonGroupLeft {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-3);
+	flex: 1;
+	min-width: 0;
+}
 
-	50% {
-		opacity: 0.8;
-	}
+.skeletonGroupRight {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-3);
+	flex-shrink: 0;
 }

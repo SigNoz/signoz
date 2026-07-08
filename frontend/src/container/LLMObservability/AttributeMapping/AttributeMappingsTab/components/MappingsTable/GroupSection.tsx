@@ -10,7 +10,9 @@ import { Button } from '@signozhq/ui/button';
 import { Switch } from '@signozhq/ui/switch';
 import { ChevronDown, ChevronRight, Plus } from '@signozhq/icons';
 import { useListSpanMappers } from 'api/generated/services/spanmapper';
-import { motion, useReducedMotion } from 'motion/react';
+import { Skeleton } from 'antd';
+import cx from 'classnames';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 
 import { DraftGroup, DraftMapper, Mapper } from '../../../types';
 import { AttributeMappingStore } from '../../hooks/useAttributeMappingStore';
@@ -21,12 +23,14 @@ import styles from './MappingsTable.module.scss';
 
 const MAPPER_SKELETON_ROWS = 2;
 
-// Fade-in shared by the non-row states (error / empty / add-mapping) so they
-// reveal in step with the mapper rows on expand. Rows unmount on collapse, so
-// only this mount transition runs — there's no exit animation.
+// Fade shared by the non-row states (skeleton / error / empty / add-mapping) so
+// they reveal in step with the mapper rows on expand and fade back out on
+// collapse. Wrapped in AnimatePresence below so the exit runs before unmount,
+// making expand/collapse read as one accordion rather than a snap.
 const STATE_ROW_MOTION = {
 	initial: { opacity: 0 },
 	animate: { opacity: 1 },
+	exit: { opacity: 0 },
 	transition: { duration: 0.18, ease: 'easeOut' },
 } as const;
 
@@ -87,66 +91,110 @@ function GroupSection({
 	// it for never-opened groups avoids a misleading "0 mappings".
 	const showCount = expanded || mapperCount > 0;
 
-	let body: JSX.Element | null = null;
-	if (expanded) {
-		if (isErrorMappers) {
-			body = (
-				<motion.tr className={styles.mapperStateRow} {...stateRowMotion}>
-					<td
-						colSpan={COLUMN_COUNT}
-						className={styles.stateCell}
-						data-testid={`mappers-error-${group.localId}`}
-					>
-						Failed to load mappings. Please try again.
-					</td>
-				</motion.tr>
-			);
-		} else if (isLoadingMappers && mapperCount === 0) {
-			body = (
-				<>
-					{Array.from({ length: MAPPER_SKELETON_ROWS }).map((_, index) => (
-						<tr
-							// eslint-disable-next-line react/no-array-index-key
-							key={`mapper-skeleton-${index}`}
-							className={styles.mapperRow}
-						>
-							<td colSpan={COLUMN_COUNT} className={styles.cell}>
-								<div className={styles.skeletonBar} />
-							</td>
-						</tr>
-					))}
-				</>
-			);
-		} else if (mapperCount === 0) {
-			body = (
-				<motion.tr className={styles.mapperStateRow} {...stateRowMotion}>
-					<td
-						colSpan={COLUMN_COUNT}
-						className={styles.stateCell}
-						data-testid={`mappers-empty-${group.localId}`}
-					>
-						No mappings in this group yet.
-					</td>
-				</motion.tr>
-			);
-		} else {
-			body = (
-				<>
-					{group.mappers.map((mapper, index) => (
-						<MapperRow
-							key={mapper.localId}
-							mapper={mapper}
-							index={index}
-							onEdit={(next): void => onEditMapper(group.localId, next)}
-							onRemove={(localId): void => removeMapper(group.localId, localId)}
-							onToggle={(localId, enabled): void =>
-								toggleMapper(group.localId, localId, enabled)
-							}
-						/>
-					))}
-				</>
-			);
-		}
+	// Skeleton mapper rows, shaped per aligned column (target · sources · writes-to
+	// · actions) so the lazy per-group load mirrors real rows rather than flat bars.
+	// Plain <tr> (not motion) on purpose: once the mappers arrive we want the
+	// skeleton to be replaced instantly, with no exit fade cross-dissolving against
+	// the incoming rows. antd's `active` shimmer covers the loading feel on its own.
+	const skeletonRows = Array.from({ length: MAPPER_SKELETON_ROWS }).map(
+		(_, index) => (
+			<tr
+				// eslint-disable-next-line react/no-array-index-key
+				key={`mapper-skeleton-${index}`}
+				className={styles.mapperRow}
+			>
+				<td className={cx(styles.cell, styles.targetCell)}>
+					<Skeleton.Input active size="small" style={{ width: '55%' }} />
+				</td>
+				<td className={styles.cell}>
+					<div className={styles.sources}>
+						<Skeleton.Button active size="small" style={{ width: 88 }} />
+						<Skeleton.Button active size="small" style={{ width: 56 }} />
+					</div>
+				</td>
+				<td className={styles.cell}>
+					<Skeleton.Button active size="small" style={{ width: 72 }} />
+				</td>
+				<td className={cx(styles.cell, styles.actionsCell)}>
+					<div className={styles.rowActions}>
+						<Skeleton.Button active size="small" shape="round" />
+						<Skeleton.Avatar active size={16} shape="square" />
+					</div>
+				</td>
+			</tr>
+		),
+	);
+
+	const errorRow = (
+		<motion.tr key="error" className={styles.mapperStateRow} {...stateRowMotion}>
+			<td
+				colSpan={COLUMN_COUNT}
+				className={styles.stateCell}
+				data-testid={`mappers-error-${group.localId}`}
+			>
+				Failed to load mappings. Please try again.
+			</td>
+		</motion.tr>
+	);
+
+	const emptyRow = (
+		<motion.tr key="empty" className={styles.mapperStateRow} {...stateRowMotion}>
+			<td
+				colSpan={COLUMN_COUNT}
+				className={styles.stateCell}
+				data-testid={`mappers-empty-${group.localId}`}
+			>
+				No mappings in this group yet.
+			</td>
+		</motion.tr>
+	);
+
+	const addMapperRow = (
+		<motion.tr
+			key="add-mapper"
+			className={styles.addMapperRow}
+			{...stateRowMotion}
+		>
+			<td colSpan={COLUMN_COUNT} className={styles.stateCell}>
+				<Button
+					variant="link"
+					color="primary"
+					size="sm"
+					prefix={<Plus size={14} />}
+					onClick={(): void => onAddMapper(group.localId)}
+					testId={`add-mapper-${group.localId}`}
+				>
+					Add mapping
+				</Button>
+			</td>
+		</motion.tr>
+	);
+
+	const mapperRows = group.mappers.map((mapper, index) => (
+		<MapperRow
+			key={mapper.localId}
+			mapper={mapper}
+			index={index}
+			onEdit={(next): void => onEditMapper(group.localId, next)}
+			onRemove={(localId): void => removeMapper(group.localId, localId)}
+			onToggle={(localId, enabled): void =>
+				toggleMapper(group.localId, localId, enabled)
+			}
+		/>
+	));
+
+	// Rows revealed on expand, assembled as a keyed list so AnimatePresence can
+	// run the per-row enter/exit fade on expand and collapse. The add-mapping row
+	// trails every non-error state (including loading/empty).
+	let expandedRows: JSX.Element[] = [];
+	if (expanded && isErrorMappers) {
+		expandedRows = [errorRow];
+	} else if (expanded && isLoadingMappers && mapperCount === 0) {
+		expandedRows = [...skeletonRows, addMapperRow];
+	} else if (expanded && mapperCount === 0) {
+		expandedRows = [emptyRow, addMapperRow];
+	} else if (expanded) {
+		expandedRows = [...mapperRows, addMapperRow];
 	}
 
 	return (
@@ -196,23 +244,7 @@ function GroupSection({
 					</div>
 				</td>
 			</tr>
-			{body}
-			{expanded && !isErrorMappers && (
-				<motion.tr className={styles.addMapperRow} {...stateRowMotion}>
-					<td colSpan={COLUMN_COUNT} className={styles.stateCell}>
-						<Button
-							variant="link"
-							color="primary"
-							size="sm"
-							prefix={<Plus size={14} />}
-							onClick={(): void => onAddMapper(group.localId)}
-							testId={`add-mapper-${group.localId}`}
-						>
-							Add mapping
-						</Button>
-					</td>
-				</motion.tr>
-			)}
+			<AnimatePresence initial={false}>{expandedRows}</AnimatePresence>
 		</tbody>
 	);
 }

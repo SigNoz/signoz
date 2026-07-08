@@ -7,6 +7,7 @@
 import { useCallback, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Plus } from '@signozhq/icons';
+import { Skeleton } from 'antd';
 
 import MapperFormDrawer from '../../../components/MapperFormDrawer';
 import { DraftGroup, DraftMapper } from '../../../types';
@@ -130,7 +131,21 @@ function MappingsTable({
 									className={styles.groupHeaderRow}
 								>
 									<td colSpan={COLUMN_COUNT} className={styles.groupHeaderCell}>
-										<div className={styles.skeletonBar} />
+										<div className={styles.skeletonGroupHeader}>
+											<div className={styles.skeletonGroupLeft}>
+												<Skeleton.Avatar active size={14} shape="square" />
+												<Skeleton.Input
+													active
+													size="small"
+													style={{ width: index % 2 === 0 ? 200 : 140 }}
+												/>
+												<Skeleton.Input active size="small" style={{ width: 64 }} />
+											</div>
+											<div className={styles.skeletonGroupRight}>
+												<Skeleton.Button active size="small" shape="round" />
+												<Skeleton.Avatar active size={16} shape="square" />
+											</div>
+										</div>
 									</td>
 								</tr>
 							))}
