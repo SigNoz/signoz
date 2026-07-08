@@ -1,0 +1,10 @@
+.row {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 4px 16px;
+	font-size: var(--periscope-font-size-base);
+	color: var(--l2-foreground);
+	// Keep Typography.Text at the row's size (it reads this var, not inherited font-size).
+	--typography-font-size: var(--periscope-font-size-base);
+}

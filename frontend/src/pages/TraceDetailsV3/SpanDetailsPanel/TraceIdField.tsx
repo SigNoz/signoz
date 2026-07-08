@@ -5,7 +5,7 @@ import { toast } from '@signozhq/ui/sonner';
 import ROUTES from 'constants/routes';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
-import styles from './SpanDetailsPanel.module.scss';
+import styles from './TraceIdField.module.scss';
 
 interface TraceIdFieldProps {
 	span: SpanV3;
