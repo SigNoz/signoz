@@ -12,6 +12,7 @@ import { Input as AntdInput } from 'antd';
 import TagKeyValueInput from 'components/TagKeyValueInput/TagKeyValueInput';
 
 import { Base64Icons } from '../utils';
+import { DASHBOARD_NAME_MAX_LENGTH } from '../../../constants';
 import settingsStyles from '../../DashboardSettings.module.scss';
 import styles from './DashboardInfoForm.module.scss';
 
@@ -71,6 +72,7 @@ function DashboardInfoForm({
 							testId="dashboard-name"
 							className={styles.dashboardNameInput}
 							value={title}
+							maxLength={DASHBOARD_NAME_MAX_LENGTH}
 							onChange={(e): void => onTitleChange(e.target.value)}
 						/>
 					</section>

@@ -18,11 +18,17 @@ import Toolbar from 'container/Toolbar/Toolbar';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import history from 'lib/history';
 import { isNull } from 'lodash-es';
+import { ResizableBox } from 'periscope/components/ResizableBox';
+import usePanelWidth from 'periscope/components/ResizableBox/usePanelWidth';
 
 import { routes } from './config';
 import { useAllErrorsQueryState } from './QueryStateContext';
 
 import './AllErrors.styles.scss';
+
+const QUICK_FILTERS_DEFAULT_WIDTH = 260;
+const QUICK_FILTERS_MIN_WIDTH = 240;
+const QUICK_FILTERS_MAX_WIDTH = 500;
 
 function AllErrors(): JSX.Element {
 	const { pathname } = useLocation();
@@ -55,17 +61,38 @@ function AllErrors(): JSX.Element {
 		setShowFilters((prev) => !prev);
 	};
 
+	const {
+		initialWidth: quickFiltersInitialWidth,
+		persistWidth: persistQuickFiltersWidth,
+	} = usePanelWidth({
+		storageKey: LOCALSTORAGE.QUICK_FILTERS_WIDTH_EXCEPTIONS,
+		defaultWidth: QUICK_FILTERS_DEFAULT_WIDTH,
+		minWidth: QUICK_FILTERS_MIN_WIDTH,
+		maxWidth: QUICK_FILTERS_MAX_WIDTH,
+	});
+
 	return (
 		<div className={cx('all-errors-page', showFilters ? 'filter-visible' : '')}>
 			{showFilters && (
-				<section className={cx('all-errors-quick-filter-section')}>
+				<ResizableBox
+					handle="right"
+					defaultWidth={QUICK_FILTERS_DEFAULT_WIDTH}
+					initialWidth={quickFiltersInitialWidth}
+					minWidth={QUICK_FILTERS_MIN_WIDTH}
+					maxWidth={QUICK_FILTERS_MAX_WIDTH}
+					onResize={persistQuickFiltersWidth}
+					resetToDefaultOnDoubleClick
+					withHandle
+					className="all-errors-quick-filter-section"
+					handleTestId="quick-filters-resize-handle"
+				>
 					<QuickFilters
 						className="qf-exceptions"
 						source={QuickFiltersSource.EXCEPTIONS}
 						signal={SignalType.EXCEPTIONS}
 						handleFilterVisibilityChange={handleFilterVisibilityChange}
 					/>
-				</section>
+				</ResizableBox>
 			)}
 			<section
 				className={cx(

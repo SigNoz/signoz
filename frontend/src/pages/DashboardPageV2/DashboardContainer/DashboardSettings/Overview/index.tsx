@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { DashboardtypesPatchOpDTO } from 'api/generated/services/sigNoz.schemas';
 import type {
 	DashboardtypesGettableDashboardV2DTO,
 	DashboardtypesJSONPatchOperationDTO,
@@ -54,20 +55,32 @@ function Overview({ dashboard }: OverviewProps): JSX.Element {
 
 	const buildPatch = useCallback((): DashboardtypesJSONPatchOperationDTO[] => {
 		const ops: DashboardtypesJSONPatchOperationDTO[] = [];
+		const op = (
+			operation: DashboardtypesJSONPatchOperationDTO['op'],
+			path: string,
+			value: unknown,
+		): DashboardtypesJSONPatchOperationDTO => ({ op: operation, path, value });
 		const replace = (
 			path: string,
 			value: unknown,
-		): DashboardtypesJSONPatchOperationDTO => ({
-			op: 'replace' as DashboardtypesJSONPatchOperationDTO['op'],
-			path,
-			value,
-		});
+		): DashboardtypesJSONPatchOperationDTO =>
+			op(DashboardtypesPatchOpDTO.replace, path, value);
 
 		if (updatedTitle !== title && updatedTitle !== '') {
 			ops.push(replace('/spec/display/name', updatedTitle));
 		}
 		if (updatedDescription !== description) {
-			ops.push(replace('/spec/display/description', updatedDescription));
+			// `replace` fails when the description doesn't exist yet, so add it when
+			// the current one is empty (`add` creates or replaces the member).
+			ops.push(
+				op(
+					description
+						? DashboardtypesPatchOpDTO.replace
+						: DashboardtypesPatchOpDTO.add,
+					'/spec/display/description',
+					updatedDescription,
+				),
+			);
 		}
 		if (updatedImage !== image) {
 			ops.push(replace('/image', updatedImage));
