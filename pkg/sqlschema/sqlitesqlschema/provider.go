@@ -2,6 +2,7 @@ package sqlitesqlschema
 
 import (
 	"context"
+	"log/slog"
 	"strconv"
 	"strings"
 
@@ -131,7 +132,7 @@ func (provider *provider) GetIndices(ctx context.Context, tableName sqlschema.Ta
 		// functional partial indexes aren't representable (PartialUniqueIndex has no
 		// expressions); skip rather than misrepresent.
 		if hasExpression && partial {
-			provider.settings.Logger().WarnContext(ctx, "skipping functional partial unique index; not representable by sqlschema", "index", name, "table", string(tableName))
+			provider.settings.Logger().WarnContext(ctx, "skipping functional partial unique index; not representable by sqlschema", slog.String("index", name), slog.String("table", string(tableName)))
 			continue
 		}
 

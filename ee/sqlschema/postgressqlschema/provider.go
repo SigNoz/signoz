@@ -3,6 +3,7 @@ package postgressqlschema
 import (
 	"context"
 	"database/sql"
+	"log/slog"
 
 	"github.com/uptrace/bun"
 
@@ -315,7 +316,7 @@ ORDER BY index_name, column_position`, string(name))
 		// functional partial indexes aren't representable (PartialUniqueIndex has no
 		// expressions); skip rather than misrepresent.
 		if entry.hasExpression && entry.predicate != nil {
-			provider.settings.Logger().WarnContext(ctx, "skipping functional partial unique index; not representable by sqlschema", "index", indexName, "table", string(name))
+			provider.settings.Logger().WarnContext(ctx, "skipping functional partial unique index; not representable by sqlschema", slog.String("index", indexName), slog.String("table", string(name)))
 			continue
 		}
 
