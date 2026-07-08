@@ -59,16 +59,31 @@ describe('useDashboardStaleCheck', () => {
 		expect(result.current.showPrompt).toBe(false);
 	});
 
-	it('reload refetches and clears the dismissed state', () => {
+	it('reload refetches and closes the prompt immediately', () => {
 		setServerUpdatedAt('2026-07-08T10:00:00Z');
 		const refetch = jest.fn();
 		const { result } = renderHook(() =>
 			useDashboardStaleCheck('d1', '2026-07-08T09:00:00Z', refetch),
 		);
-		act(() => result.current.dismiss());
-		expect(result.current.showPrompt).toBe(false);
+		expect(result.current.showPrompt).toBe(true);
 		act(() => result.current.reload());
 		expect(refetch).toHaveBeenCalledTimes(1);
+		// Closes on the click itself, not dependent on the refetched loaded copy
+		// catching up to the server copy (two separate queries).
+		expect(result.current.showPrompt).toBe(false);
+	});
+
+	it('re-prompts when a newer version appears after a reload', () => {
+		setServerUpdatedAt('2026-07-08T10:00:00Z');
+		const { result, rerender } = renderHook(() =>
+			useDashboardStaleCheck('d1', '2026-07-08T09:00:00Z', jest.fn()),
+		);
+		act(() => result.current.reload());
+		expect(result.current.showPrompt).toBe(false);
+
+		// A later external change (new updatedAt) must surface again.
+		setServerUpdatedAt('2026-07-08T10:05:00Z');
+		rerender();
 		expect(result.current.showPrompt).toBe(true);
 	});
 });

@@ -56,10 +56,15 @@ export function useDashboardStaleCheck(
 		(): void => setDismissedAt(serverUpdatedAt ?? null),
 		[serverUpdatedAt],
 	);
+	// Reload is Dismiss + refetch: close the prompt immediately on the user's action
+	// rather than waiting for the refetched `loadedUpdatedAt` to converge with
+	// `serverUpdatedAt` (two separate queries — that convergence is racy and can leave
+	// the dialog stuck open). A genuinely newer server version re-prompts, since it
+	// won't equal the version we just acknowledged.
 	const reload = useCallback((): void => {
+		setDismissedAt(serverUpdatedAt ?? null);
 		refetch();
-		setDismissedAt(null);
-	}, [refetch]);
+	}, [refetch, serverUpdatedAt]);
 
 	return {
 		showPrompt: changed && serverUpdatedAt !== dismissedAt,
