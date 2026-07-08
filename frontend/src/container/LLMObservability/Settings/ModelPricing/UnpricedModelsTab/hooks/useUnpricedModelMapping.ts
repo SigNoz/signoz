@@ -20,53 +20,31 @@ export interface UnpricedModelMapping {
 }
 
 interface UseUnpricedModelMappingResult {
-	// Commits all selected mappings in one request. Resolves true on success so
-	// the caller can close the confirm dialog and clear its selections.
-	mapModels: (mappings: UnpricedModelMapping[]) => Promise<boolean>;
-	// True while the batch save is in flight, so the confirm button can spin.
+	// Commits a single mapping in one request. Resolves true on success so the
+	// caller can close the confirm dialog and clear its staged pick.
+	mapModel: (mapping: UnpricedModelMapping) => Promise<boolean>;
+	// True while the save is in flight, so the confirm button can spin.
 	isSaving: boolean;
 }
 
-// Maps unpriced models onto existing pricing rules. There's no dedicated "edit"
-// endpoint — mapping reuses CreateOrUpdate (PUT), appending each model name as a
-// match pattern on the chosen rule. Mappings that target the same rule are merged
-// into a single payload so their patterns don't overwrite one another, and every
-// payload goes out in one request. Both the unmapped list and the rules list are
-// invalidated on success so mapped models drop out of this tab immediately.
+// Maps an unpriced model onto an existing pricing rule. There's no dedicated
+// "edit" endpoint — mapping reuses CreateOrUpdate (PUT), appending the model name
+// as a match pattern on the chosen rule so the model inherits its pricing. Both
+// the unmapped list and the rules list are invalidated on success so the mapped
+// model drops out of this tab immediately.
 export function useUnpricedModelMapping(): UseUnpricedModelMappingResult {
 	const queryClient = useQueryClient();
 	const [isSaving, setIsSaving] = useState(false);
 
 	const { mutateAsync: createOrUpdate } = useCreateOrUpdateLLMPricingRules();
 
-	const mapModels = useCallback(
-		async (mappings: UnpricedModelMapping[]): Promise<boolean> => {
-			if (mappings.length === 0) {
-				return false;
-			}
-
-			// Group model names by their target rule so each rule is PUT once with
-			// all of its newly mapped patterns appended together.
-			const groups = new Map<
-				string,
-				{ rule: PricingRule; modelNames: string[] }
-			>();
-			mappings.forEach(({ model, rule }) => {
-				const group = groups.get(rule.id);
-				if (group) {
-					group.modelNames.push(model.modelName);
-				} else {
-					groups.set(rule.id, { rule, modelNames: [model.modelName] });
-				}
-			});
-
-			const rules = Array.from(groups.values()).map(({ rule, modelNames }) =>
-				buildPatternMappingPayload(rule, modelNames),
-			);
+	const mapModel = useCallback(
+		async ({ model, rule }: UnpricedModelMapping): Promise<boolean> => {
+			const payload = buildPatternMappingPayload(rule, model.modelName);
 
 			setIsSaving(true);
 			try {
-				await createOrUpdate({ data: { rules } });
+				await createOrUpdate({ data: { rules: [payload] } });
 				await Promise.all([
 					queryClient.invalidateQueries({
 						queryKey: getListUnmappedLLMModelsQueryKey(),
@@ -75,9 +53,7 @@ export function useUnpricedModelMapping(): UseUnpricedModelMappingResult {
 						queryKey: getListLLMPricingRulesQueryKey(),
 					}),
 				]);
-				toast.success(
-					`Mapped ${mappings.length} model${mappings.length === 1 ? '' : 's'}`,
-				);
+				toast.success('Mapped model');
 				return true;
 			} catch (error) {
 				const message = error instanceof Error ? error.message : 'Mapping failed';
@@ -90,5 +66,5 @@ export function useUnpricedModelMapping(): UseUnpricedModelMappingResult {
 		[createOrUpdate, queryClient],
 	);
 
-	return { mapModels, isSaving };
+	return { mapModel, isSaving };
 }

@@ -127,7 +127,7 @@ describe('UnpricedModelsTab (integration)', () => {
 		expect(sent[0].rules).toHaveLength(1);
 		expect(sent[0].rules?.[0].modelPattern).toContain(MODEL);
 		await waitFor(() =>
-			expect(toastSuccess).toHaveBeenCalledWith('Mapped 1 model'),
+			expect(toastSuccess).toHaveBeenCalledWith('Mapped model'),
 		);
 		// Dialog closes on success.
 		await waitFor(() =>

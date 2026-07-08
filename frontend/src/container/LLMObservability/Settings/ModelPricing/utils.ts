@@ -178,14 +178,12 @@ export const getRuleOptionLabel = (rule: PricingRule): string =>
 
 export const buildPatternMappingPayload = (
 	rule: PricingRule,
-	modelNames: string[],
+	modelName: string,
 ): LlmpricingruletypesUpdatableLLMPricingRuleDTO => {
 	const draft = draftFromRule(rule);
-	const patterns = [...draft.patterns];
-	modelNames.forEach((modelName) => {
-		if (!patterns.includes(modelName)) {
-			patterns.push(modelName);
-		}
-	});
+	// Append the model as a match pattern unless the rule already carries it.
+	const patterns = draft.patterns.includes(modelName)
+		? draft.patterns
+		: [...draft.patterns, modelName];
 	return buildRulePayload({ ...draft, patterns });
 };

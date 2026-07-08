@@ -34,7 +34,7 @@ function UnpricedModelsTab(): JSX.Element {
 	const pendingMapping = usePendingMappingStore((state) => state.pending);
 	const setPending = usePendingMappingStore((state) => state.setPending);
 	const clearPending = usePendingMappingStore((state) => state.clearPending);
-	const { mapModels, isSaving } = useUnpricedModelMapping();
+	const { mapModel, isSaving } = useUnpricedModelMapping();
 
 	// Reset any staged mapping when leaving the tab so a stale pick doesn't reopen
 	// the dialog on remount (the store outlives this component).
@@ -56,11 +56,11 @@ function UnpricedModelsTab(): JSX.Element {
 		if (!pendingMapping) {
 			return;
 		}
-		const didSave = await mapModels([pendingMapping]);
+		const didSave = await mapModel(pendingMapping);
 		if (didSave) {
 			clearPending();
 		}
-	}, [mapModels, pendingMapping, clearPending]);
+	}, [mapModel, pendingMapping, clearPending]);
 
 	const columnsConfig: UnpricedColumnsConfig = {
 		canManage: canManagePricing,
