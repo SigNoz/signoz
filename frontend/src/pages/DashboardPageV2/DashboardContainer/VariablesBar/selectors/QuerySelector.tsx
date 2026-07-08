@@ -3,6 +3,7 @@ import { useQuery } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQuery';
+import { DASHBOARD_CACHE_TIME } from 'constants/queryCacheTime';
 import type { AppState } from 'store/reducers';
 import type { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -62,7 +63,7 @@ function QuerySelector({
 		(s) => s.onVariableFetchFailure,
 	);
 
-	const { data, isFetching } = useQuery(
+	const { data, isFetching, error, refetch } = useQuery(
 		[
 			'dashboard-variable',
 			variable.name,
@@ -79,6 +80,8 @@ function QuerySelector({
 		{
 			enabled: isVariableFetching || (isVariableSettled && hasVariableFetchedOnce),
 			refetchOnWindowFocus: false,
+			// Each cycle mints a fresh key; a small cacheTime bounds cache churn.
+			cacheTime: DASHBOARD_CACHE_TIME,
 			onSettled: (_, error) =>
 				error
 					? onVariableFetchFailure(variable.name)
@@ -104,6 +107,10 @@ function QuerySelector({
 			multiSelect={variable.multiSelect}
 			showAllOption={variable.showAllOption}
 			loading={isFetching || isVariableWaiting}
+			errorMessage={error ? (error as Error).message || null : null}
+			onRetry={(): void => {
+				void refetch();
+			}}
 			selection={selection}
 			onChange={onChange}
 			testId={`variable-select-${variable.name}`}

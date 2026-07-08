@@ -11,6 +11,7 @@ import { useCreatePanel } from '../../../hooks/useCreatePanel';
 import type { DashboardSection } from '../../../utils';
 import PanelTypeSelectionModal from '../../Panel/PanelTypeSelectionModal/PanelTypeSelectionModal';
 import { useDashboardStore } from '../../../store/useDashboardStore';
+import { useCloneSection } from '../hooks/useCloneSection';
 import { useDeleteSection } from '../hooks/useDeleteSection';
 import { useRenameSection } from '../hooks/useRenameSection';
 import { useToggleSectionCollapse } from '../hooks/useToggleSectionCollapse';
@@ -70,6 +71,8 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 		setIsDeleteOpen(false);
 	}, [deleteSection]);
 
+	const cloneSection = useCloneSection();
+
 	const grid = (
 		<SectionGrid
 			items={section.items}
@@ -113,6 +116,7 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 						? {
 								onRename: (): void => setIsRenaming(true),
 								onAddPanel: (): void => openPicker(section.layoutIndex),
+								onCloneSection: (): void => void cloneSection(section),
 								onDeleteSection: (): void => setIsDeleteOpen(true),
 							}
 						: undefined

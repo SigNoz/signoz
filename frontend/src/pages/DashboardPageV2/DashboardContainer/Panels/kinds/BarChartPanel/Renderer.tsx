@@ -146,9 +146,14 @@ function BarPanelRenderer({
 
 	const renderTooltipFooter = useCallback(
 		({ isPinned, dismiss }: IRenderTooltipFooterArgs) => (
-			<TooltipFooter id={panelId} isPinned={isPinned} dismiss={dismiss} />
+			<TooltipFooter
+				id={panelId}
+				isPinned={isPinned}
+				canDrilldown={!!enableDrillDown}
+				dismiss={dismiss}
+			/>
 		),
-		[panelId],
+		[panelId, enableDrillDown],
 	);
 
 	// Keying on sync prefs forces a full chart teardown/re-mount so stale sync

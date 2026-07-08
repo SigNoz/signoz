@@ -12,6 +12,8 @@ import { useDashboardStore } from './store/useDashboardStore';
 import styles from './DashboardContainer.module.scss';
 import DashboardPageHeader from './components/DashboardPageHeader/DashboardPageHeader';
 import LockedIndicator from './components/LockedIndicator/LockedIndicator';
+import DashboardChangedDialog from './components/DashboardChangedDialog/DashboardChangedDialog';
+import { useDashboardStaleCheck } from './hooks/useDashboardStaleCheck';
 import { Base64Icons } from './DashboardSettings/Overview/utils';
 
 interface DashboardContainerProps {
@@ -53,6 +55,12 @@ function DashboardContainer({
 	// suggests them ($variable) in the panel editor and dashboards-page builder.
 	useSyncVariablesForSuggestions(dashboard);
 
+	const staleCheck = useDashboardStaleCheck(
+		dashboard.id,
+		dashboard.updatedAt,
+		refetch,
+	);
+
 	// In full screen show only the sections and panels — the header/toolbar chrome
 	// is hidden for a clean presentation view (exit with Esc).
 	return (
@@ -66,6 +74,11 @@ function DashboardContainer({
 				)}
 				<PanelsAndSectionsLayout layouts={spec.layouts} panels={spec.panels} />
 				{isLocked && <LockedIndicator />}
+				<DashboardChangedDialog
+					open={staleCheck.showPrompt}
+					onReload={staleCheck.reload}
+					onDismiss={staleCheck.dismiss}
+				/>
 			</div>
 		</FullScreen>
 	);
