@@ -27,7 +27,7 @@ export interface PanelActionsConfig {
 interface PanelProps {
 	panel: DashboardtypesPanelDTO;
 	panelId: string;
-	/** True once this panel's section enters the viewport — gates the fetch. */
+	/** True once this panel enters the viewport — gates the fetch (owned by SectionGridItem). */
 	isVisible?: boolean;
 	/** Move/delete actions — present only in editable sectioned mode. */
 	panelActions?: PanelActionsConfig;
