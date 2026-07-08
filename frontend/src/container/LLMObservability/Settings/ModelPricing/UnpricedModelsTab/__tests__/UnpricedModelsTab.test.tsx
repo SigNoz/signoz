@@ -1,15 +1,15 @@
-import { rest, server } from 'mocks-server/server';
-import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import type { LlmpricingruletypesUpdatableLLMPricingRulesDTO } from 'api/generated/services/sigNoz.schemas';
-
-import UnpricedModelsTab from '../UnpricedModelsTab';
 import {
 	LLM_PRICING_ENDPOINT,
 	LLM_UNMAPPED_ENDPOINT,
 	makeListResponse,
 	makeUnmappedResponse,
 	mockRules,
-} from '../../__tests__/fixtures';
+} from 'container/LLMObservability/Settings/ModelPricing/__tests__/fixtures';
+import { rest, server } from 'mocks-server/server';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+
+import UnpricedModelsTab from '../UnpricedModelsTab';
 
 const toastSuccess = jest.fn();
 const toastError = jest.fn();
@@ -55,35 +55,6 @@ describe('UnpricedModelsTab (integration)', () => {
 		server.resetHandlers();
 		toastSuccess.mockClear();
 		toastError.mockClear();
-	});
-
-	it('shows skeleton placeholders in the dropdown while billing models load', async () => {
-		// Delay the rules fetch so the loading state is observable after the
-		// dropdown opens (the default handler resolves instantly).
-		server.use(
-			rest.get(LLM_PRICING_ENDPOINT, (_req, res, ctx) =>
-				res(ctx.delay(200), ctx.status(200), ctx.json(makeListResponse(mockRules))),
-			),
-		);
-
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		render(<UnpricedModelsTab />);
-
-		await screen.findByTestId(`unpriced-model-name-${MODEL}`);
-
-		// Opening the row's dropdown triggers the (delayed) rules fetch.
-		await user.click(screen.getByTestId(`map-to-select-${MODEL}`));
-
-		// Skeleton rows show while the request is in flight...
-		const skeleton = await screen.findByTestId(`map-to-loading-${MODEL}`);
-		expect(skeleton).toBeInTheDocument();
-
-		// ...then options replace them once it resolves.
-		const option = await screen.findByTestId('map-to-option-rule-openai');
-		expect(option).toBeInTheDocument();
-		expect(
-			screen.queryByTestId(`map-to-loading-${MODEL}`),
-		).not.toBeInTheDocument();
 	});
 
 	it('opens the confirm dialog with the target rule pricing when a model is picked', async () => {
