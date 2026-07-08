@@ -37,6 +37,7 @@ function TracesTableComponent({
 	queryResponse,
 	setRequestData,
 	onColumnWidthsChange,
+	hidePagination,
 }: TracesTableComponentProps): JSX.Element {
 	const [pagination, setPagination] = useState<Pagination>({
 		offset: 0,
@@ -139,34 +140,36 @@ function TracesTableComponent({
 					/>
 				</OverlayScrollbar>
 			</div>
-			<div className="controller">
-				<Controls
-					totalCount={totalCount}
-					perPageOptions={PER_PAGE_OPTIONS}
-					isLoading={queryResponse.isFetching}
-					offset={pagination.offset}
-					countPerPage={pagination.limit}
-					handleNavigatePrevious={(): void => {
-						handlePaginationChange({
-							...pagination,
-							offset: pagination.offset - pagination.limit,
-						});
-					}}
-					handleNavigateNext={(): void => {
-						handlePaginationChange({
-							...pagination,
-							offset: pagination.offset + pagination.limit,
-						});
-					}}
-					handleCountItemsPerPageChange={(value): void => {
-						handlePaginationChange({
-							...pagination,
-							limit: value,
-							offset: 0,
-						});
-					}}
-				/>
-			</div>
+			{!hidePagination && (
+				<div className="controller">
+					<Controls
+						totalCount={totalCount}
+						perPageOptions={PER_PAGE_OPTIONS}
+						isLoading={queryResponse.isFetching}
+						offset={pagination.offset}
+						countPerPage={pagination.limit}
+						handleNavigatePrevious={(): void => {
+							handlePaginationChange({
+								...pagination,
+								offset: pagination.offset - pagination.limit,
+							});
+						}}
+						handleNavigateNext={(): void => {
+							handlePaginationChange({
+								...pagination,
+								offset: pagination.offset + pagination.limit,
+							});
+						}}
+						handleCountItemsPerPageChange={(value): void => {
+							handlePaginationChange({
+								...pagination,
+								limit: value,
+								offset: 0,
+							});
+						}}
+					/>
+				</div>
+			)}
 		</div>
 	);
 }
@@ -178,6 +181,7 @@ export type TracesTableComponentProps = {
 	>;
 	widget: Widgets;
 	setRequestData: Dispatch<SetStateAction<GetQueryResultsProps>>;
+	hidePagination?: boolean;
 	onColumnWidthsChange?: (widths: Record<string, number>) => void;
 };
 

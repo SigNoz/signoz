@@ -1,3 +1,4 @@
+import { GripVertical } from '@signozhq/icons';
 import { useCallback, useRef, useState } from 'react';
 
 import './ResizableBox.styles.scss';
@@ -11,15 +12,28 @@ export interface ResizableBoxProps {
 	// resize (width). Dragging the handle away from the content grows the box;
 	// dragging it toward the content shrinks it.
 	handle?: ResizableBoxHandle;
+	// Canonical default size, and the target that double-click reset restores to.
 	defaultHeight?: number;
 	minHeight?: number;
 	maxHeight?: number;
 	defaultWidth?: number;
 	minWidth?: number;
 	maxWidth?: number;
+	// Starting size when different from the default (e.g. a persisted value).
+	// Falls back to defaultWidth/defaultHeight when omitted, preserving the
+	// behavior of callers that don't opt in.
+	initialWidth?: number;
+	initialHeight?: number;
+	// When true, double-clicking the handle resets the size to
+	// defaultWidth/defaultHeight and fires onResize with that value.
+	resetToDefaultOnDoubleClick?: boolean;
+	// When true, renders a visible grip indicator on the handle so it is
+	// discoverable as a draggable affordance.
+	withHandle?: boolean;
 	onResize?: (size: number) => void;
 	disabled?: boolean;
 	className?: string;
+	handleTestId?: string;
 }
 
 function ResizableBox({
@@ -31,13 +45,22 @@ function ResizableBox({
 	defaultWidth = 200,
 	minWidth = 50,
 	maxWidth = Infinity,
+	initialWidth,
+	initialHeight,
+	resetToDefaultOnDoubleClick = false,
+	withHandle = false,
 	onResize,
 	disabled = false,
 	className,
+	handleTestId,
 }: ResizableBoxProps): JSX.Element {
 	const isHorizontal = handle === 'left' || handle === 'right';
 	const isStartHandle = handle === 'top' || handle === 'left';
-	const [size, setSize] = useState(isHorizontal ? defaultWidth : defaultHeight);
+	const [size, setSize] = useState(
+		isHorizontal
+			? (initialWidth ?? defaultWidth)
+			: (initialHeight ?? defaultHeight),
+	);
 	const containerRef = useRef<HTMLDivElement>(null);
 
 	const handleMouseDown = useCallback(
@@ -83,6 +106,21 @@ function ResizableBox({
 		],
 	);
 
+	const handleDoubleClick = useCallback((): void => {
+		if (!resetToDefaultOnDoubleClick) {
+			return;
+		}
+		const nextSize = isHorizontal ? defaultWidth : defaultHeight;
+		setSize(nextSize);
+		onResize?.(nextSize);
+	}, [
+		resetToDefaultOnDoubleClick,
+		isHorizontal,
+		defaultWidth,
+		defaultHeight,
+		onResize,
+	]);
+
 	const containerStyle = disabled
 		? undefined
 		: isHorizontal
@@ -99,7 +137,22 @@ function ResizableBox({
 			style={containerStyle}
 		>
 			<div className="resizable-box__content">{children}</div>
-			{!disabled && <div className={handleClass} onMouseDown={handleMouseDown} />}
+			{!disabled && (
+				<div
+					role="separator"
+					aria-orientation={isHorizontal ? 'vertical' : 'horizontal'}
+					className={handleClass}
+					onMouseDown={handleMouseDown}
+					onDoubleClick={handleDoubleClick}
+					data-testid={handleTestId}
+				>
+					{withHandle && (
+						<span className="resizable-box__grip">
+							<GripVertical size={12} />
+						</span>
+					)}
+				</div>
+			)}
 		</div>
 	);
 }

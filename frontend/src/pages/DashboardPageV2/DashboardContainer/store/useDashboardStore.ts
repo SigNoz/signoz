@@ -13,10 +13,20 @@ import {
 	createVariableSelectionSlice,
 	type VariableSelectionSlice,
 } from './slices/variableSelectionSlice';
+import {
+	createVariableFetchSlice,
+	type VariableFetchSlice,
+} from './slices/variableFetchSlice';
+import {
+	createSettingsRequestSlice,
+	type SettingsRequestSlice,
+} from './slices/settingsRequestSlice';
 
 export type DashboardStore = EditContextSlice &
 	CollapseSlice &
-	VariableSelectionSlice;
+	VariableSelectionSlice &
+	VariableFetchSlice &
+	SettingsRequestSlice;
 
 /**
  * V2 dashboard session store. Holds cross-cutting client state only — never the
@@ -31,6 +41,8 @@ export const useDashboardStore = create<DashboardStore>()(
 			...createEditContextSlice(...a),
 			...createCollapseSlice(...a),
 			...createVariableSelectionSlice(...a),
+			...createVariableFetchSlice(...a),
+			...createSettingsRequestSlice(...a),
 		}),
 		{
 			name: '@signoz/dashboard-v2',

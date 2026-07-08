@@ -8,6 +8,10 @@
 	transition: border-color 0.15s ease;
 }
 
+.resourceCardError {
+	border-color: var(--destructive);
+}
+
 .resourceCardHeader {
 	display: flex;
 	align-items: center;

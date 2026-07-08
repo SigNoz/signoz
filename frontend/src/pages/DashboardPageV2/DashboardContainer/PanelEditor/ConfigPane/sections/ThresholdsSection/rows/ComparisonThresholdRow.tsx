@@ -27,6 +27,7 @@ interface ComparisonThresholdRowProps {
 	isEditing: boolean;
 	onEdit: () => void;
 	onSave: (next: DashboardtypesComparisonThresholdDTO) => void;
+	onLiveChange: (next: DashboardtypesComparisonThresholdDTO) => void;
 	onDiscard: () => void;
 	onRemove: () => void;
 }
@@ -42,10 +43,15 @@ function ComparisonThresholdRow({
 	isEditing,
 	onEdit,
 	onSave,
+	onLiveChange,
 	onDiscard,
 	onRemove,
 }: ComparisonThresholdRowProps): JSX.Element {
-	const { draft, setDraft, setValue } = useThresholdDraft(threshold, isEditing);
+	const { draft, setDraft, setValue } = useThresholdDraft(
+		threshold,
+		isEditing,
+		onLiveChange,
+	);
 
 	const symbol = threshold.operator ? OPERATOR_SYMBOL[threshold.operator] : '';
 	const summary = (

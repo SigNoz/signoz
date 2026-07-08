@@ -6,20 +6,23 @@ import {
 	useParams,
 } from 'react-router-dom';
 import { Typography } from '@signozhq/ui/typography';
-import { useGetDashboardV2 } from 'api/generated/services/dashboard';
 import Spinner from 'components/Spinner';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 
+import { useDashboardFetch } from '../DashboardContainer/hooks/useDashboardFetch';
+import { useDashboardEditGuard } from '../DashboardContainer/hooks/useDashboardEditGuard';
 import { getPanelDefinition } from '../DashboardContainer/Panels/registry';
-import { buildDefaultPluginSpec } from '../DashboardContainer/Panels/utils/buildDefaultPluginSpec';
+import { buildPluginSpec } from '../DashboardContainer/Panels/utils/buildPluginSpec';
 import { buildDefaultQueries } from '../DashboardContainer/Panels/utils/buildDefaultQueries';
 import PanelEditorContainer from '../DashboardContainer/PanelEditor';
+import type { PanelEditorHandoffState } from '../DashboardContainer/PanelEditor/panelEditorHandoff';
 import {
 	parseNewPanelKind,
 	parseNewPanelLayoutIndex,
 } from '../DashboardContainer/PanelEditor/newPanelRoute';
+import { useSyncVariablesForSuggestions } from '../DashboardContainer/hooks/useSyncVariablesForSuggestions';
 import { createDefaultPanel } from '../DashboardContainer/patchOps';
 import styles from './PanelEditorPage.module.scss';
 
@@ -32,29 +35,40 @@ function PanelEditorPage(): JSX.Element {
 		dashboardId: string;
 		panelId: string;
 	}>();
-	const { search } = useLocation();
+	const { search, state } = useLocation();
 	const { safeNavigate } = useSafeNavigate();
 
-	const { data, isLoading, isError, error } = useGetDashboardV2({
-		id: dashboardId,
-	});
-	const dashboard = data?.data;
+	// Edits handed off from the View modal's drilldown — open the editor on these
+	// instead of the saved panel. Lost on refresh/new-tab, which falls back to saved.
+	const handoffSpec = (state as PanelEditorHandoffState | null)?.editSpec;
+
+	const { dashboard, isLoading, isError, error } =
+		useDashboardFetch(dashboardId);
+	// Derived here (not from the store) because the editor route doesn't mount
+	// DashboardContainer, so the store's edit context may be cold on a direct URL.
+	const { isEditable, editDisabledReason } = useDashboardEditGuard(dashboard);
+
+	// Feed variables to the query builder autocomplete inside the editor.
+	useSyncVariablesForSuggestions(dashboard);
 
 	// A `panel/new?panelKind=…` route means "create": seed a default panel of that
 	// kind rather than looking one up. Persisted (with a real id) only on save.
 	const newKind = parseNewPanelKind(panelId, search);
 	const existingPanel = dashboard?.spec.panels[panelId];
-	const panel = useMemo(
-		() =>
-			newKind
-				? createDefaultPanel(
-						newKind,
-						buildDefaultPluginSpec(getPanelDefinition(newKind)?.sections ?? []),
-						buildDefaultQueries(newKind),
-					)
-				: existingPanel,
-		[newKind, existingPanel],
-	);
+	const panel = useMemo(() => {
+		if (newKind) {
+			return createDefaultPanel(
+				newKind,
+				buildPluginSpec(getPanelDefinition(newKind).sections),
+				buildDefaultQueries(newKind),
+			);
+		}
+		if (!existingPanel) {
+			return undefined;
+		}
+		// Open on the modal's drilldown edits when handed off; else the saved panel.
+		return handoffSpec ? { ...existingPanel, spec: handoffSpec } : existingPanel;
+	}, [newKind, existingPanel, handoffSpec]);
 
 	// Target section for a newly-created panel (set by the "Add panel" trigger).
 	const layoutIndex = parseNewPanelLayoutIndex(search);
@@ -104,6 +118,8 @@ function PanelEditorPage(): JSX.Element {
 			panel={panel}
 			isNew={!!newKind}
 			layoutIndex={layoutIndex}
+			isEditable={isEditable}
+			editDisabledReason={editDisabledReason}
 			onClose={backToDashboard}
 			onSaved={backToDashboard}
 		/>

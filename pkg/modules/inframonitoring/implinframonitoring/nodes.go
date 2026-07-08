@@ -26,6 +26,7 @@ func buildNodeRecords(
 	metadataMap map[string]map[string]string,
 	nodeConditionCounts map[string]nodeConditionCounts,
 	podPhaseCounts map[string]podPhaseCounts,
+	podStatusCounts map[string]podStatusCounts,
 ) []inframonitoringtypes.NodeRecord {
 	metricsMap := parseFullQueryResponse(resp, groupBy)
 
@@ -84,6 +85,10 @@ func buildNodeRecords(
 				Failed:    podPhaseCountsForGroup.Failed,
 				Unknown:   podPhaseCountsForGroup.Unknown,
 			}
+		}
+
+		if podStatusCountsForGroup, ok := podStatusCounts[compositeKey]; ok {
+			record.PodCountsByStatus = podStatusCountsToResponse(podStatusCountsForGroup)
 		}
 
 		if attrs, ok := metadataMap[compositeKey]; ok {
@@ -149,14 +154,14 @@ func (m *module) getTopNodeGroups(
 	return paginateWithBackfill(allMetricGroups, metadataMap, req.GroupBy, req.Offset, req.Limit), nil
 }
 
-func (m *module) getNodesTableMetadata(ctx context.Context, req *inframonitoringtypes.PostableNodes) (map[string]map[string]string, error) {
+func (m *module) getNodesTableMetadata(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableNodes) (map[string]map[string]string, error) {
 	var nonGroupByAttrs []string
 	for _, key := range nodeAttrKeysForMetadata {
 		if !isKeyInGroupByAttrs(req.GroupBy, key) {
 			nonGroupByAttrs = append(nonGroupByAttrs, key)
 		}
 	}
-	return m.getMetadata(ctx, nodesTableMetricNamesList, req.GroupBy, nonGroupByAttrs, req.Filter, req.Start, req.End)
+	return m.getMetadata(ctx, orgID, nodesTableMetricNamesList, req.GroupBy, nonGroupByAttrs, req.Filter, req.Start, req.End)
 }
 
 // getPerGroupNodeConditionCounts computes per-group node counts bucketed by each

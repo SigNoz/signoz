@@ -3,7 +3,11 @@ import type {
 	DashboardtypesLayoutDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
-import { createDefaultPanel, createPanelOps } from '../patchOps';
+import {
+	cloneSectionOps,
+	createDefaultPanel,
+	createPanelOps,
+} from '../patchOps';
 
 function item(y: number, height: number): DashboardGridItemDTO {
 	return { x: 0, y, width: 6, height, content: { $ref: '#/spec/panels/x' } };
@@ -107,7 +111,7 @@ describe('createPanelOps', () => {
 		expect(value.y).toBe(6);
 	});
 
-	it('falls back to the last section when no index is requested', () => {
+	it('falls back to the root (first) section when no index is requested', () => {
 		const layouts = [section([]), section([item(0, 6)])];
 		const ops = createPanelOps({
 			layouts,
@@ -116,11 +120,11 @@ describe('createPanelOps', () => {
 			panel,
 		});
 
-		expect(ops[1].path).toBe('/spec/layouts/1/spec/items/-');
+		expect(ops[1].path).toBe('/spec/layouts/0/spec/items/-');
 	});
 
-	it('falls back to the last section when the requested index is out of range', () => {
-		const layouts = [section([])];
+	it('falls back to the root (first) section when the requested index is out of range', () => {
+		const layouts = [section([item(0, 6)]), section([])];
 		const ops = createPanelOps({ layouts, layoutIndex: 5, panelId: 'p1', panel });
 		expect(ops[1].path).toBe('/spec/layouts/0/spec/items/-');
 	});
@@ -138,5 +142,41 @@ describe('createPanelOps', () => {
 		expect(ops[1]).toMatchObject({ op: 'add', path: '/spec/panels/p1' });
 		expect(ops[2].path).toBe('/spec/layouts/0/spec/items/-');
 		expect((ops[2].value as DashboardGridItemDTO).y).toBe(0);
+	});
+});
+
+describe('cloneSectionOps', () => {
+	const panel = createDefaultPanel('signoz/TimeSeriesPanel');
+
+	it('adds a fresh panel per source panel + a titled Grid referencing them, geometry preserved', () => {
+		const ops = cloneSectionOps('Overview (Copy)', [
+			{ newId: 'n1', panel, x: 0, y: 0, width: 6, height: 4 },
+			{ newId: 'n2', panel, x: 6, y: 0, width: 6, height: 4 },
+		]);
+
+		// One add per panel, then the layout append.
+		expect(ops).toHaveLength(3);
+		expect(ops[0]).toMatchObject({ op: 'add', path: '/spec/panels/n1' });
+		expect(ops[1]).toMatchObject({ op: 'add', path: '/spec/panels/n2' });
+
+		const layoutOp = ops[2];
+		expect(layoutOp).toMatchObject({ op: 'add', path: '/spec/layouts/-' });
+		const layout = layoutOp.value as DashboardtypesLayoutDTO;
+		expect(layout.spec?.display?.title).toBe('Overview (Copy)');
+		expect(layout.spec?.items).toHaveLength(2);
+		expect(layout.spec?.items?.[1]).toMatchObject({
+			x: 6,
+			y: 0,
+			width: 6,
+			height: 4,
+			content: { $ref: '#/spec/panels/n2' },
+		});
+	});
+
+	it('produces just the empty titled Grid when the section has no panels', () => {
+		const ops = cloneSectionOps('Empty (Copy)', []);
+		expect(ops).toHaveLength(1);
+		expect(ops[0]).toMatchObject({ op: 'add', path: '/spec/layouts/-' });
+		expect((ops[0].value as DashboardtypesLayoutDTO).spec?.items).toHaveLength(0);
 	});
 });

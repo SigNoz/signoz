@@ -44,40 +44,15 @@
 }
 
 .quickFiltersContainer {
-	width: 280px;
-	min-width: 280px;
+	// Width is owned by ResizableBox (inline style). No overflow here: the panel
+	// must not scroll (QuickFilters scrolls its own list internally) — an
+	// overflow on the root would also clip the edge-mounted resize grip.
+	flex-shrink: 0;
 	border-right: 1px solid var(--l1-border);
-	overflow-y: auto;
 
-	&::-webkit-scrollbar {
-		width: 0.1rem;
-		height: 0.1rem;
-	}
-
-	&::-webkit-scrollbar-track {
-		background: transparent;
-	}
-
-	&::-webkit-scrollbar-thumb {
-		background: var(--accent-primary);
-	}
-
-	&::-webkit-scrollbar-thumb:hover {
-		background: colox-mix(var(--accent-primary), var(--bg-vanilla-100), 20%);
-	}
-
-	:global(.ant-collapse-header) {
-		border-bottom: 1px solid var(--l1-border);
-		padding: 12px 8px;
-	}
-
-	:global(.ant-collapse-content-box) {
-		padding: 0 !important;
-		padding-block: 0 !important;
-
-		:global(.quick-filters .checkbox-filter) {
-			padding-left: 18px;
-		}
+	:global(.resizable-box__content) {
+		display: flex;
+		flex-direction: column;
 	}
 
 	:global(.quick-filters) {
@@ -111,22 +86,6 @@
 	justify-content: space-between;
 }
 
-.quickFiltersCategoryLabel {
-	display: flex;
-	align-items: center;
-	gap: 4px;
-}
-
-.quickFiltersCategoryLabelIcon {
-	margin-right: 8px;
-}
-
-.quickFiltersCategoryLabelContainer {
-	display: flex;
-	align-items: center;
-	gap: 4px;
-}
-
 .listContainer {
 	flex: 1;
 	min-width: 0;
@@ -158,5 +117,118 @@
 }
 
 .listContainerFiltersVisible {
-	max-width: calc(100% - 280px);
+	// Width is driven by flex now that the filters panel is resizable; the list
+	// fills whatever space the (variable-width) panel leaves.
+	max-width: 100%;
+}
+
+.categorySelectorSection {
+	padding: var(--spacing-4);
+}
+
+.sectionHeader {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-4);
+	margin-bottom: var(--spacing-4);
+
+	&[data-type='filter'] {
+		padding: 0 var(--spacing-4);
+	}
+}
+
+.sectionLabel {
+	font-size: var(--periscope-font-size-small);
+	font-weight: var(--font-weight-semibold);
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	color: var(--l3-foreground);
+	white-space: nowrap;
+}
+
+.sectionLine {
+	flex: 1;
+	height: 1px;
+	background: var(--l1-border);
+}
+
+.categoryCard {
+	background: var(--l2-background);
+	border: 1px solid var(--l2-border);
+	border-radius: var(--spacing-3);
+	padding: var(--spacing-2);
+}
+
+.categoryList {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-1);
+}
+
+.categoryItem {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-5);
+	padding: var(--spacing-3) var(--spacing-4);
+	border: none;
+	border-radius: var(--spacing-2);
+	background: transparent;
+	cursor: pointer;
+	width: 100%;
+	text-align: left;
+	transition:
+		background-color 0.2s ease,
+		color 0.2s ease;
+	color: var(--l2-foreground);
+	font-size: var(--periscope-font-size-base);
+	--typography-color: var(--l1-foreground);
+
+	&:hover:not(.categoryItemSelected) {
+		background: var(--l2-background-hover);
+	}
+
+	svg {
+		color: var(--l3-foreground);
+		flex-shrink: 0;
+		transition: color 0.2s ease;
+	}
+
+	&.categoryItemSelected {
+		background: var(--accent-primary);
+		color: var(--l1-background);
+		font-weight: 600;
+
+		&:hover {
+			background: var(--accent-primary-hover, var(--accent-primary));
+		}
+
+		svg {
+			color: var(--l1-foreground);
+		}
+	}
+}
+
+.quickFiltersSection {
+	flex: 1;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	overflow-y: auto;
+
+	:global(.quick-filters-container) {
+		flex: 1;
+		min-height: 0;
+	}
+
+	&::-webkit-scrollbar {
+		width: 0.1rem;
+	}
+
+	&::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	&::-webkit-scrollbar-thumb {
+		background: var(--accent-primary);
+	}
 }

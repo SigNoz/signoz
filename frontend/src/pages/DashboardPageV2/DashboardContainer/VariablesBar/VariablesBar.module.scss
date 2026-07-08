@@ -1,9 +1,21 @@
+// Block (not flex) so the strip wraps around the floated time selector: one line
+// beside it when collapsed, and — via `.stripExpanded`'s `clear: both` — dropping
+// full-width below it when expanded. A flex `.bar` would be a BFC that sits beside
+// the float and makes the child strip's `clear` inert.
 .bar {
 	min-width: 0;
 }
 
+.addVariable {
+	flex: none;
+	border-style: dashed !important;
+	border-color: var(--l3-border) !important;
+}
+
 .strip {
 	display: flow-root;
+	// Collapsed: one line only, so the trailing add "+" never wraps below.
+	white-space: nowrap;
 }
 
 .stripExpanded {
@@ -12,10 +24,12 @@
 	gap: 8px;
 	padding-top: 12px;
 	overflow: visible;
+	white-space: normal;
 	clear: both;
 
 	.variableSlot,
-	.moreButton {
+	.moreButton,
+	.addSlot {
 		margin: 0;
 	}
 
@@ -48,6 +62,12 @@
 }
 
 .moreButton {
+	display: inline-flex;
+	margin-right: 8px;
+	vertical-align: top;
+}
+
+.addSlot {
 	display: inline-flex;
 	vertical-align: top;
 }
@@ -111,4 +131,14 @@
 		background: transparent !important;
 		box-shadow: none !important;
 	}
+}
+
+.overflowTooltip {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.overflowName {
+	font-weight: var(--font-weight-medium);
 }

@@ -207,11 +207,11 @@ export function useInviteMembers(
 		const successes = results.filter((r) => r.success);
 
 		if (failures.length === 0) {
-			onSuccess?.();
+			onSuccess?.(results, touched);
 		} else if (successes.length > 0) {
-			onPartialSuccess?.(results);
+			onPartialSuccess?.(results, touched);
 		} else {
-			onAllFailed?.(results);
+			onAllFailed?.(results, touched);
 		}
 
 		return results;

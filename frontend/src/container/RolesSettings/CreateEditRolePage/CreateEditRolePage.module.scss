@@ -105,3 +105,8 @@
 	height: 1px;
 	background: var(--l1-border);
 }
+
+.errorInPlaceContainer {
+	border-color: var(--callout-error-border) !important;
+	background: var(--callout-error-background) !important;
+}

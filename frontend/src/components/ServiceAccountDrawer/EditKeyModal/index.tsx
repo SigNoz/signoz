@@ -16,8 +16,8 @@ import type {
 import { AxiosError } from 'axios';
 import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
 import dayjs from 'dayjs';
-import { buildAPIKeyUpdatePermission } from 'hooks/useAuthZ/permissions/service-account.permissions';
-import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
+import { buildAPIKeyUpdatePermission } from 'lib/authz/hooks/useAuthZ/permissions/service-account.permissions';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { parseAsString, useQueryState } from 'nuqs';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useTimezone } from 'providers/Timezone';
