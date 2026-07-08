@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { cloneDeep, isEqual } from 'lodash-es';
 import { toast } from '@signozhq/ui/sonner';
 import { useQueryClient } from 'react-query';
@@ -10,8 +10,12 @@ import {
 } from 'api/generated/services/spanmapper';
 
 import { persistDraft, SaveMutations } from '../../saveDraft';
-import { DraftGroup, GroupDraft, MapperGroup } from '../../types';
-import { buildDraftGroup, nodeFromGroupDraft } from '../../utils';
+import { DraftGroup, GroupDraft, Mapper, MapperGroup } from '../../types';
+import {
+	buildDraftGroup,
+	buildDraftMapper,
+	nodeFromGroupDraft,
+} from '../../utils';
 
 const GROUPS_KEY_PREFIX = '/api/v1/span_mapper_groups';
 
@@ -29,6 +33,7 @@ export interface AttributeMappingStore {
 	upsertGroup: (draft: GroupDraft) => void;
 	removeGroup: (localId: string) => void;
 	toggleGroup: (localId: string, enabled: boolean) => void;
+	hydrateGroupMappers: (groupServerId: string, mappers: Mapper[]) => void;
 	save: () => Promise<void>;
 	discard: () => void;
 }
@@ -44,16 +49,23 @@ export function useAttributeMappingStore(): AttributeMappingStore {
 
 	const ready = !groupsQuery.isLoading;
 
-	// Groups only: a group's mappers are fetched lazily when its row is expanded
-	// (see MappersTable), so page load is a single request rather than an N+1
-	// fan-out across every group. Group edits (name/condition/enabled, create/
-	// delete) don't touch mappers; mapper reconciliation lands in a later PR.
+	// A group's mappers are fetched lazily when its row is first expanded (see
+	// GroupSection -> hydrateGroupMappers) and cached here, keyed by group server
+	// id. Page load stays a single groups request — never an N+1 fan-out across
+	// every group. Mapper edits/reconciliation land in a later PR.
+	const [loadedMappers, setLoadedMappers] = useState<Record<string, Mapper[]>>(
+		{},
+	);
+	const loadedRef = useRef<Set<string>>(new Set());
+
 	const snapshot = useMemo<DraftGroup[]>(() => {
 		if (!ready) {
 			return [];
 		}
-		return serverGroups.map((group) => buildDraftGroup(group, []));
-	}, [ready, serverGroups]);
+		return serverGroups.map((group) =>
+			buildDraftGroup(group, loadedMappers[group.id] ?? []),
+		);
+	}, [ready, serverGroups, loadedMappers]);
 
 	const [draft, setDraft] = useState<DraftGroup[] | null>(null);
 
@@ -114,6 +126,30 @@ export function useAttributeMappingStore(): AttributeMappingStore {
 		);
 	}, []);
 
+	// Fold a group's freshly-fetched server mappers into both the snapshot
+	// baseline and the working draft, exactly once per group (the guard skips
+	// re-expands). Mapper rows are read-only in this PR, so the fetched list can
+	// replace the draft group's mappers wholesale.
+	const hydrateGroupMappers = useCallback(
+		(groupServerId: string, mappers: Mapper[]): void => {
+			if (loadedRef.current.has(groupServerId)) {
+				return;
+			}
+			loadedRef.current.add(groupServerId);
+			setLoadedMappers((prev) => ({ ...prev, [groupServerId]: mappers }));
+			setDraft((prev) =>
+				prev === null
+					? prev
+					: prev.map((group) =>
+							group.serverId === groupServerId
+								? { ...group, mappers: mappers.map(buildDraftMapper) }
+								: group,
+						),
+			);
+		},
+		[],
+	);
+
 	const discard = useCallback((): void => {
 		setSaveError(null);
 		setDraft(clone(snapshot));
@@ -127,13 +163,28 @@ export function useAttributeMappingStore(): AttributeMappingStore {
 		setSaveError(null);
 		try {
 			await persistDraft(snapshot, draft, mutations);
+			// Refetch the groups list in place — it stays mounted, so this just
+			// swaps in fresh data without a loading flash. Exact-match the key so
+			// this doesn't also touch the per-group mapper lists (handled below).
 			await queryClient.invalidateQueries({
+				predicate: (query) => query.queryKey?.[0] === GROUPS_KEY_PREFIX,
+			});
+			// Reset the working copy and the lazily-loaded mapper mirror *before*
+			// the mapper queries re-emit, so the re-hydrate isn't clobbered.
+			loadedRef.current = new Set();
+			setLoadedMappers({});
+			setDraft(null);
+			// removeQueries (not invalidate) for the per-group mapper lists: an
+			// expanded group's table only re-hydrates when its query `data` changes
+			// reference, but react-query's structural sharing keeps `data` stable
+			// when the list is unchanged — so invalidate alone leaves the table
+			// empty. Removing the cache forces undefined -> refetch -> fresh, which
+			// always fires the hydrate effect. Also fixes stale mappers on re-expand.
+			queryClient.removeQueries({
 				predicate: (query) =>
 					typeof query.queryKey?.[0] === 'string' &&
-					(query.queryKey[0] as string).startsWith(GROUPS_KEY_PREFIX),
+					(query.queryKey[0] as string).startsWith(`${GROUPS_KEY_PREFIX}/`),
 			});
-			// Re-initialise the working copy from the freshly-fetched server data.
-			setDraft(null);
 			toast.success('Attribute mapping changes saved');
 		} catch (error) {
 			const message = error instanceof Error ? error.message : 'Save failed';
@@ -159,6 +210,7 @@ export function useAttributeMappingStore(): AttributeMappingStore {
 		upsertGroup,
 		removeGroup,
 		toggleGroup,
+		hydrateGroupMappers,
 		save,
 		discard,
 	};

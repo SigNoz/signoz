@@ -55,10 +55,33 @@ function AttributeMappingHarness(): JSX.Element {
 	);
 }
 
+// The real Save button lives in the page header; this harness exposes the same
+// store.save() path the header wires up, so the tab suite can exercise it.
+function SaveableHarness(): JSX.Element {
+	const store = useAttributeMappingStore();
+	return (
+		<>
+			<button
+				type="button"
+				data-testid="save-button"
+				onClick={(): void => {
+					void store.save();
+				}}
+			>
+				Save
+			</button>
+			<AttributeMappingsTab
+				store={store}
+				onEditGroup={jest.fn()}
+				onAddGroup={jest.fn()}
+			/>
+		</>
+	);
+}
+
 describe('AttributeMappingsTab (integration)', () => {
 	beforeEach(() => {
-		// The shared TanStackTable owns page/limit URL state via nuqs, which reads
-		// window.location — jsdom shares that across tests in a file.
+		// Reset URL state between tests — jsdom shares window.location across a file.
 		window.history.pushState(null, '', '/');
 	});
 
@@ -96,25 +119,22 @@ describe('AttributeMappingsTab (integration)', () => {
 		).resolves.toHaveTextContent('No mapping groups yet.');
 	});
 
-	it('renders each group row with its name, condition filters and status', async () => {
+	it('renders each group header row with its name and enabled status', async () => {
 		setupGroups();
 		render(<AttributeMappingHarness />);
 
-		// group-1: enabled, with attribute + resource condition keys.
+		// Condition filters are no longer shown inline — they live in the group
+		// drawer now — so the header row only carries the name and the toggle.
+		// group-1: enabled.
 		const enabledRow = (await screen.findByTestId('group-name-group-1')).closest(
 			'tr',
 		) as HTMLElement;
 		expect(
 			within(enabledRow).getByTestId('group-name-group-1'),
 		).toHaveTextContent('demo');
-		const filters = within(enabledRow).getByTestId('group-filters-group-1');
-		expect(filters).toHaveTextContent('attribute');
-		expect(filters).toHaveTextContent('contains ai.embeddings');
-		expect(filters).toHaveTextContent('resource');
-		expect(filters).toHaveTextContent('contains cloud.account.id');
 		expect(within(enabledRow).getByTestId('group-enabled-group-1')).toBeChecked();
 
-		// group-2: disabled, with no condition keys.
+		// group-2: disabled.
 		const disabledRow = screen
 			.getByTestId('group-name-group-2')
 			.closest('tr') as HTMLElement;
@@ -122,9 +142,6 @@ describe('AttributeMappingsTab (integration)', () => {
 		expect(
 			within(disabledRow).getByTestId('group-enabled-group-2'),
 		).not.toBeChecked();
-		expect(
-			within(disabledRow).getByTestId('group-filters-group-2'),
-		).toHaveTextContent('No condition · always runs');
 	});
 
 	it("reveals a group's mappers on expand and hides them on collapse", async () => {
@@ -247,5 +264,44 @@ describe('AttributeMappingsTab (integration)', () => {
 		await waitFor(() =>
 			expect(screen.getByTestId('mapper-sources-mapper-1')).toHaveTextContent('—'),
 		);
+	});
+
+	it("re-fetches an open group's mappers on save instead of showing stale rows", async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		setupGroups();
+
+		// The mapper list changes server-side between the first open and the save
+		// (e.g. another edit landed, or the save reconciled ids). The open table
+		// must reflect the latest list — not the list cached on first expand.
+		let mappers = mockMappers;
+		server.use(
+			rest.get(mappersEndpoint('group-1'), (_req, res, ctx) =>
+				res(ctx.status(200), ctx.json(makeMappersResponse(mappers))),
+			),
+		);
+		render(<SaveableHarness />);
+
+		await waitFor(() =>
+			expect(screen.getByTestId('group-name-group-1')).toBeInTheDocument(),
+		);
+
+		await user.click(screen.getByTestId('group-expand-group-1'));
+		await expect(
+			screen.findByTestId('mapper-target-mapper-1'),
+		).resolves.toBeInTheDocument();
+
+		// Server now returns a different mapper for the group.
+		mappers = [makeMapper({ id: 'mapper-2', name: 'gen_ai.response.model' })];
+
+		await user.click(screen.getByTestId('save-button'));
+
+		// Fresh row appears; the stale one is gone. Without removeQueries the table
+		// would keep showing mapper-1 (the hydrate once-guard blocks the update).
+		await expect(
+			screen.findByTestId('mapper-target-mapper-2'),
+		).resolves.toHaveTextContent('gen_ai.response.model');
+		expect(
+			screen.queryByTestId('mapper-target-mapper-1'),
+		).not.toBeInTheDocument();
 	});
 });

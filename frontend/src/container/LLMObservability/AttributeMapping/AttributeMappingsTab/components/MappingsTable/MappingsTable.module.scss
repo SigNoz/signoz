@@ -1,0 +1,202 @@
+.tableWrapper {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+}
+
+.toolbar {
+	display: flex;
+	justify-content: flex-end;
+	align-items: center;
+	padding: var(--spacing-4);
+}
+
+.table {
+	width: 100%;
+	border-collapse: collapse;
+	table-layout: fixed;
+}
+
+.colTarget {
+	width: 32%;
+}
+
+.colWritesTo {
+	width: 140px;
+}
+
+.colStatus {
+	width: 140px;
+}
+
+// ---- header ----
+
+.headerRow {
+	border-bottom: 1px solid var(--l2-border);
+}
+
+.headerCell {
+	padding: var(--spacing-4) var(--spacing-6);
+	text-align: left;
+	font-size: var(--periscope-font-size-base);
+	font-weight: var(--font-weight-normal);
+	color: var(--l2-foreground);
+
+	&:last-child {
+		text-align: right;
+	}
+}
+
+// ---- group header (banner) row ----
+
+.groupSection {
+	border-bottom: 1px solid var(--l2-border);
+}
+
+.groupHeaderRow {
+	background: var(--l2-background);
+}
+
+.groupHeaderCell {
+	padding: 0;
+	border-top: 1px solid var(--l2-border);
+}
+
+.groupHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--spacing-4);
+	padding: var(--spacing-3) var(--spacing-6);
+}
+
+.groupHeaderToggle {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-3);
+	flex: 1;
+	min-width: 0;
+	padding: 0;
+	background: none;
+	border: none;
+	cursor: pointer;
+	color: var(--l3-foreground);
+	text-align: left;
+}
+
+.groupName {
+	color: var(--l1-foreground);
+	font-weight: var(--font-weight-semibold);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.groupCount {
+	color: var(--l3-foreground);
+	font-size: var(--font-size-xs);
+	white-space: nowrap;
+}
+
+// ---- mapper rows ----
+
+.mapperRow {
+	&:hover {
+		background: var(--l2-background-hover);
+	}
+}
+
+.cell {
+	padding: var(--spacing-4) var(--spacing-6);
+	vertical-align: middle;
+	color: var(--l1-foreground);
+	font-size: var(--periscope-font-size-base);
+}
+
+// Indent the first cell so mapper rows read as nested under their group.
+.targetCell {
+	padding-left: var(--spacing-12);
+}
+
+.statusCell {
+	text-align: right;
+}
+
+.rowActions {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: var(--spacing-3);
+}
+
+.sources {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--spacing-3);
+}
+
+.sourceChip {
+	// Badge's outline/vanilla variant supplies border/background/radius/padding.
+	font-family: var(--font-mono, monospace);
+}
+
+.sourceChipText {
+	display: block;
+	max-width: 220px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.sourceMore {
+	font-size: var(--font-size-xs);
+	white-space: nowrap;
+}
+
+.muted {
+	color: var(--l3-foreground);
+}
+
+// ---- per-group state rows (loading / empty / error) ----
+
+.mapperStateRow .stateCell {
+	color: var(--l3-foreground);
+}
+
+.stateCell {
+	padding: var(--spacing-4) var(--spacing-6) var(--spacing-4) var(--spacing-12);
+	font-size: var(--periscope-font-size-base);
+}
+
+// ---- empty / loading ----
+
+.tableEmpty {
+	padding: var(--spacing-12) var(--spacing-6);
+	text-align: center;
+	color: var(--l3-foreground);
+	font-size: var(--periscope-font-size-base);
+}
+
+.skeletonGroupHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--spacing-4);
+	padding: var(--spacing-3) var(--spacing-6);
+}
+
+.skeletonGroupLeft {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-3);
+	flex: 1;
+	min-width: 0;
+}
+
+.skeletonGroupRight {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-3);
+	flex-shrink: 0;
+}
