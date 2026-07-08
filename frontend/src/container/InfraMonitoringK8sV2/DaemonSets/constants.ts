@@ -1,67 +1,52 @@
+import { InframonitoringtypesDaemonSetRecordDTO } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
-import {
-	createFilterItem,
-	K8sDetailsMetadataConfig,
-} from '../Base/K8sBaseDetails';
-import { QUERY_KEYS } from '../EntityDetailsUtils/utils';
-import { K8sDaemonSetsData } from './api';
+import { K8sDetailsMetadataConfig } from '../Base/K8sBaseDetails';
+import { formatValueForExpression } from 'components/QueryBuilderV2/utils';
+import { INFRA_MONITORING_ATTR_KEYS } from '../constants';
 
-export const k8sDaemonSetGetSelectedItemFilters = (
+export const k8sDaemonSetGetSelectedItemExpression = (
 	selectedItemId: string,
-): TagFilter => ({
-	op: 'AND',
-	items: [
-		{
-			id: 'k8s_daemonset_name',
-			key: {
-				key: 'k8s_daemonset_name',
-				type: null,
-			},
-			op: '=',
-			value: selectedItemId,
-		},
-	],
-});
+): string =>
+	`${INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME} = ${formatValueForExpression(selectedItemId)}`;
 
-export const k8sDaemonSetDetailsMetadataConfig: K8sDetailsMetadataConfig<K8sDaemonSetsData>[] =
+export const k8sDaemonSetDetailsMetadataConfig: K8sDetailsMetadataConfig<InframonitoringtypesDaemonSetRecordDTO>[] =
 	[
 		{
 			label: 'Daemonset Name',
-			getValue: (p): string => p.meta.k8s_daemonset_name,
+			getValue: (p): string =>
+				p.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME] ?? '',
 		},
 		{
 			label: 'Cluster Name',
-			getValue: (p): string => p.meta.k8s_cluster_name,
+			getValue: (p): string =>
+				p.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] ?? '',
 		},
 		{
 			label: 'Namespace Name',
-			getValue: (p): string => p.meta.k8s_namespace_name,
+			getValue: (p): string =>
+				p.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ?? '',
 		},
 	];
 
-export const k8sDaemonSetInitialEventsFilter = (
-	item: K8sDaemonSetsData,
-): ReturnType<typeof createFilterItem>[] => [
-	createFilterItem(QUERY_KEYS.K8S_OBJECT_KIND, 'DaemonSet'),
-	createFilterItem(QUERY_KEYS.K8S_OBJECT_NAME, item.meta.k8s_daemonset_name),
-];
+export const k8sDaemonSetInitialEventsExpression = (
+	item: InframonitoringtypesDaemonSetRecordDTO,
+): string =>
+	`${INFRA_MONITORING_ATTR_KEYS.K8S_OBJECT_KIND} = 'DaemonSet' AND ${INFRA_MONITORING_ATTR_KEYS.K8S_OBJECT_NAME} = ${formatValueForExpression(item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME] ?? '')}`;
 
-export const k8sDaemonSetInitialLogTracesFilter = (
-	item: K8sDaemonSetsData,
-): ReturnType<typeof createFilterItem>[] => [
-	createFilterItem(QUERY_KEYS.K8S_DAEMON_SET_NAME, item.meta.k8s_daemonset_name),
-	createFilterItem(QUERY_KEYS.K8S_NAMESPACE_NAME, item.meta.k8s_namespace_name),
-];
+export const k8sDaemonSetInitialLogTracesExpression = (
+	item: InframonitoringtypesDaemonSetRecordDTO,
+): string =>
+	`${INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME} = ${formatValueForExpression(item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME] ?? '')} AND ${INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME} = ${formatValueForExpression(item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ?? '')}`;
 
-export const k8sDaemonSetGetEntityName = (item: K8sDaemonSetsData): string =>
-	item.meta.k8s_daemonset_name;
+export const k8sDaemonSetGetEntityName = (
+	item: InframonitoringtypesDaemonSetRecordDTO,
+): string => item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME] ?? '';
 
 export const daemonSetWidgetInfo = [
 	{
@@ -83,7 +68,7 @@ export const daemonSetWidgetInfo = [
 ];
 
 export const getDaemonSetMetricsQueryPayload = (
-	daemonSet: K8sDaemonSetsData,
+	daemonSet: InframonitoringtypesDaemonSetRecordDTO,
 	start: number,
 	end: number,
 	dotMetricsEnabled: boolean,
@@ -159,7 +144,9 @@ export const getDaemonSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: daemonSet.meta.k8s_daemonset_name,
+										value:
+											daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME] ??
+											'',
 									},
 									{
 										id: '47b3adae',
@@ -170,7 +157,9 @@ export const getDaemonSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: daemonSet.meta.k8s_namespace_name,
+										value:
+											daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ??
+											'',
 									},
 								],
 								op: 'AND',
@@ -209,7 +198,9 @@ export const getDaemonSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: 'contains',
-										value: daemonSet.meta.k8s_daemonset_name,
+										value:
+											daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME] ??
+											'',
 									},
 									{
 										id: '47b3adae',
@@ -220,7 +211,9 @@ export const getDaemonSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: daemonSet.meta.k8s_namespace_name,
+										value:
+											daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ??
+											'',
 									},
 								],
 								op: 'AND',
@@ -259,7 +252,9 @@ export const getDaemonSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: 'contains',
-										value: daemonSet.meta.k8s_daemonset_name,
+										value:
+											daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME] ??
+											'',
 									},
 									{
 										id: '47b3adae',
@@ -270,7 +265,9 @@ export const getDaemonSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: daemonSet.meta.k8s_namespace_name,
+										value:
+											daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ??
+											'',
 									},
 								],
 								op: 'AND',
@@ -343,7 +340,9 @@ export const getDaemonSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: daemonSet.meta.k8s_daemonset_name,
+										value:
+											daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME] ??
+											'',
 									},
 									{
 										id: '47b3adae',
@@ -354,7 +353,9 @@ export const getDaemonSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: daemonSet.meta.k8s_namespace_name,
+										value:
+											daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ??
+											'',
 									},
 								],
 								op: 'AND',
@@ -393,7 +394,9 @@ export const getDaemonSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: 'contains',
-										value: daemonSet.meta.k8s_daemonset_name,
+										value:
+											daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME] ??
+											'',
 									},
 									{
 										id: '47b3adae',
@@ -404,7 +407,9 @@ export const getDaemonSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: daemonSet.meta.k8s_namespace_name,
+										value:
+											daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ??
+											'',
 									},
 								],
 								op: 'AND',
@@ -443,7 +448,9 @@ export const getDaemonSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: 'contains',
-										value: daemonSet.meta.k8s_daemonset_name,
+										value:
+											daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME] ??
+											'',
 									},
 									{
 										id: '47b3adae',
@@ -454,7 +461,9 @@ export const getDaemonSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: daemonSet.meta.k8s_namespace_name,
+										value:
+											daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ??
+											'',
 									},
 								],
 								op: 'AND',
@@ -527,7 +536,9 @@ export const getDaemonSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: daemonSet.meta.k8s_daemonset_name,
+										value:
+											daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME] ??
+											'',
 									},
 									{
 										id: '47b3adae',
@@ -538,7 +549,9 @@ export const getDaemonSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: daemonSet.meta.k8s_namespace_name,
+										value:
+											daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ??
+											'',
 									},
 								],
 								op: 'AND',
@@ -624,7 +637,9 @@ export const getDaemonSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: daemonSet.meta.k8s_daemonset_name,
+										value:
+											daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME] ??
+											'',
 									},
 									{
 										id: '47b3adae',
@@ -635,7 +650,9 @@ export const getDaemonSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: daemonSet.meta.k8s_namespace_name,
+										value:
+											daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ??
+											'',
 									},
 								],
 								op: 'AND',
