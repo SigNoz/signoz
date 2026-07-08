@@ -24,6 +24,7 @@ import { useTraceStore } from '../stores/traceStore';
 import EntityMetadataRow from '../EntityMetadata/EntityMetadataRow';
 import AnalyticsPanel from '../SpanDetailsPanel/AnalyticsPanel/AnalyticsPanel';
 import Filters from '../TraceWaterfall/TraceWaterfallStates/Success/Filters/Filters';
+import MissingSpansBanner from './MissingSpansBanner';
 import TraceOptionsMenu from './TraceOptionsMenu';
 
 import styles from './TraceDetailsHeader.module.scss';
@@ -41,6 +42,7 @@ export interface TraceMetadataForHeader {
 	rootServiceName: string;
 	rootServiceEntryPoint: string;
 	rootSpanStatusCode: string;
+	hasMissingSpans: boolean;
 }
 
 interface TraceDetailsHeaderProps {
@@ -208,6 +210,8 @@ function TraceDetailsHeader({
 					)}
 				</div>
 			)}
+
+			{traceMetadata?.hasMissingSpans && <MissingSpansBanner />}
 
 			<FieldsSelector
 				isOpen={isPreviewFieldsOpen}

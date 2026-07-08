@@ -4,11 +4,13 @@ import { type TabItemProps } from '@signozhq/ui/tabs';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 
+import LLMObservabilityAttributeMapping from '../AttributeMapping/LLMObservabilityAttributeMapping';
 import Overview from '../Overview/Overview';
 import LLMObservabilityModelPricing from '../Settings/ModelPricing/LLMObservabilityModelPricing';
 
 const OVERVIEW_KEY = ROUTES.LLM_OBSERVABILITY_OVERVIEW;
 const CONFIGURATION_KEY = ROUTES.LLM_OBSERVABILITY_CONFIGURATION;
+const ATTRIBUTE_MAPPING_KEY = ROUTES.LLM_OBSERVABILITY_ATTRIBUTE_MAPPING;
 
 interface UseLLMObservabilityTabsResult {
 	items: TabItemProps[];
@@ -24,9 +26,12 @@ export function useLLMObservabilityTabs(): UseLLMObservabilityTabsResult {
 	const { pathname } = useLocation();
 	const { safeNavigate } = useSafeNavigate();
 
-	const activeTab = pathname.startsWith(CONFIGURATION_KEY)
-		? CONFIGURATION_KEY
-		: OVERVIEW_KEY;
+	let activeTab: string = OVERVIEW_KEY;
+	if (pathname.startsWith(CONFIGURATION_KEY)) {
+		activeTab = CONFIGURATION_KEY;
+	} else if (pathname.startsWith(ATTRIBUTE_MAPPING_KEY)) {
+		activeTab = ATTRIBUTE_MAPPING_KEY;
+	}
 
 	const onTabChange = useCallback(
 		(key: string): void => {
@@ -45,6 +50,11 @@ export function useLLMObservabilityTabs(): UseLLMObservabilityTabsResult {
 			key: CONFIGURATION_KEY,
 			label: 'Model pricing',
 			children: <LLMObservabilityModelPricing />,
+		},
+		{
+			key: ATTRIBUTE_MAPPING_KEY,
+			label: 'Attribute Mapping',
+			children: <LLMObservabilityAttributeMapping />,
 		},
 	];
 

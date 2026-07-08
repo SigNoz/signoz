@@ -140,6 +140,7 @@ describe('TraceDetailsHeader – trace metadata row', () => {
 		rootServiceName: 'inventory-frontend',
 		rootServiceEntryPoint: 'large-trace-root',
 		rootSpanStatusCode: '404',
+		hasMissingSpans: false,
 	};
 
 	it('renders the metadata (service, entry point, duration, status) when provided', () => {
