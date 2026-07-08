@@ -9,6 +9,7 @@ function ListPanelWrapper({
 	queryResponse,
 	setRequestData,
 	onColumnWidthsChange,
+	hidePagination,
 }: PanelWrapperProps): JSX.Element {
 	const dataSource = widget.query.builder?.queryData[0]?.dataSource;
 
@@ -23,6 +24,7 @@ function ListPanelWrapper({
 				queryResponse={queryResponse}
 				setRequestData={setRequestData}
 				onColumnWidthsChange={onColumnWidthsChange}
+				hidePagination={hidePagination}
 			/>
 		);
 	}
@@ -32,6 +34,7 @@ function ListPanelWrapper({
 			queryResponse={queryResponse}
 			setRequestData={setRequestData}
 			onColumnWidthsChange={onColumnWidthsChange}
+			hidePagination={hidePagination}
 		/>
 	);
 }

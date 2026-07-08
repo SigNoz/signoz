@@ -127,4 +127,37 @@ describe('preparePieData', () => {
 	it('returns no slices for empty tables', () => {
 		expect(preparePieData(args([]))).toStrictEqual([]);
 	});
+
+	it('carries the value column query name and group-by labels for drilldown', () => {
+		const table = tableWith(
+			[
+				{
+					name: 'service.name',
+					queryName: 'A',
+					isValueColumn: false,
+					id: 'service.name',
+				},
+				{ name: 'count', queryName: 'A', isValueColumn: true, id: 'A' },
+			],
+			[{ data: { 'service.name': 'adservice', A: 100 } }],
+		);
+
+		const [slice] = preparePieData(args([table]));
+
+		expect(slice.queryName).toBe('A');
+		expect(slice.labels).toStrictEqual({ 'service.name': 'adservice' });
+	});
+
+	it('leaves labels empty for an ungrouped slice', () => {
+		const table = tableWith(
+			[{ name: 'count', queryName: 'A', isValueColumn: true, id: 'A' }],
+			[{ data: { A: 42 } }],
+			{ legend: 'requests' },
+		);
+
+		const [slice] = preparePieData(args([table]));
+
+		expect(slice.queryName).toBe('A');
+		expect(slice.labels).toStrictEqual({});
+	});
 });
