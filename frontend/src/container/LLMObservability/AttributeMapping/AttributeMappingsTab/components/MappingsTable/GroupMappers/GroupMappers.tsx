@@ -34,9 +34,16 @@ function GroupMappers({ group }: GroupMappersProps): JSX.Element {
 		? { initial: false as const }
 		: STATE_ROW_MOTION;
 
-	const { data, isLoading, isError } = useListSpanMappers({
-		groupId: group.id,
-	});
+	const { data, isLoading, isError } = useListSpanMappers(
+		{
+			groupId: group.id,
+		},
+		{
+			query: {
+				refetchOnMount: false,
+			},
+		},
+	);
 
 	const mappers = useMemo<Mapping[]>(() => {
 		const items = (data?.data?.items ??
