@@ -28,7 +28,7 @@ func TestTransactionGroupsValueNil(t *testing.T) {
 	var groups TransactionGroups
 	value, err := groups.Value()
 	require.NoError(t, err)
-	assert.Nil(t, value)
+	assert.Equal(t, "[]", value)
 }
 
 func TestTransactionGroupsScan(t *testing.T) {

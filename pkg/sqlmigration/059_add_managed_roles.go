@@ -3,6 +3,7 @@ package sqlmigration
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlschema"
@@ -16,6 +17,30 @@ import (
 type addManagedRoles struct {
 	sqlstore  sqlstore.SQLStore
 	sqlschema sqlschema.SQLSchema
+}
+
+type role struct {
+	bun.BaseModel `bun:"table:role"`
+
+	ID          valuer.UUID `bun:"id,pk,type:text"`
+	CreatedAt   time.Time   `bun:"created_at"`
+	UpdatedAt   time.Time   `bun:"updated_at"`
+	Name        string      `bun:"name,type:string"`
+	Description string      `bun:"description,type:string"`
+	Type        string      `bun:"type,type:string"`
+	OrgID       valuer.UUID `bun:"org_id,type:string"`
+}
+
+func newManagedRole(name, description string, orgID valuer.UUID) *role {
+	return &role{
+		ID:          valuer.GenerateUUID(),
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+		Name:        name,
+		Description: description,
+		Type:        authtypes.RoleTypeManaged.StringValue(),
+		OrgID:       orgID,
+	}
 }
 
 func NewAddManagedRolesFactory(sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) factory.ProviderFactory[SQLMigration, Config] {
@@ -54,36 +79,24 @@ func (migration *addManagedRoles) Up(ctx context.Context, db *bun.DB) error {
 		return err
 	}
 
-	managedRoles := []*authtypes.Role{}
+	managedRoles := []*role{}
 	for _, orgIDStr := range orgIDs {
 		orgID, err := valuer.NewUUID(orgIDStr)
 		if err != nil {
 			return err
 		}
 
-		// signoz admin
-		signozAdminRole := authtypes.NewRole(authtypes.SigNozAdminRoleName, authtypes.SigNozAdminRoleDescription, authtypes.RoleTypeManaged, orgID, nil)
-		managedRoles = append(managedRoles, signozAdminRole)
-
-		// signoz editor
-		signozEditorRole := authtypes.NewRole(authtypes.SigNozEditorRoleName, authtypes.SigNozEditorRoleDescription, authtypes.RoleTypeManaged, orgID, nil)
-		managedRoles = append(managedRoles, signozEditorRole)
-
-		// signoz viewer
-		signozViewerRole := authtypes.NewRole(authtypes.SigNozViewerRoleName, authtypes.SigNozViewerRoleDescription, authtypes.RoleTypeManaged, orgID, nil)
-		managedRoles = append(managedRoles, signozViewerRole)
-
-		// signoz anonymous
-		signozAnonymousRole := authtypes.NewRole(authtypes.SigNozAnonymousRoleName, authtypes.SigNozAnonymousRoleDescription, authtypes.RoleTypeManaged, orgID, nil)
-		managedRoles = append(managedRoles, signozAnonymousRole)
+		managedRoles = append(managedRoles,
+			newManagedRole(authtypes.SigNozAdminRoleName, authtypes.SigNozAdminRoleDescription, orgID),
+			newManagedRole(authtypes.SigNozEditorRoleName, authtypes.SigNozEditorRoleDescription, orgID),
+			newManagedRole(authtypes.SigNozViewerRoleName, authtypes.SigNozViewerRoleDescription, orgID),
+			newManagedRole(authtypes.SigNozAnonymousRoleName, authtypes.SigNozAnonymousRoleDescription, orgID),
+		)
 	}
 
 	if len(managedRoles) > 0 {
-		// Pin the columns that existed when this migration shipped so later
-		// additions to the live Role model don't break fresh installs.
 		_, err = tx.NewInsert().
 			Model(&managedRoles).
-			Column("id", "created_at", "updated_at", "name", "description", "type", "org_id").
 			On("CONFLICT (org_id, name) DO UPDATE").
 			Set("description = EXCLUDED.description, type = EXCLUDED.type, updated_at = EXCLUDED.updated_at").
 			Exec(ctx)

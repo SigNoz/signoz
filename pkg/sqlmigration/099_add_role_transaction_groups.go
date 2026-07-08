@@ -49,26 +49,16 @@ func (migration *addRoleTransactionGroups) Up(ctx context.Context, db *bun.DB) e
 		return err
 	}
 
-	columnExists := false
-	for _, column := range table.Columns {
-		if column.Name == sqlschema.ColumnName("transaction_groups") {
-			columnExists = true
-			break
-		}
+	column := &sqlschema.Column{
+		Name:     sqlschema.ColumnName("transaction_groups"),
+		DataType: sqlschema.DataTypeText,
+		Nullable: true,
 	}
 
-	if !columnExists {
-		column := &sqlschema.Column{
-			Name:     sqlschema.ColumnName("transaction_groups"),
-			DataType: sqlschema.DataTypeText,
-			Nullable: true,
-		}
-
-		sqls := migration.sqlschema.Operator().AddColumn(table, nil, column, nil)
-		for _, sql := range sqls {
-			if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
-				return err
-			}
+	sqls := migration.sqlschema.Operator().AddColumn(table, nil, column, nil)
+	for _, sql := range sqls {
+		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
+			return err
 		}
 	}
 

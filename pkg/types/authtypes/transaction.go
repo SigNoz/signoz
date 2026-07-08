@@ -119,10 +119,6 @@ func (groups TransactionGroups) MarshalJSON() ([]byte, error) {
 }
 
 func (groups TransactionGroups) Value() (driver.Value, error) {
-	if groups == nil {
-		return nil, nil
-	}
-
 	data, err := json.Marshal(groups)
 	if err != nil {
 		return nil, err

@@ -65,7 +65,7 @@ func (handler *handler) Get(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	role, err := handler.authz.GetWithTransactionGroups(ctx, valuer.MustNewUUID(claims.OrgID), roleID)
+	role, err := handler.authz.Get(ctx, valuer.MustNewUUID(claims.OrgID), roleID)
 	if err != nil {
 		render.Error(rw, err)
 		return

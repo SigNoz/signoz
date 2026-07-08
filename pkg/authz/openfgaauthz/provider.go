@@ -80,10 +80,6 @@ func (provider *provider) ListObjects(ctx context.Context, subject string, relat
 }
 
 func (provider *provider) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*authtypes.Role, error) {
-	return provider.store.Get(ctx, orgID, id)
-}
-
-func (provider *provider) GetWithTransactionGroups(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*authtypes.Role, error) {
 	return nil, errors.Newf(errors.TypeUnsupported, authtypes.ErrCodeRoleUnsupported, "not implemented")
 }
 
@@ -183,10 +179,6 @@ func (provider *provider) CreateManagedUserRoleTransactions(ctx context.Context,
 
 func (setter *provider) Create(_ context.Context, _ valuer.UUID, _ *authtypes.Role) error {
 	return errors.Newf(errors.TypeUnsupported, authtypes.ErrCodeRoleUnsupported, "not implemented")
-}
-
-func (provider *provider) GetOrCreate(_ context.Context, _ valuer.UUID, _ *authtypes.Role) (*authtypes.Role, error) {
-	return nil, errors.Newf(errors.TypeUnsupported, authtypes.ErrCodeRoleUnsupported, "not implemented")
 }
 
 func (provider *provider) Update(_ context.Context, _ valuer.UUID, _ *authtypes.Role) error {
