@@ -94,6 +94,7 @@ export interface K8sBaseDetailsProps<T> {
 	entityWidgetInfo: {
 		title: string;
 		yAxisUnit: string;
+		docPath?: string;
 	}[];
 	getEntityQueryPayload: (
 		entity: T,

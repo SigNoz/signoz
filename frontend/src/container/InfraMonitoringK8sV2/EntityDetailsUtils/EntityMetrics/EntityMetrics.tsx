@@ -21,6 +21,7 @@ import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
 import { buildEntityMetricsChartConfig } from './configBuilder';
+import ChartHeader from './ChartHeader';
 
 import { useEntityMetrics } from './hooks';
 import { isKeyNotFoundError } from '../utils';
@@ -44,6 +45,7 @@ interface EntityMetricsProps<T> {
 	entityWidgetInfo: {
 		title: string;
 		yAxisUnit: string;
+		docPath?: string;
 	}[];
 	getEntityQueryPayload: (
 		node: T,
@@ -204,9 +206,10 @@ function EntityMetrics<T>({
 						key={entityWidgetInfo[idx].title}
 						className={styles.entityMetricsCol}
 					>
-						<span className={styles.entityMetricsTitle}>
-							{entityWidgetInfo[idx].title}
-						</span>
+						<ChartHeader
+							title={entityWidgetInfo[idx].title}
+							docPath={entityWidgetInfo[idx].docPath}
+						/>
 						<div className={styles.entityMetricsCard} ref={graphRef}>
 							{renderCardContent(query, idx)}
 						</div>

@@ -39,34 +39,45 @@ export const clusterWidgetInfo = [
 	{
 		title: 'CPU Usage, allocatable',
 		yAxisUnit: '',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/clusters/#cpu-usage-allocatable',
 	},
 	{
 		title: 'Memory Usage, allocatable',
 		yAxisUnit: 'bytes',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/clusters/#memory-usage-allocatable',
 	},
 	{
 		title: 'Ready Nodes',
 		yAxisUnit: '',
+		docPath: '/infrastructure-monitoring/kubernetes/clusters/#ready-nodes',
 	},
 	{
 		title: 'NotReady Nodes',
 		yAxisUnit: '',
+		docPath: '/infrastructure-monitoring/kubernetes/clusters/#notready-nodes',
 	},
 	{
 		title: 'Deployments available and desired',
 		yAxisUnit: '',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/clusters/#deployments-available-and-desired',
 	},
 	{
 		title: 'Statefulset pods',
 		yAxisUnit: '',
+		docPath: '/infrastructure-monitoring/kubernetes/clusters/#statefulset-pods',
 	},
 	{
 		title: 'Daemonset nodes',
 		yAxisUnit: '',
+		docPath: '/infrastructure-monitoring/kubernetes/clusters/#daemonset-nodes',
 	},
 	{
 		title: 'Jobs',
 		yAxisUnit: '',
+		docPath: '/infrastructure-monitoring/kubernetes/clusters/#jobs',
 	},
 ];
 

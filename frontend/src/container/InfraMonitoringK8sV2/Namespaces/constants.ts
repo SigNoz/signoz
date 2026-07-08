@@ -47,42 +47,54 @@ export const namespaceWidgetInfo = [
 	{
 		title: 'CPU Usage (cores)',
 		yAxisUnit: '',
+		docPath: '/infrastructure-monitoring/kubernetes/namespaces/#cpu-usage-cores',
 	},
 	{
 		title: 'Memory Usage (bytes)',
 		yAxisUnit: 'bytes',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/namespaces/#memory-usage-bytes',
 	},
 	{
 		title: 'Pods CPU (top 10)',
 		yAxisUnit: '',
+		docPath: '/infrastructure-monitoring/kubernetes/namespaces/#pods-cpu-top-10',
 	},
 	{
 		title: 'Pods Memory (top 10)',
 		yAxisUnit: 'bytes',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/namespaces/#pods-memory-top-10',
 	},
 	{
 		title: 'Network rate',
 		yAxisUnit: 'binBps',
+		docPath: '/infrastructure-monitoring/kubernetes/namespaces/#network-rate',
 	},
 	{
 		title: 'Network errors',
 		yAxisUnit: '',
+		docPath: '/infrastructure-monitoring/kubernetes/namespaces/#network-errors',
 	},
 	{
-		title: 'StatefulSets',
+		title: 'StatefulSets (pods)',
 		yAxisUnit: '',
+		docPath: '/infrastructure-monitoring/kubernetes/namespaces/#statefulsets',
 	},
 	{
-		title: 'ReplicaSets',
+		title: 'ReplicaSets (pods)',
 		yAxisUnit: '',
+		docPath: '/infrastructure-monitoring/kubernetes/namespaces/#replicasets',
 	},
 	{
-		title: 'DaemonSets',
+		title: 'DaemonSets (nodes)',
 		yAxisUnit: '',
+		docPath: '/infrastructure-monitoring/kubernetes/namespaces/#daemonsets',
 	},
 	{
-		title: 'Deployments',
+		title: 'Deployments (pods)',
 		yAxisUnit: '',
+		docPath: '/infrastructure-monitoring/kubernetes/namespaces/#deployments',
 	},
 ];
 

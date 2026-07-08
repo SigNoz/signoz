@@ -58,26 +58,37 @@ export const statefulSetWidgetInfo = [
 	{
 		title: 'CPU usage, request, limits',
 		yAxisUnit: '',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/statefulsets/#cpu-usage-request-limits',
 	},
 	{
 		title: 'CPU request, limit util (%)',
 		yAxisUnit: 'percentunit',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/statefulsets/#cpu-request-limit-utilization-',
 	},
 	{
 		title: 'Memory usage, request, limits',
 		yAxisUnit: 'bytes',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/statefulsets/#memory-usage-request-limits',
 	},
 	{
 		title: 'Memory request, limit util (%)',
 		yAxisUnit: 'percentunit',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/statefulsets/#memory-request-limit-utilization-',
 	},
 	{
 		title: 'Network IO',
 		yAxisUnit: 'binBps',
+		docPath: '/infrastructure-monitoring/kubernetes/statefulsets/#network-io',
 	},
 	{
 		title: 'Network errors count',
 		yAxisUnit: '',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/statefulsets/#network-errors-count',
 	},
 ];
 
