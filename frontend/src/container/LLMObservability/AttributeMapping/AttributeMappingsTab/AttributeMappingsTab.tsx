@@ -1,6 +1,6 @@
 import { DraftGroup } from '../types';
 import styles from './AttributeMappingsTab.module.scss';
-import MapperGroupsTable from './components/MapperGroupsTable';
+import MappingsTable from './components/MappingsTable/MappingsTable';
 import { AttributeMappingStore } from './hooks/useAttributeMappingStore';
 
 interface AttributeMappingsTabProps {
@@ -25,7 +25,7 @@ function AttributeMappingsTab({
 				</div>
 			)}
 
-			<MapperGroupsTable
+			<MappingsTable
 				store={store}
 				onEditGroup={onEditGroup}
 				onAddGroup={onAddGroup}

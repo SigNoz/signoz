@@ -81,8 +81,7 @@ function SaveableHarness(): JSX.Element {
 
 describe('AttributeMappingsTab (integration)', () => {
 	beforeEach(() => {
-		// The shared TanStackTable owns page/limit URL state via nuqs, which reads
-		// window.location — jsdom shares that across tests in a file.
+		// Reset URL state between tests — jsdom shares window.location across a file.
 		window.history.pushState(null, '', '/');
 	});
 
@@ -120,25 +119,22 @@ describe('AttributeMappingsTab (integration)', () => {
 		).resolves.toHaveTextContent('No mapping groups yet.');
 	});
 
-	it('renders each group row with its name, condition filters and status', async () => {
+	it('renders each group header row with its name and enabled status', async () => {
 		setupGroups();
 		render(<AttributeMappingHarness />);
 
-		// group-1: enabled, with attribute + resource condition keys.
+		// Condition filters are no longer shown inline — they live in the group
+		// drawer now — so the header row only carries the name and the toggle.
+		// group-1: enabled.
 		const enabledRow = (await screen.findByTestId('group-name-group-1')).closest(
 			'tr',
 		) as HTMLElement;
 		expect(
 			within(enabledRow).getByTestId('group-name-group-1'),
 		).toHaveTextContent('demo');
-		const filters = within(enabledRow).getByTestId('group-filters-group-1');
-		expect(filters).toHaveTextContent('attribute');
-		expect(filters).toHaveTextContent('contains ai.embeddings');
-		expect(filters).toHaveTextContent('resource');
-		expect(filters).toHaveTextContent('contains cloud.account.id');
 		expect(within(enabledRow).getByTestId('group-enabled-group-1')).toBeChecked();
 
-		// group-2: disabled, with no condition keys.
+		// group-2: disabled.
 		const disabledRow = screen
 			.getByTestId('group-name-group-2')
 			.closest('tr') as HTMLElement;
@@ -146,9 +142,6 @@ describe('AttributeMappingsTab (integration)', () => {
 		expect(
 			within(disabledRow).getByTestId('group-enabled-group-2'),
 		).not.toBeChecked();
-		expect(
-			within(disabledRow).getByTestId('group-filters-group-2'),
-		).toHaveTextContent('No condition · always runs');
 	});
 
 	it("reveals a group's mappers on expand and hides them on collapse", async () => {
@@ -314,11 +307,12 @@ describe('AttributeMappingsTab (integration)', () => {
 		).not.toBeInTheDocument();
 	});
 
-	// The mapper drawer is owned by MappersTable (it renders its own
-	// useMapperFormDrawer + MapperFormDrawer), so these flows reach it through the
-	// same store-backed harness by expanding a group first. Persistence is staged
-	// into the draft store, so the assertions are on the resulting table rows and
-	// the store's dirty state rather than any network call.
+	// The mapper drawer is owned by MappingsTable (a single useMapperFormDrawer +
+	// MapperFormDrawer instance, targeted at whichever group triggered it), so
+	// these flows reach it through the same store-backed harness by expanding a
+	// group first. Persistence is staged into the draft store, so the assertions
+	// are on the resulting table rows and the store's dirty state rather than any
+	// network call.
 	describe('mapper drawer', () => {
 		async function openGroupWithMapper(
 			user: ReturnType<typeof userEvent.setup>,

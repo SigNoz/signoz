@@ -67,7 +67,7 @@ export function useAttributeMappingStore(): AttributeMappingStore {
 	const ready = !groupsQuery.isLoading;
 
 	// A group's mappers are fetched lazily when its row is first expanded (see
-	// MappersTable -> hydrateGroupMappers) and cached here, keyed by group server
+	// GroupSection -> hydrateGroupMappers) and cached here, keyed by group server
 	// id. Page load stays a single groups request — never an N+1 fan-out across
 	// every group.
 	const [loadedMappers, setLoadedMappers] = useState<Record<string, Mapper[]>>(
