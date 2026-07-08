@@ -89,6 +89,7 @@ const ROUTES = {
 	AI_ASSISTANT_BASE: '/ai-assistant',
 	AI_ASSISTANT_ICON_PREVIEW: '/ai-assistant-icon-preview',
 	MCP_SERVER: '/settings/mcp-server',
+	LLM_OBSERVABILITY_ATTRIBUTE_MAPPING: '/llm-observability/attribute-mapping',
 	LLM_OBSERVABILITY_BASE: '/llm-observability',
 	LLM_OBSERVABILITY_OVERVIEW: '/llm-observability/overview',
 	LLM_OBSERVABILITY_CONFIGURATION: '/llm-observability/configuration',
