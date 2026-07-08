@@ -72,7 +72,7 @@ describe('EntityTraces - Table Rendering', () => {
 		expect(screen.getByTestId('responseStatusCode')).toHaveTextContent('200');
 	});
 
-	it('should render http method as robin colored badge', async () => {
+	it('should render http method as robin colored outline badge', async () => {
 		mockQueryRangeV5WithTracesResponse({
 			customTraces: [{ httpMethod: 'POST', responseStatusCode: '200' }],
 		});
@@ -84,6 +84,7 @@ describe('EntityTraces - Table Rendering', () => {
 		const badge = await screen.findByTestId('httpMethod');
 		expect(badge).toHaveTextContent('POST');
 		expect(badge).toHaveAttribute('data-color', 'robin');
+		expect(badge).toHaveAttribute('data-variant', 'outline');
 	});
 
 	it('should render N/A when http method is empty', async () => {
@@ -119,10 +120,10 @@ describe('EntityTraces - Table Rendering', () => {
 
 		expect(badgeColors).toStrictEqual([
 			'forest', // 2xx -> success
-			'amber', // 3xx -> warning
-			'sakura', // 4xx
-			'cherry', // 5xx -> error
-			'vanilla', // <200 -> secondary
+			'robin', // 3xx -> redirect
+			'amber', // 4xx -> client error
+			'cherry', // 5xx -> server error
+			'vanilla', // 1xx -> informational
 		]);
 	});
 
