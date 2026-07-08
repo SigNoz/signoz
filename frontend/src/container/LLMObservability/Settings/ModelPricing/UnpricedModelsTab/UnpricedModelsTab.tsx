@@ -62,11 +62,21 @@ function UnpricedModelsTab(): JSX.Element {
 		}
 	}, [mapModel, pendingMapping, clearPending]);
 
-	const columnsConfig: UnpricedColumnsConfig = {
-		canManage: canManagePricing,
-		onRequestMap,
-		onCreateNew: (modelName): void => drawer.openForAdd(modelName),
-	};
+	// openForAdd is stable (useCallback with no deps); drawer itself is a fresh
+	// object each render, so depend on the method, not the object.
+	const { openForAdd } = drawer;
+	const onCreateNew = useCallback(
+		(modelName: string): void => openForAdd(modelName),
+		[openForAdd],
+	);
+	const columnsConfig = useMemo<UnpricedColumnsConfig>(
+		() => ({
+			canManage: canManagePricing,
+			onRequestMap,
+			onCreateNew,
+		}),
+		[canManagePricing, onRequestMap, onCreateNew],
+	);
 
 	return (
 		<div className={styles.unpricedModelsTab}>
