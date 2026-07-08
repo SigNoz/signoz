@@ -2,6 +2,7 @@ import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { PanelQueryData } from 'pages/DashboardPageV2/DashboardContainer/queryV5/types';
 import type { ReactElement } from 'react';
 import type { Warning } from 'types/api';
 
@@ -43,6 +44,11 @@ function makePanel(overrides?: {
 const baseProps = {
 	panel: makePanel(),
 	panelId: 'panel-1',
+	data: {
+		response: undefined,
+		requestPayload: undefined,
+		legendMap: {},
+	} as PanelQueryData,
 	isFetching: false,
 };
 

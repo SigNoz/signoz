@@ -35,6 +35,7 @@ function BarPanelRenderer({
 	panelId,
 	panel,
 	data,
+	isFetching,
 	refetch,
 	onClick,
 	onDragSelect,
@@ -186,7 +187,9 @@ function BarPanelRenderer({
 			data-testid="bar-panel-renderer"
 			className={PanelStyles.panelContainer}
 		>
-			{flatSeries.length === 0 && <NoData onRetry={refetch} />}
+			{flatSeries.length === 0 && (
+				<NoData isFetching={isFetching} onRetry={refetch} />
+			)}
 			{flatSeries.length > 0 &&
 				containerDimensions.width > 0 &&
 				containerDimensions.height > 0 && (
