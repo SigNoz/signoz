@@ -5,6 +5,8 @@ import { Button } from '@signozhq/ui/button';
 import { useIntersectionObserver } from 'hooks/useIntersectionObserver';
 
 import ConfirmDeleteDialog from '../../../components/ConfirmDeleteDialog/ConfirmDeleteDialog';
+import DisabledControlTooltip from '../../../components/DisabledControlTooltip/DisabledControlTooltip';
+import { DASHBOARD_LOCKED_REASON } from '../../../hooks/useDashboardEditGuard';
 import { useCreatePanel } from '../../../hooks/useCreatePanel';
 import type { DashboardSection } from '../../../utils';
 import PanelTypeSelectionModal from '../../Panel/PanelTypeSelectionModal/PanelTypeSelectionModal';
@@ -28,7 +30,8 @@ interface SectionProps {
 }
 
 function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
-	const isEditable = useDashboardStore((s) => s.isEditable);
+	const canEditDashboard = useDashboardStore((s) => s.canEditDashboard);
+	const isLocked = useDashboardStore((s) => s.isLocked);
 	const {
 		isPickerOpen,
 		openPicker,
@@ -104,8 +107,9 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 				onToggle={toggle}
 				repeatVariable={section.repeatVariable}
 				dragHandle={dragHandle}
+				disabledReason={isLocked ? DASHBOARD_LOCKED_REASON : ''}
 				actions={
-					isEditable
+					canEditDashboard
 						? {
 								onRename: (): void => setIsRenaming(true),
 								onAddPanel: (): void => openPicker(section.layoutIndex),
@@ -119,17 +123,25 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 					grid
 				) : (
 					<div className={styles.emptySection}>
-						{isEditable && (
-							<Button
-								type="button"
-								variant="dashed"
-								color="secondary"
-								prefix={<Plus size="md" />}
-								onClick={(): void => openPicker(section.layoutIndex)}
-								testId={`section-add-panel-${section.id}`}
+						{canEditDashboard && (
+							<DisabledControlTooltip
+								reason={DASHBOARD_LOCKED_REASON}
+								disabled={isLocked}
 							>
-								New Panel
-							</Button>
+								<Button
+									type="button"
+									variant="dashed"
+									color="secondary"
+									prefix={<Plus size="md" />}
+									disabled={isLocked}
+									onClick={
+										isLocked ? undefined : (): void => openPicker(section.layoutIndex)
+									}
+									testId={`section-add-panel-${section.id}`}
+								>
+									New Panel
+								</Button>
+							</DisabledControlTooltip>
 						)}
 					</div>
 				))}
