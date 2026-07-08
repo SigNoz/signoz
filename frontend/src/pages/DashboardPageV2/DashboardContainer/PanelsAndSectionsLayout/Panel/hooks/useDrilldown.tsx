@@ -16,7 +16,9 @@ import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPageV2/DashboardContain
 import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/registry';
 import { buildAggregateData } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/drilldown/buildAggregateData';
 import { getBuilderQueries } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/getBuilderQueries';
+import { getPanelQueryType } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/getPanelQueryType';
 import { fromPerses } from 'pages/DashboardPageV2/DashboardContainer/queryV5/persesQueryAdapters';
+import { EQueryType } from 'types/common/dashboard';
 
 import DrilldownAggregateMenu from '../DrilldownMenu/DrilldownAggregateMenu';
 import DrilldownBreakoutMenu from '../DrilldownMenu/DrilldownBreakoutMenu';
@@ -76,12 +78,14 @@ export function useDrilldown(
 	const panelType = PANEL_KIND_TO_PANEL_TYPE[kind];
 	const queries = panel.spec.queries;
 
-	// Kind must opt in via its capability AND have a builder query to drill into.
+	// Drilldown only for builder-authored panels with a query to drill into (PromQL /
+	// ClickHouse have no builder context to refine).
 	const enableDrillDown = useMemo(
 		() =>
 			getPanelDefinition(kind).actions.drilldown &&
+			getPanelQueryType(panel) === EQueryType.QUERY_BUILDER &&
 			getBuilderQueries(queries).length > 0,
-		[kind, queries],
+		[kind, panel, queries],
 	);
 
 	const v1Query = useMemo(
