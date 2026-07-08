@@ -37,6 +37,15 @@ export function preparePieData({
 				.map(String)
 				.join(', ');
 
+			// Group-by key→value, keyed by field name for drilldown filters (`enrichPieClick`).
+			const labels: Record<string, string> = {};
+			labelColumns.forEach((column) => {
+				const value = row.data[column.id || column.name];
+				if (value != null) {
+					labels[column.name] = String(value as string | number);
+				}
+			});
+
 			valueColumns.forEach((column) => {
 				let label: string;
 				if (hasMultipleValueColumns) {
@@ -50,6 +59,8 @@ export function preparePieData({
 					label,
 					value: Number(row.data[column.id || column.name]),
 					color,
+					queryName: column.queryName,
+					labels,
 				});
 			});
 		});
