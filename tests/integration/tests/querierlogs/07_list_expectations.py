@@ -602,17 +602,17 @@ def test_logs_list_query_timestamp_expectations(
                 order=[OrderBy(TelemetryFieldKey("resource.trace_id"), "desc")],
             ),
             lambda x: [
-                [x[2].id, x[2].timestamp, x[2].resources_string.get("trace_id", "")],
-                [x[1].id, x[1].timestamp, x[1].resources_string.get("trace_id", "")],
-                [x[0].id, x[0].timestamp, x[0].resources_string.get("trace_id", "")],
-                [x[3].id, x[3].timestamp, x[3].resources_string.get("trace_id", "")],
+                [x[2].id, x[2].timestamp, x[2].resources_string.get("trace_id", None)],
+                [x[1].id, x[1].timestamp, x[1].resources_string.get("trace_id", None)],
+                [x[0].id, x[0].timestamp, x[0].resources_string.get("trace_id", None)],
+                [x[3].id, x[3].timestamp, x[3].resources_string.get("trace_id", None)],
             ],
             id="select-resource-trace-id-order-resource-trace-id-desc",
             # Justification (expected values and row order):
             # AdjustKeys: no-op for both select and order, "resource.trace_id" is a valid resource key
             # Field mapping: "resource.trace_id" → resources_string["trace_id"]
-            # Values: x[0]="", x[1]="", x[2]="3", x[3]="" (only x[2] has resource.trace_id set)
-            # Order: resource.trace_id DESC → x[2]("3") first, then x[1](""), x[0](""), x[3]("") in storage order
+            # Values: x[0]=None, x[1]=None, x[2]="3", x[3]=None (only x[2] has resource.trace_id set)
+            # Order: resource.trace_id DESC → x[2]("3") first, then x[1](None), x[0](None), x[3](None) in storage order
             # Behaviour:
             # AdjustKeys no-op
         ),
@@ -735,7 +735,6 @@ def test_logs_list_query_trace_id_expectations(
             # No results expected
             assert response.json()["data"]["data"]["results"][0]["rows"] is None
         else:
-            print(response.json())
             rows = response.json()["data"]["data"]["results"][0]["rows"]
             assert len(rows) == len(results(logs)), f"Expected {len(results(logs))} rows, got {len(rows)}"
             for row, expected_row in zip(rows, results(logs)):
