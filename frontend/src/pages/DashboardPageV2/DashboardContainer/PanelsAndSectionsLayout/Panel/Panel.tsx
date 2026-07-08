@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import type {
-	DashboardtypesPanelDTO,
-	DashboardtypesTimePreferenceDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import ContextMenu from 'periscope/components/ContextMenu';
 import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/registry';
-import { panelTimePreferenceLabel } from 'pages/DashboardPageV2/DashboardContainer/hooks/resolvePanelTimeWindow';
+import {
+	getPanelTimePreference,
+	panelTimePreferenceLabel,
+} from 'pages/DashboardPageV2/DashboardContainer/hooks/resolvePanelTimeWindow';
 import { usePanelQuery } from 'pages/DashboardPageV2/DashboardContainer/hooks/usePanelQuery';
 
 import type { DashboardSection } from '../../utils';
@@ -43,15 +43,7 @@ function Panel({
 	isVisible,
 	panelActions,
 }: PanelProps): JSX.Element {
-	// A per-panel time preference is surfaced as a header pill. `visualization` is
-	// common to every plugin-spec variant — localized cast reads it without
-	// narrowing on kind.
-	const timePreference = (
-		panel.spec.plugin.spec as
-			| { visualization?: { timePreference?: DashboardtypesTimePreferenceDTO } }
-			| undefined
-	)?.visualization?.timePreference;
-	const timeLabel = panelTimePreferenceLabel(timePreference);
+	const timeLabel = panelTimePreferenceLabel(getPanelTimePreference(panel));
 
 	const panelKind = panel.spec.plugin.kind;
 	const panelDefinition = getPanelDefinition(panelKind);
