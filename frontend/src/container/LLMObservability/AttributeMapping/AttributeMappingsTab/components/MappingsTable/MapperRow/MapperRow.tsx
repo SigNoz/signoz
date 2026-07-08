@@ -69,7 +69,6 @@ function MapperRow({ mapper, index }: MapperRowProps): JSX.Element {
 							<Badge
 								variant="outline"
 								color="vanilla"
-								className={styles.sourceChip}
 								key={`${source.context}:${source.key}`}
 							>
 								<span className={styles.sourceChipText} title={source.key}>

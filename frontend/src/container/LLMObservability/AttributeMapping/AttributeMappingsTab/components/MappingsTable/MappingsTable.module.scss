@@ -1,13 +1,8 @@
-// Must mirror the panel tables' layout in GroupMappers.module.scss so the
-// standalone column header aligns to the shared colgroup (see
-// MappingsColgroup).
 .table {
 	width: 100%;
 	border-collapse: collapse;
 	table-layout: fixed;
 }
-
-// ---- header ----
 
 .headerRow {
 	border-bottom: 1px solid var(--l2-border);
@@ -27,12 +22,6 @@
 
 // ---- group accordion (antd Collapse) ----
 
-// Restyle antd Collapse to the listing's banner-row look. antd v5's component
-// styles use selectors like `.ant-collapse > .ant-collapse-item >
-// .ant-collapse-header` (specificity 0-3-0), so these overrides repeat the
-// same direct-child chain — plus the module class — to out-rank them without
-// !important. In particular, antd top-aligns header content (flex-start, for
-// multiline labels); this header is single-line, so icon/label/extra center.
 .groupsCollapse:global(.ant-collapse) {
 	background: transparent;
 	border: none;
@@ -85,8 +74,6 @@
 		}
 	}
 }
-
-// ---- empty / loading ----
 
 .tableEmpty {
 	padding: var(--spacing-12) var(--spacing-6);

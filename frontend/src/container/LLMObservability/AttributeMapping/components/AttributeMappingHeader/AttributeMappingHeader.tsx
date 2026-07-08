@@ -10,10 +10,6 @@ interface AttributeMappingHeaderProps {
 	onSave: () => void;
 }
 
-// Page header: static description plus the save/discard actions. The actions
-// only render while there are staged changes — a pristine page shows no
-// buttons at all rather than a permanently disabled pair.
-
 function AttributeMappingHeader({
 	isDirty,
 	isSaving,

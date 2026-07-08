@@ -1,7 +1,3 @@
-// Single source of the listing's column widths. Both the header table and
-// every group panel's mappers table render <MappingsColgroup />, so alignment
-// across those separate <table> elements comes entirely from these widths
-// (each table is width-100% + table-layout: fixed).
 .colTarget {
 	width: 32%;
 }

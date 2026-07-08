@@ -5,8 +5,6 @@ import {
 
 import { MappingGroup, Mapping, SourceConfig } from './types';
 
-// Source configs for a mapper, highest priority first (first match wins at
-// evaluation time).
 function getMapperSources(mapper: SpantypesSpanMapperDTO): SourceConfig[] {
 	const sources = mapper.config?.sources ?? [];
 	return [...sources]

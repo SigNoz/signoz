@@ -15,14 +15,6 @@ interface MappingsTableProps {
 	store: AttributeMappingStore;
 }
 
-// Single, GitHub-style listing: one shared column header, groups as collapsible
-// full-width banner rows, and each group's mappers rendered as rows aligned to
-// the shared columns. The accordion itself is antd Collapse (controlled
-// activeKey, one item per group); the column alignment across its panels comes
-// from every panel body being a fixed-layout table with the same colgroup as
-// the header table (see MappingsColgroup). destroyInactivePanel keeps collapse
-// semantics identical to an unmount: a closed group's rows leave the DOM and
-// its mappers query disables.
 function MappingsTable({ store }: MappingsTableProps): JSX.Element {
 	const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
 
@@ -38,11 +30,7 @@ function MappingsTable({ store }: MappingsTableProps): JSX.Element {
 	const skeletonBanners = (
 		<div className={styles.skeletonList}>
 			{Array.from({ length: SKELETON_ROW_COUNT }).map((_, index) => (
-				<div
-					// eslint-disable-next-line react/no-array-index-key
-					key={`group-skeleton-${index}`}
-					className={styles.skeletonBanner}
-				>
+				<div key={`group-skeleton-${index}`} className={styles.skeletonBanner}>
 					<div className={styles.skeletonGroupLeft}>
 						<Skeleton.Avatar active size={14} shape="square" />
 						<Skeleton.Input

@@ -1,10 +1,3 @@
-/*
- * jsx-a11y/control-has-associated-label mis-fires on non-interactive data-table
- * rows/cells whose content is a wrapping element (a flex container, badge, or
- * loading bar) rather than a direct text node — a `<tr>`/`<td>` is not a control,
- * and the read-only status switch carries its own label.
- */
-/* eslint-disable jsx-a11y/control-has-associated-label */
 import { useMemo } from 'react';
 import type { SpantypesSpanMapperDTO } from 'api/generated/services/sigNoz.schemas';
 import { useListSpanMappers } from 'api/generated/services/spanmapper';
@@ -32,38 +25,24 @@ interface GroupMappersProps {
 	group: MappingGroup;
 }
 
-// A group's Collapse panel body: its mapper rows rendered in a table that
-// shares the listing's colgroup, so they align to the columns of the header
-// table above the Collapse. The panel only mounts while its group is expanded
-// (destroyInactivePanel), so the fetch is lazy by construction — page load is
-// a single groups request rather than an N+1 fan-out. Rows render straight
-// from the react-query response (read-only listing); editing lands in a later
-// PR.
 function GroupMappers({ group }: GroupMappersProps): JSX.Element {
 	const prefersReducedMotion = useReducedMotion();
 	const stateRowMotion = prefersReducedMotion
 		? { initial: false as const }
 		: STATE_ROW_MOTION;
 
-	// The panel mounts only while its group is expanded (destroyInactivePanel),
-	// so this fetch is lazy by construction — no `enabled` guard needed.
 	const { data, isLoading, isError } = useListSpanMappers({
 		groupId: group.id,
 	});
 
 	const mappers = useMemo<Mapping[]>(() => {
-		// The generated schema mis-types this list response with the groups DTO;
-		// the runtime payload is mappers.
 		const items = (data?.data?.items ??
 			[]) as unknown as SpantypesSpanMapperDTO[];
 		return items.map(buildMapping);
 	}, [data]);
 
 	const skeletonRows = Array.from({ length: MAPPER_SKELETON_ROWS }).map(
-		(_, index) => (
-			// eslint-disable-next-line react/no-array-index-key
-			<MapperRowSkeleton key={`mapper-skeleton-${index}`} />
-		),
+		(_, index) => <MapperRowSkeleton key={`mapper-skeleton-${index}`} />,
 	);
 
 	const errorRow = (
