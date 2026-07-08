@@ -62,6 +62,8 @@ func (migration *addTags) Up(ctx context.Context, db *bun.DB) error {
 	})
 	sqls = append(sqls, tagTableSQLs...)
 
+	// TODO (@namanverma): add a unique index for tags: (org_id, kind, (LOWER(key)), (LOWER(value)))
+
 	tagRelationsTableSQLs := migration.sqlschema.Operator().CreateTable(&sqlschema.Table{
 		Name: "tag_relation",
 		Columns: []*sqlschema.Column{
