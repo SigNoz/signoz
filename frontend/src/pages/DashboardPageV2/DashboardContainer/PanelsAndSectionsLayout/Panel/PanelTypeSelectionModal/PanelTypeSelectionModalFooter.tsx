@@ -15,8 +15,9 @@ interface PanelTypeSelectionModalFooterProps {
 }
 
 /**
- * Footer for the New Panel modal: an "Add panel to" section picker (shown only
- * when the dashboard has more than one section) and the confirm button.
+ * Footer for the New Panel modal: an "Add panel to" section picker and the
+ * confirm button. Only rendered when the dashboard has more than one section —
+ * otherwise there's nothing to pick and a tile click creates the panel directly.
  */
 function PanelTypeSelectionModalFooter({
 	options,
@@ -25,20 +26,16 @@ function PanelTypeSelectionModalFooter({
 	isConfirmDisabled,
 	onConfirm,
 }: PanelTypeSelectionModalFooterProps): JSX.Element {
-	const hasSectionPicker = options.length > 1;
-
 	return (
 		<div className={styles.footerActions}>
-			{hasSectionPicker && (
-				<div className={styles.footerPicker}>
-					<span className={styles.pickerLabel}>Add panel to</span>
-					<SectionPicker
-						options={options}
-						value={selectedValue}
-						onChange={onSectionChange}
-					/>
-				</div>
-			)}
+			<div className={styles.footerPicker}>
+				<span className={styles.pickerLabel}>Add panel to</span>
+				<SectionPicker
+					options={options}
+					value={selectedValue}
+					onChange={onSectionChange}
+				/>
+			</div>
 			<Button
 				color="primary"
 				size="md"

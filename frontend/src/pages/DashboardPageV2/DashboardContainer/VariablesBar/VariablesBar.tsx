@@ -6,6 +6,9 @@ import cx from 'classnames';
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
 import { useInlineOverflowCount } from 'hooks/useInlineOverflowCount';
 
+import { useDashboardStore } from '../store/useDashboardStore';
+import AddVariableFull from './AddVariableFull';
+import AddVariableIcon from './AddVariableIcon';
 import type { VariableSelection } from './selectionTypes';
 import { useVariableSelection } from './useVariableSelection';
 import VariableSelector from './VariableSelector';
@@ -44,15 +47,19 @@ interface VariablesBarProps {
 function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 	const { variables, selection, setSelection, autoSelect } =
 		useVariableSelection(dashboard);
+	const isEditable = useDashboardStore((s) => s.isEditable);
 	const [expanded, setExpanded] = useState(false);
 	const { containerRef, visibleCount, overflowCount } = useInlineOverflowCount({
 		itemCount: variables.length,
 		gap: 8,
-		reserveWidth: 48,
+		// Reserve room for the "+N" trigger and the add "+" so both stay on one line.
+		reserveWidth: isEditable ? 112 : 48,
 		enabled: !expanded,
 	});
 
-	if (variables.length === 0) {
+	// Editors can add a variable even before any exist; viewers with no variables
+	// have nothing to show.
+	if (variables.length === 0 && !isEditable) {
 		return null;
 	}
 
@@ -73,6 +80,14 @@ function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 			{expanded ? 'Less' : `+${overflowCount}`}
 		</Button>
 	);
+
+	if (variables.length === 0) {
+		return (
+			<div className={styles.bar} data-testid="dashboard-variables-bar">
+				<AddVariableFull />
+			</div>
+		);
+	}
 
 	return (
 		<div className={styles.bar} data-testid="dashboard-variables-bar">
@@ -126,6 +141,15 @@ function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 								{moreButton}
 							</TooltipSimple>
 						)}
+					</span>
+				)}
+
+				{/* After the more/less trigger, in every state. Kept inline (not block)
+				    so the row still flows under the floated time selector, and always
+				    mounted so measuring never toggles it. */}
+				{isEditable && (
+					<span className={styles.addSlot}>
+						<AddVariableIcon />
 					</span>
 				)}
 			</div>

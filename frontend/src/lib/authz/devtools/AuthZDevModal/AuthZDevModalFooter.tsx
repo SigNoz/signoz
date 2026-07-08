@@ -16,32 +16,6 @@ export function AuthZDevModalFooter({
 		<div className={styles.footer}>
 			<div className={styles.hint}>
 				<span className={styles.hintGroup}>
-					<Kbd>↑</Kbd>
-					<Kbd>↓</Kbd>
-					<Typography.Text as="span" size="small" color="muted">
-						navigate
-					</Typography.Text>
-				</span>
-				<span className={styles.hintGroup}>
-					<Kbd>←</Kbd>
-					<Kbd>→</Kbd>
-					<Typography.Text as="span" size="small" color="muted">
-						mode
-					</Typography.Text>
-				</span>
-				<span className={styles.hintGroup}>
-					<Kbd>1-5</Kbd>
-					<Typography.Text as="span" size="small" color="muted">
-						set
-					</Typography.Text>
-				</span>
-				<span className={styles.hintGroup}>
-					<Kbd>/</Kbd>
-					<Typography.Text as="span" size="small" color="muted">
-						search
-					</Typography.Text>
-				</span>
-				<span className={styles.hintGroup}>
 					<Kbd>Esc</Kbd>
 					<Typography.Text as="span" size="small" color="muted">
 						close

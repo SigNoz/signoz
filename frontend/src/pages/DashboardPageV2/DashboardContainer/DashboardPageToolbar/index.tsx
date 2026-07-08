@@ -1,14 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useQueryClient } from 'react-query';
 import { FullScreenHandle } from 'react-full-screen';
 import { toast } from '@signozhq/ui/sonner';
 import logEvent from 'api/common/logEvent';
 import {
+	getGetDashboardV2QueryKey,
 	lockDashboardV2,
 	unlockDashboardV2,
 } from 'api/generated/services/dashboard';
 import type {
 	DashboardtypesGettableDashboardV2DTO,
 	DashboardtypesJSONPatchOperationDTO,
+	GetDashboardV2200,
 } from 'api/generated/services/sigNoz.schemas';
 import { Base64Icons } from 'container/DashboardContainer/DashboardSettings/General/utils';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
@@ -32,13 +35,13 @@ import styles from './DashboardPageToolbar.module.scss';
 interface DashboardPageToolbarProps {
 	dashboard: DashboardtypesGettableDashboardV2DTO;
 	handle: FullScreenHandle;
-	refetch: () => void;
 }
 
 function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
-	const { dashboard, handle, refetch } = props;
+	const { dashboard, handle } = props;
 
 	const id = dashboard.id;
+	const queryClient = useQueryClient();
 
 	// Session-local lock state: the toggle appears once locked and persists for the page.
 	const [isDashboardLocked, setIsDashboardLocked] = useState(!!dashboard.locked);
@@ -101,12 +104,21 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 				await unlockDashboardV2({ id });
 				toast.success('Dashboard unlocked');
 			}
-			refetch();
+			// Patch just the `locked` flag in the cache — a full refetch would reload
+			// every panel's chart data for a metadata-only change.
+			const key = getGetDashboardV2QueryKey({ id });
+			const cached = queryClient.getQueryData<GetDashboardV2200>(key);
+			if (cached) {
+				queryClient.setQueryData<GetDashboardV2200>(key, {
+					...cached,
+					data: { ...cached.data, locked: next },
+				});
+			}
 		} catch (error) {
 			setIsDashboardLocked(!next);
 			showErrorModal(error as APIError);
 		}
-	}, [id, isDashboardLocked, refetch, showErrorModal]);
+	}, [id, isDashboardLocked, queryClient, showErrorModal]);
 
 	const onNameSave = useCallback(
 		async (next: string): Promise<void> => {

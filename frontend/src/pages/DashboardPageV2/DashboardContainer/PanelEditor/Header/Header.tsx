@@ -6,12 +6,16 @@ import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
 import { useConfirmableAction } from 'hooks/useConfirmableAction';
 
+import DisabledControlTooltip from '../../components/DisabledControlTooltip/DisabledControlTooltip';
 import styles from './Header.module.scss';
 
 interface HeaderProps {
 	isDirty: boolean;
 	isSaving: boolean;
 	showSwitchToView?: boolean;
+	/** Locked/no-permission dashboard — Save is disabled with a reason. */
+	readOnly?: boolean;
+	readOnlyReason?: string;
 	onSave: () => void;
 	onSwitchToView?: () => void;
 	onClose: () => void;
@@ -21,6 +25,8 @@ function Header({
 	isDirty,
 	isSaving,
 	showSwitchToView = false,
+	readOnly = false,
+	readOnlyReason,
 	onSave,
 	onSwitchToView,
 	onClose,
@@ -63,16 +69,18 @@ function Header({
 						Switch to View Mode
 					</Button>
 				)}
-				<Button
-					variant="solid"
-					color="primary"
-					data-testid="panel-editor-v2-save"
-					disabled={!isDirty || isSaving}
-					loading={isSaving}
-					onClick={onSave}
-				>
-					Save changes
-				</Button>
+				<DisabledControlTooltip reason={readOnlyReason ?? ''} disabled={readOnly}>
+					<Button
+						variant="solid"
+						color="primary"
+						data-testid="panel-editor-v2-save"
+						disabled={readOnly || !isDirty || isSaving}
+						loading={!readOnly && isSaving}
+						onClick={readOnly ? undefined : onSave}
+					>
+						Save changes
+					</Button>
+				</DisabledControlTooltip>
 			</div>
 
 			<DialogWrapper

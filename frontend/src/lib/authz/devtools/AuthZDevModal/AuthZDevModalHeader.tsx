@@ -2,14 +2,13 @@ import { Search } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { SelectSimple } from '@signozhq/ui/select';
-import { RefObject, useCallback } from 'react';
+import { useCallback } from 'react';
 
 import { BrandedPermission } from '../../hooks/useAuthZ/types';
 
 import styles from './AuthZDevModal.module.css';
 
 export interface AuthZDevModalHeaderProps {
-	searchInputRef: RefObject<HTMLInputElement>;
 	search: string;
 	setSearch: (value: string) => void;
 	resourceFilter: string;
@@ -25,7 +24,6 @@ export interface AuthZDevModalHeaderProps {
 }
 
 export function AuthZDevModalHeader({
-	searchInputRef,
 	search,
 	setSearch,
 	resourceFilter,
@@ -56,7 +54,6 @@ export function AuthZDevModalHeader({
 			<div className={styles.searchRow}>
 				<div className={styles.search}>
 					<Input
-						ref={searchInputRef}
 						placeholder="Search permissions..."
 						value={search}
 						onChange={(e): void => setSearch(e.target.value)}

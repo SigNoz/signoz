@@ -21,6 +21,13 @@ export function isSettled(state: VariableFetchState | undefined): boolean {
 	return state === VariableFetchState.Idle || state === VariableFetchState.Error;
 }
 
+/** Active = a fetch is in flight; only then should a settle be applied. */
+export function isVariableInActiveFetchState(
+	state: VariableFetchState | undefined,
+): boolean {
+	return state === 'loading' || state === 'revalidating';
+}
+
 /** Fetch-start state: `revalidating` if fetched before, else `loading`. */
 export function resolveFetchState(
 	maps: FetchMaps,

@@ -1,5 +1,4 @@
 import { Typography } from '@signozhq/ui/typography';
-import { useCallback } from 'react';
 
 import { BrandedPermission } from '../../hooks/useAuthZ/types';
 import { ObservedPermission, OverrideState } from '../types';
@@ -17,9 +16,6 @@ export interface AuthZDevModalContentProps {
 	observedListLength: number;
 	orderedPermissions: string[];
 	groups: PermissionGroup[];
-	indexByPermission: Map<string, number>;
-	selectedIndex: number;
-	setSelectedIndex: (index: number) => void;
 	observed: Record<string, ObservedPermission>;
 	overrides: Record<string, OverrideState>;
 	onSetOverride: (permission: BrandedPermission, state: OverrideState) => void;
@@ -29,20 +25,10 @@ export function AuthZDevModalContent({
 	observedListLength,
 	orderedPermissions,
 	groups,
-	indexByPermission,
-	selectedIndex,
-	setSelectedIndex,
 	observed,
 	overrides,
 	onSetOverride,
 }: AuthZDevModalContentProps): JSX.Element {
-	const handleSelectIndex = useCallback(
-		(index: number) => (): void => {
-			setSelectedIndex(index);
-		},
-		[setSelectedIndex],
-	);
-
 	return (
 		<div className={styles.list} data-testid="authz-dev-permission-list">
 			{orderedPermissions.length === 0 ? (
@@ -64,19 +50,14 @@ export function AuthZDevModalContent({
 								{group.items.length}
 							</Typography.Text>
 						</div>
-						{group.items.map((permission) => {
-							const index = indexByPermission.get(permission) ?? 0;
-							return (
-								<PermissionRow
-									key={permission}
-									observed={observed[permission]}
-									override={overrides[permission]}
-									isSelected={index === selectedIndex}
-									onSetOverride={onSetOverride}
-									onSelect={handleSelectIndex(index)}
-								/>
-							);
-						})}
+						{group.items.map((permission) => (
+							<PermissionRow
+								key={permission}
+								observed={observed[permission]}
+								override={overrides[permission]}
+								onSetOverride={onSetOverride}
+							/>
+						))}
 					</div>
 				))
 			)}

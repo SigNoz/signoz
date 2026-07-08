@@ -1,5 +1,12 @@
-import { useCallback, useMemo } from 'react';
-import { Bell, Copy, Fullscreen, PenLine, Trash2 } from '@signozhq/icons';
+import { type ReactNode, useCallback, useMemo } from 'react';
+import {
+	Bell,
+	Copy,
+	FolderInput,
+	Fullscreen,
+	PenLine,
+	Trash2,
+} from '@signozhq/icons';
 import type { MenuItem } from '@signozhq/ui/dropdown-menu';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import useComponentPermission from 'hooks/useComponentPermission';
@@ -23,6 +30,8 @@ import { useMovePanelToSection } from '../hooks/useMovePanelToSection';
 import { useViewPanel } from '../hooks/useViewPanel';
 import { buildMoveItems } from '../utils/buildMoveItems';
 import { PANEL_ACTION_META } from './panelActionMeta';
+import DisabledMenuItemLabel from '../../../components/DisabledMenuItemLabel/DisabledMenuItemLabel';
+import { DASHBOARD_LOCKED_REASON } from '../../../hooks/useDashboardEditGuard';
 
 // Stable fallback so renders without layout context don't churn the mutation
 // hooks' deps (a fresh [] each render would re-create their callbacks).
@@ -67,7 +76,8 @@ export function usePanelActionItems({
 		],
 		user.role,
 	);
-	const isEditable = useDashboardStore((s) => s.isEditable);
+	const canEditDashboard = useDashboardStore((s) => s.canEditDashboard);
+	const isLocked = useDashboardStore((s) => s.isLocked);
 	const openPanelEditor = useOpenPanelEditor();
 	const createAlert = useCreateAlertFromPanel();
 	const { openView } = useViewPanel();
@@ -102,6 +112,18 @@ export function usePanelActionItems({
 	const { request: requestDelete } = deleteConfirm;
 
 	const items = useMemo<MenuItem[]>(() => {
+		// Edit actions are shown only to edit-permitted users; the lock is their only
+		// disabled state, surfaced as a hover tooltip on the row.
+		const canEdit = canEditDashboard;
+		const label = (text: string): ReactNode =>
+			isLocked ? (
+				<DisabledMenuItemLabel reason={DASHBOARD_LOCKED_REASON}>
+					{text}
+				</DisabledMenuItemLabel>
+			) : (
+				text
+			);
+
 		const panelGroup: MenuItem[] = [];
 		if (panelCapabilities.view) {
 			panelGroup.push({
@@ -111,26 +133,30 @@ export function usePanelActionItems({
 				onClick: (): void => openView(panelId),
 			});
 		}
-		if (isEditable && canEditWidget && panelCapabilities.edit) {
+		if (canEdit && canEditWidget && panelCapabilities.edit) {
 			panelGroup.push({
 				key: 'edit-panel',
-				label: 'Edit panel',
+				label: label('Edit panel'),
 				icon: <PenLine size={14} />,
+				disabled: isLocked,
 				onClick: (): void => openPanelEditor(panelId),
 			});
 		}
-		// Clone needs the section context to place the copy, so — unlike Edit —
-		// it requires panelActions.
-		if (isEditable && canEditWidget && panelActions && panelCapabilities.clone) {
+		if (canEdit && canEditWidget && panelCapabilities.clone) {
+			// Needs section context to place the copy; disabled without it.
 			panelGroup.push({
 				key: 'clone-panel',
-				label: 'Clone',
+				label: label('Clone'),
 				icon: <Copy size={14} />,
-				onClick: (): void =>
-					void clonePanel({
-						panelId,
-						layoutIndex: panelActions.currentLayoutIndex,
-					}),
+				disabled: isLocked || !panelActions,
+				onClick: (): void => {
+					if (panelActions) {
+						void clonePanel({
+							panelId,
+							layoutIndex: panelActions.currentLayoutIndex,
+						});
+					}
+				},
 			});
 		}
 
@@ -140,7 +166,7 @@ export function usePanelActionItems({
 		}
 
 		// Create Alerts opens a new tab and never mutates the dashboard, so —
-		// unlike edit/clone — it isn't gated on `isEditable` (V1 parity).
+		// unlike edit/clone — it isn't gated on editability (V1 parity).
 		if (panelCapabilities.createAlert) {
 			dataGroup.push({
 				key: 'create-alert',
@@ -150,24 +176,35 @@ export function usePanelActionItems({
 			});
 		}
 
-		const moveGroup: MenuItem[] =
-			canMove && panelActions
-				? buildMoveItems({
-						sections,
-						currentLayoutIndex: panelActions.currentLayoutIndex,
-						panelId,
-						movePanel,
-					})
-				: [];
+		let moveGroup: MenuItem[] = [];
+		if (canEdit && canMove) {
+			moveGroup =
+				!isLocked && panelActions
+					? buildMoveItems({
+							sections,
+							currentLayoutIndex: panelActions.currentLayoutIndex,
+							panelId,
+							movePanel,
+						})
+					: [
+							{
+								key: 'move',
+								label: label('Move to section'),
+								icon: <FolderInput size={14} />,
+								disabled: true,
+							},
+						];
+		}
 
 		const deleteGroup: MenuItem[] =
-			canDelete && panelActions
+			canEdit && canDelete
 				? [
 						{
 							key: 'delete-panel',
 							danger: true,
 							icon: <Trash2 size={14} />,
-							label: 'Delete panel',
+							label: label('Delete panel'),
+							disabled: isLocked || !panelActions,
 							onClick: (): void => requestDelete(),
 						},
 					]
@@ -179,7 +216,8 @@ export function usePanelActionItems({
 				index === 0 ? group : [{ type: 'divider' as const }, ...group],
 			);
 	}, [
-		isEditable,
+		canEditDashboard,
+		isLocked,
 		canEditWidget,
 		canMove,
 		canDelete,

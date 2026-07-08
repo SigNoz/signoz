@@ -33,21 +33,36 @@ export const variablesUrlParser = parseAsJson<
 );
 
 function defaultSelection(model: VariableFormModel): VariableSelection {
-	// `defaultValue` is a string | string[] on the wire.
 	const def = model.defaultValue;
+	// Explicit ALL sentinel, or a multi-select allowing ALL with no default → ALL.
+	if (
+		def === ALL_SELECTED ||
+		(Array.isArray(def) && def.length === 1 && def[0] === ALL_SELECTED)
+	) {
+		return { value: null, allSelected: true };
+	}
 	if (Array.isArray(def) && def.length > 0) {
 		return { value: def, allSelected: false };
 	}
 	if (typeof def === 'string' && def !== '') {
 		return { value: model.multiSelect ? [def] : def, allSelected: false };
 	}
+	if (model.multiSelect && model.showAllOption) {
+		return { value: null, allSelected: true };
+	}
 	return { value: model.multiSelect ? [] : '', allSelected: false };
 }
 
-function fromUrlValue(raw: SelectedVariableValue): VariableSelection {
-	return raw === ALL_SELECTED
-		? { value: null, allSelected: true }
-		: { value: raw, allSelected: false };
+function fromUrlValue(
+	raw: SelectedVariableValue,
+	model: VariableFormModel,
+): VariableSelection {
+	// Only read the `__ALL__` sentinel as "ALL" for variables that support it —
+	// otherwise a legitimate value of "__ALL__" (e.g. a text var) is taken literally.
+	if (raw === ALL_SELECTED && model.multiSelect && model.showAllOption) {
+		return { value: null, allSelected: true };
+	}
+	return { value: raw, allSelected: false };
 }
 
 interface UseVariableSelection {
@@ -112,7 +127,7 @@ export function useVariableSelection(
 		variables.forEach((variable) => {
 			const urlValue = urlValues?.[variable.name];
 			if (urlValue !== undefined) {
-				seeded[variable.name] = fromUrlValue(urlValue);
+				seeded[variable.name] = fromUrlValue(urlValue, variable);
 			} else if (stored[variable.name]) {
 				seeded[variable.name] = stored[variable.name];
 			} else {
@@ -120,12 +135,27 @@ export function useVariableSelection(
 			}
 		});
 		setVariableValues(dashboardId, seeded);
+
+		// Drop URL selections for variables that no longer exist (renamed/removed),
+		// so a shared link doesn't carry stale entries a later variable could inherit.
+		if (urlValues) {
+			const validNames = new Set(variables.map((v) => v.name));
+			const orphaned = Object.keys(urlValues).some((n) => !validNames.has(n));
+			if (orphaned) {
+				const pruned: Record<string, SelectedVariableValue> = {};
+				Object.entries(urlValues).forEach(([name, value]) => {
+					if (validNames.has(name)) {
+						pruned[name] = value;
+					}
+				});
+				void setUrlValues(pruned);
+			}
+		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [dashboardId, variables]);
 
-	// Start a full fetch cycle on load / dependency-order / time change. Runs after
-	// the seeding effect above, so it reads the seeded selection from the store; a
-	// value change instead goes through `enqueueDescendants`, not this effect.
+	// Start a full fetch cycle on load / dependency-order / time change. A value
+	// change instead goes through `enqueueDescendants`, not this effect.
 	const orderKey = `${fetchContext.queryVariableOrder.join(
 		',',
 	)}|${fetchContext.dynamicVariableOrder.join(',')}`;
