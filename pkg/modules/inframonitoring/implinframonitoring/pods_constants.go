@@ -8,15 +8,11 @@ import (
 )
 
 const (
-	podUIDAttrKey                = "k8s.pod.uid"
-	podStartTimeAttrKey          = "k8s.pod.start_time"
-	containerNameAttrKey         = "k8s.container.name"
-	containerStatusReasonAttrKey = "k8s.container.status.reason"
+	podUIDAttrKey       = "k8s.pod.uid"
+	podStartTimeAttrKey = "k8s.pod.start_time"
 
-	podPhaseMetricName              = "k8s.pod.phase"
-	podStatusReasonMetricName       = "k8s.pod.status_reason"
-	containerStatusReasonMetricName = "k8s.container.status.reason"
-	containerRestartsMetricName     = "k8s.container.restarts"
+	podPhaseMetricName        = "k8s.pod.phase"
+	podStatusReasonMetricName = "k8s.pod.status_reason"
 )
 
 // podStatusMetricNamesList are the metrics required to derive the kubectl-style
