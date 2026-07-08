@@ -474,14 +474,17 @@ func (b *scopedTraceStatementBuilder) resolveSpanPredicate(ctx context.Context, 
 // picks the top-N traces. The WHERE prunes to gen_ai spans (widened with the span-level
 // predicate when present); HAVING enforces the gate (countIf(mask) > 0), the span-level
 // filter as an existence check, and the trace-level aggregate filter; ORDER BY + LIMIT
-// select the winners. Only gen_ai-scoped aggregates are computable here.
+// select the winners. Only gen_ai-scoped aggregates are computable here, and only those
+// actually referenced by ORDER BY / the aggregate filter are selected (the rest are
+// computed once, later, in the enrichment scan) — this keeps the hot ranking pass lean.
 func (b *scopedTraceStatementBuilder) buildMatchedCTE(start, end, startBucket, endBucket uint64, resolved []resolvedColumn, orders []listOrder, orderableSet map[string]struct{}, maskExpr string, maskArgs []any, fp filterParts, limit, offset int) (string, []any, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 
-	// SELECT trace_id + the gen_ai-scoped aggregates (so ORDER BY / HAVING reference them).
+	// SELECT trace_id + only the aggregates ORDER BY / HAVING reference (as aliases).
+	needed := neededMatchedAliases(orders, fp.havingExpr, orderableSet)
 	selects := []string{"trace_id"}
 	for _, rc := range resolved {
-		if _, ok := orderableSet[rc.alias]; !ok {
+		if _, ok := needed[rc.alias]; !ok {
 			continue
 		}
 		selects = append(selects, embedExpr(sb, rc.expr, rc.args)+" AS "+quoteAlias(rc.alias))
@@ -622,6 +625,23 @@ func orderableAliasSet(resolved []resolvedColumn) map[string]struct{} {
 		}
 	}
 	return set
+}
+
+// neededMatchedAliases is the minimal set of aggregate aliases the matched pass must
+// select: those referenced by ORDER BY plus those referenced in the aggregate HAVING
+// (bare / trace. / tracefield. forms). Anything else is left to the enrichment scan.
+func neededMatchedAliases(orders []listOrder, havingExpr string, orderableSet map[string]struct{}) map[string]struct{} {
+	needed := make(map[string]struct{})
+	for _, o := range orders {
+		needed[o.alias] = struct{}{}
+	}
+	for _, sel := range querybuilder.QueryStringToKeysSelectors(havingExpr) {
+		name := strings.TrimPrefix(strings.TrimPrefix(sel.Name, "trace."), "tracefield.")
+		if _, ok := orderableSet[name]; ok {
+			needed[name] = struct{}{}
+		}
+	}
+	return needed
 }
 
 // validateAggregateFilter rejects a trace-level filter that references an aggregate not
