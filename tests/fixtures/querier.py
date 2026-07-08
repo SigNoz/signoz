@@ -862,6 +862,8 @@ def generate_traces_with_corrupt_metadata() -> list[Traces]:
                 "cloud.provider": "integration",
                 "cloud.account.id": "000",
                 "trace_id": "corrupt_data",
+                "scope_name": "corrupt_data",
+                "scope.scope.name": "corrupt_data",
             },
             attributes={
                 "net.transport": "IP.TCP",
@@ -870,7 +872,10 @@ def generate_traces_with_corrupt_metadata() -> list[Traces]:
                 "http.request.method": "POST",
                 "http.response.status_code": "200",
                 "timestamp": "corrupt_data",
+                "version": "1.0.0",
+                "scope.scope.version": "1.0.0",
             },
+            scope={"name": "io.signoz.http.server", "version": "2.0.0"},
         ),
         Traces(
             timestamp=now - timedelta(seconds=3.5),
@@ -890,12 +895,24 @@ def generate_traces_with_corrupt_metadata() -> list[Traces]:
                 "cloud.provider": "integration",
                 "cloud.account.id": "000",
                 "timestamp": "corrupt_data",
+                "scope.attributes.name": "corrupt_data",
             },
             attributes={
                 "db.name": "integration",
                 "db.operation": "SELECT",
                 "db.statement": "SELECT * FROM integration",
                 "trace_d": "corrupt_data",
+                "scope.attributes.version": "corrupt_data",
+            },
+            scope={
+                "name": "io.opentelemetry.contrib.http",
+                "version": "1.0.0",
+                "attributes": {
+                    "telemetry.sdk.language": "cpp",
+                    "name": "not-the-real-name",
+                    "version": "not-the-real-version",
+                    "attributes": "literally-a-key-named-attributes",
+                },
             },
         ),
         Traces(
@@ -916,12 +933,15 @@ def generate_traces_with_corrupt_metadata() -> list[Traces]:
                 "cloud.provider": "integration",
                 "cloud.account.id": "000",
                 "duration_nano": "corrupt_data",
+                "scope.scope.attributes.version": "corrupt_data",
             },
             attributes={
                 "http.request.method": "PATCH",
                 "http.status_code": "404",
                 "id": "1",
+                "scope.scope.version": "corrupt_data",
             },
+            scope={"name": "io.signoz.http.client", "version": "2.0.0"},
         ),
         Traces(
             timestamp=now - timedelta(seconds=1),
@@ -940,6 +960,7 @@ def generate_traces_with_corrupt_metadata() -> list[Traces]:
                 "host.name": "linux-001",
                 "cloud.provider": "integration",
                 "cloud.account.id": "001",
+                "scope.scope.version": "corrupt_data",
             },
             attributes={
                 "message.type": "SENT",
@@ -947,6 +968,9 @@ def generate_traces_with_corrupt_metadata() -> list[Traces]:
                 "messaging.message.id": "001",
                 "duration_nano": "corrupt_data",
                 "id": 1,
+                "scope": "corrupt_data",
+                "scope.attributes.name": "corrupt_data",
             },
+            scope={"name": "io.signoz.messaging", "version": "3.0.0"},
         ),
     ]

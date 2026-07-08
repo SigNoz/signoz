@@ -83,6 +83,33 @@ func TestGetFieldKeyName(t *testing.T) {
 			expectedError:  nil,
 		},
 		{
+			name: "Scope field - scope.name",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:         "scope.name",
+				FieldContext: telemetrytypes.FieldContextScope,
+			},
+			expectedResult: "scope.name::String",
+			expectedError:  nil,
+		},
+		{
+			name: "Scope field - scope.version",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:         "scope.version",
+				FieldContext: telemetrytypes.FieldContextScope,
+			},
+			expectedResult: "scope.version::String",
+			expectedError:  nil,
+		},
+		{
+			name: "Scope field - custom attribute",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:         "custom.attr",
+				FieldContext: telemetrytypes.FieldContextScope,
+			},
+			expectedResult: "scope.attributes.`custom.attr`::String",
+			expectedError:  nil,
+		},
+		{
 			// Query like `attribute.attribute_string:string` should resolve to `attributes_string['attribute_string']`.
 			name: "Attribute key whose name collides with contextual map column resolves as a map lookup",
 			key: telemetrytypes.TelemetryFieldKey{
