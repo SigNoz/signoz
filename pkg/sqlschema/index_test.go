@@ -275,6 +275,18 @@ func TestIndexEquals(t *testing.T) {
 			equals: true,
 		},
 		{
+			name: "Unique_Functional_CaseInsensitiveEqual",
+			a: &UniqueIndex{
+				TableName:   "users",
+				Expressions: []string{"LOWER(email)"},
+			},
+			b: &UniqueIndex{
+				TableName:   "users",
+				Expressions: []string{"lower(email)"},
+			},
+			equals: true,
+		},
+		{
 			name: "Unique_Functional_DifferentExpressions",
 			a: &UniqueIndex{
 				TableName:   "users",
