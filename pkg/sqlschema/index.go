@@ -59,7 +59,9 @@ type Index interface {
 //   - Functional (e.g. LOWER(col)): set only Expressions, one per key, emitted
 //     verbatim (caller owns well-formedness); plain columns go in as bare
 //     identifiers. The auto-name uses a hash suffix (uq_t_<hash>) since
-//     expressions aren't valid identifier fragments.
+//     expressions aren't valid identifier fragments. Use this only when at least
+//     one key is a real expression; an all-identifier Expressions reconstructs as
+//     ColumnNames on read-back and won't compare equal — use ColumnNames instead.
 type UniqueIndex struct {
 	TableName   TableName
 	ColumnNames []ColumnName
