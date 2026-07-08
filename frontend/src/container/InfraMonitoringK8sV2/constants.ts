@@ -854,7 +854,6 @@ export const getInvalidValueTooltipText = (
 	attribute: string,
 ): string => `Some ${entity} do not have ${attribute}s.`;
 
-// TODO(H4ad): before merging, confirm with Nikhil about these common filters
 export const ENTITY_FILTER_PLACEHOLDERS: Record<InfraMonitoringEntity, string> =
 	{
 		[InfraMonitoringEntity.HOSTS]:
