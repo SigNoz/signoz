@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { Typography } from '@signozhq/ui/typography';
 import { TriangleAlert } from '@signozhq/icons';
 import { useListUnmappedLLMModels } from 'api/generated/services/llmpricingrules';
@@ -14,13 +14,7 @@ import MapConfirmDialog from './components/MapConfirmDialog';
 import type { UnpricedColumnsConfig } from './components/UnpricedModelsTable/TableConfig';
 import UnpricedModelsTable from './components/UnpricedModelsTable';
 import { useUnpricedModelMapping } from './hooks/useUnpricedModelMapping';
-
-// A model + the billing rule it's about to be mapped onto, held while the confirm
-// dialog is open.
-interface PendingMapping {
-	model: UnpricedModel;
-	rule: PricingRule;
-}
+import { usePendingMappingStore } from './usePendingMappingStore';
 
 function UnpricedModelsTab(): JSX.Element {
 	const { data, isLoading, isError } = useListUnmappedLLMModels();
@@ -34,11 +28,17 @@ function UnpricedModelsTab(): JSX.Element {
 	const models: UnpricedModel[] = useMemo(() => data?.data?.items || [], [data]);
 
 	// Picking a billing model stages a single mapping for confirmation; the
-	// mapping only commits once the user confirms in the dialog.
-	const [pendingMapping, setPendingMapping] = useState<PendingMapping | null>(
-		null,
-	);
+	// mapping only commits once the user confirms in the dialog. Kept in a store
+	// (not local state) so the row's memoized select trigger can mirror the pick —
+	// see usePendingMappingStore.
+	const pendingMapping = usePendingMappingStore((state) => state.pending);
+	const setPending = usePendingMappingStore((state) => state.setPending);
+	const clearPending = usePendingMappingStore((state) => state.clearPending);
 	const { mapModels, isSaving } = useUnpricedModelMapping();
+
+	// Reset any staged mapping when leaving the tab so a stale pick doesn't reopen
+	// the dialog on remount (the store outlives this component).
+	useEffect(() => (): void => clearPending(), [clearPending]);
 
 	// Reuses the "Model costs" add/edit drawer to define brand-new pricing for a
 	// model that has no matching billing model to map onto. Saving resolves the
@@ -47,9 +47,9 @@ function UnpricedModelsTab(): JSX.Element {
 
 	const onRequestMap = useCallback(
 		(model: UnpricedModel, rule: PricingRule): void => {
-			setPendingMapping({ model, rule });
+			setPending({ model, rule });
 		},
-		[],
+		[setPending],
 	);
 
 	const onConfirmMap = useCallback(async (): Promise<void> => {
@@ -58,9 +58,9 @@ function UnpricedModelsTab(): JSX.Element {
 		}
 		const didSave = await mapModels([pendingMapping]);
 		if (didSave) {
-			setPendingMapping(null);
+			clearPending();
 		}
-	}, [mapModels, pendingMapping]);
+	}, [mapModels, pendingMapping, clearPending]);
 
 	const columnsConfig: UnpricedColumnsConfig = {
 		canManage: canManagePricing,
@@ -99,7 +99,7 @@ function UnpricedModelsTab(): JSX.Element {
 					rule={pendingMapping.rule}
 					isSaving={isSaving}
 					onConfirm={onConfirmMap}
-					onCancel={(): void => setPendingMapping(null)}
+					onCancel={clearPending}
 				/>
 			)}
 

@@ -79,7 +79,7 @@ function MapConfirmDialog({
 					onCancel();
 				}
 			}}
-			width="narrow"
+			width="base"
 			title="Map to billing model"
 			titleIcon={<Link2 size={16} />}
 			footer={footer}

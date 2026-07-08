@@ -18,6 +18,7 @@ import styles from './MapToBillingModelSelect.module.scss';
 import type { PricingRule } from '../../../types';
 import { useMapToBillingModelSearch } from './useMapToBillingModelSearch';
 import { getRuleOptionLabel } from '../../../utils';
+import { usePendingMappingLabel } from '../../usePendingMappingStore';
 
 // Stable keys for the placeholder rows shown while options load.
 const SKELETON_ROW_KEYS = [
@@ -45,7 +46,8 @@ interface MapToBillingModelSelectProps {
 // narrows the set via the rules API rather than client-side filtering, so cmdk's
 // own filter is disabled (shouldFilter={false}). The dropdown is a pure picker —
 // choosing a rule hands it up to the confirm dialog rather than persisting a
-// selection here, so there's no selected-value/clear state on the trigger.
+// selection here. The trigger only mirrors the staged pick (read from the
+// pending-mapping store) while that dialog is open, reverting on confirm/cancel.
 function MapToBillingModelSelect({
 	modelName,
 	disabled,
@@ -55,6 +57,7 @@ function MapToBillingModelSelect({
 	const [open, setOpen] = useState(false);
 	const { searchText, setSearchText, rules, rulesById, isFetching } =
 		useMapToBillingModelSearch(open);
+	const selectedLabel = usePendingMappingLabel(modelName);
 
 	const handleSelect = (ruleId: string): void => {
 		const rule = rulesById.get(ruleId);
@@ -76,6 +79,7 @@ function MapToBillingModelSelect({
 					className={styles.mapToSelect}
 					disabled={disabled}
 					placeholder="Select / Create a pricing model"
+					value={selectedLabel}
 					testId={`map-to-select-${modelName}`}
 				/>
 				<ComboboxContent className={styles.mapToDropdown}>

@@ -7,7 +7,7 @@ import {
 	mockRules,
 } from 'container/LLMObservability/Settings/ModelPricing/__tests__/fixtures';
 import { rest, server } from 'mocks-server/server';
-import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
 
 import UnpricedModelsTab from '../UnpricedModelsTab';
 
@@ -63,8 +63,7 @@ describe('UnpricedModelsTab (integration)', () => {
 
 		await screen.findByTestId(`unpriced-model-name-${MODEL}`);
 
-		// No selection persists on the row — picking a rule stages the mapping in
-		// the confirm dialog instead.
+		// Picking a rule stages the mapping in the confirm dialog.
 		await selectRule(user, MODEL, 'rule-openai');
 
 		const confirmItem = await screen.findByTestId(
@@ -75,6 +74,36 @@ describe('UnpricedModelsTab (integration)', () => {
 		expect(screen.getByText('openai:gpt-4o')).toBeInTheDocument();
 		expect(screen.getByText('$3.00')).toBeInTheDocument();
 		expect(screen.getByText('$9.00')).toBeInTheDocument();
+		// While the dialog is open, the row's trigger mirrors the staged pick
+		// instead of the placeholder.
+		const trigger = screen.getByTestId(`map-to-select-${MODEL}`);
+		expect(
+			within(trigger).getByText('openai:gpt-4o ($3.00/$9.00)'),
+		).toBeInTheDocument();
+	});
+
+	it('reverts the row trigger to the placeholder when the mapping is cancelled', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		render(<UnpricedModelsTab />);
+
+		await screen.findByTestId(`unpriced-model-name-${MODEL}`);
+		await selectRule(user, MODEL, 'rule-openai');
+
+		const trigger = screen.getByTestId(`map-to-select-${MODEL}`);
+		expect(
+			within(trigger).getByText('openai:gpt-4o ($3.00/$9.00)'),
+		).toBeInTheDocument();
+
+		await user.click(await screen.findByTestId('unpriced-map-cancel-btn'));
+
+		await waitFor(() =>
+			expect(
+				within(trigger).queryByText('openai:gpt-4o ($3.00/$9.00)'),
+			).not.toBeInTheDocument(),
+		);
+		expect(
+			within(trigger).getByText('Select / Create a pricing model'),
+		).toBeInTheDocument();
 	});
 
 	it('commits the mapping in one request when confirmed', async () => {
