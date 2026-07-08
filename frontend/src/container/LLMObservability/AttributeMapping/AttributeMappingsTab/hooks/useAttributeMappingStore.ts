@@ -2,8 +2,8 @@ import { useMemo } from 'react';
 import { SpantypesSpanMapperGroupDTO } from 'api/generated/services/sigNoz.schemas';
 import { useListSpanMapperGroups } from 'api/generated/services/spanmapper';
 
-import { MappingGroup } from '../../types';
-import { buildMappingGroup } from '../../utils';
+import { MappingGroup } from 'container/LLMObservability/AttributeMapping/types';
+import { buildMappingGroup } from 'container/LLMObservability/AttributeMapping/utils';
 
 export interface AttributeMappingStore {
 	groups: MappingGroup[];

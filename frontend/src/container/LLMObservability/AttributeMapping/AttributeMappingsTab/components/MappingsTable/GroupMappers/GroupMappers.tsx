@@ -3,8 +3,11 @@ import type { SpantypesSpanMapperDTO } from 'api/generated/services/sigNoz.schem
 import { useListSpanMappers } from 'api/generated/services/spanmapper';
 import { motion, useReducedMotion } from 'motion/react';
 
-import { MappingGroup, Mapping } from '../../../../types';
-import { buildMapping } from '../../../../utils';
+import {
+	MappingGroup,
+	Mapping,
+} from 'container/LLMObservability/AttributeMapping/types';
+import { buildMapping } from 'container/LLMObservability/AttributeMapping/utils';
 import { COLUMN_COUNT } from '../constants';
 import MapperRow, { MapperRowSkeleton } from '../MapperRow';
 import MappingsColgroup from '../MappingsColgroup';
@@ -42,7 +45,10 @@ function GroupMappers({ group }: GroupMappersProps): JSX.Element {
 	}, [data]);
 
 	const skeletonRows = Array.from({ length: MAPPER_SKELETON_ROWS }).map(
-		(_, index) => <MapperRowSkeleton key={`mapper-skeleton-${index}`} />,
+		(_, index) => (
+			// eslint-disable-next-line react/no-array-index-key
+			<MapperRowSkeleton key={`mapper-skeleton-${index}`} />
+		),
 	);
 
 	const errorRow = (

@@ -5,7 +5,7 @@ import { SpantypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas'
 import cx from 'classnames';
 import { motion, useReducedMotion } from 'motion/react';
 
-import { Mapping } from '../../../../types';
+import { Mapping } from 'container/LLMObservability/AttributeMapping/types';
 import styles from './MapperRow.module.scss';
 
 const MAX_VISIBLE_SOURCES = 3;
@@ -47,7 +47,6 @@ function MapperRow({ mapper, index }: MapperRowProps): JSX.Element {
 		>
 			<td className={cx(styles.cell, styles.targetCell)}>
 				<Typography.Text
-					weight="semibold"
 					truncate={1}
 					title={mapper.name}
 					data-testid={`mapper-target-${mapper.id}`}
@@ -69,6 +68,7 @@ function MapperRow({ mapper, index }: MapperRowProps): JSX.Element {
 							<Badge
 								variant="outline"
 								color="vanilla"
+								className={styles.sourceChip}
 								key={`${source.context}:${source.key}`}
 							>
 								<span className={styles.sourceChipText} title={source.key}>

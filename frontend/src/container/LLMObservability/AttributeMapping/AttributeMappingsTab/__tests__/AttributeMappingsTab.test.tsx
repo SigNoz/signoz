@@ -13,7 +13,7 @@ import {
 	mappersEndpoint,
 	mockGroups,
 	mockMappers,
-} from '../../__tests__/fixtures';
+} from 'container/LLMObservability/AttributeMapping/__tests__/fixtures';
 import AttributeMappingsTab from '../AttributeMappingsTab';
 
 function setupGroups(groups = mockGroups): void {

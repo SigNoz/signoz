@@ -1,4 +1,4 @@
-import { MappingGroup } from '../../../../types';
+import { MappingGroup } from 'container/LLMObservability/AttributeMapping/types';
 import styles from './GroupHeader.module.scss';
 
 interface GroupHeaderProps {

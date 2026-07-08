@@ -16,8 +16,6 @@ function getMapperSources(mapper: SpantypesSpanMapperDTO): SourceConfig[] {
 		}));
 }
 
-// ---- listing view-model helpers ----
-
 export function buildMapping(mapper: SpantypesSpanMapperDTO): Mapping {
 	return {
 		id: mapper.id,

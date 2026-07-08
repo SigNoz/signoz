@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ChevronDown, ChevronRight } from '@signozhq/icons';
 import { Collapse, type CollapseProps, Skeleton } from 'antd';
 
-import { AttributeMappingStore } from '../../hooks/useAttributeMappingStore';
+import { AttributeMappingStore } from 'container/LLMObservability/AttributeMapping/AttributeMappingsTab/hooks/useAttributeMappingStore';
 import GroupHeader from './GroupHeader';
 import GroupHeaderActions from './GroupHeaderActions';
 import GroupMappers from './GroupMappers';
@@ -30,7 +30,11 @@ function MappingsTable({ store }: MappingsTableProps): JSX.Element {
 	const skeletonBanners = (
 		<div className={styles.skeletonList}>
 			{Array.from({ length: SKELETON_ROW_COUNT }).map((_, index) => (
-				<div key={`group-skeleton-${index}`} className={styles.skeletonBanner}>
+				<div
+					// eslint-disable-next-line react/no-array-index-key
+					key={`group-skeleton-${index}`}
+					className={styles.skeletonBanner}
+				>
 					<div className={styles.skeletonGroupLeft}>
 						<Skeleton.Avatar active size={14} shape="square" />
 						<Skeleton.Input

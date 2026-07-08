@@ -1,6 +1,6 @@
 import { Switch } from '@signozhq/ui/switch';
 
-import { MappingGroup } from '../../../../types';
+import { MappingGroup } from 'container/LLMObservability/AttributeMapping/types';
 import styles from './GroupHeaderActions.module.scss';
 
 interface GroupHeaderActionsProps {
