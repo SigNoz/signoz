@@ -4,13 +4,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-// TraceColumn is one per-trace enrichment column. It is declarative: either a
-// fixed SQL expression over intrinsic columns (Intrinsic), or an aggregate over an
-// attribute the builder resolves through the field mapper (Attr). Keeping attribute
-// access out of the projection means every field goes through the evolution/
-// materialization-aware resolver — no hardcoded map lookups.
 type TraceColumn struct {
-	Alias     string
+	Alias string
+	// Orderable marks a column computable in the mask-pruned `matched` pass (a
+	// gen_ai-scoped aggregate): the only columns usable for ORDER BY and the
+	// aggregate filter. All-span columns (span_count, duration_nano, …) are false —
+	// they are output-only, since the matched pass sees only gen_ai spans.
 	Orderable bool
 	Intrinsic string   // fixed SQL over intrinsic columns; used verbatim (nil Attr)
 	Attr      *AttrAgg // field-mapper-resolved aggregate (nil Intrinsic)
@@ -34,24 +33,23 @@ type ProjectionProvider interface {
 	Columns() []TraceColumn
 	// DefaultOrderAlias is sorted by (desc) when the query gives no order.
 	DefaultOrderAlias() string
-	// HavingAliases are the computed per-trace columns that only exist
-	// post-aggregation (filterable as HAVING/AND, never OR-ed with span keys).
-	// Excludes aliases that are also real span/resource keys (e.g. service.name).
-	HavingAliases() []string
+	// AggregateAliases are the computed per-trace (trace-level) column names, used to
+	// classify which filter keys are trace-level vs span-level. Only the Orderable
+	// subset is actually usable in ORDER BY / the aggregate filter; the rest are
+	// output-only. Excludes aliases that are also real span/resource keys (service.name).
+	AggregateAliases() []string
 }
 
 // CommonTraceColumns are domain-neutral intrinsic columns any trace list can reuse.
+// All are over-all-spans intrinsics, so none is Orderable (not computable in the
+// mask-pruned matched pass) — they are output-only, computed in the enrichment scan.
 func CommonTraceColumns() []TraceColumn {
 	return []TraceColumn{
-		{Alias: "start_time", Intrinsic: "min(timestamp)", Orderable: true},
-		{Alias: "end_time", Intrinsic: "max(timestamp)", Orderable: true},
-		// alias intentionally matches the raw span column `duration_nano`; ClickHouse
-		// resolves the inner reference to the column and ORDER BY/HAVING to this alias
-		// (verified — no cyclic-alias error).
-		{Alias: "duration_nano", Intrinsic: "(max(toUnixTimestamp64Nano(timestamp) + duration_nano) - min(toUnixTimestamp64Nano(timestamp)))", Orderable: true},
-		{Alias: "span_count", Intrinsic: "count()", Orderable: true},
-		// root_span_name is empty for traces without a root span; service resolves
-		// via any() since resource attrs are on every span.
+		{Alias: "start_time", Intrinsic: "min(timestamp)", Orderable: false},
+		{Alias: "end_time", Intrinsic: "max(timestamp)", Orderable: false},
+		{Alias: "duration_nano", Intrinsic: "(max(toUnixTimestamp64Nano(timestamp) + duration_nano) - min(toUnixTimestamp64Nano(timestamp)))", Orderable: false},
+		{Alias: "span_count", Intrinsic: "count()", Orderable: false},
+
 		{Alias: "root_span_name", Intrinsic: "anyIf(name, parent_span_id = '')", Orderable: false},
 		{Alias: "service.name", Intrinsic: "any(resource_string_service$$name)", Orderable: false},
 	}
@@ -66,21 +64,12 @@ func NewGenAIProjectionProvider() ProjectionProvider {
 	return &genAIProjectionProvider{}
 }
 
-// genAIAttrKey builds an attribute field key for a gen_ai attribute; the builder
-// resolves it through the field mapper.
-func genAIAttrKey(name string, dt telemetrytypes.FieldDataType) telemetrytypes.TelemetryFieldKey {
-	return telemetrytypes.TelemetryFieldKey{
-		Name:          name,
-		Signal:        telemetrytypes.SignalTraces,
-		FieldContext:  telemetrytypes.FieldContextAttribute,
-		FieldDataType: dt,
-	}
-}
-
 func (genAIProjectionProvider) Columns() []TraceColumn {
-	reqModel := genAIAttrKey(telemetrytypes.GenAIRequestModel, telemetrytypes.FieldDataTypeString)
-	inTok := genAIAttrKey(telemetrytypes.GenAIUsageInputTokens, telemetrytypes.FieldDataTypeFloat64)
-	outTok := genAIAttrKey(telemetrytypes.GenAIUsageOutputTokens, telemetrytypes.FieldDataTypeFloat64)
+	// Key definitions (name/context/type) live once in GenAIFieldDefinitions, shared
+	// with the metadata enrichment. Copy to locals so we can take their address.
+	reqModel := telemetrytypes.GenAIFieldDefinitions[telemetrytypes.GenAIRequestModel]
+	inTok := telemetrytypes.GenAIFieldDefinitions[telemetrytypes.GenAIUsageInputTokens]
+	outTok := telemetrytypes.GenAIFieldDefinitions[telemetrytypes.GenAIUsageOutputTokens]
 
 	cols := CommonTraceColumns()
 	return append(cols,
@@ -98,9 +87,11 @@ func (genAIProjectionProvider) Columns() []TraceColumn {
 
 func (genAIProjectionProvider) DefaultOrderAlias() string { return "last_activity_time" }
 
-func (genAIProjectionProvider) HavingAliases() []string {
+func (genAIProjectionProvider) AggregateAliases() []string {
 	// every computed column except service.name (a real resource key, filterable
-	// at the span level).
+	// at the span level). Of these, only the gen_ai-scoped ones (llm_call_count,
+	// input_tokens, output_tokens, last_activity_time) are Orderable and thus usable
+	// in ORDER BY / the aggregate filter; the rest are output-only.
 	return []string{
 		"start_time", "end_time", "duration_nano", "span_count", "root_span_name",
 		"llm_call_count", "input_tokens", "output_tokens", "last_activity_time",

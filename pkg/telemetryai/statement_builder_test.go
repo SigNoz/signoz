@@ -2,6 +2,8 @@ package telemetryai
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
@@ -98,138 +100,367 @@ func newTestBuilderWithKeys(t *testing.T, keysMap map[string][]*telemetrytypes.T
 	)
 }
 
-func TestBuild_TraceList_NoFilter(t *testing.T) {
-	b := newTestBuilder(t)
-	query := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
-		Signal: telemetrytypes.SignalTraces,
-		Source: telemetrytypes.SourceAI,
-		Limit:  20,
+// ---------------------------------------------------------------------------
+// Full-query golden tests
+//
+// These pin the WHOLE generated statement, with bound args inlined into the `?`
+// placeholders, so the entire query can be read and verified by eye. The golden
+// `want` strings are formatted for readability; the comparison is whitespace- and
+// backtick-insensitive (see normalizeSQL), so only the SQL tokens themselves matter.
+//
+// Run `go test ./pkg/telemetryai/ -run TestBuild_FullSQL -v` to also print each query.
+// ---------------------------------------------------------------------------
+
+// renderSQL substitutes bound args into the `?` placeholders so the whole statement
+// reads as one literal SQL string.
+func renderSQL(t *testing.T, stmt *qbtypes.Statement) string {
+	t.Helper()
+	var b strings.Builder
+	argi := 0
+	for i := 0; i < len(stmt.Query); i++ {
+		if stmt.Query[i] == '?' {
+			require.Less(t, argi, len(stmt.Args), "more ? than args in query")
+			b.WriteString(formatArg(stmt.Args[argi]))
+			argi++
+			continue
+		}
+		b.WriteByte(stmt.Query[i])
 	}
-
-	stmt, err := b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace, query, nil)
-	require.NoError(t, err)
-
-	q := stmt.Query
-	// Layer 2 gate as a WHERE-level pre-scan of qualifying trace_ids (not a
-	// HAVING over every trace in the window)
-	require.Contains(t, q, "__ai_gate_ids AS (SELECT trace_id")
-	// gate resolved through the field mapper (materialization-aware `= ?` form),
-	// not a hardcoded mapContains
-	require.Contains(t, q, "mapContains(attributes_string, 'gen_ai.request.model') = ?")
-	require.NotContains(t, q, "HAVING")
-	// ranked+limited trace-id CTE constrained to gated traces
-	require.Contains(t, q, "__ai_trace_ids AS (")
-	require.Contains(t, q, "trace_id GLOBAL IN (SELECT trace_id FROM __ai_gate_ids)")
-	// llm_call_count counts LLM spans only (request model present), resolved
-	require.Contains(t, q, "countIf(mapContains(attributes_string, 'gen_ai.request.model') = ?) AS llm_call_count")
-	// token columns resolved via the field mapper (null-safe multiIf), summed
-	require.Contains(t, q, "sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = ?")
-	require.Contains(t, q, "sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens') = ?")
-	// default ranking: last in-scope activity, scoped to the resolved gate mask,
-	// selected as a real alias so ranking CTE and enrichment both ORDER BY it
-	require.Contains(t, q, "maxIf(timestamp, (mapContains(attributes_string, 'gen_ai.request.model') = ?")
-	require.Contains(t, q, ") AS last_activity_time")
-	require.Contains(t, q, "last_activity_time DESC, trace_id DESC")
-	// enrichment restricted to selected traces and the SAME window as ranking,
-	// with root/service/duration columns
-	require.Contains(t, q, "trace_id GLOBAL IN (SELECT trace_id FROM __ai_trace_ids)")
-	require.Contains(t, q, "anyIf(name, parent_span_id = '') AS root_span_name")
-	require.Contains(t, q, "resource_string_service$$name")
-	require.Contains(t, q, "AS duration_nano")
-	// honored the limit (parameterized)
-	require.Contains(t, q, "LIMIT ?")
-	require.Contains(t, stmt.Args, 20)
-	// no filter => no filter CTE
-	require.NotContains(t, q, "__ai_filter_ids")
-	require.Contains(t, q, "SETTINGS distributed_product_mode='allow'")
+	require.Equal(t, len(stmt.Args), argi, "arg count does not match number of placeholders")
+	return b.String()
 }
 
-func TestBuild_TraceList_OrderByCompletionTokens(t *testing.T) {
-	b := newTestBuilder(t)
-	query := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
-		Signal: telemetrytypes.SignalTraces,
-		Source: telemetrytypes.SourceAI,
-		Order: []qbtypes.OrderBy{
-			{Key: qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "output_tokens"}}, Direction: qbtypes.OrderDirectionDesc},
-		},
-		Limit: 10,
+func formatArg(a any) string {
+	if s, ok := a.(string); ok {
+		return "'" + s + "'"
 	}
-
-	stmt, err := b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace, query, nil)
-	require.NoError(t, err)
-
-	q := stmt.Query
-	// candidates ranked by the trace-level token sum BEFORE the limit (resolved,
-	// selected as the output_tokens alias)...
-	require.Contains(t, q, "sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = ?")
-	require.Contains(t, q, ") AS output_tokens")
-	// ...and the same key re-applied on the enrich alias
-	require.Contains(t, q, "ORDER BY output_tokens DESC, trace_id DESC")
+	return fmt.Sprintf("%v", a)
 }
 
-func TestBuild_TraceList_Having(t *testing.T) {
-	b := newTestBuilder(t)
-	query := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
-		Signal: telemetrytypes.SignalTraces,
-		Source: telemetrytypes.SourceAI,
-		Filter: &qbtypes.Filter{Expression: "gen_ai.request.model = 'gpt-4o-mini'"},
-		Having: &qbtypes.Having{Expression: "output_tokens > 1000 AND span_count > 3"},
-		Limit:  10,
-	}
-
-	stmt, err := b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace, query, nil)
-	require.NoError(t, err)
-
-	q := stmt.Query
-	// aggregate filter applied as HAVING on the grouped ranking CTE, referencing the
-	// per-trace aggregate aliases; span-level filter still handled by the filter CTE.
-	require.Contains(t, q, "HAVING")
-	require.Contains(t, q, "output_tokens > 1000")
-	require.Contains(t, q, "span_count > 3")
-	require.Contains(t, q, ") AS output_tokens")
-	require.Contains(t, q, "count() AS span_count")
-	require.Contains(t, q, "__ai_filter_ids AS (")
+// normalizeSQL makes the comparison insensitive to formatting: it drops identifier
+// backticks, collapses whitespace runs to a single space, and removes spaces directly
+// inside parentheses. This lets the golden strings be freely indented/wrapped (and
+// written as Go raw literals, which cannot contain backticks) — only the SQL tokens
+// and their order matter.
+func normalizeSQL(s string) string {
+	s = strings.Join(strings.Fields(strings.ReplaceAll(s, "`", "")), " ")
+	s = strings.ReplaceAll(s, "( ", "(")
+	s = strings.ReplaceAll(s, " )", ")")
+	return s
 }
 
-func TestBuild_TraceList_TraceFilterInWhere(t *testing.T) {
-	b := newTestBuilder(t)
-	query := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
-		Signal: telemetrytypes.SignalTraces,
-		Source: telemetrytypes.SourceAI,
-		// ONE filter box, span-level AND trace-level (trace.* context) — no `having`.
-		Filter: &qbtypes.Filter{Expression: "gen_ai.request.model = 'gpt-4o-mini' AND trace.output_tokens > 1000"},
-		Limit:  10,
-	}
-
-	stmt, err := b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace, query, nil)
-	require.NoError(t, err)
-
-	q := stmt.Query
-	// span-level predicate -> filter CTE (WHERE over spans)
-	require.Contains(t, q, "__ai_filter_ids AS (")
-	require.Contains(t, q, "trace_id GLOBAL IN (SELECT trace_id FROM __ai_filter_ids)")
-	// trace-level predicate -> HAVING referencing the aggregate alias
-	require.Contains(t, q, "HAVING")
-	require.Contains(t, q, "output_tokens > 1000")
+func requireSQLEqual(t *testing.T, want string, stmt *qbtypes.Statement) {
+	t.Helper()
+	got := renderSQL(t, stmt)
+	t.Logf("\n%s", got)
+	require.Equal(t, normalizeSQL(want), normalizeSQL(got))
 }
 
-func TestBuild_TraceList_TraceFilterOnly(t *testing.T) {
+// Trace list, no filter. The benchmarked pipeline: `matched` picks the top-N traces in
+// one windowed, mask-pruned pass (default order last_activity_time); `ranked` reads
+// their time bounds from trace_summary; `buckets` derives the primary-key prune; the
+// final SELECT enriches only those traces over their buckets.
+func TestBuild_FullSQL_TraceList_NoFilter(t *testing.T) {
 	b := newTestBuilder(t)
-	query := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
-		Signal: telemetrytypes.SignalTraces,
-		Source: telemetrytypes.SourceAI,
-		Filter: &qbtypes.Filter{Expression: "span_count > 3"}, // bare aggregate name
-		Limit:  10,
-	}
-	stmt, err := b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace, query, nil)
+	stmt, err := b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace,
+		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+			Signal: telemetrytypes.SignalTraces, Source: telemetrytypes.SourceAI, Limit: 20,
+		}, nil)
 	require.NoError(t, err)
-	q := stmt.Query
-	// pure trace-level filter: HAVING, and NO span filter CTE
-	require.Contains(t, q, "HAVING")
-	require.Contains(t, q, "span_count > 3")
-	require.NotContains(t, q, "__ai_filter_ids")
+
+	requireSQLEqual(t, `
+WITH matched AS (
+    SELECT trace_id,
+        countIf(mapContains(attributes_string, 'gen_ai.request.model') = true) AS llm_call_count,
+        sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens') = true, toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)) AS input_tokens,
+        sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens,
+        maxIf(timestamp, (mapContains(attributes_string, 'gen_ai.request.model') = true OR mapContains(attributes_string, 'gen_ai.tool.name') = true OR mapContains(attributes_string, 'gen_ai.agent.name') = true)) AS last_activity_time
+    FROM signoz_traces.distributed_signoz_index_v3
+    WHERE timestamp >= '1747947419000000000'
+      AND timestamp < '1747983448000000000'
+      AND ts_bucket_start >= 1747945619
+      AND ts_bucket_start <= 1747983448
+      AND ((mapContains(attributes_string, 'gen_ai.request.model') = true OR mapContains(attributes_string, 'gen_ai.tool.name') = true OR mapContains(attributes_string, 'gen_ai.agent.name') = true))
+    GROUP BY trace_id
+    ORDER BY last_activity_time DESC, trace_id DESC
+    LIMIT 20
+),
+ranked AS (
+    SELECT trace_id, min(start) AS t_start, max(end) AS t_end
+    FROM signoz_traces.distributed_trace_summary
+    WHERE trace_id GLOBAL IN (SELECT trace_id FROM matched)
+      AND end >= fromUnixTimestamp64Nano(1747947419000000000)
+      AND start < fromUnixTimestamp64Nano(1747983448000000000)
+    GROUP BY trace_id
+),
+buckets AS (
+    SELECT DISTINCT b AS ts_bucket
+    FROM ranked
+    ARRAY JOIN range(toUInt64(intDiv(toUnixTimestamp(t_start), 1800) * 1800 - 1800), toUInt64(intDiv(toUnixTimestamp(t_end), 1800) * 1800 + 1800), 1800) AS b
+)
+SELECT trace_id,
+    min(timestamp) AS start_time,
+    max(timestamp) AS end_time,
+    (max(toUnixTimestamp64Nano(timestamp) + duration_nano) - min(toUnixTimestamp64Nano(timestamp))) AS duration_nano,
+    count() AS span_count,
+    anyIf(name, parent_span_id = '') AS root_span_name,
+    any(resource_string_service$$name) AS service.name,
+    countIf(mapContains(attributes_string, 'gen_ai.request.model') = true) AS llm_call_count,
+    sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens') = true, toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)) AS input_tokens,
+    sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens,
+    maxIf(timestamp, (mapContains(attributes_string, 'gen_ai.request.model') = true OR mapContains(attributes_string, 'gen_ai.tool.name') = true OR mapContains(attributes_string, 'gen_ai.agent.name') = true)) AS last_activity_time
+FROM signoz_traces.distributed_signoz_index_v3
+WHERE ts_bucket_start GLOBAL IN (SELECT ts_bucket FROM buckets)
+  AND trace_id GLOBAL IN (SELECT trace_id FROM ranked)
+GROUP BY trace_id
+ORDER BY last_activity_time DESC, trace_id DESC
+SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000
+`, stmt)
 }
 
+// Trace list, span-level AND trace-level filter, custom order, pagination:
+//   - `gen_ai.request.model = ...`  widens the matched WHERE prune and becomes a
+//     countIf(...) > 0 existence check in HAVING (alongside the gate countIf).
+//   - `output_tokens > 1000`        becomes an aggregate HAVING on the matched pass.
+//   - order by output_tokens desc, limit 10 offset 30.
+func TestBuild_FullSQL_TraceList_SpanAndTraceFilter(t *testing.T) {
+	b := newTestBuilder(t)
+	stmt, err := b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace,
+		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+			Signal: telemetrytypes.SignalTraces, Source: telemetrytypes.SourceAI,
+			Filter: &qbtypes.Filter{Expression: "gen_ai.request.model = 'gpt-4o-mini' AND output_tokens > 1000"},
+			Order:  []qbtypes.OrderBy{{Key: qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "output_tokens"}}, Direction: qbtypes.OrderDirectionDesc}},
+			Limit:  10, Offset: 30,
+		}, nil)
+	require.NoError(t, err)
+
+	requireSQLEqual(t, `
+WITH matched AS (
+    SELECT trace_id,
+        countIf(mapContains(attributes_string, 'gen_ai.request.model') = true) AS llm_call_count,
+        sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens') = true, toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)) AS input_tokens,
+        sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens,
+        maxIf(timestamp, (mapContains(attributes_string, 'gen_ai.request.model') = true OR mapContains(attributes_string, 'gen_ai.tool.name') = true OR mapContains(attributes_string, 'gen_ai.agent.name') = true)) AS last_activity_time
+    FROM signoz_traces.distributed_signoz_index_v3
+    WHERE timestamp >= '1747947419000000000'
+      AND timestamp < '1747983448000000000'
+      AND ts_bucket_start >= 1747945619
+      AND ts_bucket_start <= 1747983448
+      AND ((mapContains(attributes_string, 'gen_ai.request.model') = true OR mapContains(attributes_string, 'gen_ai.tool.name') = true OR mapContains(attributes_string, 'gen_ai.agent.name') = true)
+        OR (attributes_string['gen_ai.request.model'] = 'gpt-4o-mini' AND mapContains(attributes_string, 'gen_ai.request.model') = true))
+    GROUP BY trace_id
+    HAVING countIf((mapContains(attributes_string, 'gen_ai.request.model') = true OR mapContains(attributes_string, 'gen_ai.tool.name') = true OR mapContains(attributes_string, 'gen_ai.agent.name') = true)) > 0
+        AND countIf((attributes_string['gen_ai.request.model'] = 'gpt-4o-mini' AND mapContains(attributes_string, 'gen_ai.request.model') = true)) > 0
+        AND output_tokens > 1000
+    ORDER BY output_tokens DESC, trace_id DESC
+    LIMIT 10 OFFSET 30
+),
+ranked AS (
+    SELECT trace_id, min(start) AS t_start, max(end) AS t_end
+    FROM signoz_traces.distributed_trace_summary
+    WHERE trace_id GLOBAL IN (SELECT trace_id FROM matched)
+      AND end >= fromUnixTimestamp64Nano(1747947419000000000)
+      AND start < fromUnixTimestamp64Nano(1747983448000000000)
+    GROUP BY trace_id
+),
+buckets AS (
+    SELECT DISTINCT b AS ts_bucket
+    FROM ranked
+    ARRAY JOIN range(toUInt64(intDiv(toUnixTimestamp(t_start), 1800) * 1800 - 1800), toUInt64(intDiv(toUnixTimestamp(t_end), 1800) * 1800 + 1800), 1800) AS b
+)
+SELECT trace_id,
+    min(timestamp) AS start_time,
+    max(timestamp) AS end_time,
+    (max(toUnixTimestamp64Nano(timestamp) + duration_nano) - min(toUnixTimestamp64Nano(timestamp))) AS duration_nano,
+    count() AS span_count,
+    anyIf(name, parent_span_id = '') AS root_span_name,
+    any(resource_string_service$$name) AS service.name,
+    countIf(mapContains(attributes_string, 'gen_ai.request.model') = true) AS llm_call_count,
+    sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens') = true, toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)) AS input_tokens,
+    sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens,
+    maxIf(timestamp, (mapContains(attributes_string, 'gen_ai.request.model') = true OR mapContains(attributes_string, 'gen_ai.tool.name') = true OR mapContains(attributes_string, 'gen_ai.agent.name') = true)) AS last_activity_time
+FROM signoz_traces.distributed_signoz_index_v3
+WHERE ts_bucket_start GLOBAL IN (SELECT ts_bucket FROM buckets)
+  AND trace_id GLOBAL IN (SELECT trace_id FROM ranked)
+GROUP BY trace_id
+ORDER BY output_tokens DESC, trace_id DESC
+SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000
+`, stmt)
+}
+
+// Span list (requestType raw): delegated to the traces builder with the gate ANDed
+// into the user filter, so only gen_ai spans matching the filter come back. Standard
+// span columns, single SELECT (no CTE pipeline).
+func TestBuild_FullSQL_SpanList_Raw(t *testing.T) {
+	b := newTestBuilder(t)
+	stmt, err := b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeRaw,
+		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+			Signal: telemetrytypes.SignalTraces, Source: telemetrytypes.SourceAI,
+			Filter: &qbtypes.Filter{Expression: "gen_ai.request.model = 'gpt-4o-mini'"},
+			Limit:  10,
+		}, nil)
+	require.NoError(t, err)
+
+	requireSQLEqual(t, `
+SELECT timestamp AS timestamp, trace_id AS trace_id, span_id AS span_id,
+    trace_state AS trace_state, parent_span_id AS parent_span_id, flags AS flags,
+    name AS name, kind AS kind, kind_string AS kind_string, duration_nano AS duration_nano,
+    status_code AS status_code, status_message AS status_message,
+    status_code_string AS status_code_string, events AS events, links AS links,
+    response_status_code AS response_status_code, external_http_url AS external_http_url,
+    http_url AS http_url, external_http_method AS external_http_method,
+    http_method AS http_method, http_host AS http_host, db_name AS db_name,
+    db_operation AS db_operation, has_error AS has_error, is_remote AS is_remote,
+    attributes_string, attributes_number, attributes_bool, resources_string
+FROM signoz_traces.distributed_signoz_index_v3
+WHERE (((mapContains(attributes_string, 'gen_ai.request.model') = true
+        OR mapContains(attributes_string, 'gen_ai.tool.name') = true
+        OR mapContains(attributes_string, 'gen_ai.agent.name') = true))
+    AND ((attributes_string['gen_ai.request.model'] = 'gpt-4o-mini'
+        AND mapContains(attributes_string, 'gen_ai.request.model') = true)))
+  AND timestamp >= '1747947419000000000'
+  AND timestamp < '1747983448000000000'
+  AND ts_bucket_start >= 1747945619
+  AND ts_bucket_start <= 1747983448
+LIMIT 10
+`, stmt)
+}
+
+// Trace list, aggregate-only filter (no span filter). The `trace.` prefix rewrites to
+// the aggregate alias; the WHERE prune is NOT widened and there is no gate/span countIf —
+// just the aggregate `HAVING`. Default order (last_activity_time).
+func TestBuild_FullSQL_TraceList_AggregateFilterOnly(t *testing.T) {
+	b := newTestBuilder(t)
+	stmt, err := b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace,
+		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+			Signal: telemetrytypes.SignalTraces, Source: telemetrytypes.SourceAI,
+			Filter: &qbtypes.Filter{Expression: "trace.output_tokens > 1000"},
+			Limit:  20,
+		}, nil)
+	require.NoError(t, err)
+
+	requireSQLEqual(t, `
+WITH matched AS (
+    SELECT trace_id,
+        countIf(mapContains(attributes_string, 'gen_ai.request.model') = true) AS llm_call_count,
+        sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens') = true, toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)) AS input_tokens,
+        sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens,
+        maxIf(timestamp, (mapContains(attributes_string, 'gen_ai.request.model') = true OR mapContains(attributes_string, 'gen_ai.tool.name') = true OR mapContains(attributes_string, 'gen_ai.agent.name') = true)) AS last_activity_time
+    FROM signoz_traces.distributed_signoz_index_v3
+    WHERE timestamp >= '1747947419000000000'
+      AND timestamp < '1747983448000000000'
+      AND ts_bucket_start >= 1747945619
+      AND ts_bucket_start <= 1747983448
+      AND ((mapContains(attributes_string, 'gen_ai.request.model') = true OR mapContains(attributes_string, 'gen_ai.tool.name') = true OR mapContains(attributes_string, 'gen_ai.agent.name') = true))
+    GROUP BY trace_id
+    HAVING output_tokens > 1000
+    ORDER BY last_activity_time DESC, trace_id DESC
+    LIMIT 20
+),
+ranked AS (
+    SELECT trace_id, min(start) AS t_start, max(end) AS t_end
+    FROM signoz_traces.distributed_trace_summary
+    WHERE trace_id GLOBAL IN (SELECT trace_id FROM matched)
+      AND end >= fromUnixTimestamp64Nano(1747947419000000000)
+      AND start < fromUnixTimestamp64Nano(1747983448000000000)
+    GROUP BY trace_id
+),
+buckets AS (
+    SELECT DISTINCT b AS ts_bucket
+    FROM ranked
+    ARRAY JOIN range(toUInt64(intDiv(toUnixTimestamp(t_start), 1800) * 1800 - 1800), toUInt64(intDiv(toUnixTimestamp(t_end), 1800) * 1800 + 1800), 1800) AS b
+)
+SELECT trace_id,
+    min(timestamp) AS start_time,
+    max(timestamp) AS end_time,
+    (max(toUnixTimestamp64Nano(timestamp) + duration_nano) - min(toUnixTimestamp64Nano(timestamp))) AS duration_nano,
+    count() AS span_count,
+    anyIf(name, parent_span_id = '') AS root_span_name,
+    any(resource_string_service$$name) AS service.name,
+    countIf(mapContains(attributes_string, 'gen_ai.request.model') = true) AS llm_call_count,
+    sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens') = true, toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)) AS input_tokens,
+    sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens,
+    maxIf(timestamp, (mapContains(attributes_string, 'gen_ai.request.model') = true OR mapContains(attributes_string, 'gen_ai.tool.name') = true OR mapContains(attributes_string, 'gen_ai.agent.name') = true)) AS last_activity_time
+FROM signoz_traces.distributed_signoz_index_v3
+WHERE ts_bucket_start GLOBAL IN (SELECT ts_bucket FROM buckets)
+  AND trace_id GLOBAL IN (SELECT trace_id FROM ranked)
+GROUP BY trace_id
+ORDER BY last_activity_time DESC, trace_id DESC
+SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000
+`, stmt)
+}
+
+// Trace list, span-only filter (no aggregate filter). The WHERE prune is widened with
+// the span predicate and HAVING has the gate + span-existence countIf pair but NO
+// trailing aggregate. `has_error = true` resolves to a materialized-column predicate.
+func TestBuild_FullSQL_TraceList_SpanFilterOnly(t *testing.T) {
+	b := newTestBuilder(t)
+	stmt, err := b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace,
+		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+			Signal: telemetrytypes.SignalTraces, Source: telemetrytypes.SourceAI,
+			Filter: &qbtypes.Filter{Expression: "has_error = true"},
+			Limit:  20,
+		}, nil)
+	require.NoError(t, err)
+
+	requireSQLEqual(t, `
+WITH matched AS (
+    SELECT trace_id,
+        countIf(mapContains(attributes_string, 'gen_ai.request.model') = true) AS llm_call_count,
+        sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens') = true, toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)) AS input_tokens,
+        sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens,
+        maxIf(timestamp, (mapContains(attributes_string, 'gen_ai.request.model') = true OR mapContains(attributes_string, 'gen_ai.tool.name') = true OR mapContains(attributes_string, 'gen_ai.agent.name') = true)) AS last_activity_time
+    FROM signoz_traces.distributed_signoz_index_v3
+    WHERE timestamp >= '1747947419000000000'
+      AND timestamp < '1747983448000000000'
+      AND ts_bucket_start >= 1747945619
+      AND ts_bucket_start <= 1747983448
+      AND ((mapContains(attributes_string, 'gen_ai.request.model') = true OR mapContains(attributes_string, 'gen_ai.tool.name') = true OR mapContains(attributes_string, 'gen_ai.agent.name') = true)
+        OR has_error = true)
+    GROUP BY trace_id
+    HAVING countIf((mapContains(attributes_string, 'gen_ai.request.model') = true OR mapContains(attributes_string, 'gen_ai.tool.name') = true OR mapContains(attributes_string, 'gen_ai.agent.name') = true)) > 0
+        AND countIf(has_error = true) > 0
+    ORDER BY last_activity_time DESC, trace_id DESC
+    LIMIT 20
+),
+ranked AS (
+    SELECT trace_id, min(start) AS t_start, max(end) AS t_end
+    FROM signoz_traces.distributed_trace_summary
+    WHERE trace_id GLOBAL IN (SELECT trace_id FROM matched)
+      AND end >= fromUnixTimestamp64Nano(1747947419000000000)
+      AND start < fromUnixTimestamp64Nano(1747983448000000000)
+    GROUP BY trace_id
+),
+buckets AS (
+    SELECT DISTINCT b AS ts_bucket
+    FROM ranked
+    ARRAY JOIN range(toUInt64(intDiv(toUnixTimestamp(t_start), 1800) * 1800 - 1800), toUInt64(intDiv(toUnixTimestamp(t_end), 1800) * 1800 + 1800), 1800) AS b
+)
+SELECT trace_id,
+    min(timestamp) AS start_time,
+    max(timestamp) AS end_time,
+    (max(toUnixTimestamp64Nano(timestamp) + duration_nano) - min(toUnixTimestamp64Nano(timestamp))) AS duration_nano,
+    count() AS span_count,
+    anyIf(name, parent_span_id = '') AS root_span_name,
+    any(resource_string_service$$name) AS service.name,
+    countIf(mapContains(attributes_string, 'gen_ai.request.model') = true) AS llm_call_count,
+    sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens') = true, toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)) AS input_tokens,
+    sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens,
+    maxIf(timestamp, (mapContains(attributes_string, 'gen_ai.request.model') = true OR mapContains(attributes_string, 'gen_ai.tool.name') = true OR mapContains(attributes_string, 'gen_ai.agent.name') = true)) AS last_activity_time
+FROM signoz_traces.distributed_signoz_index_v3
+WHERE ts_bucket_start GLOBAL IN (SELECT ts_bucket FROM buckets)
+  AND trace_id GLOBAL IN (SELECT trace_id FROM ranked)
+GROUP BY trace_id
+ORDER BY last_activity_time DESC, trace_id DESC
+SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000
+`, stmt)
+}
+
+// ---------------------------------------------------------------------------
+// Behavior / branch tests not covered by the goldens above
+// ---------------------------------------------------------------------------
+
+// Trace-level and span-level predicates may not be OR-combined.
 func TestBuild_TraceList_TraceOrSpanMixRejected(t *testing.T) {
 	b := newTestBuilder(t)
 	query := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
@@ -243,19 +474,44 @@ func TestBuild_TraceList_TraceOrSpanMixRejected(t *testing.T) {
 	require.Contains(t, err.Error(), "cannot be combined")
 }
 
+// An output-only aggregate (span_count / duration_nano) can be displayed but not used
+// in the aggregate filter or ORDER BY — it is not computable in the matched pass.
+func TestBuild_TraceList_OutputOnlyAggregateRejected(t *testing.T) {
+	b := newTestBuilder(t)
+
+	// filter by span_count -> rejected
+	_, err := b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace,
+		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+			Signal: telemetrytypes.SignalTraces, Source: telemetrytypes.SourceAI,
+			Filter: &qbtypes.Filter{Expression: "span_count > 3"},
+		}, nil)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "span_count")
+
+	// order by duration_nano -> rejected
+	_, err = b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace,
+		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+			Signal: telemetrytypes.SignalTraces, Source: telemetrytypes.SourceAI,
+			Order: []qbtypes.OrderBy{{Key: qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "duration_nano"}}, Direction: qbtypes.OrderDirectionDesc}},
+		}, nil)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "unsupported order key")
+}
+
+// A HAVING referencing a non-aggregate column is rejected.
 func TestBuild_TraceList_Having_UnknownColumn(t *testing.T) {
 	b := newTestBuilder(t)
 	query := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 		Signal: telemetrytypes.SignalTraces,
 		Source: telemetrytypes.SourceAI,
-		Having: &qbtypes.Having{Expression: "service.name > 1"},
+		Having: &qbtypes.Having{Expression: "service.name > 1"}, // not an aggregate column
 		Limit:  10,
 	}
-	// service.name is not an aggregate column -> HAVING rewriter rejects it.
 	_, err := b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace, query, nil)
 	require.Error(t, err)
 }
 
+// Ordering by an unknown key is rejected.
 func TestBuild_TraceList_UnsupportedOrderKey(t *testing.T) {
 	b := newTestBuilder(t)
 	query := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
@@ -265,48 +521,12 @@ func TestBuild_TraceList_UnsupportedOrderKey(t *testing.T) {
 			{Key: qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "http.request.method"}}, Direction: qbtypes.OrderDirectionDesc},
 		},
 	}
-
 	_, err := b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace, query, nil)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "unsupported order key")
 }
 
-func TestBuild_TraceList_Offset(t *testing.T) {
-	b := newTestBuilder(t)
-	query := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
-		Signal: telemetrytypes.SignalTraces,
-		Source: telemetrytypes.SourceAI,
-		Limit:  10,
-		Offset: 30,
-	}
-
-	stmt, err := b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace, query, nil)
-	require.NoError(t, err)
-	require.Contains(t, stmt.Query, "OFFSET ?")
-	require.Contains(t, stmt.Args, 30)
-}
-
-func TestBuild_TraceList_WithFilter(t *testing.T) {
-	b := newTestBuilder(t)
-	query := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
-		Signal: telemetrytypes.SignalTraces,
-		Source: telemetrytypes.SourceAI,
-		Filter: &qbtypes.Filter{Expression: "gen_ai.request.model = 'gpt-4o-mini'"},
-		Limit:  10,
-	}
-
-	stmt, err := b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace, query, nil)
-	require.NoError(t, err)
-
-	q := stmt.Query
-	// user filter becomes an independent trace-id set, intersected with the gate
-	require.Contains(t, q, "__ai_filter_ids AS (")
-	require.Contains(t, q, "trace_id GLOBAL IN (SELECT trace_id FROM __ai_filter_ids)")
-	require.Contains(t, q, "gen_ai.request.model")
-	// filter value is parameterized, not inlined
-	require.Contains(t, stmt.Args, "gpt-4o-mini")
-}
-
+// With no limit set, the builder applies the default of 100.
 func TestBuild_TraceList_DefaultLimit(t *testing.T) {
 	b := newTestBuilder(t)
 	query := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
@@ -319,23 +539,7 @@ func TestBuild_TraceList_DefaultLimit(t *testing.T) {
 	require.Contains(t, stmt.Args, 100)
 }
 
-func TestBuild_SpanList_Raw_DelegatesWithGate(t *testing.T) {
-	b := newTestBuilder(t)
-	query := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
-		Signal: telemetrytypes.SignalTraces,
-		Source: telemetrytypes.SourceAI,
-		Filter: &qbtypes.Filter{Expression: "gen_ai.request.model = 'gpt-4o-mini'"},
-		Limit:  10,
-	}
-	// span list: the gate is ANDed into the user filter and delegated, so only
-	// gen_ai spans (request model / tool / agent) come back.
-	stmt, err := b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeRaw, query, nil)
-	require.NoError(t, err)
-	require.Contains(t, stmt.Query, "gen_ai.request.model")
-	require.Contains(t, stmt.Query, "gen_ai.tool.name")
-	require.Contains(t, stmt.Query, "gen_ai.agent.name")
-}
-
+// Only trace list and span list (raw) are supported; distribution is not.
 func TestBuild_UnsupportedRequestType(t *testing.T) {
 	b := newTestBuilder(t)
 	query := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
@@ -345,8 +549,6 @@ func TestBuild_UnsupportedRequestType(t *testing.T) {
 			{Expression: "count()"},
 		},
 	}
-	// trace list, span list (raw), scalar, and timeseries are supported;
-	// distribution is not.
 	_, err := b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeDistribution, query, nil)
 	require.ErrorIs(t, err, ErrUnsupportedRequestType)
 }
