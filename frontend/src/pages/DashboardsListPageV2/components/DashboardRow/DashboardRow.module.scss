@@ -55,6 +55,10 @@
 	overflow-wrap: anywhere;
 }
 
+.legacyBadge {
+	flex: none;
+}
+
 .tagsWithActions {
 	display: flex;
 	align-items: center;
@@ -69,6 +73,17 @@
 	justify-content: center;
 	flex: none;
 	color: var(--l3-foreground);
+}
+
+/* Wrap so the tooltip has a hoverable target even when the pin button is disabled
+   (a legacy dashboard can't be pinned). */
+.pinButtonWrap {
+	display: inline-flex;
+	flex: none;
+}
+
+.pinButtonWrap button:disabled {
+	pointer-events: none;
 }
 
 .pinButton {
