@@ -2,10 +2,13 @@ import { Badge } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
 import type { TableColumnDef } from 'components/TanStackTableView';
 
-import MapToBillingModelSelect from '../../MapToBillingModelSelect';
+import MapToBillingModelSelect from 'container/LLMObservability/Settings/ModelPricing/UnpricedModelsTab/components/MapToBillingModelSelect';
+import type {
+	PricingRule,
+	UnpricedModel,
+} from 'container/LLMObservability/Settings/ModelPricing/types';
+import { formatSpanCount } from 'container/LLMObservability/Settings/ModelPricing/utils';
 import styles from './tableConfig.module.scss';
-import type { PricingRule, UnpricedModel } from '../../../../types';
-import { formatSpanCount } from '../../../../utils';
 
 export interface UnpricedColumnsConfig {
 	canManage: boolean;

@@ -15,10 +15,10 @@ import { Plus } from '@signozhq/icons';
 import { Skeleton } from 'antd';
 
 import styles from './MapToBillingModelSelect.module.scss';
-import type { PricingRule } from '../../../types';
+import type { PricingRule } from 'container/LLMObservability/Settings/ModelPricing/types';
+import { getRuleOptionLabel } from 'container/LLMObservability/Settings/ModelPricing/utils';
+import { usePendingMappingLabel } from 'container/LLMObservability/Settings/ModelPricing/UnpricedModelsTab/usePendingMappingStore';
 import { useMapToBillingModelSearch } from './useMapToBillingModelSearch';
-import { getRuleOptionLabel } from '../../../utils';
-import { usePendingMappingLabel } from '../../usePendingMappingStore';
 
 // Stable keys for the placeholder rows shown while options load.
 const SKELETON_ROW_KEYS = [

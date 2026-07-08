@@ -11,9 +11,16 @@ import {
 	EMPTY_DRAFT,
 	TOAST_MODEL_COST_ADDED,
 	TOAST_MODEL_COST_UPDATED,
-} from '../../../../constants';
-import type { DrawerDraft, DrawerMode, PricingRule } from '../../../../types';
-import { buildRulePayload, draftFromRule } from '../../../../utils';
+} from 'container/LLMObservability/Settings/ModelPricing/constants';
+import type {
+	DrawerDraft,
+	DrawerMode,
+	PricingRule,
+} from 'container/LLMObservability/Settings/ModelPricing/types';
+import {
+	buildRulePayload,
+	draftFromRule,
+} from 'container/LLMObservability/Settings/ModelPricing/utils';
 
 interface UseModelCostDrawerResult {
 	isOpen: boolean;

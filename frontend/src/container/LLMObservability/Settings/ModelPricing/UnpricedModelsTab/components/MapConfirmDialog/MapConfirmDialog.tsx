@@ -5,12 +5,15 @@ import { ArrowRight, Check, Link2, X } from '@signozhq/icons';
 import { startCase } from 'lodash-es';
 
 import styles from './MapConfirmDialog.module.scss';
-import type { PricingRule, UnpricedModel } from '../../../types';
+import type {
+	PricingRule,
+	UnpricedModel,
+} from 'container/LLMObservability/Settings/ModelPricing/types';
 import {
 	formatPricePerMillion,
 	getCanonicalId,
 	getExtraBuckets,
-} from '../../../utils';
+} from 'container/LLMObservability/Settings/ModelPricing/utils';
 
 interface MapConfirmDialogProps {
 	open: boolean;

@@ -7,8 +7,11 @@ import {
 	useCreateOrUpdateLLMPricingRules,
 } from 'api/generated/services/llmpricingrules';
 
-import type { PricingRule, UnpricedModel } from '../../types';
-import { buildPatternMappingPayload } from '../../utils';
+import type {
+	PricingRule,
+	UnpricedModel,
+} from 'container/LLMObservability/Settings/ModelPricing/types';
+import { buildPatternMappingPayload } from 'container/LLMObservability/Settings/ModelPricing/utils';
 
 // A single row's choice: map this unpriced model onto this billing rule.
 export interface UnpricedModelMapping {
