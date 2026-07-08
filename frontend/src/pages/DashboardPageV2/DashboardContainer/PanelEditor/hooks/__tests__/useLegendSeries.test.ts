@@ -56,6 +56,10 @@ const PIE_PANEL = {
 	kind: 'Panel',
 	spec: { plugin: { kind: 'signoz/PieChartPanel', spec: {} }, queries: [] },
 } as unknown as DashboardtypesPanelDTO;
+const HISTOGRAM_PANEL = {
+	kind: 'Panel',
+	spec: { plugin: { kind: 'signoz/HistogramPanel', spec: {} }, queries: [] },
+} as unknown as DashboardtypesPanelDTO;
 const DATA = { response: {}, legendMap: {} } as unknown as PanelQueryData;
 
 // Each flattened series carries the label resolveSeriesLabelV5 should report.
@@ -101,6 +105,17 @@ describe('useLegendSeries', () => {
 		expect(result.current).toStrictEqual([
 			{ label: 'a', defaultColor: 'color:a' },
 		]);
+	});
+
+	it('resolves histogram panels via the time-series path', () => {
+		mockFlatten.mockReturnValue(seriesWithLabels(['a', 'b']));
+		const { result } = renderHook(() => useLegendSeries(HISTOGRAM_PANEL, DATA));
+		expect(result.current).toStrictEqual([
+			{ label: 'a', defaultColor: 'color:a' },
+			{ label: 'b', defaultColor: 'color:b' },
+		]);
+		// The pie path must not run for a histogram panel.
+		expect(mockPreparePie).not.toHaveBeenCalled();
 	});
 
 	it('resolves pie panels from their scalar slices, deduped by label', () => {

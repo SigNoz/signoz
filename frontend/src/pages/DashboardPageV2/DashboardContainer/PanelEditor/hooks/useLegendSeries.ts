@@ -26,6 +26,8 @@ export function useLegendSeries(
 			case 'signoz/PieChartPanel':
 				return resolvePieLegendSeries(data, isDarkMode);
 			case 'signoz/TimeSeriesPanel':
+			case 'signoz/BarChartPanel':
+			case 'signoz/HistogramPanel':
 				return resolveTimeSeriesLegendSeries(panel.spec.queries, data, isDarkMode);
 			default:
 				return [];
