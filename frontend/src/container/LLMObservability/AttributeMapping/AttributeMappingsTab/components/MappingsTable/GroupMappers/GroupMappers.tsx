@@ -10,12 +10,11 @@ import type { SpantypesSpanMapperDTO } from 'api/generated/services/sigNoz.schem
 import { useListSpanMappers } from 'api/generated/services/spanmapper';
 import { motion, useReducedMotion } from 'motion/react';
 
-import { DraftGroup } from '../../../types';
-import { AttributeMappingStore } from '../../hooks/useAttributeMappingStore';
-import { COLUMN_COUNT } from './constants';
-import MapperRow from './MapperRow';
-import MapperRowSkeleton from './MapperRowSkeleton';
-import MappingsColgroup from './MappingsColgroup';
+import { DraftGroup } from '../../../../types';
+import { AttributeMappingStore } from '../../../hooks/useAttributeMappingStore';
+import { COLUMN_COUNT } from '../constants';
+import MapperRow, { MapperRowSkeleton } from '../MapperRow';
+import MappingsColgroup from '../MappingsColgroup';
 import styles from './GroupMappers.module.scss';
 
 const MAPPER_SKELETON_ROWS = 2;

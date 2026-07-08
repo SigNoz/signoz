@@ -1,7 +1,7 @@
 import { Switch } from '@signozhq/ui/switch';
 
-import { DraftGroup } from '../../../types';
-import { AttributeMappingStore } from '../../hooks/useAttributeMappingStore';
+import { DraftGroup } from '../../../../types';
+import { AttributeMappingStore } from '../../../hooks/useAttributeMappingStore';
 import styles from './GroupHeaderActions.module.scss';
 
 interface GroupHeaderActionsProps {

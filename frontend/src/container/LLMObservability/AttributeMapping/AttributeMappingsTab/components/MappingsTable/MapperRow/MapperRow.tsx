@@ -5,7 +5,7 @@ import { SpantypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas'
 import cx from 'classnames';
 import { motion, useReducedMotion } from 'motion/react';
 
-import { DraftMapper } from '../../../types';
+import { DraftMapper } from '../../../../types';
 import styles from './MapperRow.module.scss';
 
 const MAX_VISIBLE_SOURCES = 3;

@@ -1,4 +1,4 @@
-import { DraftGroup } from '../../../types';
+import { DraftGroup } from '../../../../types';
 import styles from './GroupHeader.module.scss';
 
 interface GroupHeaderProps {

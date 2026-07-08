@@ -1,5 +1,5 @@
 import styles from './AttributeMappingsTab.module.scss';
-import MappingsTable from './components/MappingsTable/MappingsTable';
+import MappingsTable from './components/MappingsTable';
 import { useAttributeMappingStore } from './hooks/useAttributeMappingStore';
 
 // "Attribute mappings" tab: the mapping-groups listing, its load/error states
