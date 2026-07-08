@@ -12,7 +12,10 @@ interface UseCreatePanelResult {
 	/** Pass the target section's layout index; omit → last/new section. */
 	openPicker: (layoutIndex?: number) => void;
 	closePicker: () => void;
-	createPanel: (panelKind: PanelKind) => void;
+	/** The section the picker was opened against — seeds its section dropdown. */
+	targetLayoutIndex: number | undefined;
+	/** `layoutIndex` overrides the opened-against target (the dropdown's choice). */
+	createPanel: (panelKind: PanelKind, layoutIndex?: number) => void;
 }
 
 /**
@@ -38,16 +41,23 @@ export function useCreatePanel(): UseCreatePanelResult {
 	}, []);
 
 	const createPanel = useCallback(
-		(panelKind: PanelKind): void => {
+		(panelKind: PanelKind, targetIndex?: number): void => {
 			setIsPickerOpen(false);
 			const path = generatePath(ROUTES.DASHBOARD_PANEL_EDITOR, {
 				dashboardId,
 				panelId: NEW_PANEL_ID,
 			});
-			safeNavigate(`${path}${newPanelSearch(panelKind, layoutIndex)}`);
+			const target = targetIndex ?? layoutIndex;
+			safeNavigate(`${path}${newPanelSearch(panelKind, target)}`);
 		},
 		[safeNavigate, dashboardId, layoutIndex],
 	);
 
-	return { isPickerOpen, openPicker, closePicker, createPanel };
+	return {
+		isPickerOpen,
+		openPicker,
+		closePicker,
+		targetLayoutIndex: layoutIndex,
+		createPanel,
+	};
 }

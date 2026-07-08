@@ -20,12 +20,23 @@
 	}
 
 	&.filter-visible {
+		// Width is owned by ResizableBox (inline style); this section is the
+		// ResizableBox root, so it stays position: relative for the drag handle.
 		.all-errors-quick-filter-section {
-			width: 260px;
+			.resizable-box__content {
+				display: flex;
+				flex-direction: column;
+			}
+
+			.quick-filters-container {
+				flex: 1;
+				min-height: 0;
+			}
 		}
 
 		.all-errors-right-section {
-			width: calc(100% - 260px);
+			flex: 1;
+			min-width: 0;
 		}
 	}
 }

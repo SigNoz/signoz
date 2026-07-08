@@ -8,58 +8,82 @@ import type { GlobalReducer } from 'types/reducer/globalTime';
 
 import { sortValuesByOrder } from '../../DashboardSettings/Variables/variableFormModel';
 import type { VariableFormModel } from '../../DashboardSettings/Variables/variableFormModel';
+import { useDashboardStore } from '../../store/useDashboardStore';
 import type {
 	VariableSelection,
 	VariableSelectionMap,
 } from '../selectionTypes';
-import { isResolved, selectionToPayload } from '../selectionUtils';
+import { selectionToPayload } from '../selectionUtils';
 import { useAutoSelect } from '../useAutoSelect';
+import { useVariableFetchState } from '../useVariableFetchState';
 import ValueSelector from './ValueSelector';
 
 interface QuerySelectorProps {
 	variable: VariableFormModel;
-	/** Names this variable's query references; it waits until they're resolved. */
-	parents: string[];
 	/** All current selections, fed to the query as `{ name: value }`. */
 	selections: VariableSelectionMap;
 	selection: VariableSelection;
 	onChange: (selection: VariableSelection) => void;
+	/** Batched auto-selection fill applied when options resolve. */
+	onAutoSelect: (selection: VariableSelection) => void;
 }
 
 /**
- * Query-driven options. Dependency orchestration is declarative: the query is
- * `enabled` only once every parent is resolved, and the parent values are in the
- * query key — so it refetches automatically when a parent changes (and a cyclic
- * dependency is simply never enabled).
+ * Query-driven options. WHEN to fetch is owned by the runtime fetch engine
+ * (`variableFetchSlice`): the query is `enabled` while this variable is fetching
+ * (or settled-after-a-first-fetch, so a cycle bump re-runs it), and the engine's
+ * per-variable `cycleId` keys the request — so a parent's value change refetches
+ * only the dependent variables, in dependency order. The current selections feed
+ * the request payload but are deliberately NOT in the key (V1 parity).
  */
 function QuerySelector({
 	variable,
-	parents,
 	selections,
 	selection,
 	onChange,
+	onAutoSelect,
 }: QuerySelectorProps): JSX.Element {
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
 	const payload = useMemo(() => selectionToPayload(selections), [selections]);
-	const enabled = parents.every((parent) => isResolved(selections[parent]));
+
+	const {
+		variableFetchCycleId,
+		isVariableFetching,
+		isVariableSettled,
+		isVariableWaiting,
+		hasVariableFetchedOnce,
+	} = useVariableFetchState(variable.name);
+	const onVariableFetchComplete = useDashboardStore(
+		(s) => s.onVariableFetchComplete,
+	);
+	const onVariableFetchFailure = useDashboardStore(
+		(s) => s.onVariableFetchFailure,
+	);
 
 	const { data, isFetching } = useQuery(
 		[
 			'dashboard-variable',
 			variable.name,
 			variable.queryValue,
-			payload,
 			minTime,
 			maxTime,
+			variableFetchCycleId,
 		],
 		() =>
 			dashboardVariablesQuery({
 				query: variable.queryValue,
 				variables: payload,
 			}),
-		{ enabled, refetchOnWindowFocus: false },
+		{
+			enabled: isVariableFetching || (isVariableSettled && hasVariableFetchedOnce),
+			refetchOnWindowFocus: false,
+			onSettled: (_, error) =>
+				error
+					? onVariableFetchFailure(variable.name)
+					: onVariableFetchComplete(variable.name),
+		},
 	);
 
 	const options = useMemo(() => {
@@ -72,14 +96,14 @@ function QuerySelector({
 		).map(String);
 	}, [data, variable.sort]);
 
-	useAutoSelect(variable, options, selection, onChange);
+	useAutoSelect(variable, options, selection, onAutoSelect);
 
 	return (
 		<ValueSelector
 			options={options}
 			multiSelect={variable.multiSelect}
 			showAllOption={variable.showAllOption}
-			loading={isFetching}
+			loading={isFetching || isVariableWaiting}
 			selection={selection}
 			onChange={onChange}
 			testId={`variable-select-${variable.name}`}

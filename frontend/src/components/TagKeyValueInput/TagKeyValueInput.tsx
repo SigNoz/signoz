@@ -2,9 +2,9 @@ import { type ChangeEvent, type KeyboardEvent, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
-import { X } from '@signozhq/icons';
 import cx from 'classnames';
 
+import TagBadge from '../TagBadge/TagBadge';
 import { parseKeyValueTag } from './utils';
 
 import styles from './TagKeyValueInput.module.scss';
@@ -120,27 +120,23 @@ function TagKeyValueInput({
 							onBlur={commitEdit}
 						/>
 					) : (
-						<div key={tag} className={styles.tag} data-testid={`${testId}-chip`}>
+						<TagBadge
+							key={tag}
+							className={styles.tag}
+							closable
+							onClose={(): void => removeTag(tag)}
+						>
 							<Button
 								variant="ghost"
 								color="secondary"
 								className={styles.tagLabel}
 								title="Double-click to edit"
+								testId={`${testId}-chip`}
 								onDoubleClick={(): void => startEdit(index)}
 							>
 								{tag}
 							</Button>
-							<Button
-								variant="ghost"
-								color="secondary"
-								size="icon"
-								className={styles.remove}
-								aria-label={`Remove ${tag}`}
-								onClick={(): void => removeTag(tag)}
-							>
-								<X size={12} />
-							</Button>
-						</div>
+						</TagBadge>
 					),
 				)}
 				<Input

@@ -49,7 +49,11 @@ describe('PanelTypeSwitcher', () => {
 	it('fires onChange with the chosen plugin kind', () => {
 		const onChange = jest.fn();
 		render(
-			<PanelTypeSwitcher panelKind="signoz/TimeSeriesPanel" onChange={onChange} />,
+			<PanelTypeSwitcher
+				panelKind="signoz/TimeSeriesPanel"
+				queryType={EQueryType.QUERY_BUILDER}
+				onChange={onChange}
+			/>,
 		);
 
 		openDropdown();
@@ -62,6 +66,7 @@ describe('PanelTypeSwitcher', () => {
 		render(
 			<PanelTypeSwitcher
 				panelKind="signoz/TimeSeriesPanel"
+				queryType={EQueryType.QUERY_BUILDER}
 				signal={TelemetrytypesSignalDTO.metrics}
 				onChange={jest.fn()}
 			/>,
@@ -77,6 +82,7 @@ describe('PanelTypeSwitcher', () => {
 		render(
 			<PanelTypeSwitcher
 				panelKind="signoz/TimeSeriesPanel"
+				queryType={EQueryType.QUERY_BUILDER}
 				onChange={jest.fn()}
 			/>,
 		);

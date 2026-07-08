@@ -155,8 +155,8 @@ querier:
   cache_ttl: 168h
   # The interval for recent data that should not be cached.
   flux_interval: 5m
-  # The maximum number of concurrent queries for missing ranges.
-  max_concurrent_queries: 4
+  # The maximum number of queries a single query range request runs at once.
+  max_concurrent_queries: 8
   # When filtering logs by trace_id, clamp the query window to the trace time
   # range with padding to include slightly delayed log exports. Logs only; set
   # to 0 to disable.
