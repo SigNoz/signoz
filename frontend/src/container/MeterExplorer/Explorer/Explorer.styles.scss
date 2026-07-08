@@ -3,11 +3,22 @@
 	flex-direction: row;
 
 	.meter-explorer-quick-filters-section {
-		width: 280px;
+		// Width is owned by ResizableBox (inline style).
+		flex-shrink: 0;
 		border-right: 1px solid var(--l1-border);
 
 		&.hidden {
 			display: none;
+		}
+
+		.resizable-box__content {
+			display: flex;
+			flex-direction: column;
+		}
+
+		.quick-filters-container {
+			flex: 1;
+			min-height: 0;
 		}
 	}
 
@@ -78,7 +89,9 @@
 
 	&.quick-filters-open {
 		.meter-explorer-content-section {
-			width: calc(100% - 280px);
+			flex: 1;
+			width: auto;
+			min-width: 0;
 		}
 	}
 

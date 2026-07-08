@@ -7,6 +7,7 @@ import styles from './DashboardsList.module.scss';
 interface Props {
 	label: string;
 	count: number;
+	isModified: boolean;
 	canCreate: boolean;
 	onCreate: () => void;
 }
@@ -14,6 +15,7 @@ interface Props {
 function CommandHeader({
 	label,
 	count,
+	isModified,
 	canCreate,
 	onCreate,
 }: Props): JSX.Element {
@@ -21,6 +23,7 @@ function CommandHeader({
 		<div className={styles.commandHeader}>
 			<div className={styles.headingBlock}>
 				<Typography.Title className={styles.title}>{label}</Typography.Title>
+				{isModified && <span className={styles.dirtyDot} title="Unsaved changes" />}
 				<span className={styles.countPill}>{count}</span>
 			</div>
 			<div className={styles.grow} />

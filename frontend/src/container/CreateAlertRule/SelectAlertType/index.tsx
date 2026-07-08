@@ -29,8 +29,7 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 		let url = '';
 		switch (option) {
 			case AlertTypes.ANOMALY_BASED_ALERT:
-				url =
-					'https://signoz.io/docs/alerts-management/anomaly-based-alerts/?utm_source=product&utm_medium=alert-source-selection-page#examples';
+				url = 'https://signoz.io/docs/alerts-management/anomaly-based-alerts/';
 				break;
 			case AlertTypes.METRICS_BASED_ALERT:
 				url =

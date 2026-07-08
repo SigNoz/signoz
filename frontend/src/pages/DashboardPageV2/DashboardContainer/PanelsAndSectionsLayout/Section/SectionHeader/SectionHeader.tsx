@@ -29,8 +29,10 @@ interface SectionHeaderProps {
 	repeatVariable?: string;
 	/** Provided by SortableSection in sectioned mode; absent for untitled/free-flow. */
 	dragHandle?: SectionDragHandle;
-	/** Present only in editable mode; absent (read-only) when locked/no-permission. */
+	/** Present for edit-permitted users; absent (no menu) in view mode. */
 	actions?: SectionHeaderActions;
+	/** Non-empty when locked — actions render disabled with this reason. */
+	disabledReason?: string;
 }
 
 function SectionHeader({
@@ -41,6 +43,7 @@ function SectionHeader({
 	repeatVariable,
 	dragHandle,
 	actions,
+	disabledReason = '',
 }: SectionHeaderProps): JSX.Element {
 	return (
 		<div className={cx(styles.header, { [styles.headerOpen]: open })}>
@@ -79,6 +82,7 @@ function SectionHeader({
 			{actions ? (
 				<SectionActionsMenu
 					sectionId={sectionId}
+					disabledReason={disabledReason}
 					onAddPanel={actions.onAddPanel}
 					onRename={actions.onRename}
 					onDeleteSection={actions.onDeleteSection}

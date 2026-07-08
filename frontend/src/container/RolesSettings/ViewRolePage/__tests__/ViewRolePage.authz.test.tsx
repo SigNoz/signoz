@@ -1,7 +1,7 @@
 import { TooltipProvider } from '@signozhq/ui/tooltip';
 import userEvent from '@testing-library/user-event';
 import * as roleApi from 'api/generated/services/role';
-import * as useAuthZModule from 'hooks/useAuthZ/useAuthZ';
+import * as useAuthZModule from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import {
 	customRoleResponse,
 	managedRoleResponse,
@@ -10,7 +10,7 @@ import {
 	mockUseAuthZDenyAll,
 	mockUseAuthZGrantAll,
 	mockUseAuthZGrantByPrefix,
-} from 'tests/authz-test-utils';
+} from 'lib/authz/utils/authz-test-utils';
 import { render, screen, waitFor } from 'tests/test-utils';
 
 import * as useRolePermissionsModule from '../../hooks/useRolePermissions';
@@ -409,6 +409,8 @@ describe('ViewRolePage - AuthZ', () => {
 				isFetching: true,
 				error: null,
 				permissions: null,
+				allowed: false,
+				deniedPermissions: [],
 				refetchPermissions: jest.fn(),
 			});
 

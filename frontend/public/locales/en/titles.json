@@ -87,6 +87,6 @@
 	"TRACES_FUNNELS_DETAIL": "SigNoz | Funnel",
 	"INTEGRATIONS_DETAIL": "SigNoz | Integration",
 	"PUBLIC_DASHBOARD": "SigNoz | Dashboard",
-	"LLM_OBSERVABILITY_BASE": "SigNoz | LLM Observability",
-	"LLM_OBSERVABILITY_MODEL_PRICING": "SigNoz | Model Pricing"
+	"LLM_OBSERVABILITY_OVERVIEW": "SigNoz | LLM Observability Overview",
+	"LLM_OBSERVABILITY_CONFIGURATION": "SigNoz | LLM Observability Configuration"
 }

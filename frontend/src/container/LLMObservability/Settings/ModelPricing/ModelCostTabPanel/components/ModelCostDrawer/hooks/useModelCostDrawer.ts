@@ -6,7 +6,11 @@ import {
 	useCreateOrUpdateLLMPricingRules,
 } from 'api/generated/services/llmpricingrules';
 
-import { EMPTY_DRAFT } from '../../../../constants';
+import {
+	EMPTY_DRAFT,
+	TOAST_MODEL_COST_ADDED,
+	TOAST_MODEL_COST_UPDATED,
+} from '../../../../constants';
 import type { DrawerDraft, DrawerMode, PricingRule } from '../../../../types';
 import { buildRulePayload, draftFromRule } from '../../../../utils';
 
@@ -76,7 +80,9 @@ export function useModelCostDrawer(): UseModelCostDrawerResult {
 				await invalidateList();
 				setIsOpen(false);
 				setSelectedRuleId(null);
-				toast.success(mode === 'edit' ? 'Model cost updated' : 'Model cost added');
+				toast.success(
+					mode === 'edit' ? TOAST_MODEL_COST_UPDATED : TOAST_MODEL_COST_ADDED,
+				);
 			} catch (error) {
 				const message = error instanceof Error ? error.message : 'Save failed';
 				setSaveError(message);

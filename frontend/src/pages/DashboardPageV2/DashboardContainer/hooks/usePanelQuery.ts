@@ -15,12 +15,14 @@ import {
 } from '../queryV5/buildQueryRangeRequest';
 import type { PanelPagination, PanelQueryData } from '../queryV5/types';
 import { getRawResults } from '../queryV5/v5ResponseData';
+import { getReferencedVariables } from '../queryV5/getReferencedVariables';
 import { getBuilderQueries } from '../Panels/utils/getBuilderQueries';
 import { PANEL_KIND_TO_PANEL_TYPE } from '../Panels/types/panelKind';
 import { selectResolvedVariables } from '../store/slices/variableSelectionSlice';
 import { useDashboardStore } from '../store/useDashboardStore';
 import { resolvePanelTimeWindow } from './resolvePanelTimeWindow';
 import { useGetQueryRangeV5 } from './useGetQueryRangeV5';
+import { useIsPanelWaitingOnVariable } from './useIsPanelWaitingOnVariable';
 
 // V1 parity: PER_PAGE_OPTIONS + default page size from V1's list views.
 const LIST_PAGE_SIZE_OPTIONS = [10, 25, 50, 100, 200];
@@ -55,6 +57,8 @@ export interface UsePanelQueryResult {
 	isLoading: boolean;
 	/** Any request in flight, including a background refetch over stale data — drives a "refreshing" affordance, never a blank panel. */
 	isFetching: boolean;
+	/** Showing a prior page's data (keepPreviousData) while the next page loads — list renderers swap in skeleton rows. */
+	isPreviousData: boolean;
 	error: Error | null;
 	/** Re-run the query (e.g. a retry button on the error state). */
 	refetch: () => void;
@@ -109,9 +113,34 @@ export function usePanelQuery({
 	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 
 	// Resolved variable values for this dashboard, published by useResolvedVariables.
-	// Substituted into the request and keyed into the cache so a selection change refetches.
+	// The full set is substituted into every request, but only the values this panel
+	// *references* key the cache — so a variable change refetches only the panels that
+	// use it (V1 parity). Names come from the fetch context (all variables, even
+	// unresolved ones); null before the variable bar initializes it.
 	const dashboardId = useDashboardStore((s) => s.dashboardId);
 	const variables = useDashboardStore(selectResolvedVariables(dashboardId));
+	const fetchContext = useDashboardStore((s) => s.variableFetchContext);
+
+	const referencedVariableNames = useMemo(() => {
+		const allNames = fetchContext ? Object.keys(fetchContext.variableTypes) : [];
+		return getReferencedVariables(queries, allNames);
+	}, [queries, fetchContext]);
+
+	const scopedVariables = useMemo(() => {
+		const scoped: typeof variables = {};
+		referencedVariableNames.forEach((name) => {
+			if (variables[name] !== undefined) {
+				scoped[name] = variables[name];
+			}
+		});
+		return scoped;
+	}, [variables, referencedVariableNames]);
+
+	// First-load gate: hold the panel in its loading state until every referenced
+	// variable has resolved a value.
+	const isWaitingOnVariable = useIsPanelWaitingOnVariable(
+		referencedVariableNames,
+	);
 
 	// `visualization` exists only on variants that declare it — read via `in` narrowing over the
 	// generated union (no cast). `fillSpans` (TimeSeries/Bar only) → formatOptions.fillGaps.
@@ -186,8 +215,9 @@ export function usePanelQuery({
 			// Each page is its own cache entry (0/default for non-paged kinds).
 			offset,
 			pageSize,
-			// Variable selection changes the request, so it must re-key the cache (refetch).
-			variables,
+			// Only the variables this panel references re-key the cache, so an unrelated
+			// variable change doesn't refetch it.
+			scopedVariables,
 		],
 		[
 			panelId,
@@ -203,14 +233,16 @@ export function usePanelQuery({
 			queries,
 			offset,
 			pageSize,
-			variables,
+			scopedVariables,
 		],
 	);
 
 	const response = useGetQueryRangeV5({
 		requestPayload,
 		queryKey,
-		enabled: enabled && runnable,
+		enabled: enabled && runnable && !isWaitingOnVariable,
+		// Hold the current page while the next loads (offset re-keys) so the pager doesn't flash.
+		keepPreviousData: isPaginated,
 	});
 
 	const queryClient = useQueryClient();
@@ -232,8 +264,8 @@ export function usePanelQuery({
 		[pageSize],
 	);
 
-	// Paging handles for raw/list panels. `canNext` is a heuristic (no total count on the wire):
-	// a full page or a response `nextCursor` implies more rows.
+	// Paging handles for raw/list panels. The backend sets `nextCursor` iff the page filled,
+	// so it's the authoritative has-more signal (there's no total count on the wire).
 	const pagination = useMemo<PanelPagination | undefined>(() => {
 		if (!isPaginated) {
 			return undefined;
@@ -246,11 +278,10 @@ export function usePanelQuery({
 		// `getRawResults` returns [] for a missing/non-raw response, so this stays
 		// defined and zero-rowed rather than throwing while data is absent.
 		const result = getRawResults(response.data)[0];
-		const rowCount = result?.rows?.length ?? 0;
 		return {
 			pageIndex: Math.floor(safeOffset / safePageSize),
 			canPrev: safeOffset > 0,
-			canNext: !!result?.nextCursor || rowCount >= safePageSize,
+			canNext: !!result?.nextCursor,
 			goPrev,
 			goNext,
 			pageSize: safePageSize,
@@ -271,6 +302,7 @@ export function usePanelQuery({
 		data,
 		isLoading: response.isLoading,
 		isFetching: response.isFetching,
+		isPreviousData: response.isPreviousData,
 		error: response.error ?? null,
 		refetch: response.refetch,
 		cancelQuery,

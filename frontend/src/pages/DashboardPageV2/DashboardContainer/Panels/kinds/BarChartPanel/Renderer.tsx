@@ -1,7 +1,9 @@
 import { useCallback, useMemo, useRef } from 'react';
 import type { DashboardtypesBarChartPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 import BarChart from 'container/DashboardContainer/visualization/charts/BarChart/BarChart';
+import ChartManager from 'container/DashboardContainer/visualization/components/ChartManager/ChartManager';
 import TooltipFooter from 'container/DashboardContainer/visualization/panels/components/TooltipFooter';
+import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { IRenderTooltipFooterArgs } from 'lib/uPlotV2/components/types';
@@ -12,8 +14,6 @@ import {
 } from 'pages/DashboardPageV2/DashboardContainer/queryV5/v5ResponseData';
 import { prepareAlignedData } from 'pages/DashboardPageV2/DashboardContainer/queryV5/uplotData';
 import { useTimezone } from 'providers/Timezone';
-import type { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
-import { getTimeRangeFromQueryRangeRequest } from 'utils/getTimeRange';
 
 import NoData from '../../components/NoData/NoData';
 import { useGroupByPerQuery } from '../../hooks/useGroupByPerQuery';
@@ -23,7 +23,10 @@ import {
 	resolveDecimalPrecision,
 	resolveLegendPosition,
 } from '../../utils/chartAppearance/resolvers';
+import { stepClickTimeRange } from '../../utils/drilldown/chartClickTimeRange';
+import { enrichChartClick } from '../../utils/drilldown/enrichChartClick';
 import { getBuilderQueries } from '../../utils/getBuilderQueries';
+import { getPanelTimeRange } from '../../utils/getPanelTimeRange';
 
 import { buildBarChartConfig } from './utils/buildConfig';
 import { ChartClickData } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
@@ -32,11 +35,14 @@ function BarPanelRenderer({
 	panelId,
 	panel,
 	data,
+	isFetching,
 	refetch,
 	onClick,
 	onDragSelect,
 	dashboardPreference,
 	panelMode,
+	onCloseStandaloneView,
+	enableDrillDown,
 }: PanelRendererProps<'signoz/BarChartPanel'>): JSX.Element {
 	const graphRef = useRef<HTMLDivElement>(null);
 	const containerDimensions = useResizeObserver(graphRef);
@@ -53,12 +59,10 @@ function BarPanelRenderer({
 		[panel.spec.queries],
 	);
 
-	// X-scale clamps come from the request that produced the data. The generated
-	// request DTO is structurally the V5 request; the cast is the boundary.
+	// X-scale clamps come from the request that produced the data, so each panel
+	// pins to the window it fetched.
 	const { minTimeScale, maxTimeScale } = useMemo(() => {
-		const { startTime, endTime } = getTimeRangeFromQueryRangeRequest(
-			data.requestPayload as unknown as QueryRangeRequestV5 | undefined,
-		);
+		const { startTime, endTime } = getPanelTimeRange(data.requestPayload);
 		return { minTimeScale: startTime, maxTimeScale: endTime };
 	}, [data.requestPayload]);
 
@@ -114,6 +118,32 @@ function BarPanelRenderer({
 		return resolveLegendPosition(spec.legend?.position);
 	}, [spec.legend?.position]);
 
+	// The standalone View modal shows V1's graph-manager legend below the chart:
+	// Filter Series + per-series show/hide + Save. Series visibility auto-persists to
+	// localStorage (STANDALONE_VIEW selection prefs), keyed by panelId.
+	const layoutChildren = useMemo(
+		() =>
+			panelMode === PanelMode.STANDALONE_VIEW ? (
+				<div className={PanelStyles.chartManagerContainer}>
+					<ChartManager
+						config={config}
+						alignedData={chartData}
+						yAxisUnit={spec.formatting?.unit}
+						decimalPrecision={decimalPrecision}
+						onCancel={onCloseStandaloneView}
+					/>
+				</div>
+			) : null,
+		[
+			panelMode,
+			config,
+			chartData,
+			spec.formatting?.unit,
+			decimalPrecision,
+			onCloseStandaloneView,
+		],
+	);
+
 	const renderTooltipFooter = useCallback(
 		({ isPinned, dismiss }: IRenderTooltipFooterArgs) => (
 			<TooltipFooter id={panelId} isPinned={isPinned} dismiss={dismiss} />
@@ -126,10 +156,29 @@ function BarPanelRenderer({
 	const key = `${dashboardPreference?.syncMode}-${dashboardPreference?.syncFilterMode}`;
 
 	const handleChartClick = useCallback(
-		(args: ChartClickData) => {
-			onClick?.(args);
+		(args: ChartClickData): void => {
+			if (!onClick) {
+				return;
+			}
+			const payload = enrichChartClick({
+				clickData: args,
+				series: flatSeries,
+				builderQueries,
+			});
+			if (!payload) {
+				return;
+			}
+			const timeRange = stepClickTimeRange({
+				clickedDataTimestamp: args.clickedDataTimestamp,
+				queryName: payload.context.queryName,
+				builderQueries,
+				stepInterval: getExecStats(data.response)?.stepIntervals?.[
+					payload.context.queryName
+				],
+			});
+			onClick({ ...payload, context: { ...payload.context, timeRange } });
 		},
-		[onClick],
+		[onClick, flatSeries, builderQueries, data.response],
 	);
 
 	return (
@@ -138,7 +187,9 @@ function BarPanelRenderer({
 			data-testid="bar-panel-renderer"
 			className={PanelStyles.panelContainer}
 		>
-			{flatSeries.length === 0 && <NoData onRetry={refetch} />}
+			{flatSeries.length === 0 && (
+				<NoData isFetching={isFetching} onRetry={refetch} />
+			)}
 			{flatSeries.length > 0 &&
 				containerDimensions.width > 0 &&
 				containerDimensions.height > 0 && (
@@ -147,6 +198,7 @@ function BarPanelRenderer({
 						config={config}
 						data={chartData}
 						legendConfig={{ position: legendPosition }}
+						layoutChildren={layoutChildren}
 						groupByPerQuery={groupByPerQuery}
 						canPinTooltip
 						timezone={timezone}
@@ -158,7 +210,7 @@ function BarPanelRenderer({
 						syncFilterMode={dashboardPreference?.syncFilterMode}
 						isStackedBarChart={spec.visualization?.stackedBarChart ?? false}
 						renderTooltipFooter={renderTooltipFooter}
-						onClick={handleChartClick}
+						onClick={enableDrillDown ? handleChartClick : undefined}
 					/>
 				)}
 		</div>

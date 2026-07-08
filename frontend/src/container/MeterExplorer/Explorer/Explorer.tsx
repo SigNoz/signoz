@@ -7,6 +7,7 @@ import cx from 'classnames';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import { initialQueryMeterWithType, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
@@ -18,6 +19,8 @@ import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { Filter } from '@signozhq/icons';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
+import { ResizableBox } from 'periscope/components/ResizableBox';
+import usePanelWidth from 'periscope/components/ResizableBox/usePanelWidth';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
@@ -29,6 +32,10 @@ import TimeSeries from './TimeSeries';
 import { splitQueryIntoOneChartPerQuery } from './utils';
 
 import './Explorer.styles.scss';
+
+const QUICK_FILTERS_DEFAULT_WIDTH = 280;
+const QUICK_FILTERS_MIN_WIDTH = 240;
+const QUICK_FILTERS_MAX_WIDTH = 500;
 
 function Explorer(): JSX.Element {
 	const {
@@ -54,6 +61,16 @@ function Explorer(): JSX.Element {
 	}, [queryClient]);
 
 	const [showQuickFilters, setShowQuickFilters] = useState(true);
+
+	const {
+		initialWidth: quickFiltersInitialWidth,
+		persistWidth: persistQuickFiltersWidth,
+	} = usePanelWidth({
+		storageKey: LOCALSTORAGE.QUICK_FILTERS_WIDTH_METER,
+		defaultWidth: QUICK_FILTERS_DEFAULT_WIDTH,
+		minWidth: QUICK_FILTERS_MIN_WIDTH,
+		maxWidth: QUICK_FILTERS_MAX_WIDTH,
+	});
 
 	const defaultQuery = useMemo(
 		() =>
@@ -127,10 +144,19 @@ function Explorer(): JSX.Element {
 					'quick-filters-open': showQuickFilters,
 				})}
 			>
-				<div
+				<ResizableBox
+					handle="right"
+					defaultWidth={QUICK_FILTERS_DEFAULT_WIDTH}
+					initialWidth={quickFiltersInitialWidth}
+					minWidth={QUICK_FILTERS_MIN_WIDTH}
+					maxWidth={QUICK_FILTERS_MAX_WIDTH}
+					onResize={persistQuickFiltersWidth}
+					resetToDefaultOnDoubleClick
+					withHandle
 					className={cx('meter-explorer-quick-filters-section', {
 						hidden: !showQuickFilters,
 					})}
+					handleTestId="quick-filters-resize-handle"
 				>
 					<QuickFilters
 						className="qf-meter-explorer"
@@ -142,7 +168,7 @@ function Explorer(): JSX.Element {
 							setShowQuickFilters(!showQuickFilters);
 						}}
 					/>
-				</div>
+				</ResizableBox>
 
 				<div className="meter-explorer-content-section">
 					<div className="meter-explorer-explore-content">

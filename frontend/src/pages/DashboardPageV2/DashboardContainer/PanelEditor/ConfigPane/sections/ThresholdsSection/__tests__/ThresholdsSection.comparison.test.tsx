@@ -4,7 +4,10 @@ import {
 	type DashboardtypesComparisonThresholdDTO,
 	DashboardtypesThresholdFormatDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import type { AnyThreshold } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
+import {
+	ThresholdVariant,
+	type AnyThreshold,
+} from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import UnifiedThresholdsSection from '../ThresholdsSection';
@@ -21,7 +24,7 @@ function ComparisonThresholdsSection(props: {
 			value={props.value}
 			onChange={props.onChange as (next: AnyThreshold[]) => void}
 			yAxisUnit={props.yAxisUnit}
-			controls={{ variant: 'comparison' }}
+			controls={{ variant: ThresholdVariant.COMPARISON }}
 		/>
 	);
 }

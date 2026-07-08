@@ -2,15 +2,16 @@ import { useEffect } from 'react';
 import { FullScreen, useFullScreenHandle } from 'react-full-screen';
 
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
-import useComponentPermission from 'hooks/useComponentPermission';
-import { useAppContext } from 'providers/App/App';
 
 import DashboardPageToolbar from './DashboardPageToolbar';
 import PanelsAndSectionsLayout from './PanelsAndSectionsLayout';
+import { useDashboardEditGuard } from './hooks/useDashboardEditGuard';
 import { useResolvedVariables } from './hooks/useResolvedVariables';
+import { useSyncVariablesForSuggestions } from './hooks/useSyncVariablesForSuggestions';
 import { useDashboardStore } from './store/useDashboardStore';
 import styles from './DashboardContainer.module.scss';
 import DashboardPageHeader from './components/DashboardPageHeader/DashboardPageHeader';
+import LockedIndicator from './components/LockedIndicator/LockedIndicator';
 import { Base64Icons } from './DashboardSettings/Overview/utils';
 
 interface DashboardContainerProps {
@@ -22,53 +23,49 @@ function DashboardContainer({
 	dashboard,
 	refetch,
 }: DashboardContainerProps): JSX.Element {
+	const spec = dashboard.spec;
+	const image = dashboard.image || Base64Icons[0];
+	const name = spec.display.name;
+
 	useEffect(() => {
-		document.title = dashboard.name;
-	}, [dashboard.name]);
+		document.title = name;
+	}, [name]);
 
 	const fullScreenHandle = useFullScreenHandle();
 
-	const { user } = useAppContext();
-	const [editDashboardPermission] = useComponentPermission(
-		['edit_dashboard'],
-		user.role,
-	);
+	const { isLocked, canEditDashboard } = useDashboardEditGuard(dashboard);
 
-	// Publish edit context to the store so hooks/components read it from there
-	// instead of receiving dashboardId/isEditable/refetch as props down the tree.
+	// Seed during render (not an effect) so the first Panel render already sees the id —
+	// useDashboardFetchRequired throws on a missing id. setEditContext self-guards.
 	const setEditContext = useDashboardStore((s) => s.setEditContext);
-	useEffect(() => {
-		setEditContext({
-			dashboardId: dashboard.id,
-			isEditable: !dashboard.locked && editDashboardPermission,
-			refetch,
-		});
-	}, [
-		dashboard.id,
-		dashboard.locked,
-		editDashboardPermission,
+	setEditContext({
+		dashboardId: dashboard.id,
+		isLocked,
+		canEditDashboard,
 		refetch,
-		setEditContext,
-	]);
+	});
 
 	// Resolve the variable selection into the V5 query payload and publish it to
 	// the store, so each panel's query substitutes the bar's selected values.
 	useResolvedVariables(dashboard);
 
-	const spec = dashboard.spec;
-	const image = dashboard.image || Base64Icons[0];
-	const name = spec.display.name;
+	// Publish variables to the shared store so the query builder autocomplete
+	// suggests them ($variable) in the panel editor and dashboards-page builder.
+	useSyncVariablesForSuggestions(dashboard);
 
+	// In full screen show only the sections and panels — the header/toolbar chrome
+	// is hidden for a clean presentation view (exit with Esc).
 	return (
 		<FullScreen handle={fullScreenHandle}>
 			<div className={styles.container}>
-				<DashboardPageHeader title={name} image={image} />
-				<DashboardPageToolbar
-					dashboard={dashboard}
-					handle={fullScreenHandle}
-					refetch={refetch}
-				/>
+				{!fullScreenHandle.active && (
+					<>
+						<DashboardPageHeader title={name} image={image} />
+						<DashboardPageToolbar dashboard={dashboard} handle={fullScreenHandle} />
+					</>
+				)}
 				<PanelsAndSectionsLayout layouts={spec.layouts} panels={spec.panels} />
+				{isLocked && <LockedIndicator />}
 			</div>
 		</FullScreen>
 	);

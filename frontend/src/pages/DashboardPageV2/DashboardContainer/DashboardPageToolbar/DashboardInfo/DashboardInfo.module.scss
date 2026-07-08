@@ -32,6 +32,50 @@
 	cursor: help;
 }
 
+.descriptionTooltip {
+	display: block;
+	overflow-wrap: anywhere;
+	/* Preserve author-entered line breaks in the description. */
+	white-space: pre-wrap;
+
+	a {
+		color: var(--accent-primary);
+		text-decoration: underline;
+
+		&:hover {
+			text-decoration: none;
+		}
+	}
+}
+
+.publicLink {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	padding: 0;
+	border: none;
+	background: transparent;
+	color: inherit;
+	cursor: pointer;
+}
+
+.lockButton {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	padding: 0;
+	border: none;
+	background: transparent;
+	color: inherit;
+	cursor: pointer;
+}
+
+.lockButton:disabled {
+	cursor: default;
+}
+
 .divider {
 	flex-shrink: 0;
 	width: 1px;

@@ -1,7 +1,7 @@
 // Built-in view catalogue + the pure logic that maps a view to how it
-// constrains the list. Views fall into three mechanisms:
-//   - snapshot:  selecting applies a filter snapshot (All, My dashboards, custom)
-//   - query:     contributes an extra server clause AND-ed with the chips (Locked)
+// constrains the list. Views fall into two mechanisms:
+//   - snapshot:  selecting applies a filter snapshot — some seed the search box
+//                with DSL (My dashboards → created_by; Locked → locked = true)
 //   - client:    constrains by a client-side id set (Favorites, Recently viewed)
 import { Clock, Layers, Lock, Pin, User } from '@signozhq/icons';
 
@@ -49,9 +49,9 @@ export const BUILTIN_VIEWS: BuiltinView[] = [
 export const isClientView = (id: string): boolean =>
 	id === BuiltinViewId.Pinned || id === BuiltinViewId.Recent;
 
-// Extra server query fragment a built-in view contributes (AND-ed with chips).
-export const builtinViewQuery = (id: string): string =>
-	id === BuiltinViewId.Locked ? 'locked = true' : '';
+// DSL the Locked view seeds into the search box, so the constraint is visible
+// (and editable) rather than applied invisibly behind the scenes.
+export const LOCKED_QUERY = 'locked = true';
 
 // The canonical filter snapshot a built-in view applies when selected. `null`
 // for ids that aren't built-in (custom views carry their own snapshot).
@@ -65,10 +65,11 @@ export const builtinViewSnapshot = (
 				...DEFAULT_FILTER_STATE,
 				createdBy: userEmail ? [userEmail] : [],
 			};
+		case BuiltinViewId.Locked:
+			return { ...DEFAULT_FILTER_STATE, search: LOCKED_QUERY };
 		case BuiltinViewId.All:
 		case BuiltinViewId.Pinned:
 		case BuiltinViewId.Recent:
-		case BuiltinViewId.Locked:
 			return { ...DEFAULT_FILTER_STATE };
 		default:
 			return null;

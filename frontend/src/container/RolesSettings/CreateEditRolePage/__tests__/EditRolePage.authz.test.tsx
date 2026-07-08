@@ -1,15 +1,15 @@
 import { Route, Switch } from 'react-router-dom';
 import ROUTES from 'constants/routes';
-import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { render, screen } from 'tests/test-utils';
 import {
 	mockUseAuthZDenyAll,
 	mockUseAuthZGrantByPrefix,
-} from 'tests/authz-test-utils';
+} from 'lib/authz/utils/authz-test-utils';
 
 import CreateEditRolePage from '../CreateEditRolePage';
 
-jest.mock('hooks/useAuthZ/useAuthZ');
+jest.mock('lib/authz/hooks/useAuthZ/useAuthZ');
 const mockUseAuthZ = useAuthZ as jest.MockedFunction<typeof useAuthZ>;
 
 const EDIT_ROLE_ID = 'test-role-123';
@@ -77,6 +77,8 @@ describe('EditRolePage - AuthZ', () => {
 				isFetching: true,
 				error: null,
 				permissions: null,
+				allowed: false,
+				deniedPermissions: [],
 				refetchPermissions: jest.fn(),
 			});
 
