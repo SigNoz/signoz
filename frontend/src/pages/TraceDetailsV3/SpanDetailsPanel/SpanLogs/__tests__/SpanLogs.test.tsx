@@ -117,12 +117,12 @@ const TEST_SPAN_ID = 'test-span-id';
 // The footer "Open in Logs Explorer" button, matched by its accessible name.
 const OPEN_IN_EXPLORER_NAME = /open in logs explorer/i;
 
-const sampleLog = ({
+const sampleLog = {
 	id: 'log-1',
 	body: 'sample log body',
 	timestamp: '1640995200000',
 	spanID: TEST_SPAN_ID,
-} as unknown) as ILog;
+} as unknown as ILog;
 
 const defaultProps = {
 	traceId: TEST_TRACE_ID,
