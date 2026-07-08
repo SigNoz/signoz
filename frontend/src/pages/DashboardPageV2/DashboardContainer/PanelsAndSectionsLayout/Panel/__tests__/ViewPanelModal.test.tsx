@@ -47,8 +47,26 @@ jest.mock('../ViewPanelModal/useViewPanelMode', () => ({
 			resetQuery: jest.fn(),
 			signal: 'logs',
 			buildSaveSpec: (spec: unknown): unknown => spec,
+			applyDrilldownQuery: jest.fn(),
 		};
 	},
+}));
+
+// Drill-down orchestration (popover, submenus, View-in-X) has its own suite
+// (useDrilldown.test.tsx) and pulls in router/redux/react-query; stub it so this
+// suite only asserts that the modal arms the preview and renders the menu host.
+const mockOnPanelClick = jest.fn();
+jest.mock('../hooks/useDrilldown', () => ({
+	useDrilldown: (): unknown => ({
+		enableDrillDown: true,
+		onPanelClick: mockOnPanelClick,
+		contextMenuProps: {
+			coordinates: null,
+			popoverPosition: null,
+			items: null,
+			onClose: jest.fn(),
+		},
+	}),
 }));
 
 // The View modal reuses the edit page's query builder, which reads the global
@@ -85,6 +103,7 @@ jest.mock('../ViewPanelModal/useViewPanelTimeWindow', () => ({
 		onTimeChange: jest.fn(),
 		refreshWindow: jest.fn(),
 		onDragSelect: jest.fn(),
+		extendWindow: { canExtend: false, actionLabel: null, extend: jest.fn() },
 	}),
 }));
 
@@ -173,5 +192,24 @@ describe('ViewPanelModal', () => {
 			dashboardPreference?: { syncMode?: unknown };
 		};
 		expect(props.dashboardPreference?.syncMode).toBe(DashboardCursorSync.None);
+	});
+
+	// Parity with the grid: the View modal arms the same drill-down click on the preview.
+	it('arms drill-down on the preview', () => {
+		mockPreviewPaneRender.mockClear();
+		renderWithProvider(
+			<ViewPanelModal
+				panel={makePanel('signoz/TimeSeriesPanel')}
+				panelId="p1"
+				open
+				onClose={jest.fn()}
+			/>,
+		);
+		const props = mockPreviewPaneRender.mock.calls.at(-1)?.[0] as {
+			onClick?: unknown;
+			enableDrillDown?: boolean;
+		};
+		expect(props.enableDrillDown).toBe(true);
+		expect(props.onClick).toBe(mockOnPanelClick);
 	});
 });

@@ -48,6 +48,8 @@ describe('CreateRolePage - AuthZ', () => {
 				isFetching: true,
 				error: null,
 				permissions: null,
+				allowed: false,
+				deniedPermissions: [],
 				refetchPermissions: jest.fn(),
 			});
 

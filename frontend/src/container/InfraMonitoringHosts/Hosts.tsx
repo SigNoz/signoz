@@ -6,6 +6,7 @@ import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource } from 'components/QuickFilters/types';
 import { InfraMonitoringEvents } from 'constants/events';
 import { FeatureKeys } from 'constants/features';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import K8sBaseDetails from 'container/InfraMonitoringK8s/Base/K8sBaseDetails';
 import { K8sBaseList } from 'container/InfraMonitoringK8s/Base/K8sBaseList';
 import { K8sBaseFilters } from 'container/InfraMonitoringK8s/Base/types';
@@ -16,6 +17,8 @@ import {
 } from 'container/InfraMonitoringK8s/hooks';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
+import { ResizableBox } from 'periscope/components/ResizableBox';
+import usePanelWidth from 'periscope/components/ResizableBox/usePanelWidth';
 import { useAppContext } from 'providers/App/App';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -40,8 +43,21 @@ import { getHostsQuickFiltersConfig } from './utils';
 import styles from './InfraMonitoringHosts.module.scss';
 import { ArrowUpToLine, Filter } from '@signozhq/icons';
 
+const QUICK_FILTERS_DEFAULT_WIDTH = 280;
+const QUICK_FILTERS_MIN_WIDTH = 240;
+const QUICK_FILTERS_MAX_WIDTH = 500;
+
 function Hosts(): JSX.Element {
 	const [showFilters, setShowFilters] = useState(true);
+	const {
+		initialWidth: quickFiltersInitialWidth,
+		persistWidth: persistQuickFiltersWidth,
+	} = usePanelWidth({
+		storageKey: LOCALSTORAGE.QUICK_FILTERS_WIDTH_INFRA,
+		defaultWidth: QUICK_FILTERS_DEFAULT_WIDTH,
+		minWidth: QUICK_FILTERS_MIN_WIDTH,
+		maxWidth: QUICK_FILTERS_MAX_WIDTH,
+	});
 	const [, setCurrentPage] = useInfraMonitoringPageListing();
 	const [urlFilters, setUrlFilters] = useInfraMonitoringFiltersK8s();
 
@@ -139,7 +155,18 @@ function Hosts(): JSX.Element {
 			<div className={styles.infraMonitoringContainer}>
 				<div className={styles.infraContentRow}>
 					{showFilters && (
-						<div className={styles.quickFiltersContainer}>
+						<ResizableBox
+							handle="right"
+							defaultWidth={QUICK_FILTERS_DEFAULT_WIDTH}
+							initialWidth={quickFiltersInitialWidth}
+							minWidth={QUICK_FILTERS_MIN_WIDTH}
+							maxWidth={QUICK_FILTERS_MAX_WIDTH}
+							onResize={persistQuickFiltersWidth}
+							resetToDefaultOnDoubleClick
+							withHandle
+							className={styles.quickFiltersContainer}
+							handleTestId="quick-filters-resize-handle"
+						>
 							<div className={styles.quickFiltersContainerHeader}>
 								<Typography.Text>Filters</Typography.Text>
 								<Tooltip title="Collapse Filters">
@@ -156,7 +183,7 @@ function Hosts(): JSX.Element {
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
 								onFilterChange={handleQuickFiltersChange}
 							/>
-						</div>
+						</ResizableBox>
 					)}
 					<div
 						className={`${styles.listContainer}${

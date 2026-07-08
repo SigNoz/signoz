@@ -13,6 +13,7 @@ import {
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
 import { getBuilderQueries } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/getBuilderQueries';
 
 import { getExecStats } from '../queryV5/v5ResponseData';
@@ -28,6 +29,7 @@ import { usePanelEditSession } from './hooks/usePanelEditSession';
 import { usePanelEditorSave } from './hooks/usePanelEditorSave';
 import { useSeedNewListColumns } from './hooks/useSeedNewListColumns';
 import { useSwitchColumnsOnSignalChange } from './hooks/useSwitchColumnsOnSignalChange';
+import { useSwitchToViewMode } from './hooks/useSwitchToViewMode';
 import { useTableColumns } from './hooks/useTableColumns';
 import ListColumnsEditor from './ListColumnsEditor/ListColumnsEditor';
 
@@ -41,6 +43,10 @@ interface PanelEditorContainerProps {
 	isNew?: boolean;
 	/** Target section for a new panel; falls back to the last/new section. */
 	layoutIndex?: number;
+	/** The dashboard can be edited (unlocked + permission); gates Save. */
+	isEditable: boolean;
+	/** Why Save is disabled (locked / no permission); '' when editable. */
+	editDisabledReason: string;
 	/** Leave the editor (navigate back to the dashboard) without saving. */
 	onClose: () => void;
 	/** Called after a successful save — navigates back to the dashboard. */
@@ -58,6 +64,8 @@ function PanelEditorContainer({
 	panel,
 	isNew = false,
 	layoutIndex,
+	isEditable,
+	editDisabledReason,
 	onClose,
 	onSaved,
 }: PanelEditorContainerProps): JSX.Element {
@@ -143,9 +151,13 @@ function PanelEditorContainer({
 		onSelectUnit: seedFormattingUnit,
 	});
 
-	// Spec and query dirtiness are tracked independently so query re-serialization
-	// never false-dirties. A new panel is always savable (you're creating it).
-	const isDirty = isNew || isSpecDirty || isQueryDirty;
+	// A new panel is savable once it has a query to run — List auto-seeds one; other
+	// kinds open query-less, so there's nothing to save until the user builds one.
+	const isDirty = useMemo(
+		() => isSpecDirty || isQueryDirty || (isNew && draft.spec.queries.length > 0),
+		[isSpecDirty, isQueryDirty, isNew, draft.spec.queries.length],
+	);
+
 	const isListPanel = panelKind === 'signoz/ListPanel';
 	// The builder-query `signal` literal matches the TelemetrytypesSignalDTO enum
 	// values; cast at this boundary (as ConfigPane does) so the columns editor's
@@ -184,7 +196,17 @@ function PanelEditorContainer({
 		return values.length ? Math.min(...values) : undefined;
 	}, [data.response]);
 
+	const onSwitchToView = useSwitchToViewMode({
+		dashboardId,
+		panelId,
+		panelType: PANEL_KIND_TO_PANEL_TYPE[panelKind],
+		query: currentQuery,
+	});
+
 	const onSave = useCallback(async (): Promise<void> => {
+		if (!isEditable) {
+			return;
+		}
 		try {
 			// Bake the live query into the spec so unstaged edits are saved too.
 			await save(buildSaveSpec(draft.spec));
@@ -193,14 +215,18 @@ function PanelEditorContainer({
 		} catch {
 			toast.error('Failed to save panel');
 		}
-	}, [save, buildSaveSpec, draft.spec, onSaved]);
+	}, [isEditable, save, buildSaveSpec, draft.spec, onSaved]);
 
 	return (
 		<div className={styles.page} data-testid="panel-editor-v2">
 			<Header
 				isDirty={isDirty}
 				isSaving={isSaving}
+				showSwitchToView={!isNew}
+				readOnly={!isEditable}
+				readOnlyReason={editDisabledReason}
 				onSave={onSave}
+				onSwitchToView={onSwitchToView}
 				onClose={onClose}
 			/>
 			<ResizablePanelGroup

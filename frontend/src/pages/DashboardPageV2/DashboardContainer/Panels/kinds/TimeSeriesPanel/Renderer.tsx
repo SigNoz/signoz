@@ -35,6 +35,7 @@ function TimeSeriesPanelRenderer({
 	panelId,
 	panel,
 	data,
+	isFetching,
 	refetch,
 	onClick,
 	onDragSelect,
@@ -187,7 +188,9 @@ function TimeSeriesPanelRenderer({
 			data-testid="time-series-renderer"
 			className={PanelStyles.panelContainer}
 		>
-			{flatSeries.length === 0 && <NoData onRetry={refetch} />}
+			{flatSeries.length === 0 && (
+				<NoData isFetching={isFetching} onRetry={refetch} />
+			)}
 			{flatSeries.length > 0 &&
 				containerDimensions.width > 0 &&
 				containerDimensions.height > 0 && (

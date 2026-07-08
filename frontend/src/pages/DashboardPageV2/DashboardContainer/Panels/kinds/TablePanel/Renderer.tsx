@@ -35,6 +35,7 @@ function TablePanelRenderer({
 	panelId,
 	panel,
 	data,
+	isFetching,
 	refetch,
 	searchTerm = '',
 	onClick,
@@ -159,7 +160,7 @@ function TablePanelRenderer({
 			className={PanelStyles.panelContainer}
 		>
 			{!table || dataSource.length === 0 ? (
-				<NoData onRetry={refetch} />
+				<NoData isFetching={isFetching} onRetry={refetch} />
 			) : (
 				<div className={styles.container}>
 					<Table
