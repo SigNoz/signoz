@@ -1,8 +1,12 @@
+import { StoreApi } from 'zustand';
 import { Time } from 'container/TopNav/DateTimeSelectionV2/types';
 
 export type CustomTimeRangeSeparator = '||_||';
 export type CustomTimeRange = `${number}${CustomTimeRangeSeparator}${number}`;
 export type GlobalTimeSelectedTime = Time | CustomTimeRange;
+
+// Forward declaration to avoid circular dependency
+export type GlobalTimeStoreApiRef = StoreApi<GlobalTimeStore>;
 
 export interface IGlobalTimeStoreState {
 	/**
@@ -88,6 +92,16 @@ export interface GlobalTimeState {
 	isRefreshEnabled: boolean;
 	lastRefreshTimestamp: number;
 	lastComputedMinMax: ParsedTimeRange;
+	/**
+	 * Reference to parent store when inheritGlobalTime was used.
+	 * Enables resetToParentTime() functionality.
+	 */
+	parentStore?: GlobalTimeStoreApiRef;
+	/**
+	 * Flag indicating URL params should be cleared (not synced).
+	 * Set by resetToParentTime(), consumed by useUrlSync.
+	 */
+	shouldClearUrlParams: boolean;
 }
 
 export interface GlobalTimeActions {
@@ -118,6 +132,16 @@ export interface GlobalTimeActions {
 		selectedTime: GlobalTimeSelectedTime,
 		...queryParts: unknown[]
 	) => unknown[];
+	/**
+	 * Reset to parent store's time. Only works if inheritGlobalTime was used.
+	 * Clears URL params and sets selectedTime to parent's value.
+	 * @returns true if reset succeeded, false if no parent store
+	 */
+	resetToParentTime: () => boolean;
+	/**
+	 * Clear the shouldClearUrlParams flag after URL sync has processed it.
+	 */
+	clearUrlParamsFlag: () => void;
 }
 
 export type GlobalTimeStore = GlobalTimeState & GlobalTimeActions;

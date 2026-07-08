@@ -55,6 +55,7 @@ export function GlobalTimeProvider({
 			name,
 			selectedTime: resolveInitialTime(),
 			refreshInterval: initialRefreshInterval ?? 0,
+			parentStore: inheritGlobalTime ? globalStore : undefined,
 		}),
 	);
 
