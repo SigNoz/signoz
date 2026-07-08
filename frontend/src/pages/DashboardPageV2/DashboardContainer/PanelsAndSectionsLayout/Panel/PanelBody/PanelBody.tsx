@@ -1,7 +1,7 @@
-import { Spin } from 'antd';
-import { Loader, RotateCw, SquarePlus, TriangleAlert } from '@signozhq/icons';
+import { RotateCw, SquarePlus, TriangleAlert } from '@signozhq/icons';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
+import PanelLoader from 'pages/DashboardPageV2/DashboardContainer/Panels/components/PanelLoader/PanelLoader';
 import PanelMessage from 'pages/DashboardPageV2/DashboardContainer/Panels/components/PanelMessage/PanelMessage';
 import type { AnyPanelInteractionProps } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/interactions';
 import type { RenderablePanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelDefinition';
@@ -106,17 +106,13 @@ function PanelBody({
 	}
 
 	// Full-panel loader only on first fetch; a refetch over existing data keeps the renderer
-	// mounted (e.g. list page change) with the header carrying the in-flight indicator.
+	// mounted (e.g. list page change). A refetch over empty data loads via NoData.
 	if (isFetching && !hasData) {
-		return (
-			<div className={styles.body} data-testid="panel-loading">
-				<Spin indicator={<Loader size={14} className="animate-spin" />} />
-			</div>
-		);
+		return <PanelLoader />;
 	}
 
 	return (
-		<div className={styles.chartContainer}>
+		<div className={styles.panelContainer}>
 			<panelDefinition.Renderer
 				panelId={panelId}
 				panel={panel}
