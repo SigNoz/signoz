@@ -12,6 +12,7 @@ import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 
 import { useDashboardFetch } from '../DashboardContainer/hooks/useDashboardFetch';
+import { useDashboardEditGuard } from '../DashboardContainer/hooks/useDashboardEditGuard';
 import { getPanelDefinition } from '../DashboardContainer/Panels/registry';
 import { buildPluginSpec } from '../DashboardContainer/Panels/utils/buildPluginSpec';
 import { buildDefaultQueries } from '../DashboardContainer/Panels/utils/buildDefaultQueries';
@@ -42,6 +43,9 @@ function PanelEditorPage(): JSX.Element {
 
 	const { dashboard, isLoading, isError, error } =
 		useDashboardFetch(dashboardId);
+	// Derived here (not from the store) because the editor route doesn't mount
+	// DashboardContainer, so the store's edit context may be cold on a direct URL.
+	const { isEditable, editDisabledReason } = useDashboardEditGuard(dashboard);
 
 	// A `panel/new?panelKind=…` route means "create": seed a default panel of that
 	// kind rather than looking one up. Persisted (with a real id) only on save.
@@ -110,6 +114,8 @@ function PanelEditorPage(): JSX.Element {
 			panel={panel}
 			isNew={!!newKind}
 			layoutIndex={layoutIndex}
+			isEditable={isEditable}
+			editDisabledReason={editDisabledReason}
 			onClose={backToDashboard}
 			onSaved={backToDashboard}
 		/>

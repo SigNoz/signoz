@@ -159,6 +159,8 @@ function makePanel(
 const baseProps = {
 	dashboardId: 'dash-1',
 	panelId: 'panel-1',
+	isEditable: true,
+	editDisabledReason: '',
 	onClose: jest.fn(),
 	onSaved: jest.fn(),
 };
