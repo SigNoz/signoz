@@ -1,20 +1,23 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
+import { listPods } from 'api/generated/services/inframonitoring';
+import {
+	InframonitoringtypesPodRecordDTO,
+	InframonitoringtypesResponseTypeDTO,
+	Querybuildertypesv5OrderDirectionDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { InfraMonitoringEvents } from 'constants/events';
-import { FeatureKeys } from 'constants/features';
-import { useAppContext } from 'providers/App/App';
 
 import K8sBaseDetails, { K8sDetailsFilters } from '../Base/K8sBaseDetails';
 import { K8sBaseList } from '../Base/K8sBaseList';
 import { K8sBaseFilters } from '../Base/types';
 import { InfraMonitoringEntity } from '../constants';
-import { getK8sPodsList, K8sPodsData } from './api';
 import {
 	getPodMetricsQueryPayload,
 	k8sPodDetailsMetadataConfig,
 	k8sPodGetEntityName,
-	k8sPodGetSelectedItemFilters,
-	k8sPodInitialEventsFilter,
-	k8sPodInitialLogTracesFilter,
+	k8sPodGetSelectedItemExpression,
+	k8sPodInitialEventsExpression,
+	k8sPodInitialLogTracesExpression,
 	podWidgetInfo,
 } from './constants';
 import {
@@ -28,66 +31,93 @@ function K8sPodsList({
 }: {
 	controlListPrefix?: React.ReactNode;
 }): JSX.Element {
-	const { featureFlags } = useAppContext();
-	const dotMetricsEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
-			?.active || false;
-
 	const fetchListData = useCallback(
 		async (filters: K8sBaseFilters, signal?: AbortSignal) => {
-			filters.orderBy ||= {
-				columnName: 'cpu',
-				order: 'desc',
-			};
+			try {
+				const response = await listPods(
+					{
+						filter: { expression: filters.filter.expression },
+						groupBy: filters.groupBy?.map((g) => ({ name: g.name })),
+						offset: filters.offset,
+						limit: filters.limit ?? 10,
+						start: filters.start,
+						end: filters.end,
+						orderBy: filters.orderBy
+							? {
+									key: { name: filters.orderBy.key.name },
+									direction:
+										filters.orderBy.direction === 'asc'
+											? Querybuildertypesv5OrderDirectionDTO.asc
+											: Querybuildertypesv5OrderDirectionDTO.desc,
+								}
+							: undefined,
+					},
+					signal,
+				);
 
-			const response = await getK8sPodsList(
-				filters,
-				signal,
-				undefined,
-				dotMetricsEnabled,
-			);
-
-			return {
-				data: response.payload?.data.records || [],
-				total: response.payload?.data.total || 0,
-				error: response.error,
-				rawData: response.payload?.data,
-			};
+				const data = response.data;
+				return {
+					type:
+						data.type === InframonitoringtypesResponseTypeDTO.grouped_list
+							? ('grouped_list' as const)
+							: ('list' as const),
+					records: data.records,
+					total: data.total,
+					endTimeBeforeRetention: data.endTimeBeforeRetention,
+					warning: data.warning,
+				};
+			} catch (error) {
+				const errMsg =
+					error instanceof Error ? error.message : 'Failed to fetch pods';
+				return {
+					type: 'list' as const,
+					records: [] as InframonitoringtypesPodRecordDTO[],
+					total: 0,
+					error: errMsg,
+				};
+			}
 		},
-		[dotMetricsEnabled],
+		[],
 	);
 
 	const fetchEntityData = useCallback(
 		async (
 			filters: K8sDetailsFilters,
 			signal?: AbortSignal,
-		): Promise<{ data: K8sPodsData | null; error?: string | null }> => {
-			const response = await getK8sPodsList(
-				{
-					filters: filters.filters,
-					start: filters.start,
-					end: filters.end,
-					limit: 1,
-					offset: 0,
-				},
-				signal,
-				undefined,
-				dotMetricsEnabled,
-			);
+		): Promise<{
+			data: InframonitoringtypesPodRecordDTO | null;
+			error?: string | null;
+		}> => {
+			try {
+				const response = await listPods(
+					{
+						filter: { expression: filters.filter.expression },
+						start: filters.start,
+						end: filters.end,
+						limit: 1,
+						offset: 0,
+					},
+					signal,
+				);
 
-			const records = response.payload?.data.records || [];
-
-			return {
-				data: records.length > 0 ? records[0] : null,
-				error: response.error,
-			};
+				return {
+					data: response.data.records.length > 0 ? response.data.records[0] : null,
+				};
+			} catch (error) {
+				const errMsg =
+					error instanceof Error ? error.message : 'Failed to fetch pod';
+				return {
+					data: null,
+					error: errMsg,
+				};
+			}
 		},
-		[dotMetricsEnabled],
+		[],
 	);
 
 	return (
 		<>
-			<K8sBaseList<K8sPodsData>
+			<K8sBaseList<InframonitoringtypesPodRecordDTO>
 				controlListPrefix={controlListPrefix}
 				entity={InfraMonitoringEntity.PODS}
 				tableColumns={k8sPodColumnsConfig}
@@ -97,14 +127,14 @@ function K8sPodsList({
 				eventCategory={InfraMonitoringEvents.Pod}
 			/>
 
-			<K8sBaseDetails<K8sPodsData>
+			<K8sBaseDetails<InframonitoringtypesPodRecordDTO>
 				category={InfraMonitoringEntity.PODS}
 				eventCategory={InfraMonitoringEvents.Pod}
-				getSelectedItemFilters={k8sPodGetSelectedItemFilters}
+				getSelectedItemExpression={k8sPodGetSelectedItemExpression}
 				fetchEntityData={fetchEntityData}
 				getEntityName={k8sPodGetEntityName}
-				getInitialLogTracesFilters={k8sPodInitialLogTracesFilter}
-				getInitialEventsFilters={k8sPodInitialEventsFilter}
+				getInitialLogTracesExpression={k8sPodInitialLogTracesExpression}
+				getInitialEventsExpression={k8sPodInitialEventsExpression}
 				metadataConfig={k8sPodDetailsMetadataConfig}
 				entityWidgetInfo={podWidgetInfo}
 				getEntityQueryPayload={getPodMetricsQueryPayload}
