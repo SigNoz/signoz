@@ -86,7 +86,7 @@ def test_logs_json_body_simple_searches(
         ]
     )
 
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # Test 1: Search by body.message = "User logged in successfully"
     response = requests.post(
@@ -392,7 +392,7 @@ def test_logs_json_body_nested_keys(
         ]
     )
 
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # Test 1: Search by body.user.name = "john_doe"
     response = requests.post(
@@ -642,7 +642,7 @@ def test_logs_json_body_array_membership(
         ]
     )
 
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # Test 1: Search by has(body.tags[*], "production")
     response = requests.post(
@@ -871,7 +871,7 @@ def test_logs_json_body_listing(
         ]
     )
 
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # Test 1: List all logs with JSON bodies
     response = requests.post(
