@@ -18,6 +18,7 @@ export interface SectionDragHandle {
 export interface SectionHeaderActions {
 	onRename: () => void;
 	onAddPanel: () => void;
+	onCloneSection: () => void;
 	onDeleteSection: () => void;
 }
 
@@ -85,6 +86,7 @@ function SectionHeader({
 					disabledReason={disabledReason}
 					onAddPanel={actions.onAddPanel}
 					onRename={actions.onRename}
+					onCloneSection={actions.onCloneSection}
 					onDeleteSection={actions.onDeleteSection}
 				/>
 			) : null}
