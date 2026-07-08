@@ -41,7 +41,6 @@ func (migration *addTagUniqueIndex) Up(ctx context.Context, db *bun.DB) error {
 	sqls := migration.sqlschema.Operator().CreateIndex(
 		&sqlschema.UniqueIndex{
 			TableName:   "tag",
-			ColumnNames: []sqlschema.ColumnName{"org_id", "kind", "key", "value"},
 			Expressions: []string{"org_id", "kind", "LOWER(key)", "LOWER(value)"},
 		},
 	)

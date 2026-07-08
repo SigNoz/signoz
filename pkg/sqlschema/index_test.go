@@ -42,34 +42,30 @@ func TestIndexToCreateSQL(t *testing.T) {
 			name: "Unique_Functional_SingleExpression",
 			index: &UniqueIndex{
 				TableName:   "users",
-				ColumnNames: []ColumnName{"email"},
 				Expressions: []string{"LOWER(email)"},
 			},
-			sql: `CREATE UNIQUE INDEX IF NOT EXISTS "uq_users_email_1e5a87f1" ON "users" (LOWER(email))`,
+			sql: `CREATE UNIQUE INDEX IF NOT EXISTS "uq_users_72852951" ON "users" (LOWER(email))`,
 		},
 		{
 			name: "Unique_Functional_MixedColumnsAndExpressions",
 			index: &UniqueIndex{
 				TableName:   "tag",
-				ColumnNames: []ColumnName{"org_id", "kind", "key", "value"},
 				Expressions: []string{"org_id", "kind", "LOWER(key)", "LOWER(value)"},
 			},
-			sql: `CREATE UNIQUE INDEX IF NOT EXISTS "uq_tag_org_id_kind_key_value_57e8f81f" ON "tag" (org_id, kind, LOWER(key), LOWER(value))`,
+			sql: `CREATE UNIQUE INDEX IF NOT EXISTS "uq_tag_a36c51df" ON "tag" (org_id, kind, LOWER(key), LOWER(value))`,
 		},
 		{
 			name: "Unique_Functional_ComplexExpression",
 			index: &UniqueIndex{
 				TableName:   "users",
-				ColumnNames: []ColumnName{"first_name", "last_name"},
 				Expressions: []string{"LOWER(TRIM(first_name) || ' ' || TRIM(last_name))"},
 			},
-			sql: `CREATE UNIQUE INDEX IF NOT EXISTS "uq_users_first_name_last_name_adb1ff53" ON "users" (LOWER(TRIM(first_name) || ' ' || TRIM(last_name)))`,
+			sql: `CREATE UNIQUE INDEX IF NOT EXISTS "uq_users_37e845f3" ON "users" (LOWER(TRIM(first_name) || ' ' || TRIM(last_name)))`,
 		},
 		{
 			name: "Unique_Functional_Named",
 			index: &UniqueIndex{
 				TableName:   "tag",
-				ColumnNames: []ColumnName{"org_id", "kind", "key", "value"},
 				Expressions: []string{"org_id", "kind", "LOWER(key)", "LOWER(value)"},
 				name:        "uq_tag_org_kind_lower_key_lower_value",
 			},
@@ -270,12 +266,10 @@ func TestIndexEquals(t *testing.T) {
 			name: "Unique_Functional_Same",
 			a: &UniqueIndex{
 				TableName:   "users",
-				ColumnNames: []ColumnName{"email"},
 				Expressions: []string{"LOWER(email)"},
 			},
 			b: &UniqueIndex{
 				TableName:   "users",
-				ColumnNames: []ColumnName{"email"},
 				Expressions: []string{"LOWER(email)"},
 			},
 			equals: true,
@@ -284,12 +278,10 @@ func TestIndexEquals(t *testing.T) {
 			name: "Unique_Functional_DifferentExpressions",
 			a: &UniqueIndex{
 				TableName:   "users",
-				ColumnNames: []ColumnName{"email"},
 				Expressions: []string{"LOWER(email)"},
 			},
 			b: &UniqueIndex{
 				TableName:   "users",
-				ColumnNames: []ColumnName{"email"},
 				Expressions: []string{"UPPER(email)"},
 			},
 			equals: false,
@@ -298,7 +290,6 @@ func TestIndexEquals(t *testing.T) {
 			name: "Unique_Functional_NotEqualToPlainSameColumns",
 			a: &UniqueIndex{
 				TableName:   "users",
-				ColumnNames: []ColumnName{"email"},
 				Expressions: []string{"LOWER(email)"},
 			},
 			b: &UniqueIndex{
@@ -320,10 +311,9 @@ func TestUniqueIndexFunctionalName(t *testing.T) {
 	t.Run("autogen uses uq_<table>_<hash>", func(t *testing.T) {
 		idx := &UniqueIndex{
 			TableName:   "tag",
-			ColumnNames: []ColumnName{"org_id", "kind", "key", "value"},
 			Expressions: []string{"org_id", "kind", "LOWER(key)", "LOWER(value)"},
 		}
-		assert.Equal(t, "uq_tag_org_id_kind_key_value_57e8f81f", idx.Name())
+		assert.Equal(t, "uq_tag_a36c51df", idx.Name())
 	})
 
 	t.Run("same expressions produce the same name", func(t *testing.T) {
@@ -369,7 +359,6 @@ func TestUniqueIndexFunctionalName(t *testing.T) {
 		}
 		functional := &UniqueIndex{
 			TableName:   "users",
-			ColumnNames: []ColumnName{"email"},
 			Expressions: []string{"LOWER(email)"},
 		}
 		assert.Equal(t, "uq_users_email", plain.Name())
@@ -383,6 +372,75 @@ func TestUniqueIndexFunctionalName(t *testing.T) {
 		}).Named("my_functional_index")
 		assert.Equal(t, "my_functional_index", idx.Name())
 	})
+
+	t.Run("setting both ColumnNames and Expressions panics", func(t *testing.T) {
+		idx := &UniqueIndex{
+			TableName:   "tag",
+			ColumnNames: []ColumnName{"org_id"},
+			Expressions: []string{"LOWER(key)"},
+		}
+		assert.Panics(t, func() { _ = idx.Name() })
+	})
+}
+
+func TestNormalizeExpressions(t *testing.T) {
+	testCases := []struct {
+		name        string
+		expressions []string
+		output      []string
+	}{
+		{
+			name:        "Empty",
+			expressions: nil,
+			output:      nil,
+		},
+		{
+			name:        "PlainColumnsUnchanged",
+			expressions: []string{"org_id", "kind"},
+			output:      []string{"org_id", "kind"},
+		},
+		{
+			name:        "FunctionNameCaseFolded",
+			expressions: []string{"LOWER(key)", "LOWER(value)"},
+			output:      []string{"lower(key)", "lower(value)"},
+		},
+		{
+			name:        "PostgresRenderedMatchesDeclared",
+			expressions: []string{"lower(key)"},
+			output:      []string{"lower(key)"},
+		},
+		{
+			name:        "WhitespaceCollapsedPerExpression",
+			expressions: []string{"LOWER(  key )", "org_id"},
+			output:      []string{"lower( key )", "org_id"},
+		},
+		{
+			name:        "RedundantOuterParenthesesStripped",
+			expressions: []string{"(LOWER(key))"},
+			output:      []string{"lower(key)"},
+		},
+		{
+			name:        "QuotedIdentifierCaseByIdentifierPreserved",
+			expressions: []string{`LOWER("Key")`},
+			output:      []string{`lower("Key")`},
+		},
+		{
+			name:        "StringLiteralCasePreserved",
+			expressions: []string{"COALESCE(status, 'Deleted')"},
+			output:      []string{"coalesce(status, 'Deleted')"},
+		},
+		{
+			name:        "NormalizedIndependentlyPerElement",
+			expressions: []string{"UPPER(a)", "b", "LOWER(c)"},
+			output:      []string{"upper(a)", "b", "lower(c)"},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			assert.Equal(t, testCase.output, normalizeExpressions(testCase.expressions))
+		})
+	}
 }
 
 func TestPartialUniqueIndexName(t *testing.T) {

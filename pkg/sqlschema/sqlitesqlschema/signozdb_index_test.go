@@ -1,3 +1,8 @@
+//go:build integration
+
+// Requires a signoz.db created and migrated by the community server; excluded
+// from the default test run. Run with: go test -tags integration ./...
+
 package sqlitesqlschema
 
 import (
@@ -74,7 +79,6 @@ func TestSignozDBTagUniqueIndex(t *testing.T) {
 
 	expected := &sqlschema.UniqueIndex{
 		TableName:   "tag",
-		ColumnNames: []sqlschema.ColumnName{"org_id", "kind", "key", "value"},
 		Expressions: []string{"org_id", "kind", "LOWER(key)", "LOWER(value)"},
 	}
 

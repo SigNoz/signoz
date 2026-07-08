@@ -1,3 +1,9 @@
+//go:build integration
+
+// Requires a running postgres (make devenv-postgres) that the enterprise server
+// has migrated; excluded from the default test run. Run with:
+// go test -tags integration ./...
+
 package postgressqlschema
 
 import (
@@ -63,7 +69,6 @@ func TestSignozDBTagUniqueIndex(t *testing.T) {
 
 	expected := &sqlschema.UniqueIndex{
 		TableName:   "tag",
-		ColumnNames: []sqlschema.ColumnName{"org_id", "kind", "key", "value"},
 		Expressions: []string{"org_id", "kind", "LOWER(key)", "LOWER(value)"},
 	}
 
