@@ -7,6 +7,13 @@ import { useJsonEditor } from '../useJsonEditor';
 
 jest.mock('../useJsonEditor', () => ({ useJsonEditor: jest.fn() }));
 
+// Editable by default so the drawer renders in its editable (non-read-only) mode.
+jest.mock('../../../store/useDashboardStore', () => ({
+	useDashboardStore: (
+		selector: (s: { isEditable: boolean; editDisabledReason: string }) => unknown,
+	): unknown => selector({ isEditable: true, editDisabledReason: '' }),
+}));
+
 jest.mock('@monaco-editor/react', () => ({
 	__esModule: true,
 	default: ({

@@ -7,6 +7,15 @@ import type { DashboardSection } from '../../../../utils';
 import { useDashboardStore } from '../../../../store/useDashboardStore';
 import { usePanelActionItems } from '../usePanelActionItems';
 
+/** Keys of the disabled items, in order. */
+function disabledKeys(
+	result: ReturnType<typeof usePanelActionItems>,
+): unknown[] {
+	return result.items
+		.filter((item) => 'disabled' in item && item.disabled)
+		.map((item) => ('key' in item ? item.key : undefined));
+}
+
 const mockOpenEditor = jest.fn();
 jest.mock(
 	'pages/DashboardPageV2/DashboardContainer/hooks/useOpenPanelEditor',
@@ -115,7 +124,7 @@ describe('usePanelActionItems', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 		mockRole = 'ADMIN';
-		useDashboardStore.setState({ isEditable: true });
+		useDashboardStore.setState({ canEditDashboard: true, isLocked: false });
 	});
 
 	it('ADMIN on an editable dashboard with a known kind gets the full V1-parity set, divider-separated', () => {
@@ -162,18 +171,42 @@ describe('usePanelActionItems', () => {
 		]);
 	});
 
-	it('read-only dashboard keeps the non-mutating actions (View, Download, Create Alerts)', () => {
-		useDashboardStore.setState({ isEditable: false });
+	it('no edit permission (view mode) hides the edit actions entirely', () => {
+		useDashboardStore.setState({ canEditDashboard: false });
 		const { result } = renderHook(() =>
 			usePanelActionItems({ ...baseArgs, panelActions: undefined }),
 		);
-		// View, the Download submenu (PNG/SVG) and Create Alerts are all
-		// non-mutating, so they survive on a read-only dashboard (V1 parity).
 		expect(itemKeys(result.current)).toStrictEqual([
 			'view-panel',
 			'divider',
 			'download',
 			'create-alert',
+		]);
+	});
+
+	it('locked (edit mode) keeps the edit actions visible but disabled', () => {
+		useDashboardStore.setState({ canEditDashboard: true, isLocked: true });
+		// A locked dashboard mounts panels without layout context (no panelActions).
+		const { result } = renderHook(() =>
+			usePanelActionItems({ ...baseArgs, panelActions: undefined }),
+		);
+		expect(itemKeys(result.current)).toStrictEqual([
+			'view-panel',
+			'edit-panel',
+			'clone-panel',
+			'divider',
+			'download',
+			'create-alert',
+			'divider',
+			'move',
+			'divider',
+			'delete-panel',
+		]);
+		expect(disabledKeys(result.current)).toStrictEqual([
+			'edit-panel',
+			'clone-panel',
+			'move',
+			'delete-panel',
 		]);
 	});
 
