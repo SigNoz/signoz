@@ -56,7 +56,7 @@ export function makeMapper(overrides: Partial<Mapper> = {}): Mapper {
 
 // Both list endpoints share the same `{ status, data: { items } }` envelope —
 // the generated schema mis-types the mappers response with the groups DTO
-// (see MappersTable), but the runtime envelope shape is identical.
+// (see GroupMappers), but the runtime envelope shape is identical.
 export function makeGroupsResponse(groups: MapperGroup[]): {
 	status: string;
 	data: { items: MapperGroup[] };

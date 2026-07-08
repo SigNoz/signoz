@@ -3,12 +3,6 @@ import {
 	SpantypesSpanMapperOperationDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
-// A single human-readable condition clause shown in the group's Filters column.
-export interface ConditionFilter {
-	context: 'attribute' | 'resource';
-	key: string;
-}
-
 // One source candidate. `context` is where the key is read from (span
 // attribute or resource); `operation` is move (delete source) or copy (keep).
 // Priority is implicit in list order (top wins), derived on save.

@@ -1,6 +1,6 @@
-import MapperGroupsTable from './components/MapperGroupsTable';
-import { useAttributeMappingStore } from './hooks/useAttributeMappingStore';
 import styles from './AttributeMappingsTab.module.scss';
+import MappingsTable from './components/MappingsTable/MappingsTable';
+import { useAttributeMappingStore } from './hooks/useAttributeMappingStore';
 
 // "Attribute mappings" tab: the mapping-groups listing, its load/error states
 // and footer summary. Lives in its own tab so siblings (e.g. "Test") can be
@@ -16,7 +16,7 @@ function AttributeMappingsTab(): JSX.Element {
 				</div>
 			)}
 
-			<MapperGroupsTable store={store} />
+			<MappingsTable store={store} />
 		</div>
 	);
 }

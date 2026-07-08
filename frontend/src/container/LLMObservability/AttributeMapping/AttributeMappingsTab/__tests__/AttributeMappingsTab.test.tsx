@@ -41,8 +41,7 @@ async function expandGroup(
 
 describe('AttributeMappingsTab (integration)', () => {
 	beforeEach(() => {
-		// The shared TanStackTable owns page/limit URL state via nuqs, which reads
-		// window.location — jsdom shares that across tests in a file.
+		// Reset URL state between tests — jsdom shares window.location across a file.
 		window.history.pushState(null, '', '/');
 	});
 
@@ -80,33 +79,57 @@ describe('AttributeMappingsTab (integration)', () => {
 		).resolves.toHaveTextContent('No mapping groups yet.');
 	});
 
-	it('renders each group row with its name, condition filters and status', async () => {
+	it('renders each group header row with its name, condition count and status', async () => {
 		setupGroups();
 		render(<AttributeMappingsTab />);
 
+		// Condition filters are no longer shown inline as clauses — the header
+		// carries a count instead (the keys surface in the group drawer, later PR).
+		// Group headers are antd Collapse panels, so rows scope to the panel item.
 		// group-1: enabled, with attribute + resource condition keys.
 		const enabledRow = (await screen.findByTestId('group-name-group-1')).closest(
-			'tr',
+			'.ant-collapse-item',
 		) as HTMLElement;
 		expect(
 			within(enabledRow).getByTestId('group-name-group-1'),
 		).toHaveTextContent('demo');
-		const filters = within(enabledRow).getByTestId('group-filters-group-1');
-		expect(filters).toHaveTextContent('attribute');
-		expect(filters).toHaveTextContent('contains ai.embeddings');
-		expect(filters).toHaveTextContent('resource');
-		expect(filters).toHaveTextContent('contains cloud.account.id');
-		expect(within(enabledRow).getByText('Enabled')).toBeInTheDocument();
+		expect(
+			within(enabledRow).getByTestId('group-condition-count-group-1'),
+		).toHaveTextContent('2 conditions');
+		expect(within(enabledRow).getByTestId('group-enabled-group-1')).toBeChecked();
 
 		// group-2: disabled, with no condition keys.
 		const disabledRow = screen
 			.getByTestId('group-name-group-2')
-			.closest('tr') as HTMLElement;
+			.closest('.ant-collapse-item') as HTMLElement;
 		expect(within(disabledRow).getByText('Tool')).toBeInTheDocument();
-		expect(within(disabledRow).getByText('Disabled')).toBeInTheDocument();
 		expect(
-			within(disabledRow).getByTestId('group-filters-group-2'),
-		).toHaveTextContent('No condition · always runs');
+			within(disabledRow).getByTestId('group-condition-count-group-2'),
+		).toHaveTextContent('0 conditions');
+		expect(
+			within(disabledRow).getByTestId('group-enabled-group-2'),
+		).not.toBeChecked();
+	});
+
+	it("toggles a group's enabled state without expanding its panel", async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		setupGroups();
+		render(<AttributeMappingsTab />);
+
+		const toggle = await screen.findByTestId('group-enabled-group-1');
+		const header = screen
+			.getByTestId('group-expand-group-1')
+			.closest('.ant-collapse-header') as HTMLElement;
+		expect(toggle).toBeChecked();
+
+		await user.click(toggle);
+
+		// The flip is staged in the draft store; the header click must not leak
+		// into the Collapse toggle (GroupHeaderActions stops propagation).
+		await waitFor(() =>
+			expect(screen.getByTestId('group-enabled-group-1')).not.toBeChecked(),
+		);
+		expect(header).toHaveAttribute('aria-expanded', 'false');
 	});
 
 	it("reveals a group's mappers on expand and hides them on collapse", async () => {
@@ -116,11 +139,14 @@ describe('AttributeMappingsTab (integration)', () => {
 		render(<AttributeMappingsTab />);
 
 		await screen.findByTestId('group-name-group-1');
-		expect(screen.getByTestId('group-expand-group-1')).toHaveAccessibleName(
-			'Expand group',
-		);
+		// The toggle is the antd Collapse header, which owns the expanded state.
+		const header = screen
+			.getByTestId('group-expand-group-1')
+			.closest('.ant-collapse-header') as HTMLElement;
+		expect(header).toHaveAttribute('aria-expanded', 'false');
 
 		await expandGroup(user);
+		expect(header).toHaveAttribute('aria-expanded', 'true');
 		await expect(
 			screen.findByTestId('mapper-target-mapper-1'),
 		).resolves.toBeInTheDocument();
@@ -156,9 +182,31 @@ describe('AttributeMappingsTab (integration)', () => {
 		const sources = within(mapperRow).getByTestId('mapper-sources-mapper-1');
 		expect(sources).toHaveTextContent('genai.model');
 		expect(sources).toHaveTextContent('llm.model');
-		// Writes-to field context + enabled status.
+		// Writes-to field context + enabled status (an inline Switch, not text).
 		expect(within(mapperRow).getByText('attribute')).toBeInTheDocument();
-		expect(within(mapperRow).getByText('Enabled')).toBeInTheDocument();
+		expect(
+			within(mapperRow).getByTestId('mapper-enabled-mapper-1'),
+		).toBeChecked();
+	});
+
+	it("toggles a mapper's enabled state through the store", async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		setupGroups();
+		setupMappers([makeMapper({ id: 'mapper-1', enabled: true })]);
+		render(<AttributeMappingsTab />);
+
+		await screen.findByTestId('group-name-group-1');
+		await expandGroup(user);
+
+		const toggle = await screen.findByTestId('mapper-enabled-mapper-1');
+		expect(toggle).toBeChecked();
+
+		await user.click(toggle);
+
+		// The switch is driven by the draft, so a flip proves the store round-trip.
+		await waitFor(() =>
+			expect(screen.getByTestId('mapper-enabled-mapper-1')).not.toBeChecked(),
+		);
 	});
 
 	it('shows the mappers error state when the mappers request fails', async () => {

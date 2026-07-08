@@ -3,33 +3,7 @@ import {
 	SpantypesSpanMapperGroupDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
-import {
-	ConditionFilter,
-	DraftGroup,
-	DraftMapper,
-	SourceConfig,
-} from './types';
-
-// Display clauses for a group's condition keys (span attribute keys first,
-// then resource keys).
-export function conditionFiltersFromGroup(group: {
-	attributes?: string[];
-	resource?: string[];
-}): ConditionFilter[] {
-	// TanStackTable renders skeleton placeholder rows through the cells on first
-	// render, so these arrays can be undefined before real data lands — default
-	// to empty rather than crashing the cell.
-	return [
-		...(group.attributes ?? []).map((key) => ({
-			context: 'attribute' as const,
-			key,
-		})),
-		...(group.resource ?? []).map((key) => ({
-			context: 'resource' as const,
-			key,
-		})),
-	];
-}
+import { DraftGroup, DraftMapper, SourceConfig } from './types';
 
 // Source configs for a mapper, highest priority first (first match wins at
 // evaluation time).
