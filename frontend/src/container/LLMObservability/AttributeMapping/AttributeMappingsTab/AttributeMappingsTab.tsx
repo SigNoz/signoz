@@ -10,13 +10,16 @@ function AttributeMappingsTab(): JSX.Element {
 
 	return (
 		<div data-testid="attribute-mappings-tab">
-			{store.isError && (
+			{store.isError ? (
+				// On a failed load the store still seeds an empty draft, so rendering
+				// the listing too would stack a "No mapping groups yet." empty state
+				// under the error. Show one or the other.
 				<div className={styles.pageError} role="alert">
 					Failed to load mapping groups. Please try again.
 				</div>
+			) : (
+				<MappingsTable store={store} />
 			)}
-
-			<MappingsTable store={store} />
 		</div>
 	);
 }

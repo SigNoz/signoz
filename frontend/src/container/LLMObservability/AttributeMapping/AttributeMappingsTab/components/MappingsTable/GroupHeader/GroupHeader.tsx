@@ -3,22 +3,23 @@ import styles from './GroupHeader.module.scss';
 
 interface GroupHeaderProps {
 	group: DraftGroup;
-	expanded: boolean;
 }
 
 // Label content of a group's Collapse header: name plus condition/mapping
 // counts. The antd header owns the toggle interaction (click + keyboard +
 // aria-expanded); the testid on this wrapper is the stable click target for
 // tests, whose clicks bubble up to that header.
-function GroupHeader({ group, expanded }: GroupHeaderProps): JSX.Element {
+function GroupHeader({ group }: GroupHeaderProps): JSX.Element {
 	const mapperCount = group.mappers.length;
 	// Condition keys (attribute + resource) ship with the group up front, so this
 	// count is always trustworthy — shown regardless of expand state.
 	const conditionCount = group.attributes.length + group.resource.length;
 	// Mappers load lazily on first expand, so the count is only trustworthy once
-	// the group has been opened (or already carries hydrated mappers). Hiding it
-	// for never-opened groups avoids a misleading "0 mappings".
-	const showCount = expanded || mapperCount > 0;
+	// they've been folded into the draft. Gate on the count itself (not on
+	// "expanded"): keying off expansion would flash "· 0 mappings" while the
+	// panel is still showing skeletons, then jump to the real number. A
+	// genuinely empty group shows nothing here — its panel body says so instead.
+	const showCount = mapperCount > 0;
 
 	return (
 		<div

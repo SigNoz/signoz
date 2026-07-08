@@ -209,6 +209,38 @@ describe('AttributeMappingsTab (integration)', () => {
 		);
 	});
 
+	it('preserves a staged mapper toggle across collapse and re-expand', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		setupGroups();
+		// The server always reports this mapper as enabled; only the staged flip
+		// makes it disabled.
+		setupMappers([makeMapper({ id: 'mapper-1', enabled: true })]);
+		render(<AttributeMappingsTab />);
+
+		await screen.findByTestId('group-name-group-1');
+		await expandGroup(user);
+
+		// Flip it off, then collapse the panel (destroyInactivePanel unmounts it).
+		await user.click(await screen.findByTestId('mapper-enabled-mapper-1'));
+		await waitFor(() =>
+			expect(screen.getByTestId('mapper-enabled-mapper-1')).not.toBeChecked(),
+		);
+		await expandGroup(user);
+		await waitFor(() =>
+			expect(
+				screen.queryByTestId('mapper-enabled-mapper-1'),
+			).not.toBeInTheDocument(),
+		);
+
+		// Re-expand: the mappers query refetches (staleTime 0) and re-fires the
+		// hydrate effect, but the store's once-guard keeps the staged flip — the
+		// switch must stay off rather than snapping back to the server's enabled.
+		await expandGroup(user);
+		await expect(
+			screen.findByTestId('mapper-enabled-mapper-1'),
+		).resolves.not.toBeChecked();
+	});
+
 	it('shows the mappers error state when the mappers request fails', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		setupGroups();
