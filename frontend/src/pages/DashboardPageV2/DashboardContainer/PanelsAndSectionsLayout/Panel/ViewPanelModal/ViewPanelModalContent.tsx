@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
 import { DashboardCursorSync } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
@@ -6,6 +6,7 @@ import ContextMenu from 'periscope/components/ContextMenu';
 import PanelEditorQueryBuilder from 'pages/DashboardPageV2/DashboardContainer/PanelEditor/PanelEditorQueryBuilder/PanelEditorQueryBuilder';
 import PreviewPane from 'pages/DashboardPageV2/DashboardContainer/PanelEditor/PreviewPane/PreviewPane';
 import type { DashboardPreference } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/rendererProps';
+import { useViewPanelStore } from 'pages/DashboardPageV2/DashboardContainer/store/useViewPanelStore';
 import { useOpenPanelEditor } from 'pages/DashboardPageV2/DashboardContainer/hooks/useOpenPanelEditor';
 
 import { useDrilldown } from '../hooks/useDrilldown';
@@ -38,6 +39,7 @@ function ViewPanelModalContent({
 		onTimeChange,
 		refreshWindow,
 		onDragSelect,
+		extendWindow,
 	} = useViewPanelTimeWindow();
 
 	const {
@@ -68,6 +70,15 @@ function ViewPanelModalContent({
 		[dashboardPreference],
 	);
 	const openPanelEditor = useOpenPanelEditor();
+
+	// Publish the modal's local extender for the nested no-data state; cleared on close.
+	const setViewPanelExtendWindow = useViewPanelStore(
+		(s) => s.setViewPanelExtendWindow,
+	);
+	useEffect(() => {
+		setViewPanelExtendWindow(extendWindow);
+		return (): void => setViewPanelExtendWindow(null);
+	}, [extendWindow, setViewPanelExtendWindow]);
 
 	// The View action only appears for registered kinds, so this is defensive.
 	if (!panelDefinition) {

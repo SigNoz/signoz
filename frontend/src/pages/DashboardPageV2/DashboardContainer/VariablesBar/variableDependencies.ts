@@ -1,6 +1,11 @@
 import { textContainsVariableReference } from 'lib/dashboardVariables/variableReference';
 
-import type { VariableFormModel } from '../DashboardSettings/Variables/variableFormModel';
+import type {
+	VariableFormModel,
+	VariableType,
+} from '../DashboardSettings/Variables/variableFormModel';
+import type { VariableSelectionMap } from './selectionTypes';
+import { isResolved } from './selectionUtils';
 
 /**
  * Inter-variable dependency graph for runtime selection. A QUERY variable
@@ -196,4 +201,58 @@ export function computeVariableDependencies(
 	variables: VariableFormModel[],
 ): VariableDependencyData {
 	return buildDependencyData(buildDependencies(variables));
+}
+
+/**
+ * Static context the runtime fetch engine (`variableFetchSlice`) needs to order
+ * fetches: the dependency graph plus the per-name type index and the QUERY /
+ * DYNAMIC fetch orders. Derived from the variable definitions; stable until the
+ * spec's variables change. Mirrors V1's `getVariableDependencyContext`.
+ */
+export interface VariableFetchContext {
+	dependencyData: VariableDependencyData;
+	/** variable name → its type. */
+	variableTypes: Record<string, VariableType>;
+	/** QUERY variables in topological (parent-before-child) order. */
+	queryVariableOrder: string[];
+	/** DYNAMIC variable names (they implicitly depend on all QUERY values). */
+	dynamicVariableOrder: string[];
+}
+
+export function deriveFetchContext(
+	variables: VariableFormModel[],
+): VariableFetchContext {
+	const dependencyData = computeVariableDependencies(variables);
+	const variableTypes: Record<string, VariableType> = {};
+	variables.forEach((v) => {
+		if (v.name) {
+			variableTypes[v.name] = v.type;
+		}
+	});
+	const queryVariableOrder = dependencyData.order.filter(
+		(name) => variableTypes[name] === 'QUERY',
+	);
+	const dynamicVariableOrder = variables
+		.filter((v) => v.type === 'DYNAMIC' && !!v.name)
+		.map((v) => v.name);
+	return {
+		dependencyData,
+		variableTypes,
+		queryVariableOrder,
+		dynamicVariableOrder,
+	};
+}
+
+/**
+ * Whether every QUERY variable already has a usable selection — decides at load
+ * time whether dynamic variables may fetch immediately or must wait for the
+ * query variables to settle first (V1 parity).
+ */
+export function doAllQueryVariablesHaveValues(
+	variables: VariableFormModel[],
+	selection: VariableSelectionMap,
+): boolean {
+	return variables
+		.filter((v) => v.type === 'QUERY')
+		.every((v) => isResolved(selection[v.name]));
 }

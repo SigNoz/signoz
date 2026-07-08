@@ -13,6 +13,7 @@ import type { DashboardtypesJSONPatchOperationDTO } from 'api/generated/services
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
+import { DASHBOARD_NAME_MAX_LENGTH } from '../../../DashboardPageV2/DashboardContainer/constants';
 import styles from './ActionsPopover.module.scss';
 
 interface Props {
@@ -102,6 +103,7 @@ function RenameDashboardModal({
 			<Input
 				value={name}
 				autoFocus
+				maxLength={DASHBOARD_NAME_MAX_LENGTH}
 				placeholder="Dashboard name"
 				testId="rename-dashboard-input"
 				onChange={(e): void => setName(e.target.value)}

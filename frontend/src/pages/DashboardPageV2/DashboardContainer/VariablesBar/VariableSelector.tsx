@@ -18,22 +18,22 @@ interface VariableSelectorProps {
 	variable: VariableFormModel;
 	/** All variables (Dynamic uses them to scope options by sibling selections). */
 	variables: VariableFormModel[];
-	/** Names this variable depends on (for Query gating). */
-	parents: string[];
 	/** All current selections (Query passes them as the request payload). */
 	selections: VariableSelectionMap;
 	selection: VariableSelection;
 	onChange: (selection: VariableSelection) => void;
+	/** Batched fill applied when options resolve (Query/Dynamic auto-selection). */
+	onAutoSelect: (selection: VariableSelection) => void;
 }
 
 /** One labelled variable control; dispatches on the variable type. */
 function VariableSelector({
 	variable,
 	variables,
-	parents,
 	selections,
 	selection,
 	onChange,
+	onAutoSelect,
 }: VariableSelectorProps): JSX.Element {
 	const customOptions = useMemo(
 		() =>
@@ -61,10 +61,10 @@ function VariableSelector({
 				return (
 					<QuerySelector
 						variable={variable}
-						parents={parents}
 						selections={selections}
 						selection={selection}
 						onChange={onChange}
+						onAutoSelect={onAutoSelect}
 					/>
 				);
 			case 'DYNAMIC':
@@ -75,6 +75,7 @@ function VariableSelector({
 						selections={selections}
 						selection={selection}
 						onChange={onChange}
+						onAutoSelect={onAutoSelect}
 					/>
 				);
 			case 'CUSTOM':
