@@ -2,7 +2,7 @@ import { Switch } from '@signozhq/ui/switch';
 
 import { DraftGroup } from '../../../types';
 import { AttributeMappingStore } from '../../hooks/useAttributeMappingStore';
-import styles from './MappingsTable.module.scss';
+import styles from './GroupHeaderActions.module.scss';
 
 interface GroupHeaderActionsProps {
 	group: DraftGroup;
@@ -21,7 +21,7 @@ function GroupHeaderActions({
 	return (
 		// eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events
 		<div
-			className={styles.rowActions}
+			className={styles.actions}
 			onClick={(event): void => event.stopPropagation()}
 		>
 			<Switch

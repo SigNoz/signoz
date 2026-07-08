@@ -1,5 +1,5 @@
 import { DraftGroup } from '../../../types';
-import styles from './MappingsTable.module.scss';
+import styles from './GroupHeader.module.scss';
 
 interface GroupHeaderProps {
 	group: DraftGroup;

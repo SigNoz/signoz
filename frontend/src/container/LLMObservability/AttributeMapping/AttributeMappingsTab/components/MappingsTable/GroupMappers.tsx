@@ -8,16 +8,15 @@
 import { useEffect } from 'react';
 import type { SpantypesSpanMapperDTO } from 'api/generated/services/sigNoz.schemas';
 import { useListSpanMappers } from 'api/generated/services/spanmapper';
-import { Skeleton } from 'antd';
-import cx from 'classnames';
 import { motion, useReducedMotion } from 'motion/react';
 
 import { DraftGroup } from '../../../types';
 import { AttributeMappingStore } from '../../hooks/useAttributeMappingStore';
 import { COLUMN_COUNT } from './constants';
 import MapperRow from './MapperRow';
+import MapperRowSkeleton from './MapperRowSkeleton';
 import MappingsColgroup from './MappingsColgroup';
-import styles from './MappingsTable.module.scss';
+import styles from './GroupMappers.module.scss';
 
 const MAPPER_SKELETON_ROWS = 2;
 
@@ -68,37 +67,10 @@ function GroupMappers({ group, store }: GroupMappersProps): JSX.Element {
 
 	const mapperCount = group.mappers.length;
 
-	// Skeleton mapper rows, shaped per aligned column (target · sources ·
-	// writes-to · status) so the lazy per-group load mirrors real rows rather
-	// than flat bars. Plain <tr> (not motion) on purpose: once the mappers
-	// arrive we want the skeleton to be replaced instantly, with no fade
-	// cross-dissolving against the incoming rows. antd's `active` shimmer covers
-	// the loading feel on its own.
 	const skeletonRows = Array.from({ length: MAPPER_SKELETON_ROWS }).map(
 		(_, index) => (
-			<tr
-				// eslint-disable-next-line react/no-array-index-key
-				key={`mapper-skeleton-${index}`}
-				className={styles.mapperRow}
-			>
-				<td className={cx(styles.cell, styles.targetCell)}>
-					<Skeleton.Input active size="small" style={{ width: '55%' }} />
-				</td>
-				<td className={styles.cell}>
-					<div className={styles.sources}>
-						<Skeleton.Button active size="small" style={{ width: 88 }} />
-						<Skeleton.Button active size="small" style={{ width: 56 }} />
-					</div>
-				</td>
-				<td className={styles.cell}>
-					<Skeleton.Button active size="small" style={{ width: 72 }} />
-				</td>
-				<td className={cx(styles.cell, styles.statusCell)}>
-					<div className={styles.rowActions}>
-						<Skeleton.Button active size="small" shape="round" />
-					</div>
-				</td>
-			</tr>
+			// eslint-disable-next-line react/no-array-index-key
+			<MapperRowSkeleton key={`mapper-skeleton-${index}`} />
 		),
 	);
 

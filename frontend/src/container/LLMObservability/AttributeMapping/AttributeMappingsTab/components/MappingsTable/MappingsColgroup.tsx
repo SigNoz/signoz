@@ -1,4 +1,4 @@
-import styles from './MappingsTable.module.scss';
+import styles from './MappingsColgroup.module.scss';
 
 // Shared <colgroup> for every table in the listing: the standalone column
 // header and each group panel's mappers table. All of them are width-100% +
