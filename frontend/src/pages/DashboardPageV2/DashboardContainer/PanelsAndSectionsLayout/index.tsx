@@ -41,13 +41,16 @@ function PanelsAndSectionsLayout({
 		[layouts, panels],
 	);
 
-	const isEmpty =
-		sections.length === 0 || sections.every((s) => s.items.length === 0);
-
 	// Sectioned mode = at least one titled layout. Sections then become a
 	// reorderable list; otherwise the dashboard is a single free-flowing grid
 	// with no section chrome or reordering.
 	const isSectioned = useMemo(() => sections.some((s) => !!s.title), [sections]);
+
+	// A titled section renders even with no panels (its header + add-panel state);
+	// only show the dashboard empty state when nothing is titled and there are no panels.
+	const isEmpty =
+		sections.length === 0 ||
+		(!isSectioned && sections.every((s) => s.items.length === 0));
 
 	const renderContent = (): ReactNode => {
 		if (isEmpty) {
