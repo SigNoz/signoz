@@ -1,0 +1,18 @@
+// Must mirror the header table's layout in MappingsTable.module.scss so a
+// panel's rows align to the shared colgroup (see MappingsColgroup).
+.table {
+	width: 100%;
+	border-collapse: collapse;
+	table-layout: fixed;
+}
+
+// ---- per-group state rows (loading / empty / error) ----
+
+.mapperStateRow .stateCell {
+	color: var(--l3-foreground);
+}
+
+.stateCell {
+	padding: var(--spacing-4) var(--spacing-6) var(--spacing-4) var(--spacing-12);
+	font-size: var(--periscope-font-size-base);
+}

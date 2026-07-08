@@ -3,10 +3,10 @@ import { Tabs } from '@signozhq/ui/tabs';
 
 import AttributeMappingHeader from './components/AttributeMappingHeader';
 import AttributeMappingsTab from './AttributeMappingsTab';
-import GroupFormDrawer from './GroupFormDrawer';
+import GroupFormDrawer from './components/GroupFormDrawer';
 import styles from './LLMObservabilityAttributeMapping.module.scss';
 import { useAttributeMappingStore } from './AttributeMappingsTab/hooks/useAttributeMappingStore';
-import { useGroupFormDrawer } from './useGroupFormDrawer';
+import { useGroupFormDrawer } from './components/GroupFormDrawer/hooks/useGroupFormDrawer';
 
 function LLMObservabilityAttributeMapping(): JSX.Element {
 	const store = useAttributeMappingStore();

@@ -17,6 +17,7 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"golang.org/x/sync/errgroup"
 )
 
 type module struct {
@@ -213,23 +214,37 @@ func (m *module) ListHosts(ctx context.Context, orgID valuer.UUID, req *inframon
 	}
 
 	fullQueryReq := buildFullQueryRequest(req.Start, req.End, hostsFilterExpr, req.GroupBy, pageGroups, m.newListHostsQuery())
-	queryResp, err := m.querier.QueryRange(ctx, orgID, fullQueryReq)
-	if err != nil {
-		return nil, err
-	}
 
 	// Compute per-group active/inactive host counts.
 	// When host.name is in groupBy, each row = one host, so counts are derived
 	// directly from activeHostsMap in buildHostRecords (no extra query needed).
 	// When host.name is not in groupBy, we need to run an additional query to get the counts per group for the current page,
 	// using the same filter expression as the main query (including user filters + page groups IN clause).
-	hostCounts := make(map[string]groupHostStatusCounts)
 	isHostNameInGroupBy := isKeyInGroupByAttrs(req.GroupBy, inframonitoringtypes.HostNameAttrKey)
+
+	var (
+		queryResp  *qbtypes.QueryRangeResponse
+		hostCounts = make(map[string]groupHostStatusCounts)
+	)
+
+	g, gCtx := errgroup.WithContext(ctx)
+
+	g.Go(func() error {
+		var err error
+		queryResp, err = m.querier.QueryRange(gCtx, orgID, fullQueryReq)
+		return err
+	})
+
 	if !isHostNameInGroupBy {
-		hostCounts, err = m.getPerGroupHostStatusCounts(ctx, orgID, req, hostsTableMetricNamesList, pageGroups, sinceUnixMilli)
-		if err != nil {
-			return nil, err
-		}
+		g.Go(func() error {
+			var err error
+			hostCounts, err = m.getPerGroupHostStatusCounts(gCtx, orgID, req, hostsTableMetricNamesList, pageGroups, sinceUnixMilli)
+			return err
+		})
+	}
+
+	if err := g.Wait(); err != nil {
+		return nil, err
 	}
 
 	resp.Records = buildHostRecords(isHostNameInGroupBy, queryResp, pageGroups, req.GroupBy, metadataMap, activeHostsMap, hostCounts)
@@ -299,19 +314,45 @@ func (m *module) ListPods(ctx context.Context, orgID valuer.UUID, req *inframoni
 	}
 
 	fullQueryReq := buildFullQueryRequest(req.Start, req.End, filterExpr, req.GroupBy, pageGroups, m.newPodsTableListQuery())
-	queryResp, err := m.querier.QueryRange(ctx, orgID, fullQueryReq)
-	if err != nil {
-		return nil, err
-	}
 
-	phaseCounts, err := m.getPerGroupPodPhaseCounts(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
-	if err != nil {
+	var (
+		queryResp     *qbtypes.QueryRangeResponse
+		phaseCounts   map[string]podPhaseCounts
+		statusCounts  map[string]podStatusCounts
+		statusWarning *qbtypes.QueryWarnData
+		restartCounts map[string]int64
+	)
+
+	g, gCtx := errgroup.WithContext(ctx)
+
+	g.Go(func() error {
+		var err error
+		queryResp, err = m.querier.QueryRange(gCtx, orgID, fullQueryReq)
+		return err
+	})
+	g.Go(func() error {
+		var err error
+		phaseCounts, err = m.getPerGroupPodPhaseCounts(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		return err
+	})
+	g.Go(func() error {
+		var err error
+		statusCounts, statusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		return err
+	})
+	g.Go(func() error {
+		var err error
+		restartCounts, err = m.getPerGroupPodRestartCounts(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		return err
+	})
+
+	if err := g.Wait(); err != nil {
 		return nil, err
 	}
 
 	isPodUIDInGroupBy := isKeyInGroupByAttrs(req.GroupBy, podUIDAttrKey)
-	resp.Records = buildPodRecords(isPodUIDInGroupBy, queryResp, pageGroups, req.GroupBy, metadataMap, phaseCounts, req.End)
-	resp.Warning = queryResp.Warning
+	resp.Records = buildPodRecords(isPodUIDInGroupBy, queryResp, pageGroups, req.GroupBy, metadataMap, phaseCounts, statusCounts, restartCounts, req.End)
+	resp.Warning = mergeQueryWarnings(queryResp.Warning, statusWarning)
 
 	return resp, nil
 }
@@ -377,24 +418,45 @@ func (m *module) ListNodes(ctx context.Context, orgID valuer.UUID, req *inframon
 	}
 
 	fullQueryReq := buildFullQueryRequest(req.Start, req.End, filterExpr, req.GroupBy, pageGroups, m.newNodesTableListQuery())
-	queryResp, err := m.querier.QueryRange(ctx, orgID, fullQueryReq)
-	if err != nil {
-		return nil, err
-	}
 
-	nodeConditionCounts, err := m.getPerGroupNodeConditionCounts(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
-	if err != nil {
-		return nil, err
-	}
+	var (
+		queryResp           *qbtypes.QueryRangeResponse
+		nodeConditionCounts map[string]nodeConditionCounts
+		podPhaseCounts      map[string]podPhaseCounts
+		podStatusCounts     map[string]podStatusCounts
+		podStatusWarning    *qbtypes.QueryWarnData
+	)
 
-	podPhaseCounts, err := m.getPerGroupPodPhaseCounts(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
-	if err != nil {
+	g, gCtx := errgroup.WithContext(ctx)
+
+	g.Go(func() error {
+		var err error
+		queryResp, err = m.querier.QueryRange(gCtx, orgID, fullQueryReq)
+		return err
+	})
+	g.Go(func() error {
+		var err error
+		nodeConditionCounts, err = m.getPerGroupNodeConditionCounts(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		return err
+	})
+	g.Go(func() error {
+		var err error
+		podPhaseCounts, err = m.getPerGroupPodPhaseCounts(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		return err
+	})
+	g.Go(func() error {
+		var err error
+		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		return err
+	})
+
+	if err := g.Wait(); err != nil {
 		return nil, err
 	}
 
 	isNodeNameInGroupBy := isKeyInGroupByAttrs(req.GroupBy, inframonitoringtypes.NodeNameAttrKey)
-	resp.Records = buildNodeRecords(isNodeNameInGroupBy, queryResp, pageGroups, req.GroupBy, metadataMap, nodeConditionCounts, podPhaseCounts)
-	resp.Warning = queryResp.Warning
+	resp.Records = buildNodeRecords(isNodeNameInGroupBy, queryResp, pageGroups, req.GroupBy, metadataMap, nodeConditionCounts, podPhaseCounts, podStatusCounts)
+	resp.Warning = mergeQueryWarnings(queryResp.Warning, podStatusWarning)
 
 	return resp, nil
 }
@@ -460,18 +522,38 @@ func (m *module) ListNamespaces(ctx context.Context, orgID valuer.UUID, req *inf
 	}
 
 	fullQueryReq := buildFullQueryRequest(req.Start, req.End, filterExpr, req.GroupBy, pageGroups, m.newNamespacesTableListQuery())
-	queryResp, err := m.querier.QueryRange(ctx, orgID, fullQueryReq)
-	if err != nil {
+
+	var (
+		queryResp        *qbtypes.QueryRangeResponse
+		phaseCounts      map[string]podPhaseCounts
+		podStatusCounts  map[string]podStatusCounts
+		podStatusWarning *qbtypes.QueryWarnData
+	)
+
+	g, gCtx := errgroup.WithContext(ctx)
+
+	g.Go(func() error {
+		var err error
+		queryResp, err = m.querier.QueryRange(gCtx, orgID, fullQueryReq)
+		return err
+	})
+	g.Go(func() error {
+		var err error
+		phaseCounts, err = m.getPerGroupPodPhaseCounts(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		return err
+	})
+	g.Go(func() error {
+		var err error
+		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		return err
+	})
+
+	if err := g.Wait(); err != nil {
 		return nil, err
 	}
 
-	phaseCounts, err := m.getPerGroupPodPhaseCounts(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
-	if err != nil {
-		return nil, err
-	}
-
-	resp.Records = buildNamespaceRecords(queryResp, pageGroups, req.GroupBy, metadataMap, phaseCounts)
-	resp.Warning = queryResp.Warning
+	resp.Records = buildNamespaceRecords(queryResp, pageGroups, req.GroupBy, metadataMap, phaseCounts, podStatusCounts)
+	resp.Warning = mergeQueryWarnings(queryResp.Warning, podStatusWarning)
 
 	return resp, nil
 }
@@ -537,25 +619,46 @@ func (m *module) ListClusters(ctx context.Context, orgID valuer.UUID, req *infra
 	}
 
 	fullQueryReq := buildFullQueryRequest(req.Start, req.End, filterExpr, req.GroupBy, pageGroups, m.newClustersTableListQuery())
-	queryResp, err := m.querier.QueryRange(ctx, orgID, fullQueryReq)
-	if err != nil {
-		return nil, err
-	}
 
 	// With default groupBy [k8s.cluster.name], counts are bucketed per cluster;
 	// with a custom groupBy, they aggregate across clusters in that group.
-	nodeConditionCountsMap, err := m.getPerGroupNodeConditionCounts(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
-	if err != nil {
+	var (
+		queryResp              *qbtypes.QueryRangeResponse
+		nodeConditionCountsMap map[string]nodeConditionCounts
+		podPhaseCountsMap      map[string]podPhaseCounts
+		podStatusCounts        map[string]podStatusCounts
+		podStatusWarning       *qbtypes.QueryWarnData
+	)
+
+	g, gCtx := errgroup.WithContext(ctx)
+
+	g.Go(func() error {
+		var err error
+		queryResp, err = m.querier.QueryRange(gCtx, orgID, fullQueryReq)
+		return err
+	})
+	g.Go(func() error {
+		var err error
+		nodeConditionCountsMap, err = m.getPerGroupNodeConditionCounts(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		return err
+	})
+	g.Go(func() error {
+		var err error
+		podPhaseCountsMap, err = m.getPerGroupPodPhaseCounts(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		return err
+	})
+	g.Go(func() error {
+		var err error
+		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		return err
+	})
+
+	if err := g.Wait(); err != nil {
 		return nil, err
 	}
 
-	podPhaseCountsMap, err := m.getPerGroupPodPhaseCounts(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
-	if err != nil {
-		return nil, err
-	}
-
-	resp.Records = buildClusterRecords(queryResp, pageGroups, req.GroupBy, metadataMap, nodeConditionCountsMap, podPhaseCountsMap)
-	resp.Warning = queryResp.Warning
+	resp.Records = buildClusterRecords(queryResp, pageGroups, req.GroupBy, metadataMap, nodeConditionCountsMap, podPhaseCountsMap, podStatusCounts)
+	resp.Warning = mergeQueryWarnings(queryResp.Warning, podStatusWarning)
 
 	return resp, nil
 }
@@ -705,18 +808,38 @@ func (m *module) ListDeployments(ctx context.Context, orgID valuer.UUID, req *in
 	}
 
 	fullQueryReq := buildFullQueryRequest(req.Start, req.End, filterExpr, req.GroupBy, pageGroups, m.newDeploymentsTableListQuery())
-	queryResp, err := m.querier.QueryRange(ctx, orgID, fullQueryReq)
-	if err != nil {
+
+	var (
+		queryResp        *qbtypes.QueryRangeResponse
+		phaseCounts      map[string]podPhaseCounts
+		podStatusCounts  map[string]podStatusCounts
+		podStatusWarning *qbtypes.QueryWarnData
+	)
+
+	g, gCtx := errgroup.WithContext(ctx)
+
+	g.Go(func() error {
+		var err error
+		queryResp, err = m.querier.QueryRange(gCtx, orgID, fullQueryReq)
+		return err
+	})
+	g.Go(func() error {
+		var err error
+		phaseCounts, err = m.getPerGroupPodPhaseCounts(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		return err
+	})
+	g.Go(func() error {
+		var err error
+		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		return err
+	})
+
+	if err := g.Wait(); err != nil {
 		return nil, err
 	}
 
-	phaseCounts, err := m.getPerGroupPodPhaseCounts(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
-	if err != nil {
-		return nil, err
-	}
-
-	resp.Records = buildDeploymentRecords(queryResp, pageGroups, req.GroupBy, metadataMap, phaseCounts)
-	resp.Warning = queryResp.Warning
+	resp.Records = buildDeploymentRecords(queryResp, pageGroups, req.GroupBy, metadataMap, phaseCounts, podStatusCounts)
+	resp.Warning = mergeQueryWarnings(queryResp.Warning, podStatusWarning)
 
 	return resp, nil
 }
@@ -788,20 +911,40 @@ func (m *module) ListStatefulSets(ctx context.Context, orgID valuer.UUID, req *i
 	}
 
 	fullQueryReq := buildFullQueryRequest(req.Start, req.End, filterExpr, req.GroupBy, pageGroups, m.newStatefulSetsTableListQuery())
-	queryResp, err := m.querier.QueryRange(ctx, orgID, fullQueryReq)
-	if err != nil {
-		return nil, err
-	}
 
 	// Pods owned by a StatefulSet carry k8s.statefulset.name as a resource attribute,
 	// so default-groupBy gives per-statefulset phase counts automatically.
-	phaseCounts, err := m.getPerGroupPodPhaseCounts(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
-	if err != nil {
+	var (
+		queryResp        *qbtypes.QueryRangeResponse
+		phaseCounts      map[string]podPhaseCounts
+		podStatusCounts  map[string]podStatusCounts
+		podStatusWarning *qbtypes.QueryWarnData
+	)
+
+	g, gCtx := errgroup.WithContext(ctx)
+
+	g.Go(func() error {
+		var err error
+		queryResp, err = m.querier.QueryRange(gCtx, orgID, fullQueryReq)
+		return err
+	})
+	g.Go(func() error {
+		var err error
+		phaseCounts, err = m.getPerGroupPodPhaseCounts(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		return err
+	})
+	g.Go(func() error {
+		var err error
+		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		return err
+	})
+
+	if err := g.Wait(); err != nil {
 		return nil, err
 	}
 
-	resp.Records = buildStatefulSetRecords(queryResp, pageGroups, req.GroupBy, metadataMap, phaseCounts)
-	resp.Warning = queryResp.Warning
+	resp.Records = buildStatefulSetRecords(queryResp, pageGroups, req.GroupBy, metadataMap, phaseCounts, podStatusCounts)
+	resp.Warning = mergeQueryWarnings(queryResp.Warning, podStatusWarning)
 
 	return resp, nil
 }
@@ -873,20 +1016,40 @@ func (m *module) ListJobs(ctx context.Context, orgID valuer.UUID, req *inframoni
 	}
 
 	fullQueryReq := buildFullQueryRequest(req.Start, req.End, filterExpr, req.GroupBy, pageGroups, m.newJobsTableListQuery())
-	queryResp, err := m.querier.QueryRange(ctx, orgID, fullQueryReq)
-	if err != nil {
-		return nil, err
-	}
 
 	// Pods owned by a Job carry k8s.job.name as a resource attribute, so default-groupBy
 	// gives per-job phase counts automatically.
-	phaseCounts, err := m.getPerGroupPodPhaseCounts(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
-	if err != nil {
+	var (
+		queryResp        *qbtypes.QueryRangeResponse
+		phaseCounts      map[string]podPhaseCounts
+		podStatusCounts  map[string]podStatusCounts
+		podStatusWarning *qbtypes.QueryWarnData
+	)
+
+	g, gCtx := errgroup.WithContext(ctx)
+
+	g.Go(func() error {
+		var err error
+		queryResp, err = m.querier.QueryRange(gCtx, orgID, fullQueryReq)
+		return err
+	})
+	g.Go(func() error {
+		var err error
+		phaseCounts, err = m.getPerGroupPodPhaseCounts(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		return err
+	})
+	g.Go(func() error {
+		var err error
+		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		return err
+	})
+
+	if err := g.Wait(); err != nil {
 		return nil, err
 	}
 
-	resp.Records = buildJobRecords(queryResp, pageGroups, req.GroupBy, metadataMap, phaseCounts)
-	resp.Warning = queryResp.Warning
+	resp.Records = buildJobRecords(queryResp, pageGroups, req.GroupBy, metadataMap, phaseCounts, podStatusCounts)
+	resp.Warning = mergeQueryWarnings(queryResp.Warning, podStatusWarning)
 
 	return resp, nil
 }
@@ -958,20 +1121,40 @@ func (m *module) ListDaemonSets(ctx context.Context, orgID valuer.UUID, req *inf
 	}
 
 	fullQueryReq := buildFullQueryRequest(req.Start, req.End, filterExpr, req.GroupBy, pageGroups, m.newDaemonSetsTableListQuery())
-	queryResp, err := m.querier.QueryRange(ctx, orgID, fullQueryReq)
-	if err != nil {
-		return nil, err
-	}
 
 	// Pods owned by a DaemonSet carry k8s.daemonset.name as a resource attribute,
 	// so default-groupBy gives per-daemonset phase counts automatically.
-	phaseCounts, err := m.getPerGroupPodPhaseCounts(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
-	if err != nil {
+	var (
+		queryResp        *qbtypes.QueryRangeResponse
+		phaseCounts      map[string]podPhaseCounts
+		podStatusCounts  map[string]podStatusCounts
+		podStatusWarning *qbtypes.QueryWarnData
+	)
+
+	g, gCtx := errgroup.WithContext(ctx)
+
+	g.Go(func() error {
+		var err error
+		queryResp, err = m.querier.QueryRange(gCtx, orgID, fullQueryReq)
+		return err
+	})
+	g.Go(func() error {
+		var err error
+		phaseCounts, err = m.getPerGroupPodPhaseCounts(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		return err
+	})
+	g.Go(func() error {
+		var err error
+		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		return err
+	})
+
+	if err := g.Wait(); err != nil {
 		return nil, err
 	}
 
-	resp.Records = buildDaemonSetRecords(queryResp, pageGroups, req.GroupBy, metadataMap, phaseCounts)
-	resp.Warning = queryResp.Warning
+	resp.Records = buildDaemonSetRecords(queryResp, pageGroups, req.GroupBy, metadataMap, phaseCounts, podStatusCounts)
+	resp.Warning = mergeQueryWarnings(queryResp.Warning, podStatusWarning)
 
 	return resp, nil
 }

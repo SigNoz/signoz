@@ -14,10 +14,12 @@ import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { isEmpty } from 'lodash-es';
+import { linkifyText } from 'utils/linkifyText';
 import { openInNewTab } from 'utils/navigation';
 
 import styles from './DashboardInfo.module.scss';
 import { useVisibleTagCount } from './useVisibleTagCount';
+import { DASHBOARD_NAME_MAX_LENGTH } from '../../constants';
 import { useDashboardStore } from '../../store/useDashboardStore';
 
 interface DashboardInfoProps {
@@ -98,7 +100,7 @@ function DashboardInfo({
 						autoFocus
 						value={draft}
 						testId="dashboard-title-input"
-						maxLength={120}
+						maxLength={DASHBOARD_NAME_MAX_LENGTH}
 						className={styles.dashboardTitleInput}
 						onChange={(e): void => onDraftChange(e.target.value)}
 						onKeyDown={onKeyDown}
@@ -143,7 +145,14 @@ function DashboardInfo({
 			)}
 
 			{hasDescription && (
-				<TooltipSimple title={description} disableHoverableContent>
+				<TooltipSimple
+					side="bottom"
+					title={
+						<span className={styles.descriptionTooltip}>
+							{linkifyText(description)}
+						</span>
+					}
+				>
 					<SolidInfoCircle
 						className={styles.descriptionIcon}
 						size={14}

@@ -51,7 +51,7 @@ describe('LLMObservabilityAttributeMapping', () => {
 		).resolves.toBeInTheDocument();
 	});
 
-	it('renders the header with its description and Save/Discard disabled by default', () => {
+	it('renders the header with its description and no Save/Discard while pristine', () => {
 		render(<LLMObservabilityAttributeMapping />);
 
 		expect(
@@ -59,8 +59,9 @@ describe('LLMObservabilityAttributeMapping', () => {
 				'Configure source-to-target attribute remapping for LLM traces',
 			),
 		).toBeInTheDocument();
-		expect(screen.getByTestId('save-changes-btn')).toBeDisabled();
-		expect(screen.getByTestId('discard-changes-btn')).toBeDisabled();
+		// The actions only appear once there are staged changes.
+		expect(screen.queryByTestId('save-changes-btn')).not.toBeInTheDocument();
+		expect(screen.queryByTestId('discard-changes-btn')).not.toBeInTheDocument();
 		expect(screen.queryByTestId('unsaved-changes')).not.toBeInTheDocument();
 	});
 });

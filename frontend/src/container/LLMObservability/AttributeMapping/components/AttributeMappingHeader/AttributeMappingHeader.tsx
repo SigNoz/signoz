@@ -21,32 +21,32 @@ function AttributeMappingHeader({
 			<Typography.Text as="p" size="base" color="muted">
 				Configure source-to-target attribute remapping for LLM traces
 			</Typography.Text>
-			<div className={styles.pageHeaderActions}>
-				{isDirty && (
+			{isDirty && (
+				<div className={styles.pageHeaderActions}>
 					<span className={styles.unsavedChanges} data-testid="unsaved-changes">
 						Unsaved changes
 					</span>
-				)}
-				<Button
-					variant="outlined"
-					color="secondary"
-					onClick={onDiscard}
-					disabled={!isDirty || isSaving}
-					testId="discard-changes-btn"
-				>
-					Discard
-				</Button>
-				<Button
-					variant="solid"
-					color="primary"
-					onClick={onSave}
-					loading={isSaving}
-					disabled={!isDirty || isSaving}
-					testId="save-changes-btn"
-				>
-					{isSaving ? 'Saving…' : 'Save changes'}
-				</Button>
-			</div>
+					<Button
+						variant="outlined"
+						color="secondary"
+						onClick={onDiscard}
+						disabled={isSaving}
+						testId="discard-changes-btn"
+					>
+						Discard
+					</Button>
+					<Button
+						variant="solid"
+						color="primary"
+						onClick={onSave}
+						loading={isSaving}
+						disabled={isSaving}
+						testId="save-changes-btn"
+					>
+						{isSaving ? 'Saving…' : 'Save changes'}
+					</Button>
+				</div>
+			)}
 		</header>
 	);
 }

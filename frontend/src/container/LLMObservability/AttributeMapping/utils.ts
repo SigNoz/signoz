@@ -1,27 +1,26 @@
 import {
 	SpantypesPostableSpanMapperGroupDTO,
+	SpantypesSpanMapperDTO,
 	SpantypesUpdatableSpanMapperGroupDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { v4 as uuid } from 'uuid';
 
 import {
-	ConditionFilter,
 	DraftGroup,
-	DraftMapper,
 	GroupDraft,
-	Mapper,
 	MapperGroup,
+	Mapping,
 	SourceConfig,
 } from './types';
 
 // Client-side id for not-yet-persisted rows. Prefixed so it never collides
 // with a server UUID and is easy to spot in logs.
-export function genLocalId(prefix: 'group' | 'mapper'): string {
+function genLocalId(prefix: 'group' | 'mapper'): string {
 	return `local-${prefix}-${uuid()}`;
 }
 
 // Trimmed, de-duplicated, non-empty keys preserving input order.
-export function cleanKeys(keys: string[]): string[] {
+function cleanKeys(keys: string[]): string[] {
 	const seen = new Set<string>();
 	const result: string[] = [];
 	keys.forEach((raw) => {
@@ -34,30 +33,9 @@ export function cleanKeys(keys: string[]): string[] {
 	return result;
 }
 
-// Display clauses for a group's condition keys (span attribute keys first,
-// then resource keys).
-export function conditionFiltersFromGroup(group: {
-	attributes?: string[];
-	resource?: string[];
-}): ConditionFilter[] {
-	// TanStackTable renders skeleton placeholder rows through the cells on first
-	// render, so these arrays can be undefined before real data lands — default
-	// to empty rather than crashing the cell.
-	return [
-		...(group.attributes ?? []).map((key) => ({
-			context: 'attribute' as const,
-			key,
-		})),
-		...(group.resource ?? []).map((key) => ({
-			context: 'resource' as const,
-			key,
-		})),
-	];
-}
-
 // Source configs for a mapper, highest priority first (first match wins at
 // evaluation time).
-export function getMapperSources(mapper: Mapper): SourceConfig[] {
+function getMapperSources(mapper: SpantypesSpanMapperDTO): SourceConfig[] {
 	const sources = mapper.config?.sources ?? [];
 	return [...sources]
 		.sort((a, b) => b.priority - a.priority)
@@ -66,6 +44,17 @@ export function getMapperSources(mapper: Mapper): SourceConfig[] {
 			context: source.context,
 			operation: source.operation,
 		}));
+}
+
+// Server mapper DTO -> read-only row model (see GroupMappers).
+export function buildMapping(mapper: SpantypesSpanMapperDTO): Mapping {
+	return {
+		id: mapper.id,
+		name: mapper.name,
+		fieldContext: mapper.fieldContext,
+		sources: getMapperSources(mapper),
+		enabled: mapper.enabled,
+	};
 }
 
 // ---- group form helpers ----
@@ -103,23 +92,9 @@ export function buildUpdatableGroup(
 	return buildPostableGroup(draft);
 }
 
-// ---- working-copy (draft tree) helpers ----
+// ---- working-copy (draft list) helpers ----
 
-export function buildDraftMapper(mapper: Mapper): DraftMapper {
-	return {
-		localId: mapper.id,
-		serverId: mapper.id,
-		name: mapper.name,
-		fieldContext: mapper.fieldContext,
-		sources: getMapperSources(mapper),
-		enabled: mapper.enabled,
-	};
-}
-
-export function buildDraftGroup(
-	group: MapperGroup,
-	mappers: Mapper[],
-): DraftGroup {
+export function buildDraftGroup(group: MapperGroup): DraftGroup {
 	return {
 		localId: group.id,
 		serverId: group.id,
@@ -127,7 +102,6 @@ export function buildDraftGroup(
 		attributes: group.condition?.attributes ?? [],
 		resource: group.condition?.resource ?? [],
 		enabled: group.enabled,
-		mappers: mappers.map(buildDraftMapper),
 	};
 }
 
@@ -142,7 +116,7 @@ export function groupDraftFromNode(group: DraftGroup): GroupDraft {
 	};
 }
 
-// Form state -> working-copy node. Reuses cleanKeys so the staged tree already
+// Form state -> working-copy node. Reuses cleanKeys so the staged list already
 // holds normalized values.
 export function nodeFromGroupDraft(
 	draft: GroupDraft,
@@ -155,6 +129,5 @@ export function nodeFromGroupDraft(
 		attributes: cleanKeys(draft.attributes),
 		resource: cleanKeys(draft.resource),
 		enabled: draft.enabled,
-		mappers: existing?.mappers ?? [],
 	};
 }

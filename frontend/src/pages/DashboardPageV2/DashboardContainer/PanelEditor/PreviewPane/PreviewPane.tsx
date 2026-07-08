@@ -5,6 +5,7 @@ import { PanelMode } from 'container/DashboardContainer/visualization/panels/typ
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import PanelBody from 'pages/DashboardPageV2/DashboardContainer/PanelsAndSectionsLayout/Panel/PanelBody/PanelBody';
 import PanelHeader from 'pages/DashboardPageV2/DashboardContainer/PanelsAndSectionsLayout/Panel/PanelHeader/PanelHeader';
+import type { AnyPanelInteractionProps } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/interactions';
 import type { RenderablePanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelDefinition';
 import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
 import type { DashboardPreference } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/rendererProps';
@@ -42,6 +43,10 @@ interface PreviewPaneProps {
 	dashboardPreference?: DashboardPreference;
 	/** Close the standalone View modal — forwarded to the time-series/bar graph manager. */
 	onCloseStandaloneView?: () => void;
+	/** Opens the drill-down context menu; only the View modal wires it (the editor preview omits it). */
+	onClick?: AnyPanelInteractionProps['onClick'];
+	/** Arms the drill-down click on interactive renderers — the View modal enables it, the editor doesn't. */
+	enableDrillDown?: boolean;
 }
 
 /**
@@ -64,6 +69,8 @@ function PreviewPane({
 	hideHeader = false,
 	dashboardPreference,
 	onCloseStandaloneView,
+	onClick,
+	enableDrillDown,
 }: PreviewPaneProps): JSX.Element {
 	const panelType = PANEL_KIND_TO_PANEL_TYPE[panel.spec.plugin.kind];
 	const queryType = getPanelQueryType(panel);
@@ -96,6 +103,7 @@ function PreviewPane({
 					<PanelHeader
 						panelId={panelId}
 						panel={panel}
+						data={data}
 						isFetching={isFetching}
 						error={error}
 						warning={data.response?.data?.warning}
@@ -119,6 +127,8 @@ function PreviewPane({
 						searchTerm={searchable ? searchTerm : undefined}
 						pagination={pagination}
 						onCloseStandaloneView={onCloseStandaloneView}
+						onClick={onClick}
+						enableDrillDown={enableDrillDown}
 					/>
 				</div>
 			</div>

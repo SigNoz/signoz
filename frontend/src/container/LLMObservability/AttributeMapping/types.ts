@@ -1,6 +1,5 @@
 import {
 	SpantypesFieldContextDTO,
-	SpantypesSpanMapperDTO,
 	SpantypesSpanMapperGroupDTO,
 	SpantypesSpanMapperOperationDTO,
 } from 'api/generated/services/sigNoz.schemas';
@@ -9,15 +8,8 @@ import {
 // the generated types directly, but the group-drawer form code reads better
 // against these domain names (and FieldContext is used as a value/enum).
 export type MapperGroup = SpantypesSpanMapperGroupDTO;
-export type Mapper = SpantypesSpanMapperDTO;
 export const FieldContext = SpantypesFieldContextDTO;
 export type FieldContextValue = SpantypesFieldContextDTO;
-
-// A single human-readable condition clause shown in the group's Filters column.
-export interface ConditionFilter {
-	context: 'attribute' | 'resource';
-	key: string;
-}
 
 export type MapperDraftMode = 'add' | 'edit';
 
@@ -28,6 +20,16 @@ export interface SourceConfig {
 	key: string;
 	context: SpantypesFieldContextDTO;
 	operation: SpantypesSpanMapperOperationDTO;
+}
+
+// Read-only view model for a mapper row. Mappers are fetched lazily per group
+// (see GroupMappers) and rendered as-is — mapper editing lands in a later PR.
+export interface Mapping {
+	id: string;
+	name: string;
+	fieldContext: SpantypesFieldContextDTO;
+	sources: SourceConfig[];
+	enabled: boolean;
 }
 
 // Editable form state for a group. The group runs when a span carries a
@@ -41,20 +43,10 @@ export interface GroupDraft {
 	enabled: boolean;
 }
 
-// Working-copy node for a mapper. `localId` is a stable client key (the server
+// Working-copy node for a group. `localId` is a stable client key (the server
 // id once persisted, or a temporary id for not-yet-saved rows). `serverId` is
-// null until the row has been persisted.
-export interface DraftMapper {
-	localId: string;
-	serverId: string | null;
-	name: string;
-	fieldContext: SpantypesFieldContextDTO;
-	sources: SourceConfig[];
-	enabled: boolean;
-}
-
-// Working-copy node for a group, holding its mappers inline so the whole tree
-// can be staged locally and diffed against the server snapshot on save.
+// null until the group has been persisted. The whole list is staged locally
+// and diffed against the server snapshot on save (see saveDraft).
 export interface DraftGroup {
 	localId: string;
 	serverId: string | null;
@@ -62,5 +54,4 @@ export interface DraftGroup {
 	attributes: string[];
 	resource: string[];
 	enabled: boolean;
-	mappers: DraftMapper[];
 }

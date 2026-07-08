@@ -1,0 +1,40 @@
+import { Switch } from '@signozhq/ui/switch';
+
+import { DraftGroup } from 'container/LLMObservability/AttributeMapping/types';
+import GroupActionsMenu from '../GroupActionsMenu';
+import styles from './GroupHeaderActions.module.scss';
+
+interface GroupHeaderActionsProps {
+	group: DraftGroup;
+	onToggle: (localId: string, enabled: boolean) => void;
+	onEdit: (group: DraftGroup) => void;
+	onRemove: (localId: string) => void;
+}
+
+// The enable/disable toggle stays inline in the header (it's the primary,
+// high-frequency action); the lower-frequency Edit and Delete actions live
+// behind the kebab to keep the row compact. The wrapper swallows clicks so
+// they don't also toggle the Collapse panel.
+function GroupHeaderActions({
+	group,
+	onToggle,
+	onEdit,
+	onRemove,
+}: GroupHeaderActionsProps): JSX.Element {
+	return (
+		// eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events
+		<div
+			className={styles.actions}
+			onClick={(event): void => event.stopPropagation()}
+		>
+			<Switch
+				value={group.enabled}
+				onChange={(checked): void => onToggle(group.localId, checked)}
+				testId={`group-enabled-${group.localId}`}
+			/>
+			<GroupActionsMenu group={group} onEdit={onEdit} onRemove={onRemove} />
+		</div>
+	);
+}
+
+export default GroupHeaderActions;

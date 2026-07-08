@@ -1,18 +1,14 @@
-/*
- * jsx-a11y/control-has-associated-label mis-fires on the non-interactive
- * skeleton rows below (a `<tr>`/`<td>` is not a control). The interactive
- * elements in this table carry their own labels.
- */
-/* eslint-disable jsx-a11y/control-has-associated-label */
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@signozhq/ui/button';
-import { Plus } from '@signozhq/icons';
-import { Skeleton } from 'antd';
+import { ChevronDown, ChevronRight, Plus } from '@signozhq/icons';
+import { Collapse, type CollapseProps, Skeleton } from 'antd';
 
-import { DraftGroup } from '../../../types';
-import { AttributeMappingStore } from '../../hooks/useAttributeMappingStore';
-import { COLUMN_COUNT } from './constants';
-import GroupSection from './GroupSection';
+import { DraftGroup } from 'container/LLMObservability/AttributeMapping/types';
+import { AttributeMappingStore } from 'container/LLMObservability/AttributeMapping/AttributeMappingsTab/hooks/useAttributeMappingStore';
+import GroupHeader from './GroupHeader';
+import GroupHeaderActions from './GroupHeaderActions';
+import GroupMappers from './GroupMappers';
+import MappingsColgroup from './MappingsColgroup';
 import styles from './MappingsTable.module.scss';
 
 const SKELETON_ROW_COUNT = 5;
@@ -23,33 +19,56 @@ interface MappingsTableProps {
 	onAddGroup: () => void;
 }
 
-// Single, GitHub-style listing: one table with one header, groups as collapsible
-// full-width header rows, and each group's mappers rendered as rows aligned to
-// the shared columns (replacing the old outer-groups + nested-mappers double
-// table).
 function MappingsTable({
 	store,
 	onEditGroup,
 	onAddGroup,
 }: MappingsTableProps): JSX.Element {
-	const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
-
-	const toggleExpanded = useCallback((localId: string): void => {
-		setExpandedGroups((prev) => {
-			const next = new Set(prev);
-			if (next.has(localId)) {
-				next.delete(localId);
-			} else {
-				next.add(localId);
-			}
-			return next;
-		});
-	}, []);
+	const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
 
 	const isEmpty = !store.isLoading && store.groups.length === 0;
 
+	const items: CollapseProps['items'] = store.groups.map((group) => ({
+		key: group.localId,
+		label: <GroupHeader group={group} />,
+		extra: (
+			<GroupHeaderActions
+				group={group}
+				onToggle={store.toggleGroup}
+				onEdit={onEditGroup}
+				onRemove={store.removeGroup}
+			/>
+		),
+		children: <GroupMappers group={group} />,
+	}));
+
+	const skeletonBanners = (
+		<div className={styles.skeletonList}>
+			{Array.from({ length: SKELETON_ROW_COUNT }).map((_, index) => (
+				<div
+					// eslint-disable-next-line react/no-array-index-key
+					key={`group-skeleton-${index}`}
+					className={styles.skeletonBanner}
+				>
+					<div className={styles.skeletonGroupLeft}>
+						<Skeleton.Avatar active size={14} shape="square" />
+						<Skeleton.Input
+							active
+							size="small"
+							style={{ width: index % 2 === 0 ? 200 : 140 }}
+						/>
+						<Skeleton.Input active size="small" style={{ width: 64 }} />
+					</div>
+					<div className={styles.skeletonGroupRight}>
+						<Skeleton.Button active size="small" shape="round" />
+					</div>
+				</div>
+			))}
+		</div>
+	);
+
 	return (
-		<div className={styles.tableWrapper}>
+		<div data-testid="mappings-table">
 			<div className={styles.toolbar}>
 				<Button
 					variant="link"
@@ -68,62 +87,36 @@ function MappingsTable({
 					No mapping groups yet.
 				</div>
 			) : (
-				<table className={styles.table} data-testid="mappings-table">
-					<colgroup>
-						<col className={styles.colTarget} />
-						<col />
-						<col className={styles.colWritesTo} />
-						<col className={styles.colStatus} />
-					</colgroup>
-					<thead>
-						<tr className={styles.headerRow}>
-							<th className={styles.headerCell}>Target</th>
-							<th className={styles.headerCell}>Sources</th>
-							<th className={styles.headerCell}>Writes to</th>
-							<th className={styles.headerCell}>Status</th>
-						</tr>
-					</thead>
+				<>
+					<table className={styles.table}>
+						<MappingsColgroup />
+						<thead>
+							<tr className={styles.headerRow}>
+								<th className={styles.headerCell}>Target</th>
+								<th className={styles.headerCell}>Sources</th>
+								<th className={styles.headerCell}>Writes to</th>
+								<th className={styles.headerCell}>Status</th>
+							</tr>
+						</thead>
+					</table>
 					{store.isLoading ? (
-						<tbody>
-							{Array.from({ length: SKELETON_ROW_COUNT }).map((_, index) => (
-								<tr
-									// eslint-disable-next-line react/no-array-index-key
-									key={`group-skeleton-${index}`}
-									className={styles.groupHeaderRow}
-								>
-									<td colSpan={COLUMN_COUNT} className={styles.groupHeaderCell}>
-										<div className={styles.skeletonGroupHeader}>
-											<div className={styles.skeletonGroupLeft}>
-												<Skeleton.Avatar active size={14} shape="square" />
-												<Skeleton.Input
-													active
-													size="small"
-													style={{ width: index % 2 === 0 ? 200 : 140 }}
-												/>
-												<Skeleton.Input active size="small" style={{ width: 64 }} />
-											</div>
-											<div className={styles.skeletonGroupRight}>
-												<Skeleton.Button active size="small" shape="round" />
-												<Skeleton.Avatar active size={16} shape="square" />
-											</div>
-										</div>
-									</td>
-								</tr>
-							))}
-						</tbody>
+						skeletonBanners
 					) : (
-						store.groups.map((group) => (
-							<GroupSection
-								key={group.localId}
-								group={group}
-								store={store}
-								expanded={expandedGroups.has(group.localId)}
-								onToggleExpanded={toggleExpanded}
-								onEditGroup={onEditGroup}
-							/>
-						))
+						<Collapse
+							className={styles.groupsCollapse}
+							activeKey={expandedGroups}
+							onChange={(keys): void =>
+								setExpandedGroups(Array.isArray(keys) ? keys : [keys])
+							}
+							bordered={false}
+							destroyInactivePanel
+							expandIcon={({ isActive }): JSX.Element =>
+								isActive ? <ChevronDown size={14} /> : <ChevronRight size={14} />
+							}
+							items={items}
+						/>
 					)}
-				</table>
+				</>
 			)}
 		</div>
 	);

@@ -39,6 +39,8 @@ interface Props {
 	dashboardName: string;
 	createdBy: string;
 	isLocked: boolean;
+	// Edit permission (edit_dashboard). Read actions show regardless; edit actions are hidden without it.
+	canEdit: boolean;
 	onView: (event: React.MouseEvent<HTMLElement>) => void;
 }
 
@@ -48,6 +50,7 @@ function ActionsPopover({
 	dashboardName,
 	createdBy,
 	isLocked,
+	canEdit,
 	onView,
 }: Props): JSX.Element {
 	const [, setCopy] = useCopyToClipboard();
@@ -135,45 +138,49 @@ function ActionsPopover({
 						>
 							Copy Link
 						</Button>
-						<Tooltip
-							placement="left"
-							title={
-								isLocked ? 'This dashboard is locked, so it cannot be renamed.' : ''
-							}
-						>
-							<span className={styles.menuItemWrap}>
-								<Button
-									color="secondary"
-									className={styles.menuItem}
-									prefix={<PenLine size={14} />}
-									disabled={isLocked}
-									onClick={(e): void => {
-										e.stopPropagation();
-										e.preventDefault();
-										if (!isLocked) {
-											setIsRenameOpen(true);
-										}
-									}}
-									testId="dashboard-action-rename"
-								>
-									Rename
-								</Button>
-							</span>
-						</Tooltip>
-						<Button
-							color="secondary"
-							className={styles.menuItem}
-							prefix={<Copy size={14} />}
-							loading={isCloning}
-							onClick={(e): void => {
-								e.stopPropagation();
-								e.preventDefault();
-								runClone();
-							}}
-							testId="dashboard-action-duplicate"
-						>
-							Duplicate
-						</Button>
+						{canEdit && (
+							<Tooltip
+								placement="left"
+								title={
+									isLocked ? 'This dashboard is locked, so it cannot be renamed.' : ''
+								}
+							>
+								<span className={styles.menuItemWrap}>
+									<Button
+										color="secondary"
+										className={styles.menuItem}
+										prefix={<PenLine size={14} />}
+										disabled={isLocked}
+										onClick={(e): void => {
+											e.stopPropagation();
+											e.preventDefault();
+											if (!isLocked) {
+												setIsRenameOpen(true);
+											}
+										}}
+										testId="dashboard-action-rename"
+									>
+										Rename
+									</Button>
+								</span>
+							</Tooltip>
+						)}
+						{canEdit && (
+							<Button
+								color="secondary"
+								className={styles.menuItem}
+								prefix={<Copy size={14} />}
+								loading={isCloning}
+								onClick={(e): void => {
+									e.stopPropagation();
+									e.preventDefault();
+									runClone();
+								}}
+								testId="dashboard-action-duplicate"
+							>
+								Duplicate
+							</Button>
+						)}
 						{canToggleLock && (
 							<Button
 								color="secondary"
@@ -190,12 +197,14 @@ function ActionsPopover({
 								{isLocked ? 'Unlock Dashboard' : 'Lock Dashboard'}
 							</Button>
 						)}
-						<DeleteActionItem
-							dashboardId={dashboardId}
-							dashboardName={dashboardName}
-							createdBy={createdBy}
-							isLocked={isLocked}
-						/>
+						{canEdit && (
+							<DeleteActionItem
+								dashboardId={dashboardId}
+								dashboardName={dashboardName}
+								createdBy={createdBy}
+								isLocked={isLocked}
+							/>
+						)}
 					</div>
 				}
 				placement="bottomRight"

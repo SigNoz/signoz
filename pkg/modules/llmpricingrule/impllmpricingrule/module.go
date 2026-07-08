@@ -29,7 +29,7 @@ type module struct {
 }
 
 func NewModule(store llmpricingruletypes.Store, flagger flagger.Flagger, querier querier.Querier) llmpricingrule.Module {
-	return &module{store: store, flagger: flagger}
+	return &module{store: store, flagger: flagger, querier: querier}
 }
 
 func (module *module) List(ctx context.Context, orgID valuer.UUID, offset, limit int, search string, isOverride *bool) ([]*llmpricingruletypes.LLMPricingRule, int, error) {
