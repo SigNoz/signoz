@@ -343,6 +343,18 @@
 .searchSelect {
 	width: 240px;
 	flex-shrink: 0;
+
+	// The clear (X) is an SVG, so antd's font-glyph offset mis-centers it — center
+	// it on the row and make it clearly visible.
+	:global(.ant-select-clear) {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		margin-top: 0;
+		transform: translateY(-50%);
+		color: var(--l2-foreground);
+		opacity: 1;
+	}
 }
 
 /* Dynamic variable: field | "from" | info | source, retained from V1. */

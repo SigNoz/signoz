@@ -52,9 +52,8 @@ function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 	const { containerRef, visibleCount, overflowCount } = useInlineOverflowCount({
 		itemCount: variables.length,
 		gap: 8,
-		// Reserve the trailing line space: the "+N" trigger, plus the always-present
-		// add-variable "+" when editable, so the collapse math accounts for both.
-		reserveWidth: isEditable ? 88 : 48,
+		// Reserve room for the "+N" trigger and the add "+" so both stay on one line.
+		reserveWidth: isEditable ? 112 : 48,
 		enabled: !expanded,
 	});
 

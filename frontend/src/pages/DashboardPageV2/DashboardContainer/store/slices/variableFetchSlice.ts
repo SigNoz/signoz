@@ -6,6 +6,7 @@ import {
 	areAllQueryVariablesSettled,
 	type FetchMaps,
 	isSettled,
+	isVariableInActiveFetchState,
 	resolveFetchState,
 	unlockWaitingDynamicVariables,
 	VariableFetchState,
@@ -114,6 +115,17 @@ export const createVariableFetchSlice: StateCreator<
 				: resolveFetchState(maps, name);
 		});
 
+		// Query variables dropped from the dependency order (part of a cycle) would
+		// otherwise never fetch and would stall waiting dynamics — start them as
+		// best-effort roots so they surface data/an error instead of sitting empty.
+		const orderedQuery = new Set(queryVariableOrder);
+		Object.keys(variableTypes).forEach((name) => {
+			if (variableTypes[name] === 'QUERY' && !orderedQuery.has(name)) {
+				maps.cycleIds[name] = (maps.cycleIds[name] || 0) + 1;
+				maps.states[name] = resolveFetchState(maps, name);
+			}
+		});
+
 		// Dynamic variables: start now if query variables already have values,
 		// otherwise wait until the query variables settle.
 		dynamicVariableOrder.forEach((name) => {
@@ -131,6 +143,11 @@ export const createVariableFetchSlice: StateCreator<
 	},
 
 	onVariableFetchComplete: (name): void => {
+		// Ignore a stale/late settle for a variable no longer fetching, so a
+		// superseded cycle can't overwrite fresh state (V1 parity).
+		if (!isVariableInActiveFetchState(get().variableFetchStates[name])) {
+			return;
+		}
 		const { variableFetchContext } = get();
 		const maps = cloneMaps(get());
 		maps.states[name] = VariableFetchState.Idle;
@@ -139,12 +156,17 @@ export const createVariableFetchSlice: StateCreator<
 		if (variableFetchContext) {
 			const { dependencyData, variableTypes, dynamicVariableOrder } =
 				variableFetchContext;
-			// Unblock waiting query-type children.
+			// Unblock a waiting query child only once ALL its parents are settled —
+			// otherwise it would fetch against a not-yet-resolved parent.
 			(dependencyData.graph[name] || []).forEach((child) => {
 				if (
-					variableTypes[child] === 'QUERY' &&
-					maps.states[child] === VariableFetchState.Waiting
+					variableTypes[child] !== 'QUERY' ||
+					maps.states[child] !== VariableFetchState.Waiting
 				) {
+					return;
+				}
+				const parents = dependencyData.parentGraph[child] || [];
+				if (parents.every((p) => isSettled(maps.states[p]))) {
 					maps.states[child] = resolveFetchState(maps, child);
 				}
 			});
@@ -165,6 +187,9 @@ export const createVariableFetchSlice: StateCreator<
 	},
 
 	onVariableFetchFailure: (name): void => {
+		if (!isVariableInActiveFetchState(get().variableFetchStates[name])) {
+			return;
+		}
 		const { variableFetchContext } = get();
 		const maps = cloneMaps(get());
 		maps.states[name] = VariableFetchState.Error;
@@ -205,13 +230,14 @@ export const createVariableFetchSlice: StateCreator<
 		const { dependencyData, variableTypes, dynamicVariableOrder } =
 			variableFetchContext;
 		const maps = cloneMaps(get());
+		const changed = new Set(names);
 
-		// Union of the changed variables' query descendants, refreshed once each:
-		// refetch when all their parents are settled, else wait.
+		// Union of the changed variables' query descendants (never the changed ones
+		// themselves), refreshed once each: refetch when all parents are settled.
 		const queryDescendants = new Set<string>();
 		names.forEach((name) => {
 			(dependencyData.transitiveDescendants[name] || []).forEach((desc) => {
-				if (variableTypes[desc] === 'QUERY') {
+				if (variableTypes[desc] === 'QUERY' && !changed.has(desc)) {
 					queryDescendants.add(desc);
 				}
 			});
@@ -225,17 +251,22 @@ export const createVariableFetchSlice: StateCreator<
 				: VariableFetchState.Waiting;
 		});
 
-		// Dynamics implicitly depend on all query values: refetch now if the query
-		// variables are settled, otherwise wait for them.
-		dynamicVariableOrder.forEach((dynName) => {
-			maps.cycleIds[dynName] = (maps.cycleIds[dynName] || 0) + 1;
-			maps.states[dynName] = areAllQueryVariablesSettled(
-				maps.states,
-				variableTypes,
-			)
-				? resolveFetchState(maps, dynName)
-				: VariableFetchState.Waiting;
-		});
+		// A dynamic's options depend only on its sibling DYNAMIC selections, so only a
+		// dynamic change affects them — refresh the *other* dynamics (never the one
+		// that changed, which would refetch its own identical options).
+		if (names.some((name) => variableTypes[name] === 'DYNAMIC')) {
+			dynamicVariableOrder
+				.filter((dynName) => !changed.has(dynName))
+				.forEach((dynName) => {
+					maps.cycleIds[dynName] = (maps.cycleIds[dynName] || 0) + 1;
+					maps.states[dynName] = areAllQueryVariablesSettled(
+						maps.states,
+						variableTypes,
+					)
+						? resolveFetchState(maps, dynName)
+						: VariableFetchState.Waiting;
+				});
+		}
 
 		set({
 			variableFetchStates: maps.states,
