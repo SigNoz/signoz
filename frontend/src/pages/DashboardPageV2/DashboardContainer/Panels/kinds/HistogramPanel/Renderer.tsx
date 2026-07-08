@@ -20,15 +20,14 @@ import { getBuilderQueries } from '../../utils/getBuilderQueries';
 
 import { buildHistogramConfig } from './utils/buildConfig';
 import { prepareHistogramData } from './prepareData';
-import { ChartClickData } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 
 function HistogramPanelRenderer({
 	panelId,
 	panel,
 	data,
+	isFetching,
 	refetch,
 	panelMode,
-	onClick,
 }: PanelRendererProps<'signoz/HistogramPanel'>): JSX.Element {
 	const graphRef = useRef<HTMLDivElement>(null);
 	const containerDimensions = useResizeObserver(graphRef);
@@ -100,20 +99,15 @@ function HistogramPanelRenderer({
 
 	const isQueriesMerged = spec.histogramBuckets?.mergeAllActiveQueries ?? false;
 
-	const handleChartClick = useCallback(
-		(args: ChartClickData) => {
-			onClick?.(args);
-		},
-		[onClick],
-	);
-
 	return (
 		<div
 			ref={graphRef}
 			data-testid="histogram-panel-renderer"
 			className={PanelStyles.panelContainer}
 		>
-			{flatSeries.length === 0 && <NoData onRetry={refetch} />}
+			{flatSeries.length === 0 && (
+				<NoData isFetching={isFetching} onRetry={refetch} />
+			)}
 			{flatSeries.length > 0 &&
 				containerDimensions.width > 0 &&
 				containerDimensions.height > 0 && (
@@ -127,7 +121,6 @@ function HistogramPanelRenderer({
 						width={containerDimensions.width}
 						height={containerDimensions.height}
 						renderTooltipFooter={renderTooltipFooter}
-						onClick={handleChartClick}
 					/>
 				)}
 		</div>

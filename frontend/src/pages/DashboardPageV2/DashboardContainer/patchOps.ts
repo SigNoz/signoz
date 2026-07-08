@@ -12,7 +12,7 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 
 import type { PanelKind } from './Panels/types/panelKind';
-import type { DefaultPluginSpec } from './Panels/utils/buildDefaultPluginSpec';
+import type { SeededPluginSpec } from './Panels/utils/buildPluginSpec';
 import type { GridItem } from './utils';
 
 /**
@@ -36,7 +36,7 @@ export function panelRef(panelId: string): string {
  */
 export function createDefaultPanel(
 	pluginKind: PanelKind,
-	pluginSpec: DefaultPluginSpec = {},
+	pluginSpec: SeededPluginSpec = {},
 	queries: DashboardtypesQueryDTO[] = [],
 ): DashboardtypesPanelDTO {
 	return {
@@ -96,6 +96,42 @@ export function addSectionOp(
 	title: string,
 ): DashboardtypesJSONPatchOperationDTO {
 	return { op: add, path: '/spec/layouts/-', value: newGridLayout(title) };
+}
+
+interface ClonedSectionPanel {
+	newId: string;
+	/** Deep-copied source panel spec (caller owns the clone). */
+	panel: DashboardtypesPanelDTO;
+	x: number;
+	y: number;
+	width: number;
+	height: number;
+}
+
+/** Clone a section: add fresh panel copies and append a titled Grid referencing them. */
+export function cloneSectionOps(
+	title: string,
+	panels: ClonedSectionPanel[],
+): DashboardtypesJSONPatchOperationDTO[] {
+	const panelOps = panels.map((p) => ({
+		op: add,
+		path: `/spec/panels/${p.newId}`,
+		value: p.panel,
+	}));
+	const layout: DashboardtypesLayoutDTO = {
+		kind: 'Grid' as DashboardtypesLayoutDTO['kind'],
+		spec: {
+			display: { title },
+			items: panels.map((p) => ({
+				x: p.x,
+				y: p.y,
+				width: p.width,
+				height: p.height,
+				content: { $ref: panelRef(p.newId) },
+			})),
+		},
+	};
+	return [...panelOps, { op: add, path: '/spec/layouts/-', value: layout }];
 }
 
 interface AddPanelToSectionArgs {

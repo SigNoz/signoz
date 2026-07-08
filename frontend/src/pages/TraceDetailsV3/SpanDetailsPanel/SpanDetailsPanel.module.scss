@@ -60,6 +60,21 @@
 	}
 }
 
+// The Badge is already pill-rounded, so an 18x18 box renders a circle for a
+// single digit and a capsule for more.
+.eventsBadge {
+	// l3 background (!important beats the Badge's [data-color] rule).
+	--badge-background: var(--l3-background) !important;
+	--badge-padding: 0 5px;
+	// Static count, not interactive — cancel the Badge's hover background change.
+	--badge-hover-background: var(--badge-background) !important;
+
+	margin-left: var(--spacing-3);
+	min-width: 18px;
+	height: 18px;
+	vertical-align: middle;
+}
+
 .tabsScroll {
 	flex: 1;
 	min-height: 0;

@@ -193,5 +193,6 @@ func newProvider(
 		bucketCache,
 		flagger,
 		cfg.LogTraceIDWindowPadding,
+		cfg.MaxConcurrentQueries,
 	), nil
 }

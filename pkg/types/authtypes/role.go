@@ -11,13 +11,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/uptrace/bun"
 )
 
 var (
 	ErrCodeRoleInvalidInput                 = errors.MustNewCode("role_invalid_input")
-	ErrCodeRoleEmptyPatch                   = errors.MustNewCode("role_empty_patch")
 	ErrCodeInvalidTypeRelation              = errors.MustNewCode("role_invalid_type_relation")
 	ErrCodeRoleNotFound                     = errors.MustNewCode("role_not_found")
 	ErrCodeRoleAlreadyExists                = errors.MustNewCode("role_already_exists")
@@ -90,10 +88,6 @@ type UpdatableRole struct {
 	TransactionGroups TransactionGroups `json:"transactionGroups" required:"true" nullable:"false"`
 }
 
-type PatchableRole struct {
-	Description string `json:"description" required:"true"`
-}
-
 func NewRole(name, description string, roleType valuer.String, orgID valuer.UUID) *Role {
 	return &Role{
 		Identifiable: types.Identifiable{
@@ -148,17 +142,6 @@ func NewStatsFromRoles(roles []*Role) map[string]any {
 	}
 	stats["role.count"] = int64(len(roles))
 	return stats
-}
-
-func (role *Role) PatchMetadata(description string) error {
-	err := role.ErrIfManaged()
-	if err != nil {
-		return err
-	}
-
-	role.Description = description
-	role.UpdatedAt = time.Now()
-	return nil
 }
 
 func (role *RoleWithTransactionGroups) Update(description string, transactionGroups TransactionGroups) error {
@@ -245,73 +228,6 @@ func (role *UpdatableRole) UnmarshalJSON(data []byte) error {
 	role.Description = *shadow.Description
 	role.TransactionGroups = transactionGroups
 	return nil
-}
-
-func (role *PatchableRole) UnmarshalJSON(data []byte) error {
-	type shadowPatchableRole struct {
-		Description string `json:"description"`
-	}
-
-	var shadowRole shadowPatchableRole
-	if err := json.Unmarshal(data, &shadowRole); err != nil {
-		return err
-	}
-
-	if shadowRole.Description == "" {
-		return errors.New(errors.TypeInvalidInput, ErrCodeRoleEmptyPatch, "empty role patch request received, description must be present")
-	}
-
-	role.Description = shadowRole.Description
-
-	return nil
-}
-
-func GetAdditionTuples(name string, orgID valuer.UUID, relation Relation, additions []*coretypes.Object) ([]*openfgav1.TupleKey, error) {
-	tuples := make([]*openfgav1.TupleKey, 0)
-
-	for _, object := range additions {
-		resource := coretypes.MustNewResourceFromTypeAndKind(object.Resource.Type, object.Resource.Kind)
-		transactionTuples := NewTuples(
-			resource,
-			MustNewSubject(
-				coretypes.NewResourceRole(),
-				name,
-				orgID,
-				&coretypes.VerbAssignee,
-			),
-			relation,
-			[]coretypes.Selector{object.Selector},
-			orgID,
-		)
-
-		tuples = append(tuples, transactionTuples...)
-	}
-
-	return tuples, nil
-}
-
-func GetDeletionTuples(name string, orgID valuer.UUID, relation Relation, deletions []*coretypes.Object) ([]*openfgav1.TupleKey, error) {
-	tuples := make([]*openfgav1.TupleKey, 0)
-
-	for _, object := range deletions {
-		resource := coretypes.MustNewResourceFromTypeAndKind(object.Resource.Type, object.Resource.Kind)
-		transactionTuples := NewTuples(
-			resource,
-			MustNewSubject(
-				coretypes.NewResourceRole(),
-				name,
-				orgID,
-				&coretypes.VerbAssignee,
-			),
-			relation,
-			[]coretypes.Selector{object.Selector},
-			orgID,
-		)
-
-		tuples = append(tuples, transactionTuples...)
-	}
-
-	return tuples, nil
 }
 
 func MustGetSigNozManagedRoleFromExistingRole(role types.Role) string {

@@ -17,6 +17,7 @@ import TagKeyValueInput from 'components/TagKeyValueInput/TagKeyValueInput';
 
 import { keyValueStringsToTags } from '../../utils/helpers';
 
+import { DASHBOARD_NAME_MAX_LENGTH } from '../../../DashboardPageV2/DashboardContainer/constants';
 import styles from './NewDashboardModal.module.scss';
 
 const DEFAULT_NAME = 'Sample Dashboard';
@@ -58,6 +59,7 @@ function BlankDashboardPanel({ onClose }: Props): JSX.Element {
 					variables: [],
 				},
 			});
+			onClose();
 			safeNavigate(
 				generatePath(ROUTES.DASHBOARD, { dashboardId: created.data.id }),
 			);
@@ -78,6 +80,7 @@ function BlankDashboardPanel({ onClose }: Props): JSX.Element {
 					<Input
 						value={name}
 						autoFocus
+						maxLength={DASHBOARD_NAME_MAX_LENGTH}
 						placeholder="e.g. Sample Dashboard"
 						testId="create-dashboard-name"
 						onChange={(e: ChangeEvent<HTMLInputElement>): void =>

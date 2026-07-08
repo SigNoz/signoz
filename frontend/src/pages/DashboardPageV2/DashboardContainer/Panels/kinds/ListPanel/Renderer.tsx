@@ -1,5 +1,5 @@
 import { useMemo, useRef } from 'react';
-import { Select, Table } from 'antd';
+import { Select, Skeleton, Table } from 'antd';
 import cx from 'classnames';
 import { Button } from '@signozhq/ui/button';
 import { ChevronLeft, ChevronRight } from '@signozhq/icons';
@@ -33,9 +33,11 @@ function ListPanelRenderer({
 	panelId,
 	panel,
 	data,
+	isFetching,
 	refetch,
 	searchTerm = '',
 	pagination,
+	isPreviousData = false,
 }: PanelRendererProps<'signoz/ListPanel'>): JSX.Element {
 	// Pin the header while the body scrolls (shared with the Table kind).
 	const containerRef = useRef<HTMLDivElement>(null);
@@ -115,6 +117,25 @@ function ListPanelRenderer({
 	// Show the footer whenever the panel pages server-side, so the page-size picker stays reachable (V1 parity).
 	const showPager = !!pagination;
 
+	// While the next page loads, swap the stale rows (held by keepPreviousData) for skeleton bars,
+	// keeping the header + pager. Row count mirrors the page being left.
+	const skeletonRowCount = dataSource.length || pagination?.pageSize || 10;
+	const skeletonColumns = useMemo(
+		() =>
+			resizableColumns.map((col) => ({
+				...col,
+				render: (): JSX.Element => <Skeleton.Input active block size="small" />,
+			})),
+		[resizableColumns],
+	);
+	const skeletonRows = useMemo(
+		() =>
+			Array.from({ length: skeletonRowCount }, (_, index) => ({
+				key: `skeleton-${index}`,
+			})) as unknown as typeof filteredDataSource,
+		[skeletonRowCount],
+	);
+
 	return (
 		<div
 			ref={containerRef}
@@ -122,7 +143,7 @@ function ListPanelRenderer({
 			className={PanelStyles.panelContainer}
 		>
 			{!table || dataSource.length === 0 ? (
-				<NoData onRetry={refetch} />
+				<NoData isFetching={isFetching} onRetry={refetch} />
 			) : (
 				<>
 					<div
@@ -134,13 +155,13 @@ function ListPanelRenderer({
 						<Table
 							size="small"
 							tableLayout="fixed"
-							columns={resizableColumns}
+							columns={isPreviousData ? skeletonColumns : resizableColumns}
 							components={components}
-							dataSource={filteredDataSource}
+							dataSource={isPreviousData ? skeletonRows : filteredDataSource}
 							pagination={false}
 							// Vertical scroll only; `x: 'max-content'` forced a content-width min that pushed columns off-screen.
 							scroll={{ y: scrollY }}
-							onRow={onRow}
+							onRow={isPreviousData ? undefined : onRow}
 						/>
 					</div>
 					{showPager && pagination && (

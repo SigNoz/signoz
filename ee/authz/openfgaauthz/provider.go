@@ -260,40 +260,6 @@ func (provider *provider) GetWithTransactionGroups(ctx context.Context, orgID va
 	return authtypes.MakeRoleWithTransactionGroups(role, transactionGroups), nil
 }
 
-func (provider *provider) GetObjects(ctx context.Context, orgID valuer.UUID, id valuer.UUID, relation authtypes.Relation) ([]*coretypes.Object, error) {
-	_, err := provider.licensing.GetActive(ctx, orgID)
-	if err != nil {
-		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
-	}
-
-	storableRole, err := provider.store.Get(ctx, orgID, id)
-	if err != nil {
-		return nil, err
-	}
-
-	objects := make([]*coretypes.Object, 0)
-	for _, objectType := range provider.registry.Types() {
-		if coretypes.ErrIfVerbNotValidForType(relation.Verb, objectType) != nil {
-			continue
-		}
-
-		resourceObjects, err := provider.
-			ListObjects(
-				ctx,
-				authtypes.MustNewSubject(coretypes.NewResourceRole(), storableRole.Name, orgID, &coretypes.VerbAssignee),
-				relation,
-				objectType,
-			)
-		if err != nil {
-			return nil, err
-		}
-
-		objects = append(objects, resourceObjects...)
-	}
-
-	return objects, nil
-}
-
 func (provider *provider) Update(ctx context.Context, orgID valuer.UUID, updatedRole *authtypes.RoleWithTransactionGroups) error {
 	_, err := provider.licensing.GetActive(ctx, orgID)
 	if err != nil {
@@ -322,39 +288,6 @@ func (provider *provider) Update(ctx context.Context, orgID valuer.UUID, updated
 	}
 
 	return provider.store.Update(ctx, orgID, updatedRole.Role)
-}
-
-func (provider *provider) Patch(ctx context.Context, orgID valuer.UUID, role *authtypes.Role) error {
-	_, err := provider.licensing.GetActive(ctx, orgID)
-	if err != nil {
-		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
-	}
-
-	return provider.store.Update(ctx, orgID, role)
-}
-
-func (provider *provider) PatchObjects(ctx context.Context, orgID valuer.UUID, name string, relation authtypes.Relation, additions, deletions []*coretypes.Object) error {
-	_, err := provider.licensing.GetActive(ctx, orgID)
-	if err != nil {
-		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
-	}
-
-	additionTuples, err := authtypes.GetAdditionTuples(name, orgID, relation, additions)
-	if err != nil {
-		return err
-	}
-
-	deletionTuples, err := authtypes.GetDeletionTuples(name, orgID, relation, deletions)
-	if err != nil {
-		return err
-	}
-
-	err = provider.Write(ctx, additionTuples, deletionTuples)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (provider *provider) Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
