@@ -39,7 +39,7 @@ def test_logs_scalar_group_by_having(
                 )
             )
     insert_logs(logs)
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     query = build_scalar_query(
         name="A",

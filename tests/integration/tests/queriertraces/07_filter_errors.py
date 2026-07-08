@@ -31,7 +31,7 @@ def test_traces_filter_validation_errors(
     expression: str,
 ) -> None:
     now = datetime.now(tz=UTC)
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     response = make_query_request(
         signoz,
         token,
