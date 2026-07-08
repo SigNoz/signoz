@@ -80,7 +80,7 @@ func (provider *provider) ListObjects(ctx context.Context, subject string, relat
 }
 
 func (provider *provider) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*authtypes.Role, error) {
-	return nil, errors.Newf(errors.TypeUnsupported, authtypes.ErrCodeRoleUnsupported, "not implemented")
+	return provider.store.Get(ctx, orgID, id)
 }
 
 func (provider *provider) GetByOrgIDAndName(ctx context.Context, orgID valuer.UUID, name string) (*authtypes.Role, error) {

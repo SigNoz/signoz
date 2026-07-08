@@ -21,6 +21,14 @@ type addRoleTransactionGroups struct {
 	sqlschema sqlschema.SQLSchema
 }
 
+type roles struct {
+	bun.BaseModel `bun:"table:role"`
+
+	ID    string `bun:"id,pk"`
+	Name  string `bun:"name"`
+	OrgID string `bun:"org_id"`
+}
+
 func NewAddRoleTransactionGroupsFactory(sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) factory.ProviderFactory[SQLMigration, Config] {
 	return factory.NewProviderFactory(
 		factory.MustNewName("add_role_transaction_groups"),
@@ -68,33 +76,20 @@ func (migration *addRoleTransactionGroups) Up(ctx context.Context, db *bun.DB) e
 		return err
 	}
 
-	type customRole struct {
-		id    string
-		name  string
-		orgID string
-	}
-
-	var customRoles []customRole
-	rows, err := tx.QueryContext(ctx, `SELECT id, name, org_id FROM role WHERE type = ? AND transaction_groups IS NULL`, authtypes.RoleTypeCustom.StringValue())
+	customRoles := make([]*roles, 0)
+	err = tx.NewSelect().
+		Model(&customRoles).
+		Column("id", "name", "org_id").
+		Where("type = ?", authtypes.RoleTypeCustom.StringValue()).
+		Where("transaction_groups IS NULL").
+		Scan(ctx)
 	if err != nil {
-		return err
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var role customRole
-		if err := rows.Scan(&role.id, &role.name, &role.orgID); err != nil {
-			return err
-		}
-		customRoles = append(customRoles, role)
-	}
-	if err := rows.Err(); err != nil {
 		return err
 	}
 
 	isPG := migration.sqlstore.BunDB().Dialect().Name() == dialect.PG
-
 	for _, role := range customRoles {
-		roleSubject := "organization/" + role.orgID + "/role/" + role.name
+		roleSubject := "organization/" + role.OrgID + "/role/" + role.Name
 
 		var tupleRows *sql.Rows
 		if isPG {
@@ -135,7 +130,11 @@ func (migration *addRoleTransactionGroups) Up(ctx context.Context, db *bun.DB) e
 			return err
 		}
 
-		if _, err := tx.ExecContext(ctx, `UPDATE role SET transaction_groups = ? WHERE id = ?`, string(data), role.id); err != nil {
+		if _, err := tx.NewUpdate().
+			Model(new(roles)).
+			Set("transaction_groups = ?", string(data)).
+			Where("id = ?", role.ID).
+			Exec(ctx); err != nil {
 			return err
 		}
 	}
@@ -147,7 +146,12 @@ func (migration *addRoleTransactionGroups) Up(ctx context.Context, db *bun.DB) e
 			return err
 		}
 
-		if _, err := tx.ExecContext(ctx, `UPDATE role SET transaction_groups = ? WHERE type = ? AND name = ?`, string(data), authtypes.RoleTypeManaged.StringValue(), roleName); err != nil {
+		if _, err := tx.NewUpdate().
+			Model(new(roles)).
+			Set("transaction_groups = ?", string(data)).
+			Where("type = ?", authtypes.RoleTypeManaged.StringValue()).
+			Where("name = ?", roleName).
+			Exec(ctx); err != nil {
 			return err
 		}
 	}
