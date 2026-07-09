@@ -28,12 +28,34 @@ const mockDefaultColumnsForSignal =
 	defaultColumnsForSignal as unknown as jest.Mock;
 
 /** A panel spec carrying the plugin.spec a seed reads; the rest of the shape is irrelevant. */
-function oldSpecWith(pluginSpec: unknown): DashboardtypesPanelSpecDTO {
+function oldSpecWith(
+	pluginSpec: unknown,
+	queries: unknown[] = [],
+): DashboardtypesPanelSpecDTO {
 	return {
 		display: { name: 'Panel' },
 		plugin: { kind: 'signoz/TimeSeriesPanel', spec: pluginSpec },
-		queries: [],
+		queries,
 	} as unknown as DashboardtypesPanelSpecDTO;
+}
+
+function builderQueryNamed(name: string): unknown {
+	return {
+		spec: {
+			plugin: {
+				kind: 'signoz/BuilderQuery',
+				spec: { name, aggregations: [{ expression: 'count()' }] },
+			},
+		},
+	};
+}
+
+function compositeQueryWith(envelopes: unknown[]): unknown {
+	return {
+		spec: {
+			plugin: { kind: 'signoz/CompositeQuery', spec: { queries: envelopes } },
+		},
+	};
 }
 
 beforeEach(() => {
@@ -279,7 +301,7 @@ describe('buildPluginSpec', () => {
 			});
 		});
 
-		it('drops unit when the target kind does not declare it (TimeSeries → Table)', () => {
+		it('drops the panel-wide unit when no column keys are derivable (TimeSeries → Table, no queries)', () => {
 			// Table formatting has columnUnits + decimals only; carrying unit breaks the save.
 			const sections: SectionConfig[] = [
 				{
@@ -290,6 +312,56 @@ describe('buildPluginSpec', () => {
 			const oldSpec = oldSpecWith({
 				formatting: { unit: 'ms', decimalPrecision: 2 },
 			});
+
+			expect(buildPluginSpec(sections, { oldSpec }).formatting).toStrictEqual({
+				decimalPrecision: 2,
+			});
+		});
+
+		it('fans the panel-wide unit out to every value column (TimeSeries → Table)', () => {
+			const sections: SectionConfig[] = [
+				{
+					kind: SectionKind.Formatting,
+					controls: { decimals: true, columnUnits: true },
+				},
+			];
+			const oldSpec = oldSpecWith(
+				{ formatting: { unit: 'ms', decimalPrecision: 2 } },
+				[
+					compositeQueryWith([
+						{
+							type: 'builder_query',
+							spec: {
+								name: 'A',
+								aggregations: [{ expression: 'count()' }, { expression: 'sum(bytes)' }],
+							},
+						},
+						{
+							type: 'builder_query',
+							spec: { name: 'B', aggregations: [{ expression: 'count()' }] },
+						},
+					]),
+				],
+			);
+
+			expect(buildPluginSpec(sections, { oldSpec }).formatting).toStrictEqual({
+				decimalPrecision: 2,
+				columnUnits: {
+					'A.count()': 'ms',
+					'A.sum(bytes)': 'ms',
+					B: 'ms',
+				},
+			});
+		});
+
+		it('never seeds a panel-wide unit from per-column units (Table → TimeSeries)', () => {
+			const sections: SectionConfig[] = [
+				{ kind: SectionKind.Formatting, controls: { unit: true, decimals: true } },
+			];
+			const oldSpec = oldSpecWith(
+				{ formatting: { columnUnits: { A: 'ms', B: 'ns' }, decimalPrecision: 2 } },
+				[builderQueryNamed('A')],
+			);
 
 			expect(buildPluginSpec(sections, { oldSpec }).formatting).toStrictEqual({
 				decimalPrecision: 2,
@@ -350,12 +422,14 @@ describe('buildPluginSpec', () => {
 		function switchThresholds(
 			variant: ThresholdVariant | undefined,
 			thresholds: unknown[],
+			queries: unknown[] = [],
 		): unknown {
 			const sections: SectionConfig[] = [
 				{ kind: SectionKind.Thresholds, controls: { variant } },
 			];
-			return buildPluginSpec(sections, { oldSpec: oldSpecWith({ thresholds }) })
-				.thresholds;
+			return buildPluginSpec(sections, {
+				oldSpec: oldSpecWith({ thresholds }, queries),
+			}).thresholds;
 		}
 
 		it('keeps color/value/unit/label within the label variant (and defaults to label)', () => {
@@ -383,25 +457,53 @@ describe('buildPluginSpec', () => {
 			]);
 		});
 
-		it('preserves existing operator/format when remapping comparison → table', () => {
+		it('preserves operator/format and keys onto the first query column when remapping comparison → table', () => {
 			expect(
-				switchThresholds(ThresholdVariant.TABLE, [
-					{
-						value: 80,
-						color: '#F1575F',
-						operator: DashboardtypesComparisonOperatorDTO.below,
-						format: DashboardtypesThresholdFormatDTO.text,
-					},
-				]),
+				switchThresholds(
+					ThresholdVariant.TABLE,
+					[
+						{
+							value: 80,
+							color: '#F1575F',
+							operator: DashboardtypesComparisonOperatorDTO.below,
+							format: DashboardtypesThresholdFormatDTO.text,
+						},
+					],
+					[builderQueryNamed('A')],
+				),
 			).toStrictEqual([
 				{
 					value: 80,
 					color: '#F1575F',
 					operator: DashboardtypesComparisonOperatorDTO.below,
 					format: DashboardtypesThresholdFormatDTO.text,
-					columnName: '',
+					columnName: 'A',
 				},
 			]);
+		});
+
+		it('keeps an existing columnName instead of the derived default', () => {
+			expect(
+				switchThresholds(
+					ThresholdVariant.TABLE,
+					[{ value: 80, color: '#F1575F', columnName: 'p99' }],
+					[builderQueryNamed('A')],
+				),
+			).toStrictEqual([
+				{
+					value: 80,
+					color: '#F1575F',
+					operator: DashboardtypesComparisonOperatorDTO.above,
+					format: DashboardtypesThresholdFormatDTO.background,
+					columnName: 'p99',
+				},
+			]);
+		});
+
+		it('drops table thresholds when no column can be derived (empty columnName fails the save)', () => {
+			expect(
+				switchThresholds(ThresholdVariant.TABLE, [{ value: 80, color: '#F1575F' }]),
+			).toBeUndefined();
 		});
 
 		it('drops table-only operator/format/columnName when remapping table → label', () => {

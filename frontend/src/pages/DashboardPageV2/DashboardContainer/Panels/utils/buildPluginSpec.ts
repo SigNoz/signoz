@@ -20,6 +20,7 @@ import {
 	type SectionSpecMap,
 	ThresholdVariant,
 } from '../types/sections';
+import { getTableColumnKeys } from './getTableColumnKeys';
 
 /** Cross-section of the per-kind spec union; assigned to `plugin.spec` (unknown) at the boundary. */
 export interface SeededPluginSpec {
@@ -27,7 +28,10 @@ export interface SeededPluginSpec {
 	axes?: SectionSpecMap[SectionKind.Axes];
 	legend?: SectionSpecMap[SectionKind.Legend];
 	chartAppearance?: SectionSpecMap[SectionKind.ChartAppearance];
-	formatting?: Pick<PanelFormattingSlice, 'unit' | 'decimalPrecision'>;
+	formatting?: Pick<
+		PanelFormattingSlice,
+		'unit' | 'decimalPrecision' | 'columnUnits'
+	>;
 	selectFields?: SectionSpecMap[SectionKind.Columns];
 	thresholds?: AnyThreshold[];
 }
@@ -52,6 +56,7 @@ interface AnyThresholdFields {
 function toThresholdVariant(
 	source: AnyThresholdFields,
 	variant: ThresholdVariant,
+	defaultColumnName?: string,
 ): AnyThreshold {
 	const core = {
 		color: source.color,
@@ -70,7 +75,7 @@ function toThresholdVariant(
 			...core,
 			operator: source.operator ?? DashboardtypesComparisonOperatorDTO.above,
 			format: source.format ?? DashboardtypesThresholdFormatDTO.background,
-			columnName: source.columnName ?? '',
+			columnName: source.columnName || defaultColumnName || '',
 		};
 	}
 	return {
@@ -194,22 +199,28 @@ const SECTION_SEEDS: Partial<Record<SectionKind, SectionSeed>> = {
 	},
 	[SectionKind.Formatting]: {
 		specKey: 'formatting',
-		seed: (
-			controls,
-			{ oldSpec },
-		): Pick<PanelFormattingSlice, 'unit' | 'decimalPrecision'> | undefined => {
+		seed: (controls, { oldSpec }): SeededPluginSpec['formatting'] | undefined => {
 			const c = controls as SectionControls[SectionKind.Formatting];
 			const old = (oldSpec?.plugin.spec as { formatting?: PanelFormattingSlice })
 				?.formatting;
 			// Carry a field only when the target kind declares it (e.g. Table has no `unit`),
 			// else the save API rejects the spec.
-			const carried: Pick<PanelFormattingSlice, 'unit' | 'decimalPrecision'> = {
+			const carried: NonNullable<SeededPluginSpec['formatting']> = {
 				...(c.unit && old?.unit !== undefined && { unit: old.unit }),
 				...(c.decimals &&
 					old?.decimalPrecision !== undefined && {
 						decimalPrecision: old.decimalPrecision,
 					}),
 			};
+			// A panel-wide unit fans out to every value column when the target keys units
+			// per column (→ Table). One-way: `columnUnits` never seed a panel-wide `unit`.
+			const unit = old?.unit;
+			if (c.columnUnits && unit) {
+				const keys = getTableColumnKeys(oldSpec?.queries ?? []);
+				if (keys.length > 0) {
+					carried.columnUnits = Object.fromEntries(keys.map((key) => [key, unit]));
+				}
+			}
 			return Object.keys(carried).length > 0 ? carried : undefined;
 		},
 	},
@@ -236,9 +247,23 @@ const SECTION_SEEDS: Partial<Record<SectionKind, SectionSeed>> = {
 			if (!old || old.length === 0) {
 				return undefined;
 			}
-			return old.map((threshold) =>
-				toThresholdVariant(threshold as AnyThresholdFields, variant),
+			// The save API rejects an empty table-threshold columnName.
+			const defaultColumnName =
+				variant === ThresholdVariant.TABLE
+					? getTableColumnKeys(oldSpec?.queries ?? [])[0]
+					: undefined;
+			const mapped = old.map((threshold) =>
+				toThresholdVariant(
+					threshold as AnyThresholdFields,
+					variant,
+					defaultColumnName,
+				),
 			);
+			const kept =
+				variant === ThresholdVariant.TABLE
+					? mapped.filter((t) => (t as { columnName?: string }).columnName)
+					: mapped;
+			return kept.length > 0 ? kept : undefined;
 		},
 	},
 };
