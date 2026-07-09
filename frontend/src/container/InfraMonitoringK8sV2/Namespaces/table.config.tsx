@@ -16,6 +16,7 @@ import {
 	INFRA_MONITORING_ATTR_KEYS,
 	InfraMonitoringEntity,
 } from '../constants';
+import { SelectedItemParams } from '../hooks';
 
 export function getK8sNamespaceRowKey(
 	namespace: InframonitoringtypesNamespaceRecordDTO,
@@ -29,8 +30,15 @@ export function getK8sNamespaceRowKey(
 
 export function getK8sNamespaceItemKey(
 	namespace: InframonitoringtypesNamespaceRecordDTO,
-): string {
-	return namespace.namespaceName;
+): SelectedItemParams {
+	return {
+		selectedItem:
+			namespace.namespaceName ??
+			namespace.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ??
+			null,
+		clusterName:
+			namespace.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] ?? null,
+	};
 }
 
 export type NamespaceTableColumnConfig =

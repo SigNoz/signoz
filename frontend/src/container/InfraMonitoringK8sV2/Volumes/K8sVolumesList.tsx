@@ -11,6 +11,7 @@ import K8sBaseDetails, { K8sDetailsFilters } from '../Base/K8sBaseDetails';
 import { K8sBaseList } from '../Base/K8sBaseList';
 import { K8sBaseFilters } from '../Base/types';
 import { InfraMonitoringEntity } from '../constants';
+import { SelectedItemParams } from '../hooks';
 import {
 	getVolumeMetricsQueryPayload,
 	k8sVolumeDetailsMetadataConfig,
@@ -117,7 +118,7 @@ function K8sVolumesList({
 
 	return (
 		<>
-			<K8sBaseList<InframonitoringtypesVolumeRecordDTO>
+			<K8sBaseList<InframonitoringtypesVolumeRecordDTO, SelectedItemParams>
 				controlListPrefix={controlListPrefix}
 				entity={InfraMonitoringEntity.VOLUMES}
 				tableColumns={k8sVolumesColumnsConfig}

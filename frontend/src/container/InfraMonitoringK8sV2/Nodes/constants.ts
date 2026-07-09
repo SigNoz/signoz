@@ -7,13 +7,19 @@ import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
 import { formatValueForExpression } from 'components/QueryBuilderV2/utils';
+import {
+	buildEventsExpression,
+	buildLogsTracesExpression,
+} from 'container/InfraMonitoringK8sV2/Base/utils';
 
 import { K8sDetailsMetadataConfig } from '../Base/K8sBaseDetails';
 import { INFRA_MONITORING_ATTR_KEYS } from '../constants';
+import { SelectedItemParams } from '../hooks';
 
 export const k8sNodeGetSelectedItemExpression = (
-	selectedItemId: string,
-): string => `k8s.node.name = ${formatValueForExpression(selectedItemId)}`;
+	params: SelectedItemParams,
+): string =>
+	`k8s.node.name = ${formatValueForExpression(params.selectedItem ?? '')}`;
 
 export const k8sNodeDetailsMetadataConfig: K8sDetailsMetadataConfig<InframonitoringtypesNodeRecordDTO>[] =
 	[
@@ -28,12 +34,20 @@ export const k8sNodeDetailsMetadataConfig: K8sDetailsMetadataConfig<Inframonitor
 export const k8sNodeInitialEventsExpression = (
 	item: InframonitoringtypesNodeRecordDTO,
 ): string =>
-	`${INFRA_MONITORING_ATTR_KEYS.K8S_OBJECT_KIND} = 'Node' AND ${INFRA_MONITORING_ATTR_KEYS.K8S_OBJECT_NAME} = ${formatValueForExpression(item.nodeName || '')}`;
+	buildEventsExpression({
+		objectKind: 'Node',
+		objectName: item.nodeName || '',
+		clusterName: item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME],
+	});
 
 export const k8sNodeInitialLogTracesExpression = (
 	item: InframonitoringtypesNodeRecordDTO,
 ): string =>
-	`${INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME} = ${formatValueForExpression(item.nodeName || '')} AND ${INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME} = ${formatValueForExpression(item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] || '')}`;
+	buildLogsTracesExpression({
+		mainAttributeKey: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME,
+		mainAttributeValue: item.nodeName,
+		clusterName: item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME],
+	});
 
 export const k8sNodeGetEntityName = (
 	item: InframonitoringtypesNodeRecordDTO,
