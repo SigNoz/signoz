@@ -1,10 +1,4 @@
-import React, {
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
+import { Fragment, useMemo } from 'react';
 import {
 	BarChart,
 	ChevronsLeftRight,
@@ -24,15 +18,7 @@ import {
 	initialQueryState,
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
-import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
-import {
-	CustomTimeType,
-	Time,
-} from 'container/TopNav/DateTimeSelectionV2/types';
-import GetMinMax from 'lib/getMinMax';
 import { parseAsString, useQueryState } from 'nuqs';
-import { isCustomTimeRange, useGlobalTimeStore } from 'store/globalTime';
-import { NANO_SECOND_MULTIPLIER } from 'store/globalTime/utils';
 import {
 	LogsAggregatorOperator,
 	TracesAggregatorOperator,
@@ -40,6 +26,7 @@ import {
 import { openInNewTab } from 'utils/navigation';
 
 import { VIEW_TYPES } from '../constants';
+import { useEntityDetailsTime } from '../EntityDetailsUtils/EntityDateTimeSelector/useEntityDetailsTime';
 import EntityEvents from '../EntityDetailsUtils/EntityEvents';
 import EntityLogs from '../EntityDetailsUtils/EntityLogs';
 import { K8S_ENTITY_LOGS_EXPRESSION_KEY } from '../EntityDetailsUtils/EntityLogs/hooks';
@@ -54,8 +41,6 @@ import {
 } from '../hooks';
 
 import { K8sBaseDetailsContentProps } from './types';
-
-const TimeRangeOffset = 1000000000;
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export default function K8sBaseDetailsContent<T>({
@@ -72,9 +57,8 @@ export default function K8sBaseDetailsContent<T>({
 	logsAndTracesInitialExpression,
 	eventsInitialExpression,
 }: K8sBaseDetailsContentProps<T>): JSX.Element {
-	const selectedTime = useGlobalTimeStore((s) => s.selectedTime);
-	const getMinMaxTime = useGlobalTimeStore((s) => s.getMinMaxTime);
-	const lastComputedMinMax = useGlobalTimeStore((s) => s.lastComputedMinMax);
+	const { timeRange, selectedInterval, handleTimeChange } =
+		useEntityDetailsTime();
 
 	const tabVisibility = useMemo(
 		() => ({
@@ -85,29 +69,6 @@ export default function K8sBaseDetailsContent<T>({
 			...tabsConfig,
 		}),
 		[tabsConfig],
-	);
-
-	const { startMs, endMs } = useMemo(
-		() => ({
-			startMs: Math.floor(lastComputedMinMax.minTime / NANO_SECOND_MULTIPLIER),
-			endMs: Math.floor(lastComputedMinMax.maxTime / NANO_SECOND_MULTIPLIER),
-		}),
-		[lastComputedMinMax],
-	);
-
-	const [modalTimeRange, setModalTimeRange] = useState(() => ({
-		startTime: startMs,
-		endTime: endMs,
-	}));
-
-	// TODO(h4ad): Remove this and use context/zustand
-	const lastSelectedInterval = useRef<Time | null>(null);
-	const [selectedInterval, setSelectedInterval] = useState<Time>(
-		lastSelectedInterval.current
-			? lastSelectedInterval.current
-			: isCustomTimeRange(selectedTime)
-				? DEFAULT_TIME_RANGE
-				: selectedTime,
 	);
 
 	const [selectedView, setSelectedView] = useInfraMonitoringView();
@@ -125,71 +86,18 @@ export default function K8sBaseDetailsContent<T>({
 		parseAsString,
 	);
 
-	useEffect(() => {
-		if (entity) {
-			logEvent(InfraMonitoringEvents.PageVisited, {
-				entity: InfraMonitoringEvents.K8sEntity,
-				page: InfraMonitoringEvents.DetailedPage,
-				category: eventCategory,
-			});
-		}
-	}, [entity, eventCategory]);
-
-	useEffect(() => {
-		const currentSelectedInterval = lastSelectedInterval.current || selectedTime;
-		if (!isCustomTimeRange(currentSelectedInterval)) {
-			setSelectedInterval(currentSelectedInterval);
-			const { minTime, maxTime } = getMinMaxTime();
-
-			setModalTimeRange({
-				startTime: Math.floor(minTime / TimeRangeOffset),
-				endTime: Math.floor(maxTime / TimeRangeOffset),
-			});
-		}
-	}, [getMinMaxTime, selectedTime]);
-
 	const handleTabChange = (value: string): void => {
-		setSelectedView(value);
-		setLogFiltersParam(null);
-		setTracesFiltersParam(null);
-		setEventsFiltersParam(null);
-		logEvent(InfraMonitoringEvents.TabChanged, {
+		void setSelectedView(value);
+		void setLogFiltersParam(null);
+		void setTracesFiltersParam(null);
+		void setEventsFiltersParam(null);
+		void logEvent(InfraMonitoringEvents.TabChanged, {
 			entity: InfraMonitoringEvents.K8sEntity,
 			page: InfraMonitoringEvents.DetailedPage,
 			category: eventCategory,
 			view: value,
 		});
 	};
-
-	const handleTimeChange = useCallback(
-		(interval: Time | CustomTimeType, dateTimeRange?: [number, number]): void => {
-			lastSelectedInterval.current = interval as Time;
-			setSelectedInterval(interval as Time);
-
-			if (interval === 'custom' && dateTimeRange) {
-				setModalTimeRange({
-					startTime: Math.floor(dateTimeRange[0] / 1000),
-					endTime: Math.floor(dateTimeRange[1] / 1000),
-				});
-			} else {
-				const { maxTime, minTime } = GetMinMax(interval);
-
-				setModalTimeRange({
-					startTime: Math.floor(minTime / TimeRangeOffset),
-					endTime: Math.floor(maxTime / TimeRangeOffset),
-				});
-			}
-
-			logEvent(InfraMonitoringEvents.TimeUpdated, {
-				entity: InfraMonitoringEvents.K8sEntity,
-				page: InfraMonitoringEvents.DetailedPage,
-				category: eventCategory,
-				interval,
-				view: effectiveView,
-			});
-		},
-		[eventCategory, effectiveView],
-	);
 
 	const handleExplorePagesRedirect = (): void => {
 		const urlQuery = new URLSearchParams();
@@ -198,11 +106,12 @@ export default function K8sBaseDetailsContent<T>({
 			urlQuery.set(QueryParams.relativeTime, selectedInterval);
 		} else {
 			urlQuery.delete(QueryParams.relativeTime);
-			urlQuery.set(QueryParams.startTime, modalTimeRange.startTime.toString());
-			urlQuery.set(QueryParams.endTime, modalTimeRange.endTime.toString());
+			// Explorer URL params are in milliseconds, timeRange is in seconds
+			urlQuery.set(QueryParams.startTime, (timeRange.startTime * 1000).toString());
+			urlQuery.set(QueryParams.endTime, (timeRange.endTime * 1000).toString());
 		}
 
-		logEvent(InfraMonitoringEvents.ExploreClicked, {
+		void logEvent(InfraMonitoringEvents.ExploreClicked, {
 			entity: InfraMonitoringEvents.K8sEntity,
 			page: InfraMonitoringEvents.DetailedPage,
 			category: eventCategory,
@@ -395,10 +304,7 @@ export default function K8sBaseDetailsContent<T>({
 			{effectiveView === VIEW_TYPES.METRICS && (
 				<EntityMetrics<T>
 					entity={entity}
-					selectedInterval={selectedInterval}
-					timeRange={modalTimeRange}
-					handleTimeChange={handleTimeChange}
-					isModalTimeSelection
+					eventEntity={eventCategory}
 					entityWidgetInfo={entityWidgetInfo}
 					getEntityQueryPayload={getEntityQueryPayload}
 					category={category}
@@ -407,10 +313,7 @@ export default function K8sBaseDetailsContent<T>({
 			)}
 			{effectiveView === VIEW_TYPES.LOGS && (
 				<EntityLogs
-					timeRange={modalTimeRange}
-					isModalTimeSelection
-					handleTimeChange={handleTimeChange}
-					selectedInterval={selectedInterval}
+					eventEntity={eventCategory}
 					queryKey={`${queryKeyPrefix}Logs`}
 					category={category}
 					initialExpression={logsAndTracesInitialExpression}
@@ -418,10 +321,7 @@ export default function K8sBaseDetailsContent<T>({
 			)}
 			{effectiveView === VIEW_TYPES.TRACES && (
 				<EntityTraces
-					timeRange={modalTimeRange}
-					isModalTimeSelection
-					handleTimeChange={handleTimeChange}
-					selectedInterval={selectedInterval}
+					eventEntity={eventCategory}
 					queryKey={`${queryKeyPrefix}Traces`}
 					category={category}
 					initialExpression={logsAndTracesInitialExpression}
@@ -429,25 +329,22 @@ export default function K8sBaseDetailsContent<T>({
 			)}
 			{effectiveView === VIEW_TYPES.EVENTS && tabVisibility.showEvents && (
 				<EntityEvents
-					timeRange={modalTimeRange}
-					isModalTimeSelection
-					handleTimeChange={handleTimeChange}
-					selectedInterval={selectedInterval}
-					category={category}
+					eventEntity={eventCategory}
 					queryKey={`${queryKeyPrefix}Events`}
 					initialExpression={eventsInitialExpression}
+					category={category}
 				/>
 			)}
 			{customTabs?.map((tab) =>
 				selectedView === tab.key ? (
-					<React.Fragment key={tab.key}>
+					<Fragment key={tab.key}>
 						{tab.render({
 							entity,
-							timeRange: modalTimeRange,
+							timeRange,
 							selectedInterval,
 							handleTimeChange,
 						})}
-					</React.Fragment>
+					</Fragment>
 				) : null,
 			)}
 		</>

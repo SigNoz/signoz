@@ -25,11 +25,6 @@ import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants'
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { FontSize } from 'container/OptionsMenu/types';
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
-import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
-import {
-	CustomTimeType,
-	Time,
-} from 'container/TopNav/DateTimeSelectionV2/types';
 import { getOldLogsOperatorFromNew } from 'hooks/logs/useActiveLog';
 import useLogDetailHandlers from 'hooks/logs/useLogDetailHandlers';
 import useScrollToLog from 'hooks/logs/useScrollToLog';
@@ -38,6 +33,8 @@ import { ILog } from 'types/api/logs/log';
 import { DataSource } from 'types/common/queryBuilder';
 import { validateQuery } from 'utils/queryValidationUtils';
 
+import EntityDateTimeSelector from '../EntityDateTimeSelector/EntityDateTimeSelector';
+import { useEntityDetailsTime } from '../EntityDateTimeSelector/useEntityDetailsTime';
 import EntityEmptyState from '../EntityEmptyState/EntityEmptyState';
 import EntityError from '../EntityError/EntityError';
 import { isKeyNotFoundError } from '../utils';
@@ -47,29 +44,18 @@ import { getEntityLogsQueryPayload } from './utils';
 import styles from './EntityLogs.module.scss';
 
 interface Props {
-	timeRange: {
-		startTime: number;
-		endTime: number;
-	};
-	isModalTimeSelection: boolean;
-	handleTimeChange: (
-		interval: Time | CustomTimeType,
-		dateTimeRange?: [number, number],
-	) => void;
-	selectedInterval: Time;
+	eventEntity: string;
 	queryKey: string;
 	category: InfraMonitoringEntity;
 	initialExpression: string;
 }
 
 function EntityLogsContent({
-	timeRange,
-	isModalTimeSelection,
-	handleTimeChange,
-	selectedInterval,
+	eventEntity,
 	queryKey,
 	category,
 }: Omit<Props, 'initialExpression'>): JSX.Element {
+	const { timeRange } = useEntityDetailsTime();
 	const virtuosoRef = useRef<VirtuosoHandle>(null);
 
 	const expression = useExpression();
@@ -134,7 +120,7 @@ function EntityLogsContent({
 			if (validation.isValid) {
 				querySearchOnRun(newUserExpression);
 
-				logEvent(InfraMonitoringEvents.FilterApplied, {
+				void logEvent(InfraMonitoringEvents.FilterApplied, {
 					entity: InfraMonitoringEvents.K8sEntity,
 					page: InfraMonitoringEvents.DetailedPage,
 					category,
@@ -239,16 +225,10 @@ function EntityLogsContent({
 		<div className={styles.container}>
 			<div className={styles.filterContainer}>
 				<div className={styles.filterContainerTime}>
-					<DateTimeSelectionV2
-						showAutoRefresh
-						showRefreshText={false}
-						hideShareModal
-						isModalTimeSelection={isModalTimeSelection}
-						onTimeChange={handleTimeChange}
-						defaultRelativeTime="5m"
-						modalSelectedInterval={selectedInterval}
-						modalInitialStartTime={timeRange.startTime * 1000}
-						modalInitialEndTime={timeRange.endTime * 1000}
+					<EntityDateTimeSelector
+						eventEntity={eventEntity}
+						category={category}
+						view={InfraMonitoringEvents.LogsView}
 					/>
 
 					<RunQueryBtn

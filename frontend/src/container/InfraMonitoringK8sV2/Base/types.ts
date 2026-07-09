@@ -49,6 +49,12 @@ export interface K8sDetailsMetadataConfig<T> {
 	render?: (value: string | number, entity: T) => ReactNode;
 }
 
+export interface K8sDetailsFilters {
+	filter: { expression: string };
+	start: number;
+	end: number;
+}
+
 export interface K8sDetailsWidgetInfo {
 	title: string;
 	yAxisUnit: string;
@@ -70,6 +76,7 @@ export interface K8sDetailsTabsConfig {
 
 export interface K8sDetailsCustomTabRenderProps<T> {
 	entity: T;
+	/** Time range in seconds — see useEntityDetailsTime */
 	timeRange: { startTime: number; endTime: number };
 	selectedInterval: Time;
 	handleTimeChange: (
@@ -83,6 +90,29 @@ export interface K8sDetailsCustomTab<T> {
 	label: string;
 	icon: ReactNode;
 	render: (props: K8sDetailsCustomTabRenderProps<T>) => ReactNode;
+}
+
+export interface K8sBaseDetailsProps<T> {
+	category: InfraMonitoringEntity;
+	eventCategory: string;
+	// Data fetching configuration
+	getSelectedItemExpression: (selectedItem: string) => string;
+	fetchEntityData: (
+		filters: K8sDetailsFilters,
+		signal?: AbortSignal,
+	) => Promise<{ data: T | null; error?: string | null }>;
+	// Entity configuration
+	getEntityName: (entity: T) => string;
+	getInitialLogTracesExpression: (entity: T) => string;
+	getInitialEventsExpression: (entity: T) => string;
+	metadataConfig: K8sDetailsMetadataConfig<T>[];
+	entityWidgetInfo: K8sDetailsWidgetInfo[];
+	getEntityQueryPayload: GetEntityQueryPayload<T>;
+	queryKeyPrefix: string;
+	/** When true, only metrics are shown and the Metrics/Logs/Traces/Events tab bar is hidden. */
+	hideDetailViewTabs?: boolean;
+	tabsConfig?: K8sDetailsTabsConfig;
+	customTabs?: K8sDetailsCustomTab<T>[];
 }
 
 export interface K8sBaseDetailsContentProps<T> {
