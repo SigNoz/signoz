@@ -460,9 +460,6 @@ func TestCompile_ComplexExamples(t *testing.T) {
 	})
 }
 
-// A query with no `key OP value` comparison — a bare word or a phrase with
-// spaces — is a case-insensitive substring search over the dashboard name,
-// description, and every tag key/value. The whole string is one CONTAINS term.
 func TestCompile_FreeText(t *testing.T) {
 	// freeTextSQL is the predicate every free-text query compiles to; only the
 	// bound pattern differs.

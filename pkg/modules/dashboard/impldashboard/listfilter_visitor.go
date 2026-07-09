@@ -23,10 +23,9 @@ type visitor struct {
 	selectBuilder *sqlbuilder.SelectBuilder
 	formatter     sqlstore.SQLFormatter
 	errors        []string
-	// bareTerms holds any primaries that were a lone key/value/full-text token
-	// rather than a `key OP value` comparison. Compile uses them to tell a
-	// free-text search (the whole query is bare terms) apart from a malformed
-	// filter (a bare term mixed into a real comparison).
+	// bareTerms are primaries that were a lone key/value/full-text token, not a
+	// `key OP value` comparison. compile uses them to tell a free-text search (all
+	// bare terms) from a malformed filter (a bare term beside a comparison).
 	bareTerms []string
 }
 
@@ -37,11 +36,9 @@ func newVisitor(formatter sqlstore.SQLFormatter) *visitor {
 	}
 }
 
-// compile turns the query into `?`-placeholder WHERE SQL + arguments for bun. A
-// well-formed `key OP value` filter compiles to the DSL predicate; a query made
-// up entirely of bare terms (a plain string) compiles to a free-text search; a
-// bare term mixed into a real filter, or any other malformed input, is returned
-// as errors.
+// compile builds `?`-placeholder WHERE SQL + args for bun: a `key OP value`
+// filter becomes the DSL predicate, an all-bare-terms query a free-text search,
+// anything malformed an error.
 func (v *visitor) compile(query string) (string, []any, []string) {
 	tree, _, collector := filterquery.Parse(query)
 	if len(collector.Errors) > 0 {
@@ -150,9 +147,8 @@ func (v *visitor) VisitPrimary(ctx *grammar.PrimaryContext) any {
 	if ctx.Comparison() != nil {
 		return v.visit(ctx.Comparison())
 	}
-	// A lone key, value, or full-text token is not a `key OP value` comparison.
-	// Record it; Compile decides whether the query is a free-text search (all
-	// bare terms) or a malformed filter (bare term alongside a comparison).
+	// A lone key/value/full-text token, not a comparison — recorded as a bare
+	// term for compile to interpret.
 	v.bareTerms = append(v.bareTerms, ctx.GetText())
 	return ""
 }
@@ -435,9 +431,8 @@ func buildSubqueryForTagKeyAndValue(subqueryBuilder *sqlbuilder.SelectBuilder, t
 
 // ─── free-text search ────────────────────────────────────────────────────────
 
-// compileFreeText treats value as a case-insensitive substring search, matching
-// when it is contained in the dashboard name, the description, or any tag's key
-// or value.
+// compileFreeText matches value as a case-insensitive substring of the dashboard
+// name, description, or any tag key/value.
 func (v *visitor) compileFreeText(value string) (string, []any) {
 	nameColumn := string(v.formatter.JSONExtractString("dashboard.data", "$.spec.display.name"))
 	descriptionColumn := string(v.formatter.JSONExtractString("dashboard.data", "$.spec.display.description"))
@@ -454,10 +449,10 @@ func (v *visitor) compileFreeText(value string) (string, []any) {
 	return v.selectBuilder.Args.CompileWithFlavor(condition, bunPlaceholderFlavor)
 }
 
-// buildFreeTextContains emits a case-insensitive `col CONTAINS value` predicate as
-// LOWER(col) LIKE LOWER(?) — identical on SQLite and Postgres. The value's % and _
-// are escaped so they match literally, and ESCAPE pins backslash as the escape char
-// (SQLite has no default; a harmless restatement of the Postgres default).
+// buildFreeTextContains emits a case-insensitive contains as LOWER(col) LIKE
+// LOWER(?) — identical on SQLite and Postgres. The value's % and _ are escaped to
+// match literally, and ESCAPE pins backslash as the escape char (SQLite has no
+// default; a harmless restatement of the Postgres default).
 func (v *visitor) buildFreeTextContains(builder *sqlbuilder.SelectBuilder, columnExpression, value string) string {
 	lowerColumn := string(v.formatter.LowerExpression(columnExpression))
 	pattern := "%" + v.formatter.EscapeLikePattern(value) + "%"
