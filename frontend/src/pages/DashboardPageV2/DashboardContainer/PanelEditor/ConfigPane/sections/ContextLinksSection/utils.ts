@@ -29,16 +29,22 @@ export function insertVariableAtCursor(
 	);
 }
 
+// Users can type raw `%` into the URL field (e.g. `?q=95%`), which is not valid
+// percent-encoding — treat undecodable input as literal text instead of throwing.
+function safeDecodeURIComponent(value: string): string {
+	try {
+		return decodeURIComponent(value);
+	} catch {
+		return value;
+	}
+}
+
 // Values may be double-encoded on the wire; decode a second time only when it changes
 // the string, so already-single-encoded values are left intact.
 function decodeForDisplay(value: string): string {
-	const decoded = decodeURIComponent(value);
-	try {
-		const doubleDecoded = decodeURIComponent(decoded);
-		return doubleDecoded !== decoded ? doubleDecoded : decoded;
-	} catch {
-		return decoded;
-	}
+	const decoded = safeDecodeURIComponent(value);
+	const doubleDecoded = safeDecodeURIComponent(decoded);
+	return doubleDecoded !== decoded ? doubleDecoded : decoded;
 }
 
 /** Parses the `?a=b&c=d` query string of a URL into decoded key/value rows. */
@@ -53,7 +59,7 @@ export function getUrlParams(url: string): UrlParam[] {
 		const [key, value] = pair.split('=');
 		if (key) {
 			params.push({
-				key: decodeURIComponent(key),
+				key: safeDecodeURIComponent(key),
 				value: decodeForDisplay(value || ''),
 			});
 		}
