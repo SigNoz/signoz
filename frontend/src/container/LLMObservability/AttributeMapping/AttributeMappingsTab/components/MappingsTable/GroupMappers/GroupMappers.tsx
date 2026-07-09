@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import type { SpantypesSpanMapperDTO } from 'api/generated/services/sigNoz.schemas';
 import { useListSpanMappers } from 'api/generated/services/spanmapper';
-import { motion, useReducedMotion } from 'motion/react';
+import { motion } from 'motion/react';
 
 import {
 	DraftGroup,
@@ -15,25 +15,19 @@ import styles from './GroupMappers.module.scss';
 
 const MAPPER_SKELETON_ROWS = 2;
 
-// Fade shared by the non-row states (error / empty) so they reveal in step
-// with the mapper rows while the antd Collapse runs its height animation on
-// expand.
 const STATE_ROW_MOTION = {
 	initial: { opacity: 0 },
 	animate: { opacity: 1 },
 	transition: { duration: 0.18, ease: 'easeOut' },
 } as const;
 
-type StateRowMotion = typeof STATE_ROW_MOTION | { initial: false };
-
 interface StateRowProps {
 	groupId: string;
-	rowMotion: StateRowMotion;
 }
 
-function ErrorRow({ groupId, rowMotion }: StateRowProps): JSX.Element {
+function ErrorRow({ groupId }: StateRowProps): JSX.Element {
 	return (
-		<motion.tr className={styles.mapperStateRow} {...rowMotion}>
+		<motion.tr className={styles.mapperStateRow} {...STATE_ROW_MOTION}>
 			<td
 				colSpan={COLUMN_COUNT}
 				className={styles.stateCell}
@@ -45,9 +39,9 @@ function ErrorRow({ groupId, rowMotion }: StateRowProps): JSX.Element {
 	);
 }
 
-function EmptyRow({ groupId, rowMotion }: StateRowProps): JSX.Element {
+function EmptyRow({ groupId }: StateRowProps): JSX.Element {
 	return (
-		<motion.tr className={styles.mapperStateRow} {...rowMotion}>
+		<motion.tr className={styles.mapperStateRow} {...STATE_ROW_MOTION}>
 			<td
 				colSpan={COLUMN_COUNT}
 				className={styles.stateCell}
@@ -64,11 +58,6 @@ interface GroupMappersProps {
 }
 
 function GroupMappers({ group }: GroupMappersProps): JSX.Element {
-	const prefersReducedMotion = useReducedMotion();
-	const stateRowMotion: StateRowMotion = prefersReducedMotion
-		? { initial: false as const }
-		: STATE_ROW_MOTION;
-
 	// A not-yet-saved group has no serverId, so there is nothing to fetch —
 	// the query stays disabled and the panel falls through to the empty row.
 	const hasServerId = group.serverId !== null;
@@ -92,18 +81,14 @@ function GroupMappers({ group }: GroupMappersProps): JSX.Element {
 
 	let rows: JSX.Element[];
 	if (isError) {
-		rows = [
-			<ErrorRow key="error" groupId={group.localId} rowMotion={stateRowMotion} />,
-		];
+		rows = [<ErrorRow key="error" groupId={group.localId} />];
 	} else if (isLoading) {
 		rows = Array.from({ length: MAPPER_SKELETON_ROWS }).map((_, index) => (
 			// eslint-disable-next-line react/no-array-index-key
 			<MapperRowSkeleton key={`mapper-skeleton-${index}`} />
 		));
 	} else if (mappers.length === 0) {
-		rows = [
-			<EmptyRow key="empty" groupId={group.localId} rowMotion={stateRowMotion} />,
-		];
+		rows = [<EmptyRow key="empty" groupId={group.localId} />];
 	} else {
 		rows = mappers.map((mapper, index) => (
 			<MapperRow key={mapper.id} mapper={mapper} index={index} />

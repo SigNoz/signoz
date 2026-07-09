@@ -84,15 +84,11 @@ export function buildPostableGroup(
 	};
 }
 
-// A full group payload is also a valid partial-update payload (all updatable
-// fields are present), so we reuse the postable builder.
 export function buildUpdatableGroup(
 	draft: GroupDraft,
 ): SpantypesUpdatableSpanMapperGroupDTO {
 	return buildPostableGroup(draft);
 }
-
-// ---- working-copy (draft list) helpers ----
 
 export function buildDraftGroup(group: MapperGroup): DraftGroup {
 	return {
@@ -105,7 +101,6 @@ export function buildDraftGroup(group: MapperGroup): DraftGroup {
 	};
 }
 
-// DraftGroup -> editable form state (id carries the localId).
 export function groupDraftFromNode(group: DraftGroup): GroupDraft {
 	return {
 		id: group.localId,
@@ -116,8 +111,6 @@ export function groupDraftFromNode(group: DraftGroup): GroupDraft {
 	};
 }
 
-// Form state -> working-copy node. Reuses cleanKeys so the staged list already
-// holds normalized values.
 export function nodeFromGroupDraft(
 	draft: GroupDraft,
 	existing?: DraftGroup,

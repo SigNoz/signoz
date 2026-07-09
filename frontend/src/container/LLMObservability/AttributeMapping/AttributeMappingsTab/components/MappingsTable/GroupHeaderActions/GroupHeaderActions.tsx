@@ -11,10 +11,6 @@ interface GroupHeaderActionsProps {
 	onRemove: (localId: string) => void;
 }
 
-// The enable/disable toggle stays inline in the header (it's the primary,
-// high-frequency action); the lower-frequency Edit and Delete actions live
-// behind the kebab to keep the row compact. The wrapper swallows clicks so
-// they don't also toggle the Collapse panel.
 function GroupHeaderActions({
 	group,
 	onToggle,

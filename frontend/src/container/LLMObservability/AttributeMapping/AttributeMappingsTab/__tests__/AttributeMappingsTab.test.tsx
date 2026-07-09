@@ -41,8 +41,6 @@ async function expandGroup(
 	await user.click(screen.getByTestId(`group-expand-${groupId}`));
 }
 
-// DropdownMenuSimple drops the trigger's testId, so the kebab is reached via
-// its accessible name instead.
 async function openGroupActionsMenu(
 	user: ReturnType<typeof userEvent.setup>,
 	groupId: string,
@@ -53,18 +51,18 @@ async function openGroupActionsMenu(
 	await user.click(within(row).getByRole('button', { name: 'Group actions' }));
 }
 
-interface HarnessProps {
+interface AttributeMappingsTabWithStoreProps {
 	onEditGroup?: (group: DraftGroup) => void;
 	onAddGroup?: () => void;
 }
 
-// The tab is a presentational view over a store owned by the container, so the
-// harness creates the store (via the hook, backed by the mocked API) and wires
+// The tab is a presentational view over a store owned by the container, so this
+// wrapper creates the store (via the hook, backed by the mocked API) and wires
 // the edit/add callbacks the tab needs.
-function AttributeMappingHarness({
+function AttributeMappingsTabWithStore({
 	onEditGroup,
 	onAddGroup,
-}: HarnessProps): JSX.Element {
+}: AttributeMappingsTabWithStoreProps): JSX.Element {
 	const store = useAttributeMappingStore();
 	return (
 		<AttributeMappingsTab
@@ -87,7 +85,7 @@ describe('AttributeMappingsTab (integration)', () => {
 
 	it('renders no error banner on a successful load', async () => {
 		setupGroups();
-		render(<AttributeMappingHarness />);
+		render(<AttributeMappingsTabWithStore />);
 
 		await waitFor(() =>
 			expect(screen.getByTestId('group-name-group-1')).toBeInTheDocument(),
@@ -99,7 +97,7 @@ describe('AttributeMappingsTab (integration)', () => {
 		server.use(
 			rest.get(GROUPS_ENDPOINT, (_req, res, ctx) => res(ctx.status(500))),
 		);
-		render(<AttributeMappingHarness />);
+		render(<AttributeMappingsTabWithStore />);
 
 		await expect(screen.findByRole('alert')).resolves.toHaveTextContent(
 			'Failed to load mapping groups. Please try again.',
@@ -108,7 +106,7 @@ describe('AttributeMappingsTab (integration)', () => {
 
 	it('shows the empty state when there are no groups', async () => {
 		setupGroups([]);
-		render(<AttributeMappingHarness />);
+		render(<AttributeMappingsTabWithStore />);
 
 		await expect(
 			screen.findByTestId('mapper-groups-empty'),
@@ -117,7 +115,7 @@ describe('AttributeMappingsTab (integration)', () => {
 
 	it('renders each group header row with its name, condition count and status', async () => {
 		setupGroups();
-		render(<AttributeMappingHarness />);
+		render(<AttributeMappingsTabWithStore />);
 
 		// Condition filters are no longer shown inline as clauses — the header
 		// carries a count instead (the keys surface in the group drawer).
@@ -150,7 +148,7 @@ describe('AttributeMappingsTab (integration)', () => {
 	it("stages a toggle of the group's enabled state via the header switch", async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		setupGroups();
-		render(<AttributeMappingHarness />);
+		render(<AttributeMappingsTabWithStore />);
 
 		const toggle = await screen.findByTestId('group-enabled-group-1');
 		expect(toggle).toBeChecked();
@@ -164,7 +162,7 @@ describe('AttributeMappingsTab (integration)', () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		const onAddGroup = jest.fn();
 		setupGroups();
-		render(<AttributeMappingHarness onAddGroup={onAddGroup} />);
+		render(<AttributeMappingsTabWithStore onAddGroup={onAddGroup} />);
 
 		await screen.findByTestId('group-name-group-1');
 		await user.click(screen.getByTestId('add-group-row'));
@@ -176,7 +174,7 @@ describe('AttributeMappingsTab (integration)', () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		const onEditGroup = jest.fn();
 		setupGroups();
-		render(<AttributeMappingHarness onEditGroup={onEditGroup} />);
+		render(<AttributeMappingsTabWithStore onEditGroup={onEditGroup} />);
 
 		await screen.findByTestId('group-name-group-1');
 		await openGroupActionsMenu(user, 'group-1');
@@ -192,7 +190,7 @@ describe('AttributeMappingsTab (integration)', () => {
 	it('stages a group removal when Delete is chosen from the actions menu', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		setupGroups();
-		render(<AttributeMappingHarness />);
+		render(<AttributeMappingsTabWithStore />);
 
 		await screen.findByTestId('group-name-group-1');
 		await openGroupActionsMenu(user, 'group-1');
@@ -210,7 +208,7 @@ describe('AttributeMappingsTab (integration)', () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		setupGroups();
 		setupMappers([makeMapper({ id: 'mapper-1' })]);
-		render(<AttributeMappingHarness />);
+		render(<AttributeMappingsTabWithStore />);
 
 		await screen.findByTestId('group-name-group-1');
 		// The toggle is the antd Collapse header, which owns the expanded state.
@@ -239,7 +237,7 @@ describe('AttributeMappingsTab (integration)', () => {
 		setupMappers([
 			makeMapper({ id: 'mapper-1', name: 'gen_ai.request.model', enabled: true }),
 		]);
-		render(<AttributeMappingHarness />);
+		render(<AttributeMappingsTabWithStore />);
 
 		await screen.findByTestId('group-name-group-1');
 		// Mappers are not fetched until the row is expanded.
@@ -267,7 +265,7 @@ describe('AttributeMappingsTab (integration)', () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		setupGroups();
 		setupMappers([makeMapper({ id: 'mapper-1', enabled: true })]);
-		render(<AttributeMappingHarness />);
+		render(<AttributeMappingsTabWithStore />);
 
 		await screen.findByTestId('group-name-group-1');
 		await expandGroup(user);
@@ -287,7 +285,7 @@ describe('AttributeMappingsTab (integration)', () => {
 				res(ctx.status(500)),
 			),
 		);
-		render(<AttributeMappingHarness />);
+		render(<AttributeMappingsTabWithStore />);
 
 		await screen.findByTestId('group-name-group-1');
 		await expandGroup(user);
@@ -301,7 +299,7 @@ describe('AttributeMappingsTab (integration)', () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		setupGroups();
 		setupMappers([]);
-		render(<AttributeMappingHarness />);
+		render(<AttributeMappingsTabWithStore />);
 
 		await screen.findByTestId('group-name-group-1');
 		await expandGroup(user);
@@ -327,7 +325,7 @@ describe('AttributeMappingsTab (integration)', () => {
 				},
 			}),
 		]);
-		render(<AttributeMappingHarness />);
+		render(<AttributeMappingsTabWithStore />);
 
 		await screen.findByTestId('group-name-group-1');
 		await expandGroup(user);
@@ -339,7 +337,7 @@ describe('AttributeMappingsTab (integration)', () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		setupGroups();
 		setupMappers([makeMapper({ id: 'mapper-1', config: { sources: [] } })]);
-		render(<AttributeMappingHarness />);
+		render(<AttributeMappingsTabWithStore />);
 
 		await screen.findByTestId('group-name-group-1');
 		await expandGroup(user);
