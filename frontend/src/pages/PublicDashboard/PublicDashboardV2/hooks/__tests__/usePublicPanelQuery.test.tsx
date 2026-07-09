@@ -1,16 +1,16 @@
 import { renderHook, waitFor } from '@testing-library/react';
-import { getPublicDashboardPanelQueryRange } from 'api/dashboard/public/getPublicDashboardPanelQueryRange';
+import { getPublicDashboardPanelQueryRangeV2 } from 'api/generated/services/dashboard';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 
 import { usePublicPanelQuery } from '../usePublicPanelQuery';
 
-jest.mock('api/dashboard/public/getPublicDashboardPanelQueryRange', () => ({
-	getPublicDashboardPanelQueryRange: jest.fn(),
+jest.mock('api/generated/services/dashboard', () => ({
+	getPublicDashboardPanelQueryRangeV2: jest.fn(),
 }));
 
-const mockFetch = getPublicDashboardPanelQueryRange as jest.Mock;
+const mockFetch = getPublicDashboardPanelQueryRangeV2 as jest.Mock;
 
 const wrapper = ({ children }: { children: ReactNode }): JSX.Element => {
 	const client = new QueryClient({
@@ -62,7 +62,8 @@ describe('usePublicPanelQuery', () => {
 		await waitFor(() => expect(result.current.isFetching).toBe(false));
 
 		expect(mockFetch).toHaveBeenCalledWith(
-			{ id: 'pub-1', key: 'panel-1', startTime: 1000, endTime: 2000 },
+			{ id: 'pub-1', key: 'panel-1' },
+			{ startTime: '1000', endTime: '2000' },
 			expect.anything(),
 		);
 		expect(result.current.data.response?.status).toBe('success');

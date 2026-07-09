@@ -1,4 +1,4 @@
-import { getPublicDashboardPanelQueryRange } from 'api/dashboard/public/getPublicDashboardPanelQueryRange';
+import { getPublicDashboardPanelQueryRangeV2 } from 'api/generated/services/dashboard';
 import type {
 	DashboardtypesPanelDTO,
 	GetPublicDashboardPanelQueryRangeV2200,
@@ -32,11 +32,7 @@ export interface UsePublicPanelQueryArgs {
 	enabled?: boolean;
 }
 
-/**
- * Mirrors the render contract of `usePanelQuery` (`{ data: PanelQueryData, ... }`) so the V2
- * panel renderers consume it unchanged — but fetches through the anonymous public endpoint
- * (by panel key + time) instead of posting an authenticated query body.
- */
+// Same shape as `usePanelQuery` so the V2 renderers consume it unchanged.
 export interface UsePublicPanelQueryResult {
 	data: PanelQueryData;
 	isLoading: boolean;
@@ -45,18 +41,14 @@ export interface UsePublicPanelQueryResult {
 	error: Error | null;
 	refetch: () => void;
 	cancelQuery: () => void;
-	/** Always undefined: the public endpoint does not support server-side paging (see #5557). */
+	/** Always undefined — the public endpoint has no paging (#5557). */
 	pagination?: PanelPagination;
 }
 
 /**
- * Fetches query-range data for one panel of a v2 public dashboard.
- *
- * Unlike the authenticated `usePanelQuery`, this cannot POST a composite query — the public
- * endpoint holds the (redacted) query server-side and accepts only a time window, with no
- * variable substitution and no pagination. We still build the request DTO locally from the
- * panel's queries so the renderers get the `requestPayload`/`legendMap` they use for scalar
- * column naming and legend resolution; it is not sent to the server.
+ * Fetches one v2 public panel by key + time. The public endpoint holds the query server-side
+ * (no body, variables, or paging); we still build the request DTO locally so the renderers get
+ * the `requestPayload`/`legendMap` they need — it is not sent.
  */
 export function usePublicPanelQuery({
 	panel,
@@ -71,8 +63,6 @@ export function usePublicPanelQuery({
 		(fullKind && PANEL_KIND_TO_PANEL_TYPE[fullKind]) ?? PANEL_TYPES.TIME_SERIES;
 	const { queries } = panel.spec;
 
-	// `visualization` exists only on variants that declare it; `fillSpans` (TimeSeries/Bar) →
-	// formatOptions.fillGaps.
 	const pluginSpec = panel.spec.plugin.spec;
 	const visualization =
 		pluginSpec && 'visualization' in pluginSpec
@@ -82,7 +72,7 @@ export function usePublicPanelQuery({
 		visualization && 'fillSpans' in visualization && visualization.fillSpans,
 	);
 
-	// Built for the renderers only (no variables, no pagination) — never sent to the server.
+	// For the renderers only — not sent to the server.
 	const requestPayload = useMemo(
 		() =>
 			buildQueryRangeRequest({
@@ -99,8 +89,7 @@ export function usePublicPanelQuery({
 	const legendMap = useMemo(() => extractLegendMap(queries), [queries]);
 	const runnable = useMemo(() => hasRunnableQueries(queries), [queries]);
 
-	// Public payloads redact query bodies, so panels with identical queries would collide on one
-	// cache entry — key on panel identity + time (the only inputs that vary the response).
+	// Redacted payloads are identical across panels — key on panel + time to avoid cache collisions.
 	const queryKey = useMemo(
 		() => [
 			REACT_QUERY_KEY.GET_PUBLIC_DASHBOARD_WIDGET_DATA,
@@ -115,13 +104,9 @@ export function usePublicPanelQuery({
 	const response = useQuery<GetPublicDashboardPanelQueryRangeV2200, Error>({
 		queryKey,
 		queryFn: ({ signal }) =>
-			getPublicDashboardPanelQueryRange(
-				{
-					id: publicDashboardId,
-					key: panelKey,
-					startTime: startMs,
-					endTime: endMs,
-				},
+			getPublicDashboardPanelQueryRangeV2(
+				{ id: publicDashboardId, key: panelKey },
+				{ startTime: String(startMs), endTime: String(endMs) },
 				signal,
 			),
 		enabled: enabled && runnable && !!publicDashboardId && !!panelKey,

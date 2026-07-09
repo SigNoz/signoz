@@ -7,27 +7,21 @@ import { popupContainer } from 'utils/selectPopupContainer';
 
 import styles from './PublicAutoRefresh.module.scss';
 
-// Reuse the app-wide auto-refresh popover styling (menu, checkbox, interval buttons).
+// Reuse the app-wide auto-refresh popover styling.
 import 'container/TopNav/AutoRefreshV2/AutoRefreshV2.styles.scss';
 
 interface PublicAutoRefreshProps {
-	/** Auto-refresh on/off (the "Auto Refresh" checkbox). */
 	enabled: boolean;
 	/** Selected interval key, e.g. `30s`. */
 	interval: string;
-	/** Paused (e.g. a fixed custom range) — greys the menu controls. */
 	disabled?: boolean;
 	onToggle: (enabled: boolean) => void;
 	onIntervalChange: (key: string) => void;
-	/** Manual "refresh now". */
 	onRefresh: () => void;
 }
 
-/**
- * Read-only public dashboard's refresh + auto-refresh control. Mirrors the app's
- * `DateTimeSelectionV2` refresh cluster (grouped refresh button + auto-refresh popover) but is
- * fully prop-driven — the public viewer manages its own time window, not Redux global time.
- */
+// Prop-driven mirror of the app's refresh + auto-refresh cluster (the public viewer owns its
+// own time window, not Redux global time).
 function PublicAutoRefresh({
 	enabled,
 	interval,

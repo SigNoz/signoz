@@ -16,11 +16,7 @@ interface PublicSectionGridProps {
 	isVisible?: boolean;
 }
 
-/**
- * Read-only react-grid-layout for one section of a v2 public dashboard. The layout mirrors the
- * authenticated `SectionGrid` (12 cols, 45px rows) but is fixed — no drag, resize, or
- * persistence.
- */
+// Fixed (non-editable) grid for one section of a v2 public dashboard.
 function PublicSectionGrid({
 	items,
 	publicDashboardId,
@@ -49,8 +45,7 @@ function PublicSectionGrid({
 			margin={[8, 8]}
 		>
 			{items.map((item) => (
-				// A layout item can reference a panel id no longer in the panels map
-				// (orphan) — render an empty cell rather than a panel with no content.
+				// Empty cell for an orphan layout item (panel id missing from the map).
 				<div key={item.id}>
 					{item.panel && (
 						<PublicPanel

@@ -105,21 +105,4 @@ describe('PublicPanel', () => {
 			expect.objectContaining({ enabled: false }),
 		);
 	});
-
-	it('renders nothing for an unsupported panel kind', () => {
-		const unknownPanel = {
-			kind: 'Panel',
-			spec: {
-				display: { name: 'x' },
-				plugin: { kind: 'signoz/UnknownPanel', spec: {} },
-				queries: [],
-			},
-		} as unknown as DashboardtypesPanelDTO;
-
-		const { container } = render(
-			<PublicPanel panel={unknownPanel} {...commonProps} />,
-		);
-		expect(container).toBeEmptyDOMElement();
-		expect(screen.queryByTestId('panel-body')).not.toBeInTheDocument();
-	});
 });

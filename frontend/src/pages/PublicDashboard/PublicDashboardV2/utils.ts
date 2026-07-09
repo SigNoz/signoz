@@ -9,11 +9,7 @@ const UNIT_TO_DAYJS = {
 	w: 'weeks',
 } as const;
 
-/**
- * Resolves a relative range string (`30m`, `6h`, `7d`, `1w`) to a `{ startTime, endTime }`
- * window in unix seconds, defaulting to the last 30 minutes. Kept in seconds to match the v1
- * public viewer; converted to milliseconds at the panel-fetch boundary.
- */
+// Relative range (`30m`/`6h`/`7d`/`1w`) → `{ startTime, endTime }` in unix seconds; default 30m.
 export function getStartTimeAndEndTimeFromTimeRange(timeRange: string): {
 	startTime: number;
 	endTime: number;

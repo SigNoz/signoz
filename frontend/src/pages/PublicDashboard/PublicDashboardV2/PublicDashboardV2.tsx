@@ -25,12 +25,8 @@ interface PublicDashboardV2Props {
 	data: DashboardtypesGettablePublicDashboardDataV2DTO;
 }
 
-/**
- * Read-only viewer for a v2 (Perses-spec) public dashboard. Renders the spec's sections and
- * panels by reusing the authenticated V2 panel renderers, fetching data through the anonymous
- * public endpoint. Dashboard variables are not rendered — the public endpoint does not
- * substitute them (see [[reference_public_dashboard_viewer]]).
- */
+// Read-only viewer for a v2 (Perses-spec) public dashboard; reuses the V2 panel renderers.
+// Variables aren't rendered — the public endpoint doesn't substitute them.
 function PublicDashboardV2({
 	publicDashboardId,
 	data,
@@ -75,7 +71,7 @@ function PublicDashboardV2({
 	const [autoRefreshEnabled, setAutoRefreshEnabled] = useState<boolean>(false);
 	const [autoRefreshInterval, setAutoRefreshInterval] = useState<string>('30s');
 
-	// Auto-refresh only makes sense for a rolling relative range, not a fixed custom window.
+	// Auto-refresh applies only to a rolling relative range, not a fixed custom window.
 	const isAutoRefreshPaused = selectedTimeRangeLabel === 'custom';
 	const refreshIntervalMs = useMemo(
 		() =>
@@ -87,13 +83,11 @@ function PublicDashboardV2({
 		[autoRefreshEnabled, autoRefreshInterval],
 	);
 
-	// Re-run the time-change handler with the current relative range so the window advances.
 	useInterval(
 		() => handleTimeChange(selectedTimeRangeLabel as Time),
 		isAutoRefreshPaused || refreshIntervalMs === 0 ? null : refreshIntervalMs,
 	);
 
-	// Manual "refresh now" — re-resolve the current relative range to refetch panels.
 	const handleRefresh = (): void =>
 		handleTimeChange(selectedTimeRangeLabel as Time);
 
