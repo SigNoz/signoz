@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import {
 	generatePath,
 	Redirect,
@@ -8,14 +8,12 @@ import {
 import { Typography } from '@signozhq/ui/typography';
 import Spinner from 'components/Spinner';
 import ROUTES from 'constants/routes';
+import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 
 import { useDashboardFetch } from '../DashboardContainer/hooks/useDashboardFetch';
 import { useDashboardEditGuard } from '../DashboardContainer/hooks/useDashboardEditGuard';
 import { useResolvedVariables } from '../DashboardContainer/hooks/useResolvedVariables';
-import { getPanelDefinition } from '../DashboardContainer/Panels/registry';
-import { buildPluginSpec } from '../DashboardContainer/Panels/utils/buildPluginSpec';
-import { buildDefaultQueries } from '../DashboardContainer/Panels/utils/buildDefaultQueries';
 import PanelEditorContainer from '../DashboardContainer/PanelEditor';
 import type { PanelEditorHandoffState } from '../DashboardContainer/PanelEditor/panelEditorHandoff';
 import {
@@ -27,6 +25,7 @@ import { createDefaultPanel } from '../DashboardContainer/patchOps';
 import { useDashboardStore } from '../DashboardContainer/store/useDashboardStore';
 import { useSeedVariableSelection } from '../DashboardContainer/VariablesBar/useSeedVariableSelection';
 import { withVariablesSearch } from '../DashboardContainer/VariablesBar/variablesUrlState';
+import { buildNewPanelSeed } from './newPanelSeed';
 import styles from './PanelEditorPage.module.scss';
 
 /**
@@ -73,17 +72,26 @@ function PanelEditorPage(): JSX.Element {
 	// Feed variables to the query builder autocomplete inside the editor.
 	useSyncVariablesForSuggestions(dashboard);
 
+	// An explorer "Add to Dashboard" export rides the query in `compositeQuery` (V1
+	// parity). Captured once at mount: the editor rewrites `compositeQuery` in the URL
+	// as the user edits, and re-reading it would churn the draft (its reset target and
+	// dirty baseline live in the initially-loaded panel).
+	const exportCompositeQuery = useGetCompositeQueryParam();
+	const exportCompositeQueryRef = useRef(exportCompositeQuery);
+
 	// A `panel/new?panelKind=…` route means "create": seed a default panel of that
-	// kind rather than looking one up. Persisted (with a real id) only on save.
+	// kind rather than looking one up (seeded from the exported query when present).
+	// Persisted (with a real id) only on save.
 	const newKind = parseNewPanelKind(panelId, search);
 	const existingPanel = dashboard?.spec.panels[panelId];
 	const panel = useMemo(() => {
 		if (newKind) {
-			return createDefaultPanel(
+			// `kind` may be coerced from `newKind` (e.g. a ClickHouse query into List).
+			const { kind, pluginSpec, queries } = buildNewPanelSeed(
 				newKind,
-				buildPluginSpec(getPanelDefinition(newKind).sections),
-				buildDefaultQueries(newKind),
+				exportCompositeQueryRef.current,
 			);
+			return createDefaultPanel(kind, pluginSpec, queries);
 		}
 		if (!existingPanel) {
 			return undefined;
