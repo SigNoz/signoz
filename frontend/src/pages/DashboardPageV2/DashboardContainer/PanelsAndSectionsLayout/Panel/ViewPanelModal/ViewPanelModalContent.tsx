@@ -131,6 +131,7 @@ function ViewPanelModalContent({
 					isLoadingQueries={isFetching}
 					onStageRunQuery={runQuery}
 					onCancelQuery={cancelQuery}
+					stickyHeader={false}
 					footer={
 						isListPanel ? (
 							<ListColumnsEditor
