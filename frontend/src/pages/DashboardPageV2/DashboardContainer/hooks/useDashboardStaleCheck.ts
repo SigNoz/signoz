@@ -16,9 +16,10 @@ interface UseDashboardStaleCheck {
  * the render cache.
  *
  * The page's own dashboard query is frozen (`staleTime: Infinity`) so it never re-fetches and
- * can't observe external changes. We probe the server's current copy explicitly on
- * `visibilitychange` — no request on first load (the page fetch already ran), exactly one each
- * time the tab regains visibility, no reliance on react-query focus heuristics.
+ * can't observe external changes. We probe the server's current copy explicitly whenever the
+ * page comes back into view — `visibilitychange` (switching browser tabs) and window `focus`
+ * (switching to another app and back). No request on first load (the page fetch already ran),
+ * exactly one each time the page is returned to.
  *
  * We prompt only for a genuine CONTENT change: the server copy must be strictly newer than the
  * one we're viewing AND its `spec` must actually differ. `updatedAt` alone is unreliable — it
