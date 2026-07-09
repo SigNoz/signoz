@@ -39,12 +39,10 @@ function safeDecodeURIComponent(value: string): string {
 	}
 }
 
-// Values may be double-encoded on the wire; decode a second time only when it changes
-// the string, so already-single-encoded values are left intact.
+// Values may be double-encoded on the wire, so decode twice; a second decode is a
+// no-op once nothing is left to unescape, leaving single-encoded values intact.
 function decodeForDisplay(value: string): string {
-	const decoded = safeDecodeURIComponent(value);
-	const doubleDecoded = safeDecodeURIComponent(decoded);
-	return doubleDecoded !== decoded ? doubleDecoded : decoded;
+	return safeDecodeURIComponent(safeDecodeURIComponent(value));
 }
 
 /** Parses the `?a=b&c=d` query string of a URL into decoded key/value rows. */
