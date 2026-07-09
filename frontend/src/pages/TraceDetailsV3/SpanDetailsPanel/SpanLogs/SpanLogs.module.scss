@@ -4,25 +4,6 @@
 	flex-direction: column;
 }
 
-// Persistent footer pinned to the bottom of the Logs tab, right-aligned and
-// visible in every state (list / empty / no-trace-logs).
-.logsFooter {
-	display: flex;
-	justify-content: flex-end;
-	align-items: center;
-	padding: 12px 0 0;
-	border-top: 1px solid var(--l2-border);
-	flex-shrink: 0;
-}
-
-// Holds the list / empty / loading content below the toolbar; fills remaining space.
-.spanLogsContent {
-	flex: 1;
-	min-height: 0;
-	display: flex;
-	flex-direction: column;
-}
-
 .spanLogsVirtuoso {
 	background: color-mix(in srgb, var(--bg-robin-200) 4%, transparent);
 }

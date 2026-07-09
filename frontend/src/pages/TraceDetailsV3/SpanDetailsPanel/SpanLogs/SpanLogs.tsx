@@ -32,8 +32,6 @@ import { v4 as uuid } from 'uuid';
 
 import noDataUrl from '@/assets/Icons/no-data.svg';
 
-import OpenInLogsExplorer from './OpenInLogsExplorer';
-
 import styles from './SpanLogs.module.scss';
 
 interface SpanLogsProps {
@@ -283,15 +281,7 @@ function SpanLogs({
 		return renderContent;
 	};
 
-	return (
-		<div className={styles.spanLogs}>
-			<div className={styles.spanLogsContent}>{renderSpanLogsContent()}</div>
-			{/* Persistent footer — Open in Logs Explorer, visible in every state. */}
-			<div className={styles.logsFooter}>
-				<OpenInLogsExplorer onClick={handleExplorerPageRedirect} />
-			</div>
-		</div>
-	);
+	return <div className={styles.spanLogs}>{renderSpanLogsContent()}</div>;
 }
 SpanLogs.defaultProps = {
 	emptyStateConfig: undefined,

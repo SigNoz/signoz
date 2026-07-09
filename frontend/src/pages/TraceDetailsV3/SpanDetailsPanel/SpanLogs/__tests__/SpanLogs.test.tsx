@@ -114,9 +114,6 @@ jest.mock(
 const TEST_TRACE_ID = 'test-trace-id';
 const TEST_SPAN_ID = 'test-span-id';
 
-// The footer "Open in Logs Explorer" button, matched by its accessible name.
-const OPEN_IN_EXPLORER_NAME = /open in logs explorer/i;
-
 const sampleLog = {
 	id: 'log-1',
 	body: 'sample log body',
@@ -238,55 +235,5 @@ describe('SpanLogs', () => {
 		expect(url).toContain(TEST_SPAN_ID);
 		expect(url).toContain(sampleLog.id); // activeLogId
 		expect(target).toBe('_blank');
-	});
-
-	describe('Open in Logs Explorer footer button', () => {
-		it('renders in the simple empty state (span has no logs)', () => {
-			render(<SpanLogs {...defaultProps} />);
-
-			expect(
-				screen.getByRole('button', { name: OPEN_IN_EXPLORER_NAME }),
-			).toBeInTheDocument();
-		});
-
-		it('renders in the no-trace-logs enhanced empty state', () => {
-			render(
-				<SpanLogs
-					{...defaultProps}
-					emptyStateConfig={getEmptyLogsListConfig(jest.fn())}
-				/>,
-			);
-
-			expect(
-				screen.getByRole('button', { name: OPEN_IN_EXPLORER_NAME }),
-			).toBeInTheDocument();
-		});
-
-		it('renders when logs are present', () => {
-			render(<SpanLogs {...defaultProps} logs={[sampleLog]} />);
-
-			expect(
-				screen.getByRole('button', { name: OPEN_IN_EXPLORER_NAME }),
-			).toBeInTheDocument();
-		});
-
-		it('calls handleExplorerPageRedirect when clicked', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
-			const mockHandleExplorerPageRedirect = jest.fn();
-
-			render(
-				<SpanLogs
-					{...defaultProps}
-					logs={[sampleLog]}
-					handleExplorerPageRedirect={mockHandleExplorerPageRedirect}
-				/>,
-			);
-
-			await user.click(
-				screen.getByRole('button', { name: OPEN_IN_EXPLORER_NAME }),
-			);
-
-			expect(mockHandleExplorerPageRedirect).toHaveBeenCalledTimes(1);
-		});
 	});
 });
