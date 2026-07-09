@@ -63,7 +63,7 @@ def test_traces_aggregate_min_max(
             ),
         ]
     )
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     response = make_query_request(
         signoz,
