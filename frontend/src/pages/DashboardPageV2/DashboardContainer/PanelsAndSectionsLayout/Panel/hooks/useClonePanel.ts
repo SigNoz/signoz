@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { toast } from '@signozhq/ui/sonner';
 import { cloneDeep } from 'lodash-es';
+import { scrollIntoViewWhenReady } from 'utils/scrollIntoViewWhenReady';
 import { v4 as uuid } from 'uuid';
 
 import { useOptimisticPatch } from '../../../hooks/useOptimisticPatch';
@@ -64,6 +65,14 @@ export function useClonePanel({
 				success: 'Panel cloned',
 				error: 'Failed to clone panel',
 				position: 'top-center',
+				duration: 2000,
+				// Defer the scroll to the toast's auto-close so the "Panel cloned"
+				// confirmation is seen first, then reveal the clone.
+				onAutoClose: () => {
+					scrollIntoViewWhenReady(() =>
+						document.querySelector(`[data-panel-root="${newPanelId}"]`),
+					);
+				},
 			});
 
 			// toast.promise owns the error UX; swallow here to avoid an unhandled

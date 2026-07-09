@@ -19,6 +19,10 @@ jest.mock('@signozhq/ui/sonner', () => ({
 
 jest.mock('uuid', () => ({ v4: (): string => 'cloned-id' }));
 
+// jsdom has no layout engine, so scrollIntoView is undefined by default.
+const mockScrollIntoView = jest.fn();
+window.HTMLElement.prototype.scrollIntoView = mockScrollIntoView;
+
 const sourcePanel = {
 	kind: 'Panel',
 	spec: {
@@ -130,6 +134,29 @@ describe('useClonePanel', () => {
 				error: 'Failed to clone panel',
 			}),
 		);
+	});
+
+	it('scrolls the cloned panel into view when the toast auto-closes', async () => {
+		const clonedNode = document.createElement('div');
+		clonedNode.setAttribute('data-panel-root', 'cloned-id');
+		document.body.appendChild(clonedNode);
+
+		const { result } = renderHook(() => useClonePanel({ sections: sections() }));
+
+		await result.current({ panelId: 'p1', layoutIndex: 0 });
+
+		// The scroll is deferred to the toast's auto-close, not fired inline.
+		const { onAutoClose } = mockToastPromise.mock.calls[0][1] as {
+			onAutoClose: () => void;
+		};
+		onAutoClose();
+
+		expect(mockScrollIntoView).toHaveBeenCalledWith({
+			behavior: 'smooth',
+			block: 'center',
+		});
+
+		document.body.removeChild(clonedNode);
 	});
 
 	it('swallows a patch rejection (toast owns the error UX) — does not throw', async () => {

@@ -18,6 +18,7 @@ import { getBuilderQueries } from 'pages/DashboardPageV2/DashboardContainer/Pane
 
 import { getExecStats } from '../queryV5/v5ResponseData';
 import { usePanelInteractions } from '../PanelsAndSectionsLayout/Panel/hooks/usePanelInteractions';
+import { useScrollToPanelStore } from '../store/useScrollToPanelStore';
 import ConfigPane from './ConfigPane/ConfigPane';
 import Header from './Header/Header';
 import layoutStorage from './layoutStorage';
@@ -203,19 +204,33 @@ function PanelEditorContainer({
 		query: currentQuery,
 	});
 
+	const setScrollToPanelId = useScrollToPanelStore((s) => s.setScrollToPanelId);
+
 	const onSave = useCallback(async (): Promise<void> => {
 		if (!isEditable) {
 			return;
 		}
 		try {
 			// Bake the live query into the spec so unstaged edits are saved too.
-			await save(buildSaveSpec(draft.spec));
+			const savedPanelId = await save(buildSaveSpec(draft.spec));
 			toast.success('Panel saved');
+			// Reveal the saved panel once the dashboard re-renders.
+			setScrollToPanelId(savedPanelId);
 			onSaved();
 		} catch {
 			toast.error('Failed to save panel');
 		}
-	}, [isEditable, save, buildSaveSpec, draft.spec, onSaved]);
+	}, [isEditable, save, buildSaveSpec, draft.spec, setScrollToPanelId, onSaved]);
+
+	// Leaving an existing panel's editor (without saving) still returns to it, so
+	// the dashboard lands on that panel rather than scrolled to the top. A new,
+	// unsaved panel has no persisted target, so there's nothing to reveal.
+	const onCloseEditor = useCallback((): void => {
+		if (!isNew) {
+			setScrollToPanelId(panelId);
+		}
+		onClose();
+	}, [isNew, panelId, setScrollToPanelId, onClose]);
 
 	return (
 		<div className={styles.page} data-testid="panel-editor-v2">
@@ -227,7 +242,7 @@ function PanelEditorContainer({
 				readOnlyReason={editDisabledReason}
 				onSave={onSave}
 				onSwitchToView={onSwitchToView}
-				onClose={onClose}
+				onClose={onCloseEditor}
 			/>
 			<ResizablePanelGroup
 				id="panel-editor-v2"
