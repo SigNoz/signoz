@@ -13,7 +13,7 @@ import MapperRow, { MapperRowSkeleton } from '../MapperRow';
 import MappingsColgroup from '../MappingsColgroup';
 import styles from './GroupMappers.module.scss';
 
-const MAPPER_SKELETON_ROWS = 2;
+const MAPPER_SKELETON_ROWS = 1;
 
 const STATE_ROW_MOTION = {
 	initial: { opacity: 0 },
