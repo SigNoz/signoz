@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 
@@ -12,6 +12,7 @@ import { useDashboardStore } from '../../../store/useDashboardStore';
 import { useCloneSection } from '../hooks/useCloneSection';
 import { useDeleteSection } from '../hooks/useDeleteSection';
 import { useRenameSection } from '../hooks/useRenameSection';
+import { useScrollSectionIntoView } from '../hooks/useScrollSectionIntoView';
 import { useToggleSectionCollapse } from '../hooks/useToggleSectionCollapse';
 import SectionTitleModal from '../SectionTitleModal';
 import SectionGrid from '../SectionGrid/SectionGrid';
@@ -65,6 +66,9 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 
 	const cloneSection = useCloneSection();
 
+	const sectionRef = useRef<HTMLDivElement>(null);
+	useScrollSectionIntoView(section.id, sectionRef);
+
 	const grid = (
 		<SectionGrid
 			items={section.items}
@@ -77,6 +81,7 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 		// Untitled section — just the grid, no header chrome.
 		return (
 			<div
+				ref={sectionRef}
 				data-testid={`dashboard-section-${section.id}`}
 				data-section-layout-index={section.layoutIndex}
 			>
@@ -87,6 +92,7 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 
 	return (
 		<div
+			ref={sectionRef}
 			className={styles.section}
 			data-testid={`dashboard-section-${section.id}`}
 			data-section-layout-index={section.layoutIndex}

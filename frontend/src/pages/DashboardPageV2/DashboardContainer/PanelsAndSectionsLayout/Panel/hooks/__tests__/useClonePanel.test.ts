@@ -1,6 +1,7 @@
 import { renderHook } from '@testing-library/react';
 
 import { useDashboardStore } from '../../../../store/useDashboardStore';
+import { useScrollToPanelStore } from '../../../../store/useScrollToPanelStore';
 import type { DashboardSection } from '../../../../utils';
 import { useClonePanel } from '../useClonePanel';
 
@@ -18,10 +19,6 @@ jest.mock('@signozhq/ui/sonner', () => ({
 }));
 
 jest.mock('uuid', () => ({ v4: (): string => 'cloned-id' }));
-
-// jsdom has no layout engine, so scrollIntoView is undefined by default.
-const mockScrollIntoView = jest.fn();
-window.HTMLElement.prototype.scrollIntoView = mockScrollIntoView;
 
 const sourcePanel = {
 	kind: 'Panel',
@@ -51,6 +48,7 @@ describe('useClonePanel', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 		useDashboardStore.setState({ dashboardId: 'dash-1' });
+		useScrollToPanelStore.setState({ scrollToPanelId: null });
 	});
 
 	it('patches an add of the deep-copied spec + a new item under the same section', async () => {
@@ -136,27 +134,19 @@ describe('useClonePanel', () => {
 		);
 	});
 
-	it('scrolls the cloned panel into view when the toast auto-closes', async () => {
-		const clonedNode = document.createElement('div');
-		clonedNode.setAttribute('data-panel-root', 'cloned-id');
-		document.body.appendChild(clonedNode);
-
+	it('records the cloned panel as the scroll target when the toast auto-closes', async () => {
 		const { result } = renderHook(() => useClonePanel({ sections: sections() }));
 
 		await result.current({ panelId: 'p1', layoutIndex: 0 });
 
-		// The scroll is deferred to the toast's auto-close, not fired inline.
+		// The reveal is deferred to the toast's auto-close, not fired inline.
+		expect(useScrollToPanelStore.getState().scrollToPanelId).toBeNull();
 		const { onAutoClose } = mockToastPromise.mock.calls[0][1] as {
 			onAutoClose: () => void;
 		};
 		onAutoClose();
 
-		expect(mockScrollIntoView).toHaveBeenCalledWith({
-			behavior: 'smooth',
-			block: 'center',
-		});
-
-		document.body.removeChild(clonedNode);
+		expect(useScrollToPanelStore.getState().scrollToPanelId).toBe('cloned-id');
 	});
 
 	it('swallows a patch rejection (toast owns the error UX) — does not throw', async () => {

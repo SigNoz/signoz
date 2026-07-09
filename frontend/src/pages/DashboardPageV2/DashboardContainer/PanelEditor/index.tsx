@@ -215,9 +215,9 @@ function PanelEditorContainer({
 		try {
 			// Bake the live query into the spec so unstaged edits are saved too.
 			const savedPanelId = await save(buildSaveSpec(draft.spec));
-			toast.success('Panel saved');
 			// Reveal the saved panel once the dashboard re-renders.
 			setScrollToPanelId(savedPanelId);
+			toast.success('Panel saved');
 			onSaved();
 		} catch {
 			toast.error('Failed to save panel');

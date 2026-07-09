@@ -4,6 +4,7 @@ import type {
 } from 'api/generated/services/sigNoz.schemas';
 
 import {
+	bottomRowSlot,
 	cloneSectionOps,
 	createDefaultPanel,
 	createPanelOps,
@@ -197,6 +198,24 @@ describe('findFreeSlot', () => {
 	it('clamps a too-wide panel to the grid width', () => {
 		// width 20 > 12 cols → clamped to 12, so it wraps below the first row.
 		expect(findFreeSlot([itemAt(0, 0, 6, 6)], 20)).toStrictEqual({ x: 0, y: 6 });
+	});
+});
+
+describe('bottomRowSlot', () => {
+	it('is the origin for an empty section', () => {
+		expect(bottomRowSlot([])).toStrictEqual({ x: 0, y: 0 });
+	});
+
+	it('drops a fresh left-edge row below the tallest reaching item', () => {
+		// max(y + height) across items: itemAt(6,0,6,12) reaches y=12.
+		const items = [itemAt(0, 0, 6, 6), itemAt(6, 0, 6, 12)];
+		expect(bottomRowSlot(items)).toStrictEqual({ x: 0, y: 12 });
+	});
+
+	it('never returns a slot that overlaps an existing item', () => {
+		const items = [itemAt(0, 0, 6, 6), itemAt(6, 0, 6, 12), itemAt(0, 6, 3, 6)];
+		const placed = { ...bottomRowSlot(items), width: 12, height: 6 };
+		expect(items.some((it) => itemsOverlap(placed, it))).toBe(false);
 	});
 });
 

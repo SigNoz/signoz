@@ -189,14 +189,26 @@ export function itemsOverlap(a: PlacedItem, b: PlacedItem): boolean {
 }
 
 /**
+ * A fresh row below every existing item (`x: 0` at the greatest bottom-y) — sits
+ * under everything so it can never overlap. Used when a panel must go to the end
+ * (e.g. moved into a section) rather than backfilling a gap.
+ */
+export function bottomRowSlot(items: PlacedItem[]): { x: number; y: number } {
+	const bottom = items.reduce(
+		(max, it) => Math.max(max, (it.y ?? 0) + (it.height ?? 0)),
+		0,
+	);
+	return { x: 0, y: bottom };
+}
+
+/**
  * Placement for a new grid item: drop it right of the last row if it both fits
  * the grid width and clears every existing item, else wrap to a fresh row at the
- * bottom. Only the last row is preferred (items sharing the greatest top-y);
- * gaps in earlier rows are left alone. The overlap guard is what keeps this
- * safe — a tall panel from an earlier row can reach down into the last row, so
- * "right of the last row" is not automatically free. The bottom fallback sits
- * below every item and so can never overlap. This is the single placement
- * primitive for create / clone / move.
+ * bottom (`bottomRowSlot`). Only the last row is preferred (items sharing the
+ * greatest top-y); gaps in earlier rows are left alone. The overlap guard is what
+ * keeps this safe — a tall panel from an earlier row can reach down into the last
+ * row, so "right of the last row" is not automatically free. This is the placement
+ * primitive for create / clone.
  */
 export function findFreeSlot(
 	items: PlacedItem[],
@@ -207,10 +219,6 @@ export function findFreeSlot(
 		return { x: 0, y: 0 };
 	}
 
-	const bottom = items.reduce(
-		(max, it) => Math.max(max, (it.y ?? 0) + (it.height ?? 0)),
-		0,
-	);
 	const lastRowY = items.reduce((max, it) => Math.max(max, it.y ?? 0), 0);
 	const lastRowRightEdge = items
 		.filter((it) => (it.y ?? 0) === lastRowY)
@@ -229,7 +237,7 @@ export function findFreeSlot(
 	if (fitsWidth && !items.some((it) => itemsOverlap(candidate, it))) {
 		return { x: lastRowRightEdge, y: lastRowY };
 	}
-	return { x: 0, y: bottom };
+	return bottomRowSlot(items);
 }
 
 /**

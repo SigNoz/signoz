@@ -108,7 +108,7 @@ function getColName(
 }
 
 /**
- * Key a value column is stored and rendered under: the query name, or
+ * The key a value column is stored and rendered under: the query name, or
  * `queryName.expression` on multi-aggregation queries so value columns don't collide.
  */
 export function getAggregationColumnKey(

@@ -4,7 +4,7 @@ import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
 import { useOptimisticPatch } from '../../../hooks/useOptimisticPatch';
-import { findFreeSlot, movePanelBetweenSectionsOps } from '../../../patchOps';
+import { bottomRowSlot, movePanelBetweenSectionsOps } from '../../../patchOps';
 import { useDashboardStore } from '../../../store/useDashboardStore';
 import type { DashboardSection } from '../../../utils';
 
@@ -20,8 +20,8 @@ interface Params {
 
 /**
  * Relocates a panel's item ref from one section to another. The panel itself
- * stays in `spec.panels`; only the grid item moves, dropped into the target
- * section's first free slot (`findFreeSlot`). Persisted as one atomic patch.
+ * stays in `spec.panels`; only the grid item moves, dropped into a fresh row at
+ * the bottom of the target section (`bottomRowSlot`). Persisted as one atomic patch.
  */
 export function useMovePanelToSection({
 	sections,
@@ -52,9 +52,9 @@ export function useMovePanelToSection({
 			}
 
 			const sourceItems = source.items.filter((i) => i.id !== panelId);
-			// Reuse the shared placement primitive: fills the last row's free edge
-			// if the panel fits, else drops to a fresh row at the bottom.
-			const { x, y } = findFreeSlot(target.items, moved.width);
+			// Land at the section bottom, not backfilled into a gap — least disruptive
+			// to the arrangement the user already made in the target section.
+			const { x, y } = bottomRowSlot(target.items);
 			const targetItems = [...target.items, { ...moved, x, y }];
 
 			try {

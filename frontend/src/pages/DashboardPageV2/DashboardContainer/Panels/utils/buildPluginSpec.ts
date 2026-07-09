@@ -42,6 +42,11 @@ export interface SeedContext {
 	signal?: TelemetrytypesSignalDTO;
 }
 
+/** `SeedContext` plus `oldSpec.plugin.spec` (typed `unknown`) resolved once, so seeds read it without re-casting. */
+interface ResolvedSeedContext extends SeedContext {
+	oldPluginSpec?: SeededPluginSpec;
+}
+
 interface AnyThresholdFields {
 	color: string;
 	value: number;
@@ -90,7 +95,7 @@ function toThresholdVariant(
  */
 interface SectionSeed {
 	specKey: keyof SeededPluginSpec;
-	seed: (controls: unknown, ctx: SeedContext) => unknown;
+	seed: (controls: unknown, ctx: ResolvedSeedContext) => unknown;
 }
 
 const SECTION_SEEDS: Partial<Record<SectionKind, SectionSeed>> = {
@@ -98,14 +103,10 @@ const SECTION_SEEDS: Partial<Record<SectionKind, SectionSeed>> = {
 		specKey: 'visualization',
 		seed: (
 			controls,
-			{ oldSpec },
+			{ oldPluginSpec },
 		): SectionSpecMap[SectionKind.Visualization] | undefined => {
 			const c = controls as SectionControls[SectionKind.Visualization];
-			const old = (
-				oldSpec?.plugin.spec as {
-					visualization?: SectionSpecMap[SectionKind.Visualization];
-				}
-			)?.visualization;
+			const old = oldPluginSpec?.visualization;
 			const visualization: SectionSpecMap[SectionKind.Visualization] = {
 				...(c.timePreference && {
 					timePreference:
@@ -125,14 +126,10 @@ const SECTION_SEEDS: Partial<Record<SectionKind, SectionSeed>> = {
 		specKey: 'axes',
 		seed: (
 			controls,
-			{ oldSpec },
+			{ oldPluginSpec },
 		): SectionSpecMap[SectionKind.Axes] | undefined => {
 			const c = controls as SectionControls[SectionKind.Axes];
-			const old = (
-				oldSpec?.plugin.spec as {
-					axes?: SectionSpecMap[SectionKind.Axes];
-				}
-			)?.axes;
+			const old = oldPluginSpec?.axes;
 			if (!old) {
 				return undefined;
 			}
@@ -151,14 +148,10 @@ const SECTION_SEEDS: Partial<Record<SectionKind, SectionSeed>> = {
 		specKey: 'legend',
 		seed: (
 			controls,
-			{ oldSpec },
+			{ oldPluginSpec },
 		): SectionSpecMap[SectionKind.Legend] | undefined => {
 			const c = controls as SectionControls[SectionKind.Legend];
-			const old = (
-				oldSpec?.plugin.spec as {
-					legend?: SectionSpecMap[SectionKind.Legend];
-				}
-			)?.legend;
+			const old = oldPluginSpec?.legend;
 			// customColors is keyed by series label, which the new kind may not reproduce.
 			return c.position
 				? { position: old?.position ?? DashboardtypesLegendPositionDTO.bottom }
@@ -169,14 +162,10 @@ const SECTION_SEEDS: Partial<Record<SectionKind, SectionSeed>> = {
 		specKey: 'chartAppearance',
 		seed: (
 			controls,
-			{ oldSpec },
+			{ oldPluginSpec },
 		): SectionSpecMap[SectionKind.ChartAppearance] | undefined => {
 			const c = controls as SectionControls[SectionKind.ChartAppearance];
-			const old = (
-				oldSpec?.plugin.spec as {
-					chartAppearance?: SectionSpecMap[SectionKind.ChartAppearance];
-				}
-			)?.chartAppearance;
+			const old = oldPluginSpec?.chartAppearance;
 			const appearance: SectionSpecMap[SectionKind.ChartAppearance] = {};
 			if (c.lineStyle) {
 				appearance.lineStyle = old?.lineStyle ?? DashboardtypesLineStyleDTO.solid;
@@ -199,10 +188,12 @@ const SECTION_SEEDS: Partial<Record<SectionKind, SectionSeed>> = {
 	},
 	[SectionKind.Formatting]: {
 		specKey: 'formatting',
-		seed: (controls, { oldSpec }): SeededPluginSpec['formatting'] | undefined => {
+		seed: (
+			controls,
+			{ oldSpec, oldPluginSpec },
+		): SeededPluginSpec['formatting'] | undefined => {
 			const c = controls as SectionControls[SectionKind.Formatting];
-			const old = (oldSpec?.plugin.spec as { formatting?: PanelFormattingSlice })
-				?.formatting;
+			const old = oldPluginSpec?.formatting;
 			// Carry a field only when the target kind declares it (e.g. Table has no `unit`),
 			// else the save API rejects the spec.
 			const carried: NonNullable<SeededPluginSpec['formatting']> = {
@@ -239,11 +230,10 @@ const SECTION_SEEDS: Partial<Record<SectionKind, SectionSeed>> = {
 	},
 	[SectionKind.Thresholds]: {
 		specKey: 'thresholds',
-		seed: (controls, { oldSpec }): AnyThreshold[] | undefined => {
+		seed: (controls, { oldSpec, oldPluginSpec }): AnyThreshold[] | undefined => {
 			const c = controls as SectionControls[SectionKind.Thresholds];
 			const variant = c.variant ?? ThresholdVariant.LABEL;
-			const old = (oldSpec?.plugin.spec as { thresholds?: AnyThreshold[] | null })
-				?.thresholds;
+			const old = oldPluginSpec?.thresholds;
 			if (!old || old.length === 0) {
 				return undefined;
 			}
@@ -278,13 +268,19 @@ export function buildPluginSpec(
 ): SeededPluginSpec {
 	const spec: SeededPluginSpec = {};
 
+	// One localized cast for all seeds: `plugin.spec` is typed `unknown`.
+	const resolved: ResolvedSeedContext = {
+		...ctx,
+		oldPluginSpec: ctx.oldSpec?.plugin.spec as SeededPluginSpec | undefined,
+	};
+
 	sections.forEach((section) => {
 		const entry = SECTION_SEEDS[section.kind];
 		if (!entry) {
 			return;
 		}
 		const controls = 'controls' in section ? section.controls : undefined;
-		const value = entry.seed(controls, ctx);
+		const value = entry.seed(controls, resolved);
 		if (value !== undefined) {
 			// specKey ↔ value correlation can't be proven across the lookup; one localized cast.
 			(spec as Record<string, unknown>)[entry.specKey] = value;
