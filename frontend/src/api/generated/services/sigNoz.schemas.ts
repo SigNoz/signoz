@@ -5585,6 +5585,7 @@ export enum InframonitoringtypesCheckTypeDTO {
 	namespaces = 'namespaces',
 	clusters = 'clusters',
 	volumes = 'volumes',
+	kube_containers = 'kube_containers',
 }
 export interface InframonitoringtypesMissingMetricsComponentEntryDTO {
 	associatedComponent: InframonitoringtypesAssociatedComponentDTO;
@@ -5856,6 +5857,174 @@ export interface InframonitoringtypesClustersDTO {
 	 * @type array
 	 */
 	records: InframonitoringtypesClusterRecordDTO[];
+	/**
+	 * @type integer
+	 */
+	total: number;
+	type: InframonitoringtypesResponseTypeDTO;
+	warning?: Querybuildertypesv5QueryWarnDataDTO;
+}
+
+export interface InframonitoringtypesContainerCountsByReadyDTO {
+	/**
+	 * @type integer
+	 */
+	notReady: number;
+	/**
+	 * @type integer
+	 */
+	ready: number;
+}
+
+export interface InframonitoringtypesContainerCountsByStatusDTO {
+	/**
+	 * @type integer
+	 */
+	completed: number;
+	/**
+	 * @type integer
+	 */
+	containerCannotRun: number;
+	/**
+	 * @type integer
+	 */
+	containerCreating: number;
+	/**
+	 * @type integer
+	 */
+	crashLoopBackOff: number;
+	/**
+	 * @type integer
+	 */
+	createContainerConfigError: number;
+	/**
+	 * @type integer
+	 */
+	errImagePull: number;
+	/**
+	 * @type integer
+	 */
+	error: number;
+	/**
+	 * @type integer
+	 */
+	imagePullBackOff: number;
+	/**
+	 * @type integer
+	 */
+	oomKilled: number;
+	/**
+	 * @type integer
+	 */
+	running: number;
+	/**
+	 * @type integer
+	 */
+	terminated: number;
+	/**
+	 * @type integer
+	 */
+	unknown: number;
+	/**
+	 * @type integer
+	 */
+	waiting: number;
+}
+
+export enum InframonitoringtypesContainerReadyDTO {
+	ready = 'ready',
+	not_ready = 'not_ready',
+	no_data = 'no_data',
+}
+export type InframonitoringtypesContainerRecordDTOMetaAnyOf = {
+	[key: string]: string;
+};
+
+/**
+ * @nullable
+ */
+export type InframonitoringtypesContainerRecordDTOMeta =
+	InframonitoringtypesContainerRecordDTOMetaAnyOf | null;
+
+export enum InframonitoringtypesContainerStatusDTO {
+	running = 'running',
+	waiting = 'waiting',
+	terminated = 'terminated',
+	crashloopbackoff = 'crashloopbackoff',
+	imagepullbackoff = 'imagepullbackoff',
+	errimagepull = 'errimagepull',
+	createcontainerconfigerror = 'createcontainerconfigerror',
+	containercreating = 'containercreating',
+	oomkilled = 'oomkilled',
+	completed = 'completed',
+	error = 'error',
+	containercannotrun = 'containercannotrun',
+	unknown = 'unknown',
+	no_data = 'no_data',
+}
+export interface InframonitoringtypesContainerRecordDTO {
+	containerCountsByReady: InframonitoringtypesContainerCountsByReadyDTO;
+	containerCountsByStatus: InframonitoringtypesContainerCountsByStatusDTO;
+	/**
+	 * @type string
+	 */
+	containerName: string;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	cpu: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	cpuLimitUtilization: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	cpuRequestUtilization: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	memory: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	memoryLimitUtilization: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	memoryRequestUtilization: number;
+	/**
+	 * @type object,null
+	 */
+	meta: InframonitoringtypesContainerRecordDTOMeta;
+	/**
+	 * @type string
+	 */
+	podUID: string;
+	ready: InframonitoringtypesContainerReadyDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	restarts: number;
+	status: InframonitoringtypesContainerStatusDTO;
+}
+
+export interface InframonitoringtypesContainersDTO {
+	/**
+	 * @type boolean
+	 */
+	endTimeBeforeRetention: boolean;
+	/**
+	 * @type array
+	 */
+	records: InframonitoringtypesContainerRecordDTO[];
 	/**
 	 * @type integer
 	 */
@@ -6420,6 +6589,33 @@ export interface InframonitoringtypesPodsDTO {
 }
 
 export interface InframonitoringtypesPostableClustersDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	end: number;
+	filter?: Querybuildertypesv5FilterDTO;
+	/**
+	 * @type array,null
+	 */
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
+	/**
+	 * @type integer
+	 */
+	limit: number;
+	/**
+	 * @type integer
+	 */
+	offset?: number;
+	orderBy?: Querybuildertypesv5OrderByDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	start: number;
+}
+
+export interface InframonitoringtypesPostableContainersDTO {
 	/**
 	 * @type integer
 	 * @format int64
@@ -11049,6 +11245,14 @@ export type ListJobs200 = {
 	status: string;
 };
 
+export type ListContainers200 = {
+	data: InframonitoringtypesContainersDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type ListNamespaces200 = {
 	data: InframonitoringtypesNamespacesDTO;
 	/**
@@ -11374,6 +11578,19 @@ export type GetPublicDashboardPanelQueryRangeV2PathParameters = {
 	id: string;
 	key: string;
 };
+export type GetPublicDashboardPanelQueryRangeV2Params = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	startTime?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	endTime?: string;
+};
+
 export type GetPublicDashboardPanelQueryRangeV2200 = {
 	data: Querybuildertypesv5QueryRangeResponseDTO;
 	/**
