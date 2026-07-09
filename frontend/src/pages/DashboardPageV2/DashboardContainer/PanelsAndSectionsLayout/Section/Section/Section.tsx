@@ -12,7 +12,7 @@ import { useDashboardStore } from '../../../store/useDashboardStore';
 import { useCloneSection } from '../hooks/useCloneSection';
 import { useDeleteSection } from '../hooks/useDeleteSection';
 import { useRenameSection } from '../hooks/useRenameSection';
-import { useScrollSectionIntoView } from '../hooks/useScrollSectionIntoView';
+import { useScrollIntoView } from '../hooks/useScrollIntoView';
 import { useToggleSectionCollapse } from '../hooks/useToggleSectionCollapse';
 import SectionTitleModal from '../SectionTitleModal';
 import SectionGrid from '../SectionGrid/SectionGrid';
@@ -67,7 +67,7 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 	const cloneSection = useCloneSection();
 
 	const sectionRef = useRef<HTMLDivElement>(null);
-	useScrollSectionIntoView(section.id, sectionRef);
+	useScrollIntoView(section.id, sectionRef);
 
 	const grid = (
 		<SectionGrid

@@ -94,6 +94,8 @@ function toThresholdVariant(
  * How each section derives its plugin-spec slice on create/switch — the single place a section
  * declares this. Sections absent from `SECTION_SEEDS` seed nothing. Mapped over `SectionKind` so
  * every `seed` receives its own kind's `controls` (atomic kinds get `undefined`), no per-seed cast.
+ * A `seed` returns an empty object/array (never `undefined`) when it has nothing to carry;
+ * `buildPluginSpec` drops the empties so the omit decision lives in one place.
  */
 type SectionSeeds = {
 	[K in SectionKind]?: {
@@ -101,9 +103,15 @@ type SectionSeeds = {
 		seed: (
 			controls: K extends ControlledSectionKind ? SectionControls[K] : undefined,
 			ctx: ResolvedSeedContext,
-		) => unknown;
+		) => object;
 	};
 };
+
+function isEmptySlice(value: object): boolean {
+	return Array.isArray(value)
+		? value.length === 0
+		: Object.keys(value).length === 0;
+}
 
 const SECTION_SEEDS: SectionSeeds = {
 	[SectionKind.Visualization]: {
@@ -111,9 +119,9 @@ const SECTION_SEEDS: SectionSeeds = {
 		seed: (
 			controls,
 			{ oldPluginSpec },
-		): SectionSpecMap[SectionKind.Visualization] | undefined => {
+		): SectionSpecMap[SectionKind.Visualization] => {
 			const old = oldPluginSpec?.visualization;
-			const visualization: SectionSpecMap[SectionKind.Visualization] = {
+			return {
 				...(controls.timePreference && {
 					timePreference:
 						old?.timePreference ?? DashboardtypesTimePreferenceDTO.global_time,
@@ -125,20 +133,16 @@ const SECTION_SEEDS: SectionSeeds = {
 				...(controls.fillSpans &&
 					old?.fillSpans !== undefined && { fillSpans: old.fillSpans }),
 			};
-			return Object.keys(visualization).length > 0 ? visualization : undefined;
 		},
 	},
 	[SectionKind.Axes]: {
 		specKey: 'axes',
-		seed: (
-			controls,
-			{ oldPluginSpec },
-		): SectionSpecMap[SectionKind.Axes] | undefined => {
+		seed: (controls, { oldPluginSpec }): SectionSpecMap[SectionKind.Axes] => {
 			const old = oldPluginSpec?.axes;
 			if (!old) {
-				return undefined;
+				return {};
 			}
-			const axes: SectionSpecMap[SectionKind.Axes] = {
+			return {
 				...(controls.minMax &&
 					typeof old.softMin === 'number' && { softMin: old.softMin }),
 				...(controls.minMax &&
@@ -146,20 +150,16 @@ const SECTION_SEEDS: SectionSeeds = {
 				...(controls.logScale &&
 					old.isLogScale !== undefined && { isLogScale: old.isLogScale }),
 			};
-			return Object.keys(axes).length > 0 ? axes : undefined;
 		},
 	},
 	[SectionKind.Legend]: {
 		specKey: 'legend',
-		seed: (
-			controls,
-			{ oldPluginSpec },
-		): SectionSpecMap[SectionKind.Legend] | undefined => {
+		seed: (controls, { oldPluginSpec }): SectionSpecMap[SectionKind.Legend] => {
 			const old = oldPluginSpec?.legend;
 			// customColors is keyed by series label, which the new kind may not reproduce.
 			return controls.position
 				? { position: old?.position ?? DashboardtypesLegendPositionDTO.bottom }
-				: undefined;
+				: {};
 		},
 	},
 	[SectionKind.ChartAppearance]: {
@@ -167,7 +167,7 @@ const SECTION_SEEDS: SectionSeeds = {
 		seed: (
 			controls,
 			{ oldPluginSpec },
-		): SectionSpecMap[SectionKind.ChartAppearance] | undefined => {
+		): SectionSpecMap[SectionKind.ChartAppearance] => {
 			// One guard on the optional old slice, then read fields with carried-or-default values.
 			const {
 				lineStyle = DashboardtypesLineStyleDTO.solid,
@@ -192,7 +192,7 @@ const SECTION_SEEDS: SectionSeeds = {
 			if (controls.spanGaps && spanGaps !== undefined) {
 				appearance.spanGaps = spanGaps;
 			}
-			return Object.keys(appearance).length > 0 ? appearance : undefined;
+			return appearance;
 		},
 	},
 	[SectionKind.Formatting]: {
@@ -200,7 +200,7 @@ const SECTION_SEEDS: SectionSeeds = {
 		seed: (
 			controls,
 			{ oldSpec, oldPluginSpec },
-		): SeededPluginSpec['formatting'] | undefined => {
+		): NonNullable<SeededPluginSpec['formatting']> => {
 			const old = oldPluginSpec?.formatting;
 			// Carry a field only when the target kind declares it (e.g. Table has no `unit`),
 			// else the save API rejects the spec.
@@ -220,29 +220,21 @@ const SECTION_SEEDS: SectionSeeds = {
 					carried.columnUnits = Object.fromEntries(keys.map((key) => [key, unit]));
 				}
 			}
-			return Object.keys(carried).length > 0 ? carried : undefined;
+			return carried;
 		},
 	},
 	[SectionKind.Columns]: {
 		specKey: 'selectFields',
-		seed: (
-			_controls,
-			{ signal },
-		): SectionSpecMap[SectionKind.Columns] | undefined => {
-			if (!signal) {
-				return undefined;
-			}
-			const columns = defaultColumnsForSignal(signal);
-			return columns.length > 0 ? columns : undefined;
-		},
+		seed: (_controls, { signal }): SectionSpecMap[SectionKind.Columns] =>
+			signal ? defaultColumnsForSignal(signal) : [],
 	},
 	[SectionKind.Thresholds]: {
 		specKey: 'thresholds',
-		seed: (controls, { oldSpec, oldPluginSpec }): AnyThreshold[] | undefined => {
+		seed: (controls, { oldSpec, oldPluginSpec }): AnyThreshold[] => {
 			const variant = controls.variant ?? ThresholdVariant.LABEL;
 			const old = oldPluginSpec?.thresholds;
 			if (!old || old.length === 0) {
-				return undefined;
+				return [];
 			}
 			// The save API rejects an empty table-threshold columnName.
 			const defaultColumnName =
@@ -256,11 +248,9 @@ const SECTION_SEEDS: SectionSeeds = {
 					defaultColumnName,
 				),
 			);
-			const kept =
-				variant === ThresholdVariant.TABLE
-					? mapped.filter((t) => (t as { columnName?: string }).columnName)
-					: mapped;
-			return kept.length > 0 ? kept : undefined;
+			return variant === ThresholdVariant.TABLE
+				? mapped.filter((t) => (t as { columnName?: string }).columnName)
+				: mapped;
 		},
 	},
 };
@@ -289,9 +279,9 @@ export function buildPluginSpec(
 		const controls = 'controls' in section ? section.controls : undefined;
 		// The lookup can't prove `section.controls` matches `entry`'s key, so `entry.seed`
 		// is a union of differently-typed fns; one boundary cast, in place of a per-seed one.
-		const seed = entry.seed as (c: unknown, ctx: ResolvedSeedContext) => unknown;
+		const seed = entry.seed as (c: unknown, ctx: ResolvedSeedContext) => object;
 		const value = seed(controls, resolved);
-		if (value !== undefined) {
+		if (!isEmptySlice(value)) {
 			// specKey ↔ value correlation can't be proven across the lookup; one localized cast.
 			(spec as Record<string, unknown>)[entry.specKey] = value;
 		}

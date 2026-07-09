@@ -77,7 +77,7 @@ describe('buildPluginSpec', () => {
 			expect(buildPluginSpec(sections)).toStrictEqual({});
 		});
 
-		it('omits the key entirely when a seed returns undefined (never key: undefined)', () => {
+		it('omits the key entirely when a seed produces an empty slice (never key: undefined)', () => {
 			const result = buildPluginSpec([
 				{ kind: SectionKind.Legend, controls: { colors: true } },
 			]);

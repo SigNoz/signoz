@@ -5,7 +5,7 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/registry';
 
 import PanelEditorContainer from '../index';
-import { useScrollToPanelStore } from '../../store/useScrollToPanelStore';
+import { useScrollIntoViewStore } from '../../store/useScrollIntoViewStore';
 
 /**
  * Characterization test for the editor's composition: which derived values and
@@ -204,7 +204,7 @@ function setup(
 describe('PanelEditorContainer composition', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
-		useScrollToPanelStore.setState({ scrollToPanelId: null });
+		useScrollIntoViewStore.setState({ scrollTargetId: null });
 	});
 
 	it('renders the editor shell with preview, query builder, and config pane', () => {
@@ -314,7 +314,7 @@ describe('PanelEditorContainer composition', () => {
 		await userEvent.click(screen.getByTestId('editor-save'));
 
 		await waitFor(() =>
-			expect(useScrollToPanelStore.getState().scrollToPanelId).toBe('panel-1'),
+			expect(useScrollIntoViewStore.getState().scrollTargetId).toBe('panel-1'),
 		);
 	});
 
@@ -323,7 +323,7 @@ describe('PanelEditorContainer composition', () => {
 
 		await userEvent.click(screen.getByTestId('editor-close'));
 
-		expect(useScrollToPanelStore.getState().scrollToPanelId).toBe('panel-1');
+		expect(useScrollIntoViewStore.getState().scrollTargetId).toBe('panel-1');
 	});
 
 	it('does not mark a scroll target when a new, unsaved panel is closed', async () => {
@@ -331,7 +331,7 @@ describe('PanelEditorContainer composition', () => {
 
 		await userEvent.click(screen.getByTestId('editor-close'));
 
-		expect(useScrollToPanelStore.getState().scrollToPanelId).toBeNull();
+		expect(useScrollIntoViewStore.getState().scrollTargetId).toBeNull();
 	});
 
 	it('offers Switch to View Mode for an existing panel', () => {

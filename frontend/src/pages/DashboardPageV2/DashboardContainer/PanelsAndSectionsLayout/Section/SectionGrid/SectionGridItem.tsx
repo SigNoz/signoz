@@ -3,7 +3,7 @@ import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schem
 import { useIntersectionObserver } from 'hooks/useIntersectionObserver';
 
 import Panel, { type PanelActionsConfig } from '../../Panel/Panel';
-import { useScrollPanelIntoView } from './useScrollPanelIntoView';
+import { useScrollIntoView } from '../hooks/useScrollIntoView';
 import styles from './SectionGrid.module.scss';
 
 const VIEWPORT_OBSERVER_OPTIONS: IntersectionObserverInit = {
@@ -32,7 +32,7 @@ function SectionGridItem({
 		VIEWPORT_OBSERVER_OPTIONS,
 		true,
 	);
-	useScrollPanelIntoView(panelId, containerRef);
+	useScrollIntoView(panelId, containerRef);
 
 	return (
 		<div ref={containerRef} className={styles.panelWrapper}>

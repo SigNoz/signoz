@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react';
 
 import { useDashboardStore } from '../../../../store/useDashboardStore';
-import { useScrollToPanelStore } from '../../../../store/useScrollToPanelStore';
+import { useScrollIntoViewStore } from '../../../../store/useScrollIntoViewStore';
 import type { DashboardSection } from '../../../../utils';
 import { useClonePanel } from '../useClonePanel';
 
@@ -48,7 +48,7 @@ describe('useClonePanel', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 		useDashboardStore.setState({ dashboardId: 'dash-1' });
-		useScrollToPanelStore.setState({ scrollToPanelId: null });
+		useScrollIntoViewStore.setState({ scrollTargetId: null });
 	});
 
 	it('patches an add of the deep-copied spec + a new item under the same section', async () => {
@@ -140,13 +140,13 @@ describe('useClonePanel', () => {
 		await result.current({ panelId: 'p1', layoutIndex: 0 });
 
 		// The reveal is deferred to the toast's auto-close, not fired inline.
-		expect(useScrollToPanelStore.getState().scrollToPanelId).toBeNull();
+		expect(useScrollIntoViewStore.getState().scrollTargetId).toBeNull();
 		const { onAutoClose } = mockToastPromise.mock.calls[0][1] as {
 			onAutoClose: () => void;
 		};
 		onAutoClose();
 
-		expect(useScrollToPanelStore.getState().scrollToPanelId).toBe('cloned-id');
+		expect(useScrollIntoViewStore.getState().scrollTargetId).toBe('cloned-id');
 	});
 
 	it('swallows a patch rejection (toast owns the error UX) — does not throw', async () => {

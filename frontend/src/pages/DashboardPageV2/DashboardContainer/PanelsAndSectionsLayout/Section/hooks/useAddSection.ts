@@ -11,7 +11,7 @@ import {
 	reorderLayoutsOp,
 } from '../../../patchOps';
 import { useDashboardStore } from '../../../store/useDashboardStore';
-import { useScrollToPanelStore } from '../../../store/useScrollToPanelStore';
+import { useScrollIntoViewStore } from '../../../store/useScrollIntoViewStore';
 import { getSectionStableId } from '../../../utils';
 
 interface Params {
@@ -33,9 +33,7 @@ export function useAddSection({ layouts }: Params): Result {
 	const { patchAsync } = useOptimisticPatch();
 	const [isSaving, setIsSaving] = useState(false);
 	const { showErrorModal } = useErrorModal();
-	const setScrollToSectionId = useScrollToPanelStore(
-		(s) => s.setScrollToSectionId,
-	);
+	const setScrollTargetId = useScrollIntoViewStore((s) => s.setScrollTargetId);
 
 	const addSection = useCallback(
 		async (title: string): Promise<void> => {
@@ -53,14 +51,14 @@ export function useAddSection({ layouts }: Params): Result {
 				// The new empty section is appended, so its layout index is the prior count;
 				// key it the way `getSectionStableId` does so it reveals itself on render.
 				const newIndex = isFirstSection ? 0 : layouts.length;
-				setScrollToSectionId(getSectionStableId([], newIndex));
+				setScrollTargetId(getSectionStableId([], newIndex));
 			} catch (error) {
 				showErrorModal(error as APIError);
 			} finally {
 				setIsSaving(false);
 			}
 		},
-		[layouts, dashboardId, patchAsync, showErrorModal, setScrollToSectionId],
+		[layouts, dashboardId, patchAsync, showErrorModal, setScrollTargetId],
 	);
 
 	return { addSection, isSaving };
