@@ -14,8 +14,9 @@ interface UseDashboardStaleCheck {
 /**
  * Prompts when another tab/user changed the open dashboard. The page's own query is frozen
  * (`staleTime: Infinity`), so we re-probe the server on tab/app return (not on first load) and
- * prompt only when it's strictly newer AND its `spec` differs — ignoring our own edits and
- * metadata-only bumps like lock/unlock. In-flight mutations are skipped.
+ * prompt only when it's strictly newer AND its content (spec, tags, or lock state) differs from
+ * what we're viewing — so our own edits, which advance the render cache, don't trip it.
+ * In-flight mutations are skipped.
  */
 export function useDashboardStaleCheck(
 	dashboard: DashboardtypesGettableDashboardV2DTO,
@@ -25,6 +26,8 @@ export function useDashboardStaleCheck(
 		id: dashboardId,
 		updatedAt: loadedUpdatedAt,
 		spec: loadedSpec,
+		tags: loadedTags,
+		locked: loadedLocked,
 	} = dashboard;
 	const isMutating = useIsMutating() > 0;
 	const [server, setServer] = useState<DashboardtypesGettableDashboardV2DTO>();
@@ -57,10 +60,15 @@ export function useDashboardStaleCheck(
 
 	const serverUpdatedAt = server?.updatedAt;
 
+	// Content the viewer cares about: panels/layout/variables (spec), tags, and lock state.
 	// Deep, order-independent so an optimistic patch's key reordering isn't read as a change.
-	const specDiffers = useMemo(
-		() => !!server && !isEqual(server.spec, loadedSpec),
-		[server, loadedSpec],
+	const contentDiffers = useMemo(
+		() =>
+			!!server &&
+			(!isEqual(server.spec, loadedSpec) ||
+				!isEqual(server.tags, loadedTags) ||
+				server.locked !== loadedLocked),
+		[server, loadedSpec, loadedTags, loadedLocked],
 	);
 
 	const changed =
@@ -68,7 +76,7 @@ export function useDashboardStaleCheck(
 		!!serverUpdatedAt &&
 		!!loadedUpdatedAt &&
 		new Date(serverUpdatedAt).getTime() > new Date(loadedUpdatedAt).getTime() &&
-		specDiffers;
+		contentDiffers;
 
 	const dismiss = useCallback(
 		(): void => setDismissedAt(serverUpdatedAt ?? null),
