@@ -7394,9 +7394,11 @@ components:
         op:
           $ref: '#/components/schemas/RuletypesCompareOperator'
         recoveryTarget:
+          format: double
           nullable: true
           type: number
         target:
+          format: double
           nullable: true
           type: number
         targetUnit:
@@ -7680,6 +7682,7 @@ components:
         selectedQueryName:
           type: string
         target:
+          format: double
           nullable: true
           type: number
         targetUnit:
