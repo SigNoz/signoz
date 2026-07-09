@@ -62,8 +62,8 @@ jest.mock('../hooks/useLegendSeries', () => ({
 jest.mock('../hooks/useTableColumns', () => ({
 	useTableColumns: (): [] => [],
 }));
-jest.mock('../hooks/useMetricYAxisUnit', () => ({
-	useMetricYAxisUnit: (): unknown => ({
+jest.mock('../hooks/useSeedMetricUnit', () => ({
+	useSeedMetricUnit: (): unknown => ({
 		metricUnit: undefined,
 		isLoading: false,
 	}),
