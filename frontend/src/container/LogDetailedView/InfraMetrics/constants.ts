@@ -2937,5 +2937,7 @@ export const hostWidgetInfo = [
 	{
 		title: 'Disk Usage (%) by mountpoint',
 		yAxisUnit: 'percentunit',
+		docPath:
+			'/infrastructure-monitoring/host-monitoring/#disk-usage--by-mountpoint',
 	},
 ];

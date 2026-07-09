@@ -132,10 +132,10 @@ export const k8sDaemonSetsColumnsConfig: DaemonSetTableColumnConfig[] = [
 		},
 	},
 	{
-		id: 'node_status',
+		id: 'scheduled_nodes',
 		header: (): React.ReactNode => (
-			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/daemonsets#node-status">
-				Node Status
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/daemonsets#scheduled-nodes">
+				Scheduled Nodes
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.currentNodes,
