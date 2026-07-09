@@ -83,6 +83,49 @@ describe('getSuggestions — value stage', () => {
 	});
 });
 
+describe('getSuggestions — IN list values', () => {
+	it('wraps a fresh IN value in a bracketed list, caret before the close', () => {
+		const q = 'created_by IN ';
+		const out = getSuggestions(q, q.length, source);
+		const alice = out.items.find((i) => i.label === 'alice@x.io');
+		expect(alice?.insertText).toBe("['alice@x.io']");
+		expect(alice?.caretOffset).toBe(1);
+	});
+
+	it('wraps tag IN values in a bracketed list', () => {
+		const q = 'env IN ';
+		expect(inserts(q, q.length)).toStrictEqual(["['prod']", "['dev']"]);
+	});
+
+	it('appends to an open list and excludes already-entered values', () => {
+		const q = "env IN ['prod', ]";
+		const caret = q.indexOf(']'); // inside the brackets, after "'prod', "
+		const out = getSuggestions(q, caret, source);
+		expect(out.items.map((i) => i.label)).toStrictEqual(['dev']);
+		const dev = out.items[0];
+		// No closing bracket (the existing `]` stays); caret lands at the end.
+		expect(dev.insertText).toBe("['prod', 'dev'");
+		expect(dev.caretOffset).toBe(0);
+	});
+
+	it('treats a complete last literal (no trailing comma) as entered', () => {
+		const q = "env IN ['prod'";
+		const out = getSuggestions(q, q.length, source);
+		// 'prod' is committed; only 'dev' remains and it appends after it.
+		expect(out.items.map((i) => i.label)).toStrictEqual(['dev']);
+		expect(out.items[0].insertText).toBe("['prod', 'dev'");
+	});
+
+	it('filters open-list suggestions by the fragment under the caret', () => {
+		const q = "env IN ['de";
+		expect(inserts(q, q.length)).toStrictEqual(["['dev'"]);
+	});
+
+	it('uses a plain literal for a single-value operator (=)', () => {
+		expect(inserts('env = ', 6)).toStrictEqual(["'prod' ", "'dev' "]);
+	});
+});
+
 describe('getSuggestions — connector stage', () => {
 	it('chains AND/OR after a valueless operator', () => {
 		expect(labels('env EXISTS ', 11)).toStrictEqual(['AND', 'OR']);

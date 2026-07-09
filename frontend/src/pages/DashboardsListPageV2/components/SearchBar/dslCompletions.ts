@@ -37,7 +37,11 @@ export const dslCompletionSource =
 				apply: (view: EditorView, _c, from: number, to: number): void => {
 					view.dispatch({
 						changes: { from, to, insert: item.insertText },
-						selection: { anchor: from + item.insertText.length },
+						// caretOffset lands the caret inside a `[...]` list (before its
+						// closing bracket) so multi-select can continue.
+						selection: {
+							anchor: from + item.insertText.length - (item.caretOffset ?? 0),
+						},
 					});
 					startCompletion(view);
 				},

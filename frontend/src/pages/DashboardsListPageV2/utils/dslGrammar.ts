@@ -68,6 +68,13 @@ export const VALUELESS_OPERATORS = new Set([
 	negateOperator(OPERATORS.EXISTS),
 ]);
 
+// Operators whose value is a bracketed list (`IN ['a', 'b']`) rather than a
+// single literal — value suggestions wrap/append inside the `[...]`.
+export const LIST_OPERATORS = new Set([
+	OPERATORS.IN,
+	negateOperator(OPERATORS.IN),
+]);
+
 // Every operator, longest spelling first, so the tokenizer matches `NOT IN`
 // before `NOT`/`IN` and `>=` before `>`. Word operators allow flexible internal
 // whitespace (`NOT   IN`).

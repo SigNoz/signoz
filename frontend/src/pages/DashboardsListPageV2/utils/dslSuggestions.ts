@@ -4,6 +4,7 @@
 // caret/stage detection in dslTokenizer.ts.
 import {
 	classifyField,
+	LIST_OPERATORS,
 	literal,
 	OPERATOR_MATRIX,
 	RESERVED_KEYS,
@@ -33,6 +34,9 @@ export interface Suggestion {
 	// Right-aligned hint in the popup — e.g. 'field' vs 'tag' so reserved columns
 	// are distinguishable from org tag keys.
 	detail?: string;
+	// Chars to move the caret back from the end of `insertText` after applying.
+	// Used to land the caret inside a `[...]` list so multi-select can continue.
+	caretOffset?: number;
 }
 
 export interface SuggestionsResult {
@@ -93,6 +97,64 @@ const operatorSuggestions = (
 const unquotePartial = (partial: string): string =>
 	partial.replace(/^['"]/, '');
 
+// A complete quoted literal (`'a'` or `"a"`, escapes allowed) — used to tell an
+// already-entered list value from the fragment the user is still typing.
+const COMPLETE_LITERAL = /^(['"])(?:\\.|(?!\1).)*\1$/;
+
+interface ListPartial {
+	// Values already entered in the list (unquoted).
+	committed: string[];
+	// The value fragment the caret is currently typing (unquoted).
+	fragment: string;
+}
+
+// Index just past the string literal opening at `start` (mirrors the tokenizer's
+// escape handling); runs to end-of-input if unterminated.
+const skipStringLiteral = (text: string, start: number): number => {
+	const quote = text[start];
+	for (let i = start + 1; i < text.length; i += 1) {
+		if (text[i] === '\\') {
+			i += 1;
+		} else if (text[i] === quote) {
+			return i;
+		}
+	}
+	return text.length - 1;
+};
+
+// Split a top-level, comma-separated `[...]` partial (quote-aware) into its
+// already-entered values and the fragment under the caret. A trailing comma or a
+// complete quoted last piece means the caret starts a fresh value (fragment '').
+const parseListPartial = (partial: string): ListPartial => {
+	const inner = partial.trim().replace(/^[[(]/, '');
+	const pieces: string[] = [];
+	let depth = 0;
+	let start = 0;
+	for (let i = 0; i < inner.length; i += 1) {
+		const c = inner[i];
+		if (c === "'" || c === '"') {
+			i = skipStringLiteral(inner, i);
+		} else if (c === '[' || c === '(') {
+			depth += 1;
+		} else if (c === ']' || c === ')') {
+			depth = Math.max(0, depth - 1);
+		} else if (c === ',' && depth === 0) {
+			pieces.push(inner.slice(start, i));
+			start = i + 1;
+		}
+	}
+	pieces.push(inner.slice(start));
+	const last = pieces[pieces.length - 1].trim();
+	const lastIsComplete = last !== '' && COMPLETE_LITERAL.test(last);
+	const committedPieces = lastIsComplete ? pieces : pieces.slice(0, -1);
+	return {
+		committed: committedPieces
+			.map((p) => unquotePartial(p.trim()).replace(/['"]$/, ''))
+			.filter((p) => p !== ''),
+		fragment: lastIsComplete ? '' : unquotePartial(last),
+	};
+};
+
 const valueSuggestions = (
 	ctx: CaretContext,
 	source: SuggestionSource,
@@ -102,7 +164,15 @@ const valueSuggestions = (
 	}
 	const key = ctx.fieldKey.toLowerCase();
 	const type = classifyField(ctx.fieldKey);
-	const needle = unquotePartial(ctx.partial);
+
+	// List operators (`IN`/`NOT IN`) take a `[...]` list: parse what's already in
+	// the brackets so we exclude entered values and append rather than replace.
+	const isList = LIST_OPERATORS.has(ctx.operator);
+	const list = isList ? parseListPartial(ctx.partial) : null;
+	// A fresh list has no `[` yet; once inside one the `]` already sits after the
+	// caret, so we omit the closing bracket when appending.
+	const inBracket = isList && /^\s*[[(]/.test(ctx.partial);
+	const needle = list ? list.fragment : unquotePartial(ctx.partial);
 
 	if (type === 'bool') {
 		return ['true', 'false']
@@ -123,16 +193,32 @@ const valueSuggestions = (
 		return [];
 	}
 
+	const committed = new Set(list?.committed ?? []);
 	return raw
-		.filter((v) => includesInsensitive(v, needle))
+		.filter((v) => !committed.has(v) && includesInsensitive(v, needle))
 		.slice(0, VALUE_LIMIT)
-		.map((v) => ({
-			label:
-				v === source.currentUserEmail && key === 'created_by' ? `${v} (me)` : v,
-			// Trailing space so picking a value lands the caret in the connector slot.
-			insertText: `${literal(v)} `,
-			kind: 'value',
-		}));
+		.map((v) => {
+			const label =
+				v === source.currentUserEmail && key === 'created_by' ? `${v} (me)` : v;
+			if (isList) {
+				const values = [...(list?.committed ?? []), v].map(literal).join(', ');
+				return {
+					label,
+					// Append inside the existing `[...]` (its `]` stays after the caret),
+					// or open a fresh closed list. Either way the caret lands just before
+					// the `]` so the next pick continues the list.
+					insertText: inBracket ? `[${values}` : `[${values}]`,
+					kind: 'value',
+					caretOffset: inBracket ? 0 : 1,
+				};
+			}
+			return {
+				label,
+				// Trailing space so picking a value lands the caret in the connector slot.
+				insertText: `${literal(v)} `,
+				kind: 'value',
+			};
+		});
 };
 
 // AND / OR chaining after a complete term.
