@@ -2,6 +2,7 @@
 // (pkg/types/dashboardtypes/list_filter.go). There is no keys/operators API, so
 // the valid keys, per-field operators, and value shapes are encoded here. Keep in
 // sync with the backend allow-lists.
+import { negateOperator, OPERATORS } from 'constants/antlrQueryConstants';
 
 // Reserved keys the backend recognises as dashboard columns. Any other key is a
 // tag key. (`updated_by` and `source` are NOT queryable.)
@@ -29,31 +30,43 @@ const RESERVED_FIELD_TYPES: Record<string, DslFieldType> = {
 export const classifyField = (key: string): DslFieldType =>
 	RESERVED_FIELD_TYPES[key.toLowerCase()] ?? 'tag';
 
-// String/tag comparison operators (REGEXP is allow-listed by the backend but
-// unimplemented, so it is deliberately omitted).
+// String/tag comparison operators, reusing the shared operator constants
+// (REGEXP is allow-listed by the backend but unimplemented, so it is omitted).
 const STRING_OPS = [
-	'=',
-	'!=',
-	'CONTAINS',
-	'NOT CONTAINS',
-	'LIKE',
-	'NOT LIKE',
-	'ILIKE',
-	'NOT ILIKE',
-	'IN',
-	'NOT IN',
+	OPERATORS['='],
+	OPERATORS['!='],
+	OPERATORS.CONTAINS,
+	negateOperator(OPERATORS.CONTAINS),
+	OPERATORS.LIKE,
+	negateOperator(OPERATORS.LIKE),
+	OPERATORS.ILIKE,
+	negateOperator(OPERATORS.ILIKE),
+	OPERATORS.IN,
+	negateOperator(OPERATORS.IN),
 ];
 
 // Valid operators per field type. Tags additionally support existence checks.
 export const OPERATOR_MATRIX: Record<DslFieldType, string[]> = {
 	string: STRING_OPS,
-	tag: [...STRING_OPS, 'EXISTS', 'NOT EXISTS'],
-	timestamp: ['=', '!=', '<', '<=', '>', '>=', 'BETWEEN', 'NOT BETWEEN'],
-	bool: ['=', '!='],
+	tag: [...STRING_OPS, OPERATORS.EXISTS, negateOperator(OPERATORS.EXISTS)],
+	timestamp: [
+		OPERATORS['='],
+		OPERATORS['!='],
+		OPERATORS['<'],
+		OPERATORS['<='],
+		OPERATORS['>'],
+		OPERATORS['>='],
+		OPERATORS.BETWEEN,
+		negateOperator(OPERATORS.BETWEEN),
+	],
+	bool: [OPERATORS['='], OPERATORS['!=']],
 };
 
 // Operators that take no value (the clause is complete after the operator).
-export const VALUELESS_OPERATORS = new Set(['EXISTS', 'NOT EXISTS']);
+export const VALUELESS_OPERATORS = new Set([
+	OPERATORS.EXISTS,
+	negateOperator(OPERATORS.EXISTS),
+]);
 
 // Every operator, longest spelling first, so the tokenizer matches `NOT IN`
 // before `NOT`/`IN` and `>=` before `>`. Word operators allow flexible internal

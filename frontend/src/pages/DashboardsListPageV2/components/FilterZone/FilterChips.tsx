@@ -1,4 +1,3 @@
-// eslint-disable-next-line signoz/no-antd-components -- antd Select (no @signozhq multi-select equivalent that fits the layout)
 import { Checkbox, Select } from 'antd';
 import cx from 'classnames';
 
