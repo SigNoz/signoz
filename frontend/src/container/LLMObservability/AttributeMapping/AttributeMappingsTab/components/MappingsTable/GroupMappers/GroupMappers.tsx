@@ -13,7 +13,7 @@ import MapperRow, { MapperRowSkeleton } from '../MapperRow';
 import MappingsColgroup from '../MappingsColgroup';
 import styles from './GroupMappers.module.scss';
 
-const MAPPER_SKELETON_ROWS = 2;
+const MAPPER_SKELETON_ROWS = 1;
 
 // Fade shared by the non-row states (error / empty) so they reveal in step
 // with the mapper rows while the antd Collapse runs its height animation on
@@ -52,10 +52,7 @@ function GroupMappers({ group }: GroupMappersProps): JSX.Element {
 	}, [data]);
 
 	const skeletonRows = Array.from({ length: MAPPER_SKELETON_ROWS }).map(
-		(_, index) => (
-			// eslint-disable-next-line react/no-array-index-key
-			<MapperRowSkeleton key={`mapper-skeleton-${index}`} />
-		),
+		(_, index) => <MapperRowSkeleton key={`mapper-skeleton-${index}`} />,
 	);
 
 	const errorRow = (

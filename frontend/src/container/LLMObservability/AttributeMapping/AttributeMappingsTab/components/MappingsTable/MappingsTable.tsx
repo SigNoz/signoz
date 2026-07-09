@@ -9,7 +9,7 @@ import GroupMappers from './GroupMappers';
 import MappingsColgroup from './MappingsColgroup';
 import styles from './MappingsTable.module.scss';
 
-const SKELETON_ROW_COUNT = 5;
+const SKELETON_ROW_COUNT = 3;
 
 interface MappingsTableProps {
 	store: AttributeMappingStore;
@@ -36,7 +36,6 @@ function MappingsTable({ store }: MappingsTableProps): JSX.Element {
 					className={styles.skeletonBanner}
 				>
 					<div className={styles.skeletonGroupLeft}>
-						<Skeleton.Avatar active size={14} shape="square" />
 						<Skeleton.Input
 							active
 							size="small"

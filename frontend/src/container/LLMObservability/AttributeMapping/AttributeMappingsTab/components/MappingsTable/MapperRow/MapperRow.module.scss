@@ -16,6 +16,19 @@
 	padding-left: var(--spacing-12);
 }
 
+// Shorter vertical padding so the loading state reads as a compact placeholder.
+.skeletonCell {
+	composes: cell;
+	:global(.ant-skeleton-input) {
+		min-height: 18px !important;
+		height: 18px !important;
+	}
+	:global(.ant-skeleton-button) {
+		min-height: 18px !important;
+		height: 18px !important;
+	}
+}
+
 .statusCell {
 	text-align: right;
 }
