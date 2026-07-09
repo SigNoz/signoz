@@ -9,7 +9,6 @@ interface GroupHeaderActionsProps {
 
 function GroupHeaderActions({ group }: GroupHeaderActionsProps): JSX.Element {
 	return (
-		// eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events
 		<div
 			className={styles.actions}
 			onClick={(event): void => event.stopPropagation()}
