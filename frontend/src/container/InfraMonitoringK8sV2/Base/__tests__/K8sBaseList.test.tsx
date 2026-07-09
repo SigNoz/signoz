@@ -22,6 +22,7 @@ import { openInNewTab } from 'utils/navigation';
 import { TableColumnDef } from 'components/TanStackTableView';
 
 import { InfraMonitoringEntity } from '../../constants';
+import { SelectedItemParams } from '../../hooks';
 
 window.ResizeObserver =
 	window.ResizeObserver ||
@@ -165,11 +166,11 @@ function createTestColumnsWithGroup(): TableColumnDef<TestItemWithGroup>[] {
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-function renderComponent<T extends K8sEntityData>({
+function renderComponent<T extends K8sEntityData, TItemKey = string>({
 	queryParams,
 	onUrlUpdate,
 	...props
-}: K8sBaseListProps<T> & {
+}: K8sBaseListProps<T, TItemKey> & {
 	queryParams?: Record<string, string>;
 	onUrlUpdate?: OnUrlUpdateFunction;
 }) {
@@ -196,7 +197,7 @@ function renderComponent<T extends K8sEntityData>({
 										value={{ viewportHeight: 800, itemHeight: 50 }}
 									>
 										<TooltipProvider>
-											<K8sBaseList {...props} />
+											<K8sBaseList<T, TItemKey> {...props} />
 										</TooltipProvider>
 									</VirtuosoMockContext.Provider>
 								</NuqsTestingAdapter>
@@ -939,6 +940,115 @@ describe('K8sBaseList', () => {
 			await waitFor(() => {
 				expect(screen.getByTestId('k8s-list-warning-popover')).toBeInTheDocument();
 			});
+		});
+	});
+
+	describe('with object itemKey (selectedItem + cluster + namespace params)', () => {
+		const itemId = 'obj-item';
+		const onUrlUpdateMock = jest.fn<void, [UrlUpdateEvent]>();
+		const fetchListDataMock = jest.fn<
+			ReturnType<
+				NonNullable<K8sBaseListProps<TestItemWithTitle>['fetchListData']>
+			>,
+			Parameters<NonNullable<K8sBaseListProps<TestItemWithTitle>['fetchListData']>>
+		>();
+
+		const getLatestParam = (key: string): string | undefined =>
+			onUrlUpdateMock.mock.calls
+				.map((call) => call[0].searchParams.get(key))
+				.filter(Boolean)
+				.pop() as string | undefined;
+
+		beforeEach(() => {
+			onUrlUpdateMock.mockClear();
+			fetchListDataMock.mockClear();
+			openInNewTabMock.mockClear();
+			fetchListDataMock.mockResolvedValue({
+				data: [{ id: `PodId:${itemId}`, title: `PodTitle:${itemId}` }],
+				total: 1,
+				error: null,
+			});
+		});
+
+		it('should set selectedItem, cluster and namespace params on row click', async () => {
+			const user = userEvent.setup();
+
+			renderComponent<TestItemWithTitle, SelectedItemParams>({
+				onUrlUpdate: onUrlUpdateMock,
+				entity: InfraMonitoringEntity.PODS,
+				eventCategory: InfraMonitoringEvents.Pod,
+				fetchListData: fetchListDataMock,
+				tableColumns: createTestColumnsWithTitle(),
+				getRowKey: (row): string => row.id,
+				getItemKey: (row): SelectedItemParams => ({
+					selectedItem: row.id,
+					clusterName: 'prod-cluster',
+					namespaceName: 'default-ns',
+				}),
+			});
+
+			const firstRowEl = await screen.findByText(`PodId:${itemId}`);
+			await user.click(firstRowEl);
+
+			await waitFor(() => {
+				expect(getLatestParam('selectedItem')).toBe(`PodId:${itemId}`);
+				expect(getLatestParam('selectedItemClusterName')).toBe('prod-cluster');
+				expect(getLatestParam('selectedItemNamespaceName')).toBe('default-ns');
+			});
+		});
+
+		it('should include cluster and namespace params in new tab URL on ctrl+click', async () => {
+			renderComponent<TestItemWithTitle, SelectedItemParams>({
+				onUrlUpdate: onUrlUpdateMock,
+				entity: InfraMonitoringEntity.PODS,
+				eventCategory: InfraMonitoringEvents.Pod,
+				fetchListData: fetchListDataMock,
+				tableColumns: createTestColumnsWithTitle(),
+				getRowKey: (row): string => row.id,
+				getItemKey: (row): SelectedItemParams => ({
+					selectedItem: row.id,
+					clusterName: 'prod-cluster',
+					namespaceName: 'default-ns',
+				}),
+			});
+
+			const firstRow = await screen.findByText(`PodId:${itemId}`);
+			fireEvent.click(firstRow, { ctrlKey: true });
+
+			await waitFor(() => {
+				expect(openInNewTabMock).toHaveBeenCalledTimes(1);
+			});
+			const url = openInNewTabMock.mock.calls[0][0] as string;
+			expect(url).toContain(`selectedItem=PodId%3A${itemId}`);
+			expect(url).toContain('selectedItemClusterName=prod-cluster');
+			expect(url).toContain('selectedItemNamespaceName=default-ns');
+		});
+
+		it('should omit null cluster/namespace params in new tab URL', async () => {
+			renderComponent<TestItemWithTitle, SelectedItemParams>({
+				onUrlUpdate: onUrlUpdateMock,
+				entity: InfraMonitoringEntity.PODS,
+				eventCategory: InfraMonitoringEvents.Pod,
+				fetchListData: fetchListDataMock,
+				tableColumns: createTestColumnsWithTitle(),
+				getRowKey: (row): string => row.id,
+				getItemKey: (row): SelectedItemParams => ({
+					selectedItem: row.id,
+					clusterName: null,
+					namespaceName: null,
+				}),
+			});
+
+			const firstRow = await screen.findByText(`PodId:${itemId}`);
+			fireEvent.click(firstRow, { ctrlKey: true });
+
+			await waitFor(() => {
+				expect(openInNewTabMock).toHaveBeenCalledTimes(1);
+			});
+			const url = openInNewTabMock.mock.calls[0][0] as string;
+			expect(url).toContain(`selectedItem=PodId%3A${itemId}`);
+			expect(url).not.toContain('selectedItemClusterName');
+			expect(url).not.toContain('selectedItemNamespaceName');
 		});
 	});
 });
