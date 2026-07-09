@@ -1,99 +1,128 @@
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
+import { getDashboardV2 } from 'api/generated/services/dashboard';
 
 import { useDashboardStaleCheck } from '../useDashboardStaleCheck';
 
-const mockUseQuery = jest.fn();
 const mockUseIsMutating = jest.fn();
 jest.mock('react-query', () => ({
-	useQuery: (...args: unknown[]): unknown => mockUseQuery(...args),
 	useIsMutating: (): number => mockUseIsMutating(),
-	useQueryClient: (): unknown => ({ getQueryData: jest.fn() }),
 }));
 jest.mock('api/generated/services/dashboard', () => ({
 	getDashboardV2: jest.fn(),
-	getGetDashboardV2QueryKey: jest.fn(() => ['/api/v2/dashboards/d1']),
 }));
 
-function setServerUpdatedAt(updatedAt: string | undefined): void {
-	mockUseQuery.mockReturnValue({ data: { data: { updatedAt } } });
+const mockGetDashboard = getDashboardV2 as jest.Mock;
+
+function setVisibility(state: 'visible' | 'hidden'): void {
+	Object.defineProperty(document, 'visibilityState', {
+		configurable: true,
+		get: () => state,
+	});
+}
+
+/** Simulate the tab coming back into view with the given server `updatedAt`. */
+async function returnToTab(serverUpdatedAt: string): Promise<void> {
+	mockGetDashboard.mockResolvedValueOnce({ data: { updatedAt: serverUpdatedAt } });
+	setVisibility('visible');
+	await act(async () => {
+		document.dispatchEvent(new Event('visibilitychange'));
+	});
 }
 
 describe('useDashboardStaleCheck', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 		mockUseIsMutating.mockReturnValue(0);
+		setVisibility('visible');
 	});
 
-	it('prompts when the server copy is newer than the loaded one', () => {
-		setServerUpdatedAt('2026-07-08T10:00:00Z');
+	it('does not fetch on first load — only when the tab returns', async () => {
+		renderHook(() =>
+			useDashboardStaleCheck('d1', '2026-07-08T09:00:00Z', jest.fn()),
+		);
+		expect(mockGetDashboard).not.toHaveBeenCalled();
+
+		await returnToTab('2026-07-08T09:00:00Z');
+		expect(mockGetDashboard).toHaveBeenCalledTimes(1);
+		expect(mockGetDashboard).toHaveBeenCalledWith({ id: 'd1' });
+	});
+
+	it('prompts when the server copy is newer than the loaded one', async () => {
 		const { result } = renderHook(() =>
 			useDashboardStaleCheck('d1', '2026-07-08T09:00:00Z', jest.fn()),
 		);
-		expect(result.current.showPrompt).toBe(true);
+		await returnToTab('2026-07-08T10:00:00Z');
+		await waitFor(() => expect(result.current.showPrompt).toBe(true));
 	});
 
-	it('does not prompt when the versions match', () => {
-		setServerUpdatedAt('2026-07-08T09:00:00Z');
+	it('does not prompt when the versions match', async () => {
 		const { result } = renderHook(() =>
 			useDashboardStaleCheck('d1', '2026-07-08T09:00:00Z', jest.fn()),
 		);
+		await returnToTab('2026-07-08T09:00:00Z');
 		expect(result.current.showPrompt).toBe(false);
 	});
 
-	it('does not prompt when the loaded copy is newer than the freshness copy (own edit)', () => {
-		// Own save advanced the render cache to 10:00 while the freshness query still
-		// lags at 09:00; a newer-than check must not read this as an external change.
-		setServerUpdatedAt('2026-07-08T09:00:00Z');
+	it('does not prompt when the loaded copy is newer (own edit)', async () => {
+		// Own save advanced the render cache to 10:00; the server probe still reads 09:00.
 		const { result } = renderHook(() =>
 			useDashboardStaleCheck('d1', '2026-07-08T10:00:00Z', jest.fn()),
 		);
+		await returnToTab('2026-07-08T09:00:00Z');
 		expect(result.current.showPrompt).toBe(false);
 	});
 
-	it('does not prompt while a mutation is in flight (optimistic save)', () => {
+	it('does not prompt while a mutation is in flight (optimistic save)', async () => {
 		mockUseIsMutating.mockReturnValue(1);
-		setServerUpdatedAt('2026-07-08T10:00:00Z');
 		const { result } = renderHook(() =>
 			useDashboardStaleCheck('d1', '2026-07-08T09:00:00Z', jest.fn()),
 		);
+		await returnToTab('2026-07-08T10:00:00Z');
 		expect(result.current.showPrompt).toBe(false);
 	});
 
-	it('stops prompting for a version once dismissed', () => {
-		setServerUpdatedAt('2026-07-08T10:00:00Z');
+	it('does not probe while the tab is hidden', async () => {
+		renderHook(() =>
+			useDashboardStaleCheck('d1', '2026-07-08T09:00:00Z', jest.fn()),
+		);
+		setVisibility('hidden');
+		await act(async () => {
+			document.dispatchEvent(new Event('visibilitychange'));
+		});
+		expect(mockGetDashboard).not.toHaveBeenCalled();
+	});
+
+	it('stops prompting for a version once dismissed', async () => {
 		const { result } = renderHook(() =>
 			useDashboardStaleCheck('d1', '2026-07-08T09:00:00Z', jest.fn()),
 		);
-		expect(result.current.showPrompt).toBe(true);
+		await returnToTab('2026-07-08T10:00:00Z');
+		await waitFor(() => expect(result.current.showPrompt).toBe(true));
 		act(() => result.current.dismiss());
 		expect(result.current.showPrompt).toBe(false);
 	});
 
-	it('reload refetches and closes the prompt immediately', () => {
-		setServerUpdatedAt('2026-07-08T10:00:00Z');
+	it('reload refetches and closes the prompt immediately', async () => {
 		const refetch = jest.fn();
 		const { result } = renderHook(() =>
 			useDashboardStaleCheck('d1', '2026-07-08T09:00:00Z', refetch),
 		);
-		expect(result.current.showPrompt).toBe(true);
+		await returnToTab('2026-07-08T10:00:00Z');
+		await waitFor(() => expect(result.current.showPrompt).toBe(true));
 		act(() => result.current.reload());
 		expect(refetch).toHaveBeenCalledTimes(1);
-		// Closes on the click itself, not dependent on the refetched loaded copy
-		// catching up to the server copy (two separate queries).
 		expect(result.current.showPrompt).toBe(false);
 	});
 
-	it('re-prompts when a newer version appears after a reload', () => {
-		setServerUpdatedAt('2026-07-08T10:00:00Z');
-		const { result, rerender } = renderHook(() =>
+	it('re-prompts when a newer version appears after a reload', async () => {
+		const { result } = renderHook(() =>
 			useDashboardStaleCheck('d1', '2026-07-08T09:00:00Z', jest.fn()),
 		);
+		await returnToTab('2026-07-08T10:00:00Z');
 		act(() => result.current.reload());
 		expect(result.current.showPrompt).toBe(false);
 
-		// A later external change (new updatedAt) must surface again.
-		setServerUpdatedAt('2026-07-08T10:05:00Z');
-		rerender();
-		expect(result.current.showPrompt).toBe(true);
+		await returnToTab('2026-07-08T10:05:00Z');
+		await waitFor(() => expect(result.current.showPrompt).toBe(true));
 	});
 });
