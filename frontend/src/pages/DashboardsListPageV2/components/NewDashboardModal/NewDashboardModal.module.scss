@@ -35,6 +35,28 @@
 	color: var(--danger-background);
 }
 
+// Title row: icon picker joined flush to the left of the name input.
+.titleRow {
+	display: flex;
+	gap: 4px;
+	align-items: center;
+
+	// The icon picker renders its dropdown inline (no portal); lift it above the
+	// description/tags fields below it.
+	:global([data-radix-popper-content-wrapper]) {
+		z-index: 1100 !important;
+	}
+}
+
+.imageTrigger {
+	border-radius: 2px 0 0 2px;
+}
+
+.titleInput {
+	flex: 1;
+	border-radius: 0 2px 2px 0;
+}
+
 .hint {
 	font-size: var(--font-size-xs);
 	color: var(--l3-foreground);
