@@ -1,3 +1,7 @@
+import {
+	DashboardtypesTimePreferenceDTO,
+	type DashboardtypesPanelDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { fireEvent, render, screen } from '@testing-library/react';
 
 import { useViewPanelStore } from '../../../../store/useViewPanelStore';
@@ -22,6 +26,15 @@ function extender(over?: Partial<ExtendTimeWindow>): ExtendTimeWindow {
 		extend: jest.fn(),
 		...over,
 	};
+}
+
+/** Minimal panel whose plugin spec carries the given time preference. */
+function panelWith(
+	timePreference?: DashboardtypesTimePreferenceDTO,
+): DashboardtypesPanelDTO {
+	return {
+		spec: { plugin: { spec: { visualization: { timePreference } } } },
+	} as unknown as DashboardtypesPanelDTO;
 }
 
 describe('NoData', () => {
@@ -118,5 +131,48 @@ describe('NoData', () => {
 		render(<NoData data-testid="number-panel-no-data" />);
 
 		expect(screen.getByTestId('number-panel-no-data')).toBeInTheDocument();
+	});
+
+	it('hides the global extend action for a panel with a fixed time preference', () => {
+		const onRetry = jest.fn();
+		mockUseExtendTimeWindow.mockReturnValue(extender());
+		render(
+			<NoData
+				onRetry={onRetry}
+				panel={panelWith(DashboardtypesTimePreferenceDTO.last_6_hr)}
+			/>,
+		);
+
+		// Only Retry — extending the dashboard window can't widen a locked panel span.
+		const action = screen.getByTestId('panel-no-data-action');
+		expect(action).toHaveTextContent('Retry');
+		expect(
+			screen.queryByTestId('panel-no-data-secondary-action'),
+		).not.toBeInTheDocument();
+	});
+
+	it('still offers the global extend action for a panel that follows the global window', () => {
+		mockUseExtendTimeWindow.mockReturnValue(extender());
+		render(
+			<NoData panel={panelWith(DashboardtypesTimePreferenceDTO.global_time)} />,
+		);
+
+		expect(screen.getByTestId('panel-no-data-action')).toHaveTextContent(
+			'Extend time range',
+		);
+	});
+
+	it('keeps the View modal extender even when the panel has a fixed time preference', () => {
+		const storeExtend = jest.fn();
+		mockUseExtendTimeWindow.mockReturnValue(extender());
+		useViewPanelStore.setState({
+			viewPanelExtendWindow: extender({ extend: storeExtend }),
+		});
+		render(
+			<NoData panel={panelWith(DashboardtypesTimePreferenceDTO.last_6_hr)} />,
+		);
+
+		fireEvent.click(screen.getByTestId('panel-no-data-action'));
+		expect(storeExtend).toHaveBeenCalledTimes(1);
 	});
 });

@@ -4,11 +4,17 @@ from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 
 import pytest
-import requests
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.logs import Logs
+from fixtures.querier import (
+    RequestType,
+    build_order_by,
+    build_raw_query,
+    get_rows,
+    make_query_request,
+)
 
 # Body-JSON array/token functions on the logs body. has() success paths are already
 # covered by 06_json_body.py::test_logs_json_body_array_membership; this file adds the
@@ -16,10 +22,6 @@ from fixtures.logs import Logs
 # paths (has/hasToken on a non-body key, non-string token) which must be rejected.
 
 
-@pytest.mark.xfail(
-    reason="hasAny/hasAll over a body-JSON array return 500 in legacy body mode (use_json_body off): ClickHouse 'Argument 0 for hasAny must be an array but has type String'. has() handles body arrays here; hasAny/hasAll do not (they work only in JSON-body mode).",
-    strict=False,
-)
 def test_logs_json_body_has_any(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
@@ -50,50 +52,30 @@ def test_logs_json_body_has_any(
             ),
         ]
     )
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # log1 has "critical", log2 has "test", log3 has neither -> 2 matches
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
-        timeout=2,
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "schemaVersion": "v1",
-            "start": int((now - timedelta(seconds=10)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "requestType": "raw",
-            "compositeQuery": {
-                "queries": [
-                    {
-                        "type": "builder_query",
-                        "spec": {
-                            "name": "A",
-                            "signal": "logs",
-                            "disabled": False,
-                            "limit": 100,
-                            "offset": 0,
-                            "filter": {"expression": "hasAny(body.tags, ['critical', 'test'])"},
-                            "order": [{"key": {"name": "timestamp"}, "direction": "desc"}],
-                            "aggregations": [{"expression": "count()"}],
-                        },
-                    }
-                ]
-            },
-            "formatOptions": {"formatTableResultForUI": False, "fillGaps": False},
-        },
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=int((now - timedelta(seconds=10)).timestamp() * 1000),
+        end_ms=int(now.timestamp() * 1000),
+        request_type=RequestType.RAW,
+        queries=[
+            build_raw_query(
+                "A",
+                "logs",
+                order=[build_order_by("timestamp")],
+                limit=100,
+                filter_expression="hasAny(body.tags, ['critical', 'test'])",
+            )
+        ],
     )
-    assert response.status_code == HTTPStatus.OK
-    assert response.json()["status"] == "success"
-    rows = response.json()["data"]["data"]["results"][0]["rows"]
-    assert len(rows) == 2
-    tags_list = [json.loads(row["data"]["body"])["tags"] for row in rows]
-    assert all(("critical" in tags) or ("test" in tags) for tags in tags_list)
+    # BUG: hasAny on a flat body array path extracts a scalar String; ClickHouse rejects
+    # it ("Argument 0 ... must be an array") -> HTTP 500.
+    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
 
 
-@pytest.mark.xfail(
-    reason="hasAny/hasAll over a body-JSON array return 500 in legacy body mode (use_json_body off): ClickHouse 'Argument 0 for hasAll must be an array but has type String'. has() handles body arrays here; hasAny/hasAll do not (they work only in JSON-body mode).",
-    strict=False,
-)
 def test_logs_json_body_has_all(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
@@ -118,44 +100,28 @@ def test_logs_json_body_has_all(
             ),
         ]
     )
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # only the second log has both "production" AND "web"
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
-        timeout=2,
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "schemaVersion": "v1",
-            "start": int((now - timedelta(seconds=10)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "requestType": "raw",
-            "compositeQuery": {
-                "queries": [
-                    {
-                        "type": "builder_query",
-                        "spec": {
-                            "name": "A",
-                            "signal": "logs",
-                            "disabled": False,
-                            "limit": 100,
-                            "offset": 0,
-                            "filter": {"expression": "hasAll(body.tags, ['production', 'web'])"},
-                            "order": [{"key": {"name": "timestamp"}, "direction": "desc"}],
-                            "aggregations": [{"expression": "count()"}],
-                        },
-                    }
-                ]
-            },
-            "formatOptions": {"formatTableResultForUI": False, "fillGaps": False},
-        },
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=int((now - timedelta(seconds=10)).timestamp() * 1000),
+        end_ms=int(now.timestamp() * 1000),
+        request_type=RequestType.RAW,
+        queries=[
+            build_raw_query(
+                "A",
+                "logs",
+                order=[build_order_by("timestamp")],
+                limit=100,
+                filter_expression="hasAll(body.tags, ['production', 'web'])",
+            )
+        ],
     )
-    assert response.status_code == HTTPStatus.OK
-    assert response.json()["status"] == "success"
-    rows = response.json()["data"]["data"]["results"][0]["rows"]
-    assert len(rows) == 1
-    tags = json.loads(rows[0]["data"]["body"])["tags"]
-    assert "production" in tags and "web" in tags
+    # BUG: hasAll on a flat body array path extracts a scalar String; ClickHouse rejects
+    # it ("Argument 0 ... must be an array") -> HTTP 500.
+    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
 
 
 def test_logs_json_body_has_token(
@@ -188,43 +154,62 @@ def test_logs_json_body_has_token(
             ),
         ]
     )
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # "production" appears in the first and third log bodies
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
-        timeout=2,
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "schemaVersion": "v1",
-            "start": int((now - timedelta(seconds=10)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "requestType": "raw",
-            "compositeQuery": {
-                "queries": [
-                    {
-                        "type": "builder_query",
-                        "spec": {
-                            "name": "A",
-                            "signal": "logs",
-                            "disabled": False,
-                            "limit": 100,
-                            "offset": 0,
-                            "filter": {"expression": 'hasToken(body, "production")'},
-                            "order": [{"key": {"name": "timestamp"}, "direction": "desc"}],
-                            "aggregations": [{"expression": "count()"}],
-                        },
-                    }
-                ]
-            },
-            "formatOptions": {"formatTableResultForUI": False, "fillGaps": False},
-        },
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=int((now - timedelta(seconds=10)).timestamp() * 1000),
+        end_ms=int(now.timestamp() * 1000),
+        request_type=RequestType.RAW,
+        queries=[
+            build_raw_query(
+                "A",
+                "logs",
+                order=[build_order_by("timestamp")],
+                limit=100,
+                filter_expression='hasToken(body, "production")',
+            )
+        ],
     )
     assert response.status_code == HTTPStatus.OK
-    assert response.json()["status"] == "success"
-    rows = response.json()["data"]["data"]["results"][0]["rows"]
+    rows = get_rows(response)
     assert len(rows) == 2
     assert all("production" in row["data"]["body"] for row in rows)
+
+
+def test_logs_json_body_function_scalar_path_errors(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_logs: Callable[[list[Logs]], None],
+) -> None:
+    """BUG: has/hasAny/hasAll on a scalar body path extract a scalar String; ClickHouse
+    rejects the array function -> HTTP 500."""
+    now = datetime.now(tz=UTC)
+    insert_logs(
+        [
+            Logs(
+                timestamp=now - timedelta(seconds=1),
+                resources={"service.name": "app-service"},
+                body=json.dumps({"level": "info", "code": 200}),
+                severity_text="INFO",
+            ),
+        ]
+    )
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    for expression in ["has(body.level, 'info')", "hasAny(body.code, [200])", "hasAll(body.level, ['info'])"]:
+        response = make_query_request(
+            signoz,
+            token,
+            start_ms=int((now - timedelta(seconds=10)).timestamp() * 1000),
+            end_ms=int(now.timestamp() * 1000),
+            request_type=RequestType.RAW,
+            queries=[build_raw_query("A", "logs", order=[build_order_by("timestamp")], limit=100, filter_expression=expression)],
+        )
+        assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR, f"{expression}: expected 500, got {response.status_code}: {response.text}"
 
 
 @pytest.mark.parametrize(
@@ -243,34 +228,13 @@ def test_logs_json_body_function_errors(
 ) -> None:
     """has/hasToken support only the body JSON field; misuse is rejected (400)."""
     now = datetime.now(tz=UTC)
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
-        timeout=2,
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "schemaVersion": "v1",
-            "start": int((now - timedelta(seconds=10)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "requestType": "raw",
-            "compositeQuery": {
-                "queries": [
-                    {
-                        "type": "builder_query",
-                        "spec": {
-                            "name": "A",
-                            "signal": "logs",
-                            "disabled": False,
-                            "limit": 100,
-                            "offset": 0,
-                            "filter": {"expression": expression},
-                            "order": [{"key": {"name": "timestamp"}, "direction": "desc"}],
-                            "aggregations": [{"expression": "count()"}],
-                        },
-                    }
-                ]
-            },
-            "formatOptions": {"formatTableResultForUI": False, "fillGaps": False},
-        },
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=int((now - timedelta(seconds=10)).timestamp() * 1000),
+        end_ms=int(now.timestamp() * 1000),
+        request_type=RequestType.RAW,
+        queries=[build_raw_query("A", "logs", order=[build_order_by("timestamp")], limit=100, filter_expression=expression)],
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST

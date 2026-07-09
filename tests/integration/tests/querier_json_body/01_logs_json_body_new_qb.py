@@ -218,7 +218,7 @@ def test_primitive_path_operations(
 
     export_json_types(logs_list)
     insert_logs(logs_list)
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     cases = [
         # ── positive operators ─────────────────────────────────────────────
@@ -449,7 +449,7 @@ def test_indexed_paths(
     ]
 
     export_json_types(logs_list)
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     create_json_index(
         token,
         [
@@ -636,7 +636,7 @@ def test_select_order_by(
 
     export_json_types(logs_list)
     insert_logs(logs_list)
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     start_ms = int((now - timedelta(seconds=10)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -867,7 +867,7 @@ def test_array_path_operations(
 
     export_json_types(logs_list)
     insert_logs(logs_list)
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     cases = [
         # ── single-hop: education[].field ──────────────────────────────────
@@ -1087,7 +1087,7 @@ def test_array_membership_operations(
 
     export_json_types(logs_list)
     insert_logs(logs_list)
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     cases = [
         # has(tags, "production"): log1 and log3 (log2 has "staging", log4 has no tags)
@@ -1185,7 +1185,7 @@ def test_message_searches(
     logs_list = [text_log, json_log, control_log, no_msg_log]
     export_json_types(logs_list)
     insert_logs(logs_list)
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     def _body_messages(response: requests.Response) -> list[str]:
         return [row["data"]["body"].get("message", "") for row in get_rows(response)]
@@ -1325,7 +1325,7 @@ def test_polluted_data(
 
     export_json_types(logs_list)
     insert_logs(logs_list)
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     cases = [
         # ── body-path vs attribute isolation ─────────────────────────────────
@@ -1445,7 +1445,7 @@ def test_groupby_scalar(
 
     export_json_types(logs_list)
     insert_logs(logs_list)
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     cases = [
         # Scalar GroupBy: results[0]["data"] = [[group_key, count], ...]

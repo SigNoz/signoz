@@ -68,6 +68,12 @@ function DashboardRow({
 	);
 
 	const onClickHandler = (event: React.MouseEvent<HTMLElement>): void => {
+		// Clicks inside portaled overlays (the actions menu, edit modals) bubble here
+		// through React's tree even though they render outside the row in the DOM.
+		// Only navigate when the click actually landed inside the row.
+		if (!event.currentTarget.contains(event.target as Node)) {
+			return;
+		}
 		event.stopPropagation();
 		if (isLegacy) {
 			setIsLegacyDialogOpen(true);
@@ -197,6 +203,7 @@ function DashboardRow({
 						dashboardName={name}
 						createdBy={createdBy}
 						isLocked={isLocked}
+						tags={tags}
 						canEdit={canEdit}
 						onView={onClickHandler}
 						isLegacy={isLegacy}

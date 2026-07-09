@@ -55,11 +55,7 @@ function DashboardContainer({
 	// suggests them ($variable) in the panel editor and dashboards-page builder.
 	useSyncVariablesForSuggestions(dashboard);
 
-	const staleCheck = useDashboardStaleCheck(
-		dashboard.id,
-		dashboard.updatedAt,
-		refetch,
-	);
+	const staleCheck = useDashboardStaleCheck(dashboard, refetch);
 
 	// In full screen show only the sections and panels — the header/toolbar chrome
 	// is hidden for a clean presentation view (exit with Esc).

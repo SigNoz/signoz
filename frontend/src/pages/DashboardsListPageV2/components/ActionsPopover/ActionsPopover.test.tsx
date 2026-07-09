@@ -8,6 +8,7 @@ const baseProps = {
 	dashboardName: 'My Dashboard',
 	createdBy: 'someone-else@signoz.io',
 	isLocked: false,
+	tags: [],
 	canEdit: true,
 	onView: jest.fn(),
 };
@@ -24,6 +25,7 @@ describe('ActionsPopover', () => {
 		).toBeInTheDocument();
 		expect(screen.getByTestId('dashboard-action-copy-link')).toBeInTheDocument();
 		expect(screen.getByTestId('dashboard-action-rename')).toBeInTheDocument();
+		expect(screen.getByTestId('dashboard-action-edit-tags')).toBeInTheDocument();
 		expect(screen.getByTestId('dashboard-action-duplicate')).toBeInTheDocument();
 		expect(screen.getByTestId('dashboard-action-delete')).toBeInTheDocument();
 	});
@@ -45,6 +47,9 @@ describe('ActionsPopover', () => {
 		).not.toBeInTheDocument();
 		expect(
 			screen.queryByTestId('dashboard-action-rename'),
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByTestId('dashboard-action-edit-tags'),
 		).not.toBeInTheDocument();
 		expect(
 			screen.queryByTestId('dashboard-action-duplicate'),

@@ -1,8 +1,6 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-
-import { useIntersectionObserver } from 'hooks/useIntersectionObserver';
 
 import ConfirmDeleteDialog from '../../../components/ConfirmDeleteDialog/ConfirmDeleteDialog';
 import DisabledControlTooltip from '../../../components/DisabledControlTooltip/DisabledControlTooltip';
@@ -41,12 +39,6 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 		targetLayoutIndex,
 	} = useCreatePanel();
 	const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-	const containerRef = useRef<HTMLDivElement>(null);
-	// Placeholder signal for lazy panel query-loading (consumed in a later PR):
-	// true once the section scrolls into (or near) the viewport.
-	const isVisible = useIntersectionObserver(containerRef, {
-		rootMargin: '200px',
-	});
 
 	const { open, toggle } = useToggleSectionCollapse({ sectionId: section.id });
 
@@ -77,17 +69,14 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 		<SectionGrid
 			items={section.items}
 			layoutIndex={section.layoutIndex}
-			isVisible={isVisible}
 			sections={sections}
 		/>
 	);
 
 	if (!section.title) {
-		// Untitled section — just the grid (no header chrome), but still observed
-		// for the viewport signal.
+		// Untitled section — just the grid, no header chrome.
 		return (
 			<div
-				ref={containerRef}
 				data-testid={`dashboard-section-${section.id}`}
 				data-section-layout-index={section.layoutIndex}
 			>
@@ -98,7 +87,6 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 
 	return (
 		<div
-			ref={containerRef}
 			className={styles.section}
 			data-testid={`dashboard-section-${section.id}`}
 			data-section-layout-index={section.layoutIndex}

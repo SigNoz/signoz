@@ -1,13 +1,13 @@
-import { mockQueryRangeV5WithLogsResponse } from '__tests__/query_range_v5.util';
-import { InfraMonitoringEntity } from 'container/InfraMonitoringK8s/constants';
+import { mockQueryRangeV5WithEventsResponse } from '__tests__/query_range_v5.util';
+import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { act, render, screen, waitFor } from 'tests/test-utils';
 import { QueryRangePayloadV5 } from 'types/api/v5/queryRange';
 
-import EntityTraces from '../EntityTraces';
-import { K8S_ENTITY_TRACES_EXPRESSION_KEY } from '../hooks';
+import EntityEvents from '../EntityEvents';
+import { K8S_ENTITY_EVENTS_EXPRESSION_KEY } from '../hooks';
 
-function verifyEntityTracesV5Request({
+function verifyEntityEventsV5Request({
 	payload,
 	expectedOffset,
 	initialTimeRange,
@@ -48,12 +48,12 @@ jest.mock('container/TopNav/DateTimeSelectionV2/index.tsx', () => ({
 	),
 }));
 
-describe('EntityTraces', () => {
+describe('EntityEvents', () => {
 	let capturedQueryRangePayloads: QueryRangePayloadV5[] = [];
 
 	beforeEach(() => {
 		capturedQueryRangePayloads = [];
-		mockQueryRangeV5WithLogsResponse({
+		mockQueryRangeV5WithEventsResponse({
 			onReceiveRequest: async (req) => {
 				const body = (await req.json()) as QueryRangePayloadV5;
 				capturedQueryRangePayloads.push(body);
@@ -62,13 +62,13 @@ describe('EntityTraces', () => {
 		});
 	});
 
-	it('should use V5 API for fetching traces', async () => {
+	it('should use V5 API for fetching events', async () => {
 		act(() => {
 			render(
 				<NuqsTestingAdapter
-					searchParams={`${K8S_ENTITY_TRACES_EXPRESSION_KEY}=k8s.pod.name+%3D+%22x%22`}
+					searchParams={`${K8S_ENTITY_EVENTS_EXPRESSION_KEY}=k8s.pod.name+%3D+%22x%22`}
 				>
-					<EntityTraces
+					<EntityEvents
 						timeRange={{ startTime: 1, endTime: 2 }}
 						isModalTimeSelection={false}
 						handleTimeChange={jest.fn()}
@@ -92,7 +92,7 @@ describe('EntityTraces', () => {
 		});
 
 		const firstPayload = capturedQueryRangePayloads[0];
-		verifyEntityTracesV5Request({
+		verifyEntityEventsV5Request({
 			payload: firstPayload,
 			expectedOffset: 0,
 		});
