@@ -10,6 +10,13 @@ import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import LLMObservability from '../LLMObservability';
 
+// DateTimeSelectionV2 depends on react-router v6 hooks (useNavigationType)
+// that the test router doesn't provide.
+jest.mock('container/TopNav/DateTimeSelectionV2', () => ({
+	__esModule: true,
+	default: (): JSX.Element => <div data-testid="mock-datetime-selection" />,
+}));
+
 function setupList(items = mockRules): void {
 	server.use(
 		rest.get(LLM_PRICING_ENDPOINT, (_req, res, ctx) =>

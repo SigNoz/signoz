@@ -62,11 +62,17 @@ import './GridCardLayout.styles.scss';
 interface GraphLayoutProps {
 	handle: FullScreenHandle;
 	enableDrillDown?: boolean;
+	/**
+	 * Renders the grid for a dashboard that doesn't exist on the backend (e.g.
+	 * hardcoded feature-page dashboards): layout changes stay session-local
+	 * (no autosave PUT) and widget edit/delete actions are hidden.
+	 */
+	isEmbedded?: boolean;
 }
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function GraphLayout(props: GraphLayoutProps): JSX.Element {
-	const { handle, enableDrillDown = false } = props;
+	const { handle, enableDrillDown = false, isEmbedded = false } = props;
 	const { safeNavigate } = useSafeNavigate();
 	const isDashboardFetching =
 		useIsFetching([REACT_QUERY_KEY.DASHBOARD_BY_ID]) > 0;
@@ -193,9 +199,10 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 		});
 	};
 
-	const widgetActions = !isDashboardLocked
-		? [...ViewMenuAction, ...EditMenuAction]
-		: [...ViewMenuAction, MenuItemKeys.CreateAlerts];
+	const widgetActions =
+		!isDashboardLocked && !isEmbedded
+			? [...ViewMenuAction, ...EditMenuAction]
+			: [...ViewMenuAction, MenuItemKeys.CreateAlerts];
 
 	const handleLayoutChange = (layout: Layout[]): void => {
 		const filterLayout = removeUndefinedValuesFromLayout(layout);
@@ -227,6 +234,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 	useEffect(() => {
 		if (
 			isDashboardLocked ||
+			isEmbedded ||
 			!saveLayoutPermission ||
 			updateDashboardMutation.isLoading ||
 			isDashboardFetching

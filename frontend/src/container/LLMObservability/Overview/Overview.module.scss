@@ -12,6 +12,12 @@
 	gap: var(--spacing-8);
 }
 
+.dashboard {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+}
+
 .pageHeaderTitle {
 	.title {
 		margin: 0;
