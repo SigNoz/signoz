@@ -34,6 +34,7 @@ import { getOldLogsOperatorFromNew } from 'hooks/logs/useActiveLog';
 import useLogDetailHandlers from 'hooks/logs/useLogDetailHandlers';
 import useScrollToLog from 'hooks/logs/useScrollToLog';
 import { generateFilterQuery } from 'lib/logs/generateFilterQuery';
+import { saveRecentQueryByExpression } from 'lib/recentQueries/saveRecentQuery';
 import { ILog } from 'types/api/logs/log';
 import { DataSource } from 'types/common/queryBuilder';
 import { validateQuery } from 'utils/queryValidationUtils';
@@ -132,6 +133,7 @@ function EntityLogsContent({
 			);
 
 			if (validation.isValid) {
+				saveRecentQueryByExpression(DataSource.LOGS, newUserExpression);
 				querySearchOnRun(newUserExpression);
 
 				logEvent(InfraMonitoringEvents.FilterApplied, {

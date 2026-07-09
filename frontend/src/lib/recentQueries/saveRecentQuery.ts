@@ -19,6 +19,34 @@ type CompositeWithBuilder = {
 	builder?: { queryData?: IBuilderQuery[] };
 };
 
+// Persists a single filter expression as a recent entry. For pages that run
+// searches outside the QueryBuilder provider (Metrics Summary, Infra
+// Monitoring entity tabs, Trace details filters). Call this only from
+// explicit user-driven Run triggers.
+export function saveRecentQueryByExpression(
+	dataSource: IBuilderQuery['dataSource'],
+	expression: string | null | undefined,
+	source = '',
+): void {
+	const trimmed = expression?.trim();
+	if (!trimmed) {
+		return;
+	}
+	const validation = validateQuery(trimmed);
+	if (!validation.isValid) {
+		return;
+	}
+	const signal = toSignal(dataSource);
+	if (!signal) {
+		return;
+	}
+	store.save({
+		signal,
+		source,
+		filter: { expression: trimmed },
+	});
+}
+
 // Persists each builder query in the composite as a recent entry. Call this
 // only from explicit user-driven Run triggers — reacting to stagedQuery or any
 // other derived state pollutes recents with navigation/refresh/go-to traffic.
@@ -31,22 +59,10 @@ export function saveRecentQuery(
 	}
 
 	queryData.forEach((q) => {
-		const expression = q.filter?.expression?.trim();
-		if (!expression) {
-			return;
-		}
-		const validation = validateQuery(expression);
-		if (!validation.isValid) {
-			return;
-		}
-		const signal = toSignal(q.dataSource);
-		if (!signal) {
-			return;
-		}
-		store.save({
-			signal,
-			source: q.source ?? '',
-			filter: q.filter ?? { expression: '' },
-		});
+		saveRecentQueryByExpression(
+			q.dataSource,
+			q.filter?.expression,
+			q.source ?? '',
+		);
 	});
 }
