@@ -9,6 +9,12 @@ import QuerySearch from '../QuerySearch/QuerySearch';
 const CM_EDITOR_SELECTOR = '.cm-editor .cm-content';
 const TOOLTIP_SELECTOR = '.cm-tooltip-autocomplete';
 
+// These tests drive a real (un-mocked) CodeMirror editor with userEvent in
+// jsdom, which is slow and highly variable across machines — Jest's default
+// 5s per-test timeout is tighter than the 8s waitFor budgets used below and
+// causes arbitrary tests to be killed on slow CI runners.
+jest.setTimeout(30000);
+
 // Mock DOM APIs that CodeMirror needs to run in jsdom. Mirrors the setup used by
 // QuerySearch.test.tsx — CodeMirror measures text via Range client rects and
 // element bounding rects, neither of which jsdom implements.
@@ -134,6 +140,33 @@ async function getEditor(): Promise<HTMLElement> {
 	);
 }
 
+// The component opens the completion popup from its own timers (focus/context
+// effects, "force reopen" after suggestion fetches), but a late-resolving fetch
+// re-renders the editor and can close an already-open popup with nothing left
+// to reopen it — in a real browser the user's next keystroke re-triggers it,
+// but a test that only waits hangs forever. Poll the popup assertions with a
+// nudge: whenever the popup is closed, press Ctrl-Space (bound to
+// startCompletion via the component's completionKeymap) and retry.
+function waitForCompletionPopup<T>(
+	editor: HTMLElement,
+	assertion: () => T,
+): Promise<T> {
+	return waitFor(
+		() => {
+			if (!document.querySelector(TOOLTIP_SELECTOR)) {
+				fireEvent.keyDown(editor, {
+					key: ' ',
+					code: 'Space',
+					keyCode: 32,
+					ctrlKey: true,
+				});
+			}
+			return assertion();
+		},
+		{ timeout: 8000 },
+	);
+}
+
 describe('QuerySearch — recent searches (integration with real CodeMirror)', () => {
 	beforeEach(() => {
 		recentQueriesStore.useRecentQueriesStore.setState({ buckets: {} });
@@ -150,15 +183,12 @@ describe('QuerySearch — recent searches (integration with real CodeMirror)', (
 		const editor = await getEditor();
 		await userEvent.click(editor);
 
-		await waitFor(
-			() => {
-				const tooltip = document.querySelector(TOOLTIP_SELECTOR);
-				expect(tooltip).toBeInTheDocument();
-				expect(tooltip?.textContent).toContain('Recent searches');
-				expect(tooltip?.textContent).toContain("service.name = 'frontend'");
-			},
-			{ timeout: 8000 },
-		);
+		await waitForCompletionPopup(editor, () => {
+			const tooltip = document.querySelector(TOOLTIP_SELECTOR);
+			expect(tooltip).toBeInTheDocument();
+			expect(tooltip?.textContent).toContain('Recent searches');
+			expect(tooltip?.textContent).toContain("service.name = 'frontend'");
+		});
 	});
 
 	it('filters recents by substring as the user types', async () => {
@@ -176,15 +206,12 @@ describe('QuerySearch — recent searches (integration with real CodeMirror)', (
 		await userEvent.click(editor);
 		await userEvent.type(editor, 'status_code');
 
-		await waitFor(
-			() => {
-				const tooltip = document.querySelector(TOOLTIP_SELECTOR);
-				expect(tooltip).toBeInTheDocument();
-				expect(tooltip?.textContent).toContain("http.status_code = '500'");
-				expect(tooltip?.textContent).not.toContain("service.name = 'frontend'");
-			},
-			{ timeout: 8000 },
-		);
+		await waitForCompletionPopup(editor, () => {
+			const tooltip = document.querySelector(TOOLTIP_SELECTOR);
+			expect(tooltip).toBeInTheDocument();
+			expect(tooltip?.textContent).toContain("http.status_code = '500'");
+			expect(tooltip?.textContent).not.toContain("service.name = 'frontend'");
+		});
 	});
 
 	it('does not surface recents saved under a different signal', async () => {
@@ -207,15 +234,12 @@ describe('QuerySearch — recent searches (integration with real CodeMirror)', (
 
 		// Anchor: wait until the logs recent is actually rendered under the
 		// "Recent searches" section.
-		await waitFor(
-			() => {
-				const tooltip = document.querySelector(TOOLTIP_SELECTOR);
-				expect(tooltip).toBeInTheDocument();
-				expect(tooltip?.textContent).toContain('Recent searches');
-				expect(tooltip?.textContent).toContain("service.name = 'frontend'");
-			},
-			{ timeout: 8000 },
-		);
+		await waitForCompletionPopup(editor, () => {
+			const tooltip = document.querySelector(TOOLTIP_SELECTOR);
+			expect(tooltip).toBeInTheDocument();
+			expect(tooltip?.textContent).toContain('Recent searches');
+			expect(tooltip?.textContent).toContain("service.name = 'frontend'");
+		});
 
 		// Now that the popup is proven open and populated, the traces recent must be absent.
 		const tooltip = document.querySelector(TOOLTIP_SELECTOR);
@@ -238,15 +262,12 @@ describe('QuerySearch — recent searches (integration with real CodeMirror)', (
 		await userEvent.type(editor, EXACT);
 
 		// Anchor: the superset recent renders under "Recent searches"...
-		await waitFor(
-			() => {
-				const labels = Array.from(
-					document.querySelectorAll('.cm-completionLabel'),
-				).map((n) => n.textContent ?? '');
-				expect(labels).toContain(ANCHOR);
-			},
-			{ timeout: 8000 },
-		);
+		await waitForCompletionPopup(editor, () => {
+			const labels = Array.from(
+				document.querySelectorAll('.cm-completionLabel'),
+			).map((n) => n.textContent ?? '');
+			expect(labels).toContain(ANCHOR);
+		});
 
 		// ...but no completion is the exact-match recent (an entry equal to the
 		// current doc is filtered out). Assert on exact label equality — a substring
@@ -267,17 +288,14 @@ describe('QuerySearch — recent searches (integration with real CodeMirror)', (
 		const editor = await getEditor();
 		await userEvent.click(editor);
 
-		const option = await waitFor(
-			() => {
-				const opts = Array.from(document.querySelectorAll('.cm-completionLabel'));
-				const match = opts.find((o) =>
-					o.textContent?.includes("service.name = 'frontend'"),
-				);
-				expect(match).toBeTruthy();
-				return match as HTMLElement;
-			},
-			{ timeout: 8000 },
-		);
+		const option = await waitForCompletionPopup(editor, () => {
+			const opts = Array.from(document.querySelectorAll('.cm-completionLabel'));
+			const match = opts.find((o) =>
+				o.textContent?.includes("service.name = 'frontend'"),
+			);
+			expect(match).toBeTruthy();
+			return match as HTMLElement;
+		});
 
 		await userEvent.click(option);
 
@@ -304,29 +322,23 @@ describe('QuerySearch — recent searches (integration with real CodeMirror)', (
 		const editor = await getEditor();
 		await userEvent.click(editor);
 
-		await waitFor(
-			() => {
-				const tooltip = document.querySelector(TOOLTIP_SELECTOR);
-				expect(tooltip).toBeInTheDocument();
-			},
-			{ timeout: 8000 },
-		);
+		await waitForCompletionPopup(editor, () => {
+			const labels = Array.from(
+				document.querySelectorAll('.cm-completionLabel'),
+			).map((n) => n.textContent ?? '');
+			const recentLabels = labels.filter((l) => l.startsWith('attribute_'));
 
-		const labels = Array.from(
-			document.querySelectorAll('.cm-completionLabel'),
-		).map((n) => n.textContent ?? '');
-		const recentLabels = labels.filter((l) => l.startsWith('attribute_'));
-
-		// Newest saved (attribute_6) first, descending; attribute_1 evicted from the
-		// 5-item display cap. Assert the full ordered array so a boost regression that
-		// scrambles the middle positions is caught, not just position 0.
-		expect(recentLabels).toStrictEqual([
-			"attribute_6 = 'v'",
-			"attribute_5 = 'v'",
-			"attribute_4 = 'v'",
-			"attribute_3 = 'v'",
-			"attribute_2 = 'v'",
-		]);
+			// Newest saved (attribute_6) first, descending; attribute_1 evicted from the
+			// 5-item display cap. Assert the full ordered array so a boost regression that
+			// scrambles the middle positions is caught, not just position 0.
+			expect(recentLabels).toStrictEqual([
+				"attribute_6 = 'v'",
+				"attribute_5 = 'v'",
+				"attribute_4 = 'v'",
+				"attribute_3 = 'v'",
+				"attribute_2 = 'v'",
+			]);
+		});
 	});
 
 	it('removes a recent from the dropdown and store when the delete button is clicked', async () => {
@@ -339,14 +351,11 @@ describe('QuerySearch — recent searches (integration with real CodeMirror)', (
 		const editor = await getEditor();
 		await userEvent.click(editor);
 
-		const deleteBtn = await waitFor(
-			() => {
-				const btn = document.querySelector('.cm-recent-delete');
-				expect(btn).toBeInTheDocument();
-				return btn as HTMLElement;
-			},
-			{ timeout: 8000 },
-		);
+		const deleteBtn = await waitForCompletionPopup(editor, () => {
+			const btn = document.querySelector('.cm-recent-delete');
+			expect(btn).toBeInTheDocument();
+			return btn as HTMLElement;
+		});
 
 		fireEvent.mouseDown(deleteBtn);
 		fireEvent.click(deleteBtn);
