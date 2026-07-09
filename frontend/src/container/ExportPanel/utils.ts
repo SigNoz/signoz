@@ -6,11 +6,3 @@ export const getSelectOptions = (data: Dashboard[]): SelectProps['options'] =>
 		label: data.title,
 		value: id,
 	}));
-
-export const filterOptions: SelectProps['filterOption'] = (
-	input,
-	options,
-): boolean =>
-	(options?.label?.toString() ?? '')
-		?.toLowerCase()
-		.includes(input.toLowerCase());
