@@ -1,5 +1,6 @@
 .resizable-box {
 	position: relative;
+	overflow: hidden;
 
 	&--disabled {
 		flex: 1;

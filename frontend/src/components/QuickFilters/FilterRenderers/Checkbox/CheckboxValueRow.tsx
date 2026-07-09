@@ -47,7 +47,7 @@ function CheckboxValueRow({
 				{customRendererForValue ? (
 					customRendererForValue(value)
 				) : (
-					<TooltipSimple title={String(value)} side="top" align="start">
+					<TooltipSimple title={value} side="top" align="center" arrow>
 						<Typography.Text className="value-string" truncate={1}>
 							{String(value)}
 						</Typography.Text>
