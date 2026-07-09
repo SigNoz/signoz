@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
-import { Time } from 'container/TopNav/DateTimeSelectionV2/types';
 import * as appContextHooks from 'providers/App/App';
 import { LicenseEvent } from 'types/api/licensesV3/getActive';
 import uPlot from 'uplot';
@@ -27,11 +26,23 @@ jest.mock('lib/uPlotV2/utils/dataUtils', () => ({
 	hasSingleVisiblePoint: jest.fn().mockReturnValue(false),
 }));
 
-jest.mock('container/TopNav/DateTimeSelectionV2', () => ({
+jest.mock('../../EntityDateTimeSelector/EntityDateTimeSelector', () => ({
 	__esModule: true,
 	default: (): JSX.Element => (
 		<div data-testid="date-time-selection">Date Time</div>
 	),
+}));
+
+jest.mock('../../EntityDateTimeSelector/useEntityDetailsTime', () => ({
+	useEntityDetailsTime: (): {
+		timeRange: { startTime: number; endTime: number };
+		selectedInterval: string;
+		handleTimeChange: jest.Mock;
+	} => ({
+		timeRange: { startTime: 1705315200, endTime: 1705318800 },
+		selectedInterval: '5m',
+		handleTimeChange: jest.fn(),
+	}),
 }));
 
 jest.mock(
@@ -142,13 +153,6 @@ const mockGetEntityQueryPayload = jest.fn().mockReturnValue([
 		end: 1705318800,
 	},
 ]);
-
-const mockTimeRange = {
-	startTime: 1705315200,
-	endTime: 1705318800,
-};
-
-const mockHandleTimeChange = jest.fn();
 
 const mockQueries = [
 	{
@@ -282,10 +286,6 @@ const mockEmptyQueries = [
 
 const renderEntityMetrics = (overrides = {}): any => {
 	const defaultProps = {
-		timeRange: mockTimeRange,
-		isModalTimeSelection: false,
-		handleTimeChange: mockHandleTimeChange,
-		selectedInterval: '5m' as Time,
 		entity: mockEntity,
 		entityWidgetInfo: mockEntityWidgetInfo,
 		getEntityQueryPayload: mockGetEntityQueryPayload,
@@ -296,11 +296,8 @@ const renderEntityMetrics = (overrides = {}): any => {
 
 	return render(
 		<EntityMetrics
-			timeRange={defaultProps.timeRange}
-			isModalTimeSelection={defaultProps.isModalTimeSelection}
-			handleTimeChange={defaultProps.handleTimeChange}
-			selectedInterval={defaultProps.selectedInterval}
 			entity={defaultProps.entity}
+			eventEntity="test"
 			entityWidgetInfo={defaultProps.entityWidgetInfo}
 			getEntityQueryPayload={defaultProps.getEntityQueryPayload}
 			queryKey={defaultProps.queryKey}
@@ -447,7 +444,6 @@ describe('EntityMetrics', () => {
 		expect(mockUseEntityMetrics).toHaveBeenCalledWith(
 			expect.objectContaining({
 				queryKey: 'test-query-key',
-				timeRange: mockTimeRange,
 				entity: mockEntity,
 				category: InfraMonitoringEntity.PODS,
 			}),

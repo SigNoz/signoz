@@ -50,23 +50,23 @@ jest.mock(
 		},
 );
 
-jest.mock('container/TopNav/DateTimeSelectionV2/index.tsx', () => ({
+jest.mock('../../EntityDateTimeSelector/EntityDateTimeSelector', () => ({
 	__esModule: true,
-	default: ({
-		onTimeChange,
-	}: {
-		onTimeChange?: (interval: string, dateTimeRange?: [number, number]) => void;
-	}): JSX.Element => (
-		<button
-			type="button"
-			data-testid="mock-datetime-selection"
-			onClick={(): void => {
-				onTimeChange?.('5m');
-			}}
-		>
-			Select Time
-		</button>
+	default: (): JSX.Element => (
+		<div data-testid="mock-datetime-selection">Date Time</div>
 	),
+}));
+
+jest.mock('../../EntityDateTimeSelector/useEntityDetailsTime', () => ({
+	useEntityDetailsTime: (): {
+		timeRange: { startTime: number; endTime: number };
+		selectedInterval: string;
+		handleTimeChange: jest.Mock;
+	} => ({
+		timeRange: { startTime: 1, endTime: 2 },
+		selectedInterval: '5m',
+		handleTimeChange: jest.fn(),
+	}),
 }));
 
 describe('EntityLogs', () => {
@@ -94,10 +94,7 @@ describe('EntityLogs', () => {
 				>
 					<VirtuosoMockContext.Provider value={{ viewportHeight: 500, itemHeight }}>
 						<EntityLogs
-							timeRange={{ startTime: 1, endTime: 2 }}
-							isModalTimeSelection={false}
-							handleTimeChange={jest.fn()}
-							selectedInterval="5m"
+							eventEntity="test"
 							queryKey="test"
 							category={InfraMonitoringEntity.PODS}
 							initialExpression='k8s.pod.name = "x"'
