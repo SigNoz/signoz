@@ -110,14 +110,6 @@ func (groups TransactionGroups) Diff(desired TransactionGroups) (additions, dele
 	return desired.subtract(groups), groups.subtract(desired)
 }
 
-func (groups TransactionGroups) MarshalJSON() ([]byte, error) {
-	if groups == nil {
-		return []byte("[]"), nil
-	}
-
-	return json.Marshal([]*TransactionGroup(groups))
-}
-
 func (groups TransactionGroups) Value() (driver.Value, error) {
 	data, err := json.Marshal(groups)
 	if err != nil {
@@ -129,7 +121,7 @@ func (groups TransactionGroups) Value() (driver.Value, error) {
 
 func (groups *TransactionGroups) Scan(value any) error {
 	if value == nil {
-		*groups = nil
+		*groups = make(TransactionGroups, 0)
 		return nil
 	}
 
@@ -145,7 +137,7 @@ func (groups *TransactionGroups) Scan(value any) error {
 
 	parsed, err := NewTransactionGroups(data)
 	if err != nil {
-		return err
+		return errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, "failed to scan transactionGroups")
 	}
 
 	*groups = parsed

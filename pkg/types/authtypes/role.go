@@ -70,7 +70,7 @@ type Role struct {
 	Description       string            `bun:"description,type:string"  json:"description" required:"true"`
 	Type              valuer.String     `bun:"type,type:string" json:"type" required:"true"`
 	OrgID             valuer.UUID       `bun:"org_id,type:string" json:"orgId" required:"true"`
-	TransactionGroups TransactionGroups `bun:"transaction_groups,type:text" json:"transactionGroups" required:"true" nullable:"false"`
+	TransactionGroups TransactionGroups `bun:"transaction_groups,nullzero,type:text" json:"transactionGroups" required:"true" nullable:"false"`
 }
 
 type GettableRole struct {
