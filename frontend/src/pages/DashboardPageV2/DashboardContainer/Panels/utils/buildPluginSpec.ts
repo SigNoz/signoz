@@ -24,6 +24,7 @@ import {
 /** Cross-section of the per-kind spec union; assigned to `plugin.spec` (unknown) at the boundary. */
 export interface SeededPluginSpec {
 	visualization?: SectionSpecMap[SectionKind.Visualization];
+	axes?: SectionSpecMap[SectionKind.Axes];
 	legend?: SectionSpecMap[SectionKind.Legend];
 	chartAppearance?: SectionSpecMap[SectionKind.ChartAppearance];
 	formatting?: Pick<PanelFormattingSlice, 'unit' | 'decimalPrecision'>;
@@ -90,35 +91,103 @@ interface SectionSeed {
 const SECTION_SEEDS: Partial<Record<SectionKind, SectionSeed>> = {
 	[SectionKind.Visualization]: {
 		specKey: 'visualization',
-		seed: (controls): SectionSpecMap[SectionKind.Visualization] | undefined => {
+		seed: (
+			controls,
+			{ oldSpec },
+		): SectionSpecMap[SectionKind.Visualization] | undefined => {
 			const c = controls as SectionControls[SectionKind.Visualization];
-			return c.timePreference
-				? { timePreference: DashboardtypesTimePreferenceDTO.global_time }
-				: undefined;
+			const old = (
+				oldSpec?.plugin.spec as {
+					visualization?: SectionSpecMap[SectionKind.Visualization];
+				}
+			)?.visualization;
+			const visualization: SectionSpecMap[SectionKind.Visualization] = {
+				...(c.timePreference && {
+					timePreference:
+						old?.timePreference ?? DashboardtypesTimePreferenceDTO.global_time,
+				}),
+				...(c.stacking &&
+					old?.stackedBarChart !== undefined && {
+						stackedBarChart: old.stackedBarChart,
+					}),
+				...(c.fillSpans &&
+					old?.fillSpans !== undefined && { fillSpans: old.fillSpans }),
+			};
+			return Object.keys(visualization).length > 0 ? visualization : undefined;
+		},
+	},
+	[SectionKind.Axes]: {
+		specKey: 'axes',
+		seed: (
+			controls,
+			{ oldSpec },
+		): SectionSpecMap[SectionKind.Axes] | undefined => {
+			const c = controls as SectionControls[SectionKind.Axes];
+			const old = (
+				oldSpec?.plugin.spec as {
+					axes?: SectionSpecMap[SectionKind.Axes];
+				}
+			)?.axes;
+			if (!old) {
+				return undefined;
+			}
+			const axes: SectionSpecMap[SectionKind.Axes] = {
+				...(c.minMax &&
+					typeof old.softMin === 'number' && { softMin: old.softMin }),
+				...(c.minMax &&
+					typeof old.softMax === 'number' && { softMax: old.softMax }),
+				...(c.logScale &&
+					old.isLogScale !== undefined && { isLogScale: old.isLogScale }),
+			};
+			return Object.keys(axes).length > 0 ? axes : undefined;
 		},
 	},
 	[SectionKind.Legend]: {
 		specKey: 'legend',
-		seed: (controls): SectionSpecMap[SectionKind.Legend] | undefined => {
+		seed: (
+			controls,
+			{ oldSpec },
+		): SectionSpecMap[SectionKind.Legend] | undefined => {
 			const c = controls as SectionControls[SectionKind.Legend];
+			const old = (
+				oldSpec?.plugin.spec as {
+					legend?: SectionSpecMap[SectionKind.Legend];
+				}
+			)?.legend;
+			// customColors is keyed by series label, which the new kind may not reproduce.
 			return c.position
-				? { position: DashboardtypesLegendPositionDTO.bottom }
+				? { position: old?.position ?? DashboardtypesLegendPositionDTO.bottom }
 				: undefined;
 		},
 	},
 	[SectionKind.ChartAppearance]: {
 		specKey: 'chartAppearance',
-		seed: (controls): SectionSpecMap[SectionKind.ChartAppearance] | undefined => {
+		seed: (
+			controls,
+			{ oldSpec },
+		): SectionSpecMap[SectionKind.ChartAppearance] | undefined => {
 			const c = controls as SectionControls[SectionKind.ChartAppearance];
+			const old = (
+				oldSpec?.plugin.spec as {
+					chartAppearance?: SectionSpecMap[SectionKind.ChartAppearance];
+				}
+			)?.chartAppearance;
 			const appearance: SectionSpecMap[SectionKind.ChartAppearance] = {};
 			if (c.lineStyle) {
-				appearance.lineStyle = DashboardtypesLineStyleDTO.solid;
+				appearance.lineStyle = old?.lineStyle ?? DashboardtypesLineStyleDTO.solid;
 			}
 			if (c.lineInterpolation) {
-				appearance.lineInterpolation = DashboardtypesLineInterpolationDTO.spline;
+				appearance.lineInterpolation =
+					old?.lineInterpolation ?? DashboardtypesLineInterpolationDTO.spline;
 			}
 			if (c.fillMode) {
-				appearance.fillMode = DashboardtypesFillModeDTO.none;
+				appearance.fillMode = old?.fillMode ?? DashboardtypesFillModeDTO.none;
+			}
+			if (c.showPoints && old?.showPoints !== undefined) {
+				appearance.showPoints = old.showPoints;
+			}
+			if (c.spanGaps && old?.spanGaps !== undefined) {
+				appearance.spanGaps = old.spanGaps;
 			}
 			return Object.keys(appearance).length > 0 ? appearance : undefined;
 		},

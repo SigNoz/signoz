@@ -47,9 +47,8 @@ describe('buildPluginSpec', () => {
 			expect(buildPluginSpec([])).toStrictEqual({});
 		});
 
-		it('seeds nothing for sections with no seed (Axes, Buckets, ContextLinks)', () => {
+		it('seeds nothing for sections with no seed (Buckets, ContextLinks)', () => {
 			const sections: SectionConfig[] = [
-				{ kind: SectionKind.Axes, controls: { minMax: true, logScale: true } },
 				{ kind: SectionKind.Buckets, controls: { count: true, width: true } },
 				{ kind: SectionKind.ContextLinks },
 			];
@@ -112,6 +111,108 @@ describe('buildPluginSpec', () => {
 			];
 			expect(buildPluginSpec(sections)).toStrictEqual({});
 		});
+
+		it('carries old timePreference / stacking / fillSpans the target declares', () => {
+			const sections: SectionConfig[] = [
+				{
+					kind: SectionKind.Visualization,
+					controls: {
+						switchPanelKind: true,
+						timePreference: true,
+						stacking: true,
+						fillSpans: true,
+					},
+				},
+			];
+			const oldSpec = oldSpecWith({
+				visualization: {
+					timePreference: DashboardtypesTimePreferenceDTO.last_6_hr,
+					stackedBarChart: true,
+					fillSpans: true,
+				},
+			});
+
+			expect(buildPluginSpec(sections, { oldSpec }).visualization).toStrictEqual({
+				timePreference: DashboardtypesTimePreferenceDTO.last_6_hr,
+				stackedBarChart: true,
+				fillSpans: true,
+			});
+		});
+
+		it('drops visualization fields the target does not declare (Bar → TimeSeries)', () => {
+			// TimeSeries has no stacking control, so Bar's stackedBarChart must not carry.
+			const sections: SectionConfig[] = [
+				{
+					kind: SectionKind.Visualization,
+					controls: { switchPanelKind: true, timePreference: true, fillSpans: true },
+				},
+			];
+			const oldSpec = oldSpecWith({
+				visualization: { stackedBarChart: true },
+			});
+
+			expect(buildPluginSpec(sections, { oldSpec }).visualization).toStrictEqual({
+				timePreference: DashboardtypesTimePreferenceDTO.global_time,
+			});
+		});
+
+		it('carries old legend position but never customColors', () => {
+			const sections: SectionConfig[] = [
+				{ kind: SectionKind.Legend, controls: { position: true, colors: true } },
+			];
+			const oldSpec = oldSpecWith({
+				legend: {
+					position: DashboardtypesLegendPositionDTO.right,
+					customColors: { 'series-a': '#F1575F' },
+				},
+			});
+
+			expect(buildPluginSpec(sections, { oldSpec }).legend).toStrictEqual({
+				position: DashboardtypesLegendPositionDTO.right,
+			});
+		});
+	});
+
+	describe('axes seed (carry, gated by controls)', () => {
+		it('carries softMin/softMax/isLogScale when the kind declares both controls', () => {
+			const sections: SectionConfig[] = [
+				{ kind: SectionKind.Axes, controls: { minMax: true, logScale: true } },
+			];
+			const oldSpec = oldSpecWith({
+				axes: { softMin: 0, softMax: 100, isLogScale: true },
+			});
+
+			expect(buildPluginSpec(sections, { oldSpec }).axes).toStrictEqual({
+				softMin: 0,
+				softMax: 100,
+				isLogScale: true,
+			});
+		});
+
+		it('carries only the fields the target controls declare', () => {
+			const sections: SectionConfig[] = [
+				{ kind: SectionKind.Axes, controls: { logScale: true } },
+			];
+			const oldSpec = oldSpecWith({
+				axes: { softMin: 0, softMax: 100, isLogScale: true },
+			});
+
+			expect(buildPluginSpec(sections, { oldSpec }).axes).toStrictEqual({
+				isLogScale: true,
+			});
+		});
+
+		it('skips null soft bounds and seeds nothing on a new panel or empty axes', () => {
+			const sections: SectionConfig[] = [
+				{ kind: SectionKind.Axes, controls: { minMax: true, logScale: true } },
+			];
+			expect(buildPluginSpec(sections)).toStrictEqual({});
+			expect(
+				buildPluginSpec(sections, {
+					oldSpec: oldSpecWith({ axes: { softMin: null, softMax: null } }),
+				}),
+			).toStrictEqual({});
+		});
 	});
 
 	describe('chartAppearance seed', () => {
@@ -136,6 +237,30 @@ describe('buildPluginSpec', () => {
 				},
 			];
 			expect(buildPluginSpec(sections)).toStrictEqual({});
+		});
+
+		it('carries old values over the defaults, gated by the declared controls', () => {
+			const sections: SectionConfig[] = [
+				{
+					kind: SectionKind.ChartAppearance,
+					controls: { lineStyle: true, lineInterpolation: true, showPoints: true },
+				},
+			];
+			const oldSpec = oldSpecWith({
+				chartAppearance: {
+					lineStyle: DashboardtypesLineStyleDTO.dashed,
+					fillMode: DashboardtypesFillModeDTO.gradient,
+					showPoints: false,
+				},
+			});
+
+			expect(buildPluginSpec(sections, { oldSpec }).chartAppearance).toStrictEqual(
+				{
+					lineStyle: DashboardtypesLineStyleDTO.dashed,
+					lineInterpolation: DashboardtypesLineInterpolationDTO.spline,
+					showPoints: false,
+				},
+			);
 		});
 	});
 
