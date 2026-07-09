@@ -102,6 +102,10 @@ func newTestBuilderWithKeys(t *testing.T, keysMap map[string][]*telemetrytypes.T
 		cb,
 		baseCond,
 		traceStmtBuilder,
+		nil, // telemetryStore: only used by the skip-fingerprint count query, which is disabled here
+		fl,
+		false,
+		100000,
 	)
 }
 
@@ -522,6 +526,92 @@ SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000
 `, stmt)
 }
 
+// Resource filter: a resource attribute in the filter is pulled into a __resource_filter
+// CTE (fingerprints matching the resource condition), and the `matched` scan is narrowed
+// by `resource_fingerprint GLOBAL IN (…)`. The resource key is dropped from the span
+// predicate (skipResourceFilter), so here there is no span-level existence check — the
+// prune stays the gate mask and the whole match is scoped to the resource fingerprints.
+func TestBuild_FullSQL_TraceList_ResourceFilter(t *testing.T) {
+	keys := otelKeysMap()
+	keys["service.name"] = []*telemetrytypes.TelemetryFieldKey{{
+		Name:          "service.name",
+		Signal:        telemetrytypes.SignalTraces,
+		FieldContext:  telemetrytypes.FieldContextResource,
+		FieldDataType: telemetrytypes.FieldDataTypeString,
+	}}
+	b := newTestBuilderWithKeys(t, keys)
+	stmt, err := b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace,
+		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+			Signal: telemetrytypes.SignalTraces, Source: telemetrytypes.SourceAI,
+			Filter: &qbtypes.Filter{Expression: "resource.service.name = 'checkout'"},
+			Limit:  20,
+		}, nil)
+	require.NoError(t, err)
+
+	requireSQLEqual(t, `
+WITH __resource_filter AS (
+    SELECT fingerprint
+    FROM signoz_traces.distributed_traces_v3_resource
+    WHERE (simpleJSONExtractString(labels, 'service.name') = 'checkout' AND labels LIKE '%service.name%' AND labels LIKE '%service.name":"checkout%')
+      AND seen_at_ts_bucket_start >= 1747945619
+      AND seen_at_ts_bucket_start <= 1747983448
+    GROUP BY fingerprint
+),
+matched AS (
+    SELECT trace_id,
+        maxIf(timestamp, (mapContains(attributes_string, 'gen_ai.request.model') = true OR mapContains(attributes_string, 'gen_ai.tool.name') = true OR mapContains(attributes_string, 'gen_ai.agent.name') = true)) AS last_activity_time
+    FROM signoz_traces.distributed_signoz_index_v3
+    WHERE timestamp >= '1747947419000000000'
+      AND timestamp < '1747983448000000000'
+      AND ts_bucket_start >= 1747945619
+      AND ts_bucket_start <= 1747983448
+      AND ((mapContains(attributes_string, 'gen_ai.request.model') = true OR mapContains(attributes_string, 'gen_ai.tool.name') = true OR mapContains(attributes_string, 'gen_ai.agent.name') = true))
+      AND resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)
+    GROUP BY trace_id
+    ORDER BY last_activity_time DESC, trace_id DESC
+    LIMIT 20
+),
+ranked AS (
+    SELECT trace_id, min(start) AS t_start, max(end) AS t_end
+    FROM signoz_traces.distributed_trace_summary
+    WHERE trace_id GLOBAL IN (SELECT trace_id FROM matched)
+      AND end >= fromUnixTimestamp64Nano(1747947419000000000)
+      AND start < fromUnixTimestamp64Nano(1747983448000000000)
+    GROUP BY trace_id
+),
+buckets AS (
+    SELECT DISTINCT b AS ts_bucket
+    FROM ranked
+    ARRAY JOIN range(toUInt64(intDiv(toUnixTimestamp(t_start), 1800) * 1800 - 1800), toUInt64(intDiv(toUnixTimestamp(t_end), 1800) * 1800 + 1800), 1800) AS b
+)
+SELECT trace_id,
+    min(timestamp) AS start_time,
+    max(timestamp) AS end_time,
+    (max(toUnixTimestamp64Nano(timestamp) + duration_nano) - min(toUnixTimestamp64Nano(timestamp))) AS duration_nano,
+    count() AS span_count,
+    anyIf(name, parent_span_id = '') AS root_span_name,
+    any(resource_string_service$$name) AS service.name,
+    countIf(mapContains(attributes_string, 'gen_ai.request.model') = true) AS llm_call_count,
+    countIf(mapContains(attributes_string, 'gen_ai.tool.name') = true) AS tool_call_count,
+    uniqIf(multiIf(mapContains(attributes_string, 'gen_ai.tool.name') = true, attributes_string['gen_ai.tool.name'], NULL), mapContains(attributes_string, 'gen_ai.tool.name') = true) AS distinct_tool_count,
+    sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens') = true, toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)) AS input_tokens,
+    sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens,
+    sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens') = true, toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)) + sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS total_tokens,
+    sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.cost') = true, toFloat64(attributes_number['gen_ai.usage.cost']), NULL)) AS estimated_cost_usd,
+    maxIf(signoz_traces.distributed_signoz_index_v3.duration_nano, mapContains(attributes_string, 'gen_ai.request.model') = true) AS max_llm_latency_ns,
+    countIf(has_error = true) AS error_count,
+    maxIf(timestamp, (mapContains(attributes_string, 'gen_ai.request.model') = true OR mapContains(attributes_string, 'gen_ai.tool.name') = true OR mapContains(attributes_string, 'gen_ai.agent.name') = true)) AS last_activity_time,
+    argMinIf(multiIf(mapContains(attributes_string, 'gen_ai.input.messages') = true, attributes_string['gen_ai.input.messages'], NULL), timestamp, mapContains(attributes_string, 'gen_ai.input.messages') = true) AS input,
+    argMaxIf(multiIf(mapContains(attributes_string, 'gen_ai.output.messages') = true, attributes_string['gen_ai.output.messages'], NULL), timestamp, mapContains(attributes_string, 'gen_ai.output.messages') = true) AS output
+FROM signoz_traces.distributed_signoz_index_v3
+WHERE ts_bucket_start GLOBAL IN (SELECT ts_bucket FROM buckets)
+  AND trace_id GLOBAL IN (SELECT trace_id FROM ranked)
+GROUP BY trace_id
+ORDER BY last_activity_time DESC, trace_id DESC
+SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000
+`, stmt)
+}
+
 // Mixed filter (two span predicates AND'd into one existence check + an aggregate) with
 // a two-key order on different aggregates than the filter. matched selects input_tokens
 // + last_activity_time (ORDER BY) and output_tokens (HAVING) — three of four; llm_call_count is not.
@@ -641,6 +731,61 @@ LIMIT 10
 // ---------------------------------------------------------------------------
 // Behavior / branch tests not covered by the goldens above
 // ---------------------------------------------------------------------------
+
+// resourceKeysMap returns the gen_ai keys plus a resource-context service.name key so
+// resource.* filters route into the fingerprint CTE.
+func resourceKeysMap() map[string][]*telemetrytypes.TelemetryFieldKey {
+	keys := otelKeysMap()
+	keys["service.name"] = []*telemetrytypes.TelemetryFieldKey{{
+		Name:          "service.name",
+		Signal:        telemetrytypes.SignalTraces,
+		FieldContext:  telemetrytypes.FieldContextResource,
+		FieldDataType: telemetrytypes.FieldDataTypeString,
+	}}
+	return keys
+}
+
+// A filter mixing a resource attribute with a span-level and an aggregate condition:
+// the resource key routes into __resource_filter (fingerprint prune), the span key stays
+// as a countIf existence check, and the aggregate becomes a HAVING — all AND-combined.
+func TestBuild_TraceList_ResourcePlusSpanPlusAggregateFilter(t *testing.T) {
+	b := newTestBuilderWithKeys(t, resourceKeysMap())
+	stmt, err := b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace,
+		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+			Signal: telemetrytypes.SignalTraces, Source: telemetrytypes.SourceAI,
+			Filter: &qbtypes.Filter{Expression: "resource.service.name = 'checkout' AND has_error = true AND output_tokens > 1000"},
+			Limit:  10,
+		}, nil)
+	require.NoError(t, err)
+
+	got := renderSQL(t, stmt)
+	// resource condition -> fingerprint CTE + prune, not applied on the span index.
+	require.Contains(t, got, "__resource_filter AS (")
+	require.Contains(t, got, "resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)")
+	require.NotContains(t, got, "resources_string['service.name']")
+	// span condition -> existence check in matched HAVING.
+	require.Contains(t, got, "countIf(has_error = true) > 0")
+	// aggregate condition -> HAVING on the matched aggregate alias.
+	require.Contains(t, got, "output_tokens")
+}
+
+// With the resolver unset (nil), the resource filter falls back to being applied inline
+// on the span index — no fingerprint CTE — so existing behavior is preserved.
+func TestBuild_TraceList_ResourceFilter_NoResolver(t *testing.T) {
+	b := newTestBuilderWithKeys(t, resourceKeysMap())
+	b.resourceFilterResolver = nil
+	stmt, err := b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace,
+		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+			Signal: telemetrytypes.SignalTraces, Source: telemetrytypes.SourceAI,
+			Filter: &qbtypes.Filter{Expression: "resource.service.name = 'checkout'"},
+			Limit:  10,
+		}, nil)
+	require.NoError(t, err)
+
+	got := renderSQL(t, stmt)
+	require.NotContains(t, got, "__resource_filter")
+	require.Contains(t, got, "resources_string['service.name']")
+}
 
 // Trace-level and span-level predicates may not be OR-combined.
 func TestBuild_TraceList_TraceOrSpanMixRejected(t *testing.T) {

@@ -40,12 +40,13 @@ def _ai_trace(
     model: str = "gpt-4o-mini",
     llm_duration_s: float = 1.0,
     error: bool = False,
+    environment: str = "production",
 ) -> list[Traces]:
     """A minimal AI trace: root span + one LLM span with gen_ai attributes."""
     trace_id = TraceIdGenerator.trace_id()
     root_id = TraceIdGenerator.span_id()
     llm_id = TraceIdGenerator.span_id()
-    resources = {"service.name": service, "deployment.environment": "production"}
+    resources = {"service.name": service, "deployment.environment": environment}
 
     root = Traces(
         timestamp=now - timedelta(seconds=5),
@@ -457,6 +458,50 @@ def test_ai_list_having_trace_context_prefix(
     body = json.dumps(response.json())
     assert large_id in body
     assert small_id not in body
+
+
+def test_ai_list_resource_filter_isolates_by_fingerprint(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[list[Traces]], None],
+) -> None:
+    """
+    A resource attribute in the filter is pulled into the __resource_filter fingerprint
+    CTE (see maybeAttachResourceFilter). Two traces on the same service but different
+    deployment.environment: `resource.deployment.environment = 'production'` must keep
+    the production trace and drop the staging one — the fingerprint prune isolates by
+    the resource, not by any span attribute.
+    """
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    service = "ai-it-resfilter"
+
+    prod = _ai_trace(now=now, service=service, user="a", in_tokens=10, out_tokens=20, cost=0.1, environment="production")
+    stag = _ai_trace(now=now, service=service, user="b", in_tokens=10, out_tokens=20, cost=0.1, environment="staging")
+    prod_id, stag_id = prod[0].trace_id, stag[0].trace_id
+    insert_traces(prod + stag)
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    start_ms, end_ms = _window_ms(now)
+
+    query = BuilderQuery(
+        signal="traces",
+        source="ai",
+        name="A",
+        filter_expression=(
+            f"resource.service.name = '{service}' "
+            "AND resource.deployment.environment = 'production'"
+        ),
+        limit=10,
+    )
+    response = make_query_request(
+        signoz, token, start_ms, end_ms, [query.to_dict()], request_type="trace"
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    body = json.dumps(response.json())
+    assert prod_id in body, "production trace should match the resource filter"
+    assert stag_id not in body, "staging trace should be excluded by the resource fingerprint prune"
 
 
 def test_ai_source_rejected_on_logs(

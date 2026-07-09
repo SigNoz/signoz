@@ -115,6 +115,10 @@ func newProvider(
 		traceConditionBuilder,
 		aiBaseCondition,
 		aiDelegateTraceStmtBuilder,
+		telemetryStore,
+		flagger,
+		cfg.SkipResourceFingerprint.Enabled,
+		cfg.SkipResourceFingerprint.Threshold,
 	)
 
 	// Create trace operator statement builder

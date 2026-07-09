@@ -8,7 +8,10 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/telemetryresourcefilter"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -24,13 +27,15 @@ var (
 // (ColumnProvider) are pluggable, so a new category is a new pair of
 // providers, not new topology.
 type scopedTraceStatementBuilder struct {
-	logger           *slog.Logger
-	metadataStore    telemetrytypes.MetadataStore
-	fm               qbtypes.FieldMapper
-	cb               qbtypes.ConditionBuilder
-	baseCond         BaseConditionProvider
-	columnProvider   ColumnProvider
-	traceStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation]
+	logger                         *slog.Logger
+	metadataStore                  telemetrytypes.MetadataStore
+	fm                             qbtypes.FieldMapper
+	cb                             qbtypes.ConditionBuilder
+	baseCond                       BaseConditionProvider
+	columnProvider                 ColumnProvider
+	traceStmtBuilder               qbtypes.StatementBuilder[qbtypes.TraceAggregation]
+	resourceFilterResolver         *telemetryresourcefilter.ResourceFingerprintResolver[qbtypes.TraceAggregation]
+	skipResourceFingerprintEnabled bool
 }
 
 var _ qbtypes.StatementBuilder[qbtypes.TraceAggregation] = (*scopedTraceStatementBuilder)(nil)
@@ -45,16 +50,38 @@ func NewScopedTraceStatementBuilder(
 	baseCond BaseConditionProvider,
 	columnProvider ColumnProvider,
 	traceStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation],
+	telemetryStore telemetrystore.TelemetryStore,
+	fl flagger.Flagger,
+	skipResourceFingerprintEnable bool,
+	skipResourceFingerprintThreshold uint64,
 ) *scopedTraceStatementBuilder {
 	aiSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetryai")
+
+	// Resource-fingerprint prune over the traces resource table, mirroring the standard
+	// trace builder — the list scans the same span index, so the same resource table applies.
+	resourceFilterResolver := telemetryresourcefilter.NewResolver[qbtypes.TraceAggregation](
+		settings,
+		telemetrytraces.DBName,
+		telemetrytraces.TracesResourceV3TableName,
+		telemetrytypes.SignalTraces,
+		telemetrytypes.SourceUnspecified,
+		metadataStore,
+		nil,
+		fl,
+		telemetryStore,
+		skipResourceFingerprintThreshold,
+	)
+
 	return &scopedTraceStatementBuilder{
-		logger:           aiSettings.Logger(),
-		metadataStore:    metadataStore,
-		fm:               fieldMapper,
-		cb:               conditionBuilder,
-		baseCond:         baseCond,
-		columnProvider:   columnProvider,
-		traceStmtBuilder: traceStmtBuilder,
+		logger:                         aiSettings.Logger(),
+		metadataStore:                  metadataStore,
+		fm:                             fieldMapper,
+		cb:                             conditionBuilder,
+		baseCond:                       baseCond,
+		columnProvider:                 columnProvider,
+		traceStmtBuilder:               traceStmtBuilder,
+		resourceFilterResolver:         resourceFilterResolver,
+		skipResourceFingerprintEnabled: skipResourceFingerprintEnable,
 	}
 }
 
@@ -66,8 +93,12 @@ func NewAITraceStatementBuilder(
 	conditionBuilder qbtypes.ConditionBuilder,
 	baseCond BaseConditionProvider,
 	traceStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation],
+	telemetryStore telemetrystore.TelemetryStore,
+	fl flagger.Flagger,
+	skipResourceFingerprintEnable bool,
+	skipResourceFingerprintThreshold uint64,
 ) *scopedTraceStatementBuilder {
-	return NewScopedTraceStatementBuilder(settings, metadataStore, fieldMapper, conditionBuilder, baseCond, NewGenAIColumnProvider(), traceStmtBuilder)
+	return NewScopedTraceStatementBuilder(settings, metadataStore, fieldMapper, conditionBuilder, baseCond, NewGenAIColumnProvider(), traceStmtBuilder, telemetryStore, fl, skipResourceFingerprintEnable, skipResourceFingerprintThreshold)
 }
 
 func (b *scopedTraceStatementBuilder) Build(
@@ -178,14 +209,23 @@ func (b *scopedTraceStatementBuilder) buildTraceListQuery(
 	}
 	orderableSet := orderableAliasSet(resolved)
 
+	// Resource-fingerprint prune: when the filter references resource attributes, build a
+	// __resource_filter CTE and narrow the `matched` scan by resource_fingerprint, exactly
+	// like the standard trace builder. `skipResourceFilter` then drops those resource keys
+	// from the span predicate so they aren't re-applied on the span index.
+	resourceFrag, resourceArgs, resourcePred, skipResourceFilter, err := b.maybeAttachResourceFilter(ctx, query, start, end, variables)
+	if err != nil {
+		return nil, err
+	}
+
 	// Split the user filter: span-level predicate + trace-level HAVING expression.
-	fp, err := b.splitFilter(ctx, query, b.aggregateAliasSet(), orderableSet, start, end, variables)
+	fp, err := b.splitFilter(ctx, query, b.aggregateAliasSet(), orderableSet, start, end, skipResourceFilter, variables)
 	if err != nil {
 		return nil, err
 	}
 
 	// matched → ranked → buckets → enrichment
-	matchedFrag, matchedArgs, err := b.buildMatchedCTE(start, end, startBucket, endBucket, resolved, orders, orderableSet, maskExpr, maskArgs, fp, limit, query.Offset)
+	matchedFrag, matchedArgs, err := b.buildMatchedCTE(start, end, startBucket, endBucket, resolved, orders, orderableSet, maskExpr, maskArgs, fp, resourcePred, limit, query.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -196,6 +236,12 @@ func (b *scopedTraceStatementBuilder) buildTraceListQuery(
 	cteFragments := []string{matchedFrag, rankedFrag, bucketsFrag}
 	cteArgs := [][]any{matchedArgs, rankedArgs, nil}
 
+	// __resource_filter must precede `matched`, which references it.
+	if resourceFrag != "" {
+		cteFragments = append([]string{resourceFrag}, cteFragments...)
+		cteArgs = append([][]any{resourceArgs}, cteArgs...)
+	}
+
 	finalSQL := querybuilder.CombineCTEs(cteFragments) + mainSQL + " SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000"
 	finalArgs := querybuilder.PrependArgs(cteArgs, mainArgs)
 
@@ -205,6 +251,49 @@ func (b *scopedTraceStatementBuilder) buildTraceListQuery(
 		Warnings:       fp.warnings,
 		WarningsDocURL: fp.warningsURL,
 	}, nil
+}
+
+// maybeAttachResourceFilter mirrors the standard trace builder: if the user filter
+// references resource attributes, it builds a __resource_filter CTE (fingerprints
+// matching those resource conditions) and returns the predicate that narrows the span
+// scan by resource_fingerprint. `skipResourceFilter` tells the caller to drop those
+// resource keys from the span predicate so they aren't re-applied on the span index.
+// When the resolver is unset or the filter contains no resource conditions, it returns
+// empty fragments and leaves the resource keys inline (skipResourceFilter=false).
+func (b *scopedTraceStatementBuilder) maybeAttachResourceFilter(
+	ctx context.Context,
+	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
+	start, end uint64,
+	variables map[string]qbtypes.VariableItem,
+) (cteFrag string, cteArgs []any, fingerprintPred string, skipResourceFilter bool, err error) {
+	if b.resourceFilterResolver == nil {
+		return "", nil, "", false, nil
+	}
+
+	if b.skipResourceFingerprintEnabled {
+		decision, err := b.resourceFilterResolver.Resolve(ctx, query, start, end, variables)
+		if err != nil {
+			return "", nil, "", true, err
+		}
+		switch decision {
+		case qbtypes.ResourceFilterResolveKindNoOp:
+			return "", nil, "", true, nil
+		case qbtypes.ResourceFilterResolveKindFallback:
+			return "", nil, "", false, nil
+		}
+	}
+
+	stmt, err := b.resourceFilterResolver.StatementBuilder().Build(
+		ctx, start, end, qbtypes.RequestTypeRaw, query, variables,
+	)
+	if err != nil {
+		return "", nil, "", true, err
+	}
+	if stmt == nil {
+		return "", nil, "", true, nil
+	}
+	return fmt.Sprintf("__resource_filter AS (%s)", stmt.Query), stmt.Args,
+		"resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)", true, nil
 }
 
 // ---------------------------------------------------------------------------
@@ -385,7 +474,7 @@ type filterParts struct {
 // splitFilter partitions query.Filter into a span-level predicate and a trace-level
 // HAVING expression; an explicit query.Having is ANDed onto the latter. The trace-level
 // expression is validated against the aggregates computable in the matched pass.
-func (b *scopedTraceStatementBuilder) splitFilter(ctx context.Context, query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation], classifySet, orderableSet map[string]struct{}, start, end uint64, variables map[string]qbtypes.VariableItem) (filterParts, error) {
+func (b *scopedTraceStatementBuilder) splitFilter(ctx context.Context, query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation], classifySet, orderableSet map[string]struct{}, start, end uint64, skipResourceFilter bool, variables map[string]qbtypes.VariableItem) (filterParts, error) {
 	var fp filterParts
 	if query.Filter != nil && strings.TrimSpace(query.Filter.Expression) != "" {
 		spanExpr, traceExpr, err := querybuilder.SplitFilterForAggregates(query.Filter.Expression, classifySet)
@@ -394,11 +483,15 @@ func (b *scopedTraceStatementBuilder) splitFilter(ctx context.Context, query qbt
 		}
 		fp.havingExpr = traceExpr
 		if strings.TrimSpace(spanExpr) != "" {
-			pred, args, warnings, url, err := b.resolveSpanPredicate(ctx, start, end, spanExpr, variables)
+			pred, args, warnings, url, err := b.resolveSpanPredicate(ctx, start, end, spanExpr, skipResourceFilter, variables)
 			if err != nil {
 				return fp, err
 			}
-			fp.spanPred, fp.spanArgs, fp.hasSpanFilter = pred, args, true
+			// pred can resolve to empty when the span-level keys were only resource
+			// attributes now handled by the __resource_filter CTE (skipResourceFilter).
+			if strings.TrimSpace(pred) != "" {
+				fp.spanPred, fp.spanArgs, fp.hasSpanFilter = pred, args, true
+			}
 			fp.warnings, fp.warningsURL = warnings, url
 		}
 	}
@@ -417,7 +510,7 @@ func (b *scopedTraceStatementBuilder) splitFilter(ctx context.Context, query qbt
 
 // resolveSpanPredicate resolves a span-level filter expression to a bare boolean SQL
 // predicate (escaped) + args via the field mapper.
-func (b *scopedTraceStatementBuilder) resolveSpanPredicate(ctx context.Context, start, end uint64, expr string, variables map[string]qbtypes.VariableItem) (string, []any, []string, string, error) {
+func (b *scopedTraceStatementBuilder) resolveSpanPredicate(ctx context.Context, start, end uint64, expr string, skipResourceFilter bool, variables map[string]qbtypes.VariableItem) (string, []any, []string, string, error) {
 	selectors := querybuilder.QueryStringToKeysSelectors(expr)
 	for i := range selectors {
 		selectors[i].Signal = telemetrytypes.SignalTraces
@@ -427,14 +520,15 @@ func (b *scopedTraceStatementBuilder) resolveSpanPredicate(ctx context.Context, 
 		return "", nil, nil, "", err
 	}
 	prepared, err := querybuilder.PrepareWhereClause(expr, querybuilder.FilterExprVisitorOpts{
-		Context:          ctx,
-		Logger:           b.logger,
-		FieldMapper:      b.fm,
-		ConditionBuilder: b.cb,
-		FieldKeys:        keys,
-		Variables:        variables,
-		StartNs:          start,
-		EndNs:            end,
+		Context:            ctx,
+		Logger:             b.logger,
+		FieldMapper:        b.fm,
+		ConditionBuilder:   b.cb,
+		FieldKeys:          keys,
+		SkipResourceFilter: skipResourceFilter,
+		Variables:          variables,
+		StartNs:            start,
+		EndNs:              end,
 	})
 	if err != nil {
 		return "", nil, nil, "", err
@@ -450,18 +544,8 @@ func (b *scopedTraceStatementBuilder) resolveSpanPredicate(ctx context.Context, 
 	return sqlbuilder.Escape(pred), args, prepared.Warnings, prepared.WarningsDocURL, nil
 }
 
-// ---------------------------------------------------------------------------
-// BUILD — compose the CTE pipeline (matched → ranked → buckets → enrichment)
-// ---------------------------------------------------------------------------
 
-// buildMatchedCTE builds `matched`: a single windowed GROUP BY trace_id pass that
-// picks the top-N traces. The WHERE prunes to gen_ai spans (widened with the span-level
-// predicate when present); HAVING enforces the gate (countIf(mask) > 0), the span-level
-// filter as an existence check, and the trace-level aggregate filter; ORDER BY + LIMIT
-// select the winners. Only gen_ai-scoped aggregates are computable here, and only those
-// actually referenced by ORDER BY / the aggregate filter are selected (the rest are
-// computed once, later, in the enrichment scan) — this keeps the hot ranking pass lean.
-func (b *scopedTraceStatementBuilder) buildMatchedCTE(start, end, startBucket, endBucket uint64, resolved []resolvedColumn, orders []listOrder, orderableSet map[string]struct{}, maskExpr string, maskArgs []any, fp filterParts, limit, offset int) (string, []any, error) {
+func (b *scopedTraceStatementBuilder) buildMatchedCTE(start, end, startBucket, endBucket uint64, resolved []resolvedColumn, orders []listOrder, orderableSet map[string]struct{}, maskExpr string, maskArgs []any, fp filterParts, resourcePred string, limit, offset int) (string, []any, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 
 	// SELECT trace_id + only the aggregates ORDER BY / HAVING reference (as aliases).
@@ -484,7 +568,12 @@ func (b *scopedTraceStatementBuilder) buildMatchedCTE(start, end, startBucket, e
 		prune += " OR " + embedExpr(sb, fp.spanPred, fp.spanArgs)
 	}
 	prune += ")"
-	sb.Where(append(win, prune)...)
+	where := append(win, prune)
+	// Resource-fingerprint prune: restrict the scan to spans on matching resources.
+	if resourcePred != "" {
+		where = append(where, resourcePred)
+	}
+	sb.Where(where...)
 	sb.GroupBy("trace_id")
 
 	// HAVING: the gate + span-existence checks are only needed once the WHERE has been
