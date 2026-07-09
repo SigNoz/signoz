@@ -10,7 +10,9 @@
 }
 
 .scrollArea {
-	padding: 12px;
+	// Top padding lives on the sticky tab nav instead, so the nav keeps its
+	// breathing room both at rest and when pinned to the top.
+	padding: 0 12px 12px 12px;
 }
 
 .tabsContainer {
@@ -24,6 +26,15 @@
 		background-color: var(--l1-background) !important;
 	}
 	:global(.ant-tabs-nav) {
+		// Pin the query-type tabs + Run Query button to the top of the
+		// `.container` scroll area while the query body scrolls underneath.
+		// `padding-top` owns the nav's top spacing (moved off `.scrollArea`).
+		position: sticky;
+		top: 0px;
+		z-index: 1100;
+		padding-top: 12px;
+		background-color: var(--l1-background);
+
 		&::before {
 			border-color: var(--l2-border);
 		}
