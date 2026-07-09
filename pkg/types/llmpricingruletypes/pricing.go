@@ -9,22 +9,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
 
 const (
 	LLMCostFeatureType agentConf.AgentFeatureType = "llm_pricing"
-
-	// gen_ai semconv keys live in telemetrytypes (single source); aliased here
-	// for existing pricing consumers.
-	GenAIProviderName                  = telemetrytypes.GenAIProviderName
-	GenAIRequestModel                  = telemetrytypes.GenAIRequestModel
-	GenAIUsageInputTokens              = telemetrytypes.GenAIUsageInputTokens
-	GenAIUsageOutputTokens             = telemetrytypes.GenAIUsageOutputTokens
-	GenAIUsageCacheReadInputTokens     = telemetrytypes.GenAIUsageCacheReadInputTokens
-	GenAIUsageCacheCreationInputTokens = telemetrytypes.GenAIUsageCacheCreationInputTokens
 
 	SignozGenAICostInput      = "_signoz.gen_ai.cost_input"
 	SignozGenAICostOutput     = "_signoz.gen_ai.cost_output"

@@ -13,10 +13,11 @@ import (
 // part (a WHERE over spans) and a trace-level part (a HAVING over per-trace
 // aggregates), splitting on the top-level AND.
 //
-// A key is trace-level when it carries the `trace`/`tracefield` field context (e.g.
-// `trace.completion_tokens`) or, with no explicit context, its name is in
-// aggregateNames. Trace-level and span-level keys may be AND-combined (they run at
-// different query stages) but not OR-combined; an OR that mixes the two is an error.
+// A key is trace-level when, with no explicit field context, its name is in
+// aggregateNames — written bare (`completion_tokens`) or with the user-facing `trace.`
+// prefix (`trace.completion_tokens`). Any explicit context (`span.`, `resource.`, …) is
+// span-level. Trace-level and span-level keys may be AND-combined (they run at different
+// query stages) but not OR-combined; an OR that mixes the two is an error.
 //
 // Syntax errors are ignored here — each part is re-parsed downstream (PrepareWhereClause
 // for the span part, the HAVING rewriter for the trace part), which surface them.
@@ -28,9 +29,9 @@ func SplitFilterForAggregates(query string, aggregateNames map[string]struct{}) 
 	s := filterSplitter{query: query, aggregateNames: aggregateNames}
 	s.visit(parseFilterQuery(query))
 
-	if s.mixedOR {
+	if s.mixed {
 		return "", "", errors.NewInvalidInputf(errors.CodeInvalidInput,
-			"trace-level and span-level filters cannot be combined with OR; use AND")
+			"trace-level and span-level filters cannot be combined within an OR/NOT group; separate them with a top-level AND")
 	}
 	return strings.Join(s.span, " AND "), strings.Join(s.having, " AND "), nil
 }
@@ -51,7 +52,7 @@ type filterSplitter struct {
 	aggregateNames map[string]struct{}
 	span           []string
 	having         []string
-	mixedOR        bool
+	mixed          bool
 }
 
 func (s *filterSplitter) visit(node antlr.Tree) {
@@ -95,10 +96,16 @@ func (s *filterSplitter) visit(node antlr.Tree) {
 func (s *filterSplitter) route(atom antlr.ParserRuleContext) {
 	isTrace, isSpan := classifyKeys(atom, s.aggregateNames)
 	if isTrace && isSpan {
-		s.mixedOR = true
+		s.mixed = true
 		return
 	}
 	text := atomSourceText(s.query, atom)
+	// A multi-branch OR group's source slice excludes its enclosing parens (they belong
+	// to the parent Primary). Re-wrap it so rejoining a bucket with " AND " cannot invert
+	// OR/AND precedence, e.g. `a AND (b OR c)` must not flatten to `a AND b OR c`.
+	if or, ok := atom.(*grammar.OrExpressionContext); ok && len(or.AllAndExpression()) > 1 {
+		text = "(" + text + ")"
+	}
 	if isTrace {
 		s.having = append(s.having, text)
 	} else {
@@ -107,22 +114,20 @@ func (s *filterSplitter) route(atom antlr.ParserRuleContext) {
 }
 
 // classifyKeys reports whether a subtree references trace-level and/or span-level keys.
-// Explicit contexts win; an unspecified-context name is trace-level if it is an
-// aggregate name (bare or with the `trace.` prefix).
+// A key is trace-level only when it has no explicit field context and its name — after
+// the optional user-facing `trace.` prefix is stripped — is a known aggregate. Any
+// explicit context (`span.`, `resource.`, …) is span-level.
 func classifyKeys(node antlr.Tree, aggregateNames map[string]struct{}) (isTrace, isSpan bool) {
 	kc, ok := node.(*grammar.KeyContext)
 	if ok {
 		key := telemetrytypes.GetFieldKeyFromKeyText(kc.GetText())
-		switch {
-		case key.FieldContext == telemetrytypes.FieldContextTrace:
-			isTrace = true
-		case key.FieldContext == telemetrytypes.FieldContextUnspecified:
-			if _, agg := aggregateNames[strings.TrimPrefix(key.Name, "trace.")]; agg {
-				isTrace = true
-			} else {
-				isSpan = true
-			}
-		default:
+		if key.FieldContext == telemetrytypes.FieldContextUnspecified {
+			// `trace.` is the user-facing prefix for trace-level aggregates. It is not a
+			// registered field context, so it stays on the name; strip it before matching.
+			name := strings.TrimPrefix(key.Name, telemetrytypes.FieldContextTrace.StringValue()+".")
+			_, isTrace = aggregateNames[name]
+			isSpan = !isTrace
+		} else {
 			isSpan = true
 		}
 		return

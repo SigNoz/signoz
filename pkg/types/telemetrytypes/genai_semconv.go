@@ -23,6 +23,7 @@ var GenAIFieldDefinitions = map[string]TelemetryFieldKey{
 	GenAIRequestModel: {Name: GenAIRequestModel, Signal: SignalTraces, FieldContext: FieldContextAttribute, FieldDataType: FieldDataTypeString},
 	GenAIToolName:     {Name: GenAIToolName, Signal: SignalTraces, FieldContext: FieldContextAttribute, FieldDataType: FieldDataTypeString},
 	GenAIAgentName:    {Name: GenAIAgentName, Signal: SignalTraces, FieldContext: FieldContextAttribute, FieldDataType: FieldDataTypeString},
+	GenAIProviderName: {Name: GenAIProviderName, Signal: SignalTraces, FieldContext: FieldContextAttribute, FieldDataType: FieldDataTypeString},
 
 	GenAIUsageInputTokens:              {Name: GenAIUsageInputTokens, Signal: SignalTraces, FieldContext: FieldContextAttribute, FieldDataType: FieldDataTypeFloat64},
 	GenAIUsageOutputTokens:             {Name: GenAIUsageOutputTokens, Signal: SignalTraces, FieldContext: FieldContextAttribute, FieldDataType: FieldDataTypeFloat64},

@@ -35,22 +35,27 @@ func otelKeysMap() map[string][]*telemetrytypes.TelemetryFieldKey {
 			FieldDataType: telemetrytypes.FieldDataTypeFloat64,
 		}
 	}
-	return map[string][]*telemetrytypes.TelemetryFieldKey{
-		"gen_ai.request.model":             {strKey("gen_ai.request.model")},
-		"gen_ai.tool.name":                 {strKey("gen_ai.tool.name")},
-		"gen_ai.agent.name":                {strKey("gen_ai.agent.name")},
-		"gen_ai.user.id":                   {strKey("gen_ai.user.id")},
-		"gen_ai.usage.input_tokens":        {numKey("gen_ai.usage.input_tokens")},
-		"gen_ai.usage.output_tokens":       {numKey("gen_ai.usage.output_tokens")},
-		"gen_ai.usage.cost":                {numKey("gen_ai.usage.cost")},
-		"gen_ai.usage.cached_input_tokens": {numKey("gen_ai.usage.cached_input_tokens")},
-		"has_error": {{
-			Name:          "has_error",
-			Signal:        telemetrytypes.SignalTraces,
-			FieldContext:  telemetrytypes.FieldContextSpan,
-			FieldDataType: telemetrytypes.FieldDataTypeBool,
-		}},
+
+	m := make(map[string][]*telemetrytypes.TelemetryFieldKey)
+
+	// gen_ai semconv keys sourced from the single source of truth, mirroring what the
+	// production metadata store surfaces via enrichWithGenAIKeys.
+	for name, def := range telemetrytypes.GenAIFieldDefinitions {
+		keyCopy := def
+		m[name] = []*telemetrytypes.TelemetryFieldKey{&keyCopy}
 	}
+
+	// Extra keys these tests reference that aren't gen_ai semconv definitions.
+	m["gen_ai.user.id"] = []*telemetrytypes.TelemetryFieldKey{strKey("gen_ai.user.id")}
+	m["gen_ai.usage.cost"] = []*telemetrytypes.TelemetryFieldKey{numKey("gen_ai.usage.cost")}
+	m["gen_ai.usage.cached_input_tokens"] = []*telemetrytypes.TelemetryFieldKey{numKey("gen_ai.usage.cached_input_tokens")}
+	m["has_error"] = []*telemetrytypes.TelemetryFieldKey{{
+		Name:          "has_error",
+		Signal:        telemetrytypes.SignalTraces,
+		FieldContext:  telemetrytypes.FieldContextSpan,
+		FieldDataType: telemetrytypes.FieldDataTypeBool,
+	}}
+	return m
 }
 
 // standard test window (ms), matching the traces builder tests.

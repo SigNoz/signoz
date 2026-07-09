@@ -1190,15 +1190,8 @@ func enrichWithIntrinsicMetricKeys(keys map[string][]*telemetrytypes.TelemetryFi
 	return keys
 }
 
-// enrichWithGenAIKeys surfaces the gen_ai semantic-convention span attributes for
-// trace queries even when they have not been ingested yet, so the AI query builder's
-// gate and aggregate columns resolve on a fresh install. Only fills a name the store
-// did not already return (ingested data wins).
+// enrichWithGenAIKeys adds keys that can be queried for GenAI signals, even though they have not been ingested yet.
 func enrichWithGenAIKeys(keys map[string][]*telemetrytypes.TelemetryFieldKey, selectors []*telemetrytypes.FieldKeySelector) map[string][]*telemetrytypes.TelemetryFieldKey {
-	if len(selectors) == 0 {
-		return keys
-	}
-
 	for _, selector := range selectors {
 		if selector.Signal != telemetrytypes.SignalTraces && selector.Signal != telemetrytypes.SignalUnspecified {
 			continue
