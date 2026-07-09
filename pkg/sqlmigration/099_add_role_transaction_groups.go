@@ -50,9 +50,12 @@ func (migration *addRoleTransactionGroups) Up(ctx context.Context, db *bun.DB) e
 	if err != nil {
 		return err
 	}
-	defer func() { _ = tx.Rollback() }()
 
-	table, _, err := migration.sqlschema.GetTable(ctx, "role")
+	defer func() {
+		_ = tx.Rollback()
+	}()
+
+	table, uniqueConstraints, err := migration.sqlschema.GetTable(ctx, "role")
 	if err != nil {
 		return err
 	}
@@ -63,7 +66,7 @@ func (migration *addRoleTransactionGroups) Up(ctx context.Context, db *bun.DB) e
 		Nullable: true,
 	}
 
-	sqls := migration.sqlschema.Operator().AddColumn(table, nil, column, nil)
+	sqls := migration.sqlschema.Operator().AddColumn(table, uniqueConstraints, column, nil)
 	for _, sql := range sqls {
 		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
 			return err
