@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { Fragment, useMemo } from 'react';
 import { Info, Loader } from '@signozhq/icons';
 import { Typography } from '@signozhq/ui/typography';
 import type {
@@ -73,6 +73,14 @@ function PanelHeader({
 		() => panelStatusFromWarning(warning),
 		[warning],
 	);
+
+	/**
+	 * Hide the entire header when there's no title, description, or status to show,
+	 * and the actions menu is suppressed (editor preview).
+	 */
+	if (!name && !description && !errorDetail && !warningDetail && hideActions) {
+		return <Fragment />;
+	}
 
 	return (
 		<div className={cx(styles.header, 'panel-drag-handle')}>

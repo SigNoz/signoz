@@ -1,0 +1,4 @@
+.wrapper :global(button[data-color]) {
+	--checkbox-checked-background: var(--series-color);
+	--checkbox-border-color: var(--series-color);
+}
