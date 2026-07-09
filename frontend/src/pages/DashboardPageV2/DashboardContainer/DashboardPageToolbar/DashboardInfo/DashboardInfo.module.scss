@@ -1,0 +1,112 @@
+.dashboardInfo {
+	display: flex;
+	flex: 1;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+}
+
+.dashboardImage {
+	flex-shrink: 0;
+}
+
+.dashboardTitle {
+	flex: 0 1 auto;
+	min-width: 0;
+	color: var(--l1-foreground);
+	font-size: 18px;
+	font-weight: 500;
+
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dashboardTitleHover {
+	cursor: text !important;
+}
+
+.descriptionIcon {
+	flex-shrink: 0;
+	color: var(--l2-foreground);
+	cursor: help;
+}
+
+.descriptionTooltip {
+	display: block;
+	overflow-wrap: anywhere;
+	/* Preserve author-entered line breaks in the description. */
+	white-space: pre-wrap;
+
+	a {
+		color: var(--accent-primary);
+		text-decoration: underline;
+
+		&:hover {
+			text-decoration: none;
+		}
+	}
+}
+
+.publicLink {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	padding: 0;
+	border: none;
+	background: transparent;
+	color: inherit;
+	cursor: pointer;
+}
+
+.lockButton {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	padding: 0;
+	border: none;
+	background: transparent;
+	color: inherit;
+	cursor: pointer;
+}
+
+.lockButton:disabled {
+	cursor: default;
+}
+
+.divider {
+	flex-shrink: 0;
+	width: 1px;
+	height: 18px;
+	background: var(--l2-border);
+}
+
+.dashboardTitleEditor {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	flex: 1;
+	min-width: 0;
+}
+
+.dashboardTitleInput {
+	flex: 1;
+	min-width: 0;
+}
+
+.dashboardTitleActionButton {
+	flex-shrink: 0;
+}
+
+/* Flexes into the remaining space and clips so the ResizeObserver can measure
+   how many tags fit before collapsing the rest into a `+N` badge. */
+.dashboardTags {
+	display: flex;
+	flex: 1 1 0;
+	align-items: center;
+	gap: 4px;
+	min-width: 0;
+	overflow: hidden;
+}

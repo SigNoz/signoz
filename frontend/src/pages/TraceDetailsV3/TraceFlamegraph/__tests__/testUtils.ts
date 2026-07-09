@@ -1,4 +1,4 @@
-import { FlamegraphSpan } from 'types/api/trace/getTraceFlamegraph';
+import { SpantypesFlamegraphSpanDTO as FlamegraphSpan } from 'api/generated/services/sigNoz.schemas';
 
 /** Minimal FlamegraphSpan for unit tests */
 export const MOCK_SPAN: FlamegraphSpan = {
@@ -6,12 +6,12 @@ export const MOCK_SPAN: FlamegraphSpan = {
 	durationNano: 50_000_000, // 50ms
 	spanId: 'span-1',
 	parentSpanId: '',
-	traceId: 'trace-1',
 	hasError: false,
-	serviceName: 'test-service',
 	name: 'test-span',
 	level: 0,
 	event: [],
+	resource: {},
+	attributes: {},
 };
 
 /** Nested spans structure for findSpanById tests */

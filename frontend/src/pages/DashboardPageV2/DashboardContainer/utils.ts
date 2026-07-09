@@ -72,7 +72,6 @@ export interface DashboardSection {
 	/** Position of this section's Grid in `spec.layouts`. All JSON-Patch ops target by this. */
 	layoutIndex: number;
 	title: string | undefined;
-	open: boolean;
 	items: GridItem[];
 	repeatVariable: string | undefined;
 }
@@ -127,15 +126,11 @@ export function layoutsToSections(
 				.filter((it): it is GridItem => it !== null);
 
 			const title = spec?.display?.title;
-			// `open` defaults to true when no collapse field is set (the section
-			// is expanded by default).
-			const open = spec?.display?.collapse?.open !== false;
 
 			return {
 				id: getSectionStableId(items, idx),
 				layoutIndex: idx,
 				title,
-				open,
 				items,
 				repeatVariable: spec?.repeatVariable,
 			};
@@ -143,12 +138,13 @@ export function layoutsToSections(
 		.filter((s): s is DashboardSection => s !== null);
 }
 
-export function getPanelKindLabel(
-	panel: DashboardtypesPanelDTO | undefined,
-): string {
-	const kind = panel?.spec?.plugin?.kind;
-	if (!kind) {
-		return 'unknown';
-	}
-	return kind.replace(/^signoz\//, '');
+/**
+ * The untitled, free-flow root section that ungrouped panels live in — the
+ * first layout (`layoutIndex === 0`) when it has no title. Titled sections and
+ * any later untitled layout are never the root.
+ */
+export function findRootSection(
+	sections: DashboardSection[],
+): DashboardSection | undefined {
+	return sections.find((section) => !section.title && section.layoutIndex === 0);
 }

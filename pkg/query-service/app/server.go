@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"slices"
 
-	"github.com/SigNoz/signoz/pkg/cache/memorycache"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 
@@ -16,7 +15,6 @@ import (
 	"github.com/rs/cors"
 	"github.com/soheilhy/cmux"
 
-	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/licensing/nooplicensing"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
@@ -60,26 +58,14 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 		return nil, err
 	}
 
-	cacheForTraceDetail, err := memorycache.New(context.TODO(), signoz.Instrumentation.ToProviderSettings(), cache.Config{
-		Provider: "memory",
-		Memory: cache.Memory{
-			NumCounters: 10 * 10000,
-			MaxCost:     1 << 27, // 128 MB
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
 	reader := clickhouseReader.NewReader(
 		signoz.Instrumentation.Logger(),
 		signoz.SQLStore,
 		signoz.TelemetryStore,
 		signoz.Prometheus,
 		signoz.TelemetryStore.Cluster(),
-		config.Querier.FluxInterval,
-		cacheForTraceDetail,
 		signoz.Cache,
+		signoz.Flagger,
 		nil,
 	)
 
@@ -128,6 +114,8 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 			Store: signoz.SQLStore,
 			AgentFeatures: []agentConf.AgentFeature{
 				logParsingPipelineController,
+				signoz.Modules.SpanMapper,
+				signoz.Modules.LLMPricingRule,
 			},
 		},
 	)
@@ -168,6 +156,7 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 		s.config.APIServer.Timeout.Default,
 		s.config.APIServer.Timeout.Max,
 	).Wrap)
+	r.Use(middleware.NewResource(s.signoz.Instrumentation.Logger()).Wrap)
 	r.Use(middleware.NewAudit(s.signoz.Instrumentation.Logger(), s.config.APIServer.Logging.ExcludedRoutes, s.signoz.Auditor).Wrap)
 	r.Use(middleware.NewComment().Wrap)
 

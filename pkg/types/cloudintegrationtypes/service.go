@@ -21,6 +21,7 @@ type CloudIntegrationService struct {
 type ServiceConfig struct {
 	AWS   *AWSServiceConfig   `json:"aws,omitempty" required:"false" nullable:"false"`
 	Azure *AzureServiceConfig `json:"azure,omitempty" required:"false" nullable:"false"`
+	GCP   *GCPServiceConfig   `json:"gcp,omitempty" required:"false" nullable:"false"`
 }
 
 // ServiceMetadata helps to quickly list available services and whether it is enabled or not.
@@ -50,8 +51,16 @@ type ListServicesMetadataParams struct {
 // Service represents a cloud integration service with its definition,
 // cloud integration service is non nil only when the service entry exists in DB with ANY config (enabled or disabled).
 type Service struct {
-	ServiceDefinition
+	ServiceDefinitionMetadata
+	Overview                string                   `json:"overview" required:"true"` // markdown
+	ServiceAssets           ServiceAssets            `json:"assets" required:"true"`
+	SupportedSignals        SupportedSignals         `json:"supportedSignals" required:"true"`
+	DataCollected           DataCollected            `json:"dataCollected" required:"true"`
 	CloudIntegrationService *CloudIntegrationService `json:"cloudIntegrationService" required:"true" nullable:"true"`
+}
+
+type ServiceAssets struct {
+	Dashboards []*ServiceDashboard `json:"dashboards" required:"true" nullable:"false"`
 }
 
 type GetServiceParams struct {
@@ -88,6 +97,7 @@ type DataCollected struct {
 type TelemetryCollectionStrategy struct {
 	AWS   *AWSTelemetryCollectionStrategy   `json:"aws,omitempty" required:"false" nullable:"false"`
 	Azure *AzureTelemetryCollectionStrategy `json:"azure,omitempty" required:"false" nullable:"false"`
+	GCP   *GCPTelemetryCollectionStrategy   `json:"gcp,omitempty" required:"false" nullable:"false"`
 }
 
 // Assets represents the collection of dashboards.
@@ -121,6 +131,12 @@ type Dashboard struct {
 	Definition  dashboardtypes.StorableDashboardData `json:"definition,omitempty"`
 }
 
+type ServiceDashboard struct {
+	Title                string                `json:"title" required:"true"`
+	Description          string                `json:"description" required:"true"`
+	IntegrationDashboard *IntegrationDashboard `json:"integrationDashboard,omitempty" required:"false"`
+}
+
 func NewCloudIntegrationService(serviceID ServiceID, cloudIntegrationID valuer.UUID, provider CloudProviderType, config *ServiceConfig) (*CloudIntegrationService, error) {
 	switch provider {
 	case CloudProviderTypeAWS:
@@ -130,6 +146,10 @@ func NewCloudIntegrationService(serviceID ServiceID, cloudIntegrationID valuer.U
 	case CloudProviderTypeAzure:
 		if config.Azure == nil {
 			return nil, errors.NewInvalidInputf(ErrCodeInvalidInput, "Azure config is required for Azure service")
+		}
+	case CloudProviderTypeGCP:
+		if config.GCP == nil {
+			return nil, errors.NewInvalidInputf(ErrCodeInvalidInput, "GCP config is required for GCP service")
 		}
 	}
 
@@ -164,11 +184,41 @@ func NewServiceMetadata(definition ServiceDefinition, enabled bool) *ServiceMeta
 	}
 }
 
-func NewService(def ServiceDefinition, storableService *CloudIntegrationService) *Service {
-	return &Service{
-		ServiceDefinition:       def,
-		CloudIntegrationService: storableService,
+func NewService(provider CloudProviderType, def *ServiceDefinition, integrationService *CloudIntegrationService, integrationDashboards []*StorableIntegrationDashboard) *Service {
+	service := &Service{
+		ServiceDefinitionMetadata: def.ServiceDefinitionMetadata,
+		Overview:                  def.Overview,
+		SupportedSignals:          def.SupportedSignals,
+		DataCollected:             def.DataCollected,
+		CloudIntegrationService:   integrationService,
+		ServiceAssets:             ServiceAssets{Dashboards: make([]*ServiceDashboard, 0, len(def.Assets.Dashboards))},
 	}
+
+	integrationDashboardsMap := make(map[string]*IntegrationDashboard)
+	for _, d := range integrationDashboards {
+		integrationDashboardsMap[d.Slug] = d
+	}
+
+	for _, d := range def.Assets.Dashboards {
+		dashboard := &ServiceDashboard{
+			Title:       d.Title,
+			Description: d.Description,
+		}
+
+		if integrationService != nil {
+			slug := CloudIntegrationDashboardSlug(provider, integrationService.Type, d.ID)
+
+			if integrationDashboard, exists := integrationDashboardsMap[slug]; exists {
+				if integrationDashboard != nil {
+					dashboard.IntegrationDashboard = integrationDashboard
+				}
+			}
+		}
+
+		service.ServiceAssets.Dashboards = append(service.ServiceAssets.Dashboards, dashboard)
+	}
+
+	return service
 }
 
 func NewGettableServicesMetadata(services []*ServiceMetadata) *GettableServicesMetadata {
@@ -217,6 +267,22 @@ func NewServiceConfigFromJSON(provider CloudProviderType, jsonString string) (*S
 		}
 
 		return &ServiceConfig{Azure: azureServiceConfig}, nil
+	case CloudProviderTypeGCP:
+		gcpServiceConfig := new(GCPServiceConfig)
+
+		if storableServiceConfig.GCP.Logs != nil {
+			gcpServiceConfig.Logs = &GCPServiceLogsConfig{
+				Enabled: storableServiceConfig.GCP.Logs.Enabled,
+			}
+		}
+
+		if storableServiceConfig.GCP.Metrics != nil {
+			gcpServiceConfig.Metrics = &GCPServiceMetricsConfig{
+				Enabled: storableServiceConfig.GCP.Metrics.Enabled,
+			}
+		}
+
+		return &ServiceConfig{GCP: gcpServiceConfig}, nil
 	default:
 		return nil, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
 	}
@@ -241,6 +307,10 @@ func (service *CloudIntegrationService) Update(provider CloudProviderType, servi
 		if config.Azure == nil {
 			return errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "Azure config is required for Azure service")
 		}
+	case CloudProviderTypeGCP:
+		if config.GCP == nil {
+			return errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "GCP config is required for GCP service")
+		}
 	default:
 		return errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
 	}
@@ -262,6 +332,10 @@ func (config *ServiceConfig) IsServiceEnabled(provider CloudProviderType) bool {
 		logsEnabled := config.Azure.Logs != nil && config.Azure.Logs.Enabled
 		metricsEnabled := config.Azure.Metrics != nil && config.Azure.Metrics.Enabled
 		return logsEnabled || metricsEnabled
+	case CloudProviderTypeGCP:
+		logsEnabled := config.GCP.Logs != nil && config.GCP.Logs.Enabled
+		metricsEnabled := config.GCP.Metrics != nil && config.GCP.Metrics.Enabled
+		return logsEnabled || metricsEnabled
 	default:
 		return false
 	}
@@ -275,6 +349,8 @@ func (config *ServiceConfig) IsMetricsEnabled(provider CloudProviderType) bool {
 		return config.AWS.Metrics != nil && config.AWS.Metrics.Enabled
 	case CloudProviderTypeAzure:
 		return config.Azure.Metrics != nil && config.Azure.Metrics.Enabled
+	case CloudProviderTypeGCP:
+		return config.GCP.Metrics != nil && config.GCP.Metrics.Enabled
 	default:
 		return false
 	}
@@ -287,6 +363,8 @@ func (config *ServiceConfig) IsLogsEnabled(provider CloudProviderType) bool {
 		return config.AWS.Logs != nil && config.AWS.Logs.Enabled
 	case CloudProviderTypeAzure:
 		return config.Azure.Logs != nil && config.Azure.Logs.Enabled
+	case CloudProviderTypeGCP:
+		return config.GCP.Logs != nil && config.GCP.Logs.Enabled
 	default:
 		return false
 	}

@@ -1,7 +1,9 @@
-import { Tooltip } from 'antd';
+import TagBadge from 'components/TagBadge/TagBadge';
+import { Button } from '@signozhq/ui/button';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
-import { Badge } from '@signozhq/ui/badge';
-import { CalendarClock } from '@signozhq/icons';
+import { CalendarClock, LockKeyhole, Pin, PinOff } from '@signozhq/icons';
+import cx from 'classnames';
 import logEvent from 'api/common/logEvent';
 import { generatePath } from 'react-router-dom';
 import { Base64Icons } from 'container/DashboardContainer/DashboardSettings/General/utils';
@@ -11,8 +13,10 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useTimezone } from 'providers/Timezone';
 import { isModifierKeyPressed } from 'utils/app';
 
-import type { DashboardListItem } from '../../utils';
-import { lastUpdatedLabel, tagsToStrings } from '../../utils';
+import { usePinDashboard } from '../../hooks/usePinDashboard';
+import { useDashboardViewsStore } from '../../store/useDashboardViewsStore';
+import type { DashboardListItem } from '../../utils/helpers';
+import { lastUpdatedLabel, tagsToStrings } from '../../utils/helpers';
 import ActionsPopover from '../ActionsPopover/ActionsPopover';
 
 import styles from './DashboardRow.module.scss';
@@ -20,7 +24,7 @@ import styles from './DashboardRow.module.scss';
 interface Props {
 	dashboard: DashboardListItem;
 	index: number;
-	canAct: boolean;
+	canEdit: boolean;
 	showUpdatedAt: boolean;
 	showUpdatedBy: boolean;
 }
@@ -28,13 +32,17 @@ interface Props {
 function DashboardRow({
 	dashboard,
 	index,
-	canAct,
+	canEdit,
 	showUpdatedAt,
 	showUpdatedBy,
 }: Props): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
+	const markViewed = useDashboardViewsStore((s) => s.markViewed);
+	const { togglePin, isUpdating } = usePinDashboard();
+
+	const isPinned = !!dashboard.pinned;
 	const id = dashboard.id;
 	const name = dashboard.spec?.display?.name ?? '';
 	const image = dashboard.image || Base64Icons[0];
@@ -52,7 +60,14 @@ function DashboardRow({
 	);
 
 	const onClickHandler = (event: React.MouseEvent<HTMLElement>): void => {
+		// Clicks inside portaled overlays (the actions menu, edit modals) bubble here
+		// through React's tree even though they render outside the row in the DOM.
+		// Only navigate when the click actually landed inside the row.
+		if (!event.currentTarget.contains(event.target as Node)) {
+			return;
+		}
 		event.stopPropagation();
+		markViewed(id);
 		safeNavigate(link, { newTab: isModifierKeyPressed(event) });
 		logEvent('Dashboard List: Clicked on dashboard', {
 			dashboardId: id,
@@ -60,54 +75,100 @@ function DashboardRow({
 		});
 	};
 
+	const onTogglePin = (event: React.MouseEvent<HTMLElement>): void => {
+		event.stopPropagation();
+		togglePin(id, isPinned);
+	};
+
+	// Only long titles are truncated, so only they need the full-name tooltip;
+	// wrapping conditionally avoids an empty hanging tooltip for short names.
+	const titleLink = (
+		<div className={styles.titleLink} onClick={onClickHandler}>
+			<img src={image} alt="dashboard-image" className={styles.icon} />
+			<Typography.Text
+				data-testid={`dashboard-title-${index}`}
+				className={styles.title}
+			>
+				{name}
+			</Typography.Text>
+		</div>
+	);
+
 	return (
 		<div className={styles.row} onClick={onClickHandler}>
 			<div className={styles.titleWithAction}>
 				<div className={styles.titleBlock}>
-					<Tooltip
-						title={name.length > 50 ? name : ''}
-						placement="left"
-						overlayClassName="titleTooltipOverlay"
-					>
-						<div className={styles.titleLink} onClick={onClickHandler}>
-							<img src={image} alt="dashboard-image" className={styles.icon} />
-							<Typography.Text
-								data-testid={`dashboard-title-${index}`}
-								className={styles.title}
-							>
-								{name}
-							</Typography.Text>
-						</div>
-					</Tooltip>
+					{name.length > 50 ? (
+						<TooltipSimple title={name} side="bottom" disableHoverableContent>
+							{titleLink}
+						</TooltipSimple>
+					) : (
+						titleLink
+					)}
 				</div>
 
 				<div className={styles.tagsWithActions}>
 					{tags.length > 0 && (
 						<div className={styles.tags}>
 							{tags.slice(0, 3).map((tag) => (
-								<Badge className={styles.tag} key={tag}>
-									{tag}
-								</Badge>
+								<TagBadge key={tag}>{tag}</TagBadge>
 							))}
 							{tags.length > 3 && (
-								<Badge className={styles.tag} key={tags[3]}>
-									+ <span> {tags.length - 3} </span>
-								</Badge>
+								<TagBadge key={tags[3]}>+{tags.length - 3}</TagBadge>
 							)}
 						</div>
 					)}
 				</div>
 
-				{canAct && (
-					<ActionsPopover
-						link={link}
-						dashboardId={id}
-						dashboardName={name}
-						createdBy={createdBy}
-						isLocked={isLocked}
-						onView={onClickHandler}
-					/>
+				{isLocked && (
+					<TooltipSimple
+						title="This dashboard is locked"
+						side="top"
+						disableHoverableContent
+					>
+						<span className={styles.lockIcon} data-testid={`dashboard-lock-${index}`}>
+							<LockKeyhole size={14} />
+						</span>
+					</TooltipSimple>
 				)}
+
+				<TooltipSimple
+					title={isPinned ? 'Unpin dashboard' : 'Pin dashboard'}
+					side="top"
+					disableHoverableContent
+				>
+					<Button
+						type="button"
+						variant="ghost"
+						color="secondary"
+						size="icon"
+						className={cx(styles.pinButton, { [styles.pinButtonOn]: isPinned })}
+						aria-label={isPinned ? 'Unpin dashboard' : 'Pin dashboard'}
+						data-testid={`dashboard-pin-${index}`}
+						disabled={isUpdating}
+						onClick={onTogglePin}
+					>
+						{isPinned ? (
+							<>
+								<Pin size={14} className={styles.pinnedIcon} />
+								<PinOff size={14} className={styles.unpinIcon} />
+							</>
+						) : (
+							<Pin size={14} />
+						)}
+					</Button>
+				</TooltipSimple>
+
+				<ActionsPopover
+					link={link}
+					dashboardId={id}
+					dashboardName={name}
+					createdBy={createdBy}
+					isLocked={isLocked}
+					tags={tags}
+					canEdit={canEdit}
+					onView={onClickHandler}
+				/>
 			</div>
 			<div className={styles.details}>
 				<div className={styles.createdAt}>

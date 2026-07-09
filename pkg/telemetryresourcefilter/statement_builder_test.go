@@ -361,7 +361,6 @@ func TestResourceFilterStatementBuilder_Traces(t *testing.T) {
 		telemetrytypes.SourceUnspecified,
 		mockMetadataStore,
 		nil,
-		nil,
 		flaggertest.New(t),
 	)
 
@@ -555,7 +554,6 @@ func TestResourceFilterStatementBuilder_Logs(t *testing.T) {
 		telemetrytypes.SourceUnspecified,
 		mockMetadataStore,
 		nil,
-		nil,
 		flaggertest.New(t),
 	)
 
@@ -622,7 +620,6 @@ func TestResourceFilterStatementBuilder_Variables(t *testing.T) {
 		telemetrytypes.SignalTraces,
 		telemetrytypes.SourceUnspecified,
 		mockMetadataStore,
-		nil,
 		nil,
 		flaggertest.New(t),
 	)

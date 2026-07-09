@@ -1,7 +1,16 @@
-import { useMemo } from 'react';
-import type { MenuItem } from '@signozhq/ui/dropdown-menu';
 import { Button } from '@signozhq/ui/button';
-import { DropdownMenuSimple as Dropdown } from '@signozhq/ui/dropdown-menu';
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuLabel,
+	DropdownMenuRadioGroup,
+	DropdownMenuRadioItem,
+	DropdownMenuSub,
+	DropdownMenuSubContent,
+	DropdownMenuSubTrigger,
+	DropdownMenuTrigger,
+} from '@signozhq/ui/dropdown-menu';
 import { Settings2 } from '@signozhq/icons';
 
 import { useTraceStore } from '../stores/traceStore';
@@ -14,6 +23,9 @@ interface TraceOptionsMenuProps {
 	onOpenPreviewFields: () => void;
 }
 
+// Composed from dropdown-menu primitives (instead of DropdownMenuSimple)
+// because the simple preset offers no way to style the submenu content,
+// which renders in its own portal and needs a z-index above FloatingPanel.
 function TraceOptionsMenu({
 	showTraceDetails,
 	onToggleTraceDetails,
@@ -25,78 +37,52 @@ function TraceOptionsMenu({
 		(s) => s.availableColorByOptions,
 	);
 
-	const menuItems: MenuItem[] = useMemo(() => {
-		const items: MenuItem[] = [
-			{
-				key: 'toggle-trace-details',
-				label: showTraceDetails ? 'Hide trace details' : 'Show trace details',
-				onClick: onToggleTraceDetails,
-			},
-			{
-				key: 'preview-fields',
-				label: 'Preview fields',
-				onClick: onOpenPreviewFields,
-			},
-		];
-
-		// Only show the "Colour by" submenu if there's an actual choice to make.
-		if (availableColorByOptions.length > 1) {
-			items.push({
-				key: 'colour-by',
-				label: 'Colour by',
-				children: [
-					{
-						type: 'group',
-						label: 'COLOUR BY',
-						children: [
-							{
-								type: 'radio-group',
-								value: colorByField.name,
-								onChange: (name: string): void => {
-									const next = availableColorByOptions.find(
-										(o) => o.field.name === name,
-									);
-									if (next) {
-										setColorByField(next.field);
-									}
-								},
-								children: availableColorByOptions.map((opt) => ({
-									type: 'radio',
-									key: opt.field.name,
-									label: opt.label,
-									value: opt.field.name,
-								})),
-							},
-						],
-					},
-				],
-			});
+	const handleColorByChange = (name: string): void => {
+		const next = availableColorByOptions.find((o) => o.field.name === name);
+		if (next) {
+			setColorByField(next.field);
 		}
-
-		return items;
-	}, [
-		showTraceDetails,
-		onToggleTraceDetails,
-		onOpenPreviewFields,
-		colorByField.name,
-		setColorByField,
-		availableColorByOptions,
-	]);
+	};
 
 	return (
-		<Dropdown
-			menu={{ items: menuItems }}
-			align="start"
-			className={styles.traceOptionsDropdown}
-		>
-			<Button
-				variant="ghost"
-				size="icon"
-				color="secondary"
-				aria-label="Trace options"
-				prefix={<Settings2 size={14} />}
-			/>
-		</Dropdown>
+		<DropdownMenu>
+			<DropdownMenuTrigger asChild>
+				<Button
+					variant="ghost"
+					size="icon"
+					color="secondary"
+					aria-label="Trace options"
+					prefix={<Settings2 size={14} />}
+				/>
+			</DropdownMenuTrigger>
+			<DropdownMenuContent align="start" className={styles.traceOptionsDropdown}>
+				<DropdownMenuItem clickable onSelect={onToggleTraceDetails}>
+					{showTraceDetails ? 'Hide trace details' : 'Show trace details'}
+				</DropdownMenuItem>
+				<DropdownMenuItem clickable onSelect={onOpenPreviewFields}>
+					Preview fields
+				</DropdownMenuItem>
+				{/* Only show the "Colour by" submenu if there's an actual choice to make. */}
+				{availableColorByOptions.length > 1 && (
+					<DropdownMenuSub>
+						<DropdownMenuSubTrigger>Colour by</DropdownMenuSubTrigger>
+						<DropdownMenuSubContent className={styles.traceOptionsDropdown}>
+							<DropdownMenuLabel>COLOUR BY</DropdownMenuLabel>
+							<DropdownMenuRadioGroup
+								value={colorByField.name}
+								onValueChange={handleColorByChange}
+							>
+								{availableColorByOptions.map((opt) => (
+									<DropdownMenuRadioItem key={opt.field.name} value={opt.field.name}>
+										{opt.label}
+									</DropdownMenuRadioItem>
+								))}
+							</DropdownMenuRadioGroup>
+						</DropdownMenuSubContent>
+					</DropdownMenuSub>
+				)}
+			</DropdownMenuContent>
+		</DropdownMenu>
 	);
 }
 

@@ -1,30 +1,30 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { ChartNoAxesGantt, TriangleAlert } from '@signozhq/icons';
+import {
+	ChartNoAxesGantt,
+	ChevronDown,
+	ChevronRight,
+	Info,
+	TriangleAlert,
+} from '@signozhq/icons';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import { Collapse } from 'antd';
 import { useDetailsPanel } from 'components/DetailsPanel';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import useGetTraceV3 from 'hooks/trace/useGetTraceV3';
+import useGetTraceV4 from 'hooks/trace/useGetTraceV4';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import NoData from 'pages/TraceDetailV2/NoData/NoData';
 import { ResizableBox } from 'periscope/components/ResizableBox';
-import {
-	SpanV3,
-	TraceDetailV3URLProps,
-	WaterfallAggregationRequest,
-} from 'types/api/trace/getTraceV3';
+import { SpanV3, TraceDetailV3URLProps } from 'types/api/trace/getTraceV3';
 
-import { COLOR_BY_FIELDS } from './constants';
 import { TraceDetailEventKeys, TraceDetailEvents } from './events';
 import { useTraceDetailLogEvent } from './hooks/useTraceDetailLogEvent';
+import NoData from './NoData/NoData';
 import TraceStoreSync from './stores/TraceStoreSync';
 import { useTraceStore } from './stores/traceStore';
-import { AGGREGATIONS } from './utils/aggregations';
 import { SpanDetailVariant } from './SpanDetailsPanel/constants';
 import SpanDetailsPanel from './SpanDetailsPanel/SpanDetailsPanel';
 import type { TraceMetadataForHeader } from './TraceDetailsHeader/TraceDetailsHeader';
@@ -34,10 +34,21 @@ import TraceFlamegraph from './TraceFlamegraph/TraceFlamegraph';
 import TraceWaterfall from './TraceWaterfall/TraceWaterfall';
 import { IInterestedSpan } from './TraceWaterfall/types';
 import { getAncestorSpanIds } from './TraceWaterfall/utils';
+import { getAvailableColorByFieldNames } from './utils';
 
 import cx from 'classnames';
 
 import styles from './TraceDetailsV3.module.scss';
+
+// Lucide chevrons for the flame/waterfall accordion headers, matching the
+// span-tree chevrons in the waterfall.
+function renderPanelExpandIcon({
+	isActive,
+}: {
+	isActive?: boolean;
+}): JSX.Element {
+	return isActive ? <ChevronDown size={14} /> : <ChevronRight size={14} />;
+}
 
 function TraceDetailsV3(): JSX.Element {
 	const { id: traceId } = useParams<TraceDetailV3URLProps>();
@@ -103,17 +114,6 @@ function TraceDetailsV3(): JSX.Element {
 		setInterestedSpanId({ spanId, isUncollapsed: true });
 	}, [urlQuery]);
 
-	// Hardcoded for now — fetch aggregations for all 3 candidate color-by fields
-	// upfront so a future color-by-field switch doesn't need to refetch.
-	const waterfallAggregationsRequest = useMemo<WaterfallAggregationRequest[]>(
-		() =>
-			COLOR_BY_FIELDS.flatMap((field) => [
-				{ field, aggregation: AGGREGATIONS.EXEC_TIME_PCT },
-				{ field, aggregation: AGGREGATIONS.SPAN_COUNT },
-			]),
-		[],
-	);
-
 	// Once all spans are loaded (frontend mode), freeze query params so
 	// subsequent interestedSpanId changes don't trigger unnecessary refetches.
 	const fullDataLoadedRef = useRef(false);
@@ -121,7 +121,6 @@ function TraceDetailsV3(): JSX.Element {
 		selectedSpanId: interestedSpanId.spanId,
 		isSelectedSpanIDUnCollapsed: interestedSpanId.isUncollapsed,
 		uncollapsedSpans: uncollapsedNodes,
-		aggregations: waterfallAggregationsRequest,
 	});
 
 	const queryParams = fullDataLoadedRef.current
@@ -130,25 +129,30 @@ function TraceDetailsV3(): JSX.Element {
 				selectedSpanId: interestedSpanId.spanId,
 				isSelectedSpanIDUnCollapsed: interestedSpanId.isUncollapsed,
 				uncollapsedSpans: uncollapsedNodes,
-				aggregations: waterfallAggregationsRequest,
 			};
 
 	const {
 		data: traceData,
 		isFetching: isFetchingTraceData,
 		error: errorFetchingTraceData,
-	} = useGetTraceV3({
+	} = useGetTraceV4({
 		traceId,
 		uncollapsedSpans: queryParams.uncollapsedSpans,
 		selectedSpanId: queryParams.selectedSpanId,
 		isSelectedSpanIDUnCollapsed: queryParams.isSelectedSpanIDUnCollapsed,
-		aggregations: queryParams.aggregations,
 	});
 
 	const allSpans = traceData?.payload?.spans || [];
 	const totalSpansCount = traceData?.payload?.totalSpansCount || 0;
 	const isFullDataLoaded =
 		totalSpansCount > 0 && totalSpansCount <= allSpans.length;
+
+	// Color-by options, gated on fields in loaded spans. Resource attrs are
+	// trace-wide, so any window has the full set — no need to accumulate.
+	const availableColorByFields = useMemo(() => {
+		const spans = traceData?.payload?.spans;
+		return spans?.length ? getAvailableColorByFieldNames(spans) : undefined;
+	}, [traceData?.payload?.spans]);
 
 	// Lock the ref once we confirm all data is loaded
 	if (isFullDataLoaded && !fullDataLoadedRef.current) {
@@ -157,7 +161,6 @@ function TraceDetailsV3(): JSX.Element {
 			selectedSpanId: interestedSpanId.spanId,
 			isSelectedSpanIDUnCollapsed: interestedSpanId.isUncollapsed,
 			uncollapsedSpans: uncollapsedNodes,
-			aggregations: waterfallAggregationsRequest,
 		};
 	}
 
@@ -192,8 +195,6 @@ function TraceDetailsV3(): JSX.Element {
 				SpanDetailVariant.DOCKED_RIGHT,
 			[TraceDetailEventKeys.ColorByField]: colorByField.name,
 			[TraceDetailEventKeys.PreviewFieldsCount]: previewFieldsCount,
-			[TraceDetailEventKeys.EntryPreferOldView]:
-				getLocalStorageKey(LOCALSTORAGE.TRACE_DETAILS_PREFER_OLD_VIEW) === 'true',
 		});
 	}, [
 		traceId,
@@ -344,6 +345,7 @@ function TraceDetailsV3(): JSX.Element {
 			rootServiceName: payload.rootServiceName,
 			rootServiceEntryPoint: payload.rootServiceEntryPoint,
 			rootSpanStatusCode: rootSpan?.response_status_code || '',
+			hasMissingSpans: payload.hasMissingSpans || false,
 		};
 	}, [traceData?.payload]);
 
@@ -382,7 +384,7 @@ function TraceDetailsV3(): JSX.Element {
 	);
 
 	return (
-		<TraceStoreSync aggregations={traceData?.payload?.aggregations}>
+		<TraceStoreSync availableColorByFields={availableColorByFields}>
 			<div className={styles.root}>
 				<TraceDetailsHeader
 					filterMetadata={filterMetadata}
@@ -403,6 +405,7 @@ function TraceDetailsV3(): JSX.Element {
 									activeKey={activeKeys.filter((k) => k === 'flame')}
 									onChange={(): void => handleCollapseChange('flame')}
 									size="small"
+									expandIcon={renderPanelExpandIcon}
 									className={styles.flameCollapse}
 									items={[
 										{
@@ -416,7 +419,13 @@ function TraceDetailsV3(): JSX.Element {
 																<WarningPopover
 																	message="The total span count exceeds the visualization limit. Displaying a sampled subset of spans in flamegraph."
 																	placement="bottomLeft"
-																/>
+																>
+																	<Info
+																		size={16}
+																		color="var(--l2-foreground)"
+																		style={{ cursor: 'pointer' }}
+																	/>
+																</WarningPopover>
 															)}
 													</span>
 													{traceData?.payload?.totalSpansCount ? (
@@ -457,6 +466,7 @@ function TraceDetailsV3(): JSX.Element {
 									activeKey={activeKeys.filter((k) => k === 'waterfall')}
 									onChange={(): void => handleCollapseChange('waterfall')}
 									size="small"
+									expandIcon={renderPanelExpandIcon}
 									className={cx(styles.waterfallCollapse, {
 										[styles.isDocked]: isWaterfallDocked,
 									})}

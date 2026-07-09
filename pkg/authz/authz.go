@@ -33,20 +33,14 @@ type AuthZ interface {
 	// Lists the selectors for objects assigned to subject (s) with relation (r) on resource (s)
 	ListObjects(context.Context, string, authtypes.Relation, coretypes.Type) ([]*coretypes.Object, error)
 
-	// Creates the role.
-	Create(context.Context, valuer.UUID, *authtypes.Role) error
+	// Creates the role with its transaction groups.
+	Create(context.Context, valuer.UUID, *authtypes.RoleWithTransactionGroups) error
 
 	// Gets the role if it exists or creates one.
 	GetOrCreate(context.Context, valuer.UUID, *authtypes.Role) (*authtypes.Role, error)
 
-	// Gets the objects associated with the given role and relation.
-	GetObjects(context.Context, valuer.UUID, valuer.UUID, authtypes.Relation) ([]*coretypes.Object, error)
-
-	// Patches the role.
-	Patch(context.Context, valuer.UUID, *authtypes.Role) error
-
-	// Patches the objects in authorization server associated with the given role and relation
-	PatchObjects(context.Context, valuer.UUID, string, authtypes.Relation, []*coretypes.Object, []*coretypes.Object) error
+	// Updates the role's metadata and reconciles its transaction groups.
+	Update(context.Context, valuer.UUID, *authtypes.RoleWithTransactionGroups) error
 
 	// Deletes the role and tuples in authorization server.
 	Delete(context.Context, valuer.UUID, valuer.UUID) error
@@ -54,11 +48,17 @@ type AuthZ interface {
 	// Gets the role
 	Get(context.Context, valuer.UUID, valuer.UUID) (*authtypes.Role, error)
 
+	// Gets the role with transaction groups
+	GetWithTransactionGroups(context.Context, valuer.UUID, valuer.UUID) (*authtypes.RoleWithTransactionGroups, error)
+
 	// Gets the role by org_id and name
 	GetByOrgIDAndName(context.Context, valuer.UUID, string) (*authtypes.Role, error)
 
 	// Lists all the roles for the organization.
 	List(context.Context, valuer.UUID) ([]*authtypes.Role, error)
+
+	// Collect returns per-org role usage stats for the stats reporter.
+	Collect(context.Context, valuer.UUID) (map[string]any, error)
 
 	//  Lists all the roles for the organization filtered by name
 	ListByOrgIDAndNames(context.Context, valuer.UUID, []string) ([]*authtypes.Role, error)
@@ -86,20 +86,16 @@ type AuthZ interface {
 }
 
 // OnBeforeRoleDelete is a callback invoked before a role is deleted.
-type OnBeforeRoleDelete func(context.Context, valuer.UUID, valuer.UUID) error
+type OnBeforeRoleDelete func(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID, roleName string) error
 
 type Handler interface {
 	Create(http.ResponseWriter, *http.Request)
 
 	Get(http.ResponseWriter, *http.Request)
 
-	GetObjects(http.ResponseWriter, *http.Request)
-
 	List(http.ResponseWriter, *http.Request)
 
-	Patch(http.ResponseWriter, *http.Request)
-
-	PatchObjects(http.ResponseWriter, *http.Request)
+	Update(http.ResponseWriter, *http.Request)
 
 	Check(http.ResponseWriter, *http.Request)
 

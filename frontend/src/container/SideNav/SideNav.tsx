@@ -80,7 +80,7 @@ import signozBrandLogoUrl from '@/assets/Logos/signoz-brand-logo.svg';
 
 import { useCmdK } from '../../providers/cmdKProvider';
 import { routeConfig } from './config';
-import { getQueryString } from './helper';
+import { buildNavUrl, getQueryString } from './helper';
 import {
 	defaultMoreMenuItems,
 	getUserSettingsDropdownMenuItems,
@@ -319,10 +319,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		}
 	}, [computedPinnedMenuItems, computedSecondaryMenuItems, userPreferences]);
 
-	const isOnboardingV3Enabled = featureFlags?.find(
-		(flag) => flag.name === FeatureKeys.ONBOARDING_V3,
-	)?.active;
-
 	const isChatSupportEnabled = featureFlags?.find(
 		(flag) => flag.name === FeatureKeys.CHAT_SUPPORT,
 	)?.active;
@@ -465,18 +461,14 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 
 	const onClickGetStarted = (event: MouseEvent): void => {
 		void logEvent('Sidebar: Menu clicked', {
-			menuRoute: '/get-started',
+			menuRoute: ROUTES.GET_STARTED_WITH_CLOUD,
 			menuLabel: 'Get Started',
 		});
 
-		const onboaringRoute = isOnboardingV3Enabled
-			? ROUTES.GET_STARTED_WITH_CLOUD
-			: ROUTES.GET_STARTED;
-
 		if (isModifierKeyPressed(event)) {
-			openInNewTab(onboaringRoute);
+			openInNewTab(ROUTES.GET_STARTED_WITH_CLOUD);
 		} else {
-			history.push(onboaringRoute);
+			history.push(ROUTES.GET_STARTED_WITH_CLOUD);
 		}
 	};
 
@@ -486,12 +478,13 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			const availableParams = routeConfig[key];
 
 			const queryString = getQueryString(availableParams || [], params);
+			const url = buildNavUrl(key, queryString);
 
 			if (pathname !== key) {
 				if (event && isModifierKeyPressed(event)) {
-					openInNewTab(`${key}?${queryString.join('&')}`);
+					openInNewTab(url);
 				} else {
-					history.push(`${key}?${queryString.join('&')}`, {
+					history.push(url, {
 						from: pathname,
 					});
 				}
@@ -884,9 +877,9 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 					break;
 				case 'invite-collaborators':
 					if (event && isModifierKeyPressed(event)) {
-						openInNewTab(`${ROUTES.ORG_SETTINGS}#invite-team-members`);
+						openInNewTab(`${ROUTES.MEMBERS_SETTINGS}?invite=true`);
 					} else {
-						history.push(`${ROUTES.ORG_SETTINGS}#invite-team-members`);
+						history.push(`${ROUTES.MEMBERS_SETTINGS}?invite=true`);
 					}
 					break;
 				case 'chat-support':
@@ -1010,7 +1003,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 								<img src={signozBrandLogoUrl} alt="SigNoz" />
 							</div>
 
-							{licenseTag && (
+							{(licenseTag || currentVersion) && (
 								<div
 									className={cx(
 										'brand-title-section',
@@ -1021,7 +1014,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 											'version-update-notification',
 									)}
 								>
-									<span className="license-type"> {licenseTag} </span>
+									{licenseTag && <span className="license-type"> {licenseTag} </span>}
 
 									{currentVersion && (
 										<Tooltip
@@ -1043,7 +1036,12 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 												)
 											}
 										>
-											<div className="version-container">
+											<div
+												className={cx(
+													'version-container',
+													!licenseTag && 'version-container-standalone',
+												)}
+											>
 												<span
 													className={cx('version', changelog && 'version-clickable')}
 													onClick={onClickVersionHandler}

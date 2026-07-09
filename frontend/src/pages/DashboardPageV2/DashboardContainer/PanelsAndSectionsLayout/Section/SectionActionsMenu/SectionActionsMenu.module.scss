@@ -1,0 +1,16 @@
+.trigger {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 2px;
+	background: transparent;
+	border: none;
+	border-radius: 2px;
+	color: var(--l2-foreground);
+	cursor: pointer;
+
+	&:hover {
+		color: var(--l1-foreground);
+		background: var(--l2-background);
+	}
+}

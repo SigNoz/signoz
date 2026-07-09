@@ -6,9 +6,8 @@
 	height: 44px;
 	flex-shrink: 0;
 	border-radius: 6px 6px 0px 0px;
-	border: 1px solid var(--l1-border);
-	background: var(--l2-background);
-	box-shadow: 0px 4px 12px 0px rgba(0, 0, 0, 0.1);
+	border: 1px solid var(--l2-border);
+	background: var(--l1-background);
 }
 
 .label {
@@ -23,8 +22,34 @@
 
 .rightActions {
 	display: flex;
+	align-items: center;
 	gap: 4px;
 	color: white;
+}
+
+.sortPrefix {
+	color: var(--l3-foreground);
+}
+
+// Inline metadata-visibility toggles (replaces the configure modal).
+.metaPanel {
+	display: flex;
+	flex-direction: column;
+	min-width: 220px;
+	padding: 4px;
+}
+
+.metaRow {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	padding: 8px 10px;
+}
+
+.metaLabel {
+	color: var(--l2-foreground);
+	font-size: var(--font-size-sm);
 }
 
 // Shared trigger button for the sort + configure-group icons in the right

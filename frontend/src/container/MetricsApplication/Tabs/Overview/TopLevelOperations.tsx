@@ -1,4 +1,3 @@
-import { Skeleton } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import axios from 'axios';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
@@ -29,24 +28,14 @@ function TopLevelOperation({
 				</Typography>
 			) : (
 				<GraphContainer>
-					{topLevelOperationsIsLoading && (
-						<Skeleton
-							style={{
-								height: '100%',
-								padding: '16px',
-							}}
-						/>
-					)}
-					{!topLevelOperationsIsLoading && (
-						<Graph
-							widget={widget}
-							onClickHandler={handleGraphClick(opName)}
-							onDragSelect={onDragSelect}
-							isQueryEnabled={!topLevelOperationsIsLoading}
-							version={ENTITY_VERSION_V4}
-							enableDrillDown={SERVICE_DETAIL_DRILLDOWN_ENABLED}
-						/>
-					)}
+					<Graph
+						widget={widget}
+						onClickHandler={handleGraphClick(opName)}
+						onDragSelect={onDragSelect}
+						isQueryEnabled={!topLevelOperationsIsLoading}
+						version={ENTITY_VERSION_V4}
+						enableDrillDown={SERVICE_DETAIL_DRILLDOWN_ENABLED}
+					/>
 				</GraphContainer>
 			)}
 		</Card>

@@ -292,10 +292,10 @@ function App(): JSX.Element {
 				isChatSupportEnabled &&
 				!showAddCreditCardModal &&
 				(isCloudUser || isEnterpriseSelfHostedUser) &&
-				(window.signozBootData?.settings?.pylon.enabled ?? true)
+				window.signozBootData?.settings?.pylon?.enabled
 			) {
 				const email = user.email || '';
-				const secret = process.env.PYLON_IDENTITY_SECRET || '';
+				const secret = window.signozBootData?.settings?.pylon?.identitySecret || '';
 				let emailHash = '';
 
 				if (email && secret) {
@@ -304,7 +304,7 @@ function App(): JSX.Element {
 
 				window.pylon = {
 					chat_settings: {
-						app_id: process.env.PYLON_APP_ID,
+						app_id: window.signozBootData?.settings?.pylon?.appId,
 						email: user.email,
 						name: user.displayName || user.email,
 						email_hash: emailHash,
@@ -335,35 +335,35 @@ function App(): JSX.Element {
 	useEffect(() => {
 		if (isCloudUser || isEnterpriseSelfHostedUser) {
 			if (
-				(window.signozBootData?.settings?.posthog.enabled ?? true) &&
-				process.env.POSTHOG_KEY
+				window.signozBootData?.settings?.posthog?.enabled &&
+				window.signozBootData?.settings?.posthog?.key
 			) {
-				posthog.init(process.env.POSTHOG_KEY, {
-					api_host: 'https://us.i.posthog.com',
+				posthog.init(window.signozBootData.settings.posthog.key, {
+					api_host: window.signozBootData.settings.posthog.apiHost,
+					ui_host: window.signozBootData.settings.posthog.uiHost,
 					person_profiles: 'identified_only', // or 'always' to create profiles for anonymous users as well
 				});
 			}
 
 			if (
 				!isSentryInitialized &&
-				(window.signozBootData?.settings?.sentry.enabled ?? true)
+				window.signozBootData?.settings?.sentry?.enabled
 			) {
 				Sentry.init({
-					dsn: process.env.SENTRY_DSN,
-					tunnel: process.env.TUNNEL_URL,
-					environment: 'production',
+					dsn: window.signozBootData.settings.sentry.dsn,
+					tunnel: window.signozBootData.settings.sentry.tunnel,
+					environment: process.env.ENVIRONMENT,
+					release: process.env.VERSION,
 					integrations: [
+						// Kept for the `transaction` tag used in routing, even though
+						// tracing is disabled. Ref: https://github.com/SigNoz/platform-pod/issues/2393#issuecomment-4603658055
 						Sentry.browserTracingIntegration(),
 						Sentry.replayIntegration({
 							maskAllText: false,
 							blockAllMedia: false,
 						}),
 					],
-					// Performance Monitoring
-					tracesSampleRate: 1.0, //  Capture 100% of the transactions
-					// Set 'tracePropagationTargets' to control for which URLs distributed tracing should be enabled
-					tracePropagationTargets: [],
-					// Session Replay
+					tracesSampleRate: 0, // Ref: https://github.com/SigNoz/platform-pod/issues/2393#issuecomment-4603658055
 					replaysSessionSampleRate: 0.1, // This sets the sample rate at 10%. You may want to change it to 100% while in development and then sample at a lower rate in production.
 					replaysOnErrorSampleRate: 1.0, // If you're not already sampling the entire session, change the sample rate to 100% when sampling sessions where errors occur.
 					beforeSend(event) {
