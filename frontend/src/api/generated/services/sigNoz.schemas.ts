@@ -11570,6 +11570,19 @@ export type GetPublicDashboardPanelQueryRangeV2PathParameters = {
 	id: string;
 	key: string;
 };
+export type GetPublicDashboardPanelQueryRangeV2Params = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	startTime?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	endTime?: string;
+};
+
 export type GetPublicDashboardPanelQueryRangeV2200 = {
 	data: Querybuildertypesv5QueryRangeResponseDTO;
 	/**

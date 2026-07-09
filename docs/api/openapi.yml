@@ -18168,6 +18168,16 @@ paths:
         public dashboard. The panel is addressed by its key in spec.panels.
       operationId: GetPublicDashboardPanelQueryRangeV2
       parameters:
+      - in: query
+        name: startTime
+        required: false
+        schema:
+          type: string
+      - in: query
+        name: endTime
+        required: false
+        schema:
+          type: string
       - in: path
         name: id
         required: true
