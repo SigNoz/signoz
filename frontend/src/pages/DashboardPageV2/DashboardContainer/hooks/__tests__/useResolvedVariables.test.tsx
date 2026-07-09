@@ -64,4 +64,10 @@ describe('useResolvedVariables', () => {
 			selectResolvedVariables('d3')(useDashboardStore.getState()),
 		).toStrictEqual({});
 	});
+
+	it('publishes nothing while the dashboard is still loading', () => {
+		renderHook(() => useResolvedVariables(undefined));
+
+		expect(useDashboardStore.getState().resolvedVariables).toStrictEqual({});
+	});
 });

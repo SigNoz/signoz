@@ -13,6 +13,7 @@ import {
 import { defaultColumnsForSignal } from '../../PanelEditor/ListColumnsEditor/selectFields';
 import {
 	type AnyThreshold,
+	type ControlledSectionKind,
 	type PanelFormattingSlice,
 	type SectionConfig,
 	type SectionControls,
@@ -20,13 +21,18 @@ import {
 	type SectionSpecMap,
 	ThresholdVariant,
 } from '../types/sections';
+import { getTableColumnKeys } from './getTableColumnKeys';
 
 /** Cross-section of the per-kind spec union; assigned to `plugin.spec` (unknown) at the boundary. */
 export interface SeededPluginSpec {
 	visualization?: SectionSpecMap[SectionKind.Visualization];
+	axes?: SectionSpecMap[SectionKind.Axes];
 	legend?: SectionSpecMap[SectionKind.Legend];
 	chartAppearance?: SectionSpecMap[SectionKind.ChartAppearance];
-	formatting?: Pick<PanelFormattingSlice, 'unit' | 'decimalPrecision'>;
+	formatting?: Pick<
+		PanelFormattingSlice,
+		'unit' | 'decimalPrecision' | 'columnUnits'
+	>;
 	selectFields?: SectionSpecMap[SectionKind.Columns];
 	thresholds?: AnyThreshold[];
 }
@@ -35,6 +41,11 @@ export interface SeedContext {
 	/** Present only on a kind switch — the spec being switched away from, to carry config across. */
 	oldSpec?: DashboardtypesPanelSpecDTO;
 	signal?: TelemetrytypesSignalDTO;
+}
+
+/** `SeedContext` plus `oldSpec.plugin.spec` (typed `unknown`) resolved once, so seeds read it without re-casting. */
+interface ResolvedSeedContext extends SeedContext {
+	oldPluginSpec?: SeededPluginSpec;
 }
 
 interface AnyThresholdFields {
@@ -51,6 +62,7 @@ interface AnyThresholdFields {
 function toThresholdVariant(
 	source: AnyThresholdFields,
 	variant: ThresholdVariant,
+	defaultColumnName?: string,
 ): AnyThreshold {
 	const core = {
 		color: source.color,
@@ -69,7 +81,7 @@ function toThresholdVariant(
 			...core,
 			operator: source.operator ?? DashboardtypesComparisonOperatorDTO.above,
 			format: source.format ?? DashboardtypesThresholdFormatDTO.background,
-			columnName: source.columnName ?? '',
+			columnName: source.columnName || defaultColumnName || '',
 		};
 	}
 	return {
@@ -79,97 +91,166 @@ function toThresholdVariant(
 }
 
 /**
- * How one section derives its plugin-spec slice on create/switch — the single place a section
- * declares this. Sections absent from `SECTION_SEEDS` seed nothing.
+ * How each section derives its plugin-spec slice on create/switch — the single place a section
+ * declares this. Sections absent from `SECTION_SEEDS` seed nothing. Mapped over `SectionKind` so
+ * every `seed` receives its own kind's `controls` (atomic kinds get `undefined`), no per-seed cast.
+ * A `seed` returns an empty object/array (never `undefined`) when it has nothing to carry;
+ * `buildPluginSpec` drops the empties so the omit decision lives in one place.
  */
-interface SectionSeed {
-	specKey: keyof SeededPluginSpec;
-	seed: (controls: unknown, ctx: SeedContext) => unknown;
+type SectionSeeds = {
+	[K in SectionKind]?: {
+		specKey: keyof SeededPluginSpec;
+		seed: (
+			controls: K extends ControlledSectionKind ? SectionControls[K] : undefined,
+			ctx: ResolvedSeedContext,
+		) => object;
+	};
+};
+
+function isEmptySlice(value: object): boolean {
+	return Array.isArray(value)
+		? value.length === 0
+		: Object.keys(value).length === 0;
 }
 
-const SECTION_SEEDS: Partial<Record<SectionKind, SectionSeed>> = {
+const SECTION_SEEDS: SectionSeeds = {
 	[SectionKind.Visualization]: {
 		specKey: 'visualization',
-		seed: (controls): SectionSpecMap[SectionKind.Visualization] | undefined => {
-			const c = controls as SectionControls[SectionKind.Visualization];
-			return c.timePreference
-				? { timePreference: DashboardtypesTimePreferenceDTO.global_time }
-				: undefined;
+		seed: (
+			controls,
+			{ oldPluginSpec },
+		): SectionSpecMap[SectionKind.Visualization] => {
+			const old = oldPluginSpec?.visualization;
+			return {
+				...(controls.timePreference && {
+					timePreference:
+						old?.timePreference ?? DashboardtypesTimePreferenceDTO.global_time,
+				}),
+				...(controls.stacking &&
+					old?.stackedBarChart !== undefined && {
+						stackedBarChart: old.stackedBarChart,
+					}),
+				...(controls.fillSpans &&
+					old?.fillSpans !== undefined && { fillSpans: old.fillSpans }),
+			};
+		},
+	},
+	[SectionKind.Axes]: {
+		specKey: 'axes',
+		seed: (controls, { oldPluginSpec }): SectionSpecMap[SectionKind.Axes] => {
+			const old = oldPluginSpec?.axes;
+			if (!old) {
+				return {};
+			}
+			return {
+				...(controls.minMax &&
+					typeof old.softMin === 'number' && { softMin: old.softMin }),
+				...(controls.minMax &&
+					typeof old.softMax === 'number' && { softMax: old.softMax }),
+				...(controls.logScale &&
+					old.isLogScale !== undefined && { isLogScale: old.isLogScale }),
+			};
 		},
 	},
 	[SectionKind.Legend]: {
 		specKey: 'legend',
-		seed: (controls): SectionSpecMap[SectionKind.Legend] | undefined => {
-			const c = controls as SectionControls[SectionKind.Legend];
-			return c.position
-				? { position: DashboardtypesLegendPositionDTO.bottom }
-				: undefined;
+		seed: (controls, { oldPluginSpec }): SectionSpecMap[SectionKind.Legend] => {
+			const old = oldPluginSpec?.legend;
+			// customColors is keyed by series label, which the new kind may not reproduce.
+			return controls.position
+				? { position: old?.position ?? DashboardtypesLegendPositionDTO.bottom }
+				: {};
 		},
 	},
 	[SectionKind.ChartAppearance]: {
 		specKey: 'chartAppearance',
-		seed: (controls): SectionSpecMap[SectionKind.ChartAppearance] | undefined => {
-			const c = controls as SectionControls[SectionKind.ChartAppearance];
+		seed: (
+			controls,
+			{ oldPluginSpec },
+		): SectionSpecMap[SectionKind.ChartAppearance] => {
+			// One guard on the optional old slice, then read fields with carried-or-default values.
+			const {
+				lineStyle = DashboardtypesLineStyleDTO.solid,
+				lineInterpolation = DashboardtypesLineInterpolationDTO.spline,
+				fillMode = DashboardtypesFillModeDTO.none,
+				showPoints,
+				spanGaps,
+			} = oldPluginSpec?.chartAppearance ?? {};
 			const appearance: SectionSpecMap[SectionKind.ChartAppearance] = {};
-			if (c.lineStyle) {
-				appearance.lineStyle = DashboardtypesLineStyleDTO.solid;
+			if (controls.lineStyle) {
+				appearance.lineStyle = lineStyle;
 			}
-			if (c.lineInterpolation) {
-				appearance.lineInterpolation = DashboardtypesLineInterpolationDTO.spline;
+			if (controls.lineInterpolation) {
+				appearance.lineInterpolation = lineInterpolation;
 			}
-			if (c.fillMode) {
-				appearance.fillMode = DashboardtypesFillModeDTO.none;
+			if (controls.fillMode) {
+				appearance.fillMode = fillMode;
 			}
-			return Object.keys(appearance).length > 0 ? appearance : undefined;
+			if (controls.showPoints && showPoints !== undefined) {
+				appearance.showPoints = showPoints;
+			}
+			if (controls.spanGaps && spanGaps !== undefined) {
+				appearance.spanGaps = spanGaps;
+			}
+			return appearance;
 		},
 	},
 	[SectionKind.Formatting]: {
 		specKey: 'formatting',
 		seed: (
 			controls,
-			{ oldSpec },
-		): Pick<PanelFormattingSlice, 'unit' | 'decimalPrecision'> | undefined => {
-			const c = controls as SectionControls[SectionKind.Formatting];
-			const old = (oldSpec?.plugin.spec as { formatting?: PanelFormattingSlice })
-				?.formatting;
+			{ oldSpec, oldPluginSpec },
+		): NonNullable<SeededPluginSpec['formatting']> => {
+			const old = oldPluginSpec?.formatting;
 			// Carry a field only when the target kind declares it (e.g. Table has no `unit`),
 			// else the save API rejects the spec.
-			const carried: Pick<PanelFormattingSlice, 'unit' | 'decimalPrecision'> = {
-				...(c.unit && old?.unit !== undefined && { unit: old.unit }),
-				...(c.decimals &&
+			const carried: NonNullable<SeededPluginSpec['formatting']> = {
+				...(controls.unit && old?.unit !== undefined && { unit: old.unit }),
+				...(controls.decimals &&
 					old?.decimalPrecision !== undefined && {
 						decimalPrecision: old.decimalPrecision,
 					}),
 			};
-			return Object.keys(carried).length > 0 ? carried : undefined;
+			// A panel-wide unit fans out to every value column when the target keys units
+			// per column (→ Table). One-way: `columnUnits` never seed a panel-wide `unit`.
+			const unit = old?.unit;
+			if (controls.columnUnits && unit) {
+				const keys = getTableColumnKeys(oldSpec?.queries ?? []);
+				if (keys.length > 0) {
+					carried.columnUnits = Object.fromEntries(keys.map((key) => [key, unit]));
+				}
+			}
+			return carried;
 		},
 	},
 	[SectionKind.Columns]: {
 		specKey: 'selectFields',
-		seed: (
-			_controls,
-			{ signal },
-		): SectionSpecMap[SectionKind.Columns] | undefined => {
-			if (!signal) {
-				return undefined;
-			}
-			const columns = defaultColumnsForSignal(signal);
-			return columns.length > 0 ? columns : undefined;
-		},
+		seed: (_controls, { signal }): SectionSpecMap[SectionKind.Columns] =>
+			signal ? defaultColumnsForSignal(signal) : [],
 	},
 	[SectionKind.Thresholds]: {
 		specKey: 'thresholds',
-		seed: (controls, { oldSpec }): AnyThreshold[] | undefined => {
-			const c = controls as SectionControls[SectionKind.Thresholds];
-			const variant = c.variant ?? ThresholdVariant.LABEL;
-			const old = (oldSpec?.plugin.spec as { thresholds?: AnyThreshold[] | null })
-				?.thresholds;
+		seed: (controls, { oldSpec, oldPluginSpec }): AnyThreshold[] => {
+			const variant = controls.variant ?? ThresholdVariant.LABEL;
+			const old = oldPluginSpec?.thresholds;
 			if (!old || old.length === 0) {
-				return undefined;
+				return [];
 			}
-			return old.map((threshold) =>
-				toThresholdVariant(threshold as AnyThresholdFields, variant),
+			// The save API rejects an empty table-threshold columnName.
+			const defaultColumnName =
+				variant === ThresholdVariant.TABLE
+					? getTableColumnKeys(oldSpec?.queries ?? [])[0]
+					: undefined;
+			const mapped = old.map((threshold) =>
+				toThresholdVariant(
+					threshold as AnyThresholdFields,
+					variant,
+					defaultColumnName,
+				),
 			);
+			return variant === ThresholdVariant.TABLE
+				? mapped.filter((t) => (t as { columnName?: string }).columnName)
+				: mapped;
 		},
 	},
 };
@@ -184,14 +265,23 @@ export function buildPluginSpec(
 ): SeededPluginSpec {
 	const spec: SeededPluginSpec = {};
 
+	// One localized cast for all seeds: `plugin.spec` is typed `unknown`.
+	const resolved: ResolvedSeedContext = {
+		...ctx,
+		oldPluginSpec: ctx.oldSpec?.plugin.spec as SeededPluginSpec | undefined,
+	};
+
 	sections.forEach((section) => {
 		const entry = SECTION_SEEDS[section.kind];
 		if (!entry) {
 			return;
 		}
 		const controls = 'controls' in section ? section.controls : undefined;
-		const value = entry.seed(controls, ctx);
-		if (value !== undefined) {
+		// The lookup can't prove `section.controls` matches `entry`'s key, so `entry.seed`
+		// is a union of differently-typed fns; one boundary cast, in place of a per-seed one.
+		const seed = entry.seed as (c: unknown, ctx: ResolvedSeedContext) => object;
+		const value = seed(controls, resolved);
+		if (!isEmptySlice(value)) {
 			// specKey ↔ value correlation can't be proven across the lookup; one localized cast.
 			(spec as Record<string, unknown>)[entry.specKey] = value;
 		}

@@ -7,12 +7,12 @@ import {
 } from 'react-router-dom';
 import { Typography } from '@signozhq/ui/typography';
 import Spinner from 'components/Spinner';
-import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 
 import { useDashboardFetch } from '../DashboardContainer/hooks/useDashboardFetch';
 import { useDashboardEditGuard } from '../DashboardContainer/hooks/useDashboardEditGuard';
+import { useResolvedVariables } from '../DashboardContainer/hooks/useResolvedVariables';
 import { getPanelDefinition } from '../DashboardContainer/Panels/registry';
 import { buildPluginSpec } from '../DashboardContainer/Panels/utils/buildPluginSpec';
 import { buildDefaultQueries } from '../DashboardContainer/Panels/utils/buildDefaultQueries';
@@ -24,6 +24,9 @@ import {
 } from '../DashboardContainer/PanelEditor/newPanelRoute';
 import { useSyncVariablesForSuggestions } from '../DashboardContainer/hooks/useSyncVariablesForSuggestions';
 import { createDefaultPanel } from '../DashboardContainer/patchOps';
+import { useDashboardStore } from '../DashboardContainer/store/useDashboardStore';
+import { useSeedVariableSelection } from '../DashboardContainer/VariablesBar/useSeedVariableSelection';
+import { withVariablesSearch } from '../DashboardContainer/VariablesBar/variablesUrlState';
 import styles from './PanelEditorPage.module.scss';
 
 /**
@@ -42,11 +45,30 @@ function PanelEditorPage(): JSX.Element {
 	// instead of the saved panel. Lost on refresh/new-tab, which falls back to saved.
 	const handoffSpec = (state as PanelEditorHandoffState | null)?.editSpec;
 
-	const { dashboard, isLoading, isError, error } =
+	const { dashboard, isLoading, isError, error, refetch } =
 		useDashboardFetch(dashboardId);
 	// Derived here (not from the store) because the editor route doesn't mount
 	// DashboardContainer, so the store's edit context may be cold on a direct URL.
-	const { isEditable, editDisabledReason } = useDashboardEditGuard(dashboard);
+	const { isEditable, isLocked, canEditDashboard, editDisabledReason } =
+		useDashboardEditGuard(dashboard);
+
+	// On a refresh/direct URL this route is the only mount, so seed the edit
+	// context the way DashboardContainer does — during render, so the subtree's
+	// first render already sees the id (useDashboardFetchRequired throws without it).
+	const setEditContext = useDashboardStore((s) => s.setEditContext);
+	if (dashboard?.id) {
+		setEditContext({
+			dashboardId: dashboard.id,
+			isLocked,
+			canEditDashboard,
+			refetch,
+		});
+	}
+
+	// No variables bar on this route: seed the selection and publish the resolved
+	// payload so the preview and context links get variable values after a refresh.
+	useSeedVariableSelection(dashboard);
+	useResolvedVariables(dashboard);
 
 	// Feed variables to the query builder autocomplete inside the editor.
 	useSyncVariablesForSuggestions(dashboard);
@@ -76,16 +98,11 @@ function PanelEditorPage(): JSX.Element {
 	const backToDashboard = useCallback((): void => {
 		// Carry only dashboard params; drop editor-only URL state (chiefly
 		// `compositeQuery`) so it doesn't leak into the dashboard. Time lives in Redux.
-		const params = new URLSearchParams();
-		const variables = new URLSearchParams(search).get(QueryParams.variables);
-		if (variables) {
-			params.set(QueryParams.variables, variables);
-		}
-		const query = params.toString();
 		safeNavigate(
-			`${generatePath(ROUTES.DASHBOARD, { dashboardId })}${
-				query ? `?${query}` : ''
-			}`,
+			`${generatePath(ROUTES.DASHBOARD, { dashboardId })}${withVariablesSearch(
+				'',
+				search,
+			)}`,
 		);
 	}, [safeNavigate, dashboardId, search]);
 
