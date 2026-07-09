@@ -1,16 +1,6 @@
 // Copyright (c) 2026 SigNoz, Inc.
 // Copyright 2023 Prometheus Team
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
 
 package jira
 
@@ -30,16 +20,17 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
-	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 )
 
-const Integration = "jira"
+const (
+	Integration    = "jira"
+	defaultBaseURL = "https://api.atlassian.com/ex/jira"
+)
 
 const (
 	// maxSummaryLenRunes is the maximum length in runes for Jira issue summary field.
@@ -47,6 +38,13 @@ const (
 	// maxDescriptionLenRunes is the maximum length in runes for Jira issue description field.
 	maxDescriptionLenRunes = 32767
 )
+
+// ConnectionResolver resolves the Atlassian OAuth credentials for a persisted
+// connection, and can exchange a stale refresh token for a fresh pair.
+type ConnectionResolver interface {
+	ResolveByConnectionID(ctx context.Context, orgID, connectionID string) (accessToken, refreshToken, cloudID string, err error)
+	Refresh(ctx context.Context, staleRefreshToken string) (newAccessToken, newRefreshToken string, err error)
+}
 
 // jiraUpdateVerbs are the operation verbs Jira accepts inside the "update" block of an edit-issue request.
 // https://developer.atlassian.com/server/jira/platform/jira-rest-api-example-edit-issues-6291632/
@@ -165,46 +163,52 @@ func (i issueFields) MarshalJSON() ([]byte, error) {
 	return json.Marshal(jsonFields)
 }
 
-// Notifier implements a Notifier for Jira notifications.
+// Notifier implements a Notifier for Jira notifications over Atlassian OAuth 2.0 (3LO).
 type Notifier struct {
-	conf      *config.JiraConfig
-	apiURL    *config.URL
+	config    *alertmanagertypes.JiraReceiverConfig
+	resolver  ConnectionResolver
 	tmpl      *template.Template
 	logger    *slog.Logger
 	client    *http.Client
 	retrier   *notify.Retrier
 	templater alertmanagertypes.Templater
+	baseURL string
 }
 
-// New returns a new Jira notifier.
-func New(c *config.JiraConfig, t *template.Template, l *slog.Logger, templater alertmanagertypes.Templater, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
-	if c == nil {
-		return nil, errors.NewInternalf(errors.CodeInternal, "jira config nil")
+// New returns a new OAuth-based Jira notifier.
+func New(cfg *alertmanagertypes.JiraReceiverConfig, t *template.Template, l *slog.Logger, templater alertmanagertypes.Templater, resolver ConnectionResolver) (*Notifier, error) {
+	if cfg == nil {
+		return nil, errors.NewInternalf(errors.CodeInternal, "jira config is required")
 	}
-
-	if c.APIURL == nil {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "missing api_url in jira config")
+	if resolver == nil {
+		return nil, errors.NewInternalf(errors.CodeInternal, "jira connection resolver is required")
 	}
-	apiURL := c.APIURL.Copy()
-	path := strings.TrimSuffix(apiURL.Path, "/")
-	if !strings.Contains(path, "/rest/api/") {
-		apiURL.Path = path + "/rest/api/2"
+	if cfg.ConnectionID == "" {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "jira connection_id is required")
 	}
-
-	client, err := notify.NewClientWithTracing(*c.HTTPConfig, Integration, httpOpts...)
-	if err != nil {
-		return nil, err
+	if cfg.OrgID == "" {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "jira org_id is required")
 	}
 
 	return &Notifier{
-		conf:      c,
-		apiURL:    apiURL,
+		config:    cfg,
+		resolver:  resolver,
 		tmpl:      t,
 		logger:    l,
-		client:    client,
+		client:    &http.Client{Timeout: 30 * time.Second},
 		retrier:   &notify.Retrier{RetryCodes: []int{http.StatusTooManyRequests}},
 		templater: templater,
+		baseURL:   defaultBaseURL,
 	}, nil
+}
+
+// session carries the resolved OAuth credentials for a single Notify call so the
+// Notifier stays safe for concurrent use.
+type session struct {
+	n            *Notifier
+	accessToken  string
+	refreshToken string
+	cloudID      string
 }
 
 // Notify implements the Notifier interface for Jira.
@@ -216,6 +220,18 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 	logger := n.logger.With(slog.String("group_key", key.String()))
 	logger.DebugContext(ctx, "extracted group key")
 
+	accessToken, refreshToken, cloudID, err := n.resolver.ResolveByConnectionID(ctx, n.config.OrgID, n.config.ConnectionID)
+	if err != nil {
+		return false, errors.WrapInternalf(err, errors.CodeInternal, "failed to resolve jira connection %s", n.config.ConnectionID)
+	}
+
+	s := &session{n: n, accessToken: accessToken, refreshToken: refreshToken, cloudID: cloudID}
+	return s.run(ctx, logger, key.Hash(), as)
+}
+
+func (s *session) run(ctx context.Context, logger *slog.Logger, groupID string, as []*types.Alert) (bool, error) {
+	n := s.n
+
 	alerts := types.Alerts(as...)
 	data := notify.GetTemplateData(ctx, n.tmpl, as, logger)
 	var tmplTextErr error
@@ -224,7 +240,7 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		return tmplText(tmpl), tmplTextErr
 	}
 
-	existingIssue, shouldRetry, err := n.searchExistingIssue(ctx, logger, key.Hash(), alerts.HasFiring(), tmplTextFunc)
+	existingIssue, shouldRetry, err := s.searchExistingIssue(ctx, logger, groupID, alerts.HasFiring(), tmplTextFunc)
 	if err != nil {
 		return shouldRetry, errors.WrapInternalf(err, errors.CodeInternal, "failed to look up existing issues")
 	}
@@ -247,27 +263,25 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		return false, err
 	}
 
-	requestBody, err := n.prepareIssueRequestBody(key.Hash(), summary, descriptionText, tmplTextFunc)
+	requestBody, err := n.prepareIssueRequestBody(groupID, summary, descriptionText, tmplTextFunc)
 	if err != nil {
 		return false, err
 	}
 
-	if method == http.MethodPut {
-		if requestBody.Fields != nil {
-			if !n.conf.Description.EnableUpdateValue() {
-				requestBody.Fields.Description = nil
-			}
-			if !n.conf.Summary.EnableUpdateValue() {
-				requestBody.Fields.Summary = nil
-			}
+	if method == http.MethodPut && requestBody.Fields != nil {
+		if !n.config.Description.EnableUpdateValue() {
+			requestBody.Fields.Description = nil
+		}
+		if !n.config.Summary.EnableUpdateValue() {
+			requestBody.Fields.Summary = nil
 		}
 	}
 
-	if _, shouldRetry, err := n.doAPIRequest(ctx, method, path, requestBody); err != nil {
+	if _, shouldRetry, err := s.doAPIRequest(ctx, method, path, requestBody); err != nil {
 		return shouldRetry, errors.WrapInternalf(err, errors.CodeInternal, "failed to %s Jira issue: %v", method, err)
 	}
 
-	return n.transitionIssue(ctx, existingIssue, alerts.HasFiring())
+	return s.transitionIssue(ctx, existingIssue, alerts.HasFiring())
 }
 
 // adfDocument wraps plain text into a minimal Atlassian Document Format document.
@@ -296,8 +310,8 @@ func (n *Notifier) expandSummaryAndDescription(ctx context.Context, logger *slog
 	result, err := n.templater.Expand(ctx, alertmanagertypes.ExpandRequest{
 		TitleTemplate:        customTitle,
 		BodyTemplate:         customBody,
-		DefaultTitleTemplate: n.conf.Summary.Template,
-		DefaultBodyTemplate:  n.conf.Description.Template,
+		DefaultTitleTemplate: n.config.Summary.Template,
+		DefaultBodyTemplate:  n.config.Description.Template,
 	}, alerts)
 	if err != nil {
 		return "", "", err
@@ -329,18 +343,18 @@ func (n *Notifier) expandSummaryAndDescription(ctx context.Context, logger *slog
 }
 
 func (n *Notifier) prepareIssueRequestBody(groupID string, summary string, descriptionText string, tmplTextFunc template.TemplateFunc) (issue, error) {
-	project, err := tmplTextFunc(n.conf.Project)
+	project, err := tmplTextFunc(n.config.Project)
 	if err != nil {
 		return issue{}, errors.WrapInternalf(err, errors.CodeInternal, "project template")
 	}
-	issueType, err := tmplTextFunc(n.conf.IssueType)
+	issueType, err := tmplTextFunc(n.config.IssueType)
 	if err != nil {
 		return issue{}, errors.WrapInternalf(err, errors.CodeInternal, "issue_type template")
 	}
 
-	fieldsWithStringKeys := make(map[string]any, len(n.conf.Fields))
+	fieldsWithStringKeys := make(map[string]any, len(n.config.Fields))
 	updateFields := make(map[string]any)
-	for k, v := range n.conf.Fields {
+	for k, v := range n.config.Fields {
 		// Skip fields saved with empty values — they carry no intent and
 		// would be rejected or misinterpreted by the Jira API.
 		if s, ok := v.(string); ok && s == "" {
@@ -361,7 +375,7 @@ func (n *Notifier) prepareIssueRequestBody(groupID string, summary string, descr
 		Project:   &issueProject{Key: project},
 		Issuetype: &idNameValue{Name: issueType},
 		Summary:   &summary,
-		Labels:    make([]string, 0, len(n.conf.Labels)+1),
+		Labels:    make([]string, 0, len(n.config.Labels)+1),
 		Fields:    fieldsWithStringKeys,
 	}}
 	if len(updateFields) > 0 {
@@ -369,14 +383,11 @@ func (n *Notifier) prepareIssueRequestBody(groupID string, summary string, descr
 	}
 
 	if descriptionText != "" {
-		if n.isCloud() {
-			requestBody.Fields.Description = adfDocument(descriptionText)
-		} else {
-			requestBody.Fields.Description = descriptionText
-		}
+		// OAuth 3LO always targets Jira Cloud, which expects Atlassian Document Format.
+		requestBody.Fields.Description = adfDocument(descriptionText)
 	}
 
-	for i, label := range n.conf.Labels {
+	for i, label := range n.config.Labels {
 		label, err = tmplTextFunc(label)
 		if err != nil {
 			return issue{}, errors.WrapInternalf(err, errors.CodeInternal, "labels[%d] template", i)
@@ -386,7 +397,7 @@ func (n *Notifier) prepareIssueRequestBody(groupID string, summary string, descr
 	requestBody.Fields.Labels = append(requestBody.Fields.Labels, fmt.Sprintf("ALERT{%s}", groupID))
 	sort.Strings(requestBody.Fields.Labels)
 
-	priority, err := tmplTextFunc(n.conf.Priority)
+	priority, err := tmplTextFunc(n.config.Priority)
 	if err != nil {
 		return issue{}, errors.WrapInternalf(err, errors.CodeInternal, "priority template")
 	}
@@ -397,19 +408,20 @@ func (n *Notifier) prepareIssueRequestBody(groupID string, summary string, descr
 	return requestBody, nil
 }
 
-func (n *Notifier) searchExistingIssue(ctx context.Context, logger *slog.Logger, groupID string, firing bool, tmplTextFunc template.TemplateFunc) (*issue, bool, error) {
+func (s *session) searchExistingIssue(ctx context.Context, logger *slog.Logger, groupID string, firing bool, tmplTextFunc template.TemplateFunc) (*issue, bool, error) {
+	n := s.n
 	jql := strings.Builder{}
 
-	if n.conf.WontFixResolution != "" {
+	if n.config.WontFixResolution != "" {
 		// JQL's != on resolution silently excludes issues whose resolution is EMPTY
 		// (unresolved). Use (resolution is EMPTY or resolution != X) so open issues
 		// remain in the candidate set and only won't-fix resolved ones are filtered out.
-		fmt.Fprintf(&jql, `(resolution is EMPTY or resolution != %q) and `, n.conf.WontFixResolution)
+		fmt.Fprintf(&jql, `(resolution is EMPTY or resolution != %q) and `, n.config.WontFixResolution)
 	}
 
 	if firing {
-		reopenDuration := int64(time.Duration(n.conf.ReopenDuration).Minutes())
-		if n.conf.ReopenTransition != "" && reopenDuration > 0 {
+		reopenDuration := int64(time.Duration(n.config.ReopenDuration).Minutes())
+		if n.config.ReopenTransition != "" && reopenDuration > 0 {
 			fmt.Fprintf(&jql, `(resolutiondate is EMPTY OR resolutiondate >= -%dm) and `, reopenDuration)
 		} else {
 			jql.WriteString(`statusCategory != Done and `)
@@ -419,15 +431,21 @@ func (n *Notifier) searchExistingIssue(ctx context.Context, logger *slog.Logger,
 	}
 
 	alertLabel := fmt.Sprintf("ALERT{%s}", groupID)
-	project, err := tmplTextFunc(n.conf.Project)
+	project, err := tmplTextFunc(n.config.Project)
 	if err != nil {
 		return nil, false, errors.WrapInternalf(err, errors.CodeInternal, "invalid project template or value")
 	}
 	fmt.Fprintf(&jql, `project=%q and labels=%q order by status ASC,resolutiondate DESC`, project, alertLabel)
 
-	requestBody, searchPath := n.prepareSearchRequest(jql.String())
+	requestBody := issueSearch{
+		JQL:        jql.String(),
+		MaxResults: 2,
+		Fields:     []string{"status"},
+	}
+	// Jira Cloud uses the v3 /search/jql endpoint.
+	searchPath := s.baseAPIURL() + "/search/jql"
 
-	responseBody, shouldRetry, err := n.doAPIRequestFullPath(ctx, http.MethodPost, searchPath, requestBody)
+	responseBody, shouldRetry, err := s.doAPIRequestFullPath(ctx, http.MethodPost, searchPath, requestBody)
 	if err != nil {
 		return nil, shouldRetry, errors.WrapInternalf(err, errors.CodeInternal, "jira search request failed")
 	}
@@ -448,32 +466,10 @@ func (n *Notifier) searchExistingIssue(ctx context.Context, logger *slog.Logger,
 	return &issueSearchResult.Issues[0], false, nil
 }
 
-// prepareSearchRequest builds request body and endpoint for searching Jira issues.
-// Jira Cloud uses /rest/api/3/search/jql while Data Center uses /rest/api/2/search.
-func (n *Notifier) prepareSearchRequest(jql string) (issueSearch, string) {
-	requestBody := issueSearch{
-		JQL:        jql,
-		MaxResults: 2,
-		Fields:     []string{"status"},
-	}
-
-	baseURL := n.versionedAPIURL()
-	baseURL.Path = strings.TrimSuffix(baseURL.Path, "/")
-
-	if n.isCloud() {
-		// Jira Cloud uses the v3 /search/jql endpoint.
-		baseURL.Path += "/search/jql"
-		return requestBody, baseURL.String()
-	}
-
-	baseURL.Path += "/search"
-	return requestBody, baseURL.String()
-}
-
-func (n *Notifier) getIssueTransitionByName(ctx context.Context, issueKey, transitionName string) (string, bool, error) {
+func (s *session) getIssueTransitionByName(ctx context.Context, issueKey, transitionName string) (string, bool, error) {
 	path := fmt.Sprintf("issue/%s/transitions", issueKey)
 
-	responseBody, shouldRetry, err := n.doAPIRequest(ctx, http.MethodGet, path, nil)
+	responseBody, shouldRetry, err := s.doAPIRequest(ctx, http.MethodGet, path, nil)
 	if err != nil {
 		return "", shouldRetry, err
 	}
@@ -492,7 +488,8 @@ func (n *Notifier) getIssueTransitionByName(ctx context.Context, issueKey, trans
 	return "", false, errors.NewInternalf(errors.CodeInternal, "can't find transition %s for issue %s", transitionName, issueKey)
 }
 
-func (n *Notifier) transitionIssue(ctx context.Context, issueToTransition *issue, firing bool) (bool, error) {
+func (s *session) transitionIssue(ctx context.Context, issueToTransition *issue, firing bool) (bool, error) {
+	n := s.n
 	if issueToTransition == nil || issueToTransition.Key == "" || issueToTransition.Fields == nil || issueToTransition.Fields.Status == nil {
 		return false, nil
 	}
@@ -502,19 +499,19 @@ func (n *Notifier) transitionIssue(ctx context.Context, issueToTransition *issue
 		if issueToTransition.Fields.Status.StatusCategory.Key != "done" {
 			return false, nil
 		}
-		transition = n.conf.ReopenTransition
+		transition = n.config.ReopenTransition
 	} else {
 		if issueToTransition.Fields.Status.StatusCategory.Key == "done" {
 			return false, nil
 		}
-		transition = n.conf.ResolveTransition
+		transition = n.config.ResolveTransition
 	}
 
 	if transition == "" {
 		return false, nil
 	}
 
-	transitionID, shouldRetry, err := n.getIssueTransitionByName(ctx, issueToTransition.Key, transition)
+	transitionID, shouldRetry, err := s.getIssueTransitionByName(ctx, issueToTransition.Key, transition)
 	if err != nil {
 		return shouldRetry, err
 	}
@@ -526,7 +523,7 @@ func (n *Notifier) transitionIssue(ctx context.Context, issueToTransition *issue
 	}
 	path := fmt.Sprintf("issue/%s/transitions", issueToTransition.Key)
 
-	_, shouldRetry, err = n.doAPIRequest(ctx, http.MethodPost, path, requestBody)
+	_, shouldRetry, err = s.doAPIRequest(ctx, http.MethodPost, path, requestBody)
 	if err != nil {
 		return shouldRetry, err
 	}
@@ -534,52 +531,49 @@ func (n *Notifier) transitionIssue(ctx context.Context, issueToTransition *issue
 	return false, nil
 }
 
-// isCloud reports whether this notifier targets a Jira Cloud instance.
-func (n *Notifier) isCloud() bool {
-	return isCloudHost(n.conf.APIType, n.apiURL.Host)
+// baseAPIURL returns the Jira Cloud REST v3 base for the resolved cloud id.
+func (s *session) baseAPIURL() string {
+	return fmt.Sprintf("%s/%s/rest/api/3", strings.TrimRight(s.n.baseURL, "/"), s.cloudID)
 }
 
-// versionedAPIURL returns the base API URL with the correct REST version.
-func (n *Notifier) versionedAPIURL() *config.URL {
-	baseURL := n.apiURL.Copy()
-	if n.isCloud() {
-		baseURL.Path = strings.Replace(baseURL.Path, "/rest/api/2", "/rest/api/3", 1)
-	}
-	return baseURL
+func (s *session) doAPIRequest(ctx context.Context, method, path string, requestBody any) ([]byte, bool, error) {
+	path = strings.TrimPrefix(path, "/")
+	return s.doAPIRequestFullPath(ctx, method, s.baseAPIURL()+"/"+path, requestBody)
 }
 
-func (n *Notifier) doAPIRequest(ctx context.Context, method, path string, requestBody any) ([]byte, bool, error) {
-	url := n.versionedAPIURL()
-	// Ensure path starts with /
-	if !strings.HasPrefix(path, "/") {
-		path = "/" + path
-	}
-	url.Path = strings.TrimSuffix(url.Path, "/") + path
-	return n.doAPIRequestFullPath(ctx, method, url.String(), requestBody)
-}
-
-func (n *Notifier) doAPIRequestFullPath(ctx context.Context, method, path string, requestBody any) ([]byte, bool, error) {
-	var body io.Reader
+func (s *session) doAPIRequestFullPath(ctx context.Context, method, fullURL string, requestBody any) ([]byte, bool, error) {
+	var bodyBytes []byte
 	if requestBody != nil {
 		var buf bytes.Buffer
 		if err := json.NewEncoder(&buf).Encode(requestBody); err != nil {
 			return nil, false, err
 		}
-
-		body = &buf
+		bodyBytes = buf.Bytes()
 	}
 
-	req, err := http.NewRequestWithContext(ctx, method, path, body)
+	resp, err := s.sendRequest(ctx, method, fullURL, bodyBytes, s.accessToken)
 	if err != nil {
 		return nil, false, err
 	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept-Language", "en")
 
-	resp, err := n.client.Do(req) //nolint:bodyclose
-	if err != nil {
-		return nil, false, err
+	// On 401, refresh the access token once and retry.
+	if resp.StatusCode == http.StatusUnauthorized && s.refreshToken != "" {
+		newAccess, newRefresh, refreshErr := s.n.resolver.Refresh(ctx, s.refreshToken)
+		if refreshErr != nil {
+			s.n.logger.WarnContext(ctx, "failed to refresh jira access token; reconnect the integration", slog.Any("err", refreshErr))
+		} else if newAccess != "" {
+			notify.Drain(resp)
+			s.accessToken = newAccess
+			if newRefresh != "" {
+				s.refreshToken = newRefresh
+			}
+			resp, err = s.sendRequest(ctx, method, fullURL, bodyBytes, s.accessToken)
+			if err != nil {
+				return nil, false, err
+			}
+		}
 	}
+
 	defer notify.Drain(resp)
 
 	responseBody, err := io.ReadAll(resp.Body)
@@ -587,10 +581,28 @@ func (n *Notifier) doAPIRequestFullPath(ctx context.Context, method, path string
 		return nil, false, err
 	}
 
-	shouldRetry, err := n.retrier.Check(resp.StatusCode, bytes.NewReader(responseBody))
+	shouldRetry, err := s.n.retrier.Check(resp.StatusCode, bytes.NewReader(responseBody))
 	if err != nil {
 		return nil, shouldRetry, notify.NewErrorWithReason(notify.GetFailureReasonFromStatusCode(resp.StatusCode), err)
 	}
 
 	return responseBody, false, nil
+}
+
+func (s *session) sendRequest(ctx context.Context, method, fullURL string, body []byte, accessToken string) (*http.Response, error) {
+	var reader io.Reader
+	if body != nil {
+		reader = bytes.NewReader(body)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, method, fullURL, reader)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Accept-Language", "en")
+
+	return s.n.client.Do(req) //nolint:bodyclose
 }

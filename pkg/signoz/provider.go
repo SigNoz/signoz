@@ -218,6 +218,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewMigrateSSORoleMappingNamesFactory(sqlstore),
 		sqlmigration.NewAddMetricReductionRulesFactory(sqlstore, sqlschema),
 		sqlmigration.NewRemoveOrganizationTuplesFactory(sqlstore),
+		sqlmigration.NewAddAtlassianConnectionFactory(sqlstore, sqlschema),
 	)
 }
 

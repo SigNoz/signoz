@@ -163,6 +163,22 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v1/channels/jira/oauth/session", provider.authzMiddleware.EditAccess(provider.alertmanagerHandler.JiraOAuthSession)).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v1/channels/jira/oauth/callback", http.HandlerFunc(provider.alertmanagerHandler.JiraOAuthCallback)).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v1/channels/jira/connections", provider.authzMiddleware.ViewAccess(provider.alertmanagerHandler.JiraConnections)).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v1/channels/jira/connections/{id}", provider.authzMiddleware.AdminAccess(provider.alertmanagerHandler.JiraConnectionDelete)).Methods(http.MethodDelete).GetError(); err != nil {
+		return err
+	}
+
 	if err := router.Handle("/api/v1/testChannel", handler.New(provider.authzMiddleware.EditAccess(provider.alertmanagerHandler.TestReceiver), handler.OpenAPIDef{
 		ID:                  "TestChannelDeprecated",
 		Tags:                []string{"channels"},

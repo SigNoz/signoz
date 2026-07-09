@@ -342,8 +342,7 @@ function CreateAlertChannels({
 			name: selectedConfig?.name || '',
 			send_resolved: selectedConfig?.send_resolved || false,
 			api_url: selectedConfig?.api_url || '',
-			username: selectedConfig?.username || '',
-			password: selectedConfig?.password || '',
+			connection_id: selectedConfig?.connection_id || '',
 			project: selectedConfig?.project || '',
 			issue_type: selectedConfig?.issue_type || '',
 			summary: selectedConfig?.summary || '',
@@ -360,17 +359,10 @@ function CreateAlertChannels({
 	);
 
 	const onJiraHandler = useCallback(async () => {
-		if (!selectedConfig.api_url) {
+		if (!selectedConfig.connection_id || !selectedConfig.api_url) {
 			notifications.error({
 				message: 'Error',
-				description: t('jira_api_url_required'),
-			});
-			return;
-		}
-		if (!selectedConfig.username || !selectedConfig.password) {
-			notifications.error({
-				message: 'Error',
-				description: t('jira_credentials_required'),
+				description: t('jira_not_connected'),
 			});
 			return;
 		}

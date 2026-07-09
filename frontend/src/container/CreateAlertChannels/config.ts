@@ -65,9 +65,10 @@ export interface OpsgenieChannel extends Channel {
 }
 
 export interface JiraChannel extends Channel {
+	// api_url is the Atlassian site URL, derived from the selected OAuth connection.
 	api_url?: string;
-	username?: string;
-	password?: string;
+	// connection_id references a persisted Atlassian OAuth connection.
+	connection_id?: string;
 	project?: string;
 	issue_type?: string;
 	summary?: string;

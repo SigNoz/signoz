@@ -1,7 +1,5 @@
 export interface JiraProjectsRequest {
-	api_url: string;
-	username: string;
-	password: string;
+	connection_id: string;
 }
 
 export interface JiraProject {
@@ -15,9 +13,7 @@ export interface JiraProjectsResponse {
 }
 
 export interface JiraProjectIssueTypesRequest {
-	api_url: string;
-	username: string;
-	password: string;
+	connection_id: string;
 	project_key: string;
 }
 

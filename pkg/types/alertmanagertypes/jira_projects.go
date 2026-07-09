@@ -1,9 +1,7 @@
 package alertmanagertypes
 
 type JiraProjectsRequest struct {
-	APIURL   string `json:"api_url"`
-	Username string `json:"username"`
-	Password string `json:"password"`
+	ConnectionID string `json:"connection_id"`
 }
 
 type JiraProject struct {
@@ -17,10 +15,8 @@ type JiraProjectsResponse struct {
 }
 
 type JiraProjectIssueTypesRequest struct {
-	APIURL     string `json:"api_url"`
-	Username   string `json:"username"`
-	Password   string `json:"password"`
-	ProjectKey string `json:"project_key"`
+	ConnectionID string `json:"connection_id"`
+	ProjectKey   string `json:"project_key"`
 }
 
 type JiraIssueType struct {

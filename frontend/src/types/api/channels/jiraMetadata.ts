@@ -1,8 +1,5 @@
 export interface JiraMetadataRequest {
-	api_url: string;
-	api_type?: string;
-	username: string;
-	password: string;
+	connection_id: string;
 	project: string;
 	issue_type: string;
 }

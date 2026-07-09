@@ -8,7 +8,7 @@ import {
 	useState,
 } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
-import { Collapse, Form, Input, Select } from 'antd';
+import { Button, Collapse, Form, Input, Select, Space } from 'antd';
 import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import {
 	fetchJiraProjectIssueTypes,
@@ -22,7 +22,9 @@ import {
 } from 'types/api/channels/jiraMetadata';
 import { JiraIssueType, JiraProject } from 'types/api/channels/jiraProjects';
 
-import { JiraChannel } from '../../CreateAlertChannels/config';
+import { JiraChannel } from '../../../CreateAlertChannels/config';
+import { useJiraConnect } from './useJiraConnect';
+import { useJiraConnections } from './useJiraConnections';
 
 const { TextArea } = Input;
 
@@ -46,11 +48,39 @@ type CustomFieldRow = {
 function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 	const { t } = useTranslation('channels');
 	const form = Form.useFormInstance();
-	const apiUrl = Form.useWatch('api_url', form) as string | undefined;
-	const username = Form.useWatch('username', form) as string | undefined;
-	const password = Form.useWatch('password', form) as string | undefined;
+	const savedConnectionId: string | undefined =
+		form.getFieldValue('connection_id');
+	const [connectionId, setConnectionId] = useState<string | undefined>(
+		savedConnectionId,
+	);
 	const project = Form.useWatch('project', form) as string | undefined;
 	const issueType = Form.useWatch('issue_type', form) as string | undefined;
+
+	const {
+		connections,
+		isLoading: connectionsLoading,
+		refetch: refetchConnections,
+	} = useJiraConnections();
+
+	// selectConnection stamps the chosen connection onto local state and the parent's config.
+	const selectConnection = (id: string): void => {
+		const connection = connections.find((conn) => conn.id === id);
+		setConnectionId(id);
+		form.setFieldValue('project', undefined);
+		form.setFieldValue('issue_type', undefined);
+		setSelectedConfig((current) => ({
+			...current,
+			connection_id: id,
+			api_url: connection?.site_url,
+			project: undefined,
+			issue_type: undefined,
+		}));
+	};
+
+	const { connect, isConnecting } = useJiraConnect((connection) => {
+		void refetchConnections().then(() => selectConnection(connection.id));
+	});
+
 	const currentCustomFieldsRef = useRef<Record<string, unknown>>(
 		(form.getFieldValue('custom_fields') as Record<string, unknown>) ?? {},
 	);
@@ -409,7 +439,7 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 	};
 
 	const loadMetadata = async (): Promise<void> => {
-		if (!apiUrl || !username || !password) {
+		if (!connectionId) {
 			setMetadataError(t('jira_metadata_missing_auth'));
 			return;
 		}
@@ -421,10 +451,7 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 		setMetadataError('');
 		try {
 			const response = await jiraMetadata({
-				api_url: apiUrl,
-				api_type: 'auto',
-				username,
-				password,
+				connection_id: connectionId,
 				project,
 				issue_type: issueType,
 			});
@@ -453,7 +480,7 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 	};
 
 	const loadProjects = async (): Promise<void> => {
-		if (!apiUrl || !username || !password) {
+		if (!connectionId) {
 			setProjectsError(t('jira_metadata_missing_auth'));
 			return;
 		}
@@ -462,9 +489,7 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 		setProjectsError('');
 		try {
 			const projectsResponse = await fetchJiraProjects({
-				api_url: apiUrl,
-				username,
-				password,
+				connection_id: connectionId,
 			});
 			const loadedProjects = projectsResponse.data.projects || [];
 			setProjects(loadedProjects);
@@ -475,9 +500,9 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 		}
 	};
 
-	// Reload projects whenever the credentials change.
+	// Reload projects whenever the selected connection changes.
 	useEffect(() => {
-		if (!apiUrl || !username || !password) {
+		if (!connectionId) {
 			return undefined;
 		}
 		const handle = setTimeout((): void => {
@@ -485,10 +510,10 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 		}, 500);
 		return (): void => clearTimeout(handle);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [apiUrl, username, password]);
+	}, [connectionId]);
 
 	const loadIssueTypes = async (projectKey: string): Promise<void> => {
-		if (!apiUrl || !username || !password) {
+		if (!connectionId) {
 			setIssueTypesError(t('jira_metadata_missing_auth'));
 			return;
 		}
@@ -501,9 +526,7 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 		setIssueTypesError('');
 		try {
 			const response = await fetchJiraProjectIssueTypes({
-				api_url: apiUrl,
-				username,
-				password,
+				connection_id: connectionId,
 				project_key: projectKey,
 			});
 			const types = response.data.issue_types || [];
@@ -516,20 +539,20 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 	};
 
 	useEffect(() => {
-		if (!project) {
+		if (!connectionId || !project) {
 			return;
 		}
 		void loadIssueTypes(project);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [project]);
+	}, [connectionId, project]);
 
 	useEffect(() => {
-		if (!project || !issueType) {
+		if (!connectionId || !project || !issueType) {
 			return;
 		}
 		void loadMetadata();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [project, issueType]);
+	}, [connectionId, project, issueType]);
 
 	const requiredRows = useMemo(
 		() =>
@@ -711,12 +734,11 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 	return (
 		<>
 			<Form.Item
-				name="api_url"
-				label={t('field_jira_api_url')}
+				label={t('field_jira_oauth')}
 				tooltip={{
 					title: (
 						<MarkdownRenderer
-							markdownContent={t('tooltip_jira_api_url')}
+							markdownContent={t('tooltip_jira_oauth')}
 							variables={{}}
 						/>
 					),
@@ -725,38 +747,31 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 				}}
 				required
 			>
-				<Input
-					onChange={handleInputChange('api_url')}
-					placeholder="https://your-domain.atlassian.net"
-					data-testid="jira-api-url-textbox"
-				/>
-			</Form.Item>
-
-			<Form.Item
-				name="username"
-				label={t('field_jira_username')}
-				help={t('help_jira_username')}
-				required
-			>
-				<Input
-					onChange={handleInputChange('username')}
-					placeholder="user@company.com or username"
-					data-testid="jira-username-textbox"
-				/>
-			</Form.Item>
-
-			<Form.Item
-				name="password"
-				label={t('field_jira_password')}
-				help={t('help_jira_password')}
-				required
-			>
-				<Input
-					type="password"
-					onChange={handleInputChange('password')}
-					placeholder="API token or password"
-					data-testid="jira-password-textbox"
-				/>
+				<Space direction="vertical" style={{ width: '100%' }}>
+					<Select
+						value={connectionId}
+						onChange={selectConnection}
+						options={connections.map((connection) => ({
+							label: connection.site_url || connection.cloud_id,
+							value: connection.id,
+						}))}
+						loading={connectionsLoading}
+						placeholder={t('placeholder_jira_connection')}
+						optionFilterProp="label"
+						showSearch
+						data-testid="jira-connection-select"
+					/>
+					<Button
+						type={connectionId ? 'default' : 'primary'}
+						onClick={(): void => {
+							void connect();
+						}}
+						loading={isConnecting}
+						data-testid="jira-oauth-connect"
+					>
+						{t('button_add_jira_connection')}
+					</Button>
+				</Space>
 			</Form.Item>
 
 			<Form.Item

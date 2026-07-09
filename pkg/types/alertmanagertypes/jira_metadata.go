@@ -1,12 +1,9 @@
 package alertmanagertypes
 
 type JiraMetadataRequest struct {
-	APIURL    string `json:"api_url"`
-	APIType   string `json:"api_type"`
-	Username  string `json:"username"`
-	Password  string `json:"password"`
-	Project   string `json:"project"`
-	IssueType string `json:"issue_type"`
+	ConnectionID string `json:"connection_id"`
+	Project      string `json:"project"`
+	IssueType    string `json:"issue_type"`
 }
 
 type JiraAllowedValue struct {

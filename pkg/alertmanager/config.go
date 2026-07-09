@@ -24,6 +24,28 @@ type Signoz struct {
 
 	// Config is the config for the alertmanager server.
 	alertmanagerserver.Config `mapstructure:",squash" yaml:",squash"`
+
+	// Jira holds configuration for the Jira notification channel.
+	Jira JiraConfig `mapstructure:"jira" yaml:"jira"`
+}
+
+// JiraConfig is the configuration for the Jira notification channel.
+type JiraConfig struct {
+	// OAuth holds the Atlassian OAuth 2.0 (3LO) app credentials used to connect Jira channels.
+	OAuth AtlassianOAuthConfig `mapstructure:"oauth" yaml:"oauth"`
+}
+
+// AtlassianOAuthConfig holds the Atlassian OAuth 2.0 app credentials.
+type AtlassianOAuthConfig struct {
+	ClientID             string   `mapstructure:"client_id" yaml:"client_id"`
+	ClientSecret         string   `mapstructure:"client_secret" yaml:"client_secret"`
+	RedirectURI          string   `mapstructure:"redirect_uri" yaml:"redirect_uri"`
+	AllowedOpenerOrigins []string `mapstructure:"allowed_opener_origins" yaml:"allowed_opener_origins"`
+}
+
+// Enabled reports whether the Atlassian OAuth app is fully configured.
+func (c AtlassianOAuthConfig) Enabled() bool {
+	return c.ClientID != "" && c.ClientSecret != "" && c.RedirectURI != ""
 }
 
 type Legacy struct {

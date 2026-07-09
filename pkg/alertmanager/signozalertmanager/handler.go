@@ -7,8 +7,10 @@ import (
 	"net/http"
 	"time"
 
+	"log/slog"
+
 	"github.com/SigNoz/signoz/pkg/alertmanager"
-	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/jira"
+	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager/atlassian"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
@@ -19,10 +21,36 @@ import (
 
 type handler struct {
 	alertmanager alertmanager.Alertmanager
+	discovery    *atlassian.DiscoveryService
+	jiraOAuth    *atlassian.OAuthHandler
 }
 
 func NewHandler(alertmanager alertmanager.Alertmanager) alertmanager.Handler {
-	return &handler{alertmanager: alertmanager}
+	return &handler{
+		alertmanager: alertmanager,
+		discovery:    atlassian.NewDiscoveryService(alertmanager.AtlassianConnectionStore(), alertmanager.JiraOAuthConfig(), slog.Default()),
+		jiraOAuth:    atlassian.NewOAuthHandler(alertmanager),
+	}
+}
+
+// JiraOAuthSession starts the Atlassian OAuth flow and returns the consent URL.
+func (handler *handler) JiraOAuthSession(rw http.ResponseWriter, req *http.Request) {
+	handler.jiraOAuth.OAuthSession(rw, req)
+}
+
+// JiraOAuthCallback completes the Atlassian OAuth flow for a Jira connection.
+func (handler *handler) JiraOAuthCallback(rw http.ResponseWriter, req *http.Request) {
+	handler.jiraOAuth.OAuthCallback(rw, req)
+}
+
+// JiraConnections lists the org's reusable Atlassian OAuth connections.
+func (handler *handler) JiraConnections(rw http.ResponseWriter, req *http.Request) {
+	handler.jiraOAuth.ListConnections(rw, req)
+}
+
+// JiraConnectionDelete removes an Atlassian OAuth connection.
+func (handler *handler) JiraConnectionDelete(rw http.ResponseWriter, req *http.Request) {
+	handler.jiraOAuth.DeleteConnection(rw, req)
 }
 
 func (handler *handler) GetAlerts(rw http.ResponseWriter, req *http.Request) {
@@ -73,6 +101,11 @@ func (handler *handler) TestReceiver(rw http.ResponseWriter, req *http.Request) 
 		return
 	}
 
+	if err := handler.jiraOAuth.ResolveConnections(ctx, claims.OrgID, receiver); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
 	err = handler.alertmanager.TestReceiver(ctx, claims.OrgID, receiver)
 	if err != nil {
 		render.Error(rw, err)
@@ -93,13 +126,19 @@ func (handler *handler) GetJiraMetadata(rw http.ResponseWriter, req *http.Reques
 	}
 	defer req.Body.Close() //nolint:errcheck
 
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
 	var metadataRequest alertmanagertypes.JiraMetadataRequest
 	if err := json.Unmarshal(body, &metadataRequest); err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	response, err := jira.GetMetadata(ctx, metadataRequest)
+	response, err := handler.discovery.Metadata(ctx, claims.OrgID, metadataRequest.ConnectionID, metadataRequest.Project, metadataRequest.IssueType)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -111,6 +150,12 @@ func (handler *handler) GetJiraMetadata(rw http.ResponseWriter, req *http.Reques
 func (handler *handler) ListJiraProjects(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
 
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
@@ -125,7 +170,7 @@ func (handler *handler) ListJiraProjects(rw http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	response, err := jira.ListProjects(ctx, projectsRequest)
+	response, err := handler.discovery.Projects(ctx, claims.OrgID, projectsRequest.ConnectionID)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -137,6 +182,12 @@ func (handler *handler) ListJiraProjects(rw http.ResponseWriter, req *http.Reque
 func (handler *handler) ListJiraProjectIssueTypes(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
 
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
@@ -151,7 +202,7 @@ func (handler *handler) ListJiraProjectIssueTypes(rw http.ResponseWriter, req *h
 		return
 	}
 
-	response, err := jira.ListProjectIssueTypes(ctx, issueTypesRequest)
+	response, err := handler.discovery.IssueTypes(ctx, claims.OrgID, issueTypesRequest.ConnectionID, issueTypesRequest.ProjectKey)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -275,6 +326,12 @@ func (handler *handler) UpdateChannelByID(rw http.ResponseWriter, req *http.Requ
 		return
 	}
 
+	// For Jira, validate the referenced connection belongs to the org and stamp OrgID.
+	if err := handler.jiraOAuth.ResolveConnections(ctx, claims.OrgID, receiver); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
 	err = handler.alertmanager.UpdateChannelByReceiverAndID(ctx, claims.OrgID, receiver, id)
 	if err != nil {
 		render.Error(rw, err)
@@ -341,6 +398,11 @@ func (handler *handler) CreateChannel(rw http.ResponseWriter, req *http.Request)
 
 	receiver, err := alertmanagertypes.NewReceiver(string(body))
 	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	if err := handler.jiraOAuth.ResolveConnections(ctx, claims.OrgID, receiver); err != nil {
 		render.Error(rw, err)
 		return
 	}

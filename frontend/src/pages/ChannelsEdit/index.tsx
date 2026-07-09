@@ -79,8 +79,6 @@ function ChannelsEdit(): JSX.Element {
 			channel = {
 				...(jiraConfig as unknown as JiraChannel),
 				api_url: jiraConfig.api_url as unknown as string,
-				username: jiraConfig.http_config?.basic_auth?.username || '',
-				password: jiraConfig.http_config?.basic_auth?.password || '',
 				summary: jiraConfig.summary?.template || '',
 				description: jiraConfig.description?.template || '',
 				labels: jiraConfig.labels?.join(', ') || '',

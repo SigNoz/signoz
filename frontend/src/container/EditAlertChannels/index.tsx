@@ -326,8 +326,7 @@ function EditAlertChannels({
 			name: selectedConfig.name || '',
 			send_resolved: selectedConfig?.send_resolved || false,
 			api_url: selectedConfig.api_url || '',
-			username: selectedConfig.username || '',
-			password: selectedConfig.password || '',
+			connection_id: selectedConfig.connection_id || '',
 			project: selectedConfig.project || '',
 			issue_type: selectedConfig.issue_type || '',
 			summary: selectedConfig.summary || '',
@@ -347,27 +346,13 @@ function EditAlertChannels({
 	const onJiraEditHandler = useCallback(async () => {
 		setSavingState(true);
 
-		const hasJiraUsername = !!selectedConfig.username;
-		const hasJiraPassword = !!selectedConfig.password;
-		if (hasJiraUsername !== hasJiraPassword) {
+		if (!selectedConfig.connection_id || !selectedConfig.api_url) {
 			notifications.error({
 				message: 'Error',
-				description: t('username_no_password'),
+				description: t('jira_not_connected'),
 			});
 			setSavingState(false);
-			return {
-				status: 'failed',
-				statusMessage: t('username_no_password'),
-			};
-		}
-
-		if (selectedConfig?.api_url === '') {
-			notifications.error({
-				message: 'Error',
-				description: t('jira_api_url_required'),
-			});
-			setSavingState(false);
-			return { status: 'failed', statusMessage: t('jira_api_url_required') };
+			return { status: 'failed', statusMessage: t('jira_not_connected') };
 		}
 		if (!selectedConfig.project) {
 			notifications.error({

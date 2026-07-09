@@ -15,24 +15,14 @@ const editJira = async (
 	props: Props,
 ): Promise<SuccessResponseV2<PayloadProps> | ErrorResponse> => {
 	try {
-		const httpConfig =
-			props.username && props.password
-				? {
-						basic_auth: {
-							username: props.username.trim(),
-							password: props.password.trim(),
-						},
-					}
-				: undefined;
-
 		const reopenDuration = props.reopen_duration?.trim();
 		const response = await axios.put<PayloadProps>(`/channels/${props.id}`, {
 			name: props.name,
 			jira_configs: [
 				{
+					connection_id: props.connection_id,
 					api_url: props.api_url,
 					api_type: 'auto',
-					http_config: httpConfig,
 					project: props.project,
 					issue_type: props.issue_type,
 					summary: { template: props.summary },
