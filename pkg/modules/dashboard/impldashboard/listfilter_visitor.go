@@ -37,13 +37,39 @@ func newVisitor(formatter sqlstore.SQLFormatter) *visitor {
 	}
 }
 
-// compile turns the parse tree into `?`-placeholder WHERE SQL + arguments for bun.
+// compile turns the query into `?`-placeholder WHERE SQL + arguments for bun. A
+// well-formed `key OP value` filter compiles to the DSL predicate; a query made
+// up entirely of bare terms (a plain string) compiles to a free-text search; a
+// bare term mixed into a real filter, or any other malformed input, is returned
+// as errors.
 func (v *visitor) compile(query string) (string, []any, []string) {
 	tree, _, collector := filterquery.Parse(query)
 	if len(collector.Errors) > 0 {
 		return "", nil, collector.Errors
 	}
 	condition, _ := v.visit(tree).(string)
+
+	// The query parsed into nothing but bare terms — treat it as a free-text search.
+	if condition == "" && len(v.errors) == 0 && len(v.bareTerms) > 0 {
+		value := strings.TrimSpace(query)
+		// A lone term spanning the whole query may be a quoted string — unquote it
+		// so a user can search a DSL-like literal, e.g. `"team = prod"`. A
+		// multi-word phrase is searched verbatim.
+		if len(v.bareTerms) == 1 && v.bareTerms[0] == value {
+			value = trimQuotes(value)
+		}
+		sql, arguments := v.compileFreeText(value)
+		return sql, arguments, nil
+	}
+
+	// A bare term alongside a real comparison is not valid DSL.
+	for _, bareTerm := range v.bareTerms {
+		v.addError("unsupported expression %q — every term must be of the form `key OP value`", bareTerm)
+	}
+	if len(v.errors) > 0 {
+		return "", nil, v.errors
+	}
+
 	if condition == "" {
 		return "", nil, nil
 	}
