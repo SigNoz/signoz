@@ -16,7 +16,7 @@ jest.mock('container/TopNav/DateTimeSelectionV2', () => ({
 	__esModule: true,
 	default: (): JSX.Element => <div data-testid="datetime-selection" />,
 }));
-jest.mock('container/PublicDashboardContainer/AutoRefresh', () => ({
+jest.mock('../PublicAutoRefresh/PublicAutoRefresh', () => ({
 	__esModule: true,
 	default: (): JSX.Element => <div data-testid="auto-refresh" />,
 }));

@@ -1,6 +1,5 @@
 import type { DashboardtypesGettablePublicDashboardDataV2DTO } from 'api/generated/services/sigNoz.schemas';
 import { Typography } from '@signozhq/ui/typography';
-import AutoRefresh from 'container/PublicDashboardContainer/AutoRefresh';
 import { refreshIntervalOptions } from 'container/TopNav/AutoRefreshV2/constants';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
@@ -16,6 +15,7 @@ import { NANO_SECOND_MULTIPLIER } from 'store/globalTime/utils';
 
 import signozBrandLogoUrl from '@/assets/Logos/signoz-brand-logo.svg';
 
+import PublicAutoRefresh from './PublicAutoRefresh/PublicAutoRefresh';
 import PublicSectionGrid from './PublicSectionGrid/PublicSectionGrid';
 import { getStartTimeAndEndTimeFromTimeRange } from './utils';
 import styles from './PublicDashboardV2.module.scss';
@@ -72,15 +72,19 @@ function PublicDashboardV2({
 		setSelectedTimeRangeLabel(interval as string);
 	};
 
-	const [refreshIntervalKey, setRefreshIntervalKey] = useState<string>('off');
+	const [autoRefreshEnabled, setAutoRefreshEnabled] = useState<boolean>(false);
+	const [autoRefreshInterval, setAutoRefreshInterval] = useState<string>('30s');
 
 	// Auto-refresh only makes sense for a rolling relative range, not a fixed custom window.
 	const isAutoRefreshPaused = selectedTimeRangeLabel === 'custom';
 	const refreshIntervalMs = useMemo(
 		() =>
-			refreshIntervalOptions.find((option) => option.key === refreshIntervalKey)
-				?.value || 0,
-		[refreshIntervalKey],
+			autoRefreshEnabled
+				? refreshIntervalOptions.find(
+						(option) => option.key === autoRefreshInterval,
+					)?.value || 0
+				: 0,
+		[autoRefreshEnabled, autoRefreshInterval],
 	);
 
 	// Re-run the time-change handler with the current relative range so the window advances.
@@ -88,6 +92,10 @@ function PublicDashboardV2({
 		() => handleTimeChange(selectedTimeRangeLabel as Time),
 		isAutoRefreshPaused || refreshIntervalMs === 0 ? null : refreshIntervalMs,
 	);
+
+	// Manual "refresh now" — re-resolve the current relative range to refetch panels.
+	const handleRefresh = (): void =>
+		handleTimeChange(selectedTimeRangeLabel as Time);
 
 	const startMs = selectedTimeRange.startTime * 1000;
 	const endMs = selectedTimeRange.endTime * 1000;
@@ -107,10 +115,13 @@ function PublicDashboardV2({
 
 				{isTimeRangeEnabled && (
 					<div className={styles.headerRight}>
-						<AutoRefresh
-							value={refreshIntervalKey}
+						<PublicAutoRefresh
+							enabled={autoRefreshEnabled}
+							interval={autoRefreshInterval}
 							disabled={isAutoRefreshPaused}
-							onChange={setRefreshIntervalKey}
+							onToggle={setAutoRefreshEnabled}
+							onIntervalChange={setAutoRefreshInterval}
+							onRefresh={handleRefresh}
 						/>
 						<DateTimeSelectionV2
 							showAutoRefresh={false}
