@@ -19,6 +19,7 @@
 
 .backBtn {
 	flex-shrink: 0;
+	border: 1px solid var(--l1-border);
 }
 
 .traceIdSection {
@@ -26,6 +27,11 @@
 	align-items: center;
 	gap: 8px;
 	flex-shrink: 0;
+
+	// Tabular figures so the trace ID's digits line up at a fixed width.
+	:global(.key-value-label__value) {
+		font-variant-numeric: tabular-nums;
+	}
 }
 
 .filterSection {

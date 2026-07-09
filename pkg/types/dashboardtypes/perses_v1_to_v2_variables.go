@@ -24,6 +24,10 @@ func (d *v1Decoder) convertV1Variables(raw any) []Variable {
 	}
 	rawVariablesMap, ok := raw.(map[string]any)
 	if !ok {
+		// An empty list isn't the expected map encoding, but tolerate it as "no variables".
+		if rawSlice, isSlice := raw.([]any); isSlice && len(rawSlice) == 0 {
+			return nil
+		}
 		d.noteMalformedField("variables", raw)
 		return nil
 	}
