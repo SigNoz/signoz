@@ -3,33 +3,23 @@ import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 import { SpantypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
 import cx from 'classnames';
-import { motion, useReducedMotion } from 'motion/react';
+import { motion } from 'motion/react';
 
 import { Mapping } from 'container/LLMObservability/AttributeMapping/types';
 import styles from './MapperRow.module.scss';
 
 const MAX_VISIBLE_SOURCES = 3;
 
-// Rows mount when their group's Collapse panel opens, so this entrance runs
-// alongside antd's height animation as the expand reveal. A small per-row
-// stagger, capped so a long group doesn't cascade for too long. Collapse
-// (unmount + antd's height animation) needs no per-row exit.
 const ROW_TRANSITION = { duration: 0.18, ease: 'easeOut' } as const;
 const MAX_STAGGERED_ROWS = 6;
 const STAGGER_STEP = 0.03;
 
 interface MapperRowProps {
 	mapper: Mapping;
-	// Position within the group, used to stagger the expand reveal.
 	index: number;
 }
 
-// A single mapper row, aligned to the table's shared columns (Target / Sources /
-// Writes to / Status). Priority order is positional — top wins — so there's no
-// sortable affordance here. The status switch is read-only in this PR (editing
-// lands later); it reflects enabled state without accepting flips.
 function MapperRow({ mapper, index }: MapperRowProps): JSX.Element {
-	const prefersReducedMotion = useReducedMotion();
 	const sources = mapper.sources ?? [];
 	const visibleSources = sources.slice(0, MAX_VISIBLE_SOURCES);
 	const remainingSources = sources.length - visibleSources.length;
@@ -38,7 +28,7 @@ function MapperRow({ mapper, index }: MapperRowProps): JSX.Element {
 		<motion.tr
 			className={styles.mapperRow}
 			data-testid={`mapper-row-${mapper.id}`}
-			initial={prefersReducedMotion ? false : { opacity: 0, y: -4 }}
+			initial={{ opacity: 0, y: -4 }}
 			animate={{ opacity: 1, y: 0 }}
 			transition={{
 				...ROW_TRANSITION,

@@ -32,7 +32,7 @@ def test_logs_json_body_has_any_string(
     ]
     export_json_types(logs)
     insert_logs(logs)
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # log1 has "critical", log2 has "test", log3 has neither -> 2 matches
     response = make_query_request(
@@ -64,7 +64,7 @@ def test_logs_json_body_has_all_string(
     ]
     export_json_types(logs)
     insert_logs(logs)
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # only the second log has both "production" AND "web"
     response = make_query_request(
@@ -97,7 +97,7 @@ def test_logs_json_body_has_any_number(
     ]
     export_json_types(logs)
     insert_logs(logs)
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # only the first log has 300 in ids; 999 matches nothing
     response = make_query_request(

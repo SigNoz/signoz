@@ -27,8 +27,6 @@
 	}
 }
 
-// ---- group accordion (antd Collapse) ----
-
 .groupsCollapse:global(.ant-collapse) {
 	background: transparent;
 	border: none;
@@ -106,6 +104,14 @@
 
 	&:last-child {
 		border-bottom: 1px solid var(--l2-border);
+	}
+	:global(.ant-skeleton-input) {
+		min-height: 18px !important;
+		height: 18px !important;
+	}
+	:global(.ant-skeleton-button) {
+		min-height: 18px !important;
+		height: 18px !important;
 	}
 }
 

@@ -24,13 +24,48 @@ const STATE_ROW_MOTION = {
 	transition: { duration: 0.18, ease: 'easeOut' },
 } as const;
 
+type StateRowMotion = typeof STATE_ROW_MOTION | { initial: false };
+
+interface StateRowProps {
+	groupId: string;
+	rowMotion: StateRowMotion;
+}
+
+function ErrorRow({ groupId, rowMotion }: StateRowProps): JSX.Element {
+	return (
+		<motion.tr className={styles.mapperStateRow} {...rowMotion}>
+			<td
+				colSpan={COLUMN_COUNT}
+				className={styles.stateCell}
+				data-testid={`mappers-error-${groupId}`}
+			>
+				Failed to load mappings. Please try again.
+			</td>
+		</motion.tr>
+	);
+}
+
+function EmptyRow({ groupId, rowMotion }: StateRowProps): JSX.Element {
+	return (
+		<motion.tr className={styles.mapperStateRow} {...rowMotion}>
+			<td
+				colSpan={COLUMN_COUNT}
+				className={styles.stateCell}
+				data-testid={`mappers-empty-${groupId}`}
+			>
+				No mappings in this group yet.
+			</td>
+		</motion.tr>
+	);
+}
+
 interface GroupMappersProps {
 	group: DraftGroup;
 }
 
 function GroupMappers({ group }: GroupMappersProps): JSX.Element {
 	const prefersReducedMotion = useReducedMotion();
-	const stateRowMotion = prefersReducedMotion
+	const stateRowMotion: StateRowMotion = prefersReducedMotion
 		? { initial: false as const }
 		: STATE_ROW_MOTION;
 
@@ -55,50 +90,24 @@ function GroupMappers({ group }: GroupMappersProps): JSX.Element {
 		return items.map(buildMapping);
 	}, [data]);
 
-	const skeletonRows = Array.from({ length: MAPPER_SKELETON_ROWS }).map(
-		(_, index) => (
-			// eslint-disable-next-line react/no-array-index-key
-			<MapperRowSkeleton key={`mapper-skeleton-${index}`} />
-		),
-	);
-
-	const errorRow = (
-		<motion.tr key="error" className={styles.mapperStateRow} {...stateRowMotion}>
-			<td
-				colSpan={COLUMN_COUNT}
-				className={styles.stateCell}
-				data-testid={`mappers-error-${group.localId}`}
-			>
-				Failed to load mappings. Please try again.
-			</td>
-		</motion.tr>
-	);
-
-	const emptyRow = (
-		<motion.tr key="empty" className={styles.mapperStateRow} {...stateRowMotion}>
-			<td
-				colSpan={COLUMN_COUNT}
-				className={styles.stateCell}
-				data-testid={`mappers-empty-${group.localId}`}
-			>
-				No mappings in this group yet.
-			</td>
-		</motion.tr>
-	);
-
-	const mapperRows = mappers.map((mapper, index) => (
-		<MapperRow key={mapper.id} mapper={mapper} index={index} />
-	));
-
 	let rows: JSX.Element[];
 	if (isError) {
-		rows = [errorRow];
+		rows = [
+			<ErrorRow key="error" groupId={group.localId} rowMotion={stateRowMotion} />,
+		];
 	} else if (isLoading) {
-		rows = skeletonRows;
+		rows = Array.from({ length: MAPPER_SKELETON_ROWS }).map((_, index) => (
+			// eslint-disable-next-line react/no-array-index-key
+			<MapperRowSkeleton key={`mapper-skeleton-${index}`} />
+		));
 	} else if (mappers.length === 0) {
-		rows = [emptyRow];
+		rows = [
+			<EmptyRow key="empty" groupId={group.localId} rowMotion={stateRowMotion} />,
+		];
 	} else {
-		rows = mapperRows;
+		rows = mappers.map((mapper, index) => (
+			<MapperRow key={mapper.id} mapper={mapper} index={index} />
+		));
 	}
 
 	return (

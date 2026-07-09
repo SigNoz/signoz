@@ -58,7 +58,7 @@ def test_logs_filter_operators_and_datatype_suffix(
             ),
         ]
     )
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     response = make_query_request(
         signoz,
@@ -113,7 +113,7 @@ def test_logs_filter_key_not_found(
             ),
         ]
     )
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     response = make_query_request(
         signoz,

@@ -111,6 +111,13 @@ const (
 
 	FilterOperatorContains
 	FilterOperatorNotContains
+
+	// has/hasAny/hasAll are array membership functions; hasToken is a full-text token
+	// search (not array membership), so it is excluded from IsArrayFunctionOperator.
+	FilterOperatorHas
+	FilterOperatorHasToken
+	FilterOperatorHasAny
+	FilterOperatorHasAll
 )
 
 var operatorInverseMapping = map[FilterOperator]FilterOperator{
@@ -221,6 +228,45 @@ func (f FilterOperator) IsArrayOperator() bool {
 		return true
 	default:
 		return false
+	}
+}
+
+// IsArrayFunctionOperator reports whether the operator is one of the array
+// membership functions (has/hasAny/hasAll) that operate over array fields.
+func (f FilterOperator) IsArrayFunctionOperator() bool {
+	switch f {
+	case FilterOperatorHas, FilterOperatorHasAny, FilterOperatorHasAll:
+		return true
+	default:
+		return false
+	}
+}
+
+// IsFunctionOperator reports whether the operator is a query function
+// (has/hasAny/hasAll/hasToken); these apply to the logs body column only.
+func (f FilterOperator) IsFunctionOperator() bool {
+	switch f {
+	case FilterOperatorHas, FilterOperatorHasAny, FilterOperatorHasAll, FilterOperatorHasToken:
+		return true
+	default:
+		return false
+	}
+}
+
+// FunctionName returns the query-text name of a function operator
+// (has/hasAny/hasAll/hasToken), or "" for any non-function operator.
+func (f FilterOperator) FunctionName() string {
+	switch f {
+	case FilterOperatorHas:
+		return "has"
+	case FilterOperatorHasAny:
+		return "hasAny"
+	case FilterOperatorHasAll:
+		return "hasAll"
+	case FilterOperatorHasToken:
+		return "hasToken"
+	default:
+		return ""
 	}
 }
 
