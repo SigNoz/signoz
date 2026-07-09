@@ -204,6 +204,7 @@ function PanelEditorContainer({
 		panelId,
 		panelType: PANEL_KIND_TO_PANEL_TYPE[panelKind],
 		query: currentQuery,
+		spec: draft.spec,
 	});
 
 	const setScrollTargetId = useScrollIntoViewStore((s) => s.setScrollTargetId);
