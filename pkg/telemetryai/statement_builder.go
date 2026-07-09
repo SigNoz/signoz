@@ -21,7 +21,7 @@ var (
 
 // scopedTraceStatementBuilder builds a trace list scoped to a span-selection
 // category. Topology is fixed; selection (BaseConditionProvider) and columns
-// (ProjectionProvider) are pluggable, so a new category is a new pair of
+// (ColumnProvider) are pluggable, so a new category is a new pair of
 // providers, not new topology.
 type scopedTraceStatementBuilder struct {
 	logger           *slog.Logger
@@ -29,7 +29,7 @@ type scopedTraceStatementBuilder struct {
 	fm               qbtypes.FieldMapper
 	cb               qbtypes.ConditionBuilder
 	baseCond         BaseConditionProvider
-	projection       ProjectionProvider
+	columnProvider   ColumnProvider
 	traceStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation]
 }
 
@@ -43,7 +43,7 @@ func NewScopedTraceStatementBuilder(
 	fieldMapper qbtypes.FieldMapper,
 	conditionBuilder qbtypes.ConditionBuilder,
 	baseCond BaseConditionProvider,
-	projection ProjectionProvider,
+	columnProvider ColumnProvider,
 	traceStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation],
 ) *scopedTraceStatementBuilder {
 	aiSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetryai")
@@ -53,12 +53,12 @@ func NewScopedTraceStatementBuilder(
 		fm:               fieldMapper,
 		cb:               conditionBuilder,
 		baseCond:         baseCond,
-		projection:       projection,
+		columnProvider:   columnProvider,
 		traceStmtBuilder: traceStmtBuilder,
 	}
 }
 
-// NewAITraceStatementBuilder is the scoped builder with the gen_ai gate + AI projection.
+// NewAITraceStatementBuilder is the scoped builder with the gen_ai gate + AI columns.
 func NewAITraceStatementBuilder(
 	settings factory.ProviderSettings,
 	metadataStore telemetrytypes.MetadataStore,
@@ -67,7 +67,7 @@ func NewAITraceStatementBuilder(
 	baseCond BaseConditionProvider,
 	traceStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation],
 ) *scopedTraceStatementBuilder {
-	return NewScopedTraceStatementBuilder(settings, metadataStore, fieldMapper, conditionBuilder, baseCond, NewGenAIProjectionProvider(), traceStmtBuilder)
+	return NewScopedTraceStatementBuilder(settings, metadataStore, fieldMapper, conditionBuilder, baseCond, NewGenAIColumnProvider(), traceStmtBuilder)
 }
 
 func (b *scopedTraceStatementBuilder) Build(
@@ -241,10 +241,9 @@ func (b *scopedTraceStatementBuilder) resolverFieldKeys() []*telemetrytypes.Tele
 	for _, k := range b.baseCond.FieldKeys() {
 		add(k)
 	}
-	for _, c := range b.projection.Columns() {
-		if c.Attr != nil {
-			add(c.Attr.ValueKey)
-			add(c.Attr.ExistsKey)
+	for _, c := range b.columnProvider.Columns() {
+		for _, k := range c.Expr.keys {
+			add(k)
 		}
 	}
 	return out
@@ -289,7 +288,7 @@ func (b *scopedTraceStatementBuilder) existsExpr(ctx context.Context, start, end
 	return sqlbuilder.Escape(expr), args, nil
 }
 
-// resolvedColumn is a projection column whose attribute access has been resolved to
+// resolvedColumn is a column whose attribute access has been resolved to
 // SQL via the field mapper. expr is escaped once, ready to embed in an outer SELECT.
 type resolvedColumn struct {
 	alias     string
@@ -298,51 +297,36 @@ type resolvedColumn struct {
 	orderable bool
 }
 
-// resolveColumns turns the projection's declarative columns into SQL, resolving all
+// resolveColumns turns the declarative columns into SQL, resolving all
 // attribute access through the field mapper.
 func (b *scopedTraceStatementBuilder) resolveColumns(ctx context.Context, start, end uint64, keys map[string][]*telemetrytypes.TelemetryFieldKey, maskExpr string, maskArgs []any) ([]resolvedColumn, error) {
-	cols := b.projection.Columns()
+	r := aggResolver{
+		exists: func(key *telemetrytypes.TelemetryFieldKey) (string, []any, error) {
+			return b.existsExpr(ctx, start, end, keys, key)
+		},
+		value: func(key *telemetrytypes.TelemetryFieldKey, dt telemetrytypes.FieldDataType) (string, []any, error) {
+			// Resolve to the metadata variant, which carries Materialized, so a promoted
+			// attribute uses its materialized column instead of map access. The static
+			// GenAIFieldDefinitions key always has Materialized=false and a concrete
+			// context, so CollisionHandledFinalExpr would otherwise never consult metadata.
+			// Mirrors existsExpr.
+			if cands := keys[key.Name]; len(cands) > 0 {
+				key = cands[0]
+			}
+			return querybuilder.CollisionHandledFinalExpr(ctx, start, end, key, b.fm, b.cb, keys, dt, nil, false)
+		},
+		maskExpr: maskExpr,
+		maskArgs: maskArgs,
+	}
+
+	cols := b.columnProvider.Columns()
 	out := make([]resolvedColumn, 0, len(cols))
 	for _, c := range cols {
-		rc := resolvedColumn{alias: c.Alias, orderable: c.Orderable}
-
-		if c.Attr == nil {
-			// intrinsic: escape once (no-op unless it references a $$ column).
-			rc.expr = sqlbuilder.Escape(c.Intrinsic)
-			out = append(out, rc)
-			continue
+		expr, args, err := c.Expr.render(r)
+		if err != nil {
+			return nil, err
 		}
-
-		a := c.Attr
-		switch {
-		case a.Func == "count" && a.ExistsKey != nil:
-			cond, cargs, err := b.existsExpr(ctx, start, end, keys, a.ExistsKey)
-			if err != nil {
-				return nil, err
-			}
-			rc.expr = fmt.Sprintf("countIf(%s)", cond)
-			rc.args = cargs
-		default:
-			var vexpr string
-			var vargs []any
-			if a.ValueKey != nil {
-				e, ar, err := querybuilder.CollisionHandledFinalExpr(ctx, start, end, a.ValueKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeFloat64, nil, false)
-				if err != nil {
-					return nil, err
-				}
-				vexpr, vargs = e, ar
-			} else {
-				vexpr = a.ValueExpr
-			}
-			if a.Scoped {
-				rc.expr = fmt.Sprintf("%sIf(%s, %s)", a.Func, vexpr, maskExpr)
-				rc.args = append(append([]any{}, vargs...), maskArgs...)
-			} else {
-				rc.expr = fmt.Sprintf("%s(%s)", a.Func, vexpr)
-				rc.args = vargs
-			}
-		}
-		out = append(out, rc)
+		out = append(out, resolvedColumn{alias: c.Alias, expr: expr, args: args, orderable: c.Orderable})
 	}
 	return out, nil
 }
@@ -355,7 +339,7 @@ type listOrder struct {
 }
 
 // resolveListOrders maps order keys to the resolved orderable columns; non-orderable
-// columns are rejected. Defaults to the projection's default order.
+// columns are rejected. Defaults to the column provider's default order.
 func (b *scopedTraceStatementBuilder) resolveListOrders(order []qbtypes.OrderBy, resolved []resolvedColumn) ([]listOrder, error) {
 	byAlias := make(map[string]resolvedColumn, len(resolved))
 	orderable := make([]string, 0, len(resolved))
@@ -367,7 +351,7 @@ func (b *scopedTraceStatementBuilder) resolveListOrders(order []qbtypes.OrderBy,
 	}
 
 	if len(order) == 0 {
-		return []listOrder{{alias: b.projection.DefaultOrderAlias(), direction: "DESC"}}, nil
+		return []listOrder{{alias: b.columnProvider.DefaultOrderAlias(), direction: "DESC"}}, nil
 	}
 
 	orders := make([]listOrder, 0, len(order))
@@ -608,8 +592,8 @@ func summaryTable() string {
 // aggregateAliasSet is the set of all trace-level (computed) column aliases, used to
 // classify which filter keys are trace-level vs span-level.
 func (b *scopedTraceStatementBuilder) aggregateAliasSet() map[string]struct{} {
-	set := make(map[string]struct{}, len(b.projection.AggregateAliases()))
-	for _, a := range b.projection.AggregateAliases() {
+	set := make(map[string]struct{}, len(b.columnProvider.AggregateAliases()))
+	for _, a := range b.columnProvider.AggregateAliases() {
 		set[a] = struct{}{}
 	}
 	return set

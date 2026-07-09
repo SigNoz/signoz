@@ -1,10 +1,6 @@
 """
 Integration tests for source="ai" over the traces signal.
 
-These ingest OpenTelemetry gen_ai spans into real ClickHouse via the insert_traces
-fixture and exercise the actual /api/v5/query_range API, so they validate the whole
-path: payload -> AI statement builder -> ClickHouse -> response.
-
 Data shape (generic OTel gen_ai semantic conventions):
   - a root span (no gen_ai attributes)
   - an LLM span carrying gen_ai.request.model (str) and numeric usage attributes
@@ -41,6 +37,7 @@ def _ai_trace(
     in_tokens: int,
     out_tokens: int,
     cost: float,
+    model: str = "gpt-4o-mini",
     llm_duration_s: float = 1.0,
     error: bool = False,
 ) -> list[Traces]:
@@ -73,7 +70,7 @@ def _ai_trace(
         status_code=(TracesStatusCode.STATUS_CODE_ERROR if error else TracesStatusCode.STATUS_CODE_OK),
         resources=resources,
         attributes={
-            "gen_ai.request.model": "gpt-4o-mini",
+            "gen_ai.request.model": model,
             "gen_ai.system": "openai",
             "gen_ai.user.id": user,
             # numeric values land in attributes_number
@@ -277,8 +274,8 @@ def test_ai_list_having_aggregate_filter(
     assert response.status_code == HTTPStatus.OK, response.text
 
     body = json.dumps(response.json())
-    assert large_id in body, f"trace with 500 out-tokens should pass output_tokens > 100"
-    assert small_id not in body, f"trace with 20 out-tokens should be filtered out by HAVING"
+    assert large_id in body, "trace with 500 out-tokens should pass output_tokens > 100"
+    assert small_id not in body, "trace with 20 out-tokens should be filtered out by HAVING"
 
 
 def test_ai_list_order_limit_offset(
@@ -395,9 +392,9 @@ def test_ai_list_having_or_aggregates(
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
     """
-    Two aggregate conditions OR-ed within the filter box (regression guard for OR-group
-    whitespace handling): output_tokens > 100 OR span_count > 100 keeps only the
-    large-token trace (span_count is 2 for both, so that branch never matches).
+    Two trace-level aggregates OR-ed within the filter box (regression guard for OR-group
+    whitespace handling): output_tokens > 100 OR input_tokens > 1000 keeps only the
+    large-output trace (input_tokens is 10 for both, so that branch never matches).
     """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-having-or"
@@ -414,7 +411,7 @@ def test_ai_list_having_or_aggregates(
         signal="traces",
         source="ai",
         name="A",
-        filter_expression=f"service.name = '{service}' AND (output_tokens > 100 OR span_count > 100)",
+        filter_expression=f"service.name = '{service}' AND (output_tokens > 100 OR input_tokens > 1000)",
         limit=10,
     )
     response = make_query_request(
@@ -513,19 +510,24 @@ def test_ai_list_rejects_aggregate_or_span_filter(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
+    insert_traces: Callable[[list[Traces]], None],
 ) -> None:
     """
     Aggregate (HAVING) columns may not be OR-ed with span-level keys in the trace
     list; a span-OR-span filter is fine.
     """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    service = "ai-it-orfilter"
+    # seed a trace so service.name resolves as a known key in this window (resource
+    # keys are discovered from ingested data).
+    insert_traces(_ai_trace(now=now, service=service, user="a", in_tokens=10, out_tokens=20, cost=0.1))
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     start_ms, end_ms = _window_ms(now)
 
     # aggregate OR span -> rejected
     bad = BuilderQuery(
         signal="traces", source="ai", name="A", limit=10,
-        filter_expression="output_tokens > 1000 OR service.name = 'ai-it-orfilter'",
+        filter_expression=f"output_tokens > 1000 OR service.name = '{service}'",
     )
     response = make_query_request(
         signoz, token, start_ms, end_ms, [bad.to_dict()], request_type="trace"
@@ -533,12 +535,277 @@ def test_ai_list_rejects_aggregate_or_span_filter(
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
     assert "cannot be combined" in response.text
 
-    # span OR span -> accepted (empty result is fine; just not an error)
+    # span OR span -> accepted (result content doesn't matter; just not an error)
     ok = BuilderQuery(
         signal="traces", source="ai", name="A", limit=10,
-        filter_expression="service.name = 'ai-it-orfilter' OR has_error = true",
+        filter_expression=f"service.name = '{service}' OR has_error = true",
     )
     response = make_query_request(
         signoz, token, start_ms, end_ms, [ok.to_dict()], request_type="trace"
     )
     assert response.status_code == HTTPStatus.OK, response.text
+
+
+def test_ai_list_nested_group_span_or_and_aggregate(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[list[Traces]], None],
+) -> None:
+    """
+    A complex filter that mixes all three routing paths in one expression:
+        service.name = X AND (has_error = true OR gen_ai.request.model = 'gpt-4o') AND total_tokens > 100
+    The nested (span OR span) group must not flatten (precedence), the span predicates
+    go to WHERE as a trace-existence check, and the new `total_tokens` aggregate goes to
+    HAVING. Three traces isolate each discriminator:
+      - t_ok:      gpt-4o, out=500 -> OR matches (model) AND total_tokens>100  -> IN
+      - t_or_miss: gpt-4o-mini, out=500 -> OR fails (no error, wrong model)    -> OUT
+      - t_agg_miss: gpt-4o, out=20  -> OR matches but total_tokens<=100         -> OUT
+    """
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    service = "ai-it-nested"
+
+    t_ok = _ai_trace(now=now, service=service, user="a", model="gpt-4o", in_tokens=10, out_tokens=500, cost=0.1)
+    t_or_miss = _ai_trace(now=now, service=service, user="b", model="gpt-4o-mini", in_tokens=10, out_tokens=500, cost=0.1)
+    t_agg_miss = _ai_trace(now=now, service=service, user="c", model="gpt-4o", in_tokens=10, out_tokens=20, cost=0.1)
+    insert_traces(t_ok + t_or_miss + t_agg_miss)
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    start_ms, end_ms = _window_ms(now)
+
+    query = BuilderQuery(
+        signal="traces",
+        source="ai",
+        name="A",
+        filter_expression=(
+            f"service.name = '{service}' "
+            "AND (has_error = true OR gen_ai.request.model = 'gpt-4o') "
+            "AND total_tokens > 100"
+        ),
+        limit=10,
+    )
+    response = make_query_request(
+        signoz, token, start_ms, end_ms, [query.to_dict()], request_type="trace"
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    body = json.dumps(response.json())
+    assert t_ok[0].trace_id in body
+    assert t_or_miss[0].trace_id not in body, "nested (span OR span) group must exclude the wrong-model, no-error trace"
+    assert t_agg_miss[0].trace_id not in body, "HAVING total_tokens > 100 must exclude the low-token trace"
+
+
+def test_ai_list_rejects_unknown_aggregate_key(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+) -> None:
+    """A trace-level filter on an unknown aggregate name is rejected, not silently run."""
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    start_ms, end_ms = _window_ms(now)
+
+    query = BuilderQuery(
+        signal="traces", source="ai", name="A", limit=10,
+        filter_expression="trace.bogus_tokens > 1",
+    )
+    response = make_query_request(
+        signoz, token, start_ms, end_ms, [query.to_dict()], request_type="trace"
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+
+
+def test_ai_list_rejects_order_by_span_attribute(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+) -> None:
+    """Only gen_ai-scoped aggregates are orderable; ordering by a span/resource key errors."""
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    start_ms, end_ms = _window_ms(now)
+
+    query = BuilderQuery(
+        signal="traces", source="ai", name="A", limit=5,
+        order=[OrderBy(key=TelemetryFieldKey(name="service.name"), direction="asc")],
+    )
+    response = make_query_request(
+        signoz, token, start_ms, end_ms, [query.to_dict()], request_type="trace"
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert "order key" in response.text
+
+
+def _ai_trace_two_llm(*, now: datetime, service: str) -> list[Traces]:
+    """Root + two LLM spans at different times, each with distinct input/output messages."""
+    trace_id = TraceIdGenerator.trace_id()
+    root_id = TraceIdGenerator.span_id()
+    resources = {"service.name": service}
+
+    def _llm(offset_s: float, prompt: str, answer: str) -> Traces:
+        return Traces(
+            timestamp=now - timedelta(seconds=offset_s),
+            duration=timedelta(seconds=1),
+            trace_id=trace_id,
+            span_id=TraceIdGenerator.span_id(),
+            parent_span_id=root_id,
+            name="chat",
+            kind=TracesKind.SPAN_KIND_CLIENT,
+            status_code=TracesStatusCode.STATUS_CODE_OK,
+            resources=resources,
+            attributes={
+                "gen_ai.request.model": "gpt-4o-mini",
+                "gen_ai.input.messages": prompt,
+                "gen_ai.output.messages": answer,
+            },
+        )
+
+    root = Traces(
+        timestamp=now - timedelta(seconds=5),
+        duration=timedelta(seconds=4),
+        trace_id=trace_id,
+        span_id=root_id,
+        parent_span_id="",
+        name="POST /api/chat",
+        kind=TracesKind.SPAN_KIND_SERVER,
+        status_code=TracesStatusCode.STATUS_CODE_OK,
+        resources=resources,
+        attributes={"http.request.method": "POST"},
+    )
+    # earlier call is the "first" (its input is the prompt), later call is the "last"
+    # (its output is the final answer).
+    first = _llm(4, "first prompt", "first answer")
+    last = _llm(2, "second prompt", "second answer")
+    return [root, first, last]
+
+
+def test_ai_list_messages_first_input_last_output(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[list[Traces]], None],
+) -> None:
+    """
+    `input` is the FIRST LLM span's prompt (argMin over timestamp) and `output` is the
+    LAST LLM span's answer (argMax) — the question -> final-answer preview.
+    """
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    service = "ai-it-messages"
+    insert_traces(_ai_trace_two_llm(now=now, service=service))
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    start_ms, end_ms = _window_ms(now)
+
+    query = BuilderQuery(
+        signal="traces", source="ai", name="A", limit=10,
+        filter_expression=f"service.name = '{service}'",
+    )
+    response = make_query_request(
+        signoz, token, start_ms, end_ms, [query.to_dict()], request_type="trace"
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    rows = response.json()["data"]["data"]["results"][0]["rows"]
+    assert len(rows) == 1, f"expected one trace, got: {rows}"
+    data = rows[0]["data"]
+    assert data["input"] == "first prompt", f"input should be the earliest call's prompt: {data}"
+    assert data["output"] == "second answer", f"output should be the latest call's answer: {data}"
+
+
+def _ai_trace_for_metrics(*, now: datetime, service: str) -> list[Traces]:
+    """
+    Root + one errored LLM span (tokens/cost) + three tool spans (two 'get_weather',
+    one 'get_time') so the derived per-trace metrics have distinct expected values.
+    """
+    trace_id = TraceIdGenerator.trace_id()
+    root_id = TraceIdGenerator.span_id()
+    resources = {"service.name": service}
+
+    def _tool(name: str, offset_s: float) -> Traces:
+        return Traces(
+            timestamp=now - timedelta(seconds=offset_s),
+            duration=timedelta(seconds=0.2),
+            trace_id=trace_id,
+            span_id=TraceIdGenerator.span_id(),
+            parent_span_id=root_id,
+            name="execute_tool",
+            kind=TracesKind.SPAN_KIND_INTERNAL,
+            status_code=TracesStatusCode.STATUS_CODE_OK,
+            resources=resources,
+            attributes={"gen_ai.tool.name": name, "gen_ai.tool.type": "function"},
+        )
+
+    root = Traces(
+        timestamp=now - timedelta(seconds=5),
+        duration=timedelta(seconds=4),
+        trace_id=trace_id,
+        span_id=root_id,
+        parent_span_id="",
+        name="POST /api/chat",
+        kind=TracesKind.SPAN_KIND_SERVER,
+        status_code=TracesStatusCode.STATUS_CODE_OK,
+        resources=resources,
+        attributes={"http.request.method": "POST"},
+    )
+    llm = Traces(
+        timestamp=now - timedelta(seconds=4),
+        duration=timedelta(seconds=2),
+        trace_id=trace_id,
+        span_id=TraceIdGenerator.span_id(),
+        parent_span_id=root_id,
+        name="chat gpt-4o-mini",
+        kind=TracesKind.SPAN_KIND_CLIENT,
+        status_code=TracesStatusCode.STATUS_CODE_ERROR,  # -> has_error, drives error_count
+        resources=resources,
+        attributes={
+            "gen_ai.request.model": "gpt-4o-mini",
+            "gen_ai.usage.input_tokens": 100,
+            "gen_ai.usage.output_tokens": 20,
+            "gen_ai.usage.cost": 0.5,
+        },
+    )
+    return [root, llm, _tool("get_weather", 3), _tool("get_weather", 2.5), _tool("get_time", 2)]
+
+
+def test_ai_list_enrichment_values(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[list[Traces]], None],
+) -> None:
+    """
+    End-to-end values of the derived per-trace columns (only integration can check that
+    ClickHouse computes uniqIf / sum+sum / countIf(predicate) correctly, not just that
+    the SQL is shaped right). One trace: root + 1 errored LLM + 3 tool spans
+    (get_weather x2, get_time x1).
+    """
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    service = "ai-it-metrics"
+    insert_traces(_ai_trace_for_metrics(now=now, service=service))
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    start_ms, end_ms = _window_ms(now)
+
+    query = BuilderQuery(
+        signal="traces", source="ai", name="A", limit=10,
+        filter_expression=f"service.name = '{service}'",
+    )
+    response = make_query_request(
+        signoz, token, start_ms, end_ms, [query.to_dict()], request_type="trace"
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    rows = response.json()["data"]["data"]["results"][0]["rows"]
+    assert len(rows) == 1, f"expected one trace, got: {rows}"
+    data = rows[0]["data"]
+
+    assert data["span_count"] == 5, data              # root + llm + 3 tools
+    assert data["llm_call_count"] == 1, data          # only the request.model span
+    assert data["tool_call_count"] == 3, data         # all three tool spans
+    assert data["distinct_tool_count"] == 2, data     # get_weather, get_time
+    assert data["input_tokens"] == 100, data
+    assert data["output_tokens"] == 20, data
+    assert data["total_tokens"] == 120, data          # input + output
+    assert data["estimated_cost_usd"] == pytest.approx(0.5), data
+    assert data["error_count"] == 1, data             # the errored LLM span
+    assert data["max_llm_latency_ns"] > 0, data       # scoped max over LLM spans
