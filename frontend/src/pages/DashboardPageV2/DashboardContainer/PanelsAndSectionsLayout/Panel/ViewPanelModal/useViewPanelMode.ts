@@ -35,6 +35,8 @@ interface UseViewPanelModeArgs {
 export interface UseViewPanelModeReturn {
 	/** Local editable copy of the panel — the preview renders this, not the saved panel. */
 	draft: DashboardtypesPanelDTO;
+	/** Update the draft's spec in place (e.g. the List columns editor). */
+	setSpec: (next: DashboardtypesPanelSpecDTO) => void;
 	/** Resolved renderer for the draft's current kind (registry always resolves a kind). */
 	panelDefinition: RenderablePanelDefinition;
 	/**
@@ -159,6 +161,7 @@ export function useViewPanelMode({
 
 	return {
 		draft,
+		setSpec,
 		panelDefinition,
 		signal,
 		queryType: currentQuery.queryType,
