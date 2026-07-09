@@ -7,47 +7,63 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-const (
-	podUIDAttrKey       = "k8s.pod.uid"
-	podStartTimeAttrKey = "k8s.pod.start_time"
+const containerNameAttrKey = inframonitoringtypes.ContainerNameAttrKey
 
-	podPhaseMetricName        = "k8s.pod.phase"
-	podStatusReasonMetricName = "k8s.pod.status_reason"
+const (
+	containerStatusStateAttrKey  = "k8s.container.status.state"
+	containerStatusReasonAttrKey = "k8s.container.status.reason"
 )
 
-// podStatusMetricNamesList are the metrics required to derive the kubectl-style
-// pod display status. All three must be present (getMetricsExistence gate)
-// before getPerGroupPodStatusCounts runs.
-var podStatusMetricNamesList = []string{
-	podPhaseMetricName,
-	podStatusReasonMetricName,
+const (
+	containerStatusStateMetricName  = "k8s.container.status.state"
+	containerStatusReasonMetricName = "k8s.container.status.reason"
+	containerReadyMetricName        = "k8s.container.ready"
+	containerRestartsMetricName     = "k8s.container.restarts"
+)
+
+// containerStatusMetricNamesList are the metrics required to derive the
+// kubectl-style container display status. Gated by
+// getPerGroupContainerStatusCountsWithReqMetricChecks — if either is missing,
+// status is skipped and a warning is returned.
+var containerStatusMetricNamesList = []string{
+	containerStatusStateMetricName,
 	containerStatusReasonMetricName,
 }
 
-var podUIDGroupByKey = qbtypes.GroupByKey{
+var containerNameGroupByKey = qbtypes.GroupByKey{
 	TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-		Name:          podUIDAttrKey,
+		Name:          containerNameAttrKey,
 		FieldContext:  telemetrytypes.FieldContextResource,
 		FieldDataType: telemetrytypes.FieldDataTypeString,
 	},
 }
 
-var podsTableMetricNamesList = []string{
-	"k8s.pod.cpu.usage",
-	"k8s.pod.cpu_request_utilization",
-	"k8s.pod.cpu_limit_utilization",
-	"k8s.pod.memory.working_set",
-	"k8s.pod.memory_request_utilization",
-	"k8s.pod.memory_limit_utilization",
-	"k8s.pod.phase",
-	"k8s.pod.status_reason",
-	"k8s.container.status.reason",
+// containerRowGroupBy is the default row-identity groupBy for the containers
+// list: (k8s.pod.uid, k8s.container.name). Stable across container restarts.
+// podUIDGroupByKey is shared with the pods module (pods_constants.go).
+var containerRowGroupBy = []qbtypes.GroupByKey{podUIDGroupByKey, containerNameGroupByKey}
+
+// containersTableMetricNamesList are the metrics that carry the container
+// attributes; used for metadata resolution and the retention check.
+var containersTableMetricNamesList = []string{
+	"container.cpu.usage",
+	"k8s.container.cpu_request_utilization",
+	"k8s.container.cpu_limit_utilization",
+	"container.memory.working_set",
+	"k8s.container.memory_request_utilization",
+	"k8s.container.memory_limit_utilization",
 	"k8s.container.restarts",
+	"k8s.container.ready",
+	"k8s.container.status.reason",
+	"k8s.container.status.state",
 }
 
-var podAttrKeysForMetadata = []string{
+var containerAttrKeysForMetadata = []string{
 	"k8s.pod.uid",
+	"k8s.container.name",
 	"k8s.pod.name",
+	"container.image.name",
+	"container.image.tag",
 	"k8s.namespace.name",
 	"k8s.node.name",
 	"k8s.deployment.name",
@@ -56,24 +72,24 @@ var podAttrKeysForMetadata = []string{
 	"k8s.job.name",
 	"k8s.cronjob.name",
 	"k8s.cluster.name",
-	"k8s.pod.start_time",
 }
 
-var orderByToPodsQueryNames = map[string][]string{
-	inframonitoringtypes.PodsOrderByCPU:           {"A"},
-	inframonitoringtypes.PodsOrderByCPURequest:    {"B"},
-	inframonitoringtypes.PodsOrderByCPULimit:      {"C"},
-	inframonitoringtypes.PodsOrderByMemory:        {"D"},
-	inframonitoringtypes.PodsOrderByMemoryRequest: {"E"},
-	inframonitoringtypes.PodsOrderByMemoryLimit:   {"F"},
+var orderByToContainersQueryNames = map[string][]string{
+	inframonitoringtypes.ContainersOrderByCPU:           {"A"},
+	inframonitoringtypes.ContainersOrderByCPURequest:    {"B"},
+	inframonitoringtypes.ContainersOrderByCPULimit:      {"C"},
+	inframonitoringtypes.ContainersOrderByMemory:        {"D"},
+	inframonitoringtypes.ContainersOrderByMemoryRequest: {"E"},
+	inframonitoringtypes.ContainersOrderByMemoryLimit:   {"F"},
 }
 
-// newPodsTableListQuery builds the composite QB v5 request for the pods list.
-// Pod phase is derived separately via getPerGroupPodPhaseCounts (works for both
-// list and grouped_list modes), so no phase query is included here.
-func (m *module) newPodsTableListQuery() *qbtypes.QueryRangeRequest {
+// newContainersTableListQuery builds the composite QB v5 request for the
+// containers list (kubeletstats usage/utilization). Status, restarts and ready
+// come from k8sclusterreceiver via dedicated queries (works for both list and
+// grouped_list modes), so not included here.
+func (m *module) newContainersTableListQuery() *qbtypes.QueryRangeRequest {
 	queries := []qbtypes.QueryEnvelope{
-		// Query A: CPU usage
+		// Query A: CPU usage (cores)
 		{
 			Type: qbtypes.QueryTypeBuilder,
 			Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
@@ -81,13 +97,13 @@ func (m *module) newPodsTableListQuery() *qbtypes.QueryRangeRequest {
 				Signal: telemetrytypes.SignalMetrics,
 				Aggregations: []qbtypes.MetricAggregation{
 					{
-						MetricName:       "k8s.pod.cpu.usage",
+						MetricName:       "container.cpu.usage",
 						TimeAggregation:  metrictypes.TimeAggregationAvg,
 						SpaceAggregation: metrictypes.SpaceAggregationSum,
 						ReduceTo:         qbtypes.ReduceToAvg,
 					},
 				},
-				GroupBy:  []qbtypes.GroupByKey{podUIDGroupByKey},
+				GroupBy:  containerRowGroupBy,
 				Disabled: false,
 			},
 		},
@@ -99,13 +115,13 @@ func (m *module) newPodsTableListQuery() *qbtypes.QueryRangeRequest {
 				Signal: telemetrytypes.SignalMetrics,
 				Aggregations: []qbtypes.MetricAggregation{
 					{
-						MetricName:       "k8s.pod.cpu_request_utilization",
+						MetricName:       "k8s.container.cpu_request_utilization",
 						TimeAggregation:  metrictypes.TimeAggregationAvg,
 						SpaceAggregation: metrictypes.SpaceAggregationAvg,
 						ReduceTo:         qbtypes.ReduceToAvg,
 					},
 				},
-				GroupBy:  []qbtypes.GroupByKey{podUIDGroupByKey},
+				GroupBy:  containerRowGroupBy,
 				Disabled: false,
 			},
 		},
@@ -117,13 +133,13 @@ func (m *module) newPodsTableListQuery() *qbtypes.QueryRangeRequest {
 				Signal: telemetrytypes.SignalMetrics,
 				Aggregations: []qbtypes.MetricAggregation{
 					{
-						MetricName:       "k8s.pod.cpu_limit_utilization",
+						MetricName:       "k8s.container.cpu_limit_utilization",
 						TimeAggregation:  metrictypes.TimeAggregationAvg,
 						SpaceAggregation: metrictypes.SpaceAggregationAvg,
 						ReduceTo:         qbtypes.ReduceToAvg,
 					},
 				},
-				GroupBy:  []qbtypes.GroupByKey{podUIDGroupByKey},
+				GroupBy:  containerRowGroupBy,
 				Disabled: false,
 			},
 		},
@@ -135,13 +151,13 @@ func (m *module) newPodsTableListQuery() *qbtypes.QueryRangeRequest {
 				Signal: telemetrytypes.SignalMetrics,
 				Aggregations: []qbtypes.MetricAggregation{
 					{
-						MetricName:       "k8s.pod.memory.working_set",
+						MetricName:       "container.memory.working_set",
 						TimeAggregation:  metrictypes.TimeAggregationAvg,
 						SpaceAggregation: metrictypes.SpaceAggregationSum,
 						ReduceTo:         qbtypes.ReduceToAvg,
 					},
 				},
-				GroupBy:  []qbtypes.GroupByKey{podUIDGroupByKey},
+				GroupBy:  containerRowGroupBy,
 				Disabled: false,
 			},
 		},
@@ -153,13 +169,13 @@ func (m *module) newPodsTableListQuery() *qbtypes.QueryRangeRequest {
 				Signal: telemetrytypes.SignalMetrics,
 				Aggregations: []qbtypes.MetricAggregation{
 					{
-						MetricName:       "k8s.pod.memory_request_utilization",
+						MetricName:       "k8s.container.memory_request_utilization",
 						TimeAggregation:  metrictypes.TimeAggregationAvg,
 						SpaceAggregation: metrictypes.SpaceAggregationAvg,
 						ReduceTo:         qbtypes.ReduceToAvg,
 					},
 				},
-				GroupBy:  []qbtypes.GroupByKey{podUIDGroupByKey},
+				GroupBy:  containerRowGroupBy,
 				Disabled: false,
 			},
 		},
@@ -171,13 +187,13 @@ func (m *module) newPodsTableListQuery() *qbtypes.QueryRangeRequest {
 				Signal: telemetrytypes.SignalMetrics,
 				Aggregations: []qbtypes.MetricAggregation{
 					{
-						MetricName:       "k8s.pod.memory_limit_utilization",
+						MetricName:       "k8s.container.memory_limit_utilization",
 						TimeAggregation:  metrictypes.TimeAggregationAvg,
 						SpaceAggregation: metrictypes.SpaceAggregationAvg,
 						ReduceTo:         qbtypes.ReduceToAvg,
 					},
 				},
-				GroupBy:  []qbtypes.GroupByKey{podUIDGroupByKey},
+				GroupBy:  containerRowGroupBy,
 				Disabled: false,
 			},
 		},
