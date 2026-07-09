@@ -1,14 +1,15 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 
-import { useIntersectionObserver } from 'hooks/useIntersectionObserver';
-
 import ConfirmDeleteDialog from '../../../components/ConfirmDeleteDialog/ConfirmDeleteDialog';
+import DisabledControlTooltip from '../../../components/DisabledControlTooltip/DisabledControlTooltip';
+import { DASHBOARD_LOCKED_REASON } from '../../../hooks/useDashboardEditGuard';
 import { useCreatePanel } from '../../../hooks/useCreatePanel';
 import type { DashboardSection } from '../../../utils';
 import PanelTypeSelectionModal from '../../Panel/PanelTypeSelectionModal/PanelTypeSelectionModal';
 import { useDashboardStore } from '../../../store/useDashboardStore';
+import { useCloneSection } from '../hooks/useCloneSection';
 import { useDeleteSection } from '../hooks/useDeleteSection';
 import { useRenameSection } from '../hooks/useRenameSection';
 import { useToggleSectionCollapse } from '../hooks/useToggleSectionCollapse';
@@ -28,16 +29,16 @@ interface SectionProps {
 }
 
 function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
-	const isEditable = useDashboardStore((s) => s.isEditable);
-	const { isPickerOpen, openPicker, closePicker, createPanel } =
-		useCreatePanel();
+	const canEditDashboard = useDashboardStore((s) => s.canEditDashboard);
+	const isLocked = useDashboardStore((s) => s.isLocked);
+	const {
+		isPickerOpen,
+		openPicker,
+		closePicker,
+		createPanel,
+		targetLayoutIndex,
+	} = useCreatePanel();
 	const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-	const containerRef = useRef<HTMLDivElement>(null);
-	// Placeholder signal for lazy panel query-loading (consumed in a later PR):
-	// true once the section scrolls into (or near) the viewport.
-	const isVisible = useIntersectionObserver(containerRef, {
-		rootMargin: '200px',
-	});
 
 	const { open, toggle } = useToggleSectionCollapse({ sectionId: section.id });
 
@@ -62,21 +63,20 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 		setIsDeleteOpen(false);
 	}, [deleteSection]);
 
+	const cloneSection = useCloneSection();
+
 	const grid = (
 		<SectionGrid
 			items={section.items}
 			layoutIndex={section.layoutIndex}
-			isVisible={isVisible}
 			sections={sections}
 		/>
 	);
 
 	if (!section.title) {
-		// Untitled section — just the grid (no header chrome), but still observed
-		// for the viewport signal.
+		// Untitled section — just the grid, no header chrome.
 		return (
 			<div
-				ref={containerRef}
 				data-testid={`dashboard-section-${section.id}`}
 				data-section-layout-index={section.layoutIndex}
 			>
@@ -87,7 +87,6 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 
 	return (
 		<div
-			ref={containerRef}
 			className={styles.section}
 			data-testid={`dashboard-section-${section.id}`}
 			data-section-layout-index={section.layoutIndex}
@@ -99,11 +98,13 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 				onToggle={toggle}
 				repeatVariable={section.repeatVariable}
 				dragHandle={dragHandle}
+				disabledReason={isLocked ? DASHBOARD_LOCKED_REASON : ''}
 				actions={
-					isEditable
+					canEditDashboard
 						? {
 								onRename: (): void => setIsRenaming(true),
 								onAddPanel: (): void => openPicker(section.layoutIndex),
+								onCloneSection: (): void => void cloneSection(section),
 								onDeleteSection: (): void => setIsDeleteOpen(true),
 							}
 						: undefined
@@ -114,17 +115,25 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 					grid
 				) : (
 					<div className={styles.emptySection}>
-						{isEditable && (
-							<Button
-								type="button"
-								variant="dashed"
-								color="secondary"
-								prefix={<Plus size="md" />}
-								onClick={(): void => openPicker(section.layoutIndex)}
-								testId={`section-add-panel-${section.id}`}
+						{canEditDashboard && (
+							<DisabledControlTooltip
+								reason={DASHBOARD_LOCKED_REASON}
+								disabled={isLocked}
 							>
-								New Panel
-							</Button>
+								<Button
+									type="button"
+									variant="dashed"
+									color="secondary"
+									prefix={<Plus size="md" />}
+									disabled={isLocked}
+									onClick={
+										isLocked ? undefined : (): void => openPicker(section.layoutIndex)
+									}
+									testId={`section-add-panel-${section.id}`}
+								>
+									New Panel
+								</Button>
+							</DisabledControlTooltip>
 						)}
 					</div>
 				))}
@@ -141,6 +150,7 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 				open={isPickerOpen}
 				onClose={closePicker}
 				onSelect={createPanel}
+				defaultLayoutIndex={targetLayoutIndex}
 			/>
 			<ConfirmDeleteDialog
 				open={isDeleteOpen}

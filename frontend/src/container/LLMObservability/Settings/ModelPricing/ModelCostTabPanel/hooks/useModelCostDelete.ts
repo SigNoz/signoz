@@ -6,6 +6,7 @@ import {
 	useDeleteLLMPricingRule,
 } from 'api/generated/services/llmpricingrules';
 
+import { TOAST_MODEL_COST_DELETED } from '../../constants';
 import type { PricingRule } from '../../types';
 
 // The minimal slice of a rule the delete-confirm flow needs: the id to delete
@@ -49,7 +50,7 @@ export function useModelCostDelete(): UseModelCostDeleteResult {
 				queryKey: getListLLMPricingRulesQueryKey(),
 			});
 			setPendingDelete(null);
-			toast.success('Model cost deleted');
+			toast.success(TOAST_MODEL_COST_DELETED);
 		} catch (error) {
 			const message = error instanceof Error ? error.message : 'Delete failed';
 			toast.error(message);

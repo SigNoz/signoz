@@ -1,4 +1,4 @@
-import { Badge } from '@signozhq/ui/badge';
+import TagBadge from 'components/TagBadge/TagBadge';
 import { Button } from '@signozhq/ui/button';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
@@ -24,7 +24,7 @@ import styles from './DashboardRow.module.scss';
 interface Props {
 	dashboard: DashboardListItem;
 	index: number;
-	canAct: boolean;
+	canEdit: boolean;
 	showUpdatedAt: boolean;
 	showUpdatedBy: boolean;
 }
@@ -32,7 +32,7 @@ interface Props {
 function DashboardRow({
 	dashboard,
 	index,
-	canAct,
+	canEdit,
 	showUpdatedAt,
 	showUpdatedBy,
 }: Props): JSX.Element {
@@ -60,6 +60,12 @@ function DashboardRow({
 	);
 
 	const onClickHandler = (event: React.MouseEvent<HTMLElement>): void => {
+		// Clicks inside portaled overlays (the actions menu, edit modals) bubble here
+		// through React's tree even though they render outside the row in the DOM.
+		// Only navigate when the click actually landed inside the row.
+		if (!event.currentTarget.contains(event.target as Node)) {
+			return;
+		}
 		event.stopPropagation();
 		markViewed(id);
 		safeNavigate(link, { newTab: isModifierKeyPressed(event) });
@@ -105,14 +111,10 @@ function DashboardRow({
 					{tags.length > 0 && (
 						<div className={styles.tags}>
 							{tags.slice(0, 3).map((tag) => (
-								<Badge className={styles.tag} key={tag}>
-									{tag}
-								</Badge>
+								<TagBadge key={tag}>{tag}</TagBadge>
 							))}
 							{tags.length > 3 && (
-								<Badge className={styles.tag} key={tags[3]}>
-									+ <Typography.Text> {tags.length - 3} </Typography.Text>
-								</Badge>
+								<TagBadge key={tags[3]}>+{tags.length - 3}</TagBadge>
 							)}
 						</div>
 					)}
@@ -157,16 +159,16 @@ function DashboardRow({
 					</Button>
 				</TooltipSimple>
 
-				{canAct && (
-					<ActionsPopover
-						link={link}
-						dashboardId={id}
-						dashboardName={name}
-						createdBy={createdBy}
-						isLocked={isLocked}
-						onView={onClickHandler}
-					/>
-				)}
+				<ActionsPopover
+					link={link}
+					dashboardId={id}
+					dashboardName={name}
+					createdBy={createdBy}
+					isLocked={isLocked}
+					tags={tags}
+					canEdit={canEdit}
+					onView={onClickHandler}
+				/>
 			</div>
 			<div className={styles.details}>
 				<div className={styles.createdAt}>
