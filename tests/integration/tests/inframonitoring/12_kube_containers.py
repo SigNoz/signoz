@@ -16,15 +16,6 @@ from fixtures.querier import compare_values, get_all_warnings
 ENDPOINT = "/api/v2/infra_monitoring/kube_containers"
 
 
-def _post(signoz: types.SigNoz, token: str, body: dict):
-    return requests.post(
-        signoz.self.host_configs["8080"].get(ENDPOINT),
-        headers={"authorization": f"Bearer {token}"},
-        json=body,
-        timeout=5,
-    )
-
-
 def test_kube_containers_accuracy(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
@@ -49,15 +40,16 @@ def test_kube_containers_accuracy(
     exp_by_name = {r["podName"]: r for r in expected["records"]}
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "filter": {"expression": "k8s.namespace.name = 'ns-acc'"},
             "limit": 50,
         },
+        timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
@@ -105,14 +97,15 @@ def test_kube_containers_status_health_and_base_set(
     }
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
         },
+        timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
@@ -146,15 +139,16 @@ def test_kube_containers_status_counts_grouped_mode(
         )
     )
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "groupBy": [{"name": "k8s.namespace.name", "fieldDataType": "string", "fieldContext": "resource"}],
             "limit": 50,
         },
+        timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
@@ -193,14 +187,15 @@ def test_kube_containers_status_recency(
         )
     )
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
         },
+        timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
@@ -230,14 +225,15 @@ def test_kube_containers_status_state_only_fallback(
         )
     )
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
         },
+        timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
@@ -265,14 +261,15 @@ def test_kube_containers_status_warning_missing_metrics(
         )
     )
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
         },
+        timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
     body = response.json()
@@ -306,15 +303,16 @@ def test_kube_containers_filter(
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     def pods_for(expr: str) -> set[str]:
-        response = _post(
-            signoz,
-            token,
-            {
+        response = requests.post(
+            signoz.self.host_configs["8080"].get(ENDPOINT),
+            headers={"authorization": f"Bearer {token}"},
+            json={
                 "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
                 "end": int(now.timestamp() * 1000),
                 "filter": {"expression": expr},
                 "limit": 50,
             },
+            timeout=5,
         )
         assert response.status_code == HTTPStatus.OK, response.text
         data = response.json()["data"]
@@ -346,16 +344,17 @@ def test_kube_containers_orderby_and_pagination(
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     def page(limit: int, offset: int) -> dict:
-        response = _post(
-            signoz,
-            token,
-            {
+        response = requests.post(
+            signoz.self.host_configs["8080"].get(ENDPOINT),
+            headers={"authorization": f"Bearer {token}"},
+            json={
                 "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
                 "end": int(now.timestamp() * 1000),
                 "orderBy": {"key": {"name": "cpu"}, "direction": "desc"},
                 "limit": limit,
                 "offset": offset,
             },
+            timeout=5,
         )
         assert response.status_code == HTTPStatus.OK, response.text
         return response.json()["data"]
@@ -419,7 +418,7 @@ def test_kube_containers_validation_errors(
     }
     body.update(payload_override)
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(signoz, token, body)
+    response = requests.post(signoz.self.host_configs["8080"].get(ENDPOINT), headers={"authorization": f"Bearer {token}"}, json=body, timeout=5)
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
     error = response.json()["error"]
     assert error["code"] == "invalid_input"
