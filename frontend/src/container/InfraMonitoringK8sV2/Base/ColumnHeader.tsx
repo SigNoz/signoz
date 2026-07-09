@@ -29,10 +29,10 @@ function ColumnHeader({
 		if (title) {
 			const parts = title.split('\n');
 			return parts.map((part, index) => (
-				<span key={`${part}-${index}`}>
+				<div key={`${part}-${index}`}>
 					{part}
 					{index < parts.length - 1 && <br />}
-				</span>
+				</div>
 			));
 		}
 
@@ -59,9 +59,9 @@ function ColumnHeader({
 						</>
 					}
 				>
-					<span className={styles.infoIcon}>
+					<div className={styles.infoIcon}>
 						<Info size="md" />
-					</span>
+					</div>
 				</TooltipSimple>
 			);
 		}
@@ -69,9 +69,9 @@ function ColumnHeader({
 		if (tooltip) {
 			return (
 				<TooltipSimple title={tooltip}>
-					<span className={styles.infoIcon}>
+					<div className={styles.infoIcon}>
 						<Info size="md" />
-					</span>
+					</div>
 				</TooltipSimple>
 			);
 		}
@@ -81,7 +81,7 @@ function ColumnHeader({
 
 	return (
 		<div className={cx(styles.columnHeader, className)} data-slot="column-header">
-			<span className={styles.columnHeaderLabel}>{renderContent()}</span>
+			<div className={styles.columnHeaderLabel}>{renderContent()}</div>
 			{renderInfoIcon()}
 		</div>
 	);

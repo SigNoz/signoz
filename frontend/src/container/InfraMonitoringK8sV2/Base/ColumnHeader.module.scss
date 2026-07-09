@@ -7,12 +7,7 @@
 .infoIcon {
 	display: inline-flex;
 	align-items: center;
-	color: var(--text-slate-secondary);
 	cursor: pointer;
-
-	&:hover {
-		color: var(--text-slate-primary);
-	}
 }
 
 .columnHeaderLabel {

@@ -11,7 +11,7 @@ import { ExpandButtonWrapper } from 'container/InfraMonitoringK8sV2/components';
 import ColumnHeader from '../Base/ColumnHeader';
 import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
-import { formatAge, formatBytes, getPodPhaseStatusItems } from '../commonUtils';
+import { formatBytes, getPodPhaseStatusItems } from '../commonUtils';
 import {
 	CellValueTooltip,
 	EntityProgressBar,
@@ -23,6 +23,7 @@ import {
 	InfraMonitoringEntity,
 } from '../constants';
 import { Typography } from '@signozhq/ui/typography';
+import { formatAge } from 'utils/timeUtils';
 
 export function getK8sPodRowKey(pod: InframonitoringtypesPodRecordDTO): string {
 	return (

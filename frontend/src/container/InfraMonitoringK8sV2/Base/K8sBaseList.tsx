@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
-import WarningPopover from 'components/WarningPopover/WarningPopover';
 import TanStackTable, {
 	TableColumnDef,
 	useCalculatedPageSize,
@@ -16,7 +15,6 @@ import { useGlobalTimeStore } from 'store/globalTime';
 import { NANO_SECOND_MULTIPLIER } from 'store/globalTime/utils';
 import { Querybuildertypesv5QueryWarnDataDTO } from 'api/generated/services/sigNoz.schemas';
 import { openInNewTab } from 'utils/navigation';
-import { Color } from '@signozhq/design-tokens';
 
 import {
 	INFRA_MONITORING_K8S_PARAMS_KEYS,
@@ -31,12 +29,12 @@ import { useInfraMonitoringLineClamp } from '../components';
 import { K8sEmptyState } from './K8sEmptyState';
 import { K8sExpandedRow } from './K8sExpandedRow';
 import K8sHeader from './K8sHeader';
+import { K8sPaginationWarning } from './K8sPaginationWarning';
 import { K8sBaseFilters } from './types';
 import { getGroupedByMeta } from './utils';
 
 import styles from './K8sBaseList.module.scss';
 import cx from 'classnames';
-import TriangleAlert from '@signozhq/icons/TriangleAlert';
 
 export type K8sBaseListEmptyStateContext = {
 	isError: boolean;
@@ -323,34 +321,9 @@ export function K8sBaseList<T extends K8sEntityData>({
 
 	const showEmptyState = !showTableLoadingState && pageData.length === 0;
 
-	const paginationWarningContent = useMemo(() => {
-		const warning = data?.warning;
-		if (!warning) {
-			return null;
-		}
-		return (
-			<span data-testid="k8s-list-warning-popover">
-				<WarningPopover
-					warningData={{
-						code: 'WARNING',
-						message: warning.message ?? '',
-						url: warning.url ?? '',
-						warnings:
-							warning.warnings?.map((w) => ({ message: w.message ?? '' })) ?? [],
-					}}
-				>
-					<div className={styles.paginationWarning}>
-						Your data contains some warnings
-						<TriangleAlert
-							size={16}
-							style={{ cursor: 'pointer' }}
-							color={Color.BG_AMBER_500}
-						/>
-					</div>
-				</WarningPopover>
-			</span>
-		);
-	}, [data?.warning]);
+	const paginationWarningContent = data?.warning ? (
+		<K8sPaginationWarning warning={data.warning} />
+	) : null;
 
 	return (
 		<>

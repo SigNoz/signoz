@@ -118,6 +118,8 @@
 }
 
 .groupBySelect {
+	width: 100%;
+
 	:global(.ant-select-selector) {
 		border-left: none;
 		border-top-left-radius: 0px;
