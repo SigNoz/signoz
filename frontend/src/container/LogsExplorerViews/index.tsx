@@ -33,6 +33,7 @@ import {
 	getQueryByPanelType,
 } from 'container/LogsExplorerViews/explorerUtils';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
+import { useGetExportToDashboardLink } from 'hooks/dashboard/useGetExportToDashboardLink';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -51,7 +52,6 @@ import { Filter } from 'types/api/v5/queryRange';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
 import { v4 } from 'uuid';
 
 import LogsActionsContainer from './LogsActionsContainer';
@@ -75,6 +75,7 @@ function LogsExplorerViewsContainer({
 	handleChangeSelectedView: ChangeViewFunctionType;
 }): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
+	const getExportToDashboardLink = useGetExportToDashboardLink();
 
 	const [showFrequencyChart, setShowFrequencyChart] = useState(
 		() => getFromLocalstorage(LOCALSTORAGE.SHOW_FREQUENCY_CHART) === 'true',
@@ -285,7 +286,7 @@ function LogsExplorerViewsContainer({
 				dashboardName: dashboard?.data?.title,
 			});
 
-			const dashboardEditView = generateExportToDashboardLink({
+			const dashboardEditView = getExportToDashboardLink({
 				query: exportDefaultQuery,
 				panelType: panelTypeParam,
 				dashboardId: dashboard.id,
@@ -294,7 +295,12 @@ function LogsExplorerViewsContainer({
 
 			safeNavigate(dashboardEditView);
 		},
-		[safeNavigate, exportDefaultQuery, selectedPanelType],
+		[
+			safeNavigate,
+			exportDefaultQuery,
+			selectedPanelType,
+			getExportToDashboardLink,
+		],
 	);
 
 	useEffect(() => {

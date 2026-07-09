@@ -14,6 +14,7 @@ import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapp
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
+import { useGetExportToDashboardLink } from 'hooks/dashboard/useGetExportToDashboardLink';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import {
@@ -35,7 +36,6 @@ import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { MetricAggregation } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
-import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
 import { explorerViewToPanelType } from 'utils/explorerUtils';
 import { v4 as uuid } from 'uuid';
 
@@ -63,6 +63,7 @@ function Explorer(): JSX.Element {
 		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
 	const { safeNavigate } = useSafeNavigate();
+	const getExportToDashboardLink = useGetExportToDashboardLink();
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
 	const [isMetricDetailsOpen, setIsMetricDetailsOpen] = useState(false);
@@ -278,7 +279,7 @@ function Explorer(): JSX.Element {
 				};
 			}
 
-			const dashboardEditView = generateExportToDashboardLink({
+			const dashboardEditView = getExportToDashboardLink({
 				query,
 				panelType: PANEL_TYPES.TIME_SERIES,
 				dashboardId: dashboard.id,
@@ -287,7 +288,7 @@ function Explorer(): JSX.Element {
 
 			safeNavigate(dashboardEditView);
 		},
-		[exportDefaultQuery, safeNavigate, yAxisUnit],
+		[exportDefaultQuery, safeNavigate, yAxisUnit, getExportToDashboardLink],
 	);
 
 	const splitedQueries = useMemo(

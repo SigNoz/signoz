@@ -1031,26 +1031,19 @@ function ExplorerOptions({
 					/>
 				</div>
 			</Modal>
-			<Modal
-				footer={null}
-				onOk={onCancel(false)}
-				onCancel={onCancel(false)}
+			<ExportPanelContainer
 				open={isExport}
-				centered
-				destroyOnClose
-			>
-				<ExportPanelContainer
-					query={isOneChartPerQuery ? queryToExport : query}
-					isLoading={isLoading}
-					onExport={(dashboard, isNewDashboard): void => {
-						if (isOneChartPerQuery && queryToExport) {
-							onExport(dashboard, isNewDashboard, queryToExport);
-						} else {
-							onExport(dashboard, isNewDashboard);
-						}
-					}}
-				/>
-			</Modal>
+				onClose={onCancel(false)}
+				query={isOneChartPerQuery ? queryToExport : query}
+				isLoading={isLoading}
+				onExport={(dashboard, isNewDashboard): void => {
+					if (isOneChartPerQuery && queryToExport) {
+						onExport(dashboard, isNewDashboard, queryToExport);
+					} else {
+						onExport(dashboard, isNewDashboard);
+					}
+				}}
+			/>
 		</div>
 	);
 }

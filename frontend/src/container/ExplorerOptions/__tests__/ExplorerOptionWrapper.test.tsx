@@ -179,10 +179,8 @@ describe('ExplorerOptionWrapper', () => {
 				expect(screen.getByRole('dialog')).toBeInTheDocument();
 			});
 
-			// Click the "New Dashboard" button
-			const newDashboardButton = screen.getByRole('button', {
-				name: /new dashboard/i,
-			});
+			// Click the "New dashboard" button
+			const newDashboardButton = screen.getByTestId('export-panel-new-dashboard');
 			await user.click(newDashboardButton);
 
 			// Wait for the API call to complete and onExport to be called
@@ -229,13 +227,12 @@ describe('ExplorerOptionWrapper', () => {
 				expect(screen.getByRole('dialog')).toBeInTheDocument();
 			});
 
-			// Wait for dashboards to load and then click on the dashboard select dropdown
+			// Wait for the dashboard select dropdown to render inside the dialog
+			const modal = screen.getByRole('dialog');
 			await waitFor(() => {
-				expect(screen.getByText('Select Dashboard')).toBeInTheDocument();
+				expect(modal.querySelector('[role="combobox"]')).toBeTruthy();
 			});
 
-			// Get the modal and find the dashboard select dropdown within it
-			const modal = screen.getByRole('dialog');
 			const dashboardSelect = modal.querySelector(
 				'[role="combobox"]',
 			) as HTMLElement;
@@ -251,14 +248,13 @@ describe('ExplorerOptionWrapper', () => {
 			const dashboardOption = screen.getByText(mockDashboard1.data.title);
 			await user.click(dashboardOption);
 
-			// Wait for the selection to be made and the Export button to be enabled
+			// Wait for the selection to be made and the export button to be enabled
 			await waitFor(() => {
-				const exportButton = screen.getByRole('button', { name: /export/i });
-				expect(exportButton).not.toBeDisabled();
+				expect(screen.getByTestId('export-panel-export')).not.toBeDisabled();
 			});
 
-			// Click the Export button
-			const exportButton = screen.getByRole('button', { name: /export/i });
+			// Click the export button
+			const exportButton = screen.getByTestId('export-panel-export');
 			await user.click(exportButton);
 
 			// Wait for onExport to be called with the selected dashboard
@@ -326,13 +322,12 @@ describe('ExplorerOptionWrapper', () => {
 				expect(screen.getByRole('dialog')).toBeInTheDocument();
 			});
 
-			// Wait for dashboards to load and then click on the dashboard select dropdown
+			// Wait for the dashboard select dropdown to render inside the dialog
+			const modal = screen.getByRole('dialog');
 			await waitFor(() => {
-				expect(screen.getByText('Select Dashboard')).toBeInTheDocument();
+				expect(modal.querySelector('[role="combobox"]')).toBeTruthy();
 			});
 
-			// Get the modal and find the dashboard select dropdown within it
-			const modal = screen.getByRole('dialog');
 			const dashboardSelect = modal.querySelector(
 				'[role="combobox"]',
 			) as HTMLElement;
@@ -348,14 +343,13 @@ describe('ExplorerOptionWrapper', () => {
 			const dashboardOption = screen.getByText(mockDashboard.data.title);
 			await user.click(dashboardOption);
 
-			// Wait for the selection to be made and the Export button to be enabled
+			// Wait for the selection to be made and the export button to be enabled
 			await waitFor(() => {
-				const exportButton = screen.getByRole('button', { name: /export/i });
-				expect(exportButton).not.toBeDisabled();
+				expect(screen.getByTestId('export-panel-export')).not.toBeDisabled();
 			});
 
-			// Click the Export button
-			const exportButton = screen.getByRole('button', { name: /export/i });
+			// Click the export button
+			const exportButton = screen.getByTestId('export-panel-export');
 			await user.click(exportButton);
 
 			// Wait for the handleExport function to be called and navigation to occur
