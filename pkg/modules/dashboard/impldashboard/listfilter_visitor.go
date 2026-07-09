@@ -23,6 +23,11 @@ type visitor struct {
 	selectBuilder *sqlbuilder.SelectBuilder
 	formatter     sqlstore.SQLFormatter
 	errors        []string
+	// bareTerms holds any primaries that were a lone key/value/full-text token
+	// rather than a `key OP value` comparison. Compile uses them to tell a
+	// free-text search (the whole query is bare terms) apart from a malformed
+	// filter (a bare term mixed into a real comparison).
+	bareTerms []string
 }
 
 func newVisitor(formatter sqlstore.SQLFormatter) *visitor {
@@ -119,9 +124,10 @@ func (v *visitor) VisitPrimary(ctx *grammar.PrimaryContext) any {
 	if ctx.Comparison() != nil {
 		return v.visit(ctx.Comparison())
 	}
-	// Bare keys, values, full text, and function calls are not part of the
-	// dashboard list DSL.
-	v.addError("unsupported expression %q — every term must be of the form `key OP value`", ctx.GetText())
+	// A lone key, value, or full-text token is not a `key OP value` comparison.
+	// Record it; Compile decides whether the query is a free-text search (all
+	// bare terms) or a malformed filter (bare term alongside a comparison).
+	v.bareTerms = append(v.bareTerms, ctx.GetText())
 	return ""
 }
 
@@ -399,6 +405,51 @@ func buildSubqueryForTagKey(subqueryBuilder *sqlbuilder.SelectBuilder, tagKey st
 
 func buildSubqueryForTagKeyAndValue(subqueryBuilder *sqlbuilder.SelectBuilder, tagKey, valuePredicate string) *sqlbuilder.SelectBuilder {
 	return buildSubqueryForTagKey(subqueryBuilder, tagKey).Where(valuePredicate)
+}
+
+// ─── free-text search ────────────────────────────────────────────────────────
+
+// compileFreeText treats value as a case-insensitive substring search, matching
+// when it is contained in the dashboard name, the description, or any tag's key
+// or value.
+func (v *visitor) compileFreeText(value string) (string, []any) {
+	nameColumn := string(v.formatter.JSONExtractString("dashboard.data", "$.spec.display.name"))
+	descriptionColumn := string(v.formatter.JSONExtractString("dashboard.data", "$.spec.display.description"))
+	namePredicate := v.buildFreeTextContains(v.selectBuilder, nameColumn, value)
+	descriptionPredicate := v.buildFreeTextContains(v.selectBuilder, descriptionColumn, value)
+
+	subqueryBuilder := sqlbuilder.NewSelectBuilder()
+	keyPredicate := v.buildFreeTextContains(subqueryBuilder, "t.key", value)
+	valuePredicate := v.buildFreeTextContains(subqueryBuilder, "t.value", value)
+	buildSubqueryForFreeTextTag(subqueryBuilder, keyPredicate, valuePredicate)
+	tagPredicate := v.selectBuilder.Exists(subqueryBuilder)
+
+	condition := v.selectBuilder.Or(namePredicate, descriptionPredicate, tagPredicate)
+	return v.selectBuilder.Args.CompileWithFlavor(condition, bunPlaceholderFlavor)
+}
+
+// buildFreeTextContains emits a case-insensitive `col CONTAINS value` predicate as
+// LOWER(col) LIKE LOWER(?) — identical on SQLite and Postgres. The value's % and _
+// are escaped so they match literally, and ESCAPE pins backslash as the escape char
+// (SQLite has no default; a harmless restatement of the Postgres default).
+func (v *visitor) buildFreeTextContains(builder *sqlbuilder.SelectBuilder, columnExpression, value string) string {
+	lowerColumn := string(v.formatter.LowerExpression(columnExpression))
+	pattern := "%" + v.formatter.EscapeLikePattern(value) + "%"
+	return fmt.Sprintf("%s LIKE LOWER(%s) ESCAPE '\\'", lowerColumn, builder.Var(pattern))
+}
+
+func buildSubqueryForFreeTextTag(subqueryBuilder *sqlbuilder.SelectBuilder, keyPredicate, valuePredicate string) *sqlbuilder.SelectBuilder {
+	const dashboardTagKind = `"dashboard"`
+
+	return subqueryBuilder.
+		Select("1").
+		From("tag_relation tr").
+		Join("tag t", "t.id = tr.tag_id").
+		Where(
+			subqueryBuilder.Equal("tr.kind", dashboardTagKind),
+			"tr.resource_id = dashboard.id",
+			subqueryBuilder.Or(keyPredicate, valuePredicate),
+		)
 }
 
 // ─── value extraction helpers ───────────────────────────────────────────────

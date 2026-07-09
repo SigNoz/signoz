@@ -460,6 +460,66 @@ func TestCompile_ComplexExamples(t *testing.T) {
 	})
 }
 
+// A query with no `key OP value` comparison — a bare word or a phrase with
+// spaces — is a case-insensitive substring search over the dashboard name,
+// description, and every tag key/value. The whole string is one CONTAINS term.
+func TestCompile_FreeText(t *testing.T) {
+	// freeTextSQL is the predicate every free-text query compiles to; only the
+	// bound pattern differs.
+	freeTextSQL := `
+		(
+		lower(json_extract("dashboard"."data", '$.spec.display.name')) LIKE LOWER(?) ESCAPE '\'
+		OR lower(json_extract("dashboard"."data", '$.spec.display.description')) LIKE LOWER(?) ESCAPE '\'
+		OR EXISTS (
+			SELECT 1 FROM tag_relation tr
+			JOIN tag t ON t.id = tr.tag_id
+			WHERE tr.kind = ? AND tr.resource_id = dashboard.id
+			AND (lower(t.key) LIKE LOWER(?) ESCAPE '\' OR lower(t.value) LIKE LOWER(?) ESCAPE '\')
+		))`
+	freeTextArgs := func(pattern string) []any {
+		return []any{pattern, pattern, kindArg, pattern, pattern}
+	}
+
+	runCompileCases(t, []compileCase{
+		{
+			subtestName:       "single bare word",
+			dslQueryToCompile: `payment`,
+			expectedSQL:       freeTextSQL,
+			expectedArgs:      freeTextArgs("%payment%"),
+		},
+		{
+			subtestName:       "phrase with spaces matches the whole string",
+			dslQueryToCompile: `prod payment service`,
+			expectedSQL:       freeTextSQL,
+			expectedArgs:      freeTextArgs("%prod payment service%"),
+		},
+		{
+			subtestName:       "quoted phrase",
+			dslQueryToCompile: `"prod payment service"`,
+			expectedSQL:       freeTextSQL,
+			expectedArgs:      freeTextArgs("%prod payment service%"),
+		},
+		{
+			subtestName:       "quoting is the escape hatch for a DSL-like literal",
+			dslQueryToCompile: `"team = prod"`,
+			expectedSQL:       freeTextSQL,
+			expectedArgs:      freeTextArgs("%team = prod%"),
+		},
+		{
+			subtestName:       "LIKE wildcards in the term are escaped to match literally",
+			dslQueryToCompile: `50% off`,
+			expectedSQL:       freeTextSQL,
+			expectedArgs:      freeTextArgs(`%50\% off%`),
+		},
+		{
+			subtestName:       "surrounding whitespace is trimmed",
+			dslQueryToCompile: `   payment   `,
+			expectedSQL:       freeTextSQL,
+			expectedArgs:      freeTextArgs("%payment%"),
+		},
+	})
+}
+
 func TestCompile_Rejections(t *testing.T) {
 	runCompileCases(t, []compileCase{
 		{
@@ -491,6 +551,11 @@ func TestCompile_Rejections(t *testing.T) {
 			subtestName:              "rejects syntax error from grammar",
 			dslQueryToCompile:        `name = `,
 			expectedErrShouldContain: "syntax",
+		},
+		{
+			subtestName:              "rejects a bare term mixed into a real comparison",
+			dslQueryToCompile:        `payment AND name = 'foo'`,
+			expectedErrShouldContain: "unsupported expression",
 		},
 	})
 }
