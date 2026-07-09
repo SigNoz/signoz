@@ -1,4 +1,11 @@
 .grid {
+	// Mount-only (SectionGrid.tsx `entering`): kill the entrance unfold that trips the
+	// lazy-load observer. Dropping the class restores RGL's transition for drag/resize.
+	&.entering
+		:global(.react-grid-item.cssTransforms:not(.react-grid-placeholder)) {
+		transition: none;
+	}
+
 	// Override react-grid-layout's default red drag/resize placeholder with the
 	// SigNoz brand blue.
 	:global(.react-grid-item.react-grid-placeholder) {

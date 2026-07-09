@@ -1,5 +1,6 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import GridLayout, { WidthProvider, type Layout } from 'react-grid-layout';
+import cx from 'classnames';
 
 import type { DashboardSection } from '../../../utils';
 import { useDashboardStore } from '../../../store/useDashboardStore';
@@ -22,6 +23,15 @@ function SectionGrid({
 	sections,
 }: SectionGridProps): JSX.Element {
 	const isEditable = useDashboardStore((s) => s.isEditable);
+
+	// Skip RGL's mount unfold (it piles panels into the viewport and trips the lazy-load
+	// observer) by suppressing the item transition for the first frame only.
+	const [entered, setEntered] = useState(false);
+	useEffect(() => {
+		const raf = requestAnimationFrame(() => setEntered(true));
+		return (): void => cancelAnimationFrame(raf);
+	}, []);
+
 	const rglLayout = useMemo<Layout[]>(
 		() =>
 			items.map((item) => ({
@@ -38,7 +48,7 @@ function SectionGrid({
 
 	return (
 		<ResponsiveGridLayout
-			className={styles.grid}
+			className={cx(styles.grid, !entered && styles.entering)}
 			cols={12}
 			rowHeight={45}
 			autoSize
