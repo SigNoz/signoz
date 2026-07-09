@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import * as Sentry from '@sentry/react';
+import { Card } from 'antd';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
@@ -40,8 +41,6 @@ import { isEmpty } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import { TOOLBAR_VIEWS } from 'pages/TracesExplorer/constants';
-import { ResizableBox } from 'periscope/components/ResizableBox';
-import usePanelWidth from 'periscope/components/ResizableBox/usePanelWidth';
 import { Warning } from 'types/api';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -62,10 +61,6 @@ import {
 import TimeSeriesView from './TimeSeriesView';
 
 import './TracesExplorer.styles.scss';
-
-const QUICK_FILTERS_DEFAULT_WIDTH = 260;
-const QUICK_FILTERS_MIN_WIDTH = 240;
-const QUICK_FILTERS_MAX_WIDTH = 500;
 
 function TracesExplorer(): JSX.Element {
 	const {
@@ -121,16 +116,6 @@ function TracesExplorer(): JSX.Element {
 
 	const [warning, setWarning] = useState<Warning | undefined>();
 	const [isOpen, setOpen] = useState<boolean>(true);
-
-	const {
-		initialWidth: quickFiltersInitialWidth,
-		persistWidth: persistQuickFiltersWidth,
-	} = usePanelWidth({
-		storageKey: LOCALSTORAGE.QUICK_FILTERS_WIDTH_TRACES,
-		defaultWidth: QUICK_FILTERS_DEFAULT_WIDTH,
-		minWidth: QUICK_FILTERS_MIN_WIDTH,
-		maxWidth: QUICK_FILTERS_MAX_WIDTH,
-	});
 
 	const defaultQuery = useMemo(
 		(): Query =>
@@ -265,29 +250,16 @@ function TracesExplorer(): JSX.Element {
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<div className="trace-explorer-page">
-				{isOpen && (
-					<ResizableBox
-						handle="right"
-						defaultWidth={QUICK_FILTERS_DEFAULT_WIDTH}
-						initialWidth={quickFiltersInitialWidth}
-						minWidth={QUICK_FILTERS_MIN_WIDTH}
-						maxWidth={QUICK_FILTERS_MAX_WIDTH}
-						onResize={persistQuickFiltersWidth}
-						resetToDefaultOnDoubleClick
-						withHandle
-						className="filter"
-						handleTestId="quick-filters-resize-handle"
-					>
-						<QuickFilters
-							className="qf-traces-explorer"
-							source={QuickFiltersSource.TRACES_EXPLORER}
-							signal={SignalType.TRACES}
-							handleFilterVisibilityChange={(): void => {
-								setOpen(!isOpen);
-							}}
-						/>
-					</ResizableBox>
-				)}
+				<Card className="filter" hidden={!isOpen}>
+					<QuickFilters
+						className="qf-traces-explorer"
+						source={QuickFiltersSource.TRACES_EXPLORER}
+						signal={SignalType.TRACES}
+						handleFilterVisibilityChange={(): void => {
+							setOpen(!isOpen);
+						}}
+					/>
+				</Card>
 				<div
 					className={cx('trace-explorer', {
 						'filters-expanded': isOpen,
