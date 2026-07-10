@@ -1,5 +1,5 @@
 import type { CSSProperties, MouseEvent, ReactNode } from 'react';
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { toast } from '@signozhq/ui/sonner';
@@ -85,9 +85,15 @@ function LogsExplorerList({
 	const { currentQuery, lastUsedQuery, redirectWithQueryBuilderData } =
 		useQueryBuilder();
 
-	const activeLogIndex = logs.findIndex(({ id }) => id === activeLogId);
+	const activeLogIndex = useMemo(
+		() => logs.findIndex(({ id }) => id === activeLogId),
+		[logs, activeLogId],
+	);
 
-	const selectedFields = convertKeysToColumnFields(options.selectColumns);
+	const selectedFields = useMemo(
+		() => convertKeysToColumnFields(options.selectColumns),
+		[options.selectColumns],
+	);
 
 	const handleColumnOrderChange = (cols: TableColumnDef<ILog>[]): void => {
 		config?.addColumn?.onReorder(cols.map((c) => c.id));
@@ -130,41 +136,54 @@ function LogsExplorerList({
 		}
 	}, [isLoading, isFetching, isError, logs.length]);
 
-	const getItemContent = (_: number, log: ILog): JSX.Element => {
-		if (options.format === 'raw') {
+	const getItemContent = useCallback(
+		(_: number, log: ILog): JSX.Element => {
+			if (options.format === 'raw') {
+				return (
+					<div key={log.id}>
+						<RawLogView
+							data={log}
+							isActiveLog={activeLog?.id === log.id}
+							linesPerRow={options.maxLines}
+							selectedFields={selectedFields}
+							fontSize={options.fontSize}
+							handleChangeSelectedView={handleChangeSelectedView}
+							onSetActiveLog={handleSetActiveLog}
+							onClearActiveLog={handleCloseLogDetail}
+						/>
+					</div>
+				);
+			}
+
 			return (
 				<div key={log.id}>
-					<RawLogView
-						data={log}
+					<ListLogView
+						logData={log}
 						isActiveLog={activeLog?.id === log.id}
-						linesPerRow={options.maxLines}
 						selectedFields={selectedFields}
-						fontSize={options.fontSize}
-						handleChangeSelectedView={handleChangeSelectedView}
+						onAddToQuery={onAddToQuery}
 						onSetActiveLog={handleSetActiveLog}
+						activeLog={activeLog}
+						fontSize={options.fontSize}
+						linesPerRow={options.maxLines}
+						handleChangeSelectedView={handleChangeSelectedView}
 						onClearActiveLog={handleCloseLogDetail}
 					/>
 				</div>
 			);
-		}
-
-		return (
-			<div key={log.id}>
-				<ListLogView
-					logData={log}
-					isActiveLog={activeLog?.id === log.id}
-					selectedFields={selectedFields}
-					onAddToQuery={onAddToQuery}
-					onSetActiveLog={handleSetActiveLog}
-					activeLog={activeLog}
-					fontSize={options.fontSize}
-					linesPerRow={options.maxLines}
-					handleChangeSelectedView={handleChangeSelectedView}
-					onClearActiveLog={handleCloseLogDetail}
-				/>
-			</div>
-		);
-	};
+		},
+		[
+			options.format,
+			options.fontSize,
+			options.maxLines,
+			activeLog,
+			selectedFields,
+			onAddToQuery,
+			handleSetActiveLog,
+			handleChangeSelectedView,
+			handleCloseLogDetail,
+		],
+	);
 
 	const components = isLoading
 		? {
@@ -221,7 +240,7 @@ function LogsExplorerList({
 			/>
 		);
 	} else {
-		function getMarginTop(): string {
+		const getMarginTop = (): string => {
 			switch (options.fontSize) {
 				case FontSize.SMALL:
 					return '10px';
@@ -232,7 +251,7 @@ function LogsExplorerList({
 				default:
 					return '15px';
 			}
-		}
+		};
 
 		renderContent = (
 			<Card
@@ -265,10 +284,6 @@ function LogsExplorerList({
 
 		if (!updatedQuery) {
 			return;
-		}
-
-		if (updatedQuery?.filters?.items) {
-			updatedQuery.filters.items = [];
 		}
 
 		const preparedQuery = {

@@ -220,7 +220,7 @@
       "sh -c tsgo --noEmit"
     ],
     "*.(js|jsx|ts|tsx|scss|css)": [
-      "oxlint --fix --quiet --no-error-on-unmatched-pattern",
+      "oxlint --fix --no-error-on-unmatched-pattern",
       "oxfmt --write"
     ],
     "*.(scss|css)": [

@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import type { DashboardtypesBarChartPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 import BarChart from 'container/DashboardContainer/visualization/charts/BarChart/BarChart';
 import ChartManager from 'container/DashboardContainer/visualization/components/ChartManager/ChartManager';
@@ -61,28 +61,49 @@ function BarPanelRenderer({
 
 	const groupByPerQuery = useGroupByPerQuery(builderQueries);
 
-	const flatSeries = flattenTimeSeries(
-		getTimeSeriesResults(data.response),
-		data.legendMap ?? {},
+	const flatSeries = useMemo(
+		() =>
+			flattenTimeSeries(
+				getTimeSeriesResults(data.response),
+				data.legendMap ?? {},
+			),
+		[data.response, data.legendMap],
 	);
 
-	// TooltipPlugin mutates `config` for cursor sync; rebuild on syncMode change
-	// so a fresh instance doesn't inherit stale sync settings (e.g. "No Sync").
-	const config = buildBarChartConfig({
-		panelId,
-		spec,
-		builderQueries,
-		series: flatSeries,
-		stepIntervals: getExecStats(data.response)?.stepIntervals,
-		isDarkMode,
-		timezone,
-		panelMode,
-		minTimeScale,
-		maxTimeScale,
-		onDragSelect,
-	});
+	const config = useMemo(
+		() =>
+			buildBarChartConfig({
+				panelId,
+				spec,
+				builderQueries,
+				series: flatSeries,
+				stepIntervals: getExecStats(data.response)?.stepIntervals,
+				isDarkMode,
+				timezone,
+				panelMode,
+				minTimeScale,
+				maxTimeScale,
+				onDragSelect,
+			}),
+		[
+			panelId,
+			spec,
+			builderQueries,
+			flatSeries,
+			data.response,
+			isDarkMode,
+			timezone,
+			panelMode,
+			minTimeScale,
+			maxTimeScale,
+			onDragSelect,
+			// TooltipPlugin mutates `config` for cursor sync; rebuild on syncMode change
+			// so a fresh instance doesn't inherit stale sync settings (e.g. "No Sync").
+			dashboardPreference?.syncMode,
+		],
+	);
 
-	const chartData = prepareAlignedData(flatSeries);
+	const chartData = useMemo(() => prepareAlignedData(flatSeries), [flatSeries]);
 
 	const decimalPrecision = resolveDecimalPrecision(
 		spec.formatting?.decimalPrecision,

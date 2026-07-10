@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { blue } from '@ant-design/colors';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
@@ -243,4 +244,4 @@ LogGeneralField.defaultProps = {
 	linesPerRow: 1,
 };
 
-export default ListLogView;
+export default memo(ListLogView);

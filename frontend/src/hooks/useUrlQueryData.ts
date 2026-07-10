@@ -1,3 +1,4 @@
+import { useCallback, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { useSafeNavigate } from './useSafeNavigate';
@@ -11,9 +12,9 @@ const useUrlQueryData = <T>(
 	const urlQuery = useUrlQuery();
 	const { safeNavigate } = useSafeNavigate();
 
-	const query = urlQuery.get(queryKey);
+	const query = useMemo(() => urlQuery.get(queryKey), [urlQuery, queryKey]);
 
-	const queryData: T = (() => {
+	const queryData: T = useMemo(() => {
 		if (query) {
 			try {
 				return JSON.parse(query);
@@ -23,23 +24,26 @@ const useUrlQueryData = <T>(
 			}
 		}
 		return defaultData;
-	})();
+	}, [query, defaultData]);
 
-	const redirectWithQuery = (newQueryData: T): void => {
-		const newQuery = JSON.stringify(newQueryData);
+	const redirectWithQuery = useCallback(
+		(newQueryData: T): void => {
+			const newQuery = JSON.stringify(newQueryData);
 
-		// Create a new URLSearchParams object with the current URL's search params
-		// This ensures we're working with the most up-to-date URL state
-		const currentUrlQuery = new URLSearchParams(window.location.search);
+			// Create a new URLSearchParams object with the current URL's search params
+			// This ensures we're working with the most up-to-date URL state
+			const currentUrlQuery = new URLSearchParams(window.location.search);
 
-		// Update or add the specified query parameter with the new serialized data
-		currentUrlQuery.set(queryKey, newQuery);
+			// Update or add the specified query parameter with the new serialized data
+			currentUrlQuery.set(queryKey, newQuery);
 
-		// Construct the new URL by combining the current pathname with the updated query string
-		const generatedUrl = `${location.pathname}?${currentUrlQuery.toString()}`;
+			// Construct the new URL by combining the current pathname with the updated query string
+			const generatedUrl = `${location.pathname}?${currentUrlQuery.toString()}`;
 
-		safeNavigate(generatedUrl);
-	};
+			safeNavigate(generatedUrl);
+		},
+		[location.pathname, queryKey, safeNavigate],
+	);
 
 	return {
 		query,

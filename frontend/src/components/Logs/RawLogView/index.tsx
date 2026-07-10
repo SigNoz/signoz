@@ -1,4 +1,4 @@
-import { MouseEvent, MouseEventHandler } from 'react';
+import { memo, MouseEvent, MouseEventHandler } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Tooltip } from 'antd';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
@@ -183,4 +183,4 @@ RawLogView.defaultProps = {
 	isHighlighted: false,
 };
 
-export default RawLogView;
+export default memo(RawLogView);

@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import ChartLayout from 'container/DashboardContainer/visualization/layout/ChartLayout/ChartLayout';
 import UPlotLegend from 'lib/uPlotV2/components/Legend/UPlotLegend';
 import {
@@ -41,31 +41,40 @@ export default function ChartWrapper({
 }: ChartProps): JSX.Element {
 	const plotInstanceRef = useRef<uPlot | null>(null);
 
-	const legendComponent = (averageLegendWidth: number): React.ReactNode => {
-		if (!showLegend) {
+	const legendComponent = useCallback(
+		(averageLegendWidth: number): React.ReactNode => {
+			if (!showLegend) {
+				return null;
+			}
+			return (
+				<UPlotLegend
+					config={config}
+					position={legendConfig.position}
+					averageLegendWidth={averageLegendWidth}
+				/>
+			);
+		},
+		[config, legendConfig.position, showLegend],
+	);
+
+	const renderTooltipCallback = useCallback(
+		(args: TooltipRenderArgs): React.ReactNode => {
+			if (customTooltip) {
+				return customTooltip(args);
+			}
 			return null;
-		}
-		return (
-			<UPlotLegend
-				config={config}
-				position={legendConfig.position}
-				averageLegendWidth={averageLegendWidth}
-			/>
-		);
-	};
+		},
+		[customTooltip],
+	);
 
-	const renderTooltipCallback = (args: TooltipRenderArgs): React.ReactNode => {
-		if (customTooltip) {
-			return customTooltip(args);
-		}
-		return null;
-	};
-
-	const syncMetadata = {
-		yAxisUnit,
-		groupByPerQuery,
-		filterMode: syncFilterMode,
-	};
+	const syncMetadata = useMemo(
+		() => ({
+			yAxisUnit,
+			groupByPerQuery,
+			filterMode: syncFilterMode,
+		}),
+		[yAxisUnit, groupByPerQuery, syncFilterMode],
+	);
 
 	return (
 		<PlotContextProvider>

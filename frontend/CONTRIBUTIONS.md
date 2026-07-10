@@ -15,6 +15,11 @@ This project uses [React Compiler](https://react.dev/learn/react-compiler). Foll
 - **Escape hatches:** Keep `useMemo` / `useCallback` when you need precise control (especially values used as effect dependencies).
 - **`React.memo`:** Usually unnecessary with the compiler.
 - **Existing memos:** Leave them in place, or remove only with careful testing (removal can change compilation output).
+- **Mass prune is not blanket-safe:** Do not strip memos across a feature just because the compiler is enabled. Identity-sensitive values (effect deps, imperative chart/list APIs) still need stable references the compiler does not always preserve.
+- **Holdout patterns** (keep manual memoization or `"use no memo"` until proven safe):
+  - uPlot `options` / panel `config` builders (chart teardown if identity churns)
+  - Virtuoso `itemContent` / `getItemContent` (and row components passed into virtualized lists)
+  - URLSearchParams hooks (`useUrlQuery` / `useUrlQueryData`) whose return identity feeds effect dependency arrays
 - **`"use no memo"`:** Use only for holdouts that must skip compilation.
 
 See [What should I do about useMemo, useCallback, and React.memo?](https://react.dev/learn/react-compiler/introduction#what-should-i-do-about-usememo-usecallback-and-reactmemo).
@@ -47,19 +52,15 @@ See [What should I do about useMemo, useCallback, and React.memo?](https://react
 
 ### Linting and Setup
 
-- It is crucial to refrain from disabling ESLint and TypeScript errors within the project. If there is a specific rule that needs to be disabled, provide a clear and justified explanation for doing so. Maintaining the integrity of the linting and type-checking processes ensures code quality and consistency throughout the codebase.
-- In our project, we rely on several essential ESLint plugins and configurations:
+- Do not disable oxlint or TypeScript errors without a clear, justified explanation. Keeping lint and type-checking strict protects merge safety (including React Compiler Rules of React via `react-hooks-js/*`).
+- Tooling:
 
-  - [eslint:recommended](https://eslint.org/docs/latest/rules/) - Core ESLint rules for JavaScript best practices
-  - [plugin:@typescript-eslint](https://typescript-eslint.io/rules/) - TypeScript-specific linting rules
-  - [plugin:react](https://github.com/jsx-eslint/eslint-plugin-react) - React best practices and patterns
-  - [plugin:react-hooks](https://www.npmjs.com/package/eslint-plugin-react-hooks) - Rules of Hooks enforcement
-  - [plugin:sonarjs](https://github.com/SonarSource/eslint-plugin-sonarjs) - Code quality and complexity analysis
-  - [plugin:prettier](https://github.com/prettier/eslint-plugin-prettier) - Code formatting via Prettier
-  - [simple-import-sort](https://github.com/lydell/eslint-plugin-simple-import-sort) - Automatic import organization
-  - [plugin:jsx-a11y](https://github.com/jsx-eslint/eslint-plugin-jsx-a11y) - Accessibility rules for JSX elements
+  - [oxlint](https://oxc.rs/docs/guide/usage/linter.html) — primary JS/TS linter (includes TypeScript, React, a11y, import, Jest, and `react-hooks-js` / React Compiler rules)
+  - [oxfmt](https://oxc.rs/docs/guide/usage/formatter.html) — code formatting (replaces Prettier in this package)
+  - [stylelint](https://stylelint.io/) — SCSS/CSS linting
+  - TypeScript (`tsgo` / `tsc`) — type-checking
 
-  To ensure compliance with our coding standards and best practices, we encourage you to refer to the documentation of these plugins. Familiarizing yourself with the ESLint rules they provide will help maintain code quality and consistency throughout the project.
+  Prefer fixing violations over disabling rules. Pre-commit runs oxlint without `--quiet` so compiler and other warnings are not swallowed.
 
 ### Naming Conventions
 
