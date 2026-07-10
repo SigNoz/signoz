@@ -1,4 +1,4 @@
-.root {
+.panel {
 	height: 100%;
 	display: flex;
 	flex-direction: column;
@@ -9,13 +9,14 @@
 	}
 }
 
-.body {
+.panelBody {
 	padding: 12px;
 	display: flex;
 	flex-direction: column;
 	flex: 1;
 	min-height: 0;
 	overflow-y: auto;
+	overscroll-behavior: contain;
 	scrollbar-width: none;
 	background: var(--l1-background);
 	font-size: 14px;
@@ -33,14 +34,33 @@
 	min-width: 0;
 }
 
+// Logs-tab footer. Sibling of the scrolling .panelBody inside .panel, so it's
+// a true fixed footer flush with the panel's bottom edge — always visible
+// regardless of how the body is scrolled.
+.logsFooter {
+	flex-shrink: 0;
+	display: flex;
+	justify-content: flex-end;
+	align-items: center;
+	// Inset to match panelBody's 12px padding so the border-top aligns with
+	// the content edges instead of bleeding to the panel border.
+	margin: 0 12px;
+	padding: 8px 0 12px;
+	border-top: 1px solid var(--l2-border);
+	background: var(--l1-background);
+}
+
+// Single scroll: when the summary sits above (non-docked modes) it scrolls away
+// and the tab section pins to the top; tab content scrolls inside `.tabsScroll`.
 .tabsSection {
-	flex: 1;
 	min-width: 0;
-	max-height: 100%;
-	min-height: 400px;
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
+	position: sticky;
+	top: 0;
+	flex: 0 0 auto;
+	height: 100%;
 
 	// TabsRoot — direct child of tabs-section
 	> div {
@@ -88,79 +108,6 @@
 		flex: 1;
 		min-height: 0;
 	}
-}
-
-.spanRow {
-	display: flex;
-	align-items: center;
-	flex-wrap: wrap;
-	gap: 8px;
-	justify-content: space-between;
-}
-
-.spanInfo {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 4px 16px;
-	padding: 8px 0;
-}
-
-.spanInfoItem {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	font-size: 13px;
-	color: var(--l2-foreground);
-	white-space: nowrap;
-}
-
-.highlightedOptions {
-	padding: 8px 0;
-	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 0;
-
-	// KeyValueLabel uses a global `.key-value-label` root; constrain it
-	// inside the two-column grid so values can ellipsize cleanly.
-	:global(.key-value-label) {
-		width: auto;
-		min-width: 0;
-		overflow: hidden;
-	}
-}
-
-.serviceDot {
-	display: inline-block;
-	width: 6px;
-	height: 6px;
-	border-radius: 50%;
-	background: var(--accent-forest);
-	flex-shrink: 0;
-}
-
-.statusMessageBadge {
-	width: 100%;
-	min-width: 0;
-	box-sizing: border-box;
-}
-
-.traceId {
-	color: var(--accent-primary);
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	display: block;
-}
-
-.traceIdCopy {
-	display: block;
-	max-width: 100%;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	padding: 0;
-	height: auto;
-	justify-content: flex-start;
 }
 
 // Tooltip is rendered in a portal but the SpanDetailsPanel can be docked as a

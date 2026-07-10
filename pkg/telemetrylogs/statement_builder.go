@@ -58,7 +58,6 @@ func NewLogQueryStatementBuilder(
 		telemetrytypes.SourceUnspecified,
 		metadataStore,
 		fullTextColumn,
-		jsonKeyToKey,
 		fl,
 		telemetryStore,
 		skipResourceFingerprintThreshold,
@@ -659,8 +658,6 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 
 	var preparedWhereClause querybuilder.PreparedWhereClause
 	var err error
-	// TODO(Tushar): thread orgID here to evaluate correctly
-	bodyJSONEnabled := b.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
 
 	if query.Filter != nil && query.Filter.Expression != "" {
 		// add filter expression
@@ -670,10 +667,8 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 			FieldMapper:        b.fm,
 			ConditionBuilder:   b.cb,
 			FieldKeys:          keys,
-			BodyJSONEnabled:    bodyJSONEnabled,
 			SkipResourceFilter: skipResourceFilter,
 			FullTextColumn:     b.fullTextColumn,
-			JsonKeyToKey:       b.jsonKeyToKey,
 			Variables:          variables,
 			StartNs:            start,
 			EndNs:              end,

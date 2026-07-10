@@ -36,7 +36,7 @@ def test_metrics_scalar_reduce_to_sum(
             Metrics(metric_name="test.reduce.metric", labels={"service.name": "service-a"}, timestamp=now - timedelta(seconds=1), value=30.0, temporality="Unspecified", type_="Gauge", is_monotonic=False),
         ]
     )
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     aggregation = build_metrics_aggregation("test.reduce.metric", "latest", "sum", "unspecified")
     aggregation["reduceTo"] = "sum"

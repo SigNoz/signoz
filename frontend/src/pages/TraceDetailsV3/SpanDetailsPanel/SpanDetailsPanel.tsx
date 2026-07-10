@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Badge } from '@signozhq/ui/badge';
 import {
 	TabsContent,
@@ -6,20 +6,11 @@ import {
 	TabsRoot,
 	TabsTrigger,
 } from '@signozhq/ui/tabs';
-import {
-	Bookmark,
-	CalendarClock,
-	ChartColumnBig,
-	Link2,
-	List,
-	ScrollText,
-	Timer,
-} from '@signozhq/icons';
+import { Bookmark, ChartColumnBig, List, ScrollText } from '@signozhq/icons';
 import { Skeleton } from 'antd';
 import { DetailsHeader, DetailsPanelDrawer } from 'components/DetailsPanel';
 import { HeaderAction } from 'components/DetailsPanel/DetailsHeader/DetailsHeader';
 import { DetailsPanelState } from 'components/DetailsPanel/types';
-import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { QueryParams } from 'constants/query';
 import {
 	initialQueryBuilderFormValuesMap,
@@ -42,14 +33,13 @@ import {
 } from 'pages/TraceDetailsV3/utils';
 import { DataViewer } from 'periscope/components/DataViewer';
 import { FloatingPanel } from 'periscope/components/FloatingPanel';
-import KeyValueLabel from 'periscope/components/KeyValueLabel';
 import { getLeafKeyFromPath } from 'periscope/components/PrettyView/utils';
+import { useMeasure } from 'react-use';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 import { DataSource, LogsAggregatorOperator } from 'types/common/queryBuilder';
 import { openInNewTab } from 'utils/navigation';
 
-import { HIGHLIGHTED_OPTIONS } from './config';
 import {
 	// KEY_ATTRIBUTE_KEYS, // uncomment when key attributes section is re-enabled
 	SpanDetailVariant,
@@ -58,17 +48,11 @@ import {
 import DockModeSwitcher from './DockModeSwitcher';
 import { useSpanAttributeActions } from './hooks/useSpanAttributeActions';
 import { useTracePinnedFields } from './hooks/useTracePinnedFields';
-import {
-	LinkedSpansPanel,
-	LinkedSpansToggle,
-	useLinkedSpans,
-} from './LinkedSpans/LinkedSpans';
-import SpanPercentileBadge from './SpanPercentile/SpanPercentileBadge';
-import SpanPercentilePanel from './SpanPercentile/SpanPercentilePanel';
-import useSpanPercentile from './SpanPercentile/useSpanPercentile';
 import Events from './Events/Events';
+import OpenInLogsExplorer from './SpanLogs/OpenInLogsExplorer';
 import SpanLogs from './SpanLogs/SpanLogs';
 import { useSpanContextLogs } from './SpanLogs/useSpanContextLogs';
+import SpanSummary from './SpanSummary';
 
 import styles from './SpanDetailsPanel.module.scss';
 
@@ -81,6 +65,13 @@ interface SpanDetailsPanelProps {
 	traceEndTime?: number;
 }
 
+// At/above this panel width the summary moves inside the Overview tab (bottom
+// dock, or a floating/right panel widened to match). ~right-dock max width.
+const WIDE_PANEL_BREAKPOINT = 720;
+
+// Context-log window padding around the span's trace time range.
+const FIVE_MINUTES_IN_MS = 5 * 60 * 1000;
+
 function SpanDetailsContent({
 	selectedSpan,
 	traceStartTime,
@@ -90,11 +81,15 @@ function SpanDetailsContent({
 	traceStartTime?: number;
 	traceEndTime?: number;
 }): JSX.Element {
-	const FIVE_MINUTES_IN_MS = 5 * 60 * 1000;
+	const [bodyRef, { width: bodyWidth }] = useMeasure<HTMLDivElement>();
 	const spanAttributeActions = useSpanAttributeActions();
 	const logTraceEvent = useTraceDetailLogEvent('v3', selectedSpan.trace_id);
+	// Tracked so the panel can render tab-specific chrome (the Logs footer)
+	// outside the scrolling tab content.
+	const [activeTab, setActiveTab] = useState('overview');
 	const handleTabChange = useCallback(
 		(tab: string): void => {
+			setActiveTab(tab);
 			logTraceEvent(TraceDetailEvents.SpanPanelTabChanged, {
 				[TraceDetailEventKeys.Tab]: tab,
 				[TraceDetailEventKeys.SpanId]: selectedSpan.span_id,
@@ -102,8 +97,6 @@ function SpanDetailsContent({
 		},
 		[logTraceEvent, selectedSpan.span_id],
 	);
-	const percentile = useSpanPercentile(selectedSpan);
-	const linkedSpans = useLinkedSpans((selectedSpan as any).references);
 
 	// One-time conversion of any V2-format value still living in the
 	// `span_details_pinned_attributes` user pref into V3 nested-path format.
@@ -282,195 +275,112 @@ function SpanDetailsContent({
 	// 		.map((key) => ({ key, value: allAttrs[key] }));
 	// }, [selectedSpan]);
 
+	// Width-driven: when the panel is wide, the summary moves inside the Overview
+	// tab; when narrow it stays above the tabs.
+	const isWide = bodyWidth >= WIDE_PANEL_BREAKPOINT;
+	const summary = (
+		<SpanSummary
+			selectedSpan={selectedSpan}
+			traceStartTime={traceStartTime}
+			traceEndTime={traceEndTime}
+		/>
+	);
 	const eventsCount = selectedSpan.events?.length || 0;
 
 	return (
-		<div className={styles.body}>
-			<div className={styles.detailsSection}>
-				<div className={styles.spanRow}>
-					<KeyValueLabel
-						badgeKey="Span name"
-						badgeValue={selectedSpan.name}
-						maxCharacters={50}
-					/>
-					<SpanPercentileBadge
-						loading={percentile.loading}
-						percentileValue={percentile.percentileValue}
-						duration={percentile.duration}
-						spanPercentileData={percentile.spanPercentileData}
-						isOpen={percentile.isOpen}
-						toggleOpen={percentile.toggleOpen}
-					/>
-				</div>
+		<>
+			<div className={styles.panelBody} ref={bodyRef}>
+				{!isWide && <div className={styles.detailsSection}>{summary}</div>}
 
-				<SpanPercentilePanel selectedSpan={selectedSpan} percentile={percentile} />
-
-				{/* Span info: exec time + start time */}
-				<div className={styles.spanInfo}>
-					<div className={styles.spanInfoItem}>
-						<Timer size={14} />
-						<span>
-							{getYAxisFormattedValue(`${selectedSpan.duration_nano / 1000000}`, 'ms')}
-							{traceStartTime && traceEndTime && traceEndTime > traceStartTime && (
-								<>
-									{' — '}
-									<strong>
-										{(
-											(selectedSpan.duration_nano * 100) /
-											((traceEndTime - traceStartTime) * 1e6)
-										).toFixed(2)}
-										%
-									</strong>
-									{' of total exec time'}
-								</>
-							)}
-						</span>
-					</div>
-					<div className={styles.spanInfoItem}>
-						<CalendarClock size={14} />
-						<span>
-							{dayjs(selectedSpan.timestamp).format('HH:mm:ss — MMM D, YYYY')}
-						</span>
-					</div>
-					<div className={styles.spanInfoItem}>
-						<Link2 size={14} />
-						<LinkedSpansToggle
-							count={linkedSpans.count}
-							isOpen={linkedSpans.isOpen}
-							toggleOpen={linkedSpans.toggleOpen}
-						/>
-					</div>
-				</div>
-
-				<LinkedSpansPanel
-					linkedSpans={linkedSpans.linkedSpans}
-					isOpen={linkedSpans.isOpen}
-				/>
-
-				{/* Step 6: HighlightedOptions */}
-				<div className={styles.highlightedOptions}>
-					{HIGHLIGHTED_OPTIONS.map((option) => {
-						const rendered = option.render(selectedSpan);
-						if (!rendered) {
-							return null;
-						}
-						return (
-							<KeyValueLabel
-								key={option.key}
-								badgeKey={option.label}
-								badgeValue={rendered}
-								direction="column"
-							/>
-						);
-					})}
-				</div>
-
-				{/* Step 7: KeyAttributes — commented out, pinning in PrettyView covers this.
-				{keyAttributes.length > 0 && (
-					<div className="span-details-panel__key-attributes">
-						<div className="span-details-panel__key-attributes-label">
-							KEY ATTRIBUTES
-						</div>
-						<div className="span-details-panel__key-attributes-chips">
-							{keyAttributes.map(({ key, value }) => (
-								<ActionMenu
-									key={key}
-									items={buildKeyAttrMenu(key, value)}
-									trigger={['click']}
-									placement="bottomRight"
-								>
-									<div>
-										<KeyValueLabel badgeKey={key} badgeValue={value} />
-									</div>
-								</ActionMenu>
-							))}
-						</div>
-					</div>
-				)}
-			*/}
-
-				{/* Step 8: MiniTraceContext */}
-			</div>
-
-			<div className={styles.tabsSection}>
-				{/* Step 9: ContentTabs */}
-				<TabsRoot defaultValue="overview" onValueChange={handleTabChange}>
-					<TabsList variant="secondary">
-						<TabsTrigger value="overview" variant="secondary">
-							<Bookmark size={14} /> Overview
-						</TabsTrigger>
-						<TabsTrigger value="events" variant="secondary">
-							<ScrollText size={14} /> Events
-							{eventsCount > 0 && (
-								<Badge color="secondary" className={styles.eventsBadge}>
-									{eventsCount}
-								</Badge>
-							)}
-						</TabsTrigger>
-						<TabsTrigger value="logs" variant="secondary">
-							<List size={14} /> Logs
-						</TabsTrigger>
-						{infraMetadata && (
-							<TabsTrigger value="metrics" variant="secondary">
-								<ChartColumnBig size={14} /> Metrics
+				<div className={styles.tabsSection}>
+					{/* Step 9: ContentTabs */}
+					<TabsRoot defaultValue="overview" onValueChange={handleTabChange}>
+						<TabsList variant="secondary">
+							<TabsTrigger value="overview" variant="secondary">
+								<Bookmark size={14} /> Overview
 							</TabsTrigger>
-						)}
-					</TabsList>
+							<TabsTrigger value="events" variant="secondary">
+								<ScrollText size={14} /> Events
+								{eventsCount > 0 && (
+									<Badge color="secondary" className={styles.eventsBadge}>
+										{eventsCount}
+									</Badge>
+								)}
+							</TabsTrigger>
+							<TabsTrigger value="logs" variant="secondary">
+								<List size={14} /> Logs
+							</TabsTrigger>
+							{infraMetadata && (
+								<TabsTrigger value="metrics" variant="secondary">
+									<ChartColumnBig size={14} /> Metrics
+								</TabsTrigger>
+							)}
+						</TabsList>
 
-					<div className={styles.tabsScroll}>
-						<TabsContent value="overview">
-							<DataViewer
-								data={spanDisplayData}
-								drawerKey="trace-details"
-								prettyViewProps={{
-									showPinned: true,
-									actions: prettyViewCustomActions,
-									visibleActions: VISIBLE_ACTIONS,
-									pinnedFieldsValue,
-									onPinnedFieldsChange,
-								}}
-							/>
-						</TabsContent>
-						<TabsContent value="events">
-							<Events
-								span={selectedSpan}
-								startTime={traceStartTime || 0}
-								isSearchVisible
-							/>
-						</TabsContent>
-						<TabsContent value="logs">
-							<SpanLogs
-								traceId={selectedSpan.trace_id}
-								spanId={selectedSpan.span_id}
-								timeRange={{
-									startTime: (traceStartTime || 0) - FIVE_MINUTES_IN_MS,
-									endTime: (traceEndTime || 0) + FIVE_MINUTES_IN_MS,
-								}}
-								logs={logs}
-								isLoading={isLogsLoading}
-								isError={isLogsError}
-								isFetching={isLogsFetching}
-								isLogSpanRelated={isLogSpanRelated}
-								handleExplorerPageRedirect={handleExplorerPageRedirect}
-								emptyStateConfig={!hasTraceIdLogs ? emptyLogsStateConfig : undefined}
-							/>
-						</TabsContent>
-						{infraMetadata && (
-							<TabsContent value="metrics">
-								<InfraMetrics
-									clusterName={infraMetadata.clusterName}
-									podName={infraMetadata.podName}
-									nodeName={infraMetadata.nodeName}
-									hostName={infraMetadata.hostName}
-									timestamp={infraMetadata.spanTimestamp}
-									dataSource={DataSource.TRACES}
+						<div className={styles.tabsScroll}>
+							<TabsContent value="overview">
+								{isWide && summary}
+								<DataViewer
+									data={spanDisplayData}
+									drawerKey="trace-details"
+									prettyViewProps={{
+										showPinned: true,
+										actions: prettyViewCustomActions,
+										visibleActions: VISIBLE_ACTIONS,
+										pinnedFieldsValue,
+										onPinnedFieldsChange,
+									}}
 								/>
 							</TabsContent>
-						)}
-					</div>
-				</TabsRoot>
+							<TabsContent value="events">
+								<Events
+									span={selectedSpan}
+									startTime={traceStartTime || 0}
+									isSearchVisible
+								/>
+							</TabsContent>
+							<TabsContent value="logs">
+								<SpanLogs
+									traceId={selectedSpan.trace_id}
+									spanId={selectedSpan.span_id}
+									timeRange={{
+										startTime: (traceStartTime || 0) - FIVE_MINUTES_IN_MS,
+										endTime: (traceEndTime || 0) + FIVE_MINUTES_IN_MS,
+									}}
+									logs={logs}
+									isLoading={isLogsLoading}
+									isError={isLogsError}
+									isFetching={isLogsFetching}
+									isLogSpanRelated={isLogSpanRelated}
+									handleExplorerPageRedirect={handleExplorerPageRedirect}
+									emptyStateConfig={!hasTraceIdLogs ? emptyLogsStateConfig : undefined}
+								/>
+							</TabsContent>
+							{infraMetadata && (
+								<TabsContent value="metrics">
+									<InfraMetrics
+										clusterName={infraMetadata.clusterName}
+										podName={infraMetadata.podName}
+										nodeName={infraMetadata.nodeName}
+										hostName={infraMetadata.hostName}
+										timestamp={infraMetadata.spanTimestamp}
+										dataSource={DataSource.TRACES}
+									/>
+								</TabsContent>
+							)}
+						</div>
+					</TabsRoot>
+				</div>
 			</div>
-		</div>
+
+			{/* Sibling of the scrolling panelBody, so it's a true fixed footer flush
+			    with the panel's bottom edge — always visible, never scrolls. */}
+			{activeTab === 'logs' && (
+				<div className={styles.logsFooter}>
+					<OpenInLogsExplorer onClick={handleExplorerPageRedirect} />
+				</div>
+			)}
+		</>
 	);
 }
 
@@ -543,7 +453,7 @@ function SpanDetailsPanel({
 					traceEndTime={traceEndTime}
 				/>
 			) : (
-				<div className={styles.body}>
+				<div className={styles.panelBody}>
 					<Skeleton active paragraph={{ rows: 6 }} title={{ width: '60%' }} />
 				</div>
 			)}
@@ -554,7 +464,7 @@ function SpanDetailsPanel({
 		variant === SpanDetailVariant.DOCKED ||
 		variant === SpanDetailVariant.DOCKED_RIGHT
 	) {
-		return <div className={styles.root}>{content}</div>;
+		return <div className={styles.panel}>{content}</div>;
 	}
 
 	if (variant === SpanDetailVariant.DRAWER) {
@@ -562,7 +472,7 @@ function SpanDetailsPanel({
 			<DetailsPanelDrawer
 				isOpen={panelState.isOpen}
 				onClose={panelState.close}
-				className={styles.root}
+				className={styles.panel}
 			>
 				{content}
 			</DetailsPanelDrawer>
@@ -572,7 +482,7 @@ function SpanDetailsPanel({
 	return (
 		<FloatingPanel
 			isOpen={panelState.isOpen}
-			className={styles.root}
+			className={styles.panel}
 			width={PANEL_WIDTH}
 			minWidth={480}
 			height={window.innerHeight - PANEL_MARGIN_TOP - PANEL_MARGIN_BOTTOM}
