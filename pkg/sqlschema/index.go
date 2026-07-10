@@ -51,29 +51,13 @@ type Index interface {
 	ToDropSQL(fmter SQLFormatter) []byte
 }
 
-// UniqueIndex is either plain or functional: ColumnNames and Expressions are
-// mutually exclusive and setting both panics.
-//
-//   - Plain: set only ColumnNames. Columns are identifier-quoted and the
-//     auto-generated name is a readable join (uq_t_a_b ON t (a, b)).
-//   - Functional (e.g. LOWER(col)): set only Expressions, one per key, emitted
-//     verbatim (caller owns well-formedness); plain columns go in as bare
-//     identifiers. The auto-name uses a hash suffix (uq_t_<hash>) since
-//     expressions aren't valid identifier fragments. Use this only when at least
-//     one key is a real expression; an all-identifier Expressions reconstructs as
-//     ColumnNames on read-back and won't compare equal — use ColumnNames instead.
 type UniqueIndex struct {
 	TableName   TableName
 	ColumnNames []ColumnName
-	Expressions []string
 	name        string
 }
 
 func (index *UniqueIndex) Name() string {
-	if len(index.ColumnNames) > 0 && len(index.Expressions) > 0 {
-		panic("sqlschema: UniqueIndex sets both ColumnNames and Expressions; they are mutually exclusive — for a functional index put every key (plain columns as bare identifiers) in Expressions and leave ColumnNames empty")
-	}
-
 	if index.name != "" {
 		return index.name
 	}
@@ -83,14 +67,6 @@ func (index *UniqueIndex) Name() string {
 	b.WriteString("_")
 	b.WriteString(string(index.TableName))
 	b.WriteString("_")
-
-	if len(index.Expressions) > 0 {
-		hasher := fnv.New32a()
-		_, _ = hasher.Write([]byte(strings.Join(normalizeExpressions(index.Expressions), "\x00")))
-		fmt.Fprintf(&b, "%08x", hasher.Sum32())
-		return b.String()
-	}
-
 	for i, column := range index.ColumnNames {
 		if i > 0 {
 			b.WriteString("_")
@@ -103,13 +79,10 @@ func (index *UniqueIndex) Name() string {
 func (index *UniqueIndex) Named(name string) Index {
 	copyOfColumnNames := make([]ColumnName, len(index.ColumnNames))
 	copy(copyOfColumnNames, index.ColumnNames)
-	copyOfExpressions := make([]string, len(index.Expressions))
-	copy(copyOfExpressions, index.Expressions)
 
 	return &UniqueIndex{
 		TableName:   index.TableName,
 		ColumnNames: copyOfColumnNames,
-		Expressions: copyOfExpressions,
 		name:        name,
 	}
 }
@@ -130,21 +103,105 @@ func (index *UniqueIndex) Equals(other Index) bool {
 	if other.Type() != IndexTypeUnique {
 		return false
 	}
-	otherUnique, ok := other.(*UniqueIndex)
+
+	return index.Name() == other.Name() && slices.Equal(index.Columns(), other.Columns())
+}
+
+func (index *UniqueIndex) ToCreateSQL(fmter SQLFormatter) []byte {
+	sql := []byte{}
+
+	sql = append(sql, "CREATE UNIQUE INDEX IF NOT EXISTS "...)
+	sql = fmter.AppendIdent(sql, index.Name())
+	sql = append(sql, " ON "...)
+	sql = fmter.AppendIdent(sql, string(index.TableName))
+	sql = append(sql, " ("...)
+
+	for i, column := range index.ColumnNames {
+		if i > 0 {
+			sql = append(sql, ", "...)
+		}
+
+		sql = fmter.AppendIdent(sql, string(column))
+	}
+
+	sql = append(sql, ")"...)
+
+	return sql
+}
+
+func (index *UniqueIndex) ToDropSQL(fmter SQLFormatter) []byte {
+	sql := []byte{}
+
+	sql = append(sql, "DROP INDEX IF EXISTS "...)
+	sql = fmter.AppendIdent(sql, index.Name())
+
+	return sql
+}
+
+// UniqueIndexWithExpressions is a functional unique index: each key is a SQL
+// expression (e.g. LOWER(col)) emitted verbatim, so the caller owns its
+// well-formedness; plain columns go in as bare identifiers. The auto-generated
+// name uses a hash suffix (uq_t_<hash>) since expressions aren't valid
+// identifier fragments.
+//
+// Use this only when at least one key is a real expression: an all-identifier
+// key list reconstructs as a plain UniqueIndex on read-back and won't compare
+// equal — use UniqueIndex instead.
+type UniqueIndexWithExpressions struct {
+	TableName   TableName
+	Expressions []string
+	name        string
+}
+
+func (index *UniqueIndexWithExpressions) Name() string {
+	if index.name != "" {
+		return index.name
+	}
+
+	var b strings.Builder
+	b.WriteString(IndexTypeUnique.String())
+	b.WriteString("_")
+	b.WriteString(string(index.TableName))
+	b.WriteString("_")
+	hasher := fnv.New32a()
+	_, _ = hasher.Write([]byte(strings.Join(normalizeExpressions(index.Expressions), "\x00")))
+	fmt.Fprintf(&b, "%08x", hasher.Sum32())
+	return b.String()
+}
+
+func (index *UniqueIndexWithExpressions) Named(name string) Index {
+	copyOfExpressions := make([]string, len(index.Expressions))
+	copy(copyOfExpressions, index.Expressions)
+
+	return &UniqueIndexWithExpressions{
+		TableName:   index.TableName,
+		Expressions: copyOfExpressions,
+		name:        name,
+	}
+}
+
+func (index *UniqueIndexWithExpressions) IsNamed() bool {
+	return index.name != ""
+}
+
+func (*UniqueIndexWithExpressions) Type() IndexType {
+	return IndexTypeUnique
+}
+
+// Columns is nil: a functional index exposes no plain key columns.
+func (*UniqueIndexWithExpressions) Columns() []ColumnName {
+	return nil
+}
+
+func (index *UniqueIndexWithExpressions) Equals(other Index) bool {
+	otherIndex, ok := other.(*UniqueIndexWithExpressions)
 	if !ok {
 		return false
 	}
-	// Plain and functional indexes produce different SQL even if their column
-	// sets overlap; require both shapes to match.
-	if (len(index.Expressions) == 0) != (len(otherUnique.Expressions) == 0) {
-		return false
-	}
+
 	// Expressions are compared normalized so a declared `LOWER(x)` matches the
 	// `lower(x)` a backend renders on read-back.
-	if len(index.Expressions) > 0 && !slices.Equal(normalizeExpressions(index.Expressions), normalizeExpressions(otherUnique.Expressions)) {
-		return false
-	}
-	return index.Name() == other.Name() && slices.Equal(index.Columns(), other.Columns())
+	return index.Name() == other.Name() && slices.Equal(normalizeExpressions(index.Expressions), normalizeExpressions(otherIndex.Expressions))
 }
 
 // normalizeExpressions canonicalizes each Expressions entry (case, whitespace,
@@ -166,7 +223,7 @@ func normalizeExpressions(expressions []string) []string {
 	return normalized
 }
 
-func (index *UniqueIndex) ToCreateSQL(fmter SQLFormatter) []byte {
+func (index *UniqueIndexWithExpressions) ToCreateSQL(fmter SQLFormatter) []byte {
 	sql := []byte{}
 
 	sql = append(sql, "CREATE UNIQUE INDEX IF NOT EXISTS "...)
@@ -175,20 +232,11 @@ func (index *UniqueIndex) ToCreateSQL(fmter SQLFormatter) []byte {
 	sql = fmter.AppendIdent(sql, string(index.TableName))
 	sql = append(sql, " ("...)
 
-	if len(index.Expressions) > 0 {
-		for i, expr := range index.Expressions {
-			if i > 0 {
-				sql = append(sql, ", "...)
-			}
-			sql = append(sql, expr...)
+	for i, expr := range index.Expressions {
+		if i > 0 {
+			sql = append(sql, ", "...)
 		}
-	} else {
-		for i, column := range index.ColumnNames {
-			if i > 0 {
-				sql = append(sql, ", "...)
-			}
-			sql = fmter.AppendIdent(sql, string(column))
-		}
+		sql = append(sql, expr...)
 	}
 
 	sql = append(sql, ")"...)
@@ -196,7 +244,7 @@ func (index *UniqueIndex) ToCreateSQL(fmter SQLFormatter) []byte {
 	return sql
 }
 
-func (index *UniqueIndex) ToDropSQL(fmter SQLFormatter) []byte {
+func (index *UniqueIndexWithExpressions) ToDropSQL(fmter SQLFormatter) []byte {
 	sql := []byte{}
 
 	sql = append(sql, "DROP INDEX IF EXISTS "...)
