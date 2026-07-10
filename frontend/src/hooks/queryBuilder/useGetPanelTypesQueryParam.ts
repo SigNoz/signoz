@@ -2,11 +2,21 @@ import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import useUrlQuery from 'hooks/useUrlQuery';
 
-export const useGetPanelTypesQueryParam = <T extends PANEL_TYPES | undefined>(
-	defaultPanelType?: T,
-): T extends undefined ? PANEL_TYPES | null : PANEL_TYPES => {
+export function useGetPanelTypesQueryParam(
+	defaultPanelType: PANEL_TYPES,
+): PANEL_TYPES;
+export function useGetPanelTypesQueryParam(
+	defaultPanelType?: undefined,
+): PANEL_TYPES | null;
+export function useGetPanelTypesQueryParam(
+	defaultPanelType?: PANEL_TYPES,
+): PANEL_TYPES | null {
 	const urlQuery = useUrlQuery();
 	const panelTypeQuery = urlQuery.get(QueryParams.panelTypes);
 
-	return panelTypeQuery ? JSON.parse(panelTypeQuery) : defaultPanelType;
-};
+	if (panelTypeQuery) {
+		return JSON.parse(panelTypeQuery);
+	}
+
+	return defaultPanelType ?? null;
+}
