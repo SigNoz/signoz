@@ -1,0 +1,18 @@
+{
+  "label_email": "이메일",
+  "placeholder_email": "name@yourcompany.com",
+  "label_password": "비밀번호",
+  "label_confirm_password": "비밀번호 확인",
+  "label_firstname": "이름",
+  "placeholder_firstname": "이름을 입력하세요",
+  "label_orgname": "조직 이름",
+  "placeholder_orgname": "회사 이름을 입력하세요",
+  "prompt_keepme_posted": "새로운 SigNoz 기능에 대한 소식 받기",
+  "prompt_anonymise": "사용 데이터 익명화. 제품 사용 현황을 측정하기 위해 데이터를 수집합니다",
+  "failed_confirm_password": "비밀번호가 일치하지 않습니다. 다시 시도해 주세요",
+  "unexpected_error": "문제가 발생했습니다",
+  "failed_to_initiate_login": "가입은 완료되었지만 로그인을 시작하지 못했습니다",
+  "token_required": "가입하려면 초대 토큰이 필요합니다. 관리자에게 요청해 주세요",
+  "button_get_started": "시작하기",
+  "prompt_admin_warning": "이 작업은 관리자 계정을 생성합니다. 관리자가 아니시라면 관리자에게 초대 링크를 요청하세요"
+}

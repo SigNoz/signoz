@@ -1,0 +1,11 @@
+{
+	"options_menu": {
+		"options": "옵션",
+		"format": "형식",
+		"raw": "원본",
+		"default": "기본값",
+		"column": "열",
+		"maxLines": "행당 최대 줄 수",
+		"addColumn": "열 추가"
+	}
+}

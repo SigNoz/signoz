@@ -1,0 +1,13 @@
+{
+	"workspaceSuspended": "워크스페이스가 잠겼습니다",
+	"gotQuestions": "궁금한 점이 있으신가요?",
+	"contactUs": "문의하기",
+	"actionHeader": "계속하려면 결제하세요",
+	"actionDescription": "지금까지 이용해 오신 모든 기능을 계속 사용하려면 지금 결제하세요.",
+	"yourDataIsSafe": "다음 시점까지 데이터는 안전하게 보관됩니다",
+	"actNow": "서비스 중단을 방지하려면 지금 조치하고 이어서 이용하세요.",
+	"contactAdmin": "업그레이드를 진행하려면 관리자에게 문의하세요.",
+	"continueMyJourney": "계속하려면 청구 금액을 정산하세요",
+	"somethingWentWrong": "문제가 발생했습니다",
+	"refreshPaymentStatus": "상태 새로고침"
+}
