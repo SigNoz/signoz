@@ -8,12 +8,13 @@ import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Pan
 import { resolveSignal } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/getBuilderQueries';
 import type { EQueryType } from 'types/common/dashboard';
 
-import type { LegendSeries } from '../hooks/useLegendSeries';
+import type { LegendSeries } from '../utils/legendSeries';
 import type { TableColumnOption } from '../hooks/useTableColumns';
 import ConfigActions from './ConfigActions/ConfigActions';
 import SectionSlot from './SectionSlot/SectionSlot';
 
 import styles from './ConfigPane.module.scss';
+import { DASHBOARD_NAME_MAX_LENGTH } from '../../constants';
 import { PanelKind } from '../../Panels/types/panelKind';
 
 interface ConfigPaneProps {
@@ -86,6 +87,7 @@ function ConfigPane({
 						data-testid="panel-editor-v2-title"
 						value={spec.display.name}
 						placeholder="Panel title"
+						maxLength={DASHBOARD_NAME_MAX_LENGTH}
 						onChange={(e): void => setDisplayField('name', e.target.value)}
 					/>
 				</div>

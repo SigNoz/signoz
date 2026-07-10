@@ -11,9 +11,9 @@ export type DashboardListItem = DashboardtypesListedDashboardForUserV2DTO;
 export const tagsToStrings = (
 	tags: { key: string; value: string }[] | null | undefined,
 ): string[] =>
-	(tags ?? []).map((tag) =>
-		tag.key === tag.value ? tag.key : `${tag.key}:${tag.value}`,
-	);
+	// Always render both sides (so an env:env tag reads "env:env", not a lone
+	// "env"); fall back to the bare key only when there's no value.
+	(tags ?? []).map((tag) => (tag.value ? `${tag.key}:${tag.value}` : tag.key));
 
 // Convert validated `key:value` tag strings (from TagKeyValueInput) into the
 // postable tag DTO shape. The first colon separates key from value.

@@ -24,6 +24,7 @@ import ValueDisplay from './components/ValueDisplay/ValueDisplay';
 function NumberPanelRenderer({
 	panel,
 	data,
+	isFetching,
 	refetch,
 	onClick,
 	enableDrillDown,
@@ -125,7 +126,12 @@ function NumberPanelRenderer({
 				: {})}
 		>
 			{value === null ? (
-				<NoData data-testid="number-panel-no-data" onRetry={refetch} />
+				<NoData
+					data-testid="number-panel-no-data"
+					isFetching={isFetching}
+					onRetry={refetch}
+					panel={panel}
+				/>
 			) : (
 				<ValueDisplay
 					value={formattedValue}

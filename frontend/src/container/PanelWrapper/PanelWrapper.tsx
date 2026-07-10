@@ -26,6 +26,7 @@ function PanelWrapper({
 	panelMode,
 	enableDrillDown = false,
 	onColumnWidthsChange,
+	hidePagination,
 }: PanelWrapperProps): JSX.Element {
 	const Component = PanelTypeVsPanelWrapper[
 		selectedGraph || widget.panelTypes
@@ -76,6 +77,7 @@ function PanelWrapper({
 			enableDrillDown={enableDrillDown}
 			onColumnWidthsChange={onColumnWidthsChange}
 			groupByPerQuery={groupByPerQuery}
+			hidePagination={hidePagination}
 		/>
 	);
 }

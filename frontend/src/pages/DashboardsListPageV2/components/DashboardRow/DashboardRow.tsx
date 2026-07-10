@@ -24,7 +24,7 @@ import styles from './DashboardRow.module.scss';
 interface Props {
 	dashboard: DashboardListItem;
 	index: number;
-	canAct: boolean;
+	canEdit: boolean;
 	showUpdatedAt: boolean;
 	showUpdatedBy: boolean;
 }
@@ -32,7 +32,7 @@ interface Props {
 function DashboardRow({
 	dashboard,
 	index,
-	canAct,
+	canEdit,
 	showUpdatedAt,
 	showUpdatedBy,
 }: Props): JSX.Element {
@@ -60,6 +60,12 @@ function DashboardRow({
 	);
 
 	const onClickHandler = (event: React.MouseEvent<HTMLElement>): void => {
+		// Clicks inside portaled overlays (the actions menu, edit modals) bubble here
+		// through React's tree even though they render outside the row in the DOM.
+		// Only navigate when the click actually landed inside the row.
+		if (!event.currentTarget.contains(event.target as Node)) {
+			return;
+		}
 		event.stopPropagation();
 		markViewed(id);
 		safeNavigate(link, { newTab: isModifierKeyPressed(event) });
@@ -153,16 +159,16 @@ function DashboardRow({
 					</Button>
 				</TooltipSimple>
 
-				{canAct && (
-					<ActionsPopover
-						link={link}
-						dashboardId={id}
-						dashboardName={name}
-						createdBy={createdBy}
-						isLocked={isLocked}
-						onView={onClickHandler}
-					/>
-				)}
+				<ActionsPopover
+					link={link}
+					dashboardId={id}
+					dashboardName={name}
+					createdBy={createdBy}
+					isLocked={isLocked}
+					tags={tags}
+					canEdit={canEdit}
+					onView={onClickHandler}
+				/>
 			</div>
 			<div className={styles.details}>
 				<div className={styles.createdAt}>

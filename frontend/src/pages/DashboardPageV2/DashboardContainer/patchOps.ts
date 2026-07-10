@@ -98,6 +98,42 @@ export function addSectionOp(
 	return { op: add, path: '/spec/layouts/-', value: newGridLayout(title) };
 }
 
+interface ClonedSectionPanel {
+	newId: string;
+	/** Deep-copied source panel spec (caller owns the clone). */
+	panel: DashboardtypesPanelDTO;
+	x: number;
+	y: number;
+	width: number;
+	height: number;
+}
+
+/** Clone a section: add fresh panel copies and append a titled Grid referencing them. */
+export function cloneSectionOps(
+	title: string,
+	panels: ClonedSectionPanel[],
+): DashboardtypesJSONPatchOperationDTO[] {
+	const panelOps = panels.map((p) => ({
+		op: add,
+		path: `/spec/panels/${p.newId}`,
+		value: p.panel,
+	}));
+	const layout: DashboardtypesLayoutDTO = {
+		kind: 'Grid' as DashboardtypesLayoutDTO['kind'],
+		spec: {
+			display: { title },
+			items: panels.map((p) => ({
+				x: p.x,
+				y: p.y,
+				width: p.width,
+				height: p.height,
+				content: { $ref: panelRef(p.newId) },
+			})),
+		},
+	};
+	return [...panelOps, { op: add, path: '/spec/layouts/-', value: layout }];
+}
+
 interface AddPanelToSectionArgs {
 	panelId: string;
 	panel: DashboardtypesPanelDTO;
@@ -136,9 +172,43 @@ const GRID_COLS = 12;
 type PlacedItem = Pick<DashboardGridItemDTO, 'x' | 'y' | 'width' | 'height'>;
 
 /**
- * Placement for a new grid item: drop it right of the last row if there's room,
- * else wrap to a fresh row at the bottom. Only the last row is considered (items
- * sharing the greatest top-y); gaps in earlier rows are left alone.
+ * Whether two grid rectangles intersect on both axes. Mirrors the backend's
+ * overlap check (a patch placing two intersecting items is rejected), so this is
+ * the authority the frontend must satisfy before adding an item.
+ */
+export function itemsOverlap(a: PlacedItem, b: PlacedItem): boolean {
+	const ax = a.x ?? 0;
+	const ay = a.y ?? 0;
+	const aw = a.width ?? 0;
+	const ah = a.height ?? 0;
+	const bx = b.x ?? 0;
+	const by = b.y ?? 0;
+	const bw = b.width ?? 0;
+	const bh = b.height ?? 0;
+	return ax < bx + bw && bx < ax + aw && ay < by + bh && by < ay + ah;
+}
+
+/**
+ * A fresh row below every existing item (`x: 0` at the greatest bottom-y) — sits
+ * under everything so it can never overlap. Used when a panel must go to the end
+ * (e.g. moved into a section) rather than backfilling a gap.
+ */
+export function bottomRowSlot(items: PlacedItem[]): { x: number; y: number } {
+	const bottom = items.reduce(
+		(max, it) => Math.max(max, (it.y ?? 0) + (it.height ?? 0)),
+		0,
+	);
+	return { x: 0, y: bottom };
+}
+
+/**
+ * Placement for a new grid item: drop it right of the last row if it both fits
+ * the grid width and clears every existing item, else wrap to a fresh row at the
+ * bottom (`bottomRowSlot`). Only the last row is preferred (items sharing the
+ * greatest top-y); gaps in earlier rows are left alone. The overlap guard is what
+ * keeps this safe — a tall panel from an earlier row can reach down into the last
+ * row, so "right of the last row" is not automatically free. This is the placement
+ * primitive for create / clone.
  */
 export function findFreeSlot(
 	items: PlacedItem[],
@@ -149,19 +219,25 @@ export function findFreeSlot(
 		return { x: 0, y: 0 };
 	}
 
-	const bottom = items.reduce(
-		(max, it) => Math.max(max, (it.y ?? 0) + (it.height ?? 0)),
-		0,
-	);
 	const lastRowY = items.reduce((max, it) => Math.max(max, it.y ?? 0), 0);
 	const lastRowRightEdge = items
 		.filter((it) => (it.y ?? 0) === lastRowY)
 		.reduce((max, it) => Math.max(max, (it.x ?? 0) + (it.width ?? 0)), 0);
 
-	if (lastRowRightEdge + w <= GRID_COLS) {
+	// height is unbounded downward, so use 1 for the fit probe: overlap on the
+	// y-axis is decided by items reaching below `lastRowY`, not by the new
+	// panel's own height (its top sits at the greatest top-y of all items).
+	const candidate: PlacedItem = {
+		x: lastRowRightEdge,
+		y: lastRowY,
+		width: w,
+		height: 1,
+	};
+	const fitsWidth = lastRowRightEdge + w <= GRID_COLS;
+	if (fitsWidth && !items.some((it) => itemsOverlap(candidate, it))) {
 		return { x: lastRowRightEdge, y: lastRowY };
 	}
-	return { x: 0, y: bottom };
+	return bottomRowSlot(items);
 }
 
 /**

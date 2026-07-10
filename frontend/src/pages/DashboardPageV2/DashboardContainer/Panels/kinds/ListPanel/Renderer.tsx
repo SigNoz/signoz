@@ -33,6 +33,7 @@ function ListPanelRenderer({
 	panelId,
 	panel,
 	data,
+	isFetching,
 	refetch,
 	searchTerm = '',
 	pagination,
@@ -142,7 +143,7 @@ function ListPanelRenderer({
 			className={PanelStyles.panelContainer}
 		>
 			{!table || dataSource.length === 0 ? (
-				<NoData onRetry={refetch} />
+				<NoData isFetching={isFetching} onRetry={refetch} panel={panel} />
 			) : (
 				<>
 					<div

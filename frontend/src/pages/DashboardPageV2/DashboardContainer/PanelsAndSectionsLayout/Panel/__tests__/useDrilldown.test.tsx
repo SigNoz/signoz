@@ -6,12 +6,14 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import type { DrilldownContext } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/drilldown';
+import { EQueryType } from 'types/common/dashboard';
 
 import { useDrilldown } from '../hooks/useDrilldown';
 
 const mockOpenViewWithQuery = jest.fn();
 const mockNavigate = jest.fn();
 const mockGetBuilderQueries = jest.fn();
+const mockGetPanelQueryType = jest.fn();
 let mockResolved = { resolvedQuery: 'RESOLVED_QUERY', isResolving: false };
 let mockDashboardVariables: {
 	hasFieldVariables: boolean;
@@ -95,6 +97,13 @@ jest.mock(
 			mockGetBuilderQueries(...args),
 	}),
 );
+jest.mock(
+	'pages/DashboardPageV2/DashboardContainer/Panels/utils/getPanelQueryType',
+	() => ({
+		getPanelQueryType: (...args: unknown[]): unknown =>
+			mockGetPanelQueryType(...args),
+	}),
+);
 // Capability lookup mocked (its per-kind values are data in the definitions); avoids
 // importing the whole renderer registry into the test.
 jest.mock('pages/DashboardPageV2/DashboardContainer/Panels/registry', () => ({
@@ -133,6 +142,7 @@ describe('useDrilldown', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 		mockGetBuilderQueries.mockReturnValue([{ name: 'A' }]);
+		mockGetPanelQueryType.mockReturnValue(EQueryType.QUERY_BUILDER);
 		mockResolved = { resolvedQuery: 'RESOLVED_QUERY', isResolving: false };
 		mockDashboardVariables = {
 			hasFieldVariables: true,
@@ -151,6 +161,15 @@ describe('useDrilldown', () => {
 			const { result } = renderHook(() => useDrilldown(tsPanel, 'p1'));
 			expect(result.current.enableDrillDown).toBe(false);
 		});
+
+		it.each([EQueryType.PROM, EQueryType.CLICKHOUSE, undefined])(
+			'is false when the query type is %s (not the builder)',
+			(queryType) => {
+				mockGetPanelQueryType.mockReturnValue(queryType);
+				const { result } = renderHook(() => useDrilldown(tsPanel, 'p1'));
+				expect(result.current.enableDrillDown).toBe(false);
+			},
+		);
 
 		it('is false for a kind that opts out of drilldown', () => {
 			const { result } = renderHook(() =>
