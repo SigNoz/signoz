@@ -112,6 +112,14 @@ SPECS = {
         "optional": {},
         "attrs": {KAP: ["k8s.persistentvolumeclaim.name", "k8s.namespace.name"], RDP: ["k8s.cluster.name"]},
     },
+    "kube_containers": {
+        "default": {KSR: ["container.cpu.usage", "container.memory.working_set"], KCR: ["k8s.container.restarts", "k8s.container.ready"]},
+        "optional": {
+            KSR: ["k8s.container.cpu_request_utilization", "k8s.container.cpu_limit_utilization", "k8s.container.memory_request_utilization", "k8s.container.memory_limit_utilization"],
+            KCR: ["k8s.container.status.state", "k8s.container.status.reason"],
+        },
+        "attrs": {KAP: ["k8s.pod.uid", "k8s.container.name"]},
+    },
 }
 
 ALL_TYPES = list(SPECS.keys())

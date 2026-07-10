@@ -5,6 +5,7 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/registry';
 
 import PanelEditorContainer from '../index';
+import { useScrollIntoViewStore } from '../../store/useScrollIntoViewStore';
 
 /**
  * Characterization test for the editor's composition: which derived values and
@@ -19,7 +20,7 @@ const mockRefetch = jest.fn();
 const mockCancelQuery = jest.fn();
 const mockBuildSaveSpec = jest.fn((spec: unknown) => spec);
 const mockOnChangePanelKind = jest.fn();
-const mockSave = jest.fn().mockResolvedValue(undefined);
+const mockSave = jest.fn().mockResolvedValue('panel-1');
 
 const mockUseDraft = jest.fn();
 jest.mock('../hooks/usePanelEditorDraft', () => ({
@@ -61,8 +62,8 @@ jest.mock('../hooks/useLegendSeries', () => ({
 jest.mock('../hooks/useTableColumns', () => ({
 	useTableColumns: (): [] => [],
 }));
-jest.mock('../hooks/useMetricYAxisUnit', () => ({
-	useMetricYAxisUnit: (): unknown => ({
+jest.mock('../hooks/useSeedMetricUnit', () => ({
+	useSeedMetricUnit: (): unknown => ({
 		metricUnit: undefined,
 		isLoading: false,
 	}),
@@ -104,12 +105,17 @@ jest.mock('@signozhq/ui/sonner', () => ({
 const mockHeaderProps = jest.fn();
 jest.mock('../Header/Header', () => ({
 	__esModule: true,
-	default: (props: { onSave: () => void }): JSX.Element => {
+	default: (props: { onSave: () => void; onClose: () => void }): JSX.Element => {
 		mockHeaderProps(props);
 		return (
-			<button type="button" data-testid="editor-save" onClick={props.onSave}>
-				save
-			</button>
+			<>
+				<button type="button" data-testid="editor-save" onClick={props.onSave}>
+					save
+				</button>
+				<button type="button" data-testid="editor-close" onClick={props.onClose}>
+					close
+				</button>
+			</>
 		);
 	},
 }));
@@ -196,7 +202,10 @@ function setup(
 }
 
 describe('PanelEditorContainer composition', () => {
-	beforeEach(() => jest.clearAllMocks());
+	beforeEach(() => {
+		jest.clearAllMocks();
+		useScrollIntoViewStore.setState({ scrollTargetId: null });
+	});
 
 	it('renders the editor shell with preview, query builder, and config pane', () => {
 		const panel = makePanel('signoz/TimeSeriesPanel');
@@ -297,6 +306,32 @@ describe('PanelEditorContainer composition', () => {
 
 		expect(mockBuildSaveSpec).toHaveBeenCalledWith(panel.spec);
 		expect(mockSave).toHaveBeenCalledWith(panel.spec);
+	});
+
+	it('marks the saved panel to be scrolled into view on the dashboard', async () => {
+		setup(makePanel('signoz/TimeSeriesPanel'));
+
+		await userEvent.click(screen.getByTestId('editor-save'));
+
+		await waitFor(() =>
+			expect(useScrollIntoViewStore.getState().scrollTargetId).toBe('panel-1'),
+		);
+	});
+
+	it('marks an existing panel to be revealed when the editor is closed', async () => {
+		setup(makePanel('signoz/TimeSeriesPanel'));
+
+		await userEvent.click(screen.getByTestId('editor-close'));
+
+		expect(useScrollIntoViewStore.getState().scrollTargetId).toBe('panel-1');
+	});
+
+	it('does not mark a scroll target when a new, unsaved panel is closed', async () => {
+		setup(makePanel('signoz/TimeSeriesPanel'), { isNew: true });
+
+		await userEvent.click(screen.getByTestId('editor-close'));
+
+		expect(useScrollIntoViewStore.getState().scrollTargetId).toBeNull();
 	});
 
 	it('offers Switch to View Mode for an existing panel', () => {

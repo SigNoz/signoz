@@ -160,7 +160,7 @@ function TablePanelRenderer({
 			className={PanelStyles.panelContainer}
 		>
 			{!table || dataSource.length === 0 ? (
-				<NoData isFetching={isFetching} onRetry={refetch} />
+				<NoData isFetching={isFetching} onRetry={refetch} panel={panel} />
 			) : (
 				<div className={styles.container}>
 					<Table

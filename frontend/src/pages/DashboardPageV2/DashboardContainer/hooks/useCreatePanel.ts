@@ -1,11 +1,12 @@
 import { useCallback, useState } from 'react';
-import { generatePath } from 'react-router-dom';
+import { generatePath, useLocation } from 'react-router-dom';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 
 import { newPanelSearch, NEW_PANEL_ID } from '../PanelEditor/newPanelRoute';
 import type { PanelKind } from '../Panels/types/panelKind';
 import { useDashboardStore } from '../store/useDashboardStore';
+import { withVariablesSearch } from '../VariablesBar/variablesUrlState';
 
 interface UseCreatePanelResult {
 	isPickerOpen: boolean;
@@ -25,6 +26,7 @@ interface UseCreatePanelResult {
  */
 export function useCreatePanel(): UseCreatePanelResult {
 	const { safeNavigate } = useSafeNavigate();
+	const { search } = useLocation();
 	const dashboardId = useDashboardStore((s) => s.dashboardId);
 
 	const [isPickerOpen, setIsPickerOpen] = useState(false);
@@ -48,9 +50,11 @@ export function useCreatePanel(): UseCreatePanelResult {
 				panelId: NEW_PANEL_ID,
 			});
 			const target = targetIndex ?? layoutIndex;
-			safeNavigate(`${path}${newPanelSearch(panelKind, target)}`);
+			safeNavigate(
+				`${path}${withVariablesSearch(newPanelSearch(panelKind, target), search)}`,
+			);
 		},
-		[safeNavigate, dashboardId, layoutIndex],
+		[safeNavigate, dashboardId, layoutIndex, search],
 	);
 
 	return {

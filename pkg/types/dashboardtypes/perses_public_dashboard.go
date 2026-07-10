@@ -10,6 +10,12 @@ import (
 // Gettable
 // ════════════════════════════════════════════════════════════════════════
 
+// PublicWidgetQueryRangeParams are the query params of the public panel query-range endpoint.
+type PublicWidgetQueryRangeParams struct {
+	StartTime string `query:"startTime" required:"false"`
+	EndTime   string `query:"endTime" required:"false"`
+}
+
 // GettablePublicDashboardDataV2 is the anonymous-facing payload of a v2 dashboard.
 type GettablePublicDashboardDataV2 struct {
 	Dashboard       *GettableDashboardV2      `json:"dashboard"`

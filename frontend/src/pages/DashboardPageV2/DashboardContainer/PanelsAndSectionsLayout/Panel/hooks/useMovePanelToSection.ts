@@ -4,7 +4,7 @@ import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
 import { useOptimisticPatch } from '../../../hooks/useOptimisticPatch';
-import { movePanelBetweenSectionsOps } from '../../../patchOps';
+import { bottomRowSlot, movePanelBetweenSectionsOps } from '../../../patchOps';
 import { useDashboardStore } from '../../../store/useDashboardStore';
 import type { DashboardSection } from '../../../utils';
 
@@ -20,8 +20,8 @@ interface Params {
 
 /**
  * Relocates a panel's item ref from one section to another. The panel itself
- * stays in `spec.panels`; only the grid item moves, dropped into a free row at
- * the bottom of the target section. Persisted as one atomic patch.
+ * stays in `spec.panels`; only the grid item moves, dropped into a fresh row at
+ * the bottom of the target section (`bottomRowSlot`). Persisted as one atomic patch.
  */
 export function useMovePanelToSection({
 	sections,
@@ -52,12 +52,10 @@ export function useMovePanelToSection({
 			}
 
 			const sourceItems = source.items.filter((i) => i.id !== panelId);
-			// Place at a fresh row at the bottom of the target section.
-			const nextY = target.items.reduce(
-				(max, i) => Math.max(max, i.y + i.height),
-				0,
-			);
-			const targetItems = [...target.items, { ...moved, x: 0, y: nextY }];
+			// Land at the section bottom, not backfilled into a gap — least disruptive
+			// to the arrangement the user already made in the target section.
+			const { x, y } = bottomRowSlot(target.items);
+			const targetItems = [...target.items, { ...moved, x, y }];
 
 			try {
 				await patchAsync(

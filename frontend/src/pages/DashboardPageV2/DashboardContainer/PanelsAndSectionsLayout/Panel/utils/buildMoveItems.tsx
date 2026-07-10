@@ -1,8 +1,11 @@
-import { FolderInput, FolderOutput } from '@signozhq/icons';
+import { FolderInput } from '@signozhq/icons';
 import type { MenuItem } from '@signozhq/ui/dropdown-menu';
 
 import { findRootSection, type DashboardSection } from '../../../utils';
 import type { MovePanelArgs } from '../hooks/useMovePanelToSection';
+
+// Matches the root option label in the New Panel picker (SectionPicker).
+const ROOT_LABEL = 'Dashboard (root)';
 
 interface MoveItemsArgs {
 	sections: DashboardSection[];
@@ -12,9 +15,11 @@ interface MoveItemsArgs {
 }
 
 /**
- * The "Move to section" submenu plus a direct "Move out of section" to the
- * untitled root, shown only when the panel sits in a titled section and a root
- * section exists to receive it.
+ * "Move to section" submenu listing every section the panel can move to — the
+ * dashboard root (untitled top level, labelled "Dashboard (root)") plus every
+ * titled section, minus the one the panel already sits in. Hidden entirely when
+ * there is nowhere to move: an ungrouped board with no titled sections, or a
+ * panel that is alone in the only section.
  */
 export function buildMoveItems({
 	sections,
@@ -22,44 +27,38 @@ export function buildMoveItems({
 	panelId,
 	movePanel,
 }: MoveItemsArgs): MenuItem[] {
+	const rootSection = findRootSection(sections);
+
+	// Sections are already in layout order, so the root (index 0, when present)
+	// naturally leads. Untitled non-root layouts are never a move target.
 	const targets = sections.filter(
-		(s) => s.title && s.layoutIndex !== currentLayoutIndex,
+		(section) =>
+			section.layoutIndex !== currentLayoutIndex &&
+			(section === rootSection || Boolean(section.title)),
 	);
-	const items: MenuItem[] = [
+
+	if (targets.length === 0) {
+		return [];
+	}
+
+	return [
 		{
 			key: 'move',
 			label: 'Move to section',
 			icon: <FolderInput size={14} />,
-			...(targets.length === 0
-				? { disabled: true }
-				: {
-						children: targets.map((s) => ({
-							key: `move-${s.layoutIndex}`,
-							label: s.title,
-							onClick: (): void =>
-								void movePanel({
-									panelId,
-									fromLayoutIndex: currentLayoutIndex,
-									toLayoutIndex: s.layoutIndex,
-								}),
-						})),
-					}),
+			children: targets.map((section) => {
+				const isRoot = section === rootSection;
+				return {
+					key: isRoot ? 'move-to-root' : `move-${section.layoutIndex}`,
+					label: isRoot ? ROOT_LABEL : (section.title as string),
+					onClick: (): void =>
+						void movePanel({
+							panelId,
+							fromLayoutIndex: currentLayoutIndex,
+							toLayoutIndex: section.layoutIndex,
+						}),
+				};
+			}),
 		},
 	];
-
-	const rootSection = findRootSection(sections);
-	if (rootSection && rootSection.layoutIndex !== currentLayoutIndex) {
-		items.push({
-			key: 'move-to-root',
-			label: 'Move out of section',
-			icon: <FolderOutput size={14} />,
-			onClick: (): void =>
-				void movePanel({
-					panelId,
-					fromLayoutIndex: currentLayoutIndex,
-					toLayoutIndex: rootSection.layoutIndex,
-				}),
-		});
-	}
-	return items;
 }
