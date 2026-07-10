@@ -196,7 +196,7 @@ func (genAIColumnProvider) Columns() []TraceColumn {
 	toolName := defs[telemetrytypes.GenAIToolName]
 	inTok := defs[telemetrytypes.GenAIUsageInputTokens]
 	outTok := defs[telemetrytypes.GenAIUsageOutputTokens]
-	cost := defs[telemetrytypes.GenAIUsageCost]
+	cost := defs[telemetrytypes.SignozGenAITotalCost]
 	inMsg := defs[telemetrytypes.GenAIInputMessages]
 	outMsg := defs[telemetrytypes.GenAIOutputMessages]
 
@@ -211,6 +211,7 @@ func (genAIColumnProvider) Columns() []TraceColumn {
 		TraceColumn{Alias: "input_tokens", Orderable: true, Expr: Reduce(AggSum, &inTok)},
 		TraceColumn{Alias: "output_tokens", Orderable: true, Expr: Reduce(AggSum, &outTok)},
 		TraceColumn{Alias: "total_tokens", Orderable: true, Expr: SumOfKeys(telemetrytypes.FieldDataTypeFloat64, &inTok, &outTok)},
+		// per-span total cost attached by the SigNoz LLM pricing processor.
 		TraceColumn{Alias: "estimated_cost_usd", Orderable: true, Expr: Reduce(AggSum, &cost)},
 		// slowest single LLM call in the trace (duration over request.model spans).
 		// duration_nano is table-qualified so it binds to the physical column, not the

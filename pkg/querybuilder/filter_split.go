@@ -26,7 +26,7 @@ func SplitFilterForAggregates(query string, aggregateNames map[string]struct{}) 
 		return "", "", nil
 	}
 
-	s := filterSplitter{query: query, aggregateNames: aggregateNames}
+	s := filterSplitter{query: []rune(query), aggregateNames: aggregateNames}
 	s.visit(parseFilterQuery(query))
 
 	if s.mixed {
@@ -48,7 +48,7 @@ func parseFilterQuery(query string) antlr.Tree {
 // routing each atom (a comparison, a NOT expression, or a whole multi-branch OR group)
 // to the span or having bucket by the class of the keys it references.
 type filterSplitter struct {
-	query          string
+	query          []rune
 	aggregateNames map[string]struct{}
 	span           []string
 	having         []string
@@ -142,11 +142,12 @@ func classifyKeys(node antlr.Tree, aggregateNames map[string]struct{}) (isTrace,
 
 // atomSourceText returns the original source substring for an atom, preserving
 // whitespace. The token stream drops skipped whitespace, which would glue word
-// operators (OR/AND/NOT) to their operands, so slice the input by char offsets.
-func atomSourceText(query string, atom antlr.ParserRuleContext) string {
+// operators (OR/AND/NOT) to their operands, so slice the input by token offsets.
+// ANTLR offsets are rune indices (InputStream holds []rune), hence the rune slice.
+func atomSourceText(query []rune, atom antlr.ParserRuleContext) string {
 	start, stop := atom.GetStart(), atom.GetStop()
 	if start == nil || stop == nil || start.GetStart() < 0 || stop.GetStop() >= len(query) || stop.GetStop() < start.GetStart() {
 		return atom.GetText()
 	}
-	return query[start.GetStart() : stop.GetStop()+1]
+	return string(query[start.GetStart() : stop.GetStop()+1])
 }

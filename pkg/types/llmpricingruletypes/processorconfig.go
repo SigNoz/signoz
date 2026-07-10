@@ -98,7 +98,7 @@ func buildProcessorConfig(rules []*LLMPricingRule) *LLMPricingRuleProcessorConfi
 			Out:        SignozGenAICostOutput,
 			CacheRead:  SignozGenAICostCacheRead,
 			CacheWrite: SignozGenAICostCacheWrite,
-			Total:      SignozGenAITotalCost,
+			Total:      telemetrytypes.SignozGenAITotalCost,
 		},
 	}
 }

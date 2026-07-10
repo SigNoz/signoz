@@ -51,6 +51,15 @@ func TestSplitFilterForAggregates(t *testing.T) {
 			span:  "tracefield.completion_tokens > 1000",
 		},
 
+		{
+			// ANTLR token offsets are rune indices; slicing must not shift after a
+			// multi-byte char (this used to truncate 1000 → 100).
+			name:   "unicode value before the split",
+			query:  "service.name = 'héllo' AND completion_tokens > 1000",
+			span:   "service.name = 'héllo'",
+			having: "completion_tokens > 1000",
+		},
+
 		// --- top-level AND splits across the two buckets -------------------------
 		{
 			name:   "span AND agg",

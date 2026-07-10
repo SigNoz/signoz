@@ -77,7 +77,7 @@ def _ai_trace(
             # numeric values land in attributes_number
             "gen_ai.usage.input_tokens": in_tokens,
             "gen_ai.usage.output_tokens": out_tokens,
-            "gen_ai.usage.cost": cost,
+            "_signoz.gen_ai.total_cost": cost,
         },
     )
     return [root, llm]
@@ -806,7 +806,7 @@ def _ai_trace_for_metrics(*, now: datetime, service: str) -> list[Traces]:
             "gen_ai.request.model": "gpt-4o-mini",
             "gen_ai.usage.input_tokens": 100,
             "gen_ai.usage.output_tokens": 20,
-            "gen_ai.usage.cost": 0.5,
+            "_signoz.gen_ai.total_cost": 0.5,
         },
     )
     return [root, llm, _tool("get_weather", 3), _tool("get_weather", 2.5), _tool("get_time", 2)]

@@ -12,10 +12,13 @@ const (
 	GenAIUsageOutputTokens             = "gen_ai.usage.output_tokens"
 	GenAIUsageCacheReadInputTokens     = "gen_ai.usage.cache_read.input_tokens"
 	GenAIUsageCacheCreationInputTokens = "gen_ai.usage.cache_creation.input_tokens"
-	GenAIUsageCost                     = "gen_ai.usage.cost"
 
 	GenAIInputMessages  = "gen_ai.input.messages"
 	GenAIOutputMessages = "gen_ai.output.messages"
+
+	// SignozGenAITotalCost is not OTel semconv: it is the per-span total cost the
+	// SigNoz LLM pricing processor computes and attaches (see llmpricingruletypes).
+	SignozGenAITotalCost = "_signoz.gen_ai.total_cost"
 )
 
 // GenAIFieldDefinitions are the gen_ai semantic-convention span attributes the AI
@@ -33,7 +36,7 @@ var GenAIFieldDefinitions = map[string]TelemetryFieldKey{
 	GenAIUsageOutputTokens:             {Name: GenAIUsageOutputTokens, Signal: SignalTraces, FieldContext: FieldContextAttribute, FieldDataType: FieldDataTypeFloat64},
 	GenAIUsageCacheReadInputTokens:     {Name: GenAIUsageCacheReadInputTokens, Signal: SignalTraces, FieldContext: FieldContextAttribute, FieldDataType: FieldDataTypeFloat64},
 	GenAIUsageCacheCreationInputTokens: {Name: GenAIUsageCacheCreationInputTokens, Signal: SignalTraces, FieldContext: FieldContextAttribute, FieldDataType: FieldDataTypeFloat64},
-	GenAIUsageCost:                     {Name: GenAIUsageCost, Signal: SignalTraces, FieldContext: FieldContextAttribute, FieldDataType: FieldDataTypeFloat64},
+	SignozGenAITotalCost:               {Name: SignozGenAITotalCost, Signal: SignalTraces, FieldContext: FieldContextAttribute, FieldDataType: FieldDataTypeFloat64},
 
 	GenAIInputMessages:  {Name: GenAIInputMessages, Signal: SignalTraces, FieldContext: FieldContextAttribute, FieldDataType: FieldDataTypeString},
 	GenAIOutputMessages: {Name: GenAIOutputMessages, Signal: SignalTraces, FieldContext: FieldContextAttribute, FieldDataType: FieldDataTypeString},

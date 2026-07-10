@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"sort"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -544,7 +545,9 @@ func (b *scopedTraceStatementBuilder) resolveSpanPredicate(ctx context.Context, 
 	return sqlbuilder.Escape(pred), args, prepared.Warnings, prepared.WarningsDocURL, nil
 }
 
-
+// buildMatchedCTE builds `matched`: the single windowed, mask-pruned GROUP BY trace_id
+// scan that fuses gate + span filter + aggregate HAVING + ORDER BY + LIMIT/OFFSET,
+// selecting only the aggregate aliases the ORDER BY / HAVING reference.
 func (b *scopedTraceStatementBuilder) buildMatchedCTE(start, end, startBucket, endBucket uint64, resolved []resolvedColumn, orders []listOrder, orderableSet map[string]struct{}, maskExpr string, maskArgs []any, fp filterParts, resourcePred string, limit, offset int) (string, []any, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 
@@ -727,6 +730,7 @@ func validateAggregateFilter(havingExpr string, orderableSet map[string]struct{}
 	for a := range orderableSet {
 		allowed = append(allowed, a)
 	}
+	sort.Strings(allowed)
 	for _, sel := range querybuilder.QueryStringToKeysSelectors(havingExpr) {
 		name := strings.TrimPrefix(strings.TrimPrefix(sel.Name, "trace."), "tracefield.")
 		if _, ok := orderableSet[name]; !ok {

@@ -20,7 +20,6 @@ const (
 	SignozGenAICostOutput     = "_signoz.gen_ai.cost_output"
 	SignozGenAICostCacheRead  = "_signoz.gen_ai.cost_cache_read"
 	SignozGenAICostCacheWrite = "_signoz.gen_ai.cost_cache_write"
-	SignozGenAITotalCost      = "_signoz.gen_ai.total_cost"
 )
 
 var (
