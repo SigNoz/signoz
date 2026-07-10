@@ -2,15 +2,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as Sentry from '@sentry/react';
 import { Button, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
-import logEvent from 'api/common/logEvent';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import {
 	QuickFilterCheckboxUseFieldApis,
 	QuickFiltersSource,
 } from 'components/QuickFilters/types';
-import { InfraMonitoringEvents } from 'constants/events';
+import { initialQueriesMap } from 'constants/queryBuilder';
+import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import {
 	ArrowUpDown,
 	ArrowUpToLine,
@@ -25,7 +24,7 @@ import {
 	Workflow,
 } from '@signozhq/icons';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
 
 import { FeatureKeys } from '../../constants/features';
 import { useAppContext } from '../../providers/App/App';
@@ -47,9 +46,9 @@ import K8sDaemonSetsList from './DaemonSets/K8sDaemonSetsList';
 import K8sDeploymentsList from './Deployments/K8sDeploymentsList';
 import {
 	useInfraMonitoringCategory,
-	useInfraMonitoringFiltersK8s,
 	useInfraMonitoringGroupBy,
 	useInfraMonitoringOrderBy,
+	useInfraMonitoringSelectedItem,
 } from './hooks';
 import K8sJobsList from './Jobs/K8sJobsList';
 import K8sNamespacesList from './Namespaces/K8sNamespacesList';
@@ -59,6 +58,8 @@ import K8sStatefulSetsList from './StatefulSets/K8sStatefulSetsList';
 import K8sVolumesList from './Volumes/K8sVolumesList';
 
 import styles from './InfraMonitoringK8s.module.scss';
+import { InfraMonitoringEvents } from 'constants/events';
+import logEvent from 'api/common/logEvent';
 import { NANO_SECOND_MULTIPLIER, useGlobalTimeStore } from 'store/globalTime';
 import { METRIC_NAMESPACE_BY_ENTITY } from 'container/InfraMonitoringK8sV2/constants.quick-filters';
 
@@ -66,21 +67,13 @@ export default function InfraMonitoringK8s(): JSX.Element {
 	const [showFilters, setShowFilters] = useState(true);
 
 	const [selectedCategory, setSelectedCategory] = useInfraMonitoringCategory();
-	const [urlFilters, setUrlFilters] = useInfraMonitoringFiltersK8s();
 	const [, setGroupBy] = useInfraMonitoringGroupBy();
 	const [, setOrderBy] = useInfraMonitoringOrderBy();
+	const [, setSelectedItem] = useInfraMonitoringSelectedItem();
 
-	const { currentQuery } = useQueryBuilder();
-
-	const handleFilterVisibilityChange = useCallback((): void => {
-		setShowFilters((show) => !show);
-	}, []);
-
-	const { handleChangeQueryData } = useQueryOperations({
-		index: 0,
-		query: currentQuery.builder.queryData[0],
-		entityVersion: '',
-	});
+	const compositeQuery = useGetCompositeQueryParam();
+	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
+	const isInitialized = useRef(false);
 
 	const selectedTime = useGlobalTimeStore((state) => state.selectedTime);
 	const getMinMaxTime = useGlobalTimeStore((state) => state.getMinMaxTime);
@@ -107,41 +100,45 @@ export default function InfraMonitoringK8s(): JSX.Element {
 		[getUseFieldApis, selectedCategory],
 	);
 
-	// Track previous urlFilters to only sync when the value actually changes
-	// (not when handleChangeQueryData changes due to query updates)
-	const prevUrlFiltersRef = useRef<string | null>(null);
+	useEffect(() => {
+		if (isInitialized.current) {
+			return;
+		}
+		isInitialized.current = true;
+
+		if (!compositeQuery) {
+			const defaultQuery = initialQueriesMap[DataSource.METRICS];
+			redirectWithQueryBuilderData({
+				...defaultQuery,
+				builder: {
+					...defaultQuery.builder,
+					queryData: defaultQuery.builder.queryData.map((query) => ({
+						...query,
+						filter: { expression: '' },
+						filters: { items: [], op: 'AND' as const },
+					})),
+				},
+			});
+		}
+	}, [compositeQuery, redirectWithQueryBuilderData]);
 
 	useEffect(() => {
-		const currentFiltersJson = urlFilters ? JSON.stringify(urlFilters) : null;
-
-		// Only sync if urlFilters value has actually changed
-		if (prevUrlFiltersRef.current !== currentFiltersJson) {
-			prevUrlFiltersRef.current = currentFiltersJson;
-			// Sync filters to query builder, using empty filter when urlFilters is null
-			handleChangeQueryData('filters', urlFilters || { items: [], op: 'and' });
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [urlFilters]); // handleChangeQueryData intentionally omitted - we call the current version but don't re-run when it changes
-
-	const { featureFlags } = useAppContext();
-	const dotMetricsEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
-			?.active || false;
-
-	const handleFilterChange = (query: Query): void => {
-		// update the current query with the new filters
-		// in infra monitoring k8s, we are using only one query, hence updating the 0th index of queryData
-		const filters = query.builder.queryData[0].filters;
-		// The useEffect will sync filters to query builder, avoiding double state updates
-		setUrlFilters(filters || null);
-
-		logEvent(InfraMonitoringEvents.FilterApplied, {
+		void logEvent(InfraMonitoringEvents.FilterApplied, {
 			entity: InfraMonitoringEvents.K8sEntity,
 			page: InfraMonitoringEvents.ListPage,
 			category: selectedCategory,
 			view: InfraMonitoringEvents.QuickFiltersView,
 		});
-	};
+	}, [selectedCategory]);
+
+	const handleFilterVisibilityChange = useCallback((): void => {
+		setShowFilters((show) => !show);
+	}, []);
+
+	const { featureFlags } = useAppContext();
+	const dotMetricsEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
+			?.active || false;
 
 	const categories = useMemo(
 		() => [
@@ -210,12 +207,23 @@ export default function InfraMonitoringK8s(): JSX.Element {
 
 	const handleCategorySelect = (key: string): void => {
 		if (key !== selectedCategory) {
-			setSelectedCategory(key);
-			// Reset filters
-			setUrlFilters(null);
-			setOrderBy(null);
-			setGroupBy(null);
-			handleChangeQueryData('filters', { items: [], op: 'and' });
+			void setSelectedCategory(key as string);
+			void setOrderBy(null);
+			void setGroupBy(null);
+			void setSelectedItem(null);
+			redirectWithQueryBuilderData({
+				...currentQuery,
+				builder: {
+					...currentQuery.builder,
+					queryData: [
+						{
+							...(currentQuery.builder.queryData[0] || {}),
+							filter: { expression: '' },
+							filters: { items: [], op: 'AND' as const },
+						},
+					],
+				},
+			});
 		}
 	};
 
@@ -223,7 +231,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 		return (
 			<>
 				{!showFilters && (
-					<div>
+					<div className={styles.k8SOpenQuickFilters}>
 						<Button
 							className="periscope-btn ghost"
 							type="text"
@@ -292,7 +300,6 @@ export default function InfraMonitoringK8s(): JSX.Element {
 										source={QuickFiltersSource.INFRA_MONITORING}
 										config={selectedCategoryConfig}
 										handleFilterVisibilityChange={handleFilterVisibilityChange}
-										onFilterChange={handleFilterChange}
 										useFieldApis={selectedCategoryUseFieldApis}
 									/>
 								)}
