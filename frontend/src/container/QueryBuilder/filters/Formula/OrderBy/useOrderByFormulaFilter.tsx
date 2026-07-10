@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import useDebounce from 'hooks/useDebounce';
 import { IOption } from 'hooks/useResourceAttribute/types';
@@ -79,22 +79,18 @@ export const useOrderByFormulaFilter = ({
 	const createOptions = (data: BaseAutocompleteData[]): IOption[] =>
 		mapLabelValuePairs(data).flat();
 
-	const customValue: IOption[] = useMemo(() => {
-		if (!searchText) {
-			return [];
-		}
-
-		return [
-			{
-				label: `${searchText} ${ORDERBY_FILTERS.ASC}`,
-				value: `${searchText}${orderByValueDelimiter}${ORDERBY_FILTERS.ASC}`,
-			},
-			{
-				label: `${searchText} ${ORDERBY_FILTERS.DESC}`,
-				value: `${searchText}${orderByValueDelimiter}${ORDERBY_FILTERS.DESC}`,
-			},
-		];
-	}, [searchText]);
+	const customValue: IOption[] = !searchText
+		? []
+		: [
+				{
+					label: `${searchText} ${ORDERBY_FILTERS.ASC}`,
+					value: `${searchText}${orderByValueDelimiter}${ORDERBY_FILTERS.ASC}`,
+				},
+				{
+					label: `${searchText} ${ORDERBY_FILTERS.DESC}`,
+					value: `${searchText}${orderByValueDelimiter}${ORDERBY_FILTERS.DESC}`,
+				},
+			];
 
 	const generateOptions = (options: IOption[]): IOption[] => {
 		const currentCustomValue = options.find(

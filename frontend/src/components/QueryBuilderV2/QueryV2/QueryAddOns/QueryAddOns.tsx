@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button, Tooltip } from 'antd';
 import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
@@ -281,61 +281,43 @@ function QueryAddOns({
 		}
 	};
 
-	const handleChangeGroupByKeys = useCallback(
-		(value: IBuilderQuery['groupBy']) => {
-			handleChangeQueryData('groupBy', value);
-		},
-		[handleChangeQueryData],
-	);
+	const handleChangeGroupByKeys = (value: IBuilderQuery['groupBy']): void => {
+		handleChangeQueryData('groupBy', value);
+	};
 
-	const handleChangeOrderByKeys = useCallback(
-		(value: IBuilderQuery['orderBy']) => {
-			handleChangeQueryData('orderBy', value);
-		},
-		[handleChangeQueryData],
-	);
+	const handleChangeOrderByKeys = (value: IBuilderQuery['orderBy']): void => {
+		handleChangeQueryData('orderBy', value);
+	};
 
-	const handleChangeReduceToV5 = useCallback(
-		(value: ReduceOperators) => {
-			handleSetQueryData(index, {
-				...query,
-				aggregations: [
-					{
-						...(query.aggregations?.[0] as MetricAggregation),
-						reduceTo: value,
-					},
-				],
-			});
-		},
-		[handleSetQueryData, index, query],
-	);
+	const handleChangeReduceToV5 = (value: ReduceOperators): void => {
+		handleSetQueryData(index, {
+			...query,
+			aggregations: [
+				{
+					...(query.aggregations?.[0] as MetricAggregation),
+					reduceTo: value,
+				},
+			],
+		});
+	};
 
-	const handleRemoveView = useCallback((key: string): void => {
+	const handleRemoveView = (key: string): void => {
 		setSelectedViews((prev) => prev.filter((view) => view.key !== key));
-	}, []);
+	};
 
-	const handleChangeQueryLegend = useCallback(
-		(value: string) => {
-			handleChangeQueryData('legend', value);
-		},
-		[handleChangeQueryData],
-	);
+	const handleChangeQueryLegend = (value: string): void => {
+		handleChangeQueryData('legend', value);
+	};
 
-	const handleChangeLimit = useCallback(
-		(value: string) => {
-			handleChangeQueryData('limit', Number(value) || null);
-		},
-		[handleChangeQueryData],
-	);
+	const handleChangeLimit = (value: string): void => {
+		handleChangeQueryData('limit', Number(value) || null);
+	};
 
-	const handleChangeHaving = useCallback(
-		(value: string) => {
-			handleChangeQueryData('having', {
-				expression: value,
-			});
-		},
-		[handleChangeQueryData],
-	);
+	const handleChangeHaving = (value: string): void => {
+		handleChangeQueryData('having', {
+			expression: value,
+		});
+	};
 
 	return (
 		<div className="query-add-ons" data-testid="query-add-ons">

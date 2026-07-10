@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { Select, Spin } from 'antd';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { DataSource, MetricAggregateOperator } from 'types/common/queryBuilder';
@@ -40,35 +39,23 @@ export function OrderByFilter({
 	);
 
 	// Get parsed aggregation options using createAggregation only for QueryV2
-	const parsedAggregationOptions = useMemo(
-		() => (isNewQueryV2 ? getParsedAggregationOptionsForOrderBy(query) : []),
-		[query, isNewQueryV2],
-	);
+	const parsedAggregationOptions = isNewQueryV2
+		? getParsedAggregationOptionsForOrderBy(query)
+		: [];
 
-	const optionsData = useMemo(() => {
-		const keyOptions = createOptions(data?.payload?.attributeKeys || []);
-		const groupByOptions = createOptions(query.groupBy);
-		const aggregationOptionsFromParsed = createOptions(parsedAggregationOptions);
+	const keyOptions = createOptions(data?.payload?.attributeKeys || []);
+	const groupByOptions = createOptions(query.groupBy);
+	const aggregationOptionsFromParsed = createOptions(parsedAggregationOptions);
 
-		const options =
-			query.aggregateOperator === MetricAggregateOperator.NOOP
-				? keyOptions
-				: [
-						...groupByOptions,
-						...(isNewQueryV2 ? aggregationOptionsFromParsed : aggregationOptions),
-					];
+	const options =
+		query.aggregateOperator === MetricAggregateOperator.NOOP
+			? keyOptions
+			: [
+					...groupByOptions,
+					...(isNewQueryV2 ? aggregationOptionsFromParsed : aggregationOptions),
+				];
 
-		return generateOptions(options);
-	}, [
-		createOptions,
-		data?.payload?.attributeKeys,
-		query.groupBy,
-		query.aggregateOperator,
-		parsedAggregationOptions,
-		aggregationOptions,
-		generateOptions,
-		isNewQueryV2,
-	]);
+	const optionsData = generateOptions(options);
 
 	const isDisabledSelect =
 		!query.aggregateAttribute?.key ||

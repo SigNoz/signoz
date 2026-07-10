@@ -1,4 +1,3 @@
-// ** Helpers
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Select } from 'antd';
@@ -96,77 +95,71 @@ export function HavingFilter({
 		[columnName, aggregatorOptions],
 	);
 
-	const handleSearch = useCallback(
-		(search: string): void => {
-			const trimmedSearch = search.replace(/\s\s+/g, ' ').trimStart();
+	const handleSearch = (search: string): void => {
+		const trimmedSearch = search.replace(/\s\s+/g, ' ').trimStart();
 
-			const currentSearch = isMulti
-				? trimmedSearch
-				: trimmedSearch.split(' ').slice(0, 3).join(' ');
+		const currentSearch = isMulti
+			? trimmedSearch
+			: trimmedSearch.split(' ').slice(0, 3).join(' ');
 
-			const isValidSearch = isValidHavingValue(currentSearch);
+		const isValidSearch = isValidHavingValue(currentSearch);
 
-			if (isValidSearch) {
-				setSearchText(currentSearch);
-			}
-		},
-		[isMulti],
-	);
+		if (isValidSearch) {
+			setSearchText(currentSearch);
+		}
+	};
 
-	const resetChanges = useCallback((): void => {
+	const resetChanges = (): void => {
 		setSearchText('');
 		setCurrentFormValue(initialHavingValues);
 		setOptions(aggregatorOptions);
-	}, [aggregatorOptions]);
+	};
 
-	const handleChange = useCallback(
-		(values: string[]): void => {
-			const having: Having[] = values.map(transformFromStringToHaving);
+	const handleChange = (values: string[]): void => {
+		const having: Having[] = values.map(transformFromStringToHaving);
 
-			const isSelectable =
-				currentFormValue.value.length > 0 &&
-				currentFormValue.value.every((value) => !!value);
+		const isSelectable =
+			currentFormValue.value.length > 0 &&
+			currentFormValue.value.every((value) => !!value);
 
-			if (isSelectable) {
-				onChange(having);
-				resetChanges();
-			}
-		},
-		[currentFormValue, resetChanges, onChange],
-	);
-
-	const handleUpdateTag = useCallback(
-		(value: string) => {
-			const filteredValues = localValues.filter(
-				(currentValue) => currentValue !== value,
-			);
-			const having: Having[] = filteredValues.map(transformFromStringToHaving);
-
+		if (isSelectable) {
 			onChange(having);
-			setSearchText(value);
-		},
-		[localValues, onChange],
-	);
+			resetChanges();
+		}
+	};
 
-	const tagRender = useCallback(
-		({ label, value, closable, disabled, onClose }: HavingTagRenderProps) => {
-			const handleClose = (): void => {
-				onClose();
-				setSearchText('');
-			};
-			return (
-				<HavingFilterTag
-					label={label}
-					value={value}
-					closable={closable}
-					disabled={disabled}
-					onClose={handleClose}
-					onUpdate={handleUpdateTag}
-				/>
-			);
-		},
-		[handleUpdateTag],
-	);
+	const handleUpdateTag = (value: string): void => {
+		const filteredValues = localValues.filter(
+			(currentValue) => currentValue !== value,
+		);
+		const having: Having[] = filteredValues.map(transformFromStringToHaving);
+
+		onChange(having);
+		setSearchText(value);
+	};
+
+	const tagRender = ({
+		label,
+		value,
+		closable,
+		disabled,
+		onClose,
+	}: HavingTagRenderProps): JSX.Element => {
+		const handleClose = (): void => {
+			onClose();
+			setSearchText('');
+		};
+		return (
+			<HavingFilterTag
+				label={label}
+				value={value}
+				closable={closable}
+				disabled={disabled}
+				onClose={handleClose}
+				onUpdate={handleUpdateTag}
+			/>
+		);
+	};
 
 	const handleSelect = (currentValue: string): void => {
 		const { columnName, op, value } = getHavingObject(currentValue);
@@ -195,11 +188,11 @@ export function HavingFilter({
 		resetChanges();
 	};
 
-	const handleFocus = useCallback(() => {
+	const handleFocus = (): void => {
 		setErrorMessage(null);
-	}, []);
+	};
 
-	const handleBlur = useCallback((): void => {
+	const handleBlur = (): void => {
 		if (searchText) {
 			const { columnName, op, value } = getHavingObject(searchText);
 			const isCompleteHavingClause =
@@ -216,7 +209,7 @@ export function HavingFilter({
 				setErrorMessage('Invalid HAVING clause');
 			}
 		}
-	}, [searchText, onChange]);
+	};
 
 	useEffect(() => {
 		parseSearchText(searchText);

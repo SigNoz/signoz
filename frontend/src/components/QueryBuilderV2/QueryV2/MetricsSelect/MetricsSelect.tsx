@@ -1,4 +1,3 @@
-import { memo, useCallback, useMemo } from 'react';
 import { Select } from 'antd';
 import {
 	initialQueriesMap,
@@ -26,7 +25,7 @@ export const SOURCE_OPTIONS: SelectOption<string, string>[] = [
 	{ value: 'meter', label: 'Meter' },
 ];
 
-export const MetricsSelect = memo(function MetricsSelect({
+export function MetricsSelect({
 	query,
 	index,
 	version,
@@ -52,48 +51,34 @@ export const MetricsSelect = memo(function MetricsSelect({
 	const { updateAllQueriesOperators, handleSetQueryData, panelType } =
 		useQueryBuilder();
 
-	const source = useMemo(
-		() => (signalSource === 'meter' ? 'meter' : 'metrics'),
-		[signalSource],
+	const source = signalSource === 'meter' ? 'meter' : 'metrics';
+
+	const defaultMeterQuery = updateAllQueriesOperators(
+		initialQueryMeterWithType,
+		PANEL_TYPES.BAR,
+		DataSource.METRICS,
+		'meter' as 'meter' | '',
 	);
 
-	const defaultMeterQuery = useMemo(
-		() =>
-			updateAllQueriesOperators(
-				initialQueryMeterWithType,
-				PANEL_TYPES.BAR,
-				DataSource.METRICS,
-				'meter' as 'meter' | '',
-			),
-		[updateAllQueriesOperators],
+	const defaultMetricsQuery = updateAllQueriesOperators(
+		initialQueriesMap.metrics,
+		PANEL_TYPES.BAR,
+		DataSource.METRICS,
+		'',
 	);
 
-	const defaultMetricsQuery = useMemo(
-		() =>
-			updateAllQueriesOperators(
-				initialQueriesMap.metrics,
-				PANEL_TYPES.BAR,
-				DataSource.METRICS,
-				'',
-			),
-		[updateAllQueriesOperators],
-	);
+	const getDefaultQueryFromSource = (selectedSource: string): IBuilderQuery => {
+		const isMeter = selectedSource === 'meter';
+		const baseQuery = isMeter
+			? defaultMeterQuery.builder.queryData[0]
+			: defaultMetricsQuery.builder.queryData[0];
 
-	const getDefaultQueryFromSource = useCallback(
-		(selectedSource: string): IBuilderQuery => {
-			const isMeter = selectedSource === 'meter';
-			const baseQuery = isMeter
-				? defaultMeterQuery.builder.queryData[0]
-				: defaultMetricsQuery.builder.queryData[0];
-
-			return {
-				...baseQuery,
-				source: isMeter ? 'meter' : '',
-				queryName: query.queryName,
-			};
-		},
-		[defaultMeterQuery, defaultMetricsQuery, query.queryName],
-	);
+		return {
+			...baseQuery,
+			source: isMeter ? 'meter' : '',
+			queryName: query.queryName,
+		};
+	};
 
 	const handleSignalSourceChange = (value: string): void => {
 		let newQueryData: IBuilderQuery;
@@ -160,4 +145,4 @@ export const MetricsSelect = memo(function MetricsSelect({
 			/>
 		</div>
 	);
-});
+}

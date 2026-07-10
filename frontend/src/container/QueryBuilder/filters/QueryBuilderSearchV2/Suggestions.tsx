@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
@@ -22,19 +21,8 @@ interface ISuggestionsProps {
 function Suggestions(props: ISuggestionsProps): React.ReactElement {
 	const { label, value, option, searchValue } = props;
 
-	const optionType = useMemo(() => {
-		if (isObject(value)) {
-			return value.type;
-		}
-		return '';
-	}, [value]);
-
-	const dataType = useMemo(() => {
-		if (isObject(value)) {
-			return value.dataType;
-		}
-		return '';
-	}, [value]);
+	const optionType = isObject(value) ? value.type : '';
+	const dataType = isObject(value) ? value.dataType : '';
 
 	const { tagValue } = getTagToken(searchValue);
 

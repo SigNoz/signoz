@@ -1,5 +1,5 @@
 // ** Components
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
 import { AutoComplete, Spin } from 'antd';
 // ** Api
@@ -29,7 +29,7 @@ import OptionRenderer from '../QueryBuilderSearch/OptionRenderer';
 // ** Types
 import { AgregatorFilterProps } from './AggregatorFilter.intefaces';
 
-export const AggregatorFilter = memo(function AggregatorFilter({
+export function AggregatorFilter({
 	query,
 	disabled,
 	onChange,
@@ -43,10 +43,7 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 	const [optionsData, setOptionsData] = useState<ExtendedSelectOption[]>([]);
 
 	// this function is only relevant for metrics and now operators are part of aggregations
-	const queryAggregation = useMemo(
-		() => query.aggregations?.[0] as MetricAggregation,
-		[query.aggregations],
-	);
+	const queryAggregation = query.aggregations?.[0] as MetricAggregation;
 
 	const [searchText, setSearchText] = useState<string>(
 		(query.aggregations?.[0] as MetricAggregation)?.metricName || '',
@@ -56,11 +53,8 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 		setSearchText('');
 	}, [signalSource]);
 
-	const debouncedSearchText = useMemo(() => {
-		const [_, value] = getAutocompleteValueAndType(searchText);
-
-		return value;
-	}, [searchText]);
+	const [, autocompleteValue] = getAutocompleteValueAndType(searchText);
+	const debouncedSearchText = autocompleteValue;
 
 	const debouncedValue = useDebounce(debouncedSearchText, DEBOUNCE_DELAY);
 	const { isFetching, data: aggregateAttributeData } = useQuery(
@@ -145,11 +139,11 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 		setAttributeKeys,
 	]);
 
-	const handleSearchText = useCallback((text: string): void => {
+	const handleSearchText = (text: string): void => {
 		setSearchText(text);
-	}, []);
+	};
 
-	const getPlaceholder = useCallback(() => {
+	const getPlaceholder = (): string => {
 		if (signalSource === 'meter') {
 			return 'Meter name';
 		}
@@ -159,9 +153,9 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 		}
 
 		return 'Aggregate attribute';
-	}, [signalSource, query.dataSource]);
+	};
 
-	const getAttributesData = useCallback((): BaseAutocompleteData[] => {
+	const getAttributesData = (): BaseAutocompleteData[] => {
 		const attributeKeys =
 			queryClient.getQueryData<SuccessResponse<IQueryAutocompleteResponse>>([
 				QueryBuilderKeys.GET_AGGREGATE_ATTRIBUTE,
@@ -175,17 +169,9 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 		setAttributeKeys?.(attributeKeys);
 
 		return attributeKeys;
-	}, [
-		debouncedValue,
-		queryAggregation.timeAggregation,
-		query.dataSource,
-		queryClient,
-		index,
-		signalSource,
-		setAttributeKeys,
-	]);
+	};
 
-	const getResponseAttributes = useCallback(async () => {
+	const getResponseAttributes = async (): Promise<BaseAutocompleteData[]> => {
 		const response = await queryClient.fetchQuery(
 			[
 				QueryBuilderKeys.GET_AGGREGATE_ATTRIBUTE,
@@ -204,83 +190,68 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 
 		setAttributeKeys?.(response.payload?.attributeKeys || []);
 		return response.payload?.attributeKeys || [];
-	}, [
-		queryAggregation.timeAggregation,
-		query.dataSource,
-		queryClient,
-		searchText,
-		index,
-		setAttributeKeys,
-	]);
+	};
 
-	const handleChangeCustomValue = useCallback(
-		async (value: string, attributes: BaseAutocompleteData[]) => {
-			const customAttribute: BaseAutocompleteData =
-				chooseAutocompleteFromCustomValue(attributes, value);
+	const handleChangeCustomValue = async (
+		value: string,
+		attributes: BaseAutocompleteData[],
+	): Promise<void> => {
+		const customAttribute: BaseAutocompleteData =
+			chooseAutocompleteFromCustomValue(attributes, value);
 
-			onChange(customAttribute);
-		},
-		[onChange],
-	);
+		onChange(customAttribute);
+	};
 
-	const handleBlur = useCallback(async () => {
+	const handleBlur = async (): Promise<void> => {
 		if (searchText && searchText !== queryAggregation.metricName) {
 			const aggregateAttributes = await getResponseAttributes();
 			handleChangeCustomValue(searchText, aggregateAttributes);
 		}
-	}, [
-		getResponseAttributes,
-		handleChangeCustomValue,
-		searchText,
-		queryAggregation?.metricName,
-	]);
+	};
 
-	const handleChange = useCallback(
-		(
-			value: string,
-			option: ExtendedSelectOption | ExtendedSelectOption[],
-		): void => {
-			const currentOption = option as ExtendedSelectOption;
+	const handleChange = (
+		value: string,
+		option: ExtendedSelectOption | ExtendedSelectOption[],
+	): void => {
+		const currentOption = option as ExtendedSelectOption;
 
-			const aggregateAttributes = getAttributesData();
+		const aggregateAttributes = getAttributesData();
 
-			if (currentOption.key) {
-				const attribute = aggregateAttributes.find(
-					(item) => item.id === currentOption.key,
-				);
+		if (currentOption.key) {
+			const attribute = aggregateAttributes.find(
+				(item) => item.id === currentOption.key,
+			);
 
-				if (attribute) {
-					onChange(attribute);
-				}
-			} else {
-				handleChangeCustomValue(value, aggregateAttributes);
+			if (attribute) {
+				onChange(attribute);
 			}
+		} else {
+			handleChangeCustomValue(value, aggregateAttributes);
+		}
 
-			setSearchText('');
-		},
-		[getAttributesData, handleChangeCustomValue, onChange],
-	);
+		setSearchText('');
+	};
 
-	const handleSelect = useCallback(
-		(_: string, option: ExtendedSelectOption | ExtendedSelectOption[]): void => {
-			const currentOption = option as ExtendedSelectOption;
+	const handleSelect = (
+		_: string,
+		option: ExtendedSelectOption | ExtendedSelectOption[],
+	): void => {
+		const currentOption = option as ExtendedSelectOption;
 
-			const aggregateAttributes = getAttributesData();
+		const aggregateAttributes = getAttributesData();
 
-			if (currentOption.key) {
-				const attribute = aggregateAttributes.find(
-					(item) => item.id === currentOption.key,
-				);
+		if (currentOption.key) {
+			const attribute = aggregateAttributes.find(
+				(item) => item.id === currentOption.key,
+			);
 
-				if (attribute && onSelect) {
-					onSelect(attribute);
-				}
+			if (attribute && onSelect) {
+				onSelect(attribute);
 			}
+		}
 
-			setSearchText('');
-		},
-		[getAttributesData, onSelect],
-	);
+		setSearchText('');
+	};
 
 	const value =
 		(query.aggregations?.[0] as MetricAggregation)?.metricName ||
@@ -303,4 +274,4 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 			onSelect={handleSelect}
 		/>
 	);
-});
+}

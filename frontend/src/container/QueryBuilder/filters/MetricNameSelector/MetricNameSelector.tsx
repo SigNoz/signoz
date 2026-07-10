@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { AutoComplete, Spin } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
@@ -76,7 +76,7 @@ function createAutocompleteData(
 //   When signalSource is 'meter', the API is filtered to meter metrics only.
 //   Changing signalSource clears the input and search text.
 
-export const MetricNameSelector = memo(function MetricNameSelector({
+export function MetricNameSelector({
 	query,
 	onChange,
 	disabled,
@@ -155,24 +155,20 @@ export const MetricNameSelector = memo(function MetricNameSelector({
 		metricsRef.current = metrics;
 	}, [metrics]);
 
-	const optionsData = useMemo((): ExtendedSelectOption[] => {
-		if (!metrics.length) {
-			return [];
-		}
-
-		return metrics.map((metric) => ({
-			label: (
-				<OptionRenderer
-					label={metric.metricName}
-					value={metric.metricName}
-					dataType={DataTypes.Float64}
-					type={getAttributeType(metric) || ''}
-				/>
-			),
-			value: metric.metricName,
-			key: metric.metricName,
-		}));
-	}, [metrics]);
+	const optionsData: ExtendedSelectOption[] = !metrics.length
+		? []
+		: metrics.map((metric) => ({
+				label: (
+					<OptionRenderer
+						label={metric.metricName}
+						value={metric.metricName}
+						dataType={DataTypes.Float64}
+						type={getAttributeType(metric) || ''}
+					/>
+				),
+				value: metric.metricName,
+				key: metric.metricName,
+			}));
 
 	useEffect(() => {
 		const metricName =
@@ -208,36 +204,31 @@ export const MetricNameSelector = memo(function MetricNameSelector({
 		[],
 	);
 
-	const placeholder = useMemo(() => {
-		if (signalSource === 'meter') {
-			return 'Search for a meter metric...';
-		}
-		return 'Search for a metric...';
-	}, [signalSource]);
+	const placeholder =
+		signalSource === 'meter'
+			? 'Search for a meter metric...'
+			: 'Search for a metric...';
 
-	const handleChange = useCallback((value: string): void => {
+	const handleChange = (value: string): void => {
 		setInputValue(value);
-	}, []);
+	};
 
-	const handleSearch = useCallback((value: string): void => {
+	const handleSearch = (value: string): void => {
 		setSearchText(value);
 		selectedFromDropdownRef.current = false;
-	}, []);
+	};
 
-	const handleSelect = useCallback(
-		(value: string): void => {
-			selectedFromDropdownRef.current = true;
-			const resolved = resolveMetricFromText(value);
-			onChange(resolved);
-			if (onSelect) {
-				onSelect(resolved);
-			}
-			setSearchText('');
-		},
-		[onChange, onSelect, resolveMetricFromText],
-	);
+	const handleSelect = (value: string): void => {
+		selectedFromDropdownRef.current = true;
+		const resolved = resolveMetricFromText(value);
+		onChange(resolved);
+		if (onSelect) {
+			onSelect(resolved);
+		}
+		setSearchText('');
+	};
 
-	const handleBlur = useCallback(() => {
+	const handleBlur = (): void => {
 		if (selectedFromDropdownRef.current) {
 			selectedFromDropdownRef.current = false;
 			return;
@@ -249,7 +240,7 @@ export const MetricNameSelector = memo(function MetricNameSelector({
 		} else if (!typedValue && currentMetricName) {
 			setInputValue(currentMetricName);
 		}
-	}, [inputValue, currentMetricName, onChange, resolveMetricFromText]);
+	};
 
 	useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent): void => {
@@ -295,4 +286,4 @@ export const MetricNameSelector = memo(function MetricNameSelector({
 			disabled={disabled}
 		/>
 	);
-});
+}

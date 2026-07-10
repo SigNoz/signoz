@@ -34,19 +34,6 @@ function HavingFilter({ formula, onChange }: HavingFilterProps): JSX.Element {
 		[columnName],
 	);
 
-	const handleUpdateTag = useCallback(
-		(value: string) => {
-			const filteredValues = localValues.filter(
-				(currentValue) => currentValue !== value,
-			);
-			const having: Having[] = filteredValues.map(transformFromStringToHaving);
-
-			onChange(having);
-			setSearchText(value);
-		},
-		[localValues, onChange],
-	);
-
 	const generateOptions = useCallback(
 		(currentString: string) => {
 			const [aggregator = '', op = '', ...restValue] = currentString.split(' ');
@@ -87,6 +74,16 @@ function HavingFilter({ formula, onChange }: HavingFilterProps): JSX.Element {
 		},
 		[generateOptions],
 	);
+
+	const handleUpdateTag = (value: string): void => {
+		const filteredValues = localValues.filter(
+			(currentValue) => currentValue !== value,
+		);
+		const having: Having[] = filteredValues.map(transformFromStringToHaving);
+
+		onChange(having);
+		setSearchText(value);
+	};
 
 	const tagRender = ({
 		label,

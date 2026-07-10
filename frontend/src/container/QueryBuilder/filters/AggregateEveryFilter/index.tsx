@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { InputNumber, InputNumberProps } from 'antd';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
@@ -10,10 +9,7 @@ function AggregateEveryFilter({
 	query,
 	disabled,
 }: AggregateEveryFilterProps): JSX.Element {
-	const isMetricsDataSource = useMemo(
-		() => query.dataSource === DataSource.METRICS,
-		[query.dataSource],
-	);
+	const isMetricsDataSource = query.dataSource === DataSource.METRICS;
 
 	const onChangeHandler: InputNumberProps<number>['onChange'] = (event) => {
 		if (event && event >= 0) {

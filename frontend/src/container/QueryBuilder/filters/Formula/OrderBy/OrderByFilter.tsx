@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { Select, Spin } from 'antd';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { MetricAggregateOperator } from 'types/common/queryBuilder';
@@ -40,23 +39,14 @@ function OrderByFilter({
 		},
 	);
 
-	const optionsData = useMemo(() => {
-		const keyOptions = createOptions(data?.payload?.attributeKeys || []);
-		const groupByOptions = createOptions(query.groupBy);
-		const options =
-			query.aggregateOperator === MetricAggregateOperator.NOOP
-				? keyOptions
-				: [...groupByOptions, ...aggregationOptions];
+	const keyOptions = createOptions(data?.payload?.attributeKeys || []);
+	const groupByOptions = createOptions(query.groupBy);
+	const options =
+		query.aggregateOperator === MetricAggregateOperator.NOOP
+			? keyOptions
+			: [...groupByOptions, ...aggregationOptions];
 
-		return generateOptions(options);
-	}, [
-		aggregationOptions,
-		createOptions,
-		data?.payload?.attributeKeys,
-		generateOptions,
-		query.aggregateOperator,
-		query.groupBy,
-	]);
+	const optionsData = generateOptions(options);
 
 	const isDisabledSelect =
 		!query.aggregateAttribute?.key ||

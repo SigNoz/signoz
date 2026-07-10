@@ -1,11 +1,4 @@
-import {
-	memo,
-	ReactNode,
-	useCallback,
-	useEffect,
-	useMemo,
-	useState,
-} from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { Select, Spin } from 'antd';
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
@@ -27,7 +20,7 @@ import { selectStyle } from '../QueryBuilderSearch/config';
 import OptionRenderer from '../QueryBuilderSearch/OptionRenderer';
 import { GroupByFilterProps } from './GroupByFilter.interfaces';
 
-export const GroupByFilter = memo(function GroupByFilter({
+export function GroupByFilter({
 	query,
 	onChange,
 	disabled,
@@ -45,12 +38,8 @@ export const GroupByFilter = memo(function GroupByFilter({
 
 	const debouncedValue = useDebounce(searchText, DEBOUNCE_DELAY);
 
-	const dataSource = useMemo(() => {
-		if (signalSource === 'meter') {
-			return 'meter' as DataSource;
-		}
-		return query.dataSource;
-	}, [signalSource, query.dataSource]);
+	const dataSource =
+		signalSource === 'meter' ? ('meter' as DataSource) : query.dataSource;
 
 	const { isFetching } = useGetAggregateKeys(
 		{
@@ -92,7 +81,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 		},
 	);
 
-	const getAttributeKeys = useCallback(async () => {
+	const getAttributeKeys = async (): Promise<BaseAutocompleteData[]> => {
 		const response = await queryClient.fetchQuery(
 			[QueryBuilderKeys.GET_AGGREGATE_KEYS, searchText, isFocused],
 			async () =>
@@ -105,14 +94,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 		);
 
 		return response.payload?.attributeKeys || [];
-	}, [
-		isFocused,
-		query.aggregateAttribute?.key,
-		query.aggregateOperator,
-		dataSource,
-		queryClient,
-		searchText,
-	]);
+	};
 
 	const handleSearchKeys = (searchText: string): void => {
 		setSearchText(searchText);
@@ -127,40 +109,39 @@ export const GroupByFilter = memo(function GroupByFilter({
 		setIsFocused(true);
 	};
 
-	const handleChange = useCallback(
-		async (values: SelectOption<string, string>[]): Promise<void> => {
-			const keys = await getAttributeKeys();
+	const handleChange = async (
+		values: SelectOption<string, string>[],
+	): Promise<void> => {
+		const keys = await getAttributeKeys();
 
-			const groupByValues: BaseAutocompleteData[] = values.map((item) => {
-				const id = item.value;
-				const currentValue = item.value.split(idDivider)[0];
+		const groupByValues: BaseAutocompleteData[] = values.map((item) => {
+			const id = item.value;
+			const currentValue = item.value.split(idDivider)[0];
 
-				if (id && id.includes(idDivider)) {
-					const attribute = keys.find((item) => item.id === id);
-					const existAttribute = query.groupBy.find((item) => item.id === id);
+			if (id && id.includes(idDivider)) {
+				const attribute = keys.find((item) => item.id === id);
+				const existAttribute = query.groupBy.find((item) => item.id === id);
 
-					if (attribute) {
-						return attribute;
-					}
-
-					if (existAttribute) {
-						return existAttribute;
-					}
+				if (attribute) {
+					return attribute;
 				}
 
-				return chooseAutocompleteFromCustomValue(keys, currentValue);
-			});
+				if (existAttribute) {
+					return existAttribute;
+				}
+			}
 
-			const result = uniqWith(groupByValues, isEqual);
+			return chooseAutocompleteFromCustomValue(keys, currentValue);
+		});
 
-			onChange(result);
-		},
-		[getAttributeKeys, onChange, query.groupBy],
-	);
+		const result = uniqWith(groupByValues, isEqual);
 
-	const clearSearch = useCallback(() => {
+		onChange(result);
+	};
+
+	const clearSearch = (): void => {
 		setSearchText('');
-	}, []);
+	};
 
 	useEffect(() => {
 		const currentValues: SelectOption<string, string>[] =
@@ -193,4 +174,4 @@ export const GroupByFilter = memo(function GroupByFilter({
 			placeholder={localValues?.length === 0 ? 'Everything (no breakdown)' : ''}
 		/>
 	);
-});
+}

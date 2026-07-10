@@ -1,4 +1,3 @@
-import { useCallback } from 'react';
 import { Button, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
@@ -32,30 +31,23 @@ export default function TraceOperator({
 		isForTraceOperator: true,
 	});
 
-	const handleTraceOperatorChange = useCallback(
-		(traceOperatorExpression: string) => {
-			handleChangeQueryData('expression', traceOperatorExpression);
-		},
-		[handleChangeQueryData],
-	);
+	const handleTraceOperatorChange = (traceOperatorExpression: string): void => {
+		handleChangeQueryData('expression', traceOperatorExpression);
+	};
 
-	const handleChangeAggregateEvery = useCallback(
-		(value: IBuilderQuery['stepInterval']) => {
-			handleChangeQueryData('stepInterval', value);
-		},
-		[handleChangeQueryData],
-	);
+	const handleChangeAggregateEvery = (
+		value: IBuilderQuery['stepInterval'],
+	): void => {
+		handleChangeQueryData('stepInterval', value);
+	};
 
-	const handleChangeAggregation = useCallback(
-		(value: string) => {
-			handleChangeQueryData('aggregations', [
-				{
-					expression: value,
-				},
-			]);
-		},
-		[handleChangeQueryData],
-	);
+	const handleChangeAggregation = (value: string): void => {
+		handleChangeQueryData('aggregations', [
+			{
+				expression: value,
+			},
+		]);
+	};
 
 	return (
 		<div className={cx('qb-trace-operator', !isListViewPanel && 'non-list-view')}>

@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { Tooltip } from 'antd';
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -25,17 +24,17 @@ function QueryAggregationOptions({
 	onChange?: (value: string) => void;
 	queryData: IBuilderQuery | IBuilderTraceOperator;
 }): JSX.Element {
-	const showAggregationInterval = useMemo(() => {
-		if (panelType === PANEL_TYPES.VALUE) {
-			return false;
-		}
-
-		if (dataSource === DataSource.TRACES || dataSource === DataSource.LOGS) {
-			return !(panelType === PANEL_TYPES.TABLE || panelType === PANEL_TYPES.PIE);
-		}
-
-		return true;
-	}, [dataSource, panelType]);
+	let showAggregationInterval = true;
+	if (panelType === PANEL_TYPES.VALUE) {
+		showAggregationInterval = false;
+	} else if (
+		dataSource === DataSource.TRACES ||
+		dataSource === DataSource.LOGS
+	) {
+		showAggregationInterval = !(
+			panelType === PANEL_TYPES.TABLE || panelType === PANEL_TYPES.PIE
+		);
+	}
 
 	const handleAggregationIntervalChange = (value: string): void => {
 		onAggregationIntervalChange(Number(value));
