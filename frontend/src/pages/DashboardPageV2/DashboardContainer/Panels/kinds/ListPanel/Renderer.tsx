@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useRef } from 'react';
 import { Select, Skeleton, Table } from 'antd';
 import cx from 'classnames';
 import { Button } from '@signozhq/ui/button';
@@ -42,46 +42,32 @@ function ListPanelRenderer({
 	// Pin the header while the body scrolls (shared with the Table kind).
 	const containerRef = useRef<HTMLDivElement>(null);
 	const { height } = useResizeObserver(containerRef);
-	const { scrollY } = useMemo(() => computeTableLayout(height), [height]);
+	const { scrollY } = computeTableLayout(height);
 
 	// `panel` is narrowed to this kind by PanelRendererProps, so no cast needed.
-	const spec = useMemo<DashboardtypesListPanelSpecDTO>(
-		() => panel.spec.plugin.spec,
-		[panel.spec.plugin.spec],
-	);
+	const spec: DashboardtypesListPanelSpecDTO = panel.spec.plugin.spec;
 
 	// Telemetry signal of the first builder query; drives flattening, cell rendering,
 	// and row-click behavior. Cast is safe — the query carries the same string values.
-	const signal = useMemo(
-		() =>
-			(getBuilderQueries(panel.spec.queries)[0]
-				?.signal as TelemetrytypesSignalDTO) || TelemetrytypesSignalDTO.logs,
-		[panel.spec.queries],
-	);
+	const signal =
+		(getBuilderQueries(panel.spec.queries)[0]
+			?.signal as TelemetrytypesSignalDTO) || TelemetrytypesSignalDTO.logs;
 
-	const table = useMemo(
-		() =>
-			prepareRawTable({
-				results: getRawResults(data.response),
-				selectFields: spec.selectFields ?? [],
-				signal,
-			}),
-		[data.response, spec.selectFields, signal],
-	);
+	const table = prepareRawTable({
+		results: getRawResults(data.response),
+		selectFields: spec.selectFields ?? [],
+		signal,
+	});
 
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
-	const columns = useMemo(
-		() =>
-			table
-				? buildListColumns({
-						columns: table.columns,
-						signal,
-						formatTimestamp: formatTimezoneAdjustedTimestamp,
-					})
-				: [],
-		[table, signal, formatTimezoneAdjustedTimestamp],
-	);
+	const columns = table
+		? buildListColumns({
+				columns: table.columns,
+				signal,
+				formatTimestamp: formatTimezoneAdjustedTimestamp,
+			})
+		: [];
 
 	// User-resizable columns, persisted per panel.
 	const { columns: resizableColumns, components } = useResizableColumns({
@@ -90,13 +76,10 @@ function ListPanelRenderer({
 		flexColumns: BODY_FLEX_COLUMNS,
 	});
 
-	const dataSource = useMemo(() => table?.rows ?? [], [table]);
+	const dataSource = table?.rows ?? [];
 
 	// Header search filters the current page client-side (V1 parity); cross-page paging is server-side via `pagination`.
-	const filteredDataSource = useMemo(
-		() => filterTableRows(dataSource, searchTerm),
-		[dataSource, searchTerm],
-	);
+	const filteredDataSource = filterTableRows(dataSource, searchTerm);
 
 	const { onRow, logDetail } = useListRowInteraction({
 		signal,
@@ -104,15 +87,11 @@ function ListPanelRenderer({
 	});
 
 	// The drawer's "selected fields" tab mirrors the panel's chosen columns.
-	const selectedLogFields = useMemo<IField[]>(
-		() =>
-			(spec.selectFields ?? []).map((field) => ({
-				name: field.name,
-				type: field.fieldContext ?? '',
-				dataType: field.fieldDataType ?? '',
-			})),
-		[spec.selectFields],
-	);
+	const selectedLogFields: IField[] = (spec.selectFields ?? []).map((field) => ({
+		name: field.name,
+		type: field.fieldContext ?? '',
+		dataType: field.fieldDataType ?? '',
+	}));
 
 	// Show the footer whenever the panel pages server-side, so the page-size picker stays reachable (V1 parity).
 	const showPager = !!pagination;
@@ -120,21 +99,13 @@ function ListPanelRenderer({
 	// While the next page loads, swap the stale rows (held by keepPreviousData) for skeleton bars,
 	// keeping the header + pager. Row count mirrors the page being left.
 	const skeletonRowCount = dataSource.length || pagination?.pageSize || 10;
-	const skeletonColumns = useMemo(
-		() =>
-			resizableColumns.map((col) => ({
-				...col,
-				render: (): JSX.Element => <Skeleton.Input active block size="small" />,
-			})),
-		[resizableColumns],
-	);
-	const skeletonRows = useMemo(
-		() =>
-			Array.from({ length: skeletonRowCount }, (_, index) => ({
-				key: `skeleton-${index}`,
-			})) as unknown as typeof filteredDataSource,
-		[skeletonRowCount],
-	);
+	const skeletonColumns = resizableColumns.map((col) => ({
+		...col,
+		render: (): JSX.Element => <Skeleton.Input active block size="small" />,
+	}));
+	const skeletonRows = Array.from({ length: skeletonRowCount }, (_, index) => ({
+		key: `skeleton-${index}`,
+	})) as unknown as typeof filteredDataSource;
 
 	return (
 		<div

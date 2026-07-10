@@ -1,8 +1,4 @@
-import {
-	useCallback,
-	useMemo,
-	type MouseEvent as ReactMouseEvent,
-} from 'react';
+import { type MouseEvent as ReactMouseEvent } from 'react';
 import type { DashboardtypesPieChartPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 import Pie from 'container/DashboardContainer/visualization/charts/Pie/Pie';
 import type { PieSlice } from 'container/DashboardContainer/visualization/charts/types';
@@ -34,63 +30,40 @@ function PiePanelRenderer({
 }: PanelRendererProps<'signoz/PieChartPanel'>): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 
-	const spec = useMemo<DashboardtypesPieChartPanelSpecDTO>(
-		() => panel.spec.plugin.spec,
-		[panel.spec.plugin.spec],
+	const spec: DashboardtypesPieChartPanelSpecDTO = panel.spec.plugin.spec;
+
+	const builderQueries = getBuilderQueries(panel.spec.queries || []);
+
+	const slices = preparePieData({
+		tables: prepareScalarTables({
+			results: getScalarResults(data.response),
+			legendMap: data.legendMap ?? {},
+			requestPayload: data.requestPayload,
+		}),
+		customColors: spec.legend?.customColors,
+		isDarkMode,
+	});
+
+	const decimalPrecision = resolveDecimalPrecision(
+		spec.formatting?.decimalPrecision,
 	);
 
-	const builderQueries = useMemo(
-		() => getBuilderQueries(panel.spec.queries || []),
-		[panel.spec.queries],
-	);
+	const legendPosition = resolveLegendPosition(spec.legend?.position);
 
-	const slices = useMemo(
-		() =>
-			preparePieData({
-				tables: prepareScalarTables({
-					results: getScalarResults(data.response),
-					legendMap: data.legendMap ?? {},
-					requestPayload: data.requestPayload,
-				}),
-				customColors: spec.legend?.customColors,
-				isDarkMode,
-			}),
-		[
-			data.response,
-			data.legendMap,
-			data.requestPayload,
-			spec.legend?.customColors,
-			isDarkMode,
-		],
-	);
-
-	const decimalPrecision = useMemo(
-		() => resolveDecimalPrecision(spec.formatting?.decimalPrecision),
-		[spec.formatting?.decimalPrecision],
-	);
-
-	const legendPosition = useMemo(
-		() => resolveLegendPosition(spec.legend?.position),
-		[spec.legend?.position],
-	);
-
-	const handleSliceClick = useCallback(
-		(slice: PieSlice, event: ReactMouseEvent): void => {
-			if (!onClick) {
-				return;
-			}
-			const payload = enrichPieClick({
-				slice,
-				builderQueries,
-				coordinates: { x: event.clientX, y: event.clientY },
-				timeRange: getPanelTimeRange(data.requestPayload),
-			});
-			if (payload) {
-				onClick(payload);
-			}
-		},
-		[onClick, builderQueries, data.requestPayload],
-	);
+	const handleSliceClick = (slice: PieSlice, event: ReactMouseEvent): void => {
+		if (!onClick) {
+			return;
+		}
+		const payload = enrichPieClick({
+			slice,
+			builderQueries,
+			coordinates: { x: event.clientX, y: event.clientY },
+			timeRange: getPanelTimeRange(data.requestPayload),
+		});
+		if (payload) {
+			onClick(payload);
+		}
+	};
 
 	return (
 		<div data-testid="pie-panel-renderer" className={PanelStyles.panelContainer}>

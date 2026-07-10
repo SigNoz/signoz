@@ -1,7 +1,5 @@
 import {
-	useCallback,
 	useEffect,
-	useMemo,
 	useRef,
 	useState,
 	type MouseEvent as ReactMouseEvent,
@@ -44,92 +42,61 @@ function TablePanelRenderer({
 	// Measure the panel so each page roughly fills it (min 10 rows) with a pinned header.
 	const containerRef = useRef<HTMLDivElement>(null);
 	const { height } = useResizeObserver(containerRef);
-	const { pageSize, scrollY } = useMemo(
-		() => computeTableLayout(height),
-		[height],
-	);
+	const { pageSize, scrollY } = computeTableLayout(height);
 
 	// `panel` is narrowed to this kind by PanelRendererProps, so no cast needed.
-	const spec = useMemo<DashboardtypesTablePanelSpecDTO>(
-		() => panel.spec.plugin.spec,
-		[panel.spec.plugin.spec],
-	);
+	const spec: DashboardtypesTablePanelSpecDTO = panel.spec.plugin.spec;
 
-	const builderQueries = useMemo(
-		() => getBuilderQueries(panel.spec.queries || []),
-		[panel.spec.queries],
-	);
+	const builderQueries = getBuilderQueries(panel.spec.queries || []);
 
 	// V5 joins every query into a single scalar result, so the first non-empty
 	// table is the whole panel.
-	const table = useMemo(
-		() =>
-			prepareScalarTables({
-				results: getScalarResults(data?.response),
-				legendMap: data.legendMap ?? {},
-				requestPayload: data.requestPayload,
-			}).find((candidate) => candidate.columns.length > 0),
-		[data.response, data.legendMap, data.requestPayload],
+	const table = prepareScalarTables({
+		results: getScalarResults(data?.response),
+		legendMap: data.legendMap ?? {},
+		requestPayload: data.requestPayload,
+	}).find((candidate) => candidate.columns.length > 0);
+
+	const decimalPrecision = resolveDecimalPrecision(
+		spec.formatting?.decimalPrecision,
 	);
 
-	const decimalPrecision = useMemo(
-		() => resolveDecimalPrecision(spec.formatting?.decimalPrecision),
-		[spec.formatting?.decimalPrecision],
-	);
+	const thresholdsByColumn = mapTableThresholds(spec.thresholds);
 
-	const thresholdsByColumn = useMemo(
-		() => mapTableThresholds(spec.thresholds),
-		[spec.thresholds],
-	);
-
-	const handleCellClick = useCallback(
-		({
-			columnId,
+	const handleCellClick = ({
+		columnId,
+		record,
+		event,
+	}: {
+		columnId: string;
+		record: TableRowData;
+		event: ReactMouseEvent<HTMLElement>;
+	}): void => {
+		if (!onClick || !table) {
+			return;
+		}
+		const payload = enrichTableClick({
 			record,
-			event,
-		}: {
-			columnId: string;
-			record: TableRowData;
-			event: ReactMouseEvent<HTMLElement>;
-		}): void => {
-			if (!onClick || !table) {
-				return;
-			}
-			const payload = enrichTableClick({
-				record,
-				columnId,
-				table,
-				builderQueries,
-				coordinates: { x: event.clientX, y: event.clientY },
-				timeRange: getPanelTimeRange(data.requestPayload),
-			});
-			if (payload) {
-				onClick(payload);
-			}
-		},
-		[onClick, table, builderQueries, data.requestPayload],
-	);
-
-	const columns = useMemo(
-		() =>
-			table
-				? buildTableColumns({
-						table,
-						columnUnits: spec.formatting?.columnUnits ?? {},
-						decimalPrecision,
-						thresholdsByColumn,
-						onCellClick: enableDrillDown ? handleCellClick : undefined,
-					})
-				: [],
-		[
+			columnId,
 			table,
-			spec.formatting?.columnUnits,
-			decimalPrecision,
-			thresholdsByColumn,
-			enableDrillDown,
-			handleCellClick,
-		],
-	);
+			builderQueries,
+			coordinates: { x: event.clientX, y: event.clientY },
+			timeRange: getPanelTimeRange(data.requestPayload),
+		});
+		if (payload) {
+			onClick(payload);
+		}
+	};
+
+	const columns = table
+		? buildTableColumns({
+				table,
+				columnUnits: spec.formatting?.columnUnits ?? {},
+				decimalPrecision,
+				thresholdsByColumn,
+				onCellClick: enableDrillDown ? handleCellClick : undefined,
+			})
+		: [];
 
 	// User-resizable columns, persisted per panel to localStorage.
 	const { columns: resizableColumns, components } = useResizableColumns({
@@ -137,17 +104,12 @@ function TablePanelRenderer({
 		columns: columns ?? [],
 	});
 
-	const dataSource = useMemo<TableRowData[]>(
-		() =>
-			table ? table.rows.map((row, index) => ({ key: index, ...row.data })) : [],
-		[table],
-	);
+	const dataSource: TableRowData[] = table
+		? table.rows.map((row, index) => ({ key: index, ...row.data }))
+		: [];
 
 	// Header search filters rows client-side (V1 parity); empty term returns the full set, so non-searching tables pay nothing.
-	const filteredDataSource = useMemo(
-		() => filterTableRows(dataSource, searchTerm),
-		[dataSource, searchTerm],
-	);
+	const filteredDataSource = filterTableRows(dataSource, searchTerm);
 
 	// Snap back to page 1 on a new search term so the filtered set never lands on a now-empty page.
 	const [page, setPage] = useState(1);

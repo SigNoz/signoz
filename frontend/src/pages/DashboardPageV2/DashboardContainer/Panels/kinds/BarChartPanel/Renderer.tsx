@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { useRef } from 'react';
 import type { DashboardtypesBarChartPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 import BarChart from 'container/DashboardContainer/visualization/charts/BarChart/BarChart';
 import ChartManager from 'container/DashboardContainer/visualization/components/ChartManager/ChartManager';
@@ -49,142 +49,101 @@ function BarPanelRenderer({
 	const isDarkMode = useIsDarkMode();
 	const { timezone } = useTimezone();
 
-	const spec = useMemo<DashboardtypesBarChartPanelSpecDTO>(
-		() => panel.spec.plugin.spec,
-		[panel.spec.plugin.spec],
-	);
+	const spec: DashboardtypesBarChartPanelSpecDTO = panel.spec.plugin.spec;
 
-	const builderQueries = useMemo(
-		() => getBuilderQueries(panel.spec.queries),
-		[panel.spec.queries],
-	);
+	const builderQueries = getBuilderQueries(panel.spec.queries);
 
 	// X-scale clamps come from the request that produced the data, so each panel
 	// pins to the window it fetched.
-	const { minTimeScale, maxTimeScale } = useMemo(() => {
-		const { startTime, endTime } = getPanelTimeRange(data.requestPayload);
-		return { minTimeScale: startTime, maxTimeScale: endTime };
-	}, [data.requestPayload]);
+	const { startTime: minTimeScale, endTime: maxTimeScale } = getPanelTimeRange(
+		data.requestPayload,
+	);
 
 	const groupByPerQuery = useGroupByPerQuery(builderQueries);
 
-	const flatSeries = useMemo(
-		() =>
-			flattenTimeSeries(getTimeSeriesResults(data.response), data.legendMap ?? {}),
-		[data.response, data.legendMap],
+	const flatSeries = flattenTimeSeries(
+		getTimeSeriesResults(data.response),
+		data.legendMap ?? {},
 	);
 
-	const config = useMemo(
-		() =>
-			buildBarChartConfig({
-				panelId,
-				spec,
-				builderQueries,
-				series: flatSeries,
-				stepIntervals: getExecStats(data.response)?.stepIntervals,
-				isDarkMode,
-				timezone,
-				panelMode,
-				minTimeScale,
-				maxTimeScale,
-				onDragSelect,
-			}),
-		[
-			panelId,
-			spec,
-			builderQueries,
-			flatSeries,
-			data.response,
-			isDarkMode,
-			timezone,
-			panelMode,
-			minTimeScale,
-			maxTimeScale,
-			onDragSelect,
-			// TooltipPlugin mutates `config` for cursor sync; rebuild on syncMode change
-			// so a fresh instance doesn't inherit stale sync settings (e.g. "No Sync").
-			dashboardPreference?.syncMode,
-		],
+	// TooltipPlugin mutates `config` for cursor sync; rebuild on syncMode change
+	// so a fresh instance doesn't inherit stale sync settings (e.g. "No Sync").
+	const config = buildBarChartConfig({
+		panelId,
+		spec,
+		builderQueries,
+		series: flatSeries,
+		stepIntervals: getExecStats(data.response)?.stepIntervals,
+		isDarkMode,
+		timezone,
+		panelMode,
+		minTimeScale,
+		maxTimeScale,
+		onDragSelect,
+	});
+
+	const chartData = prepareAlignedData(flatSeries);
+
+	const decimalPrecision = resolveDecimalPrecision(
+		spec.formatting?.decimalPrecision,
 	);
 
-	const chartData = useMemo(() => prepareAlignedData(flatSeries), [flatSeries]);
-
-	const decimalPrecision = useMemo(
-		() => resolveDecimalPrecision(spec.formatting?.decimalPrecision),
-		[spec.formatting?.decimalPrecision],
-	);
-
-	const legendPosition = useMemo(() => {
-		return resolveLegendPosition(spec.legend?.position);
-	}, [spec.legend?.position]);
+	const legendPosition = resolveLegendPosition(spec.legend?.position);
 
 	// The standalone View modal shows V1's graph-manager legend below the chart:
 	// Filter Series + per-series show/hide + Save. Series visibility auto-persists to
 	// localStorage (STANDALONE_VIEW selection prefs), keyed by panelId.
-	const layoutChildren = useMemo(
-		() =>
-			panelMode === PanelMode.STANDALONE_VIEW ? (
-				<div className={PanelStyles.chartManagerContainer}>
-					<ChartManager
-						config={config}
-						alignedData={chartData}
-						yAxisUnit={spec.formatting?.unit}
-						decimalPrecision={decimalPrecision}
-						onCancel={onCloseStandaloneView}
-					/>
-				</div>
-			) : null,
-		[
-			panelMode,
-			config,
-			chartData,
-			spec.formatting?.unit,
-			decimalPrecision,
-			onCloseStandaloneView,
-		],
-	);
+	const layoutChildren =
+		panelMode === PanelMode.STANDALONE_VIEW ? (
+			<div className={PanelStyles.chartManagerContainer}>
+				<ChartManager
+					config={config}
+					alignedData={chartData}
+					yAxisUnit={spec.formatting?.unit}
+					decimalPrecision={decimalPrecision}
+					onCancel={onCloseStandaloneView}
+				/>
+			</div>
+		) : null;
 
-	const renderTooltipFooter = useCallback(
-		({ isPinned, dismiss }: IRenderTooltipFooterArgs) => (
-			<TooltipFooter
-				id={panelId}
-				isPinned={isPinned}
-				canDrilldown={!!enableDrillDown}
-				dismiss={dismiss}
-			/>
-		),
-		[panelId, enableDrillDown],
+	const renderTooltipFooter = ({
+		isPinned,
+		dismiss,
+	}: IRenderTooltipFooterArgs): JSX.Element => (
+		<TooltipFooter
+			id={panelId}
+			isPinned={isPinned}
+			canDrilldown={!!enableDrillDown}
+			dismiss={dismiss}
+		/>
 	);
 
 	// Keying on sync prefs forces a full chart teardown/re-mount so stale sync
 	// settings aren't inherited — the only way to fully reset the uPlot instance.
 	const key = `${dashboardPreference?.syncMode}-${dashboardPreference?.syncFilterMode}`;
 
-	const handleChartClick = useCallback(
-		(args: ChartClickData): void => {
-			if (!onClick) {
-				return;
-			}
-			const payload = enrichChartClick({
-				clickData: args,
-				series: flatSeries,
-				builderQueries,
-			});
-			if (!payload) {
-				return;
-			}
-			const timeRange = stepClickTimeRange({
-				clickedDataTimestamp: args.clickedDataTimestamp,
-				queryName: payload.context.queryName,
-				builderQueries,
-				stepInterval: getExecStats(data.response)?.stepIntervals?.[
-					payload.context.queryName
-				],
-			});
-			onClick({ ...payload, context: { ...payload.context, timeRange } });
-		},
-		[onClick, flatSeries, builderQueries, data.response],
-	);
+	const handleChartClick = (args: ChartClickData): void => {
+		if (!onClick) {
+			return;
+		}
+		const payload = enrichChartClick({
+			clickData: args,
+			series: flatSeries,
+			builderQueries,
+		});
+		if (!payload) {
+			return;
+		}
+		const timeRange = stepClickTimeRange({
+			clickedDataTimestamp: args.clickedDataTimestamp,
+			queryName: payload.context.queryName,
+			builderQueries,
+			stepInterval: getExecStats(data.response)?.stepIntervals?.[
+				payload.context.queryName
+			],
+		});
+		onClick({ ...payload, context: { ...payload.context, timeRange } });
+	};
 
 	return (
 		<div

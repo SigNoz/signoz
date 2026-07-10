@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { useRef } from 'react';
 import type { DashboardtypesHistogramPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 import Histogram from 'container/DashboardContainer/visualization/charts/Histogram/Histogram';
 import TooltipFooter from 'container/DashboardContainer/visualization/panels/components/TooltipFooter';
@@ -34,67 +34,44 @@ function HistogramPanelRenderer({
 	const isDarkMode = useIsDarkMode();
 	const { timezone } = useTimezone();
 
-	const spec = useMemo<DashboardtypesHistogramPanelSpecDTO>(
-		() => panel.spec.plugin.spec,
-		[panel.spec.plugin.spec],
+	const spec: DashboardtypesHistogramPanelSpecDTO = panel.spec.plugin.spec;
+
+	const builderQueries = getBuilderQueries(panel.spec.queries);
+
+	const flatSeries = flattenTimeSeries(
+		getTimeSeriesResults(data.response),
+		data.legendMap ?? {},
 	);
 
-	const builderQueries = useMemo(
-		() => getBuilderQueries(panel.spec.queries),
-		[panel.spec.queries],
-	);
+	const config = buildHistogramConfig({
+		panelId,
+		spec,
+		builderQueries,
+		series: flatSeries,
+		isDarkMode,
+		timezone,
+		panelMode,
+	});
 
-	const flatSeries = useMemo(
-		() =>
-			flattenTimeSeries(getTimeSeriesResults(data.response), data.legendMap ?? {}),
-		[data.response, data.legendMap],
-	);
+	const chartData = prepareHistogramData({
+		series: flatSeries,
+		bucketWidth: spec.histogramBuckets?.bucketWidth ?? undefined,
+		bucketCount: spec.histogramBuckets?.bucketCount ?? undefined,
+		mergeAllActiveQueries: spec.histogramBuckets?.mergeAllActiveQueries,
+	});
 
-	const config = useMemo(
-		() =>
-			buildHistogramConfig({
-				panelId,
-				spec,
-				builderQueries,
-				series: flatSeries,
-				isDarkMode,
-				timezone,
-				panelMode,
-			}),
-		[panelId, spec, builderQueries, flatSeries, isDarkMode, timezone, panelMode],
-	);
+	const legendPosition = resolveLegendPosition(spec.legend?.position);
 
-	const chartData = useMemo(
-		() =>
-			prepareHistogramData({
-				series: flatSeries,
-				bucketWidth: spec.histogramBuckets?.bucketWidth ?? undefined,
-				bucketCount: spec.histogramBuckets?.bucketCount ?? undefined,
-				mergeAllActiveQueries: spec.histogramBuckets?.mergeAllActiveQueries,
-			}),
-		[
-			flatSeries,
-			spec.histogramBuckets?.bucketWidth,
-			spec.histogramBuckets?.bucketCount,
-			spec.histogramBuckets?.mergeAllActiveQueries,
-		],
-	);
-
-	const legendPosition = useMemo(
-		() => resolveLegendPosition(spec.legend?.position),
-		[spec.legend?.position],
-	);
-
-	const renderTooltipFooter = useCallback(
-		({ isPinned, dismiss }: IRenderTooltipFooterArgs) => (
-			<TooltipFooter
-				id={panelId}
-				isPinned={isPinned}
-				dismiss={dismiss}
-				canDrilldown={false}
-			/>
-		),
-		[panelId],
+	const renderTooltipFooter = ({
+		isPinned,
+		dismiss,
+	}: IRenderTooltipFooterArgs): JSX.Element => (
+		<TooltipFooter
+			id={panelId}
+			isPinned={isPinned}
+			dismiss={dismiss}
+			canDrilldown={false}
+		/>
 	);
 
 	const isQueriesMerged = spec.histogramBuckets?.mergeAllActiveQueries ?? false;
