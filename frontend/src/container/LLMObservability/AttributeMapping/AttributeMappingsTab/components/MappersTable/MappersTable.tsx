@@ -12,7 +12,7 @@ import { AttributeMappingStore } from '../../hooks/useAttributeMappingStore';
 import styles from './MappersTable.module.scss';
 import { getMappersColumns } from './TableConfig';
 
-const SKELETON_ROW_COUNT = 3;
+const SKELETON_ROW_COUNT = 1;
 
 // Expand reveal: the panel mounts already-open, so this mount transition IS the
 // group's expand animation (height + fade).
