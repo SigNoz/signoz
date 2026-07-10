@@ -3,40 +3,39 @@ import { EllipsisVertical, Pencil, Trash2 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { DropdownMenuSimple, type MenuItem } from '@signozhq/ui/dropdown-menu';
 
-import type { DraftGroup } from '../../../types';
+import type { DraftMapper } from 'container/LLMObservability/AttributeMapping/types';
 
-interface MapperGroupActionsMenuProps {
-	group: DraftGroup;
-	onEdit: (group: DraftGroup) => void;
+interface MapperActionsMenuProps {
+	mapper: DraftMapper;
+	onEdit: (mapper: DraftMapper) => void;
 	onRemove: (localId: string) => void;
 }
 
-// Per-row overflow menu for a mapping group. The enable/disable toggle stays
-// inline in the row (it's the primary, high-frequency action); the lower-
-// frequency Edit and Delete actions live behind the kebab to keep the row
-// compact.
-function MapperGroupActionsMenu({
-	group,
+// Per-row overflow menu for a mapping. The enable/disable toggle stays inline in
+// the row (it's the primary, high-frequency action); the lower-frequency Edit
+// and Delete actions live behind the kebab to keep the row compact.
+function MapperActionsMenu({
+	mapper,
 	onEdit,
 	onRemove,
-}: MapperGroupActionsMenuProps): JSX.Element {
+}: MapperActionsMenuProps): JSX.Element {
 	const menuItems = useMemo<MenuItem[]>(
 		() => [
 			{
 				key: 'edit',
 				label: 'Edit',
 				icon: <Pencil size={14} />,
-				onClick: (): void => onEdit(group),
+				onClick: (): void => onEdit(mapper),
 			},
 			{
 				key: 'delete',
 				label: 'Delete',
 				danger: true,
 				icon: <Trash2 size={14} />,
-				onClick: (): void => onRemove(group.localId),
+				onClick: (): void => onRemove(mapper.localId),
 			},
 		],
-		[onEdit, onRemove, group],
+		[onEdit, onRemove, mapper],
 	);
 
 	return (
@@ -45,8 +44,8 @@ function MapperGroupActionsMenu({
 				variant="ghost"
 				color="secondary"
 				size="icon"
-				aria-label="Group actions"
-				testId={`group-actions-${group.localId}`}
+				aria-label="Mapping actions"
+				testId={`mapper-actions-${mapper.localId}`}
 			>
 				<EllipsisVertical size={16} />
 			</Button>
@@ -54,4 +53,4 @@ function MapperGroupActionsMenu({
 	);
 }
 
-export default MapperGroupActionsMenu;
+export default MapperActionsMenu;
