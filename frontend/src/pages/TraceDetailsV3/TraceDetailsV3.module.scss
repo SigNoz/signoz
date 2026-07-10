@@ -22,8 +22,8 @@
 .rightDock {
 	display: flex;
 	flex-direction: column;
-	border-left: 1px solid var(--l2-border);
 	min-width: 0;
+	border-top: 1px solid var(--l2-border);
 }
 
 // Shared Ant Collapse chrome reset for both the flamegraph and waterfall

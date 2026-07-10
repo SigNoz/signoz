@@ -1,74 +1,196 @@
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
+import { getDashboardV2 } from 'api/generated/services/dashboard';
+import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
 
 import { useDashboardStaleCheck } from '../useDashboardStaleCheck';
 
-const mockUseQuery = jest.fn();
 const mockUseIsMutating = jest.fn();
 jest.mock('react-query', () => ({
-	useQuery: (...args: unknown[]): unknown => mockUseQuery(...args),
 	useIsMutating: (): number => mockUseIsMutating(),
-	useQueryClient: (): unknown => ({ getQueryData: jest.fn() }),
 }));
 jest.mock('api/generated/services/dashboard', () => ({
 	getDashboardV2: jest.fn(),
-	getGetDashboardV2QueryKey: jest.fn(() => ['/api/v2/dashboards/d1']),
 }));
 
-function setServerUpdatedAt(updatedAt: string | undefined): void {
-	mockUseQuery.mockReturnValue({ data: { data: { updatedAt } } });
+const mockGetDashboard = getDashboardV2 as jest.Mock;
+
+const SPEC_A = { panels: { p1: {} } };
+const SPEC_B = { panels: { p1: {}, p2: {} } };
+
+interface Content {
+	spec?: unknown;
+	tags?: unknown;
+	locked?: boolean;
+}
+
+// Defaults make loaded and server content identical unless a field is overridden.
+function withDefaults(content: Content): Record<string, unknown> {
+	return { spec: SPEC_A, tags: [], locked: false, ...content };
+}
+
+function loaded(
+	updatedAt: string,
+	content: Content = {},
+): DashboardtypesGettableDashboardV2DTO {
+	return {
+		id: 'd1',
+		updatedAt,
+		...withDefaults(content),
+	} as unknown as DashboardtypesGettableDashboardV2DTO;
+}
+
+function setVisibility(state: 'visible' | 'hidden'): void {
+	Object.defineProperty(document, 'visibilityState', {
+		configurable: true,
+		get: () => state,
+	});
+}
+
+/** Simulate the tab/window coming back with the given server copy. */
+async function comeBack(
+	serverUpdatedAt: string,
+	content: Content = {},
+	via: 'visibilitychange' | 'focus' = 'visibilitychange',
+): Promise<void> {
+	mockGetDashboard.mockResolvedValueOnce({
+		data: { updatedAt: serverUpdatedAt, ...withDefaults(content) },
+	});
+	setVisibility('visible');
+	await act(async () => {
+		if (via === 'focus') {
+			window.dispatchEvent(new Event('focus'));
+		} else {
+			document.dispatchEvent(new Event('visibilitychange'));
+		}
+	});
 }
 
 describe('useDashboardStaleCheck', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 		mockUseIsMutating.mockReturnValue(0);
+		setVisibility('visible');
 	});
 
-	it('prompts when the server copy is newer than the loaded one', () => {
-		setServerUpdatedAt('2026-07-08T10:00:00Z');
-		const { result } = renderHook(() =>
-			useDashboardStaleCheck('d1', '2026-07-08T09:00:00Z', jest.fn()),
+	it('does not fetch on first load — only when the tab/window returns', async () => {
+		renderHook(() =>
+			useDashboardStaleCheck(loaded('2026-07-08T09:00:00Z'), jest.fn()),
 		);
-		expect(result.current.showPrompt).toBe(true);
+		expect(mockGetDashboard).not.toHaveBeenCalled();
+
+		await comeBack('2026-07-08T09:00:00Z');
+		expect(mockGetDashboard).toHaveBeenCalledWith({ id: 'd1' });
 	});
 
-	it('does not prompt when the versions match', () => {
-		setServerUpdatedAt('2026-07-08T09:00:00Z');
-		const { result } = renderHook(() =>
-			useDashboardStaleCheck('d1', '2026-07-08T09:00:00Z', jest.fn()),
+	it('also probes on window focus (returning from another app)', async () => {
+		renderHook(() =>
+			useDashboardStaleCheck(loaded('2026-07-08T09:00:00Z'), jest.fn()),
 		);
+		await comeBack('2026-07-08T09:00:00Z', {}, 'focus');
+		expect(mockGetDashboard).toHaveBeenCalledTimes(1);
+	});
+
+	it('prompts when newer and the spec differs', async () => {
+		const { result } = renderHook(() =>
+			useDashboardStaleCheck(loaded('2026-07-08T09:00:00Z'), jest.fn()),
+		);
+		await comeBack('2026-07-08T10:00:00Z', { spec: SPEC_B });
+		await waitFor(() => expect(result.current.showPrompt).toBe(true));
+	});
+
+	it('prompts when newer and the lock state differs (external lock)', async () => {
+		const { result } = renderHook(() =>
+			useDashboardStaleCheck(
+				loaded('2026-07-08T09:00:00Z', { locked: false }),
+				jest.fn(),
+			),
+		);
+		await comeBack('2026-07-08T10:00:00Z', { locked: true });
+		await waitFor(() => expect(result.current.showPrompt).toBe(true));
+	});
+
+	it('prompts when newer and the tags differ', async () => {
+		const { result } = renderHook(() =>
+			useDashboardStaleCheck(
+				loaded('2026-07-08T09:00:00Z', { tags: [] }),
+				jest.fn(),
+			),
+		);
+		await comeBack('2026-07-08T10:00:00Z', {
+			tags: [{ key: 'env', value: 'prod' }],
+		});
+		await waitFor(() => expect(result.current.showPrompt).toBe(true));
+	});
+
+	it('does NOT prompt when newer but content (spec/tags/locked) is unchanged', async () => {
+		const { result } = renderHook(() =>
+			useDashboardStaleCheck(loaded('2026-07-08T09:00:00Z'), jest.fn()),
+		);
+		// updatedAt bumped but every content field matches — e.g. our own lock, already
+		// reflected in the render cache.
+		await comeBack('2026-07-08T10:00:00Z');
 		expect(result.current.showPrompt).toBe(false);
 	});
 
-	it('does not prompt while a mutation is in flight (optimistic save)', () => {
+	it('does not prompt when the loaded copy is newer (own edit)', async () => {
+		const { result } = renderHook(() =>
+			useDashboardStaleCheck(loaded('2026-07-08T10:00:00Z'), jest.fn()),
+		);
+		await comeBack('2026-07-08T09:00:00Z', { spec: SPEC_B });
+		expect(result.current.showPrompt).toBe(false);
+	});
+
+	it('does not prompt while a mutation is in flight (optimistic save)', async () => {
 		mockUseIsMutating.mockReturnValue(1);
-		setServerUpdatedAt('2026-07-08T10:00:00Z');
 		const { result } = renderHook(() =>
-			useDashboardStaleCheck('d1', '2026-07-08T09:00:00Z', jest.fn()),
+			useDashboardStaleCheck(loaded('2026-07-08T09:00:00Z'), jest.fn()),
 		);
+		await comeBack('2026-07-08T10:00:00Z', { spec: SPEC_B });
 		expect(result.current.showPrompt).toBe(false);
 	});
 
-	it('stops prompting for a version once dismissed', () => {
-		setServerUpdatedAt('2026-07-08T10:00:00Z');
-		const { result } = renderHook(() =>
-			useDashboardStaleCheck('d1', '2026-07-08T09:00:00Z', jest.fn()),
+	it('does not probe while the tab is hidden', async () => {
+		renderHook(() =>
+			useDashboardStaleCheck(loaded('2026-07-08T09:00:00Z'), jest.fn()),
 		);
-		expect(result.current.showPrompt).toBe(true);
+		setVisibility('hidden');
+		await act(async () => {
+			document.dispatchEvent(new Event('visibilitychange'));
+		});
+		expect(mockGetDashboard).not.toHaveBeenCalled();
+	});
+
+	it('stops prompting for a version once dismissed', async () => {
+		const { result } = renderHook(() =>
+			useDashboardStaleCheck(loaded('2026-07-08T09:00:00Z'), jest.fn()),
+		);
+		await comeBack('2026-07-08T10:00:00Z', { spec: SPEC_B });
+		await waitFor(() => expect(result.current.showPrompt).toBe(true));
 		act(() => result.current.dismiss());
 		expect(result.current.showPrompt).toBe(false);
 	});
 
-	it('reload refetches and clears the dismissed state', () => {
-		setServerUpdatedAt('2026-07-08T10:00:00Z');
+	it('reload refetches and closes the prompt immediately', async () => {
 		const refetch = jest.fn();
 		const { result } = renderHook(() =>
-			useDashboardStaleCheck('d1', '2026-07-08T09:00:00Z', refetch),
+			useDashboardStaleCheck(loaded('2026-07-08T09:00:00Z'), refetch),
 		);
-		act(() => result.current.dismiss());
-		expect(result.current.showPrompt).toBe(false);
+		await comeBack('2026-07-08T10:00:00Z', { spec: SPEC_B });
+		await waitFor(() => expect(result.current.showPrompt).toBe(true));
 		act(() => result.current.reload());
 		expect(refetch).toHaveBeenCalledTimes(1);
-		expect(result.current.showPrompt).toBe(true);
+		expect(result.current.showPrompt).toBe(false);
+	});
+
+	it('re-prompts when a newer, different version appears after a reload', async () => {
+		const { result } = renderHook(() =>
+			useDashboardStaleCheck(loaded('2026-07-08T09:00:00Z'), jest.fn()),
+		);
+		await comeBack('2026-07-08T10:00:00Z', { spec: SPEC_B });
+		act(() => result.current.reload());
+		expect(result.current.showPrompt).toBe(false);
+
+		await comeBack('2026-07-08T10:05:00Z', { spec: { panels: { p3: {} } } });
+		await waitFor(() => expect(result.current.showPrompt).toBe(true));
 	});
 });

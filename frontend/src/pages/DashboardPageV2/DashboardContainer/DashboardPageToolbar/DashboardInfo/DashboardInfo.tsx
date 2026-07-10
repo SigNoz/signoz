@@ -1,4 +1,4 @@
-import { KeyboardEvent } from 'react';
+import { type FocusEvent, KeyboardEvent } from 'react';
 import {
 	Check,
 	Globe,
@@ -90,12 +90,20 @@ function DashboardInfo({
 		}
 	};
 
+	// Clicking outside the editor commits, matching the input's Enter behaviour.
+	// Guard against blurs that move focus to the Save/Cancel buttons within it.
+	const onEditorBlur = (event: FocusEvent<HTMLDivElement>): void => {
+		if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+			onCommit();
+		}
+	};
+
 	return (
 		<div className={styles.dashboardInfo}>
 			<img src={image} alt={title} className={styles.dashboardImage} />
 
 			{isEditing ? (
-				<div className={styles.dashboardTitleEditor}>
+				<div className={styles.dashboardTitleEditor} onBlur={onEditorBlur}>
 					<Input
 						autoFocus
 						value={draft}
