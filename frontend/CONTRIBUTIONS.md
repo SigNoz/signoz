@@ -7,13 +7,22 @@ Embrace the spirit of collaboration and contribute to the success of our open-so
 - **React components** (`src/components/`, `src/container/`, `src/pages/`): Prefer **default exports** for the main component in each file
 - **Utilities, hooks, APIs, types, constants** (`src/utils/`, `src/hooks/`, `src/api/`, `src/lib/`, `src/types/`, `src/constants/`): Prefer **named exports** for better tree-shaking and explicit imports
 
+### Memoization (React Compiler)
+
+This project uses [React Compiler](https://react.dev/learn/react-compiler). Follow React’s official stance:
+
+- **New code:** Rely on the compiler. Do not add `useMemo`, `useCallback`, or `React.memo` by default.
+- **Escape hatches:** Keep `useMemo` / `useCallback` when you need precise control (especially values used as effect dependencies).
+- **`React.memo`:** Usually unnecessary with the compiler.
+- **Existing memos:** Leave them in place, or remove only with careful testing (removal can change compilation output).
+- **`"use no memo"`:** Use only for holdouts that must skip compilation.
+
+See [What should I do about useMemo, useCallback, and React.memo?](https://react.dev/learn/react-compiler/introduction#what-should-i-do-about-usememo-usecallback-and-reactmemo).
+
 ### React and Components
 
 - Strive to create small and modular components, ensuring they are divided into individual pieces for improved maintainability and reusability.
-- Avoid passing inline objects or functions as props to React components, as they are recreated with each render cycle.
-  Utilize careful memoization of functions and variables, balancing optimization efforts to prevent potential performance issues. [When to useMemo and useCallback](https://kentcdodds.com/blog/usememo-and-usecallback) by Kent C. Dodds is quite helpful for this scenario.
 - Minimize the use of inline functions whenever possible to enhance code readability and improve overall comprehension.
-- Employ the appropriate usage of useMemo and useCallback hooks for effective memoization of values and functions.
 - Determine the appropriate placement of components:
   - Pages should contain an aggregation of all components and containers.
   - Commonly used components should reside in the 'components' directory.
