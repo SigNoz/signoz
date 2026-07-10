@@ -3,10 +3,10 @@ minimumReleaseAge: 2880 # 2d
 minimumReleaseAgeExclude:
  - '@signozhq/*'
 minimumReleaseAgeStrict: true
-# Security floors for vulnerable transitive deps. Targets are capped to the
-# consumer's major so an override never silently crosses a breaking version.
-# Each entry documents the dependency chain that pulls the bad range and what
-# upgrade would allow deleting the override.
+# Security floors for vulnerable transitive deps. Where possible, targets are
+# capped to avoid crossing breaking versions (major; and minor for 0.x).
+# Some entries may still force a breaking bump when no safe release exists
+# within the consumer’s constraint—see per-entry notes.
 overrides:
  # via: direct devDep @babel/core ^7.22.11 (+ babel plugin peers)
  # remove: bump @babel/core in package.json to ^7.29.6
