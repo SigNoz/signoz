@@ -8,6 +8,7 @@ function ValuePanelWrapper({
 	queryResponse,
 	enableDrillDown = false,
 }: PanelWrapperProps): JSX.Element {
+	'use memo';
 	const { yAxisUnit, thresholds } = widget;
 	const data = getUPlotChartData(queryResponse?.data?.payload);
 	const dataNew = Object.values(
