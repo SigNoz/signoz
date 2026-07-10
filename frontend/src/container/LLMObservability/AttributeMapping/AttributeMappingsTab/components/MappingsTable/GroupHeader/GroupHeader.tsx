@@ -11,13 +11,7 @@ interface GroupHeaderProps {
 	group: DraftGroup;
 }
 
-// Label content of a group's Collapse header: name plus condition/mapping
-// counts. The antd header owns the toggle interaction (click + keyboard +
-// aria-expanded); the testid on this wrapper is the stable click target for
-// tests, whose clicks bubble up to that header.
 function GroupHeader({ group }: GroupHeaderProps): JSX.Element {
-	// Condition keys (attribute + resource) ship with the group up front, so this
-	// count is always trustworthy — shown regardless of expand state.
 	const conditionCount = group.attributes.length + group.resource.length;
 
 	return (
@@ -42,9 +36,6 @@ function GroupHeader({ group }: GroupHeaderProps): JSX.Element {
 				side="bottom"
 				align="start"
 			>
-				{/* Plain span: this is the tooltip's Slot trigger, and Typography's
-				    testId does not survive the Radix clone — the count needs a native
-				    element to keep its data-testid. */}
 				<span
 					className={styles.conditionCount}
 					data-testid={`group-condition-count-${group.localId}`}

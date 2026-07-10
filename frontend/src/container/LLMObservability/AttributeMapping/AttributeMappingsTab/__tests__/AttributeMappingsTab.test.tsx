@@ -41,8 +41,6 @@ async function expandGroup(
 	await user.click(screen.getByTestId(`group-expand-${groupId}`));
 }
 
-// DropdownMenuSimple drops the trigger's testId, so the kebab is reached via
-// its accessible name instead.
 async function openGroupActionsMenu(
 	user: ReturnType<typeof userEvent.setup>,
 	groupId: string,

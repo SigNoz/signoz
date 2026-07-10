@@ -19,8 +19,6 @@
 	white-space: nowrap;
 }
 
-// Condition count doubles as the hover target for the conditions tooltip; the
-// trailing info icon signals that affordance, kept a 4px gap from the text.
 .conditionCount {
 	composes: groupCount;
 	display: inline-flex;
