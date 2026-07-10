@@ -3,9 +3,9 @@ import userEvent from '@testing-library/user-event';
 import { server, rest } from 'mocks-server/server';
 import { render } from 'tests/test-utils';
 
-import { QuickFiltersSource } from '../../../types';
+import { QuickFiltersSource } from '../../../../types';
 
-import CheckboxFilterV2 from './CheckboxFilterV2';
+import CheckboxFilterV2 from '../CheckboxFilterV2';
 import {
 	DEFAULT_FILTER,
 	DEFAULT_USE_FIELD_APIS,
@@ -13,7 +13,7 @@ import {
 	mockFieldsValuesAPI,
 	renderWithFilter,
 	setupServer,
-} from './CheckboxFilterV2.testUtils';
+} from '../CheckboxFilterV2.testUtils';
 
 setupServer();
 

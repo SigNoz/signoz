@@ -170,7 +170,7 @@ export default function CheckboxFilterV2(
 						/>
 					</section>
 
-					{(totalCount > 0 || searchText) && (
+					{totalCount > 0 && (
 						<section className={styles.values}>
 							{sections.map((section, index) => (
 								<CheckboxFilterV2Section

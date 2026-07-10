@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { CheckboxFilterV2Header } from './CheckboxFilterV2Header';
+import { CheckboxFilterV2Header } from '../CheckboxFilterV2Header';
 
 describe('CheckboxFilterV2Header', () => {
 	const defaultProps = {

@@ -1,4 +1,4 @@
-import { deriveItemConfig, ItemContext, SectionType } from './itemRules';
+import { deriveItemConfig, ItemContext, SectionType } from '../itemRules';
 
 describe('itemRules', () => {
 	describe('deriveItemConfig', () => {
