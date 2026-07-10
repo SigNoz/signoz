@@ -107,6 +107,7 @@ function ActionsPopover({
 				content={
 					// Stop clicks inside the menu (incl. disabled items) from bubbling to the
 					// row's onClick, which would navigate to the dashboard.
+					// eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events -- wrapper only guards propagation, not an interactive control
 					<div
 						className={styles.content}
 						role="presentation"
