@@ -1,10 +1,4 @@
-import {
-	memo,
-	MouseEvent,
-	MouseEventHandler,
-	useCallback,
-	useMemo,
-} from 'react';
+import { MouseEvent, MouseEventHandler } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Tooltip } from 'antd';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
@@ -46,17 +40,14 @@ function RawLogView({
 		isLogsExplorerPage,
 		onLogCopy,
 	} = useCopyLogLink(data.id);
-	const flattenLogData = useMemo(() => FlatLogData(data), [data]);
+	const flattenLogData = FlatLogData(data);
 
 	const isDarkMode = useIsDarkMode();
 	const isReadOnlyLog = !isLogsExplorerPage || isReadOnly;
 
 	const logType = getLogIndicatorType(data);
 
-	const updatedSelecedFields = useMemo(
-		() => selectedFields.filter((e) => e.name !== 'id'),
-		[selectedFields],
-	);
+	const updatedSelecedFields = selectedFields.filter((e) => e.name !== 'id');
 
 	const attributesValues = updatedSelecedFields
 		.filter((field) => !['timestamp', 'body'].includes(field.name))
@@ -78,81 +69,64 @@ function RawLogView({
 
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
-	const text = useMemo(() => {
-		const parts = [];
+	const parts = [];
 
-		// Check if timestamp is selected
-		const showTimestamp = selectedFields.some(
-			(field) => field.name === 'timestamp',
-		);
-		if (showTimestamp) {
-			const date =
-				typeof data.timestamp === 'string'
-					? formatTimezoneAdjustedTimestamp(
-							data.timestamp,
-							DATE_TIME_FORMATS.ISO_DATETIME_MS,
-						)
-					: formatTimezoneAdjustedTimestamp(
-							data.timestamp / 1e6,
-							DATE_TIME_FORMATS.ISO_DATETIME_MS,
-						);
-			parts.push(date);
+	// Check if timestamp is selected
+	const showTimestamp = selectedFields.some(
+		(field) => field.name === 'timestamp',
+	);
+	if (showTimestamp) {
+		const date =
+			typeof data.timestamp === 'string'
+				? formatTimezoneAdjustedTimestamp(
+						data.timestamp,
+						DATE_TIME_FORMATS.ISO_DATETIME_MS,
+					)
+				: formatTimezoneAdjustedTimestamp(
+						data.timestamp / 1e6,
+						DATE_TIME_FORMATS.ISO_DATETIME_MS,
+					);
+		parts.push(date);
+	}
+
+	// Check if body is selected
+	const showBody = selectedFields.some((field) => field.name === 'body');
+	if (showBody) {
+		parts.push(`${attributesText} ${getBodyDisplayString(data.body)}`);
+	} else {
+		parts.push(attributesText);
+	}
+
+	const text = parts.join(' | ');
+
+	const handleClickExpand = (event: MouseEvent): void => {
+		if (isReadOnly) {
+			return;
 		}
 
-		// Check if body is selected
-		const showBody = selectedFields.some((field) => field.name === 'body');
-		if (showBody) {
-			parts.push(`${attributesText} ${getBodyDisplayString(data.body)}`);
-		} else {
-			parts.push(attributesText);
+		// Use custom click handler if provided, otherwise use default behavior
+		if (onLogClick) {
+			onLogClick(data, event);
+			return;
+		}
+		if (isActiveLog) {
+			onClearActiveLog?.();
+			return;
 		}
 
-		return parts.join(' | ');
-	}, [
-		selectedFields,
-		attributesText,
-		data.timestamp,
-		data.body,
-		formatTimezoneAdjustedTimestamp,
-	]);
+		onSetActiveLog?.(data);
+	};
 
-	const handleClickExpand = useCallback(
-		(event: MouseEvent) => {
-			if (isReadOnly) {
-				return;
-			}
+	const handleShowContext: MouseEventHandler<HTMLElement> = (event) => {
+		event.preventDefault();
+		event.stopPropagation();
 
-			// Use custom click handler if provided, otherwise use default behavior
-			if (onLogClick) {
-				onLogClick(data, event);
-				return;
-			}
-			if (isActiveLog) {
-				onClearActiveLog?.();
-				return;
-			}
+		onSetActiveLog?.(data, VIEW_TYPES.CONTEXT);
+	};
 
-			onSetActiveLog?.(data);
-		},
-		[isReadOnly, onLogClick, isActiveLog, onSetActiveLog, data, onClearActiveLog],
-	);
-
-	const handleShowContext: MouseEventHandler<HTMLElement> = useCallback(
-		(event) => {
-			event.preventDefault();
-			event.stopPropagation();
-
-			onSetActiveLog?.(data, VIEW_TYPES.CONTEXT);
-		},
-		[data, onSetActiveLog],
-	);
-
-	const html = useMemo(
-		() => ({
-			__html: getSanitizedLogBody(text, { shouldEscapeHtml: true }),
-		}),
-		[text],
-	);
+	const html = {
+		__html: getSanitizedLogBody(text, { shouldEscapeHtml: true }),
+	};
 
 	return (
 		<RawLogViewContainer
@@ -209,4 +183,4 @@ RawLogView.defaultProps = {
 	isHighlighted: false,
 };
 
-export default memo(RawLogView);
+export default RawLogView;

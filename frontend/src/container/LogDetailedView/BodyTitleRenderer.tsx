@@ -1,4 +1,3 @@
-import { useCallback } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { orange } from '@ant-design/colors';
 import { Settings } from '@signozhq/icons';
@@ -85,7 +84,7 @@ function BodyTitleRenderer({
 		}
 	};
 
-	const groupByHandler = useCallback((): void => {
+	const groupByHandler = (): void => {
 		if (!stagedQuery) {
 			return;
 		}
@@ -130,16 +129,7 @@ function BodyTitleRenderer({
 		};
 
 		handleChangeSelectedView?.(ExplorerViews.TIMESERIES, queryData);
-	}, [
-		cleanedNodeKey,
-		handleChangeSelectedView,
-		isBodyJsonQueryEnabled,
-		parentIsArray,
-		stagedQuery,
-		updateQueriesData,
-		value,
-		viewName,
-	]);
+	};
 
 	const onClickHandler = (key: string): void => {
 		const mapper = {
@@ -174,42 +164,39 @@ function BodyTitleRenderer({
 			: []),
 	];
 
-	const handleNodeClick = useCallback(
-		(e: React.MouseEvent): void => {
-			// Prevent tree node expansion/collapse
-			e.stopPropagation();
-			let copyText: string;
+	const handleNodeClick = (e: React.MouseEvent): void => {
+		// Prevent tree node expansion/collapse
+		e.stopPropagation();
+		let copyText: string;
 
-			// Check if value is an object or array
-			const isObject = typeof value === 'object' && value !== null;
+		// Check if value is an object or array
+		const isObject = typeof value === 'object' && value !== null;
 
-			if (isObject) {
-				// For objects/arrays, stringify the entire structure
-				copyText = JSON.stringify(value, null, 2);
-			} else if (parentIsArray) {
-				// array elements
-				copyText = `${value}`;
-			} else {
-				// primitive values
-				const valueStr = typeof value === 'string' ? value : String(value);
-				copyText = valueStr;
-			}
+		if (isObject) {
+			// For objects/arrays, stringify the entire structure
+			copyText = JSON.stringify(value, null, 2);
+		} else if (parentIsArray) {
+			// array elements
+			copyText = `${value}`;
+		} else {
+			// primitive values
+			const valueStr = typeof value === 'string' ? value : String(value);
+			copyText = valueStr;
+		}
 
-			setCopy(copyText);
+		setCopy(copyText);
 
-			if (copyText) {
-				const notificationMessage = isObject
-					? `${cleanedNodeKey} object copied to clipboard`
-					: `${cleanedNodeKey} copied to clipboard`;
+		if (copyText) {
+			const notificationMessage = isObject
+				? `${cleanedNodeKey} object copied to clipboard`
+				: `${cleanedNodeKey} copied to clipboard`;
 
-				notifications.success({
-					message: notificationMessage,
-					key: notificationMessage,
-				});
-			}
-		},
-		[cleanedNodeKey, parentIsArray, setCopy, value, notifications],
-	);
+			notifications.success({
+				message: notificationMessage,
+				key: notificationMessage,
+			});
+		}
+	};
 
 	return (
 		<TitleWrapper onClick={handleNodeClick}>

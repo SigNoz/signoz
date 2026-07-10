@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import MEditor, { EditorProps, Monaco } from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
 import { Switch } from '@signozhq/ui/switch';
@@ -13,10 +13,7 @@ import './JsonView.styles.scss';
 function JSONView({ logData }: JSONViewProps): JSX.Element {
 	const [isWrapWord, setIsWrapWord] = useState<boolean>(true);
 
-	const LogJsonData = useMemo(
-		() => aggregateAttributesResourcesToString(logData),
-		[logData],
-	);
+	const LogJsonData = aggregateAttributesResourcesToString(logData);
 
 	const isDarkMode = useIsDarkMode();
 

@@ -1,4 +1,3 @@
-import { memo, useCallback } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
@@ -58,87 +57,77 @@ function LogDetailedView({
 		});
 	};
 
-	const handleAddToQuery = useCallback(
-		(fieldKey: string, fieldValue: string, operator: string) => {
-			const newOperator = getOldLogsOperatorFromNew(operator);
-			const updatedQueryString = getGeneratedFilterQueryString(
-				fieldKey,
-				fieldValue,
-				newOperator,
-				queryString,
-			);
-
-			history.replace(`${ROUTES.OLD_LOGS_EXPLORER}?q=${updatedQueryString}`);
-		},
-		[history, queryString],
-	);
-
-	const handleClickActionItem = useCallback(
-		(fieldKey: string, fieldValue: string, operator: string): void => {
-			const newOperator = getOldLogsOperatorFromNew(operator);
-			const updatedQueryString = getGeneratedFilterQueryString(
-				fieldKey,
-				fieldValue,
-				newOperator,
-				queryString,
-			);
-
-			dispatch({
-				type: SET_SEARCH_QUERY_STRING,
-				payload: {
-					searchQueryString: updatedQueryString,
-				},
-			});
-
-			if (liveTail === 'STOPPED') {
-				getLogs({
-					q: updatedQueryString,
-					limit: logLinesPerPage,
-					orderBy: 'timestamp',
-					order,
-					timestampStart: minTime,
-					timestampEnd: maxTime,
-					...getIdConditions(idStart, idEnd, order),
-				});
-				getLogsAggregate({
-					timestampStart: minTime,
-					timestampEnd: maxTime,
-					step: getStep({
-						start: minTime,
-						end: maxTime,
-						inputFormat: 'ns',
-					}),
-					q: updatedQueryString,
-				});
-			} else if (liveTail === 'PLAYING') {
-				dispatch({
-					type: TOGGLE_LIVE_TAIL,
-					payload: 'PAUSED',
-				});
-				setTimeout(
-					() =>
-						dispatch({
-							type: TOGGLE_LIVE_TAIL,
-							payload: liveTail,
-						}),
-					0,
-				);
-			}
-		},
-		[
-			dispatch,
-			getLogs,
-			getLogsAggregate,
-			idEnd,
-			idStart,
-			liveTail,
-			logLinesPerPage,
-			maxTime,
-			minTime,
-			order,
+	const handleAddToQuery = (
+		fieldKey: string,
+		fieldValue: string,
+		operator: string,
+	): void => {
+		const newOperator = getOldLogsOperatorFromNew(operator);
+		const updatedQueryString = getGeneratedFilterQueryString(
+			fieldKey,
+			fieldValue,
+			newOperator,
 			queryString,
-		],
-	);
+		);
+
+		history.replace(`${ROUTES.OLD_LOGS_EXPLORER}?q=${updatedQueryString}`);
+	};
+
+	const handleClickActionItem = (
+		fieldKey: string,
+		fieldValue: string,
+		operator: string,
+	): void => {
+		const newOperator = getOldLogsOperatorFromNew(operator);
+		const updatedQueryString = getGeneratedFilterQueryString(
+			fieldKey,
+			fieldValue,
+			newOperator,
+			queryString,
+		);
+
+		dispatch({
+			type: SET_SEARCH_QUERY_STRING,
+			payload: {
+				searchQueryString: updatedQueryString,
+			},
+		});
+
+		if (liveTail === 'STOPPED') {
+			getLogs({
+				q: updatedQueryString,
+				limit: logLinesPerPage,
+				orderBy: 'timestamp',
+				order,
+				timestampStart: minTime,
+				timestampEnd: maxTime,
+				...getIdConditions(idStart, idEnd, order),
+			});
+			getLogsAggregate({
+				timestampStart: minTime,
+				timestampEnd: maxTime,
+				step: getStep({
+					start: minTime,
+					end: maxTime,
+					inputFormat: 'ns',
+				}),
+				q: updatedQueryString,
+			});
+		} else if (liveTail === 'PLAYING') {
+			dispatch({
+				type: TOGGLE_LIVE_TAIL,
+				payload: 'PAUSED',
+			});
+			setTimeout(
+				() =>
+					dispatch({
+						type: TOGGLE_LIVE_TAIL,
+						payload: liveTail,
+					}),
+				0,
+			);
+		}
+	};
 
 	return (
 		<LogDetail
@@ -165,4 +154,4 @@ const mapDispatchToProps = (
 	getLogsAggregate: bindActionCreators(getLogsAggregate, dispatch),
 });
 
-export default connect(null, mapDispatchToProps)(memo(LogDetailedView as any));
+export default connect(null, mapDispatchToProps)(LogDetailedView as any);

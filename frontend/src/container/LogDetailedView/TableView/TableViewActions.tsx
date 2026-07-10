@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Popover, Spin, Tooltip, Tree } from 'antd';
@@ -57,74 +57,74 @@ interface ITableViewActionsProps {
 	handleChangeSelectedView?: ChangeViewFunctionType;
 }
 
-// Memoized Tree Component
-const MemoizedTree = React.memo<{ treeData: DataNode[] }>(({ treeData }) => (
-	<Tree
-		defaultExpandAll
-		showLine
-		treeData={treeData}
-		className="selectable-tree"
-	/>
-));
+function BodyTree({ treeData }: { treeData: DataNode[] }): JSX.Element {
+	return (
+		<Tree
+			defaultExpandAll
+			showLine
+			treeData={treeData}
+			className="selectable-tree"
+		/>
+	);
+}
 
-MemoizedTree.displayName = 'MemoizedTree';
-
-// Body Content Component
-const BodyContent: React.FC<{
+function BodyContent({
+	fieldData,
+	record,
+	bodyHtml,
+	textToCopy,
+	handleChangeSelectedView,
+}: {
 	fieldData: Record<string, string>;
 	record: DataType;
 	bodyHtml: { __html: string };
 	textToCopy: string;
 	handleChangeSelectedView?: ChangeViewFunctionType;
-}> = React.memo(
-	({ fieldData, record, bodyHtml, textToCopy, handleChangeSelectedView }) => {
-		const { isLoading, treeData, error } = useAsyncJSONProcessing(
-			fieldData.value,
-			record.field === 'body',
-			handleChangeSelectedView,
+}): JSX.Element | null {
+	const { isLoading, treeData, error } = useAsyncJSONProcessing(
+		fieldData.value,
+		record.field === 'body',
+		handleChangeSelectedView,
+	);
+
+	// Show JSON tree if available, otherwise show HTML content
+	if (record.field === 'body' && treeData) {
+		return <BodyTree treeData={treeData} />;
+	}
+
+	if (record.field === 'body' && isLoading) {
+		return (
+			<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+				<Spin size="small" />
+				<span style={{ color: Color.BG_SIENNA_400 }}>Processing JSON...</span>
+			</div>
 		);
+	}
 
-		// Show JSON tree if available, otherwise show HTML content
-		if (record.field === 'body' && treeData) {
-			return <MemoizedTree treeData={treeData} />;
-		}
+	if (record.field === 'body' && error) {
+		return (
+			<span
+				style={{ color: Color.BG_SIENNA_400, whiteSpace: 'pre-wrap', tabSize: 4 }}
+			>
+				Error parsing Body JSON
+			</span>
+		);
+	}
 
-		if (record.field === 'body' && isLoading) {
-			return (
-				<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-					<Spin size="small" />
-					<span style={{ color: Color.BG_SIENNA_400 }}>Processing JSON...</span>
-				</div>
-			);
-		}
-
-		if (record.field === 'body' && error) {
-			return (
+	if (record.field === 'body') {
+		return (
+			<CopyClipboardHOC entityKey="body" textToCopy={textToCopy}>
 				<span
 					style={{ color: Color.BG_SIENNA_400, whiteSpace: 'pre-wrap', tabSize: 4 }}
 				>
-					Error parsing Body JSON
+					<span dangerouslySetInnerHTML={bodyHtml} />
 				</span>
-			);
-		}
+			</CopyClipboardHOC>
+		);
+	}
 
-		if (record.field === 'body') {
-			return (
-				<CopyClipboardHOC entityKey="body" textToCopy={textToCopy}>
-					<span
-						style={{ color: Color.BG_SIENNA_400, whiteSpace: 'pre-wrap', tabSize: 4 }}
-					>
-						<span dangerouslySetInnerHTML={bodyHtml} />
-					</span>
-				</CopyClipboardHOC>
-			);
-		}
-
-		return null;
-	},
-);
-
-BodyContent.displayName = 'BodyContent';
+	return null;
+}
 
 export default function TableViewActions(
 	props: ITableViewActionsProps,
@@ -145,29 +145,23 @@ export default function TableViewActions(
 	const { dataType, logType: fieldType } = getFieldAttributes(record.field);
 
 	// there is no option for where clause in old logs explorer and live logs page
-	const isOldLogsExplorerOrLiveLogsPage = useMemo(
-		() => pathname === ROUTES.OLD_LOGS_EXPLORER || pathname === ROUTES.LIVE_LOGS,
-		[pathname],
-	);
+	const isOldLogsExplorerOrLiveLogsPage =
+		pathname === ROUTES.OLD_LOGS_EXPLORER || pathname === ROUTES.LIVE_LOGS;
 
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
-	// Memoize bodyHtml computation
-	const bodyHtml = useMemo(() => {
-		if (record.field !== 'body') {
-			return { __html: '' };
-		}
-
-		return {
-			__html: getSanitizedLogBody(record.value, { shouldEscapeHtml: true }),
-		};
-	}, [record.field, record.value]);
+	const bodyHtml =
+		record.field !== 'body'
+			? { __html: '' }
+			: {
+					__html: getSanitizedLogBody(record.value, { shouldEscapeHtml: true }),
+				};
 
 	const fieldFilterKey = filterKeyForField(fieldData.field);
 
-	const handleGroupByAttribute = useCallback((): void => {
+	const handleGroupByAttribute = (): void => {
 		if (!stagedQuery) {
 			return;
 		}
@@ -204,17 +198,9 @@ export default function TableViewActions(
 		};
 
 		handleChangeSelectedView?.(ExplorerViews.TIMESERIES, queryData);
-	}, [
-		stagedQuery,
-		updateQueriesData,
-		fieldFilterKey,
-		fieldType,
-		dataType,
-		handleChangeSelectedView,
-		viewName,
-	]);
+	};
 
-	const handleReplaceFilter = useCallback((): void => {
+	const handleReplaceFilter = (): void => {
 		if (!stagedQuery) {
 			return;
 		}
@@ -267,49 +253,33 @@ export default function TableViewActions(
 		};
 
 		handleChangeSelectedView?.(ExplorerViews.LIST, queryData);
-	}, [
-		stagedQuery,
-		updateQueriesData,
-		fieldFilterKey,
-		fieldType,
-		dataType,
-		fieldData,
-		handleChangeSelectedView,
-		viewName,
-	]);
+	};
 
-	// Memoize textToCopy computation
-	const textToCopy = useMemo(() => {
-		let text = fieldData.value;
-		try {
-			text = text.replace(/^"|"$/g, '');
-		} catch (error) {
-			console.error(
-				'Failed to remove starting and ending quotes from the value',
-				error,
-			);
+	let textToCopy = fieldData.value;
+	try {
+		textToCopy = textToCopy.replace(/^"|"$/g, '');
+	} catch (error) {
+		console.error(
+			'Failed to remove starting and ending quotes from the value',
+			error,
+		);
+	}
+	// If the value is valid JSON (object or array), pretty-print it for copying
+	try {
+		const parsed = JSON.parse(textToCopy);
+		if (typeof parsed === 'object' && parsed !== null) {
+			textToCopy = JSON.stringify(parsed, null, 2);
 		}
-		// If the value is valid JSON (object or array), pretty-print it for copying
-		try {
-			const parsed = JSON.parse(text);
-			if (typeof parsed === 'object' && parsed !== null) {
-				return JSON.stringify(parsed, null, 2);
-			}
-		} catch {
-			// not JSON, return as-is
-		}
-		return text;
-	}, [fieldData.value]);
+	} catch {
+		// not JSON, return as-is
+	}
 
-	// Memoize cleanTimestamp computation
-	const cleanTimestamp = useMemo(() => {
-		if (record.field !== 'timestamp') {
-			return '';
-		}
-		return fieldData.value.replace(/^["']|["']$/g, '');
-	}, [record.field, fieldData.value]);
+	const cleanTimestamp =
+		record.field !== 'timestamp'
+			? ''
+			: fieldData.value.replace(/^["']|["']$/g, '');
 
-	const renderFieldContent = useCallback((): JSX.Element => {
+	const renderFieldContent = (): JSX.Element => {
 		const commonStyles: React.CSSProperties = {
 			color: Color.BG_SIENNA_400,
 			whiteSpace: 'pre-wrap',
@@ -343,15 +313,7 @@ export default function TableViewActions(
 					<span style={commonStyles}>{removeEscapeCharacters(fieldData.value)}</span>
 				);
 		}
-	}, [
-		record,
-		fieldData,
-		bodyHtml,
-		textToCopy,
-		handleChangeSelectedView,
-		formatTimezoneAdjustedTimestamp,
-		cleanTimestamp,
-	]);
+	};
 
 	// Early return for body field with async processing
 	if (record.field === 'body') {

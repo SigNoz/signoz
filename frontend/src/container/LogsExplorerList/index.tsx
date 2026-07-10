@@ -1,5 +1,5 @@
 import type { CSSProperties, MouseEvent, ReactNode } from 'react';
-import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { toast } from '@signozhq/ui/sonner';
@@ -85,45 +85,34 @@ function LogsExplorerList({
 	const { currentQuery, lastUsedQuery, redirectWithQueryBuilderData } =
 		useQueryBuilder();
 
-	const activeLogIndex = useMemo(
-		() => logs.findIndex(({ id }) => id === activeLogId),
-		[logs, activeLogId],
-	);
+	const activeLogIndex = logs.findIndex(({ id }) => id === activeLogId);
 
-	const selectedFields = useMemo(
-		() => convertKeysToColumnFields(options.selectColumns),
-		[options.selectColumns],
-	);
+	const selectedFields = convertKeysToColumnFields(options.selectColumns);
 
-	const handleColumnOrderChange = useCallback(
-		(cols: TableColumnDef<ILog>[]): void => {
-			config?.addColumn?.onReorder(cols.map((c) => c.id));
-		},
-		[config],
-	);
+	const handleColumnOrderChange = (cols: TableColumnDef<ILog>[]): void => {
+		config?.addColumn?.onReorder(cols.map((c) => c.id));
+	};
 
 	const logsColumns = useLogsTableColumns({
 		fields: selectedFields,
 		fontSize: options.fontSize,
 	});
 
-	const makeOnLogCopy = useCallback(
+	const makeOnLogCopy =
 		(log: ILog) =>
-			(event: MouseEvent<HTMLElement>): void => {
-				event.preventDefault();
-				event.stopPropagation();
-				const urlQuery = new URLSearchParams(window.location.search);
-				urlQuery.delete(QueryParams.activeLogId);
-				urlQuery.delete(QueryParams.relativeTime);
-				urlQuery.set(QueryParams.activeLogId, `"${log.id}"`);
-				const link = getAbsoluteUrl(
-					`${window.location.pathname}?${urlQuery.toString()}`,
-				);
-				setCopy(link);
-				toast.success('Copied to clipboard', { position: 'top-right' });
-			},
-		[setCopy],
-	);
+		(event: MouseEvent<HTMLElement>): void => {
+			event.preventDefault();
+			event.stopPropagation();
+			const urlQuery = new URLSearchParams(window.location.search);
+			urlQuery.delete(QueryParams.activeLogId);
+			urlQuery.delete(QueryParams.relativeTime);
+			urlQuery.set(QueryParams.activeLogId, `"${log.id}"`);
+			const link = getAbsoluteUrl(
+				`${window.location.pathname}?${urlQuery.toString()}`,
+			);
+			setCopy(link);
+			toast.success('Copied to clipboard', { position: 'top-right' });
+		};
 
 	const handleScrollToLog = useScrollToLog({
 		logs,
@@ -141,109 +130,97 @@ function LogsExplorerList({
 		}
 	}, [isLoading, isFetching, isError, logs.length]);
 
-	const getItemContent = useCallback(
-		(_: number, log: ILog): JSX.Element => {
-			if (options.format === 'raw') {
-				return (
-					<div key={log.id}>
-						<RawLogView
-							data={log}
-							isActiveLog={activeLog?.id === log.id}
-							linesPerRow={options.maxLines}
-							selectedFields={selectedFields}
-							fontSize={options.fontSize}
-							handleChangeSelectedView={handleChangeSelectedView}
-							onSetActiveLog={handleSetActiveLog}
-							onClearActiveLog={handleCloseLogDetail}
-						/>
-					</div>
-				);
-			}
-
+	const getItemContent = (_: number, log: ILog): JSX.Element => {
+		if (options.format === 'raw') {
 			return (
 				<div key={log.id}>
-					<ListLogView
-						logData={log}
+					<RawLogView
+						data={log}
 						isActiveLog={activeLog?.id === log.id}
-						selectedFields={selectedFields}
-						onAddToQuery={onAddToQuery}
-						onSetActiveLog={handleSetActiveLog}
-						activeLog={activeLog}
-						fontSize={options.fontSize}
 						linesPerRow={options.maxLines}
+						selectedFields={selectedFields}
+						fontSize={options.fontSize}
 						handleChangeSelectedView={handleChangeSelectedView}
+						onSetActiveLog={handleSetActiveLog}
 						onClearActiveLog={handleCloseLogDetail}
 					/>
 				</div>
 			);
-		},
-		[
-			options.format,
-			options.fontSize,
-			options.maxLines,
-			activeLog,
-			selectedFields,
-			onAddToQuery,
-			handleSetActiveLog,
-			handleChangeSelectedView,
-			handleCloseLogDetail,
-		],
-	);
-
-	const renderContent = useMemo(() => {
-		const components = isLoading
-			? {
-					Footer,
-				}
-			: {};
-
-		if (options.format === 'table') {
-			return (
-				<TanStackTable<ILog>
-					ref={ref as React.Ref<TanStackTableHandle>}
-					columns={logsColumns}
-					columnStorageKey={LOCALSTORAGE.LOGS_LIST_COLUMNS}
-					respectColumnOrder={false}
-					onColumnRemove={config?.addColumn?.onRemove}
-					onColumnOrderChange={handleColumnOrderChange}
-					plainTextCellLineClamp={options.maxLines}
-					cellTypographySize={options.fontSize}
-					data={logs}
-					isLoading={isLoading || isFetching}
-					onEndReached={onEndReached}
-					isRowActive={(log): boolean =>
-						log.id === activeLog?.id || log.id === activeLogId
-					}
-					getRowStyle={(log): CSSProperties =>
-						({
-							'--row-active-bg': getRowBackgroundColor(
-								isDarkMode,
-								getLogIndicatorType(log),
-							),
-							'--row-hover-bg': getRowBackgroundColor(
-								isDarkMode,
-								getLogIndicatorType(log),
-							),
-						}) as CSSProperties
-					}
-					onRowClick={(log): void => {
-						handleSetActiveLog(log);
-					}}
-					onRowDeactivate={handleCloseLogDetail}
-					activeRowIndex={activeLogIndex}
-					renderRowActions={(log): ReactNode => (
-						<LogLinesActionButtons
-							handleShowContext={(e): void => {
-								e.preventDefault();
-								e.stopPropagation();
-								handleSetActiveLog(log, VIEW_TYPES.CONTEXT);
-							}}
-							onLogCopy={makeOnLogCopy(log)}
-						/>
-					)}
-				/>
-			);
 		}
+
+		return (
+			<div key={log.id}>
+				<ListLogView
+					logData={log}
+					isActiveLog={activeLog?.id === log.id}
+					selectedFields={selectedFields}
+					onAddToQuery={onAddToQuery}
+					onSetActiveLog={handleSetActiveLog}
+					activeLog={activeLog}
+					fontSize={options.fontSize}
+					linesPerRow={options.maxLines}
+					handleChangeSelectedView={handleChangeSelectedView}
+					onClearActiveLog={handleCloseLogDetail}
+				/>
+			</div>
+		);
+	};
+
+	const components = isLoading
+		? {
+				Footer,
+			}
+		: {};
+
+	let renderContent: JSX.Element;
+
+	if (options.format === 'table') {
+		renderContent = (
+			<TanStackTable<ILog>
+				ref={ref as React.Ref<TanStackTableHandle>}
+				columns={logsColumns}
+				columnStorageKey={LOCALSTORAGE.LOGS_LIST_COLUMNS}
+				respectColumnOrder={false}
+				onColumnRemove={config?.addColumn?.onRemove}
+				onColumnOrderChange={handleColumnOrderChange}
+				plainTextCellLineClamp={options.maxLines}
+				cellTypographySize={options.fontSize}
+				data={logs}
+				isLoading={isLoading || isFetching}
+				onEndReached={onEndReached}
+				isRowActive={(log): boolean =>
+					log.id === activeLog?.id || log.id === activeLogId
+				}
+				getRowStyle={(log): CSSProperties =>
+					({
+						'--row-active-bg': getRowBackgroundColor(
+							isDarkMode,
+							getLogIndicatorType(log),
+						),
+						'--row-hover-bg': getRowBackgroundColor(
+							isDarkMode,
+							getLogIndicatorType(log),
+						),
+					}) as CSSProperties
+				}
+				onRowClick={(log): void => {
+					handleSetActiveLog(log);
+				}}
+				onRowDeactivate={handleCloseLogDetail}
+				activeRowIndex={activeLogIndex}
+				renderRowActions={(log): ReactNode => (
+					<LogLinesActionButtons
+						handleShowContext={(e): void => {
+							e.preventDefault();
+							e.stopPropagation();
+							handleSetActiveLog(log, VIEW_TYPES.CONTEXT);
+						}}
+						onLogCopy={makeOnLogCopy(log)}
+					/>
+				)}
+			/>
+		);
+	} else {
 		function getMarginTop(): string {
 			switch (options.fontSize) {
 				case FontSize.SMALL:
@@ -257,7 +234,7 @@ function LogsExplorerList({
 			}
 		}
 
-		return (
+		renderContent = (
 			<Card
 				style={{ width: '100%', marginTop: getMarginTop() }}
 				bodyStyle={CARD_BODY_STYLE}
@@ -276,31 +253,13 @@ function LogsExplorerList({
 				</OverlayScrollbar>
 			</Card>
 		);
-	}, [
-		isLoading,
-		options.format,
-		options.maxLines,
-		options.fontSize,
-		activeLogIndex,
-		logs,
-		onEndReached,
-		getItemContent,
-		isFetching,
-		handleSetActiveLog,
-		handleCloseLogDetail,
-		activeLog,
-		isDarkMode,
-		makeOnLogCopy,
-	]);
+	}
 
-	const isTraceToLogsNavigation = useMemo(() => {
-		if (!currentStagedQueryData) {
-			return false;
-		}
-		return isTraceToLogsQuery(currentStagedQueryData);
-	}, [currentStagedQueryData]);
+	const isTraceToLogsNavigation = currentStagedQueryData
+		? isTraceToLogsQuery(currentStagedQueryData)
+		: false;
 
-	const handleClearFilters = useCallback((): void => {
+	const handleClearFilters = (): void => {
 		const queryIndex = lastUsedQuery ?? 0;
 		const updatedQuery = currentQuery?.builder.queryData?.[queryIndex];
 
@@ -328,15 +287,11 @@ function LogsExplorerList({
 		};
 
 		redirectWithQueryBuilderData(preparedQuery);
-	}, [currentQuery, lastUsedQuery, redirectWithQueryBuilderData]);
+	};
 
-	const getEmptyStateMessage = useMemo(() => {
-		if (!isTraceToLogsNavigation) {
-			return;
-		}
-
-		return getEmptyLogsListConfig(handleClearFilters);
-	}, [isTraceToLogsNavigation, handleClearFilters]);
+	const getEmptyStateMessage = isTraceToLogsNavigation
+		? getEmptyLogsListConfig(handleClearFilters)
+		: undefined;
 
 	return (
 		<div className="logs-list-view-container">
@@ -389,4 +344,4 @@ function LogsExplorerList({
 	);
 }
 
-export default memo(LogsExplorerList);
+export default LogsExplorerList;

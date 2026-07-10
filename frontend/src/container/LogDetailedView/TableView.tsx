@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch } from 'react-redux';
 import { generatePath } from 'react-router-dom';
@@ -110,7 +110,7 @@ function TableView({
 	// back to a string so flattenObject keeps `body` as a single table row instead of
 	// recursively expanding it into dotted sub-keys (body.message, body.foo.bar, …),
 	// which would break the tree view in BodyContent that relies on record.field === 'body'.
-	const flattenLogData: Record<string, string> | null = useMemo(() => {
+	const flattenLogData: Record<string, string> | null = (() => {
 		if (!logData) {
 			return null;
 		}
@@ -119,7 +119,7 @@ function TableView({
 				? { ...logData, body: JSON.stringify(logData.body) }
 				: logData;
 		return flattenObject(normalizedLog);
-	}, [logData]);
+	})();
 
 	const handleClick = (
 		operator: string,

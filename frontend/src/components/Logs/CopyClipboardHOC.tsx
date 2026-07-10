@@ -1,4 +1,4 @@
-import { ReactNode, useCallback, useEffect } from 'react';
+import { ReactNode, useEffect } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { Popover } from 'antd';
 import { useNotifications } from 'hooks/useNotifications';
@@ -24,9 +24,9 @@ function CopyClipboardHOC({
 		}
 	}, [value, notifications, entityKey]);
 
-	const onClick = useCallback((): void => {
+	const onClick = (): void => {
 		setCopy(textToCopy);
-	}, [setCopy, textToCopy]);
+	};
 
 	return (
 		<span onClick={onClick} role="presentation" tabIndex={-1}>

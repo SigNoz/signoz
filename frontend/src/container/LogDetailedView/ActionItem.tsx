@@ -1,4 +1,3 @@
-import { useCallback, useMemo } from 'react';
 import { CircleMinus, CirclePlus } from '@signozhq/icons';
 import { Button, Col, Popover } from 'antd';
 import { OPERATORS } from 'constants/queryBuilder';
@@ -10,35 +9,26 @@ function ActionItem({
 	fieldValue,
 	onClickActionItem,
 }: ActionItemProps): JSX.Element {
-	const handleClick = useCallback(
-		(operator: string) => {
-			const validatedFieldValue = removeJSONStringifyQuotes(fieldValue);
+	const handleClick = (operator: string): void => {
+		const validatedFieldValue = removeJSONStringifyQuotes(fieldValue);
 
-			onClickActionItem(fieldKey, validatedFieldValue, operator);
-		},
-		[onClickActionItem, fieldKey, fieldValue],
-	);
+		onClickActionItem(fieldKey, validatedFieldValue, operator);
+	};
 
-	const onClickHandler = useCallback(
-		(operator: string) => (): void => {
-			handleClick(operator);
-		},
-		[handleClick],
-	);
+	const onClickHandler = (operator: string) => (): void => {
+		handleClick(operator);
+	};
 
-	const PopOverMenuContent = useMemo(
-		() => (
-			<Col>
-				<Button type="text" size="small" onClick={onClickHandler(OPERATORS.IN)}>
-					<CirclePlus size={12} /> Filter for value
-				</Button>
-				<br />
-				<Button type="text" size="small" onClick={onClickHandler(OPERATORS.NIN)}>
-					<CircleMinus size={12} /> Filter out value
-				</Button>
-			</Col>
-		),
-		[onClickHandler],
+	const PopOverMenuContent = (
+		<Col>
+			<Button type="text" size="small" onClick={onClickHandler(OPERATORS.IN)}>
+				<CirclePlus size={12} /> Filter for value
+			</Button>
+			<br />
+			<Button type="text" size="small" onClick={onClickHandler(OPERATORS.NIN)}>
+				<CircleMinus size={12} /> Filter out value
+			</Button>
+		</Col>
 	);
 	return (
 		<Popover placement="bottomLeft" content={PopOverMenuContent} trigger="click">

@@ -1,4 +1,3 @@
-import { memo, useCallback, useMemo } from 'react';
 import { blue } from '@ant-design/colors';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
@@ -46,12 +45,9 @@ function LogGeneralField({
 	linesPerRow = 1,
 	fontSize,
 }: LogFieldProps): JSX.Element {
-	const html = useMemo(
-		() => ({
-			__html: getSanitizedLogBody(fieldValue, { shouldEscapeHtml: true }),
-		}),
-		[fieldValue],
-	);
+	const html = {
+		__html: getSanitizedLogBody(fieldValue, { shouldEscapeHtml: true }),
+	};
 
 	return (
 		<div className="log-field-container">
@@ -129,7 +125,7 @@ function ListLogView({
 	isActiveLog,
 	onClearActiveLog,
 }: ListLogViewProps): JSX.Element {
-	const flattenLogData = useMemo(() => FlatLogData(logData), [logData]);
+	const flattenLogData = FlatLogData(logData);
 
 	const { isHighlighted, isLogsExplorerPage, onLogCopy } = useCopyLogLink(
 		logData.id,
@@ -138,44 +134,35 @@ function ListLogView({
 
 	const isDarkMode = useIsDarkMode();
 
-	const handleDetailedView = useCallback(() => {
+	const handleDetailedView = (): void => {
 		if (isActiveLog) {
 			onClearActiveLog?.();
 			return;
 		}
 
 		onSetActiveLog(logData);
-	}, [logData, onSetActiveLog, isActiveLog, onClearActiveLog]);
+	};
 
-	const handleShowContext = useCallback(
-		(event: React.MouseEvent) => {
-			event.preventDefault();
-			event.stopPropagation();
-			onSetActiveLog(logData, VIEW_TYPES.CONTEXT);
-		},
-		[logData, onSetActiveLog],
-	);
+	const handleShowContext = (event: React.MouseEvent): void => {
+		event.preventDefault();
+		event.stopPropagation();
+		onSetActiveLog(logData, VIEW_TYPES.CONTEXT);
+	};
 
-	const updatedSelecedFields = useMemo(
-		() => selectedFields.filter((e) => e.name !== 'id'),
-		[selectedFields],
-	);
+	const updatedSelecedFields = selectedFields.filter((e) => e.name !== 'id');
 
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
-	const timestampValue = useMemo(
-		() =>
-			typeof flattenLogData.timestamp === 'string'
-				? formatTimezoneAdjustedTimestamp(
-						flattenLogData.timestamp,
-						DATE_TIME_FORMATS.ISO_DATETIME_MS,
-					)
-				: formatTimezoneAdjustedTimestamp(
-						flattenLogData.timestamp / 1e6,
-						DATE_TIME_FORMATS.ISO_DATETIME_MS,
-					),
-		[flattenLogData.timestamp, formatTimezoneAdjustedTimestamp],
-	);
+	const timestampValue =
+		typeof flattenLogData.timestamp === 'string'
+			? formatTimezoneAdjustedTimestamp(
+					flattenLogData.timestamp,
+					DATE_TIME_FORMATS.ISO_DATETIME_MS,
+				)
+			: formatTimezoneAdjustedTimestamp(
+					flattenLogData.timestamp / 1e6,
+					DATE_TIME_FORMATS.ISO_DATETIME_MS,
+				);
 
 	const logType = getLogIndicatorType(logData);
 
@@ -256,4 +243,4 @@ LogGeneralField.defaultProps = {
 	linesPerRow: 1,
 };
 
-export default memo(ListLogView);
+export default ListLogView;
