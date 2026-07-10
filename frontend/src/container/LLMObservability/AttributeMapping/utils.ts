@@ -1,4 +1,5 @@
 import {
+	ListSpanMappers200,
 	SpantypesSpanMapperDTO,
 	SpantypesSpanMapperGroupDTO,
 } from 'api/generated/services/sigNoz.schemas';
@@ -24,6 +25,14 @@ export function buildMapping(mapper: SpantypesSpanMapperDTO): Mapping {
 		sources: getMapperSources(mapper),
 		enabled: mapper.enabled,
 	};
+}
+
+export function buildMappingsFromListResponse(
+	response: ListSpanMappers200,
+): Mapping[] {
+	const items = (response.data?.items ??
+		[]) as unknown as SpantypesSpanMapperDTO[];
+	return items.map(buildMapping);
 }
 
 export function buildMappingGroup(

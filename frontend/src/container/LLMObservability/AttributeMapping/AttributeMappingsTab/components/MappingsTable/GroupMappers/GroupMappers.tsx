@@ -1,5 +1,3 @@
-import { useMemo } from 'react';
-import type { SpantypesSpanMapperDTO } from 'api/generated/services/sigNoz.schemas';
 import { useListSpanMappers } from 'api/generated/services/spanmapper';
 import { motion } from 'motion/react';
 
@@ -7,7 +5,7 @@ import {
 	MappingGroup,
 	Mapping,
 } from 'container/LLMObservability/AttributeMapping/types';
-import { buildMapping } from 'container/LLMObservability/AttributeMapping/utils';
+import { buildMappingsFromListResponse } from 'container/LLMObservability/AttributeMapping/utils';
 import { COLUMN_COUNT } from '../constants';
 import MapperRow, { MapperRowSkeleton } from '../MapperRow';
 import MappingsColgroup from '../MappingsColgroup';
@@ -58,22 +56,21 @@ interface GroupMappersProps {
 }
 
 function GroupMappers({ group }: GroupMappersProps): JSX.Element {
-	const { data, isLoading, isError } = useListSpanMappers(
+	const {
+		data: mappers = [],
+		isLoading,
+		isError,
+	} = useListSpanMappers<Mapping[]>(
 		{
 			groupId: group.id,
 		},
 		{
 			query: {
 				refetchOnMount: false,
+				select: buildMappingsFromListResponse,
 			},
 		},
 	);
-
-	const mappers = useMemo<Mapping[]>(() => {
-		const items = (data?.data?.items ??
-			[]) as unknown as SpantypesSpanMapperDTO[];
-		return items.map(buildMapping);
-	}, [data]);
 
 	let rows: JSX.Element[];
 	if (isError) {
