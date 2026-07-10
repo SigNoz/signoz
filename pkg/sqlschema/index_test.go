@@ -287,6 +287,42 @@ func TestIndexEquals(t *testing.T) {
 			equals: true,
 		},
 		{
+			name: "Unique_Functional_QuotedSimpleIdentifierEqualsUnquoted",
+			a: &UniqueIndex{
+				TableName:   "users",
+				Expressions: []string{"LOWER(email)"},
+			},
+			b: &UniqueIndex{
+				TableName:   "users",
+				Expressions: []string{`LOWER("email")`},
+			},
+			equals: true,
+		},
+		{
+			name: "Unique_Functional_UnquotedMixedCaseEqualsLower",
+			a: &UniqueIndex{
+				TableName:   "users",
+				Expressions: []string{"LOWER(Email)"},
+			},
+			b: &UniqueIndex{
+				TableName:   "users",
+				Expressions: []string{"LOWER(email)"},
+			},
+			equals: true,
+		},
+		{
+			name: "Unique_Functional_QuotedMixedCaseNotEqualUnquoted",
+			a: &UniqueIndex{
+				TableName:   "users",
+				Expressions: []string{`LOWER("Email")`},
+			},
+			b: &UniqueIndex{
+				TableName:   "users",
+				Expressions: []string{"LOWER(email)"},
+			},
+			equals: false,
+		},
+		{
 			name: "Unique_Functional_DifferentExpressions",
 			a: &UniqueIndex{
 				TableName:   "users",
@@ -430,6 +466,11 @@ func TestNormalizeExpressions(t *testing.T) {
 			name:        "RedundantOuterParenthesesStripped",
 			expressions: []string{"(LOWER(key))"},
 			output:      []string{"lower(key)"},
+		},
+		{
+			name:        "QuotedSimpleIdentifierUnquoted",
+			expressions: []string{`LOWER("email")`},
+			output:      []string{"lower(email)"},
 		},
 		{
 			name:        "QuotedIdentifierCaseByIdentifierPreserved",
