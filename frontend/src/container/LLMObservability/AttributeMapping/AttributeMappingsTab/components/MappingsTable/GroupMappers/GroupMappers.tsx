@@ -7,8 +7,9 @@ import {
 } from 'container/LLMObservability/AttributeMapping/types';
 import { buildMappingsFromListResponse } from 'container/LLMObservability/AttributeMapping/utils';
 import { COLUMN_COUNT } from '../constants';
-import MapperRow, { MapperRowSkeleton } from '../MapperRow';
-import MappingsColgroup from '../MappingsColgroup';
+import MapperRow from '../MapperRow/MapperRow';
+import MapperRowSkeleton from '../MapperRow/MapperRowSkeleton';
+import MappingsColgroup from '../MappingsColgroup/MappingsColgroup';
 import styles from './GroupMappers.module.scss';
 
 const MAPPER_SKELETON_ROWS = 1;

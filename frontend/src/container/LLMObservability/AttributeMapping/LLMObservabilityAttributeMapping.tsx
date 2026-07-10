@@ -1,9 +1,9 @@
 import { useCallback } from 'react';
 import { Tabs } from '@signozhq/ui/tabs';
 
-import AttributeMappingHeader from './components/AttributeMappingHeader';
+import AttributeMappingHeader from './components/AttributeMappingHeader/AttributeMappingHeader';
 import AttributeMappingsTab from './AttributeMappingsTab/AttributeMappingsTab';
-import GroupFormDrawer from './components/GroupFormDrawer';
+import GroupFormDrawer from './components/GroupFormDrawer/GroupFormDrawer';
 import styles from './LLMObservabilityAttributeMapping.module.scss';
 import { useAttributeMappingStore } from './AttributeMappingsTab/hooks/useAttributeMappingStore';
 import { useGroupFormDrawer } from './components/GroupFormDrawer/hooks/useGroupFormDrawer';
