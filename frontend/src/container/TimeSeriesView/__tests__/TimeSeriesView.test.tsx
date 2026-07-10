@@ -13,7 +13,7 @@ jest.mock('components/Uplot', () => ({
 	default: (): JSX.Element => <div data-testid="uplot-chart" />,
 }));
 
-jest.mock('../TimeseriesExportMenu', () => ({
+jest.mock('components/ExportMenu/ExportMenu', () => ({
 	__esModule: true,
 	default: (): JSX.Element => <div data-testid="timeseries-export-menu" />,
 }));
