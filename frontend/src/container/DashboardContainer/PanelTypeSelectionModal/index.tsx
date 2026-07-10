@@ -1,4 +1,3 @@
-import { memo } from 'react';
 import { Card, Modal } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
@@ -69,4 +68,4 @@ function PanelTypeSelectionModal(): JSX.Element {
 	);
 }
 
-export default memo(PanelTypeSelectionModal);
+export default PanelTypeSelectionModal;

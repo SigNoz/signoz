@@ -1,4 +1,3 @@
-import { memo } from 'react';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
@@ -37,4 +36,4 @@ function LogsExplorerTable({
 	);
 }
 
-export default memo(LogsExplorerTable);
+export default LogsExplorerTable;

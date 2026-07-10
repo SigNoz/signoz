@@ -1,4 +1,4 @@
-import { Fragment, memo, ReactNode, useState } from 'react';
+import { Fragment, ReactNode, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Col, Row } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
@@ -11,7 +11,7 @@ import { StyledInner, StyledLink } from './AdditionalFiltersToggler.styled';
 
 import './AdditionalFiltersToggler.styles.scss';
 
-export const AdditionalFiltersToggler = memo(function AdditionalFiltersToggler({
+export function AdditionalFiltersToggler({
 	children,
 	listOfAdditionalFilter,
 }: AdditionalFiltersProps): JSX.Element {
@@ -63,4 +63,4 @@ export const AdditionalFiltersToggler = memo(function AdditionalFiltersToggler({
 			{isOpenedFilters && <Col span={24}>{children}</Col>}
 		</Row>
 	);
-});
+}

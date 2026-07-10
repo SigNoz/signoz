@@ -1,4 +1,4 @@
-import { memo, MouseEvent, ReactNode, useMemo } from 'react';
+import { MouseEvent, ReactNode, useMemo } from 'react';
 import { Popover } from 'antd';
 import cx from 'classnames';
 import { OPERATORS } from 'constants/queryBuilder';
@@ -56,4 +56,4 @@ AddToQueryHOC.defaultProps = {
 	dataType: DataTypes.EMPTY,
 };
 
-export default memo(AddToQueryHOC);
+export default AddToQueryHOC;

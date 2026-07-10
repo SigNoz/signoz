@@ -1,4 +1,4 @@
-import { memo, useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Input, InputRef } from 'antd';
 
 import { VariableItemProps } from './VariableItem';
@@ -82,4 +82,4 @@ function TextboxVariableInput({
 	);
 }
 
-export default memo(TextboxVariableInput);
+export default TextboxVariableInput;

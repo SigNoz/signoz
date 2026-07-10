@@ -1,4 +1,3 @@
-import { memo } from 'react';
 import { EyeClosed, EyeOpen } from '@signozhq/icons';
 import { ButtonProps } from 'antd';
 
@@ -7,7 +6,7 @@ import { ListMarkerProps } from './ListMarker.interfaces';
 // ** Styles
 import { StyledButton } from './ListMarker.styled';
 
-export const ListMarker = memo(function ListMarker({
+export function ListMarker({
 	isDisabled,
 	labelName,
 	index,
@@ -36,4 +35,4 @@ export const ListMarker = memo(function ListMarker({
 			{labelName}
 		</StyledButton>
 	);
-});
+}

@@ -1,4 +1,4 @@
-import { memo, MouseEventHandler } from 'react';
+import { MouseEventHandler } from 'react';
 import { Link, TextSelect } from '@signozhq/icons';
 import { Button, Tooltip } from 'antd';
 
@@ -41,4 +41,4 @@ LogLinesActionButtons.defaultProps = {
 	customClassName: '',
 };
 
-export default memo(LogLinesActionButtons);
+export default LogLinesActionButtons;

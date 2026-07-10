@@ -1,4 +1,3 @@
-import { memo } from 'react';
 import { Select } from 'antd';
 import { DataSource } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
@@ -12,9 +11,7 @@ const dataSourceMap = [DataSource.LOGS, DataSource.METRICS, DataSource.TRACES];
 
 const exploreDataSourceMap = [DataSource.LOGS, DataSource.TRACES];
 
-export const DataSourceDropdown = memo(function DataSourceDropdown(
-	props: QueryLabelProps,
-): JSX.Element {
+export function DataSourceDropdown(props: QueryLabelProps): JSX.Element {
 	const { onChange, value, style, isListViewPanel = false } = props;
 
 	const dataSourceOptions: SelectOption<DataSource, string>[] = isListViewPanel
@@ -37,4 +34,4 @@ export const DataSourceDropdown = memo(function DataSourceDropdown(
 			style={style}
 		/>
 	);
-});
+}

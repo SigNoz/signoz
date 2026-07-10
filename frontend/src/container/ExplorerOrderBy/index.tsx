@@ -1,4 +1,4 @@
-import { memo, useMemo } from 'react';
+import { useMemo } from 'react';
 import { Select, Spin } from 'antd';
 import { OrderByFilterProps } from 'container/QueryBuilder/filters/OrderByFilter/OrderByFilter.interfaces';
 import { useOrderByFilter } from 'container/QueryBuilder/filters/OrderByFilter/useOrderByFilter';
@@ -70,4 +70,4 @@ function ExplorerOrderBy({ query, onChange }: OrderByFilterProps): JSX.Element {
 	);
 }
 
-export default memo(ExplorerOrderBy);
+export default ExplorerOrderBy;

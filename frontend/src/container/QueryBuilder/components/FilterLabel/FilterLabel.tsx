@@ -1,4 +1,3 @@
-import { memo } from 'react';
 import { Typography } from '@signozhq/ui/typography';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
@@ -7,9 +6,7 @@ import { FilterLabelProps } from './FilterLabel.interfaces';
 // ** Styles
 import { StyledLabel } from './FilterLabel.styled';
 
-export const FilterLabel = memo(function FilterLabel({
-	label,
-}: FilterLabelProps): JSX.Element {
+export function FilterLabel({ label }: FilterLabelProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 
 	return (
@@ -23,4 +20,4 @@ export const FilterLabel = memo(function FilterLabel({
 			</Typography>
 		</StyledLabel>
 	);
-});
+}

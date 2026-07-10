@@ -1,11 +1,10 @@
-import { memo } from 'react';
 import { Select } from 'antd';
 
 // ** Types
 import { selectStyle } from '../QueryBuilderSearch/config';
 import { OperatorsSelectProps } from './OperatorsSelect.interfaces';
 
-export const OperatorsSelect = memo(function OperatorsSelect({
+export function OperatorsSelect({
 	operators,
 	value,
 	onChange,
@@ -23,4 +22,4 @@ export const OperatorsSelect = memo(function OperatorsSelect({
 			popupClassName={className}
 		/>
 	);
-});
+}

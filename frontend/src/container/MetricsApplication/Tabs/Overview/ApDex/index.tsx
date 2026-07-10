@@ -1,4 +1,4 @@
-import { memo, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import Spinner from 'components/Spinner';
 import { Card, GraphContainer } from 'container/MetricsApplication/styles';
@@ -54,4 +54,4 @@ function ApDexApplication({
 	);
 }
 
-export default memo(ApDexApplication);
+export default ApDexApplication;

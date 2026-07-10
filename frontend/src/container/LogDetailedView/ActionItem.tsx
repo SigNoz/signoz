@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { CircleMinus, CirclePlus } from '@signozhq/icons';
 import { Button, Col, Popover } from 'antd';
 import { OPERATORS } from 'constants/queryBuilder';
@@ -61,4 +61,4 @@ export interface ActionItemProps {
 	) => void;
 }
 
-export default memo(ActionItem);
+export default ActionItem;

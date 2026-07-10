@@ -1,4 +1,3 @@
-import { memo } from 'react';
 import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 
 import DashboardPageBreadcrumbs from './DashboardPageBreadcrumbs';
@@ -22,4 +21,4 @@ function DashboardPageHeader({
 	);
 }
 
-export default memo(DashboardPageHeader);
+export default DashboardPageHeader;
