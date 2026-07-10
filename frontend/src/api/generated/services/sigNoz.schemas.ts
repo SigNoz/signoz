@@ -5008,6 +5008,10 @@ export interface DashboardtypesListedDashboardForUserV2DTO {
 	/**
 	 * @type boolean
 	 */
+	legacy: boolean;
+	/**
+	 * @type boolean
+	 */
 	locked: boolean;
 	/**
 	 * @type string
@@ -5080,6 +5084,10 @@ export interface DashboardtypesListedDashboardV2DTO {
 	 * @type string
 	 */
 	image?: string;
+	/**
+	 * @type boolean
+	 */
+	legacy: boolean;
 	/**
 	 * @type boolean
 	 */
@@ -6082,8 +6090,16 @@ export interface InframonitoringtypesDaemonSetRecordDTO {
 	 * @type object,null
 	 */
 	meta: InframonitoringtypesDaemonSetRecordDTOMeta;
+	/**
+	 * @type integer
+	 */
+	misscheduledNodes: number;
 	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
 	podCountsByStatus: InframonitoringtypesPodCountsByStatusDTO;
+	/**
+	 * @type integer
+	 */
+	readyNodes: number;
 }
 
 export interface InframonitoringtypesDaemonSetsDTO {
@@ -8480,10 +8496,12 @@ export interface RuletypesBasicRuleThresholdDTO {
 	op: RuletypesCompareOperatorDTO;
 	/**
 	 * @type number,null
+	 * @format double
 	 */
 	recoveryTarget?: number | null;
 	/**
 	 * @type number,null
+	 * @format double
 	 */
 	target: number | null;
 	/**
@@ -8677,6 +8695,7 @@ export interface RuletypesRuleConditionDTO {
 	selectedQueryName?: string;
 	/**
 	 * @type number,null
+	 * @format double
 	 */
 	target?: number | null;
 	/**
@@ -11570,6 +11589,19 @@ export type GetPublicDashboardPanelQueryRangeV2PathParameters = {
 	id: string;
 	key: string;
 };
+export type GetPublicDashboardPanelQueryRangeV2Params = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	startTime?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	endTime?: string;
+};
+
 export type GetPublicDashboardPanelQueryRangeV2200 = {
 	data: Querybuildertypesv5QueryRangeResponseDTO;
 	/**

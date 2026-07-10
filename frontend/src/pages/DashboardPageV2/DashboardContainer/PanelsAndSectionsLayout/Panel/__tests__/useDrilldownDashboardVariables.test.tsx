@@ -68,7 +68,7 @@ jest.mock(
 	}),
 );
 jest.mock(
-	'pages/DashboardPageV2/DashboardContainer/VariablesBar/useVariableSelection',
+	'pages/DashboardPageV2/DashboardContainer/VariablesBar/variablesUrlState',
 	() => ({
 		ALL_SELECTED: '__ALL__',
 		variablesUrlParser: { withOptions: (): unknown => ({}) },

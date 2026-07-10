@@ -26,6 +26,31 @@
 	}
 
 	&::-webkit-scrollbar {
+		width: 8px;
+		height: 8px;
+	}
+
+	&::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	&::-webkit-scrollbar-thumb {
+		background: color-mix(in srgb, var(--l1-foreground) 20%, transparent);
+		border-radius: 9999px;
+	}
+
+	&::-webkit-scrollbar-thumb:hover {
+		background: color-mix(in srgb, var(--l1-foreground) 30%, transparent);
+	}
+}
+
+.quickFiltersContainer {
+	width: 280px;
+	min-width: 280px;
+	border-right: 1px solid var(--l1-border);
+	overflow-y: auto;
+
+	&::-webkit-scrollbar {
 		width: 0.1rem;
 		height: 0.1rem;
 	}
@@ -40,24 +65,6 @@
 
 	&::-webkit-scrollbar-thumb:hover {
 		background: colox-mix(var(--accent-primary), var(--bg-vanilla-100), 20%);
-	}
-}
-
-.quickFiltersContainer {
-	// Width is owned by ResizableBox (inline style). No overflow here: the panel
-	// must not scroll (QuickFilters scrolls its own list internally) — an
-	// overflow on the root would also clip the edge-mounted resize grip.
-	flex-shrink: 0;
-	border-right: 1px solid var(--l1-border);
-
-	:global(.resizable-box__content) {
-		display: flex;
-		flex-direction: column;
-	}
-
-	:global(.quick-filters-container) {
-		flex: 1;
-		min-height: 0;
 	}
 
 	:global(.ant-collapse-header) {
@@ -92,7 +99,7 @@
 		}
 
 		&::-webkit-scrollbar-thumb:hover {
-			background: colox-mix(var(--accent-primary), var(--bg-vanilla-100), 20%);
+			background: var(--accent-primary);
 		}
 	}
 }
@@ -107,42 +114,25 @@
 
 .listContainer {
 	flex: 1;
-	min-width: 0;
 	max-width: 100%;
 	display: flex;
 	flex-direction: column;
 	align-items: stretch;
+	min-width: 595px;
 
 	> * {
 		min-width: 0;
 		max-width: 100%;
 		box-sizing: border-box;
 	}
-
-	> :global(.ant-table-wrapper) {
-		width: 100%;
-		max-width: 100%;
-
-		:global(.ant-spin-container) {
-			display: flex !important;
-			flex-direction: column;
-		}
-
-		:global(.ant-table),
-		:global(.ant-table-container) {
-			max-width: 100%;
-		}
-	}
 }
 
 .listContainerFiltersVisible {
-	// Width is driven by flex now that the filters panel is resizable; the list
-	// fills whatever space the (variable-width) panel leaves.
-	max-width: 100%;
+	max-width: calc(100% - 280px);
 }
 
 .quickFiltersToggleContainer {
-	padding: 0 8px;
+	grid-area: quickFilters;
 }
 
 .infraMonitoringTags {
