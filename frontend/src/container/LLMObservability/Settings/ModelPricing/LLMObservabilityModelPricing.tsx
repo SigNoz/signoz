@@ -16,13 +16,13 @@ function LLMObservabilityModelPricing(): JSX.Element {
 				items={[
 					{
 						key: 'model-costs',
-						label: 'Model costs',
+						label: 'Model Costs',
 						children: <ModelCostTabPanel />,
 					},
 					{
 						// Unpriced-models tab lands in a later PR.
 						key: 'unpriced-models',
-						label: 'Unpriced models',
+						label: 'Unpriced Models',
 						disabled: true,
 						children: null,
 					},

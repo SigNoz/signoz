@@ -1,3 +1,9 @@
+.tableWrapper {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+}
+
 .toolbar {
 	display: flex;
 	justify-content: flex-end;
