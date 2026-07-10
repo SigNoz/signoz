@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { Form } from 'antd';
 
 export interface CollapseSectionErrors {
@@ -20,42 +19,40 @@ export function useCollapseSectionErrors(
 	Form.useWatch([], form);
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
-	return useMemo(() => {
-		const fieldErrors = form.getFieldsError();
-		const messages: string[] = [];
+	const fieldErrors = form.getFieldsError();
+	const messages: string[] = [];
 
-		if (specificFields?.length) {
-			fieldErrors.forEach((field) => {
-				const fieldPath = Array.isArray(field.name) ? field.name : [field.name];
+	if (specificFields?.length) {
+		fieldErrors.forEach((field) => {
+			const fieldPath = Array.isArray(field.name) ? field.name : [field.name];
 
-				const isMatch = specificFields.some((specificField) => {
-					if (fieldPath.length < specificField.length) {
-						return false;
-					}
-					return specificField.every((part, idx) => fieldPath[idx] === part);
-				});
-
-				if (isMatch && field.errors.length > 0) {
-					field.errors.forEach((error) => messages.push(error));
+			const isMatch = specificFields.some((specificField) => {
+				if (fieldPath.length < specificField.length) {
+					return false;
 				}
+				return specificField.every((part, idx) => fieldPath[idx] === part);
 			});
-		} else {
-			const prefixPath = fieldNamePrefix.join('.');
 
-			fieldErrors.forEach((field) => {
-				const fieldPath = Array.isArray(field.name)
-					? field.name.join('.')
-					: String(field.name);
+			if (isMatch && field.errors.length > 0) {
+				field.errors.forEach((error) => messages.push(error));
+			}
+		});
+	} else {
+		const prefixPath = fieldNamePrefix.join('.');
 
-				if (fieldPath.startsWith(prefixPath) && field.errors.length > 0) {
-					field.errors.forEach((error) => messages.push(error));
-				}
-			});
-		}
+		fieldErrors.forEach((field) => {
+			const fieldPath = Array.isArray(field.name)
+				? field.name.join('.')
+				: String(field.name);
 
-		return {
-			hasErrors: messages.length > 0,
-			errorMessages: messages,
-		};
-	}, [form, fieldNamePrefix, specificFields]);
+			if (fieldPath.startsWith(prefixPath) && field.errors.length > 0) {
+				field.errors.forEach((error) => messages.push(error));
+			}
+		});
+	}
+
+	return {
+		hasErrors: messages.length > 0,
+		errorMessages: messages,
+	};
 }

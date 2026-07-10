@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { PageTypeDTO } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
@@ -13,11 +12,7 @@ export function useResolvePageType(): PageTypeDTO {
 	const location = useLocation();
 	const variant = useVariant();
 
-	return useMemo(
-		() =>
-			resolvePageType(location.pathname, location.search, {
-				isStandaloneAssistant: variant === 'page',
-			}),
-		[location.pathname, location.search, variant],
-	);
+	return resolvePageType(location.pathname, location.search, {
+		isStandaloneAssistant: variant === 'page',
+	});
 }

@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import {
 	IDashboardVariable,
 	TVariableQueryType,
@@ -20,11 +19,9 @@ export function useDashboardVariablesByType(
 ): IDashboardVariable[] | [string, IDashboardVariable][] {
 	const { dashboardVariables } = useDashboardVariables();
 
-	return useMemo(() => {
-		const entries = Object.entries(dashboardVariables || {}).filter(
-			(entry): entry is [string, IDashboardVariable] =>
-				Boolean(entry[1].name) && entry[1].type === variableType,
-		);
-		return returnType === 'values' ? entries.map(([, value]) => value) : entries;
-	}, [dashboardVariables, variableType, returnType]);
+	const entries = Object.entries(dashboardVariables || {}).filter(
+		(entry): entry is [string, IDashboardVariable] =>
+			Boolean(entry[1].name) && entry[1].type === variableType,
+	);
+	return returnType === 'values' ? entries.map(([, value]) => value) : entries;
 }

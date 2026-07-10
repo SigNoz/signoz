@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { QUERY_BUILDER_SEARCH_VALUES } from 'constants/queryBuilder';
 
 import { useIsValidTag } from './useIsValidTag';
@@ -20,14 +19,9 @@ export const useTagValidation = (
 		operatorType === 'SINGLE_VALUE' ? [result]?.length : result?.length;
 	const isValidTag = useIsValidTag(operatorType, resultLength);
 
-	const { isExist, isValidOperator, isMulti } = useMemo(() => {
-		const isExist = operatorType === QUERY_BUILDER_SEARCH_VALUES.NON;
-		const isValidOperator =
-			operatorType !== QUERY_BUILDER_SEARCH_VALUES.NOT_VALID;
-		const isMulti = operatorType === QUERY_BUILDER_SEARCH_VALUES.MULTIPLY;
-
-		return { isExist, isValidOperator, isMulti };
-	}, [operatorType]);
+	const isExist = operatorType === QUERY_BUILDER_SEARCH_VALUES.NON;
+	const isValidOperator = operatorType !== QUERY_BUILDER_SEARCH_VALUES.NOT_VALID;
+	const isMulti = operatorType === QUERY_BUILDER_SEARCH_VALUES.MULTIPLY;
 
 	return { isValidTag, isExist, isValidOperator, isMulti };
 };

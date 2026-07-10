@@ -48,40 +48,34 @@ function useGetYAxisUnit(
 	const { stagedQuery } = useQueryBuilder();
 	const [yAxisUnit, setYAxisUnit] = useState<string | undefined>();
 
-	const metricNames: string[] | null = useMemo(() => {
-		// If the query type is not QUERY_BUILDER, return null
-		if (stagedQuery?.queryType !== EQueryType.QUERY_BUILDER) {
-			return null;
-		}
+	let metricNames: string[] | null = null;
+	// If the query type is not QUERY_BUILDER, return null
+	if (stagedQuery?.queryType === EQueryType.QUERY_BUILDER) {
 		// If the data source is not METRICS, return null
 		const dataSource = stagedQuery?.builder?.queryData?.[0]?.dataSource;
-		if (dataSource !== DataSource.METRICS) {
-			return null;
-		}
-		const currentMetricNames: string[] = [];
-		// If a selected query name is provided, return the metric name for that query only
-		if (selectedQueryName) {
-			stagedQuery?.builder?.queryData?.forEach((query) => {
-				const metricName = getMetricNameFromQueryData(query);
-				if (query.queryName === selectedQueryName && metricName) {
-					currentMetricNames.push(metricName);
-				}
-			});
-			return currentMetricNames.length ? currentMetricNames : null;
-		}
-		// Else, return all metric names
-		stagedQuery?.builder?.queryData?.forEach((query) => {
-			const metricName = getMetricNameFromQueryData(query);
-			if (metricName) {
-				currentMetricNames.push(metricName);
+		if (dataSource === DataSource.METRICS) {
+			const currentMetricNames: string[] = [];
+			// If a selected query name is provided, return the metric name for that query only
+			if (selectedQueryName) {
+				stagedQuery?.builder?.queryData?.forEach((query) => {
+					const metricName = getMetricNameFromQueryData(query);
+					if (query.queryName === selectedQueryName && metricName) {
+						currentMetricNames.push(metricName);
+					}
+				});
+				metricNames = currentMetricNames.length ? currentMetricNames : null;
+			} else {
+				// Else, return all metric names
+				stagedQuery?.builder?.queryData?.forEach((query) => {
+					const metricName = getMetricNameFromQueryData(query);
+					if (metricName) {
+						currentMetricNames.push(metricName);
+					}
+				});
+				metricNames = currentMetricNames.length ? currentMetricNames : null;
 			}
-		});
-		return currentMetricNames.length ? currentMetricNames : null;
-	}, [
-		selectedQueryName,
-		stagedQuery?.builder?.queryData,
-		stagedQuery?.queryType,
-	]);
+		}
+	}
 
 	const { metrics, isLoading, isError } = useGetMetrics(
 		metricNames ?? [],

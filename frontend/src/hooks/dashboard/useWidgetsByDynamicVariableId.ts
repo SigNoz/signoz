@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { PANEL_GROUP_TYPES } from 'constants/queryBuilder';
 import { createDynamicVariableToWidgetsMap } from 'hooks/dashboard/utils';
 import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
@@ -14,15 +13,13 @@ export function useWidgetsByDynamicVariableId(): Record<string, string[]> {
 	const dynamicVariables = useDashboardVariablesByType('DYNAMIC', 'values');
 	const { dashboardData } = useDashboardStore();
 
-	return useMemo(() => {
-		const widgets =
-			dashboardData?.data?.widgets?.filter(
-				(widget) => widget.panelTypes !== PANEL_GROUP_TYPES.ROW,
-			) || [];
+	const widgets =
+		dashboardData?.data?.widgets?.filter(
+			(widget) => widget.panelTypes !== PANEL_GROUP_TYPES.ROW,
+		) || [];
 
-		return createDynamicVariableToWidgetsMap(
-			dynamicVariables,
-			widgets as Widgets[],
-		);
-	}, [dashboardData, dynamicVariables]);
+	return createDynamicVariableToWidgetsMap(
+		dynamicVariables,
+		widgets as Widgets[],
+	);
 }
