@@ -16,13 +16,14 @@ import { useDashboardStore } from '../store/useDashboardStore';
  * panel queries and triggers a refetch with the new values.
  */
 export function useResolvedVariables(
-	dashboard: DashboardtypesGettableDashboardV2DTO,
+	dashboard: DashboardtypesGettableDashboardV2DTO | undefined,
 ): void {
-	const dashboardId = dashboard.id ?? '';
+	const dashboardId = dashboard?.id ?? '';
 
+	const specVariables = dashboard?.spec?.variables;
 	const definitions = useMemo(
-		() => (dashboard.spec?.variables ?? []).map(dtoToFormModel),
-		[dashboard.spec?.variables],
+		() => (specVariables ?? []).map(dtoToFormModel),
+		[specVariables],
 	);
 
 	const selection = useDashboardStore(selectVariableValues(dashboardId));

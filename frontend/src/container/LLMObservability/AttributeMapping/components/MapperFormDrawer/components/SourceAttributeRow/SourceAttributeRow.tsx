@@ -11,7 +11,7 @@ import {
 	MapperOperationValue,
 	SourceConfig,
 } from 'container/LLMObservability/AttributeMapping/types';
-import KeySearchInput from '../../../GroupFormDrawer/components/KeySearchInput';
+import KeySearchInput from '../../../GroupFormDrawer/components/KeySearchInput/KeySearchInput';
 import styles from './SourceAttributeRow.module.scss';
 
 const CONTEXT_OPTIONS = [

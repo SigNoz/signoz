@@ -10,10 +10,10 @@ import {
 	DraftMapper,
 } from 'container/LLMObservability/AttributeMapping/types';
 import { AttributeMappingStore } from 'container/LLMObservability/AttributeMapping/AttributeMappingsTab/hooks/useAttributeMappingStore';
-import GroupHeader from './GroupHeader';
-import GroupHeaderActions from './GroupHeaderActions';
-import GroupMappers from './GroupMappers';
-import MappingsColgroup from './MappingsColgroup';
+import GroupHeader from './GroupHeader/GroupHeader';
+import GroupHeaderActions from './GroupHeaderActions/GroupHeaderActions';
+import GroupMappers from './GroupMappers/GroupMappers';
+import MappingsColgroup from './MappingsColgroup/MappingsColgroup';
 import styles from './MappingsTable.module.scss';
 
 const SKELETON_ROW_COUNT = 3;

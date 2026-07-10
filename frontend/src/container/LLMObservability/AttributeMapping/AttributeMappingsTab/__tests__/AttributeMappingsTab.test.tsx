@@ -261,7 +261,7 @@ describe('AttributeMappingsTab (integration)', () => {
 		).toBeChecked();
 	});
 
-	it("renders a mapper's enable state as a read-only switch", async () => {
+	it("toggles a mapper's enable state", async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		setupGroups();
 		setupMappers([makeMapper({ id: 'mapper-1', enabled: true })]);
@@ -270,11 +270,13 @@ describe('AttributeMappingsTab (integration)', () => {
 		await screen.findByTestId('group-name-group-1');
 		await expandGroup(user);
 
-		// Unlike the group switch, a mapper's status switch reflects state without
-		// accepting flips — mapper editing lands in a later PR.
+		// The mapper's status switch reflects state and can be flipped.
 		const toggle = await screen.findByTestId('mapper-enabled-mapper-1');
 		expect(toggle).toBeChecked();
-		expect(toggle).toBeDisabled();
+
+		await user.click(toggle);
+
+		expect(screen.getByTestId('mapper-enabled-mapper-1')).not.toBeChecked();
 	});
 
 	it('shows the mappers error state when the mappers request fails', async () => {

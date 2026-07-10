@@ -1,3 +1,5 @@
+import { Typography } from '@signozhq/ui/typography';
+
 import { DraftGroup } from 'container/LLMObservability/AttributeMapping/types';
 import styles from './GroupHeader.module.scss';
 
@@ -13,18 +15,20 @@ function GroupHeader({ group }: GroupHeaderProps): JSX.Element {
 			className={styles.groupHeaderLabel}
 			data-testid={`group-expand-${group.localId}`}
 		>
-			<span
+			<Typography.Text
+				as="span"
 				className={styles.groupName}
-				data-testid={`group-name-${group.localId}`}
+				testId={`group-name-${group.localId}`}
 			>
 				{group.name}
-			</span>
-			<span
+			</Typography.Text>
+			<Typography.Text
+				as="span"
 				className={styles.groupCount}
-				data-testid={`group-condition-count-${group.localId}`}
+				testId={`group-condition-count-${group.localId}`}
 			>
 				· {conditionCount} {conditionCount === 1 ? 'condition' : 'conditions'}
-			</span>
+			</Typography.Text>
 		</div>
 	);
 }

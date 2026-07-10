@@ -19,7 +19,7 @@ import {
 import { Plus, Trash2 } from '@signozhq/icons';
 import { v4 as uuid } from 'uuid';
 
-import KeySearchInput from '../GroupFormDrawer/components/KeySearchInput';
+import KeySearchInput from '../GroupFormDrawer/components/KeySearchInput/KeySearchInput';
 import styles from './MapperFormDrawer.module.scss';
 import SourceAttributeRow from './components/SourceAttributeRow/SourceAttributeRow';
 import {

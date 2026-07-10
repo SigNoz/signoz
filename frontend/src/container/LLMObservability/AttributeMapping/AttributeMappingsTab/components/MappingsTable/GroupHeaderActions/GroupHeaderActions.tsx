@@ -1,7 +1,7 @@
 import { Switch } from '@signozhq/ui/switch';
 
 import { DraftGroup } from 'container/LLMObservability/AttributeMapping/types';
-import GroupActionsMenu from '../GroupActionsMenu';
+import GroupActionsMenu from '../GroupActionsMenu/GroupActionsMenu';
 import styles from './GroupHeaderActions.module.scss';
 
 interface GroupHeaderActionsProps {

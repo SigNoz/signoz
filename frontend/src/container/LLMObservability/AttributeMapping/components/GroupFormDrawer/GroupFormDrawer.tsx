@@ -3,7 +3,7 @@ import { DrawerWrapper } from '@signozhq/ui/drawer';
 import { Input } from '@signozhq/ui/input';
 import { Switch } from '@signozhq/ui/switch';
 
-import ConditionKeyList from './components/ConditionKeyList';
+import ConditionKeyList from './components/ConditionKeyList/ConditionKeyList';
 import styles from './GroupFormDrawer.module.scss';
 import { FieldContext, GroupDraft, MapperDraftMode } from '../../types';
 import { isGroupDraftValid } from '../../utils';
