@@ -1,8 +1,15 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "extends": [
+    "./node_modules/oxlint-config-react-hooks-js/configs/recommended-latest.json"
+  ],
   "jsPlugins": [
     "./plugins/signoz.mjs",
-    "eslint-plugin-sonarjs"
+    "eslint-plugin-sonarjs",
+    {
+      "name": "react-hooks-js",
+      "specifier": "eslint-plugin-react-hooks"
+    }
   ],
   "plugins": [
     "eslint",
@@ -259,26 +266,22 @@
     // TODO: Change to error after migration to oxlint
     // TODO: Change to error after migration to oxlint
     "react-hooks/rules-of-hooks": "warn",
-    // React Hooks rules - Enforces Rules of Hooks (only call at top level)
     "react-hooks/exhaustive-deps": "warn",
-    // Warns about missing dependencies in useEffect/useMemo/useCallback
-    // NOTE: The following react-hooks rules are not supported right know, follow the progress at https://github.com/oxc-project/oxc/issues/1022
-    // Most of them are for React Compiler, which we don't have enabled right know
-    // "react-hooks/config": "error",
-    // "react-hooks/error-boundaries": "error",
-    // "react-hooks/component-hook-factories": "error",
-    // "react-hooks/gating": "error",
-    // "react-hooks/globals": "error",
-    // "react-hooks/immutability": "error",
-    // "react-hooks/preserve-manual-memoization": "error",
-    // "react-hooks/purity": "error",
-    // "react-hooks/refs": "error",
-    // "react-hooks/set-state-in-effect": "error",
-    // "react-hooks/set-state-in-render": "error",
-    // "react-hooks/static-components": "error",
-    // "react-hooks/unsupported-syntax": "warn",
-    // "react-hooks/use-memo": "error",
-    // "react-hooks/incompatible-library": "warn",
+    "react-hooks-js/static-components": "warn",
+    "react-hooks-js/use-memo": "warn",
+    "react-hooks-js/void-use-memo": "warn",
+    "react-hooks-js/preserve-manual-memoization": "warn",
+    "react-hooks-js/incompatible-library": "warn",
+    "react-hooks-js/immutability": "warn",
+    "react-hooks-js/globals": "warn",
+    "react-hooks-js/refs": "warn",
+    "react-hooks-js/set-state-in-effect": "warn",
+    "react-hooks-js/error-boundaries": "warn",
+    "react-hooks-js/purity": "warn",
+    "react-hooks-js/set-state-in-render": "warn",
+    "react-hooks-js/unsupported-syntax": "warn",
+    "react-hooks-js/config": "warn",
+    "react-hooks-js/gating": "warn",
     "signoz/no-unsupported-asset-pattern": "error",
     // Prevents the wrong usage of assets to break custom base path installations
     "signoz/no-zustand-getstate-in-hooks": "error",
