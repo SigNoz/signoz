@@ -8,25 +8,29 @@ import {
 import { toast } from '@signozhq/ui/sonner';
 import {
 	type DashboardtypesPanelDTO,
-	type DashboardtypesPanelFormattingDTO,
-	type DashboardtypesPanelSpecDTO,
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
+import {
+	type SectionConfig,
+	type SectionControls,
+	SectionKind,
+} from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
 import { getBuilderQueries } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/getBuilderQueries';
 
 import { getExecStats } from '../queryV5/v5ResponseData';
 import { usePanelInteractions } from '../PanelsAndSectionsLayout/Panel/hooks/usePanelInteractions';
+import { useScrollIntoViewStore } from '../store/useScrollIntoViewStore';
 import ConfigPane from './ConfigPane/ConfigPane';
 import Header from './Header/Header';
 import layoutStorage from './layoutStorage';
 import PanelEditorQueryBuilder from './PanelEditorQueryBuilder/PanelEditorQueryBuilder';
 import PreviewPane from './PreviewPane/PreviewPane';
 import { useLegendSeries } from './hooks/useLegendSeries';
-import { useMetricYAxisUnit } from './hooks/useMetricYAxisUnit';
 import { usePanelEditSession } from './hooks/usePanelEditSession';
 import { usePanelEditorSave } from './hooks/usePanelEditorSave';
+import { useSeedMetricUnit } from './hooks/useSeedMetricUnit';
 import { useSeedNewListColumns } from './hooks/useSeedNewListColumns';
 import { useSwitchColumnsOnSignalChange } from './hooks/useSwitchColumnsOnSignalChange';
 import { useSwitchToViewMode } from './hooks/useSwitchToViewMode';
@@ -124,32 +128,20 @@ function PanelEditorContainer({
 
 	const panelKind = draft.spec.plugin.kind;
 
-	// At editor level, not the collapsible FormattingSection, so seeding runs while closed.
-	const formattingUnit = (
-		spec.plugin.spec as {
-			formatting?: DashboardtypesPanelFormattingDTO;
-		}
-	).formatting?.unit;
-	const seedFormattingUnit = useCallback(
-		(unit: string): void => {
-			const pluginSpec = spec.plugin.spec as {
-				formatting?: DashboardtypesPanelFormattingDTO;
-			};
-			setSpec({
-				...spec,
-				plugin: {
-					...spec.plugin,
-					spec: { ...pluginSpec, formatting: { ...pluginSpec.formatting, unit } },
-				},
-			} as DashboardtypesPanelSpecDTO);
-		},
-		[spec, setSpec],
-	);
-	const { metricUnit } = useMetricYAxisUnit({
-		isNewPanel: isNew,
-		unit: formattingUnit,
-		onSelectUnit: seedFormattingUnit,
-	});
+	// The current kind's Formatting controls — which unit field (panel-wide `unit` vs
+	// per-column `columnUnits`) a metric unit may seed into. Same source of truth the
+	// switch-time seeding in `buildPluginSpec` reads, so the two stay in lockstep.
+	const formattingControls = useMemo(():
+		| SectionControls[SectionKind.Formatting]
+		| undefined => {
+		const section = panelDefinition.sections.find(
+			(
+				candidate,
+			): candidate is Extract<SectionConfig, { kind: SectionKind.Formatting }> =>
+				candidate.kind === SectionKind.Formatting,
+		);
+		return section?.controls;
+	}, [panelDefinition]);
 
 	// A new panel is savable once it has a query to run — List auto-seeds one; other
 	// kinds open query-less, so there's nothing to save until the user builds one.
@@ -188,6 +180,17 @@ function PanelEditorContainer({
 	const legendSeries = useLegendSeries(draft, data);
 	const tableColumns = useTableColumns(draft, data);
 
+	// Resolves the selected metric's unit and, on a new panel, seeds it into the right
+	// formatting field for the kind (panel-wide `unit`, or per-column `columnUnits` for
+	// a Table once results resolve them). `metricUnit` also drives the mismatch warning.
+	const { metricUnit } = useSeedMetricUnit({
+		isNewPanel: isNew,
+		formattingControls,
+		columns: tableColumns,
+		spec,
+		onChangeSpec: setSpec,
+	});
+
 	// Smallest query step interval (seconds) — the floor for the span-gaps
 	// threshold. Undefined until results carry step metadata.
 	const stepInterval = useMemo((): number | undefined => {
@@ -203,19 +206,33 @@ function PanelEditorContainer({
 		query: currentQuery,
 	});
 
+	const setScrollTargetId = useScrollIntoViewStore((s) => s.setScrollTargetId);
+
 	const onSave = useCallback(async (): Promise<void> => {
 		if (!isEditable) {
 			return;
 		}
 		try {
 			// Bake the live query into the spec so unstaged edits are saved too.
-			await save(buildSaveSpec(draft.spec));
+			const savedPanelId = await save(buildSaveSpec(draft.spec));
+			// Reveal the saved panel once the dashboard re-renders.
+			setScrollTargetId(savedPanelId);
 			toast.success('Panel saved');
 			onSaved();
 		} catch {
 			toast.error('Failed to save panel');
 		}
-	}, [isEditable, save, buildSaveSpec, draft.spec, onSaved]);
+	}, [isEditable, save, buildSaveSpec, draft.spec, setScrollTargetId, onSaved]);
+
+	// Leaving an existing panel's editor (without saving) still returns to it, so
+	// the dashboard lands on that panel rather than scrolled to the top. A new,
+	// unsaved panel has no persisted target, so there's nothing to reveal.
+	const onCloseEditor = useCallback((): void => {
+		if (!isNew) {
+			setScrollTargetId(panelId);
+		}
+		onClose();
+	}, [isNew, panelId, setScrollTargetId, onClose]);
 
 	return (
 		<div className={styles.page} data-testid="panel-editor-v2">
@@ -227,7 +244,7 @@ function PanelEditorContainer({
 				readOnlyReason={editDisabledReason}
 				onSave={onSave}
 				onSwitchToView={onSwitchToView}
-				onClose={onClose}
+				onClose={onCloseEditor}
 			/>
 			<ResizablePanelGroup
 				id="panel-editor-v2"

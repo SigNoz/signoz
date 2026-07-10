@@ -3,6 +3,7 @@ import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schem
 import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
 import { DashboardCursorSync } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 import ContextMenu from 'periscope/components/ContextMenu';
+import ListColumnsEditor from 'pages/DashboardPageV2/DashboardContainer/PanelEditor/ListColumnsEditor/ListColumnsEditor';
 import PanelEditorQueryBuilder from 'pages/DashboardPageV2/DashboardContainer/PanelEditor/PanelEditorQueryBuilder/PanelEditorQueryBuilder';
 import PreviewPane from 'pages/DashboardPageV2/DashboardContainer/PanelEditor/PreviewPane/PreviewPane';
 import type { DashboardPreference } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/rendererProps';
@@ -44,6 +45,7 @@ function ViewPanelModalContent({
 
 	const {
 		draft,
+		setSpec,
 		panelDefinition,
 		signal,
 		queryType,
@@ -54,7 +56,17 @@ function ViewPanelModalContent({
 		buildSaveSpec,
 		applyDrilldownQuery,
 	} = useViewPanelMode({ panel, panelId, time: timeOverride });
-	const { data, isFetching, error, refetch, cancelQuery, pagination } = query;
+	const {
+		data,
+		isFetching,
+		isPreviousData,
+		error,
+		refetch,
+		cancelQuery,
+		pagination,
+	} = query;
+
+	const isListPanel = draft.spec.plugin.kind === 'signoz/ListPanel';
 
 	// Grid drill-down, but filter-by-value / breakout refine this view in place. Drills the draft
 	// so it reflects in-modal edits (and the click's time range follows the per-view window).
@@ -119,6 +131,16 @@ function ViewPanelModalContent({
 					isLoadingQueries={isFetching}
 					onStageRunQuery={runQuery}
 					onCancelQuery={cancelQuery}
+					stickyHeader={false}
+					footer={
+						isListPanel ? (
+							<ListColumnsEditor
+								spec={draft.spec}
+								onChangeSpec={setSpec}
+								signal={signal}
+							/>
+						) : undefined
+					}
 				/>
 			</div>
 			<div className={styles.body}>
@@ -128,6 +150,7 @@ function ViewPanelModalContent({
 					panelDefinition={panelDefinition}
 					data={data}
 					isFetching={isFetching}
+					isPreviousData={isPreviousData}
 					error={error}
 					refetch={refetch}
 					onDragSelect={onDragSelect}

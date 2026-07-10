@@ -33,14 +33,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { colorToRgb } from 'lib/uPlotLib/utils/generateColor';
-import {
-	ArrowUpRight,
-	ChevronDown,
-	ChevronRight,
-	CircleAlert,
-	Link,
-	ListPlus,
-} from '@signozhq/icons';
+import { ChevronDown, ChevronRight, Link, ListPlus } from '@signozhq/icons';
 import { useTraceStore } from 'pages/TraceDetailsV3/stores/traceStore';
 import { resolveSpanColor } from 'pages/TraceDetailsV3/utils';
 import { useBoundaryPagination } from 'pages/TraceDetailsV3/TraceWaterfall/hooks/useBoundaryPagination';
@@ -551,7 +544,9 @@ function Success(props: ISuccessProps): JSX.Element {
 		cursorX,
 		onMouseMove: onCrosshairMove,
 		onMouseLeave: onCrosshairLeave,
-	} = useCrosshair({ containerRef: timelineAreaRef, enabled: false });
+		// Rows are padded 0 15px while `.timeline` spans full width — inset the
+		// crosshair by the same 15px so it aligns with the ruler ticks and bars.
+	} = useCrosshair({ containerRef: timelineAreaRef, insetX: 15 });
 
 	// Imperative DOM class toggling for hover highlights (avoids React re-renders)
 	const applyHoverClass = useCallback((spanId: string | null): void => {
@@ -854,28 +849,6 @@ function Success(props: ISuccessProps): JSX.Element {
 
 	return (
 		<div className={styles.root}>
-			{traceMetadata.hasMissingSpans && (
-				<div className={styles.missingSpans}>
-					<section className={styles.leftInfo}>
-						<CircleAlert size={14} />
-						<span className={styles.text}>This trace has missing spans</span>
-					</section>
-					<Button
-						variant="ghost"
-						color="secondary"
-						className={styles.rightInfo}
-						suffix={<ArrowUpRight size={14} />}
-						onClick={(): WindowProxy | null =>
-							window.open(
-								'https://signoz.io/docs/traces-management/troubleshooting/faqs/#q-why-are-some-spans-missing-from-a-trace',
-								'_blank',
-							)
-						}
-					>
-						Learn More
-					</Button>
-				</div>
-			)}
 			{isFetching && <div className={styles.loadingBar} />}
 			<div className={styles.splitPanel} ref={scrollContainerRef}>
 				{/* Sticky header row */}
@@ -994,8 +967,8 @@ function Success(props: ISuccessProps): JSX.Element {
 										transform: `translateY(${virtualRow.start}px)`,
 									}}
 									data-span-id={span.span_id}
-									onMouseEnter={(): void => handleRowMouseEnter(span.span_id)}
-									onMouseLeave={handleRowMouseLeave}
+									onMouseEnter={(): void => applyHoverClass(span.span_id)}
+									onMouseLeave={(): void => applyHoverClass(null)}
 									onClick={(): void => handleSpanClick(span)}
 								>
 									{span.response_status_code && (
