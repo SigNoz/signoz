@@ -112,6 +112,7 @@ function DeleteAccountModal(): JSX.Element {
 			className="alert-dialog sa-delete-dialog"
 			showCloseButton={false}
 			disableOutsideClick={isErrorModalVisible}
+			testId="delete-service-account-modal"
 			footer={footer}
 		>
 			{content}

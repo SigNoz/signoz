@@ -222,10 +222,10 @@ describe('ServiceAccountDrawer', () => {
 			screen.getByRole('button', { name: /Delete Service Account/i }),
 		);
 
-		const dialog = await screen.findByRole('dialog', {
-			name: /Delete service account CI Bot/i,
-		});
-		expect(dialog).toBeInTheDocument();
+		await screen.findByTestId('delete-service-account-modal');
+		expect(
+			screen.getByTestId('delete-service-account-modal'),
+		).toBeInTheDocument();
 
 		await user.click(screen.getByTestId('confirm-delete-btn'));
 
