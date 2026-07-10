@@ -4,7 +4,7 @@ import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import { DatePicker } from 'antd';
-import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
+import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import {
 	APIKeyCreatePermission,
 	buildSAAttachPermission,
@@ -109,24 +109,21 @@ function KeyFormPhase({
 					<Button variant="solid" color="secondary" onClick={onClose}>
 						Cancel
 					</Button>
-					<AuthZTooltip
+					<AuthZButton
 						checks={[
 							APIKeyCreatePermission,
 							buildSAAttachPermission(accountId ?? ''),
 						]}
-						enabled={!!accountId}
+						authZEnabled={!!accountId}
+						type="submit"
+						form={FORM_ID}
+						variant="solid"
+						color="primary"
+						loading={isSubmitting}
+						disabled={!isValid}
 					>
-						<Button
-							type="submit"
-							form={FORM_ID}
-							variant="solid"
-							color="primary"
-							loading={isSubmitting}
-							disabled={!isValid}
-						>
-							Create Key
-						</Button>
-					</AuthZTooltip>
+						Create Key
+					</AuthZButton>
 				</div>
 			</div>
 		</>

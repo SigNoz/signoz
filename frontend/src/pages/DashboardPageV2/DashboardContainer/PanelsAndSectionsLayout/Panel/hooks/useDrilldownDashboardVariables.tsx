@@ -21,7 +21,7 @@ import type { VariableSelection } from 'pages/DashboardPageV2/DashboardContainer
 import {
 	ALL_SELECTED,
 	variablesUrlParser,
-} from 'pages/DashboardPageV2/DashboardContainer/VariablesBar/useVariableSelection';
+} from 'pages/DashboardPageV2/DashboardContainer/VariablesBar/variablesUrlState';
 
 interface UseDrilldownDashboardVariablesArgs {
 	/** Group-by field filters from the clicked point (empty when the click has no group-by). */

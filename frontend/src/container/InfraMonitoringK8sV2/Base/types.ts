@@ -1,16 +1,25 @@
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
-
-import { OrderBySchemaType } from '../schemas';
-
 export type K8sBaseFilters = {
-	filters: TagFilter;
-	groupBy?: BaseAutocompleteData[];
+	filter: {
+		expression: string;
+		filterByStatus?: 'active' | 'inactive' | '';
+	};
+	groupBy?: Array<{ name: string }>;
 	offset?: number;
 	limit?: number;
 	start: number;
 	end: number;
-	orderBy?: OrderBySchemaType;
+	orderBy?: {
+		key: { name: string };
+		direction: 'asc' | 'desc';
+	};
+};
+
+export type K8sListResponse<T> = {
+	type: 'list' | 'grouped_list';
+	records: T[];
+	total: number;
+	endTimeBeforeRetention?: boolean;
+	error?: string | null;
 };
 
 /**

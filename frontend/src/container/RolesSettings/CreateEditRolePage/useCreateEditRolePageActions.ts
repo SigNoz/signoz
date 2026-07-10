@@ -16,7 +16,6 @@ import {
 	useRolePermissions,
 	useUpdateRolePermissions,
 } from '../hooks/useRolePermissions';
-import { useRoleAuthZ } from '../hooks/useRoleAuthZ';
 import {
 	useRoleUnsavedChanges,
 	type RoleFormData,
@@ -43,9 +42,6 @@ interface UseCreateEditRolePageCallbacksResult {
 	saveError: APIError | null;
 	clearSaveError: () => void;
 	validationErrors: Set<string>;
-	hasRequiredPermission: boolean;
-	isAuthZLoading: boolean;
-	deniedPermission: string;
 }
 
 export function useCreateEditRolePageActions(
@@ -54,23 +50,6 @@ export function useCreateEditRolePageActions(
 ): UseCreateEditRolePageCallbacksResult {
 	const history = useHistory();
 	const isCreateMode = roleId === 'new';
-
-	const {
-		hasCreatePermission,
-		hasReadPermission,
-		hasUpdatePermission,
-		isAuthZLoading,
-	} = useRoleAuthZ(roleName);
-
-	const deniedPermission = useMemo(() => {
-		if (isCreateMode) {
-			return 'role:create';
-		}
-		if (roleName) {
-			return `role:${roleName}:update`;
-		}
-		return `role:<missing-rule-name>:update`;
-	}, [isCreateMode, roleName]);
 
 	const [formData, setFormData] = useState<RoleFormData>({
 		name: '',
@@ -261,10 +240,5 @@ export function useCreateEditRolePageActions(
 		saveError,
 		clearSaveError,
 		validationErrors,
-		hasRequiredPermission: isCreateMode
-			? hasCreatePermission
-			: hasReadPermission && hasUpdatePermission,
-		isAuthZLoading,
-		deniedPermission,
 	};
 }
