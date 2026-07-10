@@ -1,8 +1,33 @@
+import { useState } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { DashboardtypesLineStyleDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	DashboardtypesLineStyleDTO,
+	type DashboardtypesTimeSeriesChartAppearanceDTO,
+} from 'api/generated/services/sigNoz.schemas';
 
 import ChartAppearanceSection from '../ChartAppearanceSection';
+
+/** Stateful wrapper that feeds onChange back as the spec, mirroring the real editor. */
+function StatefulSpanGaps({
+	initial,
+	stepInterval,
+}: {
+	initial?: DashboardtypesTimeSeriesChartAppearanceDTO;
+	stepInterval?: number;
+}): JSX.Element {
+	const [value, setValue] = useState<
+		DashboardtypesTimeSeriesChartAppearanceDTO | undefined
+	>(initial);
+	return (
+		<ChartAppearanceSection
+			value={value}
+			controls={{ spanGaps: true }}
+			stepInterval={stepInterval}
+			onChange={setValue}
+		/>
+	);
+}
 
 // Open the antd Select by clicking its selector, then pick the option by label. The
 // line-style and fill-mode controls are ConfigSegmented (buttons), so this helper is
@@ -139,7 +164,7 @@ describe('ChartAppearanceSection', () => {
 		await user.click(screen.getByText('Threshold'));
 
 		expect(onChange).toHaveBeenLastCalledWith({
-			spanGaps: { fillLessThan: '1m' },
+			spanGaps: { fillOnlyBelow: true, fillLessThan: '1m' },
 		});
 	});
 
@@ -162,7 +187,7 @@ describe('ChartAppearanceSection', () => {
 		await user.tab();
 
 		expect(onChange).toHaveBeenLastCalledWith({
-			spanGaps: { fillLessThan: '5m' },
+			spanGaps: { fillOnlyBelow: true, fillLessThan: '5m' },
 		});
 	});
 
@@ -183,7 +208,7 @@ describe('ChartAppearanceSection', () => {
 		await user.tab();
 
 		expect(onChange).toHaveBeenLastCalledWith({
-			spanGaps: { fillLessThan: '300' },
+			spanGaps: { fillOnlyBelow: true, fillLessThan: '300' },
 		});
 	});
 
@@ -200,7 +225,24 @@ describe('ChartAppearanceSection', () => {
 
 		await user.click(screen.getByText('Never'));
 
-		expect(onChange).toHaveBeenLastCalledWith({ spanGaps: undefined });
+		expect(onChange).toHaveBeenLastCalledWith({
+			spanGaps: { fillOnlyBelow: false, fillLessThan: undefined },
+		});
+	});
+
+	it('selects Never when fillOnlyBelow is false even if a duration lingers', () => {
+		render(
+			<ChartAppearanceSection
+				value={{ spanGaps: { fillOnlyBelow: false, fillLessThan: '1m' } }}
+				controls={{ spanGaps: true }}
+				onChange={jest.fn()}
+			/>,
+		);
+
+		// The flag is authoritative: a stale fillLessThan must not show Threshold.
+		expect(
+			screen.queryByTestId('panel-editor-v2-span-gaps-value'),
+		).not.toBeInTheDocument();
 	});
 
 	it('shows an error and does not commit an invalid duration', async () => {
@@ -243,5 +285,118 @@ describe('ChartAppearanceSection', () => {
 
 		expect(screen.getByText(/Threshold should be >/)).toBeInTheDocument();
 		expect(onChange).not.toHaveBeenCalled();
+	});
+
+	it('seeds the threshold from the step interval when switching to Threshold', async () => {
+		const user = userEvent.setup();
+		const onChange = jest.fn();
+		render(
+			<ChartAppearanceSection
+				value={undefined}
+				controls={{ spanGaps: true }}
+				stepInterval={300}
+				onChange={onChange}
+			/>,
+		);
+
+		await user.click(screen.getByText('Threshold'));
+
+		expect(onChange).toHaveBeenLastCalledWith({
+			spanGaps: { fillOnlyBelow: true, fillLessThan: '5m' },
+		});
+	});
+
+	it('seeds from the step interval even when it arrives after mount', async () => {
+		const user = userEvent.setup();
+		const onChange = jest.fn();
+		// The step interval is undefined until the query response carries step metadata,
+		// so the panel first renders without it and receives it on a later render.
+		const { rerender } = render(
+			<ChartAppearanceSection
+				value={undefined}
+				controls={{ spanGaps: true }}
+				onChange={onChange}
+			/>,
+		);
+		rerender(
+			<ChartAppearanceSection
+				value={undefined}
+				controls={{ spanGaps: true }}
+				stepInterval={300}
+				onChange={onChange}
+			/>,
+		);
+
+		await user.click(screen.getByText('Threshold'));
+
+		// Regression: a value seeded at mount would still be the 1m fallback.
+		expect(onChange).toHaveBeenLastCalledWith({
+			spanGaps: { fillOnlyBelow: true, fillLessThan: '5m' },
+		});
+	});
+
+	it('shows a validation error while typing, before blur', async () => {
+		const user = userEvent.setup();
+		render(
+			<ChartAppearanceSection
+				value={{ spanGaps: { fillLessThan: '1m' } }}
+				controls={{ spanGaps: true }}
+				onChange={jest.fn()}
+			/>,
+		);
+
+		const input = screen.getByTestId('panel-editor-v2-span-gaps-value');
+		await user.clear(input);
+		await user.type(input, 'abc');
+		// No blur / Enter — the error must already be visible.
+
+		expect(screen.getByText(/valid duration/i)).toBeInTheDocument();
+	});
+
+	it('does not re-commit the threshold when blurred without a change', async () => {
+		const user = userEvent.setup();
+		const onChange = jest.fn();
+		render(
+			<ChartAppearanceSection
+				value={{ spanGaps: { fillLessThan: '1m' } }}
+				controls={{ spanGaps: true }}
+				onChange={onChange}
+			/>,
+		);
+
+		const input = screen.getByTestId('panel-editor-v2-span-gaps-value');
+		await user.click(input);
+		await user.tab();
+
+		expect(onChange).not.toHaveBeenCalled();
+	});
+
+	it('fully switches from Threshold to Never (the input disappears)', async () => {
+		const user = userEvent.setup();
+		render(<StatefulSpanGaps initial={{ spanGaps: { fillLessThan: '1m' } }} />);
+
+		expect(
+			screen.getByTestId('panel-editor-v2-span-gaps-value'),
+		).toBeInTheDocument();
+
+		// Focus the input first so clicking Never also fires its blur (the toggle race).
+		await user.click(screen.getByTestId('panel-editor-v2-span-gaps-value'));
+		await user.click(screen.getByText('Never'));
+
+		expect(
+			screen.queryByTestId('panel-editor-v2-span-gaps-value'),
+		).not.toBeInTheDocument();
+	});
+
+	it('remembers the last threshold when toggling Never → Threshold', async () => {
+		const user = userEvent.setup();
+		render(<StatefulSpanGaps initial={{ spanGaps: { fillLessThan: '5m' } }} />);
+
+		await user.click(screen.getByText('Never'));
+		await user.click(screen.getByText('Threshold'));
+
+		expect(screen.getByTestId('panel-editor-v2-span-gaps-value')).toHaveValue(
+			'5m',
+		);
 	});
 });

@@ -1,10 +1,7 @@
 import { useCallback } from 'react';
 import { useQueryClient } from 'react-query';
 import { v4 as uuid } from 'uuid';
-import {
-	getGetDashboardV2QueryKey,
-	usePatchDashboardV2,
-} from 'api/generated/services/dashboard';
+import { getGetDashboardV2QueryKey } from 'api/generated/services/dashboard';
 import {
 	type DashboardtypesJSONPatchOperationDTO,
 	type DashboardtypesPanelSpecDTO,
@@ -13,6 +10,7 @@ import {
 	type GetDashboardV2200,
 } from 'api/generated/services/sigNoz.schemas';
 
+import { useOptimisticPatch } from '../../hooks/useOptimisticPatch';
 import { createPanelOps } from '../../patchOps';
 
 interface UsePanelEditorSaveArgs {
@@ -25,7 +23,8 @@ interface UsePanelEditorSaveArgs {
 }
 
 interface UsePanelEditorSaveApi {
-	save: (spec: DashboardtypesPanelSpecDTO) => Promise<void>;
+	/** Resolves with the saved panel's id (freshly minted when creating). */
+	save: (spec: DashboardtypesPanelSpecDTO) => Promise<string>;
 	isSaving: boolean;
 	error: Error | null;
 }
@@ -43,21 +42,23 @@ export function usePanelEditorSave({
 	layoutIndex,
 }: UsePanelEditorSaveArgs): UsePanelEditorSaveApi {
 	const queryClient = useQueryClient();
-	const { mutateAsync, isLoading, error } = usePatchDashboardV2();
+	const { patchAsync, isPatching, error } = useOptimisticPatch(dashboardId);
 
 	const save = useCallback(
-		async (spec: DashboardtypesPanelSpecDTO): Promise<void> => {
-			const dashboardQueryKey = getGetDashboardV2QueryKey({ id: dashboardId });
-
+		async (spec: DashboardtypesPanelSpecDTO): Promise<string> => {
 			let ops: DashboardtypesJSONPatchOperationDTO[];
+			// The id a new panel is persisted under (surfaced so the caller can reveal it).
+			let savedPanelId = panelId;
 			if (isNew) {
 				// Resolve the target section against the freshest dashboard we have.
+				const dashboardQueryKey = getGetDashboardV2QueryKey({ id: dashboardId });
 				const cached =
 					queryClient.getQueryData<GetDashboardV2200>(dashboardQueryKey);
+				savedPanelId = uuid();
 				ops = createPanelOps({
 					layouts: cached?.data.spec.layouts ?? [],
 					layoutIndex,
-					panelId: uuid(),
+					panelId: savedPanelId,
 					panel: { kind: DashboardtypesPanelKindDTO.Panel, spec },
 				});
 			} else {
@@ -70,11 +71,12 @@ export function usePanelEditorSave({
 				];
 			}
 
-			await mutateAsync({ pathParams: { id: dashboardId }, data: ops });
-			await queryClient.invalidateQueries(dashboardQueryKey);
+			// Optimistic cache write + settle refetch (replaces the manual invalidate).
+			await patchAsync(ops);
+			return savedPanelId;
 		},
-		[dashboardId, panelId, isNew, layoutIndex, mutateAsync, queryClient],
+		[dashboardId, panelId, isNew, layoutIndex, patchAsync, queryClient],
 	);
 
-	return { save, isSaving: isLoading, error: (error as Error) ?? null };
+	return { save, isSaving: isPatching, error };
 }

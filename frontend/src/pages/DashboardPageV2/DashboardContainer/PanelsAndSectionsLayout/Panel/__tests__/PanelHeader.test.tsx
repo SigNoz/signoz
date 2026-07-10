@@ -1,11 +1,12 @@
 import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { PanelQueryData } from 'pages/DashboardPageV2/DashboardContainer/queryV5/types';
 import type { ReactElement } from 'react';
 import type { Warning } from 'types/api';
 
 import PanelHeader from '../PanelHeader/PanelHeader';
-import { PanelKind } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
 
 // Status indicators use a radix tooltip, which needs a TooltipProvider ancestor
 // (supplied globally by AppLayout at runtime).
@@ -22,10 +23,32 @@ jest.mock(
 		},
 );
 
+// The header reads its name/description/kind off the panel itself.
+function makePanel(overrides?: {
+	name?: string;
+	description?: string;
+}): DashboardtypesPanelDTO {
+	return {
+		kind: 'Panel',
+		spec: {
+			display: {
+				name: overrides?.name ?? 'My panel',
+				description: overrides?.description,
+			},
+			plugin: { kind: 'signoz/TimeSeriesPanel', spec: {} },
+			queries: [],
+		},
+	} as unknown as DashboardtypesPanelDTO;
+}
+
 const baseProps = {
-	name: 'My panel',
-	panelKind: 'signoz/TimeSeriesPanel' as PanelKind,
+	panel: makePanel(),
 	panelId: 'panel-1',
+	data: {
+		response: undefined,
+		requestPayload: undefined,
+		legendMap: {},
+	} as PanelQueryData,
 	isFetching: false,
 };
 
@@ -44,7 +67,10 @@ describe('PanelHeader title and description', () => {
 
 	it('shows the description info icon when a description is provided', () => {
 		renderWithProvider(
-			<PanelHeader {...baseProps} description="What this panel measures" />,
+			<PanelHeader
+				{...baseProps}
+				panel={makePanel({ description: 'What this panel measures' })}
+			/>,
 		);
 		expect(screen.getByTestId('panel-header-info-icon')).toBeInTheDocument();
 	});

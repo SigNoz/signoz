@@ -1,12 +1,16 @@
 import { renderHook } from '@testing-library/react';
-import { patchDashboardV2 } from 'api/generated/services/dashboard';
 
 import { useDashboardStore } from '../../../../store/useDashboardStore';
+import { useScrollIntoViewStore } from '../../../../store/useScrollIntoViewStore';
 import type { DashboardSection } from '../../../../utils';
 import { useClonePanel } from '../useClonePanel';
 
-jest.mock('api/generated/services/dashboard', () => ({
-	patchDashboardV2: jest.fn().mockResolvedValue(undefined),
+const mockPatchAsync = jest.fn().mockResolvedValue(undefined);
+jest.mock('../../../../hooks/useOptimisticPatch', () => ({
+	useOptimisticPatch: (): { patchAsync: jest.Mock; isPatching: boolean } => ({
+		patchAsync: mockPatchAsync,
+		isPatching: false,
+	}),
 }));
 
 const mockToastPromise = jest.fn();
@@ -15,8 +19,6 @@ jest.mock('@signozhq/ui/sonner', () => ({
 }));
 
 jest.mock('uuid', () => ({ v4: (): string => 'cloned-id' }));
-
-const mockPatch = patchDashboardV2 as unknown as jest.Mock;
 
 const sourcePanel = {
 	kind: 'Panel',
@@ -45,7 +47,8 @@ function sections(): DashboardSection[] {
 describe('useClonePanel', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
-		useDashboardStore.setState({ dashboardId: 'dash-1', refetch: jest.fn() });
+		useDashboardStore.setState({ dashboardId: 'dash-1' });
+		useScrollIntoViewStore.setState({ scrollTargetId: null });
 	});
 
 	it('patches an add of the deep-copied spec + a new item under the same section', async () => {
@@ -53,7 +56,7 @@ describe('useClonePanel', () => {
 
 		await result.current({ panelId: 'p1', layoutIndex: 0 });
 
-		expect(mockPatch).toHaveBeenCalledWith({ id: 'dash-1' }, [
+		expect(mockPatchAsync).toHaveBeenCalledWith([
 			{
 				op: 'add',
 				path: '/spec/panels/cloned-id',
@@ -92,7 +95,7 @@ describe('useClonePanel', () => {
 
 		await result.current({ panelId: 'p1', layoutIndex: 0 });
 
-		const ops = mockPatch.mock.calls[0][1];
+		const ops = mockPatchAsync.mock.calls[0][0];
 		// Room in the last row (4 + 4 = 8 ≤ 12 cols) → sits to the right at y:0.
 		expect(ops[1].value).toMatchObject({ x: 4, y: 0, width: 4, height: 5 });
 	});
@@ -102,7 +105,7 @@ describe('useClonePanel', () => {
 
 		await result.current({ panelId: 'p1', layoutIndex: 0 });
 
-		const ops = mockPatch.mock.calls[0][1];
+		const ops = mockPatchAsync.mock.calls[0][0];
 		expect(ops[0].value).toStrictEqual(sourcePanel);
 		expect(ops[0].value).not.toBe(sourcePanel);
 	});
@@ -112,7 +115,7 @@ describe('useClonePanel', () => {
 
 		await result.current({ panelId: 'missing', layoutIndex: 0 });
 
-		expect(mockPatch).not.toHaveBeenCalled();
+		expect(mockPatchAsync).not.toHaveBeenCalled();
 		expect(mockToastPromise).not.toHaveBeenCalled();
 	});
 
@@ -131,8 +134,23 @@ describe('useClonePanel', () => {
 		);
 	});
 
+	it('records the cloned panel as the scroll target when the toast auto-closes', async () => {
+		const { result } = renderHook(() => useClonePanel({ sections: sections() }));
+
+		await result.current({ panelId: 'p1', layoutIndex: 0 });
+
+		// The reveal is deferred to the toast's auto-close, not fired inline.
+		expect(useScrollIntoViewStore.getState().scrollTargetId).toBeNull();
+		const { onAutoClose } = mockToastPromise.mock.calls[0][1] as {
+			onAutoClose: () => void;
+		};
+		onAutoClose();
+
+		expect(useScrollIntoViewStore.getState().scrollTargetId).toBe('cloned-id');
+	});
+
 	it('swallows a patch rejection (toast owns the error UX) — does not throw', async () => {
-		mockPatch.mockRejectedValueOnce(new Error('boom'));
+		mockPatchAsync.mockRejectedValueOnce(new Error('boom'));
 		const { result } = renderHook(() => useClonePanel({ sections: sections() }));
 
 		await expect(

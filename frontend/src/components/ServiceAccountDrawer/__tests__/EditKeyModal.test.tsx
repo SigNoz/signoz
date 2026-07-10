@@ -1,12 +1,13 @@
 import { toast } from '@signozhq/ui/sonner';
 import type { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
+import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import EditKeyModal from '../EditKeyModal';
 
-jest.mock('components/AuthZTooltip/AuthZTooltip', () => ({
+jest.mock('lib/authz/components/AuthZTooltip/AuthZTooltip', () => ({
 	__esModule: true,
 	default: ({
 		children,
@@ -61,6 +62,7 @@ describe('EditKeyModal (URL-controlled)', () => {
 			rest.delete(SA_KEY_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
 			),
+			setupAuthzAdmin(),
 		);
 	});
 

@@ -48,7 +48,7 @@ function NewDashboardModal({ open, onClose }: Props): JSX.Element {
 					{
 						key: 'import',
 						label: 'Import JSON',
-						children: <ImportJsonPanel />,
+						children: <ImportJsonPanel onClose={onClose} />,
 					},
 				]}
 			/>

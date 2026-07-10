@@ -2,9 +2,9 @@ import { type ChangeEvent, type KeyboardEvent, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
-import { X } from '@signozhq/icons';
 import cx from 'classnames';
 
+import TagBadge from '../TagBadge/TagBadge';
 import { parseKeyValueTag } from './utils';
 
 import styles from './TagKeyValueInput.module.scss';
@@ -65,7 +65,9 @@ function TagKeyValueInput({
 	};
 
 	const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>): void => {
-		if (e.key === 'Enter') {
+		// Plain Enter adds the tag; let Cmd/Ctrl+Enter pass through so a host form
+		// (e.g. a modal) can submit on it.
+		if (e.key === 'Enter' && !e.metaKey && !e.ctrlKey) {
 			e.preventDefault();
 			commit();
 		}
@@ -93,11 +95,17 @@ function TagKeyValueInput({
 	};
 
 	const handleEditKeyDown = (e: KeyboardEvent<HTMLInputElement>): void => {
-		if (e.key === 'Enter') {
+		// Plain Enter commits the edit; let Cmd/Ctrl+Enter pass through so a host
+		// form (e.g. a modal) can submit on it.
+		if (e.key === 'Enter' && !e.metaKey && !e.ctrlKey) {
 			e.preventDefault();
+			e.stopPropagation();
 			commitEdit();
 		} else if (e.key === 'Escape') {
+			// Contain Escape so it cancels the inline edit instead of bubbling up and
+			// closing the host drawer/modal.
 			e.preventDefault();
+			e.stopPropagation();
 			cancelEdit();
 		}
 	};
@@ -120,27 +128,23 @@ function TagKeyValueInput({
 							onBlur={commitEdit}
 						/>
 					) : (
-						<div key={tag} className={styles.tag} data-testid={`${testId}-chip`}>
+						<TagBadge
+							key={tag}
+							className={styles.tag}
+							closable
+							onClose={(): void => removeTag(tag)}
+						>
 							<Button
 								variant="ghost"
 								color="secondary"
 								className={styles.tagLabel}
 								title="Double-click to edit"
+								testId={`${testId}-chip`}
 								onDoubleClick={(): void => startEdit(index)}
 							>
 								{tag}
 							</Button>
-							<Button
-								variant="ghost"
-								color="secondary"
-								size="icon"
-								className={styles.remove}
-								aria-label={`Remove ${tag}`}
-								onClick={(): void => removeTag(tag)}
-							>
-								<X size={12} />
-							</Button>
-						</div>
+						</TagBadge>
 					),
 				)}
 				<Input

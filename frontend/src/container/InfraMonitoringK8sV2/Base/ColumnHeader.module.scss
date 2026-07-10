@@ -1,0 +1,16 @@
+.columnHeader {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-2);
+}
+
+.infoIcon {
+	display: inline-flex;
+	align-items: center;
+	cursor: pointer;
+}
+
+.columnHeaderLabel {
+	text-align: center;
+	padding: var(--spacing-2) var(--spacing-2) var(--spacing-2) 0px;
+}

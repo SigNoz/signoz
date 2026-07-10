@@ -20,7 +20,8 @@ export type ComponentTypes =
 	| 'add_panel'
 	| 'page_pipelines'
 	| 'edit_locked_dashboard'
-	| 'add_panel_locked_dashboard';
+	| 'add_panel_locked_dashboard'
+	| 'manage_llm_pricing';
 
 export const componentPermission: Record<ComponentTypes, ROLES[]> = {
 	current_org_settings: ['ADMIN'],
@@ -42,6 +43,7 @@ export const componentPermission: Record<ComponentTypes, ROLES[]> = {
 	page_pipelines: ['ADMIN', 'EDITOR'],
 	edit_locked_dashboard: ['ADMIN', 'AUTHOR'],
 	add_panel_locked_dashboard: ['ADMIN', 'AUTHOR'],
+	manage_llm_pricing: ['ADMIN'],
 };
 
 export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
@@ -134,6 +136,8 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	AI_ASSISTANT_ICON_PREVIEW: ['ADMIN', 'EDITOR', 'VIEWER'],
 	MCP_SERVER: ['ADMIN', 'EDITOR', 'VIEWER'],
 	AI_ASSISTANT_BASE: ['ADMIN', 'EDITOR', 'VIEWER'],
+	LLM_OBSERVABILITY_ATTRIBUTE_MAPPING: ['ADMIN', 'EDITOR', 'VIEWER'],
 	LLM_OBSERVABILITY_BASE: ['ADMIN', 'EDITOR', 'VIEWER'],
-	LLM_OBSERVABILITY_MODEL_PRICING: ['ADMIN', 'EDITOR', 'VIEWER'],
+	LLM_OBSERVABILITY_OVERVIEW: ['ADMIN', 'EDITOR', 'VIEWER'],
+	LLM_OBSERVABILITY_CONFIGURATION: ['ADMIN', 'EDITOR', 'VIEWER'],
 };
