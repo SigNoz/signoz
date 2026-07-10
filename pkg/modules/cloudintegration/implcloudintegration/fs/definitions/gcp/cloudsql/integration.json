@@ -8,7 +8,86 @@
     "logs": true
   },
   "dataCollected": {
-    "metrics": [],
+    "metrics": [
+      {
+        "name": "cloudsql.googleapis.com/database/up",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "cloudsql.googleapis.com/database/cpu/utilization",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "cloudsql.googleapis.com/database/memory/utilization",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "cloudsql.googleapis.com/database/memory/usage",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "cloudsql.googleapis.com/database/disk/bytes_used",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "cloudsql.googleapis.com/database/postgresql/num_backends",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "cloudsql.googleapis.com/database/postgresql/num_backends_by_state",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "cloudsql.googleapis.com/database/postgresql/transaction_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "cloudsql.googleapis.com/database/postgresql/deadlock_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "cloudsql.googleapis.com/database/postgresql/vacuum/oldest_transaction_age",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "cloudsql.googleapis.com/database/postgresql/insights/aggregate/execution_time",
+        "unit": "Microseconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "cloudsql.googleapis.com/database/postgresql/insights/perquery/execution_time",
+        "unit": "Microseconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "cloudsql.googleapis.com/database/postgresql/replication/replica_byte_lag",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      }
+    ],
     "logs": []
   },
   "telemetryCollectionStrategy": {
