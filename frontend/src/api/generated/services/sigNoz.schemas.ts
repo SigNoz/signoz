@@ -6082,8 +6082,16 @@ export interface InframonitoringtypesDaemonSetRecordDTO {
 	 * @type object,null
 	 */
 	meta: InframonitoringtypesDaemonSetRecordDTOMeta;
+	/**
+	 * @type integer
+	 */
+	misscheduledNodes: number;
 	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
 	podCountsByStatus: InframonitoringtypesPodCountsByStatusDTO;
+	/**
+	 * @type integer
+	 */
+	readyNodes: number;
 }
 
 export interface InframonitoringtypesDaemonSetsDTO {
