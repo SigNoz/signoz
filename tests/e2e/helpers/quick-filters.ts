@@ -147,9 +147,7 @@ export async function assertQuickFiltersSettingsDrawerOpen(
 	await expect(panel.getByRole('button', { name: 'Save changes' })).toBeHidden();
 
 	// OTHER FILTERS loads asynchronously from attribute/aggregate suggestions.
-	await expect(
-		panel.locator('.qf-other-filters-list .ant-skeleton-input'),
-	).toHaveCount(0);
+	await expect(panel.locator('.qf-other-filters-skeleton')).toHaveCount(0);
 	await expect(panel.getByText('OTHER FILTERS')).toBeVisible();
 	await expect(
 		panel.locator('.qf-other-filters-list .other-filters-item').first(),
