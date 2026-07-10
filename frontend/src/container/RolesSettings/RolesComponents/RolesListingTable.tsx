@@ -5,12 +5,11 @@ import { Pagination, Skeleton } from 'antd';
 import { useListRoles } from 'api/generated/services/role';
 import { AuthtypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
-import PermissionDeniedFullPage from 'lib/authz/components/PermissionDeniedFullPage/PermissionDeniedFullPage';
 import ROUTES from 'constants/routes';
-import { RoleListPermission } from 'lib/authz/hooks/useAuthZ/permissions/role.permissions';
-import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { useRolesFeatureGate } from 'hooks/useRolesFeatureGate';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { withAuthZPage } from 'lib/authz/components/withAuthZ/withAuthZPage';
+import { RoleListPermission } from 'lib/authz/hooks/useAuthZ/permissions/role.permissions';
 import LineClampedText from 'periscope/components/LineClampedText/LineClampedText';
 import { useTimezone } from 'providers/Timezone';
 import { RoleType } from 'types/roles';
@@ -24,23 +23,14 @@ type DisplayItem =
 	| { type: 'section'; label: string; count?: number }
 	| { type: 'role'; role: AuthtypesRoleDTO };
 
-interface RolesListingTableProps {
+interface RolesListContentProps {
 	searchQuery: string;
 }
 
-function RolesListingTable({
-	searchQuery,
-}: RolesListingTableProps): JSX.Element {
+function RolesListContent({ searchQuery }: RolesListContentProps): JSX.Element {
 	const { isRolesEnabled } = useRolesFeatureGate();
 
-	const { permissions: listPerms, isLoading: isAuthZLoading } = useAuthZ([
-		RoleListPermission,
-	]);
-	const hasListPermission = listPerms?.[RoleListPermission]?.isGranted ?? false;
-
-	const { data, isLoading, isError, error } = useListRoles({
-		query: { enabled: hasListPermission },
-	});
+	const { data, isLoading, isError, error } = useListRoles();
 	const { formatTimezoneAdjustedTimestampOptional } = useTimezone();
 	const history = useHistory();
 	const urlQuery = useUrlQuery();
@@ -155,11 +145,7 @@ function RolesListingTable({
 		</>
 	);
 
-	if (!hasListPermission && listPerms !== null) {
-		return <PermissionDeniedFullPage permissionName="role:list" />;
-	}
-
-	if (isAuthZLoading || isLoading) {
+	if (isLoading) {
 		return (
 			<div className={styles.rolesListingTable}>
 				<Skeleton active paragraph={{ rows: 5 }} />
@@ -281,4 +267,11 @@ function RolesListingTable({
 	);
 }
 
-export default RolesListingTable;
+export default withAuthZPage<RolesListContentProps>(RolesListContent, {
+	checks: [RoleListPermission],
+	fallbackOnLoading: (
+		<div className={styles.rolesListingTable}>
+			<Skeleton active paragraph={{ rows: 5 }} />
+		</div>
+	),
+});

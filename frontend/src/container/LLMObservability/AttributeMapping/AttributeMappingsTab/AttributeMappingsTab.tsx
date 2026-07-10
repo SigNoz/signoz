@@ -1,6 +1,6 @@
 import { DraftGroup } from '../types';
 import styles from './AttributeMappingsTab.module.scss';
-import MappingsTable from './components/MappingsTable';
+import MappingsTable from './components/MappingsTable/MappingsTable';
 import { AttributeMappingStore } from './hooks/useAttributeMappingStore';
 
 interface AttributeMappingsTabProps {

@@ -1,4 +1,5 @@
 import {
+	ListSpanMappers200,
 	SpantypesPostableSpanMapperGroupDTO,
 	SpantypesSpanMapperDTO,
 	SpantypesUpdatableSpanMapperGroupDTO,
@@ -38,7 +39,7 @@ function cleanKeys(keys: string[]): string[] {
 function getMapperSources(mapper: SpantypesSpanMapperDTO): SourceConfig[] {
 	const sources = mapper.config?.sources ?? [];
 	return [...sources]
-		.sort((a, b) => b.priority - a.priority)
+		.sort((a, b) => a.priority - b.priority)
 		.map((source) => ({
 			key: source.key,
 			context: source.context,
@@ -55,6 +56,15 @@ export function buildMapping(mapper: SpantypesSpanMapperDTO): Mapping {
 		sources: getMapperSources(mapper),
 		enabled: mapper.enabled,
 	};
+}
+
+// Server list response -> read-only row models (see GroupMappers).
+export function buildMappingsFromListResponse(
+	response: ListSpanMappers200,
+): Mapping[] {
+	const items = (response.data?.items ??
+		[]) as unknown as SpantypesSpanMapperDTO[];
+	return items.map(buildMapping);
 }
 
 // ---- group form helpers ----

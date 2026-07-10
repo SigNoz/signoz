@@ -1,5 +1,3 @@
-import { useMemo } from 'react';
-import type { SpantypesSpanMapperDTO } from 'api/generated/services/sigNoz.schemas';
 import { useListSpanMappers } from 'api/generated/services/spanmapper';
 import { motion } from 'motion/react';
 
@@ -7,7 +5,7 @@ import {
 	DraftGroup,
 	Mapping,
 } from 'container/LLMObservability/AttributeMapping/types';
-import { buildMapping } from 'container/LLMObservability/AttributeMapping/utils';
+import { buildMappingsFromListResponse } from 'container/LLMObservability/AttributeMapping/utils';
 import { COLUMN_COUNT } from '../constants';
 import MapperRow, { MapperRowSkeleton } from '../MapperRow';
 import MappingsColgroup from '../MappingsColgroup';
@@ -61,7 +59,11 @@ function GroupMappers({ group }: GroupMappersProps): JSX.Element {
 	// A not-yet-saved group has no serverId, so there is nothing to fetch —
 	// the query stays disabled and the panel falls through to the empty row.
 	const hasServerId = group.serverId !== null;
-	const { data, isLoading, isError } = useListSpanMappers(
+	const {
+		data: mappers = [],
+		isLoading,
+		isError,
+	} = useListSpanMappers<Mapping[]>(
 		{
 			groupId: group.serverId ?? '',
 		},
@@ -69,15 +71,10 @@ function GroupMappers({ group }: GroupMappersProps): JSX.Element {
 			query: {
 				enabled: hasServerId,
 				refetchOnMount: false,
+				select: buildMappingsFromListResponse,
 			},
 		},
 	);
-
-	const mappers = useMemo<Mapping[]>(() => {
-		const items = (data?.data?.items ??
-			[]) as unknown as SpantypesSpanMapperDTO[];
-		return items.map(buildMapping);
-	}, [data]);
 
 	let rows: JSX.Element[];
 	if (isError) {

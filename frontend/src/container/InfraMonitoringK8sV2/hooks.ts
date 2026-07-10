@@ -1,4 +1,5 @@
 import {
+	createParser,
 	Options,
 	parseAsInteger,
 	parseAsJson,
@@ -6,7 +7,6 @@ import {
 	useQueryState,
 	UseQueryStateReturn,
 } from 'nuqs';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderQuery,
 	TagFilter,
@@ -20,35 +20,19 @@ import {
 } from './constants';
 import { orderBySchema, OrderBySchemaType } from './schemas';
 
+export type StatusFilterValue = 'active' | 'inactive';
+
 const defaultNuqsOptions: Options = {
 	history: 'push',
 };
 
-export const useInfraMonitoringCurrentPage = (): UseQueryStateReturn<
-	number,
-	number
-> =>
-	useQueryState(
-		INFRA_MONITORING_K8S_PARAMS_KEYS.CURRENT_PAGE,
-		parseAsInteger.withDefault(1).withOptions(defaultNuqsOptions),
-	);
-
 export const useInfraMonitoringPageListing = (): UseQueryStateReturn<
 	number,
-	number
+	number | undefined
 > =>
 	useQueryState(
 		INFRA_MONITORING_K8S_PARAMS_KEYS.PAGE,
-		parseAsInteger.withDefault(1).withOptions(defaultNuqsOptions),
-	);
-
-export const useInfraMonitoringPageSizeListing = (): UseQueryStateReturn<
-	number,
-	number
-> =>
-	useQueryState(
-		INFRA_MONITORING_K8S_PARAMS_KEYS.PAGE_SIZE,
-		parseAsInteger.withDefault(10).withOptions(defaultNuqsOptions),
+		parseAsInteger.withOptions(defaultNuqsOptions),
 	);
 
 export const useInfraMonitoringOrderBy = (): UseQueryStateReturn<
@@ -60,15 +44,40 @@ export const useInfraMonitoringOrderBy = (): UseQueryStateReturn<
 		parseAsJson(orderBySchema).withOptions(defaultNuqsOptions),
 	);
 
+const parseAsGroupBy = createParser<string[]>({
+	parse: (value: string): string[] | null => {
+		try {
+			const parsed = JSON.parse(value);
+			if (!Array.isArray(parsed)) {
+				return null;
+			}
+			return parsed
+				.map((item: unknown) => {
+					if (typeof item === 'string') {
+						return item;
+					}
+					if (item && typeof item === 'object' && 'key' in item) {
+						return String((item as { key: unknown }).key);
+					}
+					return '';
+				})
+				.filter(Boolean);
+		} catch {
+			return null;
+		}
+	},
+	serialize: (value: string[]): string => JSON.stringify(value),
+	eq: (a: string[], b: string[]): boolean =>
+		JSON.stringify(a) === JSON.stringify(b),
+});
+
 export const useInfraMonitoringGroupBy = (): UseQueryStateReturn<
-	BaseAutocompleteData[],
+	string[],
 	[]
 > =>
 	useQueryState(
 		INFRA_MONITORING_K8S_PARAMS_KEYS.GROUP_BY,
-		parseAsJsonNoValidate<IBuilderQuery['groupBy']>()
-			.withDefault([])
-			.withOptions(defaultNuqsOptions),
+		parseAsGroupBy.withDefault([]).withOptions(defaultNuqsOptions),
 	);
 
 export const useInfraMonitoringView = (): UseQueryStateReturn<string, string> =>
@@ -119,15 +128,6 @@ export const useInfraMonitoringCategory = (): UseQueryStateReturn<
 		parseAsString.withDefault(K8sCategories.PODS).withOptions(defaultNuqsOptions),
 	);
 
-export const useInfraMonitoringFiltersK8s = (): UseQueryStateReturn<
-	TagFilter,
-	undefined
-> =>
-	useQueryState(
-		INFRA_MONITORING_K8S_PARAMS_KEYS.FILTERS,
-		parseAsJsonNoValidate<TagFilter>().withOptions(defaultNuqsOptions),
-	);
-
 export const useInfraMonitoringSelectedItem = (): UseQueryStateReturn<
 	string,
 	string | undefined
@@ -137,3 +137,12 @@ export const useInfraMonitoringSelectedItem = (): UseQueryStateReturn<
 		parseAsString,
 	);
 };
+
+export const useInfraMonitoringStatusFilter = (): UseQueryStateReturn<
+	string,
+	string
+> =>
+	useQueryState(
+		INFRA_MONITORING_K8S_PARAMS_KEYS.STATUS_FILTER,
+		parseAsString.withDefault('').withOptions(defaultNuqsOptions),
+	);

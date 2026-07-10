@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { Tabs } from '@signozhq/ui/tabs';
 
 import AttributeMappingHeader from './components/AttributeMappingHeader';
-import AttributeMappingsTab from './AttributeMappingsTab';
+import AttributeMappingsTab from './AttributeMappingsTab/AttributeMappingsTab';
 import GroupFormDrawer from './components/GroupFormDrawer';
 import styles from './LLMObservabilityAttributeMapping.module.scss';
 import { useAttributeMappingStore } from './AttributeMappingsTab/hooks/useAttributeMappingStore';

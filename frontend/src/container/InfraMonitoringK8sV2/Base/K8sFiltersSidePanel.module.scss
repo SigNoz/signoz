@@ -24,11 +24,37 @@
 .columnsList {
 	display: flex;
 	flex-direction: column;
+
+	[data-slot='icon'] {
+		display: none;
+	}
+
+	[data-slot='entity-group-header'] {
+		padding-left: 0;
+	}
+
+	[data-slot='column-header'] {
+		display: flex;
+		width: auto;
+
+		span {
+			padding: 0;
+			text-align: left;
+		}
+
+		br {
+			display: none;
+		}
+	}
 }
 
 .columnItem {
 	justify-content: flex-start !important;
 	width: 100%;
+
+	> span {
+		width: auto !important;
+	}
 }
 
 .horizontalDivider {

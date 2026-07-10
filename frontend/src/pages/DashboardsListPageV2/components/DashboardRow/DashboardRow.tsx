@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import TagBadge from 'components/TagBadge/TagBadge';
+import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
@@ -18,6 +20,7 @@ import { useDashboardViewsStore } from '../../store/useDashboardViewsStore';
 import type { DashboardListItem } from '../../utils/helpers';
 import { lastUpdatedLabel, tagsToStrings } from '../../utils/helpers';
 import ActionsPopover from '../ActionsPopover/ActionsPopover';
+import LegacyDashboardDialog from '../LegacyDashboardDialog/LegacyDashboardDialog';
 
 import styles from './DashboardRow.module.scss';
 
@@ -42,6 +45,11 @@ function DashboardRow({
 	const markViewed = useDashboardViewsStore((s) => s.markViewed);
 	const { togglePin, isUpdating } = usePinDashboard();
 
+	const [isLegacyDialogOpen, setIsLegacyDialogOpen] = useState(false);
+
+	// A legacy dashboard is stored in the pre-v2 shape and has no v2 spec, so it
+	// can't be opened in the new experience — clicking it explains this instead.
+	const isLegacy = !!dashboard.legacy;
 	const isPinned = !!dashboard.pinned;
 	const id = dashboard.id;
 	const name = dashboard.spec?.display?.name ?? '';
@@ -67,9 +75,17 @@ function DashboardRow({
 			return;
 		}
 		event.stopPropagation();
+		if (isLegacy) {
+			setIsLegacyDialogOpen(true);
+			void logEvent('Dashboard List: Clicked on legacy dashboard', {
+				dashboardId: id,
+				dashboardName: name,
+			});
+			return;
+		}
 		markViewed(id);
 		safeNavigate(link, { newTab: isModifierKeyPressed(event) });
-		logEvent('Dashboard List: Clicked on dashboard', {
+		void logEvent('Dashboard List: Clicked on dashboard', {
 			dashboardId: id,
 			dashboardName: name,
 		});
@@ -77,8 +93,16 @@ function DashboardRow({
 
 	const onTogglePin = (event: React.MouseEvent<HTMLElement>): void => {
 		event.stopPropagation();
+		if (isLegacy) {
+			return;
+		}
 		togglePin(id, isPinned);
 	};
+
+	const pinLabel = isPinned ? 'Unpin dashboard' : 'Pin dashboard';
+	const pinTooltip = isLegacy
+		? "This dashboard isn't available in the new experience, so it can't be pinned"
+		: pinLabel;
 
 	// Only long titles are truncated, so only they need the full-name tooltip;
 	// wrapping conditionally avoids an empty hanging tooltip for short names.
@@ -95,120 +119,144 @@ function DashboardRow({
 	);
 
 	return (
-		<div className={styles.row} onClick={onClickHandler}>
-			<div className={styles.titleWithAction}>
-				<div className={styles.titleBlock}>
-					{name.length > 50 ? (
-						<TooltipSimple title={name} side="bottom" disableHoverableContent>
-							{titleLink}
+		<>
+			<div className={styles.row} onClick={onClickHandler}>
+				<div className={styles.titleWithAction}>
+					<div className={styles.titleBlock}>
+						{name.length > 50 ? (
+							<TooltipSimple title={name} side="bottom" disableHoverableContent>
+								{titleLink}
+							</TooltipSimple>
+						) : (
+							titleLink
+						)}
+						{isLegacy && (
+							<Badge
+								color="amber"
+								variant="outline"
+								className={styles.legacyBadge}
+								testId={`dashboard-legacy-${index}`}
+							>
+								Legacy
+							</Badge>
+						)}
+					</div>
+
+					<div className={styles.tagsWithActions}>
+						{tags.length > 0 && (
+							<div className={styles.tags}>
+								{tags.slice(0, 3).map((tag) => (
+									<TagBadge key={tag}>{tag}</TagBadge>
+								))}
+								{tags.length > 3 && (
+									<TagBadge key={tags[3]}>+{tags.length - 3}</TagBadge>
+								)}
+							</div>
+						)}
+					</div>
+
+					{isLocked && (
+						<TooltipSimple
+							title="This dashboard is locked"
+							side="top"
+							disableHoverableContent
+						>
+							<span
+								className={styles.lockIcon}
+								data-testid={`dashboard-lock-${index}`}
+							>
+								<LockKeyhole size={14} />
+							</span>
 						</TooltipSimple>
-					) : (
-						titleLink
 					)}
-				</div>
 
-				<div className={styles.tagsWithActions}>
-					{tags.length > 0 && (
-						<div className={styles.tags}>
-							{tags.slice(0, 3).map((tag) => (
-								<TagBadge key={tag}>{tag}</TagBadge>
-							))}
-							{tags.length > 3 && (
-								<TagBadge key={tags[3]}>+{tags.length - 3}</TagBadge>
-							)}
-						</div>
-					)}
-				</div>
-
-				{isLocked && (
-					<TooltipSimple
-						title="This dashboard is locked"
-						side="top"
-						disableHoverableContent
-					>
-						<span className={styles.lockIcon} data-testid={`dashboard-lock-${index}`}>
-							<LockKeyhole size={14} />
+					<TooltipSimple title={pinTooltip} side="top" disableHoverableContent>
+						<span className={styles.pinButtonWrap}>
+							<Button
+								type="button"
+								variant="ghost"
+								color="secondary"
+								size="icon"
+								className={cx(styles.pinButton, {
+									[styles.pinButtonOn]: isPinned && !isLegacy,
+								})}
+								aria-label={pinLabel}
+								data-testid={`dashboard-pin-${index}`}
+								disabled={isUpdating || isLegacy}
+								onClick={onTogglePin}
+							>
+								{isPinned ? (
+									<>
+										<Pin size={14} className={styles.pinnedIcon} />
+										<PinOff size={14} className={styles.unpinIcon} />
+									</>
+								) : (
+									<Pin size={14} />
+								)}
+							</Button>
 						</span>
 					</TooltipSimple>
-				)}
 
-				<TooltipSimple
-					title={isPinned ? 'Unpin dashboard' : 'Pin dashboard'}
-					side="top"
-					disableHoverableContent
-				>
-					<Button
-						type="button"
-						variant="ghost"
-						color="secondary"
-						size="icon"
-						className={cx(styles.pinButton, { [styles.pinButtonOn]: isPinned })}
-						aria-label={isPinned ? 'Unpin dashboard' : 'Pin dashboard'}
-						data-testid={`dashboard-pin-${index}`}
-						disabled={isUpdating}
-						onClick={onTogglePin}
-					>
-						{isPinned ? (
-							<>
-								<Pin size={14} className={styles.pinnedIcon} />
-								<PinOff size={14} className={styles.unpinIcon} />
-							</>
-						) : (
-							<Pin size={14} />
-						)}
-					</Button>
-				</TooltipSimple>
-
-				<ActionsPopover
-					link={link}
-					dashboardId={id}
-					dashboardName={name}
-					createdBy={createdBy}
-					isLocked={isLocked}
-					tags={tags}
-					canEdit={canEdit}
-					onView={onClickHandler}
-				/>
-			</div>
-			<div className={styles.details}>
-				<div className={styles.createdAt}>
-					<CalendarClock size={14} />
-					<Typography.Text>{formattedCreatedAt}</Typography.Text>
+					<ActionsPopover
+						link={link}
+						dashboardId={id}
+						dashboardName={name}
+						createdBy={createdBy}
+						isLocked={isLocked}
+						tags={tags}
+						canEdit={canEdit}
+						onView={onClickHandler}
+						isLegacy={isLegacy}
+					/>
 				</div>
-
-				{createdBy && (
-					<div className={styles.createdBy}>
-						<div className={styles.avatar}>
-							<Typography.Text className={styles.avatarText}>
-								{createdBy.substring(0, 1).toUpperCase()}
-							</Typography.Text>
-						</div>
-						<Typography.Text className={styles.byLabel}>{createdBy}</Typography.Text>
-					</div>
-				)}
-
-				{showUpdatedAt && (
+				<div className={styles.details}>
 					<div className={styles.createdAt}>
 						<CalendarClock size={14} />
-						<Typography.Text>{lastUpdatedLabel(updatedAt)}</Typography.Text>
+						<Typography.Text>{formattedCreatedAt}</Typography.Text>
 					</div>
-				)}
 
-				{updatedBy && showUpdatedBy && (
-					<div className={styles.updatedBy}>
-						<Typography.Text className={styles.byLabel}>
-							Last Updated By -
-						</Typography.Text>
-						<div className={styles.avatar}>
-							<Typography.Text className={styles.avatarText}>
-								{updatedBy.substring(0, 1).toUpperCase()}
-							</Typography.Text>
+					{createdBy && (
+						<div className={styles.createdBy}>
+							<div className={styles.avatar}>
+								<Typography.Text className={styles.avatarText}>
+									{createdBy.substring(0, 1).toUpperCase()}
+								</Typography.Text>
+							</div>
+							<Typography.Text className={styles.byLabel}>{createdBy}</Typography.Text>
 						</div>
-						<Typography.Text className={styles.byLabel}>{updatedBy}</Typography.Text>
-					</div>
-				)}
+					)}
+
+					{showUpdatedAt && (
+						<div className={styles.createdAt}>
+							<CalendarClock size={14} />
+							<Typography.Text>{lastUpdatedLabel(updatedAt)}</Typography.Text>
+						</div>
+					)}
+
+					{updatedBy && showUpdatedBy && (
+						<div className={styles.updatedBy}>
+							<Typography.Text className={styles.byLabel}>
+								Last Updated By -
+							</Typography.Text>
+							<div className={styles.avatar}>
+								<Typography.Text className={styles.avatarText}>
+									{updatedBy.substring(0, 1).toUpperCase()}
+								</Typography.Text>
+							</div>
+							<Typography.Text className={styles.byLabel}>{updatedBy}</Typography.Text>
+						</div>
+					)}
+				</div>
 			</div>
-		</div>
+			{isLegacy && (
+				<LegacyDashboardDialog
+					open={isLegacyDialogOpen}
+					dashboardId={id}
+					dashboardName={name}
+					onClose={(): void => setIsLegacyDialogOpen(false)}
+				/>
+			)}
+		</>
 	);
 }
 
