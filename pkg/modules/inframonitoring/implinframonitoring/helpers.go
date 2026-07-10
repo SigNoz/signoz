@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
+	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -763,6 +764,20 @@ func (m *module) getMetadata(
 	return result, nil
 }
 
+// countAttrIdentityTuples maps a counted attr to the full label tuple that
+// uniquely identifies its entity, so uniqExact counts real entities rather than
+// bare names (namespace-scoped workloads with the same name across namespaces,
+// or cluster-scoped nodes/namespaces across clusters, would otherwise collapse).
+// Attrs absent from this map are counted on their bare name.
+var countAttrIdentityTuples = map[string][]string{
+	inframonitoringtypes.NamespaceNameAttrKey:   {inframonitoringtypes.ClusterNameAttrKey, inframonitoringtypes.NamespaceNameAttrKey},
+	inframonitoringtypes.NodeNameAttrKey:        {inframonitoringtypes.ClusterNameAttrKey, inframonitoringtypes.NodeNameAttrKey},
+	inframonitoringtypes.DeploymentNameAttrKey:  {inframonitoringtypes.ClusterNameAttrKey, inframonitoringtypes.NamespaceNameAttrKey, inframonitoringtypes.DeploymentNameAttrKey},
+	inframonitoringtypes.DaemonSetNameAttrKey:   {inframonitoringtypes.ClusterNameAttrKey, inframonitoringtypes.NamespaceNameAttrKey, inframonitoringtypes.DaemonSetNameAttrKey},
+	inframonitoringtypes.JobNameAttrKey:         {inframonitoringtypes.ClusterNameAttrKey, inframonitoringtypes.NamespaceNameAttrKey, inframonitoringtypes.JobNameAttrKey},
+	inframonitoringtypes.StatefulSetNameAttrKey: {inframonitoringtypes.ClusterNameAttrKey, inframonitoringtypes.NamespaceNameAttrKey, inframonitoringtypes.StatefulSetNameAttrKey},
+}
+
 // getPerGroupDistinctCounts returns, per groupBy combination, the exact distinct
 // count of each attr in attrNames within the time range and metric universe.
 // It mirrors getMetadata: fingerprints come from the samples table, labels are
@@ -822,8 +837,21 @@ func (m *module) getPerGroupDistinctCounts(
 	for _, attr := range attrNames {
 		// Guard on != '' so a series missing the attr isn't counted as one empty value.
 		extract := fmt.Sprintf("JSONExtractString(labels, %s)", sb.Var(attr))
+
+		// Count on the entity's full identity tuple where one is defined, so
+		// same-named entities in different scopes (e.g. workloads sharing a name
+		// across namespaces) aren't collapsed. Falls back to the bare name.
+		valueExpr := extract
+		if tuple, ok := countAttrIdentityTuples[attr]; ok {
+			parts := make([]string, len(tuple))
+			for i, col := range tuple {
+				parts[i] = fmt.Sprintf("JSONExtractString(labels, %s)", sb.Var(col))
+			}
+			valueExpr = fmt.Sprintf("(%s)", strings.Join(parts, ", "))
+		}
+
 		selectCols = append(selectCols,
-			fmt.Sprintf("uniqExactIf(%s, %s != '') AS %s", extract, extract, quoteIdentifier(attr)),
+			fmt.Sprintf("uniqExactIf(%s, %s != '') AS %s", valueExpr, extract, quoteIdentifier(attr)),
 		)
 	}
 	sb.Select(selectCols...)
