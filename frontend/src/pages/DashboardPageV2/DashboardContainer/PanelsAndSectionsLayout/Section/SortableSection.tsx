@@ -7,11 +7,13 @@ import Section from './Section/Section';
 interface SortableSectionProps {
 	section: DashboardSection;
 	sections: DashboardSection[];
+	enablePanelDrag?: boolean;
 }
 
 function SortableSection({
 	section,
 	sections,
+	enablePanelDrag,
 }: SortableSectionProps): JSX.Element {
 	const {
 		attributes,
@@ -38,6 +40,7 @@ function SortableSection({
 			<Section
 				section={section}
 				sections={sections}
+				enablePanelDrag={enablePanelDrag}
 				dragHandle={{ attributes, listeners, setActivatorNodeRef }}
 			/>
 		</div>
