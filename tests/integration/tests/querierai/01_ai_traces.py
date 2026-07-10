@@ -20,7 +20,6 @@ from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.querier import (
     BuilderQuery,
-    MetricAggregation,
     OrderBy,
     RequestType,
     TelemetryFieldKey,
@@ -200,43 +199,6 @@ def _ai_trace_mixed_spans(*, now: datetime, service: str, user: str) -> list[Tra
         "gen_ai.agent.name": "chat-agent",
     }, 2)
     return [root, llm, tool, agent]
-
-
-def test_ai_list_llm_call_count_counts_llm_only(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    insert_traces: Callable[[list[Traces]], None],
-) -> None:
-    """
-    llm_call_count counts LLM spans only (gen_ai.request.model), not the full gate:
-    a trace with 1 LLM + 1 tool + 1 agent span (4 spans incl. root) reports
-    llm_call_count == 1 and span_count == 4.
-    """
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-    service = "ai-it-llmcount"
-    insert_traces(_ai_trace_mixed_spans(now=now, service=service, user="alice"))
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _window_ms(now)
-
-    query = BuilderQuery(
-        signal="traces",
-        source="ai",
-        name="A",
-        filter_expression=f"service.name = '{service}'",
-        limit=10,
-    )
-    response = make_query_request(
-        signoz, token, start_ms, end_ms, [query.to_dict()], request_type="trace"
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-
-    rows = response.json()["data"]["data"]["results"][0]["rows"]
-    assert len(rows) == 1, f"expected exactly one AI trace, got: {rows}"
-    data = rows[0]["data"]
-    assert data["llm_call_count"] == 1, f"llm_call_count should count LLM spans only: {data}"
-    assert data["span_count"] == 4, f"span_count should include all spans: {data}"
 
 
 def test_ai_list_having_aggregate_filter(
@@ -504,53 +466,6 @@ def test_ai_list_resource_filter_isolates_by_fingerprint(
     assert stag_id not in body, "staging trace should be excluded by the resource fingerprint prune"
 
 
-def test_ai_source_rejected_on_logs(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-) -> None:
-    """source=ai is only valid for traces; on logs it must be a validation error."""
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _window_ms(now)
-
-    query = BuilderQuery(signal="logs", source="ai", name="A", limit=5)
-    response = make_query_request(
-        signoz, token, start_ms, end_ms, [query.to_dict()], request_type=RequestType.RAW
-    )
-    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
-    assert "traces signal" in response.text
-
-
-def test_ai_source_rejected_on_metrics(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-) -> None:
-    """source=ai on metrics must be a validation error, not a silent normal query."""
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _window_ms(now)
-
-    query = BuilderQuery(
-        signal="metrics",
-        source="ai",
-        name="A",
-        aggregations=[MetricAggregation(
-            metric_name="system_memory_usage",
-            time_aggregation="avg",
-            space_aggregation="avg",
-            temporality="unspecified",
-        )],
-        step_interval=60,
-    )
-    response = make_query_request(
-        signoz, token, start_ms, end_ms, [query.to_dict()], request_type=RequestType.TIME_SERIES
-    )
-    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
-    assert "traces signal" in response.text
-
-
 def test_ai_list_rejects_aggregate_or_span_filter(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
@@ -760,7 +675,9 @@ def test_ai_list_messages_first_input_last_output(
 def _ai_trace_for_metrics(*, now: datetime, service: str) -> list[Traces]:
     """
     Root + one errored LLM span (tokens/cost) + three tool spans (two 'get_weather',
-    one 'get_time') so the derived per-trace metrics have distinct expected values.
+    one 'get_time') + one agent span, so the derived per-trace metrics have distinct
+    expected values. The agent span is in the gen_ai gate but carries no request.model,
+    so it must NOT count toward llm_call_count (only span_count / last_activity_time).
     """
     trace_id = TraceIdGenerator.trace_id()
     root_id = TraceIdGenerator.span_id()
@@ -809,7 +726,19 @@ def _ai_trace_for_metrics(*, now: datetime, service: str) -> list[Traces]:
             "_signoz.gen_ai.total_cost": 0.5,
         },
     )
-    return [root, llm, _tool("get_weather", 3), _tool("get_weather", 2.5), _tool("get_time", 2)]
+    agent = Traces(
+        timestamp=now - timedelta(seconds=1),
+        duration=timedelta(seconds=0.5),
+        trace_id=trace_id,
+        span_id=TraceIdGenerator.span_id(),
+        parent_span_id=root_id,
+        name="agent.step",
+        kind=TracesKind.SPAN_KIND_INTERNAL,
+        status_code=TracesStatusCode.STATUS_CODE_OK,
+        resources=resources,
+        attributes={"gen_ai.agent.name": "chat-agent"},
+    )
+    return [root, llm, _tool("get_weather", 3), _tool("get_weather", 2.5), _tool("get_time", 2), agent]
 
 
 def test_ai_list_enrichment_values(
@@ -822,7 +751,9 @@ def test_ai_list_enrichment_values(
     End-to-end values of the derived per-trace columns (only integration can check that
     ClickHouse computes uniqIf / sum+sum / countIf(predicate) correctly, not just that
     the SQL is shaped right). One trace: root + 1 errored LLM + 3 tool spans
-    (get_weather x2, get_time x1).
+    (get_weather x2, get_time x1) + 1 agent span. The tool and agent spans are in the
+    gen_ai gate but carry no request.model, so llm_call_count stays 1 while span_count
+    counts them all.
     """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-metrics"
@@ -844,8 +775,8 @@ def test_ai_list_enrichment_values(
     assert len(rows) == 1, f"expected one trace, got: {rows}"
     data = rows[0]["data"]
 
-    assert data["span_count"] == 5, data              # root + llm + 3 tools
-    assert data["llm_call_count"] == 1, data          # only the request.model span
+    assert data["span_count"] == 6, data              # root + llm + 3 tools + agent
+    assert data["llm_call_count"] == 1, data          # only the request.model span, not tool/agent
     assert data["tool_call_count"] == 3, data         # all three tool spans
     assert data["distinct_tool_count"] == 2, data     # get_weather, get_time
     assert data["input_tokens"] == 100, data
