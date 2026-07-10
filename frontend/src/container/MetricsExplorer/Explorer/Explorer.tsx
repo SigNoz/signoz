@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import * as Sentry from '@sentry/react';
@@ -77,23 +77,20 @@ function Explorer(): JSX.Element {
 		}
 	}, [isLoadingQueries]);
 
-	const handleCancelQuery = useCallback(() => {
+	const handleCancelQuery = (): void => {
 		queryClient.cancelQueries([REACT_QUERY_KEY.GET_QUERY_RANGE]);
 		setIsCancelled(true);
-	}, [queryClient]);
+	};
 
-	const metricNames = useMemo(() => {
-		const currentMetricNames: string[] = [];
-		stagedQuery?.builder.queryData.forEach((query) => {
-			const metricName =
-				query.aggregateAttribute?.key ||
-				(query.aggregations?.[0] as MetricAggregation | undefined)?.metricName;
-			if (metricName) {
-				currentMetricNames.push(metricName);
-			}
-		});
-		return currentMetricNames;
-	}, [stagedQuery]);
+	const metricNames: string[] = [];
+	stagedQuery?.builder.queryData.forEach((query) => {
+		const metricName =
+			query.aggregateAttribute?.key ||
+			(query.aggregations?.[0] as MetricAggregation | undefined)?.metricName;
+		if (metricName) {
+			metricNames.push(metricName);
+		}
+	});
 
 	const {
 		metrics,
@@ -186,42 +183,36 @@ function Explorer(): JSX.Element {
 		});
 	};
 
-	const defaultQuery = useMemo(
-		() =>
-			updateAllQueriesOperators(
-				initialQueriesMap[DataSource.METRICS],
-				PANEL_TYPES.TIME_SERIES,
-				DataSource.METRICS,
-			),
-		[updateAllQueriesOperators],
+	const defaultQuery = updateAllQueriesOperators(
+		initialQueriesMap[DataSource.METRICS],
+		PANEL_TYPES.TIME_SERIES,
+		DataSource.METRICS,
 	);
 
-	const exportDefaultQuery = useMemo(() => {
-		const query = updateAllQueriesOperators(
-			currentQuery || initialQueriesMap[DataSource.METRICS],
-			PANEL_TYPES.TIME_SERIES,
-			DataSource.METRICS,
-		);
-		if (yAxisUnit && !query.unit) {
-			return {
-				...query,
-				unit: yAxisUnit,
-			};
-		}
-		return query;
-	}, [currentQuery, updateAllQueriesOperators, yAxisUnit]);
+	const exportQuery = updateAllQueriesOperators(
+		currentQuery || initialQueriesMap[DataSource.METRICS],
+		PANEL_TYPES.TIME_SERIES,
+		DataSource.METRICS,
+	);
+	const exportDefaultQuery =
+		yAxisUnit && !exportQuery.unit
+			? {
+					...exportQuery,
+					unit: yAxisUnit,
+				}
+			: exportQuery;
 
 	useShareBuilderUrl({ defaultValue: defaultQuery });
 
-	const handleChangeSelectedView = useCallback(
-		(view: ExplorerViews, querySearchParameters?: ICurrentQueryData): void => {
-			const nextPanelType =
-				explorerViewToPanelType[view] || PANEL_TYPES.TIME_SERIES;
-			handleSetConfig(nextPanelType, DataSource.METRICS);
-			handleExplorerTabChange(nextPanelType, querySearchParameters);
-		},
-		[handleSetConfig, handleExplorerTabChange],
-	);
+	const handleChangeSelectedView = (
+		view: ExplorerViews,
+		querySearchParameters?: ICurrentQueryData,
+	): void => {
+		const nextPanelType =
+			explorerViewToPanelType[view] || PANEL_TYPES.TIME_SERIES;
+		handleSetConfig(nextPanelType, DataSource.METRICS);
+		handleExplorerTabChange(nextPanelType, querySearchParameters);
+	};
 
 	// ─── AI Assistant page actions (only when license feature is on) ───────────
 	const aiActions = useMemo(
@@ -258,46 +249,39 @@ function Explorer(): JSX.Element {
 	usePageActions('metrics-explorer', aiActions);
 	// ───────────────────────────────────────────────────────────────────────────
 
-	const handleExport = useCallback(
-		(
-			dashboard: Dashboard | null,
-			_isNewDashboard?: boolean,
-			queryToExport?: Query,
-		): void => {
-			if (!dashboard) {
-				return;
-			}
+	const handleExport = (
+		dashboard: Dashboard | null,
+		_isNewDashboard?: boolean,
+		queryToExport?: Query,
+	): void => {
+		if (!dashboard) {
+			return;
+		}
 
-			const widgetId = uuid();
+		const widgetId = uuid();
 
-			let query = queryToExport || exportDefaultQuery;
-			if (yAxisUnit && !query.unit) {
-				query = {
-					...query,
-					unit: yAxisUnit,
-				};
-			}
+		let query = queryToExport || exportDefaultQuery;
+		if (yAxisUnit && !query.unit) {
+			query = {
+				...query,
+				unit: yAxisUnit,
+			};
+		}
 
-			const dashboardEditView = generateExportToDashboardLink({
-				query,
-				panelType: PANEL_TYPES.TIME_SERIES,
-				dashboardId: dashboard.id,
-				widgetId,
-			});
+		const dashboardEditView = generateExportToDashboardLink({
+			query,
+			panelType: PANEL_TYPES.TIME_SERIES,
+			dashboardId: dashboard.id,
+			widgetId,
+		});
 
-			safeNavigate(dashboardEditView);
-		},
-		[exportDefaultQuery, safeNavigate, yAxisUnit],
-	);
+		safeNavigate(dashboardEditView);
+	};
 
-	const splitedQueries = useMemo(
-		() =>
-			splitQueryIntoOneChartPerQuery(
-				stagedQuery || initialQueriesMap[DataSource.METRICS],
-				metricNames,
-				units,
-			),
-		[stagedQuery, metricNames, units],
+	const splitedQueries = splitQueryIntoOneChartPerQuery(
+		stagedQuery || initialQueriesMap[DataSource.METRICS],
+		metricNames,
+		units,
 	);
 
 	const [selectedMetricName, setSelectedMetricName] = useState<string | null>(
@@ -320,33 +304,27 @@ function Explorer(): JSX.Element {
 		});
 	}, []);
 
-	const queryComponents = useMemo(
-		(): QueryBuilderProps['queryComponents'] => ({}),
-		[],
-	);
+	const queryComponents: QueryBuilderProps['queryComponents'] = {};
 
 	const [warning, setWarning] = useState<Warning | undefined>();
 
-	const oneChartPerQueryDisabledTooltip = useMemo(() => {
-		if (splitedQueries.length <= 1) {
-			return 'One chart per query cannot be toggled for a single query.';
-		}
-		if (units.length <= 1) {
-			return 'One chart per query cannot be toggled when there is only one metric.';
-		}
-		if (disableOneChartPerQuery) {
-			return 'One chart per query cannot be disabled for multiple queries with different units.';
-		}
-		return;
-	}, [disableOneChartPerQuery, splitedQueries.length, units.length]);
+	let oneChartPerQueryDisabledTooltip: string | undefined;
+	if (splitedQueries.length <= 1) {
+		oneChartPerQueryDisabledTooltip =
+			'One chart per query cannot be toggled for a single query.';
+	} else if (units.length <= 1) {
+		oneChartPerQueryDisabledTooltip =
+			'One chart per query cannot be toggled when there is only one metric.';
+	} else if (disableOneChartPerQuery) {
+		oneChartPerQueryDisabledTooltip =
+			'One chart per query cannot be disabled for multiple queries with different units.';
+	}
 
 	// Show the y axis unit selector if -
 	// 1. There is only one metric
 	// 2. The metric has no saved unit
-	const showYAxisUnitSelector = useMemo(
-		() => !isMetricUnitsLoading && units.length === 1 && !units[0],
-		[units, isMetricUnitsLoading],
-	);
+	const showYAxisUnitSelector =
+		!isMetricUnitsLoading && units.length === 1 && !units[0];
 
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>

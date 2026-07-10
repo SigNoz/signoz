@@ -11,7 +11,7 @@ import { LegendPosition } from 'lib/uPlotV2/components/types';
 import { DrawStyle } from 'lib/uPlotV2/config/types';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { useTimezone } from 'providers/Timezone';
-import { useMemo, useRef } from 'react';
+import { useRef } from 'react';
 
 import { buildVolumeChartPayload } from '../../chartUtils';
 import styles from './VolumeControlChart.module.scss';
@@ -35,36 +35,30 @@ function VolumeControlChart({ enabled }: VolumeControlChartProps): JSX.Element {
 	const graphRef = useRef<HTMLDivElement>(null);
 	const dimensions = useResizeObserver(graphRef);
 
-	const payload = useMemo(
-		() => buildVolumeChartPayload(data?.data).payload,
-		[data],
-	);
-	const chartData = useMemo(() => getUPlotChartData(payload), [payload]);
+	const payload = buildVolumeChartPayload(data?.data).payload;
+	const chartData = getUPlotChartData(payload);
 
-	const config = useMemo(() => {
-		const timestamps = (chartData[0] as number[]) ?? [];
-		const builder = buildBaseConfig({
-			id: 'metric-volume-control',
+	const timestamps = (chartData[0] as number[]) ?? [];
+	const config = buildBaseConfig({
+		id: 'metric-volume-control',
+		isDarkMode,
+		apiResponse: payload,
+		timezone,
+		panelType: PANEL_TYPES.BAR,
+		yAxisUnit: 'short',
+		onDragSelect: (): void => {},
+		minTimeScale: timestamps[0],
+		maxTimeScale: timestamps[timestamps.length - 1],
+	});
+	(payload.data.result ?? []).forEach((series) => {
+		config.addSeries({
+			scaleKey: 'y',
+			drawStyle: DrawStyle.Bar,
+			label: series.legend ?? series.queryName,
+			colorMapping: COLOR_MAPPING,
 			isDarkMode,
-			apiResponse: payload,
-			timezone,
-			panelType: PANEL_TYPES.BAR,
-			yAxisUnit: 'short',
-			onDragSelect: (): void => {},
-			minTimeScale: timestamps[0],
-			maxTimeScale: timestamps[timestamps.length - 1],
 		});
-		(payload.data.result ?? []).forEach((series) => {
-			builder.addSeries({
-				scaleKey: 'y',
-				drawStyle: DrawStyle.Bar,
-				label: series.legend ?? series.queryName,
-				colorMapping: COLOR_MAPPING,
-				isDarkMode,
-			});
-		});
-		return builder;
-	}, [payload, chartData, isDarkMode, timezone]);
+	});
 
 	return (
 		<div className={styles.chart} data-testid="volume-control-chart">

@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { Button, Card } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { ArrowRight } from '@signozhq/icons';
@@ -19,28 +18,21 @@ function GraphPopover({
 		timeSeries: null,
 	};
 
-	const closestTimestamp = useMemo(() => {
-		if (!timeSeries) {
-			return timestamp;
-		}
-		return timeSeries?.values.reduce((prev, curr) => {
+	let closestTimestamp = timestamp;
+	let closestValue: string | number | null = value;
+
+	if (timeSeries) {
+		closestTimestamp = timeSeries.values.reduce((prev, curr) => {
 			const prevDiff = Math.abs(prev.timestamp - timestamp);
 			const currDiff = Math.abs(curr.timestamp - timestamp);
 			return prevDiff < currDiff ? prev : curr;
 		}).timestamp;
-	}, [timeSeries, timestamp]);
-
-	const closestValue = useMemo(() => {
-		if (!timeSeries) {
-			return value;
-		}
 		const index = timeSeries.values.findIndex(
-			(value) => value.timestamp === closestTimestamp,
+			(entry) => entry.timestamp === closestTimestamp,
 		);
-		return index !== undefined && index >= 0
-			? timeSeries?.values[index].value
-			: null;
-	}, [timeSeries, closestTimestamp, value]);
+		closestValue =
+			index !== undefined && index >= 0 ? timeSeries.values[index].value : null;
+	}
 
 	return (
 		<div

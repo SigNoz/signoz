@@ -1,5 +1,5 @@
 /* eslint-disable sonarjs/no-identical-functions */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import type { TableColumnsType as ColumnsType } from 'antd';
 import { Card, Tooltip } from 'antd';
@@ -62,88 +62,64 @@ function ExpandedView({
 		}
 	}, [step, options?.timeSeries]);
 
-	const spaceAggregatedData = useMemo(() => {
-		if (
-			!options?.timeSeries ||
-			!options?.timestamp ||
-			step !== InspectionStep.COMPLETED
-		) {
-			return [];
-		}
-		return getSpaceAggregatedDataFromTimeSeries(
-			options?.timeSeries,
-			spaceAggregationSeriesMap,
-			options?.timestamp,
-			true,
-		);
-	}, [options?.timeSeries, options?.timestamp, spaceAggregationSeriesMap, step]);
+	const spaceAggregatedData =
+		!options?.timeSeries ||
+		!options?.timestamp ||
+		step !== InspectionStep.COMPLETED
+			? []
+			: getSpaceAggregatedDataFromTimeSeries(
+					options.timeSeries,
+					spaceAggregationSeriesMap,
+					options.timestamp,
+					true,
+				);
 
-	const rawData = useMemo(() => {
-		if (!selectedTimeSeries || !options?.timestamp) {
-			return [];
-		}
-		return getRawDataFromTimeSeries(selectedTimeSeries, options?.timestamp, true);
-	}, [selectedTimeSeries, options?.timestamp]);
+	const rawData =
+		!selectedTimeSeries || !options?.timestamp
+			? []
+			: getRawDataFromTimeSeries(selectedTimeSeries, options.timestamp, true);
 
-	const absoluteValue = useMemo(
-		() =>
-			options?.timeSeries?.values.find(
-				(value) => value.timestamp >= options?.timestamp,
-			)?.value ?? options?.value,
-		[options],
-	);
+	const absoluteValue =
+		options?.timeSeries?.values.find(
+			(value) => value.timestamp >= options.timestamp,
+		)?.value ?? options?.value;
 
-	const timeAggregatedData = useMemo(() => {
-		if (step !== InspectionStep.SPACE_AGGREGATION || !options?.timestamp) {
-			return [];
-		}
-		return (
-			timeAggregatedSeriesMap
-				.get(options?.timestamp)
-				?.filter(
-					(popoverData) =>
-						popoverData.title && popoverData.title === options.timeSeries?.title,
-				) ?? []
-		);
-	}, [
-		step,
-		options?.timestamp,
-		options?.timeSeries?.title,
-		timeAggregatedSeriesMap,
-	]);
+	const timeAggregatedData =
+		step !== InspectionStep.SPACE_AGGREGATION || !options?.timestamp
+			? []
+			: (timeAggregatedSeriesMap
+					.get(options.timestamp)
+					?.filter(
+						(popoverData) =>
+							popoverData.title && popoverData.title === options.timeSeries?.title,
+					) ?? []);
 
-	const tableData = useMemo(() => {
-		if (!selectedTimeSeries) {
-			return [];
-		}
-		return Object.entries(selectedTimeSeries.labels).map(([key, value]) => ({
-			label: key,
-			value,
-		}));
-	}, [selectedTimeSeries]);
+	const tableData = !selectedTimeSeries
+		? []
+		: Object.entries(selectedTimeSeries.labels).map(([key, value]) => ({
+				label: key,
+				value,
+			}));
 
-	const columns: ColumnsType<DataType> = useMemo(
-		() => [
-			{
-				title: 'Label',
-				dataIndex: 'label',
-				key: 'label',
-				width: 50,
-				align: 'left',
-				className: 'labels-key',
-			},
-			{
-				title: 'Value',
-				dataIndex: 'value',
-				key: 'value',
-				width: 50,
-				align: 'left',
-				ellipsis: true,
-				className: 'labels-value',
-			},
-		],
-		[],
-	);
+	const columns: ColumnsType<DataType> = [
+		{
+			title: 'Label',
+			dataIndex: 'label',
+			key: 'label',
+			width: 50,
+			align: 'left',
+			className: 'labels-key',
+		},
+		{
+			title: 'Value',
+			dataIndex: 'value',
+			key: 'value',
+			width: 50,
+			align: 'left',
+			ellipsis: true,
+			className: 'labels-value',
+		},
+	];
 
 	return (
 		<div className="expanded-view">

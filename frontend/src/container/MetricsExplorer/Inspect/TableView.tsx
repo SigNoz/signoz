@@ -1,4 +1,3 @@
-import { useCallback, useMemo } from 'react';
 import type { TableColumnsType as ColumnsType } from 'antd';
 import { Card, Flex, Table } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
@@ -14,21 +13,15 @@ function TableView({
 	isInspectMetricsRefetching,
 	metricInspectionAppliedOptions,
 }: TableViewProps): JSX.Element {
-	const isSpaceAggregatedWithoutLabel = useMemo(
-		() =>
-			!!metricInspectionAppliedOptions.spaceAggregationOption &&
-			metricInspectionAppliedOptions.spaceAggregationLabels.length === 0,
-		[metricInspectionAppliedOptions],
-	);
-	const labelKeys = useMemo(() => {
-		if (isSpaceAggregatedWithoutLabel) {
-			return [];
-		}
-		if (inspectMetricsTimeSeries.length > 0) {
-			return Object.keys(inspectMetricsTimeSeries[0].labels);
-		}
-		return [];
-	}, [inspectMetricsTimeSeries, isSpaceAggregatedWithoutLabel]);
+	const isSpaceAggregatedWithoutLabel =
+		!!metricInspectionAppliedOptions.spaceAggregationOption &&
+		metricInspectionAppliedOptions.spaceAggregationLabels.length === 0;
+
+	const labelKeys = isSpaceAggregatedWithoutLabel
+		? []
+		: inspectMetricsTimeSeries.length > 0
+			? Object.keys(inspectMetricsTimeSeries[0].labels)
+			: [];
 
 	const getDynamicColumnStyle = (strokeColor?: string): React.CSSProperties => {
 		const style: React.CSSProperties = {
@@ -43,83 +36,75 @@ function TableView({
 		return style;
 	};
 
-	const columns = useMemo(
-		() => [
-			...labelKeys.map((label) => ({
-				title: label,
-				dataIndex: label,
-				align: 'left',
-				render: (text: string): JSX.Element => (
-					<div style={getDynamicColumnStyle()}>{text}</div>
-				),
-			})),
-			{
-				title: 'Values',
-				dataIndex: 'values',
-				align: 'left',
-				sticky: 'right',
-			},
-		],
-		[labelKeys],
-	);
-	const openExpandedView = useCallback(
-		(series: InspectMetricsSeries, value: string, timestamp: number): void => {
-			setShowExpandedView(true);
-			setExpandedViewOptions({
-				x: timestamp,
-				y: Number(value),
-				value: Number(value),
-				timestamp,
-				timeSeries: series,
-			});
+	const columns = [
+		...labelKeys.map((label) => ({
+			title: label,
+			dataIndex: label,
+			align: 'left' as const,
+			render: (text: string): JSX.Element => (
+				<div style={getDynamicColumnStyle()}>{text}</div>
+			),
+		})),
+		{
+			title: 'Values',
+			dataIndex: 'values',
+			align: 'left' as const,
+			sticky: 'right' as const,
 		},
-		[setShowExpandedView, setExpandedViewOptions],
-	);
+	];
 
-	const dataSource = useMemo(
-		() =>
-			inspectMetricsTimeSeries.map((series, index) => {
-				const labelData = labelKeys.reduce(
-					(acc, label) => {
-						acc[label] = (
-							<div style={getDynamicColumnStyle(series.strokeColor)}>
-								{series.labels[label]}
-							</div>
-						);
-						return acc;
-					},
-					{} as Record<string, JSX.Element>,
-				);
+	const openExpandedView = (
+		series: InspectMetricsSeries,
+		value: string,
+		timestamp: number,
+	): void => {
+		setShowExpandedView(true);
+		setExpandedViewOptions({
+			x: timestamp,
+			y: Number(value),
+			value: Number(value),
+			timestamp,
+			timeSeries: series,
+		});
+	};
 
-				return {
-					key: index,
-					...labelData,
-					values: (
-						<div className="table-view-values-header">
-							<Flex gap={8}>
-								{series.values.map((value) => {
-									const formattedValue = `(${formatTimestampToFullDateTime(
-										value.timestamp,
-										true,
-									)}, ${value.value})`;
-									return (
-										<Card
-											key={formattedValue}
-											onClick={(): void =>
-												openExpandedView(series, value.value, value.timestamp)
-											}
-										>
-											<Typography.Text>{formattedValue}</Typography.Text>
-										</Card>
-									);
-								})}
-							</Flex>
-						</div>
-					),
-				};
-			}),
-		[inspectMetricsTimeSeries, labelKeys, openExpandedView],
-	);
+	const dataSource = inspectMetricsTimeSeries.map((series, index) => {
+		const labelData: Record<string, JSX.Element> = {};
+		for (const label of labelKeys) {
+			labelData[label] = (
+				<div style={getDynamicColumnStyle(series.strokeColor)}>
+					{series.labels[label]}
+				</div>
+			);
+		}
+
+		return {
+			key: index,
+			...labelData,
+			values: (
+				<div className="table-view-values-header">
+					<Flex gap={8}>
+						{series.values.map((value) => {
+							const formattedValue = `(${formatTimestampToFullDateTime(
+								value.timestamp,
+								true,
+							)}, ${value.value})`;
+							return (
+								<Card
+									key={formattedValue}
+									onClick={(): void =>
+										openExpandedView(series, value.value, value.timestamp)
+									}
+								>
+									<Typography.Text>{formattedValue}</Typography.Text>
+								</Card>
+							);
+						})}
+					</Flex>
+				</div>
+			),
+		};
+	});
 
 	return (
 		<Table

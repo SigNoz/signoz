@@ -15,7 +15,7 @@ import {
 import dayjs from 'dayjs';
 import { useVolumeControlFeatureGate } from 'hooks/metricsExplorer/useVolumeControlFeatureGate';
 import useDebounce from 'hooks/useDebounce';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { formatCompact } from '../../configUtils';
 import { getLabelVerb, getMatchTypeLabel } from '../../ruleUtils';
@@ -81,210 +81,204 @@ function VolumeControlTab(): JSX.Element {
 	const rules = data?.data.rules ?? [];
 	const total = data?.data.total ?? 0;
 
-	const sortOrderFor = useCallback(
-		(
-			key: MetricreductionruletypesReductionRuleOrderByDTO,
-		): 'ascend' | 'descend' | undefined => {
-			if (params.orderBy !== key) {
-				return undefined;
-			}
-			return params.order === SortOrder.desc ? 'descend' : 'ascend';
-		},
-		[params],
-	);
+	const sortOrderFor = (
+		key: MetricreductionruletypesReductionRuleOrderByDTO,
+	): 'ascend' | 'descend' | undefined => {
+		if (params.orderBy !== key) {
+			return undefined;
+		}
+		return params.order === SortOrder.desc ? 'descend' : 'ascend';
+	};
 
 	const columns: TableColumnsType<MetricreductionruletypesGettableReductionRuleDTO> =
-		useMemo(
-			() => [
-				{
-					title: 'METRIC',
-					dataIndex: 'metricName',
-					key: OrderBy.metric,
-					sorter: true,
-					sortOrder: sortOrderFor(OrderBy.metric),
-					render: (metricName: string): JSX.Element => (
-						<Typography.Text size="small" className={styles.metricNameCell}>
-							{metricName}
-						</Typography.Text>
-					),
-				},
-				{
-					title: 'STATUS',
-					key: 'status',
-					width: 130,
-					render: (
-						_value: unknown,
-						rule: MetricreductionruletypesGettableReductionRuleDTO,
-					): JSX.Element => <VolumeControlBadge rule={rule} />,
-				},
-				{
-					title: 'MODE',
-					key: 'mode',
-					width: 110,
-					render: (
-						_value: unknown,
-						rule: MetricreductionruletypesGettableReductionRuleDTO,
-					): JSX.Element => (
-						<Typography.Text size="small">
-							{getMatchTypeLabel(rule.matchType)}
-						</Typography.Text>
-					),
-				},
-				{
-					title: 'ATTRIBUTES',
-					key: 'attributes',
-					render: (
-						_value: unknown,
-						rule: MetricreductionruletypesGettableReductionRuleDTO,
-					): JSX.Element => (
-						<Typography.Text
-							size="small"
-							color="muted"
-							className={styles.attributesCell}
-						>
-							{getLabelVerb(rule.matchType)} {(rule.labels ?? []).join(', ') || '—'}
-						</Typography.Text>
-					),
-				},
-				{
-					title: (
-						<>
-							INGESTED{' '}
-							<Typography.Text size="small" color="muted">
-								(1h)
-							</Typography.Text>
-						</>
-					),
-					key: OrderBy.ingested_volume,
-					width: 130,
-					sorter: true,
-					sortOrder: sortOrderFor(OrderBy.ingested_volume),
-					render: (
-						_value: unknown,
-						rule: MetricreductionruletypesGettableReductionRuleDTO,
-					): JSX.Element => (
-						<div className={styles.volumeCell}>
-							<Typography.Text size="small">
-								{formatCompact(rule.ingestedSeries)}{' '}
-								<Typography.Text size="small" color="muted">
-									series
-								</Typography.Text>
-							</Typography.Text>
-							<Typography.Text size="small" color="muted">
-								{formatCompact(rule.ingestedSamples)} samples
-							</Typography.Text>
-						</div>
-					),
-				},
-				{
-					title: (
-						<>
-							RETAINED{' '}
-							<Typography.Text size="small" color="muted">
-								(1h)
-							</Typography.Text>
-						</>
-					),
-					key: OrderBy.reduced_volume,
-					width: 130,
-					sorter: true,
-					sortOrder: sortOrderFor(OrderBy.reduced_volume),
-					render: (
-						_value: unknown,
-						rule: MetricreductionruletypesGettableReductionRuleDTO,
-					): JSX.Element => (
-						<div className={styles.volumeCell}>
-							<Typography.Text size="small">
-								{formatCompact(rule.retainedSeries)}{' '}
-								<Typography.Text size="small" color="muted">
-									series
-								</Typography.Text>
-							</Typography.Text>
-							<Typography.Text size="small" color="muted">
-								{formatCompact(rule.retainedSamples)} samples
-							</Typography.Text>
-						</div>
-					),
-				},
-				{
-					title: 'CHANGE',
-					width: 140,
-					render: (
-						_value: unknown,
-						rule: MetricreductionruletypesGettableReductionRuleDTO,
-					): JSX.Element => {
-						const seriesReduction =
-							rule.ingestedSeries > 0
-								? (1 - rule.retainedSeries / rule.ingestedSeries) * 100
-								: 0;
-						const samplesReduction =
-							rule.ingestedSamples > 0
-								? (1 - rule.retainedSamples / rule.ingestedSamples) * 100
-								: 0;
-						if (seriesReduction <= 0 && samplesReduction <= 0) {
-							return (
-								<Typography.Text size="small" color="muted">
-									—
-								</Typography.Text>
-							);
-						}
-						return (
-							<div className={styles.volumeCell}>
-								<Typography.Text size="small" weight="semibold" color="success">
-									{seriesReduction > 0 ? `−${Math.round(seriesReduction)}%` : '0%'}{' '}
-									<Typography.Text size="small" color="muted">
-										series
-									</Typography.Text>
-								</Typography.Text>
-								<Typography.Text size="small" color="muted">
-									{samplesReduction > 0 ? `−${Math.round(samplesReduction)}%` : '0%'}{' '}
-									samples
-								</Typography.Text>
-							</div>
-						);
-					},
-				},
-				{
-					title: 'LAST CONFIGURED',
-					key: OrderBy.last_updated,
-					width: 240,
-					sorter: true,
-					sortOrder: sortOrderFor(OrderBy.last_updated),
-					render: (
-						_value: unknown,
-						rule: MetricreductionruletypesGettableReductionRuleDTO,
-					): JSX.Element => (
+		[
+			{
+				title: 'METRIC',
+				dataIndex: 'metricName',
+				key: OrderBy.metric,
+				sorter: true,
+				sortOrder: sortOrderFor(OrderBy.metric),
+				render: (metricName: string): JSX.Element => (
+					<Typography.Text size="small" className={styles.metricNameCell}>
+						{metricName}
+					</Typography.Text>
+				),
+			},
+			{
+				title: 'STATUS',
+				key: 'status',
+				width: 130,
+				render: (
+					_value: unknown,
+					rule: MetricreductionruletypesGettableReductionRuleDTO,
+				): JSX.Element => <VolumeControlBadge rule={rule} />,
+			},
+			{
+				title: 'MODE',
+				key: 'mode',
+				width: 110,
+				render: (
+					_value: unknown,
+					rule: MetricreductionruletypesGettableReductionRuleDTO,
+				): JSX.Element => (
+					<Typography.Text size="small">
+						{getMatchTypeLabel(rule.matchType)}
+					</Typography.Text>
+				),
+			},
+			{
+				title: 'ATTRIBUTES',
+				key: 'attributes',
+				render: (
+					_value: unknown,
+					rule: MetricreductionruletypesGettableReductionRuleDTO,
+				): JSX.Element => (
+					<Typography.Text
+						size="small"
+						color="muted"
+						className={styles.attributesCell}
+					>
+						{getLabelVerb(rule.matchType)} {(rule.labels ?? []).join(', ') || '—'}
+					</Typography.Text>
+				),
+			},
+			{
+				title: (
+					<>
+						INGESTED{' '}
 						<Typography.Text size="small" color="muted">
-							{dayjs(rule.updatedAt).format('MMM D, YYYY · h:mm A')}
-							{rule.updatedBy ? ` · ${rule.updatedBy}` : ''}
+							(1h)
 						</Typography.Text>
-					),
+					</>
+				),
+				key: OrderBy.ingested_volume,
+				width: 130,
+				sorter: true,
+				sortOrder: sortOrderFor(OrderBy.ingested_volume),
+				render: (
+					_value: unknown,
+					rule: MetricreductionruletypesGettableReductionRuleDTO,
+				): JSX.Element => (
+					<div className={styles.volumeCell}>
+						<Typography.Text size="small">
+							{formatCompact(rule.ingestedSeries)}{' '}
+							<Typography.Text size="small" color="muted">
+								series
+							</Typography.Text>
+						</Typography.Text>
+						<Typography.Text size="small" color="muted">
+							{formatCompact(rule.ingestedSamples)} samples
+						</Typography.Text>
+					</div>
+				),
+			},
+			{
+				title: (
+					<>
+						RETAINED{' '}
+						<Typography.Text size="small" color="muted">
+							(1h)
+						</Typography.Text>
+					</>
+				),
+				key: OrderBy.reduced_volume,
+				width: 130,
+				sorter: true,
+				sortOrder: sortOrderFor(OrderBy.reduced_volume),
+				render: (
+					_value: unknown,
+					rule: MetricreductionruletypesGettableReductionRuleDTO,
+				): JSX.Element => (
+					<div className={styles.volumeCell}>
+						<Typography.Text size="small">
+							{formatCompact(rule.retainedSeries)}{' '}
+							<Typography.Text size="small" color="muted">
+								series
+							</Typography.Text>
+						</Typography.Text>
+						<Typography.Text size="small" color="muted">
+							{formatCompact(rule.retainedSamples)} samples
+						</Typography.Text>
+					</div>
+				),
+			},
+			{
+				title: 'CHANGE',
+				width: 140,
+				render: (
+					_value: unknown,
+					rule: MetricreductionruletypesGettableReductionRuleDTO,
+				): JSX.Element => {
+					const seriesReduction =
+						rule.ingestedSeries > 0
+							? (1 - rule.retainedSeries / rule.ingestedSeries) * 100
+							: 0;
+					const samplesReduction =
+						rule.ingestedSamples > 0
+							? (1 - rule.retainedSamples / rule.ingestedSamples) * 100
+							: 0;
+					if (seriesReduction <= 0 && samplesReduction <= 0) {
+						return (
+							<Typography.Text size="small" color="muted">
+								—
+							</Typography.Text>
+						);
+					}
+					return (
+						<div className={styles.volumeCell}>
+							<Typography.Text size="small" weight="semibold" color="success">
+								{seriesReduction > 0 ? `−${Math.round(seriesReduction)}%` : '0%'}{' '}
+								<Typography.Text size="small" color="muted">
+									series
+								</Typography.Text>
+							</Typography.Text>
+							<Typography.Text size="small" color="muted">
+								{samplesReduction > 0 ? `−${Math.round(samplesReduction)}%` : '0%'}{' '}
+								samples
+							</Typography.Text>
+						</div>
+					);
 				},
-				...(canManageVolumeControl
-					? ([
-							{
-								title: '',
-								key: 'action',
-								width: 110,
-								render: (
-									_value: unknown,
-									rule: MetricreductionruletypesGettableReductionRuleDTO,
-								): JSX.Element => (
-									<Button
-										variant="ghost"
-										color="secondary"
-										onClick={(): void => setSelectedRule(rule)}
-										data-testid={`volume-control-manage-${rule.metricName}`}
-									>
-										Manage
-									</Button>
-								),
-							},
-						] as TableColumnsType<MetricreductionruletypesGettableReductionRuleDTO>)
-					: []),
-			],
-			[canManageVolumeControl, sortOrderFor],
-		);
+			},
+			{
+				title: 'LAST CONFIGURED',
+				key: OrderBy.last_updated,
+				width: 240,
+				sorter: true,
+				sortOrder: sortOrderFor(OrderBy.last_updated),
+				render: (
+					_value: unknown,
+					rule: MetricreductionruletypesGettableReductionRuleDTO,
+				): JSX.Element => (
+					<Typography.Text size="small" color="muted">
+						{dayjs(rule.updatedAt).format('MMM D, YYYY · h:mm A')}
+						{rule.updatedBy ? ` · ${rule.updatedBy}` : ''}
+					</Typography.Text>
+				),
+			},
+			...(canManageVolumeControl
+				? ([
+						{
+							title: '',
+							key: 'action',
+							width: 110,
+							render: (
+								_value: unknown,
+								rule: MetricreductionruletypesGettableReductionRuleDTO,
+							): JSX.Element => (
+								<Button
+									variant="ghost"
+									color="secondary"
+									onClick={(): void => setSelectedRule(rule)}
+									data-testid={`volume-control-manage-${rule.metricName}`}
+								>
+									Manage
+								</Button>
+							),
+						},
+					] as TableColumnsType<MetricreductionruletypesGettableReductionRuleDTO>)
+				: []),
+		];
 
 	const handleTableChange: TableProps<MetricreductionruletypesGettableReductionRuleDTO>['onChange'] =
 		(pagination, _filters, sorter): void => {

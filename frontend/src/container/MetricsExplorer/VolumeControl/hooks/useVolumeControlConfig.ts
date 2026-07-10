@@ -12,7 +12,7 @@ import {
 	MetricreductionruletypesGettableReductionRulePreviewDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { useNotifications } from 'hooks/useNotifications';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQueryClient } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
@@ -63,7 +63,7 @@ export function useVolumeControlConfig({
 		(state) => state.globalTime,
 	);
 
-	const initial = useMemo(() => modeFromRule(existingRule), [existingRule]);
+	const initial = modeFromRule(existingRule);
 	const [mode, setMode] = useState<RuleMode>(initial.mode);
 	const [labels, setLabels] = useState<string[]>(initial.labels);
 
@@ -77,9 +77,8 @@ export function useVolumeControlConfig({
 		},
 		{ query: { enabled: open && !!metricName } },
 	);
-	const attributeKeys = useMemo(
-		() => (attributesQuery.data?.data.attributes ?? []).map((attr) => attr.key),
-		[attributesQuery.data],
+	const attributeKeys = (attributesQuery.data?.data.attributes ?? []).map(
+		(attr) => attr.key,
 	);
 
 	const previewMutation = usePreviewMetricReductionRule();
@@ -120,12 +119,12 @@ export function useVolumeControlConfig({
 	const updateMutation = useUpdateMetricReductionRuleByID();
 	const deleteMutation = useDeleteMetricReductionRuleByID();
 
-	const invalidate = useCallback((): void => {
+	const invalidate = (): void => {
 		void invalidateListMetricReductionRules(queryClient);
 		void invalidateListMetrics(queryClient);
-	}, [queryClient]);
+	};
 
-	const removeRule = useCallback((): void => {
+	const removeRule = (): void => {
 		if (!existingRuleId) {
 			onClose();
 			return;
@@ -144,9 +143,9 @@ export function useVolumeControlConfig({
 					}),
 			},
 		);
-	}, [deleteMutation, existingRuleId, notifications, invalidate, onClose]);
+	};
 
-	const save = useCallback((): void => {
+	const save = (): void => {
 		if (mode === 'all') {
 			if (!existingRuleId) {
 				onClose();
@@ -194,18 +193,7 @@ export function useVolumeControlConfig({
 					}),
 			},
 		);
-	}, [
-		mode,
-		labels,
-		metricName,
-		existingRuleId,
-		createMutation,
-		updateMutation,
-		removeRule,
-		notifications,
-		invalidate,
-		onClose,
-	]);
+	};
 
 	return {
 		mode,

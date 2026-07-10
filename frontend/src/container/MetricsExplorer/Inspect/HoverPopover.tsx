@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { Card } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 
@@ -37,49 +36,42 @@ function HoverPopover({
 	step: InspectionStep;
 	metricInspectionAppliedOptions: MetricInspectionOptions;
 }): JSX.Element {
-	const closestTimestamp = useMemo(() => {
-		if (!options.timeSeries) {
-			return options.timestamp;
-		}
-		return options.timeSeries?.values.reduce((prev, curr) => {
+	let closestTimestamp = options.timestamp;
+	let closestValue: string | number | null = options.value;
+
+	if (options.timeSeries) {
+		closestTimestamp = options.timeSeries.values.reduce((prev, curr) => {
 			const prevDiff = Math.abs(prev.timestamp - options.timestamp);
 			const currDiff = Math.abs(curr.timestamp - options.timestamp);
 			return prevDiff < currDiff ? prev : curr;
 		}).timestamp;
-	}, [options.timeSeries, options.timestamp]);
-
-	const closestValue = useMemo(() => {
-		if (!options.timeSeries) {
-			return options.value;
-		}
 		const index = options.timeSeries.values.findIndex(
-			(value) => value.timestamp === closestTimestamp,
+			(entry) => entry.timestamp === closestTimestamp,
 		);
-		return index !== undefined && index >= 0
-			? options.timeSeries?.values[index].value
-			: null;
-	}, [options.timeSeries, closestTimestamp, options.value]);
+		closestValue =
+			index !== undefined && index >= 0
+				? options.timeSeries.values[index].value
+				: null;
+	}
 
-	const title = useMemo(() => {
-		if (
-			step === InspectionStep.COMPLETED &&
-			metricInspectionAppliedOptions.spaceAggregationLabels.length === 0
-		) {
-			return undefined;
-		}
-		if (step === InspectionStep.COMPLETED && options.timeSeries?.title) {
-			return options.timeSeries.title;
-		}
-		if (!options.timeSeries) {
-			return undefined;
-		}
-		return (
+	let title: JSX.Element | string | undefined;
+	if (
+		step === InspectionStep.COMPLETED &&
+		metricInspectionAppliedOptions.spaceAggregationLabels.length === 0
+	) {
+		title = undefined;
+	} else if (step === InspectionStep.COMPLETED && options.timeSeries?.title) {
+		title = options.timeSeries.title;
+	} else if (!options.timeSeries) {
+		title = undefined;
+	} else {
+		title = (
 			<TimeSeriesLabel
 				timeSeries={options.timeSeries}
 				textColor={options.timeSeries?.strokeColor}
 			/>
 		);
-	}, [step, options.timeSeries, metricInspectionAppliedOptions]);
+	}
 
 	return (
 		<Card

@@ -1,5 +1,5 @@
 /* eslint-disable no-nested-ternary */
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux'; // old code, TODO: fix this correctly
 import { useSearchParams } from 'react-router-dom-v5-compat';
@@ -71,12 +71,9 @@ function Summary(): JSX.Element {
 
 	useShareBuilderUrl({ defaultValue: initialQueriesMap[DataSource.METRICS] });
 
-	const query = useMemo(
-		() =>
-			stagedQuery?.builder?.queryData?.[0] ||
-			initialQueriesMap[DataSource.METRICS].builder.queryData[0],
-		[stagedQuery],
-	);
+	const query =
+		stagedQuery?.builder?.queryData?.[0] ||
+		initialQueriesMap[DataSource.METRICS].builder.queryData[0];
 
 	const [searchParams, setSearchParams] = useSearchParams();
 	const [isMetricDetailsOpen, setIsMetricDetailsOpen] = useState(
@@ -104,10 +101,7 @@ function Summary(): JSX.Element {
 		setCurrentQueryFilterExpression(appliedFilterExpression);
 	}, [appliedFilterExpression]);
 
-	const queryFilterExpression = useMemo(
-		() => ({ expression: appliedFilterExpression }),
-		[appliedFilterExpression],
-	);
+	const queryFilterExpression = { expression: appliedFilterExpression };
 
 	useEffect(() => {
 		logEvent(MetricsExplorerEvents.TabChanged, {
@@ -172,15 +166,9 @@ function Summary(): JSX.Element {
 		reset: resetMetricsTreemap,
 	} = useGetMetricsTreemap();
 
-	const metricsStatsApiError = useMemo(
-		() => convertToApiError(metricsStatsError),
-		[metricsStatsError],
-	);
+	const metricsStatsApiError = convertToApiError(metricsStatsError);
 
-	const metricsTreemapApiError = useMemo(
-		() => convertToApiError(metricsTreemapError),
-		[metricsTreemapError],
-	);
+	const metricsTreemapApiError = convertToApiError(metricsTreemapError);
 
 	useEffect(() => {
 		getMetricsStats({
@@ -194,19 +182,14 @@ function Summary(): JSX.Element {
 		});
 	}, [metricsTreemapQuery, getMetricsTreemap]);
 
-	const handleCancelQuery = useCallback(() => {
+	const handleCancelQuery = (): void => {
 		resetMetricsStats();
 		resetMetricsTreemap();
 		setCurrentQueryFilterExpression(appliedFilterExpression);
 		setIsCancelled(true);
-	}, [
-		resetMetricsStats,
-		resetMetricsTreemap,
-		setCurrentQueryFilterExpression,
-		appliedFilterExpression,
-	]);
+	};
 
-	const handleRunQuery = useCallback(() => {
+	const handleRunQuery = (): void => {
 		setIsCancelled(false);
 		getMetricsStats({
 			data: {
@@ -220,44 +203,35 @@ function Summary(): JSX.Element {
 				filter: { expression: currentQueryFilterExpression },
 			},
 		});
-	}, [
-		getMetricsStats,
-		getMetricsTreemap,
-		metricsListQuery,
-		metricsTreemapQuery,
-		currentQueryFilterExpression,
-	]);
+	};
 
-	const handleFilterChange = useCallback(
-		(expression: string) => {
-			const newFilters: TagFilter = {
-				items: convertExpressionToFilters(expression),
-				op: 'AND',
-			};
-			redirectWithQueryBuilderData({
-				...currentQuery,
-				builder: {
-					...currentQuery.builder,
-					queryData: [
-						{
-							...currentQuery.builder.queryData[0],
-							filters: newFilters,
-							filter: {
-								expression,
-							},
+	const handleFilterChange = (expression: string): void => {
+		const newFilters: TagFilter = {
+			items: convertExpressionToFilters(expression),
+			op: 'AND',
+		};
+		redirectWithQueryBuilderData({
+			...currentQuery,
+			builder: {
+				...currentQuery.builder,
+				queryData: [
+					{
+						...currentQuery.builder.queryData[0],
+						filters: newFilters,
+						filter: {
+							expression,
 						},
-					],
-				},
+					},
+				],
+			},
+		});
+		setCurrentPage(1);
+		if (expression) {
+			logEvent(MetricsExplorerEvents.FilterApplied, {
+				[MetricsExplorerEventKeys.Tab]: 'summary',
 			});
-			setCurrentPage(1);
-			if (expression) {
-				logEvent(MetricsExplorerEvents.FilterApplied, {
-					[MetricsExplorerEventKeys.Tab]: 'summary',
-				});
-			}
-		},
-		[currentQuery, redirectWithQueryBuilderData],
-	);
+		}
+	};
 
 	const onPaginationChange = (page: number, pageSize: number): void => {
 		setCurrentPage(page);
@@ -272,9 +246,8 @@ function Summary(): JSX.Element {
 		});
 	};
 
-	const formattedMetricsData = useMemo(
-		() => formatDataForMetricsTable(metricsData?.data.metrics || []),
-		[metricsData],
+	const formattedMetricsData = formatDataForMetricsTable(
+		metricsData?.data.metrics || [],
 	);
 
 	const openMetricDetails = (

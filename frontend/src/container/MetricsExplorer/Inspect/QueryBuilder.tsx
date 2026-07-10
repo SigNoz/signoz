@@ -1,4 +1,3 @@
-import { useCallback } from 'react';
 import { Button, Card } from 'antd';
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
 import { Atom } from '@signozhq/icons';
@@ -24,18 +23,13 @@ function QueryBuilder({
 	handleCancelQuery,
 	onRunQuery,
 }: QueryBuilderProps): JSX.Element {
-	const applyInspectionOptions = useCallback(() => {
+	const applyInspectionOptions = (): void => {
 		onRunQuery?.();
 		setAppliedMetricName(currentMetricName ?? '');
 		dispatchMetricInspectionOptions({
 			type: 'APPLY_METRIC_INSPECTION_OPTIONS',
 		});
-	}, [
-		currentMetricName,
-		setAppliedMetricName,
-		dispatchMetricInspectionOptions,
-		onRunQuery,
-	]);
+	};
 
 	return (
 		<div className="inspect-metrics-query-builder">

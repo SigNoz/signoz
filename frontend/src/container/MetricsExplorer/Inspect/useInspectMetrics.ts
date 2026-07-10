@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
+import { useEffect, useMemo, useReducer, useState } from 'react';
 import { useQuery } from 'react-query';
 import { inspectMetrics } from 'api/generated/services/metrics';
 import { isAxiosError } from 'axios';
@@ -138,26 +138,23 @@ export function useInspectMetrics(
 		},
 	});
 
-	const inspectMetricsData = useMemo(
-		() => ({
-			series: (inspectMetricsResponse?.data?.series ?? []).map((s) => {
-				const labels: Record<string, string> = {};
-				for (const l of s.labels ?? []) {
-					if (l.key?.name) {
-						labels[l.key.name] = String(l.value ?? '');
-					}
+	const inspectMetricsData = {
+		series: (inspectMetricsResponse?.data?.series ?? []).map((s) => {
+			const labels: Record<string, string> = {};
+			for (const l of s.labels ?? []) {
+				if (l.key?.name) {
+					labels[l.key.name] = String(l.value ?? '');
 				}
-				return {
-					labels,
-					values: (s.values ?? []).map((v) => ({
-						timestamp: v.timestamp ?? 0,
-						value: String(v.value ?? 0),
-					})),
-				};
-			}) as InspectMetricsSeries[],
-		}),
-		[inspectMetricsResponse],
-	);
+			}
+			return {
+				labels,
+				values: (s.values ?? []).map((v) => ({
+					timestamp: v.timestamp ?? 0,
+					value: String(v.value ?? 0),
+				})),
+			};
+		}) as InspectMetricsSeries[],
+	};
 	const isDarkMode = useIsDarkMode();
 
 	const inspectMetricsTimeSeries = useMemo(() => {
@@ -179,31 +176,25 @@ export function useInspectMetrics(
 	}, [inspectMetricsData, isDarkMode]);
 
 	// Evaluate inspection step
-	const currentInspectionStep = useMemo(() => {
-		if (metricInspectionOptions.currentOptions.spaceAggregationOption) {
-			return InspectionStep.COMPLETED;
-		}
-		if (
-			metricInspectionOptions.currentOptions.timeAggregationOption &&
-			metricInspectionOptions.currentOptions.timeAggregationInterval
-		) {
-			return InspectionStep.SPACE_AGGREGATION;
-		}
-		return InspectionStep.TIME_AGGREGATION;
-	}, [metricInspectionOptions]);
+	let currentInspectionStep = InspectionStep.TIME_AGGREGATION;
+	if (metricInspectionOptions.currentOptions.spaceAggregationOption) {
+		currentInspectionStep = InspectionStep.COMPLETED;
+	} else if (
+		metricInspectionOptions.currentOptions.timeAggregationOption &&
+		metricInspectionOptions.currentOptions.timeAggregationInterval
+	) {
+		currentInspectionStep = InspectionStep.SPACE_AGGREGATION;
+	}
 
-	const appliedInspectionStep = useMemo(() => {
-		if (metricInspectionOptions.appliedOptions.spaceAggregationOption) {
-			return InspectionStep.COMPLETED;
-		}
-		if (
-			metricInspectionOptions.appliedOptions.timeAggregationOption &&
-			metricInspectionOptions.appliedOptions.timeAggregationInterval
-		) {
-			return InspectionStep.SPACE_AGGREGATION;
-		}
-		return InspectionStep.TIME_AGGREGATION;
-	}, [metricInspectionOptions]);
+	let appliedInspectionStep = InspectionStep.TIME_AGGREGATION;
+	if (metricInspectionOptions.appliedOptions.spaceAggregationOption) {
+		appliedInspectionStep = InspectionStep.COMPLETED;
+	} else if (
+		metricInspectionOptions.appliedOptions.timeAggregationOption &&
+		metricInspectionOptions.appliedOptions.timeAggregationInterval
+	) {
+		appliedInspectionStep = InspectionStep.SPACE_AGGREGATION;
+	}
 
 	const [spaceAggregatedSeriesMap, setSpaceAggregatedSeriesMap] = useState<
 		Map<string, InspectMetricsSeries[]>
@@ -264,24 +255,22 @@ export function useInspectMetrics(
 		return rawData.map((series) => new Float64Array(series));
 	}, [inspectMetricsTimeSeries, appliedInspectionStep, metricInspectionOptions]);
 
-	const spaceAggregationLabels = useMemo(() => {
-		const labels = new Set<string>();
-		inspectMetricsData?.series?.forEach((series) => {
-			Object.keys(series.labels).forEach((label) => {
-				labels.add(label);
-			});
+	const labels = new Set<string>();
+	inspectMetricsData?.series?.forEach((series) => {
+		Object.keys(series.labels).forEach((label) => {
+			labels.add(label);
 		});
-		return [...labels];
-	}, [inspectMetricsData]);
+	});
+	const spaceAggregationLabels = [...labels];
 
-	const reset = useCallback(() => {
+	const reset = (): void => {
 		dispatchMetricInspectionOptions({
 			type: 'RESET_INSPECTION',
 		});
 		setSpaceAggregatedSeriesMap(new Map());
 		setTimeAggregatedSeriesMap(new Map());
 		setAggregatedTimeSeries(inspectMetricsTimeSeries);
-	}, [dispatchMetricInspectionOptions, inspectMetricsTimeSeries]);
+	};
 
 	return {
 		inspectMetricsTimeSeries,

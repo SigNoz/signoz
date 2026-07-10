@@ -1,4 +1,3 @@
-import { useCallback } from 'react';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
@@ -13,31 +12,28 @@ function MetricFilters({
 	currentQuery,
 	setCurrentQuery,
 }: MetricFiltersProps): JSX.Element {
-	const handleOnChange = useCallback(
-		(expression: string): void => {
-			logEvent(MetricsExplorerEvents.FilterApplied, {
-				[MetricsExplorerEventKeys.Modal]: 'inspect',
-			});
-			const tagFilter = {
-				items: convertExpressionToFilters(expression),
-				op: 'AND',
-			};
-			setCurrentQuery({
-				...currentQuery,
-				filters: tagFilter,
-				filter: {
-					...currentQuery.filter,
-					expression,
-				},
+	const handleOnChange = (expression: string): void => {
+		logEvent(MetricsExplorerEvents.FilterApplied, {
+			[MetricsExplorerEventKeys.Modal]: 'inspect',
+		});
+		const tagFilter = {
+			items: convertExpressionToFilters(expression),
+			op: 'AND',
+		};
+		setCurrentQuery({
+			...currentQuery,
+			filters: tagFilter,
+			filter: {
+				...currentQuery.filter,
 				expression,
-			});
-			dispatchMetricInspectionOptions({
-				type: 'SET_FILTERS',
-				payload: expression,
-			});
-		},
-		[currentQuery, dispatchMetricInspectionOptions, setCurrentQuery],
-	);
+			},
+			expression,
+		});
+		dispatchMetricInspectionOptions({
+			type: 'SET_FILTERS',
+			payload: expression,
+		});
+	};
 
 	return (
 		<div

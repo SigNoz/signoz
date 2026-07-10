@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
 	Button,
 	Empty,
@@ -69,151 +69,119 @@ function MetricNameSearch({
 		},
 	);
 
-	const handleSelect = useCallback(
-		(selectedMetricName: string): void => {
-			const queryFilters = convertExpressionToFilters(
-				queryFilterExpression.expression,
-			);
-			const newFilters = {
-				items: [
-					...queryFilters,
-					{
+	const handleSelect = (selectedMetricName: string): void => {
+		const queryFilters = convertExpressionToFilters(
+			queryFilterExpression.expression,
+		);
+		const newFilters = {
+			items: [
+				...queryFilters,
+				{
+					id: 'metric_name',
+					op: 'CONTAINS',
+					key: {
 						id: 'metric_name',
-						op: 'CONTAINS',
-						key: {
-							id: 'metric_name',
-							key: 'metric_name',
-							type: 'tag',
-						},
-						value: selectedMetricName,
+						key: 'metric_name',
+						type: 'tag',
 					},
-				],
-				op: 'and',
-			};
-			const newFilterExpression = convertFiltersToExpression(newFilters);
-			onFilterChange(newFilterExpression.expression);
-			setIsPopoverOpen(false);
-		},
-		[queryFilterExpression, onFilterChange],
-	);
+					value: selectedMetricName,
+				},
+			],
+			op: 'and',
+		};
+		const newFilterExpression = convertFiltersToExpression(newFilters);
+		onFilterChange(newFilterExpression.expression);
+		setIsPopoverOpen(false);
+	};
 
-	const metricNameFilterValues = useMemo(
-		() => metricNameListData?.data?.metrics?.map((m) => m.metricName) || [],
-		[metricNameListData],
-	);
+	const metricNameFilterValues =
+		metricNameListData?.data?.metrics?.map((m) => m.metricName) || [];
 
-	const handleKeyDown = useCallback(
-		(event: React.KeyboardEvent<HTMLInputElement>) => {
-			if (!isPopoverOpen) {
-				return;
+	const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>): void => {
+		if (!isPopoverOpen) {
+			return;
+		}
+
+		if (event.key === 'ArrowDown') {
+			event.preventDefault();
+			setHighlightedIndex((prev) => {
+				const nextIndex = prev < metricNameFilterValues.length - 1 ? prev + 1 : 0;
+				menuRef.current?.focus();
+				return nextIndex;
+			});
+		} else if (event.key === 'ArrowUp') {
+			event.preventDefault();
+			setHighlightedIndex((prev) => {
+				const prevIndex = prev > 0 ? prev - 1 : metricNameFilterValues.length - 1;
+				menuRef.current?.focus();
+				return prevIndex;
+			});
+		} else if (event.key === 'Enter') {
+			event.preventDefault();
+			if (highlightedIndex >= 0 && metricNameFilterValues[highlightedIndex]) {
+				handleSelect(metricNameFilterValues[highlightedIndex]);
+			} else if (highlightedIndex === -1 && searchString) {
+				handleSelect(searchString);
 			}
+		}
+	};
 
-			if (event.key === 'ArrowDown') {
-				event.preventDefault();
-				setHighlightedIndex((prev) => {
-					const nextIndex = prev < metricNameFilterValues.length - 1 ? prev + 1 : 0;
-					menuRef.current?.focus();
-					return nextIndex;
-				});
-			} else if (event.key === 'ArrowUp') {
-				event.preventDefault();
-				setHighlightedIndex((prev) => {
-					const prevIndex = prev > 0 ? prev - 1 : metricNameFilterValues.length - 1;
-					menuRef.current?.focus();
-					return prevIndex;
-				});
-			} else if (event.key === 'Enter') {
-				event.preventDefault();
-				// If there is a highlighted item, select it
-				if (highlightedIndex >= 0 && metricNameFilterValues[highlightedIndex]) {
-					handleSelect(metricNameFilterValues[highlightedIndex]);
-				} else if (highlightedIndex === -1 && searchString) {
-					// If there is no highlighted item and there is a search string, select the search string
-					handleSelect(searchString);
-				}
-			}
-		},
-		[
-			isPopoverOpen,
-			highlightedIndex,
-			metricNameFilterValues,
-			searchString,
-			handleSelect,
-		],
-	);
-
-	const popoverItems = useMemo(() => {
-		const items: JSX.Element[] = [];
-		if (searchString) {
-			items.push(
+	const popoverItems: JSX.Element[] = [];
+	if (searchString) {
+		popoverItems.push(
+			<Menu.Item
+				key={searchString}
+				onClick={(): void => handleSelect(searchString)}
+				className={highlightedIndex === 0 ? 'highlighted' : ''}
+			>
+				{searchString}
+			</Menu.Item>,
+		);
+	}
+	if (isLoadingMetricNameFilterValues) {
+		popoverItems.push(<Spin />);
+	} else if (isErrorMetricNameFilterValues) {
+		popoverItems.push(<Empty description="Error fetching metric names" />);
+	} else if (metricNameFilterValues?.length === 0) {
+		popoverItems.push(<Empty description="No metric names found" />);
+	} else {
+		popoverItems.push(
+			...metricNameFilterValues.map((filterValue, index) => (
 				<Menu.Item
-					key={searchString}
-					onClick={(): void => handleSelect(searchString)}
-					className={highlightedIndex === 0 ? 'highlighted' : ''}
+					key={filterValue}
+					onClick={(): void => handleSelect(filterValue)}
+					className={highlightedIndex === index ? 'highlighted' : ''}
 				>
-					{searchString}
-				</Menu.Item>,
-			);
-		}
-		if (isLoadingMetricNameFilterValues) {
-			items.push(<Spin />);
-		} else if (isErrorMetricNameFilterValues) {
-			items.push(<Empty description="Error fetching metric names" />);
-		} else if (metricNameFilterValues?.length === 0) {
-			items.push(<Empty description="No metric names found" />);
-		} else {
-			items.push(
-				...metricNameFilterValues.map((filterValue, index) => (
-					<Menu.Item
-						key={filterValue}
-						onClick={(): void => handleSelect(filterValue)}
-						className={highlightedIndex === index ? 'highlighted' : ''}
-					>
-						{filterValue}
-					</Menu.Item>
-				)),
-			);
-		}
-		return items;
-	}, [
-		handleSelect,
-		highlightedIndex,
-		isErrorMetricNameFilterValues,
-		isLoadingMetricNameFilterValues,
-		metricNameFilterValues,
-		searchString,
-	]);
+					{filterValue}
+				</Menu.Item>
+			)),
+		);
+	}
 
 	const debouncedUpdate = useDebouncedFn((value) => {
 		setDebouncedSearchString(value as string);
 	}, 400);
 
-	const handleInputChange = useCallback(
-		(e: React.ChangeEvent<HTMLInputElement>): void => {
-			const value = e.target.value.trim();
-			setSearchString(value);
-			debouncedUpdate(value);
-		},
-		[debouncedUpdate],
-	);
+	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+		const value = e.target.value.trim();
+		setSearchString(value);
+		debouncedUpdate(value);
+	};
 
-	const popoverContent = useMemo(
-		() => (
-			<div className="metric-name-search-popover">
-				<Input
-					ref={inputRef}
-					onKeyDown={handleKeyDown}
-					placeholder="Search..."
-					value={searchString}
-					onChange={handleInputChange}
-					bordered
-				/>
-				<Menu ref={menuRef} className="metric-name-search-popover-menu">
-					{popoverItems}
-				</Menu>
-			</div>
-		),
-		[handleKeyDown, searchString, handleInputChange, popoverItems],
+	const popoverContent = (
+		<div className="metric-name-search-popover">
+			<Input
+				ref={inputRef}
+				onKeyDown={handleKeyDown}
+				placeholder="Search..."
+				value={searchString}
+				onChange={handleInputChange}
+				bordered
+			/>
+			<Menu ref={menuRef} className="metric-name-search-popover-menu">
+				{popoverItems}
+			</Menu>
+		</div>
 	);
 
 	useEffect(() => {

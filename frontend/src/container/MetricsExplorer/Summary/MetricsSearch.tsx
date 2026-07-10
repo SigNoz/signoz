@@ -1,4 +1,3 @@
-import { useCallback } from 'react';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
@@ -15,25 +14,19 @@ function MetricsSearch({
 	handleCancelQuery,
 	onRunQuery,
 }: MetricsSearchProps): JSX.Element {
-	const handleOnChange = useCallback(
-		(expression: string): void => {
-			setCurrentQueryFilterExpression(expression);
-		},
-		[setCurrentQueryFilterExpression],
-	);
+	const handleOnChange = (expression: string): void => {
+		setCurrentQueryFilterExpression(expression);
+	};
 
-	const handleStageAndRunQuery = useCallback(() => {
+	const handleStageAndRunQuery = (): void => {
 		onChange(currentQueryFilterExpression);
 		onRunQuery?.();
-	}, [currentQueryFilterExpression, onChange, onRunQuery]);
+	};
 
-	const handleRunQuery = useCallback(
-		(expression: string): void => {
-			setCurrentQueryFilterExpression(expression);
-			onChange(expression);
-		},
-		[setCurrentQueryFilterExpression, onChange],
-	);
+	const handleRunQuery = (expression: string): void => {
+		setCurrentQueryFilterExpression(expression);
+		onChange(expression);
+	};
 
 	return (
 		<div className="metrics-search-container">

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import * as Sentry from '@sentry/react';
 import { Color } from '@signozhq/design-tokens';
@@ -124,30 +124,23 @@ function Inspect({
 	}, [isInspectMetricsLoading, isInspectMetricsRefetching]);
 
 	const queryClient = useQueryClient();
-	const handleCancelInspectQuery = useCallback(() => {
+	const handleCancelInspectQuery = (): void => {
 		queryClient.cancelQueries(REACT_QUERY_KEY.GET_INSPECT_METRICS_DETAILS);
 		setIsCancelled(true);
-	}, [queryClient]);
+	};
 
-	const handleDispatchMetricInspectionOptions = useCallback(
-		(action: MetricInspectionAction): void => {
-			dispatchMetricInspectionOptions(action);
-			logEvent(MetricsExplorerEvents.InspectQueryChanged, {
-				[MetricsExplorerEventKeys.Modal]: 'inspect',
-			});
-		},
-		[dispatchMetricInspectionOptions],
-	);
+	const handleDispatchMetricInspectionOptions = (
+		action: MetricInspectionAction,
+	): void => {
+		dispatchMetricInspectionOptions(action);
+		logEvent(MetricsExplorerEvents.InspectQueryChanged, {
+			[MetricsExplorerEventKeys.Modal]: 'inspect',
+		});
+	};
 
-	const selectedMetricType = useMemo(
-		() => metricDetailsData?.data?.type,
-		[metricDetailsData],
-	);
+	const selectedMetricType = metricDetailsData?.data?.type;
 
-	const selectedMetricUnit = useMemo(
-		() => metricDetailsData?.data?.unit,
-		[metricDetailsData],
-	);
+	const selectedMetricUnit = metricDetailsData?.data?.unit;
 
 	const aggregateAttribute = useMemo(
 		() => ({
@@ -175,13 +168,13 @@ function Inspect({
 		}
 	}, [aggregateAttribute, searchQuery]);
 
-	const resetInspection = useCallback(() => {
+	const resetInspection = (): void => {
 		setShowExpandedView(false);
 		setPopoverOptions(null);
 		setExpandedViewOptions(null);
 		setCurrentQueryData(searchQuery as IBuilderQuery);
 		reset();
-	}, [reset, searchQuery]);
+	};
 
 	// Hide expanded view whenever inspection step changes
 	useEffect(() => {
@@ -189,43 +182,36 @@ function Inspect({
 		setExpandedViewOptions(null);
 	}, [inspectionStep]);
 
-	const chartArea = useMemo(() => {
-		const renderFallback = (testId: string, body: JSX.Element): JSX.Element => (
-			<div data-testid={testId} className="inspect-metrics-fallback">
-				<div className="inspect-metrics-fallback-header-placeholder" />
-				<div className="inspect-metrics-fallback-body">{body}</div>
-			</div>
+	const renderFallback = (testId: string, body: JSX.Element): JSX.Element => (
+		<div data-testid={testId} className="inspect-metrics-fallback">
+			<div className="inspect-metrics-fallback-header-placeholder" />
+			<div className="inspect-metrics-fallback-body">{body}</div>
+		</div>
+	);
+
+	// Cancelled state takes precedence over any react-query state — ensures
+	// the placeholder shows immediately on cancel, regardless of whether
+	// isLoading/isRefetching has settled yet.
+	let chartArea: JSX.Element;
+	if (isCancelled) {
+		chartArea = renderFallback(
+			'inspect-metrics-cancelled',
+			<QueryCancelledPlaceholder subText='Click "Run Query" to see inspect results.' />,
 		);
-
-		// Cancelled state takes precedence over any react-query state — ensures
-		// the placeholder shows immediately on cancel, regardless of whether
-		// isLoading/isRefetching has settled yet.
-		if (isCancelled) {
-			return renderFallback(
-				'inspect-metrics-cancelled',
-				<QueryCancelledPlaceholder subText='Click "Run Query" to see inspect results.' />,
-			);
-		}
-
-		if (isInspectMetricsLoading && !isInspectMetricsRefetching) {
-			return renderFallback('inspect-metrics-loading', <Skeleton active />);
-		}
-
-		if (isInspectMetricsError) {
-			return renderFallback(
-				'inspect-metrics-error',
-				<Empty description="Error loading inspect metrics." />,
-			);
-		}
-
-		if (inspectMetricsTimeSeries.length === 0) {
-			return renderFallback(
-				'inspect-metrics-empty',
-				<Empty description="No time series found for this metric to inspect." />,
-			);
-		}
-
-		return (
+	} else if (isInspectMetricsLoading && !isInspectMetricsRefetching) {
+		chartArea = renderFallback('inspect-metrics-loading', <Skeleton active />);
+	} else if (isInspectMetricsError) {
+		chartArea = renderFallback(
+			'inspect-metrics-error',
+			<Empty description="Error loading inspect metrics." />,
+		);
+	} else if (inspectMetricsTimeSeries.length === 0) {
+		chartArea = renderFallback(
+			'inspect-metrics-empty',
+			<Empty description="No time series found for this metric to inspect." />,
+		);
+	} else {
+		chartArea = (
 			<GraphView
 				inspectMetricsTimeSeries={aggregatedTimeSeries}
 				formattedInspectMetricsTimeSeries={formattedInspectMetricsTimeSeries}
@@ -244,33 +230,7 @@ function Inspect({
 				isInspectMetricsRefetching={isInspectMetricsRefetching}
 			/>
 		);
-	}, [
-		isInspectMetricsLoading,
-		isInspectMetricsRefetching,
-		isInspectMetricsError,
-		isCancelled,
-		inspectMetricsTimeSeries,
-		aggregatedTimeSeries,
-		formattedInspectMetricsTimeSeries,
-		resetInspection,
-		appliedMetricName,
-		selectedMetricUnit,
-		selectedMetricType,
-		spaceAggregationSeriesMap,
-		inspectionStep,
-		showExpandedView,
-		popoverOptions,
-		metricInspectionOptions.appliedOptions,
-		metricInspectionOptions.currentOptions,
-		currentMetricName,
-		setCurrentMetricName,
-		setAppliedMetricName,
-		spaceAggregationLabels,
-		handleDispatchMetricInspectionOptions,
-		currentQueryData,
-		expandedViewOptions,
-		timeAggregatedSeriesMap,
-	]);
+	}
 
 	useEffect(() => {
 		logEvent(MetricsExplorerEvents.ModalOpened, {

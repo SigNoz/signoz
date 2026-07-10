@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Color } from '@signozhq/design-tokens';
@@ -56,28 +56,19 @@ function MetricDetails({
 		},
 	);
 
-	const metadata = useMemo(() => {
-		if (!metricMetadataResponse) {
-			return null;
-		}
-		const { type, description, unit, temporality, isMonotonic } =
-			metricMetadataResponse.data;
+	const metadata = !metricMetadataResponse
+		? null
+		: {
+				type: metricMetadataResponse.data.type,
+				description: metricMetadataResponse.data.description,
+				unit: metricMetadataResponse.data.unit,
+				temporality: metricMetadataResponse.data.temporality,
+				isMonotonic: metricMetadataResponse.data.isMonotonic,
+			};
 
-		return {
-			type,
-			description,
-			unit,
-			temporality,
-			isMonotonic,
-		};
-	}, [metricMetadataResponse]);
+	const showInspectFeature = isInspectEnabled(metadata?.type);
 
-	const showInspectFeature = useMemo(
-		() => isInspectEnabled(metadata?.type),
-		[metadata?.type],
-	);
-
-	const goToMetricsExplorerwithSelectedMetric = useCallback(() => {
+	const goToMetricsExplorerwithSelectedMetric = (): void => {
 		if (metricName) {
 			const compositeQuery = getMetricDetailsQuery(
 				metricName,
@@ -103,12 +94,7 @@ function MetricDetails({
 				[MetricsExplorerEventKeys.Modal]: 'metric-details',
 			});
 		}
-	}, [
-		metricName,
-		handleExplorerTabChange,
-		metadata?.type,
-		metadata?.isMonotonic,
-	]);
+	};
 
 	useEffect(() => {
 		logEvent(MetricsExplorerEvents.ModalOpened, {
@@ -119,20 +105,19 @@ function MetricDetails({
 	const isActionButtonDisabled =
 		!metricName || isLoadingMetricMetadata || isErrorMetricMetadata;
 
-	const handleDrawerClose = useCallback(
-		(e: React.MouseEvent | React.KeyboardEvent): void => {
-			if ('key' in e && e.key === 'Escape') {
-				const openPopover = document.querySelector(
-					'.metric-details-popover:not(.ant-popover-hidden)',
-				);
-				if (openPopover) {
-					return;
-				}
+	const handleDrawerClose = (
+		e: React.MouseEvent | React.KeyboardEvent,
+	): void => {
+		if ('key' in e && e.key === 'Escape') {
+			const openPopover = document.querySelector(
+				'.metric-details-popover:not(.ant-popover-hidden)',
+			);
+			if (openPopover) {
+				return;
 			}
-			onClose();
-		},
-		[onClose],
-	);
+		}
+		onClose();
+	};
 
 	return (
 		<Drawer

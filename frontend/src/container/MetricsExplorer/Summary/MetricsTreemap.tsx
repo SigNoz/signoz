@@ -1,4 +1,3 @@
-import { useCallback, useMemo } from 'react';
 import { useWindowSize } from 'react-use';
 import { Group } from '@visx/group';
 import { Treemap } from '@visx/hierarchy';
@@ -36,22 +35,16 @@ function MetricsTreemapInternal({
 }: MetricsTreemapInternalProps): JSX.Element {
 	const { width: windowWidth } = useWindowSize();
 
-	const treemapWidth = useMemo(
-		() =>
-			Math.max(
-				windowWidth - TREEMAP_MARGINS.LEFT - TREEMAP_MARGINS.RIGHT - 70,
-				300,
-			),
-		[windowWidth],
+	const treemapWidth = Math.max(
+		windowWidth - TREEMAP_MARGINS.LEFT - TREEMAP_MARGINS.RIGHT - 70,
+		300,
 	);
 
-	const treemapData = useMemo(() => {
-		const extracedTreemapData =
-			(viewType === MetricsexplorertypesTreemapModeDTO.timeseries
-				? data?.timeseries
-				: data?.samples) || [];
-		return transformTreemapData(extracedTreemapData, viewType);
-	}, [data, viewType]);
+	const extracedTreemapData =
+		(viewType === MetricsexplorertypesTreemapModeDTO.timeseries
+			? data?.timeseries
+			: data?.samples) || [];
+	const treemapData = transformTreemapData(extracedTreemapData, viewType);
 
 	const transformedTreemapData = stratify<TreemapTile>()
 		.id((d) => d.id)
@@ -61,30 +54,23 @@ function MetricsTreemapInternal({
 	const xMax = treemapWidth - TREEMAP_MARGINS.LEFT - TREEMAP_MARGINS.RIGHT;
 	const yMax = TREEMAP_HEIGHT - TREEMAP_MARGINS.TOP - TREEMAP_MARGINS.BOTTOM;
 
-	const treemapStylesWithoutPadding = useMemo(
-		() => ({
-			width: treemapWidth,
-			height: TREEMAP_HEIGHT,
-		}),
-		[treemapWidth],
-	);
+	const treemapStylesWithoutPadding = {
+		width: treemapWidth,
+		height: TREEMAP_HEIGHT,
+	};
 
-	const treemapStylesWithPadding = useMemo(
-		() => ({
-			width: treemapWidth,
-			height: TREEMAP_HEIGHT,
-			paddingTop: 30,
-		}),
-		[treemapWidth],
-	);
+	const treemapStylesWithPadding = {
+		width: treemapWidth,
+		height: TREEMAP_HEIGHT,
+		paddingTop: 30,
+	};
 
-	const treemapTileStyle = useCallback(
-		(node: HierarchyNode<TreemapTile>) => ({
-			...getTreemapTileStyle(node.data),
-			...getTreemapTileTextStyle(),
-		}),
-		[],
-	);
+	const treemapTileStyle = (
+		node: HierarchyNode<TreemapTile>,
+	): React.CSSProperties => ({
+		...getTreemapTileStyle(node.data),
+		...getTreemapTileTextStyle(),
+	});
 
 	if (isLoading) {
 		return (

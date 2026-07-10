@@ -61,24 +61,20 @@ function TimeSeries({
 	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 	const queryClient = useQueryClient();
 
-	const isValidToConvertToMs = useMemo(() => {
-		const isValid: boolean[] = [];
+	const isValid: boolean[] = [];
+	currentQuery.builder.queryData.forEach(
+		({ aggregateAttribute, aggregateOperator }) => {
+			const isExistDurationNanoAttribute =
+				aggregateAttribute?.key === 'durationNano' ||
+				aggregateAttribute?.key === 'duration_nano';
 
-		currentQuery.builder.queryData.forEach(
-			({ aggregateAttribute, aggregateOperator }) => {
-				const isExistDurationNanoAttribute =
-					aggregateAttribute?.key === 'durationNano' ||
-					aggregateAttribute?.key === 'duration_nano';
+			const isCountOperator =
+				aggregateOperator === 'count' || aggregateOperator === 'count_distinct';
 
-				const isCountOperator =
-					aggregateOperator === 'count' || aggregateOperator === 'count_distinct';
-
-				isValid.push(!isCountOperator && isExistDurationNanoAttribute);
-			},
-		);
-
-		return isValid.every(Boolean);
-	}, [currentQuery]);
+			isValid.push(!isCountOperator && isExistDurationNanoAttribute);
+		},
+	);
+	const isValidToConvertToMs = isValid.every(Boolean);
 
 	const queryPayloads = useMemo(
 		() =>
@@ -152,20 +148,14 @@ function TimeSeries({
 		onFetchingStateChange?.(isFetching);
 	}, [isFetching, onFetchingStateChange]);
 
-	const data = useMemo(() => queries.map(({ data }) => data) ?? [], [queries]);
+	const data = queries.map(({ data }) => data) ?? [];
 
-	const responseData = useMemo(
-		() =>
-			data.map((datapoint) =>
-				isValidToConvertToMs ? convertDataValueToMs(datapoint) : datapoint,
-			),
-		[data, isValidToConvertToMs],
+	const responseData = data.map((datapoint) =>
+		isValidToConvertToMs ? convertDataValueToMs(datapoint) : datapoint,
 	);
 
-	const changeLayoutForOneChartPerQuery = useMemo(
-		() => showOneChartPerQuery && queries.length > 1,
-		[showOneChartPerQuery, queries],
-	);
+	const changeLayoutForOneChartPerQuery =
+		showOneChartPerQuery && queries.length > 1;
 
 	const onUnitChangeHandler = (value: string): void => {
 		setYAxisUnit(value);
@@ -175,14 +165,11 @@ function TimeSeries({
 	// 1. There is only one metric
 	// 2. The metric has no saved unit
 	// 3. The user has selected a unit
-	const showSaveUnitButton = useMemo(
-		() =>
-			metricUnits.length === 1 &&
-			Boolean(metrics[0]) &&
-			!metricUnits[0] &&
-			yAxisUnit,
-		[metricUnits, metrics, yAxisUnit],
-	);
+	const showSaveUnitButton =
+		metricUnits.length === 1 &&
+		Boolean(metrics[0]) &&
+		!metricUnits[0] &&
+		yAxisUnit;
 
 	const { mutate: updateMetricMetadata, isLoading: isUpdatingMetricMetadata } =
 		useUpdateMetricMetadata();

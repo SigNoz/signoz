@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { Button, Input, Menu, Popover, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
@@ -41,67 +41,54 @@ export function AllAttributesValue({
 	const [, copyToClipboard] = useCopyToClipboard();
 	const copyTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
-	const handleCopyWithFeedback = useCallback(
-		(value: string): void => {
-			copyToClipboard(value);
-			setCopiedValue(value);
-			clearTimeout(copyTimerRef.current);
-			copyTimerRef.current = setTimeout(() => {
-				setCopiedValue(null);
-			}, COPY_FEEDBACK_DURATION_MS);
-		},
-		[copyToClipboard],
+	const handleCopyWithFeedback = (value: string): void => {
+		copyToClipboard(value);
+		setCopiedValue(value);
+		clearTimeout(copyTimerRef.current);
+		copyTimerRef.current = setTimeout(() => {
+			setCopiedValue(null);
+		}, COPY_FEEDBACK_DURATION_MS);
+	};
+
+	const handleMenuItemClick = (key: string, attribute: string): void => {
+		switch (key) {
+			case 'open-in-explorer':
+				goToMetricsExploreWithAppliedAttribute(filterKey, attribute);
+				break;
+			case 'copy-value':
+				handleCopyWithFeedback(attribute);
+				break;
+			default:
+				break;
+		}
+		setAttributePopoverKey(null);
+	};
+
+	const attributePopoverContent = (attribute: string): JSX.Element => (
+		<Menu
+			items={[
+				{
+					icon: <SquareArrowOutUpRight size={14} />,
+					label: 'Open in Metric Explorer',
+					key: 'open-in-explorer',
+				},
+				{
+					icon: <Copy size={14} />,
+					label: 'Copy Value',
+					key: 'copy-value',
+				},
+			]}
+			onClick={(info): void => {
+				handleMenuItemClick(info.key, attribute);
+			}}
+		/>
 	);
 
-	const handleMenuItemClick = useCallback(
-		(key: string, attribute: string): void => {
-			switch (key) {
-				case 'open-in-explorer':
-					goToMetricsExploreWithAppliedAttribute(filterKey, attribute);
-					break;
-				case 'copy-value':
-					handleCopyWithFeedback(attribute);
-					break;
-				default:
-					break;
-			}
-			setAttributePopoverKey(null);
-		},
-		[goToMetricsExploreWithAppliedAttribute, filterKey, handleCopyWithFeedback],
-	);
-
-	const attributePopoverContent = useCallback(
-		(attribute: string) => (
-			<Menu
-				items={[
-					{
-						icon: <SquareArrowOutUpRight size={14} />,
-						label: 'Open in Metric Explorer',
-						key: 'open-in-explorer',
-					},
-					{
-						icon: <Copy size={14} />,
-						label: 'Copy Value',
-						key: 'copy-value',
-					},
-				]}
-				onClick={(info): void => {
-					handleMenuItemClick(info.key, attribute);
-				}}
-			/>
-		),
-		[handleMenuItemClick],
-	);
-
-	const filteredAllValues = useMemo(
-		() =>
-			allValuesSearch
-				? filterValue.filter((v) =>
-						v.toLowerCase().includes(allValuesSearch.toLowerCase()),
-					)
-				: filterValue,
-		[filterValue, allValuesSearch],
-	);
+	const filteredAllValues = allValuesSearch
+		? filterValue.filter((v) =>
+				v.toLowerCase().includes(allValuesSearch.toLowerCase()),
+			)
+		: filterValue;
 
 	const allValuesPopoverContent = (
 		<div className="all-values-popover">

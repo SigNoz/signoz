@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Color } from '@signozhq/design-tokens';
@@ -42,11 +42,8 @@ function GraphView({
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
-	const start = useMemo(
-		() => Math.floor(Number(minTime) / 1000000000),
-		[minTime],
-	);
-	const end = useMemo(() => Math.floor(Number(maxTime) / 1000000000), [maxTime]);
+	const start = Math.floor(Number(minTime) / 1000000000);
+	const end = Math.floor(Number(maxTime) / 1000000000);
 	const [showGraphPopover, setShowGraphPopover] = useState(false);
 	const [showHoverPopover, setShowHoverPopover] = useState(false);
 	const [hoverPopoverOptions, setHoverPopoverOptions] =
@@ -73,111 +70,98 @@ function GraphView({
 		};
 	}, [popoverRef, graphRef]);
 
-	const options: uPlot.Options = useMemo(
-		() => ({
-			width: dimensions.width,
-			height: 500,
-			legend: {
-				show: false,
+	const options: uPlot.Options = {
+		width: dimensions.width,
+		height: 500,
+		legend: {
+			show: false,
+		},
+		axes: [
+			{
+				stroke: isDarkMode ? Color.TEXT_VANILLA_400 : Color.BG_SLATE_400,
+				grid: {
+					show: false,
+				},
+				values: (_, vals): string[] =>
+					vals.map((v) => {
+						const d = new Date(v);
+						const date = `${String(d.getDate()).padStart(2, '0')}/${String(
+							d.getMonth() + 1,
+						).padStart(2, '0')}`;
+						const time = `${String(d.getHours()).padStart(2, '0')}:${String(
+							d.getMinutes(),
+						).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`;
+						return `${date}\n${time}`; // two-line label
+					}),
 			},
-			axes: [
-				{
-					stroke: isDarkMode ? Color.TEXT_VANILLA_400 : Color.BG_SLATE_400,
-					grid: {
-						show: false,
-					},
-					values: (_, vals): string[] =>
-						vals.map((v) => {
-							const d = new Date(v);
-							const date = `${String(d.getDate()).padStart(2, '0')}/${String(
-								d.getMonth() + 1,
-							).padStart(2, '0')}`;
-							const time = `${String(d.getHours()).padStart(2, '0')}:${String(
-								d.getMinutes(),
-							).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`;
-							return `${date}\n${time}`; // two-line label
-						}),
-				},
-				{
-					label: metricUnit || '',
-					stroke: isDarkMode ? Color.TEXT_VANILLA_400 : Color.BG_SLATE_400,
-					grid: {
-						show: true,
-						stroke: isDarkMode ? Color.BG_SLATE_500 : Color.BG_SLATE_200,
-					},
-					values: (_, vals): string[] =>
-						vals.map((v) => formatNumberIntoHumanReadableFormat(v, false)),
-				},
-			],
-			series: [
-				{ label: 'Time' }, // This config is required as a placeholder for x-axis,
-				...formattedInspectMetricsTimeSeries.slice(1).map((_, index) => ({
-					drawStyle: 'line',
-					lineInterpolation: 'spline',
+			{
+				label: metricUnit || '',
+				stroke: isDarkMode ? Color.TEXT_VANILLA_400 : Color.BG_SLATE_400,
+				grid: {
 					show: true,
-					label: String.fromCharCode(65 + (index % 26)),
-					stroke: inspectMetricsTimeSeries[index]?.strokeColor,
-					width: 2,
-					spanGaps: true,
-					points: {
-						size: 5,
-						show: false,
-						stroke: inspectMetricsTimeSeries[index]?.strokeColor,
-					},
-					scales: {
-						x: {
-							min: start,
-							max: end,
-						},
-					},
-				})),
-			],
-			hooks: {
-				ready: [
-					(u: uPlot): void => {
-						u.over.addEventListener('click', (e) => {
-							onGraphClick(
-								e,
-								u,
-								popoverRef,
-								setPopoverOptions,
-								inspectMetricsTimeSeries,
-								showGraphPopover,
-								setShowGraphPopover,
-								formattedInspectMetricsTimeSeries,
-							);
-						});
-						u.over.addEventListener('mousemove', (e) => {
-							onGraphHover(
-								e,
-								u,
-								setHoverPopoverOptions,
-								inspectMetricsTimeSeries,
-								formattedInspectMetricsTimeSeries,
-							);
-						});
-						u.over.addEventListener('mouseenter', () => {
-							setShowHoverPopover(true);
-						});
-						u.over.addEventListener('mouseleave', () => {
-							setShowHoverPopover(false);
-						});
-					},
-				],
+					stroke: isDarkMode ? Color.BG_SLATE_500 : Color.BG_SLATE_200,
+				},
+				values: (_, vals): string[] =>
+					vals.map((v) => formatNumberIntoHumanReadableFormat(v, false)),
 			},
-		}),
-		[
-			dimensions.width,
-			isDarkMode,
-			metricUnit,
-			formattedInspectMetricsTimeSeries,
-			inspectMetricsTimeSeries,
-			start,
-			end,
-			setPopoverOptions,
-			showGraphPopover,
 		],
-	);
+		series: [
+			{ label: 'Time' }, // This config is required as a placeholder for x-axis,
+			...formattedInspectMetricsTimeSeries.slice(1).map((_, index) => ({
+				drawStyle: 'line',
+				lineInterpolation: 'spline',
+				show: true,
+				label: String.fromCharCode(65 + (index % 26)),
+				stroke: inspectMetricsTimeSeries[index]?.strokeColor,
+				width: 2,
+				spanGaps: true,
+				points: {
+					size: 5,
+					show: false,
+					stroke: inspectMetricsTimeSeries[index]?.strokeColor,
+				},
+				scales: {
+					x: {
+						min: start,
+						max: end,
+					},
+				},
+			})),
+		],
+		hooks: {
+			ready: [
+				(u: uPlot): void => {
+					u.over.addEventListener('click', (e) => {
+						onGraphClick(
+							e,
+							u,
+							popoverRef,
+							setPopoverOptions,
+							inspectMetricsTimeSeries,
+							showGraphPopover,
+							setShowGraphPopover,
+							formattedInspectMetricsTimeSeries,
+						);
+					});
+					u.over.addEventListener('mousemove', (e) => {
+						onGraphHover(
+							e,
+							u,
+							setHoverPopoverOptions,
+							inspectMetricsTimeSeries,
+							formattedInspectMetricsTimeSeries,
+						);
+					});
+					u.over.addEventListener('mouseenter', () => {
+						setShowHoverPopover(true);
+					});
+					u.over.addEventListener('mouseleave', () => {
+						setShowHoverPopover(false);
+					});
+				},
+			],
+		},
+	};
 
 	const MetricTypeIcon = metricType ? METRIC_TYPE_TO_ICON_MAP[metricType] : null;
 
