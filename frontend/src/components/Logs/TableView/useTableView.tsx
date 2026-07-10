@@ -47,8 +47,6 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 		.map(({ name }) => ({
 			title: name,
 			dataIndex: name,
-			accessorKey: name,
-			id: name.toLowerCase().replace(/\./g, '_'),
 			key: name,
 			render: (field): ColumnTypeRender<Record<string, unknown>> => ({
 				props: {
@@ -75,8 +73,6 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 					title: '',
 					dataIndex: '',
 					key: 'state-indicator',
-					accessorKey: 'state-indicator',
-					id: 'state-indicator',
 					render: (_, item): ColumnTypeRender<Record<string, unknown>> => ({
 						children: (
 							<div className={cx('state-indicator', fontSize)}>
@@ -95,8 +91,6 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 								title: 'timestamp',
 								dataIndex: 'timestamp',
 								key: 'timestamp',
-								accessorKey: 'timestamp',
-								id: 'timestamp',
 								// https://github.com/ant-design/ant-design/discussions/36886
 								render: (
 									field: string | number,
@@ -129,8 +123,6 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 								title: 'body',
 								dataIndex: 'body',
 								key: 'body',
-								accessorKey: 'body',
-								id: 'body',
 								render: (
 									field: string | number,
 								): ColumnTypeRender<Record<string, unknown>> => ({
