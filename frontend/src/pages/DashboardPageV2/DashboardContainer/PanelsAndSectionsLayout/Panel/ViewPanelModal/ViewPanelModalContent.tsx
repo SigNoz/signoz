@@ -1,12 +1,15 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
 import { DashboardCursorSync } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
+import ContextMenu from 'periscope/components/ContextMenu';
 import PanelEditorQueryBuilder from 'pages/DashboardPageV2/DashboardContainer/PanelEditor/PanelEditorQueryBuilder/PanelEditorQueryBuilder';
 import PreviewPane from 'pages/DashboardPageV2/DashboardContainer/PanelEditor/PreviewPane/PreviewPane';
 import type { DashboardPreference } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/rendererProps';
+import { useViewPanelStore } from 'pages/DashboardPageV2/DashboardContainer/store/useViewPanelStore';
 import { useOpenPanelEditor } from 'pages/DashboardPageV2/DashboardContainer/hooks/useOpenPanelEditor';
 
+import { useDrilldown } from '../hooks/useDrilldown';
 import { usePanelInteractions } from '../hooks/usePanelInteractions';
 import ViewPanelModalHeader from './ViewPanelModalHeader';
 import { useViewPanelMode } from './useViewPanelMode';
@@ -36,6 +39,7 @@ function ViewPanelModalContent({
 		onTimeChange,
 		refreshWindow,
 		onDragSelect,
+		extendWindow,
 	} = useViewPanelTimeWindow();
 
 	const {
@@ -48,8 +52,15 @@ function ViewPanelModalContent({
 		onChangePanelKind,
 		resetQuery,
 		buildSaveSpec,
+		applyDrilldownQuery,
 	} = useViewPanelMode({ panel, panelId, time: timeOverride });
 	const { data, isFetching, error, refetch, cancelQuery, pagination } = query;
+
+	// Grid drill-down, but filter-by-value / breakout refine this view in place. Drills the draft
+	// so it reflects in-modal edits (and the click's time range follows the per-view window).
+	const drilldown = useDrilldown(draft, panelId, {
+		openDrilldownView: applyDrilldownQuery,
+	});
 
 	// Drag-to-zoom stays inside the modal; opt the chart out of the dashboard's
 	// cursor-sync group so a drag here can't replay onto the grid panels.
@@ -59,6 +70,15 @@ function ViewPanelModalContent({
 		[dashboardPreference],
 	);
 	const openPanelEditor = useOpenPanelEditor();
+
+	// Publish the modal's local extender for the nested no-data state; cleared on close.
+	const setViewPanelExtendWindow = useViewPanelStore(
+		(s) => s.setViewPanelExtendWindow,
+	);
+	useEffect(() => {
+		setViewPanelExtendWindow(extendWindow);
+		return (): void => setViewPanelExtendWindow(null);
+	}, [extendWindow, setViewPanelExtendWindow]);
 
 	// The View action only appears for registered kinds, so this is defensive.
 	if (!panelDefinition) {
@@ -115,9 +135,12 @@ function ViewPanelModalContent({
 					panelMode={PanelMode.STANDALONE_VIEW}
 					dashboardPreference={isolatedPreference}
 					onCloseStandaloneView={onClose}
+					onClick={drilldown.onPanelClick}
+					enableDrillDown={drilldown.enableDrillDown}
 					hideHeader
 				/>
 			</div>
+			<ContextMenu {...drilldown.contextMenuProps} />
 		</div>
 	);
 }

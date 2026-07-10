@@ -1,0 +1,27 @@
+.unpricedModelsTab {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-8);
+}
+
+.banner {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--spacing-5);
+	padding: var(--spacing-6) var(--spacing-8);
+	border-radius: var(--radius-2);
+	border: 1px solid color-mix(in srgb, var(--bg-amber-400) 30%, transparent);
+	background: color-mix(in srgb, var(--bg-amber-400) 8%, transparent);
+	color: var(--bg-amber-300, var(--bg-amber-400));
+}
+
+.bannerIcon {
+	flex-shrink: 0;
+	margin-top: var(--spacing-1);
+}
+
+.error {
+	padding: var(--spacing-6) var(--spacing-8);
+	border-radius: var(--radius-2);
+	background: color-mix(in srgb, var(--bg-cherry-400) 8%, transparent);
+}

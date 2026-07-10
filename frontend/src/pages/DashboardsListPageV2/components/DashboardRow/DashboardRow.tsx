@@ -24,7 +24,7 @@ import styles from './DashboardRow.module.scss';
 interface Props {
 	dashboard: DashboardListItem;
 	index: number;
-	canAct: boolean;
+	canEdit: boolean;
 	showUpdatedAt: boolean;
 	showUpdatedBy: boolean;
 }
@@ -32,7 +32,7 @@ interface Props {
 function DashboardRow({
 	dashboard,
 	index,
-	canAct,
+	canEdit,
 	showUpdatedAt,
 	showUpdatedBy,
 }: Props): JSX.Element {
@@ -153,16 +153,15 @@ function DashboardRow({
 					</Button>
 				</TooltipSimple>
 
-				{canAct && (
-					<ActionsPopover
-						link={link}
-						dashboardId={id}
-						dashboardName={name}
-						createdBy={createdBy}
-						isLocked={isLocked}
-						onView={onClickHandler}
-					/>
-				)}
+				<ActionsPopover
+					link={link}
+					dashboardId={id}
+					dashboardName={name}
+					createdBy={createdBy}
+					isLocked={isLocked}
+					canEdit={canEdit}
+					onView={onClickHandler}
+				/>
 			</div>
 			<div className={styles.details}>
 				<div className={styles.createdAt}>
