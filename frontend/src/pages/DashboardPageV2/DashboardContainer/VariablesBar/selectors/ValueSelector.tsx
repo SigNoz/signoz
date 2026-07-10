@@ -57,6 +57,8 @@ function ValueSelector({
 				onRetry={onRetry}
 				showSearch
 				placeholder="Select value"
+				maxTagCount={2}
+				maxTagTextLength={20}
 				enableAllSelection={showAllOption}
 				onChange={(next): void => {
 					const values = Array.isArray(next)

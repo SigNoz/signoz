@@ -514,6 +514,13 @@ const routes: AppRoutes[] = [
 		isPrivate: true,
 	},
 	{
+		path: ROUTES.LLM_OBSERVABILITY_ATTRIBUTE_MAPPING,
+		exact: true,
+		component: LLMObservabilityPage,
+		key: 'LLM_OBSERVABILITY_ATTRIBUTE_MAPPING',
+		isPrivate: true,
+	},
+	{
 		path: ROUTES.LLM_OBSERVABILITY_OVERVIEW,
 		exact: true,
 		component: LLMObservabilityPage,

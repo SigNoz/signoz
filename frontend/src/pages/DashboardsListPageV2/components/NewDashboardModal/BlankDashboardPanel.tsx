@@ -17,6 +17,8 @@ import TagKeyValueInput from 'components/TagKeyValueInput/TagKeyValueInput';
 
 import { keyValueStringsToTags } from '../../utils/helpers';
 
+import DashboardImagePicker from '../../../DashboardPageV2/DashboardContainer/DashboardSettings/Overview/DashboardImagePicker/DashboardImagePicker';
+import { Base64Icons } from '../../../DashboardPageV2/DashboardContainer/DashboardSettings/Overview/utils';
 import { DASHBOARD_NAME_MAX_LENGTH } from '../../../DashboardPageV2/DashboardContainer/constants';
 import styles from './NewDashboardModal.module.scss';
 
@@ -32,6 +34,7 @@ function BlankDashboardPanel({ onClose }: Props): JSX.Element {
 
 	const [name, setName] = useState(DEFAULT_NAME);
 	const [description, setDescription] = useState('');
+	const [image, setImage] = useState<string>(Base64Icons[0]);
 	const [tags, setTags] = useState<string[]>([]);
 	const [submitting, setSubmitting] = useState(false);
 
@@ -48,6 +51,7 @@ function BlankDashboardPanel({ onClose }: Props): JSX.Element {
 			const created = await createDashboardV2({
 				schemaVersion: 'v6',
 				generateName: true,
+				image,
 				tags: postableTags.length ? postableTags : null,
 				spec: {
 					display: {
@@ -77,21 +81,29 @@ function BlankDashboardPanel({ onClose }: Props): JSX.Element {
 					<Typography.Text className={styles.label}>
 						Title <Typography.Text className={styles.required}>*</Typography.Text>
 					</Typography.Text>
-					<Input
-						value={name}
-						autoFocus
-						maxLength={DASHBOARD_NAME_MAX_LENGTH}
-						placeholder="e.g. Sample Dashboard"
-						testId="create-dashboard-name"
-						onChange={(e: ChangeEvent<HTMLInputElement>): void =>
-							setName(e.target.value)
-						}
-						onKeyDown={(e): void => {
-							if (e.key === 'Enter') {
-								void handleCreate();
+					<div className={styles.titleRow}>
+						<DashboardImagePicker
+							image={image}
+							onChange={setImage}
+							triggerClassName={styles.imageTrigger}
+						/>
+						<Input
+							className={styles.titleInput}
+							value={name}
+							autoFocus
+							maxLength={DASHBOARD_NAME_MAX_LENGTH}
+							placeholder="e.g. Sample Dashboard"
+							testId="create-dashboard-name"
+							onChange={(e: ChangeEvent<HTMLInputElement>): void =>
+								setName(e.target.value)
 							}
-						}}
-					/>
+							onKeyDown={(e): void => {
+								if (e.key === 'Enter') {
+									void handleCreate();
+								}
+							}}
+						/>
+					</div>
 				</div>
 
 				<div className={styles.field}>

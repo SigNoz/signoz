@@ -1,0 +1,11 @@
+.loadingState {
+	padding: 8px;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.loadingStateItem {
+	height: 48px;
+	width: 100%;
+}
