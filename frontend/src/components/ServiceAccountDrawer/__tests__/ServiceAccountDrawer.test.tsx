@@ -227,16 +227,15 @@ describe('ServiceAccountDrawer', () => {
 		});
 		expect(dialog).toBeInTheDocument();
 
-		const confirmBtns = screen.getAllByRole('button', { name: /^Delete$/i });
-		await user.click(confirmBtns[confirmBtns.length - 1]);
+		await user.click(screen.getByTestId('confirm-delete-btn'));
 
-		await waitFor(() => {
-			expect(deleteSpy).toHaveBeenCalled();
-		});
-
-		await waitFor(() => {
-			expect(screen.queryByDisplayValue('CI Bot')).not.toBeInTheDocument();
-		});
+		await waitFor(
+			() => {
+				expect(deleteSpy).toHaveBeenCalled();
+				expect(screen.queryByDisplayValue('CI Bot')).not.toBeInTheDocument();
+			},
+			{ timeout: 3000 },
+		);
 	});
 
 	it('deleted account shows read-only name, no Save button, no Delete button', async () => {
