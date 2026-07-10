@@ -16,6 +16,14 @@
 		min-height: 0;
 
 		.log-explorer-query-container {
+			// Meant to fix the query builder colors
+			--input-background: var(--l2-background);
+			--input-hover-background: var(--l2-background);
+			--input-focus-background: var(--l2-background);
+			--input-border-color: var(--l2-border);
+			--input-hover-border-color: var(--internal-ant-border-color-hover);
+			--input-focus-border-color: var(--internal-ant-border-color-hover);
+
 			display: flex;
 			flex-direction: column;
 			flex: 1;
@@ -33,18 +41,15 @@
 	}
 
 	&.filter-visible {
-		// Width is owned by ResizableBox (inline style); this section is the
-		// ResizableBox root, so it stays position: relative for the drag handle.
 		.log-quick-filter-left-section {
+			width: 260px;
 			height: 100%;
 			overflow: visible;
 			min-height: 0;
+			position: relative;
 			z-index: 2;
-
-			.resizable-box__content {
-				display: flex;
-				flex-direction: column;
-			}
+			display: flex;
+			flex-direction: column;
 
 			.quick-filters-container {
 				flex: 1;
@@ -53,9 +58,7 @@
 		}
 
 		.log-module-right-section {
-			flex: 1;
-			width: auto;
-			min-width: 0;
+			width: calc(100% - 260px);
 		}
 	}
 }

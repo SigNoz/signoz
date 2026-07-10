@@ -67,25 +67,6 @@
 	color: var(--l2-foreground);
 }
 
-.subItem {
-	display: flex;
-	align-items: center;
-	gap: 6px;
-	white-space: nowrap;
-}
-
-.separator {
-	color: var(--l2-foreground);
-	opacity: 0.5;
-}
-
-.entryPointBadge {
-	padding: 2px 8px;
-	border: 1px solid var(--l2-border);
-	border-radius: 4px;
-	font-size: 12px;
-}
-
 .skeleton {
 	:global(.ant-skeleton-input) {
 		width: 160px !important;

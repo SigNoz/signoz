@@ -49,6 +49,7 @@ export const useDashboardStore = create<DashboardStore>()(
 			// Persist UI-only state (context incl. the refetch fn is transient).
 			partialize: (state) => ({
 				collapsed: state.collapsed,
+				variablesExpanded: state.variablesExpanded,
 				variableValues: state.variableValues,
 			}),
 		},

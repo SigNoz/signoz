@@ -247,11 +247,13 @@ describe('usePanelEditorQuerySync', () => {
 	});
 
 	describe('datasource switch', () => {
-		const withSource = (id: string, dataSource: string): Query =>
+		const withSource = (id: string, ...dataSources: string[]): Query =>
 			({
 				id,
 				queryType: 'builder',
-				builder: { queryData: [{ dataSource }] },
+				builder: {
+					queryData: dataSources.map((dataSource) => ({ dataSource })),
+				},
 			}) as unknown as Query;
 
 		it('commits the active query when a query datasource changes', () => {
@@ -285,6 +287,58 @@ describe('usePanelEditorQuerySync', () => {
 			rerender();
 
 			expect(setSpec).not.toHaveBeenCalled();
+		});
+
+		it('does not commit when a query is added (the fresh query must not auto-run)', () => {
+			const state = builderState({ currentQuery: withSource('a', 'metrics') });
+			mockUseQueryBuilder.mockImplementation(() => state);
+			mockGetIsQueryModified.mockReturnValue(true);
+
+			const { setSpec, rerender } = setup();
+			setSpec.mockClear();
+
+			state.currentQuery = withSource('b', 'metrics', 'metrics');
+			rerender();
+
+			expect(setSpec).not.toHaveBeenCalled();
+		});
+
+		it('commits when a query is removed', () => {
+			const state = builderState({
+				currentQuery: withSource('a', 'metrics', 'logs'),
+			});
+			mockUseQueryBuilder.mockImplementation(() => state);
+			mockGetIsQueryModified.mockReturnValue(true);
+
+			const { setSpec, rerender } = setup();
+			setSpec.mockClear();
+
+			state.currentQuery = withSource('b', 'metrics');
+			rerender();
+
+			expect(setSpec).toHaveBeenCalledWith({
+				...makeDraft().spec,
+				queries: CONVERTED_QUERIES,
+			});
+		});
+
+		it('commits a datasource switch on a query added after mount', () => {
+			const state = builderState({ currentQuery: withSource('a', 'metrics') });
+			mockUseQueryBuilder.mockImplementation(() => state);
+			mockGetIsQueryModified.mockReturnValue(true);
+
+			const { setSpec, rerender } = setup();
+			setSpec.mockClear();
+
+			state.currentQuery = withSource('b', 'metrics', 'metrics');
+			rerender();
+			state.currentQuery = withSource('c', 'metrics', 'logs');
+			rerender();
+
+			expect(setSpec).toHaveBeenCalledWith({
+				...makeDraft().spec,
+				queries: CONVERTED_QUERIES,
+			});
 		});
 	});
 
