@@ -88,12 +88,7 @@ export default defineConfig(({ mode }): UserConfig => {
 		devBootDataPlugin(env),
 		react({
 			babel: {
-				plugins: [
-					[
-						'babel-plugin-react-compiler',
-						{ target: '18', compilationMode: 'annotation' },
-					],
-				],
+				plugins: [['babel-plugin-react-compiler', { target: '18' }]],
 			},
 		}),
 		vitePluginChecker({

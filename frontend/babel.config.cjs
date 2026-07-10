@@ -5,7 +5,7 @@ module.exports = {
 		['@babel/preset-typescript'],
 	],
 	plugins: [
-		['babel-plugin-react-compiler', { target: '18', compilationMode: 'annotation' }],
+		['babel-plugin-react-compiler', { target: '18' }],
 		'@babel/plugin-proposal-class-properties',
 	],
 	env: {
@@ -19,10 +19,7 @@ module.exports = {
 				['@babel/preset-typescript'],
 			],
 			plugins: [
-				[
-					'babel-plugin-react-compiler',
-					{ target: '18', compilationMode: 'annotation' },
-				],
+				['babel-plugin-react-compiler', { target: '18' }],
 				'@babel/plugin-proposal-class-properties',
 			],
 		},

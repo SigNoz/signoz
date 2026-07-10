@@ -28,7 +28,6 @@ function LogsExplorerChart({
 	isLogsExplorerViews = false,
 	isShowingLiveLogs = false,
 }: LogsExplorerChartProps): JSX.Element {
-	'use memo';
 	const dispatch = useDispatch();
 	const urlQuery = useUrlQuery();
 	const location = useLocation();
