@@ -2,6 +2,7 @@
 	display: flex;
 	flex-direction: column;
 	gap: var(--spacing-6);
+	margin-top: var(--spacing-6);
 }
 
 // Heading + description on the left, Run button pinned to the top-right.
