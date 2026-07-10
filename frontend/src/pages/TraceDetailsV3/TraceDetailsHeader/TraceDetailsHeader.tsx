@@ -10,18 +10,10 @@ import {
 import { Skeleton } from 'antd';
 import cx from 'classnames';
 import FieldsSelector from 'components/FieldsSelector';
-import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
 import ROUTES from 'constants/routes';
-import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import dayjs from 'dayjs';
 import history, { hasInAppHistory } from 'lib/history';
-import {
-	ArrowLeft,
-	CalendarClock,
-	ChartPie,
-	Server,
-	Timer,
-} from '@signozhq/icons';
+import { ArrowLeft, ChartPie } from '@signozhq/icons';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
 import { TraceDetailV3URLProps } from 'types/api/trace/getTraceV3';
 import { DataSource } from 'types/common/queryBuilder';
@@ -29,8 +21,10 @@ import { DataSource } from 'types/common/queryBuilder';
 import { TraceDetailEventKeys, TraceDetailEvents } from '../events';
 import { useTraceDetailLogEvent } from '../hooks/useTraceDetailLogEvent';
 import { useTraceStore } from '../stores/traceStore';
+import EntityMetadataRow from '../EntityMetadata/EntityMetadataRow';
 import AnalyticsPanel from '../SpanDetailsPanel/AnalyticsPanel/AnalyticsPanel';
 import Filters from '../TraceWaterfall/TraceWaterfallStates/Success/Filters/Filters';
+import MissingSpansBanner from './MissingSpansBanner';
 import TraceOptionsMenu from './TraceOptionsMenu';
 
 import styles from './TraceDetailsHeader.module.scss';
@@ -48,6 +42,7 @@ export interface TraceMetadataForHeader {
 	rootServiceName: string;
 	rootServiceEntryPoint: string;
 	rootSpanStatusCode: string;
+	hasMissingSpans: boolean;
 }
 
 interface TraceDetailsHeaderProps {
@@ -122,8 +117,6 @@ function TraceDetailsHeader({
 	const durationMs = traceMetadata
 		? traceMetadata.endTimestampMillis - traceMetadata.startTimestampMillis
 		: 0;
-	const { time: formattedDuration, timeUnitName } =
-		convertTimeToRelevantUnit(durationMs);
 
 	return (
 		<div className={styles.wrapper}>
@@ -200,34 +193,25 @@ function TraceDetailsHeader({
 			{showTraceDetails && (
 				<div className={styles.subHeader}>
 					{traceMetadata ? (
-						<>
-							<span className={styles.subItem}>
-								<Server size={13} />
-								{traceMetadata.rootServiceName}
-								<span className={styles.separator}>—</span>
-								<span className={styles.entryPointBadge}>
-									{traceMetadata.rootServiceEntryPoint}
-								</span>
-							</span>
-							<span className={styles.subItem}>
-								<Timer size={13} />
-								{parseFloat(formattedDuration.toFixed(2))} {timeUnitName}
-							</span>
-							<span className={styles.subItem}>
-								<CalendarClock size={13} />
-								{dayjs(traceMetadata.startTimestampMillis).format(
-									DATE_TIME_FORMATS.DD_MMM_YYYY_HH_MM_SS,
-								)}
-							</span>
-							{traceMetadata.rootSpanStatusCode && (
-								<HttpStatusBadge statusCode={traceMetadata.rootSpanStatusCode} />
+						<EntityMetadataRow
+							entity="trace"
+							service={{
+								name: traceMetadata.rootServiceName,
+								entryPoint: traceMetadata.rootServiceEntryPoint,
+							}}
+							durationMs={durationMs}
+							timestamp={dayjs(traceMetadata.startTimestampMillis).format(
+								DATE_TIME_FORMATS.DD_MMM_YYYY_HH_MM_SS,
 							)}
-						</>
+							statusCode={traceMetadata.rootSpanStatusCode}
+						/>
 					) : (
 						<DetailsLoader />
 					)}
 				</div>
 			)}
+
+			{traceMetadata?.hasMissingSpans && <MissingSpansBanner />}
 
 			<FieldsSelector
 				isOpen={isPreviewFieldsOpen}

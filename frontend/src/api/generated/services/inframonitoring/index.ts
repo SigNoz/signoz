@@ -21,6 +21,7 @@ import type {
 	GetChecks200,
 	GetChecksParams,
 	InframonitoringtypesPostableClustersDTO,
+	InframonitoringtypesPostableContainersDTO,
 	InframonitoringtypesPostableDaemonSetsDTO,
 	InframonitoringtypesPostableDeploymentsDTO,
 	InframonitoringtypesPostableHostsDTO,
@@ -31,6 +32,7 @@ import type {
 	InframonitoringtypesPostableStatefulSetsDTO,
 	InframonitoringtypesPostableVolumesDTO,
 	ListClusters200,
+	ListContainers200,
 	ListDaemonSets200,
 	ListDeployments200,
 	ListHosts200,
@@ -547,6 +549,89 @@ export const useListJobs = <
 	TContext
 > => {
 	return useMutation(getListJobsMutationOptions(options));
+};
+/**
+ * Returns a paginated list of Kubernetes containers with key kubeletstats metrics: CPU usage (cores), CPU request/limit utilization, memory working set, and memory request/limit utilization. Each container also reports health signals from the k8s_cluster receiver: status (kubectl-style display status derived from k8s.container.status.state + k8s.container.status.reason), restarts (absolute count from k8s.container.restarts), and ready (ready/not_ready from k8s.container.ready). The row identity is (k8s.pod.uid, k8s.container.name), stable across container restarts. Each container includes metadata attributes (k8s.container.name, k8s.pod.name, container.image.name, container.image.tag, k8s.namespace.name, k8s.node.name, k8s.cluster.name, and workload owner such as deployment/statefulset/daemonset/job). The response type is 'list' for the default (k8s.pod.uid, k8s.container.name) grouping (each row is one container with its current status and ready state) or 'grouped_list' for custom groupBy keys (each row aggregates containers in the group with per-status counts under containerCountsByStatus, per-readiness counts under containerCountsByReady, and restarts as the group sum). Status requires the optional k8s.container.status.state and k8s.container.status.reason metrics; when either is missing, status is omitted and a warning is returned while restarts and ready are still computed. Supports filtering via a filter expression, custom groupBy, ordering by any of the six metrics (cpu, cpu_request, cpu_limit, memory, memory_request, memory_limit), and pagination via offset/limit. Also reports whether the requested time range falls before the data retention boundary. Numeric metric fields (cpu, cpuRequestUtilization, cpuLimitUtilization, memory, memoryRequestUtilization, memoryLimitUtilization) and restarts return -1 as a sentinel when no data is available for that field.
+ * @summary List Kubernetes Containers for Infra Monitoring
+ */
+export const listContainers = (
+	inframonitoringtypesPostableContainersDTO?: BodyType<InframonitoringtypesPostableContainersDTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<ListContainers200>({
+		url: `/api/v2/infra_monitoring/kube_containers`,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		data: inframonitoringtypesPostableContainersDTO,
+		signal,
+	});
+};
+
+export const getListContainersMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof listContainers>>,
+		TError,
+		{ data?: BodyType<InframonitoringtypesPostableContainersDTO> },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof listContainers>>,
+	TError,
+	{ data?: BodyType<InframonitoringtypesPostableContainersDTO> },
+	TContext
+> => {
+	const mutationKey = ['listContainers'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof listContainers>>,
+		{ data?: BodyType<InframonitoringtypesPostableContainersDTO> }
+	> = (props) => {
+		const { data } = props ?? {};
+
+		return listContainers(data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type ListContainersMutationResult = NonNullable<
+	Awaited<ReturnType<typeof listContainers>>
+>;
+export type ListContainersMutationBody =
+	| BodyType<InframonitoringtypesPostableContainersDTO>
+	| undefined;
+export type ListContainersMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary List Kubernetes Containers for Infra Monitoring
+ */
+export const useListContainers = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof listContainers>>,
+		TError,
+		{ data?: BodyType<InframonitoringtypesPostableContainersDTO> },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof listContainers>>,
+	TError,
+	{ data?: BodyType<InframonitoringtypesPostableContainersDTO> },
+	TContext
+> => {
+	return useMutation(getListContainersMutationOptions(options));
 };
 /**
  * Returns a paginated list of Kubernetes namespaces with key aggregated pod metrics: CPU usage and memory working set (summed across pods in the group), plus per-group podCountsByPhase ({ pending, running, succeeded, failed, unknown } from each pod's latest k8s.pod.phase value in the window). Each namespace includes metadata attributes (k8s.namespace.name, k8s.cluster.name). The response type is 'list' for the default k8s.namespace.name grouping or 'grouped_list' for custom groupBy keys; in both modes every row aggregates pods in the group. Supports filtering via a filter expression, custom groupBy, ordering by cpu / memory, and pagination via offset/limit. Also reports whether the requested time range falls before the data retention boundary. Numeric metric fields (namespaceCPU, namespaceMemory) return -1 as a sentinel when no data is available for that field.

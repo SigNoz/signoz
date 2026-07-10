@@ -48,6 +48,25 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v2/infra_monitoring/kube_containers", handler.New(
+		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.ListContainers),
+		handler.OpenAPIDef{
+			ID:                  "ListContainers",
+			Tags:                []string{"inframonitoring"},
+			Summary:             "List Kubernetes Containers for Infra Monitoring",
+			Description:         "Returns a paginated list of Kubernetes containers with key kubeletstats metrics: CPU usage (cores), CPU request/limit utilization, memory working set, and memory request/limit utilization. Each container also reports health signals from the k8s_cluster receiver: status (kubectl-style display status derived from k8s.container.status.state + k8s.container.status.reason), restarts (absolute count from k8s.container.restarts), and ready (ready/not_ready from k8s.container.ready). The row identity is (k8s.pod.uid, k8s.container.name), stable across container restarts. Each container includes metadata attributes (k8s.container.name, k8s.pod.name, container.image.name, container.image.tag, k8s.namespace.name, k8s.node.name, k8s.cluster.name, and workload owner such as deployment/statefulset/daemonset/job). The response type is 'list' for the default (k8s.pod.uid, k8s.container.name) grouping (each row is one container with its current status and ready state) or 'grouped_list' for custom groupBy keys (each row aggregates containers in the group with per-status counts under containerCountsByStatus, per-readiness counts under containerCountsByReady, and restarts as the group sum). Status requires the optional k8s.container.status.state and k8s.container.status.reason metrics; when either is missing, status is omitted and a warning is returned while restarts and ready are still computed. Supports filtering via a filter expression, custom groupBy, ordering by any of the six metrics (cpu, cpu_request, cpu_limit, memory, memory_request, memory_limit), and pagination via offset/limit. Also reports whether the requested time range falls before the data retention boundary. Numeric metric fields (cpu, cpuRequestUtilization, cpuLimitUtilization, memory, memoryRequestUtilization, memoryLimitUtilization) and restarts return -1 as a sentinel when no data is available for that field.",
+			Request:             new(inframonitoringtypes.PostableContainers),
+			RequestContentType:  "application/json",
+			Response:            new(inframonitoringtypes.Containers),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
+			Deprecated:          false,
+			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+		})).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
 	if err := router.Handle("/api/v2/infra_monitoring/nodes", handler.New(
 		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.ListNodes),
 		handler.OpenAPIDef{

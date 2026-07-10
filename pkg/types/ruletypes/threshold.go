@@ -134,9 +134,9 @@ type RuleThreshold interface {
 
 type BasicRuleThreshold struct {
 	Name            string          `json:"name" required:"true"`
-	TargetValue     *float64        `json:"target" required:"true"`
+	TargetValue     *float64        `json:"target" required:"true" format:"double"`
 	TargetUnit      string          `json:"targetUnit"`
-	RecoveryTarget  *float64        `json:"recoveryTarget"`
+	RecoveryTarget  *float64        `json:"recoveryTarget" format:"double"`
 	MatchType       MatchType       `json:"matchType" required:"true"`
 	CompareOperator CompareOperator `json:"op" required:"true"`
 	Channels        []string        `json:"channels"`
