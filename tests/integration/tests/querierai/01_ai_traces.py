@@ -139,9 +139,7 @@ def test_ai_list_excludes_non_ai(
         limit=10,
     )
 
-    response = make_query_request(
-        signoz, token, start_ms, end_ms, [query.to_dict()], request_type="trace"
-    )
+    response = make_query_request(signoz, token, start_ms, end_ms, [query.to_dict()], request_type="trace")
     assert response.status_code == HTTPStatus.OK, response.text
 
     body = json.dumps(response.json())
@@ -184,20 +182,35 @@ def _ai_trace_mixed_spans(*, now: datetime, service: str, user: str) -> list[Tra
         resources=resources,
         attributes={"http.request.method": "POST"},
     )
-    llm = _span("chat gpt-4o-mini", TracesKind.SPAN_KIND_CLIENT, {
-        "gen_ai.request.model": "gpt-4o-mini",
-        "gen_ai.system": "openai",
-        "gen_ai.user.id": user,
-        "gen_ai.usage.input_tokens": 100,
-        "gen_ai.usage.output_tokens": 20,
-    }, 4)
-    tool = _span("execute_tool", TracesKind.SPAN_KIND_INTERNAL, {
-        "gen_ai.tool.name": "get_weather",
-        "gen_ai.tool.type": "function",
-    }, 3)
-    agent = _span("agent.step", TracesKind.SPAN_KIND_INTERNAL, {
-        "gen_ai.agent.name": "chat-agent",
-    }, 2)
+    llm = _span(
+        "chat gpt-4o-mini",
+        TracesKind.SPAN_KIND_CLIENT,
+        {
+            "gen_ai.request.model": "gpt-4o-mini",
+            "gen_ai.system": "openai",
+            "gen_ai.user.id": user,
+            "gen_ai.usage.input_tokens": 100,
+            "gen_ai.usage.output_tokens": 20,
+        },
+        4,
+    )
+    tool = _span(
+        "execute_tool",
+        TracesKind.SPAN_KIND_INTERNAL,
+        {
+            "gen_ai.tool.name": "get_weather",
+            "gen_ai.tool.type": "function",
+        },
+        3,
+    )
+    agent = _span(
+        "agent.step",
+        TracesKind.SPAN_KIND_INTERNAL,
+        {
+            "gen_ai.agent.name": "chat-agent",
+        },
+        2,
+    )
     return [root, llm, tool, agent]
 
 
@@ -231,9 +244,7 @@ def test_ai_list_having_aggregate_filter(
         filter_expression=f"service.name = '{service}' AND output_tokens > 100",
         limit=10,
     )
-    response = make_query_request(
-        signoz, token, start_ms, end_ms, [query.to_dict()], request_type="trace"
-    )
+    response = make_query_request(signoz, token, start_ms, end_ms, [query.to_dict()], request_type="trace")
     assert response.status_code == HTTPStatus.OK, response.text
 
     body = json.dumps(response.json())
@@ -269,9 +280,7 @@ def test_ai_list_order_limit_offset(
             limit=2,
             offset=offset,
         )
-        resp = make_query_request(
-            signoz, token, start_ms, end_ms, [query.to_dict()], request_type="trace"
-        )
+        resp = make_query_request(signoz, token, start_ms, end_ms, [query.to_dict()], request_type="trace")
         assert resp.status_code == HTTPStatus.OK, resp.text
         rows = resp.json()["data"]["data"]["results"][0]["rows"]
         return [int(r["data"]["output_tokens"]) for r in rows]
@@ -289,10 +298,7 @@ def test_ai_span_list_limit(
     """Span list honors limit (delegated raw path): 6 gen_ai spans available, capped to 4."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-spanlimit"
-    insert_traces(
-        _ai_trace_mixed_spans(now=now, service=service, user="a")
-        + _ai_trace_mixed_spans(now=now, service=service, user="b")
-    )
+    insert_traces(_ai_trace_mixed_spans(now=now, service=service, user="a") + _ai_trace_mixed_spans(now=now, service=service, user="b"))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     start_ms, end_ms = _window_ms(now)
@@ -304,9 +310,7 @@ def test_ai_span_list_limit(
         filter_expression=f"service.name = '{service}'",
         limit=4,
     )
-    resp = make_query_request(
-        signoz, token, start_ms, end_ms, [query.to_dict()], request_type=RequestType.RAW
-    )
+    resp = make_query_request(signoz, token, start_ms, end_ms, [query.to_dict()], request_type=RequestType.RAW)
     assert resp.status_code == HTTPStatus.OK, resp.text
     rows = resp.json()["data"]["data"]["results"][0]["rows"]
     assert len(rows) == 4, f"limit should cap at 4 (6 gen_ai spans available), got {len(rows)}"
@@ -337,9 +341,7 @@ def test_ai_span_list_excludes_non_gen_ai_spans(
         select_fields=[TelemetryFieldKey(name="name", field_context="span")],
         limit=50,
     )
-    response = make_query_request(
-        signoz, token, start_ms, end_ms, [query.to_dict()], request_type=RequestType.RAW
-    )
+    response = make_query_request(signoz, token, start_ms, end_ms, [query.to_dict()], request_type=RequestType.RAW)
     assert response.status_code == HTTPStatus.OK, response.text
 
     rows = response.json()["data"]["data"]["results"][0]["rows"]
@@ -377,9 +379,7 @@ def test_ai_list_having_or_aggregates(
         filter_expression=f"service.name = '{service}' AND (output_tokens > 100 OR input_tokens > 1000)",
         limit=10,
     )
-    response = make_query_request(
-        signoz, token, start_ms, end_ms, [query.to_dict()], request_type="trace"
-    )
+    response = make_query_request(signoz, token, start_ms, end_ms, [query.to_dict()], request_type="trace")
     assert response.status_code == HTTPStatus.OK, response.text
 
     body = json.dumps(response.json())
@@ -412,9 +412,7 @@ def test_ai_list_having_trace_context_prefix(
         filter_expression=f"service.name = '{service}' AND trace.output_tokens > 100",
         limit=10,
     )
-    response = make_query_request(
-        signoz, token, start_ms, end_ms, [query.to_dict()], request_type="trace"
-    )
+    response = make_query_request(signoz, token, start_ms, end_ms, [query.to_dict()], request_type="trace")
     assert response.status_code == HTTPStatus.OK, response.text
 
     body = json.dumps(response.json())
@@ -450,15 +448,10 @@ def test_ai_list_resource_filter_isolates_by_fingerprint(
         signal="traces",
         source="ai",
         name="A",
-        filter_expression=(
-            f"resource.service.name = '{service}' "
-            "AND resource.deployment.environment = 'production'"
-        ),
+        filter_expression=(f"resource.service.name = '{service}' AND resource.deployment.environment = 'production'"),
         limit=10,
     )
-    response = make_query_request(
-        signoz, token, start_ms, end_ms, [query.to_dict()], request_type="trace"
-    )
+    response = make_query_request(signoz, token, start_ms, end_ms, [query.to_dict()], request_type="trace")
     assert response.status_code == HTTPStatus.OK, response.text
 
     body = json.dumps(response.json())
@@ -486,23 +479,25 @@ def test_ai_list_rejects_aggregate_or_span_filter(
 
     # aggregate OR span -> rejected
     bad = BuilderQuery(
-        signal="traces", source="ai", name="A", limit=10,
+        signal="traces",
+        source="ai",
+        name="A",
+        limit=10,
         filter_expression=f"output_tokens > 1000 OR service.name = '{service}'",
     )
-    response = make_query_request(
-        signoz, token, start_ms, end_ms, [bad.to_dict()], request_type="trace"
-    )
+    response = make_query_request(signoz, token, start_ms, end_ms, [bad.to_dict()], request_type="trace")
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
     assert "cannot be combined" in response.text
 
     # span OR span -> accepted (result content doesn't matter; just not an error)
     ok = BuilderQuery(
-        signal="traces", source="ai", name="A", limit=10,
+        signal="traces",
+        source="ai",
+        name="A",
+        limit=10,
         filter_expression=f"service.name = '{service}' OR has_error = true",
     )
-    response = make_query_request(
-        signoz, token, start_ms, end_ms, [ok.to_dict()], request_type="trace"
-    )
+    response = make_query_request(signoz, token, start_ms, end_ms, [ok.to_dict()], request_type="trace")
     assert response.status_code == HTTPStatus.OK, response.text
 
 
@@ -537,16 +532,10 @@ def test_ai_list_nested_group_span_or_and_aggregate(
         signal="traces",
         source="ai",
         name="A",
-        filter_expression=(
-            f"service.name = '{service}' "
-            "AND (has_error = true OR gen_ai.request.model = 'gpt-4o') "
-            "AND total_tokens > 100"
-        ),
+        filter_expression=(f"service.name = '{service}' AND (has_error = true OR gen_ai.request.model = 'gpt-4o') AND total_tokens > 100"),
         limit=10,
     )
-    response = make_query_request(
-        signoz, token, start_ms, end_ms, [query.to_dict()], request_type="trace"
-    )
+    response = make_query_request(signoz, token, start_ms, end_ms, [query.to_dict()], request_type="trace")
     assert response.status_code == HTTPStatus.OK, response.text
 
     body = json.dumps(response.json())
@@ -566,12 +555,13 @@ def test_ai_list_rejects_unknown_aggregate_key(
     start_ms, end_ms = _window_ms(now)
 
     query = BuilderQuery(
-        signal="traces", source="ai", name="A", limit=10,
+        signal="traces",
+        source="ai",
+        name="A",
+        limit=10,
         filter_expression="trace.bogus_tokens > 1",
     )
-    response = make_query_request(
-        signoz, token, start_ms, end_ms, [query.to_dict()], request_type="trace"
-    )
+    response = make_query_request(signoz, token, start_ms, end_ms, [query.to_dict()], request_type="trace")
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
 
 
@@ -586,12 +576,13 @@ def test_ai_list_rejects_order_by_span_attribute(
     start_ms, end_ms = _window_ms(now)
 
     query = BuilderQuery(
-        signal="traces", source="ai", name="A", limit=5,
+        signal="traces",
+        source="ai",
+        name="A",
+        limit=5,
         order=[OrderBy(key=TelemetryFieldKey(name="service.name"), direction="asc")],
     )
-    response = make_query_request(
-        signoz, token, start_ms, end_ms, [query.to_dict()], request_type="trace"
-    )
+    response = make_query_request(signoz, token, start_ms, end_ms, [query.to_dict()], request_type="trace")
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
     assert "order key" in response.text
 
@@ -657,12 +648,13 @@ def test_ai_list_messages_first_input_last_output(
     start_ms, end_ms = _window_ms(now)
 
     query = BuilderQuery(
-        signal="traces", source="ai", name="A", limit=10,
+        signal="traces",
+        source="ai",
+        name="A",
+        limit=10,
         filter_expression=f"service.name = '{service}'",
     )
-    response = make_query_request(
-        signoz, token, start_ms, end_ms, [query.to_dict()], request_type="trace"
-    )
+    response = make_query_request(signoz, token, start_ms, end_ms, [query.to_dict()], request_type="trace")
     assert response.status_code == HTTPStatus.OK, response.text
 
     rows = response.json()["data"]["data"]["results"][0]["rows"]
@@ -763,25 +755,26 @@ def test_ai_list_enrichment_values(
     start_ms, end_ms = _window_ms(now)
 
     query = BuilderQuery(
-        signal="traces", source="ai", name="A", limit=10,
+        signal="traces",
+        source="ai",
+        name="A",
+        limit=10,
         filter_expression=f"service.name = '{service}'",
     )
-    response = make_query_request(
-        signoz, token, start_ms, end_ms, [query.to_dict()], request_type="trace"
-    )
+    response = make_query_request(signoz, token, start_ms, end_ms, [query.to_dict()], request_type="trace")
     assert response.status_code == HTTPStatus.OK, response.text
 
     rows = response.json()["data"]["data"]["results"][0]["rows"]
     assert len(rows) == 1, f"expected one trace, got: {rows}"
     data = rows[0]["data"]
 
-    assert data["span_count"] == 6, data              # root + llm + 3 tools + agent
-    assert data["llm_call_count"] == 1, data          # only the request.model span, not tool/agent
-    assert data["tool_call_count"] == 3, data         # all three tool spans
-    assert data["distinct_tool_count"] == 2, data     # get_weather, get_time
+    assert data["span_count"] == 6, data  # root + llm + 3 tools + agent
+    assert data["llm_call_count"] == 1, data  # only the request.model span, not tool/agent
+    assert data["tool_call_count"] == 3, data  # all three tool spans
+    assert data["distinct_tool_count"] == 2, data  # get_weather, get_time
     assert data["input_tokens"] == 100, data
     assert data["output_tokens"] == 20, data
-    assert data["total_tokens"] == 120, data          # input + output
+    assert data["total_tokens"] == 120, data  # input + output
     assert data["estimated_cost_usd"] == pytest.approx(0.5), data
-    assert data["error_count"] == 1, data             # the errored LLM span
-    assert data["max_llm_latency_ns"] > 0, data       # scoped max over LLM spans
+    assert data["error_count"] == 1, data  # the errored LLM span
+    assert data["max_llm_latency_ns"] > 0, data  # scoped max over LLM spans
