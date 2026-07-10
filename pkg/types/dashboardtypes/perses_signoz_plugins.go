@@ -8,6 +8,7 @@ import (
 	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/prometheus/common/model"
 	"github.com/swaggest/jsonschema-go"
 )
 
@@ -621,8 +622,35 @@ func (fm *FillMode) UnmarshalJSON(data []byte) error {
 }
 
 type SpanGaps struct {
-	FillOnlyBelow bool                `json:"fillOnlyBelow" description:"Controls whether lines connect across null values. When false (default), all gaps are connected. When true, only gaps smaller than fillLessThan are connected."`
-	FillLessThan  valuer.TextDuration `json:"fillLessThan" description:"The maximum gap size to connect when fillOnlyBelow is true. Gaps larger than this duration are left disconnected."`
+	FillOnlyBelow bool   `json:"fillOnlyBelow" description:"Controls whether lines connect across null values. When false (default), all gaps are connected. When true, only gaps smaller than fillLessThan are connected."`
+	FillLessThan  string `json:"fillLessThan" description:"The maximum gap size to connect when fillOnlyBelow is true. Gaps larger than this duration are left disconnected."`
+}
+
+func (sg *SpanGaps) UnmarshalJSON(data []byte) error {
+	type alias SpanGaps
+	var tmp alias
+	if err := json.Unmarshal(data, &tmp); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid spanGaps")
+	}
+	*sg = SpanGaps(tmp)
+	return sg.validate()
+}
+
+// validate checks that FillLessThan, when set, is a valid positive duration.
+// It uses prometheus's parser so day/week/year units (e.g. "1d") are accepted;
+// time.ParseDuration caps at hours.
+func (sg SpanGaps) validate() error {
+	if sg.FillLessThan == "" {
+		return nil
+	}
+	d, err := model.ParseDuration(sg.FillLessThan)
+	if err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid spanGaps.fillLessThan duration %q", sg.FillLessThan)
+	}
+	if d <= 0 {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spanGaps.fillLessThan duration must be positive, got %q", sg.FillLessThan)
+	}
+	return nil
 }
 
 type PrecisionOption struct{ valuer.String }

@@ -6,7 +6,6 @@ import (
 	"os"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/perses/spec/go/dashboard"
@@ -1371,7 +1370,7 @@ func TestSpanGaps(t *testing.T) {
 	t.Run("defaults", func(t *testing.T) {
 		var sg SpanGaps
 		assert.False(t, sg.FillOnlyBelow, "expected FillOnlyBelow default false")
-		assert.True(t, sg.FillLessThan.IsZero(), "expected FillLessThan default zero")
+		assert.Empty(t, sg.FillLessThan, "expected FillLessThan default empty")
 	})
 
 	t.Run("fillOnlyBelow true", func(t *testing.T) {
@@ -1382,12 +1381,27 @@ func TestSpanGaps(t *testing.T) {
 	t.Run("fillLessThan duration", func(t *testing.T) {
 		sg := unmarshal(t, `{"fillOnlyBelow": false, "fillLessThan": "5m"}`)
 		assert.False(t, sg.FillOnlyBelow)
-		assert.Equal(t, 5*time.Minute, sg.FillLessThan.Duration())
+		assert.Equal(t, "5m", sg.FillLessThan)
 	})
 
 	t.Run("fillLessThan compound duration", func(t *testing.T) {
 		sg := unmarshal(t, `{"fillLessThan": "1h30m"}`)
-		assert.Equal(t, 90*time.Minute, sg.FillLessThan.Duration())
+		assert.Equal(t, "1h30m", sg.FillLessThan)
+	})
+
+	t.Run("fillLessThan day duration", func(t *testing.T) {
+		sg := unmarshal(t, `{"fillLessThan": "1d"}`)
+		assert.Equal(t, "1d", sg.FillLessThan)
+	})
+
+	t.Run("invalid fillLessThan rejected on unmarshal", func(t *testing.T) {
+		var sg SpanGaps
+		require.Error(t, json.Unmarshal([]byte(`{"fillLessThan": "not-a-duration"}`), &sg))
+	})
+
+	t.Run("non-positive fillLessThan rejected on unmarshal", func(t *testing.T) {
+		var sg SpanGaps
+		require.Error(t, json.Unmarshal([]byte(`{"fillLessThan": "0s"}`), &sg))
 	})
 }
 

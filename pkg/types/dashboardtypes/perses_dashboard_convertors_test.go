@@ -38,7 +38,7 @@ func newTestDashboardV2(t *testing.T, orgID valuer.UUID, source Source) *Dashboa
 								LineInterpolation: LineInterpolationSpline,
 								LineStyle:         LineStyleSolid,
 								FillMode:          FillModeSolid,
-								SpanGaps:          SpanGaps{FillLessThan: valuer.MustParseTextDuration("60s")},
+								SpanGaps:          SpanGaps{FillLessThan: "60s"},
 							},
 							Legend: Legend{Position: LegendPositionBottom, Mode: LegendModeList},
 						},
