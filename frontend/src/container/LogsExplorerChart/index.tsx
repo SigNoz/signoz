@@ -1,4 +1,3 @@
-import { memo, useCallback, useMemo } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
@@ -37,76 +36,64 @@ function LogsExplorerChart({
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
-	const handleCreateDatasets: Required<GetChartDataProps>['createDataset'] =
-		useCallback(
-			(element, index, allLabels) => ({
-				data: element,
-				backgroundColor: isLogsExplorerViews
-					? getColorsForSeverityLabels(allLabels[index], index)
-					: colors[index % colors.length] || themeColors.red,
-				borderColor: isLogsExplorerViews
-					? getColorsForSeverityLabels(allLabels[index], index)
-					: colors[index % colors.length] || themeColors.red,
-				...(isLabelEnabled
-					? {
-							label: allLabels[index],
-						}
-					: {}),
-			}),
-			[isLabelEnabled, isLogsExplorerViews],
-		);
+	const handleCreateDatasets: Required<GetChartDataProps>['createDataset'] = (
+		element,
+		index,
+		allLabels,
+	) => ({
+		data: element,
+		backgroundColor: isLogsExplorerViews
+			? getColorsForSeverityLabels(allLabels[index], index)
+			: colors[index % colors.length] || themeColors.red,
+		borderColor: isLogsExplorerViews
+			? getColorsForSeverityLabels(allLabels[index], index)
+			: colors[index % colors.length] || themeColors.red,
+		...(isLabelEnabled
+			? {
+					label: allLabels[index],
+				}
+			: {}),
+	});
 
-	const onDragSelect = useCallback(
-		(start: number, end: number): void => {
-			// Do not allow dragging on live logs chart
-			if (isShowingLiveLogs) {
-				return;
-			}
+	const onDragSelect = (start: number, end: number): void => {
+		// Do not allow dragging on live logs chart
+		if (isShowingLiveLogs) {
+			return;
+		}
 
-			const startTimestamp = Math.trunc(start);
-			const endTimestamp = Math.trunc(end);
+		const startTimestamp = Math.trunc(start);
+		const endTimestamp = Math.trunc(end);
 
-			if (startTimestamp !== endTimestamp) {
-				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
-			}
+		if (startTimestamp !== endTimestamp) {
+			dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
+		}
 
-			const { maxTime, minTime } = GetMinMax('custom', [
-				startTimestamp,
-				endTimestamp,
-			]);
+		const { maxTime, minTime } = GetMinMax('custom', [
+			startTimestamp,
+			endTimestamp,
+		]);
 
-			urlQuery.set(QueryParams.startTime, minTime.toString());
-			urlQuery.set(QueryParams.endTime, maxTime.toString());
-			urlQuery.delete(QueryParams.relativeTime);
-			// Remove Hidden Filters from URL query parameters on time change
-			urlQuery.delete(QueryParams.activeLogId);
-			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-			safeNavigate(generatedUrl);
-		},
-		[dispatch, location.pathname, safeNavigate, urlQuery, isShowingLiveLogs],
-	);
+		urlQuery.set(QueryParams.startTime, minTime.toString());
+		urlQuery.set(QueryParams.endTime, maxTime.toString());
+		urlQuery.delete(QueryParams.relativeTime);
+		// Remove Hidden Filters from URL query parameters on time change
+		urlQuery.delete(QueryParams.activeLogId);
+		const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
+		safeNavigate(generatedUrl);
+	};
 
-	const graphData = useMemo(
-		() =>
-			getChartData({
-				queryData: [
-					{
-						queryData: data,
-					},
-				],
-				createDataset: handleCreateDatasets,
-			}),
-		[data, handleCreateDatasets],
-	);
+	const graphData = getChartData({
+		queryData: [
+			{
+				queryData: data,
+			},
+		],
+		createDataset: handleCreateDatasets,
+	});
 
 	// Convert nanosecond timestamps to milliseconds for Chart.js
-	const { chartMinTime, chartMaxTime } = useMemo(
-		() => ({
-			chartMinTime: minTime ? Math.floor(minTime / 1e6) : undefined,
-			chartMaxTime: maxTime ? Math.floor(maxTime / 1e6) : undefined,
-		}),
-		[minTime, maxTime],
-	);
+	const chartMinTime = minTime ? Math.floor(minTime / 1e6) : undefined;
+	const chartMaxTime = maxTime ? Math.floor(maxTime / 1e6) : undefined;
 
 	return (
 		<div className={`${className} logs-frequency-chart-container`}>
@@ -130,4 +117,4 @@ function LogsExplorerChart({
 	);
 }
 
-export default memo(LogsExplorerChart);
+export default LogsExplorerChart;
