@@ -752,7 +752,7 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 						"spec": {
 							"plugin": {
 								"kind": "signoz/TimeSeriesPanel",
-								"spec": {"chartAppearance": {"spanGaps": {"fillLessThan": "notaduration"}}}
+								"spec": {"chartAppearance": {"spanGaps": {"fillOnlyBelow": true, "fillLessThan": "notaduration"}}}
 							}
 						}
 					}
@@ -1374,34 +1374,45 @@ func TestSpanGaps(t *testing.T) {
 	})
 
 	t.Run("fillOnlyBelow true", func(t *testing.T) {
-		sg := unmarshal(t, `{"fillOnlyBelow": true}`)
+		sg := unmarshal(t, `{"fillOnlyBelow": true, "fillLessThan": "5m"}`)
 		assert.True(t, sg.FillOnlyBelow)
 	})
 
-	t.Run("fillLessThan duration", func(t *testing.T) {
-		sg := unmarshal(t, `{"fillOnlyBelow": false, "fillLessThan": "5m"}`)
+	t.Run("fillLessThan ignored when fillOnlyBelow is false", func(t *testing.T) {
+		sg := unmarshal(t, `{"fillOnlyBelow": false, "fillLessThan": ""}`)
 		assert.False(t, sg.FillOnlyBelow)
+		assert.Empty(t, sg.FillLessThan)
+	})
+
+	t.Run("fillLessThan duration", func(t *testing.T) {
+		sg := unmarshal(t, `{"fillOnlyBelow": true, "fillLessThan": "5m"}`)
+		assert.True(t, sg.FillOnlyBelow)
 		assert.Equal(t, "5m", sg.FillLessThan)
 	})
 
 	t.Run("fillLessThan compound duration", func(t *testing.T) {
-		sg := unmarshal(t, `{"fillLessThan": "1h30m"}`)
+		sg := unmarshal(t, `{"fillOnlyBelow": true, "fillLessThan": "1h30m"}`)
 		assert.Equal(t, "1h30m", sg.FillLessThan)
 	})
 
 	t.Run("fillLessThan day duration", func(t *testing.T) {
-		sg := unmarshal(t, `{"fillLessThan": "1d"}`)
+		sg := unmarshal(t, `{"fillOnlyBelow": true, "fillLessThan": "1d"}`)
 		assert.Equal(t, "1d", sg.FillLessThan)
+	})
+
+	t.Run("fillLessThan required when fillOnlyBelow is true", func(t *testing.T) {
+		var sg SpanGaps
+		require.Error(t, json.Unmarshal([]byte(`{"fillOnlyBelow": true}`), &sg))
 	})
 
 	t.Run("invalid fillLessThan rejected on unmarshal", func(t *testing.T) {
 		var sg SpanGaps
-		require.Error(t, json.Unmarshal([]byte(`{"fillLessThan": "not-a-duration"}`), &sg))
+		require.Error(t, json.Unmarshal([]byte(`{"fillOnlyBelow": true, "fillLessThan": "not-a-duration"}`), &sg))
 	})
 
 	t.Run("non-positive fillLessThan rejected on unmarshal", func(t *testing.T) {
 		var sg SpanGaps
-		require.Error(t, json.Unmarshal([]byte(`{"fillLessThan": "0s"}`), &sg))
+		require.Error(t, json.Unmarshal([]byte(`{"fillOnlyBelow": true, "fillLessThan": "0s"}`), &sg))
 	})
 }
 

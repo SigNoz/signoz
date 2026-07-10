@@ -636,12 +636,16 @@ func (sg *SpanGaps) UnmarshalJSON(data []byte) error {
 	return sg.validate()
 }
 
-// validate checks that FillLessThan, when set, is a valid positive duration.
-// It uses prometheus's parser so day/week/year units (e.g. "1d") are accepted;
-// time.ParseDuration caps at hours.
+// validate enforces FillLessThan only when FillOnlyBelow is set, since that is
+// the only mode in which it applies. It must then be a valid positive duration.
+// prometheus's parser accepts day/week/year units (e.g. "1d"); time.ParseDuration
+// caps at hours.
 func (sg SpanGaps) validate() error {
-	if sg.FillLessThan == "" {
+	if !sg.FillOnlyBelow {
 		return nil
+	}
+	if sg.FillLessThan == "" {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spanGaps.fillLessThan is required when fillOnlyBelow is true")
 	}
 	d, err := model.ParseDuration(sg.FillLessThan)
 	if err != nil {
