@@ -1,4 +1,3 @@
-import { memo, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Typography } from '@signozhq/ui/typography';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
@@ -24,7 +23,7 @@ function GridValueComponent({
 	const value = ((data[1] || [])[0] || 0) as number;
 
 	const location = useLocation();
-	const gridTitle = useMemo(() => generateGridTitle(title), [title]);
+	const gridTitle = generateGridTitle(title);
 
 	const isDashboardPage = location.pathname.split('/').length === 3;
 
@@ -122,4 +121,4 @@ function GridValueComponent({
 	);
 }
 
-export default memo(GridValueComponent);
+export default GridValueComponent;

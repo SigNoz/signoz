@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { useRef } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Group } from '@visx/group';
 import { Pie as VisxPie } from '@visx/shape';
@@ -67,56 +67,47 @@ export default function Pie({
 	// Reuse the uPlot chart/legend split so the donut + legend get the same area
 	// allocation (right column, or up-to-two bottom rows) as every other panel.
 	const { width, height, legendWidth, legendHeight, averageLegendWidth } =
-		useMemo(
-			() =>
-				calculateChartDimensions({
-					containerWidth,
-					containerHeight,
-					legendConfig: { position },
-					seriesLabels: data.map((slice) => slice.label),
-				}),
-			[containerWidth, containerHeight, position, data],
-		);
+		calculateChartDimensions({
+			containerWidth,
+			containerHeight,
+			legendConfig: { position },
+			seriesLabels: data.map((slice) => slice.label),
+		});
 
 	// Donut geometry derived from the allocated chart box, sized to leave room
 	// for the external leader labels (see getDonutGeometry).
-	const { size, radius, innerRadius } = useMemo(
-		() => getDonutGeometry(width, height),
-		[width, height],
-	);
+	const { size, radius, innerRadius } = getDonutGeometry(width, height);
 
-	const totalValue = useMemo(
-		() => visibleData.reduce((sum, slice) => sum + slice.value, 0),
-		[visibleData],
-	);
+	const totalValue = visibleData.reduce((sum, slice) => sum + slice.value, 0);
 
 	const labelColor = isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_400;
 	const activeColor = active?.color ?? null;
 
-	const handleSliceEnter = useCallback(
-		(slice: PieSlice, centroidX: number, centroidY: number): void => {
-			showTooltip({
-				tooltipData: {
-					label: slice.label,
-					value: getYAxisFormattedValue(
-						slice.value.toString(),
-						yAxisUnit || 'none',
-						decimalPrecision,
-					),
-					color: slice.color,
-				},
-				tooltipTop: centroidY + height / 2,
-				tooltipLeft: centroidX + width / 2,
-			});
-			setActive(slice);
-		},
-		[showTooltip, setActive, yAxisUnit, decimalPrecision, height, width],
-	);
+	const handleSliceEnter = (
+		slice: PieSlice,
+		centroidX: number,
+		centroidY: number,
+	): void => {
+		showTooltip({
+			tooltipData: {
+				label: slice.label,
+				value: getYAxisFormattedValue(
+					slice.value.toString(),
+					yAxisUnit || 'none',
+					decimalPrecision,
+				),
+				color: slice.color,
+			},
+			tooltipTop: centroidY + height / 2,
+			tooltipLeft: centroidX + width / 2,
+		});
+		setActive(slice);
+	};
 
-	const handleSliceLeave = useCallback((): void => {
+	const handleSliceLeave = (): void => {
 		hideTooltip();
 		setActive(null);
-	}, [hideTooltip, setActive]);
+	};
 
 	if (!data.length) {
 		return (

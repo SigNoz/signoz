@@ -1,4 +1,3 @@
-import { useCallback } from 'react';
 import ChartWrapper from 'container/DashboardContainer/visualization/charts/ChartWrapper/ChartWrapper';
 import BarChartTooltip from 'lib/uPlotV2/components/Tooltip/BarChartTooltip';
 import {
@@ -26,33 +25,22 @@ export default function BarChart(props: BarChartProps): JSX.Element {
 		config,
 	});
 
-	const renderTooltip = useCallback(
-		(props: TooltipRenderArgs): React.ReactNode => {
-			if (customTooltip) {
-				return customTooltip(props);
-			}
-			const tooltipProps: BarTooltipProps = {
-				...props,
-				id: config.getId(),
-				timezone: rest.timezone,
-				yAxisUnit: rest.yAxisUnit,
-				decimalPrecision: rest.decimalPrecision,
-				isStackedBarChart: isStackedBarChart,
-				canPinTooltip: rest.canPinTooltip,
-				renderTooltipFooter: rest.renderTooltipFooter,
-			};
-			return <BarChartTooltip {...tooltipProps} />;
-		},
-		[
-			customTooltip,
-			rest.timezone,
-			rest.yAxisUnit,
-			rest.decimalPrecision,
-			isStackedBarChart,
-			rest.canPinTooltip,
-			rest.renderTooltipFooter,
-		],
-	);
+	const renderTooltip = (props: TooltipRenderArgs): React.ReactNode => {
+		if (customTooltip) {
+			return customTooltip(props);
+		}
+		const tooltipProps: BarTooltipProps = {
+			...props,
+			id: config.getId(),
+			timezone: rest.timezone,
+			yAxisUnit: rest.yAxisUnit,
+			decimalPrecision: rest.decimalPrecision,
+			isStackedBarChart: isStackedBarChart,
+			canPinTooltip: rest.canPinTooltip,
+			renderTooltipFooter: rest.renderTooltipFooter,
+		};
+		return <BarChartTooltip {...tooltipProps} />;
+	};
 
 	return (
 		<ChartWrapper
