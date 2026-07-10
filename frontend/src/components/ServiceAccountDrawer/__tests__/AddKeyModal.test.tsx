@@ -1,4 +1,5 @@
 import { toast } from '@signozhq/ui/sonner';
+import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import {
@@ -59,6 +60,7 @@ describe('AddKeyModal', () => {
 			rest.post(SA_KEYS_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(201), ctx.json(createdKeyResponse)),
 			),
+			setupAuthzAdmin(),
 		);
 	});
 
