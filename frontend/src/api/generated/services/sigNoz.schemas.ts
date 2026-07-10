@@ -8480,10 +8480,12 @@ export interface RuletypesBasicRuleThresholdDTO {
 	op: RuletypesCompareOperatorDTO;
 	/**
 	 * @type number,null
+	 * @format double
 	 */
 	recoveryTarget?: number | null;
 	/**
 	 * @type number,null
+	 * @format double
 	 */
 	target: number | null;
 	/**
@@ -8677,6 +8679,7 @@ export interface RuletypesRuleConditionDTO {
 	selectedQueryName?: string;
 	/**
 	 * @type number,null
+	 * @format double
 	 */
 	target?: number | null;
 	/**
