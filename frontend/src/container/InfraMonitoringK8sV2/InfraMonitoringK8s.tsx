@@ -4,7 +4,10 @@ import { Button, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
-import { QuickFiltersSource } from 'components/QuickFilters/types';
+import {
+	QuickFilterCheckboxUseFieldApis,
+	QuickFiltersSource,
+} from 'components/QuickFilters/types';
 import { InfraMonitoringEvents } from 'constants/events';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
@@ -37,6 +40,7 @@ import {
 	GetPodsQuickFiltersConfig,
 	GetStatefulsetsQuickFiltersConfig,
 	GetVolumesQuickFiltersConfig,
+	InfraMonitoringEntity,
 	K8sCategories,
 } from './constants';
 import K8sDaemonSetsList from './DaemonSets/K8sDaemonSetsList';
@@ -55,6 +59,8 @@ import K8sStatefulSetsList from './StatefulSets/K8sStatefulSetsList';
 import K8sVolumesList from './Volumes/K8sVolumesList';
 
 import styles from './InfraMonitoringK8s.module.scss';
+import { NANO_SECOND_MULTIPLIER, useGlobalTimeStore } from 'store/globalTime';
+import { METRIC_NAMESPACE_BY_ENTITY } from 'container/InfraMonitoringK8sV2/constants.quick-filters';
 
 export default function InfraMonitoringK8s(): JSX.Element {
 	const [showFilters, setShowFilters] = useState(true);
@@ -75,6 +81,31 @@ export default function InfraMonitoringK8s(): JSX.Element {
 		query: currentQuery.builder.queryData[0],
 		entityVersion: '',
 	});
+
+	const selectedTime = useGlobalTimeStore((state) => state.selectedTime);
+	const getMinMaxTime = useGlobalTimeStore((state) => state.getMinMaxTime);
+	const { startUnixMilli, endUnixMilli } = useMemo(() => {
+		const { minTime, maxTime } = getMinMaxTime();
+		return {
+			startUnixMilli: Math.floor(minTime / NANO_SECOND_MULTIPLIER),
+			endUnixMilli: Math.floor(maxTime / NANO_SECOND_MULTIPLIER),
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [selectedTime, getMinMaxTime]);
+
+	const getUseFieldApis = useCallback(
+		(entity: InfraMonitoringEntity): QuickFilterCheckboxUseFieldApis => ({
+			metricNamespace: METRIC_NAMESPACE_BY_ENTITY[entity],
+			startUnixMilli,
+			endUnixMilli,
+		}),
+		[startUnixMilli, endUnixMilli],
+	);
+
+	const selectedCategoryUseFieldApis = useMemo(
+		() => getUseFieldApis(selectedCategory as InfraMonitoringEntity),
+		[getUseFieldApis, selectedCategory],
+	);
 
 	// Track previous urlFilters to only sync when the value actually changes
 	// (not when handleChangeQueryData changes due to query updates)
@@ -262,6 +293,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 										config={selectedCategoryConfig}
 										handleFilterVisibilityChange={handleFilterVisibilityChange}
 										onFilterChange={handleFilterChange}
+										useFieldApis={selectedCategoryUseFieldApis}
 									/>
 								)}
 							</div>
