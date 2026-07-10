@@ -1,3 +1,4 @@
+import { useRef, useState } from 'react';
 import { Check, X } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
@@ -6,6 +7,7 @@ import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 // eslint-disable-next-line signoz/no-antd-components -- TextArea/Collapse: no @signozhq/ui equivalent
 import { Collapse, Input as AntdInput } from 'antd';
+import { CustomMultiSelect } from 'components/NewSelect';
 
 import type { VariableType } from '../variableFormModel';
 import DynamicVariableFields from './DynamicVariableFields';
@@ -30,9 +32,19 @@ function VariableForm({
 	siblings,
 	isNew,
 	isSaving,
+	panelOptions,
+	appliedPanelIds,
 	onClose,
 	onSave,
 }: VariableFormProps): JSX.Element {
+	// The "apply to panels" selection is transient form state, seeded from the
+	// panels that already reference this variable. Held in a ref so the save
+	// callback (owned by useVariableForm) reads the latest value.
+	const [selectedPanelIds, setSelectedPanelIds] =
+		useState<string[]>(appliedPanelIds);
+	const selectedPanelIdsRef = useRef(selectedPanelIds);
+	selectedPanelIdsRef.current = selectedPanelIds;
+
 	const {
 		model,
 		set,
@@ -54,7 +66,12 @@ function VariableForm({
 		showAllOptionField,
 		payloadVariables,
 		handleSave,
-	} = useVariableForm({ initial, siblings, isNew, onSave });
+	} = useVariableForm({
+		initial,
+		siblings,
+		isNew,
+		onSave: (next): void => onSave(next, selectedPanelIdsRef.current),
+	});
 
 	// Shared list rows (preview/sort/multi/default) for the list-type variables;
 	// rendered as a sibling inside each list-type panel. Only the active panel
@@ -101,6 +118,20 @@ function VariableForm({
 								attributeError={attributeError}
 							/>
 							{listFields}
+							<div className={styles.row}>
+								<div className={styles.labelContainer}>
+									<Typography.Text className={styles.label}>
+										Apply to panels
+									</Typography.Text>
+								</div>
+								<CustomMultiSelect
+									placeholder="Select panels"
+									options={panelOptions}
+									value={selectedPanelIds}
+									onChange={(value): void => setSelectedPanelIds(value as string[])}
+									data-testid="variable-apply-panels"
+								/>
+							</div>
 						</div>
 					</TabsContent>
 

@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { CustomMultiSelect, CustomSelect } from 'components/NewSelect';
 import type { OptionData } from 'components/NewSelect/types';
-import { ALL_SELECT_VALUE } from 'container/DashboardContainer/utils';
 
 import type { VariableSelection } from '../selectionTypes';
 import styles from '../VariablesBar.module.scss';
@@ -14,6 +13,9 @@ interface ValueSelectorProps {
 	selection: VariableSelection;
 	onChange: (selection: VariableSelection) => void;
 	testId?: string;
+	/** Option-fetch error surfaced in the dropdown, with a retry action. */
+	errorMessage?: string | null;
+	onRetry?: () => void;
 }
 
 /**
@@ -29,6 +31,8 @@ function ValueSelector({
 	selection,
 	onChange,
 	testId,
+	errorMessage,
+	onRetry,
 }: ValueSelectorProps): JSX.Element {
 	const optionData = useMemo<OptionData[]>(
 		() => options.map((option) => ({ label: option, value: option })),
@@ -36,8 +40,11 @@ function ValueSelector({
 	);
 
 	if (multiSelect) {
+		// All-selected → hand CustomMultiSelect the full option set so it engages its
+		// "all" path (overlay when closed, every option checked when open). Passing the
+		// scalar sentinel instead makes it render a literal `__ALL__` row.
 		const value = selection.allSelected
-			? ALL_SELECT_VALUE
+			? options
 			: (Array.isArray(selection.value) ? selection.value : []).map(String);
 		return (
 			<CustomMultiSelect
@@ -46,8 +53,12 @@ function ValueSelector({
 				options={optionData}
 				value={value}
 				loading={loading}
+				errorMessage={errorMessage}
+				onRetry={onRetry}
 				showSearch
 				placeholder="Select value"
+				maxTagCount={2}
+				maxTagTextLength={20}
 				enableAllSelection={showAllOption}
 				onChange={(next): void => {
 					const values = Array.isArray(next)
@@ -82,6 +93,8 @@ function ValueSelector({
 					: String(selection.value)
 			}
 			loading={loading}
+			errorMessage={errorMessage}
+			onRetry={onRetry}
 			showSearch
 			placeholder="Select value"
 			onChange={(next): void =>

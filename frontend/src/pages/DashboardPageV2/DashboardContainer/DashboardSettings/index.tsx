@@ -17,6 +17,7 @@ import { useAppContext } from 'providers/App/App';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { USER_ROLES } from 'types/roles';
 
+import { useDashboardStore } from '../store/useDashboardStore';
 import styles from './DashboardSettings.module.scss';
 
 interface DashboardSettingsProps {
@@ -38,6 +39,9 @@ const prefixIcons: Record<TabKeys, JSX.Element> = {
 function DashboardSettings({ dashboard }: DashboardSettingsProps): JSX.Element {
 	const { user } = useAppContext();
 	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
+	// Opened once per drawer mount (the drawer destroys on close); a deep-link
+	// request lands us on the right tab.
+	const settingsRequest = useDashboardStore((s) => s.settingsRequest);
 
 	const enablePublicDashboard = isCloudUser || isEnterpriseSelfHostedUser;
 
@@ -69,7 +73,7 @@ function DashboardSettings({ dashboard }: DashboardSettingsProps): JSX.Element {
 	);
 
 	return (
-		<TabsRoot defaultValue={TabKeys.OVERVIEW}>
+		<TabsRoot defaultValue={settingsRequest?.tab ?? TabKeys.OVERVIEW}>
 			<TabsList variant="primary">
 				{Object.values(TabKeys).map((key) => (
 					<TabsTrigger value={key} key={key}>

@@ -14,6 +14,7 @@ import type {
 
 import {
 	DYNAMIC_SIGNAL_ALL,
+	DYNAMIC_SIGNALS,
 	type DynamicSignalOption,
 	emptyVariableFormModel,
 	signalForApi,
@@ -68,9 +69,12 @@ export function dtoToFormModel(
 			...listCommon,
 			type: 'DYNAMIC',
 			dynamicAttribute: plugin.spec.name ?? '',
-			// An omitted wire signal means "all telemetry".
-			dynamicSignal:
-				(plugin.spec.signal as DynamicSignalOption) ?? DYNAMIC_SIGNAL_ALL,
+			// Unrecognized/empty signal → "all telemetry", so the source always shows.
+			dynamicSignal: DYNAMIC_SIGNALS.includes(
+				plugin.spec.signal as DynamicSignalOption,
+			)
+				? (plugin.spec.signal as DynamicSignalOption)
+				: DYNAMIC_SIGNAL_ALL,
 		};
 	}
 	// Default to Query (also covers a query plugin or a missing/unknown plugin).

@@ -49,6 +49,23 @@ describe('ContextLinksSection utils', () => {
 				{ key: 'q', value: '{{x}}' },
 			]);
 		});
+
+		it('treats undecodable percent sequences as literal text instead of throwing', () => {
+			expect(getUrlParams('/logs?search=95%')).toStrictEqual([
+				{ key: 'search', value: '95%' },
+			]);
+			expect(getUrlParams('/logs?95%=value')).toStrictEqual([
+				{ key: '95%', value: 'value' },
+			]);
+		});
+
+		it('decodes a valid escape once even when the result has a stray percent', () => {
+			// %2525 double-decodes to '%'; 95%25 decodes once to '95%' and stops there
+			expect(getUrlParams('/logs?a=95%25&b=%2525')).toStrictEqual([
+				{ key: 'a', value: '95%' },
+				{ key: 'b', value: '%' },
+			]);
+		});
 	});
 
 	describe('updateUrlWithParams', () => {

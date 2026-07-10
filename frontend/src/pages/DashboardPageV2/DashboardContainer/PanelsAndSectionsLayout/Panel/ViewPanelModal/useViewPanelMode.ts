@@ -10,6 +10,7 @@ import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQue
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { usePanelEditSession } from 'pages/DashboardPageV2/DashboardContainer/PanelEditor/hooks/usePanelEditSession';
+import type { OpenDrilldownView } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/drilldown';
 import type { RenderablePanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelDefinition';
 import {
 	PANEL_KIND_TO_PANEL_TYPE,
@@ -34,6 +35,8 @@ interface UseViewPanelModeArgs {
 export interface UseViewPanelModeReturn {
 	/** Local editable copy of the panel — the preview renders this, not the saved panel. */
 	draft: DashboardtypesPanelDTO;
+	/** Update the draft's spec in place (e.g. the List columns editor). */
+	setSpec: (next: DashboardtypesPanelSpecDTO) => void;
 	/** Resolved renderer for the draft's current kind (registry always resolves a kind). */
 	panelDefinition: RenderablePanelDefinition;
 	/**
@@ -56,6 +59,11 @@ export interface UseViewPanelModeReturn {
 	buildSaveSpec: (
 		spec: DashboardtypesPanelSpecDTO,
 	) => DashboardtypesPanelSpecDTO;
+	/**
+	 * Drill-down handoff for filter-by-value / breakout: refine the view in place (persist to the
+	 * URL so it survives refresh, and re-run the preview), rather than opening a new View modal.
+	 */
+	applyDrilldownQuery: OpenDrilldownView;
 }
 
 /**
@@ -101,6 +109,7 @@ export function useViewPanelMode({
 		onChangePanelKind,
 		buildSaveSpec,
 		reset,
+		setSpec,
 	} = usePanelEditSession({ panel: initialPanel, panelId, time });
 
 	// The query the view opened with, captured once — the Reset target.
@@ -119,6 +128,31 @@ export function useViewPanelMode({
 		redirectWithQueryBuilderData(savedQuery);
 	}, [reset, redirectWithQueryBuilderData, savedQuery]);
 
+	// redirectWithQueryBuilderData (not the grid's openViewWithQuery): the cloned query keeps its id,
+	// so the QB provider's `stagedQuery.id === url id` guard would skip a plain URL write. setSpec
+	// commits into the draft too — filter/breakout aren't a structural change, so it won't auto-commit.
+	const applyDrilldownQuery = useCallback<OpenDrilldownView>(
+		(viewPanelId, drilldownQuery, drilldownPanelType): void => {
+			redirectWithQueryBuilderData(
+				drilldownQuery,
+				{
+					[QueryParams.expandedWidgetId]: viewPanelId,
+					[QueryParams.graphType]: drilldownPanelType,
+				},
+				undefined,
+				true,
+			);
+			setSpec(
+				buildViewPanelSpec({
+					spec: draft.spec,
+					query: drilldownQuery,
+					panelType: drilldownPanelType,
+				}),
+			);
+		},
+		[redirectWithQueryBuilderData, setSpec, draft.spec],
+	);
+
 	// Current builder datasource — resolved the same way as the full editor's
 	// ConfigPane so the two selectors stay in sync, then defaulted to the kind's first
 	// signal (PromQL/ClickHouse carry none) so the query builder always has one.
@@ -127,6 +161,7 @@ export function useViewPanelMode({
 
 	return {
 		draft,
+		setSpec,
 		panelDefinition,
 		signal,
 		queryType: currentQuery.queryType,
@@ -135,5 +170,6 @@ export function useViewPanelMode({
 		onChangePanelKind,
 		resetQuery,
 		buildSaveSpec,
+		applyDrilldownQuery,
 	};
 }

@@ -30,7 +30,9 @@ function PanelsAndSectionsLayout({
 
 	// Single View-modal host for the whole dashboard, driven by the URL
 	// (`expandedWidgetId`). One mounted modal beats one-per-panel: no N location
-	// subscriptions, and the expanded panel is looked up by id from the map.
+	// subscriptions, and the expanded panel is looked up by id from the map. A
+	// drilldown refinement rides in the URL (`compositeQuery`/`graphType`) and is
+	// hydrated inside the modal, so the host just hands it the saved panel.
 	const { expandedPanelId, closeView } = useViewPanel();
 	const expandedPanel = expandedPanelId ? panels[expandedPanelId] : undefined;
 
@@ -39,13 +41,16 @@ function PanelsAndSectionsLayout({
 		[layouts, panels],
 	);
 
-	const isEmpty =
-		sections.length === 0 || sections.every((s) => s.items.length === 0);
-
 	// Sectioned mode = at least one titled layout. Sections then become a
 	// reorderable list; otherwise the dashboard is a single free-flowing grid
 	// with no section chrome or reordering.
 	const isSectioned = useMemo(() => sections.some((s) => !!s.title), [sections]);
+
+	// A titled section renders even with no panels (its header + add-panel state);
+	// only show the dashboard empty state when nothing is titled and there are no panels.
+	const isEmpty =
+		sections.length === 0 ||
+		(!isSectioned && sections.every((s) => s.items.length === 0));
 
 	const renderContent = (): ReactNode => {
 		if (isEmpty) {

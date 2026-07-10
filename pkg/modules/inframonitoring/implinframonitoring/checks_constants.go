@@ -49,17 +49,18 @@ var (
 // checkSpecs is the single lookup table the module consults for a type's
 // readiness contract. Every CheckType value must have an entry here.
 var checkSpecs = map[inframonitoringtypes.CheckType]checkSpec{
-	inframonitoringtypes.CheckTypeHosts:        hostsSpec,
-	inframonitoringtypes.CheckTypeProcesses:    processesSpec,
-	inframonitoringtypes.CheckTypePods:         podsSpec,
-	inframonitoringtypes.CheckTypeNodes:        nodesSpec,
-	inframonitoringtypes.CheckTypeDeployments:  deploymentsSpec,
-	inframonitoringtypes.CheckTypeDaemonsets:   daemonsetsSpec,
-	inframonitoringtypes.CheckTypeStatefulsets: statefulsetsSpec,
-	inframonitoringtypes.CheckTypeJobs:         jobsSpec,
-	inframonitoringtypes.CheckTypeNamespaces:   namespacesSpec,
-	inframonitoringtypes.CheckTypeClusters:     clustersSpec,
-	inframonitoringtypes.CheckTypeVolumes:      volumesSpec,
+	inframonitoringtypes.CheckTypeHosts:          hostsSpec,
+	inframonitoringtypes.CheckTypeProcesses:      processesSpec,
+	inframonitoringtypes.CheckTypePods:           podsSpec,
+	inframonitoringtypes.CheckTypeNodes:          nodesSpec,
+	inframonitoringtypes.CheckTypeDeployments:    deploymentsSpec,
+	inframonitoringtypes.CheckTypeDaemonsets:     daemonsetsSpec,
+	inframonitoringtypes.CheckTypeStatefulsets:   statefulsetsSpec,
+	inframonitoringtypes.CheckTypeJobs:           jobsSpec,
+	inframonitoringtypes.CheckTypeNamespaces:     namespacesSpec,
+	inframonitoringtypes.CheckTypeClusters:       clustersSpec,
+	inframonitoringtypes.CheckTypeVolumes:        volumesSpec,
+	inframonitoringtypes.CheckTypeKubeContainers: kubeContainersSpec,
 }
 
 // Per-type specs. Every metric and attribute is spelled out in its own spec
@@ -100,6 +101,42 @@ var processesSpec = checkSpec{
 	},
 }
 
+var kubeContainersSpec = checkSpec{
+	Buckets: []checkComponentBucket{
+		{
+			Component: componentKubeletStatsReceiver,
+			DefaultMetrics: []string{
+				"container.cpu.usage",
+				"container.memory.working_set",
+			},
+			OptionalMetrics: []string{
+				"k8s.container.cpu_request_utilization",
+				"k8s.container.cpu_limit_utilization",
+				"k8s.container.memory_request_utilization",
+				"k8s.container.memory_limit_utilization",
+			},
+			DocumentationLink: docLinkKubeletStatsReceiver,
+		},
+		{
+			Component: componentK8sClusterReceiver,
+			DefaultMetrics: []string{
+				"k8s.container.restarts",
+				"k8s.container.ready",
+			},
+			OptionalMetrics: []string{
+				"k8s.container.status.state",
+				"k8s.container.status.reason",
+			},
+			DocumentationLink: docLinkK8sClusterReceiver,
+		},
+		{
+			Component:         componentK8sAttributesProcessor,
+			RequiredAttrs:     []string{"k8s.pod.uid", "k8s.container.name"},
+			DocumentationLink: docLinkK8sAttributesProcessor,
+		},
+	},
+}
+
 var podsSpec = checkSpec{
 	Buckets: []checkComponentBucket{
 		{
@@ -117,8 +154,16 @@ var podsSpec = checkSpec{
 			DocumentationLink: docLinkKubeletStatsReceiver,
 		},
 		{
-			Component:         componentK8sClusterReceiver,
-			DefaultMetrics:    []string{"k8s.pod.phase"},
+			Component: componentK8sClusterReceiver,
+			DefaultMetrics: []string{
+				"k8s.pod.phase",
+				"k8s.container.restarts", // pod restart count (default-on)
+			},
+			OptionalMetrics: []string{
+				// kubectl-style pod display status (default-off in the receiver).
+				"k8s.pod.status_reason",
+				"k8s.container.status.reason",
+			},
 			DocumentationLink: docLinkK8sClusterReceiver,
 		},
 		{
@@ -148,6 +193,10 @@ var nodesSpec = checkSpec{
 				"k8s.node.condition_ready", // # k8s.node.condition_* metrics (k8s.node.condition_ready, k8s.node.condition_memory_pressure, etc) are controlled# by node_conditions_to_report config option.
 				//  By default, only k8s.node.condition_ready is enabled. (Check https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/4f9a578b210a6dcb9f9bf47942f27208b5765298/receiver/k8sclusterreceiver/metadata.yaml#L802)
 				"k8s.pod.phase", // pod counts per node by phase
+			},
+			OptionalMetrics: []string{
+				"k8s.pod.status_reason",
+				"k8s.container.status.reason",
 			},
 			DocumentationLink: docLinkK8sClusterReceiver,
 		},
@@ -181,6 +230,10 @@ var deploymentsSpec = checkSpec{
 				"k8s.pod.phase",
 				"k8s.deployment.desired",
 				"k8s.deployment.available",
+			},
+			OptionalMetrics: []string{
+				"k8s.pod.status_reason",
+				"k8s.container.status.reason",
 			},
 			DocumentationLink: docLinkK8sClusterReceiver,
 		},
@@ -219,6 +272,12 @@ var daemonsetsSpec = checkSpec{
 				"k8s.pod.phase",
 				"k8s.daemonset.desired_scheduled_nodes",
 				"k8s.daemonset.current_scheduled_nodes",
+				"k8s.daemonset.ready_nodes",
+				"k8s.daemonset.misscheduled_nodes",
+			},
+			OptionalMetrics: []string{
+				"k8s.pod.status_reason",
+				"k8s.container.status.reason",
 			},
 			DocumentationLink: docLinkK8sClusterReceiver,
 		},
@@ -257,6 +316,10 @@ var statefulsetsSpec = checkSpec{
 				"k8s.pod.phase",
 				"k8s.statefulset.desired_pods",
 				"k8s.statefulset.current_pods",
+			},
+			OptionalMetrics: []string{
+				"k8s.pod.status_reason",
+				"k8s.container.status.reason",
 			},
 			DocumentationLink: docLinkK8sClusterReceiver,
 		},
@@ -298,6 +361,10 @@ var jobsSpec = checkSpec{
 				"k8s.job.failed_pods",
 				"k8s.job.successful_pods",
 			},
+			OptionalMetrics: []string{
+				"k8s.pod.status_reason",
+				"k8s.container.status.reason",
+			},
 			DocumentationLink: docLinkK8sClusterReceiver,
 		},
 		{
@@ -324,8 +391,12 @@ var namespacesSpec = checkSpec{
 			DocumentationLink: docLinkKubeletStatsReceiver,
 		},
 		{
-			Component:         componentK8sClusterReceiver,
-			DefaultMetrics:    []string{"k8s.pod.phase"},
+			Component:      componentK8sClusterReceiver,
+			DefaultMetrics: []string{"k8s.pod.phase"},
+			OptionalMetrics: []string{
+				"k8s.pod.status_reason",
+				"k8s.container.status.reason",
+			},
 			DocumentationLink: docLinkK8sClusterReceiver,
 		},
 		{
@@ -359,6 +430,10 @@ var clustersSpec = checkSpec{
 				// controlled by allocatable_types_to_report config option (Check // https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/4f9a578b210a6dcb9f9bf47942f27208b5765298/receiver/k8sclusterreceiver/metadata.yaml#L805-L806)
 				"k8s.node.condition_ready", // node counts by readiness
 				"k8s.pod.phase",            // pod counts per cluster by phase
+			},
+			OptionalMetrics: []string{
+				"k8s.pod.status_reason",
+				"k8s.container.status.reason",
 			},
 			DocumentationLink: docLinkK8sClusterReceiver,
 		},

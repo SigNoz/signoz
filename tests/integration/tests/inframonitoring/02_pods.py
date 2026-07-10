@@ -10,6 +10,7 @@ import requests
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.fs import get_testdata_file_path
+from fixtures.inframonitoring import STATUS_BUCKETS, STATUS_TO_BUCKET
 from fixtures.metrics import Metrics
 from fixtures.querier import compare_values, get_all_warnings
 from fixtures.time import parse_timestamp
@@ -121,6 +122,9 @@ def test_pods_accuracy(
             "podMemoryLimit",
             "podPhase",
             "podCountsByPhase",
+            "podStatus",
+            "podCountsByStatus",
+            "podRestarts",
             "podAge",
             "meta",
         ):
@@ -130,6 +134,11 @@ def test_pods_accuracy(
         for bucket in ("pending", "running", "succeeded", "failed", "unknown"):
             assert bucket in record["podCountsByPhase"], f"missing phase bucket {bucket} in {record['podCountsByPhase']!r}"
             assert isinstance(record["podCountsByPhase"][bucket], int)
+
+        # All status buckets always present, integer-typed.
+        for bucket in STATUS_BUCKETS:
+            assert bucket in record["podCountsByStatus"], f"missing status bucket {bucket} in {record['podCountsByStatus']!r}"
+            assert isinstance(record["podCountsByStatus"][bucket], int)
 
         # Exact values.
         pod_name = record["meta"]["k8s.pod.name"]
@@ -145,6 +154,9 @@ def test_pods_accuracy(
             assert compare_values(record[field], exp[field], 1e-9), f"{pod_name}.{field}: got {record[field]}, expected {exp[field]}"
         assert record["podPhase"] == exp["podPhase"]
         assert record["podCountsByPhase"] == exp["podCountsByPhase"]
+        assert record["podStatus"] == exp["podStatus"], f"{pod_name}.podStatus: got {record['podStatus']}, expected {exp['podStatus']}"
+        assert record["podCountsByStatus"] == exp["podCountsByStatus"], f"{pod_name}.podCountsByStatus mismatch: got {record['podCountsByStatus']}"
+        assert record["podRestarts"] == exp["podRestarts"], f"{pod_name}.podRestarts: got {record['podRestarts']}, expected {exp['podRestarts']}"
         assert record["podAge"] == expected_age_ms, f"{pod_name}.podAge: got {record['podAge']}, expected {expected_age_ms}"
 
 
@@ -793,3 +805,343 @@ def test_pods_validation_errors(
     error = response.json()["error"]
     assert error["code"] == "invalid_input"
     assert err_substr.lower() in error["message"].lower(), f"expected substring {err_substr!r} not found in: {error['message']!r}"
+
+
+@pytest.mark.parametrize(
+    "pod_name,expected_status",
+    [
+        # Expectations are what `kubectl get pods` STATUS would show for the
+        # seeded K8s state in pods_phases.jsonl (not the query internals).
+        pytest.param("pend-p", "pending", id="pending_phase_fallback"),
+        pytest.param("run-p", "crashloopbackoff", id="container_reason_beats_running_phase"),
+        pytest.param("succ-p", "completed", id="completed_terminated_reason"),
+        pytest.param("fail-p", "evicted", id="pod_reason_beats_phase"),
+        pytest.param("unk-p", "crashloopbackoff", id="multi_container_priority"),
+    ],
+)
+def test_pods_status_list_mode(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+    pod_name: str,
+    expected_status: str,
+) -> None:
+    """List mode: podStatus is the kubectl-style display status derived from
+    k8s.pod.phase + k8s.pod.status_reason + k8s.container.status.reason.
+
+    Seeded states -> what kubectl would print:
+      pend-p  Pending          (unscheduled; phase fallback, no container reason)
+      run-p   CrashLoopBackOff (container crashlooping; phase still Running)
+      succ-p  Completed        (container terminated Completed; phase Succeeded)
+      fail-p  Evicted          (pod-level Status.Reason overrides phase)
+      unk-p   CrashLoopBackOff (2 containers: OOMKilled + CrashLoopBackOff)
+
+    NOTE unk-p: a multi-container pod. kubectl picks the reason by container
+    order; we pick by reason priority (waiting>terminated), so CrashLoopBackOff
+    wins over OOMKilled. Documented divergence for multi-container pods — metrics
+    carry no container ordering.
+    """
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        _load_pods_metrics(
+            "inframonitoring/pods_phases.jsonl",
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": f"k8s.pod.name = '{pod_name}'"},
+        },
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()["data"]
+    assert data["total"] == 1
+    rec = data["records"][0]
+    assert rec["meta"]["k8s.pod.name"] == pod_name
+    assert rec["podStatus"] == expected_status
+
+    # List mode: pod is its own group -> exactly its status bucket is 1.
+    bucket = STATUS_TO_BUCKET[expected_status]
+    assert rec["podCountsByStatus"][bucket] == 1
+    for other in STATUS_BUCKETS:
+        if other != bucket:
+            assert rec["podCountsByStatus"][other] == 0, f"expected {other}=0 when status={expected_status}, got {rec['podCountsByStatus']}"
+
+
+@pytest.mark.parametrize(
+    "pod_name,expected_restarts",
+    [
+        # Mirrors kubectl RESTARTS (sum across the pod's containers).
+        pytest.param("run-p", 5, id="single_container"),
+        pytest.param("succ-p", 0, id="zero_restarts"),
+        pytest.param("unk-p", 10, id="multi_container_sum"),  # 2 + 8
+        pytest.param("pend-p", -1, id="no_series_sentinel"),  # unscheduled -> no metric -> -1
+    ],
+)
+def test_pods_restarts_list_mode(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+    pod_name: str,
+    expected_restarts: int,
+) -> None:
+    """podRestarts is the sum of k8s.container.restarts across the pod's
+    containers (kubectl RESTARTS). pend-p never scheduled so emits no restart
+    series -> -1 no-data sentinel (kubectl would show 0)."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        _load_pods_metrics(
+            "inframonitoring/pods_phases.jsonl",
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": f"k8s.pod.name = '{pod_name}'"},
+        },
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()["data"]
+    assert data["total"] == 1
+    rec = data["records"][0]
+    assert rec["meta"]["k8s.pod.name"] == pod_name
+    assert rec["podRestarts"] == expected_restarts
+
+
+def test_pods_status_latest_wins(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+) -> None:
+    """A stale container reason from an old incarnation must not win. trans-p's
+    first incarnation (container.id=aaa) reported CrashLoopBackOff, then it
+    recovered in a new incarnation (container.id=bbb, CrashLoopBackOff=0) while
+    phase went Running. kubectl shows Running; the frozen stale series is
+    ignored via argMax-by-latest-timestamp per (pod, container, reason)."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        _load_pods_metrics(
+            "inframonitoring/pods_phases_transition.jsonl",
+            base_time=now - timedelta(minutes=8),
+        )
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=10)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+        },
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()["data"]
+    assert data["total"] == 1
+    rec = data["records"][0]
+    assert rec["meta"]["k8s.pod.name"] == "trans-p"
+    assert rec["podStatus"] == "running"
+
+
+def test_pods_restarts_latest_wins(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+) -> None:
+    """restartCount is cumulative per container. Across incarnations
+    (container.id=aaa reported 1, then container.id=bbb reported 5) podRestarts
+    is the LATEST value 5 (kubectl RESTARTS), not the sum 6 — incarnations must
+    not be double-counted."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        _load_pods_metrics(
+            "inframonitoring/pods_phases_transition.jsonl",
+            base_time=now - timedelta(minutes=8),
+        )
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=10)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+        },
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()["data"]
+    assert data["total"] == 1
+    rec = data["records"][0]
+    assert rec["meta"]["k8s.pod.name"] == "trans-p"
+    assert rec["podRestarts"] == 5
+
+
+def test_pods_status_grouped_mode(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+) -> None:
+    """groupBy=[k8s.namespace.name] aggregates each pod's display status across
+    ns-mixed. podStatus is no-data (no single pod identifies the group). Seeded
+    states -> kubectl: g-run-1/g-run-3 Running, g-run-2 CrashLoopBackOff,
+    g-fail-1 Error, g-fail-2 Evicted, g-pend-1 Pending."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        _load_pods_metrics(
+            "inframonitoring/pods_phases_grouped.jsonl",
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "groupBy": [
+                {
+                    "name": "k8s.namespace.name",
+                    "fieldDataType": "string",
+                    "fieldContext": "resource",
+                }
+            ],
+        },
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()["data"]
+    assert data["total"] == 1
+    rec = data["records"][0]
+    assert rec["meta"].get("k8s.namespace.name") == "ns-mixed"
+    assert rec["podStatus"] == "no_data"
+
+    expected_counts = {bucket: 0 for bucket in STATUS_BUCKETS}
+    expected_counts.update(
+        {
+            "running": 2,
+            "crashLoopBackOff": 1,
+            "error": 1,
+            "evicted": 1,
+            "pending": 1,
+        }
+    )
+    assert rec["podCountsByStatus"] == expected_counts
+
+
+def test_pods_restarts_grouped_mode(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+) -> None:
+    """Grouped podRestarts is the sum of restarts across all pods in the group.
+    In ns-mixed only g-run-2 has restarts (3); all others 0 -> group total 3."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        _load_pods_metrics(
+            "inframonitoring/pods_phases_grouped.jsonl",
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "groupBy": [
+                {
+                    "name": "k8s.namespace.name",
+                    "fieldDataType": "string",
+                    "fieldContext": "resource",
+                }
+            ],
+        },
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()["data"]
+    assert data["total"] == 1
+    rec = data["records"][0]
+    assert rec["meta"].get("k8s.namespace.name") == "ns-mixed"
+    assert rec["podRestarts"] == 3
+
+
+def test_pods_status_missing_metric_warning(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+) -> None:
+    """When the status metrics were never ingested, the status query is gated
+    off: a warning naming the missing metric(s) is surfaced, podStatus is the
+    no-data sentinel, and all status buckets are 0. (pods_missing_metrics.jsonl
+    seeds only k8s.pod.cpu.usage.)"""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        _load_pods_metrics(
+            "inframonitoring/pods_missing_metrics.jsonl",
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": "k8s.pod.name = 'miss-p1'"},
+        },
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    body = response.json()
+    data = body["data"]
+
+    # Collect primary + additional warning messages.
+    warning = data.get("warning") or {}
+    msgs = ([warning["message"]] if warning.get("message") else []) + [w["message"] for w in warning.get("warnings", [])]
+    assert any("Pod status could not be computed" in m for m in msgs), f"status-gate warning missing: {msgs!r}"
+    assert any("k8s.container.status.reason" in m for m in msgs), f"missing metric not named: {msgs!r}"
+
+    rec = data["records"][0]
+    assert rec["meta"]["k8s.pod.name"] == "miss-p1"
+    assert rec["podStatus"] == "no_data"
+    for bucket in STATUS_BUCKETS:
+        assert rec["podCountsByStatus"][bucket] == 0, f"expected {bucket}=0 when gated off, got {rec['podCountsByStatus']}"
+    assert rec["podRestarts"] == -1

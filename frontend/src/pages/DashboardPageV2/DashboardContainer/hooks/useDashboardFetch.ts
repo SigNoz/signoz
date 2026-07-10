@@ -31,9 +31,15 @@ export interface UseDashboardFetchResult {
 export function useDashboardFetch(
 	dashboardId: string,
 ): UseDashboardFetchResult {
-	const { data, isLoading, isError, error, refetch } = useGetDashboardV2({
-		id: dashboardId,
-	});
+	const { data, isLoading, isError, error, refetch } = useGetDashboardV2(
+		{ id: dashboardId },
+		{
+			// The spec is kept fresh in-cache by optimistic patches (useOptimisticPatch),
+			// so never auto-refetch: it would flash the grid back to server state as
+			// observers mount across the panel tree. Explicit refetch() still works.
+			query: { staleTime: Infinity, refetchOnMount: false },
+		},
+	);
 	const dashboard = data?.data;
 
 	return { dashboard, isLoading, isError, error, refetch };
