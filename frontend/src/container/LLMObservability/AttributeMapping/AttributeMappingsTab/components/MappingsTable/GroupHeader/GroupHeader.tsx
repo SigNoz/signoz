@@ -1,5 +1,7 @@
 import { Info } from '@signozhq/icons';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Typography } from '@signozhq/ui/typography';
+
 import { DraftGroup } from 'container/LLMObservability/AttributeMapping/types';
 
 import ConditionsTooltip from './ConditionsTooltip';
@@ -23,12 +25,13 @@ function GroupHeader({ group }: GroupHeaderProps): JSX.Element {
 			className={styles.groupHeaderLabel}
 			data-testid={`group-expand-${group.localId}`}
 		>
-			<span
+			<Typography.Text
+				as="span"
 				className={styles.groupName}
-				data-testid={`group-name-${group.localId}`}
+				testId={`group-name-${group.localId}`}
 			>
 				{group.name}
-			</span>
+			</Typography.Text>
 			<TooltipSimple
 				title={
 					<ConditionsTooltip
@@ -39,6 +42,9 @@ function GroupHeader({ group }: GroupHeaderProps): JSX.Element {
 				side="bottom"
 				align="start"
 			>
+				{/* Plain span: this is the tooltip's Slot trigger, and Typography's
+				    testId does not survive the Radix clone — the count needs a native
+				    element to keep its data-testid. */}
 				<span
 					className={styles.conditionCount}
 					data-testid={`group-condition-count-${group.localId}`}

@@ -64,6 +64,13 @@ type (
 	ListableDashboard []*GettableDashboard
 )
 
+// readString reads a string field from the untyped data blob, yielding "" when
+// the key is absent, null, or not a string.
+func (d StorableDashboardData) readString(key string) string {
+	s, _ := d[key].(string)
+	return s
+}
+
 func NewStorableDashboardFromDashboard(dashboard *Dashboard) (*StorableDashboard, error) {
 	dashboardID, err := valuer.NewUUID(dashboard.ID)
 	if err != nil {

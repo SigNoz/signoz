@@ -77,6 +77,8 @@ def test_daemonsets_accuracy(
             "daemonSetMemoryLimit",
             "desiredNodes",
             "currentNodes",
+            "readyNodes",
+            "misscheduledNodes",
             "podCountsByPhase",
             "meta",
         ):
@@ -85,6 +87,8 @@ def test_daemonsets_accuracy(
         # ints (not floats) for node counts.
         assert isinstance(record["desiredNodes"], int)
         assert isinstance(record["currentNodes"], int)
+        assert isinstance(record["readyNodes"], int)
+        assert isinstance(record["misscheduledNodes"], int)
 
         for bucket in ("pending", "running", "succeeded", "failed", "unknown"):
             assert bucket in record["podCountsByPhase"]
@@ -107,6 +111,8 @@ def test_daemonsets_accuracy(
             assert compare_values(record[field], exp[field], 1e-6), f"{record['daemonSetName']}.{field}: got {record[field]}, expected {exp[field]}"
         assert record["desiredNodes"] == exp["desiredNodes"]
         assert record["currentNodes"] == exp["currentNodes"]
+        assert record["readyNodes"] == exp["readyNodes"]
+        assert record["misscheduledNodes"] == exp["misscheduledNodes"]
         assert record["podCountsByPhase"] == exp["podCountsByPhase"]
 
 
@@ -627,6 +633,8 @@ def test_daemonsets_pagination(
         pytest.param("memory_limit", "daemonSetMemoryLimit", id="memory_limit"),
         pytest.param("desired_nodes", "desiredNodes", id="desired_nodes"),
         pytest.param("current_nodes", "currentNodes", id="current_nodes"),
+        pytest.param("ready_nodes", "readyNodes", id="ready_nodes"),
+        pytest.param("misscheduled_nodes", "misscheduledNodes", id="misscheduled_nodes"),
         pytest.param("k8s.daemonset.name", "daemonSetName", id="daemonset_name"),
     ],
 )
