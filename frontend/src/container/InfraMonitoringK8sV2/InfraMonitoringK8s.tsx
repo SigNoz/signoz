@@ -41,6 +41,7 @@ import {
 	GetVolumesQuickFiltersConfig,
 	InfraMonitoringEntity,
 	K8sCategories,
+	METRIC_NAMESPACE_BY_ENTITY,
 } from './constants';
 import K8sDaemonSetsList from './DaemonSets/K8sDaemonSetsList';
 import K8sDeploymentsList from './Deployments/K8sDeploymentsList';
@@ -61,7 +62,6 @@ import styles from './InfraMonitoringK8s.module.scss';
 import { InfraMonitoringEvents } from 'constants/events';
 import logEvent from 'api/common/logEvent';
 import { NANO_SECOND_MULTIPLIER, useGlobalTimeStore } from 'store/globalTime';
-import { METRIC_NAMESPACE_BY_ENTITY } from 'container/InfraMonitoringK8sV2/constants.quick-filters';
 
 export default function InfraMonitoringK8s(): JSX.Element {
 	const [showFilters, setShowFilters] = useState(true);

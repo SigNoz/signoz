@@ -19,7 +19,10 @@ import K8sBaseDetails, {
 import { K8sBaseList } from 'container/InfraMonitoringK8sV2/Base/K8sBaseList';
 import StatusFilter from 'container/InfraMonitoringHostsV2/StatusFilter';
 import { K8sBaseFilters } from 'container/InfraMonitoringK8sV2/Base/types';
-import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
+import {
+	InfraMonitoringEntity,
+	METRIC_NAMESPACE_BY_ENTITY,
+} from 'container/InfraMonitoringK8sV2/constants';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useAppContext } from 'providers/App/App';
@@ -44,7 +47,6 @@ import { getHostsQuickFiltersConfig } from './utils';
 import styles from './InfraMonitoringHosts.module.scss';
 import { ArrowUpToLine, Filter } from '@signozhq/icons';
 import { NANO_SECOND_MULTIPLIER, useGlobalTimeStore } from 'store/globalTime';
-import { METRIC_NAMESPACE_BY_ENTITY } from 'container/InfraMonitoringK8sV2/constants.quick-filters';
 
 function Hosts(): JSX.Element {
 	const [showFilters, setShowFilters] = useState(true);
