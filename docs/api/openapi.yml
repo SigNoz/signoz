@@ -3148,6 +3148,8 @@ components:
           type: string
         image:
           type: string
+        legacy:
+          type: boolean
         locked:
           type: boolean
         name:
@@ -3180,6 +3182,7 @@ components:
       - name
       - tags
       - spec
+      - legacy
       - pinned
       type: object
     DashboardtypesListedDashboardV2:
@@ -3193,6 +3196,8 @@ components:
           type: string
         image:
           type: string
+        legacy:
+          type: boolean
         locked:
           type: boolean
         name:
@@ -3223,6 +3228,7 @@ components:
       - name
       - tags
       - spec
+      - legacy
       type: object
     DashboardtypesListedDashboardV2Spec:
       properties:
