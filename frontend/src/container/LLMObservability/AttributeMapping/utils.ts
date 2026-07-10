@@ -9,7 +9,7 @@ import { MappingGroup, Mapping, SourceConfig } from './types';
 function getMapperSources(mapper: SpantypesSpanMapperDTO): SourceConfig[] {
 	const sources = mapper.config?.sources ?? [];
 	return [...sources]
-		.sort((a, b) => b.priority - a.priority)
+		.sort((a, b) => a.priority - b.priority)
 		.map((source) => ({
 			key: source.key,
 			context: source.context,
