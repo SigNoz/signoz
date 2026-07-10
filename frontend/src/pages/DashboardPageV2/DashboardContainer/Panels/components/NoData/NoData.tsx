@@ -1,37 +1,75 @@
-import { Clock, RotateCw } from '@signozhq/icons';
+import { CalendarRange, Clock, RotateCw } from '@signozhq/icons';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 
-import PanelMessage from '../PanelMessage/PanelMessage';
+import { panelHasFixedTimePreference } from '../../../hooks/resolvePanelTimeWindow';
+import {
+	selectViewPanelExtendWindow,
+	useViewPanelStore,
+} from '../../../store/useViewPanelStore';
+import PanelLoader from '../PanelLoader/PanelLoader';
+import PanelMessage, { PanelMessageAction } from '../PanelMessage/PanelMessage';
+import { useExtendTimeWindow } from './useExtendTimeWindow';
 
 interface NoDataProps {
-	/** Title override. Defaults to the time-range empty-state copy. */
 	title?: string;
-	/** Description override. Defaults to the "widen the range" hint. */
 	description?: string;
+	/** In flight over empty data → show the loader, not the empty state. */
+	isFetching?: boolean;
 	/** When provided, renders a Retry button that re-runs the query. */
 	onRetry?: () => void;
+	/** Hides the global "Extend time range" action when this panel is locked to a fixed time preference. */
+	panel?: DashboardtypesPanelDTO;
 	'data-testid'?: string;
 }
 
 /**
- * Shared empty-state for panel renderers: wraps `PanelMessage` so every panel
- * kind surfaces the same "no data" affordance when a query returns nothing.
+ * Shared empty-state for panel renderers. The query succeeded but returned nothing,
+ * so we offer to widen the time window — global by default, or the View modal's
+ * local window when it publishes one to the store — alongside a Retry that re-runs
+ * the query.
  */
 function NoData({
 	title = 'No data in this time range',
 	description = 'Nothing in the selected window. Try widening the range.',
+	isFetching = false,
 	onRetry,
+	panel,
 	'data-testid': testId = 'panel-no-data',
 }: NoDataProps): JSX.Element {
+	const viewExtend = useViewPanelStore(selectViewPanelExtendWindow);
+	const globalExtend = useExtendTimeWindow();
+	// The View modal's local extender wins; the global one only applies to a panel that
+	// follows the ambient window (a fixed preference can't be widened by it).
+	const hasFixedTimePreference = panel
+		? panelHasFixedTimePreference(panel)
+		: false;
+	const activeExtend =
+		viewExtend ?? (hasFixedTimePreference ? undefined : globalExtend);
+
+	if (isFetching) {
+		return <PanelLoader />;
+	}
+
+	const extendAction: PanelMessageAction | undefined =
+		activeExtend?.canExtend && activeExtend.actionLabel
+			? {
+					label: activeExtend.actionLabel,
+					onClick: activeExtend.extend,
+					icon: <CalendarRange size={14} />,
+				}
+			: undefined;
+
+	const retryAction: PanelMessageAction | undefined = onRetry
+		? { label: 'Retry', onClick: onRetry, icon: <RotateCw size={14} /> }
+		: undefined;
+
 	return (
 		<PanelMessage
 			icon={<Clock size={18} />}
 			title={title}
 			description={description}
-			action={
-				onRetry
-					? { label: 'Retry', onClick: onRetry, icon: <RotateCw size={14} /> }
-					: undefined
-			}
+			action={extendAction ?? retryAction}
+			secondaryAction={extendAction ? retryAction : undefined}
 			data-testid={testId}
 		/>
 	);

@@ -27,6 +27,7 @@ function PiePanelRenderer({
 	panelId,
 	panel,
 	data,
+	isFetching,
 	refetch,
 	onClick,
 	enableDrillDown,
@@ -94,7 +95,7 @@ function PiePanelRenderer({
 	return (
 		<div data-testid="pie-panel-renderer" className={PanelStyles.panelContainer}>
 			{slices.length === 0 ? (
-				<NoData onRetry={refetch} />
+				<NoData isFetching={isFetching} onRetry={refetch} panel={panel} />
 			) : (
 				<Pie
 					data={slices}

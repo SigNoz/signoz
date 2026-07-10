@@ -28,7 +28,7 @@ describe('ServiceAccountsSettings — FGA', () => {
 		);
 	});
 
-	it('shows PermissionDeniedFullPage when list permission is denied', async () => {
+	it('shows denied callout when list permission is denied', async () => {
 		server.use(
 			rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
 				const payload = await req.json();
@@ -47,12 +47,38 @@ describe('ServiceAccountsSettings — FGA', () => {
 		renderPage();
 
 		await waitFor(() => {
-			expect(
-				screen.getByText('Uh-oh! You are not authorized'),
-			).toBeInTheDocument();
+			expect(screen.getByText(/is not authorized to perform/)).toBeInTheDocument();
 		});
 
 		expect(screen.queryByRole('table')).not.toBeInTheDocument();
+	});
+
+	it('shows page header and disables search when list permission is denied', async () => {
+		server.use(
+			rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
+				const payload = await req.json();
+				return res(
+					ctx.status(200),
+					ctx.json(
+						authzMockResponse(
+							payload,
+							payload.map(() => false),
+						),
+					),
+				);
+			}),
+		);
+
+		renderPage();
+
+		await waitFor(() => {
+			expect(screen.getByText(/is not authorized to perform/)).toBeInTheDocument();
+		});
+
+		expect(screen.getByText('Service Accounts')).toBeInTheDocument();
+		expect(
+			screen.getByPlaceholderText('Search by name or email...'),
+		).toBeDisabled();
 	});
 
 	it('shows table when list permission is granted', async () => {
@@ -78,7 +104,7 @@ describe('ServiceAccountsSettings — FGA', () => {
 		});
 
 		expect(
-			screen.queryByText('Uh-oh! You are not authorized'),
+			screen.queryByText(/is not authorized to perform/),
 		).not.toBeInTheDocument();
 	});
 

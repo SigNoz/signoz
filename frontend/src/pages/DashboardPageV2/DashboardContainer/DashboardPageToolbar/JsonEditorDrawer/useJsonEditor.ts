@@ -23,6 +23,8 @@ export interface JsonValidity {
 interface Params {
 	dashboard: DashboardtypesGettableDashboardV2DTO;
 	isOpen: boolean;
+	/** Locked/no-permission — `apply` is a no-op so edits can never be saved. */
+	readOnly?: boolean;
 	onApplied: () => void;
 }
 
@@ -77,6 +79,7 @@ function errorLineFromMessage(
 export function useJsonEditor({
 	dashboard,
 	isOpen,
+	readOnly = false,
 	onApplied,
 }: Params): Result {
 	const dashboardId = useDashboardStore((s) => s.dashboardId);
@@ -147,7 +150,7 @@ export function useJsonEditor({
 	}, [appliedText]);
 
 	const apply = useCallback(async (): Promise<void> => {
-		if (!validity.valid || !isDirty) {
+		if (readOnly || !validity.valid || !isDirty) {
 			return;
 		}
 		try {
@@ -173,6 +176,7 @@ export function useJsonEditor({
 		validity.valid,
 		isDirty,
 		draft,
+		readOnly,
 		refetch,
 		onApplied,
 		showErrorModal,

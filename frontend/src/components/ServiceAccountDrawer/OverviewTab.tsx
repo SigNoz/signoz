@@ -6,15 +6,20 @@ import { Input } from '@signozhq/ui/input';
 import { useCopyToClipboard } from 'react-use';
 import type { AuthtypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
+import { withAuthZContent } from 'lib/authz/components/withAuthZ/withAuthZContent';
 import RolesSelect from 'components/RolesSelect';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { ServiceAccountRow } from 'container/ServiceAccountsSettings/utils';
-import { buildSAUpdatePermission } from 'lib/authz/hooks/useAuthZ/permissions/service-account.permissions';
+import {
+	buildSAReadPermission,
+	buildSAUpdatePermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/service-account.permissions';
 import { useTimezone } from 'providers/Timezone';
 import APIError from 'types/api/error';
 
 import SaveErrorItem from './SaveErrorItem';
 import type { SaveError } from './utils';
+import { Skeleton } from 'antd';
 
 interface OverviewTabProps {
 	account: ServiceAccountRow;
@@ -23,7 +28,6 @@ interface OverviewTabProps {
 	localRoles: string[];
 	onRolesChange: (v: string[]) => void;
 	isDisabled: boolean;
-	canUpdate?: boolean;
 	availableRoles: AuthtypesRoleDTO[];
 	rolesLoading?: boolean;
 	rolesError?: boolean;
@@ -39,7 +43,6 @@ function OverviewTab({
 	localRoles,
 	onRolesChange,
 	isDisabled,
-	canUpdate = true,
 	availableRoles,
 	rolesLoading,
 	rolesError,
@@ -86,23 +89,22 @@ function OverviewTab({
 				<label className="sa-drawer__label" htmlFor="sa-name">
 					Name
 				</label>
-				{isDisabled || !canUpdate ? (
-					<AuthZTooltip
-						checks={[buildSAUpdatePermission(account.id)]}
-						enabled={!isDisabled && !canUpdate}
-					>
+				{isDisabled ? (
+					<AuthZTooltip checks={[buildSAUpdatePermission(account.id)]}>
 						<div className="sa-drawer__input-wrapper sa-drawer__input-wrapper--disabled">
 							<span className="sa-drawer__input-text">{localName || '—'}</span>
 							<LockKeyhole size={14} className="sa-drawer__lock-icon" />
 						</div>
 					</AuthZTooltip>
 				) : (
-					<Input
-						id="sa-name"
-						value={localName}
-						onChange={(e): void => onNameChange(e.target.value)}
-						placeholder="Enter name"
-					/>
+					<AuthZTooltip checks={[buildSAUpdatePermission(account.id)]}>
+						<Input
+							id="sa-name"
+							value={localName}
+							onChange={(e): void => onNameChange(e.target.value)}
+							placeholder="Enter name"
+						/>
+					</AuthZTooltip>
 				)}
 			</div>
 
@@ -220,4 +222,9 @@ function OverviewTab({
 	);
 }
 
-export default OverviewTab;
+export default withAuthZContent(OverviewTab, {
+	checks: (props): ReturnType<typeof buildSAReadPermission>[] => [
+		buildSAReadPermission(props.account.id),
+	],
+	fallbackOnLoading: <Skeleton active paragraph={{ rows: 6 }} />,
+});

@@ -6,7 +6,7 @@ import { Typography } from '@signozhq/ui/typography';
 
 import styles from './ViewsRail.module.scss';
 
-export const VIEW_NAME_MAX_LENGTH = 128;
+export const VIEW_NAME_MAX_LENGTH = 64;
 
 interface Props {
 	open: boolean;

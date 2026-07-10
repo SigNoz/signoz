@@ -45,7 +45,10 @@ function InputWithLabel({
 		>
 			{!labelAfter && <Typography.Text className="label">{label}</Typography.Text>}
 			<Input
-				className="input"
+				className={cx('input', {
+					'input__has-label-after': !labelAfter,
+					'input__has-close-button': !!onClose,
+				})}
 				placeholder={placeholder}
 				type={type}
 				value={inputValue}

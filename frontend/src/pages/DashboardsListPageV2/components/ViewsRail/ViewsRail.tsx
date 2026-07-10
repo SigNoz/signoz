@@ -27,6 +27,8 @@ interface Props {
 	isCustomActive: boolean;
 	isModified: boolean;
 	collapsed?: boolean;
+	// Edit permission. Viewers can select views but not add / rename / delete / save.
+	canEdit: boolean;
 	onSelect: (id: string) => void;
 	onSave: (name: string) => void;
 	onSaveChanges: () => void;
@@ -52,6 +54,7 @@ function ViewsRail({
 	isCustomActive,
 	isModified,
 	collapsed = false,
+	canEdit,
 	onSelect,
 	onSave,
 	onSaveChanges,
@@ -129,7 +132,7 @@ function ViewsRail({
 						<div className={styles.dirtyDot} title="Unsaved changes" />
 					)}
 				</Button>
-				{row.deletable && (
+				{canEdit && row.deletable && (
 					<div className={styles.itemActions}>
 						<ViewNamePopover
 							open={renamingId === row.id}
@@ -177,25 +180,27 @@ function ViewsRail({
 		<aside className={cx(styles.rail, { [styles.collapsed]: collapsed })}>
 			<div className={styles.header}>
 				<h4 className={styles.headerTitle}>Views</h4>
-				<ViewNamePopover
-					open={saveOpen}
-					onOpenChange={setSaveOpen}
-					onSubmit={onSave}
-					title="Save as view"
-					confirmLabel="Save view"
-					testIdPrefix="save-view"
-					trigger={
-						<Button
-							variant="ghost"
-							color="secondary"
-							size="icon"
-							title="Save current filters as a view"
-							testId="dashboards-view-save-trigger"
-						>
-							<Plus size={14} />
-						</Button>
-					}
-				/>
+				{canEdit && (
+					<ViewNamePopover
+						open={saveOpen}
+						onOpenChange={setSaveOpen}
+						onSubmit={onSave}
+						title="Save as view"
+						confirmLabel="Save view"
+						testIdPrefix="save-view"
+						trigger={
+							<Button
+								variant="ghost"
+								color="secondary"
+								size="icon"
+								title="Save current filters as a view"
+								testId="dashboards-view-save-trigger"
+							>
+								<Plus size={14} />
+							</Button>
+						}
+					/>
+				)}
 			</div>
 
 			<div className={styles.search}>
@@ -265,23 +270,27 @@ function ViewsRail({
 				<div className={styles.dirtyPanel}>
 					<div className={styles.dirtyTitle}>Unsaved changes</div>
 					<div className={styles.dirtyActions}>
-						<Button
-							variant="solid"
-							color="primary"
-							size="sm"
-							onClick={onSaveChanges}
-							testId="dashboards-view-save-changes"
-						>
-							Save
-						</Button>
-						<Button
-							variant="outlined"
-							color="secondary"
-							size="sm"
-							onClick={(): void => setSaveOpen(true)}
-						>
-							Save as…
-						</Button>
+						{canEdit && (
+							<>
+								<Button
+									variant="solid"
+									color="primary"
+									size="sm"
+									onClick={onSaveChanges}
+									testId="dashboards-view-save-changes"
+								>
+									Save
+								</Button>
+								<Button
+									variant="outlined"
+									color="secondary"
+									size="sm"
+									onClick={(): void => setSaveOpen(true)}
+								>
+									Save as…
+								</Button>
+							</>
+						)}
 						<Button variant="ghost" color="secondary" size="sm" onClick={onReset}>
 							Reset
 						</Button>
@@ -293,16 +302,18 @@ function ViewsRail({
 				<div className={cx(styles.dirtyPanel, styles.dirtyPanelDefault)}>
 					<div className={styles.dirtyTitle}>Filters active</div>
 					<div className={styles.dirtyActions}>
-						<Button
-							variant="solid"
-							color="primary"
-							size="sm"
-							prefix={<Plus size={12} />}
-							onClick={(): void => setSaveOpen(true)}
-							testId="dashboards-view-save-as-new"
-						>
-							Save as new view
-						</Button>
+						{canEdit && (
+							<Button
+								variant="solid"
+								color="primary"
+								size="sm"
+								prefix={<Plus size={12} />}
+								onClick={(): void => setSaveOpen(true)}
+								testId="dashboards-view-save-as-new"
+							>
+								Save as new view
+							</Button>
+						)}
 						<Button variant="ghost" color="secondary" size="sm" onClick={onReset}>
 							Reset
 						</Button>

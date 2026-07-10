@@ -293,8 +293,8 @@ func TestConditionFor(t *testing.T) {
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-			cond, err := conditionBuilder.ConditionFor(ctx, 1761437108000000000, 1761458708000000000, &tc.key, tc.operator, tc.value, sb)
-			sb.Where(cond)
+			cond, _, err := conditionBuilder.ConditionFor(ctx, 1761437108000000000, 1761458708000000000, &tc.key, []*telemetrytypes.TelemetryFieldKey{&tc.key}, tc.operator, tc.value, sb)
+			sb.Where(cond...)
 
 			if tc.expectedError != nil {
 				assert.Equal(t, tc.expectedError, err)
@@ -380,9 +380,9 @@ func TestConditionForResourceWithEvolution(t *testing.T) {
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-			cond, err := conditionBuilder.ConditionFor(ctx, tc.tsStart, tc.tsEnd, &tc.key, tc.operator, nil, sb)
+			cond, _, err := conditionBuilder.ConditionFor(ctx, tc.tsStart, tc.tsEnd, &tc.key, []*telemetrytypes.TelemetryFieldKey{&tc.key}, tc.operator, nil, sb)
 			require.NoError(t, err)
-			sb.Where(cond)
+			sb.Where(cond...)
 			sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 			assert.Contains(t, sql, tc.expectedSQL)
 		})
