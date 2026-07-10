@@ -12,7 +12,7 @@
       },
       "podCountsByPhase": {
         "pending": 0,
-        "running": 2,
+        "running": 3,
         "succeeded": 0,
         "failed": 0,
         "unknown": 0
@@ -20,7 +20,7 @@
       "counts": {
         "nodes": 2,
         "namespaces": 2,
-        "deployments": 1,
+        "deployments": 2,
         "daemonSets": 0,
         "jobs": 0,
         "statefulSets": 1
