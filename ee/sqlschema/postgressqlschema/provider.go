@@ -333,7 +333,7 @@ ORDER BY index_name, column_position`, string(name))
 				indices = append(indices, index.Named(indexName))
 			}
 		} else if entry.hasExpression {
-			index := &sqlschema.UniqueIndex{
+			index := &sqlschema.UniqueIndexWithExpressions{
 				TableName:   name,
 				Expressions: entry.keyDefs,
 			}

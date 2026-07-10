@@ -40,7 +40,7 @@ func TestIndexToCreateSQL(t *testing.T) {
 		},
 		{
 			name: "Unique_Functional_SingleExpression",
-			index: &UniqueIndex{
+			index: &UniqueIndexWithExpressions{
 				TableName:   "users",
 				Expressions: []string{"LOWER(email)"},
 			},
@@ -48,7 +48,7 @@ func TestIndexToCreateSQL(t *testing.T) {
 		},
 		{
 			name: "Unique_Functional_MixedColumnsAndExpressions",
-			index: &UniqueIndex{
+			index: &UniqueIndexWithExpressions{
 				TableName:   "tag",
 				Expressions: []string{"org_id", "kind", "LOWER(key)", "LOWER(value)"},
 			},
@@ -56,7 +56,7 @@ func TestIndexToCreateSQL(t *testing.T) {
 		},
 		{
 			name: "Unique_Functional_ComplexExpression",
-			index: &UniqueIndex{
+			index: &UniqueIndexWithExpressions{
 				TableName:   "users",
 				Expressions: []string{"LOWER(TRIM(first_name) || ' ' || TRIM(last_name))"},
 			},
@@ -64,7 +64,7 @@ func TestIndexToCreateSQL(t *testing.T) {
 		},
 		{
 			name: "Unique_Functional_Named",
-			index: &UniqueIndex{
+			index: &UniqueIndexWithExpressions{
 				TableName:   "tag",
 				Expressions: []string{"org_id", "kind", "LOWER(key)", "LOWER(value)"},
 				name:        "uq_tag_org_kind_lower_key_lower_value",
@@ -264,11 +264,11 @@ func TestIndexEquals(t *testing.T) {
 		},
 		{
 			name: "Unique_Functional_Same",
-			a: &UniqueIndex{
+			a: &UniqueIndexWithExpressions{
 				TableName:   "users",
 				Expressions: []string{"LOWER(email)"},
 			},
-			b: &UniqueIndex{
+			b: &UniqueIndexWithExpressions{
 				TableName:   "users",
 				Expressions: []string{"LOWER(email)"},
 			},
@@ -276,11 +276,11 @@ func TestIndexEquals(t *testing.T) {
 		},
 		{
 			name: "Unique_Functional_CaseInsensitiveEqual",
-			a: &UniqueIndex{
+			a: &UniqueIndexWithExpressions{
 				TableName:   "users",
 				Expressions: []string{"LOWER(email)"},
 			},
-			b: &UniqueIndex{
+			b: &UniqueIndexWithExpressions{
 				TableName:   "users",
 				Expressions: []string{"lower(email)"},
 			},
@@ -288,11 +288,11 @@ func TestIndexEquals(t *testing.T) {
 		},
 		{
 			name: "Unique_Functional_QuotedSimpleIdentifierEqualsUnquoted",
-			a: &UniqueIndex{
+			a: &UniqueIndexWithExpressions{
 				TableName:   "users",
 				Expressions: []string{"LOWER(email)"},
 			},
-			b: &UniqueIndex{
+			b: &UniqueIndexWithExpressions{
 				TableName:   "users",
 				Expressions: []string{`LOWER("email")`},
 			},
@@ -300,11 +300,11 @@ func TestIndexEquals(t *testing.T) {
 		},
 		{
 			name: "Unique_Functional_UnquotedMixedCaseEqualsLower",
-			a: &UniqueIndex{
+			a: &UniqueIndexWithExpressions{
 				TableName:   "users",
 				Expressions: []string{"LOWER(Email)"},
 			},
-			b: &UniqueIndex{
+			b: &UniqueIndexWithExpressions{
 				TableName:   "users",
 				Expressions: []string{"LOWER(email)"},
 			},
@@ -312,11 +312,11 @@ func TestIndexEquals(t *testing.T) {
 		},
 		{
 			name: "Unique_Functional_QuotedMixedCaseNotEqualUnquoted",
-			a: &UniqueIndex{
+			a: &UniqueIndexWithExpressions{
 				TableName:   "users",
 				Expressions: []string{`LOWER("Email")`},
 			},
-			b: &UniqueIndex{
+			b: &UniqueIndexWithExpressions{
 				TableName:   "users",
 				Expressions: []string{"LOWER(email)"},
 			},
@@ -324,11 +324,11 @@ func TestIndexEquals(t *testing.T) {
 		},
 		{
 			name: "Unique_Functional_DifferentExpressions",
-			a: &UniqueIndex{
+			a: &UniqueIndexWithExpressions{
 				TableName:   "users",
 				Expressions: []string{"LOWER(email)"},
 			},
-			b: &UniqueIndex{
+			b: &UniqueIndexWithExpressions{
 				TableName:   "users",
 				Expressions: []string{"UPPER(email)"},
 			},
@@ -336,7 +336,7 @@ func TestIndexEquals(t *testing.T) {
 		},
 		{
 			name: "Unique_Functional_NotEqualToPlainSameColumns",
-			a: &UniqueIndex{
+			a: &UniqueIndexWithExpressions{
 				TableName:   "users",
 				Expressions: []string{"LOWER(email)"},
 			},
@@ -357,7 +357,7 @@ func TestIndexEquals(t *testing.T) {
 
 func TestUniqueIndexFunctionalName(t *testing.T) {
 	t.Run("autogen uses uq_<table>_<hash>", func(t *testing.T) {
-		idx := &UniqueIndex{
+		idx := &UniqueIndexWithExpressions{
 			TableName:   "tag",
 			Expressions: []string{"org_id", "kind", "LOWER(key)", "LOWER(value)"},
 		}
@@ -365,11 +365,11 @@ func TestUniqueIndexFunctionalName(t *testing.T) {
 	})
 
 	t.Run("same expressions produce the same name", func(t *testing.T) {
-		a := &UniqueIndex{
+		a := &UniqueIndexWithExpressions{
 			TableName:   "users",
 			Expressions: []string{"LOWER(email)"},
 		}
-		b := &UniqueIndex{
+		b := &UniqueIndexWithExpressions{
 			TableName:   "users",
 			Expressions: []string{"LOWER(email)"},
 		}
@@ -377,11 +377,11 @@ func TestUniqueIndexFunctionalName(t *testing.T) {
 	})
 
 	t.Run("different expressions produce different names", func(t *testing.T) {
-		a := &UniqueIndex{
+		a := &UniqueIndexWithExpressions{
 			TableName:   "users",
 			Expressions: []string{"LOWER(email)"},
 		}
-		b := &UniqueIndex{
+		b := &UniqueIndexWithExpressions{
 			TableName:   "users",
 			Expressions: []string{"UPPER(email)"},
 		}
@@ -389,11 +389,11 @@ func TestUniqueIndexFunctionalName(t *testing.T) {
 	})
 
 	t.Run("expressions in different order produce different names", func(t *testing.T) {
-		a := &UniqueIndex{
+		a := &UniqueIndexWithExpressions{
 			TableName:   "tag",
 			Expressions: []string{"org_id", "LOWER(key)"},
 		}
-		b := &UniqueIndex{
+		b := &UniqueIndexWithExpressions{
 			TableName:   "tag",
 			Expressions: []string{"LOWER(key)", "org_id"},
 		}
@@ -405,7 +405,7 @@ func TestUniqueIndexFunctionalName(t *testing.T) {
 			TableName:   "users",
 			ColumnNames: []ColumnName{"email"},
 		}
-		functional := &UniqueIndex{
+		functional := &UniqueIndexWithExpressions{
 			TableName:   "users",
 			Expressions: []string{"LOWER(email)"},
 		}
@@ -414,20 +414,11 @@ func TestUniqueIndexFunctionalName(t *testing.T) {
 	})
 
 	t.Run("Named() override wins over hash", func(t *testing.T) {
-		idx := (&UniqueIndex{
+		idx := (&UniqueIndexWithExpressions{
 			TableName:   "tag",
 			Expressions: []string{"org_id", "LOWER(key)"},
 		}).Named("my_functional_index")
 		assert.Equal(t, "my_functional_index", idx.Name())
-	})
-
-	t.Run("setting both ColumnNames and Expressions panics", func(t *testing.T) {
-		idx := &UniqueIndex{
-			TableName:   "tag",
-			ColumnNames: []ColumnName{"org_id"},
-			Expressions: []string{"LOWER(key)"},
-		}
-		assert.Panics(t, func() { _ = idx.Name() })
 	})
 }
 

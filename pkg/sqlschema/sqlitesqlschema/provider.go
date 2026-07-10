@@ -144,7 +144,7 @@ func (provider *provider) GetIndices(ctx context.Context, tableName sqlschema.Ta
 				Where:       extractWhereClause(ddl),
 			}
 		} else if hasExpression {
-			index = &sqlschema.UniqueIndex{
+			index = &sqlschema.UniqueIndexWithExpressions{
 				TableName:   tableName,
 				Expressions: extractIndexColumns(ddl),
 			}
