@@ -1,5 +1,5 @@
 import styles from './AttributeMappingsTab.module.scss';
-import MappingsTable from './components/MappingsTable';
+import MappingsTable from './components/MappingsTable/MappingsTable';
 import { useAttributeMappingStore } from './hooks/useAttributeMappingStore';
 
 function AttributeMappingsTab(): JSX.Element {

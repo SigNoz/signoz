@@ -107,7 +107,11 @@ function ActionsPopover({
 				content={
 					// Stop clicks inside the menu (incl. disabled items) from bubbling to the
 					// row's onClick, which would navigate to the dashboard.
-					<div className={styles.content} onClick={(e): void => e.stopPropagation()}>
+					<div
+						className={styles.content}
+						role="presentation"
+						onClick={(e): void => e.stopPropagation()}
+					>
 						<Button
 							color="secondary"
 							className={styles.menuItem}

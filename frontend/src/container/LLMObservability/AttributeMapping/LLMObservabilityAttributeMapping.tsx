@@ -1,7 +1,7 @@
 import { Tabs } from '@signozhq/ui/tabs';
 
 import AttributeMappingHeader from './components/AttributeMappingHeader';
-import AttributeMappingsTab from './AttributeMappingsTab';
+import AttributeMappingsTab from './AttributeMappingsTab/AttributeMappingsTab';
 import styles from './LLMObservabilityAttributeMapping.module.scss';
 
 const noop = (): void => undefined;
