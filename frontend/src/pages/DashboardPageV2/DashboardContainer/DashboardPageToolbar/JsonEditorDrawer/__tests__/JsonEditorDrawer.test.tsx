@@ -1,10 +1,18 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { TooltipProvider } from '@signozhq/ui/tooltip';
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
 
 import JsonEditorDrawer from '../JsonEditorDrawer';
 import { useJsonEditor } from '../useJsonEditor';
 
 jest.mock('../useJsonEditor', () => ({ useJsonEditor: jest.fn() }));
+
+// Editable by default so the drawer renders in its editable (non-read-only) mode.
+jest.mock('../../../store/useDashboardStore', () => ({
+	useDashboardStore: (
+		selector: (s: { isEditable: boolean; editDisabledReason: string }) => unknown,
+	): unknown => selector({ isEditable: true, editDisabledReason: '' }),
+}));
 
 jest.mock('@monaco-editor/react', () => ({
 	__esModule: true,
@@ -48,11 +56,13 @@ function hookValue(
 		validity: { valid: true, lineCount: 3 },
 		isDirty: true,
 		isSaving: false,
+		danglingPanelIds: [],
+		missingPanelRefs: [],
 		format: jest.fn(),
 		reset: jest.fn(),
 		apply: jest.fn().mockResolvedValue(undefined),
 		...overrides,
-	};
+	} as ReturnType<typeof useJsonEditor>;
 }
 
 describe('JsonEditorDrawer', () => {
@@ -79,6 +89,42 @@ describe('JsonEditorDrawer', () => {
 		expect(screen.getByTestId('json-editor-validation')).toHaveTextContent(
 			'Valid JSON · 12 lines',
 		);
+	});
+
+	it('warns about dangling panels, and hides the warning when there are none', () => {
+		mockUseJsonEditor.mockReturnValue(
+			hookValue({ danglingPanelIds: ['p1', 'p2'] }),
+		);
+		const { rerender } = render(
+			<TooltipProvider>
+				<JsonEditorDrawer dashboard={dashboard} isOpen onClose={jest.fn()} />
+			</TooltipProvider>,
+		);
+		expect(screen.getByTestId('json-editor-dangling-warning')).toHaveTextContent(
+			'2 panels not present in layout',
+		);
+
+		mockUseJsonEditor.mockReturnValue(hookValue({ danglingPanelIds: [] }));
+		rerender(
+			<TooltipProvider>
+				<JsonEditorDrawer dashboard={dashboard} isOpen onClose={jest.fn()} />
+			</TooltipProvider>,
+		);
+		expect(
+			screen.queryByTestId('json-editor-dangling-warning'),
+		).not.toBeInTheDocument();
+	});
+
+	it('warns about layout refs to missing panels', () => {
+		mockUseJsonEditor.mockReturnValue(hookValue({ missingPanelRefs: ['ghost'] }));
+		render(
+			<TooltipProvider>
+				<JsonEditorDrawer dashboard={dashboard} isOpen onClose={jest.fn()} />
+			</TooltipProvider>,
+		);
+		expect(
+			screen.getByTestId('json-editor-missing-ref-warning'),
+		).toHaveTextContent('1 layout item references a panel that no longer exists');
 	});
 
 	it('shows the error line and message when invalid', () => {

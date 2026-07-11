@@ -111,15 +111,25 @@ export function usePanelEditorQuerySync({
 
 	// Re-commit on a query-type/datasource switch so the preview refetches. Skip
 	// mount: the draft already holds the saved queries the builder is reset to.
-	const dataSourceSignature = useMemo(
-		() =>
-			(currentQuery.builder?.queryData ?? []).map((q) => q.dataSource).join(','),
+	const dataSources = useMemo(
+		() => (currentQuery.builder?.queryData ?? []).map((q) => q.dataSource),
 		[currentQuery.builder],
 	);
+	const dataSourceSignature = dataSources.join(',');
+	const prevDataSourcesRef = useRef(dataSources);
 	const didMountRef = useRef(false);
 	useEffect(() => {
+		const prev = prevDataSourcesRef.current;
+		prevDataSourcesRef.current = dataSources;
 		if (!didMountRef.current) {
 			didMountRef.current = true;
+			return;
+		}
+		// An added query is still empty — don't auto-run it; it commits on Run Query.
+		const isQueryAdded =
+			dataSources.length > prev.length &&
+			prev.every((source, index) => source === dataSources[index]);
+		if (isQueryAdded) {
 			return;
 		}
 		commitRef.current(queryRef.current);

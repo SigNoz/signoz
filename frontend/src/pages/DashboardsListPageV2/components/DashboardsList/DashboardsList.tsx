@@ -10,9 +10,9 @@ import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useAppContext } from 'providers/App/App';
 import { toAPIError } from 'utils/errorUtils';
 
-import { combineQueries } from '../../utils/filterQuery';
 import { useAccumulatedTags } from '../../hooks/useAccumulatedTags';
 import { useActiveView } from '../../hooks/useActiveView';
+import { useCreatorOptions } from '../../hooks/useCreatorOptions';
 import { useDashboardFilters } from '../../hooks/useDashboardFilters';
 import {
 	usePage,
@@ -25,7 +25,6 @@ import { BuiltinViewId } from '../../types';
 import type { SelectedTag, UpdatedWindow } from '../../types';
 import type { DashboardListItem } from '../../utils/helpers';
 import { applyClientView } from '../../utils/views';
-import type { CreatorOption } from '../FilterZone/FilterChips';
 import FilterZone from '../FilterZone/FilterZone';
 import NewDashboardModal from '../NewDashboardModal/NewDashboardModal';
 import StatusBar from '../StatusBar/StatusBar';
@@ -45,10 +44,11 @@ function DashboardsList(): JSX.Element {
 	const { isCloudUser } = useGetTenantLicense();
 
 	const { user } = useAppContext();
-	const [action, canCreateNewDashboard] = useComponentPermission(
-		['action', 'create_new_dashboards'],
+	const [editDashboard, canCreateNewDashboard] = useComponentPermission(
+		['edit_dashboard', 'create_new_dashboards'],
 		user.role,
 	);
+	const canEdit = !!editDashboard;
 
 	const {
 		filters,
@@ -72,13 +72,13 @@ function DashboardsList(): JSX.Element {
 		customViewsLoading,
 		isCustomActive,
 		isModified,
-		viewQuery,
 		clientView,
 		selectView,
 		saveView,
 		saveActiveView,
 		resetView,
 		removeView,
+		renameView,
 	} = useActiveView({
 		filters,
 		applyFilters,
@@ -153,13 +153,13 @@ function DashboardsList(): JSX.Element {
 
 	const listParams = useMemo(
 		() => ({
-			query: combineQueries(viewQuery, query) || undefined,
+			query: query || undefined,
 			sort: sortColumn,
 			order: sortOrder,
 			limit: clientView ? CLIENT_VIEW_LIMIT : PAGE_SIZE,
 			offset: clientView ? 0 : (page - 1) * PAGE_SIZE,
 		}),
-		[viewQuery, query, sortColumn, sortOrder, page, clientView],
+		[query, sortColumn, sortOrder, page, clientView],
 	);
 
 	const {
@@ -195,24 +195,19 @@ function DashboardsList(): JSX.Element {
 	);
 	const total = clientView ? dashboards.length : (response?.data?.total ?? 0);
 
-	// Creator filter options: distinct authors on the loaded page plus the
-	// current user (so "me" is always selectable). Page-scoped until a members
-	// source backs this.
-	const creatorOptions = useMemo<CreatorOption[]>(() => {
-		const emails = new Set<string>();
-		if (user.email) {
-			emails.add(user.email);
-		}
-		rawDashboards.forEach((d) => {
-			if (d.createdBy) {
-				emails.add(d.createdBy);
-			}
-		});
-		return [...emails].sort().map((email) => ({
-			email,
-			label: email === user.email ? `${email} (me)` : email,
-		}));
-	}, [rawDashboards, user.email]);
+	// Authors present on the loaded page — a fallback for the creator filter until
+	// the org-wide user list resolves.
+	const pageAuthorEmails = useMemo<string[]>(
+		() =>
+			rawDashboards
+				.map((d) => d.createdBy)
+				.filter((email): email is string => !!email),
+		[rawDashboards],
+	);
+	const creatorOptions = useCreatorOptions({
+		currentUserEmail: user.email,
+		fallbackEmails: pageAuthorEmails,
+	});
 
 	// All key:value tags the API reports for the org's dashboards, powering the
 	// Tags filter chip and DSL key suggestions. Accumulated across refetches so
@@ -289,8 +284,9 @@ function DashboardsList(): JSX.Element {
 				onSave={saveView}
 				onSaveChanges={saveActiveView}
 				onReset={handleResetView}
-				onClearFilters={handleClearAll}
 				onDelete={handleRemoveView}
+				onRename={renameView}
+				canEdit={canEdit}
 			/>
 			<div className={styles.main}>
 				<div className={styles.mainScroll}>
@@ -305,6 +301,7 @@ function DashboardsList(): JSX.Element {
 								<CommandHeader
 									label={activeLabel}
 									count={total}
+									isModified={isModified}
 									canCreate={canCreateNewDashboard}
 									onCreate={openCreate}
 								/>
@@ -345,7 +342,7 @@ function DashboardsList(): JSX.Element {
 									pageSize={clientView ? CLIENT_VIEW_LIMIT : PAGE_SIZE}
 									total={total}
 									onPageChange={setPage}
-									canAct={!!action}
+									canEdit={canEdit}
 									showUpdatedAt={visibleColumns.updatedAt}
 									showUpdatedBy={visibleColumns.updatedBy}
 									loading={isFetching}

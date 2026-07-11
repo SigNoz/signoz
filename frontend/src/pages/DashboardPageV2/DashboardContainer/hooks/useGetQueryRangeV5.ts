@@ -20,7 +20,10 @@ export interface UseGetQueryRangeV5Args {
  * The retry callback gets the raw AxiosError this path rejects with (not yet normalized to
  * APIError — that happens later at the display boundary), so inspect it at the axios level.
  */
-function retryUnlessClientError(failureCount: number, error: Error): boolean {
+export function retryUnlessClientError(
+	failureCount: number,
+	error: Error,
+): boolean {
 	if (isAxiosError(error)) {
 		if (error.code === 'ERR_CANCELED') {
 			return false;

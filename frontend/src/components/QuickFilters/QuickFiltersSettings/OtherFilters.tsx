@@ -20,6 +20,7 @@ function OtherFiltersSkeleton(): JSX.Element {
 				<Skeleton.Input
 					active
 					size="small"
+					className="qf-other-filters-skeleton"
 					// eslint-disable-next-line react/no-array-index-key
 					key={index}
 				/>

@@ -50,7 +50,6 @@ func TestFilterExprLogs(t *testing.T) {
 		ConditionBuilder: cb,
 		FieldKeys:        keys,
 		FullTextColumn:   DefaultFullTextColumn,
-		JsonKeyToKey:     GetBodyJSONKey,
 		StartNs:          uint64(releaseTime.Add(-5 * time.Minute).UnixNano()),
 		EndNs:            uint64(releaseTime.Add(5 * time.Minute).UnixNano()),
 	}
@@ -2467,7 +2466,6 @@ func TestFilterExprLogsConflictNegation(t *testing.T) {
 		ConditionBuilder: cb,
 		FieldKeys:        keys,
 		FullTextColumn:   DefaultFullTextColumn,
-		JsonKeyToKey:     GetBodyJSONKey,
 	}
 
 	testCases := []struct {

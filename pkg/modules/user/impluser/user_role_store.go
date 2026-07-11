@@ -39,6 +39,26 @@ func (store *userRoleStore) ListUserRolesByOrgIDAndUserIDs(ctx context.Context, 
 	return userRoles, nil
 }
 
+func (store *userRoleStore) GetUserRoleByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*authtypes.UserRole, error) {
+	userRole := new(authtypes.UserRole)
+
+	err := store.sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(userRole).
+		Join("JOIN users").
+		JoinOn("users.id = user_role.user_id").
+		Where("users.org_id = ?", orgID).
+		Where("user_role.id = ?", id).
+		Relation("Role").
+		Scan(ctx)
+	if err != nil {
+		return nil, store.sqlstore.WrapNotFoundErrf(err, authtypes.ErrCodeUserRolesNotFound, "user role with id: %s doesn't exist in org: %s", id, orgID)
+	}
+
+	return userRole, nil
+}
+
 func (store *userRoleStore) CreateUserRoles(ctx context.Context, userRoles []*authtypes.UserRole) error {
 	_, err := store.sqlstore.
 		BunDBCtx(ctx).

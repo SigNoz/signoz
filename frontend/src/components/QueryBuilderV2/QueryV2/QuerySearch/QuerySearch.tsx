@@ -89,6 +89,7 @@ interface QuerySearchProps {
 	onChange: (value: string) => void;
 	queryData: IBuilderQuery;
 	dataSource: DataSource;
+	metricNamespace?: string;
 	signalSource?: string;
 	hardcodedAttributeKeys?: QueryKeyDataSuggestionsProps[];
 	onRun?: (query: string) => void;
@@ -107,6 +108,7 @@ function QuerySearch({
 	hardcodedAttributeKeys,
 	showFilterSuggestionsWithoutMetric,
 	initialExpression,
+	metricNamespace,
 }: QuerySearchProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const [valueSuggestions, setValueSuggestions] = useState<any[]>([]);
@@ -299,6 +301,7 @@ function QuerySearch({
 				searchText: searchText || '',
 				metricName: debouncedMetricName ?? undefined,
 				signalSource: signalSource as 'meter' | '',
+				metricNamespace,
 			});
 
 			if (response.data.data) {
@@ -331,6 +334,7 @@ function QuerySearch({
 			signalSource,
 			hardcodedAttributeKeys,
 			showFilterSuggestionsWithoutMetric,
+			metricNamespace,
 		],
 	);
 

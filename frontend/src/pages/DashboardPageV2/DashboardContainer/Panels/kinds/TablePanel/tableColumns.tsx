@@ -1,7 +1,10 @@
 import type { TableProps } from 'antd';
 import type { DashboardtypesTableThresholdDTO } from 'api/generated/services/sigNoz.schemas';
 import type { PrecisionOption } from 'components/Graph/types';
-import type { PanelTable } from 'pages/DashboardPageV2/DashboardContainer/queryV5/types';
+import type {
+	PanelTable,
+	PanelTableColumn,
+} from 'pages/DashboardPageV2/DashboardContainer/queryV5/types';
 import { coerceToString } from 'utils/stringUtils';
 
 import type { PanelThreshold } from '../../types/threshold';
@@ -9,6 +12,8 @@ import { resolveActiveThreshold } from '../../utils/evaluateThresholds';
 import { formatPanelValue } from '../../utils/formatPanelValue';
 import { getColumnUnit } from '../../utils/getColumnUnit';
 import { toPanelThreshold } from '../../utils/mapComparisonThreshold';
+
+import styles from './TablePanel.module.scss';
 
 /** A prepared scalar-table row flattened for the antd Table, with the antd key. */
 export type TableRowData = Record<string, unknown> & { key: number };
@@ -26,6 +31,26 @@ export function mapTableThresholds(
 		(byColumn[threshold.columnName] ??= []).push(toPanelThreshold(threshold));
 	});
 	return byColumn;
+}
+
+/**
+ * Plain-text value of a table cell (value columns formatted through unit +
+ * precision, group columns raw). Shared by the renderer and the CSV export.
+ */
+export function formatTableCellText(
+	col: PanelTableColumn,
+	raw: unknown,
+	unit: string | undefined,
+	decimalPrecision?: PrecisionOption,
+): string {
+	if (!col.isValueColumn) {
+		return coerceToString(raw);
+	}
+	const num = Number(raw);
+	if (!Number.isFinite(num)) {
+		return coerceToString(raw);
+	}
+	return formatPanelValue(num, unit, decimalPrecision);
 }
 
 // Sort comparator: numeric when both cells parse as numbers (value columns and
@@ -52,6 +77,12 @@ export interface BuildTableColumnsArgs {
 	decimalPrecision?: PrecisionOption;
 	/** Thresholds grouped by column name (see `mapTableThresholds`). */
 	thresholdsByColumn: Record<string, PanelThreshold[]>;
+	/** When set, every body cell becomes a drill-down target (keyed by its column id). */
+	onCellClick?: (args: {
+		columnId: string;
+		record: TableRowData;
+		event: React.MouseEvent<HTMLElement>;
+	}) => void;
 }
 
 /**
@@ -65,6 +96,7 @@ export function buildTableColumns({
 	columnUnits,
 	decimalPrecision,
 	thresholdsByColumn,
+	onCellClick,
 }: BuildTableColumnsArgs): TableProps<TableRowData>['columns'] {
 	return table.columns.map((col) => {
 		// Column key = query identifier for value columns, group name otherwise. Units
@@ -80,15 +112,13 @@ export function buildTableColumns({
 			sorter: (a: TableRowData, b: TableRowData): number =>
 				compareCells(a[key], b[key]),
 			render: (raw: unknown): React.ReactNode => {
-				if (!col.isValueColumn) {
-					return coerceToString(raw);
-				}
+				const text = formatTableCellText(col, raw, unit, decimalPrecision);
 				const num = Number(raw);
-				if (!Number.isFinite(num)) {
-					return coerceToString(raw);
-				}
-				const text = formatPanelValue(num, unit, decimalPrecision);
-				if (colThresholds.length === 0) {
+				if (
+					!col.isValueColumn ||
+					colThresholds.length === 0 ||
+					!Number.isFinite(num)
+				) {
 					return text;
 				}
 				const { threshold } = resolveActiveThreshold(colThresholds, num, unit);
@@ -97,19 +127,26 @@ export function buildTableColumns({
 				}
 				return text;
 			},
-			onCell: (record: TableRowData): { style?: React.CSSProperties } => {
-				if (!col.isValueColumn || colThresholds.length === 0) {
-					return {};
+			onCell: (record: TableRowData): React.HTMLAttributes<HTMLElement> => {
+				const cellProps: React.HTMLAttributes<HTMLElement> = {};
+
+				if (col.isValueColumn && colThresholds.length > 0) {
+					const num = Number(record[key]);
+					if (Number.isFinite(num)) {
+						const { threshold } = resolveActiveThreshold(colThresholds, num, unit);
+						if (threshold?.format === 'background') {
+							cellProps.style = { backgroundColor: threshold.color };
+						}
+					}
 				}
-				const num = Number(record[key]);
-				if (!Number.isFinite(num)) {
-					return {};
+
+				if (onCellClick) {
+					cellProps.onClick = (event): void =>
+						onCellClick({ columnId: key, record, event });
+					cellProps.className = styles.clickableCell;
 				}
-				const { threshold } = resolveActiveThreshold(colThresholds, num, unit);
-				if (threshold?.format === 'background') {
-					return { style: { backgroundColor: threshold.color } };
-				}
-				return {};
+
+				return cellProps;
 			},
 		};
 	});
