@@ -16,7 +16,6 @@ const NavItem = forwardRef<HTMLAnchorElement, {
 	const { item, isActive, onClick } = props;
 	const { label, icon, isBeta, isNew, key: itemKey } = item;
 
-	// Generate href from key if not explicitly provided
 	const href = item.href ?? (typeof itemKey === 'string' ? `/${itemKey}` : undefined);
 
 	return (
