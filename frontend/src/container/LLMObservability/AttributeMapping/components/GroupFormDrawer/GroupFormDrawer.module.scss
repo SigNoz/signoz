@@ -1,0 +1,76 @@
+.groupForm {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-10);
+	padding: var(--spacing-2) 0;
+}
+
+.groupFormField {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+}
+
+.groupFormFieldRow {
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.groupFormLabel {
+	font-size: var(--font-size-xs);
+	font-weight: var(--font-weight-semibold);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--l3-foreground);
+}
+
+.groupFormLabelHint {
+	font-weight: var(--font-weight-normal);
+	text-transform: none;
+	letter-spacing: normal;
+}
+
+.groupFormHint {
+	font-size: var(--font-size-xs);
+	color: var(--l3-foreground);
+}
+
+.groupFormKeys {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+}
+
+.groupFormKey {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-3);
+}
+
+.groupFormKeyInput {
+	flex: 1;
+	font-family: 'Geist Mono', monospace;
+}
+
+.groupFormError {
+	padding: var(--spacing-5) var(--spacing-6);
+	border-radius: var(--radius-2);
+	background: var(--callout-error-background);
+	color: var(--callout-error-title);
+	font-size: var(--periscope-font-size-base);
+}
+
+.groupFormFooter {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
+	gap: var(--spacing-4);
+}
+
+.groupFormFooterActions {
+	display: flex;
+	gap: var(--spacing-4);
+	margin-left: auto;
+}
