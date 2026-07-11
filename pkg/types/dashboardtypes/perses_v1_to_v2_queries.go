@@ -2,6 +2,7 @@ package dashboardtypes
 
 import (
 	"encoding/json"
+	"strconv"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -162,7 +163,9 @@ func (d *v1Decoder) collectV1QueryEnvelopes(widget map[string]any, panelKind Pan
 				signal = signalFromDataSource(q["dataSource"])
 			}
 		}
-		for _, f := range d.readObjects(builder, "queryFormulas") {
+		formulas := d.readObjects(builder, "queryFormulas")
+		assignMissingFormulaNames(formulas)
+		for _, f := range formulas {
 			normalizePreV5QueryData(f, widgetType)
 			name := d.readString(f, "queryName")
 			out = append(out, qb.WrapInV5Envelope(name, f, string(qb.QueryTypeFormula.StringValue())))
@@ -177,6 +180,34 @@ func (d *v1Decoder) collectV1QueryEnvelopes(widget map[string]any, panelKind Pan
 		d.note("widget %q has unknown queryType %q", d.readString(widget, "id"), queryType)
 	}
 	return nil, telemetrytypes.Signal{}
+}
+
+// maxFormulas mirrors the frontend MAX_FORMULAS; formula names run F1..F20.
+const maxFormulas = 20
+
+// assignMissingFormulaNames fills queryName for unnamed formulas, mirroring the
+// frontend: pick the first F{n} (n in 1..20) not already used by another formula.
+// Formulas that already have a name keep it.
+func assignMissingFormulaNames(formulas []map[string]any) {
+	taken := make(map[string]bool, len(formulas))
+	for _, f := range formulas {
+		if name, _ := f["queryName"].(string); name != "" {
+			taken[name] = true
+		}
+	}
+	for _, f := range formulas {
+		if name, _ := f["queryName"].(string); name != "" {
+			continue
+		}
+		for i := 1; i <= maxFormulas; i++ {
+			candidate := "F" + strconv.Itoa(i)
+			if !taken[candidate] {
+				f["queryName"] = candidate
+				taken[candidate] = true
+				break
+			}
+		}
+	}
 }
 
 func promQLEnvelope(q map[string]any) map[string]any {
