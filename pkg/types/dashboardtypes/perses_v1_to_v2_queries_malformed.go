@@ -29,9 +29,29 @@ var preV5Migrator = transition.NewDashboardMigrateV5(slog.New(slog.DiscardHandle
 // normalizePreV5QueryData upgrades one builder queryData/formula in place: the
 // shared migrator, then a reshape of any existing aggregations[] it leaves alone.
 func normalizePreV5QueryData(query map[string]any, widgetType string) {
+	dropLegacyFilter(query)
 	preV5Migrator.MigrateQueryDataShapeSafe(context.Background(), query, widgetType)
 	normalizePreV5LogTraceAggregations(query)
 	normalizeMetricSpaceAggregation(query)
+}
+
+// dropLegacyFilter removes a v4-shaped filter ({items, op}) stored under the v5
+// `filter` key. The v5 filter is {expression}; the migrator only rewrites the v4
+// `filters` key and skips when `filter` is present, so this stale shape would reach
+// WrapInV5Envelope and fail v5 validation. The v1 UI ignores it — it types
+// IBuilderQuery.filter as {expression} (frontend queryBuilderData.ts, filter?: Filter)
+// and only ever reads filter.expression, so items/op go unread. We drop it before the
+// migrator, which can then rebuild `filter` from `filters` if present.
+func dropLegacyFilter(query map[string]any) {
+	filter, ok := query["filter"].(map[string]any)
+	if !ok {
+		return
+	}
+	_, hasItems := filter["items"]
+	_, hasOp := filter["op"]
+	if hasItems || hasOp {
+		delete(query, "filter")
+	}
 }
 
 // normalizeMetricSpaceAggregation defaults an invalid spaceAggregation on a metric
