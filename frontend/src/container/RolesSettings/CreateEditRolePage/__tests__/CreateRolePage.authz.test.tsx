@@ -1,16 +1,17 @@
 import { Route, Switch } from 'react-router-dom';
 import ROUTES from 'constants/routes';
-import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
+import { server } from 'mocks-server/server';
+import { rest } from 'msw';
 import { render, screen } from 'tests/test-utils';
-import { mockUseAuthZDenyAll } from 'lib/authz/utils/authz-test-utils';
+import {
+	setupAuthzAdmin,
+	setupAuthzDenyAll,
+} from 'lib/authz/utils/authz-test-utils';
 
 import CreateEditRolePage from '../CreateEditRolePage';
 
-jest.mock('lib/authz/hooks/useAuthZ/useAuthZ');
-const mockUseAuthZ = useAuthZ as jest.MockedFunction<typeof useAuthZ>;
-
 afterEach(() => {
-	jest.clearAllMocks();
+	server.resetHandlers();
 });
 
 function renderCreatePage(): ReturnType<typeof render> {
@@ -31,7 +32,7 @@ function renderCreatePage(): ReturnType<typeof render> {
 describe('CreateRolePage - AuthZ', () => {
 	describe('permission denied', () => {
 		it('shows PermissionDeniedFullPage when create permission denied', async () => {
-			mockUseAuthZ.mockImplementation(mockUseAuthZDenyAll);
+			server.use(setupAuthzDenyAll());
 
 			renderCreatePage();
 
@@ -43,19 +44,31 @@ describe('CreateRolePage - AuthZ', () => {
 
 	describe('loading state', () => {
 		it('shows skeleton while checking permissions', () => {
-			mockUseAuthZ.mockReturnValue({
-				isLoading: true,
-				isFetching: true,
-				error: null,
-				permissions: null,
-				allowed: false,
-				deniedPermissions: [],
-				refetchPermissions: jest.fn(),
-			});
+			server.use(
+				rest.post('*/api/v1/authz/check', (_req, res, ctx) =>
+					res(
+						ctx.delay(200),
+						ctx.status(200),
+						ctx.json({ data: [], status: 'success' }),
+					),
+				),
+			);
 
 			renderCreatePage();
 
 			expect(document.querySelector('.ant-skeleton')).toBeInTheDocument();
+		});
+	});
+
+	describe('permission granted', () => {
+		it('renders create page when create permission granted', async () => {
+			server.use(setupAuthzAdmin());
+
+			renderCreatePage();
+
+			await expect(
+				screen.findByTestId('role-name-input'),
+			).resolves.toBeInTheDocument();
 		});
 	});
 });
