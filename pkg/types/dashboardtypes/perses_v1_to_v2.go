@@ -54,7 +54,7 @@ func (storable StorableDashboard) ConvertV1ToV2() (result *DashboardV2, err erro
 	description := d.readString(storable.Data, "description")
 	image := d.readString(storable.Data, "image")
 
-	panels := d.convertV1Panels(storable.Data["widgets"])
+	panels := d.convertV1Panels(retainPlacedWidgets(storable.Data))
 	spec := DashboardSpec{
 		Display:   Display{Name: clipName(title, MaxDisplayNameLen), Description: description},
 		Variables: d.convertV1Variables(storable.Data["variables"]),

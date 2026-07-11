@@ -142,12 +142,14 @@ func TestConvertV1DetectsMalformedFields(t *testing.T) {
 		{"widgets not an array", map[string]any{"widgets": "nope"}},
 		{"tags not an array", map[string]any{"tags": "nope"}},
 		{"non-string tag element", map[string]any{"tags": []any{"ok", 42}}},
-		{"scalar widget field wrong type", map[string]any{"widgets": []any{
-			map[string]any{"id": "w1", "panelTypes": "graph", "title": float64(3)},
-		}}},
-		{"nested query wrong type", map[string]any{"widgets": []any{
-			map[string]any{"id": "w1", "panelTypes": "graph", "query": "nope"},
-		}}},
+		{"scalar widget field wrong type", map[string]any{
+			"widgets": []any{map[string]any{"id": "w1", "panelTypes": "graph", "title": float64(3)}},
+			"layout":  []any{map[string]any{"i": "w1", "x": float64(0), "y": float64(0), "w": float64(6), "h": float64(6)}},
+		}},
+		{"nested query wrong type", map[string]any{
+			"widgets": []any{map[string]any{"id": "w1", "panelTypes": "graph", "query": "nope"}},
+			"layout":  []any{map[string]any{"i": "w1", "x": float64(0), "y": float64(0), "w": float64(6), "h": float64(6)}},
+		}},
 		{"deep layout coordinate wrong type", map[string]any{
 			"widgets": []any{map[string]any{"id": "w1", "panelTypes": "graph", "query": singleLogsBuilderQuery()}},
 			"layout":  []any{map[string]any{"i": "w1", "x": "0", "y": float64(0)}},
@@ -376,6 +378,10 @@ func TestConvertV1ToV2HappyPath(t *testing.T) {
 				},
 				// widget with missing id — dropped
 				map[string]any{"panelTypes": "graph", "title": "no id"},
+			},
+			"layout": []any{
+				map[string]any{"i": "panel-1", "x": float64(0), "y": float64(0), "w": float64(6), "h": float64(6)},
+				map[string]any{"i": "panel-2", "x": float64(6), "y": float64(0), "w": float64(6), "h": float64(6)},
 			},
 		},
 	}
