@@ -3,17 +3,12 @@ import { Check, GripVertical, PenLine, Trash2, X } from '@signozhq/icons';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Button } from '@signozhq/ui/button';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
+import cx from 'classnames';
 
 import type { VariableFormModel } from './variableFormModel';
 import styles from './Variables.module.scss';
-
-const TYPE_LABEL: Record<VariableFormModel['type'], string> = {
-	QUERY: 'Query',
-	CUSTOM: 'Custom',
-	TEXT: 'Text',
-	DYNAMIC: 'Dynamic',
-};
 
 interface VariableRowProps {
 	variable: VariableFormModel;
@@ -25,9 +20,11 @@ interface VariableRowProps {
 	onRequestDelete: (index: number) => void;
 	onConfirmDelete: (index: number) => void;
 	onCancelDelete: () => void;
+	/** Apply this variable's filter to all panels. Dynamic variables only. */
+	onApplyToAll: (index: number) => void;
 }
 
-/** A single draggable variable row (drag handle + meta + inline actions). */
+/** A single draggable variable row in the two-column (name / description) table. */
 function VariableRow({
 	variable,
 	index,
@@ -37,6 +34,7 @@ function VariableRow({
 	onRequestDelete,
 	onConfirmDelete,
 	onCancelDelete,
+	onApplyToAll,
 }: VariableRowProps): JSX.Element {
 	const {
 		attributes,
@@ -61,7 +59,7 @@ function VariableRow({
 			className={styles.row}
 			data-testid={`variable-row-${variable.name}`}
 		>
-			<div className={styles.rowMain}>
+			<div className={styles.varCell}>
 				{canEdit ? (
 					<span
 						ref={setActivatorNodeRef}
@@ -74,65 +72,94 @@ function VariableRow({
 					</span>
 				) : null}
 				<Typography.Text className={styles.varName}>
-					${variable.name}
+					{variable.name}
 				</Typography.Text>
-				<span className={styles.typeTag}>{TYPE_LABEL[variable.type]}</span>
+			</div>
+
+			<div className={styles.descCell}>
 				{variable.description ? (
 					<Typography.Text className={styles.varDesc}>
 						{variable.description}
 					</Typography.Text>
+				) : (
+					<span className={styles.varDescEmpty}>—</span>
+				)}
+
+				{canEdit ? (
+					<div
+						className={cx(styles.rowActions, {
+							[styles.rowActionsVisible]: isConfirmingDelete,
+						})}
+					>
+						{isConfirmingDelete ? (
+							<>
+								<Typography.Text className={styles.confirmText}>
+									Delete?
+								</Typography.Text>
+								<Button
+									variant="ghost"
+									color="destructive"
+									size="icon"
+									onClick={(): void => onConfirmDelete(index)}
+									aria-label="Confirm delete"
+									testId={`variable-delete-confirm-${variable.name}`}
+								>
+									<Check size={14} />
+								</Button>
+								<Button
+									variant="ghost"
+									color="secondary"
+									size="icon"
+									onClick={onCancelDelete}
+									aria-label="Cancel delete"
+								>
+									<X size={14} />
+								</Button>
+							</>
+						) : (
+							<>
+								{variable.type === 'DYNAMIC' ? (
+									<TooltipSimple
+										side="top"
+										title="Add this variable as a filter to every panel"
+									>
+										<Button
+											variant="ghost"
+											color="secondary"
+											size="sm"
+											className={styles.applyAllButton}
+											onClick={(): void => onApplyToAll(index)}
+											testId={`variable-apply-all-${variable.name}`}
+										>
+											Apply to all
+										</Button>
+									</TooltipSimple>
+								) : null}
+								<Button
+									variant="ghost"
+									color="secondary"
+									size="icon"
+									onClick={(): void => onEdit(index)}
+									aria-label="Edit variable"
+									testId={`variable-edit-${variable.name}`}
+								>
+									<PenLine size={14} />
+								</Button>
+								<Button
+									variant="ghost"
+									color="secondary"
+									size="icon"
+									onClick={(): void => onRequestDelete(index)}
+									aria-label="Delete variable"
+									testId={`variable-delete-${variable.name}`}
+								>
+									<Trash2 size={14} />
+								</Button>
+							</>
+						)}
+					</div>
 				) : null}
 			</div>
-
-			{canEdit && isConfirmingDelete ? (
-				<div className={styles.rowActions}>
-					<Typography.Text className={styles.confirmText}>Delete?</Typography.Text>
-					<Button
-						variant="ghost"
-						color="destructive"
-						size="icon"
-						onClick={(): void => onConfirmDelete(index)}
-						aria-label="Confirm delete"
-						testId={`variable-delete-confirm-${variable.name}`}
-					>
-						<Check size={14} />
-					</Button>
-					<Button
-						variant="ghost"
-						color="secondary"
-						size="icon"
-						onClick={onCancelDelete}
-						aria-label="Cancel delete"
-					>
-						<X size={14} />
-					</Button>
-				</div>
-			) : null}
-
-			{canEdit && !isConfirmingDelete ? (
-				<div className={styles.rowActions}>
-					<Button
-						variant="ghost"
-						color="secondary"
-						size="icon"
-						onClick={(): void => onEdit(index)}
-						aria-label="Edit variable"
-						testId={`variable-edit-${variable.name}`}
-					>
-						<PenLine size={14} />
-					</Button>
-					<Button
-						variant="ghost"
-						color="secondary"
-						size="icon"
-						onClick={(): void => onRequestDelete(index)}
-						aria-label="Delete variable"
-						testId={`variable-delete-${variable.name}`}
-					>
-						<Trash2 size={14} />
-					</Button>
-				</div>
-			) : null}
 		</div>
 	);
 }

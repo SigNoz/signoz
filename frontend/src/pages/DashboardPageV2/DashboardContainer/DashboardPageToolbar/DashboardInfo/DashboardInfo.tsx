@@ -1,4 +1,4 @@
-import { KeyboardEvent } from 'react';
+import { type FocusEvent, KeyboardEvent } from 'react';
 import {
 	Check,
 	Globe,
@@ -19,6 +19,7 @@ import { openInNewTab } from 'utils/navigation';
 
 import styles from './DashboardInfo.module.scss';
 import { useVisibleTagCount } from './useVisibleTagCount';
+import { DASHBOARD_NAME_MAX_LENGTH } from '../../constants';
 import { useDashboardStore } from '../../store/useDashboardStore';
 
 interface DashboardInfoProps {
@@ -89,17 +90,25 @@ function DashboardInfo({
 		}
 	};
 
+	// Clicking outside the editor commits, matching the input's Enter behaviour.
+	// Guard against blurs that move focus to the Save/Cancel buttons within it.
+	const onEditorBlur = (event: FocusEvent<HTMLDivElement>): void => {
+		if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+			onCommit();
+		}
+	};
+
 	return (
 		<div className={styles.dashboardInfo}>
 			<img src={image} alt={title} className={styles.dashboardImage} />
 
 			{isEditing ? (
-				<div className={styles.dashboardTitleEditor}>
+				<div className={styles.dashboardTitleEditor} onBlur={onEditorBlur}>
 					<Input
 						autoFocus
 						value={draft}
 						testId="dashboard-title-input"
-						maxLength={120}
+						maxLength={DASHBOARD_NAME_MAX_LENGTH}
 						className={styles.dashboardTitleInput}
 						onChange={(e): void => onDraftChange(e.target.value)}
 						onKeyDown={onKeyDown}

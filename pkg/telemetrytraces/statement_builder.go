@@ -54,7 +54,6 @@ func NewTraceQueryStatementBuilder(
 		telemetrytypes.SourceUnspecified,
 		metadataStore,
 		nil,
-		nil,
 		flagger,
 		telemetryStore,
 		skipResourceFingerprintThreshold,

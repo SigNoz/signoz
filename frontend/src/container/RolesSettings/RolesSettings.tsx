@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { Plus } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
+import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import ROUTES from 'constants/routes';
-import { RoleCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/role.permissions';
+import {
+	RoleCreatePermission,
+	RoleListPermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/role.permissions';
 import { useRolesFeatureGate } from 'hooks/useRolesFeatureGate';
 
 import RolesListingTable from './RolesComponents/RolesListingTable';
@@ -37,24 +40,25 @@ function RolesSettings(): JSX.Element {
 			</div>
 			<div className={styles.rolesSettingsContent}>
 				<div className={styles.rolesSettingsToolbar}>
-					<Input
-						type="search"
-						placeholder="Search for roles..."
-						value={searchQuery}
-						onChange={(e): void => setSearchQuery(e.target.value)}
-					/>
+					<AuthZTooltip checks={[RoleListPermission]}>
+						<Input
+							type="search"
+							placeholder="Search for roles..."
+							value={searchQuery}
+							onChange={(e): void => setSearchQuery(e.target.value)}
+						/>
+					</AuthZTooltip>
 					{isRolesEnabled && (
-						<AuthZTooltip checks={[RoleCreatePermission]}>
-							<Button
-								variant="solid"
-								color="primary"
-								className={styles.roleSettingsToolbarButton}
-								onClick={(): void => history.push(ROUTES.ROLE_CREATE)}
-							>
-								<Plus size={14} />
-								Custom role
-							</Button>
-						</AuthZTooltip>
+						<AuthZButton
+							checks={[RoleCreatePermission]}
+							variant="solid"
+							color="primary"
+							className={styles.roleSettingsToolbarButton}
+							onClick={(): void => history.push(ROUTES.ROLE_CREATE)}
+						>
+							<Plus size={14} />
+							Custom role
+						</AuthZButton>
 					)}
 				</div>
 				<RolesListingTable searchQuery={searchQuery} />

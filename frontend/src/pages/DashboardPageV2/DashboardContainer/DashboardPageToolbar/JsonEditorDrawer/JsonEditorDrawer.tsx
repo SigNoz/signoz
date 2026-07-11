@@ -14,6 +14,8 @@ import { defineJsonEditorTheme, JSON_EDITOR_THEME } from './editorTheme';
 import styles from './JsonEditorDrawer.module.scss';
 import JsonEditorToolbar from './JsonEditorToolbar';
 import { useJsonEditor } from './useJsonEditor';
+import DisabledControlTooltip from '../../components/DisabledControlTooltip/DisabledControlTooltip';
+import { useDashboardStore } from '../../store/useDashboardStore';
 
 interface JsonEditorDrawerProps {
 	dashboard: DashboardtypesGettableDashboardV2DTO;
@@ -28,6 +30,11 @@ function JsonEditorDrawer({
 }: JsonEditorDrawerProps): JSX.Element {
 	const [, copyToClipboard] = useCopyToClipboard();
 
+	const isEditable = useDashboardStore((s) => s.isEditable);
+	const readOnlyReason = useDashboardStore((s) => s.editDisabledReason);
+	// Inspect-only when not editable: Apply/Format/Reset disabled.
+	const readOnly = !isEditable;
+
 	const {
 		draft,
 		setDraft,
@@ -39,7 +46,7 @@ function JsonEditorDrawer({
 		format,
 		reset,
 		apply,
-	} = useJsonEditor({ dashboard, isOpen, onApplied: onClose });
+	} = useJsonEditor({ dashboard, isOpen, readOnly, onApplied: onClose });
 
 	const onCopy = useCallback((): void => {
 		copyToClipboard(draft);
@@ -63,13 +70,15 @@ function JsonEditorDrawer({
 			event.stopPropagation();
 			if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
 				event.preventDefault();
-				void apply();
+				if (!readOnly) {
+					void apply();
+				}
 			}
 		},
-		[apply],
+		[apply, readOnly],
 	);
 
-	const applyDisabled = !isDirty || !validity.valid || isSaving;
+	const applyDisabled = readOnly || !isDirty || !validity.valid || isSaving;
 	const validationText = validity.valid
 		? `Valid JSON · ${validity.lineCount} lines`
 		: `Line ${validity.errorLine ?? '?'} · ${validity.message ?? 'Invalid JSON'}`;
@@ -150,16 +159,18 @@ function JsonEditorDrawer({
 						>
 							Cancel
 						</Button>
-						<Button
-							variant="solid"
-							color="primary"
-							size="md"
-							testId="json-editor-apply"
-							disabled={applyDisabled}
-							onClick={(): void => void apply()}
-						>
-							Apply changes
-						</Button>
+						<DisabledControlTooltip reason={readOnlyReason} disabled={readOnly}>
+							<Button
+								variant="solid"
+								color="primary"
+								size="md"
+								testId="json-editor-apply"
+								disabled={applyDisabled}
+								onClick={readOnly ? undefined : (): void => void apply()}
+							>
+								Apply changes
+							</Button>
+						</DisabledControlTooltip>
 					</div>
 				</div>
 			}
@@ -168,6 +179,7 @@ function JsonEditorDrawer({
 			<div className={styles.body} onKeyDown={onKeyDown}>
 				<JsonEditorToolbar
 					isDirty={isDirty}
+					readOnly={readOnly}
 					onFormat={format}
 					onCopy={onCopy}
 					onDownload={onDownload}
@@ -180,6 +192,7 @@ function JsonEditorDrawer({
 						value={draft}
 						onChange={(value): void => setDraft(value ?? '')}
 						options={{
+							readOnly,
 							scrollbar: { alwaysConsumeMouseWheel: false },
 							minimap: { enabled: false },
 							fontSize: 13,
