@@ -150,7 +150,9 @@ func (d *v1Decoder) collectV1QueryEnvelopes(widget map[string]any, panelKind Pan
 		var out []map[string]any
 		var signal telemetrytypes.Signal
 		widgetType := d.readString(widget, "panelTypes")
-		for _, q := range d.readObjects(builder, "queryData") {
+		queries := d.readObjects(builder, "queryData")
+		assignQueryDataNames(queries)
+		for _, q := range queries {
 			normalizePreV5QueryData(q, widgetType)
 			normalizePreV5SelectColumns(q)
 			normalizePreV5PageSize(q, rowLimitPanel)
@@ -180,6 +182,38 @@ func (d *v1Decoder) collectV1QueryEnvelopes(widget map[string]any, panelKind Pan
 		d.note("widget %q has unknown queryType %q", d.readString(widget, "id"), queryType)
 	}
 	return nil, telemetrytypes.Signal{}
+}
+
+// maxQueries mirrors the frontend MAX_QUERIES; builder query names run A..Z.
+const maxQueries = 26
+
+// assignQueryDataNames names builder data queries the way the frontend does: each
+// unnamed query takes the first unused A..Z, deduped against existing names. It also
+// forces expression == queryName, since a data query's expression is always its own
+// name and WrapInV5Envelope's name != expression heuristic would otherwise
+// misclassify the query as a formula.
+func assignQueryDataNames(queries []map[string]any) {
+	taken := make(map[string]bool, len(queries))
+	for _, q := range queries {
+		if name, _ := q["queryName"].(string); name != "" {
+			taken[name] = true
+		}
+	}
+	for _, q := range queries {
+		name, _ := q["queryName"].(string)
+		if name == "" {
+			for i := 0; i < maxQueries; i++ {
+				candidate := string(rune('A' + i))
+				if !taken[candidate] {
+					name = candidate
+					taken[candidate] = true
+					break
+				}
+			}
+			q["queryName"] = name
+		}
+		q["expression"] = name
+	}
 }
 
 // maxFormulas mirrors the frontend MAX_FORMULAS; formula names run F1..F20.
