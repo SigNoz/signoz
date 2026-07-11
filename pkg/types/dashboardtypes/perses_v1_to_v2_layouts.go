@@ -155,7 +155,7 @@ func (d *v1Decoder) buildV2GridLayout(row *rowInfo, items []map[string]any) Layo
 	spec := dashboard.GridLayoutSpec{Items: make([]dashboard.GridItem, 0, len(items))}
 	if row != nil {
 		spec.Display = &dashboard.GridLayoutDisplay{
-			Title:    row.title,
+			Title:    clipName(row.title, MaxLayoutTitleLen),
 			Collapse: &dashboard.GridLayoutCollapse{Open: !row.collapsed},
 		}
 	}

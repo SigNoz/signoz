@@ -3,6 +3,7 @@ package dashboardtypes
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -94,7 +95,33 @@ func (d *v1Decoder) readString(m map[string]any, key string) string {
 	return readField[string](d, m, key)
 }
 func (d *v1Decoder) readFloat(m map[string]any, key string) float64 {
-	return readField[float64](d, m, key)
+	v, present := m[key]
+	if !present || v == nil {
+		return 0
+	}
+	f, ok := coerceFloat(v)
+	if !ok {
+		d.noteMalformedField(key, v)
+		return 0
+	}
+	return f
+}
+
+// coerceFloat accepts a JSON number or a numeric string (v1 sometimes stores
+// numbers like softMin as quoted strings). A blank string is "unset", not a
+// number, so it fails to coerce.
+func coerceFloat(v any) (float64, bool) {
+	switch n := v.(type) {
+	case float64:
+		return n, true
+	case string:
+		f, err := strconv.ParseFloat(strings.TrimSpace(n), 64)
+		if err != nil {
+			return 0, false
+		}
+		return f, true
+	}
+	return 0, false
 }
 func (d *v1Decoder) readBool(m map[string]any, key string) bool   { return readField[bool](d, m, key) }
 func (d *v1Decoder) readArray(m map[string]any, key string) []any { return readField[[]any](d, m, key) }
@@ -110,7 +137,11 @@ func (d *v1Decoder) readFloatPtr(m map[string]any, key string) *float64 {
 	if !present || v == nil {
 		return nil
 	}
-	f, ok := v.(float64)
+	// A blank string means "unset" (v1's empty softMin/softMax), not malformed.
+	if s, ok := v.(string); ok && strings.TrimSpace(s) == "" {
+		return nil
+	}
+	f, ok := coerceFloat(v)
 	if !ok {
 		d.noteMalformedField(key, v)
 		return nil
@@ -118,7 +149,22 @@ func (d *v1Decoder) readFloatPtr(m map[string]any, key string) *float64 {
 	return &f
 }
 
+// clipName truncates s to at most limit runes so a v1 name over a v2 length bound
+// (MaxDisplayNameLen / MaxLayoutTitleLen) is shortened rather than failing migration.
+func clipName(s string, limit int) string {
+	r := []rune(s)
+	if len(r) <= limit {
+		return s
+	}
+	return string(r[:limit])
+}
+
 func (d *v1Decoder) readStringMap(m map[string]any, key string) map[string]string {
+	// An empty list is a stand-in for an empty map here; tolerate it silently
+	// rather than flagging the wrong-type as malformed.
+	if s, ok := m[key].([]any); ok && len(s) == 0 {
+		return nil
+	}
 	raw := d.readObject(m, key)
 	if len(raw) == 0 {
 		return nil

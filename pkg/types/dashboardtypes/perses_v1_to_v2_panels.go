@@ -34,15 +34,21 @@ func (d *v1Decoder) convertV1Panels(raw any) map[string]*Panel {
 			d.noteMalformedField(fmt.Sprintf("widgets[%d]", i), widgetRaw)
 			continue
 		}
-		id := d.readString(widget, "id")
-		if id == "" {
-			// dead widget that can't be referenced anywhere, skipping.
+		// A non-string (or missing) id can't be referenced by any layout entry, and
+		// v1 doesn't render such widgets either — skip silently, don't flag it as
+		// malformed. Read directly (not via readString) to avoid a malformed note.
+		id, ok := widget["id"].(string)
+		if !ok || id == "" {
 			continue
 		}
 		var panel *Panel
 		panelType := d.readString(widget, "panelTypes")
 		switch panelType {
 		case "graph":
+			panel = d.convertGraphWidget(widget)
+		case "time_series", "TIME_SERIES":
+			// Malformed panelTypes: the canonical v1 value is "graph". Some dashboards
+			// stored the v2/enum-style name instead; accept it as a time-series graph.
 			panel = d.convertGraphWidget(widget)
 		case "bar":
 			panel = d.convertBarWidget(widget)
@@ -63,6 +69,10 @@ func (d *v1Decoder) convertV1Panels(raw any) map[string]*Panel {
 			d.note("widgets[%d] has unknown panel type %q", i, panelType)
 		}
 		if panel == nil {
+			continue
+		}
+		if len(panel.Spec.Queries) == 0 {
+			d.note("widgets[%d] %q produced no queries; skipping", i, id)
 			continue
 		}
 		panels[id] = panel
@@ -224,7 +234,7 @@ func (d *v1Decoder) convertListWidget(w map[string]any) *Panel {
 // ══════════════════════════════════════════════
 
 func (d *v1Decoder) widgetDisplay(w map[string]any) Display {
-	return Display{Name: d.readString(w, "title"), Description: d.readString(w, "description")}
+	return Display{Name: clipName(d.readString(w, "title"), MaxDisplayNameLen), Description: d.readString(w, "description")}
 }
 
 func (d *v1Decoder) basicVisualization(w map[string]any) BasicVisualization {
@@ -355,11 +365,7 @@ func mapV1SpanGaps(raw any) SpanGaps {
 		}
 		return SpanGaps{FillOnlyBelow: true}
 	case float64:
-		dur, err := valuer.ParseTextDuration(time.Duration(v * float64(time.Second)).String())
-		if err != nil {
-			return SpanGaps{FillOnlyBelow: false}
-		}
-		return SpanGaps{FillOnlyBelow: true, FillLessThan: dur}
+		return SpanGaps{FillOnlyBelow: true, FillLessThan: time.Duration(v * float64(time.Second)).String()}
 	}
 	return SpanGaps{FillOnlyBelow: false}
 }
@@ -456,6 +462,9 @@ func (d *v1Decoder) mapV1ComparisonOperator(s string) ComparisonOperator {
 		return ComparisonOperatorEqual
 	case "!=":
 		return ComparisonOperatorNotEqual
+	case "":
+		// v1 often leaves the operator empty; default to "above" without flagging.
+		return ComparisonOperatorAbove
 	default:
 		d.note("threshold has unknown comparison operator %q", s)
 		return ComparisonOperatorAbove

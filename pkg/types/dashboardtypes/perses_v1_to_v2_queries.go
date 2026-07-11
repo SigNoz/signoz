@@ -29,6 +29,11 @@ func (d *v1Decoder) convertV1WidgetQuery(widget map[string]any, panelKind PanelP
 	if len(envelopes) == 0 {
 		return nil
 	}
+	// List panels accept only a bare BuilderQuery — never a CompositeQuery. Keep the
+	// first query and drop the rest so a multi-query v1 list widget still migrates.
+	if panelKind == PanelKindList && len(envelopes) > 1 {
+		envelopes = envelopes[:1]
+	}
 	requestType := requestTypeForPanel(panelKind)
 
 	// A single query keeps its native kind — never wrapped in a CompositeQuery.
@@ -84,15 +89,27 @@ func (d *v1Decoder) collectV1QueryEnvelopes(widget map[string]any, panelKind Pan
 	queryType := d.readString(queryMap, "queryType")
 	switch queryType {
 	case "promql":
+		promQueries := d.readObjects(queryMap, "promql")
 		var out []map[string]any
-		for _, q := range d.readObjects(queryMap, "promql") {
+		for _, q := range promQueries {
+			// With multiple promql queries, drop the empty ones; a lone query is
+			// kept even if empty (nothing else would remain).
+			if len(promQueries) > 1 && d.readString(q, "query") == "" {
+				continue
+			}
 			out = append(out, promQLEnvelope(q))
 		}
 		return out, telemetrytypes.Signal{}
 
 	case "clickhouse_sql":
+		chQueries := d.readObjects(queryMap, "clickhouse_sql")
 		var out []map[string]any
-		for _, q := range d.readObjects(queryMap, "clickhouse_sql") {
+		for _, q := range chQueries {
+			// With multiple clickhouse queries, drop the empty ones; a lone query is
+			// kept even if empty (nothing else would remain).
+			if len(chQueries) > 1 && d.readString(q, "query") == "" {
+				continue
+			}
 			out = append(out, clickhouseEnvelope(q))
 		}
 		return out, telemetrytypes.Signal{}

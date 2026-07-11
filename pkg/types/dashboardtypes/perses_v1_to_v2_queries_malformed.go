@@ -7,7 +7,9 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/transition"
+	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 // ══════════════════════════════════════════════
@@ -29,6 +31,33 @@ var preV5Migrator = transition.NewDashboardMigrateV5(slog.New(slog.DiscardHandle
 func normalizePreV5QueryData(query map[string]any, widgetType string) {
 	preV5Migrator.MigrateQueryDataShapeSafe(context.Background(), query, widgetType)
 	normalizePreV5LogTraceAggregations(query)
+	normalizeMetricSpaceAggregation(query)
+}
+
+// normalizeMetricSpaceAggregation defaults an invalid spaceAggregation on a metric
+// query to "sum". v1 bodies often leave it empty or carry a stale/unknown value,
+// which fails v5 validation (metrictypes.SpaceAggregation.IsValid). Only metrics
+// carry spaceAggregation; a valid value (including a histogram percentile) is left
+// alone. The metric type isn't in the dashboard body, so we can't prefer a
+// percentile default for histograms — sum is the safe fallback.
+func normalizeMetricSpaceAggregation(query map[string]any) {
+	if signalFromDataSource(query["dataSource"]) != telemetrytypes.SignalMetrics {
+		return
+	}
+	aggs, ok := query["aggregations"].([]any)
+	if !ok {
+		return
+	}
+	for _, a := range aggs {
+		agg, ok := a.(map[string]any)
+		if !ok {
+			continue
+		}
+		sa, _ := agg["spaceAggregation"].(string)
+		if !(metrictypes.SpaceAggregation{String: valuer.NewString(sa)}).IsValid() {
+			agg["spaceAggregation"] = metrictypes.SpaceAggregationSum.StringValue()
+		}
+	}
 }
 
 // aggExprRe matches one "func(args)" with an optional "as alias". Mirrors the
