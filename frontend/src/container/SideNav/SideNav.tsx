@@ -407,7 +407,7 @@ function SideNav({
 						{menuItems.map((item, index) => (
 							<NavItem
 								key={item.key || index}
-								item={item}
+								item={{...item, href: `/${item.key}`}}
 								isActive={activeMenuKey === item.key}
 								onClick={(event): void => {
 									handleMenuItemClick(event, item);
@@ -419,7 +419,7 @@ function SideNav({
 					<div className="secondary-nav-items">
 						<NavItem
 							key="keyboardShortcuts"
-							item={shortcutMenuItem}
+							item={{...shortcutMenuItem, href: "/shortcuts"}}
 							isActive={false}
 							onClick={onClickShortcuts}
 						/>
@@ -427,7 +427,7 @@ function SideNav({
 						{licenseData && !isLicenseActive && (
 							<NavItem
 								key="trySignozCloud"
-								item={trySignozCloudMenuItem}
+								item={{...trySignozCloudMenuItem, href: ROUTES.BILLING}}
 								isActive={false}
 								onClick={onClickSignozCloud}
 							/>
@@ -437,7 +437,7 @@ function SideNav({
 							(item, index): JSX.Element => (
 								<NavItem
 									key={item?.key || index}
-									item={item}
+									item={{...item, href: typeof item?.key === "string" ? `/${item.key}` : undefined}}
 									isActive={activeMenuKey === item?.key}
 									onClick={(event: MouseEvent): void => {
 										handleUserManagentMenuItemClick(item?.key as string, event);
@@ -453,7 +453,7 @@ function SideNav({
 						{inviteMembers && (
 							<NavItem
 								key={inviteMemberMenuItem.key}
-								item={inviteMemberMenuItem}
+								item={{...inviteMemberMenuItem, href: inviteMemberMenuItem.key}}
 								isActive={activeMenuKey === inviteMemberMenuItem?.key}
 								onClick={(event: React.MouseEvent): void => {
 									if (isCtrlMetaKey(event)) {
@@ -472,7 +472,7 @@ function SideNav({
 						{user && (
 							<NavItem
 								key={ROUTES.MY_SETTINGS}
-								item={userSettingsMenuItem}
+								item={{...userSettingsMenuItem, href: settingsRoute}}
 								isActive={activeMenuKey === userSettingsMenuItem?.key}
 								onClick={(event: MouseEvent): void => {
 									handleUserManagentMenuItemClick(
