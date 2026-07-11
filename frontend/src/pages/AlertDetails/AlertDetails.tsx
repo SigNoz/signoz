@@ -11,6 +11,7 @@ import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { CreateAlertProvider } from 'container/CreateAlertV2/context';
 import { getCreateAlertLocalStateFromAlertDef } from 'container/CreateAlertV2/utils';
+import { AlertDetectionTypes } from 'container/FormAlertRules';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { useAlertRule } from 'providers/Alert';
@@ -85,11 +86,18 @@ function AlertDetails(): JSX.Element {
 		return <Spinner />;
 	}
 
+	// Anomaly rules are stored with a metric alertType; the editor's alert
+	// type is derived from the ruleType so the anomaly condition is shown.
+	const initialAlertType =
+		alertRuleDetails?.ruleType === AlertDetectionTypes.ANOMALY_DETECTION_ALERT
+			? AlertTypes.ANOMALY_BASED_ALERT
+			: (alertRuleDetails?.alertType as AlertTypes);
+
 	return (
 		<CreateAlertProvider
 			ruleId={ruleId || ''}
 			isEditMode
-			initialAlertType={alertRuleDetails?.alertType as AlertTypes}
+			initialAlertType={initialAlertType}
 			initialAlertState={initialAlertState}
 		>
 			<div

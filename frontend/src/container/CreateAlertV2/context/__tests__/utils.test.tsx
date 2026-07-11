@@ -239,6 +239,39 @@ describe('CreateAlertV2 Context Utils', () => {
 			});
 		});
 
+		it('should set evaluation window', () => {
+			const result = alertThresholdReducer(INITIAL_ALERT_THRESHOLD_STATE, {
+				type: 'SET_EVALUATION_WINDOW',
+				payload: TimeDuration.ONE_HOUR,
+			});
+			expect(result).toStrictEqual({
+				...INITIAL_ALERT_THRESHOLD_STATE,
+				evaluationWindow: TimeDuration.ONE_HOUR,
+			});
+		});
+
+		it('should set algorithm', () => {
+			const result = alertThresholdReducer(INITIAL_ALERT_THRESHOLD_STATE, {
+				type: 'SET_ALGORITHM',
+				payload: Algorithm.STANDARD,
+			});
+			expect(result).toStrictEqual({
+				...INITIAL_ALERT_THRESHOLD_STATE,
+				algorithm: Algorithm.STANDARD,
+			});
+		});
+
+		it('should set seasonality', () => {
+			const result = alertThresholdReducer(INITIAL_ALERT_THRESHOLD_STATE, {
+				type: 'SET_SEASONALITY',
+				payload: Seasonality.WEEKLY,
+			});
+			expect(result).toStrictEqual({
+				...INITIAL_ALERT_THRESHOLD_STATE,
+				seasonality: Seasonality.WEEKLY,
+			});
+		});
+
 		it('should set thresholds', () => {
 			const newThresholds = [
 				{

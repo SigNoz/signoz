@@ -152,7 +152,7 @@ describe('CreateAlertRule', () => {
 		expect(screen.getByText(AlertTypes.METRICS_BASED_ALERT)).toBeInTheDocument();
 	});
 
-	it('should render classic flow when ruleType is anomaly_rule even if showClassicCreateAlertsPage is not true', () => {
+	it('should render new flow when ruleType is anomaly_rule', () => {
 		mockGetUrlQuery.mockImplementation((key: string) => {
 			if (key === QueryParams.showClassicCreateAlertsPage) {
 				return 'false';
@@ -163,8 +163,8 @@ describe('CreateAlertRule', () => {
 			return null;
 		});
 		render(<CreateAlertRule />);
-		expect(screen.getByText(FORM_ALERT_RULES_TEXT)).toBeInTheDocument();
-		expect(screen.queryByText(CREATE_ALERT_V2_TEXT)).not.toBeInTheDocument();
+		expect(screen.getByText(CREATE_ALERT_V2_TEXT)).toBeInTheDocument();
+		expect(screen.queryByText(FORM_ALERT_RULES_TEXT)).not.toBeInTheDocument();
 	});
 
 	it('should use alertType from URL when provided', () => {

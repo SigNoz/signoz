@@ -188,7 +188,7 @@ function AnomalyThreshold({
 						}}
 						options={ANOMALY_SEASONALITY_OPTIONS}
 					/>
-					{notificationSettings.routingPolicies ? (
+					{!notificationSettings.routingPolicies ? (
 						<>
 							<Typography.Text
 								data-testid="seasonality-text"

@@ -2,7 +2,9 @@ import { useQuery } from 'react-query';
 import { Button, Tooltip } from 'antd';
 import getAllChannels from 'api/channels/getAll';
 import classNames from 'classnames';
-import { ChartLine } from '@signozhq/icons';
+import { FeatureKeys } from 'constants/features';
+import { Activity, ChartLine } from '@signozhq/icons';
+import { useAppContext } from 'providers/App/App';
 import { SuccessResponseV2 } from 'types/api';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { Channels } from 'types/api/channels/getAll';
@@ -19,6 +21,7 @@ import './styles.scss';
 
 function AlertCondition(): JSX.Element {
 	const { alertType, setAlertType } = useCreateAlertState();
+	const { featureFlags } = useAppContext();
 
 	const {
 		data,
@@ -30,9 +33,15 @@ function AlertCondition(): JSX.Element {
 	});
 	const channels = data?.data || [];
 
+	const isAnomalyDetectionEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.ANOMALY_DETECTION)
+			?.active || false;
+
+	// Anomaly alerts always show both tabs so existing rules stay editable;
+	// metric alerts only offer the anomaly tab when the feature is enabled.
 	const showMultipleTabs =
 		alertType === AlertTypes.ANOMALY_BASED_ALERT ||
-		alertType === AlertTypes.METRICS_BASED_ALERT;
+		(isAnomalyDetectionEnabled && alertType === AlertTypes.METRICS_BASED_ALERT);
 
 	const tabs = [
 		{
@@ -40,16 +49,15 @@ function AlertCondition(): JSX.Element {
 			icon: <ChartLine size={14} data-testid="threshold-view" />,
 			value: AlertTypes.METRICS_BASED_ALERT,
 		},
-		// Hide anomaly tab for now
-		// ...(showMultipleTabs
-		// 	? [
-		// 			{
-		// 				label: 'Anomaly',
-		// 				icon: <Activity size={14} data-testid="anomaly-view" />,
-		// 				value: AlertTypes.ANOMALY_BASED_ALERT,
-		// 			},
-		// 	  ]
-		// 	: []),
+		...(showMultipleTabs
+			? [
+					{
+						label: 'Anomaly',
+						icon: <Activity size={14} data-testid="anomaly-view" />,
+						value: AlertTypes.ANOMALY_BASED_ALERT,
+					},
+				]
+			: []),
 	];
 
 	const handleAlertTypeChange = (value: AlertTypes): void => {

@@ -4,6 +4,7 @@ import { Spin } from 'antd';
 import { TIMEZONE_DATA } from 'components/CustomTimePicker/timezoneUtils';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 import { getRandomColor } from 'container/ExplorerOptions/utils';
+import { AlertDetectionTypes } from 'container/FormAlertRules';
 import { PostableAlertRuleV2 } from 'types/api/alerts/alertTypesV2';
 import { v4 } from 'uuid';
 
@@ -303,13 +304,19 @@ export function normalizeMatchType(
 export function getThresholdStateFromAlertDef(
 	alertDef: PostableAlertRuleV2,
 ): AlertThresholdState {
+	// Anomaly targets are stored as literal z-scores (negative for the below
+	// operator); the deviations select always shows the positive value.
+	const isAnomalyRule =
+		alertDef.ruleType === AlertDetectionTypes.ANOMALY_DETECTION_ALERT;
 	return {
 		...INITIAL_ALERT_THRESHOLD_STATE,
 		thresholds:
 			alertDef.condition.thresholds?.spec.map((threshold) => ({
 				id: v4(),
 				label: threshold.name,
-				thresholdValue: threshold.target,
+				thresholdValue: isAnomalyRule
+					? Math.abs(threshold.target)
+					: threshold.target,
 				recoveryThresholdValue: null,
 				unit: threshold.targetUnit,
 				color: getColorForThreshold(threshold.name),
@@ -321,6 +328,18 @@ export function getThresholdStateFromAlertDef(
 		matchType:
 			alertDef.condition.thresholds?.spec[0].matchType ||
 			AlertThresholdMatchType.AT_LEAST_ONCE,
+		...(isAnomalyRule
+			? {
+					evaluationWindow:
+						alertDef.evaluation?.spec?.evalWindow ||
+						INITIAL_ALERT_THRESHOLD_STATE.evaluationWindow,
+					algorithm:
+						alertDef.condition.algorithm || INITIAL_ALERT_THRESHOLD_STATE.algorithm,
+					seasonality:
+						alertDef.condition.seasonality ||
+						INITIAL_ALERT_THRESHOLD_STATE.seasonality,
+				}
+			: {}),
 	};
 }
 

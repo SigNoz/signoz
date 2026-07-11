@@ -7,11 +7,13 @@ import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 import { ALERT_TYPE_URL_MAP } from './constants';
 
+// The setup-guide button only exists in the classic form, which is reachable
+// via the unadvertised showClassicCreateAlertsPage param.
 jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),
 	useLocation: (): { pathname: string; search: string } => ({
 		pathname: `${process.env.FRONTEND_API_ENDPOINT}${ROUTES.ALERTS_NEW}`,
-		search: 'ruleType=anomaly_rule',
+		search: 'ruleType=anomaly_rule&showClassicCreateAlertsPage=true',
 	}),
 }));
 
@@ -20,7 +22,7 @@ jest.mock('react-router-dom-v5-compat', () => ({
 	useNavigationType: jest.fn(() => 'PUSH'),
 	useLocation: jest.fn(() => ({
 		pathname: '/alerts/new',
-		search: 'ruleType=anomaly_rule',
+		search: 'ruleType=anomaly_rule&showClassicCreateAlertsPage=true',
 		hash: '',
 		state: null,
 	})),

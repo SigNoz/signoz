@@ -2,6 +2,7 @@ import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { AlertDetectionTypes } from 'container/FormAlertRules';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
+import { AlertTypes } from 'types/api/alerts/alertTypes';
 import {
 	BasicThreshold,
 	PostableAlertRuleV2,
@@ -11,9 +12,11 @@ import { compositeQueryToQueryEnvelope } from 'utils/compositeQueryToQueryEnvelo
 
 import {
 	AdvancedOptionsState,
+	AlertThresholdOperator,
 	EvaluationWindowState,
 	NotificationSettingsState,
 } from '../context/types';
+import { normalizeOperator } from '../utils';
 import { BuildCreateAlertRulePayloadArgs } from './types';
 
 // Get formatted time/unit pairs for create alert api payload
@@ -288,16 +291,15 @@ export function buildCreateThresholdAlertRulePayload(
 }
 
 // Build Create Anomaly Alert Rule Payload
-// TODO: Update this function before enabling anomaly alert rule creation
 export function buildCreateAnomalyAlertRulePayload(
 	args: BuildCreateAlertRulePayloadArgs,
 ): PostableAlertRuleV2 {
 	const {
 		alertType,
 		basicAlertState,
+		thresholdState,
 		query,
 		notificationSettings,
-		evaluationWindow,
 		advancedOptions,
 	} = args;
 
@@ -313,19 +315,55 @@ export function buildCreateAnomalyAlertRulePayload(
 		unit: basicAlertState.yAxisUnit,
 	});
 
+	// v2alpha1 thresholds are literal: "3 deviations below the predicted data"
+	// means the anomaly z-score must drop under -3, so the target is negated
+	// for the below operator (the deviations input is always positive).
+	const isBelowOperator =
+		normalizeOperator(thresholdState.operator) ===
+		AlertThresholdOperator.IS_BELOW;
+	const thresholds: BasicThreshold[] = thresholdState.thresholds.map(
+		(threshold) => {
+			const deviations = Math.abs(parseFloat(threshold.thresholdValue.toString()));
+			return {
+				name: threshold.label,
+				target: isBelowOperator ? -deviations : deviations,
+				matchType: thresholdState.matchType,
+				op: thresholdState.operator,
+				channels: threshold.channels,
+				targetUnit: threshold.unit,
+			};
+		},
+	);
+
 	const alertOnAbsentProps = getAlertOnAbsentProps(advancedOptions);
 	const enforceMinimumDatapointsProps =
 		getEnforceMinimumDatapointsProps(advancedOptions);
-	const evaluationProps = getEvaluationProps(evaluationWindow, advancedOptions);
 	const notificationSettingsProps =
 		getNotificationSettingsProps(notificationSettings);
+
+	// The anomaly condition carries its own evaluation window
+	// ("during the last X"), so the evaluation is always a rolling window.
+	const frequency = getFormattedTimeValue(
+		advancedOptions.evaluationCadence.default.value,
+		advancedOptions.evaluationCadence.default.timeUnit,
+	);
 
 	return {
 		alert: basicAlertState.name,
 		ruleType: AlertDetectionTypes.ANOMALY_DETECTION_ALERT,
-		alertType,
+		alertType:
+			alertType === AlertTypes.ANOMALY_BASED_ALERT
+				? AlertTypes.METRICS_BASED_ALERT
+				: alertType,
 		condition: {
+			thresholds: {
+				kind: 'basic',
+				spec: thresholds,
+			},
 			compositeQuery,
+			selectedQueryName: thresholdState.selectedQuery,
+			algorithm: thresholdState.algorithm,
+			seasonality: thresholdState.seasonality,
 			...alertOnAbsentProps,
 			...enforceMinimumDatapointsProps,
 		},
@@ -335,9 +373,25 @@ export function buildCreateAnomalyAlertRulePayload(
 			summary: notificationSettings.description,
 		},
 		notificationSettings: notificationSettingsProps,
-		evaluation: evaluationProps,
-		version: '',
-		schemaVersion: '',
+		evaluation: {
+			kind: 'rolling',
+			spec: {
+				evalWindow: thresholdState.evaluationWindow,
+				frequency,
+			},
+		},
+		version: 'v5',
+		schemaVersion: 'v2alpha1',
 		source: window?.location.toString(),
 	};
+}
+
+// Build the create/test alert rule payload for the selected alert type
+export function buildCreateAlertRulePayload(
+	args: BuildCreateAlertRulePayloadArgs,
+): PostableAlertRuleV2 {
+	if (args.alertType === AlertTypes.ANOMALY_BASED_ALERT) {
+		return buildCreateAnomalyAlertRulePayload(args);
+	}
+	return buildCreateThresholdAlertRulePayload(args);
 }

@@ -712,6 +712,39 @@ func TestValidate_V2Alpha1(t *testing.T) {
 			json: validV2Alpha1Builder(),
 		},
 
+		// anomaly rules are supported under v2alpha1; thresholds are literal,
+		// so a drop of 2 deviations below the forecast carries target -2
+		{
+			name: "valid v2alpha1 anomaly rule",
+			json: `{
+				"alert": "Test", "version": "v5", "schemaVersion": "v2alpha1", "ruleType": "anomaly_rule",
+				"condition": {
+					"compositeQuery": {"queryType": "builder", "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "aggregations": [{"metricName": "cpu", "spaceAggregation": "p50"}], "stepInterval": "5m"}}]},
+					"algorithm": "standard",
+					"seasonality": "daily",
+					"thresholds": {"kind": "basic", "spec": [{"name": "critical", "target": -2.0, "matchType": "2", "op": "2", "channels": ["slack"]}]}
+				},
+				"evaluation": {"kind": "rolling", "spec": {"evalWindow": "1h", "frequency": "1m"}},
+				"notificationSettings": {"renotify": {"enabled": true, "interval": "4h", "alertStates": ["firing"]}}
+			}`,
+		},
+		{
+			name: "v2alpha1 anomaly rule with invalid seasonality",
+			json: `{
+				"alert": "Test", "version": "v5", "schemaVersion": "v2alpha1", "ruleType": "anomaly_rule",
+				"condition": {
+					"compositeQuery": {"queryType": "builder", "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "aggregations": [{"metricName": "cpu", "spaceAggregation": "p50"}], "stepInterval": "5m"}}]},
+					"algorithm": "standard",
+					"seasonality": "yearly",
+					"thresholds": {"kind": "basic", "spec": [{"name": "critical", "target": -2.0, "matchType": "2", "op": "2", "channels": ["slack"]}]}
+				},
+				"evaluation": {"kind": "rolling", "spec": {"evalWindow": "1h", "frequency": "1m"}},
+				"notificationSettings": {"renotify": {"enabled": true, "interval": "4h", "alertStates": ["firing"]}}
+			}`,
+			wantErr:   true,
+			errSubstr: "seasonality",
+		},
+
 		// missing required fields
 		{
 			name: "missing thresholds",

@@ -100,10 +100,9 @@ function CreateRules(): JSX.Element {
 			return <SelectAlertType onSelect={handleSelectType} />;
 		}
 
-		if (
-			showClassicCreateAlertsPageFlag ||
-			alertType === AlertTypes.ANOMALY_BASED_ALERT
-		) {
+		// The classic experience is no longer offered in the UI; the query param
+		// is kept as an unadvertised escape hatch until the flow is removed.
+		if (showClassicCreateAlertsPageFlag) {
 			return (
 				<FormAlertRules
 					alertType={alertType}

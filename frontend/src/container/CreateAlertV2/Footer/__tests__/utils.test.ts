@@ -18,6 +18,8 @@ import { EQueryType } from 'types/common/dashboard';
 
 import { BuildCreateAlertRulePayloadArgs } from '../types';
 import {
+	buildCreateAlertRulePayload,
+	buildCreateAnomalyAlertRulePayload,
 	buildCreateThresholdAlertRulePayload,
 	getAlertOnAbsentProps,
 	getEnforceMinimumDatapointsProps,
@@ -549,5 +551,116 @@ describe('Footer utils', () => {
 				expect(props.condition.thresholds?.spec[0].matchType).toBe(matchType);
 			},
 		);
+	});
+
+	describe('buildCreateAnomalyAlertRulePayload', () => {
+		const mockCreateAlertContextState = createMockAlertContextState();
+		const ANOMALY_PAYLOAD_ARGS: BuildCreateAlertRulePayloadArgs = {
+			basicAlertState: mockCreateAlertContextState.alertState,
+			thresholdState: {
+				...mockCreateAlertContextState.thresholdState,
+				thresholds: [
+					{
+						...mockCreateAlertContextState.thresholdState.thresholds[0],
+						thresholdValue: 3,
+					},
+				],
+			},
+			advancedOptions: mockCreateAlertContextState.advancedOptions,
+			evaluationWindow: mockCreateAlertContextState.evaluationWindow,
+			notificationSettings: mockCreateAlertContextState.notificationSettings,
+			query: initialQueriesMap.metrics,
+			alertType: AlertTypes.ANOMALY_BASED_ALERT,
+		};
+
+		it('builds a v2alpha1 anomaly rule payload', () => {
+			const props = buildCreateAnomalyAlertRulePayload(ANOMALY_PAYLOAD_ARGS);
+			expect(props.ruleType).toBe('anomaly_rule');
+			expect(props.schemaVersion).toBe('v2alpha1');
+			expect(props.version).toBe('v5');
+			// The stored alertType is metric based; anomaly is a rule type
+			expect(props.alertType).toBe('METRIC_BASED_ALERT');
+			expect(props.condition.algorithm).toBe(
+				ANOMALY_PAYLOAD_ARGS.thresholdState.algorithm,
+			);
+			expect(props.condition.seasonality).toBe(
+				ANOMALY_PAYLOAD_ARGS.thresholdState.seasonality,
+			);
+			expect(props.condition.selectedQueryName).toBe(
+				ANOMALY_PAYLOAD_ARGS.thresholdState.selectedQuery,
+			);
+			// Evaluation comes from the anomaly condition's own window
+			expect(props.evaluation).toStrictEqual({
+				kind: 'rolling',
+				spec: {
+					evalWindow: ANOMALY_PAYLOAD_ARGS.thresholdState.evaluationWindow,
+					frequency: '1m',
+				},
+			});
+		});
+
+		it('keeps the target positive for the above operator', () => {
+			const props = buildCreateAnomalyAlertRulePayload({
+				...ANOMALY_PAYLOAD_ARGS,
+				thresholdState: {
+					...ANOMALY_PAYLOAD_ARGS.thresholdState,
+					operator: 'above',
+				},
+			});
+			expect(props.condition.thresholds?.spec[0].target).toBe(3);
+			expect(props.condition.thresholds?.spec[0].op).toBe('above');
+		});
+
+		it.each([['below'], ['2']])(
+			'negates the target for the below operator (%s)',
+			(op) => {
+				const props = buildCreateAnomalyAlertRulePayload({
+					...ANOMALY_PAYLOAD_ARGS,
+					thresholdState: {
+						...ANOMALY_PAYLOAD_ARGS.thresholdState,
+						operator: op,
+					},
+				});
+				expect(props.condition.thresholds?.spec[0].target).toBe(-3);
+				expect(props.condition.thresholds?.spec[0].op).toBe(op);
+			},
+		);
+
+		it('keeps the target positive for the outside_bounds operator', () => {
+			const props = buildCreateAnomalyAlertRulePayload({
+				...ANOMALY_PAYLOAD_ARGS,
+				thresholdState: {
+					...ANOMALY_PAYLOAD_ARGS.thresholdState,
+					operator: 'outside_bounds',
+				},
+			});
+			expect(props.condition.thresholds?.spec[0].target).toBe(3);
+		});
+	});
+
+	describe('buildCreateAlertRulePayload', () => {
+		const mockCreateAlertContextState = createMockAlertContextState();
+		const args: BuildCreateAlertRulePayloadArgs = {
+			basicAlertState: mockCreateAlertContextState.alertState,
+			thresholdState: mockCreateAlertContextState.thresholdState,
+			advancedOptions: mockCreateAlertContextState.advancedOptions,
+			evaluationWindow: mockCreateAlertContextState.evaluationWindow,
+			notificationSettings: mockCreateAlertContextState.notificationSettings,
+			query: initialQueriesMap.metrics,
+			alertType: mockCreateAlertContextState.alertType,
+		};
+
+		it('builds an anomaly payload for anomaly based alerts', () => {
+			const props = buildCreateAlertRulePayload({
+				...args,
+				alertType: AlertTypes.ANOMALY_BASED_ALERT,
+			});
+			expect(props.ruleType).toBe('anomaly_rule');
+		});
+
+		it('builds a threshold payload for other alert types', () => {
+			const props = buildCreateAlertRulePayload(args);
+			expect(props.ruleType).toBe('threshold_rule');
+		});
 	});
 });

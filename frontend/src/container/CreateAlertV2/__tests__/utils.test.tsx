@@ -316,6 +316,60 @@ describe('CreateAlertV2 utils', () => {
 		});
 	});
 
+	describe('getThresholdStateFromAlertDef for anomaly rules', () => {
+		const anomalyAlertDef: PostableAlertRuleV2 = {
+			...defaultPostableAlertRuleV2,
+			ruleType: 'anomaly_rule',
+			condition: {
+				...defaultPostableAlertRuleV2.condition,
+				algorithm: 'standard',
+				seasonality: 'daily',
+				selectedQueryName: 'A',
+				thresholds: {
+					kind: 'basic',
+					spec: [
+						{
+							name: 'critical',
+							target: -3,
+							targetUnit: '',
+							channels: ['email'],
+							matchType: AlertThresholdMatchType.AT_LEAST_ONCE,
+							op: AlertThresholdOperator.IS_BELOW,
+						},
+					],
+				},
+			},
+			evaluation: {
+				kind: 'rolling',
+				spec: {
+					evalWindow: '1h0m0s',
+					frequency: '1m',
+				},
+			},
+		};
+
+		it('shows the absolute deviation value for negative anomaly targets', () => {
+			const props = getThresholdStateFromAlertDef(anomalyAlertDef);
+			expect(props.thresholds[0].thresholdValue).toBe(3);
+			expect(props.operator).toBe(AlertThresholdOperator.IS_BELOW);
+		});
+
+		it('hydrates the anomaly evaluation window, algorithm and seasonality', () => {
+			const props = getThresholdStateFromAlertDef(anomalyAlertDef);
+			expect(props.evaluationWindow).toBe('1h0m0s');
+			expect(props.algorithm).toBe('standard');
+			expect(props.seasonality).toBe('daily');
+		});
+
+		it('does not touch the target for non-anomaly rules', () => {
+			const props = getThresholdStateFromAlertDef({
+				...anomalyAlertDef,
+				ruleType: 'threshold_rule',
+			});
+			expect(props.thresholds[0].thresholdValue).toBe(-3);
+		});
+	});
+
 	describe('normalizeOperator', () => {
 		it.each([
 			['1', AlertThresholdOperator.IS_ABOVE],

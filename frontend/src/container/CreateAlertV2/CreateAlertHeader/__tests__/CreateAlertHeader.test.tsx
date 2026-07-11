@@ -1,19 +1,11 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { QueryParams } from 'constants/query';
-import ROUTES from 'constants/routes';
 import { defaultPostableAlertRuleV2 } from 'container/CreateAlertV2/constants';
 import { getCreateAlertLocalStateFromAlertDef } from 'container/CreateAlertV2/utils';
-import * as useSafeNavigateHook from 'hooks/useSafeNavigate';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 import * as rulesHook from '../../../../api/generated/services/rules';
 import { CreateAlertProvider } from '../../context';
 import CreateAlertHeader from '../CreateAlertHeader';
-
-const mockSafeNavigate = jest.fn();
-jest.spyOn(useSafeNavigateHook, 'useSafeNavigate').mockReturnValue({
-	safeNavigate: mockSafeNavigate,
-});
 
 jest.spyOn(rulesHook, 'useCreateRule').mockReturnValue({
 	mutate: jest.fn(),
@@ -106,34 +98,8 @@ describe('CreateAlertHeader', () => {
 		).toHaveValue('TEST_ALERT');
 	});
 
-	it('should navigate to classic experience when button is clicked', () => {
+	it('should not render "switch to classic experience" button', () => {
 		renderCreateAlertHeader();
-		const switchToClassicExperienceButton = screen.getByText(
-			'Switch to Classic Experience',
-		);
-		expect(switchToClassicExperienceButton).toBeInTheDocument();
-		fireEvent.click(switchToClassicExperienceButton);
-
-		const params = new URLSearchParams();
-		params.set(QueryParams.showClassicCreateAlertsPage, 'true');
-		expect(mockSafeNavigate).toHaveBeenCalledWith(
-			`${ROUTES.ALERTS_NEW}?${params.toString()}`,
-			{ replace: true },
-		);
-	});
-
-	it('should not render "switch to classic experience" button when isEditMode is true', () => {
-		render(
-			<CreateAlertProvider
-				isEditMode
-				initialAlertType={AlertTypes.METRICS_BASED_ALERT}
-				initialAlertState={getCreateAlertLocalStateFromAlertDef(
-					defaultPostableAlertRuleV2,
-				)}
-			>
-				<CreateAlertHeader />
-			</CreateAlertProvider>,
-		);
 		expect(
 			screen.queryByText('Switch to Classic Experience'),
 		).not.toBeInTheDocument();
