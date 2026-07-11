@@ -11,6 +11,7 @@ export interface SidebarItem {
 	icon?: ReactNode;
 	text?: ReactNode;
 	key: string | number;
+	href?: string;
 	label?: ReactNode;
 	isBeta?: boolean;
 	isNew?: boolean;

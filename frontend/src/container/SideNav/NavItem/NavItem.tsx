@@ -4,24 +4,31 @@ import './NavItem.styles.scss';
 
 import { Tag } from 'antd';
 import cx from 'classnames';
+import { forwardRef } from 'react';
 
 import { SidebarItem } from '../sideNav.types';
 
-export default function NavItem({
-	item,
-	isActive,
-	onClick,
-}: {
+const NavItem = forwardRef<HTMLAnchorElement, {
 	item: SidebarItem;
 	isActive: boolean;
-	onClick: (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
-}): JSX.Element {
-	const { label, icon, isBeta, isNew } = item;
+	onClick: (event: React.MouseEvent<HTMLElement, MouseEvent>) => void;
+}>((props, ref) => {
+	const { item, isActive, onClick } = props;
+	const { label, icon, isBeta, isNew, key: itemKey } = item;
+
+	// Generate href from key if not explicitly provided
+	const href = item.href ?? (typeof itemKey === 'string' ? `/${itemKey}` : undefined);
 
 	return (
-		<div
+		<a
+			ref={ref}
+			href={href}
 			className={cx('nav-item', isActive ? 'active' : '')}
-			onClick={(event): void => onClick(event)}
+			onMouseDown={(event): void => {
+				if (event.button !== 0) return; // only left-click
+				event.preventDefault();
+				onClick(event);
+			}}
 		>
 			<div className="nav-item-active-marker" />
 			<div className={cx('nav-item-data', isBeta ? 'beta-tag' : '')}>
@@ -45,6 +52,10 @@ export default function NavItem({
 					</div>
 				)}
 			</div>
-		</div>
+		</a>
 	);
-}
+});
+
+NavItem.displayName = 'NavItem';
+
+export default NavItem;
