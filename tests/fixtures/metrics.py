@@ -36,7 +36,6 @@ class MetricsTimeSeries(ABC):
     attrs: dict[str, str]
     scope_attrs: dict[str, str]
     resource_attrs: dict[str, str]
-    __normalized: bool
 
     def __init__(
         self,
@@ -68,7 +67,6 @@ class MetricsTimeSeries(ABC):
         self.scope_attrs = scope_attrs
         self.resource_attrs = resource_attrs
         self.unix_milli = np.int64(int(timestamp.timestamp() * 1e3))
-        self.__normalized = False
 
         # Calculate fingerprint from metric_name + labels
         fingerprint_str = metric_name + self.labels
@@ -89,7 +87,6 @@ class MetricsTimeSeries(ABC):
             self.attrs,
             self.scope_attrs,
             self.resource_attrs,
-            self.__normalized,
         ]
 
 
@@ -460,8 +457,7 @@ class MetricsReducedTimeSeries(ABC):
         self.is_monotonic = is_monotonic
         self.labels = json.dumps(kept_labels, separators=(",", ":"))
         self.attrs = kept_labels
-        self.unix_milli = np.int64(int(timestamp.timestamp() * 1e3))
-        self.normalized = False
+        self.unix_milli = np.int64(int(timestamp.timestamp() * 1e3) // 3600000 * 3600000)
 
         fingerprint_str = metric_name + self.labels
         self.fingerprint = np.uint64(int(hashlib.md5(fingerprint_str.encode()).hexdigest()[:16], 16))
@@ -481,7 +477,6 @@ class MetricsReducedTimeSeries(ABC):
             self.attrs,
             {},
             {},
-            self.normalized,
         ]
 
 
@@ -615,8 +610,7 @@ class MetricsBufferTimeSeries(ABC):
         self.is_reduced = is_reduced
         self.labels = json.dumps(labels, separators=(",", ":"))
         self.attrs = labels
-        self.unix_milli = np.int64(int(timestamp.timestamp() * 1e3))
-        self.normalized = False
+        self.unix_milli = np.int64(int(timestamp.timestamp() * 1e3) // 3600000 * 3600000)
 
         fingerprint_str = metric_name + self.labels
         self.fingerprint = np.uint64(int(hashlib.md5(fingerprint_str.encode()).hexdigest()[:16], 16))
@@ -638,7 +632,6 @@ class MetricsBufferTimeSeries(ABC):
             self.attrs,
             {},
             {},
-            self.normalized,
         ]
 
 
@@ -718,7 +711,6 @@ def insert_metrics_to_clickhouse(conn, metrics: list[Metrics]) -> None:
                 "attrs",
                 "scope_attrs",
                 "resource_attrs",
-                "__normalized",
             ],
             data=[ts.to_row() for ts in time_series_map.values()],
         )
@@ -873,7 +865,6 @@ def insert_reduced_metrics_to_clickhouse(
                 "attrs",
                 "scope_attrs",
                 "resource_attrs",
-                "__normalized",
             ],
             data=[ts.to_row() for ts in time_series],
         )
@@ -943,7 +934,6 @@ def insert_buffer_metrics_to_clickhouse(
                 "attrs",
                 "scope_attrs",
                 "resource_attrs",
-                "__normalized",
             ],
             data=[ts.to_row() for ts in time_series],
         )

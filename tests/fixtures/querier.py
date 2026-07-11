@@ -192,7 +192,10 @@ def make_query_request(
 def aligned_epoch(ago: timedelta, step_seconds: int = DEFAULT_STEP_INTERVAL) -> int:
     """Epoch seconds for `now - ago`, floored to a step boundary so seeded
     points land exactly on the query's toStartOfInterval buckets."""
-    return (int((datetime.now(tz=UTC) - ago).timestamp()) // step_seconds) * step_seconds
+    epoch = (int((datetime.now(tz=UTC) - ago).timestamp()) // step_seconds) * step_seconds
+    if epoch % 3600 == 0:
+        epoch += step_seconds
+    return epoch
 
 
 def query_metric_values(  # pylint: disable=too-many-arguments,too-many-positional-arguments
