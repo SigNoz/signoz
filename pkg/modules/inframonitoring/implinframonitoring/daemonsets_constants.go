@@ -33,6 +33,8 @@ var daemonSetsTableMetricNamesList = []string{
 	"k8s.pod.memory_limit_utilization",
 	"k8s.daemonset.desired_scheduled_nodes",
 	"k8s.daemonset.current_scheduled_nodes",
+	"k8s.daemonset.ready_nodes",
+	"k8s.daemonset.misscheduled_nodes",
 }
 
 // Carried forward from v1 daemonSetAttrsToEnrich
@@ -47,14 +49,16 @@ var daemonSetAttrKeysForMetadata = []string{
 // used for ranking daemonset groups. v2 B/C/E/F are direct metrics, no
 // formula deps — so unlike v1 we don't carry A/D.
 var orderByToDaemonSetsQueryNames = map[string][]string{
-	inframonitoringtypes.DaemonSetsOrderByCPU:           {"A"},
-	inframonitoringtypes.DaemonSetsOrderByCPURequest:    {"B"},
-	inframonitoringtypes.DaemonSetsOrderByCPULimit:      {"C"},
-	inframonitoringtypes.DaemonSetsOrderByMemory:        {"D"},
-	inframonitoringtypes.DaemonSetsOrderByMemoryRequest: {"E"},
-	inframonitoringtypes.DaemonSetsOrderByMemoryLimit:   {"F"},
-	inframonitoringtypes.DaemonSetsOrderByDesiredNodes:  {"H"},
-	inframonitoringtypes.DaemonSetsOrderByCurrentNodes:  {"I"},
+	inframonitoringtypes.DaemonSetsOrderByCPU:               {"A"},
+	inframonitoringtypes.DaemonSetsOrderByCPURequest:        {"B"},
+	inframonitoringtypes.DaemonSetsOrderByCPULimit:          {"C"},
+	inframonitoringtypes.DaemonSetsOrderByMemory:            {"D"},
+	inframonitoringtypes.DaemonSetsOrderByMemoryRequest:     {"E"},
+	inframonitoringtypes.DaemonSetsOrderByMemoryLimit:       {"F"},
+	inframonitoringtypes.DaemonSetsOrderByDesiredNodes:      {"H"},
+	inframonitoringtypes.DaemonSetsOrderByCurrentNodes:      {"I"},
+	inframonitoringtypes.DaemonSetsOrderByReadyNodes:        {"J"},
+	inframonitoringtypes.DaemonSetsOrderByMisscheduledNodes: {"K"},
 }
 
 // newDaemonSetsTableListQuery builds the composite QB v5 request for the daemonsets list.
@@ -215,6 +219,44 @@ func (m *module) newDaemonSetsTableListQuery() *qbtypes.QueryRangeRequest {
 				Aggregations: []qbtypes.MetricAggregation{
 					{
 						MetricName:       "k8s.daemonset.current_scheduled_nodes",
+						TimeAggregation:  metrictypes.TimeAggregationLatest,
+						SpaceAggregation: metrictypes.SpaceAggregationSum,
+						ReduceTo:         qbtypes.ReduceToLast,
+					},
+				},
+				Filter:   &qbtypes.Filter{Expression: daemonSetsBaseFilterExpr},
+				GroupBy:  []qbtypes.GroupByKey{daemonSetNameGroupByKey},
+				Disabled: false,
+			},
+		},
+		// Query J: k8s.daemonset.ready_nodes — latest known ready node count per group.
+		{
+			Type: qbtypes.QueryTypeBuilder,
+			Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+				Name:   "J",
+				Signal: telemetrytypes.SignalMetrics,
+				Aggregations: []qbtypes.MetricAggregation{
+					{
+						MetricName:       "k8s.daemonset.ready_nodes",
+						TimeAggregation:  metrictypes.TimeAggregationLatest,
+						SpaceAggregation: metrictypes.SpaceAggregationSum,
+						ReduceTo:         qbtypes.ReduceToLast,
+					},
+				},
+				Filter:   &qbtypes.Filter{Expression: daemonSetsBaseFilterExpr},
+				GroupBy:  []qbtypes.GroupByKey{daemonSetNameGroupByKey},
+				Disabled: false,
+			},
+		},
+		// Query K: k8s.daemonset.misscheduled_nodes — latest known misscheduled node count per group.
+		{
+			Type: qbtypes.QueryTypeBuilder,
+			Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+				Name:   "K",
+				Signal: telemetrytypes.SignalMetrics,
+				Aggregations: []qbtypes.MetricAggregation{
+					{
+						MetricName:       "k8s.daemonset.misscheduled_nodes",
 						TimeAggregation:  metrictypes.TimeAggregationLatest,
 						SpaceAggregation: metrictypes.SpaceAggregationSum,
 						ReduceTo:         qbtypes.ReduceToLast,

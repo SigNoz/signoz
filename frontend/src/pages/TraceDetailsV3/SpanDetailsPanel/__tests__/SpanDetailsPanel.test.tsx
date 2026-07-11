@@ -1,10 +1,18 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import ROUTES from 'constants/routes';
 import { render } from 'tests/test-utils';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import { SpanDetailVariant } from '../constants';
 import SpanDetailsPanel from '../SpanDetailsPanel';
+
+// Mock window.open for the Open in Logs Explorer footer redirect.
+const mockWindowOpen = jest.fn();
+Object.defineProperty(window, 'open', {
+	value: mockWindowOpen,
+	writable: true,
+});
 
 // Placement is width-driven via useMeasure (jsdom reports 0), so we control the
 // reported width per test. `mock` prefix lets the jest.mock factory reference it.
@@ -155,5 +163,44 @@ describe('SpanDetailsPanel – tabs', () => {
 
 		await user.click(screen.getByRole('tab', { name: /logs/i }));
 		expect(screen.getByTestId('logs-tab')).toBeInTheDocument();
+	});
+});
+
+// The footer lives on the panel body (not inside the tab content) so it stays
+// pinned to the panel's visible bottom edge; it should track the active tab.
+describe('SpanDetailsPanel – Open in Logs Explorer footer', () => {
+	beforeEach(() => {
+		mockWindowOpen.mockClear();
+	});
+
+	it('appears only while the Logs tab is active', async () => {
+		const user = userEvent.setup({ delay: null });
+		renderPanel(400);
+
+		expect(
+			screen.queryByTestId('open-in-explorer-button'),
+		).not.toBeInTheDocument();
+
+		await user.click(screen.getByRole('tab', { name: /logs/i }));
+		expect(screen.getByTestId('open-in-explorer-button')).toBeInTheDocument();
+
+		await user.click(screen.getByRole('tab', { name: /overview/i }));
+		expect(
+			screen.queryByTestId('open-in-explorer-button'),
+		).not.toBeInTheDocument();
+	});
+
+	it('opens Logs Explorer in a new tab filtered to the span trace when clicked', async () => {
+		const user = userEvent.setup({ delay: null });
+		renderPanel(400);
+
+		await user.click(screen.getByRole('tab', { name: /logs/i }));
+		await user.click(screen.getByTestId('open-in-explorer-button'));
+
+		expect(mockWindowOpen).toHaveBeenCalledTimes(1);
+		const [url, target] = mockWindowOpen.mock.calls[0];
+		expect(url).toContain(ROUTES.LOGS_EXPLORER);
+		expect(url).toContain('trace-1');
+		expect(target).toBe('_blank');
 	});
 });
