@@ -75,6 +75,11 @@ func (d *v1Decoder) convertV1Panels(raw any) map[string]*Panel {
 			d.note("widgets[%d] %q produced no queries; skipping", i, id)
 			continue
 		}
+		// A lone metric query with no metric name can't render (v1) and fails v2
+		// validation; drop the widget silently, as v1 effectively does.
+		if isSingleUnnamedMetricQuery(panel) {
+			continue
+		}
 		panels[id] = panel
 	}
 	return panels

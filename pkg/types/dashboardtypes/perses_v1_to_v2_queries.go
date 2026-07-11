@@ -57,6 +57,33 @@ func (d *v1Decoder) convertV1WidgetQuery(widget map[string]any, panelKind PanelP
 	}}
 }
 
+// isSingleUnnamedMetricQuery reports whether the panel's only query is a metric
+// builder query with no metric name. v1 doesn't render such a query and v2 rejects
+// it ("metric name is required"), so the widget is skipped silently.
+func isSingleUnnamedMetricQuery(panel *Panel) bool {
+	if len(panel.Spec.Queries) != 1 {
+		return false
+	}
+	plugin := panel.Spec.Queries[0].Spec.Plugin
+	if plugin.Kind != QueryKindBuilder {
+		return false
+	}
+	bqs, ok := plugin.Spec.(*BuilderQuerySpec)
+	if !ok {
+		return false
+	}
+	mq, ok := bqs.Spec.(qb.QueryBuilderQuery[qb.MetricAggregation])
+	if !ok {
+		return false
+	}
+	for _, agg := range mq.Aggregations {
+		if agg.MetricName == "" {
+			return true
+		}
+	}
+	return false
+}
+
 // requestTypeForPanel maps a v2 panel plugin kind to the request type (result
 // shape) its queries produce. Mirrors the frontend's panelTypeToRequestType
 // (buildQueryRangeRequest.ts): time series for line/bar/histogram (histogram
