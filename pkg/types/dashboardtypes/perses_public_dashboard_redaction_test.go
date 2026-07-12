@@ -226,15 +226,29 @@ func TestRedactVariableQueries(t *testing.T) {
 		assert.Equal(t, "SELECT DISTINCT namespace FROM secret_table", source.Plugin.Spec.(*QueryVariableSpec).QueryValue)
 	})
 
-	t.Run("leaves non-query variables untouched", func(t *testing.T) {
+	t.Run("redacts the custom-variable value without mutating the source", func(t *testing.T) {
+		source := &ListVariableSpec{
+			Name:   "env",
+			Plugin: VariablePlugin{Kind: VariableKindCustom, Spec: &CustomVariableSpec{CustomValue: "account_id = 'CUST-12345'"}},
+		}
+		spec := DashboardSpec{Variables: []Variable{{Kind: variable.KindList, Spec: source}}}
+
+		redactVariableQueries(&spec)
+
+		redacted := spec.Variables[0].Spec.(*ListVariableSpec)
+		assert.Empty(t, redacted.Plugin.Spec.(*CustomVariableSpec).CustomValue)
+		assert.Equal(t, "env", redacted.Name)
+		// source pointee is untouched
+		assert.Equal(t, "account_id = 'CUST-12345'", source.Plugin.Spec.(*CustomVariableSpec).CustomValue)
+	})
+
+	t.Run("leaves dynamic variables untouched", func(t *testing.T) {
 		spec := DashboardSpec{Variables: []Variable{
 			{Kind: variable.KindList, Spec: &ListVariableSpec{Name: "signal", Plugin: VariablePlugin{Kind: VariableKindDynamic, Spec: &DynamicVariableSpec{Name: "service.name", Signal: telemetrytypes.SignalTraces}}}},
-			{Kind: variable.KindList, Spec: &ListVariableSpec{Name: "env", Plugin: VariablePlugin{Kind: VariableKindCustom, Spec: &CustomVariableSpec{CustomValue: "prod,staging"}}}},
 		}}
 
 		redactVariableQueries(&spec)
 
 		assert.Equal(t, "service.name", spec.Variables[0].Spec.(*ListVariableSpec).Plugin.Spec.(*DynamicVariableSpec).Name)
-		assert.Equal(t, "prod,staging", spec.Variables[1].Spec.(*ListVariableSpec).Plugin.Spec.(*CustomVariableSpec).CustomValue)
 	})
 }

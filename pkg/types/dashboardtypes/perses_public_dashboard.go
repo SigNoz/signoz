@@ -68,22 +68,33 @@ func redactPanelQueries(spec *DashboardSpec) {
 	spec.Panels = panels
 }
 
-// redactVariableQueries strips the raw query from query-kind list variables. The
-// query is the same class of secret as a panel query, and the anonymous viewer
-// never runs variable queries. Rebuilds the slice rather than mutating in place:
-// spec shares its Variables backing array with the stored dashboard.
+// redactVariableQueries strips the raw query from query-kind list variables and
+// the raw value from custom-kind list variables. Both are user-supplied free-form
+// text and the anonymous viewer never runs either. Dynamic-kind variables carry
+// only an attribute name + signal enum, so they are not redacted. Rebuilds the
+// slice rather than mutating in place: spec shares its Variables backing array
+// with the stored dashboard.
 func redactVariableQueries(spec *DashboardSpec) {
 	variables := make([]Variable, len(spec.Variables))
 	copy(variables, spec.Variables)
 	for i := range variables {
 		list, ok := variables[i].Spec.(*ListVariableSpec)
-		if !ok || list.Plugin.Kind != VariableKindQuery {
+		if !ok {
 			continue
 		}
-		if _, ok := list.Plugin.Spec.(*QueryVariableSpec); ok {
-			redacted := *list
-			redacted.Plugin.Spec = &QueryVariableSpec{}
-			variables[i].Spec = &redacted
+		switch list.Plugin.Kind {
+		case VariableKindQuery:
+			if _, ok := list.Plugin.Spec.(*QueryVariableSpec); ok {
+				redacted := *list
+				redacted.Plugin.Spec = &QueryVariableSpec{}
+				variables[i].Spec = &redacted
+			}
+		case VariableKindCustom:
+			if _, ok := list.Plugin.Spec.(*CustomVariableSpec); ok {
+				redacted := *list
+				redacted.Plugin.Spec = &CustomVariableSpec{}
+				variables[i].Spec = &redacted
+			}
 		}
 	}
 	spec.Variables = variables
