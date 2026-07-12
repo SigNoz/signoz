@@ -1,7 +1,7 @@
 import { Badge, BadgeColor } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useMemo } from 'react';
 
 import type { BrandedPermission } from '../../hooks/useAuthZ/types';
 import { parsePermission } from '../../hooks/useAuthZ/utils';
@@ -14,9 +14,7 @@ import styles from './PermissionRow.module.css';
 type PermissionRowProps = {
 	observed: ObservedPermission;
 	override: OverrideState | undefined;
-	isSelected: boolean;
 	onSetOverride: (permission: BrandedPermission, state: OverrideState) => void;
-	onSelect: () => void;
 };
 
 const ROW_OVERRIDE_CLASSES: Record<OverrideState, string | null> = {
@@ -30,9 +28,7 @@ const ROW_OVERRIDE_CLASSES: Record<OverrideState, string | null> = {
 export const PermissionRow = memo(function PermissionRow({
 	observed,
 	override,
-	isSelected,
 	onSetOverride,
-	onSelect,
 }: PermissionRowProps): JSX.Element {
 	const currentState = override ?? OverrideState.Reset;
 
@@ -48,14 +44,6 @@ export const PermissionRow = memo(function PermissionRow({
 		};
 	}, [observed.permission]);
 
-	const handleSetOverride = useCallback(
-		(permission: BrandedPermission, state: OverrideState): void => {
-			onSelect();
-			onSetOverride(permission, state);
-		},
-		[onSelect, onSetOverride],
-	);
-
 	let apiColor: BadgeColor = 'secondary';
 	let apiLabel = 'API ?';
 	if (observed.apiValue === true) {
@@ -68,9 +56,7 @@ export const PermissionRow = memo(function PermissionRow({
 
 	return (
 		<div
-			className={cx(styles.permissionRow, ROW_OVERRIDE_CLASSES[currentState], {
-				[styles.isSelected]: isSelected,
-			})}
+			className={cx(styles.permissionRow, ROW_OVERRIDE_CLASSES[currentState])}
 			data-testid={`permission-row-${observed.permission}`}
 		>
 			<div className={styles.permissionInfo}>
@@ -106,7 +92,7 @@ export const PermissionRow = memo(function PermissionRow({
 				<OverrideControl
 					permission={observed.permission}
 					value={currentState}
-					onSelect={handleSetOverride}
+					onSelect={onSetOverride}
 				/>
 			</div>
 		</div>

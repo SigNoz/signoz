@@ -23,6 +23,9 @@ interface Props {
 	dashboardName: string;
 	createdBy: string;
 	isLocked: boolean;
+	// Delete sits below the other actions, so it leads with a divider. When it's
+	// the only item (a legacy dashboard), the divider is suppressed.
+	showDivider?: boolean;
 }
 
 function DeleteActionItem({
@@ -30,6 +33,7 @@ function DeleteActionItem({
 	dashboardName,
 	createdBy,
 	isLocked,
+	showDivider = true,
 }: Props): JSX.Element {
 	const { t } = useTranslation(['dashboard']);
 	const { user } = useAppContext();
@@ -100,7 +104,7 @@ function DeleteActionItem({
 
 	return (
 		<>
-			<Divider />
+			{showDivider && <Divider />}
 			<Tooltip placement="left" title={tooltip}>
 				<span className={styles.menuItemWrap}>
 					<Button

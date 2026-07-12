@@ -40,9 +40,12 @@ function configuredDefault(
 	if (definition.type === 'TEXT') {
 		return definition.textValue || undefined;
 	}
-	return (
-		definition.defaultValue as { value?: SelectedVariableValue } | undefined
-	)?.value;
+	// `defaultValue` is `string | string[]` on the wire — use it directly.
+	const def = definition.defaultValue;
+	if (Array.isArray(def)) {
+		return def.length > 0 ? def : undefined;
+	}
+	return def || undefined;
 }
 
 /**

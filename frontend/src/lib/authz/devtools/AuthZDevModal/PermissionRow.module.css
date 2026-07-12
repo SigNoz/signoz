@@ -33,11 +33,6 @@
 	border-color: color-mix(in srgb, var(--accent-cherry) 45%, transparent);
 }
 
-/* Keyboard selection wins over the override border. */
-.permissionRow.isSelected {
-	border-color: var(--primary);
-}
-
 .permissionInfo {
 	display: flex;
 	flex: 1 1 auto;

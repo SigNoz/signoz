@@ -90,4 +90,35 @@ describe('useViewPanelTimeWindow', () => {
 
 		expect(result.current.timeOverride).toStrictEqual(initial);
 	});
+
+	it('widens the local window in place via the zoom-out ladder', () => {
+		const { result } = renderHook(() => useViewPanelTimeWindow());
+		act(() => result.current.onDragSelect(1000, 5000));
+
+		expect(result.current.extendWindow.canExtend).toBe(true);
+		expect(result.current.extendWindow.actionLabel).toBe('Extend time range');
+
+		act(() => result.current.extendWindow.extend());
+
+		// A past 4s window (< 15m) zooms out 3× around its centre (3000): [-3000, 9000].
+		expect(result.current.selectedInterval).toBe('custom');
+		expect(result.current.timeOverride).toStrictEqual({
+			startMs: -3000,
+			endMs: 9000,
+		});
+	});
+
+	it('cannot extend a window already at the widest ladder step', () => {
+		const { result } = renderHook(() => useViewPanelTimeWindow());
+		// 40 days > the ladder's 1-month max.
+		act(() => result.current.onDragSelect(0, 40 * 24 * 60 * 60 * 1000));
+
+		expect(result.current.extendWindow.canExtend).toBe(false);
+		expect(result.current.extendWindow.actionLabel).toBeNull();
+
+		// extend() is a no-op — the window is unchanged.
+		const before = result.current.timeOverride;
+		act(() => result.current.extendWindow.extend());
+		expect(result.current.timeOverride).toStrictEqual(before);
+	});
 });

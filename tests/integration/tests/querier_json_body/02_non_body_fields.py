@@ -150,7 +150,7 @@ def test_non_body_filter_groupby_aggregation(
     ]
     export_json_types(logs_list)
     insert_logs(logs_list)
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     cases = [
         # 1. Filter — resource + log attr + top-level in WHERE (all three non-body contexts at once)
@@ -246,7 +246,7 @@ def test_non_body_orderby(
     ]
     export_json_types(logs_list)
     insert_logs(logs_list)
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     cases = [
         # resource attr ASC: svc-a×2 before svc-b×2

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { Fragment, useMemo } from 'react';
 import { Info, Loader } from '@signozhq/icons';
 import { Typography } from '@signozhq/ui/typography';
 import type {
@@ -7,6 +7,7 @@ import type {
 } from 'api/generated/services/sigNoz.schemas';
 import cx from 'classnames';
 import type { PanelTimePreferenceLabel } from 'pages/DashboardPageV2/DashboardContainer/hooks/resolvePanelTimeWindow';
+import type { PanelQueryData } from 'pages/DashboardPageV2/DashboardContainer/queryV5/types';
 
 import type { PanelActionsConfig } from '../Panel';
 import PanelActionsMenu from '../PanelActionsMenu/PanelActionsMenu';
@@ -23,6 +24,8 @@ interface PanelHeaderProps {
 	panelId: string;
 	/** The panel itself — its query seeds the menu's "Create Alerts" action. */
 	panel: DashboardtypesPanelDTO;
+	/** The panel's query response — the menu's source for "Download as CSV". */
+	data: PanelQueryData;
 	/** Background refresh in flight — shows a spinner without blinking the chart. */
 	isFetching: boolean;
 	/** Latest query error — surfaced as a header error indicator. */
@@ -51,6 +54,7 @@ interface PanelHeaderProps {
 function PanelHeader({
 	panelId,
 	panel,
+	data,
 	isFetching,
 	error,
 	warning,
@@ -69,6 +73,14 @@ function PanelHeader({
 		() => panelStatusFromWarning(warning),
 		[warning],
 	);
+
+	/**
+	 * Hide the entire header when there's no title, description, or status to show,
+	 * and the actions menu is suppressed (editor preview).
+	 */
+	if (!name && !description && !errorDetail && !warningDetail && hideActions) {
+		return <Fragment />;
+	}
 
 	return (
 		<div className={cx(styles.header, 'panel-drag-handle')}>
@@ -117,6 +129,7 @@ function PanelHeader({
 					<PanelActionsMenu
 						panelId={panelId}
 						panel={panel}
+						data={data}
 						panelActions={panelActions}
 					/>
 				)}

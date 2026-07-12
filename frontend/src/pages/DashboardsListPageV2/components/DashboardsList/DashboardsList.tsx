@@ -44,10 +44,11 @@ function DashboardsList(): JSX.Element {
 	const { isCloudUser } = useGetTenantLicense();
 
 	const { user } = useAppContext();
-	const [action, canCreateNewDashboard] = useComponentPermission(
-		['action', 'create_new_dashboards'],
+	const [editDashboard, canCreateNewDashboard] = useComponentPermission(
+		['edit_dashboard', 'create_new_dashboards'],
 		user.role,
 	);
+	const canEdit = !!editDashboard;
 
 	const {
 		filters,
@@ -285,6 +286,7 @@ function DashboardsList(): JSX.Element {
 				onReset={handleResetView}
 				onDelete={handleRemoveView}
 				onRename={renameView}
+				canEdit={canEdit}
 			/>
 			<div className={styles.main}>
 				<div className={styles.mainScroll}>
@@ -340,7 +342,7 @@ function DashboardsList(): JSX.Element {
 									pageSize={clientView ? CLIENT_VIEW_LIMIT : PAGE_SIZE}
 									total={total}
 									onPageChange={setPage}
-									canAct={!!action}
+									canEdit={canEdit}
 									showUpdatedAt={visibleColumns.updatedAt}
 									showUpdatedBy={visibleColumns.updatedBy}
 									loading={isFetching}

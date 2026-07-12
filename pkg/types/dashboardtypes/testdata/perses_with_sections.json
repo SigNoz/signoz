@@ -76,7 +76,7 @@
                             "showPoints": false,
                             "lineStyle": "solid",
                             "fillMode": "none",
-                            "spanGaps": {"fillOnlyBelow": true}
+                            "spanGaps": {"fillOnlyBelow": true, "fillLessThan": "5m"}
                         },
                         "legend": {
                             "position": "bottom"

@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { Modal } from 'antd';
 import { Input } from '@signozhq/ui/input';
 
+import { DASHBOARD_NAME_MAX_LENGTH } from '../../constants';
+
 interface SectionTitleModalProps {
 	open: boolean;
 	/** Modal heading, e.g. "Rename section" / "New section". */
@@ -56,7 +58,7 @@ function SectionTitleModal({
 				testId="section-title-input"
 				autoFocus
 				value={value}
-				maxLength={120}
+				maxLength={DASHBOARD_NAME_MAX_LENGTH}
 				placeholder={placeholder}
 				onChange={(e): void => setValue(e.target.value)}
 				onKeyDown={(e): void => {

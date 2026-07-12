@@ -1,6 +1,6 @@
 import { LayoutDashboard, Rows2 } from '@signozhq/icons';
 
-import type { DashboardSection } from '../../../utils';
+import { findRootSection, type DashboardSection } from '../../../utils';
 import type { SectionOption } from './types';
 
 const ROOT_LABEL = 'Dashboard (root)';
@@ -11,8 +11,9 @@ const SECTION_DESCRIPTION = 'Section';
 export function buildSectionOptions(
 	sections: DashboardSection[],
 ): SectionOption[] {
+	const rootSection = findRootSection(sections);
 	return sections.map((section) => {
-		const isRoot = !section.title && section.layoutIndex === 0;
+		const isRoot = rootSection === section;
 		return {
 			value: String(section.layoutIndex),
 			layoutIndex: section.layoutIndex,

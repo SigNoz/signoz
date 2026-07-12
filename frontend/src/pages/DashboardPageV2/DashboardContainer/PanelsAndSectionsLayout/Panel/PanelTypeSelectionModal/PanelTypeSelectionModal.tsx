@@ -27,6 +27,11 @@ function PanelTypeSelectionModal({
 	const sections = useDashboardSections();
 	const options = useMemo(() => buildSectionOptions(sections), [sections]);
 
+	// With more than one section the user must pick a target section, so we keep
+	// the select-then-confirm flow. Otherwise there's nothing to choose: hide the
+	// footer and let a tile click create the panel outright.
+	const hasSectionPicker = options.length > 1;
+
 	const [selectedValue, setSelectedValue] = useState('');
 	const [selectedPanelKind, setSelectedPanelKind] = useState<PanelKind | null>(
 		null,
@@ -40,12 +45,24 @@ function PanelTypeSelectionModal({
 		}
 	}, [open, options, defaultLayoutIndex]);
 
+	const createPanel = (panelKind: PanelKind): void => {
+		const layoutIndex = selectedValue === '' ? undefined : Number(selectedValue);
+		onSelect(panelKind, layoutIndex);
+	};
+
+	const handleTileClick = (panelKind: PanelKind): void => {
+		if (hasSectionPicker) {
+			setSelectedPanelKind(panelKind);
+			return;
+		}
+		createPanel(panelKind);
+	};
+
 	const handleConfirm = (): void => {
 		if (selectedPanelKind === null) {
 			return;
 		}
-		const layoutIndex = selectedValue === '' ? undefined : Number(selectedValue);
-		onSelect(selectedPanelKind, layoutIndex);
+		createPanel(selectedPanelKind);
 	};
 
 	return (
@@ -58,17 +75,21 @@ function PanelTypeSelectionModal({
 			}}
 			title="New Panel"
 			footer={
-				<PanelTypeSelectionModalFooter
-					options={options}
-					selectedValue={selectedValue}
-					onSectionChange={setSelectedValue}
-					isConfirmDisabled={selectedPanelKind === null}
-					onConfirm={handleConfirm}
-				/>
+				hasSectionPicker ? (
+					<PanelTypeSelectionModalFooter
+						options={options}
+						selectedValue={selectedValue}
+						onSectionChange={setSelectedValue}
+						isConfirmDisabled={selectedPanelKind === null}
+						onConfirm={handleConfirm}
+					/>
+				) : undefined
 			}
 		>
 			<div className={styles.panelTypeSection}>
-				<span className={styles.pickerLabel}>Select panel type</span>
+				{hasSectionPicker && (
+					<span className={styles.pickerLabel}>Select panel type</span>
+				)}
 				<div className={styles.grid}>
 					{PANEL_TYPES.map(({ panelKind, label, Icon }) => (
 						<button
@@ -79,7 +100,7 @@ function PanelTypeSelectionModal({
 							})}
 							data-testid={`panel-type-${panelKind}`}
 							aria-pressed={panelKind === selectedPanelKind}
-							onClick={(): void => setSelectedPanelKind(panelKind)}
+							onClick={(): void => handleTileClick(panelKind)}
 						>
 							<Icon size={24} color={Color.BG_ROBIN_400} />
 							{label}

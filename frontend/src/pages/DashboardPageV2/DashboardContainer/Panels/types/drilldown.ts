@@ -1,5 +1,7 @@
 import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import type { PANEL_TYPES } from 'constants/queryBuilder';
 import type { FilterData } from 'container/QueryTable/Drilldown/drilldownUtils';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 // Drilldown is the click-to-context-menu feature ported from V1. Every renderer turns its native
 // click into one `DrilldownClickPayload`; the kind-agnostic orchestration layer consumes only that.
@@ -34,3 +36,13 @@ export interface DrilldownClickPayload {
 	coordinates: { x: number; y: number };
 	context: DrilldownContext;
 }
+
+/**
+ * Opens the View modal on a refined drilldown query (filter-by-value / breakout). In the grid this
+ * navigates to the modal seeded with the query; inside the modal it refines the view in place.
+ */
+export type OpenDrilldownView = (
+	panelId: string,
+	query: Query,
+	panelType: PANEL_TYPES,
+) => void;

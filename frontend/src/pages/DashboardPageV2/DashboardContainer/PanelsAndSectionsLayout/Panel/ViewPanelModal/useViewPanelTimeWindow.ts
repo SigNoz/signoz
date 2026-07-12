@@ -6,11 +6,15 @@ import type {
 	Time,
 } from 'container/TopNav/DateTimeSelectionV2/types';
 import GetMinMax from 'lib/getMinMax';
+import {
+	buildExtendWindow,
+	ExtendTimeWindow,
+} from 'pages/DashboardPageV2/DashboardContainer/Panels/components/NoData/extendWindow';
+import { getNextZoomOutRange } from 'lib/zoomOutUtils';
 import type { PanelQueryTimeOverride } from 'pages/DashboardPageV2/DashboardContainer/hooks/usePanelQuery';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
-
-const NS_PER_MS = 1e6;
+import { NANO_SECOND_MULTIPLIER } from '@/store/globalTime';
 
 export interface ViewPanelTimeWindow {
 	/** Absolute window (epoch ms) to pass to usePanelQuery as a time override. */
@@ -26,6 +30,8 @@ export interface ViewPanelTimeWindow {
 	refreshWindow: () => void;
 	/** Drag-to-zoom on a time chart → set a custom window locally (not the dashboard's). */
 	onDragSelect: (start: number, end: number) => void;
+	/** Widens this local window in place — powers the empty-state "extend" action. */
+	extendWindow: ExtendTimeWindow;
 }
 
 /**
@@ -45,8 +51,8 @@ export function useViewPanelTimeWindow(): ViewPanelTimeWindow {
 	>(selectedTime as Time);
 	const [timeOverride, setTimeOverride] = useState<PanelQueryTimeOverride>(
 		() => ({
-			startMs: Math.floor(minTime / NS_PER_MS),
-			endMs: Math.floor(maxTime / NS_PER_MS),
+			startMs: Math.floor(minTime / NANO_SECOND_MULTIPLIER),
+			endMs: Math.floor(maxTime / NANO_SECOND_MULTIPLIER),
 		}),
 	);
 
@@ -64,8 +70,8 @@ export function useViewPanelTimeWindow(): ViewPanelTimeWindow {
 			// GetMinMax returns nanoseconds — convert to the ms window we work in.
 			const { minTime: startNs, maxTime: endNs } = GetMinMax(interval);
 			setTimeOverride({
-				startMs: Math.floor(startNs / NS_PER_MS),
-				endMs: Math.floor(endNs / NS_PER_MS),
+				startMs: Math.floor(startNs / NANO_SECOND_MULTIPLIER),
+				endMs: Math.floor(endNs / NANO_SECOND_MULTIPLIER),
 			});
 		},
 		[],
@@ -78,8 +84,8 @@ export function useViewPanelTimeWindow(): ViewPanelTimeWindow {
 		}
 		const { minTime: startNs, maxTime: endNs } = GetMinMax(selectedInterval);
 		setTimeOverride({
-			startMs: Math.floor(startNs / NS_PER_MS),
-			endMs: Math.floor(endNs / NS_PER_MS),
+			startMs: Math.floor(startNs / NANO_SECOND_MULTIPLIER),
+			endMs: Math.floor(endNs / NANO_SECOND_MULTIPLIER),
 		});
 	}, [selectedInterval]);
 
@@ -95,6 +101,22 @@ export function useViewPanelTimeWindow(): ViewPanelTimeWindow {
 		setTimeOverride({ startMs, endMs });
 	}, []);
 
+	// Empty-state extender that widens this local window via onTimeChange (not global time).
+	const extendWindow = useMemo<ExtendTimeWindow>(() => {
+		const result = getNextZoomOutRange(timeOverride.startMs, timeOverride.endMs);
+		return buildExtendWindow(result, (): void => {
+			if (!result) {
+				return;
+			}
+			const [startMs, endMs] = result.range;
+			if (result.preset) {
+				onTimeChange(result.preset);
+			} else {
+				onTimeChange('custom', [startMs, endMs]);
+			}
+		});
+	}, [timeOverride, onTimeChange]);
+
 	return useMemo(
 		() => ({
 			timeOverride,
@@ -102,7 +124,15 @@ export function useViewPanelTimeWindow(): ViewPanelTimeWindow {
 			onTimeChange,
 			refreshWindow,
 			onDragSelect,
+			extendWindow,
 		}),
-		[timeOverride, selectedInterval, onTimeChange, refreshWindow, onDragSelect],
+		[
+			timeOverride,
+			selectedInterval,
+			onTimeChange,
+			refreshWindow,
+			onDragSelect,
+			extendWindow,
+		],
 	);
 }

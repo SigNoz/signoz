@@ -37,7 +37,7 @@ describe('ViewRolePage - Actions', () => {
 			{ initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME) },
 		);
 
-		const cancelBtn = screen.getByTestId('cancel-button');
+		const cancelBtn = await screen.findByTestId('cancel-button');
 		await user.click(cancelBtn);
 
 		await expect(
@@ -61,7 +61,10 @@ describe('ViewRolePage - Actions', () => {
 			{ initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME) },
 		);
 
-		const updateBtn = screen.getByTestId('save-button');
+		const updateBtn = await screen.findByTestId('save-button');
+		await waitFor(() => {
+			expect(updateBtn).not.toBeDisabled();
+		});
 		await user.click(updateBtn);
 
 		await expect(
@@ -76,7 +79,10 @@ describe('ViewRolePage - Actions', () => {
 			initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 		});
 
-		const deleteBtn = screen.getByTestId('delete-button');
+		const deleteBtn = await screen.findByTestId('delete-button');
+		await waitFor(() => {
+			expect(deleteBtn).not.toBeDisabled();
+		});
 		await user.click(deleteBtn);
 
 		await expect(
@@ -105,7 +111,11 @@ describe('ViewRolePage - Actions', () => {
 			{ initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME) },
 		);
 
-		await user.click(screen.getByTestId('delete-button'));
+		const deleteBtn = await screen.findByTestId('delete-button');
+		await waitFor(() => {
+			expect(deleteBtn).not.toBeDisabled();
+		});
+		await user.click(deleteBtn);
 
 		await expect(
 			screen.findByText(/Are you sure you want to delete the role/),
