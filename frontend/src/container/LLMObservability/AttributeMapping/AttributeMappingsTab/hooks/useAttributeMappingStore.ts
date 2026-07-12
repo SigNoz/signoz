@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { cloneDeep, isEqual } from 'lodash-es';
 import { toast } from '@signozhq/ui/sonner';
-import { useQueryClient } from 'react-query';
 import {
 	useCreateSpanMapperGroup,
 	useDeleteSpanMapperGroup,
@@ -12,8 +11,6 @@ import {
 import { persistDraft, SaveMutations } from '../../saveDraft';
 import { DraftGroup, GroupDraft, MapperGroup } from '../../types';
 import { buildDraftGroup, nodeFromGroupDraft } from '../../utils';
-
-const GROUPS_KEY_PREFIX = '/api/v1/span_mapper_groups';
 
 function clone(groups: DraftGroup[]): DraftGroup[] {
 	return cloneDeep(groups);
@@ -39,9 +36,8 @@ export interface AttributeMappingStore {
 // group's mappers are fetched lazily when its panel is expanded (see
 // GroupMappers) and stay read-only — mapper editing lands in a later PR.
 export function useAttributeMappingStore(): AttributeMappingStore {
-	const queryClient = useQueryClient();
-
 	const groupsQuery = useListSpanMapperGroups();
+	const { refetch: refetchGroups } = groupsQuery;
 	const serverGroups: MapperGroup[] = useMemo(
 		() => groupsQuery.data?.data?.items ?? [],
 		[groupsQuery.data],
@@ -129,12 +125,10 @@ export function useAttributeMappingStore(): AttributeMappingStore {
 		try {
 			await persistDraft(snapshot, draft, mutations);
 			// Refetch the groups list in place — it stays mounted, so this just
-			// swaps in fresh data without a loading flash. Exact-match the key so
-			// this doesn't also touch the per-group mapper lists: mappers aren't
-			// edited here, and a deleted group unmounts its panel anyway.
-			await queryClient.invalidateQueries({
-				predicate: (query) => query.queryKey?.[0] === GROUPS_KEY_PREFIX,
-			});
+			// swaps in fresh data without a loading flash. Scoped to this query by
+			// construction, so it leaves the per-group mapper lists alone (mappers
+			// aren't edited here, and a deleted group unmounts its panel anyway).
+			await refetchGroups();
 			// Reset the working copy so the effect above re-seeds it from the
 			// fresh snapshot (new server ids included).
 			setDraft(null);
@@ -146,7 +140,7 @@ export function useAttributeMappingStore(): AttributeMappingStore {
 		} finally {
 			setIsSaving(false);
 		}
-	}, [draft, snapshot, mutations, queryClient]);
+	}, [draft, snapshot, mutations, refetchGroups]);
 
 	const isDirty = useMemo(
 		() => draft !== null && !isEqual(draft, snapshot),
