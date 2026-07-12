@@ -46,7 +46,11 @@ function GroupMappers({
 	const hasServerId = group.serverId !== null;
 	const { data, isLoading, isError } = useListSpanMappers(
 		{ groupId: group.serverId ?? '' },
-		{ query: { enabled: hasServerId } },
+		// refetchOnMount: false — the Collapse destroys inactive panels, so a
+		// group's mappers would otherwise refetch on every expand. Cached data is
+		// reused instead; the save flow evicts these caches so post-edit expands
+		// still fetch fresh.
+		{ query: { enabled: hasServerId, refetchOnMount: false } },
 	);
 
 	useEffect(() => {

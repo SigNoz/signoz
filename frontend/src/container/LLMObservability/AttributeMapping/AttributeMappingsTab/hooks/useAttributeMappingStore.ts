@@ -59,6 +59,7 @@ export function useAttributeMappingStore(): AttributeMappingStore {
 	const queryClient = useQueryClient();
 
 	const groupsQuery = useListSpanMapperGroups();
+	const { refetch: refetchGroups } = groupsQuery;
 	const serverGroups: MapperGroup[] = useMemo(
 		() => groupsQuery.data?.data?.items ?? [],
 		[groupsQuery.data],
@@ -260,15 +261,21 @@ export function useAttributeMappingStore(): AttributeMappingStore {
 		setSaveError(null);
 		try {
 			await persistDraft(snapshot, draft, mutations);
-			// Refetch the groups list in place — it stays mounted, so this just
-			// swaps in fresh data without a loading flash. Exact-match the key so
-			// this doesn't also touch the per-group mapper lists (handled below).
-			await queryClient.invalidateQueries({
-				predicate: (query) => query.queryKey?.[0] === GROUPS_KEY_PREFIX,
-			});
+			// Refresh the groups list in place — it stays mounted, so this just
+			// swaps in fresh data without a loading flash. Using the query's own
+			// refetch keeps it scoped to the groups list; the per-group mapper
+			// caches are handled separately below (mappers can change here, so
+			// their cached lists must be dropped rather than left stale).
+			await refetchGroups();
+			// Reset the mapper-load tracking so expanded groups re-hydrate from
+			// the fresh server data.
 			loadedRef.current = new Set();
 			setLoadedMappers({});
+			// Reset the working copy so the effect above re-seeds it from the
+			// fresh snapshot (new server ids included).
 			setDraft(null);
+			// Evict the cached per-group mapper lists so an expanded group
+			// refetches its mappers against the fresh server state.
 			queryClient.removeQueries({
 				predicate: (query) =>
 					typeof query.queryKey?.[0] === 'string' &&
@@ -282,7 +289,7 @@ export function useAttributeMappingStore(): AttributeMappingStore {
 		} finally {
 			setIsSaving(false);
 		}
-	}, [draft, snapshot, mutations, queryClient]);
+	}, [draft, snapshot, mutations, refetchGroups, queryClient]);
 
 	const isDirty = useMemo(
 		() => draft !== null && !isEqual(draft, snapshot),
