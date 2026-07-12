@@ -93,6 +93,7 @@ function KeySearchInput({
 							type="button"
 							key={name}
 							className={styles.keySearchOption}
+							title={name}
 							// onMouseDown (not onClick) so selection runs before the input blur.
 							onMouseDown={(event): void => {
 								event.preventDefault();

@@ -9,9 +9,8 @@
 	top: calc(100% + var(--spacing-2));
 	left: 0;
 	z-index: 20;
-	min-width: 100%;
-	width: max-content;
-	max-width: 420px;
+	// Match the trigger input's width — long keys truncate per-option.
+	width: 100%;
 	max-height: 240px;
 	overflow-x: hidden;
 	overflow-y: auto;
