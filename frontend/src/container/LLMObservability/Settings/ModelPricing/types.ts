@@ -33,6 +33,8 @@ export interface DrawerDraft {
 	provider: string;
 	patterns: string[];
 	isOverride: boolean;
+	// Preserved across an edit so saving a disabled rule doesn't re-enable it.
+	enabled: boolean;
 	pricing: {
 		input: number | null;
 		output: number | null;

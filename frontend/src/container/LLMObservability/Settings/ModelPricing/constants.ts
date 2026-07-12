@@ -69,6 +69,7 @@ export const EMPTY_DRAFT: DrawerDraft = {
 	provider: 'OpenAI',
 	patterns: [],
 	isOverride: true,
+	enabled: true,
 	pricing: {
 		input: null,
 		output: null,

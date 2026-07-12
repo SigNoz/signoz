@@ -86,6 +86,7 @@ export const draftFromRule = (rule: PricingRule): DrawerDraft => ({
 	provider: rule.provider,
 	patterns: rule.modelPattern || [],
 	isOverride: !!rule.isOverride,
+	enabled: rule.enabled,
 	pricing: {
 		input: rule.pricing?.input ?? 0,
 		output: rule.pricing?.output ?? 0,
@@ -129,7 +130,7 @@ export const buildRulePayload = (
 	provider: draft.provider.trim(),
 	modelPattern: draft.patterns,
 	isOverride: draft.isOverride,
-	enabled: true,
+	enabled: draft.enabled,
 	unit: UnitDTO.per_million_tokens,
 	pricing: buildPricingPayload(draft),
 });
@@ -180,10 +181,19 @@ export const buildPatternMappingPayload = (
 	rule: PricingRule,
 	modelName: string,
 ): LlmpricingruletypesUpdatableLLMPricingRuleDTO => {
-	const draft = draftFromRule(rule);
-	// Append the model as a match pattern unless the rule already carries it.
-	const patterns = draft.patterns.includes(modelName)
-		? draft.patterns
-		: [...draft.patterns, modelName];
-	return buildRulePayload({ ...draft, patterns });
+	const existing = rule.modelPattern ?? [];
+	const modelPattern = existing.includes(modelName)
+		? existing
+		: [...existing, modelName];
+	return {
+		id: rule.id,
+		sourceId: rule.sourceId,
+		modelName: rule.modelName,
+		provider: rule.provider,
+		modelPattern,
+		isOverride: rule.isOverride,
+		enabled: rule.enabled,
+		unit: rule.unit,
+		pricing: rule.pricing,
+	};
 };
