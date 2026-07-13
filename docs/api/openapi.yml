@@ -7998,6 +7998,15 @@ components:
       required:
       - items
       type: object
+    SpantypesGettableSpanMappers:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/SpantypesSpanMapper'
+          type: array
+      required:
+      - items
+      type: object
     SpantypesGettableTraceAggregations:
       properties:
         aggregations:
@@ -13742,7 +13751,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/SpantypesGettableSpanMapperGroups'
+                    $ref: '#/components/schemas/SpantypesGettableSpanMappers'
                   status:
                     type: string
                 required:
