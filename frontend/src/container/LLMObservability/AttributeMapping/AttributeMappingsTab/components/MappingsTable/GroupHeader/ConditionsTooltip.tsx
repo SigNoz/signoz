@@ -1,0 +1,58 @@
+import styles from './ConditionsTooltip.module.scss';
+
+interface ConditionsTooltipProps {
+	attributes: string[];
+	resource: string[];
+}
+
+// Rich hover content for a group's condition count: lists the span-attribute and
+// resource keys that gate the group, mirroring the matching logic spelled out in
+// the group form drawer.
+function ConditionsTooltip({
+	attributes,
+	resource,
+}: ConditionsTooltipProps): JSX.Element {
+	const hasConditions = attributes.length > 0 || resource.length > 0;
+
+	if (!hasConditions) {
+		return <span className={styles.emptyHint}>No conditions set up</span>;
+	}
+
+	return (
+		<div
+			className={styles.conditionsTooltip}
+			data-testid="group-conditions-tooltip"
+		>
+			{attributes.length > 0 && (
+				<div className={styles.section}>
+					<span className={styles.sectionTitle}>
+						Runs when a span attribute key contains
+					</span>
+					<div className={styles.keyList}>
+						{attributes.map((key) => (
+							<code key={key} className={styles.key}>
+								{key}
+							</code>
+						))}
+					</div>
+				</div>
+			)}
+			{resource.length > 0 && (
+				<div className={styles.section}>
+					<span className={styles.sectionTitle}>
+						{attributes.length > 0 ? 'or when' : 'Runs when'} a resource key contains
+					</span>
+					<div className={styles.keyList}>
+						{resource.map((key) => (
+							<code key={key} className={styles.key}>
+								{key}
+							</code>
+						))}
+					</div>
+				</div>
+			)}
+		</div>
+	);
+}
+
+export default ConditionsTooltip;
