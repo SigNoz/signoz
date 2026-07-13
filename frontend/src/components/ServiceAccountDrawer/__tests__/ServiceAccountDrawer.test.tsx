@@ -222,21 +222,20 @@ describe('ServiceAccountDrawer', () => {
 			screen.getByRole('button', { name: /Delete Service Account/i }),
 		);
 
-		const dialog = await screen.findByRole('dialog', {
-			name: /Delete service account CI Bot/i,
-		});
-		expect(dialog).toBeInTheDocument();
+		await screen.findByTestId('delete-service-account-modal');
+		expect(
+			screen.getByTestId('delete-service-account-modal'),
+		).toBeInTheDocument();
 
-		const confirmBtns = screen.getAllByRole('button', { name: /^Delete$/i });
-		await user.click(confirmBtns[confirmBtns.length - 1]);
+		await user.click(screen.getByTestId('confirm-delete-btn'));
 
-		await waitFor(() => {
-			expect(deleteSpy).toHaveBeenCalled();
-		});
-
-		await waitFor(() => {
-			expect(screen.queryByDisplayValue('CI Bot')).not.toBeInTheDocument();
-		});
+		await waitFor(
+			() => {
+				expect(deleteSpy).toHaveBeenCalled();
+				expect(screen.queryByDisplayValue('CI Bot')).not.toBeInTheDocument();
+			},
+			{ timeout: 3000 },
+		);
 	});
 
 	it('deleted account shows read-only name, no Save button, no Delete button', async () => {

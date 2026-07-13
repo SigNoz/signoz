@@ -24,7 +24,6 @@ frontend/test-results
 
 # misc
 .DS_Store
-.env.local
 .env.development.local
 .env.test.local
 .env.production.local
@@ -39,7 +38,6 @@ frontend/src/constants/env.ts
 **/locust-scripts/__pycache__/
 **/__debug_bin
 
-.env
 pkg/query-service/signoz.db
 
 pkg/query-service/tests/test-deploy/data/
@@ -184,7 +182,6 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env
 .venv
 env/
 venv/
@@ -232,3 +229,7 @@ cython_debug/
 pyrightconfig.json
 
 
+config.bat
+branch_structure.json
+temp_auto_push.bat
+temp_interactive_push.bat
