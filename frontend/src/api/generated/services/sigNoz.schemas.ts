@@ -2082,6 +2082,39 @@ export interface AuthtypesGettableAuthDomainDTO {
 	updatedAt?: string;
 }
 
+export interface AuthtypesGettableRoleDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	/**
+	 * @type string
+	 */
+	description: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	/**
+	 * @type string
+	 */
+	type: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
+}
+
 export interface AuthtypesGettableTokenDTO {
 	/**
 	 * @type string
@@ -2325,39 +2358,6 @@ export interface AuthtypesPostableUserRoleDTO {
 }
 
 export interface AuthtypesRoleDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: string;
-	/**
-	 * @type string
-	 */
-	description: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type string
-	 */
-	name: string;
-	/**
-	 * @type string
-	 */
-	orgId: string;
-	/**
-	 * @type string
-	 */
-	type: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: string;
-}
-
-export interface AuthtypesRoleWithTransactionGroupsDTO {
 	/**
 	 * @type string
 	 * @format date-time
@@ -10614,7 +10614,7 @@ export type ListRoles200 = {
 	/**
 	 * @type array
 	 */
-	data: AuthtypesRoleDTO[];
+	data: AuthtypesGettableRoleDTO[];
 	/**
 	 * @type string
 	 */
@@ -10636,7 +10636,7 @@ export type GetRolePathParameters = {
 	id: string;
 };
 export type GetRole200 = {
-	data: AuthtypesRoleWithTransactionGroupsDTO;
+	data: AuthtypesRoleDTO;
 	/**
 	 * @type string
 	 */
