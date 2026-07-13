@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { listDaemonSets } from 'api/generated/services/inframonitoring';
 import {
 	InframonitoringtypesDaemonSetRecordDTO,
@@ -6,6 +6,7 @@ import {
 	Querybuildertypesv5OrderDirectionDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { InfraMonitoringEvents } from 'constants/events';
+
 import K8sBaseDetails, { K8sDetailsFilters } from '../Base/K8sBaseDetails';
 import { K8sBaseList } from '../Base/K8sBaseList';
 import { K8sBaseFilters } from '../Base/types';
@@ -14,6 +15,7 @@ import { SelectedItemParams } from '../hooks';
 import {
 	daemonSetWidgetInfo,
 	getDaemonSetMetricsQueryPayload,
+	getDaemonSetPodMetricsQueryPayload,
 	k8sDaemonSetDetailsMetadataConfig,
 	k8sDaemonSetGetEntityName,
 	k8sDaemonSetGetSelectedItemExpression,
@@ -25,6 +27,8 @@ import {
 	getK8sDaemonSetRowKey,
 	k8sDaemonSetsColumnsConfig,
 } from './table.config';
+import { createPodMetricsTab } from 'container/InfraMonitoringK8sV2/EntityDetailsUtils/createPodMetricsTab';
+
 function K8sDaemonSetsList({
 	controlListPrefix,
 }: {
@@ -110,6 +114,17 @@ function K8sDaemonSetsList({
 		},
 		[],
 	);
+	const customTabs = useMemo(
+		() => [
+			createPodMetricsTab<InframonitoringtypesDaemonSetRecordDTO>({
+				getQueryPayload: getDaemonSetPodMetricsQueryPayload,
+				category: InfraMonitoringEntity.DAEMONSETS,
+				queryKey: 'daemonSetPodMetrics',
+			}),
+		],
+		[],
+	);
+
 	return (
 		<>
 			<K8sBaseList<InframonitoringtypesDaemonSetRecordDTO, SelectedItemParams>
@@ -133,6 +148,7 @@ function K8sDaemonSetsList({
 				entityWidgetInfo={daemonSetWidgetInfo}
 				getEntityQueryPayload={getDaemonSetMetricsQueryPayload}
 				queryKeyPrefix="daemonset"
+				customTabs={customTabs}
 			/>
 		</>
 	);
