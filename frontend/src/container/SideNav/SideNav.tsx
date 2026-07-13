@@ -98,6 +98,7 @@ import {
 import { getActiveMenuKeyFromPath } from './sideNav.utils';
 
 import './SideNav.styles.scss';
+import { Divider } from '@signozhq/ui/divider';
 
 function SortableFilter({ item }: { item: SidebarItem }): JSX.Element {
 	const { attributes, listeners, setNodeRef, transform, transition } =
@@ -1090,6 +1091,8 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 						<div className="primary-nav-items">
 							{renderNavItems(primaryMenuItems)}
 						</div>
+
+						{isCollapsed && <Divider className="nav-divider" />}
 
 						{(pinnedMenuItems.length > 0 || !isCollapsed) && (
 							<div
