@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestWhereNormalizerNormalize(t *testing.T) {
+func TestExpressionNormalizerNormalize(t *testing.T) {
 	testCases := []struct {
 		name   string
 		input  string
@@ -47,11 +47,16 @@ func TestWhereNormalizerNormalize(t *testing.T) {
 			input:  `NOT ("deleted_at" IS NOT NULL AND ("active" = false OR "status" = 'archived'))`,
 			output: `NOT (deleted_at IS NOT NULL AND (active = false OR status = 'archived'))`,
 		},
+		{
+			name:   "CaseNotFoldedWithoutFlag",
+			input:  `LOWER("email") IS NOT NULL`,
+			output: `LOWER(email) IS NOT NULL`,
+		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			assert.Equal(t, testCase.output, (&whereNormalizer{input: testCase.input}).normalize())
+			assert.Equal(t, testCase.output, (&expressionNormalizer{input: testCase.input}).normalize())
 		})
 	}
 }

@@ -2,7 +2,7 @@ import { getGroupByEl } from './utils';
 import { useInfraMonitoringGroupBy } from '../hooks';
 
 interface K8sEntityWithMeta {
-	meta?: Record<string, string>;
+	meta?: Record<string, string> | null;
 }
 
 function K8sGroupCell<T extends K8sEntityWithMeta>({
