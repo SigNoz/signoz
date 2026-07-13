@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from 'tests/test-utils';
 import { QueryRangeResponseV5 } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 

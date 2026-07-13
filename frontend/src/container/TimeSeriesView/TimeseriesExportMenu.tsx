@@ -1,10 +1,12 @@
-import { Download, LoaderCircle } from '@signozhq/icons';
+import { Download } from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@signozhq/ui/popover';
 import { RadioGroup, RadioGroupItem } from '@signozhq/ui/radio-group';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
-import { Button, Popover, Tooltip } from 'antd';
 import { useClientExport } from 'hooks/useExportData/useClientExport';
 import { ExportFormat } from 'lib/exportData/types';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryRangeResponseV5 } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
@@ -46,14 +48,24 @@ export default function TimeseriesExportMenu({
 		handleClientExport({ format: exportFormat as ExportFormat });
 	}, [exportFormat, handleClientExport]);
 
-	const popoverContent = useMemo(
-		() => (
-			<div
-				className="export-options-container"
-				role="dialog"
-				aria-label="Export options"
-				aria-modal="true"
-			>
+	return (
+		<Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+			<TooltipSimple title="Download">
+				<PopoverTrigger asChild>
+					<Button
+						variant="ghost"
+						color="secondary"
+						size="icon"
+						aria-label="Download"
+						data-testid={`timeseries-export-${dataSource}`}
+						disabled={isExporting}
+						loading={isExporting}
+					>
+						<Download size={14} />
+					</Button>
+				</PopoverTrigger>
+			</TooltipSimple>
+			<PopoverContent align="end" className="timeseries-export-popover">
 				<div className="export-format">
 					<Typography.Text className="title">FORMAT</Typography.Text>
 					<RadioGroup value={exportFormat} onChange={setExportFormat}>
@@ -63,44 +75,17 @@ export default function TimeseriesExportMenu({
 				</div>
 
 				<Button
-					type="primary"
-					icon={<Download size={16} />}
-					onClick={handleExport}
+					variant="solid"
+					color="primary"
 					className="export-button"
+					onClick={handleExport}
 					disabled={isExporting}
 					loading={isExporting}
+					prefix={<Download size={16} />}
 				>
 					Export
 				</Button>
-			</div>
-		),
-		[exportFormat, isExporting, handleExport],
-	);
-
-	return (
-		<Popover
-			content={popoverContent}
-			trigger="click"
-			placement="bottomRight"
-			arrow={false}
-			open={isPopoverOpen}
-			onOpenChange={setIsPopoverOpen}
-			rootClassName="timeseries-export-popover"
-		>
-			<Tooltip title="Download" placement="top">
-				<Button
-					className="periscope-btn ghost"
-					icon={
-						isExporting ? (
-							<LoaderCircle size={14} className="animate-spin" />
-						) : (
-							<Download size={14} />
-						)
-					}
-					data-testid={`timeseries-export-${dataSource}`}
-					disabled={isExporting}
-				/>
-			</Tooltip>
+			</PopoverContent>
 		</Popover>
 	);
 }
