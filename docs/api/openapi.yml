@@ -543,6 +543,31 @@ components:
       required:
       - id
       type: object
+    AuthtypesGettableRole:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        description:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        orgId:
+          type: string
+        type:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - id
+      - name
+      - description
+      - type
+      - orgId
+      type: object
     AuthtypesGettableToken:
       properties:
         accessToken:
@@ -706,43 +731,6 @@ components:
           type: string
         orgId:
           type: string
-        type:
-          type: string
-        updatedAt:
-          format: date-time
-          type: string
-      required:
-      - id
-      - name
-      - description
-      - type
-      - orgId
-      type: object
-    AuthtypesRoleMapping:
-      properties:
-        defaultRole:
-          type: string
-        groupMappings:
-          additionalProperties:
-            type: string
-          nullable: true
-          type: object
-        useRoleAttribute:
-          type: boolean
-      type: object
-    AuthtypesRoleWithTransactionGroups:
-      properties:
-        createdAt:
-          format: date-time
-          type: string
-        description:
-          type: string
-        id:
-          type: string
-        name:
-          type: string
-        orgId:
-          type: string
         transactionGroups:
           $ref: '#/components/schemas/AuthtypesTransactionGroups'
         type:
@@ -757,6 +745,18 @@ components:
       - type
       - orgId
       - transactionGroups
+      type: object
+    AuthtypesRoleMapping:
+      properties:
+        defaultRole:
+          type: string
+        groupMappings:
+          additionalProperties:
+            type: string
+          nullable: true
+          type: object
+        useRoleAttribute:
+          type: boolean
       type: object
     AuthtypesSamlConfig:
       properties:
@@ -1494,7 +1494,7 @@ components:
       - cosmosdb
       - cassandradb
       - redis
-      - cloudsql
+      - cloudsql_postgres
       type: string
     CloudintegrationtypesServiceMetadata:
       properties:
@@ -3148,6 +3148,8 @@ components:
           type: string
         image:
           type: string
+        legacy:
+          type: boolean
         locked:
           type: boolean
         name:
@@ -3180,6 +3182,7 @@ components:
       - name
       - tags
       - spec
+      - legacy
       - pinned
       type: object
     DashboardtypesListedDashboardV2:
@@ -3193,6 +3196,8 @@ components:
           type: string
         image:
           type: string
+        legacy:
+          type: boolean
         locked:
           type: boolean
         name:
@@ -3223,6 +3228,7 @@ components:
       - name
       - tags
       - spec
+      - legacy
       type: object
     DashboardtypesListedDashboardV2Spec:
       properties:
@@ -4478,10 +4484,14 @@ components:
             type: string
           nullable: true
           type: object
+        misscheduledNodes:
+          type: integer
         podCountsByPhase:
           $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
         podCountsByStatus:
           $ref: '#/components/schemas/InframonitoringtypesPodCountsByStatus'
+        readyNodes:
+          type: integer
       required:
       - daemonSetName
       - daemonSetCPU
@@ -4492,6 +4502,8 @@ components:
       - daemonSetMemoryLimit
       - desiredNodes
       - currentNodes
+      - readyNodes
+      - misscheduledNodes
       - podCountsByPhase
       - podCountsByStatus
       - meta
@@ -7394,9 +7406,11 @@ components:
         op:
           $ref: '#/components/schemas/RuletypesCompareOperator'
         recoveryTarget:
+          format: double
           nullable: true
           type: number
         target:
+          format: double
           nullable: true
           type: number
         targetUnit:
@@ -7680,6 +7694,7 @@ components:
         selectedQueryName:
           type: string
         target:
+          format: double
           nullable: true
           type: number
         targetUnit:
@@ -12007,7 +12022,7 @@ paths:
                 properties:
                   data:
                     items:
-                      $ref: '#/components/schemas/AuthtypesRole'
+                      $ref: '#/components/schemas/AuthtypesGettableRole'
                     type: array
                   status:
                     type: string
@@ -12191,7 +12206,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/AuthtypesRoleWithTransactionGroups'
+                    $ref: '#/components/schemas/AuthtypesRole'
                   status:
                     type: string
                 required:
@@ -15990,21 +16005,24 @@ paths:
         daemonSetCPULimit, daemonSetMemoryRequest, daemonSetMemoryLimit). Each row
         also reports the latest known node-level counters from kube-state-metrics:
         desiredNodes (k8s.daemonset.desired_scheduled_nodes, the number of nodes the
-        daemonset wants to run on) and currentNodes (k8s.daemonset.current_scheduled_nodes,
-        the number of nodes the daemonset currently runs on) — note these are node
-        counts, not pod counts. It also reports per-group podCountsByPhase ({ pending,
-        running, succeeded, failed, unknown } from each pod''s latest k8s.pod.phase
-        value). Each daemonset includes metadata attributes (k8s.daemonset.name, k8s.namespace.name,
-        k8s.cluster.name). The response type is ''list'' for the default k8s.daemonset.name
-        grouping or ''grouped_list'' for custom groupBy keys; in both modes every
-        row aggregates pods owned by daemonsets in the group. Supports filtering via
-        a filter expression, custom groupBy, ordering by cpu / cpu_request / cpu_limit
-        / memory / memory_request / memory_limit / desired_nodes / current_nodes,
+        daemonset wants to run on), currentNodes (k8s.daemonset.current_scheduled_nodes,
+        the number of nodes the daemonset currently runs on), readyNodes (k8s.daemonset.ready_nodes,
+        the number of nodes running at least one ready daemon pod) and misscheduledNodes
+        (k8s.daemonset.misscheduled_nodes, the number of nodes running the daemon
+        pod but not supposed to) — note these are node counts, not pod counts. It
+        also reports per-group podCountsByPhase ({ pending, running, succeeded, failed,
+        unknown } from each pod''s latest k8s.pod.phase value). Each daemonset includes
+        metadata attributes (k8s.daemonset.name, k8s.namespace.name, k8s.cluster.name).
+        The response type is ''list'' for the default k8s.daemonset.name grouping
+        or ''grouped_list'' for custom groupBy keys; in both modes every row aggregates
+        pods owned by daemonsets in the group. Supports filtering via a filter expression,
+        custom groupBy, ordering by cpu / cpu_request / cpu_limit / memory / memory_request
+        / memory_limit / desired_nodes / current_nodes / ready_nodes / misscheduled_nodes,
         and pagination via offset/limit. Also reports whether the requested time range
         falls before the data retention boundary. Numeric metric fields (daemonSetCPU,
         daemonSetCPURequest, daemonSetCPULimit, daemonSetMemory, daemonSetMemoryRequest,
-        daemonSetMemoryLimit, desiredNodes, currentNodes) return -1 as a sentinel
-        when no data is available for that field.'
+        daemonSetMemoryLimit, desiredNodes, currentNodes, readyNodes, misscheduledNodes)
+        return -1 as a sentinel when no data is available for that field.'
       operationId: ListDaemonSets
       requestBody:
         content:
@@ -18168,6 +18186,16 @@ paths:
         public dashboard. The panel is addressed by its key in spec.panels.
       operationId: GetPublicDashboardPanelQueryRangeV2
       parameters:
+      - in: query
+        name: startTime
+        required: false
+        schema:
+          type: string
+      - in: query
+        name: endTime
+        required: false
+        schema:
+          type: string
       - in: path
         name: id
         required: true

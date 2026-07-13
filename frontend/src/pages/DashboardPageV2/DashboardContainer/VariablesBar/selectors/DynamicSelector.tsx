@@ -3,7 +3,10 @@ import { useQuery } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { getFieldValues } from 'api/dynamicVariables/getFieldValues';
-import { DASHBOARD_CACHE_TIME } from 'constants/queryCacheTime';
+import {
+	DASHBOARD_CACHE_TIME,
+	DASHBOARD_CACHE_TIME_ON_REFRESH_ENABLED,
+} from 'constants/queryCacheTime';
 import type { AppState } from 'store/reducers';
 import type { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -48,9 +51,10 @@ function DynamicSelector({
 	onChange,
 	onAutoSelect,
 }: DynamicSelectorProps): JSX.Element {
-	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
+	const { minTime, maxTime, isAutoRefreshDisabled } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
 
 	const existingQuery = useMemo(
 		() => buildExistingDynamicVariableQuery(variables, selections, variable.name),
@@ -96,8 +100,10 @@ function DynamicSelector({
 				!!variable.dynamicAttribute &&
 				(isVariableFetching || (isVariableSettled && hasVariableFetchedOnce)),
 			refetchOnWindowFocus: false,
-			// Each cycle mints a fresh key; a small cacheTime bounds cache churn.
-			cacheTime: DASHBOARD_CACHE_TIME,
+			// Each cycle mints a fresh key; 0 under auto-refresh so entries don't pile up (V1 parity).
+			cacheTime: isAutoRefreshDisabled
+				? DASHBOARD_CACHE_TIME
+				: DASHBOARD_CACHE_TIME_ON_REFRESH_ENABLED,
 			onSettled: (_, error) =>
 				error
 					? onVariableFetchFailure(variable.name)
