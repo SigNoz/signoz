@@ -152,43 +152,54 @@ func parseAggregations(expression, availableAlias string) []any {
 	return out
 }
 
-// normalizePreV5SelectColumns lets WrapInV5Envelope (which reads the old
-// {key,dataType,type}) handle selectColumns stored the v5 way ({name,…}): backfill
-// key/dataType/type from name/fieldDataType/fieldContext, drop columns with no
-// resolvable key. Inverse of normalizePreV5FieldKeys (the two consumers want
-// opposite shapes).
+// normalizePreV5SelectColumns / normalizePreV5GroupBy let WrapInV5Envelope (which
+// reads the old {key,dataType,type}) handle selectColumns/groupBy stored the v5 way
+// ({name,…}) — see backfillPreV5FieldKeys. Inverse of normalizePreV5FieldKeys (the
+// two consumers want opposite shapes).
 func normalizePreV5SelectColumns(query map[string]any) {
-	cols, ok := query["selectColumns"].([]any)
-	if !ok {
-		return
+	if cols, ok := query["selectColumns"].([]any); ok {
+		query["selectColumns"] = backfillPreV5FieldKeys(cols)
 	}
-	out := make([]any, 0, len(cols))
-	for _, c := range cols {
-		col, ok := c.(map[string]any)
+}
+
+func normalizePreV5GroupBy(query map[string]any) {
+	if gb, ok := query["groupBy"].([]any); ok {
+		query["groupBy"] = backfillPreV5FieldKeys(gb)
+	}
+}
+
+// backfillPreV5FieldKeys copies v5 field names (name/fieldDataType/fieldContext)
+// down to their v4 equivalents (key/dataType/type) so WrapInV5Envelope, which reads
+// the v4 names, sees a field stored the v5 way. Fields with no resolvable key are
+// dropped.
+func backfillPreV5FieldKeys(fields []any) []any {
+	out := make([]any, 0, len(fields))
+	for _, f := range fields {
+		field, ok := f.(map[string]any)
 		if !ok {
 			continue
 		}
-		if _, ok := col["key"]; !ok {
-			if name, ok := col["name"]; ok {
-				col["key"] = name
+		if _, ok := field["key"]; !ok {
+			if name, ok := field["name"]; ok {
+				field["key"] = name
 			}
 		}
-		if _, ok := col["dataType"]; !ok {
-			if fdt, ok := col["fieldDataType"]; ok {
-				col["dataType"] = fdt
+		if _, ok := field["dataType"]; !ok {
+			if fdt, ok := field["fieldDataType"]; ok {
+				field["dataType"] = fdt
 			}
 		}
-		if _, ok := col["type"]; !ok {
-			if fc, ok := col["fieldContext"]; ok {
-				col["type"] = fc
+		if _, ok := field["type"]; !ok {
+			if fc, ok := field["fieldContext"]; ok {
+				field["type"] = fc
 			}
 		}
-		if key, _ := col["key"].(string); key == "" {
+		if key, _ := field["key"].(string); key == "" {
 			continue
 		}
-		out = append(out, col)
+		out = append(out, field)
 	}
-	query["selectColumns"] = out
+	return out
 }
 
 // normalizePreV5FieldKeys renames list-panel field keys {key,dataType,type} →

@@ -159,6 +159,7 @@ func (d *v1Decoder) collectV1QueryEnvelopes(widget map[string]any, panelKind Pan
 		for _, q := range queries {
 			normalizePreV5QueryData(q, widgetType)
 			normalizePreV5SelectColumns(q)
+			normalizePreV5GroupBy(q)
 			normalizePreV5PageSize(q, rowLimitPanel)
 			if needsAggregation {
 				ensureDefaultAggregation(q)
