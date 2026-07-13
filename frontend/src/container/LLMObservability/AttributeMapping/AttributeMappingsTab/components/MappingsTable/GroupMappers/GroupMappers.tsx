@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Plus } from '@signozhq/icons';
 import { useListSpanMappers } from 'api/generated/services/spanmapper';
-import { motion, useReducedMotion } from 'motion/react';
+import { motion } from 'motion/react';
 
 import {
 	DraftGroup,
@@ -38,10 +38,6 @@ function GroupMappers({
 	onEditMapper,
 }: GroupMappersProps): JSX.Element {
 	const { hydrateGroupMappers, removeMapper, toggleMapper } = store;
-	const prefersReducedMotion = useReducedMotion();
-	const stateRowMotion = prefersReducedMotion
-		? { initial: false as const }
-		: STATE_ROW_MOTION;
 
 	const hasServerId = group.serverId !== null;
 	const { data, isLoading, isError } = useListSpanMappers(
@@ -72,7 +68,11 @@ function GroupMappers({
 	);
 
 	const errorRow = (
-		<motion.tr key="error" className={styles.mapperStateRow} {...stateRowMotion}>
+		<motion.tr
+			key="error"
+			className={styles.mapperStateRow}
+			{...STATE_ROW_MOTION}
+		>
 			<td
 				colSpan={COLUMN_COUNT}
 				className={styles.stateCell}
@@ -84,7 +84,11 @@ function GroupMappers({
 	);
 
 	const emptyRow = (
-		<motion.tr key="empty" className={styles.mapperStateRow} {...stateRowMotion}>
+		<motion.tr
+			key="empty"
+			className={styles.mapperStateRow}
+			{...STATE_ROW_MOTION}
+		>
 			<td
 				colSpan={COLUMN_COUNT}
 				className={styles.stateCell}
@@ -99,7 +103,7 @@ function GroupMappers({
 		<motion.tr
 			key="add-mapper"
 			className={styles.addMapperRow}
-			{...stateRowMotion}
+			{...STATE_ROW_MOTION}
 		>
 			<td colSpan={COLUMN_COUNT} className={styles.addMapperCell}>
 				<Button

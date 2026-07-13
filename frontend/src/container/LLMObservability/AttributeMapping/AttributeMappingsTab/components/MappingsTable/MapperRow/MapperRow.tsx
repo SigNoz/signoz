@@ -3,7 +3,7 @@ import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 import { SpantypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
 import cx from 'classnames';
-import { motion, useReducedMotion } from 'motion/react';
+import { motion } from 'motion/react';
 
 import { DraftMapper } from 'container/LLMObservability/AttributeMapping/types';
 import MapperActionsMenu from '../MapperActionsMenu/MapperActionsMenu';
@@ -30,7 +30,6 @@ function MapperRow({
 	onRemove,
 	onToggle,
 }: MapperRowProps): JSX.Element {
-	const prefersReducedMotion = useReducedMotion();
 	const sources = mapper.sources ?? [];
 	const visibleSources = sources.slice(0, MAX_VISIBLE_SOURCES);
 	const remainingSources = sources.length - visibleSources.length;
@@ -39,7 +38,7 @@ function MapperRow({
 		<motion.tr
 			className={styles.mapperRow}
 			data-testid={`mapper-row-${mapper.localId}`}
-			initial={prefersReducedMotion ? false : { opacity: 0, y: -4 }}
+			initial={{ opacity: 0, y: -4 }}
 			animate={{ opacity: 1, y: 0 }}
 			transition={{
 				...ROW_TRANSITION,
