@@ -1,12 +1,13 @@
 import React, { useCallback, useMemo } from 'react';
 import { KeyRound, X } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
-import { Skeleton, Table, Tooltip } from 'antd';
+import { Pagination, Skeleton, Table, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table/interface';
 import type { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
-import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
+import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
+import { withAuthZContent } from 'lib/authz/components/withAuthZ/withAuthZContent';
 import {
 	APIKeyCreatePermission,
+	APIKeyListPermission,
 	buildAPIKeyDeletePermission,
 	buildSAAttachPermission,
 	buildSADetachPermission,
@@ -24,10 +25,10 @@ interface KeysTabProps {
 	keys: ServiceaccounttypesGettableFactorAPIKeyDTO[];
 	isLoading: boolean;
 	isDisabled?: boolean;
-	canUpdate?: boolean;
 	accountId?: string;
 	currentPage: number;
 	pageSize: number;
+	onPageChange: (page: number) => void;
 }
 
 interface BuildColumnsParams {
@@ -113,29 +114,26 @@ function buildColumns({
 			render: (_, record): JSX.Element => {
 				const tooltipTitle = isDisabled ? 'Service account disabled' : 'Revoke Key';
 				return (
-					<AuthZTooltip
-						checks={[
-							buildAPIKeyDeletePermission(record.id),
-							buildSADetachPermission(accountId),
-						]}
-						enabled={!isDisabled && !!accountId}
-					>
-						<Tooltip title={tooltipTitle}>
-							<Button
-								variant="ghost"
-								size="sm"
-								color="destructive"
-								disabled={isDisabled}
-								onClick={(e): void => {
-									e.stopPropagation();
-									onRevokeClick(record.id);
-								}}
-								className="keys-tab__revoke-btn"
-							>
-								<X size={12} />
-							</Button>
-						</Tooltip>
-					</AuthZTooltip>
+					<Tooltip title={tooltipTitle}>
+						<AuthZButton
+							checks={[
+								buildAPIKeyDeletePermission(record.id),
+								buildSADetachPermission(accountId),
+							]}
+							authZEnabled={!isDisabled && !!accountId}
+							variant="ghost"
+							size="sm"
+							color="destructive"
+							disabled={isDisabled}
+							onClick={(e): void => {
+								e.stopPropagation();
+								onRevokeClick(record.id);
+							}}
+							className="keys-tab__revoke-btn"
+						>
+							<X size={12} />
+						</AuthZButton>
+					</Tooltip>
 				);
 			},
 		},
@@ -149,6 +147,7 @@ function KeysTab({
 	accountId = '',
 	currentPage,
 	pageSize,
+	onPageChange,
 }: KeysTabProps): JSX.Element {
 	const [, setIsAddKeyOpen] = useQueryState(
 		'add-key',
@@ -212,21 +211,18 @@ function KeysTab({
 						Learn more
 					</a>
 				</p>
-				<AuthZTooltip
+				<AuthZButton
 					checks={[APIKeyCreatePermission, buildSAAttachPermission(accountId)]}
-					enabled={!isDisabled && !!accountId}
+					authZEnabled={!isDisabled && !!accountId}
+					variant="link"
+					color="primary"
+					onClick={async (): Promise<void> => {
+						await setIsAddKeyOpen(true);
+					}}
+					disabled={isDisabled}
 				>
-					<Button
-						variant="link"
-						color="primary"
-						onClick={async (): Promise<void> => {
-							await setIsAddKeyOpen(true);
-						}}
-						disabled={isDisabled}
-					>
-						+ Add your first key
-					</Button>
-				</AuthZTooltip>
+					+ Add your first key
+				</AuthZButton>
 			</div>
 		);
 	}
@@ -278,6 +274,24 @@ function KeysTab({
 				})}
 			/>
 
+			<Pagination
+				current={currentPage}
+				pageSize={pageSize}
+				total={keys.length}
+				showTotal={(total: number, range: number[]): JSX.Element => (
+					<>
+						<span className="sa-drawer__pagination-range">
+							{range[0]} &#8212; {range[1]}
+						</span>
+						<span className="sa-drawer__pagination-total"> of {total}</span>
+					</>
+				)}
+				showSizeChanger={false}
+				hideOnSinglePage
+				onChange={onPageChange}
+				className="sa-drawer__keys-pagination"
+			/>
+
 			<EditKeyModal keyItem={editKey} />
 
 			<RevokeKeyModal />
@@ -285,4 +299,7 @@ function KeysTab({
 	);
 }
 
-export default KeysTab;
+export default withAuthZContent(KeysTab, {
+	checks: [APIKeyListPermission],
+	fallbackOnLoading: <Skeleton active paragraph={{ rows: 6 }} />,
+});

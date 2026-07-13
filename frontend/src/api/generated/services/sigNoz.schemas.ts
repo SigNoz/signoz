@@ -5008,6 +5008,10 @@ export interface DashboardtypesListedDashboardForUserV2DTO {
 	/**
 	 * @type boolean
 	 */
+	legacy: boolean;
+	/**
+	 * @type boolean
+	 */
 	locked: boolean;
 	/**
 	 * @type string
@@ -5080,6 +5084,10 @@ export interface DashboardtypesListedDashboardV2DTO {
 	 * @type string
 	 */
 	image?: string;
+	/**
+	 * @type boolean
+	 */
+	legacy: boolean;
 	/**
 	 * @type boolean
 	 */
@@ -6119,8 +6127,16 @@ export interface InframonitoringtypesDaemonSetRecordDTO {
 	 * @type object,null
 	 */
 	meta: InframonitoringtypesDaemonSetRecordDTOMeta;
+	/**
+	 * @type integer
+	 */
+	misscheduledNodes: number;
 	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
 	podCountsByStatus: InframonitoringtypesPodCountsByStatusDTO;
+	/**
+	 * @type integer
+	 */
+	readyNodes: number;
 }
 
 export interface InframonitoringtypesDaemonSetsDTO {
