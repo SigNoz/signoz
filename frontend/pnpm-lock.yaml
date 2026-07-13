@@ -142,7 +142,7 @@ importers:
         specifier: ^1.10.7
         version: 1.11.20
       dompurify:
-        specifier: '>=3.4.11 <4'
+        specifier: 3.4.11
         version: 3.4.11
       event-source-polyfill:
         specifier: 1.0.31
