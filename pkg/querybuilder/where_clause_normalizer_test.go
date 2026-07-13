@@ -236,11 +236,68 @@ func TestNormalizeWhereClauseAtoms(t *testing.T) {
 	expected := []WhereClauseCondition{
 		{Key: "a", Operator: "=", Values: []string{"1"}, Negated: true},
 		{Key: "b", Operator: "IN", Values: []string{"x", "y"}, Negated: true},
-		{Key: "service.name", Operator: "EXISTS", Values: []string{}, Negated: false},
-		{Key: "tags", Operator: "hasAny", Values: []string{"p", "q"}, Negated: false},
-		{Key: "", Operator: WhereClauseOperatorFullText, Values: []string{"panic"}, Negated: false},
+		{Key: "service.name", Operator: "EXISTS", Values: []string{}, Negated: false, TopLevel: true},
+		{Key: "tags", Operator: "hasAny", Values: []string{"p", "q"}, Negated: false, TopLevel: true},
+		{Key: "", Operator: WhereClauseOperatorFullText, Values: []string{"panic"}, Negated: false, TopLevel: true},
 	}
 	assert.ElementsMatch(t, expected, canonical.Conditions)
+}
+
+func TestNormalizeWhereClauseTopLevel(t *testing.T) {
+	testCases := []struct {
+		name       string
+		expression string
+		expected   map[string]bool
+	}{
+		{
+			name:       "and siblings are top level",
+			expression: "service.name = 'a' AND status = 500",
+			expected:   map[string]bool{"service.name": true, "status": true},
+		},
+		{
+			name:       "or branches are not top level",
+			expression: "service.name = 'a' OR status = 500",
+			expected:   map[string]bool{"service.name": false, "status": false},
+		},
+		{
+			name:       "and sibling stays top level next to a grouped or",
+			expression: "service.name = 'a' AND (x = 1 OR y = 2)",
+			expected:   map[string]bool{"service.name": true, "x": false, "y": false},
+		},
+		{
+			name:       "parenthesized pure and group stays top level",
+			expression: "(service.name = 'a' AND b = 2) AND c = 3",
+			expected:   map[string]bool{"service.name": true, "b": true, "c": true},
+		},
+		{
+			name:       "negated condition is not top level",
+			expression: "NOT service.name = 'a' AND status = 500",
+			expected:   map[string]bool{"service.name": false, "status": true},
+		},
+		{
+			name:       "double negation restores top level",
+			expression: "NOT (NOT (service.name = 'a'))",
+			expected:   map[string]bool{"service.name": true},
+		},
+		{
+			name:       "in condition under and is top level",
+			expression: "service.name IN ('a', 'b') AND x = 1",
+			expected:   map[string]bool{"service.name": true, "x": true},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			normalized, err := NormalizeWhereClause(testCase.expression, nil)
+			require.NoError(t, err)
+
+			actual := make(map[string]bool)
+			for _, condition := range normalized.Conditions {
+				actual[condition.Key] = condition.TopLevel
+			}
+			assert.Equal(t, testCase.expected, actual)
+		})
+	}
 }
 
 func TestNormalizeWhereClauseEscaping(t *testing.T) {

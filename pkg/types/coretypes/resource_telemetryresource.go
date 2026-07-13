@@ -1,6 +1,9 @@
 package coretypes
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -26,7 +29,18 @@ func (resourceTelemetryResource *resourceTelemetryResource) Prefix(orgID valuer.
 }
 
 func (resourceTelemetryResource *resourceTelemetryResource) Object(orgID valuer.UUID, selector string) string {
-	return resourceTelemetryResource.Prefix(orgID) + "/" + selector
+	if selector == WildCardSelectorString {
+		return resourceTelemetryResource.Prefix(orgID) + "/" + selector
+	}
+
+	return resourceTelemetryResource.Prefix(orgID) + "/" + TelemetrySelectorSegment(selector)
+}
+
+// Must stay stable: grant-time and check-time object building both rely on
+// producing the same segment for the same selector value.
+func TelemetrySelectorSegment(selector string) string {
+	sum := sha256.Sum256([]byte(selector))
+	return hex.EncodeToString(sum[:16])
 }
 
 func (resourceTelemetryResource *resourceTelemetryResource) Scope(verb Verb) string {

@@ -25,6 +25,7 @@ type WhereClauseCondition struct {
 	Operator string
 	Values   []string
 	Negated  bool
+	TopLevel bool
 }
 
 type joinKind int
@@ -50,6 +51,7 @@ type whereClauseNormalizer struct {
 	variables  map[string]qbtypes.VariableItem
 	conditions []WhereClauseCondition
 	negated    bool
+	orDepth    int
 	errors     []string
 }
 
@@ -116,7 +118,7 @@ func NormalizeWhereClause(expression string, variables map[string]qbtypes.Variab
 }
 
 func (condition WhereClauseCondition) sortKey() string {
-	return condition.Key + "|" + condition.Operator + "|" + strings.Join(condition.Values, ",") + "|" + strconv.FormatBool(condition.Negated)
+	return condition.Key + "|" + condition.Operator + "|" + strings.Join(condition.Values, ",") + "|" + strconv.FormatBool(condition.Negated) + "|" + strconv.FormatBool(condition.TopLevel)
 }
 
 func (visitor *whereClauseNormalizer) visitQuery(ctx grammar.IQueryContext) normalizedPart {
@@ -129,6 +131,11 @@ func (visitor *whereClauseNormalizer) visitQuery(ctx grammar.IQueryContext) norm
 
 func (visitor *whereClauseNormalizer) visitOrExpression(ctx grammar.IOrExpressionContext) normalizedPart {
 	andExpressions := ctx.AllAndExpression()
+	if len(andExpressions) > 1 {
+		visitor.orDepth++
+		defer func() { visitor.orDepth-- }()
+	}
+
 	parts := make([]normalizedPart, 0, len(andExpressions))
 	for _, andExpression := range andExpressions {
 		part := visitor.visitAndExpression(andExpression)
@@ -432,6 +439,7 @@ func (visitor *whereClauseNormalizer) appendCondition(key, operator string, valu
 		Operator: operator,
 		Values:   values,
 		Negated:  visitor.negated,
+		TopLevel: visitor.orDepth == 0 && !visitor.negated,
 	})
 }
 

@@ -68,6 +68,38 @@ func NewTuplesFromTransactionGroups(name string, orgID valuer.UUID, transactionG
 	return tuples, nil
 }
 
+func DiffTuples(existing, desired []*openfgav1.TupleKey) (additions, deletions []*openfgav1.TupleKey) {
+	key := func(tuple *openfgav1.TupleKey) string {
+		return tuple.GetUser() + "|" + tuple.GetRelation() + "|" + tuple.GetObject()
+	}
+
+	existingSet := make(map[string]struct{}, len(existing))
+	for _, tuple := range existing {
+		existingSet[key(tuple)] = struct{}{}
+	}
+
+	desiredSet := make(map[string]struct{}, len(desired))
+	for _, tuple := range desired {
+		desiredSet[key(tuple)] = struct{}{}
+	}
+
+	additions = make([]*openfgav1.TupleKey, 0)
+	for _, tuple := range desired {
+		if _, ok := existingSet[key(tuple)]; !ok {
+			additions = append(additions, tuple)
+		}
+	}
+
+	deletions = make([]*openfgav1.TupleKey, 0)
+	for _, tuple := range existing {
+		if _, ok := desiredSet[key(tuple)]; !ok {
+			deletions = append(deletions, tuple)
+		}
+	}
+
+	return additions, deletions
+}
+
 func MustNewTransactionGroupsFromTuples(tuples []*openfgav1.TupleKey) TransactionGroups {
 	objectsByRelation := make(map[string][]*coretypes.Object)
 
