@@ -1,5 +1,8 @@
 import { act, renderHook } from '@testing-library/react';
-import { downloadFile } from 'lib/exportData/downloadFile';
+import {
+	downloadFile,
+	getTimestampedFileName,
+} from 'lib/exportData/downloadFile';
 import { ExportFormat } from 'lib/exportData/types';
 import { QueryRangeResponseV5 } from 'types/api/v5/queryRange';
 
@@ -49,7 +52,17 @@ function timeSeriesResponse(): QueryRangeResponseV5 {
 }
 
 describe('useClientExport', () => {
-	beforeEach(() => jest.clearAllMocks());
+	beforeEach(() => {
+		jest.clearAllMocks();
+		// Freeze the clock so filenames are deterministic — asserted against the
+		// real getTimestampedFileName (the format itself is pinned by an exact
+		// string in downloadFile.test).
+		jest.useFakeTimers().setSystemTime(new Date(2026, 6, 13, 14, 32, 5));
+	});
+
+	afterEach(() => {
+		jest.useRealTimers();
+	});
 
 	it('exports time_series as CSV to a timestamped <fileName>.csv', () => {
 		const { result } = renderHook(() =>
@@ -66,7 +79,8 @@ describe('useClientExport', () => {
 
 		expect(mockDownloadFile).toHaveBeenCalledTimes(1);
 		const [content, name, mime] = mockDownloadFile.mock.calls[0];
-		expect(name).toMatch(/^chart-\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.csv$/);
+		// delegation: the hook names files via getTimestampedFileName
+		expect(name).toBe(getTimestampedFileName('chart', 'csv'));
 		expect(mime).toContain('text/csv');
 		expect(content).toContain('service');
 		expect(content).toContain('a');
@@ -82,7 +96,7 @@ describe('useClientExport', () => {
 		});
 
 		const [content, name, mime] = mockDownloadFile.mock.calls[0];
-		expect(name).toMatch(/^export-\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.jsonl$/);
+		expect(name).toBe(getTimestampedFileName('export', 'jsonl'));
 		expect(mime).toContain('ndjson');
 		expect(content).toContain('"series"');
 	});
