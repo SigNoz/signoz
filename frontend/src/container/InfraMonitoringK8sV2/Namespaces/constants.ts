@@ -7,7 +7,10 @@ import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
 import { K8sDetailsMetadataConfig } from '../Base/K8sBaseDetails';
-import { INFRA_MONITORING_ATTR_KEYS } from '../constants';
+import {
+	getPodUtilizationByPodQueryPayloads,
+	INFRA_MONITORING_ATTR_KEYS,
+} from '../constants';
 import { SelectedItemParams } from '../hooks';
 import {
 	buildEventsExpression,
@@ -1688,4 +1691,27 @@ export const getNamespaceMetricsQueryPayload = (
 			end,
 		},
 	];
+};
+
+export const getNamespacePodMetricsQueryPayload = (
+	namespace: InframonitoringtypesNamespaceRecordDTO,
+	start: number,
+	end: number,
+	dotMetricsEnabled: boolean,
+): GetQueryResultsProps[] => {
+	const k8sNamespaceNameKey = dotMetricsEnabled
+		? 'k8s.namespace.name'
+		: 'k8s_namespace_name';
+
+	return getPodUtilizationByPodQueryPayloads(
+		{
+			workloadNameKey: k8sNamespaceNameKey,
+			workloadNameValue: namespace.namespaceName ?? '',
+			clusterName:
+				namespace.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] ?? '',
+		},
+		start,
+		end,
+		dotMetricsEnabled,
+	);
 };

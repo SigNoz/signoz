@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { listNamespaces } from 'api/generated/services/inframonitoring';
 import {
 	InframonitoringtypesNamespaceRecordDTO,
@@ -14,6 +14,7 @@ import { InfraMonitoringEntity } from '../constants';
 import { SelectedItemParams } from '../hooks';
 import {
 	getNamespaceMetricsQueryPayload,
+	getNamespacePodMetricsQueryPayload,
 	k8sNamespaceDetailsMetadataConfig,
 	k8sNamespaceGetEntityName,
 	k8sNamespaceGetSelectedItemExpression,
@@ -26,6 +27,7 @@ import {
 	getK8sNamespaceRowKey,
 	k8sNamespacesColumnsConfig,
 } from './table.config';
+import { createPodMetricsTab } from 'container/InfraMonitoringK8sV2/EntityDetailsUtils/createPodMetricsTab';
 
 function K8sNamespacesList({
 	controlListPrefix,
@@ -116,6 +118,17 @@ function K8sNamespacesList({
 		[],
 	);
 
+	const customTabs = useMemo(
+		() => [
+			createPodMetricsTab<InframonitoringtypesNamespaceRecordDTO>({
+				getQueryPayload: getNamespacePodMetricsQueryPayload,
+				category: InfraMonitoringEntity.NAMESPACES,
+				queryKey: 'namespacePodMetrics',
+			}),
+		],
+		[],
+	);
+
 	return (
 		<>
 			<K8sBaseList<InframonitoringtypesNamespaceRecordDTO, SelectedItemParams>
@@ -140,6 +153,7 @@ function K8sNamespacesList({
 				entityWidgetInfo={namespaceWidgetInfo}
 				getEntityQueryPayload={getNamespaceMetricsQueryPayload}
 				queryKeyPrefix="namespace"
+				customTabs={customTabs}
 			/>
 		</>
 	);
