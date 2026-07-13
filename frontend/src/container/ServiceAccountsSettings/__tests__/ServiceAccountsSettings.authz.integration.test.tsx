@@ -208,7 +208,7 @@ describe('ServiceAccountsSettings (integration)', () => {
 
 		fireEvent.click(screen.getByRole('button', { name: /New Service Account/i }));
 
-		await screen.findByRole('dialog', { name: /New Service Account/i });
+		await screen.findByTestId('create-service-account-modal');
 		expect(screen.getByPlaceholderText('Enter a name')).toBeInTheDocument();
 	});
 
