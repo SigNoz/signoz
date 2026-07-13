@@ -149,7 +149,7 @@ describe('useClientExport', () => {
 
 		expect(mockDownloadFile).toHaveBeenCalledTimes(1);
 		const [content, name] = mockDownloadFile.mock.calls[0];
-		expect(name).toMatch(/^table-\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.csv$/);
+		expect(name).toBe(getTimestampedFileName('table', 'csv'));
 		expect(content).toContain('service.name');
 		expect(content).toContain('frontend');
 		expect(content).toContain('120');
