@@ -1,4 +1,5 @@
 import { message } from 'antd';
+import { REQUEST_TYPES } from 'api/v5/queryRange/constants';
 import {
 	downloadFile,
 	getTimestampedFileName,
@@ -28,7 +29,7 @@ function serialize(
 	legendMap?: Record<string, string>,
 	query?: Query,
 ): SerializedTable {
-	if (response.type === 'time_series') {
+	if (response.type === REQUEST_TYPES.TIME_SERIES) {
 		return exportTimeseriesData({
 			data: response.data.results as TimeSeriesData[],
 			yAxisUnit,
