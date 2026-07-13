@@ -2,7 +2,7 @@ import { Button } from '@signozhq/ui/button';
 import { Plus, X } from '@signozhq/icons';
 
 import { FieldContextValue } from 'container/LLMObservability/AttributeMapping/types';
-import KeySearchInput from '../KeySearchInput/KeySearchInput';
+import KeySearchInput from '../../../KeySearchInput/KeySearchInput';
 import styles from './ConditionKeyList.module.scss';
 
 interface ConditionKeyListProps {

@@ -1,8 +1,11 @@
 import { useCallback } from 'react';
+import { Divider } from '@signozhq/ui/divider';
 import { Tabs } from '@signozhq/ui/tabs';
+import { useConfirmableAction } from 'hooks/useConfirmableAction';
 
 import AttributeMappingHeader from './components/AttributeMappingHeader/AttributeMappingHeader';
 import AttributeMappingsTab from './AttributeMappingsTab/AttributeMappingsTab';
+import DiscardChangesDialog from './components/DiscardChangesDialog/DiscardChangesDialog';
 import GroupFormDrawer from './components/GroupFormDrawer/GroupFormDrawer';
 import styles from './LLMObservabilityAttributeMapping.module.scss';
 import { useAttributeMappingStore } from './AttributeMappingsTab/hooks/useAttributeMappingStore';
@@ -12,6 +15,15 @@ function LLMObservabilityAttributeMapping(): JSX.Element {
 	const store = useAttributeMappingStore();
 	const groupDrawer = useGroupFormDrawer();
 
+	const { discard } = store;
+	// Discarding wipes the whole working copy, so gate it behind a confirm
+	// prompt rather than firing straight from the button.
+	const discardConfirm = useConfirmableAction(
+		useCallback(async (): Promise<void> => {
+			discard();
+		}, [discard]),
+	);
+
 	const handleGroupSave = useCallback((): void => {
 		store.upsertGroup(groupDrawer.draft);
 		groupDrawer.close();
@@ -20,7 +32,7 @@ function LLMObservabilityAttributeMapping(): JSX.Element {
 	const tabItems = [
 		{
 			key: 'attribute-mappings',
-			label: 'Attribute mappings',
+			label: 'Attribute Mappings',
 			children: (
 				<AttributeMappingsTab
 					store={store}
@@ -46,7 +58,7 @@ function LLMObservabilityAttributeMapping(): JSX.Element {
 			<AttributeMappingHeader
 				isDirty={store.isDirty}
 				isSaving={store.isSaving}
-				onDiscard={store.discard}
+				onDiscard={discardConfirm.request}
 				onSave={store.save}
 			/>
 
@@ -55,6 +67,7 @@ function LLMObservabilityAttributeMapping(): JSX.Element {
 					{store.saveError}
 				</div>
 			)}
+			<Divider />
 
 			<Tabs
 				testId="attribute-mapping-tabs"
@@ -71,6 +84,11 @@ function LLMObservabilityAttributeMapping(): JSX.Element {
 					onSave={handleGroupSave}
 				/>
 			)}
+			<DiscardChangesDialog
+				open={discardConfirm.open}
+				onConfirm={discardConfirm.confirm}
+				onCancel={discardConfirm.cancel}
+			/>
 		</div>
 	);
 }

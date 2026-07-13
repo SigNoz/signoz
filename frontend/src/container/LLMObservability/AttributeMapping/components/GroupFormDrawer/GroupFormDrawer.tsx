@@ -64,7 +64,7 @@ function GroupFormDrawer({
 		>
 			<div className={styles.groupForm}>
 				<div className={styles.groupFormField}>
-					<span className={styles.groupFormLabel}>Group name</span>
+					<span className={styles.groupFormLabel}>Group Name</span>
 					<Input
 						placeholder="e.g. OpenAI gateway"
 						value={draft.name}
@@ -86,7 +86,7 @@ function GroupFormDrawer({
 
 				<ConditionKeyList
 					label="Condition · span attribute keys"
-					labelHint="· runs when a span attribute key contains any of these"
+					labelHint="·Runs when a span attribute key contains any of these"
 					keys={draft.attributes}
 					placeholder="e.g. gen_ai."
 					addLabel="Add attribute key"
@@ -97,7 +97,7 @@ function GroupFormDrawer({
 
 				<ConditionKeyList
 					label="Condition · resource keys"
-					labelHint="· or when a resource key contains any of these"
+					labelHint="·Or when a resource key contains any of these"
 					keys={draft.resource}
 					placeholder="e.g. service.name"
 					addLabel="Add resource key"
