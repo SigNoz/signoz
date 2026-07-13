@@ -19,6 +19,7 @@ func buildDeploymentRecords(
 	groupBy []qbtypes.GroupByKey,
 	metadataMap map[string]map[string]string,
 	phaseCounts map[string]podPhaseCounts,
+	podStatusCounts map[string]podStatusCounts,
 ) []inframonitoringtypes.DeploymentRecord {
 	metricsMap := parseFullQueryResponse(resp, groupBy)
 
@@ -75,6 +76,10 @@ func buildDeploymentRecords(
 				Failed:    phaseCountsForGroup.Failed,
 				Unknown:   phaseCountsForGroup.Unknown,
 			}
+		}
+
+		if podStatusCountsForGroup, ok := podStatusCounts[compositeKey]; ok {
+			record.PodCountsByStatus = podStatusCountsToResponse(podStatusCountsForGroup)
 		}
 
 		if attrs, ok := metadataMap[compositeKey]; ok {
@@ -140,12 +145,12 @@ func (m *module) getTopDeploymentGroups(
 	return paginateWithBackfill(allMetricGroups, metadataMap, req.GroupBy, req.Offset, req.Limit), nil
 }
 
-func (m *module) getDeploymentsTableMetadata(ctx context.Context, req *inframonitoringtypes.PostableDeployments) (map[string]map[string]string, error) {
+func (m *module) getDeploymentsTableMetadata(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableDeployments) (map[string]map[string]string, error) {
 	var nonGroupByAttrs []string
 	for _, key := range deploymentAttrKeysForMetadata {
 		if !isKeyInGroupByAttrs(req.GroupBy, key) {
 			nonGroupByAttrs = append(nonGroupByAttrs, key)
 		}
 	}
-	return m.getMetadata(ctx, deploymentsTableMetricNamesList, req.GroupBy, nonGroupByAttrs, req.Filter, req.Start, req.End)
+	return m.getMetadata(ctx, orgID, deploymentsTableMetricNamesList, req.GroupBy, nonGroupByAttrs, req.Filter, req.Start, req.End)
 }

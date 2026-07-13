@@ -1,0 +1,25 @@
+.container {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.itemWrapper {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.separator {
+	width: 3px;
+	height: 14px;
+	border-radius: 1px;
+	flex-shrink: 0;
+}
+
+.value {
+	font-variant-numeric: tabular-nums;
+	min-width: 4ch;
+	text-align: left;
+	cursor: default;
+}

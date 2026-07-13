@@ -1,0 +1,59 @@
+/* Shared drawer selectors used by 2+ of the model-cost drawer components. */
+/* Components pull these in via CSS-modules `composes` from their own module so */
+/* the authored class names in the TSX stay identical. */
+/* NOTE: this file is a `composes` target, so it is parsed as plain CSS (no SCSS */
+/* preprocessing). Keep it flat — no nesting, no slash-slash comments. */
+
+.drawerSection {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-3);
+}
+
+.drawerSection .help,
+.help {
+	margin: 0;
+}
+
+.help code {
+	padding: 1px var(--spacing-2);
+	border-radius: 3px;
+	background: var(--l3-background);
+	font-size: 10px;
+}
+
+.drawerSurface {
+	padding: var(--spacing-7);
+	border-radius: 6px;
+	background: var(--l2-background);
+	border: 1px solid var(--l2-border);
+}
+
+.drawerSurfaceHead {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: var(--spacing-5);
+}
+
+.managedLabel {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-2);
+	font-size: var(--periscope-font-size-small);
+	color: var(--l3-foreground);
+}
+
+.required {
+	color: var(--accent-cherry);
+}
+
+.pricingField {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-2);
+}
+
+.pricingField input {
+	width: 100%;
+}

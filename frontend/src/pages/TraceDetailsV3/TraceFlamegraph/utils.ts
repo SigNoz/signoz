@@ -279,6 +279,9 @@ export function drawSpanBar(args: DrawSpanBarArgs): void {
 		width,
 		height: metrics.SPAN_BAR_HEIGHT,
 		level: levelIndex,
+		// Resting group color (selected/hovered bars override the fill, but this
+		// still reflects the colour-by grouping — used by the e2e colour-by hook).
+		color: isDarkMode ? color : colorDark,
 	});
 
 	span.event?.forEach((event) => {

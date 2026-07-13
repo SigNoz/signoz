@@ -93,6 +93,14 @@
 	flex: 1;
 }
 
+.dirtyDot {
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: var(--warning-background);
+	flex: none;
+}
+
 .countPill {
 	padding: 2px 9px;
 	border-radius: 999px;

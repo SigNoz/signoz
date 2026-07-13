@@ -4,6 +4,13 @@
 	}
 }
 
+// Re-enable hover on the warning icon: its `.ant-select-arrow` parent sets
+// `pointer-events: none`, which would otherwise suppress the tooltip.
+.y-axis-unit-warning {
+	display: inline-flex;
+	pointer-events: auto;
+}
+
 .warning-state {
 	.ant-select-selector {
 		border-color: var(--bg-amber-400) !important;
@@ -16,4 +23,8 @@
 	.ant-select-clear {
 		right: 28px;
 	}
+}
+
+.y-axis-unit-warning-tooltip {
+	max-width: 240px;
 }

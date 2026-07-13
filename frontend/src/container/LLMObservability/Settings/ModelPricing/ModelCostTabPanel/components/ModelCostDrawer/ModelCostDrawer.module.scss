@@ -1,0 +1,58 @@
+.drawerSection {
+	composes: drawerSection from './shared.module.scss';
+}
+
+.fullWidth {
+	width: 100%;
+}
+
+.required {
+	composes: required from './shared.module.scss';
+}
+
+.modelCostDrawer {
+	// Uniform horizontal padding across header / body / footer. The header and
+	// footer read these dialog vars; the body (rendered in drawer-description)
+	// is set directly below.
+	--dialog-header-padding: var(--spacing-10) var(--spacing-12);
+	--dialog-footer-padding: var(--spacing-8) var(--spacing-12);
+
+	display: flex;
+	overflow-y: auto;
+
+	// The drawer body — children render inside [data-slot='drawer-description']
+	// (this is the @signozhq drawer, not antd, so .ant-drawer-body was a no-op).
+	[data-slot='drawer-description'] {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-12);
+		padding: var(--spacing-10) var(--spacing-12);
+	}
+
+	[data-slot='select-content'] {
+		width: var(--radix-select-trigger-width);
+	}
+}
+
+.title {
+	h3 {
+		margin: 0;
+		font-size: var(--periscope-font-size-medium);
+		font-weight: var(--font-weight-semibold);
+	}
+
+	p {
+		margin: var(--spacing-2) 0 0;
+		color: var(--l3-foreground);
+		font-size: 12px;
+	}
+}
+
+.footer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	// Horizontal padding is provided by the drawer-footer slot var above.
+	padding: 0;
+	width: 100%;
+}

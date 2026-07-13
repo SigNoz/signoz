@@ -1,0 +1,28 @@
+// Full-page editor: fills the route's content area as a header-over-split
+// column (the editor is its own page now, not a modal overlay).
+.page {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	min-height: 0;
+	overflow: hidden;
+	background: var(--l1-background);
+}
+
+.left {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	min-height: 0;
+}
+
+.right {
+	display: flex;
+}
+
+.handle {
+	background: var(--l1-border);
+	&:hover {
+		background: var(--l2-border);
+	}
+}

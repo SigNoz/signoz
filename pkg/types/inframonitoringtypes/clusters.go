@@ -12,7 +12,6 @@ type Clusters struct {
 	Type                   ResponseType           `json:"type" required:"true"`
 	Records                []ClusterRecord        `json:"records" required:"true" nullable:"false"`
 	Total                  int                    `json:"total" required:"true"`
-	RequiredMetricsCheck   RequiredMetricsCheck   `json:"requiredMetricsCheck" required:"true"`
 	EndTimeBeforeRetention bool                   `json:"endTimeBeforeRetention" required:"true"`
 	Warning                *qbtypes.QueryWarnData `json:"warning,omitempty"`
 }
@@ -28,6 +27,7 @@ type ClusterRecord struct {
 	ClusterMemoryAllocatable float64               `json:"clusterMemoryAllocatable" required:"true"`
 	NodeCountsByReadiness    NodeCountsByReadiness `json:"nodeCountsByReadiness" required:"true"`
 	PodCountsByPhase         PodCountsByPhase      `json:"podCountsByPhase" required:"true"`
+	PodCountsByStatus        PodCountsByStatus     `json:"podCountsByStatus" required:"true"`
 	Meta                     map[string]string     `json:"meta" required:"true"`
 }
 

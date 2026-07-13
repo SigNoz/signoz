@@ -39,15 +39,6 @@ type AuthZ interface {
 	// Gets the role if it exists or creates one.
 	GetOrCreate(context.Context, valuer.UUID, *authtypes.Role) (*authtypes.Role, error)
 
-	// Gets the objects associated with the given role and relation.
-	GetObjects(context.Context, valuer.UUID, valuer.UUID, authtypes.Relation) ([]*coretypes.Object, error)
-
-	// Patches the role.
-	Patch(context.Context, valuer.UUID, *authtypes.Role) error
-
-	// Patches the objects in authorization server associated with the given role and relation
-	PatchObjects(context.Context, valuer.UUID, string, authtypes.Relation, []*coretypes.Object, []*coretypes.Object) error
-
 	// Updates the role's metadata and reconciles its transaction groups.
 	Update(context.Context, valuer.UUID, *authtypes.RoleWithTransactionGroups) error
 
@@ -65,6 +56,9 @@ type AuthZ interface {
 
 	// Lists all the roles for the organization.
 	List(context.Context, valuer.UUID) ([]*authtypes.Role, error)
+
+	// Collect returns per-org role usage stats for the stats reporter.
+	Collect(context.Context, valuer.UUID) (map[string]any, error)
 
 	//  Lists all the roles for the organization filtered by name
 	ListByOrgIDAndNames(context.Context, valuer.UUID, []string) ([]*authtypes.Role, error)
@@ -92,20 +86,14 @@ type AuthZ interface {
 }
 
 // OnBeforeRoleDelete is a callback invoked before a role is deleted.
-type OnBeforeRoleDelete func(context.Context, valuer.UUID, valuer.UUID) error
+type OnBeforeRoleDelete func(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID, roleName string) error
 
 type Handler interface {
 	Create(http.ResponseWriter, *http.Request)
 
 	Get(http.ResponseWriter, *http.Request)
 
-	GetObjects(http.ResponseWriter, *http.Request)
-
 	List(http.ResponseWriter, *http.Request)
-
-	Patch(http.ResponseWriter, *http.Request)
-
-	PatchObjects(http.ResponseWriter, *http.Request)
 
 	Update(http.ResponseWriter, *http.Request)
 

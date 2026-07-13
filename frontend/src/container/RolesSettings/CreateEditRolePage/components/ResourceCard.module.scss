@@ -1,0 +1,68 @@
+.resourceCard {
+	display: flex;
+	flex-direction: column;
+	border: 1px solid var(--l2-border);
+	border-radius: 4px;
+	overflow: hidden;
+	background: var(--l2-background);
+	transition: border-color 0.15s ease;
+}
+
+.resourceCardError {
+	border-color: var(--destructive);
+}
+
+.resourceCardHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
+	padding: var(--spacing-6) var(--spacing-8);
+	border: none;
+	background: transparent;
+	cursor: pointer;
+	transition: background 0.15s ease;
+	text-align: left;
+
+	&:hover {
+		background: var(--l1-background-hover);
+	}
+
+	&:focus {
+		outline: 2px solid var(--primary);
+		outline-offset: -2px;
+	}
+}
+
+.resourceCardHeaderLeft {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-4);
+}
+
+.resourceCardChevron {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 16px;
+	height: 16px;
+	color: var(--l2-foreground);
+	flex-shrink: 0;
+}
+
+.resourceCardHeaderRight {
+	display: flex;
+	align-items: center;
+}
+
+.resourceCardBody {
+	display: flex;
+	flex-direction: column;
+
+	&::before {
+		content: '';
+		height: 1px;
+		margin: 0 var(--spacing-8);
+		background: var(--l2-border);
+	}
+}

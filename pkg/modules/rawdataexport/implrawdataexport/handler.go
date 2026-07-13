@@ -114,6 +114,10 @@ func validateAndApplyDefaultExportLimits(queries []qbtypes.QueryEnvelope) error 
 			return errors.NewInvalidInputf(errors.CodeInvalidInput, "limit cannot be more than %d", MaxExportRowCountLimit)
 		}
 		queries[idx].SetLimit(limit)
+
+		if queries[idx].GetOffset() < 0 {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "offset must be non-negative")
+		}
 	}
 	return nil
 }

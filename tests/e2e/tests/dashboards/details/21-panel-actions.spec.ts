@@ -107,14 +107,15 @@ function panelContainer(page: Page, title: string, index = 0): Locator {
 }
 
 /**
- * Hover the panel header (the ⋮ icon is CSS-hidden until the row is hovered)
- * and open the action dropdown. Returns the opened menu locator.
+ * Reveal the panel header's ⋮ icon and open the action dropdown. Returns the
+ * opened menu locator.
  *
- * The antd `<Dropdown>` wrapping the ⋮ icon uses `trigger={['hover']}` (see
- * `WidgetHeader/index.tsx`), so the menu opens on hover, not click —
- * dispatching a click is a no-op. We hover the container first to reveal the
- * icon (it's CSS-hidden until then) and then hover the icon itself to fire
- * the antd Dropdown's mouseenter handler.
+ * The ⋮ icon is a `@signozhq/ui` `DropdownMenuSimple` (Radix
+ * `@radix-ui/react-dropdown-menu` under the hood — see `WidgetHeader/index.tsx`),
+ * so the menu opens on click, not hover. We still hover the container first
+ * because the icon is `visibility: hidden` until the row is hovered (see the
+ * `.widget-graph-component-container:hover` rule in `GridCardLayout.styles.scss`);
+ * then we click the revealed icon to toggle the Radix menu open.
  */
 async function openPanelMoreMenu(
 	page: Page,
@@ -125,7 +126,7 @@ async function openPanelMoreMenu(
 	await container.scrollIntoViewIfNeeded();
 	await container.hover();
 	const moreOptions = container.getByTestId('widget-header-options');
-	await moreOptions.hover();
+	await moreOptions.click();
 	const menu = page.getByRole('menu');
 	await menu.waitFor({ state: 'visible' });
 	return menu;

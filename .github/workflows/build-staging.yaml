@@ -67,12 +67,6 @@ jobs:
           echo 'VITE_SENTRY_AUTH_TOKEN="${{ secrets.SENTRY_AUTH_TOKEN }}"' >> frontend/.env
           echo 'VITE_SENTRY_ORG="${{ secrets.SENTRY_ORG }}"' >> frontend/.env
           echo 'VITE_SENTRY_PROJECT_ID="${{ secrets.SENTRY_PROJECT_ID }}"' >> frontend/.env
-          echo 'VITE_SENTRY_DSN="${{ secrets.SENTRY_DSN }}"' >> frontend/.env
-          echo 'VITE_TUNNEL_URL="${{ secrets.NP_TUNNEL_URL }}"' >> frontend/.env
-          echo 'VITE_TUNNEL_DOMAIN="${{ secrets.NP_TUNNEL_DOMAIN }}"' >> frontend/.env
-          echo 'VITE_PYLON_APP_ID="${{ secrets.NP_PYLON_APP_ID }}"' >> frontend/.env
-          echo 'VITE_APPCUES_APP_ID="${{ secrets.NP_APPCUES_APP_ID }}"' >> frontend/.env
-          echo 'VITE_PYLON_IDENTITY_SECRET="${{ secrets.NP_PYLON_IDENTITY_SECRET }}"' >> frontend/.env
           echo 'VITE_DOCS_BASE_URL="https://staging.signoz.io"' >> frontend/.env
           echo 'VITE_ENVIRONMENT="staging"' >> frontend/.env
           echo 'VITE_VERSION="${{ steps.build-info.outputs.version }}"' >> frontend/.env

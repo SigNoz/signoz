@@ -1,6 +1,7 @@
 import { TableColumnsType as ColumnsType } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
+import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
 import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
 import {
 	BlockLink,
@@ -9,6 +10,7 @@ import {
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { FormatTimezoneAdjustedTimestamp } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
+import styles from './traceListColumns.module.scss';
 
 const keyToLabelMap: Record<string, string> = {
 	timestamp: 'Timestamp',
@@ -48,8 +50,9 @@ const getValueForKey = (data: Record<string, any>, key: string): any => {
 	const aliases = keyAliases[primaryKey];
 	if (aliases) {
 		for (const alias of aliases) {
-			if (data[alias] !== undefined) {
-				return data[alias];
+			const aliasedValue = data[alias] || data.resource?.[alias];
+			if (aliasedValue !== undefined) {
+				return aliasedValue;
 			}
 		}
 	}
@@ -78,7 +81,7 @@ export const getTraceListColumns = (
 
 					return (
 						<BlockLink to={getTraceLink(itemData)} openInNewTab>
-							<Typography.Text>{date}</Typography.Text>
+							<Typography.Text className={styles.cellText}>{date}</Typography.Text>
 						</BlockLink>
 					);
 				}
@@ -86,17 +89,60 @@ export const getTraceListColumns = (
 				if (value === '') {
 					return (
 						<BlockLink to={getTraceLink(itemData)} openInNewTab>
-							<Typography data-testid={key}>N/A</Typography>
+							<Typography data-testid={key} className={styles.cellText}>
+								N/A
+							</Typography>
 						</BlockLink>
 					);
 				}
 
-				if (primaryKey === 'httpMethod' || primaryKey === 'responseStatusCode') {
+				if (primaryKey === 'httpMethod') {
+					const httpMethod = getValueForKey(itemData, key);
+
+					if (!httpMethod) {
+						return (
+							<BlockLink to={getTraceLink(itemData)} openInNewTab>
+								<Typography className={styles.cellText}>N/A</Typography>
+							</BlockLink>
+						);
+					}
+
 					return (
 						<BlockLink to={getTraceLink(itemData)} openInNewTab>
-							<Badge data-testid={key} color="sakura">
-								{getValueForKey(itemData, key)}
+							<Badge
+								data-testid={key}
+								color="robin"
+								variant="outline"
+								className={styles.pointer}
+							>
+								{httpMethod}
 							</Badge>
+						</BlockLink>
+					);
+				}
+
+				if (primaryKey === 'responseStatusCode') {
+					const statusCode = getValueForKey(itemData, key);
+					const numericCode = Number(statusCode);
+					const isValidCode = !Number.isNaN(numericCode) && numericCode > 0;
+
+					if (!isValidCode) {
+						return (
+							<BlockLink to={getTraceLink(itemData)} openInNewTab>
+								<Typography className={styles.cellText}>
+									{numericCode === 0 || !statusCode ? 'N/A' : statusCode}
+								</Typography>
+							</BlockLink>
+						);
+					}
+
+					return (
+						<BlockLink to={getTraceLink(itemData)} openInNewTab>
+							<HttpStatusBadge
+								statusCode={statusCode}
+								testId={key}
+								className={styles.pointer}
+							/>
 						</BlockLink>
 					);
 				}
@@ -106,14 +152,18 @@ export const getTraceListColumns = (
 
 					return (
 						<BlockLink to={getTraceLink(itemData)} openInNewTab>
-							<Typography data-testid={key}>{getMs(durationNano)}ms</Typography>
+							<Typography data-testid={key} className={styles.cellText}>
+								{getMs(durationNano)}ms
+							</Typography>
 						</BlockLink>
 					);
 				}
 
 				return (
 					<BlockLink to={getTraceLink(itemData)} openInNewTab>
-						<Typography data-testid={key}>{getValueForKey(itemData, key)}</Typography>
+						<Typography data-testid={key} className={styles.cellText}>
+							{getValueForKey(itemData, key)}
+						</Typography>
 					</BlockLink>
 				);
 			},

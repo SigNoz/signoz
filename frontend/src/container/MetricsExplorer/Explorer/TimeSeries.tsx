@@ -191,9 +191,6 @@ function TimeSeries({
 		if (metrics[0] && yAxisUnit) {
 			updateMetricMetadata(
 				{
-					pathParams: {
-						metricName: metricNames[0],
-					},
 					data: buildUpdateMetricYAxisUnitPayload(
 						metricNames[0],
 						metrics[0],

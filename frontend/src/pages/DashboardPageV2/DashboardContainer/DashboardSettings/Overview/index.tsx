@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { patchDashboardV2 } from 'api/generated/services/dashboard';
+import { DashboardtypesPatchOpDTO } from 'api/generated/services/sigNoz.schemas';
 import type {
 	DashboardtypesGettableDashboardV2DTO,
 	DashboardtypesJSONPatchOperationDTO,
@@ -9,7 +9,7 @@ import { isEqual } from 'lodash-es';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
-import { useDashboardStore } from '../../store/useDashboardStore';
+import { useOptimisticPatch } from '../../hooks/useOptimisticPatch';
 import CrossPanelSync from './CrossPanelSync/CrossPanelSync';
 import DashboardInfoForm from './DashboardInfoForm/DashboardInfoForm';
 import UnsavedChangesFooter from './UnsavedChangesFooter/UnsavedChangesFooter';
@@ -23,7 +23,7 @@ interface OverviewProps {
 function Overview({ dashboard }: OverviewProps): JSX.Element {
 	const id = dashboard.id;
 
-	const refetch = useDashboardStore((s) => s.refetch);
+	const { patchAsync } = useOptimisticPatch();
 
 	const title = dashboard.spec.display.name;
 	const description = dashboard.spec.display.description ?? '';
@@ -55,23 +55,46 @@ function Overview({ dashboard }: OverviewProps): JSX.Element {
 
 	const buildPatch = useCallback((): DashboardtypesJSONPatchOperationDTO[] => {
 		const ops: DashboardtypesJSONPatchOperationDTO[] = [];
+		const op = (
+			operation: DashboardtypesJSONPatchOperationDTO['op'],
+			path: string,
+			value: unknown,
+		): DashboardtypesJSONPatchOperationDTO => ({ op: operation, path, value });
 		const replace = (
 			path: string,
 			value: unknown,
-		): DashboardtypesJSONPatchOperationDTO => ({
-			op: 'replace' as DashboardtypesJSONPatchOperationDTO['op'],
-			path,
-			value,
-		});
+		): DashboardtypesJSONPatchOperationDTO =>
+			op(DashboardtypesPatchOpDTO.replace, path, value);
 
 		if (updatedTitle !== title && updatedTitle !== '') {
 			ops.push(replace('/spec/display/name', updatedTitle));
 		}
 		if (updatedDescription !== description) {
-			ops.push(replace('/spec/display/description', updatedDescription));
+			// `replace` fails when the description doesn't exist yet, so add it when
+			// the current one is empty (`add` creates or replaces the member).
+			ops.push(
+				op(
+					description
+						? DashboardtypesPatchOpDTO.replace
+						: DashboardtypesPatchOpDTO.add,
+					'/spec/display/description',
+					updatedDescription,
+				),
+			);
 		}
 		if (updatedImage !== image) {
-			ops.push(replace('/image', updatedImage));
+			// `replace` fails when the image doesn't exist yet, so add it when the
+			// dashboard has none (`add` creates or replaces the member). Key off the
+			// raw stored value, not the `Base64Icons[0]`-defaulted local `image`.
+			ops.push(
+				op(
+					dashboard.image
+						? DashboardtypesPatchOpDTO.replace
+						: DashboardtypesPatchOpDTO.add,
+					'/image',
+					updatedImage,
+				),
+			);
 		}
 		if (!isEqual(updatedTags, tagsAsStrings)) {
 			ops.push(replace('/tags', stringsToTags(updatedTags)));
@@ -84,6 +107,7 @@ function Overview({ dashboard }: OverviewProps): JSX.Element {
 		description,
 		updatedImage,
 		image,
+		dashboard.image,
 		updatedTags,
 		tagsAsStrings,
 	]);
@@ -96,15 +120,14 @@ function Overview({ dashboard }: OverviewProps): JSX.Element {
 
 		try {
 			setIsSaving(true);
-			await patchDashboardV2({ id }, ops);
+			await patchAsync(ops);
 			toast.success('Dashboard updated');
-			refetch();
 		} catch (error) {
 			showErrorModal(error as APIError);
 		} finally {
 			setIsSaving(false);
 		}
-	}, [id, buildPatch, refetch, showErrorModal]);
+	}, [buildPatch, patchAsync, showErrorModal]);
 
 	useEffect(() => {
 		let numberOfUnsavedChanges = 0;

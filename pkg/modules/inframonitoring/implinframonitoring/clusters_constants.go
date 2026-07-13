@@ -27,6 +27,8 @@ var clustersTableMetricNamesList = []string{
 	"k8s.node.allocatable_memory",
 	"k8s.node.condition_ready", //TODO(nikhilmantri0902): should these metrics be used to count groups k8s.node.condition_ready and k8s.pod.phase
 	"k8s.pod.phase",
+	"k8s.pod.status_reason",
+	"k8s.container.status.reason",
 }
 
 var clusterAttrKeysForMetadata = []string{

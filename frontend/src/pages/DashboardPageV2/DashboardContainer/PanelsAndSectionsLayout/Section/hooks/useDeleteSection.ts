@@ -1,10 +1,10 @@
 import { useCallback, useState } from 'react';
 
-import { patchDashboardV2 } from 'api/generated/services/dashboard';
 import type { DashboardtypesJSONPatchOperationDTO } from 'api/generated/services/sigNoz.schemas';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
+import { useOptimisticPatch } from '../../../hooks/useOptimisticPatch';
 import { removePanelOp, removeSectionOp } from '../../../patchOps';
 import { useDashboardStore } from '../../../store/useDashboardStore';
 import type { DashboardSection } from '../../../utils';
@@ -24,7 +24,7 @@ interface Result {
  */
 export function useDeleteSection({ section }: Params): Result {
 	const dashboardId = useDashboardStore((s) => s.dashboardId);
-	const refetch = useDashboardStore((s) => s.refetch);
+	const { patchAsync } = useOptimisticPatch();
 	const [isSaving, setIsSaving] = useState(false);
 	const { showErrorModal } = useErrorModal();
 
@@ -38,14 +38,13 @@ export function useDeleteSection({ section }: Params): Result {
 		ops.push(removeSectionOp(section.layoutIndex));
 		try {
 			setIsSaving(true);
-			await patchDashboardV2({ id: dashboardId }, ops);
-			refetch();
+			await patchAsync(ops);
 		} catch (error) {
 			showErrorModal(error as APIError);
 		} finally {
 			setIsSaving(false);
 		}
-	}, [section, dashboardId, refetch, showErrorModal]);
+	}, [section, dashboardId, patchAsync, showErrorModal]);
 
 	return { deleteSection, isSaving };
 }

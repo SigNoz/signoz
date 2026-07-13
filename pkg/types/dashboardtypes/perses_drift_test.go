@@ -30,6 +30,7 @@ func TestDashboardSpecMatchesPerses(t *testing.T) {
 		{"DatasourceSpec", typeOf[DatasourceSpec](), typeOf[datasource.Spec]()},
 		{"Variable", typeOf[Variable](), typeOf[dashboard.Variable]()},
 		{"ListVariableSpec", typeOf[ListVariableSpec](), typeOf[dashboard.ListVariableSpec]()},
+		{"TextVariableSpec", typeOf[TextVariableSpec](), typeOf[dashboard.TextVariableSpec]()},
 		{"Layout", typeOf[Layout](), typeOf[dashboard.Layout]()},
 	}
 

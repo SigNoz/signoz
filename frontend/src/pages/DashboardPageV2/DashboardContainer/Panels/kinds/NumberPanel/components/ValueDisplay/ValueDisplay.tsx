@@ -24,9 +24,7 @@ interface ValueDisplayProps {
 
 /**
  * Renders a single large scalar with optional prefix/suffix units and threshold
- * recoloring (text or background). A V2-native replacement for the V1
- * `ValueGraph` — depends only on V2 threshold utilities and the shared icon/
- * typography primitives.
+ * recoloring (text or background). V2-native replacement for the V1 `ValueGraph`.
  */
 function ValueDisplay({
 	value,

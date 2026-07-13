@@ -1,10 +1,17 @@
-.members-settings {
+@use '../../styles/scrollbar' as *;
+
+.members-settings-page {
 	display: flex;
 	flex-direction: column;
 	gap: var(--spacing-8);
 	padding: var(--padding-4) var(--padding-2) var(--padding-6) var(--padding-4);
 	height: 100%;
+	overflow-y: auto;
 
+	@include custom-scrollbar;
+}
+
+.members-settings {
 	&__header {
 		display: flex;
 		flex-direction: column;
@@ -26,7 +33,8 @@
 		color: var(--foreground);
 		letter-spacing: -0.07px;
 		line-height: var(--paragraph-base-400-line-height);
-		margin: 0;
+		margin-bottom: var(--spacing-8);
+		margin-top: 0;
 	}
 
 	&__controls {

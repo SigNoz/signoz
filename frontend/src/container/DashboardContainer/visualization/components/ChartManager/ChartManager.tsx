@@ -3,7 +3,6 @@ import { Input } from '@signozhq/ui/input';
 import { Button } from 'antd';
 import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
 import { ResizeTable } from 'components/ResizeTable';
-import { useNotifications } from 'hooks/useNotifications';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import { usePlotContext } from 'lib/uPlotV2/context/PlotContext';
 import useLegendsSync from 'lib/uPlotV2/hooks/useLegendsSync';
@@ -11,6 +10,7 @@ import {
 	selectIsDashboardLocked,
 	useDashboardStore,
 } from 'providers/Dashboard/store/useDashboardStore';
+import { toast } from '@signozhq/ui/sonner';
 
 import { getChartManagerColumns } from './getChartMangerColumns';
 import { ExtendedChartDataset, getDefaultTableDataSet } from './utils';
@@ -44,7 +44,6 @@ export default function ChartManager({
 	decimalPrecision = PrecisionOptionsEnum.TWO,
 	onCancel,
 }: ChartManagerProps): JSX.Element {
-	const { notifications } = useNotifications();
 	const { legendItemsMap } = useLegendsSync({
 		config,
 		subscribeToFocusChange: false,
@@ -136,11 +135,9 @@ export default function ChartManager({
 
 	const handleSave = useCallback((): void => {
 		syncSeriesVisibilityToLocalStorage();
-		notifications.success({
-			message: 'The updated graphs & legends are saved',
-		});
+		toast.success('The updated graphs & legends are saved');
 		onCancel?.();
-	}, [syncSeriesVisibilityToLocalStorage, notifications, onCancel]);
+	}, [syncSeriesVisibilityToLocalStorage, onCancel]);
 
 	return (
 		<div className="chart-manager-container">

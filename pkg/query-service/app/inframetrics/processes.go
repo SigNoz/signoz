@@ -43,7 +43,7 @@ func NewProcessesRepo(reader interfaces.Reader, querierV2 interfaces.Querier) *P
 	return &ProcessesRepo{reader: reader, querierV2: querierV2}
 }
 
-func (p *ProcessesRepo) GetProcessAttributeKeys(ctx context.Context, req v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
+func (p *ProcessesRepo) GetProcessAttributeKeys(ctx context.Context, orgID valuer.UUID, req v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
 	// TODO(srikanthccv): remove hardcoded metric name and support keys from any system metric
 	req.DataSource = v3.DataSourceMetrics
 	req.AggregateAttribute = GetDotMetrics("process_memory_usage")
@@ -51,7 +51,7 @@ func (p *ProcessesRepo) GetProcessAttributeKeys(ctx context.Context, req v3.Filt
 		req.Limit = 50
 	}
 
-	attributeKeysResponse, err := p.reader.GetMetricAttributeKeys(ctx, &req)
+	attributeKeysResponse, err := p.reader.GetMetricAttributeKeys(ctx, orgID, &req)
 	if err != nil {
 		return nil, err
 	}
@@ -69,14 +69,14 @@ func (p *ProcessesRepo) GetProcessAttributeKeys(ctx context.Context, req v3.Filt
 	return &v3.FilterAttributeKeyResponse{AttributeKeys: filteredKeys}, nil
 }
 
-func (p *ProcessesRepo) GetProcessAttributeValues(ctx context.Context, req v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
+func (p *ProcessesRepo) GetProcessAttributeValues(ctx context.Context, orgID valuer.UUID, req v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
 	req.DataSource = v3.DataSourceMetrics
 	req.AggregateAttribute = GetDotMetrics("process_memory_usage")
 	if req.Limit == 0 {
 		req.Limit = 50
 	}
 
-	attributeValuesResponse, err := p.reader.GetMetricAttributeValues(ctx, &req)
+	attributeValuesResponse, err := p.reader.GetMetricAttributeValues(ctx, orgID, &req)
 	if err != nil {
 		return nil, err
 	}

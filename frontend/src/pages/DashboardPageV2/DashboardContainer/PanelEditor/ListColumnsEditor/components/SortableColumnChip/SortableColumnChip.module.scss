@@ -1,0 +1,41 @@
+.chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	height: 28px;
+	padding: 0 8px;
+	border: 1px solid var(--l2-border);
+	border-radius: 4px;
+	background-color: var(--l2-background);
+}
+
+// Shrink the icon Button to the chip's compact footprint (defaults are 2rem
+// square with 0.5rem padding) via the component's CSS-custom-property hooks.
+.grip {
+	--button-height: 16px;
+	--button-width: 16px;
+	--button-padding: 0;
+	cursor: grab;
+
+	&:active {
+		cursor: grabbing;
+	}
+}
+
+.chipName {
+	max-width: 180px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 12px;
+	color: var(--l1-foreground);
+}
+
+.remove {
+	--button-height: 16px;
+	--button-width: 16px;
+	--button-padding: 0;
+	// Keep the V1 affordance: neutral by default, cherry-red on hover.
+	--button-variant-ghost-hover-color: var(--bg-cherry-400);
+	--button-variant-ghost-hover-background-color: transparent;
+}

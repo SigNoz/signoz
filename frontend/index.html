@@ -111,11 +111,10 @@
 		<div id="root"></div>
 
 		<script>
-			var PYLON_APP_ID = '<%- PYLON_APP_ID %>';
 			var pylonSettings =
 				((window.signozBootData || {}).settings || {}).pylon || {};
-			var pylonEnabled = pylonSettings.enabled !== false;
-			if (PYLON_APP_ID && pylonEnabled) {
+			var pylonEnabled = pylonSettings.enabled === true;
+			if (pylonSettings.appId && pylonEnabled) {
 				(function () {
 					var e = window;
 					var t = document;
@@ -133,7 +132,7 @@
 						e.setAttribute('async', 'true');
 						e.setAttribute(
 							'src',
-							'https://widget.usepylon.com/widget/' + PYLON_APP_ID,
+							'https://widget.usepylon.com/widget/' + pylonSettings.appId,
 						);
 						var n = t.getElementsByTagName('script')[0];
 						n.parentNode.insertBefore(e, n);
@@ -150,15 +149,14 @@
 			window.AppcuesSettings = { enableURLDetection: true };
 		</script>
 		<script>
-			var APPCUES_APP_ID = '<%- APPCUES_APP_ID %>';
 			var appcuesSettings =
 				((window.signozBootData || {}).settings || {}).appcues || {};
-			var appcuesEnabled = appcuesSettings.enabled !== false;
-			if (APPCUES_APP_ID && appcuesEnabled) {
+			var appcuesEnabled = appcuesSettings.enabled === true;
+			if (appcuesSettings.appId && appcuesEnabled) {
 				(function (d, t) {
 					var a = d.createElement(t);
 					a.async = 1;
-					a.src = '//fast.appcues.com/' + APPCUES_APP_ID + '.js';
+					a.src = '//fast.appcues.com/' + appcuesSettings.appId + '.js';
 					var s = d.getElementsByTagName(t)[0];
 					s.parentNode.insertBefore(a, s);
 				})(document, 'script');

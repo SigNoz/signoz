@@ -6,26 +6,28 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestValidReferences(t *testing.T) {
-	// An empty set returns "" so callers don't surface a bare "valid references: ".
-	assert.Equal(t, "", ValidReferences[string]())
+func TestNewValidReferences(t *testing.T) {
+	// An empty set returns "" so callers don't surface a bare "valid <noun> are".
+	assert.Equal(t, "", NewValidReferences[string](NounFields))
 
-	assert.Equal(t, "valid references: `a`, `b`", ValidReferences("a", "b"))
+	// The noun phrases the list, e.g. "valid fields are", "valid keys are".
+	assert.Equal(t, "valid fields are `a`, `b`", NewValidReferences(NounFields, "a", "b"))
+	assert.Equal(t, "valid keys are `a`, `b`", NewValidReferences(NounKeys, "a", "b"))
 }
 
-func TestSuggestionsOnLevenshteinDistance(t *testing.T) {
-	// No valid inputs => no suggestions at all (no bare "valid references: ").
-	assert.Empty(t, SuggestionsOnLevenshteinDistance("foo", nil))
+func TestNewSuggestionsOnLevenshteinDistance(t *testing.T) {
+	// No valid inputs => no suggestions at all (no bare "valid <noun> are").
+	assert.Empty(t, NewSuggestionsOnLevenshteinDistance("foo", NounFields, nil))
 
 	// Close match => did-you-mean plus the valid-references list.
 	assert.Equal(t,
-		[]string{"did you mean: `name`", "valid references: `name`, `color`"},
-		SuggestionsOnLevenshteinDistance("nam", []string{"name", "color"}),
+		[]string{"did you mean: `name`", "valid fields are `name`, `color`"},
+		NewSuggestionsOnLevenshteinDistance("nam", NounFields, []string{"name", "color"}),
 	)
 
 	// No close match => valid-references list only.
 	assert.Equal(t,
-		[]string{"valid references: `name`, `color`"},
-		SuggestionsOnLevenshteinDistance("zzzzz", []string{"name", "color"}),
+		[]string{"valid fields are `name`, `color`"},
+		NewSuggestionsOnLevenshteinDistance("zzzzz", NounFields, []string{"name", "color"}),
 	)
 }

@@ -1,4 +1,12 @@
 .dashboard-navigation {
+	// Meant to fix the query builder colors
+	--input-background: var(--l2-background);
+	--input-hover-background: var(--l2-background);
+	--input-focus-background: var(--l2-background);
+	--input-border-color: var(--l2-border);
+	--input-hover-border-color: var(--internal-ant-border-color-hover);
+	--input-focus-border-color: var(--internal-ant-border-color-hover);
+
 	.run-query-dashboard-btn {
 		min-width: 180px;
 	}

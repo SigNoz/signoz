@@ -101,6 +101,7 @@ type promqlQuery struct {
 }
 
 var _ qbv5.Query = (*promqlQuery)(nil)
+var _ qbv5.StatementProvider = (*promqlQuery)(nil)
 
 func newPromqlQuery(
 	logger *slog.Logger,
@@ -218,6 +219,62 @@ func (q *promqlQuery) renderVars(query string, vars map[string]qbv5.VariableItem
 		return "", errors.WrapInternalf(err, errors.CodeInternal, "error while replacing template variables")
 	}
 	return newQuery.String(), nil
+}
+
+// Statement renders the PromQL string (no SQL args) without executing it, for
+// the preview path.
+func (q *promqlQuery) Statement(_ context.Context) (*qbv5.Statement, error) {
+	rendered, err := q.renderVars(q.query.Query, q.vars, q.tr.From, q.tr.To)
+	if err != nil {
+		return nil, err
+	}
+	return &qbv5.Statement{Query: rendered}, nil
+}
+
+// PreviewStatements returns the ClickHouse statement(s) this PromQL query would
+// run, captured by driving the engine with a Storage that records each selector's
+// SQL and returns no data. Returns nil if capture is unsupported.
+func (q *promqlQuery) PreviewStatements(ctx context.Context) ([]prometheus.CapturedStatement, error) {
+	storer, ok := q.promEngine.(prometheus.StatementCapturer)
+	if !ok {
+		return nil, nil
+	}
+
+	rendered, err := q.renderVars(q.query.Query, q.vars, q.tr.From, q.tr.To)
+	if err != nil {
+		return nil, err
+	}
+
+	start := int64(querybuilder.ToNanoSecs(q.tr.From))
+	end := int64(querybuilder.ToNanoSecs(q.tr.To))
+
+	capStorage, recorder := storer.CapturingStorage()
+	qry, err := q.promEngine.Engine().NewRangeQuery(
+		ctx,
+		capStorage,
+		nil,
+		rendered,
+		time.Unix(0, start),
+		time.Unix(0, end),
+		q.query.Step.Duration,
+	)
+	if err != nil {
+		if e := tryEnhancePromQLExecError(err); e != nil {
+			return nil, e
+		}
+		return nil, enhancePromQLError(rendered, err)
+	}
+	defer qry.Close()
+
+	// Exec drives a Select per selector (recording SQL) but reads no data.
+	if res := qry.Exec(ctx); res.Err != nil {
+		if e := tryEnhancePromQLExecError(res.Err); e != nil {
+			return nil, e
+		}
+		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "query execution error: %v", res.Err)
+	}
+
+	return recorder.Statements(), nil
 }
 
 func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {

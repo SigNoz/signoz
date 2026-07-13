@@ -1,0 +1,26 @@
+.modelCell {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-1);
+	min-width: 0;
+}
+
+.extraBuckets {
+	display: flex;
+	// Keep chips on a single line so the row stays at the table's fixed row
+	// height; the column flexes to 100% so there's room for both.
+	flex-wrap: nowrap;
+	gap: var(--spacing-3);
+	overflow: hidden;
+}
+
+.extraBucketsChip {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-3);
+	margin: 0;
+}
+
+.sourceBadge {
+	margin: 0;
+}

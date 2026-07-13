@@ -23,6 +23,8 @@ var namespacesTableMetricNamesList = []string{
 	"k8s.pod.cpu.usage",
 	"k8s.pod.memory.working_set",
 	"k8s.pod.phase",
+	"k8s.pod.status_reason",
+	"k8s.container.status.reason",
 }
 
 var namespaceAttrKeysForMetadata = []string{

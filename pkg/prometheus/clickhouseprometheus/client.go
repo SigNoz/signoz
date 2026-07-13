@@ -204,8 +204,9 @@ func (client *client) getFingerprintsFromClickhouseQuery(ctx context.Context, qu
 	return fingerprints, nil
 }
 
-func (client *client) querySamples(ctx context.Context, start int64, end int64, fingerprints map[uint64][]prompb.Label, metricName string, subQuery string, args []any) ([]*prompb.TimeSeries, error) {
-	ctx = client.withClickhousePrometheusContext(ctx, "querySamples")
+// buildSamplesQuery renders the samples SQL (and args) that fetches data
+// points for the series selected by subQuery.
+func buildSamplesQuery(start int64, end int64, metricName string, subQuery string, args []any) (string, []any) {
 	argCount := len(args)
 
 	query := fmt.Sprintf(`
@@ -217,6 +218,13 @@ func (client *client) querySamples(ctx context.Context, start int64, end int64, 
 
 	allArgs := append([]any{metricName}, args...)
 	allArgs = append(allArgs, start, end)
+	return query, allArgs
+}
+
+func (client *client) querySamples(ctx context.Context, start int64, end int64, fingerprints map[uint64][]prompb.Label, metricName string, subQuery string, args []any) ([]*prompb.TimeSeries, error) {
+	ctx = client.withClickhousePrometheusContext(ctx, "querySamples")
+
+	query, allArgs := buildSamplesQuery(start, end, metricName, subQuery, args)
 
 	rows, err := client.telemetryStore.ClickhouseDB().Query(ctx, query, allArgs...)
 	if err != nil {

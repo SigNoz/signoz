@@ -392,17 +392,17 @@ test.describe('Dashboard Detail — Sections', () => {
 			page.getByText(panelName, { exact: true }).first(),
 		).toBeVisible();
 
-		// The panel ⋮ menu opens on HOVER (not click) — see
-		// `openPanelMoreMenu` in 21-panel-actions.spec.ts. Clicking the kebab
-		// can momentarily toggle the menu and immediately re-close it, racing
-		// the menuitem click on the next line. Use hover and wait for the
-		// menu role to be visible before clicking Delete.
+		// The panel ⋮ menu is a Radix `DropdownMenuSimple` — it opens on click,
+		// not hover (see `openPanelMoreMenu` in 21-panel-actions.spec.ts). The
+		// container hover only reveals the kebab (it's `visibility: hidden`
+		// until then); the click toggles the menu. Wait for the menu role to be
+		// visible before clicking Delete.
 		const panelTitle = page.getByText(panelName, { exact: true }).first();
 		await panelTitle.hover();
 		const panelContainer = panelTitle.locator('../..');
 		await panelContainer.scrollIntoViewIfNeeded();
 		await panelContainer.hover();
-		await panelContainer.getByTestId('widget-header-options').hover();
+		await panelContainer.getByTestId('widget-header-options').click();
 		const menu = page.getByRole('menu');
 		await menu.waitFor({ state: 'visible' });
 		await menu.getByRole('menuitem', { name: 'Delete', exact: true }).click();

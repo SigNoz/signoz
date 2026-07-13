@@ -2,6 +2,7 @@ import { Button } from 'antd';
 import { Checkbox } from '@signozhq/ui/checkbox';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 
 interface CheckboxValueRowProps {
 	value: string;
@@ -46,9 +47,11 @@ function CheckboxValueRow({
 				{customRendererForValue ? (
 					customRendererForValue(value)
 				) : (
-					<Typography.Text className="value-string" truncate={1}>
-						{String(value)}
-					</Typography.Text>
+					<TooltipSimple title={String(value)} side="top" align="start">
+						<Typography.Text className="value-string" truncate={1}>
+							{String(value)}
+						</Typography.Text>
+					</TooltipSimple>
 				)}
 				<Button type="text" className="only-btn">
 					{onlyButtonLabel}

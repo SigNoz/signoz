@@ -12,22 +12,24 @@ type DaemonSets struct {
 	Type                   ResponseType           `json:"type" required:"true"`
 	Records                []DaemonSetRecord      `json:"records" required:"true" nullable:"false"`
 	Total                  int                    `json:"total" required:"true"`
-	RequiredMetricsCheck   RequiredMetricsCheck   `json:"requiredMetricsCheck" required:"true"`
 	EndTimeBeforeRetention bool                   `json:"endTimeBeforeRetention" required:"true"`
 	Warning                *qbtypes.QueryWarnData `json:"warning,omitempty"`
 }
 
 type DaemonSetRecord struct {
-	DaemonSetName          string           `json:"daemonSetName" required:"true"`
-	DaemonSetCPU           float64          `json:"daemonSetCPU" required:"true"`
-	DaemonSetCPURequest    float64          `json:"daemonSetCPURequest" required:"true"`
-	DaemonSetCPULimit      float64          `json:"daemonSetCPULimit" required:"true"`
-	DaemonSetMemory        float64          `json:"daemonSetMemory" required:"true"`
-	DaemonSetMemoryRequest float64          `json:"daemonSetMemoryRequest" required:"true"`
-	DaemonSetMemoryLimit   float64          `json:"daemonSetMemoryLimit" required:"true"`
+	DaemonSetName          string            `json:"daemonSetName" required:"true"`
+	DaemonSetCPU           float64           `json:"daemonSetCPU" required:"true"`
+	DaemonSetCPURequest    float64           `json:"daemonSetCPURequest" required:"true"`
+	DaemonSetCPULimit      float64           `json:"daemonSetCPULimit" required:"true"`
+	DaemonSetMemory        float64           `json:"daemonSetMemory" required:"true"`
+	DaemonSetMemoryRequest float64           `json:"daemonSetMemoryRequest" required:"true"`
+	DaemonSetMemoryLimit   float64           `json:"daemonSetMemoryLimit" required:"true"`
 	DesiredNodes           int               `json:"desiredNodes" required:"true"`
 	CurrentNodes           int               `json:"currentNodes" required:"true"`
+	ReadyNodes             int               `json:"readyNodes" required:"true"`
+	MisscheduledNodes      int               `json:"misscheduledNodes" required:"true"`
 	PodCountsByPhase       PodCountsByPhase  `json:"podCountsByPhase" required:"true"`
+	PodCountsByStatus      PodCountsByStatus `json:"podCountsByStatus" required:"true"`
 	Meta                   map[string]string `json:"meta" required:"true"`
 }
 

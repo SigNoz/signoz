@@ -8,13 +8,14 @@ import {
 	GetMetricQueryRange,
 	GetQueryResultsProps,
 } from 'lib/dashboard/getQueryResults';
-import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
+import { prepareChartData } from 'lib/uPlotV2/utils/dataUtils';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import uPlot from 'uplot';
 
-import { FeatureKeys } from '../../../../constants/features';
-import { useAppContext } from '../../../../providers/App/App';
-import { getMetricsTableData } from './utils';
+import { FeatureKeys } from 'constants/features';
+import { useAppContext } from 'providers/App/App';
+import { getMetricsTableData, MetricsTableData } from './utils';
 
 export interface UseEntityMetricsParams<T> {
 	queryKey: string;
@@ -32,10 +33,8 @@ export interface UseEntityMetricsParams<T> {
 
 export interface UseEntityMetricsResult {
 	queries: UseQueryResult<SuccessResponse<MetricRangePayloadProps>, unknown>[];
-	chartData: (
-		| ReturnType<typeof getUPlotChartData>
-		| ReturnType<typeof getMetricsTableData>
-	)[];
+	chartData: (uPlot.AlignedData | null)[];
+	tableData: (MetricsTableData[] | null)[];
 	queryPayloads: GetQueryResultsProps[];
 }
 
@@ -93,9 +92,22 @@ export function useEntityMetrics<T>({
 		() =>
 			queries.map(({ data }, index) => {
 				const panelType = queryPayloads[index]?.graphType;
-				return panelType === PANEL_TYPES.TABLE
-					? getMetricsTableData(data)
-					: getUPlotChartData(data?.payload);
+				if (panelType === PANEL_TYPES.TABLE) {
+					return null;
+				}
+				return data?.payload ? prepareChartData(data.payload) : null;
+			}),
+		[queries, queryPayloads],
+	);
+
+	const tableData = useMemo(
+		() =>
+			queries.map(({ data }, index) => {
+				const panelType = queryPayloads[index]?.graphType;
+				if (panelType !== PANEL_TYPES.TABLE) {
+					return null;
+				}
+				return getMetricsTableData(data);
 			}),
 		[queries, queryPayloads],
 	);
@@ -103,6 +115,7 @@ export function useEntityMetrics<T>({
 	return {
 		queries,
 		chartData,
+		tableData,
 		queryPayloads,
 	};
 }

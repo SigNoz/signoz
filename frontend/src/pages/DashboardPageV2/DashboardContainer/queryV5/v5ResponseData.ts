@@ -2,6 +2,7 @@ import type {
 	Querybuildertypesv5AggregationBucketDTO,
 	Querybuildertypesv5ExecStatsDTO,
 	Querybuildertypesv5RawDataDTO,
+	Querybuildertypesv5RequestTypeDTO,
 	Querybuildertypesv5ScalarDataDTO,
 	Querybuildertypesv5TimeSeriesDataDTO,
 	Querybuildertypesv5TimeSeriesDTO,
@@ -11,12 +12,8 @@ import { isEmpty } from 'lodash-es';
 
 import type { PanelSeries, PanelSeriesKind } from './types';
 
-/**
- * The generated `Querybuildertypesv5QueryDataDTO` union erases the `results`
- * element type to `unknown[]` (Orval limitation), so each accessor here
- * narrows it once — guarded by the response `type` discriminator — to the
- * generated per-element DTO. This is the single place that cast lives.
- */
+// Orval erases the response `results` element type to `unknown[]`, so each accessor here narrows
+// it once — guarded by the response `type` discriminator. The single place that cast lives.
 
 export function getTimeSeriesResults(
 	response: QueryRangeV5200 | undefined,
@@ -48,6 +45,13 @@ export function getRawResults(
 	return (data.data?.results ?? []) as Querybuildertypesv5RawDataDTO[];
 }
 
+/** Response request-type discriminator (raw/trace/scalar/time_series); detects a stale cross-type response. */
+export function getResponseType(
+	response: QueryRangeV5200 | undefined,
+): Querybuildertypesv5RequestTypeDTO | undefined {
+	return response?.data?.type;
+}
+
 /** Exec stats (incl. per-query `stepIntervals`) from the response top level. */
 export function getExecStats(
 	response: QueryRangeV5200 | undefined,
@@ -55,8 +59,10 @@ export function getExecStats(
 	return response?.data?.meta;
 }
 
-// V5 labels are `{key: {name}, value}` pairs; renderers want a flat
-// name → value record with string values (uPlot/getLabelName contract).
+/**
+ * V5 labels are `{key: {name}, value}` pairs → flat name → value record with string values
+ * (uPlot/getLabelName contract).
+ */
 function labelsToRecord(
 	series: Querybuildertypesv5TimeSeriesDTO,
 ): Record<string, string> {
@@ -70,10 +76,8 @@ function labelsToRecord(
 }
 
 /**
- * Legend/labels backfill, V1 parity (`convertV5ResponseToLegacy` +
- * `GetMetricQueryRange`'s post pass): a series with no labels falls back to
- * the query name as its legend, and mirrors the name into `labels` so
- * downstream label-driven naming has something to show.
+ * Legend/labels backfill (V1 parity): a series with no labels falls back to the query name as its
+ * legend and mirrors the name into `labels` so downstream label-driven naming has something to show.
  */
 function resolveLegendAndLabels(
 	queryName: string,
@@ -104,10 +108,9 @@ const BUCKET_FIELD_TO_KIND: Record<
 };
 
 /**
- * Flattens the V5 time-series result tree
- * (`results[].aggregations[].series[]` + anomaly companions) into the flat
- * `PanelSeries[]` the chart renderers iterate. Values stay numeric and
- * timestamps stay epoch-ms (V5 wire native) — no legacy stringification.
+ * Flattens the V5 time-series result tree (`results[].aggregations[].series[]` + anomaly
+ * companions) into the flat `PanelSeries[]` renderers iterate. Values stay numeric, timestamps
+ * stay epoch-ms — no legacy stringification.
  */
 export function flattenTimeSeries(
 	results: Querybuildertypesv5TimeSeriesDataDTO[],
@@ -115,8 +118,7 @@ export function flattenTimeSeries(
 ): PanelSeries[] {
 	const flattened: PanelSeries[] = [];
 
-	// Kind-outer iteration so the flat order matches what the legacy chain
-	// produced (per query: all plain series across aggregations, then the
+	// Kind-outer iteration so flat order matches the legacy chain (per query: plain series, then
 	// anomaly companions) — series order drives uPlot color assignment.
 	results.forEach((result) => {
 		const queryName = result.queryName ?? '';

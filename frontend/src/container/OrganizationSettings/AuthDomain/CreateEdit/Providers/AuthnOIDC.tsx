@@ -38,7 +38,7 @@ function ConfigureOIDCAuthnProvider({
 					Configure OpenID Connect Single Sign-On with your Identity Provider. Read
 					the{' '}
 					<a
-						href="https://signoz.io/docs/userguide/sso-authentication"
+						href="https://signoz.io/docs/manage/administrator-guide/sso/overview/"
 						target="_blank"
 						rel="noreferrer"
 					>

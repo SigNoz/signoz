@@ -53,14 +53,14 @@ func (p *NamespacesRepo) GetNamespaceAttributeKeys(ctx context.Context, req v3.F
 	return &v3.FilterAttributeKeyResponse{AttributeKeys: attributesKeysForNamespaces}, nil
 }
 
-func (p *NamespacesRepo) GetNamespaceAttributeValues(ctx context.Context, req v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
+func (p *NamespacesRepo) GetNamespaceAttributeValues(ctx context.Context, orgID valuer.UUID, req v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
 	req.DataSource = v3.DataSourceMetrics
 	req.AggregateAttribute = metricToUseForNamespaces
 	if req.Limit == 0 {
 		req.Limit = 50
 	}
 
-	attributeValuesResponse, err := p.reader.GetMetricAttributeValues(ctx, &req)
+	attributeValuesResponse, err := p.reader.GetMetricAttributeValues(ctx, orgID, &req)
 	if err != nil {
 		return nil, err
 	}

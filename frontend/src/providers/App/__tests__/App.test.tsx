@@ -4,11 +4,14 @@ import { renderHook, waitFor } from '@testing-library/react';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import { getIsNoAuthMode, setNoAuthMode } from 'utils/noAuthMode';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { SINGLE_FLIGHT_WAIT_TIME_MS } from 'hooks/useAuthZ/constants';
+import { SINGLE_FLIGHT_WAIT_TIME_MS } from 'lib/authz/hooks/useAuthZ/constants';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { USER_ROLES } from 'types/roles';
-import { AUTHZ_CHECK_URL, authzMockResponse } from 'tests/authz-test-utils';
+import {
+	AUTHZ_CHECK_URL,
+	authzMockResponse,
+} from 'lib/authz/utils/authz-test-utils';
 
 import { AppProvider, useAppContext } from '../App';
 

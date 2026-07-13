@@ -30,7 +30,6 @@ func TestFilterExprLogsBodyJSON(t *testing.T) {
 		ConditionBuilder: cb,
 		FieldKeys:        keys,
 		FullTextColumn:   &telemetrytypes.TelemetryFieldKey{Name: "body"},
-		JsonKeyToKey:     GetBodyJSONKey,
 	}
 
 	testCases := []struct {

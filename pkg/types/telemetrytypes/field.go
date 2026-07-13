@@ -172,58 +172,13 @@ func (f *TelemetryFieldKey) Normalize() {
 
 }
 
-// GetFieldKeyFromKeyText returns a TelemetryFieldKey from a key text.
-// The key text is expected to be in the format of `fieldContext.fieldName:fieldDataType` in the search query.
-// Both fieldContext and :fieldDataType are optional.
-// fieldName can contain dots and can start with a dot (e.g., ".http_code").
-// Special cases:
-// - When key exactly matches a field context name (e.g., "body", "attribute"), use unspecified context.
-// - When key starts with "body." prefix, use "body" as context with remainder as field name.
+// GetFieldKeyFromKeyText returns a TelemetryFieldKey parsed from a key text of the
+// form `fieldContext.fieldName:fieldDataType` (context and :dataType optional). It
+// delegates to Normalize; see Normalize for the parsing rules and special cases.
 func GetFieldKeyFromKeyText(key string) TelemetryFieldKey {
-	var explicitFieldDataType = FieldDataTypeUnspecified
-	var fieldName string
-
-	// Step 1: Parse data type from the right (after the last ":")
-	var keyWithoutDataType string
-	if colonIdx := strings.LastIndex(key, ":"); colonIdx != -1 {
-		potentialDataType := key[colonIdx+1:]
-		if dt, ok := fieldDataTypes[potentialDataType]; ok && dt != FieldDataTypeUnspecified {
-			explicitFieldDataType = dt
-			keyWithoutDataType = key[:colonIdx]
-		} else {
-			// No valid data type found, treat the entire key as the field name
-			keyWithoutDataType = key
-		}
-	} else {
-		keyWithoutDataType = key
-	}
-
-	// Step 2: Parse field context from the left
-	if dotIdx := strings.Index(keyWithoutDataType, "."); dotIdx != -1 {
-		potentialContext := keyWithoutDataType[:dotIdx]
-		if fc, ok := fieldContexts[potentialContext]; ok && fc != FieldContextUnspecified {
-			fieldName = keyWithoutDataType[dotIdx+1:]
-
-			// Step 2a: Handle special case for log.body.* fields
-			if fc == FieldContextLog && strings.HasPrefix(fieldName, BodyJSONStringSearchPrefix) {
-				fc = FieldContextBody
-				fieldName = strings.TrimPrefix(fieldName, BodyJSONStringSearchPrefix)
-			}
-
-			return TelemetryFieldKey{
-				Name:          fieldName,
-				FieldContext:  fc,
-				FieldDataType: explicitFieldDataType,
-			}
-		}
-	}
-
-	// Step 3: No context found, entire key is the field name
-	return TelemetryFieldKey{
-		Name:          keyWithoutDataType,
-		FieldContext:  FieldContextUnspecified,
-		FieldDataType: explicitFieldDataType,
-	}
+	f := TelemetryFieldKey{Name: key}
+	f.Normalize()
+	return f
 }
 
 func TelemetryFieldKeyToText(key *TelemetryFieldKey) string {

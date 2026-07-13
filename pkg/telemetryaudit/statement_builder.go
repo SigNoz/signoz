@@ -49,7 +49,6 @@ func NewAuditQueryStatementBuilder(
 		telemetrytypes.SourceAudit,
 		metadataStore,
 		fullTextColumn,
-		jsonKeyToKey,
 		flagger,
 	)
 
@@ -551,7 +550,6 @@ func (b *auditQueryStatementBuilder) addFilterCondition(
 			FieldKeys:          keys,
 			SkipResourceFilter: true,
 			FullTextColumn:     b.fullTextColumn,
-			JsonKeyToKey:       b.jsonKeyToKey,
 			Variables:          variables,
 			StartNs:            start,
 			EndNs:              end,

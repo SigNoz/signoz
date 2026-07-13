@@ -2,6 +2,7 @@
 
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
+import { matchPath, useLocation } from 'react-router-dom';
 import { Typography } from '@signozhq/ui/typography';
 import get from 'api/channels/get';
 import AlertBreadcrumb from 'components/AlertBreadcrumb';
@@ -24,10 +25,10 @@ import './ChannelsEdit.styles.scss';
 function ChannelsEdit(): JSX.Element {
 	const { t } = useTranslation();
 
-	// Extract channelId from URL pathname
-	const { pathname } = window.location;
-	const channelIdMatch = pathname.match(/\/alerts\/channels\/edit\/([^/]+)/);
-	const channelId = channelIdMatch ? channelIdMatch[1] : undefined;
+	const { pathname } = useLocation();
+	const channelId = matchPath<{ channelId: string }>(pathname, {
+		path: ROUTES.CHANNELS_EDIT,
+	})?.params?.channelId;
 
 	const { isFetching, isError, data, error } = useQuery<
 		SuccessResponseV2<Channels>,
@@ -147,6 +148,7 @@ function ChannelsEdit(): JSX.Element {
 			<div className="edit-alert-channels-container">
 				<EditAlertChannels
 					{...{
+						channelId: channelId || '',
 						initialValue: {
 							...target.channel,
 							type: target.type,

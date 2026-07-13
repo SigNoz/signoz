@@ -1,0 +1,13 @@
+.llmObservabilityAttributeMapping {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-8);
+	padding: var(--spacing-12);
+}
+
+.tableEmpty {
+	padding: var(--spacing-12) var(--spacing-6);
+	text-align: center;
+	color: var(--l3-foreground);
+	font-size: var(--periscope-font-size-base);
+}

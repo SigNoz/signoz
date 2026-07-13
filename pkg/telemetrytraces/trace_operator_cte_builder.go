@@ -424,6 +424,20 @@ func (b *traceOperatorCTEBuilder) buildNotCTE(leftCTE, rightCTE string) (string,
 }
 
 func (b *traceOperatorCTEBuilder) buildFinalQuery(ctx context.Context, selectFromCTE string, requestType qbtypes.RequestType) (*qbtypes.Statement, error) {
+	// Mirror statement_builder.go::Build: for raw queries, empty selectFields
+	// expands to the full intrinsic + calculated set, and the list query also
+	// pulls in the contextual columns so the consume layer can merge them
+	// into unified attributes/resource (and parse events/links).
+	isSelectFieldsEmpty := false
+	if requestType == qbtypes.RequestTypeRaw {
+		isSelectFieldsEmpty = len(b.operator.SelectFields) == 0
+		if isSelectFieldsEmpty {
+			b.operator.SelectFields = make([]telemetrytypes.TelemetryFieldKey, 0, len(IntrinsicSpanFields)+len(CalculatedSpanFields))
+			b.operator.SelectFields = append(b.operator.SelectFields, IntrinsicSpanFields...)
+			b.operator.SelectFields = append(b.operator.SelectFields, CalculatedSpanFields...)
+		}
+	}
+
 	keySelectors := b.getKeySelectors()
 	keys, _, err := b.stmtBuilder.metadataStore.GetKeysMulti(ctx, keySelectors)
 	if err != nil {
@@ -433,7 +447,7 @@ func (b *traceOperatorCTEBuilder) buildFinalQuery(ctx context.Context, selectFro
 
 	switch requestType {
 	case qbtypes.RequestTypeRaw:
-		return b.buildListQuery(ctx, selectFromCTE, keys)
+		return b.buildListQuery(ctx, selectFromCTE, keys, isSelectFieldsEmpty)
 	case qbtypes.RequestTypeTimeSeries:
 		return b.buildTimeSeriesQuery(ctx, selectFromCTE, keys)
 	case qbtypes.RequestTypeTrace:
@@ -445,10 +459,11 @@ func (b *traceOperatorCTEBuilder) buildFinalQuery(ctx context.Context, selectFro
 	}
 }
 
-func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, selectFromCTE string, keys map[string][]*telemetrytypes.TelemetryFieldKey) (*qbtypes.Statement, error) {
+func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, selectFromCTE string, keys map[string][]*telemetrytypes.TelemetryFieldKey, isSelectFieldsEmpty bool) (*qbtypes.Statement, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 
-	// Select core fields
+	// Select core fields. These are always present so the trace operator
+	// response shape is stable regardless of user-supplied selectFields.
 	sb.Select(
 		"timestamp",
 		"trace_id",
@@ -480,6 +495,12 @@ func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, selectFrom
 		}
 		sb.SelectMore(colExpr)
 		selectedFields[field.Name] = true
+	}
+
+	if isSelectFieldsEmpty {
+		for _, col := range ContextualSpanColumns {
+			sb.SelectMore(col)
+		}
 	}
 
 	sb.From(selectFromCTE)

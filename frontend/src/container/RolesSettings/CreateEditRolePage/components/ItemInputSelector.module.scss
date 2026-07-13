@@ -1,0 +1,105 @@
+.itemInputSelector {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+	background: var(--l1-background);
+	border: 1px solid var(--l1-border);
+	border-radius: 4px;
+	padding: var(--spacing-4);
+
+	--input-suffix-padding: var(--spacing-2);
+}
+
+.itemInputSelectorError {
+	border-color: var(--destructive);
+}
+
+.itemInputSelectorFooter {
+	position: relative;
+	display: flex;
+	align-items: flex-start;
+	gap: var(--spacing-3);
+	padding-top: var(--spacing-3);
+
+	&::before {
+		content: '';
+		position: absolute;
+		top: 0;
+		right: 0;
+		left: 0;
+		height: 1px;
+		background: var(--l1-border);
+	}
+}
+
+.itemInputSelectorBadges {
+	flex: 1;
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--spacing-2);
+	max-height: 60px;
+	overflow-y: auto;
+}
+
+.itemInputSelectorInfoIcon {
+	flex-shrink: 0;
+	color: var(--l2-foreground);
+	cursor: pointer;
+
+	&:hover {
+		color: var(--l1-foreground);
+	}
+}
+
+.itemInputSelectorBadge {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	max-width: 140px;
+	padding: 2px 4px 2px 6px;
+	background: var(--l2-background);
+	border: 1px solid var(--l2-border);
+	border-radius: 4px;
+}
+
+.itemInputSelectorBadgeLabel {
+	flex: 1;
+	min-width: 0;
+}
+
+.itemInputSelectorBadgeRemove {
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 14px;
+	height: 14px;
+	padding: 0;
+	background: transparent;
+	border: none;
+	border-radius: 2px;
+	color: var(--l2-foreground);
+	cursor: pointer;
+	transition:
+		background 0.15s ease,
+		color 0.15s ease;
+
+	&:hover {
+		background: var(--l1-background);
+		color: var(--l1-foreground);
+	}
+}
+
+.itemInputSelectorHint {
+	margin: 0;
+	color: var(--l2-foreground);
+
+	a {
+		color: var(--primary);
+		text-decoration: none;
+
+		&:hover {
+			text-decoration: underline;
+		}
+	}
+}

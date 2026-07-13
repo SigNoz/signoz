@@ -31,11 +31,13 @@ type AgentReport struct {
 type AccountConfig struct {
 	AWS   *AWSAccountConfig   `json:"aws,omitempty" required:"false" nullable:"false"`
 	Azure *AzureAccountConfig `json:"azure,omitempty" required:"false" nullable:"false"`
+	GCP   *GCPAccountConfig   `json:"gcp,omitempty" required:"false" nullable:"false"`
 }
 
 type UpdatableAccountConfig struct {
 	AWS   *UpdatableAWSAccountConfig   `json:"aws,omitempty" required:"false" nullable:"false"`
 	Azure *UpdatableAzureAccountConfig `json:"azure,omitempty" required:"false" nullable:"false"`
+	GCP   *UpdatableGCPAccountConfig   `json:"gcp,omitempty" required:"false" nullable:"false"`
 }
 
 type PostableAccount struct {
@@ -48,6 +50,7 @@ type PostableAccountConfig struct {
 	AgentVersion string
 	AWS          *AWSPostableAccountConfig   `json:"aws,omitempty" required:"false" nullable:"false"`
 	Azure        *AzurePostableAccountConfig `json:"azure,omitempty" required:"false" nullable:"false"`
+	GCP          *GCPPostableAccountConfig   `json:"gcp,omitempty" required:"false" nullable:"false"`
 }
 
 type Credentials struct {
@@ -66,6 +69,7 @@ type ConnectionArtifact struct {
 	// required till new providers are added
 	AWS   *AWSConnectionArtifact   `json:"aws,omitempty" required:"false" nullable:"false"`
 	Azure *AzureConnectionArtifact `json:"azure,omitempty" required:"false" nullable:"false"`
+	GCP   *GCPConnectionArtifact   `json:"gcp,omitempty" required:"false" nullable:"false"`
 }
 
 type GetConnectionArtifactRequest = PostableAccount
@@ -211,6 +215,30 @@ func NewAccountConfigFromPostable(provider CloudProviderType, config *PostableAc
 		}
 
 		return &AccountConfig{Azure: &AzureAccountConfig{DeploymentRegion: config.Azure.DeploymentRegion, ResourceGroups: config.Azure.ResourceGroups}}, nil
+	case CloudProviderTypeGCP:
+		if config.GCP == nil {
+			return nil, errors.NewInvalidInputf(ErrCodeInvalidInput, "GCP config can not be nil for GCP provider")
+		}
+
+		if config.GCP.DeploymentProjectID == "" {
+			return nil, errors.NewInvalidInputf(ErrCodeInvalidInput, "deployment project ID is required for GCP provider")
+		}
+
+		if err := validateGCPRegion(config.GCP.DeploymentRegion); err != nil {
+			return nil, err
+		}
+
+		if len(config.GCP.ProjectIDs) == 0 {
+			return nil, errors.NewInvalidInputf(ErrCodeInvalidInput, "at least one project id is required for GCP provider")
+		}
+
+		return &AccountConfig{
+			GCP: &GCPAccountConfig{
+				DeploymentProjectID: config.GCP.DeploymentProjectID,
+				ProjectIDs:          config.GCP.ProjectIDs,
+				DeploymentRegion:    config.GCP.DeploymentRegion,
+			},
+		}, nil
 	default:
 		return nil, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
 	}
@@ -244,6 +272,30 @@ func NewAccountConfigFromUpdatable(provider CloudProviderType, config *Updatable
 		}
 
 		return &AccountConfig{Azure: &AzureAccountConfig{ResourceGroups: config.Config.Azure.ResourceGroups}}, nil
+	case CloudProviderTypeGCP:
+		if config.Config.GCP == nil {
+			return nil, errors.NewInvalidInputf(ErrCodeInvalidInput, "GCP config can not be nil for GCP provider")
+		}
+
+		if err := validateGCPRegion(config.Config.GCP.DeploymentRegion); err != nil {
+			return nil, err
+		}
+
+		if len(config.Config.GCP.ProjectIDs) == 0 {
+			return nil, errors.NewInvalidInputf(ErrCodeInvalidInput, "at least one project id is required for GCP provider")
+		}
+
+		if config.Config.GCP.DeploymentProjectID == "" {
+			return nil, errors.NewInvalidInputf(ErrCodeInvalidInput, "deployment project ID is required for GCP provider")
+		}
+
+		return &AccountConfig{
+			GCP: &GCPAccountConfig{
+				DeploymentProjectID: config.Config.GCP.DeploymentProjectID,
+				ProjectIDs:          config.Config.GCP.ProjectIDs,
+				DeploymentRegion:    config.Config.GCP.DeploymentRegion,
+			},
+		}, nil
 	default:
 		return nil, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
 	}
@@ -332,15 +384,16 @@ func (config *PostableAccountConfig) SetAgentVersion(agentVersion string) {
 // thats why not naming it MarshalJSON(), as it will interfere with default JSON marshalling of AccountConfig struct.
 // NOTE: this entertains first non-null provider's config.
 func (config *AccountConfig) ToJSON() ([]byte, error) {
-	if config.AWS != nil {
+	switch {
+	case config.AWS != nil:
 		return json.Marshal(config.AWS)
-	}
-
-	if config.Azure != nil {
+	case config.Azure != nil:
 		return json.Marshal(config.Azure)
+	case config.GCP != nil:
+		return json.Marshal(config.GCP)
+	default:
+		return nil, errors.NewInternalf(errors.CodeInternal, "no provider account config found")
 	}
-
-	return nil, errors.NewInternalf(errors.CodeInternal, "no provider account config found")
 }
 
 func NewIngestionKeyName(provider CloudProviderType) string {

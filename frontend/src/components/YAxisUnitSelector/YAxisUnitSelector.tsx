@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { SolidAlertTriangle } from '@signozhq/icons';
 import { Select, Tooltip } from 'antd';
 import type { DefaultOptionType } from 'antd/es/select';
-import classNames from 'classnames';
+import cx from 'classnames';
 
 import { UniversalYAxisUnitMappings } from './constants';
 import { UniversalYAxisUnit, YAxisUnitSelectorProps } from './types';
@@ -72,9 +72,7 @@ function YAxisUnitSelector({
 	}, [categoriesOverride, source]);
 
 	return (
-		<div
-			className={classNames('y-axis-unit-selector-component', containerClassName)}
-		>
+		<div className={cx('y-axis-unit-selector-component', containerClassName)}>
 			<Select
 				showSearch
 				value={universalUnit}
@@ -84,12 +82,17 @@ function YAxisUnitSelector({
 				loading={loading}
 				suffixIcon={
 					incompatibleUnitMessage ? (
-						<Tooltip title={incompatibleUnitMessage}>
-							<SolidAlertTriangle role="img" aria-label="warning" size="md" />
+						<Tooltip
+							title={incompatibleUnitMessage}
+							overlayClassName="y-axis-unit-warning-tooltip"
+						>
+							<span className="y-axis-unit-warning" role="img" aria-label="warning">
+								<SolidAlertTriangle size="md" />
+							</span>
 						</Tooltip>
 					) : undefined
 				}
-				className={classNames({
+				className={cx({
 					'warning-state': incompatibleUnitMessage,
 				})}
 				data-testid={dataTestId}

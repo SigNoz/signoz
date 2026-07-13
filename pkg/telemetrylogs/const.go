@@ -44,6 +44,16 @@ const (
 	messageSubField          = "message"
 	messageSubColumn         = "body_v2.message"
 	bodySearchDefaultWarning = "body searches default to `body.message:string`. Use `body.<key>` to search a different field inside body"
+
+	// bodyMessageField is the field name addressing the message sub-field of the
+	// body when use_json_body is enabled (i.e. `body` + `.` + `message`). hasToken
+	// targets this column in that mode.
+	bodyMessageField = "body.message"
+
+	// Documentation URLs attached to function-call errors so the visitor can
+	// surface them to the user without knowing function-specific details.
+	hasTokenFunctionDocURL       = "https://signoz.io/docs/userguide/functions-reference/#hastoken-function"
+	functionBodyJSONSearchDocURL = "https://signoz.io/docs/userguide/search-troubleshooting/#function-supports-only-body-json-search"
 )
 
 var (

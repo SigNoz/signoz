@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Table } from 'antd';
 import type { TableProps } from 'antd/lib';
 
-import type { DashboardListItem } from '../../utils';
+import type { DashboardListItem } from '../../utils/helpers';
 import DashboardRow from '../DashboardRow/DashboardRow';
 
 interface Props {
@@ -11,7 +11,7 @@ interface Props {
 	pageSize: number;
 	total: number;
 	onPageChange: (page: number) => void;
-	canAct: boolean;
+	canEdit: boolean;
 	showUpdatedAt: boolean;
 	showUpdatedBy: boolean;
 	loading: boolean;
@@ -23,7 +23,7 @@ function DashboardsListContent({
 	pageSize,
 	total,
 	onPageChange,
-	canAct,
+	canEdit,
 	showUpdatedAt,
 	showUpdatedBy,
 	loading,
@@ -37,14 +37,14 @@ function DashboardsListContent({
 					<DashboardRow
 						dashboard={dashboard}
 						index={index}
-						canAct={canAct}
+						canEdit={canEdit}
 						showUpdatedAt={showUpdatedAt}
 						showUpdatedBy={showUpdatedBy}
 					/>
 				),
 			},
 		],
-		[canAct, showUpdatedAt, showUpdatedBy],
+		[canEdit, showUpdatedAt, showUpdatedBy],
 	);
 
 	const paginationConfig = total > pageSize && {

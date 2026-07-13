@@ -3,10 +3,10 @@ package binding
 import (
 	"encoding/json"
 	"io"
-	"reflect"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/jsonschema"
 )
 
 const (
@@ -76,7 +76,7 @@ func (b *jsonBinding) BindBody(body io.Reader, obj any, opts ...BindBodyOption) 
 
 				return errors.
 					NewInvalidInputf(errors.CodeInvalidInput, message, field).
-					WithSuggestions(errors.SuggestionsOnLevenshteinDistance(field, JSONFieldNames(obj))...)
+					WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(field, errors.NounFields, jsonschema.JSONFieldNames(obj))...)
 			}
 		}
 
@@ -84,37 +84,6 @@ func (b *jsonBinding) BindBody(body io.Reader, obj any, opts ...BindBodyOption) 
 	}
 
 	return nil
-}
-
-// JSONFieldNames returns the JSON field names of a struct (or pointer to one),
-// skipping fields tagged "-" or without a json tag.
-func JSONFieldNames(v any) []string {
-	var fields []string
-
-	t := reflect.TypeOf(v)
-	if t.Kind() == reflect.Pointer {
-		t = t.Elem()
-	}
-
-	if t.Kind() != reflect.Struct {
-		return fields
-	}
-
-	for i := 0; i < t.NumField(); i++ {
-		field := t.Field(i)
-		jsonTag := field.Tag.Get("json")
-
-		if jsonTag == "" || jsonTag == "-" {
-			continue
-		}
-
-		fieldName := strings.Split(jsonTag, ",")[0]
-		if fieldName != "" {
-			fields = append(fields, fieldName)
-		}
-	}
-
-	return fields
 }
 
 // extractUnknownField pulls fieldname out of a `json: unknown field "fieldname"`

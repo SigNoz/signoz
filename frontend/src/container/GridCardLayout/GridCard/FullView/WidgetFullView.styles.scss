@@ -3,6 +3,30 @@
 	overflow-x: auto;
 	overflow-y: hidden;
 
+	--query-builder-v2-color: var(--l2-foreground);
+	--query-builder-v2-background-color: var(--l3-background);
+	--query-builder-v2-border-color: var(--l3-border);
+	--query-builder-v2-selection-background-color: var(--l2-background);
+	--query-builder-v2-chip-decorator-background-color: var(--l2-background);
+	--query-builder-v2-placeholder-color: var(--l3-foreground);
+	--query-builder-v2-selected-background-color: var(--l3-foreground);
+	--query-search-background-color: var(--l3-background);
+	--query-search-background-color-selection: var(--l3-background);
+	--input-with-label-border-color: var(--l3-border);
+	--input-with-label-background-color: var(--l3-background);
+	--input-with-label-color: var(--l2-foreground);
+	--query-builder-v2-toggle-group-background-color: var(--l3-background);
+	--query-builder-v2-toggle-group-border-color: var(--l3-border);
+	--query-builder-v2-toggle-group-active-background-color: var(--l2-background);
+	--query-builder-v2-toggle-group-background-color-hover: var(--l3-background);
+	--input-height: 36px;
+	--input-hover-background: var(--l3-background);
+	--input-hover-border-color: var(--internal-ant-border-color-hover);
+	--input-focus-border-color: var(--internal-ant-border-color-hover);
+	--input-background: var(--l3-background);
+	--input-focus-background: var(--l3-background);
+	--input-border-color: var(--l3-border);
+
 	.full-view-header-container {
 		display: flex;
 		flex-direction: column;

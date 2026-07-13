@@ -63,12 +63,6 @@ def pytest_addoption(parser: pytest.Parser):
         help="sqlite mode",
     )
     parser.addoption(
-        "--sqlite-transaction-mode",
-        action="store",
-        default="deferred",
-        help="sqlite transaction mode",
-    )
-    parser.addoption(
         "--postgres-version",
         action="store",
         default="15",

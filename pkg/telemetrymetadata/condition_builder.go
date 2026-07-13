@@ -23,6 +23,40 @@ func (c *conditionBuilder) ConditionFor(
 	ctx context.Context,
 	tsStart, tsEnd uint64,
 	key *telemetrytypes.TelemetryFieldKey,
+	fieldKeysForName []*telemetrytypes.TelemetryFieldKey,
+	operator qbtypes.FilterOperator,
+	value any,
+	sb *sqlbuilder.SelectBuilder,
+) ([]string, []string, error) {
+
+	// has/hasAny/hasAll/hasToken are logs-body-only; reject to avoid malformed related-values SQL.
+	if err := querybuilder.NewFunctionUnsupportedError(operator); err != nil {
+		return nil, nil, err
+	}
+
+	// metadata builds best-effort filters for related-values lookups; an unknown key
+	// simply yields no condition rather than an error.
+	keys, warning := querybuilder.ResolveKeys(key, fieldKeysForName)
+	var warnings []string
+	if warning != "" {
+		warnings = append(warnings, warning)
+	}
+
+	conds := make([]string, 0, len(keys))
+	for _, k := range keys {
+		cond, err := c.conditionForKey(ctx, tsStart, tsEnd, k, operator, value, sb)
+		if err != nil {
+			return nil, nil, err
+		}
+		conds = append(conds, cond)
+	}
+	return conds, warnings, nil
+}
+
+func (c *conditionBuilder) conditionForKey(
+	ctx context.Context,
+	tsStart, tsEnd uint64,
+	key *telemetrytypes.TelemetryFieldKey,
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,

@@ -1,4 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import ROUTES from 'constants/routes';
 import { render } from 'tests/test-utils';
 
@@ -127,5 +129,71 @@ describe('TraceDetailsHeader – action cluster', () => {
 
 		fireEvent.click(analyticsBtn);
 		expect(panel).toHaveAttribute('data-open', 'false');
+	});
+});
+
+describe('TraceDetailsHeader – trace metadata row', () => {
+	// Plain prop, no API mock needed: traceMetadata is passed straight in.
+	const traceMetadata = {
+		startTimestampMillis: 1_700_000_000_000,
+		endTimestampMillis: 1_700_000_120_000, // +120000ms = 2 min
+		rootServiceName: 'inventory-frontend',
+		rootServiceEntryPoint: 'large-trace-root',
+		rootSpanStatusCode: '404',
+		hasMissingSpans: false,
+	};
+
+	it('renders the metadata (service, entry point, duration, status) when provided', () => {
+		render(
+			<TraceDetailsHeader
+				{...baseProps}
+				isDataLoaded
+				traceMetadata={traceMetadata}
+			/>,
+		);
+
+		expect(screen.getByText(/inventory-frontend/)).toBeInTheDocument();
+		expect(screen.getByText('large-trace-root')).toBeInTheDocument();
+		expect(screen.getByText('404')).toBeInTheDocument();
+		// Duration goes through the shared formatter (e.g. "2 min").
+		const duration = getYAxisFormattedValue(
+			`${traceMetadata.endTimestampMillis - traceMetadata.startTimestampMillis}`,
+			'ms',
+		);
+		expect(screen.getByText(duration)).toBeInTheDocument();
+	});
+
+	it('is shown by default and can be hidden / shown again via the Trace options menu', async () => {
+		const user = userEvent.setup({ delay: null });
+		render(
+			<TraceDetailsHeader
+				{...baseProps}
+				isDataLoaded
+				traceMetadata={traceMetadata}
+			/>,
+		);
+
+		// Visible by default (showTraceDetails defaults to true).
+		expect(screen.getByText(/inventory-frontend/)).toBeInTheDocument();
+
+		// Hide it.
+		await user.click(screen.getByRole('button', { name: /trace options/i }));
+		await user.click(
+			await screen.findByRole('menuitem', { name: /hide trace details/i }),
+		);
+		expect(screen.queryByText(/inventory-frontend/)).not.toBeInTheDocument();
+
+		// Show it again.
+		await user.click(screen.getByRole('button', { name: /trace options/i }));
+		await user.click(
+			await screen.findByRole('menuitem', { name: /show trace details/i }),
+		);
+		expect(screen.getByText(/inventory-frontend/)).toBeInTheDocument();
+	});
+
+	it('does not render the metadata row when traceMetadata is absent', () => {
+		render(<TraceDetailsHeader {...baseProps} isDataLoaded />);
+
+		expect(screen.queryByText(/inventory-frontend/)).not.toBeInTheDocument();
 	});
 });

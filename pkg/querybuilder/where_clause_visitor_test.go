@@ -3,10 +3,10 @@ package querybuilder
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"strings"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	grammar "github.com/SigNoz/signoz/pkg/parser/filterquery/grammar"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -79,15 +79,13 @@ func TestPrepareWhereClause_EmptyVariableList(t *testing.T) {
 }
 
 // createTestVisitor creates a filterExpressionVisitor for testing VisitKey.
-func createTestVisitor(t *testing.T, fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey, ignoreNotFoundKeys bool) *filterExpressionVisitor {
+func createTestVisitor(t *testing.T, fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey) *filterExpressionVisitor {
 	t.Helper()
 	return &filterExpressionVisitor{
-		context:            t.Context(),
-		logger:             slog.Default(),
-		fieldKeys:          fieldKeys,
-		ignoreNotFoundKeys: ignoreNotFoundKeys,
-		keysWithWarnings:   make(map[string]bool),
-		builder:            sqlbuilder.NewSelectBuilder(),
+		context:          t.Context(),
+		fieldKeys:        fieldKeys,
+		keysWithWarnings: make(map[string]bool),
+		builder:          sqlbuilder.NewSelectBuilder(),
 	}
 }
 
@@ -160,7 +158,7 @@ func TestVisitKey(t *testing.T) {
 			name:    "Key not found",
 			keyText: "unknown_key",
 			fieldKeys: map[string][]*telemetrytypes.TelemetryFieldKey{
-				"service": []*telemetrytypes.TelemetryFieldKey{
+				"service": {
 					{
 						Name:          "service",
 						Signal:        telemetrytypes.SignalLogs,
@@ -361,7 +359,7 @@ func TestVisitKey(t *testing.T) {
 			name:    "Unknown key with ignoreNotFoundKeys=true",
 			keyText: "unknown_key",
 			fieldKeys: map[string][]*telemetrytypes.TelemetryFieldKey{
-				"service": []*telemetrytypes.TelemetryFieldKey{
+				"service": {
 					{
 						Name:          "service",
 						Signal:        telemetrytypes.SignalLogs,
@@ -574,7 +572,7 @@ func TestVisitKey(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			visitor := createTestVisitor(t, tt.fieldKeys, tt.ignoreNotFoundKeys)
+			visitor := createTestVisitor(t, tt.fieldKeys)
 			keyCtx := parseKeyContext(tt.keyText)
 
 			if keyCtx == nil {
@@ -582,10 +580,30 @@ func TestVisitKey(t *testing.T) {
 			}
 
 			result := visitor.VisitKey(keyCtx)
-			keys, ok := result.([]*telemetrytypes.TelemetryFieldKey)
-
+			key, ok := result.(*telemetrytypes.TelemetryFieldKey)
 			if !ok {
-				t.Fatalf("expected []*TelemetryFieldKey, got %T", result)
+				t.Fatalf("expected *TelemetryFieldKey, got %T", result)
+			}
+
+			// VisitKey only parses; the condition builder matches, resolves ambiguity
+			// and decides not-found handling. Replay that here against the generic
+			// builder behavior (error unless the key is ignored).
+			matching := matchingFieldKeys(key, tt.fieldKeys)
+			keys, warning := ResolveKeys(key, matching)
+
+			var gotErrors []string
+			var gotMainErrURL, gotMainWrnURL string
+			var gotWarnings []string
+			if len(keys) == 0 && !tt.ignoreNotFoundKeys {
+				err := NewKeyNotFoundError(key.Name)
+				gotErrors = append(gotErrors, err.Error())
+				_, _, _, _, gotMainErrURL, _ = errors.Unwrapb(err)
+			}
+			if warning != "" {
+				gotWarnings = append(gotWarnings, warning)
+				if len(matching) > 1 {
+					gotMainWrnURL = FieldContextDataTypesDocURL
+				}
 			}
 
 			// Check expected keys count
@@ -612,55 +630,55 @@ func TestVisitKey(t *testing.T) {
 
 			// Check errors
 			if tt.expectedErrors != nil {
-				if len(visitor.errors) != len(tt.expectedErrors) {
-					t.Errorf("expected %d errors, got %d: %v", len(tt.expectedErrors), len(visitor.errors), visitor.errors)
+				if len(gotErrors) != len(tt.expectedErrors) {
+					t.Errorf("expected %d errors, got %d: %v", len(tt.expectedErrors), len(gotErrors), gotErrors)
 				}
 				for _, expectedError := range tt.expectedErrors {
 					found := false
-					for _, err := range visitor.errors {
+					for _, err := range gotErrors {
 						if strings.Contains(err, expectedError) {
 							found = true
 							break
 						}
 					}
 					if !found {
-						t.Errorf("expected error containing %q, got errors: %v", expectedError, visitor.errors)
+						t.Errorf("expected error containing %q, got errors: %v", expectedError, gotErrors)
 					}
 				}
 			} else {
-				if len(visitor.errors) != 0 {
-					t.Errorf("expected no errors, got %d: %v", len(visitor.errors), visitor.errors)
+				if len(gotErrors) != 0 {
+					t.Errorf("expected no errors, got %d: %v", len(gotErrors), gotErrors)
 				}
 			}
 
 			// Check mainErrorURL
-			if visitor.mainErrorURL != tt.expectedMainErrURL {
-				t.Errorf("expected mainErrorURL %q, got %q", tt.expectedMainErrURL, visitor.mainErrorURL)
+			if gotMainErrURL != tt.expectedMainErrURL {
+				t.Errorf("expected mainErrorURL %q, got %q", tt.expectedMainErrURL, gotMainErrURL)
 			}
 
 			// Check warnings
 			if tt.expectedWarnings != nil {
 				for _, expectedWarn := range tt.expectedWarnings {
 					found := false
-					for _, warn := range visitor.warnings {
+					for _, warn := range gotWarnings {
 						if strings.Contains(strings.ToLower(warn), strings.ToLower(expectedWarn)) {
 							found = true
 							break
 						}
 					}
 					if !found {
-						t.Errorf("expected warning containing %q, got warnings: %v", expectedWarn, visitor.warnings)
+						t.Errorf("expected warning containing %q, got warnings: %v", expectedWarn, gotWarnings)
 					}
 				}
 			} else {
-				if len(visitor.warnings) != 0 {
-					t.Errorf("expected no warnings, got %d: %v", len(visitor.warnings), visitor.warnings)
+				if len(gotWarnings) != 0 {
+					t.Errorf("expected no warnings, got %d: %v", len(gotWarnings), gotWarnings)
 				}
 			}
 
 			// Check mainWarnURL
-			if visitor.mainWarnURL != tt.expectedMainWrnURL {
-				t.Errorf("expected mainWarnURL %q, got %q", tt.expectedMainWrnURL, visitor.mainWarnURL)
+			if gotMainWrnURL != tt.expectedMainWrnURL {
+				t.Errorf("expected mainWarnURL %q, got %q", tt.expectedMainWrnURL, gotMainWrnURL)
 			}
 		})
 	}
@@ -673,13 +691,12 @@ func TestVisitKey(t *testing.T) {
 // This suite exercises the visitor with two different configurations
 // side-by-side for each expression, asserting both expected outputs:
 //
-//   resourceConditionBuilder (wantRSB) — returns TrueConditionLiteral for
-//   non-resource keys and "{name}_cond" for resource keys (x, y, z).
-//   Opts: SkipFullTextFilter:true, SkipFunctionCalls:true, IgnoreNotFoundKeys:true.
+//   resourceConditionBuilder (wantRSB) — produces "{name}_cond" only for resource
+//   keys (x, y, z); non-resource keys, unknown keys, and function calls yield no
+//   condition. Opts: SkipFullTextFilter:true.
 //
 //   conditionBuilder (wantSB) — returns "{name}_cond" for every key regardless
-//   of FieldContext. Opts: SkipFullTextFilter:false, SkipFunctionCalls:false,
-//   IgnoreNotFoundKeys:false, FullTextColumn:bodyCol.
+//   of FieldContext. Opts: SkipFullTextFilter:false, FullTextColumn:bodyCol.
 //
 // Key behavioral rules:
 //
@@ -732,16 +749,32 @@ func (b *resourceConditionBuilder) ConditionFor(
 	_ uint64,
 	_ uint64,
 	key *telemetrytypes.TelemetryFieldKey,
-	_ qbtypes.FilterOperator,
+	fieldKeysForName []*telemetrytypes.TelemetryFieldKey,
+	operator qbtypes.FilterOperator,
 	_ any,
 	_ *sqlbuilder.SelectBuilder,
-) (string, error) {
+) ([]string, []string, error) {
 
-	if key.FieldContext != telemetrytypes.FieldContextResource {
-		return SkipConditionLiteral, nil
+	// mirror the real resource builder: function operators never apply to resources
+	if operator.IsFunctionOperator() {
+		return nil, nil, nil
 	}
 
-	return fmt.Sprintf("%s_cond", key.Name), nil
+	keys, warning := ResolveKeys(key, fieldKeysForName)
+	var warnings []string
+	if warning != "" {
+		warnings = append(warnings, warning)
+	}
+
+	var conds []string
+	for _, k := range keys {
+		// only resource keys contribute; others (and unknown keys) are ignored
+		if k.FieldContext != telemetrytypes.FieldContextResource {
+			continue
+		}
+		conds = append(conds, fmt.Sprintf("%s_cond", k.Name))
+	}
+	return conds, warnings, nil
 }
 
 type conditionBuilder struct{}
@@ -751,19 +784,44 @@ func (b *conditionBuilder) ConditionFor(
 	_ uint64,
 	_ uint64,
 	key *telemetrytypes.TelemetryFieldKey,
-	_ qbtypes.FilterOperator,
+	fieldKeysForName []*telemetrytypes.TelemetryFieldKey,
+	operator qbtypes.FilterOperator,
 	_ any,
 	_ *sqlbuilder.SelectBuilder,
-) (string, error) {
+) ([]string, []string, error) {
 
-	return fmt.Sprintf("%s_cond", key.Name), nil
+	// has/hasAny/hasAll/hasToken only support body fields; mirror the real
+	// condition builder which now owns this validation and errors for non-body keys.
+	switch operator {
+	case qbtypes.FilterOperatorHas, qbtypes.FilterOperatorHasAny, qbtypes.FilterOperatorHasAll, qbtypes.FilterOperatorHasToken:
+		if key.FieldContext != telemetrytypes.FieldContextBody {
+			return nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "function supports only body JSON search")
+		}
+		return []string{fmt.Sprintf("%s_cond", key.Name)}, nil, nil
+	}
+
+	keys, warning := ResolveKeys(key, fieldKeysForName)
+	var warnings []string
+	if warning != "" {
+		warnings = append(warnings, warning)
+	}
+	if len(keys) == 0 {
+		// errors on unknown keys (no IgnoreNotFoundKeys equivalent for this builder)
+		return nil, warnings, NewKeyNotFoundError(key.Name)
+	}
+
+	conds := make([]string, 0, len(keys))
+	for _, k := range keys {
+		conds = append(conds, fmt.Sprintf("%s_cond", k.Name))
+	}
+	return conds, warnings, nil
 }
 
 // visitComparisonCase is a single test case for the TestVisitComparison_* family.
 // Each case is run under two independent configurations:
 //
-//   - rsbOpts (resourceConditionBuilder): skips full-text and function calls,
-//     ignores unknown keys, produces conditions only for resource-context keys.
+//   - rsbOpts (resourceConditionBuilder): skips full-text; its builder skips function
+//     calls and unknown keys, producing conditions only for resource-context keys.
 //
 //   - sbOpts (conditionBuilder): skips resource-context keys (unless OR is present),
 //     evaluates full-text, errors on unknown keys.
@@ -799,8 +857,6 @@ func visitComparisonOpts(t *testing.T) (rsbOpts, sbOpts FilterExprVisitorOpts) {
 		Variables:          allVariable,
 		SkipResourceFilter: false,
 		SkipFullTextFilter: true,
-		SkipFunctionCalls:  true,
-		IgnoreNotFoundKeys: true,
 	}
 	sbOpts = FilterExprVisitorOpts{
 		Context:            t.Context(),
@@ -809,8 +865,6 @@ func visitComparisonOpts(t *testing.T) (rsbOpts, sbOpts FilterExprVisitorOpts) {
 		Variables:          allVariable,
 		SkipResourceFilter: true,
 		SkipFullTextFilter: false,
-		SkipFunctionCalls:  false,
-		IgnoreNotFoundKeys: false,
 		FullTextColumn:     bodyCol,
 	}
 	return
@@ -1537,9 +1591,9 @@ func TestVisitComparison_AllVariable(t *testing.T) {
 }
 
 // TestVisitComparison_FunctionCalls covers function call expressions (has, hasAny, hasAll).
-// rsbOpts has SkipFunctionCalls=true → TrueConditionLiteral (function never evaluated).
-// sbOpts has SkipFunctionCalls=false; has/hasAny/hasAll only support FieldContextBody,
-// so calls on attribute/resource keys return an error.
+// The resource builder skips function operators, so they yield no condition in RSB.
+// In SB, has/hasAny/hasAll only support FieldContextBody, so calls on attribute/resource
+// keys return an error.
 func TestVisitComparison_FunctionCalls(t *testing.T) {
 	rsbOpts, sbOpts := visitComparisonOpts(t)
 	tests := []visitComparisonCase{

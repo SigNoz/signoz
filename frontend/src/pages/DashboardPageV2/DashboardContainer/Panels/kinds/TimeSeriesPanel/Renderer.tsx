@@ -1,7 +1,9 @@
 import { useCallback, useMemo, useRef } from 'react';
 import type { DashboardtypesTimeSeriesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 import TimeSeries from 'container/DashboardContainer/visualization/charts/TimeSeries/TimeSeries';
+import ChartManager from 'container/DashboardContainer/visualization/components/ChartManager/ChartManager';
 import TooltipFooter from 'container/DashboardContainer/visualization/panels/components/TooltipFooter';
+import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { IRenderTooltipFooterArgs } from 'lib/uPlotV2/components/types';
@@ -12,8 +14,6 @@ import {
 } from 'pages/DashboardPageV2/DashboardContainer/queryV5/v5ResponseData';
 import { prepareAlignedData } from 'pages/DashboardPageV2/DashboardContainer/queryV5/uplotData';
 import { useTimezone } from 'providers/Timezone';
-import type { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
-import { getTimeRangeFromQueryRangeRequest } from 'utils/getTimeRange';
 
 import NoData from '../../components/NoData/NoData';
 import { useGroupByPerQuery } from '../../hooks/useGroupByPerQuery';
@@ -23,7 +23,10 @@ import {
 	resolveDecimalPrecision,
 	resolveLegendPosition,
 } from '../../utils/chartAppearance/resolvers';
+import { stepClickTimeRange } from '../../utils/drilldown/chartClickTimeRange';
+import { enrichChartClick } from '../../utils/drilldown/enrichChartClick';
 import { getBuilderQueries } from '../../utils/getBuilderQueries';
+import { getPanelTimeRange } from '../../utils/getPanelTimeRange';
 
 import { buildTimeSeriesConfig } from './utils/buildConfig';
 import { ChartClickData } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
@@ -32,22 +35,22 @@ function TimeSeriesPanelRenderer({
 	panelId,
 	panel,
 	data,
+	isFetching,
+	refetch,
 	onClick,
 	onDragSelect,
 	dashboardPreference,
 	panelMode,
+	onCloseStandaloneView,
+	enableDrillDown,
 }: PanelRendererProps<'signoz/TimeSeriesPanel'>): JSX.Element {
 	const graphRef = useRef<HTMLDivElement>(null);
 	const containerDimensions = useResizeObserver(graphRef);
 	const isDarkMode = useIsDarkMode();
 	const { timezone } = useTimezone();
 
-	// The registry guarantees this Renderer only runs when
-	// `panel.spec.plugin.kind === 'signoz/TimeSeriesPanel'`, so the cast is a
-	// documented boundary narrowing — not a blind assertion. Memoized so the
-	// `?? {}` fallback doesn't produce a fresh object on each render.
 	const spec = useMemo<DashboardtypesTimeSeriesPanelSpecDTO>(
-		() => (panel.spec.plugin.spec ?? {}) as DashboardtypesTimeSeriesPanelSpecDTO,
+		() => panel.spec.plugin.spec,
 		[panel.spec.plugin.spec],
 	);
 
@@ -56,16 +59,11 @@ function TimeSeriesPanelRenderer({
 		[panel.spec.queries],
 	);
 
-	// X-scale clamps come from the request that produced the data, so each
-	// panel pins to the window it actually fetched — important during
-	// drag-zoom transitions when the time picker has moved but new data
-	// hasn't arrived yet. Falls back to the global picker inside the helper.
-	// The generated request DTO is structurally the hand-written V5 request;
-	// the cast is the documented boundary.
+	// X-scale clamps come from the request that produced the data, so each panel
+	// pins to the window it fetched — matters during drag-zoom transitions before
+	// new data arrives.
 	const { minTimeScale, maxTimeScale } = useMemo(() => {
-		const { startTime, endTime } = getTimeRangeFromQueryRangeRequest(
-			data.requestPayload as unknown as QueryRangeRequestV5 | undefined,
-		);
+		const { startTime, endTime } = getPanelTimeRange(data.requestPayload);
 		return { minTimeScale: startTime, maxTimeScale: endTime };
 	}, [data.requestPayload]);
 
@@ -104,10 +102,8 @@ function TimeSeriesPanelRenderer({
 			minTimeScale,
 			maxTimeScale,
 			onDragSelect,
-			// `config` gets mutated by TooltipPlugin (config.setCursor for cursor sync).
-			// Rebuild it on syncMode changes so the new chart instance starts from a
-			// clean config — otherwise switching to "No Sync" would inherit stale sync
-			// settings from the previous mode.
+			// TooltipPlugin mutates `config` for cursor sync; rebuild on syncMode change
+			// so a fresh instance doesn't inherit stale sync settings (e.g. "No Sync").
 			dashboardPreference?.syncMode,
 		],
 	);
@@ -123,26 +119,72 @@ function TimeSeriesPanelRenderer({
 		return resolveLegendPosition(spec.legend?.position);
 	}, [spec.legend?.position]);
 
-	const renderTooltipFooter = useCallback(
-		({ isPinned, dismiss }: IRenderTooltipFooterArgs) => (
-			<TooltipFooter id={panelId} isPinned={isPinned} dismiss={dismiss} />
-		),
-		[panelId],
+	// The standalone View modal shows V1's graph-manager legend below the chart:
+	// Filter Series + per-series show/hide + Save. Series visibility auto-persists to
+	// localStorage (STANDALONE_VIEW selection prefs), keyed by panelId.
+	const layoutChildren = useMemo(
+		() =>
+			panelMode === PanelMode.STANDALONE_VIEW ? (
+				<div className={PanelStyles.chartManagerContainer}>
+					<ChartManager
+						config={config}
+						alignedData={chartData}
+						yAxisUnit={spec.formatting?.unit}
+						decimalPrecision={decimalPrecision}
+						onCancel={onCloseStandaloneView}
+					/>
+				</div>
+			) : null,
+		[
+			panelMode,
+			config,
+			chartData,
+			spec.formatting?.unit,
+			decimalPrecision,
+			onCloseStandaloneView,
+		],
 	);
 
-	/**
-	 * The uPlot key prop is the only way to force a full teardown and re-mount
-	 * of the chart. By including the syncMode and syncFilterMode in the key,
-	 * we ensure that changes to these preferences trigger a fresh chart instance,
-	 * preventing stale sync settings from being inherited.
-	 */
+	const renderTooltipFooter = useCallback(
+		({ isPinned, dismiss }: IRenderTooltipFooterArgs) => (
+			<TooltipFooter
+				id={panelId}
+				isPinned={isPinned}
+				canDrilldown={!!enableDrillDown}
+				dismiss={dismiss}
+			/>
+		),
+		[panelId, enableDrillDown],
+	);
+
+	// Keying on sync prefs forces a full chart teardown/re-mount so stale sync
+	// settings aren't inherited — the only way to fully reset the uPlot instance.
 	const key = `${dashboardPreference?.syncMode}-${dashboardPreference?.syncFilterMode}`;
 
 	const handleChartClick = useCallback(
-		(args: ChartClickData) => {
-			onClick?.(args);
+		(args: ChartClickData): void => {
+			if (!onClick) {
+				return;
+			}
+			const payload = enrichChartClick({
+				clickData: args,
+				series: flatSeries,
+				builderQueries,
+			});
+			if (!payload) {
+				return;
+			}
+			const timeRange = stepClickTimeRange({
+				clickedDataTimestamp: args.clickedDataTimestamp,
+				queryName: payload.context.queryName,
+				builderQueries,
+				stepInterval: getExecStats(data.response)?.stepIntervals?.[
+					payload.context.queryName
+				],
+			});
+			onClick({ ...payload, context: { ...payload.context, timeRange } });
 		},
-		[onClick],
+		[onClick, flatSeries, builderQueries, data.response],
 	);
 
 	return (
@@ -151,7 +193,9 @@ function TimeSeriesPanelRenderer({
 			data-testid="time-series-renderer"
 			className={PanelStyles.panelContainer}
 		>
-			{flatSeries.length === 0 && <NoData />}
+			{flatSeries.length === 0 && (
+				<NoData isFetching={isFetching} onRetry={refetch} panel={panel} />
+			)}
 			{flatSeries.length > 0 &&
 				containerDimensions.width > 0 &&
 				containerDimensions.height > 0 && (
@@ -160,6 +204,7 @@ function TimeSeriesPanelRenderer({
 						config={config}
 						data={chartData}
 						legendConfig={{ position: legendPosition }}
+						layoutChildren={layoutChildren}
 						groupByPerQuery={groupByPerQuery}
 						canPinTooltip
 						timezone={timezone}
@@ -170,7 +215,7 @@ function TimeSeriesPanelRenderer({
 						syncMode={dashboardPreference?.syncMode}
 						syncFilterMode={dashboardPreference?.syncFilterMode}
 						renderTooltipFooter={renderTooltipFooter}
-						onClick={handleChartClick}
+						onClick={enableDrillDown ? handleChartClick : undefined}
 					/>
 				)}
 		</div>

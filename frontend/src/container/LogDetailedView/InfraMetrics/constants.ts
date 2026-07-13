@@ -1625,6 +1625,9 @@ export const getHostQueryPayload = (
 	const diskPendingKey = dotMetricsEnabled
 		? 'system.disk.pending_operations'
 		: 'system_disk_pending_operations';
+	const fsUsageKey = dotMetricsEnabled
+		? 'system.filesystem.usage'
+		: 'system_filesystem_usage';
 
 	return [
 		{
@@ -2657,6 +2660,155 @@ export const getHostQueryPayload = (
 			start,
 			end,
 		},
+		{
+			selectedTime: 'GLOBAL_TIME',
+			graphType: PANEL_TYPES.TIME_SERIES,
+			query: {
+				builder: {
+					queryData: [
+						{
+							aggregateAttribute: {
+								dataType: DataTypes.Float64,
+								id: 'system_filesystem_usage--float64--Gauge--true',
+
+								key: fsUsageKey,
+								type: 'Gauge',
+							},
+							aggregateOperator: 'avg',
+							dataSource: DataSource.METRICS,
+							disabled: true,
+							expression: 'A',
+							filters: {
+								items: [
+									{
+										id: 'fs_f1',
+										key: {
+											dataType: DataTypes.String,
+											id: 'host_name--string--tag--false',
+
+											key: hostNameKey,
+											type: 'tag',
+										},
+										op: '=',
+										value: hostName,
+									},
+									{
+										id: 'fs_f2',
+										key: {
+											dataType: DataTypes.String,
+											id: 'state--string--tag--false',
+
+											key: 'state',
+											type: 'tag',
+										},
+										op: '=',
+										value: 'used',
+									},
+								],
+								op: 'AND',
+							},
+							functions: [],
+							groupBy: [
+								{
+									dataType: DataTypes.String,
+									id: 'mountpoint--string--tag--false',
+
+									key: 'mountpoint',
+									type: 'tag',
+								},
+							],
+							having: [
+								{
+									columnName: `SUM(${fsUsageKey})`,
+									op: '>',
+									value: 0,
+								},
+							],
+							legend: '{{mountpoint}}',
+							limit: null,
+							orderBy: [],
+							queryName: 'A',
+							reduceTo: ReduceOperators.AVG,
+							spaceAggregation: 'sum',
+							stepInterval: 60,
+							timeAggregation: 'avg',
+						},
+						{
+							aggregateAttribute: {
+								dataType: DataTypes.Float64,
+								id: 'system_filesystem_usage--float64--Gauge--true',
+
+								key: fsUsageKey,
+								type: 'Gauge',
+							},
+							aggregateOperator: 'avg',
+							dataSource: DataSource.METRICS,
+							disabled: true,
+							expression: 'B',
+							filters: {
+								items: [
+									{
+										id: 'fs_f3',
+										key: {
+											dataType: DataTypes.String,
+											id: 'host_name--string--tag--false',
+
+											key: hostNameKey,
+											type: 'tag',
+										},
+										op: '=',
+										value: hostName,
+									},
+								],
+								op: 'AND',
+							},
+							functions: [],
+							groupBy: [
+								{
+									dataType: DataTypes.String,
+									id: 'mountpoint--string--tag--false',
+
+									key: 'mountpoint',
+									type: 'tag',
+								},
+							],
+							having: [
+								{
+									columnName: `SUM(${fsUsageKey})`,
+									op: '>',
+									value: 0,
+								},
+							],
+							legend: '{{mountpoint}}',
+							limit: null,
+							orderBy: [],
+							queryName: 'B',
+							reduceTo: ReduceOperators.AVG,
+							spaceAggregation: 'sum',
+							stepInterval: 60,
+							timeAggregation: 'avg',
+						},
+					],
+					queryFormulas: [
+						{
+							disabled: false,
+							expression: 'A/B',
+							legend: '{{mountpoint}}',
+							queryName: 'F1',
+						},
+					],
+					queryTraceOperator: [],
+				},
+				clickhouse_sql: [{ disabled: false, legend: '', name: 'A', query: '' }],
+				id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+				promql: [{ disabled: false, legend: '', name: 'A', query: '' }],
+				queryType: EQueryType.QUERY_BUILDER,
+			},
+			variables: {},
+			formatForWeb: false,
+			start,
+			end,
+		},
 	];
 };
 
@@ -2732,4 +2884,5 @@ export const hostWidgetInfo = [
 	{ title: 'System disk operations/s', yAxisUnit: 'short' },
 	{ title: 'Queue size', yAxisUnit: 'short' },
 	{ title: 'System disk operation time/s', yAxisUnit: 's' },
+	{ title: 'Disk Usage (%) by mountpoint', yAxisUnit: 'percentunit' },
 ];

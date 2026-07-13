@@ -8,10 +8,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 )
 
@@ -28,7 +26,6 @@ type resourceFilterStatementBuilder[T any] struct {
 	flagger          flagger.Flagger
 
 	fullTextColumn *telemetrytypes.TelemetryFieldKey
-	jsonKeyToKey   qbtypes.JsonKeyToFieldFunc
 }
 
 // Ensure interface compliance at compile time.
@@ -45,7 +42,6 @@ func New[T any](
 	source telemetrytypes.Source,
 	metadataStore telemetrytypes.MetadataStore,
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
-	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
 	fl flagger.Flagger,
 ) *resourceFilterStatementBuilder[T] {
 	set := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetryresourcefilter")
@@ -62,7 +58,6 @@ func New[T any](
 		source:           source,
 		flagger:          fl,
 		fullTextColumn:   fullTextColumn,
-		jsonKeyToKey:     jsonKeyToKey,
 	}
 }
 
@@ -158,9 +153,6 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 	variables map[string]qbtypes.VariableItem,
 ) (bool, error) {
 
-	// TODO(Tushar): thread orgID here to evaluate correctly
-	bodyJSONEnabled := b.flagger.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
-
 	// Add filter condition if present
 	if query.Filter != nil && query.Filter.Expression != "" {
 
@@ -171,16 +163,13 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 			FieldMapper:        b.fieldMapper,
 			ConditionBuilder:   b.conditionBuilder,
 			FieldKeys:          keys,
-			BodyJSONEnabled:    bodyJSONEnabled,
 			FullTextColumn:     b.fullTextColumn,
-			JsonKeyToKey:       b.jsonKeyToKey,
 			SkipFullTextFilter: true,
-			SkipFunctionCalls:  true,
-			// there is no need for "key" not found error for resource filtering
-			IgnoreNotFoundKeys: true,
-			Variables:          variables,
-			StartNs:            start,
-			EndNs:              end,
+			// the resource-filter condition builder ignores keys it can't resolve (and
+			// skips function calls), so no "key not found" error arises here.
+			Variables: variables,
+			StartNs:   start,
+			EndNs:     end,
 		})
 
 		if err != nil {

@@ -13,10 +13,8 @@ import type {
 
 /**
  * Threshold evaluation for V2 panels — a self-contained port of the V1
- * `GridTableComponent`/`ValueGraph` logic that depends only on shared,
- * non-V1 primitives (`convertValue`, the Y-axis unit catalog). No imports
- * from `container/NewWidget`, `container/GridTableComponent`, or
- * `components/ValueGraph`.
+ * `GridTableComponent`/`ValueGraph` logic, depending only on non-V1 primitives
+ * (`convertValue`, the Y-axis unit catalog) so it never imports V1 surfaces.
  */
 
 /** Resolves which unit category a unit id belongs to, or null if unknown. */
@@ -25,9 +23,8 @@ function getCategoryName(unitId: string): YAxisCategoryNames | null {
 
 	const foundCategory = categories.find((category) =>
 		category.units.some((unit) => {
-			// Category units use universal ids; thresholds/panel units may use
-			// Grafana-style ids. Match either the universal id directly or its
-			// mapped Grafana id.
+			// Category units use universal ids; panel/threshold units may use
+			// Grafana-style ids. Match the universal id or its mapped Grafana id.
 			if (unit.id === unitId) {
 				return true;
 			}
@@ -38,10 +35,7 @@ function getCategoryName(unitId: string): YAxisCategoryNames | null {
 	return foundCategory ? foundCategory.name : null;
 }
 
-/**
- * Converts `value` from `fromUnit` to `toUnit`, returning null when the
- * conversion is invalid (unknown unit, or units in different categories).
- */
+/** Converts `value` between units; null when invalid (unknown, or different categories). */
 function convertUnit(
 	value: number,
 	fromUnit?: string,
@@ -85,9 +79,8 @@ function evaluateCondition(
 }
 
 /**
- * Whether `value` (expressed in `panelUnit`) satisfies `threshold`. When the
- * threshold declares its own unit, the panel value is converted into that unit
- * before comparing; if the conversion is invalid we compare the raw value.
+ * Whether `value` (in `panelUnit`) satisfies `threshold`. Converts into the
+ * threshold's unit before comparing; falls back to the raw value if invalid.
  */
 export function doesValueMatchThreshold(
 	value: number,
@@ -112,9 +105,8 @@ export interface ActiveThreshold {
 }
 
 /**
- * Resolves the threshold to apply for `value`. Among matching thresholds the
- * one declared earliest (lowest index) wins, mirroring V1 precedence; a match
- * count greater than one flags a conflict.
+ * Resolves the threshold to apply for `value`. Earliest-declared match wins
+ * (V1 precedence); more than one match flags a conflict.
  */
 export function resolveActiveThreshold(
 	thresholds: PanelThreshold[],

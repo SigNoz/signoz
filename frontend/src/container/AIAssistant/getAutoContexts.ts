@@ -124,7 +124,9 @@ export function getAutoContexts(
 		}
 	}
 
-	// Alert edit — `/alerts/edit?ruleId=…`.
+	// Alert edit — `/alerts/edit?ruleId=…`. The form syncs its query-builder
+	// state to the URL (`useShareBuilderUrl`), so shared metadata carries the
+	// alert's query + time range, mirroring the dashboard panel editor.
 	if (matchPath(pathname, { path: ROUTES.EDIT_ALERTS, exact: true })) {
 		const ruleId = params.get(QueryParams.ruleId);
 		if (ruleId) {
@@ -133,19 +135,21 @@ export function getAutoContexts(
 					source: 'auto',
 					type: 'alert',
 					resourceId: ruleId,
-					metadata: { page: 'alert_edit', ruleId },
+					metadata: { page: 'alert_edit', ruleId, ...sharedMetadata },
 				},
 			];
 		}
 	}
 
+	// Alert new — `/alerts/new`. No rule id yet (draft), but the query-builder
+	// state is on the URL, so shared metadata carries the in-progress query.
 	if (matchPath(pathname, { path: ROUTES.ALERTS_NEW, exact: true })) {
 		return [
 			{
 				source: 'auto',
 				type: 'alert',
 				resourceId: null,
-				metadata: { page: 'alert_new' },
+				metadata: { page: 'alert_new', ...sharedMetadata },
 			},
 		];
 	}

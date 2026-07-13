@@ -1,0 +1,104 @@
+.list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+// ── View mode: compact summary row ──────────────────────────────────────────
+.viewRow {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	height: 40px;
+	padding: 0 4px 0 10px;
+	border: 1px solid var(--l2-border);
+	background-color: var(--l2-background);
+	border-radius: 6px;
+}
+
+.viewValue {
+	flex: none;
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--text-vanilla-100);
+}
+
+.viewLabel {
+	overflow: hidden;
+	font-size: 12px;
+	color: var(--text-vanilla-400);
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.spacer {
+	flex: 1;
+}
+
+// ── Edit mode: labelled form ────────────────────────────────────────────────
+.editRow {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	padding: 12px;
+	background-color: var(--l2-background);
+	border: 1px solid var(--bg-robin-400);
+	border-radius: 6px;
+}
+
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.fieldLabel {
+	font-size: 12px;
+	color: var(--text-vanilla-400);
+}
+
+.actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+}
+
+// ── Shared ──────────────────────────────────────────────────────────────────
+.dot {
+	width: 12px;
+	height: 12px;
+	flex: none;
+	border-radius: 50%;
+}
+
+.colorTrigger {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	width: 100%;
+	height: 36px;
+	padding: 0 10px;
+	border: 1px solid var(--l2-border);
+	border-radius: 4px;
+	background: transparent;
+	color: var(--text-vanilla-100);
+	cursor: pointer;
+}
+
+.colorLabel {
+	flex: 1;
+	font-size: 13px;
+	text-align: left;
+}
+
+// Match Formatting: make the YAxisUnitSelector fill the row width.
+.unitSelector {
+	:global(.ant-select) {
+		width: 100%;
+	}
+}
+
+.invalidUnit {
+	font-size: 11px;
+	color: var(--bg-cherry-400);
+}

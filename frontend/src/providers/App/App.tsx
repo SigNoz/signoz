@@ -27,8 +27,8 @@ import {
 	IsAdminPermission,
 	IsEditorPermission,
 	IsViewerPermission,
-} from 'hooks/useAuthZ/legacy';
-import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
+} from 'lib/authz/hooks/useAuthZ/legacy';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { useGetFeatureFlag } from 'hooks/useGetFeatureFlag';
 import { useGlobalEventListener } from 'hooks/useGlobalEventListener';
 import { ChangelogSchema } from 'types/api/changelog/getChangelogByVersion';

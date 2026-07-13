@@ -43,6 +43,10 @@ type Store interface {
 
 	ListForUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, params *ListDashboardsV2Params) ([]*StorableDashboardWithPinInfo, int64, error)
 
+	// ListByDataContainsAny returns the org's dashboards whose raw `data` JSON
+	// contains any of the given substrings (matched literally; LIKE wildcards escaped).
+	ListByDataContainsAny(ctx context.Context, orgID valuer.UUID, searches []string) ([]*StorableDashboard, error)
+
 	// Returns ErrCodePinnedDashboardLimitHit when the user is at MaxPinnedDashboardsPerUser.
 	PinForUser(ctx context.Context, preference *UserDashboardPreference) error
 

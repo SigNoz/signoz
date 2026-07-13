@@ -26,6 +26,7 @@ func (s *store) List(ctx context.Context, orgID valuer.UUID, kind coretypes.Kind
 		Model(&tags).
 		Where("org_id = ?", orgID).
 		Where("kind = ?", kind).
+		OrderExpr("lower(key) ASC, lower(value) ASC").
 		Scan(ctx)
 	if err != nil {
 		return nil, err

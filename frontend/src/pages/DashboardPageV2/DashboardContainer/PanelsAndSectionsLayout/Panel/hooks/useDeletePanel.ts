@@ -1,9 +1,9 @@
 import { useCallback } from 'react';
 
-import { patchDashboardV2 } from 'api/generated/services/dashboard';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
+import { useOptimisticPatch } from '../../../hooks/useOptimisticPatch';
 import { removePanelOp, replaceSectionItemsOp } from '../../../patchOps';
 import { useDashboardStore } from '../../../store/useDashboardStore';
 import type { DashboardSection } from '../../../utils';
@@ -25,7 +25,7 @@ export function useDeletePanel({
 	sections,
 }: Params): (args: DeletePanelArgs) => Promise<void> {
 	const dashboardId = useDashboardStore((s) => s.dashboardId);
-	const refetch = useDashboardStore((s) => s.refetch);
+	const { patchAsync } = useOptimisticPatch();
 	const { showErrorModal } = useErrorModal();
 
 	return useCallback(
@@ -40,15 +40,14 @@ export function useDeletePanel({
 
 			const nextItems = section.items.filter((i) => i.id !== panelId);
 			try {
-				await patchDashboardV2({ id: dashboardId }, [
+				await patchAsync([
 					replaceSectionItemsOp(layoutIndex, nextItems),
 					removePanelOp(panelId),
 				]);
-				refetch();
 			} catch (error) {
 				showErrorModal(error as APIError);
 			}
 		},
-		[sections, dashboardId, refetch, showErrorModal],
+		[sections, dashboardId, patchAsync, showErrorModal],
 	);
 }

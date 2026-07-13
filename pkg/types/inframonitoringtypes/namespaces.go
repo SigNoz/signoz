@@ -12,17 +12,17 @@ type Namespaces struct {
 	Type                   ResponseType           `json:"type" required:"true"`
 	Records                []NamespaceRecord      `json:"records" required:"true" nullable:"false"`
 	Total                  int                    `json:"total" required:"true"`
-	RequiredMetricsCheck   RequiredMetricsCheck   `json:"requiredMetricsCheck" required:"true"`
 	EndTimeBeforeRetention bool                   `json:"endTimeBeforeRetention" required:"true"`
 	Warning                *qbtypes.QueryWarnData `json:"warning,omitempty"`
 }
 
 type NamespaceRecord struct {
-	NamespaceName    string            `json:"namespaceName" required:"true"`
-	NamespaceCPU     float64           `json:"namespaceCPU" required:"true"`
-	NamespaceMemory  float64           `json:"namespaceMemory" required:"true"`
-	PodCountsByPhase PodCountsByPhase  `json:"podCountsByPhase" required:"true"`
-	Meta             map[string]string `json:"meta" required:"true"`
+	NamespaceName     string            `json:"namespaceName" required:"true"`
+	NamespaceCPU      float64           `json:"namespaceCPU" required:"true"`
+	NamespaceMemory   float64           `json:"namespaceMemory" required:"true"`
+	PodCountsByPhase  PodCountsByPhase  `json:"podCountsByPhase" required:"true"`
+	PodCountsByStatus PodCountsByStatus `json:"podCountsByStatus" required:"true"`
+	Meta              map[string]string `json:"meta" required:"true"`
 }
 
 // PostableNamespaces is the request body for the v2 namespaces list API.

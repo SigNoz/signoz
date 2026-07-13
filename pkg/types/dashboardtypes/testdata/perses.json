@@ -652,6 +652,7 @@
                                             "type": "builder_trace_operator",
                                             "spec": {
                                                 "name": "T1",
+                                                "expression": "A => B",
                                                 "aggregations": [
                                                     {
                                                         "expression": "count()",

@@ -120,12 +120,12 @@ func (m *module) getTopVolumeGroups(
 	return paginateWithBackfill(allMetricGroups, metadataMap, req.GroupBy, req.Offset, req.Limit), nil
 }
 
-func (m *module) getVolumesTableMetadata(ctx context.Context, req *inframonitoringtypes.PostableVolumes) (map[string]map[string]string, error) {
+func (m *module) getVolumesTableMetadata(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableVolumes) (map[string]map[string]string, error) {
 	var nonGroupByAttrs []string
 	for _, key := range volumeAttrKeysForMetadata {
 		if !isKeyInGroupByAttrs(req.GroupBy, key) {
 			nonGroupByAttrs = append(nonGroupByAttrs, key)
 		}
 	}
-	return m.getMetadata(ctx, volumesTableMetricNamesList, req.GroupBy, nonGroupByAttrs, req.Filter, req.Start, req.End)
+	return m.getMetadata(ctx, orgID, volumesTableMetricNamesList, req.GroupBy, nonGroupByAttrs, req.Filter, req.Start, req.End)
 }

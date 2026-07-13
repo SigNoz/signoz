@@ -48,6 +48,48 @@ describe('getAutoContexts', () => {
 		]);
 	});
 
+	it('includes the query in alert edit context', () => {
+		const ruleId = 'rule-edit';
+		const query = { queryType: 'builder', builder: { queryData: [] } };
+		const compositeQuery = encodeURIComponent(JSON.stringify(query));
+		const search = `?${QueryParams.ruleId}=${ruleId}&${QueryParams.compositeQuery}=${compositeQuery}`;
+
+		const contexts = getAutoContexts(ROUTES.EDIT_ALERTS, search);
+
+		expect(contexts).toStrictEqual([
+			{
+				source: 'auto',
+				type: 'alert',
+				resourceId: ruleId,
+				metadata: {
+					page: 'alert_edit',
+					ruleId,
+					query,
+				},
+			},
+		]);
+	});
+
+	it('includes the query in alert new context (no ruleId)', () => {
+		const query = { queryType: 'builder', builder: { queryData: [] } };
+		const compositeQuery = encodeURIComponent(JSON.stringify(query));
+		const search = `?${QueryParams.compositeQuery}=${compositeQuery}`;
+
+		const contexts = getAutoContexts(ROUTES.ALERTS_NEW, search);
+
+		expect(contexts).toStrictEqual([
+			{
+				source: 'auto',
+				type: 'alert',
+				resourceId: null,
+				metadata: {
+					page: 'alert_new',
+					query,
+				},
+			},
+		]);
+	});
+
 	it('returns triggered alerts context on alert history without ruleId', () => {
 		const contexts = getAutoContexts(ROUTES.ALERT_HISTORY, '');
 

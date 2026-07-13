@@ -5,7 +5,7 @@ import { handleContactSupport } from 'container/Integrations/utils';
 
 import awwSnapUrl from '@/assets/Icons/awwSnap.svg';
 
-import { formatQueryErrorMessage } from '../../../utils';
+import { formatQueryErrorMessage } from '../../../utils/helpers';
 import styles from './ErrorState.module.scss';
 
 interface Props {

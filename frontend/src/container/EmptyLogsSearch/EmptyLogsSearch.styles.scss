@@ -43,7 +43,7 @@
 
 				&__title {
 					color: var(--l1-foreground);
-					font-size: 14px;
+					font-size: var(--periscope-font-size-base);
 					font-weight: 500;
 					line-height: 20px;
 					letter-spacing: -0.07px;
@@ -51,14 +51,14 @@
 
 				&__subtitle {
 					color: var(--l2-foreground);
-					font-size: 14px;
+					font-size: var(--periscope-font-size-base);
 					font-weight: 400;
 					line-height: 20px;
 					letter-spacing: -0.07px;
 				}
 
 				&__description {
-					font-size: 14px;
+					font-size: var(--periscope-font-size-base);
 					color: var(--l2-foreground);
 					line-height: 20px;
 				}
@@ -67,7 +67,7 @@
 					margin: 0;
 					margin-top: 8px;
 					color: var(--l2-foreground);
-					font-size: 14px;
+					font-size: var(--periscope-font-size-base);
 					font-weight: 400;
 					line-height: 20px;
 					letter-spacing: -0.07px;
@@ -106,7 +106,7 @@
 					border: 1px dashed var(--l1-border);
 					background: transparent;
 					color: var(--l2-foreground);
-					font-size: 14px;
+					font-size: var(--periscope-font-size-base);
 					font-weight: 400;
 					line-height: 18px;
 					letter-spacing: -0.07px;
@@ -120,15 +120,15 @@
 					gap: 6px;
 				}
 
+				// Stack the message and the resources card; card matches the content
+				// width above it and is capped so it doesn't sprawl in a wide panel.
 				&__row {
 					display: flex;
-					flex-direction: row;
-					flex-wrap: wrap;
-					align-items: flex-end;
-					max-width: 825px;
-					gap: 25px;
-					justify-content: center;
-					margin-left: 21px;
+					flex-direction: column;
+					align-items: stretch;
+					gap: 16px;
+					width: fit-content;
+					max-width: 600px;
 				}
 
 				&__content {
@@ -142,7 +142,7 @@
 					background: var(--l2-background);
 					border: 1px solid var(--l1-border);
 					border-radius: 4px;
-					width: 332px;
+					width: 100%; // match the content width above
 				}
 
 				&__resources-title {
@@ -155,7 +155,6 @@
 					text-transform: uppercase;
 					padding: 16px 16px 12px;
 					border-bottom: 1px solid var(--l1-border);
-					height: 46px;
 				}
 
 				&__resources-links {

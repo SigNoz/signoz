@@ -5,6 +5,7 @@ import { Button } from '@signozhq/ui/button';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import cx from 'classnames';
 import { useCopyToClipboard } from 'hooks/useCopyToClipboard';
+import { useResizeObserver } from 'hooks/useDimensions';
 import { LegendItem } from 'lib/uPlotV2/config/types';
 import { Check, Copy } from '@signozhq/icons';
 
@@ -36,17 +37,16 @@ export default function Legend({
 
 	// Search is intrinsic to the right-positioned legend.
 	const searchEnabled = position === LegendPosition.RIGHT;
+	const { width: containerWidth } = useResizeObserver(legendContainerRef);
 
 	const isSingleRow = useMemo(() => {
-		if (!legendContainerRef.current || position !== LegendPosition.BOTTOM) {
+		if (position !== LegendPosition.BOTTOM || containerWidth <= 0) {
 			return false;
 		}
-		const containerWidth = legendContainerRef.current.clientWidth;
-
 		const totalLegendWidth = items.length * (averageLegendWidth + 16);
 		const totalRows = Math.ceil(totalLegendWidth / containerWidth);
 		return totalRows <= 1;
-	}, [averageLegendWidth, items.length, position]);
+	}, [averageLegendWidth, items.length, position, containerWidth]);
 
 	const visibleLegendItems = useMemo(() => {
 		if (!searchEnabled || !legendSearchQuery.trim()) {

@@ -1,0 +1,20 @@
+.warning {
+	display: flex;
+	gap: 10px;
+	padding: 11px 13px;
+	border-radius: 6px;
+	background: var(--callout-warning-background);
+	border: 1px solid var(--callout-warning-border);
+	color: var(--callout-warning-icon);
+}
+
+.warningBody {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.assetList {
+	margin: 2px 0 0;
+	padding-left: 16px;
+}

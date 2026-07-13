@@ -90,21 +90,21 @@ func TestJSONBinding_BindBody_UnknownFieldSuggestions(t *testing.T) {
 			body:        `{"shape":"round"}`,
 			opts:        []BindBodyOption{WithDisallowUnknownFields(true)},
 			message:     `unknown field "shape"`,
-			suggestions: []string{"valid references: `name`, `color`"},
+			suggestions: []string{"valid fields are `name`, `color`"},
 		},
 		{
 			name:        "WithContext",
 			body:        `{"shape":"round"}`,
 			opts:        []BindBodyOption{WithDisallowUnknownFields(true), WithUnknownFieldContext("widget spec")},
 			message:     `unknown field "shape" in widget spec`,
-			suggestions: []string{"valid references: `name`, `color`"},
+			suggestions: []string{"valid fields are `name`, `color`"},
 		},
 		{
 			name:        "NearMatch",
 			body:        `{"nam":"x"}`,
 			opts:        []BindBodyOption{WithDisallowUnknownFields(true)},
 			message:     `unknown field "nam"`,
-			suggestions: []string{"did you mean: `name`", "valid references: `name`, `color`"},
+			suggestions: []string{"did you mean: `name`", "valid fields are `name`, `color`"},
 		},
 	}
 

@@ -22,6 +22,7 @@ var (
 	ErrCodeServiceAccountAlreadyExists     = errors.MustNewCode("service_account_already_exists")
 	ErrCodeServiceAccountNotFound          = errors.MustNewCode("service_account_not_found")
 	ErrCodeServiceAccountRoleAlreadyExists = errors.MustNewCode("service_account_role_already_exists")
+	ErrCodeServiceAccountRoleNotFound      = errors.MustNewCode("service_account_role_not_found")
 	errInvalidServiceAccountName           = errors.New(errors.TypeInvalidInput, ErrCodeServiceAccountInvalidInput, "name must start with a lowercase letter (a-z), contain only lowercase letters, numbers (0-9), and hyphens (-), and be at most 50 characters long")
 )
 
@@ -68,8 +69,13 @@ type PostableServiceAccount struct {
 	Name string `json:"name" required:"true"`
 }
 
-type PostableServiceAccountRole struct {
+type DeprecatedPostableServiceAccountRole struct {
 	ID valuer.UUID `json:"id" required:"true"`
+}
+
+type PostableServiceAccountRole struct {
+	ServiceAccountID valuer.UUID `json:"serviceAccountId" required:"true"`
+	RoleID           valuer.UUID `json:"roleId" required:"true"`
 }
 
 type UpdatableServiceAccount = PostableServiceAccount
@@ -205,6 +211,26 @@ func (serviceAccount *ServiceAccountWithRoles) RoleNames() []string {
 	return names
 }
 
+func (serviceAccountRole *PostableServiceAccountRole) UnmarshalJSON(data []byte) error {
+	type Alias PostableServiceAccountRole
+
+	var temp Alias
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+
+	if temp.ServiceAccountID.IsZero() {
+		return errors.New(errors.TypeInvalidInput, ErrCodeServiceAccountInvalidInput, "serviceAccountId is required")
+	}
+
+	if temp.RoleID.IsZero() {
+		return errors.New(errors.TypeInvalidInput, ErrCodeServiceAccountInvalidInput, "roleId is required")
+	}
+
+	*serviceAccountRole = PostableServiceAccountRole(temp)
+	return nil
+}
+
 func (serviceAccount *PostableServiceAccount) UnmarshalJSON(data []byte) error {
 	type Alias PostableServiceAccount
 
@@ -245,6 +271,7 @@ type Store interface {
 
 	// Service Account Role
 	CreateServiceAccountRole(context.Context, *ServiceAccountRole) error
+	GetServiceAccountRoleByOrgIDAndID(context.Context, valuer.UUID, valuer.UUID) (*ServiceAccountRole, error)
 	DeleteServiceAccountRole(context.Context, valuer.UUID, valuer.UUID) error
 
 	// Service Account Factor API Key

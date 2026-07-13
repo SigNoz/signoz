@@ -214,6 +214,23 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v1/user/{id}", handler.New(provider.authzMiddleware.AdminAccess(provider.userHandler.DeleteUser), handler.OpenAPIDef{
+		ID:                  "DeleteUserDeprecated",
+		Tags:                []string{"users"},
+		Summary:             "Delete user",
+		Description:         "This endpoint deletes the user by id",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            nil,
+		ResponseContentType: "",
+		SuccessStatusCode:   http.StatusNoContent,
+		ErrorStatusCodes:    []int{http.StatusNotFound},
+		Deprecated:          true,
+		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+	})).Methods(http.MethodDelete).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/users/{id}", handler.New(provider.authzMiddleware.AdminAccess(provider.userHandler.DeleteUser), handler.OpenAPIDef{
 		ID:                  "DeleteUser",
 		Tags:                []string{"users"},
 		Summary:             "Delete user",
@@ -377,7 +394,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		ResponseContentType: "",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusNotFound},
-		Deprecated:          false,
+		Deprecated:          true,
 		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 	})).Methods(http.MethodPost).GetError(); err != nil {
 		return err
@@ -394,7 +411,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		ResponseContentType: "",
 		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{http.StatusNotFound},
-		Deprecated:          false,
+		Deprecated:          true,
 		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 	})).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
@@ -414,6 +431,57 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		Deprecated:          false,
 		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 	})).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/user_roles", handler.New(provider.authzMiddleware.AdminAccess(provider.userHandler.CreateUserRole), handler.OpenAPIDef{
+		ID:                  "CreateUserRole",
+		Tags:                []string{"users"},
+		Summary:             "Create user role",
+		Description:         "This endpoint assigns a role to a user",
+		Request:             new(authtypes.PostableUserRole),
+		RequestContentType:  "",
+		Response:            new(types.Identifiable),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusCreated,
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+	})).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/user_roles/{id}", handler.New(provider.authzMiddleware.AdminAccess(provider.userHandler.GetUserRole), handler.OpenAPIDef{
+		ID:                  "GetUserRole",
+		Tags:                []string{"users"},
+		Summary:             "Get user role",
+		Description:         "This endpoint gets an existing user role",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            new(authtypes.UserRole),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+	})).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/user_roles/{id}", handler.New(provider.authzMiddleware.AdminAccess(provider.userHandler.DeleteUserRole), handler.OpenAPIDef{
+		ID:                  "DeleteUserRole",
+		Tags:                []string{"users"},
+		Summary:             "Delete user role",
+		Description:         "This endpoint revokes a role from a user",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            nil,
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusNoContent,
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+	})).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
 

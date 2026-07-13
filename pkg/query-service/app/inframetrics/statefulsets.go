@@ -99,7 +99,7 @@ func NewStatefulSetsRepo(reader interfaces.Reader, querierV2 interfaces.Querier)
 	return &StatefulSetsRepo{reader: reader, querierV2: querierV2}
 }
 
-func (d *StatefulSetsRepo) GetStatefulSetAttributeKeys(ctx context.Context, req v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
+func (d *StatefulSetsRepo) GetStatefulSetAttributeKeys(ctx context.Context, orgID valuer.UUID, req v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
 	// TODO(srikanthccv): remove hardcoded metric name and support keys from any pod metric
 	req.DataSource = v3.DataSourceMetrics
 	req.AggregateAttribute = metricToUseForStatefulSets
@@ -107,7 +107,7 @@ func (d *StatefulSetsRepo) GetStatefulSetAttributeKeys(ctx context.Context, req 
 		req.Limit = 50
 	}
 
-	attributeKeysResponse, err := d.reader.GetMetricAttributeKeys(ctx, &req)
+	attributeKeysResponse, err := d.reader.GetMetricAttributeKeys(ctx, orgID, &req)
 	if err != nil {
 		return nil, err
 	}
@@ -125,14 +125,14 @@ func (d *StatefulSetsRepo) GetStatefulSetAttributeKeys(ctx context.Context, req 
 	return &v3.FilterAttributeKeyResponse{AttributeKeys: filteredKeys}, nil
 }
 
-func (d *StatefulSetsRepo) GetStatefulSetAttributeValues(ctx context.Context, req v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
+func (d *StatefulSetsRepo) GetStatefulSetAttributeValues(ctx context.Context, orgID valuer.UUID, req v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
 	req.DataSource = v3.DataSourceMetrics
 	req.AggregateAttribute = metricToUseForStatefulSets
 	if req.Limit == 0 {
 		req.Limit = 50
 	}
 
-	attributeValuesResponse, err := d.reader.GetMetricAttributeValues(ctx, &req)
+	attributeValuesResponse, err := d.reader.GetMetricAttributeValues(ctx, orgID, &req)
 	if err != nil {
 		return nil, err
 	}

@@ -41,6 +41,7 @@ const getTraceV4 = async (
 	> & { spans: WireSpan[] | null };
 
 	// Derive 'service.name' from resource for convenience — only derived field
+	// todo(tech-debt): to remove use of this and to directly use service.name from resources.
 	const spans: SpanV3[] = (rawPayload.spans || []).map((span) => ({
 		...span,
 		'service.name': span.resource?.['service.name'] || '',

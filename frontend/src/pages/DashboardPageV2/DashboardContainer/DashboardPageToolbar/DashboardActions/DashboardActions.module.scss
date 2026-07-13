@@ -1,11 +1,13 @@
 .dashboardActionsContainer {
 	display: flex;
 	flex-wrap: wrap;
+	align-items: center;
 	justify-content: flex-end;
 	gap: 12px;
 }
 
-.dashboardActionsSecondary {
-	display: flex;
-	gap: 12px;
+/* Actions / Configure / Edit-as-JSON: a flat l3 outline — no depth/shadow. */
+.toolbarButton {
+	border: 1px solid var(--l3-border) !important;
+	box-shadow: none !important;
 }

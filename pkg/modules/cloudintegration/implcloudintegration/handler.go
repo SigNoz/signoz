@@ -481,6 +481,7 @@ func (handler *handler) UpdateService(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusNoContent, nil)
 }
 
+// TODO: Rename AgentCheckIn to just CheckIn.
 func (handler *handler) AgentCheckIn(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()

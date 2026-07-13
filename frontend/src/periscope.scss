@@ -13,9 +13,9 @@
 
 	padding: 6px;
 
-	border: 1px solid var(--l1-border);
+	border: 1px solid var(--periscope-btn-border-color, var(--l1-border));
 	border-radius: 3px;
-	background: var(--l2-background);
+	background: var(--periscope-btn-background-color, var(--l2-background));
 	box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 	color: var(--l2-foreground);
 
@@ -135,11 +135,15 @@
 	display: flex;
 	flex-direction: row;
 	border-radius: 2px 0px 0px 2px;
+	background-color: var(
+		--input-with-label-background-color,
+		var(--l2-background)
+	);
 
 	.label {
 		font-size: 12px;
 
-		color: var(--l2-foreground);
+		color: var(--input-with-label-color, var(--l2-foreground));
 		font-size: 12px;
 		font-style: normal;
 		font-weight: 500;
@@ -153,9 +157,8 @@
 		text-overflow: ellipsis;
 		padding: 0px 8px;
 		border-radius: 2px 0px 0px 2px;
-		border: 1px solid var(--l2-border);
-		background: var(--l2-background);
-		color: var(--l1-foreground);
+		border: 1px solid var(--input-with-label-border-color, var(--l2-border));
+		background: var(--input-with-label-background-color, var(--l2-background));
 		display: flex;
 		justify-content: flex-start;
 		align-items: center;
@@ -165,7 +168,6 @@
 	.input {
 		flex: 1;
 		border-radius: 0px 2px 2px 0px;
-		border: 1px solid var(--l1-border);
 		border-right: none;
 		border-left: none;
 		border-top-right-radius: 0px;
@@ -173,7 +175,7 @@
 		border-top-left-radius: 0px;
 		border-bottom-left-radius: 0px;
 
-		background: var(--l1-background);
+		background: var(--input-with-label-background-color, var(--l2-background));
 
 		min-width: 0;
 
@@ -189,21 +191,44 @@
 		}
 
 		.ant-select-selector {
-			border: none;
-			background: var(--l2-background);
+			height: 36px;
+			border-color: var(--input-with-label-border-color, var(--l2-border));
+			background: var(--input-with-label-background-color, var(--l2-background));
+			border-radius: 0;
+			position: relative;
+			margin-left: -1px;
+		}
+
+		.ant-select:hover .ant-select-selector,
+		.ant-select-focused .ant-select-selector {
+			z-index: 1;
+		}
+
+		.ant-select-disabled .ant-select-selector {
+			background: var(
+				--input-with-label-background-color,
+				var(--l2-background)
+			) !important;
 		}
 
 		.ant-select-selection-placeholder {
-			color: var(--l2-foreground);
+			color: var(--input-with-label-color, var(--l2-foreground));
 		}
 	}
 
 	.close-btn {
 		border-radius: 0px 2px 2px 0px;
-		border: 1px solid var(--l2-border);
-		background: var(--l2-background);
-		height: 38px;
+		border: 1px solid var(--input-with-label-border-color, var(--l2-border));
+		background: var(--input-with-label-background-color, var(--l2-background));
+		height: 100%;
 		width: 38px;
+		margin-left: -1px;
+		position: relative;
+
+		&:hover,
+		&:focus {
+			z-index: 2;
+		}
 
 		&:focus:not(:focus-visible),
 		&.ant-btn:focus:not(:focus-visible) {

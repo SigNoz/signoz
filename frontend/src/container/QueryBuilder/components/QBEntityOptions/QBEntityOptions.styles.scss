@@ -31,8 +31,14 @@
 			min-width: 32px;
 
 			border-radius: 2px;
-			border: 1px solid var(--l1-border);
-			background: var(--l2-background);
+			--periscope-btn-border-color: var(
+				--query-builder-v2-border-color,
+				var(--l2-border)
+			);
+			--periscope-btn-background-color: var(
+				--query-builder-v2-background-color,
+				var(--l2-background)
+			);
 			box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 		}
 

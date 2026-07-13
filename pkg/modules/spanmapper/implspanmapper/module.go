@@ -4,19 +4,22 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/modules/spanmapper"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type module struct {
-	store spantypes.SpanMapperStore
+	store   spantypes.SpanMapperStore
+	flagger flagger.Flagger
 }
 
-func NewModule(store spantypes.SpanMapperStore) spanmapper.Module {
-	return &module{store: store}
+func NewModule(store spantypes.SpanMapperStore, flagger flagger.Flagger) spanmapper.Module {
+	return &module{store: store, flagger: flagger}
 }
 
 func (module *module) ListGroups(ctx context.Context, orgID valuer.UUID, q *spantypes.ListSpanMapperGroupsQuery) ([]*spantypes.SpanMapperGroup, error) {
@@ -109,12 +112,22 @@ func (module *module) AgentFeatureType() agentConf.AgentFeatureType {
 func (module *module) RecommendAgentConfig(orgID valuer.UUID, currentConfYaml []byte, configVersion *opamptypes.AgentConfigVersion) ([]byte, string, error) {
 	ctx := context.Background()
 
-	enabled, err := module.listEnabledGroupsWithMappers(ctx, orgID)
+	// Skip the llm pricing processor unless AI observability is enabled for the org.
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
+	enabled, err := module.flagger.Boolean(ctx, flagger.FeatureEnableAIObservability, evalCtx)
+	if err != nil {
+		return nil, "", err
+	}
+	if !enabled {
+		return currentConfYaml, "", nil
+	}
+
+	enabledMappers, err := module.listEnabledGroupsWithMappers(ctx, orgID)
 	if err != nil {
 		return nil, "", err
 	}
 
-	updatedConf, err := spantypes.GenerateCollectorConfigWithSpanMapperProcessor(currentConfYaml, enabled)
+	updatedConf, err := spantypes.GenerateCollectorConfigWithSpanMapperProcessor(currentConfYaml, enabledMappers)
 	if err != nil {
 		return nil, "", err
 	}

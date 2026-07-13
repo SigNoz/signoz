@@ -4,8 +4,12 @@ import (
 	"bytes"
 	"crypto/rand"
 	"encoding/json"
+	"fmt"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -134,12 +138,41 @@ func (d *DashboardV2) ErrIfNotClonable() error {
 }
 
 func (d DashboardV2) ToPostableForCloning() PostableDashboardV2 {
+	spec := d.Spec
+	spec.Display.Name = nextCloneDisplayName(spec.Display.Name)
 	return PostableDashboardV2{
 		DashboardV2MetadataBase: d.DashboardV2MetadataBase,
 		GenerateName:            true,
 		Tags:                    tagtypes.NewPostableTagsFromTags(d.Tags),
-		Spec:                    d.Spec,
+		Spec:                    spec,
 	}
+}
+
+// cloneCopySuffixRegex matches a " - Copy" or " - Copy (n)" suffix on a display name.
+var cloneCopySuffixRegex = regexp.MustCompile(`^(.*) - Copy(?: \((\d+)\))?$`)
+
+// nextCloneDisplayName appends " - Copy" to a clone's display name, bumping an
+// existing " - Copy (n)" counter, then truncates the base to fit MaxDisplayNameLen.
+func nextCloneDisplayName(name string) string {
+	base, count := name, 0
+	if m := cloneCopySuffixRegex.FindStringSubmatch(name); m != nil {
+		base = m[1]
+		count = 1 // bare " - Copy"
+		if m[2] != "" {
+			count, _ = strconv.Atoi(m[2])
+		}
+	}
+
+	suffix := " - Copy"
+	if count++; count > 1 {
+		suffix = fmt.Sprintf(" - Copy (%d)", count)
+	}
+
+	limit := max(MaxDisplayNameLen-utf8.RuneCountInString(suffix), 0)
+	if runes := []rune(base); len(runes) > limit {
+		base = strings.TrimRight(string(runes[:limit]), " ")
+	}
+	return base + suffix
 }
 
 type DashboardV2MetadataBase struct {

@@ -8,10 +8,9 @@ export interface ParsedFormattedValue {
 }
 
 /**
- * Splits a formatted value string (e.g. "$ 1.2K", "295.43 ms") into its
- * numeric core and any prefix/suffix unit so each part can be styled
- * independently. Falls back to treating the whole string as the numeric value
- * when it doesn't match the expected shape.
+ * Splits a formatted value (e.g. "$ 1.2K", "295.43 ms") into its numeric core
+ * and prefix/suffix unit for independent styling. Non-matching input falls back
+ * to the whole string as the numeric value.
  */
 export function parseFormattedValue(value: string): ParsedFormattedValue {
 	const matches = value.match(
