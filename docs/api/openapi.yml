@@ -8159,7 +8159,7 @@ components:
           type: boolean
         fieldContext:
           $ref: '#/components/schemas/SpantypesFieldContext'
-        group_id:
+        groupId:
           type: string
         id:
           type: string
@@ -8172,7 +8172,7 @@ components:
           type: string
       required:
       - id
-      - group_id
+      - groupId
       - name
       - fieldContext
       - config

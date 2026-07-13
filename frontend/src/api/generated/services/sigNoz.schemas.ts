@@ -9237,7 +9237,7 @@ export interface SpantypesSpanMapperDTO {
 	/**
 	 * @type string
 	 */
-	group_id: string;
+	groupId: string;
 	/**
 	 * @type string
 	 */
