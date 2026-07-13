@@ -1,8 +1,9 @@
 package querybuilder
 
 import (
-	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"testing"
+
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,6 +21,7 @@ func TestNormalizeWhereClauseEquivalenceClasses(t *testing.T) {
 				"service.name = 'frontend' AND status = 200",
 				"service.name='frontend' and status=200",
 				"service.name  =  'frontend'  AND  status  =  200",
+				"service.name  =  frontend  AND  status  =  200",
 			},
 			expected: "service.name = 'frontend' AND status = 200",
 		},
@@ -70,6 +72,7 @@ func TestNormalizeWhereClauseEquivalenceClasses(t *testing.T) {
 			expressions: []string{
 				"a IN 1",
 				"a IN (1)",
+				"a IN [1]",
 			},
 			expected: "a IN (1)",
 		},

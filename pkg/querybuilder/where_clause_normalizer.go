@@ -246,11 +246,11 @@ func (visitor *whereClauseNormalizer) visitComparison(ctx grammar.IComparisonCon
 	}
 
 	if ctx.InClause() != nil {
-		return visitor.inComparison(key, "IN", visitor.visitInValues(ctx.InClause().ValueList(), ctx.InClause().Value()))
+		return visitor.visitInComparison(key, "IN", visitor.visitInValues(ctx.InClause().ValueList(), ctx.InClause().Value()))
 	}
 
 	if ctx.NotInClause() != nil {
-		return visitor.inComparison(key, "NOT IN", visitor.visitInValues(ctx.NotInClause().ValueList(), ctx.NotInClause().Value()))
+		return visitor.visitInComparison(key, "NOT IN", visitor.visitInValues(ctx.NotInClause().ValueList(), ctx.NotInClause().Value()))
 	}
 
 	if ctx.BETWEEN() != nil {
@@ -293,53 +293,19 @@ func (visitor *whereClauseNormalizer) visitComparison(ctx grammar.IComparisonCon
 		operator = "NOT " + operator
 	}
 
-	value := visitor.normalizeValue(ctx.AllValue()[0])
-	if variableItem, ok := visitor.resolveVariable(value.raw); ok {
-		if variableItem.Type == qbtypes.DynamicVariableType {
-			if allValue, ok := variableItem.Value.(string); ok && allValue == "__all__" {
-				return normalizedPart{skipped: true}
-			}
-		}
-
-		switch variableValues := variableItem.Value.(type) {
-		case []any:
-			if len(variableValues) == 0 {
-				visitor.errors = append(visitor.errors, fmt.Sprintf("malformed request payload: variable `%s` used in expression has an empty list value", strings.TrimPrefix(value.raw, "$")))
-				return normalizedPart{skipped: true}
-			}
-			value = formatVariableValue(variableValues[0])
-		case any:
-			value = formatVariableValue(variableValues)
-		}
+	value, skipped := visitor.substituteScalarVariable(visitor.normalizeValue(ctx.AllValue()[0]))
+	if skipped {
+		return normalizedPart{skipped: true}
 	}
 
 	visitor.appendCondition(key, operator, []string{value.raw})
 	return normalizedPart{text: key + " " + operator + " " + value.text}
 }
 
-func (visitor *whereClauseNormalizer) inComparison(key, operator string, values []normalizedValue) normalizedPart {
-	if len(values) == 1 {
-		if variableItem, ok := visitor.resolveVariable(values[0].raw); ok {
-			if variableItem.Type == qbtypes.DynamicVariableType {
-				if allValue, ok := variableItem.Value.(string); ok && allValue == "__all__" {
-					return normalizedPart{skipped: true}
-				}
-			}
-
-			switch variableValues := variableItem.Value.(type) {
-			case []any:
-				if len(variableValues) == 0 {
-					visitor.errors = append(visitor.errors, fmt.Sprintf("malformed request payload: variable `%s` used in expression has an empty list value", strings.TrimPrefix(values[0].raw, "$")))
-					return normalizedPart{skipped: true}
-				}
-				values = make([]normalizedValue, 0, len(variableValues))
-				for _, variableValue := range variableValues {
-					values = append(values, formatVariableValue(variableValue))
-				}
-			case any:
-				values = []normalizedValue{formatVariableValue(variableValues)}
-			}
-		}
+func (visitor *whereClauseNormalizer) visitInComparison(key, operator string, values []normalizedValue) normalizedPart {
+	values, skipped := visitor.substituteListVariable(values)
+	if skipped {
+		return normalizedPart{skipped: true}
 	}
 
 	sort.Slice(values, func(i, j int) bool { return values[i].text < values[j].text })
@@ -356,19 +322,6 @@ func (visitor *whereClauseNormalizer) inComparison(key, operator string, values 
 
 	visitor.appendCondition(key, operator, raws)
 	return normalizedPart{text: key + " " + operator + " (" + strings.Join(texts, ", ") + ")"}
-}
-
-func (visitor *whereClauseNormalizer) resolveVariable(raw string) (qbtypes.VariableItem, bool) {
-	if len(visitor.variables) == 0 {
-		return qbtypes.VariableItem{}, false
-	}
-
-	variableItem, ok := visitor.variables[raw]
-	if !ok && len(raw) > 0 {
-		variableItem, ok = visitor.variables[raw[1:]]
-	}
-
-	return variableItem, ok
 }
 
 func (visitor *whereClauseNormalizer) visitInValues(valueList grammar.IValueListContext, value grammar.IValueContext) []normalizedValue {
@@ -461,8 +414,11 @@ func (visitor *whereClauseNormalizer) normalizeValue(ctx grammar.IValueContext) 
 		text := strings.ToLower(ctx.BOOL().GetText())
 		return normalizedValue{text: text, raw: text}
 	default:
-		text := ctx.KEY().GetText()
-		return normalizedValue{text: text, raw: text}
+		raw := ctx.KEY().GetText()
+		if strings.HasPrefix(raw, "$") {
+			return normalizedValue{text: raw, raw: raw}
+		}
+		return normalizedValue{text: quoteValue(raw), raw: raw}
 	}
 }
 
@@ -477,6 +433,82 @@ func (visitor *whereClauseNormalizer) appendCondition(key, operator string, valu
 		Values:   values,
 		Negated:  visitor.negated,
 	})
+}
+
+func (visitor *whereClauseNormalizer) substituteScalarVariable(value normalizedValue) (normalizedValue, bool) {
+	variableItem, ok := visitor.resolveVariable(value.raw)
+	if !ok {
+		return value, false
+	}
+
+	if skipped := visitor.errIfSkippedOrEmpty(variableItem, value.raw); skipped {
+		return normalizedValue{}, true
+	}
+
+	switch variableValues := variableItem.Value.(type) {
+	case []any:
+		return formatVariableValue(variableValues[0]), false
+	case any:
+		return formatVariableValue(variableValues), false
+	}
+
+	return value, false
+}
+
+func (visitor *whereClauseNormalizer) substituteListVariable(values []normalizedValue) ([]normalizedValue, bool) {
+	if len(values) != 1 {
+		return values, false
+	}
+
+	variableItem, ok := visitor.resolveVariable(values[0].raw)
+	if !ok {
+		return values, false
+	}
+
+	if skipped := visitor.errIfSkippedOrEmpty(variableItem, values[0].raw); skipped {
+		return nil, true
+	}
+
+	switch variableValues := variableItem.Value.(type) {
+	case []any:
+		substituted := make([]normalizedValue, 0, len(variableValues))
+		for _, variableValue := range variableValues {
+			substituted = append(substituted, formatVariableValue(variableValue))
+		}
+		return substituted, false
+	case any:
+		return []normalizedValue{formatVariableValue(variableValues)}, false
+	}
+
+	return values, false
+}
+
+func (visitor *whereClauseNormalizer) errIfSkippedOrEmpty(variableItem qbtypes.VariableItem, raw string) bool {
+	if variableItem.Type == qbtypes.DynamicVariableType {
+		if allValue, ok := variableItem.Value.(string); ok && allValue == "__all__" {
+			return true
+		}
+	}
+
+	if variableValues, ok := variableItem.Value.([]any); ok && len(variableValues) == 0 {
+		visitor.errors = append(visitor.errors, fmt.Sprintf("malformed request payload: variable `%s` used in expression has an empty list value", strings.TrimPrefix(raw, "$")))
+		return true
+	}
+
+	return false
+}
+
+func (visitor *whereClauseNormalizer) resolveVariable(raw string) (qbtypes.VariableItem, bool) {
+	if len(visitor.variables) == 0 {
+		return qbtypes.VariableItem{}, false
+	}
+
+	variableItem, ok := visitor.variables[raw]
+	if !ok && len(raw) > 0 {
+		variableItem, ok = visitor.variables[raw[1:]]
+	}
+
+	return variableItem, ok
 }
 
 func formatVariableValue(value any) normalizedValue {
