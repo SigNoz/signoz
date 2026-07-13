@@ -21,9 +21,11 @@ func (c Compiled) IsEmpty() bool {
 // produces no SQL) yields a Compiled with an empty SQL — callers gate on
 // SQL != "" rather than a nil check.
 //
-// A valid `key OP value` filter compiles to the DSL predicate; a plain string
-// (bare words, spaces allowed) is a case-insensitive substring search over the
-// dashboard name, description, and tag keys/values; anything else is an error.
+// A `key OP value` term compiles to a DSL predicate; a bare word is a
+// case-insensitive substring search over the dashboard name, description, and tag
+// keys/values. They compose through AND/OR/NOT, so `prod payment` matches both
+// words (implicit AND) and `prod OR name = 'x'` mixes free text with a filter. A
+// quoted token matches literally, e.g. `"prod payment"`.
 func Compile(query string, formatter sqlstore.SQLFormatter) (*Compiled, error) {
 	if len(strings.TrimSpace(query)) == 0 {
 		return &Compiled{}, nil

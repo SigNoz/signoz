@@ -723,10 +723,11 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
         assert response.status_code == HTTPStatus.OK, response.text
         assert {d["spec"]["display"]["name"] for d in response.json()["data"]["dashboards"]} == expected, query
 
-    # ── stage 5: free-text search (a non-DSL query) ──────────────────────────
-    # A query that isn't a `key OP value` filter is a case-insensitive substring
-    # search over the dashboard name and every tag key/value. The whole string
-    # (spaces included) is one CONTAINS term, not a per-word match.
+    # ── stage 5: free-text search (bare-word terms) ──────────────────────────
+    # A bare word is a case-insensitive substring search over the name and every
+    # tag key/value. Consecutive words are separate terms AND'd together (implicit
+    # AND); a quoted token matches the whole phrase; and a term composes with
+    # comparisons via AND/OR.
     free_text_cases = [
         # name substring, matched case-insensitively
         ("overview", {"Alpha Overview", "Beta Overview", "Zeta Overview"}),
@@ -750,12 +751,19 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
                 "Zeta Overview",
             },
         ),
-        # a phrase matches as one whole substring, spaces included
-        ("Delta Storage", {"Delta Storage"}),
-        # whole-string, not per-word: no field contains this exact substring
-        ("Overview Storage", set()),
-        # a fully-quoted string is unquoted and searched literally
+        # two words AND'd: only Delta matches both "delta" and "storage"
+        ("delta storage", {"Delta Storage"}),
+        # two words AND'd with no dashboard matching both
+        ("overview storage", set()),
+        # a quoted token matches the whole phrase
         ('"Alpha Overview"', {"Alpha Overview"}),
+        # a free-text term AND'd with a comparison (the reviewer's case)
+        ("pulse AND env = 'prod'", {"Alpha Overview"}),
+        # a free-text term OR'd with a comparison
+        (
+            "storage OR env = 'staging'",
+            {"Gamma Storage", "Delta Storage", "Epsilon Metrics", "Zeta Overview"},
+        ),
         # no match anywhere
         ("nonexistent", set()),
     ]
@@ -886,10 +894,11 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
     )
     assert response.json()["data"]["spec"]["display"]["description"] == "now with a description"
 
-    # free-text search also matches the description (only Alpha has one now)
+    # free-text search also matches the description (only Alpha has one now);
+    # quoted so the phrase matches as one substring rather than per-word
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v2/users/me/dashboards"),
-        params={"query": "now with a description", "limit": 200},
+        params={"query": '"now with a description"', "limit": 200},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )

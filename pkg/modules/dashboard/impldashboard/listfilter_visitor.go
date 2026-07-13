@@ -23,10 +23,6 @@ type visitor struct {
 	selectBuilder *sqlbuilder.SelectBuilder
 	formatter     sqlstore.SQLFormatter
 	errors        []string
-	// bareTerms are primaries that were a lone key/value/full-text token, not a
-	// `key OP value` comparison. compile uses them to tell a free-text search (all
-	// bare terms) from a malformed filter (a bare term beside a comparison).
-	bareTerms []string
 }
 
 func newVisitor(formatter sqlstore.SQLFormatter) *visitor {
@@ -36,37 +32,19 @@ func newVisitor(formatter sqlstore.SQLFormatter) *visitor {
 	}
 }
 
-// compile builds `?`-placeholder WHERE SQL + args for bun: a `key OP value`
-// filter becomes the DSL predicate, an all-bare-terms query a free-text search,
-// anything malformed an error.
+// compile builds `?`-placeholder WHERE SQL + args for bun. Each term is either a
+// `key OP value` comparison or a bare token that becomes a free-text search; the
+// two compose through the boolean grammar (AND/OR/NOT). Malformed input is
+// returned as errors.
 func (v *visitor) compile(query string) (string, []any, []string) {
 	tree, _, collector := filterquery.Parse(query)
 	if len(collector.Errors) > 0 {
 		return "", nil, collector.Errors
 	}
 	condition, _ := v.visit(tree).(string)
-
-	// The query parsed into nothing but bare terms — treat it as a free-text search.
-	if condition == "" && len(v.errors) == 0 && len(v.bareTerms) > 0 {
-		value := strings.TrimSpace(query)
-		// A lone term spanning the whole query may be a quoted string — unquote it
-		// so a user can search a DSL-like literal, e.g. `"team = prod"`. A
-		// multi-word phrase is searched verbatim.
-		if len(v.bareTerms) == 1 && v.bareTerms[0] == value {
-			value = trimQuotes(value)
-		}
-		sql, arguments := v.compileFreeText(value)
-		return sql, arguments, nil
-	}
-
-	// A bare term alongside a real comparison is not valid DSL.
-	for _, bareTerm := range v.bareTerms {
-		v.addError("unsupported expression %q — every term must be of the form `key OP value`", bareTerm)
-	}
 	if len(v.errors) > 0 {
 		return "", nil, v.errors
 	}
-
 	if condition == "" {
 		return "", nil, nil
 	}
@@ -147,10 +125,10 @@ func (v *visitor) VisitPrimary(ctx *grammar.PrimaryContext) any {
 	if ctx.Comparison() != nil {
 		return v.visit(ctx.Comparison())
 	}
-	// A lone key/value/full-text token, not a comparison — recorded as a bare
-	// term for compile to interpret.
-	v.bareTerms = append(v.bareTerms, ctx.GetText())
-	return ""
+	// A lone key/value/full-text token is a free-text term, composed with any
+	// comparisons through the boolean grammar. A quoted token matches its contents
+	// literally — the escape hatch for a phrase or a term that looks like DSL.
+	return v.buildFreeTextTerm(trimQuotes(ctx.GetText()))
 }
 
 // VisitComparison dispatches a single `key OP value` term. A key that matches
@@ -431,9 +409,9 @@ func buildSubqueryForTagKeyAndValue(subqueryBuilder *sqlbuilder.SelectBuilder, t
 
 // ─── free-text search ────────────────────────────────────────────────────────
 
-// compileFreeText matches value as a case-insensitive substring of the dashboard
-// name, description, or any tag key/value.
-func (v *visitor) compileFreeText(value string) (string, []any) {
+// buildFreeTextTerm matches value as a case-insensitive substring of the
+// dashboard name, description, or any tag key/value.
+func (v *visitor) buildFreeTextTerm(value string) string {
 	nameColumn := string(v.formatter.JSONExtractString("dashboard.data", "$.spec.display.name"))
 	descriptionColumn := string(v.formatter.JSONExtractString("dashboard.data", "$.spec.display.description"))
 	namePredicate := v.buildFreeTextContains(v.selectBuilder, nameColumn, value)
@@ -445,8 +423,7 @@ func (v *visitor) compileFreeText(value string) (string, []any) {
 	buildSubqueryForFreeTextTag(subqueryBuilder, keyPredicate, valuePredicate)
 	tagPredicate := v.selectBuilder.Exists(subqueryBuilder)
 
-	condition := v.selectBuilder.Or(namePredicate, descriptionPredicate, tagPredicate)
-	return v.selectBuilder.Args.CompileWithFlavor(condition, bunPlaceholderFlavor)
+	return v.selectBuilder.Or(namePredicate, descriptionPredicate, tagPredicate)
 }
 
 // buildFreeTextContains emits a case-insensitive contains as LOWER(col) LIKE

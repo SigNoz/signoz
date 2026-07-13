@@ -485,16 +485,18 @@ func TestCompile_FreeText(t *testing.T) {
 			expectedArgs:      freeTextArgs("%payment%"),
 		},
 		{
-			subtestName:       "phrase with spaces matches the whole string",
-			dslQueryToCompile: `prod payment service`,
-			expectedSQL:       freeTextSQL,
-			expectedArgs:      freeTextArgs("%prod payment service%"),
+			// consecutive words are implicit-AND per the grammar, so each is its
+			// own term; `"prod payment"` (below) is the way to match the phrase
+			subtestName:       "words are separate terms AND'd together",
+			dslQueryToCompile: `prod payment`,
+			expectedSQL:       "(" + freeTextSQL + " AND " + freeTextSQL + ")",
+			expectedArgs:      append(freeTextArgs("%prod%"), freeTextArgs("%payment%")...),
 		},
 		{
-			subtestName:       "quoted phrase",
-			dslQueryToCompile: `"prod payment service"`,
+			subtestName:       "a quoted token matches the whole phrase",
+			dslQueryToCompile: `"prod payment"`,
 			expectedSQL:       freeTextSQL,
-			expectedArgs:      freeTextArgs("%prod payment service%"),
+			expectedArgs:      freeTextArgs("%prod payment%"),
 		},
 		{
 			subtestName:       "quoting is the escape hatch for a DSL-like literal",
@@ -504,14 +506,32 @@ func TestCompile_FreeText(t *testing.T) {
 		},
 		{
 			subtestName:       "LIKE wildcards in the term are escaped to match literally",
-			dslQueryToCompile: `50% off`,
+			dslQueryToCompile: `"50%"`,
 			expectedSQL:       freeTextSQL,
-			expectedArgs:      freeTextArgs(`%50\% off%`),
+			expectedArgs:      freeTextArgs(`%50\%%`),
 		},
 		{
 			subtestName:       "surrounding whitespace is trimmed",
 			dslQueryToCompile: `   payment   `,
 			expectedSQL:       freeTextSQL,
+			expectedArgs:      freeTextArgs("%payment%"),
+		},
+		{
+			subtestName:       "free-text term composes with a comparison via AND",
+			dslQueryToCompile: `prod AND name CONTAINS 'signoz'`,
+			expectedSQL:       "(" + freeTextSQL + ` AND json_extract("dashboard"."data", '$.spec.display.name') LIKE ? ESCAPE '\')`,
+			expectedArgs:      append(freeTextArgs("%prod%"), "%signoz%"),
+		},
+		{
+			subtestName:       "free-text words compose with a comparison via OR",
+			dslQueryToCompile: `prod payment OR name = 'x'`,
+			expectedSQL:       "((" + freeTextSQL + " AND " + freeTextSQL + `) OR json_extract("dashboard"."data", '$.spec.display.name') = ?)`,
+			expectedArgs:      append(append(freeTextArgs("%prod%"), freeTextArgs("%payment%")...), "x"),
+		},
+		{
+			subtestName:       "NOT negates a free-text term",
+			dslQueryToCompile: `NOT payment`,
+			expectedSQL:       "NOT (" + freeTextSQL + ")",
 			expectedArgs:      freeTextArgs("%payment%"),
 		},
 	})
@@ -548,11 +568,6 @@ func TestCompile_Rejections(t *testing.T) {
 			subtestName:              "rejects syntax error from grammar",
 			dslQueryToCompile:        `name = `,
 			expectedErrShouldContain: "syntax",
-		},
-		{
-			subtestName:              "rejects a bare term mixed into a real comparison",
-			dslQueryToCompile:        `payment AND name = 'foo'`,
-			expectedErrShouldContain: "unsupported expression",
 		},
 	})
 }
