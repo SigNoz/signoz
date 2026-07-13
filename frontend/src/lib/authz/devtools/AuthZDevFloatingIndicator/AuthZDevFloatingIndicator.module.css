@@ -1,0 +1,28 @@
+.container {
+	position: fixed;
+	top: 12px;
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 9998;
+	pointer-events: auto;
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.button {
+	box-shadow:
+		0 4px 12px rgb(0 0 0 / 15%),
+		0 0 0 1px rgb(0 0 0 / 5%);
+}
+
+.badge {
+	margin-left: 4px;
+}
+
+.closeButton {
+	border-radius: 4px;
+	box-shadow:
+		0 4px 12px rgb(0 0 0 / 15%),
+		0 0 0 1px rgb(0 0 0 / 5%);
+}

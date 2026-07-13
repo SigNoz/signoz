@@ -46,8 +46,12 @@ export interface UseVariableForm {
 	handleSave: () => void;
 }
 
-const readDefaultValue = (model: VariableFormModel): string =>
-	((model.defaultValue as { value?: string })?.value ?? '') as string;
+// `defaultValue` is a string | string[] on the wire; the editor uses a single
+// string, so take the first when it's an array.
+const readDefaultValue = (model: VariableFormModel): string => {
+	const dv = model.defaultValue;
+	return Array.isArray(dv) ? (dv[0] ?? '') : (dv ?? '');
+};
 
 /** Form state, derivations and handlers for the variable editor. */
 export function useVariableForm({

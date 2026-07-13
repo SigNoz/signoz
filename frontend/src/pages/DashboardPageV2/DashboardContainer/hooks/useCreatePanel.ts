@@ -1,18 +1,22 @@
 import { useCallback, useState } from 'react';
-import { generatePath } from 'react-router-dom';
+import { generatePath, useLocation } from 'react-router-dom';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 
 import { newPanelSearch, NEW_PANEL_ID } from '../PanelEditor/newPanelRoute';
 import type { PanelKind } from '../Panels/types/panelKind';
 import { useDashboardStore } from '../store/useDashboardStore';
+import { withVariablesSearch } from '../VariablesBar/variablesUrlState';
 
 interface UseCreatePanelResult {
 	isPickerOpen: boolean;
 	/** Pass the target section's layout index; omit → last/new section. */
 	openPicker: (layoutIndex?: number) => void;
 	closePicker: () => void;
-	createPanel: (panelKind: PanelKind) => void;
+	/** The section the picker was opened against — seeds its section dropdown. */
+	targetLayoutIndex: number | undefined;
+	/** `layoutIndex` overrides the opened-against target (the dropdown's choice). */
+	createPanel: (panelKind: PanelKind, layoutIndex?: number) => void;
 }
 
 /**
@@ -22,6 +26,7 @@ interface UseCreatePanelResult {
  */
 export function useCreatePanel(): UseCreatePanelResult {
 	const { safeNavigate } = useSafeNavigate();
+	const { search } = useLocation();
 	const dashboardId = useDashboardStore((s) => s.dashboardId);
 
 	const [isPickerOpen, setIsPickerOpen] = useState(false);
@@ -38,16 +43,25 @@ export function useCreatePanel(): UseCreatePanelResult {
 	}, []);
 
 	const createPanel = useCallback(
-		(panelKind: PanelKind): void => {
+		(panelKind: PanelKind, targetIndex?: number): void => {
 			setIsPickerOpen(false);
 			const path = generatePath(ROUTES.DASHBOARD_PANEL_EDITOR, {
 				dashboardId,
 				panelId: NEW_PANEL_ID,
 			});
-			safeNavigate(`${path}${newPanelSearch(panelKind, layoutIndex)}`);
+			const target = targetIndex ?? layoutIndex;
+			safeNavigate(
+				`${path}${withVariablesSearch(newPanelSearch(panelKind, target), search)}`,
+			);
 		},
-		[safeNavigate, dashboardId, layoutIndex],
+		[safeNavigate, dashboardId, layoutIndex, search],
 	);
 
-	return { isPickerOpen, openPicker, closePicker, createPanel };
+	return {
+		isPickerOpen,
+		openPicker,
+		closePicker,
+		targetLayoutIndex: layoutIndex,
+		createPanel,
+	};
 }

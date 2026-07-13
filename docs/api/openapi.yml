@@ -515,6 +515,13 @@ components:
         url:
           type: string
       type: object
+    AuthtypesDeprecatedPostableUserRole:
+      properties:
+        id:
+          type: string
+      required:
+      - id
+      type: object
     AuthtypesGettableAuthDomain:
       properties:
         authNProviderInfo:
@@ -660,17 +667,20 @@ components:
           type: string
         userRoles:
           items:
-            $ref: '#/components/schemas/AuthtypesPostableUserRole'
+            $ref: '#/components/schemas/AuthtypesDeprecatedPostableUserRole'
           type: array
       required:
       - email
       type: object
     AuthtypesPostableUserRole:
       properties:
-        id:
+        roleId:
+          type: string
+        userId:
           type: string
       required:
-      - id
+      - userId
+      - roleId
       type: object
     AuthtypesRelation:
       enum:
@@ -3138,6 +3148,8 @@ components:
           type: string
         image:
           type: string
+        legacy:
+          type: boolean
         locked:
           type: boolean
         name:
@@ -3170,6 +3182,7 @@ components:
       - name
       - tags
       - spec
+      - legacy
       - pinned
       type: object
     DashboardtypesListedDashboardV2:
@@ -3183,6 +3196,8 @@ components:
           type: string
         image:
           type: string
+        legacy:
+          type: boolean
         locked:
           type: boolean
         name:
@@ -3213,6 +3228,7 @@ components:
       - name
       - tags
       - spec
+      - legacy
       type: object
     DashboardtypesListedDashboardV2Spec:
       properties:
@@ -4179,6 +4195,7 @@ components:
       - namespaces
       - clusters
       - volumes
+      - kube_containers
       type: string
     InframonitoringtypesChecks:
       properties:
@@ -4251,6 +4268,8 @@ components:
           $ref: '#/components/schemas/InframonitoringtypesNodeCountsByReadiness'
         podCountsByPhase:
           $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
+        podCountsByStatus:
+          $ref: '#/components/schemas/InframonitoringtypesPodCountsByStatus'
       required:
       - clusterName
       - clusterCPU
@@ -4259,6 +4278,7 @@ components:
       - clusterMemoryAllocatable
       - nodeCountsByReadiness
       - podCountsByPhase
+      - podCountsByStatus
       - meta
       type: object
     InframonitoringtypesClusters:
@@ -4268,6 +4288,158 @@ components:
         records:
           items:
             $ref: '#/components/schemas/InframonitoringtypesClusterRecord'
+          type: array
+        total:
+          type: integer
+        type:
+          $ref: '#/components/schemas/InframonitoringtypesResponseType'
+        warning:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryWarnData'
+      required:
+      - type
+      - records
+      - total
+      - endTimeBeforeRetention
+      type: object
+    InframonitoringtypesContainerCountsByReady:
+      properties:
+        notReady:
+          type: integer
+        ready:
+          type: integer
+      required:
+      - ready
+      - notReady
+      type: object
+    InframonitoringtypesContainerCountsByStatus:
+      properties:
+        completed:
+          type: integer
+        containerCannotRun:
+          type: integer
+        containerCreating:
+          type: integer
+        crashLoopBackOff:
+          type: integer
+        createContainerConfigError:
+          type: integer
+        errImagePull:
+          type: integer
+        error:
+          type: integer
+        imagePullBackOff:
+          type: integer
+        oomKilled:
+          type: integer
+        running:
+          type: integer
+        terminated:
+          type: integer
+        unknown:
+          type: integer
+        waiting:
+          type: integer
+      required:
+      - running
+      - waiting
+      - terminated
+      - crashLoopBackOff
+      - imagePullBackOff
+      - errImagePull
+      - createContainerConfigError
+      - containerCreating
+      - oomKilled
+      - completed
+      - error
+      - containerCannotRun
+      - unknown
+      type: object
+    InframonitoringtypesContainerReady:
+      enum:
+      - ready
+      - not_ready
+      - no_data
+      type: string
+    InframonitoringtypesContainerRecord:
+      properties:
+        containerCountsByReady:
+          $ref: '#/components/schemas/InframonitoringtypesContainerCountsByReady'
+        containerCountsByStatus:
+          $ref: '#/components/schemas/InframonitoringtypesContainerCountsByStatus'
+        containerName:
+          type: string
+        cpu:
+          format: double
+          type: number
+        cpuLimitUtilization:
+          format: double
+          type: number
+        cpuRequestUtilization:
+          format: double
+          type: number
+        memory:
+          format: double
+          type: number
+        memoryLimitUtilization:
+          format: double
+          type: number
+        memoryRequestUtilization:
+          format: double
+          type: number
+        meta:
+          additionalProperties:
+            type: string
+          nullable: true
+          type: object
+        podUID:
+          type: string
+        ready:
+          $ref: '#/components/schemas/InframonitoringtypesContainerReady'
+        restarts:
+          format: int64
+          type: integer
+        status:
+          $ref: '#/components/schemas/InframonitoringtypesContainerStatus'
+      required:
+      - podUID
+      - containerName
+      - status
+      - containerCountsByStatus
+      - ready
+      - containerCountsByReady
+      - restarts
+      - cpu
+      - cpuRequestUtilization
+      - cpuLimitUtilization
+      - memory
+      - memoryRequestUtilization
+      - memoryLimitUtilization
+      - meta
+      type: object
+    InframonitoringtypesContainerStatus:
+      enum:
+      - running
+      - waiting
+      - terminated
+      - crashloopbackoff
+      - imagepullbackoff
+      - errimagepull
+      - createcontainerconfigerror
+      - containercreating
+      - oomkilled
+      - completed
+      - error
+      - containercannotrun
+      - unknown
+      - no_data
+      type: string
+    InframonitoringtypesContainers:
+      properties:
+        endTimeBeforeRetention:
+          type: boolean
+        records:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesContainerRecord'
           type: array
         total:
           type: integer
@@ -4312,8 +4484,14 @@ components:
             type: string
           nullable: true
           type: object
+        misscheduledNodes:
+          type: integer
         podCountsByPhase:
           $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
+        podCountsByStatus:
+          $ref: '#/components/schemas/InframonitoringtypesPodCountsByStatus'
+        readyNodes:
+          type: integer
       required:
       - daemonSetName
       - daemonSetCPU
@@ -4324,7 +4502,10 @@ components:
       - daemonSetMemoryLimit
       - desiredNodes
       - currentNodes
+      - readyNodes
+      - misscheduledNodes
       - podCountsByPhase
+      - podCountsByStatus
       - meta
       type: object
     InframonitoringtypesDaemonSets:
@@ -4380,6 +4561,8 @@ components:
           type: object
         podCountsByPhase:
           $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
+        podCountsByStatus:
+          $ref: '#/components/schemas/InframonitoringtypesPodCountsByStatus'
       required:
       - deploymentName
       - deploymentCPU
@@ -4391,6 +4574,7 @@ components:
       - desiredPods
       - availablePods
       - podCountsByPhase
+      - podCountsByStatus
       - meta
       type: object
     InframonitoringtypesDeployments:
@@ -4523,6 +4707,8 @@ components:
           type: object
         podCountsByPhase:
           $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
+        podCountsByStatus:
+          $ref: '#/components/schemas/InframonitoringtypesPodCountsByStatus'
         successfulPods:
           type: integer
       required:
@@ -4538,6 +4724,7 @@ components:
       - failedPods
       - successfulPods
       - podCountsByPhase
+      - podCountsByStatus
       - meta
       type: object
     InframonitoringtypesJobs:
@@ -4628,11 +4815,14 @@ components:
           type: string
         podCountsByPhase:
           $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
+        podCountsByStatus:
+          $ref: '#/components/schemas/InframonitoringtypesPodCountsByStatus'
       required:
       - namespaceName
       - namespaceCPU
       - namespaceMemory
       - podCountsByPhase
+      - podCountsByStatus
       - meta
       type: object
     InframonitoringtypesNamespaces:
@@ -4698,11 +4888,14 @@ components:
           type: string
         podCountsByPhase:
           $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
+        podCountsByStatus:
+          $ref: '#/components/schemas/InframonitoringtypesPodCountsByStatus'
       required:
       - nodeName
       - condition
       - nodeCountsByReadiness
       - podCountsByPhase
+      - podCountsByStatus
       - nodeCPU
       - nodeCPUAllocatable
       - nodeMemory
@@ -4748,6 +4941,64 @@ components:
       - failed
       - unknown
       type: object
+    InframonitoringtypesPodCountsByStatus:
+      properties:
+        completed:
+          type: integer
+        containerCannotRun:
+          type: integer
+        containerCreating:
+          type: integer
+        crashLoopBackOff:
+          type: integer
+        createContainerConfigError:
+          type: integer
+        errImagePull:
+          type: integer
+        error:
+          type: integer
+        evicted:
+          type: integer
+        failed:
+          type: integer
+        imagePullBackOff:
+          type: integer
+        nodeAffinity:
+          type: integer
+        nodeLost:
+          type: integer
+        oomKilled:
+          type: integer
+        pending:
+          type: integer
+        running:
+          type: integer
+        shutdown:
+          type: integer
+        unexpectedAdmissionError:
+          type: integer
+        unknown:
+          type: integer
+      required:
+      - pending
+      - running
+      - failed
+      - unknown
+      - crashLoopBackOff
+      - imagePullBackOff
+      - errImagePull
+      - createContainerConfigError
+      - containerCreating
+      - oomKilled
+      - completed
+      - error
+      - containerCannotRun
+      - evicted
+      - nodeAffinity
+      - nodeLost
+      - shutdown
+      - unexpectedAdmissionError
+      type: object
     InframonitoringtypesPodPhase:
       enum:
       - pending
@@ -4778,6 +5029,8 @@ components:
           type: number
         podCountsByPhase:
           $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
+        podCountsByStatus:
+          $ref: '#/components/schemas/InframonitoringtypesPodCountsByStatus'
         podMemory:
           format: double
           type: number
@@ -4789,6 +5042,11 @@ components:
           type: number
         podPhase:
           $ref: '#/components/schemas/InframonitoringtypesPodPhase'
+        podRestarts:
+          format: int64
+          type: integer
+        podStatus:
+          $ref: '#/components/schemas/InframonitoringtypesPodStatus'
         podUID:
           type: string
       required:
@@ -4801,9 +5059,34 @@ components:
       - podMemoryLimit
       - podPhase
       - podCountsByPhase
+      - podStatus
+      - podCountsByStatus
+      - podRestarts
       - podAge
       - meta
       type: object
+    InframonitoringtypesPodStatus:
+      enum:
+      - pending
+      - running
+      - failed
+      - unknown
+      - crashloopbackoff
+      - imagepullbackoff
+      - errimagepull
+      - createcontainerconfigerror
+      - containercreating
+      - oomkilled
+      - completed
+      - error
+      - containercannotrun
+      - evicted
+      - nodeaffinity
+      - nodelost
+      - shutdown
+      - unexpectedadmissionerror
+      - no_data
+      type: string
     InframonitoringtypesPods:
       properties:
         endTimeBeforeRetention:
@@ -4825,6 +5108,32 @@ components:
       - endTimeBeforeRetention
       type: object
     InframonitoringtypesPostableClusters:
+      properties:
+        end:
+          format: int64
+          type: integer
+        filter:
+          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+        groupBy:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          nullable: true
+          type: array
+        limit:
+          type: integer
+        offset:
+          type: integer
+        orderBy:
+          $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+        start:
+          format: int64
+          type: integer
+      required:
+      - start
+      - end
+      - limit
+      type: object
+    InframonitoringtypesPostableContainers:
       properties:
         end:
           format: int64
@@ -5102,6 +5411,8 @@ components:
           type: object
         podCountsByPhase:
           $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
+        podCountsByStatus:
+          $ref: '#/components/schemas/InframonitoringtypesPodCountsByStatus'
         statefulSetCPU:
           format: double
           type: number
@@ -5133,6 +5444,7 @@ components:
       - desiredPods
       - currentPods
       - podCountsByPhase
+      - podCountsByStatus
       - meta
       type: object
     InframonitoringtypesStatefulSets:
@@ -7094,9 +7406,11 @@ components:
         op:
           $ref: '#/components/schemas/RuletypesCompareOperator'
         recoveryTarget:
+          format: double
           nullable: true
           type: number
         target:
+          format: double
           nullable: true
           type: number
         targetUnit:
@@ -7380,6 +7694,7 @@ components:
         selectedQueryName:
           type: string
         target:
+          format: double
           nullable: true
           type: number
         targetUnit:
@@ -7430,6 +7745,13 @@ components:
       enum:
       - basic
       type: string
+    ServiceaccounttypesDeprecatedPostableServiceAccountRole:
+      properties:
+        id:
+          type: string
+      required:
+      - id
+      type: object
     ServiceaccounttypesGettableFactorAPIKey:
       properties:
         createdAt:
@@ -7486,10 +7808,13 @@ components:
       type: object
     ServiceaccounttypesPostableServiceAccountRole:
       properties:
-        id:
+        roleId:
+          type: string
+        serviceAccountId:
           type: string
       required:
-      - id
+      - serviceAccountId
+      - roleId
       type: object
     ServiceaccounttypesServiceAccount:
       properties:
@@ -12252,6 +12577,188 @@ paths:
       summary: Update route policy
       tags:
       - routepolicies
+  /api/v1/service_account_roles:
+    post:
+      deprecated: false
+      description: This endpoint assigns a role to a service account
+      operationId: CreateServiceAccountRole
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServiceaccounttypesPostableServiceAccountRole'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TypesIdentifiable'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - serviceaccount:attach
+        - role:attach
+      - tokenizer:
+        - serviceaccount:attach
+        - role:attach
+      summary: Create service account role
+      tags:
+      - serviceaccount
+  /api/v1/service_account_roles/{id}:
+    delete:
+      deprecated: false
+      description: This endpoint revokes a role from a service account
+      operationId: DeleteServiceAccountRole
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - serviceaccount:detach
+        - role:detach
+      - tokenizer:
+        - serviceaccount:detach
+        - role:detach
+      summary: Delete service account role
+      tags:
+      - serviceaccount
+    get:
+      deprecated: false
+      description: This endpoint gets an existing service account role
+      operationId: GetServiceAccountRole
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ServiceaccounttypesServiceAccountRole'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - serviceaccount:read
+      - tokenizer:
+        - serviceaccount:read
+      summary: Get service account role
+      tags:
+      - serviceaccount
   /api/v1/service_accounts:
     get:
       deprecated: false
@@ -12821,9 +13328,9 @@ paths:
       tags:
       - serviceaccount
     post:
-      deprecated: false
+      deprecated: true
       description: This endpoint assigns a role to a service account
-      operationId: CreateServiceAccountRole
+      operationId: CreateServiceAccountRoleDeprecated
       parameters:
       - in: path
         name: id
@@ -12834,7 +13341,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ServiceaccounttypesPostableServiceAccountRole'
+              $ref: '#/components/schemas/ServiceaccounttypesDeprecatedPostableServiceAccountRole'
       responses:
         "201":
           content:
@@ -12886,9 +13393,9 @@ paths:
       - serviceaccount
   /api/v1/service_accounts/{id}/roles/{rid}:
     delete:
-      deprecated: false
+      deprecated: true
       description: This endpoint revokes a role from service account
-      operationId: DeleteServiceAccountRole
+      operationId: DeleteServiceAccountRoleDeprecated
       parameters:
       - in: path
         name: id
@@ -15498,21 +16005,24 @@ paths:
         daemonSetCPULimit, daemonSetMemoryRequest, daemonSetMemoryLimit). Each row
         also reports the latest known node-level counters from kube-state-metrics:
         desiredNodes (k8s.daemonset.desired_scheduled_nodes, the number of nodes the
-        daemonset wants to run on) and currentNodes (k8s.daemonset.current_scheduled_nodes,
-        the number of nodes the daemonset currently runs on) — note these are node
-        counts, not pod counts. It also reports per-group podCountsByPhase ({ pending,
-        running, succeeded, failed, unknown } from each pod''s latest k8s.pod.phase
-        value). Each daemonset includes metadata attributes (k8s.daemonset.name, k8s.namespace.name,
-        k8s.cluster.name). The response type is ''list'' for the default k8s.daemonset.name
-        grouping or ''grouped_list'' for custom groupBy keys; in both modes every
-        row aggregates pods owned by daemonsets in the group. Supports filtering via
-        a filter expression, custom groupBy, ordering by cpu / cpu_request / cpu_limit
-        / memory / memory_request / memory_limit / desired_nodes / current_nodes,
+        daemonset wants to run on), currentNodes (k8s.daemonset.current_scheduled_nodes,
+        the number of nodes the daemonset currently runs on), readyNodes (k8s.daemonset.ready_nodes,
+        the number of nodes running at least one ready daemon pod) and misscheduledNodes
+        (k8s.daemonset.misscheduled_nodes, the number of nodes running the daemon
+        pod but not supposed to) — note these are node counts, not pod counts. It
+        also reports per-group podCountsByPhase ({ pending, running, succeeded, failed,
+        unknown } from each pod''s latest k8s.pod.phase value). Each daemonset includes
+        metadata attributes (k8s.daemonset.name, k8s.namespace.name, k8s.cluster.name).
+        The response type is ''list'' for the default k8s.daemonset.name grouping
+        or ''grouped_list'' for custom groupBy keys; in both modes every row aggregates
+        pods owned by daemonsets in the group. Supports filtering via a filter expression,
+        custom groupBy, ordering by cpu / cpu_request / cpu_limit / memory / memory_request
+        / memory_limit / desired_nodes / current_nodes / ready_nodes / misscheduled_nodes,
         and pagination via offset/limit. Also reports whether the requested time range
         falls before the data retention boundary. Numeric metric fields (daemonSetCPU,
         daemonSetCPURequest, daemonSetCPULimit, daemonSetMemory, daemonSetMemoryRequest,
-        daemonSetMemoryLimit, desiredNodes, currentNodes) return -1 as a sentinel
-        when no data is available for that field.'
+        daemonSetMemoryLimit, desiredNodes, currentNodes, readyNodes, misscheduledNodes)
+        return -1 as a sentinel when no data is available for that field.'
       operationId: ListDaemonSets
       requestBody:
         content:
@@ -15784,6 +16294,86 @@ paths:
       - tokenizer:
         - VIEWER
       summary: List Jobs for Infra Monitoring
+      tags:
+      - inframonitoring
+  /api/v2/infra_monitoring/kube_containers:
+    post:
+      deprecated: false
+      description: 'Returns a paginated list of Kubernetes containers with key kubeletstats
+        metrics: CPU usage (cores), CPU request/limit utilization, memory working
+        set, and memory request/limit utilization. Each container also reports health
+        signals from the k8s_cluster receiver: status (kubectl-style display status
+        derived from k8s.container.status.state + k8s.container.status.reason), restarts
+        (absolute count from k8s.container.restarts), and ready (ready/not_ready from
+        k8s.container.ready). The row identity is (k8s.pod.uid, k8s.container.name),
+        stable across container restarts. Each container includes metadata attributes
+        (k8s.container.name, k8s.pod.name, container.image.name, container.image.tag,
+        k8s.namespace.name, k8s.node.name, k8s.cluster.name, and workload owner such
+        as deployment/statefulset/daemonset/job). The response type is ''list'' for
+        the default (k8s.pod.uid, k8s.container.name) grouping (each row is one container
+        with its current status and ready state) or ''grouped_list'' for custom groupBy
+        keys (each row aggregates containers in the group with per-status counts under
+        containerCountsByStatus, per-readiness counts under containerCountsByReady,
+        and restarts as the group sum). Status requires the optional k8s.container.status.state
+        and k8s.container.status.reason metrics; when either is missing, status is
+        omitted and a warning is returned while restarts and ready are still computed.
+        Supports filtering via a filter expression, custom groupBy, ordering by any
+        of the six metrics (cpu, cpu_request, cpu_limit, memory, memory_request, memory_limit),
+        and pagination via offset/limit. Also reports whether the requested time range
+        falls before the data retention boundary. Numeric metric fields (cpu, cpuRequestUtilization,
+        cpuLimitUtilization, memory, memoryRequestUtilization, memoryLimitUtilization)
+        and restarts return -1 as a sentinel when no data is available for that field.'
+      operationId: ListContainers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InframonitoringtypesPostableContainers'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/InframonitoringtypesContainers'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List Kubernetes Containers for Infra Monitoring
       tags:
       - inframonitoring
   /api/v2/infra_monitoring/namespaces:
@@ -17596,6 +18186,16 @@ paths:
         public dashboard. The panel is addressed by its key in spec.panels.
       operationId: GetPublicDashboardPanelQueryRangeV2
       parameters:
+      - in: query
+        name: startTime
+        required: false
+        schema:
+          type: string
+      - in: query
+        name: endTime
+        required: false
+        schema:
+          type: string
       - in: path
         name: id
         required: true
@@ -21990,6 +22590,184 @@ paths:
       summary: Rotate session
       tags:
       - sessions
+  /api/v2/user_roles:
+    post:
+      deprecated: false
+      description: This endpoint assigns a role to a user
+      operationId: CreateUserRole
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthtypesPostableUserRole'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TypesIdentifiable'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Create user role
+      tags:
+      - users
+  /api/v2/user_roles/{id}:
+    delete:
+      deprecated: false
+      description: This endpoint revokes a role from a user
+      operationId: DeleteUserRole
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Delete user role
+      tags:
+      - users
+    get:
+      deprecated: false
+      description: This endpoint gets an existing user role
+      operationId: GetUserRole
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AuthtypesUserRole'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Get user role
+      tags:
+      - users
   /api/v2/users:
     get:
       deprecated: false
@@ -22443,7 +23221,7 @@ paths:
       tags:
       - users
     post:
-      deprecated: false
+      deprecated: true
       description: This endpoint assigns the role to the user roles by user id
       operationId: SetRoleByUserID
       parameters:
@@ -22494,7 +23272,7 @@ paths:
       - users
   /api/v2/users/{id}/roles/{roleId}:
     delete:
-      deprecated: false
+      deprecated: true
       description: This endpoint removes a role from the user by user id and role
         id
       operationId: RemoveUserRoleByUserIDAndRoleID

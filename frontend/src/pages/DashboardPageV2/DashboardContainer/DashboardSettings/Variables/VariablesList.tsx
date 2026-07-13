@@ -25,6 +25,7 @@ interface VariablesListProps {
 	onConfirmDelete: (index: number) => void;
 	onCancelDelete: () => void;
 	onMove: (from: number, to: number) => void;
+	onApplyToAll: (index: number) => void;
 }
 
 function VariablesList({
@@ -36,6 +37,7 @@ function VariablesList({
 	onConfirmDelete,
 	onCancelDelete,
 	onMove,
+	onApplyToAll,
 }: VariablesListProps): JSX.Element {
 	const sensors = useSensors(
 		useSensor(PointerSensor, { activationConstraint: { distance: 1 } }),
@@ -53,32 +55,39 @@ function VariablesList({
 	};
 
 	return (
-		<DndContext
-			sensors={sensors}
-			modifiers={[restrictToVerticalAxis]}
-			onDragEnd={handleDragEnd}
-		>
-			<SortableContext
-				items={variables.map((v) => v.name)}
-				strategy={verticalListSortingStrategy}
+		<div className={styles.table} data-testid="variables-list">
+			<div className={styles.headerRow}>
+				<span className={styles.headerCell}>Variable</span>
+				<span className={styles.headerCell}>Description</span>
+			</div>
+			<DndContext
+				sensors={sensors}
+				modifiers={[restrictToVerticalAxis]}
+				onDragEnd={handleDragEnd}
 			>
-				<div className={styles.list} data-testid="variables-list">
-					{variables.map((variable, index) => (
-						<VariableRow
-							key={variable.name || `variable-${index}`}
-							variable={variable}
-							index={index}
-							canEdit={canEdit}
-							isConfirmingDelete={confirmingIndex === index}
-							onEdit={onEdit}
-							onRequestDelete={onRequestDelete}
-							onConfirmDelete={onConfirmDelete}
-							onCancelDelete={onCancelDelete}
-						/>
-					))}
-				</div>
-			</SortableContext>
-		</DndContext>
+				<SortableContext
+					items={variables.map((v) => v.name)}
+					strategy={verticalListSortingStrategy}
+				>
+					<div className={styles.list}>
+						{variables.map((variable, index) => (
+							<VariableRow
+								key={variable.name || `variable-${index}`}
+								variable={variable}
+								index={index}
+								canEdit={canEdit}
+								isConfirmingDelete={confirmingIndex === index}
+								onEdit={onEdit}
+								onRequestDelete={onRequestDelete}
+								onConfirmDelete={onConfirmDelete}
+								onCancelDelete={onCancelDelete}
+								onApplyToAll={onApplyToAll}
+							/>
+						))}
+					</div>
+				</SortableContext>
+			</DndContext>
+		</div>
 	);
 }
 

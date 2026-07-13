@@ -1,0 +1,10 @@
+.label {
+	// Re-enable pointer events so the tooltip fires while the disabled row
+	// (pointer-events: none) suppresses selection.
+	pointer-events: auto;
+}
+
+.aboveOverlay {
+	// Lift the tooltip above the dropdown menu (z 50) and the antd Drawer (z 1000).
+	--tooltip-z-index: 1100;
+}

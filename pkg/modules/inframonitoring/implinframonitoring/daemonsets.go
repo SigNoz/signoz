@@ -19,6 +19,7 @@ func buildDaemonSetRecords(
 	groupBy []qbtypes.GroupByKey,
 	metadataMap map[string]map[string]string,
 	phaseCounts map[string]podPhaseCounts,
+	podStatusCounts map[string]podStatusCounts,
 ) []inframonitoringtypes.DaemonSetRecord {
 	metricsMap := parseFullQueryResponse(resp, groupBy)
 
@@ -37,6 +38,8 @@ func buildDaemonSetRecords(
 			DaemonSetMemoryLimit:   -1,
 			DesiredNodes:           -1,
 			CurrentNodes:           -1,
+			ReadyNodes:             -1,
+			MisscheduledNodes:      -1,
 			Meta:                   map[string]string{},
 		}
 
@@ -65,6 +68,12 @@ func buildDaemonSetRecords(
 			if v, exists := metrics["I"]; exists {
 				record.CurrentNodes = int(v)
 			}
+			if v, exists := metrics["J"]; exists {
+				record.ReadyNodes = int(v)
+			}
+			if v, exists := metrics["K"]; exists {
+				record.MisscheduledNodes = int(v)
+			}
 		}
 
 		if phaseCountsForGroup, ok := phaseCounts[compositeKey]; ok {
@@ -75,6 +84,10 @@ func buildDaemonSetRecords(
 				Failed:    phaseCountsForGroup.Failed,
 				Unknown:   phaseCountsForGroup.Unknown,
 			}
+		}
+
+		if podStatusCountsForGroup, ok := podStatusCounts[compositeKey]; ok {
+			record.PodCountsByStatus = podStatusCountsToResponse(podStatusCountsForGroup)
 		}
 
 		if attrs, ok := metadataMap[compositeKey]; ok {
