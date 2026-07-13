@@ -262,6 +262,33 @@ export default function K8sBaseDetails<T>({
 	const [selectedView, setSelectedView] = useInfraMonitoringView();
 	const effectiveView = hideDetailViewTabs ? VIEW_TYPES.METRICS : selectedView;
 
+	const validTabs = useMemo(() => {
+		const tabs: string[] = [];
+		if (tabVisibility.showMetrics) {
+			tabs.push(VIEW_TYPES.METRICS);
+		}
+		if (tabVisibility.showLogs) {
+			tabs.push(VIEW_TYPES.LOGS);
+		}
+		if (tabVisibility.showTraces) {
+			tabs.push(VIEW_TYPES.TRACES);
+		}
+		if (tabVisibility.showEvents) {
+			tabs.push(VIEW_TYPES.EVENTS);
+		}
+		if (customTabs) {
+			tabs.push(...customTabs.map((t) => t.key));
+		}
+		return tabs;
+	}, [tabVisibility, customTabs]);
+
+	useEffect(() => {
+		if (!hideDetailViewTabs && !validTabs.includes(selectedView)) {
+			const firstValid = validTabs[0] || VIEW_TYPES.METRICS;
+			void setSelectedView(firstValid);
+		}
+	}, [hideDetailViewTabs, selectedView, validTabs, setSelectedView]);
+
 	const [, setLogFiltersParam] = useInfraMonitoringLogFilters();
 	const [, setTracesFiltersParam] = useInfraMonitoringTracesFilters();
 	const [, setEventsFiltersParam] = useInfraMonitoringEventsFilters();
