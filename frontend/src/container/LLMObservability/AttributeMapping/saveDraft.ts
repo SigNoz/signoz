@@ -105,14 +105,8 @@ async function persistMappers(
 			.map((mapper) => mapper.serverId as string),
 	);
 
-	// Deleted mappers.
-	await Promise.all(
-		snapshotMappers
-			.filter((mapper) => mapper.serverId && !draftServerIds.has(mapper.serverId))
-			.map((mapper) => m.deleteMapper(groupServerId, mapper.serverId as string)),
-	);
-
-	// Created + updated mappers (sequential to keep ordering deterministic).
+	// Creates/updates before deletes (see persistDraft). Sequential for
+	// deterministic ordering.
 	for (const mapper of draftMappers) {
 		if (!mapper.serverId) {
 			// eslint-disable-next-line no-await-in-loop
@@ -132,6 +126,13 @@ async function persistMappers(
 			}
 		}
 	}
+
+	// Deletes last.
+	await Promise.all(
+		snapshotMappers
+			.filter((mapper) => mapper.serverId && !draftServerIds.has(mapper.serverId))
+			.map((mapper) => m.deleteMapper(groupServerId, mapper.serverId as string)),
+	);
 }
 
 // Diffs the staged tree against the server snapshot and issues the minimal set
@@ -152,11 +153,13 @@ export async function persistDraft(
 			.map((group) => group.serverId as string),
 	);
 
-	// Apply additive work (creates/updates) before deletes, so a failure here
-	// leaves at worst an incomplete set of additions rather than groups that
-	// were deleted with no replacement persisted. Deletes are irreversible
-	// (they cascade mappers server-side), so we do them last, once everything
-	// else has succeeded.
+	// Creates/updates before deletes: a mid-save failure then leaves incomplete
+	// additions rather than groups deleted with no replacement. Deletes are
+	// irreversible (cascade mappers server-side), so they run last.
+	//
+	// Names are unique per scope, so deleting and recreating the same name in
+	// one save collides and errors — recoverable by splitting across two saves,
+	// which we favour over the data loss delete-first would risk.
 	for (const group of draft) {
 		if (!group.serverId) {
 			// eslint-disable-next-line no-await-in-loop

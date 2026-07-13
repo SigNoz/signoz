@@ -2,8 +2,18 @@ import {
 	SpantypesFieldContextDTO as FieldContext,
 	SpantypesSpanMapperOperationDTO as MapperOperation,
 } from 'api/generated/services/sigNoz.schemas';
+import { toast } from '@signozhq/ui/sonner';
 import { rest, server } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
+
+jest.mock('@signozhq/ui/sonner', () => ({
+	...jest.requireActual('@signozhq/ui/sonner'),
+	toast: {
+		success: jest.fn(),
+		error: jest.fn(),
+		warning: jest.fn(),
+	},
+}));
 
 import {
 	GROUPS_ENDPOINT,
@@ -393,6 +403,45 @@ describe('AttributeMappingsTab (integration)', () => {
 		expect(
 			screen.queryByTestId('mapper-target-mapper-1'),
 		).not.toBeInTheDocument();
+	});
+
+	it('warns and keeps the working copy when the post-save refresh fails', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		(toast.success as jest.Mock).mockClear();
+		(toast.warning as jest.Mock).mockClear();
+
+		// The initial load succeeds; the post-save refetch fails. persistDraft
+		// itself succeeds (the PATCH below), so the changes are on the server —
+		// only the refresh that follows them errors.
+		let failRefresh = false;
+		server.use(
+			rest.get(GROUPS_ENDPOINT, (_req, res, ctx) =>
+				failRefresh
+					? res(ctx.status(500), ctx.json({ status: 'error' }))
+					: res(ctx.status(200), ctx.json(makeGroupsResponse(mockGroups))),
+			),
+			rest.patch(`${GROUPS_ENDPOINT}/:groupId`, (_req, res, ctx) =>
+				res(ctx.status(200), ctx.json({ status: 'ok' })),
+			),
+		);
+		render(<SaveableHarness />);
+
+		const toggle = await screen.findByTestId('group-enabled-group-1');
+		expect(toggle).toBeChecked();
+
+		// Stage a change so persistDraft issues a PATCH and the draft is dirty.
+		await user.click(toggle);
+		expect(screen.getByTestId('group-enabled-group-1')).not.toBeChecked();
+
+		failRefresh = true;
+		await user.click(screen.getByTestId('save-button'));
+
+		// The refresh failed, so the user is warned rather than told the save
+		// succeeded. Crucially the working copy is not reset — the guard skips the
+		// setDraft(null) reset that would otherwise re-seed from the stale
+		// pre-save cache and silently drop the just-saved change.
+		await waitFor(() => expect(toast.warning).toHaveBeenCalled());
+		expect(toast.success).not.toHaveBeenCalled();
 	});
 
 	// The mapper drawer is owned by MappingsTable (a single useMapperFormDrawer +

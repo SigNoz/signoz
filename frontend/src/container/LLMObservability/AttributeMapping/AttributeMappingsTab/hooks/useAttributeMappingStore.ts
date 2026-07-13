@@ -266,7 +266,13 @@ export function useAttributeMappingStore(): AttributeMappingStore {
 			// refetch keeps it scoped to the groups list; the per-group mapper
 			// caches are handled separately below (mappers can change here, so
 			// their cached lists must be dropped rather than left stale).
-			await refetchGroups();
+			const { isError: refreshFailed } = await refetchGroups();
+			if (refreshFailed) {
+				toast.warning(
+					'Changes saved, but the list failed to refresh. Reload to see the latest.',
+				);
+				return;
+			}
 			// Reset the mapper-load tracking so expanded groups re-hydrate from
 			// the fresh server data.
 			loadedRef.current = new Set();
