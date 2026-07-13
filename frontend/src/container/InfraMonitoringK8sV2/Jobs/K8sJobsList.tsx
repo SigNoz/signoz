@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { listJobs } from 'api/generated/services/inframonitoring';
 import {
 	InframonitoringtypesJobRecordDTO,
@@ -14,6 +14,7 @@ import { InfraMonitoringEntity } from '../constants';
 import { SelectedItemParams } from '../hooks';
 import {
 	getJobMetricsQueryPayload,
+	getJobPodMetricsQueryPayload,
 	jobWidgetInfo,
 	k8sJobDetailsMetadataConfig,
 	k8sJobGetEntityName,
@@ -26,6 +27,7 @@ import {
 	getK8sJobRowKey,
 	k8sJobsColumnsConfig,
 } from './table.config';
+import { createPodMetricsTab } from 'container/InfraMonitoringK8sV2/EntityDetailsUtils/createPodMetricsTab';
 
 function K8sJobsList({
 	controlListPrefix,
@@ -116,6 +118,17 @@ function K8sJobsList({
 		[],
 	);
 
+	const customTabs = useMemo(
+		() => [
+			createPodMetricsTab<InframonitoringtypesJobRecordDTO>({
+				getQueryPayload: getJobPodMetricsQueryPayload,
+				category: InfraMonitoringEntity.JOBS,
+				queryKey: 'jobPodMetrics',
+			}),
+		],
+		[],
+	);
+
 	return (
 		<>
 			<K8sBaseList<InframonitoringtypesJobRecordDTO, SelectedItemParams>
@@ -140,6 +153,7 @@ function K8sJobsList({
 				entityWidgetInfo={jobWidgetInfo}
 				getEntityQueryPayload={getJobMetricsQueryPayload}
 				queryKeyPrefix="job"
+				customTabs={customTabs}
 			/>
 		</>
 	);
