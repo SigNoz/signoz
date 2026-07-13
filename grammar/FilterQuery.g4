@@ -32,11 +32,12 @@ unaryExpression
     ;
 
 // Primary constructs: grouped expressions, a comparison (key op value),
-// a function call, or a full-text string
+// a function call, a search() full-text call, or a free-text string
 primary
     : LPAREN orExpression RPAREN
     | comparison
     | functionCall
+    | searchCall
     | fullText
     | key
     | value
@@ -108,6 +109,18 @@ fullText
  */
 functionCall
     : (HASTOKEN | HAS | HASANY | HASALL) LPAREN functionParamList RPAREN
+    ;
+
+/*
+ * Full-text search call: search('needle')
+ *
+ * Uses the shared functionParamList so future scoped forms like
+ * search(body, 'abc') / search(attribute, 'abc') need no grammar change. Today
+ * only a single needle is supported. Unlike bare/quoted free text (`fullText`),
+ * which only targets the body column, search() fans out across every field.
+ */
+searchCall
+    : SEARCH LPAREN functionParamList RPAREN
     ;
 
 // Function parameters can be keys, single scalar values, or arrays
@@ -184,6 +197,7 @@ HASTOKEN    : [Hh][Aa][Ss][Tt][Oo][Kk][Ee][Nn];
 HAS         : [Hh][Aa][Ss] ;
 HASANY      : [Hh][Aa][Ss][Aa][Nn][Yy] ;
 HASALL      : [Hh][Aa][Ss][Aa][Ll][Ll] ;
+SEARCH      : [Ss][Ee][Aa][Rr][Cc][Hh] ;
 
 // Potential boolean constants
 BOOL

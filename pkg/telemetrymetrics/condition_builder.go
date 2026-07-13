@@ -36,7 +36,7 @@ func (c *conditionBuilder) conditionFor(
 		value = querybuilder.FormatValueForContains(value)
 	}
 
-	fieldExpression, err := c.fm.FieldFor(ctx, startNs, endNs, key)
+	fieldExpression, err := c.fm.FieldFor(ctx, valuer.UUID{}, startNs, endNs, key)
 	if err != nil {
 		return "", err
 	}
@@ -154,7 +154,7 @@ func (c *conditionBuilder) ConditionFor(
 	sb *sqlbuilder.SelectBuilder,
 ) ([]string, []string, error) {
 
-	// has/hasAny/hasAll/hasToken are logs-body-only; reject for metrics.
+	// has/hasAny/hasAll/hasToken/search are logs-only functions; reject for metrics.
 	if err := querybuilder.NewFunctionUnsupportedError(operator); err != nil {
 		return nil, nil, err
 	}

@@ -27,6 +27,8 @@ type Config struct {
 	SkipResourceFingerprint SkipResourceFingerprint `yaml:"skip_resource_fingerprint" mapstructure:"skip_resource_fingerprint"`
 	// LogTraceIDWindowPadding is the padding added to narrowed down timerange from trace summary to logs with trace_id filter.
 	LogTraceIDWindowPadding time.Duration `yaml:"log_trace_id_window_padding" mapstructure:"log_trace_id_window_padding"`
+	// SearchMaxScanRows caps the rows a search() query may scan, enforced via
+	SearchMaxScanRows int64 `yaml:"search_max_scan_rows" mapstructure:"search_max_scan_rows"`
 }
 
 // NewConfigFactory creates a new config factory for querier.
@@ -45,6 +47,7 @@ func newConfig() factory.Config {
 			Threshold: 100000,
 		},
 		LogTraceIDWindowPadding: 5 * time.Minute,
+		SearchMaxScanRows:       100_000_000,
 	}
 }
 
@@ -64,6 +67,9 @@ func (c Config) Validate() error {
 	}
 	if c.LogTraceIDWindowPadding < 0 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "log_trace_id_window_padding must not be negative, got %v", c.LogTraceIDWindowPadding)
+	}
+	if c.SearchMaxScanRows < 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "search_max_scan_rows must not be negative, got %v", c.SearchMaxScanRows)
 	}
 	return nil
 }

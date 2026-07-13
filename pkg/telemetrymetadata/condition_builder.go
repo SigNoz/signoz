@@ -74,13 +74,13 @@ func (c *conditionBuilder) conditionForKey(
 		value = querybuilder.FormatValueForContains(value)
 	}
 
-	columns, err := c.fm.ColumnFor(ctx, tsStart, tsEnd, key)
+	columns, err := c.fm.ColumnFor(ctx, valuer.UUID{}, tsStart, tsEnd, key)
 	if err != nil {
 		// if we don't have a column, we can't build a condition for related values
 		return "", nil
 	}
 
-	fieldExpression, err := c.fm.FieldFor(ctx, tsStart, tsEnd, key)
+	fieldExpression, err := c.fm.FieldFor(ctx, valuer.UUID{}, tsStart, tsEnd, key)
 	if err != nil {
 		// if we don't have a table field name, we can't build a condition for related values
 		return "", nil

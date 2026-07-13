@@ -23,9 +23,9 @@ type JsonKeyToFieldFunc func(context.Context, *telemetrytypes.TelemetryFieldKey,
 // FieldMapper maps the telemetry field key to the table field name.
 type FieldMapper interface {
 	// FieldFor returns the field name for the given key.
-	FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey) (string, error)
+	FieldFor(ctx context.Context, orgID valuer.UUID, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey) (string, error)
 	// ColumnFor returns the column for the given key.
-	ColumnFor(ctx context.Context, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error)
+	ColumnFor(ctx context.Context, orgID valuer.UUID, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error)
 	// ColumnExpressionFor returns the column expression for the given key. Most mappers
 	// return it aliased (`expr AS name`); the traces mapper returns a bare expression and
 	// callers add their own alias.
@@ -68,6 +68,12 @@ type Statement struct {
 	Args           []any
 	Warnings       []string
 	WarningsDocURL string
+	CostGuard      *CostGuard
+}
+
+type CostGuard struct {
+	Warning     string
+	MaxScanRows int64
 }
 
 // StatementBuilder builds the query.

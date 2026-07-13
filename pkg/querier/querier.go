@@ -782,7 +782,7 @@ func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query
 			defer func() { <-sem }()
 
 			// Create a new query with the missing time range
-			rangedQuery := q.createRangedQuery(query, *tr)
+			rangedQuery := q.createRangedQuery(orgID, query, *tr)
 			if rangedQuery == nil {
 				errs[idx] = errors.NewInternalf(errors.CodeInternal, "failed to create ranged query for range %d-%d", tr.From, tr.To)
 				return
@@ -843,7 +843,7 @@ func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query
 }
 
 // createRangedQuery creates a copy of the query with a different time range.
-func (q *querier) createRangedQuery(originalQuery qbtypes.Query, timeRange qbtypes.TimeRange) qbtypes.Query {
+func (q *querier) createRangedQuery(orgID valuer.UUID, originalQuery qbtypes.Query, timeRange qbtypes.TimeRange) qbtypes.Query {
 	// this is called in a goroutine, so we create a copy of the query to avoid race conditions
 	switch qt := originalQuery.(type) {
 	case *promqlQuery:

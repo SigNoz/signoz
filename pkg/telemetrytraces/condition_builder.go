@@ -46,13 +46,13 @@ func (c *conditionBuilder) conditionFor(
 	}
 
 	// first, locate the raw column type (so we can choose the right EXISTS logic)
-	columns, err := c.fm.ColumnFor(ctx, startNs, endNs, key)
+	columns, err := c.fm.ColumnFor(ctx, valuer.UUID{}, startNs, endNs, key)
 	if err != nil {
 		return "", err
 	}
 
 	// then ask the mapper for the actual SQL reference
-	fieldExpression, err := c.fm.FieldFor(ctx, startNs, endNs, key)
+	fieldExpression, err := c.fm.FieldFor(ctx, valuer.UUID{}, startNs, endNs, key)
 	if err != nil {
 		return "", err
 	}
@@ -306,7 +306,7 @@ func (c *conditionBuilder) conditionsForKeys(
 	sb *sqlbuilder.SelectBuilder,
 ) ([]string, []string, error) {
 
-	// has/hasAny/hasAll/hasToken are logs-body-only; reject for traces.
+	// has/hasAny/hasAll/hasToken/search are logs-only functions; reject for traces.
 	if err := querybuilder.NewFunctionUnsupportedError(operator); err != nil {
 		return nil, nil, err
 	}
@@ -374,7 +374,7 @@ func (c *conditionBuilder) conditionForKey(
 
 	if operator.AddDefaultExistsFilter() {
 		// skip adding exists filter for intrinsic fields
-		field, _ := c.fm.FieldFor(ctx, startNs, endNs, key)
+		field, _ := c.fm.FieldFor(ctx, valuer.UUID{}, startNs, endNs, key)
 		if slices.Contains(maps.Keys(IntrinsicFields), field) ||
 			slices.Contains(maps.Keys(IntrinsicFieldsDeprecated), field) ||
 			slices.Contains(maps.Keys(CalculatedFields), field) ||
