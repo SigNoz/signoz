@@ -294,6 +294,9 @@ export default function K8sBaseDetails<T>({
 	}, [getMinMaxTime, selectedTime]);
 
 	const handleTabChange = (value: string): void => {
+		if (!value) {
+			return;
+		}
 		setSelectedView(value);
 		setLogFiltersParam(null);
 		setTracesFiltersParam(null);
