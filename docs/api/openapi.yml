@@ -1494,7 +1494,7 @@ components:
       - cosmosdb
       - cassandradb
       - redis
-      - cloudsql
+      - cloudsql_postgres
       type: string
     CloudintegrationtypesServiceMetadata:
       properties:
