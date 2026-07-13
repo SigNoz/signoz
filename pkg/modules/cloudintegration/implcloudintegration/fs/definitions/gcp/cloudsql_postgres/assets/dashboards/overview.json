@@ -1,5 +1,5 @@
 {
-  "description": "Dashboard for GCP CloudSQL monitoring overview",
+  "description": "Dashboard for GCP CloudSQL for PostgreSQL monitoring overview",
   "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNHB4IiBoZWlnaHQ9IjI0cHgiIHZpZXdCb3g9IjAgMCAyNCAyNCI+PGRlZnM+PHN0eWxlPi5jbHMtMXtmaWxsOiNhZWNiZmE7fS5jbHMtMSwuY2xzLTIsLmNscy0ze2ZpbGwtcnVsZTpldmVub2RkO30uY2xzLTJ7ZmlsbDojNjY5ZGY2O30uY2xzLTN7ZmlsbDojNDI4NWY0O308L3N0eWxlPjwvZGVmcz48dGl0bGU+SWNvbl8yNHB4X1NRTF9Db2xvcjwvdGl0bGU+PGcgZGF0YS1uYW1lPSJQcm9kdWN0IEljb25zIj48ZyA+PHBvbHlnb24gY2xhc3M9ImNscy0xIiBwb2ludHM9IjQuNjcgMTAuNDQgNC42NyAxMy40NSAxMiAxNy4zNSAxMiAxNC4zNCA0LjY3IDEwLjQ0Ii8+PHBvbHlnb24gY2xhc3M9ImNscy0xIiBwb2ludHM9IjQuNjcgMTUuMDkgNC42NyAxOC4xIDEyIDIyIDEyIDE4Ljk5IDQuNjcgMTUuMDkiLz48cG9seWdvbiBjbGFzcz0iY2xzLTIiIHBvaW50cz0iMTIgMTcuMzUgMTkuMzMgMTMuNDUgMTkuMzMgMTAuNDQgMTIgMTQuMzQgMTIgMTcuMzUiLz48cG9seWdvbiBjbGFzcz0iY2xzLTIiIHBvaW50cz0iMTIgMjIgMTkuMzMgMTguMSAxOS4zMyAxNS4wOSAxMiAxOC45OSAxMiAyMiIvPjxwb2x5Z29uIGNsYXNzPSJjbHMtMyIgcG9pbnRzPSIxOS4zMyA4LjkxIDE5LjMzIDUuOSAxMiAyIDEyIDUuMDEgMTkuMzMgOC45MSIvPjxwb2x5Z29uIGNsYXNzPSJjbHMtMiIgcG9pbnRzPSIxMiAyIDQuNjcgNS45IDQuNjcgOC45MSAxMiA1LjAxIDEyIDIiLz48cG9seWdvbiBjbGFzcz0iY2xzLTEiIHBvaW50cz0iNC42NyA1Ljg3IDQuNjcgOC44OSAxMiAxMi43OSAxMiA5Ljc3IDQuNjcgNS44NyIvPjxwb2x5Z29uIGNsYXNzPSJjbHMtMiIgcG9pbnRzPSIxMiAxMi43OSAxOS4zMyA4Ljg5IDE5LjMzIDUuODcgMTIgOS43NyAxMiAxMi43OSIvPjwvZz48L2c+PC9zdmc+",
   "layout": [
     {
@@ -345,7 +345,7 @@
   "tags": [
     "observability"
   ],
-  "title": "GCP CloudSQL Overview",
+  "title": "GCP CloudSQL for PostgreSQL Overview",
   "uploadedGrafana": false,
   "variables": {
     "349eb9af-b899-4380-8879-b03b37c3b968": {

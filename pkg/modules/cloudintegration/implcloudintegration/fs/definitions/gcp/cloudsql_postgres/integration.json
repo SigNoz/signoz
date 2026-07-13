@@ -1,6 +1,6 @@
 {
-  "id": "cloudsql",
-  "title": "GCP Cloud SQL",
+  "id": "cloudsql_postgres",
+  "title": "GCP Cloud SQL for PostgreSQL",
   "icon": "file://icon.svg",
   "overview": "file://overview.md",
   "supportedSignals": {
@@ -97,8 +97,8 @@
     "dashboards": [
       {
         "id": "overview",
-        "title": "GCP Cloud SQL Overview",
-        "description": "Overview of GCP Cloud SQL metrics",
+        "title": "GCP Cloud SQL for PostgreSQL Overview",
+        "description": "Overview of GCP Cloud SQL for PostgreSQL metrics",
         "definition": "file://assets/dashboards/overview.json"
       }
     ]
