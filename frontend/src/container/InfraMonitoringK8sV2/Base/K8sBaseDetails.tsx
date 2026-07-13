@@ -78,6 +78,23 @@ export interface K8sDetailsFilters {
 	end: number;
 }
 
+export interface CustomTabRenderProps<T> {
+	entity: T;
+	timeRange: { startTime: number; endTime: number };
+	selectedInterval: Time;
+	handleTimeChange: (
+		interval: Time | CustomTimeType,
+		dateTimeRange?: [number, number],
+	) => void;
+}
+
+export interface CustomTab<T> {
+	key: string;
+	label: string;
+	icon: React.ReactNode;
+	render: (props: CustomTabRenderProps<T>) => React.ReactNode;
+}
+
 export interface K8sBaseDetailsProps<T> {
 	category: InfraMonitoringEntity;
 	eventCategory: string;
@@ -111,20 +128,7 @@ export interface K8sBaseDetailsProps<T> {
 		showTraces?: boolean;
 		showEvents?: boolean;
 	};
-	customTabs?: Array<{
-		key: string;
-		label: string;
-		icon: React.ReactNode;
-		render: (props: {
-			entity: T;
-			timeRange: { startTime: number; endTime: number };
-			selectedInterval: Time;
-			handleTimeChange: (
-				interval: Time | CustomTimeType,
-				dateTimeRange?: [number, number],
-			) => void;
-		}) => React.ReactNode;
-	}>;
+	customTabs?: Array<CustomTab<T>>;
 }
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
