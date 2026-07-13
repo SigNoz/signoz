@@ -44,6 +44,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/pprof/nooppprof"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/clickhouseprometheus"
+	"github.com/SigNoz/signoz/pkg/prometheus/clickhouseprometheusv2"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/querier/signozquerier"
 	"github.com/SigNoz/signoz/pkg/sharder"
@@ -235,6 +236,7 @@ func NewTelemetryStoreProviderFactories() factory.NamedMap[factory.ProviderFacto
 func NewPrometheusProviderFactories(telemetryStore telemetrystore.TelemetryStore) factory.NamedMap[factory.ProviderFactory[prometheus.Prometheus, prometheus.Config]] {
 	return factory.MustNewNamedMap(
 		clickhouseprometheus.NewFactory(telemetryStore),
+		clickhouseprometheusv2.NewFactory(telemetryStore),
 	)
 }
 
@@ -276,9 +278,9 @@ func NewStatsReporterProviderFactories(aggregator statsreporter.Aggregator, orgG
 	)
 }
 
-func NewQuerierProviderFactories(telemetryStore telemetrystore.TelemetryStore, prometheus prometheus.Prometheus, cache cache.Cache, flagger flagger.Flagger) factory.NamedMap[factory.ProviderFactory[querier.Querier, querier.Config]] {
+func NewQuerierProviderFactories(telemetryStore telemetrystore.TelemetryStore, prometheus prometheus.Prometheus, promV2 *clickhouseprometheusv2.Provider, cache cache.Cache, flagger flagger.Flagger) factory.NamedMap[factory.ProviderFactory[querier.Querier, querier.Config]] {
 	return factory.MustNewNamedMap(
-		signozquerier.NewFactory(telemetryStore, prometheus, cache, flagger),
+		signozquerier.NewFactory(telemetryStore, prometheus, promV2, cache, flagger),
 	)
 }
 

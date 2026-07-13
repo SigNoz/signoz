@@ -7,7 +7,9 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/prometheus/clickhouseprometheusv2"
 	qbv5 "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/prometheus/prometheus/promql"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -439,4 +441,36 @@ func TestQuotedMetricOutsideBracesPattern(t *testing.T) {
 			}
 		})
 	}
+}
+
+// wrappedErr stands in for the engine's fmt-based "expanding series: %w"
+// wrapper: an ordinary error with an Unwrap chain that is not a SigNoz base
+// error itself.
+type wrappedErr struct{ inner error }
+
+func (w wrappedErr) Error() string { return "expanding series: " + w.inner.Error() }
+func (w wrappedErr) Unwrap() error { return w.inner }
+
+// A typed budget refusal must survive the engine's wrapping and reach the
+// API as invalid input; flattened to internal it becomes a 500 the user
+// cannot act on — the exact failure this error type exists to prevent.
+func TestTypedStorageError_SeesThroughEngineWrappers(t *testing.T) {
+	budget := errors.NewInvalidInputf(errors.CodeInvalidInput, "promql selector matched more than 500000 series")
+
+	assert.NotNil(t, typedStorageError(wrappedErr{inner: budget}), "typed error behind an Unwrap wrapper")
+	assert.NotNil(t, typedStorageError(promql.ErrStorage{Err: wrappedErr{inner: budget}}), "typed error behind ErrStorage then a wrapper")
+	assert.NotNil(t, typedStorageError(wrappedErr{inner: promql.ErrStorage{Err: budget}}), "typed error behind a wrapper then ErrStorage")
+	assert.Nil(t, typedStorageError(wrappedErr{inner: errors.NewInternalf(errors.CodeInternal, "boom")}), "internal errors stay internal")
+}
+
+// A pinned request must not share cache entries with default serving: a
+// cached default result would satisfy the pin without running the pinned
+// provider.
+func TestFingerprint_PinnedProviderBypassesCache(t *testing.T) {
+	q := &promqlQuery{
+		logger: slog.Default(),
+		query:  qbv5.PromQuery{Query: "up"},
+		opts:   promqlOptions{serve: &clickhouseprometheusv2.Provider{}},
+	}
+	assert.Empty(t, q.Fingerprint())
 }

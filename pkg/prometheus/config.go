@@ -13,6 +13,11 @@ type ActiveQueryTrackerConfig struct {
 	MaxConcurrent int    `mapstructure:"max_concurrent"`
 }
 
+type ClickhouseV2Config struct {
+	MaxFetchedSeries  int   `mapstructure:"max_fetched_series"`
+	MaxFetchedSamples int64 `mapstructure:"max_fetched_samples"`
+}
+
 type Config struct {
 	ActiveQueryTrackerConfig ActiveQueryTrackerConfig `mapstructure:"active_query_tracker"`
 
@@ -24,6 +29,13 @@ type Config struct {
 
 	// Timeout is the maximum time a query is allowed to run before being aborted.
 	Timeout time.Duration `mapstructure:"timeout"`
+
+	// ProviderName selects the storage provider: "clickhouse" (default) or
+	// "clickhousev2".
+	ProviderName string `mapstructure:"provider"`
+
+	// ClickhouseV2 configures the clickhousev2 provider.
+	ClickhouseV2 ClickhouseV2Config `mapstructure:"clickhousev2"`
 }
 
 func NewConfigFactory() factory.ConfigFactory {
@@ -37,7 +49,12 @@ func newConfig() factory.Config {
 			Path:          "",
 			MaxConcurrent: 20,
 		},
-		Timeout: 2 * time.Minute,
+		Timeout:      2 * time.Minute,
+		ProviderName: "clickhouse",
+		ClickhouseV2: ClickhouseV2Config{
+			MaxFetchedSeries:  500_000,
+			MaxFetchedSamples: 50_000_000,
+		},
 	}
 }
 
@@ -45,9 +62,18 @@ func (c Config) Validate() error {
 	if c.Timeout <= 0 {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "prometheus::timeout must be greater than 0")
 	}
+	if c.ProviderName != "" && c.ProviderName != "clickhouse" && c.ProviderName != "clickhousev2" {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "prometheus::provider must be one of [clickhouse, clickhousev2], got %q", c.ProviderName)
+	}
+	if c.ClickhouseV2.MaxFetchedSeries < 0 || c.ClickhouseV2.MaxFetchedSamples < 0 {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "prometheus::clickhousev2 limits must not be negative")
+	}
 	return nil
 }
 
 func (c Config) Provider() string {
-	return "clickhouse"
+	if c.ProviderName == "" {
+		return "clickhouse"
+	}
+	return c.ProviderName
 }

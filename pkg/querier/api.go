@@ -50,6 +50,7 @@ func (handler *handler) QueryRange(rw http.ResponseWriter, req *http.Request) {
 		render.Error(rw, err)
 		return
 	}
+	queryRangeRequest.PromQLProvider = req.Header.Get("X-SigNoz-PromQL-Provider")
 
 	// Validate the query request
 	if err := queryRangeRequest.Validate(); err != nil {

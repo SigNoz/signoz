@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/prometheus/clickhouseprometheusv2"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetryaudit"
@@ -22,6 +23,7 @@ import (
 func NewFactory(
 	telemetryStore telemetrystore.TelemetryStore,
 	prometheus prometheus.Prometheus,
+	promV2 *clickhouseprometheusv2.Provider,
 	cache cache.Cache,
 	flagger flagger.Flagger,
 ) factory.ProviderFactory[querier.Querier, querier.Config] {
@@ -32,7 +34,7 @@ func NewFactory(
 			settings factory.ProviderSettings,
 			cfg querier.Config,
 		) (querier.Querier, error) {
-			return newProvider(ctx, settings, cfg, telemetryStore, prometheus, cache, flagger)
+			return newProvider(ctx, settings, cfg, telemetryStore, prometheus, promV2, cache, flagger)
 		},
 	)
 }
@@ -43,6 +45,7 @@ func newProvider(
 	cfg querier.Config,
 	telemetryStore telemetrystore.TelemetryStore,
 	prometheus prometheus.Prometheus,
+	promV2 *clickhouseprometheusv2.Provider,
 	cache cache.Cache,
 	flagger flagger.Flagger,
 ) (querier.Querier, error) {
@@ -184,6 +187,7 @@ func newProvider(
 		telemetryStore,
 		telemetryMetadataStore,
 		prometheus,
+		promV2,
 		traceStmtBuilder,
 		logStmtBuilder,
 		auditStmtBuilder,

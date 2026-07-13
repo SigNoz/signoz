@@ -19,10 +19,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/prometheus/clickhouseprometheusv2"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -36,11 +38,19 @@ var (
 )
 
 type querier struct {
-	logger                   *slog.Logger
-	fl                       flagger.Flagger
-	telemetryStore           telemetrystore.TelemetryStore
-	metadataStore            telemetrytypes.MetadataStore
-	promEngine               prometheus.Prometheus
+	logger         *slog.Logger
+	fl             flagger.Flagger
+	telemetryStore telemetrystore.TelemetryStore
+	metadataStore  telemetrytypes.MetadataStore
+	promEngine     prometheus.Prometheus
+	// promV2 is the clickhousev2 prometheus provider, wired only when the
+	// serving provider is the default one (nil otherwise). It reads the same
+	// ClickHouse data through a different implementation; PromQL queries
+	// shadow-compare against it behind the use_prometheus_clickhouse_v2 flag
+	// and can be pinned to it for a response (see promqlOptions). It never
+	// serves by default — that cutover happens only after the shadow logs
+	// stay clean.
+	promV2                   *clickhouseprometheusv2.Provider
 	traceStmtBuilder         qbtypes.StatementBuilder[qbtypes.TraceAggregation]
 	logStmtBuilder           qbtypes.StatementBuilder[qbtypes.LogAggregation]
 	auditStmtBuilder         qbtypes.StatementBuilder[qbtypes.LogAggregation]
@@ -51,7 +61,15 @@ type querier struct {
 	liveDataRefresh          time.Duration
 	builderConfig            builderConfig
 	maxConcurrentQueries     int
+	// shadowSlots bounds concurrent shadow comparisons per process; shadows
+	// detach from their requests, so nothing else limits how many pile up.
+	shadowSlots chan struct{}
 }
+
+// maxConcurrentShadows is deliberately small: a shadow is a full extra
+// ClickHouse evaluation, and a sampled stream of comparisons is exactly as
+// useful for rollout evidence as an exhaustive one under load.
+const maxConcurrentShadows = 8
 
 var _ Querier = (*querier)(nil)
 
@@ -60,6 +78,7 @@ func New(
 	telemetryStore telemetrystore.TelemetryStore,
 	metadataStore telemetrytypes.MetadataStore,
 	promEngine prometheus.Prometheus,
+	promV2 *clickhouseprometheusv2.Provider,
 	traceStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation],
 	logStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation],
 	auditStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation],
@@ -81,6 +100,7 @@ func New(
 		telemetryStore:           telemetryStore,
 		metadataStore:            metadataStore,
 		promEngine:               promEngine,
+		promV2:                   promV2,
 		traceStmtBuilder:         traceStmtBuilder,
 		logStmtBuilder:           logStmtBuilder,
 		auditStmtBuilder:         auditStmtBuilder,
@@ -93,6 +113,7 @@ func New(
 			logTraceIDWindowPaddingMS: uint64(logTraceIDWindowPadding.Milliseconds()),
 		},
 		maxConcurrentQueries: maxConcurrentQueries,
+		shadowSlots:          make(chan struct{}, maxConcurrentShadows),
 	}
 }
 
@@ -132,7 +153,11 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 		missingMetricQuerySet[name] = true
 	}
 
-	queries, steps, err := q.buildQueries(req, dependencyQueries, missingMetricQuerySet, event)
+	promqlOpts, err := q.promqlOptions(ctx, orgID, req)
+	if err != nil {
+		return nil, err
+	}
+	queries, steps, err := q.buildQueries(req, dependencyQueries, missingMetricQuerySet, event, promqlOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -175,11 +200,40 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 	return qbResp, qbErr
 }
 
+// promqlOptions derives the PromQL execution options for a request. With the
+// org's use_prometheus_clickhouse_v2 flag on, queries are shadow-compared
+// against the clickhousev2 provider (serving unaffected, diffs logged; see
+// promql_shadow.go). The X-SigNoz-PromQL-Provider header may instead pin the
+// response to that provider — integration tests and support fetch both
+// results for comparison — so it is deliberately flag-gated too: without the
+// gate the header would be an unaudited switch onto a provider still under
+// validation.
+func (q *querier) promqlOptions(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest) (promqlOptions, error) {
+	enabled := q.fl.BooleanOrEmpty(ctx, flagger.FeatureUsePrometheusClickhouseV2, featuretypes.NewFlaggerEvaluationContext(orgID))
+	if req.PromQLProvider == "" {
+		if enabled && q.promV2 != nil {
+			return promqlOptions{shadow: q.promV2, shadowSlots: q.shadowSlots}, nil
+		}
+		return promqlOptions{}, nil
+	}
+	if req.PromQLProvider != prometheus.ProviderClickhouseV2 {
+		return promqlOptions{}, errors.NewInvalidInputf(errors.CodeInvalidInput, "unknown promql provider %q", req.PromQLProvider)
+	}
+	if !enabled {
+		return promqlOptions{}, errors.NewInvalidInputf(errors.CodeInvalidInput, "promql provider %q requires the use_prometheus_clickhouse_v2 flag", req.PromQLProvider)
+	}
+	if q.promV2 == nil {
+		return promqlOptions{}, errors.NewInvalidInputf(errors.CodeInvalidInput, "promql provider %q is not available", req.PromQLProvider)
+	}
+	return promqlOptions{serve: q.promV2}, nil
+}
+
 func (q *querier) buildQueries(
 	req *qbtypes.QueryRangeRequest,
 	dependencyQueries map[string]bool,
 	missingMetricQuerySet map[string]bool,
 	event *qbtypes.QBEvent,
+	promqlOpts promqlOptions,
 ) (map[string]qbtypes.Query, map[string]qbtypes.Step, error) {
 
 	tmplVars := req.Variables
@@ -204,7 +258,7 @@ func (q *querier) buildQueries(
 			if !ok {
 				return nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid promql query spec %T", query.Spec)
 			}
-			promqlQuery := newPromqlQuery(q.logger, q.promEngine, promQuery, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType, tmplVars)
+			promqlQuery := newPromqlQuery(q.logger, q.promEngine, promQuery, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType, tmplVars, promqlOpts)
 			queries[promQuery.Name] = promqlQuery
 			steps[promQuery.Name] = promQuery.Step
 		case qbtypes.QueryTypeClickHouseSQL:
@@ -846,7 +900,7 @@ func (q *querier) createRangedQuery(originalQuery qbtypes.Query, timeRange qbtyp
 	switch qt := originalQuery.(type) {
 	case *promqlQuery:
 		queryCopy := qt.query.Copy()
-		return newPromqlQuery(q.logger, q.promEngine, queryCopy, timeRange, qt.requestType, qt.vars)
+		return newPromqlQuery(q.logger, qt.promEngine, queryCopy, timeRange, qt.requestType, qt.vars, qt.opts)
 
 	case *chSQLQuery:
 		queryCopy := qt.query.Copy()
