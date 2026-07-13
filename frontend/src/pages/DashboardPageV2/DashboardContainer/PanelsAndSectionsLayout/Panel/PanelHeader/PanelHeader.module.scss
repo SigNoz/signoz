@@ -5,6 +5,7 @@
 	padding: 8px 12px;
 	border-bottom: 1px solid var(--l2-border);
 	cursor: grab;
+	min-height: 32px;
 }
 
 .headerLeft {
@@ -30,7 +31,7 @@
 .actions {
 	display: flex;
 	align-items: center;
-	gap: 4px;
+	gap: 8px;
 	cursor: default;
 }
 
@@ -38,4 +39,23 @@
 .refetchIndicator {
 	color: var(--l2-foreground);
 	flex-shrink: 0;
+}
+
+// Per-panel time-preference pill (e.g. `6h`), shown when the panel overrides
+// the dashboard time window.
+.timePill {
+	flex-shrink: 0;
+	padding: 1px 6px;
+	border-radius: 4px;
+	font-size: 11px;
+	line-height: 16px;
+	color: var(--l3-foreground);
+	background: var(--l3-background);
+	border: 1px solid var(--l3-border);
+	cursor: default;
+}
+
+.descriptionTooltip {
+	max-width: 240px;
+	padding: 12px;
 }

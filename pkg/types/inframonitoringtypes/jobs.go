@@ -12,7 +12,6 @@ type Jobs struct {
 	Type                   ResponseType           `json:"type" required:"true"`
 	Records                []JobRecord            `json:"records" required:"true" nullable:"false"`
 	Total                  int                    `json:"total" required:"true"`
-	RequiredMetricsCheck   RequiredMetricsCheck   `json:"requiredMetricsCheck" required:"true"`
 	EndTimeBeforeRetention bool                   `json:"endTimeBeforeRetention" required:"true"`
 	Warning                *qbtypes.QueryWarnData `json:"warning,omitempty"`
 }
@@ -30,6 +29,7 @@ type JobRecord struct {
 	FailedPods            int               `json:"failedPods" required:"true"`
 	SuccessfulPods        int               `json:"successfulPods" required:"true"`
 	PodCountsByPhase      PodCountsByPhase  `json:"podCountsByPhase" required:"true"`
+	PodCountsByStatus     PodCountsByStatus `json:"podCountsByStatus" required:"true"`
 	Meta                  map[string]string `json:"meta" required:"true"`
 }
 

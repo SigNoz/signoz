@@ -283,7 +283,7 @@ describe('prepareScalarTables', () => {
 							aggregationIndex: 4,
 						},
 					],
-					[['kuja-api_gateway-service', 99.985, 0.985, 'Healthy ✅', 2181216]],
+					[['demo-service', 99.985, 0.985, 'Healthy ✅', 2181216]],
 				),
 			],
 			legendMap: { A: '' },
@@ -315,7 +315,7 @@ describe('prepareScalarTables', () => {
 		expect(table.rows).toStrictEqual([
 			{
 				data: {
-					'service.name': 'kuja-api_gateway-service',
+					'service.name': 'demo-service',
 					current_availability: 99.985,
 					error_budget_remaining: 0.985,
 					budget_status: 'Healthy ✅',

@@ -192,5 +192,7 @@ func newProvider(
 		traceOperatorStmtBuilder,
 		bucketCache,
 		flagger,
+		cfg.LogTraceIDWindowPadding,
+		cfg.MaxConcurrentQueries,
 	), nil
 }

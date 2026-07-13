@@ -29,6 +29,18 @@ if (!HTMLElement.prototype.scrollIntoView) {
 	HTMLElement.prototype.scrollIntoView = function (): void {};
 }
 
+// jsdom doesn't implement the Pointer Capture API, which Radix UI primitives
+// (e.g. @signozhq/ui Select) call when opening. Stub them so those components
+// can be exercised in tests.
+if (!HTMLElement.prototype.hasPointerCapture) {
+	HTMLElement.prototype.hasPointerCapture = function (): boolean {
+		return false;
+	};
+}
+if (!HTMLElement.prototype.releasePointerCapture) {
+	HTMLElement.prototype.releasePointerCapture = function (): void {};
+}
+
 if (typeof window.IntersectionObserver === 'undefined') {
 	class IntersectionObserverMock {
 		observe(): void {}

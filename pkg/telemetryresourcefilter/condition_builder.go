@@ -48,14 +48,50 @@ func (b *defaultConditionBuilder) ConditionFor(
 	startNs uint64,
 	endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
+	fieldKeysForName []*telemetrytypes.TelemetryFieldKey,
+	op qbtypes.FilterOperator,
+	value any,
+	sb *sqlbuilder.SelectBuilder,
+) ([]string, []string, error) {
+
+	// has/hasAny/hasAll/hasToken are logs-body-only functions; they never apply to the
+	// resource fingerprint table, so skip them (the main query still evaluates them).
+	if op.IsFunctionOperator() {
+		return nil, nil, nil
+	}
+
+	keys, warning := querybuilder.ResolveKeys(key, fieldKeysForName)
+	var warnings []string
+	if warning != "" {
+		warnings = append(warnings, warning)
+	}
+
+	conds := make([]string, 0, len(keys))
+	for _, k := range keys {
+		// the resource fingerprint table only stores resource attributes; keys from
+		// any other context contribute no condition and are omitted. An empty result
+		// (including an unknown key) lets the caller skip this filter entirely.
+		if k.FieldContext != telemetrytypes.FieldContextResource {
+			continue
+		}
+		cond, err := b.conditionForKey(ctx, startNs, endNs, k, op, value, sb)
+		if err != nil {
+			return nil, nil, err
+		}
+		conds = append(conds, cond)
+	}
+	return conds, warnings, nil
+}
+
+func (b *defaultConditionBuilder) conditionForKey(
+	ctx context.Context,
+	startNs uint64,
+	endNs uint64,
+	key *telemetrytypes.TelemetryFieldKey,
 	op qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) (string, error) {
-
-	if key.FieldContext != telemetrytypes.FieldContextResource {
-		return querybuilder.SkipConditionLiteral, nil
-	}
 
 	// except for in, not in, between, not between all other operators should have formatted value
 	// as we store resource values as string

@@ -20,6 +20,7 @@ const config: Config.InitialOptions = {
 		'\\.module\\.mjs$': '<rootDir>/__mocks__/cssMock.ts',
 		'\\.md$': '<rootDir>/__mocks__/cssMock.ts',
 		'^uplot$': '<rootDir>/__mocks__/uplotMock.ts',
+		'^motion/react$': '<rootDir>/__mocks__/motionMock.tsx',
 		'^@signozhq/resizable$': '<rootDir>/__mocks__/resizableMock.tsx',
 		'^hooks/useSafeNavigate$': USE_SAFE_NAVIGATE_MOCK_PATH,
 		'^src/hooks/useSafeNavigate$': USE_SAFE_NAVIGATE_MOCK_PATH,
@@ -29,6 +30,7 @@ const config: Config.InitialOptions = {
 		'^constants/env$': '<rootDir>/__mocks__/env.ts',
 		'^src/constants/env$': '<rootDir>/__mocks__/env.ts',
 		'^@signozhq/icons$': '<rootDir>/__mocks__/signozhqIconsMock.tsx',
+		'^lib/env$': '<rootDir>/__mocks__/lib/env.ts',
 		'^test-mocks/(.*)$': '<rootDir>/__mocks__/$1',
 		'^react-syntax-highlighter/dist/esm/(.*)$':
 			'<rootDir>/node_modules/react-syntax-highlighter/dist/cjs/$1',

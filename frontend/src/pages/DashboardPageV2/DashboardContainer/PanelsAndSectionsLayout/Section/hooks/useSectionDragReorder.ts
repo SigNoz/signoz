@@ -9,11 +9,11 @@ import {
 } from '@dnd-kit/core';
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 
-import { patchDashboardV2 } from 'api/generated/services/dashboard';
 import type { DashboardtypesLayoutDTO } from 'api/generated/services/sigNoz.schemas';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
+import { useOptimisticPatch } from '../../../hooks/useOptimisticPatch';
 import { reorderLayoutsOp } from '../../../patchOps';
 import { useDashboardStore } from '../../../store/useDashboardStore';
 import type { DashboardSection } from '../../../utils';
@@ -43,7 +43,7 @@ interface Result {
  */
 export function useSectionDragReorder({ sections, layouts }: Params): Result {
 	const dashboardId = useDashboardStore((s) => s.dashboardId);
-	const refetch = useDashboardStore((s) => s.refetch);
+	const { patchAsync } = useOptimisticPatch();
 	const [activeId, setActiveId] = useState<string | null>(null);
 	const [localOrderIds, setLocalOrderIds] = useState<string[] | null>(null);
 	const { showErrorModal } = useErrorModal();
@@ -99,14 +99,13 @@ export function useSectionDragReorder({ sections, layouts }: Params): Result {
 				.filter((l): l is DashboardtypesLayoutDTO => l !== undefined);
 
 			try {
-				await patchDashboardV2({ id: dashboardId }, [reorderLayoutsOp(newLayouts)]);
-				refetch();
+				await patchAsync([reorderLayoutsOp(newLayouts)]);
 			} catch (error) {
 				setLocalOrderIds(null); // revert optimistic order on failure
 				showErrorModal(error as APIError);
 			}
 		},
-		[orderedSections, layouts, dashboardId, refetch, showErrorModal],
+		[orderedSections, layouts, dashboardId, patchAsync, showErrorModal],
 	);
 
 	const activeSection = useMemo(
