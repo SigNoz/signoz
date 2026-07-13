@@ -58,10 +58,11 @@ func (d *v1Decoder) convertV1WidgetQuery(widget map[string]any, panelKind PanelP
 	}}
 }
 
-// isSingleUnnamedMetricQuery reports whether the panel's only query is a metric
-// builder query with no metric name. v1 doesn't render such a query and v2 rejects
-// it ("metric name is required"), so the widget is skipped silently.
-func isSingleUnnamedMetricQuery(panel *Panel) bool {
+// isUnrenderableMetricQuery reports whether the panel's only query is a metric
+// builder query that v2 rejects: no aggregations at all ("at least one aggregation
+// is required") or an aggregation with no metric name ("metric name is required").
+// v1 doesn't render either, so the widget is skipped silently.
+func isUnrenderableMetricQuery(panel *Panel) bool {
 	if len(panel.Spec.Queries) != 1 {
 		return false
 	}
@@ -76,6 +77,9 @@ func isSingleUnnamedMetricQuery(panel *Panel) bool {
 	mq, ok := bqs.Spec.(qb.QueryBuilderQuery[qb.MetricAggregation])
 	if !ok {
 		return false
+	}
+	if len(mq.Aggregations) == 0 {
+		return true
 	}
 	for _, agg := range mq.Aggregations {
 		if agg.MetricName == "" {
