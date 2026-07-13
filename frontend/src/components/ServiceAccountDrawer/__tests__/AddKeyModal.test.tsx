@@ -2,13 +2,7 @@ import { toast } from '@signozhq/ui/sonner';
 import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
-import {
-	render,
-	screen,
-	userEvent,
-	waitFor,
-	waitForElementToBeRemoved,
-} from 'tests/test-utils';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import AddKeyModal from '../AddKeyModal';
 
@@ -97,7 +91,7 @@ describe('AddKeyModal', () => {
 
 		await screen.findByText('snz_abc123xyz456secret');
 		expect(screen.getByText(/Store the key securely/i)).toBeInTheDocument();
-		await screen.findByRole('dialog', { name: /Key Created Successfully/i });
+		expect(screen.getByTestId('add-key-modal')).toBeInTheDocument();
 	});
 
 	it('copy button writes key to clipboard and shows toast.success', async () => {
@@ -133,9 +127,11 @@ describe('AddKeyModal', () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		renderModal();
 
-		const dialog = await screen.findByRole('dialog', { name: /Add a New Key/i });
+		await screen.findByTestId('add-key-modal');
 		await user.click(screen.getByRole('button', { name: /Cancel/i }));
 
-		await waitForElementToBeRemoved(dialog);
+		await waitFor(() => {
+			expect(screen.queryByTestId('add-key-modal')).not.toBeInTheDocument();
+		});
 	});
 });

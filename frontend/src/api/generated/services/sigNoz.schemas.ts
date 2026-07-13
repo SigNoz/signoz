@@ -2813,7 +2813,7 @@ export enum CloudintegrationtypesServiceIDDTO {
 	cosmosdb = 'cosmosdb',
 	cassandradb = 'cassandradb',
 	redis = 'redis',
-	cloudsql = 'cloudsql',
+	cloudsql_postgres = 'cloudsql_postgres',
 }
 export type CloudintegrationtypesCloudIntegrationServiceDTOAnyOf = {
 	/**
