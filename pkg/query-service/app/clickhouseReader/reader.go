@@ -4086,6 +4086,10 @@ func readRowsForTimeSeriesResult(rows driver.Rows, vars []interface{}, columnNam
 
 // GetTimeSeriesResultV3 runs the query and returns list of time series
 func (r *ClickHouseReader) GetTimeSeriesResultV3(ctx context.Context, query string) ([]*v3.Series, error) {
+	return r.getTimeSeriesResultV3(ctx, query)
+}
+
+func (r *ClickHouseReader) getTimeSeriesResultV3(ctx context.Context, query string, args ...interface{}) ([]*v3.Series, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
 		instrumentationtypes.CodeFunctionName: "GetTimeSeriesResultV3",
@@ -4111,7 +4115,7 @@ func (r *ClickHouseReader) GetTimeSeriesResultV3(ctx context.Context, query stri
 		}
 	}
 
-	rows, err := r.db.Query(ctx, query)
+	rows, err := r.db.Query(ctx, query, args...)
 
 	if err != nil {
 		r.logger.Error("error while reading time series result", errorsV2.Attr(err))
@@ -4631,11 +4635,11 @@ func (r *ClickHouseReader) GetLastSavedRuleStateHistory(ctx context.Context, rul
 		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
 		instrumentationtypes.CodeFunctionName: "GetLastSavedRuleStateHistory",
 	})
-	query := fmt.Sprintf("SELECT * FROM %s.%s WHERE rule_id = '%s' AND state_changed = true ORDER BY unix_milli DESC LIMIT 1 BY fingerprint",
-		signozHistoryDBName, ruleStateHistoryTableName, ruleID)
+	query := fmt.Sprintf("SELECT * FROM %s.%s WHERE rule_id = ? AND state_changed = true ORDER BY unix_milli DESC LIMIT 1 BY fingerprint",
+		signozHistoryDBName, ruleStateHistoryTableName)
 
 	history := []model.RuleStateHistory{}
-	err := r.db.Select(ctx, &history, query)
+	err := r.db.Select(ctx, &history, query, ruleID)
 	if err != nil {
 		return nil, err
 	}
@@ -4650,13 +4654,17 @@ func (r *ClickHouseReader) ReadRuleStateHistoryByRuleID(
 		instrumentationtypes.CodeFunctionName: "ReadRuleStateHistoryByRuleID",
 	})
 	var conditions []string
+	args := make([]interface{}, 0, 4)
 
-	conditions = append(conditions, fmt.Sprintf("rule_id = '%s'", ruleID))
+	conditions = append(conditions, "rule_id = ?")
+	args = append(args, ruleID)
 
-	conditions = append(conditions, fmt.Sprintf("unix_milli >= %d AND unix_milli < %d", params.Start, params.End))
+	conditions = append(conditions, "unix_milli >= ? AND unix_milli < ?")
+	args = append(args, params.Start, params.End)
 
 	if params.State != "" {
-		conditions = append(conditions, fmt.Sprintf("state = '%s'", params.State))
+		conditions = append(conditions, "state = ?")
+		args = append(args, params.State)
 	}
 
 	if params.Filters != nil && len(params.Filters.Items) != 0 {
@@ -4666,42 +4674,45 @@ func (r *ClickHouseReader) ReadRuleStateHistoryByRuleID(
 			if op == v3.FilterOperatorContains || op == v3.FilterOperatorNotContains {
 				toFormat = fmt.Sprintf("%%%s%%", toFormat)
 			}
-			fmtVal := utils.ClickHouseFormattedValue(toFormat)
 			switch op {
 			case v3.FilterOperatorEqual:
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') = %s", item.Key.Key, fmtVal))
+				conditions = append(conditions, "JSONExtractString(labels, ?) = ?")
 			case v3.FilterOperatorNotEqual:
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') != %s", item.Key.Key, fmtVal))
+				conditions = append(conditions, "JSONExtractString(labels, ?) != ?")
 			case v3.FilterOperatorIn:
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') IN %s", item.Key.Key, fmtVal))
+				conditions = append(conditions, "JSONExtractString(labels, ?) IN ?")
 			case v3.FilterOperatorNotIn:
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') NOT IN %s", item.Key.Key, fmtVal))
+				conditions = append(conditions, "JSONExtractString(labels, ?) NOT IN ?")
 			case v3.FilterOperatorLike:
-				conditions = append(conditions, fmt.Sprintf("like(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
+				conditions = append(conditions, "like(JSONExtractString(labels, ?), ?)")
 			case v3.FilterOperatorNotLike:
-				conditions = append(conditions, fmt.Sprintf("notLike(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
+				conditions = append(conditions, "notLike(JSONExtractString(labels, ?), ?)")
 			case v3.FilterOperatorRegex:
-				conditions = append(conditions, fmt.Sprintf("match(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
+				conditions = append(conditions, "match(JSONExtractString(labels, ?), ?)")
 			case v3.FilterOperatorNotRegex:
-				conditions = append(conditions, fmt.Sprintf("not match(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
+				conditions = append(conditions, "not match(JSONExtractString(labels, ?), ?)")
 			case v3.FilterOperatorGreaterThan:
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') > %s", item.Key.Key, fmtVal))
+				conditions = append(conditions, "JSONExtractString(labels, ?) > ?")
 			case v3.FilterOperatorGreaterThanOrEq:
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') >= %s", item.Key.Key, fmtVal))
+				conditions = append(conditions, "JSONExtractString(labels, ?) >= ?")
 			case v3.FilterOperatorLessThan:
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') < %s", item.Key.Key, fmtVal))
+				conditions = append(conditions, "JSONExtractString(labels, ?) < ?")
 			case v3.FilterOperatorLessThanOrEq:
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') <= %s", item.Key.Key, fmtVal))
+				conditions = append(conditions, "JSONExtractString(labels, ?) <= ?")
 			case v3.FilterOperatorContains:
-				conditions = append(conditions, fmt.Sprintf("like(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
+				conditions = append(conditions, "like(JSONExtractString(labels, ?), ?)")
 			case v3.FilterOperatorNotContains:
-				conditions = append(conditions, fmt.Sprintf("notLike(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
+				conditions = append(conditions, "notLike(JSONExtractString(labels, ?), ?)")
 			case v3.FilterOperatorExists:
-				conditions = append(conditions, fmt.Sprintf("has(JSONExtractKeys(labels), '%s')", item.Key.Key))
+				conditions = append(conditions, "has(JSONExtractKeys(labels), ?)")
 			case v3.FilterOperatorNotExists:
-				conditions = append(conditions, fmt.Sprintf("not has(JSONExtractKeys(labels), '%s')", item.Key.Key))
+				conditions = append(conditions, "not has(JSONExtractKeys(labels), ?)")
 			default:
 				return nil, fmt.Errorf("unsupported filter operator")
+			}
+			args = append(args, item.Key.Key)
+			if op != v3.FilterOperatorExists && op != v3.FilterOperatorNotExists {
+				args = append(args, toFormat)
 			}
 		}
 	}
@@ -4712,7 +4723,7 @@ func (r *ClickHouseReader) ReadRuleStateHistoryByRuleID(
 
 	history := []model.RuleStateHistory{}
 	r.logger.Debug("rule state history query", "query", query)
-	err := r.db.Select(ctx, &history, query)
+	err := r.db.Select(ctx, &history, query, args...)
 	if err != nil {
 		r.logger.Error("Error while reading rule state history", errorsV2.Attr(err))
 		return nil, err
@@ -4722,12 +4733,12 @@ func (r *ClickHouseReader) ReadRuleStateHistoryByRuleID(
 	r.logger.Debug("rule state history total query", "query", fmt.Sprintf("SELECT count(*) FROM %s.%s WHERE %s",
 		signozHistoryDBName, ruleStateHistoryTableName, whereClause))
 	err = r.db.QueryRow(ctx, fmt.Sprintf("SELECT count(*) FROM %s.%s WHERE %s",
-		signozHistoryDBName, ruleStateHistoryTableName, whereClause)).Scan(&total)
+		signozHistoryDBName, ruleStateHistoryTableName, whereClause), args...).Scan(&total)
 	if err != nil {
 		return nil, err
 	}
 
-	labelsQuery := fmt.Sprintf("SELECT DISTINCT labels FROM %s.%s WHERE rule_id = $1",
+	labelsQuery := fmt.Sprintf("SELECT DISTINCT labels FROM %s.%s WHERE rule_id = ?",
 		signozHistoryDBName, ruleStateHistoryTableName)
 	rows, err := r.db.Query(ctx, labelsQuery, ruleID)
 	if err != nil {
@@ -4772,15 +4783,15 @@ func (r *ClickHouseReader) ReadRuleStateHistoryTopContributorsByRuleID(
 		any(labels) as labels,
 		count(*) as count
 	FROM %s.%s
-	WHERE rule_id = '%s' AND (state_changed = true) AND (state = '%s') AND unix_milli >= %d AND unix_milli <= %d
+	WHERE rule_id = ? AND (state_changed = true) AND (state = ?) AND unix_milli >= ? AND unix_milli <= ?
 	GROUP BY fingerprint
 	HAVING labels != '{}'
 	ORDER BY count DESC`,
-		signozHistoryDBName, ruleStateHistoryTableName, ruleID, model.StateFiring.String(), params.Start, params.End)
+		signozHistoryDBName, ruleStateHistoryTableName)
 
 	r.logger.Debug("rule state history top contributors query", "query", query)
 	contributors := []model.RuleStateHistoryContributor{}
-	err := r.db.Select(ctx, &contributors, query)
+	err := r.db.Select(ctx, &contributors, query, ruleID, model.StateFiring.String(), params.Start, params.End)
 	if err != nil {
 		r.logger.Error("Error while reading rule state history", errorsV2.Attr(err))
 		return nil, err
@@ -4803,8 +4814,8 @@ func (r *ClickHouseReader) GetOverallStateTransitions(ctx context.Context, ruleI
     FROM %s.%s
     WHERE overall_state = '` + model.StateFiring.String() + `'
       AND overall_state_changed = true
-      AND rule_id IN ('%s')
-	  AND unix_milli >= %d AND unix_milli <= %d
+      AND rule_id = ?
+      AND unix_milli >= ? AND unix_milli <= ?
 ),
 resolution_events AS (
     SELECT
@@ -4814,8 +4825,8 @@ resolution_events AS (
     FROM %s.%s
     WHERE overall_state = '` + model.StateInactive.String() + `'
       AND overall_state_changed = true
-      AND rule_id IN ('%s')
-	  AND unix_milli >= %d AND unix_milli <= %d
+      AND rule_id = ?
+      AND unix_milli >= ? AND unix_milli <= ?
 ),
 matched_events AS (
     SELECT
@@ -4834,13 +4845,13 @@ FROM matched_events
 ORDER BY firing_time ASC;`
 
 	query := fmt.Sprintf(tmpl,
-		signozHistoryDBName, ruleStateHistoryTableName, ruleID, params.Start, params.End,
-		signozHistoryDBName, ruleStateHistoryTableName, ruleID, params.Start, params.End)
+		signozHistoryDBName, ruleStateHistoryTableName,
+		signozHistoryDBName, ruleStateHistoryTableName)
 
 	r.logger.Debug("overall state transitions query", "query", query)
 
 	transitions := []model.RuleStateTransition{}
-	err := r.db.Select(ctx, &transitions, query)
+	err := r.db.Select(ctx, &transitions, query, ruleID, params.Start, params.End, ruleID, params.Start, params.End)
 	if err != nil {
 		return nil, err
 	}
@@ -4869,9 +4880,9 @@ ORDER BY firing_time ASC;`
 
 	// fetch the most recent overall_state from the table
 	var state model.AlertState
-	stateQuery := fmt.Sprintf("SELECT state FROM %s.%s WHERE rule_id = '%s' AND unix_milli <= %d ORDER BY unix_milli DESC LIMIT 1",
-		signozHistoryDBName, ruleStateHistoryTableName, ruleID, params.End)
-	if err := r.db.QueryRow(ctx, stateQuery).Scan(&state); err != nil {
+	stateQuery := fmt.Sprintf("SELECT state FROM %s.%s WHERE rule_id = ? AND unix_milli <= ? ORDER BY unix_milli DESC LIMIT 1",
+		signozHistoryDBName, ruleStateHistoryTableName)
+	if err := r.db.QueryRow(ctx, stateQuery, ruleID, params.End).Scan(&state); err != nil {
 		if err != sql.ErrNoRows {
 			return nil, err
 		}
@@ -4900,9 +4911,9 @@ ORDER BY firing_time ASC;`
 			SELECT
 				unix_milli
 			FROM %s.%s
-			WHERE rule_id = '%s' AND overall_state_changed = true AND overall_state = '%s' AND unix_milli <= %d
-			ORDER BY unix_milli DESC LIMIT 1`, signozHistoryDBName, ruleStateHistoryTableName, ruleID, model.StateFiring.String(), params.End)
-			if err := r.db.QueryRow(ctx, firingQuery).Scan(&firingTime); err != nil {
+				WHERE rule_id = ? AND overall_state_changed = true AND overall_state = ? AND unix_milli <= ?
+				ORDER BY unix_milli DESC LIMIT 1`, signozHistoryDBName, ruleStateHistoryTableName)
+			if err := r.db.QueryRow(ctx, firingQuery, ruleID, model.StateFiring.String(), params.End).Scan(&firingTime); err != nil {
 				return nil, err
 			}
 			stateItems = append(stateItems, model.ReleStateItem{
@@ -4935,8 +4946,8 @@ WITH firing_events AS (
     FROM %s.%s
     WHERE overall_state = '` + model.StateFiring.String() + `'
       AND overall_state_changed = true
-      AND rule_id IN ('%s')
-	  AND unix_milli >= %d AND unix_milli <= %d
+      AND rule_id = ?
+      AND unix_milli >= ? AND unix_milli <= ?
 ),
 resolution_events AS (
     SELECT
@@ -4946,8 +4957,8 @@ resolution_events AS (
     FROM %s.%s
     WHERE overall_state = '` + model.StateInactive.String() + `'
       AND overall_state_changed = true
-      AND rule_id IN ('%s')
-	  AND unix_milli >= %d AND unix_milli <= %d
+      AND rule_id = ?
+      AND unix_milli >= ? AND unix_milli <= ?
 ),
 matched_events AS (
     SELECT
@@ -4966,12 +4977,12 @@ FROM matched_events;
 `
 
 	query := fmt.Sprintf(tmpl,
-		signozHistoryDBName, ruleStateHistoryTableName, ruleID, params.Start, params.End,
-		signozHistoryDBName, ruleStateHistoryTableName, ruleID, params.Start, params.End)
+		signozHistoryDBName, ruleStateHistoryTableName,
+		signozHistoryDBName, ruleStateHistoryTableName)
 
 	r.logger.Debug("avg resolution time query", "query", query)
 	var avgResolutionTime float64
-	err := r.db.QueryRow(ctx, query).Scan(&avgResolutionTime)
+	err := r.db.QueryRow(ctx, query, ruleID, params.Start, params.End, ruleID, params.Start, params.End).Scan(&avgResolutionTime)
 	if err != nil {
 		return 0, err
 	}
@@ -4992,8 +5003,8 @@ WITH firing_events AS (
     FROM %s.%s
     WHERE overall_state = '` + model.StateFiring.String() + `'
       AND overall_state_changed = true
-      AND rule_id IN ('%s')
-	  AND unix_milli >= %d AND unix_milli <= %d
+      AND rule_id = ?
+      AND unix_milli >= ? AND unix_milli <= ?
 ),
 resolution_events AS (
     SELECT
@@ -5003,8 +5014,8 @@ resolution_events AS (
     FROM %s.%s
     WHERE overall_state = '` + model.StateInactive.String() + `'
       AND overall_state_changed = true
-      AND rule_id IN ('%s')
-	  AND unix_milli >= %d AND unix_milli <= %d
+      AND rule_id = ?
+      AND unix_milli >= ? AND unix_milli <= ?
 ),
 matched_events AS (
     SELECT
@@ -5024,11 +5035,11 @@ GROUP BY ts
 ORDER BY ts ASC;`
 
 	query := fmt.Sprintf(tmpl,
-		signozHistoryDBName, ruleStateHistoryTableName, ruleID, params.Start, params.End,
-		signozHistoryDBName, ruleStateHistoryTableName, ruleID, params.Start, params.End, step)
+		signozHistoryDBName, ruleStateHistoryTableName,
+		signozHistoryDBName, ruleStateHistoryTableName, step)
 
 	r.logger.Debug("avg resolution time by interval query", "query", query)
-	result, err := r.GetTimeSeriesResultV3(ctx, query)
+	result, err := r.getTimeSeriesResultV3(ctx, query, ruleID, params.Start, params.End, ruleID, params.Start, params.End)
 	if err != nil || len(result) == 0 {
 		return nil, err
 	}
@@ -5041,12 +5052,12 @@ func (r *ClickHouseReader) GetTotalTriggers(ctx context.Context, ruleID string, 
 		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
 		instrumentationtypes.CodeFunctionName: "GetTotalTriggers",
 	})
-	query := fmt.Sprintf("SELECT count(*) FROM %s.%s WHERE rule_id = '%s' AND (state_changed = true) AND (state = '%s') AND unix_milli >= %d AND unix_milli <= %d",
-		signozHistoryDBName, ruleStateHistoryTableName, ruleID, model.StateFiring.String(), params.Start, params.End)
+	query := fmt.Sprintf("SELECT count(*) FROM %s.%s WHERE rule_id = ? AND (state_changed = true) AND (state = ?) AND unix_milli >= ? AND unix_milli <= ?",
+		signozHistoryDBName, ruleStateHistoryTableName)
 
 	var totalTriggers uint64
 
-	err := r.db.QueryRow(ctx, query).Scan(&totalTriggers)
+	err := r.db.QueryRow(ctx, query, ruleID, model.StateFiring.String(), params.Start, params.End).Scan(&totalTriggers)
 	if err != nil {
 		return 0, err
 	}
@@ -5057,10 +5068,10 @@ func (r *ClickHouseReader) GetTotalTriggers(ctx context.Context, ruleID string, 
 func (r *ClickHouseReader) GetTriggersByInterval(ctx context.Context, ruleID string, params *model.QueryRuleStateHistory) (*v3.Series, error) {
 	step := common.MinAllowedStepInterval(params.Start, params.End)
 
-	query := fmt.Sprintf("SELECT count(*), toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL %d SECOND) as ts FROM %s.%s WHERE rule_id = '%s' AND (state_changed = true) AND (state = '%s') AND unix_milli >= %d AND unix_milli <= %d GROUP BY ts ORDER BY ts ASC",
-		step, signozHistoryDBName, ruleStateHistoryTableName, ruleID, model.StateFiring.String(), params.Start, params.End)
+	query := fmt.Sprintf("SELECT count(*), toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL %d SECOND) as ts FROM %s.%s WHERE rule_id = ? AND (state_changed = true) AND (state = ?) AND unix_milli >= ? AND unix_milli <= ? GROUP BY ts ORDER BY ts ASC",
+		step, signozHistoryDBName, ruleStateHistoryTableName)
 
-	result, err := r.GetTimeSeriesResultV3(ctx, query)
+	result, err := r.getTimeSeriesResultV3(ctx, query, ruleID, model.StateFiring.String(), params.Start, params.End)
 	if err != nil || len(result) == 0 {
 		return nil, err
 	}

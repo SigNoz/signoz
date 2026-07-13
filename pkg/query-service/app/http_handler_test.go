@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gorilla/mux"
+
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 )
 
@@ -126,6 +128,62 @@ func TestPrepareQuery(t *testing.T) {
 				if query != tc.query {
 					t.Errorf("expected query: %s, but got: %s", tc.query, query)
 				}
+			}
+		})
+	}
+}
+
+func TestValidateRuleID(t *testing.T) {
+	testCases := []struct {
+		name    string
+		ruleID  string
+		wantErr bool
+	}{
+		{name: "valid rule id", ruleID: "123"},
+		{name: "zero rule id", ruleID: "0", wantErr: true},
+		{name: "negative rule id", ruleID: "-1", wantErr: true},
+		{name: "non-numeric rule id", ruleID: "not-a-rule-id", wantErr: true},
+		{name: "sql injection payload", ruleID: "1' OR 1=1 --", wantErr: true},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := validateRuleID(tc.ruleID)
+			if tc.wantErr && err == nil {
+				t.Fatal("expected error, got nil")
+			}
+			if !tc.wantErr && err != nil {
+				t.Fatalf("expected no error, got %v", err)
+			}
+		})
+	}
+}
+
+func TestAlertHistoryHandlersRejectInvalidRuleID(t *testing.T) {
+	aH := &APIHandler{}
+	handlers := []struct {
+		name    string
+		handler func(http.ResponseWriter, *http.Request)
+	}{
+		{name: "stats", handler: aH.getRuleStats},
+		{name: "overall status", handler: aH.getOverallStateTransitions},
+		{name: "timeline", handler: aH.getRuleStateHistory},
+		{name: "top contributors", handler: aH.getRuleStateHistoryTopContributors},
+	}
+
+	for _, tc := range handlers {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodPost, "/api/v1/rules/bad/history", strings.NewReader(`{"start":1,"end":2}`))
+			req = mux.SetURLVars(req, map[string]string{"id": "bad-id' OR 1=1 --"})
+			resp := httptest.NewRecorder()
+
+			tc.handler(resp, req)
+
+			if resp.Code != http.StatusBadRequest {
+				t.Fatalf("expected status %d, got %d", http.StatusBadRequest, resp.Code)
+			}
+			if !strings.Contains(resp.Body.String(), "invalid rule id") {
+				t.Fatalf("expected invalid rule id error, got %s", resp.Body.String())
 			}
 		})
 	}

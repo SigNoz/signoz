@@ -797,8 +797,22 @@ func (aH *APIHandler) testRule(w http.ResponseWriter, r *http.Request) {
 	aH.Respond(w, response)
 }
 
+func validateRuleID(ruleID string) error {
+	id, err := strconv.Atoi(ruleID)
+	if err != nil || id <= 0 {
+		return fmt.Errorf("invalid rule id: must be a positive integer")
+	}
+
+	return nil
+}
+
 func (aH *APIHandler) getRuleStats(w http.ResponseWriter, r *http.Request) {
 	ruleID := mux.Vars(r)["id"]
+	if err := validateRuleID(ruleID); err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
 	params := model.QueryRuleStateHistory{}
 	err := json.NewDecoder(r.Body).Decode(&params)
 	if err != nil {
@@ -881,6 +895,11 @@ func (aH *APIHandler) getRuleStats(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) getOverallStateTransitions(w http.ResponseWriter, r *http.Request) {
 	ruleID := mux.Vars(r)["id"]
+	if err := validateRuleID(ruleID); err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
 	params := model.QueryRuleStateHistory{}
 	err := json.NewDecoder(r.Body).Decode(&params)
 	if err != nil {
@@ -898,15 +917,14 @@ func (aH *APIHandler) getOverallStateTransitions(w http.ResponseWriter, r *http.
 }
 
 func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request) {
-	idStr := mux.Vars(r)["id"]
-	id, err := valuer.NewUUID(idStr)
-	if err != nil {
+	ruleID := mux.Vars(r)["id"]
+	if err := validateRuleID(ruleID); err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
 	params := model.QueryRuleStateHistory{}
-	err = json.NewDecoder(r.Body).Decode(&params)
+	err := json.NewDecoder(r.Body).Decode(&params)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
@@ -916,67 +934,69 @@ func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	res, err := aH.reader.ReadRuleStateHistoryByRuleID(r.Context(), id.StringValue(), &params)
+	res, err := aH.reader.ReadRuleStateHistoryByRuleID(r.Context(), ruleID, &params)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
 
-	rule, err := aH.ruleManager.GetRule(r.Context(), id)
-	if err == nil {
-		for idx := range res.Items {
-			lbls := make(map[string]string)
-			err := json.Unmarshal([]byte(res.Items[idx].Labels), &lbls)
-			if err != nil {
-				continue
-			}
-			end := time.Unix(res.Items[idx].UnixMilli/1000, 0)
-			// why are we subtracting 3 minutes?
-			// the query range is calculated based on the rule's evalWindow and evalDelay
-			// alerts have 2 minutes delay built in, so we need to subtract that from the start time
-			// to get the correct query range
-			start := end.Add(-rule.EvalWindow.Duration() - 3*time.Minute)
-			if rule.AlertType == ruletypes.AlertTypeLogs {
-				// TODO(srikanthccv): re-visit this and support multiple queries
-				var q qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
+	if id, err := valuer.NewUUID(ruleID); err == nil {
+		rule, err := aH.ruleManager.GetRule(r.Context(), id)
+		if err == nil {
+			for idx := range res.Items {
+				lbls := make(map[string]string)
+				err := json.Unmarshal([]byte(res.Items[idx].Labels), &lbls)
+				if err != nil {
+					continue
+				}
+				end := time.Unix(res.Items[idx].UnixMilli/1000, 0)
+				// why are we subtracting 3 minutes?
+				// the query range is calculated based on the rule's evalWindow and evalDelay
+				// alerts have 2 minutes delay built in, so we need to subtract that from the start time
+				// to get the correct query range
+				start := end.Add(-rule.EvalWindow.Duration() - 3*time.Minute)
+				if rule.AlertType == ruletypes.AlertTypeLogs {
+					// TODO(srikanthccv): re-visit this and support multiple queries
+					var q qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
 
-				for _, query := range rule.RuleCondition.CompositeQuery.Queries {
-					if query.Type == qbtypes.QueryTypeBuilder {
-						switch spec := query.Spec.(type) {
-						case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
-							q = spec
+					for _, query := range rule.RuleCondition.CompositeQuery.Queries {
+						if query.Type == qbtypes.QueryTypeBuilder {
+							switch spec := query.Spec.(type) {
+							case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
+								q = spec
+							}
 						}
 					}
-				}
 
-				filterExpr := ""
-				if q.Filter != nil && q.Filter.Expression != "" {
-					filterExpr = q.Filter.Expression
-				}
+					filterExpr := ""
+					if q.Filter != nil && q.Filter.Expression != "" {
+						filterExpr = q.Filter.Expression
+					}
 
-				whereClause := contextlinks.PrepareFilterExpression(lbls, filterExpr, q.GroupBy)
+					whereClause := contextlinks.PrepareFilterExpression(lbls, filterExpr, q.GroupBy)
 
-				res.Items[idx].RelatedLogsLink = contextlinks.PrepareParamsForLogsV5(start, end, whereClause).Encode()
-			} else if rule.AlertType == ruletypes.AlertTypeTraces {
-				// TODO(srikanthccv): re-visit this and support multiple queries
-				var q qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]
+					res.Items[idx].RelatedLogsLink = contextlinks.PrepareParamsForLogsV5(start, end, whereClause).Encode()
+				} else if rule.AlertType == ruletypes.AlertTypeTraces {
+					// TODO(srikanthccv): re-visit this and support multiple queries
+					var q qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]
 
-				for _, query := range rule.RuleCondition.CompositeQuery.Queries {
-					if query.Type == qbtypes.QueryTypeBuilder {
-						switch spec := query.Spec.(type) {
-						case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
-							q = spec
+					for _, query := range rule.RuleCondition.CompositeQuery.Queries {
+						if query.Type == qbtypes.QueryTypeBuilder {
+							switch spec := query.Spec.(type) {
+							case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
+								q = spec
+							}
 						}
 					}
-				}
 
-				filterExpr := ""
-				if q.Filter != nil && q.Filter.Expression != "" {
-					filterExpr = q.Filter.Expression
-				}
+					filterExpr := ""
+					if q.Filter != nil && q.Filter.Expression != "" {
+						filterExpr = q.Filter.Expression
+					}
 
-				whereClause := contextlinks.PrepareFilterExpression(lbls, filterExpr, q.GroupBy)
-				res.Items[idx].RelatedTracesLink = contextlinks.PrepareParamsForTracesV5(start, end, whereClause).Encode()
+					whereClause := contextlinks.PrepareFilterExpression(lbls, filterExpr, q.GroupBy)
+					res.Items[idx].RelatedTracesLink = contextlinks.PrepareParamsForTracesV5(start, end, whereClause).Encode()
+				}
 			}
 		}
 	}
@@ -985,21 +1005,20 @@ func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request
 }
 
 func (aH *APIHandler) getRuleStateHistoryTopContributors(w http.ResponseWriter, r *http.Request) {
-	idStr := mux.Vars(r)["id"]
-	id, err := valuer.NewUUID(idStr)
-	if err != nil {
+	ruleID := mux.Vars(r)["id"]
+	if err := validateRuleID(ruleID); err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
 	params := model.QueryRuleStateHistory{}
-	err = json.NewDecoder(r.Body).Decode(&params)
+	err := json.NewDecoder(r.Body).Decode(&params)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
-	res, err := aH.reader.ReadRuleStateHistoryTopContributorsByRuleID(r.Context(), id.StringValue(), &params)
+	res, err := aH.reader.ReadRuleStateHistoryTopContributorsByRuleID(r.Context(), ruleID, &params)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
