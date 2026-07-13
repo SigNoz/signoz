@@ -42,8 +42,6 @@ function serialize(
 
 interface UseClientExportProps {
 	response?: QueryRangeResponseV5;
-	// The builder query behind the response — series names resolve aggregation
-	// aliases/expressions from it, exactly like the chart legend.
 	query?: Query;
 	yAxisUnit?: string;
 	fileName?: string;
@@ -59,10 +57,8 @@ interface UseClientExportReturn {
 	handleExport: (options: ClientExportOptions) => void;
 }
 
-// Frontend-driven export: serializes in-memory query results and downloads them
-// client-side. Backend-driven export lives in useServerExport.
 export function useClientExport({
-	response,
+	response, // currently supports only qb v5 response. Can extend to support future responses.
 	query,
 	yAxisUnit,
 	fileName = 'export',
