@@ -1,8 +1,10 @@
 import {
 	RuletypesAlertStateDTO,
 	RuletypesAlertTypeDTO,
+	RuletypesEvaluationRollingDTOKind,
 	RuletypesPanelTypeDTO,
 	RuletypesQueryTypeDTO,
+	RuletypesRuleDTOSchemaVersion,
 	RuletypesRuleTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type {
@@ -15,6 +17,10 @@ const baseCondition: RuletypesRuleConditionDTO = {
 		queryType: RuletypesQueryTypeDTO.builder,
 		panelType: RuletypesPanelTypeDTO.graph,
 		queries: null,
+	},
+	thresholds: {
+		kind: 'basic',
+		spec: [{ name: 'critical', target: 90, matchType: '1', op: '1' }],
 	},
 } as unknown as RuletypesRuleConditionDTO;
 
@@ -34,9 +40,12 @@ const make = (
 	state: RuletypesAlertStateDTO.inactive,
 	labels: { severity: 'info' },
 	annotations: {},
-	source: '',
-	evalWindow: '5m0s',
-	frequency: '1m0s',
+	schemaVersion: RuletypesRuleDTOSchemaVersion.v2alpha1,
+	evaluation: {
+		kind: RuletypesEvaluationRollingDTOKind.rolling,
+		spec: { evalWindow: '5m0s', frequency: '1m0s' },
+	},
+	notificationSettings: {},
 	ruleType: RuletypesRuleTypeDTO.threshold_rule,
 	...overrides,
 });

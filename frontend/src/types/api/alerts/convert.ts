@@ -61,6 +61,22 @@ function stripUndefinedLabels(
 	return out;
 }
 
+// why: the published DTO carries only the v2alpha1 contract, but the server
+// still accepts the legacy v1 fields (evalWindow, frequency,
+// preferredChannels, version, and a free-form schemaVersion) that the v1
+// editor flows send. LegacyRuleFields keeps those on the wire until
+// schemaVersion v1 is removed from the backend.
+type LegacyRuleFields = {
+	evalWindow?: string;
+	frequency?: string;
+	preferredChannels?: string[];
+	version?: string;
+	schemaVersion?: string;
+	description?: string;
+	notificationSettings?: RuletypesPostableRuleDTO['notificationSettings'];
+	evaluation?: RuletypesPostableRuleDTO['evaluation'];
+};
+
 // why: local PostableAlertRuleV2/AlertDef diverge from RuletypesPostableRuleDTO
 // in several spots that match by string value but not by nominal TS type —
 // condition.{op,matchType}, evaluation.kind, notificationSettings.renotify.alertStates.
@@ -69,24 +85,24 @@ function stripUndefinedLabels(
 export function toPostableRuleDTO(
 	local: PostableAlertRuleV2,
 ): RuletypesPostableRuleDTO {
-	const payload: Record<keyof RuletypesPostableRuleDTO, any> = {
+	const legacy = local as unknown as LegacyRuleFields;
+	const payload: Record<string, unknown> = {
 		alert: local.alert,
 		alertType: toAlertTypeDTO(local.alertType),
 		ruleType: toRuleTypeDTO(local.ruleType),
 		condition: local.condition,
 		annotations: local.annotations,
 		labels: stripUndefinedLabels(local.labels),
-		evalWindow: (local as unknown as RuletypesPostableRuleDTO).evalWindow,
-		frequency: (local as unknown as RuletypesPostableRuleDTO).frequency,
-		preferredChannels: (local as unknown as RuletypesPostableRuleDTO)
-			.preferredChannels,
+		evalWindow: legacy.evalWindow,
+		frequency: legacy.frequency,
+		preferredChannels: legacy.preferredChannels,
 		notificationSettings: local.notificationSettings,
 		evaluation: local.evaluation,
 		schemaVersion: local.schemaVersion,
 		source: local.source,
 		version: local.version,
 		disabled: local.disabled,
-		description: (local as unknown as RuletypesPostableRuleDTO).description,
+		description: legacy.description,
 	};
 	return payload as unknown as RuletypesPostableRuleDTO;
 }
@@ -94,7 +110,8 @@ export function toPostableRuleDTO(
 export function toPostableRuleDTOFromAlertDef(
 	local: AlertDef,
 ): RuletypesPostableRuleDTO {
-	const payload: Record<keyof RuletypesPostableRuleDTO, any> = {
+	const legacy = local as unknown as LegacyRuleFields;
+	const payload: Record<string, unknown> = {
 		alert: local.alert,
 		alertType: toAlertTypeDTO(local.alertType),
 		ruleType: toRuleTypeDTO(local.ruleType),
@@ -104,16 +121,15 @@ export function toPostableRuleDTOFromAlertDef(
 		evalWindow: local.evalWindow,
 		frequency: local.frequency,
 		preferredChannels: local.preferredChannels,
-		notificationSettings: (local as unknown as RuletypesPostableRuleDTO)
-			.notificationSettings,
-		evaluation: (local as unknown as RuletypesPostableRuleDTO).evaluation,
-		schemaVersion: (local as unknown as RuletypesPostableRuleDTO).schemaVersion,
+		notificationSettings: legacy.notificationSettings,
+		evaluation: legacy.evaluation,
+		schemaVersion: legacy.schemaVersion,
 		source: local.source,
 		version: local.version,
 		disabled: local.disabled,
-		description: (local as unknown as RuletypesPostableRuleDTO).description,
+		description: legacy.description,
 	};
-	return payload;
+	return payload as unknown as RuletypesPostableRuleDTO;
 }
 
 export function fromRuleDTOToPostableRuleV2(

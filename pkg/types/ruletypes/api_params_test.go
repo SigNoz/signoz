@@ -2,6 +2,7 @@ package ruletypes
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 	"time"
 
@@ -1325,5 +1326,107 @@ func TestAnomalyNegationEval(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// TestRenotifyRoundTrip ensures notificationSettings.renotify survives the
+// v2 read path (stored JSON -> GettableRule -> NewRule -> marshal) exactly as
+// stored, including an explicitly disabled renotify with no interval.
+func TestRenotifyRoundTrip(t *testing.T) {
+	base := `{
+		"alert": "cpu high",
+		"alertType": "METRIC_BASED_ALERT",
+		"ruleType": "threshold_rule",
+		"schemaVersion": "v2alpha1",
+		"condition": {
+			"compositeQuery": {
+				"queries": [{"type": "promql", "spec": {"name": "A", "query": "up"}}],
+				"panelType": "graph",
+				"queryType": "promql"
+			},
+			"thresholds": {"kind": "basic", "spec": [{"name": "critical", "target": 90, "matchType": "1", "op": "1"}]}
+		},
+		"evaluation": {"kind": "rolling", "spec": {"evalWindow": "5m", "frequency": "1m"}},
+		"notificationSettings": %s
+	}`
+
+	cases := []struct {
+		name         string
+		settings     string
+		wantRenotify string
+	}{
+		{
+			name:         "absent renotify stays absent",
+			settings:     `{"usePolicy": false}`,
+			wantRenotify: "",
+		},
+		{
+			name:         "explicitly disabled renotify is echoed",
+			settings:     `{"renotify": {"enabled": false}}`,
+			wantRenotify: `{"enabled":false}`,
+		},
+		{
+			name:         "enabled renotify with states is echoed",
+			settings:     `{"renotify": {"enabled": true, "interval": "30m", "alertStates": ["firing"]}}`,
+			wantRenotify: `{"enabled":true,"interval":"30m","alertStates":["firing"]}`,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			stored := strings.Replace(base, "%s", tc.settings, 1)
+			g := GettableRule{}
+			if err := json.Unmarshal([]byte(stored), &g); err != nil {
+				t.Fatalf("unmarshal stored rule: %v", err)
+			}
+			out, err := json.Marshal(NewRule(&g))
+			if err != nil {
+				t.Fatalf("marshal v2 rule: %v", err)
+			}
+			var resp struct {
+				NotificationSettings struct {
+					Renotify json.RawMessage `json:"renotify"`
+				} `json:"notificationSettings"`
+			}
+			if err := json.Unmarshal(out, &resp); err != nil {
+				t.Fatalf("unmarshal response: %v", err)
+			}
+			got := string(resp.NotificationSettings.Renotify)
+			if got != tc.wantRenotify {
+				t.Errorf("renotify round-trip mismatch: got %q, want %q", got, tc.wantRenotify)
+			}
+		})
+	}
+}
+
+// TestVersionDefaultsToV5 ensures rules posted without a version parse and
+// validate with version defaulted to v5.
+func TestVersionDefaultsToV5(t *testing.T) {
+	content := `{
+		"alert": "cpu high",
+		"alertType": "METRIC_BASED_ALERT",
+		"ruleType": "threshold_rule",
+		"schemaVersion": "v2alpha1",
+		"condition": {
+			"compositeQuery": {
+				"queries": [{"type": "promql", "spec": {"name": "A", "query": "up"}}],
+				"panelType": "graph",
+				"queryType": "promql"
+			},
+			"thresholds": {"kind": "basic", "spec": [{"name": "critical", "target": 90, "matchType": "1", "op": "1"}]}
+		},
+		"evaluation": {"kind": "rolling", "spec": {"evalWindow": "5m", "frequency": "1m"}},
+		"notificationSettings": {"usePolicy": false}
+	}`
+
+	rule := PostableRule{}
+	if err := json.Unmarshal([]byte(content), &rule); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if rule.Version != "v5" {
+		t.Errorf("expected version to default to v5, got %q", rule.Version)
+	}
+	if err := rule.Validate(); err != nil {
+		t.Errorf("expected rule without version to validate, got %v", err)
 	}
 }

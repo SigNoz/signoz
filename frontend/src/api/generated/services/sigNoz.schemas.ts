@@ -8644,6 +8644,9 @@ export type RuletypesPostableRuleDTOAnnotations = { [key: string]: string };
 
 export type RuletypesPostableRuleDTOLabels = { [key: string]: string };
 
+export enum RuletypesPostableRuleDTOSchemaVersion {
+	v2alpha1 = 'v2alpha1',
+}
 export enum RuletypesSeasonalityDTO {
 	hourly = 'hourly',
 	daily = 'daily',
@@ -8678,8 +8681,6 @@ export interface RuletypesRuleConditionDTO {
 	 */
 	algorithm?: string;
 	compositeQuery: RuletypesAlertCompositeQueryDTO;
-	matchType?: RuletypesMatchTypeDTO;
-	op?: RuletypesCompareOperatorDTO;
 	/**
 	 * @type boolean
 	 */
@@ -8693,16 +8694,7 @@ export interface RuletypesRuleConditionDTO {
 	 * @type string
 	 */
 	selectedQueryName?: string;
-	/**
-	 * @type number,null
-	 * @format double
-	 */
-	target?: number | null;
-	/**
-	 * @type string
-	 */
-	targetUnit?: string;
-	thresholds?: RuletypesRuleThresholdDataDTO;
+	thresholds: RuletypesRuleThresholdDataDTO;
 }
 
 export enum RuletypesRuleTypeDTO {
@@ -8729,43 +8721,27 @@ export interface RuletypesPostableRuleDTO {
 	 * @type boolean
 	 */
 	disabled?: boolean;
-	/**
-	 * @type string
-	 */
-	evalWindow?: string;
-	evaluation?: RuletypesEvaluationEnvelopeDTO;
-	/**
-	 * @type string
-	 */
-	frequency?: string;
+	evaluation: RuletypesEvaluationEnvelopeDTO;
 	/**
 	 * @type object
 	 */
 	labels?: RuletypesPostableRuleDTOLabels;
-	notificationSettings?: RuletypesNotificationSettingsDTO;
-	/**
-	 * @type array
-	 */
-	preferredChannels?: string[];
+	notificationSettings: RuletypesNotificationSettingsDTO;
 	ruleType: RuletypesRuleTypeDTO;
 	/**
+	 * @enum v2alpha1
 	 * @type string
 	 */
-	schemaVersion?: string;
-	/**
-	 * @type string
-	 */
-	source?: string;
-	/**
-	 * @type string
-	 */
-	version?: string;
+	schemaVersion: RuletypesPostableRuleDTOSchemaVersion;
 }
 
 export type RuletypesRuleDTOAnnotations = { [key: string]: string };
 
 export type RuletypesRuleDTOLabels = { [key: string]: string };
 
+export enum RuletypesRuleDTOSchemaVersion {
+	v2alpha1 = 'v2alpha1',
+}
 export interface RuletypesRuleDTO {
 	/**
 	 * @type string
@@ -8794,15 +8770,7 @@ export interface RuletypesRuleDTO {
 	 * @type boolean
 	 */
 	disabled?: boolean;
-	/**
-	 * @type string
-	 */
-	evalWindow?: string;
-	evaluation?: RuletypesEvaluationEnvelopeDTO;
-	/**
-	 * @type string
-	 */
-	frequency?: string;
+	evaluation: RuletypesEvaluationEnvelopeDTO;
 	/**
 	 * @type string
 	 */
@@ -8811,20 +8779,13 @@ export interface RuletypesRuleDTO {
 	 * @type object
 	 */
 	labels?: RuletypesRuleDTOLabels;
-	notificationSettings?: RuletypesNotificationSettingsDTO;
-	/**
-	 * @type array
-	 */
-	preferredChannels?: string[];
+	notificationSettings: RuletypesNotificationSettingsDTO;
 	ruleType: RuletypesRuleTypeDTO;
 	/**
+	 * @enum v2alpha1
 	 * @type string
 	 */
-	schemaVersion?: string;
-	/**
-	 * @type string
-	 */
-	source?: string;
+	schemaVersion: RuletypesRuleDTOSchemaVersion;
 	state: RuletypesAlertStateDTO;
 	/**
 	 * @type string
@@ -8835,10 +8796,6 @@ export interface RuletypesRuleDTO {
 	 * @type string
 	 */
 	updatedBy?: string;
-	/**
-	 * @type string
-	 */
-	version?: string;
 }
 
 export enum RuletypesThresholdKindDTO {

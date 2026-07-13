@@ -76,9 +76,12 @@ type PostableRule struct {
 }
 
 type NotificationSettings struct {
-	GroupBy   []string `json:"groupBy,omitempty"`
-	Renotify  Renotify `json:"renotify,omitzero"`
-	UsePolicy bool     `json:"usePolicy,omitempty"`
+	GroupBy []string `json:"groupBy,omitempty"`
+	// Renotify is a pointer so that an explicitly disabled renotify
+	// ({"enabled": false}) survives the read path; a value struct with
+	// omitzero would drop it from every response.
+	Renotify  *Renotify `json:"renotify,omitempty"`
+	UsePolicy bool      `json:"usePolicy,omitempty"`
 	// NewGroupEvalDelay is the grace period for new series to be excluded from alerts evaluation
 	NewGroupEvalDelay valuer.TextDuration `json:"newGroupEvalDelay,omitzero"`
 }
@@ -92,7 +95,7 @@ type Renotify struct {
 func (ns *NotificationSettings) GetAlertManagerNotificationConfig() alertmanagertypes.NotificationConfig {
 	var renotifyInterval time.Duration
 	var noDataRenotifyInterval time.Duration
-	if ns.Renotify.Enabled {
+	if ns.Renotify != nil && ns.Renotify.Enabled {
 		if slices.Contains(ns.Renotify.AlertStates, StateNoData) {
 			noDataRenotifyInterval = ns.Renotify.ReNotifyInterval.Duration()
 		}
@@ -204,10 +207,12 @@ func (ns *NotificationSettings) UnmarshalJSON(data []byte) error {
 	}
 
 	// Validate states after unmarshaling
-	for _, state := range ns.Renotify.AlertStates {
-		if state != StateFiring && state != StateNoData {
-			return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid alert state: %s", state)
+	if ns.Renotify != nil {
+		for _, state := range ns.Renotify.AlertStates {
+			if state != StateFiring && state != StateNoData {
+				return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid alert state: %s", state)
 
+			}
 		}
 	}
 	return nil
@@ -218,6 +223,12 @@ func (ns *NotificationSettings) UnmarshalJSON(data []byte) error {
 func (r *PostableRule) processRuleDefaults() {
 	if r.SchemaVersion == "" {
 		r.SchemaVersion = DefaultSchemaVersion
+	}
+
+	// v5 is the only supported query version; default it so clients
+	// don't have to send it.
+	if r.Version == "" {
+		r.Version = "v5"
 	}
 
 	// v2alpha1 uses the Evaluation envelope for window/frequency;
@@ -271,7 +282,7 @@ func (r *PostableRule) processRuleDefaults() {
 			r.RuleCondition.Thresholds = &thresholdData
 			r.Evaluation = &EvaluationEnvelope{RollingEvaluation, RollingWindow{EvalWindow: r.EvalWindow, Frequency: r.Frequency}}
 			r.NotificationSettings = &NotificationSettings{
-				Renotify: Renotify{
+				Renotify: &Renotify{
 					Enabled:          true,
 					ReNotifyInterval: valuer.MustParseTextDuration("4h"),
 					AlertStates:      []AlertState{StateFiring},
@@ -557,7 +568,7 @@ func (r *PostableRule) validateV2Alpha1() []error {
 		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput,
 			"notificationSettings: field is required for schemaVersion %q", SchemaVersionV2Alpha1))
 	} else {
-		if r.NotificationSettings.Renotify.Enabled && !r.NotificationSettings.Renotify.ReNotifyInterval.IsPositive() {
+		if r.NotificationSettings.Renotify != nil && r.NotificationSettings.Renotify.Enabled && !r.NotificationSettings.Renotify.ReNotifyInterval.IsPositive() {
 			errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput,
 				"notificationSettings.renotify.interval: must be a positive duration when renotify is enabled"))
 		}

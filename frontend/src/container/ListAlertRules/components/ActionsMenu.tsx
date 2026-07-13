@@ -71,12 +71,13 @@ function ActionsMenu({
 			createRule({
 				...rule,
 				alert: `${rule.alert} - Copy`,
-			} as RuletypesPostableRuleDTO).then(async (response) => {
+			} as unknown as RuletypesPostableRuleDTO).then(async (response) => {
 				await invalidateListRules(queryClient);
 				const newRule = response.data;
 				if (newRule) {
 					onEdit(newRule as AlertRule);
 				}
+				return newRule;
 			}),
 			{
 				loading: 'Cloning alert...',
