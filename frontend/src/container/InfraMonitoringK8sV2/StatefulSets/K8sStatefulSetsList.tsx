@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { listStatefulSets } from 'api/generated/services/inframonitoring';
 import {
 	InframonitoringtypesResponseTypeDTO,
@@ -14,6 +14,7 @@ import { InfraMonitoringEntity } from '../constants';
 import { SelectedItemParams } from '../hooks';
 import {
 	getStatefulSetMetricsQueryPayload,
+	getStatefulSetPodMetricsQueryPayload,
 	k8sStatefulSetDetailsMetadataConfig,
 	k8sStatefulSetGetEntityName,
 	k8sStatefulSetGetSelectedItemExpression,
@@ -26,6 +27,7 @@ import {
 	getK8sStatefulSetRowKey,
 	k8sStatefulSetsColumnsConfig,
 } from './table.config';
+import { createPodMetricsTab } from 'container/InfraMonitoringK8sV2/EntityDetailsUtils/createPodMetricsTab';
 
 function K8sStatefulSetsList({
 	controlListPrefix,
@@ -116,6 +118,17 @@ function K8sStatefulSetsList({
 		[],
 	);
 
+	const customTabs = useMemo(
+		() => [
+			createPodMetricsTab<InframonitoringtypesStatefulSetRecordDTO>({
+				getQueryPayload: getStatefulSetPodMetricsQueryPayload,
+				category: InfraMonitoringEntity.STATEFULSETS,
+				queryKey: 'statefulSetPodMetrics',
+			}),
+		],
+		[],
+	);
+
 	return (
 		<>
 			<K8sBaseList<InframonitoringtypesStatefulSetRecordDTO, SelectedItemParams>
@@ -140,6 +153,7 @@ function K8sStatefulSetsList({
 				entityWidgetInfo={statefulSetWidgetInfo}
 				getEntityQueryPayload={getStatefulSetMetricsQueryPayload}
 				queryKeyPrefix="statefulSet"
+				customTabs={customTabs}
 			/>
 		</>
 	);
