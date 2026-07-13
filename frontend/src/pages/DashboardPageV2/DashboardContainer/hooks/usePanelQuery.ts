@@ -4,6 +4,10 @@ import { useQueryClient } from 'react-query';
 import { useSelector } from 'react-redux';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import {
+	DASHBOARD_CACHE_TIME,
+	DASHBOARD_CACHE_TIME_ON_REFRESH_ENABLED,
+} from 'constants/queryCacheTime';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -110,6 +114,7 @@ export function usePanelQuery({
 		selectedTime: globalSelectedInterval,
 		maxTime,
 		minTime,
+		isAutoRefreshDisabled,
 	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 
 	// Resolved variable values for this dashboard, published by useResolvedVariables.
@@ -243,6 +248,10 @@ export function usePanelQuery({
 		enabled: enabled && runnable && !isWaitingOnVariable,
 		// Hold the current page while the next loads (offset re-keys) so the pager doesn't flash.
 		keepPreviousData: isPaginated,
+		// 0 under auto-refresh so time-keyed entries don't accumulate and OOM the tab (V1 parity).
+		cacheTime: isAutoRefreshDisabled
+			? DASHBOARD_CACHE_TIME
+			: DASHBOARD_CACHE_TIME_ON_REFRESH_ENABLED,
 	});
 
 	const queryClient = useQueryClient();
