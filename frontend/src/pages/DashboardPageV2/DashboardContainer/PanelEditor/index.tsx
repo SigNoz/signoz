@@ -38,6 +38,8 @@ import { useTableColumns } from './hooks/useTableColumns';
 import ListColumnsEditor from './ListColumnsEditor/ListColumnsEditor';
 
 import styles from './PanelEditor.module.scss';
+import logEvent from '@/api/common/logEvent';
+import { DashboardEvents } from '../../constants/events';
 
 interface PanelEditorContainerProps {
 	dashboardId: string;
@@ -204,6 +206,7 @@ function PanelEditorContainer({
 		panelId,
 		panelType: PANEL_KIND_TO_PANEL_TYPE[panelKind],
 		query: currentQuery,
+		spec: draft.spec,
 	});
 
 	const setScrollTargetId = useScrollIntoViewStore((s) => s.setScrollTargetId);
@@ -234,6 +237,13 @@ function PanelEditorContainer({
 		onClose();
 	}, [isNew, panelId, setScrollTargetId, onClose]);
 
+	const switchToViewMode = useCallback((): void => {
+		logEvent(DashboardEvents.SWITCH_TO_VIEW_MODE, {
+			panelId: panelId,
+		});
+		onSwitchToView();
+	}, [onSwitchToView]);
+
 	return (
 		<div className={styles.page} data-testid="panel-editor-v2">
 			<Header
@@ -243,7 +253,7 @@ function PanelEditorContainer({
 				readOnly={!isEditable}
 				readOnlyReason={editDisabledReason}
 				onSave={onSave}
-				onSwitchToView={onSwitchToView}
+				onSwitchToView={switchToViewMode}
 				onClose={onCloseEditor}
 			/>
 			<ResizablePanelGroup
