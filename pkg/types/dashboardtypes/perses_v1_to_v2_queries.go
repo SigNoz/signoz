@@ -112,6 +112,7 @@ func requestTypeForPanel(panelKind PanelPluginKind) qb.RequestType {
 func (d *v1Decoder) collectV1QueryEnvelopes(widget map[string]any, panelKind PanelPluginKind) ([]map[string]any, telemetrytypes.Signal) {
 	queryMap := d.readObject(widget, "query")
 	if queryMap == nil {
+		d.note("widget %q has no query map", d.readString(widget, "id"))
 		return nil, telemetrytypes.Signal{}
 	}
 	rowLimitPanel := panelKind == PanelKindList || panelKind == PanelKindTable
@@ -149,6 +150,7 @@ func (d *v1Decoder) collectV1QueryEnvelopes(widget map[string]any, panelKind Pan
 	case "builder":
 		builder := d.readObject(queryMap, "builder")
 		if builder == nil {
+			d.note("widget %q has no builder data in the query map", d.readString(widget, "id"))
 			return nil, telemetrytypes.Signal{}
 		}
 		var out []map[string]any
