@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
 import { Time } from 'container/TopNav/DateTimeSelectionV2/types';
 import * as appContextHooks from 'providers/App/App';
@@ -295,17 +296,19 @@ const renderEntityMetrics = (overrides = {}): any => {
 	};
 
 	return render(
-		<EntityMetrics
-			timeRange={defaultProps.timeRange}
-			isModalTimeSelection={defaultProps.isModalTimeSelection}
-			handleTimeChange={defaultProps.handleTimeChange}
-			selectedInterval={defaultProps.selectedInterval}
-			entity={defaultProps.entity}
-			entityWidgetInfo={defaultProps.entityWidgetInfo}
-			getEntityQueryPayload={defaultProps.getEntityQueryPayload}
-			queryKey={defaultProps.queryKey}
-			category={defaultProps.category}
-		/>,
+		<MemoryRouter>
+			<EntityMetrics
+				timeRange={defaultProps.timeRange}
+				isModalTimeSelection={defaultProps.isModalTimeSelection}
+				handleTimeChange={defaultProps.handleTimeChange}
+				selectedInterval={defaultProps.selectedInterval}
+				entity={defaultProps.entity}
+				entityWidgetInfo={defaultProps.entityWidgetInfo}
+				getEntityQueryPayload={defaultProps.getEntityQueryPayload}
+				queryKey={defaultProps.queryKey}
+				category={defaultProps.category}
+			/>
+		</MemoryRouter>,
 	);
 };
 
@@ -334,8 +337,8 @@ const mockTableData: (import('../utils').MetricsTableData[] | null)[] = [
 ];
 
 const mockQueryPayloads = [
-	{ graphType: 'graph' }, // time_series
-	{ graphType: 'table' }, // table
+	{ graphType: 'graph', query: { queryType: 'builder' } }, // time_series
+	{ graphType: 'table', query: { queryType: 'builder' } }, // table
 ];
 
 describe('EntityMetrics', () => {
@@ -440,6 +443,34 @@ describe('EntityMetrics', () => {
 				visibilities: [true, true],
 			}),
 		);
+	});
+
+	it('renders metrics explorer link only for non-table panels', () => {
+		renderEntityMetrics();
+		expect(screen.getByTestId('open-metrics-explorer-0')).toBeInTheDocument();
+		expect(
+			screen.queryByTestId('open-metrics-explorer-1'),
+		).not.toBeInTheDocument();
+	});
+
+	it('builds metrics explorer link with relativeTime when a relative interval is selected', () => {
+		renderEntityMetrics({ selectedInterval: '5m' as Time });
+		const href = screen
+			.getByTestId('open-metrics-explorer-0')
+			.getAttribute('href');
+		expect(href).toContain('relativeTime=5m');
+		expect(href).not.toContain('startTime=');
+		expect(href).not.toContain('endTime=');
+	});
+
+	it('builds metrics explorer link with absolute time range in milliseconds for custom interval', () => {
+		renderEntityMetrics({ selectedInterval: 'custom' as Time });
+		const href = screen
+			.getByTestId('open-metrics-explorer-0')
+			.getAttribute('href');
+		expect(href).toContain(`startTime=${mockTimeRange.startTime * 1000}`);
+		expect(href).toContain(`endTime=${mockTimeRange.endTime * 1000}`);
+		expect(href).not.toContain('relativeTime=');
 	});
 
 	it('passes correct parameters to useEntityMetrics hook', () => {

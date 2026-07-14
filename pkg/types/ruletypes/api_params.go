@@ -76,9 +76,9 @@ type PostableRule struct {
 }
 
 type NotificationSettings struct {
-	GroupBy   []string `json:"groupBy,omitempty"`
-	Renotify  Renotify `json:"renotify,omitzero"`
-	UsePolicy bool     `json:"usePolicy,omitempty"`
+	GroupBy   []string  `json:"groupBy,omitempty"`
+	Renotify  *Renotify `json:"renotify,omitempty"`
+	UsePolicy bool      `json:"usePolicy,omitempty"`
 	// NewGroupEvalDelay is the grace period for new series to be excluded from alerts evaluation
 	NewGroupEvalDelay valuer.TextDuration `json:"newGroupEvalDelay,omitzero"`
 }
@@ -92,7 +92,7 @@ type Renotify struct {
 func (ns *NotificationSettings) GetAlertManagerNotificationConfig() alertmanagertypes.NotificationConfig {
 	var renotifyInterval time.Duration
 	var noDataRenotifyInterval time.Duration
-	if ns.Renotify.Enabled {
+	if ns.Renotify != nil && ns.Renotify.Enabled {
 		if slices.Contains(ns.Renotify.AlertStates, StateNoData) {
 			noDataRenotifyInterval = ns.Renotify.ReNotifyInterval.Duration()
 		}
@@ -204,10 +204,12 @@ func (ns *NotificationSettings) UnmarshalJSON(data []byte) error {
 	}
 
 	// Validate states after unmarshaling
-	for _, state := range ns.Renotify.AlertStates {
-		if state != StateFiring && state != StateNoData {
-			return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid alert state: %s", state)
+	if ns.Renotify != nil {
+		for _, state := range ns.Renotify.AlertStates {
+			if state != StateFiring && state != StateNoData {
+				return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid alert state: %s", state)
 
+			}
 		}
 	}
 	return nil
@@ -218,6 +220,11 @@ func (ns *NotificationSettings) UnmarshalJSON(data []byte) error {
 func (r *PostableRule) processRuleDefaults() {
 	if r.SchemaVersion == "" {
 		r.SchemaVersion = DefaultSchemaVersion
+	}
+
+	// TODO(srikanthccv): remove as this is now a legacy field
+	if r.Version == "" {
+		r.Version = "v5"
 	}
 
 	// v2alpha1 uses the Evaluation envelope for window/frequency;
@@ -271,7 +278,7 @@ func (r *PostableRule) processRuleDefaults() {
 			r.RuleCondition.Thresholds = &thresholdData
 			r.Evaluation = &EvaluationEnvelope{RollingEvaluation, RollingWindow{EvalWindow: r.EvalWindow, Frequency: r.Frequency}}
 			r.NotificationSettings = &NotificationSettings{
-				Renotify: Renotify{
+				Renotify: &Renotify{
 					Enabled:          true,
 					ReNotifyInterval: valuer.MustParseTextDuration("4h"),
 					AlertStates:      []AlertState{StateFiring},
@@ -338,6 +345,7 @@ func isValidLabelValue(v string) bool {
 // validate runs during UnmarshalJSON (read + write path).
 // Preserves the original pre-existing checks only so that stored rules
 // continue to load without errors.
+// TODO(srikanthccv): remove this once v1 is deprecated and removed.
 func (r *PostableRule) validate() error {
 	var errs []error
 
@@ -366,9 +374,13 @@ func (r *PostableRule) validate() error {
 
 	errs = append(errs, testTemplateParsing(r)...)
 
-	joined := errors.Join(errs...)
-	if joined != nil {
-		return errors.WrapInvalidInputf(joined, errors.CodeInvalidInput, "validation failed")
+	if len(errs) > 0 {
+		messages := make([]string, len(errs))
+		for i, e := range errs {
+			messages[i] = e.Error()
+		}
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "alert rule definition is not valid").
+			WithAdditional(messages...)
 	}
 	return nil
 }
@@ -466,9 +478,13 @@ func (r *PostableRule) Validate() error {
 
 	errs = append(errs, testTemplateParsing(r)...)
 
-	joined := errors.Join(errs...)
-	if joined != nil {
-		return errors.WrapInvalidInputf(joined, errors.CodeInvalidInput, "validation failed")
+	if len(errs) > 0 {
+		messages := make([]string, len(errs))
+		for i, e := range errs {
+			messages[i] = e.Error()
+		}
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "alert rule is not valid").
+			WithAdditional(messages...)
 	}
 	return nil
 }
@@ -548,7 +564,7 @@ func (r *PostableRule) validateV2Alpha1() []error {
 		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput,
 			"notificationSettings: field is required for schemaVersion %q", SchemaVersionV2Alpha1))
 	} else {
-		if r.NotificationSettings.Renotify.Enabled && !r.NotificationSettings.Renotify.ReNotifyInterval.IsPositive() {
+		if r.NotificationSettings.Renotify != nil && r.NotificationSettings.Renotify.Enabled && !r.NotificationSettings.Renotify.ReNotifyInterval.IsPositive() {
 			errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput,
 				"notificationSettings.renotify.interval: must be a positive duration when renotify is enabled"))
 		}

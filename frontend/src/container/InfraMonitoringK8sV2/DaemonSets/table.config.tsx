@@ -139,21 +139,31 @@ export const k8sDaemonSetsColumnsConfig: DaemonSetTableColumnConfig[] = [
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.currentNodes,
-		width: { min: 180 },
+		width: { min: 210 },
 		enableSort: false,
 		enableResize: true,
 		cell: ({ row }): React.ReactNode => (
 			<GroupedStatusCounts
 				items={[
 					{
+						value: row.readyNodes,
+						label: 'Ready',
+						color: Color.BG_FOREST_500,
+					},
+					{
 						value: row.currentNodes,
 						label: 'Current',
-						color: Color.BG_FOREST_500,
+						color: Color.BG_ROBIN_500,
 					},
 					{
 						value: row.desiredNodes,
 						label: 'Desired',
-						color: Color.BG_ROBIN_500,
+						color: Color.BG_SAKURA_400,
+					},
+					{
+						value: row.misscheduledNodes,
+						label: 'Misscheduled',
+						color: Color.BG_AMBER_500,
 					},
 				]}
 			/>
@@ -313,6 +323,30 @@ export const k8sDaemonSetsColumnsConfig: DaemonSetTableColumnConfig[] = [
 		},
 	},
 	{
+		id: 'ready_nodes',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/daemonsets#ready">
+				Ready Nodes
+			</ColumnHeader>
+		),
+		accessorFn: (row): number => row.readyNodes,
+		width: { min: 140 },
+		enableSort: true,
+		defaultVisibility: false,
+		cell: ({ value }): React.ReactNode => {
+			const readyNodes = value as number;
+			return (
+				<ValidateColumnValueWrapper
+					value={readyNodes}
+					entity={InfraMonitoringEntity.DAEMONSETS}
+					attribute="ready node"
+				>
+					<TanStackTable.Text>{readyNodes}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
+	},
+	{
 		id: 'current_nodes',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/daemonsets#current">
@@ -356,6 +390,30 @@ export const k8sDaemonSetsColumnsConfig: DaemonSetTableColumnConfig[] = [
 					attribute="desired node"
 				>
 					<TanStackTable.Text>{desiredNodes}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
+	},
+	{
+		id: 'misscheduled_nodes',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/daemonsets#misscheduled">
+				Misscheduled Nodes
+			</ColumnHeader>
+		),
+		accessorFn: (row): number => row.misscheduledNodes,
+		width: { min: 140 },
+		enableSort: true,
+		defaultVisibility: false,
+		cell: ({ value }): React.ReactNode => {
+			const misscheduledNodes = value as number;
+			return (
+				<ValidateColumnValueWrapper
+					value={misscheduledNodes}
+					entity={InfraMonitoringEntity.DAEMONSETS}
+					attribute="misscheduled node"
+				>
+					<TanStackTable.Text>{misscheduledNodes}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
 			);
 		},

@@ -1,4 +1,5 @@
-import { Info } from '@signozhq/icons';
+import { Link } from 'react-router-dom';
+import { Compass, Info } from '@signozhq/icons';
 import { Tooltip } from 'antd';
 
 import styles from './ChartHeader.module.scss';
@@ -9,12 +10,16 @@ interface ChartHeaderProps {
 	title: string;
 	docPath?: string;
 	tooltip?: string;
+	metricsExplorerUrl?: string;
+	metricsExplorerTestId?: string;
 }
 
 function ChartHeader({
 	title,
 	docPath,
 	tooltip,
+	metricsExplorerUrl,
+	metricsExplorerTestId = 'open-metrics-explorer',
 }: ChartHeaderProps): JSX.Element {
 	const renderInfoIcon = (): React.ReactNode => {
 		if (docPath) {
@@ -60,6 +65,17 @@ function ChartHeader({
 		<div className={styles.chartHeader} data-testid="chart-header">
 			<span className={styles.chartHeaderLabel}>{title}</span>
 			{renderInfoIcon()}
+			{metricsExplorerUrl && (
+				<Tooltip title="Open in Metrics Explorer">
+					<Link
+						to={metricsExplorerUrl}
+						className={styles.metricsExplorerLink}
+						data-testid={metricsExplorerTestId}
+					>
+						<Compass size={14} />
+					</Link>
+				</Tooltip>
+			)}
 		</div>
 	);
 }

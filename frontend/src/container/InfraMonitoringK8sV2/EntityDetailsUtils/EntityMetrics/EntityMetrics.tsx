@@ -19,6 +19,7 @@ import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { useTimezone } from 'providers/Timezone';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { getMetricsExplorerUrl } from 'utils/explorerUtils';
 
 import { buildEntityMetricsChartConfig } from './configBuilder';
 import ChartHeader from './ChartHeader';
@@ -209,6 +210,20 @@ function EntityMetrics<T>({
 						<ChartHeader
 							title={entityWidgetInfo[idx].title}
 							docPath={entityWidgetInfo[idx].docPath}
+							metricsExplorerUrl={
+								queryPayloads[idx] && queryPayloads[idx].graphType !== PANEL_TYPES.TABLE
+									? getMetricsExplorerUrl({
+											query: queryPayloads[idx].query,
+											...(selectedInterval && selectedInterval !== 'custom'
+												? { relativeTime: selectedInterval }
+												: {
+														startTimeMs: timeRange.startTime * 1000,
+														endTimeMs: timeRange.endTime * 1000,
+													}),
+										})
+									: undefined
+							}
+							metricsExplorerTestId={`open-metrics-explorer-${idx}`}
 						/>
 						<div className={styles.entityMetricsCard} ref={graphRef}>
 							{renderCardContent(query, idx)}
