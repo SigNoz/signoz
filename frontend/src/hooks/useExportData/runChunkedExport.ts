@@ -16,6 +16,7 @@ import { EXPORT_CONCURRENCY, EXPORT_PAGE_SIZE } from './constants';
 export interface ChunkedExportArgs {
 	query: Query;
 	timeRange: { start: number; end: number };
+	// Total rows the query is expected to return; drives the page count.
 	totalRows: number;
 	fileNameBase: string;
 }
@@ -37,10 +38,6 @@ const MIME_BY_FORMAT: Record<ExportFormat, string> = {
  * worker pool (EXPORT_CONCURRENCY wide — pages are independent since offsets
  * are precomputable), stitches the parts in page order client-side, and saves
  * a single file.
- *
- * Pure async runner — no React lifecycle, so a download survives component
- * unmounts and in-app navigation. Throws on failure; an abort surfaces as the
- * underlying cancellation error (callers distinguish it via signal.aborted).
  */
 export async function runChunkedExport({
 	query,
