@@ -166,7 +166,10 @@ function createTestColumnsWithGroup(): TableColumnDef<TestItemWithGroup>[] {
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-function renderComponent<T extends K8sEntityData, TItemKey = string>({
+function renderComponent<
+	T extends K8sEntityData,
+	TItemKey extends string | SelectedItemParams = string,
+>({
 	queryParams,
 	onUrlUpdate,
 	...props

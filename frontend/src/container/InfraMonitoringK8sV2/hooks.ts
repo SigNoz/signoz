@@ -149,7 +149,10 @@ export type UseSelectedItemParamsReturn = [
 
 export const useInfraMonitoringSelectedItemParams =
 	(): UseSelectedItemParamsReturn => {
-		const [rawParams, setRawParams] = useQueryStates(selectedItemParamsParsers);
+		const [rawParams, setRawParams] = useQueryStates(
+			selectedItemParamsParsers,
+			defaultNuqsOptions,
+		);
 
 		const params: SelectedItemParams = useMemo(
 			() => ({

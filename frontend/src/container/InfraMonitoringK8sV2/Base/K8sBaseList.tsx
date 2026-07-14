@@ -50,7 +50,10 @@ export type K8sBaseListEmptyStateContext = {
 /** Base type constraint for K8s entity data */
 export type K8sEntityData = { meta?: Record<string, string> | null };
 
-export type K8sBaseListProps<T extends K8sEntityData, TItemKey = string> = {
+export type K8sBaseListProps<
+	T extends K8sEntityData,
+	TItemKey extends string | SelectedItemParams = string,
+> = {
 	controlListPrefix?: React.ReactNode;
 	leftFilters?: React.ReactNode;
 	entity: InfraMonitoringEntity;
@@ -79,7 +82,10 @@ export type K8sBaseListProps<T extends K8sEntityData, TItemKey = string> = {
 	extraQueryKeyParts?: string[];
 };
 
-export function K8sBaseList<T extends K8sEntityData, TItemKey = string>({
+export function K8sBaseList<
+	T extends K8sEntityData,
+	TItemKey extends string | SelectedItemParams = string,
+>({
 	controlListPrefix,
 	leftFilters,
 	entity,
@@ -229,10 +235,10 @@ export function K8sBaseList<T extends K8sEntityData, TItemKey = string>({
 		(_record: T, itemKey: TItemKey): void => {
 			if (groupBy.length === 0) {
 				if (typeof itemKey === 'object' && itemKey !== null) {
-					setSelectedItemParams(itemKey as unknown as SelectedItemParams);
+					setSelectedItemParams(itemKey);
 				} else {
 					setSelectedItemParams({
-						selectedItem: itemKey as string,
+						selectedItem: itemKey,
 						clusterName: null,
 						namespaceName: null,
 					});
@@ -257,7 +263,7 @@ export function K8sBaseList<T extends K8sEntityData, TItemKey = string>({
 			// Build URL with selectedItem params
 			const url = new URL(window.location.href);
 			if (typeof itemKey === 'object' && itemKey !== null) {
-				const params = itemKey as unknown as SelectedItemParams;
+				const params = itemKey;
 				if (params.selectedItem) {
 					url.searchParams.set(
 						INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM,
@@ -279,7 +285,7 @@ export function K8sBaseList<T extends K8sEntityData, TItemKey = string>({
 			} else {
 				url.searchParams.set(
 					INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM,
-					itemKey as string,
+					itemKey,
 				);
 			}
 			openInNewTab(url.pathname + url.search);
