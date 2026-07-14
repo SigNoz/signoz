@@ -5669,6 +5669,39 @@ export interface InframonitoringtypesChecksDTO {
 	type: InframonitoringtypesCheckTypeDTO;
 }
 
+export type InframonitoringtypesClusterRecordDTOCounts = {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	daemonSets: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	deployments: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	jobs: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	namespaces: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	nodes: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	statefulSets: number;
+};
+
 export type InframonitoringtypesClusterRecordDTOMetaAnyOf = {
 	[key: string]: string;
 };
@@ -5813,6 +5846,10 @@ export interface InframonitoringtypesClusterRecordDTO {
 	 * @type string
 	 */
 	clusterName: string;
+	/**
+	 * @type object
+	 */
+	counts: InframonitoringtypesClusterRecordDTOCounts;
 	/**
 	 * @type object,null
 	 */
@@ -6368,6 +6405,29 @@ export interface InframonitoringtypesJobsDTO {
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 
+export type InframonitoringtypesNamespaceRecordDTOCounts = {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	daemonSets: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	deployments: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	jobs: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	statefulSets: number;
+};
+
 export type InframonitoringtypesNamespaceRecordDTOMetaAnyOf = {
 	[key: string]: string;
 };
@@ -6379,6 +6439,10 @@ export type InframonitoringtypesNamespaceRecordDTOMeta =
 	InframonitoringtypesNamespaceRecordDTOMetaAnyOf | null;
 
 export interface InframonitoringtypesNamespaceRecordDTO {
+	/**
+	 * @type object
+	 */
+	counts: InframonitoringtypesNamespaceRecordDTOCounts;
 	/**
 	 * @type object,null
 	 */
