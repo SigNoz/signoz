@@ -63,6 +63,7 @@ import LoadingContainer from '../LoadingContainer';
 
 import '../EntityDetailsUtils/entityDetails.styles.scss';
 import { parseAsString, useQueryState } from 'nuqs';
+import { EntityCountConfig, EntityCountsSection } from './EntityCountsSection';
 
 const TimeRangeOffset = 1000000000;
 
@@ -71,6 +72,8 @@ export interface K8sDetailsMetadataConfig<T> {
 	getValue: (entity: T) => string | number;
 	render?: (value: string | number, entity: T) => React.ReactNode;
 }
+
+export type K8sDetailsCountConfig<T> = EntityCountConfig<T>;
 
 export interface K8sDetailsFilters {
 	filter: { expression: string };
@@ -92,6 +95,8 @@ export interface K8sBaseDetailsProps<T> {
 	getInitialLogTracesExpression: (entity: T) => string;
 	getInitialEventsExpression: (entity: T) => string;
 	metadataConfig: K8sDetailsMetadataConfig<T>[];
+	countsConfig?: K8sDetailsCountConfig<T>[];
+	getCountsFilterExpression?: (entity: T) => string;
 	entityWidgetInfo: {
 		title: string;
 		yAxisUnit: string;
@@ -137,6 +142,8 @@ export default function K8sBaseDetails<T>({
 	getInitialLogTracesExpression,
 	getInitialEventsExpression,
 	metadataConfig,
+	countsConfig,
+	getCountsFilterExpression,
 	entityWidgetInfo,
 	getEntityQueryPayload,
 	queryKeyPrefix,
@@ -479,6 +486,19 @@ export default function K8sBaseDetails<T>({
 								})}
 							</div>
 						</div>
+
+						{countsConfig &&
+							countsConfig.length > 0 &&
+							selectedItem &&
+							getCountsFilterExpression && (
+								<EntityCountsSection
+									entity={entity}
+									countsConfig={countsConfig}
+									selectedItem={selectedItem}
+									filterExpression={getCountsFilterExpression(entity)}
+									closeDrawer={handleClose}
+								/>
+							)}
 					</div>
 
 					{!hideDetailViewTabs && (
