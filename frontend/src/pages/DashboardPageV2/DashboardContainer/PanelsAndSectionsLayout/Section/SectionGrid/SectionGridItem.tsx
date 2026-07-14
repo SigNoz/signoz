@@ -10,6 +10,10 @@ const VIEWPORT_OBSERVER_OPTIONS: IntersectionObserverInit = {
 	rootMargin: '200px',
 };
 
+// Start observing after RGL's mount unfold settles, so transient off-screen
+// panels don't latch as visible.
+const OBSERVER_START_DELAY_MS = 350;
+
 interface SectionGridItemProps {
 	panel: DashboardtypesPanelDTO;
 	panelId: string;
@@ -31,6 +35,7 @@ function SectionGridItem({
 		containerRef,
 		VIEWPORT_OBSERVER_OPTIONS,
 		true,
+		OBSERVER_START_DELAY_MS,
 	);
 	useScrollIntoView(panelId, containerRef);
 

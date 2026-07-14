@@ -1,6 +1,7 @@
 package authtypes
 
 import (
+	"database/sql/driver"
 	"encoding/json"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -70,6 +71,28 @@ func NewTransactionGroups(data []byte) (TransactionGroups, error) {
 	return groups, nil
 }
 
+func NewTransactionGroupsFromTransactions(transactions []coretypes.Transaction) TransactionGroups {
+	objectsByVerb := make(map[string][]*coretypes.Object)
+	for _, transaction := range transactions {
+		object := transaction.Object
+		objectsByVerb[transaction.Verb.StringValue()] = append(objectsByVerb[transaction.Verb.StringValue()], &object)
+	}
+
+	groups := make(TransactionGroups, 0)
+	for _, verb := range coretypes.Verbs {
+		objects := objectsByVerb[verb.StringValue()]
+		if len(objects) == 0 {
+			continue
+		}
+
+		for _, objectGroup := range coretypes.NewObjectGroupsFromObjects(objects) {
+			groups = append(groups, &TransactionGroup{Relation: Relation{Verb: verb}, ObjectGroup: *objectGroup})
+		}
+	}
+
+	return groups
+}
+
 func NewGettableTransaction(results []*TransactionWithAuthorization) []*GettableTransaction {
 	gettableTransactions := make([]*GettableTransaction, len(results))
 	for i, result := range results {
@@ -85,6 +108,40 @@ func NewGettableTransaction(results []*TransactionWithAuthorization) []*Gettable
 
 func (groups TransactionGroups) Diff(desired TransactionGroups) (additions, deletions TransactionGroups) {
 	return desired.subtract(groups), groups.subtract(desired)
+}
+
+func (groups TransactionGroups) Value() (driver.Value, error) {
+	data, err := json.Marshal(groups)
+	if err != nil {
+		return nil, err
+	}
+
+	return string(data), nil
+}
+
+func (groups *TransactionGroups) Scan(value any) error {
+	if value == nil {
+		*groups = make(TransactionGroups, 0)
+		return nil
+	}
+
+	var data []byte
+	switch typed := value.(type) {
+	case string:
+		data = []byte(typed)
+	case []byte:
+		data = typed
+	default:
+		return errors.Newf(errors.TypeInternal, errors.CodeInternal, "unsupported type %T for transaction groups", value)
+	}
+
+	parsed, err := NewTransactionGroups(data)
+	if err != nil {
+		return errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, "failed to scan transactionGroups")
+	}
+
+	*groups = parsed
+	return nil
 }
 
 func (transaction *Transaction) UnmarshalJSON(data []byte) error {
