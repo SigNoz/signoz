@@ -2,6 +2,7 @@ package dashboardtypes
 
 import (
 	"context"
+	"encoding/json"
 	"log/slog"
 	"regexp"
 	"strings"
@@ -36,6 +37,35 @@ func normalizePreV5QueryData(query map[string]any, widgetType string) {
 	normalizeMetricAggregations(query)
 	normalizeOrderByKeys(query)
 	normalizeFunctionArgs(query)
+	dropInvalidFunctions(query)
+}
+
+// dropInvalidFunctions removes any function the v5 validator would reject — an unknown
+// name, or a missing/uncastable required arg (see Function.Validate). v1 tolerated these
+// but v2 fails the whole query, so we drop just the offending function. Runs after
+// normalizeFunctionArgs so a merely double-wrapped (but otherwise valid) function isn't
+// lost.
+func dropInvalidFunctions(query map[string]any) {
+	fns, ok := query["functions"].([]any)
+	if !ok {
+		return
+	}
+	kept := make([]any, 0, len(fns))
+	for _, f := range fns {
+		raw, err := json.Marshal(f)
+		if err != nil {
+			continue
+		}
+		var fn qb.Function
+		if err := json.Unmarshal(raw, &fn); err != nil {
+			continue
+		}
+		if fn.Validate() != nil {
+			continue
+		}
+		kept = append(kept, f)
+	}
+	query["functions"] = kept
 }
 
 // normalizeFunctionArgs collapses a doubly-wrapped function arg to a scalar. The
