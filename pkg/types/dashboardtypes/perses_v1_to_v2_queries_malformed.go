@@ -33,6 +33,68 @@ func normalizePreV5QueryData(query map[string]any, widgetType string) {
 	preV5Migrator.MigrateQueryDataShapeSafe(context.Background(), query, widgetType)
 	normalizePreV5LogTraceAggregations(query)
 	normalizeMetricAggregations(query)
+	normalizeOrderByKeys(query)
+}
+
+// orderByValueKeys are v4 order-by columnNames meaning "order by the aggregation value"
+// that the v5 aggregation validator rejects (validateOrderByForAggregation). All resolve
+// to the same aggregation key. Add more as they surface. The frontend passes these
+// through (the query-service resolves them), but the v2 dashboard validator only accepts
+// a real aggregation key.
+var orderByValueKeys = map[string]bool{
+	"#SIGNOZ_VALUE": true,
+	"A":             true,
+	"__result":      true,
+	"value":         true,
+}
+
+// normalizeOrderByKeys rewrites any orderBy columnName in orderByValueKeys to the
+// v5-valid aggregation key. Left untouched if the key can't resolve (no aggregation to
+// name).
+func normalizeOrderByKeys(query map[string]any) {
+	orders, ok := query["orderBy"].([]any)
+	if !ok {
+		return
+	}
+	key, ok := aggregationOrderKey(query)
+	if !ok {
+		return
+	}
+	for _, o := range orders {
+		order, ok := o.(map[string]any)
+		if !ok {
+			continue
+		}
+		if cn, _ := order["columnName"].(string); orderByValueKeys[cn] {
+			order["columnName"] = key
+		}
+	}
+}
+
+// aggregationOrderKey names the first aggregation the way validateOrderByForAggregation
+// expects: "space(metricName)" for metrics, the expression for logs/traces.
+func aggregationOrderKey(query map[string]any) (string, bool) {
+	aggs, ok := query["aggregations"].([]any)
+	if !ok || len(aggs) == 0 {
+		return "", false
+	}
+	agg, ok := aggs[0].(map[string]any)
+	if !ok {
+		return "", false
+	}
+	if signalFromDataSource(query["dataSource"]) == telemetrytypes.SignalMetrics {
+		metricName, _ := agg["metricName"].(string)
+		space, _ := agg["spaceAggregation"].(string)
+		if metricName == "" || space == "" {
+			return "", false
+		}
+		return space + "(" + metricName + ")", true
+	}
+	expr, _ := agg["expression"].(string)
+	if expr == "" {
+		return "", false
+	}
+	return expr, true
 }
 
 // dropLegacyFilter removes a v4-shaped filter ({items, op}) stored under the v5
