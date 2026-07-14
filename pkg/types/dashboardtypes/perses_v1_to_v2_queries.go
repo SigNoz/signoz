@@ -163,6 +163,7 @@ func (d *v1Decoder) collectV1QueryEnvelopes(widget map[string]any, panelKind Pan
 			normalizePreV5SelectColumns(q)
 			normalizePreV5GroupBy(q)
 			normalizePreV5PageSize(q, rowLimitPanel)
+			normalizeQueryLimit(q)
 			if needsAggregation {
 				ensureDefaultAggregation(q)
 			}

@@ -8,6 +8,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/transition"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
+	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -322,5 +323,18 @@ func normalizePreV5PageSize(query map[string]any, rowLimitPanel bool) {
 	}
 	if ps, ok := query["pageSize"]; ok {
 		query["limit"] = ps
+	}
+}
+
+// normalizeQueryLimit drops a limit above the v5 maximum (MaxQueryLimit); v1 allowed
+// larger/unbounded limits, and an over-max value fails validation. Removing it leaves
+// the query unlimited (the field is optional).
+func normalizeQueryLimit(query map[string]any) {
+	limit, ok := coerceFloat(query["limit"])
+	if !ok {
+		return
+	}
+	if limit > qb.MaxQueryLimit {
+		delete(query, "limit")
 	}
 }
