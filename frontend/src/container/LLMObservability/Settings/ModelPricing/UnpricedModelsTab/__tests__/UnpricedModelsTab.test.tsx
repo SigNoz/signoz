@@ -97,13 +97,6 @@ describe('UnpricedModelsTab (integration)', () => {
 
 		await user.click(await screen.findByTestId('unpriced-map-cancel-btn'));
 
-		// Don't hold a trigger reference across the cancel click: the re-render can
-		// remount the row's cell (seen under CI timing), leaving the captured node
-		// detached. A detached node keeps its old content, so asserting on it checks
-		// a dead element instead of the real trigger — and a negative assertion
-		// passes vacuously. Re-querying inside waitFor always targets the live
-		// element, and asserting the positive end state (placeholder back) avoids
-		// the vacuous pass entirely.
 		await waitFor(() => {
 			const trigger = screen.getByTestId(`map-to-select-${MODEL}`);
 			expect(
