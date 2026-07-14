@@ -452,23 +452,21 @@ func (d *v1Decoder) mapV1TableThresholds(w map[string]any) []TableThreshold {
 
 func (d *v1Decoder) mapV1ComparisonOperator(s string) ComparisonOperator {
 	switch s {
-	case ">":
+	case ">", "gt":
 		return ComparisonOperatorAbove
-	case ">=":
+	case ">=", "gte":
 		return ComparisonOperatorAboveOrEqual
-	case "<":
+	case "<", "lt":
 		return ComparisonOperatorBelow
-	case "<=":
+	case "<=", "lte":
 		return ComparisonOperatorBelowOrEqual
-	case "=":
+	case "=", "==", "eq":
 		return ComparisonOperatorEqual
-	case "!=":
+	case "!=", "neq":
 		return ComparisonOperatorNotEqual
-	case "":
-		// v1 often leaves the operator empty; default to "above" without flagging.
-		return ComparisonOperatorAbove
 	default:
-		d.note("threshold has unknown comparison operator %q", s)
+		// v1 often leaves the operator empty or carries an unknown value; default to
+		// "above" without flagging.
 		return ComparisonOperatorAbove
 	}
 }
