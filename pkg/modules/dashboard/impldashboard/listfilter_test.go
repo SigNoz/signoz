@@ -465,13 +465,13 @@ func TestCompile_FreeText(t *testing.T) {
 	// bound pattern differs.
 	freeTextSQL := `
 		(
-		lower(json_extract("dashboard"."data", '$.spec.display.name')) LIKE LOWER(?) ESCAPE '\'
-		OR lower(json_extract("dashboard"."data", '$.spec.display.description')) LIKE LOWER(?) ESCAPE '\'
+		lower(COALESCE(json_extract("dashboard"."data", '$.spec.display.name'), '')) LIKE LOWER(?) ESCAPE '\'
+		OR lower(COALESCE(json_extract("dashboard"."data", '$.spec.display.description'), '')) LIKE LOWER(?) ESCAPE '\'
 		OR EXISTS (
 			SELECT 1 FROM tag_relation tr
 			JOIN tag t ON t.id = tr.tag_id
 			WHERE tr.kind = ? AND tr.resource_id = dashboard.id
-			AND (lower(t.key) LIKE LOWER(?) ESCAPE '\' OR lower(t.value) LIKE LOWER(?) ESCAPE '\')
+			AND (lower(COALESCE(t.key, '')) LIKE LOWER(?) ESCAPE '\' OR lower(COALESCE(t.value, '')) LIKE LOWER(?) ESCAPE '\')
 		))`
 	freeTextArgs := func(pattern string) []any {
 		return []any{pattern, pattern, kindArg, pattern, pattern}
