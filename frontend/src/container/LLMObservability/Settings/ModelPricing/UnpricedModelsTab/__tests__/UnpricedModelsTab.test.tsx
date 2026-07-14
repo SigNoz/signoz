@@ -97,8 +97,9 @@ describe('UnpricedModelsTab (integration)', () => {
 
 		await user.click(await screen.findByTestId('unpriced-map-cancel-btn'));
 
-		// Re-query the trigger inside waitFor — the virtualized table can remount
-		// the row's cells on cancel, detaching any previously captured element.
+		// Re-query the trigger inside waitFor — under CI timing the row's cell can
+		// be remounted on cancel, detaching any previously captured element, and a
+		// negative assertion on a detached node passes vacuously.
 		await waitFor(() => {
 			const trigger = screen.getByTestId(`map-to-select-${MODEL}`);
 			expect(
