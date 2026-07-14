@@ -32,7 +32,7 @@ func normalizePreV5QueryData(query map[string]any, widgetType string) {
 	dropLegacyFilter(query)
 	preV5Migrator.MigrateQueryDataShapeSafe(context.Background(), query, widgetType)
 	normalizePreV5LogTraceAggregations(query)
-	normalizeMetricSpaceAggregation(query)
+	normalizeMetricAggregations(query)
 }
 
 // dropLegacyFilter removes a v4-shaped filter ({items, op}) stored under the v5
@@ -54,13 +54,30 @@ func dropLegacyFilter(query map[string]any) {
 	}
 }
 
-// normalizeMetricSpaceAggregation defaults an invalid spaceAggregation on a metric
-// query to "sum". v1 bodies often leave it empty or carry a stale/unknown value,
-// which fails v5 validation (metrictypes.SpaceAggregation.IsValid). Only metrics
-// carry spaceAggregation; a valid value (including a histogram percentile) is left
-// alone. The metric type isn't in the dashboard body, so we can't prefer a
-// percentile default for histograms — sum is the safe fallback.
-func normalizeMetricSpaceAggregation(query map[string]any) {
+// metricAggregationFields are the JSON keys a metric aggregation accepts (see
+// MetricAggregation). The decoder is strict, so any other key (e.g. a logs/traces
+// style `expression`) is rejected as an unknown field.
+var metricAggregationFields = map[string]bool{
+	"metricName":                      true,
+	"temporality":                     true,
+	"timeAggregation":                 true,
+	"spaceAggregation":                true,
+	"comparisonSpaceAggregationParam": true,
+	"reduceTo":                        true,
+}
+
+// normalizeMetricAggregations reshapes a metric query's aggregations to the shape v5
+// expects. v1 bodies sometimes carry a logs/traces-style aggregation ({expression});
+// the frontend ignores expression for metrics and builds from the metric fields
+// (createAggregation, prepareQueryRangePayloadV5.ts), so we drop every non-metric
+// key. A dropped expression leaves metricName empty and the widget is skipped later
+// (isUnrenderableMetricQuery), matching what v1 renders.
+//
+// It also defaults an invalid spaceAggregation to "sum": v1 bodies often leave it
+// empty or carry a stale value, which fails validation (SpaceAggregation.IsValid). A
+// valid value (including a histogram percentile) is left alone; the metric type isn't
+// in the body, so we can't prefer a percentile default for histograms.
+func normalizeMetricAggregations(query map[string]any) {
 	if signalFromDataSource(query["dataSource"]) != telemetrytypes.SignalMetrics {
 		return
 	}
@@ -72,6 +89,11 @@ func normalizeMetricSpaceAggregation(query map[string]any) {
 		agg, ok := a.(map[string]any)
 		if !ok {
 			continue
+		}
+		for k := range agg {
+			if !metricAggregationFields[k] {
+				delete(agg, k)
+			}
 		}
 		sa, _ := agg["spaceAggregation"].(string)
 		if !(metrictypes.SpaceAggregation{String: valuer.NewString(sa)}).IsValid() {
