@@ -1141,6 +1141,43 @@
 	}
 }
 
+// Informational "SigNoz v0.x.y" entry inside the Help & Support dropdown.
+// Keeps the version visible at the standard "Help" menu like virtually
+// every native GUI application, so users have a one-click path to copy
+// the version when filing bug reports. See issue #11602.
+.help-support-dropdown {
+	.ant-dropdown-menu-item {
+		.help-support-dropdown-version {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 8px;
+			padding: 4px 0;
+
+			.help-support-dropdown-version-label {
+				color: var(--l3-foreground);
+				font-family: Inter;
+				font-size: var(--font-size-xs);
+				font-style: normal;
+				line-height: normal;
+				letter-spacing: 0.14px;
+				text-transform: uppercase;
+			}
+
+			.help-support-dropdown-version-value {
+				color: var(--l1-foreground);
+				font-family: Inter;
+				font-size: var(--font-size-xs);
+				font-style: normal;
+				font-weight: 600;
+				line-height: normal;
+				letter-spacing: 0.14px;
+				font-variant-numeric: tabular-nums;
+			}
+		}
+	}
+}
+
 .secondary-nav-items {
 	.nav-item {
 		position: relative;
