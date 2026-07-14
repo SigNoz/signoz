@@ -228,7 +228,14 @@ func (d *v1Decoder) collectV1QueryEnvelopes(widget map[string]any, panelKind Pan
 		for _, f := range formulas {
 			normalizePreV5QueryData(f, widgetType)
 			name := d.readString(f, "queryName")
-			out = append(out, qb.WrapInV5Envelope(name, f, string(qb.QueryTypeFormula.StringValue())))
+			env := qb.WrapInV5Envelope(name, f, string(qb.QueryTypeFormula.StringValue()))
+			// Drop a formula whose expression the validator rejects (blank/unparseable);
+			// v1 tolerated it but v2 fails the whole query. Reuse the real validator
+			// rather than reimplement it, as we do for functions.
+			if !formulaEnvelopeIsValid(env) {
+				continue
+			}
+			out = append(out, env)
 		}
 		for _, op := range d.readObjects(builder, "queryTraceOperator") {
 			// A trace operator's expression is the operation itself and is required
@@ -278,6 +285,25 @@ func assignQueryDataNames(queries []map[string]any) {
 		}
 		q["expression"] = name
 	}
+}
+
+// formulaEnvelopeIsValid reports whether a builder_formula envelope's spec passes
+// QueryBuilderFormula.Validate (blank/unparseable expression, blank name, invalid
+// functions). Reuses the real validator rather than reimplementing it.
+func formulaEnvelopeIsValid(env map[string]any) bool {
+	spec, ok := env["spec"].(map[string]any)
+	if !ok {
+		return false
+	}
+	raw, err := json.Marshal(spec)
+	if err != nil {
+		return false
+	}
+	var f qb.QueryBuilderFormula
+	if err := json.Unmarshal(raw, &f); err != nil {
+		return false
+	}
+	return f.Validate() == nil
 }
 
 // maxFormulas mirrors the frontend MAX_FORMULAS; formula names run F1..F20.
