@@ -3,7 +3,7 @@ import { Button, Popover, Tooltip } from 'antd';
 import { RadioGroup, RadioGroupItem } from '@signozhq/ui/radio-group';
 import { Typography } from '@signozhq/ui/typography';
 import { TelemetryFieldKey } from 'api/v5/v5';
-import { useExportRawData } from 'hooks/useDownloadOptionsMenu/useDownloadOptionsMenu';
+import { useExportRawData } from 'hooks/useExportData/useServerExport';
 import { Download, LoaderCircle } from '@signozhq/icons';
 import { DataSource } from 'types/common/queryBuilder';
 
