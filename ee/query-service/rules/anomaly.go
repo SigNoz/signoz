@@ -97,6 +97,14 @@ func NewAnomalyRule(
 		)
 	}
 
+	if p.RuleCondition.Algorithm == "ml" {
+		r.provider = anomaly.NewMLProvider(
+			r.provider,
+			querier,
+			r.logger,
+		)
+	}
+
 	return &r, nil
 }
 
@@ -129,7 +137,6 @@ func (r *AnomalyRule) prepareQueryRange(ctx context.Context, ts time.Time) *qbty
 }
 
 func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, ts time.Time) (ruletypes.Vector, error) {
-
 	params := r.prepareQueryRange(ctx, ts)
 
 	anomalies, err := r.provider.GetAnomalies(ctx, orgID, &anomaly.AnomaliesRequest{
@@ -204,7 +211,6 @@ func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, t
 }
 
 func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (int, error) {
-
 	prevState := r.State()
 
 	valueFormatter := units.FormatterFromUnit(r.Unit())
@@ -250,7 +256,6 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 
 		// utility function to apply go template on labels and annotations
 		expand := func(text string) string {
-
 			tmpl := ruletypes.NewTemplateExpander(
 				ctx,
 				defs+text,
@@ -261,13 +266,24 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 			result, err := tmpl.Expand()
 			if err != nil {
 				result = fmt.Sprintf("<error expanding template: %s>", err)
-				r.logger.ErrorContext(ctx, "expanding alert template failed", errors.Attr(err), slog.Any("alert.template_data", tmplData))
+				r.logger.ErrorContext(
+					ctx,
+					"expanding alert template failed",
+					errors.Attr(err),
+					slog.Any("alert.template_data", tmplData),
+				)
 			}
 			return result
 		}
 
-		lb := ruletypes.NewBuilder(smpl.Metric...).Del(ruletypes.MetricNameLabel).Del(ruletypes.TemporalityLabel)
-		resultLabels := ruletypes.NewBuilder(smpl.Metric...).Del(ruletypes.MetricNameLabel).Del(ruletypes.TemporalityLabel).Labels()
+		lb := ruletypes.NewBuilder(smpl.Metric...).
+			Del(ruletypes.MetricNameLabel).
+			Del(ruletypes.TemporalityLabel)
+
+		resultLabels := ruletypes.NewBuilder(smpl.Metric...).
+			Del(ruletypes.MetricNameLabel).
+			Del(ruletypes.TemporalityLabel).
+			Labels()
 
 		for name, value := range r.Labels().Map() {
 			lb.Set(name, expand(value))
@@ -279,8 +295,12 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 
 		annotations := make(ruletypes.Labels, 0, len(r.Annotations().Map()))
 		for name, value := range r.Annotations().Map() {
-			annotations = append(annotations, ruletypes.Label{Name: name, Value: expand(value)})
+			annotations = append(annotations, ruletypes.Label{
+				Name:  name,
+				Value: expand(value),
+			})
 		}
+
 		if smpl.IsMissing {
 			lb.Set(ruletypes.AlertNameLabel, "[No data] "+r.Name())
 			lb.Set(ruletypes.NoDataLabel, "true")
@@ -291,8 +311,15 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		resultFPs[h] = struct{}{}
 
 		if _, ok := alerts[h]; ok {
-			r.logger.ErrorContext(ctx, "the alert query returns duplicate records", slog.Any("alert", alerts[h]))
-			err = errors.NewInternalf(errors.CodeInternal, "duplicate alert found, vector contains metrics with the same labelset after applying alert labels")
+			r.logger.ErrorContext(
+				ctx,
+				"the alert query returns duplicate records",
+				slog.Any("alert", alerts[h]),
+			)
+			err = errors.NewInternalf(
+				errors.CodeInternal,
+				"duplicate alert found, vector contains metrics with the same labelset after applying alert labels",
+			)
 			return 0, err
 		}
 
@@ -311,12 +338,12 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 	}
 
 	r.logger.InfoContext(ctx, "number of alerts found", slog.Int("alert.count", len(alerts)))
+
 	// alerts[h] is ready, add or update active list now
 	for h, a := range alerts {
 		// Check whether we already have alerting state for the identifying label set.
 		// Update the last value and annotations if so, create a new alert entry otherwise.
 		if alert, ok := r.Active[h]; ok && alert.State != ruletypes.StateInactive {
-
 			alert.Value = a.Value
 			alert.Annotations = a.Annotations
 			// Update the recovering and missing state of existing alert
@@ -337,12 +364,18 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 	for fp, a := range r.Active {
 		labelsJSON, err := json.Marshal(a.QueryResultLabels)
 		if err != nil {
-			r.logger.ErrorContext(ctx, "error marshaling labels", errors.Attr(err), slog.Any("alert.labels", a.Labels))
+			r.logger.ErrorContext(
+				ctx,
+				"error marshaling labels",
+				errors.Attr(err),
+				slog.Any("alert.labels", a.Labels),
+			)
 		}
 		if _, ok := resultFPs[fp]; !ok {
 			// If the alert was previously firing, keep it around for a given
 			// retention time so it is reported as resolved to the AlertManager.
-			if a.State == ruletypes.StatePending || (!a.ResolvedAt.IsZero() && ts.Sub(a.ResolvedAt) > ruletypes.ResolvedRetention) {
+			if a.State == ruletypes.StatePending ||
+				(!a.ResolvedAt.IsZero() && ts.Sub(a.ResolvedAt) > ruletypes.ResolvedRetention) {
 				delete(r.Active, fp)
 			}
 			if a.State != ruletypes.StateInactive {
@@ -421,7 +454,6 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 }
 
 func (r *AnomalyRule) String() string {
-
 	ar := ruletypes.PostableRule{
 		AlertName:         r.Name(),
 		RuleCondition:     r.Condition(),

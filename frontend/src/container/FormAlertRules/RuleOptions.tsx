@@ -210,6 +210,7 @@ function RuleOptions({
 			onChange={onChangeAlgorithm}
 		>
 			<Select.Option value="standard">Standard</Select.Option>
+			<Select.Option value="ml">ML</Select.Option>
 		</InlineSelect>
 	);
 
