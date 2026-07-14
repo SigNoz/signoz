@@ -12,7 +12,7 @@ import { v4 as uuid } from 'uuid';
 import {
 	INFRA_MONITORING_K8S_PARAMS_KEYS,
 	InfraMonitoringEntity,
-} from '../constants';
+} from '../../../constants';
 import styles from './EntityCountsSection.module.scss';
 
 export interface EntityCountConfig<T> {

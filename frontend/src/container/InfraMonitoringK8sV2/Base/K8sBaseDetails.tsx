@@ -63,7 +63,10 @@ import LoadingContainer from '../LoadingContainer';
 
 import '../EntityDetailsUtils/entityDetails.styles.scss';
 import { parseAsString, useQueryState } from 'nuqs';
-import { EntityCountConfig, EntityCountsSection } from './EntityCountsSection';
+import {
+	EntityCountConfig,
+	EntityCountsSection,
+} from './components/EntityCountsSection/EntityCountsSection';
 
 const TimeRangeOffset = 1000000000;
 
