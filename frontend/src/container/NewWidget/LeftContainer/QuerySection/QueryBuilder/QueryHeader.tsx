@@ -1,16 +1,16 @@
-import './QueryHeader.styles.scss';
-
-import {
-	DeleteOutlined,
-	DownOutlined,
-	EyeFilled,
-	EyeInvisibleFilled,
-	RightOutlined,
-} from '@ant-design/icons';
-import { Button, Row } from 'antd';
 import { ReactNode, useState } from 'react';
+import {
+	ChevronDown,
+	ChevronRight,
+	EyeClosed,
+	EyeOpen,
+	Trash2,
+} from '@signozhq/icons';
+import { Button, Row } from 'antd';
 
 import { QueryWrapper } from '../styles';
+
+import './QueryHeader.styles.scss';
 
 interface IQueryHeaderProps {
 	disabled: boolean;
@@ -36,7 +36,7 @@ function QueryHeader({
 				<Row>
 					<Button
 						type="default"
-						icon={disabled ? <EyeInvisibleFilled /> : <EyeFilled />}
+						icon={disabled ? <EyeClosed size="md" /> : <EyeOpen size="md" />}
 						onClick={onDisable}
 						className="action-btn"
 					>
@@ -44,7 +44,7 @@ function QueryHeader({
 					</Button>
 					<Button
 						type="default"
-						icon={collapse ? <RightOutlined /> : <DownOutlined />}
+						icon={collapse ? <ChevronRight size="md" /> : <ChevronDown size="md" />}
 						onClick={(): void => setCollapse(!collapse)}
 						className="action-btn"
 					/>
@@ -54,7 +54,7 @@ function QueryHeader({
 					<Button
 						type="default"
 						danger
-						icon={<DeleteOutlined />}
+						icon={<Trash2 size="md" />}
 						onClick={onDelete}
 						className="action-btn"
 					/>

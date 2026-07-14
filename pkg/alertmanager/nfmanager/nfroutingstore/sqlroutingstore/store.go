@@ -83,6 +83,18 @@ func (store *store) GetAllByName(ctx context.Context, orgID string, name string)
 	return routes, nil
 }
 
+func (store *store) GetAll(ctx context.Context, orgID string) ([]*routeTypes.RoutePolicy, error) {
+	var routes []*routeTypes.RoutePolicy
+	err := store.sqlstore.BunDBCtx(ctx).NewSelect().Model(&routes).Where("org_id = ?", orgID).Scan(ctx)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "unable to fetch routing policies for orgID: %s", orgID)
+	}
+	return routes, nil
+}
+
 func (store *store) DeleteRouteByName(ctx context.Context, orgID string, name string) error {
 	_, err := store.sqlstore.BunDBCtx(ctx).NewDelete().Model((*routeTypes.RoutePolicy)(nil)).Where("org_id = ?", orgID).Where("name = ?", name).Exec(ctx)
 	if err != nil {

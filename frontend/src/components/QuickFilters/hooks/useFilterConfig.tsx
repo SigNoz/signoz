@@ -1,7 +1,7 @@
-import getCustomFilters from 'api/quickFilters/getCustomFilters';
-import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useMemo } from 'react';
 import { useQuery } from 'react-query';
+import getCustomFilters from 'api/quickFilters/getCustomFilters';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { Filter as FilterType } from 'types/api/quickFilters/getCustomFilters';
 
 import { IQuickFiltersConfig, SignalType } from '../types';
@@ -38,9 +38,10 @@ const useFilterConfig = ({
 		},
 	);
 
-	const isDynamicFilters = useMemo(() => customFilters.length > 0, [
-		customFilters,
-	]);
+	const isDynamicFilters = useMemo(
+		() => customFilters.length > 0,
+		[customFilters],
+	);
 
 	const filterConfig = useMemo(
 		() => getFilterConfig(signal, customFilters, config),

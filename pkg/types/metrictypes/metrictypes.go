@@ -2,6 +2,8 @@ package metrictypes
 
 import (
 	"database/sql/driver"
+	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -19,6 +21,7 @@ var (
 	Cumulative  = Temporality{valuer.NewString("cumulative")}
 	Unspecified = Temporality{valuer.NewString("unspecified")}
 	Unknown     = Temporality{valuer.NewString("")}
+	Multiple    = Temporality{valuer.NewString("__multiple__")}
 )
 
 func (t Temporality) Value() (driver.Value, error) {
@@ -36,7 +39,7 @@ func (t Temporality) Value() (driver.Value, error) {
 	}
 }
 
-func (t *Temporality) Scan(src interface{}) error {
+func (t *Temporality) Scan(src any) error {
 	if src == nil {
 		*t = Unknown
 		return nil
@@ -64,6 +67,14 @@ func (t *Temporality) Scan(src interface{}) error {
 	}
 
 	return nil
+}
+
+func (Temporality) Enum() []any {
+	return []any{
+		Delta,
+		Cumulative,
+		Unspecified,
+	}
 }
 
 // Type is the type of the metric in OTLP data model
@@ -125,14 +136,28 @@ func (t *Type) Scan(src interface{}) error {
 	return nil
 }
 
+func (t Type) IsPercentileSpaceAggregationAllowed() bool {
+	return t == HistogramType || t == ExpHistogramType
+}
+
 var (
 	GaugeType        = Type{valuer.NewString("gauge")}
 	SumType          = Type{valuer.NewString("sum")}
 	HistogramType    = Type{valuer.NewString("histogram")}
 	SummaryType      = Type{valuer.NewString("summary")}
-	ExpHistogramType = Type{valuer.NewString("exponential_histogram")}
+	ExpHistogramType = Type{valuer.NewString("exponentialhistogram")}
 	UnspecifiedType  = Type{valuer.NewString("")}
 )
+
+func (Type) Enum() []any {
+	return []any{
+		GaugeType,
+		SumType,
+		HistogramType,
+		SummaryType,
+		ExpHistogramType,
+	}
+}
 
 type TimeAggregation struct {
 	valuer.String
@@ -151,6 +176,24 @@ var (
 	TimeAggregationIncrease      = TimeAggregation{valuer.NewString("increase")}
 )
 
+func (TimeAggregation) Enum() []any {
+	return []any{
+		TimeAggregationLatest,
+		TimeAggregationSum,
+		TimeAggregationAvg,
+		TimeAggregationMin,
+		TimeAggregationMax,
+		TimeAggregationCount,
+		TimeAggregationCountDistinct,
+		TimeAggregationRate,
+		TimeAggregationIncrease,
+	}
+}
+
+func (t TimeAggregation) IsValid() bool {
+	return slices.ContainsFunc(t.Enum(), func(v any) bool { return v == t })
+}
+
 type SpaceAggregation struct {
 	valuer.String
 }
@@ -168,6 +211,25 @@ var (
 	SpaceAggregationPercentile95 = SpaceAggregation{valuer.NewString("p95")}
 	SpaceAggregationPercentile99 = SpaceAggregation{valuer.NewString("p99")}
 )
+
+func (SpaceAggregation) Enum() []any {
+	return []any{
+		SpaceAggregationSum,
+		SpaceAggregationAvg,
+		SpaceAggregationMin,
+		SpaceAggregationMax,
+		SpaceAggregationCount,
+		SpaceAggregationPercentile50,
+		SpaceAggregationPercentile75,
+		SpaceAggregationPercentile90,
+		SpaceAggregationPercentile95,
+		SpaceAggregationPercentile99,
+	}
+}
+
+func (s SpaceAggregation) IsValid() bool {
+	return slices.ContainsFunc(s.Enum(), func(v any) bool { return v == s })
+}
 
 func (s SpaceAggregation) IsPercentile() bool {
 	return s == SpaceAggregationPercentile50 ||
@@ -195,7 +257,10 @@ func (s SpaceAggregation) Percentile() float64 {
 }
 
 // MetricTableHints is a struct that contains tables to use instead of the derived tables
-// from the start and end time, for internal use only when we need to override the derived tables
+//
+// Convention :
+//   - TimeSeriesTableName: the LOCAL table name (e.g. "time_series_v4_1day").
+//   - SamplesTableName: the DISTRIBUTED table name (e.g. "distributed_samples_v4_agg_5m").
 type MetricTableHints struct {
 	TimeSeriesTableName string
 	SamplesTableName    string
@@ -207,4 +272,13 @@ type MetricTableHints struct {
 // This is a workaround for those metrics.
 type MetricValueFilter struct {
 	Value float64
+}
+
+type ComparisonSpaceAggregationParam struct {
+	Operater  string  `json:"operator" required:"true"`
+	Threshold float64 `json:"threshold" required:"true"`
+}
+
+func (param ComparisonSpaceAggregationParam) StringValue() string {
+	return fmt.Sprintf("operator=%s:threshold=%f", param.Operater, param.Threshold)
 }

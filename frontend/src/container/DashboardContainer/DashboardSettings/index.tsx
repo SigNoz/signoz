@@ -1,8 +1,6 @@
-import './DashboardSettingsContent.styles.scss';
-
 import { Button, Tabs, Tooltip } from 'antd';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { Braces, Globe, Table } from 'lucide-react';
+import { Braces, Globe, Table } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
 
@@ -10,6 +8,8 @@ import { VariablesSettingsTabHandle } from '../DashboardDescription/types';
 import DashboardVariableSettings from './DashboardVariableSettings';
 import GeneralDashboardSettings from './General';
 import PublicDashboardSetting from './PublicDashboard';
+
+import './DashboardSettingsContent.styles.scss';
 
 function DashboardSettings({
 	variablesSettingsTabHandle,
@@ -50,7 +50,7 @@ function DashboardSettings({
 	const items = [
 		{
 			label: (
-				<Button type="text" icon={<Table size="14" />} className="overview-btn">
+				<Button type="text" icon={<Table size={14} />} className="overview-btn">
 					Overview
 				</Button>
 			),

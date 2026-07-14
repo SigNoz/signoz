@@ -1,0 +1,74 @@
+.variables-popover-container {
+	.url-input-trigger {
+		width: 100%;
+
+		.url-input-field {
+			width: 100%;
+		}
+	}
+
+	.variables-popover-anchor-wrap {
+		width: 100%;
+	}
+}
+
+.variables-popover-content {
+	// antd Modal uses z-index ~1000; popover must sit above it.
+	z-index: 1100;
+	padding: 4px 0;
+	max-height: 300px;
+	overflow-y: auto;
+	overflow-x: hidden;
+	min-width: var(--radix-popover-trigger-width);
+}
+
+.variables-popover-empty {
+	padding: 8px 12px;
+	color: var(--l3-foreground, #999);
+	font-size: 12px;
+	font-style: italic;
+}
+
+.variables-popover-item {
+	all: unset;
+	display: block;
+	box-sizing: border-box;
+	width: 100%;
+	padding: 8px 12px;
+	cursor: pointer;
+	color: var(--l1-foreground);
+	font-size: 13px;
+	line-height: 1.4;
+	overflow: hidden;
+
+	&:hover,
+	&:focus {
+		background-color: var(--l1-background-hover);
+	}
+}
+
+.variable-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	min-width: 0;
+
+	.variable-name,
+	.variable-source {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.variable-name {
+		flex: 1 1 auto;
+	}
+
+	.variable-source {
+		color: #666;
+		font-size: 12px;
+		flex: 0 1 auto;
+	}
+}

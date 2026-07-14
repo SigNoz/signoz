@@ -1,4 +1,5 @@
-import { Skeleton } from 'antd';
+import { useMemo } from 'react';
+import { useParams } from 'react-router-dom';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { FeatureKeys } from 'constants/features';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -6,6 +7,7 @@ import Graph from 'container/GridCardLayout/GridCard';
 import {
 	GraphTitle,
 	SERVICE_CHART_ID,
+	SERVICE_DETAIL_DRILLDOWN_ENABLED,
 } from 'container/MetricsApplication/constant';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { latency } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';
@@ -15,8 +17,6 @@ import { resourceAttributesToTagFilterItems } from 'hooks/useResourceAttribute/u
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { useAppContext } from 'providers/App/App';
-import { useMemo } from 'react';
-import { useParams } from 'react-router-dom';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
@@ -123,23 +123,14 @@ function ServiceOverview({
 			/>
 			<Card data-testid="service_latency">
 				<GraphContainer>
-					{topLevelOperationsIsLoading && (
-						<Skeleton
-							style={{
-								height: '100%',
-								padding: '16px',
-							}}
-						/>
-					)}
-					{!topLevelOperationsIsLoading && (
-						<Graph
-							onDragSelect={onDragSelect}
-							widget={latencyWidget}
-							onClickHandler={handleGraphClick('Service')}
-							isQueryEnabled={isQueryEnabled}
-							version={ENTITY_VERSION_V4}
-						/>
-					)}
+					<Graph
+						onDragSelect={onDragSelect}
+						widget={latencyWidget}
+						onClickHandler={handleGraphClick('Service')}
+						isQueryEnabled={isQueryEnabled}
+						version={ENTITY_VERSION_V4}
+						enableDrillDown={SERVICE_DETAIL_DRILLDOWN_ENABLED}
+					/>
 				</GraphContainer>
 			</Card>
 		</>

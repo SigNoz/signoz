@@ -1,3 +1,16 @@
+import React, {
+	// eslint-disable-next-line no-restricted-imports
+	createContext,
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	// eslint-disable-next-line no-restricted-imports
+	useContext,
+	useMemo,
+	useState,
+} from 'react';
+import getLocalStorageKey from 'api/browser/localstorage/get';
+import setLocalStorageKey from 'api/browser/localstorage/set';
 import {
 	getBrowserTimezone,
 	getTimezoneObjectByTimezoneString,
@@ -6,24 +19,17 @@ import {
 } from 'components/CustomTimePicker/timezoneUtils';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import useTimezoneFormatter, {
+	FormatTimezoneAdjustedTimestamp,
 	TimestampInput,
 } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
-import React, {
-	createContext,
-	Dispatch,
-	SetStateAction,
-	useCallback,
-	useContext,
-	useMemo,
-	useState,
-} from 'react';
 
-interface TimezoneContextType {
+export interface TimezoneContextType {
 	timezone: Timezone;
 	browserTimezone: Timezone;
 	updateTimezone: (timezone: Timezone) => void;
-	formatTimezoneAdjustedTimestamp: (
-		input: TimestampInput,
+	formatTimezoneAdjustedTimestamp: FormatTimezoneAdjustedTimestamp;
+	formatTimezoneAdjustedTimestampOptional: (
+		input: TimestampInput | undefined,
 		format?: string,
 	) => string;
 	isAdaptationEnabled: boolean;
@@ -41,7 +47,7 @@ function TimezoneProvider({
 }): JSX.Element {
 	const getStoredTimezoneValue = (): Timezone | null => {
 		try {
-			const timezoneValue = localStorage.getItem(LOCALSTORAGE.PREFERRED_TIMEZONE);
+			const timezoneValue = getLocalStorageKey(LOCALSTORAGE.PREFERRED_TIMEZONE);
 			if (timezoneValue) {
 				return getTimezoneObjectByTimezoneString(timezoneValue);
 			}
@@ -53,7 +59,7 @@ function TimezoneProvider({
 
 	const setStoredTimezoneValue = (value: string): void => {
 		try {
-			localStorage.setItem(LOCALSTORAGE.PREFERRED_TIMEZONE, value);
+			setLocalStorageKey(LOCALSTORAGE.PREFERRED_TIMEZONE, value);
 		} catch (error) {
 			console.error('Error saving timezone to localStorage:', error);
 		}
@@ -83,12 +89,29 @@ function TimezoneProvider({
 		userTimezone: timezone,
 	});
 
+	const formatTimezoneAdjustedTimestampOptional = useCallback(
+		(date: TimestampInput | undefined, format?: string): string => {
+			if (!date) {
+				return '—';
+			}
+			const d = new Date(date);
+
+			if (Number.isNaN(d.getTime())) {
+				return '—';
+			}
+
+			return formatTimezoneAdjustedTimestamp(date, format);
+		},
+		[formatTimezoneAdjustedTimestamp],
+	);
+
 	const value = React.useMemo(
 		() => ({
 			timezone: isAdaptationEnabled ? timezone : UTC_TIMEZONE,
 			browserTimezone,
 			updateTimezone,
 			formatTimezoneAdjustedTimestamp,
+			formatTimezoneAdjustedTimestampOptional,
 			isAdaptationEnabled,
 			setIsAdaptationEnabled,
 		}),
@@ -97,6 +120,7 @@ function TimezoneProvider({
 			browserTimezone,
 			updateTimezone,
 			formatTimezoneAdjustedTimestamp,
+			formatTimezoneAdjustedTimestampOptional,
 			isAdaptationEnabled,
 		],
 	);

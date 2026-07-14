@@ -182,8 +182,7 @@ const generateTooltipContent = (
 						show: item.show || false,
 						color,
 						label,
-						// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-						// @ts-ignore
+						// @ts-expect-error
 						focus: item?._focus || false,
 						value,
 						tooltipValue,
@@ -206,10 +205,8 @@ const generateTooltipContent = (
 		return container;
 	}
 
-	const sortedData: Record<
-		string,
-		UplotTooltipDataProps
-	> = sortTooltipContentBasedOnValue(formattedData);
+	const sortedData: Record<string, UplotTooltipDataProps> =
+		sortTooltipContentBasedOnValue(formattedData);
 
 	const headerDiv = document.createElement('div');
 	headerDiv.classList.add('tooltip-content-row', 'tooltip-content-header');
@@ -280,8 +277,7 @@ const tooltipPlugin = ({
 	colorMapping,
 	query,
 	decimalPrecision,
-}: // eslint-disable-next-line sonarjs/cognitive-complexity
-ToolTipPluginProps): any => {
+}: ToolTipPluginProps): any => {
 	let over: HTMLElement;
 	let bound: HTMLElement;
 	// Cache bounding box to avoid recalculating on every cursor move

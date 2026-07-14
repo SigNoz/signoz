@@ -1,5 +1,5 @@
-import { QUERY_BUILDER_SEARCH_VALUES } from 'constants/queryBuilder';
 import { useMemo } from 'react';
+import { QUERY_BUILDER_SEARCH_VALUES } from 'constants/queryBuilder';
 
 import { useIsValidTag } from './useIsValidTag';
 import { useOperatorType } from './useOperatorType';

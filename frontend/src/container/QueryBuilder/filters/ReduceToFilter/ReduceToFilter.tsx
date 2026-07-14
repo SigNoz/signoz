@@ -1,6 +1,6 @@
+import { memo, useEffect, useState } from 'react';
 import { Select } from 'antd';
 import { REDUCE_TO_VALUES } from 'constants/queryBuilder';
-import { memo, useEffect, useState } from 'react';
 import { MetricAggregation } from 'types/api/v5/queryRange';
 // ** Types
 import { ReduceOperators } from 'types/common/queryBuilder';

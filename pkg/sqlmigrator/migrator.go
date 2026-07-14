@@ -2,13 +2,15 @@ package sqlmigrator
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 
+	"github.com/uptrace/bun/migrate"
+
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/uptrace/bun/migrate"
 )
 
 var (
@@ -41,7 +43,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, sqlstor
 }
 
 func (migrator *migrator) Migrate(ctx context.Context) error {
-	migrator.settings.Logger().InfoContext(ctx, "starting sqlstore migrations", "dialect", migrator.dialect)
+	migrator.settings.Logger().InfoContext(ctx, "starting sqlstore migrations", slog.String("dialect", migrator.dialect))
 	if err := migrator.migrator.Init(ctx); err != nil {
 		return err
 	}
@@ -58,12 +60,34 @@ func (migrator *migrator) Migrate(ctx context.Context) error {
 	}
 
 	if group.IsZero() {
-		migrator.settings.Logger().InfoContext(ctx, "no new migrations to run (database is up to date)", "dialect", migrator.dialect)
+		migrator.settings.Logger().InfoContext(ctx, "no new migrations to run (database is up to date)", slog.String("dialect", migrator.dialect))
 		return nil
 	}
 
-	migrator.settings.Logger().InfoContext(ctx, "migrated to", "group", group.String(), "dialect", migrator.dialect)
+	migrator.settings.Logger().InfoContext(ctx, "migrated to", slog.String("group", group.String()), slog.String("dialect", migrator.dialect))
 	return nil
+}
+
+func (migrator *migrator) Check(ctx context.Context) error {
+	migrator.settings.Logger().InfoContext(ctx, "checking sqlstore migrations", slog.String("dialect", migrator.dialect))
+
+	migrations, err := migrator.migrator.MigrationsWithStatus(ctx)
+	if err != nil {
+		return err
+	}
+
+	unapplied := migrations.Unapplied()
+	if len(unapplied) == 0 {
+		migrator.settings.Logger().InfoContext(ctx, "no pending migrations (database is up to date)", slog.String("dialect", migrator.dialect))
+		return nil
+	}
+
+	names := make([]string, 0, len(unapplied))
+	for _, migration := range unapplied {
+		names = append(names, migration.Name)
+	}
+
+	return errors.Newf(errors.TypeNotFound, ErrCodePendingSQLMigrations, "%d pending migration(s): %v", len(unapplied), names)
 }
 
 func (migrator *migrator) Rollback(ctx context.Context) error {
@@ -78,17 +102,17 @@ func (migrator *migrator) Rollback(ctx context.Context) error {
 	}
 
 	if group.IsZero() {
-		migrator.settings.Logger().InfoContext(ctx, "no groups to roll back", "dialect", migrator.dialect)
+		migrator.settings.Logger().InfoContext(ctx, "no groups to roll back", slog.String("dialect", migrator.dialect))
 		return nil
 	}
 
-	migrator.settings.Logger().InfoContext(ctx, "rolled back", "group", group.String(), "dialect", migrator.dialect)
+	migrator.settings.Logger().InfoContext(ctx, "rolled back", slog.String("group", group.String()), slog.String("dialect", migrator.dialect))
 	return nil
 }
 
 func (migrator *migrator) Lock(ctx context.Context) error {
 	if err := migrator.migrator.Lock(ctx); err == nil {
-		migrator.settings.Logger().InfoContext(ctx, "acquired migration lock", "dialect", migrator.dialect)
+		migrator.settings.Logger().InfoContext(ctx, "acquired migration lock", slog.String("dialect", migrator.dialect))
 		return nil
 	}
 
@@ -102,15 +126,15 @@ func (migrator *migrator) Lock(ctx context.Context) error {
 		select {
 		case <-timer.C:
 			err := errors.New(errors.TypeTimeout, errors.CodeTimeout, "timed out waiting for lock")
-			migrator.settings.Logger().ErrorContext(ctx, "cannot acquire lock", "error", err, "lock_timeout", migrator.config.Lock.Timeout.String(), "dialect", migrator.dialect)
+			migrator.settings.Logger().ErrorContext(ctx, "cannot acquire lock", errors.Attr(err), slog.String("lock_timeout", migrator.config.Lock.Timeout.String()), slog.String("dialect", migrator.dialect))
 			return err
 		case <-ticker.C:
 			var err error
 			if err = migrator.migrator.Lock(ctx); err == nil {
-				migrator.settings.Logger().InfoContext(ctx, "acquired migration lock", "dialect", migrator.dialect)
+				migrator.settings.Logger().InfoContext(ctx, "acquired migration lock", slog.String("dialect", migrator.dialect))
 				return nil
 			}
-			migrator.settings.Logger().ErrorContext(ctx, "attempt to acquire lock failed", "error", err, "lock_interval", migrator.config.Lock.Interval.String(), "dialect", migrator.dialect)
+			migrator.settings.Logger().ErrorContext(ctx, "attempt to acquire lock failed", errors.Attr(err), slog.String("lock_interval", migrator.config.Lock.Interval.String()), slog.String("dialect", migrator.dialect))
 		case <-ctx.Done():
 			return ctx.Err()
 		}

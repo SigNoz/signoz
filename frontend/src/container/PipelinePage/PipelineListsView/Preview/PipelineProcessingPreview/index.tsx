@@ -1,7 +1,5 @@
-import './styles.scss';
-
-import { RelativeDurationOptions } from 'container/TopNav/DateTimeSelectionV2/constants';
 import { useState } from 'react';
+import { RelativeDurationOptions } from 'container/TopNav/DateTimeSelectionV2/constants';
 import { PipelineData } from 'types/api/pipeline/def';
 
 import PreviewIntervalSelector from '../components/PreviewIntervalSelector';
@@ -9,13 +7,14 @@ import SampleLogsResponseDisplay from '../components/SampleLogs/SampleLogsRespon
 import useSampleLogs from '../hooks/useSampleLogs';
 import LogsProcessingSimulator from './components/LogsProcessingSimulator';
 
+import './styles.scss';
+
 function PipelineProcessingPreview({
 	pipeline,
 }: PipelineProcessingPreviewProps): JSX.Element {
 	const last1HourInterval = RelativeDurationOptions[3].value;
-	const [logsSampleQueryInterval, setLogsSampleQueryInterval] = useState(
-		last1HourInterval,
-	);
+	const [logsSampleQueryInterval, setLogsSampleQueryInterval] =
+		useState(last1HourInterval);
 
 	const sampleLogsResponse = useSampleLogs({
 		filter: pipeline.filter,

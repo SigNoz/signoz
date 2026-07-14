@@ -1,15 +1,16 @@
-import '../GantChart.styles.scss';
-
-import { Popover, Typography } from 'antd';
+import { useEffect } from 'react';
+import { Popover } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useTimezone } from 'providers/Timezone';
-import { useEffect } from 'react';
 import { toFixed } from 'utils/toFixed';
 
 import { SpanBorder, SpanLine, SpanText, SpanWrapper } from './styles';
+
+import '../GantChart.styles.scss';
 
 interface SpanLengthProps {
 	globalStart: number;
@@ -22,15 +23,8 @@ interface SpanLengthProps {
 }
 
 function Span(props: SpanLengthProps): JSX.Element {
-	const {
-		width,
-		leftOffset,
-		bgColor,
-		inMsCount,
-		startTime,
-		name,
-		globalStart,
-	} = props;
+	const { width, leftOffset, bgColor, inMsCount, startTime, name, globalStart } =
+		props;
 	const isDarkMode = useIsDarkMode();
 	const { time, timeUnitName } = convertTimeToRelevantUnit(inMsCount);
 

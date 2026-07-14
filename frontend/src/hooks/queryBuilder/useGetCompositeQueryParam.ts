@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import {
 	convertAggregationToExpression,
 	convertFiltersToExpressionWithExistingQuery,
@@ -5,7 +6,6 @@ import {
 } from 'components/QueryBuilderV2/utils';
 import { QueryParams } from 'constants/query';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { useMemo } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -29,8 +29,8 @@ export const useGetCompositeQueryParam = (): Query | null => {
 
 			// Convert old format to new format for each query in builder.queryData
 			if (parsedCompositeQuery?.builder?.queryData) {
-				parsedCompositeQuery.builder.queryData = parsedCompositeQuery.builder.queryData.map(
-					(query) => {
+				parsedCompositeQuery.builder.queryData =
+					parsedCompositeQuery.builder.queryData.map((query) => {
 						const existingExpression = query.filter?.expression || '';
 						const convertedQuery = { ...query };
 
@@ -61,8 +61,7 @@ export const useGetCompositeQueryParam = (): Query | null => {
 							convertedQuery.aggregations = convertedAggregation;
 						}
 						return convertedQuery;
-					},
-				);
+					});
 			}
 		} catch (e) {
 			parsedCompositeQuery = null;

@@ -11,6 +11,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"golang.org/x/exp/slices"
 )
@@ -41,7 +43,7 @@ func NewProcessesRepo(reader interfaces.Reader, querierV2 interfaces.Querier) *P
 	return &ProcessesRepo{reader: reader, querierV2: querierV2}
 }
 
-func (p *ProcessesRepo) GetProcessAttributeKeys(ctx context.Context, req v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
+func (p *ProcessesRepo) GetProcessAttributeKeys(ctx context.Context, orgID valuer.UUID, req v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
 	// TODO(srikanthccv): remove hardcoded metric name and support keys from any system metric
 	req.DataSource = v3.DataSourceMetrics
 	req.AggregateAttribute = GetDotMetrics("process_memory_usage")
@@ -49,7 +51,7 @@ func (p *ProcessesRepo) GetProcessAttributeKeys(ctx context.Context, req v3.Filt
 		req.Limit = 50
 	}
 
-	attributeKeysResponse, err := p.reader.GetMetricAttributeKeys(ctx, &req)
+	attributeKeysResponse, err := p.reader.GetMetricAttributeKeys(ctx, orgID, &req)
 	if err != nil {
 		return nil, err
 	}
@@ -67,14 +69,14 @@ func (p *ProcessesRepo) GetProcessAttributeKeys(ctx context.Context, req v3.Filt
 	return &v3.FilterAttributeKeyResponse{AttributeKeys: filteredKeys}, nil
 }
 
-func (p *ProcessesRepo) GetProcessAttributeValues(ctx context.Context, req v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
+func (p *ProcessesRepo) GetProcessAttributeValues(ctx context.Context, orgID valuer.UUID, req v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
 	req.DataSource = v3.DataSourceMetrics
 	req.AggregateAttribute = GetDotMetrics("process_memory_usage")
 	if req.Limit == 0 {
 		req.Limit = 50
 	}
 
-	attributeValuesResponse, err := p.reader.GetMetricAttributeValues(ctx, &req)
+	attributeValuesResponse, err := p.reader.GetMetricAttributeValues(ctx, orgID, &req)
 	if err != nil {
 		return nil, err
 	}
@@ -171,6 +173,10 @@ func (p *ProcessesRepo) getTopProcessGroups(ctx context.Context, orgID valuer.UU
 		topProcessGroupsQueryRangeParams.CompositeQuery.BuilderQueries[queryName] = query
 	}
 
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "inframetrics",
+		instrumentationtypes.CodeFunctionName: "getTopProcessGroups",
+	})
 	queryResponse, _, err := p.querierV2.QueryRange(ctx, orgID, topProcessGroupsQueryRangeParams)
 	if err != nil {
 		return nil, nil, err
@@ -284,6 +290,10 @@ func (p *ProcessesRepo) GetProcessList(ctx context.Context, orgID valuer.UUID, r
 		}
 	}
 
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "inframetrics",
+		instrumentationtypes.CodeFunctionName: "GetProcessList",
+	})
 	queryResponse, _, err := p.querierV2.QueryRange(ctx, orgID, query)
 	if err != nil {
 		return resp, err

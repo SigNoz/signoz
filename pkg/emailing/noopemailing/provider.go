@@ -2,6 +2,7 @@ package noopemailing
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -24,6 +25,6 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 }
 
 func (provider *provider) SendHTML(ctx context.Context, to string, subject string, templateName emailtypes.TemplateName, data map[string]any) error {
-	provider.settings.Logger().WarnContext(ctx, "using noop provider, no email will be sent", "to", to, "subject", subject)
+	provider.settings.Logger().WarnContext(ctx, "using noop provider, no email will be sent", slog.String("to", to), slog.String("subject", subject))
 	return nil
 }

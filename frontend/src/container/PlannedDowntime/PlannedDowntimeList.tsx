@@ -1,32 +1,34 @@
-/* eslint-disable react/require-default-props */
-import './PlannedDowntime.styles.scss';
-
+import React, { ReactNode, useEffect } from 'react';
+import { UseQueryResult } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
-import { Collapse, Flex, Space, Table, Tag, Tooltip, Typography } from 'antd';
-import { DefaultOptionType } from 'antd/es/select';
-import { TableProps } from 'antd/lib';
-import {
-	DowntimeSchedules,
-	PayloadProps,
-	Recurrence,
-} from 'api/plannedDowntime/getAllDowntimeSchedules';
-import { AxiosError, AxiosResponse } from 'axios';
+import { Collapse, Flex, Space, Table, TableProps, Tooltip } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
+import { Typography } from '@signozhq/ui/typography';
+import type { DefaultOptionType } from 'antd/es/select';
+import type {
+	ListDowntimeSchedules200,
+	RenderErrorResponseDTO,
+	AlertmanagertypesPlannedMaintenanceDTO,
+	AlertmanagertypesScheduleDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import type { ErrorType } from 'api/generatedAPIInstance';
 import cx from 'classnames';
+import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
 import { defaultTo } from 'lodash-es';
-import { CalendarClock, PenLine, Trash2 } from 'lucide-react';
+import { CalendarClock, PenLine, Trash2 } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
-import { ReactNode, useEffect } from 'react';
-import { UseQueryResult } from 'react-query';
 import { USER_ROLES } from 'types/roles';
 
+import { showErrorNotification } from 'utils/error';
 import {
 	formatDateTime,
 	getAlertOptionsFromIds,
 	getDuration,
-	getEndTime,
 	recurrenceInfo,
 } from './PlannedDowntimeutils';
+
+import './PlannedDowntime.styles.scss';
 
 const { Panel } = Collapse;
 
@@ -47,21 +49,24 @@ export function AlertRuleTags(props: AlertRuleTagsProps): JSX.Element {
 			{selectedTags?.map((tag: DefaultOptionType, index: number) => {
 				const isLongTag = (tag?.label as string)?.length > 20;
 				const tagElem = (
-					<Tag
+					<Badge
 						key={tag.value}
-						onClose={(): void => handleClose?.(tag?.value)}
-						closable={closable}
+						color={index % 2 ? 'sakura' : 'robin'}
+						variant="outline"
 						className={cx(
 							{ 'red-tag': index % 2 },
 							{ 'non-closable-tag': !closable },
 						)}
+						closable={closable}
+						onClose={(e): void => {
+							e.preventDefault();
+							handleClose?.(tag?.value);
+						}}
 					>
-						<span>
-							{isLongTag
-								? `${(tag?.label as string | null)?.slice(0, 20)}...`
-								: tag?.label}
-						</span>
-					</Tag>
+						{isLongTag
+							? `${(tag?.label as string | null)?.slice(0, 20)}...`
+							: tag?.label}
+					</Badge>
 				);
 				return isLongTag ? (
 					<Tooltip title={tag?.label} key={tag?.value}>
@@ -92,7 +97,7 @@ function HeaderComponent({
 		<Flex className="header-content" justify="space-between">
 			<Flex gap={8}>
 				<Typography>{name}</Typography>
-				<Tag>{duration}</Tag>
+				<Badge color="vanilla">{duration}</Badge>
 			</Flex>
 
 			{isCrudEnabled && (
@@ -124,22 +129,18 @@ export function CollapseListContent({
 	created_at,
 	created_by_name,
 	created_by_email,
-	timeframe,
-	repeats,
+	schedule,
 	updated_at,
 	updated_by_name,
 	alertOptions,
-	timezone,
 }: {
 	created_at?: string;
 	created_by_name?: string;
 	created_by_email?: string;
-	timeframe: [string | undefined | null, string | undefined | null];
-	repeats?: Recurrence | null;
+	schedule?: AlertmanagertypesScheduleDTO;
 	updated_at?: string;
 	updated_by_name?: string;
 	alertOptions?: DefaultOptionType[];
-	timezone?: string;
 }): JSX.Element {
 	const renderItems = (title: string, value: ReactNode): JSX.Element => (
 		<div className="render-item-collapse-list">
@@ -147,6 +148,8 @@ export function CollapseListContent({
 			<div className="render-item-value">{value}</div>
 		</div>
 	);
+	const startTime = formatDateTime(schedule?.startTime, schedule?.timezone);
+	const endTime = formatDateTime(schedule?.endTime, schedule?.timezone);
 
 	return (
 		<Flex vertical>
@@ -155,9 +158,7 @@ export function CollapseListContent({
 				created_by_name ? (
 					<Flex gap={8}>
 						<Typography>{created_by_name}</Typography>
-						{created_by_email && (
-							<Tag style={{ borderRadius: 20 }}>{created_by_email}</Tag>
-						)}
+						{created_by_email && <Badge color="vanilla">{created_by_email}</Badge>}
 					</Flex>
 				) : (
 					'-'
@@ -181,16 +182,17 @@ export function CollapseListContent({
 
 			{renderItems(
 				'Timeframe',
-				timeframe[0] || timeframe[1] ? (
-					<Typography>{`${formatDateTime(timeframe[0])} ⎯ ${formatDateTime(
-						timeframe[1],
-					)}`}</Typography>
+				schedule?.startTime ? (
+					<Typography>{`${startTime} ⎯ ${endTime}`}</Typography>
 				) : (
 					'-'
 				),
 			)}
-			{renderItems('Timezone', <Typography>{timezone || '-'}</Typography>)}
-			{renderItems('Repeats', <Typography>{recurrenceInfo(repeats)}</Typography>)}
+			{renderItems(
+				'Timezone',
+				<Typography>{schedule?.timezone || '-'}</Typography>,
+			)}
+			{renderItems('Repeats', <Typography>{recurrenceInfo(schedule)}</Typography>)}
 			{renderItems(
 				'Alerts silenced',
 				alertOptions?.length ? (
@@ -200,7 +202,9 @@ export function CollapseListContent({
 						selectedTags={alertOptions}
 					/>
 				) : (
-					'-'
+					<Badge className="all-alerts-tag" color="vanilla">
+						All alert rules
+					</Badge>
 				),
 			)}
 		</Flex>
@@ -210,10 +214,10 @@ export function CollapseListContent({
 export function CustomCollapseList(
 	props: DowntimeSchedulesTableData & {
 		setInitialValues: React.Dispatch<
-			React.SetStateAction<Partial<DowntimeSchedules>>
+			React.SetStateAction<Partial<AlertmanagertypesPlannedMaintenanceDTO>>
 		>;
 		setModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
-		handleDeleteDowntime: (id: number, name: string) => void;
+		handleDeleteDowntime: (id: string, name: string) => void;
 		setEditMode: React.Dispatch<React.SetStateAction<boolean>>;
 	},
 ): JSX.Element {
@@ -230,15 +234,12 @@ export function CustomCollapseList(
 		setModalOpen,
 		handleDeleteDowntime,
 		setEditMode,
-		kind,
 	} = props;
 
-	const scheduleTime = schedule?.startTime ? schedule.startTime : createdAt;
-	// Combine time and date
-	const formattedDateAndTime = `Start time ⎯ ${formatDateTime(
-		defaultTo(scheduleTime, ''),
-	)} ${schedule?.timezone}`;
-	const endTime = getEndTime({ kind, schedule });
+	const scheduleTime = schedule?.startTime
+		? dayjs(schedule.startTime).tz(schedule.timezone)
+		: createdAt || '';
+	const formattedDateAndTime = `Start time ⎯ ${formatDateTime(scheduleTime)} ${schedule?.timezone}`;
 
 	return (
 		<>
@@ -248,34 +249,27 @@ export function CustomCollapseList(
 						<HeaderComponent
 							duration={
 								schedule?.recurrence?.duration
-									? (schedule?.recurrence?.duration as string)
-									: getDuration(schedule?.startTime, schedule?.endTime)
+									? schedule.recurrence.duration
+									: getDuration(schedule?.startTime || '', schedule?.endTime || '')
 							}
 							name={defaultTo(name, '')}
-							handleEdit={(): void => {
+							handleEdit={() => {
 								setInitialValues({ ...props });
 								setModalOpen(true);
 								setEditMode(true);
 							}}
-							handleDelete={(): void => {
-								handleDeleteDowntime(id, name || '');
-							}}
+							handleDelete={() => handleDeleteDowntime(id ?? '', name || '')}
 						/>
 					}
-					key={id}
+					key={id ?? ''}
 				>
 					<CollapseListContent
-						created_at={defaultTo(createdAt, '')}
+						created_at={createdAt ? dayjs(createdAt).toISOString() : ''}
 						created_by_name={defaultTo(createdBy, '')}
-						timeframe={[
-							schedule?.startTime?.toString(),
-							typeof endTime === 'string' ? endTime : endTime?.toString(),
-						]}
-						repeats={schedule?.recurrence}
-						updated_at={defaultTo(updatedAt, '')}
+						schedule={schedule}
+						updated_at={updatedAt ? dayjs(updatedAt).toISOString() : ''}
 						updated_by_name={defaultTo(updatedBy, '')}
 						alertOptions={alertOptions}
-						timezone={defaultTo(schedule?.timezone, '')}
 					/>
 				</Panel>
 			</Collapse>
@@ -287,9 +281,10 @@ export function CustomCollapseList(
 	);
 }
 
-export type DowntimeSchedulesTableData = DowntimeSchedules & {
-	alertOptions: DefaultOptionType[];
-};
+export type DowntimeSchedulesTableData =
+	AlertmanagertypesPlannedMaintenanceDTO & {
+		alertOptions: DefaultOptionType[];
+	};
 
 export function PlannedDowntimeList({
 	downtimeSchedules,
@@ -301,15 +296,15 @@ export function PlannedDowntimeList({
 	searchValue,
 }: {
 	downtimeSchedules: UseQueryResult<
-		AxiosResponse<PayloadProps, any>,
-		AxiosError<unknown, any>
+		ListDowntimeSchedules200,
+		ErrorType<RenderErrorResponseDTO>
 	>;
 	alertOptions: DefaultOptionType[];
 	setInitialValues: React.Dispatch<
-		React.SetStateAction<Partial<DowntimeSchedules>>
+		React.SetStateAction<Partial<AlertmanagertypesPlannedMaintenanceDTO>>
 	>;
 	setModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
-	handleDeleteDowntime: (id: number, name: string) => void;
+	handleDeleteDowntime: (id: string, name: string) => void;
 	setEditMode: React.Dispatch<React.SetStateAction<boolean>>;
 	searchValue: string | number;
 }): JSX.Element {
@@ -329,19 +324,19 @@ export function PlannedDowntimeList({
 	];
 	const { notifications } = useNotifications();
 
-	const tableData = (downtimeSchedules.data?.data?.data || [])
+	const tableData = [...(downtimeSchedules.data?.data || [])]
 		.sort((a, b): number => {
 			if (a?.updatedAt && b?.updatedAt) {
-				return b.updatedAt.localeCompare(a.updatedAt);
+				return dayjs(b.updatedAt).diff(dayjs(a.updatedAt));
 			}
 			return 0;
 		})
-		?.filter(
+		.filter(
 			(data) =>
-				data?.name?.includes(searchValue.toLocaleString()) ||
-				data?.id.toLocaleString() === searchValue.toLocaleString(),
+				data.name.includes(searchValue.toLocaleString()) ||
+				data.id === searchValue.toLocaleString(),
 		)
-		.map?.((data) => {
+		.map((data) => {
 			const specificAlertOptions = getAlertOptionsFromIds(
 				data.alertIds || [],
 				alertOptions,
@@ -352,7 +347,7 @@ export function PlannedDowntimeList({
 
 	useEffect(() => {
 		if (downtimeSchedules.isError) {
-			notifications.error(downtimeSchedules.error);
+			showErrorNotification(notifications, downtimeSchedules.error);
 		}
 	}, [downtimeSchedules.error, downtimeSchedules.isError, notifications]);
 

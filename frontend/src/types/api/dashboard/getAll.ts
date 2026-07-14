@@ -1,10 +1,15 @@
+import { ReactNode } from 'react';
+import { Layout } from 'react-grid-layout';
 import { PrecisionOption } from 'components/Graph/types';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
-import { ReactNode } from 'react';
-import { Layout } from 'react-grid-layout';
+import {
+	FillMode,
+	LineInterpolation,
+	LineStyle,
+} from 'lib/uPlotV2/config/types';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { IField } from '../logs/fields';
@@ -16,10 +21,10 @@ export const VariableQueryTypeArr = [
 	'CUSTOM',
 	'DYNAMIC',
 ] as const;
-export type TVariableQueryType = typeof VariableQueryTypeArr[number];
+export type TVariableQueryType = (typeof VariableQueryTypeArr)[number];
 
 export const VariableSortTypeArr = ['DISABLED', 'ASC', 'DESC'] as const;
-export type TSortVariableValuesType = typeof VariableSortTypeArr[number];
+export type TSortVariableValuesType = (typeof VariableSortTypeArr)[number];
 
 export enum LegendPosition {
 	BOTTOM = 'bottom',
@@ -90,7 +95,7 @@ export interface DashboardData {
 	title: string;
 	layout?: Layout[];
 	panelMap?: Record<string, { widgets: Layout[]; collapsed: boolean }>;
-	variables: Record<string, IDashboardVariable>;
+	variables?: Record<string, IDashboardVariable>;
 	version?: string;
 	image?: string;
 }
@@ -132,6 +137,11 @@ export interface IBaseWidget {
 	legendPosition?: LegendPosition;
 	customLegendColors?: Record<string, string>;
 	contextLinks?: ContextLinksData;
+	lineInterpolation?: LineInterpolation;
+	showPoints?: boolean;
+	lineStyle?: LineStyle;
+	fillMode?: FillMode;
+	spanGaps?: boolean | number;
 }
 export interface Widgets extends IBaseWidget {
 	query: Query;

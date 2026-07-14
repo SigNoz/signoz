@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import { Pipeline } from 'types/api/pipeline/def';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 

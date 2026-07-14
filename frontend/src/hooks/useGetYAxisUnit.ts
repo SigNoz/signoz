@@ -1,8 +1,8 @@
+import { useEffect, useMemo, useState } from 'react';
 import {
 	getMetricUnits,
 	useGetMetrics,
 } from 'container/MetricsExplorer/Explorer/utils';
-import { useEffect, useMemo, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { MetricAggregation } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';

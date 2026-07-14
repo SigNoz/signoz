@@ -1,19 +1,30 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable sonarjs/no-duplicate-string */
 import { render, screen } from '@testing-library/react';
-import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
+import { InfraMonitoringEntity } from 'container/InfraMonitoringK8s/constants';
 import { Time } from 'container/TopNav/DateTimeSelectionV2/types';
 import * as appContextHooks from 'providers/App/App';
 import { LicenseEvent } from 'types/api/licensesV3/getActive';
+import uPlot from 'uplot';
 
 import EntityMetrics from '../EntityMetrics';
+import { useEntityMetrics } from '../hooks';
 
-jest.mock('lib/uPlotLib/getUplotChartOptions', () => ({
-	getUPlotChartOptions: jest.fn().mockReturnValue({}),
+jest.mock('../hooks', () => ({
+	useEntityMetrics: jest.fn(),
 }));
 
-jest.mock('lib/uPlotLib/utils/getUplotChartData', () => ({
-	getUPlotChartData: jest.fn().mockReturnValue([]),
+const mockUseEntityMetrics = useEntityMetrics as jest.MockedFunction<
+	typeof useEntityMetrics
+>;
+
+jest.mock('../configBuilder', () => ({
+	buildEntityMetricsChartConfig: jest.fn().mockReturnValue({
+		getId: jest.fn().mockReturnValue('mock-id'),
+	}),
+}));
+
+jest.mock('lib/uPlotV2/utils/dataUtils', () => ({
+	prepareChartData: jest.fn().mockReturnValue([]),
+	hasSingleVisiblePoint: jest.fn().mockReturnValue(false),
 }));
 
 jest.mock('container/TopNav/DateTimeSelectionV2', () => ({
@@ -23,25 +34,24 @@ jest.mock('container/TopNav/DateTimeSelectionV2', () => ({
 	),
 }));
 
-jest.mock('components/Uplot', () => ({
-	__esModule: true,
-	default: (): JSX.Element => <div data-testid="uplot-chart">Uplot Chart</div>,
+jest.mock(
+	'container/DashboardContainer/visualization/charts/TimeSeries/TimeSeries',
+	() => ({
+		__esModule: true,
+		default: (): JSX.Element => (
+			<div data-testid="uplot-chart">TimeSeries Chart</div>
+		),
+	}),
+);
+
+jest.mock('providers/Timezone', () => ({
+	useTimezone: (): { timezone: { value: string } } => ({
+		timezone: { value: 'UTC' },
+	}),
 }));
 
-jest.mock('container/InfraMonitoringK8s/commonUtils', () => ({
+jest.mock('../MetricsTable', () => ({
 	__esModule: true,
-	getMetricsTableData: jest.fn().mockReturnValue([
-		{
-			rows: [
-				{ data: { timestamp: '2024-01-15T10:00:00Z', value: '42.5' } },
-				{ data: { timestamp: '2024-01-15T10:01:00Z', value: '43.2' } },
-			],
-			columns: [
-				{ key: 'timestamp', label: 'Timestamp', isValueColumn: false },
-				{ key: 'value', label: 'Value', isValueColumn: true },
-			],
-		},
-	]),
 	MetricsTable: jest
 		.fn()
 		.mockImplementation(
@@ -49,11 +59,9 @@ jest.mock('container/InfraMonitoringK8s/commonUtils', () => ({
 		),
 }));
 
-const mockUseQueries = jest.fn();
 const mockUseQuery = jest.fn();
 jest.mock('react-query', () => ({
 	...jest.requireActual('react-query'),
-	useQueries: (queryConfigs: any[]): any[] => mockUseQueries(queryConfigs),
 	useQuery: (config: any): any => mockUseQuery(config),
 }));
 
@@ -282,7 +290,7 @@ const renderEntityMetrics = (overrides = {}): any => {
 		entityWidgetInfo: mockEntityWidgetInfo,
 		getEntityQueryPayload: mockGetEntityQueryPayload,
 		queryKey: 'test-query-key',
-		category: K8sCategory.PODS,
+		category: InfraMonitoringEntity.PODS,
 		...overrides,
 	};
 
@@ -301,10 +309,44 @@ const renderEntityMetrics = (overrides = {}): any => {
 	);
 };
 
+const mockChartData: (uPlot.AlignedData | null)[] = [
+	[
+		[1705315200, 1705318800],
+		[42.5, 43.2],
+	], // time_series chart data (AlignedData)
+	null, // table uses tableData
+];
+
+const mockTableData: (import('../utils').MetricsTableData[] | null)[] = [
+	null, // time_series uses chartData
+	[
+		{
+			rows: [
+				{ timestamp: '2024-01-15T10:00:00Z', value: '1024' },
+				{ timestamp: '2024-01-15T10:01:00Z', value: '1028' },
+			],
+			columns: [
+				{ key: 'timestamp', label: 'Timestamp', isValueColumn: false },
+				{ key: 'value', label: 'Value', isValueColumn: true },
+			],
+		},
+	], // table data
+];
+
+const mockQueryPayloads = [
+	{ graphType: 'graph' }, // time_series
+	{ graphType: 'table' }, // table
+];
+
 describe('EntityMetrics', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
-		mockUseQueries.mockReturnValue(mockQueries);
+		mockUseEntityMetrics.mockReturnValue({
+			queries: mockQueries as any,
+			chartData: mockChartData,
+			tableData: mockTableData,
+			queryPayloads: mockQueryPayloads as any,
+		});
 		mockUseQuery.mockReturnValue({
 			data: {
 				data: {
@@ -331,21 +373,44 @@ describe('EntityMetrics', () => {
 	});
 
 	it('renders loading state when fetching metrics', () => {
-		mockUseQueries.mockReturnValue(mockLoadingQueries);
+		mockUseEntityMetrics.mockReturnValue({
+			queries: mockLoadingQueries as any,
+			chartData: [null, null],
+			tableData: [null, null],
+			queryPayloads: mockQueryPayloads as any,
+		});
 		renderEntityMetrics();
 		expect(screen.getAllByText('CPU Usage')).toHaveLength(1);
 		expect(screen.getAllByText('Memory Usage')).toHaveLength(1);
 	});
 
 	it('renders error state when query fails', () => {
-		mockUseQueries.mockReturnValue(mockErrorQueries);
+		mockUseEntityMetrics.mockReturnValue({
+			queries: mockErrorQueries as any,
+			chartData: [null, null],
+			tableData: [null, null],
+			queryPayloads: mockQueryPayloads as any,
+		});
 		renderEntityMetrics();
 		expect(screen.getByText('API Error')).toBeInTheDocument();
 		expect(screen.getByText('Network Error')).toBeInTheDocument();
 	});
 
 	it('renders empty state when no metrics data', () => {
-		mockUseQueries.mockReturnValue(mockEmptyQueries);
+		mockUseEntityMetrics.mockReturnValue({
+			queries: mockEmptyQueries as any,
+			chartData: [[[]], null],
+			tableData: [
+				null,
+				[
+					{
+						rows: [],
+						columns: [],
+					},
+				],
+			],
+			queryPayloads: mockQueryPayloads as any,
+		});
 		renderEntityMetrics();
 		expect(screen.getByTestId('uplot-chart')).toBeInTheDocument();
 		expect(screen.getByTestId('metrics-table')).toBeInTheDocument();
@@ -370,22 +435,22 @@ describe('EntityMetrics', () => {
 
 	it('applies intersection observer for visibility', () => {
 		renderEntityMetrics();
-		expect(mockUseQueries).toHaveBeenCalledWith(
-			expect.arrayContaining([
-				expect.objectContaining({
-					enabled: true,
-				}),
-			]),
+		expect(mockUseEntityMetrics).toHaveBeenCalledWith(
+			expect.objectContaining({
+				visibilities: [true, true],
+			}),
 		);
 	});
 
-	it('generates correct query payloads', () => {
+	it('passes correct parameters to useEntityMetrics hook', () => {
 		renderEntityMetrics();
-		expect(mockGetEntityQueryPayload).toHaveBeenCalledWith(
-			mockEntity,
-			mockTimeRange.startTime,
-			mockTimeRange.endTime,
-			false,
+		expect(mockUseEntityMetrics).toHaveBeenCalledWith(
+			expect.objectContaining({
+				queryKey: 'test-query-key',
+				timeRange: mockTimeRange,
+				entity: mockEntity,
+				category: InfraMonitoringEntity.PODS,
+			}),
 		);
 	});
 });

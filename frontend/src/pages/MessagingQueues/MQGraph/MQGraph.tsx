@@ -1,3 +1,7 @@
+import { useCallback, useMemo, useRef } from 'react';
+// eslint-disable-next-line no-restricted-imports
+import { useDispatch } from 'react-redux';
+import { useHistory, useLocation } from 'react-router-dom';
 import logEvent from 'api/common/logEvent';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
@@ -9,9 +13,6 @@ import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsAppli
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useAppContext } from 'providers/App/App';
-import { useCallback, useMemo, useRef } from 'react';
-import { useDispatch } from 'react-redux';
-import { useHistory, useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 
 import {

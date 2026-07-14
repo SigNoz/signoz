@@ -1,15 +1,15 @@
-/* eslint-disable sonarjs/cognitive-complexity */
-import '../OnboardingQuestionaire.styles.scss';
-
-import { Button } from '@signozhq/button';
-import { Checkbox } from '@signozhq/checkbox';
-import { Input } from '@signozhq/input';
-import TextArea from 'antd/lib/input/TextArea';
+import { useEffect, useMemo, useState } from 'react';
+import { Button } from '@signozhq/ui/button';
+import { Checkbox } from '@signozhq/ui/checkbox';
+import { Input } from '@signozhq/ui/input';
+import { Input as AntdInput } from 'antd';
 import logEvent from 'api/common/logEvent';
-import { ArrowRight } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { ArrowRight } from '@signozhq/icons';
+import { useAppContext } from 'providers/App/App';
 
 import { OnboardingQuestionHeader } from '../OnboardingQuestionHeader';
+
+import '../OnboardingQuestionaire.styles.scss';
 
 export interface SignozDetails {
 	interestInSignoz: string[] | null;
@@ -30,13 +30,34 @@ const interestedInOptions: Record<string, string> = {
 	singleTool:
 		'Single Tool (logs, metrics & traces) to reduce operational overhead',
 	correlateSignals: 'Correlate signals for faster troubleshooting',
+	openSourceTooling: 'Prefer open-source tooling',
 };
+
+function seededShuffle<T>(array: T[], seed: string): T[] {
+	const result = [...array];
+
+	let num = 0;
+	for (let i = 0; i < seed.length; i++) {
+		num = Math.imul(num + seed.charCodeAt(i), 2654435761);
+		num = Math.abs(num);
+	}
+
+	for (let i = result.length - 1; i > 0; i--) {
+		num = Math.abs(Math.imul(num, 1664525) + 1013904223);
+		const j = num % (i + 1);
+		[result[i], result[j]] = [result[j], result[i]];
+	}
+
+	return result;
+}
 
 export function AboutSigNozQuestions({
 	signozDetails,
 	setSignozDetails,
 	onNext,
 }: AboutSigNozQuestionsProps): JSX.Element {
+	const { versionData } = useAppContext();
+
 	const [interestInSignoz, setInterestInSignoz] = useState<string[]>(
 		signozDetails?.interestInSignoz || [],
 	);
@@ -47,6 +68,12 @@ export function AboutSigNozQuestions({
 		signozDetails?.discoverSignoz || '',
 	);
 	const [isNextDisabled, setIsNextDisabled] = useState<boolean>(true);
+
+	const shuffledOptionKeys = useMemo(
+		() =>
+			seededShuffle(Object.keys(interestedInOptions), versionData?.version ?? ''),
+		[versionData?.version],
+	);
 
 	useEffect((): void => {
 		if (
@@ -68,11 +95,11 @@ export function AboutSigNozQuestions({
 		}
 	};
 
-	const createInterestChangeHandler = (option: string) => (
-		checked: boolean,
-	): void => {
-		handleInterestChange(option, Boolean(checked));
-	};
+	const createInterestChangeHandler =
+		(option: string) =>
+		(checked: boolean): void => {
+			handleInterestChange(option, Boolean(checked));
+		};
 
 	const handleOnNext = (): void => {
 		setSignozDetails({
@@ -102,7 +129,7 @@ export function AboutSigNozQuestions({
 					<div className="form-group">
 						<div className="question">How did you first come across SigNoz?</div>
 
-						<TextArea
+						<AntdInput.TextArea
 							className="discover-signoz-input"
 							placeholder={`e.g., googling "datadog alternative", a post on r/devops, from a friend/colleague, a LinkedIn post, ChatGPT, etc.`}
 							value={discoverSignoz}
@@ -115,24 +142,26 @@ export function AboutSigNozQuestions({
 					<div className="form-group">
 						<div className="question">What got you interested in SigNoz?</div>
 						<div className="checkbox-grid">
-							{Object.keys(interestedInOptions).map((option: string) => (
+							{shuffledOptionKeys.map((option: string) => (
 								<div key={option} className="checkbox-item">
 									<Checkbox
 										id={`checkbox-${option}`}
-										checked={interestInSignoz.includes(option)}
-										onCheckedChange={createInterestChangeHandler(option)}
-										labelName={interestedInOptions[option]}
-									/>
+										value={interestInSignoz.includes(option)}
+										onChange={createInterestChangeHandler(option)}
+									>
+										{interestedInOptions[option]}
+									</Checkbox>
 								</div>
 							))}
 
 							<div className="checkbox-item checkbox-item-others">
 								<Checkbox
 									id="others-checkbox"
-									checked={interestInSignoz.includes('Others')}
-									onCheckedChange={createInterestChangeHandler('Others')}
-									labelName={interestInSignoz.includes('Others') ? '' : 'Others'}
-								/>
+									value={interestInSignoz.includes('Others')}
+									onChange={createInterestChangeHandler('Others')}
+								>
+									{interestInSignoz.includes('Others') ? '' : 'Others'}
+								</Checkbox>
 								{interestInSignoz.includes('Others') && (
 									<Input
 										type="text"
@@ -155,7 +184,7 @@ export function AboutSigNozQuestions({
 						className={`onboarding-next-button ${isNextDisabled ? 'disabled' : ''}`}
 						onClick={handleOnNext}
 						disabled={isNextDisabled}
-						suffixIcon={<ArrowRight size={12} />}
+						suffix={<ArrowRight size={12} />}
 					>
 						Next
 					</Button>

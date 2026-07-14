@@ -1,0 +1,6 @@
+// Matches ConfigPane's `.field` so the switcher lines up with the title/description fields.
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}

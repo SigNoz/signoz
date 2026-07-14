@@ -1,5 +1,3 @@
-import { PartialOptions } from 'overlayscrollbars';
-import { useOverlayScrollbars } from 'overlayscrollbars-react';
 import {
 	Dispatch,
 	RefObject,
@@ -8,6 +6,8 @@ import {
 	useRef,
 	useState,
 } from 'react';
+import { PartialOptions } from 'overlayscrollbars';
+import { useOverlayScrollbars } from 'overlayscrollbars-react';
 
 const useInitializeOverlayScrollbar = (
 	options: PartialOptions,

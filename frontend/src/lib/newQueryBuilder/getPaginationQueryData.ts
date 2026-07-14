@@ -80,7 +80,7 @@ export const getPaginationQueryData: SetupPaginationQueryData = ({
 							value: listItemId,
 						},
 						...updatedFilters.items,
-				  ]
+					]
 				: updatedFilters.items,
 		op: filters?.op || 'AND',
 	};

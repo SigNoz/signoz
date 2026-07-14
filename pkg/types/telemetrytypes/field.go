@@ -19,40 +19,115 @@ var (
 )
 
 const (
-	// BodyJSONStringSearchPrefix is the prefix used for body JSON search queries
-	// e.g., "body.status" where "body." is the prefix
+	// BodyJSONStringSearchPrefix is the prefix used for body JSON search queries.
+	// e.g., "body.status" where "body." is the prefix.
 	BodyJSONStringSearchPrefix = "body."
 	ArraySep                   = jsontypeexporter.ArraySeparator
-	ArrayAnyIndex              = "[*]."
+	ArraySepSuffix             = "[]"
+	// TODO(Piyush): Remove once we've migrated to the new array syntax.
+	ArrayAnyIndex       = "[*]."
+	ArrayAnyIndexSuffix = "[*]"
 )
 
 type TelemetryFieldKey struct {
-	Name          string        `json:"name"`
+	Name          string        `json:"name" validate:"required" required:"true"`
 	Description   string        `json:"description,omitempty"`
 	Unit          string        `json:"unit,omitempty"`
-	Signal        Signal        `json:"signal,omitempty"`
-	FieldContext  FieldContext  `json:"fieldContext,omitempty"`
-	FieldDataType FieldDataType `json:"fieldDataType,omitempty"`
+	Signal        Signal        `json:"signal,omitzero"`
+	FieldContext  FieldContext  `json:"fieldContext,omitzero"`
+	FieldDataType FieldDataType `json:"fieldDataType,omitzero"`
 
-	JSONDataType *JSONDataType       `json:"-"`
-	Indexes      []JSONDataTypeIndex `json:"-"`
-	Materialized bool                `json:"-"` // refers to promoted in case of body.... fields
+	JSONPlan     JSONAccessPlan               `json:"-"`
+	Indexes      []TelemetryFieldKeySkipIndex `json:"-"`
+	Materialized bool                         `json:"-"` // refers to promoted in case of body.... fields
+
+	Evolutions []*EvolutionEntry `json:"-"`
+}
+
+func (f *TelemetryFieldKey) KeyNameContainsArray() bool {
+	return strings.Contains(f.Name, ArraySep) || strings.Contains(f.Name, ArrayAnyIndex)
+}
+
+// ArrayPathSegments returns just the individual segments of the path.
+// e.g., "education[].awards[].type" -> ["education", "awards", "type"].
+func (f *TelemetryFieldKey) ArrayPathSegments() []string {
+	return strings.Split(strings.ReplaceAll(f.Name, ArrayAnyIndex, ArraySep), ArraySep)
+}
+
+func (f *TelemetryFieldKey) ArrayParentPaths() []string {
+	parts := f.ArrayPathSegments()
+	paths := make([]string, 0, len(parts))
+	for i := range parts {
+		paths = append(paths, strings.Join(parts[:i+1], ArraySep))
+	}
+	return paths
+}
+
+func (f *TelemetryFieldKey) ArrayParentSelectors() []*FieldKeySelector {
+	paths := f.ArrayParentPaths()
+	selectors := make([]*FieldKeySelector, 0, len(paths))
+	for i := range paths {
+		selectors = append(selectors, &FieldKeySelector{
+			Name:              paths[i],
+			SelectorMatchType: FieldSelectorMatchTypeExact,
+			Signal:            f.Signal,
+			FieldContext:      f.FieldContext,
+			Limit:             1,
+		})
+	}
+
+	return selectors
+}
+
+// GetJSONDataType derives the JSONDataType from FieldDataType.
+func (f *TelemetryFieldKey) GetJSONDataType() JSONDataType {
+	return MappingFieldDataTypeToJSONDataType[f.FieldDataType]
 }
 
 func (f TelemetryFieldKey) String() string {
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("name=%s", f.Name))
+	fmt.Fprintf(&sb, "name=%s", f.Name)
 	if f.FieldContext != FieldContextUnspecified {
-		sb.WriteString(fmt.Sprintf(",context=%s", f.FieldContext.String))
+		fmt.Fprintf(&sb, ",context=%s", f.FieldContext.String)
 	}
 	if f.FieldDataType != FieldDataTypeUnspecified {
-		sb.WriteString(fmt.Sprintf(",datatype=%s", f.FieldDataType.StringValue()))
+		fmt.Fprintf(&sb, ",datatype=%s", f.FieldDataType.StringValue())
+	}
+	if f.Materialized {
+		sb.WriteString(",materialized=true")
+	}
+	if len(f.Indexes) > 0 {
+		sb.WriteString(",indexes=[")
+		for i, index := range f.Indexes {
+			if i > 0 {
+				sb.WriteString("; ")
+			}
+			fmt.Fprintf(&sb, "{type=%s, indexExpr=%s}", MappingFieldDataTypeToJSONDataType[index.FieldDataType].StringValue(), index.IndexExpression)
+		}
+		sb.WriteString("]")
 	}
 	return sb.String()
 }
 
 func (f TelemetryFieldKey) Text() string {
 	return TelemetryFieldKeyToText(&f)
+}
+
+// OverrideMetadataFrom copies the resolved metadata fields from src into f.
+// This is used when adjusting user-provided keys to match known field definitions.
+func (f *TelemetryFieldKey) OverrideMetadataFrom(src *TelemetryFieldKey) {
+	f.FieldContext = src.FieldContext
+	f.FieldDataType = src.FieldDataType
+	f.Indexes = src.Indexes
+	f.Materialized = src.Materialized
+	f.JSONPlan = src.JSONPlan
+	f.Evolutions = src.Evolutions
+}
+
+func (f *TelemetryFieldKey) Equal(key *TelemetryFieldKey) bool {
+	return f.Name == key.Name &&
+		f.FieldContext == key.FieldContext &&
+		f.FieldDataType == key.FieldDataType
 }
 
 // Normalize parses and normalizes a TelemetryFieldKey by extracting
@@ -97,58 +172,13 @@ func (f *TelemetryFieldKey) Normalize() {
 
 }
 
-// GetFieldKeyFromKeyText returns a TelemetryFieldKey from a key text.
-// The key text is expected to be in the format of `fieldContext.fieldName:fieldDataType` in the search query.
-// Both fieldContext and :fieldDataType are optional.
-// fieldName can contain dots and can start with a dot (e.g., ".http_code").
-// Special cases:
-// - When key exactly matches a field context name (e.g., "body", "attribute"), use unspecified context
-// - When key starts with "body." prefix, use "body" as context with remainder as field name
+// GetFieldKeyFromKeyText returns a TelemetryFieldKey parsed from a key text of the
+// form `fieldContext.fieldName:fieldDataType` (context and :dataType optional). It
+// delegates to Normalize; see Normalize for the parsing rules and special cases.
 func GetFieldKeyFromKeyText(key string) TelemetryFieldKey {
-	var explicitFieldDataType FieldDataType = FieldDataTypeUnspecified
-	var fieldName string
-
-	// Step 1: Parse data type from the right (after the last ":")
-	var keyWithoutDataType string
-	if colonIdx := strings.LastIndex(key, ":"); colonIdx != -1 {
-		potentialDataType := key[colonIdx+1:]
-		if dt, ok := fieldDataTypes[potentialDataType]; ok && dt != FieldDataTypeUnspecified {
-			explicitFieldDataType = dt
-			keyWithoutDataType = key[:colonIdx]
-		} else {
-			// No valid data type found, treat the entire key as the field name
-			keyWithoutDataType = key
-		}
-	} else {
-		keyWithoutDataType = key
-	}
-
-	// Step 2: Parse field context from the left
-	if dotIdx := strings.Index(keyWithoutDataType, "."); dotIdx != -1 {
-		potentialContext := keyWithoutDataType[:dotIdx]
-		if fc, ok := fieldContexts[potentialContext]; ok && fc != FieldContextUnspecified {
-			fieldName = keyWithoutDataType[dotIdx+1:]
-
-			// Step 2a: Handle special case for log.body.* fields
-			if fc == FieldContextLog && strings.HasPrefix(fieldName, BodyJSONStringSearchPrefix) {
-				fc = FieldContextBody
-				fieldName = strings.TrimPrefix(fieldName, BodyJSONStringSearchPrefix)
-			}
-
-			return TelemetryFieldKey{
-				Name:          fieldName,
-				FieldContext:  fc,
-				FieldDataType: explicitFieldDataType,
-			}
-		}
-	}
-
-	// Step 3: No context found, entire key is the field name
-	return TelemetryFieldKey{
-		Name:          keyWithoutDataType,
-		FieldContext:  FieldContextUnspecified,
-		FieldDataType: explicitFieldDataType,
-	}
+	f := TelemetryFieldKey{Name: key}
+	f.Normalize()
+	return f
 }
 
 func TelemetryFieldKeyToText(key *TelemetryFieldKey) string {
@@ -166,11 +196,19 @@ func TelemetryFieldKeyToText(key *TelemetryFieldKey) string {
 }
 
 func FieldKeyToMaterializedColumnName(key *TelemetryFieldKey) string {
-	return fmt.Sprintf("`%s_%s_%s`", key.FieldContext.String, fieldDataTypes[key.FieldDataType.StringValue()].StringValue(), strings.ReplaceAll(key.Name, ".", "$$"))
+	return fmt.Sprintf("`%s_%s_%s`",
+		key.FieldContext.String,
+		fieldDataTypes[key.FieldDataType.StringValue()].StringValue(),
+		strings.ReplaceAll(key.Name, ".", "$$"),
+	)
 }
 
 func FieldKeyToMaterializedColumnNameForExists(key *TelemetryFieldKey) string {
-	return fmt.Sprintf("`%s_%s_%s_exists`", key.FieldContext.String, fieldDataTypes[key.FieldDataType.StringValue()].StringValue(), strings.ReplaceAll(key.Name, ".", "$$"))
+	return fmt.Sprintf("`%s_%s_%s_exists`",
+		key.FieldContext.String,
+		fieldDataTypes[key.FieldDataType.StringValue()].StringValue(),
+		strings.ReplaceAll(key.Name, ".", "$$"),
+	)
 }
 
 type TelemetryFieldValues struct {
@@ -185,7 +223,8 @@ func (t *TelemetryFieldValues) NumValues() int {
 }
 
 type MetricContext struct {
-	MetricName string `json:"metricName"`
+	MetricName      string `json:"metricName"`
+	MetricNamespace string `json:"metricNamespace,omitempty"`
 }
 
 type FieldKeySelector struct {
@@ -206,4 +245,124 @@ type FieldValueSelector struct {
 	ExistingQuery string `json:"existingQuery"`
 	Value         string `json:"value"`
 	Limit         int    `json:"limit"`
+}
+
+type GettableFieldKeys struct {
+	Keys     map[string][]*TelemetryFieldKey `json:"keys" required:"true"`
+	Complete bool                            `json:"complete" required:"true"`
+}
+
+type PostableFieldKeysParams struct {
+	Signal          Signal        `query:"signal"`
+	Source          Source        `query:"source"`
+	Limit           int           `query:"limit"`
+	StartUnixMilli  int64         `query:"startUnixMilli"`
+	EndUnixMilli    int64         `query:"endUnixMilli"`
+	FieldContext    FieldContext  `query:"fieldContext"`
+	FieldDataType   FieldDataType `query:"fieldDataType"`
+	MetricName      string        `query:"metricName"`
+	MetricNamespace string        `query:"metricNamespace"`
+	SearchText      string        `query:"searchText"`
+}
+
+type GettableFieldValues struct {
+	Values   *TelemetryFieldValues `json:"values" required:"true"`
+	Complete bool                  `json:"complete" required:"true"`
+}
+
+type PostableFieldValueParams struct {
+	PostableFieldKeysParams
+	Name          string `query:"name"`
+	ExistingQuery string `query:"existingQuery"`
+}
+
+func NewFieldKeySelectorFromPostableFieldKeysParams(params PostableFieldKeysParams) *FieldKeySelector {
+	var req FieldKeySelector
+
+	if params.StartUnixMilli != 0 {
+		req.StartUnixMilli = params.StartUnixMilli
+		// Round down to the nearest 6 hours (21600000 milliseconds)
+		req.StartUnixMilli -= req.StartUnixMilli % 21600000
+	}
+
+	if params.EndUnixMilli != 0 {
+		req.EndUnixMilli = params.EndUnixMilli
+	}
+
+	req.Signal = params.Signal
+	req.Source = params.Source
+	req.FieldContext = params.FieldContext
+	req.FieldDataType = params.FieldDataType
+	req.SelectorMatchType = FieldSelectorMatchTypeFuzzy
+
+	if params.Limit != 0 {
+		req.Limit = params.Limit
+	} else {
+		req.Limit = 1000
+	}
+
+	if params.MetricName != "" || params.MetricNamespace != "" {
+		req.MetricContext = &MetricContext{
+			MetricName:      params.MetricName,
+			MetricNamespace: params.MetricNamespace,
+		}
+	}
+
+	req.Name = params.SearchText
+	if params.SearchText != "" && params.FieldContext == FieldContextUnspecified {
+		parsedFieldKey := GetFieldKeyFromKeyText(params.SearchText)
+		if parsedFieldKey.FieldContext != FieldContextUnspecified {
+			// Only apply inferred context if it is valid for the current signal
+			if isContextValidForSignal(parsedFieldKey.FieldContext, req.Signal) {
+				req.Name = parsedFieldKey.Name
+				req.FieldContext = parsedFieldKey.FieldContext
+			}
+		}
+	}
+
+	return &req
+}
+
+func NewFieldValueSelectorFromPostableFieldValueParams(params PostableFieldValueParams) *FieldValueSelector {
+
+	keySelector := NewFieldKeySelectorFromPostableFieldKeysParams(params.PostableFieldKeysParams)
+
+	fieldValueSelector := &FieldValueSelector{
+		FieldKeySelector: keySelector,
+	}
+
+	fieldValueSelector.Name = params.Name
+
+	if params.Name != "" && fieldValueSelector.FieldContext == FieldContextUnspecified {
+		parsedFieldKey := GetFieldKeyFromKeyText(params.Name)
+		if parsedFieldKey.FieldContext != FieldContextUnspecified {
+			// Only apply inferred context if it is valid for the current signal
+			if isContextValidForSignal(parsedFieldKey.FieldContext, fieldValueSelector.Signal) {
+				fieldValueSelector.Name = parsedFieldKey.Name
+				fieldValueSelector.FieldContext = parsedFieldKey.FieldContext
+			}
+		}
+	}
+
+	fieldValueSelector.ExistingQuery = params.ExistingQuery
+	fieldValueSelector.Value = params.SearchText
+
+	if params.Limit != 0 {
+		fieldValueSelector.Limit = params.Limit
+	} else {
+		fieldValueSelector.Limit = 50
+	}
+
+	return fieldValueSelector
+}
+
+type TelemetryFieldKeySkipIndex struct {
+	Name            string        `json:"name"` // Name is TelemetryFieldKey.Name not IndexName from ClickHouse
+	FieldContext    FieldContext  `json:"fieldContext,omitzero"`
+	FieldDataType   FieldDataType `json:"fieldDataType,omitzero"`
+	BaseColumn      string        `json:"baseColumn"`
+	IndexName       string        `json:"indexName"`
+	IndexType       string        `json:"indexType"`
+	IndexExpression string        `json:"indexExpression"`
+	Granularity     int           `json:"granularity"`
 }

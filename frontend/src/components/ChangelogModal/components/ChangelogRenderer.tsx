@@ -1,13 +1,13 @@
-import './ChangelogRenderer.styles.scss';
-
-import dayjs from 'dayjs';
 import ReactMarkdown from 'react-markdown';
+import dayjs from 'dayjs';
 import {
 	ChangelogSchema,
 	Media,
 	SupportedImageTypes,
 	SupportedVideoTypes,
 } from 'types/api/changelog/getChangelogByVersion';
+
+import './ChangelogRenderer.styles.scss';
 
 interface Props {
 	changelog: ChangelogSchema;

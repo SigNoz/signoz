@@ -1,7 +1,7 @@
 import { QueryOperatorsMultiVal } from 'lib/logql/tokens';
 
 type Keys = keyof typeof QueryOperatorsMultiVal;
-type Values = typeof QueryOperatorsMultiVal[Keys];
+type Values = (typeof QueryOperatorsMultiVal)[Keys];
 
 interface GenerateFilterQueryParams {
 	fieldKey: string;

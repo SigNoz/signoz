@@ -1,6 +1,6 @@
-import './SignozModal.style.scss';
-
 import { Modal, ModalProps } from 'antd';
+
+import './SignozModal.style.scss';
 
 function SignozModal({
 	children,
@@ -14,7 +14,6 @@ function SignozModal({
 			width={width}
 			cancelText="Close"
 			rootClassName={`signoz-modal ${rootClassName}`}
-			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...rest}
 		>
 			{children}

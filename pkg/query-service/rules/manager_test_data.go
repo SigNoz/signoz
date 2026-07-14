@@ -4,17 +4,17 @@ import (
 	"math"
 	"time"
 
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 // ThresholdRuleTestCase defines test case structure for threshold rule test notifications
 type ThresholdRuleTestCase struct {
 	Name         string
-	Values       [][]interface{}
+	Values       [][]any
 	ExpectAlerts int
 	ExpectValue  float64
 }
@@ -40,8 +40,8 @@ func ThresholdRuleAtLeastOnceValueAbove(target float64, recovery *float64) rulet
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeThreshold,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
-			EvalWindow: ruletypes.Duration(5 * time.Minute),
-			Frequency:  ruletypes.Duration(1 * time.Minute),
+			EvalWindow: valuer.MustParseTextDuration("5m"),
+			Frequency:  valuer.MustParseTextDuration("1m"),
 		}},
 		Labels: map[string]string{
 			"service.name": "frontend",
@@ -51,11 +51,11 @@ func ThresholdRuleAtLeastOnceValueAbove(target float64, recovery *float64) rulet
 		},
 		Version: "v5",
 		RuleCondition: &ruletypes.RuleCondition{
-			MatchType: ruletypes.AtleastOnce,
-			CompareOp: ruletypes.ValueIsAbove,
-			Target:    &target,
-			CompositeQuery: &v3.CompositeQuery{
-				QueryType: v3.QueryTypeBuilder,
+			MatchType:       ruletypes.AtleastOnce,
+			CompareOperator: ruletypes.ValueIsAbove,
+			Target:          &target,
+			CompositeQuery: &ruletypes.AlertCompositeQuery{
+				QueryType: ruletypes.QueryTypeBuilder,
 				Queries: []qbtypes.QueryEnvelope{
 					{
 						Type: qbtypes.QueryTypeBuilder,
@@ -79,11 +79,11 @@ func ThresholdRuleAtLeastOnceValueAbove(target float64, recovery *float64) rulet
 				Kind: ruletypes.BasicThresholdKind,
 				Spec: ruletypes.BasicRuleThresholds{
 					{
-						Name:           "primary",
-						TargetValue:    &target,
-						RecoveryTarget: recovery,
-						MatchType:      ruletypes.AtleastOnce,
-						CompareOp:      ruletypes.ValueIsAbove,
+						Name:            "primary",
+						TargetValue:     &target,
+						RecoveryTarget:  recovery,
+						MatchType:       ruletypes.AtleastOnce,
+						CompareOperator: ruletypes.ValueIsAbove,
 					},
 				},
 			},
@@ -99,8 +99,8 @@ func BuildPromAtLeastOnceValueAbove(target float64, recovery *float64) ruletypes
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeProm,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
-			EvalWindow: ruletypes.Duration(5 * time.Minute),
-			Frequency:  ruletypes.Duration(1 * time.Minute),
+			EvalWindow: valuer.MustParseTextDuration("5m"),
+			Frequency:  valuer.MustParseTextDuration("1m"),
 		}},
 		Labels: map[string]string{
 			"service.name": "frontend",
@@ -110,13 +110,13 @@ func BuildPromAtLeastOnceValueAbove(target float64, recovery *float64) ruletypes
 		},
 		Version: "v5",
 		RuleCondition: &ruletypes.RuleCondition{
-			MatchType:     ruletypes.AtleastOnce,
-			SelectedQuery: "A",
-			CompareOp:     ruletypes.ValueIsAbove,
-			Target:        &target,
-			CompositeQuery: &v3.CompositeQuery{
-				QueryType: v3.QueryTypePromQL,
-				PanelType: v3.PanelTypeGraph,
+			MatchType:       ruletypes.AtleastOnce,
+			SelectedQuery:   "A",
+			CompareOperator: ruletypes.ValueIsAbove,
+			Target:          &target,
+			CompositeQuery: &ruletypes.AlertCompositeQuery{
+				QueryType: ruletypes.QueryTypePromQL,
+				PanelType: ruletypes.PanelTypeGraph,
 				Queries: []qbtypes.QueryEnvelope{
 					{
 						Type: qbtypes.QueryTypePromQL,
@@ -133,12 +133,12 @@ func BuildPromAtLeastOnceValueAbove(target float64, recovery *float64) ruletypes
 				Kind: ruletypes.BasicThresholdKind,
 				Spec: ruletypes.BasicRuleThresholds{
 					{
-						Name:           "primary",
-						TargetValue:    &target,
-						RecoveryTarget: recovery,
-						MatchType:      ruletypes.AtleastOnce,
-						CompareOp:      ruletypes.ValueIsAbove,
-						Channels:       []string{"slack"},
+						Name:            "primary",
+						TargetValue:     &target,
+						RecoveryTarget:  recovery,
+						MatchType:       ruletypes.AtleastOnce,
+						CompareOperator: ruletypes.ValueIsAbove,
+						Channels:        []string{"slack"},
 					},
 				},
 			},
@@ -152,7 +152,7 @@ var (
 	TcTestNotiSendUnmatchedThresholdRule = []ThresholdRuleTestCase{
 		{
 			Name: "return first valid point in case of test notification",
-			Values: [][]interface{}{
+			Values: [][]any{
 				{float64(3), "attr", time.Now()},
 				{float64(4), "attr", time.Now().Add(1 * time.Minute)},
 			},
@@ -161,12 +161,12 @@ var (
 		},
 		{
 			Name:         "No data in DB so no alerts fired",
-			Values:       [][]interface{}{},
+			Values:       [][]any{},
 			ExpectAlerts: 0,
 		},
 		{
 			Name: "return first valid point in case of test notification skips NaN and Inf",
-			Values: [][]interface{}{
+			Values: [][]any{
 				{math.NaN(), "attr", time.Now()},
 				{math.Inf(1), "attr", time.Now().Add(1 * time.Minute)},
 				{float64(7), "attr", time.Now().Add(2 * time.Minute)},
@@ -176,7 +176,7 @@ var (
 		},
 		{
 			Name: "If found matching alert with given target value, return the alerting value rather than first valid point",
-			Values: [][]interface{}{
+			Values: [][]any{
 				{float64(1), "attr", time.Now()},
 				{float64(2), "attr", time.Now().Add(1 * time.Minute)},
 				{float64(3), "attr", time.Now().Add(2 * time.Minute)},

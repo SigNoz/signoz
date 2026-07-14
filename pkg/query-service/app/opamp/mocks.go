@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 
+	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/google/uuid"
 	"github.com/knadh/koanf"
@@ -125,6 +126,11 @@ func (ta *MockAgentConfigProvider) HasReportedDeploymentStatus(orgID valuer.UUID
 	}
 	_, exists := confIdReports[agentId]
 	return exists
+}
+
+// AgentConfigProvider interface
+func (ta *MockAgentConfigProvider) GetDeployStatusByHash(_ context.Context, _ valuer.UUID, _ string) (opamptypes.DeployStatus, error) {
+	return opamptypes.DeployStatusUnknown, nil
 }
 
 // AgentConfigProvider interface

@@ -1,9 +1,9 @@
+import React, { ComponentType, Suspense } from 'react';
 import {
 	render,
 	screen,
 	waitForElementToBeRemoved,
 } from '@testing-library/react';
-import React, { ComponentType, Suspense } from 'react';
 
 import Loadable from './index';
 

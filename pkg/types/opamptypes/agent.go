@@ -6,6 +6,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/open-telemetry/opamp-go/protobufs"
 	"github.com/uptrace/bun"
 )
 
@@ -16,6 +17,15 @@ const (
 	AgentStatusConnected
 	AgentStatusDisconnected
 )
+
+var DeployStatusToProtoStatus = map[DeployStatus]protobufs.RemoteConfigStatuses{
+	PendingDeploy:       protobufs.RemoteConfigStatuses_RemoteConfigStatuses_UNSET,
+	Deploying:           protobufs.RemoteConfigStatuses_RemoteConfigStatuses_APPLYING,
+	Deployed:            protobufs.RemoteConfigStatuses_RemoteConfigStatuses_APPLIED,
+	DeployInitiated:     protobufs.RemoteConfigStatuses_RemoteConfigStatuses_APPLYING,
+	DeployFailed:        protobufs.RemoteConfigStatuses_RemoteConfigStatuses_FAILED,
+	DeployStatusUnknown: protobufs.RemoteConfigStatuses_RemoteConfigStatuses_UNSET,
+}
 
 type StorableAgent struct {
 	bun.BaseModel `bun:"table:agent"`
@@ -30,16 +40,6 @@ type StorableAgent struct {
 	Config       string      `bun:"config,type:text,notnull"`
 }
 
-func NewStorableAgent(store sqlstore.SQLStore, orgID valuer.UUID, agentID string, status AgentStatus) StorableAgent {
-	return StorableAgent{
-		OrgID:         orgID,
-		Identifiable:  types.Identifiable{ID: valuer.GenerateUUID()},
-		AgentID:       agentID,
-		TimeAuditable: types.TimeAuditable{CreatedAt: time.Now(), UpdatedAt: time.Now()},
-		Status:        status,
-	}
-}
-
 type ElementType struct{ valuer.String }
 
 var (
@@ -48,24 +48,6 @@ var (
 	ElementTypeLogPipelines  = ElementType{valuer.NewString("log_pipelines")}
 	ElementTypeLbExporter    = ElementType{valuer.NewString("lb_exporter")}
 )
-
-// NewElementType creates a new ElementType from a string value.
-// Returns the corresponding ElementType constant if the string matches,
-// otherwise returns an empty ElementType.
-func NewElementType(value string) ElementType {
-	switch valuer.NewString(value) {
-	case ElementTypeSamplingRules.String:
-		return ElementTypeSamplingRules
-	case ElementTypeDropRules.String:
-		return ElementTypeDropRules
-	case ElementTypeLogPipelines.String:
-		return ElementTypeLogPipelines
-	case ElementTypeLbExporter.String:
-		return ElementTypeLbExporter
-	default:
-		return ElementType{valuer.NewString("")}
-	}
-}
 
 type DeployStatus struct{ valuer.String }
 
@@ -98,6 +80,26 @@ type AgentConfigVersion struct {
 	Config         string       `json:"config" bun:"config,type:text"`
 }
 
+type AgentConfigElement struct {
+	bun.BaseModel `bun:"table:agent_config_element"`
+
+	types.Identifiable
+	types.TimeAuditable
+	ElementID   string      `bun:"element_id,type:text,notnull,unique:element_type_version_idx"`
+	ElementType string      `bun:"element_type,type:text,notnull,unique:element_type_version_idx"`
+	VersionID   valuer.UUID `bun:"version_id,type:text,notnull,unique:element_type_version_idx"`
+}
+
+func NewStorableAgent(store sqlstore.SQLStore, orgID valuer.UUID, agentID string, status AgentStatus) StorableAgent {
+	return StorableAgent{
+		OrgID:         orgID,
+		Identifiable:  types.Identifiable{ID: valuer.GenerateUUID()},
+		AgentID:       agentID,
+		TimeAuditable: types.TimeAuditable{CreatedAt: time.Now(), UpdatedAt: time.Now()},
+		Status:        status,
+	}
+}
+
 func NewAgentConfigVersion(orgId valuer.UUID, userId valuer.UUID, elementType ElementType) *AgentConfigVersion {
 	return &AgentConfigVersion{
 		TimeAuditable: types.TimeAuditable{
@@ -118,12 +120,20 @@ func (a *AgentConfigVersion) IncrementVersion(lastVersion int) {
 	a.Version = lastVersion + 1
 }
 
-type AgentConfigElement struct {
-	bun.BaseModel `bun:"table:agent_config_element"`
-
-	types.Identifiable
-	types.TimeAuditable
-	ElementID   string      `bun:"element_id,type:text,notnull,unique:element_type_version_idx"`
-	ElementType string      `bun:"element_type,type:text,notnull,unique:element_type_version_idx"`
-	VersionID   valuer.UUID `bun:"version_id,type:text,notnull,unique:element_type_version_idx"`
+// NewElementType creates a new ElementType from a string value.
+// Returns the corresponding ElementType constant if the string matches,
+// otherwise returns an empty ElementType.
+func NewElementType(value string) ElementType {
+	switch valuer.NewString(value) {
+	case ElementTypeSamplingRules.String:
+		return ElementTypeSamplingRules
+	case ElementTypeDropRules.String:
+		return ElementTypeDropRules
+	case ElementTypeLogPipelines.String:
+		return ElementTypeLogPipelines
+	case ElementTypeLbExporter.String:
+		return ElementTypeLbExporter
+	default:
+		return ElementType{valuer.NewString("")}
+	}
 }

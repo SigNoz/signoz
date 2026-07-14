@@ -6,7 +6,7 @@
 	&__steps-config {
 		flex-shrink: 0;
 		width: 600px;
-		border-right: 1px solid var(--bg-slate-400);
+		border-right: 1px solid var(--l1-border);
 		position: relative;
 	}
 	&__steps-results {
@@ -15,14 +15,6 @@
 
 		&::-webkit-scrollbar {
 			width: 0.1rem;
-		}
-	}
-}
-
-.lightMode {
-	.traces-funnel-details {
-		&__steps-config {
-			border-color: var(--bg-vanilla-300);
 		}
 	}
 }

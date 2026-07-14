@@ -1,12 +1,14 @@
-import { noop, unset } from 'lodash-es';
 import {
+	// eslint-disable-next-line no-restricted-imports
 	createContext,
 	useCallback,
+	// eslint-disable-next-line no-restricted-imports
 	useContext,
 	useEffect,
 	useMemo,
 	useRef,
 } from 'react';
+import { noop, unset } from 'lodash-es';
 
 import { useCmdK } from '../../providers/cmdKProvider';
 
@@ -82,11 +84,12 @@ export function KeyboardHotkeysProvider({
 		}
 
 		const target = event.target as HTMLElement;
-		const isCodeMirrorEditor =
-			(target as HTMLElement).closest('.cm-editor') !== null;
+		const isCodeMirrorEditor = target.closest('.cm-editor') !== null;
+		const isMonacoEditor = target.closest('.monaco-editor') !== null;
 		if (
-			IGNORE_INPUTS.includes((target as HTMLElement).tagName.toLowerCase()) ||
-			isCodeMirrorEditor
+			IGNORE_INPUTS.includes(target.tagName.toLowerCase()) ||
+			isCodeMirrorEditor ||
+			isMonacoEditor
 		) {
 			return;
 		}

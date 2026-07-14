@@ -7,8 +7,10 @@ import {
 import ROUTES from 'constants/routes';
 import { isApmMetric } from 'container/PanelWrapper/utils';
 import {
+	applyMappingsToExpression,
+	DRILLDOWN_TO_LOGS_MAPPINGS,
+	DRILLDOWN_TO_TRACES_MAPPINGS,
 	METRIC_TO_LOGS_TRACES_MAPPINGS,
-	replaceKeysAndValuesInExpression,
 } from 'container/QueryTable/Drilldown/metricsCorrelationUtils';
 import cloneDeep from 'lodash-es/cloneDeep';
 import {
@@ -166,7 +168,7 @@ export const getAggregateColumnHeader = (
 	};
 };
 
-const getFiltersFromMetric = (metric: any): FilterData[] =>
+export const getFiltersFromMetric = (metric: any): FilterData[] =>
 	Object.keys(metric).map((key) => ({
 		filterKey: key,
 		filterValue: metric[key],
@@ -196,6 +198,7 @@ export const getUplotClickData = ({
 	coord: { x: number; y: number };
 	record: { queryName: string; filters: FilterData[] };
 	label: string | React.ReactNode;
+	seriesColor?: string;
 } | null => {
 	if (!queryData?.queryName || !metric) {
 		return null;
@@ -208,6 +211,8 @@ export const getUplotClickData = ({
 
 	// Generate label from focusedSeries data
 	let label: string | React.ReactNode = '';
+	const seriesColor = focusedSeries?.color;
+
 	if (focusedSeries && focusedSeries.seriesName) {
 		label = (
 			<span style={{ color: focusedSeries.color }}>
@@ -223,6 +228,7 @@ export const getUplotClickData = ({
 		},
 		record,
 		label,
+		seriesColor,
 	};
 };
 
@@ -237,6 +243,7 @@ export const getPieChartClickData = (
 	queryName: string;
 	filters: FilterData[];
 	label: string | React.ReactNode;
+	seriesColor?: string;
 } | null => {
 	const { metric, queryName } = arc.data.record;
 	if (!queryName || !metric) {
@@ -248,6 +255,7 @@ export const getPieChartClickData = (
 		queryName,
 		filters: getFiltersFromMetric(metric), // TODO: add where clause query as well.
 		label,
+		seriesColor: arc.data.color,
 	};
 };
 
@@ -341,27 +349,41 @@ export const getViewQuery = (
 	newQuery.builder.queryData[0].filter = newFilterExpression;
 
 	try {
-		// ===========================================
-		// TEMP LOGIC - TO BE REMOVED LATER
-		// ===========================================
-		// Apply metric-to-logs/traces transformations
+		// Drill-down filter sanitisation. Two stages:
+		//   1. Source-side: rewrite metric-APM-specific keys (operation, span.kind,
+		//      status.code) so they map onto trace/log columns.
+		//   2. Target-side: normalise legacy keys to OTel-canonical (`serviceName`
+		//      -> `service.name`) and drop keys with no equivalent in the target
+		//      datasource (e.g. `name` for logs).
+		let expression = newFilterExpression?.expression || '';
+
 		const specificQuery = getQueryData(query, queryName);
 		const isMetricQuery = specificQuery?.dataSource === 'metrics';
 		const metricName = (specificQuery?.aggregations?.[0] as MetricAggregation)
 			?.metricName;
 
 		if (isMetricQuery && isApmMetric(metricName || '')) {
-			const transformedExpression = replaceKeysAndValuesInExpression(
-				newFilterExpression?.expression || '',
+			expression = applyMappingsToExpression(
+				expression,
 				METRIC_TO_LOGS_TRACES_MAPPINGS,
 			);
-			newQuery.builder.queryData[0].filter = {
-				expression: transformedExpression || '',
-			};
 		}
-		// ===========================================
+
+		if (key === 'view_logs') {
+			expression = applyMappingsToExpression(
+				expression,
+				DRILLDOWN_TO_LOGS_MAPPINGS,
+			);
+		} else if (key === 'view_traces') {
+			expression = applyMappingsToExpression(
+				expression,
+				DRILLDOWN_TO_TRACES_MAPPINGS,
+			);
+		}
+
+		newQuery.builder.queryData[0].filter = { expression };
 	} catch (error) {
-		console.error('Error transforming metrics to logs/traces:', error);
+		console.error('Error sanitising drilldown filter expression:', error);
 	}
 
 	return newQuery;

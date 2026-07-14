@@ -1,3 +1,4 @@
+import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
 import { render } from 'tests/test-utils';
 import { Widgets } from 'types/api/dashboard/getAll';
 
@@ -20,8 +21,9 @@ describe('Value panel wrappper tests', () => {
 	it('should render value panel correctly with yaxis unit', () => {
 		const { getByText } = render(
 			<ValuePanelWrapper
-				widget={(valuePanelWidget as unknown) as Widgets}
-				queryResponse={(valuePanelQueryResponse as unknown) as any}
+				panelMode={PanelMode.DASHBOARD_VIEW}
+				widget={valuePanelWidget as unknown as Widgets}
+				queryResponse={valuePanelQueryResponse as unknown as any}
 				onDragSelect={(): void => {}}
 			/>,
 		);
@@ -34,8 +36,9 @@ describe('Value panel wrappper tests', () => {
 	it('should render tooltip when there are conflicting thresholds', () => {
 		const { getByTestId, container } = render(
 			<ValuePanelWrapper
-				widget={({ ...valuePanelWidget, thresholds } as unknown) as Widgets}
-				queryResponse={(valuePanelQueryResponse as unknown) as any}
+				panelMode={PanelMode.DASHBOARD_VIEW}
+				widget={{ ...valuePanelWidget, thresholds } as unknown as Widgets}
+				queryResponse={valuePanelQueryResponse as unknown as any}
 				onDragSelect={(): void => {}}
 			/>,
 		);

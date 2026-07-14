@@ -6,34 +6,38 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"runtime/debug"
 	"strconv"
 
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/SigNoz/signoz/pkg/variables"
 )
 
-type API struct {
+type handler struct {
 	set       factory.ProviderSettings
 	analytics analytics.Analytics
 	querier   Querier
 }
 
-func NewAPI(set factory.ProviderSettings, querier Querier, analytics analytics.Analytics) *API {
-	return &API{set: set, querier: querier, analytics: analytics}
+func NewHandler(set factory.ProviderSettings, querier Querier, analytics analytics.Analytics) Handler {
+	return &handler{set: set, querier: querier, analytics: analytics}
 }
 
-func (a *API) QueryRange(rw http.ResponseWriter, req *http.Request) {
-
+func (handler *handler) QueryRange(rw http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "querier",
+		instrumentationtypes.CodeFunctionName: "QueryRange",
+	})
 
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
@@ -42,30 +46,10 @@ func (a *API) QueryRange(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	var queryRangeRequest qbtypes.QueryRangeRequest
-	if err := json.NewDecoder(req.Body).Decode(&queryRangeRequest); err != nil {
+	if err := binding.JSON.BindBody(req.Body, &queryRangeRequest); err != nil {
 		render.Error(rw, err)
 		return
 	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			stackTrace := string(debug.Stack())
-
-			queryJSON, _ := json.Marshal(queryRangeRequest)
-
-			a.set.Logger.ErrorContext(ctx, "panic in QueryRange",
-				"error", r,
-				"user", claims.UserID,
-				"payload", string(queryJSON),
-				"stacktrace", stackTrace,
-			)
-
-			render.Error(rw, errors.NewInternalf(
-				errors.CodeInternal,
-				"Something went wrong on our end. It's not you, it's us. Our team is notified about it. Reach out to support if issue persists.",
-			))
-		}
-	}()
 
 	// Validate the query request
 	if err := queryRangeRequest.Validate(); err != nil {
@@ -79,17 +63,64 @@ func (a *API) QueryRange(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	queryRangeResponse, err := a.querier.QueryRange(ctx, orgID, &queryRangeRequest)
+	queryRangeResponse, err := handler.querier.QueryRange(ctx, orgID, &queryRangeRequest)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	a.logEvent(req.Context(), req.Header.Get("Referer"), queryRangeResponse.QBEvent)
+	handler.logEvent(req.Context(), req.Header.Get("Referer"), queryRangeResponse.QBEvent)
 
 	render.Success(rw, http.StatusOK, queryRangeResponse)
 }
-func (a *API) QueryRawStream(rw http.ResponseWriter, req *http.Request) {
+
+// QueryRangePreview is the dry-run counterpart of QueryRange: it validates and
+// renders each query without executing it.
+func (handler *handler) QueryRangePreview(rw http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "querier",
+		instrumentationtypes.CodeFunctionName: "QueryRangePreview",
+	})
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	var queryRangeRequest qbtypes.QueryRangeRequest
+	if err := json.NewDecoder(req.Body).Decode(&queryRangeRequest); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	// Validation is deferred to QueryRangePreview, which reports per-query
+	// errors instead of failing fast.
+
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	previewParams := qbtypes.QueryRangePreviewParams{Verbose: req.URL.Query().Get("verbose")}
+	previewOpts, err := previewParams.Validate()
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	preview, err := handler.querier.QueryRangePreview(ctx, orgID, &queryRangeRequest, previewOpts)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, preview)
+}
+
+func (handler *handler) QueryRawStream(rw http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 
 	// get the param from url and add it to body
@@ -147,26 +178,6 @@ func (a *API) QueryRawStream(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	defer func() {
-		if r := recover(); r != nil {
-			stackTrace := string(debug.Stack())
-
-			queryJSON, _ := json.Marshal(queryRangeRequest)
-
-			a.set.Logger.ErrorContext(ctx, "panic in QueryRawStream",
-				"error", r,
-				"user", claims.UserID,
-				"payload", string(queryJSON),
-				"stacktrace", stackTrace,
-			)
-
-			render.Error(rw, errors.NewInternalf(
-				errors.CodeInternal,
-				"Something went wrong on our end. It's not you, it's us. Our team is notified about it. Reach out to support if issue persists.",
-			))
-		}
-	}()
-
 	// Validate the query request
 	if err := queryRangeRequest.Validate(); err != nil {
 		render.Error(rw, err)
@@ -193,7 +204,7 @@ func (a *API) QueryRawStream(rw http.ResponseWriter, req *http.Request) {
 	flusher.Flush()
 
 	client := &qbtypes.RawStream{Name: req.RemoteAddr, Logs: make(chan *qbtypes.RawRow, 1000), Done: make(chan *bool), Error: make(chan error)}
-	go a.querier.QueryRawStream(ctx, orgID, &queryRangeRequest, client)
+	go handler.querier.QueryRawStream(ctx, orgID, &queryRangeRequest, client)
 
 	for {
 		select {
@@ -219,11 +230,11 @@ func (a *API) QueryRawStream(rw http.ResponseWriter, req *http.Request) {
 }
 
 // TODO(srikanthccv): everything done here can be done on frontend as well
-// For the time being I am adding a helper function
-func (a *API) ReplaceVariables(rw http.ResponseWriter, req *http.Request) {
+// For the time being I am adding a helper function.
+func (handler *handler) ReplaceVariables(rw http.ResponseWriter, req *http.Request) {
 
 	var queryRangeRequest qbtypes.QueryRangeRequest
-	if err := json.NewDecoder(req.Body).Decode(&queryRangeRequest); err != nil {
+	if err := binding.JSON.BindBody(req.Body, &queryRangeRequest); err != nil {
 		render.Error(rw, err)
 		return
 	}
@@ -239,7 +250,9 @@ func (a *API) ReplaceVariables(rw http.ResponseWriter, req *http.Request) {
 					if err != nil {
 						errs = append(errs, err)
 					}
-					a.set.Logger.WarnContext(req.Context(), "variable replace warnings", "warnings", warnings)
+					if len(warnings) > 0 {
+						handler.set.Logger.WarnContext(req.Context(), "variable replace warnings", "warnings", warnings)
+					}
 					spec.Filter.Expression = replaced
 				}
 				queryRangeRequest.CompositeQuery.Queries[idx].Spec = spec
@@ -249,7 +262,9 @@ func (a *API) ReplaceVariables(rw http.ResponseWriter, req *http.Request) {
 					if err != nil {
 						errs = append(errs, err)
 					}
-					a.set.Logger.WarnContext(req.Context(), "variable replace warnings", "warnings", warnings)
+					if len(warnings) > 0 {
+						handler.set.Logger.WarnContext(req.Context(), "variable replace warnings", "warnings", warnings)
+					}
 					spec.Filter.Expression = replaced
 				}
 				queryRangeRequest.CompositeQuery.Queries[idx].Spec = spec
@@ -259,7 +274,9 @@ func (a *API) ReplaceVariables(rw http.ResponseWriter, req *http.Request) {
 					if err != nil {
 						errs = append(errs, err)
 					}
-					a.set.Logger.WarnContext(req.Context(), "variable replace warnings", "warnings", warnings)
+					if len(warnings) > 0 {
+						handler.set.Logger.WarnContext(req.Context(), "variable replace warnings", "warnings", warnings)
+					}
 					spec.Filter.Expression = replaced
 				}
 				queryRangeRequest.CompositeQuery.Queries[idx].Spec = spec
@@ -275,13 +292,13 @@ func (a *API) ReplaceVariables(rw http.ResponseWriter, req *http.Request) {
 	render.Success(rw, http.StatusOK, queryRangeRequest)
 }
 
-func (a *API) logEvent(ctx context.Context, referrer string, event *qbtypes.QBEvent) {
+func (handler *handler) logEvent(ctx context.Context, referrer string, event *qbtypes.QBEvent) {
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
 		return
 	}
 
-	if !(event.LogsUsed || event.MetricsUsed || event.TracesUsed) {
+	if !event.LogsUsed && !event.MetricsUsed && !event.TracesUsed {
 		return
 	}
 
@@ -308,8 +325,9 @@ func (a *API) logEvent(ctx context.Context, referrer string, event *qbtypes.QBEv
 	}
 
 	if !event.HasData {
-		a.analytics.TrackUser(ctx, claims.OrgID, claims.UserID, "Telemetry Query Returned Empty", properties)
+		handler.analytics.TrackUser(ctx, claims.OrgID, claims.IdentityID(), "Telemetry Query Returned Empty", properties)
 		return
 	}
-	a.analytics.TrackUser(ctx, claims.OrgID, claims.UserID, "Telemetry Query Returned Results", properties)
+
+	handler.analytics.TrackUser(ctx, claims.OrgID, claims.IdentityID(), "Telemetry Query Returned Results", properties)
 }

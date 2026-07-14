@@ -1,11 +1,11 @@
-import './InfrastructureMonitoring.styles.scss';
-
+import { useLocation } from 'react-use';
 import RouteTab from 'components/RouteTab';
 import { TabRoutes } from 'components/RouteTab/types';
 import history from 'lib/history';
-import { useLocation } from 'react-use';
 
 import { Hosts, Kubernetes } from './constants';
+
+import './InfrastructureMonitoring.styles.scss';
 
 export default function InfrastructureMonitoringPage(): JSX.Element {
 	const { pathname } = useLocation();

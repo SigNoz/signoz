@@ -1,5 +1,10 @@
-import { Form, FormInstance, Input, Select, Switch, Typography } from 'antd';
-import { Store } from 'antd/lib/form/interface';
+import { Dispatch, ReactElement, SetStateAction } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Input } from '@signozhq/ui/input';
+import { Switch } from '@signozhq/ui/switch';
+import { Form, FormInstance, Select } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
+import type { Store } from 'antd/lib/form/interface';
 import ROUTES from 'constants/routes';
 import {
 	ChannelType,
@@ -10,8 +15,6 @@ import {
 	WebhookChannel,
 } from 'container/CreateAlertChannels/config';
 import history from 'lib/history';
-import { Dispatch, ReactElement, SetStateAction } from 'react';
-import { useTranslation } from 'react-i18next';
 
 import EmailSettings from './Settings/Email';
 import MsTeamsSettings from './Settings/MsTeams';
@@ -81,8 +84,8 @@ function FormAlertChannels({
 					name="send_resolved"
 				>
 					<Switch
-						defaultChecked={initialValue?.send_resolved}
-						data-testid="field-send-resolved-checkbox"
+						defaultValue={initialValue?.send_resolved}
+						testId="field-send-resolved-checkbox"
 						onChange={(value): void => {
 							setSelectedConfig((state) => ({
 								...state,
@@ -133,6 +136,7 @@ function FormAlertChannels({
 
 				<Form.Item>
 					<Button
+						data-testid="save-channel-button"
 						disabled={savingState}
 						loading={savingState}
 						type="primary"
@@ -141,6 +145,7 @@ function FormAlertChannels({
 						{t('button_save_channel')}
 					</Button>
 					<Button
+						data-testid="test-channel-button"
 						disabled={testingState}
 						loading={testingState}
 						onClick={(): void => onTestHandler(type)}
@@ -148,6 +153,7 @@ function FormAlertChannels({
 						{t('button_test_channel')}
 					</Button>
 					<Button
+						data-testid="return-button"
 						onClick={(): void => {
 							history.replace(ROUTES.ALL_CHANNELS);
 						}}

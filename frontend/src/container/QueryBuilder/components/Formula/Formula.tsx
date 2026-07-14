@@ -1,5 +1,4 @@
-import './Formula.styles.scss';
-
+import { ChangeEvent, useCallback, useMemo, useState } from 'react';
 import { Col, Input, Row, Select } from 'antd';
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
 import { LEGEND } from 'constants/global';
@@ -11,7 +10,6 @@ import OrderByFilter from 'container/QueryBuilder/filters/Formula/OrderBy/OrderB
 // ** Hooks
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
-import { ChangeEvent, useCallback, useMemo, useState } from 'react';
 import {
 	IBuilderFormula,
 	OrderByPayload,
@@ -24,6 +22,8 @@ import QBEntityOptions from '../QBEntityOptions/QBEntityOptions';
 // ** Types
 import { FormulaProps } from './Formula.interfaces';
 
+import './Formula.styles.scss';
+
 export function Formula({
 	index,
 	formula,
@@ -32,21 +32,17 @@ export function Formula({
 	isAdditionalFilterEnable,
 	isQBV2,
 }: FormulaProps): JSX.Element {
-	const {
-		removeQueryBuilderEntityByIndex,
-		handleSetFormulaData,
-	} = useQueryBuilder();
+	const { removeQueryBuilderEntityByIndex, handleSetFormulaData } =
+		useQueryBuilder();
 
-	const {
-		listOfAdditionalFormulaFilters,
-		handleChangeFormulaData,
-	} = useQueryOperations({
-		index,
-		query,
-		filterConfigs,
-		formula,
-		entityVersion: '',
-	});
+	const { listOfAdditionalFormulaFilters, handleChangeFormulaData } =
+		useQueryOperations({
+			index,
+			query,
+			filterConfigs,
+			formula,
+			entityVersion: '',
+		});
 
 	const [isCollapse, setIsCollapsed] = useState(false);
 

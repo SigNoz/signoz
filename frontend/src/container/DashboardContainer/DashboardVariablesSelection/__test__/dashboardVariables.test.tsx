@@ -2,14 +2,12 @@ import {
 	buildDependencies,
 	buildDependencyGraph,
 	buildParentDependencyGraph,
-	checkAPIInvocation,
 	onUpdateVariableNode,
 	VariableGraph,
 } from '../util';
 import {
 	buildDependenciesMock,
 	buildGraphMock,
-	checkAPIInvocationMock,
 	onUpdateVariableNodeMock,
 } from './mock';
 
@@ -49,7 +47,7 @@ describe('dashboardVariables - utilities and processors', () => {
 			},
 		];
 
-		test.each(testCases)(
+		it.each(testCases)(
 			'should update variable node when $scenario',
 			({ nodeToUpdate, expected }) => {
 				const updatedVariables: string[] = [];
@@ -59,7 +57,7 @@ describe('dashboardVariables - utilities and processors', () => {
 
 				onUpdateVariableNode(nodeToUpdate, graph, topologicalOrder, callback);
 
-				expect(updatedVariables).toEqual(expected);
+				expect(updatedVariables).toStrictEqual(expected);
 			},
 		);
 
@@ -68,98 +66,7 @@ describe('dashboardVariables - utilities and processors', () => {
 			onUpdateVariableNode('http_status_code', graph, [], (node) =>
 				updatedVariables.push(node),
 			);
-			expect(updatedVariables).toEqual([]);
-		});
-	});
-
-	describe('checkAPIInvocation', () => {
-		const {
-			variablesToGetUpdated,
-			variableData,
-			parentDependencyGraph,
-		} = checkAPIInvocationMock;
-
-		const mockRootElement = {
-			name: 'deployment_environment',
-			key: '036a47cd-9ffc-47de-9f27-0329198964a8',
-			id: '036a47cd-9ffc-47de-9f27-0329198964a8',
-			modificationUUID: '5f71b591-f583-497c-839d-6a1590c3f60f',
-			selectedValue: 'production',
-			type: 'QUERY',
-			// ... other properties omitted for brevity
-		} as any;
-
-		describe('edge cases', () => {
-			it('should return false when variableData is empty', () => {
-				expect(
-					checkAPIInvocation(
-						variablesToGetUpdated,
-						variableData,
-						parentDependencyGraph,
-					),
-				).toBeFalsy();
-			});
-
-			it('should return true when parentDependencyGraph is empty', () => {
-				expect(
-					checkAPIInvocation(variablesToGetUpdated, variableData, {}),
-				).toBeFalsy();
-			});
-		});
-
-		describe('variable sequences', () => {
-			it('should return true for valid sequence', () => {
-				expect(
-					checkAPIInvocation(
-						['k8s_node_name', 'k8s_namespace_name'],
-						variableData,
-						parentDependencyGraph,
-					),
-				).toBeTruthy();
-			});
-
-			it('should return false for invalid sequence', () => {
-				expect(
-					checkAPIInvocation(
-						['k8s_cluster_name', 'k8s_node_name', 'k8s_namespace_name'],
-						variableData,
-						parentDependencyGraph,
-					),
-				).toBeFalsy();
-			});
-
-			it('should return false when variableData is not in sequence', () => {
-				expect(
-					checkAPIInvocation(
-						['deployment_environment', 'service_name', 'endpoint'],
-						variableData,
-						parentDependencyGraph,
-					),
-				).toBeFalsy();
-			});
-		});
-
-		describe('root element behavior', () => {
-			it('should return true for valid root element sequence', () => {
-				expect(
-					checkAPIInvocation(
-						[
-							'deployment_environment',
-							'service_name',
-							'endpoint',
-							'http_status_code',
-						],
-						mockRootElement,
-						parentDependencyGraph,
-					),
-				).toBeTruthy();
-			});
-
-			it('should return true for empty variablesToGetUpdated array', () => {
-				expect(
-					checkAPIInvocation([], mockRootElement, parentDependencyGraph),
-				).toBeTruthy();
-			});
+			expect(updatedVariables).toStrictEqual([]);
 		});
 	});
 
@@ -180,11 +87,11 @@ describe('dashboardVariables - utilities and processors', () => {
 					environment: [],
 				};
 
-				expect(buildParentDependencyGraph(graph)).toEqual(expected);
+				expect(buildParentDependencyGraph(graph)).toStrictEqual(expected);
 			});
 
 			it('should handle empty graph', () => {
-				expect(buildParentDependencyGraph({})).toEqual({});
+				expect(buildParentDependencyGraph({})).toStrictEqual({});
 			});
 		});
 
@@ -223,9 +130,85 @@ describe('dashboardVariables - utilities and processors', () => {
 					},
 					hasCycle: false,
 					cycleNodes: undefined,
+					transitiveDescendants: {
+						deployment_environment: ['service_name', 'endpoint', 'http_status_code'],
+						endpoint: ['http_status_code'],
+						environment: [],
+						http_status_code: [],
+						k8s_cluster_name: ['k8s_node_name', 'k8s_namespace_name'],
+						k8s_namespace_name: [],
+						k8s_node_name: ['k8s_namespace_name'],
+						service_name: ['endpoint', 'http_status_code'],
+					},
 				};
 
-				expect(buildDependencyGraph(graph)).toEqual(expected);
+				expect(buildDependencyGraph(graph)).toStrictEqual(expected);
+			});
+
+			it('should return empty transitiveDescendants for an empty graph', () => {
+				const result = buildDependencyGraph({});
+				expect(result.transitiveDescendants).toStrictEqual({});
+				expect(result.order).toStrictEqual([]);
+				expect(result.hasCycle).toBe(false);
+			});
+
+			it('should compute transitiveDescendants for a linear chain (a -> b -> c)', () => {
+				const linearGraph: VariableGraph = {
+					a: ['b'],
+					b: ['c'],
+					c: [],
+				};
+				const result = buildDependencyGraph(linearGraph);
+				expect(result.transitiveDescendants).toStrictEqual({
+					a: ['b', 'c'],
+					b: ['c'],
+					c: [],
+				});
+			});
+
+			it('should compute transitiveDescendants for a diamond dependency (a -> b, a -> c, b -> d, c -> d)', () => {
+				const diamondGraph: VariableGraph = {
+					a: ['b', 'c'],
+					b: ['d'],
+					c: ['d'],
+					d: [],
+				};
+				const result = buildDependencyGraph(diamondGraph);
+				expect(result.transitiveDescendants.a).toStrictEqual(
+					expect.arrayContaining(['b', 'c', 'd']),
+				);
+				expect(result.transitiveDescendants.a).toHaveLength(3);
+				expect(result.transitiveDescendants.b).toStrictEqual(['d']);
+				expect(result.transitiveDescendants.c).toStrictEqual(['d']);
+				expect(result.transitiveDescendants.d).toStrictEqual([]);
+			});
+
+			it('should handle disconnected components in transitiveDescendants', () => {
+				const disconnectedGraph: VariableGraph = {
+					a: ['b'],
+					b: [],
+					x: ['y'],
+					y: [],
+				};
+				const result = buildDependencyGraph(disconnectedGraph);
+				expect(result.transitiveDescendants.a).toStrictEqual(['b']);
+				expect(result.transitiveDescendants.b).toStrictEqual([]);
+				expect(result.transitiveDescendants.x).toStrictEqual(['y']);
+				expect(result.transitiveDescendants.y).toStrictEqual([]);
+			});
+
+			it('should return empty transitiveDescendants for all leaf nodes', () => {
+				const leafOnlyGraph: VariableGraph = {
+					a: [],
+					b: [],
+					c: [],
+				};
+				const result = buildDependencyGraph(leafOnlyGraph);
+				expect(result.transitiveDescendants).toStrictEqual({
+					a: [],
+					b: [],
+					c: [],
+				});
 			});
 		});
 
@@ -242,11 +225,11 @@ describe('dashboardVariables - utilities and processors', () => {
 					environment: [],
 				};
 
-				expect(buildDependencies(variables)).toEqual(expected);
+				expect(buildDependencies(variables)).toStrictEqual(expected);
 			});
 
 			it('should handle empty variables array', () => {
-				expect(buildDependencies([])).toEqual({});
+				expect(buildDependencies([])).toStrictEqual({});
 			});
 		});
 	});

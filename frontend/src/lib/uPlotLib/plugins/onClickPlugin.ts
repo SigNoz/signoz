@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/cognitive-complexity */
 import { themeColors } from 'constants/theme';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
@@ -38,8 +37,7 @@ function getPreferredSeriesIndex(
 	const top = e.clientY - bbox.top;
 	// Prefer series explicitly marked as focused
 	for (let i = 1; i < u.series.length; i++) {
-		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
+		// @ts-expect-error
 		const isSeriesFocused = u.series[i]?._focus === true;
 		const isSeriesShown = u.series[i].show !== false;
 		const seriesValue = u.data[i]?.[timestampIndex];
@@ -164,8 +162,6 @@ function onClickPlugin(opts: OnClickPluginOpts): uPlot.Plugin {
 					inFocusOrNot: false,
 				};
 
-				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-				// @ts-ignore
 				if (
 					focusedSeriesData &&
 					focusedSeriesData.seriesIndex <= apiResult.length

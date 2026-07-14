@@ -1,3 +1,9 @@
+import { ErrorResponseHandlerForGeneratedAPIs } from 'api/ErrorResponseHandlerForGeneratedAPIs';
+import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import { ErrorType } from 'api/generatedAPIInstance';
+import { AxiosError } from 'axios';
+import APIError from 'types/api/error';
+
 /**
  * Extracts HTTP status code from various error types
  * @param error - The error object (could be APIError, AxiosError, or other error types)
@@ -27,4 +33,44 @@ export const isRetryableError = (error: any): boolean => {
 	// 4xx errors are client errors (not retryable), 5xx errors are server errors (retryable)
 	// If no status code is available, default to retryable
 	return !statusCode || statusCode >= 500;
+};
+
+export function toAPIError(
+	error: ErrorType<RenderErrorResponseDTO>,
+	defaultMessage = 'An unexpected error occurred.',
+): APIError {
+	try {
+		ErrorResponseHandlerForGeneratedAPIs(error);
+	} catch (apiError) {
+		if (apiError instanceof APIError) {
+			return apiError;
+		}
+	}
+	return new APIError({
+		httpStatusCode: 500,
+		error: {
+			code: 'UNKNOWN_ERROR',
+			message: defaultMessage,
+			url: '',
+			errors: [],
+		},
+	});
+}
+
+export function handleApiError(
+	err: ErrorType<RenderErrorResponseDTO>,
+	showErrorFunction: (error: APIError) => void,
+): void {
+	try {
+		ErrorResponseHandlerForGeneratedAPIs(err);
+	} catch (apiError) {
+		showErrorFunction(apiError as APIError);
+	}
+}
+
+export const retryOn429 = (failureCount: number, error: unknown): boolean => {
+	if (error instanceof AxiosError && error.response?.status === 429) {
+		return failureCount < 2;
+	}
+	return false;
 };

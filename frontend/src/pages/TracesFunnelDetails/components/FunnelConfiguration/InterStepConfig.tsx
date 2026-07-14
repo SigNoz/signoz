@@ -1,10 +1,10 @@
-import './InterStepConfig.styles.scss';
-
-import { Divider } from 'antd';
+import { Divider } from '@signozhq/ui/divider';
 import SignozRadioGroup from 'components/SignozRadioGroup/SignozRadioGroup';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import { useAppContext } from 'providers/App/App';
 import { FunnelStepData, LatencyOptions } from 'types/api/traceFunnels';
+
+import './InterStepConfig.styles.scss';
 
 function InterStepConfig({
 	index,
@@ -33,10 +33,10 @@ function InterStepConfig({
 					disabled={!hasEditPermission}
 					onChange={
 						hasEditPermission
-							? (e): void =>
+							? (value): void =>
 									onStepChange(index, {
 										...step,
-										latency_type: e.target.value,
+										latency_type: value as LatencyOptions,
 									})
 							: (): void => {}
 					}

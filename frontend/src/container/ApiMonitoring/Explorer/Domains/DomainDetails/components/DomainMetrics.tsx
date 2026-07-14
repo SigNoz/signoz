@@ -1,5 +1,9 @@
+import { useMemo } from 'react';
+import { useQueries } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
-import { Progress, Skeleton, Tooltip, Typography } from 'antd';
+import { Skeleton, Tooltip } from 'antd';
+import { Progress } from '@signozhq/ui/progress';
+import { Typography } from '@signozhq/ui/typography';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import {
@@ -8,8 +12,6 @@ import {
 	getDomainMetricsQueryPayload,
 } from 'container/ApiMonitoring/utils';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import { useMemo } from 'react';
-import { useQueries } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
@@ -87,28 +89,16 @@ function DomainMetrics({
 		<div className="domain-detail-drawer__endpoint">
 			<div className="domain-details-grid">
 				<div className="labels-row">
-					<Typography.Text
-						type="secondary"
-						className="domain-details-metadata-label"
-					>
+					<Typography.Text color="muted" className="domain-details-metadata-label">
 						EXTERNAL API
 					</Typography.Text>
-					<Typography.Text
-						type="secondary"
-						className="domain-details-metadata-label"
-					>
+					<Typography.Text color="muted" className="domain-details-metadata-label">
 						AVERAGE LATENCY
 					</Typography.Text>
-					<Typography.Text
-						type="secondary"
-						className="domain-details-metadata-label"
-					>
+					<Typography.Text color="muted" className="domain-details-metadata-label">
 						ERROR %
 					</Typography.Text>
-					<Typography.Text
-						type="secondary"
-						className="domain-details-metadata-label"
-					>
+					<Typography.Text color="muted" className="domain-details-metadata-label">
 						LAST USED
 					</Typography.Text>
 				</div>
@@ -147,12 +137,11 @@ function DomainMetrics({
 							<Tooltip title={formattedDomainMetricsData.errorRate}>
 								{formattedDomainMetricsData.errorRate !== '-' ? (
 									<Progress
-										status="active"
 										percent={Number(
 											Number(formattedDomainMetricsData.errorRate).toFixed(2),
 										)}
 										strokeLinecap="butt"
-										size="small"
+										showInfo
 										strokeColor={((): string => {
 											const errorRatePercent = Number(
 												Number(formattedDomainMetricsData.errorRate).toFixed(2),

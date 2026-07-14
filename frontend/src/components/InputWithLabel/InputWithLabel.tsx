@@ -1,9 +1,11 @@
-import './InputWithLabel.styles.scss';
-
-import { Button, Input, Typography } from 'antd';
-import cx from 'classnames';
-import { X } from 'lucide-react';
 import { useState } from 'react';
+import { Input } from '@signozhq/ui/input';
+import { Button } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
+import cx from 'classnames';
+import { X } from '@signozhq/icons';
+
+import './InputWithLabel.styles.scss';
 
 function InputWithLabel({
 	label,
@@ -43,7 +45,10 @@ function InputWithLabel({
 		>
 			{!labelAfter && <Typography.Text className="label">{label}</Typography.Text>}
 			<Input
-				className="input"
+				className={cx('input', {
+					'input__has-label-after': !labelAfter,
+					'input__has-close-button': !!onClose,
+				})}
 				placeholder={placeholder}
 				type={type}
 				value={inputValue}

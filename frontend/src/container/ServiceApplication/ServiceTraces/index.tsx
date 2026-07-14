@@ -1,3 +1,6 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
+import { useSelector } from 'react-redux';
 import localStorageGet from 'api/browser/localstorage/get';
 import localStorageSet from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
@@ -10,8 +13,6 @@ import {
 	getResourceDeploymentKeys,
 } from 'hooks/useResourceAttribute/utils';
 import { isUndefined } from 'lodash-es';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { Tags } from 'types/reducer/trace';

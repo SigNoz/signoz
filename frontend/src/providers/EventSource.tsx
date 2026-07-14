@@ -1,3 +1,16 @@
+import {
+	// eslint-disable-next-line no-restricted-imports
+	createContext,
+	PropsWithChildren,
+	useCallback,
+	// eslint-disable-next-line no-restricted-imports
+	useContext,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
+import { useQueryClient } from 'react-query';
 import { apiV3 } from 'api/apiV1';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import { Logout } from 'api/utils';
@@ -8,18 +21,8 @@ import { LIVE_TAIL_HEARTBEAT_TIMEOUT } from 'constants/liveTail';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { EventListener, EventSourcePolyfill } from 'event-source-polyfill';
 import { useNotifications } from 'hooks/useNotifications';
-import {
-	createContext,
-	PropsWithChildren,
-	useCallback,
-	useContext,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
-import { useQueryClient } from 'react-query';
 import APIError from 'types/api/error';
+import { withBasePath } from 'utils/basePath';
 
 interface IEventSourceContext {
 	eventSourceInstance: EventSourcePolyfill | null;
@@ -127,9 +130,12 @@ export function EventSourceProvider({
 
 	const handleStartOpenConnection = useCallback(
 		(filterExpression?: string): void => {
-			const eventSourceUrl = `${
-				ENVIRONMENT.baseURL
-			}${apiV3}logs/livetail?filter=${encodeURIComponent(filterExpression || '')}`;
+			const apiPath = `${apiV3}logs/livetail?filter=${encodeURIComponent(
+				filterExpression || '',
+			)}`;
+			const eventSourceUrl = ENVIRONMENT.baseURL
+				? `${ENVIRONMENT.baseURL}${apiPath}`
+				: withBasePath(apiPath);
 
 			eventSourceRef.current = new EventSourcePolyfill(eventSourceUrl, {
 				headers: {

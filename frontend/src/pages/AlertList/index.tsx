@@ -1,22 +1,24 @@
-import './AlertList.styles.scss';
-
-import { Tabs } from 'antd';
-import { TabsProps } from 'antd/lib';
+import { useCallback, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
+import { Tabs, TabsProps } from 'antd';
 import ConfigureIcon from 'assets/AlertHistory/ConfigureIcon';
 import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import ROUTES from 'constants/routes';
+import AllAlertChannels from 'container/AllAlertChannels';
 import AllAlertRules from 'container/ListAlertRules';
 import { PlannedDowntime } from 'container/PlannedDowntime/PlannedDowntime';
 import RoutingPolicies from 'container/RoutingPolicies';
 import TriggeredAlerts from 'container/TriggeredAlerts';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { GalleryVerticalEnd, Pyramid } from 'lucide-react';
+import { Cable, GalleryVerticalEnd, Pyramid } from '@signozhq/icons';
 import AlertDetails from 'pages/AlertDetails';
-import { useCallback, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import ChannelsEdit from 'pages/ChannelsEdit';
+import ChannelsNew from 'pages/ChannelsNew';
 
 import { AlertListSubTabs, AlertListTabs } from './types';
+
+import './AlertList.styles.scss';
 
 function AllAlertList(): JSX.Element {
 	const urlQuery = useUrlQuery();
@@ -27,15 +29,19 @@ function AllAlertList(): JSX.Element {
 	const subTab = urlQuery.get('subTab');
 	const isAlertHistory = location.pathname === ROUTES.ALERT_HISTORY;
 	const isAlertOverview = location.pathname === ROUTES.ALERT_OVERVIEW;
+	const isChannelsNew = location.pathname === ROUTES.CHANNELS_NEW;
+	const isChannelsEdit = location.pathname.startsWith('/alerts/channels/edit/');
+	const isChannelDetails = isChannelsNew || isChannelsEdit;
 
 	const handleConfigurationTabChange = useCallback(
 		(subTab: string): void => {
-			urlQuery.set('tab', AlertListTabs.CONFIGURATION);
-			urlQuery.set('subTab', subTab);
-			urlQuery.delete('search');
-			safeNavigate(`/alerts?${urlQuery.toString()}`);
+			const queryParams = new URLSearchParams();
+
+			queryParams.set('tab', AlertListTabs.CONFIGURATION);
+			queryParams.set('subTab', subTab);
+			safeNavigate(`/alerts?${queryParams.toString()}`);
 		},
-		[safeNavigate, urlQuery],
+		[safeNavigate],
 	);
 
 	const configurationTab = useMemo(() => {
@@ -89,6 +95,22 @@ function AllAlertList(): JSX.Element {
 		{
 			label: (
 				<div className="periscope-tab top-level-tab">
+					<Cable size={14} />
+					Notification Channels
+				</div>
+			),
+			key: AlertListTabs.CHANNELS,
+			children: (
+				<div className="alert-rules-container">
+					{isChannelsNew && <ChannelsNew />}
+					{isChannelsEdit && <ChannelsEdit />}
+					{!isChannelDetails && <AllAlertChannels />}
+				</div>
+			),
+		},
+		{
+			label: (
+				<div className="periscope-tab top-level-tab">
 					<ConfigureIcon width={14} height={14} />
 					Configuration
 				</div>
@@ -98,30 +120,41 @@ function AllAlertList(): JSX.Element {
 		},
 	];
 
+	const getActiveKey = (): string => {
+		if (isAlertHistory || isAlertOverview) {
+			return AlertListTabs.ALERT_RULES;
+		}
+		if (isChannelDetails) {
+			return AlertListTabs.CHANNELS;
+		}
+		return tab || AlertListTabs.ALERT_RULES;
+	};
+
 	return (
 		<Tabs
 			destroyInactiveTabPane
 			items={items}
-			activeKey={tab || AlertListTabs.ALERT_RULES}
+			activeKey={getActiveKey()}
 			onChange={(tab): void => {
-				urlQuery.set('tab', tab);
+				const queryParams = new URLSearchParams();
+
+				queryParams.set('tab', tab);
 
 				// If navigating to Configuration tab, set default subTab
 				if (tab === AlertListTabs.CONFIGURATION) {
 					const currentSubTab = subTab || AlertListSubTabs.PLANNED_DOWNTIME;
-					urlQuery.set('subTab', currentSubTab);
+					queryParams.set('subTab', currentSubTab);
 				} else {
 					// Clear subTab when navigating out of Configuration tab
-					urlQuery.delete('subTab');
+					queryParams.delete('subTab');
 				}
 
-				// Clear search when navigating to any tab
-				urlQuery.delete('search');
-
-				safeNavigate(`/alerts?${urlQuery.toString()}`);
+				safeNavigate(`/alerts?${queryParams.toString()}`);
 			}}
 			className={`alerts-container ${
-				isAlertHistory || isAlertOverview ? 'alert-details-tabs' : ''
+				isAlertHistory || isAlertOverview || isChannelDetails
+					? 'alert-details-tabs'
+					: ''
 			}`}
 			tabBarExtraContent={
 				<HeaderRightSection

@@ -16,8 +16,8 @@ export const PagerInitialConfig: Partial<PagerChannel> = {
 	client: 'SigNoz Alert Manager',
 	client_url: 'https://enter-signoz-host-n-port-here/alerts',
 	details: JSON.stringify({
-		firing: `{{ template "pagerduty.default.instances" .Alerts.Firing }}`,
-		resolved: `{{ template "pagerduty.default.instances" .Alerts.Resolved }}`,
+		firing: `{{ .Alerts.Firing | toJson }}`,
+		resolved: `{{ .Alerts.Resolved | toJson }}`,
 		num_firing: '{{ .Alerts.Firing | len }}',
 		num_resolved: '{{ .Alerts.Resolved | len }}',
 	}),

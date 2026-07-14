@@ -2,19 +2,23 @@ package googlecallbackauthn
 
 import (
 	"context"
+	"log/slog"
 	"net/url"
+	"path"
 
-	"github.com/SigNoz/signoz/pkg/authn"
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/http/client"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/coreos/go-oidc/v3/oidc"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	admin "google.golang.org/api/admin/directory/v1"
 	"google.golang.org/api/option"
+
+	"github.com/SigNoz/signoz/pkg/authn"
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/global"
+	"github.com/SigNoz/signoz/pkg/http/client"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 const (
@@ -27,12 +31,13 @@ var scopes []string = []string{"email", "profile"}
 var _ authn.CallbackAuthN = (*AuthN)(nil)
 
 type AuthN struct {
-	store      authtypes.AuthNStore
-	settings   factory.ScopedProviderSettings
-	httpClient *client.Client
+	store        authtypes.AuthNStore
+	settings     factory.ScopedProviderSettings
+	httpClient   *client.Client
+	globalConfig global.Config
 }
 
-func New(ctx context.Context, store authtypes.AuthNStore, providerSettings factory.ProviderSettings) (*AuthN, error) {
+func New(ctx context.Context, store authtypes.AuthNStore, providerSettings factory.ProviderSettings, globalConfig global.Config) (*AuthN, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/authn/callbackauthn/googlecallbackauthn")
 
 	httpClient, err := client.New(settings.Logger(), providerSettings.TracerProvider, providerSettings.MeterProvider)
@@ -41,9 +46,10 @@ func New(ctx context.Context, store authtypes.AuthNStore, providerSettings facto
 	}
 
 	return &AuthN{
-		store:      store,
-		settings:   settings,
-		httpClient: httpClient,
+		store:        store,
+		settings:     settings,
+		httpClient:   httpClient,
+		globalConfig: globalConfig,
 	}, nil
 }
 
@@ -72,13 +78,13 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 	}
 
 	if err := query.Get("error"); err != "" {
-		a.settings.Logger().ErrorContext(ctx, "google: error while authenticating", "error", err, "error_description", query.Get("error_description"))
+		a.settings.Logger().ErrorContext(ctx, "google: error while authenticating", slog.String("error", err), slog.String("error_description", query.Get("error_description")))
 		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "google: error while authenticating").WithAdditional(query.Get("error_description"))
 	}
 
 	state, err := authtypes.NewStateFromString(query.Get("state"))
 	if err != nil {
-		a.settings.Logger().ErrorContext(ctx, "google: invalid state", "error", err)
+		a.settings.Logger().ErrorContext(ctx, "google: invalid state", errors.Attr(err))
 		return nil, errors.Newf(errors.TypeInvalidInput, authtypes.ErrCodeInvalidState, "google: invalid state").WithAdditional(err.Error())
 	}
 
@@ -92,11 +98,11 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 	if err != nil {
 		var retrieveError *oauth2.RetrieveError
 		if errors.As(err, &retrieveError) {
-			a.settings.Logger().ErrorContext(ctx, "google: failed to get token", "error", err, "error_description", retrieveError.ErrorDescription, "body", string(retrieveError.Body))
+			a.settings.Logger().ErrorContext(ctx, "google: failed to get token", errors.Attr(err), slog.String("error_description", retrieveError.ErrorDescription), slog.String("body", string(retrieveError.Body)))
 			return nil, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "google: failed to get token").WithAdditional(retrieveError.ErrorDescription)
 		}
 
-		a.settings.Logger().ErrorContext(ctx, "google: failed to get token", "error", err)
+		a.settings.Logger().ErrorContext(ctx, "google: failed to get token", errors.Attr(err))
 		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "google: failed to get token")
 	}
 
@@ -108,7 +114,7 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 	verifier := oidcProvider.Verifier(&oidc.Config{ClientID: authDomain.AuthDomainConfig().Google.ClientID})
 	idToken, err := verifier.Verify(ctx, rawIDToken)
 	if err != nil {
-		a.settings.Logger().ErrorContext(ctx, "google: failed to verify token", "error", err)
+		a.settings.Logger().ErrorContext(ctx, "google: failed to verify token", errors.Attr(err))
 		return nil, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "google: failed to verify token")
 	}
 
@@ -120,18 +126,18 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 	}
 
 	if err := idToken.Claims(&claims); err != nil {
-		a.settings.Logger().ErrorContext(ctx, "google: missing or invalid claims", "error", err)
+		a.settings.Logger().ErrorContext(ctx, "google: missing or invalid claims", errors.Attr(err))
 		return nil, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "google: missing or invalid claims").WithAdditional(err.Error())
 	}
 
 	if claims.HostedDomain != authDomain.StorableAuthDomain().Name {
-		a.settings.Logger().ErrorContext(ctx, "google: unexpected hd claim", "expected", authDomain.StorableAuthDomain().Name, "actual", claims.HostedDomain)
+		a.settings.Logger().ErrorContext(ctx, "google: unexpected hd claim", slog.String("expected", authDomain.StorableAuthDomain().Name), slog.String("actual", claims.HostedDomain))
 		return nil, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "google: unexpected hd claim")
 	}
 
 	if !authDomain.AuthDomainConfig().Google.InsecureSkipEmailVerified {
 		if !claims.EmailVerified {
-			a.settings.Logger().ErrorContext(ctx, "google: email is not verified", "email", claims.Email)
+			a.settings.Logger().ErrorContext(ctx, "google: email is not verified", slog.String("email", claims.Email))
 			return nil, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "google: email is not verified")
 		}
 	}
@@ -145,7 +151,7 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 	if authDomain.AuthDomainConfig().Google.FetchGroups {
 		groups, err = a.fetchGoogleWorkspaceGroups(ctx, claims.Email, authDomain.AuthDomainConfig().Google)
 		if err != nil {
-			a.settings.Logger().ErrorContext(ctx, "google: could not fetch groups", "error", err)
+			a.settings.Logger().ErrorContext(ctx, "google: could not fetch groups", errors.Attr(err))
 			return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "google: could not fetch groups").WithAdditional(err.Error())
 		}
 
@@ -176,7 +182,7 @@ func (a *AuthN) oauth2Config(siteURL *url.URL, authDomain *authtypes.AuthDomain,
 		RedirectURL: (&url.URL{
 			Scheme: siteURL.Scheme,
 			Host:   siteURL.Host,
-			Path:   redirectPath,
+			Path:   path.Join(a.globalConfig.ExternalPath(), redirectPath),
 		}).String(),
 	}
 }
@@ -189,7 +195,7 @@ func (a *AuthN) fetchGoogleWorkspaceGroups(ctx context.Context, userEmail string
 
 	jwtConfig, err := google.JWTConfigFromJSON([]byte(config.ServiceAccountJSON), admin.AdminDirectoryGroupReadonlyScope)
 	if err != nil {
-		a.settings.Logger().ErrorContext(ctx, "google: invalid service account credentials", "error", err)
+		a.settings.Logger().ErrorContext(ctx, "google: invalid service account credentials", errors.Attr(err))
 		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid service account credentials")
 	}
 
@@ -199,7 +205,7 @@ func (a *AuthN) fetchGoogleWorkspaceGroups(ctx context.Context, userEmail string
 
 	adminService, err := admin.NewService(ctx, option.WithHTTPClient(jwtConfig.Client(customCtx)))
 	if err != nil {
-		a.settings.Logger().ErrorContext(ctx, "google: unable to create directory service", "error", err)
+		a.settings.Logger().ErrorContext(ctx, "google: unable to create directory service", errors.Attr(err))
 		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "unable to create directory service")
 	}
 
@@ -208,7 +214,7 @@ func (a *AuthN) fetchGoogleWorkspaceGroups(ctx context.Context, userEmail string
 	return a.getGroups(ctx, adminService, userEmail, config.FetchTransitiveGroupMembership, checkedGroups)
 }
 
-// Recursive method
+// Recursive method.
 func (a *AuthN) getGroups(ctx context.Context, adminService *admin.Service, userEmail string, fetchTransitive bool, checkedGroups map[string]struct{}) ([]string, error) {
 	var userGroups []string
 	var pageToken string
@@ -221,7 +227,7 @@ func (a *AuthN) getGroups(ctx context.Context, adminService *admin.Service, user
 
 		groupList, err := call.Context(ctx).Do()
 		if err != nil {
-			a.settings.Logger().ErrorContext(ctx, "google: unable to list groups", "error", err)
+			a.settings.Logger().ErrorContext(ctx, "google: unable to list groups", errors.Attr(err))
 			return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "unable to list groups")
 		}
 
@@ -236,7 +242,7 @@ func (a *AuthN) getGroups(ctx context.Context, adminService *admin.Service, user
 			if fetchTransitive {
 				transitiveGroups, err := a.getGroups(ctx, adminService, group.Email, fetchTransitive, checkedGroups)
 				if err != nil {
-					a.settings.Logger().ErrorContext(ctx, "google: unable to list transitive groups", "error", err)
+					a.settings.Logger().ErrorContext(ctx, "google: unable to list transitive groups", errors.Attr(err))
 					return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "unable to list transitive groups")
 				}
 				userGroups = append(userGroups, transitiveGroups...)

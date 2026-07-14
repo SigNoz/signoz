@@ -41,6 +41,7 @@ func TestNewConfigFromChannels(t *testing.T) {
 						"require_tls":   true,
 						"html":          "{{ template \"email.default.html\" . }}",
 						"tls_config":    map[string]any{"insecure_skip_verify": false},
+						"threading":     map[string]any{},
 					}},
 				},
 			},
@@ -62,6 +63,7 @@ func TestNewConfigFromChannels(t *testing.T) {
 					"slack_configs": []any{map[string]any{
 						"send_resolved": true,
 						"api_url":       "https://slack.com/api/test",
+						"app_url":       "https://slack.com/api/chat.postMessage",
 						"channel":       "#alerts",
 						"callback_id":   "{{ template \"slack.default.callbackid\" . }}",
 						"color":         "{{ if eq .Status \"firing\" }}danger{{ else }}good{{ end }}",
@@ -71,6 +73,7 @@ func TestNewConfigFromChannels(t *testing.T) {
 						"icon_url":      "{{ template \"slack.default.iconurl\" . }}",
 						"pretext":       "{{ template \"slack.default.pretext\" . }}",
 						"text":          "{{ template \"slack.default.text\" . }}",
+						"timeout":       float64(0),
 						"title":         "{{ template \"slack.default.title\" . }}",
 						"title_link":    "{{ template \"slack.default.titlelink\" . }}",
 						"username":      "{{ template \"slack.default.username\" . }}",
@@ -106,11 +109,12 @@ func TestNewConfigFromChannels(t *testing.T) {
 						"client_url":    "{{ template \"pagerduty.default.clientURL\" . }}",
 						"description":   "{{ template \"pagerduty.default.description\" .}}",
 						"source":        "{{ template \"pagerduty.default.client\" . }}",
+						"timeout":       float64(0),
 						"details": map[string]any{
-							"firing":       "{{ template \"pagerduty.default.instances\" .Alerts.Firing }}",
+							"firing":       "{{ .Alerts.Firing | toJson }}",
 							"num_firing":   "{{ .Alerts.Firing | len }}",
 							"num_resolved": "{{ .Alerts.Resolved | len }}",
-							"resolved":     "{{ template \"pagerduty.default.instances\" .Alerts.Resolved }}",
+							"resolved":     "{{ .Alerts.Resolved | toJson }}",
 						},
 						"http_config": map[string]any{
 							"tls_config":       map[string]any{"insecure_skip_verify": false},
@@ -149,11 +153,12 @@ func TestNewConfigFromChannels(t *testing.T) {
 						"client_url":    "{{ template \"pagerduty.default.clientURL\" . }}",
 						"description":   "{{ template \"pagerduty.default.description\" .}}",
 						"source":        "{{ template \"pagerduty.default.client\" . }}",
+						"timeout":       float64(0),
 						"details": map[string]any{
-							"firing":       "{{ template \"pagerduty.default.instances\" .Alerts.Firing }}",
+							"firing":       "{{ .Alerts.Firing | toJson }}",
 							"num_firing":   "{{ .Alerts.Firing | len }}",
 							"num_resolved": "{{ .Alerts.Resolved | len }}",
-							"resolved":     "{{ template \"pagerduty.default.instances\" .Alerts.Resolved }}",
+							"resolved":     "{{ .Alerts.Resolved | toJson }}",
 						},
 						"http_config": map[string]any{
 							"tls_config":       map[string]any{"insecure_skip_verify": false},
@@ -168,6 +173,7 @@ func TestNewConfigFromChannels(t *testing.T) {
 					"slack_configs": []any{map[string]any{
 						"send_resolved": true,
 						"api_url":       "https://slack.com/api/test",
+						"app_url":       "https://slack.com/api/chat.postMessage",
 						"channel":       "#alerts",
 						"callback_id":   "{{ template \"slack.default.callbackid\" . }}",
 						"color":         "{{ if eq .Status \"firing\" }}danger{{ else }}good{{ end }}",
@@ -177,6 +183,7 @@ func TestNewConfigFromChannels(t *testing.T) {
 						"icon_url":      "{{ template \"slack.default.iconurl\" . }}",
 						"pretext":       "{{ template \"slack.default.pretext\" . }}",
 						"text":          "{{ template \"slack.default.text\" . }}",
+						"timeout":       float64(0),
 						"title":         "{{ template \"slack.default.title\" . }}",
 						"title_link":    "{{ template \"slack.default.titlelink\" . }}",
 						"username":      "{{ template \"slack.default.username\" . }}",
@@ -270,7 +277,7 @@ func TestNewChannelFromReceiver(t *testing.T) {
 			expected: &Channel{
 				Name: "test-receiver",
 				Type: "slack",
-				Data: `{"name":"test-receiver","slack_configs":[{"send_resolved":true,"api_url":"https://slack.com/api/test","channel":"#alerts"}]}`,
+				Data: `{"name":"test-receiver","slack_configs":[{"send_resolved":true,"api_url":"https://slack.com/api/test","channel":"#alerts","timeout":0}]}`,
 			},
 			pass: true,
 		},
@@ -278,7 +285,8 @@ func TestNewChannelFromReceiver(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			channel, err := NewChannelFromReceiver(testCase.receiver, "1")
+			receiver := testCase.receiver
+			channel, err := NewChannelFromReceiver(&Receiver{Receiver: &receiver}, "1")
 			if !testCase.pass {
 				assert.Error(t, err)
 				return
@@ -291,4 +299,32 @@ func TestNewChannelFromReceiver(t *testing.T) {
 		})
 	}
 
+}
+
+// Type and Data are derived from the native googlechat_configs field.
+func TestNewChannelFromReceiverGoogleChat(t *testing.T) {
+	webhookURL, err := url.Parse("https://chat.googleapis.com/v1/spaces/test/messages")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	receiver := &Receiver{
+		Receiver: &config.Receiver{Name: "googlechat-receiver"},
+		GoogleChatConfigs: []*GoogleChatReceiverConfig{
+			{
+				WebhookURL: &config.SecretURL{URL: webhookURL},
+				Title:      "Alert",
+				Text:       "Body",
+			},
+		},
+	}
+
+	channel, err := NewChannelFromReceiver(receiver, "1")
+	assert.NoError(t, err)
+	assert.Equal(t, "googlechat-receiver", channel.Name)
+	assert.Equal(t, "googlechat", channel.Type)
+	assert.JSONEq(t,
+		`{"name":"googlechat-receiver","googlechat_configs":[{"send_resolved":false,"webhook_url":"https://chat.googleapis.com/v1/spaces/test/messages","title":"Alert","text":"Body"}]}`,
+		channel.Data,
+	)
 }

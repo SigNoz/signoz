@@ -1,6 +1,6 @@
+import { useEffect } from 'react';
 import { useGetAlertRuleDetailsStats } from 'pages/AlertDetails/hooks';
 import DataStateRenderer from 'periscope/components/DataStateRenderer/DataStateRenderer';
-import { useEffect } from 'react';
 
 import AverageResolutionCard from '../AverageResolutionCard/AverageResolutionCard';
 import StatsCard from '../StatsCard/StatsCard';
@@ -28,14 +28,8 @@ type StatsCardsRendererProps = {
 function StatsCardsRenderer({
 	setTotalCurrentTriggers,
 }: StatsCardsRendererProps): JSX.Element {
-	const {
-		isLoading,
-		isRefetching,
-		isError,
-		data,
-		isValidRuleId,
-		ruleId,
-	} = useGetAlertRuleDetailsStats();
+	const { isLoading, isRefetching, isError, data, isValidRuleId, ruleId } =
+		useGetAlertRuleDetailsStats();
 
 	useEffect(() => {
 		if (data?.payload?.data?.totalCurrentTriggers !== undefined) {

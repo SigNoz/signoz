@@ -1,5 +1,5 @@
-import { InputNumber, InputNumberProps } from 'antd';
 import { useMemo } from 'react';
+import { InputNumber, InputNumberProps } from 'antd';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 

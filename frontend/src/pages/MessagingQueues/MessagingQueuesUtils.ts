@@ -275,7 +275,7 @@ export function setConfigDetail(
 	},
 ): void {
 	// remove "key" and its value from the paramsToSet object
-	const { key, ...restParamsToSet } = paramsToSet || {};
+	const { key: _key, ...restParamsToSet } = paramsToSet || {};
 
 	if (!isEmpty(restParamsToSet)) {
 		const configDetail = {
@@ -318,13 +318,8 @@ interface MetaDataAndAPIPerView {
 export const getMetaDataAndAPIPerView = (
 	metaDataProps: MetaDataAndAPIPerView,
 ): Record<string, MetaDataAndAPI> => {
-	const {
-		detailType,
-		minTime,
-		maxTime,
-		selectedTimelineQuery,
-		configDetails,
-	} = metaDataProps;
+	const { detailType, minTime, maxTime, selectedTimelineQuery, configDetails } =
+		metaDataProps;
 	return {
 		[MessagingQueuesViewType.consumerLag.value]: {
 			tableApiPayload: {

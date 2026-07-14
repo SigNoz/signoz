@@ -1,11 +1,10 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 
-export const compositeQueryWithoutVariables = ({
+export const compositeQueryWithoutVariables = {
 	builderQueries: {
 		A: {
 			queryName: 'A',
@@ -34,7 +33,7 @@ export const compositeQueryWithoutVariables = ({
 	},
 	panelType: PANEL_TYPES.TIME_SERIES,
 	queryType: EQueryType.QUERY_BUILDER,
-} as unknown) as ICompositeMetricQuery;
+} as unknown as ICompositeMetricQuery;
 
 export const stepIntervalUnchanged = {
 	builder: {
@@ -55,7 +54,7 @@ export const stepIntervalUnchanged = {
 					{
 						metricName: '',
 						temporality: '',
-						timeAggregation: 'count',
+						timeAggregation: 'avg',
 						spaceAggregation: 'sum',
 						reduceTo: ReduceOperators.AVG,
 					},
@@ -87,7 +86,7 @@ export const stepIntervalUnchanged = {
 	unit: undefined,
 };
 
-export const compositeQueryWithVariables = ({
+export const compositeQueryWithVariables = {
 	builderQueries: {
 		A: {
 			queryName: 'A',
@@ -157,7 +156,7 @@ export const compositeQueryWithVariables = ({
 	},
 	panelType: 'graph',
 	queryType: 'builder',
-} as unknown) as ICompositeMetricQuery;
+} as unknown as ICompositeMetricQuery;
 
 export const replaceVariables = {
 	builder: {
@@ -178,7 +177,7 @@ export const replaceVariables = {
 					{
 						metricName: '',
 						temporality: '',
-						timeAggregation: 'count',
+						timeAggregation: 'avg',
 						spaceAggregation: 'sum',
 						reduceTo: ReduceOperators.AVG,
 					},
@@ -268,7 +267,7 @@ export const defaultOutput = {
 						reduceTo: ReduceOperators.AVG,
 						spaceAggregation: 'sum',
 						temporality: '',
-						timeAggregation: 'count',
+						timeAggregation: 'avg',
 					},
 				],
 				filter: { expression: '' },
@@ -303,7 +302,7 @@ export const defaultOutput = {
 	unit: undefined,
 };
 
-export const compositeQueriesWithFunctions = ({
+export const compositeQueriesWithFunctions = {
 	builderQueries: {
 		A: {
 			queryName: 'A',
@@ -372,7 +371,7 @@ export const compositeQueriesWithFunctions = ({
 	},
 	panelType: 'graph',
 	queryType: 'builder',
-} as unknown) as ICompositeMetricQuery;
+} as unknown as ICompositeMetricQuery;
 
 export const outputWithFunctions = {
 	builder: {
@@ -393,7 +392,7 @@ export const outputWithFunctions = {
 					{
 						metricName: '',
 						temporality: '',
-						timeAggregation: 'count',
+						timeAggregation: 'avg',
 						spaceAggregation: 'sum',
 						reduceTo: ReduceOperators.AVG,
 					},
@@ -430,7 +429,7 @@ export const outputWithFunctions = {
 					{
 						metricName: '',
 						temporality: '',
-						timeAggregation: 'count',
+						timeAggregation: 'avg',
 						spaceAggregation: 'sum',
 						reduceTo: ReduceOperators.AVG,
 					},

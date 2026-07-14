@@ -9,7 +9,15 @@ import (
 	"github.com/swaggest/rest/openapi"
 )
 
-// Def is the definition of an OpenAPI operation
+// OpenAPIExample is a named example for an OpenAPI operation.
+type OpenAPIExample struct {
+	Name        string
+	Summary     string
+	Description string
+	Value       any
+}
+
+// Def is the definition of an OpenAPI operation.
 type OpenAPIDef struct {
 	ID                  string
 	Tags                []string
@@ -18,6 +26,7 @@ type OpenAPIDef struct {
 	Request             any
 	RequestQuery        any
 	RequestContentType  string
+	RequestExamples     []OpenAPIExample
 	Response            any
 	ResponseContentType string
 	SuccessStatusCode   int
@@ -31,7 +40,7 @@ type OpenAPISecurityScheme struct {
 	Scopes []string
 }
 
-// Collector is a collector for OpenAPI operations
+// OpenAPICollector is a collector for OpenAPI operations.
 type OpenAPICollector struct {
 	collector *openapi.Collector
 }

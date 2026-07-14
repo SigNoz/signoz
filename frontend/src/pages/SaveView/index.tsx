@@ -1,15 +1,11 @@
-import './SaveView.styles.scss';
-
+import { ChangeEvent, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useLocation } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
-import {
-	Button,
-	ColorPicker,
-	Input,
-	Modal,
-	Table,
-	TableProps,
-	Typography,
-} from 'antd';
+import { Button } from '@signozhq/ui/button';
+import { Input } from '@signozhq/ui/input';
+import { ColorPicker, Modal, Table, TableProps } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import {
 	getViewDetailsUsingViewKey,
@@ -39,12 +35,9 @@ import {
 	Search,
 	Trash2,
 	X,
-} from 'lucide-react';
+} from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
-import { ChangeEvent, useEffect, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useLocation } from 'react-router-dom';
 import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 import { ViewProps } from 'types/api/saveViews/types';
 import { DataSource } from 'types/common/queryBuilder';
@@ -52,6 +45,8 @@ import { USER_ROLES } from 'types/roles';
 
 import { ROUTES_VS_SOURCEPAGE, SOURCEPAGE_VS_ROUTES } from './constants';
 import { deleteViewHandler } from './utils';
+
+import './SaveView.styles.scss';
 
 const allowedRoles = [USER_ROLES.ADMIN, USER_ROLES.AUTHOR, USER_ROLES.EDITOR];
 
@@ -64,10 +59,8 @@ function SaveView(): JSX.Element {
 	const [color, setColor] = useState(Color.BG_SIENNA_500);
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 	const [activeViewName, setActiveViewName] = useState<string>('');
-	const [
-		activeCompositeQuery,
-		setActiveCompositeQuery,
-	] = useState<ICompositeMetricQuery | null>(null);
+	const [activeCompositeQuery, setActiveCompositeQuery] =
+		useState<ICompositeMetricQuery | null>(null);
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [dataSource, setDataSource] = useState<ViewProps[]>([]);
 	const { t } = useTranslation(['explorer']);
@@ -125,10 +118,8 @@ function SaveView(): JSX.Element {
 		setSearchValue('');
 	};
 
-	const {
-		mutateAsync: deleteViewAsync,
-		isLoading: isDeleteLoading,
-	} = useDeleteView(activeViewKey);
+	const { mutateAsync: deleteViewAsync, isLoading: isDeleteLoading } =
+		useDeleteView(activeViewKey);
 
 	const onDeleteHandler = (): void => {
 		deleteViewHandler({
@@ -141,16 +132,14 @@ function SaveView(): JSX.Element {
 		});
 	};
 
-	const {
-		mutateAsync: updateViewAsync,
-		isLoading: isViewUpdating,
-	} = useUpdateView({
-		compositeQuery: activeCompositeQuery || ({} as ICompositeMetricQuery),
-		viewKey: activeViewKey,
-		extraData: JSON.stringify({ color }),
-		sourcePage: sourcepage || DataSource.LOGS,
-		viewName: newViewName,
-	});
+	const { mutateAsync: updateViewAsync, isLoading: isViewUpdating } =
+		useUpdateView({
+			compositeQuery: activeCompositeQuery || ({} as ICompositeMetricQuery),
+			viewKey: activeViewKey,
+			extraData: JSON.stringify({ color }),
+			sourcePage: sourcepage || DataSource.LOGS,
+			viewName: newViewName,
+		});
 
 	const logEventCalledRef = useRef(false);
 	useEffect(() => {
@@ -317,18 +306,21 @@ function SaveView(): JSX.Element {
 					Manage your saved views for {ROUTES_VS_SOURCEPAGE[pathname]}.{' '}
 					<Typography.Link
 						className="learn-more"
-						href="https://signoz.io/docs/product-features/saved-view/?utm_source=product&utm_medium=views-tab"
+						href="https://signoz.io/docs/metrics-management/metrics-explorer/?utm_source=product&utm_medium=views-tab#saved-views-in-metrics-explorer"
 						target="_blank"
 					>
 						Learn more
 					</Typography.Link>
 				</Typography.Text>
-				<Input
-					placeholder="Search for views..."
-					prefix={<Search size={12} color={Color.BG_VANILLA_400} />}
-					value={searchValue}
-					onChange={handleSearch}
-				/>
+				<div className="search-input-container">
+					<Input
+						placeholder="Search for views..."
+						prefix={<Search size={12} color={Color.BG_VANILLA_400} />}
+						value={searchValue}
+						onChange={handleSearch}
+						className="search-input"
+					/>
+				</div>
 
 				<Table
 					columns={columns}
@@ -348,15 +340,19 @@ function SaveView(): JSX.Element {
 				footer={[
 					<Button
 						key="cancel"
+						variant="solid"
+						color="secondary"
 						onClick={hideDeleteViewModal}
 						className="cancel-btn"
-						icon={<X size={16} />}
+						prefix={<X size={16} />}
 					>
 						Cancel
 					</Button>,
 					<Button
 						key="submit"
-						icon={<Trash2 size={16} />}
+						variant="solid"
+						color="destructive"
+						prefix={<Trash2 size={16} />}
 						onClick={onDeleteHandler}
 						className="delete-btn"
 						disabled={isDeleteLoading}
@@ -382,7 +378,9 @@ function SaveView(): JSX.Element {
 				footer={[
 					<Button
 						key="submit"
-						icon={<Check size={16} color={Color.BG_VANILLA_100} />}
+						variant="solid"
+						color="primary"
+						prefix={<Check size={16} color={Color.BG_VANILLA_100} />}
 						onClick={onUpdateQueryHandler}
 						disabled={isViewUpdating}
 						data-testid="save-view"

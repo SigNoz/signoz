@@ -1,3 +1,5 @@
+import { useCallback, useState } from 'react';
+import { useMutation } from 'react-query';
 import logEvent from 'api/common/logEvent';
 import updateCustomFiltersAPI from 'api/quickFilters/updateCustomFilters';
 import axios, { AxiosError } from 'axios';
@@ -5,8 +7,6 @@ import { SignalType } from 'components/QuickFilters/types';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';
-import { useCallback, useState } from 'react';
-import { useMutation } from 'react-query';
 import { Filter as FilterType } from 'types/api/quickFilters/getCustomFilters';
 
 interface UseQuickFilterSettingsProps {
@@ -40,28 +40,26 @@ const useQuickFilterSettings = ({
 	const [addedFilters, setAddedFilters] = useState<FilterType[]>(customFilters);
 	const { notifications } = useNotifications();
 
-	const {
-		mutate: updateCustomFilters,
-		isLoading: isUpdatingCustomFilters,
-	} = useMutation(updateCustomFiltersAPI, {
-		onSuccess: () => {
-			setIsSettingsOpen(false);
-			refetchCustomFilters();
-			logEvent('Quick Filters Settings: changes saved', {
-				addedFilters,
-			});
-			notifications.success({
-				message: 'Quick filters updated successfully',
-				placement: 'bottomRight',
-			});
-		},
-		onError: (error: AxiosError) => {
-			notifications.error({
-				message: axios.isAxiosError(error) ? error.message : SOMETHING_WENT_WRONG,
-				placement: 'bottomRight',
-			});
-		},
-	});
+	const { mutate: updateCustomFilters, isLoading: isUpdatingCustomFilters } =
+		useMutation(updateCustomFiltersAPI, {
+			onSuccess: () => {
+				setIsSettingsOpen(false);
+				refetchCustomFilters();
+				logEvent('Quick Filters Settings: changes saved', {
+					addedFilters,
+				});
+				notifications.success({
+					message: 'Quick filters updated successfully',
+					placement: 'bottomRight',
+				});
+			},
+			onError: (error: AxiosError) => {
+				notifications.error({
+					message: axios.isAxiosError(error) ? error.message : SOMETHING_WENT_WRONG,
+					placement: 'bottomRight',
+				});
+			},
+		});
 	const debouncedUpdate = useDebouncedFn((value) => {
 		setDebouncedInputValue(value as string);
 	}, 400);

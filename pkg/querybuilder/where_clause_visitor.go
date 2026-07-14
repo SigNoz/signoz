@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	grammar "github.com/SigNoz/signoz/pkg/parser/grammar"
+	grammar "github.com/SigNoz/signoz/pkg/parser/filterquery/grammar"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/antlr4-go/antlr/v4"
@@ -22,9 +23,9 @@ var searchTroubleshootingGuideURL = "https://signoz.io/docs/userguide/search-tro
 const stringMatchingOperatorDocURL = "https://signoz.io/docs/userguide/operators-reference/#string-matching-operators"
 
 // filterExpressionVisitor implements the FilterQueryVisitor interface
-// to convert the parsed filter expressions into ClickHouse WHERE clause
+// to convert the parsed filter expressions into ClickHouse WHERE clause.
 type filterExpressionVisitor struct {
-	logger             *slog.Logger
+	context            context.Context
 	fieldMapper        qbtypes.FieldMapper
 	conditionBuilder   qbtypes.ConditionBuilder
 	warnings           []string
@@ -34,11 +35,8 @@ type filterExpressionVisitor struct {
 	mainErrorURL       string
 	builder            *sqlbuilder.SelectBuilder
 	fullTextColumn     *telemetrytypes.TelemetryFieldKey
-	jsonKeyToKey       qbtypes.JsonKeyToFieldFunc
 	skipResourceFilter bool
 	skipFullTextFilter bool
-	skipFunctionCalls  bool
-	ignoreNotFoundKeys bool
 	variables          map[string]qbtypes.VariableItem
 
 	keysWithWarnings map[string]bool
@@ -47,36 +45,31 @@ type filterExpressionVisitor struct {
 }
 
 type FilterExprVisitorOpts struct {
+	Context            context.Context
 	Logger             *slog.Logger
 	FieldMapper        qbtypes.FieldMapper
 	ConditionBuilder   qbtypes.ConditionBuilder
 	FieldKeys          map[string][]*telemetrytypes.TelemetryFieldKey
 	Builder            *sqlbuilder.SelectBuilder
 	FullTextColumn     *telemetrytypes.TelemetryFieldKey
-	JsonKeyToKey       qbtypes.JsonKeyToFieldFunc
 	SkipResourceFilter bool
 	SkipFullTextFilter bool
-	SkipFunctionCalls  bool
-	IgnoreNotFoundKeys bool
 	Variables          map[string]qbtypes.VariableItem
 	StartNs            uint64
 	EndNs              uint64
 }
 
-// newFilterExpressionVisitor creates a new filterExpressionVisitor
+// newFilterExpressionVisitor creates a new filterExpressionVisitor.
 func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVisitor {
 	return &filterExpressionVisitor{
-		logger:             opts.Logger,
+		context:            opts.Context,
 		fieldMapper:        opts.FieldMapper,
 		conditionBuilder:   opts.ConditionBuilder,
 		fieldKeys:          opts.FieldKeys,
 		builder:            opts.Builder,
 		fullTextColumn:     opts.FullTextColumn,
-		jsonKeyToKey:       opts.JsonKeyToKey,
 		skipResourceFilter: opts.SkipResourceFilter,
 		skipFullTextFilter: opts.SkipFullTextFilter,
-		skipFunctionCalls:  opts.SkipFunctionCalls,
-		ignoreNotFoundKeys: opts.IgnoreNotFoundKeys,
 		variables:          opts.Variables,
 		keysWithWarnings:   make(map[string]bool),
 		startNs:            opts.StartNs,
@@ -90,8 +83,12 @@ type PreparedWhereClause struct {
 	WarningsDocURL string
 }
 
-// PrepareWhereClause generates a ClickHouse compatible WHERE clause from the filter query
-func PrepareWhereClause(query string, opts FilterExprVisitorOpts, startNs uint64, endNs uint64) (*PreparedWhereClause, error) {
+func (p PreparedWhereClause) IsEmpty() bool {
+	return p.WhereClause == nil
+}
+
+// PrepareWhereClause generates a ClickHouse compatible WHERE clause from the filter query.
+func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (PreparedWhereClause, error) {
 
 	// Setup the ANTLR parsing pipeline
 	input := antlr.NewInputStream(query)
@@ -125,8 +122,6 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts, startNs uint64
 	}
 	tokens.Reset()
 
-	opts.StartNs = startNs
-	opts.EndNs = endNs
 	visitor := newFilterExpressionVisitor(opts)
 
 	// Handle syntax errors
@@ -137,14 +132,14 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts, startNs uint64
 			"Found %d syntax errors while parsing the search expression.",
 			len(parserErrorListener.SyntaxErrors),
 		)
-		additionals := make([]string, len(parserErrorListener.SyntaxErrors))
+		additionals := make([]string, 0, len(parserErrorListener.SyntaxErrors))
 		for _, err := range parserErrorListener.SyntaxErrors {
 			if err.Error() != "" {
 				additionals = append(additionals, err.Error())
 			}
 		}
 
-		return nil, combinedErrors.WithAdditional(additionals...).WithUrl(searchTroubleshootingGuideURL)
+		return PreparedWhereClause{}, combinedErrors.WithAdditional(additionals...).WithUrl(searchTroubleshootingGuideURL)
 	}
 
 	// Visit the parse tree with our ClickHouse visitor
@@ -162,24 +157,24 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts, startNs uint64
 		if url == "" {
 			url = searchTroubleshootingGuideURL
 		}
-		return nil, combinedErrors.WithAdditional(visitor.errors...).WithUrl(url)
+		return PreparedWhereClause{}, combinedErrors.WithAdditional(visitor.errors...).WithUrl(url)
 	}
 
-	// if there is nothing to filter, return true
-	if cond == "" {
-		cond = "true"
+	// Return empty where clause so callers can skip the WHERE clause
+	if cond == "" || cond == SkipConditionLiteral {
+		return PreparedWhereClause{WhereClause: nil, Warnings: visitor.warnings, WarningsDocURL: visitor.mainWarnURL}, nil
 	}
 
 	whereClause := sqlbuilder.NewWhereClause().AddWhereExpr(visitor.builder.Args, cond)
 
-	return &PreparedWhereClause{WhereClause: whereClause, Warnings: visitor.warnings, WarningsDocURL: visitor.mainWarnURL}, nil
+	return PreparedWhereClause{WhereClause: whereClause, Warnings: visitor.warnings, WarningsDocURL: visitor.mainWarnURL}, nil
 }
 
-// Visit dispatches to the specific visit method based on node type
+// Visit dispatches to the specific visit method based on node type.
 func (v *filterExpressionVisitor) Visit(tree antlr.ParseTree) any {
 	// Handle nil nodes to prevent panic
 	if tree == nil {
-		return ""
+		return SkipConditionLiteral
 	}
 
 	switch t := tree.(type) {
@@ -218,32 +213,38 @@ func (v *filterExpressionVisitor) Visit(tree antlr.ParseTree) any {
 	case *grammar.KeyContext:
 		return v.VisitKey(t)
 	default:
-		return ""
+		return ErrorConditionLiteral
 	}
 }
 
 func (v *filterExpressionVisitor) VisitQuery(ctx *grammar.QueryContext) any {
+
 	return v.Visit(ctx.Expression())
 }
 
-// VisitExpression passes through to the orExpression
+// VisitExpression passes through to the orExpression.
 func (v *filterExpressionVisitor) VisitExpression(ctx *grammar.ExpressionContext) any {
 	return v.Visit(ctx.OrExpression())
 }
 
-// VisitOrExpression handles OR expressions
+// VisitOrExpression handles OR expressions.
 func (v *filterExpressionVisitor) VisitOrExpression(ctx *grammar.OrExpressionContext) any {
 	andExpressions := ctx.AllAndExpression()
 
-	andExpressionConditions := make([]string, len(andExpressions))
-	for i, expr := range andExpressions {
+	andExpressionConditions := make([]string, 0, len(andExpressions))
+	for _, expr := range andExpressions {
 		if condExpr, ok := v.Visit(expr).(string); ok && condExpr != "" {
-			andExpressionConditions[i] = condExpr
+			// In an OR, a single unevaluable branch makes the entire expression unevaluable,
+			// so short-circuit immediately.
+			if slices.Contains(SkippableConditionLiterals, condExpr) {
+				return condExpr
+			}
+			andExpressionConditions = append(andExpressionConditions, condExpr)
 		}
 	}
 
 	if len(andExpressionConditions) == 0 {
-		return ""
+		return SkipConditionLiteral
 	}
 
 	if len(andExpressionConditions) == 1 {
@@ -253,19 +254,25 @@ func (v *filterExpressionVisitor) VisitOrExpression(ctx *grammar.OrExpressionCon
 	return v.builder.Or(andExpressionConditions...)
 }
 
-// VisitAndExpression handles AND expressions
+// VisitAndExpression handles AND expressions.
 func (v *filterExpressionVisitor) VisitAndExpression(ctx *grammar.AndExpressionContext) any {
 	unaryExpressions := ctx.AllUnaryExpression()
 
-	unaryExpressionConditions := make([]string, len(unaryExpressions))
-	for i, expr := range unaryExpressions {
+	unaryExpressionConditions := make([]string, 0, len(unaryExpressions))
+	for _, expr := range unaryExpressions {
 		if condExpr, ok := v.Visit(expr).(string); ok && condExpr != "" {
-			unaryExpressionConditions[i] = condExpr
+			// filter out skippable no-op conditions (e.g. non-resource attributes in resource filter)
+			// to avoid producing compound expressions like "(SkipConditionLiteral AND SkipConditionLiteral)"
+			if slices.Contains(SkippableConditionLiterals, condExpr) {
+				continue
+			}
+			unaryExpressionConditions = append(unaryExpressionConditions, condExpr)
 		}
 	}
 
+	// If there are no conditions, return SkipConditionLiteral
 	if len(unaryExpressionConditions) == 0 {
-		return ""
+		return SkipConditionLiteral
 	}
 
 	if len(unaryExpressionConditions) == 1 {
@@ -275,26 +282,34 @@ func (v *filterExpressionVisitor) VisitAndExpression(ctx *grammar.AndExpressionC
 	return v.builder.And(unaryExpressionConditions...)
 }
 
-// VisitUnaryExpression handles NOT expressions
+// VisitUnaryExpression handles NOT expressions.
 func (v *filterExpressionVisitor) VisitUnaryExpression(ctx *grammar.UnaryExpressionContext) any {
 	result := v.Visit(ctx.Primary()).(string)
 
 	// Check if this is a NOT expression
 	if ctx.NOT() != nil {
+		// NOT (skippable) -> propagate the skippable literal unchanged
+		if slices.Contains(SkippableConditionLiterals, result) {
+			return result
+		}
 		return fmt.Sprintf("NOT (%s)", result)
 	}
 
 	return result
 }
 
-// VisitPrimary handles grouped expressions, comparisons, function calls, and full-text search
+// VisitPrimary handles grouped expressions, comparisons, function calls, and full-text search.
 func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any {
 	if ctx.OrExpression() != nil {
 		// This is a parenthesized expression
-		if condExpr, ok := v.Visit(ctx.OrExpression()).(string); ok && condExpr != "" {
-			return fmt.Sprintf("(%s)", v.Visit(ctx.OrExpression()).(string))
+		if condExpr, ok := v.Visit(ctx.OrExpression()).(string); ok {
+			// Don't wrap skippable literals in parentheses — pass them through as-is
+			if slices.Contains(SkippableConditionLiterals, condExpr) {
+				return condExpr
+			}
+			return fmt.Sprintf("(%s)", condExpr)
 		}
-		return ""
+		return ErrorConditionLiteral
 	} else if ctx.Comparison() != nil {
 		return v.Visit(ctx.Comparison())
 	} else if ctx.FunctionCall() != nil {
@@ -306,72 +321,70 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 	// Handle standalone key/value as a full text search term
 	if ctx.GetChildCount() == 1 {
 		if v.skipFullTextFilter {
-			return ""
+			return SkipConditionLiteral
 		}
 
 		if v.fullTextColumn == nil {
 			v.errors = append(v.errors, "full text search is not supported")
-			return ""
+			return ErrorConditionLiteral
 		}
 		child := ctx.GetChild(0)
+		var searchText string
 		if keyCtx, ok := child.(*grammar.KeyContext); ok {
 			// create a full text search condition on the body field
-
-			keyText := keyCtx.GetText()
-			cond, err := v.conditionBuilder.ConditionFor(context.Background(), v.fullTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(keyText), v.builder, v.startNs, v.endNs)
-			if err != nil {
-				v.errors = append(v.errors, fmt.Sprintf("failed to build full text search condition: %s", err.Error()))
-				return ""
-			}
-			return cond
+			searchText = keyCtx.GetText()
 		} else if valCtx, ok := child.(*grammar.ValueContext); ok {
-			var text string
 			if valCtx.QUOTED_TEXT() != nil {
-				text = trimQuotes(valCtx.QUOTED_TEXT().GetText())
+				searchText = trimQuotes(valCtx.QUOTED_TEXT().GetText())
 			} else if valCtx.NUMBER() != nil {
-				text = valCtx.NUMBER().GetText()
+				searchText = valCtx.NUMBER().GetText()
 			} else if valCtx.BOOL() != nil {
-				text = valCtx.BOOL().GetText()
+				searchText = valCtx.BOOL().GetText()
 			} else if valCtx.KEY() != nil {
-				text = valCtx.KEY().GetText()
+				searchText = valCtx.KEY().GetText()
 			} else {
 				v.errors = append(v.errors, fmt.Sprintf("unsupported value type: %s", valCtx.GetText()))
-				return ""
+				return ErrorConditionLiteral
 			}
-			cond, err := v.conditionBuilder.ConditionFor(context.Background(), v.fullTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(text), v.builder, v.startNs, v.endNs)
-			if err != nil {
-				v.errors = append(v.errors, fmt.Sprintf("failed to build full text search condition: %s", err.Error()))
-				return ""
-			}
-			return cond
 		}
+		conds, ok := v.buildConditions(v.fullTextColumn, []*telemetrytypes.TelemetryFieldKey{v.fullTextColumn}, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(searchText))
+		if !ok {
+			return ErrorConditionLiteral
+		}
+		if len(conds) == 0 {
+			return SkipConditionLiteral
+		}
+		if len(conds) == 1 {
+			return conds[0]
+		}
+		return v.builder.Or(conds...)
 	}
 
-	return "" // Should not happen with valid input
+	return ErrorConditionLiteral // Should not happen with valid input
 }
 
-// VisitComparison handles all comparison operators
+// VisitComparison handles all comparison operators.
 func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext) any {
-	keys := v.Visit(ctx.Key()).([]*telemetrytypes.TelemetryFieldKey)
+	key := v.Visit(ctx.Key()).(*telemetrytypes.TelemetryFieldKey)
+	matching := matchingFieldKeys(key, v.fieldKeys)
 
-	// if key is missing and can be ignored, the condition is ignored
-	if len(keys) == 0 && v.ignoreNotFoundKeys {
-		return ""
-	}
-
-	// this is used to skip the resource filtering on main table if
-	// the query may use the resources table sub-query filter
-	if v.skipResourceFilter {
-		filteredKeys := []*telemetrytypes.TelemetryFieldKey{}
-		for _, key := range keys {
-			if key.FieldContext != telemetrytypes.FieldContextResource {
-				filteredKeys = append(filteredKeys, key)
+	// Skip resource filtering on the main table when a sub-query covers it. Resolve
+	// ambiguity first (resource+attribute defaults to resource), then drop resource
+	// matches; skip the term if nothing remains. Empty matches flow to the builder.
+	if v.skipResourceFilter && len(matching) > 0 {
+		resolved, warning := ResolveKeys(key, matching)
+		// emit the ambiguity warning even when the term is skipped below
+		v.addWarnings([]string{warning}, len(matching) > 1)
+		filtered := []*telemetrytypes.TelemetryFieldKey{}
+		for _, k := range resolved {
+			if k.FieldContext != telemetrytypes.FieldContextResource {
+				filtered = append(filtered, k)
 			}
 		}
-		keys = filteredKeys
-		if len(keys) == 0 {
-			return ""
+		if len(filtered) == 0 {
+			return SkipConditionLiteral
 		}
+		matching = filtered
 	}
 
 	// Handle EXISTS specially
@@ -380,13 +393,14 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 		if ctx.NOT() != nil {
 			op = qbtypes.FilterOperatorNotExists
 		}
-		var conds []string
-		for _, key := range keys {
-			condition, err := v.conditionBuilder.ConditionFor(context.Background(), key, op, nil, v.builder, v.startNs, v.endNs)
-			if err != nil {
-				return ""
-			}
-			conds = append(conds, condition)
+
+		conds, ok := v.buildConditions(key, matching, op, nil)
+		if !ok {
+			return ErrorConditionLiteral
+		}
+
+		if len(conds) == 0 {
+			return SkipConditionLiteral
 		}
 		// if there is only one condition, return it directly, one less `()` wrapper
 		if len(conds) == 1 {
@@ -415,6 +429,11 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 			values = []any{ret}
 		}
 
+		// a value with an embedded variable resolved to __all__ makes the whole condition moot
+		if slices.ContainsFunc(values, isSkipConditionValue) {
+			return SkipConditionLiteral
+		}
+
 		if len(values) == 1 {
 			if var_, ok := values[0].(string); ok {
 				// check if this is a variables
@@ -430,15 +449,15 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 					// we have a variable, now check for dynamic variable
 					if varItem.Type == qbtypes.DynamicVariableType {
 						// check if it is special value to skip entire filter, if so skip it
-						if all_, ok := varItem.Value.(string); ok && all_ == "__all__" {
-							return ""
+						if all_, ok := varItem.Value.(string); ok && all_ == qbtypes.AllVariableValue {
+							return SkipConditionLiteral
 						}
 					}
 					switch varValues := varItem.Value.(type) {
 					case []any:
 						if len(varValues) == 0 {
 							v.errors = append(v.errors, fmt.Sprintf("malformed request payload: variable `%s` used in expression has an empty list value", strings.TrimPrefix(var_, "$")))
-							return ""
+							return ErrorConditionLiteral
 						}
 						values = varValues
 					case any:
@@ -452,13 +471,14 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 		if ctx.NotInClause() != nil {
 			op = qbtypes.FilterOperatorNotIn
 		}
-		var conds []string
-		for _, key := range keys {
-			condition, err := v.conditionBuilder.ConditionFor(context.Background(), key, op, values, v.builder, v.startNs, v.endNs)
-			if err != nil {
-				return ""
-			}
-			conds = append(conds, condition)
+
+		conds, ok := v.buildConditions(key, matching, op, values)
+		if !ok {
+			return ErrorConditionLiteral
+		}
+
+		if len(conds) == 0 {
+			return SkipConditionLiteral
 		}
 		if len(conds) == 1 {
 			return conds[0]
@@ -478,19 +498,39 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 
 		values := ctx.AllValue()
 		if len(values) != 2 {
-			return ""
+			return SkipConditionLiteral
 		}
 
 		value1 := v.Visit(values[0])
 		value2 := v.Visit(values[1])
 
-		var conds []string
-		for _, key := range keys {
-			condition, err := v.conditionBuilder.ConditionFor(context.Background(), key, op, []any{value1, value2}, v.builder, v.startNs, v.endNs)
-			if err != nil {
-				return ""
+		// a bound with an embedded variable resolved to __all__ makes the whole condition moot
+		if isSkipConditionValue(value1) || isSkipConditionValue(value2) {
+			return SkipConditionLiteral
+		}
+
+		switch value1.(type) {
+		case float64:
+			if _, ok := value2.(float64); !ok {
+				v.errors = append(v.errors, fmt.Sprintf("value type mismatch for key %s: expected number for both operands", key.Name))
+				return ErrorConditionLiteral
 			}
-			conds = append(conds, condition)
+		case string:
+			if _, ok := value2.(string); !ok {
+				v.errors = append(v.errors, fmt.Sprintf("value type mismatch for key %s: expected string for both operands", key.Name))
+				return ErrorConditionLiteral
+			}
+		default:
+			v.errors = append(v.errors, fmt.Sprintf("value type mismatch for key %s: operands must be number or string", key.Name))
+			return ErrorConditionLiteral
+		}
+
+		conds, ok := v.buildConditions(key, matching, op, []any{value1, value2})
+		if !ok {
+			return ErrorConditionLiteral
+		}
+		if len(conds) == 0 {
+			return SkipConditionLiteral
 		}
 		if len(conds) == 1 {
 			return conds[0]
@@ -504,14 +544,11 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 	// Get all values for operations that need them
 	values := ctx.AllValue()
 	if len(values) > 0 {
-		// there should only be one value for the following operators, even if there is more than one
-		// we just take the first value
 		value := v.Visit(values[0])
 
-		// Check if the value is a skip marker (embedded variable with __all__ value)
-		if strVal, ok := value.(string); ok && strVal == specialSkipConditionMarker {
-			v.logger.Info("skipping condition due to __all__ variable", "keys", keys, "value", value) //nolint:sloglint
-			return ""
+		// the value had an embedded variable resolved to __all__; drop the condition
+		if isSkipConditionValue(value) {
+			return SkipConditionLiteral
 		}
 
 		if var_, ok := value.(string); ok {
@@ -526,17 +563,17 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 
 			if ok {
 				if varItem.Type == qbtypes.DynamicVariableType {
-					if all_, ok := varItem.Value.(string); ok && all_ == "__all__" {
-						// this is likely overlooked by user, we treat it as if it was IN instead of =
-						v.logger.Warn("received unexpected __all__ value for single select dynamic variable", "variable", var_, "keys", keys, "value", value) //nolint:sloglint
-						return ""
+					// __all__ used with a single-value operator: there is nothing to
+					// filter on, drop the condition like the IN clause handling does
+					if all_, ok := varItem.Value.(string); ok && all_ == qbtypes.AllVariableValue {
+						return SkipConditionLiteral
 					}
 				}
 				switch varValues := varItem.Value.(type) {
 				case []any:
 					if len(varValues) == 0 {
 						v.errors = append(v.errors, fmt.Sprintf("malformed request payload: variable `%s` used in expression has an empty list value", strings.TrimPrefix(var_, "$")))
-						return ""
+						return ErrorConditionLiteral
 					}
 					value = varValues[0]
 				case any:
@@ -584,14 +621,13 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 			}
 		}
 
-		var conds []string
-		for _, key := range keys {
-			condition, err := v.conditionBuilder.ConditionFor(context.Background(), key, op, value, v.builder, v.startNs, v.endNs)
-			if err != nil {
-				v.errors = append(v.errors, fmt.Sprintf("failed to build condition: %s", err.Error()))
-				return ""
-			}
-			conds = append(conds, condition)
+		conds, ok := v.buildConditions(key, matching, op, value)
+		if !ok {
+			return ErrorConditionLiteral
+		}
+
+		if len(conds) == 0 {
+			return SkipConditionLiteral
 		}
 		if len(conds) == 1 {
 			return conds[0]
@@ -602,10 +638,10 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 		return v.builder.Or(conds...)
 	}
 
-	return "" // Should not happen with valid input
+	return ErrorConditionLiteral // Should not happen with valid input
 }
 
-// warnIfLikeWithoutWildcards adds a guidance warning when LIKE/ILIKE is used without wildcards
+// warnIfLikeWithoutWildcards adds a guidance warning when LIKE/ILIKE is used without wildcards.
 func (v *filterExpressionVisitor) warnIfLikeWithoutWildcards(op string, value any) {
 	if hasLikeWildcards(value) {
 		return
@@ -618,7 +654,7 @@ func (v *filterExpressionVisitor) warnIfLikeWithoutWildcards(op string, value an
 	}
 }
 
-// VisitInClause handles IN expressions
+// VisitInClause handles IN expressions.
 func (v *filterExpressionVisitor) VisitInClause(ctx *grammar.InClauseContext) any {
 	if ctx.ValueList() != nil {
 		return v.Visit(ctx.ValueList())
@@ -626,7 +662,7 @@ func (v *filterExpressionVisitor) VisitInClause(ctx *grammar.InClauseContext) an
 	return v.Visit(ctx.Value())
 }
 
-// VisitNotInClause handles NOT IN expressions
+// VisitNotInClause handles NOT IN expressions.
 func (v *filterExpressionVisitor) VisitNotInClause(ctx *grammar.NotInClauseContext) any {
 	if ctx.ValueList() != nil {
 		return v.Visit(ctx.ValueList())
@@ -634,7 +670,7 @@ func (v *filterExpressionVisitor) VisitNotInClause(ctx *grammar.NotInClauseConte
 	return v.Visit(ctx.Value())
 }
 
-// VisitValueList handles comma-separated value lists
+// VisitValueList handles comma-separated value lists.
 func (v *filterExpressionVisitor) VisitValueList(ctx *grammar.ValueListContext) any {
 	values := ctx.AllValue()
 
@@ -646,11 +682,13 @@ func (v *filterExpressionVisitor) VisitValueList(ctx *grammar.ValueListContext) 
 	return parts
 }
 
-// VisitFullText handles standalone quoted strings for full-text search
+// VisitFullText handles standalone quoted strings for full-text search.
 func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) any {
-
 	if v.skipFullTextFilter {
-		return ""
+		// A skipped FT term must be treated as TrueConditionLiteral, not "".
+		// Returning "" would silently drop this branch from an OR, incorrectly
+		// excluding rows that could match the FT condition on the real table.
+		return SkipConditionLiteral
 	}
 
 	var text string
@@ -663,106 +701,79 @@ func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) an
 
 	if v.fullTextColumn == nil {
 		v.errors = append(v.errors, "full text search is not supported")
-		return ""
+		return ErrorConditionLiteral
 	}
-	cond, err := v.conditionBuilder.ConditionFor(context.Background(), v.fullTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(text), v.builder, v.startNs, v.endNs)
-	if err != nil {
-		v.errors = append(v.errors, fmt.Sprintf("failed to build full text search condition: %s", err.Error()))
-		return ""
-	}
-	return cond
-}
-
-// VisitFunctionCall handles function calls like has(), hasAny(), etc.
-func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallContext) any {
-	if v.skipFunctionCalls {
-		return ""
-	}
-
-	// Get function name based on which token is present
-	var functionName string
-	if ctx.HAS() != nil {
-		functionName = "has"
-	} else if ctx.HASANY() != nil {
-		functionName = "hasAny"
-	} else if ctx.HASALL() != nil {
-		functionName = "hasAll"
-	} else if ctx.HASTOKEN() != nil {
-		functionName = "hasToken"
-	} else {
-		// Default fallback
-		v.errors = append(v.errors, fmt.Sprintf("unknown function `%s`", ctx.GetText()))
-		return ""
-	}
-	params := v.Visit(ctx.FunctionParamList()).([]any)
-
-	if len(params) < 2 {
-		v.errors = append(v.errors, fmt.Sprintf("function `%s` expects key and value parameters", functionName))
-		return ""
-	}
-
-	keys, ok := params[0].([]*telemetrytypes.TelemetryFieldKey)
+	conds, ok := v.buildConditions(v.fullTextColumn, []*telemetrytypes.TelemetryFieldKey{v.fullTextColumn}, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(text))
 	if !ok {
-		v.errors = append(v.errors, fmt.Sprintf("function `%s` expects key parameter to be a field key", functionName))
-		return ""
-	}
-	value := params[1:]
-	var conds []string
-	for _, key := range keys {
-		var fieldName string
-
-		if functionName == "hasToken" {
-
-			if key.Name != "body" {
-				if v.mainErrorURL == "" {
-					v.mainErrorURL = "https://signoz.io/docs/userguide/functions-reference/#hastoken-function"
-				}
-				v.errors = append(v.errors, fmt.Sprintf("function `%s` only supports body field as first parameter", functionName))
-			}
-
-			// this will only work with string.
-			if _, ok := value[0].(string); !ok {
-				if v.mainErrorURL == "" {
-					v.mainErrorURL = "https://signoz.io/docs/userguide/functions-reference/#hastoken-function"
-				}
-				v.errors = append(v.errors, fmt.Sprintf("function `%s` expects value parameter to be a string", functionName))
-				return ""
-			}
-			conds = append(conds, fmt.Sprintf("hasToken(LOWER(%s), LOWER(%s))", key.Name, v.builder.Var(value[0])))
-		} else {
-			// this is that all other functions only support array fields
-			if key.FieldContext == telemetrytypes.FieldContextBody {
-				fieldName, _ = v.jsonKeyToKey(context.Background(), key, qbtypes.FilterOperatorUnknown, value)
-			} else {
-				// TODO(add docs for json body search)
-				if v.mainErrorURL == "" {
-					v.mainErrorURL = "https://signoz.io/docs/userguide/search-troubleshooting/#function-supports-only-body-json-search"
-				}
-				v.errors = append(v.errors, fmt.Sprintf("function `%s` supports only body JSON search", functionName))
-				return ""
-			}
-
-			var cond string
-			// Map our functions to ClickHouse equivalents
-			switch functionName {
-			case "has":
-				cond = fmt.Sprintf("has(%s, %s)", fieldName, v.builder.Var(value[0]))
-			case "hasAny":
-				cond = fmt.Sprintf("hasAny(%s, %s)", fieldName, v.builder.Var(value))
-			case "hasAll":
-				cond = fmt.Sprintf("hasAll(%s, %s)", fieldName, v.builder.Var(value))
-			}
-			conds = append(conds, cond)
-		}
+		return ErrorConditionLiteral
 	}
 
+	if len(conds) == 0 {
+		return SkipConditionLiteral
+	}
 	if len(conds) == 1 {
 		return conds[0]
 	}
 	return v.builder.Or(conds...)
 }
 
-// VisitFunctionParamList handles the parameter list for function calls
+// VisitFunctionCall handles function calls like has(), hasAny(), etc.
+func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallContext) any {
+	// Get function name based on which token is present
+	var functionName string
+	var operator qbtypes.FilterOperator
+	if ctx.HAS() != nil {
+		functionName = "has"
+		operator = qbtypes.FilterOperatorHas
+	} else if ctx.HASANY() != nil {
+		functionName = "hasAny"
+		operator = qbtypes.FilterOperatorHasAny
+	} else if ctx.HASALL() != nil {
+		functionName = "hasAll"
+		operator = qbtypes.FilterOperatorHasAll
+	} else if ctx.HASTOKEN() != nil {
+		functionName = "hasToken"
+		operator = qbtypes.FilterOperatorHasToken
+	} else {
+		// Default fallback
+		v.errors = append(v.errors, fmt.Sprintf("unknown function `%s`", ctx.GetText()))
+		return ErrorConditionLiteral
+	}
+	params := v.Visit(ctx.FunctionParamList()).([]any)
+
+	if len(params) < 2 {
+		v.errors = append(v.errors, fmt.Sprintf("function `%s` expects key and value parameters", functionName))
+		return ErrorConditionLiteral
+	}
+
+	key, ok := params[0].(*telemetrytypes.TelemetryFieldKey)
+	if !ok {
+		v.errors = append(v.errors, fmt.Sprintf("function `%s` expects key parameter to be a field key", functionName))
+		return ErrorConditionLiteral
+	}
+
+	value := params[1:]
+
+	// a param with an embedded variable resolved to __all__ makes the whole condition moot
+	if slices.ContainsFunc(value, isSkipConditionValue) {
+		return SkipConditionLiteral
+	}
+
+	conds, ok := v.buildConditions(key, matchingFieldKeys(key, v.fieldKeys), operator, value)
+	if !ok {
+		return ErrorConditionLiteral
+	}
+
+	if len(conds) == 0 {
+		return SkipConditionLiteral
+	}
+	if len(conds) == 1 {
+		return conds[0]
+	}
+	return v.builder.Or(conds...)
+}
+
+// VisitFunctionParamList handles the parameter list for function calls.
 func (v *filterExpressionVisitor) VisitFunctionParamList(ctx *grammar.FunctionParamListContext) any {
 	params := ctx.AllFunctionParam()
 	parts := make([]any, len(params))
@@ -774,7 +785,7 @@ func (v *filterExpressionVisitor) VisitFunctionParamList(ctx *grammar.FunctionPa
 	return parts
 }
 
-// VisitFunctionParam handles individual parameters in function calls
+// VisitFunctionParam handles individual parameters in function calls.
 func (v *filterExpressionVisitor) VisitFunctionParam(ctx *grammar.FunctionParamContext) any {
 	if ctx.Key() != nil {
 		return v.Visit(ctx.Key())
@@ -784,154 +795,98 @@ func (v *filterExpressionVisitor) VisitFunctionParam(ctx *grammar.FunctionParamC
 		return v.Visit(ctx.Array())
 	}
 
-	return "" // Should not happen with valid input
+	return ErrorConditionLiteral // Should not happen with valid input
 }
 
-// VisitArray handles array literals
+// VisitArray handles array literals.
 func (v *filterExpressionVisitor) VisitArray(ctx *grammar.ArrayContext) any {
 	return v.Visit(ctx.ValueList())
 }
 
-// VisitValue handles literal values: strings, numbers, booleans
+// VisitValue handles literal values: strings, numbers, booleans.
 func (v *filterExpressionVisitor) VisitValue(ctx *grammar.ValueContext) any {
 	if ctx.QUOTED_TEXT() != nil {
 		txt := ctx.QUOTED_TEXT().GetText()
 		// trim quotes and return the value
 		value := trimQuotes(txt)
-		// Check if the string contains embedded variables
+		// the string may have variables embedded in it (e.g. '$env-suffix')
 		if strings.Contains(value, "$") {
-			return v.interpolateVariablesInString(value)
+			interpolated, hasAll := v.interpolateVariablesInString(value)
+			if hasAll {
+				return skipConditionValue{}
+			}
+			return interpolated
 		}
 		return value
 	} else if ctx.NUMBER() != nil {
 		number, err := strconv.ParseFloat(ctx.NUMBER().GetText(), 64)
 		if err != nil {
 			v.errors = append(v.errors, fmt.Sprintf("failed to parse number %s", ctx.NUMBER().GetText()))
-			return ""
+			return ErrorConditionLiteral
 		}
 		return number
 	} else if ctx.BOOL() != nil {
 		// Convert to ClickHouse boolean literal
 		boolText := strings.ToLower(ctx.BOOL().GetText())
-		return boolText == "true"
+		return boolText == TrueConditionLiteral
 	} else if ctx.KEY() != nil {
 		// Why do we have a KEY context here?
 		// When the user writes an expression like `service.name=redis`
 		// The `redis` part is a VALUE context but parsed as a KEY token
 		// so we return the text as is
 		keyText := ctx.KEY().GetText()
-		// Check if this is a composed variable like $environment-xyz
-		if strings.HasPrefix(keyText, "$") {
-			return v.interpolateVariablesInString(keyText)
+		// an unquoted value may compose variables too (e.g. $environment-xyz)
+		if strings.Contains(keyText, "$") {
+			interpolated, hasAll := v.interpolateVariablesInString(keyText)
+			if hasAll {
+				return skipConditionValue{}
+			}
+			return interpolated
 		}
 		return keyText
 	}
 
-	return "" // Should not happen with valid input
+	return ErrorConditionLiteral // Should not happen with valid input
 }
 
-// VisitKey handles field/column references
+// VisitKey resolves a field/column reference to its parsed key. It makes no
+// decisions — the condition builder owns those.
 func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 	fieldKey := telemetrytypes.GetFieldKeyFromKeyText(ctx.GetText())
-	keyName := fieldKey.Name
-
-	// GetFieldKeyFromKeyText function extracts the context prefix (attribute., resource., body.) if present
-	// extracts data type if present (e.g., :string, :int)
-	// so we need to filter the available field keys based on the provided context and data type
-	fieldKeysForName := []*telemetrytypes.TelemetryFieldKey{}
-
-	// If user said key = 'xyz', we look up in the map for all possible field keys with name 'xyz'
-	for _, item := range v.fieldKeys[keyName] {
-		// Match items where:
-		// 1) user didn't specify context OR context matches, AND
-		// 2) user didn't specify data type OR data type matches.
-		if (fieldKey.FieldContext == telemetrytypes.FieldContextUnspecified || fieldKey.FieldContext == item.FieldContext) &&
-			(fieldKey.FieldDataType == telemetrytypes.FieldDataTypeUnspecified || fieldKey.FieldDataType == item.FieldDataType) {
-			fieldKeysForName = append(fieldKeysForName, item)
-		}
-	}
-
-	// Now consider that GetFieldKeyFromKeyText may have extracted the context which was actually part of the name
-	// If user said attribute.key = 'xyz',
-	// 1. either user meant key ( this is already handled above in fieldKeysForName )
-	// 2. or user meant `attribute.key` we look up in the map for all possible field keys with name 'attribute.key'
-
-	// Note:
-	// If user only wants to search `attribute.key`, then they have to use `attribute.attribute.key`
-	// If user only wants to search `key`, then they have to use `key`
-	// If user wants to search both, they can use `attribute.key` and we will resolve the ambiguity
-	if fieldKey.FieldContext != telemetrytypes.FieldContextUnspecified {
-		contextPrefixedFieldName := fmt.Sprintf("%s.%s", fieldKey.FieldContext.StringValue(), fieldKey.Name)
-		for _, item := range v.fieldKeys[contextPrefixedFieldName] {
-			// Match items where: user didn't specify data type OR data type matches. Context filtering not needed here since context was used to construct the lookup key.
-			if fieldKey.FieldDataType == telemetrytypes.FieldDataTypeUnspecified || item.FieldDataType == fieldKey.FieldDataType {
-				fieldKeysForName = append(fieldKeysForName, item)
-			}
-		}
-	}
-
-	// for the body json search, we need to add search on the body field even
-	// if there is a field with the same name as attribute/resource attribute
-	// Since it will ORed with the fieldKeysForName, it will not result empty
-	// when either of them have values
-	// Note: Skip this logic if body json query is enabled so we can look up the key inside fields
-	//
-	// TODO(Piyush): After entire migration this is supposed to be removed.
-	if !BodyJSONQueryEnabled && fieldKey.FieldContext == telemetrytypes.FieldContextBody {
-		fieldKeysForName = append(fieldKeysForName, &fieldKey)
-	}
-
-	if len(fieldKeysForName) == 0 {
-		if fieldKey.FieldContext == telemetrytypes.FieldContextBody && keyName == "" {
-			v.errors = append(v.errors, "missing key for body json search - expected key of the form `body.key` (ex: `body.status`)")
-		} else if !v.ignoreNotFoundKeys {
-			// TODO(srikanthccv): do we want to return an error here?
-			// should we infer the type and auto-magically build a key for expression?
-			v.errors = append(v.errors, fmt.Sprintf("key `%s` not found", fieldKey.Name))
-			v.mainErrorURL = "https://signoz.io/docs/userguide/search-troubleshooting/#key-fieldname-not-found"
-		}
-	}
-
-	if len(fieldKeysForName) > 1 {
-		warnMsg := fmt.Sprintf(
-			"Key `%s` is ambiguous, found %d different combinations of field context / data type: %v.",
-			fieldKey.Name,
-			len(fieldKeysForName),
-			fieldKeysForName,
-		)
-		mixedFieldContext := map[string]bool{}
-		for _, item := range fieldKeysForName {
-			mixedFieldContext[item.FieldContext.StringValue()] = true
-		}
-
-		// when there is both resource and attribute context, default to resource only
-		if mixedFieldContext[telemetrytypes.FieldContextResource.StringValue()] &&
-			mixedFieldContext[telemetrytypes.FieldContextAttribute.StringValue()] {
-			filteredKeys := []*telemetrytypes.TelemetryFieldKey{}
-			for _, item := range fieldKeysForName {
-				if item.FieldContext != telemetrytypes.FieldContextResource {
-					continue
-				}
-				filteredKeys = append(filteredKeys, item)
-			}
-			fieldKeysForName = filteredKeys
-			warnMsg += " " + "Using `resource` context by default. To query attributes explicitly, " +
-				fmt.Sprintf("use the fully qualified name (e.g., 'attribute.%s')", fieldKey.Name)
-		}
-
-		if !v.keysWithWarnings[keyName] {
-			v.mainWarnURL = "https://signoz.io/docs/userguide/field-context-data-types/"
-			// this is warning state, we must have a unambiguous key
-			v.warnings = append(v.warnings, warnMsg)
-		}
-		v.keysWithWarnings[keyName] = true
-		v.logger.Warn("ambiguous key", "field_key_name", fieldKey.Name) //nolint:sloglint
-	}
-
-	return fieldKeysForName
+	return &fieldKey
 }
 
-// hasLikeWildcards checks if a value contains LIKE wildcards (% or _)
+// buildConditions invokes the condition builder for a filter term, folding its
+// warnings/errors into visitor state. It returns the conditions and false if an error
+// was recorded.
+func (v *filterExpressionVisitor) buildConditions(key *telemetrytypes.TelemetryFieldKey, matching []*telemetrytypes.TelemetryFieldKey, op qbtypes.FilterOperator, value any) ([]string, bool) {
+	conds, warns, err := v.conditionBuilder.ConditionFor(v.context, v.startNs, v.endNs, key, matching, op, value, v.builder)
+	if err != nil {
+		_, _, _, _, errURL, _ := errors.Unwrapb(err)
+		assignIfEmpty(&v.mainErrorURL, errURL)
+		v.errors = append(v.errors, err.Error())
+		return nil, false
+	}
+	v.addWarnings(warns, len(matching) > 1)
+	return conds, true
+}
+
+// addWarnings appends de-duplicated warnings to the visitor. ambiguous marks warnings
+// from a multi-match key so the field-context doc URL is attached.
+func (v *filterExpressionVisitor) addWarnings(warns []string, ambiguous bool) {
+	for _, w := range warns {
+		if w == "" || v.keysWithWarnings[w] {
+			continue
+		}
+		v.keysWithWarnings[w] = true
+		v.warnings = append(v.warnings, w)
+		if ambiguous {
+			assignIfEmpty(&v.mainWarnURL, FieldContextDataTypesDocURL)
+		}
+	}
+}
+
+// hasLikeWildcards checks if a value contains LIKE wildcards (% or _).
 func hasLikeWildcards(value any) bool {
 	str, ok := value.(string)
 	if !ok {
@@ -955,99 +910,170 @@ func trimQuotes(txt string) string {
 	return txt
 }
 
-// specialSkipConditionMarker is used to indicate that the entire condition should be removed
-const specialSkipConditionMarker = "__signoz_skip_condition__"
-
-// interpolateVariablesInString finds and replaces variable references within a string
-// by checking against actual variable names in the variables map.
-// Pure variable references (e.g., "$service") are returned as-is to let the
-// existing variable handling code process them.
-// Returns specialSkipConditionMarker if any variable has __all__ value.
-func (v *filterExpressionVisitor) interpolateVariablesInString(s string) string {
-	// if this is a complete variable reference (just $varname with nothing else)
-	// if so, return as-is
-	varName := s
-	if strings.HasPrefix(varName, "$") {
-		_, exactMatch := v.variables[varName]
-		if !exactMatch {
-			_, exactMatch = v.variables[varName[1:]]
-		}
-		if exactMatch {
-			return s
-		}
+func assignIfEmpty(s *string, value string) {
+	if *s == "" {
+		*s = value
 	}
-
-	result := s
-
-	// find and replace variables by checking each variable name in the map
-	// process longer variable names first to handle cases with prefix substring
-	varNames := make([]string, 0, len(v.variables)*2)
-	for name := range v.variables {
-		varNames = append(varNames, name)
-		// add with $ prefix if not already present
-		if !strings.HasPrefix(name, "$") {
-			varNames = append(varNames, "$"+name)
-		}
-	}
-
-	// sort by length (longest first) to match longer variable names before shorter ones
-	sort.Slice(varNames, func(i, j int) bool {
-		return len(varNames[i]) > len(varNames[j])
-	})
-
-	for _, vName := range varNames {
-		searchPattern := vName
-		if !strings.HasPrefix(searchPattern, "$") {
-			searchPattern = "$" + vName
-		}
-
-		if strings.Contains(result, searchPattern) {
-			// direct lookup
-			varItem, ok := v.variables[vName]
-			if !ok {
-				// Try without $ prefix
-				varItem, ok = v.variables[strings.TrimPrefix(vName, "$")]
-			}
-
-			if ok {
-				// special check for __all__ value - skip the entire condition
-				if varItem.Type == qbtypes.DynamicVariableType {
-					if allVal, ok := varItem.Value.(string); ok && allVal == "__all__" {
-						return specialSkipConditionMarker
-					}
-				}
-
-				replacement := v.formatVariableValueForInterpolation(varItem.Value, strings.TrimPrefix(vName, "$"))
-				result = strings.ReplaceAll(result, searchPattern, replacement)
-			}
-		}
-	}
-
-	return result
 }
 
+// matchingFieldKeys returns the field keys from the provided map that match the given
+// key, honoring any context/data type the user specified. It also resolves the case
+// where GetFieldKeyFromKeyText split a context off a name that legitimately contained it.
+func matchingFieldKeys(field *telemetrytypes.TelemetryFieldKey, fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.TelemetryFieldKey {
+	fieldKeysForName := []*telemetrytypes.TelemetryFieldKey{}
+
+	// match by name; keep items whose context and data type match (unspecified matches any)
+	for _, item := range fieldKeys[field.Name] {
+		if (field.FieldContext == telemetrytypes.FieldContextUnspecified || field.FieldContext == item.FieldContext) &&
+			(field.FieldDataType == telemetrytypes.FieldDataTypeUnspecified || field.FieldDataType == item.FieldDataType) {
+			fieldKeysForName = append(fieldKeysForName, item)
+		}
+	}
+
+	// A context may have been split off a name that legitimately contained it (e.g.
+	// `attribute.key`); also look up the context-prefixed name so both readings resolve.
+	if field.FieldContext != telemetrytypes.FieldContextUnspecified {
+		contextPrefixedFieldName := fmt.Sprintf("%s.%s", field.FieldContext.StringValue(), field.Name)
+		for _, item := range fieldKeys[contextPrefixedFieldName] {
+			// Context already matched via the lookup key; only data type needs checking.
+			if field.FieldDataType == telemetrytypes.FieldDataTypeUnspecified || item.FieldDataType == field.FieldDataType {
+				fieldKeysForName = append(fieldKeysForName, item)
+			}
+		}
+	}
+
+	return fieldKeysForName
+}
+
+// skipConditionValue is the value-level counterpart of SkipConditionLiteral: VisitValue
+// returns it when a variable embedded in the value resolved to __all__, and the
+// comparison handling turns it into SkipConditionLiteral for the whole condition. A
+// dedicated type (rather than a sentinel string) so no user-supplied value can ever
+// collide with it.
+type skipConditionValue struct{}
+
+// isSkipConditionValue reports whether a visited value says "drop the enclosing
+// condition" (an embedded variable resolved to __all__).
+func isSkipConditionValue(value any) bool {
+	_, ok := value.(skipConditionValue)
+	return ok
+}
+
+// isVariableNameChar reports whether c can be part of a variable name.
+func isVariableNameChar(c byte) bool {
+	return c == '_' || ('0' <= c && c <= '9') || ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z')
+}
+
+// lookupVariable resolves a variable name against the variables map, tolerating a
+// `$` prefix on either the name or the map keys.
+func (v *filterExpressionVisitor) lookupVariable(name string) (qbtypes.VariableItem, bool) {
+	if item, ok := v.variables[name]; ok {
+		return item, true
+	}
+	if strings.HasPrefix(name, "$") {
+		item, ok := v.variables[name[1:]]
+		return item, ok
+	}
+	item, ok := v.variables["$"+name]
+	return item, ok
+}
+
+// interpolateVariablesInString replaces $variable references embedded in s with their
+// values, matching against the names in the variables map (longest name first). A
+// reference is only replaced when the character following it cannot extend a variable
+// name: with only `env` defined, "$env-suffix" becomes "prod-suffix" while
+// "$environment" stays untouched instead of turning into "prodironment".
+// A string that is a single variable reference (e.g. "$env") is returned as-is so the
+// standalone variable handling can process it with its type intact (lists for IN,
+// numbers, __all__, etc.).
+// The returned bool is true when a referenced dynamic variable has the __all__ value,
+// meaning the enclosing condition must be dropped.
+func (v *filterExpressionVisitor) interpolateVariablesInString(s string) (string, bool) {
+	if len(v.variables) == 0 {
+		return s, false
+	}
+
+	if strings.HasPrefix(s, "$") {
+		if _, ok := v.lookupVariable(s); ok {
+			return s, false
+		}
+	}
+
+	names := make([]string, 0, len(v.variables))
+	seen := make(map[string]bool, len(v.variables))
+	for name := range v.variables {
+		name = strings.TrimPrefix(name, "$")
+		if name == "" || seen[name] {
+			continue
+		}
+		seen[name] = true
+		names = append(names, name)
+	}
+	// longest first so that $environment is not mistaken for $env plus a suffix
+	sort.Slice(names, func(i, j int) bool { return len(names[i]) > len(names[j]) })
+
+	var sb strings.Builder
+	i := 0
+	for i < len(s) {
+		if s[i] != '$' {
+			sb.WriteByte(s[i])
+			i++
+			continue
+		}
+		rest := s[i+1:]
+		matched := false
+		for _, name := range names {
+			if !strings.HasPrefix(rest, name) {
+				continue
+			}
+			// a name character right after the match means this occurrence references
+			// a longer, unknown variable; leave it for a shorter-name check or as-is
+			if len(rest) > len(name) && isVariableNameChar(rest[len(name)]) {
+				continue
+			}
+			varItem, _ := v.lookupVariable(name)
+			if varItem.Type == qbtypes.DynamicVariableType {
+				if allVal, ok := varItem.Value.(string); ok && allVal == qbtypes.AllVariableValue {
+					return "", true
+				}
+			}
+			sb.WriteString(v.formatVariableValueForInterpolation(varItem.Value, name))
+			i += 1 + len(name)
+			matched = true
+			break
+		}
+		if !matched {
+			sb.WriteByte('$')
+			i++
+		}
+	}
+
+	return sb.String(), false
+}
+
+// formatVariableValueForInterpolation renders a variable value as a plain string for
+// embedding inside a larger value. Multi-value variables collapse to their first value
+// with a warning, since a pattern like "%$var%" can only hold one.
 func (v *filterExpressionVisitor) formatVariableValueForInterpolation(value any, varName string) string {
 	switch val := value.(type) {
 	case string:
 		return val
 	case []string:
+		if len(val) == 0 {
+			return ""
+		}
 		if len(val) > 1 {
-			v.warnings = append(v.warnings, fmt.Sprintf("variable `%s` has multiple values, using first value `%s` for string interpolation", varName, val[0]))
+			v.addWarnings([]string{fmt.Sprintf("variable `%s` has multiple values, using first value `%s` for string interpolation", varName, val[0])}, false)
 		}
-		if len(val) > 0 {
-			return val[0]
-		}
-		return ""
+		return val[0]
 	case []any:
+		if len(val) == 0 {
+			return ""
+		}
 		if len(val) > 1 {
-			v.warnings = append(v.warnings, fmt.Sprintf("variable `%s` has multiple values, using first value for string interpolation", varName))
+			v.addWarnings([]string{fmt.Sprintf("variable `%s` has multiple values, using first value for string interpolation", varName)}, false)
 		}
-		if len(val) > 0 {
-			return v.formatVariableValueForInterpolation(val[0], varName)
-		}
-		return ""
-	case int, int32, int64, float32, float64:
-		return fmt.Sprintf("%v", val)
+		return v.formatVariableValueForInterpolation(val[0], varName)
 	case bool:
 		return strconv.FormatBool(val)
 	default:

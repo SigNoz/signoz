@@ -1,4 +1,5 @@
-import { Card, Typography } from 'antd';
+import { Card } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import Spinner from 'components/Spinner';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -22,13 +23,11 @@ function WidgetGraphContainer({
 		const sortedSeriesData = getSortedSeriesData(
 			queryResponse.data?.payload.data.result,
 		);
-		// eslint-disable-next-line no-param-reassign
 		queryResponse.data.payload.data.result = sortedSeriesData;
 	}
 
 	if (queryResponse.data && selectedGraph === PANEL_TYPES.PIE) {
 		const transformedData = populateMultipleResults(queryResponse?.data);
-		// eslint-disable-next-line no-param-reassign
 		queryResponse.data = transformedData;
 	}
 
@@ -49,28 +48,6 @@ function WidgetGraphContainer({
 
 	if (isLoadingPanelData) {
 		return <Spinner size="large" tip="Loading..." />;
-	}
-
-	if (
-		selectedGraph !== PANEL_TYPES.LIST &&
-		selectedGraph !== PANEL_TYPES.VALUE &&
-		queryResponse.data?.payload.data?.result?.length === 0
-	) {
-		return (
-			<NotFoundContainer>
-				<Typography>No Data</Typography>
-			</NotFoundContainer>
-		);
-	}
-	if (
-		(selectedGraph === PANEL_TYPES.LIST || selectedGraph === PANEL_TYPES.VALUE) &&
-		queryResponse.data?.payload?.data?.newResult?.data?.result?.length === 0
-	) {
-		return (
-			<NotFoundContainer>
-				<Typography>No Data</Typography>
-			</NotFoundContainer>
-		);
 	}
 
 	if (queryResponse.isIdle) {

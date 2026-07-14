@@ -1,7 +1,8 @@
-/* eslint-disable sonarjs/no-duplicate-string */
+import { ReactNode } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Progress, Tag, Tooltip } from 'antd';
-import { ColumnType } from 'antd/es/table';
+import { TableColumnType as ColumnType, Tooltip } from 'antd';
+import { Progress } from '@signozhq/ui/progress';
+import { Badge } from '@signozhq/ui/badge';
 import { convertFiltersToExpressionWithExistingQuery } from 'components/QueryBuilderV2/utils';
 import {
 	FiltersType,
@@ -14,11 +15,9 @@ import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsAppli
 import { convertNanoToMilliseconds } from 'container/MetricsExplorer/Summary/utils';
 import dayjs from 'dayjs';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { cloneDeep } from 'lodash-es';
-import { ArrowUpDown, ChevronDown, ChevronRight, Info } from 'lucide-react';
+import { ArrowUpDown, ChevronDown, ChevronRight, Info } from '@signozhq/icons';
 import { getWidgetQuery } from 'pages/MessagingQueues/MQDetails/MetricPage/MetricPageUtil';
-import { ReactNode } from 'react';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import {
@@ -57,12 +56,12 @@ export const getDisplayValue = (value: unknown): string =>
 	isEmptyFilterValue(value) ? '-' : String(value);
 
 export const getDomainNameFilterExpression = (domainName: string): string =>
-	`(net.peer.name = '${domainName}' OR server.address = '${domainName}')`;
+	`http_host = '${domainName}'`;
 
 export const clientKindExpression = `kind_string = 'Client'`;
 
 /**
- * Converts filters to expression, handling http.url specially by creating (http.url OR url.full) condition
+ * Converts filters to expression
  * @param filters Filters to convert
  * @param baseExpression Base expression to combine with filters
  * @returns Filter expression string
@@ -73,34 +72,6 @@ export const convertFiltersWithUrlHandling = (
 ): string => {
 	if (!filters) {
 		return baseExpression;
-	}
-
-	// Check if filters contain http.url (SPAN_ATTRIBUTES.URL_PATH)
-	const httpUrlFilter = filters.items?.find(
-		(item) => item.key?.key === SPAN_ATTRIBUTES.URL_PATH,
-	);
-
-	// If http.url filter exists, create modified filters with (http.url OR url.full)
-	if (httpUrlFilter && httpUrlFilter.value) {
-		// Remove ALL http.url filters from items (guards against duplicates)
-		const otherFilters = filters.items?.filter(
-			(item) => item.key?.key !== SPAN_ATTRIBUTES.URL_PATH,
-		);
-
-		// Convert to expression first with other filters
-		const {
-			filter: intermediateFilter,
-		} = convertFiltersToExpressionWithExistingQuery(
-			{ ...filters, items: otherFilters || [] },
-			baseExpression,
-		);
-
-		// Add the OR condition for http.url and url.full
-		const urlValue = httpUrlFilter.value;
-		const urlCondition = `(http.url = '${urlValue}' OR url.full = '${urlValue}')`;
-		return intermediateFilter.expression.trim()
-			? `${intermediateFilter.expression} AND ${urlCondition}`
-			: urlCondition;
 	}
 
 	const { filter } = convertFiltersToExpressionWithExistingQuery(
@@ -288,10 +259,9 @@ export const columnsConfig: ColumnType<APIDomainsRowData>[] = [
 				errorRate === 'n/a' || errorRate === '-' ? 0 : errorRate;
 			return (
 				<Progress
-					status="active"
 					percent={Number((errorRateValue as number).toFixed(2))}
 					strokeLinecap="butt"
-					size="small"
+					showInfo
 					strokeColor={((): string => {
 						const errorRatePercent = Number((errorRateValue as number).toFixed(2));
 						if (errorRatePercent >= 90) {
@@ -333,14 +303,17 @@ export const formatDataForTable = (
 	data: string[][],
 	columns: APIMonitoringResponseColumn[],
 ): APIDomainsRowData[] => {
-	const indexMap = columns.reduce((acc, column, index) => {
-		if (column.name === domainNameKey) {
-			acc[column.name] = index;
-		} else {
-			acc[column.queryName] = index;
-		}
-		return acc;
-	}, {} as Record<string, number>);
+	const indexMap = columns.reduce(
+		(acc, column, index) => {
+			if (column.name === domainNameKey) {
+				acc[column.name] = index;
+			} else {
+				acc[column.queryName] = index;
+			}
+			return acc;
+		},
+		{} as Record<string, number>,
+	);
 
 	return data.map((row) => {
 		const rowData: APIDomainsRowData = {
@@ -371,7 +344,7 @@ export const formatDataForTable = (
 	});
 };
 
-const urlExpression = `(url.full EXISTS OR http.url EXISTS)`;
+const urlExpression = `${SPAN_ATTRIBUTES.HTTP_URL} EXISTS`;
 
 export const getDomainMetricsQueryPayload = (
 	domainName: string,
@@ -588,14 +561,7 @@ const defaultGroupBy = [
 		dataType: DataTypes.String,
 		isColumn: false,
 		isJSON: false,
-		key: SPAN_ATTRIBUTES.URL_PATH,
-		type: 'attribute',
-	},
-	{
-		dataType: DataTypes.String,
-		isColumn: false,
-		isJSON: false,
-		key: 'url.full',
+		key: SPAN_ATTRIBUTES.HTTP_URL,
 		type: 'attribute',
 	},
 	// {
@@ -638,7 +604,7 @@ export const getEndPointsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											key: SPAN_ATTRIBUTES.SERVER_NAME,
-											type: 'tag',
+											type: '',
 										},
 										op: '=',
 										value: domainName,
@@ -685,7 +651,7 @@ export const getEndPointsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											key: SPAN_ATTRIBUTES.SERVER_NAME,
-											type: 'tag',
+											type: '',
 										},
 										op: '=',
 										value: domainName,
@@ -733,7 +699,7 @@ export const getEndPointsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											key: SPAN_ATTRIBUTES.SERVER_NAME,
-											type: 'tag',
+											type: '',
 										},
 										op: '=',
 										value: domainName,
@@ -780,7 +746,7 @@ export const getEndPointsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											key: SPAN_ATTRIBUTES.SERVER_NAME,
-											type: 'tag',
+											type: '',
 										},
 										op: '=',
 										value: domainName,
@@ -859,7 +825,6 @@ export const getEndPointsQueryPayload = (
 	];
 };
 
-// eslint-disable-next-line sonarjs/cognitive-complexity
 function buildFilterExpression(
 	domainName: string,
 	filters: IBuilderQuery['filters'],
@@ -867,8 +832,8 @@ function buildFilterExpression(
 ): string {
 	const baseFilterParts = [
 		`kind_string = 'Client'`,
-		`(http.url EXISTS OR url.full EXISTS)`,
-		`(net.peer.name = '${domainName}' OR server.address = '${domainName}')`,
+		`${SPAN_ATTRIBUTES.HTTP_URL} EXISTS`,
+		`${SPAN_ATTRIBUTES.SERVER_NAME} = '${domainName}'`,
 		`has_error = true`,
 	];
 	if (showStatusCodeErrors) {
@@ -910,12 +875,7 @@ export const getTopErrorsQueryPayload = (
 						filter: { expression: filterExpression },
 						groupBy: [
 							{
-								name: 'http.url',
-								fieldDataType: 'string',
-								fieldContext: 'attribute',
-							},
-							{
-								name: 'url.full',
+								name: SPAN_ATTRIBUTES.HTTP_URL,
 								fieldDataType: 'string',
 								fieldContext: 'attribute',
 							},
@@ -1013,14 +973,10 @@ export const getEndPointsColumnsConfig = (
 					})()}
 					{isGroupedByAttribute
 						? text.split(',').map((value) => (
-								<Tag
-									key={value}
-									color={Color.BG_SLATE_100}
-									className="endpoint-group-tag-item"
-								>
+								<Badge key={value} color="vanilla" className="endpoint-group-tag-item">
 									{value === '' ? '<no-value>' : value}
-								</Tag>
-						  ))
+								</Badge>
+							))
 						: endPointName}
 				</div>
 			);
@@ -1061,21 +1017,16 @@ export const getEndPointsColumnsConfig = (
 		sorter: true,
 		align: 'right',
 		className: `column`,
-		render: (
-			errorRate: number | string,
-			// eslint-disable-next-line sonarjs/no-identical-functions
-		): React.ReactNode => (
+		render: (errorRate: number | string): React.ReactNode => (
 			<Progress
-				status="active"
 				percent={Number(
-					((errorRate === 'n/a' || errorRate === '-'
-						? 0
-						: errorRate) as number).toFixed(1),
+					(
+						(errorRate === 'n/a' || errorRate === '-' ? 0 : errorRate) as number
+					).toFixed(1),
 				)}
 				strokeLinecap="butt"
-				size="small"
-				strokeColor={((): // eslint-disable-next-line sonarjs/no-identical-functions
-				string => {
+				showInfo
+				strokeColor={((): string => {
 					const errorRatePercent = Number((errorRate as number).toFixed(1));
 					if (errorRatePercent >= 90) {
 						return Color.BG_SAKURA_500;
@@ -1134,11 +1085,11 @@ export const formatEndPointsDataForTable = (
 	if (!isGroupedByAttribute) {
 		formattedData = data?.map((endpoint) => {
 			const { port } = extractPortAndEndpoint(
-				(endpoint.data[SPAN_ATTRIBUTES.URL_PATH] as string) || '',
+				(endpoint.data[SPAN_ATTRIBUTES.HTTP_URL] as string) || '',
 			);
 			return {
 				key: v4(),
-				endpointName: (endpoint.data[SPAN_ATTRIBUTES.URL_PATH] as string) || '-',
+				endpointName: (endpoint.data[SPAN_ATTRIBUTES.HTTP_URL] as string) || '-',
 				port,
 				callCount:
 					endpoint.data.A === 'n/a' || endpoint.data.A === undefined
@@ -1185,10 +1136,13 @@ export const formatEndPointsDataForTable = (
 					endpoint.data.D === 'n/a' || endpoint.data.D === undefined
 						? 0
 						: Number(endpoint.data.D),
-				groupedByMeta: groupedByAttributeData.reduce((acc, attribute) => {
-					acc[attribute] = endpoint.data[attribute] || '';
-					return acc;
-				}, {} as Record<string, string | number>),
+				groupedByMeta: groupedByAttributeData.reduce(
+					(acc, attribute) => {
+						acc[attribute] = endpoint.data[attribute] || '';
+						return acc;
+					},
+					{} as Record<string, string | number>,
+				),
 			};
 		});
 	}
@@ -1262,9 +1216,7 @@ export const formatTopErrorsDataForTable = (
 
 		return {
 			key: v4(),
-			endpointName: getDisplayValue(
-				rowObj[SPAN_ATTRIBUTES.URL_PATH] || rowObj['url.full'],
-			),
+			endpointName: getDisplayValue(rowObj[SPAN_ATTRIBUTES.HTTP_URL]),
 			statusCode: getDisplayValue(rowObj[SPAN_ATTRIBUTES.RESPONSE_STATUS_CODE]),
 			statusMessage: getDisplayValue(rowObj.status_message),
 			count: getDisplayValue(rowObj.__result_0),
@@ -1281,10 +1233,10 @@ export const getTopErrorsCoRelationQueryFilters = (
 		{
 			id: 'ea16470b',
 			key: {
-				key: 'http.url',
+				key: SPAN_ATTRIBUTES.HTTP_URL,
 				dataType: DataTypes.String,
 				type: 'tag',
-				id: 'http.url--string--tag--false',
+				id: `${SPAN_ATTRIBUTES.HTTP_URL}--string--tag--false`,
 			},
 			op: '=',
 			value: endPointName,
@@ -1302,7 +1254,7 @@ export const getTopErrorsCoRelationQueryFilters = (
 		{
 			id: 'e8a043b7',
 			key: {
-				key: 'net.peer.name',
+				key: SPAN_ATTRIBUTES.SERVER_NAME,
 				dataType: DataTypes.String,
 				type: '',
 			},
@@ -1331,53 +1283,54 @@ export const getTopErrorsCoRelationQueryFilters = (
 	};
 };
 
-export const getTopErrorsColumnsConfig = (): ColumnType<TopErrorsTableRowData>[] => [
-	{
-		title: <div className="endpoint-name-header">Endpoint</div>,
-		dataIndex: 'endpointName',
-		key: 'endpointName',
-		width: 180,
-		ellipsis: true,
-		sorter: false,
-		className: 'column',
-		render: (text: string, record: TopErrorsTableRowData): React.ReactNode => {
-			const { endpoint } = extractPortAndEndpoint(record.endpointName);
-			return (
-				<Tooltip title="Click to open traces">
-					<div className="endpoint-name-value">{endpoint}</div>
-				</Tooltip>
-			);
+export const getTopErrorsColumnsConfig =
+	(): ColumnType<TopErrorsTableRowData>[] => [
+		{
+			title: <div className="endpoint-name-header">Endpoint</div>,
+			dataIndex: 'endpointName',
+			key: 'endpointName',
+			width: 180,
+			ellipsis: true,
+			sorter: false,
+			className: 'column',
+			render: (text: string, record: TopErrorsTableRowData): React.ReactNode => {
+				const { endpoint } = extractPortAndEndpoint(record.endpointName);
+				return (
+					<Tooltip title="Click to open traces">
+						<div className="endpoint-name-value">{endpoint}</div>
+					</Tooltip>
+				);
+			},
 		},
-	},
-	{
-		title: <div className="column-header">Status code</div>,
-		dataIndex: 'statusCode',
-		key: 'statusCode',
-		width: 180,
-		ellipsis: true,
-		sorter: false,
-		align: 'right',
-		className: `column`,
-	},
-	{
-		title: <div className="column-header">Status message</div>,
-		dataIndex: 'statusMessage',
-		key: 'statusMessage',
-		width: 180,
-		ellipsis: true,
-		align: 'right',
-		className: `column`,
-	},
-	{
-		title: <div>Count</div>,
-		dataIndex: 'count',
-		key: 'count',
-		width: 120,
-		sorter: false,
-		align: 'right',
-		className: `column`,
-	},
-];
+		{
+			title: <div className="column-header">Status code</div>,
+			dataIndex: 'statusCode',
+			key: 'statusCode',
+			width: 180,
+			ellipsis: true,
+			sorter: false,
+			align: 'right',
+			className: `column`,
+		},
+		{
+			title: <div className="column-header">Status message</div>,
+			dataIndex: 'statusMessage',
+			key: 'statusMessage',
+			width: 180,
+			ellipsis: true,
+			align: 'right',
+			className: `column`,
+		},
+		{
+			title: <div>Count</div>,
+			dataIndex: 'count',
+			key: 'count',
+			width: 120,
+			sorter: false,
+			align: 'right',
+			className: `column`,
+		},
+	];
 
 export const createFiltersForSelectedRowData = (
 	selectedRowData: EndPointsTableRowData,
@@ -1781,7 +1734,7 @@ export const getEndPointDetailsQueryPayload = (
 								filters || { items: [], op: 'AND' },
 								`${getDomainNameFilterExpression(
 									domainName,
-								)} AND ${clientKindExpression} AND (http.url EXISTS OR url.full EXISTS)`,
+								)} AND ${clientKindExpression} AND ${SPAN_ATTRIBUTES.HTTP_URL} EXISTS`,
 							),
 						},
 						expression: 'A',
@@ -1793,12 +1746,7 @@ export const getEndPointDetailsQueryPayload = (
 						orderBy: [],
 						groupBy: [
 							{
-								key: SPAN_ATTRIBUTES.URL_PATH,
-								dataType: DataTypes.String,
-								type: 'attribute',
-							},
-							{
-								key: 'url.full',
+								key: SPAN_ATTRIBUTES.HTTP_URL,
 								dataType: DataTypes.String,
 								type: 'attribute',
 							},
@@ -2198,7 +2146,7 @@ export const getEndPointZeroStateQueryPayload = (
 									key: {
 										key: SPAN_ATTRIBUTES.SERVER_NAME,
 										dataType: DataTypes.String,
-										type: 'tag',
+										type: '',
 									},
 									op: '=',
 									value: domainName,
@@ -2225,7 +2173,7 @@ export const getEndPointZeroStateQueryPayload = (
 						orderBy: [],
 						groupBy: [
 							{
-								key: SPAN_ATTRIBUTES.URL_PATH,
+								key: SPAN_ATTRIBUTES.HTTP_URL,
 								dataType: DataTypes.String,
 								type: 'tag',
 							},
@@ -2419,8 +2367,7 @@ export const statusCodeWidgetInfo = [
 
 interface EndPointDropDownResponseRow {
 	data: {
-		[SPAN_ATTRIBUTES.URL_PATH]: string;
-		'url.full': string;
+		[SPAN_ATTRIBUTES.HTTP_URL]: string;
 		A: number;
 	};
 }
@@ -2439,8 +2386,8 @@ export const getFormattedEndPointDropDownData = (
 	}
 	return data.map((row) => ({
 		key: v4(),
-		label: row.data[SPAN_ATTRIBUTES.URL_PATH] || row.data['url.full'] || '-',
-		value: row.data[SPAN_ATTRIBUTES.URL_PATH] || row.data['url.full'] || '-',
+		label: row.data[SPAN_ATTRIBUTES.HTTP_URL] || '-',
+		value: row.data[SPAN_ATTRIBUTES.HTTP_URL] || '-',
 	}));
 };
 
@@ -2471,7 +2418,6 @@ export interface DependentServicesData {
 // Discuss once about type safety of this function
 export const getFormattedDependentServicesData = (
 	data: DependentServicesResponseRow[],
-	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): DependentServicesData[] => {
 	if (!data) {
 		return [];
@@ -2561,18 +2507,13 @@ export const dependentServicesColumns: ColumnType<DependentServicesData>[] = [
 		dataIndex: 'errorPercentage',
 		key: 'errorPercentage',
 		align: 'center',
-		render: (
-			errorPercentage: number | string,
-			// eslint-disable-next-line sonarjs/no-identical-functions
-		): React.ReactNode =>
+		render: (errorPercentage: number | string): React.ReactNode =>
 			errorPercentage !== '-' ? (
 				<Progress
-					status="active"
 					percent={Number((errorPercentage as number).toFixed(2))}
 					strokeLinecap="butt"
-					size="small"
-					strokeColor={((): // eslint-disable-next-line sonarjs/no-identical-functions
-					string => {
+					showInfo
+					strokeColor={((): string => {
 						const errorPercentagePercent = Number(
 							(errorPercentage as number).toFixed(2),
 						);
@@ -2769,7 +2710,6 @@ export const groupStatusCodes = (
 
 export const getStatusCodeBarChartWidgetData = (
 	domainName: string,
-	endPointName: string,
 	filters: IBuilderQuery['filters'],
 ): Widgets => ({
 	query: {
@@ -2793,25 +2733,11 @@ export const getStatusCodeBarChartWidgetData = (
 								key: {
 									dataType: DataTypes.String,
 									key: SPAN_ATTRIBUTES.SERVER_NAME,
-									type: 'tag',
+									type: '',
 								},
 								op: '=',
 								value: domainName,
 							},
-							...(endPointName
-								? [
-										{
-											id: '8b1be6f0',
-											key: {
-												dataType: DataTypes.String,
-												key: SPAN_ATTRIBUTES.URL_PATH,
-												type: 'tag',
-											},
-											op: '=',
-											value: endPointName,
-										},
-								  ]
-								: []),
 							...(filters?.items || []),
 						],
 						op: 'AND',
@@ -2933,7 +2859,7 @@ export const getAllEndpointsWidgetData = (
 							filters,
 							`${getDomainNameFilterExpression(
 								domainName,
-							)} AND ${clientKindExpression} AND (http.url EXISTS OR url.full EXISTS)`,
+							)} AND ${clientKindExpression} AND http_url EXISTS`,
 						),
 					},
 					functions: [],
@@ -2965,7 +2891,7 @@ export const getAllEndpointsWidgetData = (
 							filters,
 							`${getDomainNameFilterExpression(
 								domainName,
-							)} AND ${clientKindExpression} AND (http.url EXISTS OR url.full EXISTS)`,
+							)} AND ${clientKindExpression} AND http_url EXISTS`,
 						),
 					},
 					functions: [],
@@ -2997,7 +2923,7 @@ export const getAllEndpointsWidgetData = (
 							filters,
 							`${getDomainNameFilterExpression(
 								domainName,
-							)} AND ${clientKindExpression} AND (http.url EXISTS OR url.full EXISTS)`,
+							)} AND ${clientKindExpression} AND http_url EXISTS`,
 						),
 					},
 					functions: [],
@@ -3029,7 +2955,7 @@ export const getAllEndpointsWidgetData = (
 							filters,
 							`${getDomainNameFilterExpression(
 								domainName,
-							)} AND ${clientKindExpression} AND has_error = true AND (http.url EXISTS OR url.full EXISTS)`,
+							)} AND ${clientKindExpression} AND has_error = true AND http_url EXISTS`,
 						),
 					},
 					functions: [],
@@ -3060,24 +2986,12 @@ export const getAllEndpointsWidgetData = (
 	);
 
 	widget.renderColumnCell = {
-		[SPAN_ATTRIBUTES.URL_PATH]: (
-			url: string | number,
-			record?: RowData,
-		): ReactNode => {
-			// First try to use the url from the column value
-			let urlValue = url;
-
-			// If url is empty/null and we have the record, fallback to url.full
-			if (isEmptyFilterValue(url) && record) {
-				const { 'url.full': urlFull } = record;
-				urlValue = urlFull;
-			}
-
-			if (!urlValue || urlValue === 'n/a') {
+		[SPAN_ATTRIBUTES.HTTP_URL]: (url: string | number): ReactNode => {
+			if (isEmptyFilterValue(url) || !url || url === 'n/a') {
 				return <span>-</span>;
 			}
 
-			const { endpoint } = extractPortAndEndpoint(String(urlValue));
+			const { endpoint } = extractPortAndEndpoint(String(url));
 			return <span>{getDisplayValue(endpoint)}</span>;
 		},
 		A: (numOfCalls: any): ReactNode => (
@@ -3098,25 +3012,23 @@ export const getAllEndpointsWidgetData = (
 					? '-'
 					: getLastUsedRelativeTime(
 							new Date(new Date(lastUsed).toISOString()).getTime(),
-					  )}
+						)}
 			</span>
 		),
 		F1: (errorRate: any): ReactNode => (
 			<Progress
-				status="active"
 				percent={Number(
-					((errorRate === 'n/a' || errorRate === '-'
-						? 0
-						: errorRate) as number).toFixed(2),
+					(
+						(errorRate === 'n/a' || errorRate === '-' ? 0 : errorRate) as number
+					).toFixed(2),
 				)}
 				strokeLinecap="butt"
-				size="small"
-				strokeColor={((): // eslint-disable-next-line sonarjs/no-identical-functions
-				string => {
+				showInfo
+				strokeColor={((): string => {
 					const errorRatePercent = Number(
-						((errorRate === 'n/a' || errorRate === '-'
-							? 0
-							: errorRate) as number).toFixed(2),
+						(
+							(errorRate === 'n/a' || errorRate === '-' ? 0 : errorRate) as number
+						).toFixed(2),
 					);
 					if (errorRatePercent >= 90) {
 						return Color.BG_SAKURA_500;
@@ -3132,8 +3044,8 @@ export const getAllEndpointsWidgetData = (
 	};
 
 	widget.customColTitles = {
-		[SPAN_ATTRIBUTES.URL_PATH]: 'Endpoint',
-		'net.peer.port': 'Port',
+		[SPAN_ATTRIBUTES.HTTP_URL]: 'Endpoint',
+		[SPAN_ATTRIBUTES.SERVER_PORT]: 'Port',
 	};
 
 	widget.title = (
@@ -3158,12 +3070,10 @@ export const getAllEndpointsWidgetData = (
 		</div>
 	);
 
-	widget.hiddenColumns = ['url.full'];
-
 	return widget;
 };
 
-const keysToRemove = ['http.url', 'url.full', 'A', 'B', 'C', 'F1'];
+const keysToRemove = [SPAN_ATTRIBUTES.HTTP_URL, 'A', 'B', 'C', 'F1'];
 
 export const getGroupByFiltersFromGroupByValues = (
 	rowData: any,
@@ -3199,7 +3109,6 @@ export const getRateOverTimeWidgetData = (
 	let legend = domainName;
 	if (endPointName) {
 		const { endpoint } = extractPortAndEndpoint(endPointName);
-		// eslint-disable-next-line sonarjs/no-nested-template-literals
 		legend = `${endpoint}`;
 	}
 
@@ -3221,7 +3130,7 @@ export const getRateOverTimeWidgetData = (
 					filter: {
 						expression: convertFiltersWithUrlHandling(
 							filters || { items: [], op: 'AND' },
-							`(net.peer.name = '${domainName}' OR server.address = '${domainName}')`,
+							`http_host = '${domainName}'`,
 						),
 					},
 					functions: [],
@@ -3250,7 +3159,6 @@ export const getLatencyOverTimeWidgetData = (
 	let legend = domainName;
 	if (endPointName) {
 		const { endpoint } = extractPortAndEndpoint(endPointName);
-		// eslint-disable-next-line sonarjs/no-nested-template-literals
 		legend = `${endpoint}`;
 	}
 
@@ -3272,7 +3180,7 @@ export const getLatencyOverTimeWidgetData = (
 					filter: {
 						expression: convertFiltersWithUrlHandling(
 							filters || { items: [], op: 'AND' },
-							`(net.peer.name = '${domainName}' OR server.address = '${domainName}')`,
+							`http_host = '${domainName}'`,
 						),
 					},
 					functions: [],
@@ -3350,7 +3258,7 @@ export const createGroupByFiltersForBarChart = (
 							op: '<=',
 							value: endStatusCode,
 						},
-				  ]
+					]
 				: [];
 		})
 		.flat();

@@ -29,3 +29,17 @@ type TraceSummary struct {
 	End      time.Time `ch:"end"`
 	NumSpans uint64    `ch:"num_spans"`
 }
+
+// AttributeValue looks up an attribute across string, number, and bool maps in priority order.
+func (s SpanItemV2) AttributeValue(name string) any {
+	if v, ok := s.Attributes_string[name]; ok {
+		return v
+	}
+	if v, ok := s.Attributes_number[name]; ok {
+		return v
+	}
+	if v, ok := s.Attributes_bool[name]; ok {
+		return v
+	}
+	return nil
+}

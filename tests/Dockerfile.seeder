@@ -1,0 +1,35 @@
+# HTTP seeder for Playwright e2e tests. Wraps the direct-ClickHouse-insert
+# helpers in tests/fixtures/{traces,logs,metrics}.py so a browser test can
+# seed telemetry with fine-grained control.
+#
+# Build context is tests/ (this file sits at its root) so `fixtures/` is
+# importable inside the image alongside `seeder/`.
+
+FROM python:3.13-slim
+
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+WORKDIR /app
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends gcc libpq-dev python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install project dependencies from the pytest project's pyproject.toml +
+# uv.lock so the seeder container's Python env matches local dev exactly
+# (single source of truth for versions; no parallel requirements.txt).
+# --no-install-project skips building the signoz-tests project itself
+# (there is no buildable package here — pyproject is used purely for dep
+# management alongside pythonpath = ["."]).
+COPY pyproject.toml uv.lock /app/
+RUN uv sync --frozen --no-install-project --no-dev
+ENV PATH="/app/.venv/bin:$PATH"
+
+# Ship the whole fixtures/ package so server.py can `from fixtures.traces
+# import ...` with the same module path the pytest side uses.
+COPY fixtures /app/fixtures
+COPY seeder /app/seeder
+
+EXPOSE 8080
+
+CMD ["uvicorn", "seeder.server:app", "--host", "0.0.0.0", "--port", "8080"]

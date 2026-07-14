@@ -1,8 +1,10 @@
-import './AuthHeader.styles.scss';
-
-import { Button } from '@signozhq/button';
-import { LifeBuoy } from 'lucide-react';
 import { useCallback } from 'react';
+import { Button } from '@signozhq/ui/button';
+import { LifeBuoy } from '@signozhq/icons';
+
+import signozBrandLogoUrl from '@/assets/Logos/signoz-brand-logo.svg';
+
+import './AuthHeader.styles.scss';
 
 function AuthHeader(): JSX.Element {
 	const handleGetHelp = useCallback((): void => {
@@ -13,7 +15,7 @@ function AuthHeader(): JSX.Element {
 		<header className="auth-header">
 			<div className="auth-header-logo">
 				<img
-					src="/Logos/signoz-brand-logo.svg"
+					src={signozBrandLogoUrl}
 					alt="SigNoz"
 					className="auth-header-logo-icon"
 				/>
@@ -21,8 +23,10 @@ function AuthHeader(): JSX.Element {
 			</div>
 			<Button
 				className="auth-header-help-button"
-				prefixIcon={<LifeBuoy size={12} />}
+				prefix={<LifeBuoy size={12} />}
 				onClick={handleGetHelp}
+				variant="solid"
+				color="none"
 			>
 				Get Help
 			</Button>

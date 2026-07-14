@@ -6,14 +6,13 @@ import (
 
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
-	baserules "github.com/SigNoz/signoz/pkg/query-service/rules"
-	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
-	"github.com/SigNoz/signoz/pkg/types/ruletypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"log/slog"
+
 	"github.com/google/uuid"
-	"go.uber.org/zap"
+
+	"github.com/SigNoz/signoz/pkg/errors"
+	baserules "github.com/SigNoz/signoz/pkg/query-service/rules"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 )
 
 func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) {
@@ -21,24 +20,26 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 	rules := make([]baserules.Rule, 0)
 	var task baserules.Task
 
-	ruleId := baserules.RuleIdFromTaskName(opts.TaskName)
+	ruleID := baserules.RuleIDFromTaskName(opts.TaskName)
 	evaluation, err := opts.Rule.Evaluation.GetEvaluation()
 	if err != nil {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "evaluation is invalid: %v", err)
 	}
+
 	if opts.Rule.RuleType == ruletypes.RuleTypeThreshold {
 		// create a threshold rule
 		tr, err := baserules.NewThresholdRule(
-			ruleId,
+			ruleID,
 			opts.OrgID,
 			opts.Rule,
-			opts.Reader,
 			opts.Querier,
-			opts.SLogger,
+			opts.Logger,
+			opts.ManagerOpts.Alertmanager.Config().ExternalURL,
 			baserules.WithEvalDelay(opts.ManagerOpts.EvalDelay),
 			baserules.WithSQLStore(opts.SQLStore),
 			baserules.WithQueryParser(opts.ManagerOpts.QueryParser),
 			baserules.WithMetadataStore(opts.ManagerOpts.MetadataStore),
+			baserules.WithRuleStateHistoryModule(opts.ManagerOpts.RuleStateHistoryModule),
 		)
 
 		if err != nil {
@@ -48,21 +49,22 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 		rules = append(rules, tr)
 
 		// create ch rule task for evaluation
-		task = newTask(baserules.TaskTypeCh, opts.TaskName, time.Duration(evaluation.GetFrequency()), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
+		task = newTask(baserules.TaskTypeCh, opts.TaskName, evaluation.GetFrequency().Duration(), rules, opts.ManagerOpts, opts.NotifyFunc)
 
 	} else if opts.Rule.RuleType == ruletypes.RuleTypeProm {
 
 		// create promql rule
 		pr, err := baserules.NewPromRule(
-			ruleId,
+			ruleID,
 			opts.OrgID,
 			opts.Rule,
-			opts.SLogger,
-			opts.Reader,
+			opts.Logger,
 			opts.ManagerOpts.Prometheus,
+			opts.ManagerOpts.Alertmanager.Config().ExternalURL,
 			baserules.WithSQLStore(opts.SQLStore),
 			baserules.WithQueryParser(opts.ManagerOpts.QueryParser),
 			baserules.WithMetadataStore(opts.ManagerOpts.MetadataStore),
+			baserules.WithRuleStateHistoryModule(opts.ManagerOpts.RuleStateHistoryModule),
 		)
 
 		if err != nil {
@@ -72,22 +74,22 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 		rules = append(rules, pr)
 
 		// create promql rule task for evaluation
-		task = newTask(baserules.TaskTypeProm, opts.TaskName, time.Duration(evaluation.GetFrequency()), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
+		task = newTask(baserules.TaskTypeProm, opts.TaskName, evaluation.GetFrequency().Duration(), rules, opts.ManagerOpts, opts.NotifyFunc)
 
 	} else if opts.Rule.RuleType == ruletypes.RuleTypeAnomaly {
 		// create anomaly rule
 		ar, err := NewAnomalyRule(
-			ruleId,
+			ruleID,
 			opts.OrgID,
 			opts.Rule,
-			opts.Reader,
 			opts.Querier,
-			opts.SLogger,
-			opts.Cache,
+			opts.Logger,
+			opts.ManagerOpts.Alertmanager.Config().ExternalURL,
 			baserules.WithEvalDelay(opts.ManagerOpts.EvalDelay),
 			baserules.WithSQLStore(opts.SQLStore),
 			baserules.WithQueryParser(opts.ManagerOpts.QueryParser),
 			baserules.WithMetadataStore(opts.ManagerOpts.MetadataStore),
+			baserules.WithRuleStateHistoryModule(opts.ManagerOpts.RuleStateHistoryModule),
 		)
 		if err != nil {
 			return task, err
@@ -96,10 +98,10 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 		rules = append(rules, ar)
 
 		// create anomaly rule task for evaluation
-		task = newTask(baserules.TaskTypeCh, opts.TaskName, time.Duration(evaluation.GetFrequency()), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
+		task = newTask(baserules.TaskTypeCh, opts.TaskName, evaluation.GetFrequency().Duration(), rules, opts.ManagerOpts, opts.NotifyFunc)
 
 	} else {
-		return nil, fmt.Errorf("unsupported rule type %s. Supported types: %s, %s", opts.Rule.RuleType, ruletypes.RuleTypeProm, ruletypes.RuleTypeThreshold)
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported rule type %s. Supported types: %s, %s", opts.Rule.RuleType, ruletypes.RuleTypeProm, ruletypes.RuleTypeThreshold)
 	}
 
 	return task, nil
@@ -107,12 +109,12 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 
 // TestNotification prepares a dummy rule for given rule parameters and
 // sends a test notification. returns alert count and error (if any)
-func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.ApiError) {
+func TestNotification(opts baserules.PrepareTestRuleOptions) (int, error) {
 
 	ctx := context.Background()
 
 	if opts.Rule == nil {
-		return 0, basemodel.BadRequest(fmt.Errorf("rule is required"))
+		return 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "rule is required")
 	}
 
 	parsedRule := opts.Rule
@@ -132,17 +134,17 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 	if parsedRule.RuleType == ruletypes.RuleTypeThreshold {
 
 		// add special labels for test alerts
-		parsedRule.Labels[labels.RuleSourceLabel] = ""
-		parsedRule.Labels[labels.AlertRuleIdLabel] = ""
+		parsedRule.Labels[ruletypes.RuleSourceLabel] = ""
+		parsedRule.Labels[ruletypes.AlertRuleIDLabel] = ""
 
 		// create a threshold rule
 		rule, err = baserules.NewThresholdRule(
 			alertname,
 			opts.OrgID,
 			parsedRule,
-			opts.Reader,
 			opts.Querier,
-			opts.SLogger,
+			opts.Logger,
+			opts.ManagerOpts.Alertmanager.Config().ExternalURL,
 			baserules.WithSendAlways(),
 			baserules.WithSendUnmatched(),
 			baserules.WithSQLStore(opts.SQLStore),
@@ -151,8 +153,8 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 		)
 
 		if err != nil {
-			zap.L().Error("failed to prepare a new threshold rule for test", zap.String("name", alertname), zap.Error(err))
-			return 0, basemodel.BadRequest(err)
+			slog.Error("failed to prepare a new threshold rule for test", "name", alertname, errors.Attr(err))
+			return 0, err
 		}
 
 	} else if parsedRule.RuleType == ruletypes.RuleTypeProm {
@@ -162,9 +164,9 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 			alertname,
 			opts.OrgID,
 			parsedRule,
-			opts.SLogger,
-			opts.Reader,
+			opts.Logger,
 			opts.ManagerOpts.Prometheus,
+			opts.ManagerOpts.Alertmanager.Config().ExternalURL,
 			baserules.WithSendAlways(),
 			baserules.WithSendUnmatched(),
 			baserules.WithSQLStore(opts.SQLStore),
@@ -173,8 +175,8 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 		)
 
 		if err != nil {
-			zap.L().Error("failed to prepare a new promql rule for test", zap.String("name", alertname), zap.Error(err))
-			return 0, basemodel.BadRequest(err)
+			slog.Error("failed to prepare a new promql rule for test", "name", alertname, errors.Attr(err))
+			return 0, err
 		}
 	} else if parsedRule.RuleType == ruletypes.RuleTypeAnomaly {
 		// create anomaly rule
@@ -182,10 +184,9 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 			alertname,
 			opts.OrgID,
 			parsedRule,
-			opts.Reader,
 			opts.Querier,
-			opts.SLogger,
-			opts.Cache,
+			opts.Logger,
+			opts.ManagerOpts.Alertmanager.Config().ExternalURL,
 			baserules.WithSendAlways(),
 			baserules.WithSendUnmatched(),
 			baserules.WithSQLStore(opts.SQLStore),
@@ -193,11 +194,11 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 			baserules.WithMetadataStore(opts.ManagerOpts.MetadataStore),
 		)
 		if err != nil {
-			zap.L().Error("failed to prepare a new anomaly rule for test", zap.String("name", alertname), zap.Error(err))
-			return 0, basemodel.BadRequest(err)
+			slog.Error("failed to prepare a new anomaly rule for test", "name", alertname, errors.Attr(err))
+			return 0, err
 		}
 	} else {
-		return 0, basemodel.BadRequest(fmt.Errorf("failed to derive ruletype with given information"))
+		return 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to derive ruletype with given information")
 	}
 
 	// set timestamp to current utc time
@@ -205,19 +206,18 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 
 	alertsFound, err := rule.Eval(ctx, ts)
 	if err != nil {
-		zap.L().Error("evaluating rule failed", zap.String("rule", rule.Name()), zap.Error(err))
-		return 0, basemodel.InternalError(fmt.Errorf("rule evaluation failed"))
+		slog.Error("evaluating rule failed", "rule", rule.Name(), errors.Attr(err))
+		return 0, err
 	}
 	rule.SendAlerts(ctx, ts, 0, time.Minute, opts.NotifyFunc)
 
 	return alertsFound, nil
 }
 
-// newTask returns an appropriate group for
-// rule type
-func newTask(taskType baserules.TaskType, name string, frequency time.Duration, rules []baserules.Rule, opts *baserules.ManagerOptions, notify baserules.NotifyFunc, maintenanceStore ruletypes.MaintenanceStore, orgID valuer.UUID) baserules.Task {
+// newTask returns an appropriate group for the rule type
+func newTask(taskType baserules.TaskType, name string, frequency time.Duration, rules []baserules.Rule, opts *baserules.ManagerOptions, notify baserules.NotifyFunc) baserules.Task {
 	if taskType == baserules.TaskTypeCh {
-		return baserules.NewRuleTask(name, "", frequency, rules, opts, notify, maintenanceStore, orgID)
+		return baserules.NewRuleTask(name, "", frequency, rules, opts, notify)
 	}
-	return baserules.NewPromRuleTask(name, "", frequency, rules, opts, notify, maintenanceStore, orgID)
+	return baserules.NewPromRuleTask(name, "", frequency, rules, opts, notify)
 }

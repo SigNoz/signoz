@@ -5,6 +5,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/metric"
@@ -35,7 +36,14 @@ func NewInstrumentation(ctx context.Context, providerSettings factory.ProviderSe
 }
 
 func (hook *instrumentation) BeforeQuery(ctx context.Context, event *telemetrystore.QueryEvent) context.Context {
-	ctx, _ = hook.tracer.Start(ctx, "", trace.WithSpanKind(trace.SpanKindClient))
+	ctx, span := hook.tracer.Start(ctx, "", trace.WithSpanKind(trace.SpanKindClient))
+
+	// add trace_id and span_id to the log_comment
+	comment := ctxtypes.CommentFromContext(ctx)
+	comment.Set("trace_id", span.SpanContext().TraceID().String())
+	comment.Set("span_id", span.SpanContext().SpanID().String())
+	ctx = ctxtypes.NewContextWithComment(ctx, comment)
+
 	return ctx
 }
 

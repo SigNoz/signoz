@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 export const dashboardSuccessResponse = {
 	status: 'success',
 	data: [

@@ -1,3 +1,6 @@
+import { Suspense, useCallback, useEffect, useState } from 'react';
+import { Route, Router, Switch } from 'react-router-dom';
+import { CompatRouter } from 'react-router-dom-v5-compat';
 import * as Sentry from '@sentry/react';
 import { ConfigProvider } from 'antd';
 import getLocalStorageApi from 'api/browser/localstorage/get';
@@ -15,7 +18,8 @@ import AppLayout from 'container/AppLayout';
 import Hex from 'crypto-js/enc-hex';
 import HmacSHA256 from 'crypto-js/hmac-sha256';
 import { KeyboardHotkeysProvider } from 'hooks/hotkeys/useKeyboardHotkeys';
-import { useThemeConfig } from 'hooks/useDarkMode';
+import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
+import { useIsDarkMode, useThemeConfig } from 'hooks/useDarkMode';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { NotificationProvider } from 'hooks/useNotifications';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
@@ -26,13 +30,9 @@ import posthog from 'posthog-js';
 import { useAppContext } from 'providers/App/App';
 import { IUser } from 'providers/App/types';
 import { CmdKProvider } from 'providers/cmdKProvider';
-import { DashboardProvider } from 'providers/Dashboard/Dashboard';
 import { ErrorModalProvider } from 'providers/ErrorModalProvider';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
-import { Suspense, useCallback, useEffect, useState } from 'react';
-import { Route, Router, Switch } from 'react-router-dom';
-import { CompatRouter } from 'react-router-dom-v5-compat';
 import { LicenseStatus } from 'types/api/licensesV3/getActive';
 import { extractDomain } from 'utils/app';
 
@@ -59,14 +59,23 @@ function App(): JSX.Element {
 		isLoggedIn: isLoggedInState,
 		featureFlags,
 		org,
+		isPreflightLoading,
 	} = useAppContext();
 	const [routes, setRoutes] = useState<AppRoutes[]>(defaultRoutes);
+	const isAIAssistantEnabled = useIsAIAssistantEnabled();
 
-	const { hostname, pathname } = window.location;
+	const { hostname } = window.location;
+	const [pathname, setPathname] = useState(history.location.pathname);
 
 	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
 
 	const [isSentryInitialized, setIsSentryInitialized] = useState(false);
+
+	useEffect(() => {
+		return history.listen((location) => {
+			setPathname(location.pathname);
+		});
+	}, []);
 
 	const enableAnalytics = useCallback(
 		(user: IUser): void => {
@@ -214,17 +223,42 @@ function App(): JSX.Element {
 	]);
 
 	useEffect(() => {
+		if (!isLoggedInState) {
+			return;
+		}
+
+		setRoutes((prev) => {
+			const hasAi = prev.some((r) => r.key === 'AI_ASSISTANT');
+			if (isAIAssistantEnabled === hasAi) {
+				return prev;
+			}
+			if (isAIAssistantEnabled) {
+				const aiRoute = defaultRoutes.find((r) => r.key === 'AI_ASSISTANT');
+				if (!aiRoute) {
+					return prev;
+				}
+				return [...prev.filter((r) => r.key !== 'AI_ASSISTANT'), aiRoute];
+			}
+			return prev.filter((r) => r.key !== 'AI_ASSISTANT');
+		});
+	}, [isLoggedInState, isAIAssistantEnabled]);
+
+	const isDarkMode = useIsDarkMode();
+
+	useEffect(() => {
+		window.Pylon?.('setTheme', isDarkMode ? 'dark' : 'light');
+	}, [isDarkMode]);
+
+	useEffect(() => {
 		if (
 			pathname === ROUTES.ONBOARDING ||
-			pathname.startsWith('/public/dashboard/')
+			pathname.startsWith('/public/dashboard/') ||
+			pathname === '/ai-assistant' ||
+			pathname.startsWith('/ai-assistant/')
 		) {
-			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-ignore
-			window.Pylon('hideChatBubble');
+			window.Pylon?.('hideChatBubble');
 		} else {
-			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-ignore
-			window.Pylon('showChatBubble');
+			window.Pylon?.('showChatBubble');
 		}
 	}, [pathname]);
 
@@ -257,10 +291,11 @@ function App(): JSX.Element {
 				isLoggedInState &&
 				isChatSupportEnabled &&
 				!showAddCreditCardModal &&
-				(isCloudUser || isEnterpriseSelfHostedUser)
+				(isCloudUser || isEnterpriseSelfHostedUser) &&
+				window.signozBootData?.settings?.pylon?.enabled
 			) {
 				const email = user.email || '';
-				const secret = process.env.PYLON_IDENTITY_SECRET || '';
+				const secret = window.signozBootData?.settings?.pylon?.identitySecret || '';
 				let emailHash = '';
 
 				if (email && secret) {
@@ -269,7 +304,7 @@ function App(): JSX.Element {
 
 				window.pylon = {
 					chat_settings: {
-						app_id: process.env.PYLON_APP_ID,
+						app_id: window.signozBootData?.settings?.pylon?.appId,
 						email: user.email,
 						name: user.displayName || user.email,
 						email_hash: emailHash,
@@ -299,32 +334,56 @@ function App(): JSX.Element {
 
 	useEffect(() => {
 		if (isCloudUser || isEnterpriseSelfHostedUser) {
-			if (process.env.POSTHOG_KEY) {
-				posthog.init(process.env.POSTHOG_KEY, {
-					api_host: 'https://us.i.posthog.com',
+			if (
+				window.signozBootData?.settings?.posthog?.enabled &&
+				window.signozBootData?.settings?.posthog?.key
+			) {
+				posthog.init(window.signozBootData.settings.posthog.key, {
+					api_host: window.signozBootData.settings.posthog.apiHost,
+					ui_host: window.signozBootData.settings.posthog.uiHost,
 					person_profiles: 'identified_only', // or 'always' to create profiles for anonymous users as well
 				});
 			}
 
-			if (!isSentryInitialized) {
+			if (
+				!isSentryInitialized &&
+				window.signozBootData?.settings?.sentry?.enabled
+			) {
 				Sentry.init({
-					dsn: process.env.SENTRY_DSN,
-					tunnel: process.env.TUNNEL_URL,
-					environment: 'production',
+					dsn: window.signozBootData.settings.sentry.dsn,
+					tunnel: window.signozBootData.settings.sentry.tunnel,
+					environment: process.env.ENVIRONMENT,
+					release: process.env.VERSION,
 					integrations: [
+						// Kept for the `transaction` tag used in routing, even though
+						// tracing is disabled. Ref: https://github.com/SigNoz/platform-pod/issues/2393#issuecomment-4603658055
 						Sentry.browserTracingIntegration(),
 						Sentry.replayIntegration({
 							maskAllText: false,
 							blockAllMedia: false,
 						}),
 					],
-					// Performance Monitoring
-					tracesSampleRate: 1.0, //  Capture 100% of the transactions
-					// Set 'tracePropagationTargets' to control for which URLs distributed tracing should be enabled
-					tracePropagationTargets: [],
-					// Session Replay
+					tracesSampleRate: 0, // Ref: https://github.com/SigNoz/platform-pod/issues/2393#issuecomment-4603658055
 					replaysSessionSampleRate: 0.1, // This sets the sample rate at 10%. You may want to change it to 100% while in development and then sample at a lower rate in production.
 					replaysOnErrorSampleRate: 1.0, // If you're not already sampling the entire session, change the sample rate to 100% when sampling sessions where errors occur.
+					beforeSend(event) {
+						// Drop the event if its level is 'warning' or 'info'
+						if (event.level === 'warning' || event.level === 'info') {
+							return null;
+						}
+
+						const sessionReplayUrl = posthog.get_session_replay_url?.({
+							withTimestamp: true,
+						});
+						if (sessionReplayUrl) {
+							// eslint-disable-next-line no-param-reassign
+							event.contexts = {
+								...event.contexts,
+								posthog: { session_replay_url: sessionReplayUrl },
+							};
+						}
+						return event;
+					},
 				});
 
 				setIsSentryInitialized(true);
@@ -335,6 +394,10 @@ function App(): JSX.Element {
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isCloudUser, isEnterpriseSelfHostedUser]);
+
+	if (isPreflightLoading) {
+		return <Spinner tip="Loading..." />;
+	}
 
 	// if the user is in logged in state
 	if (isLoggedInState) {
@@ -375,28 +438,26 @@ function App(): JSX.Element {
 									<PrivateRoute>
 										<ResourceProvider>
 											<QueryBuilderProvider>
-												<DashboardProvider>
-													<KeyboardHotkeysProvider>
-														<AppLayout>
-															<PreferenceContextProvider>
-																<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
-																	<Switch>
-																		{routes.map(({ path, component, exact }) => (
-																			<Route
-																				key={`${path}`}
-																				exact={exact}
-																				path={path}
-																				component={component}
-																			/>
-																		))}
-																		<Route exact path="/" component={Home} />
-																		<Route path="*" component={NotFound} />
-																	</Switch>
-																</Suspense>
-															</PreferenceContextProvider>
-														</AppLayout>
-													</KeyboardHotkeysProvider>
-												</DashboardProvider>
+												<KeyboardHotkeysProvider>
+													<AppLayout>
+														<PreferenceContextProvider>
+															<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
+																<Switch>
+																	{routes.map(({ path, component, exact }) => (
+																		<Route
+																			key={`${path}`}
+																			exact={exact}
+																			path={path}
+																			component={component}
+																		/>
+																	))}
+																	<Route exact path="/" component={Home} />
+																	<Route path="*" component={NotFound} />
+																</Switch>
+															</Suspense>
+														</PreferenceContextProvider>
+													</AppLayout>
+												</KeyboardHotkeysProvider>
 											</QueryBuilderProvider>
 										</ResourceProvider>
 									</PrivateRoute>

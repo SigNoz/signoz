@@ -79,7 +79,7 @@ var (
 	}
 )
 
-// UnmarshalJSON implements the json.Unmarshaler interface
+// UnmarshalJSON implements the json.Unmarshaler interface.
 func (f *FieldContext) UnmarshalJSON(data []byte) error {
 	var str string
 	if err := json.Unmarshal(data, &str); err != nil {
@@ -100,7 +100,7 @@ func (f *FieldContext) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// Scan implements the sql.Scanner interface
+// Scan implements the sql.Scanner interface.
 func (f *FieldContext) Scan(value interface{}) error {
 	if f == nil {
 		return errors.NewInternalf(errors.CodeInternal, "fieldcontext: nil receiver")
@@ -153,4 +153,37 @@ func (f FieldContext) TagType() string {
 		return "body"
 	}
 	return ""
+}
+
+func isContextValidForSignal(ctx FieldContext, signal Signal) bool {
+	if ctx == FieldContextResource ||
+		ctx == FieldContextAttribute ||
+		ctx == FieldContextScope {
+		return true
+	}
+
+	switch signal.StringValue() {
+	case SignalLogs.StringValue():
+		return ctx == FieldContextLog || ctx == FieldContextBody
+	case SignalTraces.StringValue():
+		return ctx == FieldContextSpan || ctx == FieldContextEvent || ctx == FieldContextTrace
+	case SignalMetrics.StringValue():
+		return ctx == FieldContextMetric
+	}
+	return true
+}
+
+// Enum returns the acceptable values for FieldContext.
+func (FieldContext) Enum() []any {
+	return []any{
+		FieldContextMetric,
+		FieldContextLog,
+		FieldContextSpan,
+		// FieldContextTrace,
+		FieldContextResource,
+		// FieldContextScope,
+		FieldContextAttribute,
+		// FieldContextEvent,
+		FieldContextBody,
+	}
 }

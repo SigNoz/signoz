@@ -1,4 +1,6 @@
-import { FC } from 'react';
+import { FC, useMemo } from 'react';
+import Spinner from 'components/Spinner';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { PanelTypeVsPanelWrapper } from './constants';
 import { PanelWrapperProps } from './panelWrapper.types';
@@ -21,18 +23,40 @@ function PanelWrapper({
 	onOpenTraceBtnClick,
 	customSeries,
 	customOnRowClick,
+	panelMode,
 	enableDrillDown = false,
+	onColumnWidthsChange,
+	hidePagination,
 }: PanelWrapperProps): JSX.Element {
 	const Component = PanelTypeVsPanelWrapper[
 		selectedGraph || widget.panelTypes
 	] as FC<PanelWrapperProps>;
 
+	const groupByPerQuery = useMemo<Record<string, BaseAutocompleteData[]>>(() => {
+		if (!widget.query.builder) {
+			return {};
+		}
+		const { queryData } = widget.query.builder;
+		return queryData.reduce<Record<string, BaseAutocompleteData[]>>(
+			(acc, query) => {
+				acc[query.queryName] = query.groupBy ?? [];
+				return acc;
+			},
+			{},
+		);
+	}, [widget]);
+
 	if (!Component) {
-		// eslint-disable-next-line react/jsx-no-useless-fragment
 		return <></>;
 	}
+
+	if (queryResponse.isFetching || queryResponse.isLoading) {
+		return <Spinner height="100%" size="large" tip="Loading..." />;
+	}
+
 	return (
 		<Component
+			panelMode={panelMode}
 			widget={widget}
 			queryResponse={queryResponse}
 			setRequestData={setRequestData}
@@ -51,6 +75,9 @@ function PanelWrapper({
 			customOnRowClick={customOnRowClick}
 			customSeries={customSeries}
 			enableDrillDown={enableDrillDown}
+			onColumnWidthsChange={onColumnWidthsChange}
+			groupByPerQuery={groupByPerQuery}
+			hidePagination={hidePagination}
 		/>
 	);
 }

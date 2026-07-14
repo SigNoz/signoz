@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react';
+import { MetricsexplorertypesMetricMetadataDTO } from 'api/generated/services/sigNoz.schemas';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 import { useGetMetrics } from 'container/MetricsExplorer/Explorer/utils';
-import { MetricMetadata } from 'types/api/metricsExplorer/v2/getMetricMetadata';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, QueryBuilderContextType } from 'types/common/queryBuilder';
@@ -24,13 +24,13 @@ const mockUseGetMetrics = useGetMetrics as jest.MockedFunction<
 
 const MOCK_METRIC_1 = {
 	unit: UniversalYAxisUnit.BYTES,
-} as MetricMetadata;
+} as MetricsexplorertypesMetricMetadataDTO;
 const MOCK_METRIC_2 = {
 	unit: UniversalYAxisUnit.SECONDS,
-} as MetricMetadata;
+} as MetricsexplorertypesMetricMetadataDTO;
 const MOCK_METRIC_3 = {
 	unit: '',
-} as MetricMetadata;
+} as MetricsexplorertypesMetricMetadataDTO;
 
 function createMockCurrentQuery(
 	queryType: EQueryType,
@@ -57,9 +57,9 @@ describe('useGetYAxisUnit', () => {
 			isError: false,
 			metrics: [],
 		});
-		mockUseQueryBuilder.mockReturnValue(({
+		mockUseQueryBuilder.mockReturnValue({
 			currentQuery: undefined,
-		} as Partial<QueryBuilderContextType>) as QueryBuilderContextType);
+		} as Partial<QueryBuilderContextType> as QueryBuilderContextType);
 	});
 
 	it('should return undefined yAxisUnit and not call useGetMetrics when currentQuery is null', async () => {
@@ -73,9 +73,9 @@ describe('useGetYAxisUnit', () => {
 
 	it('should return undefined yAxisUnit when queryType is PROM', async () => {
 		const mockCurrentQuery = createMockCurrentQuery(EQueryType.PROM);
-		mockUseQueryBuilder.mockReturnValueOnce(({
+		mockUseQueryBuilder.mockReturnValueOnce({
 			currentQuery: mockCurrentQuery,
-		} as Partial<QueryBuilderContextType>) as QueryBuilderContextType);
+		} as Partial<QueryBuilderContextType> as QueryBuilderContextType);
 
 		const { result } = renderHook(() => useGetYAxisUnit());
 
@@ -85,9 +85,9 @@ describe('useGetYAxisUnit', () => {
 
 	it('should return undefined yAxisUnit when queryType is CLICKHOUSE', async () => {
 		const mockCurrentQuery = createMockCurrentQuery(EQueryType.CLICKHOUSE);
-		mockUseQueryBuilder.mockReturnValueOnce(({
+		mockUseQueryBuilder.mockReturnValueOnce({
 			currentQuery: mockCurrentQuery,
-		} as Partial<QueryBuilderContextType>) as QueryBuilderContextType);
+		} as Partial<QueryBuilderContextType> as QueryBuilderContextType);
 
 		const { result } = renderHook(() => useGetYAxisUnit());
 
@@ -104,9 +104,9 @@ describe('useGetYAxisUnit', () => {
 				aggregateAttribute: { key: 'trace_metric' },
 			} as Query['builder']['queryData'][0],
 		]);
-		mockUseQueryBuilder.mockReturnValueOnce(({
+		mockUseQueryBuilder.mockReturnValueOnce({
 			currentQuery: mockCurrentQuery,
-		} as Partial<QueryBuilderContextType>) as QueryBuilderContextType);
+		} as Partial<QueryBuilderContextType> as QueryBuilderContextType);
 
 		const { result } = renderHook(() => useGetYAxisUnit());
 
@@ -123,9 +123,9 @@ describe('useGetYAxisUnit', () => {
 				aggregateAttribute: { key: 'log_metric' },
 			} as Query['builder']['queryData'][number],
 		]);
-		mockUseQueryBuilder.mockReturnValueOnce(({
+		mockUseQueryBuilder.mockReturnValueOnce({
 			currentQuery: mockCurrentQuery,
-		} as Partial<QueryBuilderContextType>) as QueryBuilderContextType);
+		} as Partial<QueryBuilderContextType> as QueryBuilderContextType);
 
 		const { result } = renderHook(() => useGetYAxisUnit());
 
@@ -149,9 +149,9 @@ describe('useGetYAxisUnit', () => {
 			} as Query['builder']['queryData'][number],
 		]);
 
-		mockUseQueryBuilder.mockReturnValueOnce(({
+		mockUseQueryBuilder.mockReturnValueOnce({
 			stagedQuery: mockCurrentQuery,
-		} as Partial<QueryBuilderContextType>) as QueryBuilderContextType);
+		} as Partial<QueryBuilderContextType> as QueryBuilderContextType);
 
 		renderHook(() => useGetYAxisUnit());
 
@@ -171,9 +171,9 @@ describe('useGetYAxisUnit', () => {
 				queryName: 'query2',
 			} as Query['builder']['queryData'][number],
 		]);
-		mockUseQueryBuilder.mockReturnValueOnce(({
+		mockUseQueryBuilder.mockReturnValueOnce({
 			stagedQuery: mockCurrentQuery,
-		} as Partial<QueryBuilderContextType>) as QueryBuilderContextType);
+		} as Partial<QueryBuilderContextType> as QueryBuilderContextType);
 
 		renderHook(() => useGetYAxisUnit('query2'));
 

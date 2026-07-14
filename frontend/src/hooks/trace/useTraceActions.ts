@@ -1,3 +1,6 @@
+import { useCallback } from 'react';
+import { useQueryClient } from 'react-query';
+import { useCopyToClipboard } from 'react-use';
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 import { convertFiltersToExpressionWithExistingQuery } from 'components/QueryBuilderV2/utils';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
@@ -7,9 +10,6 @@ import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSea
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useNotifications } from 'hooks/useNotifications';
 import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAutocompleteFromCustomValue';
-import { useCallback } from 'react';
-import { useQueryClient } from 'react-query';
-import { useCopyToClipboard } from 'react-use';
 import {
 	BaseAutocompleteData,
 	DataTypes,

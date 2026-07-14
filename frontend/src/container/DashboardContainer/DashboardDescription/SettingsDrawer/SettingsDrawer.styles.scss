@@ -1,19 +1,19 @@
 .settings-container-root {
 	.ant-drawer-wrapper-body {
-		border-left: 1px solid var(--bg-slate-500);
-		background: var(--bg-ink-400);
+		border-left: 1px solid var(--l1-border);
+		background: var(--l2-background);
 		box-shadow: -4px 10px 16px 2px rgba(0, 0, 0, 0.2);
 
 		.ant-drawer-header {
 			height: 48px;
-			border-bottom: 1px solid var(--bg-slate-500);
+			border-bottom: 1px solid var(--l1-border);
 			padding: 14px 14px 14px 11px;
 
 			.ant-drawer-header-title {
 				gap: 16px;
 
 				.ant-drawer-title {
-					color: var(--bg-vanilla-400);
+					color: var(--l2-foreground);
 					font-family: Inter;
 					font-size: 14px;
 					font-style: normal;
@@ -21,7 +21,7 @@
 					line-height: 20px; /* 142.857% */
 					letter-spacing: -0.07px;
 					padding-left: 16px;
-					border-left: 1px solid var(--bg-slate-500);
+					border-left: 1px solid var(--l1-border);
 				}
 
 				.ant-drawer-close {
@@ -37,30 +37,6 @@
 
 			&::-webkit-scrollbar {
 				width: 0.1rem;
-			}
-		}
-	}
-}
-
-.lightMode {
-	.settings-container-root {
-		.ant-drawer-wrapper-body {
-			border-left: 1px solid var(--bg-vanilla-300);
-			background: var(--bg-vanilla-100);
-
-			.ant-drawer-header {
-				border-bottom: 1px solid var(--bg-vanilla-300);
-
-				.ant-drawer-header-title {
-					.ant-drawer-title {
-						color: var(--bg-ink-400);
-						border-left: 1px solid var(--bg-vanilla-300);
-					}
-
-					.ant-drawer-close {
-						color: var(--bg-ink-300);
-					}
-				}
 			}
 		}
 	}

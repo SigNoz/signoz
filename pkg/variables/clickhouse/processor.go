@@ -7,32 +7,32 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 )
 
-// FilterAction represents what to do with a filter containing a variable
+// FilterAction represents what to do with a filter containing a variable.
 type FilterAction int
 
 const (
-	// KeepFilter maintains the original filter
+	// KeepFilter maintains the original filter.
 	KeepFilter FilterAction = iota
-	// RemoveFilter completely removes the filter
+	// RemoveFilter completely removes the filter.
 	RemoveFilter
-	// ReplaceWithExistsCheck replaces filter with an EXISTS check
+	// ReplaceWithExistsCheck replaces filter with an EXISTS check.
 	ReplaceWithExistsCheck
 )
 
 // FilterTransformer defines the callback function that decides
-// what to do with a filter containing a variable
+// what to do with a filter containing a variable.
 type FilterTransformer func(variableName string, expr parser.Expr) FilterAction
 
-// QueryProcessor handles ClickHouse query modifications
+// QueryProcessor handles ClickHouse query modifications.
 type QueryProcessor struct {
 }
 
-// NewQueryProcessor creates a new processor
+// NewQueryProcessor creates a new processor.
 func NewQueryProcessor() *QueryProcessor {
 	return &QueryProcessor{}
 }
 
-// ProcessQuery finds variables in WHERE clauses and modifies them according to the transformer function
+// ProcessQuery finds variables in WHERE clauses and modifies them according to the transformer function.
 func (qp *QueryProcessor) ProcessQuery(query string, transformer FilterTransformer) (string, error) {
 	p := parser.NewParser(query)
 	stmts, err := p.ParseStmts()
@@ -76,7 +76,7 @@ func (qp *QueryProcessor) ProcessQuery(query string, transformer FilterTransform
 	return resultBuilder.String(), nil
 }
 
-// processWhereClause processes the WHERE clause in a SELECT statement
+// processWhereClause processes the WHERE clause in a SELECT statement.
 func (qp *QueryProcessor) processWhereClause(selectQuery *parser.SelectQuery, transformer FilterTransformer) (bool, error) {
 	// First, process any subqueries in the FROM clause
 	if selectQuery.From != nil {
@@ -115,7 +115,7 @@ func (qp *QueryProcessor) processWhereClause(selectQuery *parser.SelectQuery, tr
 	return modified, nil
 }
 
-// processFromClauseSubqueries recursively processes subqueries in the FROM clause
+// processFromClauseSubqueries recursively processes subqueries in the FROM clause.
 func (qp *QueryProcessor) processFromClauseSubqueries(fromClause *parser.FromClause, transformer FilterTransformer) (bool, error) {
 	if fromClause == nil {
 		return false, nil
@@ -124,7 +124,7 @@ func (qp *QueryProcessor) processFromClauseSubqueries(fromClause *parser.FromCla
 	return qp.processExprSubqueries(fromClause.Expr, transformer)
 }
 
-// processExprSubqueries processes subqueries found in expressions
+// processExprSubqueries processes subqueries found in expressions.
 func (qp *QueryProcessor) processExprSubqueries(expr parser.Expr, transformer FilterTransformer) (bool, error) {
 	if expr == nil {
 		return false, nil
@@ -209,7 +209,7 @@ func (qp *QueryProcessor) processExprSubqueries(expr parser.Expr, transformer Fi
 	return modified, nil
 }
 
-// transformExpr recursively processes expressions in the WHERE clause
+// transformExpr recursively processes expressions in the WHERE clause.
 func (qp *QueryProcessor) transformExpr(expr parser.Expr, transformer FilterTransformer) (parser.Expr, bool, error) {
 	if expr == nil {
 		return nil, false, nil
@@ -347,7 +347,7 @@ func (qp *QueryProcessor) transformExpr(expr parser.Expr, transformer FilterTran
 }
 
 // isComplexExpression checks if an expression contains nested operations
-// that should not be treated as a simple variable reference
+// that should not be treated as a simple variable reference.
 func (qp *QueryProcessor) isComplexExpression(expr parser.Expr) bool {
 	switch e := expr.(type) {
 	case *parser.BinaryOperation:
@@ -366,7 +366,7 @@ func (qp *QueryProcessor) isComplexExpression(expr parser.Expr) bool {
 	return false
 }
 
-// findVariables finds all variables in an expression
+// findVariables finds all variables in an expression.
 func (qp *QueryProcessor) findVariables(expr parser.Expr) []string {
 	var variables []string
 
@@ -415,7 +415,7 @@ func (qp *QueryProcessor) findVariables(expr parser.Expr) []string {
 	return variables
 }
 
-// createExistsCheck creates an EXISTS check for a column/map field
+// createExistsCheck creates an EXISTS check for a column/map field.
 func (qp *QueryProcessor) createExistsCheck(expr parser.Expr, _ string) (parser.Expr, bool, error) {
 	switch e := expr.(type) {
 	case *parser.BinaryOperation:

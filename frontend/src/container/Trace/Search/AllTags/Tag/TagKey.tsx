@@ -1,5 +1,3 @@
-import { AutoComplete, Input } from 'antd';
-import getTagFilters from 'api/trace/getTagFilter';
 import {
 	Dispatch,
 	SetStateAction,
@@ -8,7 +6,11 @@ import {
 	useState,
 } from 'react';
 import { useQuery } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
+import { Input } from '@signozhq/ui/input';
+import { AutoComplete } from 'antd';
+import getTagFilters from 'api/trace/getTagFilter';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';

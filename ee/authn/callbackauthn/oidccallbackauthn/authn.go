@@ -3,11 +3,14 @@ package oidccallbackauthn
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/url"
+	"path"
 
 	"github.com/SigNoz/signoz/pkg/authn"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/http/client"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
@@ -25,13 +28,14 @@ var defaultScopes []string = []string{"email", "profile", oidc.ScopeOpenID}
 var _ authn.CallbackAuthN = (*AuthN)(nil)
 
 type AuthN struct {
-	settings   factory.ScopedProviderSettings
-	store      authtypes.AuthNStore
-	licensing  licensing.Licensing
-	httpClient *client.Client
+	settings     factory.ScopedProviderSettings
+	store        authtypes.AuthNStore
+	licensing    licensing.Licensing
+	httpClient   *client.Client
+	globalConfig global.Config
 }
 
-func New(store authtypes.AuthNStore, licensing licensing.Licensing, providerSettings factory.ProviderSettings) (*AuthN, error) {
+func New(store authtypes.AuthNStore, licensing licensing.Licensing, providerSettings factory.ProviderSettings, globalConfig global.Config) (*AuthN, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/ee/authn/callbackauthn/oidccallbackauthn")
 
 	httpClient, err := client.New(providerSettings.Logger, providerSettings.TracerProvider, providerSettings.MeterProvider)
@@ -40,10 +44,11 @@ func New(store authtypes.AuthNStore, licensing licensing.Licensing, providerSett
 	}
 
 	return &AuthN{
-		settings:   settings,
-		store:      store,
-		licensing:  licensing,
-		httpClient: httpClient,
+		settings:     settings,
+		store:        store,
+		licensing:    licensing,
+		httpClient:   httpClient,
+		globalConfig: globalConfig,
 	}, nil
 }
 
@@ -150,7 +155,7 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 				// Some IDPs return a single group as a string instead of an array
 				groups = append(groups, g)
 			default:
-				a.settings.Logger().WarnContext(ctx, "oidc: unsupported groups type", "type", fmt.Sprintf("%T", claimValue))
+				a.settings.Logger().WarnContext(ctx, "oidc: unsupported groups type", slog.String("type", fmt.Sprintf("%T", claimValue)))
 			}
 		}
 	}
@@ -196,7 +201,7 @@ func (a *AuthN) oidcProviderAndoauth2Config(ctx context.Context, siteURL *url.UR
 		RedirectURL: (&url.URL{
 			Scheme: siteURL.Scheme,
 			Host:   siteURL.Host,
-			Path:   redirectPath,
+			Path:   path.Join(a.globalConfig.ExternalPath(), redirectPath),
 		}).String(),
 	}, nil
 }

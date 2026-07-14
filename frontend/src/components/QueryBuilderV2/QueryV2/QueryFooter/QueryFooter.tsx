@@ -1,13 +1,13 @@
-import './QueryFooter.styles.scss';
-
-/* eslint-disable react/require-default-props */
-import { Button, Tooltip, Typography } from 'antd';
+import { useMemo } from 'react';
+import { Button, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { DraftingCompass, Plus, Sigma } from 'lucide-react';
+import { DraftingCompass, Plus, Sigma } from '@signozhq/icons';
 import BetaTag from 'periscope/components/BetaTag/BetaTag';
-import { useMemo } from 'react';
+
+import './QueryFooter.styles.scss';
 
 function TraceOperatorSection({
 	addTraceOperator,
@@ -44,7 +44,7 @@ function TraceOperatorSection({
 					<div style={{ textAlign: 'center' }}>
 						Add Trace Matching
 						<Typography.Link
-							href="https://signoz.io/docs/userguide/query-builder-v5/#multi-query-analysis-trace-operators"
+							href="https://signoz.io/docs/querying/multi-query-analysis/#trace-matching"
 							target="_blank"
 							style={{ textDecoration: 'underline' }}
 						>
@@ -106,7 +106,7 @@ export default function QueryFooter({
 								<div style={{ textAlign: 'center' }}>
 									Add New Formula
 									<Typography.Link
-										href="https://signoz.io/docs/userguide/query-builder-v5/#multi-query-analysis-advanced-comparisons"
+										href="https://signoz.io/docs/querying/multi-query-analysis/#advanced-comparisons"
 										target="_blank"
 										style={{ textDecoration: 'underline' }}
 									>

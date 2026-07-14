@@ -11,6 +11,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"golang.org/x/exp/slices"
 )
@@ -41,14 +43,14 @@ func NewClustersRepo(reader interfaces.Reader, querierV2 interfaces.Querier) *Cl
 	return &ClustersRepo{reader: reader, querierV2: querierV2}
 }
 
-func (n *ClustersRepo) GetClusterAttributeKeys(ctx context.Context, req v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
+func (n *ClustersRepo) GetClusterAttributeKeys(ctx context.Context, orgID valuer.UUID, req v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
 	req.DataSource = v3.DataSourceMetrics
 	req.AggregateAttribute = metricToUseForClusters
 	if req.Limit == 0 {
 		req.Limit = 50
 	}
 
-	attributeKeysResponse, err := n.reader.GetMetricAttributeKeys(ctx, &req)
+	attributeKeysResponse, err := n.reader.GetMetricAttributeKeys(ctx, orgID, &req)
 	if err != nil {
 		return nil, err
 	}
@@ -56,14 +58,14 @@ func (n *ClustersRepo) GetClusterAttributeKeys(ctx context.Context, req v3.Filte
 	return attributeKeysResponse, nil
 }
 
-func (n *ClustersRepo) GetClusterAttributeValues(ctx context.Context, req v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
+func (n *ClustersRepo) GetClusterAttributeValues(ctx context.Context, orgID valuer.UUID, req v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
 	req.DataSource = v3.DataSourceMetrics
 	req.AggregateAttribute = metricToUseForClusters
 	if req.Limit == 0 {
 		req.Limit = 50
 	}
 
-	attributeValuesResponse, err := n.reader.GetMetricAttributeValues(ctx, &req)
+	attributeValuesResponse, err := n.reader.GetMetricAttributeValues(ctx, orgID, &req)
 	if err != nil {
 		return nil, err
 	}
@@ -163,6 +165,10 @@ func (p *ClustersRepo) getTopClusterGroups(ctx context.Context, orgID valuer.UUI
 		topClusterGroupsQueryRangeParams.CompositeQuery.BuilderQueries[queryName] = query
 	}
 
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "inframetrics",
+		instrumentationtypes.CodeFunctionName: "getTopClusterGroups",
+	})
 	queryResponse, _, err := p.querierV2.QueryRange(ctx, orgID, topClusterGroupsQueryRangeParams)
 	if err != nil {
 		return nil, nil, err
@@ -278,6 +284,10 @@ func (p *ClustersRepo) GetClusterList(ctx context.Context, orgID valuer.UUID, re
 		}
 	}
 
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "inframetrics",
+		instrumentationtypes.CodeFunctionName: "GetClusterList",
+	})
 	queryResponse, _, err := p.querierV2.QueryRange(ctx, orgID, query)
 	if err != nil {
 		return resp, err

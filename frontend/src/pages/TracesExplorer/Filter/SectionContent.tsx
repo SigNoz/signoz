@@ -1,10 +1,3 @@
-import './Filter.styles.scss';
-
-import { Button, Card, Checkbox, Input, Tooltip } from 'antd';
-import { CheckboxChangeEvent } from 'antd/es/checkbox';
-import { ParaGraph } from 'container/Trace/Filters/Panel/PanelBody/Common/styles';
-import useDebouncedFn from 'hooks/useDebouncedFunction';
-import { isArray, isEmpty } from 'lodash-es';
 import {
 	ChangeEvent,
 	Dispatch,
@@ -13,6 +6,11 @@ import {
 	useMemo,
 	useState,
 } from 'react';
+import { Button, Card, Input, Tooltip } from 'antd';
+import { Checkbox } from '@signozhq/ui/checkbox';
+import { ParaGraph } from 'container/Trace/Filters/Panel/PanelBody/Common/styles';
+import useDebouncedFn from 'hooks/useDebouncedFunction';
+import { isArray, isEmpty } from 'lodash-es';
 
 import {
 	addFilter,
@@ -24,6 +22,8 @@ import {
 	statusFilterOption,
 	useGetAggregateValues,
 } from './filterUtils';
+
+import './Filter.styles.scss';
 
 interface SectionBodyProps {
 	type: AllTraceFilterKeys;
@@ -53,7 +53,11 @@ export function SectionBody(props: SectionBodyProps): JSX.Element {
 		setSearchText(searchText as string);
 	}, 500);
 
-	const { isFetching: fetching, keys, results: res } = useGetAggregateValues({
+	const {
+		isFetching: fetching,
+		keys,
+		results: res,
+	} = useGetAggregateValues({
 		value: type,
 		searchText,
 	});
@@ -83,8 +87,11 @@ export function SectionBody(props: SectionBodyProps): JSX.Element {
 		[results, searchFilter, type, visibleItemsCount],
 	);
 
-	const onCheckHandler = (event: CheckboxChangeEvent, value: string): void => {
-		const { checked } = event.target;
+	const onCheckHandler = (
+		checkedState: boolean | 'indeterminate',
+		value: string,
+	): void => {
+		const checked = checkedState === true;
 		let newValue = value;
 		if (type === 'hasError') {
 			newValue = String(value === 'Error');
@@ -143,14 +150,14 @@ export function SectionBody(props: SectionBodyProps): JSX.Element {
 							<Checkbox
 								className="submenu-checkbox"
 								key={`${type}-${item}`}
-								onChange={(e): void => onCheckHandler(e, item)}
-								checked={checkboxMatcher(item)}
-								data-testid={`${type}-${item}`}
+								onChange={(checked): void => onCheckHandler(checked, item)}
+								value={checkboxMatcher(item)}
+								testId={`${type}-${item}`}
 							>
 								<div className="checkbox-label">
 									<div className={labelClassname(item)} />
 									<Tooltip overlay={<div>{item}</div>} placement="rightTop">
-										<ParaGraph ellipsis style={{ maxWidth: 200 }}>
+										<ParaGraph truncate={1} style={{ maxWidth: 200 }}>
 											{item}
 										</ParaGraph>
 									</Tooltip>

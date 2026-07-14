@@ -82,7 +82,6 @@ export const getSortedData = (treeData: ITraceTree): ITraceTree => {
 		}
 
 		// need this rule to disable
-		// eslint-disable-next-line no-param-reassign
 		treeNode.children = sortBy(treeNode.children, (e) => e.startTime);
 
 		treeNode.children.forEach((childNode) => {
@@ -117,7 +116,6 @@ export const getTreeLevelsCount = (tree: ITraceTree): number => {
 	return levels;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const formUrlParams = (params: Record<string, any>): string => {
 	let urlParams = '';
 	Object.entries(params).forEach(([key, value], index) => {

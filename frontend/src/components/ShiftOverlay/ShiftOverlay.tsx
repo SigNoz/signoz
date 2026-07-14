@@ -1,18 +1,18 @@
-import './shiftOverlay.scss';
-
 import { useMemo } from 'react';
 import ReactDOM from 'react-dom';
+import { ROLES } from 'types/roles';
 
 import { formatShortcut } from './formatShortcut';
 
-export type UserRole = 'ADMIN' | 'EDITOR' | 'AUTHOR' | 'VIEWER';
+import './shiftOverlay.scss';
+
 export type CmdAction = {
 	id: string;
 	name: string;
 	shortcut?: string[];
 	keywords?: string;
 	section?: string;
-	roles?: UserRole[];
+	roles?: ROLES[];
 	perform: () => void;
 };
 
@@ -33,7 +33,7 @@ function Shortcut({ label, keyHint }: ShortcutProps): JSX.Element {
 interface ShiftOverlayProps {
 	visible: boolean;
 	actions: CmdAction[];
-	userRole: UserRole;
+	userRole: ROLES;
 }
 
 export function ShiftOverlay({

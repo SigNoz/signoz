@@ -1,6 +1,6 @@
+import { ReactNode } from 'react';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { WhereClauseConfig } from 'hooks/queryBuilder/useAutoComplete';
-import { ReactNode } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -37,6 +37,7 @@ export type QueryBuilderProps = {
 	onChangeTraceView?: (view: TraceView) => void;
 	onSignalSourceChange?: (value: string) => void;
 	signalSourceChangeEnabled?: boolean;
+	savePreviousQuery?: boolean;
 };
 
 export enum TraceView {

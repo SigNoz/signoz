@@ -1,4 +1,6 @@
-import { Collapse, Input, Typography } from 'antd';
+import { Input } from '@signozhq/ui/input';
+import { Collapse } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 
 import { useCreateAlertState } from '../context';
 import AdvancedOptionItem from './AdvancedOptionItem';

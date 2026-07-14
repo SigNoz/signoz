@@ -1,5 +1,5 @@
-import './QueryTable.styles.scss';
-
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import cx from 'classnames';
 import { ResizeTable } from 'components/ResizeTable';
 import Download from 'container/Download/Download';
@@ -9,12 +9,12 @@ import {
 	RowData,
 } from 'lib/query/createTableColumnsFromQuery';
 import ContextMenu, { useCoordinates } from 'periscope/components/ContextMenu';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
 
 import useTableContextMenu from './Drilldown/useTableContextMenu';
 import { QueryTableProps } from './QueryTable.intefaces';
 import { createDownloadableData } from './utils';
+
+import './QueryTable.styles.scss';
 
 export function QueryTable({
 	queryTableData,
@@ -28,6 +28,8 @@ export function QueryTable({
 	sticky,
 	searchTerm,
 	widgetId,
+	columnWidths,
+	onColumnWidthsChange,
 	panelType,
 	...props
 }: QueryTableProps): JSX.Element {
@@ -175,10 +177,9 @@ export function QueryTable({
 					dataSource={filterTable === null ? newDataSource : filterTable}
 					scroll={{ x: 'max-content' }}
 					pagination={paginationConfig}
-					widgetId={widgetId}
-					shouldPersistColumnWidths
+					columnWidths={columnWidths}
+					onColumnWidthsChange={onColumnWidthsChange}
 					sticky={sticky}
-					// eslint-disable-next-line react/jsx-props-no-spreading
 					{...props}
 				/>
 			</div>

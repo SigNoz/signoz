@@ -1,11 +1,11 @@
-import './AddToQueryHOC.styles.scss';
-
+import { memo, MouseEvent, ReactNode, useMemo } from 'react';
 import { Popover } from 'antd';
 import cx from 'classnames';
 import { OPERATORS } from 'constants/queryBuilder';
 import { FontSize } from 'container/OptionsMenu/types';
-import { memo, MouseEvent, ReactNode, useMemo } from 'react';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+
+import './AddToQueryHOC.styles.scss';
 
 function AddToQueryHOC({
 	fieldKey,
@@ -20,14 +20,18 @@ function AddToQueryHOC({
 		onAddToQuery(fieldKey, fieldValue, OPERATORS['='], dataType);
 	};
 
-	const popOverContent = useMemo(() => <span>Add to query: {fieldKey}</span>, [
-		fieldKey,
-	]);
+	const popOverContent = useMemo(
+		() => <span>Add to query: {fieldKey}</span>,
+		[fieldKey],
+	);
 
 	return (
-		// eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
 		<div className={cx('addToQueryContainer', fontSize)} onClick={handleQueryAdd}>
-			<Popover placement="top" content={popOverContent}>
+			<Popover
+				overlayClassName="drawer-popover"
+				placement="top"
+				content={popOverContent}
+			>
 				{children}
 			</Popover>
 		</div>

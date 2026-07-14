@@ -1,4 +1,12 @@
 /* eslint-disable sonarjs/cognitive-complexity */
+import {
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import {
@@ -11,14 +19,6 @@ import { getRequestData } from 'container/LogsContextList/utils';
 import { FontSize } from 'container/OptionsMenu/types';
 import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
-import {
-	Dispatch,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useMemo,
-	useState,
-} from 'react';
 import { SuccessResponse } from 'types/api';
 import { ILog } from 'types/api/logs/log';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
@@ -55,9 +55,10 @@ export const useContextLogData = ({
 
 	const orderByTimestamp = useMemo(() => getOrderByTimestamp(order), [order]);
 
-	const logsMorePageSize = useMemo(() => (page - 1) * LOGS_MORE_PAGE_SIZE, [
-		page,
-	]);
+	const logsMorePageSize = useMemo(
+		() => (page - 1) * LOGS_MORE_PAGE_SIZE,
+		[page],
+	);
 
 	const initialPageSize =
 		fontSize && fontSize === FontSize.SMALL
@@ -67,10 +68,10 @@ export const useContextLogData = ({
 		() => (page <= 1 ? initialPageSize : logsMorePageSize + initialPageSize),
 		[page, initialPageSize, logsMorePageSize],
 	);
-	const isDisabledFetch = useMemo(() => logs.length < pageSize, [
-		logs.length,
-		pageSize,
-	]);
+	const isDisabledFetch = useMemo(
+		() => logs.length < pageSize,
+		[logs.length, pageSize],
+	);
 
 	const currentStagedQueryData = useMemo(() => {
 		if (!query || query.builder.queryData.length !== 1) {

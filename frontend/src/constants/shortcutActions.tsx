@@ -1,10 +1,11 @@
+import React from 'react';
 import ROUTES from 'constants/routes';
 import { GlobalShortcutsName } from 'constants/shortcuts/globalShortcuts';
 import { THEME_MODE } from 'hooks/useDarkMode/constant';
 import {
-	BarChart2,
+	BarChart,
 	BellDot,
-	BugIcon,
+	Bug,
 	Compass,
 	DraftingCompass,
 	Expand,
@@ -16,10 +17,9 @@ import {
 	Settings,
 	TowerControl,
 	Workflow,
-} from 'lucide-react';
-import React from 'react';
-
-export type UserRole = 'ADMIN' | 'EDITOR' | 'AUTHOR' | 'VIEWER';
+} from '@signozhq/icons';
+import Noz from 'components/Noz/Noz';
+import { ROLES } from 'types/roles';
 
 export type CmdAction = {
 	id: string;
@@ -28,19 +28,34 @@ export type CmdAction = {
 	keywords?: string;
 	section?: string;
 	icon?: React.ReactNode;
-	roles?: UserRole[];
+	roles?: ROLES[];
 	perform: () => void;
 };
 
 type ActionDeps = {
 	navigate: (path: string) => void;
 	handleThemeChange: (mode: string) => void;
+	/**
+	 * Provided only when the AI Assistant feature is available for the current
+	 * tenant. When present, the palette surfaces an "Open AI Assistant" entry
+	 * at the top; when absent, the action is omitted entirely.
+	 */
+	aiAssistant?: {
+		open: () => void;
+	};
+	/**
+	 * Provided only in development mode. Opens the AuthZ DevTools modal
+	 * for testing permission overrides.
+	 */
+	authzDevTools?: {
+		open: () => void;
+	};
 };
 
 export function createShortcutActions(deps: ActionDeps): CmdAction[] {
-	const { navigate, handleThemeChange } = deps;
+	const { navigate, handleThemeChange, aiAssistant, authzDevTools } = deps;
 
-	return [
+	const actions: CmdAction[] = [
 		{
 			id: 'home',
 			name: 'Go to Home',
@@ -87,7 +102,7 @@ export function createShortcutActions(deps: ActionDeps): CmdAction[] {
 			shortcut: [GlobalShortcutsName.NavigateToExceptions],
 			keywords: 'exceptions errors',
 			section: 'Navigation',
-			icon: <BugIcon size={14} />,
+			icon: <Bug size={14} />,
 			roles: ['ADMIN', 'EDITOR', 'VIEWER'],
 			perform: (): void => navigate(ROUTES.ALL_ERROR),
 		},
@@ -141,7 +156,7 @@ export function createShortcutActions(deps: ActionDeps): CmdAction[] {
 			shortcut: [GlobalShortcutsName.NavigateToMetricsSummary],
 			keywords: 'metrics summary',
 			section: 'Metrics',
-			icon: <BarChart2 size={14} />,
+			icon: <BarChart size={14} />,
 			roles: ['ADMIN', 'EDITOR', 'VIEWER'],
 			perform: (): void => navigate(ROUTES.METRICS_EXPLORER),
 		},
@@ -250,14 +265,61 @@ export function createShortcutActions(deps: ActionDeps): CmdAction[] {
 			perform: (): void => navigate(ROUTES.BILLING),
 		},
 		{
-			id: 'my-settings-api-keys',
-			name: 'Go to Account Settings API Keys',
-			shortcut: [GlobalShortcutsName.NavigateToSettingsAPIKeys],
-			keywords: 'account settings api keys',
+			id: 'my-settings-service-accounts',
+			name: 'Go to Service Accounts',
+			shortcut: [GlobalShortcutsName.NavigateToSettingsServiceAccounts],
+			keywords: 'settings service accounts',
 			section: 'Settings',
 			icon: <Settings size={14} />,
-			roles: ['ADMIN', 'EDITOR'],
-			perform: (): void => navigate(ROUTES.API_KEYS),
+			roles: ['ADMIN'],
+			perform: (): void => navigate(ROUTES.SERVICE_ACCOUNTS_SETTINGS),
+		},
+		{
+			id: 'my-settings-roles',
+			name: 'Go to Roles',
+			shortcut: [GlobalShortcutsName.NavigateToSettingsRoles],
+			keywords: 'settings roles',
+			section: 'Settings',
+			icon: <Settings size={14} />,
+			roles: ['ADMIN'],
+			perform: (): void => navigate(ROUTES.ROLES_SETTINGS),
+		},
+		{
+			id: 'my-settings-members',
+			name: 'Go to Members',
+			shortcut: [GlobalShortcutsName.NavigateToSettingsMembers],
+			keywords: 'settings members',
+			section: 'Settings',
+			icon: <Settings size={14} />,
+			roles: ['ADMIN'],
+			perform: (): void => navigate(ROUTES.MEMBERS_SETTINGS),
 		},
 	];
+
+	if (aiAssistant) {
+		actions.unshift({
+			id: 'ai-assistant',
+			name: 'Open Noz',
+			shortcut: ['cmd+j'],
+			keywords: 'noz ai assistant chat ask sparkles copilot',
+			section: 'Noz',
+			icon: <Noz size={16} />,
+			roles: ['ADMIN', 'EDITOR', 'VIEWER'],
+			perform: aiAssistant.open,
+		});
+	}
+
+	if (authzDevTools) {
+		actions.push({
+			id: 'authz-devtools',
+			name: 'AuthZ DevTools',
+			keywords: 'authz permissions rbac debug devtools override testing',
+			section: 'Dev',
+			icon: <Settings size={14} />,
+			roles: ['ADMIN', 'EDITOR', 'VIEWER'],
+			perform: authzDevTools.open,
+		});
+	}
+
+	return actions;
 }

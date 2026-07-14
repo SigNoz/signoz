@@ -6,7 +6,10 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
 type traceOperatorQuery struct {
@@ -20,6 +23,7 @@ type traceOperatorQuery struct {
 }
 
 var _ qbtypes.Query = (*traceOperatorQuery)(nil)
+var _ qbtypes.StatementProvider = (*traceOperatorQuery)(nil)
 
 func (q *traceOperatorQuery) Fingerprint() string {
 	return ""
@@ -27,6 +31,11 @@ func (q *traceOperatorQuery) Fingerprint() string {
 
 func (q *traceOperatorQuery) Window() (uint64, uint64) {
 	return q.fromMS, q.toMS
+}
+
+// Statement renders the SQL without executing it, for the preview path.
+func (q *traceOperatorQuery) Statement(ctx context.Context) (*qbtypes.Statement, error) {
+	return q.stmtBuilder.Build(ctx, q.fromMS, q.toMS, q.kind, q.spec, q.compositeQuery)
 }
 
 func (q *traceOperatorQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
@@ -52,6 +61,11 @@ func (q *traceOperatorQuery) Execute(ctx context.Context) (*qbtypes.Result, erro
 }
 
 func (q *traceOperatorQuery) executeWithContext(ctx context.Context, query string, args []any) (*qbtypes.Result, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal: telemetrytypes.SignalTraces.StringValue(),
+		instrumentationtypes.QueryDuration:   instrumentationtypes.DurationBucket(q.fromMS, q.toMS),
+	})
+
 	totalRows := uint64(0)
 	totalBytes := uint64(0)
 	elapsed := time.Duration(0)
@@ -75,6 +89,13 @@ func (q *traceOperatorQuery) executeWithContext(ctx context.Context, query strin
 	payload, err := consume(rows, q.kind, queryWindow, q.spec.StepInterval, q.spec.Name)
 	if err != nil {
 		return nil, err
+	}
+
+	// TODO: This should move to readAsRaw function in consume.go but for now we can keep it here since it's only relevant for traces
+	if raw, ok := payload.(*qbtypes.RawData); ok {
+		for _, rr := range raw.Rows {
+			mergeSpanAttributeColumns(rr.Data)
+		}
 	}
 
 	return &qbtypes.Result{

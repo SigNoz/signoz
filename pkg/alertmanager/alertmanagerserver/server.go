@@ -10,10 +10,7 @@ import (
 	"github.com/prometheus/alertmanager/types"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify"
-	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/featurecontrol"
 	"github.com/prometheus/alertmanager/inhibit"
@@ -25,14 +22,17 @@ import (
 	"github.com/prometheus/alertmanager/timeinterval"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/model"
+
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 )
 
-var (
-	// This is not a real file and will never be used. We need this placeholder to ensure maintenance runs on shutdown. See
-	// https://github.com/prometheus/server/blob/3ee2cd0f1271e277295c02b6160507b4d193dde2/silence/silence.go#L435-L438
-	// and https://github.com/prometheus/server/blob/3b06b97af4d146e141af92885a185891eb79a5b0/nflog/nflog.go#L362.
-	snapfnoop string = "snapfnoop"
-)
+// This is not a real snapshot file and will never be used. We need this placeholder to ensure maintenance runs on shutdown.
+// See https://github.com/prometheus/alertmanager/blob/3ee2cd0f1271e277295c02b6160507b4d193dde2/silence/silence.go#L435-L438
+// and https://github.com/prometheus/alertmanager/blob/3b06b97af4d146e141af92885a185891eb79a5b0/nflog/nflog.go#L362.
+var snapfnoop string = "snapfnoop"
 
 type Server struct {
 	// logger is the logger for the alertmanager
@@ -62,17 +62,28 @@ type Server struct {
 	silencer            *silence.Silencer
 	silences            *silence.Silences
 	timeIntervals       map[string][]timeinterval.TimeInterval
-	pipelineBuilder     *notify.PipelineBuilder
-	marker              *alertmanagertypes.MemMarker
+	pipelineBuilder     *pipelineBuilder
+	muter               *MaintenanceMuter
+	marker              *types.MemMarker
 	tmpl                *template.Template
+	templater           alertmanagertypes.Templater
 	wg                  sync.WaitGroup
 	stopc               chan struct{}
 	notificationManager nfmanager.NotificationManager
 }
 
-func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registerer, srvConfig Config, orgID string, stateStore alertmanagertypes.StateStore, nfManager nfmanager.NotificationManager) (*Server, error) {
+func New(
+	ctx context.Context,
+	logger *slog.Logger,
+	registry prometheus.Registerer,
+	srvConfig Config,
+	orgID string,
+	stateStore alertmanagertypes.StateStore,
+	nfManager nfmanager.NotificationManager,
+	maintenanceStore alertmanagertypes.MaintenanceStore,
+) (*Server, error) {
 	server := &Server{
-		logger:              logger.With("pkg", "go.signoz.io/pkg/alertmanager/alertmanagerserver"),
+		logger:              logger.With(slog.String("pkg", "go.signoz.io/pkg/alertmanager/alertmanagerserver")),
 		registry:            registry,
 		srvConfig:           srvConfig,
 		orgID:               orgID,
@@ -83,7 +94,7 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 	signozRegisterer := prometheus.WrapRegistererWithPrefix("signoz_", registry)
 	signozRegisterer = prometheus.WrapRegistererWith(prometheus.Labels{"org_id": server.orgID}, signozRegisterer)
 	// initialize marker
-	server.marker = alertmanagertypes.NewMarker(signozRegisterer)
+	server.marker = types.NewMarker(signozRegisterer)
 
 	// get silences for initial state
 	state, err := server.stateStore.Get(ctx, server.orgID)
@@ -139,7 +150,7 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 		server.silences.Maintenance(server.srvConfig.Silences.MaintenanceInterval, snapfnoop, server.stopc, func() (int64, error) {
 			// Delete silences older than the retention period.
 			if _, err := server.silences.GC(); err != nil {
-				server.logger.ErrorContext(ctx, "silence garbage collection", "error", err)
+				server.logger.ErrorContext(ctx, "silence garbage collection", errors.Attr(err))
 				// Don't return here - we need to snapshot our state first.
 			}
 
@@ -159,7 +170,6 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 
 			return c, server.stateStore.Set(ctx, storableSilences)
 		})
-
 	}()
 
 	// Start maintenance for notification logs
@@ -168,7 +178,7 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 		defer server.wg.Done()
 		server.nflog.Maintenance(server.srvConfig.NFLog.MaintenanceInterval, snapfnoop, server.stopc, func() (int64, error) {
 			if _, err := server.nflog.GC(); err != nil {
-				server.logger.ErrorContext(ctx, "notification log garbage collection", "error", err)
+				server.logger.ErrorContext(ctx, "notification log garbage collection", errors.Attr(err))
 				// Don't return without saving the current state.
 			}
 
@@ -190,28 +200,36 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 		})
 	}()
 
-	server.alerts, err = mem.NewAlerts(ctx, server.marker, server.srvConfig.Alerts.GCInterval, nil, server.logger, signozRegisterer)
+	server.alerts, err = mem.NewAlerts(ctx, server.marker, server.srvConfig.Alerts.GCInterval, 0, nil, server.logger, signozRegisterer, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	server.pipelineBuilder = notify.NewPipelineBuilder(signozRegisterer, featurecontrol.NoopFlags{})
+	server.muter = NewMaintenanceMuter(maintenanceStore, orgID, server.logger)
+	server.pipelineBuilder = newPipelineBuilder(signozRegisterer, featurecontrol.NoopFlags{})
 	server.dispatcherMetrics = NewDispatcherMetrics(false, signozRegisterer)
 
 	return server, nil
 }
 
 func (server *Server) GetAlerts(ctx context.Context, params alertmanagertypes.GettableAlertsParams) (alertmanagertypes.GettableAlerts, error) {
-	return alertmanagertypes.NewGettableAlertsFromAlertProvider(server.alerts, server.alertmanagerConfig, server.marker.Status, func(labels model.LabelSet) {
-		server.inhibitor.Mutes(labels)
-		server.silencer.Mutes(labels)
-	}, params)
+	return alertmanagertypes.NewGettableAlertsFromAlertProvider(
+		server.alerts, server.alertmanagerConfig, server.marker.Status,
+		func(labels model.LabelSet) {
+			server.inhibitor.Mutes(ctx, labels)
+			server.silencer.Mutes(ctx, labels)
+		},
+		func(labels model.LabelSet) []string {
+			return server.muter.MutedBy(ctx, labels)
+		},
+		params,
+	)
 }
 
 func (server *Server) PutAlerts(ctx context.Context, postableAlerts alertmanagertypes.PostableAlerts) error {
-	alerts, err := alertmanagertypes.NewAlertsFromPostableAlerts(postableAlerts, time.Duration(server.srvConfig.Global.ResolveTimeout), time.Now())
+	alerts, err := alertmanagertypes.NewAlertsFromPostableAlerts(ctx, postableAlerts, time.Duration(server.srvConfig.Global.ResolveTimeout), time.Now())
 	// Notification sending alert takes precedence over validation errors.
-	if err := server.alerts.Put(alerts...); err != nil {
+	if err := server.alerts.Put(ctx, alerts...); err != nil {
 		return err
 	}
 
@@ -226,12 +244,20 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 	config := alertmanagerConfig.AlertmanagerConfig()
 
 	var err error
-	server.tmpl, err = alertmanagertypes.FromGlobs(config.Templates)
+	// Load SigNoz's alertmanager notification templates from the configured
+	// globs. The upstream default templates (default.tmpl, email.tmpl) are
+	// always loaded from the embedded alertmanager assets inside FromGlobs, so
+	// only SigNoz's own templates (e.g. the email.signoz.html layout) are listed
+	// here. The upstream config.Templates field is not used: SigNoz never
+	// populates it (there is no per-org template configuration).
+	server.tmpl, err = alertmanagertypes.FromGlobs(server.srvConfig.Templates)
 	if err != nil {
 		return err
 	}
 
 	server.tmpl.ExternalURL = server.srvConfig.ExternalURL
+
+	server.templater = alertmanagertemplate.New(server.tmpl, server.logger)
 
 	// Build the routing tree and record which receivers are used.
 	routes := dispatch.NewRoute(config.Route, nil)
@@ -246,10 +272,14 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 	for _, rcv := range config.Receivers {
 		if _, found := activeReceivers[rcv.Name]; !found {
 			// No need to build a receiver if no route is using it.
-			server.logger.InfoContext(ctx, "skipping creation of receiver not referenced by any route", "receiver", rcv.Name)
+			server.logger.InfoContext(ctx, "skipping creation of receiver not referenced by any route", slog.String("receiver", rcv.Name))
 			continue
 		}
-		integrations, err := alertmanagernotify.NewReceiverIntegrations(rcv, server.tmpl, server.logger)
+		extendedRcv, err := alertmanagerConfig.GetReceiver(rcv.Name)
+		if err != nil {
+			return err
+		}
+		integrations, err := alertmanagernotify.NewReceiverIntegrations(extendedRcv, server.tmpl, server.logger, server.templater)
 		if err != nil {
 			return err
 		}
@@ -289,6 +319,7 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 		server.silencer,
 		intervener,
 		server.marker,
+		server.muter,
 		server.nflog,
 		pipelinePeer,
 	)
@@ -323,9 +354,9 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 	return nil
 }
 
-func (server *Server) TestReceiver(ctx context.Context, receiver alertmanagertypes.Receiver) error {
+func (server *Server) TestReceiver(ctx context.Context, receiver *alertmanagertypes.Receiver) error {
 	testAlert := alertmanagertypes.NewTestAlert(receiver, time.Now(), time.Now())
-	return alertmanagertypes.TestReceiver(ctx, receiver, alertmanagernotify.NewReceiverIntegrations, server.alertmanagerConfig, server.tmpl, server.logger, testAlert.Labels, testAlert)
+	return alertmanagertypes.TestReceiver(ctx, receiver, alertmanagernotify.NewReceiverIntegrations, server.alertmanagerConfig, server.tmpl, server.logger, server.templater, testAlert.Labels, testAlert)
 }
 
 func (server *Server) TestAlert(ctx context.Context, receiversMap map[*alertmanagertypes.PostableAlert][]string, config *alertmanagertypes.NotificationConfig) error {
@@ -340,6 +371,7 @@ func (server *Server) TestAlert(ctx context.Context, receiversMap map[*alertmana
 	}
 
 	alerts, err := alertmanagertypes.NewAlertsFromPostableAlerts(
+		ctx,
 		postableAlerts,
 		time.Duration(server.srvConfig.Global.ResolveTimeout),
 		time.Now(),
@@ -407,6 +439,7 @@ func (server *Server) TestAlert(ctx context.Context, receiversMap map[*alertmana
 					server.alertmanagerConfig,
 					server.tmpl,
 					server.logger,
+					server.templater,
 					group.groupLabels,
 					group.alerts...,
 				)

@@ -1,5 +1,8 @@
-import { ColumnsType } from 'antd/es/table';
-import { ColumnType } from 'antd/lib/table';
+import { ReactNode } from 'react';
+import {
+	TableColumnsType as ColumnsType,
+	TableColumnType as ColumnType,
+} from 'antd';
 import {
 	initialClickHouseData,
 	initialFormulaBuilderFormValues,
@@ -10,7 +13,6 @@ import { FORMULA_REGEXP } from 'constants/regExp';
 import { QUERY_TABLE_CONFIG } from 'container/QueryTable/config';
 import { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
 import { get, isEqual, isNaN, isObject } from 'lodash-es';
-import { ReactNode } from 'react';
 import {
 	IBuilderFormula,
 	IBuilderQuery,
@@ -46,9 +48,7 @@ export type DynamicColumn = {
 
 type DynamicColumns = DynamicColumn[];
 
-type CreateTableDataFromQuery = (
-	params: CreateTableDataFromQueryParams,
-) => {
+type CreateTableDataFromQuery = (params: CreateTableDataFromQueryParams) => {
 	columns: ColumnsType<RowData>;
 	dataSource: RowData[];
 	rowsLength: number;
@@ -762,7 +762,7 @@ export const createTableColumnsFromQuery: CreateTableDataFromQuery = ({
 				key: 'actions',
 				title: 'Actions',
 				render: (_, record): ReactNode => renderActionCell(record),
-		  }
+			}
 		: null;
 
 	if (actionsCell && dataSource.length > 0) {

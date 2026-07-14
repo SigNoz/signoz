@@ -4,7 +4,7 @@
 	gap: 8px;
 	padding: 8px;
 	cursor: pointer;
-	color: var(--bg-ink-400);
+	color: var(--muted-foreground);
 	font-family: Inter;
 	font-size: var(--font-size-sm);
 	font-weight: 600;
@@ -20,13 +20,10 @@
 	overflow: hidden;
 	text-overflow: ellipsis;
 
-	&:hover {
-		background-color: var(--bg-vanilla-200);
-	}
-
+	&:hover,
 	&:focus {
 		outline: none;
-		background-color: var(--bg-vanilla-200);
+		background-color: var(--l2-background-hover);
 	}
 
 	&.disabled {
@@ -47,12 +44,13 @@
 		}
 
 		&:hover {
-			background-color: var(--bg-cherry-100);
+			background-color: var(--danger-background);
+			color: var(--l1-foreground);
 		}
 	}
 
 	.icon {
-		color: var(--bg-robin-500);
+		color: var(--accent-primary);
 		font-size: 14px;
 		display: flex;
 		align-items: center;
@@ -74,73 +72,24 @@
 }
 
 .context-menu-header {
-	padding-bottom: 4px;
-	border-bottom: 1px solid var(--bg-vanilla-400);
-	color: var(--bg-slate-400);
+	padding: 8px 12px;
+	border-bottom: 1px solid var(--l2-border);
+	color: var(--muted-foreground);
 }
 
-// Target the popover inner specifically for context menu
 .context-menu .ant-popover-inner {
-	padding: 12px 8px !important;
-	// max-height: 254px !important;
-	max-width: 300px !important;
+	padding: 0;
+	border-radius: 6px;
+	max-width: 300px;
+	background: var(--l2-background) !important;
+	border: 1px solid var(--l2-border) !important;
 }
 
-// Dark mode support
-.darkMode {
-	.context-menu-item {
-		color: var(--bg-vanilla-400);
-
-		&:hover,
-		&:focus {
-			background-color: var(--bg-slate-400);
-		}
-
-		&.danger {
-			color: var(--bg-cherry-400);
-
-			.icon {
-				color: var(--bg-cherry-400);
-			}
-
-			&:hover {
-				background-color: var(--bg-cherry-500);
-				color: var(--bg-vanilla-100);
-			}
-		}
-
-		.icon {
-			color: var(--bg-robin-400);
-		}
-	}
-
-	.context-menu-header {
-		border-bottom: 1px solid var(--bg-slate-400);
-		color: var(--bg-vanilla-400);
-	}
-
-	// Set the menu popover background
-	.context-menu .ant-popover-inner {
-		background: var(--bg-ink-500) !important;
-		border: 1px solid var(--bg-slate-400) !important;
-	}
-}
-
-// Context menu backdrop overlay
 .context-menu-backdrop {
 	position: fixed;
-	top: 0;
-	left: 0;
-	width: 100vw;
-	height: 100vh;
+	inset: 0;
 	z-index: 9999;
 	background: transparent;
 	cursor: default;
-
-	// Prevent any pointer events from reaching elements behind
 	pointer-events: auto;
-
-	// Ensure it covers the entire viewport including any scrollable areas
-	position: fixed !important;
-	inset: 0;
 }

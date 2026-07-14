@@ -1,6 +1,6 @@
+import { useLocation } from 'react-router-dom';
 import ROUTES from 'constants/routes';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
-import { useLocation } from 'react-router-dom';
 import { render } from 'tests/test-utils';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { ReduceOperators } from 'types/common/queryBuilder';

@@ -1,8 +1,8 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { FunnelStepGraphMetrics } from 'api/traceFunnels';
 import { Chart, ChartConfiguration } from 'chart.js';
 import ChangePercentagePill from 'components/ChangePercentagePill/ChangePercentagePill';
-import { useCallback, useEffect, useRef, useState } from 'react';
 
 const CHART_CONFIG: Partial<ChartConfiguration> = {
 	type: 'bar',

@@ -4,10 +4,11 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/schema"
+
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/factory"
 )
 
 type transactorKey struct{}
@@ -42,7 +43,7 @@ func (db *BunDB) RunInTxCtx(ctx context.Context, opts *sql.TxOptions, cb func(ct
 	defer func() {
 		if err := tx.Rollback(); err != nil {
 			if err != sql.ErrTxDone {
-				db.settings.Logger().ErrorContext(ctx, "cannot rollback transaction", "error", err)
+				db.settings.Logger().ErrorContext(ctx, "cannot rollback transaction", errors.Attr(err))
 			}
 		}
 	}()

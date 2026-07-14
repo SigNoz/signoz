@@ -7,13 +7,9 @@ export const Label = styled.label`
 	font-weight: 600;
 	line-height: 1;
 	letter-spacing: -0.065px;
-	color: var(--levels-l1-foreground, #eceef2);
+	color: var(--l1-foreground);
 	margin-bottom: 12px;
 	display: block;
-
-	.lightMode & {
-		color: var(--text-ink-500);
-	}
 `;
 
 export const FormContainer = styled(Form)`
@@ -47,29 +43,19 @@ export const FormContainer = styled(Form)`
 	& .ant-input,
 	& .ant-input-password,
 	& .ant-select-selector {
-		background: var(--levels-l3-background, #23262e) !important;
-		border-color: var(--levels-l3-border, #2c303a) !important;
-		color: var(--levels-l1-foreground, #eceef2) !important;
-
-		.lightMode & {
-			background: var(--bg-vanilla-200, #f5f5f5) !important;
-			border-color: var(--bg-vanilla-300, #e9e9e9) !important;
-			color: var(--text-ink-500) !important;
-		}
+		background: var(--l3-background) !important;
+		border-color: var(--l1-border) !important;
+		color: var(--l1-foreground) !important;
 	}
 
 	& .ant-input::placeholder {
-		color: var(--levels-l3-foreground, #747b8b) !important;
-
-		.lightMode & {
-			color: var(--text-neutral-light-200, #80828d) !important;
-		}
+		color: var(--l3-foreground) !important;
 	}
 
 	& .ant-input:focus,
 	& .ant-input-password:focus,
 	& .ant-select-focused .ant-select-selector {
-		border-color: var(--semantic-primary-background, #4e74f8) !important;
+		border-color: var(--primary) !important;
 		box-shadow: none !important;
 	}
 `;

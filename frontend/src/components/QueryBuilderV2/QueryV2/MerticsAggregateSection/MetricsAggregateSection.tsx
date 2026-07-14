@@ -1,5 +1,4 @@
-import './MetricsAggregateSection.styles.scss';
-
+import { memo, useCallback, useEffect, useMemo } from 'react';
 import { Tooltip } from 'antd';
 import cx from 'classnames';
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
@@ -7,11 +6,12 @@ import { ATTRIBUTE_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import SpaceAggregationOptions from 'container/QueryBuilder/components/SpaceAggregationOptions/SpaceAggregationOptions';
 import { GroupByFilter, OperatorsSelect } from 'container/QueryBuilder/filters';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
-import { memo, useCallback, useEffect, useMemo } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { MetricAggregation } from 'types/api/v5/queryRange';
 
 import { useQueryBuilderV2Context } from '../../QueryBuilderV2Context';
+
+import './MetricsAggregateSection.styles.scss';
 
 const MetricsAggregateSection = memo(function MetricsAggregateSection({
 	query,
@@ -78,14 +78,10 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 		[handleChangeQueryData],
 	);
 
-	const showAggregationInterval = useMemo(() => {
-		// eslint-disable-next-line sonarjs/prefer-single-boolean-return
-		if (panelType === PANEL_TYPES.VALUE) {
-			return false;
-		}
-
-		return true;
-	}, [panelType]);
+	const showAggregationInterval = useMemo(
+		() => panelType !== PANEL_TYPES.VALUE,
+		[panelType],
+	);
 
 	const disableOperatorSelector =
 		!queryAggregation.metricName || queryAggregation.metricName === '';
@@ -135,7 +131,7 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 												Set the time interval for aggregation
 												<br />
 												<a
-													href="https://signoz.io/docs/userguide/query-builder-v5/#time-aggregation-windows"
+													href="https://signoz.io/docs/userguide/query-builder-v5/#temporal-aggregation-within-each-time-series"
 													target="_blank"
 													rel="noopener noreferrer"
 													style={{ color: '#1890ff', textDecoration: 'underline' }}
@@ -258,7 +254,7 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 										Set the time interval for aggregation
 										<br />
 										<a
-											href="https://signoz.io/docs/userguide/query-builder-v5/#time-aggregation-windows"
+											href="https://signoz.io/docs/userguide/query-builder-v5/#temporal-aggregation-within-each-time-series"
 											target="_blank"
 											rel="noopener noreferrer"
 											style={{ color: '#1890ff', textDecoration: 'underline' }}

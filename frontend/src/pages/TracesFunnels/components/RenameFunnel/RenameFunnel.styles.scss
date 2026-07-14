@@ -22,9 +22,9 @@
 		.funnel-modal__ok-btn {
 			width: 138px;
 			justify-content: center;
-			background-color: var(--bg-robin-500);
+			background-color: var(--primary-background);
 			margin: 0 !important;
-			color: var(--bg-vanilla-100);
+			color: var(--primary-foreground);
 			font-weight: 500;
 			&:disabled {
 				opacity: 0.5;
@@ -32,8 +32,8 @@
 		}
 
 		.funnel-modal__cancel-btn {
-			background-color: var(--bg-slate-500);
-			color: var(--bg-vanilla-400);
+			background-color: var(--l1-border);
+			color: var(--l2-foreground);
 			font-weight: 400;
 			letter-spacing: -0.07px;
 			width: 74px;
@@ -47,65 +47,31 @@
 	gap: 8px;
 
 	&__label {
-		color: var(--bg-vanilla-100);
+		color: var(--l1-foreground);
 		font-size: 14px;
 		font-weight: 500;
 		line-height: 20px;
 	}
 
 	&__input {
-		background: var(--bg-ink-300);
-		border: 1px solid var(--bg-slate-400);
 		border-radius: 2px;
 		padding: 6px 8px;
-		color: var(--bg-vanilla-400);
+		color: var(--l2-foreground);
 		font-size: 14px;
 		font-weight: 400;
 		line-height: 18px;
 		letter-spacing: -0.07px;
 
 		&--error {
-			border-color: var(--bg-cherry-500);
+			border-color: var(--danger-background);
 		}
 	}
 
 	&__error {
-		color: var(--bg-cherry-500);
+		color: var(--danger-background);
 		font-size: 12px;
 		font-weight: 400;
 		line-height: 16px;
 		margin-top: 4px;
-	}
-}
-
-// Light mode styles
-.lightMode {
-	.funnel-modal-content {
-		&__label {
-			color: var(--bg-ink-500);
-		}
-
-		&__input {
-			background: var(--bg-vanilla-100);
-			border-color: var(--bg-vanilla-300);
-			color: var(--bg-ink-500);
-
-			&:hover,
-			&:focus {
-				border-color: var(--bg-robin-500);
-			}
-
-			&--error {
-				border-color: var(--bg-cherry-500);
-			}
-		}
-
-		&__error {
-			color: var(--bg-cherry-500);
-		}
-	}
-	.funnel-modal__cancel-btn {
-		background-color: var(--bg-slate-100) !important;
-		color: var(--bg-vanilla-100) !important;
 	}
 }

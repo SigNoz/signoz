@@ -1,6 +1,6 @@
-import { EyeFilled, EyeInvisibleFilled } from '@ant-design/icons';
-import { ButtonProps } from 'antd';
 import { memo } from 'react';
+import { EyeClosed, EyeOpen } from '@signozhq/icons';
+import { ButtonProps } from 'antd';
 
 // ** Types
 import { ListMarkerProps } from './ListMarker.interfaces';
@@ -19,9 +19,9 @@ export const ListMarker = memo(function ListMarker({
 	const buttonProps: Partial<ButtonProps> = isAvailableToDisable
 		? {
 				type: isDisabled ? 'default' : 'primary',
-				icon: isDisabled ? <EyeInvisibleFilled /> : <EyeFilled />,
+				icon: isDisabled ? <EyeClosed size="md" /> : <EyeOpen size="md" />,
 				onClick: (): void => onDisable(index),
-		  }
+			}
 		: { type: 'primary' };
 
 	return (

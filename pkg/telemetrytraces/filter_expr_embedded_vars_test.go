@@ -1,7 +1,9 @@
 package telemetrytraces
 
 import (
+	"context"
 	"testing"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
@@ -10,16 +12,20 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TestFilterExprEmbeddedVariables covers variables composed inside values
+// (GitHub issue #10008), e.g. '$env-suffix' or LIKE '$env%'.
 func TestFilterExprEmbeddedVariables(t *testing.T) {
+	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)
-	keys := buildCompleteFieldKeyMap()
+	keys := buildCompleteFieldKeyMap(releaseTime)
 
 	testCases := []struct {
 		name          string
 		query         string
 		variables     map[string]qbtypes.VariableItem
 		shouldPass    bool
+		expectSkipped bool
 		expectedQuery string
 		expectedArgs  []any
 	}{
@@ -98,12 +104,11 @@ func TestFilterExprEmbeddedVariables(t *testing.T) {
 			variables: map[string]qbtypes.VariableItem{
 				"method": {
 					Type:  qbtypes.DynamicVariableType,
-					Value: "__all__",
+					Value: qbtypes.AllVariableValue,
 				},
 			},
 			shouldPass:    true,
-			expectedQuery: "WHERE true",
-			expectedArgs:  nil,
+			expectSkipped: true,
 		},
 		{
 			name:  "multi-select takes first value",
@@ -123,24 +128,32 @@ func TestFilterExprEmbeddedVariables(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			opts := querybuilder.FilterExprVisitorOpts{
+				Context:          context.Background(),
 				Logger:           instrumentationtest.New().Logger(),
 				FieldMapper:      fm,
 				ConditionBuilder: cb,
 				FieldKeys:        keys,
 				Variables:        tc.variables,
+				StartNs:          uint64(releaseTime.Add(-5 * time.Minute).UnixNano()),
+				EndNs:            uint64(releaseTime.Add(5 * time.Minute).UnixNano()),
 			}
 
-			clause, err := querybuilder.PrepareWhereClause(tc.query, opts, 0, 0)
+			clause, err := querybuilder.PrepareWhereClause(tc.query, opts)
 
-			if tc.shouldPass {
-				require.NoError(t, err)
-				require.NotNil(t, clause)
-				sql, args := clause.WhereClause.BuildWithFlavor(sqlbuilder.ClickHouse)
-				require.Equal(t, tc.expectedQuery, sql)
-				require.Equal(t, tc.expectedArgs, args)
-			} else {
+			if !tc.shouldPass {
 				require.Error(t, err)
+				return
 			}
+
+			require.NoError(t, err)
+			if tc.expectSkipped {
+				require.True(t, clause.IsEmpty(), "expected the condition to be skipped")
+				return
+			}
+			require.False(t, clause.IsEmpty())
+			sql, args := clause.WhereClause.BuildWithFlavor(sqlbuilder.ClickHouse)
+			require.Equal(t, tc.expectedQuery, sql)
+			require.Equal(t, tc.expectedArgs, args)
 		})
 	}
 }

@@ -2,6 +2,11 @@
 
 Embrace the spirit of collaboration and contribute to the success of our open-source project by adhering to these frontend development guidelines with precision and passion.
 
+### Export Style
+
+- **React components** (`src/components/`, `src/container/`, `src/pages/`): Prefer **default exports** for the main component in each file
+- **Utilities, hooks, APIs, types, constants** (`src/utils/`, `src/hooks/`, `src/api/`, `src/lib/`, `src/types/`, `src/constants/`): Prefer **named exports** for better tree-shaking and explicit imports
+
 ### React and Components
 
 - Strive to create small and modular components, ensuring they are divided into individual pieces for improved maintainability and reusability.

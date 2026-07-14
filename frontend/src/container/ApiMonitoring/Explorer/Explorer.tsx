@@ -1,14 +1,14 @@
-import './Explorer.styles.scss';
-
+import { useEffect } from 'react';
 import * as Sentry from '@sentry/react';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { useEffect } from 'react';
 
 import DomainList from './Domains/DomainList';
+
+import './Explorer.styles.scss';
 
 function Explorer(): JSX.Element {
 	useEffect(() => {

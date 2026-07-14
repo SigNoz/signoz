@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
 	alertmanagermock "github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/prometheus"
@@ -25,7 +26,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	cmock "github.com/srikanthccv/ClickHouse-go-mock"
+	cmock "github.com/SigNoz/clickhouse-go-mock"
 )
 
 func TestManager_TestNotification_SendUnmatched_ThresholdRule(t *testing.T) {
@@ -51,6 +52,7 @@ func TestManager_TestNotification_SendUnmatched_ThresholdRule(t *testing.T) {
 					fAlert := am.(*alertmanagermock.MockAlertmanager)
 					// mock set notification config
 					fAlert.On("SetNotificationConfig", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+					fAlert.On("Config").Return(alertmanagerserver.Config{ExternalURL: mustParseURL(t, "http://localhost:8080")})
 					// for saving temp alerts that are triggered via TestNotification
 					if tc.ExpectAlerts > 0 {
 						fAlert.On("TestAlert", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
@@ -80,6 +82,21 @@ func TestManager_TestNotification_SendUnmatched_ThresholdRule(t *testing.T) {
 					alertDataRows := cmock.NewRows(cols, tc.Values)
 
 					mock := telemetryStore.Mock()
+					// Mock metadata queries for FetchTemporalityAndTypeMulti
+					// First query: fetchMetricsTemporalityAndType (from signoz_metrics time series table)
+					metadataCols := []cmock.ColumnType{
+						{Name: "metric_name", Type: "String"},
+						{Name: "temporality", Type: "String"},
+						{Name: "type", Type: "String"},
+						{Name: "is_monotonic", Type: "Bool"},
+					}
+					metadataRows := cmock.NewRows(metadataCols, [][]any{
+						{"probe_success", metrictypes.Unspecified, metrictypes.GaugeType, false},
+					})
+					mock.ExpectQuery("*distributed_time_series_v4*").WithArgs(nil, nil, nil).WillReturnRows(metadataRows)
+					// Second query: fetchMeterSourceMetricsTemporalityAndType (from signoz_meter table)
+					emptyMetadataRows := cmock.NewRows(metadataCols, [][]any{})
+					mock.ExpectQuery("*meter*").WithArgs(nil).WillReturnRows(emptyMetadataRows)
 
 					// Generate query arguments for the metric query
 					evalTime := time.Now().UTC()
@@ -99,11 +116,8 @@ func TestManager_TestNotification_SendUnmatched_ThresholdRule(t *testing.T) {
 				},
 			})
 
-			count, apiErr := mgr.TestNotification(context.Background(), orgID, string(ruleBytes))
-			if apiErr != nil {
-				t.Logf("TestNotification error: %v, type: %s", apiErr.Err, apiErr.Typ)
-			}
-			require.Nil(t, apiErr)
+			count, err := mgr.TestNotification(context.Background(), orgID, string(ruleBytes))
+			require.Nil(t, err)
 			assert.Equal(t, tc.ExpectAlerts, count)
 
 			if tc.ExpectAlerts > 0 {
@@ -154,6 +168,7 @@ func TestManager_TestNotification_SendUnmatched_PromRule(t *testing.T) {
 					mockAM := am.(*alertmanagermock.MockAlertmanager)
 					// mock set notification config
 					mockAM.On("SetNotificationConfig", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+					mockAM.On("Config").Return(alertmanagerserver.Config{ExternalURL: mustParseURL(t, "http://localhost:8080")})
 					// for saving temp alerts that are triggered via TestNotification
 					if tc.ExpectAlerts > 0 {
 						mockAM.On("TestAlert", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
@@ -242,7 +257,7 @@ func TestManager_TestNotification_SendUnmatched_PromRule(t *testing.T) {
 						WillReturnRows(samplesRows)
 
 					// Create Prometheus provider for this test
-					promProvider = prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{}, store)
+					promProvider = prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{Timeout: 2 * time.Minute}, store)
 				},
 				ManagerOptionsHook: func(opts *rules.ManagerOptions) {
 					// Set Prometheus provider for PromQL queries
@@ -253,11 +268,8 @@ func TestManager_TestNotification_SendUnmatched_PromRule(t *testing.T) {
 				},
 			})
 
-			count, apiErr := mgr.TestNotification(context.Background(), orgID, string(ruleBytes))
-			if apiErr != nil {
-				t.Logf("TestNotification error: %v, type: %s", apiErr.Err, apiErr.Typ)
-			}
-			require.Nil(t, apiErr)
+			count, err := mgr.TestNotification(context.Background(), orgID, string(ruleBytes))
+			require.Nil(t, err)
 			assert.Equal(t, tc.ExpectAlerts, count)
 
 			if tc.ExpectAlerts > 0 {

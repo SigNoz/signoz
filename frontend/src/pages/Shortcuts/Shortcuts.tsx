@@ -1,8 +1,9 @@
-import './Shortcuts.styles.scss';
-
-import { Table, Typography } from 'antd';
+import { Table } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 
 import { ALL_SHORTCUTS, generateTableData, shortcutColumns } from './utils';
+
+import './Shortcuts.styles.scss';
 
 function Shortcuts(): JSX.Element {
 	function getShortcutTable(shortcutSection: string): JSX.Element {

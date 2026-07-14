@@ -1,0 +1,22 @@
+{
+  "records": [
+    {
+      "persistentVolumeClaimName": "acc-pvc-1",
+      "volumeAvailable": 30000000000.0,
+      "volumeCapacity": 100000000000.0,
+      "volumeUsage": 70000000000.0,
+      "volumeInodes": 1000000.0,
+      "volumeInodesFree": 800000.0,
+      "volumeInodesUsed": 200000.0
+    },
+    {
+      "persistentVolumeClaimName": "acc-pvc-2",
+      "volumeAvailable": 80000000000.0,
+      "volumeCapacity": 200000000000.0,
+      "volumeUsage": 120000000000.0,
+      "volumeInodes": 2000000.0,
+      "volumeInodesFree": 1600000.0,
+      "volumeInodesUsed": 400000.0
+    }
+  ]
+}

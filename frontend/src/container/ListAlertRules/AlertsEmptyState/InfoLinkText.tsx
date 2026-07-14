@@ -1,5 +1,9 @@
-import { ArrowRightOutlined, PlayCircleFilled } from '@ant-design/icons';
-import { Flex, Typography } from 'antd';
+import { ArrowRight, CirclePlay } from '@signozhq/icons';
+import { Flex } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
+import { openInNewTab } from 'utils/navigation';
+
+import styles from './AlertsEmptyState.module.scss';
 
 interface InfoLinkTextProps {
 	infoText: string;
@@ -20,13 +24,15 @@ function InfoLinkText({
 		<Flex
 			onClick={(): void => {
 				onClick();
-				window.open(link, '_blank');
+				openInNewTab(link);
 			}}
-			className="info-link-container"
+			className={styles.infoLinkContainer}
 		>
-			{leftIconVisible && <PlayCircleFilled />}
-			<Typography.Text className="info-text">{infoText}</Typography.Text>
-			{rightIconVisible && <ArrowRightOutlined rotate={315} />}
+			{leftIconVisible && <CirclePlay size={16} />}
+			<Typography.Text className={styles.infoText}>{infoText}</Typography.Text>
+			{rightIconVisible && (
+				<ArrowRight size={16} style={{ transform: 'rotate(315deg)' }} />
+			)}
 		</Flex>
 	);
 }

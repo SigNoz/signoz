@@ -21,7 +21,7 @@ func New(store authtypes.AuthNStore) *AuthN {
 }
 
 func (a *AuthN) Authenticate(ctx context.Context, email string, password string, orgID valuer.UUID) (*authtypes.Identity, error) {
-	user, factorPassword, err := a.store.GetUserAndFactorPasswordByEmailAndOrgID(ctx, email, orgID)
+	user, factorPassword, _, err := a.store.GetActiveUserAndFactorPasswordByEmailAndOrgID(ctx, email, orgID)
 	if err != nil {
 		return nil, err
 	}
@@ -30,5 +30,5 @@ func (a *AuthN) Authenticate(ctx context.Context, email string, password string,
 		return nil, errors.New(errors.TypeUnauthenticated, types.ErrCodeIncorrectPassword, "invalid email or password")
 	}
 
-	return authtypes.NewIdentity(user.ID, orgID, user.Email, user.Role), nil
+	return authtypes.NewPrincipalUserIdentity(user.ID, orgID, user.Email, authtypes.IdentNProviderTokenizer), nil
 }

@@ -10,7 +10,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerstore/sqlalertmanagerstore"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfmanagertest"
+	"github.com/SigNoz/signoz/pkg/factory/factorytest"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstoretest"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes/alertmanagertypestest"
 	"github.com/go-openapi/strfmt"
@@ -23,9 +28,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func newTestMaintenanceStore() alertmanagertypes.MaintenanceStore {
+	ss := sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual)
+	return sqlalertmanagerstore.NewMaintenanceStore(ss, factorytest.NewSettings())
+}
+
 func TestServerSetConfigAndStop(t *testing.T) {
 	notificationManager := nfmanagertest.NewMock()
-	server, err := New(context.Background(), slog.New(slog.DiscardHandler), prometheus.NewRegistry(), NewConfig(), "1", alertmanagertypestest.NewStateStore(), notificationManager)
+	server, err := New(context.Background(), slog.New(slog.DiscardHandler), prometheus.NewRegistry(), NewConfig(), "1", alertmanagertypestest.NewStateStore(), notificationManager, newTestMaintenanceStore())
 	require.NoError(t, err)
 
 	amConfig, err := alertmanagertypes.NewDefaultConfig(alertmanagertypes.GlobalConfig{}, alertmanagertypes.RouteConfig{GroupInterval: 1 * time.Minute, RepeatInterval: 1 * time.Minute, GroupWait: 1 * time.Minute}, "1")
@@ -37,7 +47,7 @@ func TestServerSetConfigAndStop(t *testing.T) {
 
 func TestServerTestReceiverTypeWebhook(t *testing.T) {
 	notificationManager := nfmanagertest.NewMock()
-	server, err := New(context.Background(), slog.New(slog.DiscardHandler), prometheus.NewRegistry(), NewConfig(), "1", alertmanagertypestest.NewStateStore(), notificationManager)
+	server, err := New(context.Background(), slog.New(slog.DiscardHandler), prometheus.NewRegistry(), NewConfig(), "1", alertmanagertypestest.NewStateStore(), notificationManager, newTestMaintenanceStore())
 	require.NoError(t, err)
 
 	amConfig, err := alertmanagertypes.NewDefaultConfig(alertmanagertypes.GlobalConfig{}, alertmanagertypes.RouteConfig{GroupInterval: 1 * time.Minute, RepeatInterval: 1 * time.Minute, GroupWait: 1 * time.Minute}, "1")
@@ -65,15 +75,15 @@ func TestServerTestReceiverTypeWebhook(t *testing.T) {
 	webhookURL, err := url.Parse("http://" + webhookListener.Addr().String() + "/webhook")
 	require.NoError(t, err)
 
-	err = server.TestReceiver(context.Background(), alertmanagertypes.Receiver{
+	err = server.TestReceiver(context.Background(), &alertmanagertypes.Receiver{Receiver: &config.Receiver{
 		Name: "test-receiver",
 		WebhookConfigs: []*config.WebhookConfig{
 			{
 				HTTPConfig: &commoncfg.HTTPClientConfig{},
-				URL:        &config.SecretURL{URL: webhookURL},
+				URL:        config.SecretTemplateURL(webhookURL.String()),
 			},
 		},
-	})
+	}})
 
 	assert.NoError(t, err)
 	assert.Contains(t, requestBody.String(), "test-receiver")
@@ -85,21 +95,21 @@ func TestServerPutAlerts(t *testing.T) {
 	srvCfg := NewConfig()
 	srvCfg.Route.GroupInterval = 1 * time.Second
 	notificationManager := nfmanagertest.NewMock()
-	server, err := New(context.Background(), slog.New(slog.DiscardHandler), prometheus.NewRegistry(), srvCfg, "1", stateStore, notificationManager)
+	server, err := New(context.Background(), slog.New(slog.DiscardHandler), prometheus.NewRegistry(), srvCfg, "1", stateStore, notificationManager, newTestMaintenanceStore())
 	require.NoError(t, err)
 
 	amConfig, err := alertmanagertypes.NewDefaultConfig(srvCfg.Global, srvCfg.Route, "1")
 	require.NoError(t, err)
 
-	require.NoError(t, amConfig.CreateReceiver(alertmanagertypes.Receiver{
+	require.NoError(t, amConfig.CreateReceiver(&alertmanagertypes.Receiver{Receiver: &config.Receiver{
 		Name: "test-receiver",
 		WebhookConfigs: []*config.WebhookConfig{
 			{
 				HTTPConfig: &commoncfg.HTTPClientConfig{},
-				URL:        &config.SecretURL{URL: &url.URL{Host: "localhost", Path: "/test-receiver"}},
+				URL:        config.SecretTemplateURL("http://localhost/test-receiver"),
 			},
 		},
-	}))
+	}}))
 
 	require.NoError(t, server.SetConfig(context.Background(), amConfig))
 
@@ -124,7 +134,7 @@ func TestServerPutAlerts(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, 1, len(gettableAlerts))
-	assert.Equal(t, gettableAlerts[0].Alert.Labels["alertname"], "test-alert")
+	assert.Equal(t, gettableAlerts[0].Labels["alertname"], "test-alert")
 	assert.NoError(t, server.Stop(context.Background()))
 }
 
@@ -133,7 +143,7 @@ func TestServerTestAlert(t *testing.T) {
 	srvCfg := NewConfig()
 	srvCfg.Route.GroupInterval = 1 * time.Second
 	notificationManager := nfmanagertest.NewMock()
-	server, err := New(context.Background(), slog.New(slog.DiscardHandler), prometheus.NewRegistry(), srvCfg, "1", stateStore, notificationManager)
+	server, err := New(context.Background(), slog.New(slog.DiscardHandler), prometheus.NewRegistry(), srvCfg, "1", stateStore, notificationManager, newTestMaintenanceStore())
 	require.NoError(t, err)
 
 	amConfig, err := alertmanagertypes.NewDefaultConfig(srvCfg.Global, srvCfg.Route, "1")
@@ -171,25 +181,25 @@ func TestServerTestAlert(t *testing.T) {
 	webhook2URL, err := url.Parse("http://" + webhook2Listener.Addr().String() + "/webhook")
 	require.NoError(t, err)
 
-	require.NoError(t, amConfig.CreateReceiver(alertmanagertypes.Receiver{
+	require.NoError(t, amConfig.CreateReceiver(&alertmanagertypes.Receiver{Receiver: &config.Receiver{
 		Name: "receiver-1",
 		WebhookConfigs: []*config.WebhookConfig{
 			{
 				HTTPConfig: &commoncfg.HTTPClientConfig{},
-				URL:        &config.SecretURL{URL: webhook1URL},
+				URL:        config.SecretTemplateURL(webhook1URL.String()),
 			},
 		},
-	}))
+	}}))
 
-	require.NoError(t, amConfig.CreateReceiver(alertmanagertypes.Receiver{
+	require.NoError(t, amConfig.CreateReceiver(&alertmanagertypes.Receiver{Receiver: &config.Receiver{
 		Name: "receiver-2",
 		WebhookConfigs: []*config.WebhookConfig{
 			{
 				HTTPConfig: &commoncfg.HTTPClientConfig{},
-				URL:        &config.SecretURL{URL: webhook2URL},
+				URL:        config.SecretTemplateURL(webhook2URL.String()),
 			},
 		},
-	}))
+	}}))
 
 	require.NoError(t, server.SetConfig(context.Background(), amConfig))
 	defer func() {
@@ -238,7 +248,7 @@ func TestServerTestAlertContinuesOnFailure(t *testing.T) {
 	srvCfg := NewConfig()
 	srvCfg.Route.GroupInterval = 1 * time.Second
 	notificationManager := nfmanagertest.NewMock()
-	server, err := New(context.Background(), slog.New(slog.DiscardHandler), prometheus.NewRegistry(), srvCfg, "1", stateStore, notificationManager)
+	server, err := New(context.Background(), slog.New(slog.DiscardHandler), prometheus.NewRegistry(), srvCfg, "1", stateStore, notificationManager, newTestMaintenanceStore())
 	require.NoError(t, err)
 
 	amConfig, err := alertmanagertypes.NewDefaultConfig(srvCfg.Global, srvCfg.Route, "1")
@@ -263,25 +273,25 @@ func TestServerTestAlertContinuesOnFailure(t *testing.T) {
 	webhookURL, err := url.Parse("http://" + webhookListener.Addr().String() + "/webhook")
 	require.NoError(t, err)
 
-	require.NoError(t, amConfig.CreateReceiver(alertmanagertypes.Receiver{
+	require.NoError(t, amConfig.CreateReceiver(&alertmanagertypes.Receiver{Receiver: &config.Receiver{
 		Name: "working-receiver",
 		WebhookConfigs: []*config.WebhookConfig{
 			{
 				HTTPConfig: &commoncfg.HTTPClientConfig{},
-				URL:        &config.SecretURL{URL: webhookURL},
+				URL:        config.SecretTemplateURL(webhookURL.String()),
 			},
 		},
-	}))
+	}}))
 
-	require.NoError(t, amConfig.CreateReceiver(alertmanagertypes.Receiver{
+	require.NoError(t, amConfig.CreateReceiver(&alertmanagertypes.Receiver{Receiver: &config.Receiver{
 		Name: "failing-receiver",
 		WebhookConfigs: []*config.WebhookConfig{
 			{
 				HTTPConfig: &commoncfg.HTTPClientConfig{},
-				URL:        &config.SecretURL{URL: &url.URL{Scheme: "http", Host: "localhost:1", Path: "/webhook"}},
+				URL:        config.SecretTemplateURL("http://localhost:1/webhook"),
 			},
 		},
-	}))
+	}}))
 
 	require.NoError(t, server.SetConfig(context.Background(), amConfig))
 	defer func() {

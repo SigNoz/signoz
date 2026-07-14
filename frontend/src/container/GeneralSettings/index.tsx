@@ -1,11 +1,11 @@
-import { Typography } from 'antd';
+import { useTranslation } from 'react-i18next';
+import { useQueries } from 'react-query';
+import { Typography } from '@signozhq/ui/typography';
 import getDisks from 'api/disks/getDisks';
 import getRetentionPeriodApi from 'api/settings/getRetention';
 import getRetentionPeriodApiV2 from 'api/settings/getRetentionV2';
 import Spinner from 'components/Spinner';
 import { useAppContext } from 'providers/App/App';
-import { useTranslation } from 'react-i18next';
-import { useQueries } from 'react-query';
 import { ErrorResponse, SuccessResponse, SuccessResponseV2 } from 'types/api';
 import APIError from 'types/api/error';
 import { TTTLType } from 'types/api/settings/common';
@@ -76,7 +76,9 @@ function GeneralSettings(): JSX.Element {
 	if (getRetentionPeriodLogsApiResponse.isError || getDisksResponse.isError) {
 		return (
 			<Typography>
-				{(getRetentionPeriodLogsApiResponse.error as APIError).getErrorMessage() ||
+				{(getRetentionPeriodLogsApiResponse.error instanceof APIError
+					? getRetentionPeriodLogsApiResponse.error.getErrorMessage()
+					: undefined) ||
 					getDisksResponse.data?.error ||
 					t('something_went_wrong')}
 			</Typography>

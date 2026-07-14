@@ -1,14 +1,4 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import { Dropdown } from 'antd';
-import cx from 'classnames';
-import { ENTITY_VERSION_V4, ENTITY_VERSION_V5 } from 'constants/app';
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import QBEntityOptions from 'container/QueryBuilder/components/QBEntityOptions/QBEntityOptions';
-import { QueryProps } from 'container/QueryBuilder/components/Query/Query.interfaces';
-import SpanScopeSelector from 'container/QueryBuilder/filters/QueryBuilderSearchV2/SpanScopeSelector';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
-import { Copy, Ellipsis, Trash } from 'lucide-react';
 import {
 	ForwardedRef,
 	forwardRef,
@@ -16,6 +6,16 @@ import {
 	useMemo,
 	useState,
 } from 'react';
+import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
+import cx from 'classnames';
+import { ENTITY_VERSION_V4, ENTITY_VERSION_V5 } from 'constants/app';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import QBEntityOptions from 'container/QueryBuilder/components/QBEntityOptions/QBEntityOptions';
+import { QueryProps } from 'container/QueryBuilder/type';
+import SpanScopeSelector from 'container/QueryBuilder/filters/QueryBuilderSearchV2/SpanScopeSelector';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
+import { Copy, Ellipsis, Trash } from '@signozhq/icons';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { HandleChangeQueryDataV5 } from 'types/common/operations.types';
 import { DataSource } from 'types/common/queryBuilder';
@@ -42,10 +42,12 @@ export const QueryV2 = forwardRef(function QueryV2(
 		onSignalSourceChange,
 		signalSourceChangeEnabled = false,
 		queriesCount = 1,
+		savePreviousQuery = false,
 	}: QueryProps & {
 		onSignalSourceChange: (value: string) => void;
 		signalSourceChangeEnabled: boolean;
 		queriesCount: number;
+		savePreviousQuery: boolean;
 	},
 	ref: ForwardedRef<HTMLDivElement>,
 ): JSX.Element {
@@ -67,6 +69,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 		filterConfigs,
 		isListViewPanel,
 		entityVersion: version,
+		savePreviousQuery,
 	});
 
 	const handleToggleDisableQuery = useCallback(() => {
@@ -90,9 +93,10 @@ export const QueryV2 = forwardRef(function QueryV2(
 		[dataSource, panelType],
 	);
 
-	const showSpanScopeSelector = useMemo(() => dataSource === DataSource.TRACES, [
-		dataSource,
-	]);
+	const showSpanScopeSelector = useMemo(
+		() => dataSource === DataSource.TRACES,
+		[dataSource],
+	);
 
 	const showInlineQuerySearch = useMemo(() => {
 		if (!showTraceOperator) {
@@ -191,7 +195,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 							)}
 
 							{isMultiQueryAllowed && (
-								<Dropdown
+								<DropdownMenuSimple
 									className="query-actions-dropdown"
 									menu={{
 										items: [
@@ -209,14 +213,14 @@ export const QueryV2 = forwardRef(function QueryV2(
 															icon: <Trash size={14} />,
 															onClick: handleDeleteQuery,
 														},
-												  ]
+													]
 												: []),
 										],
 									}}
-									placement="bottomRight"
+									align="end"
 								>
 									<Ellipsis size={16} />
-								</Dropdown>
+								</DropdownMenuSimple>
 							)}
 						</div>
 					</div>
@@ -234,6 +238,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 										signalSource={signalSource as 'meter' | ''}
 										onSignalSourceChange={onSignalSourceChange}
 										signalSourceChangeEnabled={signalSourceChangeEnabled}
+										savePreviousQuery={savePreviousQuery}
 									/>
 								</div>
 							)}

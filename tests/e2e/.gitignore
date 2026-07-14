@@ -1,0 +1,24 @@
+node_modules/
+# All Playwright output — HTML report, JSON summary, per-test traces /
+# screenshots / videos. Set via outputDir + reporter paths in playwright.config.ts.
+/artifacts/
+/playwright/.cache/
+.env
+dist/
+*.log
+yarn-error.log
+.yarn/cache
+.yarn/install-state.gz
+.vscode/
+
+# playwright-cli artifacts (snapshots, screenshots, videos, traces)
+.playwright-cli/
+
+# backend coordinates written by the pytest bootstrap (bootstrap/setup.py);
+# loaded by playwright.config.ts via dotenv override.
+.env.local
+
+# AI test-planner scratch (playwright-test-planner writes markdown plans
+# here before the generator turns them into .spec.ts files; the tests are
+# the source of truth, plans are regenerable).
+specs/

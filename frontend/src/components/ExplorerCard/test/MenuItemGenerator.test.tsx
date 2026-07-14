@@ -13,7 +13,8 @@ jest.mock('react-router-dom', () => ({
 	}),
 }));
 
-jest.mock('antd/es/form/Form', () => ({
+jest.mock('antd', () => ({
+	...jest.requireActual('antd'),
 	useForm: jest.fn().mockReturnValue({
 		onFinish: jest.fn(),
 	}),
@@ -54,7 +55,7 @@ describe('MenuItemGenerator', () => {
 		);
 
 		const spanElement = screen.getByRole('img', {
-			name: 'delete',
+			name: /delete view/i,
 		});
 
 		expect(spanElement).toBeInTheDocument();

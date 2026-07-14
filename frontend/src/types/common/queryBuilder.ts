@@ -1,8 +1,8 @@
+import { Dispatch, SetStateAction } from 'react';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { Format } from 'container/NewWidget/RightContainer/types';
 import { OptionsQuery } from 'container/OptionsMenu/types';
-import { Dispatch, SetStateAction } from 'react';
 import {
 	IBuilderFormula,
 	IBuilderQuery,
@@ -276,8 +276,9 @@ export type QueryBuilderContextType = {
 	redirectWithQueryBuilderData: (
 		query: Query,
 		searchParams?: Record<string, unknown>,
-		redirectToUrl?: typeof ROUTES[keyof typeof ROUTES],
+		redirectToUrl?: (typeof ROUTES)[keyof typeof ROUTES],
 		shallStringify?: boolean,
+		newTab?: boolean,
 	) => void;
 	handleRunQuery: () => void;
 	resetQuery: (newCurrentQuery?: QueryState) => void;

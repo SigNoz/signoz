@@ -1,0 +1,43 @@
+.general-settings__name-description {
+	padding: 0 0 4px 0;
+
+	.general-settings__name-input {
+		display: flex;
+		padding: 6px 6px 6px 8px;
+		align-items: center;
+		gap: 4px;
+		flex: 1 0 0;
+		align-self: stretch;
+		border-radius: 2px;
+		border: 1px solid var(--l1-border);
+		background: var(--l2-background);
+		color: var(--l1-foreground);
+		font-family: Inter;
+		font-size: 14px;
+		font-style: normal;
+		font-weight: 400;
+		line-height: 18px; /* 128.571% */
+		letter-spacing: -0.07px;
+	}
+
+	.general-settings__description-input {
+		border-style: unset;
+		.ant-input {
+			display: flex;
+			height: 80px;
+			padding: 6px 6px 6px 8px;
+			align-items: flex-start;
+			gap: 4px;
+			border-radius: 2px;
+			border: 1px solid var(--l1-border);
+			background: var(--l2-background);
+			color: var(--l1-foreground);
+			font-family: Inter;
+			font-size: 14px;
+			font-style: normal;
+			font-weight: 400;
+			line-height: 18px; /* 128.571% */
+			letter-spacing: -0.07px;
+		}
+	}
+}

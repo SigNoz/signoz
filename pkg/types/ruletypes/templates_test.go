@@ -3,16 +3,14 @@ package ruletypes
 import (
 	"context"
 	"testing"
-	"time"
 
-	"github.com/SigNoz/signoz/pkg/query-service/utils/times"
 	"github.com/stretchr/testify/require"
 )
 
 func TestTemplateExpander(t *testing.T) {
 	defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"
 	data := AlertTemplateData(map[string]string{"service.name": "my-service"}, "100", "200")
-	expander := NewTemplateExpander(context.Background(), defs+"test $service.name", "test", data, times.Time(time.Now().Unix()), nil)
+	expander := NewTemplateExpander(context.Background(), defs+"test $service.name", "test", data, nil)
 	result, err := expander.Expand()
 	if err != nil {
 		t.Fatal(err)
@@ -23,7 +21,7 @@ func TestTemplateExpander(t *testing.T) {
 func TestTemplateExpander_WithThreshold(t *testing.T) {
 	defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"
 	data := AlertTemplateData(map[string]string{"service.name": "my-service"}, "200", "100")
-	expander := NewTemplateExpander(context.Background(), defs+"test $service.name exceeds {{$threshold}} and observed at {{$value}}", "test", data, times.Time(time.Now().Unix()), nil)
+	expander := NewTemplateExpander(context.Background(), defs+"test $service.name exceeds {{$threshold}} and observed at {{$value}}", "test", data, nil)
 	result, err := expander.Expand()
 	if err != nil {
 		t.Fatal(err)
@@ -34,7 +32,7 @@ func TestTemplateExpander_WithThreshold(t *testing.T) {
 func TestTemplateExpanderOldVariableSyntax(t *testing.T) {
 	defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"
 	data := AlertTemplateData(map[string]string{"service.name": "my-service"}, "200", "100")
-	expander := NewTemplateExpander(context.Background(), defs+"test {{.Labels.service_name}} exceeds {{$threshold}} and observed at {{$value}}", "test", data, times.Time(time.Now().Unix()), nil)
+	expander := NewTemplateExpander(context.Background(), defs+"test {{.Labels.service_name}} exceeds {{$threshold}} and observed at {{$value}}", "test", data, nil)
 	result, err := expander.Expand()
 	if err != nil {
 		t.Fatal(err)
@@ -45,7 +43,7 @@ func TestTemplateExpanderOldVariableSyntax(t *testing.T) {
 func TestTemplateExpander_WithAlreadyNormalizedKey(t *testing.T) {
 	defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"
 	data := AlertTemplateData(map[string]string{"service_name": "my-service"}, "200", "100")
-	expander := NewTemplateExpander(context.Background(), defs+"test {{.Labels.service_name}} exceeds {{$threshold}} and observed at {{$value}}", "test", data, times.Time(time.Now().Unix()), nil)
+	expander := NewTemplateExpander(context.Background(), defs+"test {{.Labels.service_name}} exceeds {{$threshold}} and observed at {{$value}}", "test", data, nil)
 	result, err := expander.Expand()
 	if err != nil {
 		t.Fatal(err)
@@ -56,7 +54,7 @@ func TestTemplateExpander_WithAlreadyNormalizedKey(t *testing.T) {
 func TestTemplateExpander_WithMissingKey(t *testing.T) {
 	defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"
 	data := AlertTemplateData(map[string]string{"service_name": "my-service"}, "200", "100")
-	expander := NewTemplateExpander(context.Background(), defs+"test {{.Labels.missing_key}} exceeds {{$threshold}} and observed at {{$value}}", "test", data, times.Time(time.Now().Unix()), nil)
+	expander := NewTemplateExpander(context.Background(), defs+"test {{.Labels.missing_key}} exceeds {{$threshold}} and observed at {{$value}}", "test", data, nil)
 	result, err := expander.Expand()
 	if err != nil {
 		t.Fatal(err)
@@ -67,7 +65,7 @@ func TestTemplateExpander_WithMissingKey(t *testing.T) {
 func TestTemplateExpander_WithLablesDotSyntax(t *testing.T) {
 	defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"
 	data := AlertTemplateData(map[string]string{"service.name": "my-service"}, "200", "100")
-	expander := NewTemplateExpander(context.Background(), defs+"test {{.Labels.service.name}} exceeds {{$threshold}} and observed at {{$value}}", "test", data, times.Time(time.Now().Unix()), nil)
+	expander := NewTemplateExpander(context.Background(), defs+"test {{.Labels.service.name}} exceeds {{$threshold}} and observed at {{$value}}", "test", data, nil)
 	result, err := expander.Expand()
 	if err != nil {
 		t.Fatal(err)
@@ -78,7 +76,7 @@ func TestTemplateExpander_WithLablesDotSyntax(t *testing.T) {
 func TestTemplateExpander_WithVariableSyntax(t *testing.T) {
 	defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"
 	data := AlertTemplateData(map[string]string{"service.name": "my-service"}, "200", "100")
-	expander := NewTemplateExpander(context.Background(), defs+"test {{$service.name}} exceeds {{$threshold}} and observed at {{$value}}", "test", data, times.Time(time.Now().Unix()), nil)
+	expander := NewTemplateExpander(context.Background(), defs+"test {{$service.name}} exceeds {{$threshold}} and observed at {{$value}}", "test", data, nil)
 	result, err := expander.Expand()
 	if err != nil {
 		t.Fatal(err)

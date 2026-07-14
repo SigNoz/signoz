@@ -1,32 +1,31 @@
 import { RouteTabProps } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
-import AlertChannels from 'container/AllAlertChannels';
-import APIKeys from 'container/APIKeys/APIKeys';
 import BillingContainer from 'container/BillingContainer/BillingContainer';
-import CreateAlertChannels from 'container/CreateAlertChannels';
-import { ChannelType } from 'container/CreateAlertChannels/config';
-import CustomDomainSettings from 'container/CustomDomainSettings';
 import GeneralSettings from 'container/GeneralSettings';
 import GeneralSettingsCloud from 'container/GeneralSettingsCloud';
 import IngestionSettings from 'container/IngestionSettings/IngestionSettings';
 import MultiIngestionSettings from 'container/IngestionSettings/MultiIngestionSettings';
+import MCPServerSettings from 'container/MCPServerSettings/MCPServerSettings';
 import MySettings from 'container/MySettings';
 import OrganizationSettings from 'container/OrganizationSettings';
+import RolesSettings from 'container/RolesSettings';
+import CreateEditRolePage from 'container/RolesSettings/CreateEditRolePage';
+import ViewRolePage from 'container/RolesSettings/ViewRolePage';
 import { TFunction } from 'i18next';
 import {
 	Backpack,
-	BellDot,
+	Bot,
 	Building,
 	Cpu,
 	CreditCard,
-	Globe,
 	Keyboard,
-	KeySquare,
-	Pencil,
-	Plus,
+	Shield,
+	Sparkles,
 	User,
-} from 'lucide-react';
-import ChannelsEdit from 'pages/ChannelsEdit';
+	Users,
+} from '@signozhq/icons';
+import MembersSettings from 'pages/MembersSettings';
+import ServiceAccountsSettings from 'pages/ServiceAccountsSettings';
 import Shortcuts from 'pages/Shortcuts';
 
 export const organizationSettings = (t: TFunction): RouteTabProps['routes'] => [
@@ -39,19 +38,6 @@ export const organizationSettings = (t: TFunction): RouteTabProps['routes'] => [
 		),
 		route: ROUTES.ORG_SETTINGS,
 		key: ROUTES.ORG_SETTINGS,
-	},
-];
-
-export const alertChannels = (t: TFunction): RouteTabProps['routes'] => [
-	{
-		Component: AlertChannels,
-		name: (
-			<div className="periscope-tab">
-				<BellDot size={16} /> {t('routes:alert_channels').toString()}
-			</div>
-		),
-		route: ROUTES.ALL_CHANNELS,
-		key: ROUTES.ALL_CHANNELS,
 	},
 ];
 
@@ -109,32 +95,6 @@ export const generalSettingsCloud = (t: TFunction): RouteTabProps['routes'] => [
 	},
 ];
 
-export const apiKeys = (t: TFunction): RouteTabProps['routes'] => [
-	{
-		Component: APIKeys,
-		name: (
-			<div className="periscope-tab">
-				<KeySquare size={16} /> {t('routes:api_keys').toString()}
-			</div>
-		),
-		route: ROUTES.API_KEYS,
-		key: ROUTES.API_KEYS,
-	},
-];
-
-export const customDomainSettings = (t: TFunction): RouteTabProps['routes'] => [
-	{
-		Component: CustomDomainSettings,
-		name: (
-			<div className="periscope-tab">
-				<Globe size={16} /> {t('routes:custom_domain_settings').toString()}
-			</div>
-		),
-		route: ROUTES.CUSTOM_DOMAIN_SETTINGS,
-		key: ROUTES.CUSTOM_DOMAIN_SETTINGS,
-	},
-];
-
 export const billingSettings = (t: TFunction): RouteTabProps['routes'] => [
 	{
 		Component: BillingContainer,
@@ -145,6 +105,71 @@ export const billingSettings = (t: TFunction): RouteTabProps['routes'] => [
 		),
 		route: ROUTES.BILLING,
 		key: ROUTES.BILLING,
+	},
+];
+
+export const membersSettings = (t: TFunction): RouteTabProps['routes'] => [
+	{
+		Component: MembersSettings,
+		name: (
+			<div className="periscope-tab">
+				<Users size={16} /> {t('routes:members').toString()}
+			</div>
+		),
+		route: ROUTES.MEMBERS_SETTINGS,
+		key: ROUTES.MEMBERS_SETTINGS,
+	},
+];
+
+export const rolesSettings = (t: TFunction): RouteTabProps['routes'] => [
+	{
+		Component: RolesSettings,
+		name: (
+			<div className="periscope-tab">
+				<Shield size={16} /> {t('routes:roles').toString()}
+			</div>
+		),
+		route: ROUTES.ROLES_SETTINGS,
+		key: ROUTES.ROLES_SETTINGS,
+	},
+];
+
+export const roleDetails = (t: TFunction): RouteTabProps['routes'] => [
+	{
+		Component: ViewRolePage,
+		name: (
+			<div className="periscope-tab">
+				<Shield size={16} /> {t('routes:role_details').toString()}
+			</div>
+		),
+		route: ROUTES.ROLE_DETAILS,
+		key: ROUTES.ROLE_DETAILS,
+	},
+];
+
+export const roleEdit = (t: TFunction): RouteTabProps['routes'] => [
+	{
+		Component: CreateEditRolePage,
+		name: (
+			<div className="periscope-tab">
+				<Shield size={16} /> {t('routes:role_edit').toString()}
+			</div>
+		),
+		route: ROUTES.ROLE_EDIT,
+		key: ROUTES.ROLE_EDIT,
+	},
+];
+
+export const roleCreate = (t: TFunction): RouteTabProps['routes'] => [
+	{
+		Component: CreateEditRolePage,
+		name: (
+			<div className="periscope-tab">
+				<Shield size={16} /> {t('routes:role_create').toString()}
+			</div>
+		),
+		route: ROUTES.ROLE_CREATE,
+		key: ROUTES.ROLE_CREATE,
 	},
 ];
 
@@ -174,30 +199,30 @@ export const mySettings = (t: TFunction): RouteTabProps['routes'] => [
 	},
 ];
 
-export const createAlertChannels = (t: TFunction): RouteTabProps['routes'] => [
+export const serviceAccountsSettings = (
+	t: TFunction,
+): RouteTabProps['routes'] => [
 	{
-		Component: (): JSX.Element => (
-			<CreateAlertChannels preType={ChannelType.Slack} />
-		),
+		Component: ServiceAccountsSettings,
 		name: (
 			<div className="periscope-tab">
-				<Plus size={16} /> {t('routes:create_alert_channels').toString()}
+				<Bot size={16} /> {t('routes:service_accounts').toString()}
 			</div>
 		),
-		route: ROUTES.CHANNELS_NEW,
-		key: ROUTES.CHANNELS_NEW,
+		route: ROUTES.SERVICE_ACCOUNTS_SETTINGS,
+		key: ROUTES.SERVICE_ACCOUNTS_SETTINGS,
 	},
 ];
 
-export const editAlertChannels = (t: TFunction): RouteTabProps['routes'] => [
+export const mcpServerSettings = (t: TFunction): RouteTabProps['routes'] => [
 	{
-		Component: ChannelsEdit,
+		Component: MCPServerSettings,
 		name: (
 			<div className="periscope-tab">
-				<Pencil size={16} /> {t('routes:edit_alert_channels').toString()}
+				<Sparkles size={16} /> {t('routes:mcp_server').toString()}
 			</div>
 		),
-		route: ROUTES.CHANNELS_EDIT,
-		key: ROUTES.CHANNELS_EDIT,
+		route: ROUTES.MCP_SERVER,
+		key: ROUTES.MCP_SERVER,
 	},
 ];

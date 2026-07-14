@@ -1,6 +1,9 @@
-import './logs.styles.scss';
-
-import { Button, Col, Divider, Popover, Row, Select, Space } from 'antd';
+import { useCallback, useMemo } from 'react';
+// eslint-disable-next-line no-restricted-imports
+import { useDispatch, useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
+import { Button, Col, Popover, Row, Select, Space } from 'antd';
+import { Divider } from '@signozhq/ui/divider';
 import { QueryParams } from 'constants/query';
 import LogControls from 'container/LogControls';
 import LogDetailedView from 'container/LogDetailedView';
@@ -10,9 +13,7 @@ import LogsFilters from 'container/LogsFilters';
 import LogsSearchFilter from 'container/LogsSearchFilter';
 import LogsTable from 'container/LogsTable';
 import history from 'lib/history';
-import { useCallback, useMemo } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
+// eslint-disable-next-line no-restricted-imports
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
@@ -29,6 +30,8 @@ import {
 import { useSelectedLogView } from './hooks';
 import PopoverContent from './PopoverContent';
 import SpaceContainer from './styles';
+
+import './logs.styles.scss';
 
 function OldLogsExplorer(): JSX.Element {
 	const dispatch = useDispatch<Dispatch<AppActions>>();
@@ -54,13 +57,15 @@ function OldLogsExplorer(): JSX.Element {
 		[linesPerRow, handleLinesPerRowChange],
 	);
 
-	const isFormatButtonVisible = useMemo(() => logsOptions.includes(viewMode), [
-		viewMode,
-	]);
+	const isFormatButtonVisible = useMemo(
+		() => logsOptions.includes(viewMode),
+		[viewMode],
+	);
 
-	const selectedViewModeOption = useMemo(() => viewModeOption.value.toString(), [
-		viewModeOption.value,
-	]);
+	const selectedViewModeOption = useMemo(
+		() => viewModeOption.value.toString(),
+		[viewModeOption.value],
+	);
 
 	const onChangeVeiwMode = useCallback(
 		(key: string) => {

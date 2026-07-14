@@ -1,7 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
-/* eslint-disable sonarjs/no-identical-functions */
-
-import { SIGNOZ_UPGRADE_PLAN_URL } from 'constants/app';
 import CreateAlertChannels from 'container/CreateAlertChannels';
 import { ChannelType } from 'container/CreateAlertChannels/config';
 import {
@@ -26,20 +22,20 @@ describe('Create Alert Channel (Normal User)', () => {
 	afterEach(() => {
 		jest.clearAllMocks();
 	});
-	describe('Should check if the new alert channel is properly displayed with the cascading fields of slack channel ', () => {
+	describe('Should check if the new alert channel is properly displayed with the cascading fields of slack channel', () => {
 		beforeEach(() => {
 			render(<CreateAlertChannels preType={ChannelType.Slack} />);
 		});
 		it('Should check if the title is "New Notification Channels"', () => {
 			expect(screen.getByText('page_title_create')).toBeInTheDocument();
 		});
-		it('Should check if the name label and textbox are displayed properly ', () => {
+		it('Should check if the name label and textbox are displayed properly', () => {
 			testLabelInputAndHelpValue({
 				labelText: 'field_channel_name',
 				testId: 'channel-name-textbox',
 			});
 		});
-		it('Should check if Send resolved alerts label and checkbox are displayed properly ', () => {
+		it('Should check if Send resolved alerts label and checkbox are displayed properly', () => {
 			testLabelInputAndHelpValue({
 				labelText: 'field_send_resolved',
 				testId: 'field-send-resolved-checkbox',
@@ -55,13 +51,13 @@ describe('Create Alert Channel (Normal User)', () => {
 		it('Should check if the selected item in the type dropdown has text "Slack"', () => {
 			expect(screen.getByText('Slack')).toBeInTheDocument();
 		});
-		it('Should check if Webhook URL label and input are displayed properly ', () => {
+		it('Should check if Webhook URL label and input are displayed properly', () => {
 			testLabelInputAndHelpValue({
 				labelText: 'field_webhook_url',
 				testId: 'webhook-url-textbox',
 			});
 		});
-		it('Should check if Recepient label, input, and help text are displayed properly ', () => {
+		it('Should check if Recepient label, input, and help text are displayed properly', () => {
 			testLabelInputAndHelpValue({
 				labelText: 'field_slack_recipient',
 				testId: 'slack-channel-textbox',
@@ -69,7 +65,7 @@ describe('Create Alert Channel (Normal User)', () => {
 			});
 		});
 
-		it('Should check if Title label and text area are displayed properly ', () => {
+		it('Should check if Title label and text area are displayed properly', () => {
 			testLabelInputAndHelpValue({
 				labelText: 'field_slack_title',
 				testId: 'title-textarea',
@@ -80,7 +76,7 @@ describe('Create Alert Channel (Normal User)', () => {
 
 			expect(titleTextArea).toHaveTextContent(slackTitleDefaultValue);
 		});
-		it('Should check if Description label and text area are displayed properly ', () => {
+		it('Should check if Description label and text area are displayed properly', () => {
 			testLabelInputAndHelpValue({
 				labelText: 'field_slack_description',
 				testId: 'description-textarea',
@@ -106,13 +102,13 @@ describe('Create Alert Channel (Normal User)', () => {
 			it('Should check if the selected item in the type dropdown has text "Webhook"', () => {
 				expect(screen.getByText('Webhook')).toBeInTheDocument();
 			});
-			it('Should check if Webhook URL label and input are displayed properly ', () => {
+			it('Should check if Webhook URL label and input are displayed properly', () => {
 				testLabelInputAndHelpValue({
 					labelText: 'field_webhook_url',
 					testId: 'webhook-url-textbox',
 				});
 			});
-			it('Should check if Webhook User Name label, input, and help text are displayed properly ', () => {
+			it('Should check if Webhook User Name label, input, and help text are displayed properly', () => {
 				testLabelInputAndHelpValue({
 					labelText: 'field_webhook_username',
 					testId: 'webhook-username-textbox',
@@ -250,7 +246,7 @@ describe('Create Alert Channel (Normal User)', () => {
 				});
 			});
 
-			it('Should check if Message contains the default template ', () => {
+			it('Should check if Message contains the default template', () => {
 				const messageTextArea = screen.getByTestId('opsgenie-message-textarea');
 
 				expect(messageTextArea).toHaveValue(opsGenieMessageDefaultValue);
@@ -316,16 +312,6 @@ describe('Create Alert Channel (Normal User)', () => {
 				expect(screen.getByText('Microsoft Teams')).toBeInTheDocument();
 			});
 
-			it.skip('Should check if the upgrade plan message is shown', () => {
-				expect(screen.getByText('Upgrade to a Paid Plan')).toBeInTheDocument();
-				expect(
-					screen.getByText(/This feature is available for paid plans only./),
-				).toBeInTheDocument();
-				const link = screen.getByRole('link', { name: 'Click here' });
-				expect(link).toBeInTheDocument();
-				expect(link).toHaveAttribute('href', SIGNOZ_UPGRADE_PLAN_URL);
-				expect(screen.getByText(/to Upgrade/)).toBeInTheDocument();
-			});
 			it('Should check if the form buttons are displayed properly (Save, Test, Back)', () => {
 				expect(
 					screen.getByRole('button', { name: 'button_save_channel' }),

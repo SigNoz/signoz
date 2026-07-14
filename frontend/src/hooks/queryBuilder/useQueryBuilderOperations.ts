@@ -1,10 +1,19 @@
 /* eslint-disable sonarjs/cognitive-complexity */
+import { useCallback, useEffect, useState } from 'react';
+import {
+	getPreviousQueryFromKey,
+	getQueryKey,
+	removeKeyFromPreviousQuery,
+	saveAsPreviousQuery,
+} from 'components/QueryBuilderV2/QueryV2/previousQuery.utils';
 import { ENTITY_VERSION_V4, ENTITY_VERSION_V5 } from 'constants/app';
 import { LEGEND } from 'constants/global';
 import {
 	ATTRIBUTE_TYPES,
 	initialAutocompleteData,
 	initialQueryBuilderFormValuesMap,
+	listViewInitialLogQuery,
+	listViewInitialTraceQuery,
 	mapOfFormulaToFilters,
 	mapOfQueryFilters,
 	PANEL_TYPES,
@@ -16,20 +25,16 @@ import {
 	metricsUnknownSpaceAggregateOperatorOptions,
 	metricsUnknownTimeAggregateOperatorOptions,
 } from 'constants/queryBuilderOperators';
-import {
-	listViewInitialLogQuery,
-	listViewInitialTraceQuery,
-} from 'container/DashboardContainer/ComponentsSlider/constants';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { getMetricsOperatorsByAttributeType } from 'lib/newQueryBuilder/getMetricsOperatorsByAttributeType';
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
 import { findDataTypeOfOperator } from 'lib/query/findDataTypeOfOperator';
 import { isEmpty, isEqual } from 'lodash-es';
-import { useCallback, useEffect, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderFormula,
 	IBuilderQuery,
+	Query,
 } from 'types/api/queryBuilder/queryBuilderData';
 import {
 	MetricAggregation,
@@ -59,6 +64,7 @@ export const useQueryOperations: UseQueryOperations = ({
 	isListViewPanel = false,
 	entityVersion,
 	isForTraceOperator = false,
+	savePreviousQuery = false,
 }) => {
 	const {
 		handleSetQueryData,
@@ -114,7 +120,7 @@ export const useQueryOperations: UseQueryOperations = ({
 				(acc, item) => {
 					if (
 						filterConfigs &&
-						filterConfigs[item.field as typeof additionalFiltersKeys[number]]
+						filterConfigs[item.field as (typeof additionalFiltersKeys)[number]]
 							?.isHidden
 					) {
 						return acc;
@@ -137,10 +143,8 @@ export const useQueryOperations: UseQueryOperations = ({
 		string[]
 	>(getNewListOfAdditionalFilters(dataSource, true));
 
-	const [
-		listOfAdditionalFormulaFilters,
-		setListOfAdditionalFormulaFilters,
-	] = useState<string[]>(getNewListOfAdditionalFilters(dataSource, false));
+	const [listOfAdditionalFormulaFilters, setListOfAdditionalFormulaFilters] =
+		useState<string[]>(getNewListOfAdditionalFilters(dataSource, false));
 
 	const handleChangeOperator = useCallback(
 		(value: string): void => {
@@ -212,7 +216,7 @@ export const useQueryOperations: UseQueryOperations = ({
 						panelType: panelType || PANEL_TYPES.TIME_SERIES,
 						aggregateAttributeType:
 							(aggregateAttribute?.type as ATTRIBUTE_TYPES) || ATTRIBUTE_TYPES.GAUGE,
-				  });
+					});
 
 			switch (aggregateAttribute?.type) {
 				case ATTRIBUTE_TYPES.SUM:
@@ -240,18 +244,11 @@ export const useQueryOperations: UseQueryOperations = ({
 	);
 
 	const handleChangeAggregatorAttribute = useCallback(
-		(
-			value: BaseAutocompleteData,
-			isEditMode?: boolean,
-			attributeKeys?: BaseAutocompleteData[],
-		): void => {
+		(value: BaseAutocompleteData, isEditMode?: boolean): void => {
 			const newQuery: IBuilderQuery = {
 				...query,
 				aggregateAttribute: value,
 			};
-
-			const getAttributeKeyFromMetricName = (metricName: string): string =>
-				attributeKeys?.find((key) => key.key === metricName)?.type || '';
 
 			if (
 				newQuery.dataSource === DataSource.METRICS &&
@@ -303,9 +300,7 @@ export const useQueryOperations: UseQueryOperations = ({
 					// Get current metric info
 					const currentMetricType = newQuery.aggregateAttribute?.type || '';
 
-					const prevMetricType = previousMetricInfo?.type
-						? previousMetricInfo.type
-						: getAttributeKeyFromMetricName(previousMetricInfo?.name || '');
+					const prevMetricType = previousMetricInfo?.type || '';
 
 					// Check if metric type has changed by comparing with tracked previous values
 					const metricTypeChanged =
@@ -366,7 +361,7 @@ export const useQueryOperations: UseQueryOperations = ({
 
 						// Handled query with unknown metric to avoid 400 and 500 errors
 						// With metric value typed and not available then - time - 'avg', space - 'avg'
-						// If not typed - time - 'rate', space - 'sum', op - 'count'
+						// If not typed - time - 'avg', space - 'sum'
 						if (isEmpty(newQuery.aggregateAttribute?.type)) {
 							if (!isEmpty(newQuery.aggregateAttribute?.key)) {
 								newQuery.aggregations = [
@@ -380,7 +375,7 @@ export const useQueryOperations: UseQueryOperations = ({
 							} else {
 								newQuery.aggregations = [
 									{
-										timeAggregation: MetricAggregateOperator.COUNT,
+										timeAggregation: MetricAggregateOperator.AVG,
 										metricName: newQuery.aggregateAttribute?.key || '',
 										temporality: '',
 										spaceAggregation: MetricAggregateOperator.SUM,
@@ -396,6 +391,29 @@ export const useQueryOperations: UseQueryOperations = ({
 								{
 									...currentAggregation,
 									metricName: newQuery.aggregateAttribute?.key || '',
+								},
+							];
+						}
+					}
+
+					// Override with safe defaults when metric type is unknown to avoid 400/500 errors
+					if (isEmpty(newQuery.aggregateAttribute?.type)) {
+						if (!isEmpty(newQuery.aggregateAttribute?.key)) {
+							newQuery.aggregations = [
+								{
+									timeAggregation: MetricAggregateOperator.AVG,
+									metricName: newQuery.aggregateAttribute?.key || '',
+									temporality: '',
+									spaceAggregation: MetricAggregateOperator.AVG,
+								},
+							];
+						} else {
+							newQuery.aggregations = [
+								{
+									timeAggregation: MetricAggregateOperator.AVG,
+									metricName: newQuery.aggregateAttribute?.key || '',
+									temporality: '',
+									spaceAggregation: MetricAggregateOperator.SUM,
 								},
 							];
 						}
@@ -417,11 +435,50 @@ export const useQueryOperations: UseQueryOperations = ({
 
 	const handleChangeDataSource = useCallback(
 		(nextSource: DataSource): void => {
+			let newQueryData: IBuilderQuery | null = null;
+			if (savePreviousQuery) {
+				// save the current query key in session storage
+				const currKey = getQueryKey({
+					queryName: query.queryName || '',
+					dataSource: query.dataSource || '',
+					signalSource: query.source || '',
+					panelType: panelType || '',
+				});
+
+				saveAsPreviousQuery(currKey, query);
+
+				const newKey = getQueryKey({
+					queryName: query.queryName || '',
+					dataSource: nextSource || '',
+					signalSource: query.source || '',
+					panelType: panelType || '',
+				});
+
+				newQueryData = getPreviousQueryFromKey(newKey);
+
+				// remove the new query key from session storage
+				removeKeyFromPreviousQuery(newKey);
+			}
+
 			if (isListViewPanel) {
+				let listPanelQuery: Query | null = null;
+
 				if (nextSource === DataSource.LOGS) {
-					redirectWithQueryBuilderData(listViewInitialLogQuery);
+					listPanelQuery = listViewInitialLogQuery;
 				} else if (nextSource === DataSource.TRACES) {
-					redirectWithQueryBuilderData(listViewInitialTraceQuery);
+					listPanelQuery = listViewInitialTraceQuery;
+				}
+				if (newQueryData && listPanelQuery) {
+					listPanelQuery = {
+						...listPanelQuery,
+						builder: {
+							...listPanelQuery.builder,
+							queryData: [newQueryData],
+						},
+					};
+				}
+				if (listPanelQuery) {
+					redirectWithQueryBuilderData(listPanelQuery);
 				}
 			}
 
@@ -443,8 +500,10 @@ export const useQueryOperations: UseQueryOperations = ({
 				aggregateOperator: newOperators[0].value,
 			};
 
+			newQueryData = newQueryData ? newQueryData : newQuery;
+
 			setOperators(newOperators);
-			handleSetQueryData(index, newQuery);
+			handleSetQueryData(index, newQueryData);
 		},
 		[
 			isListViewPanel,
@@ -453,6 +512,7 @@ export const useQueryOperations: UseQueryOperations = ({
 			handleSetQueryData,
 			index,
 			redirectWithQueryBuilderData,
+			savePreviousQuery,
 		],
 	);
 
@@ -468,32 +528,31 @@ export const useQueryOperations: UseQueryOperations = ({
 		index,
 	]);
 
-	const handleChangeQueryData:
-		| HandleChangeQueryData
-		| HandleChangeQueryDataV5 = useCallback(
-		(key: string, value: any) => {
-			const newQuery = {
-				...query,
-				[key]:
-					key === LEGEND && typeof value === 'string'
-						? getFormatedLegend(value)
-						: value,
-			};
+	const handleChangeQueryData: HandleChangeQueryData | HandleChangeQueryDataV5 =
+		useCallback(
+			(key: string, value: any) => {
+				const newQuery = {
+					...query,
+					[key]:
+						key === LEGEND && typeof value === 'string'
+							? getFormatedLegend(value)
+							: value,
+				};
 
-			if (isForTraceOperator) {
-				handleSetTraceOperatorData(index, newQuery);
-			} else {
-				handleSetQueryData(index, newQuery);
-			}
-		},
-		[
-			query,
-			index,
-			handleSetQueryData,
-			handleSetTraceOperatorData,
-			isForTraceOperator,
-		],
-	);
+				if (isForTraceOperator) {
+					handleSetTraceOperatorData(index, newQuery);
+				} else {
+					handleSetQueryData(index, newQuery);
+				}
+			},
+			[
+				query,
+				index,
+				handleSetQueryData,
+				handleSetTraceOperatorData,
+				isForTraceOperator,
+			],
+		);
 
 	const handleChangeFormulaData: HandleChangeFormulaData = useCallback(
 		(key, value) => {

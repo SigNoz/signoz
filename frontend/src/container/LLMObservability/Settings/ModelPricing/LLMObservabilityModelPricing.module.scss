@@ -1,0 +1,15 @@
+.llmObservabilityModelPricing {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-8);
+}
+
+.tabLabel {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.tabBadge {
+	margin: 0;
+}

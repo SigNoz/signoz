@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// createBenchmarkTimeSeriesData creates test data for benchmarking
+// createBenchmarkTimeSeriesData creates test data for benchmarking.
 func createBenchmarkTimeSeriesData(queryName string, numSeries, numPoints int) *TimeSeriesData {
 	series := make([]*TimeSeries, numSeries)
 
@@ -61,7 +61,7 @@ func createBenchmarkTimeSeriesData(queryName string, numSeries, numPoints int) *
 	}
 }
 
-// BenchmarkFormulaEvaluator_10k_Series_300_Points benchmarks the target scenario
+// BenchmarkFormulaEvaluator_10k_Series_300_Points benchmarks the target scenario.
 func BenchmarkFormulaEvaluator_10k_Series_300_Points(b *testing.B) {
 	// Create test data: 10k series, 300 points each
 	const numSeries = 10000
@@ -99,7 +99,7 @@ func BenchmarkFormulaEvaluator_10k_Series_300_Points(b *testing.B) {
 	}
 }
 
-// BenchmarkFormulaEvaluator_Scaling tests different scales for comparison
+// BenchmarkFormulaEvaluator_Scaling tests different scales for comparison.
 func BenchmarkFormulaEvaluator_1k_Series_300_Points(b *testing.B) {
 	const numSeries = 1000
 	const numPoints = 300
@@ -152,7 +152,7 @@ func BenchmarkFormulaEvaluator_5k_Series_300_Points(b *testing.B) {
 	}
 }
 
-// BenchmarkFormulaEvaluator_Complex_Expression tests more complex math
+// BenchmarkFormulaEvaluator_Complex_Expression tests more complex math.
 func BenchmarkFormulaEvaluator_10k_Series_Complex(b *testing.B) {
 	const numSeries = 10000
 	const numPoints = 300
@@ -180,7 +180,7 @@ func BenchmarkFormulaEvaluator_10k_Series_Complex(b *testing.B) {
 	}
 }
 
-// BenchmarkFormulaEvaluator_Memory_Reuse tests object pool efficiency
+// BenchmarkFormulaEvaluator_Memory_Reuse tests object pool efficiency.
 func BenchmarkFormulaEvaluator_Memory_Reuse(b *testing.B) {
 	const numSeries = 1000
 	const numPoints = 100
@@ -208,7 +208,7 @@ func BenchmarkFormulaEvaluator_Memory_Reuse(b *testing.B) {
 	}
 }
 
-// Benchmark just the lookup building phase
+// Benchmark just the lookup building phase.
 func BenchmarkFormulaEvaluator_LookupBuilding(b *testing.B) {
 	const numSeries = 10000
 	const numPoints = 300
@@ -230,7 +230,7 @@ func BenchmarkFormulaEvaluator_LookupBuilding(b *testing.B) {
 	}
 }
 
-// Benchmark just the evaluation phase (excluding lookup building)
+// Benchmark just the evaluation phase (excluding lookup building).
 func BenchmarkFormulaEvaluator_EvaluationOnly(b *testing.B) {
 	const numSeries = 10000
 	const numPoints = 300

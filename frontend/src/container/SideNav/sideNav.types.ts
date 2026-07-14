@@ -1,5 +1,5 @@
-import { MenuProps } from 'antd';
 import { ReactNode } from 'react';
+import { MenuProps } from 'antd';
 
 export type MenuItem = Required<MenuProps>['items'][number];
 
@@ -14,6 +14,9 @@ export interface SidebarItem {
 	label?: ReactNode;
 	isBeta?: boolean;
 	isNew?: boolean;
+	isEarlyAccess?: boolean;
+	/** Hover copy for the whole item row (e.g. Noz's early-access tagline). */
+	tooltip?: ReactNode;
 	isPinned?: boolean;
 	children?: SidebarItem[];
 	isExternal?: boolean;
@@ -23,6 +26,13 @@ export interface SidebarItem {
 }
 
 export const CHANGELOG_LABEL = 'Full Changelog';
+
+export interface SettingsNavSection {
+	title?: string;
+	items: SidebarItem[];
+	key: string;
+	hasDivider?: boolean;
+}
 
 export interface DropdownSeparator {
 	type: 'divider' | 'group';

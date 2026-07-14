@@ -2,10 +2,15 @@ import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import duration from 'dayjs/plugin/duration';
+import relativeTime from 'dayjs/plugin/relativeTime';
+import timezone from 'dayjs/plugin/timezone';
+import utc from 'dayjs/plugin/utc';
 
+dayjs.extend(utc);
 dayjs.extend(customParseFormat);
-
 dayjs.extend(duration);
+dayjs.extend(timezone);
+dayjs.extend(relativeTime);
 
 export function toUTCEpoch(time: number): number {
 	const x = new Date();
@@ -34,8 +39,7 @@ export const getRemainingDays = (billingEndDate: number): number => {
 	const endDate = new Date(billingEndDate * 1000); // Convert seconds to milliseconds
 
 	// Calculate the time difference in milliseconds
-	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-	// @ts-ignore
+	// @ts-expect-error
 	const timeDifference = endDate - startDate;
 
 	return Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
@@ -110,6 +114,12 @@ export function formatEpochTimestamp(epoch: number): string {
  */
 
 export function formatTime(seconds: number): string {
+	seconds = +seconds;
+
+	if (Number.isNaN(seconds)) {
+		return '-';
+	}
+
 	const days = seconds / 86400;
 
 	if (days >= 1) {
@@ -163,6 +173,24 @@ export const normalizeTimeToMs = (timestamp: number | string): number => {
 	return isNanoSeconds ? Math.floor(ts / 1_000_000) : ts;
 };
 
+/**
+ * Calculates milliseconds elapsed since the given timestamp.
+ * Returns 0 for undefined/invalid timestamps.
+ */
+export function getElapsedMs(startsAt: Date | string | undefined): number {
+	if (!startsAt) {
+		return 0;
+	}
+	const timestamp =
+		typeof startsAt === 'string'
+			? new Date(startsAt).getTime()
+			: startsAt.getTime();
+	if (Number.isNaN(timestamp)) {
+		return 0;
+	}
+	return Date.now() - timestamp;
+}
+
 export const hasDatePassed = (expiresAt: string): boolean => {
 	const date = dayjs(expiresAt);
 
@@ -213,10 +241,11 @@ export const validateTimeRange = (
 	startTime: string,
 	endTime: string,
 	format: string,
+	timezone: string,
 ): TimeRangeValidationResult => {
-	const start = dayjs(startTime, format, true);
-	const end = dayjs(endTime, format, true);
-	const now = dayjs();
+	const start = dayjs.tz(startTime, format, timezone);
+	const end = dayjs.tz(endTime, format, timezone);
+	const now = dayjs().tz(timezone);
 	const startTimeMs = start.valueOf();
 	const endTimeMs = end.valueOf();
 
@@ -273,3 +302,30 @@ Shortcuts:
 		endTimeMs,
 	};
 };
+
+/**
+ * Formats age in milliseconds to a human-readable string (e.g., "5d 3h", "2h 30m", "45s")
+ */
+export function formatAge(ms: number): string {
+	if (ms < 0 || Number.isNaN(ms) || !Number.isFinite(ms)) {
+		return '-';
+	}
+
+	const seconds = Math.floor(ms / 1000);
+	const minutes = Math.floor(seconds / 60);
+	const hours = Math.floor(minutes / 60);
+	const days = Math.floor(hours / 24);
+
+	if (days > 0) {
+		const remainingHours = hours % 24;
+		return remainingHours > 0 ? `${days}d ${remainingHours}h` : `${days}d`;
+	}
+	if (hours > 0) {
+		const remainingMinutes = minutes % 60;
+		return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
+	}
+	if (minutes > 0) {
+		return `${minutes}m`;
+	}
+	return `${seconds}s`;
+}

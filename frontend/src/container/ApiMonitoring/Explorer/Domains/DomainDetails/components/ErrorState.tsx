@@ -1,5 +1,8 @@
-import { Button, Typography } from 'antd';
-import { RotateCw } from 'lucide-react';
+import { Button } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
+import { RotateCw } from '@signozhq/icons';
+
+import awwSnapUrl from '@/assets/Icons/awwSnap.svg';
 
 function ErrorState({ refetch }: { refetch: () => void }): JSX.Element {
 	return (
@@ -7,11 +10,11 @@ function ErrorState({ refetch }: { refetch: () => void }): JSX.Element {
 			<div className="error-state-content-wrapper">
 				<div className="error-state-content">
 					<div className="icon">
-						<img src="/Icons/awwSnap.svg" alt="awwSnap" width={32} height={32} />
+						<img src={awwSnapUrl} alt="awwSnap" width={32} height={32} />
 					</div>
 					<div className="error-state-text">
 						<Typography.Text>Uh-oh :/ We ran into an error.</Typography.Text>
-						<Typography.Text type="secondary">
+						<Typography.Text color="muted">
 							Please refresh this panel.
 						</Typography.Text>
 					</div>

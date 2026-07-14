@@ -1,15 +1,14 @@
-/* eslint-disable no-nested-ternary */
-/* eslint-disable react/require-default-props */
-import './MQTables.styles.scss';
-
-import { Skeleton, Table, Typography } from 'antd';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMutation } from 'react-query';
+import { useHistory, useLocation } from 'react-router-dom';
+import { Skeleton, Table } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import {
 	MessagingQueueServicePayload,
 	MessagingQueuesPayloadProps,
 } from 'api/messagingQueues/getConsumerLagDetails';
 import axios from 'axios';
-import { isNumber } from 'chart.js/helpers';
 import cx from 'classnames';
 import { ColumnTypeRender } from 'components/Logs/TableView/types';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
@@ -29,13 +28,14 @@ import {
 	SelectedTimelineQuery,
 	setConfigDetail,
 } from 'pages/MessagingQueues/MessagingQueuesUtils';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useMutation } from 'react-query';
-import { useHistory, useLocation } from 'react-router-dom';
 import { ErrorResponse, SuccessResponse } from 'types/api';
+import { isModifierKeyPressed } from 'utils/app';
+import { openInNewTab } from 'utils/navigation';
+import { formatNumericValue } from 'utils/numericUtils';
 
 import { getTableDataForProducerLatencyOverview } from './MQTableUtils';
-import { formatNumericValue } from 'utils/numericUtils';
+
+import './MQTables.styles.scss';
 
 const INITIAL_PAGE_SIZE = 10;
 
@@ -53,7 +53,7 @@ export function getColumns(
 		? [
 				...(data?.result?.[0]?.table?.columns || []),
 				{ name: 'byte_rate', queryName: 'byte_rate' },
-		  ]
+			]
 		: data?.result?.[0]?.table?.columns;
 
 	const columns: {
@@ -81,7 +81,12 @@ export function getColumns(
 								onClick={(e): void => {
 									e.preventDefault();
 									e.stopPropagation();
-									history.push(`/services/${encodeURIComponent(text)}`);
+									const path = `/services/${encodeURIComponent(text)}`;
+									if (isModifierKeyPressed(e as React.MouseEvent)) {
+										openInNewTab(path);
+									} else {
+										history.push(path);
+									}
 								}}
 							>
 								{text}
@@ -89,7 +94,7 @@ export function getColumns(
 						) : (
 							<Typography.Text>{text}</Typography.Text>
 						),
-			  }),
+				}),
 	}));
 
 	return columns;
@@ -164,9 +169,10 @@ function MessagingQueuesTable({
 
 	const configDetailQueryData: {
 		[key: string]: string;
-	} = useMemo(() => (configDetails ? JSON.parse(configDetails) : {}), [
-		configDetails,
-	]);
+	} = useMemo(
+		() => (configDetails ? JSON.parse(configDetails) : {}),
+		[configDetails],
+	);
 
 	const paginationConfig = useMemo(
 		() =>
@@ -193,22 +199,24 @@ function MessagingQueuesTable({
 		[type, selectedView, tableApiPayload],
 	);
 
-	const { mutate: getViewDetails, isLoading, error, isError } = useMutation(
-		tableApi,
-		{
-			onSuccess: (data) => {
-				if (data.payload) {
-					setColumns(getColumns(data?.payload, history, isProducerOverview));
-					setTableData(
-						isProducerOverview
-							? getTableDataForProducerLatencyOverview(data?.payload)
-							: getTableData(data?.payload),
-					);
-				}
-			},
-			onError: handleConsumerDetailsOnError,
+	const {
+		mutate: getViewDetails,
+		isLoading,
+		error,
+		isError,
+	} = useMutation(tableApi, {
+		onSuccess: (data) => {
+			if (data.payload) {
+				setColumns(getColumns(data?.payload, history, isProducerOverview));
+				setTableData(
+					isProducerOverview
+						? getTableDataForProducerLatencyOverview(data?.payload)
+						: getTableData(data?.payload),
+				);
+			}
 		},
-	);
+		onError: handleConsumerDetailsOnError,
+	});
 
 	useEffect(
 		() => {
@@ -259,10 +267,10 @@ function MessagingQueuesTable({
 		selectedView === MessagingQueuesViewType.consumerLag.value
 			? `${timelineQueryData?.group || ''} ${timelineQueryData?.topic || ''} ${
 					timelineQueryData?.partition || ''
-			  }`
+				}`
 			: `${configDetailQueryData?.service_name || ''} ${
 					configDetailQueryData?.topic || ''
-			  } ${configDetailQueryData?.partition || ''}`;
+				} ${configDetailQueryData?.partition || ''}`;
 
 	const prevTableDataRef = useRef<string>();
 
@@ -339,7 +347,7 @@ function MessagingQueuesTable({
 							type !== 'Detail'
 								? {
 										onClick: (): void => onRowClick(record),
-								  }
+									}
 								: {}
 						}
 						rowClassName={(record): any =>

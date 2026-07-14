@@ -1,6 +1,8 @@
 package queryprogress
 
 import (
+	"log/slog"
+
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 )
@@ -21,10 +23,11 @@ type QueryProgressTracker interface {
 	SubscribeToQueryProgress(queryId string) (ch <-chan model.QueryProgress, unsubscribe func(), apiErr *model.ApiError)
 }
 
-func NewQueryProgressTracker() QueryProgressTracker {
+func NewQueryProgressTracker(logger *slog.Logger) QueryProgressTracker {
 	// InMemory tracker is useful only for single replica query service setups.
 	// Multi replica setups must use a centralized store for tracking and subscribing to query progress
 	return &inMemoryQueryProgressTracker{
+		logger:  logger,
 		queries: map[string]*queryTracker{},
 	}
 }

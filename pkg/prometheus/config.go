@@ -3,6 +3,7 @@ package prometheus
 import (
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 )
 
@@ -20,6 +21,9 @@ type Config struct {
 	//
 	// If not set, the prometheus default is used (currently 5m).
 	LookbackDelta time.Duration `mapstructure:"lookback_delta"`
+
+	// Timeout is the maximum time a query is allowed to run before being aborted.
+	Timeout time.Duration `mapstructure:"timeout"`
 }
 
 func NewConfigFactory() factory.ConfigFactory {
@@ -33,10 +37,14 @@ func newConfig() factory.Config {
 			Path:          "",
 			MaxConcurrent: 20,
 		},
+		Timeout: 2 * time.Minute,
 	}
 }
 
 func (c Config) Validate() error {
+	if c.Timeout <= 0 {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "prometheus::timeout must be greater than 0")
+	}
 	return nil
 }
 

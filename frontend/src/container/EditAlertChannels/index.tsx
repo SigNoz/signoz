@@ -1,3 +1,5 @@
+import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Form } from 'antd';
 import editEmail from 'api/channels/editEmail';
 import editMsTeamsApi from 'api/channels/editMsTeams';
@@ -26,12 +28,11 @@ import {
 import FormAlertChannels from 'container/FormAlertChannels';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
-import { useCallback, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import APIError from 'types/api/error';
 
 function EditAlertChannels({
 	initialValue,
+	channelId: id,
 }: EditAlertChannelsProps): JSX.Element {
 	// init namespace for translations
 	const { t } = useTranslation('channels');
@@ -52,11 +53,6 @@ function EditAlertChannels({
 	const [savingState, setSavingState] = useState<boolean>(false);
 	const [testingState, setTestingState] = useState<boolean>(false);
 	const { notifications } = useNotifications();
-
-	// Extract channelId from URL pathname since useParams doesn't work in nested routing
-	const { pathname } = window.location;
-	const channelIdMatch = pathname.match(/\/settings\/channels\/edit\/([^/]+)/);
-	const id = channelIdMatch ? channelIdMatch[1] : '';
 
 	const [type, setType] = useState<ChannelType>(
 		initialValue?.type ? (initialValue.type as ChannelType) : ChannelType.Slack,
@@ -520,6 +516,7 @@ interface EditAlertChannelsProps {
 	initialValue: {
 		[x: string]: unknown;
 	};
+	channelId: string;
 }
 
 export default EditAlertChannels;

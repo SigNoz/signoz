@@ -1,8 +1,9 @@
-import { fireEvent, render, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { I18nextProvider } from 'react-i18next';
+// eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
+import { fireEvent, render, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import i18n from 'ReactI18';
 import store from 'store';
 

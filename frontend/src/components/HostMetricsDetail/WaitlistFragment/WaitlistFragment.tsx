@@ -1,13 +1,14 @@
-import './WaitListFragment.styles.scss';
-
-import { Color } from '@signozhq/design-tokens';
-import { Button, Typography } from 'antd';
-import logEvent from 'api/common/logEvent';
-import { useNotifications } from 'hooks/useNotifications';
-import { CheckCircle2, HandPlatter } from 'lucide-react';
-import { useAppContext } from 'providers/App/App';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Color } from '@signozhq/design-tokens';
+import { Button } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
+import logEvent from 'api/common/logEvent';
+import { useNotifications } from 'hooks/useNotifications';
+import { CircleCheckBig, HandPlatter } from '@signozhq/icons';
+import { useAppContext } from 'providers/App/App';
+
+import './WaitListFragment.styles.scss';
 
 export default function WaitlistFragment({
 	entityType,
@@ -61,7 +62,7 @@ export default function WaitlistFragment({
 				loading={isSubmitting}
 				icon={
 					isSuccess ? (
-						<CheckCircle2 size={16} color={Color.BG_FOREST_500} />
+						<CircleCheckBig size={16} color={Color.BG_FOREST_500} />
 					) : (
 						<HandPlatter size={16} />
 					)

@@ -1,30 +1,8 @@
-import './Description.styles.scss';
-
-import { PlusOutlined } from '@ant-design/icons';
-import {
-	Button,
-	Card,
-	Input,
-	Modal,
-	Popover,
-	Tag,
-	Tooltip,
-	Typography,
-} from 'antd';
-import logEvent from 'api/common/logEvent';
-import ConfigureIcon from 'assets/Integrations/ConfigureIcon';
-import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
-import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
-import ROUTES from 'constants/routes';
-import { DeleteButton } from 'container/ListOfDashboard/TableComponents/DeleteButton';
-import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
-import { useGetPublicDashboardMeta } from 'hooks/dashboard/useGetPublicDashboardMeta';
-import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
-import useComponentPermission from 'hooks/useComponentPermission';
-import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { useNotifications } from 'hooks/useNotifications';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import { isEmpty } from 'lodash-es';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { FullScreenHandle } from 'react-full-screen';
+import { Layout } from 'react-grid-layout';
+import { useTranslation } from 'react-i18next';
+import { useCopyToClipboard } from 'react-use';
 import {
 	Check,
 	ClipboardCopy,
@@ -33,95 +11,101 @@ import {
 	FolderKanban,
 	Fullscreen,
 	Globe,
-	LayoutGrid,
 	LockKeyhole,
 	PenLine,
+	Plus,
 	X,
-} from 'lucide-react';
+} from '@signozhq/icons';
+import { Button, Card, Modal, Popover, Tooltip } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
+import { Typography } from '@signozhq/ui/typography';
+import { Input } from '@signozhq/ui/input';
+import logEvent from 'api/common/logEvent';
+import ConfigureIcon from 'assets/Integrations/ConfigureIcon';
+import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
+import { DeleteButton } from 'container/ListOfDashboard/TableComponents/DeleteButton';
+import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
+import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
+import { useGetPublicDashboardMeta } from 'hooks/dashboard/useGetPublicDashboardMeta';
+import { useLockDashboard } from 'hooks/dashboard/useLockDashboard';
+import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
+import useComponentPermission from 'hooks/useComponentPermission';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
+import { useNotifications } from 'hooks/useNotifications';
+import { isEmpty } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { usePanelTypeSelectionModalStore } from 'providers/Dashboard/helpers/panelTypeSelectionModalHelper';
+import {
+	selectIsDashboardLocked,
+	useDashboardStore,
+} from 'providers/Dashboard/store/useDashboardStore';
 import { sortLayout } from 'providers/Dashboard/util';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { FullScreenHandle } from 'react-full-screen';
-import { Layout } from 'react-grid-layout';
-import { useTranslation } from 'react-i18next';
-import { useCopyToClipboard } from 'react-use';
-import { DashboardData, IDashboardVariable } from 'types/api/dashboard/getAll';
+import { DashboardData } from 'types/api/dashboard/getAll';
 import { Props } from 'types/api/dashboard/update';
 import { ROLES, USER_ROLES } from 'types/roles';
+import { linkifyText } from 'utils/linkifyText';
 import { ComponentTypes } from 'utils/permission';
 import { v4 as uuid } from 'uuid';
 
-import DashboardGraphSlider from '../ComponentsSlider';
+import DashboardHeader from '../components/DashboardHeader/DashboardHeader';
 import DashboardSettings from '../DashboardSettings';
 import { Base64Icons } from '../DashboardSettings/General/utils';
 import DashboardVariableSelection from '../DashboardVariablesSelection';
+import PanelTypeSelectionModal from '../PanelTypeSelectionModal';
 import SettingsDrawer from './SettingsDrawer';
 import { VariablesSettingsTab } from './types';
-import { DEFAULT_ROW_NAME, downloadObjectAsJson } from './utils';
+import {
+	DEFAULT_ROW_NAME,
+	downloadObjectAsJson,
+	sanitizeDashboardData,
+} from './utils';
+
+import './Description.styles.scss';
 
 interface DashboardDescriptionProps {
 	handle: FullScreenHandle;
 }
 
-export function sanitizeDashboardData(
-	selectedData: DashboardData,
-): DashboardData {
-	if (!selectedData?.variables) {
-		return selectedData;
-	}
-
-	const updatedVariables = Object.entries(selectedData.variables).reduce(
-		(acc, [key, value]) => {
-			const { selectedValue, ...rest } = value;
-			acc[key] = rest;
-			return acc;
-		},
-		{} as Record<string, IDashboardVariable>,
-	);
-
-	return {
-		...selectedData,
-		variables: updatedVariables,
-	};
-}
-
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
-	const { safeNavigate } = useSafeNavigate();
 	const { handle } = props;
+	const setIsPanelTypeSelectionModalOpen = usePanelTypeSelectionModalStore(
+		(s) => s.setIsPanelTypeSelectionModalOpen,
+	);
 	const {
-		selectedDashboard,
+		dashboardData,
 		panelMap,
 		setPanelMap,
 		layouts,
 		setLayouts,
-		isDashboardLocked,
-		listSortOrder,
-		setSelectedDashboard,
-		handleToggleDashboardSlider,
-		setSelectedRowWidgetId,
-		handleDashboardLockToggle,
-	} = useDashboard();
+		setDashboardData,
+	} = useDashboardStore();
+
+	const isDashboardLocked = useDashboardStore(selectIsDashboardLocked);
+	const handleDashboardLockToggle = useLockDashboard();
 
 	const variablesSettingsTabHandle = useRef<VariablesSettingsTab>(null);
-	const [isSettingsDrawerOpen, setIsSettingsDrawerOpen] = useState<boolean>(
-		false,
-	);
+	const [isSettingsDrawerOpen, setIsSettingsDrawerOpen] =
+		useState<boolean>(false);
 
 	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
 
 	const isPublicDashboardEnabled = isCloudUser || isEnterpriseSelfHostedUser;
 
-	const selectedData = selectedDashboard
+	const selectedData = dashboardData
 		? {
-				...selectedDashboard.data,
-				uuid: selectedDashboard.id,
-		  }
+				...dashboardData.data,
+				uuid: dashboardData.id,
+			}
 		: ({} as DashboardData);
+	const { dashboardVariables } = useDashboardVariables();
 
-	const { title = '', description, tags, image = Base64Icons[0] } =
-		selectedData || {};
+	const {
+		title = '',
+		description,
+		tags,
+		image = Base64Icons[0],
+	} = selectedData || {};
 
 	const [updatedTitle, setUpdatedTitle] = useState<string>(title);
 
@@ -131,24 +115,21 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 
 	const { user } = useAppContext();
 	const [editDashboard] = useComponentPermission(['edit_dashboard'], user.role);
-	const [isDashboardSettingsOpen, setIsDashbordSettingsOpen] = useState<boolean>(
-		false,
-	);
+	const [isDashboardSettingsOpen, setIsDashbordSettingsOpen] =
+		useState<boolean>(false);
 
-	const [isRenameDashboardOpen, setIsRenameDashboardOpen] = useState<boolean>(
-		false,
-	);
+	const [isRenameDashboardOpen, setIsRenameDashboardOpen] =
+		useState<boolean>(false);
 
-	const [isPanelNameModalOpen, setIsPanelNameModalOpen] = useState<boolean>(
-		false,
-	);
+	const [isPanelNameModalOpen, setIsPanelNameModalOpen] =
+		useState<boolean>(false);
 
 	const [isPublicDashboard, setIsPublicDashboard] = useState<boolean>(false);
 
 	let isAuthor = false;
 
-	if (selectedDashboard && user && user.email) {
-		isAuthor = selectedDashboard?.createdBy === user?.email;
+	if (dashboardData && user && user.email) {
+		isAuthor = dashboardData?.createdBy === user?.email;
 	}
 
 	let permissions: ComponentTypes[] = ['add_panel'];
@@ -160,22 +141,21 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 	const { notifications } = useNotifications();
 
 	const userRole: ROLES | null =
-		selectedDashboard?.createdBy === user?.email
+		dashboardData?.createdBy === user?.email
 			? (USER_ROLES.AUTHOR as ROLES)
 			: user.role;
 
 	const [addPanelPermission] = useComponentPermission(permissions, userRole);
 
 	const onEmptyWidgetHandler = useCallback(() => {
-		setSelectedRowWidgetId(null);
-		handleToggleDashboardSlider(true);
+		setIsPanelTypeSelectionModalOpen(true);
 		logEvent('Dashboard Detail: Add new panel clicked', {
-			dashboardId: selectedDashboard?.id,
-			dashboardName: selectedDashboard?.data.title,
-			numberOfPanels: selectedDashboard?.data.widgets?.length,
+			dashboardId: dashboardData?.id,
+			dashboardName: dashboardData?.data.title,
+			numberOfPanels: dashboardData?.data.widgets?.length,
 		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [handleToggleDashboardSlider]);
+	}, [setIsPanelTypeSelectionModalOpen]);
 
 	const handleLockDashboardToggle = (): void => {
 		setIsDashbordSettingsOpen(false);
@@ -183,14 +163,14 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 	};
 
 	const onNameChangeHandler = (): void => {
-		if (!selectedDashboard) {
+		if (!dashboardData) {
 			return;
 		}
 		const updatedDashboard: Props = {
-			id: selectedDashboard.id,
+			id: dashboardData.id,
 
 			data: {
-				...selectedDashboard.data,
+				...dashboardData.data,
 				title: updatedTitle,
 			},
 		};
@@ -201,7 +181,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 				});
 				setIsRenameDashboardOpen(false);
 				if (updatedDashboard.data) {
-					setSelectedDashboard(updatedDashboard.data);
+					setDashboardData(updatedDashboard.data);
 				}
 			},
 			onError: () => {
@@ -218,10 +198,10 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 	// the context value is sometimes not available during the initial render
 	// due to which the updatedTitle is set to some previous value
 	useEffect(() => {
-		if (selectedDashboard) {
-			setUpdatedTitle(selectedDashboard.data.title);
+		if (dashboardData) {
+			setUpdatedTitle(dashboardData.data.title);
 		}
-	}, [selectedDashboard]);
+	}, [dashboardData]);
 
 	useEffect(() => {
 		if (state.error) {
@@ -242,7 +222,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 	}, [state.error, state.value, t, notifications]);
 
 	function handleAddRow(): void {
-		if (!selectedDashboard) {
+		if (!dashboardData) {
 			return;
 		}
 		const id = uuid();
@@ -261,10 +241,10 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		}
 
 		const updatedDashboard: Props = {
-			id: selectedDashboard.id,
+			id: dashboardData.id,
 
 			data: {
-				...selectedDashboard.data,
+				...dashboardData.data,
 				layout: [
 					{
 						i: id,
@@ -280,7 +260,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 				],
 				panelMap: { ...panelMap, [id]: newRowWidgetMap },
 				widgets: [
-					...(selectedDashboard.data.widgets || []),
+					...(dashboardData.data.widgets || []),
 					{
 						id,
 						title: sectionName,
@@ -292,13 +272,12 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		};
 
 		updateDashboardMutation.mutate(updatedDashboard, {
-			// eslint-disable-next-line sonarjs/no-identical-functions
 			onSuccess: (updatedDashboard) => {
 				if (updatedDashboard.data) {
 					if (updatedDashboard.data.data.layout) {
 						setLayouts(sortLayout(updatedDashboard.data.data.layout));
 					}
-					setSelectedDashboard(updatedDashboard.data);
+					setDashboardData(updatedDashboard.data);
 					setPanelMap(updatedDashboard.data?.data?.panelMap || {});
 				}
 
@@ -308,17 +287,6 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		});
 	}
 
-	function goToListPage(): void {
-		const urlParams = new URLSearchParams();
-		urlParams.set('columnKey', listSortOrder.columnKey as string);
-		urlParams.set('order', listSortOrder.order as string);
-		urlParams.set('page', listSortOrder.pagination as string);
-		urlParams.set('search', listSortOrder.search as string);
-
-		const generatedUrl = `${ROUTES.ALL_DASHBOARD}?${urlParams.toString()}`;
-		safeNavigate(generatedUrl);
-	}
-
 	const {
 		data: publicDashboardResponse,
 		isLoading: isLoadingPublicDashboardData,
@@ -326,8 +294,8 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		error: errorPublicDashboardData,
 		isError: isErrorPublicDashboardData,
 	} = useGetPublicDashboardMeta(
-		selectedDashboard?.id || '',
-		!!selectedDashboard?.id && isPublicDashboardEnabled,
+		dashboardData?.id || '',
+		!!dashboardData?.id && isPublicDashboardEnabled,
 	);
 
 	useEffect(() => {
@@ -367,32 +335,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 
 	return (
 		<Card className="dashboard-description-container">
-			<div className="dashboard-header">
-				<section className="dashboard-breadcrumbs">
-					<Button
-						type="text"
-						icon={<LayoutGrid size={14} />}
-						className="dashboard-btn"
-						onClick={(): void => goToListPage()}
-					>
-						Dashboard /
-					</Button>
-					<Button type="text" className="id-btn dashboard-name-btn">
-						<img
-							src={image}
-							alt="dashboard-icon"
-							style={{ height: '14px', width: '14px' }}
-						/>
-						{title}
-					</Button>
-				</section>
-
-				<HeaderRightSection
-					enableAnnouncements={false}
-					enableShare
-					enableFeedback
-				/>
-			</div>
+			<DashboardHeader />
 			<section className="dashboard-details">
 				<div className="left-section">
 					<img src={image} alt="dashboard-img" className="dashboard-img" />
@@ -430,14 +373,14 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 									{(isAuthor || user.role === USER_ROLES.ADMIN) && (
 										<Tooltip
 											title={
-												selectedDashboard?.createdBy === 'integration' &&
+												dashboardData?.createdBy === 'integration' &&
 												'Dashboards created by integrations cannot be unlocked'
 											}
 										>
 											<Button
 												type="text"
 												icon={<LockKeyhole size={14} />}
-												disabled={selectedDashboard?.createdBy === 'integration'}
+												disabled={dashboardData?.createdBy === 'integration'}
 												onClick={handleLockDashboardToggle}
 												data-testid="lock-unlock-dashboard"
 											>
@@ -509,9 +452,9 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 								</section>
 								<section className="delete-dashboard">
 									<DeleteButton
-										createdBy={selectedDashboard?.createdBy || ''}
-										name={selectedDashboard?.data.title || ''}
-										id={String(selectedDashboard?.id) || ''}
+										createdBy={dashboardData?.createdBy || ''}
+										name={dashboardData?.data.title || ''}
+										id={String(dashboardData?.id) || ''}
 										isLocked={isDashboardLocked}
 										routeToListPage
 									/>
@@ -554,7 +497,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 						<Button
 							className="add-panel-btn"
 							onClick={onEmptyWidgetHandler}
-							icon={<PlusOutlined />}
+							icon={<Plus size="md" />}
 							type="primary"
 							data-testid="add-panel-header"
 						>
@@ -566,22 +509,24 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 			{(tags?.length || 0) > 0 && (
 				<div className="dashboard-tags">
 					{tags?.map((tag) => (
-						<Tag key={tag} className="tag">
+						<Badge key={tag} className="tag" color="vanilla">
 							{tag}
-						</Tag>
+						</Badge>
 					))}
 				</div>
 			)}
 			{!isEmpty(description) && (
-				<section className="dashboard-description-section">{description}</section>
+				<section className="dashboard-description-section">
+					{linkifyText(description ?? '')}
+				</section>
 			)}
 
-			{!isEmpty(selectedData.variables) && (
+			{!isEmpty(dashboardVariables) && (
 				<section className="dashboard-variables">
 					<DashboardVariableSelection />
 				</section>
 			)}
-			<DashboardGraphSlider />
+			<PanelTypeSelectionModal />
 
 			<Modal
 				open={isRenameDashboardOpen}

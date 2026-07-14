@@ -2,12 +2,14 @@ package implsession
 
 import (
 	"context"
+	"log/slog"
 	"net/url"
 	"slices"
 	"strings"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/authn"
+	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
@@ -23,22 +25,24 @@ import (
 type module struct {
 	settings   factory.ScopedProviderSettings
 	authNs     map[authtypes.AuthNProvider]authn.AuthN
-	user       user.Module
+	userSetter user.Setter
 	userGetter user.Getter
 	authDomain authdomain.Module
 	tokenizer  tokenizer.Tokenizer
 	orgGetter  organization.Getter
+	authz      authz.AuthZ
 }
 
-func NewModule(providerSettings factory.ProviderSettings, authNs map[authtypes.AuthNProvider]authn.AuthN, user user.Module, userGetter user.Getter, authDomain authdomain.Module, tokenizer tokenizer.Tokenizer, orgGetter organization.Getter) session.Module {
+func NewModule(providerSettings factory.ProviderSettings, authNs map[authtypes.AuthNProvider]authn.AuthN, userSetter user.Setter, userGetter user.Getter, authDomain authdomain.Module, tokenizer tokenizer.Tokenizer, orgGetter organization.Getter, authz authz.AuthZ) session.Module {
 	return &module{
 		settings:   factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/session/implsession"),
 		authNs:     authNs,
-		user:       user,
+		userSetter: userSetter,
 		userGetter: userGetter,
 		authDomain: authDomain,
 		tokenizer:  tokenizer,
 		orgGetter:  orgGetter,
+		authz:      authz,
 	}
 }
 
@@ -64,6 +68,9 @@ func (module *module) GetSessionContext(ctx context.Context, email valuer.Email,
 	if err != nil {
 		return nil, err
 	}
+
+	// filter out deleted users
+	users = slices.DeleteFunc(users, func(user *types.User) bool { return user.ErrIfDeleted() != nil })
 
 	// Since email is a valuer, we can be sure that it is a valid email and we can split it to get the domain name.
 	name := strings.Split(email.String(), "@")[1]
@@ -129,7 +136,7 @@ func (module *module) CreateCallbackAuthNSession(ctx context.Context, authNProvi
 
 	callbackIdentity, err := callbackAuthN.HandleCallback(ctx, values)
 	if err != nil {
-		module.settings.Logger().ErrorContext(ctx, "failed to handle callback", "error", err, "authn_provider", authNProvider)
+		module.settings.Logger().ErrorContext(ctx, "failed to handle callback", errors.Attr(err), slog.Any("authn_provider", authNProvider))
 		return "", err
 	}
 
@@ -139,19 +146,32 @@ func (module *module) CreateCallbackAuthNSession(ctx context.Context, authNProvi
 	}
 
 	roleMapping := authDomain.AuthDomainConfig().RoleMapping
-	role := roleMapping.NewRoleFromCallbackIdentity(callbackIdentity)
 
-	user, err := types.NewUser(callbackIdentity.Name, callbackIdentity.Email, role, callbackIdentity.OrgID)
+	roleAttributeExists := false
+	if roleMapping != nil && roleMapping.UseRoleAttribute && callbackIdentity.Role != "" {
+		_, err := module.authz.GetByOrgIDAndName(ctx, callbackIdentity.OrgID, authtypes.NormalizeRoleName(callbackIdentity.Role))
+		if err == nil {
+			roleAttributeExists = true
+		}
+	}
+
+	roleNames := roleMapping.NewRolesFromCallbackIdentity(callbackIdentity, roleAttributeExists)
+
+	newUser, err := types.NewUser(callbackIdentity.Name, callbackIdentity.Email, callbackIdentity.OrgID, types.UserStatusActive)
 	if err != nil {
 		return "", err
 	}
 
-	user, err = module.user.GetOrCreateUser(ctx, user)
+	newUser, err = module.userSetter.GetOrCreateUser(ctx, newUser, user.WithRoleNames(roleNames))
 	if err != nil {
 		return "", err
 	}
 
-	token, err := module.tokenizer.CreateToken(ctx, authtypes.NewIdentity(user.ID, user.OrgID, user.Email, user.Role), map[string]string{})
+	if err := newUser.ErrIfRoot(); err != nil {
+		return "", errors.WithAdditionalf(err, "root user can only authenticate via password")
+	}
+
+	token, err := module.tokenizer.CreateToken(ctx, authtypes.NewPrincipalUserIdentity(newUser.ID, newUser.OrgID, newUser.Email, authtypes.IdentNProviderTokenizer), map[string]string{})
 	if err != nil {
 		return "", err
 	}

@@ -1,6 +1,6 @@
-import '@testing-library/jest-dom';
-
 import { render, screen } from '@testing-library/react';
+
+import '@testing-library/jest-dom';
 
 import type { CmdAction } from '../ShiftOverlay';
 import { ShiftOverlay } from '../ShiftOverlay';

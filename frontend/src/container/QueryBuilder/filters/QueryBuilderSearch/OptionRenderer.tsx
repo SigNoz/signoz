@@ -1,8 +1,8 @@
-import './OptionRenderer.styles.scss';
-
 import { Tooltip } from 'antd';
 
 import { TagContainer, TagLabel, TagValue } from './style';
+
+import './OptionRenderer.styles.scss';
 
 function OptionRenderer({
 	label,

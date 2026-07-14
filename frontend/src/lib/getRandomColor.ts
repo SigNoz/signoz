@@ -1,4 +1,3 @@
-/* eslint-disable no-bitwise */
 import { Span } from 'types/api/trace/getTraceItem';
 
 import { themeColors } from '../constants/theme';

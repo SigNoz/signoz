@@ -37,18 +37,11 @@ function DraggableTableRow({
 	drop(drag(ref));
 
 	return (
-		<tr
-			ref={ref}
-			className={className}
-			style={{ ...style }}
-			// eslint-disable-next-line react/jsx-props-no-spreading
-			{...restProps}
-		/>
+		<tr ref={ref} className={className} style={{ ...style }} {...restProps} />
 	);
 }
 
-interface DraggableTableRowProps
-	extends React.HTMLAttributes<HTMLTableRowElement> {
+interface DraggableTableRowProps extends React.HTMLAttributes<HTMLTableRowElement> {
 	index: number;
 	moveRow: (dragIndex: number, hoverIndex: number) => void;
 }

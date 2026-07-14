@@ -3,13 +3,16 @@ package httpzeus
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/http/client"
+	"github.com/SigNoz/signoz/pkg/types/zeustypes"
 	"github.com/SigNoz/signoz/pkg/zeus"
 	"github.com/tidwall/gjson"
 )
@@ -35,6 +38,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		providerSettings.MeterProvider,
 		client.WithRequestResponseLog(true),
 		client.WithRetryCount(3),
+		client.WithTimeout(30*time.Second),
 	)
 	if err != nil {
 		return nil, err
@@ -107,6 +111,21 @@ func (provider *Provider) GetDeployment(ctx context.Context, key string) ([]byte
 	return []byte(gjson.GetBytes(response, "data").String()), nil
 }
 
+func (provider *Provider) GetMeters(ctx context.Context, key string) ([]byte, error) {
+	response, err := provider.do(
+		ctx,
+		provider.config.URL.JoinPath("/v1/meters"),
+		http.MethodGet,
+		key,
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return []byte(gjson.GetBytes(response, "data").String()), nil
+}
+
 func (provider *Provider) PutMeters(ctx context.Context, key string, data []byte) error {
 	_, err := provider.do(
 		ctx,
@@ -119,8 +138,91 @@ func (provider *Provider) PutMeters(ctx context.Context, key string, data []byte
 	return err
 }
 
-func (provider *Provider) PutProfile(ctx context.Context, key string, body []byte) error {
+func (provider *Provider) PutMetersV2(ctx context.Context, key string, data []byte) error {
 	_, err := provider.do(
+		ctx,
+		provider.config.URL.JoinPath("/v1/meters"),
+		http.MethodPost,
+		key,
+		data,
+	)
+
+	return err
+}
+
+func (provider *Provider) PutMetersV3(ctx context.Context, key string, idempotencyKey string, data []byte) error {
+	headers := http.Header{}
+	if idempotencyKey != "" {
+		headers.Set("X-Idempotency-Key", idempotencyKey)
+	}
+
+	_, err := provider.doWithHeaders(
+		ctx,
+		provider.config.URL.JoinPath("/v2/meters"),
+		http.MethodPost,
+		key,
+		data,
+		headers,
+	)
+
+	return err
+}
+
+func (provider *Provider) ListMeterCheckpoints(ctx context.Context, key string) ([]zeustypes.MeterCheckpoint, error) {
+	response, err := provider.do(
+		ctx,
+		provider.config.URL.JoinPath("/v2/meters/checkpoints"),
+		http.MethodGet,
+		key,
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	checkpointValues := gjson.GetBytes(response, "data")
+	if !checkpointValues.Exists() || checkpointValues.Type == gjson.Null {
+		return nil, errors.Newf(errors.TypeInternal, zeus.ErrCodeResponseMalformed, "meter checkpoints are required")
+	}
+
+	if !checkpointValues.IsArray() {
+		return nil, errors.Newf(errors.TypeInternal, zeus.ErrCodeResponseMalformed, "meter checkpoints must be an array")
+	}
+
+	checkpointResults := checkpointValues.Array()
+	checkpoints := make([]zeustypes.MeterCheckpoint, 0, len(checkpointResults))
+	for _, checkpointValue := range checkpointResults {
+		name := checkpointValue.Get("name").String()
+		if name == "" {
+			return nil, errors.Newf(errors.TypeInternal, zeus.ErrCodeResponseMalformed, "meter checkpoint name is required")
+		}
+
+		startDateString := checkpointValue.Get("start_date").String()
+		if startDateString == "" {
+			return nil, errors.Newf(errors.TypeInternal, zeus.ErrCodeResponseMalformed, "meter checkpoint start_date is required for %q", name)
+		}
+
+		startDate, err := time.Parse("2006-01-02", startDateString)
+		if err != nil {
+			return nil, errors.Wrapf(err, errors.TypeInternal, zeus.ErrCodeResponseMalformed, "parse meter checkpoint start_date %q for %q", startDateString, name)
+		}
+
+		checkpoints = append(checkpoints, zeustypes.MeterCheckpoint{
+			Name:      name,
+			StartDate: startDate,
+		})
+	}
+
+	return checkpoints, nil
+}
+
+func (provider *Provider) PutProfile(ctx context.Context, key string, profile *zeustypes.PostableProfile) error {
+	body, err := json.Marshal(profile)
+	if err != nil {
+		return err
+	}
+
+	_, err = provider.do(
 		ctx,
 		provider.config.URL.JoinPath("/v2/profiles/me"),
 		http.MethodPut,
@@ -131,10 +233,15 @@ func (provider *Provider) PutProfile(ctx context.Context, key string, body []byt
 	return err
 }
 
-func (provider *Provider) PutHost(ctx context.Context, key string, body []byte) error {
-	_, err := provider.do(
+func (provider *Provider) PutHost(ctx context.Context, key string, host *zeustypes.PostableHost) error {
+	body, err := json.Marshal(host)
+	if err != nil {
+		return err
+	}
+
+	_, err = provider.do(
 		ctx,
-		provider.config.URL.JoinPath("/v2/deployments/me/hosts"),
+		provider.config.URL.JoinPath("/v2/deployments/me/host"),
 		http.MethodPut,
 		key,
 		body,
@@ -144,12 +251,21 @@ func (provider *Provider) PutHost(ctx context.Context, key string, body []byte) 
 }
 
 func (provider *Provider) do(ctx context.Context, url *url.URL, method string, key string, requestBody []byte) ([]byte, error) {
+	return provider.doWithHeaders(ctx, url, method, key, requestBody, nil)
+}
+
+func (provider *Provider) doWithHeaders(ctx context.Context, url *url.URL, method string, key string, requestBody []byte, extraHeaders http.Header) ([]byte, error) {
 	request, err := http.NewRequestWithContext(ctx, method, url.String(), bytes.NewBuffer(requestBody))
 	if err != nil {
 		return nil, err
 	}
 	request.Header.Set("X-Signoz-Cloud-Api-Key", key)
 	request.Header.Set("Content-Type", "application/json")
+	for k, vs := range extraHeaders {
+		for _, v := range vs {
+			request.Header.Add(k, v)
+		}
+	}
 
 	response, err := provider.httpClient.Do(request)
 	if err != nil {
@@ -169,21 +285,28 @@ func (provider *Provider) do(ctx context.Context, url *url.URL, method string, k
 		return body, nil
 	}
 
-	return nil, provider.errFromStatusCode(response.StatusCode)
-}
-
-// This can be taken down to the client package
-func (provider *Provider) errFromStatusCode(statusCode int) error {
-	switch statusCode {
-	case http.StatusBadRequest:
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "bad request")
-	case http.StatusUnauthorized:
-		return errors.Newf(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "unauthenticated")
-	case http.StatusForbidden:
-		return errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "forbidden")
-	case http.StatusNotFound:
-		return errors.Newf(errors.TypeNotFound, errors.CodeNotFound, "not found")
+	errorMessage := gjson.GetBytes(body, "error").String()
+	if errorMessage == "" {
+		errorMessage = "an unknown error occurred"
 	}
 
-	return errors.Newf(errors.TypeInternal, errors.CodeInternal, "internal")
+	return nil, provider.errFromStatusCode(response.StatusCode, errorMessage)
+}
+
+// This can be taken down to the client package.
+func (provider *Provider) errFromStatusCode(statusCode int, errorMessage string) error {
+	switch statusCode {
+	case http.StatusBadRequest:
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, errorMessage)
+	case http.StatusUnauthorized:
+		return errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, errorMessage)
+	case http.StatusForbidden:
+		return errors.New(errors.TypeForbidden, errors.CodeForbidden, errorMessage)
+	case http.StatusNotFound:
+		return errors.New(errors.TypeNotFound, errors.CodeNotFound, errorMessage)
+	case http.StatusConflict:
+		return errors.New(errors.TypeAlreadyExists, errors.CodeAlreadyExists, errorMessage)
+	}
+
+	return errors.New(errors.TypeInternal, errors.CodeInternal, errorMessage)
 }

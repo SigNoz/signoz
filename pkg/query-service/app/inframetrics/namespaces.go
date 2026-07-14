@@ -11,6 +11,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"golang.org/x/exp/slices"
 )
@@ -51,14 +53,14 @@ func (p *NamespacesRepo) GetNamespaceAttributeKeys(ctx context.Context, req v3.F
 	return &v3.FilterAttributeKeyResponse{AttributeKeys: attributesKeysForNamespaces}, nil
 }
 
-func (p *NamespacesRepo) GetNamespaceAttributeValues(ctx context.Context, req v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
+func (p *NamespacesRepo) GetNamespaceAttributeValues(ctx context.Context, orgID valuer.UUID, req v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
 	req.DataSource = v3.DataSourceMetrics
 	req.AggregateAttribute = metricToUseForNamespaces
 	if req.Limit == 0 {
 		req.Limit = 50
 	}
 
-	attributeValuesResponse, err := p.reader.GetMetricAttributeValues(ctx, &req)
+	attributeValuesResponse, err := p.reader.GetMetricAttributeValues(ctx, orgID, &req)
 	if err != nil {
 		return nil, err
 	}
@@ -157,6 +159,10 @@ func (p *NamespacesRepo) getTopNamespaceGroups(ctx context.Context, orgID valuer
 		topNamespaceGroupsQueryRangeParams.CompositeQuery.BuilderQueries[queryName] = query
 	}
 
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "inframetrics",
+		instrumentationtypes.CodeFunctionName: "getTopNamespaceGroups",
+	})
 	queryResponse, _, err := p.querierV2.QueryRange(ctx, orgID, topNamespaceGroupsQueryRangeParams)
 	if err != nil {
 		return nil, nil, err
@@ -277,6 +283,10 @@ func (p *NamespacesRepo) GetNamespaceList(ctx context.Context, orgID valuer.UUID
 		}
 	}
 
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "inframetrics",
+		instrumentationtypes.CodeFunctionName: "GetNamespaceList",
+	})
 	queryResponse, _, err := p.querierV2.QueryRange(ctx, orgID, query)
 	if err != nil {
 		return resp, err

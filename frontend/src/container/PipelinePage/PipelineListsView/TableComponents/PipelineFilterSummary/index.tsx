@@ -1,7 +1,7 @@
-import './styles.scss';
-
 import { queryFilterTags } from 'hooks/queryBuilder/useTag';
 import { PipelineData } from 'types/api/pipeline/def';
+
+import './styles.scss';
 
 function PipelineFilterSummary({
 	filter,

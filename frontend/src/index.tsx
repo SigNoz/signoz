@@ -1,17 +1,21 @@
-import './ReactI18';
-import 'styles.scss';
-
-import AppRoutes from 'AppRoutes';
-import { AxiosError } from 'axios';
-import { ThemeProvider } from 'hooks/useDarkMode';
-import { AppProvider } from 'providers/App/App';
-import TimezoneProvider from 'providers/Timezone';
 import { createRoot } from 'react-dom/client';
 import { HelmetProvider } from 'react-helmet-async';
 import { QueryClient, QueryClientProvider } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
+import AppRoutes from 'AppRoutes';
+import { AxiosError } from 'axios';
+import { GlobalTimeStoreAdapter } from 'components/GlobalTimeStoreAdapter/GlobalTimeStoreAdapter';
+import { ThemeProvider } from 'hooks/useDarkMode';
+import { NuqsAdapter } from 'nuqs/adapters/react';
+import { AppProvider } from 'providers/App/App';
+import TimezoneProvider from 'providers/Timezone';
 import store from 'store';
 import APIError from 'types/api/error';
+
+import './ReactI18';
+
+import 'styles.scss';
 
 const queryClient = new QueryClient({
 	defaultOptions: {
@@ -43,17 +47,20 @@ if (container) {
 
 	root.render(
 		<HelmetProvider>
-			<ThemeProvider>
-				<TimezoneProvider>
-					<QueryClientProvider client={queryClient}>
-						<Provider store={store}>
-							<AppProvider>
-								<AppRoutes />
-							</AppProvider>
-						</Provider>
-					</QueryClientProvider>
-				</TimezoneProvider>
-			</ThemeProvider>
+			<NuqsAdapter>
+				<ThemeProvider>
+					<TimezoneProvider>
+						<QueryClientProvider client={queryClient}>
+							<Provider store={store}>
+								<GlobalTimeStoreAdapter />
+								<AppProvider>
+									<AppRoutes />
+								</AppProvider>
+							</Provider>
+						</QueryClientProvider>
+					</TimezoneProvider>
+				</ThemeProvider>
+			</NuqsAdapter>
 		</HelmetProvider>,
 	);
 }

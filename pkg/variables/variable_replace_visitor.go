@@ -2,23 +2,24 @@ package variables
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	grammar "github.com/SigNoz/signoz/pkg/parser/grammar"
+	grammar "github.com/SigNoz/signoz/pkg/parser/filterquery/grammar"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/antlr4-go/antlr/v4"
 )
 
-// ErrorListener collects syntax errors during parsing
+// ErrorListener collects syntax errors during parsing.
 type ErrorListener struct {
 	*antlr.DefaultErrorListener
 	SyntaxErrors []error
 }
 
-// NewErrorListener creates a new error listener
+// NewErrorListener creates a new error listener.
 func NewErrorListener() *ErrorListener {
 	return &ErrorListener{
 		DefaultErrorListener: antlr.NewDefaultErrorListener(),
@@ -26,24 +27,24 @@ func NewErrorListener() *ErrorListener {
 	}
 }
 
-// SyntaxError is called when a syntax error is encountered
+// SyntaxError is called when a syntax error is encountered.
 func (e *ErrorListener) SyntaxError(recognizer antlr.Recognizer, offendingSymbol any, line, column int, msg string, ex antlr.RecognitionException) {
 	e.SyntaxErrors = append(e.SyntaxErrors, errors.NewInvalidInputf(errors.CodeInvalidInput, "line %d:%d %s", line, column, msg))
 }
 
 // variableReplacementVisitor implements the visitor interface
-// to replace variables in filter expressions with their actual values
+// to replace variables in filter expressions with their actual values.
 type variableReplacementVisitor struct {
 	variables map[string]qbtypes.VariableItem
 	errors    []string
 	warnings  []string
 }
 
-// specialSkipMarker is used to indicate that a condition should be removed
+// specialSkipMarker is used to indicate that a condition should be removed.
 const specialSkipMarker = "__SKIP_CONDITION__"
 
-// ReplaceVariablesInExpression takes a filter expression and returns it with variables replaced
-// Also returns any warnings generated during the replacement process.
+// ReplaceVariablesInExpression takes a filter expression and returns it with variables
+// replaced, along with any warnings generated during the replacement.
 func ReplaceVariablesInExpression(expression string, variables map[string]qbtypes.VariableItem) (string, []string, error) {
 	input := antlr.NewInputStream(expression)
 	lexer := grammar.NewFilterQueryLexer(input)
@@ -84,7 +85,7 @@ func ReplaceVariablesInExpression(expression string, variables map[string]qbtype
 	return result, visitor.warnings, nil
 }
 
-// Visit dispatches to the specific visit method based on node type
+// Visit dispatches to the specific visit method based on node type.
 func (v *variableReplacementVisitor) Visit(tree antlr.ParseTree) any {
 	if tree == nil {
 		return ""
@@ -473,7 +474,7 @@ func (v *variableReplacementVisitor) VisitValue(ctx *grammar.ValueContext) any {
 		if ok {
 			// Handle dynamic variable with __all__ value
 			if varItem.Type == qbtypes.DynamicVariableType {
-				if allVal, ok := varItem.Value.(string); ok && allVal == "__all__" {
+				if allVal, ok := varItem.Value.(string); ok && allVal == qbtypes.AllVariableValue {
 					// Return special marker to indicate this condition should be removed
 					return specialSkipMarker
 				}
@@ -482,32 +483,23 @@ func (v *variableReplacementVisitor) VisitValue(ctx *grammar.ValueContext) any {
 			// Replace variable with its value
 			return v.formatVariableValue(varItem.Value)
 		}
+	}
 
-		// did not find as exact match; check if it's a composed string like "$env-xyz"
-		interpolated, hasAllValue := v.interpolateVariablesInString(originalValue)
-		if hasAllValue {
+	// Not a standalone variable reference; the value may still have variables
+	// embedded in it (e.g. '$env-suffix' or 'prefix-$var-suffix')
+	if strings.Contains(originalValue, "$") {
+		interpolated, hasAll := v.interpolateVariablesInString(originalValue)
+		if hasAll {
 			return specialSkipMarker
 		}
 		if interpolated != originalValue {
 			return v.formatVariableValue(interpolated)
 		}
-
-		// No variables found, return original
-		return originalValue
-	}
-
-	// Check if the quoted text contains embedded variables (not starting with $)
-	if ctx.QUOTED_TEXT() != nil && strings.Contains(originalValue, "$") {
-		interpolated, hasAllValue := v.interpolateVariablesInString(originalValue)
-		if hasAllValue {
-			return specialSkipMarker
-		}
-		return v.formatVariableValue(interpolated)
 	}
 
 	// Return original value if not a variable or variable not found
 	// If it was quoted text and not a variable, return with quotes
-	if ctx.QUOTED_TEXT() != nil {
+	if ctx.QUOTED_TEXT() != nil && !strings.HasPrefix(originalValue, "$") {
 		return ctx.QUOTED_TEXT().GetText()
 	}
 	return originalValue
@@ -530,7 +522,7 @@ func (v *variableReplacementVisitor) VisitKey(ctx *grammar.KeyContext) any {
 		if ok {
 			// Handle dynamic variable with __all__ value
 			if varItem.Type == qbtypes.DynamicVariableType {
-				if allVal, ok := varItem.Value.(string); ok && allVal == "__all__" {
+				if allVal, ok := varItem.Value.(string); ok && allVal == qbtypes.AllVariableValue {
 					return specialSkipMarker
 				}
 			}
@@ -542,83 +534,129 @@ func (v *variableReplacementVisitor) VisitKey(ctx *grammar.KeyContext) any {
 	return keyText
 }
 
-// interpolateVariablesInString finds and replaces variable references within a string
-// by checking against actual variable names in the variables map.
-// Returns the interpolated string and a boolean indicating if any variable had __all__ value.
-func (v *variableReplacementVisitor) interpolateVariablesInString(s string) (string, bool) {
-	result := s
-
-	varNames := make([]string, 0, len(v.variables)*2)
-	for name := range v.variables {
-		varNames = append(varNames, name)
-		if !strings.HasPrefix(name, "$") {
-			varNames = append(varNames, "$"+name)
-		}
-	}
-
-	sort.Slice(varNames, func(i, j int) bool {
-		return len(varNames[i]) > len(varNames[j])
-	})
-
-	for _, varName := range varNames {
-		// ensure we're looking for $varname pattern
-		searchPattern := varName
-		if !strings.HasPrefix(searchPattern, "$") {
-			searchPattern = "$" + varName
-		}
-
-		if strings.Contains(result, searchPattern) {
-			// direct lookup
-			varItem, ok := v.variables[varName]
-			if !ok {
-				// Try without $ prefix
-				varItem, ok = v.variables[strings.TrimPrefix(varName, "$")]
-			}
-
-			if ok {
-				// special check for __all__ value
-				if varItem.Type == qbtypes.DynamicVariableType {
-					if allVal, ok := varItem.Value.(string); ok && allVal == "__all__" {
-						return "", true
-					}
-				}
-
-				// format the replacement value (unquoted for string interpolation)
-				replacement := v.formatVariableValueUnquoted(varItem.Value, strings.TrimPrefix(varName, "$"))
-				result = strings.ReplaceAll(result, searchPattern, replacement)
-			}
-		}
-	}
-
-	return result, false
+// isVariableNameChar reports whether c can be part of a variable name.
+func isVariableNameChar(c byte) bool {
+	return c == '_' || ('0' <= c && c <= '9') || ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z')
 }
 
-// formatVariableValueUnquoted returns a string representation of the value for string interpolation.
-// For multi-select (array) values, it takes the first value and adds a warning.
+// lookupVariable resolves a variable name against the variables map, tolerating a
+// `$` prefix on either the name or the map keys.
+func (v *variableReplacementVisitor) lookupVariable(name string) (qbtypes.VariableItem, bool) {
+	if item, ok := v.variables[name]; ok {
+		return item, true
+	}
+	if strings.HasPrefix(name, "$") {
+		item, ok := v.variables[name[1:]]
+		return item, ok
+	}
+	item, ok := v.variables["$"+name]
+	return item, ok
+}
+
+// interpolateVariablesInString replaces $variable references embedded in s with their
+// values, matching against the names in the variables map (longest name first). A
+// reference is only replaced when the character following it cannot extend a variable
+// name: with only `env` defined, "$env-suffix" becomes "prod-suffix" while
+// "$environment" stays untouched instead of turning into "prodironment".
+// The returned bool is true when a referenced dynamic variable has the __all__ value,
+// meaning the enclosing condition must be dropped.
+func (v *variableReplacementVisitor) interpolateVariablesInString(s string) (string, bool) {
+	if len(v.variables) == 0 {
+		return s, false
+	}
+
+	names := make([]string, 0, len(v.variables))
+	seen := make(map[string]bool, len(v.variables))
+	for name := range v.variables {
+		name = strings.TrimPrefix(name, "$")
+		if name == "" || seen[name] {
+			continue
+		}
+		seen[name] = true
+		names = append(names, name)
+	}
+	// longest first so that $environment is not mistaken for $env plus a suffix
+	sort.Slice(names, func(i, j int) bool { return len(names[i]) > len(names[j]) })
+
+	var sb strings.Builder
+	i := 0
+	for i < len(s) {
+		if s[i] != '$' {
+			sb.WriteByte(s[i])
+			i++
+			continue
+		}
+		rest := s[i+1:]
+		matched := false
+		for _, name := range names {
+			if !strings.HasPrefix(rest, name) {
+				continue
+			}
+			// a name character right after the match means this occurrence references
+			// a longer, unknown variable; leave it for a shorter-name check or as-is
+			if len(rest) > len(name) && isVariableNameChar(rest[len(name)]) {
+				continue
+			}
+			varItem, _ := v.lookupVariable(name)
+			if varItem.Type == qbtypes.DynamicVariableType {
+				if allVal, ok := varItem.Value.(string); ok && allVal == qbtypes.AllVariableValue {
+					return "", true
+				}
+			}
+			sb.WriteString(v.formatVariableValueUnquoted(varItem.Value, name))
+			i += 1 + len(name)
+			matched = true
+			break
+		}
+		if !matched {
+			sb.WriteByte('$')
+			i++
+		}
+	}
+
+	return sb.String(), false
+}
+
+// addWarning appends w unless it is already recorded; comparisons visit their values
+// twice (once to check for __all__, once to rebuild), which would duplicate warnings.
+func (v *variableReplacementVisitor) addWarning(w string) {
+	if slices.Contains(v.warnings, w) {
+		return
+	}
+	v.warnings = append(v.warnings, w)
+}
+
+// formatVariableValueUnquoted renders a variable value as a plain string for embedding
+// inside a larger value. Multi-value variables collapse to their first value with a
+// warning, since a pattern like "%$var%" can only hold one.
 func (v *variableReplacementVisitor) formatVariableValueUnquoted(value any, varName string) string {
 	switch val := value.(type) {
+	case string:
+		return val
 	case []string:
+		if len(val) == 0 {
+			return ""
+		}
 		if len(val) > 1 {
-			v.warnings = append(v.warnings, fmt.Sprintf("variable `%s` has multiple values, using first value `%s` for string interpolation", varName, val[0]))
+			v.addWarning(fmt.Sprintf("variable `%s` has multiple values, using first value `%s` for string interpolation", varName, val[0]))
 		}
-		if len(val) > 0 {
-			return val[0]
-		}
-		return ""
+		return val[0]
 	case []any:
+		if len(val) == 0 {
+			return ""
+		}
 		if len(val) > 1 {
-			v.warnings = append(v.warnings, fmt.Sprintf("variable `%s` has multiple values, using first value for string interpolation", varName))
+			v.addWarning(fmt.Sprintf("variable `%s` has multiple values, using first value for string interpolation", varName))
 		}
-		if len(val) > 0 {
-			return fmt.Sprintf("%v", val[0])
-		}
-		return ""
+		return v.formatVariableValueUnquoted(val[0], varName)
+	case bool:
+		return strconv.FormatBool(val)
 	default:
 		return fmt.Sprintf("%v", val)
 	}
 }
 
-// formatVariableValue formats a variable value for inclusion in the expression
+// formatVariableValue formats a variable value for inclusion in the expression.
 func (v *variableReplacementVisitor) formatVariableValue(value any) string {
 	switch val := value.(type) {
 	case string:

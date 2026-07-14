@@ -1,7 +1,9 @@
+@use './periscope.scss';
+
 @import '@signozhq/design-tokens/dist/style.css';
 @import 'overlayscrollbars/overlayscrollbars.css';
 
-@import './periscope.scss';
+@import '@signozhq/design-tokens/dist/themes/signoz-tokens.css';
 
 /* Import fonts from CDN */
 @import url('https://fonts.googleapis.com/css2?family=Work+Sans&wght@500&display=swap');
@@ -18,6 +20,8 @@ body {
 	font-optical-sizing: auto;
 	font-weight: 400;
 	font-style: normal;
+	background: var(--l1-background) !important;
+	color: var(--l1-foreground) !important;
 }
 
 body {
@@ -195,7 +199,7 @@ body {
 					}
 
 					&:hover {
-						background: rgba(255, 255, 255, 0.05);
+						background: color-mix(in srgb, var(--l1-foreground) 5%, transparent);
 					}
 				}
 
@@ -220,7 +224,7 @@ body {
 								left: 50%;
 								width: 12px;
 								height: 2px;
-								background: #ff4444;
+								background: var(--danger-background);
 								transform: translate(-50%, -50%) rotate(45deg);
 								border-radius: 1px;
 							}
@@ -269,7 +273,7 @@ body {
 				max-width: 100%;
 
 				&:hover {
-					background: rgba(255, 255, 255, 0.05);
+					background: color-mix(in srgb, var(--l1-foreground) 5%, transparent);
 				}
 
 				.u-marker {
@@ -329,7 +333,7 @@ body {
 							left: 50%;
 							width: 12px;
 							height: 2px;
-							background: #ff4444;
+							background: var(--danger-background);
 							transform: translate(-50%, -50%) rotate(45deg);
 							border-radius: 1px;
 						}
@@ -389,9 +393,9 @@ body {
 	font-size: 12px;
 	position: absolute;
 	margin: 0.5rem;
-	background: var(--bg-ink-300);
+	background: var(--l2-background);
 	-webkit-font-smoothing: antialiased;
-	color: var(--bg-vanilla-100);
+	color: var(--l1-foreground);
 	z-index: 10000;
 	// pointer-events: none;
 	overflow: auto;
@@ -472,11 +476,11 @@ body {
 
 	border-radius: 4px;
 	padding: 16px;
-	border: 1px solid var(--bg-slate-400, #1d212d);
+	border: 1px solid var(--l1-border);
 	background: linear-gradient(
 		139deg,
-		rgba(18, 19, 23, 0.8) 0%,
-		rgba(18, 19, 23, 0.9) 98.68%
+		color-mix(in srgb, var(--card) 80%, transparent) 0%,
+		color-mix(in srgb, var(--card) 90%, transparent) 98.68%
 	);
 	box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
 	backdrop-filter: blur(20px);
@@ -540,10 +544,10 @@ body {
 }
 
 .ant-tooltip {
-	--antd-arrow-background-color: var(--bg-slate-400, #1d212d);
+	--antd-arrow-background-color: var(--l2-background);
 
 	.ant-tooltip-inner {
-		background-color: var(--bg-slate-400, #1d212d);
+		background-color: var(--l2-background);
 	}
 	.flexBtn {
 		display: flex;
@@ -560,23 +564,32 @@ body {
 
 .lightMode {
 	#overlay {
-		color: var(--bg-ink-500);
-		background: var(--bg-vanilla-100);
-		border: 1px solid var(--bg-vanilla-300);
+		color: var(--l1-foreground);
+		background: var(--l1-background);
+		border: 1px solid var(--l1-border);
+	}
+
+	.ant-tooltip {
+		--antd-arrow-background-color: var(--l1-background);
+
+		.ant-tooltip-inner {
+			background-color: var(--l1-background);
+			color: var(--l1-foreground);
+		}
 	}
 
 	.ant-dropdown-menu {
-		border: 1px solid var(--bg-vanilla-300);
-		background: var(--bg-vanilla-100);
+		border: 1px solid var(--l1-border);
+		background: var(--l1-background);
 		box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
 	}
 
 	.ant-dropdown-menu-item {
 		&:hover {
-			background-color: var(--bg-vanilla-300) !important;
+			background-color: var(--l3-background) !important;
 
 			&.ant-dropdown-menu-item-danger {
-				background-color: var(--bg-cherry-500) !important;
+				background-color: var(--danger-background) !important;
 			}
 		}
 	}
@@ -614,7 +627,7 @@ body {
 						opacity: 0.3;
 
 						&::after {
-							background: #cc3333;
+							background: var(--bg-cherry-600);
 						}
 
 						&:hover {
@@ -652,7 +665,7 @@ body {
 						opacity: 0.3;
 
 						&::after {
-							background: #cc3333;
+							background: var(--bg-cherry-600);
 						}
 
 						&:hover {
@@ -707,11 +720,15 @@ notifications	-  2050
 	animation: spin 1s linear infinite;
 }
 
+.animate-fast-spin {
+	animation: spin 0.5s linear infinite;
+}
+
 // Custom legend tooltip for immediate display
 .legend-tooltip {
 	position: fixed;
-	background: var(--bg-slate-400);
-	color: var(--text-vanilla-100);
+	background: var(--l2-background);
+	color: var(--l1-foreground);
 	padding: 8px 12px;
 	border-radius: 6px;
 	font-size: 12px;
@@ -721,17 +738,9 @@ notifications	-  2050
 	pointer-events: none;
 	white-space: nowrap;
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-	border: 1px solid #374151;
+	border: 1px solid var(--l1-border);
 	-webkit-font-smoothing: antialiased;
 	letter-spacing: 0.025em;
-}
-
-// Light mode styling for legend tooltip
-.lightMode .legend-tooltip {
-	background: #ffffff;
-	color: #1f2937;
-	border: 1px solid #d1d5db;
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .metrics-application-container,
@@ -752,4 +761,89 @@ notifications	-  2050
 
 .cursor-pointer {
 	cursor: pointer;
+}
+
+.ant-modal {
+	.ant-modal-content {
+		background: var(--l1-background);
+		border: 1px solid var(--l1-border);
+		padding: 0;
+	}
+
+	.ant-modal-header {
+		background: var(--l1-background);
+		border-bottom: 1px solid var(--l1-border);
+		padding: 12px;
+	}
+
+	.ant-modal-body {
+		padding: 12px;
+	}
+
+	.ant-modal-footer {
+		padding: 12px;
+		border-top: 1px solid var(--l1-border);
+	}
+}
+
+.border {
+	border: 1px solid var(--l1-border);
+}
+
+.bg-border {
+	background: color-mix(in srgb, var(--l3-background) 20%, transparent);
+}
+
+// =================================================================
+// Monaco Editor style overrides
+.monaco-editor .find-widget.visible {
+	top: 30px !important;
+	right: 45px !important;
+}
+
+body.ai-assistant-panel-open {
+	.PylonChat-bubbleFrameContainer,
+	.PylonChat-chatWindowFrameContainer {
+		right: calc(var(--ai-assistant-panel-width, 380px) + 8px) !important;
+		left: auto !important;
+	}
+}
+
+[role='tab'] {
+	color: var(--foreground) !important;
+}
+
+[data-slot='drawer-content'] {
+	background: var(--l1-background) !important;
+	border: 1px solid var(--l1-border) !important;
+
+	[data-slot='drawer-title'] {
+		color: var(--l1-foreground) !important;
+	}
+
+	[data-slot='drawer-close'] {
+		color: var(--l1-foreground) !important;
+	}
+
+	[data-slot='drawer-body'] {
+		color: var(--l1-foreground) !important;
+	}
+}
+// overrides
+:root {
+	--input-focus-outline-width: 0;
+	--radius-2: 4px;
+
+	// @signozhq/ui dropdown content portals to body with a default z-index of 50,
+	// antd defines it at z-index of 1050. Keeping this till we have components from both
+	// design libraries.
+	--dropdown-menu-content-z-index: 1050;
+	--dropdown-menu-sub-content-z-index: 1050;
+
+	--internal-ant-border-color-focus: #3a52a8;
+	--internal-ant-border-color-hover: #6e8de8;
+}
+
+div[data-slot='callout'] {
+	box-sizing: border-box;
 }

@@ -1,0 +1,211 @@
+package telemetryresourcefilter
+
+import (
+	"context"
+	"fmt"
+	"log/slog"
+
+	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/flagger"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/huandu/go-sqlbuilder"
+)
+
+// resourceFilterStatementBuilder builds resource fingerprint filter CTEs.
+type resourceFilterStatementBuilder[T any] struct {
+	logger           *slog.Logger
+	dbName           string
+	tableName        string
+	fieldMapper      qbtypes.FieldMapper
+	conditionBuilder qbtypes.ConditionBuilder
+	metadataStore    telemetrytypes.MetadataStore
+	signal           telemetrytypes.Signal
+	source           telemetrytypes.Source
+	flagger          flagger.Flagger
+
+	fullTextColumn *telemetrytypes.TelemetryFieldKey
+}
+
+// Ensure interface compliance at compile time.
+var (
+	_ qbtypes.StatementBuilder[qbtypes.TraceAggregation] = (*resourceFilterStatementBuilder[qbtypes.TraceAggregation])(nil)
+	_ qbtypes.StatementBuilder[qbtypes.LogAggregation]   = (*resourceFilterStatementBuilder[qbtypes.LogAggregation])(nil)
+)
+
+func New[T any](
+	settings factory.ProviderSettings,
+	dbName string,
+	tableName string,
+	signal telemetrytypes.Signal,
+	source telemetrytypes.Source,
+	metadataStore telemetrytypes.MetadataStore,
+	fullTextColumn *telemetrytypes.TelemetryFieldKey,
+	fl flagger.Flagger,
+) *resourceFilterStatementBuilder[T] {
+	set := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetryresourcefilter")
+	fm := NewFieldMapper()
+	cb := NewConditionBuilder(fm)
+	return &resourceFilterStatementBuilder[T]{
+		logger:           set.Logger(),
+		dbName:           dbName,
+		tableName:        tableName,
+		fieldMapper:      fm,
+		conditionBuilder: cb,
+		metadataStore:    metadataStore,
+		signal:           signal,
+		source:           source,
+		flagger:          fl,
+		fullTextColumn:   fullTextColumn,
+	}
+}
+
+func (b *resourceFilterStatementBuilder[T]) getKeySelectors(query qbtypes.QueryBuilderQuery[T]) []*telemetrytypes.FieldKeySelector {
+	var keySelectors []*telemetrytypes.FieldKeySelector
+
+	if query.Filter != nil && query.Filter.Expression != "" {
+		whereClauseSelectors := querybuilder.QueryStringToKeysSelectors(query.Filter.Expression)
+		keySelectors = append(keySelectors, whereClauseSelectors...)
+	}
+
+	// exclude out the body related key selectors
+	filteredKeySelectors := []*telemetrytypes.FieldKeySelector{}
+	for idx := range keySelectors {
+		if keySelectors[idx].FieldContext == telemetrytypes.FieldContextBody {
+			continue
+		}
+		keySelectors[idx].Signal = b.signal
+		keySelectors[idx].Source = b.source
+		keySelectors[idx].SelectorMatchType = telemetrytypes.FieldSelectorMatchTypeExact
+		filteredKeySelectors = append(filteredKeySelectors, keySelectors[idx])
+	}
+
+	return filteredKeySelectors
+}
+
+// Build builds a SQL query based on the given parameters.
+func (b *resourceFilterStatementBuilder[T]) Build(
+	ctx context.Context,
+	start uint64,
+	end uint64,
+	requestType qbtypes.RequestType,
+	query qbtypes.QueryBuilderQuery[T],
+	variables map[string]qbtypes.VariableItem,
+) (*qbtypes.Statement, error) {
+	q := sqlbuilder.NewSelectBuilder()
+	q.Select("fingerprint")
+	q.From(fmt.Sprintf("%s.%s", b.dbName, b.tableName))
+
+	keySelectors := b.getKeySelectors(query)
+	keys, _, err := b.metadataStore.GetKeysMulti(ctx, keySelectors)
+	if err != nil {
+		return nil, err
+	}
+
+	isNoOp, err := b.addConditions(ctx, q, start, end, query, keys, variables)
+	if err != nil {
+		return nil, err
+	}
+	if isNoOp {
+		return nil, nil //nolint:nilnil
+	}
+
+	// Group by fingerprint instead of using DISTINCT; on ClickHouse GROUP BY
+	// parallelizes across multiple threads and is faster for deduplication.
+	q.GroupBy("fingerprint")
+
+	stmt, args := q.BuildWithFlavor(sqlbuilder.ClickHouse)
+	return &qbtypes.Statement{
+		Query: stmt,
+		Args:  args,
+	}, nil
+}
+
+// BuildCount returns a statement that counts the distinct fingerprints matching
+// the resource filter. Returns (nil, nil) when the filter is a no-op.
+func (b *resourceFilterStatementBuilder[T]) BuildCount(
+	ctx context.Context,
+	start uint64,
+	end uint64,
+	query qbtypes.QueryBuilderQuery[T],
+	variables map[string]qbtypes.VariableItem,
+) (*qbtypes.Statement, error) {
+	inner, err := b.Build(ctx, start, end, qbtypes.RequestTypeRaw, query, variables)
+	if err != nil || inner == nil {
+		return nil, err
+	}
+	return &qbtypes.Statement{
+		Query: fmt.Sprintf("SELECT count() FROM (%s)", inner.Query),
+		Args:  inner.Args,
+	}, nil
+}
+
+// addConditions adds both filter and time conditions to the query.
+// Returns true (isNoOp) when the filter expression evaluated to no resource conditions,
+// meaning the CTE would select all fingerprints and should be skipped entirely.
+func (b *resourceFilterStatementBuilder[T]) addConditions(
+	ctx context.Context,
+	sb *sqlbuilder.SelectBuilder,
+	start, end uint64,
+	query qbtypes.QueryBuilderQuery[T],
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	variables map[string]qbtypes.VariableItem,
+) (bool, error) {
+
+	// Add filter condition if present
+	if query.Filter != nil && query.Filter.Expression != "" {
+
+		// warnings would be encountered as part of the main condition already
+		filterWhereClause, err := querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
+			Context:            ctx,
+			Logger:             b.logger,
+			FieldMapper:        b.fieldMapper,
+			ConditionBuilder:   b.conditionBuilder,
+			FieldKeys:          keys,
+			FullTextColumn:     b.fullTextColumn,
+			SkipFullTextFilter: true,
+			// the resource-filter condition builder ignores keys it can't resolve (and
+			// skips function calls), so no "key not found" error arises here.
+			Variables: variables,
+			StartNs:   start,
+			EndNs:     end,
+		})
+
+		if err != nil {
+			return false, err
+		}
+		if filterWhereClause.IsEmpty() {
+			// this means all conditions evaluated to no-op (non-resource fields, unknown keys, skipped full-text/functions)
+			// the CTE would select all fingerprints, so skip it entirely
+			return true, nil
+		}
+		sb.AddWhereClause(filterWhereClause.WhereClause)
+	} else {
+		// No filter expression means we would select all fingerprints — skip the CTE.
+		return true, nil
+	}
+
+	// Add time filter
+	b.addTimeFilter(sb, start, end)
+	return false, nil
+}
+
+// addTimeFilter adds time-based filtering conditions.
+func (b *resourceFilterStatementBuilder[T]) addTimeFilter(sb *sqlbuilder.SelectBuilder, start, end uint64) {
+	// Convert nanoseconds to seconds and adjust start bucket
+	startBucket := start/querybuilder.NsToSeconds - querybuilder.BucketAdjustment
+	var endBucket uint64
+	if end != 0 {
+		endBucket = end / querybuilder.NsToSeconds
+	}
+
+	sb.Where(
+		sb.GE("seen_at_ts_bucket_start", startBucket),
+	)
+	if end != 0 {
+		sb.Where(
+			sb.LE("seen_at_ts_bucket_start", endBucket),
+		)
+	}
+}

@@ -1,7 +1,7 @@
-import './GridCardLayout.styles.scss';
-
-import { isUndefined } from 'lodash-es';
 import { useCallback, useEffect, useRef } from 'react';
+import { isUndefined } from 'lodash-es';
+
+import './GridCardLayout.styles.scss';
 
 interface ClickToShowButtonProps {
 	graphRef: React.RefObject<HTMLDivElement>;
@@ -157,15 +157,8 @@ export const useGraphClickToShowButton = ({
 	return useCallback(
 		(props: GraphClickProps) => {
 			cleanup();
-			const {
-				xValue,
-				yValue,
-				mouseX,
-				mouseY,
-				metric,
-				queryData,
-				menuItems,
-			} = props;
+			const { xValue, yValue, mouseX, mouseY, metric, queryData, menuItems } =
+				props;
 
 			if (
 				isButtonEnabled &&

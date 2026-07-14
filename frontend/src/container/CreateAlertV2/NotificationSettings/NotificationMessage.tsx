@@ -1,14 +1,12 @@
-import { Tooltip, Typography } from 'antd';
-import TextArea from 'antd/lib/input/TextArea';
-import { Info } from 'lucide-react';
+import { Input, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
+import { Info } from '@signozhq/icons';
 
 import { useCreateAlertState } from '../context';
 
 function NotificationMessage(): JSX.Element {
-	const {
-		notificationSettings,
-		setNotificationSettings,
-	} = useCreateAlertState();
+	const { notificationSettings, setNotificationSettings } =
+		useCreateAlertState();
 
 	// const templateVariables = [
 	// 	{ variable: '{{alertname}}', description: 'Name of the alert rule' },
@@ -76,7 +74,7 @@ function NotificationMessage(): JSX.Element {
 					</Popover> */}
 				</div>
 			</div>
-			<TextArea
+			<Input.TextArea
 				value={notificationSettings.description}
 				onChange={(e): void =>
 					setNotificationSettings({

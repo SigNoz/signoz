@@ -1,16 +1,17 @@
-import './Version.styles.scss';
-
-import { Button, Form } from 'antd';
-import { CheckCircle, CloudUpload, InfoIcon, Wrench } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
+import { Button, Form } from 'antd';
+import { CircleCheck, CloudUpload, Info, Wrench } from '@signozhq/icons';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 import { checkVersionState } from 'utils/app';
 
 import { githubReleaseURL } from './constant';
 import { InputComponent } from './styles';
+
+import './Version.styles.scss';
 
 function Version(): JSX.Element {
 	const [form] = Form.useForm();
@@ -80,7 +81,7 @@ function Version(): JSX.Element {
 					{!isError && isLatestVersion && (
 						<div className="version-page-latest-version-container">
 							<div className="version-page-latest-version-container-title">
-								<CheckCircle size={16} />
+								<CircleCheck size={16} />
 
 								{t('latest_version_signoz')}
 							</div>
@@ -90,7 +91,7 @@ function Version(): JSX.Element {
 					{!isError && !isLatestVersion && (
 						<div className="version-page-stale-version-container">
 							<div className="version-page-stale-version-container-title">
-								<InfoIcon size={16} />
+								<Info size={16} />
 								{t('stale_version')}
 							</div>
 						</div>
@@ -99,7 +100,7 @@ function Version(): JSX.Element {
 					{!isError && !isLatestVersion && (
 						<div className="version-page-upgrade-container">
 							<Button
-								href="https://signoz.io/docs/operate/docker-standalone/#upgrade"
+								href="https://signoz.io/docs/opentelemetry-collection-agents/docker/overview/"
 								target="_blank"
 								type="primary"
 								className="periscope-btn primary"

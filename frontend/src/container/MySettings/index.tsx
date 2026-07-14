@@ -1,6 +1,8 @@
-import './MySettings.styles.scss';
-
-import { Radio, RadioChangeEvent, Switch, Tag } from 'antd';
+import { useEffect, useState } from 'react';
+import { useMutation } from 'react-query';
+import { Badge } from '@signozhq/ui/badge';
+import { Switch } from '@signozhq/ui/switch';
+import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
 import updateUserPreference from 'api/v1/user/preferences/name/update';
@@ -8,16 +10,16 @@ import { AxiosError } from 'axios';
 import { USER_PREFERENCES } from 'constants/userPreferences';
 import useThemeMode, { useIsDarkMode, useSystemTheme } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
-import { MonitorCog, Moon, Sun } from 'lucide-react';
+import { MonitorCog, Moon, Sun } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
-import { useEffect, useState } from 'react';
-import { useMutation } from 'react-query';
 import { UserPreference } from 'types/api/preferences/preference';
 import { showErrorNotification } from 'utils/error';
 
 import LicenseSection from './LicenseSection';
 import TimezoneAdaptation from './TimezoneAdaptation/TimezoneAdaptation';
 import UserInfo from './UserInfo';
+
+import './MySettings.styles.scss';
 
 function MySettings(): JSX.Element {
 	const isDarkMode = useIsDarkMode();
@@ -36,7 +38,6 @@ function MySettings(): JSX.Element {
 				)?.value as boolean,
 			);
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [userPreferences]);
 
 	const {
@@ -64,9 +65,7 @@ function MySettings(): JSX.Element {
 			label: (
 				<div className="theme-option">
 					<Sun size={12} data-testid="light-theme-icon" /> Light{' '}
-					<Tag bordered={false} color="geekblue">
-						Beta
-					</Tag>
+					<Badge color="robin">Beta</Badge>
 				</div>
 			),
 			value: 'light',
@@ -88,7 +87,7 @@ function MySettings(): JSX.Element {
 		return isDarkMode ? 'dark' : 'light';
 	});
 
-	const handleThemeChange = ({ target: { value } }: RadioChangeEvent): void => {
+	const handleThemeChange = (value: string): void => {
 		logEvent('Account Settings: Theme Changed', {
 			theme: value,
 		});
@@ -162,7 +161,7 @@ function MySettings(): JSX.Element {
 		<div className="my-settings-container">
 			<div className="user-info-section">
 				<div className="user-info-section-header">
-					<div className="user-info-section-title">General </div>
+					<div className="user-info-section-title">Account </div>
 
 					<div className="user-info-section-subtitle">
 						Manage your account settings.
@@ -187,14 +186,12 @@ function MySettings(): JSX.Element {
 					<div className="user-preference-section-content-item theme-selector">
 						<div className="user-preference-section-content-item-title-action">
 							Select your theme
-							<Radio.Group
-								options={themeOptions}
+							<ToggleGroupSimple
+								type="single"
 								onChange={handleThemeChange}
 								value={theme}
-								optionType="button"
-								buttonStyle="solid"
 								data-testid="theme-selector"
-								size="middle"
+								items={themeOptions}
 							/>
 						</div>
 
@@ -219,10 +216,10 @@ function MySettings(): JSX.Element {
 						<div className="user-preference-section-content-item-title-action">
 							Keep the primary sidebar always open{' '}
 							<Switch
-								checked={sideNavPinned}
+								value={sideNavPinned}
 								onChange={handleSideNavPinnedChange}
-								loading={isUpdatingUserPreference}
-								data-testid="side-nav-pinned-switch"
+								disabled={isUpdatingUserPreference}
+								testId="side-nav-pinned-switch"
 							/>
 						</div>
 

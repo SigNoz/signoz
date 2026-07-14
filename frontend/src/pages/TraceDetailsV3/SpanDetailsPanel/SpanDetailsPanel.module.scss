@@ -1,0 +1,118 @@
+.panel {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+
+	:global(.details-header) {
+		height: 39px;
+	}
+}
+
+.panelBody {
+	padding: 12px;
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	scrollbar-width: none;
+	background: var(--l1-background);
+	font-size: 14px;
+	gap: 16px;
+
+	// DataViewer keeps its global `.data-viewer` class — give it a min-height
+	// so the tab area doesn't collapse on short content.
+	:global(.data-viewer) {
+		min-height: 500px;
+	}
+}
+
+.detailsSection {
+	flex-shrink: 0;
+	min-width: 0;
+}
+
+// Logs-tab footer. Sibling of the scrolling .panelBody inside .panel, so it's
+// a true fixed footer flush with the panel's bottom edge — always visible
+// regardless of how the body is scrolled.
+.logsFooter {
+	flex-shrink: 0;
+	display: flex;
+	justify-content: flex-end;
+	align-items: center;
+	// Inset to match panelBody's 12px padding so the border-top aligns with
+	// the content edges instead of bleeding to the panel border.
+	margin: 0 12px;
+	padding: 8px 0 12px;
+	border-top: 1px solid var(--l2-border);
+	background: var(--l1-background);
+}
+
+// Single scroll: when the summary sits above (non-docked modes) it scrolls away
+// and the tab section pins to the top; tab content scrolls inside `.tabsScroll`.
+.tabsSection {
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	position: sticky;
+	top: 0;
+	flex: 0 0 auto;
+	height: 100%;
+
+	// TabsRoot — direct child of tabs-section
+	> div {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		min-height: 0;
+		overflow: hidden;
+	}
+
+	[role='tablist'] {
+		flex-shrink: 0;
+	}
+
+	[class*='tabs__list-wrapper'] {
+		padding-left: 0 !important;
+	}
+}
+
+// The Badge is already pill-rounded, so an 18x18 box renders a circle for a
+// single digit and a capsule for more.
+.eventsBadge {
+	// l3 background (!important beats the Badge's [data-color] rule).
+	--badge-background: var(--l3-background) !important;
+	--badge-padding: 0 5px;
+	// Static count, not interactive — cancel the Badge's hover background change.
+	--badge-hover-background: var(--badge-background) !important;
+
+	margin-left: var(--spacing-3);
+	min-width: 18px;
+	height: 18px;
+	vertical-align: middle;
+}
+
+.tabsScroll {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	scrollbar-width: none;
+	display: flex;
+	flex-direction: column;
+
+	[role='tabpanel'] {
+		padding: 0;
+		flex: 1;
+		min-height: 0;
+	}
+}
+
+// Tooltip is rendered in a portal but the SpanDetailsPanel can be docked as a
+// FloatingPanel (z-index 999), which would otherwise sit on top of the default
+// tooltip (z-index 50). Bump the tooltip above the panel.
+.dockToggleTooltip {
+	--tooltip-z-index: 1000;
+}

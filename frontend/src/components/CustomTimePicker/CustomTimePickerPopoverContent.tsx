@@ -1,5 +1,12 @@
-import './CustomTimePicker.styles.scss';
-
+import {
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react';
+import { useLocation } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -14,23 +21,17 @@ import {
 	Option,
 } from 'container/TopNav/DateTimeSelectionV2/types';
 import dayjs from 'dayjs';
-import { Clock, PenLine, TriangleAlertIcon } from 'lucide-react';
+import { Clock, PenLine, TriangleAlert } from '@signozhq/icons';
 import { useTimezone } from 'providers/Timezone';
-import {
-	Dispatch,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useMemo,
-	useState,
-} from 'react';
-import { useLocation } from 'react-router-dom';
 import { getCustomTimeRanges } from 'utils/customTimeRangeUtils';
 import { TimeRangeValidationResult } from 'utils/timeUtils';
 
 import CalendarContainer from './CalendarContainer';
 import { CustomTimePickerInputStatus } from './CustomTimePicker';
 import TimezonePicker from './TimezonePicker';
+import { Timezone } from './timezoneUtils';
+
+import './CustomTimePicker.styles.scss';
 
 const TO_MILLISECONDS_FACTOR = 1000_000;
 
@@ -52,6 +53,7 @@ interface CustomTimePickerPopoverContentProps {
 		lexicalContext?: LexicalContext,
 	) => void;
 	onSelectHandler: (label: string, value: string) => void;
+	onTimezoneChange: (timezone: Timezone) => void;
 	onGoLive: () => void;
 	selectedTime: string;
 	activeView: 'datetime' | 'timezone';
@@ -90,7 +92,6 @@ const getDateRange = (
 	return { from, to };
 };
 
-// eslint-disable-next-line sonarjs/cognitive-complexity
 function CustomTimePickerPopoverContent({
 	isLiveLogsEnabled,
 	minTime,
@@ -101,6 +102,7 @@ function CustomTimePickerPopoverContent({
 	setCustomDTPickerVisible,
 	onCustomDateHandler,
 	onSelectHandler,
+	onTimezoneChange,
 	onGoLive,
 	selectedTime,
 	activeView,
@@ -114,9 +116,10 @@ function CustomTimePickerPopoverContent({
 }: CustomTimePickerPopoverContentProps): JSX.Element {
 	const { pathname } = useLocation();
 
-	const isLogsExplorerPage = useMemo(() => pathname === ROUTES.LOGS_EXPLORER, [
-		pathname,
-	]);
+	const isLogsExplorerPage = useMemo(
+		() => pathname === ROUTES.LOGS_EXPLORER,
+		[pathname],
+	);
 
 	const url = new URLSearchParams(window.location.search);
 
@@ -152,8 +155,8 @@ function CustomTimePickerPopoverContent({
 		if (!customDateTimeVisible) {
 			const customTimeRanges = getCustomTimeRanges();
 
-			const formattedCustomTimeRanges: RecentlyUsedDateTimeRange[] = customTimeRanges.map(
-				(range) => ({
+			const formattedCustomTimeRanges: RecentlyUsedDateTimeRange[] =
+				customTimeRanges.map((range) => ({
 					label: `${dayjs(range.from)
 						.tz(timezone.value)
 						.format(DATE_TIME_FORMATS.DD_MMM_YYYY_HH_MM_SS)} - ${dayjs(range.to)
@@ -163,8 +166,7 @@ function CustomTimePickerPopoverContent({
 					to: range.to,
 					value: range.timestamp,
 					timestamp: range.timestamp,
-				}),
-			);
+				}));
 
 			setRecentlyUsedTimeRanges(formattedCustomTimeRanges);
 		}
@@ -208,6 +210,7 @@ function CustomTimePickerPopoverContent({
 					setActiveView={setActiveView}
 					setIsOpen={setIsOpen}
 					isOpenedFromFooter={isOpenedFromFooter}
+					onTimezoneSelect={onTimezoneChange}
 				/>
 			</div>
 		);
@@ -297,7 +300,7 @@ function CustomTimePickerPopoverContent({
 								inputErrorDetails && (
 									<div className="input-error-message-container">
 										<div className="input-error-message-title">
-											<TriangleAlertIcon color={Color.BG_CHERRY_400} size={16} />
+											<TriangleAlert color={Color.BG_CHERRY_400} size={16} />
 											<span className="input-error-message-text">
 												{inputErrorDetails.message}
 											</span>
@@ -352,26 +355,29 @@ function CustomTimePickerPopoverContent({
 
 			<div className="date-time-popover__footer">
 				<div className="timezone-container">
-					<Clock
-						color={Color.BG_VANILLA_400}
-						className="timezone-container__clock-icon"
-						height={12}
-						width={12}
-					/>
-					<span className="timezone__icon">Current timezone</span>
-					<div>⎯</div>
-					<button
-						type="button"
-						className="timezone"
-						onClick={handleTimezoneHintClick}
-					>
-						<span>{activeTimezoneOffset}</span>
-						<PenLine
-							color={Color.BG_VANILLA_100}
-							className="timezone__icon"
-							size={10}
+					<div className="timezone-container__left">
+						<Clock
+							color={Color.BG_ROBIN_400}
+							className="timezone-container__clock-icon"
+							size={14}
 						/>
-					</button>
+
+						<span className="timezone__name">{timezone.name}</span>
+						<span className="timezone__separator">⎯</span>
+						<span className="timezone__offset">{activeTimezoneOffset}</span>
+					</div>
+
+					<div className="timezone-container__right">
+						<Button
+							type="text"
+							size="small"
+							className="periscope-btn text timezone-change-button"
+							onClick={handleTimezoneHintClick}
+							icon={<PenLine size={10} />}
+						>
+							Change Timezone
+						</Button>
+					</div>
 				</div>
 			</div>
 		</>

@@ -1,5 +1,4 @@
-import './RuleOptions.styles.scss';
-
+import { useTranslation } from 'react-i18next';
 import {
 	Checkbox,
 	Collapse,
@@ -9,14 +8,13 @@ import {
 	Select,
 	SelectProps,
 	Space,
-	Typography,
 } from 'antd';
-import { DefaultOptionType } from 'antd/es/select';
+import { Typography } from '@signozhq/ui/typography';
+import type { DefaultOptionType } from 'antd/es/select';
 import {
 	getCategoryByOptionId,
 	getCategorySelectOptionByName,
 } from 'container/CreateAlertV2/AlertCondition/utils';
-import { useTranslation } from 'react-i18next';
 import {
 	AlertDef,
 	defaultAlgorithm,
@@ -36,6 +34,8 @@ import {
 	StepHeading,
 	VerticalLine,
 } from './styles';
+
+import './RuleOptions.styles.scss';
 
 function RuleOptions({
 	alertDef,

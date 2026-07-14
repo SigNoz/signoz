@@ -10,6 +10,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/analytics/segmentanalytics"
 	"github.com/SigNoz/signoz/pkg/apiserver"
 	"github.com/SigNoz/signoz/pkg/apiserver/signozapiserver"
+	"github.com/SigNoz/signoz/pkg/auditor"
+	"github.com/SigNoz/signoz/pkg/auditor/noopauditor"
 	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/cache/memorycache"
@@ -22,21 +24,28 @@ import (
 	"github.com/SigNoz/signoz/pkg/flagger/configflagger"
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/global/signozglobal"
+	"github.com/SigNoz/signoz/pkg/identn"
+	"github.com/SigNoz/signoz/pkg/identn/apikeyidentn"
+	"github.com/SigNoz/signoz/pkg/identn/impersonationidentn"
+	"github.com/SigNoz/signoz/pkg/identn/tokenizeridentn"
+	"github.com/SigNoz/signoz/pkg/meterreporter"
+	"github.com/SigNoz/signoz/pkg/meterreporter/noopmeterreporter"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain/implauthdomain"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/preference/implpreference"
 	"github.com/SigNoz/signoz/pkg/modules/promote/implpromote"
+	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/modules/session/implsession"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
+	"github.com/SigNoz/signoz/pkg/pprof"
+	"github.com/SigNoz/signoz/pkg/pprof/httppprof"
+	"github.com/SigNoz/signoz/pkg/pprof/nooppprof"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/clickhouseprometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/querier/signozquerier"
-	"github.com/SigNoz/signoz/pkg/queryparser"
-	"github.com/SigNoz/signoz/pkg/ruler"
-	"github.com/SigNoz/signoz/pkg/ruler/signozruler"
 	"github.com/SigNoz/signoz/pkg/sharder"
 	"github.com/SigNoz/signoz/pkg/sharder/noopsharder"
 	"github.com/SigNoz/signoz/pkg/sharder/singlesharder"
@@ -78,10 +87,17 @@ func NewCacheProviderFactories() factory.NamedMap[factory.ProviderFactory[cache.
 	)
 }
 
-func NewWebProviderFactories() factory.NamedMap[factory.ProviderFactory[web.Web, web.Config]] {
+func NewWebProviderFactories(globalConfig global.Config) factory.NamedMap[factory.ProviderFactory[web.Web, web.Config]] {
 	return factory.MustNewNamedMap(
-		routerweb.NewFactory(),
+		routerweb.NewFactory(globalConfig),
 		noopweb.NewFactory(),
+	)
+}
+
+func NewPProfProviderFactories() factory.NamedMap[factory.ProviderFactory[pprof.PProf, pprof.Config]] {
+	return factory.MustNewNamedMap(
+		httppprof.NewFactory(),
+		nooppprof.NewFactory(),
 	)
 }
 
@@ -161,15 +177,58 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewUpdateUserPreferenceFactory(sqlstore, sqlschema),
 		sqlmigration.NewUpdateOrgPreferenceFactory(sqlstore, sqlschema),
 		sqlmigration.NewRenameOrgDomainsFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddResetPasswordTokenExpiryFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddManagedRolesFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddAuthzIndexFactory(sqlstore, sqlschema),
+		sqlmigration.NewMigrateRbacToAuthzFactory(sqlstore),
+		sqlmigration.NewMigratePublicDashboardsFactory(sqlstore),
+		sqlmigration.NewAddAnonymousPublicDashboardTransactionFactory(sqlstore),
+		sqlmigration.NewAddRootUserFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddUserEmailOrgIDIndexFactory(sqlstore, sqlschema),
+		sqlmigration.NewMigrateRulesV4ToV5Factory(sqlstore, telemetryStore),
+		sqlmigration.NewAddStatusUserFactory(sqlstore, sqlschema),
+		sqlmigration.NewDeprecateUserInviteFactory(sqlstore, sqlschema),
+		sqlmigration.NewUpdateCloudIntegrationUniqueIndexFactory(sqlstore, sqlschema),
+		sqlmigration.NewUpdatePlannedMaintenanceRuleFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddUserRoleFactory(sqlstore, sqlschema),
+		sqlmigration.NewDropUserRoleColumnFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddServiceAccountFactory(sqlstore, sqlschema),
+		sqlmigration.NewDeprecateAPIKeyFactory(sqlstore, sqlschema),
+		sqlmigration.NewServiceAccountAuthzactory(sqlstore),
+		sqlmigration.NewDropUserDeletedAtFactory(sqlstore, sqlschema),
+		sqlmigration.NewMigrateAWSAllRegionsFactory(sqlstore),
+		sqlmigration.NewAddServiceAccountManagedRoleTransactionsFactory(sqlstore),
+		sqlmigration.NewAddSpanMapperFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddLLMPricingRulesFactory(sqlstore, sqlschema),
+		sqlmigration.NewMigrateMetaresourcesTuplesFactory(sqlstore),
+		sqlmigration.NewAddTagsFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddRoleCRUDTuplesFactory(sqlstore),
+		sqlmigration.NewAddIntegrationDashboardFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddSourceToDashboardFactory(sqlstore, sqlschema),
+		sqlmigration.NewMigrateCloudIntegrationDashboardsFactory(sqlstore),
+		sqlmigration.NewAddScopeToPlannedMaintenanceFactory(sqlstore, sqlschema),
+		sqlmigration.NewMigrateInstalledIntegrationDashboardsFactory(sqlstore),
+		sqlmigration.NewAddDashboardNameFactory(sqlstore, sqlschema),
+		sqlmigration.NewFixChangelogOperationTypeFactory(sqlstore, sqlschema),
+		sqlmigration.NewCloudIntegrationRemoveCascadeDeleteFactory(sqlschema),
+		sqlmigration.NewAddUserDashboardPreferenceFactory(sqlstore, sqlschema),
+		sqlmigration.NewRecreateUserDashboardPreferenceFactory(sqlstore, sqlschema),
+		sqlmigration.NewMigrateRecurrenceBoundsFactory(sqlstore),
+		sqlmigration.NewAddDashboardViewFactory(sqlstore, sqlschema),
+		sqlmigration.NewMigrateSSORoleMappingNamesFactory(sqlstore),
+		sqlmigration.NewAddMetricReductionRulesFactory(sqlstore, sqlschema),
+		sqlmigration.NewRemoveOrganizationTuplesFactory(sqlstore),
+		sqlmigration.NewAddRoleTransactionGroupsFactory(sqlstore, sqlschema),
 	)
 }
 
 func NewTelemetryStoreProviderFactories() factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]] {
 	return factory.MustNewNamedMap(
 		clickhousetelemetrystore.NewFactory(
-			telemetrystorehook.NewSettingsFactory(),
 			telemetrystorehook.NewLoggingFactory(),
+			// adding instrumentation factory before settings as we are starting the query span here
 			telemetrystorehook.NewInstrumentationFactory(),
+			telemetrystorehook.NewSettingsFactory(),
 		),
 	)
 }
@@ -186,15 +245,14 @@ func NewNotificationManagerProviderFactories(routeStore alertmanagertypes.RouteS
 	)
 }
 
-func NewAlertmanagerProviderFactories(sqlstore sqlstore.SQLStore, orgGetter organization.Getter, nfManager nfmanager.NotificationManager) factory.NamedMap[factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config]] {
+func NewAlertmanagerProviderFactories(
+	sqlstore sqlstore.SQLStore,
+	orgGetter organization.Getter,
+	nfManager nfmanager.NotificationManager,
+	maintenanceStore alertmanagertypes.MaintenanceStore,
+) factory.NamedMap[factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config]] {
 	return factory.MustNewNamedMap(
-		signozalertmanager.NewFactory(sqlstore, orgGetter, nfManager),
-	)
-}
-
-func NewRulerProviderFactories(sqlstore sqlstore.SQLStore, queryParser queryparser.QueryParser) factory.NamedMap[factory.ProviderFactory[ruler.Ruler, ruler.Config]] {
-	return factory.MustNewNamedMap(
-		signozruler.NewFactory(sqlstore, queryParser),
+		signozalertmanager.NewFactory(sqlstore, orgGetter, nfManager, maintenanceStore),
 	)
 }
 
@@ -212,9 +270,9 @@ func NewSharderProviderFactories() factory.NamedMap[factory.ProviderFactory[shar
 	)
 }
 
-func NewStatsReporterProviderFactories(telemetryStore telemetrystore.TelemetryStore, collectors []statsreporter.StatsCollector, orgGetter organization.Getter, userGetter user.Getter, tokenizer tokenizer.Tokenizer, build version.Build, analyticsConfig analytics.Config) factory.NamedMap[factory.ProviderFactory[statsreporter.StatsReporter, statsreporter.Config]] {
+func NewStatsReporterProviderFactories(aggregator statsreporter.Aggregator, orgGetter organization.Getter, userGetter user.Getter, tokenizer tokenizer.Tokenizer, build version.Build, analyticsConfig analytics.Config) factory.NamedMap[factory.ProviderFactory[statsreporter.StatsReporter, statsreporter.Config]] {
 	return factory.MustNewNamedMap(
-		analyticsstatsreporter.NewFactory(telemetryStore, collectors, orgGetter, userGetter, tokenizer, build, analyticsConfig),
+		analyticsstatsreporter.NewFactory(aggregator, orgGetter, userGetter, tokenizer, build, analyticsConfig),
 		noopstatsreporter.NewFactory(),
 	)
 }
@@ -225,23 +283,41 @@ func NewQuerierProviderFactories(telemetryStore telemetrystore.TelemetryStore, p
 	)
 }
 
-func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.AuthZ, global global.Global, modules Modules, handlers Handlers) factory.NamedMap[factory.ProviderFactory[apiserver.APIServer, apiserver.Config]] {
+func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.AuthZ, modules Modules, handlers Handlers, globalConfig global.Config) factory.NamedMap[factory.ProviderFactory[apiserver.APIServer, apiserver.Config]] {
 	return factory.MustNewNamedMap(
 		signozapiserver.NewFactory(
 			orgGetter,
 			authz,
 			implorganization.NewHandler(modules.OrgGetter, modules.OrgSetter),
-			impluser.NewHandler(modules.User, modules.UserGetter),
-			implsession.NewHandler(modules.Session),
+			impluser.NewHandler(modules.UserSetter, modules.UserGetter),
+			implsession.NewHandler(modules.Session, globalConfig),
 			implauthdomain.NewHandler(modules.AuthDomain),
 			implpreference.NewHandler(modules.Preference),
-			signozglobal.NewHandler(global),
+			handlers.Global,
 			implpromote.NewHandler(modules.Promote),
 			handlers.FlaggerHandler,
 			modules.Dashboard,
 			handlers.Dashboard,
 			handlers.MetricsExplorer,
+			handlers.MetricReductionRule,
+			handlers.InfraMonitoring,
 			handlers.GatewayHandler,
+			handlers.Fields,
+			handlers.AuthzHandler,
+			handlers.RawDataExport,
+			handlers.ZeusHandler,
+			handlers.QuerierHandler,
+			handlers.ServiceAccountHandler,
+			modules.ServiceAccountGetter,
+			handlers.RegistryHandler,
+			handlers.CloudIntegrationHandler,
+			handlers.RuleStateHistory,
+			handlers.SpanMapperHandler,
+			handlers.AlertmanagerHandler,
+			handlers.LLMPricingRuleHandler,
+			handlers.TraceDetail,
+			handlers.RulerHandler,
+			handlers.StatsHandler,
 		),
 	)
 }
@@ -254,9 +330,29 @@ func NewTokenizerProviderFactories(cache cache.Cache, sqlstore sqlstore.SQLStore
 	)
 }
 
-func NewGlobalProviderFactories() factory.NamedMap[factory.ProviderFactory[global.Global, global.Config]] {
+func NewIdentNProviderFactories(tokenizer tokenizer.Tokenizer, serviceAccount serviceaccount.Module, orgGetter organization.Getter, userGetter user.Getter, userConfig user.Config) factory.NamedMap[factory.ProviderFactory[identn.IdentN, identn.Config]] {
 	return factory.MustNewNamedMap(
-		signozglobal.NewFactory(),
+		impersonationidentn.NewFactory(orgGetter, userGetter, userConfig),
+		tokenizeridentn.NewFactory(tokenizer),
+		apikeyidentn.NewFactory(serviceAccount),
+	)
+}
+
+func NewGlobalProviderFactories(identNConfig identn.Config) factory.NamedMap[factory.ProviderFactory[global.Global, global.Config]] {
+	return factory.MustNewNamedMap(
+		signozglobal.NewFactory(identNConfig),
+	)
+}
+
+func NewAuditorProviderFactories() factory.NamedMap[factory.ProviderFactory[auditor.Auditor, auditor.Config]] {
+	return factory.MustNewNamedMap(
+		noopauditor.NewFactory(),
+	)
+}
+
+func NewMeterReporterProviderFactories() factory.NamedMap[factory.ProviderFactory[meterreporter.Reporter, meterreporter.Config]] {
+	return factory.MustNewNamedMap(
+		noopmeterreporter.NewFactory(),
 	)
 }
 

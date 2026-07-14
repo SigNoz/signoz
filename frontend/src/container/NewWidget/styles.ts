@@ -1,4 +1,3 @@
-import { Col, Tag as AntDTag } from 'antd';
 import styled from 'styled-components';
 
 export const Container = styled.div`
@@ -6,35 +5,6 @@ export const Container = styled.div`
 	display: flex;
 	flex-direction: column;
 	overflow-y: hidden;
-`;
-
-export const RightContainerWrapper = styled(Col)`
-	&&& {
-		max-width: 400px;
-		width: 30%;
-		overflow-y: auto;
-	}
-	&::-webkit-scrollbar {
-		width: 0rem;
-	}
-`;
-
-interface LeftContainerWrapperProps {
-	isDarkMode: boolean;
-}
-
-export const LeftContainerWrapper = styled(Col)<LeftContainerWrapperProps>`
-	&&& {
-		width: 100%;
-		overflow-y: auto;
-		border-right: ${({ isDarkMode }): string =>
-			isDarkMode
-				? '1px solid var(--bg-slate-300)'
-				: '1px solid var(--bg-vanilla-300)'};
-	}
-	&::-webkit-scrollbar {
-		width: 0rem;
-	}
 `;
 
 export const ButtonContainer = styled.div`
@@ -47,8 +17,4 @@ export const ButtonContainer = styled.div`
 export const PanelContainer = styled.div`
 	display: flex;
 	overflow-y: auto;
-`;
-
-export const Tag = styled(AntDTag)`
-	margin: 0;
 `;

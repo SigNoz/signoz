@@ -1,7 +1,6 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-import { DefaultOptionType } from 'antd/es/select';
-import { getAttributesValues } from 'api/queryBuilder/getAttributesValues';
 import { useQuery } from 'react-query';
+import type { DefaultOptionType } from 'antd/es/select';
+import { getAttributesValues } from 'api/queryBuilder/getAttributesValues';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 

@@ -2,11 +2,12 @@ package clickhouseprometheus
 
 import (
 	"context"
-	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
-	cmock "github.com/srikanthccv/ClickHouse-go-mock"
-	"github.com/stretchr/testify/require"
 	"sort"
 	"testing"
+
+	cmock "github.com/SigNoz/clickhouse-go-mock"
+	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
+	"github.com/stretchr/testify/require"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
@@ -14,7 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// Test for querySamples method
+// Test for querySamples method.
 func TestClient_QuerySamples(t *testing.T) {
 	ctx := context.Background()
 	cols := make([]cmock.ColumnType, 0)

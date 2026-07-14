@@ -35,7 +35,7 @@ type scoped struct {
 
 func NewScopedProviderSettings(settings ProviderSettings, pkgName string) *scoped {
 	return &scoped{
-		logger:               settings.Logger.With("logger", pkgName),
+		logger:               settings.Logger.With(slog.String("logger", pkgName)),
 		meter:                settings.MeterProvider.Meter(pkgName),
 		tracer:               settings.TracerProvider.Tracer(pkgName),
 		prometheusRegisterer: settings.PrometheusRegisterer,

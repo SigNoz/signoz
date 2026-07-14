@@ -1,5 +1,5 @@
-import * as Sentry from '@sentry/react';
 import { ComponentType, ReactElement } from 'react';
+import * as Sentry from '@sentry/react';
 
 import ErrorBoundaryFallback from '../../pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 
@@ -81,7 +81,6 @@ function withErrorBoundary<P extends Record<string, unknown>>(
 				}}
 				onError={onError}
 			>
-				{/* eslint-disable-next-line react/jsx-props-no-spreading */}
 				<WrappedComponent {...props} />
 			</Sentry.ErrorBoundary>
 		);

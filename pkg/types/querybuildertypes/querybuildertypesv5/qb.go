@@ -10,10 +10,11 @@ import (
 )
 
 var (
-	ErrColumnNotFound      = errors.Newf(errors.TypeNotFound, errors.CodeNotFound, "field not found")
-	ErrBetweenValues       = errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "(not) between operator requires two values")
-	ErrInValues            = errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "(not) in operator requires a list of values")
-	ErrUnsupportedOperator = errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "unsupported operator")
+	ErrColumnNotFound      = errors.NewNotFoundf(errors.CodeNotFound, "field not found")
+	ErrBetweenValues       = errors.NewInvalidInputf(errors.CodeInvalidInput, "(not) between operator requires two values")
+	ErrBetweenValuesType   = errors.NewInvalidInputf(errors.CodeInvalidInput, "(not) between operator requires two values of the number type")
+	ErrInValues            = errors.NewInvalidInputf(errors.CodeInvalidInput, "(not) in operator requires a list of values")
+	ErrUnsupportedOperator = errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported operator")
 )
 
 type JsonKeyToFieldFunc func(context.Context, *telemetrytypes.TelemetryFieldKey, FilterOperator, any) (string, any)
@@ -21,24 +22,27 @@ type JsonKeyToFieldFunc func(context.Context, *telemetrytypes.TelemetryFieldKey,
 // FieldMapper maps the telemetry field key to the table field name.
 type FieldMapper interface {
 	// FieldFor returns the field name for the given key.
-	FieldFor(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (string, error)
+	FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey) (string, error)
 	// ColumnFor returns the column for the given key.
-	ColumnFor(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error)
+	ColumnFor(ctx context.Context, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error)
 	// ColumnExpressionFor returns the column expression for the given key.
-	ColumnExpressionFor(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) (string, error)
+	ColumnExpressionFor(ctx context.Context, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) (string, error)
 }
 
-// ConditionBuilder builds the condition for the filter.
+// ConditionBuilder builds the conditions for the filter.
 type ConditionBuilder interface {
-	// ConditionFor returns the condition for the given key, operator and value.
-	// TODO(srikanthccv,nikhilmantri0902): remove startNs, endNs when top_level_operations can be replaced with `is_remote`
-	ConditionFor(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, operator FilterOperator, value any, sb *sqlbuilder.SelectBuilder, startNs uint64, endNs uint64) (string, error)
+	// ConditionFor returns the conditions and any advisory warnings for a filter
+	// term. key is the field key as parsed from the query text; fieldKeysForName is
+	// the set of known field keys matching it (may be empty). The builder owns the
+	// decision of what to do — resolve ambiguity, fall back to a body JSON search,
+	// emit a "not found" error, or skip — and which errors/warnings are apt.
+	ConditionFor(ctx context.Context, startNs uint64, endNs uint64, key *telemetrytypes.TelemetryFieldKey, fieldKeysForName []*telemetrytypes.TelemetryFieldKey, operator FilterOperator, value any, sb *sqlbuilder.SelectBuilder) ([]string, []string, error)
 }
 
 type AggExprRewriter interface {
 	// Rewrite rewrites the aggregation expression to be used in the query.
-	Rewrite(ctx context.Context, expr string, rateInterval uint64, keys map[string][]*telemetrytypes.TelemetryFieldKey) (string, []any, error)
-	RewriteMulti(ctx context.Context, exprs []string, rateInterval uint64, keys map[string][]*telemetrytypes.TelemetryFieldKey) ([]string, [][]any, error)
+	Rewrite(ctx context.Context, startNs, endNs uint64, expr string, rateInterval uint64, keys map[string][]*telemetrytypes.TelemetryFieldKey) (string, []any, error)
+	RewriteMulti(ctx context.Context, startNs, endNs uint64, exprs []string, rateInterval uint64, keys map[string][]*telemetrytypes.TelemetryFieldKey) ([]string, [][]any, error)
 }
 
 type Statement struct {
@@ -57,4 +61,9 @@ type StatementBuilder[T any] interface {
 type TraceOperatorStatementBuilder interface {
 	// Build builds the trace operator query.
 	Build(ctx context.Context, start, end uint64, requestType RequestType, query QueryBuilderTraceOperator, compositeQuery *CompositeQuery) (*Statement, error)
+}
+
+// StatementProvider renders a query's underlying statement without executing it.
+type StatementProvider interface {
+	Statement(ctx context.Context) (*Statement, error)
 }

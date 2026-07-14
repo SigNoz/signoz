@@ -1,10 +1,11 @@
-import './Tabs2.styles.scss';
-
-import { Color } from '@signozhq/design-tokens';
-import { Button, Tag } from 'antd';
-import { TimelineFilter } from 'container/AlertHistory/types';
-import { Undo } from 'lucide-react';
 import { useState } from 'react';
+import { Color } from '@signozhq/design-tokens';
+import { Button } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
+import { TimelineFilter } from 'container/AlertHistory/types';
+import { Undo } from '@signozhq/icons';
+
+import './Tabs2.styles.scss';
 
 interface Tab {
 	value: string;
@@ -65,11 +66,7 @@ function Tabs2({
 					>
 						{tab.label}
 
-						{tab.isBeta && (
-							<Tag bordered={false} color="geekblue">
-								Beta
-							</Tag>
-						)}
+						{tab.isBeta && <Badge color="robin">Beta</Badge>}
 					</Button>
 				))}
 			</Button.Group>

@@ -1,10 +1,10 @@
-import './ResizeTable.styles.scss';
-
 import { SyntheticEvent, useMemo } from 'react';
 import { Resizable, ResizeCallbackData } from 'react-resizable';
 
 import { enableUserSelectHack } from './config';
 import { SpanStyle } from './styles';
+
+import './ResizeTable.styles.scss';
 
 function ResizableHeader(props: ResizableHeaderProps): JSX.Element {
 	const { onResize, width, ...restProps } = props;
@@ -20,7 +20,6 @@ function ResizableHeader(props: ResizableHeaderProps): JSX.Element {
 	);
 
 	if (!width) {
-		// eslint-disable-next-line react/jsx-props-no-spreading
 		return <th {...restProps} className="resizable-header" />;
 	}
 
@@ -33,7 +32,6 @@ function ResizableHeader(props: ResizableHeaderProps): JSX.Element {
 			draggableOpts={enableUserSelectHack}
 			minConstraints={[150, 0]}
 		>
-			{/* eslint-disable-next-line react/jsx-props-no-spreading */}
 			<th {...restProps} className="resizable-header" />
 		</Resizable>
 	);

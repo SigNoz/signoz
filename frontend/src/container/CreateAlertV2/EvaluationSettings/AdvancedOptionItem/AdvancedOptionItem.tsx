@@ -1,10 +1,12 @@
-import './styles.scss';
-
-import { Switch, Tooltip, Typography } from 'antd';
-import { Info } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { Tooltip } from 'antd';
+import { Switch } from '@signozhq/ui/switch';
+import { Typography } from '@signozhq/ui/typography';
+import { Info } from '@signozhq/icons';
 
 import { IAdvancedOptionItemProps } from '../types';
+
+import './styles.scss';
 
 function AdvancedOptionItem({
 	title,
@@ -48,7 +50,7 @@ function AdvancedOptionItem({
 				>
 					{input}
 				</div>
-				<Switch onChange={handleOnToggle} checked={showInput} />
+				<Switch onChange={handleOnToggle} value={showInput} />
 			</div>
 		</div>
 	);

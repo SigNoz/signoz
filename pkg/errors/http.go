@@ -3,33 +3,47 @@ package errors
 import (
 	"encoding/json"
 	"net/url"
+	"time"
 )
 
 type JSON struct {
-	Code    string                    `json:"code"`
-	Message string                    `json:"message"`
-	Url     string                    `json:"url,omitempty"`
-	Errors  []responseerroradditional `json:"errors,omitempty"`
+	Type        string                    `json:"type" required:"true" nullable:"false"`
+	Code        string                    `json:"code" required:"true" nullable:"false"`
+	Message     string                    `json:"message" required:"true" nullable:"false"`
+	Url         string                    `json:"url,omitempty" required:"false"`
+	Errors      []responseerroradditional `json:"errors" required:"true" nullable:"false"`
+	Retry       *responseretryjson        `json:"retry,omitempty" required:"false"`
+	Suggestions []string                  `json:"suggestions" required:"true" nullable:"false"`
+}
+
+type responseretryjson struct {
+	Delay time.Duration `json:"delay" required:"true" nullable:"false"`
 }
 
 type responseerroradditional struct {
-	Message string `json:"message"`
+	Message     string   `json:"message" required:"true" nullable:"false"`
+	Suggestions []string `json:"suggestions" required:"true" nullable:"false"`
 }
 
 func AsJSON(cause error) *JSON {
 	// See if this is an instance of the base error or not
-	_, c, m, _, u, a := Unwrapb(cause)
+	t, c, m, _, u, a := Unwrapb(cause)
 
-	rea := make([]responseerroradditional, len(a))
-	for k, v := range a {
-		rea[k] = responseerroradditional{v}
+	rea := responseAdditionals(a)
+
+	var retry *responseretryjson
+	if r := retryOf(cause); r != nil {
+		retry = &responseretryjson{Delay: r.delay}
 	}
 
 	return &JSON{
-		Code:    c.String(),
-		Message: m,
-		Url:     u,
-		Errors:  rea,
+		Type:        t.String(),
+		Code:        c.String(),
+		Message:     m,
+		Url:         u,
+		Errors:      rea,
+		Retry:       retry,
+		Suggestions: nonNilStrings(suggestionsOf(cause)),
 	}
 }
 
@@ -37,10 +51,7 @@ func AsURLValues(cause error) url.Values {
 	// See if this is an instance of the base error or not
 	_, c, m, _, u, a := Unwrapb(cause)
 
-	rea := make([]responseerroradditional, len(a))
-	for k, v := range a {
-		rea[k] = responseerroradditional{v}
-	}
+	rea := responseAdditionals(a)
 
 	errors, err := json.Marshal(rea)
 	if err != nil {
@@ -57,4 +68,21 @@ func AsURLValues(cause error) url.Values {
 		"url":     {u},
 		"errors":  {string(errors)},
 	}
+}
+
+func responseAdditionals(a []additional) []responseerroradditional {
+	rea := make([]responseerroradditional, len(a))
+	for k, v := range a {
+		rea[k] = responseerroradditional{Message: v.message, Suggestions: nonNilStrings(v.suggestions)}
+	}
+
+	return rea
+}
+
+func nonNilStrings(s []string) []string {
+	if s == nil {
+		return []string{}
+	}
+
+	return s
 }

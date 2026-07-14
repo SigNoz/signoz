@@ -1,13 +1,19 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
-import { YAxisSource } from '../types';
+import { YAxisCategoryNames } from '../constants';
+import { UniversalYAxisUnit, YAxisSource } from '../types';
 import YAxisUnitSelector from '../YAxisUnitSelector';
 
 describe('YAxisUnitSelector', () => {
 	const mockOnChange = jest.fn();
+	// antd injects its `pointer-events` styles via cssinjs in jsdom, but the SCSS
+	// overrides aren't loaded — skip the pointer-events check so hovers/clicks register.
+	let user: ReturnType<typeof userEvent.setup>;
 
 	beforeEach(() => {
 		mockOnChange.mockClear();
+		user = userEvent.setup({ pointerEventsCheck: 0 });
 	});
 
 	it('renders with default placeholder', () => {
@@ -33,7 +39,7 @@ describe('YAxisUnitSelector', () => {
 		expect(screen.queryByText('Custom placeholder')).toBeInTheDocument();
 	});
 
-	it('calls onChange when a value is selected', () => {
+	it('calls onChange when a value is selected', async () => {
 		render(
 			<YAxisUnitSelector
 				value=""
@@ -43,9 +49,8 @@ describe('YAxisUnitSelector', () => {
 		);
 		const select = screen.getByRole('combobox');
 
-		fireEvent.mouseDown(select);
-		const option = screen.getByText('Bytes (B)');
-		fireEvent.click(option);
+		await user.click(select);
+		await user.click(screen.getByText('Bytes (B)'));
 
 		expect(mockOnChange).toHaveBeenCalledWith('By', {
 			children: 'Bytes (B)',
@@ -54,7 +59,7 @@ describe('YAxisUnitSelector', () => {
 		});
 	});
 
-	it('filters options based on search input', () => {
+	it('filters options based on search input', async () => {
 		render(
 			<YAxisUnitSelector
 				value=""
@@ -64,14 +69,13 @@ describe('YAxisUnitSelector', () => {
 		);
 		const select = screen.getByRole('combobox');
 
-		fireEvent.mouseDown(select);
-		const input = screen.getByRole('combobox');
-		fireEvent.change(input, { target: { value: 'bytes/sec' } });
+		await user.click(select);
+		await user.type(select, 'bytes/sec');
 
 		expect(screen.getByText('Bytes/sec')).toBeInTheDocument();
 	});
 
-	it('shows all categories and their units', () => {
+	it('shows all categories and their units', async () => {
 		render(
 			<YAxisUnitSelector
 				value=""
@@ -79,9 +83,8 @@ describe('YAxisUnitSelector', () => {
 				source={YAxisSource.ALERTS}
 			/>,
 		);
-		const select = screen.getByRole('combobox');
 
-		fireEvent.mouseDown(select);
+		await user.click(screen.getByRole('combobox'));
 
 		// Check for category headers
 		expect(screen.getByText('Data')).toBeInTheDocument();
@@ -92,7 +95,7 @@ describe('YAxisUnitSelector', () => {
 		expect(screen.getByText('Seconds (s)')).toBeInTheDocument();
 	});
 
-	it('shows warning message when incompatible unit is selected', () => {
+	it('shows warning message when incompatible unit is selected', async () => {
 		render(
 			<YAxisUnitSelector
 				source={YAxisSource.ALERTS}
@@ -103,12 +106,12 @@ describe('YAxisUnitSelector', () => {
 		);
 		const warningIcon = screen.getByLabelText('warning');
 		expect(warningIcon).toBeInTheDocument();
-		fireEvent.mouseOver(warningIcon);
-		return screen
-			.findByText(
+		await user.hover(warningIcon);
+		await expect(
+			screen.findByText(
 				'Unit mismatch. The metric was sent with unit Seconds (s), but Bytes (B) is selected.',
-			)
-			.then((el) => expect(el).toBeInTheDocument());
+			),
+		).resolves.toBeInTheDocument();
 	});
 
 	it('does not show warning message when compatible unit is selected', () => {
@@ -122,5 +125,33 @@ describe('YAxisUnitSelector', () => {
 		);
 		const warningIcon = screen.queryByLabelText('warning');
 		expect(warningIcon).not.toBeInTheDocument();
+	});
+
+	it('uses categories override to render custom units', async () => {
+		const customCategories = [
+			{
+				name: YAxisCategoryNames.Data,
+				units: [
+					{
+						id: UniversalYAxisUnit.BYTES,
+						name: 'Custom Bytes (B)',
+					},
+				],
+			},
+		];
+
+		render(
+			<YAxisUnitSelector
+				value=""
+				onChange={mockOnChange}
+				source={YAxisSource.ALERTS}
+				categoriesOverride={customCategories}
+			/>,
+		);
+
+		await user.click(screen.getByRole('combobox'));
+
+		expect(screen.getByText('Custom Bytes (B)')).toBeInTheDocument();
+		expect(screen.queryByText('Bytes (B)')).not.toBeInTheDocument();
 	});
 });

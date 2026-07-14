@@ -1,11 +1,14 @@
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable sonarjs/cognitive-complexity */
-import './VariableItem.styles.scss';
-
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useQuery } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
+import { useSelector } from 'react-redux';
 import { orange } from '@ant-design/colors';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Collapse, Input, Select, Switch, Tag, Typography } from 'antd';
+import { Button, Collapse, Input, Select } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
+import { Switch } from '@signozhq/ui/switch';
+import { Typography } from '@signozhq/ui/typography';
 import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQuery';
 import cx from 'classnames';
 import Editor from 'components/Editor';
@@ -13,14 +16,12 @@ import { CustomSelect } from 'components/NewSelect';
 import TextToolTip from 'components/TextToolTip';
 import { PANEL_GROUP_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import {
-	createDynamicVariableToWidgetsMap,
-	getWidgetsHavingDynamicVariableAttribute,
-} from 'hooks/dashboard/utils';
+import { useWidgetsByDynamicVariableId } from 'hooks/dashboard/useWidgetsByDynamicVariableId';
+import { getWidgetsHavingDynamicVariableAttribute } from 'hooks/dashboard/utils';
 import { useGetFieldValues } from 'hooks/dynamicVariables/useGetFieldValues';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
-import sortValues from 'lib/dashbaordVariables/sortVariableValues';
+import { commaValuesParser } from 'lib/dashboardVariables/customCommaValuesParser';
+import sortValues from 'lib/dashboardVariables/sortVariableValues';
 import { isEmpty, map } from 'lodash-es';
 import {
 	ArrowLeft,
@@ -31,11 +32,8 @@ import {
 	LayoutList,
 	Pyramid,
 	X,
-} from 'lucide-react';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useQuery } from 'react-query';
-import { useSelector } from 'react-redux';
+} from '@signozhq/icons';
+import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { AppState } from 'store/reducers';
 import {
 	IDashboardVariable,
@@ -56,6 +54,8 @@ import { TVariableMode } from '../types';
 import DynamicVariable from './DynamicVariable/DynamicVariable';
 import { LabelContainer, VariableItemRow } from './styles';
 import { WidgetSelector } from './WidgetSelector';
+
+import './VariableItem.styles.scss';
 
 const { Option } = Select;
 
@@ -87,10 +87,8 @@ function VariableItem({
 	const [variableName, setVariableName] = useState<string>(
 		variableData.name || '',
 	);
-	const [
-		hasUserManuallyChangedName,
-		setHasUserManuallyChangedName,
-	] = useState<boolean>(false);
+	const [hasUserManuallyChangedName, setHasUserManuallyChangedName] =
+		useState<boolean>(false);
 	const [variableDescription, setVariableDescription] = useState<string>(
 		variableData.description || '',
 	);
@@ -106,12 +104,10 @@ function VariableItem({
 	const [variableTextboxValue, setVariableTextboxValue] = useState<string>(
 		variableData.textboxValue || '',
 	);
-	const [
-		variableSortType,
-		setVariableSortType,
-	] = useState<TSortVariableValuesType>(
-		variableData.sort || VariableSortTypeArr[0],
-	);
+	const [variableSortType, setVariableSortType] =
+		useState<TSortVariableValuesType>(
+			variableData.sort || VariableSortTypeArr[0],
+		);
 	const [variableMultiSelect, setVariableMultiSelect] = useState<boolean>(
 		variableData.multiSelect || false,
 	);
@@ -125,19 +121,15 @@ function VariableItem({
 
 	const isDarkMode = useIsDarkMode();
 
-	const [
-		dynamicVariablesSelectedValue,
-		setDynamicVariablesSelectedValue,
-	] = useState<{ name: string; value: string }>();
+	const [dynamicVariablesSelectedValue, setDynamicVariablesSelectedValue] =
+		useState<{ name: string; value: string }>();
 
 	// Error messages
 	const [errorName, setErrorName] = useState<boolean>(false);
 	const [errorNameMessage, setErrorNameMessage] = useState<string>('');
 	const [errorAttributeKey, setErrorAttributeKey] = useState<boolean>(false);
-	const [
-		errorAttributeKeyMessage,
-		setErrorAttributeKeyMessage,
-	] = useState<string>('');
+	const [errorAttributeKeyMessage, setErrorAttributeKeyMessage] =
+		useState<string>('');
 	const [errorPreview, setErrorPreview] = useState<string | null>(null);
 
 	useEffect(() => {
@@ -242,28 +234,16 @@ function VariableItem({
 
 	const [selectedWidgets, setSelectedWidgets] = useState<string[]>([]);
 
-	const { selectedDashboard } = useDashboard();
+	const { dashboardData } = useDashboardStore();
+	const widgetsByDynamicVariableId = useWidgetsByDynamicVariableId();
 
 	useEffect(() => {
-		const dynamicVariables = Object.values(
-			selectedDashboard?.data?.variables || {},
-		)?.filter((variable: IDashboardVariable) => variable.type === 'DYNAMIC');
-
-		const widgets =
-			selectedDashboard?.data?.widgets?.filter(
-				(widget) => widget.panelTypes !== PANEL_GROUP_TYPES.ROW,
-			) || [];
-		const widgetsHavingDynamicVariables = createDynamicVariableToWidgetsMap(
-			dynamicVariables,
-			widgets as Widgets[],
-		);
-
-		if (variableData?.id && variableData.id in widgetsHavingDynamicVariables) {
-			setSelectedWidgets(widgetsHavingDynamicVariables[variableData.id] || []);
+		if (variableData?.id && variableData.id in widgetsByDynamicVariableId) {
+			setSelectedWidgets(widgetsByDynamicVariableId[variableData.id] || []);
 		} else if (dynamicVariablesSelectedValue?.name) {
 			const widgets = getWidgetsHavingDynamicVariableAttribute(
 				dynamicVariablesSelectedValue?.name,
-				(selectedDashboard?.data?.widgets?.filter(
+				(dashboardData?.data?.widgets?.filter(
 					(widget) => widget.panelTypes !== PANEL_GROUP_TYPES.ROW,
 				) || []) as Widgets[],
 				variableData.name,
@@ -272,9 +252,10 @@ function VariableItem({
 		}
 	}, [
 		dynamicVariablesSelectedValue?.name,
-		selectedDashboard,
+		dashboardData,
 		variableData.id,
 		variableData.name,
+		widgetsByDynamicVariableId,
 	]);
 
 	useEffect(() => {
@@ -507,7 +488,7 @@ function VariableItem({
 								}}
 							/>
 							<div>
-								<Typography.Text type="warning">{errorNameMessage}</Typography.Text>
+								<Typography.Text color="warning">{errorNameMessage}</Typography.Text>
 							</div>
 						</div>
 					</VariableItemRow>
@@ -537,7 +518,6 @@ function VariableItem({
 										size={14}
 										style={{
 											color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500,
-											marginTop: 1,
 										}}
 									/>
 								}
@@ -549,7 +529,6 @@ function VariableItem({
 								type="text"
 								icon={<Pyramid size={14} />}
 								className={cx(
-									// eslint-disable-next-line sonarjs/no-duplicate-string
 									'variable-type-btn',
 									queryType === 'DYNAMIC' ? 'selected' : '',
 								)}
@@ -563,9 +542,9 @@ function VariableItem({
 								}}
 							>
 								Dynamic
-								<Tag bordered={false} className="sidenav-beta-tag" color="geekblue">
+								<Badge color="robin" className="sidenav-beta-tag">
 									Beta
-								</Tag>
+								</Badge>
 							</Button>
 							<Button
 								type="text"
@@ -607,7 +586,6 @@ function VariableItem({
 								type="text"
 								icon={<DatabaseZap size={14} />}
 								className={cx(
-									// eslint-disable-next-line sonarjs/no-duplicate-string
 									'variable-type-btn',
 									queryType === 'QUERY' ? 'selected' : '',
 								)}
@@ -621,9 +599,9 @@ function VariableItem({
 								}}
 							>
 								Query
-								<Tag bordered={false} className="sidenav-beta-tag" color="warning">
+								<Badge color="amber" className="sidenav-beta-tag">
 									Not Recommended
-								</Tag>
+								</Badge>
 								<div onClick={(e): void => e.stopPropagation()}>
 									<TextToolTip
 										text="Learn why we don't recommend"
@@ -635,7 +613,6 @@ function VariableItem({
 												size={14}
 												style={{
 													color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500,
-													marginTop: 1,
 												}}
 											/>
 										}
@@ -755,7 +732,9 @@ function VariableItem({
 										<Typography style={{ color: orange[5] }}>{errorPreview}</Typography>
 									) : (
 										map(previewValues, (value, idx) => (
-											<Tag key={`${value}${idx}`}>{value.toString()}</Tag>
+											<Badge key={`${value}${idx}`} color="vanilla">
+												{value.toString()}
+											</Badge>
 										))
 									)}
 								</div>
@@ -786,7 +765,7 @@ function VariableItem({
 									</Typography>
 								</LabelContainer>
 								<Switch
-									checked={variableMultiSelect}
+									value={variableMultiSelect}
 									onChange={(e): void => {
 										setVariableMultiSelect(e);
 										if (!e) {
@@ -803,7 +782,7 @@ function VariableItem({
 										</Typography>
 									</LabelContainer>
 									<Switch
-										checked={variableShowALLOption}
+										value={variableShowALLOption}
 										onChange={(e): void => setVariableShowALLOption(e)}
 									/>
 								</VariableItemRow>

@@ -1,15 +1,19 @@
 package signoz
 
 import (
+	"context"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerstore/sqlalertmanagerstore"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfmanagertest"
 	"github.com/SigNoz/signoz/pkg/analytics"
+	"github.com/SigNoz/signoz/pkg/factory/factorytest"
+	"github.com/SigNoz/signoz/pkg/flagger"
+	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
-	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlschema/sqlschematest"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -20,6 +24,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/tokenizer/tokenizertest"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // This is a test to ensure that provider factories can be created without panicking since
@@ -31,7 +36,7 @@ func TestNewProviderFactories(t *testing.T) {
 	})
 
 	assert.NotPanics(t, func() {
-		NewWebProviderFactories()
+		NewWebProviderFactories(global.Config{})
 	})
 
 	assert.NotPanics(t, func() {
@@ -56,14 +61,11 @@ func TestNewProviderFactories(t *testing.T) {
 	})
 
 	assert.NotPanics(t, func() {
-		orgGetter := implorganization.NewGetter(implorganization.NewStore(sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual)), nil)
+		store := sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual)
+		orgGetter := implorganization.NewGetter(implorganization.NewStore(store), nil)
 		notificationManager := nfmanagertest.NewMock()
-		NewAlertmanagerProviderFactories(sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual), orgGetter, notificationManager)
-	})
-
-	assert.NotPanics(t, func() {
-		queryParser := queryparser.New(instrumentationtest.New().ToProviderSettings())
-		NewRulerProviderFactories(sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual), queryParser)
+		maintenanceStore := sqlalertmanagerstore.NewMaintenanceStore(store, factorytest.NewSettings())
+		NewAlertmanagerProviderFactories(store, orgGetter, notificationManager, maintenanceStore)
 	})
 
 	assert.NotPanics(t, func() {
@@ -75,19 +77,25 @@ func TestNewProviderFactories(t *testing.T) {
 	})
 
 	assert.NotPanics(t, func() {
-		userGetter := impluser.NewGetter(impluser.NewStore(sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual), instrumentationtest.New().ToProviderSettings()))
+		providerSettings := instrumentationtest.New().ToProviderSettings()
+		ss := sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual)
+		userRoleStore := impluser.NewUserRoleStore(ss, providerSettings)
+		flagger, err := flagger.New(context.Background(), providerSettings, flagger.Config{}, flagger.MustNewRegistry())
+		require.NoError(t, err)
+
+		userGetter := impluser.NewGetter(impluser.NewStore(sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual), instrumentationtest.New().ToProviderSettings()), userRoleStore, flagger)
 		orgGetter := implorganization.NewGetter(implorganization.NewStore(sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual)), nil)
-		telemetryStore := telemetrystoretest.New(telemetrystore.Config{Provider: "clickhouse"}, sqlmock.QueryMatcherEqual)
-		NewStatsReporterProviderFactories(telemetryStore, []statsreporter.StatsCollector{}, orgGetter, userGetter, tokenizertest.NewMockTokenizer(t), version.Build{}, analytics.Config{Enabled: true})
+		statsAggregator := statsreporter.NewAggregator(providerSettings, []statsreporter.StatsCollector{})
+		NewStatsReporterProviderFactories(statsAggregator, orgGetter, userGetter, tokenizertest.NewMockTokenizer(t), version.Build{}, analytics.Config{Enabled: true})
 	})
 
 	assert.NotPanics(t, func() {
 		NewAPIServerProviderFactories(
 			implorganization.NewGetter(implorganization.NewStore(sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual)), nil),
 			nil,
-			nil,
 			Modules{},
 			Handlers{},
+			global.Config{},
 		)
 	})
 }

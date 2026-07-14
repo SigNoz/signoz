@@ -1,10 +1,10 @@
+import { UseQueryResult } from 'react-query';
 import { ServiceDataProps } from 'api/metrics/getTopLevelOperations';
 import {
 	CustomTimeType,
 	Time,
 } from 'container/TopNav/DateTimeSelectionV2/types';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import { UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { ServicesList } from 'types/api/metrics/getService';

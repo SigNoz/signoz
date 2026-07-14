@@ -1,12 +1,12 @@
-import './Toolbar.styles.scss';
-
+import { useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import ROUTES from 'constants/routes';
 import LiveLogsPauseResume from 'container/LiveLogs/LiveLogsPauseResume/LiveLogsPauseResume';
 import NewExplorerCTA from 'container/NewExplorerCTA';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { noop } from 'lodash-es';
-import { useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+
+import './Toolbar.styles.scss';
 
 interface ToolbarProps {
 	showAutoRefresh: boolean;
@@ -31,13 +31,15 @@ export default function Toolbar({
 }: ToolbarProps): JSX.Element {
 	const { pathname } = useLocation();
 
-	const isLogsExplorerPage = useMemo(() => pathname === ROUTES.LOGS_EXPLORER, [
-		pathname,
-	]);
+	const isLogsExplorerPage = useMemo(
+		() => pathname === ROUTES.LOGS_EXPLORER,
+		[pathname],
+	);
 
-	const isApiMonitoringPage = useMemo(() => pathname === ROUTES.API_MONITORING, [
-		pathname,
-	]);
+	const isApiMonitoringPage = useMemo(
+		() => pathname === ROUTES.API_MONITORING,
+		[pathname],
+	);
 
 	return (
 		<div className="toolbar">

@@ -1,6 +1,7 @@
 package telemetrymetrics
 
 import (
+	"context"
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
@@ -66,6 +67,7 @@ func TestFilterExprEmbeddedVariables(t *testing.T) {
 		query         string
 		variables     map[string]qbtypes.VariableItem
 		shouldPass    bool
+		expectSkipped bool
 		expectedQuery string
 		expectedArgs  []any
 	}{
@@ -187,12 +189,11 @@ func TestFilterExprEmbeddedVariables(t *testing.T) {
 			variables: map[string]qbtypes.VariableItem{
 				"env": {
 					Type:  qbtypes.DynamicVariableType,
-					Value: "__all__",
+					Value: qbtypes.AllVariableValue,
 				},
 			},
 			shouldPass:    true,
-			expectedQuery: "WHERE true",
-			expectedArgs:  nil,
+			expectSkipped: true,
 		},
 		{
 			name:  "multi-select takes first value",
@@ -212,6 +213,7 @@ func TestFilterExprEmbeddedVariables(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			opts := querybuilder.FilterExprVisitorOpts{
+				Context:          context.Background(),
 				Logger:           instrumentationtest.New().Logger(),
 				FieldMapper:      fm,
 				ConditionBuilder: cb,
@@ -219,17 +221,22 @@ func TestFilterExprEmbeddedVariables(t *testing.T) {
 				Variables:        tc.variables,
 			}
 
-			clause, err := querybuilder.PrepareWhereClause(tc.query, opts, 0, 0)
+			clause, err := querybuilder.PrepareWhereClause(tc.query, opts)
 
-			if tc.shouldPass {
-				require.NoError(t, err)
-				require.NotNil(t, clause)
-				sql, args := clause.WhereClause.BuildWithFlavor(sqlbuilder.ClickHouse)
-				require.Equal(t, tc.expectedQuery, sql)
-				require.Equal(t, tc.expectedArgs, args)
-			} else {
+			if !tc.shouldPass {
 				require.Error(t, err)
+				return
 			}
+
+			require.NoError(t, err)
+			if tc.expectSkipped {
+				require.True(t, clause.IsEmpty(), "expected the condition to be skipped")
+				return
+			}
+			require.False(t, clause.IsEmpty())
+			sql, args := clause.WhereClause.BuildWithFlavor(sqlbuilder.ClickHouse)
+			require.Equal(t, tc.expectedQuery, sql)
+			require.Equal(t, tc.expectedArgs, args)
 		})
 	}
 }

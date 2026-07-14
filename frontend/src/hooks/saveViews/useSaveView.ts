@@ -1,6 +1,6 @@
+import { useMutation, UseMutationResult } from 'react-query';
 import { saveView } from 'api/saveView/saveView';
 import { AxiosResponse } from 'axios';
-import { useMutation, UseMutationResult } from 'react-query';
 import { SaveViewPayloadProps, SaveViewProps } from 'types/api/saveViews/types';
 
 export const useSaveView = ({

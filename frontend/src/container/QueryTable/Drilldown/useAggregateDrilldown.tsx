@@ -1,10 +1,9 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import useDashboardVarConfig from 'container/QueryTable/Drilldown/useDashboardVarConfig';
 import { useMemo } from 'react';
 import { UseQueryResult } from 'react-query';
-import { SuccessResponse } from 'types/api';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import useDashboardVarConfig from 'container/QueryTable/Drilldown/useDashboardVarConfig';
 import { ContextLinksData } from 'types/api/dashboard/getAll';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { getTimeRange } from 'utils/getTimeRange';
 
@@ -22,6 +21,7 @@ export interface AggregateData {
 		endTime: number;
 	};
 	label?: string | React.ReactNode;
+	seriesColor?: string;
 }
 
 const useAggregateDrilldown = ({
@@ -43,10 +43,7 @@ const useAggregateDrilldown = ({
 	aggregateData: AggregateData | null;
 	contextLinks?: ContextLinksData;
 	panelType?: PANEL_TYPES;
-	queryRange?: UseQueryResult<
-		SuccessResponse<MetricRangePayloadProps, unknown>,
-		Error
-	>;
+	queryRange?: UseQueryResult<MetricQueryRangeSuccessResponse, Error>;
 }): {
 	aggregateDrilldownConfig: {
 		header?: string | React.ReactNode;
@@ -136,7 +133,6 @@ const useAggregateDrilldown = ({
 		query,
 		// panelType,
 		aggregateData: aggregateDataWithTimeRange,
-		widgetId,
 		onClose,
 	});
 

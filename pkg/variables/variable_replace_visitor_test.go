@@ -517,6 +517,53 @@ func TestReplaceVariablesInExpression(t *testing.T) {
 			},
 			expected: "name = 'dev-production'",
 		},
+		{
+			// Unresolved $-prefixed values come back unquoted so they stay
+			// variable-shaped for downstream resolution.
+			name:       "shorter variable does not match inside longer unknown reference",
+			expression: "name = '$environment'",
+			variables: map[string]qbtypes.VariableItem{
+				"env": {
+					Type:  qbtypes.DynamicVariableType,
+					Value: "prod",
+				},
+			},
+			// `env` must not corrupt `$environment` into 'prodironment'
+			expected: "name = $environment",
+		},
+		{
+			name:       "unknown embedded variable left untouched",
+			expression: "name = '$unknown-suffix'",
+			variables: map[string]qbtypes.VariableItem{
+				"env": {
+					Type:  qbtypes.DynamicVariableType,
+					Value: "prod",
+				},
+			},
+			expected: "name = $unknown-suffix",
+		},
+		{
+			name:       "embedded variable in unquoted value with prefix",
+			expression: "cluster_name = abc-$env",
+			variables: map[string]qbtypes.VariableItem{
+				"env": {
+					Type:  qbtypes.DynamicVariableType,
+					Value: "prod",
+				},
+			},
+			expected: "cluster_name = 'abc-prod'",
+		},
+		{
+			name:       "multi-select variable in composed string takes first value",
+			expression: "cluster_name = '$env-xyz'",
+			variables: map[string]qbtypes.VariableItem{
+				"env": {
+					Type:  qbtypes.CustomVariableType,
+					Value: []any{"prod", "staging"},
+				},
+			},
+			expected: "cluster_name = 'prod-xyz'",
+		},
 	}
 
 	for _, tt := range tests {
@@ -532,6 +579,24 @@ func TestReplaceVariablesInExpression(t *testing.T) {
 			assert.Equal(t, tt.expected, result)
 		})
 	}
+}
+
+// TestReplaceVariablesInExpressionWarnings ensures multi-value variables used inside a
+// composed string produce exactly one warning, even though comparisons visit their
+// values twice (once for the __all__ check, once to rebuild the expression).
+func TestReplaceVariablesInExpressionWarnings(t *testing.T) {
+	variables := map[string]qbtypes.VariableItem{
+		"env": {
+			Type:  qbtypes.CustomVariableType,
+			Value: []any{"prod", "staging"},
+		},
+	}
+
+	result, warnings, err := ReplaceVariablesInExpression("cluster_name = '$env-xyz'", variables)
+	assert.NoError(t, err)
+	assert.Equal(t, "cluster_name = 'prod-xyz'", result)
+	assert.Len(t, warnings, 1)
+	assert.Contains(t, warnings[0], "`env` has multiple values")
 }
 
 func TestFormatVariableValue(t *testing.T) {

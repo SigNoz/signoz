@@ -1,7 +1,8 @@
-import './GeneralSettingsCloud.styles.scss';
+import { Card } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
+import { Info } from '@signozhq/icons';
 
-import { Card, Typography } from 'antd';
-import { Info } from 'lucide-react';
+import './GeneralSettingsCloud.styles.scss';
 
 export default function GeneralSettingsCloud(): JSX.Element {
 	return (

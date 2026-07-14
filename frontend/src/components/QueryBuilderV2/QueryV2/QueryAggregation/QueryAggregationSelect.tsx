@@ -1,11 +1,7 @@
 /* eslint-disable import/no-extraneous-dependencies */
-/* eslint-disable no-cond-assign */
-/* eslint-disable no-restricted-syntax */
-/* eslint-disable class-methods-use-this */
-/* eslint-disable react/no-this-in-sfc */
 /* eslint-disable sonarjs/cognitive-complexity */
-import './QueryAggregation.styles.scss';
-
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useQuery } from 'react-query';
 import {
 	autocompletion,
 	closeCompletion,
@@ -33,13 +29,13 @@ import { QUERY_BUILDER_KEY_TYPES } from 'constants/antlrQueryConstants';
 import { QueryBuilderKeys } from 'constants/queryBuilder';
 import { tracesAggregateOperatorOptions } from 'constants/queryBuilderOperators';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { Info, TriangleAlert } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useQuery } from 'react-query';
+import { Info, TriangleAlert } from '@signozhq/icons';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { TracesAggregatorOperator } from 'types/common/queryBuilder';
 
 import { useQueryBuilderV2Context } from '../../QueryBuilderV2Context';
+
+import './QueryAggregation.styles.scss';
 
 const chipDecoration = Decoration.mark({
 	class: 'chip-decorator',
@@ -149,7 +145,6 @@ const stopEventsExtension = EditorView.domEventHandlers({
 	},
 });
 
-// eslint-disable-next-line react/no-this-in-sfc
 function QueryAggregationSelect({
 	onChange,
 	queryData,
@@ -295,12 +290,12 @@ function QueryAggregationSelect({
 			}
 
 			const regex = /([a-zA-Z_][\w]*)\s*\(([^)]*)\)/g;
-			const oldMatches = [
-				...tr.startState.doc.toString().matchAll(regex),
-			].filter((match) => validFunctions.includes(match[1].toLowerCase()));
-			const newMatches = [
-				...tr.newDoc.toString().matchAll(regex),
-			].filter((match) => validFunctions.includes(match[1].toLowerCase()));
+			const oldMatches = [...tr.startState.doc.toString().matchAll(regex)].filter(
+				(match) => validFunctions.includes(match[1].toLowerCase()),
+			);
+			const newMatches = [...tr.newDoc.toString().matchAll(regex)].filter(
+				(match) => validFunctions.includes(match[1].toLowerCase()),
+			);
 
 			if (
 				newMatches.length > oldMatches.length &&
@@ -563,7 +558,7 @@ function QueryAggregationSelect({
 									? availableSuggestions
 									: availableSuggestions.filter((suggestion) =>
 											suggestion.label.toLowerCase().includes(inputText.toLowerCase()),
-									  );
+										);
 
 							return {
 								from: startOfArg,
@@ -681,7 +676,7 @@ function QueryAggregationSelect({
 						</span>
 						<br />
 						<a
-							href="https://signoz.io/docs/userguide/query-builder-v5/#core-aggregation-functions"
+							href="https://signoz.io/docs/querying/aggregation-grouping/#core-aggregation-functions-logs--traces"
 							target="_blank"
 							rel="noopener noreferrer"
 							style={{ color: '#1890ff', textDecoration: 'underline' }}

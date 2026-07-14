@@ -1,6 +1,3 @@
-import './Filter.styles.scss';
-
-import { Button, Collapse, Divider } from 'antd';
 import {
 	Dispatch,
 	MouseEvent,
@@ -9,6 +6,8 @@ import {
 	useMemo,
 	useState,
 } from 'react';
+import { Button, Collapse } from 'antd';
+import { Divider } from '@signozhq/ui/divider';
 
 import { DurationSection } from './DurationSection';
 import {
@@ -18,6 +17,8 @@ import {
 	HandleRunProps,
 } from './filterUtils';
 import { SectionBody } from './SectionContent';
+
+import './Filter.styles.scss';
 
 interface SectionProps {
 	panelName: AllTraceFilterKeys;
@@ -64,7 +65,7 @@ export function Section(props: SectionProps): JSX.Element {
 
 	return (
 		<div>
-			<Divider plain className="divider" />
+			<Divider plain className="section-body__divider" />
 			<div className="section-body-header" data-testid={`collapse-${panelName}`}>
 				<Collapse
 					bordered={false}
@@ -82,7 +83,7 @@ export function Section(props: SectionProps): JSX.Element {
 										/>
 									),
 									label: AllTraceFilterKeyValue[panelName],
-							  }
+								}
 							: {
 									key: panelName,
 									children: (
@@ -94,7 +95,7 @@ export function Section(props: SectionProps): JSX.Element {
 										/>
 									),
 									label: AllTraceFilterKeyValue[panelName],
-							  },
+								},
 					]}
 				/>
 				<Button

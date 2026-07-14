@@ -1,8 +1,8 @@
-/* eslint-disable  */
-// @ts-ignore
 // @ts-nocheck
 
+import getPublicDashboardWidgetData from 'api/dashboard/public/getPublicDashboardWidgetData';
 import { getMetricsQueryRange } from 'api/metrics/getQueryRange';
+import { createAggregation } from 'api/v5/queryRange/prepareQueryRangePayloadV5';
 import {
 	convertV5ResponseToLegacy,
 	getQueryRangeV5,
@@ -18,17 +18,20 @@ import {
 import { Pagination } from 'hooks/queryPagination';
 import { convertNewDataToOld } from 'lib/newQueryBuilder/convertNewDataToOld';
 import { isEmpty } from 'lodash-es';
-import { SuccessResponse, SuccessResponseV2, Warning } from 'types/api';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { SuccessResponseV2, Warning } from 'types/api';
+import { IDashboardVariable } from 'types/api/dashboard/getAll';
+import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	ExecStats,
+	MetricRangePayloadV5,
+	QueryRangeResponseV5,
+} from 'types/api/v5/queryRange';
+import { QueryData } from 'types/api/widgets/getQuery';
+import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { prepareQueryRangePayload } from './prepareQueryRangePayload';
-import { QueryData } from 'types/api/widgets/getQuery';
-import { createAggregation } from 'api/v5/queryRange/prepareQueryRangePayloadV5';
-import { IDashboardVariable } from 'types/api/dashboard/getAll';
-import { EQueryType } from 'types/common/dashboard';
-import getPublicDashboardWidgetData from 'api/dashboard/public/getPublicDashboardWidgetData';
 
 /**
  * Validates if metric name is available for METRICS data source
@@ -61,19 +64,6 @@ function validateMetricNameForMetricsDataSource(query: Query): boolean {
 	return !allMetricsQueriesMissingNames;
 }
 
-/**
- * Helper function to get the data source for a specific query
- */
-const getQueryDataSource = (
-	queryData: QueryData,
-	payloadQuery: Query,
-): DataSource | null => {
-	const queryItem = payloadQuery.builder?.queryData.find(
-		(query) => query.queryName === queryData.queryName,
-	);
-	return queryItem?.dataSource || null;
-};
-
 const getLegendForSingleAggregation = (
 	queryData: QueryData,
 	allQueries: IBuilderQuery[],
@@ -81,7 +71,7 @@ const getLegendForSingleAggregation = (
 	aggregationExpression: string,
 	labelName: string,
 	singleAggregation: boolean,
-) => {
+): string => {
 	const queryItem = allQueries.find(
 		(query) => query.queryName === queryData.queryName,
 	);
@@ -93,16 +83,13 @@ const getLegendForSingleAggregation = (
 	if (hasGroupBy) {
 		if (singleAggregation) {
 			return labelName;
-		} else {
-			return `${aggregationAlias || aggregationExpression}-${labelName}`;
 		}
-	} else {
-		if (singleAggregation) {
-			return aggregationAlias || legend || aggregationExpression;
-		} else {
-			return aggregationAlias || aggregationExpression;
-		}
+		return `${aggregationAlias || aggregationExpression}-${labelName}`;
 	}
+	if (singleAggregation) {
+		return aggregationAlias || legend || aggregationExpression;
+	}
+	return aggregationAlias || aggregationExpression;
 };
 
 const getLegendForMultipleAggregations = (
@@ -112,35 +99,31 @@ const getLegendForMultipleAggregations = (
 	aggregationExpression: string,
 	labelName: string,
 	singleAggregation: boolean,
-) => {
+): string => {
 	const queryItem = allQueries.find(
 		(query) => query.queryName === queryData.queryName,
 	);
 
-	const legend = queryItem?.legend;
 	// Check if groupBy exists and has items
 	const hasGroupBy = queryItem?.groupBy && queryItem.groupBy.length > 0;
 
 	if (hasGroupBy) {
 		if (singleAggregation) {
 			return labelName;
-		} else {
-			return `${aggregationAlias || aggregationExpression}-${labelName}`;
 		}
-	} else {
-		if (singleAggregation) {
-			return aggregationAlias || labelName || aggregationExpression;
-		} else {
-			return `${aggregationAlias || aggregationExpression}-${labelName}`;
-		}
+		return `${aggregationAlias || aggregationExpression}-${labelName}`;
 	}
+	if (singleAggregation) {
+		return aggregationAlias || labelName || aggregationExpression;
+	}
+	return `${aggregationAlias || aggregationExpression}-${labelName}`;
 };
 
 export const getLegend = (
 	queryData: QueryData,
 	payloadQuery: Query,
 	labelName: string,
-) => {
+): string => {
 	// For non-query builder queries, return the label name directly
 	if (payloadQuery.queryType !== EQueryType.QUERY_BUILDER) {
 		return labelName;
@@ -180,7 +163,7 @@ export const getLegend = (
 					aggregationExpression,
 					labelName,
 					singleAggregation,
-			  )
+				)
 			: getLegendForMultipleAggregations(
 					queryData,
 					allQueries,
@@ -188,11 +171,12 @@ export const getLegend = (
 					aggregationExpression,
 					labelName,
 					singleAggregation,
-			  );
+				);
 	}
 	return labelName || metaData?.queryName || queryData.queryName;
 };
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export async function GetMetricQueryRange(
 	props: GetQueryResultsProps,
 	version: string,
@@ -205,13 +189,15 @@ export async function GetMetricQueryRange(
 		widgetIndex: number;
 		publicDashboardId: string;
 	},
-): Promise<SuccessResponse<MetricRangePayloadProps> & { warning?: Warning }> {
+): Promise<MetricQueryRangeSuccessResponse> {
 	let legendMap: Record<string, string>;
 	let response:
-		| SuccessResponse<MetricRangePayloadProps>
-		| SuccessResponseV2<MetricRangePayloadV5>
-		| (SuccessResponse<MetricRangePayloadProps> & { warning?: Warning });
+		| MetricQueryRangeSuccessResponse
+		| SuccessResponseV2<MetricRangePayloadV5>;
 	let warning: Warning | undefined;
+	let meta: ExecStats | undefined;
+	// Raw V5 response, kept before it's converted to legacy — powers client-side export.
+	let rawV5Response: QueryRangeResponseV5 | undefined;
 
 	const panelType = props.originalGraphType || props.graphType;
 
@@ -288,6 +274,8 @@ export async function GetMetricQueryRange(
 				endTime: props.end * 1000,
 			});
 
+			rawV5Response = publicResponse.data.data;
+
 			// Convert V5 response to legacy format for components
 			response = convertV5ResponseToLegacy(
 				{
@@ -299,6 +287,7 @@ export async function GetMetricQueryRange(
 			);
 
 			warning = response.payload.warning || undefined;
+			meta = response.payload.meta || undefined;
 		} else {
 			const v5Response = await getQueryRangeV5(
 				v5Result.queryPayload,
@@ -306,6 +295,8 @@ export async function GetMetricQueryRange(
 				signal,
 				headers,
 			);
+
+			rawV5Response = v5Response.data.data;
 
 			// Convert V5 response to legacy format for components
 			response = convertV5ResponseToLegacy(
@@ -318,6 +309,7 @@ export async function GetMetricQueryRange(
 			);
 
 			warning = response.payload.warning || undefined;
+			meta = response.payload.meta || undefined;
 		}
 	} else {
 		const legacyResult = prepareQueryRangePayload(props);
@@ -370,20 +362,22 @@ export async function GetMetricQueryRange(
 	}
 
 	if (response.payload?.data?.newResult?.data?.resultType === 'anomaly') {
-		response.payload.data.newResult.data.result = response.payload.data.newResult.data.result.map(
-			(queryData) => {
+		response.payload.data.newResult.data.result =
+			response.payload.data.newResult.data.result.map((queryData) => {
 				if (legendMap[queryData.queryName]) {
 					queryData.legend = legendMap[queryData.queryName];
 				}
 
 				return queryData;
-			},
-		);
+			});
 	}
 
 	return {
 		...response,
 		warning,
+		meta,
+		rawV5Response,
+		legendMap,
 	};
 }
 

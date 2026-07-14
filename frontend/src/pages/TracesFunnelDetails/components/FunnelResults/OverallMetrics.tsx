@@ -1,5 +1,5 @@
-import { useFunnelMetrics } from 'hooks/TracesFunnels/useFunnelMetrics';
 import { useParams } from 'react-router-dom';
+import { useFunnelMetrics } from 'hooks/TracesFunnels/useFunnelMetrics';
 
 import FunnelMetricsTable from './FunnelMetricsTable';
 

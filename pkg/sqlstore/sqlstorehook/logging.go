@@ -31,12 +31,12 @@ func (*logging) BeforeQuery(ctx context.Context, event *bun.QueryEvent) context.
 }
 
 func (hook *logging) AfterQuery(ctx context.Context, event *bun.QueryEvent) {
-	hook.logger.Log(
+	hook.logger.LogAttrs(
 		ctx,
 		hook.level,
 		"::SQLSTORE-QUERY::",
-		"db_query_operation", event.Operation(),
-		"db_query_text", event.Query,
-		"db_query_duration", time.Since(event.StartTime).String(),
+		slog.String("db_query_operation", event.Operation()),
+		slog.String("db_query_text", event.Query),
+		slog.String("db_query_duration", time.Since(event.StartTime).String()),
 	)
 }

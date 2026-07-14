@@ -1,5 +1,5 @@
-import './Table.styles.scss';
-
+import { HTMLAttributes, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Table } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { initialFilters } from 'constants/queryBuilder';
@@ -8,24 +8,18 @@ import {
 	useTimelineTable,
 } from 'pages/AlertDetails/hooks';
 import { useTimezone } from 'providers/Timezone';
-import { HTMLAttributes, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { AlertRuleTimelineTableResponse } from 'types/api/alerts/def';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 import { timelineTableColumns } from './useTimelineTable';
 
+import './Table.styles.scss';
+
 function TimelineTable(): JSX.Element {
 	const [filters, setFilters] = useState<TagFilter>(initialFilters);
 
-	const {
-		isLoading,
-		isRefetching,
-		isError,
-		data,
-		isValidRuleId,
-		ruleId,
-	} = useGetAlertRuleDetailsTimelineTable({ filters });
+	const { isLoading, isRefetching, isError, data, isValidRuleId, ruleId } =
+		useGetAlertRuleDetailsTimelineTable({ filters });
 
 	const { timelineData, totalItems, labels } = useMemo(() => {
 		const response = data?.payload?.data;

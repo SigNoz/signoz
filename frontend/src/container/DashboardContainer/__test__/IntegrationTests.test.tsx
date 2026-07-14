@@ -1,5 +1,5 @@
-/* eslint-disable react/jsx-props-no-spreading */
 import { QueryClient, QueryClientProvider } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import configureStore from 'redux-mock-store';
 
@@ -47,17 +47,14 @@ const mockDashboard = {
 };
 
 // Mock the dashboard provider with stable functions to prevent infinite loops
-const mockSetSelectedDashboard = jest.fn();
+const mockSetDashboardData = jest.fn();
 const mockUpdateLocalStorageDashboardVariables = jest.fn();
-const mockSetVariablesToGetUpdated = jest.fn();
-
-jest.mock('providers/Dashboard/Dashboard', () => ({
-	useDashboard: (): any => ({
-		selectedDashboard: mockDashboard,
-		setSelectedDashboard: mockSetSelectedDashboard,
-		updateLocalStorageDashboardVariables: mockUpdateLocalStorageDashboardVariables,
-		variablesToGetUpdated: ['env'], // Stable initial value
-		setVariablesToGetUpdated: mockSetVariablesToGetUpdated,
+jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
+	useDashboardStore: (): any => ({
+		dashboardData: mockDashboard,
+		setDashboardData: mockSetDashboardData,
+		updateLocalStorageDashboardVariables:
+			mockUpdateLocalStorageDashboardVariables,
 	}),
 }));
 

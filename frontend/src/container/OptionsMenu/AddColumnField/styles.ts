@@ -1,7 +1,7 @@
-import { DeleteOutlined } from '@ant-design/icons';
+import { FunctionComponent } from 'react';
+import { Trash2 } from '@signozhq/icons';
 import { Card, Select, SelectProps, Space } from 'antd';
 import { themeColors } from 'constants/theme';
-import { FunctionComponent } from 'react';
 import styled from 'styled-components';
 
 export const SearchIconWrapper = styled(Card)<{ $isDarkMode: boolean }>`
@@ -34,6 +34,6 @@ export const AddColumnItem = styled(Space)`
 	justify-content: space-between;
 `;
 
-export const DeleteOutlinedIcon = styled(DeleteOutlined)`
+export const DeleteOutlinedIcon = styled(Trash2)`
 	color: red;
 `;

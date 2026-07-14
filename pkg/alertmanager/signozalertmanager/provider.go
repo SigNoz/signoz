@@ -4,12 +4,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
+	amConfig "github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/common/model"
 
-	amConfig "github.com/prometheus/alertmanager/config"
-
 	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerstore/sqlalertmanagerstore"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -19,6 +18,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -29,35 +29,49 @@ type provider struct {
 	configStore         alertmanagertypes.ConfigStore
 	stateStore          alertmanagertypes.StateStore
 	notificationManager nfmanager.NotificationManager
+	maintenanceStore    alertmanagertypes.MaintenanceStore
 	stopC               chan struct{}
 }
 
-func NewFactory(sqlstore sqlstore.SQLStore, orgGetter organization.Getter, notificationManager nfmanager.NotificationManager) factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config] {
+func NewFactory(
+	sqlstore sqlstore.SQLStore,
+	orgGetter organization.Getter,
+	notificationManager nfmanager.NotificationManager,
+	maintenanceStore alertmanagertypes.MaintenanceStore,
+) factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, settings factory.ProviderSettings, config alertmanager.Config) (alertmanager.Alertmanager, error) {
-		return New(ctx, settings, config, sqlstore, orgGetter, notificationManager)
+		return New(settings, config, sqlstore, orgGetter, notificationManager, maintenanceStore)
 	})
 }
 
-func New(ctx context.Context, providerSettings factory.ProviderSettings, config alertmanager.Config, sqlstore sqlstore.SQLStore, orgGetter organization.Getter, notificationManager nfmanager.NotificationManager) (*provider, error) {
+func New(
+	providerSettings factory.ProviderSettings,
+	config alertmanager.Config,
+	sqlstore sqlstore.SQLStore,
+	orgGetter organization.Getter,
+	notificationManager nfmanager.NotificationManager,
+	maintenanceStore alertmanagertypes.MaintenanceStore,
+) (*provider, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager")
 	configStore := sqlalertmanagerstore.NewConfigStore(sqlstore)
 	stateStore := sqlalertmanagerstore.NewStateStore(sqlstore)
 
 	p := &provider{
 		service: alertmanager.New(
-			ctx,
 			settings,
 			config.Signoz.Config,
 			stateStore,
 			configStore,
 			orgGetter,
 			notificationManager,
+			maintenanceStore,
 		),
 		settings:            settings,
 		config:              config,
 		configStore:         configStore,
 		stateStore:          stateStore,
 		notificationManager: notificationManager,
+		maintenanceStore:    maintenanceStore,
 		stopC:               make(chan struct{}),
 	}
 
@@ -66,7 +80,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 
 func (provider *provider) Start(ctx context.Context) error {
 	if err := provider.service.SyncServers(ctx); err != nil {
-		provider.settings.Logger().ErrorContext(ctx, "failed to sync alertmanager servers", "error", err)
+		provider.settings.Logger().ErrorContext(ctx, "failed to sync alertmanager servers", errors.Attr(err))
 		return err
 	}
 
@@ -78,7 +92,7 @@ func (provider *provider) Start(ctx context.Context) error {
 			return nil
 		case <-ticker.C:
 			if err := provider.service.SyncServers(ctx); err != nil {
-				provider.settings.Logger().ErrorContext(ctx, "failed to sync alertmanager servers", "error", err)
+				provider.settings.Logger().ErrorContext(ctx, "failed to sync alertmanager servers", errors.Attr(err))
 			}
 		}
 	}
@@ -97,7 +111,7 @@ func (provider *provider) PutAlerts(ctx context.Context, orgID string, alerts al
 	return provider.service.PutAlerts(ctx, orgID, alerts)
 }
 
-func (provider *provider) TestReceiver(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver) error {
+func (provider *provider) TestReceiver(ctx context.Context, orgID string, receiver *alertmanagertypes.Receiver) error {
 	return provider.service.TestReceiver(ctx, orgID, receiver)
 }
 
@@ -112,7 +126,7 @@ func (provider *provider) TestAlert(ctx context.Context, orgID string, ruleID st
 			for k, v := range alert.Labels {
 				set[model.LabelName(k)] = model.LabelValue(v)
 			}
-			match, err := provider.notificationManager.Match(ctx, orgID, alert.Labels[labels.AlertRuleIdLabel], set)
+			match, err := provider.notificationManager.Match(ctx, orgID, alert.Labels[ruletypes.LabelRuleID], set)
 			if err != nil {
 				return err
 			}
@@ -138,7 +152,7 @@ func (provider *provider) GetChannelByID(ctx context.Context, orgID string, chan
 	return provider.configStore.GetChannelByID(ctx, orgID, channelID)
 }
 
-func (provider *provider) UpdateChannelByReceiverAndID(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver, id valuer.UUID) error {
+func (provider *provider) UpdateChannelByReceiverAndID(ctx context.Context, orgID string, receiver *alertmanagertypes.Receiver, id valuer.UUID) error {
 	channel, err := provider.configStore.GetChannelByID(ctx, orgID, id)
 	if err != nil {
 		return err
@@ -168,6 +182,21 @@ func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, c
 		return err
 	}
 
+	// Check if channel is referenced by any route policy (rule-based or policy-based)
+	policies, err := provider.notificationManager.GetRoutePoliciesByChannel(ctx, orgID, channel.Name)
+	if err != nil {
+		return err
+	}
+	if len(policies) > 0 {
+		names := make([]string, 0, len(policies))
+		for _, p := range policies {
+			names = append(names, p.Name)
+		}
+		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"channel %q cannot be deleted because it is used by the following routing policies: %v",
+			channel.Name, names)
+	}
+
 	config, err := provider.configStore.Get(ctx, orgID)
 	if err != nil {
 		return err
@@ -182,7 +211,7 @@ func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, c
 	}))
 }
 
-func (provider *provider) CreateChannel(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver) (*alertmanagertypes.Channel, error) {
+func (provider *provider) CreateChannel(ctx context.Context, orgID string, receiver *alertmanagertypes.Receiver) (*alertmanagertypes.Channel, error) {
 	config, err := provider.configStore.Get(ctx, orgID)
 	if err != nil {
 		return nil, err
@@ -207,6 +236,10 @@ func (provider *provider) CreateChannel(ctx context.Context, orgID string, recei
 	return channel, nil
 }
 
+func (provider *provider) Config() alertmanagerserver.Config {
+	return provider.config.Signoz.Config
+}
+
 func (provider *provider) SetConfig(ctx context.Context, config *alertmanagertypes.Config) error {
 	return provider.configStore.Set(ctx, config)
 }
@@ -216,7 +249,7 @@ func (provider *provider) GetConfig(ctx context.Context, orgID string) (*alertma
 }
 
 func (provider *provider) SetDefaultConfig(ctx context.Context, orgID string) error {
-	config, err := alertmanagertypes.NewDefaultConfig(provider.config.Signoz.Config.Global, provider.config.Signoz.Config.Route, orgID)
+	config, err := alertmanagertypes.NewDefaultConfig(provider.config.Signoz.Global, provider.config.Signoz.Route, orgID)
 	if err != nil {
 		return err
 	}
@@ -293,8 +326,8 @@ func (provider *provider) CreateRoutePolicy(ctx context.Context, routeRequest *a
 	return &alertmanagertypes.GettableRoutePolicy{
 		PostableRoutePolicy: *routeRequest,
 		ID:                  route.ID.StringValue(),
-		CreatedAt:           &route.CreatedAt,
-		UpdatedAt:           &route.UpdatedAt,
+		CreatedAt:           route.CreatedAt,
+		UpdatedAt:           route.UpdatedAt,
 		CreatedBy:           &route.CreatedBy,
 		UpdatedBy:           &route.UpdatedBy,
 	}, nil
@@ -349,8 +382,8 @@ func (provider *provider) CreateRoutePolicies(ctx context.Context, routeRequests
 		results = append(results, &alertmanagertypes.GettableRoutePolicy{
 			PostableRoutePolicy: *routeRequest,
 			ID:                  route.ID.StringValue(),
-			CreatedAt:           &route.CreatedAt,
-			UpdatedAt:           &route.UpdatedAt,
+			CreatedAt:           route.CreatedAt,
+			UpdatedAt:           route.UpdatedAt,
 			CreatedBy:           &route.CreatedBy,
 			UpdatedBy:           &route.UpdatedBy,
 		})
@@ -389,8 +422,8 @@ func (provider *provider) GetRoutePolicyByID(ctx context.Context, routeID string
 			Tags:           route.Tags,
 		},
 		ID:        route.ID.StringValue(),
-		CreatedAt: &route.CreatedAt,
-		UpdatedAt: &route.UpdatedAt,
+		CreatedAt: route.CreatedAt,
+		UpdatedAt: route.UpdatedAt,
 		CreatedBy: &route.CreatedBy,
 		UpdatedBy: &route.UpdatedBy,
 	}, nil
@@ -423,8 +456,8 @@ func (provider *provider) GetAllRoutePolicies(ctx context.Context) ([]*alertmana
 				Tags:           route.Tags,
 			},
 			ID:        route.ID.StringValue(),
-			CreatedAt: &route.CreatedAt,
-			UpdatedAt: &route.UpdatedAt,
+			CreatedAt: route.CreatedAt,
+			UpdatedAt: route.UpdatedAt,
 			CreatedBy: &route.CreatedBy,
 			UpdatedBy: &route.UpdatedBy,
 		})
@@ -492,8 +525,8 @@ func (provider *provider) UpdateRoutePolicyByID(ctx context.Context, routeID str
 	return &alertmanagertypes.GettableRoutePolicy{
 		PostableRoutePolicy: *route,
 		ID:                  updatedRoute.ID.StringValue(),
-		CreatedAt:           &updatedRoute.CreatedAt,
-		UpdatedAt:           &updatedRoute.UpdatedAt,
+		CreatedAt:           updatedRoute.CreatedAt,
+		UpdatedAt:           updatedRoute.UpdatedAt,
 		CreatedBy:           &updatedRoute.CreatedBy,
 		UpdatedBy:           &updatedRoute.UpdatedBy,
 	}, nil

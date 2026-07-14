@@ -1,11 +1,11 @@
-import './styles.scss';
-
-import { Popover } from 'antd';
 import { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { Popover } from 'antd';
 
 import { Coordinates, PopoverPosition } from './types';
 import { useCoordinates } from './useCoordinates';
+
+import './styles.scss';
 
 export { useCoordinates };
 export type { ClickedData, Coordinates, PopoverPosition } from './types';

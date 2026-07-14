@@ -2,6 +2,7 @@ package impldashboard
 
 import (
 	"context"
+	"log/slog"
 	"slices"
 
 	"github.com/SigNoz/signoz/pkg/analytics"
@@ -9,11 +10,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/tag"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
-	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -24,9 +26,10 @@ type module struct {
 	analytics   analytics.Analytics
 	orgGetter   organization.Getter
 	queryParser queryparser.QueryParser
+	tagModule   tag.Module
 }
 
-func NewModule(store dashboardtypes.Store, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, queryParser queryparser.QueryParser) dashboard.Module {
+func NewModule(store dashboardtypes.Store, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, queryParser queryparser.QueryParser, tagModule tag.Module) dashboard.Module {
 	scopedProviderSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard")
 	return &module{
 		store:       store,
@@ -34,11 +37,12 @@ func NewModule(store dashboardtypes.Store, settings factory.ProviderSettings, an
 		analytics:   analytics,
 		orgGetter:   orgGetter,
 		queryParser: queryParser,
+		tagModule:   tagModule,
 	}
 }
 
-func (module *module) Create(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, postableDashboard dashboardtypes.PostableDashboard) (*dashboardtypes.Dashboard, error) {
-	dashboard, err := dashboardtypes.NewDashboard(orgID, createdBy, postableDashboard)
+func (module *module) Create(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, source dashboardtypes.Source, postableDashboard dashboardtypes.PostableDashboard) (*dashboardtypes.Dashboard, error) {
+	dashboard, err := dashboardtypes.NewDashboard(orgID, createdBy, source, postableDashboard)
 	if err != nil {
 		return nil, err
 	}
@@ -72,12 +76,25 @@ func (module *module) List(ctx context.Context, orgID valuer.UUID) ([]*dashboard
 		return nil, err
 	}
 
-	return dashboardtypes.NewDashboardsFromStorableDashboards(storableDashboards), nil
+	// system dashboards are hidden from the listing endpoint but still gettable by id.
+	filtered := make([]*dashboardtypes.StorableDashboard, 0, len(storableDashboards))
+	for _, storable := range storableDashboards {
+		if storable.Source == dashboardtypes.SourceSystem {
+			continue
+		}
+		filtered = append(filtered, storable)
+	}
+
+	return dashboardtypes.NewDashboardsFromStorableDashboards(filtered), nil
 }
 
 func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, updatableDashboard dashboardtypes.UpdatableDashboard, diff int) (*dashboardtypes.Dashboard, error) {
 	dashboard, err := module.Get(ctx, orgID, id)
 	if err != nil {
+		return nil, err
+	}
+
+	if err := dashboard.ErrIfNotMutable(); err != nil {
 		return nil, err
 	}
 
@@ -99,13 +116,17 @@ func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.U
 	return dashboard, nil
 }
 
-func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, role types.Role, lock bool) error {
+func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, isAdmin bool, lock bool) error {
 	dashboard, err := module.Get(ctx, orgID, id)
 	if err != nil {
 		return err
 	}
 
-	err = dashboard.LockUnlock(lock, role, updatedBy)
+	if err := dashboard.ErrIfNotLockable(); err != nil {
+		return err
+	}
+
+	err = dashboard.LockUnlock(lock, isAdmin, updatedBy)
 	if err != nil {
 		return err
 	}
@@ -128,6 +149,10 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 		return err
 	}
 
+	if err := dashboard.ErrIfNotDeletable(); err != nil {
+		return err
+	}
+
 	if dashboard.Locked {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "dashboard is locked, please unlock the dashboard to be delete it")
 	}
@@ -140,13 +165,17 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 	return nil
 }
 
-func (module *module) GetByMetricNames(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string][]map[string]string, error) {
+func (module *module) DeleteUnsafe(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
+	return module.store.Delete(ctx, orgID, id)
+}
+
+func (module *module) GetByMetricNames(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string][]dashboardtypes.DashboardPanelRef, error) {
 	dashboards, err := module.List(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
 
-	result := make(map[string][]map[string]string)
+	result := make(map[string][]dashboardtypes.DashboardPanelRef)
 
 	for _, dashboard := range dashboards {
 		dashData := dashboard.Data
@@ -170,21 +199,27 @@ func (module *module) GetByMetricNames(ctx context.Context, orgID valuer.UUID, m
 				continue
 			}
 
-			// Track which metrics were found in this widget
+			// Track which metrics were found in this widget, along with the
+			// group-by and filter labels referenced for each metric. CH/PromQL
+			// paths are presence-only and leave the label sets empty.
 			foundMetrics := make(map[string]bool)
+			groupByByMetric := make(map[string][]string)
+			filterByByMetric := make(map[string][]string)
 
 			// Check all three query types
-			module.checkBuilderQueriesForMetricNames(query, metricNames, foundMetrics)
+			module.checkBuilderQueriesForMetricNames(query, metricNames, foundMetrics, groupByByMetric, filterByByMetric)
 			module.checkClickHouseQueriesForMetricNames(ctx, query, metricNames, foundMetrics)
 			module.checkPromQLQueriesForMetricNames(ctx, query, metricNames, foundMetrics)
 
 			// Add widget to results for all found metrics
 			for metricName := range foundMetrics {
-				result[metricName] = append(result[metricName], map[string]string{
-					"dashboard_id":   dashboard.ID,
-					"widget_name":    widgetTitle,
-					"widget_id":      widgetID,
-					"dashboard_name": dashTitle,
+				result[metricName] = append(result[metricName], dashboardtypes.DashboardPanelRef{
+					DashboardID:   dashboard.ID,
+					DashboardName: dashTitle,
+					PanelID:       widgetID,
+					PanelName:     widgetTitle,
+					GroupBy:       groupByByMetric[metricName],
+					FilterBy:      filterByByMetric[metricName],
 				})
 			}
 		}
@@ -202,11 +237,7 @@ func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[strin
 	return dashboardtypes.NewStatsFromStorableDashboards(dashboards), nil
 }
 
-func (module *module) MustGetTypeables() []authtypes.Typeable {
-	return []authtypes.Typeable{dashboardtypes.TypeableMetaResourceDashboard, dashboardtypes.TypeableMetaResourcesDashboards}
-}
-
-// not supported
+// CreatePublic is not supported.
 func (module *module) CreatePublic(ctx context.Context, orgID valuer.UUID, publicDashboard *dashboardtypes.PublicDashboard) error {
 	return errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
 }
@@ -219,11 +250,19 @@ func (module *module) GetDashboardByPublicID(_ context.Context, _ valuer.UUID) (
 	return nil, errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
 }
 
-func (module *module) GetPublicWidgetQueryRange(context.Context, valuer.UUID, uint64, uint64, uint64) (*querybuildertypesv5.QueryRangeResponse, error) {
+func (module *module) GetPublicWidgetQueryRange(context.Context, valuer.UUID, uint64, uint64, uint64) (*qbtypes.QueryRangeResponse, error) {
 	return nil, errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
 }
 
-func (module *module) GetPublicDashboardSelectorsAndOrg(_ context.Context, _ valuer.UUID, _ []*types.Organization) ([]authtypes.Selector, valuer.UUID, error) {
+func (module *module) GetDashboardByPublicIDV2(_ context.Context, _ valuer.UUID) (*dashboardtypes.DashboardV2, error) {
+	return nil, errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
+}
+
+func (module *module) GetPublicWidgetQueryRangeV2(context.Context, valuer.UUID, string, string, string) (*qbtypes.QueryRangeResponse, error) {
+	return nil, errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
+}
+
+func (module *module) GetPublicDashboardSelectorsAndOrg(_ context.Context, _ valuer.UUID, _ []*types.Organization) ([]coretypes.Selector, valuer.UUID, error) {
 	return nil, valuer.UUID{}, errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
 }
 
@@ -235,8 +274,11 @@ func (module *module) DeletePublic(_ context.Context, _ valuer.UUID, _ valuer.UU
 	return errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
 }
 
-// checkBuilderQueriesForMetricNames checks builder.queryData[] for aggregations[].metricName
-func (module *module) checkBuilderQueriesForMetricNames(query map[string]interface{}, metricNames []string, foundMetrics map[string]bool) {
+// checkBuilderQueriesForMetricNames checks builder.queryData[] for aggregations[].metricName.
+// For each queryData entry whose dataSource is "metrics" and that references a
+// target metric, it accumulates (deduped) the group-by and filter labels used
+// by that entry into groupByByMetric/filterByByMetric, keyed by metric name.
+func (module *module) checkBuilderQueriesForMetricNames(query map[string]interface{}, metricNames []string, foundMetrics map[string]bool, groupByByMetric, filterByByMetric map[string][]string) {
 	builder, ok := query["builder"].(map[string]interface{})
 	if !ok {
 		return
@@ -264,6 +306,7 @@ func (module *module) checkBuilderQueriesForMetricNames(query map[string]interfa
 			continue
 		}
 
+		entryMetrics := make([]string, 0, len(aggregations))
 		for _, agg := range aggregations {
 			aggMap, ok := agg.(map[string]interface{})
 			if !ok {
@@ -277,12 +320,101 @@ func (module *module) checkBuilderQueriesForMetricNames(query map[string]interfa
 
 			if slices.Contains(metricNames, metricName) {
 				foundMetrics[metricName] = true
+				entryMetrics = append(entryMetrics, metricName)
 			}
+		}
+
+		if len(entryMetrics) == 0 {
+			continue
+		}
+
+		groupBy := extractBuilderGroupByLabels(data)
+		filterBy := extractBuilderFilterLabels(data)
+		for _, metricName := range entryMetrics {
+			groupByByMetric[metricName] = appendDedup(groupByByMetric[metricName], groupBy...)
+			filterByByMetric[metricName] = appendDedup(filterByByMetric[metricName], filterBy...)
 		}
 	}
 }
 
-// checkClickHouseQueriesForMetricNames checks clickhouse_sql[] array for metric names in query strings
+func extractBuilderGroupByLabels(data map[string]interface{}) []string {
+	gb, ok := data["groupBy"].([]interface{})
+	if !ok {
+		return nil
+	}
+
+	out := make([]string, 0, len(gb))
+	for _, g := range gb {
+		gm, ok := g.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if name, ok := gm["name"].(string); ok && name != "" {
+			out = append(out, name)
+			continue
+		}
+		// v3: groupBy[].key may be a plain string ...
+		if key, ok := gm["key"].(string); ok && key != "" {
+			out = append(out, key)
+			continue
+		}
+		// ... or a nested object {key: "<name>"}.
+		if km, ok := gm["key"].(map[string]interface{}); ok {
+			if key, ok := km["key"].(string); ok && key != "" {
+				out = append(out, key)
+			}
+		}
+	}
+	return out
+}
+
+func extractBuilderFilterLabels(data map[string]interface{}) []string {
+	out := []string{}
+
+	// v5: filter.expression
+	if f, ok := data["filter"].(map[string]interface{}); ok {
+		if expr, ok := f["expression"].(string); ok && expr != "" {
+			for _, sel := range querybuilder.QueryStringToKeysSelectors(expr) {
+				if sel != nil && sel.Name != "" {
+					out = append(out, sel.Name)
+				}
+			}
+		}
+	}
+
+	// v3: filters.items[].key.key
+	if f, ok := data["filters"].(map[string]interface{}); ok {
+		if items, ok := f["items"].([]interface{}); ok {
+			for _, it := range items {
+				im, ok := it.(map[string]interface{})
+				if !ok {
+					continue
+				}
+				km, ok := im["key"].(map[string]interface{})
+				if !ok {
+					continue
+				}
+				if key, ok := km["key"].(string); ok && key != "" {
+					out = append(out, key)
+				}
+			}
+		}
+	}
+
+	return out
+}
+
+func appendDedup(dst []string, values ...string) []string {
+	for _, v := range values {
+		if v == "" || slices.Contains(dst, v) {
+			continue
+		}
+		dst = append(dst, v)
+	}
+	return dst
+}
+
+// checkClickHouseQueriesForMetricNames checks clickhouse_sql[] array for metric names in query strings.
 func (module *module) checkClickHouseQueriesForMetricNames(ctx context.Context, query map[string]interface{}, metricNames []string, foundMetrics map[string]bool) {
 	clickhouseSQL, ok := query["clickhouse_sql"].([]interface{})
 	if !ok {
@@ -304,7 +436,7 @@ func (module *module) checkClickHouseQueriesForMetricNames(ctx context.Context, 
 		result, err := module.queryParser.AnalyzeQueryFilter(ctx, qbtypes.QueryTypeClickHouseSQL, queryStr)
 		if err != nil {
 			// Log warning and continue - parsing errors shouldn't break the search
-			module.settings.Logger().WarnContext(ctx, "failed to parse ClickHouse query", "query", queryStr, "error", err)
+			module.settings.Logger().WarnContext(ctx, "failed to parse ClickHouse query", slog.String("query", queryStr), errors.Attr(err))
 			continue
 		}
 
@@ -317,7 +449,7 @@ func (module *module) checkClickHouseQueriesForMetricNames(ctx context.Context, 
 	}
 }
 
-// checkPromQLQueriesForMetricNames checks promql[] array for metric names in query strings
+// checkPromQLQueriesForMetricNames checks promql[] array for metric names in query strings.
 func (module *module) checkPromQLQueriesForMetricNames(ctx context.Context, query map[string]interface{}, metricNames []string, foundMetrics map[string]bool) {
 	promQL, ok := query["promql"].([]interface{})
 	if !ok {
@@ -339,7 +471,7 @@ func (module *module) checkPromQLQueriesForMetricNames(ctx context.Context, quer
 		result, err := module.queryParser.AnalyzeQueryFilter(ctx, qbtypes.QueryTypePromQL, queryStr)
 		if err != nil {
 			// Log warning and continue - parsing errors shouldn't break the search
-			module.settings.Logger().WarnContext(ctx, "failed to parse PromQL query", "query", queryStr, "error", err)
+			module.settings.Logger().WarnContext(ctx, "failed to parse PromQL query", slog.String("query", queryStr), errors.Attr(err))
 			continue
 		}
 

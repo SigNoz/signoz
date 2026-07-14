@@ -1,6 +1,7 @@
-import './styles.scss';
-
-import { toast } from '@signozhq/sonner';
+import { useMemo, useState } from 'react';
+import { useQuery, useQueryClient } from 'react-query';
+import { useHistory } from 'react-router-dom';
+import { toast } from '@signozhq/ui/sonner';
 import getAllChannels from 'api/channels/getAll';
 import { GetRoutingPoliciesResponse } from 'api/routingPolicies/getRoutingPolicies';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -10,9 +11,6 @@ import { useGetRoutingPolicies } from 'hooks/routingPolicies/useGetRoutingPolici
 import { useUpdateRoutingPolicy } from 'hooks/routingPolicies/useUpdateRoutingPolicy';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { useMemo, useState } from 'react';
-import { useQuery, useQueryClient } from 'react-query';
-import { useHistory } from 'react-router-dom';
 import { SuccessResponseV2 } from 'types/api';
 import { Channels } from 'types/api/channels/getAll';
 import APIError from 'types/api/error';
@@ -29,6 +27,8 @@ import {
 	mapRoutingPolicyToUpdateApiPayload,
 } from './utils';
 
+import './styles.scss';
+
 function useRoutingPolicies(): UseRoutingPoliciesReturn {
 	const queryClient = useQueryClient();
 	const urlQuery = useUrlQuery();
@@ -37,17 +37,13 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 	// Local state
 	const [searchTerm, setSearchTerm] = useState(urlQuery.get('search') || '');
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-	const [
-		policyDetailsModalState,
-		setPolicyDetailsModalState,
-	] = useState<PolicyDetailsModalState>({
-		mode: null,
-		isOpen: false,
-	});
-	const [
-		selectedRoutingPolicy,
-		setSelectedRoutingPolicy,
-	] = useState<RoutingPolicy | null>(null);
+	const [policyDetailsModalState, setPolicyDetailsModalState] =
+		useState<PolicyDetailsModalState>({
+			mode: null,
+			isOpen: false,
+		});
+	const [selectedRoutingPolicy, setSelectedRoutingPolicy] =
+		useState<RoutingPolicy | null>(null);
 
 	const updateUrlWithSearch = useDebouncedFn((value) => {
 		const searchValue = value as string;
@@ -133,16 +129,12 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 	};
 
 	// Create Routing Policy
-	const {
-		mutate: createRoutingPolicy,
-		isLoading: isCreating,
-	} = useCreateRoutingPolicy();
+	const { mutate: createRoutingPolicy, isLoading: isCreating } =
+		useCreateRoutingPolicy();
 
 	// Update Routing Policy
-	const {
-		mutate: updateRoutingPolicy,
-		isLoading: isUpdating,
-	} = useUpdateRoutingPolicy();
+	const { mutate: updateRoutingPolicy, isLoading: isUpdating } =
+		useUpdateRoutingPolicy();
 
 	// Policy Details Modal Action (Create or Update)
 	const handlePolicyDetailsModalAction = (
@@ -212,10 +204,8 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 	}, [policyDetailsModalState.mode, isCreating, isUpdating]);
 
 	// Delete Routing Policy
-	const {
-		mutate: deleteRoutingPolicy,
-		isLoading: isDeletingRoutingPolicy,
-	} = useDeleteRoutingPolicy();
+	const { mutate: deleteRoutingPolicy, isLoading: isDeletingRoutingPolicy } =
+		useDeleteRoutingPolicy();
 
 	const handleDeleteRoutingPolicy = (): void => {
 		if (!selectedRoutingPolicy) {

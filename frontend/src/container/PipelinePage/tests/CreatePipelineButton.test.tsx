@@ -1,16 +1,15 @@
-import { render } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import logEvent from 'api/common/logEvent';
 import { I18nextProvider } from 'react-i18next';
+// eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
+import { render } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { logEventMock } from '__tests__/logEventMock';
 import i18n from 'ReactI18';
 import store from 'store';
 
 import CreatePipelineButton from '../Layouts/Pipeline/CreatePipelineButton';
 import { pipelineApiResponseMockData } from '../mocks/pipeline';
-
-jest.mock('api/common/logEvent');
 
 describe('PipelinePage container test', () => {
 	it('should render CreatePipelineButton section', async () => {
@@ -52,9 +51,12 @@ describe('PipelinePage container test', () => {
 		expect(editButton).toBeInTheDocument();
 		await userEvent.click(editButton);
 
-		expect(logEvent).toBeCalledWith('Logs: Pipelines: Entered Edit Mode', {
-			source: 'signoz-ui',
-		});
+		expect(logEventMock).toHaveBeenCalledWith(
+			'Logs: Pipelines: Entered Edit Mode',
+			{
+				source: 'signoz-ui',
+			},
+		);
 	});
 
 	it('CreatePipelineButton - add new mode & tracking', async () => {
@@ -77,8 +79,11 @@ describe('PipelinePage container test', () => {
 		expect(editButton).toBeInTheDocument();
 		await userEvent.click(editButton);
 
-		expect(logEvent).toBeCalledWith('Logs: Pipelines: Clicked Add New Pipeline', {
-			source: 'signoz-ui',
-		});
+		expect(logEventMock).toHaveBeenCalledWith(
+			'Logs: Pipelines: Clicked Add New Pipeline',
+			{
+				source: 'signoz-ui',
+			},
+		);
 	});
 });

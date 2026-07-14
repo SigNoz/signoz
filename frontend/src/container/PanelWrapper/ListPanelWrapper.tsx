@@ -8,11 +8,12 @@ function ListPanelWrapper({
 	widget,
 	queryResponse,
 	setRequestData,
+	onColumnWidthsChange,
+	hidePagination,
 }: PanelWrapperProps): JSX.Element {
 	const dataSource = widget.query.builder?.queryData[0]?.dataSource;
 
 	if (!setRequestData) {
-		// eslint-disable-next-line react/jsx-no-useless-fragment
 		return <></>;
 	}
 
@@ -22,6 +23,8 @@ function ListPanelWrapper({
 				widget={widget}
 				queryResponse={queryResponse}
 				setRequestData={setRequestData}
+				onColumnWidthsChange={onColumnWidthsChange}
+				hidePagination={hidePagination}
 			/>
 		);
 	}
@@ -30,6 +33,8 @@ function ListPanelWrapper({
 			widget={widget}
 			queryResponse={queryResponse}
 			setRequestData={setRequestData}
+			onColumnWidthsChange={onColumnWidthsChange}
+			hidePagination={hidePagination}
 		/>
 	);
 }

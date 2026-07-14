@@ -1,3 +1,7 @@
+import { useCallback, useEffect, useMemo, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
+import { useDispatch, useSelector } from 'react-redux';
+import { useHistory, useLocation } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
 import { Card } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -10,9 +14,6 @@ import { Button } from 'container/MetricsApplication/Tabs/styles';
 import { useGraphClickHandler } from 'container/MetricsApplication/Tabs/util';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useHistory, useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
@@ -88,12 +89,9 @@ export default function OverviewRightPanelGraph({
 	const onGraphClickHandler = useGraphClickHandler(handleSetTimeStamp);
 
 	const handleGraphClick = useCallback(
-		(type: string): OnClickPluginOpts['onClick'] => (
-			xValue,
-			yValue,
-			mouseX,
-			mouseY,
-		): Promise<void> => onGraphClickHandler(xValue, yValue, mouseX, mouseY, type),
+		(type: string): OnClickPluginOpts['onClick'] =>
+			(xValue, yValue, mouseX, mouseY): Promise<void> =>
+				onGraphClickHandler(xValue, yValue, mouseX, mouseY, type),
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[handleSetTimeStamp],
 	);

@@ -1,11 +1,11 @@
+import { useMemo } from 'react';
+import { UseQueryResult } from 'react-query';
 import {
 	ErrorTraceData,
 	FunnelOverviewPayload,
 	SlowTraceData,
 } from 'api/traceFunnels';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
-import { useMemo } from 'react';
-import { UseQueryResult } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { FunnelStepData } from 'types/api/traceFunnels';
 
@@ -49,10 +49,11 @@ function FunnelTopTracesTable({
 		[startTime, endTime, stepAOrder, stepBOrder, steps],
 	);
 
-	const { data: response, isLoading, isFetching } = useQueryHook(
-		funnelId,
-		payload,
-	);
+	const {
+		data: response,
+		isLoading,
+		isFetching,
+	} = useQueryHook(funnelId, payload);
 
 	const data = useMemo(() => {
 		if (!response?.payload?.data) {

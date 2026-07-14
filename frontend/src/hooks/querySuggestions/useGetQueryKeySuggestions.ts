@@ -1,7 +1,7 @@
-import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
-import { AxiosError, AxiosResponse } from 'axios';
 import { useMemo } from 'react';
 import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
+import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
+import { AxiosError, AxiosResponse } from 'axios';
 import {
 	QueryKeyRequestProps,
 	QueryKeySuggestionsResponseProps,

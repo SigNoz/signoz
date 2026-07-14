@@ -1,0 +1,201 @@
+import { toast } from '@signozhq/ui/sonner';
+import { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
+import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
+import { rest, server } from 'mocks-server/server';
+import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+
+import KeysTab from '../KeysTab';
+
+jest.mock('lib/authz/components/AuthZTooltip/AuthZTooltip', () => ({
+	__esModule: true,
+	default: ({
+		children,
+	}: {
+		children: React.ReactElement;
+	}): React.ReactElement => children,
+}));
+
+jest.mock('@signozhq/ui/sonner', () => ({
+	...jest.requireActual('@signozhq/ui/sonner'),
+	toast: { success: jest.fn(), error: jest.fn() },
+}));
+
+const mockToast = jest.mocked(toast);
+
+const SA_KEY_ENDPOINT = '*/api/v1/service_accounts/sa-1/keys/:fid';
+
+const keys: ServiceaccounttypesGettableFactorAPIKeyDTO[] = [
+	{
+		id: 'key-1',
+		name: 'Production Key',
+		expiresAt: 0,
+		lastObservedAt: null as unknown as string,
+		serviceAccountId: 'sa-1',
+	},
+	{
+		id: 'key-2',
+		name: 'Staging Key',
+		expiresAt: 1924948800, // 2030-12-31 12:00 UTC (noon to avoid timezone issues)
+		lastObservedAt: '2026-03-10T10:00:00Z',
+		serviceAccountId: 'sa-1',
+	},
+];
+
+const defaultProps = {
+	keys,
+	isLoading: false,
+	isDisabled: false,
+	currentPage: 1,
+	pageSize: 10,
+	onPageChange: jest.fn(),
+};
+
+function renderKeysTab(
+	props: Partial<typeof defaultProps> = {},
+	searchParams: Record<string, string> = { account: 'sa-1' },
+): ReturnType<typeof render> {
+	return render(
+		<NuqsTestingAdapter searchParams={searchParams} hasMemory>
+			<KeysTab {...defaultProps} {...props} />
+		</NuqsTestingAdapter>,
+	);
+}
+
+describe('KeysTab', () => {
+	beforeEach(() => {
+		jest.clearAllMocks();
+		server.use(
+			rest.delete(SA_KEY_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
+			),
+			setupAuthzAdmin(),
+		);
+	});
+
+	afterEach(() => {
+		server.resetHandlers();
+	});
+
+	it('renders loading state', async () => {
+		renderKeysTab({ isLoading: true });
+		// Wait for authz to complete, then check for skeleton
+		await waitFor(() => {
+			expect(document.querySelector('.ant-skeleton')).toBeInTheDocument();
+		});
+	});
+
+	it('renders empty state when no keys and clicking add sets add-key param', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const onUrlUpdate = jest.fn();
+		render(
+			<NuqsTestingAdapter
+				searchParams={{ account: 'sa-1' }}
+				onUrlUpdate={onUrlUpdate}
+			>
+				<KeysTab {...defaultProps} keys={[]} />
+			</NuqsTestingAdapter>,
+		);
+
+		await expect(
+			screen.findByText(/No keys. Start by creating one./i),
+		).resolves.toBeInTheDocument();
+		const addBtn = screen.getByRole('button', { name: /\+ Add your first key/i });
+		await user.click(addBtn);
+		expect(onUrlUpdate).toHaveBeenCalledWith(
+			expect.objectContaining({
+				queryString: expect.stringContaining('add-key=true'),
+			}),
+		);
+	});
+
+	it('renders table with keys', async () => {
+		renderKeysTab();
+
+		await expect(
+			screen.findByText('Production Key'),
+		).resolves.toBeInTheDocument();
+		expect(screen.getByText('Staging Key')).toBeInTheDocument();
+		expect(screen.getByText('Never')).toBeInTheDocument();
+		expect(screen.getByText('Dec 31, 2030')).toBeInTheDocument();
+	});
+
+	it('clicking a row sets the edit-key URL param', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const onUrlUpdate = jest.fn();
+
+		render(
+			<NuqsTestingAdapter onUrlUpdate={onUrlUpdate}>
+				<KeysTab {...defaultProps} />
+			</NuqsTestingAdapter>,
+		);
+
+		const row = (await screen.findByText('Production Key')).closest('tr');
+		if (!row) {
+			throw new Error('Row not found');
+		}
+
+		await user.click(row);
+
+		expect(onUrlUpdate).toHaveBeenCalledWith(
+			expect.objectContaining({
+				queryString: expect.stringContaining('edit-key=key-1'),
+			}),
+		);
+	});
+
+	it('clicking revoke icon sets revoke-key URL param', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const onUrlUpdate = jest.fn();
+
+		render(
+			<NuqsTestingAdapter onUrlUpdate={onUrlUpdate}>
+				<KeysTab {...defaultProps} />
+			</NuqsTestingAdapter>,
+		);
+
+		// Wait for authz to complete and table to render
+		await screen.findByText('Production Key');
+		const revokeBtns = screen
+			.getAllByRole('button')
+			.filter((btn) => btn.className.includes('keys-tab__revoke-btn'));
+		await user.click(revokeBtns[0]);
+
+		expect(onUrlUpdate).toHaveBeenCalledWith(
+			expect.objectContaining({
+				queryString: expect.stringContaining('revoke-key=key-1'),
+			}),
+		);
+	});
+
+	it('handles successful key revocation via RevokeKeyModal', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+		renderKeysTab();
+
+		// Wait for authz to complete and table to render
+		await screen.findByText('Production Key');
+		const revokeBtns = screen
+			.getAllByRole('button')
+			.filter((btn) => btn.className.includes('keys-tab__revoke-btn'));
+		await user.click(revokeBtns[0]);
+
+		const confirmBtn = await screen.findByRole('button', { name: /Revoke Key/i });
+		await user.click(confirmBtn);
+
+		await waitFor(() => {
+			expect(mockToast.success).toHaveBeenCalledWith('Key revoked successfully');
+		});
+	});
+
+	it('disables actions when isDisabled is true', async () => {
+		renderKeysTab({ isDisabled: true });
+
+		// Wait for authz to complete and table to render
+		await screen.findByText('Production Key');
+		const revokeBtns = screen
+			.getAllByRole('button')
+			.filter((btn) => btn.className.includes('keys-tab__revoke-btn'));
+		revokeBtns.forEach((btn) => expect(btn).toBeDisabled());
+	});
+});

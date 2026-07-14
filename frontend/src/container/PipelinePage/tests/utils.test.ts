@@ -12,53 +12,53 @@ import {
 } from '../PipelineListsView/utils';
 
 describe('Utils testing of Pipeline Page', () => {
-	test('it should be check form field of add pipeline', () => {
-		expect(pipelineFields.length).toBe(3);
+	it('should be check form field of add pipeline', () => {
+		expect(pipelineFields).toHaveLength(3);
 		expect(pipelineFields.length).toBeGreaterThan(1);
 	});
 
-	test('it should be check processor types field of add pipeline', () => {
+	it('should be check processor types field of add pipeline', () => {
 		expect(processorTypes.length).toBeGreaterThan(1);
 	});
 
-	test('it should check form field of add processor', () => {
+	it('should check form field of add processor', () => {
 		Object.keys(processorFields).forEach((key) => {
 			expect(processorFields[key].length).toBeGreaterThan(1);
 		});
 	});
 
-	test('it should be check data length of pipeline', () => {
-		expect(pipelineMockData.length).toBe(2);
+	it('should be check data length of pipeline', () => {
+		expect(pipelineMockData).toHaveLength(2);
 		expect(pipelineMockData.length).toBeGreaterThan(0);
 	});
 
-	test('it should be return filtered data and perform deletion', () => {
+	it('should be return filtered data and perform deletion', () => {
 		const filterData = getElementFromArray(
 			pipelineMockData,
 			pipelineMockData[0],
 			'id',
 		);
-		expect(pipelineMockData).not.toEqual(filterData);
-		expect(pipelineMockData[0]).not.toEqual(filterData);
+		expect(pipelineMockData).not.toStrictEqual(filterData);
+		expect(pipelineMockData[0]).not.toStrictEqual(filterData);
 	});
 
-	test('it should be return index data and perform deletion', () => {
+	it('should be return index data and perform deletion', () => {
 		const findRecordIndex = getRecordIndex(
 			pipelineMockData,
 			pipelineMockData[0],
 			'id',
 		);
-		expect(pipelineMockData).not.toEqual(findRecordIndex);
-		expect(pipelineMockData[0]).not.toEqual(findRecordIndex);
+		expect(pipelineMockData).not.toStrictEqual(findRecordIndex);
+		expect(pipelineMockData[0]).not.toStrictEqual(findRecordIndex);
 	});
 
-	test('it should be return modified column data', () => {
+	it('should be return modified column data', () => {
 		const columnData = getTableColumn(processorColumns);
-		expect(processorColumns).not.toEqual(columnData);
-		expect(processorColumns.length).toEqual(columnData.length);
+		expect(processorColumns).not.toStrictEqual(columnData);
+		expect(processorColumns).toHaveLength(columnData.length);
 	});
 
-	test('it should be return modified column data', () => {
+	it('should be return modified column data', () => {
 		const findRecordIndex = getRecordIndex(
 			pipelineMockData,
 			pipelineMockData[0],
@@ -77,12 +77,12 @@ describe('Utils testing of Pipeline Page', () => {
 			'name',
 			updatedPipelineData,
 		);
-		expect(pipelineMockData).not.toEqual(editedData);
-		expect(pipelineMockData.length).toEqual(editedData.length);
-		expect(pipelineMockData[0].name).not.toEqual(editedData[0].name);
-		expect(pipelineMockData[0].description).not.toEqual(
+		expect(pipelineMockData).not.toStrictEqual(editedData);
+		expect(pipelineMockData).toHaveLength(editedData.length);
+		expect(pipelineMockData[0].name).not.toStrictEqual(editedData[0].name);
+		expect(pipelineMockData[0].description).not.toStrictEqual(
 			editedData[0].description,
 		);
-		expect(pipelineMockData[0].tags).not.toEqual(editedData[0].tags);
+		expect(pipelineMockData[0].tags).not.toStrictEqual(editedData[0].tags);
 	});
 });

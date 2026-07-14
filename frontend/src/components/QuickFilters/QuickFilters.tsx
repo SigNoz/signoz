@@ -1,10 +1,11 @@
-import './QuickFilters.styles.scss';
-
+import { useMemo, useState } from 'react';
 import {
-	FilterOutlined,
-	SyncOutlined,
-	VerticalAlignTopOutlined,
-} from '@ant-design/icons';
+	ArrowUpToLine,
+	Filter,
+	Frown,
+	RefreshCw,
+	Settings2 as SettingsIcon,
+} from '@signozhq/icons';
 import {
 	Combobox,
 	ComboboxCommand,
@@ -12,8 +13,10 @@ import {
 	ComboboxItem,
 	ComboboxList,
 	ComboboxTrigger,
-} from '@signozhq/combobox';
-import { Skeleton, Switch, Tooltip, Typography } from 'antd';
+} from '@signozhq/ui/combobox';
+import { Skeleton, Tooltip } from 'antd';
+import { Switch } from '@signozhq/ui/switch';
+import { Typography } from '@signozhq/ui/typography';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
@@ -24,9 +27,7 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useApiMonitoringParams } from 'container/ApiMonitoring/queryParams';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { isFunction, isNull } from 'lodash-es';
-import { Frown, Settings2 as SettingsIcon } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { useMemo, useState } from 'react';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { USER_ROLES } from 'types/roles';
 
@@ -37,6 +38,8 @@ import useFilterConfig from './hooks/useFilterConfig';
 import AnnouncementTooltip from './QuickFiltersSettings/AnnouncementTooltip';
 import QuickFiltersSettings from './QuickFiltersSettings/QuickFiltersSettings';
 import { FiltersType, IQuickFiltersProps, QuickFiltersSource } from './types';
+
+import './QuickFilters.styles.scss';
 
 export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 	const {
@@ -176,7 +179,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 	// Helpers to reduce cognitive complexity in main render
 	const renderLeftActions = (): JSX.Element => (
 		<section className="left-actions">
-			<FilterOutlined />
+			<Filter size="md" />
 			<Typography.Text className="text">
 				{displayedQueryName ? 'Filters for' : 'Filters'}
 			</Typography.Text>
@@ -200,7 +203,6 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 												setOpen(false);
 											}}
 											isSelected={validQueryIndex === option.value}
-											showCheck={false}
 										>
 											{option.label}
 										</ComboboxItem>
@@ -228,14 +230,15 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		<section className="right-actions">
 			<Tooltip title="Reset All">
 				<div className="right-action-icon-container">
-					<SyncOutlined className="sync-icon" onClick={handleReset} />
+					<RefreshCw className="sync-icon" size="md" onClick={handleReset} />
 				</div>
 			</Tooltip>
 			{showFilterCollapse && (
 				<Tooltip title="Collapse Filters">
 					<div className="right-action-icon-container">
-						<VerticalAlignTopOutlined
-							rotate={270}
+						<ArrowUpToLine
+							style={{ rotate: '270deg', cursor: 'pointer' }}
+							size="md"
 							onClick={handleFilterVisibilityChange}
 						/>
 					</div>
@@ -279,14 +282,13 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 				<div className="api-quick-filters-header">
 					<Typography.Text>Show IP addresses</Typography.Text>
 					<Switch
-						size="small"
 						style={{ marginLeft: 'auto' }}
-						checked={showIP ?? true}
-						onClick={(): void => {
+						value={showIP ?? true}
+						onChange={(checked): void => {
 							logEvent('API Monitoring: Show IP addresses clicked', {
-								showIP: !(showIP ?? true),
+								showIP: checked,
 							});
-							setParams({ showIP });
+							setParams({ showIP: checked });
 						}}
 					/>
 				</div>
@@ -303,15 +305,9 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 								/>
 							);
 						case FiltersType.DURATION:
-							return (
-								<Duration
-									filter={filter}
-									onFilterChange={onFilterChange}
-									source={source}
-								/>
-							);
+							return <Duration filter={filter} onFilterChange={onFilterChange} />;
 						case FiltersType.SLIDER:
-							return <Slider filter={filter} />;
+							return <Slider />;
 						// eslint-disable-next-line sonarjs/no-duplicated-branches
 						default:
 							return (

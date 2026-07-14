@@ -1,0 +1,195 @@
+import { sentryVitePlugin } from '@sentry/vite-plugin';
+import react from '@vitejs/plugin-react';
+import { resolve } from 'path';
+import { visualizer } from 'rollup-plugin-visualizer';
+import type { Plugin, TransformResult, UserConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
+import vitePluginChecker from 'vite-plugin-checker';
+import viteCompression from 'vite-plugin-compression';
+import { ViteImageOptimizer } from 'vite-plugin-image-optimizer';
+import tsconfigPaths from 'vite-tsconfig-paths';
+import type {
+	Appcues,
+	Posthog,
+	Pylon,
+	Sentry,
+	WebSettings,
+} from 'types/generated/webSettings';
+
+// In dev the Go backend is not involved, so replace the [[.BaseHref]] placeholder
+// with the configured base path so relative assets resolve correctly from the Vite dev server.
+// Set VITE_BASE_PATH env var to test with a custom base path (e.g., /signoz/).
+function devBasePathPlugin(basePath: string): Plugin {
+	return {
+		name: 'dev-base-path',
+		apply: 'serve',
+		transformIndexHtml(html): string {
+			return html.replaceAll('[[.BaseHref]]', basePath);
+		},
+	};
+}
+
+function devBootDataPlugin(env: ImportMetaEnv): Plugin {
+	return {
+		name: 'dev-boot-data',
+		apply: 'serve',
+		transformIndexHtml(html): string {
+			const settings = {
+				posthog: {
+					enabled: env.VITE_POSTHOG_ENABLED === 'true',
+					apiHost: env.VITE_POSTHOG_API_HOST || '',
+					key: env.VITE_POSTHOG_KEY || '',
+					uiHost: env.VITE_POSTHOG_UI_HOST || '',
+				} satisfies Required<Posthog>,
+				appcues: {
+					enabled: env.VITE_APPCUES_ENABLED === 'true',
+					appId: env.VITE_APPCUES_APP_ID || '',
+				} satisfies Required<Appcues>,
+				sentry: {
+					enabled: env.VITE_SENTRY_ENABLED === 'true',
+					dsn: env.VITE_SENTRY_DSN || '',
+					tunnel: env.VITE_SENTRY_TUNNEL || '',
+				} satisfies Required<Sentry>,
+				pylon: {
+					enabled: env.VITE_PYLON_ENABLED === 'true',
+					appId: env.VITE_PYLON_APP_ID || '',
+					identitySecret: env.VITE_PYLON_IDENTITY_SECRET || '',
+				} satisfies Required<Pylon>,
+			} satisfies Required<WebSettings>;
+			return html.replaceAll('[[.Settings]]', JSON.stringify(settings));
+		},
+	};
+}
+
+function rawMarkdownPlugin(): Plugin {
+	return {
+		name: 'raw-markdown',
+		transform(code, id): TransformResult | undefined {
+			if (!id.endsWith('.md')) {
+				return undefined;
+			}
+			return {
+				code: `export default ${JSON.stringify(code)};`,
+				map: null,
+			};
+		},
+	};
+}
+
+export default defineConfig(({ mode }): UserConfig => {
+	const env = loadEnv(mode, process.cwd(), '') as ImportMetaEnv;
+	// Base path for serving the app (e.g., '/signoz/'). Defaults to '/'.
+	const basePath = env.VITE_BASE_PATH || '/';
+
+	const plugins = [
+		tsconfigPaths(),
+		rawMarkdownPlugin(),
+		devBasePathPlugin(basePath),
+		devBootDataPlugin(env),
+		react(),
+		vitePluginChecker({
+			typescript: true,
+			// this doubles the build tim
+			// disabled to use Biome/tsgo (in the future) as alternative
+			enableBuild: false,
+		}),
+	];
+
+	if (env.VITE_SENTRY_AUTH_TOKEN) {
+		if (!env.VITE_SENTRY_ORG || !env.VITE_SENTRY_PROJECT_ID) {
+			throw new Error(
+				'VITE_SENTRY_ORG and VITE_SENTRY_PROJECT_ID must be defined when VITE_SENTRY_AUTH_TOKEN is present.',
+			);
+		}
+		// Refuse to upload sourcemaps without an explicit version.
+		if (!env.VITE_VERSION) {
+			throw new Error(
+				'VITE_VERSION must be set to upload sourcemaps to Sentry; refusing to upload without a matching release.',
+			);
+		}
+		plugins.push(
+			sentryVitePlugin({
+				authToken: env.VITE_SENTRY_AUTH_TOKEN,
+				org: env.VITE_SENTRY_ORG,
+				project: env.VITE_SENTRY_PROJECT_ID,
+				// Pin the sourcemap-upload release to the same value injected as
+				// process.env.VERSION so uploaded sourcemaps resolve. Ref: platform-pod#2393
+				release: { name: env.VITE_VERSION, setCommits: { auto: true } },
+			}),
+		);
+	}
+
+	if (env.BUNDLE_ANALYSER === 'true') {
+		plugins.push(
+			visualizer({
+				open: true,
+				gzipSize: true,
+				brotliSize: true,
+			}),
+		);
+	}
+
+	if (mode === 'production') {
+		plugins.push(
+			ViteImageOptimizer({
+				jpeg: { quality: 80 },
+				jpg: { quality: 80 },
+			}),
+		);
+		plugins.push(viteCompression());
+	}
+
+	return {
+		plugins,
+		resolve: {
+			alias: {
+				'@': resolve(__dirname, './src'),
+				utils: resolve(__dirname, './src/utils'),
+				types: resolve(__dirname, './src/types'),
+				constants: resolve(__dirname, './src/constants'),
+				parser: resolve(__dirname, './src/parser'),
+				providers: resolve(__dirname, './src/providers'),
+				lib: resolve(__dirname, './src/lib'),
+			},
+		},
+		css: {
+			preprocessorOptions: {
+				less: {
+					javascriptEnabled: true,
+				},
+			},
+			modules: {
+				localsConvention: 'camelCaseOnly',
+			},
+		},
+		define: {
+			// TODO: Remove this in favor of import.meta.env
+			'process.env.NODE_ENV': JSON.stringify(mode),
+			'process.env.FRONTEND_API_ENDPOINT': JSON.stringify(
+				env.VITE_FRONTEND_API_ENDPOINT,
+			),
+			'process.env.WEBSOCKET_API_ENDPOINT': JSON.stringify(
+				env.VITE_WEBSOCKET_API_ENDPOINT,
+			),
+			'process.env.DOCS_BASE_URL': JSON.stringify(env.VITE_DOCS_BASE_URL),
+			'process.env.ENVIRONMENT': JSON.stringify(env.VITE_ENVIRONMENT),
+			'process.env.VERSION': JSON.stringify(env.VITE_VERSION),
+		},
+		// In production, use relative paths so assets work with any base path injected by the backend.
+		// In dev, use the configured base path for proper HMR and routing.
+		base: mode === 'production' ? './' : basePath,
+		build: {
+			sourcemap: true,
+			outDir: 'build',
+			cssMinify: 'esbuild',
+		},
+		server: {
+			open: true,
+			port: 3301,
+			host: true,
+		},
+		preview: {
+			port: 3301,
+		},
+	};
+});

@@ -1,7 +1,7 @@
 /**
  * ! Do not edit manually
  * * The file has been auto-generated using Orval for SigNoz
- * * regenerate with 'yarn generate:api'
+ * * regenerate with 'pnpm generate:api'
  * SigNoz
  */
 import { useQuery } from 'react-query';
@@ -19,14 +19,11 @@ import type {
 	RenderErrorResponseDTO,
 } from '../sigNoz.schemas';
 
-import { GeneratedAPIInstance } from '../../../index';
-
-type AwaitedInput<T> = PromiseLike<T> | T;
-
-type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
+import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
+import type { ErrorType } from '../../../generatedAPIInstance';
 
 /**
- * This endpoints returns global config
+ * This endpoint returns global config
  * @summary Get global config
  */
 export const getGlobalConfig = (signal?: AbortSignal) => {
@@ -38,12 +35,12 @@ export const getGlobalConfig = (signal?: AbortSignal) => {
 };
 
 export const getGetGlobalConfigQueryKey = () => {
-	return ['getGlobalConfig'] as const;
+	return [`/api/v1/global/config`] as const;
 };
 
 export const getGetGlobalConfigQueryOptions = <
 	TData = Awaited<ReturnType<typeof getGlobalConfig>>,
-	TError = RenderErrorResponseDTO
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof getGlobalConfig>>,
@@ -69,7 +66,7 @@ export const getGetGlobalConfigQueryOptions = <
 export type GetGlobalConfigQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getGlobalConfig>>
 >;
-export type GetGlobalConfigQueryError = RenderErrorResponseDTO;
+export type GetGlobalConfigQueryError = ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Get global config
@@ -77,7 +74,7 @@ export type GetGlobalConfigQueryError = RenderErrorResponseDTO;
 
 export function useGetGlobalConfig<
 	TData = Awaited<ReturnType<typeof getGlobalConfig>>,
-	TError = RenderErrorResponseDTO
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof getGlobalConfig>>,
@@ -91,9 +88,7 @@ export function useGetGlobalConfig<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**

@@ -1,27 +1,34 @@
-import { Typography } from 'antd';
+import { useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import { Modal } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { AxiosError } from 'axios';
 import NotFound from 'components/NotFound';
 import Spinner from 'components/Spinner';
 import DashboardContainer from 'container/DashboardContainer';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useEffect } from 'react';
+import { useDashboardBootstrap } from 'hooks/dashboard/useDashboardBootstrap';
+import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { ErrorType } from 'types/common';
 
 function DashboardPage(): JSX.Element {
-	const { dashboardResponse } = useDashboard();
+	const { dashboardId } = useParams<{ dashboardId: string }>();
 
-	const { isFetching, isError, isLoading } = dashboardResponse;
+	const [onModal, Content] = Modal.useModal();
 
-	const errorMessage = isError
-		? // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		  // @ts-ignore
-		  (dashboardResponse?.error as AxiosError)?.response?.data?.errorType
-		: 'Something went wrong';
+	const { isLoading, isError, isFetching, error } = useDashboardBootstrap(
+		dashboardId,
+		{ confirm: onModal.confirm },
+	);
+
+	const dashboardTitle = useDashboardStore((s) => s.dashboardData?.data.title);
 
 	useEffect(() => {
-		const dashboardTitle = dashboardResponse.data?.data.data.title;
 		document.title = dashboardTitle || document.title;
-	}, [dashboardResponse.data?.data.data.title, isFetching]);
+	}, [dashboardTitle]);
+
+	const errorMessage = isError
+		? (error as AxiosError<{ errorType: string }>)?.response?.data?.errorType
+		: 'Something went wrong';
 
 	if (isError && !isFetching && errorMessage === ErrorType.NotFound) {
 		return <NotFound />;
@@ -35,7 +42,12 @@ function DashboardPage(): JSX.Element {
 		return <Spinner tip="Loading.." />;
 	}
 
-	return <DashboardContainer />;
+	return (
+		<>
+			{Content}
+			<DashboardContainer />
+		</>
+	);
 }
 
 export default DashboardPage;

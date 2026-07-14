@@ -1,42 +1,43 @@
-import { QueryParams } from 'constants/query';
-import { AlertDetectionTypes } from 'container/FormAlertRules';
-import { useCreateAlertRule } from 'hooks/alerts/useCreateAlertRule';
-import { useTestAlertRule } from 'hooks/alerts/useTestAlertRule';
-import { useUpdateAlertRule } from 'hooks/alerts/useUpdateAlertRule';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import {
+	// eslint-disable-next-line no-restricted-imports
 	createContext,
 	useCallback,
+	// eslint-disable-next-line no-restricted-imports
 	useContext,
 	useEffect,
 	useMemo,
 	useReducer,
+	useRef,
 	useState,
 } from 'react';
 import { useLocation } from 'react-router-dom';
+import {
+	useCreateRule,
+	useTestRule,
+	useUpdateRuleByID,
+} from 'api/generated/services/rules';
+import { QueryParams } from 'constants/query';
+import { AlertDetectionTypes } from 'container/FormAlertRules';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
+import { INITIAL_CREATE_ALERT_STATE } from './constants';
 import {
-	INITIAL_ADVANCED_OPTIONS_STATE,
-	INITIAL_ALERT_STATE,
-	INITIAL_ALERT_THRESHOLD_STATE,
-	INITIAL_EVALUATION_WINDOW_STATE,
-	INITIAL_NOTIFICATION_SETTINGS_STATE,
-} from './constants';
-import {
+	AdvancedOptionsAction,
+	AlertThresholdAction,
 	AlertThresholdMatchType,
+	CreateAlertAction,
+	CreateAlertSlice,
+	EvaluationWindowAction,
 	ICreateAlertContextProps,
 	ICreateAlertProviderProps,
+	NotificationSettingsAction,
 } from './types';
 import {
-	advancedOptionsReducer,
-	alertCreationReducer,
-	alertThresholdReducer,
 	buildInitialAlertDef,
-	evaluationWindowReducer,
+	createAlertReducer,
 	getInitialAlertTypeFromURL,
-	notificationSettingsReducer,
 } from './utils';
 
 const CreateAlertContext = createContext<ICreateAlertContextProps | null>(null);
@@ -55,24 +56,76 @@ export const useCreateAlertState = (): ICreateAlertContextProps => {
 export function CreateAlertProvider(
 	props: ICreateAlertProviderProps,
 ): JSX.Element {
-	const {
-		children,
-		initialAlertState,
-		isEditMode,
-		ruleId,
-		initialAlertType,
-	} = props;
+	const { children, initialAlertState, isEditMode, ruleId, initialAlertType } =
+		props;
 
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 
-	const [alertState, setAlertState] = useReducer(alertCreationReducer, {
-		...INITIAL_ALERT_STATE,
-		yAxisUnit: currentQuery.unit,
-	});
+	const [createAlertState, setCreateAlertState] = useReducer(
+		createAlertReducer,
+		{
+			...INITIAL_CREATE_ALERT_STATE,
+			basic: {
+				...INITIAL_CREATE_ALERT_STATE.basic,
+				yAxisUnit: currentQuery.unit,
+			},
+		},
+	);
+
+	const setAlertState = useCallback(
+		(action: CreateAlertAction) => {
+			setCreateAlertState({
+				slice: CreateAlertSlice.BASIC,
+				action,
+			});
+		},
+		[setCreateAlertState],
+	);
+
+	const setThresholdState = useCallback(
+		(action: AlertThresholdAction) => {
+			setCreateAlertState({
+				slice: CreateAlertSlice.THRESHOLD,
+				action,
+			});
+		},
+		[setCreateAlertState],
+	);
+
+	const setEvaluationWindow = useCallback(
+		(action: EvaluationWindowAction) => {
+			setCreateAlertState({
+				slice: CreateAlertSlice.EVALUATION_WINDOW,
+				action,
+			});
+		},
+		[setCreateAlertState],
+	);
+
+	const setAdvancedOptions = useCallback(
+		(action: AdvancedOptionsAction) => {
+			setCreateAlertState({
+				slice: CreateAlertSlice.ADVANCED_OPTIONS,
+				action,
+			});
+		},
+		[setCreateAlertState],
+	);
+	const setNotificationSettings = useCallback(
+		(action: NotificationSettingsAction) => {
+			setCreateAlertState({
+				slice: CreateAlertSlice.NOTIFICATION_SETTINGS,
+				action,
+			});
+		},
+		[setCreateAlertState],
+	);
 
 	const location = useLocation();
 	const queryParams = new URLSearchParams(location.search);
 	const thresholdsFromURL = queryParams.get(QueryParams.thresholds);
+	const ruleNameFromURL = queryParams.get(QueryParams.ruleName);
+	const yAxisUnitFromURL = queryParams.get(QueryParams.yAxisUnit);
 
 	const [alertType, setAlertType] = useState<AlertTypes>(() => {
 		if (isEditMode) {
@@ -104,125 +157,107 @@ export function CreateAlertProvider(
 		[redirectWithQueryBuilderData],
 	);
 
-	const [thresholdState, setThresholdState] = useReducer(
-		alertThresholdReducer,
-		INITIAL_ALERT_THRESHOLD_STATE,
-	);
-
-	const [evaluationWindow, setEvaluationWindow] = useReducer(
-		evaluationWindowReducer,
-		INITIAL_EVALUATION_WINDOW_STATE,
-	);
-
-	const [advancedOptions, setAdvancedOptions] = useReducer(
-		advancedOptionsReducer,
-		INITIAL_ADVANCED_OPTIONS_STATE,
-	);
-
-	const [notificationSettings, setNotificationSettings] = useReducer(
-		notificationSettingsReducer,
-		INITIAL_NOTIFICATION_SETTINGS_STATE,
-	);
+	const ruleNameAppliedRef = useRef(false);
+	const yAxisUnitAppliedRef = useRef(false);
 
 	useEffect(() => {
-		setThresholdState({
-			type: 'RESET',
+		setCreateAlertState({
+			slice: CreateAlertSlice.THRESHOLD,
+			action: {
+				type: 'RESET',
+			},
 		});
 
 		if (thresholdsFromURL) {
 			try {
 				const thresholds = JSON.parse(thresholdsFromURL);
-				setThresholdState({
-					type: 'SET_THRESHOLDS',
-					payload: thresholds,
+				setCreateAlertState({
+					slice: CreateAlertSlice.THRESHOLD,
+					action: {
+						type: 'SET_THRESHOLDS',
+						payload: thresholds,
+					},
 				});
 			} catch (error) {
 				console.error('Error parsing thresholds from URL:', error);
 			}
 
-			setEvaluationWindow({
-				type: 'SET_INITIAL_STATE_FOR_METER',
+			setCreateAlertState({
+				slice: CreateAlertSlice.EVALUATION_WINDOW,
+				action: {
+					type: 'SET_INITIAL_STATE_FOR_METER',
+				},
 			});
 
-			setThresholdState({
-				type: 'SET_MATCH_TYPE',
-				payload: AlertThresholdMatchType.IN_TOTAL,
+			setCreateAlertState({
+				slice: CreateAlertSlice.THRESHOLD,
+				action: {
+					type: 'SET_MATCH_TYPE',
+					payload: AlertThresholdMatchType.IN_TOTAL,
+				},
 			});
 		}
-	}, [alertType, thresholdsFromURL]);
+
+		if (ruleNameFromURL && !ruleNameAppliedRef.current) {
+			ruleNameAppliedRef.current = true;
+			setCreateAlertState({
+				slice: CreateAlertSlice.BASIC,
+				action: {
+					type: 'SET_ALERT_NAME',
+					payload: ruleNameFromURL,
+				},
+			});
+		}
+
+		if (yAxisUnitFromURL && !yAxisUnitAppliedRef.current) {
+			yAxisUnitAppliedRef.current = true;
+			setCreateAlertState({
+				slice: CreateAlertSlice.BASIC,
+				action: {
+					type: 'SET_Y_AXIS_UNIT',
+					payload: yAxisUnitFromURL,
+				},
+			});
+		}
+	}, [alertType, thresholdsFromURL, ruleNameFromURL, yAxisUnitFromURL]);
 
 	useEffect(() => {
 		if (isEditMode && initialAlertState) {
-			setAlertState({
+			setCreateAlertState({
 				type: 'SET_INITIAL_STATE',
-				payload: initialAlertState.basicAlertState,
-			});
-			setThresholdState({
-				type: 'SET_INITIAL_STATE',
-				payload: initialAlertState.thresholdState,
-			});
-			setEvaluationWindow({
-				type: 'SET_INITIAL_STATE',
-				payload: initialAlertState.evaluationWindowState,
-			});
-			setAdvancedOptions({
-				type: 'SET_INITIAL_STATE',
-				payload: initialAlertState.advancedOptionsState,
-			});
-			setNotificationSettings({
-				type: 'SET_INITIAL_STATE',
-				payload: initialAlertState.notificationSettingsState,
+				payload: initialAlertState,
 			});
 		}
 	}, [initialAlertState, isEditMode]);
 
 	const discardAlertRule = useCallback(() => {
-		setAlertState({
-			type: 'RESET',
-		});
-		setThresholdState({
-			type: 'RESET',
-		});
-		setEvaluationWindow({
-			type: 'RESET',
-		});
-		setAdvancedOptions({
-			type: 'RESET',
-		});
-		setNotificationSettings({
+		setCreateAlertState({
 			type: 'RESET',
 		});
 		handleAlertTypeChange(AlertTypes.METRICS_BASED_ALERT);
 	}, [handleAlertTypeChange]);
 
-	const {
-		mutate: createAlertRule,
-		isLoading: isCreatingAlertRule,
-	} = useCreateAlertRule();
+	const { mutate: createAlertRule, isLoading: isCreatingAlertRule } =
+		useCreateRule();
 
-	const {
-		mutate: testAlertRule,
-		isLoading: isTestingAlertRule,
-	} = useTestAlertRule();
+	const { mutate: testAlertRule, isLoading: isTestingAlertRule } = useTestRule();
 
-	const {
-		mutate: updateAlertRule,
-		isLoading: isUpdatingAlertRule,
-	} = useUpdateAlertRule(ruleId || '');
+	const { mutate: updateAlertRule, isLoading: isUpdatingAlertRule } =
+		useUpdateRuleByID();
 
 	const contextValue: ICreateAlertContextProps = useMemo(
 		() => ({
-			alertState,
+			alertState: createAlertState.basic,
 			setAlertState,
 			alertType,
 			setAlertType: handleAlertTypeChange,
-			thresholdState,
+			thresholdState: createAlertState.threshold,
 			setThresholdState,
-			evaluationWindow,
+			evaluationWindow: createAlertState.evaluationWindow,
 			setEvaluationWindow,
-			advancedOptions,
+			advancedOptions: createAlertState.advancedOptions,
 			setAdvancedOptions,
-			notificationSettings,
+			notificationSettings: createAlertState.notificationSettings,
 			setNotificationSettings,
 			discardAlertRule,
 			createAlertRule,
@@ -232,15 +267,17 @@ export function CreateAlertProvider(
 			updateAlertRule,
 			isUpdatingAlertRule,
 			isEditMode: isEditMode || false,
+			ruleId: ruleId || '',
 		}),
 		[
-			alertState,
+			createAlertState,
+			setAlertState,
+			setThresholdState,
+			setEvaluationWindow,
+			setAdvancedOptions,
+			setNotificationSettings,
 			alertType,
 			handleAlertTypeChange,
-			thresholdState,
-			evaluationWindow,
-			advancedOptions,
-			notificationSettings,
 			discardAlertRule,
 			createAlertRule,
 			isCreatingAlertRule,
@@ -249,6 +286,7 @@ export function CreateAlertProvider(
 			updateAlertRule,
 			isUpdatingAlertRule,
 			isEditMode,
+			ruleId,
 		],
 	);
 

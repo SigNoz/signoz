@@ -1,48 +1,51 @@
-import './PublicDashboard.styles.scss';
-
-import { Typography } from 'antd';
-import { useGetPublicDashboardData } from 'hooks/dashboard/useGetPublicDashboardData';
-import { FrownIcon } from 'lucide-react';
 import { useParams } from 'react-router-dom';
+import { Typography } from '@signozhq/ui/typography';
+import {
+	PublicDashboardSchema,
+	useGetResolvedPublicDashboard,
+} from 'hooks/dashboard/useGetResolvedPublicDashboard';
+import { Frown } from '@signozhq/icons';
+
+import signozBrandLogoUrl from '@/assets/Logos/signoz-brand-logo.svg';
 
 import PublicDashboardContainer from '../../container/PublicDashboardContainer';
+import PublicDashboardV2 from './PublicDashboardV2/PublicDashboardV2';
+
+import './PublicDashboard.styles.scss';
 
 function PublicDashboardPage(): JSX.Element {
 	// read the dashboard id from the url
 	const { dashboardId } = useParams<{ dashboardId: string }>();
 
 	const {
-		data: publicDashboardData,
-		isLoading: isLoadingPublicDashboardData,
-		isFetching: isFetchingPublicDashboardData,
-		isError: isErrorPublicDashboardData,
-	} = useGetPublicDashboardData(dashboardId || '');
+		data: resolved,
+		isLoading,
+		isFetching,
+		isError,
+	} = useGetResolvedPublicDashboard(dashboardId || '');
 
-	const isLoading =
-		isLoadingPublicDashboardData || isFetchingPublicDashboardData;
-
-	const isError = isErrorPublicDashboardData;
+	const isBusy = isLoading || isFetching;
 
 	return (
 		<div className="public-dashboard-page">
-			{publicDashboardData && (
+			{resolved?.schema === PublicDashboardSchema.V2 && (
+				<PublicDashboardV2 publicDashboardId={dashboardId} data={resolved.data} />
+			)}
+
+			{resolved?.schema === PublicDashboardSchema.V1 && (
 				<PublicDashboardContainer
 					publicDashboardId={dashboardId}
-					publicDashboardData={publicDashboardData}
+					publicDashboardData={{ httpStatusCode: 200, data: resolved.data }}
 				/>
 			)}
 
-			{isError && !isLoading && (
+			{isError && !isBusy && (
 				<div className="public-dashboard-error-container">
 					<div className="perilin-bg" />
 
 					<div className="public-dashboard-error-content-header">
 						<div className="brand">
-							<img
-								src="/Logos/signoz-brand-logo.svg"
-								alt="SigNoz"
-								className="brand-logo"
-							/>
+							<img src={signozBrandLogoUrl} alt="SigNoz" className="brand-logo" />
 
 							<Typography.Title level={2} className="brand-title">
 								SigNoz
@@ -61,7 +64,7 @@ function PublicDashboardPage(): JSX.Element {
 							level={4}
 							className="public-dashboard-error-message-icon"
 						>
-							<FrownIcon size={36} />
+							<Frown size={36} />
 						</Typography.Title>
 						<Typography.Title level={4} className="public-dashboard-error-message">
 							The public dashboard you are looking for does not exist or has been

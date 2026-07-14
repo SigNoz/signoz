@@ -1,5 +1,5 @@
+import { useEffect, useLayoutEffect, useState } from 'react';
 import debounce from 'lodash-es/debounce';
-import { useEffect, useState } from 'react';
 
 export type Dimensions = {
 	width: number;
@@ -15,14 +15,29 @@ export function useResizeObserver<T extends HTMLElement>(
 		height: ref.current?.clientHeight || 0,
 	});
 
+	// Measure before paint so the first frame has real dimensions, not 0 (the
+	// debounced observer below only catches up after paint → layout jump).
+	useLayoutEffect(() => {
+		const node = ref.current;
+		if (node) {
+			setSize({ width: node.clientWidth, height: node.clientHeight });
+		}
+	}, [ref]);
+
 	useEffect(() => {
-		const handleResize = debounce((entries: ResizeObserverEntry[]) => {
-			const entry = entries[0];
-			if (entry) {
-				const { width, height } = entry.contentRect;
-				setSize({ width, height });
-			}
-		}, debounceTime);
+		const handleResize = debounce(
+			(entries: ResizeObserverEntry[]) => {
+				const entry = entries[0];
+				if (entry) {
+					const { width, height } = entry.contentRect;
+					setSize({ width, height });
+				}
+			},
+			debounceTime,
+			{
+				leading: true,
+			},
+		);
 
 		const ro = new ResizeObserver(handleResize);
 		const referenceNode = ref.current;

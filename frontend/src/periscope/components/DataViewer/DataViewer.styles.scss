@@ -1,0 +1,24 @@
+.data-viewer {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	min-height: 0;
+
+	// Toolbar — view mode switcher + copy button
+	&__toolbar {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding-bottom: 8px;
+	}
+
+	// Shared content container — no scroll, each view handles its own
+	&__content {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		border: 1px solid var(--l2-border);
+		border-top: 0px;
+		min-height: 0;
+	}
+}

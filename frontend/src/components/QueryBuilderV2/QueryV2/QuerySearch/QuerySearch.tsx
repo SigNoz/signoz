@@ -1,8 +1,6 @@
-/* eslint-disable sonarjs/no-identical-functions */
 /* eslint-disable sonarjs/cognitive-complexity */
-import './QuerySearch.styles.scss';
-
-import { CheckCircleFilled } from '@ant-design/icons';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { CircleCheck, Info, TriangleAlert, Filter } from '@signozhq/icons';
 import {
 	autocompletion,
 	closeCompletion,
@@ -12,12 +10,12 @@ import {
 	startCompletion,
 } from '@codemirror/autocomplete';
 import { javascript } from '@codemirror/lang-javascript';
-import * as Sentry from '@sentry/react';
 import { Color } from '@signozhq/design-tokens';
 import { copilot } from '@uiw/codemirror-theme-copilot';
 import { githubLight } from '@uiw/codemirror-theme-github';
 import CodeMirror, { EditorView, keymap, Prec } from '@uiw/react-codemirror';
-import { Button, Card, Collapse, Popover, Tag, Tooltip } from 'antd';
+import { Button, Card, Collapse, Popover, Tooltip } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import { getValueSuggestions } from 'api/querySuggestions/getValueSuggestion';
 import cx from 'classnames';
@@ -29,19 +27,15 @@ import {
 	QUERY_BUILDER_OPERATORS_BY_KEY_TYPE,
 	queryOperatorSuggestions,
 } from 'constants/antlrQueryConstants';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useDashboardVariablesByType } from 'hooks/dashboard/useDashboardVariablesByType';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDebounce from 'hooks/useDebounce';
 import { debounce, isNull } from 'lodash-es';
-import { Info, TriangleAlert } from 'lucide-react';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
 	IDetailedError,
 	IQueryContext,
 	IValidationResult,
 } from 'types/antlrQueryTypes';
-import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
 import { DataSource } from 'types/common/queryBuilder';
@@ -52,7 +46,17 @@ import {
 import { validateQuery } from 'utils/queryValidationUtils';
 import { unquote } from 'utils/stringUtils';
 
-import { queryExamples } from './constants';
+import { getRecentQueries } from 'lib/recentQueries/getRecentQueries';
+import type { SignalType } from 'types/api/v5/queryRange';
+
+import { queryExamples, SUGGESTIONS_SECTION } from './constants';
+import {
+	combineInitialAndUserExpression,
+	getRecentOptions,
+	renderRecentDeleteButton,
+} from './utils';
+
+import './QuerySearch.styles.scss';
 
 const { Panel } = Collapse;
 
@@ -85,9 +89,13 @@ interface QuerySearchProps {
 	onChange: (value: string) => void;
 	queryData: IBuilderQuery;
 	dataSource: DataSource;
+	metricNamespace?: string;
 	signalSource?: string;
 	hardcodedAttributeKeys?: QueryKeyDataSuggestionsProps[];
 	onRun?: (query: string) => void;
+	showFilterSuggestionsWithoutMetric?: boolean;
+	/** When set, the editor shows only the user expression; API/filter uses `initial AND (user)`. */
+	initialExpression?: string;
 }
 
 function QuerySearch({
@@ -98,6 +106,9 @@ function QuerySearch({
 	onRun,
 	signalSource,
 	hardcodedAttributeKeys,
+	showFilterSuggestionsWithoutMetric,
+	initialExpression,
+	metricNamespace,
 }: QuerySearchProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const [valueSuggestions, setValueSuggestions] = useState<any[]>([]);
@@ -114,18 +125,26 @@ function QuerySearch({
 	const [isFocused, setIsFocused] = useState(false);
 	const editorRef = useRef<EditorView | null>(null);
 
-	const handleQueryValidation = useCallback((newExpression: string): void => {
-		try {
-			const validationResponse = validateQuery(newExpression);
-			setValidation(validationResponse);
-		} catch (error) {
-			setValidation({
-				isValid: false,
-				message: 'Failed to process query',
-				errors: [error as IDetailedError],
-			});
-		}
-	}, []);
+	const isScopedFilter = initialExpression !== undefined;
+
+	const validateExpressionForEditor = useCallback(
+		(editorDoc: string): void => {
+			const toValidate = isScopedFilter
+				? combineInitialAndUserExpression(initialExpression ?? '', editorDoc)
+				: editorDoc;
+			try {
+				const validationResponse = validateQuery(toValidate);
+				setValidation(validationResponse);
+			} catch (error) {
+				setValidation({
+					isValid: false,
+					message: 'Failed to process query',
+					errors: [error as IDetailedError],
+				});
+			}
+		},
+		[initialExpression, isScopedFilter],
+	);
 
 	const getCurrentExpression = useCallback(
 		(): string => editorRef.current?.state.doc.toString() || '',
@@ -167,6 +186,8 @@ function QuerySearch({
 		setIsEditorReady(true);
 	}, []);
 
+	const prevQueryDataExpressionRef = useRef<string | undefined>();
+
 	useEffect(
 		() => {
 			if (!isEditorReady) {
@@ -175,13 +196,22 @@ function QuerySearch({
 
 			const newExpression = queryData.filter?.expression || '';
 			const currentExpression = getCurrentExpression();
+			const prevExpression = prevQueryDataExpressionRef.current;
 
-			// Do not update codemirror editor if the expression is the same
-			if (newExpression !== currentExpression && !isFocused) {
+			// Only sync editor when queryData.filter?.expression actually changed from external source
+			// Not when focus changed (which would reset uncommitted user input)
+			const queryDataExpressionChanged = prevExpression !== newExpression;
+			prevQueryDataExpressionRef.current = newExpression;
+
+			if (
+				queryDataExpressionChanged &&
+				newExpression !== currentExpression &&
+				!isFocused
+			) {
 				updateEditorValue(newExpression, { skipOnChange: true });
-				if (newExpression) {
-					handleQueryValidation(newExpression);
-				}
+			}
+			if (!isFocused) {
+				validateExpressionForEditor(currentExpression);
 			}
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -196,10 +226,8 @@ function QuerySearch({
 
 	const [cursorPos, setCursorPos] = useState({ line: 0, ch: 0 });
 
-	const [
-		isFetchingCompleteValuesList,
-		setIsFetchingCompleteValuesList,
-	] = useState<boolean>(false);
+	const [isFetchingCompleteValuesList, setIsFetchingCompleteValuesList] =
+		useState<boolean>(false);
 
 	const lastPosRef = useRef<{ line: number; ch: number }>({ line: 0, ch: 0 });
 
@@ -208,16 +236,9 @@ function QuerySearch({
 	const lastValueRef = useRef<string>('');
 	const isMountedRef = useRef<boolean>(true);
 
-	const { handleRunQuery } = useQueryBuilder();
-
-	const { selectedDashboard } = useDashboard();
-
-	const dynamicVariables = useMemo(
-		() =>
-			Object.values(selectedDashboard?.data?.variables || {})?.filter(
-				(variable: IDashboardVariable) => variable.type === 'DYNAMIC',
-			),
-		[selectedDashboard],
+	const dashboardDynamicVariables = useDashboardVariablesByType(
+		'DYNAMIC',
+		'values',
 	);
 
 	// Add back the generateOptions function and useEffect
@@ -261,7 +282,8 @@ function QuerySearch({
 		async (searchText?: string): Promise<void> => {
 			if (
 				dataSource === DataSource.METRICS &&
-				!queryData.aggregateAttribute?.key
+				!queryData.aggregateAttribute?.key &&
+				!showFilterSuggestionsWithoutMetric
 			) {
 				setKeySuggestions([]);
 				return;
@@ -279,6 +301,7 @@ function QuerySearch({
 				searchText: searchText || '',
 				metricName: debouncedMetricName ?? undefined,
 				signalSource: signalSource as 'meter' | '',
+				metricNamespace,
 			});
 
 			if (response.data.data) {
@@ -294,7 +317,7 @@ function QuerySearch({
 						}
 					});
 				}
-				setKeySuggestions(Array.from(merged.values()));
+				setKeySuggestions([...merged.values()]);
 
 				// Force reopen the completion if editor is available and focused
 				if (editorRef.current) {
@@ -310,6 +333,8 @@ function QuerySearch({
 			queryData.aggregateAttribute?.key,
 			signalSource,
 			hardcodedAttributeKeys,
+			showFilterSuggestionsWithoutMetric,
+			metricNamespace,
 		],
 	);
 
@@ -346,7 +371,7 @@ function QuerySearch({
 		// If value contains single quotes, escape them and wrap in single quotes
 		if (value.includes("'")) {
 			// Replace single quotes with escaped single quotes
-			const escapedValue = value.replace(/'/g, "\\'");
+			const escapedValue = value.replaceAll(/'/g, "\\'");
 			return `'${escapedValue}'`;
 		}
 
@@ -398,7 +423,6 @@ function QuerySearch({
 
 	// Use callback to prevent dependency changes on each render
 	const fetchValueSuggestions = useCallback(
-		// eslint-disable-next-line sonarjs/cognitive-complexity
 		async ({
 			key,
 			searchText,
@@ -573,15 +597,7 @@ function QuerySearch({
 		const lastPos = lastPosRef.current;
 
 		if (newPos.line !== lastPos.line || newPos.ch !== lastPos.ch) {
-			setCursorPos((lastPos) => {
-				if (newPos.ch !== lastPos.ch && newPos.ch === 0) {
-					Sentry.captureEvent({
-						message: `Cursor jumped to start of line from ${lastPos.ch} to ${newPos.ch}`,
-						level: 'warning',
-					});
-				}
-				return newPos;
-			});
+			setCursorPos(newPos);
 			lastPosRef.current = newPos;
 
 			if (doc) {
@@ -632,7 +648,7 @@ function QuerySearch({
 
 	const handleBlur = (): void => {
 		const currentExpression = getCurrentExpression();
-		handleQueryValidation(currentExpression);
+		validateExpressionForEditor(currentExpression);
 		setIsFocused(false);
 	};
 
@@ -650,7 +666,6 @@ function QuerySearch({
 	);
 
 	const handleExampleClick = (exampleQuery: string): void => {
-		// If there's an existing query, append the example with AND
 		const currentExpression = getCurrentExpression();
 		const newExpression = currentExpression
 			? `${currentExpression} AND ${exampleQuery}`
@@ -661,31 +676,30 @@ function QuerySearch({
 	// Helper function to render a badge for the current context mode
 	const renderContextBadge = (): JSX.Element => {
 		if (!editingMode) {
-			return <Tag>Unknown</Tag>;
+			return <Badge color="vanilla">Unknown</Badge>;
 		}
 
 		switch (editingMode) {
 			case 'key':
-				return <Tag color="blue">Key</Tag>;
+				return <Badge color="robin">Key</Badge>;
 			case 'operator':
-				return <Tag color="purple">Operator</Tag>;
+				return <Badge color="sakura">Operator</Badge>;
 			case 'value':
-				return <Tag color="green">Value</Tag>;
+				return <Badge color="forest">Value</Badge>;
 			case 'conjunction':
-				return <Tag color="orange">Conjunction</Tag>;
+				return <Badge color="amber">Conjunction</Badge>;
 			case 'function':
-				return <Tag color="cyan">Function</Tag>;
+				return <Badge color="aqua">Function</Badge>;
 			case 'parenthesis':
-				return <Tag color="magenta">Parenthesis</Tag>;
+				return <Badge color="sakura">Parenthesis</Badge>;
 			case 'bracketList':
-				return <Tag color="red">Bracket List</Tag>;
+				return <Badge color="cherry">Bracket List</Badge>;
 			default:
-				return <Tag>Unknown</Tag>;
+				return <Badge color="vanilla">Unknown</Badge>;
 		}
 	};
 
 	// Enhanced myCompletions function to better use context including query pairs
-	// eslint-disable-next-line sonarjs/cognitive-complexity
 	function autoSuggestions(context: CompletionContext): CompletionResult | null {
 		// This matches words before the cursor position
 		// eslint-disable-next-line no-useless-escape
@@ -916,12 +930,12 @@ function QuerySearch({
 
 			// If we have previous pairs, we can prioritize keys that haven't been used yet
 			if (queryContext.queryPairs && queryContext.queryPairs.length > 0) {
-				const usedKeys = queryContext.queryPairs.map((pair) => pair.key);
+				const usedKeys = new Set(queryContext.queryPairs.map((pair) => pair.key));
 
 				// Add boost to unused keys to prioritize them
 				options = options.map((option) => ({
 					...option,
-					boost: usedKeys.includes(option.label) ? -10 : 10,
+					boost: usedKeys.has(option.label) ? -10 : 10,
 				}));
 			}
 
@@ -1072,7 +1086,7 @@ function QuerySearch({
 			);
 
 			// Add dynamic variables suggestions for the current key
-			const variableName = dynamicVariables?.find(
+			const variableName = dashboardDynamicVariables?.find(
 				(variable) => variable?.dynamicVariablesAttribute === keyName,
 			)?.name;
 
@@ -1103,7 +1117,6 @@ function QuerySearch({
 				!(isLoadingSuggestions && lastKeyRef.current === keyName);
 
 			if (shouldFetch) {
-				// eslint-disable-next-line sonarjs/no-identical-functions
 				debouncedFetchValueSuggestions({
 					key: keyName,
 					searchText,
@@ -1248,6 +1261,41 @@ function QuerySearch({
 		};
 	}
 
+	const signal = dataSource as SignalType;
+
+	function combinedSuggestions(
+		context: CompletionContext,
+	): CompletionResult | null {
+		const fullDoc = context.state.doc.toString();
+		const recentOptions = getRecentOptions(
+			getRecentQueries(signal, signalSource ?? ''),
+			fullDoc,
+		);
+		const result = autoSuggestions(context);
+
+		const suggestionOptions = (result?.options || []).map((opt) => ({
+			...opt,
+			section: SUGGESTIONS_SECTION,
+		}));
+
+		if (recentOptions.length === 0 && suggestionOptions.length === 0) {
+			return result;
+		}
+
+		if (!result) {
+			return {
+				from: 0,
+				to: fullDoc.length,
+				options: recentOptions,
+			};
+		}
+
+		return {
+			...result,
+			options: [...recentOptions, ...suggestionOptions],
+		};
+	}
+
 	// Effect to handle focus state and trigger suggestions
 	useEffect(() => {
 		const clearTimeout = toggleSuggestions(10);
@@ -1303,41 +1351,60 @@ function QuerySearch({
 					Currently editing: {renderContextBadge()}
 					{queryContext?.keyToken && (
 						<span className="triplet-info">
-							Key: <Tag>{queryContext.keyToken}</Tag>
+							Key: <Badge color="vanilla">{queryContext.keyToken}</Badge>
 						</span>
 					)}
 					{queryContext?.operatorToken && (
 						<span className="triplet-info">
-							Operator: <Tag>{queryContext.operatorToken}</Tag>
+							Operator: <Badge color="vanilla">{queryContext.operatorToken}</Badge>
 						</span>
 					)}
 					{queryContext?.valueToken && (
 						<span className="triplet-info">
-							Value: <Tag>{queryContext.valueToken}</Tag>
+							Value: <Badge color="vanilla">{queryContext.valueToken}</Badge>
 						</span>
 					)}
 					{queryContext?.currentPair && (
 						<span className="triplet-info query-pair-info">
-							Current pair: <Tag color="blue">{queryContext.currentPair.key}</Tag>
-							<Tag color="purple">{queryContext.currentPair.operator}</Tag>
+							Current pair: <Badge color="robin">{queryContext.currentPair.key}</Badge>
+							<Badge color="sakura">{queryContext.currentPair.operator}</Badge>
 							{queryContext.currentPair.value && (
-								<Tag color="green">{queryContext.currentPair.value}</Tag>
+								<Badge color="forest">{queryContext.currentPair.value}</Badge>
 							)}
-							<Tag color={queryContext.currentPair.isComplete ? 'success' : 'warning'}>
+							<Badge
+								color={queryContext.currentPair.isComplete ? 'success' : 'warning'}
+							>
 								{queryContext.currentPair.isComplete ? 'Complete' : 'Incomplete'}
-							</Tag>
+							</Badge>
 						</span>
 					)}
 					{queryContext?.queryPairs && queryContext.queryPairs.length > 0 && (
 						<span className="triplet-info">
-							Total pairs: <Tag color="blue">{queryContext.queryPairs.length}</Tag>
+							Total pairs:{' '}
+							<Badge color="robin">{queryContext.queryPairs.length}</Badge>
 						</span>
 					)}
 				</div>
 			)}
 
 			<div className="query-where-clause-editor-container">
-				<Tooltip title={getTooltipContent()} placement="left">
+				{isScopedFilter ? (
+					<Tooltip title={initialExpression || ''} placement="left">
+						<div className="query-search-initial-scope-label">
+							<Filter
+								size={14}
+								style={{
+									opacity: 0.9,
+									color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500,
+								}}
+							/>
+						</div>
+					</Tooltip>
+				) : null}
+				<Tooltip
+					title={<div data-log-detail-ignore="true">{getTooltipContent()}</div>}
+					placement="left"
+				>
 					<a
 						href="https://signoz.io/docs/userguide/search-syntax/"
 						target="_blank"
@@ -1373,14 +1440,16 @@ function QuerySearch({
 					className={cx('query-where-clause-editor', {
 						isValid: validation.isValid === true,
 						hasErrors: validation.errors.length > 0,
+						hasInitialExpression: isScopedFilter,
 					})}
 					extensions={[
 						autocompletion({
-							override: [autoSuggestions],
+							override: [combinedSuggestions],
 							defaultKeymap: true,
 							closeOnBlur: true,
 							activateOnTyping: true,
 							maxRenderedOptions: 50,
+							addToOptions: [{ render: renderRecentDeleteButton, position: 100 }],
 						}),
 						javascript({ jsx: false, typescript: false }),
 						EditorView.lineWrapping,
@@ -1407,7 +1476,12 @@ function QuerySearch({
 									// Mod-Enter is usually Ctrl-Enter or Cmd-Enter based on OS
 									run: (): boolean => {
 										if (onRun && typeof onRun === 'function') {
-											onRun(getCurrentExpression());
+											const user = getCurrentExpression();
+											onRun(
+												isScopedFilter
+													? combineInitialAndUserExpression(initialExpression ?? '', user)
+													: user,
+											);
 										}
 										return true;
 									},
@@ -1462,7 +1536,7 @@ function QuerySearch({
 							{validation.isValid ? (
 								<Button
 									type="text"
-									icon={<CheckCircleFilled />}
+									icon={<CircleCheck size="md" />}
 									className="periscope-btn ghost"
 								/>
 							) : (
@@ -1571,6 +1645,8 @@ QuerySearch.defaultProps = {
 	hardcodedAttributeKeys: undefined,
 	placeholder:
 		"Enter your filter query (e.g., http.status_code >= 500 AND service.name = 'frontend')",
+	showFilterSuggestionsWithoutMetric: false,
+	initialExpression: undefined,
 };
 
 export default QuerySearch;

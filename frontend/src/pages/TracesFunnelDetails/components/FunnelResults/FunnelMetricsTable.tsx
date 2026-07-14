@@ -1,7 +1,7 @@
-import './FunnelMetricsTable.styles.scss';
-
 import { Empty } from 'antd';
 import Spinner from 'components/Spinner';
+
+import './FunnelMetricsTable.styles.scss';
 
 export interface MetricItem {
 	title: string;

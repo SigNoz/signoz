@@ -1,22 +1,28 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import './WidgetFullView.styles.scss';
-
-import {
-	LoadingOutlined,
-	SearchOutlined,
-	SyncOutlined,
-} from '@ant-design/icons';
+import React, {
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
+import { useQueryClient } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
+import { useSelector } from 'react-redux'; // old code, TODO: fix this correctly
+import { Loader, RefreshCw, Search } from '@signozhq/icons';
 import { Button, Input, Spin } from 'antd';
 import cx from 'classnames';
 import { ToggleGraphProps } from 'components/Graph/types';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
+import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import Spinner from 'components/Spinner';
 import TimePreference from 'components/TimePreferenceDropDown';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
 import useDrilldown from 'container/GridCardLayout/GridCard/FullView/useDrilldown';
 import { populateMultipleResults } from 'container/NewWidget/LeftContainer/WidgetGraph/util';
 import {
@@ -25,23 +31,26 @@ import {
 } from 'container/NewWidget/RightContainer/timeItems';
 import PanelWrapper from 'container/PanelWrapper/PanelWrapper';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
+import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useChartMutable } from 'hooks/useChartMutable';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import { getDashboardVariables } from 'lib/dashboardVariables/getDashboardVariables';
 import GetMinMax from 'lib/getMinMax';
 import { isEmpty } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useSelector } from 'react-redux';
+import {
+	selectIsDashboardLocked,
+	useDashboardStore,
+} from 'providers/Dashboard/store/useDashboardStore';
 import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { isModifierKeyPressed } from 'utils/app';
 import { getGraphType } from 'utils/getGraphType';
 import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 
@@ -50,6 +59,8 @@ import { PANEL_TYPES_VS_FULL_VIEW_TABLE } from './contants';
 import PanelTypeSelector from './PanelTypeSelector';
 import { GraphContainer, TimeContainer } from './styles';
 import { FullViewProps } from './types';
+
+import './WidgetFullView.styles.scss';
 
 function FullView({
 	widget,
@@ -65,20 +76,31 @@ function FullView({
 	enableDrillDown = false,
 }: FullViewProps): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
-	const { selectedTime: globalSelectedTime, minTime, maxTime } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+	const {
+		selectedTime: globalSelectedTime,
+		minTime,
+		maxTime,
+	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 	const urlQuery = useUrlQuery();
 
 	const fullViewRef = useRef<HTMLDivElement>(null);
 	const { handleRunQuery } = useQueryBuilder();
+	const queryClient = useQueryClient();
 
 	useEffect(() => {
 		setCurrentGraphRef(fullViewRef);
 	}, [setCurrentGraphRef]);
 
-	const { selectedDashboard, isDashboardLocked } = useDashboard();
+	const { dashboardData, setColumnWidths } = useDashboardStore();
+	const isDashboardLocked = useDashboardStore(selectIsDashboardLocked);
+
+	const onColumnWidthsChange = useCallback(
+		(widths: Record<string, number>) => {
+			setColumnWidths((prev) => ({ ...prev, [widget.id]: widths }));
+		},
+		[setColumnWidths, widget.id],
+	);
+	const { dashboardVariables } = useDashboardVariables();
 	const { user } = useAppContext();
 
 	const [editWidget] = useComponentPermission(['edit_widget'], user.role);
@@ -114,7 +136,7 @@ function FullView({
 				graphType: getGraphType(selectedPanelType),
 				query: updatedQuery,
 				globalSelectedInterval: globalSelectedTime,
-				variables: getDashboardVariables(selectedDashboard?.data.variables),
+				variables: getDashboardVariables(dashboardVariables),
 				fillGaps: widget.fillSpans,
 				formatForWeb: selectedPanelType === PANEL_TYPES.TABLE,
 				originalGraphType: selectedPanelType,
@@ -125,7 +147,7 @@ function FullView({
 			graphType: PANEL_TYPES.LIST,
 			selectedTime: widget?.timePreferance || 'GLOBAL_TIME',
 			globalSelectedInterval: globalSelectedTime,
-			variables: getDashboardVariables(selectedDashboard?.data.variables),
+			variables: getDashboardVariables(dashboardVariables),
 			tableParams: {
 				pagination: {
 					offset: 0,
@@ -135,18 +157,14 @@ function FullView({
 		};
 	});
 
-	const {
-		drilldownQuery,
-		dashboardEditView,
-		handleResetQuery,
-		showResetQuery,
-	} = useDrilldown({
-		enableDrillDown,
-		widget,
-		setRequestData,
-		selectedDashboard,
-		selectedPanelType,
-	});
+	const { drilldownQuery, dashboardEditView, handleResetQuery, showResetQuery } =
+		useDrilldown({
+			enableDrillDown,
+			widget,
+			setRequestData,
+			dashboardData,
+			selectedPanelType,
+		});
 
 	useEffect(() => {
 		const timeRange =
@@ -181,8 +199,8 @@ function FullView({
 		});
 	}, [selectedPanelType]);
 
-	const response = useGetQueryRange(requestData, ENTITY_VERSION_V5, {
-		queryKey: [
+	const queryRangeKey = useMemo(
+		() => [
 			widget?.query,
 			selectedPanelType,
 			requestData,
@@ -190,9 +208,27 @@ function FullView({
 			minTime,
 			maxTime,
 		],
+		[widget?.query, selectedPanelType, requestData, version, minTime, maxTime],
+	);
+
+	const response = useGetQueryRange(requestData, ENTITY_VERSION_V5, {
+		queryKey: queryRangeKey,
 		enabled: !isDependedDataLoaded,
 		keepPreviousData: true,
 	});
+
+	const [isCancelled, setIsCancelled] = useState(false);
+
+	useEffect(() => {
+		if (response.isFetching) {
+			setIsCancelled(false);
+		}
+	}, [response.isFetching]);
+
+	const handleCancelQuery = useCallback(() => {
+		queryClient.cancelQueries(queryRangeKey);
+		setIsCancelled(true);
+	}, [queryClient, queryRangeKey]);
 
 	const onDragSelect = useCallback((start: number, end: number): void => {
 		const startTimestamp = Math.trunc(start);
@@ -215,12 +251,11 @@ function FullView({
 	>(Array(response.data?.payload?.data?.result?.length).fill(true));
 
 	useEffect(() => {
-		const {
-			graphVisibilityStates: localStoredVisibilityState,
-		} = getLocalStorageGraphVisibilityState({
-			apiResponse: response.data?.payload.data.result || [],
-			name: originalName,
-		});
+		const { graphVisibilityStates: localStoredVisibilityState } =
+			getLocalStorageGraphVisibilityState({
+				apiResponse: response.data?.payload.data.result || [],
+				name: originalName,
+			});
 		setGraphsVisibilityStates(localStoredVisibilityState);
 	}, [originalName, response.data?.payload.data.result]);
 
@@ -238,7 +273,6 @@ function FullView({
 
 	if (response.data && selectedPanelType === PANEL_TYPES.PIE) {
 		const transformedData = populateMultipleResults(response?.data);
-		// eslint-disable-next-line no-param-reassign
 		response.data = transformedData;
 	}
 
@@ -258,6 +292,8 @@ function FullView({
 		return <Spinner height="100%" size="large" tip="Loading..." />;
 	}
 
+	const showEditBtn = editWidget && dashboardEditView;
+
 	return (
 		<div className="full-view-container">
 			<OverlayScrollbar>
@@ -272,13 +308,15 @@ function FullView({
 												Reset Query
 											</Button>
 										)}
-										{editWidget && (
+										{showEditBtn && (
 											<Button
 												className="switch-edit-btn"
 												disabled={response.isFetching || response.isLoading}
-												onClick={(): void => {
+												onClick={(e: React.MouseEvent): void => {
 													if (dashboardEditView) {
-														safeNavigate(dashboardEditView);
+														safeNavigate(dashboardEditView, {
+															newTab: isModifierKeyPressed(e),
+														});
 													}
 												}}
 											>
@@ -298,7 +336,10 @@ function FullView({
 								)}
 								<div className="time-container">
 									{response.isFetching && (
-										<Spin spinning indicator={<LoadingOutlined spin />} />
+										<Spin
+											spinning
+											indicator={<Loader size="md" className="animate-spin" />}
+										/>
 									)}
 									<TimePreference
 										selectedTime={selectedTime}
@@ -312,7 +353,7 @@ function FullView({
 											response.refetch();
 										}}
 										type="primary"
-										icon={<SyncOutlined />}
+										icon={<RefreshCw size="md" />}
 									/>
 								</div>
 							</TimeContainer>
@@ -321,7 +362,7 @@ function FullView({
 							<>
 								<QueryBuilderV2
 									panelType={selectedPanelType}
-									version={selectedDashboard?.data?.version || 'v3'}
+									version={dashboardData?.data?.version || 'v3'}
 									isListViewPanel={selectedPanelType === PANEL_TYPES.LIST}
 									signalSourceChangeEnabled
 									// filterConfigs={filterConfigs}
@@ -331,6 +372,8 @@ function FullView({
 									onStageRunQuery={(): void => {
 										handleRunQuery();
 									}}
+									isLoadingQueries={response.isFetching}
+									handleCancelQuery={handleCancelQuery}
 								/>
 							</>
 						)}
@@ -353,7 +396,7 @@ function FullView({
 						>
 							{isTablePanel && (
 								<Input
-									addonBefore={<SearchOutlined size={14} />}
+									addonBefore={<Search size={14} />}
 									className="global-search"
 									placeholder="Search..."
 									allowClear
@@ -363,21 +406,27 @@ function FullView({
 									}}
 								/>
 							)}
-							<PanelWrapper
-								queryResponse={response}
-								widget={widget}
-								setRequestData={setRequestData}
-								isFullViewMode
-								onToggleModelHandler={onToggleModelHandler}
-								setGraphVisibility={setGraphsVisibilityStates}
-								graphVisibility={graphsVisibilityStates}
-								onDragSelect={customOnDragSelect ?? onDragSelect}
-								tableProcessedDataRef={tableProcessedDataRef}
-								searchTerm={searchTerm}
-								onClickHandler={onClickHandler}
-								enableDrillDown={enableDrillDown}
-								selectedGraph={selectedPanelType}
-							/>
+							{isCancelled ? (
+								<QueryCancelledPlaceholder subText='Click "Run Query" to reload the widget.' />
+							) : (
+								<PanelWrapper
+									panelMode={PanelMode.STANDALONE_VIEW}
+									queryResponse={response}
+									widget={widget}
+									setRequestData={setRequestData}
+									isFullViewMode
+									onToggleModelHandler={onToggleModelHandler}
+									setGraphVisibility={setGraphsVisibilityStates}
+									graphVisibility={graphsVisibilityStates}
+									onDragSelect={customOnDragSelect ?? onDragSelect}
+									tableProcessedDataRef={tableProcessedDataRef}
+									searchTerm={searchTerm}
+									onClickHandler={onClickHandler}
+									enableDrillDown={enableDrillDown}
+									selectedGraph={selectedPanelType}
+									onColumnWidthsChange={onColumnWidthsChange}
+								/>
+							)}
 						</GraphContainer>
 					</div>
 				</>

@@ -1,3 +1,6 @@
+import { useEffect, useMemo, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
+import { useSelector } from 'react-redux';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import {
@@ -6,8 +9,6 @@ import {
 } from 'constants/queryBuilder';
 import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
 import { getPaginationQueryDataV2 } from 'lib/newQueryBuilder/getPaginationQueryData';
-import { useEffect, useMemo, useState } from 'react';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { ILog } from 'types/api/logs/log';
 import {
@@ -70,7 +71,7 @@ export const useLogsData = ({
 	}, [logs.length, listQuery]);
 
 	const orderByTimestamp: OrderByPayload | null = useMemo(() => {
-		const timestampOrderBy = listQuery?.orderBy.find(
+		const timestampOrderBy = listQuery?.orderBy?.find(
 			(item) => item.columnName === 'timestamp',
 		);
 
@@ -122,7 +123,7 @@ export const useLogsData = ({
 							...(listQuery || initialQueryBuilderFormValues),
 							...paginateData,
 						},
-				  ];
+					];
 
 		const data: Query = {
 			...query,

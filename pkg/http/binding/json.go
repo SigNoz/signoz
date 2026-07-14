@@ -3,8 +3,10 @@ package binding
 import (
 	"encoding/json"
 	"io"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/jsonschema"
 )
 
 const (
@@ -59,8 +61,39 @@ func (b *jsonBinding) BindBody(body io.Reader, obj any, opts ...BindBodyOption) 
 				WithAdditional("value of type '" + unmarshalTypeError.Value + "' was received, try sending '" + unmarshalTypeError.Type.String() + "' instead?")
 		}
 
+		// DisallowUnknownFields surfaces a bare `json: unknown field "x"`; turn it
+		// into a structured invalid-input error with did-you-mean/valid-reference
+		// suggestions drawn from obj's own JSON field names. Gated on the strict
+		// flag so an already-structured "unknown field" error bubbling up from a
+		// nested UnmarshalJSON is passed through unchanged, not re-wrapped here with
+		// the wrong (outer) field set.
+		if bindBodyOptions.DisallowUnknownFields && strings.Contains(err.Error(), "unknown field") {
+			if field := extractUnknownField(err.Error()); field != "" {
+				message := "unknown field %q"
+				if bindBodyOptions.UnknownFieldContext != "" {
+					message = "unknown field %q in " + bindBodyOptions.UnknownFieldContext
+				}
+
+				return errors.
+					NewInvalidInputf(errors.CodeInvalidInput, message, field).
+					WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(field, errors.NounFields, jsonschema.JSONFieldNames(obj))...)
+			}
+		}
+
 		return err
 	}
 
 	return nil
+}
+
+// extractUnknownField pulls fieldname out of a `json: unknown field "fieldname"`
+// decoder message, or returns "" when the message has no quoted field.
+func extractUnknownField(errMsg string) string {
+	parts := strings.Split(errMsg, `"`)
+
+	if len(parts) >= 2 {
+		return parts[1]
+	}
+
+	return ""
 }

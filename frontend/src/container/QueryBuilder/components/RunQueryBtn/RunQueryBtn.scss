@@ -1,0 +1,30 @@
+.run-query-btn {
+	display: flex;
+	min-width: 132px;
+	align-items: center;
+	gap: 6px;
+
+	.ant-btn-icon {
+		margin: 0 !important;
+	}
+}
+
+.cancel-query-btn {
+	display: flex;
+	min-width: 132px;
+	align-items: center;
+	gap: 6px;
+}
+
+.cmd-hint {
+	display: inline-flex;
+	align-items: center;
+	gap: 2px;
+	padding: 2px 4px;
+	border-radius: 4px;
+	//not using var here to support opacity 60%. To be handled at design system level.
+	background: color-mix(in srgb, var(--l1-background) 60%, transparent);
+	color: var(--l1-foreground);
+	line-height: 1;
+	font-size: 10px;
+}

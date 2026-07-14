@@ -1,6 +1,9 @@
-import './logsTable.styles.scss';
-
-import { Card, Typography } from 'antd';
+import { memo, useCallback, useMemo } from 'react';
+// eslint-disable-next-line no-restricted-imports
+import { useSelector } from 'react-redux';
+import { Virtuoso } from 'react-virtuoso';
+import { Card } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 // components
@@ -13,9 +16,6 @@ import { CARD_BODY_STYLE } from 'constants/card';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
-import { memo, useCallback, useMemo } from 'react';
-import { useSelector } from 'react-redux';
-import { Virtuoso } from 'react-virtuoso';
 import { AppState } from 'store/reducers';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 // interfaces
@@ -23,6 +23,8 @@ import { ILogsReducer } from 'types/reducer/logs';
 
 // styles
 import { Container, Heading } from './styles';
+
+import './logsTable.styles.scss';
 
 export type LogViewMode = 'raw' | 'table' | 'list';
 
@@ -34,12 +36,8 @@ type LogsTableProps = {
 function LogsTable(props: LogsTableProps): JSX.Element {
 	const { viewMode, linesPerRow } = props;
 
-	const {
-		activeLog,
-		onClearActiveLog,
-		onAddToQuery,
-		onSetActiveLog,
-	} = useActiveLog();
+	const { activeLog, onClearActiveLog, onAddToQuery, onSetActiveLog } =
+		useActiveLog();
 
 	const {
 		logs,
@@ -48,15 +46,15 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 		liveTail,
 	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
 
-	const isLiveTail = useMemo(() => logs.length === 0 && liveTail === 'PLAYING', [
-		logs?.length,
-		liveTail,
-	]);
+	const isLiveTail = useMemo(
+		() => logs.length === 0 && liveTail === 'PLAYING',
+		[logs?.length, liveTail],
+	);
 
-	const isNoLogs = useMemo(() => logs.length === 0 && liveTail === 'STOPPED', [
-		logs?.length,
-		liveTail,
-	]);
+	const isNoLogs = useMemo(
+		() => logs.length === 0 && liveTail === 'STOPPED',
+		[logs?.length, liveTail],
+	);
 
 	const { options } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,

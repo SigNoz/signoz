@@ -1,16 +1,12 @@
-/* eslint-disable react/jsx-props-no-spreading */
 import { fireEvent, render, screen } from '@testing-library/react';
 import { QueryParams } from 'constants/query';
-import { initialQueriesMap } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { defaultPostableAlertRuleV2 } from 'container/CreateAlertV2/constants';
 import { getCreateAlertLocalStateFromAlertDef } from 'container/CreateAlertV2/utils';
 import * as useSafeNavigateHook from 'hooks/useSafeNavigate';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
-import * as useCreateAlertRuleHook from '../../../../hooks/alerts/useCreateAlertRule';
-import * as useTestAlertRuleHook from '../../../../hooks/alerts/useTestAlertRule';
-import * as useUpdateAlertRuleHook from '../../../../hooks/alerts/useUpdateAlertRule';
+import * as rulesHook from '../../../../api/generated/services/rules';
 import { CreateAlertProvider } from '../../context';
 import CreateAlertHeader from '../CreateAlertHeader';
 
@@ -19,15 +15,15 @@ jest.spyOn(useSafeNavigateHook, 'useSafeNavigate').mockReturnValue({
 	safeNavigate: mockSafeNavigate,
 });
 
-jest.spyOn(useCreateAlertRuleHook, 'useCreateAlertRule').mockReturnValue({
+jest.spyOn(rulesHook, 'useCreateRule').mockReturnValue({
 	mutate: jest.fn(),
 	isLoading: false,
 } as any);
-jest.spyOn(useTestAlertRuleHook, 'useTestAlertRule').mockReturnValue({
+jest.spyOn(rulesHook, 'useTestRule').mockReturnValue({
 	mutate: jest.fn(),
 	isLoading: false,
 } as any);
-jest.spyOn(useUpdateAlertRuleHook, 'useUpdateAlertRule').mockReturnValue({
+jest.spyOn(rulesHook, 'useUpdateRuleByID').mockReturnValue({
 	mutate: jest.fn(),
 	isLoading: false,
 } as any);
