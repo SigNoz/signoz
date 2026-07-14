@@ -357,10 +357,7 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id valuer.UUID) 
 	if err != nil {
 		return err
 	}
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		return err
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 	parsedRule := ruletypes.PostableRule{}
 	err = json.Unmarshal([]byte(ruleStr), &parsedRule)
 	if err != nil {
@@ -485,10 +482,7 @@ func (m *Manager) DeleteRule(ctx context.Context, idStr string) error {
 		return err
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		return err
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	_, err = m.ruleStore.GetStoredRule(ctx, orgID, id)
 	if err != nil {
@@ -891,10 +885,7 @@ func (m *Manager) GetRule(ctx context.Context, id valuer.UUID) (*ruletypes.Getta
 		return nil, err
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		return nil, err
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	s, err := m.ruleStore.GetStoredRule(ctx, orgID, id)
 	if err != nil {
@@ -961,10 +952,7 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, id valuer.UUID)
 		return nil, err
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		return nil, err
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	taskName := prepareTaskName(id.StringValue())
 
