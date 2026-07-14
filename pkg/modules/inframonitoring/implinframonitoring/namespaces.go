@@ -19,6 +19,7 @@ func buildNamespaceRecords(
 	metadataMap map[string]map[string]string,
 	phaseCounts map[string]podPhaseCounts,
 	podStatusCounts map[string]podStatusCounts,
+	resourceCounts map[string]map[string]int64,
 ) []inframonitoringtypes.NamespaceRecord {
 	metricsMap := parseFullQueryResponse(resp, groupBy)
 
@@ -55,6 +56,13 @@ func buildNamespaceRecords(
 
 		if podStatusCountsForGroup, ok := podStatusCounts[compositeKey]; ok {
 			record.PodCountsByStatus = podStatusCountsToResponse(podStatusCountsForGroup)
+		}
+
+		if counts, ok := resourceCounts[compositeKey]; ok {
+			record.Counts.Deployments = counts[inframonitoringtypes.DeploymentNameAttrKey]
+			record.Counts.DaemonSets = counts[inframonitoringtypes.DaemonSetNameAttrKey]
+			record.Counts.Jobs = counts[inframonitoringtypes.JobNameAttrKey]
+			record.Counts.StatefulSets = counts[inframonitoringtypes.StatefulSetNameAttrKey]
 		}
 
 		if attrs, ok := metadataMap[compositeKey]; ok {
