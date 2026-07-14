@@ -76,6 +76,17 @@ func (client *client) Read(ctx context.Context, query *prompb.Query, sortSeries 
 		return remote.FromQueryResult(sortSeries, new(prompb.QueryResult)), nil
 	}
 
+	// For series-only requests (e.g. /api/v1/series), return label sets directly
+	// without fetching sample data. This avoids the "metric_name = ''" condition
+	// in querySamples when no __name__ matcher is present.
+	if query.Hints != nil && query.Hints.Func == "series" {
+		res := new(prompb.QueryResult)
+		for _, lbls := range fingerprints {
+			res.Timeseries = append(res.Timeseries, &prompb.TimeSeries{Labels: lbls})
+		}
+		return remote.FromQueryResult(sortSeries, res), nil
+	}
+
 	clickhouseSubQuery, args, err := client.queryToClickhouseQuery(ctx, query, metricName, true)
 	if err != nil {
 		return nil, err
@@ -129,40 +140,56 @@ func (c *client) ReadMultiple(ctx context.Context, queries []*prompb.Query, sort
 func (client *client) queryToClickhouseQuery(_ context.Context, query *prompb.Query, metricName string, subQuery bool) (string, []any, error) {
 	var clickHouseQuery string
 	var conditions []string
-	var argCount = 0
 	var selectString = "fingerprint, any(labels)"
 	if subQuery {
-		argCount = 1
 		selectString = "fingerprint"
 	}
 
 	start, end, tableName := getStartAndEndAndTableName(query.StartTimestampMs, query.EndTimestampMs)
 
+	// nextArgIdx is 1-based. For subQuery=true, $1 is reserved by querySamples
+	// (prepended as metricName), so our args begin at $2.
+	nextArgIdx := 1
+	if subQuery {
+		nextArgIdx = 2
+	}
+
 	var args []any
-	conditions = append(conditions, fmt.Sprintf("metric_name = $%d", argCount+1))
+
+	// Only add a metric_name filter when __name__ was found in the matchers.
+	// Omitting this when metricName is empty prevents "metric_name = ''" which
+	// would match no rows for selectors like {k8s.container.name="coredns"}.
+	if metricName != "" {
+		conditions = append(conditions, fmt.Sprintf("metric_name = $%d", nextArgIdx))
+		args = append(args, metricName)
+		nextArgIdx++
+	}
 	conditions = append(conditions, "temporality IN ['Cumulative', 'Unspecified']")
 	conditions = append(conditions, fmt.Sprintf("unix_milli >= %d AND unix_milli < %d", start, end))
 
 	normalized := !constants.IsDotMetricsEnabled
-
 	conditions = append(conditions, fmt.Sprintf("__normalized = %v", normalized))
 
-	args = append(args, metricName)
 	for _, m := range query.Matchers {
+		if m.Name == "__name__" && m.Type == prompb.LabelMatcher_EQ {
+			// EQ __name__ is already handled via metric_name = $N above;
+			// skip the redundant JSONExtractString("__name__") condition.
+			continue
+		}
 		switch m.Type {
 		case prompb.LabelMatcher_EQ:
-			conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, $%d) = $%d", argCount+2, argCount+3))
+			conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, $%d) = $%d", nextArgIdx, nextArgIdx+1))
 		case prompb.LabelMatcher_NEQ:
-			conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, $%d) != $%d", argCount+2, argCount+3))
+			conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, $%d) != $%d", nextArgIdx, nextArgIdx+1))
 		case prompb.LabelMatcher_RE:
-			conditions = append(conditions, fmt.Sprintf("match(JSONExtractString(labels, $%d), $%d)", argCount+2, argCount+3))
+			conditions = append(conditions, fmt.Sprintf("match(JSONExtractString(labels, $%d), $%d)", nextArgIdx, nextArgIdx+1))
 		case prompb.LabelMatcher_NRE:
-			conditions = append(conditions, fmt.Sprintf("not match(JSONExtractString(labels, $%d), $%d)", argCount+2, argCount+3))
+			conditions = append(conditions, fmt.Sprintf("not match(JSONExtractString(labels, $%d), $%d)", nextArgIdx, nextArgIdx+1))
 		default:
 			return "", nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported or invalid matcher type: %s", m.Type.String())
 		}
-		args = append(args, m.Name, m.Value)
-		argCount += 2
+		args = append(args, unescapePromLabelName(m.Name), m.Value)
+		nextArgIdx += 2
 	}
 
 	whereClause := strings.Join(conditions, " AND ")
@@ -338,6 +365,57 @@ func (client *client) queryRaw(ctx context.Context, query string, ts int64) (*pr
 	}
 
 	return &res, nil
+}
+
+// unescapePromLabelName converts a Prometheus value-encoded label name back to
+// its original UTF-8 form. Value-encoded names start with "U__" and use _XX_
+// (lowercase hex) sequences for non-legacy characters, and __ for a literal
+// underscore. See https://prometheus.io/docs/instrumenting/escaping_schemes/
+func unescapePromLabelName(name string) string {
+	if len(name) < 3 || name[:3] != "U__" {
+		return name
+	}
+	enc := name[3:]
+	var b strings.Builder
+	b.Grow(len(enc))
+	for i := 0; i < len(enc); {
+		if enc[i] != '_' {
+			b.WriteByte(enc[i])
+			i++
+			continue
+		}
+		// doubled underscore → original underscore
+		if i+1 < len(enc) && enc[i+1] == '_' {
+			b.WriteByte('_')
+			i += 2
+			continue
+		}
+		// _XX_ hex escape
+		if i+3 < len(enc) && enc[i+3] == '_' {
+			hi, hiOk := promHexVal(enc[i+1])
+			lo, loOk := promHexVal(enc[i+2])
+			if hiOk && loOk {
+				b.WriteByte(hi<<4 | lo)
+				i += 4
+				continue
+			}
+		}
+		b.WriteByte('_')
+		i++
+	}
+	return b.String()
+}
+
+func promHexVal(c byte) (byte, bool) {
+	switch {
+	case c >= '0' && c <= '9':
+		return c - '0', true
+	case c >= 'a' && c <= 'f':
+		return c - 'a' + 10, true
+	case c >= 'A' && c <= 'F':
+		return c - 'A' + 10, true
+	}
+	return 0, false
 }
 
 func (client *client) withClickhousePrometheusContext(ctx context.Context, functionName string) context.Context {
