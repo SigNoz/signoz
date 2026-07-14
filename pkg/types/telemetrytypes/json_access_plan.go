@@ -75,7 +75,7 @@ func (n *JSONAccessNode) Alias() string {
 	parentAlias := strings.TrimLeft(n.Parent.Alias(), "`")
 	parentAlias = strings.TrimRight(parentAlias, "`")
 
-	sep := "[]."
+	sep := ArraySep
 	if n.Parent.isRoot {
 		sep = "."
 	}

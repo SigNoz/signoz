@@ -21,8 +21,11 @@ const (
 	// BodyJSONStringSearchPrefix is the prefix used for body JSON search queries.
 	// e.g., "body.status" where "body." is the prefix.
 	BodyJSONStringSearchPrefix = "body."
-	ArraySep                   = "[]."
-	ArraySepSuffix             = "[]"
+	// ArraySep must match the array separator written by the collector's JSON
+	// type exporter; the shared constant (jsontypeexporter.ArraySeparator) was
+	// removed from signoz-otel-collector, so the value is duplicated here.
+	ArraySep       = "[]."
+	ArraySepSuffix = "[]"
 	// TODO(Piyush): Remove once we've migrated to the new array syntax.
 	ArrayAnyIndex       = "[*]."
 	ArrayAnyIndexSuffix = "[*]"

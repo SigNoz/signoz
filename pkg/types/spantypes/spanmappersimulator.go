@@ -2,8 +2,8 @@ package spantypes
 
 import (
 	"context"
+	"maps"
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/SigNoz/signoz-otel-collector/pkg/collectorsimulator"
@@ -27,14 +27,16 @@ func SimulateSpanMappersProcessing(ctx context.Context, groups []*SpanMapperGrou
 		return spans, nil, nil
 	}
 
-	// this is done to preserve the order in which the request was sent
-	for i := range spans {
-		if spans[i].Attributes == nil {
-			spans[i].Attributes = map[string]any{}
-		}
-		spans[i].Attributes[spanInputOrderAttr] = int64(i)
+	// Tag each span with its request position so the output can be returned in
+	// input order; work on copies so the caller's attribute maps stay untouched.
+	inputSpans := make([]SpanMapperTestSpan, len(spans))
+	for i, s := range spans {
+		attrs := make(map[string]any, len(s.Attributes)+1)
+		maps.Copy(attrs, s.Attributes)
+		attrs[spanInputOrderAttr] = int64(i)
+		inputSpans[i] = SpanMapperTestSpan{Attributes: attrs, Resource: s.Resource}
 	}
-	simulatorInput := SpansToPTraces(spans)
+	simulatorInput := SpansToPTraces(inputSpans)
 
 	processorFactories, err := otelcol.MakeFactoryMap(signozspanmapperprocessor.NewFactory())
 	if err != nil {
@@ -68,6 +70,12 @@ func SimulateSpanMappersProcessing(ctx context.Context, groups []*SpanMapperGrou
 
 	outputSpans := PTracesToSpans(outputTraces)
 
+	// The simulator returns whatever has been exported when its timeout
+	// elapses, without error; surface that instead of silently dropping spans.
+	if len(outputSpans) != len(spans) {
+		return nil, nil, errors.Newf(errors.TypeInternal, ErrCodeSpanMapperSimulationFailed, "simulation returned %d spans for %d input spans", len(outputSpans), len(spans))
+	}
+
 	sort.Slice(outputSpans, func(i, j int) bool {
 		iIdx, _ := outputSpans[i].Attributes[spanInputOrderAttr].(int64)
 		jIdx, _ := outputSpans[j].Attributes[spanInputOrderAttr].(int64)
@@ -77,15 +85,7 @@ func SimulateSpanMappersProcessing(ctx context.Context, groups []*SpanMapperGrou
 		delete(s.Attributes, spanInputOrderAttr)
 	}
 
-	collectorWarnAndErrorLogs := []string{}
-	for _, log := range collectorErrs {
-		if log == "" || strings.Contains(log, "featuregate.go") {
-			continue
-		}
-		collectorWarnAndErrorLogs = append(collectorWarnAndErrorLogs, log)
-	}
-
-	return outputSpans, collectorWarnAndErrorLogs, nil
+	return outputSpans, collectorErrs, nil
 }
 
 func SpansToPTraces(spans []SpanMapperTestSpan) []ptrace.Traces {
@@ -132,23 +132,20 @@ func PTracesToSpans(traces []ptrace.Traces) []SpanMapperTestSpan {
 // service.pipelines.traces.processors so the processor defined by
 // GenerateCollectorConfigWithSpanMapperProcessor actually runs against the
 // traces flowing through the simulator. Idempotent: skips appending if the
-// processor name is already present.
+// processor name is already present. Errors if the config has no traces
+// pipeline, since the simulation would otherwise silently pass spans through.
 func wireSpanMapperIntoTracesPipeline(confYaml []byte) ([]byte, error) {
 	var conf map[string]any
 	if err := yaml.Unmarshal(confYaml, &conf); err != nil {
 		return nil, errors.Wrapf(err, errors.TypeInvalidInput, ErrCodeInvalidCollectorConfig, "failed to unmarshal collector config for pipeline wiring")
 	}
+	// Failed assertions yield nil, and indexing a nil map is safe,
+	// so any missing/mistyped level surfaces as traces == nil below.
 	service, _ := conf["service"].(map[string]any)
-	if service == nil {
-		return confYaml, nil
-	}
 	pipelines, _ := service["pipelines"].(map[string]any)
-	if pipelines == nil {
-		return confYaml, nil
-	}
 	traces, _ := pipelines["traces"].(map[string]any)
 	if traces == nil {
-		return confYaml, nil
+		return nil, errors.Newf(errors.TypeInternal, ErrCodeBuildMappingProcessorConfig, "collector config has no service.pipelines.traces pipeline to wire %q into", ProcessorName)
 	}
 
 	procs, _ := traces["processors"].([]any)

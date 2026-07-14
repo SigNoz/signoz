@@ -38,7 +38,6 @@ jobs:
       fail-fast: false
       matrix:
         suite:
-          - spanmapper
           - alerts
           - basepath
           - callbackauthn
@@ -58,6 +57,7 @@ jobs:
           - role
           - rootuser
           - serviceaccount
+          - spanmapper
           - querier_json_body
           - querier_skip_resource_fingerprint
           - ttl
