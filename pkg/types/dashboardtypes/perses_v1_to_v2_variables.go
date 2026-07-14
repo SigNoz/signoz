@@ -49,7 +49,9 @@ func (d *v1Decoder) convertV1Variables(raw any) []Variable {
 	for variableID, variableContentRaw := range rawVariablesMap {
 		variableContent, ok := variableContentRaw.(map[string]any)
 		if !ok {
-			d.noteMalformedField("variables."+variableID, variableContentRaw)
+			// A variable whose content isn't an object (e.g. a stray "list" array) can't
+			// render in the current UI, so it's useless — skip it instead of failing the
+			// migration.
 			continue
 		}
 		entries = append(entries, ordered{variableID: variableID, variableContent: variableContent, order: d.readFloat(variableContent, "order")})
