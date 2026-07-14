@@ -338,6 +338,7 @@ func isValidLabelValue(v string) bool {
 // validate runs during UnmarshalJSON (read + write path).
 // Preserves the original pre-existing checks only so that stored rules
 // continue to load without errors.
+// TODO(srikanthccv): remove this once v1 is deprecated and removed.
 func (r *PostableRule) validate() error {
 	var errs []error
 
@@ -366,9 +367,13 @@ func (r *PostableRule) validate() error {
 
 	errs = append(errs, testTemplateParsing(r)...)
 
-	joined := errors.Join(errs...)
-	if joined != nil {
-		return errors.WrapInvalidInputf(joined, errors.CodeInvalidInput, "validation failed")
+	if len(errs) > 0 {
+		messages := make([]string, len(errs))
+		for i, e := range errs {
+			messages[i] = e.Error()
+		}
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "alert rule definition is not valid").
+			WithAdditional(messages...)
 	}
 	return nil
 }
@@ -466,9 +471,13 @@ func (r *PostableRule) Validate() error {
 
 	errs = append(errs, testTemplateParsing(r)...)
 
-	joined := errors.Join(errs...)
-	if joined != nil {
-		return errors.WrapInvalidInputf(joined, errors.CodeInvalidInput, "validation failed")
+	if len(errs) > 0 {
+		messages := make([]string, len(errs))
+		for i, e := range errs {
+			messages[i] = e.Error()
+		}
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "alert rule is not valid").
+			WithAdditional(messages...)
 	}
 	return nil
 }

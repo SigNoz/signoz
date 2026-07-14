@@ -16,6 +16,8 @@ import ViewPanelModalHeader from './ViewPanelModalHeader';
 import { useViewPanelMode } from './useViewPanelMode';
 import { useViewPanelTimeWindow } from './useViewPanelTimeWindow';
 import styles from './ViewPanelModal.module.scss';
+import logEvent from 'api/common/logEvent';
+import { DashboardEvents } from 'pages/DashboardPageV2/constants/events';
 
 interface ViewPanelModalContentProps {
 	panel: DashboardtypesPanelDTO;
@@ -97,6 +99,14 @@ function ViewPanelModalContent({
 		return null;
 	}
 
+	const onSwitchToEdit = (): void => {
+		// Carry the drilldown edits so the editor opens on them, not the saved panel.
+		logEvent(DashboardEvents.SWITCH_TO_EDIT_MODE, {
+			panelId: panelId,
+		});
+		openPanelEditor(panelId, { editSpec: buildSaveSpec(draft.spec) });
+	};
+
 	return (
 		<div className={styles.content} data-testid="view-panel-modal-content">
 			<ViewPanelModalHeader
@@ -114,10 +124,7 @@ function ViewPanelModalContent({
 						refreshWindow();
 					}
 				}}
-				onSwitchToEdit={(): void =>
-					// Carry the drilldown edits so the editor opens on them, not the saved panel.
-					openPanelEditor(panelId, { editSpec: buildSaveSpec(draft.spec) })
-				}
+				onSwitchToEdit={onSwitchToEdit}
 				panelKind={draft.spec.plugin.kind}
 				queryType={queryType}
 				signal={signal}

@@ -3,7 +3,7 @@ import { useHistory } from 'react-router-dom';
 import cx from 'classnames';
 import { Pagination, Skeleton } from 'antd';
 import { useListRoles } from 'api/generated/services/role';
-import { AuthtypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
+import { AuthtypesGettableRoleDTO } from 'api/generated/services/sigNoz.schemas';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import ROUTES from 'constants/routes';
 import { useRolesFeatureGate } from 'hooks/useRolesFeatureGate';
@@ -21,7 +21,7 @@ const PAGE_SIZE = 20;
 
 type DisplayItem =
 	| { type: 'section'; label: string; count?: number }
-	| { type: 'role'; role: AuthtypesRoleDTO };
+	| { type: 'role'; role: AuthtypesGettableRoleDTO };
 
 interface RolesListContentProps {
 	searchQuery: string;
@@ -176,7 +176,7 @@ function RolesListContent({ searchQuery }: RolesListContentProps): JSX.Element {
 		);
 	}
 
-	const renderRow = (role: AuthtypesRoleDTO): JSX.Element => (
+	const renderRow = (role: AuthtypesGettableRoleDTO): JSX.Element => (
 		<div
 			key={role.id}
 			className={cx(styles.tableRow, {
