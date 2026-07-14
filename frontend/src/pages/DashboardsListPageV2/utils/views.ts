@@ -5,9 +5,9 @@
 //   - client:    constrains by a client-side id set (Favorites, Recently viewed)
 import { Clock, Layers, Lock, Pin, User } from '@signozhq/icons';
 
-import { DEFAULT_FILTER_STATE } from './filterQuery';
+import { createdByClause } from './filterQuery';
 import { BuiltinViewId } from '../types';
-import type { DashboardFilterState, ViewSection } from '../types';
+import type { ViewSection } from '../types';
 import type { DashboardListItem } from './helpers';
 
 // All @signozhq icons share this component type.
@@ -49,28 +49,25 @@ export const BUILTIN_VIEWS: BuiltinView[] = [
 export const isClientView = (id: string): boolean =>
 	id === BuiltinViewId.Pinned || id === BuiltinViewId.Recent;
 
-// DSL the Locked view seeds into the search box, so the constraint is visible
-// (and editable) rather than applied invisibly behind the scenes.
+// DSL the Locked view applies — visible and editable in the query box rather
+// than applied invisibly behind the scenes.
 export const LOCKED_QUERY = 'locked = true';
 
-// The canonical filter snapshot a built-in view applies when selected. `null`
-// for ids that aren't built-in (custom views carry their own snapshot).
-export const builtinViewSnapshot = (
+// The canonical query string a built-in view applies when selected. `null` for
+// ids that aren't built-in (custom views carry their own query).
+export const builtinViewQuery = (
 	id: string,
 	userEmail: string,
-): DashboardFilterState | null => {
+): string | null => {
 	switch (id) {
 		case BuiltinViewId.Mine:
-			return {
-				...DEFAULT_FILTER_STATE,
-				createdBy: userEmail ? [userEmail] : [],
-			};
+			return userEmail ? (createdByClause([userEmail]) ?? '') : '';
 		case BuiltinViewId.Locked:
-			return { ...DEFAULT_FILTER_STATE, search: LOCKED_QUERY };
+			return LOCKED_QUERY;
 		case BuiltinViewId.All:
 		case BuiltinViewId.Pinned:
 		case BuiltinViewId.Recent:
-			return { ...DEFAULT_FILTER_STATE };
+			return '';
 		default:
 			return null;
 	}
