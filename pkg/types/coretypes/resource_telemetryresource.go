@@ -3,6 +3,8 @@ package coretypes
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"maps"
+	"slices"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -37,26 +39,49 @@ var telemetryQueryTypeSelectors = map[string]struct{}{
 	"clickhouse_sql":         {},
 }
 
+var telemetryGrantKeys = map[string]struct{}{
+	"service.name": {},
+}
+
 func IsTelemetryQueryTypeSelector(selector string) bool {
 	_, ok := telemetryQueryTypeSelectors[selector]
 	return ok
 }
 
+func IsTelemetryGrantKey(key string) bool {
+	_, ok := telemetryGrantKeys[key]
+	return ok
+}
+
+func TelemetryGrantKeys() []string {
+	return slices.Sorted(maps.Keys(telemetryGrantKeys))
+}
+
 func (resourceTelemetryResource *resourceTelemetryResource) Object(orgID valuer.UUID, selector string) string {
+	prefix := resourceTelemetryResource.Prefix(orgID)
+
 	if selector == WildCardSelectorString {
-		return resourceTelemetryResource.Prefix(orgID) + "/" + selector
+		return prefix + "/" + selector
 	}
 
-	parts := strings.SplitN(selector, "/", 2)
-	if len(parts) == 2 && IsTelemetryQueryTypeSelector(parts[0]) {
-		if parts[1] == WildCardSelectorString {
-			return resourceTelemetryResource.Prefix(orgID) + "/" + parts[0] + "/" + WildCardSelectorString
+	parts := strings.SplitN(selector, "/", 3)
+	if !IsTelemetryQueryTypeSelector(parts[0]) {
+		return prefix + "/" + TelemetrySelectorSegment(selector)
+	}
+
+	if len(parts) == 2 && parts[1] == WildCardSelectorString {
+		return prefix + "/" + selector
+	}
+
+	if len(parts) == 3 && IsTelemetryGrantKey(parts[1]) {
+		if parts[2] == WildCardSelectorString {
+			return prefix + "/" + selector
 		}
 
-		return resourceTelemetryResource.Prefix(orgID) + "/" + parts[0] + "/" + TelemetrySelectorSegment(parts[1])
+		return prefix + "/" + parts[0] + "/" + parts[1] + "/" + TelemetrySelectorSegment(parts[2])
 	}
 
-	return resourceTelemetryResource.Prefix(orgID) + "/" + TelemetrySelectorSegment(selector)
+	return prefix + "/" + TelemetrySelectorSegment(selector)
 }
 
 // Must stay stable: grant-time and check-time object building both rely on

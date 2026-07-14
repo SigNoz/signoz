@@ -3,8 +3,6 @@ package querybuilder
 import (
 	"context"
 	"encoding/json"
-	"maps"
-	"slices"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -14,10 +12,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/tidwall/gjson"
 )
-
-var telemetryGrantKeys = map[string]struct{}{
-	"service.name": {},
-}
 
 func TelemetrySelector(_ context.Context, resource coretypes.Resource, id string, _ valuer.UUID) ([]coretypes.Selector, error) {
 	if coretypes.IsTelemetryQueryTypeSelector(id) {
@@ -182,7 +176,7 @@ func builderQuerySelectors(queryType, expression string, variables map[string]qb
 
 		if condition.Operator == "=" || condition.Operator == "IN" {
 			for _, value := range condition.Values {
-				ids = append(ids, queryType+"/"+telemetryGrantAtom(key, value))
+				ids = append(ids, queryType+"/"+key+"/"+value)
 			}
 		}
 	}
@@ -200,56 +194,46 @@ func canonicalTelemetryGrantKey(keyText string) (string, bool) {
 		return "", false
 	}
 
-	if _, ok := telemetryGrantKeys[fieldKey.Name]; !ok {
+	if !coretypes.IsTelemetryGrantKey(fieldKey.Name) {
 		return "", false
 	}
 
 	return fieldKey.Name, true
 }
 
-func telemetryGrantAtom(key, value string) string {
-	return key + " = " + quoteValue(value)
-}
-
-func CanonicalizeTelemetryGrantSelector(input string) (string, error) {
+func ValidateTelemetryGrantSelector(input string) (string, error) {
 	if input == coretypes.WildCardSelectorString {
 		return input, nil
 	}
 
-	queryType := "builder_query"
-	expression := input
-	parts := strings.SplitN(input, "/", 2)
-	if coretypes.IsTelemetryQueryTypeSelector(parts[0]) {
-		queryType = parts[0]
-		if len(parts) == 1 || parts[1] == coretypes.WildCardSelectorString {
-			return queryType + "/" + coretypes.WildCardSelectorString, nil
+	parts := strings.SplitN(input, "/", 3)
+	if !coretypes.IsTelemetryQueryTypeSelector(parts[0]) {
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "telemetry selector %q must start with a query type or be %q", input, coretypes.WildCardSelectorString)
+	}
+
+	if len(parts) == 1 {
+		return parts[0] + "/" + coretypes.WildCardSelectorString, nil
+	}
+
+	if len(parts) == 2 {
+		if parts[1] != coretypes.WildCardSelectorString {
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "telemetry selector %q must be <query_type>/<key>/<value>, <query_type>/%s or %s", input, coretypes.WildCardSelectorString, coretypes.WildCardSelectorString)
 		}
-		expression = parts[1]
+		return input, nil
 	}
 
-	normalized, err := NormalizeWhereClause(expression, nil)
-	if err != nil {
-		return "", err
+	if !coretypes.IsTelemetryGrantKey(parts[1]) {
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "telemetry selector %q must use one of the supported keys: %s", input, strings.Join(coretypes.TelemetryGrantKeys(), ", "))
 	}
 
-	if len(normalized.Conditions) != 1 {
-		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "telemetry selector %q must be a single condition", input)
+	value := parts[2]
+	if value == coretypes.WildCardSelectorString {
+		return input, nil
 	}
 
-	condition := normalized.Conditions[0]
-	if !condition.TopLevel || condition.Operator != "=" || len(condition.Values) != 1 {
-		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "telemetry selector %q must be a single positive equality condition", input)
-	}
-
-	key, ok := canonicalTelemetryGrantKey(condition.Key)
-	if !ok {
-		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "telemetry selector %q must use one of the supported keys: %s", input, strings.Join(slices.Sorted(maps.Keys(telemetryGrantKeys)), ", "))
-	}
-
-	value := condition.Values[0]
 	if value == "" || strings.HasPrefix(value, "$") {
 		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "telemetry selector %q must use a concrete non-empty value", input)
 	}
 
-	return queryType + "/" + telemetryGrantAtom(key, value), nil
+	return input, nil
 }

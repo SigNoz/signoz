@@ -25,30 +25,30 @@ func TestQueryRangeResources(t *testing.T) {
 			name: "top level service equality",
 			body: builderQueryBody("logs", "service.name = 'checkout' AND status = 500"),
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/service.name = 'checkout'"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/service.name/checkout"},
 			},
 		},
 		{
 			name: "resource prefixed service key",
 			body: builderQueryBody("traces", "resource.service.name = 'checkout'"),
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "builder_query/service.name = 'checkout'"},
+				{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "builder_query/service.name/checkout"},
 			},
 		},
 		{
 			name: "in atom requires every value",
 			body: builderQueryBody("logs", "service.name IN ('b', 'a')"),
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/service.name = 'a'"},
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/service.name = 'b'"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/service.name/a"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/service.name/b"},
 			},
 		},
 		{
 			name: "multiple equality atoms each require a grant",
 			body: builderQueryBody("logs", "service.name = 'b' AND service.name = 'a'"),
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/service.name = 'a'"},
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/service.name = 'b'"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/service.name/a"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/service.name/b"},
 			},
 		},
 		{
@@ -83,7 +83,7 @@ func TestQueryRangeResources(t *testing.T) {
 			name: "audit source maps to audit logs resource",
 			body: `{"compositeQuery":{"queries":[{"type":"builder_query","spec":{"signal":"logs","source":"audit","filter":{"expression":"service.name = 'a'"}}}]}}`,
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceAuditLogs, ID: "builder_query/service.name = 'a'"},
+				{Resource: coretypes.ResourceTelemetryResourceAuditLogs, ID: "builder_query/service.name/a"},
 			},
 		},
 		{
@@ -111,14 +111,14 @@ func TestQueryRangeResources(t *testing.T) {
 			name: "variable substitution qualifies",
 			body: `{"variables":{"svc":{"value":"checkout"}},"compositeQuery":{"queries":[{"type":"builder_query","spec":{"signal":"logs","filter":{"expression":"service.name = $svc"}}}]}}`,
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/service.name = 'checkout'"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/service.name/checkout"},
 			},
 		},
 		{
 			name: "duplicate queries dedupe",
 			body: `{"compositeQuery":{"queries":[{"type":"builder_query","spec":{"signal":"logs","filter":{"expression":"service.name = 'a'"}}},{"type":"builder_query","spec":{"signal":"logs","filter":{"expression":"service.name='a'"}}}]}}`,
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/service.name = 'a'"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/service.name/a"},
 			},
 		},
 	}
@@ -160,7 +160,7 @@ func TestTelemetrySelector(t *testing.T) {
 		return values
 	}
 
-	assert.Equal(t, []string{"builder_query/service.name = 'a'", "builder_query/*", "*"}, selectorValues("builder_query/service.name = 'a'"))
+	assert.Equal(t, []string{"builder_query/service.name/a", "builder_query/service.name/*", "builder_query/*", "*"}, selectorValues("builder_query/service.name/a"))
 	assert.Equal(t, []string{"builder_query/*", "*"}, selectorValues("builder_query"))
 	assert.Equal(t, []string{"promql/*", "*"}, selectorValues("promql"))
 
@@ -168,20 +168,19 @@ func TestTelemetrySelector(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestCanonicalizeTelemetryGrantSelector(t *testing.T) {
+func TestValidateTelemetryGrantSelector(t *testing.T) {
 	valid := map[string]string{
-		"*":                                  "*",
-		"builder_query":                      "builder_query/*",
-		"promql":                             "promql/*",
-		"clickhouse_sql":                     "clickhouse_sql/*",
-		"service.name = 'checkout'":          "builder_query/service.name = 'checkout'",
-		"service.name='checkout'":            "builder_query/service.name = 'checkout'",
-		`service.name = "checkout"`:          "builder_query/service.name = 'checkout'",
-		"resource.service.name = 'checkout'": "builder_query/service.name = 'checkout'",
-		"service.name = checkout":            "builder_query/service.name = 'checkout'",
+		"*":                                   "*",
+		"builder_query":                       "builder_query/*",
+		"promql":                              "promql/*",
+		"clickhouse_sql":                      "clickhouse_sql/*",
+		"builder_query/*":                     "builder_query/*",
+		"builder_query/service.name/checkout": "builder_query/service.name/checkout",
+		"builder_query/service.name/*":        "builder_query/service.name/*",
+		"builder_query/service.name/a/b":      "builder_query/service.name/a/b",
 	}
 	for input, expected := range valid {
-		canonical, err := CanonicalizeTelemetryGrantSelector(input)
+		canonical, err := ValidateTelemetryGrantSelector(input)
 		require.NoError(t, err, "input %q", input)
 		assert.Equal(t, expected, canonical, "input %q", input)
 	}
@@ -189,17 +188,15 @@ func TestCanonicalizeTelemetryGrantSelector(t *testing.T) {
 	invalid := []string{
 		"",
 		"checkout",
-		"deployment.environment = 'qa'",
-		"service.name != 'checkout'",
-		"NOT service.name = 'checkout'",
-		"service.name IN ('a', 'b')",
-		"service.name = 'a' OR service.name = 'b'",
-		"service.name = 'a' AND status = 500",
-		"service.name = $svc",
-		"service.name EXISTS",
+		"service.name = 'checkout'",
+		"builder_query/checkout",
+		"builder_query/deployment.environment/qa",
+		"builder_query/service.name/",
+		"builder_query/service.name/$svc",
+		"unknown_type/service.name/checkout",
 	}
 	for _, input := range invalid {
-		_, err := CanonicalizeTelemetryGrantSelector(input)
+		_, err := ValidateTelemetryGrantSelector(input)
 		assert.Error(t, err, "input %q", input)
 	}
 }

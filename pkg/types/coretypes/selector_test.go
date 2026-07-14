@@ -50,10 +50,13 @@ func TestTelemetryResourceObjectSelectors(t *testing.T) {
 	assert.Equal(t, prefix+"*", ResourceTelemetryResourceLogs.Object(orgID, "*"))
 	assert.Equal(t, prefix+"promql/*", ResourceTelemetryResourceLogs.Object(orgID, "promql/*"))
 	assert.Equal(t, prefix+"builder_query/*", ResourceTelemetryResourceLogs.Object(orgID, "builder_query/*"))
-	assert.Equal(t, prefix+"builder_query/"+TelemetrySelectorSegment("service.name = 'checkout'"), ResourceTelemetryResourceLogs.Object(orgID, "builder_query/service.name = 'checkout'"))
+	assert.Equal(t, prefix+"builder_query/service.name/*", ResourceTelemetryResourceLogs.Object(orgID, "builder_query/service.name/*"))
+	assert.Equal(t, prefix+"builder_query/service.name/"+TelemetrySelectorSegment("checkout"), ResourceTelemetryResourceLogs.Object(orgID, "builder_query/service.name/checkout"))
+	assert.Equal(t, prefix+"builder_query/service.name/"+TelemetrySelectorSegment("a/b"), ResourceTelemetryResourceLogs.Object(orgID, "builder_query/service.name/a/b"))
+	assert.Equal(t, prefix+TelemetrySelectorSegment("builder_query/unknown.key/checkout"), ResourceTelemetryResourceLogs.Object(orgID, "builder_query/unknown.key/checkout"))
 	assert.Equal(t, prefix+TelemetrySelectorSegment("service.name = 'checkout'"), ResourceTelemetryResourceLogs.Object(orgID, "service.name = 'checkout'"))
 
-	object := MustNewObjectFromString(prefix + "builder_query/" + TelemetrySelectorSegment("service.name = 'checkout'"))
-	assert.Equal(t, "builder_query/"+TelemetrySelectorSegment("service.name = 'checkout'"), object.Selector.String())
+	object := MustNewObjectFromString(prefix + "builder_query/service.name/" + TelemetrySelectorSegment("checkout"))
+	assert.Equal(t, "builder_query/service.name/"+TelemetrySelectorSegment("checkout"), object.Selector.String())
 	assert.Equal(t, KindLogs, object.Resource.Kind)
 }
