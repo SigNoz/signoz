@@ -89,21 +89,22 @@ describe('UnpricedModelsTab (integration)', () => {
 		await screen.findByTestId(`unpriced-model-name-${MODEL}`);
 		await selectRule(user, MODEL, 'rule-openai');
 
-		const trigger = screen.getByTestId(`map-to-select-${MODEL}`);
 		expect(
-			within(trigger).getByText('openai:gpt-4o ($3.00/$9.00)'),
+			within(screen.getByTestId(`map-to-select-${MODEL}`)).getByText(
+				'openai:gpt-4o ($3.00/$9.00)',
+			),
 		).toBeInTheDocument();
 
 		await user.click(await screen.findByTestId('unpriced-map-cancel-btn'));
 
-		await waitFor(() =>
+		// Re-query the trigger inside waitFor — the virtualized table can remount
+		// the row's cells on cancel, detaching any previously captured element.
+		await waitFor(() => {
+			const trigger = screen.getByTestId(`map-to-select-${MODEL}`);
 			expect(
-				within(trigger).queryByText('openai:gpt-4o ($3.00/$9.00)'),
-			).not.toBeInTheDocument(),
-		);
-		expect(
-			within(trigger).getByText('Select / Create a pricing model'),
-		).toBeInTheDocument();
+				within(trigger).getByText('Select / Create a pricing model'),
+			).toBeInTheDocument();
+		});
 	});
 
 	it('commits the mapping in one request when confirmed', async () => {
