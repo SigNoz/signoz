@@ -12,10 +12,18 @@ import (
 // "#/spec/panels/<id>".
 const panelRefPrefix = "#/spec/panels/"
 
-// sanitizePanelID rewrites a widget id to something valid in a panel $ref. Only the
-// em dash has shown up as illegal; replace it with a hyphen.
+// sanitizePanelID rewrites a widget id to something valid in a panel $ref. Perses
+// accepts only [a-zA-Z0-9_-] per ref segment (common.jsonRefMatching), so every
+// other rune (em dash, spaces, dots, unicode, …) is mapped to a hyphen.
 func sanitizePanelID(id string) string {
-	return strings.ReplaceAll(id, "—", "-")
+	return strings.Map(func(r rune) rune {
+		switch {
+		case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r >= '0' && r <= '9', r == '_', r == '-':
+			return r
+		default:
+			return '-'
+		}
+	}, id)
 }
 
 // sanitizeWidgetIDs rewrites every widget id in the raw v1 data — widgets[].id,
