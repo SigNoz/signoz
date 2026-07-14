@@ -28,6 +28,7 @@ import { defaultSelectedColumns } from 'container/TracesExplorer/ListView/config
 import QuerySection from 'container/TracesExplorer/QuerySection';
 import TableView from 'container/TracesExplorer/TableView';
 import TracesView from 'container/TracesExplorer/TracesView';
+import { ExportDashboard } from 'hooks/dashboard/useExportDashboards';
 import { useGetExportToDashboardLink } from 'hooks/dashboard/useGetExportToDashboardLink';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -43,7 +44,6 @@ import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFall
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import { TOOLBAR_VIEWS } from 'pages/TracesExplorer/constants';
 import { Warning } from 'types/api';
-import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import {
@@ -194,7 +194,7 @@ function TracesExplorer(): JSX.Element {
 	);
 
 	const handleExport = useCallback(
-		(dashboard: Dashboard | null, isNewDashboard?: boolean): void => {
+		(dashboard: ExportDashboard | null, isNewDashboard?: boolean): void => {
 			if (!dashboard || !panelType) {
 				return;
 			}
@@ -214,7 +214,7 @@ function TracesExplorer(): JSX.Element {
 			logEvent('Traces Explorer: Add to dashboard successful', {
 				panelType,
 				isNewDashboard,
-				dashboardName: dashboard?.data?.title,
+				dashboardName: dashboard?.title,
 			});
 
 			const dashboardEditView = getExportToDashboardLink({
@@ -224,7 +224,9 @@ function TracesExplorer(): JSX.Element {
 				widgetId,
 			});
 
-			safeNavigate(dashboardEditView);
+			if (dashboardEditView) {
+				safeNavigate(dashboardEditView);
+			}
 		},
 		[
 			exportDefaultQuery,

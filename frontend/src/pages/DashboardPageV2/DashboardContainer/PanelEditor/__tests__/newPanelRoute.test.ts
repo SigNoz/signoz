@@ -40,8 +40,11 @@ describe('newPanelRoute', () => {
 		const query = { id: 'q1', queryType: 'builder' } as unknown as Query;
 
 		const parseLink = (
-			link: string,
+			link: string | null,
 		): { path: string; params: URLSearchParams } => {
+			if (link === null) {
+				throw new Error('expected a link, got null');
+			}
 			const [path, search] = link.split('?');
 			return { path, params: new URLSearchParams(search) };
 		};
@@ -76,15 +79,13 @@ describe('newPanelRoute', () => {
 			);
 		});
 
-		it('falls back to TimeSeries for a panel type with no V2 kind', () => {
+		it('returns null for a panel type with no V2 kind', () => {
 			const link = buildExportPanelLink({
 				dashboardId: 'dash-1',
 				panelType: PANEL_TYPES.EMPTY_WIDGET,
 				query,
 			});
-			expect(parseLink(link).params.get('panelKind')).toBe(
-				'signoz/TimeSeriesPanel',
-			);
+			expect(link).toBeNull();
 		});
 	});
 });

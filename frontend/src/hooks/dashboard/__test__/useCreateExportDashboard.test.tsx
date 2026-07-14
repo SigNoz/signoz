@@ -56,7 +56,9 @@ describe('useCreateExportDashboard', () => {
 
 		act(() => result.current.create());
 
-		await waitFor(() => expect(onCreated).toHaveBeenCalledWith(v1Dashboard));
+		await waitFor(() =>
+			expect(onCreated).toHaveBeenCalledWith({ id: 'v1-new', title: TITLE }),
+		);
 		expect(mockCreateV1).toHaveBeenCalledWith({
 			title: TITLE,
 			uploadedGrafana: false,
@@ -78,9 +80,7 @@ describe('useCreateExportDashboard', () => {
 		act(() => result.current.create());
 
 		await waitFor(() =>
-			expect(onCreated).toHaveBeenCalledWith(
-				expect.objectContaining({ id: 'v2-new', data: { title: TITLE } }),
-			),
+			expect(onCreated).toHaveBeenCalledWith({ id: 'v2-new', title: TITLE }),
 		);
 		expect(mockCreateV2).toHaveBeenCalledWith(
 			expect.objectContaining({

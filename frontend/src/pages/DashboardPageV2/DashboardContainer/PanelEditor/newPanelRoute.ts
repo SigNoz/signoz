@@ -44,10 +44,10 @@ export function parseNewPanelKind(
 }
 
 /**
- * New-panel editor link that exports an explorer query into a V2 dashboard: maps panel
- * type → kind (falls back to TimeSeries) and carries the raw `Query` as `compositeQuery`,
- * encoded as the V1 link so `useGetCompositeQueryParam` reads it identically. Conversion
- * happens in the editor; no `layoutIndex`, so exports land in the first section.
+ * New-panel editor link that exports an explorer query into a V2 dashboard. Carries the
+ * raw `Query` as `compositeQuery` encoded as the V1 link so `useGetCompositeQueryParam`
+ * reads it identically (conversion happens in the editor). `null` when the panel type has
+ * no V2 kind, so the caller skips the export instead of landing on an unrelated kind.
  */
 export function buildExportPanelLink({
 	dashboardId,
@@ -57,8 +57,11 @@ export function buildExportPanelLink({
 	dashboardId: string;
 	panelType: PANEL_TYPES;
 	query: Query;
-}): string {
-	const kind = PANEL_TYPE_TO_PANEL_KIND[panelType] ?? 'signoz/TimeSeriesPanel';
+}): string | null {
+	const kind = PANEL_TYPE_TO_PANEL_KIND[panelType];
+	if (!kind) {
+		return null;
+	}
 	const path = generatePath(ROUTES.DASHBOARD_PANEL_EDITOR, {
 		dashboardId,
 		panelId: NEW_PANEL_ID,

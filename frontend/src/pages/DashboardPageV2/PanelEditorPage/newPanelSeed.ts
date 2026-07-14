@@ -2,7 +2,7 @@ import type { DashboardtypesQueryDTO } from 'api/generated/services/sigNoz.schem
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 
-import { isQueryTypeSupported } from '../DashboardContainer/Panels/capabilities';
+import { isQueryTypeSupportedByPanelKind } from '../DashboardContainer/Panels/capabilities';
 import { getPanelDefinition } from '../DashboardContainer/Panels/registry';
 import { PANEL_KIND_TO_PANEL_TYPE } from '../DashboardContainer/Panels/types/panelKind';
 import type { PanelKind } from '../DashboardContainer/Panels/types/panelKind';
@@ -42,7 +42,7 @@ function resolveSeededPanelKind(
 ): PanelKind {
 	if (
 		!compositeQuery ||
-		isQueryTypeSupported(requestedKind, compositeQuery.queryType)
+		isQueryTypeSupportedByPanelKind(requestedKind, compositeQuery.queryType)
 	) {
 		return requestedKind;
 	}
@@ -71,6 +71,7 @@ export function buildNewPanelSeed(
 	const converted = toPerses(compositeQuery, PANEL_KIND_TO_PANEL_TYPE[kind]);
 	const queries = converted.length > 0 ? converted : buildDefaultQueries(kind);
 
+	// An exported Query has only a single `unit`, no per-column units to seed `columnUnits`.
 	if (compositeQuery.unit && kindSupportsUnit(kind)) {
 		return {
 			kind,

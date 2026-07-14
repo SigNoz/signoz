@@ -1,6 +1,7 @@
 import { useHistory } from 'react-router-dom';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { MOCK_QUERY } from 'container/QueryTable/Drilldown/__tests__/mockTableData';
+import { ExportDashboard } from 'hooks/dashboard/useExportDashboards';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { rest, server } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
@@ -80,7 +81,7 @@ const renderExplorerOptionWrapper = (
 		isLoading: false,
 		onExport: jest.fn() as jest.MockedFunction<
 			(
-				dashboard: Dashboard | null,
+				dashboard: ExportDashboard | null,
 				isNewDashboard?: boolean,
 				queryToExport?: Query,
 			) => void
@@ -150,7 +151,7 @@ describe('ExplorerOptionWrapper', () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 			const testOnExport = jest.fn() as jest.MockedFunction<
 				(
-					dashboard: Dashboard | null,
+					dashboard: ExportDashboard | null,
 					isNewDashboard?: boolean,
 					queryToExport?: Query,
 				) => void
@@ -185,7 +186,10 @@ describe('ExplorerOptionWrapper', () => {
 
 			// Wait for the API call to complete and onExport to be called
 			await waitFor(() => {
-				expect(testOnExport).toHaveBeenCalledWith(mockNewDashboard, true);
+				expect(testOnExport).toHaveBeenCalledWith(
+					{ id: NEW_DASHBOARD_ID, title: TEST_DASHBOARD_TITLE },
+					true,
+				);
 			});
 		});
 
@@ -193,7 +197,7 @@ describe('ExplorerOptionWrapper', () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 			const testOnExport = jest.fn() as jest.MockedFunction<
 				(
-					dashboard: Dashboard | null,
+					dashboard: ExportDashboard | null,
 					isNewDashboard?: boolean,
 					queryToExport?: Query,
 				) => void
@@ -259,7 +263,10 @@ describe('ExplorerOptionWrapper', () => {
 
 			// Wait for onExport to be called with the selected dashboard
 			await waitFor(() => {
-				expect(testOnExport).toHaveBeenCalledWith(mockDashboard1, false);
+				expect(testOnExport).toHaveBeenCalledWith(
+					{ id: 'dashboard-1', title: 'Dashboard 1' },
+					false,
+				);
 			});
 		});
 
@@ -280,7 +287,7 @@ describe('ExplorerOptionWrapper', () => {
 
 			// Create a real handleExport function similar to LogsExplorerViews
 			// This should NOT call useUpdateDashboard (as per PR #8029)
-			const handleExport = (dashboard: Dashboard | null): void => {
+			const handleExport = (dashboard: ExportDashboard | null): void => {
 				if (!dashboard) {
 					return;
 				}
@@ -369,7 +376,7 @@ describe('ExplorerOptionWrapper', () => {
 		it('should not show export buttons when component is disabled', () => {
 			const testOnExport = jest.fn() as jest.MockedFunction<
 				(
-					dashboard: Dashboard | null,
+					dashboard: ExportDashboard | null,
 					isNewDashboard?: boolean,
 					queryToExport?: Query,
 				) => void

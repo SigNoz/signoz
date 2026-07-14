@@ -14,6 +14,7 @@ import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapp
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
+import { ExportDashboard } from 'hooks/dashboard/useExportDashboards';
 import { useGetExportToDashboardLink } from 'hooks/dashboard/useGetExportToDashboardLink';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
@@ -32,7 +33,6 @@ import {
 } from 'pages/MetricsExplorer/aiActions';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import { Warning } from 'types/api';
-import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { MetricAggregation } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
@@ -261,7 +261,7 @@ function Explorer(): JSX.Element {
 
 	const handleExport = useCallback(
 		(
-			dashboard: Dashboard | null,
+			dashboard: ExportDashboard | null,
 			_isNewDashboard?: boolean,
 			queryToExport?: Query,
 		): void => {
@@ -286,7 +286,9 @@ function Explorer(): JSX.Element {
 				widgetId,
 			});
 
-			safeNavigate(dashboardEditView);
+			if (dashboardEditView) {
+				safeNavigate(dashboardEditView);
+			}
 		},
 		[exportDefaultQuery, safeNavigate, yAxisUnit, getExportToDashboardLink],
 	);

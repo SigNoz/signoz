@@ -5,13 +5,13 @@ import createDashboardV1 from 'api/v1/dashboards/create';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { useIsDashboardV2 } from 'hooks/useIsDashboardV2';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import { Dashboard } from 'types/api/dashboard/getAll';
 import APIError from 'types/api/error';
+
+import type { ExportDashboard } from './useExportDashboards';
 
 interface UseCreateExportDashboardParams {
 	title: string;
-	/** Receives the created dashboard (normalized) for the caller to navigate/export. */
-	onCreated: (dashboard: Dashboard) => void;
+	onCreated: (dashboard: ExportDashboard) => void;
 }
 
 interface UseCreateExportDashboardResult {
@@ -21,7 +21,7 @@ interface UseCreateExportDashboardResult {
 
 /**
  * Flag-aware "create a new dashboard to export into". V2 uses the Perses-spec
- * `createDashboardV2`; V1 uses the legacy create. Both normalize to a `Dashboard`.
+ * `createDashboardV2`; V1 uses the legacy create. Both normalize to an `ExportDashboard`.
  */
 export function useCreateExportDashboard({
 	title,
@@ -38,7 +38,7 @@ export function useCreateExportDashboard({
 	const v1 = useMutation(createDashboardV1, {
 		onSuccess: (data) => {
 			if (data.data) {
-				onCreated(data.data);
+				onCreated({ id: data.data.id, title: data.data.data.title ?? '' });
 			}
 		},
 		onError,
@@ -59,15 +59,7 @@ export function useCreateExportDashboard({
 			}),
 		{
 			onSuccess: (created) => {
-				onCreated({
-					id: created.data.id,
-					createdAt: '',
-					updatedAt: '',
-					createdBy: '',
-					updatedBy: '',
-					locked: false,
-					data: { title },
-				} as Dashboard);
+				onCreated({ id: created.data.id, title });
 			},
 			onError,
 		},

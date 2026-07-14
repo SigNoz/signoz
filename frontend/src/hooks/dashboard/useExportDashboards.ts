@@ -9,8 +9,14 @@ import { Dashboard } from 'types/api/dashboard/getAll';
 const V2_LIST_LIMIT = 1000;
 const SEARCH_DEBOUNCE_MS = 300;
 
+/** Neutral id+title the picker uses in place of the V1/V2 dashboard entity. */
+export interface ExportDashboard {
+	id: string;
+	title: string;
+}
+
 export interface UseExportDashboardsResult {
-	dashboards: Dashboard[];
+	dashboards: ExportDashboard[];
 	/** First load only — disables the picker until there are options. */
 	isLoading: boolean;
 	/** Any fetch incl. a search refetch — drives the picker spinner. */
@@ -18,27 +24,26 @@ export interface UseExportDashboardsResult {
 	refetch: () => void;
 }
 
-function toDashboard(
+function fromV2(
 	item: DashboardtypesListedDashboardForUserV2DTO,
-): Dashboard {
-	return {
-		id: item.id,
-		createdAt: item.createdAt ?? '',
-		updatedAt: item.updatedAt ?? '',
-		createdBy: item.createdBy ?? '',
-		updatedBy: item.updatedBy ?? '',
-		locked: item.locked,
-		data: { title: item.spec.display?.name || item.name },
-	};
+): ExportDashboard {
+	return { id: item.id, title: item.spec.display?.name || item.name };
 }
 
-function filterByTitle(dashboards: Dashboard[], search: string): Dashboard[] {
+function fromV1(dashboard: Dashboard): ExportDashboard {
+	return { id: dashboard.id, title: dashboard.data.title ?? '' };
+}
+
+function filterByTitle(
+	dashboards: ExportDashboard[],
+	search: string,
+): ExportDashboard[] {
 	const term = search.trim().toLowerCase();
 	if (!term) {
 		return dashboards;
 	}
 	return dashboards.filter((dashboard) =>
-		(dashboard.data.title ?? '').toLowerCase().includes(term),
+		dashboard.title.toLowerCase().includes(term),
 	);
 }
 
@@ -49,10 +54,7 @@ function toNameQuery(search: string): string | undefined {
 	return term ? `name CONTAINS '${term.replace(/'/g, "\\'")}'` : undefined;
 }
 
-/**
- * Flag-aware, search-filtered source for the "Add to dashboard" picker. V2 searches
- * server-side (debounced); V1 filters its already-complete list in memory.
- */
+/** Flag-aware picker source: V2 searches server-side (debounced), V1 filters in memory. */
 export function useExportDashboards(search = ''): UseExportDashboardsResult {
 	const isDashboardV2 = useIsDashboardV2();
 	const debouncedSearch = useDebounce(search, SEARCH_DEBOUNCE_MS);
@@ -63,11 +65,11 @@ export function useExportDashboards(search = ''): UseExportDashboardsResult {
 		{ query: { enabled: isDashboardV2, keepPreviousData: true } },
 	);
 
-	const dashboards = useMemo<Dashboard[]>(
+	const dashboards = useMemo<ExportDashboard[]>(
 		() =>
 			isDashboardV2
-				? (v2.data?.data?.dashboards ?? []).map(toDashboard)
-				: filterByTitle(v1.data?.data ?? [], search),
+				? (v2.data?.data?.dashboards ?? []).map(fromV2)
+				: filterByTitle((v1.data?.data ?? []).map(fromV1), search),
 		[isDashboardV2, v1.data, v2.data, search],
 	);
 

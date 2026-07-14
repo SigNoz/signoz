@@ -25,7 +25,7 @@ describe('useGetExportToDashboardLink', () => {
 		const { result } = renderHook(() => useGetExportToDashboardLink());
 		const link = result.current(params);
 
-		expect(link.startsWith('/dashboard/dash-1/new?')).toBe(true);
+		expect(link?.startsWith('/dashboard/dash-1/new?')).toBe(true);
 		expect(link).toContain('graphType=');
 		expect(link).toContain('widgetId=w1');
 		expect(link).toContain('compositeQuery=');
@@ -37,7 +37,7 @@ describe('useGetExportToDashboardLink', () => {
 		const { result } = renderHook(() => useGetExportToDashboardLink());
 		const link = result.current(params);
 
-		expect(link.startsWith('/dashboard/dash-1/panel/new?')).toBe(true);
+		expect(link?.startsWith('/dashboard/dash-1/panel/new?')).toBe(true);
 		expect(link).toContain('panelKind=signoz%2FTimeSeriesPanel');
 		expect(link).not.toContain('widgetId');
 		expect(link).toContain('compositeQuery=');

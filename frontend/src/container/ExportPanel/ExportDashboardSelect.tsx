@@ -1,16 +1,16 @@
 import { useMemo } from 'react';
 // eslint-disable-next-line signoz/no-antd-components
 import { Select, SelectProps } from 'antd';
-import { Dashboard } from 'types/api/dashboard/getAll';
+import { ExportDashboard } from 'hooks/dashboard/useExportDashboards';
 
 import { getSelectOptions } from './utils';
 import styles from './ExportPanel.module.scss';
 
 interface ExportDashboardSelectProps {
-	dashboards: Dashboard[];
+	dashboards: ExportDashboard[];
 	value: string | null;
 	/** The picked dashboard, pinned as an option so its label survives a later search. */
-	selectedDashboard: Dashboard | null;
+	selectedDashboard: ExportDashboard | null;
 	loading?: boolean;
 	disabled?: boolean;
 	onChange: (dashboardId: string) => void;
@@ -39,7 +39,7 @@ function ExportDashboardSelect({
 			!base.some((option) => option.value === selectedDashboard.id)
 		) {
 			return [
-				{ label: selectedDashboard.data.title, value: selectedDashboard.id },
+				{ label: selectedDashboard.title, value: selectedDashboard.id },
 				...base,
 			];
 		}

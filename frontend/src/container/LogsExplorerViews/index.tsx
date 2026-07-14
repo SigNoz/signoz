@@ -33,6 +33,7 @@ import {
 	getQueryByPanelType,
 } from 'container/LogsExplorerViews/explorerUtils';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
+import { ExportDashboard } from 'hooks/dashboard/useExportDashboards';
 import { useGetExportToDashboardLink } from 'hooks/dashboard/useGetExportToDashboardLink';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
@@ -44,7 +45,6 @@ import { isEmpty, isUndefined } from 'lodash-es';
 import LiveLogs from 'pages/LiveLogs';
 import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
-import { Dashboard } from 'types/api/dashboard/getAll';
 import APIError from 'types/api/error';
 import { ILog } from 'types/api/logs/log';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
@@ -263,7 +263,7 @@ function LogsExplorerViewsContainer({
 	}, [data?.payload]);
 
 	const handleExport = useCallback(
-		(dashboard: Dashboard | null, isNewDashboard?: boolean): void => {
+		(dashboard: ExportDashboard | null, isNewDashboard?: boolean): void => {
 			if (!dashboard || !selectedPanelType) {
 				return;
 			}
@@ -283,7 +283,7 @@ function LogsExplorerViewsContainer({
 			logEvent('Logs Explorer: Add to dashboard successful', {
 				panelType: selectedPanelType,
 				isNewDashboard,
-				dashboardName: dashboard?.data?.title,
+				dashboardName: dashboard?.title,
 			});
 
 			const dashboardEditView = getExportToDashboardLink({
@@ -293,7 +293,9 @@ function LogsExplorerViewsContainer({
 				widgetId,
 			});
 
-			safeNavigate(dashboardEditView);
+			if (dashboardEditView) {
+				safeNavigate(dashboardEditView);
+			}
 		},
 		[
 			safeNavigate,

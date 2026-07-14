@@ -63,7 +63,10 @@ describe('useExportDashboards', () => {
 
 		const { result } = renderHook(() => useExportDashboards());
 
-		expect(result.current.dashboards).toStrictEqual([v1Dashboard, v1Other]);
+		expect(result.current.dashboards).toStrictEqual([
+			{ id: 'v1-1', title: 'V1 Dashboard' },
+			{ id: 'v1-2', title: 'Other board' },
+		]);
 		expect(mockUseGetAllDashboard).toHaveBeenCalledWith({ enabled: true });
 		expect(mockUseListV2).toHaveBeenCalledWith(
 			expect.anything(),
@@ -78,16 +81,18 @@ describe('useExportDashboards', () => {
 
 		const { result } = renderHook(() => useExportDashboards('v1 dash'));
 
-		expect(result.current.dashboards).toStrictEqual([v1Dashboard]);
+		expect(result.current.dashboards).toStrictEqual([
+			{ id: 'v1-1', title: 'V1 Dashboard' },
+		]);
 	});
 
-	it('returns the V2 list normalized to the dashboard shape when the flag is on', () => {
+	it('returns the V2 list normalized to the export shape when the flag is on', () => {
 		mockUseIsDashboardV2.mockReturnValue(true);
 
 		const { result } = renderHook(() => useExportDashboards());
 
 		expect(result.current.dashboards).toStrictEqual([
-			expect.objectContaining({ id: 'v2-1', data: { title: 'V2 Dashboard' } }),
+			{ id: 'v2-1', title: 'V2 Dashboard' },
 		]);
 		expect(mockUseGetAllDashboard).toHaveBeenCalledWith({ enabled: false });
 		expect(mockUseListV2).toHaveBeenCalledWith(

@@ -5,8 +5,10 @@ import { Button } from '@signozhq/ui/button';
 import { DialogWrapper } from '@signozhq/ui/dialog';
 import { Typography } from '@signozhq/ui/typography';
 import { useCreateExportDashboard } from 'hooks/dashboard/useCreateExportDashboard';
-import { useExportDashboards } from 'hooks/dashboard/useExportDashboards';
-import { Dashboard } from 'types/api/dashboard/getAll';
+import {
+	ExportDashboard,
+	useExportDashboards,
+} from 'hooks/dashboard/useExportDashboards';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import ExportDashboardSelect from './ExportDashboardSelect';
@@ -14,7 +16,10 @@ import styles from './ExportPanel.module.scss';
 
 export interface ExportPanelProps {
 	isLoading?: boolean;
-	onExport: (dashboard: Dashboard | null, isNewDashboard?: boolean) => void;
+	onExport: (
+		dashboard: ExportDashboard | null,
+		isNewDashboard?: boolean,
+	) => void;
 	query: Query | null;
 	/** Controlled open state of the dialog. */
 	open: boolean;
@@ -35,9 +40,8 @@ function ExportPanelContainer({
 	const { t } = useTranslation(['dashboard']);
 
 	// Track the object, not just the id, so export survives a search that narrows it out.
-	const [selectedDashboard, setSelectedDashboard] = useState<Dashboard | null>(
-		null,
-	);
+	const [selectedDashboard, setSelectedDashboard] =
+		useState<ExportDashboard | null>(null);
 	const [searchText, setSearchText] = useState('');
 
 	const {

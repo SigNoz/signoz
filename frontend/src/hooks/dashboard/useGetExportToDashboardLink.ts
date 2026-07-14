@@ -14,12 +14,12 @@ interface ExportToDashboardLinkParams {
 
 /**
  * Flag-aware "Add to Dashboard" link builder for the explorers. V2 targets the panel
- * editor (`/dashboard/:id/panel/new`); V1 uses the legacy new-widget link. Keeps the V1
- * `generateExportToDashboardLink` signature (V2 ignores `widgetId` — the id is made on save).
+ * editor; V1 uses the legacy new-widget link. `null` (V2 only) when the panel type has no
+ * V2 kind, so callers skip navigation.
  */
 export function useGetExportToDashboardLink(): (
 	params: ExportToDashboardLinkParams,
-) => string {
+) => string | null {
 	const isDashboardV2 = useIsDashboardV2();
 
 	return useCallback(

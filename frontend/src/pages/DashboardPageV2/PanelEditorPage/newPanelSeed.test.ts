@@ -1,7 +1,7 @@
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 
-import { isQueryTypeSupported } from '../DashboardContainer/Panels/capabilities';
+import { isQueryTypeSupportedByPanelKind } from '../DashboardContainer/Panels/capabilities';
 import { getPanelDefinition } from '../DashboardContainer/Panels/registry';
 import { SectionKind } from '../DashboardContainer/Panels/types/sections';
 import { buildDefaultQueries } from '../DashboardContainer/Panels/utils/buildDefaultQueries';
@@ -22,14 +22,14 @@ jest.mock('../DashboardContainer/Panels/registry', () => ({
 	getPanelDefinition: jest.fn(),
 }));
 jest.mock('../DashboardContainer/Panels/capabilities', () => ({
-	isQueryTypeSupported: jest.fn(),
+	isQueryTypeSupportedByPanelKind: jest.fn(),
 }));
 
 const mockToPerses = toPerses as jest.Mock;
 const mockBuildDefaultQueries = buildDefaultQueries as jest.Mock;
 const mockBuildPluginSpec = buildPluginSpec as jest.Mock;
 const mockGetPanelDefinition = getPanelDefinition as jest.Mock;
-const mockIsQueryTypeSupported = isQueryTypeSupported as jest.Mock;
+const mockIsQueryTypeSupported = isQueryTypeSupportedByPanelKind as jest.Mock;
 
 const DEFAULT_QUERIES = [{ kind: 'default' }];
 const CONVERTED_QUERIES = [{ kind: 'converted' }];
