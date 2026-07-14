@@ -1,6 +1,8 @@
 package implinframonitoring
 
 import (
+	"slices"
+
 	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -34,6 +36,26 @@ var clustersTableMetricNamesList = []string{
 var clusterAttrKeysForMetadata = []string{
 	"k8s.cluster.name",
 }
+
+// clusterCountAttrKeys are the resource attributes whose distinct values are
+// counted per cluster. Node name is read from the node metric universe, while
+// namespace + workload names come from the pod metric universe — both unioned
+// into clusterCountMetricNamesList.
+var clusterCountAttrKeys = []string{
+	inframonitoringtypes.NodeNameAttrKey,
+	inframonitoringtypes.NamespaceNameAttrKey,
+	inframonitoringtypes.DeploymentNameAttrKey,
+	inframonitoringtypes.DaemonSetNameAttrKey,
+	inframonitoringtypes.JobNameAttrKey,
+	inframonitoringtypes.StatefulSetNameAttrKey,
+}
+
+// clusterMetricNamesListForCounts is the metric universe for per-cluster distinct
+// counts. It unions the pod universe (carries namespace + workload owner labels)
+// with the cluster/node universe (carries k8s.node.name), so a single query can
+// count nodes, namespaces, and workloads per cluster. Overlapping pod
+// phase/status metrics are left in — harmless in a metric_name IN (...) list.
+var clusterMetricNamesListForCounts = slices.Concat(podsTableMetricNamesList, clustersTableMetricNamesList)
 
 var orderByToClustersQueryNames = map[string][]string{
 	inframonitoringtypes.ClustersOrderByCPU:               {"A"},
