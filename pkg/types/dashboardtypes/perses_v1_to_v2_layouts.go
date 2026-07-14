@@ -243,7 +243,10 @@ func (d *v1Decoder) extractRowsAndCollapsedWidgets(data StorableDashboardData) m
 	panelMap := d.readObject(data, "panelMap")
 	rows := make(map[string]*rowInfo)
 	for _, w := range d.readObjects(data, "widgets") {
-		id := d.readString(w, "id")
+		// Read id directly (not via readString): a non-string id is skipped silently by
+		// convertV1Panels, so flagging it malformed here would fail the migration for a
+		// widget that's already been dropped.
+		id, _ := w["id"].(string)
 		if d.readString(w, "panelTypes") != "row" || id == "" {
 			continue
 		}
