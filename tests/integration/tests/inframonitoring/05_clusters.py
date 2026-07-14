@@ -78,6 +78,7 @@ def test_clusters_accuracy(
             "clusterMemoryAllocatable",
             "nodeCountsByReadiness",
             "podCountsByPhase",
+            "counts",
             "meta",
         ):
             assert field in record, f"missing {field} in {record!r}"
@@ -88,6 +89,9 @@ def test_clusters_accuracy(
         for bucket in ("pending", "running", "succeeded", "failed", "unknown"):
             assert bucket in record["podCountsByPhase"]
             assert isinstance(record["podCountsByPhase"][bucket], int)
+        for bucket in ("nodes", "namespaces", "deployments", "daemonSets", "jobs", "statefulSets"):
+            assert bucket in record["counts"]
+            assert isinstance(record["counts"][bucket], int)
 
         assert record["meta"].get("k8s.cluster.name") == record["clusterName"]
 
@@ -102,6 +106,7 @@ def test_clusters_accuracy(
             assert compare_values(record[field], exp[field], 1e-6), f"{record['clusterName']}.{field}: got {record[field]}, expected {exp[field]}"
         assert record["nodeCountsByReadiness"] == exp["nodeCountsByReadiness"]
         assert record["podCountsByPhase"] == exp["podCountsByPhase"]
+        assert record["counts"] == exp["counts"]
 
 
 @pytest.mark.parametrize(

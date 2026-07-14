@@ -81,6 +81,18 @@ describe('exportTimeseriesData', () => {
 		]);
 	});
 
+	it('omits display-only format ids (short/none) from headers', () => {
+		const data = [
+			makeQuery('A', [{ series: [makeSeries({ service: 'a' }, [[1000, 1]])] }]),
+		];
+
+		const short = exportTimeseriesData({ data, yAxisUnit: 'short' });
+		expect(short.headers[short.headers.length - 1]).toBe('value');
+
+		const none = exportTimeseriesData({ data, yAxisUnit: 'none' });
+		expect(none.headers[none.headers.length - 1]).toBe('value');
+	});
+
 	it('multi-query: query is its own column; label keys are unioned', () => {
 		const data = [
 			makeQuery('A', [{ series: [makeSeries({ service: 'x' }, [[1000, 1]])] }]),
