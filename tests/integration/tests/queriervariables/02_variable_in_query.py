@@ -8,386 +8,261 @@ from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 
+import pytest
+
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.logs import Logs
 from fixtures.querier import (
-    get_all_series,
-    get_series_values,
+    BuilderQuery,
+    OrderBy,
+    TelemetryFieldKey,
+    get_column_data_from_response,
+    get_scalar_table_data,
     make_query_request,
 )
 
-LOGS_COUNT_AGG = [{"expression": "count()"}]
 
-
-def build_logs_query(filter_expression: str, group_by: list[dict] | None = None) -> dict:
-    spec = {
-        "name": "A",
-        "signal": "logs",
-        "stepInterval": 60,
-        "disabled": False,
-        "aggregations": LOGS_COUNT_AGG,
-        "filter": {"expression": filter_expression},
-    }
-    if group_by:
-        spec["groupBy"] = group_by
-    return {"type": "builder_query", "spec": spec}
-
-
-def sum_series_values(series_values: list[dict]) -> float:
-    return sum(point["value"] for point in series_values)
-
-
-def make_service_logs(now: datetime) -> list[Logs]:
-    return [
-        Logs(
-            timestamp=now - timedelta(minutes=1),
-            resources={"service.name": "auth-service"},
-            attributes={"env": "production"},
-            body="Auth service log",
-            severity_text="INFO",
+@pytest.mark.parametrize(
+    "expression,variables,expected_logs",
+    [
+        pytest.param(
+            "service.name = $service",
+            {"service": {"type": "query", "value": "auth-service"}},
+            {"auth-prod-log"},
+            id="standalone_variable",
         ),
-        Logs(
-            timestamp=now - timedelta(minutes=1),
-            resources={"service.name": "api-service"},
-            attributes={"env": "production"},
-            body="API service log",
-            severity_text="INFO",
+        pytest.param(
+            "service.name IN $services",
+            {"services": {"type": "custom", "value": ["auth-service", "api-service"]}},
+            {"auth-prod-log", "api-prod-log"},
+            id="array_variable",
         ),
-        Logs(
-            timestamp=now - timedelta(minutes=1),
-            resources={"service.name": "web-service"},
-            attributes={"env": "staging"},
-            body="Web service log",
-            severity_text="INFO",
+        pytest.param(
+            "cluster_name = '$environment-xyz'",
+            {"environment": {"type": "dynamic", "value": "prod"}},
+            {"auth-prod-log", "api-prod-log"},
+            id="variable_composed_in_string",
         ),
-    ]
-
-
-def make_cluster_logs(now: datetime) -> list[Logs]:
-    return [
-        Logs(
-            timestamp=now - timedelta(minutes=1),
-            resources={"service.name": "service1"},
-            attributes={"cluster_name": "prod-xyz"},
-            body="Prod cluster log",
-            severity_text="INFO",
+        pytest.param(
+            "cluster_name LIKE '$env%'",
+            {"env": {"type": "text", "value": "prod"}},
+            {"auth-prod-log", "api-prod-log"},
+            id="variable_in_like_pattern",
         ),
-        Logs(
-            timestamp=now - timedelta(minutes=1),
-            resources={"service.name": "service2"},
-            attributes={"cluster_name": "staging-xyz"},
-            body="Staging cluster log",
-            severity_text="INFO",
+        pytest.param(
+            "path = '$region-$env-cluster'",
+            {
+                "region": {"type": "query", "value": "us-west"},
+                "env": {"type": "custom", "value": "prod"},
+            },
+            {"auth-prod-log"},
+            id="multiple_variables_in_string",
         ),
-        Logs(
-            timestamp=now - timedelta(minutes=1),
-            resources={"service.name": "service3"},
-            attributes={"cluster_name": "dev-xyz"},
-            body="Dev cluster log",
-            severity_text="INFO",
+        pytest.param(
+            "label = 'prefix-$var-suffix'",
+            {"var": {"type": "text", "value": "middle"}},
+            {"auth-prod-log"},
+            id="variable_with_prefix_and_suffix",
         ),
-    ]
-
-
-def query_total_count(
+        pytest.param(
+            "cluster_name = $environment-xyz",
+            {"environment": {"type": "custom", "value": "staging"}},
+            {"web-staging-log"},
+            id="variable_without_quotes",
+        ),
+        pytest.param(
+            "service.name = $service",
+            {"service": {"type": "query", "value": "auth-service"}},
+            {"auth-prod-log"},
+            id="query_variable_type",
+        ),
+        pytest.param(
+            "service.name = $service",
+            {"service": {"type": "custom", "value": "auth-service"}},
+            {"auth-prod-log"},
+            id="custom_variable_type",
+        ),
+        pytest.param(
+            "service.name = $service",
+            {"service": {"type": "text", "value": "auth-service"}},
+            {"auth-prod-log"},
+            id="text_variable_type",
+        ),
+        pytest.param(
+            "service.name = $service",
+            {"service": {"type": "dynamic", "value": "auth-service"}},
+            {"auth-prod-log"},
+            id="dynamic_variable_type",
+        ),
+        # `__all__` removes the filter condition entirely → all logs match
+        pytest.param(
+            "service.name = $service",
+            {"service": {"type": "dynamic", "value": "__all__"}},
+            {"auth-prod-log", "api-prod-log", "web-staging-log"},
+            id="all_value_standalone",
+        ),
+        pytest.param(
+            "cluster_name = '$environment-xyz'",
+            {"environment": {"type": "dynamic", "value": "__all__"}},
+            {"auth-prod-log", "api-prod-log", "web-staging-log"},
+            id="all_value_in_composed_string",
+        ),
+        pytest.param(
+            "service.name IN $services",
+            {"services": {"type": "dynamic", "value": "__all__"}},
+            {"auth-prod-log", "api-prod-log", "web-staging-log"},
+            id="all_value_in_array",
+        ),
+        # `__all__` for service drops only that condition; env filter still applies
+        pytest.param(
+            "service.name = $service AND env = $env",
+            {
+                "service": {"type": "dynamic", "value": "__all__"},
+                "env": {"type": "dynamic", "value": "production"},
+            },
+            {"auth-prod-log", "api-prod-log"},
+            id="all_value_partial_filter",
+        ),
+    ],
+)
+def test_variable_in_query(
     signoz: types.SigNoz,
-    token: str,
-    now: datetime,
-    filter_expression: str,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_logs: Callable[[list[Logs]], None],
+    expression: str,
     variables: dict,
-) -> float:
-    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
-    end_ms = int(now.timestamp() * 1000)
+    expected_logs: set[str],
+) -> None:
+    """
+    Runs a raw logs query with the filter expression and variables, then checks the
+    set of matching log bodies.
+
+    Canonical dataset:
+    auth-prod-log:   service.name=auth-service, env=production, cluster_name=prod-xyz,
+                     path=us-west-prod-cluster, label=prefix-middle-suffix
+    api-prod-log:    service.name=api-service,  env=production, cluster_name=prod-xyz,
+                     path=us-east-prod-cluster, label=prefix-other-suffix
+    web-staging-log: service.name=web-service,  env=staging,    cluster_name=staging-xyz,
+                     path=eu-west-staging-cluster
+    """
+    now = datetime.now(tz=UTC)
+    insert_logs(
+        [
+            Logs(
+                timestamp=now - timedelta(seconds=5),
+                body="auth-prod-log",
+                resources={"service.name": "auth-service"},
+                attributes={
+                    "env": "production",
+                    "cluster_name": "prod-xyz",
+                    "path": "us-west-prod-cluster",
+                    "label": "prefix-middle-suffix",
+                },
+            ),
+            Logs(
+                timestamp=now - timedelta(seconds=4),
+                body="api-prod-log",
+                resources={"service.name": "api-service"},
+                attributes={
+                    "env": "production",
+                    "cluster_name": "prod-xyz",
+                    "path": "us-east-prod-cluster",
+                    "label": "prefix-other-suffix",
+                },
+            ),
+            Logs(
+                timestamp=now - timedelta(seconds=3),
+                body="web-staging-log",
+                resources={"service.name": "web-service"},
+                attributes={
+                    "env": "staging",
+                    "cluster_name": "staging-xyz",
+                    "path": "eu-west-staging-cluster",
+                },
+            ),
+        ]
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    now = datetime.now(tz=UTC)
 
     response = make_query_request(
         signoz,
         token,
-        start_ms,
-        end_ms,
-        [build_logs_query(filter_expression)],
+        start_ms=int((now - timedelta(seconds=30)).timestamp() * 1000),
+        end_ms=int(now.timestamp() * 1000),
+        request_type="raw",
+        queries=[
+            BuilderQuery(
+                signal="logs",
+                limit=100,
+                filter_expression=expression,
+                order=[
+                    OrderBy(key=TelemetryFieldKey(name="timestamp"), direction="desc"),
+                    OrderBy(key=TelemetryFieldKey(name="id"), direction="desc"),
+                ],
+            ).to_dict()
+        ],
         variables=variables,
     )
 
     assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
+    assert set(get_column_data_from_response(response.json(), "body")) == expected_logs
 
-    return sum_series_values(get_series_values(response.json(), "A"))
 
-
-def test_query_range_with_standalone_variable(
+def test_variable_in_query_with_group_by(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
 ) -> None:
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-    insert_logs(make_service_logs(now))
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    total_count = query_total_count(
-        signoz,
-        token,
-        now,
-        "service.name = $service",
-        {"service": {"type": "query", "value": "auth-service"}},
-    )
-    assert total_count == 1  # auth-service log
-
-
-def test_query_range_with_variable_in_array(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    insert_logs: Callable[[list[Logs]], None],
-) -> None:
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-    insert_logs(make_service_logs(now))
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    total_count = query_total_count(
-        signoz,
-        token,
-        now,
-        "service.name IN $services",
-        {"services": {"type": "custom", "value": ["auth-service", "api-service"]}},
-    )
-    assert total_count == 2  # auth-service and api-service logs
-
-
-def test_query_range_with_variable_composed_in_string(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    insert_logs: Callable[[list[Logs]], None],
-) -> None:
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-    insert_logs(make_cluster_logs(now))
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    total_count = query_total_count(
-        signoz,
-        token,
-        now,
-        "cluster_name = '$environment-xyz'",
-        {"environment": {"type": "dynamic", "value": "prod"}},
-    )
-    assert total_count == 1  # prod-xyz log
-
-
-def test_query_range_with_variable_in_like_pattern(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    insert_logs: Callable[[list[Logs]], None],
-) -> None:
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-    logs: list[Logs] = [
-        Logs(
-            timestamp=now - timedelta(minutes=1),
-            resources={"service.name": "prod-auth"},
-            attributes={"env": "production"},
-            body="Prod auth log",
-            severity_text="INFO",
-        ),
-        Logs(
-            timestamp=now - timedelta(minutes=1),
-            resources={"service.name": "prod-api"},
-            attributes={"env": "production"},
-            body="Prod API log",
-            severity_text="INFO",
-        ),
-        Logs(
-            timestamp=now - timedelta(minutes=1),
-            resources={"service.name": "staging-api"},
-            attributes={"env": "staging"},
-            body="Staging API log",
-            severity_text="INFO",
-        ),
-    ]
-    insert_logs(logs)
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    total_count = query_total_count(
-        signoz,
-        token,
-        now,
-        "service.name LIKE '$env%'",
-        {"env": {"type": "text", "value": "prod"}},
-    )
-    assert total_count == 2  # prod-auth and prod-api logs
-
-
-def test_query_range_with_multiple_variables_in_string(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    insert_logs: Callable[[list[Logs]], None],
-) -> None:
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-    logs: list[Logs] = [
-        Logs(
-            timestamp=now - timedelta(minutes=1),
-            resources={"service.name": "service1"},
-            attributes={"path": "us-west-prod-cluster"},
-            body="US West Prod log",
-            severity_text="INFO",
-        ),
-        Logs(
-            timestamp=now - timedelta(minutes=1),
-            resources={"service.name": "service2"},
-            attributes={"path": "us-east-prod-cluster"},
-            body="US East Prod log",
-            severity_text="INFO",
-        ),
-        Logs(
-            timestamp=now - timedelta(minutes=1),
-            resources={"service.name": "service3"},
-            attributes={"path": "eu-west-staging-cluster"},
-            body="EU West Staging log",
-            severity_text="INFO",
-        ),
-    ]
-    insert_logs(logs)
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    total_count = query_total_count(
-        signoz,
-        token,
-        now,
-        "path = '$region-$env-cluster'",
-        {
-            "region": {"type": "query", "value": "us-west"},
-            "env": {"type": "custom", "value": "prod"},
-        },
-    )
-    assert total_count == 1  # us-west-prod-cluster log
-
-
-def test_query_range_with_variable_prefix_and_suffix(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    insert_logs: Callable[[list[Logs]], None],
-) -> None:
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-    logs: list[Logs] = [
-        Logs(
-            timestamp=now - timedelta(minutes=1),
-            resources={"service.name": "service1"},
-            attributes={"label": "prefix-middle-suffix"},
-            body="Middle label log",
-            severity_text="INFO",
-        ),
-        Logs(
-            timestamp=now - timedelta(minutes=1),
-            resources={"service.name": "service2"},
-            attributes={"label": "prefix-other-suffix"},
-            body="Other label log",
-            severity_text="INFO",
-        ),
-    ]
-    insert_logs(logs)
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    total_count = query_total_count(
-        signoz,
-        token,
-        now,
-        "label = 'prefix-$var-suffix'",
-        {"var": {"type": "text", "value": "middle"}},
-    )
-    assert total_count == 1  # prefix-middle-suffix log
-
-
-def test_query_range_with_variable_without_quotes(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    insert_logs: Callable[[list[Logs]], None],
-) -> None:
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-    insert_logs(make_cluster_logs(now))
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    total_count = query_total_count(
-        signoz,
-        token,
-        now,
-        "cluster_name = $environment-xyz",
-        {"environment": {"type": "custom", "value": "staging"}},
-    )
-    assert total_count == 1  # staging-xyz log
-
-
-def test_query_range_time_series_with_group_by(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    insert_logs: Callable[[list[Logs]], None],
-) -> None:
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    """
+    A composed variable in the filter works together with groupBy: count logs
+    with cluster_name = '$env-xyz' grouped by service.name.
+    """
+    now = datetime.now(tz=UTC)
     logs: list[Logs] = []
-
     for i in range(3):
-        logs.append(
-            Logs(
-                timestamp=now - timedelta(minutes=i + 1),
-                resources={"service.name": "auth-service"},
-                attributes={"cluster_name": "prod-xyz"},
-                body=f"Auth service log {i}",
-                severity_text="INFO",
+        for service, cluster in [
+            ("auth-service", "prod-xyz"),
+            ("api-service", "prod-xyz"),
+            ("web-service", "staging-xyz"),
+        ]:
+            logs.append(
+                Logs(
+                    timestamp=now - timedelta(seconds=i + 1),
+                    body=f"{service} log {i}",
+                    resources={"service.name": service},
+                    attributes={"cluster_name": cluster},
+                )
             )
-        )
-        logs.append(
-            Logs(
-                timestamp=now - timedelta(minutes=i + 1),
-                resources={"service.name": "api-service"},
-                attributes={"cluster_name": "prod-xyz"},
-                body=f"API service log {i}",
-                severity_text="INFO",
-            )
-        )
-        logs.append(
-            Logs(
-                timestamp=now - timedelta(minutes=i + 1),
-                resources={"service.name": "web-service"},
-                attributes={"cluster_name": "staging-xyz"},
-                body=f"Web service log {i}",
-                severity_text="INFO",
-            )
-        )
-
     insert_logs(logs)
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    now = datetime.now(tz=UTC)
 
-    start_ms = int((now - timedelta(minutes=10)).timestamp() * 1000)
-    end_ms = int(now.timestamp() * 1000)
-
+    # BuilderQuery has no groupBy field, so the spec is built inline
     response = make_query_request(
         signoz,
         token,
-        start_ms,
-        end_ms,
-        [
-            build_logs_query(
-                "cluster_name = '$env-xyz'",
-                group_by=[
-                    {
-                        "name": "service.name",
-                        "fieldDataType": "string",
-                        "fieldContext": "resource",
-                    }
-                ],
-            )
+        start_ms=int((now - timedelta(seconds=30)).timestamp() * 1000),
+        end_ms=int(now.timestamp() * 1000),
+        request_type="scalar",
+        queries=[
+            {
+                "type": "builder_query",
+                "spec": {
+                    "name": "A",
+                    "signal": "logs",
+                    "disabled": False,
+                    "filter": {"expression": "cluster_name = '$env-xyz'"},
+                    "groupBy": [{"name": "service.name", "fieldContext": "resource"}],
+                    "aggregations": [{"expression": "count()"}],
+                },
+            }
         ],
         variables={"env": {"type": "query", "value": "prod"}},
     )
@@ -395,147 +270,5 @@ def test_query_range_time_series_with_group_by(
     assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
 
-    all_series = get_all_series(response.json(), "A")
-    assert len(all_series) == 2  # auth-service and api-service
-
-    # 6 (3 auth-service + 3 api-service)
-    total_count = sum(sum_series_values(s["values"]) for s in all_series)
-    assert total_count == 6
-
-
-def test_query_range_with_different_variable_types(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    insert_logs: Callable[[list[Logs]], None],
-) -> None:
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-    logs: list[Logs] = [
-        Logs(
-            timestamp=now - timedelta(minutes=1),
-            resources={"service.name": "auth-service"},
-            attributes={"env": "production"},
-            body="Auth service log",
-            severity_text="INFO",
-        ),
-    ]
-    insert_logs(logs)
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    # all different variable types
-    for var_type in ["query", "custom", "text", "dynamic"]:
-        total_count = query_total_count(
-            signoz,
-            token,
-            now,
-            "service.name = $service",
-            {"service": {"type": var_type, "value": "auth-service"}},
-        )
-        assert total_count == 1, f"Expected 1 log for variable type {var_type}, got {total_count}"
-
-
-def test_query_range_with_all_value_standalone(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    insert_logs: Callable[[list[Logs]], None],
-) -> None:
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-    insert_logs(make_service_logs(now))
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    # `__all__`, the filter condition should be removed
-    total_count = query_total_count(
-        signoz,
-        token,
-        now,
-        "service.name = $service",
-        {"service": {"type": "dynamic", "value": "__all__"}},
-    )
-    assert total_count == 3
-
-
-def test_query_range_with_all_value_in_composed_string(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    insert_logs: Callable[[list[Logs]], None],
-) -> None:
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-    insert_logs(make_cluster_logs(now))
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    # `__all__` in composed string, the filter should be removed
-    total_count = query_total_count(
-        signoz,
-        token,
-        now,
-        "cluster_name = '$environment-xyz'",
-        {"environment": {"type": "dynamic", "value": "__all__"}},
-    )
-    assert total_count == 3  # all logs should be returned
-
-
-def test_query_range_with_all_value_partial_filter(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    insert_logs: Callable[[list[Logs]], None],
-) -> None:
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-    insert_logs(make_service_logs(now))
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    # `__all__` for service, only env filter should apply
-    total_count = query_total_count(
-        signoz,
-        token,
-        now,
-        "service.name = $service AND env = $env",
-        {
-            "service": {"type": "dynamic", "value": "__all__"},
-            "env": {"type": "dynamic", "value": "production"},
-        },
-    )
-    assert total_count == 2  # production logs (auth + api)
-
-
-def test_query_range_with_all_value_in_array(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    insert_logs: Callable[[list[Logs]], None],
-) -> None:
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-    logs: list[Logs] = [
-        Logs(
-            timestamp=now - timedelta(minutes=1),
-            resources={"service.name": "auth-service"},
-            attributes={"env": "production"},
-            body="Auth service log",
-            severity_text="INFO",
-        ),
-        Logs(
-            timestamp=now - timedelta(minutes=1),
-            resources={"service.name": "api-service"},
-            attributes={"env": "production"},
-            body="API service log",
-            severity_text="INFO",
-        ),
-    ]
-    insert_logs(logs)
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    total_count = query_total_count(
-        signoz,
-        token,
-        now,
-        "service.name IN $services",
-        {"services": {"type": "dynamic", "value": "__all__"}},
-    )
-    assert total_count == 2  # all logs
+    rows = get_scalar_table_data(response.json())
+    assert sorted(rows) == [["api-service", 3], ["auth-service", 3]]

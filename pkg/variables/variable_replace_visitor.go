@@ -3,7 +3,6 @@ package variables
 import (
 	"fmt"
 	"slices"
-	"sort"
 	"strconv"
 	"strings"
 
@@ -534,89 +533,6 @@ func (v *variableReplacementVisitor) VisitKey(ctx *grammar.KeyContext) any {
 	return keyText
 }
 
-// isVariableNameChar reports whether c can be part of a variable name.
-func isVariableNameChar(c byte) bool {
-	return c == '_' || ('0' <= c && c <= '9') || ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z')
-}
-
-// lookupVariable resolves a variable name against the variables map, tolerating a
-// `$` prefix on either the name or the map keys.
-func (v *variableReplacementVisitor) lookupVariable(name string) (qbtypes.VariableItem, bool) {
-	if item, ok := v.variables[name]; ok {
-		return item, true
-	}
-	if strings.HasPrefix(name, "$") {
-		item, ok := v.variables[name[1:]]
-		return item, ok
-	}
-	item, ok := v.variables["$"+name]
-	return item, ok
-}
-
-// interpolateVariablesInString replaces $variable references embedded in s with their
-// values, matching against the names in the variables map (longest name first). A
-// reference is only replaced when the character following it cannot extend a variable
-// name: with only `env` defined, "$env-suffix" becomes "prod-suffix" while
-// "$environment" stays untouched instead of turning into "prodironment".
-// The returned bool is true when a referenced dynamic variable has the __all__ value,
-// meaning the enclosing condition must be dropped.
-func (v *variableReplacementVisitor) interpolateVariablesInString(s string) (string, bool) {
-	if len(v.variables) == 0 {
-		return s, false
-	}
-
-	names := make([]string, 0, len(v.variables))
-	seen := make(map[string]bool, len(v.variables))
-	for name := range v.variables {
-		name = strings.TrimPrefix(name, "$")
-		if name == "" || seen[name] {
-			continue
-		}
-		seen[name] = true
-		names = append(names, name)
-	}
-	// longest first so that $environment is not mistaken for $env plus a suffix
-	sort.Slice(names, func(i, j int) bool { return len(names[i]) > len(names[j]) })
-
-	var sb strings.Builder
-	i := 0
-	for i < len(s) {
-		if s[i] != '$' {
-			sb.WriteByte(s[i])
-			i++
-			continue
-		}
-		rest := s[i+1:]
-		matched := false
-		for _, name := range names {
-			if !strings.HasPrefix(rest, name) {
-				continue
-			}
-			// a name character right after the match means this occurrence references
-			// a longer, unknown variable; leave it for a shorter-name check or as-is
-			if len(rest) > len(name) && isVariableNameChar(rest[len(name)]) {
-				continue
-			}
-			varItem, _ := v.lookupVariable(name)
-			if varItem.Type == qbtypes.DynamicVariableType {
-				if allVal, ok := varItem.Value.(string); ok && allVal == qbtypes.AllVariableValue {
-					return "", true
-				}
-			}
-			sb.WriteString(v.formatVariableValueUnquoted(varItem.Value, name))
-			i += 1 + len(name)
-			matched = true
-			break
-		}
-		if !matched {
-			sb.WriteByte('$')
-			i++
-		}
-	}
-
-	return sb.String(), false
-}
-
 // addWarning appends w unless it is already recorded; comparisons visit their values
 // twice (once to check for __all__, once to rebuild), which would duplicate warnings.
 func (v *variableReplacementVisitor) addWarning(w string) {
@@ -626,34 +542,14 @@ func (v *variableReplacementVisitor) addWarning(w string) {
 	v.warnings = append(v.warnings, w)
 }
 
-// formatVariableValueUnquoted renders a variable value as a plain string for embedding
-// inside a larger value. Multi-value variables collapse to their first value with a
-// warning, since a pattern like "%$var%" can only hold one.
-func (v *variableReplacementVisitor) formatVariableValueUnquoted(value any, varName string) string {
-	switch val := value.(type) {
-	case string:
-		return val
-	case []string:
-		if len(val) == 0 {
-			return ""
-		}
-		if len(val) > 1 {
-			v.addWarning(fmt.Sprintf("variable `%s` has multiple values, using first value `%s` for string interpolation", varName, val[0]))
-		}
-		return val[0]
-	case []any:
-		if len(val) == 0 {
-			return ""
-		}
-		if len(val) > 1 {
-			v.addWarning(fmt.Sprintf("variable `%s` has multiple values, using first value for string interpolation", varName))
-		}
-		return v.formatVariableValueUnquoted(val[0], varName)
-	case bool:
-		return strconv.FormatBool(val)
-	default:
-		return fmt.Sprintf("%v", val)
+// interpolateVariablesInString delegates to Interpolate, folding its warnings into
+// the visitor.
+func (v *variableReplacementVisitor) interpolateVariablesInString(s string) (string, bool) {
+	interpolated, hasAll, warnings := Interpolate(s, v.variables)
+	for _, w := range warnings {
+		v.addWarning(w)
 	}
+	return interpolated, hasAll
 }
 
 // formatVariableValue formats a variable value for inclusion in the expression.

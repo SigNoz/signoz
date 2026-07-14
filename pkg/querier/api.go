@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -251,7 +252,7 @@ func (handler *handler) ReplaceVariables(rw http.ResponseWriter, req *http.Reque
 						errs = append(errs, err)
 					}
 					if len(warnings) > 0 {
-						handler.set.Logger.WarnContext(req.Context(), "variable replace warnings", "warnings", warnings)
+						handler.set.Logger.WarnContext(req.Context(), "variable replace warnings", slog.Any("warnings", warnings))
 					}
 					spec.Filter.Expression = replaced
 				}
@@ -263,7 +264,7 @@ func (handler *handler) ReplaceVariables(rw http.ResponseWriter, req *http.Reque
 						errs = append(errs, err)
 					}
 					if len(warnings) > 0 {
-						handler.set.Logger.WarnContext(req.Context(), "variable replace warnings", "warnings", warnings)
+						handler.set.Logger.WarnContext(req.Context(), "variable replace warnings", slog.Any("warnings", warnings))
 					}
 					spec.Filter.Expression = replaced
 				}
@@ -275,7 +276,7 @@ func (handler *handler) ReplaceVariables(rw http.ResponseWriter, req *http.Reque
 						errs = append(errs, err)
 					}
 					if len(warnings) > 0 {
-						handler.set.Logger.WarnContext(req.Context(), "variable replace warnings", "warnings", warnings)
+						handler.set.Logger.WarnContext(req.Context(), "variable replace warnings", slog.Any("warnings", warnings))
 					}
 					spec.Filter.Expression = replaced
 				}
