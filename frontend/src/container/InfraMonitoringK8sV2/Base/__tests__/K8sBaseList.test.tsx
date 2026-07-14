@@ -17,6 +17,7 @@ import {
 import { AppProvider } from 'providers/App/App';
 import TimezoneProvider from 'providers/Timezone';
 import store from 'store';
+import APIError from 'types/api/error';
 import { openInNewTab } from 'utils/navigation';
 
 import { TableColumnDef } from 'components/TanStackTableView';
@@ -630,7 +631,15 @@ describe('K8sBaseList', () => {
 			fetchListDataMock.mockResolvedValue({
 				data: [],
 				total: 0,
-				error: 'Failed to fetch pods',
+				error: new APIError({
+					httpStatusCode: 500,
+					error: {
+						code: '500',
+						message: 'Failed to fetch pods',
+						url: '',
+						errors: [],
+					},
+				}),
 			});
 
 			renderComponent<TestItem>({

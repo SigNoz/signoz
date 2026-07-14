@@ -14,6 +14,7 @@ import { useGlobalTimeStore } from 'store/globalTime';
 import { NANO_SECOND_MULTIPLIER } from 'store/globalTime/utils';
 import { Querybuildertypesv5QueryWarnDataDTO } from 'api/generated/services/sigNoz.schemas';
 import { openInNewTab } from 'utils/navigation';
+import APIError from 'types/api/error';
 
 import {
 	INFRA_MONITORING_K8S_PARAMS_KEYS,
@@ -40,7 +41,7 @@ import cx from 'classnames';
 
 export type K8sBaseListEmptyStateContext = {
 	isError: boolean;
-	error?: string | null;
+	error?: APIError | null;
 	totalCount: number;
 	hasFilters: boolean;
 	isLoading: boolean;
@@ -67,7 +68,7 @@ export type K8sBaseListProps<
 		records?: T[];
 		data?: T[];
 		total: number;
-		error?: string | null;
+		error?: APIError | null;
 		rawData?: unknown;
 		endTimeBeforeRetention?: boolean;
 		warning?: Querybuildertypesv5QueryWarnDataDTO | null;
