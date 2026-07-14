@@ -1,37 +1,18 @@
 import { useCallback, useState } from 'react';
 
-import { patchDashboardV2 } from 'api/generated/services/dashboard';
 import type { DashboardtypesLayoutDTO } from 'api/generated/services/sigNoz.schemas';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
+import { useOptimisticPatch } from '../../../hooks/useOptimisticPatch';
 import {
 	addSectionOp,
 	newGridLayout,
 	reorderLayoutsOp,
 } from '../../../patchOps';
 import { useDashboardStore } from '../../../store/useDashboardStore';
-
-const SECTION_SELECTOR = '[data-testid^="dashboard-section-"]';
-
-/**
- * Waits (via rAF) for the refetch to render the appended section, then scrolls
- * it into view. Polls because `refetch` resolves before React commits the new
- * section to the DOM; bails after ~40 frames.
- */
-function scrollToNewSection(prevCount: number, attempts = 40): void {
-	const sections = document.querySelectorAll(SECTION_SELECTOR);
-	if (sections.length > prevCount) {
-		sections[sections.length - 1]?.scrollIntoView({
-			behavior: 'smooth',
-			block: 'center',
-		});
-		return;
-	}
-	if (attempts > 0) {
-		requestAnimationFrame(() => scrollToNewSection(prevCount, attempts - 1));
-	}
-}
+import { useScrollIntoViewStore } from '../../../store/useScrollIntoViewStore';
+import { getSectionStableId } from '../../../utils';
 
 interface Params {
 	layouts: DashboardtypesLayoutDTO[] | undefined | null;
@@ -49,9 +30,10 @@ interface Result {
  */
 export function useAddSection({ layouts }: Params): Result {
 	const dashboardId = useDashboardStore((s) => s.dashboardId);
-	const refetch = useDashboardStore((s) => s.refetch);
+	const { patchAsync } = useOptimisticPatch();
 	const [isSaving, setIsSaving] = useState(false);
 	const { showErrorModal } = useErrorModal();
+	const setScrollTargetId = useScrollIntoViewStore((s) => s.setScrollTargetId);
 
 	const addSection = useCallback(
 		async (title: string): Promise<void> => {
@@ -59,23 +41,24 @@ export function useAddSection({ layouts }: Params): Result {
 			if (!dashboardId || !trimmed) {
 				return;
 			}
-			const op =
-				!layouts || layouts.length === 0
-					? reorderLayoutsOp([newGridLayout(trimmed)])
-					: addSectionOp(trimmed);
-			const prevSectionCount = document.querySelectorAll(SECTION_SELECTOR).length;
+			const isFirstSection = !layouts || layouts.length === 0;
+			const op = isFirstSection
+				? reorderLayoutsOp([newGridLayout(trimmed)])
+				: addSectionOp(trimmed);
 			try {
 				setIsSaving(true);
-				await patchDashboardV2({ id: dashboardId }, [op]);
-				refetch();
-				scrollToNewSection(prevSectionCount);
+				await patchAsync([op]);
+				// The new empty section is appended, so its layout index is the prior count;
+				// key it the way `getSectionStableId` does so it reveals itself on render.
+				const newIndex = isFirstSection ? 0 : layouts.length;
+				setScrollTargetId(getSectionStableId([], newIndex));
 			} catch (error) {
 				showErrorModal(error as APIError);
 			} finally {
 				setIsSaving(false);
 			}
 		},
-		[layouts, dashboardId, refetch, showErrorModal],
+		[layouts, dashboardId, patchAsync, showErrorModal, setScrollTargetId],
 	);
 
 	return { addSection, isSaving };

@@ -10,6 +10,7 @@ import requests
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.fs import get_testdata_file_path
+from fixtures.inframonitoring import expected_status_counts
 from fixtures.metrics import Metrics
 from fixtures.querier import compare_values, get_all_warnings
 
@@ -77,6 +78,7 @@ def test_clusters_accuracy(
             "clusterMemoryAllocatable",
             "nodeCountsByReadiness",
             "podCountsByPhase",
+            "counts",
             "meta",
         ):
             assert field in record, f"missing {field} in {record!r}"
@@ -87,6 +89,9 @@ def test_clusters_accuracy(
         for bucket in ("pending", "running", "succeeded", "failed", "unknown"):
             assert bucket in record["podCountsByPhase"]
             assert isinstance(record["podCountsByPhase"][bucket], int)
+        for bucket in ("nodes", "namespaces", "deployments", "daemonSets", "jobs", "statefulSets"):
+            assert bucket in record["counts"]
+            assert isinstance(record["counts"][bucket], int)
 
         assert record["meta"].get("k8s.cluster.name") == record["clusterName"]
 
@@ -101,6 +106,7 @@ def test_clusters_accuracy(
             assert compare_values(record[field], exp[field], 1e-6), f"{record['clusterName']}.{field}: got {record[field]}, expected {exp[field]}"
         assert record["nodeCountsByReadiness"] == exp["nodeCountsByReadiness"]
         assert record["podCountsByPhase"] == exp["podCountsByPhase"]
+        assert record["counts"] == exp["counts"]
 
 
 @pytest.mark.parametrize(
@@ -402,6 +408,49 @@ def test_clusters_pod_phase_aggregation(
         "failed": 2,
         "unknown": 0,
     }
+
+
+def test_clusters_pod_status_aggregation(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+) -> None:
+    """Cluster's pods aggregated by kubectl-style display status. Seeded states
+    in clusters_pod_phases.jsonl -> what kubectl would show:
+      pp-run-1/3/4 Running, pp-run-2 CrashLoopBackOff (phase Running),
+      pp-fail-1 Error, pp-fail-2 Evicted (pod-level), pp-pend-1 Pending.
+    """
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/clusters_pod_phases.jsonl"),
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": "k8s.cluster.name = 'pp-cluster'"},
+        },
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()["data"]
+    assert data["total"] == 1
+    rec = data["records"][0]
+    assert rec["clusterName"] == "pp-cluster"
+    assert rec["podCountsByStatus"] == expected_status_counts(running=3, crashLoopBackOff=1, error=1, evicted=1, pending=1)
+    # Phase counts unchanged by the status enrichment.
+    assert rec["podCountsByPhase"] == {"pending": 1, "running": 4, "succeeded": 0, "failed": 2, "unknown": 0}
+    # All status metrics present -> gate satisfied -> no status warning.
+    assert all("Pod status could not be computed" not in w["message"] for w in get_all_warnings(response.json()))
 
 
 @pytest.mark.parametrize(

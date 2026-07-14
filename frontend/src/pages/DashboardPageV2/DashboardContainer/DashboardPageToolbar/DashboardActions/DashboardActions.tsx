@@ -1,14 +1,16 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+	type ReactNode,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react';
 import { FullScreenHandle } from 'react-full-screen';
-import { useTranslation } from 'react-i18next';
 import { generatePath } from 'react-router-dom';
-import { useCopyToClipboard } from 'react-use';
 import {
 	Braces,
-	ClipboardCopy,
 	Configure,
 	Copy,
-	FileJson,
 	Fullscreen,
 	Grid3X3,
 	LockKeyhole,
@@ -33,12 +35,15 @@ import APIError from 'types/api/error';
 import { USER_ROLES } from 'types/roles';
 
 import ConfirmDeleteDialog from '../../components/ConfirmDeleteDialog/ConfirmDeleteDialog';
+import DisabledControlTooltip from '../../components/DisabledControlTooltip/DisabledControlTooltip';
+import DisabledMenuItemLabel from '../../components/DisabledMenuItemLabel/DisabledMenuItemLabel';
 import DashboardSettings from '../../DashboardSettings';
 import { useAddSection } from '../../PanelsAndSectionsLayout/Section/hooks/useAddSection';
 import SectionTitleModal from '../../PanelsAndSectionsLayout/Section/SectionTitleModal';
 import JsonEditorDrawer from '../JsonEditorDrawer/JsonEditorDrawer';
 import SettingsDrawer from '../SettingsDrawer';
 import styles from './DashboardActions.module.scss';
+import { DASHBOARD_LOCKED_REASON } from '../../hooks/useDashboardEditGuard';
 import { useDashboardStore } from '../../store/useDashboardStore';
 
 interface DashboardActionsProps {
@@ -62,9 +67,11 @@ function DashboardActions({
 	onLockToggle,
 	onOpenRename,
 }: DashboardActionsProps): JSX.Element {
-	const canEdit = useDashboardStore((s) => s.isEditable);
+	const canEditDashboard = useDashboardStore((s) => s.canEditDashboard);
+	const isLocked = useDashboardStore((s) => s.isLocked);
+	const settingsRequest = useDashboardStore((s) => s.settingsRequest);
+	const clearSettingsRequest = useDashboardStore((s) => s.clearSettingsRequest);
 	const { user } = useAppContext();
-	const { t } = useTranslation(['dashboard', 'common']);
 	const { safeNavigate } = useSafeNavigate();
 	const { showErrorModal } = useErrorModal();
 
@@ -74,9 +81,16 @@ function DashboardActions({
 	const [isCloning, setIsCloning] = useState<boolean>(false);
 	const [isNewSectionOpen, setIsNewSectionOpen] = useState<boolean>(false);
 
-	const [state, setCopy] = useCopyToClipboard();
 	const [isDeleteOpen, setIsDeleteOpen] = useState<boolean>(false);
 	const deleteDashboardMutation = useDeleteDashboard(dashboard.id);
+
+	// Open the settings drawer when something in the tree requests it (e.g. the
+	// variables bar's "Add variable" button).
+	useEffect(() => {
+		if (settingsRequest) {
+			setIsSettingsDrawerOpen(true);
+		}
+	}, [settingsRequest]);
 
 	const { addSection, isSaving: isAddingSection } = useAddSection({
 		layouts: dashboard.spec.layouts,
@@ -89,32 +103,6 @@ function DashboardActions({
 		},
 		[addSection],
 	);
-
-	useEffect(() => {
-		if (state.error) {
-			toast.error(t('something_went_wrong', { ns: 'common' }));
-		}
-		if (state.value) {
-			toast.success(t('success', { ns: 'common' }));
-		}
-	}, [state.error, state.value, t]);
-
-	const dashboardDataJSON = useCallback(
-		(): string => JSON.stringify(dashboard, null, 2),
-		[dashboard],
-	);
-
-	const exportJSON = useCallback((): void => {
-		const blob = new Blob([dashboardDataJSON()], { type: 'application/json' });
-		const url = URL.createObjectURL(blob);
-		const link = document.createElement('a');
-		link.href = url;
-		link.download = `${title || 'dashboard'}.json`;
-		document.body.appendChild(link);
-		link.click();
-		document.body.removeChild(link);
-		URL.revokeObjectURL(url);
-	}, [dashboardDataJSON, title]);
 
 	const handleClone = useCallback(async (): Promise<void> => {
 		if (!dashboard.id) {
@@ -143,23 +131,38 @@ function DashboardActions({
 		});
 	}, [deleteDashboardMutation]);
 
+	// Shown only to edit-permitted users, so the only disabled reason is the lock.
+	const editLabel = useCallback(
+		(text: string): ReactNode =>
+			isLocked ? (
+				<DisabledMenuItemLabel reason={DASHBOARD_LOCKED_REASON}>
+					{text}
+				</DisabledMenuItemLabel>
+			) : (
+				text
+			),
+		[isLocked],
+	);
+
 	const menuItems = useMemo<MenuItem[]>(() => {
 		const dashboardGroup: MenuItem[] = [];
-		if (canEdit) {
+		if (canEditDashboard) {
 			dashboardGroup.push({
 				key: 'rename',
-				label: 'Rename',
+				label: editLabel('Rename'),
 				icon: <PenLine size={14} />,
+				disabled: isLocked,
 				onClick: onOpenRename,
 			});
+			// Clone creates a new dashboard, so it's not lock-gated.
+			dashboardGroup.push({
+				key: 'clone',
+				label: 'Clone dashboard',
+				icon: <Copy size={14} />,
+				disabled: isCloning,
+				onClick: (): void => void handleClone(),
+			});
 		}
-		dashboardGroup.push({
-			key: 'clone',
-			label: 'Clone dashboard',
-			icon: <Copy size={14} />,
-			disabled: isCloning,
-			onClick: (): void => void handleClone(),
-		});
 		if (isAuthor || user.role === USER_ROLES.ADMIN) {
 			dashboardGroup.push({
 				key: 'lock',
@@ -176,31 +179,6 @@ function DashboardActions({
 			onClick: handle.enter,
 		});
 
-		const dataGroup: MenuItem[] = [
-			{
-				key: 'export',
-				label: 'Export JSON',
-				icon: <FileJson size={14} />,
-				onClick: exportJSON,
-			},
-			{
-				key: 'copy',
-				label: 'Copy as JSON',
-				icon: <ClipboardCopy size={14} />,
-				onClick: (): void => setCopy(dashboardDataJSON()),
-			},
-		];
-
-		const layoutGroup: MenuItem[] = [];
-		if (canEdit) {
-			layoutGroup.push({
-				key: 'new-section',
-				label: 'New section',
-				icon: <SquareStack size={14} />,
-				onClick: (): void => setIsNewSectionOpen(true),
-			});
-		}
-
 		const items: MenuItem[] = [
 			{
 				type: 'group',
@@ -208,29 +186,40 @@ function DashboardActions({
 				label: 'Dashboard',
 				children: dashboardGroup,
 			},
-			{ type: 'group', key: 'group-data', label: 'Data', children: dataGroup },
 		];
-		if (layoutGroup.length > 0) {
+		// Omit the whole Layout group (header included) in view mode.
+		if (canEditDashboard) {
 			items.push({
 				type: 'group',
 				key: 'group-layout',
 				label: 'Layout',
-				children: layoutGroup,
+				children: [
+					{
+						key: 'new-section',
+						label: editLabel('New section'),
+						icon: <SquareStack size={14} />,
+						disabled: isLocked,
+						onClick: (): void => setIsNewSectionOpen(true),
+					},
+				],
 			});
+			items.push(
+				{ type: 'divider', key: 'divider-danger' },
+				{
+					key: 'delete',
+					label: editLabel('Delete dashboard'),
+					icon: <Trash2 size={14} />,
+					danger: true,
+					disabled: isLocked,
+					onClick: (): void => setIsDeleteOpen(true),
+				},
+			);
 		}
-		items.push(
-			{ type: 'divider', key: 'divider-danger' },
-			{
-				key: 'delete',
-				label: 'Delete dashboard',
-				icon: <Trash2 size={14} />,
-				danger: true,
-				onClick: (): void => setIsDeleteOpen(true),
-			},
-		);
 		return items;
 	}, [
-		canEdit,
+		editLabel,
+		canEditDashboard,
+		isLocked,
 		isCloning,
 		isAuthor,
 		user.role,
@@ -240,9 +229,6 @@ function DashboardActions({
 		handleClone,
 		onLockToggle,
 		handle.enter,
-		exportJSON,
-		setCopy,
-		dashboardDataJSON,
 	]);
 
 	return (
@@ -252,28 +238,40 @@ function DashboardActions({
 					variant="solid"
 					color="secondary"
 					size="md"
+					className={styles.toolbarButton}
 					prefix={<Grid3X3 size="md" />}
 					testId="options"
 				>
 					Actions
 				</Button>
 			</DropdownMenuSimple>
-			{canEdit && (
+			{canEditDashboard && (
 				<>
-					<Button
-						variant="solid"
-						color="secondary"
-						prefix={<Configure size="md" />}
-						testId="show-drawer"
-						onClick={(): void => setIsSettingsDrawerOpen(true)}
-						size="md"
+					<DisabledControlTooltip
+						reason={DASHBOARD_LOCKED_REASON}
+						disabled={isLocked}
 					>
-						Configure
-					</Button>
+						<Button
+							variant="solid"
+							color="secondary"
+							className={styles.toolbarButton}
+							prefix={<Configure size="md" />}
+							testId="show-drawer"
+							disabled={isLocked}
+							onClick={(): void => setIsSettingsDrawerOpen(true)}
+							size="md"
+						>
+							Configure
+						</Button>
+					</DisabledControlTooltip>
 					<SettingsDrawer
 						drawerTitle="Dashboard Configuration"
 						isOpen={isSettingsDrawerOpen}
-						onClose={(): void => setIsSettingsDrawerOpen(false)}
+						destroyOnClose
+						onClose={(): void => {
+							setIsSettingsDrawerOpen(false);
+							clearSettingsRequest();
+						}}
 					>
 						<DashboardSettings dashboard={dashboard} />
 					</SettingsDrawer>
@@ -282,24 +280,31 @@ function DashboardActions({
 			<Button
 				variant="solid"
 				color="secondary"
+				className={styles.toolbarButton}
 				prefix={<Braces size="md" />}
 				testId="edit-json"
 				onClick={(): void => setIsJsonEditorOpen(true)}
 				size="md"
 			>
-				Edit as JSON
+				JSON
 			</Button>
-			{!isDashboardLocked && (
-				<Button
-					variant="solid"
-					color="primary"
-					onClick={onAddPanel}
-					prefix={<Plus size="md" />}
-					testId="add-panel-header"
-					size="md"
+			{canEditDashboard && (
+				<DisabledControlTooltip
+					reason={DASHBOARD_LOCKED_REASON}
+					disabled={isLocked}
 				>
-					New Panel
-				</Button>
+					<Button
+						variant="solid"
+						color="primary"
+						onClick={onAddPanel}
+						prefix={<Plus size="md" />}
+						testId="add-panel-header"
+						disabled={isLocked}
+						size="md"
+					>
+						New Panel
+					</Button>
+				</DisabledControlTooltip>
 			)}
 			<JsonEditorDrawer
 				dashboard={dashboard}

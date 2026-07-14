@@ -1,5 +1,5 @@
 import {
-	DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpecDTOKind as TextEnvelopeKind,
+	DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpecDTOKind as TextEnvelopeKind,
 	DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpecDTOKind as ListEnvelopeKind,
 	DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesCustomVariableSpecDTOKind as CustomPluginKind,
 	DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDynamicVariableSpecDTOKind as DynamicPluginKind,
@@ -9,17 +9,17 @@ import type {
 	DashboardtypesListVariableSpecDTO,
 	DashboardtypesVariableDTO,
 	DashboardtypesVariablePluginDTO,
-	DashboardTextVariableSpecDTO,
+	DashboardtypesTextVariableSpecDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
 import {
 	DYNAMIC_SIGNAL_ALL,
+	DYNAMIC_SIGNALS,
 	type DynamicSignalOption,
 	emptyVariableFormModel,
 	signalForApi,
 	VARIABLE_SORT_DISABLED,
 	type VariableFormModel,
-	type VariableSort,
 } from './variableFormModel';
 
 /** DTO envelope → flat form model (for display / editing). */
@@ -37,7 +37,7 @@ export function dtoToFormModel(
 
 	// Text variable — a distinct envelope (no list plugin).
 	if (dto.kind === TextEnvelopeKind.TextVariable) {
-		const spec = dto.spec as DashboardTextVariableSpecDTO;
+		const spec = dto.spec as DashboardtypesTextVariableSpecDTO;
 		return {
 			...common,
 			type: 'TEXT',
@@ -52,7 +52,7 @@ export function dtoToFormModel(
 		...common,
 		multiSelect: spec.allowMultiple ?? false,
 		showAllOption: spec.allowAllValue ?? false,
-		sort: (spec.sort as VariableSort) ?? VARIABLE_SORT_DISABLED,
+		sort: spec.sort ?? VARIABLE_SORT_DISABLED,
 		defaultValue: spec.defaultValue,
 	};
 	const plugin = spec.plugin;
@@ -69,9 +69,12 @@ export function dtoToFormModel(
 			...listCommon,
 			type: 'DYNAMIC',
 			dynamicAttribute: plugin.spec.name ?? '',
-			// An omitted wire signal means "all telemetry".
-			dynamicSignal:
-				(plugin.spec.signal as DynamicSignalOption) ?? DYNAMIC_SIGNAL_ALL,
+			// Unrecognized/empty signal → "all telemetry", so the source always shows.
+			dynamicSignal: DYNAMIC_SIGNALS.includes(
+				plugin.spec.signal as DynamicSignalOption,
+			)
+				? (plugin.spec.signal as DynamicSignalOption)
+				: DYNAMIC_SIGNAL_ALL,
 		};
 	}
 	// Default to Query (also covers a query plugin or a missing/unknown plugin).

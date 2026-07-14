@@ -33,14 +33,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { colorToRgb } from 'lib/uPlotLib/utils/generateColor';
-import {
-	ArrowUpRight,
-	ChevronDown,
-	ChevronRight,
-	CircleAlert,
-	Link,
-	ListPlus,
-} from '@signozhq/icons';
+import { ChevronDown, ChevronRight, Link, ListPlus } from '@signozhq/icons';
 import { useTraceStore } from 'pages/TraceDetailsV3/stores/traceStore';
 import { resolveSpanColor } from 'pages/TraceDetailsV3/utils';
 import { useBoundaryPagination } from 'pages/TraceDetailsV3/TraceWaterfall/hooks/useBoundaryPagination';
@@ -246,6 +239,19 @@ const SpanOverview = memo(function SpanOverview({
 		onAddSpanToFunnel(span);
 	};
 
+	// e2e hook: expose the filter highlight/dim state as a stable attribute, since
+	// the styles.* classes are hashed at build time and can't be asserted.
+	let spanState = 'default';
+	if (isHighlighted) {
+		spanState = 'highlighted';
+	} else if (isDimmed) {
+		spanState = 'dimmed';
+	} else if (isSelectedNonMatching) {
+		spanState = 'selected-non-matching';
+	} else if (isSelected) {
+		spanState = 'selected';
+	}
+
 	return (
 		<div
 			className={cx(styles.spanOverview, {
@@ -254,6 +260,7 @@ const SpanOverview = memo(function SpanOverview({
 				[styles.isSelectedNonMatching]: isSelectedNonMatching,
 				[styles.isDimmed]: isDimmed,
 			})}
+			data-span-state={spanState}
 			onClick={(): void => handleSpanClick(span)}
 			onMouseEnter={(): void => onHoverEnter(span.span_id)}
 			onMouseLeave={(): void => onHoverLeave()}
@@ -301,6 +308,7 @@ const SpanOverview = memo(function SpanOverview({
 				{span.has_children && (
 					<span
 						className={styles.treeArrow}
+						data-testid={`cell-collapse-${span.span_id}`}
 						onClick={(event): void => {
 							event.stopPropagation();
 							event.preventDefault();
@@ -536,7 +544,9 @@ function Success(props: ISuccessProps): JSX.Element {
 		cursorX,
 		onMouseMove: onCrosshairMove,
 		onMouseLeave: onCrosshairLeave,
-	} = useCrosshair({ containerRef: timelineAreaRef, enabled: false });
+		// Rows are padded 0 15px while `.timeline` spans full width — inset the
+		// crosshair by the same 15px so it aligns with the ruler ticks and bars.
+	} = useCrosshair({ containerRef: timelineAreaRef, insetX: 15 });
 
 	// Imperative DOM class toggling for hover highlights (avoids React re-renders)
 	const applyHoverClass = useCallback((spanId: string | null): void => {
@@ -839,28 +849,6 @@ function Success(props: ISuccessProps): JSX.Element {
 
 	return (
 		<div className={styles.root}>
-			{traceMetadata.hasMissingSpans && (
-				<div className={styles.missingSpans}>
-					<section className={styles.leftInfo}>
-						<CircleAlert size={14} />
-						<span className={styles.text}>This trace has missing spans</span>
-					</section>
-					<Button
-						variant="ghost"
-						color="secondary"
-						className={styles.rightInfo}
-						suffix={<ArrowUpRight size={14} />}
-						onClick={(): WindowProxy | null =>
-							window.open(
-								'https://signoz.io/docs/userguide/traces/#missing-spans',
-								'_blank',
-							)
-						}
-					>
-						Learn More
-					</Button>
-				</div>
-			)}
 			{isFetching && <div className={styles.loadingBar} />}
 			<div className={styles.splitPanel} ref={scrollContainerRef}>
 				{/* Sticky header row */}
@@ -979,8 +967,8 @@ function Success(props: ISuccessProps): JSX.Element {
 										transform: `translateY(${virtualRow.start}px)`,
 									}}
 									data-span-id={span.span_id}
-									onMouseEnter={(): void => handleRowMouseEnter(span.span_id)}
-									onMouseLeave={handleRowMouseLeave}
+									onMouseEnter={(): void => applyHoverClass(span.span_id)}
+									onMouseLeave={(): void => applyHoverClass(null)}
 									onClick={(): void => handleSpanClick(span)}
 								>
 									{span.response_status_code && (

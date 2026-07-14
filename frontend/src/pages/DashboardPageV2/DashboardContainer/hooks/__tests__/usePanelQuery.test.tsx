@@ -2,6 +2,10 @@
 import { useSelector } from 'react-redux';
 import { act, renderHook } from '@testing-library/react';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	DASHBOARD_CACHE_TIME,
+	DASHBOARD_CACHE_TIME_ON_REFRESH_ENABLED,
+} from 'constants/queryCacheTime';
 
 import { usePanelQuery } from '../usePanelQuery';
 import { useGetQueryRangeV5 } from '../useGetQueryRangeV5';
@@ -328,6 +332,12 @@ describe('usePanelQuery', () => {
 			expect(result.current.pagination).toBeUndefined();
 		});
 
+		it('keeps previous data while paging so the table/pager stay mounted on page change', () => {
+			renderHook(() => usePanelQuery({ panel: listPanel({}), panelId: 'p1' }));
+			const [{ keepPreviousData }] = mockUseGetQueryRangeV5.mock.calls[0];
+			expect(keepPreviousData).toBe(true);
+		});
+
 		it('changes the page size (and re-requests with the new limit) via setPageSize', () => {
 			const { result } = renderHook(() =>
 				usePanelQuery({ panel: listPanel({}), panelId: 'p1' }),
@@ -377,26 +387,20 @@ describe('usePanelQuery', () => {
 			expect(result.current.pagination?.canNext).toBe(false);
 		});
 
-		it('flags canNext on a full page and clears it on a partial page', () => {
+		it('drives canNext from the response cursor, not the row count', () => {
+			// Full page but no cursor → backend says these are the last rows.
 			withResponse(rawResponse(25));
-			const full = renderHook(() =>
+			const noCursor = renderHook(() =>
 				usePanelQuery({ panel: listPanel({}), panelId: 'p1' }),
 			);
-			expect(full.result.current.pagination?.canNext).toBe(true);
+			expect(noCursor.result.current.pagination?.canNext).toBe(false);
 
-			withResponse(rawResponse(10));
-			const partial = renderHook(() =>
-				usePanelQuery({ panel: listPanel({}), panelId: 'p1' }),
-			);
-			expect(partial.result.current.pagination?.canNext).toBe(false);
-		});
-
-		it('flags canNext from a nextCursor even on a partial page', () => {
+			// Cursor present (even on a partial page) → more rows.
 			withResponse(rawResponse(3, 'cursor-1'));
-			const { result } = renderHook(() =>
+			const withCursor = renderHook(() =>
 				usePanelQuery({ panel: listPanel({}), panelId: 'p1' }),
 			);
-			expect(result.current.pagination?.canNext).toBe(true);
+			expect(withCursor.result.current.pagination?.canNext).toBe(true);
 		});
 
 		it('advances pageIndex and enables canPrev after goNext', () => {
@@ -430,6 +434,30 @@ describe('usePanelQuery', () => {
 			act(() => result.current.pagination?.setPageSize(0));
 			expect(result.current.pagination?.pageSize).toBe(25);
 			expect(result.current.pagination?.pageIndex).toBe(0);
+		});
+	});
+
+	describe('cacheTime (auto-refresh OOM guard)', () => {
+		const withAutoRefreshDisabled = (disabled: boolean): void => {
+			mockUseSelector.mockImplementation((selector: unknown) =>
+				(selector as (state: { globalTime: unknown }) => unknown)({
+					globalTime: { ...DEFAULT_GLOBAL_TIME, isAutoRefreshDisabled: disabled },
+				}),
+			);
+		};
+
+		it('caches for DASHBOARD_CACHE_TIME when auto-refresh is disabled', () => {
+			withAutoRefreshDisabled(true);
+			renderHook(() => usePanelQuery({ panel: builderPanel(), panelId: 'p1' }));
+			const [{ cacheTime }] = mockUseGetQueryRangeV5.mock.calls[0];
+			expect(cacheTime).toBe(DASHBOARD_CACHE_TIME);
+		});
+
+		it('drops cacheTime to 0 when auto-refresh is enabled', () => {
+			withAutoRefreshDisabled(false);
+			renderHook(() => usePanelQuery({ panel: builderPanel(), panelId: 'p1' }));
+			const [{ cacheTime }] = mockUseGetQueryRangeV5.mock.calls[0];
+			expect(cacheTime).toBe(DASHBOARD_CACHE_TIME_ON_REFRESH_ENABLED);
 		});
 	});
 });

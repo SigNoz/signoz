@@ -1,0 +1,22 @@
+{
+  "records": [
+    {
+      "podName": "acc1",
+      "cpu": 0.25,
+      "cpuRequestUtilization": 0.5,
+      "cpuLimitUtilization": 0.3,
+      "memory": 2000000,
+      "memoryRequestUtilization": 0.6,
+      "memoryLimitUtilization": 0.4
+    },
+    {
+      "podName": "acc2",
+      "cpu": 0.75,
+      "cpuRequestUtilization": 0.9,
+      "cpuLimitUtilization": 0.7,
+      "memory": 5000000,
+      "memoryRequestUtilization": 0.8,
+      "memoryLimitUtilization": 0.5
+    }
+  ]
+}

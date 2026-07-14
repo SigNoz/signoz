@@ -47,11 +47,11 @@ func CollisionHandledFinalExpr(
 
 	addCondition := func(key *telemetrytypes.TelemetryFieldKey) error {
 		sb := sqlbuilder.NewSelectBuilder()
-		condition, err := cb.ConditionFor(ctx, startNs, endNs, key, qbtypes.FilterOperatorExists, nil, sb)
+		conds, _, err := cb.ConditionFor(ctx, startNs, endNs, key, []*telemetrytypes.TelemetryFieldKey{key}, qbtypes.FilterOperatorExists, nil, sb)
 		if err != nil {
 			return err
 		}
-		sb.Where(condition)
+		sb.Where(conds[0])
 
 		expr, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 		expr = strings.TrimPrefix(expr, "WHERE ")
@@ -81,7 +81,7 @@ func CollisionHandledFinalExpr(
 			// - it is not a static field
 			// - the next best thing to do is see if there is a typo
 			// and suggest a correction
-			wrappedErr := errors.WithSuggestiveAdditionalf(fieldForErr, errors.SuggestionsOnLevenshteinDistance(field.Name, maps.Keys(keys)), "field `%s` not found", field.Name)
+			wrappedErr := errors.WithSuggestiveAdditionalf(fieldForErr, errors.NewSuggestionsOnLevenshteinDistance(field.Name, errors.NounKeys, maps.Keys(keys)), "field `%s` not found", field.Name)
 			return "", nil, wrappedErr
 		} else {
 			for _, key := range keysForField {

@@ -1,0 +1,14 @@
+.table {
+	width: 100%;
+	border-collapse: collapse;
+	table-layout: fixed;
+}
+
+.mapperStateRow .stateCell {
+	color: var(--l3-foreground);
+}
+
+.stateCell {
+	padding: var(--spacing-4) var(--spacing-6) var(--spacing-4) var(--spacing-12);
+	font-size: var(--periscope-font-size-base);
+}
