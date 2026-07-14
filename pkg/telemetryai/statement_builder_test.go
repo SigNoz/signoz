@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	scopedtraces "github.com/SigNoz/signoz/pkg/telemetryscopedtraces"
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -64,14 +65,14 @@ const (
 	testEndMs   = uint64(1747983448000)
 )
 
-func newTestBuilder(t *testing.T) *scopedTraceStatementBuilder {
+func newTestBuilder(t *testing.T) qbtypes.StatementBuilder[qbtypes.TraceAggregation] {
 	return newTestBuilderWithKeys(t, otelKeysMap())
 }
 
 // newTestBuilderWithKeys mirrors the production wiring in signozquerier's provider.
 // The gen_ai keys are seeded via keysMap here; in production the metadata store
 // surfaces them itself (enrichWithGenAIKeys).
-func newTestBuilderWithKeys(t *testing.T, keysMap map[string][]*telemetrytypes.TelemetryFieldKey) *scopedTraceStatementBuilder {
+func newTestBuilderWithKeys(t *testing.T, keysMap map[string][]*telemetrytypes.TelemetryFieldKey) qbtypes.StatementBuilder[qbtypes.TraceAggregation] {
 	t.Helper()
 	settings := instrumentationtest.New().ToProviderSettings()
 	fm := telemetrytraces.NewFieldMapper()
@@ -98,8 +99,6 @@ func newTestBuilderWithKeys(t *testing.T, keysMap map[string][]*telemetrytypes.T
 	return NewAITraceStatementBuilder(
 		settings,
 		metadataStore,
-		fm,
-		cb,
 		baseCond,
 		traceStmtBuilder,
 		nil, // telemetryStore: only used by the skip-fingerprint count query, which is disabled here
@@ -220,7 +219,7 @@ SELECT trace_id,
     uniqIf(multiIf(mapContains(attributes_string, 'gen_ai.tool.name') = true, attributes_string['gen_ai.tool.name'], NULL), mapContains(attributes_string, 'gen_ai.tool.name') = true) AS distinct_tool_count,
     sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens') = true, toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)) AS input_tokens,
     sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens,
-    sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens') = true, toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)) + sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS total_tokens,
+    coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens') = true, toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)), 0) + coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)), 0) AS total_tokens,
     sum(multiIf(mapContains(attributes_number, '_signoz.gen_ai.total_cost') = true, toFloat64(attributes_number['_signoz.gen_ai.total_cost']), NULL)) AS estimated_cost_usd,
     maxIf(signoz_traces.distributed_signoz_index_v3.duration_nano, mapContains(attributes_string, 'gen_ai.request.model') = true) AS max_llm_latency_ns,
     countIf(has_error = true) AS error_count,
@@ -295,7 +294,7 @@ SELECT trace_id,
     uniqIf(multiIf(mapContains(attributes_string, 'gen_ai.tool.name') = true, attributes_string['gen_ai.tool.name'], NULL), mapContains(attributes_string, 'gen_ai.tool.name') = true) AS distinct_tool_count,
     sum(multiIf(attribute_number_gen_ai$$usage$$input_tokens_exists = true, toFloat64(attribute_number_gen_ai$$usage$$input_tokens), NULL)) AS input_tokens,
     sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens,
-    sum(multiIf(attribute_number_gen_ai$$usage$$input_tokens_exists = true, toFloat64(attribute_number_gen_ai$$usage$$input_tokens), NULL)) + sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS total_tokens,
+    coalesce(sum(multiIf(attribute_number_gen_ai$$usage$$input_tokens_exists = true, toFloat64(attribute_number_gen_ai$$usage$$input_tokens), NULL)), 0) + coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)), 0) AS total_tokens,
     sum(multiIf(mapContains(attributes_number, '_signoz.gen_ai.total_cost') = true, toFloat64(attributes_number['_signoz.gen_ai.total_cost']), NULL)) AS estimated_cost_usd,
     maxIf(signoz_traces.distributed_signoz_index_v3.duration_nano, attribute_string_gen_ai$$request$$model_exists = true) AS max_llm_latency_ns,
     countIf(has_error = true) AS error_count,
@@ -369,7 +368,7 @@ SELECT trace_id,
     uniqIf(multiIf(mapContains(attributes_string, 'gen_ai.tool.name') = true, attributes_string['gen_ai.tool.name'], NULL), mapContains(attributes_string, 'gen_ai.tool.name') = true) AS distinct_tool_count,
     sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens') = true, toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)) AS input_tokens,
     sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens,
-    sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens') = true, toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)) + sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS total_tokens,
+    coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens') = true, toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)), 0) + coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)), 0) AS total_tokens,
     sum(multiIf(mapContains(attributes_number, '_signoz.gen_ai.total_cost') = true, toFloat64(attributes_number['_signoz.gen_ai.total_cost']), NULL)) AS estimated_cost_usd,
     maxIf(signoz_traces.distributed_signoz_index_v3.duration_nano, mapContains(attributes_string, 'gen_ai.request.model') = true) AS max_llm_latency_ns,
     countIf(has_error = true) AS error_count,
@@ -439,7 +438,7 @@ SELECT trace_id,
     uniqIf(multiIf(mapContains(attributes_string, 'gen_ai.tool.name') = true, attributes_string['gen_ai.tool.name'], NULL), mapContains(attributes_string, 'gen_ai.tool.name') = true) AS distinct_tool_count,
     sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens') = true, toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)) AS input_tokens,
     sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens,
-    sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens') = true, toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)) + sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS total_tokens,
+    coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens') = true, toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)), 0) + coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)), 0) AS total_tokens,
     sum(multiIf(mapContains(attributes_number, '_signoz.gen_ai.total_cost') = true, toFloat64(attributes_number['_signoz.gen_ai.total_cost']), NULL)) AS estimated_cost_usd,
     maxIf(signoz_traces.distributed_signoz_index_v3.duration_nano, mapContains(attributes_string, 'gen_ai.request.model') = true) AS max_llm_latency_ns,
     countIf(has_error = true) AS error_count,
@@ -510,7 +509,7 @@ SELECT trace_id,
     uniqIf(multiIf(mapContains(attributes_string, 'gen_ai.tool.name') = true, attributes_string['gen_ai.tool.name'], NULL), mapContains(attributes_string, 'gen_ai.tool.name') = true) AS distinct_tool_count,
     sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens') = true, toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)) AS input_tokens,
     sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens,
-    sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens') = true, toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)) + sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS total_tokens,
+    coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens') = true, toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)), 0) + coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)), 0) AS total_tokens,
     sum(multiIf(mapContains(attributes_number, '_signoz.gen_ai.total_cost') = true, toFloat64(attributes_number['_signoz.gen_ai.total_cost']), NULL)) AS estimated_cost_usd,
     maxIf(signoz_traces.distributed_signoz_index_v3.duration_nano, mapContains(attributes_string, 'gen_ai.request.model') = true) AS max_llm_latency_ns,
     countIf(has_error = true) AS error_count,
@@ -596,7 +595,7 @@ SELECT trace_id,
     uniqIf(multiIf(mapContains(attributes_string, 'gen_ai.tool.name') = true, attributes_string['gen_ai.tool.name'], NULL), mapContains(attributes_string, 'gen_ai.tool.name') = true) AS distinct_tool_count,
     sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens') = true, toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)) AS input_tokens,
     sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens,
-    sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens') = true, toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)) + sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS total_tokens,
+    coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens') = true, toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)), 0) + coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)), 0) AS total_tokens,
     sum(multiIf(mapContains(attributes_number, '_signoz.gen_ai.total_cost') = true, toFloat64(attributes_number['_signoz.gen_ai.total_cost']), NULL)) AS estimated_cost_usd,
     maxIf(signoz_traces.distributed_signoz_index_v3.duration_nano, mapContains(attributes_string, 'gen_ai.request.model') = true) AS max_llm_latency_ns,
     countIf(has_error = true) AS error_count,
@@ -674,7 +673,7 @@ SELECT trace_id,
     uniqIf(multiIf(mapContains(attributes_string, 'gen_ai.tool.name') = true, attributes_string['gen_ai.tool.name'], NULL), mapContains(attributes_string, 'gen_ai.tool.name') = true) AS distinct_tool_count,
     sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens') = true, toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)) AS input_tokens,
     sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens,
-    sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens') = true, toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)) + sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS total_tokens,
+    coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens') = true, toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)), 0) + coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)), 0) AS total_tokens,
     sum(multiIf(mapContains(attributes_number, '_signoz.gen_ai.total_cost') = true, toFloat64(attributes_number['_signoz.gen_ai.total_cost']), NULL)) AS estimated_cost_usd,
     maxIf(signoz_traces.distributed_signoz_index_v3.duration_nano, mapContains(attributes_string, 'gen_ai.request.model') = true) AS max_llm_latency_ns,
     countIf(has_error = true) AS error_count,
@@ -769,23 +768,8 @@ func TestBuild_TraceList_ResourcePlusSpanPlusAggregateFilter(t *testing.T) {
 	require.Contains(t, got, "output_tokens")
 }
 
-// With the resolver unset (nil), the resource filter falls back to being applied inline
-// on the span index — no fingerprint CTE — so existing behavior is preserved.
-func TestBuild_TraceList_ResourceFilter_NoResolver(t *testing.T) {
-	b := newTestBuilderWithKeys(t, resourceKeysMap())
-	b.resourceFilterResolver = nil
-	stmt, err := b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace,
-		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
-			Signal: telemetrytypes.SignalTraces, Source: telemetrytypes.SourceAI,
-			Filter: &qbtypes.Filter{Expression: "resource.service.name = 'checkout'"},
-			Limit:  10,
-		}, nil)
-	require.NoError(t, err)
-
-	got := renderSQL(t, stmt)
-	require.NotContains(t, got, "__resource_filter")
-	require.Contains(t, got, "resources_string['service.name']")
-}
+// The resolver-unset (nil) fallback is covered in pkg/telemetryscopedtraces, which
+// can construct that builder state directly.
 
 // Trace-level and span-level predicates may not be OR-combined.
 func TestBuild_TraceList_TraceOrSpanMixRejected(t *testing.T) {
@@ -877,5 +861,92 @@ func TestBuild_UnsupportedRequestType(t *testing.T) {
 		},
 	}
 	_, err := b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeDistribution, query, nil)
-	require.ErrorIs(t, err, ErrUnsupportedRequestType)
+	require.ErrorIs(t, err, scopedtraces.ErrUnsupportedRequestType)
+}
+
+// A gate key ingested under several data types (e.g. string + number from a
+// misbehaving SDK) contributes ALL variants to the mask, OR-combined — not just
+// the first — matching the standard visitor's EXISTS handling.
+func TestBuild_TraceList_MultiVariantGateKey(t *testing.T) {
+	keys := otelKeysMap()
+	keys[telemetrytypes.GenAIToolName] = append(keys[telemetrytypes.GenAIToolName], &telemetrytypes.TelemetryFieldKey{
+		Name:          telemetrytypes.GenAIToolName,
+		Signal:        telemetrytypes.SignalTraces,
+		FieldContext:  telemetrytypes.FieldContextAttribute,
+		FieldDataType: telemetrytypes.FieldDataTypeFloat64,
+	})
+	b := newTestBuilderWithKeys(t, keys)
+	stmt, err := b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace,
+		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+			Signal: telemetrytypes.SignalTraces, Source: telemetrytypes.SourceAI, Limit: 10,
+		}, nil)
+	require.NoError(t, err)
+
+	got := renderSQL(t, stmt)
+	require.Contains(t, got, "mapContains(attributes_string, 'gen_ai.tool.name') = true OR mapContains(attributes_number, 'gen_ai.tool.name') = true")
+}
+
+// `tracefield.` is the explicit trace field context, so in a filter it marks a
+// trace-level aggregate exactly like the user-facing `trace.` prefix — same statement,
+// and the same targeted rejection for a non-filterable aggregate. (Filter and Having
+// accept the same forms; the splitter used to misroute tracefield. as span-level.)
+func TestBuild_TraceList_TracefieldPrefixMatchesTracePrefix(t *testing.T) {
+	b := newTestBuilder(t)
+	build := func(expr string) (*qbtypes.Statement, error) {
+		return b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace,
+			qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+				Signal: telemetrytypes.SignalTraces, Source: telemetrytypes.SourceAI,
+				Filter: &qbtypes.Filter{Expression: expr},
+				Limit:  20,
+			}, nil)
+	}
+
+	viaTrace, err := build("trace.output_tokens > 1000")
+	require.NoError(t, err)
+	viaTracefield, err := build("tracefield.output_tokens > 1000")
+	require.NoError(t, err)
+	require.Equal(t, viaTrace.Query, viaTracefield.Query)
+	require.Equal(t, viaTrace.Args, viaTracefield.Args)
+
+	// output-only aggregate under tracefield. gets the aggregate rejection, not an
+	// unknown-span-field failure.
+	_, err = build("tracefield.span_count > 3")
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "cannot be used")
+}
+
+// Query variables in a trace-level condition are substituted into the HAVING (the
+// span path binds them via PrepareWhereClause; the HAVING is a text rewrite).
+func TestBuild_TraceList_VariableInAggregateFilter(t *testing.T) {
+	b := newTestBuilder(t)
+	build := func(expr string, vars map[string]qbtypes.VariableItem) (*qbtypes.Statement, error) {
+		return b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace,
+			qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+				Signal: telemetrytypes.SignalTraces, Source: telemetrytypes.SourceAI,
+				Filter: &qbtypes.Filter{Expression: expr},
+				Limit:  20,
+			}, vars)
+	}
+
+	// scalar variable -> literal in HAVING
+	stmt, err := build("trace.output_tokens > $threshold",
+		map[string]qbtypes.VariableItem{"threshold": {Value: 700}})
+	require.NoError(t, err)
+	require.Contains(t, stmt.Query, "HAVING output_tokens > 700")
+
+	// list variable with IN
+	stmt, err = build("trace.llm_call_count IN $counts",
+		map[string]qbtypes.VariableItem{"counts": {Value: []any{1, 2}}})
+	require.NoError(t, err)
+	require.Contains(t, stmt.Query, "HAVING llm_call_count IN")
+
+	// dynamic __all__ -> condition dropped, no HAVING at all
+	stmt, err = build("trace.output_tokens > $threshold",
+		map[string]qbtypes.VariableItem{"threshold": {Type: qbtypes.DynamicVariableType, Value: "__all__"}})
+	require.NoError(t, err)
+	require.NotContains(t, stmt.Query, "HAVING")
+
+	// unresolved variable -> rejected, not compared as a literal
+	_, err = build("trace.output_tokens > $missing", map[string]qbtypes.VariableItem{"other": {Value: 1}})
+	require.Error(t, err)
 }

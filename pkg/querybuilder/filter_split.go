@@ -114,20 +114,27 @@ func (s *filterSplitter) route(atom antlr.ParserRuleContext) {
 }
 
 // classifyKeys reports whether a subtree references trace-level and/or span-level keys.
-// A key is trace-level only when it has no explicit field context and its name — after
-// the optional user-facing `trace.` prefix is stripped — is a known aggregate. Any
-// explicit context (`span.`, `resource.`, …) is span-level.
+// A key is trace-level when it has no explicit field context and its name — after the
+// optional user-facing `trace.` prefix is stripped — is a known aggregate, or when it
+// carries the trace field context explicitly (`tracefield.`, which Normalize parses
+// into FieldContextTrace; no span field mapper resolves that context, so it can only
+// mean a trace-level aggregate — an unknown name is then rejected by the aggregate
+// validation with a targeted error instead of failing as an unknown span field). Any
+// other explicit context (`span.`, `resource.`, …) is span-level.
 func classifyKeys(node antlr.Tree, aggregateNames map[string]struct{}) (isTrace, isSpan bool) {
 	kc, ok := node.(*grammar.KeyContext)
 	if ok {
 		key := telemetrytypes.GetFieldKeyFromKeyText(kc.GetText())
-		if key.FieldContext == telemetrytypes.FieldContextUnspecified {
+		switch key.FieldContext {
+		case telemetrytypes.FieldContextUnspecified:
 			// `trace.` is the user-facing prefix for trace-level aggregates. It is not a
 			// registered field context, so it stays on the name; strip it before matching.
 			name := strings.TrimPrefix(key.Name, telemetrytypes.FieldContextTrace.StringValue()+".")
 			_, isTrace = aggregateNames[name]
 			isSpan = !isTrace
-		} else {
+		case telemetrytypes.FieldContextTrace:
+			isTrace = true
+		default:
 			isSpan = true
 		}
 		return

@@ -493,6 +493,10 @@ func (q *querier) QueryRawStream(ctx context.Context, orgID valuer.UUID, req *qb
 		if query.Type == qbtypes.QueryTypeBuilder {
 			switch spec := query.Spec.(type) {
 			case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
+				if spec.Source == telemetrytypes.SourceAI {
+					client.Error <- errors.NewInvalidInputf(errors.CodeInvalidInput, "source \"ai\" is only supported for the traces signal, not logs")
+					return
+				}
 				event.FilterApplied = spec.Filter != nil && spec.Filter.Expression != ""
 			default:
 				// return if it's not log aggregation

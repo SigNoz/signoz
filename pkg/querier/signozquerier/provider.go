@@ -101,8 +101,6 @@ func newProvider(
 	aiTraceStmtBuilder := telemetryai.NewAITraceStatementBuilder(
 		settings,
 		telemetryMetadataStore,
-		traceFieldMapper,
-		traceConditionBuilder,
 		aiBaseCondition,
 		traceStmtBuilder,
 		telemetryStore,

@@ -33,7 +33,7 @@ def _ai_trace(
     now: datetime,
     service: str,
     user: str,
-    in_tokens: int,
+    in_tokens: int | None,
     out_tokens: int,
     cost: float,
     model: str = "gpt-4o-mini",
@@ -41,7 +41,8 @@ def _ai_trace(
     error: bool = False,
     environment: str = "production",
 ) -> list[Traces]:
-    """A minimal AI trace: root span + one LLM span with gen_ai attributes."""
+    """A minimal AI trace: root span + one LLM span with gen_ai attributes.
+    in_tokens=None omits the input-tokens attribute entirely (not zero)."""
     trace_id = TraceIdGenerator.trace_id()
     root_id = TraceIdGenerator.span_id()
     llm_id = TraceIdGenerator.span_id()
@@ -59,6 +60,16 @@ def _ai_trace(
         resources=resources,
         attributes={"http.request.method": "POST"},
     )
+    attributes = {
+        "gen_ai.request.model": model,
+        "gen_ai.system": "openai",
+        "gen_ai.user.id": user,
+        # numeric values land in attributes_number
+        "gen_ai.usage.output_tokens": out_tokens,
+        "_signoz.gen_ai.total_cost": cost,
+    }
+    if in_tokens is not None:
+        attributes["gen_ai.usage.input_tokens"] = in_tokens
     llm = Traces(
         timestamp=now - timedelta(seconds=4),
         duration=timedelta(seconds=llm_duration_s),
@@ -69,15 +80,7 @@ def _ai_trace(
         kind=TracesKind.SPAN_KIND_CLIENT,
         status_code=(TracesStatusCode.STATUS_CODE_ERROR if error else TracesStatusCode.STATUS_CODE_OK),
         resources=resources,
-        attributes={
-            "gen_ai.request.model": model,
-            "gen_ai.system": "openai",
-            "gen_ai.user.id": user,
-            # numeric values land in attributes_number
-            "gen_ai.usage.input_tokens": in_tokens,
-            "gen_ai.usage.output_tokens": out_tokens,
-            "_signoz.gen_ai.total_cost": cost,
-        },
+        attributes=attributes,
     )
     return [root, llm]
 
@@ -223,7 +226,10 @@ def test_ai_list_having_aggregate_filter(
     """
     Aggregate filter written in the SAME filter box: the span-level predicate narrows
     to the service, the trace-level `output_tokens > 100` keeps the large-token
-    trace and drops the small one (split internally into WHERE + HAVING).
+    trace and drops the small one (split internally into WHERE + HAVING). All three
+    spellings of a trace-level aggregate — bare, `trace.`, `tracefield.` — behave
+    identically (unit tests pin them to byte-identical SQL; this covers the wiring
+    once end-to-end). An output-only aggregate is rejected under any spelling.
     """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-having"
@@ -237,19 +243,32 @@ def test_ai_list_having_aggregate_filter(
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     start_ms, end_ms = _window_ms(now)
 
-    query = BuilderQuery(
+    for spelling in ("output_tokens", "trace.output_tokens", "tracefield.output_tokens"):
+        query = BuilderQuery(
+            signal="traces",
+            source="ai",
+            name="A",
+            filter_expression=f"service.name = '{service}' AND {spelling} > 100",
+            limit=10,
+        )
+        response = make_query_request(signoz, token, start_ms, end_ms, [query.to_dict()], request_type="trace")
+        assert response.status_code == HTTPStatus.OK, f"{spelling}: {response.text}"
+
+        body = json.dumps(response.json())
+        assert large_id in body, f"{spelling}: trace with 500 out-tokens should pass > 100"
+        assert small_id not in body, f"{spelling}: trace with 20 out-tokens should be filtered out by HAVING"
+
+    # output-only aggregate gets the targeted rejection, also under the explicit context.
+    bad = BuilderQuery(
         signal="traces",
         source="ai",
         name="A",
-        filter_expression=f"service.name = '{service}' AND output_tokens > 100",
+        filter_expression="tracefield.span_count > 3",
         limit=10,
     )
-    response = make_query_request(signoz, token, start_ms, end_ms, [query.to_dict()], request_type="trace")
-    assert response.status_code == HTTPStatus.OK, response.text
-
-    body = json.dumps(response.json())
-    assert large_id in body, "trace with 500 out-tokens should pass output_tokens > 100"
-    assert small_id not in body, "trace with 20 out-tokens should be filtered out by HAVING"
+    response = make_query_request(signoz, token, start_ms, end_ms, [bad.to_dict()], request_type="trace")
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert "cannot be used" in response.text
 
 
 def test_ai_list_order_limit_offset(
@@ -377,39 +396,6 @@ def test_ai_list_having_or_aggregates(
         source="ai",
         name="A",
         filter_expression=f"service.name = '{service}' AND (output_tokens > 100 OR input_tokens > 1000)",
-        limit=10,
-    )
-    response = make_query_request(signoz, token, start_ms, end_ms, [query.to_dict()], request_type="trace")
-    assert response.status_code == HTTPStatus.OK, response.text
-
-    body = json.dumps(response.json())
-    assert large_id in body
-    assert small_id not in body
-
-
-def test_ai_list_having_trace_context_prefix(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    insert_traces: Callable[[list[Traces]], None],
-) -> None:
-    """The `trace.` context prefix on an aggregate column works like the bare name."""
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-    service = "ai-it-trace-ctx"
-
-    small = _ai_trace(now=now, service=service, user="a", in_tokens=10, out_tokens=20, cost=0.1)
-    large = _ai_trace(now=now, service=service, user="b", in_tokens=10, out_tokens=500, cost=0.2)
-    small_id, large_id = small[0].trace_id, large[0].trace_id
-    insert_traces(small + large)
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _window_ms(now)
-
-    query = BuilderQuery(
-        signal="traces",
-        source="ai",
-        name="A",
-        filter_expression=f"service.name = '{service}' AND trace.output_tokens > 100",
         limit=10,
     )
     response = make_query_request(signoz, token, start_ms, end_ms, [query.to_dict()], request_type="trace")
@@ -585,6 +571,83 @@ def test_ai_list_rejects_order_by_span_attribute(
     response = make_query_request(signoz, token, start_ms, end_ms, [query.to_dict()], request_type="trace")
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
     assert "order key" in response.text
+
+
+def test_ai_list_total_tokens_output_only(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[list[Traces]], None],
+) -> None:
+    """
+    A trace whose LLM span carries only output tokens (no input-tokens attribute at
+    all) must still total: total_tokens is coalesce(sum(in),0)+coalesce(sum(out),0),
+    since sum over an absent attribute is NULL and NULL + n = NULL in ClickHouse.
+    """
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    service = "ai-it-total-coalesce"
+    insert_traces(_ai_trace(now=now, service=service, user="a", in_tokens=None, out_tokens=300, cost=0.1))
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    start_ms, end_ms = _window_ms(now)
+
+    query = BuilderQuery(
+        signal="traces",
+        source="ai",
+        name="A",
+        filter_expression=f"service.name = '{service}'",
+        limit=10,
+    )
+    response = make_query_request(signoz, token, start_ms, end_ms, [query.to_dict()], request_type="trace")
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    rows = response.json()["data"]["data"]["results"][0]["rows"]
+    assert len(rows) == 1, f"expected one trace, got: {rows}"
+    data = rows[0]["data"]
+    assert data["input_tokens"] is None, data  # attribute absent -> NULL, not 0
+    assert data["output_tokens"] == 300, data
+    assert data["total_tokens"] == 300, f"total must coalesce the missing input side: {data}"
+
+
+def test_ai_list_variable_in_aggregate_filter(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[list[Traces]], None],
+) -> None:
+    """A query variable in a trace-level condition is substituted into the HAVING."""
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    service = "ai-it-having-var"
+
+    small = _ai_trace(now=now, service=service, user="a", in_tokens=10, out_tokens=20, cost=0.1)
+    large = _ai_trace(now=now, service=service, user="b", in_tokens=10, out_tokens=500, cost=0.2)
+    small_id, large_id = small[0].trace_id, large[0].trace_id
+    insert_traces(small + large)
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    start_ms, end_ms = _window_ms(now)
+
+    query = BuilderQuery(
+        signal="traces",
+        source="ai",
+        name="A",
+        filter_expression=f"service.name = '{service}' AND trace.output_tokens > $threshold",
+        limit=10,
+    )
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms,
+        end_ms,
+        [query.to_dict()],
+        request_type="trace",
+        variables={"threshold": {"type": "custom", "value": 100}},
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    body = json.dumps(response.json())
+    assert large_id in body
+    assert small_id not in body
 
 
 def _ai_trace_two_llm(*, now: datetime, service: str) -> list[Traces]:
