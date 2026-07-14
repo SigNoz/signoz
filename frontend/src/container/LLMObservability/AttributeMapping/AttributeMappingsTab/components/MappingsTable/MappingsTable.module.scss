@@ -1,0 +1,124 @@
+.table {
+	width: 100%;
+	border-collapse: collapse;
+	table-layout: fixed;
+}
+
+.headerRow {
+	border-bottom: 1px solid var(--l2-border);
+}
+
+.headerCell {
+	padding: var(--spacing-4) var(--spacing-6);
+	text-align: left;
+	font-size: var(--periscope-font-size-base);
+	font-weight: var(--font-weight-normal);
+	color: var(--l2-foreground);
+
+	&:last-child {
+		text-align: right;
+	}
+}
+
+.groupsCollapse:global(.ant-collapse) {
+	background: transparent;
+	border: none;
+	border-radius: 0;
+
+	> :global(.ant-collapse-item) {
+		border-bottom: none;
+		border-top: 1px solid var(--l2-border);
+		border-radius: 0;
+
+		&:last-child {
+			border-bottom: 1px solid var(--l2-border);
+			border-radius: 0;
+		}
+
+		> :global(.ant-collapse-header) {
+			align-items: center;
+			gap: var(--spacing-3);
+			background: var(--l2-background);
+			border-radius: 0;
+			padding: var(--spacing-3) var(--spacing-6);
+			color: var(--l3-foreground);
+
+			:global(.ant-collapse-expand-icon) {
+				display: flex;
+				align-items: center;
+				height: auto;
+				padding-inline-end: 0;
+				color: var(--l3-foreground);
+			}
+
+			:global(.ant-collapse-header-text) {
+				min-width: 0;
+			}
+
+			:global(.ant-collapse-extra) {
+				display: flex;
+				align-items: center;
+			}
+		}
+	}
+
+	:global(.ant-collapse-content) {
+		background: transparent;
+		border-top: none;
+		color: inherit;
+
+		> :global(.ant-collapse-content-box) {
+			padding: 0;
+		}
+	}
+}
+
+.tableEmpty {
+	padding: var(--spacing-12) var(--spacing-6);
+	text-align: center;
+	color: var(--l3-foreground);
+	font-size: var(--periscope-font-size-base);
+}
+
+.skeletonList {
+	display: flex;
+	flex-direction: column;
+}
+
+// Mirrors the Collapse header banner while groups load.
+.skeletonBanner {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--spacing-4);
+	padding: var(--spacing-3) var(--spacing-6);
+	background: var(--l2-background);
+	border-top: 1px solid var(--l2-border);
+
+	&:last-child {
+		border-bottom: 1px solid var(--l2-border);
+	}
+	:global(.ant-skeleton-input) {
+		min-height: 18px !important;
+		height: 18px !important;
+	}
+	:global(.ant-skeleton-button) {
+		min-height: 18px !important;
+		height: 18px !important;
+	}
+}
+
+.skeletonGroupLeft {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-3);
+	flex: 1;
+	min-width: 0;
+}
+
+.skeletonGroupRight {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-3);
+	flex-shrink: 0;
+}

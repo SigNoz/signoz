@@ -1,0 +1,19 @@
+.groupHeaderLabel {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-3);
+	min-width: 0;
+}
+
+.groupName {
+	color: var(--l1-foreground);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.groupCount {
+	color: var(--l3-foreground);
+	font-size: var(--font-size-xs);
+	white-space: nowrap;
+}
