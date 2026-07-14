@@ -52,12 +52,12 @@ def test_create_groups_and_simulate_with_backfill(
 
     assert create_group.status_code == HTTPStatus.CREATED
     group = create_group.json()["data"]
-    group_id = group["id"]
+    groupId = group["id"]
     assert group["name"] == "llm-backfill"
     assert group["enabled"] is True
 
     create_mapper = requests.post(
-        signoz.self.host_configs["8080"].get(f"{GROUPS_PATH}/{group_id}/span_mappers"),
+        signoz.self.host_configs["8080"].get(f"{GROUPS_PATH}/{groupId}/span_mappers"),
         timeout=10,
         headers=_auth_headers(token),
         json={
@@ -80,7 +80,7 @@ def test_create_groups_and_simulate_with_backfill(
     assert create_mapper.status_code == HTTPStatus.CREATED
     mapper = create_mapper.json()["data"]
     assert mapper["name"] == "gen_ai.request.model"
-    assert mapper["group_id"] == group_id
+    assert mapper["groupId"] == groupId
 
     list_groups = requests.get(
         signoz.self.host_configs["8080"].get(GROUPS_PATH),
@@ -88,10 +88,10 @@ def test_create_groups_and_simulate_with_backfill(
         headers=_auth_headers(token),
     )
     assert list_groups.status_code == HTTPStatus.OK
-    assert group_id in [g["id"] for g in list_groups.json()["data"]["items"]]
+    assert groupId in [g["id"] for g in list_groups.json()["data"]["items"]]
 
     list_mappers = requests.get(
-        signoz.self.host_configs["8080"].get(f"{GROUPS_PATH}/{group_id}/span_mappers"),
+        signoz.self.host_configs["8080"].get(f"{GROUPS_PATH}/{groupId}/span_mappers"),
         timeout=10,
         headers=_auth_headers(token),
     )
@@ -159,7 +159,7 @@ def test_create_groups_and_simulate_with_backfill(
     assert out_spans[1]["attributes"] == {"http.method": "GET"}  # unchanged
 
     delete_group = requests.delete(
-        signoz.self.host_configs["8080"].get(f"{GROUPS_PATH}/{group_id}"),
+        signoz.self.host_configs["8080"].get(f"{GROUPS_PATH}/{groupId}"),
         timeout=10,
         headers=_auth_headers(token),
     )
@@ -171,4 +171,4 @@ def test_create_groups_and_simulate_with_backfill(
         headers=_auth_headers(token),
     )
     assert list_after_delete.status_code == HTTPStatus.OK
-    assert group_id not in [g["id"] for g in list_after_delete.json()["data"]["items"]]
+    assert groupId not in [g["id"] for g in list_after_delete.json()["data"]["items"]]
