@@ -89,6 +89,53 @@ func isUnrenderableMetricQuery(panel *Panel) bool {
 	return false
 }
 
+// dropUnrenderableQueries removes queries whose aggregation can't render (see
+// queryIsUnrenderable) — but only when the widget has other renderable queries to keep
+// it alive. If every query is unrenderable, the list is returned unchanged so the
+// single-query path (isUnrenderableMetricQuery) can drop the whole widget silently.
+func dropUnrenderableQueries(queries []map[string]any) []map[string]any {
+	renderable := make([]map[string]any, 0, len(queries))
+	for _, q := range queries {
+		if !queryIsUnrenderable(q) {
+			renderable = append(renderable, q)
+		}
+	}
+	if len(renderable) == 0 {
+		return queries
+	}
+	return renderable
+}
+
+// queryIsUnrenderable reports whether a builder query can't render because of its
+// aggregations: a metrics query with none or an empty metric name, or a logs/traces
+// query with an empty aggregation expression. No aggregations is valid for a raw
+// logs/traces query, so that isn't flagged.
+func queryIsUnrenderable(q map[string]any) bool {
+	aggs, _ := q["aggregations"].([]any)
+	switch signalFromDataSource(q["dataSource"]) {
+	case telemetrytypes.SignalMetrics:
+		if len(aggs) == 0 {
+			return true
+		}
+		for _, a := range aggs {
+			if agg, ok := a.(map[string]any); ok {
+				if mn, _ := agg["metricName"].(string); mn == "" {
+					return true
+				}
+			}
+		}
+	case telemetrytypes.SignalLogs, telemetrytypes.SignalTraces:
+		for _, a := range aggs {
+			if agg, ok := a.(map[string]any); ok {
+				if expr, _ := agg["expression"].(string); expr == "" {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
 // requestTypeForPanel maps a v2 panel plugin kind to the request type (result
 // shape) its queries produce. Mirrors the frontend's panelTypeToRequestType
 // (buildQueryRangeRequest.ts): time series for line/bar/histogram (histogram
@@ -167,6 +214,9 @@ func (d *v1Decoder) collectV1QueryEnvelopes(widget map[string]any, panelKind Pan
 			if needsAggregation {
 				ensureDefaultAggregation(q)
 			}
+		}
+		queries = dropUnrenderableQueries(queries)
+		for _, q := range queries {
 			name := d.readString(q, "queryName")
 			out = append(out, qb.WrapInV5Envelope(name, q, string(qb.QueryTypeBuilder.StringValue())))
 			if signal.IsZero() {
