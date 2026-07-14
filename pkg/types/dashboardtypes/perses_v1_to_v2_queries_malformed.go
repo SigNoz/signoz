@@ -35,6 +35,41 @@ func normalizePreV5QueryData(query map[string]any, widgetType string) {
 	normalizePreV5LogTraceAggregations(query)
 	normalizeMetricAggregations(query)
 	normalizeOrderByKeys(query)
+	normalizeFunctionArgs(query)
+}
+
+// normalizeFunctionArgs collapses a doubly-wrapped function arg to a scalar. The
+// v4→v5 migration that runs before ConvertV1ToV2 (transition.updateQueryData) wraps every arg as
+// {name, value} without checking whether it's already a v5 arg, so a body that was
+// already v5 comes back as {value:{value:60}} and fails validation ("must be a floating
+// value"). We can't guard it at the source — transition's Migrate is shared and left
+// untouched — so unwrap one level of {value:...} nesting here.
+func normalizeFunctionArgs(query map[string]any) {
+	fns, ok := query["functions"].([]any)
+	if !ok {
+		return
+	}
+	for _, f := range fns {
+		fn, ok := f.(map[string]any)
+		if !ok {
+			continue
+		}
+		args, ok := fn["args"].([]any)
+		if !ok {
+			continue
+		}
+		for _, a := range args {
+			arg, ok := a.(map[string]any)
+			if !ok {
+				continue
+			}
+			if inner, ok := arg["value"].(map[string]any); ok {
+				if v, ok := inner["value"]; ok {
+					arg["value"] = v
+				}
+			}
+		}
+	}
 }
 
 // orderByValueKeys are v4 order-by columnNames meaning "order by the aggregation value"
