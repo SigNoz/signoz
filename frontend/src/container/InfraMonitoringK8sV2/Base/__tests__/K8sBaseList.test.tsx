@@ -9,6 +9,8 @@ import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { InfraMonitoringEvents } from 'constants/events';
+import { server } from 'mocks-server/server';
+import { rest } from 'msw';
 import {
 	NuqsTestingAdapter,
 	OnUrlUpdateFunction,
@@ -1061,6 +1063,306 @@ describe('K8sBaseList', () => {
 			expect(url).toContain(`selectedItem=PodId%3A${itemId}`);
 			expect(url).not.toContain('selectedItemClusterName');
 			expect(url).not.toContain('selectedItemNamespaceName');
+		});
+	});
+
+	describe('instrumentation checks callout', () => {
+		const fetchListDataMock = jest.fn<
+			ReturnType<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>,
+			Parameters<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>
+		>();
+
+		beforeEach(() => {
+			fetchListDataMock.mockClear();
+			fetchListDataMock.mockResolvedValue({
+				data: [{ id: 'item-1' }],
+				total: 1,
+				error: null,
+			});
+		});
+
+		it('should not render callout when ready is true', async () => {
+			server.use(
+				rest.get('http://localhost/api/v2/infra_monitoring/checks', (_, res, ctx) =>
+					res(
+						ctx.json({
+							status: 'success',
+							data: {
+								ready: true,
+								type: 'pods',
+								presentDefaultEnabledMetrics: [
+									{
+										associatedComponent: { name: 'otel-collector' },
+										metrics: ['k8s.pod.cpu.usage'],
+									},
+								],
+							},
+						}),
+					),
+				),
+			);
+
+			renderComponent<TestItem>({
+				entity: InfraMonitoringEntity.PODS,
+				eventCategory: InfraMonitoringEvents.Pod,
+				fetchListData: fetchListDataMock,
+				tableColumns: createTestColumns(),
+				getRowKey: (row): string => row.id,
+				getItemKey: (row): string => row.id,
+			});
+
+			await screen.findByText('item-1');
+
+			expect(screen.queryByText('Instrumentation checks')).not.toBeInTheDocument();
+		});
+
+		it('should not render callout when no entries exist', async () => {
+			server.use(
+				rest.get('http://localhost/api/v2/infra_monitoring/checks', (_, res, ctx) =>
+					res(
+						ctx.json({
+							status: 'success',
+							data: {
+								ready: false,
+								type: 'pods',
+								presentDefaultEnabledMetrics: null,
+								presentOptionalMetrics: null,
+								presentRequiredAttributes: null,
+								missingDefaultEnabledMetrics: null,
+								missingOptionalMetrics: null,
+								missingRequiredAttributes: null,
+							},
+						}),
+					),
+				),
+			);
+
+			renderComponent<TestItem>({
+				entity: InfraMonitoringEntity.PODS,
+				eventCategory: InfraMonitoringEvents.Pod,
+				fetchListData: fetchListDataMock,
+				tableColumns: createTestColumns(),
+				getRowKey: (row): string => row.id,
+				getItemKey: (row): string => row.id,
+			});
+
+			await screen.findByText('item-1');
+
+			expect(screen.queryByText('Instrumentation checks')).not.toBeInTheDocument();
+		});
+
+		it('should render callout with present entries', async () => {
+			server.use(
+				rest.get('http://localhost/api/v2/infra_monitoring/checks', (_, res, ctx) =>
+					res(
+						ctx.json({
+							status: 'success',
+							data: {
+								ready: false,
+								type: 'pods',
+								presentDefaultEnabledMetrics: [
+									{
+										associatedComponent: { name: 'otel-collector' },
+										metrics: ['k8s.pod.cpu.usage', 'k8s.pod.memory.usage'],
+									},
+								],
+								presentOptionalMetrics: null,
+								presentRequiredAttributes: null,
+								missingDefaultEnabledMetrics: null,
+								missingOptionalMetrics: null,
+								missingRequiredAttributes: null,
+							},
+						}),
+					),
+				),
+			);
+
+			renderComponent<TestItem>({
+				entity: InfraMonitoringEntity.PODS,
+				eventCategory: InfraMonitoringEvents.Pod,
+				fetchListData: fetchListDataMock,
+				tableColumns: createTestColumns(),
+				getRowKey: (row): string => row.id,
+				getItemKey: (row): string => row.id,
+			});
+
+			await screen.findByText('Instrumentation checks');
+
+			await expect(
+				screen.findByText('Default enabled metrics'),
+			).resolves.toBeInTheDocument();
+			await expect(
+				screen.findByText('k8s.pod.cpu.usage, k8s.pod.memory.usage'),
+			).resolves.toBeInTheDocument();
+			await expect(
+				screen.findByText('otel-collector'),
+			).resolves.toBeInTheDocument();
+		});
+
+		it('should render callout with missing entries', async () => {
+			server.use(
+				rest.get('http://localhost/api/v2/infra_monitoring/checks', (_, res, ctx) =>
+					res(
+						ctx.json({
+							status: 'success',
+							data: {
+								ready: false,
+								type: 'pods',
+								presentDefaultEnabledMetrics: null,
+								presentOptionalMetrics: null,
+								presentRequiredAttributes: null,
+								missingDefaultEnabledMetrics: [
+									{
+										associatedComponent: { name: 'otel-collector' },
+										metrics: ['k8s.pod.cpu.limit'],
+										documentationLink: 'https://example.com/docs',
+									},
+								],
+								missingOptionalMetrics: null,
+								missingRequiredAttributes: null,
+							},
+						}),
+					),
+				),
+			);
+
+			renderComponent<TestItem>({
+				entity: InfraMonitoringEntity.PODS,
+				eventCategory: InfraMonitoringEvents.Pod,
+				fetchListData: fetchListDataMock,
+				tableColumns: createTestColumns(),
+				getRowKey: (row): string => row.id,
+				getItemKey: (row): string => row.id,
+			});
+
+			await screen.findByText('Instrumentation checks');
+
+			await expect(
+				screen.findByText('Missing default metrics'),
+			).resolves.toBeInTheDocument();
+			await expect(
+				screen.findByText('k8s.pod.cpu.limit'),
+			).resolves.toBeInTheDocument();
+			await expect(screen.findByText('Learn here')).resolves.toBeInTheDocument();
+		});
+
+		it('should trigger recheck on button click', async () => {
+			let recheckCallCount = 0;
+			server.use(
+				rest.get(
+					'http://localhost/api/v2/infra_monitoring/checks',
+					(_, res, ctx) => {
+						recheckCallCount++;
+						return res(
+							ctx.json({
+								status: 'success',
+								data: {
+									ready: false,
+									type: 'pods',
+									presentDefaultEnabledMetrics: [
+										{
+											associatedComponent: { name: 'otel-collector' },
+											metrics: ['k8s.pod.cpu.usage'],
+										},
+									],
+								},
+							}),
+						);
+					},
+				),
+			);
+
+			const user = userEvent.setup();
+
+			renderComponent<TestItem>({
+				entity: InfraMonitoringEntity.PODS,
+				eventCategory: InfraMonitoringEvents.Pod,
+				fetchListData: fetchListDataMock,
+				tableColumns: createTestColumns(),
+				getRowKey: (row): string => row.id,
+				getItemKey: (row): string => row.id,
+			});
+
+			await screen.findByText('Instrumentation checks');
+
+			const initialCallCount = recheckCallCount;
+
+			const recheckBtn = screen.getByTestId('instrumentation-checks-recheck-btn');
+			await user.click(recheckBtn);
+
+			await waitFor(() => {
+				expect(recheckCallCount).toBeGreaterThan(initialCallCount);
+			});
+		});
+
+		it('should render both present and missing entries', async () => {
+			server.use(
+				rest.get('http://localhost/api/v2/infra_monitoring/checks', (_, res, ctx) =>
+					res(
+						ctx.json({
+							status: 'success',
+							data: {
+								ready: false,
+								type: 'pods',
+								presentDefaultEnabledMetrics: [
+									{
+										associatedComponent: { name: 'otel-collector' },
+										metrics: ['k8s.pod.cpu.usage'],
+									},
+								],
+								presentOptionalMetrics: null,
+								presentRequiredAttributes: [
+									{
+										associatedComponent: { name: 'otel-collector' },
+										attributes: ['k8s.namespace.name'],
+									},
+								],
+								missingDefaultEnabledMetrics: [
+									{
+										associatedComponent: { name: 'otel-collector' },
+										metrics: ['k8s.pod.memory.limit'],
+									},
+								],
+								missingOptionalMetrics: null,
+								missingRequiredAttributes: null,
+							},
+						}),
+					),
+				),
+			);
+
+			renderComponent<TestItem>({
+				entity: InfraMonitoringEntity.PODS,
+				eventCategory: InfraMonitoringEvents.Pod,
+				fetchListData: fetchListDataMock,
+				tableColumns: createTestColumns(),
+				getRowKey: (row): string => row.id,
+				getItemKey: (row): string => row.id,
+			});
+
+			await screen.findByText('Instrumentation checks');
+
+			// Present entries
+			await expect(
+				screen.findByText('Default enabled metrics'),
+			).resolves.toBeInTheDocument();
+			await expect(
+				screen.findByText('k8s.pod.cpu.usage'),
+			).resolves.toBeInTheDocument();
+			await expect(
+				screen.findByText('Required attributes'),
+			).resolves.toBeInTheDocument();
+			await expect(
+				screen.findByText('k8s.namespace.name'),
+			).resolves.toBeInTheDocument();
+
+			// Missing entries
+			await expect(
+				screen.findByText('Missing default metrics'),
+			).resolves.toBeInTheDocument();
+			await expect(
+				screen.findByText('k8s.pod.memory.limit'),
+			).resolves.toBeInTheDocument();
 		});
 	});
 });
