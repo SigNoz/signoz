@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -40,4 +41,19 @@ func TestTelemetrySelectorSegment(t *testing.T) {
 	assert.Len(t, segment, 32)
 	assert.Equal(t, segment, TelemetrySelectorSegment("checkout-service"))
 	assert.NotEqual(t, segment, TelemetrySelectorSegment("checkout-service2"))
+}
+
+func TestTelemetryResourceObjectSelectors(t *testing.T) {
+	orgID := valuer.GenerateUUID()
+	prefix := "telemetryresource:organization/" + orgID.StringValue() + "/logs/"
+
+	assert.Equal(t, prefix+"*", ResourceTelemetryResourceLogs.Object(orgID, "*"))
+	assert.Equal(t, prefix+"promql/*", ResourceTelemetryResourceLogs.Object(orgID, "promql/*"))
+	assert.Equal(t, prefix+"builder_query/*", ResourceTelemetryResourceLogs.Object(orgID, "builder_query/*"))
+	assert.Equal(t, prefix+"builder_query/"+TelemetrySelectorSegment("service.name = 'checkout'"), ResourceTelemetryResourceLogs.Object(orgID, "builder_query/service.name = 'checkout'"))
+	assert.Equal(t, prefix+TelemetrySelectorSegment("service.name = 'checkout'"), ResourceTelemetryResourceLogs.Object(orgID, "service.name = 'checkout'"))
+
+	object := MustNewObjectFromString(prefix + "builder_query/" + TelemetrySelectorSegment("service.name = 'checkout'"))
+	assert.Equal(t, "builder_query/"+TelemetrySelectorSegment("service.name = 'checkout'"), object.Selector.String())
+	assert.Equal(t, KindLogs, object.Resource.Kind)
 }

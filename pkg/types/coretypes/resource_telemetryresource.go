@@ -3,6 +3,7 @@ package coretypes
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -28,9 +29,31 @@ func (resourceTelemetryResource *resourceTelemetryResource) Prefix(orgID valuer.
 	return resourceTelemetryResource.Type().StringValue() + ":" + "organization" + "/" + orgID.StringValue() + "/" + resourceTelemetryResource.Kind().String()
 }
 
+var telemetryQueryTypeSelectors = map[string]struct{}{
+	"builder_query":          {},
+	"builder_sub_query":      {},
+	"builder_trace_operator": {},
+	"promql":                 {},
+	"clickhouse_sql":         {},
+}
+
+func IsTelemetryQueryTypeSelector(selector string) bool {
+	_, ok := telemetryQueryTypeSelectors[selector]
+	return ok
+}
+
 func (resourceTelemetryResource *resourceTelemetryResource) Object(orgID valuer.UUID, selector string) string {
 	if selector == WildCardSelectorString {
 		return resourceTelemetryResource.Prefix(orgID) + "/" + selector
+	}
+
+	parts := strings.SplitN(selector, "/", 2)
+	if len(parts) == 2 && IsTelemetryQueryTypeSelector(parts[0]) {
+		if parts[1] == WildCardSelectorString {
+			return resourceTelemetryResource.Prefix(orgID) + "/" + parts[0] + "/" + WildCardSelectorString
+		}
+
+		return resourceTelemetryResource.Prefix(orgID) + "/" + parts[0] + "/" + TelemetrySelectorSegment(parts[1])
 	}
 
 	return resourceTelemetryResource.Prefix(orgID) + "/" + TelemetrySelectorSegment(selector)

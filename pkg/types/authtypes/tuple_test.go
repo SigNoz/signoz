@@ -18,7 +18,7 @@ func TestTelemetryGrantAndCheckObjectsMatch(t *testing.T) {
 			Relation: Relation{Verb: coretypes.VerbRead},
 			ObjectGroup: coretypes.ObjectGroup{
 				Resource:  coretypes.ResourceRef{Type: coretypes.TypeTelemetryResource, Kind: coretypes.KindLogs},
-				Selectors: []coretypes.Selector{coretypes.TypeTelemetryResource.MustSelector("checkout")},
+				Selectors: []coretypes.Selector{coretypes.TypeTelemetryResource.MustSelector("builder_query/service.name = 'checkout'")},
 			},
 		},
 	}
@@ -32,18 +32,24 @@ func TestTelemetryGrantAndCheckObjectsMatch(t *testing.T) {
 		"user:organization/"+orgID.StringValue()+"/user/some-user",
 		Relation{Verb: coretypes.VerbRead},
 		[]coretypes.Selector{
-			coretypes.TypeTelemetryResource.MustSelector("checkout"),
-			coretypes.TypeTelemetryResource.MustSelector("payments"),
+			coretypes.TypeTelemetryResource.MustSelector("builder_query/service.name = 'checkout'"),
+			coretypes.TypeTelemetryResource.MustSelector("builder_query/service.name = 'payments'"),
+			coretypes.TypeTelemetryResource.MustSelector("builder_query/deployment.environment = 'checkout'"),
+			coretypes.TypeTelemetryResource.MustSelector("promql/service.name = 'checkout'"),
+			coretypes.TypeTelemetryResource.MustSelector("builder_query/*"),
 			coretypes.TypeTelemetryResource.MustSelector(coretypes.WildCardSelectorString),
 		},
 		orgID,
 	)
-	require.Len(t, checkTuples, 3)
+	require.Len(t, checkTuples, 6)
 
 	assert.Equal(t, grantTuples[0].GetObject(), checkTuples[0].GetObject())
 	assert.NotEqual(t, grantTuples[0].GetObject(), checkTuples[1].GetObject())
+	assert.NotEqual(t, grantTuples[0].GetObject(), checkTuples[2].GetObject())
+	assert.NotEqual(t, grantTuples[0].GetObject(), checkTuples[3].GetObject())
 	assert.NotContains(t, checkTuples[0].GetObject(), "checkout")
-	assert.Equal(t, "telemetryresource:organization/"+orgID.StringValue()+"/logs/*", checkTuples[2].GetObject())
+	assert.Equal(t, "telemetryresource:organization/"+orgID.StringValue()+"/logs/builder_query/*", checkTuples[4].GetObject())
+	assert.Equal(t, "telemetryresource:organization/"+orgID.StringValue()+"/logs/*", checkTuples[5].GetObject())
 }
 
 func TestDiffTuples(t *testing.T) {

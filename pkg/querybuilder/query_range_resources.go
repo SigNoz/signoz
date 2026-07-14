@@ -3,7 +3,8 @@ package querybuilder
 import (
 	"context"
 	"encoding/json"
-	"sort"
+	"maps"
+	"slices"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -14,15 +15,27 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-var TelemetrySelector coretypes.SelectorFunc = func(_ context.Context, resource coretypes.Resource, id string, _ valuer.UUID) ([]coretypes.Selector, error) {
-	values := make([]string, 0)
-	if id != "" {
-		if err := json.Unmarshal([]byte(id), &values); err != nil {
-			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid telemetry resource id %q", id)
-		}
+var telemetryGrantKeys = map[string]struct{}{
+	"service.name": {},
+}
+
+func TelemetrySelector(_ context.Context, resource coretypes.Resource, id string, _ valuer.UUID) ([]coretypes.Selector, error) {
+	if coretypes.IsTelemetryQueryTypeSelector(id) {
+		id = id + "/" + coretypes.WildCardSelectorString
 	}
 
-	values = append(values, coretypes.WildCardSelectorString)
+	values := []string{id}
+	segments := strings.Split(id, "/")
+	for level := len(segments) - 1; level >= 1; level-- {
+		value := strings.Join(segments[:level], "/") + "/" + coretypes.WildCardSelectorString
+		if value == id {
+			continue
+		}
+		values = append(values, value)
+	}
+	if id != coretypes.WildCardSelectorString {
+		values = append(values, coretypes.WildCardSelectorString)
+	}
 
 	selectors := make([]coretypes.Selector, 0, len(values))
 	for _, value := range values {
@@ -69,12 +82,13 @@ func QueryRangeResources(ec coretypes.ExtractorContext) ([]coretypes.ResourceWit
 }
 
 func queryRangeVariables(body []byte) (map[string]qbtypes.VariableItem, error) {
+	variables := make(map[string]qbtypes.VariableItem)
+
 	raw := gjson.GetBytes(body, "variables")
 	if !raw.Exists() {
-		return nil, nil
+		return variables, nil
 	}
 
-	variables := make(map[string]qbtypes.VariableItem)
 	if err := json.Unmarshal([]byte(raw.Raw), &variables); err != nil {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid variables in query range request")
 	}
@@ -87,16 +101,16 @@ func resourcesForQuery(query gjson.Result, variables map[string]qbtypes.Variable
 
 	switch queryType {
 	case "builder_query", "builder_sub_query":
-		return resourcesForBuilderQuery(query.Get("spec"), variables)
+		return resourcesForBuilderQuery(queryType, query.Get("spec"), variables)
 	case "builder_trace_operator":
-		return []coretypes.ResourceWithID{{Resource: coretypes.ResourceTelemetryResourceTraces}}, nil
+		return []coretypes.ResourceWithID{{Resource: coretypes.ResourceTelemetryResourceTraces, ID: queryType}}, nil
 	case "promql":
-		return []coretypes.ResourceWithID{{Resource: coretypes.ResourceTelemetryResourceMetrics}}, nil
+		return []coretypes.ResourceWithID{{Resource: coretypes.ResourceTelemetryResourceMetrics, ID: queryType}}, nil
 	case "clickhouse_sql":
 		return []coretypes.ResourceWithID{
-			{Resource: coretypes.ResourceTelemetryResourceLogs},
-			{Resource: coretypes.ResourceTelemetryResourceTraces},
-			{Resource: coretypes.ResourceTelemetryResourceMetrics},
+			{Resource: coretypes.ResourceTelemetryResourceLogs, ID: queryType},
+			{Resource: coretypes.ResourceTelemetryResourceTraces, ID: queryType},
+			{Resource: coretypes.ResourceTelemetryResourceMetrics, ID: queryType},
 		}, nil
 	case "builder_formula", "builder_join":
 		return nil, nil
@@ -105,13 +119,13 @@ func resourcesForQuery(query gjson.Result, variables map[string]qbtypes.Variable
 	}
 }
 
-func resourcesForBuilderQuery(spec gjson.Result, variables map[string]qbtypes.VariableItem) ([]coretypes.ResourceWithID, error) {
+func resourcesForBuilderQuery(queryType string, spec gjson.Result, variables map[string]qbtypes.VariableItem) ([]coretypes.ResourceWithID, error) {
 	resource, err := builderQueryResource(spec)
 	if err != nil {
 		return nil, err
 	}
 
-	ids, err := serviceResourceIDs(spec.Get("filter.expression").String(), variables)
+	ids, err := builderQuerySelectors(queryType, spec.Get("filter.expression").String(), variables)
 	if err != nil {
 		return nil, err
 	}
@@ -145,9 +159,9 @@ func builderQueryResource(spec gjson.Result) (coretypes.Resource, error) {
 	}
 }
 
-func serviceResourceIDs(expression string, variables map[string]qbtypes.VariableItem) ([]string, error) {
+func builderQuerySelectors(queryType, expression string, variables map[string]qbtypes.VariableItem) ([]string, error) {
 	if strings.TrimSpace(expression) == "" {
-		return []string{""}, nil
+		return []string{queryType}, nil
 	}
 
 	normalized, err := NormalizeWhereClause(expression, variables)
@@ -155,65 +169,87 @@ func serviceResourceIDs(expression string, variables map[string]qbtypes.Variable
 		return nil, err
 	}
 
-	anyOf := make([]string, 0)
 	ids := make([]string, 0)
 	for _, condition := range normalized.Conditions {
-		if !condition.TopLevel || !isServiceNameKey(condition.Key) {
+		if !condition.TopLevel {
 			continue
 		}
 
-		switch condition.Operator {
-		case "=":
-			anyOf = append(anyOf, condition.Values[0])
-		case "IN":
+		key, ok := canonicalTelemetryGrantKey(condition.Key)
+		if !ok {
+			continue
+		}
+
+		if condition.Operator == "=" || condition.Operator == "IN" {
 			for _, value := range condition.Values {
-				id, err := serviceResourceID([]string{value})
-				if err != nil {
-					return nil, err
-				}
-				ids = append(ids, id)
+				ids = append(ids, queryType+"/"+telemetryGrantAtom(key, value))
 			}
 		}
 	}
 
-	if len(anyOf) > 0 {
-		id, err := serviceResourceID(anyOf)
-		if err != nil {
-			return nil, err
-		}
-		ids = append(ids, id)
-	}
-
 	if len(ids) == 0 {
-		return []string{""}, nil
+		return []string{queryType}, nil
 	}
 
 	return ids, nil
 }
 
-func serviceResourceID(values []string) (string, error) {
-	sort.Strings(values)
-	deduped := values[:0]
-	for index, value := range values {
-		if index > 0 && value == values[index-1] {
-			continue
-		}
-		deduped = append(deduped, value)
+func canonicalTelemetryGrantKey(keyText string) (string, bool) {
+	fieldKey := telemetrytypes.GetFieldKeyFromKeyText(keyText)
+	if fieldKey.FieldContext != telemetrytypes.FieldContextUnspecified && fieldKey.FieldContext != telemetrytypes.FieldContextResource {
+		return "", false
 	}
 
-	encoded, err := json.Marshal(deduped)
-	if err != nil {
-		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to encode telemetry resource id")
+	if _, ok := telemetryGrantKeys[fieldKey.Name]; !ok {
+		return "", false
 	}
 
-	return string(encoded), nil
+	return fieldKey.Name, true
 }
 
-func isServiceNameKey(keyText string) bool {
-	fieldKey := telemetrytypes.GetFieldKeyFromKeyText(keyText)
-	if fieldKey.Name != "service.name" {
-		return false
+func telemetryGrantAtom(key, value string) string {
+	return key + " = " + quoteValue(value)
+}
+
+func CanonicalizeTelemetryGrantSelector(input string) (string, error) {
+	if input == coretypes.WildCardSelectorString {
+		return input, nil
 	}
 
-	return fieldKey.FieldContext == telemetrytypes.FieldContextUnspecified || fieldKey.FieldContext == telemetrytypes.FieldContextResource
+	queryType := "builder_query"
+	expression := input
+	parts := strings.SplitN(input, "/", 2)
+	if coretypes.IsTelemetryQueryTypeSelector(parts[0]) {
+		queryType = parts[0]
+		if len(parts) == 1 || parts[1] == coretypes.WildCardSelectorString {
+			return queryType + "/" + coretypes.WildCardSelectorString, nil
+		}
+		expression = parts[1]
+	}
+
+	normalized, err := NormalizeWhereClause(expression, nil)
+	if err != nil {
+		return "", err
+	}
+
+	if len(normalized.Conditions) != 1 {
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "telemetry selector %q must be a single condition", input)
+	}
+
+	condition := normalized.Conditions[0]
+	if !condition.TopLevel || condition.Operator != "=" || len(condition.Values) != 1 {
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "telemetry selector %q must be a single positive equality condition", input)
+	}
+
+	key, ok := canonicalTelemetryGrantKey(condition.Key)
+	if !ok {
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "telemetry selector %q must use one of the supported keys: %s", input, strings.Join(slices.Sorted(maps.Keys(telemetryGrantKeys)), ", "))
+	}
+
+	value := condition.Values[0]
+	if value == "" || strings.HasPrefix(value, "$") {
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "telemetry selector %q must use a concrete non-empty value", input)
+	}
+
+	return queryType + "/" + telemetryGrantAtom(key, value), nil
 }
