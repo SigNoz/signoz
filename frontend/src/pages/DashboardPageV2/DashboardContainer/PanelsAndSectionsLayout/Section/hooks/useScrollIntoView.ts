@@ -9,7 +9,7 @@ import { useScrollIntoViewStore } from '../../../store/useScrollIntoViewStore';
 export function useScrollIntoView(
 	id: string,
 	ref: RefObject<HTMLElement>,
-	block: ScrollLogicalPosition = 'start',
+	block: ScrollLogicalPosition = 'center',
 ): void {
 	const scrollTargetId = useScrollIntoViewStore((s) => s.scrollTargetId);
 	const setScrollTargetId = useScrollIntoViewStore((s) => s.setScrollTargetId);
