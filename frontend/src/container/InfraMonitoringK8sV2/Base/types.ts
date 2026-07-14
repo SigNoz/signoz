@@ -6,6 +6,7 @@ import {
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 
 import { InfraMonitoringEntity } from '../constants';
+import { SelectedItemParams } from '../hooks';
 
 export type K8sBaseFilters = {
 	filter: {
@@ -96,7 +97,7 @@ export interface K8sBaseDetailsProps<T> {
 	category: InfraMonitoringEntity;
 	eventCategory: string;
 	// Data fetching configuration
-	getSelectedItemExpression: (selectedItem: string) => string;
+	getSelectedItemExpression: (params: SelectedItemParams) => string;
 	fetchEntityData: (
 		filters: K8sDetailsFilters,
 		signal?: AbortSignal,

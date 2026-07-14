@@ -22,10 +22,11 @@ import { parseAsJsonNoValidate } from 'utils/nuqsParsers';
 
 import { InfraMonitoringEntity } from '../constants';
 import {
+	SelectedItemParams,
 	useInfraMonitoringGroupBy,
 	useInfraMonitoringOrderBy,
 	useInfraMonitoringPageListing,
-	useInfraMonitoringSelectedItem,
+	useInfraMonitoringSelectedItemParams,
 } from '../hooks';
 import { K8sBaseFilters } from './types';
 
@@ -34,7 +35,7 @@ import { buildExpressionFromGroupMeta } from './utils';
 
 const EXPANDED_ROW_LIMIT = 10;
 
-export type K8sExpandedRowProps<T> = {
+export type K8sExpandedRowProps<T, TItemKey = string> = {
 	/** Pre-computed row key from parent table (includes group prefix + duplicate handling) */
 	rowKey: string;
 	/** Group metadata for building filters */
@@ -59,10 +60,10 @@ export type K8sExpandedRowProps<T> = {
 	/** Function to get the unique key for a row. */
 	getRowKey?: (record: T) => string;
 	/** Function to get the item key used for selection. Defaults to getRowKey if not provided. */
-	getItemKey?: (record: T) => string;
+	getItemKey?: (record: T) => TItemKey;
 };
 
-export function K8sExpandedRow<T>({
+export function K8sExpandedRow<T, TItemKey = string>({
 	rowKey,
 	groupMeta,
 	entity,
@@ -71,13 +72,13 @@ export function K8sExpandedRow<T>({
 	extraQueryKeyParts = [],
 	getRowKey,
 	getItemKey,
-}: K8sExpandedRowProps<T>): JSX.Element {
+}: K8sExpandedRowProps<T, TItemKey>): JSX.Element {
 	const [, setGroupBy] = useInfraMonitoringGroupBy();
 	const [, setCurrentPage] = useInfraMonitoringPageListing();
 	const { currentQuery } = useQueryBuilder();
 	const parentExpression =
 		currentQuery.builder.queryData[0]?.filter?.expression || '';
-	const [, setSelectedItem] = useInfraMonitoringSelectedItem();
+	const [, setSelectedItemParams] = useInfraMonitoringSelectedItemParams();
 	const [, setMainOrderBy] = useInfraMonitoringOrderBy();
 	const { safeNavigate } = useSafeNavigate();
 	const urlQuery = useUrlQuery();
@@ -175,10 +176,18 @@ export function K8sExpandedRow<T>({
 	const expandedData = data?.data ?? [];
 
 	const handleRowClick = useCallback(
-		(_row: T, itemKey: string): void => {
-			void setSelectedItem(itemKey);
+		(_row: T, itemKey: TItemKey): void => {
+			if (typeof itemKey === 'object' && itemKey !== null) {
+				setSelectedItemParams(itemKey as unknown as SelectedItemParams);
+			} else {
+				setSelectedItemParams({
+					selectedItem: itemKey as string,
+					clusterName: null,
+					namespaceName: null,
+				});
+			}
 		},
-		[setSelectedItem],
+		[setSelectedItemParams],
 	);
 
 	const handleViewAllClick = (): void => {
@@ -239,7 +248,7 @@ export function K8sExpandedRow<T>({
 
 			<div data-testid="expanded-table">
 				<TanStackTableStateProvider>
-					<TanStackTable<T>
+					<TanStackTable<T, TItemKey>
 						data={expandedData}
 						columns={tableColumns}
 						columnStorageKey={storageKey}

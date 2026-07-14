@@ -15,7 +15,7 @@ import {
 } from 'store/globalTime';
 
 import { INFRA_MONITORING_K8S_PARAMS_KEYS } from '../constants';
-import { useInfraMonitoringSelectedItem } from '../hooks';
+import { useInfraMonitoringSelectedItemParams } from '../hooks';
 import LoadingContainer from '../LoadingContainer';
 
 import K8sBaseDetailsContent from './K8sBaseDetailsContent';
@@ -53,7 +53,9 @@ export default function K8sBaseDetails<T>({
 
 	const isDarkMode = useIsDarkMode();
 
-	const [selectedItem, setSelectedItem] = useInfraMonitoringSelectedItem();
+	const [selectedItemParams, setSelectedItemParams] =
+		useInfraMonitoringSelectedItemParams();
+	const selectedItem = selectedItemParams.selectedItem;
 
 	const entityQueryKey = useMemo(
 		() =>
@@ -61,8 +63,17 @@ export default function K8sBaseDetails<T>({
 				selectedTime,
 				`${queryKeyPrefix}EntityDetails`,
 				selectedItem,
+				selectedItemParams.clusterName,
+				selectedItemParams.namespaceName,
 			),
-		[queryKeyPrefix, selectedItem, selectedTime, getAutoRefreshQueryKey],
+		[
+			queryKeyPrefix,
+			selectedItem,
+			selectedItemParams.clusterName,
+			selectedItemParams.namespaceName,
+			selectedTime,
+			getAutoRefreshQueryKey,
+		],
 	);
 
 	const {
@@ -79,7 +90,7 @@ export default function K8sBaseDetails<T>({
 			const { minTime, maxTime } = getMinMaxTime();
 			const start = Math.floor(minTime / NANO_SECOND_MULTIPLIER);
 			const end = Math.floor(maxTime / NANO_SECOND_MULTIPLIER);
-			const expression = getSelectedItemExpression(selectedItem);
+			const expression = getSelectedItemExpression(selectedItemParams);
 
 			return fetchEntityData({ filter: { expression }, start, end }, signal);
 		},
@@ -104,8 +115,8 @@ export default function K8sBaseDetails<T>({
 	}, [entity, getInitialEventsExpression]);
 
 	const handleClose = useCallback((): void => {
-		void setSelectedItem(null);
-	}, [setSelectedItem]);
+		setSelectedItemParams(null);
+	}, [setSelectedItemParams]);
 
 	const entityName = entity ? getEntityName(entity) : '';
 

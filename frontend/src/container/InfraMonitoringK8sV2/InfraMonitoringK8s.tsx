@@ -44,7 +44,7 @@ import {
 	useInfraMonitoringCategory,
 	useInfraMonitoringGroupBy,
 	useInfraMonitoringOrderBy,
-	useInfraMonitoringSelectedItem,
+	useInfraMonitoringSelectedItemParams,
 } from './hooks';
 import K8sJobsList from './Jobs/K8sJobsList';
 import K8sNamespacesList from './Namespaces/K8sNamespacesList';
@@ -63,7 +63,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 	const [selectedCategory, setSelectedCategory] = useInfraMonitoringCategory();
 	const [, setGroupBy] = useInfraMonitoringGroupBy();
 	const [, setOrderBy] = useInfraMonitoringOrderBy();
-	const [, setSelectedItem] = useInfraMonitoringSelectedItem();
+	const [, setSelectedItemParams] = useInfraMonitoringSelectedItemParams();
 
 	const compositeQuery = useGetCompositeQueryParam();
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
@@ -179,7 +179,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 			void setSelectedCategory(key as string);
 			void setOrderBy(null);
 			void setGroupBy(null);
-			void setSelectedItem(null);
+			setSelectedItemParams(null);
 			redirectWithQueryBuilderData({
 				...currentQuery,
 				builder: {

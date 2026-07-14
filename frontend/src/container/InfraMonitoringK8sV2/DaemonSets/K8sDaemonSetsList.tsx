@@ -10,6 +10,7 @@ import K8sBaseDetails, { K8sDetailsFilters } from '../Base/K8sBaseDetails';
 import { K8sBaseList } from '../Base/K8sBaseList';
 import { K8sBaseFilters } from '../Base/types';
 import { InfraMonitoringEntity } from '../constants';
+import { SelectedItemParams } from '../hooks';
 import {
 	daemonSetWidgetInfo,
 	getDaemonSetMetricsQueryPayload,
@@ -111,7 +112,7 @@ function K8sDaemonSetsList({
 	);
 	return (
 		<>
-			<K8sBaseList<InframonitoringtypesDaemonSetRecordDTO>
+			<K8sBaseList<InframonitoringtypesDaemonSetRecordDTO, SelectedItemParams>
 				controlListPrefix={controlListPrefix}
 				entity={InfraMonitoringEntity.DAEMONSETS}
 				tableColumns={k8sDaemonSetsColumnsConfig}
