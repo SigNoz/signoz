@@ -102,14 +102,15 @@ func normalizeFunctionArgs(query map[string]any) {
 	}
 }
 
-// orderByValueKeys are v4 order-by columnNames meaning "order by the aggregation value"
+// malformedOrderByValueKeys are v4 order-by columnNames meaning "order by the aggregation value"
 // that the v5 aggregation validator rejects (validateOrderByForAggregation). All resolve
 // to the same aggregation key. Add more as they surface. The frontend passes these
 // through (the query-service resolves them), but the v2 dashboard validator only accepts
 // a real aggregation key.
-var orderByValueKeys = map[string]bool{
+var malformedOrderByValueKeys = map[string]bool{
 	"#SIGNOZ_VALUE": true,
 	"A":             true,
+	"A.count()":     true,
 	"__result":      true,
 	"value":         true,
 }
@@ -131,7 +132,7 @@ func normalizeOrderByKeys(query map[string]any) {
 		if !ok {
 			continue
 		}
-		if cn, _ := order["columnName"].(string); orderByValueKeys[cn] {
+		if cn, _ := order["columnName"].(string); malformedOrderByValueKeys[cn] {
 			order["columnName"] = key
 		}
 	}
