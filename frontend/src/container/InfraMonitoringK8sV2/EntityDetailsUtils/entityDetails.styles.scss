@@ -150,6 +150,18 @@
 				font-size: var(--font-size-xs);
 				font-style: normal;
 				font-weight: var(--font-weight-normal);
+				position: relative;
+
+				--toggle-group-overflow: visible;
+
+				.view-title__badge {
+					position: absolute;
+					top: -12px;
+					right: -24px;
+					font-size: 9px;
+					padding: 0 4px;
+					line-height: 14px;
+				}
 			}
 
 			> button {
