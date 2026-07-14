@@ -2,6 +2,7 @@ package dashboardtypes
 
 import (
 	"sort"
+	"strings"
 
 	"github.com/perses/spec/go/common"
 	"github.com/perses/spec/go/dashboard"
@@ -10,6 +11,42 @@ import (
 // panelRefPrefix is the JSON-ref prefix a grid item uses to point at a panel:
 // "#/spec/panels/<id>".
 const panelRefPrefix = "#/spec/panels/"
+
+// sanitizePanelID rewrites a widget id to something valid in a panel $ref. Only the
+// em dash has shown up as illegal; replace it with a hyphen.
+func sanitizePanelID(id string) string {
+	return strings.ReplaceAll(id, "—", "-")
+}
+
+// sanitizeWidgetIDs rewrites every widget id in the raw v1 data — widgets[].id,
+// layout[].i, panelMap keys and their widgets[].i — through sanitizePanelID, so a
+// panel's map key and the layout $ref pointing at it stay identical (an illegal char
+// in one but not the other would dangle the ref). Runs before panels/layouts build.
+func sanitizeWidgetIDs(data StorableDashboardData) {
+	sanitizeField := func(raw any, field string) {
+		items, _ := raw.([]any)
+		for _, it := range items {
+			if m, ok := it.(map[string]any); ok {
+				if s, ok := m[field].(string); ok {
+					m[field] = sanitizePanelID(s)
+				}
+			}
+		}
+	}
+	sanitizeField(data["widgets"], "id")
+	sanitizeField(data["layout"], "i")
+	if panelMap, ok := data["panelMap"].(map[string]any); ok {
+		for key, v := range panelMap {
+			if s := sanitizePanelID(key); s != key {
+				panelMap[s] = v
+				delete(panelMap, key)
+			}
+			if m, ok := v.(map[string]any); ok {
+				sanitizeField(m["widgets"], "i")
+			}
+		}
+	}
+}
 
 // ══════════════════════════════════════════════
 // Layouts (data.layout + data.panelMap)
