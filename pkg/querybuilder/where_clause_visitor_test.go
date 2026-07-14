@@ -2031,3 +2031,102 @@ func TestInterpolateVariablesInString(t *testing.T) {
 		})
 	}
 }
+
+// valueRecordingConditionBuilder records the value each ConditionFor call receives,
+// so tests can assert what the visitor actually hands to the condition builder.
+type valueRecordingConditionBuilder struct {
+	values []any
+}
+
+func (b *valueRecordingConditionBuilder) ConditionFor(
+	_ context.Context,
+	_ uint64,
+	_ uint64,
+	key *telemetrytypes.TelemetryFieldKey,
+	_ []*telemetrytypes.TelemetryFieldKey,
+	_ qbtypes.FilterOperator,
+	value any,
+	_ *sqlbuilder.SelectBuilder,
+) ([]string, []string, error) {
+	b.values = append(b.values, value)
+	return []string{fmt.Sprintf("%s_cond", key.Name)}, nil, nil
+}
+
+// TestInterpolatedValueReachesConditionBuilder pins the visitor → condition builder
+// handoff for embedded variables: the interpolated string (not the raw reference) is
+// the value passed to ConditionFor. The condition builder is signal-specific but this
+// seam is not, so it is covered here once instead of per telemetry package.
+func TestInterpolatedValueReachesConditionBuilder(t *testing.T) {
+	tests := []struct {
+		name       string
+		expr       string
+		variables  map[string]qbtypes.VariableItem
+		wantValues []any
+	}{
+		{
+			name: "composed value in quoted string",
+			expr: "a = '$env-xyz'",
+			variables: map[string]qbtypes.VariableItem{
+				"env": {Value: "prod"},
+			},
+			wantValues: []any{"prod-xyz"},
+		},
+		{
+			name: "composed value in LIKE pattern",
+			expr: "a LIKE '$env%'",
+			variables: map[string]qbtypes.VariableItem{
+				"env": {Value: "prod"},
+			},
+			wantValues: []any{"prod%"},
+		},
+		{
+			name: "pure reference goes through standalone substitution",
+			expr: "a = $env",
+			variables: map[string]qbtypes.VariableItem{
+				"env": {Value: "prod"},
+			},
+			wantValues: []any{"prod"},
+		},
+		{
+			name: "multi-select collapses to first value",
+			expr: "a = '$env-xyz'",
+			variables: map[string]qbtypes.VariableItem{
+				"env": {Value: []any{"prod", "staging"}},
+			},
+			wantValues: []any{"prod-xyz"},
+		},
+		{
+			name: "composed members of an IN list",
+			expr: "a IN ('$env-1', '$env-2')",
+			variables: map[string]qbtypes.VariableItem{
+				"env": {Value: "prod"},
+			},
+			wantValues: []any{[]any{"prod-1", "prod-2"}},
+		},
+		{
+			name: "unknown variable passes through untouched",
+			expr: "a = '$unknown-xyz'",
+			variables: map[string]qbtypes.VariableItem{
+				"env": {Value: "prod"},
+			},
+			wantValues: []any{"$unknown-xyz"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			recorder := &valueRecordingConditionBuilder{}
+			opts := FilterExprVisitorOpts{
+				Context:          t.Context(),
+				FieldKeys:        visitTestKeys,
+				ConditionBuilder: recorder,
+				Variables:        tt.variables,
+			}
+
+			result, err := PrepareWhereClause(tt.expr, opts)
+			assert.NoError(t, err)
+			assert.False(t, result.IsEmpty())
+			assert.Equal(t, tt.wantValues, recorder.values)
+		})
+	}
+}
