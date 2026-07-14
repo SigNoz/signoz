@@ -1,6 +1,8 @@
 import { useCallback, useRef, useState } from 'react';
+import { useDroppable } from '@dnd-kit/core';
 import { Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
+import cx from 'classnames';
 
 import ConfirmDeleteDialog from '../../../components/ConfirmDeleteDialog/ConfirmDeleteDialog';
 import DisabledControlTooltip from '../../../components/DisabledControlTooltip/DisabledControlTooltip';
@@ -9,6 +11,7 @@ import { useCreatePanel } from '../../../hooks/useCreatePanel';
 import type { DashboardSection } from '../../../utils';
 import PanelTypeSelectionModal from '../../Panel/PanelTypeSelectionModal/PanelTypeSelectionModal';
 import { useDashboardStore } from '../../../store/useDashboardStore';
+import { sectionDropId } from '../hooks/crossSectionDrag';
 import { useCloneSection } from '../hooks/useCloneSection';
 import { useDeleteSection } from '../hooks/useDeleteSection';
 import { useRenameSection } from '../hooks/useRenameSection';
@@ -27,9 +30,16 @@ interface SectionProps {
 	sections?: DashboardSection[];
 	/** Provided by SortableSection in sectioned mode; absent for untitled/free-flow. */
 	dragHandle?: SectionDragHandle;
+	/** Register this section as a cross-section panel drop target. */
+	enablePanelDrag?: boolean;
 }
 
-function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
+function Section({
+	section,
+	sections,
+	dragHandle,
+	enablePanelDrag = false,
+}: SectionProps): JSX.Element {
 	const canEditDashboard = useDashboardStore((s) => s.canEditDashboard);
 	const isLocked = useDashboardStore((s) => s.isLocked);
 	const {
@@ -66,14 +76,30 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 
 	const cloneSection = useCloneSection();
 
-	const sectionRef = useRef<HTMLDivElement>(null);
+	const sectionRef = useRef<HTMLDivElement | null>(null);
 	useScrollIntoView(section.id, sectionRef);
+
+	// Cross-section panel drop target. `setSectionRef` fans the node out to both
+	// the scroll-into-view ref and dnd-kit's droppable ref; `isOver` highlights
+	// the section while a panel hovers it.
+	const { setNodeRef: setDroppableRef, isOver } = useDroppable({
+		id: sectionDropId(section.layoutIndex),
+		disabled: !enablePanelDrag,
+	});
+	const setSectionRef = useCallback(
+		(node: HTMLDivElement | null): void => {
+			sectionRef.current = node;
+			setDroppableRef(node);
+		},
+		[setDroppableRef],
+	);
 
 	const grid = (
 		<SectionGrid
 			items={section.items}
 			layoutIndex={section.layoutIndex}
 			sections={sections}
+			enablePanelDrag={enablePanelDrag}
 		/>
 	);
 
@@ -81,7 +107,8 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 		// Untitled section — just the grid, no header chrome.
 		return (
 			<div
-				ref={sectionRef}
+				ref={setSectionRef}
+				className={cx(isOver && styles.dropTarget)}
 				data-testid={`dashboard-section-${section.id}`}
 				data-section-layout-index={section.layoutIndex}
 			>
@@ -92,8 +119,8 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 
 	return (
 		<div
-			ref={sectionRef}
-			className={styles.section}
+			ref={setSectionRef}
+			className={cx(styles.section, isOver && styles.dropTarget)}
 			data-testid={`dashboard-section-${section.id}`}
 			data-section-layout-index={section.layoutIndex}
 		>

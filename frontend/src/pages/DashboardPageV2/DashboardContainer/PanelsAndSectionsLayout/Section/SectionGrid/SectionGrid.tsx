@@ -14,12 +14,15 @@ interface SectionGridProps {
 	layoutIndex: number;
 	/** All sections — layout context for the panel menu's move/delete actions. */
 	sections?: DashboardSection[];
+	/** Enable the cross-section drag grip on each panel (sectioned edit mode). */
+	enablePanelDrag?: boolean;
 }
 
 function SectionGrid({
 	items,
 	layoutIndex,
 	sections,
+	enablePanelDrag = false,
 }: SectionGridProps): JSX.Element {
 	const isEditable = useDashboardStore((s) => s.isEditable);
 	const rglLayout = useMemo<Layout[]>(
@@ -61,6 +64,8 @@ function SectionGrid({
 						<SectionGridItem
 							panel={item.panel}
 							panelId={item.id}
+							layoutIndex={layoutIndex}
+							enablePanelDrag={enablePanelDrag}
 							panelActions={
 								isEditable
 									? {

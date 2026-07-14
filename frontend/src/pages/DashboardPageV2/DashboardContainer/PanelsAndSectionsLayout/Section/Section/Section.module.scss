@@ -8,6 +8,14 @@
 	opacity: 0.8;
 }
 
+// A panel is being dragged over this section — highlight it as the drop target.
+.dropTarget {
+	border-radius: 4px;
+	outline: 1px dashed var(--bg-robin-500);
+	outline-offset: 2px;
+	background: color-mix(in srgb, var(--bg-robin-500) 6%, transparent);
+}
+
 .deleteModal :global(.ant-modal-confirm-body) {
 	align-items: center;
 }

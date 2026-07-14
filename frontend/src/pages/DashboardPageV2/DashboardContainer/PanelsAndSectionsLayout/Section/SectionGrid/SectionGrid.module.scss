@@ -23,6 +23,47 @@
 
 // Lazy-load observer boundary (SectionGridItem); fills the grid cell.
 .panelWrapper {
+	position: relative;
 	height: 100%;
 	width: 100%;
+}
+
+// Cross-section drag grip: a small handle at the panel's top-left, revealed on
+// hover. `panel-no-drag` keeps react-grid-layout from treating it as an
+// intra-section move handle, so it exclusively starts the dnd-kit cross-section
+// drag.
+.panelDragHandle {
+	position: absolute;
+	top: 6px;
+	left: 6px;
+	z-index: 3;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 2px;
+	border: 1px solid var(--l2-border);
+	border-radius: 4px;
+	background: var(--bg-ink-400, #0b0c0e);
+	color: var(--l2-foreground);
+	opacity: 0;
+	cursor: grab;
+	transition: opacity 100ms ease;
+
+	&:hover,
+	&:focus-visible {
+		opacity: 1;
+	}
+
+	&:active {
+		cursor: grabbing;
+	}
+}
+
+.panelWrapper:hover .panelDragHandle {
+	opacity: 1;
+}
+
+// The original panel is dimmed while its DragOverlay preview follows the pointer.
+.panelDragging {
+	opacity: 0.4;
 }
