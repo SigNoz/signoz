@@ -238,7 +238,7 @@
     }
   },
   "tags": [],
-  "title": "Signoz GCP Memorystory Redis overview",
+  "title": "GCP Memorystory Redis overview",
   "uploadedGrafana": false,
   "uuid": "019f6016-1c55-7f29-adb2-20ab94c5d94e",
   "variables": {
