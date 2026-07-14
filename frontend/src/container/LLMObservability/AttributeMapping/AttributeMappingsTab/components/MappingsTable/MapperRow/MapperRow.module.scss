@@ -1,0 +1,65 @@
+.mapperRow {
+	&:hover {
+		background: var(--l2-background-hover);
+	}
+}
+
+.cell {
+	padding: var(--spacing-4) var(--spacing-6);
+	vertical-align: middle;
+	color: var(--l1-foreground);
+	font-size: var(--periscope-font-size-base);
+}
+
+// Indent the first cell so mapper rows read as nested under their group.
+.targetCell {
+	padding-left: var(--spacing-12);
+}
+
+// Shorter vertical padding so the loading state reads as a compact placeholder.
+.skeletonCell {
+	composes: cell;
+	:global(.ant-skeleton-input) {
+		min-height: 18px !important;
+		height: 18px !important;
+	}
+	:global(.ant-skeleton-button) {
+		min-height: 18px !important;
+		height: 18px !important;
+	}
+}
+
+.statusCell {
+	text-align: right;
+}
+
+.rowActions {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: var(--spacing-3);
+}
+
+.sources {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--spacing-3);
+}
+
+.sourceChipText {
+	display: block;
+	max-width: 220px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.sourceMore {
+	font-size: var(--font-size-xs);
+	white-space: nowrap;
+}
+
+.muted {
+	color: var(--l3-foreground);
+}

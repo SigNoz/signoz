@@ -38,7 +38,7 @@ func newTestDashboardV2(t *testing.T, orgID valuer.UUID, source Source) *Dashboa
 								LineInterpolation: LineInterpolationSpline,
 								LineStyle:         LineStyleSolid,
 								FillMode:          FillModeSolid,
-								SpanGaps:          SpanGaps{FillLessThan: valuer.MustParseTextDuration("60s")},
+								SpanGaps:          SpanGaps{FillLessThan: "60s"},
 							},
 							Legend: Legend{Position: LegendPositionBottom, Mode: LegendModeList},
 						},
@@ -303,6 +303,146 @@ func TestNextCloneDisplayName(t *testing.T) {
 			assert.LessOrEqual(t, utf8.RuneCountInString(result), MaxDisplayNameLen, "a clone name must fit the limit")
 		})
 	}
+}
+
+func TestNewLegacyListedDashboardV2(t *testing.T) {
+	orgID := valuer.GenerateUUID()
+	dashboardID := valuer.GenerateUUID()
+	createdAt := time.Date(2026, time.January, 1, 12, 0, 0, 0, time.UTC)
+	updatedAt := time.Date(2026, time.January, 2, 12, 0, 0, 0, time.UTC)
+
+	t.Run("extracts display fields from a well-formed v1 blob", func(t *testing.T) {
+		storable := &StorableDashboard{
+			Identifiable:  types.Identifiable{ID: dashboardID},
+			TimeAuditable: types.TimeAuditable{CreatedAt: createdAt, UpdatedAt: updatedAt},
+			UserAuditable: types.UserAuditable{CreatedBy: "alice", UpdatedBy: "bob"},
+			OrgID:         orgID,
+			Locked:        true,
+			Source:        SourceUser,
+			Name:          "legacy-dashboard",
+			Data: StorableDashboardData{
+				"title":       "Legacy Title",
+				"description": "an old v1 dashboard",
+				"image":       "data:image/png;base64,xyz",
+				"version":     "v5",
+				"widgets":     []any{},
+			},
+		}
+		listed := newLegacyListedDashboardV2(storable, nil)
+
+		assert.True(t, listed.Legacy, "a non-v2 dashboard must be flagged legacy")
+		assert.Equal(t, storable.Identifiable, listed.Identifiable)
+		assert.Equal(t, storable.TimeAuditable, listed.TimeAuditable)
+		assert.Equal(t, storable.UserAuditable, listed.UserAuditable)
+		assert.Equal(t, orgID, listed.OrgID)
+		assert.True(t, listed.Locked)
+		assert.Equal(t, SourceUser, listed.Source)
+		assert.Equal(t, "legacy-dashboard", listed.Name, "name comes off the column, not the blob")
+		assert.Equal(t, "v5", listed.SchemaVersion)
+		assert.Equal(t, "data:image/png;base64,xyz", listed.Image)
+		assert.Equal(t, "Legacy Title", listed.Spec.Display.Name)
+		assert.Equal(t, "an old v1 dashboard", listed.Spec.Display.Description)
+		assert.Empty(t, listed.Tags, "v1 dashboards predate tags; nil converts to an empty, non-nil slice")
+	})
+
+	t.Run("yields zero values for absent or wrongly-typed fields", func(t *testing.T) {
+		storable := &StorableDashboard{
+			OrgID:  orgID,
+			Source: SourceUser,
+			Data: StorableDashboardData{
+				"title":   42,          // wrong type
+				"version": []any{"v5"}, // wrong type
+				"image":   nil,         // null
+			},
+		}
+
+		listed := newLegacyListedDashboardV2(storable, nil)
+
+		assert.True(t, listed.Legacy)
+		assert.Empty(t, listed.Spec.Display.Name)
+		assert.Empty(t, listed.SchemaVersion)
+		assert.Empty(t, listed.Image)
+		assert.Empty(t, listed.Tags, "nil tags convert to an empty, non-nil slice")
+	})
+
+	t.Run("tolerates entirely empty data", func(t *testing.T) {
+		storable := &StorableDashboard{OrgID: orgID, Source: SourceUser, Name: "bare"}
+
+		listed := newLegacyListedDashboardV2(storable, nil)
+
+		assert.True(t, listed.Legacy)
+		assert.Equal(t, "bare", listed.Name)
+		assert.Empty(t, listed.Spec.Display.Name)
+	})
+}
+
+func TestNewListableDashboardV2MixedSchemas(t *testing.T) {
+	orgID := valuer.GenerateUUID()
+
+	v2Dashboard := newTestDashboardV2(t, orgID, SourceUser)
+	v2Storable, err := v2Dashboard.ToStorableDashboard()
+	require.NoError(t, err)
+
+	v1Storable := &StorableDashboard{
+		Identifiable: types.Identifiable{ID: valuer.GenerateUUID()},
+		OrgID:        orgID,
+		Source:       SourceUser,
+		Name:         "legacy-dashboard",
+		Data: StorableDashboardData{
+			"title":   "Legacy Title",
+			"version": "v5",
+			"widgets": []any{},
+		},
+	}
+
+	tagsByEntity := map[valuer.UUID][]*tagtypes.Tag{
+		v2Storable.ID: v2Dashboard.Tags,
+	}
+
+	listable := NewListableDashboardV2([]*StorableDashboard{v2Storable, v1Storable}, 2, tagsByEntity, nil)
+
+	require.Len(t, listable.Dashboards, 2, "a single legacy dashboard must not drop rows from the list")
+	assert.Equal(t, int64(2), listable.Total)
+
+	v2Row := listable.Dashboards[0]
+	assert.False(t, v2Row.Legacy, "a v2 dashboard is not legacy")
+	assert.Equal(t, SchemaVersion, v2Row.SchemaVersion)
+	assert.Equal(t, "Test Dashboard", v2Row.Spec.Display.Name)
+
+	v1Row := listable.Dashboards[1]
+	assert.True(t, v1Row.Legacy, "a v1 dashboard is flagged legacy")
+	assert.Equal(t, "v5", v1Row.SchemaVersion)
+	assert.Equal(t, "Legacy Title", v1Row.Spec.Display.Name)
+	assert.Equal(t, "legacy-dashboard", v1Row.Name)
+}
+
+func TestNewListableDashboardForUserV2MixedSchemas(t *testing.T) {
+	orgID := valuer.GenerateUUID()
+
+	v2Dashboard := newTestDashboardV2(t, orgID, SourceUser)
+	v2Storable, err := v2Dashboard.ToStorableDashboard()
+	require.NoError(t, err)
+
+	v1Storable := &StorableDashboard{
+		Identifiable: types.Identifiable{ID: valuer.GenerateUUID()},
+		OrgID:        orgID,
+		Source:       SourceUser,
+		Name:         "legacy-dashboard",
+		Data:         StorableDashboardData{"title": "Legacy Title", "version": "v5"},
+	}
+
+	rows := []*StorableDashboardWithPinInfo{
+		{Dashboard: v2Storable, Pinned: true},
+		{Dashboard: v1Storable, Pinned: false},
+	}
+
+	listable := NewListableDashboardForUserV2(rows, 2, nil, nil)
+
+	require.Len(t, listable.Dashboards, 2)
+	assert.False(t, listable.Dashboards[0].Legacy)
+	assert.True(t, listable.Dashboards[0].Pinned)
+	assert.True(t, listable.Dashboards[1].Legacy)
+	assert.False(t, listable.Dashboards[1].Pinned)
 }
 
 func TestDashboardV2StorableRoundTrip(t *testing.T) {

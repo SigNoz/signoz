@@ -19,9 +19,14 @@ jest.mock('hooks/queryBuilder/useGetQueryRange', () => ({
 	},
 }));
 
+const widgetGraphProps = jest.fn();
+
 jest.mock('container/GridCardLayout/GridCard/WidgetGraphComponent', () => ({
 	__esModule: true,
-	default: (): JSX.Element => <div data-testid="widget-graph" />,
+	default: (props: { setRequestData?: unknown }): JSX.Element => {
+		widgetGraphProps(props);
+		return <div data-testid="widget-graph" />;
+	},
 }));
 
 const buildWidget = (id: string): Widgets =>
@@ -39,6 +44,22 @@ const buildWidget = (id: string): Widgets =>
 describe('Public dashboard Panel', () => {
 	beforeEach(() => {
 		useGetQueryRangeMock.mockClear();
+		widgetGraphProps.mockClear();
+	});
+
+	it('forwards a setRequestData setter so LIST panels render (bug 3646)', () => {
+		render(
+			<Panel
+				widget={buildWidget('widget-a')}
+				index={0}
+				dashboardId="dash-1"
+				startTime={100}
+				endTime={200}
+			/>,
+		);
+
+		const props = widgetGraphProps.mock.calls[0][0];
+		expect(typeof props.setRequestData).toBe('function');
 	});
 
 	it('keys each panel by widget id + index so identical queries do not collide (bug 5503)', () => {
