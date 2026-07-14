@@ -365,10 +365,7 @@ func mapV1Enum[T interface{ StringValue() string }](s string, fallback T, allowe
 func mapV1SpanGaps(raw any) SpanGaps {
 	switch v := raw.(type) {
 	case bool:
-		if v {
-			return SpanGaps{FillOnlyBelow: false}
-		}
-		return SpanGaps{FillOnlyBelow: true}
+		return SpanGaps{FillOnlyBelow: false}
 	case float64:
 		return SpanGaps{FillOnlyBelow: true, FillLessThan: time.Duration(v * float64(time.Second)).String()}
 	}
