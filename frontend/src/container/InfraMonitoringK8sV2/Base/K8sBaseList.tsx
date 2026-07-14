@@ -33,6 +33,7 @@ import K8sHeader from './K8sHeader';
 import { K8sPaginationWarning } from './K8sPaginationWarning';
 import { K8sBaseFilters } from './types';
 import { getGroupedByMeta } from './utils';
+import { K8sInstrumentationChecksCallout } from './components/K8sInstrumentationChecksCallout/K8sInstrumentationChecksCallout';
 
 import styles from './K8sBaseList.module.scss';
 import cx from 'classnames';
@@ -377,6 +378,8 @@ export function K8sBaseList<
 				cancelQuery={cancelQuery}
 			/>
 			<div ref={containerRef} className={styles.tableContainer}>
+				<K8sInstrumentationChecksCallout entity={entity} />
+
 				{isError && (
 					<Typography>
 						{data?.error?.toString() || 'Something went wrong'}
