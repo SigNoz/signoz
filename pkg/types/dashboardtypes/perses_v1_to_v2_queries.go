@@ -231,6 +231,12 @@ func (d *v1Decoder) collectV1QueryEnvelopes(widget map[string]any, panelKind Pan
 			out = append(out, qb.WrapInV5Envelope(name, f, string(qb.QueryTypeFormula.StringValue())))
 		}
 		for _, op := range d.readObjects(builder, "queryTraceOperator") {
+			// A trace operator's expression is the operation itself and is required
+			// (ParseExpression rejects a blank one); drop it if empty rather than let it
+			// be misclassified as a blank formula and fail validation.
+			if d.readString(op, "expression") == "" {
+				continue
+			}
 			normalizePreV5QueryData(op, widgetType)
 			name := d.readString(op, "queryName")
 			out = append(out, qb.WrapInV5Envelope(name, op, string(qb.QueryTypeTraceOperator.StringValue())))
