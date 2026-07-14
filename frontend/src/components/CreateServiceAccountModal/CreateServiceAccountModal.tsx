@@ -92,6 +92,7 @@ function CreateServiceAccountModal(): JSX.Element {
 			width="narrow"
 			className="create-sa-modal"
 			disableOutsideClick={isErrorModalVisible}
+			testId="create-service-account-modal"
 		>
 			<div className="create-sa-modal__content">
 				<form

@@ -5,23 +5,6 @@
 	gap: var(--spacing-8);
 }
 
-.pageHeaderTitle {
-	display: flex;
-	flex-direction: column;
-}
-
-.title {
-	margin: 0;
-	font-size: var(--periscope-font-size-large);
-	font-weight: var(--font-weight-semibold);
-}
-
-.description {
-	margin: var(--spacing-2) 0 0;
-	font-size: var(--periscope-font-size-base);
-	color: var(--l3-foreground);
-}
-
 .pageHeaderActions {
 	display: flex;
 	align-items: center;

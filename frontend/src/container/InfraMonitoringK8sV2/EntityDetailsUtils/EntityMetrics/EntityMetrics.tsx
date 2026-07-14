@@ -1,6 +1,8 @@
 import { useCallback, useMemo, useRef } from 'react';
 import { UseQueryResult } from 'react-query';
-import { Skeleton } from 'antd';
+import { Link } from 'react-router-dom';
+import { Compass } from '@signozhq/icons';
+import { Skeleton, Tooltip } from 'antd';
 import cx from 'classnames';
 import { InfraMonitoringEvents } from 'constants/events';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -15,6 +17,7 @@ import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { useTimezone } from 'providers/Timezone';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { getMetricsExplorerUrl } from 'utils/explorerUtils';
 
 import { buildEntityMetricsChartConfig } from './configBuilder';
 
@@ -51,7 +54,8 @@ function EntityMetrics<T>({
 	queryKey,
 	category,
 }: EntityMetricsProps<T>): JSX.Element {
-	const { timeRange, handleTimeChange } = useEntityDetailsTime();
+	const { timeRange, selectedInterval, handleTimeChange } =
+		useEntityDetailsTime();
 
 	const { visibilities, setElement } = useMultiIntersectionObserver(
 		entityWidgetInfo.length,
@@ -183,9 +187,31 @@ function EntityMetrics<T>({
 						key={entityWidgetInfo[idx].title}
 						className={styles.entityMetricsCol}
 					>
-						<span className={styles.entityMetricsTitle}>
-							{entityWidgetInfo[idx].title}
-						</span>
+						<div className={styles.entityMetricsTitleContainer}>
+							<span className={styles.entityMetricsTitle}>
+								{entityWidgetInfo[idx].title}
+							</span>
+							{queryPayloads[idx] &&
+								queryPayloads[idx].graphType !== PANEL_TYPES.TABLE && (
+									<Tooltip title="Open in Metrics Explorer">
+										<Link
+											to={getMetricsExplorerUrl({
+												query: queryPayloads[idx].query,
+												...(selectedInterval && selectedInterval !== 'custom'
+													? { relativeTime: selectedInterval }
+													: {
+															startTimeMs: timeRange.startTime * 1000,
+															endTimeMs: timeRange.endTime * 1000,
+														}),
+											})}
+											className={styles.metricsExplorerLink}
+											data-testid={`open-metrics-explorer-${idx}`}
+										>
+											<Compass size={14} />
+										</Link>
+									</Tooltip>
+								)}
+						</div>
 						<div className={styles.entityMetricsCard} ref={graphRef}>
 							{renderCardContent(query, idx)}
 						</div>

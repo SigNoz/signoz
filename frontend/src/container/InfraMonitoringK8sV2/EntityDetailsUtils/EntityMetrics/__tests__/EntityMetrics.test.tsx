@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
 import * as appContextHooks from 'providers/App/App';
 import { LicenseEvent } from 'types/api/licensesV3/getActive';
@@ -33,14 +34,17 @@ jest.mock('../../EntityDateTimeSelector/EntityDateTimeSelector', () => ({
 	),
 }));
 
+const mockTimeRange = { startTime: 1705315200, endTime: 1705318800 };
+let mockSelectedInterval = '5m';
+
 jest.mock('../../EntityDateTimeSelector/useEntityDetailsTime', () => ({
 	useEntityDetailsTime: (): {
 		timeRange: { startTime: number; endTime: number };
 		selectedInterval: string;
 		handleTimeChange: jest.Mock;
 	} => ({
-		timeRange: { startTime: 1705315200, endTime: 1705318800 },
-		selectedInterval: '5m',
+		timeRange: mockTimeRange,
+		selectedInterval: mockSelectedInterval,
 		handleTimeChange: jest.fn(),
 	}),
 }));
@@ -295,14 +299,16 @@ const renderEntityMetrics = (overrides = {}): any => {
 	};
 
 	return render(
-		<EntityMetrics
-			entity={defaultProps.entity}
-			eventEntity="test"
-			entityWidgetInfo={defaultProps.entityWidgetInfo}
-			getEntityQueryPayload={defaultProps.getEntityQueryPayload}
-			queryKey={defaultProps.queryKey}
-			category={defaultProps.category}
-		/>,
+		<MemoryRouter>
+			<EntityMetrics
+				entity={defaultProps.entity}
+				eventEntity="test"
+				entityWidgetInfo={defaultProps.entityWidgetInfo}
+				getEntityQueryPayload={defaultProps.getEntityQueryPayload}
+				queryKey={defaultProps.queryKey}
+				category={defaultProps.category}
+			/>
+		</MemoryRouter>,
 	);
 };
 
@@ -331,13 +337,14 @@ const mockTableData: (import('../utils').MetricsTableData[] | null)[] = [
 ];
 
 const mockQueryPayloads = [
-	{ graphType: 'graph' }, // time_series
-	{ graphType: 'table' }, // table
+	{ graphType: 'graph', query: { queryType: 'builder' } }, // time_series
+	{ graphType: 'table', query: { queryType: 'builder' } }, // table
 ];
 
 describe('EntityMetrics', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
+		mockSelectedInterval = '5m';
 		mockUseEntityMetrics.mockReturnValue({
 			queries: mockQueries as any,
 			chartData: mockChartData,
@@ -437,6 +444,36 @@ describe('EntityMetrics', () => {
 				visibilities: [true, true],
 			}),
 		);
+	});
+
+	it('renders metrics explorer link only for non-table panels', () => {
+		renderEntityMetrics();
+		expect(screen.getByTestId('open-metrics-explorer-0')).toBeInTheDocument();
+		expect(
+			screen.queryByTestId('open-metrics-explorer-1'),
+		).not.toBeInTheDocument();
+	});
+
+	it('builds metrics explorer link with relativeTime when a relative interval is selected', () => {
+		mockSelectedInterval = '5m';
+		renderEntityMetrics();
+		const href = screen
+			.getByTestId('open-metrics-explorer-0')
+			.getAttribute('href');
+		expect(href).toContain('relativeTime=5m');
+		expect(href).not.toContain('startTime=');
+		expect(href).not.toContain('endTime=');
+	});
+
+	it('builds metrics explorer link with absolute time range in milliseconds for custom interval', () => {
+		mockSelectedInterval = 'custom';
+		renderEntityMetrics();
+		const href = screen
+			.getByTestId('open-metrics-explorer-0')
+			.getAttribute('href');
+		expect(href).toContain(`startTime=${mockTimeRange.startTime * 1000}`);
+		expect(href).toContain(`endTime=${mockTimeRange.endTime * 1000}`);
+		expect(href).not.toContain('relativeTime=');
 	});
 
 	it('passes correct parameters to useEntityMetrics hook', () => {

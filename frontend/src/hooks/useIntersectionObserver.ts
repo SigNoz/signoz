@@ -4,6 +4,8 @@ export function useIntersectionObserver<T extends HTMLElement>(
 	ref: RefObject<T>,
 	options?: IntersectionObserverInit,
 	isObserverOnce?: boolean,
+	/** Defer observation by this many ms to let a transient mount layout settle. */
+	startDelayMs = 0,
 ): boolean {
 	const [isIntersecting, setIntersecting] = useState(false);
 
@@ -23,16 +25,28 @@ export function useIntersectionObserver<T extends HTMLElement>(
 			}
 		}, options);
 
-		if (currentReference) {
-			observer.observe(currentReference);
+		const startObserving = (): void => {
+			if (currentReference) {
+				observer.observe(currentReference);
+			}
+		};
+
+		let timer: ReturnType<typeof setTimeout> | undefined;
+		if (startDelayMs > 0) {
+			timer = setTimeout(startObserving, startDelayMs);
+		} else {
+			startObserving();
 		}
 
 		return (): void => {
+			if (timer) {
+				clearTimeout(timer);
+			}
 			if (currentReference) {
 				observer.unobserve(currentReference);
 			}
 		};
-	}, [ref, options, isObserverOnce]);
+	}, [ref, options, isObserverOnce, startDelayMs]);
 
 	return isIntersecting;
 }
