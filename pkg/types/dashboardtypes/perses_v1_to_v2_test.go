@@ -1136,12 +1136,16 @@ func TestConvertV1LayoutsWithCollapsedSection(t *testing.T) {
 	d := &v1Decoder{}
 	layouts := d.convertV1Layouts(data, d.convertV1Panels(data["widgets"]))
 	require.NoError(t, d.errIfHasMalformedFields())
-	require.Len(t, layouts, 2, "one root grid (p-2) + one section grid (row-1 with p-1)")
+	require.Len(t, layouts, 2, "root grid (p-1 and p-2, both placed from layout) + empty collapsed section")
 
+	// p-1 appears in both `layout` and the collapsed row's panelMap. The layout entry
+	// wins — the frontend renders it under the open layout, not the collapsed row — so
+	// p-1 and p-2 both land in the root grid and the collapsed section is left empty.
 	rootSpec, ok := layouts[0].Spec.(*dashboard.GridLayoutSpec)
 	require.True(t, ok)
-	require.Len(t, rootSpec.Items, 1)
-	assert.Equal(t, "#/spec/panels/p-2", rootSpec.Items[0].Content.Ref)
+	require.Len(t, rootSpec.Items, 2)
+	assert.Equal(t, "#/spec/panels/p-1", rootSpec.Items[0].Content.Ref)
+	assert.Equal(t, "#/spec/panels/p-2", rootSpec.Items[1].Content.Ref)
 	assert.Nil(t, rootSpec.Display)
 
 	sectionSpec, ok := layouts[1].Spec.(*dashboard.GridLayoutSpec)
@@ -1150,8 +1154,7 @@ func TestConvertV1LayoutsWithCollapsedSection(t *testing.T) {
 	assert.Equal(t, "Latency", sectionSpec.Display.Title)
 	require.NotNil(t, sectionSpec.Display.Collapse)
 	assert.False(t, sectionSpec.Display.Collapse.Open, "collapsed=true → open=false")
-	require.Len(t, sectionSpec.Items, 1)
-	assert.Equal(t, "#/spec/panels/p-1", sectionSpec.Items[0].Content.Ref)
+	assert.Empty(t, sectionSpec.Items, "p-1 is rendered from layout, not the collapsed section")
 }
 
 // TestConvertV1LayoutsExpandedSectionsNoPanelMap covers the common real-world

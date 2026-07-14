@@ -71,12 +71,11 @@ func (d *v1Decoder) convertV1Layouts(data StorableDashboardData, panels map[stri
 		return nil
 	}
 
-	// react-grid-layout can persist the same widget id more than once. Drop the
-	// duplicates, mirroring the frontend's getUpdatedLayout: keep the first
-	// occurrence in stored order and discard the rest (the losing entry's
-	// geometry is thrown away, not merged). Dedupe here, before sortByPosition,
-	// so "first" means first-in-stored-order as the frontend sees it — not
-	// topmost. Entries with no id are left for the main loop to drop.
+	// react-grid-layout can persist the same widget id more than once. Keep the first
+	// occurrence in stored order (mirroring getUpdatedLayout — the losing entry's
+	// geometry is discarded, not merged) and drop the rest. Dedupe before sortByPosition
+	// so "first" means first-in-stored-order, not topmost. Entries with no id are left
+	// for the main loop to drop.
 	seenWidgetIds := make(map[string]bool, len(layout))
 	dedupedLayouts := layout[:0]
 	for _, item := range layout {
@@ -92,14 +91,12 @@ func (d *v1Decoder) convertV1Layouts(data StorableDashboardData, panels map[stri
 
 	rows := d.extractRowsAndCollapsedWidgets(data)
 
-	// Skip collapsed-row children a malformed dashboard lists in `layout` too.
-	isWidgetCollapsed := make(map[string]bool)
-	for _, row := range rows {
-		for _, child := range row.collapsedWidgets {
-			if id := d.readString(child, "i"); id != "" {
-				isWidgetCollapsed[id] = true
-				break
-			}
+	// ids placed directly in `layout`. A collapsed child also listed here is rendered from
+	// layout (the open section), so it's dropped from its collapsed section below.
+	placedInLayout := make(map[string]bool, len(layout))
+	for _, item := range layout {
+		if id := d.readString(item, "i"); id != "" {
+			placedInLayout[id] = true
 		}
 	}
 
@@ -114,12 +111,11 @@ func (d *v1Decoder) convertV1Layouts(data StorableDashboardData, panels map[stri
 	currentRowHeader := topSectionWithoutHeader
 	for _, item := range layout {
 		id := d.readString(item, "i")
-		if id == "" || isWidgetCollapsed[id] {
-			// widgets in collapsed sectinos will be added when those sections' row widgets are handled.
+		if id == "" {
 			continue
 		}
 		if row, ok := rows[id]; ok {
-			newRowHeader := &section{row: row, items: d.extractValidLayoutItemsForCollapsedSection(row.collapsedWidgets, panels)}
+			newRowHeader := &section{row: row, items: d.extractValidLayoutItemsForCollapsedSection(row.collapsedWidgets, panels, placedInLayout)}
 			sectionsWithHeader = append(sectionsWithHeader, newRowHeader)
 			// A collapsed row owns only its stashed children; later panels → ungrouped.
 			if row.collapsed {
@@ -212,16 +208,25 @@ func placedWidgetIDs(data StorableDashboardData) map[string]bool {
 }
 
 // extractValidLayoutItemsForCollapsedSection keeps only the collapsed-row children
-// backed by a real panel, dropping ghosts. These come from panelMap and skip the
-// main loop's per-item panel check, so a grid never references a missing panel.
-func (d *v1Decoder) extractValidLayoutItemsForCollapsedSection(items []map[string]any, panels map[string]*Panel) []map[string]any {
+// backed by a real panel and not already placed in `layout`, dropping ghosts and any
+// child the open layout renders instead. These come from panelMap and skip the main
+// loop's per-item panel check, so a grid never references a missing or twice-placed panel.
+func (d *v1Decoder) extractValidLayoutItemsForCollapsedSection(items []map[string]any, panels map[string]*Panel, placedInLayout map[string]bool) []map[string]any {
 	out := make([]map[string]any, 0, len(items))
+	seen := make(map[string]bool, len(items))
 	for _, item := range items {
-		if id := d.readString(item, "i"); id != "" {
-			if _, ok := panels[id]; ok {
-				out = append(out, item)
-			}
+		id := d.readString(item, "i")
+		if id == "" {
+			continue
 		}
+		if _, ok := panels[id]; !ok {
+			continue
+		}
+		if placedInLayout[id] || seen[id] {
+			continue
+		}
+		seen[id] = true
+		out = append(out, item)
 	}
 	return out
 }
