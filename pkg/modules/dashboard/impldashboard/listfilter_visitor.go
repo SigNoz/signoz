@@ -426,12 +426,13 @@ func (v *visitor) buildFreeTextTerm(value string) string {
 	return v.selectBuilder.Or(namePredicate, descriptionPredicate, tagPredicate)
 }
 
-// buildFreeTextContains emits a case-insensitive contains as LOWER(col) LIKE
-// LOWER(?) — identical on SQLite and Postgres. The value's % and _ are escaped to
-// match literally, and ESCAPE pins backslash as the escape char (SQLite has no
-// default; a harmless restatement of the Postgres default).
+// buildFreeTextContains emits a case-insensitive contains as
+// LOWER(COALESCE(col, '')) LIKE LOWER(?), identical on SQLite and Postgres.
+// COALESCE keeps a NULL column (an absent description) false rather than NULL —
+// otherwise `NOT (…)` goes NULL and drops every description-less dashboard. The
+// value's % and _ are escaped, and ESCAPE pins backslash as the escape char.
 func (v *visitor) buildFreeTextContains(builder *sqlbuilder.SelectBuilder, columnExpression, value string) string {
-	lowerColumn := string(v.formatter.LowerExpression(columnExpression))
+	lowerColumn := string(v.formatter.LowerExpression("COALESCE(" + columnExpression + ", '')"))
 	pattern := "%" + v.formatter.EscapeLikePattern(value) + "%"
 	return fmt.Sprintf("%s LIKE LOWER(%s) ESCAPE '\\'", lowerColumn, builder.Var(pattern))
 }

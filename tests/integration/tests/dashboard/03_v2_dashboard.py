@@ -766,6 +766,19 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
         ),
         # no match anywhere
         ("nonexistent", set()),
+        # NOT over a term nothing matches returns everything — including these
+        # description-less dashboards, which a negated search must not exclude.
+        (
+            "NOT payment",
+            {
+                "Alpha Overview",
+                "Beta Overview",
+                "Gamma Storage",
+                "Delta Storage",
+                "Epsilon Metrics",
+                "Zeta Overview",
+            },
+        ),
     ]
     for query, expected in free_text_cases:
         response = requests.get(
