@@ -133,10 +133,10 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<InframonitoringtypesDep
 			},
 		},
 		{
-			id: 'replica_status',
+			id: 'pod_replicas',
 			header: (): React.ReactNode => (
-				<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/deployments#replica-status">
-					Replica Status
+				<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/deployments#pod-replicas">
+					Pod Replicas
 				</ColumnHeader>
 			),
 			accessorFn: (row): number => row.availablePods,

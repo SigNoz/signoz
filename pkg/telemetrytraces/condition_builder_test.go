@@ -7,6 +7,7 @@ import (
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -293,7 +294,7 @@ func TestConditionFor(t *testing.T) {
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-			cond, _, err := conditionBuilder.ConditionFor(ctx, 1761437108000000000, 1761458708000000000, &tc.key, []*telemetrytypes.TelemetryFieldKey{&tc.key}, tc.operator, tc.value, sb)
+			cond, _, err := conditionBuilder.ConditionFor(ctx, valuer.UUID{}, 1761437108000000000, 1761458708000000000, &tc.key, []*telemetrytypes.TelemetryFieldKey{&tc.key}, tc.operator, tc.value, sb)
 			sb.Where(cond...)
 
 			if tc.expectedError != nil {
@@ -380,11 +381,138 @@ func TestConditionForResourceWithEvolution(t *testing.T) {
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-			cond, _, err := conditionBuilder.ConditionFor(ctx, tc.tsStart, tc.tsEnd, &tc.key, []*telemetrytypes.TelemetryFieldKey{&tc.key}, tc.operator, nil, sb)
+			cond, _, err := conditionBuilder.ConditionFor(ctx, valuer.UUID{}, tc.tsStart, tc.tsEnd, &tc.key, []*telemetrytypes.TelemetryFieldKey{&tc.key}, tc.operator, nil, sb)
 			require.NoError(t, err)
 			sb.Where(cond...)
 			sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 			assert.Contains(t, sql, tc.expectedSQL)
 		})
 	}
+}
+
+// TestConditionForSynthesizedKeys covers the KeyNotFound fallback: when a
+// referenced attribute key has no metadata match, the builder synthesizes key(s) from
+// user input and queries anyway, emitting a warning instead of failing.
+func TestConditionForSynthesizedKeys(t *testing.T) {
+	ctx := context.Background()
+	fm := NewFieldMapper()
+	cb := NewConditionBuilder(fm)
+
+	// no metadata matches -> the builder must synthesize from user input
+	var noMatches []*telemetrytypes.TelemetryFieldKey
+
+	t.Run("bare key with string operand -> attribute string", func(t *testing.T) {
+		sb := sqlbuilder.NewSelectBuilder()
+		key := telemetrytypes.TelemetryFieldKey{Name: "error.type"}
+		conds, warnings, err := cb.ConditionFor(ctx, valuer.UUID{}, 0, 0, &key, noMatches, qbtypes.FilterOperatorEqual, "timeout", sb)
+		assert.NoError(t, err)
+		assert.NotEmpty(t, warnings, "a not-found warning should be emitted")
+		sb.Where(conds...)
+		sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+		assert.Contains(t, sql, "attributes_string['error.type']")
+		assert.Contains(t, args, "timeout")
+	})
+
+	t.Run("bare key with number operand -> attribute number", func(t *testing.T) {
+		sb := sqlbuilder.NewSelectBuilder()
+		key := telemetrytypes.TelemetryFieldKey{Name: "http.status"}
+		conds, warnings, err := cb.ConditionFor(ctx, valuer.UUID{}, 0, 0, &key, noMatches, qbtypes.FilterOperatorGreaterThan, float64(5), sb)
+		assert.NoError(t, err)
+		assert.NotEmpty(t, warnings)
+		sb.Where(conds...)
+		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+		assert.Contains(t, sql, "attributes_number['http.status']")
+	})
+
+	t.Run("bare key with bool operand -> attribute bool", func(t *testing.T) {
+		sb := sqlbuilder.NewSelectBuilder()
+		key := telemetrytypes.TelemetryFieldKey{Name: "sampled"}
+		conds, _, err := cb.ConditionFor(ctx, valuer.UUID{}, 0, 0, &key, noMatches, qbtypes.FilterOperatorEqual, true, sb)
+		assert.NoError(t, err)
+		sb.Where(conds...)
+		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+		assert.Contains(t, sql, "attributes_bool['sampled']")
+	})
+
+	t.Run("exists with no operand fans out across type variants", func(t *testing.T) {
+		sb := sqlbuilder.NewSelectBuilder()
+		key := telemetrytypes.TelemetryFieldKey{Name: "exception.type"}
+		conds, warnings, err := cb.ConditionFor(ctx, valuer.UUID{}, 0, 0, &key, noMatches, qbtypes.FilterOperatorExists, nil, sb)
+		assert.NoError(t, err)
+		assert.NotEmpty(t, warnings)
+		assert.Len(t, conds, 3, "exists should fan out to string/number/bool")
+		sb.Where(sb.Or(conds...))
+		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+		assert.Contains(t, sql, "mapContains(attributes_string, 'exception.type')")
+		assert.Contains(t, sql, "mapContains(attributes_number, 'exception.type')")
+		assert.Contains(t, sql, "mapContains(attributes_bool, 'exception.type')")
+	})
+
+	t.Run("qualified data type honored without fanout", func(t *testing.T) {
+		sb := sqlbuilder.NewSelectBuilder()
+		key := telemetrytypes.TelemetryFieldKey{Name: "custom.key", FieldDataType: telemetrytypes.FieldDataTypeString}
+		conds, _, err := cb.ConditionFor(ctx, valuer.UUID{}, 0, 0, &key, noMatches, qbtypes.FilterOperatorEqual, "v", sb)
+		assert.NoError(t, err)
+		assert.Len(t, conds, 1)
+		sb.Where(conds...)
+		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+		assert.Contains(t, sql, "attributes_string['custom.key']")
+	})
+
+	t.Run("qualified resource context honored", func(t *testing.T) {
+		sb := sqlbuilder.NewSelectBuilder()
+		key := telemetrytypes.TelemetryFieldKey{Name: "k8s.cluster.name", FieldContext: telemetrytypes.FieldContextResource}
+		conds, _, err := cb.ConditionFor(ctx, valuer.UUID{}, 0, 0, &key, noMatches, qbtypes.FilterOperatorEqual, "prod", sb)
+		assert.NoError(t, err)
+		assert.Len(t, conds, 1)
+		sb.Where(conds...)
+		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+		assert.Contains(t, sql, "resources_string")
+	})
+
+	t.Run("synthesized resource key survives skip-resource-filter", func(t *testing.T) {
+		// the resource sub-query never covered a key absent from metadata
+		sb := sqlbuilder.NewSelectBuilder()
+		key := telemetrytypes.TelemetryFieldKey{Name: "deployment.environment", FieldContext: telemetrytypes.FieldContextResource}
+		conds, warnings, err := cb.ConditionForKeys(ctx, valuer.UUID{}, 0, 0, &key, nil, qbtypes.ConditionBuilderOptions{SkipResourceFilter: true}, qbtypes.FilterOperatorEqual, "prod", sb)
+		assert.NoError(t, err)
+		assert.NotEmpty(t, warnings)
+		assert.Len(t, conds, 1, "the synthesized resource condition must not be dropped")
+		sb.Where(conds...)
+		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+		assert.Contains(t, sql, "resources_string['deployment.environment']")
+	})
+
+	t.Run("metadata-backed resource key still dropped under skip-resource-filter", func(t *testing.T) {
+		sb := sqlbuilder.NewSelectBuilder()
+		key := telemetrytypes.TelemetryFieldKey{Name: "service.name", FieldContext: telemetrytypes.FieldContextResource}
+		keysMap := map[string][]*telemetrytypes.TelemetryFieldKey{
+			"service.name": {{Name: "service.name", FieldContext: telemetrytypes.FieldContextResource, FieldDataType: telemetrytypes.FieldDataTypeString}},
+		}
+		conds, _, err := cb.ConditionForKeys(ctx, valuer.UUID{}, 0, 0, &key, keysMap, qbtypes.ConditionBuilderOptions{SkipResourceFilter: true}, qbtypes.FilterOperatorEqual, "redis", sb)
+		assert.NoError(t, err)
+		assert.Empty(t, conds, "the resource CTE covers metadata-backed keys")
+	})
+
+	t.Run("synthesized resource key coerces numeric operand", func(t *testing.T) {
+		sb := sqlbuilder.NewSelectBuilder()
+		key := telemetrytypes.TelemetryFieldKey{Name: "replica.count", FieldContext: telemetrytypes.FieldContextResource}
+		conds, _, err := cb.ConditionFor(ctx, valuer.UUID{}, 0, 0, &key, noMatches, qbtypes.FilterOperatorEqual, float64(3), sb)
+		assert.NoError(t, err)
+		sb.Where(conds...)
+		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+		assert.Contains(t, sql, "toFloat64OrNull(")
+		assert.Contains(t, sql, "resources_string['replica.count']")
+	})
+
+	t.Run("negative operator builds without exists guard (matches-everything semantics)", func(t *testing.T) {
+		sb := sqlbuilder.NewSelectBuilder()
+		key := telemetrytypes.TelemetryFieldKey{Name: "error.type"}
+		conds, _, err := cb.ConditionFor(ctx, valuer.UUID{}, 0, 0, &key, noMatches, qbtypes.FilterOperatorNotEqual, "fatal", sb)
+		assert.NoError(t, err)
+		sb.Where(conds...)
+		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+		assert.Contains(t, sql, "attributes_string['error.type'] <> ?")
+		assert.NotContains(t, sql, "mapContains")
+	})
 }

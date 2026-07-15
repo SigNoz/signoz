@@ -71,18 +71,25 @@ export const daemonSetWidgetInfo = [
 	{
 		title: 'CPU usage, request, limits',
 		yAxisUnit: '',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/daemonsets/#cpu-usage-request-limits',
 	},
 	{
 		title: 'Memory usage, request, limits',
 		yAxisUnit: 'bytes',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/daemonsets/#memory-usage-request-limits',
 	},
 	{
 		title: 'Network IO',
 		yAxisUnit: 'binBps',
+		docPath: '/infrastructure-monitoring/kubernetes/daemonsets/#network-io',
 	},
 	{
 		title: 'Network errors count',
 		yAxisUnit: '',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/daemonsets/#network-errors-count',
 	},
 ];
 
