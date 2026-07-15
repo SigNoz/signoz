@@ -67,7 +67,7 @@ const INCREASE_VIEWPORT_BY = { top: 500, bottom: 500 };
 const noopColumnVisibility = (): void => {};
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
-function TanStackTableInner<TData>(
+function TanStackTableInner<TData, TItemKey = string>(
 	{
 		data,
 		columns,
@@ -107,7 +107,7 @@ function TanStackTableInner<TData>(
 		suffixPaginationContent,
 		enableAlternatingRowColors,
 		disableVirtualScroll,
-	}: TanStackTableProps<TData>,
+	}: TanStackTableProps<TData, TItemKey>,
 	forwardedRef: React.ForwardedRef<TanStackTableHandle>,
 ): JSX.Element {
 	if (disableVirtualScroll && onEndReached) {
@@ -193,7 +193,7 @@ function TanStackTableInner<TData>(
 		skeletonRowCount,
 	});
 
-	const { rowKeyData, getRowKeyData } = useRowKeyData({
+	const { rowKeyData, getRowKeyData } = useRowKeyData<TData, TItemKey>({
 		data: effectiveData,
 		isLoading,
 		getRowKey,
@@ -229,7 +229,7 @@ function TanStackTableInner<TData>(
 	const tanstackColumns = useMemo<ColumnDef<TData>[]>(
 		() =>
 			effectiveColumns.map((colDef) =>
-				buildTanstackColumnDef(colDef, isRowActive, getRowKeyData),
+				buildTanstackColumnDef<TData, TItemKey>(colDef, isRowActive, getRowKeyData),
 			),
 		[effectiveColumns, isRowActive, getRowKeyData],
 	);
@@ -356,7 +356,7 @@ function TanStackTableInner<TData>(
 		[effectiveVisibility, columnIds],
 	);
 
-	const virtuosoContext = useMemo<TableRowContext<TData>>(
+	const virtuosoContext = useMemo<TableRowContext<TData, TItemKey>>(
 		() => ({
 			getRowStyle,
 			getRowClassName,
@@ -520,13 +520,15 @@ function TanStackTableInner<TData>(
 	);
 
 	type VirtuosoTableComponentProps = ComponentProps<
-		NonNullable<TableComponents<FlatItem<TData>, TableRowContext<TData>>['Table']>
+		NonNullable<
+			TableComponents<FlatItem<TData>, TableRowContext<TData, TItemKey>>['Table']
+		>
 	>;
 
 	// Use refs in virtuosoComponents to keep the component reference stable during resize
 	// This prevents Virtuoso from re-rendering all rows when columns are resized
 	const virtuosoComponents = useMemo(
-		() => ({
+		(): TableComponents<FlatItem<TData>, TableRowContext<TData, TItemKey>> => ({
 			Table: ({ style, children }: VirtuosoTableComponentProps): JSX.Element => (
 				<table className={tableStyles.tanStackTable} style={style}>
 					<VirtuosoTableColGroup
@@ -582,7 +584,7 @@ function TanStackTableInner<TData>(
 							</table>
 						</div>
 					) : (
-						<TableVirtuoso<FlatItem<TData>, TableRowContext<TData>>
+						<TableVirtuoso<FlatItem<TData>, TableRowContext<TData, TItemKey>>
 							className={virtuosoClassName}
 							ref={virtuosoRef}
 							{...restTableScrollerProps}
@@ -660,8 +662,11 @@ function TanStackTableInner<TData>(
 	);
 }
 
-const TanStackTableForward = forwardRef(TanStackTableInner) as <TData>(
-	props: TanStackTableProps<TData> & {
+const TanStackTableForward = forwardRef(TanStackTableInner) as <
+	TData,
+	TItemKey = string,
+>(
+	props: TanStackTableProps<TData, TItemKey> & {
 		ref?: React.Ref<TanStackTableHandle>;
 	},
 ) => JSX.Element;

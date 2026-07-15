@@ -11,6 +11,7 @@ import K8sBaseDetails, { K8sDetailsFilters } from '../Base/K8sBaseDetails';
 import { K8sBaseList } from '../Base/K8sBaseList';
 import { K8sBaseFilters } from '../Base/types';
 import { InfraMonitoringEntity } from '../constants';
+import { SelectedItemParams } from '../hooks';
 import {
 	deploymentWidgetInfo,
 	getDeploymentMetricsQueryPayload,
@@ -117,7 +118,7 @@ function K8sDeploymentsList({
 
 	return (
 		<>
-			<K8sBaseList<InframonitoringtypesDeploymentRecordDTO>
+			<K8sBaseList<InframonitoringtypesDeploymentRecordDTO, SelectedItemParams>
 				controlListPrefix={controlListPrefix}
 				entity={InfraMonitoringEntity.DEPLOYMENTS}
 				tableColumns={k8sDeploymentsColumnsConfig}
