@@ -33,6 +33,7 @@ func NewConditionBuilder(fm qbtypes.FieldMapper) *conditionBuilder {
 
 func (c *conditionBuilder) conditionFor(
 	ctx context.Context,
+	orgID valuer.UUID,
 	startNs uint64,
 	endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
@@ -46,13 +47,13 @@ func (c *conditionBuilder) conditionFor(
 	}
 
 	// first, locate the raw column type (so we can choose the right EXISTS logic)
-	columns, err := c.fm.ColumnFor(ctx, startNs, endNs, key)
+	columns, err := c.fm.ColumnFor(ctx, orgID, startNs, endNs, key)
 	if err != nil {
 		return "", err
 	}
 
 	// then ask the mapper for the actual SQL reference
-	fieldExpression, err := c.fm.FieldFor(ctx, startNs, endNs, key)
+	fieldExpression, err := c.fm.FieldFor(ctx, orgID, startNs, endNs, key)
 	if err != nil {
 		return "", err
 	}
@@ -345,7 +346,7 @@ func (c *conditionBuilder) conditionsForKeys(
 
 	conds := make([]string, 0, len(keys))
 	for _, k := range keys {
-		cond, err := c.conditionForKey(ctx, startNs, endNs, k, operator, value, sb)
+		cond, err := c.conditionForKey(ctx, orgID, startNs, endNs, k, operator, value, sb)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -356,6 +357,7 @@ func (c *conditionBuilder) conditionsForKeys(
 
 func (c *conditionBuilder) conditionForKey(
 	ctx context.Context,
+	orgID valuer.UUID,
 	startNs uint64,
 	endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
@@ -367,14 +369,14 @@ func (c *conditionBuilder) conditionForKey(
 		return c.buildSpanScopeCondition(key, operator, value, startNs)
 	}
 
-	condition, err := c.conditionFor(ctx, startNs, endNs, key, operator, value, sb)
+	condition, err := c.conditionFor(ctx, orgID, startNs, endNs, key, operator, value, sb)
 	if err != nil {
 		return "", err
 	}
 
 	if operator.AddDefaultExistsFilter() {
 		// skip adding exists filter for intrinsic fields
-		field, _ := c.fm.FieldFor(ctx, startNs, endNs, key)
+		field, _ := c.fm.FieldFor(ctx, orgID, startNs, endNs, key)
 		if slices.Contains(maps.Keys(IntrinsicFields), field) ||
 			slices.Contains(maps.Keys(IntrinsicFieldsDeprecated), field) ||
 			slices.Contains(maps.Keys(CalculatedFields), field) ||
@@ -382,7 +384,7 @@ func (c *conditionBuilder) conditionForKey(
 			return condition, nil
 		}
 
-		existsCondition, err := c.conditionFor(ctx, startNs, endNs, key, qbtypes.FilterOperatorExists, nil, sb)
+		existsCondition, err := c.conditionFor(ctx, orgID, startNs, endNs, key, qbtypes.FilterOperatorExists, nil, sb)
 		if err != nil {
 			return "", err
 		}

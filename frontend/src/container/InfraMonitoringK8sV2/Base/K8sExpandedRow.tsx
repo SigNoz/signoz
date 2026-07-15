@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 import { Querybuildertypesv5QueryWarnDataDTO } from 'api/generated/services/sigNoz.schemas';
 import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
+import APIError from 'types/api/error';
 import TanStackTable, {
 	SortState,
 	TableColumnDef,
@@ -51,7 +52,7 @@ export type K8sExpandedRowProps<T, TItemKey = string> = {
 		records?: T[];
 		data?: T[];
 		total: number;
-		error?: string | null;
+		error?: APIError | null;
 		rawData?: unknown;
 		warning?: Querybuildertypesv5QueryWarnDataDTO | null;
 	}>;
