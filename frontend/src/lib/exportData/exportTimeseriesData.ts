@@ -5,6 +5,7 @@ import { TimeSeries, TimeSeriesData } from 'types/api/v5/queryRange';
 import { QueryData } from 'types/api/widgets/getQuery';
 
 import { SerializedTable } from './types';
+import { withUnit } from './withUnit';
 
 interface ExportTimeseriesDataArgs {
 	data: TimeSeriesData[];
@@ -96,18 +97,6 @@ function flatten(
 		});
 	});
 	return flat;
-}
-
-// Display-format ids, not physical units — meaningful on a chart axis
-// (compact-number formatting) but misleading in an export header.
-const DISPLAY_ONLY_UNITS = new Set(['short', 'none']);
-
-// Appends the y-axis unit to the value header: `value` → `value (ms)`.
-function withUnit(header: string, yAxisUnit?: string): string {
-	if (!yAxisUnit || DISPLAY_ONLY_UNITS.has(yAxisUnit)) {
-		return header;
-	}
-	return `${header} (${yAxisUnit})`;
 }
 
 function toIso(timestamp: number): string {

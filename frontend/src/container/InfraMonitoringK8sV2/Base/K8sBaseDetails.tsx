@@ -52,9 +52,10 @@ import EntityMetrics from '../EntityDetailsUtils/EntityMetrics';
 import EntityTraces from '../EntityDetailsUtils/EntityTraces';
 import { K8S_ENTITY_TRACES_EXPRESSION_KEY } from '../EntityDetailsUtils/EntityTraces/hooks';
 import {
+	SelectedItemParams,
 	useInfraMonitoringEventsFilters,
 	useInfraMonitoringLogFilters,
-	useInfraMonitoringSelectedItem,
+	useInfraMonitoringSelectedItemParams,
 	useInfraMonitoringTracesFilters,
 	useInfraMonitoringView,
 } from '../hooks';
@@ -81,7 +82,7 @@ export interface K8sBaseDetailsProps<T> {
 	category: InfraMonitoringEntity;
 	eventCategory: string;
 	// Data fetching configuration
-	getSelectedItemExpression: (selectedItem: string) => string;
+	getSelectedItemExpression: (params: SelectedItemParams) => string;
 	fetchEntityData: (
 		filters: K8sDetailsFilters,
 		signal?: AbortSignal,
@@ -153,7 +154,9 @@ export default function K8sBaseDetails<T>({
 
 	const isDarkMode = useIsDarkMode();
 
-	const [selectedItem, setSelectedItem] = useInfraMonitoringSelectedItem();
+	const [selectedItemParams, setSelectedItemParams] =
+		useInfraMonitoringSelectedItemParams();
+	const selectedItem = selectedItemParams.selectedItem;
 
 	const entityQueryKey = useMemo(
 		() =>
@@ -161,8 +164,17 @@ export default function K8sBaseDetails<T>({
 				selectedTime,
 				`${queryKeyPrefix}EntityDetails`,
 				selectedItem,
+				selectedItemParams.clusterName,
+				selectedItemParams.namespaceName,
 			),
-		[queryKeyPrefix, selectedItem, selectedTime, getAutoRefreshQueryKey],
+		[
+			queryKeyPrefix,
+			selectedItem,
+			selectedItemParams.clusterName,
+			selectedItemParams.namespaceName,
+			selectedTime,
+			getAutoRefreshQueryKey,
+		],
 	);
 
 	const {
@@ -179,7 +191,7 @@ export default function K8sBaseDetails<T>({
 			const { minTime, maxTime } = getMinMaxTime();
 			const start = Math.floor(minTime / NANO_SECOND_MULTIPLIER);
 			const end = Math.floor(maxTime / NANO_SECOND_MULTIPLIER);
-			const expression = getSelectedItemExpression(selectedItem);
+			const expression = getSelectedItemExpression(selectedItemParams);
 
 			return fetchEntityData({ filter: { expression }, start, end }, signal);
 		},
@@ -204,8 +216,8 @@ export default function K8sBaseDetails<T>({
 	}, [entity, getInitialEventsExpression]);
 
 	const handleClose = useCallback((): void => {
-		setSelectedItem(null);
-	}, [setSelectedItem]);
+		setSelectedItemParams(null);
+	}, [setSelectedItemParams]);
 
 	const entityName = entity ? getEntityName(entity) : '';
 
