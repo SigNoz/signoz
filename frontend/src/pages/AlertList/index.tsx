@@ -6,7 +6,7 @@ import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection
 import ROUTES from 'constants/routes';
 import AllAlertChannels from 'container/AllAlertChannels';
 import AllAlertRules from 'container/ListAlertRules';
-import JiraConnections from 'container/JiraConnections';
+import AtlassianConnections from 'container/AtlassianConnections';
 import { PlannedDowntime } from 'container/PlannedDowntime/PlannedDowntime';
 import RoutingPolicies from 'container/RoutingPolicies';
 import TriggeredAlerts from 'container/TriggeredAlerts';
@@ -89,7 +89,7 @@ function AllAlertList(): JSX.Element {
 			{
 				label: 'Jira Connections',
 				key: AlertListSubTabs.JIRA_CONNECTIONS,
-				children: <JiraConnections />,
+				children: <AtlassianConnections />,
 			},
 		];
 

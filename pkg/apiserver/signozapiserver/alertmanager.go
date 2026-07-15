@@ -163,19 +163,36 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/channels/jira/oauth/session", provider.authzMiddleware.EditAccess(provider.alertmanagerHandler.JiraOAuthSession)).Methods(http.MethodPost).GetError(); err != nil {
+	if err := router.Handle("/api/v1/channels/jira/users", handler.New(provider.authzMiddleware.EditAccess(provider.alertmanagerHandler.ListJiraUsers), handler.OpenAPIDef{
+		ID:                  "ListJiraUsers",
+		Tags:                []string{"channels"},
+		Summary:             "List Jira assignable users",
+		Description:         "This endpoint lists users assignable to issues in a Jira project",
+		Request:             new(alertmanagertypes.JiraUsersRequest),
+		RequestContentType:  "application/json",
+		Response:            new(alertmanagertypes.JiraUsersResponse),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusBadRequest},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+	})).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/channels/jira/oauth/callback", http.HandlerFunc(provider.alertmanagerHandler.JiraOAuthCallback)).Methods(http.MethodGet).GetError(); err != nil {
+	if err := router.Handle("/api/v1/channels/atlassian/oauth/session", provider.authzMiddleware.EditAccess(provider.alertmanagerHandler.AtlassianOAuthSession)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/channels/jira/connections", provider.authzMiddleware.ViewAccess(provider.alertmanagerHandler.JiraConnections)).Methods(http.MethodGet).GetError(); err != nil {
+	if err := router.Handle("/api/v1/channels/atlassian/oauth/callback", http.HandlerFunc(provider.alertmanagerHandler.AtlassianOAuthCallback)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/channels/jira/connections/{id}", provider.authzMiddleware.AdminAccess(provider.alertmanagerHandler.JiraConnectionDelete)).Methods(http.MethodDelete).GetError(); err != nil {
+	if err := router.Handle("/api/v1/channels/atlassian/connections", provider.authzMiddleware.ViewAccess(provider.alertmanagerHandler.AtlassianConnections)).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v1/channels/atlassian/connections/{id}", provider.authzMiddleware.AdminAccess(provider.alertmanagerHandler.AtlassianConnectionDelete)).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
 

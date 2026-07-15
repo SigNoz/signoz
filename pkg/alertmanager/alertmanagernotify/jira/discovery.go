@@ -6,7 +6,6 @@ package jira
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -19,8 +18,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 )
 
-// maxCloudPages bounds pagination.
-const maxCloudPages = 50
+// maxCreateMetaPages bounds pagination.
+const maxCreateMetaPages = 50
 
 var discoveryClient = &http.Client{Timeout: 20 * time.Second}
 
@@ -28,16 +27,19 @@ var discoveryClient = &http.Client{Timeout: 20 * time.Second}
 // rejected with a 401, so the caller may refresh it and retry.
 var ErrTokenExpired = errors.NewUnauthenticatedf(errors.CodeUnauthenticated, "jira access token expired")
 
-// v3Base returns the Jira Cloud REST v3 base URL for a cloud id.
-func v3Base(cloudID string) (*url.URL, error) {
-	if cloudID == "" {
+// apiBase returns the parsed REST base URL for a connection.
+func apiBase(conn *alertmanagertypes.AtlassianConnection) (*url.URL, error) {
+	if conn == nil {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "connection is required")
+	}
+	if conn.CloudID == "" {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "cloud_id is required")
 	}
-	return url.Parse(fmt.Sprintf("%s/%s/rest/api/3", strings.TrimRight(defaultBaseURL, "/"), cloudID))
+	return url.Parse(conn.APIBaseURL())
 }
 
 // GetMetadata returns the create-issue field metadata for a project and issue type.
-func GetMetadata(ctx context.Context, accessToken, cloudID, project, issueType string) (*alertmanagertypes.JiraMetadataResponse, error) {
+func GetMetadata(ctx context.Context, conn *alertmanagertypes.AtlassianConnection, project, issueType string) (*alertmanagertypes.JiraMetadataResponse, error) {
 	if project == "" {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "project is required")
 	}
@@ -45,17 +47,17 @@ func GetMetadata(ctx context.Context, accessToken, cloudID, project, issueType s
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "issue_type is required")
 	}
 
-	baseURL, err := v3Base(cloudID)
+	baseURL, err := apiBase(conn)
 	if err != nil {
 		return nil, err
 	}
 
-	issueTypeID, err := resolveCloudIssueTypeID(ctx, baseURL, accessToken, project, issueType)
+	issueTypeID, err := resolveIssueTypeID(ctx, baseURL, conn.AccessToken, project, issueType)
 	if err != nil {
 		return nil, err
 	}
 
-	fields, err := fetchCloudFields(ctx, baseURL, accessToken, project, issueTypeID)
+	fields, err := fetchFields(ctx, baseURL, conn.AccessToken, project, issueTypeID)
 	if err != nil {
 		return nil, err
 	}
@@ -68,8 +70,8 @@ func GetMetadata(ctx context.Context, accessToken, cloudID, project, issueType s
 }
 
 // ListProjects returns the projects visible to the connection.
-func ListProjects(ctx context.Context, accessToken, cloudID string) (*alertmanagertypes.JiraProjectsResponse, error) {
-	baseURL, err := v3Base(cloudID)
+func ListProjects(ctx context.Context, conn *alertmanagertypes.AtlassianConnection) (*alertmanagertypes.JiraProjectsResponse, error) {
+	baseURL, err := apiBase(conn)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +82,7 @@ func ListProjects(ctx context.Context, accessToken, cloudID string) (*alertmanag
 	query.Set("maxResults", "200")
 	projectsURL.RawQuery = query.Encode()
 
-	responseBody, err := doDiscoveryRequest(ctx, projectsURL.String(), accessToken)
+	responseBody, err := doDiscoveryRequest(ctx, projectsURL.String(), conn.AccessToken)
 	if err != nil {
 		return nil, err
 	}
@@ -94,23 +96,23 @@ func ListProjects(ctx context.Context, accessToken, cloudID string) (*alertmanag
 }
 
 // ListProjectIssueTypes returns the creatable issue types for a project.
-func ListProjectIssueTypes(ctx context.Context, accessToken, cloudID, projectKey string) (*alertmanagertypes.JiraProjectIssueTypesResponse, error) {
+func ListProjectIssueTypes(ctx context.Context, conn *alertmanagertypes.AtlassianConnection, projectKey string) (*alertmanagertypes.JiraProjectIssueTypesResponse, error) {
 	if projectKey == "" {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "project_key is required")
 	}
 
-	baseURL, err := v3Base(cloudID)
+	baseURL, err := apiBase(conn)
 	if err != nil {
 		return nil, err
 	}
 
-	cloudTypes, err := pageCloudIssueTypes(ctx, baseURL, accessToken, projectKey)
+	rawTypes, err := pageIssueTypes(ctx, baseURL, conn.AccessToken, projectKey)
 	if err != nil {
 		return nil, err
 	}
 
-	issueTypes := make([]alertmanagertypes.JiraIssueType, 0, len(cloudTypes))
-	for _, issueType := range cloudTypes {
+	issueTypes := make([]alertmanagertypes.JiraIssueType, 0, len(rawTypes))
+	for _, issueType := range rawTypes {
 		issueTypes = append(issueTypes, alertmanagertypes.JiraIssueType{
 			ID:   issueType.ID,
 			Name: issueType.Name,
@@ -123,6 +125,40 @@ func ListProjectIssueTypes(ctx context.Context, accessToken, cloudID, projectKey
 	}, nil
 }
 
+// ListAssignableUsers returns the users assignable to issues in a project.
+func ListAssignableUsers(ctx context.Context, conn *alertmanagertypes.AtlassianConnection, projectKey, query string) (*alertmanagertypes.JiraUsersResponse, error) {
+	if projectKey == "" {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "project_key is required")
+	}
+
+	baseURL, err := apiBase(conn)
+	if err != nil {
+		return nil, err
+	}
+
+	usersURL := *baseURL
+	usersURL.Path = strings.TrimSuffix(baseURL.Path, "/") + "/user/assignable/search"
+	params := usersURL.Query()
+	params.Set("project", projectKey)
+	params.Set("maxResults", "50")
+	if query != "" {
+		params.Set("query", query)
+	}
+	usersURL.RawQuery = params.Encode()
+
+	responseBody, err := doDiscoveryRequest(ctx, usersURL.String(), conn.AccessToken)
+	if err != nil {
+		return nil, err
+	}
+
+	users, err := parseUsers(responseBody)
+	if err != nil {
+		return nil, err
+	}
+
+	return &alertmanagertypes.JiraUsersResponse{Users: users}, nil
+}
+
 type createMetaSchema struct {
 	Type     string `json:"type"`
 	Items    string `json:"items"`
@@ -131,24 +167,24 @@ type createMetaSchema struct {
 	CustomID int    `json:"customId"`
 }
 
-// cloudPage holds the common pagination envelope returned by the Jira Cloud createmeta endpoints.
-type cloudPage struct {
+// createMetaPage holds the common pagination envelope returned by the createmeta endpoints.
+type createMetaPage struct {
 	StartAt int  `json:"startAt"`
 	Total   int  `json:"total"`
 	IsLast  bool `json:"isLast"`
 }
 
-type cloudIssueType struct {
+type metaIssueType struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
 }
 
-type cloudIssueTypesPage struct {
-	cloudPage
-	IssueTypes []cloudIssueType `json:"issueTypes"`
+type issueTypesPage struct {
+	createMetaPage
+	IssueTypes []metaIssueType `json:"issueTypes"`
 }
 
-type cloudField struct {
+type metaField struct {
 	FieldID       string           `json:"fieldId"`
 	Name          string           `json:"name"`
 	Required      bool             `json:"required"`
@@ -156,13 +192,13 @@ type cloudField struct {
 	AllowedValues []map[string]any `json:"allowedValues"`
 }
 
-type cloudFieldsPage struct {
-	cloudPage
-	Fields []cloudField `json:"fields"`
+type fieldsPage struct {
+	createMetaPage
+	Fields []metaField `json:"fields"`
 }
 
-// cloudCreateMetaURL builds a paginated createmeta URL under the v3 base.
-func cloudCreateMetaURL(baseURL *url.URL, startAt int, segments ...string) string {
+// createMetaURL builds a paginated createmeta URL under the REST base.
+func createMetaURL(baseURL *url.URL, startAt int, segments ...string) string {
 	pageURL := *baseURL
 	base := strings.TrimSuffix(baseURL.Path, "/")
 	pageURL.Path = strings.Join(append([]string{base, "issue", "createmeta"}, segments...), "/")
@@ -172,27 +208,28 @@ func cloudCreateMetaURL(baseURL *url.URL, startAt int, segments ...string) strin
 	return pageURL.String()
 }
 
-// pageCloudIssueTypes pages through the Jira Cloud issuetypes endpoint and returns every creatable
-// issue type for the project.
-func pageCloudIssueTypes(ctx context.Context, baseURL *url.URL, accessToken, project string) ([]cloudIssueType, error) {
-	issueTypes := make([]cloudIssueType, 0)
+// pageIssueTypes pages through the createmeta issuetypes endpoint and returns every
+// creatable issue type for the project.
+func pageIssueTypes(ctx context.Context, baseURL *url.URL, accessToken, project string) ([]metaIssueType, error) {
+	issueTypes := make([]metaIssueType, 0)
 	startAt := 0
-	for range maxCloudPages {
-		pageURL := cloudCreateMetaURL(baseURL, startAt, project, "issuetypes")
+	for range maxCreateMetaPages {
+		pageURL := createMetaURL(baseURL, startAt, project, "issuetypes")
 		body, err := doDiscoveryRequest(ctx, pageURL, accessToken)
 		if err != nil {
 			return nil, err
 		}
 
-		var result cloudIssueTypesPage
+		var result issueTypesPage
 		if err := json.Unmarshal(body, &result); err != nil {
 			return nil, err
 		}
 
-		issueTypes = append(issueTypes, result.IssueTypes...)
+		items := result.IssueTypes
+		issueTypes = append(issueTypes, items...)
 
-		startAt += len(result.IssueTypes)
-		if result.IsLast || len(result.IssueTypes) == 0 || startAt >= result.Total {
+		startAt += len(items)
+		if result.IsLast || len(items) == 0 || startAt >= result.Total {
 			break
 		}
 	}
@@ -200,8 +237,8 @@ func pageCloudIssueTypes(ctx context.Context, baseURL *url.URL, accessToken, pro
 	return issueTypes, nil
 }
 
-func resolveCloudIssueTypeID(ctx context.Context, baseURL *url.URL, accessToken, project, issueType string) (string, error) {
-	issueTypes, err := pageCloudIssueTypes(ctx, baseURL, accessToken, project)
+func resolveIssueTypeID(ctx context.Context, baseURL *url.URL, accessToken, project, issueType string) (string, error) {
+	issueTypes, err := pageIssueTypes(ctx, baseURL, accessToken, project)
 	if err != nil {
 		return "", err
 	}
@@ -215,22 +252,23 @@ func resolveCloudIssueTypeID(ctx context.Context, baseURL *url.URL, accessToken,
 	return "", errors.NewNotFoundf(errors.CodeNotFound, "issue type %q not found in project %q", issueType, project)
 }
 
-func fetchCloudFields(ctx context.Context, baseURL *url.URL, accessToken, project, issueTypeID string) ([]alertmanagertypes.JiraFieldMetadata, error) {
+func fetchFields(ctx context.Context, baseURL *url.URL, accessToken, project, issueTypeID string) ([]alertmanagertypes.JiraFieldMetadata, error) {
 	fields := make([]alertmanagertypes.JiraFieldMetadata, 0)
 	startAt := 0
-	for range maxCloudPages {
-		pageURL := cloudCreateMetaURL(baseURL, startAt, project, "issuetypes", issueTypeID)
+	for range maxCreateMetaPages {
+		pageURL := createMetaURL(baseURL, startAt, project, "issuetypes", issueTypeID)
 		body, err := doDiscoveryRequest(ctx, pageURL, accessToken)
 		if err != nil {
 			return nil, err
 		}
 
-		var result cloudFieldsPage
+		var result fieldsPage
 		if err := json.Unmarshal(body, &result); err != nil {
 			return nil, err
 		}
 
-		for _, field := range result.Fields {
+		items := result.Fields
+		for _, field := range items {
 			fields = append(fields, alertmanagertypes.JiraFieldMetadata{
 				ID:             field.FieldID,
 				Name:           field.Name,
@@ -244,8 +282,8 @@ func fetchCloudFields(ctx context.Context, baseURL *url.URL, accessToken, projec
 			})
 		}
 
-		startAt += len(result.Fields)
-		if result.IsLast || len(result.Fields) == 0 || startAt >= result.Total {
+		startAt += len(items)
+		if result.IsLast || len(items) == 0 || startAt >= result.Total {
 			break
 		}
 	}
@@ -302,6 +340,13 @@ type projectItem struct {
 	Name string `json:"name"`
 }
 
+type userItem struct {
+	AccountID    string `json:"accountId"`
+	DisplayName  string `json:"displayName"`
+	EmailAddress string `json:"emailAddress"`
+	Active       bool   `json:"active"`
+}
+
 func doDiscoveryRequest(ctx context.Context, reqURL, accessToken string) ([]byte, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
 	if err != nil {
@@ -331,6 +376,7 @@ func doDiscoveryRequest(ctx context.Context, reqURL, accessToken string) ([]byte
 	return respBody, nil
 }
 
+// parseProjects reads the Cloud /project/search envelope.
 func parseProjects(responseBody []byte) ([]alertmanagertypes.JiraProject, error) {
 	var searchResponse projectSearchResponse
 	if err := json.Unmarshal(responseBody, &searchResponse); err != nil {
@@ -347,4 +393,27 @@ func parseProjects(responseBody []byte) ([]alertmanagertypes.JiraProject, error)
 	}
 
 	return projects, nil
+}
+
+// parseUsers reads the Cloud /user/assignable/search envelope.
+func parseUsers(responseBody []byte) ([]alertmanagertypes.JiraUser, error) {
+	var items []userItem
+	if err := json.Unmarshal(responseBody, &items); err != nil {
+		return nil, err
+	}
+
+	users := make([]alertmanagertypes.JiraUser, 0, len(items))
+	for _, user := range items {
+		if user.AccountID == "" {
+			continue
+		}
+		users = append(users, alertmanagertypes.JiraUser{
+			AccountID:    user.AccountID,
+			DisplayName:  user.DisplayName,
+			EmailAddress: user.EmailAddress,
+			Active:       user.Active,
+		})
+	}
+
+	return users, nil
 }

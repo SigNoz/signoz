@@ -25,13 +25,13 @@ type Signoz struct {
 	// Config is the config for the alertmanager server.
 	alertmanagerserver.Config `mapstructure:",squash" yaml:",squash"`
 
-	// Jira holds configuration for the Jira notification channel.
-	Jira JiraConfig `mapstructure:"jira" yaml:"jira"`
+	// Atlassian holds configuration shared by every Atlassian-backed notification channel.
+	Atlassian AtlassianConfig `mapstructure:"atlassian" yaml:"atlassian"`
 }
 
-// JiraConfig is the configuration for the Jira notification channel.
-type JiraConfig struct {
-	// OAuth holds the Atlassian OAuth 2.0 (3LO) app credentials used to connect Jira channels.
+// AtlassianConfig is the configuration for Atlassian-backed notification channels.
+type AtlassianConfig struct {
+	// OAuth holds the Atlassian OAuth 2.0 (3LO) app credentials used to connect Atlassian channels.
 	OAuth AtlassianOAuthConfig `mapstructure:"oauth" yaml:"oauth"`
 }
 

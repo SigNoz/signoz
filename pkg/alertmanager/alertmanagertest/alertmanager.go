@@ -155,12 +155,12 @@ func (_c *MockAlertmanager_Config_Call) RunAndReturn(run func() alertmanagerserv
 	return _c
 }
 
-// JiraOAuthConfig provides a mock function for the type MockAlertmanager
-func (_mock *MockAlertmanager) JiraOAuthConfig() alertmanager.AtlassianOAuthConfig {
+// AtlassianOAuthConfig provides a mock function for the type MockAlertmanager
+func (_mock *MockAlertmanager) AtlassianOAuthConfig() alertmanager.AtlassianOAuthConfig {
 	ret := _mock.Called()
 
 	if len(ret) == 0 {
-		panic("no return value specified for JiraOAuthConfig")
+		panic("no return value specified for AtlassianOAuthConfig")
 	}
 
 	var r0 alertmanager.AtlassianOAuthConfig
@@ -172,29 +172,29 @@ func (_mock *MockAlertmanager) JiraOAuthConfig() alertmanager.AtlassianOAuthConf
 	return r0
 }
 
-// MockAlertmanager_JiraOAuthConfig_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'JiraOAuthConfig'
-type MockAlertmanager_JiraOAuthConfig_Call struct {
+// MockAlertmanager_AtlassianOAuthConfig_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AtlassianOAuthConfig'
+type MockAlertmanager_AtlassianOAuthConfig_Call struct {
 	*mock.Call
 }
 
-// JiraOAuthConfig is a helper method to define mock.On call
-func (_e *MockAlertmanager_Expecter) JiraOAuthConfig() *MockAlertmanager_JiraOAuthConfig_Call {
-	return &MockAlertmanager_JiraOAuthConfig_Call{Call: _e.mock.On("JiraOAuthConfig")}
+// AtlassianOAuthConfig is a helper method to define mock.On call
+func (_e *MockAlertmanager_Expecter) AtlassianOAuthConfig() *MockAlertmanager_AtlassianOAuthConfig_Call {
+	return &MockAlertmanager_AtlassianOAuthConfig_Call{Call: _e.mock.On("AtlassianOAuthConfig")}
 }
 
-func (_c *MockAlertmanager_JiraOAuthConfig_Call) Run(run func()) *MockAlertmanager_JiraOAuthConfig_Call {
+func (_c *MockAlertmanager_AtlassianOAuthConfig_Call) Run(run func()) *MockAlertmanager_AtlassianOAuthConfig_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run()
 	})
 	return _c
 }
 
-func (_c *MockAlertmanager_JiraOAuthConfig_Call) Return(atlassianOAuthConfig alertmanager.AtlassianOAuthConfig) *MockAlertmanager_JiraOAuthConfig_Call {
+func (_c *MockAlertmanager_AtlassianOAuthConfig_Call) Return(atlassianOAuthConfig alertmanager.AtlassianOAuthConfig) *MockAlertmanager_AtlassianOAuthConfig_Call {
 	_c.Call.Return(atlassianOAuthConfig)
 	return _c
 }
 
-func (_c *MockAlertmanager_JiraOAuthConfig_Call) RunAndReturn(run func() alertmanager.AtlassianOAuthConfig) *MockAlertmanager_JiraOAuthConfig_Call {
+func (_c *MockAlertmanager_AtlassianOAuthConfig_Call) RunAndReturn(run func() alertmanager.AtlassianOAuthConfig) *MockAlertmanager_AtlassianOAuthConfig_Call {
 	_c.Call.Return(run)
 	return _c
 }

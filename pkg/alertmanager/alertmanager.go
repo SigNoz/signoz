@@ -52,8 +52,8 @@ type Alertmanager interface {
 	// Config returns the alertmanagerserver configuration.
 	Config() alertmanagerserver.Config
 
-	// JiraOAuthConfig returns the configured Atlassian OAuth app credentials.
-	JiraOAuthConfig() AtlassianOAuthConfig
+	// AtlassianOAuthConfig returns the configured Atlassian OAuth app credentials.
+	AtlassianOAuthConfig() AtlassianOAuthConfig
 
 	// AtlassianConnectionStore returns the store for reusable Atlassian OAuth connections.
 	AtlassianConnectionStore() alertmanagertypes.AtlassianConnectionStore

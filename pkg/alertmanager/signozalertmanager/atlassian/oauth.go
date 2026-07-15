@@ -5,14 +5,10 @@ package atlassian
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
-	"strings"
-	"sync"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
@@ -24,59 +20,51 @@ import (
 	"github.com/gorilla/mux"
 )
 
-const oauthStateTTL = 10 * time.Minute
-
-// OAuthHandler serves the Atlassian OAuth 2.0 (3LO) flow and connection CRUD for
-// the Jira alert channel.
-type OAuthHandler struct {
-	am alertmanager.Alertmanager
+type Handler struct {
+	alertmanager alertmanager.Alertmanager
 }
 
-// NewOAuthHandler returns an OAuthHandler.
-func NewOAuthHandler(am alertmanager.Alertmanager) *OAuthHandler {
-	return &OAuthHandler{am: am}
+func NewHandler(am alertmanager.Alertmanager) *Handler {
+	return &Handler{alertmanager: am}
 }
 
-// oauthStateEntry is the server-side state for one in-flight OAuth handshake.
-type oauthStateEntry struct {
-	expiry       time.Time
-	openerOrigin string
-	orgID        string
-}
-
-var oauthStates = &sync.Map{}
-
-func randomToken() (string, error) {
-	b := make([]byte, 32)
-	if _, err := rand.Read(b); err != nil {
-		return "", errors.NewInternalf(errors.CodeInternal, "failed to generate secure token: %v", err)
+// writeBridge renders the minimal OAuth bridge page.
+func writeBridge(rw http.ResponseWriter, openerOrigin string, message map[string]string) {
+	var script string
+	if openerOrigin != "" {
+		messageJSON, _ := json.Marshal(message)
+		targetOriginJSON, _ := json.Marshal(openerOrigin)
+		script = fmt.Sprintf(`<script>
+(function () {
+	try {
+		if (window.opener && !window.opener.closed) {
+			window.opener.postMessage(%s, %s);
+		}
+	} catch (e) {}
+	window.close();
+})();
+</script>`, messageJSON, targetOriginJSON)
 	}
-	return base64.URLEncoding.EncodeToString(b), nil
+
+	html := fmt.Sprintf(`<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="robots" content="noindex"><title>Atlassian</title></head>
+<body>
+<p>You can close this window.</p>
+%s
+</body>
+</html>`, script)
+
+	rw.Header().Set("Content-Type", "text/html; charset=utf-8")
+	rw.WriteHeader(http.StatusOK)
+	rw.Write([]byte(html)) //nolint:errcheck
 }
 
-func storeOAuthState(entry oauthStateEntry) (string, error) {
-	state, err := randomToken()
-	if err != nil {
-		return "", err
-	}
-	oauthStates.Store(state, entry)
-	return state, nil
+func (h *Handler) bridgeError(rw http.ResponseWriter, openerOrigin, code string) {
+	writeBridge(rw, openerOrigin, map[string]string{"type": "atlassian_oauth_error", "error": code})
 }
 
-func loadAndDeleteOAuthState(state string) (oauthStateEntry, bool) {
-	value, exists := oauthStates.LoadAndDelete(state)
-	if !exists {
-		return oauthStateEntry{}, false
-	}
-	entry, ok := value.(oauthStateEntry)
-	if !ok {
-		return oauthStateEntry{}, false
-	}
-	return entry, true
-}
-
-// allowedOpenerOrigin returns openerOrigin when it matches the configured
-// redirect URI's origin or any configured allowed opener origin.
+// allowedOpenerOrigin returns openerOrigin if it matches the redirect URI origin or a configured allowed opener origin.
 func allowedOpenerOrigin(oauth alertmanager.AtlassianOAuthConfig, openerOrigin string) string {
 	if openerOrigin == "" {
 		return ""
@@ -105,49 +93,12 @@ func allowedOpenerOrigin(oauth alertmanager.AtlassianOAuthConfig, openerOrigin s
 	return ""
 }
 
-// writeBridge renders the minimal OAuth popup bridge page that postMessages the
-// result to the opener window and closes itself.
-func writeBridge(rw http.ResponseWriter, openerOrigin string, message map[string]string) {
-	var script string
-	if openerOrigin != "" {
-		messageJSON, _ := json.Marshal(message)
-		targetOriginJSON, _ := json.Marshal(openerOrigin)
-		script = fmt.Sprintf(`<script>
-(function () {
-    try {
-        if (window.opener && !window.opener.closed) {
-            window.opener.postMessage(%s, %s);
-        }
-    } catch (e) {}
-    window.close();
-})();
-</script>`, messageJSON, targetOriginJSON)
-	}
-
-	html := fmt.Sprintf(`<!DOCTYPE html>
-<html lang="en">
-<head><meta charset="utf-8"><meta name="robots" content="noindex"><title>Jira</title></head>
-<body>
-<p>You can close this window.</p>
-%s
-</body>
-</html>`, script)
-
-	rw.Header().Set("Content-Type", "text/html; charset=utf-8")
-	rw.WriteHeader(http.StatusOK)
-	_, _ = rw.Write([]byte(html))
-}
-
-func (h *OAuthHandler) bridgeError(rw http.ResponseWriter, openerOrigin, code string) {
-	writeBridge(rw, openerOrigin, map[string]string{"type": "jira_oauth_error", "error": code})
-}
-
 type authorizeURLResponse struct {
 	AuthorizeURL string `json:"authorize_url"`
 }
 
 // OAuthSession starts the Atlassian OAuth flow and returns the consent URL.
-func (h *OAuthHandler) OAuthSession(rw http.ResponseWriter, req *http.Request) {
+func (h *Handler) OAuthSession(rw http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 
 	claims, err := authtypes.ClaimsFromContext(ctx)
@@ -156,9 +107,9 @@ func (h *OAuthHandler) OAuthSession(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	oauth := h.am.JiraOAuthConfig()
+	oauth := h.alertmanager.AtlassianOAuthConfig()
 	if !oauth.Enabled() {
-		render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "Jira OAuth is not configured"))
+		render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "Atlassian OAuth is not configured"))
 		return
 	}
 
@@ -174,19 +125,13 @@ func (h *OAuthHandler) OAuthSession(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	authURL := fmt.Sprintf(
-		"https://auth.atlassian.com/authorize?audience=api.atlassian.com&client_id=%s&scope=%s&redirect_uri=%s&state=%s&response_type=code&prompt=consent",
-		url.QueryEscape(oauth.ClientID),
-		url.QueryEscape(strings.Join(Scopes, " ")),
-		url.QueryEscape(oauth.RedirectURI),
-		url.QueryEscape(state),
-	)
-
-	render.Success(rw, http.StatusOK, authorizeURLResponse{AuthorizeURL: authURL})
+	render.Success(rw, http.StatusOK, authorizeURLResponse{
+		AuthorizeURL: authorizeURLFor(oauth.ClientID, oauth.RedirectURI, state),
+	})
 }
 
-// OAuthCallback completes the Atlassian OAuth flow for a Jira connection.
-func (h *OAuthHandler) OAuthCallback(rw http.ResponseWriter, req *http.Request) {
+// OAuthCallback completes the Atlassian OAuth flow and persists the connection.
+func (h *Handler) OAuthCallback(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
@@ -206,24 +151,26 @@ func (h *OAuthHandler) OAuthCallback(rw http.ResponseWriter, req *http.Request) 
 		h.bridgeError(rw, openerOrigin, errorParam)
 		return
 	}
+
 	if !stateValid {
 		h.bridgeError(rw, openerOrigin, "invalid_state")
 		return
 	}
 
-	oauth := h.am.JiraOAuthConfig()
+	oauth := h.alertmanager.AtlassianOAuthConfig()
 	if !oauth.Enabled() {
 		h.bridgeError(rw, openerOrigin, "oauth_not_configured")
 		return
 	}
 
-	tokens, err := ExchangeCodeForTokens(ctx, oauth, code)
+	tokens, err := exchangeCodeForTokens(ctx, oauth, code)
 	if err != nil {
 		h.bridgeError(rw, openerOrigin, "token_exchange_failed")
 		return
 	}
 
-	cloudID, siteURL, err := FetchSite(ctx, tokens.AccessToken)
+	// The token has to be traded for the cloud id and canonical site URL.
+	cloudID, siteURL, err := fetchSite(ctx, tokens.AccessToken)
 	if err != nil {
 		h.bridgeError(rw, openerOrigin, "site_lookup_failed")
 		return
@@ -236,37 +183,36 @@ func (h *OAuthHandler) OAuthCallback(rw http.ResponseWriter, req *http.Request) 
 	}
 
 	writeBridge(rw, openerOrigin, map[string]string{
-		"type":          "jira_oauth_success",
+		"type":          "atlassian_oauth_success",
 		"connection_id": connectionID,
 		"site":          siteURL,
 	})
 }
 
-// persistConnection upserts the connection for (org, cloud_id): reconnecting the
-// same Atlassian site rotates its tokens rather than creating a duplicate.
-func (h *OAuthHandler) persistConnection(ctx context.Context, orgID, cloudID, siteURL, accessToken, refreshToken string) (string, error) {
-	store := h.am.AtlassianConnectionStore()
+// persistConnection upserts the connection for (org, site_url), rotating tokens on reconnect instead of creating duplicates.
+func (h *Handler) persistConnection(ctx context.Context, orgID, cloudID, siteURL, accessToken, refreshToken string) (string, error) {
+	connStore := h.alertmanager.AtlassianConnectionStore()
 
-	if existing, err := store.GetByOrgAndCloudID(ctx, orgID, cloudID); err == nil && existing != nil {
-		existing.SiteURL = siteURL
+	if existing, err := connStore.GetByOrgAndSiteURL(ctx, orgID, siteURL); err == nil && existing != nil {
+		existing.CloudID = cloudID
 		existing.AccessToken = accessToken
 		existing.RefreshToken = refreshToken
 		existing.UpdatedAt = time.Now()
-		if err := store.Update(ctx, existing); err != nil {
+		if err := connStore.Update(ctx, existing); err != nil {
 			return "", err
 		}
 		return existing.ID.StringValue(), nil
 	}
 
 	conn := alertmanagertypes.NewAtlassianConnection(orgID, cloudID, siteURL, accessToken, refreshToken)
-	if err := store.Create(ctx, conn); err != nil {
+	if err := connStore.Create(ctx, conn); err != nil {
 		return "", err
 	}
 	return conn.ID.StringValue(), nil
 }
 
 // ListConnections returns the org's reusable Atlassian connections.
-func (h *OAuthHandler) ListConnections(rw http.ResponseWriter, req *http.Request) {
+func (h *Handler) ListConnections(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
@@ -276,7 +222,7 @@ func (h *OAuthHandler) ListConnections(rw http.ResponseWriter, req *http.Request
 		return
 	}
 
-	conns, err := h.am.AtlassianConnectionStore().ListByOrg(ctx, claims.OrgID)
+	conns, err := h.alertmanager.AtlassianConnectionStore().ListByOrg(ctx, claims.OrgID)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -288,9 +234,8 @@ func (h *OAuthHandler) ListConnections(rw http.ResponseWriter, req *http.Request
 	render.Success(rw, http.StatusOK, conns)
 }
 
-// DeleteConnection removes a connection, rejecting the request if any channel
-// still targets the connection's Atlassian site.
-func (h *OAuthHandler) DeleteConnection(rw http.ResponseWriter, req *http.Request) {
+// DeleteConnection removes a connection.
+func (h *Handler) DeleteConnection(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
@@ -317,11 +262,11 @@ func (h *OAuthHandler) DeleteConnection(rw http.ResponseWriter, req *http.Reques
 		return
 	}
 	if inUse {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, alertmanagertypes.ErrCodeAtlassianConnectionInUse, "this connection is used by one or more Jira alert channels; remove them first"))
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, alertmanagertypes.ErrCodeAtlassianConnectionInUse, "this connection is in use by one or more alert channels; remove them first"))
 		return
 	}
 
-	if err := h.am.AtlassianConnectionStore().DeleteByID(ctx, claims.OrgID, id); err != nil {
+	if err := h.alertmanager.AtlassianConnectionStore().DeleteByID(ctx, claims.OrgID, id); err != nil {
 		render.Error(rw, err)
 		return
 	}
@@ -329,48 +274,43 @@ func (h *OAuthHandler) DeleteConnection(rw http.ResponseWriter, req *http.Reques
 	render.Success(rw, http.StatusNoContent, nil)
 }
 
-// ResolveConnections validates that each Jira config references a connection the
-// org owns and stamps the runtime-only OrgID so the notifier can resolve live
-// credentials at fire/test time. Run on create/update/test.
-func (h *OAuthHandler) ResolveConnections(ctx context.Context, orgID string, receiver *alertmanagertypes.Receiver) error {
-	store := h.am.AtlassianConnectionStore()
-
-	for _, cfg := range receiver.JiraConfigs {
-		if cfg.ConnectionID == "" {
-			return errors.NewInvalidInputf(errors.CodeInvalidInput, "Jira channel is not connected; please select a connection before saving or testing")
-		}
-
-		id, err := valuer.NewUUID(cfg.ConnectionID)
-		if err != nil {
-			return errors.NewInvalidInputf(errors.CodeInvalidInput, "Jira connection_id is not a valid uuid-v7")
-		}
-
-		if _, err := store.GetByID(ctx, orgID, id); err != nil {
-			return errors.NewInvalidInputf(errors.CodeInvalidInput, "Jira connection has expired or is invalid; please reconnect")
-		}
-
-		cfg.OrgID = orgID
-	}
-
-	return nil
-}
-
-// connectionInUse reports whether any Jira channel in the org references connectionID.
-func (h *OAuthHandler) connectionInUse(ctx context.Context, orgID, connectionID string) (bool, error) {
-	channels, err := h.am.ListChannels(ctx, orgID)
+// connectionInUse reports whether any channel in the org references connectionID.
+func (h *Handler) connectionInUse(ctx context.Context, orgID, connectionID string) (bool, error) {
+	channels, err := h.alertmanager.ListChannels(ctx, orgID)
 	if err != nil {
 		return false, err
 	}
+
 	for _, channel := range channels {
 		receiver, err := alertmanagertypes.NewReceiver(channel.Data)
 		if err != nil {
-			return false, errors.NewInternalf(errors.CodeInternal, "failed to parse channel %q while checking connection usage: %v", channel.Name, err)
+			return false, errors.NewInternalf(errors.CodeInternal, "failed to parse channel %q while checking Atlassian connection usage: %v", channel.Name, err)
 		}
-		for _, cfg := range receiver.JiraConfigs {
-			if cfg.ConnectionID == connectionID {
+		for _, config := range receiver.AtlassianConfigs() {
+			if config.GetConnectionID() == connectionID {
 				return true, nil
 			}
 		}
 	}
+
 	return false, nil
+}
+
+// ResolveConnections validates Atlassian-backed configs reference org-owned connections and stamps the runtime-only OrgID.
+func (h *Handler) ResolveConnections(ctx context.Context, orgID string, receiver *alertmanagertypes.Receiver) error {
+	connStore := h.alertmanager.AtlassianConnectionStore()
+
+	for _, config := range receiver.AtlassianConfigs() {
+		if config.GetConnectionID() == "" {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "%s channel is not connected; please select a connection before saving or testing", config.ChannelKind())
+		}
+
+		if _, err := Resolve(ctx, connStore, orgID, config.GetConnectionID()); err != nil {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "%s connection has expired or is invalid; please reconnect", config.ChannelKind())
+		}
+
+		config.SetOrgID(orgID)
+	}
+
+	return nil
 }

@@ -2,6 +2,8 @@ package alertmanagertypes
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -16,16 +18,15 @@ var (
 	ErrCodeAtlassianConnectionInUse    = errors.MustNewCode("atlassian_connection_in_use")
 )
 
+// CloudAPIGatewayURL is the gateway through which Jira Cloud sites are addressed by cloud id.
+const CloudAPIGatewayURL = "https://api.atlassian.com/ex/jira"
+
+// JiraReceiverConfig represents a Jira notification configuration.
 type JiraReceiverConfig struct {
 	config.JiraConfig `yaml:",inline"`
 
-	// ConnectionID references a persisted AtlassianConnection.
 	ConnectionID string `json:"connection_id,omitempty" yaml:"connection_id,omitempty"`
-
-	// OrgID is a runtime-only field stamped at config-load and
-	// on create/update/test so the notifier can resolve live credentials from the
-	// connection store for the right org on each fire.
-	OrgID string `json:"-" yaml:"-"`
+	OrgID        string `json:"-" yaml:"-"`
 }
 
 type AtlassianConnection struct {
@@ -33,7 +34,7 @@ type AtlassianConnection struct {
 
 	types.Identifiable
 	types.TimeAuditable
-	CloudID      string `json:"cloud_id" bun:"cloud_id"`
+	CloudID      string `json:"cloud_id,omitempty" bun:"cloud_id"`
 	SiteURL      string `json:"site_url" bun:"site_url"`
 	AccessToken  string `json:"-" bun:"access_token"`
 	RefreshToken string `json:"-" bun:"refresh_token"`
@@ -57,6 +58,16 @@ func NewAtlassianConnection(orgID, cloudID, siteURL, accessToken, refreshToken s
 	}
 }
 
+// APIBaseURL returns the REST base for issue operations, keyed by cloud id.
+func (c *AtlassianConnection) APIBaseURL() string {
+	return c.APIBaseURLVia(CloudAPIGatewayURL)
+}
+
+// APIBaseURLVia is APIBaseURL with the Cloud gateway host overridden.
+func (c *AtlassianConnection) APIBaseURLVia(gateway string) string {
+	return fmt.Sprintf("%s/%s/rest/api/3", strings.TrimRight(gateway, "/"), c.CloudID)
+}
+
 // AtlassianConnectionStore persists reusable Atlassian OAuth connections.
 type AtlassianConnectionStore interface {
 	// Create inserts a new connection.
@@ -65,8 +76,8 @@ type AtlassianConnectionStore interface {
 	// GetByID returns the connection for the given org and id.
 	GetByID(context.Context, string, valuer.UUID) (*AtlassianConnection, error)
 
-	// GetByOrgAndCloudID returns the connection for an org and Atlassian site, if any.
-	GetByOrgAndCloudID(context.Context, string, string) (*AtlassianConnection, error)
+	// GetByOrgAndSiteURL returns the connection for an org and Atlassian site, if any.
+	GetByOrgAndSiteURL(context.Context, string, string) (*AtlassianConnection, error)
 
 	// ListByOrg returns all connections for an org.
 	ListByOrg(context.Context, string) ([]*AtlassianConnection, error)
@@ -74,10 +85,37 @@ type AtlassianConnectionStore interface {
 	// Update persists token (and timestamp) changes for an existing connection.
 	Update(context.Context, *AtlassianConnection) error
 
-	// UpdateTokensByRefreshToken rotates the access/refresh token of any connection
-	// currently holding oldRefreshToken. Returns the number of rows updated.
-	UpdateTokensByRefreshToken(ctx context.Context, oldRefreshToken, accessToken, refreshToken string) (int64, error)
-
 	// DeleteByID removes a connection owned by the given org.
 	DeleteByID(context.Context, string, valuer.UUID) error
 }
+
+func (receiver *Receiver) AtlassianConfigs() []AtlassianBackedConfig {
+	configs := make([]AtlassianBackedConfig, 0, len(receiver.JiraConfigs))
+	for _, config := range receiver.JiraConfigs {
+		configs = append(configs, config)
+	}
+
+	return configs
+}
+
+type AtlassianBackedConfig interface {
+	// GetConnectionID returns the id of the AtlassianConnection this config uses.
+	GetConnectionID() string
+
+	// SetOrgID stamps the runtime-only org id used to resolve live credentials.
+	SetOrgID(string)
+
+	// ChannelKind names the channel type in user-facing errors.
+	ChannelKind() string
+}
+
+var _ AtlassianBackedConfig = (*JiraReceiverConfig)(nil)
+
+// GetConnectionID returns the id of the AtlassianConnection this config uses.
+func (c *JiraReceiverConfig) GetConnectionID() string { return c.ConnectionID }
+
+// SetOrgID stamps the runtime-only org id used to resolve live credentials.
+func (c *JiraReceiverConfig) SetOrgID(orgID string) { c.OrgID = orgID }
+
+// ChannelKind names the channel type in user-facing errors.
+func (c *JiraReceiverConfig) ChannelKind() string { return "Jira" }

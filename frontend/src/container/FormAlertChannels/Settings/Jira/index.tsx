@@ -8,27 +8,39 @@ import {
 	useState,
 } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
-import { Button, Collapse, Form, Input, Select, Space } from 'antd';
+import { useQuery } from 'react-query';
+import { Button, Form, Input, Select, Space } from 'antd';
 import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import {
 	fetchJiraProjectIssueTypes,
 	fetchJiraProjects,
 } from 'api/channels/getJiraProjects';
 import jiraMetadata from 'api/channels/getJiraMetadata';
+import { fetchJiraUsers } from 'api/channels/getJiraUsers';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
+import { SuccessResponseV2 } from 'types/api';
 import {
 	JiraAllowedValue,
 	JiraFieldMetadata,
 } from 'types/api/channels/jiraMetadata';
-import { JiraIssueType, JiraProject } from 'types/api/channels/jiraProjects';
+import {
+	JiraIssueType,
+	JiraProject,
+	JiraUser,
+	JiraUsersResponse,
+} from 'types/api/channels/jiraProjects';
+import APIError from 'types/api/error';
 
 import { JiraChannel } from '../../../CreateAlertChannels/config';
-import { useJiraConnect } from './useJiraConnect';
-import { useJiraConnections } from './useJiraConnections';
+import { JiraCustomFieldsCollapse } from '../../styles';
+import { useAtlassianConnect } from '../Atlassian/useAtlassianConnect';
+import { useAtlassianConnections } from '../Atlassian/useAtlassianConnections';
 
 const { TextArea } = Input;
 
-type FieldMode = 'none' | 'text' | 'select' | 'json';
+const JIRA_USERS_QUERY_KEY = 'jiraUsers';
+
+type FieldMode = 'none' | 'default' | 'text' | 'select' | 'json';
 
 type CustomFieldRow = {
 	label: string;
@@ -45,6 +57,91 @@ type CustomFieldRow = {
 	touched?: boolean;
 };
 
+interface JiraUserSelectProps {
+	connectionId?: string;
+	projectKey?: string;
+	multiple: boolean;
+	value: string | string[];
+	onChange: (value: string | string[]) => void;
+	testId: string;
+}
+
+function JiraUserSelect({
+	connectionId,
+	projectKey,
+	multiple,
+	value,
+	onChange,
+	testId,
+}: JiraUserSelectProps): JSX.Element {
+	const { t } = useTranslation('channels');
+	const [searchTerm, setSearchTerm] = useState('');
+	const [debouncedTerm, setDebouncedTerm] = useState('');
+	const labelCacheRef = useRef<Record<string, string>>({});
+
+	useEffect(() => {
+		const handle = setTimeout(() => setDebouncedTerm(searchTerm), 400);
+		return (): void => clearTimeout(handle);
+	}, [searchTerm]);
+
+	const usersQuery = useQuery<SuccessResponseV2<JiraUsersResponse>, APIError>(
+		[JIRA_USERS_QUERY_KEY, connectionId, projectKey, debouncedTerm],
+		() =>
+			fetchJiraUsers({
+				connection_id: connectionId as string,
+				project_key: projectKey as string,
+				query: debouncedTerm,
+			}),
+		{
+			enabled: !!connectionId && !!projectKey,
+			keepPreviousData: true,
+		},
+	);
+
+	const users: JiraUser[] = usersQuery.data?.data?.users || [];
+	const isLoading = usersQuery.isLoading || usersQuery.isFetching;
+
+	users.forEach((user) => {
+		labelCacheRef.current[user.account_id] =
+			user.display_name || user.email_address || user.account_id;
+	});
+
+	const options = useMemo(() => {
+		const selectedIds = Array.isArray(value) ? value : [value].filter(Boolean);
+		const fetchedIds = new Set(users.map((user) => user.account_id));
+		const fetchedOptions = users.map((user) => ({
+			label: user.display_name || user.email_address || user.account_id,
+			value: user.account_id,
+		}));
+		const selectedOptions = selectedIds
+			.filter((id) => !fetchedIds.has(id))
+			.map((id) => ({
+				label: labelCacheRef.current[id] || id,
+				value: id,
+			}));
+		return [...selectedOptions, ...fetchedOptions];
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [users, value]);
+
+	return (
+		<Select
+			mode={multiple ? 'multiple' : undefined}
+			value={value || undefined}
+			onChange={(next: string | string[] | undefined): void =>
+				onChange(next ?? (multiple ? [] : ''))
+			}
+			onSearch={setSearchTerm}
+			filterOption={false}
+			options={options}
+			loading={isLoading}
+			showSearch
+			allowClear
+			placeholder={t('placeholder_jira_user_select')}
+			data-testid={testId}
+		/>
+	);
+}
+
 function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 	const { t } = useTranslation('channels');
 	const form = Form.useFormInstance();
@@ -60,7 +157,7 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 		connections,
 		isLoading: connectionsLoading,
 		refetch: refetchConnections,
-	} = useJiraConnections();
+	} = useAtlassianConnections();
 
 	// selectConnection stamps the chosen connection onto local state and the parent's config.
 	const selectConnection = (id: string): void => {
@@ -77,7 +174,7 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 		}));
 	};
 
-	const { connect, isConnecting } = useJiraConnect((connection) => {
+	const { connect, isConnecting } = useAtlassianConnect((connection) => {
 		void refetchConnections().then(() => selectConnection(connection.id));
 	});
 
@@ -156,6 +253,16 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 		return false;
 	};
 
+	const isUserField = (field: JiraFieldMetadata): boolean => {
+		if (field.schema_type === 'user') {
+			return true;
+		}
+		if (field.schema_type === 'array') {
+			return field.schema_items === 'user';
+		}
+		return false;
+	};
+
 	const inferDefaultMode = (field: JiraFieldMetadata): FieldMode => {
 		if (isSelectField(field)) {
 			return 'select';
@@ -163,8 +270,17 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 		if (isTextField(field)) {
 			return 'text';
 		}
+		if (isUserField(field)) {
+			return 'default';
+		}
 		return 'json';
 	};
+
+	const isUserRow = (row: CustomFieldRow): boolean =>
+		isUserField({
+			schema_type: row.schemaType,
+			schema_items: row.schemaItems,
+		} as JiraFieldMetadata);
 
 	// coerceRowValue finalises the value stored on a CustomFieldRow after mode and extraction have been resolved.
 	const coerceRowValue = (
@@ -252,6 +368,15 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 					};
 				}
 
+				if (isUserField(field)) {
+					const value = resolveSelectFieldValue(existingValue, isArrayField);
+					return {
+						...meta,
+						value,
+						mode: hasFieldValue(value) ? 'select' : 'default',
+					};
+				}
+
 				const extracted = extractCustomFieldValue(existingValue);
 				const hasValue = hasFieldValue(extracted.value);
 				const defaultMode = inferDefaultMode(field);
@@ -278,6 +403,15 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 				.map((value) => String(value).trim())
 				.filter((value) => value !== '');
 		};
+
+		if (row.mode === 'select' && isUserRow(row)) {
+			const wrap = (accountId: string): Record<string, string> => ({ accountId });
+			if (isArrayField) {
+				return toTrimmedValues().map(wrap);
+			}
+			const single = Array.isArray(row.value) ? (row.value[0] ?? '') : row.value;
+			return wrap(single);
+		}
 
 		if (
 			row.mode === 'select' &&
@@ -306,7 +440,7 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 		const nextFields: Record<string, unknown> = {};
 
 		rows.forEach((row, index) => {
-			if (row.mode === 'none') {
+			if (row.mode === 'none' || row.mode === 'default') {
 				return;
 			}
 			const valueString = Array.isArray(row.value)
@@ -367,10 +501,13 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 	const updateCustomFieldRow = (
 		index: number,
 		patch: Partial<CustomFieldRow>,
+		touch = true,
 	): void => {
 		setCustomFieldRows((rows) =>
 			rows.map((row, rowIndex) =>
-				rowIndex === index ? { ...row, ...patch, touched: true } : row,
+				rowIndex === index
+					? { ...row, ...patch, touched: touch ? true : row.touched }
+					: row,
 			),
 		);
 	};
@@ -400,22 +537,29 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 		if (nextMode === row.mode) {
 			return;
 		}
-		if (nextMode === 'none') {
-			updateCustomFieldRow(index, { mode: 'none', value: '' });
+		if (nextMode === 'none' || nextMode === 'default') {
+			updateCustomFieldRow(index, { mode: nextMode, value: '' }, false);
 			return;
 		}
 		if (nextMode === 'json') {
-			updateCustomFieldRow(index, {
-				mode: 'json',
-				value: JSON.stringify(serializeRowValue(row), null, 2),
-			});
+			updateCustomFieldRow(
+				index,
+				{
+					mode: 'json',
+					value: hasFieldValue(row.value)
+						? JSON.stringify(serializeRowValue(row), null, 2)
+						: '',
+				},
+				false,
+			);
 			return;
 		}
 		if (row.mode === 'json') {
-			updateCustomFieldRow(index, {
-				mode: nextMode,
-				value: jsonRowToValue(row, nextMode),
-			});
+			updateCustomFieldRow(
+				index,
+				{ mode: nextMode, value: jsonRowToValue(row, nextMode) },
+				false,
+			);
 			return;
 		}
 
@@ -428,14 +572,14 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 							.split(',')
 							.map((item) => item.trim())
 							.filter((item) => item !== '');
-				updateCustomFieldRow(index, { mode: nextMode, value: values });
+				updateCustomFieldRow(index, { mode: nextMode, value: values }, false);
 			} else {
 				const single = Array.isArray(row.value) ? (row.value[0] ?? '') : row.value;
-				updateCustomFieldRow(index, { mode: nextMode, value: single });
+				updateCustomFieldRow(index, { mode: nextMode, value: single }, false);
 			}
 			return;
 		}
-		updateCustomFieldRow(index, { mode: nextMode });
+		updateCustomFieldRow(index, { mode: nextMode }, false);
 	};
 
 	const loadMetadata = async (): Promise<void> => {
@@ -459,8 +603,7 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 			if (!customFieldsSeededRef.current) {
 				const raw =
 					(form.getFieldValue('custom_fields') as Record<string, unknown>) ?? {};
-				// Strip empty-string values that were saved by older code so they
-				// don't seed fields as if they had actual values.
+				// Strip empty-string values that were previously saved to avoid overwriting the metadata with empty values.
 				const savedCustomFields = Object.fromEntries(
 					Object.entries(raw).filter(
 						([, v]) => v !== '' && v !== null && v !== undefined,
@@ -570,16 +713,37 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 		[customFieldRows],
 	);
 
+	const rowKey = (row: CustomFieldRow, index: number): string =>
+		row.fieldId || `${row.label}-${index}`;
+
+	const requiredActiveKeys = useMemo(
+		() => requiredRows.map(({ row, index }) => rowKey(row, index)),
+		[requiredRows],
+	);
+
+	const optionalActiveKeys = useMemo(
+		() =>
+			optionalRows
+				.filter(({ row }) => hasFieldValue(row.value))
+				.map(({ row, index }) => rowKey(row, index)),
+		[optionalRows],
+	);
+
 	const getModeOptions = (row: CustomFieldRow): FieldMode[] => {
-		const modes: FieldMode[] = [];
-		if (!row.required) {
-			modes.push('none');
-		}
 		const rowAsField = {
 			allowed_values: row.allowedValues,
 			schema_type: row.schemaType,
 			schema_items: row.schemaItems,
 		} as JiraFieldMetadata;
+
+		if (isUserField(rowAsField)) {
+			return ['default', 'select', 'json'];
+		}
+
+		const modes: FieldMode[] = [];
+		if (!row.required) {
+			modes.push('none');
+		}
 		if (isSelectField(rowAsField)) {
 			modes.push('select');
 		} else if (isTextField(rowAsField)) {
@@ -653,6 +817,18 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 		row: CustomFieldRow,
 		index: number,
 	): JSX.Element => {
+		if (row.mode === 'select' && isUserRow(row)) {
+			return (
+				<JiraUserSelect
+					connectionId={connectionId}
+					projectKey={project}
+					multiple={row.schemaType === 'array'}
+					value={row.value}
+					onChange={(value): void => updateCustomFieldRow(index, { value })}
+					testId={`jira-custom-field-value-${index}`}
+				/>
+			);
+		}
 		if (row.mode === 'select') {
 			return (
 				<Select
@@ -712,16 +888,20 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 				}}
 				items={getModeOptions(row).map((mode) => ({
 					value: mode,
-					label: mode.toUpperCase(),
+					label:
+						mode === 'default'
+							? t('jira_custom_field_default_label')
+							: mode.toUpperCase(),
 				}))}
 				testId={`jira-custom-field-mode-${index}`}
 			/>
-			{row.mode !== 'none' && (
+			{row.mode !== 'none' && row.mode !== 'default' && (
 				<div style={{ marginTop: 12 }}>
 					<Form.Item
 						label={t('field_jira_custom_field_value')}
 						validateStatus={customFieldErrors[index] ? 'error' : ''}
 						help={customFieldErrors[index]}
+						style={{ marginBottom: 0 }}
 					>
 						{renderValueEditor(row, index)}
 					</Form.Item>
@@ -756,7 +936,7 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 							value: connection.id,
 						}))}
 						loading={connectionsLoading}
-						placeholder={t('placeholder_jira_connection')}
+						placeholder={t('placeholder_atlassian_connection')}
 						optionFilterProp="label"
 						showSearch
 						data-testid="jira-connection-select"
@@ -769,7 +949,7 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 						loading={isConnecting}
 						data-testid="jira-oauth-connect"
 					>
-						{t('button_add_jira_connection')}
+						{t('button_add_atlassian_connection')}
 					</Button>
 				</Space>
 			</Form.Item>
@@ -927,32 +1107,34 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 					</div>
 				)}
 				{requiredRows.length > 0 && (
-					<Collapse
+					<JiraCustomFieldsCollapse
 						accordion={false}
 						bordered={false}
 						size="small"
+						defaultActiveKey={requiredActiveKeys}
 						style={{ background: 'transparent' }}
 						items={requiredRows.map(({ row, index }) => ({
-							key: row.fieldId || `${row.label}-${index}`,
+							key: rowKey(row, index),
 							label: row.label,
-							style: { background: 'transparent', border: 'none' },
+							style: { background: 'transparent' },
 							children: renderCustomFieldRow(row, index),
 						}))}
 					/>
 				)}
 				{optionalRows.length > 0 && (
-					<Collapse
+					<JiraCustomFieldsCollapse
 						accordion={false}
 						bordered={false}
 						size="small"
+						defaultActiveKey={optionalActiveKeys}
 						style={{
 							background: 'transparent',
 							marginTop: requiredRows.length > 0 ? 8 : 0,
 						}}
 						items={optionalRows.map(({ row, index }) => ({
-							key: row.fieldId || `${row.label}-${index}`,
+							key: rowKey(row, index),
 							label: row.label,
-							style: { background: 'transparent', border: 'none' },
+							style: { background: 'transparent' },
 							children: renderCustomFieldRow(row, index),
 						}))}
 					/>

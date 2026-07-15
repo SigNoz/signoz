@@ -1,7 +1,7 @@
-import JiraConnections from 'container/JiraConnections';
+import AtlassianConnections from 'container/AtlassianConnections';
 
 function ConnectionsSettings(): JSX.Element {
-	return <JiraConnections />;
+	return <AtlassianConnections />;
 }
 
 export default ConnectionsSettings;

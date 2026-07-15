@@ -7,10 +7,9 @@ import (
 	"net/http"
 	"time"
 
-	"log/slog"
-
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager/atlassian"
+	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager/jira"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
@@ -21,36 +20,36 @@ import (
 
 type handler struct {
 	alertmanager alertmanager.Alertmanager
-	discovery    *atlassian.DiscoveryService
-	jiraOAuth    *atlassian.OAuthHandler
+	atlassian    *atlassian.Handler
+	jira         *jira.Handler
 }
 
 func NewHandler(alertmanager alertmanager.Alertmanager) alertmanager.Handler {
 	return &handler{
 		alertmanager: alertmanager,
-		discovery:    atlassian.NewDiscoveryService(alertmanager.AtlassianConnectionStore(), alertmanager.JiraOAuthConfig(), slog.Default()),
-		jiraOAuth:    atlassian.NewOAuthHandler(alertmanager),
+		atlassian:    atlassian.NewHandler(alertmanager),
+		jira:         jira.NewHandler(alertmanager),
 	}
 }
 
-// JiraOAuthSession starts the Atlassian OAuth flow and returns the consent URL.
-func (handler *handler) JiraOAuthSession(rw http.ResponseWriter, req *http.Request) {
-	handler.jiraOAuth.OAuthSession(rw, req)
+// AtlassianOAuthSession starts the Atlassian OAuth flow and returns the consent URL.
+func (handler *handler) AtlassianOAuthSession(rw http.ResponseWriter, req *http.Request) {
+	handler.atlassian.OAuthSession(rw, req)
 }
 
-// JiraOAuthCallback completes the Atlassian OAuth flow for a Jira connection.
-func (handler *handler) JiraOAuthCallback(rw http.ResponseWriter, req *http.Request) {
-	handler.jiraOAuth.OAuthCallback(rw, req)
+// AtlassianOAuthCallback completes the Atlassian OAuth flow and persists the connection.
+func (handler *handler) AtlassianOAuthCallback(rw http.ResponseWriter, req *http.Request) {
+	handler.atlassian.OAuthCallback(rw, req)
 }
 
-// JiraConnections lists the org's reusable Atlassian OAuth connections.
-func (handler *handler) JiraConnections(rw http.ResponseWriter, req *http.Request) {
-	handler.jiraOAuth.ListConnections(rw, req)
+// AtlassianConnections lists the org's reusable Atlassian OAuth connections.
+func (handler *handler) AtlassianConnections(rw http.ResponseWriter, req *http.Request) {
+	handler.atlassian.ListConnections(rw, req)
 }
 
-// JiraConnectionDelete removes an Atlassian OAuth connection.
-func (handler *handler) JiraConnectionDelete(rw http.ResponseWriter, req *http.Request) {
-	handler.jiraOAuth.DeleteConnection(rw, req)
+// AtlassianConnectionDelete removes an Atlassian OAuth connection.
+func (handler *handler) AtlassianConnectionDelete(rw http.ResponseWriter, req *http.Request) {
+	handler.atlassian.DeleteConnection(rw, req)
 }
 
 func (handler *handler) GetAlerts(rw http.ResponseWriter, req *http.Request) {
@@ -101,7 +100,7 @@ func (handler *handler) TestReceiver(rw http.ResponseWriter, req *http.Request) 
 		return
 	}
 
-	if err := handler.jiraOAuth.ResolveConnections(ctx, claims.OrgID, receiver); err != nil {
+	if err := handler.atlassian.ResolveConnections(ctx, claims.OrgID, receiver); err != nil {
 		render.Error(rw, err)
 		return
 	}
@@ -115,100 +114,24 @@ func (handler *handler) TestReceiver(rw http.ResponseWriter, req *http.Request) 
 	render.Success(rw, http.StatusNoContent, nil)
 }
 
+// GetJiraMetadata returns the create-issue field metadata for a project and issue type.
 func (handler *handler) GetJiraMetadata(rw http.ResponseWriter, req *http.Request) {
-	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
-	defer cancel()
-
-	body, err := io.ReadAll(req.Body)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-	defer req.Body.Close() //nolint:errcheck
-
-	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	var metadataRequest alertmanagertypes.JiraMetadataRequest
-	if err := json.Unmarshal(body, &metadataRequest); err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	response, err := handler.discovery.Metadata(ctx, claims.OrgID, metadataRequest.ConnectionID, metadataRequest.Project, metadataRequest.IssueType)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	render.Success(rw, http.StatusOK, response)
+	handler.jira.Metadata(rw, req)
 }
 
+// ListJiraProjects lists the Jira projects visible to a connection.
 func (handler *handler) ListJiraProjects(rw http.ResponseWriter, req *http.Request) {
-	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
-	defer cancel()
-
-	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	body, err := io.ReadAll(req.Body)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-	defer req.Body.Close() //nolint:errcheck
-
-	var projectsRequest alertmanagertypes.JiraProjectsRequest
-	if err := json.Unmarshal(body, &projectsRequest); err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	response, err := handler.discovery.Projects(ctx, claims.OrgID, projectsRequest.ConnectionID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	render.Success(rw, http.StatusOK, response)
+	handler.jira.Projects(rw, req)
 }
 
+// ListJiraProjectIssueTypes lists the creatable issue types for a project.
 func (handler *handler) ListJiraProjectIssueTypes(rw http.ResponseWriter, req *http.Request) {
-	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
-	defer cancel()
+	handler.jira.ProjectIssueTypes(rw, req)
+}
 
-	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	body, err := io.ReadAll(req.Body)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-	defer req.Body.Close() //nolint:errcheck
-
-	var issueTypesRequest alertmanagertypes.JiraProjectIssueTypesRequest
-	if err := json.Unmarshal(body, &issueTypesRequest); err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	response, err := handler.discovery.IssueTypes(ctx, claims.OrgID, issueTypesRequest.ConnectionID, issueTypesRequest.ProjectKey)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	render.Success(rw, http.StatusOK, response)
+// ListJiraUsers lists the users assignable to issues in a project.
+func (handler *handler) ListJiraUsers(rw http.ResponseWriter, req *http.Request) {
+	handler.jira.Users(rw, req)
 }
 
 func (handler *handler) ListChannels(rw http.ResponseWriter, req *http.Request) {
@@ -327,7 +250,7 @@ func (handler *handler) UpdateChannelByID(rw http.ResponseWriter, req *http.Requ
 	}
 
 	// For Jira, validate the referenced connection belongs to the org and stamp OrgID.
-	if err := handler.jiraOAuth.ResolveConnections(ctx, claims.OrgID, receiver); err != nil {
+	if err := handler.atlassian.ResolveConnections(ctx, claims.OrgID, receiver); err != nil {
 		render.Error(rw, err)
 		return
 	}
@@ -402,7 +325,7 @@ func (handler *handler) CreateChannel(rw http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	if err := handler.jiraOAuth.ResolveConnections(ctx, claims.OrgID, receiver); err != nil {
+	if err := handler.atlassian.ResolveConnections(ctx, claims.OrgID, receiver); err != nil {
 		render.Error(rw, err)
 		return
 	}

@@ -26,3 +26,20 @@ export interface JiraProjectIssueTypesResponse {
 	project_key: string;
 	issue_types: JiraIssueType[];
 }
+
+export interface JiraUsersRequest {
+	connection_id: string;
+	project_key: string;
+	query?: string;
+}
+
+export interface JiraUser {
+	account_id: string;
+	display_name: string;
+	email_address: string;
+	active: boolean;
+}
+
+export interface JiraUsersResponse {
+	users: JiraUser[];
+}

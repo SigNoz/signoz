@@ -3,7 +3,6 @@ package sqlalertmanagerstore
 import (
 	"context"
 	"database/sql"
-	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -51,7 +50,7 @@ func (store *atlassianConnectionStore) GetByID(ctx context.Context, orgID string
 	return conn, nil
 }
 
-func (store *atlassianConnectionStore) GetByOrgAndCloudID(ctx context.Context, orgID string, cloudID string) (*alertmanagertypes.AtlassianConnection, error) {
+func (store *atlassianConnectionStore) GetByOrgAndSiteURL(ctx context.Context, orgID string, siteURL string) (*alertmanagertypes.AtlassianConnection, error) {
 	conn := new(alertmanagertypes.AtlassianConnection)
 
 	err := store.
@@ -60,11 +59,11 @@ func (store *atlassianConnectionStore) GetByOrgAndCloudID(ctx context.Context, o
 		NewSelect().
 		Model(conn).
 		Where("org_id = ?", orgID).
-		Where("cloud_id = ?", cloudID).
+		Where("site_url = ?", siteURL).
 		Scan(ctx)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, errors.Newf(errors.TypeNotFound, alertmanagertypes.ErrCodeAtlassianConnectionNotFound, "cannot find Atlassian connection for cloud_id %s", cloudID)
+			return nil, errors.Newf(errors.TypeNotFound, alertmanagertypes.ErrCodeAtlassianConnectionNotFound, "cannot find Atlassian connection for site %s", siteURL)
 		}
 		return nil, err
 	}
@@ -99,23 +98,6 @@ func (store *atlassianConnectionStore) Update(ctx context.Context, conn *alertma
 		WherePK().
 		Exec(ctx)
 	return err
-}
-
-func (store *atlassianConnectionStore) UpdateTokensByRefreshToken(ctx context.Context, oldRefreshToken, accessToken, refreshToken string) (int64, error) {
-	res, err := store.
-		sqlstore.
-		BunDB().
-		NewUpdate().
-		Model((*alertmanagertypes.AtlassianConnection)(nil)).
-		Set("access_token = ?", accessToken).
-		Set("refresh_token = ?", refreshToken).
-		Set("updated_at = ?", time.Now()).
-		Where("refresh_token = ?", oldRefreshToken).
-		Exec(ctx)
-	if err != nil {
-		return 0, err
-	}
-	return res.RowsAffected()
 }
 
 func (store *atlassianConnectionStore) DeleteByID(ctx context.Context, orgID string, id valuer.UUID) error {

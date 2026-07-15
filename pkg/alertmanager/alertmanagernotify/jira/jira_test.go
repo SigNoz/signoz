@@ -63,13 +63,20 @@ type fakeResolver struct {
 	newAccess, newRefresh  string
 }
 
-func (f *fakeResolver) ResolveByConnectionID(_ context.Context, _, _ string) (string, string, string, error) {
-	return f.access, f.refresh, f.cloud, nil
+func (f *fakeResolver) connection() *alertmanagertypes.AtlassianConnection {
+	return alertmanagertypes.NewAtlassianConnection("org-1", f.cloud, "https://acme.atlassian.net", f.access, f.refresh)
 }
 
-func (f *fakeResolver) Refresh(_ context.Context, _ string) (string, string, error) {
+func (f *fakeResolver) Resolve(_ context.Context, _, _ string) (*alertmanagertypes.AtlassianConnection, error) {
+	return f.connection(), nil
+}
+
+func (f *fakeResolver) Refresh(_ context.Context, _, _ string) (*alertmanagertypes.AtlassianConnection, error) {
 	f.refreshCalled = true
-	return f.newAccess, f.newRefresh, nil
+	conn := f.connection()
+	conn.AccessToken = f.newAccess
+	conn.RefreshToken = f.newRefresh
+	return conn, nil
 }
 
 func newTestNotifier(t *testing.T, resolver ConnectionResolver, baseURL string) *Notifier {
@@ -78,7 +85,7 @@ func newTestNotifier(t *testing.T, resolver ConnectionResolver, baseURL string) 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	n, err := New(newTestConfig(), tmpl, logger, newTestTemplater(tmpl), resolver)
 	require.NoError(t, err)
-	n.baseURL = baseURL
+	n.cloudGateway = baseURL
 	return n
 }
 
@@ -115,7 +122,7 @@ func newNotifierWithConfig(t *testing.T, cfg *config.JiraConfig, baseURL string)
 	receiverCfg.JiraConfig = *cfg
 	n, err := New(receiverCfg, tmpl, logger, newTestTemplater(tmpl), resolver)
 	require.NoError(t, err)
-	n.baseURL = baseURL
+	n.cloudGateway = baseURL
 	return n
 }
 
@@ -531,7 +538,7 @@ func TestSearchExistingIssueJQL(t *testing.T) {
 			defer srv.Close()
 
 			n := newNotifierWithConfig(t, tc.cfg, srv.URL)
-			s := &session{n: n, accessToken: "tok", cloudID: "cloud"}
+			s := &session{n: n, conn: (&fakeResolver{access: "tok", cloud: "cloud"}).connection()}
 
 			as := []*types.Alert{alertWith(model.LabelSet{"project": "PROJ"}, false)}
 			ctx := notify.WithGroupKey(context.Background(), "1")

@@ -63,12 +63,11 @@ func (migration *addAtlassianConnection) Up(ctx context.Context, db *bun.DB) err
 	})
 	sqls = append(sqls, tableSQLs...)
 
-	// A single Atlassian site (cloud_id) maps to one connection per org. Reconnecting
-	// the same site updates the existing row rather than creating a duplicate.
+	// A single Atlassian site maps to one connection per org, shared by every Atlassian-backed channel type.
 	uniqueIndexSQLs := migration.sqlschema.Operator().CreateIndex(
 		&sqlschema.UniqueIndex{
 			TableName:   "atlassian_connection",
-			ColumnNames: []sqlschema.ColumnName{"org_id", "cloud_id"},
+			ColumnNames: []sqlschema.ColumnName{"org_id", "site_url"},
 		},
 	)
 	sqls = append(sqls, uniqueIndexSQLs...)

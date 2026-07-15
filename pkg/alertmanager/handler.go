@@ -13,13 +13,15 @@ type Handler interface {
 
 	ListJiraProjectIssueTypes(http.ResponseWriter, *http.Request)
 
-	JiraOAuthSession(http.ResponseWriter, *http.Request)
+	ListJiraUsers(http.ResponseWriter, *http.Request)
 
-	JiraOAuthCallback(http.ResponseWriter, *http.Request)
+	AtlassianOAuthSession(http.ResponseWriter, *http.Request)
 
-	JiraConnections(http.ResponseWriter, *http.Request)
+	AtlassianOAuthCallback(http.ResponseWriter, *http.Request)
 
-	JiraConnectionDelete(http.ResponseWriter, *http.Request)
+	AtlassianConnections(http.ResponseWriter, *http.Request)
+
+	AtlassianConnectionDelete(http.ResponseWriter, *http.Request)
 
 	ListChannels(http.ResponseWriter, *http.Request)
 

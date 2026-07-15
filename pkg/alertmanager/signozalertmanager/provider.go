@@ -12,7 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerstore/sqlalertmanagerstore"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
-	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager/atlassian"
+	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager/jira"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
@@ -59,7 +59,7 @@ func New(
 	configStore := sqlalertmanagerstore.NewConfigStore(sqlstore)
 	atlassianConnStore := sqlalertmanagerstore.NewAtlassianConnectionStore(sqlstore)
 	stateStore := sqlalertmanagerstore.NewStateStore(sqlstore)
-	jiraResolver := atlassian.NewConnectionResolver(atlassianConnStore, config.Signoz.Jira.OAuth, settings.Logger())
+	jiraResolver := jira.NewConnectionResolver(atlassianConnStore, config.Signoz.Atlassian.OAuth, settings.Logger())
 	receiverIntegrations := alertmanagernotify.NewReceiverIntegrationsFactory(jiraResolver)
 
 	p := &provider{
@@ -86,9 +86,9 @@ func New(
 	return p, nil
 }
 
-// JiraOAuthConfig returns the configured Atlassian OAuth app credentials.
-func (provider *provider) JiraOAuthConfig() alertmanager.AtlassianOAuthConfig {
-	return provider.config.Signoz.Jira.OAuth
+// AtlassianOAuthConfig returns the configured Atlassian OAuth app credentials.
+func (provider *provider) AtlassianOAuthConfig() alertmanager.AtlassianOAuthConfig {
+	return provider.config.Signoz.Atlassian.OAuth
 }
 
 // AtlassianConnectionStore returns the store for reusable Atlassian OAuth connections.

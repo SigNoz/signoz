@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import createJiraOAuthSession from 'api/channels/createJiraOAuthSession';
+import createAtlassianOAuthSession from 'api/channels/createAtlassianOAuthSession';
 import { ENVIRONMENT } from 'constants/env';
 import { useNotifications } from 'hooks/useNotifications';
 import APIError from 'types/api/error';
 
 export interface ConnectedConnection {
 	id: string;
-	site?: string;
 }
 
 function getOAuthOrigin(): string {
@@ -18,14 +17,14 @@ function getOAuthOrigin(): string {
 	return window.location.origin;
 }
 
-interface UseJiraConnectResult {
+interface UseAtlassianConnectResult {
 	connect: () => Promise<void>;
 	isConnecting: boolean;
 }
 
-export function useJiraConnect(
+export function useAtlassianConnect(
 	onConnected: (connection: ConnectedConnection) => void,
-): UseJiraConnectResult {
+): UseAtlassianConnectResult {
 	const { t } = useTranslation('channels');
 	const { notifications } = useNotifications();
 	const [isConnecting, setIsConnecting] = useState(false);
@@ -48,20 +47,22 @@ export function useJiraConnect(
 				return;
 			}
 
-			if (event.data.type === 'jira_oauth_success' && event.data.connection_id) {
+			if (
+				event.data.type === 'atlassian_oauth_success' &&
+				event.data.connection_id
+			) {
 				setIsConnecting(false);
 				onConnectedRef.current({
 					id: event.data.connection_id,
-					site: event.data.site,
 				});
-			} else if (event.data.type === 'jira_oauth_error') {
+			} else if (event.data.type === 'atlassian_oauth_error') {
 				setIsConnecting(false);
 				notifications.error({
 					message: 'Error',
 					description:
 						event.data.error === 'oauth_not_configured'
-							? t('jira_oauth_not_configured')
-							: t('jira_oauth_failed'),
+							? t('atlassian_oauth_not_configured')
+							: t('atlassian_oauth_failed'),
 				});
 			}
 		};
@@ -75,7 +76,7 @@ export function useJiraConnect(
 		try {
 			// oxlint-disable-next-line signoz/no-raw-absolute-path -- opener origin is a bare origin used only as a postMessage target
 			const openerOrigin = window.location.origin;
-			const session = await createJiraOAuthSession({ openerOrigin });
+			const session = await createAtlassianOAuthSession({ openerOrigin });
 
 			const width = 600;
 			const height = 700;
@@ -108,7 +109,7 @@ export function useJiraConnect(
 			notifications.error({
 				message: (error as APIError).getErrorCode?.() || 'Error',
 				description:
-					(error as APIError).getErrorMessage?.() || t('jira_oauth_failed'),
+					(error as APIError).getErrorMessage?.() || t('atlassian_oauth_failed'),
 			});
 		}
 	}, [notifications, t]);

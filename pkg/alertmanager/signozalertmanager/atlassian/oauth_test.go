@@ -4,6 +4,8 @@
 package atlassian
 
 import (
+	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
@@ -11,7 +13,7 @@ import (
 
 func TestAllowedOpenerOrigin(t *testing.T) {
 	oauth := alertmanager.AtlassianOAuthConfig{
-		RedirectURI: "https://signoz.example.com/api/v1/channels/jira/oauth/callback",
+		RedirectURI: "https://signoz.example.com/api/v1/channels/atlassian/oauth/callback",
 	}
 
 	cases := []struct {
@@ -47,7 +49,7 @@ func TestAllowedOpenerOriginUnconfiguredRedirect(t *testing.T) {
 
 func TestAllowedOpenerOriginAllowlist(t *testing.T) {
 	oauth := alertmanager.AtlassianOAuthConfig{
-		RedirectURI:          "http://localhost:8080/api/v1/channels/jira/oauth/callback",
+		RedirectURI:          "http://localhost:8080/api/v1/channels/atlassian/oauth/callback",
 		AllowedOpenerOrigins: []string{"http://localhost:3301"},
 	}
 

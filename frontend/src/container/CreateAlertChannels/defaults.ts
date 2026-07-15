@@ -66,7 +66,8 @@ Severity: {{ .CommonLabels.severity }}
 Message: {{ .Annotations.description }}
 Generator URL: {{ .GeneratorURL }}
 {{ end }}`,
-	priority: 'Medium',
+	priority:
+		'{{ if eq (index .Alerts 0).Labels.severity "critical" }}Highest{{ else if eq (index .Alerts 0).Labels.severity "warning" }}High{{ else if eq (index .Alerts 0).Labels.severity "info" }}Low{{ else }}Medium{{ end }}',
 };
 
 export const EmailInitialConfig: Partial<EmailChannel> = {

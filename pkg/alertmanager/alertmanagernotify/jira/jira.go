@@ -27,10 +27,7 @@ import (
 	"github.com/prometheus/alertmanager/types"
 )
 
-const (
-	Integration    = "jira"
-	defaultBaseURL = "https://api.atlassian.com/ex/jira"
-)
+const Integration = "jira"
 
 const (
 	// maxSummaryLenRunes is the maximum length in runes for Jira issue summary field.
@@ -39,11 +36,9 @@ const (
 	maxDescriptionLenRunes = 32767
 )
 
-// ConnectionResolver resolves the Atlassian OAuth credentials for a persisted
-// connection, and can exchange a stale refresh token for a fresh pair.
 type ConnectionResolver interface {
-	ResolveByConnectionID(ctx context.Context, orgID, connectionID string) (accessToken, refreshToken, cloudID string, err error)
-	Refresh(ctx context.Context, staleRefreshToken string) (newAccessToken, newRefreshToken string, err error)
+	Resolve(ctx context.Context, orgID, connectionID string) (*alertmanagertypes.AtlassianConnection, error)
+	Refresh(ctx context.Context, orgID, connectionID string) (*alertmanagertypes.AtlassianConnection, error)
 }
 
 // jiraUpdateVerbs are the operation verbs Jira accepts inside the "update" block of an edit-issue request.
@@ -163,7 +158,7 @@ func (i issueFields) MarshalJSON() ([]byte, error) {
 	return json.Marshal(jsonFields)
 }
 
-// Notifier implements a Notifier for Jira notifications over Atlassian OAuth 2.0 (3LO).
+// Notifier implements a Notifier for Jira notifications over Jira Cloud OAuth 2.0 (3LO).
 type Notifier struct {
 	config    *alertmanagertypes.JiraReceiverConfig
 	resolver  ConnectionResolver
@@ -172,10 +167,9 @@ type Notifier struct {
 	client    *http.Client
 	retrier   *notify.Retrier
 	templater alertmanagertypes.Templater
-	baseURL string
+	cloudGateway string
 }
 
-// New returns a new OAuth-based Jira notifier.
 func New(cfg *alertmanagertypes.JiraReceiverConfig, t *template.Template, l *slog.Logger, templater alertmanagertypes.Templater, resolver ConnectionResolver) (*Notifier, error) {
 	if cfg == nil {
 		return nil, errors.NewInternalf(errors.CodeInternal, "jira config is required")
@@ -191,27 +185,22 @@ func New(cfg *alertmanagertypes.JiraReceiverConfig, t *template.Template, l *slo
 	}
 
 	return &Notifier{
-		config:    cfg,
-		resolver:  resolver,
-		tmpl:      t,
-		logger:    l,
-		client:    &http.Client{Timeout: 30 * time.Second},
-		retrier:   &notify.Retrier{RetryCodes: []int{http.StatusTooManyRequests}},
-		templater: templater,
-		baseURL:   defaultBaseURL,
+		config:       cfg,
+		resolver:     resolver,
+		tmpl:         t,
+		logger:       l,
+		client:       &http.Client{Timeout: 30 * time.Second},
+		retrier:      &notify.Retrier{RetryCodes: []int{http.StatusTooManyRequests}},
+		templater:    templater,
+		cloudGateway: alertmanagertypes.CloudAPIGatewayURL,
 	}, nil
 }
 
-// session carries the resolved OAuth credentials for a single Notify call so the
-// Notifier stays safe for concurrent use.
 type session struct {
-	n            *Notifier
-	accessToken  string
-	refreshToken string
-	cloudID      string
+	n    *Notifier
+	conn *alertmanagertypes.AtlassianConnection
 }
 
-// Notify implements the Notifier interface for Jira.
 func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	key, err := notify.ExtractGroupKey(ctx)
 	if err != nil {
@@ -220,12 +209,12 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 	logger := n.logger.With(slog.String("group_key", key.String()))
 	logger.DebugContext(ctx, "extracted group key")
 
-	accessToken, refreshToken, cloudID, err := n.resolver.ResolveByConnectionID(ctx, n.config.OrgID, n.config.ConnectionID)
+	conn, err := n.resolver.Resolve(ctx, n.config.OrgID, n.config.ConnectionID)
 	if err != nil {
 		return false, errors.WrapInternalf(err, errors.CodeInternal, "failed to resolve jira connection %s", n.config.ConnectionID)
 	}
 
-	s := &session{n: n, accessToken: accessToken, refreshToken: refreshToken, cloudID: cloudID}
+	s := &session{n: n, conn: conn}
 	return s.run(ctx, logger, key.Hash(), as)
 }
 
@@ -263,7 +252,7 @@ func (s *session) run(ctx context.Context, logger *slog.Logger, groupID string, 
 		return false, err
 	}
 
-	requestBody, err := n.prepareIssueRequestBody(groupID, summary, descriptionText, tmplTextFunc)
+	requestBody, err := s.prepareIssueRequestBody(groupID, summary, descriptionText, tmplTextFunc)
 	if err != nil {
 		return false, err
 	}
@@ -342,7 +331,8 @@ func (n *Notifier) expandSummaryAndDescription(ctx context.Context, logger *slog
 	return summary, descriptionText, nil
 }
 
-func (n *Notifier) prepareIssueRequestBody(groupID string, summary string, descriptionText string, tmplTextFunc template.TemplateFunc) (issue, error) {
+func (s *session) prepareIssueRequestBody(groupID string, summary string, descriptionText string, tmplTextFunc template.TemplateFunc) (issue, error) {
+	n := s.n
 	project, err := tmplTextFunc(n.config.Project)
 	if err != nil {
 		return issue{}, errors.WrapInternalf(err, errors.CodeInternal, "project template")
@@ -383,7 +373,7 @@ func (n *Notifier) prepareIssueRequestBody(groupID string, summary string, descr
 	}
 
 	if descriptionText != "" {
-		// OAuth 3LO always targets Jira Cloud, which expects Atlassian Document Format.
+		// The Cloud v3 API expects Atlassian Document Format.
 		requestBody.Fields.Description = adfDocument(descriptionText)
 	}
 
@@ -442,10 +432,7 @@ func (s *session) searchExistingIssue(ctx context.Context, logger *slog.Logger, 
 		MaxResults: 2,
 		Fields:     []string{"status"},
 	}
-	// Jira Cloud uses the v3 /search/jql endpoint.
-	searchPath := s.baseAPIURL() + "/search/jql"
-
-	responseBody, shouldRetry, err := s.doAPIRequestFullPath(ctx, http.MethodPost, searchPath, requestBody)
+	responseBody, shouldRetry, err := s.doAPIRequestFullPath(ctx, http.MethodPost, s.searchURL(), requestBody)
 	if err != nil {
 		return nil, shouldRetry, errors.WrapInternalf(err, errors.CodeInternal, "jira search request failed")
 	}
@@ -531,9 +518,14 @@ func (s *session) transitionIssue(ctx context.Context, issueToTransition *issue,
 	return false, nil
 }
 
-// baseAPIURL returns the Jira Cloud REST v3 base for the resolved cloud id.
+// baseAPIURL returns the REST base for the resolved connection.
 func (s *session) baseAPIURL() string {
-	return fmt.Sprintf("%s/%s/rest/api/3", strings.TrimRight(s.n.baseURL, "/"), s.cloudID)
+	return s.conn.APIBaseURLVia(s.n.cloudGateway)
+}
+
+// searchURL returns the JQL search endpoint. Cloud v3 replaced /search with /search/jql.
+func (s *session) searchURL() string {
+	return s.baseAPIURL() + "/search/jql"
 }
 
 func (s *session) doAPIRequest(ctx context.Context, method, path string, requestBody any) ([]byte, bool, error) {
@@ -551,23 +543,20 @@ func (s *session) doAPIRequestFullPath(ctx context.Context, method, fullURL stri
 		bodyBytes = buf.Bytes()
 	}
 
-	resp, err := s.sendRequest(ctx, method, fullURL, bodyBytes, s.accessToken)
+	resp, err := s.sendRequest(ctx, method, fullURL, bodyBytes, s.conn.AccessToken)
 	if err != nil {
 		return nil, false, err
 	}
 
 	// On 401, refresh the access token once and retry.
-	if resp.StatusCode == http.StatusUnauthorized && s.refreshToken != "" {
-		newAccess, newRefresh, refreshErr := s.n.resolver.Refresh(ctx, s.refreshToken)
+	if resp.StatusCode == http.StatusUnauthorized && s.conn.RefreshToken != "" {
+		refreshed, refreshErr := s.n.resolver.Refresh(ctx, s.n.config.OrgID, s.n.config.ConnectionID)
 		if refreshErr != nil {
 			s.n.logger.WarnContext(ctx, "failed to refresh jira access token; reconnect the integration", slog.Any("err", refreshErr))
-		} else if newAccess != "" {
+		} else if refreshed.AccessToken != "" {
 			notify.Drain(resp)
-			s.accessToken = newAccess
-			if newRefresh != "" {
-				s.refreshToken = newRefresh
-			}
-			resp, err = s.sendRequest(ctx, method, fullURL, bodyBytes, s.accessToken)
+			s.conn = refreshed
+			resp, err = s.sendRequest(ctx, method, fullURL, bodyBytes, s.conn.AccessToken)
 			if err != nil {
 				return nil, false, err
 			}

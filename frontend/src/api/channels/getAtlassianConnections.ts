@@ -2,14 +2,14 @@ import axios from 'api';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { AxiosError } from 'axios';
 import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
-import { JiraConnection } from 'types/api/channels/jiraConnections';
+import { AtlassianConnection } from 'types/api/channels/atlassian';
 
-const getJiraConnections = async (): Promise<
-	SuccessResponseV2<JiraConnection[]>
+const getAtlassianConnections = async (): Promise<
+	SuccessResponseV2<AtlassianConnection[]>
 > => {
 	try {
-		const response = await axios.get<{ data: JiraConnection[] }>(
-			'/channels/jira/connections',
+		const response = await axios.get<{ data: AtlassianConnection[] }>(
+			'/channels/atlassian/connections',
 		);
 
 		return {
@@ -22,4 +22,4 @@ const getJiraConnections = async (): Promise<
 	}
 };
 
-export default getJiraConnections;
+export default getAtlassianConnections;

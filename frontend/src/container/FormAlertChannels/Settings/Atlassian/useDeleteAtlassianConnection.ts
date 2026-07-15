@@ -1,22 +1,21 @@
 import { useMutation, useQueryClient } from 'react-query';
-import deleteJiraConnection from 'api/channels/deleteJiraConnection';
+import deleteAtlassianConnection from 'api/channels/deleteAtlassianConnection';
 import { SuccessResponseV2 } from 'types/api';
 import APIError from 'types/api/error';
+import { ATLASSIAN_CONNECTIONS_QUERY_KEY } from './useAtlassianConnections';
 
-import { JIRA_CONNECTIONS_QUERY_KEY } from './useJiraConnections';
-
-interface UseDeleteJiraConnectionResult {
+interface UseDeleteAtlassianConnectionResult {
 	deleteConnection: (id: string) => Promise<unknown>;
 	isDeleting: boolean;
 }
 
-export function useDeleteJiraConnection(): UseDeleteJiraConnectionResult {
+export function useDeleteAtlassianConnection(): UseDeleteAtlassianConnectionResult {
 	const queryClient = useQueryClient();
 	const mutation = useMutation<SuccessResponseV2<null>, APIError, string>(
-		(id: string) => deleteJiraConnection({ id }),
+		(id: string) => deleteAtlassianConnection({ id }),
 		{
 			onSuccess: () => {
-				void queryClient.invalidateQueries([JIRA_CONNECTIONS_QUERY_KEY]);
+				void queryClient.invalidateQueries([ATLASSIAN_CONNECTIONS_QUERY_KEY]);
 			},
 		},
 	);

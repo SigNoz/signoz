@@ -7,11 +7,13 @@ interface Props {
 	id: string;
 }
 
-const deleteJiraConnection = async (
+const deleteAtlassianConnection = async (
 	props: Props,
 ): Promise<SuccessResponseV2<null>> => {
 	try {
-		const response = await axios.delete(`/channels/jira/connections/${props.id}`);
+		const response = await axios.delete(
+			`/channels/atlassian/connections/${props.id}`,
+		);
 
 		return {
 			httpStatusCode: response.status,
@@ -23,4 +25,4 @@ const deleteJiraConnection = async (
 	}
 };
 
-export default deleteJiraConnection;
+export default deleteAtlassianConnection;

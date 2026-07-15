@@ -437,7 +437,9 @@ describe('Create Alert Channel', () => {
 
 			it('Should check if the Add connection button is displayed', () => {
 				expect(screen.getByTestId('jira-oauth-connect')).toBeInTheDocument();
-				expect(screen.getByText('button_add_jira_connection')).toBeInTheDocument();
+				expect(
+					screen.getByText('button_add_atlassian_connection'),
+				).toBeInTheDocument();
 			});
 
 			it('Should check if Summary label and input are displayed properly', () => {

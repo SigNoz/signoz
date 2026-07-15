@@ -3,22 +3,22 @@ import { Plus } from '@signozhq/icons';
 import { Button, Flex, Popconfirm, Table } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import { Typography } from '@signozhq/ui/typography';
-import { useDeleteJiraConnection } from 'container/FormAlertChannels/Settings/Jira/useDeleteJiraConnection';
-import { useJiraConnect } from 'container/FormAlertChannels/Settings/Jira/useJiraConnect';
-import { useJiraConnections } from 'container/FormAlertChannels/Settings/Jira/useJiraConnections';
+import { AtlassianConnection } from 'types/api/channels/atlassian';
+import { useAtlassianConnections } from 'container/FormAlertChannels/Settings/Atlassian/useAtlassianConnections';
+import { useDeleteAtlassianConnection } from 'container/FormAlertChannels/Settings/Atlassian/useDeleteAtlassianConnection';
+import { useAtlassianConnect } from 'container/FormAlertChannels/Settings/Atlassian/useAtlassianConnect';
 import { useNotifications } from 'hooks/useNotifications';
-import { JiraConnection } from 'types/api/channels/jiraConnections';
 import APIError from 'types/api/error';
 
 const { Text } = Typography;
 
-function JiraConnections(): JSX.Element {
+function AtlassianConnections(): JSX.Element {
 	const { t } = useTranslation(['channels']);
 	const { notifications } = useNotifications();
 
-	const { connections, isLoading, refetch } = useJiraConnections();
-	const { deleteConnection, isDeleting } = useDeleteJiraConnection();
-	const { connect, isConnecting } = useJiraConnect(() => {
+	const { connections, isLoading, refetch } = useAtlassianConnections();
+	const { deleteConnection, isDeleting } = useDeleteAtlassianConnection();
+	const { connect, isConnecting } = useAtlassianConnect(() => {
 		void refetch();
 	});
 
@@ -27,27 +27,27 @@ function JiraConnections(): JSX.Element {
 			await deleteConnection(id);
 			notifications.success({
 				message: 'Success',
-				description: t('jira_connection_deleted'),
+				description: t('atlassian_connection_deleted'),
 			});
 		} catch (error) {
 			notifications.error({
 				message: (error as APIError).getErrorCode?.() || 'Error',
 				description:
 					(error as APIError).getErrorMessage?.() ||
-					t('jira_connection_delete_failed'),
+					t('atlassian_connection_delete_failed'),
 			});
 		}
 	};
 
-	const columns: ColumnsType<JiraConnection> = [
+	const columns: ColumnsType<AtlassianConnection> = [
 		{
-			title: t('jira_connection_site'),
+			title: t('atlassian_connection_site'),
 			dataIndex: 'site_url',
 			key: 'site_url',
 			render: (siteURL: string, record): string => siteURL || record.cloud_id,
 		},
 		{
-			title: t('jira_connection_cloud_id'),
+			title: t('atlassian_connection_cloud_id'),
 			dataIndex: 'cloud_id',
 			key: 'cloud_id',
 		},
@@ -57,16 +57,16 @@ function JiraConnections(): JSX.Element {
 			width: 120,
 			render: (_, record): JSX.Element => (
 				<Popconfirm
-					title={t('jira_connection_delete_confirm')}
+					title={t('atlassian_connection_delete_confirm')}
 					onConfirm={(): Promise<void> => handleDelete(record.id)}
 					okButtonProps={{ loading: isDeleting }}
 				>
 					<Button
 						danger
 						type="text"
-						data-testid={`jira-connection-delete-${record.id}`}
+						data-testid={`atlassian-connection-delete-${record.id}`}
 					>
-						{t('jira_connection_delete')}
+						{t('atlassian_connection_delete')}
 					</Button>
 				</Popconfirm>
 			),
@@ -74,31 +74,32 @@ function JiraConnections(): JSX.Element {
 	];
 
 	return (
-		<div className="jira-connections-container">
+		<div className="atlassian-connections-container">
 			<Flex justify="space-between" align="center" style={{ marginBottom: 12 }}>
-				<Text>{t('jira_connections_title')}</Text>
+				<Text>{t('atlassian_connections_title')}</Text>
 				<Button
-					icon={<Plus size={16} />}
+					icon={<Plus size="md" />}
 					onClick={(): void => {
 						void connect();
 					}}
 					loading={isConnecting}
-					data-testid="jira-connection-add"
+					data-testid="atlassian-connection-add"
 				>
-					{t('button_add_jira_connection')}
+					{t('button_add_atlassian_connection')}
 				</Button>
 			</Flex>
 
-			<Table<JiraConnection>
+			<Table<AtlassianConnection>
 				rowKey="id"
 				loading={isLoading}
 				dataSource={connections}
 				columns={columns}
 				pagination={false}
-				locale={{ emptyText: t('jira_connections_empty') }}
+				locale={{ emptyText: t('atlassian_connections_empty') }}
+				data-testid="atlassian-connections-table"
 			/>
 		</div>
 	);
 }
 
-export default JiraConnections;
+export default AtlassianConnections;
