@@ -1,3 +1,4 @@
+import { RuletypesAlertStateDTO } from 'api/generated/services/sigNoz.schemas';
 import { AlertLabelsProps } from 'pages/AlertDetails/AlertHeader/AlertLabels/AlertLabels';
 import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 
@@ -99,8 +100,6 @@ export interface AlertRuleTimelineTableResponse {
 	labels: Labels;
 	fingerprint: number;
 	value: number;
-	relatedTracesLink: string;
-	relatedLogsLink: string;
 }
 export type AlertRuleTimelineTableResponsePayload = {
 	data: {
@@ -110,12 +109,10 @@ export type AlertRuleTimelineTableResponsePayload = {
 	};
 };
 
-type AlertState = 'firing' | 'normal' | 'nodata' | 'muted';
-
 export interface AlertRuleTimelineGraphResponse {
 	start: number;
 	end: number;
-	state: AlertState;
+	state: RuletypesAlertStateDTO;
 }
 export type AlertRuleTimelineGraphResponsePayload = {
 	data: AlertRuleTimelineGraphResponse[];
