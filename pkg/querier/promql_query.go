@@ -8,8 +8,11 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"sync"
 	"text/template"
 	"time"
+
+	"github.com/ClickHouse/clickhouse-go/v2"
 
 	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/promql"
@@ -17,6 +20,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/prometheus/clickhouseprometheusv2"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
@@ -39,6 +43,13 @@ var quotedMetricOutsideBracesPattern = regexp.MustCompile(`"([^"]+)"\s*\{`)
 // tryEnhancePromQLExecError attempts to convert a PromQL execution error into
 // a properly typed error. Returns nil if the error is not a recognized execution error.
 func tryEnhancePromQLExecError(execErr error) error {
+	// A storage may fail a query with an already-typed error (e.g. the
+	// clickhousev2 series/sample budgets); surface it as-is instead of
+	// flattening it into an internal error.
+	if typed := typedStorageError(execErr); typed != nil {
+		return typed
+	}
+
 	var eqc promql.ErrQueryCanceled
 	var eqt promql.ErrQueryTimeout
 	var es promql.ErrStorage
@@ -56,6 +67,30 @@ func tryEnhancePromQLExecError(execErr error) error {
 	default:
 		return nil
 	}
+}
+
+// typedStorageError walks an engine execution error chain looking for a
+// SigNoz-typed invalid-input error raised by the storage layer (the budget
+// refusals). Every wrapper level is stepped through by hand: Ast is a bare
+// type cast, not an unwrap — it misses a typed error behind the engine's
+// "expanding series: %w" — and promql.ErrStorage has no Unwrap method at
+// all, so a plain unwrap loop would stop at it.
+func typedStorageError(execErr error) error {
+	for e := execErr; e != nil; {
+		if errors.Ast(e, errors.TypeInvalidInput) {
+			return e
+		}
+		if es, ok := e.(promql.ErrStorage); ok {
+			e = es.Err
+			continue
+		}
+		u, ok := e.(interface{ Unwrap() error })
+		if !ok {
+			return nil
+		}
+		e = u.Unwrap()
+	}
+	return nil
 }
 
 // enhancePromQLError adds helpful context to PromQL parse errors,
@@ -98,6 +133,24 @@ type promqlQuery struct {
 	tr          qbv5.TimeRange
 	requestType qbv5.RequestType
 	vars        map[string]qbv5.VariableItem
+	opts        promqlOptions
+}
+
+// promqlOptions is how a PromQL query relates to the clickhousev2 provider
+// (see querier.promqlOptions for where the fields come from and why they are
+// flag-gated). Both providers are nil for a plain request, so a plain
+// request costs nothing extra.
+type promqlOptions struct {
+	// shadow, when set, runs the query on this provider after serving and
+	// logs any result difference; the response is never affected.
+	shadow *clickhouseprometheusv2.Provider
+	// shadowSlots is the querier-wide admission for shadow runs, shared by
+	// every query so the bound holds per process.
+	shadowSlots chan struct{}
+	// serve, when set, serves the response from this provider instead of the
+	// default path. Comparison callers fetch the default and the pinned
+	// result as two API calls and diff them.
+	serve *clickhouseprometheusv2.Provider
 }
 
 var _ qbv5.Query = (*promqlQuery)(nil)
@@ -110,6 +163,7 @@ func newPromqlQuery(
 	tr qbv5.TimeRange,
 	requestType qbv5.RequestType,
 	variables map[string]qbv5.VariableItem,
+	opts promqlOptions,
 ) *promqlQuery {
 	return &promqlQuery{
 		logger:      logger,
@@ -119,10 +173,20 @@ func newPromqlQuery(
 		tr:          tr,
 		requestType: requestType,
 		vars:        variables,
+		opts:        opts,
 	}
 }
 
 func (q *promqlQuery) Fingerprint() string {
+	// A pinned request must not share cache entries with default serving: a
+	// cached default result would satisfy the pin without running the pinned
+	// provider, and a pinned result would poison normal serving. No
+	// fingerprint means no caching at all — the pin exists to observe a
+	// provider, so a cache in front of it defeats the point.
+	if q.opts.serve != nil {
+		return ""
+	}
+
 	query, err := q.renderVars(q.query.Query, q.vars, q.tr.From, q.tr.To)
 	if err != nil {
 		q.logger.ErrorContext(context.TODO(), "failed render template variables", slog.String("query", q.query.Query))
@@ -248,7 +312,16 @@ func (q *promqlQuery) PreviewStatements(ctx context.Context) ([]prometheus.Captu
 	start := int64(querybuilder.ToNanoSecs(q.tr.From))
 	end := int64(querybuilder.ToNanoSecs(q.tr.To))
 
+	// Attach the same query traits as Execute so the captured statements
+	// match what the live path would run.
+	if expr, parseErr := q.parser.ParseExpr(rendered); parseErr == nil {
+		ctx = prometheus.NewContextWithQueryTraits(ctx, prometheus.DetectQueryTraits(expr))
+	}
+
 	capStorage, recorder := storer.CapturingStorage()
+	if capStorage == nil {
+		return nil, nil
+	}
 	qry, err := q.promEngine.Engine().NewRangeQuery(
 		ctx,
 		capStorage,
@@ -292,6 +365,58 @@ func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {
 		return nil, err
 	}
 
+	// Attach query traits so the storage can prove step-aligned optimizations
+	// safe (see prometheus.QueryTraits). A parse failure surfaces below via
+	// the engine with the enhanced error message.
+	if expr, parseErr := q.parser.ParseExpr(query); parseErr == nil {
+		ctx = prometheus.NewContextWithQueryTraits(ctx, prometheus.DetectQueryTraits(expr))
+	}
+
+	// Accumulate ClickHouse-side scan stats across every storage query this
+	// evaluation issues (engine selectors or the compiled executor): progress
+	// options propagate to each ClickHouse query through the context.
+	var statsMu sync.Mutex
+	var rowsScanned, bytesScanned uint64
+	ctx = clickhouse.Context(ctx, clickhouse.WithProgress(func(p *clickhouse.Progress) {
+		statsMu.Lock()
+		rowsScanned += p.Rows
+		bytesScanned += p.Bytes
+		statsMu.Unlock()
+	}))
+
+	began := time.Now()
+
+	// A pinned provider serves directly from it: comparison callers fetch
+	// the default result and the pinned result as two API calls and diff
+	// them.
+	if q.opts.serve != nil {
+		matrix, err := q.serveFromProvider(ctx, query, start, end)
+		if err != nil {
+			if enhanced := tryEnhancePromQLExecError(err); enhanced != nil {
+				return nil, enhanced
+			}
+			return nil, err
+		}
+		return q.toResult(matrix, nil, began, &statsMu, &rowsScanned, &bytesScanned), nil
+	}
+
+	// When the serving provider itself is clickhousev2
+	// (prometheus::provider: clickhousev2), serve the way the provider is
+	// designed to serve: transpiled when the shape allows. Without this the
+	// override would silently run the engine path only.
+	if prov, ok := q.promEngine.(*clickhouseprometheusv2.Provider); ok {
+		matrix, served, err := prov.TryExecuteRange(ctx, query, time.Unix(0, start), time.Unix(0, end), q.query.Step.Duration)
+		if err != nil {
+			if enhanced := tryEnhancePromQLExecError(err); enhanced != nil {
+				return nil, enhanced
+			}
+			return nil, err
+		}
+		if served {
+			return q.toResult(matrix, nil, began, &statsMu, &rowsScanned, &bytesScanned), nil
+		}
+	}
+
 	qry, err := q.promEngine.Engine().NewRangeQuery(
 		ctx,
 		q.promEngine.Storage(),
@@ -327,6 +452,34 @@ func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {
 		return nil, errors.WrapInternalf(promErr, errors.CodeInternal, "error getting matrix from promql query %q", query)
 	}
 
+	if q.opts.shadow != nil {
+		// Shadows detach from the request, so without admission a dashboard
+		// burst would stack unbounded ClickHouse work for up to the shadow
+		// timeout — the concurrency pattern behind the original outages.
+		// Non-blocking: at the cap the comparison is skipped, not queued;
+		// a sampled shadow stream is exactly as useful for rollout evidence.
+		select {
+		case q.opts.shadowSlots <- struct{}{}:
+			// The engine pools the result's sample slices on Close; the
+			// shadow comparison needs a stable copy of what was served.
+			served := copyMatrix(matrix)
+			servedIn := time.Since(began)
+			go func() {
+				defer func() { <-q.opts.shadowSlots }()
+				q.runShadowCompare(context.WithoutCancel(ctx), query, start, end, served, servedIn)
+			}()
+		default:
+			q.logger.DebugContext(ctx, "promql shadow skipped: at concurrency cap", slog.String("query", query))
+		}
+	}
+
+	warnings, _ := res.Warnings.AsStrings(query, 10, 0)
+	return q.toResult(matrix, warnings, began, &statsMu, &rowsScanned, &bytesScanned), nil
+}
+
+// toResult converts an evaluated matrix into the v5 result shape, attaching
+// the ClickHouse scan stats accumulated during evaluation.
+func (q *promqlQuery) toResult(matrix promql.Matrix, warnings []string, began time.Time, statsMu *sync.Mutex, rowsScanned, bytesScanned *uint64) *qbv5.Result {
 	excludeLabel := func(labelName string) bool {
 		if labelName == "__name__" {
 			return false
@@ -359,7 +512,13 @@ func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {
 		series = append(series, &s)
 	}
 
-	warnings, _ := res.Warnings.AsStrings(query, 10, 0)
+	statsMu.Lock()
+	stats := qbv5.ExecStats{
+		RowsScanned:  *rowsScanned,
+		BytesScanned: *bytesScanned,
+		DurationMS:   uint64(time.Since(began).Milliseconds()),
+	}
+	statsMu.Unlock()
 
 	return &qbv5.Result{
 		Type: q.requestType,
@@ -372,6 +531,6 @@ func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {
 			},
 		},
 		Warnings: warnings,
-		// TODO: map promql stats?
-	}, nil
+		Stats:    stats,
+	}
 }

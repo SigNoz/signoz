@@ -105,7 +105,7 @@ func NewTestManager(t *testing.T, testOpts *TestManagerOptions) *Manager {
 	}
 
 	// Create querier with test values
-	providerFactory := signozquerier.NewFactory(telemetryStore, prometheus, cache, flagger)
+	providerFactory := signozquerier.NewFactory(telemetryStore, prometheus, nil, cache, flagger)
 	mockQuerier, err := providerFactory.New(context.Background(), providerSettings, querier.Config{})
 	require.NoError(t, err)
 

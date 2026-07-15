@@ -58,6 +58,7 @@ jobs:
           - rootuser
           - serviceaccount
           - querier_json_body
+          - promqlparity
           - querier_skip_resource_fingerprint
           - ttl
         sqlstore-provider:
