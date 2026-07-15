@@ -13,10 +13,10 @@ const (
 	// to multiple field context / data type combinations.
 	FieldContextDataTypesDocURL = "https://signoz.io/docs/userguide/field-context-data-types/"
 	// KeyNotFoundDocURL documents the "key not found" error.
-	KeyNotFoundDocURL = "https://signoz.io/docs/userguide/search-troubleshooting/#key-fieldname-not-found"
+	KeyNotFoundDocURL = "https://signoz.io/docs/userguide/search-troubleshooting/#q-im-getting-key-fieldname-not-found--why-cant-it-find-my-field"
 
 	// Doc URLs for the has/hasAny/hasAll and hasToken "unsupported" errors.
-	functionBodyJSONSearchDocURL = "https://signoz.io/docs/userguide/search-troubleshooting/#function-supports-only-body-json-search"
+	functionBodyJSONSearchDocURL = "https://signoz.io/docs/userguide/search-troubleshooting/#q-im-getting-function-supports-only-body-json-search--can-i-use-functions-on-other-fields"
 	hasTokenFunctionDocURL       = "https://signoz.io/docs/userguide/functions-reference/#hastoken-function"
 )
 

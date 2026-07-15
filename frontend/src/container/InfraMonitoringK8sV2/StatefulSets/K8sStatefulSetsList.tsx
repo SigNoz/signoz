@@ -11,6 +11,7 @@ import K8sBaseDetails, { K8sDetailsFilters } from '../Base/K8sBaseDetails';
 import { K8sBaseList } from '../Base/K8sBaseList';
 import { K8sBaseFilters } from '../Base/types';
 import { InfraMonitoringEntity } from '../constants';
+import { SelectedItemParams } from '../hooks';
 import {
 	getStatefulSetMetricsQueryPayload,
 	k8sStatefulSetDetailsMetadataConfig,
@@ -117,7 +118,7 @@ function K8sStatefulSetsList({
 
 	return (
 		<>
-			<K8sBaseList<InframonitoringtypesStatefulSetRecordDTO>
+			<K8sBaseList<InframonitoringtypesStatefulSetRecordDTO, SelectedItemParams>
 				controlListPrefix={controlListPrefix}
 				entity={InfraMonitoringEntity.STATEFULSETS}
 				tableColumns={k8sStatefulSetsColumnsConfig}
