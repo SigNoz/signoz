@@ -11,6 +11,7 @@ import K8sBaseDetails, { K8sDetailsFilters } from '../Base/K8sBaseDetails';
 import { K8sBaseList } from '../Base/K8sBaseList';
 import { K8sBaseFilters } from '../Base/types';
 import { InfraMonitoringEntity } from '../constants';
+import { SelectedItemParams } from '../hooks';
 import {
 	getJobMetricsQueryPayload,
 	jobWidgetInfo,
@@ -117,7 +118,7 @@ function K8sJobsList({
 
 	return (
 		<>
-			<K8sBaseList<InframonitoringtypesJobRecordDTO>
+			<K8sBaseList<InframonitoringtypesJobRecordDTO, SelectedItemParams>
 				controlListPrefix={controlListPrefix}
 				entity={InfraMonitoringEntity.JOBS}
 				tableColumns={k8sJobsColumnsConfig}

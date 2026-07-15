@@ -12,6 +12,7 @@ import (
 	grammar "github.com/SigNoz/signoz/pkg/parser/filterquery/grammar"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/antlr4-go/antlr/v4"
 
 	sqlbuilder "github.com/huandu/go-sqlbuilder"
@@ -25,6 +26,7 @@ const stringMatchingOperatorDocURL = "https://signoz.io/docs/userguide/operators
 // to convert the parsed filter expressions into ClickHouse WHERE clause.
 type filterExpressionVisitor struct {
 	context            context.Context
+	orgID              valuer.UUID
 	fieldMapper        qbtypes.FieldMapper
 	conditionBuilder   qbtypes.ConditionBuilder
 	warnings           []string
@@ -45,6 +47,7 @@ type filterExpressionVisitor struct {
 
 type FilterExprVisitorOpts struct {
 	Context            context.Context
+	OrgID              valuer.UUID
 	Logger             *slog.Logger
 	FieldMapper        qbtypes.FieldMapper
 	ConditionBuilder   qbtypes.ConditionBuilder
@@ -62,6 +65,7 @@ type FilterExprVisitorOpts struct {
 func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVisitor {
 	return &filterExpressionVisitor{
 		context:            opts.Context,
+		orgID:              opts.OrgID,
 		fieldMapper:        opts.FieldMapper,
 		conditionBuilder:   opts.ConditionBuilder,
 		fieldKeys:          opts.FieldKeys,
@@ -365,12 +369,11 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 // VisitComparison handles all comparison operators.
 func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext) any {
 	key := v.Visit(ctx.Key()).(*telemetrytypes.TelemetryFieldKey)
-	matching := matchingFieldKeys(key, v.fieldKeys)
+	matching := MatchingFieldKeys(key, v.fieldKeys)
 
-	// Skip resource filtering on the main table when a sub-query covers it. Resolve
-	// ambiguity first (resource+attribute defaults to resource), then drop resource
-	// matches; skip the term if nothing remains. Empty matches flow to the builder.
-	if v.skipResourceFilter && len(matching) > 0 {
+	// Skip resource filtering on the main table when a sub-query covers it; a resolving
+	// condition builder applies this itself in ConditionForKeys.
+	if _, resolvesKeys := v.conditionBuilder.(qbtypes.ResolvingConditionBuilder); v.skipResourceFilter && len(matching) > 0 && !resolvesKeys {
 		resolved, warning := ResolveKeys(key, matching)
 		// emit the ambiguity warning even when the term is skipped below
 		v.addWarnings([]string{warning}, len(matching) > 1)
@@ -731,7 +734,7 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 
 	value := params[1:]
 
-	conds, ok := v.buildConditions(key, matchingFieldKeys(key, v.fieldKeys), operator, value)
+	conds, ok := v.buildConditions(key, MatchingFieldKeys(key, v.fieldKeys), operator, value)
 	if !ok {
 		return ErrorConditionLiteral
 	}
@@ -811,10 +814,20 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 }
 
 // buildConditions invokes the condition builder for a filter term, folding its
-// warnings/errors into visitor state. It returns the conditions and false if an error
-// was recorded.
+// warnings/errors into visitor state; returns false if an error was recorded.
 func (v *filterExpressionVisitor) buildConditions(key *telemetrytypes.TelemetryFieldKey, matching []*telemetrytypes.TelemetryFieldKey, op qbtypes.FilterOperator, value any) ([]string, bool) {
-	conds, warns, err := v.conditionBuilder.ConditionFor(v.context, v.startNs, v.endNs, key, matching, op, value, v.builder)
+	var (
+		conds []string
+		warns []string
+		err   error
+	)
+	// A resolving condition builder owns key resolution, so hand it the raw key + full map;
+	// other signals use the pre-matched ConditionFor path.
+	if rcb, ok := v.conditionBuilder.(qbtypes.ResolvingConditionBuilder); ok {
+		conds, warns, err = rcb.ConditionForKeys(v.context, v.orgID, v.startNs, v.endNs, key, v.fieldKeys, qbtypes.ConditionBuilderOptions{SkipResourceFilter: v.skipResourceFilter}, op, value, v.builder)
+	} else {
+		conds, warns, err = v.conditionBuilder.ConditionFor(v.context, v.orgID, v.startNs, v.endNs, key, matching, op, value, v.builder)
+	}
 	if err != nil {
 		_, _, _, _, errURL, _ := errors.Unwrapb(err)
 		assignIfEmpty(&v.mainErrorURL, errURL)
@@ -870,10 +883,9 @@ func assignIfEmpty(s *string, value string) {
 	}
 }
 
-// matchingFieldKeys returns the field keys from the provided map that match the given
-// key, honoring any context/data type the user specified. It also resolves the case
-// where GetFieldKeyFromKeyText split a context off a name that legitimately contained it.
-func matchingFieldKeys(field *telemetrytypes.TelemetryFieldKey, fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.TelemetryFieldKey {
+// MatchingFieldKeys returns the field keys from the map that match the given key,
+// honoring any context/data type the user specified.
+func MatchingFieldKeys(field *telemetrytypes.TelemetryFieldKey, fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.TelemetryFieldKey {
 	fieldKeysForName := []*telemetrytypes.TelemetryFieldKey{}
 
 	// match by name; keep items whose context and data type match (unspecified matches any)

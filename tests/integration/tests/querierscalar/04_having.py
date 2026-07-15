@@ -7,8 +7,8 @@ from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.logs import Logs
 from fixtures.querier import (
     assert_scalar_result_order,
+    build_aggregation,
     build_group_by_field,
-    build_logs_aggregation,
     build_order_by,
     build_scalar_query,
     get_scalar_table_data,
@@ -44,7 +44,7 @@ def test_logs_scalar_group_by_having(
     query = build_scalar_query(
         name="A",
         signal="logs",
-        aggregations=[build_logs_aggregation("count()")],
+        aggregations=[build_aggregation("count()")],
         group_by=[build_group_by_field("service.name", "string", "resource")],
         order=[build_order_by("count()", "desc")],
         having_expression="count() > 3",

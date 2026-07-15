@@ -6,6 +6,7 @@ import { ExpandButtonWrapper } from 'container/InfraMonitoringK8sV2/components';
 import ColumnHeader from '../Base/ColumnHeader';
 import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
+import { SelectedItemParams } from '../hooks';
 import { formatBytes, getPodPhaseStatusItems } from '../commonUtils';
 import {
 	CellValueTooltip,
@@ -27,8 +28,13 @@ export function getK8sJobRowKey(job: InframonitoringtypesJobRecordDTO): string {
 
 export function getK8sJobItemKey(
 	job: InframonitoringtypesJobRecordDTO,
-): string {
-	return job.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_JOB_NAME] || '';
+): SelectedItemParams {
+	return {
+		selectedItem: job.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_JOB_NAME] ?? null,
+		clusterName: job.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] ?? null,
+		namespaceName:
+			job.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ?? null,
+	};
 }
 
 export type JobTableColumnConfig =
