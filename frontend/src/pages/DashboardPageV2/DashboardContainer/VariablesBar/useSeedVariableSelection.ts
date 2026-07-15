@@ -87,20 +87,11 @@ export function useSeedVariableSelection(
 		});
 		setVariableValues(dashboardId, seeded);
 
-		// Drop URL selections for variables that no longer exist (renamed/removed),
-		// so a shared link doesn't carry stale entries a later variable could inherit.
+		// Read-once: a share link's `?variables=` seeds the store, then the param is
+		// dropped so the store is the sole source of truth. Selection changes never
+		// write it back (only an explicit Share action re-materializes it).
 		if (urlValues) {
-			const validNames = new Set(variables.map((v) => v.name));
-			const orphaned = Object.keys(urlValues).some((n) => !validNames.has(n));
-			if (orphaned) {
-				const pruned: Record<string, SelectedVariableValue> = {};
-				Object.entries(urlValues).forEach(([name, value]) => {
-					if (validNames.has(name)) {
-						pruned[name] = value;
-					}
-				});
-				void setUrlValues(pruned);
-			}
+			void setUrlValues(null);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps -- seed once per dashboard/variable set; the URL is read as of that moment
 	}, [dashboardId, variables]);
