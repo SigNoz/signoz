@@ -1,4 +1,4 @@
-import { isArray } from 'lodash-es';
+import { escapeRegExp, isArray } from 'lodash-es';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 
@@ -31,6 +31,23 @@ export function textContainsVariableReference(
 		return false;
 	}
 	return buildVariableReferencePattern(variableName).test(text);
+}
+
+/**
+ * Matches *any* variable reference in a recognized syntax without knowing the
+ * name: `{{name}}`, `{{.name}}`, `[[name]]`, or `$name`. The `$` form excludes
+ * `$__…` macros and positional `$1` so built-ins don't read as variables.
+ */
+const ANY_VARIABLE_REFERENCE =
+	/\{\{\s*\.?[\w.]+\s*\}\}|\[\[\s*[\w.]+\s*\]\]|\$(?!__)[a-zA-Z_][\w.]*/;
+
+/**
+ * Returns true if `text` contains a reference to any variable. Use when the set
+ * of variable names isn't known yet (e.g. before the fetch context initializes),
+ * so a name-based {@link textContainsVariableReference} check can't run.
+ */
+export function containsAnyVariableReference(text: string): boolean {
+	return !!text && ANY_VARIABLE_REFERENCE.test(text);
 }
 
 /**
@@ -133,4 +150,53 @@ export function getVariableReferencesInQuery(
 	return variableNames.filter((name) =>
 		texts.some((text) => textContainsVariableReference(text, name)),
 	);
+}
+
+/**
+ * Rewrites every reference to `oldName` in `text` to `newName`, preserving the
+ * surrounding syntax for each recognized form ({{.x}}, {{x}}, $x, [[x]]). Used
+ * when a variable is renamed so its usages across queries stay valid.
+ */
+export function rewriteVariableReferences(
+	text: string,
+	oldName: string,
+	newName: string,
+): string {
+	if (!text || !oldName || oldName === newName) {
+		return text;
+	}
+	const name = escapeRegExp(oldName);
+	return text
+		.replace(
+			new RegExp(`(\\{\\{\\s*?\\.)${name}(\\s*?\\}\\})`, 'g'),
+			`$1${newName}$2`,
+		)
+		.replace(new RegExp(`(\\{\\{\\s*)${name}(\\s*\\}\\})`, 'g'), `$1${newName}$2`)
+		.replace(new RegExp(`\\$${name}\\b`, 'g'), `$${newName}`)
+		.replace(
+			new RegExp(`(\\[\\[\\s*)${name}(\\s*\\]\\])`, 'g'),
+			`$1${newName}$2`,
+		);
+}
+
+/**
+ * Best-effort removal of the clause that references `variableName` from an
+ * ` AND `-joined filter expression (e.g. a builder query's `filter.expression`).
+ * Any top-level `AND` part that references the variable is dropped. It does not
+ * understand `OR`/nested parentheses, so it is a starting point the user reviews
+ * before applying — never an automatic edit of raw PromQL/ClickHouse.
+ */
+export function removeVariableReferenceClause(
+	expression: string,
+	variableName: string,
+): string {
+	if (!expression) {
+		return expression;
+	}
+	return expression
+		.split(' AND ')
+		.map((part) => part.trim())
+		.filter(Boolean)
+		.filter((part) => !textContainsVariableReference(part, variableName))
+		.join(' AND ');
 }
