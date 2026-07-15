@@ -1,18 +1,15 @@
 // Copyright (c) 2026 SigNoz, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package jsmops
+package atlassian
 
 import (
-	"context"
 	"crypto/rand"
 	"encoding/base64"
 	"sync"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 const oauthStateTTL = 10 * time.Minute
@@ -41,8 +38,20 @@ func storeOAuthState(entry oauthStateEntry) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	sweepExpiredOAuthStates()
 	oauthStates.Store(state, entry)
 	return state, nil
+}
+
+// sweepExpiredOAuthStates removes state entries whose TTL has elapsed.
+func sweepExpiredOAuthStates() {
+	now := time.Now()
+	oauthStates.Range(func(key, value any) bool {
+		if entry, ok := value.(oauthStateEntry); ok && now.After(entry.expiry) {
+			oauthStates.Delete(key)
+		}
+		return true
+	})
 }
 
 // loadAndDeleteOAuthState consumes a state token exactly once.
@@ -56,28 +65,4 @@ func loadAndDeleteOAuthState(state string) (oauthStateEntry, bool) {
 		return oauthStateEntry{}, false
 	}
 	return entry, true
-}
-
-// ResolveConnections validates that each JSM Ops config references a connection the org owns and stamps the runtime-only OrgID.
-func (h *Handler) ResolveConnections(ctx context.Context, orgID string, receiver *alertmanagertypes.Receiver) error {
-	connStore := h.alertmanager.JSMOpsConnectionStore()
-
-	for _, cfg := range receiver.JsmOpsConfigs {
-		if cfg.ConnectionID == "" {
-			return errors.NewInvalidInputf(errors.CodeInvalidInput, "JSM Ops channel is not connected; please select a connection before saving or testing")
-		}
-
-		id, err := valuer.NewUUID(cfg.ConnectionID)
-		if err != nil {
-			return errors.NewInvalidInputf(errors.CodeInvalidInput, "JSM Ops connection_id is not a valid uuid-v7")
-		}
-
-		if _, err := connStore.GetByID(ctx, orgID, id); err != nil {
-			return errors.NewInvalidInputf(errors.CodeInvalidInput, "JSM Ops connection has expired or is invalid; please reconnect")
-		}
-
-		cfg.OrgID = orgID
-	}
-
-	return nil
 }

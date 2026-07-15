@@ -112,11 +112,11 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/channels/jsmops/oauth/session", provider.authzMiddleware.EditAccess(provider.alertmanagerHandler.JsmOpsOAuthSession)).Methods(http.MethodPost).GetError(); err != nil {
+	if err := router.Handle("/api/v1/channels/atlassian/oauth/session", provider.authzMiddleware.EditAccess(provider.alertmanagerHandler.AtlassianOAuthSession)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/channels/jsmops/oauth/callback", http.HandlerFunc(provider.alertmanagerHandler.JsmOpsOAuthCallback)).Methods(http.MethodGet).GetError(); err != nil {
+	if err := router.Handle("/api/v1/channels/atlassian/oauth/callback", http.HandlerFunc(provider.alertmanagerHandler.AtlassianOAuthCallback)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
@@ -124,11 +124,11 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/channels/jsmops/connections", provider.authzMiddleware.ViewAccess(provider.alertmanagerHandler.JsmOpsConnections)).Methods(http.MethodGet).GetError(); err != nil {
+	if err := router.Handle("/api/v1/channels/atlassian/connections", provider.authzMiddleware.ViewAccess(provider.alertmanagerHandler.AtlassianConnections)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/channels/jsmops/connections/{id}", provider.authzMiddleware.AdminAccess(provider.alertmanagerHandler.JsmOpsConnectionDelete)).Methods(http.MethodDelete).GetError(); err != nil {
+	if err := router.Handle("/api/v1/channels/atlassian/connections/{id}", provider.authzMiddleware.AdminAccess(provider.alertmanagerHandler.AtlassianConnectionDelete)).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
 

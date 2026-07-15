@@ -244,9 +244,9 @@ alertmanager:
       maintenance_interval: 15m
       # Retention of the notification logs.
       retention: 120h
-    jsmops:
+    atlassian:
       oauth:
-        # OAuth 2.0 credentials for the JSM Ops alert channel.
+        # Atlassian OAuth 2.0 (3LO) app credentials.
         client_id: ""
         client_secret: ""
         redirect_uri: ""

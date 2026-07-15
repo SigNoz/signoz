@@ -29,13 +29,13 @@ type Handler interface {
 
 	DeleteRoutePolicyByID(http.ResponseWriter, *http.Request)
 
-	JsmOpsOAuthSession(http.ResponseWriter, *http.Request)
+	AtlassianOAuthSession(http.ResponseWriter, *http.Request)
 
-	JsmOpsOAuthCallback(http.ResponseWriter, *http.Request)
+	AtlassianOAuthCallback(http.ResponseWriter, *http.Request)
 
 	JsmOpsTeams(http.ResponseWriter, *http.Request)
 
-	JsmOpsConnections(http.ResponseWriter, *http.Request)
+	AtlassianConnections(http.ResponseWriter, *http.Request)
 
-	JsmOpsConnectionDelete(http.ResponseWriter, *http.Request)
+	AtlassianConnectionDelete(http.ResponseWriter, *http.Request)
 }

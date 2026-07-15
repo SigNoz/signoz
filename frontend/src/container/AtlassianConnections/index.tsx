@@ -3,22 +3,22 @@ import { Plus } from '@signozhq/icons';
 import { Button, Flex, Popconfirm, Table } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import { Typography } from '@signozhq/ui/typography';
-import { JsmOpsConnection } from 'types/api/channels/jsmOps';
-import { useJsmOpsConnections } from 'container/FormAlertChannels/Settings/useJsmOpsConnections';
-import { useDeleteJsmOpsConnection } from 'container/FormAlertChannels/Settings/useDeleteJsmOpsConnection';
-import { useJsmOpsConnect } from 'container/FormAlertChannels/Settings/useJsmOpsConnect';
+import { AtlassianConnection } from 'types/api/channels/atlassian';
+import { useAtlassianConnections } from 'container/FormAlertChannels/Settings/Atlassian/useAtlassianConnections';
+import { useDeleteAtlassianConnection } from 'container/FormAlertChannels/Settings/Atlassian/useDeleteAtlassianConnection';
+import { useAtlassianConnect } from 'container/FormAlertChannels/Settings/Atlassian/useAtlassianConnect';
 import { useNotifications } from 'hooks/useNotifications';
 import APIError from 'types/api/error';
 
 const { Text } = Typography;
 
-function JsmOpsConnections(): JSX.Element {
+function AtlassianConnections(): JSX.Element {
 	const { t } = useTranslation(['channels']);
 	const { notifications } = useNotifications();
 
-	const { connections, isLoading, refetch } = useJsmOpsConnections();
-	const { deleteConnection, isDeleting } = useDeleteJsmOpsConnection();
-	const { connect, isConnecting } = useJsmOpsConnect(() => {
+	const { connections, isLoading, refetch } = useAtlassianConnections();
+	const { deleteConnection, isDeleting } = useDeleteAtlassianConnection();
+	const { connect, isConnecting } = useAtlassianConnect(() => {
 		void refetch();
 	});
 
@@ -27,27 +27,27 @@ function JsmOpsConnections(): JSX.Element {
 			await deleteConnection(id);
 			notifications.success({
 				message: 'Success',
-				description: t('jsmops_connection_deleted'),
+				description: t('atlassian_connection_deleted'),
 			});
 		} catch (error) {
 			notifications.error({
 				message: (error as APIError).getErrorCode?.() || 'Error',
 				description:
 					(error as APIError).getErrorMessage?.() ||
-					t('jsmops_connection_delete_failed'),
+					t('atlassian_connection_delete_failed'),
 			});
 		}
 	};
 
-	const columns: ColumnsType<JsmOpsConnection> = [
+	const columns: ColumnsType<AtlassianConnection> = [
 		{
-			title: t('jsmops_connection_site'),
+			title: t('atlassian_connection_site'),
 			dataIndex: 'site_url',
 			key: 'site_url',
 			render: (siteURL: string, record): string => siteURL || record.cloud_id,
 		},
 		{
-			title: t('jsmops_connection_cloud_id'),
+			title: t('atlassian_connection_cloud_id'),
 			dataIndex: 'cloud_id',
 			key: 'cloud_id',
 		},
@@ -57,16 +57,16 @@ function JsmOpsConnections(): JSX.Element {
 			width: 120,
 			render: (_, record): JSX.Element => (
 				<Popconfirm
-					title={t('jsmops_connection_delete_confirm')}
+					title={t('atlassian_connection_delete_confirm')}
 					onConfirm={(): Promise<void> => handleDelete(record.id)}
 					okButtonProps={{ loading: isDeleting }}
 				>
 					<Button
 						danger
 						type="text"
-						data-testid={`jsmops-connection-delete-${record.id}`}
+						data-testid={`atlassian-connection-delete-${record.id}`}
 					>
-						{t('jsmops_connection_delete')}
+						{t('atlassian_connection_delete')}
 					</Button>
 				</Popconfirm>
 			),
@@ -74,32 +74,32 @@ function JsmOpsConnections(): JSX.Element {
 	];
 
 	return (
-		<div className="jsmops-connections-container">
+		<div className="atlassian-connections-container">
 			<Flex justify="space-between" align="center" style={{ marginBottom: 12 }}>
-				<Text>{t('jsmops_connections_title')}</Text>
+				<Text>{t('atlassian_connections_title')}</Text>
 				<Button
 					icon={<Plus size="md" />}
 					onClick={(): void => {
 						void connect();
 					}}
 					loading={isConnecting}
-					data-testid="jsmops-connection-add"
+					data-testid="atlassian-connection-add"
 				>
-					{t('button_add_jsmops_connection')}
+					{t('button_add_atlassian_connection')}
 				</Button>
 			</Flex>
 
-			<Table<JsmOpsConnection>
+			<Table<AtlassianConnection>
 				rowKey="id"
 				loading={isLoading}
 				dataSource={connections}
 				columns={columns}
 				pagination={false}
-				locale={{ emptyText: t('jsmops_connections_empty') }}
-				data-testid="jsmops-connections-table"
+				locale={{ emptyText: t('atlassian_connections_empty') }}
+				data-testid="atlassian-connections-table"
 			/>
 		</div>
 	);
 }
 
-export default JsmOpsConnections;
+export default AtlassianConnections;

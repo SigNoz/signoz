@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager/atlassian"
 	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager/jsmops"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
@@ -19,12 +20,14 @@ import (
 
 type handler struct {
 	alertmanager alertmanager.Alertmanager
+	atlassian    *atlassian.Handler
 	jsmops       *jsmops.Handler
 }
 
 func NewHandler(alertmanager alertmanager.Alertmanager) alertmanager.Handler {
 	return &handler{
 		alertmanager: alertmanager,
+		atlassian:    atlassian.NewHandler(alertmanager),
 		jsmops:       jsmops.NewHandler(alertmanager),
 	}
 }
@@ -77,7 +80,7 @@ func (handler *handler) TestReceiver(rw http.ResponseWriter, req *http.Request) 
 		return
 	}
 
-	if err := handler.jsmops.ResolveConnections(ctx, claims.OrgID, receiver); err != nil {
+	if err := handler.atlassian.ResolveConnections(ctx, claims.OrgID, receiver); err != nil {
 		render.Error(rw, err)
 		return
 	}
@@ -91,14 +94,14 @@ func (handler *handler) TestReceiver(rw http.ResponseWriter, req *http.Request) 
 	render.Success(rw, http.StatusNoContent, nil)
 }
 
-// JsmOpsOAuthSession starts the Atlassian OAuth flow and returns the consent URL.
-func (handler *handler) JsmOpsOAuthSession(rw http.ResponseWriter, req *http.Request) {
-	handler.jsmops.OAuthSession(rw, req)
+// AtlassianOAuthSession starts the Atlassian OAuth flow and returns the consent URL.
+func (handler *handler) AtlassianOAuthSession(rw http.ResponseWriter, req *http.Request) {
+	handler.atlassian.OAuthSession(rw, req)
 }
 
-// JsmOpsOAuthCallback completes the Atlassian OAuth flow for a JSM Ops channel.
-func (handler *handler) JsmOpsOAuthCallback(rw http.ResponseWriter, req *http.Request) {
-	handler.jsmops.OAuthCallback(rw, req)
+// AtlassianOAuthCallback completes the Atlassian OAuth flow and persists the connection.
+func (handler *handler) AtlassianOAuthCallback(rw http.ResponseWriter, req *http.Request) {
+	handler.atlassian.OAuthCallback(rw, req)
 }
 
 // JsmOpsTeams lists the JSM Ops teams a user can pick as responders.
@@ -106,14 +109,14 @@ func (handler *handler) JsmOpsTeams(rw http.ResponseWriter, req *http.Request) {
 	handler.jsmops.Teams(rw, req)
 }
 
-// JsmOpsConnections lists the org's reusable JSM Ops OAuth connections.
-func (handler *handler) JsmOpsConnections(rw http.ResponseWriter, req *http.Request) {
-	handler.jsmops.ListConnections(rw, req)
+// AtlassianConnections lists the org's reusable Atlassian OAuth connections.
+func (handler *handler) AtlassianConnections(rw http.ResponseWriter, req *http.Request) {
+	handler.atlassian.ListConnections(rw, req)
 }
 
-// JsmOpsConnectionDelete removes a JSM Ops OAuth connection.
-func (handler *handler) JsmOpsConnectionDelete(rw http.ResponseWriter, req *http.Request) {
-	handler.jsmops.DeleteConnection(rw, req)
+// AtlassianConnectionDelete removes an Atlassian OAuth connection.
+func (handler *handler) AtlassianConnectionDelete(rw http.ResponseWriter, req *http.Request) {
+	handler.atlassian.DeleteConnection(rw, req)
 }
 
 func (handler *handler) ListChannels(rw http.ResponseWriter, req *http.Request) {
@@ -231,8 +234,8 @@ func (handler *handler) UpdateChannelByID(rw http.ResponseWriter, req *http.Requ
 		return
 	}
 
-	// For JSM Ops, validate the referenced connection belongs to the org.
-	if err := handler.jsmops.ResolveConnections(ctx, claims.OrgID, receiver); err != nil {
+	// Validate that any Atlassian-backed config references a connection the org owns.
+	if err := handler.atlassian.ResolveConnections(ctx, claims.OrgID, receiver); err != nil {
 		render.Error(rw, err)
 		return
 	}
@@ -307,7 +310,7 @@ func (handler *handler) CreateChannel(rw http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	if err := handler.jsmops.ResolveConnections(ctx, claims.OrgID, receiver); err != nil {
+	if err := handler.atlassian.ResolveConnections(ctx, claims.OrgID, receiver); err != nil {
 		render.Error(rw, err)
 		return
 	}

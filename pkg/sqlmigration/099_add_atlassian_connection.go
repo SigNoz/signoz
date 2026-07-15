@@ -10,25 +10,25 @@ import (
 	"github.com/uptrace/bun/migrate"
 )
 
-type addJsmOpsConnection struct {
+type addAtlassianConnection struct {
 	sqlstore  sqlstore.SQLStore
 	sqlschema sqlschema.SQLSchema
 }
 
-func NewAddJsmOpsConnectionFactory(sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) factory.ProviderFactory[SQLMigration, Config] {
-	return factory.NewProviderFactory(factory.MustNewName("add_jsmops_connection"), func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
-		return &addJsmOpsConnection{
+func NewAddAtlassianConnectionFactory(sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) factory.ProviderFactory[SQLMigration, Config] {
+	return factory.NewProviderFactory(factory.MustNewName("add_atlassian_connection"), func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
+		return &addAtlassianConnection{
 			sqlstore:  sqlstore,
 			sqlschema: sqlschema,
 		}, nil
 	})
 }
 
-func (migration *addJsmOpsConnection) Register(migrations *migrate.Migrations) error {
+func (migration *addAtlassianConnection) Register(migrations *migrate.Migrations) error {
 	return migrations.Register(migration.Up, migration.Down)
 }
 
-func (migration *addJsmOpsConnection) Up(ctx context.Context, db *bun.DB) error {
+func (migration *addAtlassianConnection) Up(ctx context.Context, db *bun.DB) error {
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -41,7 +41,7 @@ func (migration *addJsmOpsConnection) Up(ctx context.Context, db *bun.DB) error 
 	sqls := [][]byte{}
 
 	tableSQLs := migration.sqlschema.Operator().CreateTable(&sqlschema.Table{
-		Name: "jsmops_connection",
+		Name: "atlassian_connection",
 		Columns: []*sqlschema.Column{
 			{Name: "id", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "cloud_id", DataType: sqlschema.DataTypeText, Nullable: false},
@@ -63,12 +63,11 @@ func (migration *addJsmOpsConnection) Up(ctx context.Context, db *bun.DB) error 
 	})
 	sqls = append(sqls, tableSQLs...)
 
-	// A single Atlassian site (cloud_id) maps to one connection per org. Reconnecting
-	// the same site updates the existing row rather than creating a duplicate.
+	// A single Atlassian site maps to one connection per org, shared by every Atlassian-backed channel type.
 	uniqueIndexSQLs := migration.sqlschema.Operator().CreateIndex(
 		&sqlschema.UniqueIndex{
-			TableName:   "jsmops_connection",
-			ColumnNames: []sqlschema.ColumnName{"org_id", "cloud_id"},
+			TableName:   "atlassian_connection",
+			ColumnNames: []sqlschema.ColumnName{"org_id", "site_url"},
 		},
 	)
 	sqls = append(sqls, uniqueIndexSQLs...)
@@ -82,6 +81,6 @@ func (migration *addJsmOpsConnection) Up(ctx context.Context, db *bun.DB) error 
 	return tx.Commit()
 }
 
-func (migration *addJsmOpsConnection) Down(_ context.Context, _ *bun.DB) error {
+func (migration *addAtlassianConnection) Down(_ context.Context, _ *bun.DB) error {
 	return nil
 }

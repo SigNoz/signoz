@@ -351,7 +351,7 @@ describe('Create Alert Channel (Normal User)', () => {
 			it('Should check if the Add connection button is displayed', () => {
 				expect(screen.getByTestId('jsmops-oauth-connect')).toBeInTheDocument();
 				expect(
-					screen.getByText('button_add_jsmops_connection'),
+					screen.getByText('button_add_atlassian_connection'),
 				).toBeInTheDocument();
 			});
 

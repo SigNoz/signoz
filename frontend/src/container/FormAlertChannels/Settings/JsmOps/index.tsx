@@ -3,9 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { Button, Form, Input, Select, Space } from 'antd';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 
-import { JsmOpsChannel } from '../../CreateAlertChannels/config';
-import { useJsmOpsConnect } from './useJsmOpsConnect';
-import { useJsmOpsConnections } from './useJsmOpsConnections';
+import { JsmOpsChannel } from '../../../CreateAlertChannels/config';
+import { useAtlassianConnect } from '../Atlassian/useAtlassianConnect';
+import { useAtlassianConnections } from '../Atlassian/useAtlassianConnections';
 import { useJsmOpsTeams } from './useJsmOpsTeams';
 
 const { TextArea } = Input;
@@ -48,9 +48,9 @@ function JsmOps({ setSelectedConfig }: JsmOpsProps): JSX.Element {
 		connections,
 		isLoading: connectionsLoading,
 		refetch: refetchConnections,
-	} = useJsmOpsConnections();
+	} = useAtlassianConnections();
 
-	const { connect, isConnecting } = useJsmOpsConnect((connection) => {
+	const { connect, isConnecting } = useAtlassianConnect((connection) => {
 		setConnectionId(connection.id);
 		setSelectedConfig((value) => ({
 			...value,
@@ -119,7 +119,7 @@ function JsmOps({ setSelectedConfig }: JsmOpsProps): JSX.Element {
 							value: connection.id,
 						}))}
 						loading={connectionsLoading}
-						placeholder={t('placeholder_jsmops_connection')}
+						placeholder={t('placeholder_atlassian_connection')}
 						optionFilterProp="label"
 						showSearch
 						data-testid="jsmops-connection-select"
@@ -132,7 +132,7 @@ function JsmOps({ setSelectedConfig }: JsmOpsProps): JSX.Element {
 						loading={isConnecting}
 						data-testid="jsmops-oauth-connect"
 					>
-						{t('button_add_jsmops_connection')}
+						{t('button_add_atlassian_connection')}
 					</Button>
 				</Space>
 			</Form.Item>

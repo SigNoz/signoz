@@ -2,22 +2,19 @@ import axios from 'api';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { AxiosError } from 'axios';
 import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
+import { AtlassianConnection } from 'types/api/channels/atlassian';
 
-interface Props {
-	id: string;
-}
-
-const deleteJsmOpsConnection = async (
-	props: Props,
-): Promise<SuccessResponseV2<null>> => {
+const getAtlassianConnections = async (): Promise<
+	SuccessResponseV2<AtlassianConnection[]>
+> => {
 	try {
-		const response = await axios.delete(
-			`/channels/jsmops/connections/${props.id}`,
+		const response = await axios.get<{ data: AtlassianConnection[] }>(
+			'/channels/atlassian/connections',
 		);
 
 		return {
 			httpStatusCode: response.status,
-			data: null,
+			data: response.data.data,
 		};
 	} catch (error) {
 		ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
@@ -25,4 +22,4 @@ const deleteJsmOpsConnection = async (
 	}
 };
 
-export default deleteJsmOpsConnection;
+export default getAtlassianConnections;

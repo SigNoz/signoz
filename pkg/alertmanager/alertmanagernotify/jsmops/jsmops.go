@@ -28,31 +28,32 @@ const (
 	Integration    = "jsmops"
 	defaultBaseURL = "https://api.atlassian.com/ex/jira"
 	sourceName     = "SigNoz Alert Manager"
+
+	maxMessageLenRunes     = 130
+	maxDescriptionLenRunes = 15000
 )
 
-// ConnectionStore resolves live OAuth credentials for a JSM Ops connection and
-// can exchange a stale refresh token for a fresh pair.
-type ConnectionStore interface {
-	GetTokens(ctx context.Context, orgID, connectionID string) (accessToken, refreshToken, cloudID string, err error)
-	Refresh(ctx context.Context, staleRefreshToken string) (newAccessToken, newRefreshToken string, err error)
+type ConnectionResolver interface {
+	Resolve(ctx context.Context, orgID, connectionID string) (*alertmanagertypes.AtlassianConnection, error)
+	Refresh(ctx context.Context, orgID, connectionID string) (*alertmanagertypes.AtlassianConnection, error)
 }
 
 type Notifier struct {
-	config  *alertmanagertypes.JsmOpsReceiverConfig
-	store   ConnectionStore
-	tmpl    *template.Template
-	logger  *slog.Logger
-	client  *http.Client
-	retrier *notify.Retrier
-	baseURL string
+	config   *alertmanagertypes.JsmOpsReceiverConfig
+	resolver ConnectionResolver
+	tmpl     *template.Template
+	logger   *slog.Logger
+	client   *http.Client
+	retrier  *notify.Retrier
+	baseURL  string
 }
 
-func New(cfg *alertmanagertypes.JsmOpsReceiverConfig, t *template.Template, l *slog.Logger, templater alertmanagertypes.Templater, store ConnectionStore, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
+func New(cfg *alertmanagertypes.JsmOpsReceiverConfig, t *template.Template, l *slog.Logger, templater alertmanagertypes.Templater, resolver ConnectionResolver, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
 	if cfg == nil {
 		return nil, errors.NewInternalf(errors.CodeInternal, "jsm ops config is required")
 	}
-	if store == nil {
-		return nil, errors.NewInternalf(errors.CodeInternal, "jsm ops connection store is required")
+	if resolver == nil {
+		return nil, errors.NewInternalf(errors.CodeInternal, "jsm ops connection resolver is required")
 	}
 	if cfg.ConnectionID == "" {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "jsm ops connection_id is required")
@@ -70,12 +71,12 @@ func New(cfg *alertmanagertypes.JsmOpsReceiverConfig, t *template.Template, l *s
 	}
 
 	return &Notifier{
-		config:  cfg,
-		store:   store,
-		tmpl:    t,
-		logger:  l,
-		client:  client,
-		retrier: &notify.Retrier{},
+		config:   cfg,
+		resolver: resolver,
+		tmpl:     t,
+		logger:   l,
+		client:   client,
+		retrier:  &notify.Retrier{RetryCodes: []int{http.StatusTooManyRequests}},
 	}, nil
 }
 
@@ -106,7 +107,7 @@ func (n *Notifier) Notify(ctx context.Context, alerts ...*types.Alert) (bool, er
 	logger := n.logger.With(slog.Any("group_key", key))
 	logger.DebugContext(ctx, "extracted group key")
 
-	accessToken, refreshToken, cloudID, err := n.store.GetTokens(ctx, n.config.OrgID, n.config.ConnectionID)
+	conn, err := n.resolver.Resolve(ctx, n.config.OrgID, n.config.ConnectionID)
 	if err != nil {
 		return false, errors.NewInternalf(errors.CodeInternal, "failed to resolve jsm ops connection: %v", err)
 	}
@@ -123,11 +124,20 @@ func (n *Notifier) Notify(ctx context.Context, alerts ...*types.Alert) (bool, er
 	description := strings.TrimSpace(tmplText(n.config.Description))
 	alias := key.Hash()
 
+	message, msgTruncated := notify.TruncateInRunes(message, maxMessageLenRunes)
+	if msgTruncated {
+		logger.WarnContext(ctx, "truncated jsm ops message to fit the field limit", slog.Int("max_runes", maxMessageLenRunes))
+	}
+	description, descTruncated := notify.TruncateInRunes(description, maxDescriptionLenRunes)
+	if descTruncated {
+		logger.WarnContext(ctx, "truncated jsm ops description to fit the field limit", slog.Int("max_runes", maxDescriptionLenRunes))
+	}
+
 	if alertsGroup.Status() == model.AlertResolved {
 		if !n.config.SendResolved() {
 			return false, nil
 		}
-		return n.closeAlert(ctx, alias, accessToken, refreshToken, cloudID)
+		return n.closeAlert(ctx, alias, conn)
 	}
 
 	request := createAlertRequest{
@@ -140,7 +150,14 @@ func (n *Notifier) Notify(ctx context.Context, alerts ...*types.Alert) (bool, er
 		Source:      sourceName,
 	}
 
-	return n.postAlert(ctx, request, accessToken, refreshToken, cloudID)
+	if shouldRetry, err := n.postAlert(ctx, request, conn); err != nil || shouldRetry {
+		return shouldRetry, err
+	}
+
+	if n.config.UpdateAlerts {
+		n.updateAlert(ctx, alias, request, conn, logger)
+	}
+	return false, nil
 }
 
 func (n *Notifier) buildResponders() []responder {
@@ -174,13 +191,13 @@ func (n *Notifier) buildTags(tmpl func(string) string) []string {
 	return tags
 }
 
-func (n *Notifier) postAlert(ctx context.Context, req createAlertRequest, accessToken, refreshToken, cloudID string) (bool, error) {
+func (n *Notifier) postAlert(ctx context.Context, req createAlertRequest, conn *alertmanagertypes.AtlassianConnection) (bool, error) {
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(req); err != nil {
 		return false, err
 	}
 
-	resp, err := n.doRequest(ctx, http.MethodPost, n.alertsURL(cloudID), &buf, accessToken, refreshToken)
+	resp, err := n.doRequest(ctx, http.MethodPost, n.alertsURL(conn.CloudID), &buf, conn)
 	if err != nil {
 		return true, err
 	}
@@ -194,8 +211,46 @@ func (n *Notifier) postAlert(ctx context.Context, req createAlertRequest, access
 	return shouldRetry, err
 }
 
-func (n *Notifier) closeAlert(ctx context.Context, alias, accessToken, refreshToken, cloudID string) (bool, error) {
-	alertID, shouldRetry, err := n.fetchAlertID(ctx, alias, accessToken, refreshToken, cloudID)
+func (n *Notifier) updateAlert(ctx context.Context, alias string, req createAlertRequest, conn *alertmanagertypes.AtlassianConnection, logger *slog.Logger) {
+	alertID, _, err := n.fetchAlertID(ctx, alias, conn)
+	if err != nil {
+		logger.WarnContext(ctx, "jsm ops alert created but alias lookup for field update failed", slog.Any("err", err))
+		return
+	}
+	if alertID == "" {
+		return
+	}
+
+	if err := n.updateField(ctx, n.messageURL(alertID, conn.CloudID), map[string]string{"message": req.Message}, conn); err != nil {
+		logger.WarnContext(ctx, "jsm ops message update failed", slog.Any("err", err))
+	}
+	if req.Description != "" {
+		if err := n.updateField(ctx, n.descriptionURL(alertID, conn.CloudID), map[string]string{"description": req.Description}, conn); err != nil {
+			logger.WarnContext(ctx, "jsm ops description update failed", slog.Any("err", err))
+		}
+	}
+}
+
+func (n *Notifier) updateField(ctx context.Context, reqURL string, payload map[string]string, conn *alertmanagertypes.AtlassianConnection) error {
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(payload); err != nil {
+		return err
+	}
+
+	resp, err := n.doRequest(ctx, http.MethodPatch, reqURL, &buf, conn)
+	if err != nil {
+		return err
+	}
+	defer notify.Drain(resp)
+
+	if _, err := n.retrier.Check(resp.StatusCode, resp.Body); err != nil {
+		return notify.NewErrorWithReason(notify.GetFailureReasonFromStatusCode(resp.StatusCode), err)
+	}
+	return nil
+}
+
+func (n *Notifier) closeAlert(ctx context.Context, alias string, conn *alertmanagertypes.AtlassianConnection) (bool, error) {
+	alertID, shouldRetry, err := n.fetchAlertID(ctx, alias, conn)
 	if err != nil || shouldRetry {
 		return shouldRetry, err
 	}
@@ -203,7 +258,7 @@ func (n *Notifier) closeAlert(ctx context.Context, alias, accessToken, refreshTo
 		return false, nil
 	}
 
-	resp, err := n.doRequest(ctx, http.MethodPost, n.closeURL(alertID, cloudID), nil, accessToken, refreshToken)
+	resp, err := n.doRequest(ctx, http.MethodPost, n.closeURL(alertID, conn.CloudID), nil, conn)
 	if err != nil {
 		return true, err
 	}
@@ -216,8 +271,8 @@ func (n *Notifier) closeAlert(ctx context.Context, alias, accessToken, refreshTo
 	return shouldRetry, err
 }
 
-func (n *Notifier) fetchAlertID(ctx context.Context, alias, accessToken, refreshToken, cloudID string) (string, bool, error) {
-	u, err := url.Parse(n.aliasURL(cloudID))
+func (n *Notifier) fetchAlertID(ctx context.Context, alias string, conn *alertmanagertypes.AtlassianConnection) (string, bool, error) {
+	u, err := url.Parse(n.aliasURL(conn.CloudID))
 	if err != nil {
 		return "", false, errors.NewInternalf(errors.CodeInternal, "failed to parse jsmops alias url: %v", err)
 	}
@@ -225,7 +280,7 @@ func (n *Notifier) fetchAlertID(ctx context.Context, alias, accessToken, refresh
 	q.Set("alias", alias)
 	u.RawQuery = q.Encode()
 
-	resp, err := n.doRequest(ctx, http.MethodGet, u.String(), nil, accessToken, refreshToken)
+	resp, err := n.doRequest(ctx, http.MethodGet, u.String(), nil, conn)
 	if err != nil {
 		return "", true, err
 	}
@@ -259,7 +314,7 @@ func (n *Notifier) fetchAlertID(ctx context.Context, alias, accessToken, refresh
 	return parsed.ID, false, nil
 }
 
-func (n *Notifier) doRequest(ctx context.Context, method, reqURL string, body io.Reader, accessToken, refreshToken string) (*http.Response, error) {
+func (n *Notifier) doRequest(ctx context.Context, method, reqURL string, body io.Reader, conn *alertmanagertypes.AtlassianConnection) (*http.Response, error) {
 	var bodyBytes []byte
 	if body != nil {
 		var err error
@@ -269,20 +324,20 @@ func (n *Notifier) doRequest(ctx context.Context, method, reqURL string, body io
 		}
 	}
 
-	resp, err := n.sendRequest(ctx, method, reqURL, bodyBytes, accessToken)
+	resp, err := n.sendRequest(ctx, method, reqURL, bodyBytes, conn.AccessToken)
 	if err != nil {
 		return resp, err
 	}
 
-	if resp.StatusCode == http.StatusUnauthorized {
-		if refreshToken != "" {
-			newAccess, _, refreshErr := n.store.Refresh(ctx, refreshToken)
-			if refreshErr != nil {
-				n.logger.WarnContext(ctx, "failed to refresh jsm ops access token; reconnect the integration", slog.Any("err", refreshErr))
-			} else if newAccess != "" {
-				notify.Drain(resp)
-				return n.sendRequest(ctx, method, reqURL, bodyBytes, newAccess)
-			}
+	if resp.StatusCode == http.StatusUnauthorized && conn.RefreshToken != "" {
+		refreshed, refreshErr := n.resolver.Refresh(ctx, conn.OrgID, conn.ID.StringValue())
+		if refreshErr != nil {
+			n.logger.WarnContext(ctx, "failed to refresh jsm ops access token; reconnect the integration", slog.Any("err", refreshErr))
+		} else {
+			conn.AccessToken = refreshed.AccessToken
+			conn.RefreshToken = refreshed.RefreshToken
+			notify.Drain(resp)
+			return n.sendRequest(ctx, method, reqURL, bodyBytes, refreshed.AccessToken)
 		}
 	}
 
@@ -317,6 +372,14 @@ func (n *Notifier) aliasURL(cloudID string) string {
 
 func (n *Notifier) closeURL(alertID, cloudID string) string {
 	return n.buildURL(cloudID, fmt.Sprintf("alerts/%s/close", alertID))
+}
+
+func (n *Notifier) messageURL(alertID, cloudID string) string {
+	return n.buildURL(cloudID, fmt.Sprintf("alerts/%s/message", alertID))
+}
+
+func (n *Notifier) descriptionURL(alertID, cloudID string) string {
+	return n.buildURL(cloudID, fmt.Sprintf("alerts/%s/description", alertID))
 }
 
 func (n *Notifier) buildURL(cloudID, path string) string {

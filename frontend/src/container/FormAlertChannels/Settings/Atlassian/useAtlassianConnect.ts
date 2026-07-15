@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import createJsmOpsSession from 'api/channels/createJsmOpsSession';
+import createAtlassianOAuthSession from 'api/channels/createAtlassianOAuthSession';
 import { ENVIRONMENT } from 'constants/env';
 import { useNotifications } from 'hooks/useNotifications';
 import APIError from 'types/api/error';
@@ -17,14 +17,14 @@ function getOAuthOrigin(): string {
 	return window.location.origin;
 }
 
-interface UseJsmOpsConnectResult {
+interface UseAtlassianConnectResult {
 	connect: () => Promise<void>;
 	isConnecting: boolean;
 }
 
-export function useJsmOpsConnect(
+export function useAtlassianConnect(
 	onConnected: (connection: ConnectedConnection) => void,
-): UseJsmOpsConnectResult {
+): UseAtlassianConnectResult {
 	const { t } = useTranslation('channels');
 	const { notifications } = useNotifications();
 	const [isConnecting, setIsConnecting] = useState(false);
@@ -47,19 +47,22 @@ export function useJsmOpsConnect(
 				return;
 			}
 
-			if (event.data.type === 'jsmops_oauth_success' && event.data.connection_id) {
+			if (
+				event.data.type === 'atlassian_oauth_success' &&
+				event.data.connection_id
+			) {
 				setIsConnecting(false);
 				onConnectedRef.current({
 					id: event.data.connection_id,
 				});
-			} else if (event.data.type === 'jsmops_oauth_error') {
+			} else if (event.data.type === 'atlassian_oauth_error') {
 				setIsConnecting(false);
 				notifications.error({
 					message: 'Error',
 					description:
 						event.data.error === 'oauth_not_configured'
-							? t('jsmops_oauth_not_configured')
-							: t('jsmops_oauth_failed'),
+							? t('atlassian_oauth_not_configured')
+							: t('atlassian_oauth_failed'),
 				});
 			}
 		};
@@ -73,7 +76,7 @@ export function useJsmOpsConnect(
 		try {
 			// oxlint-disable-next-line signoz/no-raw-absolute-path -- opener origin is a bare origin used only as a postMessage target
 			const openerOrigin = window.location.origin;
-			const session = await createJsmOpsSession({ openerOrigin });
+			const session = await createAtlassianOAuthSession({ openerOrigin });
 
 			const width = 600;
 			const height = 700;
@@ -106,7 +109,7 @@ export function useJsmOpsConnect(
 			notifications.error({
 				message: (error as APIError).getErrorCode?.() || 'Error',
 				description:
-					(error as APIError).getErrorMessage?.() || t('jsmops_oauth_failed'),
+					(error as APIError).getErrorMessage?.() || t('atlassian_oauth_failed'),
 			});
 		}
 	}, [notifications, t]);

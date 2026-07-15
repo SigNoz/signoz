@@ -1,7 +1,7 @@
 // Copyright (c) 2026 SigNoz, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package jsmops
+package atlassian
 
 import (
 	"testing"
@@ -10,8 +10,8 @@ import (
 )
 
 func TestAllowedOpenerOrigin(t *testing.T) {
-	oauth := alertmanager.JSMOpsOAuthConfig{
-		RedirectURI: "https://signoz.example.com/api/v1/channels/jsmops/oauth/callback",
+	oauth := alertmanager.AtlassianOAuthConfig{
+		RedirectURI: "https://signoz.example.com/api/v1/channels/atlassian/oauth/callback",
 	}
 
 	cases := []struct {
@@ -39,18 +39,15 @@ func TestAllowedOpenerOrigin(t *testing.T) {
 }
 
 func TestAllowedOpenerOriginUnconfiguredRedirect(t *testing.T) {
-	// With no redirect URI configured, no opener origin can be trusted.
-	oauth := alertmanager.JSMOpsOAuthConfig{}
+	oauth := alertmanager.AtlassianOAuthConfig{}
 	if got := allowedOpenerOrigin(oauth, "https://signoz.example.com"); got != "" {
 		t.Fatalf("allowedOpenerOrigin with empty redirect = %q, want empty", got)
 	}
 }
 
 func TestAllowedOpenerOriginAllowlist(t *testing.T) {
-	// The UI and the OAuth callback can live on different origins (e.g. UI on :3301
-	// and API on :8080 in local dev); the allowlist lets such an opener through.
-	oauth := alertmanager.JSMOpsOAuthConfig{
-		RedirectURI:          "http://localhost:8080/api/v1/channels/jsmops/oauth/callback",
+	oauth := alertmanager.AtlassianOAuthConfig{
+		RedirectURI:          "http://localhost:8080/api/v1/channels/atlassian/oauth/callback",
 		AllowedOpenerOrigins: []string{"http://localhost:3301"},
 	}
 

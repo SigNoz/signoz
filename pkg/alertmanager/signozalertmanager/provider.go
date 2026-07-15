@@ -29,7 +29,7 @@ type provider struct {
 	config              alertmanager.Config
 	settings            factory.ScopedProviderSettings
 	configStore         alertmanagertypes.ConfigStore
-	jsmOpsConnStore     alertmanagertypes.JsmOpsConnectionStore
+	atlassianConnStore  alertmanagertypes.AtlassianConnectionStore
 	stateStore          alertmanagertypes.StateStore
 	notificationManager nfmanager.NotificationManager
 	maintenanceStore    alertmanagertypes.MaintenanceStore
@@ -57,9 +57,9 @@ func New(
 ) (*provider, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager")
 	configStore := sqlalertmanagerstore.NewConfigStore(sqlstore)
-	jsmOpsConnStore := sqlalertmanagerstore.NewJsmOpsConnectionStore(sqlstore)
+	atlassianConnStore := sqlalertmanagerstore.NewAtlassianConnectionStore(sqlstore)
 	stateStore := sqlalertmanagerstore.NewStateStore(sqlstore)
-	jsmOpsResolver := jsmops.NewConnectionResolver(jsmOpsConnStore, config.Signoz.JSMOps.OAuth, settings.Logger())
+	jsmOpsResolver := jsmops.NewConnectionResolver(atlassianConnStore, config.Signoz.Atlassian.OAuth, settings.Logger())
 	receiverIntegrations := alertmanagernotify.NewReceiverIntegrationsFactory(jsmOpsResolver)
 
 	p := &provider{
@@ -76,7 +76,7 @@ func New(
 		settings:            settings,
 		config:              config,
 		configStore:         configStore,
-		jsmOpsConnStore:     jsmOpsConnStore,
+		atlassianConnStore:  atlassianConnStore,
 		stateStore:          stateStore,
 		notificationManager: notificationManager,
 		maintenanceStore:    maintenanceStore,
@@ -248,12 +248,12 @@ func (provider *provider) Config() alertmanagerserver.Config {
 	return provider.config.Signoz.Config
 }
 
-func (provider *provider) JSMOpsOAuthConfig() alertmanager.JSMOpsOAuthConfig {
-	return provider.config.Signoz.JSMOps.OAuth
+func (provider *provider) AtlassianOAuthConfig() alertmanager.AtlassianOAuthConfig {
+	return provider.config.Signoz.Atlassian.OAuth
 }
 
-func (provider *provider) JSMOpsConnectionStore() alertmanagertypes.JsmOpsConnectionStore {
-	return provider.jsmOpsConnStore
+func (provider *provider) AtlassianConnectionStore() alertmanagertypes.AtlassianConnectionStore {
+	return provider.atlassianConnStore
 }
 
 func (provider *provider) SetConfig(ctx context.Context, config *alertmanagertypes.Config) error {

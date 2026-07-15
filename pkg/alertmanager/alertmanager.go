@@ -52,11 +52,11 @@ type Alertmanager interface {
 	// Config returns the alertmanagerserver configuration.
 	Config() alertmanagerserver.Config
 
-	// JSMOpsOAuthConfig returns the configured JSM Ops OAuth app credentials.
-	JSMOpsOAuthConfig() JSMOpsOAuthConfig
+	// AtlassianOAuthConfig returns the configured Atlassian OAuth app credentials.
+	AtlassianOAuthConfig() AtlassianOAuthConfig
 
-	// JSMOpsConnectionStore returns the store for reusable JSM Ops OAuth connections.
-	JSMOpsConnectionStore() alertmanagertypes.JsmOpsConnectionStore
+	// AtlassianConnectionStore returns the store for reusable Atlassian OAuth connections.
+	AtlassianConnectionStore() alertmanagertypes.AtlassianConnectionStore
 
 	// SetConfig sets the config for the organization.
 	SetConfig(context.Context, *alertmanagertypes.Config) error

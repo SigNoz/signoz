@@ -2,18 +2,18 @@ import axios from 'api';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { AxiosError } from 'axios';
 import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
-import { JsmOpsOAuthSession } from 'types/api/channels/jsmOps';
+import { AtlassianOAuthSession } from 'types/api/channels/atlassian';
 
 interface Props {
 	openerOrigin: string;
 }
 
-const createJsmOpsSession = async (
+const createAtlassianOAuthSession = async (
 	props: Props,
-): Promise<SuccessResponseV2<JsmOpsOAuthSession>> => {
+): Promise<SuccessResponseV2<AtlassianOAuthSession>> => {
 	try {
-		const response = await axios.post<{ data: JsmOpsOAuthSession }>(
-			'/channels/jsmops/oauth/session',
+		const response = await axios.post<{ data: AtlassianOAuthSession }>(
+			'/channels/atlassian/oauth/session',
 			null,
 			{ params: { opener_origin: props.openerOrigin } },
 		);
@@ -28,4 +28,4 @@ const createJsmOpsSession = async (
 	}
 };
 
-export default createJsmOpsSession;
+export default createAtlassianOAuthSession;

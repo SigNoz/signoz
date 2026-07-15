@@ -1823,6 +1823,8 @@ components:
           items:
             type: string
           type: array
+        update_alerts:
+          type: boolean
       type: object
     ConfigMSTeamsConfig:
       properties:

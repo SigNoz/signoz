@@ -28,13 +28,13 @@ var customNotifierIntegrations = []string{
 	jsmops.Integration,
 }
 
-func NewReceiverIntegrationsFactory(jsmOpsStore jsmops.ConnectionStore) alertmanagertypes.ReceiverIntegrationsFunc {
+func NewReceiverIntegrationsFactory(jsmOpsResolver jsmops.ConnectionResolver) alertmanagertypes.ReceiverIntegrationsFunc {
 	return func(nc *alertmanagertypes.Receiver, tmpl *template.Template, logger *slog.Logger, templater alertmanagertypes.Templater) ([]notify.Integration, error) {
-		return newReceiverIntegrations(nc, tmpl, logger, templater, jsmOpsStore)
+		return newReceiverIntegrations(nc, tmpl, logger, templater, jsmOpsResolver)
 	}
 }
 
-func newReceiverIntegrations(nc *alertmanagertypes.Receiver, tmpl *template.Template, logger *slog.Logger, templater alertmanagertypes.Templater, jsmOpsStore jsmops.ConnectionStore) ([]notify.Integration, error) {
+func newReceiverIntegrations(nc *alertmanagertypes.Receiver, tmpl *template.Template, logger *slog.Logger, templater alertmanagertypes.Templater, jsmOpsResolver jsmops.ConnectionResolver) ([]notify.Integration, error) {
 	upstreamIntegrations, err := receiver.BuildReceiverIntegrations(*nc.Receiver, tmpl, logger)
 	if err != nil {
 		return nil, err
@@ -83,7 +83,7 @@ func newReceiverIntegrations(nc *alertmanagertypes.Receiver, tmpl *template.Temp
 		})
 	}
 	for i, c := range nc.JsmOpsConfigs {
-		add(jsmops.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return jsmops.New(c, tmpl, l, templater, jsmOpsStore) })
+		add(jsmops.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return jsmops.New(c, tmpl, l, templater, jsmOpsResolver) })
 	}
 
 	if errs.Len() > 0 {
