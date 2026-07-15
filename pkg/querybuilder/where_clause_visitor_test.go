@@ -1552,11 +1552,34 @@ func TestVisitComparison_AllVariable(t *testing.T) {
 			wantSB:  "WHERE body_cond",
 		},
 		{
-			// Equality does not trigger __all__ short-circuit; ConditionFor called normally.
-			name:    "equality with __all__ variable no shortcircuit",
+			// __all__ with a single-value operator means "no filter", same as IN:
+			// the user picked ALL, so the condition is dropped instead of matching
+			// the literal string "__all__".
+			name:    "equality with __all__ variable skips condition",
 			expr:    "a = $service",
 			wantRSB: "",
-			wantSB:  "WHERE a_cond",
+			wantSB:  "",
+		},
+		{
+			// __all__ referenced from inside a composed value drops the condition too.
+			name:    "embedded __all__ variable skips condition",
+			expr:    "a = '$service-suffix'",
+			wantRSB: "",
+			wantSB:  "",
+		},
+		{
+			// Embedded __all__ inside an IN list member drops the condition.
+			name:    "embedded __all__ variable in IN list skips condition",
+			expr:    "a IN ('$service-suffix', 'other')",
+			wantRSB: "",
+			wantSB:  "",
+		},
+		{
+			// Embedded __all__ in one bound of BETWEEN drops the condition.
+			name:    "embedded __all__ variable in BETWEEN skips condition",
+			expr:    "a BETWEEN '$service-lo' AND 'hi'",
+			wantRSB: "",
+			wantSB:  "",
 		},
 		{
 			// __all__→TrueConditionLiteral stripped in AND; y_cond wrapped in paren; NOT wraps.
@@ -1826,6 +1849,284 @@ func TestVisitComparison_SkippableLiteralValues(t *testing.T) {
 				}
 				assert.Equal(t, tt.wantSB, expr, "conditionBuilder SQL mismatch:\n  want: %s\n   got: %s", tt.wantSB, expr)
 			}
+		})
+	}
+}
+
+// TestInterpolateVariablesInString tests the embedded variable interpolation
+// feature (GitHub issue #10008).
+func TestInterpolateVariablesInString(t *testing.T) {
+	tests := []struct {
+		name         string
+		input        string
+		variables    map[string]qbtypes.VariableItem
+		expected     string
+		expectAll    bool
+		wantWarnings int
+	}{
+		{
+			name:  "pure variable reference - not interpolated",
+			input: "$service",
+			variables: map[string]qbtypes.VariableItem{
+				"service": {Value: "auth-service"},
+			},
+			expected: "$service", // handled by the standalone variable flow
+		},
+		{
+			name:  "variable composed with suffix",
+			input: "$environment-xyz",
+			variables: map[string]qbtypes.VariableItem{
+				"environment": {Value: "prod"},
+			},
+			expected: "prod-xyz",
+		},
+		{
+			name:  "variable with prefix and suffix",
+			input: "prefix-$var-suffix",
+			variables: map[string]qbtypes.VariableItem{
+				"var": {Value: "middle"},
+			},
+			expected: "prefix-middle-suffix",
+		},
+		{
+			name:  "multiple variables in one string",
+			input: "$region-$env-cluster",
+			variables: map[string]qbtypes.VariableItem{
+				"region": {Value: "us-west"},
+				"env":    {Value: "prod"},
+			},
+			expected: "us-west-prod-cluster",
+		},
+		{
+			name:  "adjacent variables",
+			input: "$env$region",
+			variables: map[string]qbtypes.VariableItem{
+				"env":    {Value: "prod-"},
+				"region": {Value: "us"},
+			},
+			expected: "prod-us",
+		},
+		{
+			name:  "similar variable names - longer matches first",
+			input: "$env-$environment",
+			variables: map[string]qbtypes.VariableItem{
+				"env":         {Value: "dev"},
+				"environment": {Value: "production"},
+			},
+			expected: "dev-production",
+		},
+		{
+			name:      "unknown variable - preserved as-is",
+			input:     "$unknown-suffix",
+			variables: map[string]qbtypes.VariableItem{},
+			expected:  "$unknown-suffix",
+		},
+		{
+			name:  "shorter variable does not match inside longer unknown reference",
+			input: "$environment",
+			variables: map[string]qbtypes.VariableItem{
+				"env": {Value: "prod"},
+			},
+			expected: "$environment", // NOT "prodironment"
+		},
+		{
+			name:  "underscore extends the variable name",
+			input: "$env_name",
+			variables: map[string]qbtypes.VariableItem{
+				"env": {Value: "prod"},
+			},
+			expected: "$env_name",
+		},
+		{
+			name:  "digit extends the variable name",
+			input: "$env2",
+			variables: map[string]qbtypes.VariableItem{
+				"env": {Value: "prod"},
+			},
+			expected: "$env2",
+		},
+		{
+			name:  "dot is a boundary",
+			input: "$env.internal",
+			variables: map[string]qbtypes.VariableItem{
+				"env": {Value: "prod"},
+			},
+			expected: "prod.internal",
+		},
+		{
+			name:  "LIKE pattern wildcards are boundaries",
+			input: "%$env%",
+			variables: map[string]qbtypes.VariableItem{
+				"env": {Value: "prod"},
+			},
+			expected: "%prod%",
+		},
+		{
+			name:  "variable with underscore in name",
+			input: "$my_var-test",
+			variables: map[string]qbtypes.VariableItem{
+				"my_var": {Value: "hello"},
+			},
+			expected: "hello-test",
+		},
+		{
+			name:  "map key with dollar prefix",
+			input: "$env-xyz",
+			variables: map[string]qbtypes.VariableItem{
+				"$env": {Value: "prod"},
+			},
+			expected: "prod-xyz",
+		},
+		{
+			name:  "dollar with no variable after it",
+			input: "cost is 100$",
+			variables: map[string]qbtypes.VariableItem{
+				"env": {Value: "prod"},
+			},
+			expected: "cost is 100$",
+		},
+		{
+			name:  "__all__ value reports hasAll",
+			input: "$env-suffix",
+			variables: map[string]qbtypes.VariableItem{
+				"env": {
+					Type:  qbtypes.DynamicVariableType,
+					Value: "__all__",
+				},
+			},
+			expected:  "",
+			expectAll: true,
+		},
+		{
+			name:  "multi-select takes first value with warning",
+			input: "$env-suffix",
+			variables: map[string]qbtypes.VariableItem{
+				"env": {Value: []any{"prod", "staging", "dev"}},
+			},
+			expected:     "prod-suffix",
+			wantWarnings: 1,
+		},
+		{
+			name:  "numeric variable value",
+			input: "code-$status",
+			variables: map[string]qbtypes.VariableItem{
+				"status": {Value: float64(200)},
+			},
+			expected: "code-200",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			visitor := &filterExpressionVisitor{
+				variables:        tt.variables,
+				keysWithWarnings: make(map[string]bool),
+			}
+			result, hasAll := visitor.interpolateVariablesInString(tt.input)
+			assert.Equal(t, tt.expectAll, hasAll)
+			if !tt.expectAll {
+				assert.Equal(t, tt.expected, result)
+			}
+			assert.Len(t, visitor.warnings, tt.wantWarnings)
+		})
+	}
+}
+
+// valueRecordingConditionBuilder records the value each ConditionFor call receives,
+// so tests can assert what the visitor actually hands to the condition builder.
+type valueRecordingConditionBuilder struct {
+	values []any
+}
+
+func (b *valueRecordingConditionBuilder) ConditionFor(
+	_ context.Context,
+	_ uint64,
+	_ uint64,
+	key *telemetrytypes.TelemetryFieldKey,
+	_ []*telemetrytypes.TelemetryFieldKey,
+	_ qbtypes.FilterOperator,
+	value any,
+	_ *sqlbuilder.SelectBuilder,
+) ([]string, []string, error) {
+	b.values = append(b.values, value)
+	return []string{fmt.Sprintf("%s_cond", key.Name)}, nil, nil
+}
+
+// TestInterpolatedValueReachesConditionBuilder pins the visitor → condition builder
+// handoff for embedded variables: the interpolated string (not the raw reference) is
+// the value passed to ConditionFor. The condition builder is signal-specific but this
+// seam is not, so it is covered here once instead of per telemetry package.
+func TestInterpolatedValueReachesConditionBuilder(t *testing.T) {
+	tests := []struct {
+		name       string
+		expr       string
+		variables  map[string]qbtypes.VariableItem
+		wantValues []any
+	}{
+		{
+			name: "composed value in quoted string",
+			expr: "a = '$env-xyz'",
+			variables: map[string]qbtypes.VariableItem{
+				"env": {Value: "prod"},
+			},
+			wantValues: []any{"prod-xyz"},
+		},
+		{
+			name: "composed value in LIKE pattern",
+			expr: "a LIKE '$env%'",
+			variables: map[string]qbtypes.VariableItem{
+				"env": {Value: "prod"},
+			},
+			wantValues: []any{"prod%"},
+		},
+		{
+			name: "pure reference goes through standalone substitution",
+			expr: "a = $env",
+			variables: map[string]qbtypes.VariableItem{
+				"env": {Value: "prod"},
+			},
+			wantValues: []any{"prod"},
+		},
+		{
+			name: "multi-select collapses to first value",
+			expr: "a = '$env-xyz'",
+			variables: map[string]qbtypes.VariableItem{
+				"env": {Value: []any{"prod", "staging"}},
+			},
+			wantValues: []any{"prod-xyz"},
+		},
+		{
+			name: "composed members of an IN list",
+			expr: "a IN ('$env-1', '$env-2')",
+			variables: map[string]qbtypes.VariableItem{
+				"env": {Value: "prod"},
+			},
+			wantValues: []any{[]any{"prod-1", "prod-2"}},
+		},
+		{
+			name: "unknown variable passes through untouched",
+			expr: "a = '$unknown-xyz'",
+			variables: map[string]qbtypes.VariableItem{
+				"env": {Value: "prod"},
+			},
+			wantValues: []any{"$unknown-xyz"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			recorder := &valueRecordingConditionBuilder{}
+			opts := FilterExprVisitorOpts{
+				Context:          t.Context(),
+				FieldKeys:        visitTestKeys,
+				ConditionBuilder: recorder,
+				Variables:        tt.variables,
+			}
+
+			result, err := PrepareWhereClause(tt.expr, opts)
+			assert.NoError(t, err)
+			assert.False(t, result.IsEmpty())
+			assert.Equal(t, tt.wantValues, recorder.values)
 		})
 	}
 }

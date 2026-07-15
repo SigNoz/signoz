@@ -314,6 +314,10 @@ func (VariableType) Enum() []any {
 	}
 }
 
+// AllVariableValue is the sentinel value a dynamic variable carries when "ALL"
+// is selected; conditions referencing such a variable are dropped entirely.
+const AllVariableValue = "__all__"
+
 type VariableItem struct {
 	Type  VariableType `json:"type"`
 	Value any          `json:"value"`

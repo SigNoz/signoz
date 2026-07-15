@@ -53,6 +53,7 @@ jobs:
           - queriermetrics
           - querierscalar
           - queriercommon
+          - queriervariables
           - rawexportdata
           - role
           - rootuser

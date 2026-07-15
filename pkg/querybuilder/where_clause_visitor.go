@@ -12,6 +12,7 @@ import (
 	grammar "github.com/SigNoz/signoz/pkg/parser/filterquery/grammar"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/variables"
 	"github.com/antlr4-go/antlr/v4"
 
 	sqlbuilder "github.com/huandu/go-sqlbuilder"
@@ -428,6 +429,11 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 			values = []any{ret}
 		}
 
+		// a value with an embedded variable resolved to __all__ makes the whole condition moot
+		if slices.ContainsFunc(values, isSkipConditionValue) {
+			return SkipConditionLiteral
+		}
+
 		if len(values) == 1 {
 			if var_, ok := values[0].(string); ok {
 				// check if this is a variables
@@ -443,7 +449,7 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 					// we have a variable, now check for dynamic variable
 					if varItem.Type == qbtypes.DynamicVariableType {
 						// check if it is special value to skip entire filter, if so skip it
-						if all_, ok := varItem.Value.(string); ok && all_ == "__all__" {
+						if all_, ok := varItem.Value.(string); ok && all_ == qbtypes.AllVariableValue {
 							return SkipConditionLiteral
 						}
 					}
@@ -498,6 +504,11 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 		value1 := v.Visit(values[0])
 		value2 := v.Visit(values[1])
 
+		// a bound with an embedded variable resolved to __all__ makes the whole condition moot
+		if isSkipConditionValue(value1) || isSkipConditionValue(value2) {
+			return SkipConditionLiteral
+		}
+
 		switch value1.(type) {
 		case float64:
 			if _, ok := value2.(float64); !ok {
@@ -535,6 +546,11 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 	if len(values) > 0 {
 		value := v.Visit(values[0])
 
+		// the value had an embedded variable resolved to __all__; drop the condition
+		if isSkipConditionValue(value) {
+			return SkipConditionLiteral
+		}
+
 		if var_, ok := value.(string); ok {
 			// check if this is a variables
 			var ok bool
@@ -546,6 +562,13 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 			}
 
 			if ok {
+				if varItem.Type == qbtypes.DynamicVariableType {
+					// __all__ used with a single-value operator: there is nothing to
+					// filter on, drop the condition like the IN clause handling does
+					if all_, ok := varItem.Value.(string); ok && all_ == qbtypes.AllVariableValue {
+						return SkipConditionLiteral
+					}
+				}
 				switch varValues := varItem.Value.(type) {
 				case []any:
 					if len(varValues) == 0 {
@@ -731,6 +754,11 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 
 	value := params[1:]
 
+	// a param with an embedded variable resolved to __all__ makes the whole condition moot
+	if slices.ContainsFunc(value, isSkipConditionValue) {
+		return SkipConditionLiteral
+	}
+
 	conds, ok := v.buildConditions(key, matchingFieldKeys(key, v.fieldKeys), operator, value)
 	if !ok {
 		return ErrorConditionLiteral
@@ -780,7 +808,16 @@ func (v *filterExpressionVisitor) VisitValue(ctx *grammar.ValueContext) any {
 	if ctx.QUOTED_TEXT() != nil {
 		txt := ctx.QUOTED_TEXT().GetText()
 		// trim quotes and return the value
-		return trimQuotes(txt)
+		value := trimQuotes(txt)
+		// the string may have variables embedded in it (e.g. '$env-suffix')
+		if strings.Contains(value, "$") {
+			interpolated, hasAll := v.interpolateVariablesInString(value)
+			if hasAll {
+				return skipConditionValue{}
+			}
+			return interpolated
+		}
+		return value
 	} else if ctx.NUMBER() != nil {
 		number, err := strconv.ParseFloat(ctx.NUMBER().GetText(), 64)
 		if err != nil {
@@ -797,7 +834,16 @@ func (v *filterExpressionVisitor) VisitValue(ctx *grammar.ValueContext) any {
 		// When the user writes an expression like `service.name=redis`
 		// The `redis` part is a VALUE context but parsed as a KEY token
 		// so we return the text as is
-		return ctx.KEY().GetText()
+		keyText := ctx.KEY().GetText()
+		// an unquoted value may compose variables too (e.g. $environment-xyz)
+		if strings.Contains(keyText, "$") {
+			interpolated, hasAll := v.interpolateVariablesInString(keyText)
+			if hasAll {
+				return skipConditionValue{}
+			}
+			return interpolated
+		}
+		return keyText
 	}
 
 	return ErrorConditionLiteral // Should not happen with valid input
@@ -897,4 +943,27 @@ func matchingFieldKeys(field *telemetrytypes.TelemetryFieldKey, fieldKeys map[st
 	}
 
 	return fieldKeysForName
+}
+
+// skipConditionValue is the value-level counterpart of SkipConditionLiteral: VisitValue
+// returns it when a variable embedded in the value resolved to __all__, and the
+// comparison handling turns it into SkipConditionLiteral for the whole condition. A
+// dedicated type (rather than a sentinel string) so no user-supplied value can ever
+// collide with it.
+type skipConditionValue struct{}
+
+// isSkipConditionValue reports whether a visited value says "drop the enclosing
+// condition" (an embedded variable resolved to __all__).
+func isSkipConditionValue(value any) bool {
+	_, ok := value.(skipConditionValue)
+	return ok
+}
+
+// interpolateVariablesInString delegates to variables.Interpolate (embedded $variable
+// references, boundary-aware, __all__ detection), folding its warnings into the
+// visitor. See that function for the full contract.
+func (v *filterExpressionVisitor) interpolateVariablesInString(s string) (string, bool) {
+	interpolated, hasAll, warnings := variables.Interpolate(s, v.variables)
+	v.addWarnings(warnings, false)
+	return interpolated, hasAll
 }

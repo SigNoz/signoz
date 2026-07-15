@@ -2,6 +2,7 @@ package variables
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -35,19 +36,22 @@ func (e *ErrorListener) SyntaxError(recognizer antlr.Recognizer, offendingSymbol
 type variableReplacementVisitor struct {
 	variables map[string]qbtypes.VariableItem
 	errors    []string
+	warnings  []string
 }
 
 // specialSkipMarker is used to indicate that a condition should be removed.
 const specialSkipMarker = "__SKIP_CONDITION__"
 
-// ReplaceVariablesInExpression takes a filter expression and returns it with variables replaced.
-func ReplaceVariablesInExpression(expression string, variables map[string]qbtypes.VariableItem) (string, error) {
+// ReplaceVariablesInExpression takes a filter expression and returns it with variables
+// replaced, along with any warnings generated during the replacement.
+func ReplaceVariablesInExpression(expression string, variables map[string]qbtypes.VariableItem) (string, []string, error) {
 	input := antlr.NewInputStream(expression)
 	lexer := grammar.NewFilterQueryLexer(input)
 
 	visitor := &variableReplacementVisitor{
 		variables: variables,
 		errors:    []string{},
+		warnings:  []string{},
 	}
 
 	lexerErrorListener := NewErrorListener()
@@ -63,21 +67,21 @@ func ReplaceVariablesInExpression(expression string, variables map[string]qbtype
 	tree := parser.Query()
 
 	if len(parserErrorListener.SyntaxErrors) > 0 {
-		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "syntax errors in expression: %v", parserErrorListener.SyntaxErrors)
+		return "", nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "syntax errors in expression: %v", parserErrorListener.SyntaxErrors)
 	}
 
 	result := visitor.Visit(tree).(string)
 
 	if len(visitor.errors) > 0 {
-		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "errors processing expression: %v", visitor.errors)
+		return "", nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "errors processing expression: %v", visitor.errors)
 	}
 
 	// If the entire expression should be skipped, return empty string
 	if result == specialSkipMarker {
-		return "", nil
+		return "", visitor.warnings, nil
 	}
 
-	return result, nil
+	return result, visitor.warnings, nil
 }
 
 // Visit dispatches to the specific visit method based on node type.
@@ -469,7 +473,7 @@ func (v *variableReplacementVisitor) VisitValue(ctx *grammar.ValueContext) any {
 		if ok {
 			// Handle dynamic variable with __all__ value
 			if varItem.Type == qbtypes.DynamicVariableType {
-				if allVal, ok := varItem.Value.(string); ok && allVal == "__all__" {
+				if allVal, ok := varItem.Value.(string); ok && allVal == qbtypes.AllVariableValue {
 					// Return special marker to indicate this condition should be removed
 					return specialSkipMarker
 				}
@@ -477,6 +481,18 @@ func (v *variableReplacementVisitor) VisitValue(ctx *grammar.ValueContext) any {
 
 			// Replace variable with its value
 			return v.formatVariableValue(varItem.Value)
+		}
+	}
+
+	// Not a standalone variable reference; the value may still have variables
+	// embedded in it (e.g. '$env-suffix' or 'prefix-$var-suffix')
+	if strings.Contains(originalValue, "$") {
+		interpolated, hasAll := v.interpolateVariablesInString(originalValue)
+		if hasAll {
+			return specialSkipMarker
+		}
+		if interpolated != originalValue {
+			return v.formatVariableValue(interpolated)
 		}
 	}
 
@@ -505,7 +521,7 @@ func (v *variableReplacementVisitor) VisitKey(ctx *grammar.KeyContext) any {
 		if ok {
 			// Handle dynamic variable with __all__ value
 			if varItem.Type == qbtypes.DynamicVariableType {
-				if allVal, ok := varItem.Value.(string); ok && allVal == "__all__" {
+				if allVal, ok := varItem.Value.(string); ok && allVal == qbtypes.AllVariableValue {
 					return specialSkipMarker
 				}
 			}
@@ -515,6 +531,25 @@ func (v *variableReplacementVisitor) VisitKey(ctx *grammar.KeyContext) any {
 	}
 
 	return keyText
+}
+
+// addWarning appends w unless it is already recorded; comparisons visit their values
+// twice (once to check for __all__, once to rebuild), which would duplicate warnings.
+func (v *variableReplacementVisitor) addWarning(w string) {
+	if slices.Contains(v.warnings, w) {
+		return
+	}
+	v.warnings = append(v.warnings, w)
+}
+
+// interpolateVariablesInString delegates to Interpolate, folding its warnings into
+// the visitor.
+func (v *variableReplacementVisitor) interpolateVariablesInString(s string) (string, bool) {
+	interpolated, hasAll, warnings := Interpolate(s, v.variables)
+	for _, w := range warnings {
+		v.addWarning(w)
+	}
+	return interpolated, hasAll
 }
 
 // formatVariableValue formats a variable value for inclusion in the expression.
