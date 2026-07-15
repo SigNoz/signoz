@@ -3,7 +3,8 @@ import { Button, Popover, Tooltip } from 'antd';
 import { RadioGroup, RadioGroupItem } from '@signozhq/ui/radio-group';
 import { Typography } from '@signozhq/ui/typography';
 import { TelemetryFieldKey } from 'api/v5/v5';
-import { useExportRawData } from 'hooks/useDownloadOptionsMenu/useDownloadOptionsMenu';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import { useExportRawData } from 'hooks/useExportData/useServerExport';
 import { Download, LoaderCircle } from '@signozhq/icons';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -18,11 +19,13 @@ import './DownloadOptionsMenu.styles.scss';
 interface DownloadOptionsMenuProps {
 	dataSource: DataSource;
 	selectedColumns?: TelemetryFieldKey[];
+	panelType?: PANEL_TYPES;
 }
 
 export default function DownloadOptionsMenu({
 	dataSource,
 	selectedColumns,
+	panelType,
 }: DownloadOptionsMenuProps): JSX.Element {
 	const [exportFormat, setExportFormat] = useState<string>(DownloadFormats.CSV);
 	const [rowLimit, setRowLimit] = useState<number>(DownloadRowCounts.TEN_K);
@@ -33,6 +36,7 @@ export default function DownloadOptionsMenu({
 
 	const { isDownloading, handleExportRawData } = useExportRawData({
 		dataSource,
+		panelType,
 	});
 
 	const handleExport = useCallback(async (): Promise<void> => {

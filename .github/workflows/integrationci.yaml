@@ -49,7 +49,11 @@ jobs:
           - logspipelines
           - passwordauthn
           - preference
-          - querier
+          - querierlogs
+          - queriertraces
+          - queriermetrics
+          - querierscalar
+          - queriercommon
           - rawexportdata
           - role
           - rootuser

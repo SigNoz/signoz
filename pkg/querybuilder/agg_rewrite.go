@@ -53,6 +53,7 @@ func NewAggExprRewriter(
 // and the args if the parametric aggregation function is used.
 func (r *aggExprRewriter) Rewrite(
 	ctx context.Context,
+	orgID valuer.UUID,
 	startNs uint64,
 	endNs uint64,
 	expr string,
@@ -83,6 +84,7 @@ func (r *aggExprRewriter) Rewrite(
 
 	visitor := newExprVisitor(
 		ctx,
+		orgID,
 		startNs,
 		endNs,
 		r.logger,
@@ -107,6 +109,7 @@ func (r *aggExprRewriter) Rewrite(
 // RewriteMulti rewrites a slice of expressions.
 func (r *aggExprRewriter) RewriteMulti(
 	ctx context.Context,
+	orgID valuer.UUID,
 	startNs uint64,
 	endNs uint64,
 	exprs []string,
@@ -117,7 +120,7 @@ func (r *aggExprRewriter) RewriteMulti(
 	var errs []error
 	var chArgsList [][]any
 	for i, e := range exprs {
-		w, chArgs, err := r.Rewrite(ctx, startNs, endNs, e, rateInterval, keys)
+		w, chArgs, err := r.Rewrite(ctx, orgID, startNs, endNs, e, rateInterval, keys)
 		if err != nil {
 			errs = append(errs, err)
 			out[i] = e
@@ -135,6 +138,7 @@ func (r *aggExprRewriter) RewriteMulti(
 // exprVisitor walks FunctionExpr nodes and applies the mappers.
 type exprVisitor struct {
 	ctx     context.Context
+	orgID   valuer.UUID
 	startNs uint64
 	endNs   uint64
 	chparser.DefaultASTVisitor
@@ -152,6 +156,7 @@ type exprVisitor struct {
 
 func newExprVisitor(
 	ctx context.Context,
+	orgID valuer.UUID,
 	startNs uint64,
 	endNs uint64,
 	logger *slog.Logger,
@@ -164,6 +169,7 @@ func newExprVisitor(
 ) *exprVisitor {
 	return &exprVisitor{
 		ctx:              ctx,
+		orgID:            orgID,
 		startNs:          startNs,
 		endNs:            endNs,
 		logger:           logger,
@@ -206,7 +212,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		dataType = telemetrytypes.FieldDataTypeFloat64
 	}
 
-	bodyJSONEnabled := v.flagger.BooleanOrEmpty(v.ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
+	bodyJSONEnabled := v.flagger.BooleanOrEmpty(v.ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(v.orgID))
 
 	// Handle *If functions with predicate + values
 	if aggFunc.FuncCombinator {
@@ -216,13 +222,12 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 			origPred,
 			FilterExprVisitorOpts{
 				Context:          v.ctx,
+				OrgID:            v.orgID,
 				Logger:           v.logger,
 				FieldKeys:        v.fieldKeys,
 				FieldMapper:      v.fieldMapper,
 				ConditionBuilder: v.conditionBuilder,
-				BodyJSONEnabled:  bodyJSONEnabled,
 				FullTextColumn:   v.fullTextColumn,
-				JsonKeyToKey:     v.jsonKeyToKey,
 				StartNs:          v.startNs,
 				EndNs:            v.endNs,
 			},
@@ -249,7 +254,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		for i := 0; i < len(args)-1; i++ {
 			origVal := args[i].String()
 			fieldKey := telemetrytypes.GetFieldKeyFromKeyText(origVal)
-			expr, exprArgs, err := CollisionHandledFinalExpr(v.ctx, v.startNs, v.endNs, &fieldKey, v.fieldMapper, v.conditionBuilder, v.fieldKeys, dataType, v.jsonKeyToKey, bodyJSONEnabled)
+			expr, exprArgs, err := CollisionHandledFinalExpr(v.ctx, v.orgID, v.startNs, v.endNs, &fieldKey, v.fieldMapper, v.conditionBuilder, v.fieldKeys, dataType, v.jsonKeyToKey, bodyJSONEnabled)
 			if err != nil {
 				return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to get table field name for %q", origVal)
 			}
@@ -267,7 +272,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		for i, arg := range args {
 			orig := arg.String()
 			fieldKey := telemetrytypes.GetFieldKeyFromKeyText(orig)
-			expr, exprArgs, err := CollisionHandledFinalExpr(v.ctx, v.startNs, v.endNs, &fieldKey, v.fieldMapper, v.conditionBuilder, v.fieldKeys, dataType, v.jsonKeyToKey, bodyJSONEnabled)
+			expr, exprArgs, err := CollisionHandledFinalExpr(v.ctx, v.orgID, v.startNs, v.endNs, &fieldKey, v.fieldMapper, v.conditionBuilder, v.fieldKeys, dataType, v.jsonKeyToKey, bodyJSONEnabled)
 			if err != nil {
 				return err
 			}

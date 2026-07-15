@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
 import {
@@ -8,32 +8,23 @@ import {
 	TooltipTrigger,
 } from '@signozhq/ui/tooltip';
 import { Skeleton } from 'antd';
-import setLocalStorageKey from 'api/browser/localstorage/set';
 import cx from 'classnames';
 import FieldsSelector from 'components/FieldsSelector';
-import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
-import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
-import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import dayjs from 'dayjs';
 import history, { hasInAppHistory } from 'lib/history';
-import {
-	ArrowLeft,
-	CalendarClock,
-	ChartPie,
-	CornerUpLeft,
-	Server,
-	Timer,
-} from '@signozhq/icons';
+import { ArrowLeft, ChartPie } from '@signozhq/icons';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
-import { TraceDetailV2URLProps } from 'types/api/trace/getTraceV2';
+import { TraceDetailV3URLProps } from 'types/api/trace/getTraceV3';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { TraceDetailEventKeys, TraceDetailEvents } from '../events';
 import { useTraceDetailLogEvent } from '../hooks/useTraceDetailLogEvent';
 import { useTraceStore } from '../stores/traceStore';
+import EntityMetadataRow from '../EntityMetadata/EntityMetadataRow';
 import AnalyticsPanel from '../SpanDetailsPanel/AnalyticsPanel/AnalyticsPanel';
 import Filters from '../TraceWaterfall/TraceWaterfallStates/Success/Filters/Filters';
+import MissingSpansBanner from './MissingSpansBanner';
 import TraceOptionsMenu from './TraceOptionsMenu';
 
 import styles from './TraceDetailsHeader.module.scss';
@@ -51,6 +42,7 @@ export interface TraceMetadataForHeader {
 	rootServiceName: string;
 	rootServiceEntryPoint: string;
 	rootSpanStatusCode: string;
+	hasMissingSpans: boolean;
 }
 
 interface TraceDetailsHeaderProps {
@@ -84,7 +76,7 @@ function TraceDetailsHeader({
 	isDataLoaded,
 	traceMetadata,
 }: TraceDetailsHeaderProps): JSX.Element {
-	const { id: traceID } = useParams<TraceDetailV2URLProps>();
+	const { id: traceID } = useParams<TraceDetailV3URLProps>();
 	const [showTraceDetails, setShowTraceDetails] = useState(true);
 	const [isFilterExpanded, setIsFilterExpanded] = useState(false);
 	const [isPreviewFieldsOpen, setIsPreviewFieldsOpen] = useState(false);
@@ -93,18 +85,6 @@ function TraceDetailsHeader({
 	const setPreviewFields = useTraceStore((s) => s.setPreviewFields);
 
 	const logTraceEvent = useTraceDetailLogEvent('v3', traceID || '');
-	const pageLoadedAtRef = useRef(Date.now());
-
-	const handleSwitchToOldView = useCallback((): void => {
-		logTraceEvent(TraceDetailEvents.ViewSwitched, {
-			[TraceDetailEventKeys.From]: 'v3',
-			[TraceDetailEventKeys.To]: 'v2',
-			[TraceDetailEventKeys.DwellMs]: Date.now() - pageLoadedAtRef.current,
-		});
-		setLocalStorageKey(LOCALSTORAGE.TRACE_DETAILS_PREFER_OLD_VIEW, 'true');
-		const oldUrl = `/trace-old/${traceID}${window.location.search}`;
-		history.replace(oldUrl);
-	}, [traceID, logTraceEvent]);
 
 	const handleToggleAnalytics = useCallback((): void => {
 		logTraceEvent(TraceDetailEvents.AnalyticsPanelToggled, {
@@ -137,8 +117,6 @@ function TraceDetailsHeader({
 	const durationMs = traceMetadata
 		? traceMetadata.endTimestampMillis - traceMetadata.startTimestampMillis
 		: 0;
-	const { time: formattedDuration, timeUnitName } =
-		convertTimeToRelevantUnit(durationMs);
 
 	return (
 		<div className={styles.wrapper}>
@@ -148,7 +126,7 @@ function TraceDetailsHeader({
 						<Button
 							variant="solid"
 							color="secondary"
-							size="md"
+							size="icon"
 							className={styles.backBtn}
 							onClick={handlePreviousBtnClick}
 							aria-label="Back"
@@ -172,20 +150,6 @@ function TraceDetailsHeader({
 						{!isFilterExpanded && (
 							<TooltipProvider>
 								<div className={styles.headerActions}>
-									<TooltipRoot>
-										<TooltipTrigger asChild>
-											<Button
-												variant="ghost"
-												size="icon"
-												color="secondary"
-												aria-label="Switch to legacy trace view"
-												onClick={handleSwitchToOldView}
-											>
-												<CornerUpLeft size={14} />
-											</Button>
-										</TooltipTrigger>
-										<TooltipContent>Switch to legacy trace view</TooltipContent>
-									</TooltipRoot>
 									<TooltipRoot>
 										<TooltipTrigger asChild>
 											<Button
@@ -229,34 +193,25 @@ function TraceDetailsHeader({
 			{showTraceDetails && (
 				<div className={styles.subHeader}>
 					{traceMetadata ? (
-						<>
-							<span className={styles.subItem}>
-								<Server size={13} />
-								{traceMetadata.rootServiceName}
-								<span className={styles.separator}>—</span>
-								<span className={styles.entryPointBadge}>
-									{traceMetadata.rootServiceEntryPoint}
-								</span>
-							</span>
-							<span className={styles.subItem}>
-								<Timer size={13} />
-								{parseFloat(formattedDuration.toFixed(2))} {timeUnitName}
-							</span>
-							<span className={styles.subItem}>
-								<CalendarClock size={13} />
-								{dayjs(traceMetadata.startTimestampMillis).format(
-									DATE_TIME_FORMATS.DD_MMM_YYYY_HH_MM_SS,
-								)}
-							</span>
-							{traceMetadata.rootSpanStatusCode && (
-								<HttpStatusBadge statusCode={traceMetadata.rootSpanStatusCode} />
+						<EntityMetadataRow
+							entity="trace"
+							service={{
+								name: traceMetadata.rootServiceName,
+								entryPoint: traceMetadata.rootServiceEntryPoint,
+							}}
+							durationMs={durationMs}
+							timestamp={dayjs(traceMetadata.startTimestampMillis).format(
+								DATE_TIME_FORMATS.DD_MMM_YYYY_HH_MM_SS,
 							)}
-						</>
+							statusCode={traceMetadata.rootSpanStatusCode}
+						/>
 					) : (
 						<DetailsLoader />
 					)}
 				</div>
 			)}
+
+			{traceMetadata?.hasMissingSpans && <MissingSpansBanner />}
 
 			<FieldsSelector
 				isOpen={isPreviewFieldsOpen}

@@ -42,6 +42,38 @@ func (handler *handler) CreateV2(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusCreated, dashboard.ToGettableDashboardV2())
 }
 
+func (handler *handler) CloneV2(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	id := mux.Vars(r)["id"]
+	if id == "" {
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is missing in the path"))
+		return
+	}
+	dashboardID, err := valuer.NewUUID(id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	dashboard, err := handler.module.CloneV2(ctx, orgID, claims.Email, valuer.MustNewUUID(claims.IdentityID()), dashboardID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusCreated, dashboard.ToGettableDashboardV2())
+}
+
 func (handler *handler) ListV2(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -343,4 +375,60 @@ func (handler *handler) DeleteV2(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	render.Success(rw, http.StatusNoContent, nil)
+}
+
+func (handler *handler) GetPublicDataV2(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	id, err := valuer.NewUUID(mux.Vars(r)["id"])
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	dashboard, err := handler.module.GetDashboardByPublicIDV2(ctx, id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	publicDashboard, err := handler.module.GetPublic(ctx, dashboard.OrgID, dashboard.ID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, dashboardtypes.NewPublicDashboardDataFromDashboardV2(dashboard, publicDashboard))
+}
+
+func (handler *handler) GetPublicWidgetQueryRangeV2(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	id, err := valuer.NewUUID(mux.Vars(r)["id"])
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	panelKey, ok := mux.Vars(r)["key"]
+	if !ok || panelKey == "" {
+		render.Error(rw, errors.New(errors.TypeInvalidInput, dashboardtypes.ErrCodePublicDashboardInvalidInput, "panel key is missing from the path"))
+		return
+	}
+
+	params := new(dashboardtypes.PublicWidgetQueryRangeParams)
+	if err := binding.Query.BindQuery(r.URL.Query(), params); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	queryRangeResults, err := handler.module.GetPublicWidgetQueryRangeV2(ctx, id, panelKey, params.StartTime, params.EndTime)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, queryRangeResults)
 }

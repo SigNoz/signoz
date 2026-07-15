@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 	"golang.org/x/exp/maps"
 )
@@ -27,6 +28,12 @@ var (
 )
 
 type fieldMapper struct {
+}
+
+// CandidateKeys returns nil: this mapper has no attribute-map fallback, so a context-missing
+// key stays unresolved and the caller errors.
+func (m *fieldMapper) CandidateKeys(_ context.Context, _ valuer.UUID, _ *telemetrytypes.TelemetryFieldKey, _ any, _ map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.TelemetryFieldKey {
+	return nil
 }
 
 func NewFieldMapper() qbtypes.FieldMapper {
@@ -69,6 +76,7 @@ func (m *fieldMapper) FieldFor(ctx context.Context, startNs, endNs uint64, key *
 
 func (m *fieldMapper) ColumnExpressionFor(
 	ctx context.Context,
+	_ valuer.UUID,
 	startNs, endNs uint64,
 	field *telemetrytypes.TelemetryFieldKey,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
@@ -91,14 +99,8 @@ func (m *fieldMapper) ColumnExpressionFor(
 				// - it is not a static field
 				// - the next best thing to do is see if there is a typo
 				// and suggest a correction
-				correction, found := telemetrytypes.SuggestCorrection(field.Name, maps.Keys(keys))
-				if found {
-					// we found a close match, in the error message send the suggestion
-					return "", errors.Wrap(err, errors.TypeInvalidInput, errors.CodeInvalidInput, correction)
-				} else {
-					// not even a close match, return an error
-					return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name)
-				}
+				wrappedErr := errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name).WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(field.Name, errors.NounKeys, maps.Keys(keys))...)
+				return "", wrappedErr
 			}
 		} else if len(keysForField) == 1 {
 			// we have a single key for the field, use it

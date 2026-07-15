@@ -14,12 +14,18 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/spantypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/bytedance/sonic"
 )
 
 var (
 	aggRe = regexp.MustCompile(`^__result_(\d+)$`)
+	// keyAliasRe matches the traces statement builder's positional column-alias prefix
+	// `__SELECT_KEY_<n>_` / `__GROUP_BY_KEY_<n>_`, which disambiguates select/group-by
+	// aliases from real table columns in the generated SQL. It is stripped here so the
+	// original field name surfaces as the label / column / raw-data key.
+	keyAliasRe = regexp.MustCompile(`^__(?:SELECT|GROUP_BY)_KEY_\d+_`)
 	// legacyReservedColumnTargetAliases identifies result value from a user
 	// written clickhouse query. The column alias indcate which value is
 	// to be considered as final result (or target).
@@ -27,6 +33,12 @@ var (
 
 	CodeFailUnmarshalJSONColumn = errors.MustNewCode("fail_unmarshal_json_column")
 )
+
+// stripKeyAlias removes the __SELECT_KEY_<n>_ / __GROUP_BY_KEY_<n>_ prefix from a result
+// column name, recovering the field name; unprefixed names are returned unchanged.
+func stripKeyAlias(name string) string {
+	return keyAliasRe.ReplaceAllString(name, "")
+}
 
 // consume reads every row and shapes it into the payload expected for the
 // given request type.
@@ -125,7 +137,7 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 		)
 
 		for idx, ptr := range slots {
-			name := colNames[idx]
+			name := stripKeyAlias(colNames[idx])
 
 			switch v := ptr.(type) {
 			case *time.Time:
@@ -295,6 +307,7 @@ func readAsScalar(rows driver.Rows, queryName string) (*qbtypes.ScalarData, erro
 
 	var aggIndex int64
 	for i, name := range colNames {
+		name = stripKeyAlias(name)
 		colType := qbtypes.ColumnTypeGroup
 		// Builder queries aliases aggregation columns as __result_N (always numeric) and wraps group-by keys with toString (always string);
 		// Raw ClickHouse queries may use any aliases.
@@ -405,7 +418,7 @@ func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 		}
 
 		for i, cellPtr := range scan {
-			name := colNames[i]
+			name := stripKeyAlias(colNames[i])
 
 			// de-reference the typed pointer to any
 			val := reflect.ValueOf(cellPtr).Elem().Interface()
@@ -450,6 +463,53 @@ func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 		QueryName: queryName,
 		Rows:      outRows,
 	}, nil
+}
+
+// mergeSpanAttributeColumns merges (attributes_string, attributes_number, attributes_bool, resources_string) into
+// unified "attributes" and "resource" keys, and parses the stringified `events`
+// and `links` columns into structured slices. Raw DB columns are removed.
+func mergeSpanAttributeColumns(data map[string]any) {
+	attrStr, hasStr := data["attributes_string"]
+	attrNum, hasNum := data["attributes_number"]
+	attrBool, hasBool := data["attributes_bool"]
+	// todo(nitya): move to resource json
+	resStr, hasRes := data["resources_string"]
+	if hasStr || hasNum || hasBool || hasRes {
+		attributes := make(map[string]any)
+		if m, ok := attrStr.(map[string]string); ok {
+			for k, v := range m {
+				attributes[k] = v
+			}
+		}
+		if m, ok := attrNum.(map[string]float64); ok {
+			for k, v := range m {
+				attributes[k] = v
+			}
+		}
+		if m, ok := attrBool.(map[string]bool); ok {
+			for k, v := range m {
+				attributes[k] = v
+			}
+		}
+		delete(data, "attributes_string")
+		delete(data, "attributes_number")
+		delete(data, "attributes_bool")
+		data["attributes"] = attributes
+
+		resource := map[string]string{}
+		if m, ok := resStr.(map[string]string); ok {
+			resource = m
+		}
+		data["resource"] = resource
+		delete(data, "resources_string")
+	}
+
+	if raw, ok := data["events"]; ok {
+		data["events"] = spantypes.ParseEvents(raw)
+	}
+	if raw, ok := data["links"]; ok {
+		data["links"] = spantypes.ParseLinks(raw)
+	}
 }
 
 // numericAsFloat converts numeric types to float64 efficiently.

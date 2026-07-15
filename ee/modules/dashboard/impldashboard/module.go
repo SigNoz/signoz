@@ -29,6 +29,7 @@ type module struct {
 	settings           factory.ScopedProviderSettings
 	querier            querier.Querier
 	licensing          licensing.Licensing
+	tagModule          tag.Module
 }
 
 func NewModule(store dashboardtypes.Store, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, queryParser queryparser.QueryParser, querier querier.Querier, licensing licensing.Licensing, tagModule tag.Module) dashboard.Module {
@@ -41,6 +42,7 @@ func NewModule(store dashboardtypes.Store, settings factory.ProviderSettings, an
 		settings:           scopedProviderSettings,
 		querier:            querier,
 		licensing:          licensing,
+		tagModule:          tagModule,
 	}
 }
 
@@ -125,6 +127,55 @@ func (module *module) GetPublicWidgetQueryRange(ctx context.Context, id valuer.U
 	}
 
 	query, err := dashboard.GetWidgetQuery(startTime, endTime, widgetIdx, module.settings.Logger())
+	if err != nil {
+		return nil, err
+	}
+
+	return module.querier.QueryRange(ctx, dashboard.OrgID, query)
+}
+
+func (module *module) GetDashboardByPublicIDV2(ctx context.Context, id valuer.UUID) (*dashboardtypes.DashboardV2, error) {
+	storableDashboard, err := module.store.GetDashboardByPublicID(ctx, id.StringValue())
+	if err != nil {
+		return nil, err
+	}
+
+	tags, err := module.tagModule.ListForResource(ctx, storableDashboard.OrgID, coretypes.KindDashboard, storableDashboard.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return storableDashboard.ToDashboardV2(tags)
+}
+
+func (module *module) GetPublicWidgetQueryRangeV2(ctx context.Context, id valuer.UUID, panelKey, startTimeRaw, endTimeRaw string) (*querybuildertypesv5.QueryRangeResponse, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "dashboard",
+		instrumentationtypes.CodeFunctionName: "GetPublicWidgetQueryRangeV2",
+	})
+
+	storableDashboard, err := module.store.GetDashboardByPublicID(ctx, id.StringValue())
+	if err != nil {
+		return nil, err
+	}
+
+	// tags are not needed for query range.
+	dashboard, err := storableDashboard.ToDashboardV2(nil)
+	if err != nil {
+		return nil, err
+	}
+
+	publicDashboard, err := module.GetPublic(ctx, dashboard.OrgID, dashboard.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	startTime, endTime, err := publicDashboard.ResolveTimeRange(startTimeRaw, endTimeRaw)
+	if err != nil {
+		return nil, err
+	}
+
+	query, err := dashboard.GetPanelQuery(startTime, endTime, panelKey)
 	if err != nil {
 		return nil, err
 	}
@@ -217,6 +268,10 @@ func (module *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy
 	return module.pkgDashboardModule.CreateV2(ctx, orgID, createdBy, creator, source, postable)
 }
 
+func (module *module) CloneV2(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error) {
+	return module.pkgDashboardModule.CloneV2(ctx, orgID, createdBy, creator, id)
+}
+
 func (module *module) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error) {
 	return module.pkgDashboardModule.GetV2(ctx, orgID, id)
 }
@@ -262,12 +317,32 @@ func (module *module) DeletePreferencesForUser(ctx context.Context, orgID valuer
 	return module.pkgDashboardModule.DeletePreferencesForUser(ctx, orgID, userID)
 }
 
+func (module *module) CreateView(ctx context.Context, orgID valuer.UUID, postable dashboardtypes.PostableDashboardView) (*dashboardtypes.DashboardView, error) {
+	return module.pkgDashboardModule.CreateView(ctx, orgID, postable)
+}
+
+func (module *module) ListViews(ctx context.Context, orgID valuer.UUID) (*dashboardtypes.ListableDashboardView, error) {
+	return module.pkgDashboardModule.ListViews(ctx, orgID)
+}
+
+func (module *module) UpdateView(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updateable dashboardtypes.UpdatableDashboardView) (*dashboardtypes.DashboardView, error) {
+	return module.pkgDashboardModule.UpdateView(ctx, orgID, id, updateable)
+}
+
+func (module *module) DeleteView(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
+	return module.pkgDashboardModule.DeleteView(ctx, orgID, id)
+}
+
 func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.Dashboard, error) {
 	return module.pkgDashboardModule.Get(ctx, orgID, id)
 }
 
-func (module *module) GetByMetricNames(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string][]map[string]string, error) {
+func (module *module) GetByMetricNames(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string][]dashboardtypes.DashboardPanelRef, error) {
 	return module.pkgDashboardModule.GetByMetricNames(ctx, orgID, metricNames)
+}
+
+func (module *module) GetByMetricNamesV2(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string][]dashboardtypes.DashboardPanelRef, error) {
+	return module.pkgDashboardModule.GetByMetricNamesV2(ctx, orgID, metricNames)
 }
 
 func (module *module) List(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error) {

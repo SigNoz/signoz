@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 )
 
@@ -21,6 +22,43 @@ func newConditionBuilder(fm qbtypes.FieldMapper) qbtypes.ConditionBuilder {
 }
 
 func (c *conditionBuilder) ConditionFor(
+	ctx context.Context,
+	orgID valuer.UUID,
+	startNs uint64,
+	endNs uint64,
+	key *telemetrytypes.TelemetryFieldKey,
+	fieldKeysForName []*telemetrytypes.TelemetryFieldKey,
+	operator qbtypes.FilterOperator,
+	value any,
+	sb *sqlbuilder.SelectBuilder,
+) ([]string, []string, error) {
+
+	// has/hasAny/hasAll/hasToken are logs-body-only; reject for rule state history.
+	if err := querybuilder.NewFunctionUnsupportedError(operator); err != nil {
+		return nil, nil, err
+	}
+
+	keys, warning := querybuilder.ResolveKeys(key, fieldKeysForName)
+	var warnings []string
+	if warning != "" {
+		warnings = append(warnings, warning)
+	}
+	if len(keys) == 0 {
+		return nil, warnings, querybuilder.NewKeyNotFoundError(key.Name)
+	}
+
+	conds := make([]string, 0, len(keys))
+	for _, k := range keys {
+		cond, err := c.conditionForKey(ctx, startNs, endNs, k, operator, value, sb)
+		if err != nil {
+			return nil, nil, err
+		}
+		conds = append(conds, cond)
+	}
+	return conds, warnings, nil
+}
+
+func (c *conditionBuilder) conditionForKey(
 	ctx context.Context,
 	startNs uint64,
 	endNs uint64,

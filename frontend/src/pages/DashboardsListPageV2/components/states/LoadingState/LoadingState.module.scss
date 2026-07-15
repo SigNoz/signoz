@@ -1,11 +1,18 @@
 .wrapper {
 	display: flex;
 	flex-direction: column;
-	gap: 16px;
+	gap: 12px;
 	margin-top: 16px;
+	width: 100%;
 }
 
 .skeleton {
-	height: 125px;
 	width: 100%;
+	height: 76px;
+
+	// antd sizes the inner input element; stretch it to fill the row.
+	:global(.ant-skeleton-input) {
+		width: 100% !important;
+		height: 76px !important;
+	}
 }

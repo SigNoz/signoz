@@ -58,7 +58,6 @@ func NewLogQueryStatementBuilder(
 		telemetrytypes.SourceUnspecified,
 		metadataStore,
 		fullTextColumn,
-		jsonKeyToKey,
 		fl,
 		telemetryStore,
 		skipResourceFingerprintThreshold,
@@ -81,6 +80,7 @@ func NewLogQueryStatementBuilder(
 // Build builds a SQL query for logs based on the given parameters.
 func (b *logQueryStatementBuilder) Build(
 	ctx context.Context,
+	orgID valuer.UUID,
 	start uint64,
 	end uint64,
 	requestType qbtypes.RequestType,
@@ -107,11 +107,11 @@ func (b *logQueryStatementBuilder) Build(
 	var stmt *qbtypes.Statement
 	switch requestType {
 	case qbtypes.RequestTypeRaw, qbtypes.RequestTypeRawStream:
-		stmt, err = b.buildListQuery(ctx, q, query, start, end, keys, variables)
+		stmt, err = b.buildListQuery(ctx, orgID, q, query, start, end, keys, variables)
 	case qbtypes.RequestTypeTimeSeries:
-		stmt, err = b.buildTimeSeriesQuery(ctx, q, query, start, end, keys, variables)
+		stmt, err = b.buildTimeSeriesQuery(ctx, orgID, q, query, start, end, keys, variables)
 	case qbtypes.RequestTypeScalar:
-		stmt, err = b.buildScalarQuery(ctx, q, query, start, end, keys, false, variables)
+		stmt, err = b.buildScalarQuery(ctx, orgID, q, query, start, end, keys, false, variables)
 	default:
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported request type: %s", requestType)
 	}
@@ -265,6 +265,7 @@ func (b *logQueryStatementBuilder) adjustKey(key *telemetrytypes.TelemetryFieldK
 // buildListQuery builds a query for list panel type.
 func (b *logQueryStatementBuilder) buildListQuery(
 	ctx context.Context,
+	orgID valuer.UUID,
 	sb *sqlbuilder.SelectBuilder,
 	query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation],
 	start, end uint64,
@@ -279,7 +280,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 		bodyJSONEnabled = b.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
 	)
 
-	frag, args, skipResourceFilter, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end, variables)
+	frag, args, skipResourceFilter, err := b.maybeAttachResourceFilter(ctx, orgID, sb, query, start, end, variables)
 	if err != nil {
 		return nil, err
 	}
@@ -315,7 +316,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 			}
 
 			// get column expression for the field - use array index directly to avoid pointer to loop variable
-			colExpr, err := b.fm.ColumnExpressionFor(ctx, start, end, &query.SelectFields[index], keys)
+			colExpr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &query.SelectFields[index], keys)
 			if err != nil {
 				return nil, err
 			}
@@ -325,7 +326,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 
 	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
 	// Add filter conditions
-	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables, skipResourceFilter)
+	preparedWhereClause, err := b.addFilterCondition(ctx, orgID, sb, start, end, query, keys, variables, skipResourceFilter)
 
 	if err != nil {
 		return nil, err
@@ -334,7 +335,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 	// Add order by
 	for _, orderBy := range query.Order {
 
-		colExpr, err := b.fm.ColumnExpressionFor(ctx, start, end, &orderBy.Key.TelemetryFieldKey, keys)
+		colExpr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &orderBy.Key.TelemetryFieldKey, keys)
 		if err != nil {
 			return nil, err
 		}
@@ -369,6 +370,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 
 func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	ctx context.Context,
+	orgID valuer.UUID,
 	sb *sqlbuilder.SelectBuilder,
 	query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation],
 	start, end uint64,
@@ -383,7 +385,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 		bodyJSONEnabled = b.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
 	)
 
-	frag, args, skipResourceFilter, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end, variables)
+	frag, args, skipResourceFilter, err := b.maybeAttachResourceFilter(ctx, orgID, sb, query, start, end, variables)
 	if err != nil {
 		return nil, err
 	}
@@ -402,7 +404,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	// Keep original column expressions so we can build the tuple
 	fieldNames := make([]string, 0, len(query.GroupBy))
 	for _, gb := range query.GroupBy {
-		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, start, end, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey, bodyJSONEnabled)
+		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, orgID, start, end, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey, bodyJSONEnabled)
 		if err != nil {
 			return nil, err
 		}
@@ -417,7 +419,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	allAggChArgs := make([]any, 0)
 	for i, agg := range query.Aggregations {
 		rewritten, chArgs, err := b.aggExprRewriter.Rewrite(
-			ctx, start, end, agg.Expression,
+			ctx, orgID, start, end, agg.Expression,
 			uint64(query.StepInterval.Seconds()),
 			keys,
 		)
@@ -431,7 +433,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	// Add FROM clause
 	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
 
-	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables, skipResourceFilter)
+	preparedWhereClause, err := b.addFilterCondition(ctx, orgID, sb, start, end, query, keys, variables, skipResourceFilter)
 
 	if err != nil {
 		return nil, err
@@ -443,7 +445,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	if query.Limit > 0 && len(query.GroupBy) > 0 {
 		// build the scalar “top/bottom-N” query in its own builder.
 		cteSB := sqlbuilder.NewSelectBuilder()
-		cteStmt, err := b.buildScalarQuery(ctx, cteSB, query, start, end, keys, true, variables)
+		cteStmt, err := b.buildScalarQuery(ctx, orgID, cteSB, query, start, end, keys, true, variables)
 		if err != nil {
 			return nil, err
 		}
@@ -528,6 +530,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 // buildScalarQuery builds a query for scalar panel type.
 func (b *logQueryStatementBuilder) buildScalarQuery(
 	ctx context.Context,
+	orgID valuer.UUID,
 	sb *sqlbuilder.SelectBuilder,
 	query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation],
 	start, end uint64,
@@ -543,7 +546,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 		bodyJSONEnabled = b.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
 	)
 
-	frag, args, skipResourceFilter, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end, variables)
+	frag, args, skipResourceFilter, err := b.maybeAttachResourceFilter(ctx, orgID, sb, query, start, end, variables)
 	if err != nil {
 		return nil, err
 	}
@@ -557,7 +560,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 	var allGroupByArgs []any
 
 	for _, gb := range query.GroupBy {
-		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, start, end, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey, bodyJSONEnabled)
+		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, orgID, start, end, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey, bodyJSONEnabled)
 		if err != nil {
 			return nil, err
 		}
@@ -575,7 +578,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 		for idx := range query.Aggregations {
 			aggExpr := query.Aggregations[idx]
 			rewritten, chArgs, err := b.aggExprRewriter.Rewrite(
-				ctx, start, end, aggExpr.Expression,
+				ctx, orgID, start, end, aggExpr.Expression,
 				rateInterval,
 				keys,
 			)
@@ -590,7 +593,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
 
 	// Add filter conditions
-	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables, skipResourceFilter)
+	preparedWhereClause, err := b.addFilterCondition(ctx, orgID, sb, start, end, query, keys, variables, skipResourceFilter)
 
 	if err != nil {
 		return nil, err
@@ -649,6 +652,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 // buildFilterCondition builds SQL condition from filter expression.
 func (b *logQueryStatementBuilder) addFilterCondition(
 	ctx context.Context,
+	orgID valuer.UUID,
 	sb *sqlbuilder.SelectBuilder,
 	start, end uint64,
 	query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation],
@@ -659,21 +663,18 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 
 	var preparedWhereClause querybuilder.PreparedWhereClause
 	var err error
-	// TODO(Tushar): thread orgID here to evaluate correctly
-	bodyJSONEnabled := b.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
 
 	if query.Filter != nil && query.Filter.Expression != "" {
 		// add filter expression
 		preparedWhereClause, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
 			Context:            ctx,
+			OrgID:              orgID,
 			Logger:             b.logger,
 			FieldMapper:        b.fm,
 			ConditionBuilder:   b.cb,
 			FieldKeys:          keys,
-			BodyJSONEnabled:    bodyJSONEnabled,
 			SkipResourceFilter: skipResourceFilter,
 			FullTextColumn:     b.fullTextColumn,
-			JsonKeyToKey:       b.jsonKeyToKey,
 			Variables:          variables,
 			StartNs:            start,
 			EndNs:              end,
@@ -718,6 +719,7 @@ func aggOrderBy(k qbtypes.OrderBy, q qbtypes.QueryBuilderQuery[qbtypes.LogAggreg
 
 func (b *logQueryStatementBuilder) maybeAttachResourceFilter(
 	ctx context.Context,
+	orgID valuer.UUID,
 	sb *sqlbuilder.SelectBuilder,
 	query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation],
 	start, end uint64,
@@ -725,7 +727,7 @@ func (b *logQueryStatementBuilder) maybeAttachResourceFilter(
 ) (cteSQL string, cteArgs []any, skipResourceFilter bool, err error) {
 
 	if b.skipResourceFingerprintEnabled {
-		decision, err := b.resourceFilterResolver.Resolve(ctx, query, start, end, variables)
+		decision, err := b.resourceFilterResolver.Resolve(ctx, orgID, query, start, end, variables)
 		if err != nil {
 			return "", nil, true, err
 		}
@@ -738,7 +740,7 @@ func (b *logQueryStatementBuilder) maybeAttachResourceFilter(
 	}
 
 	stmt, err := b.resourceFilterResolver.StatementBuilder().Build(
-		ctx, start, end, qbtypes.RequestTypeRaw, query, variables,
+		ctx, orgID, start, end, qbtypes.RequestTypeRaw, query, variables,
 	)
 	if err != nil {
 		return "", nil, true, err

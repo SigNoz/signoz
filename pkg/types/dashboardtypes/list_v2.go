@@ -2,6 +2,7 @@ package dashboardtypes
 
 import (
 	"slices"
+	"unicode/utf8"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -12,6 +13,7 @@ import (
 const (
 	DefaultListLimit = 20
 	MaxListLimit     = 200
+	MaxListQueryLen  = 1024
 )
 
 // ListSort is the sort field for the dashboard list endpoint. The value is a
@@ -49,31 +51,45 @@ func (o ListOrder) IsValid() bool {
 
 var ErrCodeDashboardListInvalid = errors.MustNewCode("dashboard_list_invalid")
 
-type ListDashboardsV2Params struct {
-	Query  string    `query:"query"`
-	Sort   ListSort  `query:"sort"`
-	Order  ListOrder `query:"order"`
-	Limit  int       `query:"limit"`
-	Offset int       `query:"offset"`
+type ListFilter struct {
+	Query string    `query:"query" json:"query"`
+	Sort  ListSort  `query:"sort" json:"sort"`
+	Order ListOrder `query:"order" json:"order"`
 }
 
-// Validate fills in defaults (sort=updated_at, order=desc, limit=20) and
-// rejects out-of-allowlist sort/order values and bad limit/offset. Limit is
-// clamped to MaxListLimit on the high side. Sort/order are case-insensitive —
-// valuer.String lowercases them at bind time.
+func (f *ListFilter) Validate() error {
+	if n := utf8.RuneCountInString(f.Query); n > MaxListQueryLen {
+		return errors.NewInvalidInputf(ErrCodeDashboardListInvalid,
+			"query cannot be longer than %d characters, got %d", MaxListQueryLen, n)
+	}
+	if !f.Sort.IsZero() && !f.Sort.IsValid() {
+		return errors.NewInvalidInputf(ErrCodeDashboardListInvalid,
+			"invalid sort %q — expected one of: `updated_at`, `created_at`, `name`", f.Sort)
+	}
+	if !f.Order.IsZero() && !f.Order.IsValid() {
+		return errors.NewInvalidInputf(ErrCodeDashboardListInvalid,
+			"invalid order %q — expected `asc` or `desc`", f.Order)
+	}
+	return nil
+}
+
+type ListDashboardsV2Params struct {
+	ListFilter
+	Limit  int `query:"limit"`
+	Offset int `query:"offset"`
+}
+
 func (p *ListDashboardsV2Params) Validate() error {
+	if err := p.ListFilter.Validate(); err != nil {
+		return err
+	}
+
 	if p.Sort.IsZero() {
 		p.Sort = ListSortUpdatedAt
-	} else if !p.Sort.IsValid() {
-		return errors.NewInvalidInputf(ErrCodeDashboardListInvalid,
-			"invalid sort %q — expected one of: `updated_at`, `created_at`, `name`", p.Sort)
 	}
 
 	if p.Order.IsZero() {
 		p.Order = ListOrderDesc
-	} else if !p.Order.IsValid() {
-		return errors.NewInvalidInputf(ErrCodeDashboardListInvalid,
-			"invalid order %q — expected `asc` or `desc`", p.Order)
 	}
 
 	if p.Limit == 0 {
@@ -106,6 +122,10 @@ type listedDashboardV2 struct {
 	Image         string                  `json:"image,omitempty"`
 	Tags          []*tagtypes.GettableTag `json:"tags" required:"true" nullable:"false"`
 	Spec          listedDashboardV2Spec   `json:"spec" required:"true"`
+	// Legacy marks a dashboard whose stored data is not yet in the v2 (perses)
+	// schema. Such rows are extracted best-effort from the v1 shape so the list
+	// still surfaces them; callers should route them to the legacy view.
+	Legacy bool `json:"legacy" required:"true"`
 }
 
 type listedDashboardV2Spec struct {
@@ -128,26 +148,59 @@ func newListedDashboardV2(v2 *DashboardV2) *listedDashboardV2 {
 	}
 }
 
-type ListableDashboardV2 struct {
-	Dashboards []*listedDashboardV2    `json:"dashboards" required:"true" nullable:"false"`
-	Total      int64                   `json:"total" required:"true"`
-	Tags       []*tagtypes.GettableTag `json:"tags" required:"true" nullable:"false"`
+// newListedDashboardForList builds the list view for a single dashboard. A row
+// whose stored data is not in the v2 (perses) schema is extracted best-effort
+// from the v1 shape and flagged Legacy, so one legacy or malformed dashboard
+// can't fail the whole list.
+func newListedDashboardForList(storable *StorableDashboard, tags []*tagtypes.Tag) *listedDashboardV2 {
+	if v2, err := storable.ToDashboardV2(tags); err == nil {
+		return newListedDashboardV2(v2)
+	}
+	return newLegacyListedDashboardV2(storable, tags)
 }
 
-func NewListableDashboardV2(dashboards []*StorableDashboard, total int64, tagsByEntity map[valuer.UUID][]*tagtypes.Tag, allTags []*tagtypes.Tag) (*ListableDashboardV2, error) {
+// newLegacyListedDashboardV2 pulls the display-relevant fields out of a v1
+// dashboard blob. Column-backed fields (name, source, timestamps, …) come
+// straight off the row; title/description/image/version are read leniently from
+// the untyped v1 data, defaulting to zero when absent or of the wrong type.
+func newLegacyListedDashboardV2(storable *StorableDashboard, tags []*tagtypes.Tag) *listedDashboardV2 {
+	return &listedDashboardV2{
+		Identifiable:  storable.Identifiable,
+		TimeAuditable: storable.TimeAuditable,
+		UserAuditable: storable.UserAuditable,
+		OrgID:         storable.OrgID,
+		Locked:        storable.Locked,
+		Source:        storable.Source,
+		SchemaVersion: storable.Data.readString("version"),
+		Name:          storable.Name,
+		Image:         storable.Data.readString("image"),
+		Tags:          tagtypes.NewGettableTagsFromTags(tags),
+		Spec: listedDashboardV2Spec{Display: Display{
+			Name:        storable.Data.readString("title"),
+			Description: storable.Data.readString("description"),
+		}},
+		Legacy: true,
+	}
+}
+
+type ListableDashboardV2 struct {
+	Dashboards       []*listedDashboardV2    `json:"dashboards" required:"true" nullable:"false"`
+	Total            int64                   `json:"total" required:"true"`
+	Tags             []*tagtypes.GettableTag `json:"tags" required:"true" nullable:"false"`
+	ReservedKeywords []DSLKey                `json:"reservedKeywords" required:"true" nullable:"false"`
+}
+
+func NewListableDashboardV2(dashboards []*StorableDashboard, total int64, tagsByEntity map[valuer.UUID][]*tagtypes.Tag, allTags []*tagtypes.Tag) *ListableDashboardV2 {
 	items := make([]*listedDashboardV2, len(dashboards))
 	for i, d := range dashboards {
-		v2, err := d.ToDashboardV2(tagsByEntity[d.ID])
-		if err != nil {
-			return nil, err
-		}
-		items[i] = newListedDashboardV2(v2)
+		items[i] = newListedDashboardForList(d, tagsByEntity[d.ID])
 	}
 	return &ListableDashboardV2{
-		Dashboards: items,
-		Total:      total,
-		Tags:       tagtypes.NewGettableTagsFromTags(allTags),
-	}, nil
+		Dashboards:       items,
+		Total:            total,
+		Tags:             tagtypes.NewGettableTagsFromTags(allTags),
+		ReservedKeywords: ReservedFilterKeys(),
+	}
 }
 
 // listedDashboardForUserV2 is a listed dashboard plus the calling user's pin
@@ -158,9 +211,10 @@ type listedDashboardForUserV2 struct {
 }
 
 type ListableDashboardForUserV2 struct {
-	Dashboards []*listedDashboardForUserV2 `json:"dashboards" required:"true" nullable:"false"`
-	Total      int64                       `json:"total" required:"true"`
-	Tags       []*tagtypes.GettableTag     `json:"tags" required:"true" nullable:"false"`
+	Dashboards       []*listedDashboardForUserV2 `json:"dashboards" required:"true" nullable:"false"`
+	Total            int64                       `json:"total" required:"true"`
+	Tags             []*tagtypes.GettableTag     `json:"tags" required:"true" nullable:"false"`
+	ReservedKeywords []DSLKey                    `json:"reservedKeywords" required:"true" nullable:"false"`
 }
 
 // StorableDashboardWithPinInfo is the per-row shape Store.ListForUser returns: the dashboard
@@ -171,21 +225,18 @@ type StorableDashboardWithPinInfo struct {
 	Pinned    bool
 }
 
-func NewListableDashboardForUserV2(rows []*StorableDashboardWithPinInfo, total int64, tagsByEntity map[valuer.UUID][]*tagtypes.Tag, allTags []*tagtypes.Tag) (*ListableDashboardForUserV2, error) {
+func NewListableDashboardForUserV2(rows []*StorableDashboardWithPinInfo, total int64, tagsByEntity map[valuer.UUID][]*tagtypes.Tag, allTags []*tagtypes.Tag) *ListableDashboardForUserV2 {
 	items := make([]*listedDashboardForUserV2, len(rows))
 	for i, r := range rows {
-		v2, err := r.Dashboard.ToDashboardV2(tagsByEntity[r.Dashboard.ID])
-		if err != nil {
-			return nil, err
-		}
 		items[i] = &listedDashboardForUserV2{
-			listedDashboardV2: *newListedDashboardV2(v2),
+			listedDashboardV2: *newListedDashboardForList(r.Dashboard, tagsByEntity[r.Dashboard.ID]),
 			Pinned:            r.Pinned,
 		}
 	}
 	return &ListableDashboardForUserV2{
-		Dashboards: items,
-		Total:      total,
-		Tags:       tagtypes.NewGettableTagsFromTags(allTags),
-	}, nil
+		Dashboards:       items,
+		Total:            total,
+		Tags:             tagtypes.NewGettableTagsFromTags(allTags),
+		ReservedKeywords: ReservedFilterKeys(),
+	}
 }

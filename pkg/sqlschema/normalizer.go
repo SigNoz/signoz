@@ -6,25 +6,26 @@ import (
 	"strings"
 )
 
-type whereNormalizer struct {
-	input string
+type expressionNormalizer struct {
+	input    string
+	foldCase bool
 }
 
-func (n *whereNormalizer) hash() string {
+func (n *expressionNormalizer) hash() string {
 	hasher := fnv.New32a()
 	_, _ = hasher.Write([]byte(n.normalize()))
 	return fmt.Sprintf("%08x", hasher.Sum32())
 }
 
-func (n *whereNormalizer) normalize() string {
-	where := strings.TrimSpace(n.input)
-	where = n.stripOuterParentheses(where)
+func (n *expressionNormalizer) normalize() string {
+	expr := strings.TrimSpace(n.input)
+	expr = n.stripOuterParentheses(expr)
 
 	var output strings.Builder
-	output.Grow(len(where))
+	output.Grow(len(expr))
 
-	for i := 0; i < len(where); i++ {
-		switch where[i] {
+	for i := 0; i < len(expr); i++ {
+		switch expr[i] {
 		case ' ', '\t', '\n', '\r':
 			if output.Len() > 0 {
 				last := output.String()[output.Len()-1]
@@ -33,21 +34,25 @@ func (n *whereNormalizer) normalize() string {
 				}
 			}
 		case '\'':
-			end := n.consumeSingleQuotedLiteral(where, i, &output)
+			end := n.consumeSingleQuotedLiteral(expr, i, &output)
 			i = end
 		case '"':
-			token, end := n.consumeDoubleQuotedToken(where, i)
+			token, end := n.consumeDoubleQuotedToken(expr, i)
 			output.WriteString(token)
 			i = end
 		default:
-			output.WriteByte(where[i])
+			c := expr[i]
+			if n.foldCase && c >= 'A' && c <= 'Z' {
+				c += 'a' - 'A'
+			}
+			output.WriteByte(c)
 		}
 	}
 
 	return strings.TrimSpace(output.String())
 }
 
-func (n *whereNormalizer) stripOuterParentheses(s string) string {
+func (n *expressionNormalizer) stripOuterParentheses(s string) string {
 	for {
 		s = strings.TrimSpace(s)
 		if len(s) < 2 || s[0] != '(' || s[len(s)-1] != ')' || !n.hasWrappingParentheses(s) {
@@ -57,7 +62,7 @@ func (n *whereNormalizer) stripOuterParentheses(s string) string {
 	}
 }
 
-func (n *whereNormalizer) hasWrappingParentheses(s string) bool {
+func (n *expressionNormalizer) hasWrappingParentheses(s string) bool {
 	depth := 0
 	inSingleQuotedLiteral := false
 	inDoubleQuotedToken := false
@@ -101,7 +106,7 @@ func (n *whereNormalizer) hasWrappingParentheses(s string) bool {
 	return depth == 0
 }
 
-func (n *whereNormalizer) consumeSingleQuotedLiteral(s string, start int, output *strings.Builder) int {
+func (n *expressionNormalizer) consumeSingleQuotedLiteral(s string, start int, output *strings.Builder) int {
 	output.WriteByte(s[start])
 	for i := start + 1; i < len(s); i++ {
 		output.WriteByte(s[i])
@@ -118,7 +123,7 @@ func (n *whereNormalizer) consumeSingleQuotedLiteral(s string, start int, output
 	return len(s) - 1
 }
 
-func (n *whereNormalizer) consumeDoubleQuotedToken(s string, start int) (string, int) {
+func (n *expressionNormalizer) consumeDoubleQuotedToken(s string, start int) (string, int) {
 	var ident strings.Builder
 
 	for i := start + 1; i < len(s); i++ {
@@ -142,7 +147,7 @@ func (n *whereNormalizer) consumeDoubleQuotedToken(s string, start int) (string,
 	return s[start:], len(s) - 1
 }
 
-func (n *whereNormalizer) isSimpleUnquotedIdentifier(s string) bool {
+func (n *expressionNormalizer) isSimpleUnquotedIdentifier(s string) bool {
 	if s == "" || strings.ToLower(s) != s {
 		return false
 	}

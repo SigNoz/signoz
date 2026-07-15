@@ -14,6 +14,7 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/require"
 )
 
@@ -94,7 +95,7 @@ func TestJSONStmtBuilder_TimeSeries(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 
-			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, c.requestType, c.query, nil)
+			q, err := statementBuilder.Build(context.Background(), valuer.UUID{}, 1747947419000, 1747983448000, c.requestType, c.query, nil)
 
 			if c.expectedErrContains != "" {
 				require.Error(t, err)
@@ -155,7 +156,7 @@ func TestStmtBuilderTimeSeriesBodyGroupByPromoted(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, c.requestType, c.query, nil)
+			q, err := statementBuilder.Build(context.Background(), valuer.UUID{}, 1747947419000, 1747983448000, c.requestType, c.query, nil)
 			if c.expectedErrContains != "" {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), c.expectedErrContains)
@@ -308,7 +309,7 @@ func TestJSONStmtBuilder_PrimitivePaths(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, qbtypes.RequestTypeRaw,
+			q, err := statementBuilder.Build(context.Background(), valuer.UUID{}, 1747947419000, 1747983448000, qbtypes.RequestTypeRaw,
 				qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
 					Signal: telemetrytypes.SignalLogs,
 					Filter: &qbtypes.Filter{Expression: c.filter},
@@ -477,7 +478,7 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 
-			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, c.requestType, c.query, nil)
+			q, err := statementBuilder.Build(context.Background(), valuer.UUID{}, 1747947419000, 1747983448000, c.requestType, c.query, nil)
 
 			if c.expectedErr != nil {
 				require.Error(t, err)
@@ -779,7 +780,7 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, qbtypes.RequestTypeRaw,
+			q, err := statementBuilder.Build(context.Background(), valuer.UUID{}, 1747947419000, 1747983448000, qbtypes.RequestTypeRaw,
 				qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
 					Signal: telemetrytypes.SignalLogs,
 					Filter: &qbtypes.Filter{Expression: c.filter},
@@ -904,7 +905,7 @@ func TestJSONStmtBuilder_IndexedPaths(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, qbtypes.RequestTypeRaw, c.query, nil)
+			q, err := statementBuilder.Build(context.Background(), valuer.UUID{}, 1747947419000, 1747983448000, qbtypes.RequestTypeRaw, c.query, nil)
 			if c.expectedErr != nil {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), c.expectedErr.Error())
@@ -991,7 +992,7 @@ func TestJSONStmtBuilder_SelectField(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, c.requestType, c.query, nil)
+			q, err := statementBuilder.Build(context.Background(), valuer.UUID{}, 1747947419000, 1747983448000, c.requestType, c.query, nil)
 			if c.expectedErrContains != "" {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), c.expectedErrContains)
@@ -1068,7 +1069,7 @@ func TestJSONStmtBuilder_OrderBy(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, c.requestType, c.query, nil)
+			q, err := statementBuilder.Build(context.Background(), valuer.UUID{}, 1747947419000, 1747983448000, c.requestType, c.query, nil)
 			if c.expectedErrContains != "" {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), c.expectedErrContains)
@@ -1131,7 +1132,7 @@ func TestResourceAggrAndGroupBy_WithJSONEnabled(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, c.requestType, c.query, nil)
+			q, err := statementBuilder.Build(context.Background(), valuer.UUID{}, 1747947419000, 1747983448000, c.requestType, c.query, nil)
 			if c.expectedErrContains != "" {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), c.expectedErrContains)

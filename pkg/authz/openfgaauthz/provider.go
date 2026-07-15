@@ -91,6 +91,15 @@ func (provider *provider) List(ctx context.Context, orgID valuer.UUID) ([]*autht
 	return provider.store.List(ctx, orgID)
 }
 
+func (provider *provider) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any, error) {
+	roles, err := provider.List(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	return authtypes.NewStatsFromRoles(roles), nil
+}
+
 func (provider *provider) ListByOrgIDAndNames(ctx context.Context, orgID valuer.UUID, names []string) ([]*authtypes.Role, error) {
 	return provider.store.ListByOrgIDAndNames(ctx, orgID, names)
 }
@@ -172,19 +181,7 @@ func (setter *provider) Create(_ context.Context, _ valuer.UUID, _ *authtypes.Ro
 	return errors.Newf(errors.TypeUnsupported, authtypes.ErrCodeRoleUnsupported, "not implemented")
 }
 
-func (provider *provider) GetOrCreate(_ context.Context, _ valuer.UUID, _ *authtypes.Role) (*authtypes.Role, error) {
-	return nil, errors.Newf(errors.TypeUnsupported, authtypes.ErrCodeRoleUnsupported, "not implemented")
-}
-
-func (provider *provider) GetObjects(ctx context.Context, orgID valuer.UUID, id valuer.UUID, relation authtypes.Relation) ([]*coretypes.Object, error) {
-	return nil, errors.Newf(errors.TypeUnsupported, authtypes.ErrCodeRoleUnsupported, "not implemented")
-}
-
-func (provider *provider) Patch(_ context.Context, _ valuer.UUID, _ *authtypes.Role) error {
-	return errors.Newf(errors.TypeUnsupported, authtypes.ErrCodeRoleUnsupported, "not implemented")
-}
-
-func (provider *provider) PatchObjects(_ context.Context, _ valuer.UUID, _ string, _ authtypes.Relation, _, _ []*coretypes.Object) error {
+func (provider *provider) Update(_ context.Context, _ valuer.UUID, _ *authtypes.Role) error {
 	return errors.Newf(errors.TypeUnsupported, authtypes.ErrCodeRoleUnsupported, "not implemented")
 }
 

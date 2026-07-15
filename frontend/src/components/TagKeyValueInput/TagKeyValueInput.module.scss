@@ -1,0 +1,59 @@
+.container {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	width: 100%;
+}
+
+.field {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 8px;
+	border-radius: 2px;
+	border: 1px solid var(--l2-border);
+}
+
+// Sienna chip via the @signozhq Badge; this only constrains its width.
+.tag {
+	max-width: 240px;
+}
+
+// The tag label is a bare, chrome-less button inside the Badge (double-click to
+// edit); strip its Button styling and let it ellipsize.
+.tagLabel {
+	--button-height: auto;
+	--button-padding: 0;
+	--button-gap: 0;
+	--button-variant-ghost-background-color: transparent;
+	--button-variant-ghost-hover-background-color: transparent;
+	--button-variant-ghost-color: currentColor;
+	--button-variant-ghost-hover-color: currentColor;
+	overflow: hidden;
+	max-width: 200px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	cursor: text;
+}
+
+.input {
+	flex: 1;
+	min-width: 120px;
+	border: none;
+	background: transparent;
+
+	&::placeholder {
+		color: var(--l3-foreground);
+	}
+}
+
+.editInput {
+	width: 160px;
+	height: 24px;
+}
+
+.error {
+	color: var(--bg-cherry-500);
+	font-size: 12px;
+}

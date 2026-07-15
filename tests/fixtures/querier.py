@@ -613,7 +613,7 @@ def build_order_by(name: str, direction: str = "desc") -> dict:
     return {"key": {"name": name}, "direction": direction}
 
 
-def build_logs_aggregation(expression: str, alias: str | None = None) -> dict:
+def build_aggregation(expression: str, alias: str | None = None) -> dict:
     agg: dict[str, Any] = {"expression": expression}
     if alias:
         agg["alias"] = alias
@@ -950,3 +950,25 @@ def generate_traces_with_corrupt_metadata() -> list[Traces]:
             },
         ),
     ]
+
+
+def make_scalar_query_request(
+    signoz: types.SigNoz,
+    token: str,
+    now: datetime,
+    queries: list[dict],
+    lookback_minutes: int = 5,
+) -> requests.Response:
+    return requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
+        timeout=5,
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "schemaVersion": "v1",
+            "start": int((now - timedelta(minutes=lookback_minutes)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "requestType": "scalar",
+            "compositeQuery": {"queries": queries},
+            "formatOptions": {"formatTableResultForUI": True, "fillGaps": False},
+        },
+    )
