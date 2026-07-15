@@ -4,6 +4,7 @@ import (
 	"bytes"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"gopkg.in/yaml.v3"
 )
 
@@ -83,11 +84,11 @@ func buildProcessorConfig(rules []*LLMPricingRule) *LLMPricingRuleProcessorConfi
 
 	return &LLMPricingRuleProcessorConfig{
 		Attrs: LLMPricingRuleProcessorAttrs{
-			Model:      GenAIRequestModel,
-			In:         GenAIUsageInputTokens,
-			Out:        GenAIUsageOutputTokens,
-			CacheRead:  GenAIUsageCacheReadInputTokens,
-			CacheWrite: GenAIUsageCacheCreationInputTokens,
+			Model:      telemetrytypes.GenAIRequestModel,
+			In:         telemetrytypes.GenAIUsageInputTokens,
+			Out:        telemetrytypes.GenAIUsageOutputTokens,
+			CacheRead:  telemetrytypes.GenAIUsageCacheReadInputTokens,
+			CacheWrite: telemetrytypes.GenAIUsageCacheCreationInputTokens,
 		},
 		DefaultPricing: LLMPricingRuleProcessorDefaultPricing{
 			Rules: pricingRules,
@@ -97,7 +98,7 @@ func buildProcessorConfig(rules []*LLMPricingRule) *LLMPricingRuleProcessorConfi
 			Out:        SignozGenAICostOutput,
 			CacheRead:  SignozGenAICostCacheRead,
 			CacheWrite: SignozGenAICostCacheWrite,
-			Total:      SignozGenAITotalCost,
+			Total:      telemetrytypes.SignozGenAITotalCost,
 		},
 	}
 }

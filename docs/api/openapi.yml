@@ -8565,6 +8565,7 @@ components:
     TelemetrytypesSource:
       enum:
       - meter
+      - ai
       type: string
     TelemetrytypesTelemetryFieldKey:
       properties:

@@ -19,6 +19,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
@@ -1190,6 +1191,45 @@ func enrichWithIntrinsicMetricKeys(keys map[string][]*telemetrytypes.TelemetryFi
 	return keys
 }
 
+// genAIEnrichmentEnabled reports whether the org in ctx has AI observability enabled.
+// The static gen_ai key definitions are surfaced (autocomplete + query-time resolution
+// before any gen_ai data is ingested) only for those orgs, so other tenants don't see
+// gen_ai keys in trace autocomplete. Contexts without claims (internal paths) resolve
+// to false — an org relying on enrichment has no gen_ai data ingested, so those paths
+// had nothing to resolve anyway.
+func (t *telemetryMetaStore) genAIEnrichmentEnabled(ctx context.Context) bool {
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		return false
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		return false
+	}
+	return t.fl.BooleanOrEmpty(ctx, flagger.FeatureEnableAIObservability, featuretypes.NewFlaggerEvaluationContext(orgID))
+}
+
+// enrichWithGenAIKeys adds keys that can be queried for GenAI signals, even though they have not been ingested yet.
+func enrichWithGenAIKeys(keys map[string][]*telemetrytypes.TelemetryFieldKey, selectors []*telemetrytypes.FieldKeySelector) map[string][]*telemetrytypes.TelemetryFieldKey {
+	for _, selector := range selectors {
+		if selector.Signal != telemetrytypes.SignalTraces && selector.Signal != telemetrytypes.SignalUnspecified {
+			continue
+		}
+		for name, def := range telemetrytypes.GenAIFieldDefinitions {
+			if len(keys[name]) > 0 {
+				continue // already resolved from ingested data
+			}
+			if !selectorMatchesIntrinsicField(selector, def) {
+				continue
+			}
+			keyCopy := def
+			keys[name] = []*telemetrytypes.TelemetryFieldKey{&keyCopy}
+		}
+	}
+
+	return keys
+}
+
 func selectorMatchesIntrinsicField(selector *telemetrytypes.FieldKeySelector, definition telemetrytypes.TelemetryFieldKey) bool {
 	if selector.FieldContext != telemetrytypes.FieldContextUnspecified && selector.FieldContext != definition.FieldContext {
 		return false
@@ -1275,6 +1315,9 @@ func (t *telemetryMetaStore) GetKeys(ctx context.Context, fieldKeySelector *tele
 
 	applyBackwardCompatibleKeys(mapOfKeys)
 	mapOfKeys = enrichWithIntrinsicMetricKeys(mapOfKeys, selectors)
+	if t.genAIEnrichmentEnabled(ctx) {
+		mapOfKeys = enrichWithGenAIKeys(mapOfKeys, selectors)
+	}
 
 	return mapOfKeys, complete, nil
 }
@@ -1353,6 +1396,9 @@ func (t *telemetryMetaStore) GetKeysMulti(ctx context.Context, fieldKeySelectors
 
 	applyBackwardCompatibleKeys(mapOfKeys)
 	mapOfKeys = enrichWithIntrinsicMetricKeys(mapOfKeys, fieldKeySelectors)
+	if t.genAIEnrichmentEnabled(ctx) {
+		mapOfKeys = enrichWithGenAIKeys(mapOfKeys, fieldKeySelectors)
+	}
 
 	return mapOfKeys, complete, nil
 }

@@ -3631,6 +3631,7 @@ export enum Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQue
 }
 export enum TelemetrytypesSourceDTO {
 	meter = 'meter',
+	ai = 'ai',
 }
 export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTO {
 	/**
