@@ -147,53 +147,35 @@ func (r *Repo) insertConfig(
 		c.Version = 1
 	}
 
-	// Track whether we've successfully finished the insert operation
-	success := false
-
-	defer func() {
-		if !success {
-			// remove all the damage (invalid rows from db)
-			// Delete elements first, then version (to respect potential foreign key constraints)
-			_, delErr := r.store.BunDB().NewDelete().Model(new(opamptypes.AgentConfigElement)).Where("version_id = ?", c.ID).Exec(ctx)
-			if delErr != nil {
-				slog.ErrorContext(ctx, "failed to delete config elements during cleanup", errors.Attr(delErr), "version_id", c.ID.String())
-			}
-			_, delErr = r.store.BunDB().NewDelete().Model(new(opamptypes.AgentConfigVersion)).Where("id = ?", c.ID).Where("org_id = ?", orgId).Exec(ctx)
-			if delErr != nil {
-				slog.ErrorContext(ctx, "failed to delete config version during cleanup", errors.Attr(delErr), "version_id", c.ID.String())
-			}
-		}
-	}()
-
-	_, dbErr := r.store.
-		BunDB().
-		NewInsert().
-		Model(c).
-		Exec(ctx)
-	if dbErr != nil {
-		slog.ErrorContext(ctx, "error in inserting config version", errors.Attr(dbErr))
-		return errors.WrapInternalf(dbErr, CodeConfigVersionInsertFailed, "failed to insert config version")
-	}
-
-	for _, e := range elements {
-		agentConfigElement := &opamptypes.AgentConfigElement{
-			Identifiable: types.Identifiable{ID: valuer.GenerateUUID()},
-			TimeAuditable: types.TimeAuditable{
-				CreatedAt: time.Now(),
-				UpdatedAt: time.Now(),
-			},
-			VersionID:   c.ID,
-			ElementType: c.ElementType.StringValue(),
-			ElementID:   e,
-		}
-		_, dbErr = r.store.BunDB().NewInsert().Model(agentConfigElement).Exec(ctx)
+	return r.store.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
+		_, dbErr := r.store.BunDBCtx(ctx).
+			NewInsert().
+			Model(c).
+			Exec(ctx)
 		if dbErr != nil {
-			return errors.WrapInternalf(dbErr, CodeConfigElementInsertFailed, "failed to insert config element")
+			slog.ErrorContext(ctx, "error in inserting config version", errors.Attr(dbErr))
+			return errors.WrapInternalf(dbErr, CodeConfigVersionInsertFailed, "failed to insert config version")
 		}
-	}
 
-	success = true
-	return nil
+		for _, e := range elements {
+			agentConfigElement := &opamptypes.AgentConfigElement{
+				Identifiable: types.Identifiable{ID: valuer.GenerateUUID()},
+				TimeAuditable: types.TimeAuditable{
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+				},
+				VersionID:   c.ID,
+				ElementType: c.ElementType.StringValue(),
+				ElementID:   e,
+			}
+			_, dbErr = r.store.BunDBCtx(ctx).NewInsert().Model(agentConfigElement).Exec(ctx)
+			if dbErr != nil {
+				return errors.WrapInternalf(dbErr, CodeConfigElementInsertFailed, "failed to insert config element")
+			}
+		}
+
+		return nil
+	})
 }
 
 func (r *Repo) updateDeployStatus(ctx context.Context,
