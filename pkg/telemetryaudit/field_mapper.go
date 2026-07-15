@@ -52,7 +52,7 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 	return nil, qbtypes.ErrColumnNotFound
 }
 
-func (m *fieldMapper) FieldFor(ctx context.Context, _, _ uint64, key *telemetrytypes.TelemetryFieldKey) (string, error) {
+func (m *fieldMapper) FieldFor(ctx context.Context, _ valuer.UUID, _, _ uint64, key *telemetrytypes.TelemetryFieldKey) (string, error) {
 	columns, err := m.getColumn(ctx, key)
 	if err != nil {
 		return "", err
@@ -92,30 +92,30 @@ func (m *fieldMapper) FieldFor(ctx context.Context, _, _ uint64, key *telemetryt
 	return column.Name, nil
 }
 
-func (m *fieldMapper) ColumnFor(ctx context.Context, _, _ uint64, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
+func (m *fieldMapper) ColumnFor(ctx context.Context, _ valuer.UUID, _, _ uint64, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
 	return m.getColumn(ctx, key)
 }
 
 func (m *fieldMapper) ColumnExpressionFor(
 	ctx context.Context,
-	_ valuer.UUID,
+	orgID valuer.UUID,
 	tsStart, tsEnd uint64,
 	field *telemetrytypes.TelemetryFieldKey,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
-	fieldExpression, err := m.FieldFor(ctx, tsStart, tsEnd, field)
+	fieldExpression, err := m.FieldFor(ctx, orgID, tsStart, tsEnd, field)
 	if errors.Is(err, qbtypes.ErrColumnNotFound) {
 		keysForField := keys[field.Name]
 		if len(keysForField) == 0 {
 			if _, ok := auditLogColumns[field.Name]; ok {
 				field.FieldContext = telemetrytypes.FieldContextLog
-				fieldExpression, _ = m.FieldFor(ctx, tsStart, tsEnd, field)
+				fieldExpression, _ = m.FieldFor(ctx, orgID, tsStart, tsEnd, field)
 			} else {
 				wrappedErr := errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name).WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(field.Name, errors.NounKeys, maps.Keys(keys))...)
 				return "", wrappedErr
 			}
 		} else {
-			fieldExpression, _ = m.FieldFor(ctx, tsStart, tsEnd, keysForField[0])
+			fieldExpression, _ = m.FieldFor(ctx, orgID, tsStart, tsEnd, keysForField[0])
 		}
 	}
 
