@@ -1230,7 +1230,7 @@ func TestSkipResourceFingerprintLogs(t *testing.T) {
 		mockStore := telemetrystoretest.New(telemetrystore.Config{}, &regexQueryMatcher{})
 		mock := mockStore.Mock()
 
-		mock.ExpectQueryRow(`SELECT count\(\) FROM \(SELECT fingerprint FROM signoz_logs\.distributed_logs_v2_resource`).
+		mock.ExpectQueryRow(`SELECT uniq\(fingerprint\) FROM signoz_logs\.distributed_logs_v2_resource`).
 			WillReturnRow(cmock.NewRow([]cmock.ColumnType{
 				{Name: "count", Type: "UInt64"},
 			}, []any{uint64(2)}))
@@ -1250,7 +1250,7 @@ func TestSkipResourceFingerprintLogs(t *testing.T) {
 		mockStore := telemetrystoretest.New(telemetrystore.Config{}, &regexQueryMatcher{})
 		mock := mockStore.Mock()
 
-		mock.ExpectQueryRow(`SELECT count\(\) FROM \(SELECT fingerprint FROM signoz_logs\.distributed_logs_v2_resource`).
+		mock.ExpectQueryRow(`SELECT uniq\(fingerprint\) FROM signoz_logs\.distributed_logs_v2_resource`).
 			WillReturnRow(cmock.NewRow([]cmock.ColumnType{
 				{Name: "count", Type: "UInt64"},
 			}, []any{threshold}))

@@ -18,8 +18,9 @@ def signoz_skip_resource_fingerprint(
 ) -> types.SigNoz:
     """
     Package-scoped SigNoz instance with the skip_resource_fingerprint
-    optimization enabled and a low threshold so the fallback resolver path is
-    exercised (filters matching >= 2 fingerprints skip the fingerprint CTE).
+    optimization enabled and a low threshold (3) so both resolver paths are
+    exercised: filters matching < 3 fingerprints resolve through the fingerprint
+    CTE, and filters matching >= 3 fingerprints fall back to the main table.
     """
     return create_signoz(
         network=network,
@@ -32,7 +33,7 @@ def signoz_skip_resource_fingerprint(
         cache_key="signoz-skip-resource-fingerprint",
         env_overrides={
             "SIGNOZ_QUERIER_SKIP__RESOURCE__FINGERPRINT_ENABLED": True,
-            "SIGNOZ_QUERIER_SKIP__RESOURCE__FINGERPRINT_THRESHOLD": 2,
+            "SIGNOZ_QUERIER_SKIP__RESOURCE__FINGERPRINT_THRESHOLD": 3,
         },
     )
 
