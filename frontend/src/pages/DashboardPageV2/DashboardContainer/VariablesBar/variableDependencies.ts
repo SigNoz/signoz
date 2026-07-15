@@ -4,8 +4,6 @@ import type {
 	VariableFormModel,
 	VariableType,
 } from '../DashboardSettings/Variables/variableFormModel';
-import type { VariableSelectionMap } from './selectionTypes';
-import { isResolved } from './selectionUtils';
 
 /**
  * Inter-variable dependency graph for runtime selection. A QUERY variable
@@ -241,18 +239,4 @@ export function deriveFetchContext(
 		queryVariableOrder,
 		dynamicVariableOrder,
 	};
-}
-
-/**
- * Whether every QUERY variable already has a usable selection — decides at load
- * time whether dynamic variables may fetch immediately or must wait for the
- * query variables to settle first (V1 parity).
- */
-export function doAllQueryVariablesHaveValues(
-	variables: VariableFormModel[],
-	selection: VariableSelectionMap,
-): boolean {
-	return variables
-		.filter((v) => v.type === 'QUERY')
-		.every((v) => isResolved(selection[v.name]));
 }

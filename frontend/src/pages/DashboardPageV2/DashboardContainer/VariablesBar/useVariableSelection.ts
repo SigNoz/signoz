@@ -11,8 +11,13 @@ import { selectVariableValues } from '../store/slices/variableSelectionSlice';
 import { useDashboardStore } from '../store/useDashboardStore';
 import type { VariableSelection, VariableSelectionMap } from './selectionTypes';
 import { useSeedVariableSelection } from './useSeedVariableSelection';
-import { doAllQueryVariablesHaveValues } from './variableDependencies';
 import { ALL_SELECTED, variablesUrlParser } from './variablesUrlState';
+
+/**
+ * Debounce for the fetch cycle, so the on-load time-range settle (default → saved)
+ * and rapid time-picker changes collapse into one cycle instead of double-fetching.
+ */
+const FETCH_CYCLE_DEBOUNCE_MS = 250;
 
 interface UseVariableSelection {
 	variables: VariableFormModel[];
@@ -48,9 +53,10 @@ export function useVariableSelection(
 		(s) => s.enqueueDescendantsBatch,
 	);
 
-	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
+	const { minTime, maxTime, selectedTime } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
 
 	// Latest selection, read by the fetch-cycle effect without subscribing to it
 	// (so a value change doesn't re-trigger a full fetch cycle).
@@ -62,20 +68,39 @@ export function useVariableSelection(
 		variablesUrlParser.withOptions({ history: 'replace' }),
 	);
 
-	// Start a full fetch cycle on load / dependency-order / time change. A value
-	// change instead goes through `enqueueDescendants`, not this effect.
+	// Start a full fetch cycle on load / dependency-order / time change, debounced so
+	// the initial time-window settle (and rapid time changes) collapse into ONE cycle
+	// instead of double-fetching every variable. Variables stay disabled until the
+	// cycle runs, so the transient window is never fetched. A value change instead
+	// goes through `enqueueDescendants` — immediate, not this effect.
 	const orderKey = `${fetchContext.queryVariableOrder.join(
 		',',
 	)}|${fetchContext.dynamicVariableOrder.join(',')}`;
+	// Key on the time *selection*, not raw min/max: a relative range recomputes those
+	// as `now` drifts, which shouldn't refetch. The fetchers still read current time.
+	const timeKey =
+		selectedTime === 'custom' ? `custom:${minTime}-${maxTime}` : selectedTime;
+	// A re-mount re-runs this effect with the same key, which enqueueFetchAll skips.
+	const fetchCycleKey = `${dashboardId}|${orderKey}|${timeKey}`;
+	const fetchCycleTimer = useRef<ReturnType<typeof setTimeout>>();
 	useEffect(() => {
 		if (!dashboardId || variables.length === 0) {
-			return;
+			return undefined;
 		}
-		enqueueFetchAll(
-			doAllQueryVariablesHaveValues(variables, selectionRef.current),
+		if (fetchCycleTimer.current) {
+			clearTimeout(fetchCycleTimer.current);
+		}
+		fetchCycleTimer.current = setTimeout(
+			() => enqueueFetchAll(fetchCycleKey),
+			FETCH_CYCLE_DEBOUNCE_MS,
 		);
+		return (): void => {
+			if (fetchCycleTimer.current) {
+				clearTimeout(fetchCycleTimer.current);
+			}
+		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [dashboardId, orderKey, minTime, maxTime]);
+	}, [dashboardId, fetchCycleKey]);
 
 	const setSelection = useCallback(
 		(name: string, next: VariableSelection): void => {
