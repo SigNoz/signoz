@@ -324,7 +324,7 @@ export default function K8sBaseDetails<T>({
 		}
 	}, [getMinMaxTime, selectedTime]);
 
-	const handleTabChange = (value: string): void => {
+	const handleTabChange = (value: string | null): void => {
 		if (!value) {
 			return;
 		}
