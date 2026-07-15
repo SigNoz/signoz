@@ -68,7 +68,7 @@ func NewTuplesFromTransactionGroups(name string, orgID valuer.UUID, transactionG
 	return tuples, nil
 }
 
-func MustNewTransactionGroupsFromTuples(tuples []*openfgav1.TupleKey) []*TransactionGroup {
+func MustNewTransactionGroupsFromTuples(tuples []*openfgav1.TupleKey) TransactionGroups {
 	objectsByRelation := make(map[string][]*coretypes.Object)
 
 	for _, tuple := range tuples {
@@ -81,7 +81,7 @@ func MustNewTransactionGroupsFromTuples(tuples []*openfgav1.TupleKey) []*Transac
 		objectsByRelation[verb.StringValue()] = append(objectsByRelation[verb.StringValue()], object)
 	}
 
-	transactionGroups := make([]*TransactionGroup, 0)
+	transactionGroups := make(TransactionGroups, 0)
 	for _, verb := range coretypes.Verbs {
 		objects := objectsByRelation[verb.StringValue()]
 		if len(objects) == 0 {

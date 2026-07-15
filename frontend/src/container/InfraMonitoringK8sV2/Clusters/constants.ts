@@ -9,27 +9,35 @@ import { v4 } from 'uuid';
 import { K8sDetailsMetadataConfig } from '../Base/K8sBaseDetails';
 import { formatValueForExpression } from 'components/QueryBuilderV2/utils';
 import { INFRA_MONITORING_ATTR_KEYS } from '../constants';
+import { SelectedItemParams } from '../hooks';
+import {
+	buildEventsExpression,
+	buildLogsTracesExpression,
+} from 'container/InfraMonitoringK8sV2/Base/utils';
 
 export const k8sClusterGetSelectedItemExpression = (
-	selectedItemId: string,
-): string => `k8s.cluster.name = ${formatValueForExpression(selectedItemId)}`;
+	params: SelectedItemParams,
+): string =>
+	`k8s.cluster.name = ${formatValueForExpression(params.selectedItem ?? '')}`;
 
 export const k8sClusterDetailsMetadataConfig: K8sDetailsMetadataConfig<InframonitoringtypesClusterRecordDTO>[] =
 	[{ label: 'Cluster Name', getValue: (p): string => p.clusterName || '' }];
 
 export const k8sClusterInitialEventsExpression = (
 	item: InframonitoringtypesClusterRecordDTO,
-): string => {
-	const objectName = formatValueForExpression(item.clusterName || '');
-	return `${INFRA_MONITORING_ATTR_KEYS.K8S_OBJECT_KIND} = 'Cluster' AND ${INFRA_MONITORING_ATTR_KEYS.K8S_OBJECT_NAME} = ${objectName}`;
-};
+): string =>
+	buildEventsExpression({
+		objectKind: 'Cluster',
+		objectName: item.clusterName || '',
+	});
 
 export const k8sClusterInitialLogTracesExpression = (
 	item: InframonitoringtypesClusterRecordDTO,
-): string => {
-	const clusterName = formatValueForExpression(item.clusterName || '');
-	return `${INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME} = ${clusterName}`;
-};
+): string =>
+	buildLogsTracesExpression({
+		mainAttributeKey: INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME,
+		mainAttributeValue: item.clusterName,
+	});
 
 export const k8sClusterGetEntityName = (
 	item: InframonitoringtypesClusterRecordDTO,
