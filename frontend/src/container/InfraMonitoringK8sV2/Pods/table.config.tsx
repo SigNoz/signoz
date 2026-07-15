@@ -152,7 +152,11 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 	},
 	{
 		id: 'podAge',
-		header: 'Age',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/pods#age">
+				Age
+			</ColumnHeader>
+		),
 		accessorFn: (row): number => row.podAge,
 		width: { min: 100 },
 		enableSort: false,
@@ -316,7 +320,11 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 	},
 	{
 		id: 'namespace',
-		header: 'Namespace',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/pods#additional-columns">
+				Namespace
+			</ColumnHeader>
+		),
 		accessorFn: (row): string =>
 			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 		width: { default: 100 },
@@ -328,7 +336,11 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 	},
 	{
 		id: 'node',
-		header: 'Node',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/pods#additional-columns">
+				Node
+			</ColumnHeader>
+		),
 		accessorFn: (row): string =>
 			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME] || '',
 		width: { default: 100 },
@@ -340,7 +352,11 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 	},
 	{
 		id: 'cluster',
-		header: 'Cluster',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/pods#additional-columns">
+				Cluster
+			</ColumnHeader>
+		),
 		accessorFn: (row): string =>
 			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] || '',
 		width: { default: 100 },

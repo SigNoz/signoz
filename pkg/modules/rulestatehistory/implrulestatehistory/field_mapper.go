@@ -8,6 +8,7 @@ import (
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 )
 
@@ -28,6 +29,12 @@ type fieldMapper struct{}
 
 func newFieldMapper() qbtypes.FieldMapper {
 	return &fieldMapper{}
+}
+
+// CandidateKeys returns nil: rule-state history has no attribute-map fallback, so a
+// context-missing key stays unresolved and the caller errors.
+func (m *fieldMapper) CandidateKeys(_ context.Context, _ valuer.UUID, _ *telemetrytypes.TelemetryFieldKey, _ any, _ map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.TelemetryFieldKey {
+	return nil
 }
 
 func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) { //nolint:unparam
@@ -57,7 +64,7 @@ func (m *fieldMapper) ColumnFor(ctx context.Context, _, _ uint64, key *telemetry
 	return []*schema.Column{col}, nil
 }
 
-func (m *fieldMapper) ColumnExpressionFor(ctx context.Context, tsStart, tsEnd uint64, field *telemetrytypes.TelemetryFieldKey, _ map[string][]*telemetrytypes.TelemetryFieldKey) (string, error) {
+func (m *fieldMapper) ColumnExpressionFor(ctx context.Context, _ valuer.UUID, tsStart, tsEnd uint64, field *telemetrytypes.TelemetryFieldKey, _ map[string][]*telemetrytypes.TelemetryFieldKey) (string, error) {
 	colName, err := m.FieldFor(ctx, tsStart, tsEnd, field)
 	if err != nil {
 		return "", err

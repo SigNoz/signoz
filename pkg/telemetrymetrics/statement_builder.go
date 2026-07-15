@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 	"golang.org/x/exp/slices"
 )
@@ -90,6 +91,7 @@ func GetKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation])
 
 func (b *MetricQueryStatementBuilder) Build(
 	ctx context.Context,
+	orgID valuer.UUID,
 	start uint64,
 	end uint64,
 	_ qbtypes.RequestType,
@@ -121,11 +123,12 @@ func (b *MetricQueryStatementBuilder) Build(
 
 	start, end = querybuilder.AdjustedMetricTimeRange(start, end, uint64(query.StepInterval.Seconds()), query)
 
-	return b.buildPipelineStatement(ctx, start, end, query, keys, variables)
+	return b.buildPipelineStatement(ctx, orgID, start, end, query, keys, variables)
 }
 
 func (b *MetricQueryStatementBuilder) buildPipelineStatement(
 	ctx context.Context,
+	orgID valuer.UUID,
 	start, end uint64,
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
@@ -195,7 +198,7 @@ func (b *MetricQueryStatementBuilder) buildPipelineStatement(
 	var timeSeriesCTEArgs []any
 	var err error
 
-	if timeSeriesCTE, timeSeriesCTEArgs, err = b.buildTimeSeriesCTE(ctx, tsStart, tsEnd, query, keys, variables, tsTable); err != nil {
+	if timeSeriesCTE, timeSeriesCTEArgs, err = b.buildTimeSeriesCTE(ctx, orgID, tsStart, tsEnd, query, keys, variables, tsTable); err != nil {
 		return nil, err
 	}
 
@@ -228,7 +231,7 @@ func (b *MetricQueryStatementBuilder) buildPipelineStatement(
 	if agg.Reduced && !useBuffer {
 		var tsCTE string
 		var tsArgs []any
-		if tsCTE, tsArgs, err = b.buildReducedTimeSeriesCTE(ctx, start, end, query, keys, variables); err != nil {
+		if tsCTE, tsArgs, err = b.buildReducedTimeSeriesCTE(ctx, orgID, start, end, query, keys, variables); err != nil {
 			return nil, err
 		}
 		if temporalFrag, temporalArgs, ok := b.buildReducedTemporalAggregationCTE(start, end, query, tsCTE, tsArgs); ok {
@@ -270,6 +273,7 @@ func unionStatements(main, reduced *qbtypes.Statement, query qbtypes.QueryBuilde
 
 func (b *MetricQueryStatementBuilder) buildReducedTimeSeriesCTE(
 	ctx context.Context,
+	orgID valuer.UUID,
 	start, end uint64,
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
@@ -282,6 +286,7 @@ func (b *MetricQueryStatementBuilder) buildReducedTimeSeriesCTE(
 	if query.Filter != nil && query.Filter.Expression != "" {
 		preparedWhereClause, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
 			Context:          ctx,
+			OrgID:            orgID,
 			Logger:           b.logger,
 			FieldMapper:      b.fm,
 			ConditionBuilder: b.cb,
@@ -299,7 +304,7 @@ func (b *MetricQueryStatementBuilder) buildReducedTimeSeriesCTE(
 	sb.From(fmt.Sprintf("%s.%s", DBName, TimeseriesV4ReducedLocalTableName))
 	sb.Select("fingerprint")
 	for _, g := range query.GroupBy {
-		col, err := b.fm.ColumnExpressionFor(ctx, start, end, &g.TelemetryFieldKey, keys)
+		col, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &g.TelemetryFieldKey, keys)
 		if err != nil {
 			return "", nil, err
 		}
@@ -454,6 +459,7 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 
 func (b *MetricQueryStatementBuilder) buildTimeSeriesCTE(
 	ctx context.Context,
+	orgID valuer.UUID,
 	start, end uint64,
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
@@ -468,6 +474,7 @@ func (b *MetricQueryStatementBuilder) buildTimeSeriesCTE(
 	if query.Filter != nil && query.Filter.Expression != "" {
 		preparedWhereClause, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
 			Context:          ctx,
+			OrgID:            orgID,
 			Logger:           b.logger,
 			FieldMapper:      b.fm,
 			ConditionBuilder: b.cb,
@@ -486,7 +493,7 @@ func (b *MetricQueryStatementBuilder) buildTimeSeriesCTE(
 
 	sb.Select("fingerprint")
 	for _, g := range query.GroupBy {
-		col, err := b.fm.ColumnExpressionFor(ctx, start, end, &g.TelemetryFieldKey, keys)
+		col, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &g.TelemetryFieldKey, keys)
 		if err != nil {
 			return "", nil, err
 		}
