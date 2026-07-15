@@ -1,3 +1,4 @@
+import type { VariableType } from '../DashboardSettings/Variables/variableFormModel';
 import type {
 	SelectedVariableValue,
 	VariableSelection,
@@ -11,6 +12,32 @@ export function isResolved(selection?: VariableSelection): boolean {
 	}
 	if (selection.allSelected) {
 		return true;
+	}
+	const { value } = selection;
+	if (Array.isArray(value)) {
+		return value.length > 0;
+	}
+	return value !== '' && value !== null && value !== undefined;
+}
+
+/**
+ * Whether a selection carries a value usable when scheduling a dependent
+ * variable/panel fetch. Unlike {@link isResolved}, a QUERY/CUSTOM ALL counts only
+ * once materialized into the concrete array (an unmaterialized ALL isn't usable),
+ * while a DYNAMIC ALL is usable immediately via the `__all__` sentinel.
+ */
+export function hasUsableValue(
+	selection: VariableSelection | undefined,
+	type: VariableType | undefined,
+): boolean {
+	if (!selection) {
+		return false;
+	}
+	if (selection.allSelected) {
+		if (type === 'DYNAMIC') {
+			return true;
+		}
+		return Array.isArray(selection.value) && selection.value.length > 0;
 	}
 	const { value } = selection;
 	if (Array.isArray(value)) {
