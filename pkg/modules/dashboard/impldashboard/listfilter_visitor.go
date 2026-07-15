@@ -32,13 +32,19 @@ func newVisitor(formatter sqlstore.SQLFormatter) *visitor {
 	}
 }
 
-// compile turns the parse tree into `?`-placeholder WHERE SQL + arguments for bun.
+// compile builds `?`-placeholder WHERE SQL + args for bun. Each term is either a
+// `key OP value` comparison or a bare token that becomes a free-text search; the
+// two compose through the boolean grammar (AND/OR/NOT). Malformed input is
+// returned as errors.
 func (v *visitor) compile(query string) (string, []any, []string) {
 	tree, _, collector := filterquery.Parse(query)
 	if len(collector.Errors) > 0 {
 		return "", nil, collector.Errors
 	}
 	condition, _ := v.visit(tree).(string)
+	if len(v.errors) > 0 {
+		return "", nil, v.errors
+	}
 	if condition == "" {
 		return "", nil, nil
 	}
@@ -119,10 +125,10 @@ func (v *visitor) VisitPrimary(ctx *grammar.PrimaryContext) any {
 	if ctx.Comparison() != nil {
 		return v.visit(ctx.Comparison())
 	}
-	// Bare keys, values, full text, and function calls are not part of the
-	// dashboard list DSL.
-	v.addError("unsupported expression %q — every term must be of the form `key OP value`", ctx.GetText())
-	return ""
+	// A lone key/value/full-text token is a free-text term, composed with any
+	// comparisons through the boolean grammar. A quoted token matches its contents
+	// literally — the escape hatch for a phrase or a term that looks like DSL.
+	return v.buildFreeTextTerm(trimQuotes(ctx.GetText()))
 }
 
 // VisitComparison dispatches a single `key OP value` term. A key that matches
@@ -399,6 +405,50 @@ func buildSubqueryForTagKey(subqueryBuilder *sqlbuilder.SelectBuilder, tagKey st
 
 func buildSubqueryForTagKeyAndValue(subqueryBuilder *sqlbuilder.SelectBuilder, tagKey, valuePredicate string) *sqlbuilder.SelectBuilder {
 	return buildSubqueryForTagKey(subqueryBuilder, tagKey).Where(valuePredicate)
+}
+
+// ─── free-text search ────────────────────────────────────────────────────────
+
+// buildFreeTextTerm matches value as a case-insensitive substring of the
+// dashboard name, description, or any tag key/value.
+func (v *visitor) buildFreeTextTerm(value string) string {
+	nameColumn := string(v.formatter.JSONExtractString("dashboard.data", "$.spec.display.name"))
+	descriptionColumn := string(v.formatter.JSONExtractString("dashboard.data", "$.spec.display.description"))
+	namePredicate := v.buildFreeTextContains(v.selectBuilder, nameColumn, value)
+	descriptionPredicate := v.buildFreeTextContains(v.selectBuilder, descriptionColumn, value)
+
+	subqueryBuilder := sqlbuilder.NewSelectBuilder()
+	keyPredicate := v.buildFreeTextContains(subqueryBuilder, "t.key", value)
+	valuePredicate := v.buildFreeTextContains(subqueryBuilder, "t.value", value)
+	buildSubqueryForFreeTextTag(subqueryBuilder, keyPredicate, valuePredicate)
+	tagPredicate := v.selectBuilder.Exists(subqueryBuilder)
+
+	return v.selectBuilder.Or(namePredicate, descriptionPredicate, tagPredicate)
+}
+
+// buildFreeTextContains emits a case-insensitive contains as
+// LOWER(COALESCE(col, '')) LIKE LOWER(?), identical on SQLite and Postgres.
+// COALESCE keeps a NULL column (an absent description) false rather than NULL —
+// otherwise `NOT (…)` goes NULL and drops every description-less dashboard. The
+// value's % and _ are escaped, and ESCAPE pins backslash as the escape char.
+func (v *visitor) buildFreeTextContains(builder *sqlbuilder.SelectBuilder, columnExpression, value string) string {
+	lowerColumn := string(v.formatter.LowerExpression("COALESCE(" + columnExpression + ", '')"))
+	pattern := "%" + v.formatter.EscapeLikePattern(value) + "%"
+	return fmt.Sprintf("%s LIKE LOWER(%s) ESCAPE '\\'", lowerColumn, builder.Var(pattern))
+}
+
+func buildSubqueryForFreeTextTag(subqueryBuilder *sqlbuilder.SelectBuilder, keyPredicate, valuePredicate string) *sqlbuilder.SelectBuilder {
+	const dashboardTagKind = `"dashboard"`
+
+	return subqueryBuilder.
+		Select("1").
+		From("tag_relation tr").
+		Join("tag t", "t.id = tr.tag_id").
+		Where(
+			subqueryBuilder.Equal("tr.kind", dashboardTagKind),
+			"tr.resource_id = dashboard.id",
+			subqueryBuilder.Or(keyPredicate, valuePredicate),
+		)
 }
 
 // ─── value extraction helpers ───────────────────────────────────────────────
