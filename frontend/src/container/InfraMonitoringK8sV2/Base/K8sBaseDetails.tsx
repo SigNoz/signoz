@@ -92,7 +92,6 @@ export interface CustomTab<T> {
 	key: string;
 	label: string;
 	icon: React.ReactNode;
-	badge?: React.ReactNode;
 	render: (props: CustomTabRenderProps<T>) => React.ReactNode;
 }
 
@@ -582,7 +581,6 @@ export default function K8sBaseDetails<T>({
 											<div className="view-title">
 												{tab.icon}
 												{tab.label}
-												{tab.badge}
 											</div>
 										),
 									})) ?? []),

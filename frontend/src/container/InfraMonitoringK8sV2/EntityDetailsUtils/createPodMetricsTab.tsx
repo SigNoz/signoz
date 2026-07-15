@@ -1,5 +1,4 @@
 import { Container } from '@signozhq/icons';
-import { Badge } from '@signozhq/ui/badge';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 
 import { CustomTab } from '../Base/K8sBaseDetails';
@@ -31,11 +30,6 @@ export function createPodMetricsTab<T>({
 		key: VIEW_TYPES.POD_METRICS,
 		label: 'Pod Metrics',
 		icon: <Container size={14} />,
-		badge: (
-			<Badge color="robin" className="view-title__badge">
-				New
-			</Badge>
-		),
 		render: ({ entity, timeRange, selectedInterval, handleTimeChange }) => (
 			<EntityMetrics
 				entity={entity}
