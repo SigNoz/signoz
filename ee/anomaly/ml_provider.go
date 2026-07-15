@@ -59,6 +59,8 @@ type mlConfig struct {
 	NetdataMaximumModels             int
 	NetdataMinimumModelsForConsensus int
 	NetdataDistanceQuantile          float64
+	NetdataConsensusFraction         float64
+	NetdataRecencyHalfLife           time.Duration
 }
 
 var defaultMLConfig = mlConfig{
@@ -89,6 +91,8 @@ var defaultMLConfig = mlConfig{
 	NetdataMaximumModels:             18,
 	NetdataMinimumModelsForConsensus: 1,
 	NetdataDistanceQuantile:          0.99,
+	NetdataConsensusFraction:         1.0,
+	NetdataRecencyHalfLife:           0,
 }
 
 type MLProvider struct {
@@ -111,7 +115,10 @@ type mlSeriesState struct {
 	expectedInterval       int64
 	featureContext         temporalFeatureContext
 	lastConsensusRatio     float64
+	lastQuorumRatio        float64
+	lastAnomalousFraction  float64
 	lastUnanimous          bool
+	lastWeightedConsensus  bool
 	lastFeatureSize        int
 }
 
@@ -149,6 +156,20 @@ type temporalKMeansModel struct {
 	windowStart    time.Time
 	windowEnd      time.Time
 	segmentID      int
+}
+
+type temporalConsensusResult struct {
+	ConsensusRatio    float64
+	QuorumRatio       float64
+	AnomalousFraction float64
+	FinalAnomalous    bool
+	Unanimous         bool
+	Weighted          bool
+}
+
+type weightedFloat64Value struct {
+	value  float64
+	weight float64
 }
 
 var _ Provider = (*MLProvider)(nil)
@@ -337,9 +358,25 @@ func (provider *MLProvider) applyMLScores(
 						"ml.consensus_ratio",
 						state.lastConsensusRatio,
 					),
+					slog.Float64(
+						"ml.consensus_fraction",
+						provider.config.NetdataConsensusFraction,
+					),
+					slog.Float64(
+						"ml.anomalous_fraction",
+						state.lastAnomalousFraction,
+					),
+					slog.Float64(
+						"ml.quorum_ratio",
+						state.lastQuorumRatio,
+					),
 					slog.Bool(
 						"ml.unanimous",
 						state.lastUnanimous,
+					),
+					slog.Bool(
+						"ml.weighted_consensus",
+						state.lastWeightedConsensus,
 					),
 					slog.Int(
 						"ml.feature_size",
@@ -352,6 +389,10 @@ func (provider *MLProvider) applyMLScores(
 					slog.Duration(
 						"ml.train_every",
 						provider.config.NetdataTrainEvery,
+					),
+					slog.Duration(
+						"ml.recency_half_life",
+						provider.config.NetdataRecencyHalfLife,
 					),
 				)
 			}
@@ -818,16 +859,34 @@ func normalizeMLConfig(
 		normalized.NetdataMaximumModels =
 			defaultMLConfig.NetdataMaximumModels
 	}
+	if normalized.NetdataMaximumModels > 64 {
+		normalized.NetdataMaximumModels = 64
+	}
 
 	if normalized.NetdataMinimumModelsForConsensus <= 0 {
 		normalized.NetdataMinimumModelsForConsensus =
 			defaultMLConfig.NetdataMinimumModelsForConsensus
+	}
+	if normalized.NetdataMinimumModelsForConsensus >
+		normalized.NetdataMaximumModels {
+		normalized.NetdataMinimumModelsForConsensus =
+			normalized.NetdataMaximumModels
 	}
 
 	if normalized.NetdataDistanceQuantile <= 0 ||
 		normalized.NetdataDistanceQuantile > 1 {
 		normalized.NetdataDistanceQuantile =
 			defaultMLConfig.NetdataDistanceQuantile
+	}
+
+	if normalized.NetdataConsensusFraction < 0.5 ||
+		normalized.NetdataConsensusFraction > 1.0 {
+		normalized.NetdataConsensusFraction =
+			defaultMLConfig.NetdataConsensusFraction
+	}
+
+	if normalized.NetdataRecencyHalfLife < 0 {
+		normalized.NetdataRecencyHalfLife = 0
 	}
 
 	return normalized
@@ -896,7 +955,10 @@ func (provider *MLProvider) scoreRawPointLocked(
 	}
 
 	state.lastConsensusRatio = 0
+	state.lastQuorumRatio = 0
+	state.lastAnomalousFraction = 0
 	state.lastUnanimous = false
+	state.lastWeightedConsensus = false
 	state.lastFeatureSize = 0
 
 	models := buildKMeansEnsemble(
@@ -986,7 +1048,10 @@ func (provider *MLProvider) scoreTemporalPointLocked(
 
 	state.lastFeatureSize = 0
 	state.lastConsensusRatio = 0
+	state.lastQuorumRatio = 0
+	state.lastAnomalousFraction = 0
 	state.lastUnanimous = false
+	state.lastWeightedConsensus = false
 	if featureReady {
 		state.lastFeatureSize = len(feature.Vector)
 	}
@@ -1004,16 +1069,20 @@ func (provider *MLProvider) scoreTemporalPointLocked(
 			len(state.temporalModels)
 	}
 
-	consensusRatio, unanimous := scoreTemporalConsensus(
+	consensus := evaluateTemporalConsensus(
 		state.temporalModels,
 		feature.Vector,
+		timestamp,
 		provider.config,
 	)
 
-	state.lastConsensusRatio = consensusRatio
-	state.lastUnanimous = unanimous
+	state.lastConsensusRatio = consensus.ConsensusRatio
+	state.lastQuorumRatio = consensus.QuorumRatio
+	state.lastAnomalousFraction = consensus.AnomalousFraction
+	state.lastUnanimous = consensus.Unanimous
+	state.lastWeightedConsensus = consensus.Weighted
 
-	if !unanimous || consensusRatio <= 1 {
+	if !consensus.FinalAnomalous || consensus.QuorumRatio <= 1 {
 		return 0, "netdata_temporal_kmeans", len(state.temporalModels)
 	}
 
@@ -1030,7 +1099,7 @@ func (provider *MLProvider) scoreTemporalPointLocked(
 
 	score := direction *
 		math.Min(
-			4.0*consensusRatio,
+			4.0*consensus.QuorumRatio,
 			provider.config.MaximumScore,
 		)
 
@@ -1086,7 +1155,8 @@ func appendTemporalFeature(
 	}
 
 	if state.featureContext.HasLastRawValue &&
-		state.expectedInterval > 0 {
+		state.expectedInterval > 0 &&
+		len(state.temporalRawHistory) >= 2 {
 		gap := timestamp -
 			state.temporalRawHistory[len(state.temporalRawHistory)-2].Timestamp
 		if gap*2 > state.expectedInterval*3 {
@@ -1513,31 +1583,162 @@ func scoreTemporalConsensus(
 	vector mlFeatureVector,
 	config mlConfig,
 ) (float64, bool) {
-	if len(models) == 0 {
+	result := evaluateTemporalConsensus(
+		models,
+		vector,
+		0,
+		config,
+	)
+	if !isFinite(result.QuorumRatio) {
 		return 0, false
 	}
 
+	return result.QuorumRatio, result.FinalAnomalous
+}
+
+func evaluateTemporalConsensus(
+	models []temporalKMeansModel,
+	vector mlFeatureVector,
+	currentTimestamp int64,
+	config mlConfig,
+) temporalConsensusResult {
+	if len(models) == 0 {
+		return temporalConsensusResult{}
+	}
+
+	ratioWeights := make([]weightedFloat64Value, 0, len(models))
 	consensusRatio := math.Inf(1)
+	totalWeight := 0.0
+	anomalousWeight := 0.0
 	unanimous := true
+	weighted := config.NetdataRecencyHalfLife > 0
+
 	for _, model := range models {
 		ratio := temporalModelRatio(
 			model,
 			vector,
 			config.MinimumScale,
 		)
+		if !isFinite(ratio) {
+			continue
+		}
 		if ratio < consensusRatio {
 			consensusRatio = ratio
 		}
-		if ratio <= 1 {
+
+		weight := temporalModelWeight(
+			model,
+			currentTimestamp,
+			config.NetdataRecencyHalfLife,
+		)
+		if !isFinite(weight) || weight <= 0 {
+			continue
+		}
+
+		totalWeight += weight
+		if ratio > 1 {
+			anomalousWeight += weight
+		} else {
 			unanimous = false
+		}
+
+		ratioWeights = append(ratioWeights, weightedFloat64Value{
+			value:  ratio,
+			weight: weight,
+		})
+	}
+
+	if len(ratioWeights) == 0 || totalWeight <= 0 || !isFinite(consensusRatio) {
+		return temporalConsensusResult{}
+	}
+
+	anomalousFraction := anomalousWeight / totalWeight
+	quorumRatio := weightedUpperQuantileFloat64(
+		ratioWeights,
+		1-config.NetdataConsensusFraction,
+	)
+	finalAnomalous := isFinite(quorumRatio) && quorumRatio > 1
+
+	return temporalConsensusResult{
+		ConsensusRatio:    consensusRatio,
+		QuorumRatio:       quorumRatio,
+		AnomalousFraction: anomalousFraction,
+		FinalAnomalous:    finalAnomalous,
+		Unanimous:         unanimous,
+		Weighted:          weighted,
+	}
+}
+
+func temporalModelWeight(
+	model temporalKMeansModel,
+	currentTimestamp int64,
+	recencyHalfLife time.Duration,
+) float64 {
+	if recencyHalfLife <= 0 || currentTimestamp <= 0 {
+		return 1
+	}
+
+	age := time.UnixMilli(currentTimestamp).Sub(model.trainedAt)
+	if age <= 0 {
+		return 1
+	}
+
+	return math.Exp(
+		-math.Ln2 * age.Seconds() /
+			recencyHalfLife.Seconds(),
+	)
+}
+
+func weightedUpperQuantileFloat64(
+	values []weightedFloat64Value,
+	quantile float64,
+) float64 {
+	if len(values) == 0 {
+		return 0
+	}
+
+	if quantile < 0 {
+		quantile = 0
+	}
+	if quantile > 1 {
+		quantile = 1
+	}
+
+	sortedValues := slices.Clone(values)
+	sort.Slice(sortedValues, func(left, right int) bool {
+		switch {
+		case sortedValues[left].value < sortedValues[right].value:
+			return true
+		case sortedValues[left].value > sortedValues[right].value:
+			return false
+		default:
+			return sortedValues[left].weight < sortedValues[right].weight
+		}
+	})
+
+	totalWeight := 0.0
+	for _, value := range sortedValues {
+		if value.weight > 0 && isFinite(value.weight) {
+			totalWeight += value.weight
+		}
+	}
+	if totalWeight <= 0 {
+		return 0
+	}
+
+	target := quantile * totalWeight
+	cumulativeWeight := 0.0
+	for _, value := range sortedValues {
+		if value.weight <= 0 || !isFinite(value.weight) {
+			continue
+		}
+		cumulativeWeight += value.weight
+		if cumulativeWeight > target {
+			return value.value
 		}
 	}
 
-	if !isFinite(consensusRatio) {
-		return 0, false
-	}
-
-	return consensusRatio, unanimous
+	return sortedValues[len(sortedValues)-1].value
 }
 
 func temporalModelRatio(

@@ -625,6 +625,305 @@ func TestNetdataModelsRotate(t *testing.T) {
 	}
 }
 
+func TestNetdataQuorumUnanimousCompatibility(t *testing.T) {
+	config := baselineNetdataMLConfig(1)
+	config.NetdataConsensusFraction = 1.0
+
+	models := []temporalKMeansModel{
+		{centers: []mlFeatureVector{{0}}, distanceCutoff: 2},
+		{centers: []mlFeatureVector{{0}}, distanceCutoff: 1.5},
+		{centers: []mlFeatureVector{{0}}, distanceCutoff: 1},
+	}
+
+	result := evaluateTemporalConsensus(
+		models,
+		mlFeatureVector{3},
+		0,
+		config,
+	)
+
+	if !result.FinalAnomalous || !result.Unanimous {
+		t.Fatal("consensusFraction=1.0 must preserve unanimous behavior")
+	}
+
+	if !approxFloat64(result.QuorumRatio, 1.5) {
+		t.Fatalf("unexpected unanimous quorum ratio: got %v want 1.5", result.QuorumRatio)
+	}
+}
+
+func TestNetdataQuorumAllowsPartialConsensus(t *testing.T) {
+	config := baselineNetdataMLConfig(1)
+	config.NetdataConsensusFraction = 0.75
+
+	models := []temporalKMeansModel{
+		{centers: []mlFeatureVector{{0}}, distanceCutoff: 1 / 1.4},
+		{centers: []mlFeatureVector{{0}}, distanceCutoff: 1 / 1.3},
+		{centers: []mlFeatureVector{{0}}, distanceCutoff: 1 / 1.2},
+		{centers: []mlFeatureVector{{0}}, distanceCutoff: 1 / 0.8},
+	}
+
+	result := evaluateTemporalConsensus(models, mlFeatureVector{1}, 0, config)
+	if !result.FinalAnomalous {
+		t.Fatal("75% quorum should accept 3 of 4 anomalous models")
+	}
+
+	config.NetdataConsensusFraction = 1.0
+	result = evaluateTemporalConsensus(models, mlFeatureVector{1}, 0, config)
+	if result.FinalAnomalous {
+		t.Fatal("100% quorum should reject partial consensus")
+	}
+}
+
+func TestNetdataQuorumRejectsInsufficientVotes(t *testing.T) {
+	config := baselineNetdataMLConfig(1)
+	config.NetdataConsensusFraction = 0.75
+
+	models := []temporalKMeansModel{
+		{centers: []mlFeatureVector{{0}}, distanceCutoff: 1 / 1.4},
+		{centers: []mlFeatureVector{{0}}, distanceCutoff: 1 / 1.3},
+		{centers: []mlFeatureVector{{0}}, distanceCutoff: 1 / 0.9},
+		{centers: []mlFeatureVector{{0}}, distanceCutoff: 1 / 0.8},
+	}
+
+	result := evaluateTemporalConsensus(models, mlFeatureVector{1}, 0, config)
+	if result.FinalAnomalous {
+		t.Fatal("quorum must reject 2 of 4 anomalous models")
+	}
+}
+
+func TestNetdataWeightedConsensus(t *testing.T) {
+	config := baselineNetdataMLConfig(1)
+	config.NetdataConsensusFraction = 0.60
+	config.NetdataRecencyHalfLife = 1 * time.Hour
+
+	now := time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC)
+	models := []temporalKMeansModel{
+		{
+			centers:        []mlFeatureVector{{0}},
+			distanceCutoff: 1 / 1.4,
+			trainedAt:      now.Add(-30 * time.Minute),
+		},
+		{
+			centers:        []mlFeatureVector{{0}},
+			distanceCutoff: 1 / 1.3,
+			trainedAt:      now.Add(-45 * time.Minute),
+		},
+		{
+			centers:        []mlFeatureVector{{0}},
+			distanceCutoff: 1 / 0.8,
+			trainedAt:      now.Add(-12 * time.Hour),
+		},
+		{
+			centers:        []mlFeatureVector{{0}},
+			distanceCutoff: 1 / 0.7,
+			trainedAt:      now.Add(-18 * time.Hour),
+		},
+	}
+
+	result := evaluateTemporalConsensus(
+		models,
+		mlFeatureVector{1},
+		now.UnixMilli(),
+		config,
+	)
+	if !result.FinalAnomalous {
+		t.Fatal("recent anomalous models should outweigh old normal models")
+	}
+	if result.AnomalousFraction <= 0.60 {
+		t.Fatalf("unexpected weighted anomalous fraction: got %v", result.AnomalousFraction)
+	}
+}
+
+func TestNetdataUniformConsensus(t *testing.T) {
+	config := baselineNetdataMLConfig(1)
+	config.NetdataConsensusFraction = 0.60
+	config.NetdataRecencyHalfLife = 0
+
+	now := time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC)
+	models := []temporalKMeansModel{
+		{
+			centers:        []mlFeatureVector{{0}},
+			distanceCutoff: 1 / 1.4,
+			trainedAt:      now.Add(-30 * time.Minute),
+		},
+		{
+			centers:        []mlFeatureVector{{0}},
+			distanceCutoff: 1 / 1.3,
+			trainedAt:      now.Add(-45 * time.Minute),
+		},
+		{
+			centers:        []mlFeatureVector{{0}},
+			distanceCutoff: 1 / 0.8,
+			trainedAt:      now.Add(-12 * time.Hour),
+		},
+		{
+			centers:        []mlFeatureVector{{0}},
+			distanceCutoff: 1 / 0.7,
+			trainedAt:      now.Add(-18 * time.Hour),
+		},
+	}
+
+	result := evaluateTemporalConsensus(
+		models,
+		mlFeatureVector{1},
+		now.UnixMilli(),
+		config,
+	)
+	if result.FinalAnomalous {
+		t.Fatal("uniform weighting should treat the vote as 2 of 4 and keep it normal")
+	}
+	if !approxFloat64(result.AnomalousFraction, 0.5) {
+		t.Fatalf("unexpected uniform anomalous fraction: got %v want 0.5", result.AnomalousFraction)
+	}
+}
+
+func TestNetdataWeightedQuantile(t *testing.T) {
+	values := []weightedFloat64Value{
+		{value: 0.8, weight: 1},
+		{value: 1.2, weight: 1},
+		{value: 1.3, weight: 1},
+		{value: 1.4, weight: 1},
+	}
+
+	quantile := weightedUpperQuantileFloat64(values, 0.25)
+	if !approxFloat64(quantile, 1.2) {
+		t.Fatalf("unexpected weighted upper quantile: got %v want 1.2", quantile)
+	}
+}
+
+func TestNetdataQuorumRatioMatchesDecision(t *testing.T) {
+	testCases := []struct {
+		name              string
+		consensusFraction float64
+		values            []weightedFloat64Value
+		wantAnomalous     bool
+	}{
+		{
+			name:              "unanimous normal",
+			consensusFraction: 1.0,
+			values: []weightedFloat64Value{
+				{value: 1.4, weight: 1},
+				{value: 0.9, weight: 1},
+			},
+			wantAnomalous: false,
+		},
+		{
+			name:              "partial quorum anomaly",
+			consensusFraction: 0.75,
+			values: []weightedFloat64Value{
+				{value: 1.4, weight: 1},
+				{value: 1.3, weight: 1},
+				{value: 1.2, weight: 1},
+				{value: 0.8, weight: 1},
+			},
+			wantAnomalous: true,
+		},
+		{
+			name:              "insufficient weighted vote",
+			consensusFraction: 0.75,
+			values: []weightedFloat64Value{
+				{value: 1.4, weight: 1},
+				{value: 1.3, weight: 1},
+				{value: 0.9, weight: 3},
+			},
+			wantAnomalous: false,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			quorumRatio := weightedUpperQuantileFloat64(
+				testCase.values,
+				1-testCase.consensusFraction,
+			)
+			gotAnomalous := quorumRatio > 1
+			if gotAnomalous != testCase.wantAnomalous {
+				t.Fatalf("unexpected anomaly decision: got %v want %v (quorumRatio=%v)", gotAnomalous, testCase.wantAnomalous, quorumRatio)
+			}
+		})
+	}
+}
+
+func TestNetdataLargeEnsembleRotation(t *testing.T) {
+	config := baselineNetdataMLConfig(1)
+	config.NetdataDiffN = 1
+	config.NetdataSmoothN = 1
+	config.NetdataLagN = 1
+	config.NetdataTrainingWindow = 3 * time.Minute
+	config.NetdataTrainEvery = 1 * time.Minute
+	config.NetdataMaximumModels = 4
+	config.NetdataMinimumModelsForConsensus = 1
+
+	provider := newMLProviderWithConfig(nil, nil, slog.New(slog.NewTextHandler(io.Discard, nil)), config)
+	start := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	for index := 0; index < 20; index++ {
+		provider.scoreSinglePointForSeries(
+			"series",
+			start.Add(time.Duration(index)*time.Minute).UnixMilli(),
+			float64(index),
+			0,
+		)
+	}
+
+	state := onlyMLSeriesState(t, provider)
+	if len(state.temporalModels) != 4 {
+		t.Fatalf("unexpected temporal model count: got %d want 4", len(state.temporalModels))
+	}
+	for index := 1; index < len(state.temporalModels); index++ {
+		if state.temporalModels[index-1].trainedAt.After(state.temporalModels[index].trainedAt) {
+			t.Fatal("temporal models must be retained oldest-to-newest after rotation")
+		}
+	}
+}
+
+func TestNetdataLargeEnsembleBoundedMemory(t *testing.T) {
+	config := baselineNetdataMLConfig(1)
+	config.NetdataDiffN = 1
+	config.NetdataSmoothN = 1
+	config.NetdataLagN = 1
+	config.NetdataTrainingWindow = 3 * time.Minute
+	config.NetdataTrainEvery = 1 * time.Minute
+	config.NetdataMaximumModels = 4
+	config.NetdataMinimumModelsForConsensus = 1
+
+	provider := newMLProviderWithConfig(nil, nil, slog.New(slog.NewTextHandler(io.Discard, nil)), config)
+	start := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	for index := 0; index < 200; index++ {
+		provider.scoreSinglePointForSeries(
+			"series",
+			start.Add(time.Duration(index)*time.Minute).UnixMilli(),
+			float64(index),
+			0,
+		)
+	}
+
+	state := onlyMLSeriesState(t, provider)
+	rawHistoryLimit := len(state.temporalRawHistory)
+	featureHistoryLimit := len(state.temporalFeatureHistory)
+
+	for index := 200; index < 400; index++ {
+		provider.scoreSinglePointForSeries(
+			"series",
+			start.Add(time.Duration(index)*time.Minute).UnixMilli(),
+			float64(index),
+			0,
+		)
+	}
+
+	state = onlyMLSeriesState(t, provider)
+	if len(state.temporalModels) != config.NetdataMaximumModels {
+		t.Fatalf("unexpected temporal model count after extended run: got %d want %d", len(state.temporalModels), config.NetdataMaximumModels)
+	}
+	if len(state.temporalRawHistory) > rawHistoryLimit+2 {
+		t.Fatalf("temporal raw history grew unexpectedly: got %d want at most %d", len(state.temporalRawHistory), rawHistoryLimit+2)
+	}
+	if len(state.temporalFeatureHistory) > featureHistoryLimit+2 {
+		t.Fatalf("temporal feature history grew unexpectedly: got %d want at most %d", len(state.temporalFeatureHistory), featureHistoryLimit+2)
+	}
+}
+
 func TestLoadNABEC2CPU(t *testing.T) {
 	nabRoot := os.Getenv("NAB_ROOT")
 	if nabRoot == "" {
@@ -2232,6 +2531,8 @@ type netdataTuneConfig struct {
 	MaximumModels             int
 	MinimumModelsForConsensus int
 	DistanceQuantile          float64
+	ConsensusFraction         float64
+	RecencyHalfLife           time.Duration
 }
 
 type netdataTuneResult struct {
@@ -4158,6 +4459,8 @@ func baselineNetdataMLConfig(
 	config.NetdataMaximumModels = 18
 	config.NetdataMinimumModelsForConsensus = minimumModelsForConsensus
 	config.NetdataDistanceQuantile = 0.99
+	config.NetdataConsensusFraction = 1.0
+	config.NetdataRecencyHalfLife = 0
 	return config
 }
 
@@ -4411,6 +4714,8 @@ func buildNetdataTuneConfigsFromGrid(
 										MaximumModels:             maximumModel,
 										MinimumModelsForConsensus: minimumModel,
 										DistanceQuantile:          quantile,
+										ConsensusFraction:         1.0,
+										RecencyHalfLife:           0,
 									})
 								}
 							}
@@ -4433,6 +4738,8 @@ func (config netdataTuneConfig) toMLConfig() mlConfig {
 	result.NetdataTrainEvery = config.TrainEvery
 	result.NetdataMaximumModels = config.MaximumModels
 	result.NetdataDistanceQuantile = config.DistanceQuantile
+	result.NetdataConsensusFraction = config.ConsensusFraction
+	result.NetdataRecencyHalfLife = config.RecencyHalfLife
 	return result
 }
 
@@ -4446,6 +4753,8 @@ func netdataTuneConfigFromMLConfig(config mlConfig) netdataTuneConfig {
 		MaximumModels:             config.NetdataMaximumModels,
 		MinimumModelsForConsensus: config.NetdataMinimumModelsForConsensus,
 		DistanceQuantile:          config.NetdataDistanceQuantile,
+		ConsensusFraction:         config.NetdataConsensusFraction,
+		RecencyHalfLife:           config.NetdataRecencyHalfLife,
 	}
 }
 
@@ -4457,7 +4766,7 @@ func (config netdataTuneConfig) warmupDuration() time.Duration {
 
 func (config netdataTuneConfig) signature() string {
 	return fmt.Sprintf(
-		"diff=%d smooth=%d lag=%d training_window=%s train_every=%s maximum_models=%d minimum_models=%d quantile=%.3f",
+		"diff=%d smooth=%d lag=%d training_window=%s train_every=%s maximum_models=%d minimum_models=%d quantile=%.3f consensus_fraction=%.2f recency_half_life=%s",
 		config.DiffN,
 		config.SmoothN,
 		config.LagN,
@@ -4466,6 +4775,8 @@ func (config netdataTuneConfig) signature() string {
 		config.MaximumModels,
 		config.MinimumModelsForConsensus,
 		config.DistanceQuantile,
+		config.ConsensusFraction,
+		config.RecencyHalfLife,
 	)
 }
 
