@@ -32,7 +32,6 @@ import {
 	getListQuery,
 	getQueryByPanelType,
 } from 'container/LogsExplorerViews/explorerUtils';
-import { BuilderUnitsFilter } from 'container/QueryBuilder/filters/BuilderUnitsFilter';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
@@ -461,18 +460,17 @@ function LogsExplorerViewsContainer({
 					)}
 					{selectedPanelType === PANEL_TYPES.TIME_SERIES && !showLiveLogs && (
 						<div className="time-series-view-container">
-							<div className="time-series-view-container-header">
-								<BuilderUnitsFilter onChange={onUnitChange} yAxisUnit={yAxisUnit} />
-							</div>
 							<TimeSeriesView
 								isLoading={isLoading || isFetching}
 								data={data}
 								isError={isError}
 								error={error as APIError}
 								yAxisUnit={yAxisUnit}
+								onYAxisUnitChange={onUnitChange}
 								isFilterApplied={!isEmpty(listQuery?.filters?.items)}
 								dataSource={DataSource.LOGS}
 								setWarning={setWarning}
+								allowExport
 							/>
 						</div>
 					)}

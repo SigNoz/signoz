@@ -23,6 +23,8 @@ interface PanelBodyProps {
 	panelId: string;
 	data: PanelQueryData;
 	isFetching: boolean;
+	/** Panel not yet scrolled into view — its fetch is deferred, so show the loader rather than NoData. */
+	isVisible?: boolean;
 	/** Showing a prior page's data while the next loads; forwarded so list renderers can show skeletons. */
 	isPreviousData?: boolean;
 	error: Error | null;
@@ -54,6 +56,7 @@ function PanelBody({
 	panelId,
 	data,
 	isFetching,
+	isVisible,
 	isPreviousData,
 	error,
 	refetch,
@@ -105,9 +108,9 @@ function PanelBody({
 		);
 	}
 
-	// Full-panel loader only on first fetch; a refetch over existing data keeps the renderer
-	// mounted (e.g. list page change). A refetch over empty data loads via NoData.
-	if (isFetching && !hasData) {
+	// Full-panel loader on first fetch or while the fetch is deferred (off-screen); a refetch
+	// over existing data keeps the renderer mounted, empty data loads via NoData.
+	if ((isFetching || isVisible === false) && !hasData) {
 		return <PanelLoader />;
 	}
 

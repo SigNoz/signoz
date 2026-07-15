@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
+	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -756,6 +757,200 @@ func (m *module) getMetadata(
 		result[compositeKey] = attrMap
 	}
 
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+// countAttrIdentityTuples maps a counted attr to the full label tuple that
+// uniquely identifies its entity, so uniqExact counts real entities rather than
+// bare names (namespace-scoped workloads with the same name across namespaces,
+// or cluster-scoped nodes/namespaces across clusters, would otherwise collapse).
+// Attrs absent from this map are counted on their bare name.
+var countAttrIdentityTuples = map[string][]string{
+	inframonitoringtypes.NamespaceNameAttrKey:   {inframonitoringtypes.ClusterNameAttrKey, inframonitoringtypes.NamespaceNameAttrKey},
+	inframonitoringtypes.NodeNameAttrKey:        {inframonitoringtypes.ClusterNameAttrKey, inframonitoringtypes.NodeNameAttrKey},
+	inframonitoringtypes.DeploymentNameAttrKey:  {inframonitoringtypes.ClusterNameAttrKey, inframonitoringtypes.NamespaceNameAttrKey, inframonitoringtypes.DeploymentNameAttrKey},
+	inframonitoringtypes.DaemonSetNameAttrKey:   {inframonitoringtypes.ClusterNameAttrKey, inframonitoringtypes.NamespaceNameAttrKey, inframonitoringtypes.DaemonSetNameAttrKey},
+	inframonitoringtypes.JobNameAttrKey:         {inframonitoringtypes.ClusterNameAttrKey, inframonitoringtypes.NamespaceNameAttrKey, inframonitoringtypes.JobNameAttrKey},
+	inframonitoringtypes.StatefulSetNameAttrKey: {inframonitoringtypes.ClusterNameAttrKey, inframonitoringtypes.NamespaceNameAttrKey, inframonitoringtypes.StatefulSetNameAttrKey},
+}
+
+// getPerGroupDistinctCounts returns, per groupBy combination, the exact distinct
+// count of each attr in attrNames within the time range and metric universe.
+// It mirrors getMetadata: fingerprints come from the samples table, labels are
+// read from the timeseries table (raw only, or raw+reduced union when reduction
+// is enabled), and the user filter is merged with the page-groups IN clauses.
+// The returned map keys group column values by "\x00", mapping to attr -> count.
+func (m *module) getPerGroupDistinctCounts(
+	ctx context.Context,
+	orgID valuer.UUID,
+	start, end int64,
+	filter *qbtypes.Filter,
+	groupBy []qbtypes.GroupByKey,
+	pageGroups []map[string]string,
+	attrNames []string,
+	metricNames []string,
+) (map[string]map[string]int64, error) {
+	if len(pageGroups) == 0 || len(groupBy) == 0 {
+		return map[string]map[string]int64{}, nil
+	}
+	if len(attrNames) == 0 {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "attrNames must not be empty")
+	}
+	if len(metricNames) == 0 {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "metricNames must not be empty")
+	}
+
+	// Merge user filter with page-groups IN clauses.
+	userFilterExpr := ""
+	if filter != nil {
+		userFilterExpr = filter.Expression
+	}
+	pageGroupsFilterExpr := buildPageGroupsFilterExpr(pageGroups)
+	mergedFilterExpr := mergeFilterExpressions(userFilterExpr, pageGroupsFilterExpr)
+
+	reductionEnabled := m.fl.BooleanOrEmpty(ctx, flagger.FeatureEnableMetricsReduction, featuretypes.NewFlaggerEvaluationContext(orgID))
+
+	// Step-floor the window and pick the right tables — same bounds the QB v5
+	// metric querier uses (see alignedMetricWindow / getMetadata).
+	samplesStartMs, flooredEndMs, tsAdjustedStartMs, distributedTimeSeriesTbl, _, _, localSamplesTbl := alignedMetricWindow(start, end)
+
+	fpSB := m.buildSamplesTblFingerprintSubQuery(metricNames, localSamplesTbl, samplesStartMs, flooredEndMs)
+
+	groupByCols := make([]string, len(groupBy))
+	for i, key := range groupBy {
+		groupByCols[i] = key.Name
+	}
+
+	sb := sqlbuilder.NewSelectBuilder()
+
+	// SELECT: one JSONExtractString per groupBy col + one uniqExactIf per attr.
+	selectCols := make([]string, 0, len(groupByCols)+len(attrNames))
+	for _, col := range groupByCols {
+		selectCols = append(selectCols,
+			fmt.Sprintf("JSONExtractString(labels, %s) AS %s", sb.Var(col), quoteIdentifier(col)),
+		)
+	}
+	for _, attr := range attrNames {
+		// Guard on != '' so a series missing the attr isn't counted as one empty value.
+		extract := fmt.Sprintf("JSONExtractString(labels, %s)", sb.Var(attr))
+
+		// Count on the entity's full identity tuple where one is defined, so
+		// same-named entities in different scopes (e.g. workloads sharing a name
+		// across namespaces) aren't collapsed. Falls back to the bare name.
+		valueExpr := extract
+		if tuple, ok := countAttrIdentityTuples[attr]; ok {
+			parts := make([]string, len(tuple))
+			for i, col := range tuple {
+				parts[i] = fmt.Sprintf("JSONExtractString(labels, %s)", sb.Var(col))
+			}
+			valueExpr = fmt.Sprintf("(%s)", strings.Join(parts, ", "))
+		}
+
+		selectCols = append(selectCols,
+			fmt.Sprintf("uniqExactIf(%s, %s != '') AS %s", valueExpr, extract, quoteIdentifier(attr)),
+		)
+	}
+	sb.Select(selectCols...)
+
+	if reductionEnabled {
+		var filterClause *sqlbuilder.WhereClause
+		if mergedFilterExpr != "" {
+			var err error
+			filterClause, err = m.buildFilterClause(ctx, &qbtypes.Filter{Expression: mergedFilterExpr}, start, end)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		reducedFpSB := m.buildReducedSamplesTblFingerprintSubQuery(metricNames, samplesStartMs, flooredEndMs)
+
+		rawSrc := sqlbuilder.NewSelectBuilder()
+		rawSrc.Select("labels")
+		rawSrc.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTimeSeriesTbl))
+		rawSrc.Where(
+			rawSrc.In("metric_name", sqlbuilder.List(metricNames)),
+			rawSrc.GE("unix_milli", tsAdjustedStartMs),
+			rawSrc.LE("unix_milli", flooredEndMs),
+			fmt.Sprintf("fingerprint IN (%s)", rawSrc.Var(fpSB)),
+		)
+		if filterClause != nil {
+			rawSrc.AddWhereClause(sqlbuilder.CopyWhereClause(filterClause))
+		}
+
+		reducedSrc := sqlbuilder.NewSelectBuilder()
+		reducedSrc.Select("labels")
+		reducedSrc.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.TimeseriesV4ReducedTableName))
+		reducedSrc.Where(
+			reducedSrc.In("metric_name", sqlbuilder.List(metricNames)),
+			reducedSrc.GE("unix_milli", tsAdjustedStartMs),
+			reducedSrc.LE("unix_milli", flooredEndMs),
+			fmt.Sprintf("fingerprint IN (%s)", reducedSrc.Var(reducedFpSB)),
+		)
+		if filterClause != nil {
+			reducedSrc.AddWhereClause(sqlbuilder.CopyWhereClause(filterClause))
+		}
+
+		sb.From(sb.BuilderAs(sqlbuilder.UnionAll(rawSrc, reducedSrc), "series"))
+	} else {
+		sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTimeSeriesTbl))
+		sb.Where(
+			sb.In("metric_name", sqlbuilder.List(metricNames)),
+			sb.GE("unix_milli", tsAdjustedStartMs),
+			sb.LE("unix_milli", flooredEndMs),
+			fmt.Sprintf("fingerprint IN (%s)", sb.Var(fpSB)),
+		)
+		if mergedFilterExpr != "" {
+			filterClause, err := m.buildFilterClause(ctx, &qbtypes.Filter{Expression: mergedFilterExpr}, start, end)
+			if err != nil {
+				return nil, err
+			}
+			if filterClause != nil {
+				sb.AddWhereClause(filterClause)
+			}
+		}
+	}
+
+	groupByAliases := make([]string, 0, len(groupByCols))
+	for _, col := range groupByCols {
+		groupByAliases = append(groupByAliases, quoteIdentifier(col))
+	}
+	sb.GroupBy(groupByAliases...)
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	rows, err := m.telemetryStore.ClickhouseDB().Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	result := make(map[string]map[string]int64)
+	for rows.Next() {
+		groupVals := make([]string, len(groupByCols))
+		counts := make([]uint64, len(attrNames))
+
+		scanPtrs := make([]any, 0, len(groupByCols)+len(attrNames))
+		for i := range groupVals {
+			scanPtrs = append(scanPtrs, &groupVals[i])
+		}
+		for i := range counts {
+			scanPtrs = append(scanPtrs, &counts[i])
+		}
+
+		if err := rows.Scan(scanPtrs...); err != nil {
+			return nil, err
+		}
+
+		attrCounts := make(map[string]int64, len(attrNames))
+		for i, attr := range attrNames {
+			attrCounts[attr] = int64(counts[i])
+		}
+		result[compositeKeyFromList(groupVals)] = attrCounts
+	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
