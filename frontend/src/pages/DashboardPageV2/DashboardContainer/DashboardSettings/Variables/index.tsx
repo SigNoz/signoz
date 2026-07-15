@@ -17,7 +17,17 @@ import {
 	emptyVariableFormModel,
 	type VariableFormModel,
 } from './variableFormModel';
+import {
+	applyVariableQueryEdits,
+	buildVariableImpactPatch,
+} from './variableImpactPatch';
+import {
+	findVariableUsages,
+	type VariableImpactMode,
+	type VariableUsage,
+} from './variableUsages';
 import VariableForm from './VariableForm/VariableForm';
+import VariableImpactDialog from './VariableImpactDialog/VariableImpactDialog';
 import VariablesList from './VariablesList';
 import styles from './Variables.module.scss';
 import AddVariableButton from './components/AddVariableButton';
@@ -59,6 +69,16 @@ function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 		null,
 	);
 	const [applyToAllIndex, setApplyToAllIndex] = useState<number | null>(null);
+	// A pending rename/delete that touches other queries — resolved via the impact
+	// dialog before it is applied. `nextVariables` is the array to persist (with the
+	// rename/delete already applied), before any variable-query edits.
+	const [impact, setImpact] = useState<{
+		mode: VariableImpactMode;
+		variableName: string;
+		newName?: string;
+		usages: VariableUsage[];
+		nextVariables: VariableFormModel[];
+	} | null>(null);
 
 	const editingFormModel: VariableFormModel | null = useMemo(() => {
 		if (!isEditing) {
@@ -104,12 +124,38 @@ function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 		formModel: VariableFormModel,
 		selectedPanelIds: string[],
 	): void => {
+		const editingIndex = isEditing?.type === 'edit' ? isEditing.index : null;
+		const oldName = editingIndex !== null ? variables[editingIndex].name : null;
+
 		const next = [...variables];
 		if (isEditing?.type === 'new') {
 			next.push(formModel);
-		} else if (isEditing?.type === 'edit') {
-			next[isEditing.index] = formModel;
+		} else if (editingIndex !== null) {
+			next[editingIndex] = formModel;
 		}
+
+		// A rename that other queries/variables reference must be reviewed first, so
+		// the references are rewritten alongside the rename (never left dangling).
+		if (oldName && oldName !== formModel.name) {
+			const usages = findVariableUsages(
+				dashboard,
+				oldName,
+				'rename',
+				formModel.name,
+			);
+			if (usages.length > 0) {
+				setIsEditing(null);
+				setImpact({
+					mode: 'rename',
+					variableName: oldName,
+					newName: formModel.name,
+					usages,
+					nextVariables: next,
+				});
+				return;
+			}
+		}
+
 		setIsEditing(null);
 		setVariables(next);
 		void (async (): Promise<void> => {
@@ -147,6 +193,57 @@ function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 	const handleConfirmDelete = (index: number): void => {
 		persist(variables.filter((_, i) => i !== index));
 		setConfirmDeleteIndex(null);
+	};
+
+	// Delete requested from the list: if the variable is referenced anywhere, block
+	// and open the impact dialog; otherwise fall through to the simple confirm.
+	const requestDelete = (index: number): void => {
+		const usages = findVariableUsages(dashboard, variables[index].name, 'delete');
+		if (usages.length > 0) {
+			setImpact({
+				mode: 'delete',
+				variableName: variables[index].name,
+				usages,
+				nextVariables: variables.filter((_, i) => i !== index),
+			});
+			return;
+		}
+		setConfirmDeleteIndex(index);
+	};
+
+	// Applies a resolved rename/delete: the variables array (rename/delete + edited
+	// variable queries) and each touched panel's queries, in one atomic patch.
+	const handleImpactConfirm = async (
+		resolvedUsages: VariableUsage[],
+	): Promise<void> => {
+		if (!impact) {
+			return;
+		}
+		const nextVariables = applyVariableQueryEdits(
+			impact.nextVariables,
+			resolvedUsages,
+		);
+		const ops = buildVariableImpactPatch(
+			dashboard,
+			nextVariables,
+			resolvedUsages,
+		);
+		setVariables(nextVariables);
+		try {
+			await patchAsync(ops);
+			toast.success(
+				impact.mode === 'rename'
+					? `Renamed to $${impact.newName}`
+					: `Deleted $${impact.variableName}`,
+			);
+		} catch {
+			toast.error(
+				impact.mode === 'rename'
+					? 'Could not rename the variable'
+					: 'Could not delete the variable',
+			);
+		}
+		setImpact(null);
 	};
 
 	const applyToAllVariable =
@@ -202,7 +299,7 @@ function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 						canEdit={isEditable}
 						confirmingIndex={confirmDeleteIndex}
 						onEdit={(index): void => setIsEditing({ type: 'edit', index })}
-						onRequestDelete={(index): void => setConfirmDeleteIndex(index)}
+						onRequestDelete={requestDelete}
 						onConfirmDelete={handleConfirmDelete}
 						onCancelDelete={(): void => setConfirmDeleteIndex(null)}
 						onMove={handleMove}
@@ -219,6 +316,16 @@ function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 				isLoading={isPatching}
 				onConfirm={(): void => void handleConfirmApplyToAll()}
 				onClose={(): void => setApplyToAllIndex(null)}
+			/>
+			<VariableImpactDialog
+				open={impact !== null}
+				mode={impact?.mode ?? 'delete'}
+				variableName={impact?.variableName ?? ''}
+				newName={impact?.newName}
+				usages={impact?.usages ?? []}
+				isLoading={isPatching}
+				onConfirm={(resolved): void => void handleImpactConfirm(resolved)}
+				onClose={(): void => setImpact(null)}
 			/>
 		</div>
 	);
