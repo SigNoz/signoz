@@ -80,7 +80,7 @@ export function EntityCountsSection<T>({
 						{config.label}
 					</Typography.Text>
 					<Typography.Text className={styles.countValue} size="xl" weight="semibold">
-						{config.getValue(entity)}
+						{config.getValue(entity) || '-'}
 					</Typography.Text>
 					<Link
 						to={buildNavigationUrl(config.targetCategory)}
