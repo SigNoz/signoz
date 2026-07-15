@@ -15,6 +15,7 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/require"
 )
 
@@ -204,7 +205,7 @@ func requireSQLEqual(t *testing.T, want string, stmt *qbtypes.Statement) {
 // just window + gate mask, no HAVING.
 func TestBuild_FullSQL_TraceList_NoFilter(t *testing.T) {
 	b := newTestBuilder(t)
-	stmt, err := b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace,
+	stmt, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeTrace,
 		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 			Signal: telemetrytypes.SignalTraces, Source: telemetrytypes.SourceAI, Limit: 20,
 		}, nil)
@@ -279,7 +280,7 @@ func TestBuild_FullSQL_TraceList_MaterializedColumns(t *testing.T) {
 		}
 	}
 	b := newTestBuilderWithKeys(t, keys)
-	stmt, err := b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace,
+	stmt, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeTrace,
 		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 			Signal: telemetrytypes.SignalTraces, Source: telemetrytypes.SourceAI, Limit: 20,
 		}, nil)
@@ -346,7 +347,7 @@ SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000
 // prune and becomes a countIf(...) > 0 existence check alongside the gate countIf.
 func TestBuild_FullSQL_TraceList_SpanAndTraceFilter(t *testing.T) {
 	b := newTestBuilder(t)
-	stmt, err := b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace,
+	stmt, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeTrace,
 		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 			Signal: telemetrytypes.SignalTraces, Source: telemetrytypes.SourceAI,
 			Filter: &qbtypes.Filter{Expression: "gen_ai.request.model = 'gpt-4o-mini' AND output_tokens > 1000"},
@@ -419,7 +420,7 @@ SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000
 // output_tokens alias. matched selects output_tokens (HAVING) + last_activity_time (default order).
 func TestBuild_FullSQL_TraceList_AggregateFilterOnly(t *testing.T) {
 	b := newTestBuilder(t)
-	stmt, err := b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace,
+	stmt, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeTrace,
 		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 			Signal: telemetrytypes.SignalTraces, Source: telemetrytypes.SourceAI,
 			Filter: &qbtypes.Filter{Expression: "trace.output_tokens > 1000"},
@@ -489,7 +490,7 @@ SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000
 // materialized-column predicate (not a map access). matched selects only the default order key.
 func TestBuild_FullSQL_TraceList_SpanFilterOnly(t *testing.T) {
 	b := newTestBuilder(t)
-	stmt, err := b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace,
+	stmt, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeTrace,
 		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 			Signal: telemetrytypes.SignalTraces, Source: telemetrytypes.SourceAI,
 			Filter: &qbtypes.Filter{Expression: "has_error = true"},
@@ -562,7 +563,7 @@ SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000
 // prune stays the gate mask and the whole match is scoped to the resource fingerprints.
 func TestBuild_FullSQL_TraceList_ResourceFilter(t *testing.T) {
 	b := newTestBuilder(t)
-	stmt, err := b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace,
+	stmt, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeTrace,
 		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 			Signal: telemetrytypes.SignalTraces, Source: telemetrytypes.SourceAI,
 			Filter: &qbtypes.Filter{Expression: "resource.service.name = 'checkout'"},
@@ -639,7 +640,7 @@ SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000
 // + last_activity_time (ORDER BY) and output_tokens (HAVING) — three of four; llm_call_count is not.
 func TestBuild_FullSQL_TraceList_MixedFiltersMultiOrder(t *testing.T) {
 	b := newTestBuilder(t)
-	stmt, err := b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace,
+	stmt, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeTrace,
 		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 			Signal: telemetrytypes.SignalTraces, Source: telemetrytypes.SourceAI,
 			Filter: &qbtypes.Filter{Expression: "gen_ai.request.model = 'gpt-4o' AND has_error = true AND output_tokens > 500"},
@@ -717,7 +718,7 @@ SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000
 // span columns, single SELECT (no CTE pipeline).
 func TestBuild_FullSQL_SpanList_Raw(t *testing.T) {
 	b := newTestBuilder(t)
-	stmt, err := b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeRaw,
+	stmt, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeRaw,
 		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 			Signal: telemetrytypes.SignalTraces, Source: telemetrytypes.SourceAI,
 			Filter: &qbtypes.Filter{Expression: "gen_ai.request.model = 'gpt-4o-mini'"},
@@ -726,15 +727,15 @@ func TestBuild_FullSQL_SpanList_Raw(t *testing.T) {
 	require.NoError(t, err)
 
 	requireSQLEqual(t, `
-SELECT timestamp AS timestamp, trace_id AS trace_id, span_id AS span_id,
-    trace_state AS trace_state, parent_span_id AS parent_span_id, flags AS flags,
-    name AS name, kind AS kind, kind_string AS kind_string, duration_nano AS duration_nano,
-    status_code AS status_code, status_message AS status_message,
-    status_code_string AS status_code_string, events AS events, links AS links,
-    response_status_code AS response_status_code, external_http_url AS external_http_url,
-    http_url AS http_url, external_http_method AS external_http_method,
-    http_method AS http_method, http_host AS http_host, db_name AS db_name,
-    db_operation AS db_operation, has_error AS has_error, is_remote AS is_remote,
+SELECT timestamp AS __SELECT_KEY_0_timestamp, trace_id AS __SELECT_KEY_1_trace_id, span_id AS __SELECT_KEY_2_span_id,
+    trace_state AS __SELECT_KEY_3_trace_state, parent_span_id AS __SELECT_KEY_4_parent_span_id, flags AS __SELECT_KEY_5_flags,
+    name AS __SELECT_KEY_6_name, kind AS __SELECT_KEY_7_kind, kind_string AS __SELECT_KEY_8_kind_string, duration_nano AS __SELECT_KEY_9_duration_nano,
+    status_code AS __SELECT_KEY_10_status_code, status_message AS __SELECT_KEY_11_status_message,
+    status_code_string AS __SELECT_KEY_12_status_code_string, events AS __SELECT_KEY_13_events, links AS __SELECT_KEY_14_links,
+    response_status_code AS __SELECT_KEY_15_response_status_code, external_http_url AS __SELECT_KEY_16_external_http_url,
+    http_url AS __SELECT_KEY_17_http_url, external_http_method AS __SELECT_KEY_18_external_http_method,
+    http_method AS __SELECT_KEY_19_http_method, http_host AS __SELECT_KEY_20_http_host, db_name AS __SELECT_KEY_21_db_name,
+    db_operation AS __SELECT_KEY_22_db_operation, has_error AS __SELECT_KEY_23_has_error, is_remote AS __SELECT_KEY_24_is_remote,
     attributes_string, attributes_number, attributes_bool, resources_string
 FROM signoz_traces.distributed_signoz_index_v3
 WHERE (((mapContains(attributes_string, 'gen_ai.request.model') = true
@@ -760,7 +761,7 @@ LIMIT 10
 // service.name (resource context) comes from otelKeysMap.
 func TestBuild_TraceList_ResourcePlusSpanPlusAggregateFilter(t *testing.T) {
 	b := newTestBuilder(t)
-	stmt, err := b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace,
+	stmt, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeTrace,
 		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 			Signal: telemetrytypes.SignalTraces, Source: telemetrytypes.SourceAI,
 			Filter: &qbtypes.Filter{Expression: "resource.service.name = 'checkout' AND has_error = true AND output_tokens > 1000"},
@@ -792,7 +793,7 @@ func TestBuild_TraceList_TraceOrSpanMixRejected(t *testing.T) {
 		Filter: &qbtypes.Filter{Expression: "trace.output_tokens > 1000 OR gen_ai.request.model = 'x'"},
 		Limit:  10,
 	}
-	_, err := b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace, query, nil)
+	_, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeTrace, query, nil)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "cannot be combined")
 }
@@ -803,7 +804,7 @@ func TestBuild_TraceList_OutputOnlyAggregateRejected(t *testing.T) {
 	b := newTestBuilder(t)
 
 	// filter by span_count -> rejected
-	_, err := b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace,
+	_, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeTrace,
 		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 			Signal: telemetrytypes.SignalTraces, Source: telemetrytypes.SourceAI,
 			Filter: &qbtypes.Filter{Expression: "span_count > 3"},
@@ -812,7 +813,7 @@ func TestBuild_TraceList_OutputOnlyAggregateRejected(t *testing.T) {
 	require.Contains(t, err.Error(), "span_count")
 
 	// order by trace_duration_nano -> rejected
-	_, err = b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace,
+	_, err = b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeTrace,
 		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 			Signal: telemetrytypes.SignalTraces, Source: telemetrytypes.SourceAI,
 			Order: []qbtypes.OrderBy{{Key: qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "trace_duration_nano"}}, Direction: qbtypes.OrderDirectionDesc}},
@@ -833,7 +834,7 @@ func TestBuild_TraceList_SpanDurationFilterIsSpanLevel(t *testing.T) {
 		FieldDataType: telemetrytypes.FieldDataTypeNumber,
 	}}
 	b := newTestBuilderWithKeys(t, keys)
-	stmt, err := b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace,
+	stmt, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeTrace,
 		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 			Signal: telemetrytypes.SignalTraces, Source: telemetrytypes.SourceAI,
 			Filter: &qbtypes.Filter{Expression: "duration_nano > 1000000"},
@@ -855,7 +856,7 @@ func TestBuild_TraceList_Having_UnknownColumn(t *testing.T) {
 		Having: &qbtypes.Having{Expression: "service.name > 1"}, // not an aggregate column
 		Limit:  10,
 	}
-	_, err := b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace, query, nil)
+	_, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeTrace, query, nil)
 	require.Error(t, err)
 }
 
@@ -869,7 +870,7 @@ func TestBuild_TraceList_UnsupportedOrderKey(t *testing.T) {
 			{Key: qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "http.request.method"}}, Direction: qbtypes.OrderDirectionDesc},
 		},
 	}
-	_, err := b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace, query, nil)
+	_, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeTrace, query, nil)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "unsupported order key")
 }
@@ -881,7 +882,7 @@ func TestBuild_TraceList_DefaultLimit(t *testing.T) {
 		Signal: telemetrytypes.SignalTraces,
 		Source: telemetrytypes.SourceAI,
 	}
-	stmt, err := b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace, query, nil)
+	stmt, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeTrace, query, nil)
 	require.NoError(t, err)
 	require.Contains(t, stmt.Query, "LIMIT ?")
 	require.Contains(t, stmt.Args, 100)
@@ -897,7 +898,7 @@ func TestBuild_UnsupportedRequestType(t *testing.T) {
 			{Expression: "count()"},
 		},
 	}
-	_, err := b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeDistribution, query, nil)
+	_, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeDistribution, query, nil)
 	require.ErrorIs(t, err, scopedtraces.ErrUnsupportedRequestType)
 }
 
@@ -913,7 +914,7 @@ func TestBuild_TraceList_MultiVariantGateKey(t *testing.T) {
 		FieldDataType: telemetrytypes.FieldDataTypeFloat64,
 	})
 	b := newTestBuilderWithKeys(t, keys)
-	stmt, err := b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace,
+	stmt, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeTrace,
 		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 			Signal: telemetrytypes.SignalTraces, Source: telemetrytypes.SourceAI, Limit: 10,
 		}, nil)
@@ -931,7 +932,7 @@ func TestBuild_TraceList_TraceContextPrefix(t *testing.T) {
 	b := newTestBuilder(t)
 	build := func(q qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) (*qbtypes.Statement, error) {
 		q.Signal, q.Source, q.Limit = telemetrytypes.SignalTraces, telemetrytypes.SourceAI, 20
-		return b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace, q, nil)
+		return b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeTrace, q, nil)
 	}
 
 	_, err := build(qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
@@ -959,7 +960,7 @@ func TestBuild_TraceList_TraceContextPrefix(t *testing.T) {
 func TestBuild_TraceList_VariableInAggregateFilter(t *testing.T) {
 	b := newTestBuilder(t)
 	build := func(expr string, vars map[string]qbtypes.VariableItem) (*qbtypes.Statement, error) {
-		return b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace,
+		return b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeTrace,
 			qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 				Signal: telemetrytypes.SignalTraces, Source: telemetrytypes.SourceAI,
 				Filter: &qbtypes.Filter{Expression: expr},

@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 )
 
@@ -65,7 +66,7 @@ func (r *fieldMapper) FieldFor(ctx context.Context, startNs, endNs uint64, key *
 
 // ConditionFor returns a boolean predicate for key via the condition builder
 // (materialized column when present, else map access).
-func (r *fieldMapper) ConditionFor(ctx context.Context, startNs, endNs uint64, key *telemetrytypes.TelemetryFieldKey, op qbtypes.FilterOperator, value any) (string, []any, error) {
+func (r *fieldMapper) ConditionFor(ctx context.Context, orgID valuer.UUID, startNs, endNs uint64, key *telemetrytypes.TelemetryFieldKey, op qbtypes.FilterOperator, value any) (string, []any, error) {
 	resolvedKey := key
 	cands := r.keys[key.Name]
 	if len(cands) == 0 {
@@ -74,7 +75,7 @@ func (r *fieldMapper) ConditionFor(ctx context.Context, startNs, endNs uint64, k
 		resolvedKey = cands[0]
 	}
 	sb := sqlbuilder.NewSelectBuilder()
-	conds, _, err := r.cb.ConditionFor(ctx, startNs, endNs, resolvedKey, cands, op, value, sb)
+	conds, _, err := r.cb.ConditionFor(ctx, orgID, startNs, endNs, resolvedKey, cands, op, value, sb)
 	if err != nil {
 		return "", nil, err
 	}
@@ -91,16 +92,16 @@ func (r *fieldMapper) ConditionFor(ctx context.Context, startNs, endNs uint64, k
 }
 
 // ExistsFor returns the EXISTS predicate for key.
-func (r *fieldMapper) ExistsFor(ctx context.Context, startNs, endNs uint64, key *telemetrytypes.TelemetryFieldKey) (string, []any, error) {
-	return r.ConditionFor(ctx, startNs, endNs, key, qbtypes.FilterOperatorExists, nil)
+func (r *fieldMapper) ExistsFor(ctx context.Context, orgID valuer.UUID, startNs, endNs uint64, key *telemetrytypes.TelemetryFieldKey) (string, []any, error) {
+	return r.ConditionFor(ctx, orgID, startNs, endNs, key, qbtypes.FilterOperatorExists, nil)
 }
 
 // ValueFor returns the value expression for an attribute key. The metadata variant
 // is preferred because it carries Materialized — a provider's static definition
 // never does, so a promoted attribute would otherwise fall back to map access.
-func (r *fieldMapper) ValueFor(ctx context.Context, startNs, endNs uint64, key *telemetrytypes.TelemetryFieldKey, dt telemetrytypes.FieldDataType) (string, []any, error) {
+func (r *fieldMapper) ValueFor(ctx context.Context, orgID valuer.UUID, startNs, endNs uint64, key *telemetrytypes.TelemetryFieldKey, dt telemetrytypes.FieldDataType) (string, []any, error) {
 	if cands := r.keys[key.Name]; len(cands) > 0 {
 		key = cands[0]
 	}
-	return querybuilder.CollisionHandledFinalExpr(ctx, startNs, endNs, key, r.fm, r.cb, r.keys, dt, nil, false)
+	return querybuilder.CollisionHandledFinalExpr(ctx, orgID, startNs, endNs, key, r.fm, r.cb, r.keys, dt, nil, false)
 }
