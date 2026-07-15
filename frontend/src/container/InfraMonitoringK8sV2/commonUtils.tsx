@@ -1,4 +1,7 @@
 import { Color } from '@signozhq/design-tokens';
+import { InframonitoringtypesPodCountsByPhaseDTO } from 'api/generated/services/sigNoz.schemas';
+
+import { StatusCountItem } from './components/GroupedStatusCounts';
 
 /**
  * Converts size in bytes to a human-readable string with appropriate units
@@ -59,4 +62,19 @@ export function getStrokeColorForLimitUtilization(value: number): string {
 	}
 	// Red
 	return Color.BG_SAKURA_500;
+}
+
+/**
+ * Builds StatusCountItem[] for GroupedStatusCounts from pod phase counts.
+ */
+export function getPodPhaseStatusItems(
+	counts: InframonitoringtypesPodCountsByPhaseDTO,
+): StatusCountItem[] {
+	return [
+		{ value: counts.running, label: 'Running', color: Color.BG_FOREST_500 },
+		{ value: counts.pending, label: 'Pending', color: Color.BG_AMBER_500 },
+		{ value: counts.succeeded, label: 'Succeeded', color: Color.BG_ROBIN_500 },
+		{ value: counts.failed, label: 'Failed', color: Color.BG_CHERRY_500 },
+		{ value: counts.unknown, label: 'Unknown', color: Color.BG_SLATE_400 },
+	];
 }

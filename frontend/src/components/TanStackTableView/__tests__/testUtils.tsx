@@ -42,14 +42,14 @@ export const defaultData: TestRow[] = [
 	{ id: '3', name: 'Item 3', value: 300 },
 ];
 
-export type RenderTanStackTableOptions<T> = {
-	props?: Partial<TanStackTableProps<T>>;
+export type RenderTanStackTableOptions<T, TItemKey = string> = {
+	props?: Partial<TanStackTableProps<T, TItemKey>>;
 	queryParams?: Record<string, string>;
 	onUrlUpdate?: OnUrlUpdateFunction;
 };
 
-export function renderTanStackTable<T = TestRow>(
-	options: RenderTanStackTableOptions<T> = {},
+export function renderTanStackTable<T = TestRow, TItemKey = string>(
+	options: RenderTanStackTableOptions<T, TItemKey> = {},
 ): RenderResult {
 	const { props = {}, queryParams, onUrlUpdate } = options;
 
@@ -57,7 +57,7 @@ export function renderTanStackTable<T = TestRow>(
 		data: defaultData as unknown as T[],
 		columns: defaultColumns as unknown as TableColumnDef<T>[],
 		...props,
-	} as TanStackTableProps<T>;
+	} as TanStackTableProps<T, TItemKey>;
 
 	return render(
 		<NuqsTestingAdapter searchParams={queryParams} onUrlUpdate={onUrlUpdate}>
@@ -65,7 +65,7 @@ export function renderTanStackTable<T = TestRow>(
 				value={{ viewportHeight: 500, itemHeight: 50 }}
 			>
 				<TooltipProvider>
-					<TanStackTable<T> {...mergedProps} />
+					<TanStackTable<T, TItemKey> {...mergedProps} />
 				</TooltipProvider>
 			</VirtuosoMockContext.Provider>
 		</NuqsTestingAdapter>,

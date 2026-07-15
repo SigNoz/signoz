@@ -129,7 +129,7 @@ sqlstore:
     # The timeout for the sqlite database to wait for a lock.
     busy_timeout: 10s
     # The default transaction locking behavior. Supported values: deferred, immediate, exclusive.
-    transaction_mode: deferred
+    transaction_mode: immediate
 
 ##################### APIServer #####################
 apiserver:

@@ -6,7 +6,6 @@ import React, {
 	useState,
 } from 'react';
 import { useQuery } from 'react-query';
-// eslint-disable-next-line no-restricted-imports
 import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button, Drawer, Tooltip } from 'antd';
 import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
@@ -14,7 +13,6 @@ import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { combineInitialAndUserExpression } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
-import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
 import { InfraMonitoringEvents } from 'constants/events';
 import { QueryParams } from 'constants/query';
 import {
@@ -40,17 +38,11 @@ import {
 } from '@signozhq/icons';
 import { isCustomTimeRange, useGlobalTimeStore } from 'store/globalTime';
 import { NANO_SECOND_MULTIPLIER } from 'store/globalTime/utils';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import {
-	TagFilter,
-	TagFilterItem,
-} from 'types/api/queryBuilder/queryBuilderData';
 import {
 	LogsAggregatorOperator,
 	TracesAggregatorOperator,
 } from 'types/common/queryBuilder';
 import { openInNewTab } from 'utils/navigation';
-import { v4 as uuidv4 } from 'uuid';
 
 import { InfraMonitoringEntity, VIEW_TYPES } from '../constants';
 import EntityEvents from '../EntityDetailsUtils/EntityEvents';
@@ -60,9 +52,10 @@ import EntityMetrics from '../EntityDetailsUtils/EntityMetrics';
 import EntityTraces from '../EntityDetailsUtils/EntityTraces';
 import { K8S_ENTITY_TRACES_EXPRESSION_KEY } from '../EntityDetailsUtils/EntityTraces/hooks';
 import {
+	SelectedItemParams,
 	useInfraMonitoringEventsFilters,
 	useInfraMonitoringLogFilters,
-	useInfraMonitoringSelectedItem,
+	useInfraMonitoringSelectedItemParams,
 	useInfraMonitoringTracesFilters,
 	useInfraMonitoringView,
 } from '../hooks';
@@ -80,7 +73,7 @@ export interface K8sDetailsMetadataConfig<T> {
 }
 
 export interface K8sDetailsFilters {
-	filters: TagFilter;
+	filter: { expression: string };
 	start: number;
 	end: number;
 }
@@ -89,15 +82,15 @@ export interface K8sBaseDetailsProps<T> {
 	category: InfraMonitoringEntity;
 	eventCategory: string;
 	// Data fetching configuration
-	getSelectedItemFilters: (selectedItem: string) => TagFilter;
+	getSelectedItemExpression: (params: SelectedItemParams) => string;
 	fetchEntityData: (
 		filters: K8sDetailsFilters,
 		signal?: AbortSignal,
 	) => Promise<{ data: T | null; error?: string | null }>;
 	// Entity configuration
 	getEntityName: (entity: T) => string;
-	getInitialLogTracesFilters: (entity: T) => TagFilterItem[];
-	getInitialEventsFilters: (entity: T) => TagFilterItem[];
+	getInitialLogTracesExpression: (entity: T) => string;
+	getInitialEventsExpression: (entity: T) => string;
 	metadataConfig: K8sDetailsMetadataConfig<T>[];
 	entityWidgetInfo: {
 		title: string;
@@ -134,33 +127,15 @@ export interface K8sBaseDetailsProps<T> {
 	}>;
 }
 
-export function createFilterItem(
-	key: string,
-	value: string,
-	dataType: DataTypes = DataTypes.String,
-): TagFilterItem {
-	return {
-		id: uuidv4(),
-		key: {
-			key,
-			dataType,
-			type: 'resource',
-			id: `${key}--string--resource--false`,
-		},
-		op: '=',
-		value,
-	};
-}
-
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export default function K8sBaseDetails<T>({
 	category,
 	eventCategory,
-	getSelectedItemFilters,
+	getSelectedItemExpression,
 	fetchEntityData,
 	getEntityName,
-	getInitialLogTracesFilters,
-	getInitialEventsFilters,
+	getInitialLogTracesExpression,
+	getInitialEventsExpression,
 	metadataConfig,
 	entityWidgetInfo,
 	getEntityQueryPayload,
@@ -178,7 +153,9 @@ export default function K8sBaseDetails<T>({
 
 	const isDarkMode = useIsDarkMode();
 
-	const [selectedItem, setSelectedItem] = useInfraMonitoringSelectedItem();
+	const [selectedItemParams, setSelectedItemParams] =
+		useInfraMonitoringSelectedItemParams();
+	const selectedItem = selectedItemParams.selectedItem;
 
 	const entityQueryKey = useMemo(
 		() =>
@@ -186,8 +163,17 @@ export default function K8sBaseDetails<T>({
 				selectedTime,
 				`${queryKeyPrefix}EntityDetails`,
 				selectedItem,
+				selectedItemParams.clusterName,
+				selectedItemParams.namespaceName,
 			),
-		[queryKeyPrefix, selectedItem, selectedTime, getAutoRefreshQueryKey],
+		[
+			queryKeyPrefix,
+			selectedItem,
+			selectedItemParams.clusterName,
+			selectedItemParams.namespaceName,
+			selectedTime,
+			getAutoRefreshQueryKey,
+		],
 	);
 
 	const {
@@ -201,17 +187,12 @@ export default function K8sBaseDetails<T>({
 			if (!selectedItem) {
 				return { data: null };
 			}
-			const filters = getSelectedItemFilters(selectedItem);
 			const { minTime, maxTime } = getMinMaxTime();
+			const start = Math.floor(minTime / NANO_SECOND_MULTIPLIER);
+			const end = Math.floor(maxTime / NANO_SECOND_MULTIPLIER);
+			const expression = getSelectedItemExpression(selectedItemParams);
 
-			return fetchEntityData(
-				{
-					filters,
-					start: Math.floor(minTime / NANO_SECOND_MULTIPLIER),
-					end: Math.floor(maxTime / NANO_SECOND_MULTIPLIER),
-				},
-				signal,
-			);
+			return fetchEntityData({ filter: { expression }, start, end }, signal);
 		},
 		enabled: !!selectedItem,
 	});
@@ -223,27 +204,19 @@ export default function K8sBaseDetails<T>({
 		if (!entity) {
 			return '';
 		}
-		const primaryFiltersOnly = {
-			op: 'AND' as const,
-			items: getInitialLogTracesFilters(entity),
-		};
-		return convertFiltersToExpression(primaryFiltersOnly).expression;
-	}, [entity, getInitialLogTracesFilters]);
+		return getInitialLogTracesExpression(entity);
+	}, [entity, getInitialLogTracesExpression]);
 
 	const eventsInitialExpression = useMemo(() => {
 		if (!entity) {
 			return '';
 		}
-		const primaryFiltersOnly = {
-			op: 'AND' as const,
-			items: getInitialEventsFilters(entity),
-		};
-		return convertFiltersToExpression(primaryFiltersOnly).expression;
-	}, [entity, getInitialEventsFilters]);
+		return getInitialEventsExpression(entity);
+	}, [entity, getInitialEventsExpression]);
 
 	const handleClose = useCallback((): void => {
-		setSelectedItem(null);
-	}, [setSelectedItem]);
+		setSelectedItemParams(null);
+	}, [setSelectedItemParams]);
 
 	const entityName = entity ? getEntityName(entity) : '';
 

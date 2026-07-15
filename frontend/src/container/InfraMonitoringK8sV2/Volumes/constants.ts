@@ -1,70 +1,69 @@
+import { InframonitoringtypesVolumeRecordDTO } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
+import { K8sDetailsMetadataConfig } from '../Base/K8sBaseDetails';
+import { INFRA_MONITORING_ATTR_KEYS } from '../constants';
+import { SelectedItemParams } from '../hooks';
 import {
-	createFilterItem,
-	K8sDetailsMetadataConfig,
-} from '../Base/K8sBaseDetails';
-import { QUERY_KEYS } from '../EntityDetailsUtils/utils';
-import { K8sVolumesData } from './api';
+	buildEventsExpression,
+	buildExpressionFromSelectedItemParams,
+	buildLogsTracesExpression,
+} from 'container/InfraMonitoringK8sV2/Base/utils';
 
-export const k8sVolumeGetSelectedItemFilters = (
-	selectedItemId: string,
-): TagFilter => ({
-	op: 'AND',
-	items: [
-		{
-			id: 'k8s_persistentvolumeclaim_name',
-			key: {
-				key: 'k8s_persistentvolumeclaim_name',
-				type: null,
-			},
-			op: '=',
-			value: selectedItemId,
-		},
-	],
-});
+export const k8sVolumeGetSelectedItemExpression = (
+	params: SelectedItemParams,
+): string =>
+	buildExpressionFromSelectedItemParams(
+		params,
+		INFRA_MONITORING_ATTR_KEYS.K8S_PERSISTENT_VOLUME_CLAIM_NAME,
+	);
 
-export const k8sVolumeDetailsMetadataConfig: K8sDetailsMetadataConfig<K8sVolumesData>[] =
+export const k8sVolumeDetailsMetadataConfig: K8sDetailsMetadataConfig<InframonitoringtypesVolumeRecordDTO>[] =
 	[
 		{
 			label: 'PVC Name',
-			getValue: (p): string => p.persistentVolumeClaimName,
+			getValue: (p): string => p.persistentVolumeClaimName || '',
 		},
 		{
 			label: 'Cluster Name',
-			getValue: (p): string => p.meta.k8s_cluster_name,
+			getValue: (p): string =>
+				p.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] || '',
 		},
 		{
 			label: 'Namespace Name',
-			getValue: (p): string => p.meta.k8s_namespace_name,
+			getValue: (p): string =>
+				p.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 		},
 	];
 
-export const k8sVolumeInitialEventsFilter = (
-	item: K8sVolumesData,
-): ReturnType<typeof createFilterItem>[] => [
-	createFilterItem(QUERY_KEYS.K8S_OBJECT_KIND, 'PersistentVolumeClaim'),
-	createFilterItem(QUERY_KEYS.K8S_OBJECT_NAME, item.persistentVolumeClaimName),
-];
+export const k8sVolumeInitialEventsExpression = (
+	item: InframonitoringtypesVolumeRecordDTO,
+): string =>
+	buildEventsExpression({
+		objectKind: 'PersistentVolumeClaim',
+		objectName: item.persistentVolumeClaimName || '',
+		clusterName: item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME],
+		namespaceName: item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME],
+	});
 
-export const k8sVolumeInitialLogTracesFilter = (
-	item: K8sVolumesData,
-): ReturnType<typeof createFilterItem>[] => [
-	createFilterItem(
-		QUERY_KEYS.K8S_PERSISTENT_VOLUME_CLAIM_NAME,
-		item.meta.k8s_persistentvolumeclaim_name,
-	),
-	createFilterItem(QUERY_KEYS.K8S_NAMESPACE_NAME, item.meta.k8s_namespace_name),
-];
+export const k8sVolumeInitialLogTracesExpression = (
+	item: InframonitoringtypesVolumeRecordDTO,
+): string =>
+	buildLogsTracesExpression({
+		mainAttributeKey: INFRA_MONITORING_ATTR_KEYS.K8S_PERSISTENT_VOLUME_CLAIM_NAME,
+		mainAttributeValue: item.persistentVolumeClaimName,
+		clusterName: item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME],
+		namespaceName: item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME],
+	});
 
-export const k8sVolumeGetEntityName = (item: K8sVolumesData): string =>
-	item.persistentVolumeClaimName;
+export const k8sVolumeGetEntityName = (
+	item: InframonitoringtypesVolumeRecordDTO,
+): string => item.persistentVolumeClaimName || '';
 
 export const volumeWidgetInfo = [
 	{
@@ -90,37 +89,37 @@ export const volumeWidgetInfo = [
 ];
 
 export const getVolumeMetricsQueryPayload = (
-	volume: K8sVolumesData,
+	volume: InframonitoringtypesVolumeRecordDTO,
 	start: number,
 	end: number,
 	dotMetricsEnabled: boolean,
 ): GetQueryResultsProps[] => {
 	const k8sClusterNameKey = dotMetricsEnabled
-		? 'k8s.cluster.name'
+		? INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME
 		: 'k8s_cluster_name';
 	const k8sNamespaceNameKey = dotMetricsEnabled
-		? 'k8s.namespace.name'
+		? INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME
 		: 'k8s_namespace_name';
 	const k8sVolumeAvailableKey = dotMetricsEnabled
-		? 'k8s.volume.available'
+		? INFRA_MONITORING_ATTR_KEYS.K8S_VOLUME_AVAILABLE
 		: 'k8s_volume_available';
 	const k8sVolumeCapacityKey = dotMetricsEnabled
-		? 'k8s.volume.capacity'
+		? INFRA_MONITORING_ATTR_KEYS.K8S_VOLUME_CAPACITY
 		: 'k8s_volume_capacity';
 	const k8sVolumeInodesUsedKey = dotMetricsEnabled
-		? 'k8s.volume.inodes.used'
+		? INFRA_MONITORING_ATTR_KEYS.K8S_VOLUME_INODES_USED
 		: 'k8s_volume_inodes_used';
 	const k8sVolumeInodesKey = dotMetricsEnabled
-		? 'k8s.volume.inodes'
+		? INFRA_MONITORING_ATTR_KEYS.K8S_VOLUME_INODES
 		: 'k8s_volume_inodes';
 	const k8sVolumeInodesFreeKey = dotMetricsEnabled
-		? 'k8s.volume.inodes.free'
+		? INFRA_MONITORING_ATTR_KEYS.K8S_VOLUME_INODES_FREE
 		: 'k8s_volume_inodes_free';
 	const k8sVolumeTypeKey = dotMetricsEnabled
-		? 'k8s.volume.type'
+		? INFRA_MONITORING_ATTR_KEYS.K8S_VOLUME_TYPE
 		: 'k8s_volume_type';
 	const k8sPVCNameKey = dotMetricsEnabled
-		? 'k8s.persistentvolumeclaim.name'
+		? INFRA_MONITORING_ATTR_KEYS.K8S_PERSISTENT_VOLUME_CLAIM_NAME
 		: 'k8s_persistentvolumeclaim_name';
 
 	return [
@@ -152,7 +151,8 @@ export const getVolumeMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: volume.meta.k8s_cluster_name,
+										value:
+											volume.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] || '',
 									},
 									{
 										id: 'c2',
@@ -163,7 +163,9 @@ export const getVolumeMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: 'in',
-										value: [volume.meta.k8s_namespace_name],
+										value: [
+											volume.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
+										],
 									},
 									{
 										id: 'c3',
@@ -244,7 +246,8 @@ export const getVolumeMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: volume.meta.k8s_cluster_name,
+										value:
+											volume.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] || '',
 									},
 									{
 										id: 'c2',
@@ -255,7 +258,9 @@ export const getVolumeMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: 'in',
-										value: [volume.meta.k8s_namespace_name],
+										value: [
+											volume.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
+										],
 									},
 									{
 										id: 'c3',
@@ -336,7 +341,8 @@ export const getVolumeMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: volume.meta.k8s_cluster_name,
+										value:
+											volume.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] || '',
 									},
 									{
 										id: 'c2',
@@ -347,7 +353,9 @@ export const getVolumeMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: 'in',
-										value: [volume.meta.k8s_namespace_name],
+										value: [
+											volume.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
+										],
 									},
 									{
 										id: 'c3',
@@ -428,7 +436,8 @@ export const getVolumeMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: volume.meta.k8s_cluster_name,
+										value:
+											volume.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] || '',
 									},
 									{
 										id: 'c2',
@@ -439,7 +448,9 @@ export const getVolumeMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: 'in',
-										value: [volume.meta.k8s_namespace_name],
+										value: [
+											volume.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
+										],
 									},
 									{
 										id: 'c3',
@@ -520,7 +531,8 @@ export const getVolumeMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: volume.meta.k8s_cluster_name,
+										value:
+											volume.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] || '',
 									},
 									{
 										id: 'c2',
@@ -531,7 +543,9 @@ export const getVolumeMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: 'in',
-										value: [volume.meta.k8s_namespace_name],
+										value: [
+											volume.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
+										],
 									},
 									{
 										id: 'c3',

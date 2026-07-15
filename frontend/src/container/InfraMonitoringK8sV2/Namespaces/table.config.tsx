@@ -1,37 +1,54 @@
-import { Tooltip } from 'antd';
+import { FilePenLine } from '@signozhq/icons';
+import { InframonitoringtypesNamespaceRecordDTO } from 'api/generated/services/sigNoz.schemas';
 import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8sV2/components';
 
+import ColumnHeader from '../Base/ColumnHeader';
 import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
-import { formatBytes } from '../commonUtils';
-import { ValidateColumnValueWrapper } from '../components';
-import { InfraMonitoringEntity } from '../constants';
-import { K8sNamespacesData, K8sNamespacesListPayload } from './api';
-import { FilePenLine } from '@signozhq/icons';
+import { formatBytes, getPodPhaseStatusItems } from '../commonUtils';
+import {
+	CellValueTooltip,
+	GroupedStatusCounts,
+	ValidateColumnValueWrapper,
+} from '../components';
+import {
+	INFRA_MONITORING_ATTR_KEYS,
+	InfraMonitoringEntity,
+} from '../constants';
+import { SelectedItemParams } from '../hooks';
 
-export function getK8sNamespaceRowKey(namespace: K8sNamespacesData): string {
-	return namespace.namespaceName || namespace.meta.k8s_namespace_name;
+export function getK8sNamespaceRowKey(
+	namespace: InframonitoringtypesNamespaceRecordDTO,
+): string {
+	return (
+		namespace.namespaceName ||
+		namespace.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ||
+		''
+	);
 }
 
-export function getK8sNamespaceItemKey(namespace: K8sNamespacesData): string {
-	return namespace.meta.k8s_namespace_name;
+export function getK8sNamespaceItemKey(
+	namespace: InframonitoringtypesNamespaceRecordDTO,
+): SelectedItemParams {
+	return {
+		selectedItem:
+			namespace.namespaceName ??
+			namespace.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ??
+			null,
+		clusterName:
+			namespace.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] ?? null,
+	};
 }
 
-export const getK8sNamespacesListQuery = (): K8sNamespacesListPayload => ({
-	filters: {
-		items: [],
-		op: 'and',
-	},
-	orderBy: { columnName: 'cpu', order: 'desc' },
-});
-
-export const k8sNamespacesColumnsConfig: TableColumnDef<K8sNamespacesData>[] = [
+export type NamespaceTableColumnConfig =
+	TableColumnDef<InframonitoringtypesNamespaceRecordDTO>;
+export const k8sNamespacesColumnsConfig: NamespaceTableColumnConfig[] = [
 	{
 		id: 'namespaceGroup',
-		header: (): React.ReactNode => <EntityGroupHeader title="NAMESPACE GROUP" />,
-		accessorFn: (row): string => row.meta.k8s_namespace_name || '',
-		width: { min: 300 },
+		header: (): React.ReactNode => <EntityGroupHeader title="Namespace Group" />,
+		accessorFn: (row): string => row.namespaceName || '',
+		width: { min: 290 },
 		enableSort: false,
 		enableRemove: false,
 		enableMove: false,
@@ -54,6 +71,7 @@ export const k8sNamespacesColumnsConfig: TableColumnDef<K8sNamespacesData>[] = [
 			<EntityGroupHeader
 				title="Namespace Name"
 				icon={<FilePenLine data-hide-expanded="true" size={14} />}
+				docPath="/infrastructure-monitoring/kubernetes/namespaces#namespace-name"
 			/>
 		),
 		accessorFn: (row): string => row.namespaceName || '',
@@ -66,16 +84,21 @@ export const k8sNamespacesColumnsConfig: TableColumnDef<K8sNamespacesData>[] = [
 		cell: ({ value }): React.ReactNode => {
 			const namespaceName = value as string;
 			return (
-				<Tooltip title={namespaceName}>
+				<CellValueTooltip value={namespaceName}>
 					<TanStackTable.Text>{namespaceName}</TanStackTable.Text>
-				</Tooltip>
+				</CellValueTooltip>
 			);
 		},
 	},
 	{
 		id: 'clusterName',
-		header: 'Cluster Name',
-		accessorFn: (row): string => row.meta.k8s_cluster_name || '',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/namespaces#cluster-name">
+				Cluster Name
+			</ColumnHeader>
+		),
+		accessorFn: (row): string =>
+			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] || '',
 		width: { default: 150 },
 		enableSort: false,
 		cell: ({ value }): React.ReactNode => (
@@ -83,32 +106,63 @@ export const k8sNamespacesColumnsConfig: TableColumnDef<K8sNamespacesData>[] = [
 		),
 	},
 	{
+		id: 'podCountsByPhase',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/namespaces#pod-counts-by-phase">
+				Pod Phases
+			</ColumnHeader>
+		),
+		accessorFn: (
+			row,
+		): InframonitoringtypesNamespaceRecordDTO['podCountsByPhase'] =>
+			row.podCountsByPhase,
+		width: { min: 250 },
+		enableSort: false,
+		cell: ({ row }): React.ReactNode => {
+			const podCountsByPhase = row.podCountsByPhase;
+			if (!podCountsByPhase) {
+				return <TanStackTable.Text>-</TanStackTable.Text>;
+			}
+			return (
+				<GroupedStatusCounts items={getPodPhaseStatusItems(row.podCountsByPhase)} />
+			);
+		},
+	},
+	{
 		id: 'cpu',
-		header: 'CPU Usage (cores)',
-		accessorFn: (row): number => row.cpuUsage,
-		width: { min: 220 },
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/namespaces#cpu-usage-cores">
+				CPU Usage (cores)
+			</ColumnHeader>
+		),
+		accessorFn: (row): number => row.namespaceCPU,
+		width: { min: 190 },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
-			const cpu = value as number;
+			const cpu = Number(value);
 			return (
 				<ValidateColumnValueWrapper
 					value={cpu}
 					entity={InfraMonitoringEntity.NAMESPACES}
 					attribute="CPU metric"
 				>
-					<TanStackTable.Text>{cpu}</TanStackTable.Text>
+					<TanStackTable.Text>{cpu.toFixed(2)}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
 			);
 		},
 	},
 	{
 		id: 'memory',
-		header: 'Mem Usage (WSS)',
-		accessorFn: (row): number => row.memoryUsage,
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/namespaces#mem-usage-wss">
+				Memory Usage (WSS)
+			</ColumnHeader>
+		),
+		accessorFn: (row): number => row.namespaceMemory,
 		width: { min: 220 },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
-			const memory = value as number;
+			const memory = Number(value);
 			return (
 				<ValidateColumnValueWrapper
 					value={memory}

@@ -16,11 +16,11 @@ const (
 
 // Documentation links — one per component. User-facing; emitted on missing-entries.
 const (
-	docLinkHostMetricsReceiver        = "https://signoz.io/docs/infrastructure-monitoring/user-guides/hostmetrics/#configure-the-hostmetrics-receiver"
-	docLinkKubeletStatsReceiver       = "https://signoz.io/docs/infrastructure-monitoring/user-guides/k8s-metrics/#setup-kubelet-stats-receiver"
-	docLinkK8sClusterReceiver         = "https://signoz.io/docs/infrastructure-monitoring/user-guides/k8s-metrics/#setup-k8s-cluster-receiver"
-	docLinkResourceDetectionProcessor = "https://signoz.io/docs/infrastructure-monitoring/user-guides/hostmetrics/#configure-the-resourcedetection-processor"
-	docLinkK8sAttributesProcessor     = "https://signoz.io/docs/infrastructure-monitoring/user-guides/k8s-metrics/#3-setup-k8sattributesprocessor-to-enable-kubernetes-metadata"
+	docLinkHostMetricsReceiver        = "https://signoz.io/docs/infrastructure-monitoring/hostmetrics/#configure-the-hostmetrics-receiver"
+	docLinkKubeletStatsReceiver       = "https://signoz.io/docs/infrastructure-monitoring/k8s-metrics/#2-configure-the-kubelet-stats-receiver"
+	docLinkK8sClusterReceiver         = "https://signoz.io/docs/infrastructure-monitoring/k8s-metrics/#1-configure-the-k8s-cluster-receiver"
+	docLinkResourceDetectionProcessor = "https://signoz.io/docs/infrastructure-monitoring/hostmetrics/#configure-the-processors"
+	docLinkK8sAttributesProcessor     = "https://signoz.io/docs/infrastructure-monitoring/k8s-metrics/#3-enable-kubernetes-metadata"
 )
 
 var (
@@ -272,6 +272,8 @@ var daemonsetsSpec = checkSpec{
 				"k8s.pod.phase",
 				"k8s.daemonset.desired_scheduled_nodes",
 				"k8s.daemonset.current_scheduled_nodes",
+				"k8s.daemonset.ready_nodes",
+				"k8s.daemonset.misscheduled_nodes",
 			},
 			OptionalMetrics: []string{
 				"k8s.pod.status_reason",

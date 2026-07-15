@@ -1,34 +1,57 @@
-import { Tooltip } from 'antd';
-import { TableColumnDef } from 'components/TanStackTableView';
-import TanStackTable from 'components/TanStackTableView';
+import { Color } from '@signozhq/design-tokens';
+import { InframonitoringtypesDaemonSetRecordDTO } from 'api/generated/services/sigNoz.schemas';
+import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8sV2/components';
 
+import ColumnHeader from '../Base/ColumnHeader';
 import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
-import { formatBytes } from '../commonUtils';
-import { EntityProgressBar, ValidateColumnValueWrapper } from '../components';
-import { InfraMonitoringEntity } from '../constants';
-import { K8sDaemonSetsData } from './api';
+import { SelectedItemParams } from '../hooks';
+import { formatBytes, getPodPhaseStatusItems } from '../commonUtils';
+import {
+	CellValueTooltip,
+	EntityProgressBar,
+	GroupedStatusCounts,
+	ValidateColumnValueWrapper,
+} from '../components';
+import {
+	INFRA_MONITORING_ATTR_KEYS,
+	InfraMonitoringEntity,
+} from '../constants';
 import { Group } from '@signozhq/icons';
 
-export function getK8sDaemonSetRowKey(daemonSet: K8sDaemonSetsData): string {
+export function getK8sDaemonSetRowKey(
+	daemonSet: InframonitoringtypesDaemonSetRecordDTO,
+): string {
 	return (
+		daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME] ||
 		daemonSet.daemonSetName ||
-		daemonSet.meta.k8s_daemonset_name ||
-		`${daemonSet.meta.k8s_namespace_name}-${daemonSet.meta.k8s_daemonset_name}`
+		`${daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME]}-${daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME]}`
 	);
 }
 
-export function getK8sDaemonSetItemKey(daemonSet: K8sDaemonSetsData): string {
-	return daemonSet.meta.k8s_daemonset_name;
+export function getK8sDaemonSetItemKey(
+	daemonSet: InframonitoringtypesDaemonSetRecordDTO,
+): SelectedItemParams {
+	return {
+		selectedItem:
+			daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME] ?? null,
+		clusterName:
+			daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] ?? null,
+		namespaceName:
+			daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ?? null,
+	};
 }
 
-export const k8sDaemonSetsColumnsConfig: TableColumnDef<K8sDaemonSetsData>[] = [
+export type DaemonSetTableColumnConfig =
+	TableColumnDef<InframonitoringtypesDaemonSetRecordDTO>;
+export const k8sDaemonSetsColumnsConfig: DaemonSetTableColumnConfig[] = [
 	{
 		id: 'daemonSetGroup',
-		header: (): React.ReactNode => <EntityGroupHeader title="DAEMONSET GROUP" />,
-		accessorFn: (row): string => row.meta.k8s_daemonset_name || '',
-		width: { min: 300 },
+		header: (): React.ReactNode => <EntityGroupHeader title="DaemonSet Group" />,
+		accessorFn: (row): string =>
+			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME] || '',
+		width: { min: 290 },
 		enableSort: false,
 		enableRemove: false,
 		enableMove: false,
@@ -51,9 +74,11 @@ export const k8sDaemonSetsColumnsConfig: TableColumnDef<K8sDaemonSetsData>[] = [
 			<EntityGroupHeader
 				title="DaemonSet Name"
 				icon={<Group data-hide-expanded="true" size={14} />}
+				docPath="/infrastructure-monitoring/kubernetes/daemonsets#daemonset-name"
 			/>
 		),
-		accessorFn: (row): string => row.meta.k8s_daemonset_name || '',
+		accessorFn: (row): string =>
+			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME] || '',
 		width: { min: 290 },
 		enableSort: false,
 		enableRemove: false,
@@ -63,71 +88,108 @@ export const k8sDaemonSetsColumnsConfig: TableColumnDef<K8sDaemonSetsData>[] = [
 		cell: ({ value }): React.ReactNode => {
 			const daemonsetName = value as string;
 			return (
-				<Tooltip title={daemonsetName}>
+				<CellValueTooltip value={daemonsetName}>
 					<TanStackTable.Text>{daemonsetName}</TanStackTable.Text>
-				</Tooltip>
+				</CellValueTooltip>
 			);
 		},
 	},
 	{
 		id: 'namespaceName',
-		header: 'Namespace Name',
-		accessorFn: (row): string => row.meta.k8s_namespace_name || '',
-		width: { default: 100 },
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/daemonsets#namespace-name">
+				Namespace
+			</ColumnHeader>
+		),
+		accessorFn: (row): string =>
+			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
+		width: { min: 160 },
 		enableSort: false,
+		enableResize: true,
 		cell: ({ value }): React.ReactNode => {
 			const namespaceName = value as string;
 			return (
-				<Tooltip title={namespaceName}>
+				<CellValueTooltip value={namespaceName}>
 					<TanStackTable.Text>{namespaceName}</TanStackTable.Text>
-				</Tooltip>
+				</CellValueTooltip>
 			);
 		},
 	},
 	{
-		id: 'available_nodes',
-		header: 'Available',
-		accessorFn: (row): number => row.availableNodes,
-		width: { min: 140 },
-		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
-			const availableNodes = value as number;
+		id: 'pod_counts_by_phase',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/daemonsets#pod-counts-by-phase">
+				Pod Phases
+			</ColumnHeader>
+		),
+		accessorFn: (
+			row,
+		): InframonitoringtypesDaemonSetRecordDTO['podCountsByPhase'] =>
+			row.podCountsByPhase,
+		width: { min: 250 },
+		enableSort: false,
+		enableResize: true,
+		cell: ({ row }): React.ReactNode => {
+			const podCountsByPhase = row.podCountsByPhase;
+			if (!podCountsByPhase) {
+				return <TanStackTable.Text>-</TanStackTable.Text>;
+			}
 			return (
-				<ValidateColumnValueWrapper
-					value={availableNodes}
-					entity={InfraMonitoringEntity.DAEMONSETS}
-					attribute="available node"
-				>
-					<TanStackTable.Text>{availableNodes}</TanStackTable.Text>
-				</ValidateColumnValueWrapper>
+				<GroupedStatusCounts items={getPodPhaseStatusItems(podCountsByPhase)} />
 			);
 		},
 	},
 	{
-		id: 'desired_nodes',
-		header: 'Desired',
-		accessorFn: (row): number => row.desiredNodes,
-		width: { min: 140 },
-		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
-			const desiredNodes = value as number;
-			return (
-				<ValidateColumnValueWrapper
-					value={desiredNodes}
-					entity={InfraMonitoringEntity.DAEMONSETS}
-					attribute="desired node"
-				>
-					<TanStackTable.Text>{desiredNodes}</TanStackTable.Text>
-				</ValidateColumnValueWrapper>
-			);
-		},
+		id: 'node_status',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/daemonsets#node-status">
+				Node Status
+			</ColumnHeader>
+		),
+		accessorFn: (row): number => row.currentNodes,
+		width: { min: 210 },
+		enableSort: false,
+		enableResize: true,
+		cell: ({ row }): React.ReactNode => (
+			<GroupedStatusCounts
+				items={[
+					{
+						value: row.readyNodes,
+						label: 'Ready',
+						color: Color.BG_FOREST_500,
+					},
+					{
+						value: row.currentNodes,
+						label: 'Current',
+						color: Color.BG_ROBIN_500,
+					},
+					{
+						value: row.desiredNodes,
+						label: 'Desired',
+						color: Color.BG_SAKURA_400,
+					},
+					{
+						value: row.misscheduledNodes,
+						label: 'Misscheduled',
+						color: Color.BG_AMBER_500,
+					},
+				]}
+			/>
+		),
 	},
 	{
 		id: 'cpu_request',
-		header: 'CPU Req Usage (%)',
-		accessorFn: (row): number => row.cpuRequest,
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/daemonsets#cpu-req-usage-">
+				CPU Request
+				<br /> Usage (%)
+			</ColumnHeader>
+		),
+		accessorFn: (row): number => row.daemonSetCPURequest,
 		width: { min: 200, default: 200 },
 		enableSort: true,
+		enableResize: true,
+		defaultVisibility: false,
 		cell: ({ value }): React.ReactNode => {
 			const cpuRequest = value as number;
 			return (
@@ -143,10 +205,16 @@ export const k8sDaemonSetsColumnsConfig: TableColumnDef<K8sDaemonSetsData>[] = [
 	},
 	{
 		id: 'cpu_limit',
-		header: 'CPU Limit Usage (%)',
-		accessorFn: (row): number => row.cpuLimit,
-		width: { min: 200, default: 200 },
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/daemonsets#cpu-limit-usage-">
+				CPU Limit
+				<br /> Usage (%)
+			</ColumnHeader>
+		),
+		accessorFn: (row): number => row.daemonSetCPULimit,
+		width: { min: 160 },
 		enableSort: true,
+		enableResize: true,
 		cell: ({ value }): React.ReactNode => {
 			const cpuLimit = value as number;
 			return (
@@ -162,30 +230,42 @@ export const k8sDaemonSetsColumnsConfig: TableColumnDef<K8sDaemonSetsData>[] = [
 	},
 	{
 		id: 'cpu',
-		header: 'CPU Usage (cores)',
-		accessorFn: (row): number => row.cpuUsage,
-		width: { min: 190 },
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/daemonsets#cpu-usage-cores">
+				CPU Usage
+				<br /> (cores)
+			</ColumnHeader>
+		),
+		accessorFn: (row): number => row.daemonSetCPU,
+		width: { min: 160 },
 		enableSort: true,
+		enableResize: true,
 		defaultVisibility: false,
 		cell: ({ value }): React.ReactNode => {
-			const cpu = value as number;
+			const cpu = Number(value);
 			return (
 				<ValidateColumnValueWrapper
 					value={cpu}
 					entity={InfraMonitoringEntity.DAEMONSETS}
 					attribute="CPU metric"
 				>
-					<TanStackTable.Text>{cpu}</TanStackTable.Text>
+					<TanStackTable.Text>{cpu.toFixed(2)}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
 			);
 		},
 	},
 	{
 		id: 'memory_request',
-		header: 'Mem Req Usage (%)',
-		accessorFn: (row): number => row.memoryRequest,
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/daemonsets#mem-req-usage-">
+				Memory Request
+				<br /> Usage (%)
+			</ColumnHeader>
+		),
+		accessorFn: (row): number => row.daemonSetMemoryRequest,
 		width: { min: 190 },
 		enableSort: true,
+		enableResize: true,
 		defaultVisibility: false,
 		cell: ({ value }): React.ReactNode => {
 			const memoryRequest = value as number;
@@ -202,10 +282,16 @@ export const k8sDaemonSetsColumnsConfig: TableColumnDef<K8sDaemonSetsData>[] = [
 	},
 	{
 		id: 'memory_limit',
-		header: 'Mem Limit Usage (%)',
-		accessorFn: (row): number => row.memoryLimit,
-		width: { min: 180 },
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/daemonsets#mem-limit-usage-">
+				Memory Limit
+				<br /> Usage (%)
+			</ColumnHeader>
+		),
+		accessorFn: (row): number => row.daemonSetMemoryLimit,
+		width: { min: 190 },
 		enableSort: true,
+		enableResize: true,
 		cell: ({ value }): React.ReactNode => {
 			const memoryLimit = value as number;
 			return (
@@ -221,10 +307,16 @@ export const k8sDaemonSetsColumnsConfig: TableColumnDef<K8sDaemonSetsData>[] = [
 	},
 	{
 		id: 'memory',
-		header: 'Mem Usage (WSS)',
-		accessorFn: (row): number => row.memoryUsage,
-		width: { min: 160 },
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/daemonsets#mem-usage-wss">
+				Memory Usage
+				<br /> (WSS)
+			</ColumnHeader>
+		),
+		accessorFn: (row): number => row.daemonSetMemory,
+		width: { min: 180 },
 		enableSort: true,
+		enableResize: true,
 		cell: ({ value }): React.ReactNode => {
 			const memory = value as number;
 			return (
@@ -234,6 +326,102 @@ export const k8sDaemonSetsColumnsConfig: TableColumnDef<K8sDaemonSetsData>[] = [
 					attribute="memory metric"
 				>
 					<TanStackTable.Text>{formatBytes(memory)}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
+	},
+	{
+		id: 'ready_nodes',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/daemonsets#ready">
+				Ready Nodes
+			</ColumnHeader>
+		),
+		accessorFn: (row): number => row.readyNodes,
+		width: { min: 140 },
+		enableSort: true,
+		defaultVisibility: false,
+		cell: ({ value }): React.ReactNode => {
+			const readyNodes = value as number;
+			return (
+				<ValidateColumnValueWrapper
+					value={readyNodes}
+					entity={InfraMonitoringEntity.DAEMONSETS}
+					attribute="ready node"
+				>
+					<TanStackTable.Text>{readyNodes}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
+	},
+	{
+		id: 'current_nodes',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/daemonsets#current">
+				Current Nodes
+			</ColumnHeader>
+		),
+		accessorFn: (row): number => row.currentNodes,
+		width: { min: 140 },
+		enableSort: true,
+		defaultVisibility: false,
+		cell: ({ value }): React.ReactNode => {
+			const currentNodes = value as number;
+			return (
+				<ValidateColumnValueWrapper
+					value={currentNodes}
+					entity={InfraMonitoringEntity.DAEMONSETS}
+					attribute="current node"
+				>
+					<TanStackTable.Text>{currentNodes}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
+	},
+	{
+		id: 'desired_nodes',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/daemonsets#desired">
+				Desired Nodes
+			</ColumnHeader>
+		),
+		accessorFn: (row): number => row.desiredNodes,
+		width: { min: 140 },
+		enableSort: true,
+		defaultVisibility: false,
+		cell: ({ value }): React.ReactNode => {
+			const desiredNodes = value as number;
+			return (
+				<ValidateColumnValueWrapper
+					value={desiredNodes}
+					entity={InfraMonitoringEntity.DAEMONSETS}
+					attribute="desired node"
+				>
+					<TanStackTable.Text>{desiredNodes}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
+	},
+	{
+		id: 'misscheduled_nodes',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/daemonsets#misscheduled">
+				Misscheduled Nodes
+			</ColumnHeader>
+		),
+		accessorFn: (row): number => row.misscheduledNodes,
+		width: { min: 140 },
+		enableSort: true,
+		defaultVisibility: false,
+		cell: ({ value }): React.ReactNode => {
+			const misscheduledNodes = value as number;
+			return (
+				<ValidateColumnValueWrapper
+					value={misscheduledNodes}
+					entity={InfraMonitoringEntity.DAEMONSETS}
+					attribute="misscheduled node"
+				>
+					<TanStackTable.Text>{misscheduledNodes}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
 			);
 		},

@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { useQuery } from 'react-query';
+import { useLocation } from 'react-router-dom';
+import { Querybuildertypesv5QueryWarnDataDTO } from 'api/generated/services/sigNoz.schemas';
 import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import TanStackTable, {
@@ -7,63 +9,80 @@ import TanStackTable, {
 	TableColumnDef,
 	TanStackTableStateProvider,
 } from 'components/TanStackTableView';
+import { QueryParams } from 'constants/query';
 import { CornerDownRight } from '@signozhq/icons';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import useUrlQuery from 'hooks/useUrlQuery';
+import { v4 as uuid } from 'uuid';
 import { useQueryState } from 'nuqs';
 import { useGlobalTimeStore } from 'store/globalTime';
 import { NANO_SECOND_MULTIPLIER } from 'store/globalTime/utils';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { parseAsJsonNoValidate } from 'utils/nuqsParsers';
 
 import { InfraMonitoringEntity } from '../constants';
 import {
-	useInfraMonitoringFiltersK8s,
+	SelectedItemParams,
 	useInfraMonitoringGroupBy,
 	useInfraMonitoringOrderBy,
 	useInfraMonitoringPageListing,
-	useInfraMonitoringSelectedItem,
+	useInfraMonitoringSelectedItemParams,
 } from '../hooks';
 import { K8sBaseFilters } from './types';
 
 import styles from './K8sExpandedRow.module.scss';
+import { buildExpressionFromGroupMeta } from './utils';
 
 const EXPANDED_ROW_LIMIT = 10;
 
-export type K8sExpandedRowProps<T> = {
+export type K8sExpandedRowProps<T, TItemKey = string> = {
 	/** Pre-computed row key from parent table (includes group prefix + duplicate handling) */
 	rowKey: string;
 	/** Group metadata for building filters */
 	groupMeta?: Record<string, string>;
 	entity: InfraMonitoringEntity;
 	tableColumns: TableColumnDef<T>[];
-	fetchListData: (
+	/** API fetch function for expanded row data */
+	fetchListData?: (
 		filters: K8sBaseFilters,
 		signal?: AbortSignal,
 	) => Promise<{
-		data: T[];
+		type?: 'list' | 'grouped_list';
+		records?: T[];
+		data?: T[];
 		total: number;
 		error?: string | null;
 		rawData?: unknown;
+		warning?: Querybuildertypesv5QueryWarnDataDTO | null;
 	}>;
+	/** Extra parts to include in the react-query cache key (e.g., status filter). */
+	extraQueryKeyParts?: string[];
 	/** Function to get the unique key for a row. */
 	getRowKey?: (record: T) => string;
 	/** Function to get the item key used for selection. Defaults to getRowKey if not provided. */
-	getItemKey?: (record: T) => string;
+	getItemKey?: (record: T) => TItemKey;
 };
 
-export function K8sExpandedRow<T>({
+export function K8sExpandedRow<T, TItemKey = string>({
 	rowKey,
 	groupMeta,
 	entity,
 	tableColumns,
 	fetchListData,
+	extraQueryKeyParts = [],
 	getRowKey,
 	getItemKey,
-}: K8sExpandedRowProps<T>): JSX.Element {
+}: K8sExpandedRowProps<T, TItemKey>): JSX.Element {
 	const [, setGroupBy] = useInfraMonitoringGroupBy();
 	const [, setCurrentPage] = useInfraMonitoringPageListing();
-	const [queryFilters, setFilters] = useInfraMonitoringFiltersK8s();
-	const [, setSelectedItem] = useInfraMonitoringSelectedItem();
+	const { currentQuery } = useQueryBuilder();
+	const parentExpression =
+		currentQuery.builder.queryData[0]?.filter?.expression || '';
+	const [, setSelectedItemParams] = useInfraMonitoringSelectedItemParams();
 	const [, setMainOrderBy] = useInfraMonitoringOrderBy();
+	const { safeNavigate } = useSafeNavigate();
+	const urlQuery = useUrlQuery();
+	const location = useLocation();
 
 	const orderByParamKey = useMemo(
 		() => `orderBy_${rowKey.replace(/[^a-zA-Z0-9]/g, '_')}`,
@@ -85,35 +104,10 @@ export function K8sExpandedRow<T>({
 
 	const storageKey = `k8s-${entity}-columns-expanded`;
 
-	const createFiltersForRecord = useCallback((): NonNullable<
-		IBuilderQuery['filters']
-	> => {
-		const baseFilters: IBuilderQuery['filters'] = {
-			items: [...(queryFilters?.items || [])],
-			op: 'and',
-		};
-
-		const metaKeys = groupMeta ?? {};
-
-		for (const key of Object.keys(metaKeys)) {
-			const value = metaKeys[key];
-			// Skip empty values to avoid creating invalid filters
-			if (value === '' || value === undefined || value === null) {
-				continue;
-			}
-			baseFilters.items.push({
-				key: {
-					key,
-					type: 'resource',
-				},
-				op: '=',
-				value,
-				id: key,
-			});
-		}
-
-		return baseFilters;
-	}, [queryFilters?.items, groupMeta]);
+	const expressionForRecord = useMemo(
+		() => buildExpressionFromGroupMeta(parentExpression || '', groupMeta),
+		[parentExpression, groupMeta],
+	);
 
 	const selectedTime = useGlobalTimeStore((s) => s.selectedTime);
 	const refreshInterval = useGlobalTimeStore((s) => s.refreshInterval);
@@ -130,8 +124,9 @@ export function K8sExpandedRow<T>({
 			'k8sExpandedRow',
 			JSON.stringify(groupMeta),
 			rowKey,
-			JSON.stringify(queryFilters),
+			expressionForRecord,
 			JSON.stringify(orderBy),
+			...extraQueryKeyParts,
 		);
 	}, [
 		getAutoRefreshQueryKey,
@@ -139,49 +134,91 @@ export function K8sExpandedRow<T>({
 		entity,
 		groupMeta,
 		rowKey,
-		queryFilters,
+		expressionForRecord,
 		orderBy,
+		extraQueryKeyParts,
 	]);
 
 	const { data, isLoading, isError } = useQuery({
 		queryKey,
 		queryFn: async ({ signal }) => {
+			if (!fetchListData) {
+				return { data: [] as T[], total: 0 };
+			}
 			const { minTime, maxTime } = getMinMaxTime();
 
-			return await fetchListData(
+			const response = await fetchListData(
 				{
+					filter: { expression: expressionForRecord },
 					limit: EXPANDED_ROW_LIMIT,
 					offset: 0,
-					filters: createFiltersForRecord(),
 					start: Math.floor(minTime / NANO_SECOND_MULTIPLIER),
 					end: Math.floor(maxTime / NANO_SECOND_MULTIPLIER),
-					orderBy: orderBy || undefined,
+					orderBy: orderBy
+						? { key: { name: orderBy.columnName }, direction: orderBy.order }
+						: undefined,
 					groupBy: undefined,
 				},
 				signal,
 			);
+
+			return {
+				data: response.records || response.data || [],
+				total: response.total,
+				error: response.error,
+			};
 		},
 		staleTime: 1000 * 60 * 30,
 		refetchInterval: isRefreshEnabled ? refreshInterval : false,
+		enabled: !!fetchListData,
 	});
 
 	const expandedData = data?.data ?? [];
 
 	const handleRowClick = useCallback(
-		(_row: T, itemKey: string): void => {
-			setSelectedItem(itemKey);
+		(_row: T, itemKey: TItemKey): void => {
+			if (typeof itemKey === 'object' && itemKey !== null) {
+				setSelectedItemParams(itemKey as unknown as SelectedItemParams);
+			} else {
+				setSelectedItemParams({
+					selectedItem: itemKey as string,
+					clusterName: null,
+					namespaceName: null,
+				});
+			}
 		},
-		[setSelectedItem],
+		[setSelectedItemParams],
 	);
 
 	const handleViewAllClick = (): void => {
-		const filters = createFiltersForRecord();
-		setGroupBy([]);
-		setCurrentPage(1);
-		setFilters(filters);
+		void setGroupBy([]);
+		void setCurrentPage(1);
 		if (orderBy) {
-			setMainOrderBy(orderBy);
+			void setMainOrderBy(orderBy);
 		}
+
+		const updatedQuery = {
+			...currentQuery,
+			id: uuid(),
+			builder: {
+				...currentQuery.builder,
+				queryData: [
+					{
+						...(currentQuery.builder.queryData[0] || {}),
+						filter: { expression: expressionForRecord },
+						filters: { items: [], op: 'AND' as const },
+					},
+				],
+			},
+		};
+
+		const newUrlQuery = new URLSearchParams(urlQuery.toString());
+		newUrlQuery.set(
+			QueryParams.compositeQuery,
+			encodeURIComponent(JSON.stringify(updatedQuery)),
+		);
+
+		safeNavigate(`${location.pathname}?${newUrlQuery.toString()}`);
 	};
 
 	const total = data?.total ?? 0;
@@ -211,7 +248,7 @@ export function K8sExpandedRow<T>({
 
 			<div data-testid="expanded-table">
 				<TanStackTableStateProvider>
-					<TanStackTable<T>
+					<TanStackTable<T, TItemKey>
 						data={expandedData}
 						columns={tableColumns}
 						columnStorageKey={storageKey}

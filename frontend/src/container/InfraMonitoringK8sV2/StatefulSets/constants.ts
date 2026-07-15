@@ -1,67 +1,72 @@
+import { InframonitoringtypesStatefulSetRecordDTO } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
+import { K8sDetailsMetadataConfig } from '../Base/K8sBaseDetails';
+import { INFRA_MONITORING_ATTR_KEYS } from '../constants';
+import { SelectedItemParams } from '../hooks';
 import {
-	createFilterItem,
-	K8sDetailsMetadataConfig,
-} from '../Base/K8sBaseDetails';
-import { QUERY_KEYS } from '../EntityDetailsUtils/utils';
-import { K8sStatefulSetsData } from './api';
+	buildEventsExpression,
+	buildExpressionFromSelectedItemParams,
+	buildLogsTracesExpression,
+} from 'container/InfraMonitoringK8sV2/Base/utils';
 
-export const k8sStatefulSetGetSelectedItemFilters = (
-	selectedItemId: string,
-): TagFilter => ({
-	op: 'AND',
-	items: [
-		{
-			id: 'k8s_statefulset_name',
-			key: {
-				key: 'k8s_statefulset_name',
-				type: null,
-			},
-			op: '=',
-			value: selectedItemId,
-		},
-	],
-});
+export const k8sStatefulSetGetSelectedItemExpression = (
+	params: SelectedItemParams,
+): string =>
+	buildExpressionFromSelectedItemParams(
+		params,
+		INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME,
+	);
 
-export const k8sStatefulSetDetailsMetadataConfig: K8sDetailsMetadataConfig<K8sStatefulSetsData>[] =
+export const k8sStatefulSetDetailsMetadataConfig: K8sDetailsMetadataConfig<InframonitoringtypesStatefulSetRecordDTO>[] =
 	[
 		{
 			label: 'Statefulset Name',
-			getValue: (p): string => p.meta.k8s_statefulset_name,
+			getValue: (p): string =>
+				p.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME] ?? '',
+		},
+		{
+			label: 'Cluster Name',
+			getValue: (p): string =>
+				p.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] ?? '',
 		},
 		{
 			label: 'Namespace Name',
-			getValue: (p): string => p.meta.k8s_namespace_name,
+			getValue: (p): string =>
+				p.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ?? '',
 		},
 	];
 
-export const k8sStatefulSetInitialEventsFilter = (
-	item: K8sStatefulSetsData,
-): ReturnType<typeof createFilterItem>[] => [
-	createFilterItem(QUERY_KEYS.K8S_OBJECT_KIND, 'StatefulSet'),
-	createFilterItem(QUERY_KEYS.K8S_OBJECT_NAME, item.meta.k8s_statefulset_name),
-];
+export const k8sStatefulSetInitialEventsExpression = (
+	item: InframonitoringtypesStatefulSetRecordDTO,
+): string =>
+	buildEventsExpression({
+		objectKind: 'StatefulSet',
+		objectName:
+			item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME] ?? '',
+		clusterName: item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME],
+		namespaceName: item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME],
+	});
 
-export const k8sStatefulSetInitialLogTracesFilter = (
-	item: K8sStatefulSetsData,
-): ReturnType<typeof createFilterItem>[] => [
-	createFilterItem(
-		QUERY_KEYS.K8S_STATEFUL_SET_NAME,
-		item.meta.k8s_statefulset_name,
-	),
-	createFilterItem(QUERY_KEYS.K8S_NAMESPACE_NAME, item.meta.k8s_namespace_name),
-];
+export const k8sStatefulSetInitialLogTracesExpression = (
+	item: InframonitoringtypesStatefulSetRecordDTO,
+): string =>
+	buildLogsTracesExpression({
+		mainAttributeKey: INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME,
+		mainAttributeValue:
+			item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME],
+		clusterName: item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME],
+		namespaceName: item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME],
+	});
 
 export const k8sStatefulSetGetEntityName = (
-	item: K8sStatefulSetsData,
-): string => item.meta.k8s_statefulset_name;
+	item: InframonitoringtypesStatefulSetRecordDTO,
+): string => item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME] ?? '';
 
 export const statefulSetWidgetInfo = [
 	{
@@ -91,18 +96,53 @@ export const statefulSetWidgetInfo = [
 ];
 
 export const getStatefulSetMetricsQueryPayload = (
-	statefulSet: K8sStatefulSetsData,
+	statefulSet: InframonitoringtypesStatefulSetRecordDTO,
 	start: number,
 	end: number,
 	dotMetricsEnabled: boolean,
 ): GetQueryResultsProps[] => {
 	const k8sStatefulSetNameKey = dotMetricsEnabled
-		? 'k8s.statefulset.name'
+		? INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME
 		: 'k8s_statefulset_name';
 	const k8sNamespaceNameKey = dotMetricsEnabled
-		? 'k8s.namespace.name'
+		? INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME
 		: 'k8s_namespace_name';
-	const k8sPodNameKey = dotMetricsEnabled ? 'k8s.pod.name' : 'k8s_pod_name';
+	const k8sPodNameKey = dotMetricsEnabled
+		? INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME
+		: 'k8s_pod_name';
+	const k8sClusterNameKey = dotMetricsEnabled
+		? INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME
+		: 'k8s_cluster_name';
+
+	const clusterName =
+		statefulSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] ?? '';
+	const namespaceName =
+		statefulSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ?? '';
+
+	const filters = [
+		{
+			id: 'f2',
+			key: {
+				dataType: DataTypes.String,
+				id: 'k8s_namespace_name--string--tag--false',
+				key: k8sNamespaceNameKey,
+				type: 'tag',
+			},
+			op: '=',
+			value: namespaceName,
+		},
+		{
+			id: 'f3',
+			key: {
+				dataType: DataTypes.String,
+				id: 'k8s_cluster_name--string--tag--false',
+				key: k8sClusterNameKey,
+				type: 'tag',
+			},
+			op: '=',
+			value: clusterName,
+		},
+	];
 
 	const k8sPodCpuUtilKey = dotMetricsEnabled
 		? 'k8s.pod.cpu.usage'
@@ -172,19 +212,12 @@ export const getStatefulSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: statefulSet.meta.k8s_statefulset_name,
+										value:
+											statefulSet.meta?.[
+												INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME
+											] ?? '',
 									},
-									{
-										id: 'f2',
-										key: {
-											dataType: DataTypes.String,
-											id: 'ns_name',
-											key: k8sNamespaceNameKey,
-											type: 'tag',
-										},
-										op: '=',
-										value: statefulSet.meta.k8s_namespace_name,
-									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -222,19 +255,12 @@ export const getStatefulSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: 'contains',
-										value: statefulSet.meta.k8s_statefulset_name,
+										value:
+											statefulSet.meta?.[
+												INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME
+											] ?? '',
 									},
-									{
-										id: 'f2',
-										key: {
-											dataType: DataTypes.String,
-											id: 'ns_name',
-											key: k8sNamespaceNameKey,
-											type: 'tag',
-										},
-										op: '=',
-										value: statefulSet.meta.k8s_namespace_name,
-									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -272,19 +298,12 @@ export const getStatefulSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: 'contains',
-										value: statefulSet.meta.k8s_statefulset_name,
+										value:
+											statefulSet.meta?.[
+												INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME
+											] ?? '',
 									},
-									{
-										id: 'f2',
-										key: {
-											dataType: DataTypes.String,
-											id: 'ns_name',
-											key: k8sNamespaceNameKey,
-											type: 'tag',
-										},
-										op: '=',
-										value: statefulSet.meta.k8s_namespace_name,
-									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -342,19 +361,12 @@ export const getStatefulSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: statefulSet.meta.k8s_statefulset_name,
+										value:
+											statefulSet.meta?.[
+												INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME
+											] ?? '',
 									},
-									{
-										id: 'f2',
-										key: {
-											dataType: DataTypes.String,
-											id: 'ns_name',
-											key: k8sNamespaceNameKey,
-											type: 'tag',
-										},
-										op: '=',
-										value: statefulSet.meta.k8s_namespace_name,
-									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -392,19 +404,12 @@ export const getStatefulSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: statefulSet.meta.k8s_statefulset_name,
+										value:
+											statefulSet.meta?.[
+												INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME
+											] ?? '',
 									},
-									{
-										id: 'f2',
-										key: {
-											dataType: DataTypes.String,
-											id: 'ns_name',
-											key: k8sNamespaceNameKey,
-											type: 'tag',
-										},
-										op: '=',
-										value: statefulSet.meta.k8s_namespace_name,
-									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -462,19 +467,12 @@ export const getStatefulSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: statefulSet.meta.k8s_statefulset_name,
+										value:
+											statefulSet.meta?.[
+												INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME
+											] ?? '',
 									},
-									{
-										id: 'f2',
-										key: {
-											dataType: DataTypes.String,
-											id: 'ns_name',
-											key: k8sNamespaceNameKey,
-											type: 'tag',
-										},
-										op: '=',
-										value: statefulSet.meta.k8s_namespace_name,
-									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -504,7 +502,7 @@ export const getStatefulSetMetricsQueryPayload = (
 							filters: {
 								items: [
 									{
-										id: 'f3',
+										id: 'f1',
 										key: {
 											dataType: DataTypes.String,
 											id: 'pod_name',
@@ -512,19 +510,12 @@ export const getStatefulSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: 'contains',
-										value: statefulSet.meta.k8s_statefulset_name,
+										value:
+											statefulSet.meta?.[
+												INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME
+											] ?? '',
 									},
-									{
-										id: 'f2',
-										key: {
-											dataType: DataTypes.String,
-											id: 'ns_name',
-											key: k8sNamespaceNameKey,
-											type: 'tag',
-										},
-										op: '=',
-										value: statefulSet.meta.k8s_namespace_name,
-									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -562,19 +553,12 @@ export const getStatefulSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: 'contains',
-										value: statefulSet.meta.k8s_statefulset_name,
+										value:
+											statefulSet.meta?.[
+												INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME
+											] ?? '',
 									},
-									{
-										id: 'f2',
-										key: {
-											dataType: DataTypes.String,
-											id: 'ns_name',
-											key: k8sNamespaceNameKey,
-											type: 'tag',
-										},
-										op: '=',
-										value: statefulSet.meta.k8s_namespace_name,
-									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -632,19 +616,12 @@ export const getStatefulSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: statefulSet.meta.k8s_statefulset_name,
+										value:
+											statefulSet.meta?.[
+												INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME
+											] ?? '',
 									},
-									{
-										id: 'f2',
-										key: {
-											dataType: DataTypes.String,
-											id: 'ns_name',
-											key: k8sNamespaceNameKey,
-											type: 'tag',
-										},
-										op: '=',
-										value: statefulSet.meta.k8s_namespace_name,
-									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -682,19 +659,12 @@ export const getStatefulSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: statefulSet.meta.k8s_statefulset_name,
+										value:
+											statefulSet.meta?.[
+												INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME
+											] ?? '',
 									},
-									{
-										id: 'f2',
-										key: {
-											dataType: DataTypes.String,
-											id: 'ns_name',
-											key: k8sNamespaceNameKey,
-											type: 'tag',
-										},
-										op: '=',
-										value: statefulSet.meta.k8s_namespace_name,
-									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -752,19 +722,12 @@ export const getStatefulSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: statefulSet.meta.k8s_statefulset_name,
+										value:
+											statefulSet.meta?.[
+												INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME
+											] ?? '',
 									},
-									{
-										id: 'f2',
-										key: {
-											dataType: DataTypes.String,
-											id: 'ns_name',
-											key: k8sNamespaceNameKey,
-											type: 'tag',
-										},
-										op: '=',
-										value: statefulSet.meta.k8s_namespace_name,
-									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -835,19 +798,12 @@ export const getStatefulSetMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: statefulSet.meta.k8s_statefulset_name,
+										value:
+											statefulSet.meta?.[
+												INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME
+											] ?? '',
 									},
-									{
-										id: 'f2',
-										key: {
-											dataType: DataTypes.String,
-											id: 'ns_name',
-											key: k8sNamespaceNameKey,
-											type: 'tag',
-										},
-										op: '=',
-										value: statefulSet.meta.k8s_namespace_name,
-									},
+									...filters,
 								],
 								op: 'AND',
 							},
