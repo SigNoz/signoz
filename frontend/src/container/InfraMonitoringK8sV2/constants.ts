@@ -897,6 +897,8 @@ export const INFRA_MONITORING_K8S_PARAMS_KEYS = {
 	PAGE_SIZE: 'pageSize',
 	EXPANDED: 'expanded',
 	SELECTED_ITEM: 'selectedItem',
+	SELECTED_ITEM_CLUSTER_NAME: 'selectedItemClusterName',
+	SELECTED_ITEM_NAMESPACE_NAME: 'selectedItemNamespaceName',
 };
 
 /** Metric namespace prefixes for /fields/keys and /fields/values APIs */

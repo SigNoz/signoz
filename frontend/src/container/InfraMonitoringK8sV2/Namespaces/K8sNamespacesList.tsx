@@ -11,9 +11,12 @@ import K8sBaseDetails, { K8sDetailsFilters } from '../Base/K8sBaseDetails';
 import { K8sBaseList } from '../Base/K8sBaseList';
 import { K8sBaseFilters } from '../Base/types';
 import { InfraMonitoringEntity } from '../constants';
+import { SelectedItemParams } from '../hooks';
 import {
 	getNamespaceMetricsQueryPayload,
+	k8sNamespaceDetailsCountsConfig,
 	k8sNamespaceDetailsMetadataConfig,
+	k8sNamespaceGetCountsFilterExpression,
 	k8sNamespaceGetEntityName,
 	k8sNamespaceGetSelectedItemExpression,
 	k8sNamespaceInitialEventsExpression,
@@ -117,7 +120,7 @@ function K8sNamespacesList({
 
 	return (
 		<>
-			<K8sBaseList<InframonitoringtypesNamespaceRecordDTO>
+			<K8sBaseList<InframonitoringtypesNamespaceRecordDTO, SelectedItemParams>
 				controlListPrefix={controlListPrefix}
 				entity={InfraMonitoringEntity.NAMESPACES}
 				tableColumns={k8sNamespacesColumnsConfig}
@@ -136,6 +139,8 @@ function K8sNamespacesList({
 				getInitialLogTracesExpression={k8sNamespaceInitialLogTracesExpression}
 				getInitialEventsExpression={k8sNamespaceInitialEventsExpression}
 				metadataConfig={k8sNamespaceDetailsMetadataConfig}
+				countsConfig={k8sNamespaceDetailsCountsConfig}
+				getCountsFilterExpression={k8sNamespaceGetCountsFilterExpression}
 				entityWidgetInfo={namespaceWidgetInfo}
 				getEntityQueryPayload={getNamespaceMetricsQueryPayload}
 				queryKeyPrefix="namespace"

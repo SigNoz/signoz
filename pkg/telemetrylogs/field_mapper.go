@@ -242,6 +242,7 @@ func (m *fieldMapper) ColumnFor(ctx context.Context, _, _ uint64, key *telemetry
 
 func (m *fieldMapper) ColumnExpressionFor(
 	ctx context.Context,
+	_ valuer.UUID,
 	tsStart, tsEnd uint64,
 	field *telemetrytypes.TelemetryFieldKey,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
@@ -283,6 +284,12 @@ func (m *fieldMapper) ColumnExpressionFor(
 	}
 
 	return fmt.Sprintf("%s AS `%s`", sqlbuilder.Escape(fieldExpression), field.Name), nil
+}
+
+// CandidateKeys returns nil: logs has no synthesize-on-unknown-key fallback, so an
+// unknown key stays unresolved and the caller errors.
+func (m *fieldMapper) CandidateKeys(_ context.Context, _ valuer.UUID, _ *telemetrytypes.TelemetryFieldKey, _ any, _ map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.TelemetryFieldKey {
+	return nil
 }
 
 // buildFieldForJSON builds the field expression for body JSON fields using arrayConcat pattern.

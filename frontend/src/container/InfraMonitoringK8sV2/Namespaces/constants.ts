@@ -6,14 +6,29 @@ import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
-import { K8sDetailsMetadataConfig } from '../Base/K8sBaseDetails';
+import {
+	K8sDetailsCountConfig,
+	K8sDetailsMetadataConfig,
+} from '../Base/K8sBaseDetails';
+import {
+	INFRA_MONITORING_ATTR_KEYS,
+	InfraMonitoringEntity,
+} from '../constants';
+import { SelectedItemParams } from '../hooks';
 import { formatValueForExpression } from 'components/QueryBuilderV2/utils';
-import { INFRA_MONITORING_ATTR_KEYS } from '../constants';
+import {
+	buildEventsExpression,
+	buildExpressionFromSelectedItemParams,
+	buildLogsTracesExpression,
+} from 'container/InfraMonitoringK8sV2/Base/utils';
 
 export const k8sNamespaceGetSelectedItemExpression = (
-	selectedItemId: string,
+	params: SelectedItemParams,
 ): string =>
-	`${INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME} = ${formatValueForExpression(selectedItemId)}`;
+	buildExpressionFromSelectedItemParams(
+		params,
+		INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
+	);
 
 export const k8sNamespaceDetailsMetadataConfig: K8sDetailsMetadataConfig<InframonitoringtypesNamespaceRecordDTO>[] =
 	[
@@ -25,64 +40,124 @@ export const k8sNamespaceDetailsMetadataConfig: K8sDetailsMetadataConfig<Inframo
 		},
 	];
 
+export const k8sNamespaceDetailsCountsConfig: K8sDetailsCountConfig<InframonitoringtypesNamespaceRecordDTO>[] =
+	[
+		{
+			label: 'Deployments',
+			getValue: (p): number => p.counts?.deployments ?? 0,
+			targetCategory: InfraMonitoringEntity.DEPLOYMENTS,
+		},
+		{
+			label: 'StatefulSets',
+			getValue: (p): number => p.counts?.statefulSets ?? 0,
+			targetCategory: InfraMonitoringEntity.STATEFULSETS,
+		},
+		{
+			label: 'DaemonSets',
+			getValue: (p): number => p.counts?.daemonSets ?? 0,
+			targetCategory: InfraMonitoringEntity.DAEMONSETS,
+		},
+		{
+			label: 'Jobs',
+			getValue: (p): number => p.counts?.jobs ?? 0,
+			targetCategory: InfraMonitoringEntity.JOBS,
+		},
+	];
+
 export const k8sNamespaceInitialEventsExpression = (
 	item: InframonitoringtypesNamespaceRecordDTO,
-): string => {
-	const name = formatValueForExpression(item.namespaceName || '');
-	return `${INFRA_MONITORING_ATTR_KEYS.K8S_OBJECT_KIND} = 'Namespace' AND ${INFRA_MONITORING_ATTR_KEYS.K8S_OBJECT_NAME} = ${name}`;
-};
+): string =>
+	buildEventsExpression({
+		objectKind: 'Namespace',
+		objectName: item.namespaceName || '',
+		clusterName: item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME],
+	});
 
 export const k8sNamespaceInitialLogTracesExpression = (
 	item: InframonitoringtypesNamespaceRecordDTO,
-): string => {
-	const name = formatValueForExpression(item.namespaceName || '');
-	return `${INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME} = ${name}`;
-};
+): string =>
+	buildLogsTracesExpression({
+		mainAttributeKey: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
+		mainAttributeValue: item.namespaceName,
+		clusterName: item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME],
+	});
 
 export const k8sNamespaceGetEntityName = (
 	item: InframonitoringtypesNamespaceRecordDTO,
 ): string => item.namespaceName || '';
 
+export const k8sNamespaceGetCountsFilterExpression = (
+	item: InframonitoringtypesNamespaceRecordDTO,
+): string => {
+	const clusterName = item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME];
+	const clauses: string[] = [];
+
+	if (clusterName) {
+		clauses.push(
+			`${INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME} = ${formatValueForExpression(clusterName)}`,
+		);
+	}
+	if (item.namespaceName) {
+		clauses.push(
+			`${INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME} = ${formatValueForExpression(item.namespaceName)}`,
+		);
+	}
+
+	return clauses.join(' AND ');
+};
+
 export const namespaceWidgetInfo = [
 	{
 		title: 'CPU Usage (cores)',
 		yAxisUnit: '',
+		docPath: '/infrastructure-monitoring/kubernetes/namespaces/#cpu-usage-cores',
 	},
 	{
 		title: 'Memory Usage (bytes)',
 		yAxisUnit: 'bytes',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/namespaces/#memory-usage-bytes',
 	},
 	{
 		title: 'Pods CPU (top 10)',
 		yAxisUnit: '',
+		docPath: '/infrastructure-monitoring/kubernetes/namespaces/#pods-cpu-top-10',
 	},
 	{
 		title: 'Pods Memory (top 10)',
 		yAxisUnit: 'bytes',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/namespaces/#pods-memory-top-10',
 	},
 	{
 		title: 'Network rate',
 		yAxisUnit: 'binBps',
+		docPath: '/infrastructure-monitoring/kubernetes/namespaces/#network-rate',
 	},
 	{
 		title: 'Network errors',
 		yAxisUnit: '',
+		docPath: '/infrastructure-monitoring/kubernetes/namespaces/#network-errors',
 	},
 	{
-		title: 'StatefulSets',
+		title: 'StatefulSets (pods)',
 		yAxisUnit: '',
+		docPath: '/infrastructure-monitoring/kubernetes/namespaces/#statefulsets',
 	},
 	{
-		title: 'ReplicaSets',
+		title: 'ReplicaSets (pods)',
 		yAxisUnit: '',
+		docPath: '/infrastructure-monitoring/kubernetes/namespaces/#replicasets',
 	},
 	{
-		title: 'DaemonSets',
+		title: 'DaemonSets (nodes)',
 		yAxisUnit: '',
+		docPath: '/infrastructure-monitoring/kubernetes/namespaces/#daemonsets',
 	},
 	{
-		title: 'Deployments',
+		title: 'Deployments (pods)',
 		yAxisUnit: '',
+		docPath: '/infrastructure-monitoring/kubernetes/namespaces/#deployments',
 	},
 ];
 
@@ -179,6 +254,24 @@ export const getNamespaceMetricsQueryPayload = (
 		'k8s.deployment.name',
 		'k8s_deployment_name',
 	);
+	const k8sClusterNameKey = getKey('k8s.cluster.name', 'k8s_cluster_name');
+
+	const clusterName =
+		namespace.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] ?? '';
+
+	const filters = [
+		{
+			id: 'f1',
+			key: {
+				dataType: DataTypes.String,
+				id: 'k8s_cluster_name--string--tag--false',
+				key: k8sClusterNameKey,
+				type: 'tag',
+			},
+			op: '=',
+			value: clusterName,
+		},
+	];
 
 	return [
 		{
@@ -211,6 +304,7 @@ export const getNamespaceMetricsQueryPayload = (
 										op: '=',
 										value: namespace.namespaceName,
 									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -250,6 +344,7 @@ export const getNamespaceMetricsQueryPayload = (
 										op: '=',
 										value: namespace.namespaceName,
 									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -289,6 +384,7 @@ export const getNamespaceMetricsQueryPayload = (
 										op: '=',
 										value: namespace.namespaceName,
 									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -328,6 +424,7 @@ export const getNamespaceMetricsQueryPayload = (
 										op: '=',
 										value: namespace.namespaceName,
 									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -401,6 +498,7 @@ export const getNamespaceMetricsQueryPayload = (
 										op: '=',
 										value: namespace.namespaceName,
 									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -440,6 +538,7 @@ export const getNamespaceMetricsQueryPayload = (
 										op: '=',
 										value: namespace.namespaceName,
 									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -479,6 +578,7 @@ export const getNamespaceMetricsQueryPayload = (
 										op: '=',
 										value: namespace.namespaceName,
 									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -518,6 +618,7 @@ export const getNamespaceMetricsQueryPayload = (
 										op: '=',
 										value: namespace.namespaceName,
 									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -557,6 +658,7 @@ export const getNamespaceMetricsQueryPayload = (
 										op: '=',
 										value: namespace.namespaceName,
 									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -596,6 +698,7 @@ export const getNamespaceMetricsQueryPayload = (
 										op: '=',
 										value: namespace.namespaceName,
 									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -669,6 +772,7 @@ export const getNamespaceMetricsQueryPayload = (
 										op: '=',
 										value: namespace.namespaceName,
 									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -749,6 +853,7 @@ export const getNamespaceMetricsQueryPayload = (
 										op: '=',
 										value: namespace.namespaceName,
 									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -829,6 +934,7 @@ export const getNamespaceMetricsQueryPayload = (
 										op: '=',
 										value: namespace.namespaceName,
 									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -915,6 +1021,7 @@ export const getNamespaceMetricsQueryPayload = (
 										op: '=',
 										value: namespace.namespaceName,
 									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -1001,6 +1108,7 @@ export const getNamespaceMetricsQueryPayload = (
 										op: '=',
 										value: namespace.namespaceName,
 									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -1047,6 +1155,7 @@ export const getNamespaceMetricsQueryPayload = (
 										op: '=',
 										value: namespace.namespaceName,
 									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -1093,6 +1202,7 @@ export const getNamespaceMetricsQueryPayload = (
 										op: '=',
 										value: namespace.namespaceName,
 									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -1173,6 +1283,7 @@ export const getNamespaceMetricsQueryPayload = (
 										op: '=',
 										value: namespace.namespaceName,
 									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -1225,6 +1336,7 @@ export const getNamespaceMetricsQueryPayload = (
 										op: '=',
 										value: namespace.namespaceName,
 									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -1311,6 +1423,7 @@ export const getNamespaceMetricsQueryPayload = (
 										op: '=',
 										value: namespace.namespaceName,
 									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -1357,6 +1470,7 @@ export const getNamespaceMetricsQueryPayload = (
 										op: '=',
 										value: namespace.namespaceName,
 									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -1403,6 +1517,7 @@ export const getNamespaceMetricsQueryPayload = (
 										op: '=',
 										value: namespace.namespaceName,
 									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -1449,6 +1564,7 @@ export const getNamespaceMetricsQueryPayload = (
 										op: '=',
 										value: namespace.namespaceName,
 									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -1529,6 +1645,7 @@ export const getNamespaceMetricsQueryPayload = (
 										op: '=',
 										value: namespace.namespaceName,
 									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -1575,6 +1692,7 @@ export const getNamespaceMetricsQueryPayload = (
 										op: '=',
 										value: namespace.namespaceName,
 									},
+									...filters,
 								],
 								op: 'AND',
 							},

@@ -613,7 +613,7 @@ def build_order_by(name: str, direction: str = "desc") -> dict:
     return {"key": {"name": name}, "direction": direction}
 
 
-def build_logs_aggregation(expression: str, alias: str | None = None) -> dict:
+def build_aggregation(expression: str, alias: str | None = None) -> dict:
     agg: dict[str, Any] = {"expression": expression}
     if alias:
         agg["alias"] = alias

@@ -52,9 +52,10 @@ import EntityMetrics from '../EntityDetailsUtils/EntityMetrics';
 import EntityTraces from '../EntityDetailsUtils/EntityTraces';
 import { K8S_ENTITY_TRACES_EXPRESSION_KEY } from '../EntityDetailsUtils/EntityTraces/hooks';
 import {
+	SelectedItemParams,
 	useInfraMonitoringEventsFilters,
 	useInfraMonitoringLogFilters,
-	useInfraMonitoringSelectedItem,
+	useInfraMonitoringSelectedItemParams,
 	useInfraMonitoringTracesFilters,
 	useInfraMonitoringView,
 } from '../hooks';
@@ -62,6 +63,10 @@ import LoadingContainer from '../LoadingContainer';
 
 import '../EntityDetailsUtils/entityDetails.styles.scss';
 import { parseAsString, useQueryState } from 'nuqs';
+import {
+	EntityCountConfig,
+	EntityCountsSection,
+} from './components/EntityCountsSection/EntityCountsSection';
 
 const TimeRangeOffset = 1000000000;
 
@@ -70,6 +75,8 @@ export interface K8sDetailsMetadataConfig<T> {
 	getValue: (entity: T) => string | number;
 	render?: (value: string | number, entity: T) => React.ReactNode;
 }
+
+export type K8sDetailsCountConfig<T> = EntityCountConfig<T>;
 
 export interface K8sDetailsFilters {
 	filter: { expression: string };
@@ -81,7 +88,7 @@ export interface K8sBaseDetailsProps<T> {
 	category: InfraMonitoringEntity;
 	eventCategory: string;
 	// Data fetching configuration
-	getSelectedItemExpression: (selectedItem: string) => string;
+	getSelectedItemExpression: (params: SelectedItemParams) => string;
 	fetchEntityData: (
 		filters: K8sDetailsFilters,
 		signal?: AbortSignal,
@@ -91,9 +98,12 @@ export interface K8sBaseDetailsProps<T> {
 	getInitialLogTracesExpression: (entity: T) => string;
 	getInitialEventsExpression: (entity: T) => string;
 	metadataConfig: K8sDetailsMetadataConfig<T>[];
+	countsConfig?: K8sDetailsCountConfig<T>[];
+	getCountsFilterExpression?: (entity: T) => string;
 	entityWidgetInfo: {
 		title: string;
 		yAxisUnit: string;
+		docPath?: string;
 	}[];
 	getEntityQueryPayload: (
 		entity: T,
@@ -136,6 +146,8 @@ export default function K8sBaseDetails<T>({
 	getInitialLogTracesExpression,
 	getInitialEventsExpression,
 	metadataConfig,
+	countsConfig,
+	getCountsFilterExpression,
 	entityWidgetInfo,
 	getEntityQueryPayload,
 	queryKeyPrefix,
@@ -152,7 +164,9 @@ export default function K8sBaseDetails<T>({
 
 	const isDarkMode = useIsDarkMode();
 
-	const [selectedItem, setSelectedItem] = useInfraMonitoringSelectedItem();
+	const [selectedItemParams, setSelectedItemParams] =
+		useInfraMonitoringSelectedItemParams();
+	const selectedItem = selectedItemParams.selectedItem;
 
 	const entityQueryKey = useMemo(
 		() =>
@@ -160,8 +174,17 @@ export default function K8sBaseDetails<T>({
 				selectedTime,
 				`${queryKeyPrefix}EntityDetails`,
 				selectedItem,
+				selectedItemParams.clusterName,
+				selectedItemParams.namespaceName,
 			),
-		[queryKeyPrefix, selectedItem, selectedTime, getAutoRefreshQueryKey],
+		[
+			queryKeyPrefix,
+			selectedItem,
+			selectedItemParams.clusterName,
+			selectedItemParams.namespaceName,
+			selectedTime,
+			getAutoRefreshQueryKey,
+		],
 	);
 
 	const {
@@ -178,7 +201,7 @@ export default function K8sBaseDetails<T>({
 			const { minTime, maxTime } = getMinMaxTime();
 			const start = Math.floor(minTime / NANO_SECOND_MULTIPLIER);
 			const end = Math.floor(maxTime / NANO_SECOND_MULTIPLIER);
-			const expression = getSelectedItemExpression(selectedItem);
+			const expression = getSelectedItemExpression(selectedItemParams);
 
 			return fetchEntityData({ filter: { expression }, start, end }, signal);
 		},
@@ -203,8 +226,8 @@ export default function K8sBaseDetails<T>({
 	}, [entity, getInitialEventsExpression]);
 
 	const handleClose = useCallback((): void => {
-		setSelectedItem(null);
-	}, [setSelectedItem]);
+		setSelectedItemParams(null);
+	}, [setSelectedItemParams]);
 
 	const entityName = entity ? getEntityName(entity) : '';
 
@@ -467,6 +490,19 @@ export default function K8sBaseDetails<T>({
 								})}
 							</div>
 						</div>
+
+						{countsConfig &&
+							countsConfig.length > 0 &&
+							selectedItem &&
+							getCountsFilterExpression && (
+								<EntityCountsSection
+									entity={entity}
+									countsConfig={countsConfig}
+									selectedItem={selectedItem}
+									filterExpression={getCountsFilterExpression(entity)}
+									closeDrawer={handleClose}
+								/>
+							)}
 					</div>
 
 					{!hideDetailViewTabs && (
