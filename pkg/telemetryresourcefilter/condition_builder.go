@@ -135,7 +135,7 @@ func (b *defaultConditionBuilder) conditionForKey(
 	// as we store resource values as string
 	formattedValue := querybuilder.FormatValueForContains(value)
 
-	columns, err := b.fm.ColumnFor(ctx, startNs, endNs, key)
+	columns, err := b.fm.ColumnFor(ctx, valuer.UUID{}, startNs, endNs, key)
 	if err != nil {
 		return "", err
 	}
@@ -151,7 +151,7 @@ func (b *defaultConditionBuilder) conditionForKey(
 	keyIdxFilter := sb.Like(column.Name, keyIndexFilter(key))
 	valueForIndexFilter := valueForIndexFilter(op, key, value)
 
-	fieldName, err := b.fm.FieldFor(ctx, startNs, endNs, key)
+	fieldName, err := b.fm.FieldFor(ctx, valuer.UUID{}, startNs, endNs, key)
 	if err != nil {
 		return "", err
 	}

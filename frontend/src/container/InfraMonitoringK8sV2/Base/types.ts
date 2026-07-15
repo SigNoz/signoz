@@ -4,6 +4,7 @@ import {
 	Time,
 } from 'container/TopNav/DateTimeSelectionV2/types';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import APIError from 'types/api/error';
 
 import { EntityCountConfig } from './components/EntityCountsSection/EntityCountsSection';
 import { InfraMonitoringEntity } from '../constants';
@@ -104,7 +105,7 @@ export interface K8sBaseDetailsProps<T> {
 	fetchEntityData: (
 		filters: K8sDetailsFilters,
 		signal?: AbortSignal,
-	) => Promise<{ data: T | null; error?: string | null }>;
+	) => Promise<{ data: T | null; error?: APIError | null }>;
 	// Entity configuration
 	getEntityName: (entity: T) => string;
 	getInitialLogTracesExpression: (entity: T) => string;

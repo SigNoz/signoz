@@ -6,6 +6,8 @@ import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
 import { Drawer } from 'antd';
 import logEvent from 'api/common/logEvent';
+import ErrorContent from 'components/ErrorModal/components/ErrorContent';
+import APIError from 'types/api/error';
 import { InfraMonitoringEvents } from 'constants/events';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import {
@@ -162,12 +164,18 @@ export default function K8sBaseDetails<T>({
 			{isEntityLoading && <LoadingContainer />}
 			{(isEntityError || hasResponseError) && (
 				<div className="entity-error-container">
-					<Typography.Text color="danger">
-						{entityResponse?.error ||
-							(entityError instanceof Error
-								? entityError.message
-								: 'Failed to load entity details')}
-					</Typography.Text>
+					<ErrorContent
+						error={
+							entityResponse?.error ??
+							(entityError instanceof APIError ? entityError : null) ?? {
+								code: 500,
+								message:
+									entityError instanceof Error
+										? entityError.message
+										: 'Failed to load entity details',
+							}
+						}
+					/>
 				</div>
 			)}
 			{entity && !isEntityLoading && !hasResponseError && (
