@@ -259,8 +259,11 @@ func (m *Manager) initiate(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
+		// Skip orgs with no stored rules; the loop must continue so subsequent
+		// orgs are still loaded. Returning here would silently drop every
+		// org that follows an empty-rules org in the list.
 		if len(storedRules) == 0 {
-			return nil
+			continue
 		}
 
 		for _, rec := range storedRules {
