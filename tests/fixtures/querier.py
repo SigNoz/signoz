@@ -189,6 +189,38 @@ def make_query_request(
     )
 
 
+def aligned_epoch(ago: timedelta, step_seconds: int = DEFAULT_STEP_INTERVAL) -> int:
+    """Epoch seconds for `now - ago`, floored to a step boundary so seeded
+    points land exactly on the query's toStartOfInterval buckets."""
+    epoch = (int((datetime.now(tz=UTC) - ago).timestamp()) // step_seconds) * step_seconds
+    if epoch % 3600 == 0:
+        epoch += step_seconds
+    return epoch
+
+
+def query_metric_values(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+    signoz: types.SigNoz,
+    token: str,
+    metric_name: str,
+    start_epoch: int,
+    end_epoch: int,
+    time_agg: str,
+    space_agg: str,
+    step_interval: int = DEFAULT_STEP_INTERVAL,
+) -> list[dict]:
+    """Run a single metrics builder query over [start_epoch, end_epoch) in
+    epoch seconds and return its series values sorted by timestamp."""
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=start_epoch * 1000,
+        end_ms=end_epoch * 1000,
+        queries=[build_builder_query("A", metric_name, time_agg, space_agg, step_interval=step_interval)],
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    return sorted(get_series_values(response.json(), "A"), key=lambda v: v["timestamp"])
+
+
 def build_builder_query(
     name: str,
     metric_name: str,
