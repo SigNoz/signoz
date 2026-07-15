@@ -85,11 +85,7 @@ export const k8sNodesColumnsConfig: NodeTableColumnConfig[] = [
 		visibilityBehavior: 'hidden-on-expand',
 		cell: ({ value }): React.ReactNode => {
 			const nodeName = value as string;
-			return (
-				<CellValueTooltip value={nodeName}>
-					<TanStackTable.Text>{nodeName}</TanStackTable.Text>
-				</CellValueTooltip>
-			);
+			return <CellValueTooltip value={nodeName} />;
 		},
 	},
 	{

@@ -88,11 +88,7 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<InframonitoringtypesSt
 			visibilityBehavior: 'hidden-on-expand',
 			cell: ({ value }): React.ReactNode => {
 				const statefulsetName = value as string;
-				return (
-					<CellValueTooltip value={statefulsetName}>
-						<TanStackTable.Text>{statefulsetName}</TanStackTable.Text>
-					</CellValueTooltip>
-				);
+				return <CellValueTooltip value={statefulsetName} />;
 			},
 		},
 		{
@@ -109,11 +105,7 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<InframonitoringtypesSt
 			enableResize: true,
 			cell: ({ value }): React.ReactNode => {
 				const namespaceName = value as string;
-				return (
-					<CellValueTooltip value={namespaceName}>
-						<TanStackTable.Text>{namespaceName}</TanStackTable.Text>
-					</CellValueTooltip>
-				);
+				return <CellValueTooltip value={namespaceName} />;
 			},
 		},
 		{

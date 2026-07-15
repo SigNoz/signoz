@@ -88,11 +88,7 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 		visibilityBehavior: 'hidden-on-expand',
 		cell: ({ value }): React.ReactNode => {
 			const podName = value as string;
-			return (
-				<CellValueTooltip value={podName}>
-					<TanStackTable.Text>{podName}</TanStackTable.Text>
-				</CellValueTooltip>
-			);
+			return <CellValueTooltip value={podName} />;
 		},
 	},
 	{

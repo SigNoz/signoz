@@ -77,11 +77,7 @@ export const k8sClustersColumnsConfig: ClusterTableColumnConfig[] = [
 		visibilityBehavior: 'hidden-on-expand',
 		cell: ({ value }): React.ReactNode => {
 			const clusterName = value as string;
-			return (
-				<CellValueTooltip value={clusterName}>
-					<TanStackTable.Text>{clusterName}</TanStackTable.Text>
-				</CellValueTooltip>
-			);
+			return <CellValueTooltip value={clusterName} />;
 		},
 	},
 	{

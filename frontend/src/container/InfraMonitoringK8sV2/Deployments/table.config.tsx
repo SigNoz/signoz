@@ -88,11 +88,7 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<InframonitoringtypesDep
 			visibilityBehavior: 'hidden-on-expand',
 			cell: ({ value }): React.ReactNode => {
 				const deploymentName = value as string;
-				return (
-					<CellValueTooltip value={deploymentName}>
-						<TanStackTable.Text>{deploymentName}</TanStackTable.Text>
-					</CellValueTooltip>
-				);
+				return <CellValueTooltip value={deploymentName} />;
 			},
 		},
 		{

@@ -87,11 +87,7 @@ export const k8sDaemonSetsColumnsConfig: DaemonSetTableColumnConfig[] = [
 		visibilityBehavior: 'hidden-on-expand',
 		cell: ({ value }): React.ReactNode => {
 			const daemonsetName = value as string;
-			return (
-				<CellValueTooltip value={daemonsetName}>
-					<TanStackTable.Text>{daemonsetName}</TanStackTable.Text>
-				</CellValueTooltip>
-			);
+			return <CellValueTooltip value={daemonsetName} />;
 		},
 	},
 	{
@@ -108,11 +104,7 @@ export const k8sDaemonSetsColumnsConfig: DaemonSetTableColumnConfig[] = [
 		enableResize: true,
 		cell: ({ value }): React.ReactNode => {
 			const namespaceName = value as string;
-			return (
-				<CellValueTooltip value={namespaceName}>
-					<TanStackTable.Text>{namespaceName}</TanStackTable.Text>
-				</CellValueTooltip>
-			);
+			return <CellValueTooltip value={namespaceName} />;
 		},
 	},
 	{

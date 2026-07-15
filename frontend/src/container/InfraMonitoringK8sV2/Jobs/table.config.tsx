@@ -81,11 +81,7 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 		visibilityBehavior: 'hidden-on-expand',
 		cell: ({ value }): React.ReactNode => {
 			const jobName = value as string;
-			return (
-				<CellValueTooltip value={jobName}>
-					<TanStackTable.Text>{jobName}</TanStackTable.Text>
-				</CellValueTooltip>
-			);
+			return <CellValueTooltip value={jobName} />;
 		},
 	},
 	{
@@ -102,11 +98,7 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 		enableResize: true,
 		cell: ({ value }): React.ReactNode => {
 			const namespaceName = value as string;
-			return (
-				<CellValueTooltip value={namespaceName}>
-					<TanStackTable.Text>{namespaceName}</TanStackTable.Text>
-				</CellValueTooltip>
-			);
+			return <CellValueTooltip value={namespaceName} />;
 		},
 	},
 	{
