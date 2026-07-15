@@ -24,6 +24,7 @@ func NewConditionBuilder(fm qbtypes.FieldMapper) *conditionBuilder {
 
 func (c *conditionBuilder) conditionFor(
 	ctx context.Context,
+	orgID valuer.UUID,
 	startNs uint64,
 	endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
@@ -36,7 +37,7 @@ func (c *conditionBuilder) conditionFor(
 		value = querybuilder.FormatValueForContains(value)
 	}
 
-	fieldExpression, err := c.fm.FieldFor(ctx, startNs, endNs, key)
+	fieldExpression, err := c.fm.FieldFor(ctx, orgID, startNs, endNs, key)
 	if err != nil {
 		return "", err
 	}
@@ -170,7 +171,7 @@ func (c *conditionBuilder) ConditionFor(
 
 	conds := make([]string, 0, len(keys))
 	for _, k := range keys {
-		cond, err := c.conditionForKey(ctx, startNs, endNs, k, operator, value, sb)
+		cond, err := c.conditionForKey(ctx, orgID, startNs, endNs, k, operator, value, sb)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -181,6 +182,7 @@ func (c *conditionBuilder) ConditionFor(
 
 func (c *conditionBuilder) conditionForKey(
 	ctx context.Context,
+	orgID valuer.UUID,
 	startNs uint64,
 	endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
@@ -188,7 +190,7 @@ func (c *conditionBuilder) conditionForKey(
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) (string, error) {
-	condition, err := c.conditionFor(ctx, startNs, endNs, key, operator, value, sb)
+	condition, err := c.conditionFor(ctx, orgID, startNs, endNs, key, operator, value, sb)
 	if err != nil {
 		return "", err
 	}

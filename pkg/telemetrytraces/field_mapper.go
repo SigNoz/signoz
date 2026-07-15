@@ -230,6 +230,7 @@ func (m *defaultFieldMapper) getColumn(
 
 func (m *defaultFieldMapper) ColumnFor(
 	ctx context.Context,
+	_ valuer.UUID,
 	startNs, endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
 ) ([]*schema.Column, error) {
@@ -240,6 +241,7 @@ func (m *defaultFieldMapper) ColumnFor(
 // otherwise it returns qbtypes.ErrColumnNotFound.
 func (m *defaultFieldMapper) FieldFor(
 	ctx context.Context,
+	_ valuer.UUID,
 	startNs, endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
@@ -368,7 +370,7 @@ func (m *defaultFieldMapper) ColumnExpressionFor(
 
 	// Resolve the candidate column(s).
 	var candidates []*telemetrytypes.TelemetryFieldKey
-	switch _, err := m.FieldFor(ctx, startNs, endNs, field); {
+	switch _, err := m.FieldFor(ctx, orgID, startNs, endNs, field); {
 	case err == nil:
 		candidates = []*telemetrytypes.TelemetryFieldKey{field}
 	case errors.Is(err, qbtypes.ErrColumnNotFound):
@@ -390,7 +392,7 @@ func (m *defaultFieldMapper) ColumnExpressionFor(
 	// Single candidate: exists-guard wrap so an absent key yields NULL; multi-column and
 	// physical columns stay bare.
 	if len(candidates) == 1 {
-		value, err := m.FieldFor(ctx, startNs, endNs, candidates[0])
+		value, err := m.FieldFor(ctx, orgID, startNs, endNs, candidates[0])
 		if err != nil {
 			return "", err
 		}
@@ -405,7 +407,7 @@ func (m *defaultFieldMapper) ColumnExpressionFor(
 	// stringified so branches share a type.
 	args := make([]string, 0, len(candidates))
 	for _, key := range candidates {
-		value, err := m.FieldFor(ctx, startNs, endNs, key)
+		value, err := m.FieldFor(ctx, orgID, startNs, endNs, key)
 		if err != nil {
 			return "", err
 		}

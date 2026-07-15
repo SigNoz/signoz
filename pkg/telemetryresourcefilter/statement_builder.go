@@ -100,7 +100,7 @@ func (b *resourceFilterStatementBuilder[T]) Build(
 	q.From(fmt.Sprintf("%s.%s", b.dbName, b.tableName))
 
 	keySelectors := b.getKeySelectors(query)
-	keys, _, err := b.metadataStore.GetKeysMulti(ctx, keySelectors)
+	keys, _, err := b.metadataStore.GetKeysMulti(ctx, orgID, keySelectors)
 	if err != nil {
 		return nil, err
 	}
