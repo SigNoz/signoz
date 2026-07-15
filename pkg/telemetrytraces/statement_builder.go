@@ -29,8 +29,9 @@ type traceQueryStatementBuilder struct {
 	resourceFilterResolver         *telemetryresourcefilter.ResourceFingerprintResolver[qbtypes.TraceAggregation]
 	aggExprRewriter                qbtypes.AggExprRewriter
 	skipResourceFingerprintEnabled bool
-	// traceScope is set only on the per-call copy made by BuildTraceScoped; it
-	// constrains the query to trace ids selected by the __trace_scope CTE.
+	// traceScope, when set (only on the per-call copy made by BuildTraceScoped),
+	// constrains raw/scalar/time-series queries to spans whose trace_id is in the
+	// scope statement, attached as a __trace_scope CTE.
 	traceScope *qbtypes.Statement
 }
 
@@ -73,8 +74,9 @@ func NewTraceQueryStatementBuilder(
 	}
 }
 
-// BuildTraceScoped is Build additionally constrained to spans whose trace_id is
-// selected by traceScope. The receiver is copied so the shared builder stays stateless.
+// BuildTraceScoped is Build with the query additionally constrained to spans whose
+// trace_id is selected by traceScope. The receiver is copied so the shared builder
+// stays stateless.
 func (b *traceQueryStatementBuilder) BuildTraceScoped(
 	ctx context.Context,
 	start uint64,
@@ -525,6 +527,11 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 		cteArgs = append(cteArgs, args)
 	}
 
+	if scopeFrag, scopeArgs := b.attachTraceScope(sb); scopeFrag != "" {
+		cteFragments = append(cteFragments, scopeFrag)
+		cteArgs = append(cteArgs, scopeArgs)
+	}
+
 	sb.SelectMore(fmt.Sprintf(
 		"toStartOfInterval(timestamp, INTERVAL %d SECOND) AS ts",
 		int64(query.StepInterval.Seconds()),
@@ -677,6 +684,13 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 	if frag != "" && !skipResourceCTE {
 		cteFragments = append(cteFragments, frag)
 		cteArgs = append(cteArgs, args)
+	}
+
+	// skipResourceCTE means this scalar is embedded as a CTE of a time-series query,
+	// which has already emitted the __trace_scope fragment — add only the condition.
+	if scopeFrag, scopeArgs := b.attachTraceScope(sb); scopeFrag != "" && !skipResourceCTE {
+		cteFragments = append(cteFragments, scopeFrag)
+		cteArgs = append(cteArgs, scopeArgs)
 	}
 
 	allAggChArgs := []any{}

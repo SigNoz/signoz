@@ -915,8 +915,9 @@ func TestBuild_TraceList_TracefieldPrefixMatchesTracePrefix(t *testing.T) {
 	require.Contains(t, err.Error(), "cannot be used")
 }
 
-// Query variables in a trace-level condition are substituted into the HAVING (the
-// span path binds them via PrepareWhereClause; the HAVING is a text rewrite).
+// Query variables in a trace-level condition resolve through the standard filter
+// pipeline, exactly like span-level filters: bound args, list/IN handling, dynamic
+// __all__ dropping the condition.
 func TestBuild_TraceList_VariableInAggregateFilter(t *testing.T) {
 	b := newTestBuilder(t)
 	build := func(expr string, vars map[string]qbtypes.VariableItem) (*qbtypes.Statement, error) {
@@ -928,17 +929,19 @@ func TestBuild_TraceList_VariableInAggregateFilter(t *testing.T) {
 			}, vars)
 	}
 
-	// scalar variable -> literal in HAVING
+	// scalar variable -> replaced to a literal (canonical pkg/variables semantics),
+	// then parsed and bound as an arg by the filter pipeline
 	stmt, err := build("trace.output_tokens > $threshold",
 		map[string]qbtypes.VariableItem{"threshold": {Value: 700}})
 	require.NoError(t, err)
-	require.Contains(t, stmt.Query, "HAVING output_tokens > 700")
+	require.Contains(t, stmt.Query, "HAVING output_tokens > ?")
+	require.Contains(t, stmt.Args, float64(700))
 
 	// list variable with IN
 	stmt, err = build("trace.llm_call_count IN $counts",
 		map[string]qbtypes.VariableItem{"counts": {Value: []any{1, 2}}})
 	require.NoError(t, err)
-	require.Contains(t, stmt.Query, "HAVING llm_call_count IN")
+	require.Contains(t, stmt.Query, "HAVING llm_call_count IN (?, ?)")
 
 	// dynamic __all__ -> condition dropped, no HAVING at all
 	stmt, err = build("trace.output_tokens > $threshold",

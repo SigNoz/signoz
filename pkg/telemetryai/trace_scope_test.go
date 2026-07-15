@@ -110,7 +110,7 @@ func TestBuild_SpanList_TraceFilter_Validation(t *testing.T) {
 }
 
 // Variables in a trace-level condition on the span list get the trace list's
-// treatment: substituted as literals, __all__ drops the condition (no scope CTE),
+// treatment: resolved and bound as args, __all__ drops the condition (no scope CTE),
 // tracefield. spelling behaves like trace..
 func TestBuild_SpanList_TraceFilter_Variables(t *testing.T) {
 	b := newTestBuilder(t)
@@ -126,7 +126,8 @@ func TestBuild_SpanList_TraceFilter_Variables(t *testing.T) {
 	stmt, err := build("trace.output_tokens > $threshold",
 		map[string]qbtypes.VariableItem{"threshold": {Value: 700}})
 	require.NoError(t, err)
-	require.Contains(t, stmt.Query, "HAVING output_tokens > 700")
+	require.Contains(t, stmt.Query, "HAVING output_tokens > ?")
+	require.Contains(t, stmt.Args, float64(700))
 
 	stmt, err = build("trace.output_tokens > $threshold",
 		map[string]qbtypes.VariableItem{"threshold": {Type: qbtypes.DynamicVariableType, Value: "__all__"}})

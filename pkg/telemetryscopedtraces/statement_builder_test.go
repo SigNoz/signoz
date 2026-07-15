@@ -42,6 +42,7 @@ func (s stubColumns) Columns() []TraceColumn {
 		TraceColumn{Alias: "scoped_span_count", Orderable: true, Expr: CountExists(s.key)})
 }
 func (s stubColumns) DefaultOrderAlias() string { return "scoped_span_count" }
+func (s stubColumns) ActivityGateAlias() string { return "" }
 func (s stubColumns) AggregateAliases() []string {
 	aliases := make([]string, 0)
 	for _, c := range s.Columns() {

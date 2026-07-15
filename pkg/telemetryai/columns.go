@@ -50,6 +50,11 @@ func (genAIColumnProvider) Columns() []scopedtraces.TraceColumn {
 
 func (genAIColumnProvider) DefaultOrderAlias() string { return "last_activity_time" }
 
+// Trace-level aggregations only see traces with LLM activity in the window/bucket —
+// a tool/agent-only slice would contribute NULL tokens but still count as a trace,
+// making count(trace.trace_id) and avg(trace.output_tokens) disagree.
+func (genAIColumnProvider) ActivityGateAlias() string { return "llm_call_count" }
+
 func (p genAIColumnProvider) AggregateAliases() []string {
 	// Derived from Columns() so a new column can't be forgotten; SpanLevel columns
 	// are filtered span-level, so skip them.

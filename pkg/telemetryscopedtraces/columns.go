@@ -165,6 +165,9 @@ type ColumnProvider interface {
 	// AggregateAliases are the computed per-trace column names, used to classify a
 	// filter key as trace-level vs span-level. Excludes SpanLevel columns.
 	AggregateAliases() []string
+	// ActivityGateAlias names the column that must be > 0 for a per-trace row to feed
+	// trace-level (trace.) aggregations; empty disables the gate.
+	ActivityGateAlias() string
 }
 
 // CommonTraceColumns are domain-neutral columns any trace list can reuse. All
