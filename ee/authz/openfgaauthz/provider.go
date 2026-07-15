@@ -223,12 +223,17 @@ func (provider *provider) Update(ctx context.Context, orgID valuer.UUID, updated
 		return err
 	}
 
-	desiredTuples, err := authtypes.NewTuplesFromTransactionGroups(existingRole.Name, orgID, updatedRole.TransactionGroups)
+	existingGroups := authtypes.MustNewTransactionGroupsFromTuples(existingTuples)
+	additions, deletions := existingGroups.Diff(updatedRole.TransactionGroups)
+	additionTuples, err := authtypes.NewTuplesFromTransactionGroups(existingRole.Name, orgID, additions)
 	if err != nil {
 		return err
 	}
 
-	additionTuples, deletionTuples := authtypes.DiffTuples(existingTuples, desiredTuples)
+	deletionTuples, err := authtypes.NewTuplesFromTransactionGroups(existingRole.Name, orgID, deletions)
+	if err != nil {
+		return err
+	}
 
 	err = provider.Write(ctx, additionTuples, deletionTuples)
 	if err != nil {
