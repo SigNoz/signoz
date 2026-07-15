@@ -2,16 +2,62 @@ import { TooltipSimple } from '@signozhq/ui/tooltip';
 
 import styles from './GroupedStatusCounts.module.scss';
 import TanStackTable from 'components/TanStackTableView';
+import { Typography } from '@signozhq/ui/typography';
+
+export interface StatusBreakdownItem {
+	label: string;
+	value: number;
+}
 
 export interface StatusCountItem {
 	value: number;
 	label: string;
 	color: string;
+	breakdown?: StatusBreakdownItem[];
 }
 
 interface GroupedStatusCountsProps {
 	items: StatusCountItem[];
 	showZeroValues?: boolean;
+}
+
+function buildTooltipContent(item: StatusCountItem): React.ReactNode {
+	if (!item.breakdown || item.breakdown.length === 0) {
+		return (
+			<Typography.Text>
+				{item.label}: {item.value}
+			</Typography.Text>
+		);
+	}
+
+	const nonZeroBreakdown = item.breakdown.filter((b) => b.value > 0);
+	if (nonZeroBreakdown.length === 0) {
+		return (
+			<div className={styles.tooltipContent}>
+				<Typography.Text className={styles.tooltipHeader}>
+					{item.label}
+				</Typography.Text>
+
+				<Typography.Text>No errors</Typography.Text>
+			</div>
+		);
+	}
+
+	return (
+		<div className={styles.tooltipContent}>
+			<Typography.Text className={styles.tooltipHeader}>
+				{item.label}
+			</Typography.Text>
+			{nonZeroBreakdown.map((b) => (
+				<div key={b.label} className={styles.tooltipRow}>
+					<Typography.Text>{b.label}</Typography.Text>
+					<Typography.Text className={styles.tooltipValue}>
+						{b.value}
+					</Typography.Text>
+				</div>
+			))}
+		</div>
+	);
 }
 
 export function GroupedStatusCounts({
@@ -33,13 +79,15 @@ export function GroupedStatusCounts({
 						className={styles.separator}
 						style={{ backgroundColor: item.color }}
 					/>
-					<TooltipSimple title={`${item.label}: ${item.value}`}>
-						<span>
-							<TanStackTable.Text className={styles.value}>
-								{item.value || '-'}
-							</TanStackTable.Text>
-						</span>
-					</TooltipSimple>
+					<div className={styles.valueWrapper}>
+						<TooltipSimple title={buildTooltipContent(item)} arrow align="start">
+							<span className={styles.valueWrapperTooltip}>
+								<TanStackTable.Text className={styles.value}>
+									{item.value || '-'}
+								</TanStackTable.Text>
+							</span>
+						</TooltipSimple>
+					</div>
 				</div>
 			))}
 		</div>

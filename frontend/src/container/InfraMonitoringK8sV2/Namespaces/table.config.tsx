@@ -6,7 +6,7 @@ import { ExpandButtonWrapper } from 'container/InfraMonitoringK8sV2/components';
 import ColumnHeader from '../Base/ColumnHeader';
 import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
-import { formatBytes, getPodPhaseStatusItems } from '../commonUtils';
+import { formatBytes, getPodStatusItems } from '../commonUtils';
 import {
 	CellValueTooltip,
 	GroupedStatusCounts,
@@ -106,25 +106,25 @@ export const k8sNamespacesColumnsConfig: NamespaceTableColumnConfig[] = [
 		),
 	},
 	{
-		id: 'podCountsByPhase',
+		id: 'podCountsByStatus',
 		header: (): React.ReactNode => (
-			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/namespaces#pod-counts-by-phase">
-				Pod Phases
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/namespaces#pod-counts-by-status">
+				Pod Status
 			</ColumnHeader>
 		),
 		accessorFn: (
 			row,
-		): InframonitoringtypesNamespaceRecordDTO['podCountsByPhase'] =>
-			row.podCountsByPhase,
+		): InframonitoringtypesNamespaceRecordDTO['podCountsByStatus'] =>
+			row.podCountsByStatus,
 		width: { min: 250 },
 		enableSort: false,
 		cell: ({ row }): React.ReactNode => {
-			const podCountsByPhase = row.podCountsByPhase;
-			if (!podCountsByPhase) {
+			const podCountsByStatus = row.podCountsByStatus;
+			if (!podCountsByStatus) {
 				return <TanStackTable.Text>-</TanStackTable.Text>;
 			}
 			return (
-				<GroupedStatusCounts items={getPodPhaseStatusItems(row.podCountsByPhase)} />
+				<GroupedStatusCounts items={getPodStatusItems(row.podCountsByStatus)} />
 			);
 		},
 	},

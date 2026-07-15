@@ -1,9 +1,9 @@
 import { Container } from '@signozhq/icons';
-import { Badge, BadgeColor } from '@signozhq/ui/badge';
+import { Badge } from '@signozhq/ui/badge';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import {
-	InframonitoringtypesPodPhaseDTO,
 	InframonitoringtypesPodRecordDTO,
+	InframonitoringtypesPodStatusDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8sV2/components';
@@ -11,7 +11,11 @@ import { ExpandButtonWrapper } from 'container/InfraMonitoringK8sV2/components';
 import ColumnHeader from '../Base/ColumnHeader';
 import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
-import { formatBytes, getPodPhaseStatusItems } from '../commonUtils';
+import {
+	formatBytes,
+	getPodStatusItems,
+	POD_STATUS_COLORS,
+} from '../commonUtils';
 import {
 	CellValueTooltip,
 	EntityProgressBar,
@@ -39,15 +43,6 @@ export function getK8sPodItemKey(
 ): string {
 	return pod.podUID;
 }
-
-const POD_PHASE_COLORS: Record<string, BadgeColor> = {
-	running: 'forest',
-	pending: 'amber',
-	succeeded: 'robin',
-	failed: 'cherry',
-	unknown: 'vanilla',
-	no_data: 'vanilla',
-};
 
 export type PodTableColumnConfig =
 	TableColumnDef<InframonitoringtypesPodRecordDTO>;
@@ -101,26 +96,26 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 		},
 	},
 	{
-		id: 'podPhase',
+		id: 'podStatus',
 		header: (): React.ReactNode => (
-			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/pods#pod-phase">
-				Phase
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/pods#pod-status">
+				Status
 			</ColumnHeader>
 		),
-		accessorFn: (row): string => row.podPhase,
-		width: { min: 120 },
+		accessorFn: (row): string => row.podStatus,
+		width: { min: 160 },
 		enableSort: false,
 		visibilityBehavior: 'hidden-on-expand',
 		cell: ({ row }): React.ReactNode => {
-			if (!row.podPhase) {
+			if (!row.podStatus) {
 				return <></>;
 			}
 
-			const color = POD_PHASE_COLORS[row.podPhase] || POD_PHASE_COLORS.unknown;
+			const color = POD_STATUS_COLORS[row.podStatus] || POD_STATUS_COLORS.unknown;
 			const label =
-				row.podPhase === InframonitoringtypesPodPhaseDTO.no_data
+				row.podStatus === InframonitoringtypesPodStatusDTO.no_data
 					? 'No Data'
-					: row.podPhase.charAt(0).toUpperCase() + row.podPhase.slice(1);
+					: row.podStatus.charAt(0).toUpperCase() + row.podStatus.slice(1);
 			return (
 				<Badge color={color} variant="outline">
 					{label}
@@ -129,24 +124,24 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 		},
 	},
 	{
-		id: 'podCountsByPhase',
+		id: 'podCountsByStatus',
 		header: (): React.ReactNode => (
-			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/pods#pod-phase">
-				Phases
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/pods#pod-status">
+				Status
 			</ColumnHeader>
 		),
-		accessorFn: (row): InframonitoringtypesPodRecordDTO['podCountsByPhase'] =>
-			row.podCountsByPhase,
+		accessorFn: (row): InframonitoringtypesPodRecordDTO['podCountsByStatus'] =>
+			row.podCountsByStatus,
 		width: { min: 250 },
 		enableSort: false,
 		visibilityBehavior: 'hidden-on-collapse',
 		cell: ({ row }): React.ReactNode => {
-			const podCountsByPhase = row.podCountsByPhase;
-			if (!podCountsByPhase) {
+			const podCountsByStatus = row.podCountsByStatus;
+			if (!podCountsByStatus) {
 				return <TanStackTable.Text>-</TanStackTable.Text>;
 			}
 			return (
-				<GroupedStatusCounts items={getPodPhaseStatusItems(row.podCountsByPhase)} />
+				<GroupedStatusCounts items={getPodStatusItems(row.podCountsByStatus)} />
 			);
 		},
 	},
@@ -170,6 +165,28 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 				);
 			}
 			return <TanStackTable.Text>{formatAge(age)}</TanStackTable.Text>;
+		},
+	},
+	{
+		id: 'podRestarts',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/pods#restarts">
+				Restarts
+			</ColumnHeader>
+		),
+		accessorFn: (row): number => row.podRestarts,
+		width: { min: 100 },
+		enableSort: true,
+		cell: ({ value }): React.ReactNode => {
+			const restarts = value as number;
+			if (restarts === -1) {
+				return (
+					<TooltipSimple title="No data">
+						<Typography.Text>-</Typography.Text>
+					</TooltipSimple>
+				);
+			}
+			return <TanStackTable.Text>{restarts}</TanStackTable.Text>;
 		},
 	},
 	{
