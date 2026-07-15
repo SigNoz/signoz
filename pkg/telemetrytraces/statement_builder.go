@@ -29,6 +29,9 @@ type traceQueryStatementBuilder struct {
 	resourceFilterResolver         *telemetryresourcefilter.ResourceFingerprintResolver[qbtypes.TraceAggregation]
 	aggExprRewriter                qbtypes.AggExprRewriter
 	skipResourceFingerprintEnabled bool
+	// traceScope is set only on the per-call copy made by BuildTraceScoped; it
+	// constrains the query to trace ids selected by the __trace_scope CTE.
+	traceScope *qbtypes.Statement
 }
 
 var _ qbtypes.StatementBuilder[qbtypes.TraceAggregation] = (*traceQueryStatementBuilder)(nil)
@@ -68,6 +71,32 @@ func NewTraceQueryStatementBuilder(
 		aggExprRewriter:                aggExprRewriter,
 		skipResourceFingerprintEnabled: skipResourceFingerprintEnable,
 	}
+}
+
+// BuildTraceScoped is Build additionally constrained to spans whose trace_id is
+// selected by traceScope. The receiver is copied so the shared builder stays stateless.
+func (b *traceQueryStatementBuilder) BuildTraceScoped(
+	ctx context.Context,
+	start uint64,
+	end uint64,
+	requestType qbtypes.RequestType,
+	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
+	variables map[string]qbtypes.VariableItem,
+	traceScope *qbtypes.Statement,
+) (*qbtypes.Statement, error) {
+	scoped := *b
+	scoped.traceScope = traceScope
+	return scoped.Build(ctx, start, end, requestType, query, variables)
+}
+
+// attachTraceScope adds the trace-scope condition to sb and returns the CTE fragment
+// + args to prepend; both empty when no scope is set.
+func (b *traceQueryStatementBuilder) attachTraceScope(sb *sqlbuilder.SelectBuilder) (string, []any) {
+	if b.traceScope == nil {
+		return "", nil
+	}
+	sb.Where("trace_id GLOBAL IN (SELECT trace_id FROM __trace_scope)")
+	return fmt.Sprintf("__trace_scope AS (%s)", b.traceScope.Query), b.traceScope.Args
 }
 
 // Build builds a SQL query for traces based on the given parameters.
@@ -290,6 +319,11 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 	if frag != "" {
 		cteFragments = append(cteFragments, frag)
 		cteArgs = append(cteArgs, args)
+	}
+
+	if scopeFrag, scopeArgs := b.attachTraceScope(sb); scopeFrag != "" {
+		cteFragments = append(cteFragments, scopeFrag)
+		cteArgs = append(cteArgs, scopeArgs)
 	}
 
 	for _, field := range query.SelectFields {
