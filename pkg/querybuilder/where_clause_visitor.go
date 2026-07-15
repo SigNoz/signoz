@@ -43,6 +43,8 @@ type filterExpressionVisitor struct {
 	keysWithWarnings map[string]bool
 	startNs          uint64
 	endNs            uint64
+
+	requiresCostGuard bool
 }
 
 type FilterExprVisitorOpts struct {
@@ -81,9 +83,10 @@ func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVis
 }
 
 type PreparedWhereClause struct {
-	WhereClause    *sqlbuilder.WhereClause
-	Warnings       []string
-	WarningsDocURL string
+	WhereClause       *sqlbuilder.WhereClause
+	Warnings          []string
+	WarningsDocURL    string
+	RequiresCostGuard bool
 }
 
 func (p PreparedWhereClause) IsEmpty() bool {
@@ -165,12 +168,12 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (PreparedWhere
 
 	// Return empty where clause so callers can skip the WHERE clause
 	if cond == "" || cond == SkipConditionLiteral {
-		return PreparedWhereClause{WhereClause: nil, Warnings: visitor.warnings, WarningsDocURL: visitor.mainWarnURL}, nil
+		return PreparedWhereClause{WhereClause: nil, Warnings: visitor.warnings, WarningsDocURL: visitor.mainWarnURL, RequiresCostGuard: visitor.requiresCostGuard}, nil
 	}
 
 	whereClause := sqlbuilder.NewWhereClause().AddWhereExpr(visitor.builder.Args, cond)
 
-	return PreparedWhereClause{WhereClause: whereClause, Warnings: visitor.warnings, WarningsDocURL: visitor.mainWarnURL}, nil
+	return PreparedWhereClause{WhereClause: whereClause, Warnings: visitor.warnings, WarningsDocURL: visitor.mainWarnURL, RequiresCostGuard: visitor.requiresCostGuard}, nil
 }
 
 // Visit dispatches to the specific visit method based on node type.
@@ -776,11 +779,60 @@ func normalizeFunctionValue(operator qbtypes.FilterOperator, functionName string
 	return valueParams, nil
 }
 
-// VisitSearchCall handles search('needle'). The search() function is parsed but
-// not yet implemented; reject it with a clear invalid-input error.
+// VisitSearchCall handles search('needle'): a keyless full-text search. The
+// visitor emits FilterOperatorSearch; the signal's condition builder owns the
+// behavior (logs fan out across all columns, other signals reject it).
 func (v *filterExpressionVisitor) VisitSearchCall(ctx *grammar.SearchCallContext) any {
-	v.errors = append(v.errors, "function `search` is not yet supported")
-	return ErrorConditionLiteral
+	// Flag scan-heavy so the statement builder attaches the cost guard.
+	v.requiresCostGuard = true
+
+	paramList := ctx.FunctionParamList()
+	if paramList == nil {
+		v.errors = append(v.errors, "function `search` expects a single value parameter, e.g. search('error')")
+		return ErrorConditionLiteral
+	}
+	// Single needle today; functionParamList leaves room for scoped forms
+	// (search(body, 'abc')) without a grammar change.
+	params := paramList.AllFunctionParam()
+	if len(params) != 1 {
+		v.errors = append(v.errors, fmt.Sprintf("function `search` currently supports a single argument, e.g. search('error'), but got %d", len(params)))
+		return ErrorConditionLiteral
+	}
+
+	// Use the raw needle: a bare word parses as a key but we take its literal text
+	// (not the normalized key, which would strip a `context.` prefix or `:type`).
+	param := params[0]
+	var searchText string
+	switch {
+	case param.Value() != nil:
+		// The search needle is always a literal string: take the token text rather
+		// than visiting (which parses NUMBER to float64 and would render large/round
+		// integers as scientific notation, e.g. search(1000000) -> "1e+06").
+		valCtx := param.Value()
+		if valCtx.QUOTED_TEXT() != nil {
+			searchText = trimQuotes(valCtx.QUOTED_TEXT().GetText())
+		} else {
+			searchText = valCtx.GetText()
+		}
+	case param.Key() != nil:
+		searchText = param.Key().GetText()
+	default:
+		v.errors = append(v.errors, "function `search` expects a quoted string, e.g. search('error')")
+		return ErrorConditionLiteral
+	}
+
+	// Keyless: pass an empty key as a placeholder for the ConditionFor signature.
+	conds, ok := v.buildConditions(&telemetrytypes.TelemetryFieldKey{}, nil, qbtypes.FilterOperatorSearch, searchText)
+	if !ok {
+		return ErrorConditionLiteral
+	}
+	if len(conds) == 0 {
+		return SkipConditionLiteral
+	}
+	if len(conds) == 1 {
+		return conds[0]
+	}
+	return v.builder.Or(conds...)
 }
 
 // VisitFunctionParamList handles the parameter list for function calls.

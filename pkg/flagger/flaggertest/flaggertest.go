@@ -29,13 +29,19 @@ func New(t *testing.T) flagger.Flagger {
 
 // WithUseJSONBody returns a Flagger with use_json_body set to the given value.
 func WithUseJSONBody(t *testing.T, enabled bool) flagger.Flagger {
+	return WithBooleanFlags(t, map[string]bool{
+		flagger.FeatureUseJSONBody.String(): enabled,
+	})
+}
+
+// WithBooleanFlags returns a Flagger with the given boolean feature flags set to
+// the provided values (keyed by feature name, e.g. flagger.FeatureX.String()).
+func WithBooleanFlags(t *testing.T, flags map[string]bool) flagger.Flagger {
 	t.Helper()
 	registry := flagger.MustNewRegistry()
 	cfg := flagger.Config{}
-	if enabled {
-		cfg.Config.Boolean = map[string]bool{
-			flagger.FeatureUseJSONBody.String(): true,
-		}
+	if len(flags) > 0 {
+		cfg.Config.Boolean = flags
 	}
 	fl, err := flagger.New(
 		context.Background(),

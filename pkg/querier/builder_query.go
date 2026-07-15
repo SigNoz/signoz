@@ -20,6 +20,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
+const estimateTimeout = 5 * time.Second
+
 const traceOutsideRangeWarn = "Query %s references a trace_id that exists between %s and %s (UTC) but lies outside the selected time range; adjust the time range to see results"
 
 type builderQuery[T any] struct {
@@ -247,6 +249,10 @@ func (q *builderQuery[T]) Execute(ctx context.Context) (*qbtypes.Result, error) 
 		return nil, err
 	}
 
+	if err := q.enforceEstimate(ctx, stmt); err != nil {
+		return nil, err
+	}
+
 	// Execute the query with proper context for partial value detection
 	result, err := q.executeWithContext(ctx, stmt.Query, stmt.Args)
 	if err != nil {
@@ -256,6 +262,70 @@ func (q *builderQuery[T]) Execute(ctx context.Context) (*qbtypes.Result, error) 
 	result.Warnings = stmt.Warnings
 	result.WarningsDocURL = stmt.WarningsDocURL
 	return result, nil
+}
+
+// estimateRows runs EXPLAIN ESTIMATE for a cost-guarded statement and returns its
+// estimated total scan rows. guarded=false means there is nothing to enforce (no
+// CostGuard or a non-positive budget). A non-nil error means the query must be
+// rejected: either the estimate itself failed (fail closed — we cannot honor the
+// budget without it) or the parent context was cancelled (surfaced as-is). Callers
+// enforce the budget so it can be applied per-statement or cumulatively.
+func (q *builderQuery[T]) estimateRows(ctx context.Context, stmt *qbtypes.Statement) (int64, bool, error) {
+	if stmt.CostGuard == nil || stmt.CostGuard.MaxScanRows <= 0 {
+		return 0, false, nil
+	}
+
+	estCtx, cancel := context.WithTimeout(ctx, estimateTimeout)
+	defer cancel()
+
+	entries, err := q.telemetryStore.Estimate(estCtx, stmt.Query, stmt.Args...)
+	if err != nil {
+		// Parent cancellation isn't the budget's concern — surface it unchanged.
+		if ctx.Err() != nil {
+			return 0, true, ctx.Err()
+		}
+		// Fail closed: this is a scan-heavy statement and without an estimate we
+		// cannot bound its cost, so running it unbounded is exactly what the guard
+		// exists to prevent.
+		reason := fmt.Sprintf("This query is too broad to plan within %s; narrow the time range or add a more selective filter.", estimateTimeout)
+		if estCtx.Err() != context.DeadlineExceeded {
+			reason = "Could not estimate this query's scan cost; narrow the time range or add a more selective filter."
+			q.logger.WarnContext(ctx, "EXPLAIN ESTIMATE failed; rejecting scan-heavy query (fail-closed)", errors.Attr(err))
+		}
+		return 0, true, errors.NewInvalidInputf(errors.CodeInvalidInput, "%s", withAdvisory(stmt.CostGuard.Warning, reason))
+	}
+
+	var rows int64
+	for _, e := range entries {
+		rows += e.Rows
+	}
+	return rows, true, nil
+}
+
+// enforceEstimate rejects a single scan-heavy statement (Statement.CostGuard) whose
+// EXPLAIN ESTIMATE rows exceed its budget, before executing. Budget 0 disables.
+func (q *builderQuery[T]) enforceEstimate(ctx context.Context, stmt *qbtypes.Statement) error {
+	rows, guarded, err := q.estimateRows(ctx, stmt)
+	if err != nil {
+		return err
+	}
+	if !guarded {
+		return nil
+	}
+	if budget := stmt.CostGuard.MaxScanRows; rows > budget {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "%s",
+			withAdvisory(stmt.CostGuard.Warning, fmt.Sprintf("This query would scan about %d rows in this range, over the limit of %d; narrow the time range or add a more selective filter.", rows, budget)))
+	}
+	return nil
+}
+
+// withAdvisory prefixes reason with the requirement's advisory (e.g. the search()
+// warning) when present, so the rejection leads with why the query is expensive.
+func withAdvisory(advisory, reason string) string {
+	if advisory == "" {
+		return reason
+	}
+	return strings.TrimRight(advisory, ". ") + ". " + reason
 }
 
 // narrowWindowByTraceID inspects the filter for trace_id predicates and clamps
@@ -491,6 +561,11 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 	var warnings []string
 	var warningsDocURL string
 
+	// Cost guard is enforced against the cumulative estimate across the buckets we
+	// actually visit — a broad search() that fans every bucket must be bounded by
+	// the per-query budget, not let each bucket pass its slice independently.
+	var estimatedScan int64
+
 	for _, r := range buckets {
 		q.spec.Offset = 0
 		q.spec.Limit = need
@@ -501,6 +576,17 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 		}
 		warnings = stmt.Warnings
 		warningsDocURL = stmt.WarningsDocURL
+		rowsEst, guarded, err := q.estimateRows(ctx, stmt)
+		if err != nil {
+			return nil, err
+		}
+		if guarded {
+			estimatedScan += rowsEst
+			if budget := stmt.CostGuard.MaxScanRows; estimatedScan > budget {
+				return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "%s",
+					withAdvisory(stmt.CostGuard.Warning, fmt.Sprintf("This query would scan about %d rows across the time range, over the limit of %d; narrow the time range or add a more selective filter.", estimatedScan, budget)))
+			}
+		}
 		// Execute with proper context for partial value detection
 		res, err := q.executeWithContext(ctx, stmt.Query, stmt.Args)
 		if err != nil {

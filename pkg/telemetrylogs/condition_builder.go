@@ -3,6 +3,7 @@ package telemetrylogs
 import (
 	"context"
 	"fmt"
+	"regexp"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -25,6 +26,66 @@ var _ qbtypes.ConditionBuilder = (*conditionBuilder)(nil)
 
 func NewConditionBuilder(fm qbtypes.FieldMapper, fl flagger.Flagger) *conditionBuilder {
 	return &conditionBuilder{fm: fm, fl: fl}
+}
+
+// conditionForSearch ORs a case-insensitive match of the needle across every
+// searchable column: log columns, the body (body_v2 JSON when use_json_body is
+// on, else the body string), and the attribute/resource maps (keys + values,
+// non-string values cast to string; JSON columns matched on their serialized
+// form). Cost is bounded by the querier's EXPLAIN ESTIMATE gate, not a window cap.
+func (c *conditionBuilder) conditionForSearch(
+	ctx context.Context,
+	orgID valuer.UUID,
+	value any,
+	sb *sqlbuilder.SelectBuilder,
+) ([]string, []string, error) {
+	// use_json_body picks the body column below; the scan budget rides on CostGuard.
+	// search is a literal, case-insensitive substring match: QuoteMeta so regex
+	// metacharacters in the needle match literally, and LOWER both sides on every
+	// column. Keeping the body path as LOWER(toString(body_v2)) lets it use the
+	// LOWER(toString(body_v2)) skip index (a (?i) regex could use neither the index
+	// nor be ngram-extractable).
+	needle := regexp.QuoteMeta(fmt.Sprintf("%v", value))
+
+	contexts := []telemetrytypes.FieldContext{
+		telemetrytypes.FieldContextLog,
+		telemetrytypes.FieldContextBody,
+		telemetrytypes.FieldContextAttribute,
+		telemetrytypes.FieldContextResource,
+	}
+
+	useJSONBody := c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID))
+
+	var conditions []string
+	for _, fieldContext := range contexts {
+		for _, col := range searchColumns(fieldContext, useJSONBody) {
+			switch col.Type.GetType() {
+			case schema.ColumnTypeEnumMap:
+				keysExpr := fmt.Sprintf("mapKeys(%s)", col.Name)
+				valsExpr := fmt.Sprintf("mapValues(%s)", col.Name)
+				// match() needs a String array; cast non-string map values first.
+				if mc, ok := col.Type.(schema.MapColumnType); ok && mc.ValueType.GetType() != schema.ColumnTypeEnumString {
+					valsExpr = fmt.Sprintf("arrayMap(x -> toString(x), mapValues(%s))", col.Name)
+				}
+				conditions = append(conditions, sb.Or(
+					fmt.Sprintf("arrayExists(x -> match(LOWER(x), LOWER(%s)), %s)", sb.Var(needle), keysExpr),
+					fmt.Sprintf("arrayExists(x -> match(LOWER(x), LOWER(%s)), %s)", sb.Var(needle), valsExpr),
+				))
+			case schema.ColumnTypeEnumJSON:
+				conditions = append(conditions, fmt.Sprintf("match(LOWER(toString(%s)), LOWER(%s))", col.Name, sb.Var(needle)))
+			case schema.ColumnTypeEnumString, schema.ColumnTypeEnumLowCardinality:
+				conditions = append(conditions, fmt.Sprintf("match(LOWER(%s), LOWER(%s))", col.Name, sb.Var(needle)))
+			default:
+				return nil, nil, errors.NewInternalf(errors.CodeInternal, "search does not support the column type of %q", col.Name)
+			}
+		}
+	}
+
+	if len(conditions) == 0 {
+		return nil, nil, nil
+	}
+	// The advisory rides on CostGuard (set by the visitor), not warnings.
+	return []string{sb.Or(conditions...)}, nil, nil
 }
 
 // isBodyJSONSearch reports whether a key addresses a path within the body JSON. Only
@@ -377,6 +438,11 @@ func (c *conditionBuilder) ConditionFor(
 ) ([]string, []string, error) {
 	matches := querybuilder.MatchingFieldKeys(key, fieldKeys)
 	skipResourceFilter := options.SkipResourceFilter
+
+	// search() is keyless; handle it before key resolution.
+	if operator == qbtypes.FilterOperatorSearch {
+		return c.conditionForSearch(ctx, orgID, value, sb)
+	}
 
 	keys, warning := querybuilder.ResolveKeys(key, matches)
 	var warnings []string

@@ -124,6 +124,7 @@ func newProvider(
 		telemetryStore,
 		cfg.SkipResourceFingerprint.Enabled,
 		cfg.SkipResourceFingerprint.Threshold,
+		telemetrylogs.WithSearchMaxScanRows(cfg.SearchMaxScanRows),
 	)
 
 	// Create audit statement builder

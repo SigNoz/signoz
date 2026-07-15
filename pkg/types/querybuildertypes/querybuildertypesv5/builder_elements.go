@@ -118,6 +118,10 @@ const (
 	FilterOperatorHasToken
 	FilterOperatorHasAny
 	FilterOperatorHasAll
+
+	// FilterOperatorSearch backs search('needle'): a keyless search the condition
+	// builder fans out across every searchable column.
+	FilterOperatorSearch
 )
 
 var operatorInverseMapping = map[FilterOperator]FilterOperator{
@@ -186,7 +190,8 @@ func (f FilterOperator) IsNegativeOperator() bool {
 		FilterOperatorIn,
 		FilterOperatorExists,
 		FilterOperatorRegexp,
-		FilterOperatorContains:
+		FilterOperatorContains,
+		FilterOperatorSearch:
 		return false
 	}
 	return true
@@ -243,10 +248,11 @@ func (f FilterOperator) IsArrayFunctionOperator() bool {
 }
 
 // IsFunctionOperator reports whether the operator is a query function
-// (has/hasAny/hasAll/hasToken); these apply to the logs body column only.
+// (has/hasAny/hasAll/hasToken/search). These are logs-only; other signals reject
+// them and the resource-fingerprint builder skips them.
 func (f FilterOperator) IsFunctionOperator() bool {
 	switch f {
-	case FilterOperatorHas, FilterOperatorHasAny, FilterOperatorHasAll, FilterOperatorHasToken:
+	case FilterOperatorHas, FilterOperatorHasAny, FilterOperatorHasAll, FilterOperatorHasToken, FilterOperatorSearch:
 		return true
 	default:
 		return false
@@ -265,6 +271,8 @@ func (f FilterOperator) FunctionName() string {
 		return "hasAll"
 	case FilterOperatorHasToken:
 		return "hasToken"
+	case FilterOperatorSearch:
+		return "search"
 	default:
 		return ""
 	}
