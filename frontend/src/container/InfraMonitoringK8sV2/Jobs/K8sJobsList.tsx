@@ -1,21 +1,25 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
+import { listJobs } from 'api/generated/services/inframonitoring';
+import {
+	InframonitoringtypesJobRecordDTO,
+	InframonitoringtypesResponseTypeDTO,
+	Querybuildertypesv5OrderDirectionDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { InfraMonitoringEvents } from 'constants/events';
-import { FeatureKeys } from 'constants/features';
-import { useAppContext } from 'providers/App/App';
 
 import K8sBaseDetails, { K8sDetailsFilters } from '../Base/K8sBaseDetails';
 import { K8sBaseList } from '../Base/K8sBaseList';
 import { K8sBaseFilters } from '../Base/types';
 import { InfraMonitoringEntity } from '../constants';
-import { getK8sJobsList, K8sJobsData } from './api';
+import { SelectedItemParams } from '../hooks';
 import {
 	getJobMetricsQueryPayload,
 	jobWidgetInfo,
 	k8sJobDetailsMetadataConfig,
 	k8sJobGetEntityName,
-	k8sJobGetSelectedItemFilters,
-	k8sJobInitialEventsFilter,
-	k8sJobInitialLogTracesFilter,
+	k8sJobGetSelectedItemExpression,
+	k8sJobInitialEventsExpression,
+	k8sJobInitialLogTracesExpression,
 } from './constants';
 import {
 	getK8sJobItemKey,
@@ -28,66 +32,93 @@ function K8sJobsList({
 }: {
 	controlListPrefix?: React.ReactNode;
 }): JSX.Element {
-	const { featureFlags } = useAppContext();
-	const dotMetricsEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
-			?.active || false;
-
 	const fetchListData = useCallback(
 		async (filters: K8sBaseFilters, signal?: AbortSignal) => {
-			filters.orderBy ||= {
-				columnName: 'cpu',
-				order: 'desc',
-			};
+			try {
+				const response = await listJobs(
+					{
+						filter: { expression: filters.filter.expression },
+						groupBy: filters.groupBy?.map((g) => ({ name: g.name })),
+						offset: filters.offset,
+						limit: filters.limit ?? 10,
+						start: filters.start,
+						end: filters.end,
+						orderBy: filters.orderBy
+							? {
+									key: { name: filters.orderBy.key.name },
+									direction:
+										filters.orderBy.direction === 'asc'
+											? Querybuildertypesv5OrderDirectionDTO.asc
+											: Querybuildertypesv5OrderDirectionDTO.desc,
+								}
+							: undefined,
+					},
+					signal,
+				);
 
-			const response = await getK8sJobsList(
-				filters,
-				signal,
-				undefined,
-				dotMetricsEnabled,
-			);
-
-			return {
-				data: response.payload?.data.records || [],
-				total: response.payload?.data.total || 0,
-				error: response.error,
-				rawData: response.payload?.data,
-			};
+				const data = response.data;
+				return {
+					type:
+						data.type === InframonitoringtypesResponseTypeDTO.grouped_list
+							? ('grouped_list' as const)
+							: ('list' as const),
+					records: data.records,
+					total: data.total,
+					endTimeBeforeRetention: data.endTimeBeforeRetention,
+					warning: data.warning,
+				};
+			} catch (error) {
+				const errMsg =
+					error instanceof Error ? error.message : 'Failed to fetch jobs';
+				return {
+					type: 'list' as const,
+					records: [] as InframonitoringtypesJobRecordDTO[],
+					total: 0,
+					error: errMsg,
+				};
+			}
 		},
-		[dotMetricsEnabled],
+		[],
 	);
 
 	const fetchEntityData = useCallback(
 		async (
 			filters: K8sDetailsFilters,
 			signal?: AbortSignal,
-		): Promise<{ data: K8sJobsData | null; error?: string | null }> => {
-			const response = await getK8sJobsList(
-				{
-					filters: filters.filters,
-					start: filters.start,
-					end: filters.end,
-					limit: 1,
-					offset: 0,
-				},
-				signal,
-				undefined,
-				dotMetricsEnabled,
-			);
+		): Promise<{
+			data: InframonitoringtypesJobRecordDTO | null;
+			error?: string | null;
+		}> => {
+			try {
+				const response = await listJobs(
+					{
+						filter: { expression: filters.filter.expression },
+						start: filters.start,
+						end: filters.end,
+						limit: 1,
+						offset: 0,
+					},
+					signal,
+				);
 
-			const records = response.payload?.data.records || [];
-
-			return {
-				data: records.length > 0 ? records[0] : null,
-				error: response.error,
-			};
+				return {
+					data: response.data.records.length > 0 ? response.data.records[0] : null,
+				};
+			} catch (error) {
+				const errMsg =
+					error instanceof Error ? error.message : 'Failed to fetch job';
+				return {
+					data: null,
+					error: errMsg,
+				};
+			}
 		},
-		[dotMetricsEnabled],
+		[],
 	);
 
 	return (
 		<>
-			<K8sBaseList<K8sJobsData>
+			<K8sBaseList<InframonitoringtypesJobRecordDTO, SelectedItemParams>
 				controlListPrefix={controlListPrefix}
 				entity={InfraMonitoringEntity.JOBS}
 				tableColumns={k8sJobsColumnsConfig}
@@ -97,14 +128,14 @@ function K8sJobsList({
 				eventCategory={InfraMonitoringEvents.Job}
 			/>
 
-			<K8sBaseDetails<K8sJobsData>
+			<K8sBaseDetails<InframonitoringtypesJobRecordDTO>
 				category={InfraMonitoringEntity.JOBS}
 				eventCategory={InfraMonitoringEvents.Job}
-				getSelectedItemFilters={k8sJobGetSelectedItemFilters}
+				getSelectedItemExpression={k8sJobGetSelectedItemExpression}
 				fetchEntityData={fetchEntityData}
 				getEntityName={k8sJobGetEntityName}
-				getInitialLogTracesFilters={k8sJobInitialLogTracesFilter}
-				getInitialEventsFilters={k8sJobInitialEventsFilter}
+				getInitialLogTracesExpression={k8sJobInitialLogTracesExpression}
+				getInitialEventsExpression={k8sJobInitialEventsExpression}
 				metadataConfig={k8sJobDetailsMetadataConfig}
 				entityWidgetInfo={jobWidgetInfo}
 				getEntityQueryPayload={getJobMetricsQueryPayload}

@@ -1,91 +1,141 @@
+import { InframonitoringtypesClusterRecordDTO } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
 import {
-	createFilterItem,
+	K8sDetailsCountConfig,
 	K8sDetailsMetadataConfig,
 } from '../Base/K8sBaseDetails';
-import { QUERY_KEYS } from '../EntityDetailsUtils/utils';
-import { K8sClusterData } from './api';
+import { formatValueForExpression } from 'components/QueryBuilderV2/utils';
+import {
+	INFRA_MONITORING_ATTR_KEYS,
+	InfraMonitoringEntity,
+} from '../constants';
+import { SelectedItemParams } from '../hooks';
+import {
+	buildEventsExpression,
+	buildLogsTracesExpression,
+} from 'container/InfraMonitoringK8sV2/Base/utils';
 
-export const k8sClusterGetSelectedItemFilters = (
-	selectedItemId: string,
-): TagFilter => ({
-	op: 'AND',
-	items: [
+export const k8sClusterGetSelectedItemExpression = (
+	params: SelectedItemParams,
+): string =>
+	`k8s.cluster.name = ${formatValueForExpression(params.selectedItem ?? '')}`;
+
+export const k8sClusterDetailsMetadataConfig: K8sDetailsMetadataConfig<InframonitoringtypesClusterRecordDTO>[] =
+	[{ label: 'Cluster Name', getValue: (p): string => p.clusterName || '' }];
+
+export const k8sClusterDetailsCountsConfig: K8sDetailsCountConfig<InframonitoringtypesClusterRecordDTO>[] =
+	[
 		{
-			id: 'k8s_cluster_name',
-			key: {
-				key: 'k8s_cluster_name',
-				type: null,
-			},
-			op: '=',
-			value: selectedItemId,
+			label: 'Namespaces',
+			getValue: (p): number => p.counts?.namespaces ?? 0,
+			targetCategory: InfraMonitoringEntity.NAMESPACES,
 		},
-	],
-});
+		{
+			label: 'Nodes',
+			getValue: (p): number => p.counts?.nodes ?? 0,
+			targetCategory: InfraMonitoringEntity.NODES,
+		},
+		{
+			label: 'Deployments',
+			getValue: (p): number => p.counts?.deployments ?? 0,
+			targetCategory: InfraMonitoringEntity.DEPLOYMENTS,
+		},
+		{
+			label: 'StatefulSets',
+			getValue: (p): number => p.counts?.statefulSets ?? 0,
+			targetCategory: InfraMonitoringEntity.STATEFULSETS,
+		},
+		{
+			label: 'DaemonSets',
+			getValue: (p): number => p.counts?.daemonSets ?? 0,
+			targetCategory: InfraMonitoringEntity.DAEMONSETS,
+		},
+		{
+			label: 'Jobs',
+			getValue: (p): number => p.counts?.jobs ?? 0,
+			targetCategory: InfraMonitoringEntity.JOBS,
+		},
+	];
 
-export const k8sClusterDetailsMetadataConfig: K8sDetailsMetadataConfig<K8sClusterData>[] =
-	[{ label: 'Cluster Name', getValue: (p): string => p.meta.k8s_cluster_name }];
+export const k8sClusterInitialEventsExpression = (
+	item: InframonitoringtypesClusterRecordDTO,
+): string =>
+	buildEventsExpression({
+		objectKind: 'Cluster',
+		objectName: item.clusterName || '',
+	});
 
-export const k8sClusterInitialEventsFilter = (
-	item: K8sClusterData,
-): ReturnType<typeof createFilterItem>[] => [
-	createFilterItem(QUERY_KEYS.K8S_OBJECT_KIND, 'Cluster'),
-	createFilterItem(QUERY_KEYS.K8S_OBJECT_NAME, item.meta.k8s_cluster_name),
-];
+export const k8sClusterInitialLogTracesExpression = (
+	item: InframonitoringtypesClusterRecordDTO,
+): string =>
+	buildLogsTracesExpression({
+		mainAttributeKey: INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME,
+		mainAttributeValue: item.clusterName,
+	});
 
-export const k8sClusterInitialLogTracesFilter = (
-	item: K8sClusterData,
-): ReturnType<typeof createFilterItem>[] => [
-	createFilterItem(QUERY_KEYS.K8S_CLUSTER_NAME, item.meta.k8s_cluster_name),
-];
+export const k8sClusterGetEntityName = (
+	item: InframonitoringtypesClusterRecordDTO,
+): string => item.clusterName || '';
 
-export const k8sClusterGetEntityName = (item: K8sClusterData): string =>
-	item.meta.k8s_cluster_name;
+export const k8sClusterGetCountsFilterExpression = (
+	item: InframonitoringtypesClusterRecordDTO,
+): string =>
+	`k8s.cluster.name = ${formatValueForExpression(item.clusterName ?? '')}`;
 
 export const clusterWidgetInfo = [
 	{
 		title: 'CPU Usage, allocatable',
 		yAxisUnit: '',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/clusters/#cpu-usage-allocatable',
 	},
 	{
 		title: 'Memory Usage, allocatable',
 		yAxisUnit: 'bytes',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/clusters/#memory-usage-allocatable',
 	},
 	{
 		title: 'Ready Nodes',
 		yAxisUnit: '',
+		docPath: '/infrastructure-monitoring/kubernetes/clusters/#ready-nodes',
 	},
 	{
 		title: 'NotReady Nodes',
 		yAxisUnit: '',
+		docPath: '/infrastructure-monitoring/kubernetes/clusters/#notready-nodes',
 	},
 	{
 		title: 'Deployments available and desired',
 		yAxisUnit: '',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/clusters/#deployments-available-and-desired',
 	},
 	{
 		title: 'Statefulset pods',
 		yAxisUnit: '',
+		docPath: '/infrastructure-monitoring/kubernetes/clusters/#statefulset-pods',
 	},
 	{
 		title: 'Daemonset nodes',
 		yAxisUnit: '',
+		docPath: '/infrastructure-monitoring/kubernetes/clusters/#daemonset-nodes',
 	},
 	{
 		title: 'Jobs',
 		yAxisUnit: '',
+		docPath: '/infrastructure-monitoring/kubernetes/clusters/#jobs',
 	},
 ];
 
 export const getClusterMetricsQueryPayload = (
-	cluster: K8sClusterData,
+	cluster: InframonitoringtypesClusterRecordDTO,
 	start: number,
 	end: number,
 	dotMetricsEnabled: boolean,
@@ -207,7 +257,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
@@ -246,7 +296,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
@@ -285,7 +335,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
@@ -324,7 +374,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
@@ -397,7 +447,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
@@ -436,7 +486,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
@@ -475,7 +525,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
@@ -514,7 +564,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
@@ -587,7 +637,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
@@ -673,7 +723,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
@@ -759,7 +809,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
@@ -811,7 +861,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
@@ -909,7 +959,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
@@ -961,7 +1011,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
@@ -1013,7 +1063,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
@@ -1065,7 +1115,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
@@ -1187,7 +1237,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
@@ -1233,7 +1283,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
@@ -1279,7 +1329,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
@@ -1383,7 +1433,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
@@ -1435,7 +1485,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
@@ -1487,7 +1537,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
@@ -1539,7 +1589,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
