@@ -15,17 +15,15 @@ def create_migrator(  # pylint: disable=too-many-arguments,too-many-positional-a
     pytestconfig: pytest.Config,
     cache_key: str = "migrator",
     env_overrides: dict | None = None,
-    version: str | None = None,
 ) -> types.Operation:
     """
-    Factory function for running schema migrations.
-    Accepts optional env_overrides to customize the migrator environment, and
-    an optional version to pin a schema-migrator release different from the
-    --schema-migrator-version option.
+    Factory function for running schema migrations. Accepts optional
+    env_overrides to customize the migrator environment; the release comes
+    from the --schema-migrator-version option.
     """
 
     def create() -> None:
-        migrator_version = version or request.config.getoption("--schema-migrator-version")
+        migrator_version = request.config.getoption("--schema-migrator-version")
         client = docker.from_env()
 
         environment = dict(env_overrides) if env_overrides else {}

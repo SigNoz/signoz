@@ -68,10 +68,9 @@ jobs:
         sqlite-mode:
           - wal
         clickhouse-version:
-          - 25.5.6
           - 25.12.5
         schema-migrator-version:
-          - v0.144.3
+          - v0.144.6
         postgres-version:
           - 15
     if: |

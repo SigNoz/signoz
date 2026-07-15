@@ -43,11 +43,10 @@ def create_clickhouse_keeper(
     request: pytest.FixtureRequest,
     pytestconfig: pytest.Config,
     cache_key: str = "clickhousekeeper",
-    version: str | None = None,
 ) -> types.TestContainerDocker:
 
     def create() -> types.TestContainerDocker:
-        keeper_version = version or request.config.getoption("--clickhouse-version")
+        keeper_version = request.config.getoption("--clickhouse-version")
 
         tmp_dir = tmpfs(cache_key)
         keeper_config_file_path = os.path.join(tmp_dir, "keeper_config.xml")

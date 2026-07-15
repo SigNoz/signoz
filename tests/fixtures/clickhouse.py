@@ -202,12 +202,11 @@ def create_clickhouse(  # pylint: disable=too-many-arguments,too-many-positional
     request: pytest.FixtureRequest,
     pytestconfig: pytest.Config,
     cache_key: str = "clickhouse",
-    version: str | None = None,
 ) -> types.TestContainerClickhouse:
     coordinator = next(iter(keeper.container_configs.values()))
 
     def create() -> types.TestContainerClickhouse:
-        clickhouse_version = version or request.config.getoption("--clickhouse-version")
+        clickhouse_version = request.config.getoption("--clickhouse-version")
 
         container = ClickHouseContainer(
             image=f"clickhouse/clickhouse-server:{clickhouse_version}",
@@ -371,7 +370,6 @@ def create_clickhouse_cluster(  # pylint: disable=too-many-arguments,too-many-po
     pytestconfig: pytest.Config,
     cache_key: str = "clickhouse_cluster",
     shards: int = 2,
-    version: str | None = None,
 ) -> types.TestContainerClickhouse:
     """
     To some extent, taken inspiration from how ClickHouse's own integration
@@ -386,7 +384,7 @@ def create_clickhouse_cluster(  # pylint: disable=too-many-arguments,too-many-po
     coordinator = next(iter(keeper.container_configs.values()))
 
     def create() -> types.TestContainerClickhouse:
-        clickhouse_version = version or request.config.getoption("--clickhouse-version")
+        clickhouse_version = request.config.getoption("--clickhouse-version")
 
         # Unique aliases per creation: docker allows duplicate network aliases
         # (DNS round-robin), so a stale cluster must never share names with a

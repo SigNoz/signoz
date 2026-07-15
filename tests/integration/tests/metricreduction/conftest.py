@@ -11,9 +11,6 @@ from fixtures.keeper import create_clickhouse_keeper
 from fixtures.migrator import create_migrator
 from fixtures.signoz import create_signoz
 
-SCHEMA_MIGRATOR_VERSION = "v0.144.6-rc.2"
-CLICKHOUSE_VERSION = "25.12.5"
-
 
 @pytest.fixture(name="keeper", scope="package")
 def keeper_metricreduction(
@@ -28,7 +25,6 @@ def keeper_metricreduction(
         request=request,
         pytestconfig=pytestconfig,
         cache_key="keeper_metricreduction",
-        version=CLICKHOUSE_VERSION,
     )
 
 
@@ -48,7 +44,6 @@ def clickhouse_metricreduction(
         pytestconfig=pytestconfig,
         cache_key="clickhouse_metricreduction",
         shards=2,
-        version=CLICKHOUSE_VERSION,
     )
 
 
@@ -65,7 +60,6 @@ def migrator_metricreduction(
         request=request,
         pytestconfig=pytestconfig,
         cache_key="migrator_metricreduction",
-        version=SCHEMA_MIGRATOR_VERSION,
     )
 
 

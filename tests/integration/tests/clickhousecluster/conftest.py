@@ -8,8 +8,6 @@ from fixtures import types
 from fixtures.clickhouse import create_clickhouse_cluster
 from fixtures.keeper import create_clickhouse_keeper
 
-CLICKHOUSE_VERSION = "25.12.5"
-
 
 @pytest.fixture(name="keeper", scope="package")
 def keeper_cluster(
@@ -24,7 +22,6 @@ def keeper_cluster(
         request=request,
         pytestconfig=pytestconfig,
         cache_key="keeper_cluster",
-        version=CLICKHOUSE_VERSION,
     )
 
 
@@ -44,5 +41,4 @@ def clickhouse_cluster(
         pytestconfig=pytestconfig,
         cache_key="clickhouse_cluster",
         shards=2,
-        version=CLICKHOUSE_VERSION,
     )
