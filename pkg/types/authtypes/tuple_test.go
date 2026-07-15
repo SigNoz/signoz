@@ -46,7 +46,7 @@ func TestTelemetryGrantAndCheckObjectsMatch(t *testing.T) {
 	assert.Equal(t, grantTuples[0].GetObject(), checkTuples[0].GetObject())
 	assert.NotEqual(t, grantTuples[0].GetObject(), checkTuples[1].GetObject())
 	assert.NotEqual(t, grantTuples[0].GetObject(), checkTuples[2].GetObject())
-	assert.NotContains(t, checkTuples[0].GetObject(), "checkout")
+	assert.Equal(t, "telemetryresource:organization/"+orgID.StringValue()+"/logs/builder_query/service.name/checkout", checkTuples[0].GetObject())
 	assert.Equal(t, "telemetryresource:organization/"+orgID.StringValue()+"/logs/builder_query/service.name/*", checkTuples[3].GetObject())
 	assert.Equal(t, "telemetryresource:organization/"+orgID.StringValue()+"/logs/builder_query/*", checkTuples[4].GetObject())
 	assert.Equal(t, "telemetryresource:organization/"+orgID.StringValue()+"/logs/*", checkTuples[5].GetObject())

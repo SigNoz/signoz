@@ -3,6 +3,7 @@ package querybuilder
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -13,11 +14,26 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-func TelemetrySelector(_ context.Context, resource coretypes.Resource, id string, _ valuer.UUID) ([]coretypes.Selector, error) {
-	if coretypes.IsTelemetryQueryTypeSelector(id) {
-		id = id + "/" + coretypes.WildCardSelectorString
+var telemetryGrantKeys = map[string]struct{}{
+	"service.name": {},
+}
+
+const telemetryValueSafeBytes = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._-"
+
+func EscapeTelemetryValue(value string) string {
+	var escaped strings.Builder
+	for _, character := range []byte(value) {
+		if strings.IndexByte(telemetryValueSafeBytes, character) >= 0 {
+			escaped.WriteByte(character)
+			continue
+		}
+		escaped.WriteString(fmt.Sprintf("%%%02X", character))
 	}
 
+	return escaped.String()
+}
+
+func TelemetrySelector(_ context.Context, resource coretypes.Resource, id string, _ valuer.UUID) ([]coretypes.Selector, error) {
 	values := []string{id}
 	segments := strings.Split(id, "/")
 	for level := len(segments) - 1; level >= 1; level-- {
@@ -92,21 +108,20 @@ func queryRangeVariables(body []byte) (map[string]qbtypes.VariableItem, error) {
 
 func resourcesForQuery(query gjson.Result, variables map[string]qbtypes.VariableItem) ([]coretypes.ResourceWithID, error) {
 	queryType := query.Get("type").String()
+	typeWildcard := queryType + "/" + coretypes.WildCardSelectorString
 
 	switch queryType {
-	case "builder_query", "builder_sub_query":
+	case qbtypes.QueryTypeBuilder.StringValue(), qbtypes.QueryTypeSubQuery.StringValue():
 		return resourcesForBuilderQuery(queryType, query.Get("spec"), variables)
-	case "builder_trace_operator":
-		return []coretypes.ResourceWithID{{Resource: coretypes.ResourceTelemetryResourceTraces, ID: queryType}}, nil
-	case "promql":
-		return []coretypes.ResourceWithID{{Resource: coretypes.ResourceTelemetryResourceMetrics, ID: queryType}}, nil
-	case "clickhouse_sql":
+	case qbtypes.QueryTypePromQL.StringValue():
+		return []coretypes.ResourceWithID{{Resource: coretypes.ResourceTelemetryResourceMetrics, ID: typeWildcard}}, nil
+	case qbtypes.QueryTypeClickHouseSQL.StringValue():
 		return []coretypes.ResourceWithID{
-			{Resource: coretypes.ResourceTelemetryResourceLogs, ID: queryType},
-			{Resource: coretypes.ResourceTelemetryResourceTraces, ID: queryType},
-			{Resource: coretypes.ResourceTelemetryResourceMetrics, ID: queryType},
+			{Resource: coretypes.ResourceTelemetryResourceLogs, ID: typeWildcard},
+			{Resource: coretypes.ResourceTelemetryResourceTraces, ID: typeWildcard},
+			{Resource: coretypes.ResourceTelemetryResourceMetrics, ID: typeWildcard},
 		}, nil
-	case "builder_formula", "builder_join":
+	case qbtypes.QueryTypeFormula.StringValue(), qbtypes.QueryTypeJoin.StringValue(), qbtypes.QueryTypeTraceOperator.StringValue():
 		return nil, nil
 	default:
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported query type %q", queryType)
@@ -154,8 +169,10 @@ func builderQueryResource(spec gjson.Result) (coretypes.Resource, error) {
 }
 
 func builderQuerySelectors(queryType, expression string, variables map[string]qbtypes.VariableItem) ([]string, error) {
+	typeWildcard := queryType + "/" + coretypes.WildCardSelectorString
+
 	if strings.TrimSpace(expression) == "" {
-		return []string{queryType}, nil
+		return []string{typeWildcard}, nil
 	}
 
 	normalized, err := NormalizeWhereClause(expression, variables)
@@ -176,13 +193,13 @@ func builderQuerySelectors(queryType, expression string, variables map[string]qb
 
 		if condition.Operator == "=" || condition.Operator == "IN" {
 			for _, value := range condition.Values {
-				ids = append(ids, queryType+"/"+key+"/"+value)
+				ids = append(ids, queryType+"/"+key+"/"+EscapeTelemetryValue(value))
 			}
 		}
 	}
 
 	if len(ids) == 0 {
-		return []string{queryType}, nil
+		return []string{typeWildcard}, nil
 	}
 
 	return ids, nil
@@ -194,46 +211,9 @@ func canonicalTelemetryGrantKey(keyText string) (string, bool) {
 		return "", false
 	}
 
-	if !coretypes.IsTelemetryGrantKey(fieldKey.Name) {
+	if _, ok := telemetryGrantKeys[fieldKey.Name]; !ok {
 		return "", false
 	}
 
 	return fieldKey.Name, true
-}
-
-func ValidateTelemetryGrantSelector(input string) (string, error) {
-	if input == coretypes.WildCardSelectorString {
-		return input, nil
-	}
-
-	parts := strings.SplitN(input, "/", 3)
-	if !coretypes.IsTelemetryQueryTypeSelector(parts[0]) {
-		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "telemetry selector %q must start with a query type or be %q", input, coretypes.WildCardSelectorString)
-	}
-
-	if len(parts) == 1 {
-		return parts[0] + "/" + coretypes.WildCardSelectorString, nil
-	}
-
-	if len(parts) == 2 {
-		if parts[1] != coretypes.WildCardSelectorString {
-			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "telemetry selector %q must be <query_type>/<key>/<value>, <query_type>/%s or %s", input, coretypes.WildCardSelectorString, coretypes.WildCardSelectorString)
-		}
-		return input, nil
-	}
-
-	if !coretypes.IsTelemetryGrantKey(parts[1]) {
-		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "telemetry selector %q must use one of the supported keys: %s", input, strings.Join(coretypes.TelemetryGrantKeys(), ", "))
-	}
-
-	value := parts[2]
-	if value == coretypes.WildCardSelectorString {
-		return input, nil
-	}
-
-	if value == "" || strings.HasPrefix(value, "$") {
-		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "telemetry selector %q must use a concrete non-empty value", input)
-	}
-
-	return input, nil
 }

@@ -55,28 +55,35 @@ func TestQueryRangeResources(t *testing.T) {
 			name: "no filter expression",
 			body: `{"compositeQuery":{"queries":[{"type":"builder_query","spec":{"signal":"logs"}}]}}`,
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/*"},
 			},
 		},
 		{
 			name: "service atom under or does not qualify",
 			body: builderQueryBody("logs", "service.name = 'a' OR status = 500"),
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/*"},
 			},
 		},
 		{
 			name: "negated service atom does not qualify",
 			body: builderQueryBody("logs", "NOT service.name = 'a'"),
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/*"},
 			},
 		},
 		{
 			name: "service inequality does not qualify",
 			body: builderQueryBody("logs", "service.name != 'a'"),
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/*"},
+			},
+		},
+		{
+			name: "unsafe value bytes are escaped",
+			body: builderQueryBody("logs", "service.name = 'check out/2'"),
+			expected: []coretypes.ResourceWithID{
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/service.name/check%20out%2F2"},
 			},
 		},
 		{
@@ -90,22 +97,29 @@ func TestQueryRangeResources(t *testing.T) {
 			name: "promql is wildcard only",
 			body: `{"compositeQuery":{"queries":[{"type":"promql","spec":{"query":"up"}}]}}`,
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceMetrics, ID: "promql"},
+				{Resource: coretypes.ResourceTelemetryResourceMetrics, ID: "promql/*"},
 			},
 		},
 		{
 			name: "clickhouse sql covers all signals",
 			body: `{"compositeQuery":{"queries":[{"type":"clickhouse_sql","spec":{"query":"SELECT 1"}}]}}`,
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "clickhouse_sql"},
-				{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "clickhouse_sql"},
-				{Resource: coretypes.ResourceTelemetryResourceMetrics, ID: "clickhouse_sql"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "clickhouse_sql/*"},
+				{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "clickhouse_sql/*"},
+				{Resource: coretypes.ResourceTelemetryResourceMetrics, ID: "clickhouse_sql/*"},
 			},
 		},
 		{
 			name:     "formula produces no resources",
 			body:     `{"compositeQuery":{"queries":[{"type":"builder_formula","spec":{"expression":"A/B"}}]}}`,
 			expected: []coretypes.ResourceWithID{},
+		},
+		{
+			name: "trace operator rides on its referenced queries",
+			body: `{"compositeQuery":{"queries":[{"type":"builder_query","spec":{"name":"A","signal":"traces","disabled":true,"filter":{"expression":"service.name = 'checkout'"}}},{"type":"builder_query","spec":{"name":"B","signal":"traces","disabled":true,"filter":{"expression":"service.name = 'checkout' AND has_error = true"}}},{"type":"builder_trace_operator","spec":{"name":"T1","expression":"A => B","returnSpansFrom":"A"}}]}}`,
+			expected: []coretypes.ResourceWithID{
+				{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "builder_query/service.name/checkout"},
+			},
 		},
 		{
 			name: "variable substitution qualifies",
@@ -161,42 +175,9 @@ func TestTelemetrySelector(t *testing.T) {
 	}
 
 	assert.Equal(t, []string{"builder_query/service.name/a", "builder_query/service.name/*", "builder_query/*", "*"}, selectorValues("builder_query/service.name/a"))
-	assert.Equal(t, []string{"builder_query/*", "*"}, selectorValues("builder_query"))
-	assert.Equal(t, []string{"promql/*", "*"}, selectorValues("promql"))
+	assert.Equal(t, []string{"builder_query/*", "*"}, selectorValues("builder_query/*"))
+	assert.Equal(t, []string{"promql/*", "*"}, selectorValues("promql/*"))
 
 	_, err := TelemetrySelector(context.Background(), coretypes.ResourceTelemetryResourceLogs, strings.Repeat("a", 256), orgID)
 	assert.Error(t, err)
-}
-
-func TestValidateTelemetryGrantSelector(t *testing.T) {
-	valid := map[string]string{
-		"*":                                   "*",
-		"builder_query":                       "builder_query/*",
-		"promql":                              "promql/*",
-		"clickhouse_sql":                      "clickhouse_sql/*",
-		"builder_query/*":                     "builder_query/*",
-		"builder_query/service.name/checkout": "builder_query/service.name/checkout",
-		"builder_query/service.name/*":        "builder_query/service.name/*",
-		"builder_query/service.name/a/b":      "builder_query/service.name/a/b",
-	}
-	for input, expected := range valid {
-		canonical, err := ValidateTelemetryGrantSelector(input)
-		require.NoError(t, err, "input %q", input)
-		assert.Equal(t, expected, canonical, "input %q", input)
-	}
-
-	invalid := []string{
-		"",
-		"checkout",
-		"service.name = 'checkout'",
-		"builder_query/checkout",
-		"builder_query/deployment.environment/qa",
-		"builder_query/service.name/",
-		"builder_query/service.name/$svc",
-		"unknown_type/service.name/checkout",
-	}
-	for _, input := range invalid {
-		_, err := ValidateTelemetryGrantSelector(input)
-		assert.Error(t, err, "input %q", input)
-	}
 }
