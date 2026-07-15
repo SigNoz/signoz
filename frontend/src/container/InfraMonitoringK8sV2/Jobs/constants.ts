@@ -73,18 +73,22 @@ export const jobWidgetInfo = [
 	{
 		title: 'CPU usage',
 		yAxisUnit: '',
+		docPath: '/infrastructure-monitoring/kubernetes/jobs/#cpu-usage',
 	},
 	{
 		title: 'Memory Usage',
 		yAxisUnit: 'bytes',
+		docPath: '/infrastructure-monitoring/kubernetes/jobs/#memory-usage',
 	},
 	{
 		title: 'Network IO',
 		yAxisUnit: 'binBps',
+		docPath: '/infrastructure-monitoring/kubernetes/jobs/#network-io',
 	},
 	{
 		title: 'Network errors count',
 		yAxisUnit: '',
+		docPath: '/infrastructure-monitoring/kubernetes/jobs/#network-errors-count',
 	},
 ];
 

@@ -74,18 +74,25 @@ export const deploymentWidgetInfo = [
 	{
 		title: 'CPU usage, request, limits',
 		yAxisUnit: '',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/deployments/#cpu-usage-request-limits',
 	},
 	{
 		title: 'Memory usage, request, limits',
 		yAxisUnit: 'bytes',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/deployments/#memory-usage-request-limits',
 	},
 	{
 		title: 'Network IO',
 		yAxisUnit: 'binBps',
+		docPath: '/infrastructure-monitoring/kubernetes/deployments/#network-io',
 	},
 	{
 		title: 'Network error count',
 		yAxisUnit: '',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/deployments/#network-error-count',
 	},
 ];
 

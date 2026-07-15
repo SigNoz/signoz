@@ -8,6 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type ResourceFingerprintResolver[T any] struct {
@@ -50,11 +51,12 @@ func (r *ResourceFingerprintResolver[T]) StatementBuilder() qbtypes.StatementBui
 
 func (r *ResourceFingerprintResolver[T]) Resolve(
 	ctx context.Context,
+	orgID valuer.UUID,
 	query qbtypes.QueryBuilderQuery[T],
 	start, end uint64,
 	variables map[string]qbtypes.VariableItem,
 ) (qbtypes.ResourceFilterResolveKind, error) {
-	countStmt, err := r.stmtBuilder.BuildCount(ctx, start, end, query, variables)
+	countStmt, err := r.stmtBuilder.BuildCount(ctx, orgID, start, end, query, variables)
 	if err != nil {
 		return qbtypes.ResourceFilterResolveKindNoOp, err
 	}

@@ -15,7 +15,9 @@ import { SelectedItemParams } from '../hooks';
 import {
 	getNamespaceMetricsQueryPayload,
 	getNamespacePodMetricsQueryPayload,
+	k8sNamespaceDetailsCountsConfig,
 	k8sNamespaceDetailsMetadataConfig,
+	k8sNamespaceGetCountsFilterExpression,
 	k8sNamespaceGetEntityName,
 	k8sNamespaceGetSelectedItemExpression,
 	k8sNamespaceInitialEventsExpression,
@@ -150,6 +152,8 @@ function K8sNamespacesList({
 				getInitialLogTracesExpression={k8sNamespaceInitialLogTracesExpression}
 				getInitialEventsExpression={k8sNamespaceInitialEventsExpression}
 				metadataConfig={k8sNamespaceDetailsMetadataConfig}
+				countsConfig={k8sNamespaceDetailsCountsConfig}
+				getCountsFilterExpression={k8sNamespaceGetCountsFilterExpression}
 				entityWidgetInfo={namespaceWidgetInfo}
 				getEntityQueryPayload={getNamespaceMetricsQueryPayload}
 				queryKeyPrefix="namespace"

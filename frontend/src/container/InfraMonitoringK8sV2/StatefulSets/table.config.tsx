@@ -141,10 +141,10 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<InframonitoringtypesSt
 			},
 		},
 		{
-			id: 'pod_status',
+			id: 'pod_replicas',
 			header: (): React.ReactNode => (
-				<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/statefulsets#pod-status">
-					Pod Status
+				<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/statefulsets#pod-replicas">
+					Pod Replicas
 				</ColumnHeader>
 			),
 			accessorFn: (row): number => row.currentPods,

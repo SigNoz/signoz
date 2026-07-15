@@ -132,10 +132,10 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 		},
 	},
 	{
-		id: 'completion_status',
+		id: 'completion',
 		header: (): React.ReactNode => (
-			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/jobs#completion-status">
-				Completion Status
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/jobs#completion">
+				Completions
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.successfulPods,
@@ -155,7 +155,7 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 					{
 						value: row.desiredSuccessfulPods,
 						label: 'Desired',
-						color: Color.BG_ROBIN_500,
+						color: Color.BG_AMBER_500,
 					},
 				]}
 			/>
