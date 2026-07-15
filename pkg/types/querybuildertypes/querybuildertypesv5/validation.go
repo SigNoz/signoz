@@ -151,6 +151,10 @@ func (q *QueryBuilderQuery[T]) Validate(opts ...ValidationOption) error {
 		return err
 	}
 
+	if err := q.validateSource(); err != nil {
+		return err
+	}
+
 	if err := q.validateAggregations(cfg); err != nil {
 		return err
 	}
@@ -236,6 +240,18 @@ func (q *QueryBuilderQuery[T]) validateSignal() error {
 			"Valid signals are: metrics, traces, logs",
 		)
 	}
+}
+
+func (q *QueryBuilderQuery[T]) validateSource() error {
+	if q.Source == telemetrytypes.SourceAI && q.Signal != telemetrytypes.SignalTraces {
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"source %q is only supported for the traces signal, got %q",
+			q.Source.StringValue(),
+			q.Signal.StringValue(),
+		)
+	}
+	return nil
 }
 
 func (q *QueryBuilderQuery[T]) validateAggregations(cfg validationConfig) error {

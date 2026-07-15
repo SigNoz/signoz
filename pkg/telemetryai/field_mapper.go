@@ -1,16 +1,51 @@
 package telemetryai
 
 import (
+	"strings"
+
 	scopedtraces "github.com/SigNoz/signoz/pkg/telemetryscopedtraces"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
+
+// genAIBaseConditionProvider: an AI trace has >=1 gen_ai LLM, tool, or agent span.
+type genAIBaseConditionProvider struct {
+	keys []string
+}
+
+var _ scopedtraces.BaseConditionProvider = (*genAIBaseConditionProvider)(nil)
+
+func newGenAIBaseConditionProvider() scopedtraces.BaseConditionProvider {
+	return &genAIBaseConditionProvider{
+		keys: []string{telemetrytypes.GenAIRequestModel, telemetrytypes.GenAIToolName, telemetrytypes.GenAIAgentName},
+	}
+}
+
+func (p *genAIBaseConditionProvider) FilterExpression() string {
+	parts := make([]string, 0, len(p.keys))
+	for _, k := range p.keys {
+		parts = append(parts, k+" EXISTS")
+	}
+	return strings.Join(parts, " OR ")
+}
+
+func (p *genAIBaseConditionProvider) FieldKeys() []*telemetrytypes.TelemetryFieldKey {
+	// Definitions come from GenAIFieldDefinitions so they can't drift from the
+	// canonical semconv keys; copy to take the address.
+	keys := make([]*telemetrytypes.TelemetryFieldKey, 0, len(p.keys))
+	for _, k := range p.keys {
+		def := telemetrytypes.GenAIFieldDefinitions[k]
+		keys = append(keys, &def)
+	}
+	return keys
+}
 
 // genAIColumnProvider adds AI/LLM per-trace metrics on top of the common columns.
 type genAIColumnProvider struct{}
 
 var _ scopedtraces.ColumnProvider = (*genAIColumnProvider)(nil)
 
-func NewGenAIColumnProvider() scopedtraces.ColumnProvider {
+func newGenAIColumnProvider() scopedtraces.ColumnProvider {
 	return &genAIColumnProvider{}
 }
 
@@ -37,14 +72,14 @@ func (genAIColumnProvider) Columns() []scopedtraces.TraceColumn {
 		// per-span cost attached by the SigNoz LLM pricing processor.
 		scopedtraces.TraceColumn{Alias: "estimated_cost_usd", Orderable: true, Expr: scopedtraces.Reduce(scopedtraces.AggSum, &cost)},
 		// slowest single LLM call in the trace.
-		scopedtraces.TraceColumn{Alias: "max_llm_latency_ns", Orderable: true, Expr: scopedtraces.ScopedToKeyColumn(scopedtraces.AggMax, "duration_nano", &reqModel)},
+		scopedtraces.TraceColumn{Alias: "max_llm_latency_ns", Orderable: true, Expr: scopedtraces.ScopedToKeyColumn(scopedtraces.AggMax, scopedtraces.IntrinsicSpanKey("duration_nano"), &reqModel)},
 		// errors across the whole trace (any span), so display-only.
-		scopedtraces.TraceColumn{Alias: "error_count", Expr: scopedtraces.PredicateCount("has_error = true")},
+		scopedtraces.TraceColumn{Alias: "error_count", Expr: scopedtraces.CondCount(scopedtraces.IntrinsicSpanKey("has_error"), qbtypes.FilterOperatorEqual, true)},
 		// timestamp of the last gen_ai span (LLM/tool/agent), hence gate-scoped.
-		scopedtraces.TraceColumn{Alias: "last_activity_time", Orderable: true, Expr: scopedtraces.ScopedReduce(scopedtraces.AggMax, "timestamp")},
+		scopedtraces.TraceColumn{Alias: "last_activity_time", Orderable: true, Expr: scopedtraces.ScopedReduce(scopedtraces.AggMax, scopedtraces.IntrinsicSpanKey("timestamp"))},
 		// previews: first call's input (the prompt), last call's output (the answer).
-		scopedtraces.TraceColumn{Alias: "input", SpanLevel: true, Expr: scopedtraces.PickBy(&inMsg, str, "timestamp", scopedtraces.PickEarliest)},
-		scopedtraces.TraceColumn{Alias: "output", SpanLevel: true, Expr: scopedtraces.PickBy(&outMsg, str, "timestamp", scopedtraces.PickLatest)},
+		scopedtraces.TraceColumn{Alias: "input", SpanLevel: true, Expr: scopedtraces.PickBy(&inMsg, str, scopedtraces.IntrinsicSpanKey("timestamp"), scopedtraces.PickEarliest)},
+		scopedtraces.TraceColumn{Alias: "output", SpanLevel: true, Expr: scopedtraces.PickBy(&outMsg, str, scopedtraces.IntrinsicSpanKey("timestamp"), scopedtraces.PickLatest)},
 	)
 }
 

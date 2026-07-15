@@ -76,6 +76,7 @@ var (
 		"log":        FieldContextLog,
 		"metric":     FieldContextMetric,
 		"tracefield": FieldContextTrace,
+		"trace":      FieldContextTrace,
 	}
 )
 

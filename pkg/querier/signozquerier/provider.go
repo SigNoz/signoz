@@ -97,16 +97,11 @@ func newProvider(
 	// surfaced by the metadata store itself (enrichWithGenAIKeys), so queries work
 	// before any gen_ai metadata is ingested — no per-builder decoration needed.
 	// The standard trace builder doubles as the delegate for the span-list path.
-	aiBaseCondition := telemetryai.NewGenAIBaseConditionProvider()
 	aiTraceStmtBuilder := telemetryai.NewAITraceStatementBuilder(
 		settings,
 		telemetryMetadataStore,
-		aiBaseCondition,
 		traceStmtBuilder,
-		telemetryStore,
 		flagger,
-		cfg.SkipResourceFingerprint.Enabled,
-		cfg.SkipResourceFingerprint.Threshold,
 	)
 
 	// Create trace operator statement builder

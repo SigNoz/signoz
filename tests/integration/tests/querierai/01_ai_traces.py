@@ -226,10 +226,10 @@ def test_ai_list_having_aggregate_filter(
     """
     Aggregate filter written in the SAME filter box: the span-level predicate narrows
     to the service, the trace-level `output_tokens > 100` keeps the large-token
-    trace and drops the small one (split internally into WHERE + HAVING). All three
-    spellings of a trace-level aggregate — bare, `trace.`, `tracefield.` — behave
-    identically (unit tests pin them to byte-identical SQL; this covers the wiring
-    once end-to-end). An output-only aggregate is rejected under any spelling.
+    trace and drops the small one (split internally into WHERE + HAVING). Both
+    spellings of a trace-level aggregate — bare and `trace.` — behave identically
+    (unit tests pin them to byte-identical SQL; this covers the wiring once
+    end-to-end). An output-only aggregate is rejected under either spelling.
     """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-having"
@@ -243,7 +243,7 @@ def test_ai_list_having_aggregate_filter(
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     start_ms, end_ms = _window_ms(now)
 
-    for spelling in ("output_tokens", "trace.output_tokens", "tracefield.output_tokens"):
+    for spelling in ("output_tokens", "trace.output_tokens"):
         query = BuilderQuery(
             signal="traces",
             source="ai",
@@ -258,12 +258,12 @@ def test_ai_list_having_aggregate_filter(
         assert large_id in body, f"{spelling}: trace with 500 out-tokens should pass > 100"
         assert small_id not in body, f"{spelling}: trace with 20 out-tokens should be filtered out by HAVING"
 
-    # output-only aggregate gets the targeted rejection, also under the explicit context.
+    # output-only aggregate gets the targeted rejection.
     bad = BuilderQuery(
         signal="traces",
         source="ai",
         name="A",
-        filter_expression="tracefield.span_count > 3",
+        filter_expression="trace.span_count > 3",
         limit=10,
     )
     response = make_query_request(signoz, token, start_ms, end_ms, [bad.to_dict()], request_type="trace")

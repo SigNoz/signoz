@@ -45,19 +45,12 @@ func TestSplitFilterForAggregates(t *testing.T) {
 			having: "trace.completion_tokens > 1000",
 		},
 		{
-			// `tracefield.` is the explicit trace field context (Normalize parses it into
-			// FieldContextTrace), so it marks a trace-level aggregate like `trace.`.
-			name:   "agg only tracefield prefix",
-			query:  "tracefield.completion_tokens > 1000",
-			having: "tracefield.completion_tokens > 1000",
-		},
-		{
-			// an unknown name under the explicit trace context still routes trace-level,
-			// so the aggregate validation rejects it with a targeted error instead of the
-			// span path failing on an unknown field.
-			name:   "unknown agg under tracefield prefix stays trace-level",
-			query:  "tracefield.not_an_aggregate > 1000",
-			having: "tracefield.not_an_aggregate > 1000",
+			// an unknown name under the trace context still routes trace-level, so the
+			// aggregate validation rejects it with a targeted error instead of the span
+			// path failing on an unknown field.
+			name:   "unknown aggregate under trace context stays trace-level",
+			query:  "trace.not_an_aggregate > 1000",
+			having: "trace.not_an_aggregate > 1000",
 		},
 
 		{

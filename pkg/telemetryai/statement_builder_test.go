@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
@@ -56,7 +57,41 @@ func otelKeysMap() map[string][]*telemetrytypes.TelemetryFieldKey {
 		FieldContext:  telemetrytypes.FieldContextSpan,
 		FieldDataType: telemetrytypes.FieldDataTypeBool,
 	}}
+	// service.name carries the resource-column evolutions like production metadata, so
+	// the rendered value expression prefers the JSON resource column over the legacy
+	// map (matching the standard traces builder tests).
+	m["service.name"] = []*telemetrytypes.TelemetryFieldKey{{
+		Name:          "service.name",
+		Signal:        telemetrytypes.SignalTraces,
+		FieldContext:  telemetrytypes.FieldContextResource,
+		FieldDataType: telemetrytypes.FieldDataTypeString,
+		Evolutions:    resourceEvolutions(),
+	}}
 	return m
+}
+
+// resourceEvolutions is the canonical resource-column timeline: the legacy
+// resources_string map at epoch 0 and the JSON resource column released inside the
+// test window (mirrors telemetrytraces' mockEvolutionData).
+func resourceEvolutions() []*telemetrytypes.EvolutionEntry {
+	return []*telemetrytypes.EvolutionEntry{
+		{
+			Signal:       telemetrytypes.SignalTraces,
+			ColumnName:   "resources_string",
+			ColumnType:   "Map(LowCardinality(String), String)",
+			FieldContext: telemetrytypes.FieldContextResource,
+			FieldName:    "__all__",
+			ReleaseTime:  time.Unix(0, 0),
+		},
+		{
+			Signal:       telemetrytypes.SignalTraces,
+			ColumnName:   "resource",
+			ColumnType:   "JSON()",
+			FieldContext: telemetrytypes.FieldContextResource,
+			FieldName:    "__all__",
+			ReleaseTime:  time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC),
+		},
+	}
 }
 
 // standard test window (ms), matching the traces builder tests.
@@ -80,7 +115,6 @@ func newTestBuilderWithKeys(t *testing.T, keysMap map[string][]*telemetrytypes.T
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = keysMap
 	fl := flaggertest.New(t)
-	baseCond := NewGenAIBaseConditionProvider()
 	// In production the metadata store enriches gen_ai keys (enrichWithGenAIKeys);
 	// here the mock is seeded directly via keysMap.
 	metadataStore := telemetrytypes.MetadataStore(mockMetadataStore)
@@ -99,12 +133,8 @@ func newTestBuilderWithKeys(t *testing.T, keysMap map[string][]*telemetrytypes.T
 	return NewAITraceStatementBuilder(
 		settings,
 		metadataStore,
-		baseCond,
 		traceStmtBuilder,
-		nil, // telemetryStore: only used by the skip-fingerprint count query, which is disabled here
 		fl,
-		false,
-		100000,
 	)
 }
 
@@ -210,10 +240,10 @@ buckets AS (
 SELECT trace_id,
     min(timestamp) AS start_time,
     max(timestamp) AS end_time,
-    (max(toUnixTimestamp64Nano(timestamp) + duration_nano) - min(toUnixTimestamp64Nano(timestamp))) AS duration_nano,
+    (max(toUnixTimestamp64Nano(timestamp) + duration_nano) - min(toUnixTimestamp64Nano(timestamp))) AS trace_duration_nano,
     count() AS span_count,
     anyIf(name, parent_span_id = '') AS root_span_name,
-    any(resource_string_service$$name) AS service.name,
+    any(multiIf(multiIf(resource.service.name IS NOT NULL, resource.service.name::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.service.name IS NOT NULL, resource.service.name::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS service.name,
     countIf(mapContains(attributes_string, 'gen_ai.request.model') = true) AS llm_call_count,
     countIf(mapContains(attributes_string, 'gen_ai.tool.name') = true) AS tool_call_count,
     uniqIf(multiIf(mapContains(attributes_string, 'gen_ai.tool.name') = true, attributes_string['gen_ai.tool.name'], NULL), mapContains(attributes_string, 'gen_ai.tool.name') = true) AS distinct_tool_count,
@@ -221,7 +251,7 @@ SELECT trace_id,
     sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens,
     coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens') = true, toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)), 0) + coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)), 0) AS total_tokens,
     sum(multiIf(mapContains(attributes_number, '_signoz.gen_ai.total_cost') = true, toFloat64(attributes_number['_signoz.gen_ai.total_cost']), NULL)) AS estimated_cost_usd,
-    maxIf(signoz_traces.distributed_signoz_index_v3.duration_nano, mapContains(attributes_string, 'gen_ai.request.model') = true) AS max_llm_latency_ns,
+    maxIf(duration_nano, mapContains(attributes_string, 'gen_ai.request.model') = true) AS max_llm_latency_ns,
     countIf(has_error = true) AS error_count,
     maxIf(timestamp, (mapContains(attributes_string, 'gen_ai.request.model') = true OR mapContains(attributes_string, 'gen_ai.tool.name') = true OR mapContains(attributes_string, 'gen_ai.agent.name') = true)) AS last_activity_time,
     argMinIf(multiIf(mapContains(attributes_string, 'gen_ai.input.messages') = true, attributes_string['gen_ai.input.messages'], NULL), timestamp, mapContains(attributes_string, 'gen_ai.input.messages') = true) AS input,
@@ -285,10 +315,10 @@ buckets AS (
 SELECT trace_id,
     min(timestamp) AS start_time,
     max(timestamp) AS end_time,
-    (max(toUnixTimestamp64Nano(timestamp) + duration_nano) - min(toUnixTimestamp64Nano(timestamp))) AS duration_nano,
+    (max(toUnixTimestamp64Nano(timestamp) + duration_nano) - min(toUnixTimestamp64Nano(timestamp))) AS trace_duration_nano,
     count() AS span_count,
     anyIf(name, parent_span_id = '') AS root_span_name,
-    any(resource_string_service$$name) AS service.name,
+    any(multiIf(multiIf(resource.service.name IS NOT NULL, resource.service.name::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.service.name IS NOT NULL, resource.service.name::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS service.name,
     countIf(attribute_string_gen_ai$$request$$model_exists = true) AS llm_call_count,
     countIf(mapContains(attributes_string, 'gen_ai.tool.name') = true) AS tool_call_count,
     uniqIf(multiIf(mapContains(attributes_string, 'gen_ai.tool.name') = true, attributes_string['gen_ai.tool.name'], NULL), mapContains(attributes_string, 'gen_ai.tool.name') = true) AS distinct_tool_count,
@@ -296,7 +326,7 @@ SELECT trace_id,
     sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens,
     coalesce(sum(multiIf(attribute_number_gen_ai$$usage$$input_tokens_exists = true, toFloat64(attribute_number_gen_ai$$usage$$input_tokens), NULL)), 0) + coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)), 0) AS total_tokens,
     sum(multiIf(mapContains(attributes_number, '_signoz.gen_ai.total_cost') = true, toFloat64(attributes_number['_signoz.gen_ai.total_cost']), NULL)) AS estimated_cost_usd,
-    maxIf(signoz_traces.distributed_signoz_index_v3.duration_nano, attribute_string_gen_ai$$request$$model_exists = true) AS max_llm_latency_ns,
+    maxIf(duration_nano, attribute_string_gen_ai$$request$$model_exists = true) AS max_llm_latency_ns,
     countIf(has_error = true) AS error_count,
     maxIf(timestamp, (attribute_string_gen_ai$$request$$model_exists = true OR mapContains(attributes_string, 'gen_ai.tool.name') = true OR mapContains(attributes_string, 'gen_ai.agent.name') = true)) AS last_activity_time,
     argMinIf(multiIf(mapContains(attributes_string, 'gen_ai.input.messages') = true, attributes_string['gen_ai.input.messages'], NULL), timestamp, mapContains(attributes_string, 'gen_ai.input.messages') = true) AS input,
@@ -359,10 +389,10 @@ buckets AS (
 SELECT trace_id,
     min(timestamp) AS start_time,
     max(timestamp) AS end_time,
-    (max(toUnixTimestamp64Nano(timestamp) + duration_nano) - min(toUnixTimestamp64Nano(timestamp))) AS duration_nano,
+    (max(toUnixTimestamp64Nano(timestamp) + duration_nano) - min(toUnixTimestamp64Nano(timestamp))) AS trace_duration_nano,
     count() AS span_count,
     anyIf(name, parent_span_id = '') AS root_span_name,
-    any(resource_string_service$$name) AS service.name,
+    any(multiIf(multiIf(resource.service.name IS NOT NULL, resource.service.name::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.service.name IS NOT NULL, resource.service.name::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS service.name,
     countIf(mapContains(attributes_string, 'gen_ai.request.model') = true) AS llm_call_count,
     countIf(mapContains(attributes_string, 'gen_ai.tool.name') = true) AS tool_call_count,
     uniqIf(multiIf(mapContains(attributes_string, 'gen_ai.tool.name') = true, attributes_string['gen_ai.tool.name'], NULL), mapContains(attributes_string, 'gen_ai.tool.name') = true) AS distinct_tool_count,
@@ -370,7 +400,7 @@ SELECT trace_id,
     sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens,
     coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens') = true, toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)), 0) + coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)), 0) AS total_tokens,
     sum(multiIf(mapContains(attributes_number, '_signoz.gen_ai.total_cost') = true, toFloat64(attributes_number['_signoz.gen_ai.total_cost']), NULL)) AS estimated_cost_usd,
-    maxIf(signoz_traces.distributed_signoz_index_v3.duration_nano, mapContains(attributes_string, 'gen_ai.request.model') = true) AS max_llm_latency_ns,
+    maxIf(duration_nano, mapContains(attributes_string, 'gen_ai.request.model') = true) AS max_llm_latency_ns,
     countIf(has_error = true) AS error_count,
     maxIf(timestamp, (mapContains(attributes_string, 'gen_ai.request.model') = true OR mapContains(attributes_string, 'gen_ai.tool.name') = true OR mapContains(attributes_string, 'gen_ai.agent.name') = true)) AS last_activity_time,
     argMinIf(multiIf(mapContains(attributes_string, 'gen_ai.input.messages') = true, attributes_string['gen_ai.input.messages'], NULL), timestamp, mapContains(attributes_string, 'gen_ai.input.messages') = true) AS input,
@@ -429,10 +459,10 @@ buckets AS (
 SELECT trace_id,
     min(timestamp) AS start_time,
     max(timestamp) AS end_time,
-    (max(toUnixTimestamp64Nano(timestamp) + duration_nano) - min(toUnixTimestamp64Nano(timestamp))) AS duration_nano,
+    (max(toUnixTimestamp64Nano(timestamp) + duration_nano) - min(toUnixTimestamp64Nano(timestamp))) AS trace_duration_nano,
     count() AS span_count,
     anyIf(name, parent_span_id = '') AS root_span_name,
-    any(resource_string_service$$name) AS service.name,
+    any(multiIf(multiIf(resource.service.name IS NOT NULL, resource.service.name::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.service.name IS NOT NULL, resource.service.name::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS service.name,
     countIf(mapContains(attributes_string, 'gen_ai.request.model') = true) AS llm_call_count,
     countIf(mapContains(attributes_string, 'gen_ai.tool.name') = true) AS tool_call_count,
     uniqIf(multiIf(mapContains(attributes_string, 'gen_ai.tool.name') = true, attributes_string['gen_ai.tool.name'], NULL), mapContains(attributes_string, 'gen_ai.tool.name') = true) AS distinct_tool_count,
@@ -440,7 +470,7 @@ SELECT trace_id,
     sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens,
     coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens') = true, toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)), 0) + coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)), 0) AS total_tokens,
     sum(multiIf(mapContains(attributes_number, '_signoz.gen_ai.total_cost') = true, toFloat64(attributes_number['_signoz.gen_ai.total_cost']), NULL)) AS estimated_cost_usd,
-    maxIf(signoz_traces.distributed_signoz_index_v3.duration_nano, mapContains(attributes_string, 'gen_ai.request.model') = true) AS max_llm_latency_ns,
+    maxIf(duration_nano, mapContains(attributes_string, 'gen_ai.request.model') = true) AS max_llm_latency_ns,
     countIf(has_error = true) AS error_count,
     maxIf(timestamp, (mapContains(attributes_string, 'gen_ai.request.model') = true OR mapContains(attributes_string, 'gen_ai.tool.name') = true OR mapContains(attributes_string, 'gen_ai.agent.name') = true)) AS last_activity_time,
     argMinIf(multiIf(mapContains(attributes_string, 'gen_ai.input.messages') = true, attributes_string['gen_ai.input.messages'], NULL), timestamp, mapContains(attributes_string, 'gen_ai.input.messages') = true) AS input,
@@ -500,10 +530,10 @@ buckets AS (
 SELECT trace_id,
     min(timestamp) AS start_time,
     max(timestamp) AS end_time,
-    (max(toUnixTimestamp64Nano(timestamp) + duration_nano) - min(toUnixTimestamp64Nano(timestamp))) AS duration_nano,
+    (max(toUnixTimestamp64Nano(timestamp) + duration_nano) - min(toUnixTimestamp64Nano(timestamp))) AS trace_duration_nano,
     count() AS span_count,
     anyIf(name, parent_span_id = '') AS root_span_name,
-    any(resource_string_service$$name) AS service.name,
+    any(multiIf(multiIf(resource.service.name IS NOT NULL, resource.service.name::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.service.name IS NOT NULL, resource.service.name::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS service.name,
     countIf(mapContains(attributes_string, 'gen_ai.request.model') = true) AS llm_call_count,
     countIf(mapContains(attributes_string, 'gen_ai.tool.name') = true) AS tool_call_count,
     uniqIf(multiIf(mapContains(attributes_string, 'gen_ai.tool.name') = true, attributes_string['gen_ai.tool.name'], NULL), mapContains(attributes_string, 'gen_ai.tool.name') = true) AS distinct_tool_count,
@@ -511,7 +541,7 @@ SELECT trace_id,
     sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens,
     coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens') = true, toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)), 0) + coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)), 0) AS total_tokens,
     sum(multiIf(mapContains(attributes_number, '_signoz.gen_ai.total_cost') = true, toFloat64(attributes_number['_signoz.gen_ai.total_cost']), NULL)) AS estimated_cost_usd,
-    maxIf(signoz_traces.distributed_signoz_index_v3.duration_nano, mapContains(attributes_string, 'gen_ai.request.model') = true) AS max_llm_latency_ns,
+    maxIf(duration_nano, mapContains(attributes_string, 'gen_ai.request.model') = true) AS max_llm_latency_ns,
     countIf(has_error = true) AS error_count,
     maxIf(timestamp, (mapContains(attributes_string, 'gen_ai.request.model') = true OR mapContains(attributes_string, 'gen_ai.tool.name') = true OR mapContains(attributes_string, 'gen_ai.agent.name') = true)) AS last_activity_time,
     argMinIf(multiIf(mapContains(attributes_string, 'gen_ai.input.messages') = true, attributes_string['gen_ai.input.messages'], NULL), timestamp, mapContains(attributes_string, 'gen_ai.input.messages') = true) AS input,
@@ -531,14 +561,7 @@ SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000
 // predicate (skipResourceFilter), so here there is no span-level existence check — the
 // prune stays the gate mask and the whole match is scoped to the resource fingerprints.
 func TestBuild_FullSQL_TraceList_ResourceFilter(t *testing.T) {
-	keys := otelKeysMap()
-	keys["service.name"] = []*telemetrytypes.TelemetryFieldKey{{
-		Name:          "service.name",
-		Signal:        telemetrytypes.SignalTraces,
-		FieldContext:  telemetrytypes.FieldContextResource,
-		FieldDataType: telemetrytypes.FieldDataTypeString,
-	}}
-	b := newTestBuilderWithKeys(t, keys)
+	b := newTestBuilder(t)
 	stmt, err := b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace,
 		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 			Signal: telemetrytypes.SignalTraces, Source: telemetrytypes.SourceAI,
@@ -586,10 +609,10 @@ buckets AS (
 SELECT trace_id,
     min(timestamp) AS start_time,
     max(timestamp) AS end_time,
-    (max(toUnixTimestamp64Nano(timestamp) + duration_nano) - min(toUnixTimestamp64Nano(timestamp))) AS duration_nano,
+    (max(toUnixTimestamp64Nano(timestamp) + duration_nano) - min(toUnixTimestamp64Nano(timestamp))) AS trace_duration_nano,
     count() AS span_count,
     anyIf(name, parent_span_id = '') AS root_span_name,
-    any(resource_string_service$$name) AS service.name,
+    any(multiIf(multiIf(resource.service.name IS NOT NULL, resource.service.name::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.service.name IS NOT NULL, resource.service.name::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS service.name,
     countIf(mapContains(attributes_string, 'gen_ai.request.model') = true) AS llm_call_count,
     countIf(mapContains(attributes_string, 'gen_ai.tool.name') = true) AS tool_call_count,
     uniqIf(multiIf(mapContains(attributes_string, 'gen_ai.tool.name') = true, attributes_string['gen_ai.tool.name'], NULL), mapContains(attributes_string, 'gen_ai.tool.name') = true) AS distinct_tool_count,
@@ -597,7 +620,7 @@ SELECT trace_id,
     sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens,
     coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens') = true, toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)), 0) + coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)), 0) AS total_tokens,
     sum(multiIf(mapContains(attributes_number, '_signoz.gen_ai.total_cost') = true, toFloat64(attributes_number['_signoz.gen_ai.total_cost']), NULL)) AS estimated_cost_usd,
-    maxIf(signoz_traces.distributed_signoz_index_v3.duration_nano, mapContains(attributes_string, 'gen_ai.request.model') = true) AS max_llm_latency_ns,
+    maxIf(duration_nano, mapContains(attributes_string, 'gen_ai.request.model') = true) AS max_llm_latency_ns,
     countIf(has_error = true) AS error_count,
     maxIf(timestamp, (mapContains(attributes_string, 'gen_ai.request.model') = true OR mapContains(attributes_string, 'gen_ai.tool.name') = true OR mapContains(attributes_string, 'gen_ai.agent.name') = true)) AS last_activity_time,
     argMinIf(multiIf(mapContains(attributes_string, 'gen_ai.input.messages') = true, attributes_string['gen_ai.input.messages'], NULL), timestamp, mapContains(attributes_string, 'gen_ai.input.messages') = true) AS input,
@@ -664,10 +687,10 @@ buckets AS (
 SELECT trace_id,
     min(timestamp) AS start_time,
     max(timestamp) AS end_time,
-    (max(toUnixTimestamp64Nano(timestamp) + duration_nano) - min(toUnixTimestamp64Nano(timestamp))) AS duration_nano,
+    (max(toUnixTimestamp64Nano(timestamp) + duration_nano) - min(toUnixTimestamp64Nano(timestamp))) AS trace_duration_nano,
     count() AS span_count,
     anyIf(name, parent_span_id = '') AS root_span_name,
-    any(resource_string_service$$name) AS service.name,
+    any(multiIf(multiIf(resource.service.name IS NOT NULL, resource.service.name::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.service.name IS NOT NULL, resource.service.name::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS service.name,
     countIf(mapContains(attributes_string, 'gen_ai.request.model') = true) AS llm_call_count,
     countIf(mapContains(attributes_string, 'gen_ai.tool.name') = true) AS tool_call_count,
     uniqIf(multiIf(mapContains(attributes_string, 'gen_ai.tool.name') = true, attributes_string['gen_ai.tool.name'], NULL), mapContains(attributes_string, 'gen_ai.tool.name') = true) AS distinct_tool_count,
@@ -675,7 +698,7 @@ SELECT trace_id,
     sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens,
     coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens') = true, toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)), 0) + coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens') = true, toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)), 0) AS total_tokens,
     sum(multiIf(mapContains(attributes_number, '_signoz.gen_ai.total_cost') = true, toFloat64(attributes_number['_signoz.gen_ai.total_cost']), NULL)) AS estimated_cost_usd,
-    maxIf(signoz_traces.distributed_signoz_index_v3.duration_nano, mapContains(attributes_string, 'gen_ai.request.model') = true) AS max_llm_latency_ns,
+    maxIf(duration_nano, mapContains(attributes_string, 'gen_ai.request.model') = true) AS max_llm_latency_ns,
     countIf(has_error = true) AS error_count,
     maxIf(timestamp, (mapContains(attributes_string, 'gen_ai.request.model') = true OR mapContains(attributes_string, 'gen_ai.tool.name') = true OR mapContains(attributes_string, 'gen_ai.agent.name') = true)) AS last_activity_time,
     argMinIf(multiIf(mapContains(attributes_string, 'gen_ai.input.messages') = true, attributes_string['gen_ai.input.messages'], NULL), timestamp, mapContains(attributes_string, 'gen_ai.input.messages') = true) AS input,
@@ -731,24 +754,12 @@ LIMIT 10
 // Behavior / branch tests not covered by the goldens above
 // ---------------------------------------------------------------------------
 
-// resourceKeysMap returns the gen_ai keys plus a resource-context service.name key so
-// resource.* filters route into the fingerprint CTE.
-func resourceKeysMap() map[string][]*telemetrytypes.TelemetryFieldKey {
-	keys := otelKeysMap()
-	keys["service.name"] = []*telemetrytypes.TelemetryFieldKey{{
-		Name:          "service.name",
-		Signal:        telemetrytypes.SignalTraces,
-		FieldContext:  telemetrytypes.FieldContextResource,
-		FieldDataType: telemetrytypes.FieldDataTypeString,
-	}}
-	return keys
-}
-
 // A filter mixing a resource attribute with a span-level and an aggregate condition:
 // the resource key routes into __resource_filter (fingerprint prune), the span key stays
 // as a countIf existence check, and the aggregate becomes a HAVING — all AND-combined.
+// service.name (resource context) comes from otelKeysMap.
 func TestBuild_TraceList_ResourcePlusSpanPlusAggregateFilter(t *testing.T) {
-	b := newTestBuilderWithKeys(t, resourceKeysMap())
+	b := newTestBuilder(t)
 	stmt, err := b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace,
 		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 			Signal: telemetrytypes.SignalTraces, Source: telemetrytypes.SourceAI,
@@ -758,10 +769,11 @@ func TestBuild_TraceList_ResourcePlusSpanPlusAggregateFilter(t *testing.T) {
 	require.NoError(t, err)
 
 	got := renderSQL(t, stmt)
-	// resource condition -> fingerprint CTE + prune, not applied on the span index.
+	// resource condition -> fingerprint CTE + prune, not filtered on the span index
+	// (the service.name output column still reads the resource map, hence the = form).
 	require.Contains(t, got, "__resource_filter AS (")
 	require.Contains(t, got, "resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)")
-	require.NotContains(t, got, "resources_string['service.name']")
+	require.NotContains(t, got, "resources_string['service.name'] = 'checkout'")
 	// span condition -> existence check in matched HAVING.
 	require.Contains(t, got, "countIf(has_error = true) > 0")
 	// aggregate condition -> HAVING on the matched aggregate alias.
@@ -785,8 +797,8 @@ func TestBuild_TraceList_TraceOrSpanMixRejected(t *testing.T) {
 	require.Contains(t, err.Error(), "cannot be combined")
 }
 
-// An output-only aggregate (span_count / duration_nano) can be displayed but not used
-// in the aggregate filter or ORDER BY — it is not computable in the matched pass.
+// An output-only aggregate (span_count / trace_duration_nano) can be displayed but not
+// used in the aggregate filter or ORDER BY — it is not computable in the matched pass.
 func TestBuild_TraceList_OutputOnlyAggregateRejected(t *testing.T) {
 	b := newTestBuilder(t)
 
@@ -799,14 +811,39 @@ func TestBuild_TraceList_OutputOnlyAggregateRejected(t *testing.T) {
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "span_count")
 
-	// order by duration_nano -> rejected
+	// order by trace_duration_nano -> rejected
 	_, err = b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace,
 		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 			Signal: telemetrytypes.SignalTraces, Source: telemetrytypes.SourceAI,
-			Order: []qbtypes.OrderBy{{Key: qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "duration_nano"}}, Direction: qbtypes.OrderDirectionDesc}},
+			Order: []qbtypes.OrderBy{{Key: qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "trace_duration_nano"}}, Direction: qbtypes.OrderDirectionDesc}},
 		}, nil)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "unsupported order key")
+}
+
+// duration_nano no longer names an aggregate (the trace column is trace_duration_nano),
+// so a bare filter on it is span-level like everywhere else in the product: the trace
+// matches when any span exceeds the duration.
+func TestBuild_TraceList_SpanDurationFilterIsSpanLevel(t *testing.T) {
+	keys := otelKeysMap()
+	keys["duration_nano"] = []*telemetrytypes.TelemetryFieldKey{{
+		Name:          "duration_nano",
+		Signal:        telemetrytypes.SignalTraces,
+		FieldContext:  telemetrytypes.FieldContextSpan,
+		FieldDataType: telemetrytypes.FieldDataTypeNumber,
+	}}
+	b := newTestBuilderWithKeys(t, keys)
+	stmt, err := b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace,
+		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+			Signal: telemetrytypes.SignalTraces, Source: telemetrytypes.SourceAI,
+			Filter: &qbtypes.Filter{Expression: "duration_nano > 1000000"},
+			Limit:  10,
+		}, nil)
+	require.NoError(t, err)
+
+	got := renderSQL(t, stmt)
+	require.Contains(t, got, "countIf(duration_nano > 1e+06) > 0")
+	require.NotContains(t, got, "HAVING trace_duration_nano")
 }
 
 // A HAVING referencing a non-aggregate column is rejected.
@@ -886,31 +923,33 @@ func TestBuild_TraceList_MultiVariantGateKey(t *testing.T) {
 	require.Contains(t, got, "mapContains(attributes_string, 'gen_ai.tool.name') = true OR mapContains(attributes_number, 'gen_ai.tool.name') = true")
 }
 
-// `tracefield.` is the explicit trace field context, so in a filter it marks a
-// trace-level aggregate exactly like the user-facing `trace.` prefix — same statement,
-// and the same targeted rejection for a non-filterable aggregate. (Filter and Having
-// accept the same forms; the splitter used to misroute tracefield. as span-level.)
-func TestBuild_TraceList_TracefieldPrefixMatchesTracePrefix(t *testing.T) {
+// `trace.` parses as the trace field context and marks a trace-level aggregate; the
+// legacy `tracefield.` spelling is explicitly rejected (filter and having alike), and
+// an output-only aggregate under the context gets the targeted rejection rather than
+// an unknown-span-field failure.
+func TestBuild_TraceList_TraceContextPrefix(t *testing.T) {
 	b := newTestBuilder(t)
-	build := func(expr string) (*qbtypes.Statement, error) {
-		return b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace,
-			qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
-				Signal: telemetrytypes.SignalTraces, Source: telemetrytypes.SourceAI,
-				Filter: &qbtypes.Filter{Expression: expr},
-				Limit:  20,
-			}, nil)
+	build := func(q qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) (*qbtypes.Statement, error) {
+		q.Signal, q.Source, q.Limit = telemetrytypes.SignalTraces, telemetrytypes.SourceAI, 20
+		return b.Build(context.Background(), testStartMs, testEndMs, qbtypes.RequestTypeTrace, q, nil)
 	}
 
-	viaTrace, err := build("trace.output_tokens > 1000")
+	_, err := build(qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+		Filter: &qbtypes.Filter{Expression: "trace.output_tokens > 1000"}})
 	require.NoError(t, err)
-	viaTracefield, err := build("tracefield.output_tokens > 1000")
-	require.NoError(t, err)
-	require.Equal(t, viaTrace.Query, viaTracefield.Query)
-	require.Equal(t, viaTrace.Args, viaTracefield.Args)
 
-	// output-only aggregate under tracefield. gets the aggregate rejection, not an
-	// unknown-span-field failure.
-	_, err = build("tracefield.span_count > 3")
+	_, err = build(qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+		Filter: &qbtypes.Filter{Expression: "tracefield.output_tokens > 1000"}})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), `use the "trace." prefix`)
+
+	_, err = build(qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+		Having: &qbtypes.Having{Expression: "tracefield.output_tokens > 1000"}})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), `use the "trace." prefix`)
+
+	_, err = build(qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+		Filter: &qbtypes.Filter{Expression: "trace.span_count > 3"}})
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "cannot be used")
 }

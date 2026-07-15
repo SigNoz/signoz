@@ -1,0 +1,106 @@
+package telemetryscopedtraces
+
+import (
+	"context"
+	"strings"
+
+	"github.com/SigNoz/signoz/pkg/querybuilder"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/huandu/go-sqlbuilder"
+)
+
+// CommonTraceColumns are domain-neutral columns any trace list can reuse. All
+// aggregate over every span, so none is Orderable.
+func CommonTraceColumns() []TraceColumn {
+	ts := IntrinsicSpanKey("timestamp")
+	duration := IntrinsicSpanKey("duration_nano")
+	name := IntrinsicSpanKey("name")
+	parentSpanID := IntrinsicSpanKey("parent_span_id")
+	serviceName := &telemetrytypes.TelemetryFieldKey{
+		Name:          "service.name",
+		Signal:        telemetrytypes.SignalTraces,
+		FieldContext:  telemetrytypes.FieldContextResource,
+		FieldDataType: telemetrytypes.FieldDataTypeString,
+	}
+	return []TraceColumn{
+		{Alias: "start_time", Expr: FieldReduce(AggMin, ts)},
+		{Alias: "end_time", Expr: FieldReduce(AggMax, ts)},
+		// Not plain "duration_nano": that name is the intrinsic span field, and an
+		// alias would shadow it — both in ClickHouse identifier resolution and in
+		// bare-name filter classification.
+		{Alias: "trace_duration_nano", Expr: TraceDuration(ts, duration)},
+		{Alias: "span_count", Expr: CountAll()},
+		{Alias: "root_span_name", Expr: FieldAnyWhere(name, parentSpanID, qbtypes.FilterOperatorEqual, "")},
+		{Alias: "service.name", SpanLevel: true, Expr: AnyValue(serviceName, telemetrytypes.FieldDataTypeString)},
+	}
+}
+
+// fieldMapper resolves aggregate-column SQL through the shared field mapper and
+// condition builder, following their method shapes (FieldFor / ConditionFor / …) so
+// column resolution reads like the other statement builders. keys is the fetched
+// metadata for the keys the columns reference; the gate mask is set by the builder
+// after resolveMask (Scoped* aggregates embed it). All returned expressions are
+// escaped once, ready to embed in an outer builder.
+type fieldMapper struct {
+	fm       qbtypes.FieldMapper
+	cb       qbtypes.ConditionBuilder
+	keys     map[string][]*telemetrytypes.TelemetryFieldKey
+	maskExpr string
+	maskArgs []any
+}
+
+func newFieldMapper(fm qbtypes.FieldMapper, cb qbtypes.ConditionBuilder, keys map[string][]*telemetrytypes.TelemetryFieldKey) *fieldMapper {
+	return &fieldMapper{fm: fm, cb: cb, keys: keys}
+}
+
+// FieldFor returns the column expression for key via the field mapper.
+func (r *fieldMapper) FieldFor(ctx context.Context, startNs, endNs uint64, key *telemetrytypes.TelemetryFieldKey) (string, error) {
+	expr, err := r.fm.FieldFor(ctx, startNs, endNs, key)
+	if err != nil {
+		return "", err
+	}
+	return sqlbuilder.Escape(expr), nil
+}
+
+// ConditionFor returns a boolean predicate for key via the condition builder
+// (materialized column when present, else map access).
+func (r *fieldMapper) ConditionFor(ctx context.Context, startNs, endNs uint64, key *telemetrytypes.TelemetryFieldKey, op qbtypes.FilterOperator, value any) (string, []any, error) {
+	resolvedKey := key
+	cands := r.keys[key.Name]
+	if len(cands) == 0 {
+		cands = []*telemetrytypes.TelemetryFieldKey{key}
+	} else {
+		resolvedKey = cands[0]
+	}
+	sb := sqlbuilder.NewSelectBuilder()
+	conds, _, err := r.cb.ConditionFor(ctx, startNs, endNs, resolvedKey, cands, op, value, sb)
+	if err != nil {
+		return "", nil, err
+	}
+	// One condition per candidate variant (a key can be ingested under several data
+	// types); OR them all, like the visitor does for EXISTS.
+	if len(conds) == 1 {
+		sb.Where(conds[0])
+	} else {
+		sb.Where(sb.Or(conds...))
+	}
+	expr, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	expr = strings.TrimPrefix(expr, "WHERE ")
+	return sqlbuilder.Escape(expr), args, nil
+}
+
+// ExistsFor returns the EXISTS predicate for key.
+func (r *fieldMapper) ExistsFor(ctx context.Context, startNs, endNs uint64, key *telemetrytypes.TelemetryFieldKey) (string, []any, error) {
+	return r.ConditionFor(ctx, startNs, endNs, key, qbtypes.FilterOperatorExists, nil)
+}
+
+// ValueFor returns the value expression for an attribute key. The metadata variant
+// is preferred because it carries Materialized — a provider's static definition
+// never does, so a promoted attribute would otherwise fall back to map access.
+func (r *fieldMapper) ValueFor(ctx context.Context, startNs, endNs uint64, key *telemetrytypes.TelemetryFieldKey, dt telemetrytypes.FieldDataType) (string, []any, error) {
+	if cands := r.keys[key.Name]; len(cands) > 0 {
+		key = cands[0]
+	}
+	return querybuilder.CollisionHandledFinalExpr(ctx, startNs, endNs, key, r.fm, r.cb, r.keys, dt, nil, false)
+}
