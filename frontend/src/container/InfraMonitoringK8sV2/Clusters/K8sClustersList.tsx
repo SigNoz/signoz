@@ -14,7 +14,9 @@ import { InfraMonitoringEntity } from '../constants';
 import {
 	clusterWidgetInfo,
 	getClusterMetricsQueryPayload,
+	k8sClusterDetailsCountsConfig,
 	k8sClusterDetailsMetadataConfig,
+	k8sClusterGetCountsFilterExpression,
 	k8sClusterGetEntityName,
 	k8sClusterGetSelectedItemExpression,
 	k8sClusterInitialEventsExpression,
@@ -136,6 +138,8 @@ function K8sClustersList({
 				getInitialLogTracesExpression={k8sClusterInitialLogTracesExpression}
 				getInitialEventsExpression={k8sClusterInitialEventsExpression}
 				metadataConfig={k8sClusterDetailsMetadataConfig}
+				countsConfig={k8sClusterDetailsCountsConfig}
+				getCountsFilterExpression={k8sClusterGetCountsFilterExpression}
 				entityWidgetInfo={clusterWidgetInfo}
 				getEntityQueryPayload={getClusterMetricsQueryPayload}
 				queryKeyPrefix="cluster"

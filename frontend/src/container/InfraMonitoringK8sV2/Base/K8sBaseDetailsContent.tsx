@@ -40,6 +40,7 @@ import {
 	useInfraMonitoringView,
 } from '../hooks';
 
+import { EntityCountsSection } from './components/EntityCountsSection/EntityCountsSection';
 import { K8sBaseDetailsContentProps } from './types';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -48,6 +49,10 @@ export default function K8sBaseDetailsContent<T>({
 	category,
 	eventCategory,
 	metadataConfig,
+	countsConfig,
+	getCountsFilterExpression,
+	selectedItem,
+	handleClose,
 	entityWidgetInfo,
 	getEntityQueryPayload,
 	queryKeyPrefix,
@@ -206,6 +211,19 @@ export default function K8sBaseDetailsContent<T>({
 						})}
 					</div>
 				</div>
+
+				{countsConfig &&
+					countsConfig.length > 0 &&
+					selectedItem &&
+					getCountsFilterExpression && (
+						<EntityCountsSection
+							entity={entity}
+							countsConfig={countsConfig}
+							selectedItem={selectedItem}
+							filterExpression={getCountsFilterExpression(entity)}
+							closeDrawer={handleClose}
+						/>
+					)}
 			</div>
 
 			{!hideDetailViewTabs && (

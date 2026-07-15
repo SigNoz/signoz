@@ -8,6 +8,7 @@ import (
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 )
 
@@ -36,6 +37,12 @@ var (
 )
 
 type fieldMapper struct{}
+
+// CandidateKeys returns nil: metrics has no attribute-map fallback, so a context-missing
+// key stays unresolved and the caller errors.
+func (m *fieldMapper) CandidateKeys(_ context.Context, _ valuer.UUID, _ *telemetrytypes.TelemetryFieldKey, _ any, _ map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.TelemetryFieldKey {
+	return nil
+}
 
 func NewFieldMapper() qbtypes.FieldMapper {
 	return &fieldMapper{}
@@ -92,6 +99,7 @@ func (m *fieldMapper) ColumnFor(ctx context.Context, tsStart, tsEnd uint64, key 
 
 func (m *fieldMapper) ColumnExpressionFor(
 	ctx context.Context,
+	_ valuer.UUID,
 	startNs, endNs uint64,
 	field *telemetrytypes.TelemetryFieldKey,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,

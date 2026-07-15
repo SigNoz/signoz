@@ -25,6 +25,7 @@ import '../EntityDetailsUtils/entityDetails.styles.scss';
 
 export type {
 	K8sBaseDetailsProps,
+	K8sDetailsCountConfig,
 	K8sDetailsFilters,
 	K8sDetailsMetadataConfig,
 } from './types';
@@ -38,6 +39,8 @@ export default function K8sBaseDetails<T>({
 	getInitialLogTracesExpression,
 	getInitialEventsExpression,
 	metadataConfig,
+	countsConfig,
+	getCountsFilterExpression,
 	entityWidgetInfo,
 	getEntityQueryPayload,
 	queryKeyPrefix,
@@ -181,6 +184,10 @@ export default function K8sBaseDetails<T>({
 						category={category}
 						eventCategory={eventCategory}
 						metadataConfig={metadataConfig}
+						countsConfig={countsConfig}
+						getCountsFilterExpression={getCountsFilterExpression}
+						selectedItem={selectedItem}
+						handleClose={handleClose}
 						entityWidgetInfo={entityWidgetInfo}
 						getEntityQueryPayload={getEntityQueryPayload}
 						queryKeyPrefix={queryKeyPrefix}

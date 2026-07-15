@@ -5,8 +5,11 @@ import {
 } from 'container/TopNav/DateTimeSelectionV2/types';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 
+import { EntityCountConfig } from './components/EntityCountsSection/EntityCountsSection';
 import { InfraMonitoringEntity } from '../constants';
 import { SelectedItemParams } from '../hooks';
+
+export type K8sDetailsCountConfig<T> = EntityCountConfig<T>;
 
 export type K8sBaseFilters = {
 	filter: {
@@ -107,6 +110,8 @@ export interface K8sBaseDetailsProps<T> {
 	getInitialLogTracesExpression: (entity: T) => string;
 	getInitialEventsExpression: (entity: T) => string;
 	metadataConfig: K8sDetailsMetadataConfig<T>[];
+	countsConfig?: K8sDetailsCountConfig<T>[];
+	getCountsFilterExpression?: (entity: T) => string;
 	entityWidgetInfo: K8sDetailsWidgetInfo[];
 	getEntityQueryPayload: GetEntityQueryPayload<T>;
 	queryKeyPrefix: string;
@@ -121,6 +126,10 @@ export interface K8sBaseDetailsContentProps<T> {
 	category: InfraMonitoringEntity;
 	eventCategory: string;
 	metadataConfig: K8sDetailsMetadataConfig<T>[];
+	countsConfig?: K8sDetailsCountConfig<T>[];
+	getCountsFilterExpression?: (entity: T) => string;
+	selectedItem: string | null;
+	handleClose: () => void;
 	entityWidgetInfo: K8sDetailsWidgetInfo[];
 	getEntityQueryPayload: GetEntityQueryPayload<T>;
 	queryKeyPrefix: string;
