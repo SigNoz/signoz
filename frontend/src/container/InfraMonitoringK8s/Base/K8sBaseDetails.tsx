@@ -28,6 +28,10 @@ import {
 	Time,
 } from 'container/TopNav/DateTimeSelectionV2/types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import {
+	applySerializedParams,
+	serialize,
+} from 'lib/compositeQuery/serializer';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import GetMinMax from 'lib/getMinMax';
 import {
@@ -403,7 +407,7 @@ export default function K8sBaseDetails<T>({
 				},
 			};
 
-			urlQuery.set('compositeQuery', JSON.stringify(compositeQuery));
+			applySerializedParams(serialize(compositeQuery as any), urlQuery);
 
 			openInNewTab(`${ROUTES.LOGS_EXPLORER}?${urlQuery.toString()}`);
 		} else if (selectedView === VIEW_TYPES.TRACES) {
@@ -428,7 +432,7 @@ export default function K8sBaseDetails<T>({
 				},
 			};
 
-			urlQuery.set('compositeQuery', JSON.stringify(compositeQuery));
+			applySerializedParams(serialize(compositeQuery as any), urlQuery);
 
 			openInNewTab(`${ROUTES.TRACES_EXPLORER}?${urlQuery.toString()}`);
 		}
