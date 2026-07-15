@@ -11,6 +11,7 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/require"
 )
 
@@ -127,7 +128,7 @@ func TestReducedStatementBuilder(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			got, err := sb.Build(context.Background(), start, end, qbtypes.RequestTypeTimeSeries, c.query, nil)
+			got, err := sb.Build(context.Background(), valuer.UUID{}, start, end, qbtypes.RequestTypeTimeSeries, c.query, nil)
 			require.NoError(t, err)
 			require.Equal(t, c.expected.Query, got.Query)
 			require.Equal(t, c.expected.Args, got.Args)
@@ -137,7 +138,7 @@ func TestReducedStatementBuilder(t *testing.T) {
 	t.Run("buffer_recent_window", func(t *testing.T) {
 		now := time.Now().UnixMilli()
 		q := reducedQuery("test.metric", metrictypes.GaugeType, metrictypes.Unspecified, metrictypes.TimeAggregationLatest, metrictypes.SpaceAggregationSum)
-		got, err := sb.Build(context.Background(), uint64(now-2*time.Hour.Milliseconds()), uint64(now), qbtypes.RequestTypeTimeSeries, q, nil)
+		got, err := sb.Build(context.Background(), valuer.UUID{}, uint64(now-2*time.Hour.Milliseconds()), uint64(now), qbtypes.RequestTypeTimeSeries, q, nil)
 		require.NoError(t, err)
 		require.Contains(t, got.Query, "signoz_metrics.distributed_samples_v4_buffer")
 		require.Contains(t, got.Query, "signoz_metrics.time_series_v4_buffer")
@@ -148,7 +149,7 @@ func TestReducedStatementBuilder(t *testing.T) {
 	t.Run("not_reduced", func(t *testing.T) {
 		q := reducedQuery("test.metric", metrictypes.GaugeType, metrictypes.Unspecified, metrictypes.TimeAggregationLatest, metrictypes.SpaceAggregationSum)
 		q.Aggregations[0].Reduced = false
-		got, err := sb.Build(context.Background(), start, end, qbtypes.RequestTypeTimeSeries, q, nil)
+		got, err := sb.Build(context.Background(), valuer.UUID{}, start, end, qbtypes.RequestTypeTimeSeries, q, nil)
 		require.NoError(t, err)
 		require.NotContains(t, got.Query, "UNION ALL")
 		require.NotContains(t, got.Query, "reduced")

@@ -1,15 +1,20 @@
 import { useCallback } from 'react';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { listDaemonSets } from 'api/generated/services/inframonitoring';
+import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import { AxiosError } from 'axios';
 import {
 	InframonitoringtypesDaemonSetRecordDTO,
 	InframonitoringtypesResponseTypeDTO,
 	Querybuildertypesv5OrderDirectionDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { InfraMonitoringEvents } from 'constants/events';
+import APIError from 'types/api/error';
 import K8sBaseDetails, { K8sDetailsFilters } from '../Base/K8sBaseDetails';
 import { K8sBaseList } from '../Base/K8sBaseList';
 import { K8sBaseFilters } from '../Base/types';
 import { InfraMonitoringEntity } from '../constants';
+import { SelectedItemParams } from '../hooks';
 import {
 	daemonSetWidgetInfo,
 	getDaemonSetMetricsQueryPayload,
@@ -64,13 +69,12 @@ function K8sDaemonSetsList({
 					warning: data.warning,
 				};
 			} catch (error) {
-				const errMsg =
-					error instanceof Error ? error.message : 'Failed to fetch daemonsets';
 				return {
 					type: 'list' as const,
 					records: [] as InframonitoringtypesDaemonSetRecordDTO[],
 					total: 0,
-					error: errMsg,
+					error:
+						convertToApiError(error as AxiosError<RenderErrorResponseDTO>) ?? null,
 				};
 			}
 		},
@@ -82,7 +86,7 @@ function K8sDaemonSetsList({
 			signal?: AbortSignal,
 		): Promise<{
 			data: InframonitoringtypesDaemonSetRecordDTO | null;
-			error?: string | null;
+			error?: APIError | null;
 		}> => {
 			try {
 				const response = await listDaemonSets(
@@ -99,11 +103,10 @@ function K8sDaemonSetsList({
 					data: response.data.records.length > 0 ? response.data.records[0] : null,
 				};
 			} catch (error) {
-				const errMsg =
-					error instanceof Error ? error.message : 'Failed to fetch daemonset';
 				return {
 					data: null,
-					error: errMsg,
+					error:
+						convertToApiError(error as AxiosError<RenderErrorResponseDTO>) ?? null,
 				};
 			}
 		},
@@ -111,7 +114,7 @@ function K8sDaemonSetsList({
 	);
 	return (
 		<>
-			<K8sBaseList<InframonitoringtypesDaemonSetRecordDTO>
+			<K8sBaseList<InframonitoringtypesDaemonSetRecordDTO, SelectedItemParams>
 				controlListPrefix={controlListPrefix}
 				entity={InfraMonitoringEntity.DAEMONSETS}
 				tableColumns={k8sDaemonSetsColumnsConfig}

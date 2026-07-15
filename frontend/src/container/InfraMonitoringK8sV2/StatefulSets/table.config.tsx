@@ -6,6 +6,7 @@ import { ExpandButtonWrapper } from 'container/InfraMonitoringK8sV2/components';
 import ColumnHeader from '../Base/ColumnHeader';
 import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
+import { SelectedItemParams } from '../hooks';
 import { formatBytes, getPodPhaseStatusItems } from '../commonUtils';
 import {
 	CellValueTooltip,
@@ -31,10 +32,15 @@ export function getK8sStatefulSetRowKey(
 
 export function getK8sStatefulSetItemKey(
 	statefulSet: InframonitoringtypesStatefulSetRecordDTO,
-): string {
-	return (
-		statefulSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME] || ''
-	);
+): SelectedItemParams {
+	return {
+		selectedItem:
+			statefulSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME] ?? null,
+		clusterName:
+			statefulSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] ?? null,
+		namespaceName:
+			statefulSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ?? null,
+	};
 }
 
 export const k8sStatefulSetsColumnsConfig: TableColumnDef<InframonitoringtypesStatefulSetRecordDTO>[] =
@@ -135,10 +141,10 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<InframonitoringtypesSt
 			},
 		},
 		{
-			id: 'pod_status',
+			id: 'pod_replicas',
 			header: (): React.ReactNode => (
-				<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/statefulsets#pod-status">
-					Pod Status
+				<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/statefulsets#pod-replicas">
+					Pod Replicas
 				</ColumnHeader>
 			),
 			accessorFn: (row): number => row.currentPods,

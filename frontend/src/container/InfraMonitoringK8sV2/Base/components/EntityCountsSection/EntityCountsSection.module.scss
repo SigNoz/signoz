@@ -1,0 +1,41 @@
+.countsContainer {
+	display: flex;
+	gap: var(--spacing-6);
+	margin-top: var(--spacing-8);
+	flex-wrap: wrap;
+}
+
+.countCard {
+	position: relative;
+	flex: 1;
+	min-width: 120px;
+	max-width: 180px;
+	border: 1px solid var(--l3-border);
+	border-radius: 4px;
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-2);
+	padding: var(--spacing-6);
+}
+
+.countLabel {
+	color: var(--l2-foreground);
+	letter-spacing: var(--letter-spacing-wide);
+	text-transform: uppercase;
+}
+
+.countValue {
+	color: var(--l1-foreground);
+	font-family: var(--periscope-font-family-mono);
+	font-size: var(--font-size-xl);
+}
+
+.navigateButton {
+	position: absolute;
+	top: var(--spacing-4);
+	right: var(--spacing-4);
+
+	--button-padding: var(--spacing-1);
+	--button-height: 24px;
+	--button-width: 24px;
+}

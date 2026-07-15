@@ -1,16 +1,21 @@
 import { useCallback } from 'react';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { listJobs } from 'api/generated/services/inframonitoring';
+import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import { AxiosError } from 'axios';
 import {
 	InframonitoringtypesJobRecordDTO,
 	InframonitoringtypesResponseTypeDTO,
 	Querybuildertypesv5OrderDirectionDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { InfraMonitoringEvents } from 'constants/events';
+import APIError from 'types/api/error';
 
 import K8sBaseDetails, { K8sDetailsFilters } from '../Base/K8sBaseDetails';
 import { K8sBaseList } from '../Base/K8sBaseList';
 import { K8sBaseFilters } from '../Base/types';
 import { InfraMonitoringEntity } from '../constants';
+import { SelectedItemParams } from '../hooks';
 import {
 	getJobMetricsQueryPayload,
 	jobWidgetInfo,
@@ -67,13 +72,12 @@ function K8sJobsList({
 					warning: data.warning,
 				};
 			} catch (error) {
-				const errMsg =
-					error instanceof Error ? error.message : 'Failed to fetch jobs';
 				return {
 					type: 'list' as const,
 					records: [] as InframonitoringtypesJobRecordDTO[],
 					total: 0,
-					error: errMsg,
+					error:
+						convertToApiError(error as AxiosError<RenderErrorResponseDTO>) ?? null,
 				};
 			}
 		},
@@ -86,7 +90,7 @@ function K8sJobsList({
 			signal?: AbortSignal,
 		): Promise<{
 			data: InframonitoringtypesJobRecordDTO | null;
-			error?: string | null;
+			error?: APIError | null;
 		}> => {
 			try {
 				const response = await listJobs(
@@ -104,11 +108,10 @@ function K8sJobsList({
 					data: response.data.records.length > 0 ? response.data.records[0] : null,
 				};
 			} catch (error) {
-				const errMsg =
-					error instanceof Error ? error.message : 'Failed to fetch job';
 				return {
 					data: null,
-					error: errMsg,
+					error:
+						convertToApiError(error as AxiosError<RenderErrorResponseDTO>) ?? null,
 				};
 			}
 		},
@@ -117,7 +120,7 @@ function K8sJobsList({
 
 	return (
 		<>
-			<K8sBaseList<InframonitoringtypesJobRecordDTO>
+			<K8sBaseList<InframonitoringtypesJobRecordDTO, SelectedItemParams>
 				controlListPrefix={controlListPrefix}
 				entity={InfraMonitoringEntity.JOBS}
 				tableColumns={k8sJobsColumnsConfig}

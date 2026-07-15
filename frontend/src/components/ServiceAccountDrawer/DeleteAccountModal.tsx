@@ -91,6 +91,7 @@ function DeleteAccountModal(): JSX.Element {
 				color="destructive"
 				loading={isDeleting}
 				onClick={handleConfirm}
+				data-testid="confirm-delete-btn"
 			>
 				<Trash2 size={12} />
 				Delete
@@ -111,6 +112,7 @@ function DeleteAccountModal(): JSX.Element {
 			className="alert-dialog sa-delete-dialog"
 			showCloseButton={false}
 			disableOutsideClick={isErrorModalVisible}
+			testId="delete-service-account-modal"
 			footer={footer}
 		>
 			{content}

@@ -10,6 +10,7 @@ import (
 	grammar "github.com/SigNoz/signoz/pkg/parser/filterquery/grammar"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/antlr4-go/antlr/v4"
 	sqlbuilder "github.com/huandu/go-sqlbuilder"
 	"github.com/stretchr/testify/assert"
@@ -169,7 +170,7 @@ func TestVisitKey(t *testing.T) {
 			},
 			expectedKeys:       []telemetrytypes.TelemetryFieldKey{},
 			expectedErrors:     []string{"key `unknown_key` not found"},
-			expectedMainErrURL: "https://signoz.io/docs/userguide/search-troubleshooting/#key-fieldname-not-found",
+			expectedMainErrURL: "https://signoz.io/docs/userguide/search-troubleshooting/#q-im-getting-key-fieldname-not-found--why-cant-it-find-my-field",
 			expectedWarnings:   nil,
 			expectedMainWrnURL: "",
 		},
@@ -351,7 +352,7 @@ func TestVisitKey(t *testing.T) {
 			ignoreNotFoundKeys: false,
 			expectedKeys:       []telemetrytypes.TelemetryFieldKey{},
 			expectedErrors:     []string{"key `unknown_key` not found"},
-			expectedMainErrURL: "https://signoz.io/docs/userguide/search-troubleshooting/#key-fieldname-not-found",
+			expectedMainErrURL: "https://signoz.io/docs/userguide/search-troubleshooting/#q-im-getting-key-fieldname-not-found--why-cant-it-find-my-field",
 			expectedWarnings:   nil,
 			expectedMainWrnURL: "",
 		},
@@ -588,7 +589,7 @@ func TestVisitKey(t *testing.T) {
 			// VisitKey only parses; the condition builder matches, resolves ambiguity
 			// and decides not-found handling. Replay that here against the generic
 			// builder behavior (error unless the key is ignored).
-			matching := matchingFieldKeys(key, tt.fieldKeys)
+			matching := MatchingFieldKeys(key, tt.fieldKeys)
 			keys, warning := ResolveKeys(key, matching)
 
 			var gotErrors []string
@@ -746,6 +747,7 @@ type resourceConditionBuilder struct{}
 
 func (b *resourceConditionBuilder) ConditionFor(
 	_ context.Context,
+	_ valuer.UUID,
 	_ uint64,
 	_ uint64,
 	key *telemetrytypes.TelemetryFieldKey,
@@ -781,6 +783,7 @@ type conditionBuilder struct{}
 
 func (b *conditionBuilder) ConditionFor(
 	_ context.Context,
+	_ valuer.UUID,
 	_ uint64,
 	_ uint64,
 	key *telemetrytypes.TelemetryFieldKey,

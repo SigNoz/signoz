@@ -6,6 +6,7 @@ import { ExpandButtonWrapper } from 'container/InfraMonitoringK8sV2/components';
 import ColumnHeader from '../Base/ColumnHeader';
 import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
+import { SelectedItemParams } from '../hooks';
 import { formatBytes, getPodPhaseStatusItems } from '../commonUtils';
 import {
 	CellValueTooltip,
@@ -31,8 +32,15 @@ export function getK8sDeploymentRowKey(
 
 export function getK8sDeploymentItemKey(
 	deployment: InframonitoringtypesDeploymentRecordDTO,
-): string {
-	return deployment.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DEPLOYMENT_NAME] || '';
+): SelectedItemParams {
+	return {
+		selectedItem:
+			deployment.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DEPLOYMENT_NAME] ?? null,
+		clusterName:
+			deployment.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] ?? null,
+		namespaceName:
+			deployment.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ?? null,
+	};
 }
 
 export const k8sDeploymentsColumnsConfig: TableColumnDef<InframonitoringtypesDeploymentRecordDTO>[] =
@@ -125,10 +133,10 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<InframonitoringtypesDep
 			},
 		},
 		{
-			id: 'replica_status',
+			id: 'pod_replicas',
 			header: (): React.ReactNode => (
-				<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/deployments#replica-status">
-					Replica Status
+				<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/deployments#pod-replicas">
+					Pod Replicas
 				</ColumnHeader>
 			),
 			accessorFn: (row): number => row.availablePods,
