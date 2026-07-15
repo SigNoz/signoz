@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { ChevronLeft } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
@@ -6,6 +5,7 @@ import cx from 'classnames';
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
 import { useInlineOverflowCount } from 'hooks/useInlineOverflowCount';
 
+import { selectVariablesExpanded } from '../store/slices/collapseSlice';
 import { useDashboardStore } from '../store/useDashboardStore';
 import AddVariableFull from './AddVariableFull';
 import AddVariableIcon from './AddVariableIcon';
@@ -45,16 +45,18 @@ interface VariablesBarProps {
  * either way so auto-selection and option fetching keep driving the panels.
  */
 function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
+	const dashboardId = dashboard.id ?? '';
 	const { variables, selection, setSelection, autoSelect } =
 		useVariableSelection(dashboard);
 	const isEditable = useDashboardStore((s) => s.isEditable);
-	const [expanded, setExpanded] = useState(false);
+	// Persisted per dashboard so the full/collapsed view survives reloads.
+	const expanded = useDashboardStore(selectVariablesExpanded(dashboardId));
+	const setVariablesExpanded = useDashboardStore((s) => s.setVariablesExpanded);
 	const { containerRef, visibleCount, overflowCount } = useInlineOverflowCount({
 		itemCount: variables.length,
 		gap: 8,
-		// Reserve the trailing line space: the "+N" trigger, plus the always-present
-		// add-variable "+" when editable, so the collapse math accounts for both.
-		reserveWidth: isEditable ? 88 : 48,
+		// Reserve room for the "+N" trigger and the add "+" so both stay on one line.
+		reserveWidth: isEditable ? 112 : 48,
 		enabled: !expanded,
 	});
 
@@ -76,7 +78,7 @@ function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 			prefix={expanded ? <ChevronLeft size={14} /> : undefined}
 			aria-expanded={expanded}
 			testId="dashboard-variables-more"
-			onClick={(): void => setExpanded((prev) => !prev)}
+			onClick={(): void => setVariablesExpanded(dashboardId, !expanded)}
 		>
 			{expanded ? 'Less' : `+${overflowCount}`}
 		</Button>
@@ -121,7 +123,7 @@ function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 					</div>
 				))}
 
-				{hasOverflow && (
+				{(expanded || hasOverflow) && (
 					<span className={styles.moreButton}>
 						{expanded ? (
 							moreButton

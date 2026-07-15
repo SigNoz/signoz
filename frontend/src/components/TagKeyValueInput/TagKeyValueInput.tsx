@@ -65,7 +65,9 @@ function TagKeyValueInput({
 	};
 
 	const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>): void => {
-		if (e.key === 'Enter') {
+		// Plain Enter adds the tag; let Cmd/Ctrl+Enter pass through so a host form
+		// (e.g. a modal) can submit on it.
+		if (e.key === 'Enter' && !e.metaKey && !e.ctrlKey) {
 			e.preventDefault();
 			commit();
 		}
@@ -93,11 +95,17 @@ function TagKeyValueInput({
 	};
 
 	const handleEditKeyDown = (e: KeyboardEvent<HTMLInputElement>): void => {
-		if (e.key === 'Enter') {
+		// Plain Enter commits the edit; let Cmd/Ctrl+Enter pass through so a host
+		// form (e.g. a modal) can submit on it.
+		if (e.key === 'Enter' && !e.metaKey && !e.ctrlKey) {
 			e.preventDefault();
+			e.stopPropagation();
 			commitEdit();
 		} else if (e.key === 'Escape') {
+			// Contain Escape so it cancels the inline edit instead of bubbling up and
+			// closing the host drawer/modal.
 			e.preventDefault();
+			e.stopPropagation();
 			cancelEdit();
 		}
 	};

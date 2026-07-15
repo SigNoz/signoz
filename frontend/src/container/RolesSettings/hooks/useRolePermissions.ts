@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from 'react-query';
 import { ErrorType } from 'api/generatedAPIInstance';
 import type {
 	AuthtypesPostableRoleDTO,
-	AuthtypesRoleWithTransactionGroupsDTO,
+	AuthtypesRoleDTO,
 	AuthtypesTransactionGroupDTO,
 	AuthtypesUpdatableRoleDTO,
 } from 'api/generated/services/sigNoz.schemas';
@@ -133,7 +133,7 @@ export function transformTransactionGroupsToResourcePermissions(
 }
 
 export function transformApiToRolePermissions(
-	role: AuthtypesRoleWithTransactionGroupsDTO,
+	role: AuthtypesRoleDTO,
 ): RolePermissionsData {
 	return {
 		roleId: role.id,

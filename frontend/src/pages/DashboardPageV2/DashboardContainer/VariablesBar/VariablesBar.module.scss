@@ -14,6 +14,8 @@
 
 .strip {
 	display: flow-root;
+	// Collapsed: one line only, so the trailing add "+" never wraps below.
+	white-space: nowrap;
 }
 
 .stripExpanded {
@@ -22,6 +24,7 @@
 	gap: 8px;
 	padding-top: 12px;
 	overflow: visible;
+	white-space: normal;
 	clear: both;
 
 	.variableSlot,

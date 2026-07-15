@@ -3,6 +3,10 @@ import { useQuery } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQuery';
+import {
+	DASHBOARD_CACHE_TIME,
+	DASHBOARD_CACHE_TIME_ON_REFRESH_ENABLED,
+} from 'constants/queryCacheTime';
 import type { AppState } from 'store/reducers';
 import type { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -43,9 +47,10 @@ function QuerySelector({
 	onChange,
 	onAutoSelect,
 }: QuerySelectorProps): JSX.Element {
-	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
+	const { minTime, maxTime, isAutoRefreshDisabled } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
 	const payload = useMemo(() => selectionToPayload(selections), [selections]);
 
 	const {
@@ -62,7 +67,7 @@ function QuerySelector({
 		(s) => s.onVariableFetchFailure,
 	);
 
-	const { data, isFetching } = useQuery(
+	const { data, isFetching, error, refetch } = useQuery(
 		[
 			'dashboard-variable',
 			variable.name,
@@ -79,6 +84,10 @@ function QuerySelector({
 		{
 			enabled: isVariableFetching || (isVariableSettled && hasVariableFetchedOnce),
 			refetchOnWindowFocus: false,
+			// Each cycle mints a fresh key; 0 under auto-refresh so entries don't pile up (V1 parity).
+			cacheTime: isAutoRefreshDisabled
+				? DASHBOARD_CACHE_TIME
+				: DASHBOARD_CACHE_TIME_ON_REFRESH_ENABLED,
 			onSettled: (_, error) =>
 				error
 					? onVariableFetchFailure(variable.name)
@@ -104,6 +113,10 @@ function QuerySelector({
 			multiSelect={variable.multiSelect}
 			showAllOption={variable.showAllOption}
 			loading={isFetching || isVariableWaiting}
+			errorMessage={error ? (error as Error).message || null : null}
+			onRetry={(): void => {
+				void refetch();
+			}}
 			selection={selection}
 			onChange={onChange}
 			testId={`variable-select-${variable.name}`}

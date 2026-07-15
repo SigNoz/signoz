@@ -1,5 +1,5 @@
 import { type ReactNode, useMemo } from 'react';
-import { EllipsisVertical, PenLine, Plus, Trash2 } from '@signozhq/icons';
+import { Copy, EllipsisVertical, PenLine, Plus, Trash2 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
 import type { MenuItem } from '@signozhq/ui/dropdown-menu';
@@ -13,6 +13,7 @@ interface SectionActionsMenuProps {
 	disabledReason?: string;
 	onAddPanel?: () => void;
 	onRename?: () => void;
+	onCloneSection?: () => void;
 	onDeleteSection?: () => void;
 }
 
@@ -21,6 +22,7 @@ function SectionActionsMenu({
 	disabledReason = '',
 	onAddPanel,
 	onRename,
+	onCloneSection,
 	onDeleteSection,
 }: SectionActionsMenuProps): JSX.Element {
 	const items = useMemo<MenuItem[]>(() => {
@@ -52,6 +54,15 @@ function SectionActionsMenu({
 				onClick: onRename,
 			});
 		}
+		if (onCloneSection) {
+			result.push({
+				key: 'clone-section',
+				icon: <Copy size={14} />,
+				label: label('Clone section'),
+				disabled,
+				onClick: onCloneSection,
+			});
+		}
 		if (onDeleteSection) {
 			result.push(
 				{ type: 'divider' },
@@ -66,7 +77,7 @@ function SectionActionsMenu({
 			);
 		}
 		return result;
-	}, [disabledReason, onAddPanel, onRename, onDeleteSection]);
+	}, [disabledReason, onAddPanel, onRename, onCloneSection, onDeleteSection]);
 
 	return (
 		<DropdownMenuSimple menu={{ items }}>

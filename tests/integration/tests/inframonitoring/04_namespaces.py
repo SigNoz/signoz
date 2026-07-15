@@ -74,6 +74,7 @@ def test_namespaces_accuracy(
             "namespaceCPU",
             "namespaceMemory",
             "podCountsByPhase",
+            "counts",
             "meta",
         ):
             assert field in record, f"missing {field} in {record!r}"
@@ -81,6 +82,9 @@ def test_namespaces_accuracy(
         for bucket in ("pending", "running", "succeeded", "failed", "unknown"):
             assert bucket in record["podCountsByPhase"]
             assert isinstance(record["podCountsByPhase"][bucket], int)
+        for bucket in ("deployments", "daemonSets", "jobs", "statefulSets"):
+            assert bucket in record["counts"]
+            assert isinstance(record["counts"][bucket], int)
 
         assert record["meta"].get("k8s.namespace.name") == record["namespaceName"]
         assert "k8s.cluster.name" in record["meta"]
@@ -90,6 +94,7 @@ def test_namespaces_accuracy(
         for field in ("namespaceCPU", "namespaceMemory"):
             assert compare_values(record[field], exp[field], 1e-6), f"{record['namespaceName']}.{field}: got {record[field]}, expected {exp[field]}"
         assert record["podCountsByPhase"] == exp["podCountsByPhase"]
+        assert record["counts"] == exp["counts"]
 
 
 @pytest.mark.parametrize(
