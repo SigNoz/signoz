@@ -96,6 +96,11 @@ interface QuerySearchProps {
 	showFilterSuggestionsWithoutMetric?: boolean;
 	/** When set, the editor shows only the user expression; API/filter uses `initial AND (user)`. */
 	initialExpression?: string;
+	/** When set, replaces the generic value-suggestion API with a custom fetcher. */
+	valueSuggestionsOverride?: (
+		key: string,
+		searchText: string,
+	) => Promise<{ stringValues?: string[]; numberValues?: number[] } | null>;
 }
 
 function QuerySearch({
@@ -109,6 +114,7 @@ function QuerySearch({
 	showFilterSuggestionsWithoutMetric,
 	initialExpression,
 	metricNamespace,
+	valueSuggestionsOverride,
 }: QuerySearchProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const [valueSuggestions, setValueSuggestions] = useState<any[]>([]);
@@ -466,28 +472,47 @@ function QuerySearch({
 			const sanitizedSearchText = searchText ? searchText?.trim() : '';
 
 			try {
-				const response = await getValueSuggestions({
-					key,
-					searchText: sanitizedSearchText,
-					signal: dataSource,
-					signalSource: signalSource as 'meter' | '',
-					metricName: debouncedMetricName ?? undefined,
-				});
+				let stringValues: string[] = [];
+				let numberValues: number[] = [];
 
-				// Skip updates if component unmounted or key changed
-				if (
-					!isMountedRef.current ||
-					lastKeyRef.current !== key ||
-					lastValueRef.current !== sanitizedSearchText
-				) {
-					return; // Skip updating if key has changed or component unmounted
+				if (valueSuggestionsOverride) {
+					const overrideData = await valueSuggestionsOverride(
+						key,
+						sanitizedSearchText,
+					);
+					if (
+						!isMountedRef.current ||
+						lastKeyRef.current !== key ||
+						lastValueRef.current !== sanitizedSearchText
+					) {
+						return;
+					}
+					stringValues = overrideData?.stringValues ?? [];
+					numberValues = overrideData?.numberValues ?? [];
+				} else {
+					const response = await getValueSuggestions({
+						key,
+						searchText: sanitizedSearchText,
+						signal: dataSource,
+						signalSource: signalSource as 'meter' | '',
+						metricName: debouncedMetricName ?? undefined,
+					});
+
+					// Skip updates if component unmounted or key changed
+					if (
+						!isMountedRef.current ||
+						lastKeyRef.current !== key ||
+						lastValueRef.current !== sanitizedSearchText
+					) {
+						return; // Skip updating if key has changed or component unmounted
+					}
+
+					// Process the response data
+					const responseData = response.data as any;
+					const values = responseData.data?.values || {};
+					stringValues = values.stringValues || [];
+					numberValues = values.numberValues || [];
 				}
-
-				// Process the response data
-				const responseData = response.data as any;
-				const values = responseData.data?.values || {};
-				const stringValues = values.stringValues || [];
-				const numberValues = values.numberValues || [];
 
 				// Generate options from string values - explicitly handle empty strings
 				const stringOptions = stringValues
@@ -566,6 +591,7 @@ function QuerySearch({
 			debouncedMetricName,
 			signalSource,
 			toggleSuggestions,
+			valueSuggestionsOverride,
 		],
 	);
 
