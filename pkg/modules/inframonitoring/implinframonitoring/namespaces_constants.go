@@ -32,6 +32,16 @@ var namespaceAttrKeysForMetadata = []string{
 	"k8s.cluster.name",
 }
 
+// namespaceCountAttrKeys are the workload resource attributes whose distinct
+// values are counted per namespace. They are read from the pod metric universe,
+// which carries the owner workload names for each pod series.
+var namespaceCountAttrKeys = []string{
+	inframonitoringtypes.DeploymentNameAttrKey,
+	inframonitoringtypes.DaemonSetNameAttrKey,
+	inframonitoringtypes.JobNameAttrKey,
+	inframonitoringtypes.StatefulSetNameAttrKey,
+}
+
 var orderByToNamespacesQueryNames = map[string][]string{
 	inframonitoringtypes.NamespacesOrderByCPU:    {"A"},
 	inframonitoringtypes.NamespacesOrderByMemory: {"D"},

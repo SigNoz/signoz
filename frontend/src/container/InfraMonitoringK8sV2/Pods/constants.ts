@@ -8,11 +8,17 @@ import { v4 } from 'uuid';
 
 import { K8sDetailsMetadataConfig } from '../Base/K8sBaseDetails';
 import { formatValueForExpression } from 'components/QueryBuilderV2/utils';
+import {
+	buildEventsExpression,
+	buildLogsTracesExpression,
+} from 'container/InfraMonitoringK8sV2/Base/utils';
 import { INFRA_MONITORING_ATTR_KEYS } from '../constants';
+import { SelectedItemParams } from '../hooks';
 
 export const k8sPodGetSelectedItemExpression = (
-	selectedItemId: string,
-): string => `k8s.pod.uid = ${formatValueForExpression(selectedItemId)}`;
+	params: SelectedItemParams,
+): string =>
+	`k8s.pod.uid = ${formatValueForExpression(params.selectedItem ?? '')}`;
 
 export const k8sPodDetailsMetadataConfig: K8sDetailsMetadataConfig<InframonitoringtypesPodRecordDTO>[] =
 	[
@@ -35,21 +41,23 @@ export const k8sPodDetailsMetadataConfig: K8sDetailsMetadataConfig<Inframonitori
 
 export const k8sPodInitialEventsExpression = (
 	pod: InframonitoringtypesPodRecordDTO,
-): string => {
-	const podName = formatValueForExpression(
-		pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
-	);
-	return `${INFRA_MONITORING_ATTR_KEYS.K8S_OBJECT_KIND} = 'Pod' AND ${INFRA_MONITORING_ATTR_KEYS.K8S_OBJECT_NAME} = ${podName}`;
-};
+): string =>
+	buildEventsExpression({
+		objectKind: 'Pod',
+		objectName: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
+		clusterName: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME],
+		namespaceName: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME],
+	});
 
 export const k8sPodInitialLogTracesExpression = (
 	pod: InframonitoringtypesPodRecordDTO,
-): string => {
-	const podName = formatValueForExpression(
-		pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
-	);
-	return `${INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME} = ${podName}`;
-};
+): string =>
+	buildLogsTracesExpression({
+		mainAttributeKey: INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME,
+		mainAttributeValue: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME],
+		clusterName: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME],
+		namespaceName: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME],
+	});
 
 export const k8sPodGetEntityName = (
 	pod: InframonitoringtypesPodRecordDTO,
