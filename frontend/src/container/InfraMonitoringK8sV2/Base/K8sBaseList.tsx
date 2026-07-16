@@ -14,6 +14,7 @@ import { useGlobalTimeStore } from 'store/globalTime';
 import { NANO_SECOND_MULTIPLIER } from 'store/globalTime/utils';
 import { Querybuildertypesv5QueryWarnDataDTO } from 'api/generated/services/sigNoz.schemas';
 import { openInNewTab } from 'utils/navigation';
+import APIError from 'types/api/error';
 
 import {
 	INFRA_MONITORING_K8S_PARAMS_KEYS,
@@ -33,13 +34,14 @@ import K8sHeader from './K8sHeader';
 import { K8sPaginationWarning } from './K8sPaginationWarning';
 import { K8sBaseFilters } from './types';
 import { getGroupedByMeta } from './utils';
+import { K8sInstrumentationChecksCallout } from './components/K8sInstrumentationChecksCallout/K8sInstrumentationChecksCallout';
 
 import styles from './K8sBaseList.module.scss';
 import cx from 'classnames';
 
 export type K8sBaseListEmptyStateContext = {
 	isError: boolean;
-	error?: string | null;
+	error?: APIError | null;
 	totalCount: number;
 	hasFilters: boolean;
 	isLoading: boolean;
@@ -66,7 +68,7 @@ export type K8sBaseListProps<
 		records?: T[];
 		data?: T[];
 		total: number;
-		error?: string | null;
+		error?: APIError | null;
 		rawData?: unknown;
 		endTimeBeforeRetention?: boolean;
 		warning?: Querybuildertypesv5QueryWarnDataDTO | null;
@@ -377,6 +379,8 @@ export function K8sBaseList<
 				cancelQuery={cancelQuery}
 			/>
 			<div ref={containerRef} className={styles.tableContainer}>
+				<K8sInstrumentationChecksCallout entity={entity} />
+
 				{isError && (
 					<Typography>
 						{data?.error?.toString() || 'Something went wrong'}

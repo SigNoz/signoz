@@ -393,25 +393,24 @@ func ReducedValueColumn(metricType metrictypes.Type, space metrictypes.SpaceAggr
 	return "", "", false
 }
 
-// ReducedTimeAggregationColumn applies the time aggregation to the reduced `value`
-// column over the step's 60s buckets. latest uses argMax over the bucket timestamp
-// (the buckets have no read order); rate divides the per-step sum by the step.
-func ReducedTimeAggregationColumn(timeAggregation metrictypes.TimeAggregation, stepSec int64) string {
+// ReducedTimeAggregationColumn applies the time aggregation to the reduced value
+// column over the step's 60s buckets.
+func ReducedTimeAggregationColumn(timeAggregation metrictypes.TimeAggregation, stepSec int64, value string) string {
 	switch timeAggregation {
 	case metrictypes.TimeAggregationLatest:
-		return "argMax(value, unix_milli)"
+		return fmt.Sprintf("argMax(%s, unix_milli)", value)
 	case metrictypes.TimeAggregationAvg:
-		return "avg(value)"
+		return fmt.Sprintf("avg(%s)", value)
 	case metrictypes.TimeAggregationMin:
-		return "min(value)"
+		return fmt.Sprintf("min(%s)", value)
 	case metrictypes.TimeAggregationMax:
-		return "max(value)"
+		return fmt.Sprintf("max(%s)", value)
 	case metrictypes.TimeAggregationCount:
-		return "count(value)"
+		return fmt.Sprintf("count(%s)", value)
 	case metrictypes.TimeAggregationRate:
-		return fmt.Sprintf("sum(value) / %d", stepSec)
+		return fmt.Sprintf("sum(%s) / %d", value, stepSec)
 	default: // sum, increase
-		return "sum(value)"
+		return fmt.Sprintf("sum(%s)", value)
 	}
 }
 
