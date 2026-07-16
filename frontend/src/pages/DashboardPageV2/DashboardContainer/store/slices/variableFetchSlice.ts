@@ -132,13 +132,11 @@ export const createVariableFetchSlice: StateCreator<
 	initVariableFetch: (names, context): void => {
 		const maps = cloneMaps(get());
 		const resolvedEmpty = { ...get().variableResolvedEmpty };
-		// Initialize new variables to idle, preserving existing states.
 		names.forEach((name) => {
 			if (!maps.states[name]) {
 				maps.states[name] = VariableFetchState.Idle;
 			}
 		});
-		// Drop entries for variables that no longer exist.
 		const nameSet = new Set(names);
 		Object.keys(maps.states).forEach((name) => {
 			if (!nameSet.has(name)) {

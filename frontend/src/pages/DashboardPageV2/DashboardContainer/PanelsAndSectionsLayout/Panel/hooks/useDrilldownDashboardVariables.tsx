@@ -23,7 +23,6 @@ interface UseDrilldownDashboardVariablesArgs {
 	filters: FilterData[];
 	/** Clicked query's telemetry signal — seeds a created variable's `dynamicSignal`. */
 	signal?: TelemetrytypesSignalDTO;
-	/** Close the popover after an action. */
 	onClose: () => void;
 }
 

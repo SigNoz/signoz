@@ -154,7 +154,6 @@ function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 		);
 	}
 
-	// Master view — the variables list.
 	return (
 		<div className={cx(styles.container, settingsStyles.settingsCard)}>
 			{variables.length === 0 ? (
