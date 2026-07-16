@@ -52,13 +52,50 @@ export function EntityCountsSection<T>({
 			},
 		};
 
-		// TODO(H4ad): After https://github.com/SigNoz/signoz/pull/12038, inherit custom time of drawer to list
 		const urlParams = new URLSearchParams();
 		urlParams.set(INFRA_MONITORING_K8S_PARAMS_KEYS.CATEGORY, targetCategory);
 		urlParams.set(
 			QueryParams.compositeQuery,
 			encodeURIComponent(JSON.stringify(compositeQuery)),
 		);
+
+		const currentSearchParams = new URLSearchParams(window.location.search);
+		const detailRelativeTime = currentSearchParams.get(
+			INFRA_MONITORING_K8S_PARAMS_KEYS.DETAIL_RELATIVE_TIME,
+		);
+		const detailStartTime = currentSearchParams.get(
+			INFRA_MONITORING_K8S_PARAMS_KEYS.DETAIL_START_TIME,
+		);
+		const detailEndTime = currentSearchParams.get(
+			INFRA_MONITORING_K8S_PARAMS_KEYS.DETAIL_END_TIME,
+		);
+
+		const listRelativeTime = currentSearchParams.get(QueryParams.relativeTime);
+		const listStartTime = currentSearchParams.get(QueryParams.startTime);
+		const listEndTime = currentSearchParams.get(QueryParams.endTime);
+
+		if (listRelativeTime) {
+			urlParams.set(QueryParams.relativeTime, listRelativeTime);
+		} else if (listStartTime && listEndTime) {
+			urlParams.set(QueryParams.startTime, listStartTime);
+			urlParams.set(QueryParams.endTime, listEndTime);
+		}
+
+		if (detailRelativeTime) {
+			urlParams.set(
+				INFRA_MONITORING_K8S_PARAMS_KEYS.DETAIL_RELATIVE_TIME,
+				detailRelativeTime,
+			);
+		} else if (detailStartTime && detailEndTime) {
+			urlParams.set(
+				INFRA_MONITORING_K8S_PARAMS_KEYS.DETAIL_START_TIME,
+				detailStartTime,
+			);
+			urlParams.set(
+				INFRA_MONITORING_K8S_PARAMS_KEYS.DETAIL_END_TIME,
+				detailEndTime,
+			);
+		}
 
 		return `${ROUTES.INFRASTRUCTURE_MONITORING_KUBERNETES}?${urlParams.toString()}`;
 	};
