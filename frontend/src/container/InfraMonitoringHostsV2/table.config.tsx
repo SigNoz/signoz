@@ -276,7 +276,7 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.diskUsage,
-		width: { min: 160 },
+		width: { min: 200 },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
 			const diskUsage = value as number;
