@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
-import { ChevronDown, ChevronRight, Plus } from '@signozhq/icons';
+import { Typography } from '@signozhq/ui/typography';
+import { ChevronDown, ChevronRight, Layers, Plus } from '@signozhq/icons';
 import { Collapse, type CollapseProps, Skeleton } from 'antd';
 
 import MapperFormDrawer from 'container/LLMObservability/AttributeMapping/components/MapperFormDrawer/MapperFormDrawer';
@@ -133,8 +134,11 @@ function MappingsTable({
 			</div>
 
 			{isEmpty ? (
-				<div className={styles.tableEmpty} data-testid="mapper-groups-empty">
-					No mapping groups yet.
+				<div className={styles.tableState} data-testid="mapper-groups-empty">
+					<Layers size={24} />
+					<Typography.Text as="span" size="base" color="muted">
+						No mapping groups yet.
+					</Typography.Text>
 				</div>
 			) : (
 				<div data-testid="mappings-table">

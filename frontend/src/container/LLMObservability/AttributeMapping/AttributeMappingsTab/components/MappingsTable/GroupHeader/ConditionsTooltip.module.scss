@@ -12,11 +12,6 @@
 	gap: var(--spacing-1);
 }
 
-.sectionTitle {
-	color: var(--l3-foreground);
-	font-size: var(--font-size-xs);
-}
-
 .keyList {
 	display: flex;
 	flex-wrap: wrap;
@@ -34,9 +29,4 @@
 	white-space: normal;
 	overflow-wrap: anywhere;
 	word-break: break-word;
-}
-
-.emptyHint {
-	color: var(--l3-foreground);
-	font-size: var(--font-size-xs);
 }

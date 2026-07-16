@@ -86,7 +86,13 @@
 	}
 }
 
-.tableEmpty {
+// Icon + message shown when the groups list is empty or failed to load.
+.tableState {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: var(--spacing-3);
 	padding: var(--spacing-12) var(--spacing-6);
 	text-align: center;
 	color: var(--l3-foreground);

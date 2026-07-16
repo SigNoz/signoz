@@ -12,6 +12,16 @@
 	color: var(--l3-foreground);
 }
 
+.stateContent {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-2);
+
+	svg {
+		flex-shrink: 0;
+	}
+}
+
 .addMapperRow .stateCell {
 	padding-top: var(--spacing-2);
 	padding-bottom: var(--spacing-2);

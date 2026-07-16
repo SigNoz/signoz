@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Button } from '@signozhq/ui/button';
-import { Plus } from '@signozhq/icons';
+import { Typography } from '@signozhq/ui/typography';
+import { ArrowLeftRight, Plus, TriangleAlert } from '@signozhq/icons';
 import { useListSpanMappers } from 'api/generated/services/spanmapper';
 import { motion } from 'motion/react';
 
@@ -78,7 +79,12 @@ function GroupMappers({
 				className={styles.stateCell}
 				data-testid={`mappers-error-${group.localId}`}
 			>
-				Failed to load mappings. Please try again.
+				<span className={styles.stateContent}>
+					<TriangleAlert size={14} color="var(--danger-background)" />
+					<Typography.Text as="span" size="base">
+						Failed to load mappings. Please try again.
+					</Typography.Text>
+				</span>
 			</td>
 		</motion.tr>
 	);
@@ -94,7 +100,12 @@ function GroupMappers({
 				className={styles.stateCell}
 				data-testid={`mappers-empty-${group.localId}`}
 			>
-				No mappings in this group yet.
+				<span className={styles.stateContent}>
+					<ArrowLeftRight size={14} />
+					<Typography.Text as="span" size="base" color="muted">
+						No mappings in this group yet.
+					</Typography.Text>
+				</span>
 			</td>
 		</motion.tr>
 	);

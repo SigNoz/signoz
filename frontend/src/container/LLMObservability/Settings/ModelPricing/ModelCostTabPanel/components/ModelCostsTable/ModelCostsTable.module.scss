@@ -8,7 +8,6 @@
 		cursor: default;
 	}
 
-	// Column headings use the l2 foreground token.
 	:global(.tanstack-header-title) {
 		color: var(--l2-foreground);
 	}
