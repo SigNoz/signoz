@@ -1,8 +1,8 @@
 import type { StateCreator } from 'zustand';
 
-import { hasUsableValue } from '../../VariablesBar/selectionUtils';
+import { hasUsableValue } from '../../VariablesBar/utils/selectionUtils';
 import type { VariableSelectionMap } from '../../VariablesBar/selectionTypes';
-import type { VariableFetchContext } from '../../VariablesBar/variableDependencies';
+import type { VariableFetchContext } from '../../VariablesBar/utils/variableDependencies';
 import type { DashboardStore } from '../useDashboardStore';
 import { selectVariableValues } from './variableSelectionSlice';
 import {

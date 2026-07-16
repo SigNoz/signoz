@@ -17,10 +17,10 @@ import {
 } from '../../DashboardSettings/Variables/variableFormModel';
 import type { VariableFormModel } from '../../DashboardSettings/Variables/variableFormModel';
 import { useDashboardStore } from '../../store/useDashboardStore';
-import { buildExistingDynamicVariableQuery } from '../dynamicFilter';
+import { buildExistingDynamicVariableQuery } from '../utils/dynamicFilter';
 import type { VariableSelectionMap } from '../selectionTypes';
-import { selectionToPayload } from '../selectionUtils';
-import { useVariableFetchState } from '../useVariableFetchState';
+import { selectionToPayload } from '../utils/selectionUtils';
+import { useVariableFetchState } from './useVariableFetchState';
 
 export interface VariableOptions {
 	options: string[];

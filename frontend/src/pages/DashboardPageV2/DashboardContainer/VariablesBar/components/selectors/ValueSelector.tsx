@@ -2,8 +2,8 @@ import { useMemo } from 'react';
 import { CustomMultiSelect, CustomSelect } from 'components/NewSelect';
 import type { OptionData } from 'components/NewSelect/types';
 
-import type { VariableSelection } from '../selectionTypes';
-import styles from '../VariablesBar.module.scss';
+import type { VariableSelection } from '../../selectionTypes';
+import styles from '../../VariablesBar.module.scss';
 
 interface ValueSelectorProps {
 	options: string[];

@@ -5,7 +5,7 @@ import {
 import {
 	deriveFetchContext,
 	type VariableFetchContext,
-} from '../../../VariablesBar/variableDependencies';
+} from '../../../VariablesBar/utils/variableDependencies';
 import { useDashboardStore } from '../../useDashboardStore';
 
 function model(overrides: Partial<VariableFormModel>): VariableFormModel {

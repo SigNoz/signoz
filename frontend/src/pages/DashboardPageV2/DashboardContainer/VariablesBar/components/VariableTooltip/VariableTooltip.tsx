@@ -1,6 +1,6 @@
 import cx from 'classnames';
 
-import styles from './VariablesBar.module.scss';
+import styles from './VariableTooltip.module.scss';
 
 interface VariableTooltipProps {
 	description?: string;

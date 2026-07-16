@@ -1,8 +1,8 @@
-import type { VariableFormModel } from '../DashboardSettings/Variables/variableFormModel';
+import type { VariableFormModel } from '../../DashboardSettings/Variables/variableFormModel';
 import type {
 	SelectedVariableValue,
 	VariableSelection,
-} from './selectionTypes';
+} from '../selectionTypes';
 import { ALL_SELECTED } from './variablesUrlState';
 
 // One default resolver, shared by the seed, the post-fetch reconcile and the

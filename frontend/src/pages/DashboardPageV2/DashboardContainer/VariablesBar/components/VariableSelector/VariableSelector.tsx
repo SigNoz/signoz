@@ -4,14 +4,17 @@ import { Typography } from '@signozhq/ui/typography';
 // eslint-disable-next-line signoz/no-antd-components -- lightweight description tooltip, matches V1
 import { Tooltip } from 'antd';
 
-import type { VariableFormModel } from '../DashboardSettings/Variables/variableFormModel';
-import type { VariableSelection, VariableSelectionMap } from './selectionTypes';
-import { computeVariableDependencies } from './variableDependencies';
-import TextSelector from './selectors/TextSelector';
-import VariableValueControl from './selectors/VariableValueControl';
-import { useVariableFetchState } from './useVariableFetchState';
-import styles from './VariablesBar.module.scss';
-import VariableTooltip from './VariableTooltip';
+import type { VariableFormModel } from '../../../DashboardSettings/Variables/variableFormModel';
+import type {
+	VariableSelection,
+	VariableSelectionMap,
+} from '../../selectionTypes';
+import { computeVariableDependencies } from '../../utils/variableDependencies';
+import TextSelector from '../selectors/TextSelector';
+import VariableValueControl from '../selectors/VariableValueControl';
+import { useVariableFetchState } from '../../hooks/useVariableFetchState';
+import styles from './VariableSelector.module.scss';
+import VariableTooltip from '../VariableTooltip/VariableTooltip';
 
 interface VariableSelectorProps {
 	variable: VariableFormModel;

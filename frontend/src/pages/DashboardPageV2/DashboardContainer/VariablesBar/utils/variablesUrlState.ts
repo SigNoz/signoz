@@ -1,6 +1,6 @@
 import { parseAsJson } from 'nuqs';
 
-import type { SelectedVariableValue } from './selectionTypes';
+import type { SelectedVariableValue } from '../selectionTypes';
 
 /** URL sentinel for an "ALL values selected" state (matches V1). */
 export const ALL_SELECTED = '__ALL__';

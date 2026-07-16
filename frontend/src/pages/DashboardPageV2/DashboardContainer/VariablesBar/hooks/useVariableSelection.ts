@@ -5,10 +5,13 @@ import { useSelector } from 'react-redux';
 import type { AppState } from 'store/reducers';
 import type { GlobalReducer } from 'types/reducer/globalTime';
 
-import type { VariableFormModel } from '../DashboardSettings/Variables/variableFormModel';
-import { selectVariableValues } from '../store/slices/variableSelectionSlice';
-import { useDashboardStore } from '../store/useDashboardStore';
-import type { VariableSelection, VariableSelectionMap } from './selectionTypes';
+import type { VariableFormModel } from '../../DashboardSettings/Variables/variableFormModel';
+import { selectVariableValues } from '../../store/slices/variableSelectionSlice';
+import { useDashboardStore } from '../../store/useDashboardStore';
+import type {
+	VariableSelection,
+	VariableSelectionMap,
+} from '../selectionTypes';
 import { useSeedVariableSelection } from './useSeedVariableSelection';
 
 /**

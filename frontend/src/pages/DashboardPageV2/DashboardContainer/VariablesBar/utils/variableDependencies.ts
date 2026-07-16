@@ -3,7 +3,7 @@ import { textContainsVariableReference } from 'lib/dashboardVariables/variableRe
 import type {
 	VariableFormModel,
 	VariableType,
-} from '../DashboardSettings/Variables/variableFormModel';
+} from '../../DashboardSettings/Variables/variableFormModel';
 
 /**
  * Inter-variable dependency graph for runtime selection. A QUERY variable

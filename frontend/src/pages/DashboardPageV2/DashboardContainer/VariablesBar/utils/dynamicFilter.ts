@@ -1,5 +1,5 @@
-import type { VariableFormModel } from '../DashboardSettings/Variables/variableFormModel';
-import type { VariableSelectionMap } from './selectionTypes';
+import type { VariableFormModel } from '../../DashboardSettings/Variables/variableFormModel';
+import type { VariableSelectionMap } from '../selectionTypes';
 
 function formatQueryValue(val: string): string {
 	const num = Number(val);

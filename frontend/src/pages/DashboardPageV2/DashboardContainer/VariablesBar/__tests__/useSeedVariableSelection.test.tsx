@@ -6,7 +6,7 @@ import {
 	type VariableFormModel,
 } from '../../DashboardSettings/Variables/variableFormModel';
 import { useDashboardStore } from '../../store/useDashboardStore';
-import { useSeedVariableSelection } from '../useSeedVariableSelection';
+import { useSeedVariableSelection } from '../hooks/useSeedVariableSelection';
 
 const mockSetUrlValues = jest.fn();
 let mockUrlValues: Record<string, unknown> | null = null;

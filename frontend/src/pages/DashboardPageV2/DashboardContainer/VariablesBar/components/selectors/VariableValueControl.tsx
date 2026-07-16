@@ -1,11 +1,11 @@
-import type { VariableFormModel } from '../../DashboardSettings/Variables/variableFormModel';
+import type { VariableFormModel } from '../../../DashboardSettings/Variables/variableFormModel';
 import type {
 	VariableSelection,
 	VariableSelectionMap,
-} from '../selectionTypes';
-import { useAutoSelect } from '../useAutoSelect';
+} from '../../selectionTypes';
+import { useAutoSelect } from '../../hooks/useAutoSelect';
 import ValueSelector from './ValueSelector';
-import { useVariableOptions } from './useVariableOptions';
+import { useVariableOptions } from '../../hooks/useVariableOptions';
 
 interface VariableValueControlProps {
 	variable: VariableFormModel;

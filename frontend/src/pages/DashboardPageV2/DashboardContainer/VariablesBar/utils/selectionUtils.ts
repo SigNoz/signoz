@@ -1,9 +1,9 @@
-import type { VariableType } from '../DashboardSettings/Variables/variableFormModel';
+import type { VariableType } from '../../DashboardSettings/Variables/variableFormModel';
 import type {
 	SelectedVariableValue,
 	VariableSelection,
 	VariableSelectionMap,
-} from './selectionTypes';
+} from '../selectionTypes';
 
 /** A selection counts as resolved (usable as a parent value) when it's non-empty. */
 export function isResolved(selection?: VariableSelection): boolean {

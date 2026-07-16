@@ -1,0 +1,94 @@
+.variableItem {
+	position: relative;
+	display: flex;
+	align-items: center;
+}
+
+// Loading indicator: an indeterminate bar flush along the control's bottom edge,
+// full width and overlaying the border so it reads as the input's own edge rather
+// than a separate element. Non-interactive so the name/description stays hoverable.
+.loadingBar {
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	height: 2px;
+	overflow: hidden;
+	border-radius: 0 0 2px 2px;
+	background: color-mix(in srgb, var(--bg-robin-500) 20%, transparent);
+	pointer-events: none;
+}
+
+.loadingBar::after {
+	content: '';
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	width: 40%;
+	border-radius: 2px;
+	background: var(--bg-robin-500);
+	animation: variable-loading-slide 1.1s ease-in-out infinite;
+}
+
+@keyframes variable-loading-slide {
+	0% {
+		left: -40%;
+	}
+
+	100% {
+		left: 100%;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.loadingBar::after {
+		left: 0;
+		width: 100%;
+		animation: none;
+		opacity: 0.7;
+	}
+}
+
+.variableName {
+	display: flex;
+	min-width: 56px;
+	height: 32px;
+	align-items: center;
+	gap: 4px;
+	padding: 6px 6px 6px 8px;
+	border: 1px solid var(--l3-border);
+	border-radius: 2px 0 0 2px;
+	background: var(--l3-background);
+	color: var(--bg-robin-400);
+	font-family: Inter;
+	font-size: 12px;
+	font-weight: 400;
+	line-height: 16px;
+	white-space: nowrap;
+}
+
+.infoIcon {
+	display: inline-flex;
+	margin-left: 6px;
+	color: var(--l2-foreground);
+	vertical-align: middle;
+}
+
+.variableValue {
+	display: flex;
+	min-width: 120px;
+	height: 32px;
+	align-items: center;
+	border: 1px solid var(--l3-border);
+	border-left: none;
+	border-radius: 0 2px 2px 0;
+	background: var(--l2-background);
+	color: var(--l2-foreground);
+	font-size: 12px;
+
+	&:hover,
+	&:focus-within {
+		outline: 1px solid var(--bg-robin-400);
+	}
+}

@@ -3,8 +3,8 @@ import {
 	selectVariableFetchedOnce,
 	selectVariableFetchState,
 	VariableFetchState,
-} from '../store/slices/variableFetchSlice';
-import { useDashboardStore } from '../store/useDashboardStore';
+} from '../../store/slices/variableFetchSlice';
+import { useDashboardStore } from '../../store/useDashboardStore';
 
 export interface VariableFetchStateResult {
 	variableFetchState: VariableFetchState;

@@ -2,21 +2,21 @@ import { useEffect, useMemo } from 'react';
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
 import { useQueryState } from 'nuqs';
 
-import { dtoToFormModel } from '../DashboardSettings/Variables/variableAdapters';
-import type { VariableFormModel } from '../DashboardSettings/Variables/variableFormModel';
-import { selectVariableValues } from '../store/slices/variableSelectionSlice';
-import { useDashboardStore } from '../store/useDashboardStore';
-import { resolveDefaultSelection } from './resolveVariableSelection';
+import { dtoToFormModel } from '../../DashboardSettings/Variables/variableAdapters';
+import type { VariableFormModel } from '../../DashboardSettings/Variables/variableFormModel';
+import { selectVariableValues } from '../../store/slices/variableSelectionSlice';
+import { useDashboardStore } from '../../store/useDashboardStore';
+import { resolveDefaultSelection } from '../utils/resolveVariableSelection';
 import type {
 	SelectedVariableValue,
 	VariableSelection,
 	VariableSelectionMap,
-} from './selectionTypes';
+} from '../selectionTypes';
 import {
 	deriveFetchContext,
 	type VariableFetchContext,
-} from './variableDependencies';
-import { ALL_SELECTED, variablesUrlParser } from './variablesUrlState';
+} from '../utils/variableDependencies';
+import { ALL_SELECTED, variablesUrlParser } from '../utils/variablesUrlState';
 
 // The `__ALL__` sentinel only means "ALL" for variables that support it — a
 // legitimate value of "__ALL__" (e.g. a text var) is taken literally.

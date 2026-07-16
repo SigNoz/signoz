@@ -3,8 +3,8 @@ import type { InputRef } from 'antd';
 // eslint-disable-next-line signoz/no-antd-components -- match V1 textbox behaviour (commit on blur/Enter, borderless)
 import { Input } from 'antd';
 
-import type { VariableSelection } from '../selectionTypes';
-import styles from '../VariablesBar.module.scss';
+import type { VariableSelection } from '../../selectionTypes';
+import styles from '../../VariablesBar.module.scss';
 
 interface TextSelectorProps {
 	selection: VariableSelection;

@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
 
-import type { VariableFormModel } from '../DashboardSettings/Variables/variableFormModel';
-import { reconcileWithOptions } from './resolveVariableSelection';
-import type { VariableSelection } from './selectionTypes';
+import type { VariableFormModel } from '../../DashboardSettings/Variables/variableFormModel';
+import { reconcileWithOptions } from '../utils/resolveVariableSelection';
+import type { VariableSelection } from '../selectionTypes';
 
 /**
  * Reconciles a variable's selection with its freshly-fetched options and fires

@@ -2,8 +2,8 @@ import { Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 
-import { useDashboardStore } from '../store/useDashboardStore';
-import styles from './VariablesBar.module.scss';
+import { useDashboardStore } from '../../../store/useDashboardStore';
+import styles from './AddVariable.module.scss';
 
 /**
  * Compact "+" trigger (label on hover) shown after the variable pills once at
