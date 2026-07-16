@@ -10,7 +10,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
@@ -142,10 +141,6 @@ func (client *client) queryToClickhouseQuery(_ context.Context, query *prompb.Qu
 	conditions = append(conditions, fmt.Sprintf("metric_name = $%d", argCount+1))
 	conditions = append(conditions, "temporality IN ['Cumulative', 'Unspecified']")
 	conditions = append(conditions, fmt.Sprintf("unix_milli >= %d AND unix_milli < %d", start, end))
-
-	normalized := !constants.IsDotMetricsEnabled
-
-	conditions = append(conditions, fmt.Sprintf("__normalized = %v", normalized))
 
 	args = append(args, metricName)
 	for _, m := range query.Matchers {

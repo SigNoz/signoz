@@ -7,7 +7,7 @@ import {
 	buildApplyVariableToPanelsPatch,
 	buildSyncVariableToPanelsPatch,
 	getPanelIdsReferencingVariable,
-} from '../applyVariableToPanelsPatch';
+} from '../utils/applyVariableToPanelsPatch';
 
 /** Minimal builder-query panel wrapped in a CompositeQuery, with a given filter. */
 function compositePanel(filterExpression: string): unknown {

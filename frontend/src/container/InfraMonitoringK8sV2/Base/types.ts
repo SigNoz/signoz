@@ -140,3 +140,7 @@ export interface K8sBaseDetailsContentProps<T> {
 	logsAndTracesInitialExpression: string;
 	eventsInitialExpression: string;
 }
+
+// Aliases for backward compatibility
+export type CustomTab<T> = K8sDetailsCustomTab<T>;
+export type CustomTabRenderProps<T> = K8sDetailsCustomTabRenderProps<T>;

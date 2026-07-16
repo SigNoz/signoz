@@ -26,6 +26,8 @@ import { K8sBaseDetailsProps } from './types';
 import '../EntityDetailsUtils/entityDetails.styles.scss';
 
 export type {
+	CustomTab,
+	CustomTabRenderProps,
 	K8sBaseDetailsProps,
 	K8sDetailsCountConfig,
 	K8sDetailsFilters,

@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { listDeployments } from 'api/generated/services/inframonitoring';
 import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
@@ -19,6 +19,7 @@ import { SelectedItemParams } from '../hooks';
 import {
 	deploymentWidgetInfo,
 	getDeploymentMetricsQueryPayload,
+	getDeploymentPodMetricsQueryPayload,
 	k8sDeploymentDetailsMetadataConfig,
 	k8sDeploymentGetEntityName,
 	k8sDeploymentGetSelectedItemExpression,
@@ -30,6 +31,7 @@ import {
 	getK8sDeploymentRowKey,
 	k8sDeploymentsColumnsConfig,
 } from './table.config';
+import { createPodMetricsTab } from 'container/InfraMonitoringK8sV2/EntityDetailsUtils/createPodMetricsTab';
 
 function K8sDeploymentsList({
 	controlListPrefix,
@@ -118,6 +120,17 @@ function K8sDeploymentsList({
 		[],
 	);
 
+	const customTabs = useMemo(
+		() => [
+			createPodMetricsTab<InframonitoringtypesDeploymentRecordDTO>({
+				getQueryPayload: getDeploymentPodMetricsQueryPayload,
+				category: InfraMonitoringEntity.DEPLOYMENTS,
+				queryKey: 'deploymentPodMetrics',
+			}),
+		],
+		[],
+	);
+
 	return (
 		<>
 			<K8sBaseList<InframonitoringtypesDeploymentRecordDTO, SelectedItemParams>
@@ -142,6 +155,7 @@ function K8sDeploymentsList({
 				entityWidgetInfo={deploymentWidgetInfo}
 				getEntityQueryPayload={getDeploymentMetricsQueryPayload}
 				queryKeyPrefix="deployment"
+				customTabs={customTabs}
 			/>
 		</>
 	);
