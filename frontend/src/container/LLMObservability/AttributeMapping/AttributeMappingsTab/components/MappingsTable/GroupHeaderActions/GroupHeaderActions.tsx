@@ -1,13 +1,22 @@
 import { Switch } from '@signozhq/ui/switch';
 
-import { MappingGroup } from 'container/LLMObservability/AttributeMapping/types';
+import { DraftGroup } from 'container/LLMObservability/AttributeMapping/types';
+import GroupActionsMenu from '../GroupActionsMenu/GroupActionsMenu';
 import styles from './GroupHeaderActions.module.scss';
 
 interface GroupHeaderActionsProps {
-	group: MappingGroup;
+	group: DraftGroup;
+	onToggle: (localId: string, enabled: boolean) => void;
+	onEdit: (group: DraftGroup) => void;
+	onRemove: (localId: string) => void;
 }
 
-function GroupHeaderActions({ group }: GroupHeaderActionsProps): JSX.Element {
+function GroupHeaderActions({
+	group,
+	onToggle,
+	onEdit,
+	onRemove,
+}: GroupHeaderActionsProps): JSX.Element {
 	return (
 		<div
 			className={styles.actions}
@@ -15,10 +24,10 @@ function GroupHeaderActions({ group }: GroupHeaderActionsProps): JSX.Element {
 		>
 			<Switch
 				value={group.enabled}
-				// We don't yet support toggling a group's enabled state in this read-only PR, so disable the switch. A later PR will add the toggle handler and its drawer.
-				disabled
-				testId={`group-enabled-${group.id}`}
+				onChange={(checked): void => onToggle(group.localId, checked)}
+				testId={`group-enabled-${group.localId}`}
 			/>
+			<GroupActionsMenu group={group} onEdit={onEdit} onRemove={onRemove} />
 		</div>
 	);
 }
