@@ -127,6 +127,7 @@ function K8sPodsList({
 				getRowKey={getK8sPodRowKey}
 				getItemKey={getK8sPodItemKey}
 				eventCategory={InfraMonitoringEvents.Pod}
+				detailsQueryKeyPrefix="pod"
 			/>
 
 			<K8sBaseDetails<InframonitoringtypesPodRecordDTO>

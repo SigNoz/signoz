@@ -128,6 +128,7 @@ function K8sVolumesList({
 				getRowKey={getK8sVolumeRowKey}
 				getItemKey={getK8sVolumeItemKey}
 				eventCategory={InfraMonitoringEvents.Volumes}
+				detailsQueryKeyPrefix="volume"
 			/>
 
 			<K8sBaseDetails<InframonitoringtypesVolumeRecordDTO>

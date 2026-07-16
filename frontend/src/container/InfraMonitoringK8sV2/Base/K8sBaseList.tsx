@@ -82,6 +82,7 @@ export type K8sBaseListProps<
 		context: K8sBaseListEmptyStateContext,
 	) => React.ReactNode | null;
 	extraQueryKeyParts?: string[];
+	detailsQueryKeyPrefix?: string;
 };
 
 export function K8sBaseList<
@@ -98,6 +99,7 @@ export function K8sBaseList<
 	eventCategory,
 	renderEmptyState,
 	extraQueryKeyParts = [],
+	detailsQueryKeyPrefix,
 }: K8sBaseListProps<T, TItemKey>): JSX.Element {
 	const { currentQuery } = useQueryBuilder();
 	const expression = currentQuery.builder.queryData[0]?.filter?.expression || '';
@@ -234,17 +236,29 @@ export function K8sBaseList<
 	}, [eventCategory, totalCount]);
 
 	const handleRowClick = useCallback(
-		(_record: T, itemKey: TItemKey): void => {
+		(record: T, itemKey: TItemKey): void => {
 			if (groupBy.length === 0) {
-				if (typeof itemKey === 'object' && itemKey !== null) {
-					setSelectedItemParams(itemKey);
-				} else {
-					setSelectedItemParams({
-						selectedItem: itemKey,
-						clusterName: null,
-						namespaceName: null,
-					});
+				const params: SelectedItemParams =
+					typeof itemKey === 'object'
+						? itemKey
+						: {
+								selectedItem: itemKey,
+								clusterName: null,
+								namespaceName: null,
+							};
+
+				if (detailsQueryKeyPrefix) {
+					const detailQueryKey = getAutoRefreshQueryKey(
+						selectedTime,
+						`${detailsQueryKeyPrefix}EntityDetails`,
+						params.selectedItem,
+						params.clusterName,
+						params.namespaceName,
+					);
+					queryClient.setQueryData(detailQueryKey, { data: record });
 				}
+
+				setSelectedItemParams(params);
 			}
 
 			void logEvent(InfraMonitoringEvents.ItemClicked, {
@@ -253,7 +267,15 @@ export function K8sBaseList<
 				category: eventCategory,
 			});
 		},
-		[eventCategory, groupBy.length, setSelectedItemParams],
+		[
+			eventCategory,
+			groupBy.length,
+			setSelectedItemParams,
+			detailsQueryKeyPrefix,
+			getAutoRefreshQueryKey,
+			selectedTime,
+			queryClient,
+		],
 	);
 
 	const handleRowClickNewTab = useCallback(

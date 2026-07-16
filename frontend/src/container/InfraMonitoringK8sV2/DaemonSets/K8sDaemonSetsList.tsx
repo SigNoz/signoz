@@ -137,6 +137,7 @@ function K8sDaemonSetsList({
 				getRowKey={getK8sDaemonSetRowKey}
 				getItemKey={getK8sDaemonSetItemKey}
 				eventCategory={InfraMonitoringEvents.DaemonSet}
+				detailsQueryKeyPrefix="daemonset"
 			/>
 			<K8sBaseDetails<InframonitoringtypesDaemonSetRecordDTO>
 				category={InfraMonitoringEntity.DAEMONSETS}

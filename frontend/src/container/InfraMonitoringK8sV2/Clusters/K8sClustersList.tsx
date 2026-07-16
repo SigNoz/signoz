@@ -129,6 +129,7 @@ function K8sClustersList({
 				getRowKey={getK8sClusterRowKey}
 				getItemKey={getK8sClusterItemKey}
 				eventCategory={InfraMonitoringEvents.Cluster}
+				detailsQueryKeyPrefix="cluster"
 			/>
 
 			<K8sBaseDetails<InframonitoringtypesClusterRecordDTO>

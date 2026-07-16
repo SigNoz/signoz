@@ -127,6 +127,7 @@ function K8sNodesList({
 				getRowKey={getK8sNodeRowKey}
 				getItemKey={getK8sNodeItemKey}
 				eventCategory={InfraMonitoringEvents.Node}
+				detailsQueryKeyPrefix="node"
 			/>
 
 			<K8sBaseDetails<InframonitoringtypesNodeRecordDTO>

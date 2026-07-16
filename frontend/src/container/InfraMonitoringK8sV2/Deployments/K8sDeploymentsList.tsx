@@ -141,6 +141,7 @@ function K8sDeploymentsList({
 				getRowKey={getK8sDeploymentRowKey}
 				getItemKey={getK8sDeploymentItemKey}
 				eventCategory={InfraMonitoringEvents.Deployment}
+				detailsQueryKeyPrefix="deployment"
 			/>
 
 			<K8sBaseDetails<InframonitoringtypesDeploymentRecordDTO>

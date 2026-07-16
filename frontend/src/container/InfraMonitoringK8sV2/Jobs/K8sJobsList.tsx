@@ -141,6 +141,7 @@ function K8sJobsList({
 				getRowKey={getK8sJobRowKey}
 				getItemKey={getK8sJobItemKey}
 				eventCategory={InfraMonitoringEvents.Job}
+				detailsQueryKeyPrefix="job"
 			/>
 
 			<K8sBaseDetails<InframonitoringtypesJobRecordDTO>

@@ -248,6 +248,7 @@ function Hosts(): JSX.Element {
 							getRowKey={getHostRowKey}
 							getItemKey={getHostItemKey}
 							eventCategory={InfraMonitoringEvents.HostEntity}
+							detailsQueryKeyPrefix="hosts"
 						/>
 					</div>
 				</div>

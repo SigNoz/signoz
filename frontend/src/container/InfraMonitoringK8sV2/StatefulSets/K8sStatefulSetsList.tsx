@@ -141,6 +141,7 @@ function K8sStatefulSetsList({
 				getRowKey={getK8sStatefulSetRowKey}
 				getItemKey={getK8sStatefulSetItemKey}
 				eventCategory={InfraMonitoringEvents.StatefulSet}
+				detailsQueryKeyPrefix="statefulSet"
 			/>
 
 			<K8sBaseDetails<InframonitoringtypesStatefulSetRecordDTO>

@@ -143,6 +143,7 @@ function K8sNamespacesList({
 				getRowKey={getK8sNamespaceRowKey}
 				getItemKey={getK8sNamespaceItemKey}
 				eventCategory={InfraMonitoringEvents.Namespace}
+				detailsQueryKeyPrefix="namespace"
 			/>
 
 			<K8sBaseDetails<InframonitoringtypesNamespaceRecordDTO>
