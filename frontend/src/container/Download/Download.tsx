@@ -11,10 +11,14 @@ import './Download.styles.scss';
 function Download({ data, isLoading, fileName }: DownloadProps): JSX.Element {
 	const [isDownloading, setIsDownloading] = useState(false);
 
+	const getFileName = (): string =>
+		typeof fileName === 'function' ? fileName() : fileName;
+
 	const downloadExcelFile = async (): Promise<void> => {
 		setIsDownloading(true);
 
 		try {
+			const resolvedFileName = getFileName();
 			const headers = Object.keys(Object.assign({}, ...data)).map((item) => {
 				const updatedTitle = item
 					.split('_')
@@ -30,24 +34,25 @@ function Download({ data, isLoading, fileName }: DownloadProps): JSX.Element {
 
 			const excel = new excelLib.Excel();
 			excel
-				.addSheet(fileName)
+				.addSheet(resolvedFileName)
 				.addColumns(headers)
 				.addDataSource(data, {
 					str2Percent: true,
 				})
-				.saveAs(`${fileName}.xlsx`);
+				.saveAs(`${resolvedFileName}.xlsx`);
 		} finally {
 			setIsDownloading(false);
 		}
 	};
 
 	const downloadCsvFile = (): void => {
+		const resolvedFileName = getFileName();
 		const csv = unparse(data);
 		const csvBlob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
 		const csvUrl = URL.createObjectURL(csvBlob);
 		const downloadLink = document.createElement('a');
 		downloadLink.href = csvUrl;
-		downloadLink.download = `${fileName}.csv`;
+		downloadLink.download = `${resolvedFileName}.csv`;
 		downloadLink.click();
 		downloadLink.remove();
 	};
