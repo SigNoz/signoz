@@ -91,10 +91,14 @@ function TimelineTableContent(): JSX.Element {
 
 	const handleRunQuery = useCallback(
 		(updatedExpression?: string): void => {
-			querySearchOnRun(updatedExpression ?? inputExpression);
-			refetch();
+			const nextExpression = updatedExpression ?? inputExpression;
+			querySearchOnRun(nextExpression);
+
+			if (nextExpression === expression) {
+				refetch();
+			}
 		},
-		[querySearchOnRun, refetch, inputExpression],
+		[querySearchOnRun, refetch, inputExpression, expression],
 	);
 
 	const queryData = useMemo(
@@ -112,7 +116,7 @@ function TimelineTableContent(): JSX.Element {
 		record: AlertRuleTimelineTableResponse,
 	): HTMLAttributes<AlertRuleTimelineTableResponse> => ({
 		onClick: (): void => {
-			logEvent('Alert history: Timeline table row: Clicked', {
+			void logEvent('Alert history: Timeline table row: Clicked', {
 				ruleId: record.ruleID,
 				labels: record.labels,
 			});

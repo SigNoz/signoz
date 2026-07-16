@@ -81,7 +81,7 @@ export function useAlertHistoryFilterSuggestions(
 			{ startUnixMilli: startTime, endUnixMilli: endTime },
 			{
 				query: {
-					enabled: !!ruleId,
+					enabled: !!ruleId && startTime !== null && endTime !== null,
 					refetchOnMount: false,
 					refetchOnWindowFocus: false,
 				},
