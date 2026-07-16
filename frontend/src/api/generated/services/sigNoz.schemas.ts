@@ -8675,9 +8675,9 @@ export interface RuletypesGettableTestRuleDTO {
 
 export interface RuletypesRenotifyDTO {
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	alertStates?: RuletypesAlertStateDTO[];
+	alertStates?: RuletypesAlertStateDTO[] | null;
 	/**
 	 * @type boolean
 	 */
@@ -8690,9 +8690,9 @@ export interface RuletypesRenotifyDTO {
 
 export interface RuletypesNotificationSettingsDTO {
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	groupBy?: string[];
+	groupBy?: string[] | null;
 	/**
 	 * @type string
 	 */
