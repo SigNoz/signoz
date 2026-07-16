@@ -1,4 +1,4 @@
-import { Fragment, useMemo } from 'react';
+import { Fragment, useEffect, useMemo } from 'react';
 import {
 	BarChart,
 	ChevronsLeftRight,
@@ -77,6 +77,34 @@ export default function K8sBaseDetailsContent<T>({
 	);
 
 	const [selectedView, setSelectedView] = useInfraMonitoringView();
+
+	const validTabs = useMemo(() => {
+		const tabs: string[] = [];
+		if (tabVisibility.showMetrics) {
+			tabs.push(VIEW_TYPES.METRICS);
+		}
+		if (tabVisibility.showLogs) {
+			tabs.push(VIEW_TYPES.LOGS);
+		}
+		if (tabVisibility.showTraces) {
+			tabs.push(VIEW_TYPES.TRACES);
+		}
+		if (tabVisibility.showEvents) {
+			tabs.push(VIEW_TYPES.EVENTS);
+		}
+		if (customTabs) {
+			tabs.push(...customTabs.map((t) => t.key));
+		}
+		return tabs;
+	}, [tabVisibility, customTabs]);
+
+	useEffect(() => {
+		if (!hideDetailViewTabs && !validTabs.includes(selectedView)) {
+			const firstValid = validTabs[0] || VIEW_TYPES.METRICS;
+			void setSelectedView(firstValid);
+		}
+	}, [hideDetailViewTabs, selectedView, validTabs, setSelectedView]);
+
 	const effectiveView = hideDetailViewTabs ? VIEW_TYPES.METRICS : selectedView;
 
 	const [, setLogFiltersParam] = useInfraMonitoringLogFilters();
@@ -91,7 +119,10 @@ export default function K8sBaseDetailsContent<T>({
 		parseAsString,
 	);
 
-	const handleTabChange = (value: string): void => {
+	const handleTabChange = (value: string | null): void => {
+		if (!value) {
+			return;
+		}
 		void setSelectedView(value);
 		void setLogFiltersParam(null);
 		void setTracesFiltersParam(null);
