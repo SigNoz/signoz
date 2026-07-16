@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useMutation, useQueryClient, useQuery } from 'react-query';
 import { generatePath } from 'react-router-dom';
 import { TablePaginationConfig, TableProps } from 'antd';
@@ -263,9 +263,8 @@ export const useGetAlertRuleDetailsTimelineTable = ({
 }): GetAlertRuleDetailsTimelineTableProps => {
 	const queryClient = useQueryClient();
 	const { ruleId, startTime, endTime, params } = useAlertHistoryQueryParams();
-	const [page] = useTimelineTablePage();
+	const [page, setPage] = useTimelineTablePage();
 	const [order] = useTimelineTableOrder();
-	const cursor = computeCursorForPage(page);
 
 	const updatedOrder = useMemo(
 		() =>
@@ -288,6 +287,20 @@ export const useGetAlertRuleDetailsTimelineTable = ({
 			? RuletypesAlertStateDTO.firing
 			: RuletypesAlertStateDTO.inactive;
 	}, [timelineFilter]);
+
+	const filtersKey = `${filterExpression}|${stateFilter ?? ''}`;
+	const prevFiltersKeyRef = useRef(filtersKey);
+	const filtersChanged = prevFiltersKeyRef.current !== filtersKey;
+	const cursor = computeCursorForPage(filtersChanged ? 1 : page);
+
+	useEffect(() => {
+		if (prevFiltersKeyRef.current !== filtersKey) {
+			prevFiltersKeyRef.current = filtersKey;
+			if (page > 1) {
+				void setPage(1);
+			}
+		}
+	}, [filtersKey, page, setPage]);
 
 	const queryParams = useMemo(
 		() => ({
