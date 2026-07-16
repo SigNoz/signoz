@@ -15,13 +15,12 @@ import {
 import { toPerses } from '../DashboardContainer/queryV5/persesQueryAdapters';
 
 interface NewPanelSeed {
-	/** Effective kind to create — may differ from the requested one (see below). */
+	/** May differ from the requested kind — see `resolveSeededPanelKind`. */
 	kind: PanelKind;
 	queries: DashboardtypesQueryDTO[];
 	pluginSpec: SeededPluginSpec;
 }
 
-/** Whether a kind's Formatting section exposes a `unit` control (Table/List don't). */
 function kindSupportsUnit(kind: PanelKind): boolean {
 	return getPanelDefinition(kind).sections.some(
 		(section) =>
@@ -31,47 +30,50 @@ function kindSupportsUnit(kind: PanelKind): boolean {
 	);
 }
 
-/**
- * Effective kind for an export: the requested kind, or — when it can't hold the query's
- * language (only List, which is builder-only) — a compatible one so the query isn't
- * dropped: PromQL → TimeSeries, ClickHouse → Table.
- */
+/** Kind to fall back to for a query language a builder-only kind (List) can't hold. */
+const FALLBACK_KIND_BY_QUERY_TYPE: Partial<Record<EQueryType, PanelKind>> = {
+	[EQueryType.PROM]: 'signoz/TimeSeriesPanel',
+	[EQueryType.CLICKHOUSE]: 'signoz/TablePanel',
+};
+
+/** Keep the requested kind if it can hold the query; otherwise coerce so it isn't dropped. */
 function resolveSeededPanelKind(
 	requestedKind: PanelKind,
-	compositeQuery: Query | null,
+	compositeQuery: Query,
 ): PanelKind {
-	if (
-		!compositeQuery ||
-		isQueryTypeSupportedByPanelKind(requestedKind, compositeQuery.queryType)
-	) {
+	if (isQueryTypeSupportedByPanelKind(requestedKind, compositeQuery.queryType)) {
 		return requestedKind;
 	}
-	return compositeQuery.queryType === EQueryType.PROM
-		? 'signoz/TimeSeriesPanel'
-		: 'signoz/TablePanel';
+	return (
+		FALLBACK_KIND_BY_QUERY_TYPE[compositeQuery.queryType] ?? 'signoz/TablePanel'
+	);
 }
 
 /**
- * Seed for a new panel from the explorer "Add to Dashboard" export: resolve the effective
- * kind, convert the exported `compositeQuery` to perses queries, and carry a unit-bearing
- * kind's explorer `unit`. Falls back to the kind's default seed when there's no query or
- * conversion yields nothing runnable.
+ * A blank "Add panel" gets the requested kind's default seed; an explorer "Add to
+ * Dashboard" export instead seeds from `compositeQuery` (converted to perses queries,
+ * carrying the query's `unit`).
  */
 export function buildNewPanelSeed(
 	requestedKind: PanelKind,
 	compositeQuery: Query | null,
+	isExplorerExport = false,
 ): NewPanelSeed {
+	if (!isExplorerExport || !compositeQuery) {
+		return {
+			kind: requestedKind,
+			queries: buildDefaultQueries(requestedKind),
+			pluginSpec: buildPluginSpec(getPanelDefinition(requestedKind).sections),
+		};
+	}
+
 	const kind = resolveSeededPanelKind(requestedKind, compositeQuery);
 	const pluginSpec = buildPluginSpec(getPanelDefinition(kind).sections);
-
-	if (!compositeQuery) {
-		return { kind, queries: buildDefaultQueries(kind), pluginSpec };
-	}
 
 	const converted = toPerses(compositeQuery, PANEL_KIND_TO_PANEL_TYPE[kind]);
 	const queries = converted.length > 0 ? converted : buildDefaultQueries(kind);
 
-	// An exported Query has only a single `unit`, no per-column units to seed `columnUnits`.
+	// Explorers put the single `unit` on the query itself, not the panel spec.
 	if (compositeQuery.unit && kindSupportsUnit(kind)) {
 		return {
 			kind,

@@ -52,7 +52,7 @@ describe('buildNewPanelSeed', () => {
 		mockIsQueryTypeSupported.mockReturnValue(true);
 	});
 
-	it('uses the kind default seed when there is no exported query', () => {
+	it('uses the kind default seed when it is not an explorer export', () => {
 		const seed = buildNewPanelSeed('signoz/TimeSeriesPanel', null);
 
 		expect(seed.kind).toBe('signoz/TimeSeriesPanel');
@@ -64,7 +64,7 @@ describe('buildNewPanelSeed', () => {
 	it('converts the exported query into perses queries', () => {
 		mockToPerses.mockReturnValue(CONVERTED_QUERIES);
 
-		const seed = buildNewPanelSeed('signoz/TimeSeriesPanel', q());
+		const seed = buildNewPanelSeed('signoz/TimeSeriesPanel', q(), true);
 
 		expect(seed.kind).toBe('signoz/TimeSeriesPanel');
 		expect(seed.queries).toBe(CONVERTED_QUERIES);
@@ -78,6 +78,7 @@ describe('buildNewPanelSeed', () => {
 		const seed = buildNewPanelSeed(
 			'signoz/ListPanel',
 			q({ queryType: EQueryType.CLICKHOUSE }),
+			true,
 		);
 
 		expect(seed.kind).toBe('signoz/TablePanel');
@@ -91,6 +92,7 @@ describe('buildNewPanelSeed', () => {
 		const seed = buildNewPanelSeed(
 			'signoz/ListPanel',
 			q({ queryType: EQueryType.PROM }),
+			true,
 		);
 
 		expect(seed.kind).toBe('signoz/TimeSeriesPanel');
@@ -100,7 +102,7 @@ describe('buildNewPanelSeed', () => {
 	it('falls back to the default seed when conversion yields nothing runnable', () => {
 		mockToPerses.mockReturnValue([]);
 
-		const seed = buildNewPanelSeed('signoz/ListPanel', q());
+		const seed = buildNewPanelSeed('signoz/ListPanel', q(), true);
 
 		expect(seed.queries).toBe(DEFAULT_QUERIES);
 	});
@@ -109,7 +111,11 @@ describe('buildNewPanelSeed', () => {
 		mockToPerses.mockReturnValue(CONVERTED_QUERIES);
 		mockGetPanelDefinition.mockReturnValue({ sections: withUnit });
 
-		const seed = buildNewPanelSeed('signoz/TimeSeriesPanel', q({ unit: 'ms' }));
+		const seed = buildNewPanelSeed(
+			'signoz/TimeSeriesPanel',
+			q({ unit: 'ms' }),
+			true,
+		);
 
 		expect(seed.pluginSpec).toStrictEqual({
 			...BASE_SPEC,
@@ -121,7 +127,7 @@ describe('buildNewPanelSeed', () => {
 		mockToPerses.mockReturnValue(CONVERTED_QUERIES);
 		mockGetPanelDefinition.mockReturnValue({ sections: withoutUnit });
 
-		const seed = buildNewPanelSeed('signoz/TablePanel', q({ unit: 'ms' }));
+		const seed = buildNewPanelSeed('signoz/TablePanel', q({ unit: 'ms' }), true);
 
 		expect(seed.pluginSpec).toStrictEqual(BASE_SPEC);
 	});

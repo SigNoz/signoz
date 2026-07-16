@@ -86,10 +86,12 @@ function PanelEditorPage(): JSX.Element {
 	const existingPanel = dashboard?.spec.panels[panelId];
 	const panel = useMemo(() => {
 		if (newKind) {
-			// `kind` may be coerced from `newKind` (e.g. a ClickHouse query into List).
+			// A `compositeQuery` at mount means the explorer routed an export here.
+			const isExplorerExport = !!exportCompositeQueryRef.current;
 			const { kind, pluginSpec, queries } = buildNewPanelSeed(
 				newKind,
 				exportCompositeQueryRef.current,
+				isExplorerExport,
 			);
 			return createDefaultPanel(kind, pluginSpec, queries);
 		}
