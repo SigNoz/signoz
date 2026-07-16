@@ -32,7 +32,7 @@ export const useTimelineTableOrder = (): UseQueryStateReturn<
 	useQueryState(
 		TIMELINE_TABLE_PARAMS.ORDER,
 		parseAsStringLiteral(ORDER_VALUES)
-			.withDefault('desc')
+			.withDefault('asc')
 			.withOptions(defaultNuqsOptions),
 	);
 
