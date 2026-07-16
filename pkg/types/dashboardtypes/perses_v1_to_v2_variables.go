@@ -120,6 +120,11 @@ func (d *v1Decoder) convertV1Variable(v map[string]any) (Variable, bool) {
 		}
 		return Variable{Kind: variable.KindList, Spec: listSpec}, true
 
+	case "":
+		// v1 sometimes stores a variable with no type; it can't render, so drop it
+		// silently rather than flagging it malformed.
+		return Variable{}, false
+
 	default:
 		d.note("variable %q has unknown type %q", name, kind)
 		return Variable{}, false

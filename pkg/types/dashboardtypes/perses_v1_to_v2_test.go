@@ -1495,8 +1495,8 @@ func TestConvertV1VariablesSkipsDynamicMissingAttribute(t *testing.T) {
 }
 
 // TestConvertV1VariablesFlagsUnknownType verifies a named variable with an
-// unrecognized type is recorded as a problem (dashboard logged and skipped)
-// rather than silently dropped.
+// unrecognized (non-empty) type is recorded as a problem (dashboard logged and
+// skipped) rather than silently dropped.
 func TestConvertV1VariablesFlagsUnknownType(t *testing.T) {
 	d := &v1Decoder{}
 	d.convertV1Variables(map[string]any{"u-1": map[string]any{"name": "ok", "type": "WHATEVER"}})
