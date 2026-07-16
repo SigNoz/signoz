@@ -171,7 +171,7 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.podRestarts,
-		width: { min: 100 },
+		width: { min: 140 },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
 			const restarts = value as number;
