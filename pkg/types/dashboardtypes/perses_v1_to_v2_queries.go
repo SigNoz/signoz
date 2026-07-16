@@ -204,21 +204,39 @@ func (d *v1Decoder) collectV1QueryEnvelopes(widget map[string]any, panelKind Pan
 			out = append(out, env)
 		}
 		for _, op := range d.readObjects(builder, "queryTraceOperator") {
-			// A trace operator's expression is the operation itself and is required
-			// (ParseExpression rejects a blank one); drop it if empty rather than let it
-			// be misclassified as a blank formula and fail validation.
-			if d.readString(op, "expression") == "" {
+			// A trace operator's expression is the operation itself ("A=>B->C") and is
+			// required (ParseExpression rejects a blank one); drop it if empty.
+			expression := d.readString(op, "expression")
+			if expression == "" {
 				continue
 			}
 			normalizePreV5QueryData(op, widgetType)
+			normalizePreV5GroupBy(op)
 			name := d.readString(op, "queryName")
-			out = append(out, qb.WrapInV5Envelope(name, op, string(qb.QueryTypeTraceOperator.StringValue())))
+			out = append(out, traceOperatorEnvelope(name, expression, op))
 		}
 		return out, signal
 	default:
 		d.note("widget %q has unknown queryType %q", d.readString(widget, "id"), queryType)
 	}
 	return nil, telemetrytypes.Signal{}
+}
+
+// traceOperatorEnvelope builds a v5 builder_trace_operator envelope. WrapInV5Envelope
+// would misclassify a trace operator as a formula (its name differs from its
+// expression, e.g. "A=>B->C"), so route the map through the builder-query path —
+// temporarily aligning expression with name to dodge that heuristic — then restore the
+// real expression, drop the builder-only signal (a trace operator's spec has no signal
+// field), and set the trace-operator type.
+func traceOperatorEnvelope(name, expression string, op map[string]any) map[string]any {
+	op["expression"] = name
+	env := qb.WrapInV5Envelope(name, op, string(qb.QueryTypeBuilder.StringValue()))
+	if spec, ok := env["spec"].(map[string]any); ok {
+		delete(spec, "signal")
+		spec["expression"] = expression
+	}
+	env["type"] = string(qb.QueryTypeTraceOperator.StringValue())
+	return env
 }
 
 // maxQueries mirrors the frontend MAX_QUERIES; builder query names run A..Z.
