@@ -8,25 +8,14 @@ import AttributeMappingsTab from './AttributeMappingsTab/AttributeMappingsTab';
 import DiscardChangesDialog from './components/DiscardChangesDialog/DiscardChangesDialog';
 import GroupFormDrawer from './components/GroupFormDrawer/GroupFormDrawer';
 import styles from './LLMObservabilityAttributeMapping.module.scss';
-import {
-	selectIsDirty,
-	useAttributeMappingStore,
-} from './store/useAttributeMappingStore';
-import { useAttributeMappingSync } from './store/useAttributeMappingSync';
+import { useAttributeMappingStore } from './AttributeMappingsTab/hooks/useAttributeMappingStore';
 import { useGroupFormDrawer } from './components/GroupFormDrawer/hooks/useGroupFormDrawer';
 
 function LLMObservabilityAttributeMapping(): JSX.Element {
-	// Bridges react-query into the store (fetch + seed) and owns save. Mounted
-	// once here, at the top of the feature.
-	const { save } = useAttributeMappingSync();
+	const store = useAttributeMappingStore();
 	const groupDrawer = useGroupFormDrawer();
 
-	const isDirty = useAttributeMappingStore(selectIsDirty);
-	const isSaving = useAttributeMappingStore((state) => state.isSaving);
-	const saveError = useAttributeMappingStore((state) => state.saveError);
-	const discard = useAttributeMappingStore((state) => state.discard);
-	const upsertGroup = useAttributeMappingStore((state) => state.upsertGroup);
-
+	const { discard } = store;
 	// Discarding wipes the whole working copy, so gate it behind a confirm
 	// prompt rather than firing straight from the button.
 	const discardConfirm = useConfirmableAction(
@@ -36,9 +25,9 @@ function LLMObservabilityAttributeMapping(): JSX.Element {
 	);
 
 	const handleGroupSave = useCallback((): void => {
-		upsertGroup(groupDrawer.draft);
+		store.upsertGroup(groupDrawer.draft);
 		groupDrawer.close();
-	}, [upsertGroup, groupDrawer]);
+	}, [store, groupDrawer]);
 
 	const tabItems = [
 		{
@@ -46,6 +35,7 @@ function LLMObservabilityAttributeMapping(): JSX.Element {
 			label: 'Attribute Mappings',
 			children: (
 				<AttributeMappingsTab
+					store={store}
 					onEditGroup={groupDrawer.openForEdit}
 					onAddGroup={groupDrawer.openForAdd}
 				/>
@@ -66,15 +56,15 @@ function LLMObservabilityAttributeMapping(): JSX.Element {
 			data-testid="llm-observability-attribute-mapping-page"
 		>
 			<AttributeMappingHeader
-				isDirty={isDirty}
-				isSaving={isSaving}
+				isDirty={store.isDirty}
+				isSaving={store.isSaving}
 				onDiscard={discardConfirm.request}
-				onSave={save}
+				onSave={store.save}
 			/>
 
-			{saveError && (
+			{store.saveError && (
 				<div className={styles.pageError} role="alert">
-					{saveError}
+					{store.saveError}
 				</div>
 			)}
 			<Divider />

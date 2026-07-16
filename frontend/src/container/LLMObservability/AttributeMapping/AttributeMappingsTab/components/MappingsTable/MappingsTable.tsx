@@ -10,11 +10,7 @@ import {
 	DraftGroup,
 	DraftMapper,
 } from 'container/LLMObservability/AttributeMapping/types';
-import {
-	selectGroups,
-	selectIsLoading,
-	useAttributeMappingStore,
-} from 'container/LLMObservability/AttributeMapping/store/useAttributeMappingStore';
+import { AttributeMappingStore } from 'container/LLMObservability/AttributeMapping/AttributeMappingsTab/hooks/useAttributeMappingStore';
 import GroupHeader from './GroupHeader/GroupHeader';
 import GroupHeaderActions from './GroupHeaderActions/GroupHeaderActions';
 import GroupMappers from './GroupMappers/GroupMappers';
@@ -24,23 +20,21 @@ import styles from './MappingsTable.module.scss';
 const SKELETON_ROW_COUNT = 3;
 
 interface MappingsTableProps {
+	store: AttributeMappingStore;
 	onEditGroup: (group: DraftGroup) => void;
 	onAddGroup: () => void;
 }
 
 function MappingsTable({
+	store,
 	onEditGroup,
 	onAddGroup,
 }: MappingsTableProps): JSX.Element {
-	const groups = useAttributeMappingStore(selectGroups);
-	const isLoading = useAttributeMappingStore(selectIsLoading);
-	const toggleGroup = useAttributeMappingStore((state) => state.toggleGroup);
-	const removeGroup = useAttributeMappingStore((state) => state.removeGroup);
-	const upsertMapper = useAttributeMappingStore((state) => state.upsertMapper);
-	const removeMapper = useAttributeMappingStore((state) => state.removeMapper);
 	const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
 	const [targetGroupId, setTargetGroupId] = useState<string | null>(null);
 	const drawer = useMapperFormDrawer();
+
+	const { upsertMapper, removeMapper } = store;
 
 	const handleAddMapper = useCallback(
 		(groupLocalId: string): void => {
@@ -76,22 +70,23 @@ function MappingsTable({
 		drawer.close();
 	}, [targetGroupId, removeMapper, drawer]);
 
-	const isEmpty = !isLoading && groups.length === 0;
+	const isEmpty = !store.isLoading && store.groups.length === 0;
 
-	const items: CollapseProps['items'] = groups.map((group) => ({
+	const items: CollapseProps['items'] = store.groups.map((group) => ({
 		key: group.localId,
 		label: <GroupHeader group={group} />,
 		extra: (
 			<GroupHeaderActions
 				group={group}
-				onToggle={toggleGroup}
+				onToggle={store.toggleGroup}
 				onEdit={onEditGroup}
-				onRemove={removeGroup}
+				onRemove={store.removeGroup}
 			/>
 		),
 		children: (
 			<GroupMappers
 				group={group}
+				store={store}
 				onAddMapper={handleAddMapper}
 				onEditMapper={handleEditMapper}
 			/>
@@ -132,7 +127,7 @@ function MappingsTable({
 					prefix={<Plus size={14} />}
 					onClick={onAddGroup}
 					testId="add-group-row"
-					disabled={isLoading}
+					disabled={store.isLoading}
 				>
 					Add a new group
 				</Button>
@@ -157,7 +152,7 @@ function MappingsTable({
 							</tr>
 						</thead>
 					</table>
-					{isLoading ? (
+					{store.isLoading ? (
 						skeletonBanners
 					) : (
 						<Collapse

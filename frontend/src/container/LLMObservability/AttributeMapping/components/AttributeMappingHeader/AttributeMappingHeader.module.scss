@@ -1,6 +1,6 @@
 .pageHeader {
 	display: flex;
-	align-items: center;
+	align-items: flex-start;
 	justify-content: space-between;
 	margin-left: var(--spacing-2);
 	margin-top: var(--spacing-4);
@@ -10,7 +10,6 @@
 	display: flex;
 	align-items: center;
 	gap: var(--spacing-6);
-	margin: var(--spacing-6);
 }
 
 .unsavedChanges {
