@@ -1,6 +1,5 @@
-import cx from 'classnames';
-
 import styles from './VariableTooltip.module.scss';
+import TooltipRefSection from './TooltipRefSection';
 
 interface VariableTooltipProps {
 	description?: string;
@@ -28,35 +27,20 @@ function VariableTooltip({
 				<>
 					{description ? <div className={styles.tooltipDivider} /> : null}
 					{dependsOn.length > 0 ? (
-						<div className={styles.tooltipSection}>
-							<div className={cx(styles.tooltipLabel, styles.dependsColor)}>
-								Depends on
-							</div>
-							<div className={styles.tooltipRefs}>
-								{dependsOn.map((name) => (
-									<span
-										key={name}
-										className={cx(styles.tooltipRef, styles.dependsColor)}
-									>
-										${name}
-									</span>
-								))}
-							</div>
-						</div>
+						<TooltipRefSection
+							label="Depends on"
+							refs={dependsOn}
+							direction="up"
+							colorClassName={styles.dependsColor}
+						/>
 					) : null}
 					{usedBy.length > 0 ? (
-						<div className={styles.tooltipSection}>
-							<div className={cx(styles.tooltipLabel, styles.usedByColor)}>
-								Used by
-							</div>
-							<div className={styles.tooltipRefs}>
-								{usedBy.map((name) => (
-									<span key={name} className={cx(styles.tooltipRef, styles.usedByColor)}>
-										${name}
-									</span>
-								))}
-							</div>
-						</div>
+						<TooltipRefSection
+							label="Used by"
+							refs={usedBy}
+							direction="down"
+							colorClassName={styles.usedByColor}
+						/>
 					) : null}
 				</>
 			) : null}
