@@ -8,10 +8,6 @@ interface DiscardChangesDialogProps {
 	onCancel: () => void;
 }
 
-// Confirmation before discarding staged attribute-mapping edits. Discard throws
-// away every unsaved group/mapper change in the working copy and can't be
-// undone, so it's gated behind an explicit confirm. AlertDialog blocks
-// outside-click dismissal to force a deliberate choice.
 function DiscardChangesDialog({
 	open,
 	onConfirm,

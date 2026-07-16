@@ -69,21 +69,17 @@ describe('LLMObservabilityAttributeMapping', () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(<LLMObservabilityAttributeMapping />);
 
-		// Stage a change (toggle a group) so the Discard action appears.
 		const toggle = await screen.findByTestId('group-enabled-group-1');
 		expect(toggle).toBeChecked();
 		await user.click(toggle);
 		expect(screen.getByTestId('group-enabled-group-1')).not.toBeChecked();
 
-		// Discard opens a confirm prompt rather than reverting immediately — the
-		// change is still staged while the prompt is open.
 		await user.click(screen.getByTestId('discard-changes-btn'));
 		const confirmBtn = await screen.findByTestId('discard-changes-confirm-btn');
 		expect(screen.getByTestId('group-enabled-group-1')).not.toBeChecked();
 
 		await user.click(confirmBtn);
 
-		// Confirmed: the change is reverted and the dirty-only actions disappear.
 		await waitFor(() =>
 			expect(screen.getByTestId('group-enabled-group-1')).toBeChecked(),
 		);
@@ -100,7 +96,6 @@ describe('LLMObservabilityAttributeMapping', () => {
 		await user.click(screen.getByTestId('discard-changes-btn'));
 		await user.click(await screen.findByTestId('discard-changes-cancel-btn'));
 
-		// Prompt closes and the staged change is preserved.
 		await waitFor(() =>
 			expect(
 				screen.queryByTestId('discard-changes-confirm-btn'),

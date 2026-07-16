@@ -51,8 +51,6 @@ function getMapperSources(mapper: Mapper): SourceConfig[] {
 		}));
 }
 
-// ---- mapper form helpers ----
-
 export function createEmptySource(): SourceConfig {
 	return {
 		key: '',
@@ -122,8 +120,6 @@ export function buildUpdatableMapper(
 	};
 }
 
-// ---- group form helpers ----
-
 export const EMPTY_GROUP_DRAFT: GroupDraft = {
 	id: null,
 	name: '',
@@ -154,8 +150,6 @@ export function buildUpdatableGroup(
 ): SpantypesUpdatableSpanMapperGroupDTO {
 	return buildPostableGroup(draft);
 }
-
-// ---- working-copy (draft tree) helpers ----
 
 export function buildDraftMapper(mapper: Mapper): DraftMapper {
 	return {

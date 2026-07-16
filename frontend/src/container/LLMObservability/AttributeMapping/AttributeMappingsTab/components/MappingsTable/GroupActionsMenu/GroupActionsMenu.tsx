@@ -11,8 +11,6 @@ interface GroupActionsMenuProps {
 	onRemove: (localId: string) => void;
 }
 
-// Per-group overflow menu: Edit opens the group drawer, Delete stages the
-// removal in the working copy (persisted on the page-level save).
 function GroupActionsMenu({
 	group,
 	onEdit,
@@ -44,7 +42,7 @@ function GroupActionsMenu({
 				color="secondary"
 				size="icon"
 				aria-label="Group actions"
-				testId={`group-actions-${group.localId}`}
+				data-testid={`group-actions-${group.localId}`}
 			>
 				<EllipsisVertical size={16} />
 			</Button>

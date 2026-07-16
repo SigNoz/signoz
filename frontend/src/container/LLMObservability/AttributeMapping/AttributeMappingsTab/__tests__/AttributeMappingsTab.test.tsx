@@ -55,20 +55,13 @@ async function openGroupActionsMenu(
 	user: ReturnType<typeof userEvent.setup>,
 	groupId: string,
 ): Promise<void> {
-	const row = screen
-		.getByTestId(`group-name-${groupId}`)
-		.closest('.ant-collapse-item') as HTMLElement;
-	await user.click(within(row).getByRole('button', { name: 'Group actions' }));
+	await user.click(screen.getByTestId(`group-actions-${groupId}`));
 }
 
 interface AttributeMappingsTabWithStoreProps {
 	onEditGroup?: (group: DraftGroup) => void;
 	onAddGroup?: () => void;
 }
-
-// The tab is a presentational view over an editor owned by the container, so
-// this wrapper creates the editor (via the hook, backed by the mocked API) and
-// wires the edit/add callbacks the tab needs.
 function AttributeMappingsTabWithStore({
 	onEditGroup,
 	onAddGroup,
@@ -83,8 +76,6 @@ function AttributeMappingsTabWithStore({
 	);
 }
 
-// The real Save button lives in the page header; this harness exposes the same
-// editor.save() path the header wires up, so the tab suite can exercise it.
 function SaveableHarness(): JSX.Element {
 	const editor = useAttributeMappingEditor();
 	return (
@@ -153,30 +144,22 @@ describe('AttributeMappingsTab (integration)', () => {
 
 		// Condition filters are no longer shown inline as clauses — the header
 		// carries a count instead (the keys surface in the group drawer).
-		// Group headers are antd Collapse panels, so rows scope to the panel item.
+		// Every field carries a group-scoped testId, so assert on them directly.
+		await screen.findByTestId('group-name-group-1');
+
 		// group-1: enabled, with attribute + resource condition keys.
-		const enabledRow = (await screen.findByTestId('group-name-group-1')).closest(
-			'.ant-collapse-item',
-		) as HTMLElement;
-		expect(
-			within(enabledRow).getByTestId('group-name-group-1'),
-		).toHaveTextContent('demo');
-		expect(
-			within(enabledRow).getByTestId('group-condition-count-group-1'),
-		).toHaveTextContent('2 conditions');
-		expect(within(enabledRow).getByTestId('group-enabled-group-1')).toBeChecked();
+		expect(screen.getByTestId('group-name-group-1')).toHaveTextContent('demo');
+		expect(screen.getByTestId('group-condition-count-group-1')).toHaveTextContent(
+			'2 conditions',
+		);
+		expect(screen.getByTestId('group-enabled-group-1')).toBeChecked();
 
 		// group-2: disabled.
-		const disabledRow = screen
-			.getByTestId('group-name-group-2')
-			.closest('.ant-collapse-item') as HTMLElement;
-		expect(within(disabledRow).getByText('Tool')).toBeInTheDocument();
-		expect(
-			within(disabledRow).getByTestId('group-condition-count-group-2'),
-		).toHaveTextContent('0 conditions');
-		expect(
-			within(disabledRow).getByTestId('group-enabled-group-2'),
-		).not.toBeChecked();
+		expect(screen.getByTestId('group-name-group-2')).toHaveTextContent('Tool');
+		expect(screen.getByTestId('group-condition-count-group-2')).toHaveTextContent(
+			'0 conditions',
+		);
+		expect(screen.getByTestId('group-enabled-group-2')).not.toBeChecked();
 	});
 
 	it("stages a toggle of the group's enabled state via the header switch", async () => {
@@ -188,7 +171,6 @@ describe('AttributeMappingsTab (integration)', () => {
 		expect(toggle).toBeChecked();
 
 		await user.click(toggle);
-		// The flip lands in the store's working copy (persisted on page save).
 		expect(screen.getByTestId('group-enabled-group-1')).not.toBeChecked();
 	});
 
@@ -230,8 +212,6 @@ describe('AttributeMappingsTab (integration)', () => {
 		await openGroupActionsMenu(user, 'group-1');
 		await user.click(await screen.findByRole('menuitem', { name: 'Delete' }));
 
-		// The row leaves the working copy immediately; the delete is persisted on
-		// the page-level save.
 		await waitFor(() =>
 			expect(screen.queryByTestId('group-name-group-1')).not.toBeInTheDocument(),
 		);
@@ -245,10 +225,11 @@ describe('AttributeMappingsTab (integration)', () => {
 		render(<AttributeMappingsTabWithStore />);
 
 		await screen.findByTestId('group-name-group-1');
-		// The toggle is the antd Collapse header, which owns the expanded state.
+		// The clickable Collapse header owns the expanded state; find it by the
+		// aria-expanded contract rather than any framework-internal class.
 		const header = screen
 			.getByTestId('group-expand-group-1')
-			.closest('.ant-collapse-header') as HTMLElement;
+			.closest('[aria-expanded]') as HTMLElement;
 		expect(header).toHaveAttribute('aria-expanded', 'false');
 
 		await expandGroup(user);
@@ -288,8 +269,6 @@ describe('AttributeMappingsTab (integration)', () => {
 		const sources = within(mapperRow).getByTestId('mapper-sources-mapper-1');
 		expect(sources).toHaveTextContent('genai.model');
 		expect(sources).toHaveTextContent('llm.model');
-		// Field-context badge (beside the target) + enabled status (an inline
-		// Switch, not text).
 		expect(within(mapperRow).getByText('attribute')).toBeInTheDocument();
 		expect(
 			within(mapperRow).getByTestId('mapper-enabled-mapper-1'),
@@ -370,9 +349,6 @@ describe('AttributeMappingsTab (integration)', () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		setupGroups();
 
-		// The mapper list changes server-side between the first open and the save
-		// (e.g. another edit landed, or the save reconciled ids). The open table
-		// must reflect the latest list — not the list cached on first expand.
 		let mappers = mockMappers;
 		server.use(
 			rest.get(mappersEndpoint('group-1'), (_req, res, ctx) =>
@@ -390,13 +366,10 @@ describe('AttributeMappingsTab (integration)', () => {
 			screen.findByTestId('mapper-target-mapper-1'),
 		).resolves.toBeInTheDocument();
 
-		// Server now returns a different mapper for the group.
 		mappers = [makeMapper({ id: 'mapper-2', name: 'gen_ai.response.model' })];
 
 		await user.click(screen.getByTestId('save-button'));
 
-		// Fresh row appears; the stale one is gone. Without removeQueries the table
-		// would keep showing mapper-1 (the hydrate once-guard blocks the update).
 		await expect(
 			screen.findByTestId('mapper-target-mapper-2'),
 		).resolves.toHaveTextContent('gen_ai.response.model');
@@ -410,9 +383,6 @@ describe('AttributeMappingsTab (integration)', () => {
 		(toast.success as jest.Mock).mockClear();
 		(toast.warning as jest.Mock).mockClear();
 
-		// The initial load succeeds; the post-save refetch fails. persistDraft
-		// itself succeeds (the PATCH below), so the changes are on the server —
-		// only the refresh that follows them errors.
 		let failRefresh = false;
 		server.use(
 			rest.get(GROUPS_ENDPOINT, (_req, res, ctx) =>
@@ -429,27 +399,16 @@ describe('AttributeMappingsTab (integration)', () => {
 		const toggle = await screen.findByTestId('group-enabled-group-1');
 		expect(toggle).toBeChecked();
 
-		// Stage a change so persistDraft issues a PATCH and the draft is dirty.
 		await user.click(toggle);
 		expect(screen.getByTestId('group-enabled-group-1')).not.toBeChecked();
 
 		failRefresh = true;
 		await user.click(screen.getByTestId('save-button'));
 
-		// The refresh failed, so the user is warned rather than told the save
-		// succeeded. Crucially the working copy is not reset — the guard skips the
-		// setDraft(null) reset that would otherwise re-seed from the stale
-		// pre-save cache and silently drop the just-saved change.
 		await waitFor(() => expect(toast.warning).toHaveBeenCalled());
 		expect(toast.success).not.toHaveBeenCalled();
 	});
 
-	// The mapper drawer is owned by MappingsTable (a single useMapperFormDrawer +
-	// MapperFormDrawer instance, targeted at whichever group triggered it), so
-	// these flows reach it through the same store-backed harness by expanding a
-	// group first. Persistence is staged into the draft store, so the assertions
-	// are on the resulting table rows and the store's dirty state rather than any
-	// network call.
 	describe('mapper drawer', () => {
 		async function openGroupWithMapper(
 			user: ReturnType<typeof userEvent.setup>,
@@ -480,7 +439,6 @@ describe('AttributeMappingsTab (integration)', () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 			await openGroupWithMapper(user);
 
-			// DropdownMenuSimple drops the trigger's testId, so target it by its label.
 			await user.click(screen.getByRole('button', { name: 'Mapping actions' }));
 			await user.click(await screen.findByRole('menuitem', { name: 'Edit' }));
 
@@ -490,7 +448,6 @@ describe('AttributeMappingsTab (integration)', () => {
 			expect(screen.getByText('Edit mapping')).toBeInTheDocument();
 			const target = screen.getByTestId('mapper-form-target');
 			expect(target).toHaveValue('gen_ai.request.model');
-			// The target attribute is the mapper's identity — immutable after create.
 			expect(target).toBeDisabled();
 		});
 
@@ -503,7 +460,6 @@ describe('AttributeMappingsTab (integration)', () => {
 
 			await user.click(toggle);
 
-			// The switch is driven by the draft, so a flip proves the store round-trip.
 			await waitFor(() =>
 				expect(screen.getByTestId('mapper-enabled-mapper-1')).not.toBeChecked(),
 			);
@@ -516,7 +472,6 @@ describe('AttributeMappingsTab (integration)', () => {
 			await user.click(screen.getByRole('button', { name: 'Mapping actions' }));
 			await user.click(await screen.findByRole('menuitem', { name: 'Delete' }));
 
-			// The row is dropped from the draft; the group falls back to its empty state.
 			await waitFor(() =>
 				expect(
 					screen.queryByTestId('mapper-target-mapper-1'),
@@ -532,7 +487,6 @@ describe('AttributeMappingsTab (integration)', () => {
 			await user.click(screen.getByTestId('add-mapper-group-1'));
 			await screen.findByTestId('mapper-form-drawer');
 
-			// Create stays disabled until the draft has a target and a non-empty source.
 			expect(screen.getByTestId('mapper-form-save')).toBeDisabled();
 
 			await user.type(
@@ -545,7 +499,6 @@ describe('AttributeMappingsTab (integration)', () => {
 			await waitFor(() => expect(create).toBeEnabled());
 			await user.click(create);
 
-			// Drawer closes and the new mapping shows up as a row in the group.
 			await waitFor(() =>
 				expect(screen.queryByTestId('mapper-form-drawer')).not.toBeInTheDocument(),
 			);

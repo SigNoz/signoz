@@ -16,8 +16,6 @@ interface ConditionKeyListProps {
 	onChange: (keys: string[]) => void;
 }
 
-// Editor for one list of condition keys (the group's span-attribute or
-// resource gating keys). Substring "contains" match, order irrelevant.
 function ConditionKeyList({
 	label,
 	labelHint,

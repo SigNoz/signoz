@@ -7,9 +7,6 @@ interface ConditionsTooltipProps {
 	resource: string[];
 }
 
-// Rich hover content for a group's condition count: lists the span-attribute and
-// resource keys that gate the group, mirroring the matching logic spelled out in
-// the group form drawer.
 function ConditionsTooltip({
 	attributes,
 	resource,
