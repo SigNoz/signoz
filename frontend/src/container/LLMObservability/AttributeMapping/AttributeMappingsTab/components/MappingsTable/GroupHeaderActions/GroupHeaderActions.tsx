@@ -20,6 +20,7 @@ function GroupHeaderActions({
 	return (
 		<div
 			className={styles.actions}
+			data-testid={`group-header-actions-${group.localId}`}
 			onClick={(event): void => event.stopPropagation()}
 		>
 			<Switch

@@ -56,10 +56,12 @@ async function openGroupActionsMenu(
 	user: ReturnType<typeof userEvent.setup>,
 	groupId: string,
 ): Promise<void> {
-	const row = screen
-		.getByTestId(`group-name-${groupId}`)
-		.closest('.ant-collapse-item') as HTMLElement;
-	await user.click(within(row).getByRole('button', { name: 'Group actions' }));
+	// The dropdown trigger drops its testId, so scope to the group's action
+	// container (data-testid) and pick the trigger by its accessible name.
+	const actions = screen.getByTestId(`group-header-actions-${groupId}`);
+	await user.click(
+		within(actions).getByRole('button', { name: 'Group actions' }),
+	);
 }
 
 interface AttributeMappingsTabWithStoreProps {
@@ -157,31 +159,23 @@ describe('AttributeMappingsTab (integration)', () => {
 		render(<AttributeMappingsTabWithStore />);
 
 		// Condition filters are no longer shown inline as clauses — the header
-		// carries a count instead (the keys surface in the group drawer).
-		// Group headers are antd Collapse panels, so rows scope to the panel item.
+		// carries a count instead (the keys surface in the group drawer). Every
+		// header field carries a group-scoped testId, so assert on those directly.
 		// group-1: enabled, with attribute + resource condition keys.
-		const enabledRow = (await screen.findByTestId('group-name-group-1')).closest(
-			'.ant-collapse-item',
-		) as HTMLElement;
-		expect(
-			within(enabledRow).getByTestId('group-name-group-1'),
-		).toHaveTextContent('demo');
-		expect(
-			within(enabledRow).getByTestId('group-condition-count-group-1'),
-		).toHaveTextContent('2 conditions');
-		expect(within(enabledRow).getByTestId('group-enabled-group-1')).toBeChecked();
+		await expect(
+			screen.findByTestId('group-name-group-1'),
+		).resolves.toHaveTextContent('demo');
+		expect(screen.getByTestId('group-condition-count-group-1')).toHaveTextContent(
+			'2 conditions',
+		);
+		expect(screen.getByTestId('group-enabled-group-1')).toBeChecked();
 
 		// group-2: disabled.
-		const disabledRow = screen
-			.getByTestId('group-name-group-2')
-			.closest('.ant-collapse-item') as HTMLElement;
-		expect(within(disabledRow).getByText('Tool')).toBeInTheDocument();
-		expect(
-			within(disabledRow).getByTestId('group-condition-count-group-2'),
-		).toHaveTextContent('0 conditions');
-		expect(
-			within(disabledRow).getByTestId('group-enabled-group-2'),
-		).not.toBeChecked();
+		expect(screen.getByTestId('group-name-group-2')).toHaveTextContent('Tool');
+		expect(screen.getByTestId('group-condition-count-group-2')).toHaveTextContent(
+			'0 conditions',
+		);
+		expect(screen.getByTestId('group-enabled-group-2')).not.toBeChecked();
 	});
 
 	it("stages a toggle of the group's enabled state via the header switch", async () => {
@@ -250,10 +244,11 @@ describe('AttributeMappingsTab (integration)', () => {
 		render(<AttributeMappingsTabWithStore />);
 
 		await screen.findByTestId('group-name-group-1');
-		// The toggle is the antd Collapse header, which owns the expanded state.
+		// The expanded state lives on the collapsible header button that wraps the
+		// group label — find it by its ARIA attribute rather than an antd class.
 		const header = screen
 			.getByTestId('group-expand-group-1')
-			.closest('.ant-collapse-header') as HTMLElement;
+			.closest('[aria-expanded]') as HTMLElement;
 		expect(header).toHaveAttribute('aria-expanded', 'false');
 
 		await expandGroup(user);
@@ -288,7 +283,7 @@ describe('AttributeMappingsTab (integration)', () => {
 
 		const target = await screen.findByTestId('mapper-target-mapper-1');
 		expect(target).toHaveTextContent('gen_ai.request.model');
-		const mapperRow = target.closest('tr') as HTMLElement;
+		const mapperRow = screen.getByTestId('mapper-row-mapper-1');
 		// Sources ordered by priority, highest first (see fixtures).
 		const sources = within(mapperRow).getByTestId('mapper-sources-mapper-1');
 		expect(sources).toHaveTextContent('genai.model');
