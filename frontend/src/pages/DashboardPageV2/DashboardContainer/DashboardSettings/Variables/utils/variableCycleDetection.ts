@@ -4,7 +4,7 @@ import {
 } from 'container/DashboardContainer/DashboardVariablesSelection/util';
 import type { IDashboardVariable } from 'types/api/dashboard/getAll';
 
-import type { VariableFormModel } from './variableFormModel';
+import type { VariableFormModel } from '../variableFormModel';
 
 /**
  * Detects a circular reference among QUERY variables (a query referencing

@@ -11,7 +11,7 @@ import {
 	emptyVariableFormModel,
 	type VariableFormModel,
 } from 'pages/DashboardPageV2/DashboardContainer/DashboardSettings/Variables/variableFormModel';
-import { buildVariablesPatch } from 'pages/DashboardPageV2/DashboardContainer/DashboardSettings/Variables/variablePatchOps';
+import { buildVariablesPatch } from 'pages/DashboardPageV2/DashboardContainer/DashboardSettings/Variables/utils/variablePatchOps';
 import { useDashboardFetchRequired } from 'pages/DashboardPageV2/DashboardContainer/hooks/useDashboardFetchRequired';
 import { useOptimisticPatch } from 'pages/DashboardPageV2/DashboardContainer/hooks/useOptimisticPatch';
 import { selectVariableValues } from 'pages/DashboardPageV2/DashboardContainer/store/slices/variableSelectionSlice';

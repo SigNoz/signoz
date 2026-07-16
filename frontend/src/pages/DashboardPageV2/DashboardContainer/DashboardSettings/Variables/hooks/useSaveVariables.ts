@@ -3,11 +3,11 @@ import { toast } from '@signozhq/ui/sonner';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
-import { useOptimisticPatch } from '../../hooks/useOptimisticPatch';
-import { useDashboardStore } from '../../store/useDashboardStore';
-import { formModelToDto } from './variableAdapters';
-import type { VariableFormModel } from './variableFormModel';
-import { buildVariablesPatch } from './variablePatchOps';
+import { useOptimisticPatch } from '../../../hooks/useOptimisticPatch';
+import { useDashboardStore } from '../../../store/useDashboardStore';
+import { formModelToDto } from '../variableAdapters';
+import type { VariableFormModel } from '../variableFormModel';
+import { buildVariablesPatch } from '../utils/variablePatchOps';
 
 interface UseSaveVariables {
 	save: (variables: VariableFormModel[]) => Promise<boolean>;

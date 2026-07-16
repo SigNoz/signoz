@@ -7,7 +7,10 @@ import { Checkbox, Input as AntdInput } from 'antd';
 import cx from 'classnames';
 import { textContainsVariableReference } from 'lib/dashboardVariables/variableReference';
 
-import type { VariableImpactMode, VariableUsage } from '../variableUsages';
+import type {
+	VariableImpactMode,
+	VariableUsage,
+} from '../utils/variableUsages';
 import { useVariableImpactState } from './useVariableImpactState';
 import styles from './VariableImpactDialog.module.scss';
 

@@ -8,8 +8,8 @@ import {
 	textContainsVariableReference,
 } from 'lib/dashboardVariables/variableReference';
 
-import { toQueryEnvelopes } from '../../queryV5/buildQueryRangeRequest';
-import { dtoToFormModel } from './variableAdapters';
+import { toQueryEnvelopes } from '../../../queryV5/buildQueryRangeRequest';
+import { dtoToFormModel } from '../variableAdapters';
 
 /** The kind of query text a variable is referenced from. */
 export type VariableUsageKind =

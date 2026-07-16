@@ -11,9 +11,9 @@ import {
 	verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 
-import VariableRow from './VariableRow';
-import type { VariableFormModel } from './variableFormModel';
-import styles from './Variables.module.scss';
+import VariableRow from '../VariableRow/VariableRow';
+import type { VariableFormModel } from '../../variableFormModel';
+import styles from './VariablesList.module.scss';
 
 interface VariablesListProps {
 	variables: VariableFormModel[];

@@ -6,8 +6,8 @@ import type {
 } from 'api/generated/services/sigNoz.schemas';
 import { cloneDeep } from 'lodash-es';
 
-import { formModelToDto } from './variableAdapters';
-import type { VariableFormModel } from './variableFormModel';
+import { formModelToDto } from '../variableAdapters';
+import type { VariableFormModel } from '../variableFormModel';
 import { buildVariablesPatch } from './variablePatchOps';
 import type { VariableUsage, VariableUsageKind } from './variableUsages';
 

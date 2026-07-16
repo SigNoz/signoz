@@ -7,8 +7,8 @@ import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 
-import type { VariableFormModel } from './variableFormModel';
-import styles from './Variables.module.scss';
+import type { VariableFormModel } from '../../variableFormModel';
+import styles from './VariableRow.module.scss';
 
 interface VariableRowProps {
 	variable: VariableFormModel;

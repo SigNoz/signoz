@@ -10,18 +10,18 @@ import type {
 	DashboardtypesJSONPatchOperationDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
-import { buildSyncVariableToPanelsPatch } from './applyVariableToPanelsPatch';
-import type { VariableFormModel } from './variableFormModel';
+import { buildSyncVariableToPanelsPatch } from '../utils/applyVariableToPanelsPatch';
+import type { VariableFormModel } from '../variableFormModel';
 import {
 	applyVariableQueryEdits,
 	buildVariableImpactPatch,
-} from './variableImpactPatch';
+} from '../utils/variableImpactPatch';
 import {
 	findVariableUsages,
 	type VariableImpactMode,
 	type VariableUsage,
-} from './variableUsages';
-import type { EditingState } from './types';
+} from '../utils/variableUsages';
+import type { EditingState } from '../types';
 
 /**
  * A pending rename/delete that touches other queries — resolved via the impact
