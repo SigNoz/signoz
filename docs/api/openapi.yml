@@ -7571,6 +7571,7 @@ components:
         groupBy:
           items:
             type: string
+          nullable: true
           type: array
         newGroupEvalDelay:
           type: string
@@ -7642,6 +7643,7 @@ components:
         alertStates:
           items:
             $ref: '#/components/schemas/RuletypesAlertState'
+          nullable: true
           type: array
         enabled:
           type: boolean
