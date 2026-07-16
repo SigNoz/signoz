@@ -76,7 +76,7 @@ type PostableRule struct {
 }
 
 type NotificationSettings struct {
-	GroupBy   []string  `json:"groupBy"`
+	GroupBy   []string  `json:"groupBy,omitzero"`
 	Renotify  *Renotify `json:"renotify,omitempty"`
 	UsePolicy bool      `json:"usePolicy"`
 	// NewGroupEvalDelay is the grace period for new series to be excluded from alerts evaluation
