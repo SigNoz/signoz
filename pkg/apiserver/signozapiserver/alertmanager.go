@@ -112,6 +112,23 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v1/channels/sync", handler.New(provider.authzMiddleware.AdminAccess(provider.alertmanagerHandler.SyncConfig), handler.OpenAPIDef{
+		ID:                  "SyncChannels",
+		Tags:                []string{"channels"},
+		Summary:             "Sync notification channels",
+		Description:         "This endpoint forces the running alertmanager to immediately load the latest stored channel configuration instead of waiting for the next periodic sync. It gives callers read-your-writes semantics after creating or updating a channel.",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            nil,
+		ResponseContentType: "",
+		SuccessStatusCode:   http.StatusNoContent,
+		ErrorStatusCodes:    []int{},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+	})).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
 	if err := router.Handle("/api/v1/testChannel", handler.New(provider.authzMiddleware.EditAccess(provider.alertmanagerHandler.TestReceiver), handler.OpenAPIDef{
 		ID:                  "TestChannelDeprecated",
 		Tags:                []string{"channels"},

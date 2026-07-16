@@ -1326,6 +1326,57 @@ func (_c *MockAlertmanager_SetConfig_Call) RunAndReturn(run func(context1 contex
 	return _c
 }
 
+// SyncConfig provides a mock function for the type MockAlertmanager
+func (_mock *MockAlertmanager) SyncConfig(context1 context.Context) error {
+	ret := _mock.Called(context1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SyncConfig")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context) error); ok {
+		r0 = returnFunc(context1)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockAlertmanager_SyncConfig_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SyncConfig'
+type MockAlertmanager_SyncConfig_Call struct {
+	*mock.Call
+}
+
+// SyncConfig is a helper method to define mock.On call
+//   - context1 context.Context
+func (_e *MockAlertmanager_Expecter) SyncConfig(context1 interface{}) *MockAlertmanager_SyncConfig_Call {
+	return &MockAlertmanager_SyncConfig_Call{Call: _e.mock.On("SyncConfig", context1)}
+}
+
+func (_c *MockAlertmanager_SyncConfig_Call) Run(run func(context1 context.Context)) *MockAlertmanager_SyncConfig_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *MockAlertmanager_SyncConfig_Call) Return(err error) *MockAlertmanager_SyncConfig_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockAlertmanager_SyncConfig_Call) RunAndReturn(run func(context1 context.Context) error) *MockAlertmanager_SyncConfig_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // SetDefaultConfig provides a mock function for the type MockAlertmanager
 func (_mock *MockAlertmanager) SetDefaultConfig(context1 context.Context, s string) error {
 	ret := _mock.Called(context1, s)
@@ -2053,6 +2104,52 @@ func (_c *MockHandler_DeleteChannelByID_Call) Return() *MockHandler_DeleteChanne
 }
 
 func (_c *MockHandler_DeleteChannelByID_Call) RunAndReturn(run func(responseWriter http.ResponseWriter, request *http.Request)) *MockHandler_DeleteChannelByID_Call {
+	_c.Run(run)
+	return _c
+}
+
+// SyncConfig provides a mock function for the type MockHandler
+func (_mock *MockHandler) SyncConfig(responseWriter http.ResponseWriter, request *http.Request) {
+	_mock.Called(responseWriter, request)
+	return
+}
+
+// MockHandler_SyncConfig_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SyncConfig'
+type MockHandler_SyncConfig_Call struct {
+	*mock.Call
+}
+
+// SyncConfig is a helper method to define mock.On call
+//   - responseWriter http.ResponseWriter
+//   - request *http.Request
+func (_e *MockHandler_Expecter) SyncConfig(responseWriter interface{}, request interface{}) *MockHandler_SyncConfig_Call {
+	return &MockHandler_SyncConfig_Call{Call: _e.mock.On("SyncConfig", responseWriter, request)}
+}
+
+func (_c *MockHandler_SyncConfig_Call) Run(run func(responseWriter http.ResponseWriter, request *http.Request)) *MockHandler_SyncConfig_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 http.ResponseWriter
+		if args[0] != nil {
+			arg0 = args[0].(http.ResponseWriter)
+		}
+		var arg1 *http.Request
+		if args[1] != nil {
+			arg1 = args[1].(*http.Request)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockHandler_SyncConfig_Call) Return() *MockHandler_SyncConfig_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockHandler_SyncConfig_Call) RunAndReturn(run func(responseWriter http.ResponseWriter, request *http.Request)) *MockHandler_SyncConfig_Call {
 	_c.Run(run)
 	return _c
 }

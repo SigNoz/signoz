@@ -1,4 +1,5 @@
 import json
+import re
 import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
@@ -287,7 +288,10 @@ NOTIFIERS_TEST = [
                 types.NotificationValidation(
                     destination_type="email",
                     validation_data={
-                        "subject": '[FIRING:1] threshold_above_at_least_once for  (alertname="threshold_above_at_least_once", severity="critical", threshold.name="critical")',
+                        "subject": re.compile(
+                            r'\[FIRING:1\] threshold_above_at_least_once for '
+                            r'.*ruleSource="http://localhost:8080/alerts/overview\?ruleId=[\w-]+"'
+                        ),
                     },
                 ),
             ],

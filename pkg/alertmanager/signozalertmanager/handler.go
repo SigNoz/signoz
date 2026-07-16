@@ -242,6 +242,23 @@ func (handler *handler) DeleteChannelByID(rw http.ResponseWriter, req *http.Requ
 	render.Success(rw, http.StatusNoContent, nil)
 }
 
+func (handler *handler) SyncConfig(rw http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
+	defer cancel()
+
+	if _, err := authtypes.ClaimsFromContext(ctx); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	if err := handler.alertmanager.SyncConfig(ctx); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusNoContent, nil)
+}
+
 func (handler *handler) CreateChannel(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()

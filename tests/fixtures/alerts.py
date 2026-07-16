@@ -1,5 +1,6 @@
 import base64
 import json
+import re
 import time
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
@@ -226,8 +227,11 @@ def _is_json_subset(subset, superset) -> bool:
     """Check if subset is contained within superset recursively.
     - For dicts: all keys in subset must exist in superset with matching values
     - For lists: all items in subset must be present in superset
+    - For re.Pattern: pattern must match the actual string value
     - For scalars: exact equality
     """
+    if isinstance(subset, re.Pattern):
+        return isinstance(superset, str) and bool(subset.search(superset))
     if isinstance(subset, dict):
         if not isinstance(superset, dict):
             return False
