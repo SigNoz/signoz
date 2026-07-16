@@ -398,7 +398,7 @@ func (m *module) buildReducedSamplesTblFingerprintSubQuery(metricNames []string,
 	return fpSB
 }
 
-func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, startMillis, endMillis int64) (*sqlbuilder.WhereClause, error) {
+func (m *module) buildFilterClause(ctx context.Context, orgID valuer.UUID, filter *qbtypes.Filter, startMillis, endMillis int64) (*sqlbuilder.WhereClause, error) {
 	expression := ""
 	if filter != nil {
 		expression = strings.TrimSpace(filter.Expression)
@@ -413,7 +413,7 @@ func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, 
 		whereClauseSelectors[idx].SelectorMatchType = telemetrytypes.FieldSelectorMatchTypeExact
 	}
 
-	keys, _, err := m.telemetryMetadataStore.GetKeysMulti(ctx, whereClauseSelectors)
+	keys, _, err := m.telemetryMetadataStore.GetKeysMulti(ctx, orgID, whereClauseSelectors)
 	if err != nil {
 		return nil, err
 	}
@@ -646,7 +646,7 @@ func (m *module) getMetadata(
 		var filterClause *sqlbuilder.WhereClause
 		if filter != nil && strings.TrimSpace(filter.Expression) != "" {
 			var err error
-			filterClause, err = m.buildFilterClause(ctx, filter, startMs, endMs)
+			filterClause, err = m.buildFilterClause(ctx, orgID, filter, startMs, endMs)
 			if err != nil {
 				return nil, err
 			}
@@ -692,7 +692,7 @@ func (m *module) getMetadata(
 		)
 
 		if filter != nil && strings.TrimSpace(filter.Expression) != "" {
-			filterClause, err := m.buildFilterClause(ctx, filter, startMs, endMs)
+			filterClause, err := m.buildFilterClause(ctx, orgID, filter, startMs, endMs)
 			if err != nil {
 				return nil, err
 			}
@@ -860,7 +860,7 @@ func (m *module) getPerGroupDistinctCounts(
 		var filterClause *sqlbuilder.WhereClause
 		if mergedFilterExpr != "" {
 			var err error
-			filterClause, err = m.buildFilterClause(ctx, &qbtypes.Filter{Expression: mergedFilterExpr}, start, end)
+			filterClause, err = m.buildFilterClause(ctx, orgID, &qbtypes.Filter{Expression: mergedFilterExpr}, start, end)
 			if err != nil {
 				return nil, err
 			}
@@ -904,7 +904,7 @@ func (m *module) getPerGroupDistinctCounts(
 			fmt.Sprintf("fingerprint IN (%s)", sb.Var(fpSB)),
 		)
 		if mergedFilterExpr != "" {
-			filterClause, err := m.buildFilterClause(ctx, &qbtypes.Filter{Expression: mergedFilterExpr}, start, end)
+			filterClause, err := m.buildFilterClause(ctx, orgID, &qbtypes.Filter{Expression: mergedFilterExpr}, start, end)
 			if err != nil {
 				return nil, err
 			}

@@ -62,7 +62,7 @@ func CollisionHandledFinalExpr(
 		return nil
 	}
 
-	fieldExpression, fieldForErr := fm.FieldFor(ctx, startNs, endNs, field)
+	fieldExpression, fieldForErr := fm.FieldFor(ctx, orgID, startNs, endNs, field)
 	if errors.Is(fieldForErr, qbtypes.ErrColumnNotFound) {
 		// the key didn't have the right context to be added to the query
 		// we try to use the context we know of
@@ -92,7 +92,7 @@ func CollisionHandledFinalExpr(
 			if err != nil {
 				return "", nil, err
 			}
-			fieldExpression, _ = fm.FieldFor(ctx, startNs, endNs, key)
+			fieldExpression, _ = fm.FieldFor(ctx, orgID, startNs, endNs, key)
 			fieldExpression, _ = DataTypeCollisionHandledFieldName(key, dummyValue, fieldExpression, qbtypes.FilterOperatorUnknown)
 			stmts = append(stmts, fieldExpression)
 		}

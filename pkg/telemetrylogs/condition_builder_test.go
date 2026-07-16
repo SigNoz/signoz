@@ -579,7 +579,7 @@ func TestConditionForMultipleKeys(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			var err error
 			for _, key := range tc.keys {
-				cond, err := conditionBuilder.conditionFor(ctx, 0, 0, &key, tc.operator, tc.value, sb)
+				cond, err := conditionBuilder.conditionFor(ctx, valuer.UUID{}, 0, 0, &key, tc.operator, tc.value, sb)
 				sb.Where(cond)
 				if err != nil {
 					t.Fatalf("Error getting condition for key %s: %v", key.Name, err)
@@ -837,7 +837,7 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-			cond, err := conditionBuilder.conditionFor(ctx, 0, 0, &tc.key, tc.operator, tc.value, sb)
+			cond, err := conditionBuilder.conditionFor(ctx, valuer.UUID{}, 0, 0, &tc.key, tc.operator, tc.value, sb)
 			sb.Where(cond)
 
 			if tc.expectedError != nil {

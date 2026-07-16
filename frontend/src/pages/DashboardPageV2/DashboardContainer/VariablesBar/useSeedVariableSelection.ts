@@ -6,6 +6,7 @@ import { dtoToFormModel } from '../DashboardSettings/Variables/variableAdapters'
 import type { VariableFormModel } from '../DashboardSettings/Variables/variableFormModel';
 import { selectVariableValues } from '../store/slices/variableSelectionSlice';
 import { useDashboardStore } from '../store/useDashboardStore';
+import { resolveDefaultSelection } from './resolveVariableSelection';
 import type {
 	SelectedVariableValue,
 	VariableSelection,
@@ -16,26 +17,6 @@ import {
 	type VariableFetchContext,
 } from './variableDependencies';
 import { ALL_SELECTED, variablesUrlParser } from './variablesUrlState';
-
-function defaultSelection(model: VariableFormModel): VariableSelection {
-	const def = model.defaultValue;
-	if (
-		def === ALL_SELECTED ||
-		(Array.isArray(def) && def.length === 1 && def[0] === ALL_SELECTED)
-	) {
-		return { value: null, allSelected: true };
-	}
-	if (Array.isArray(def) && def.length > 0) {
-		return { value: def, allSelected: false };
-	}
-	if (typeof def === 'string' && def !== '') {
-		return { value: model.multiSelect ? [def] : def, allSelected: false };
-	}
-	if (model.multiSelect && model.showAllOption) {
-		return { value: null, allSelected: true };
-	}
-	return { value: model.multiSelect ? [] : '', allSelected: false };
-}
 
 // The `__ALL__` sentinel only means "ALL" for variables that support it — a
 // legitimate value of "__ALL__" (e.g. a text var) is taken literally.
@@ -88,36 +69,37 @@ export function useSeedVariableSelection(
 		const seeded: VariableSelectionMap = {};
 		variables.forEach((variable) => {
 			const urlValue = urlValues?.[variable.name];
+			const stored = selection[variable.name];
 			if (urlValue !== undefined) {
-				seeded[variable.name] = fromUrlValue(urlValue, variable);
-			} else if (selection[variable.name]) {
-				seeded[variable.name] = selection[variable.name];
+				const fromUrl = fromUrlValue(urlValue, variable);
+				// When the URL carries only the ALL sentinel but the store already holds
+				// the materialized full-option array, reuse it — avoids the re-fetch +
+				// re-materialize round-trip (and its dependent-refetch cascade) on load.
+				seeded[variable.name] =
+					fromUrl.allSelected && stored?.allSelected && Array.isArray(stored.value)
+						? stored
+						: fromUrl;
+			} else if (stored) {
+				seeded[variable.name] = stored;
 			} else {
-				seeded[variable.name] = defaultSelection(variable);
+				seeded[variable.name] = resolveDefaultSelection(variable);
 			}
 		});
 		setVariableValues(dashboardId, seeded);
 
-		// Drop URL selections for variables that no longer exist (renamed/removed),
-		// so a shared link doesn't carry stale entries a later variable could inherit.
+		// Read-once: a share link's `?variables=` seeds the store, then the param is
+		// dropped so the store is the sole source of truth. Selection changes never
+		// write it back (only an explicit Share action re-materializes it).
 		if (urlValues) {
-			const validNames = new Set(variables.map((v) => v.name));
-			const orphaned = Object.keys(urlValues).some((n) => !validNames.has(n));
-			if (orphaned) {
-				const pruned: Record<string, SelectedVariableValue> = {};
-				Object.entries(urlValues).forEach(([name, value]) => {
-					if (validNames.has(name)) {
-						pruned[name] = value;
-					}
-				});
-				void setUrlValues(pruned);
-			}
+			void setUrlValues(null);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps -- seed once per dashboard/variable set; the URL is read as of that moment
 	}, [dashboardId, variables]);
 
+	// Always init the context (even with no variables) so panels can tell "ready, none"
+	// from "not ready yet"; also clears it when the last variable is removed.
 	useEffect(() => {
-		if (!dashboardId || variables.length === 0) {
+		if (!dashboardId) {
 			return;
 		}
 		const names = variables

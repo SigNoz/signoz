@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { SolidInfoCircle } from '@signozhq/icons';
 import { Typography } from '@signozhq/ui/typography';
 // eslint-disable-next-line signoz/no-antd-components -- lightweight description tooltip, matches V1
@@ -5,11 +6,12 @@ import { Tooltip } from 'antd';
 
 import type { VariableFormModel } from '../DashboardSettings/Variables/variableFormModel';
 import type { VariableSelection, VariableSelectionMap } from './selectionTypes';
-import CustomSelector from './selectors/CustomSelector';
-import DynamicSelector from './selectors/DynamicSelector';
-import QuerySelector from './selectors/QuerySelector';
+import { computeVariableDependencies } from './variableDependencies';
 import TextSelector from './selectors/TextSelector';
+import VariableValueControl from './selectors/VariableValueControl';
+import { useVariableFetchState } from './useVariableFetchState';
 import styles from './VariablesBar.module.scss';
+import VariableTooltip from './VariableTooltip';
 
 interface VariableSelectorProps {
 	variable: VariableFormModel;
@@ -32,50 +34,48 @@ function VariableSelector({
 	onChange,
 	onAutoSelect,
 }: VariableSelectorProps): JSX.Element {
-	const renderControl = (): JSX.Element => {
-		switch (variable.type) {
-			case 'TEXT':
-				return (
-					<TextSelector
-						selection={selection}
-						defaultValue={variable.textValue}
-						onChange={onChange}
-						testId={`variable-input-${variable.name}`}
-					/>
-				);
-			case 'QUERY':
-				return (
-					<QuerySelector
-						variable={variable}
-						selections={selections}
-						selection={selection}
-						onChange={onChange}
-						onAutoSelect={onAutoSelect}
-					/>
-				);
-			case 'DYNAMIC':
-				return (
-					<DynamicSelector
-						variable={variable}
-						variables={variables}
-						selections={selections}
-						selection={selection}
-						onChange={onChange}
-						onAutoSelect={onAutoSelect}
-					/>
-				);
-			case 'CUSTOM':
-			default:
-				return (
-					<CustomSelector
-						variable={variable}
-						selection={selection}
-						onChange={onChange}
-						onAutoSelect={onAutoSelect}
-					/>
-				);
-		}
-	};
+	// Dependency links shown in the hover tooltip: variables this one's query
+	// references (dependsOn = its parents) and query variables that reference this
+	// one (usedBy = its children), from the shared dependency graph.
+	const { dependsOn, usedBy } = useMemo(() => {
+		const { graph, parentGraph } = computeVariableDependencies(variables);
+		return {
+			dependsOn: parentGraph[variable.name] ?? [],
+			usedBy: graph[variable.name] ?? [],
+		};
+	}, [variable.name, variables]);
+
+	const hasTooltip =
+		!!variable.description || dependsOn.length > 0 || usedBy.length > 0;
+
+	// Surface the fetch on the bar itself: a bar flush along the control's bottom
+	// edge while a QUERY/DYNAMIC variable is loading (or waiting on a parent), so the
+	// user sees options are being fetched without opening the dropdown.
+	const { isVariableFetching, isVariableWaiting } = useVariableFetchState(
+		variable.name,
+	);
+	const isFetchingOptions =
+		(variable.type === 'QUERY' || variable.type === 'DYNAMIC') &&
+		(isVariableFetching || isVariableWaiting);
+
+	const renderControl = (): JSX.Element =>
+		variable.type === 'TEXT' ? (
+			<TextSelector
+				selection={selection}
+				defaultValue={variable.textValue}
+				onChange={onChange}
+				testId={`variable-input-${variable.name}`}
+			/>
+		) : (
+			<VariableValueControl
+				variable={variable}
+				variables={variables}
+				selections={selections}
+				selection={selection}
+				onChange={onChange}
+				onAutoSelect={onAutoSelect}
+			/>
+		);
 
 	return (
 		<div
@@ -84,14 +84,29 @@ function VariableSelector({
 		>
 			<Typography.Text className={styles.variableName}>
 				${variable.name}
-				{variable.description ? (
-					<Tooltip title={variable.description}>
+				{hasTooltip ? (
+					<Tooltip
+						title={
+							<VariableTooltip
+								description={variable.description}
+								dependsOn={dependsOn}
+								usedBy={usedBy}
+							/>
+						}
+					>
 						<SolidInfoCircle className={styles.infoIcon} size={14} />
 					</Tooltip>
 				) : null}
 			</Typography.Text>
 
 			<div className={styles.variableValue}>{renderControl()}</div>
+
+			{isFetchingOptions ? (
+				<span
+					className={styles.loadingBar}
+					data-testid={`variable-loading-${variable.name}`}
+				/>
+			) : null}
 		</div>
 	);
 }

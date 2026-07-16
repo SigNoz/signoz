@@ -99,7 +99,7 @@ func (b *MetricQueryStatementBuilder) Build(
 	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
 	keySelectors := GetKeySelectors(query)
-	keys, _, err := b.metadataStore.GetKeysMulti(ctx, keySelectors)
+	keys, _, err := b.metadataStore.GetKeysMulti(ctx, orgID, keySelectors)
 	if err != nil {
 		return nil, err
 	}
@@ -231,10 +231,18 @@ func (b *MetricQueryStatementBuilder) buildPipelineStatement(
 	if agg.Reduced && !useBuffer {
 		var tsCTE string
 		var tsArgs []any
-		if tsCTE, tsArgs, err = b.buildReducedTimeSeriesCTE(ctx, orgID, start, end, query, keys, variables); err != nil {
+		// time series rows are written on hour boundaries
+		tsStart := start - (start % oneHourInMilliseconds)
+		if tsCTE, tsArgs, err = b.buildReducedTimeSeriesCTE(ctx, orgID, tsStart, end, query, keys, variables); err != nil {
 			return nil, err
 		}
-		if temporalFrag, temporalArgs, ok := b.buildReducedTemporalAggregationCTE(start, end, query, tsCTE, tsArgs); ok {
+		if qbtypes.CanShortCircuitReduced(agg) {
+			// spatial_aggregation_cte directly, no per-series level
+			if spatialFrag, spatialArgs, ok := b.buildReducedSpatialAggFastPath(start, end, query, tsCTE, tsArgs); ok {
+				reducedFragments = []string{spatialFrag}
+				reducedArgs = [][]any{spatialArgs}
+			}
+		} else if temporalFrag, temporalArgs, ok := b.buildReducedTemporalAggregationCTE(start, end, query, tsCTE, tsArgs); ok {
 			spatialFrag, spatialArgs := b.buildReducedSpatialAggregationCTE(query)
 			reducedFragments = []string{temporalFrag, spatialFrag}
 			reducedArgs = [][]any{temporalArgs, spatialArgs}
@@ -265,7 +273,10 @@ func unionStatements(main, reduced *qbtypes.Statement, query qbtypes.QueryBuilde
 	for _, g := range query.GroupBy {
 		orderBy = fmt.Sprintf("`%s`, ", g.Name) + orderBy
 	}
-	q := fmt.Sprintf("SELECT * FROM (%s) UNION ALL SELECT * FROM (%s) ORDER BY %s", main.Query, reduced.Query, orderBy)
+	q := fmt.Sprintf(
+		"SELECT * FROM (%s) UNION ALL SELECT * FROM (%s) ORDER BY %s SETTINGS do_not_merge_across_partitions_select_final = 1, optimize_move_to_prewhere_if_final = 1",
+		main.Query, reduced.Query, orderBy,
+	)
 	args := append(append([]any{}, main.Args...), reduced.Args...)
 	warnings := append(append([]string{}, main.Warnings...), reduced.Warnings...)
 	return &qbtypes.Statement{Query: q, Args: args, Warnings: warnings}, nil
@@ -314,7 +325,6 @@ func (b *MetricQueryStatementBuilder) buildReducedTimeSeriesCTE(
 		sb.In("metric_name", query.Aggregations[0].MetricName),
 		sb.GTE("unix_milli", start),
 		sb.LTE("unix_milli", end),
-		sb.EQ("__normalized", false),
 	)
 
 	if !preparedWhereClause.IsEmpty() {
@@ -325,6 +335,46 @@ func (b *MetricQueryStatementBuilder) buildReducedTimeSeriesCTE(
 
 	q, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 	return fmt.Sprintf("(%s) AS filtered_time_series", q), args, nil
+}
+
+// buildReducedSpatialAggFastPath is the reduced analog of
+// buildTemporalAggDeltaFastPath: for combinations where the temporal and
+// spatial aggregations collapse (CanShortCircuitReduced), it emits the
+// spatial_aggregation_cte in one level with no per-series grouping, so shards
+// send one state per (step, group) instead of per (series, step, group).
+// FINAL still dedups recomputed 60s buckets at scan time.
+func (b *MetricQueryStatementBuilder) buildReducedSpatialAggFastPath(
+	start, end uint64,
+	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
+	timeSeriesCTE string,
+	timeSeriesCTEArgs []any,
+) (string, []any, bool) {
+	agg := query.Aggregations[0]
+	stepSec := int64(query.StepInterval.Seconds())
+
+	value, _, ok := ReducedValueColumn(agg.Type, agg.SpaceAggregation)
+	if !ok {
+		return "", nil, false
+	}
+
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select(fmt.Sprintf("toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(%d)) AS ts", stepSec))
+	for _, g := range query.GroupBy {
+		sb.SelectMore(fmt.Sprintf("`%s`", g.Name))
+	}
+	sb.SelectMore(fmt.Sprintf("%s AS value", ReducedTimeAggregationColumn(agg.TimeAggregation, stepSec, value)))
+	sb.From(fmt.Sprintf("%s.%s AS points FINAL", DBName, WhichReducedSamplesTableToUse(agg.Type)))
+	sb.JoinWithOption(sqlbuilder.InnerJoin, timeSeriesCTE, "points.reduced_fingerprint = filtered_time_series.fingerprint")
+	sb.Where(
+		sb.In("metric_name", agg.MetricName),
+		sb.GTE("unix_milli", start),
+		sb.LT("unix_milli", end),
+	)
+	sb.GroupBy("ts")
+	sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
+
+	q, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse, timeSeriesCTEArgs...)
+	return fmt.Sprintf("__spatial_aggregation_cte AS (%s)", q), args, true
 }
 
 func (b *MetricQueryStatementBuilder) buildReducedTemporalAggregationCTE(
@@ -341,41 +391,31 @@ func (b *MetricQueryStatementBuilder) buildReducedTemporalAggregationCTE(
 		return "", nil, false
 	}
 
-	// dedup recomputed buckets: latest computed_at wins per (series, 60s bucket)
-	dedup := sqlbuilder.NewSelectBuilder()
-	dedup.Select("reduced_fingerprint AS fingerprint", "unix_milli")
-	dedup.SelectMore(fmt.Sprintf("argMax(%s, computed_at) AS value", value))
-	if weight != "" {
-		dedup.SelectMore(fmt.Sprintf("argMax(%s, computed_at) AS weight", weight))
-	}
-	dedup.From(fmt.Sprintf("%s.%s", DBName, WhichReducedSamplesTableToUse(agg.Type)))
-	dedup.Where(
-		dedup.In("metric_name", agg.MetricName),
-		dedup.GTE("unix_milli", start),
-		dedup.LT("unix_milli", end),
-	)
-	dedup.GroupBy("reduced_fingerprint", "unix_milli")
-	dedupQuery, dedupArgs := dedup.BuildWithFlavor(sqlbuilder.ClickHouse)
-
+	// TODO(srikanthccv): add _5m/_30m tables similar to samples_v4
+	// and wire them up in querier before GA
 	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select("fingerprint")
+	sb.Select("points.reduced_fingerprint AS fingerprint")
 	sb.SelectMore(fmt.Sprintf("toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(%d)) AS ts", stepSec))
 	for _, g := range query.GroupBy {
 		sb.SelectMore(fmt.Sprintf("`%s`", g.Name))
 	}
-	sb.SelectMore(fmt.Sprintf("%s AS per_series_value", ReducedTimeAggregationColumn(agg.TimeAggregation, stepSec)))
+	sb.SelectMore(fmt.Sprintf("%s AS per_series_value", ReducedTimeAggregationColumn(agg.TimeAggregation, stepSec, value)))
 	if weight != "" {
 		// count_series is a series count, not additive over time, so the avg
 		// denominator is reduced with avg
-		sb.SelectMore("avg(weight) AS per_series_weight")
+		sb.SelectMore(fmt.Sprintf("avg(%s) AS per_series_weight", weight))
 	}
-	sb.From(fmt.Sprintf("(%s) AS points", dedupQuery))
-	sb.JoinWithOption(sqlbuilder.InnerJoin, timeSeriesCTE, "points.fingerprint = filtered_time_series.fingerprint")
+	sb.From(fmt.Sprintf("%s.%s AS points FINAL", DBName, WhichReducedSamplesTableToUse(agg.Type)))
+	sb.JoinWithOption(sqlbuilder.InnerJoin, timeSeriesCTE, "points.reduced_fingerprint = filtered_time_series.fingerprint")
+	sb.Where(
+		sb.In("metric_name", agg.MetricName),
+		sb.GTE("unix_milli", start),
+		sb.LT("unix_milli", end),
+	)
 	sb.GroupBy("fingerprint", "ts")
 	sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
 
-	initArgs := append(append([]any{}, dedupArgs...), timeSeriesCTEArgs...)
-	q, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse, initArgs...)
+	q, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse, timeSeriesCTEArgs...)
 	return fmt.Sprintf("__temporal_aggregation_cte AS (%s)", q), args, true
 }
 
@@ -509,11 +549,6 @@ func (b *MetricQueryStatementBuilder) buildTimeSeriesCTE(
 	if query.Aggregations[0].Temporality != metrictypes.Multiple && query.Aggregations[0].Temporality != metrictypes.Unknown {
 		sb.Where(sb.ILike("temporality", query.Aggregations[0].Temporality.StringValue()))
 	}
-
-	// TODO configurable if we don't rollout the new un-normalized metrics
-	sb.Where(
-		sb.EQ("__normalized", false),
-	)
 
 	// the buffer holds both raw rows and the reduced catalog rows; the raw read
 	// only wants the original series

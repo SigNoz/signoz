@@ -2,7 +2,6 @@ import { useCallback, useMemo } from 'react';
 import { toast } from '@signozhq/ui/sonner';
 import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import type { FilterData } from 'container/QueryTable/Drilldown/drilldownUtils';
-import { useQueryState } from 'nuqs';
 import {
 	dtoToFormModel,
 	formModelToDto,
@@ -18,10 +17,6 @@ import { useOptimisticPatch } from 'pages/DashboardPageV2/DashboardContainer/hoo
 import { selectVariableValues } from 'pages/DashboardPageV2/DashboardContainer/store/slices/variableSelectionSlice';
 import { useDashboardStore } from 'pages/DashboardPageV2/DashboardContainer/store/useDashboardStore';
 import type { VariableSelection } from 'pages/DashboardPageV2/DashboardContainer/VariablesBar/selectionTypes';
-import {
-	ALL_SELECTED,
-	variablesUrlParser,
-} from 'pages/DashboardPageV2/DashboardContainer/VariablesBar/variablesUrlState';
 
 interface UseDrilldownDashboardVariablesArgs {
 	/** Group-by field filters from the clicked point (empty when the click has no group-by). */
@@ -57,7 +52,7 @@ export interface UseDrilldownDashboardVariablesApi {
 
 /**
  * "Dashboard Variables" submenu logic (V1 `useDashboardVarConfig` parity). Set/Unset are runtime-only
- * (store + URL — V2 selections don't persist); Create is the one path that patches `spec.variables`.
+ * (store — V2 selections aren't in the spec); Create is the one path that patches `spec.variables`.
  */
 export function useDrilldownDashboardVariables({
 	filters,
@@ -78,10 +73,6 @@ export function useDrilldownDashboardVariables({
 
 	const selection = useDashboardStore(selectVariableValues(dashboardId));
 	const setVariableValue = useDashboardStore((state) => state.setVariableValue);
-	const [, setUrlValues] = useQueryState(
-		'variables',
-		variablesUrlParser.withOptions({ history: 'replace' }),
-	);
 	const { patchAsync } = useOptimisticPatch();
 
 	const fieldVariables = useMemo<[string, string | number][]>(
@@ -94,16 +85,12 @@ export function useDrilldownDashboardVariables({
 		[filters],
 	);
 
-	// Runtime-only write (store + URL), never the spec — mirrors VariablesBar's setSelection.
+	// Runtime-only store write, never the spec — mirrors VariablesBar's setSelection.
 	const setSelection = useCallback(
 		(name: string, next: VariableSelection): void => {
 			setVariableValue(dashboardId, name, next);
-			void setUrlValues((prev) => ({
-				...(prev ?? {}),
-				[name]: next.allSelected ? ALL_SELECTED : next.value,
-			}));
 		},
-		[dashboardId, setVariableValue, setUrlValues],
+		[dashboardId, setVariableValue],
 	);
 
 	const handleCreate = useCallback(

@@ -97,7 +97,7 @@ func (b *traceQueryStatementBuilder) Build(
 	// fields can carry keys that need evolutions, so fetch keys after that.
 	keySelectors := getKeySelectors(query)
 
-	keys, _, err := b.metadataStore.GetKeysMulti(ctx, keySelectors)
+	keys, _, err := b.metadataStore.GetKeysMulti(ctx, orgID, keySelectors)
 	if err != nil {
 		return nil, err
 	}
