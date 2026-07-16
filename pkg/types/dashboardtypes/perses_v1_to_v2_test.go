@@ -1503,6 +1503,15 @@ func TestConvertV1VariablesFlagsUnknownType(t *testing.T) {
 	require.Error(t, d.errIfHasMalformedFields())
 }
 
+// TestConvertV1VariablesSkipsEmptyType verifies a variable with no type is dropped
+// silently, without failing the migration.
+func TestConvertV1VariablesSkipsEmptyType(t *testing.T) {
+	d := &v1Decoder{}
+	vars := d.convertV1Variables(map[string]any{"u-1": map[string]any{"name": "ok", "type": ""}})
+	assert.Empty(t, vars)
+	require.NoError(t, d.errIfHasMalformedFields())
+}
+
 func TestConvertV1VariablesDefaultFromSelectedSlice(t *testing.T) {
 	raw := map[string]any{
 		"u-1": map[string]any{

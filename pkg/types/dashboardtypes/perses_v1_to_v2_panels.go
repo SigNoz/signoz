@@ -409,7 +409,7 @@ func (d *v1Decoder) mapV1ComparisonThresholds(w map[string]any) []ComparisonThre
 			Operator: d.mapV1ComparisonOperator(d.readString(t, "thresholdOperator")),
 			Unit:     d.readString(t, "thresholdUnit"),
 			Color:    color,
-			Format:   mapV1ThresholdFormat(d.readString(t, "thresholdFormat")),
+			Format:   mapV1ThresholdFormat(t["thresholdFormat"]),
 		})
 	}
 	if len(out) == 0 {
@@ -437,7 +437,7 @@ func (d *v1Decoder) mapV1TableThresholds(w map[string]any) []TableThreshold {
 				Operator: d.mapV1ComparisonOperator(d.readString(t, "thresholdOperator")),
 				Unit:     d.readString(t, "thresholdUnit"),
 				Color:    color,
-				Format:   mapV1ThresholdFormat(d.readString(t, "thresholdFormat")),
+				Format:   mapV1ThresholdFormat(t["thresholdFormat"]),
 			},
 			ColumnName: columnName,
 		})
@@ -469,7 +469,11 @@ func (d *v1Decoder) mapV1ComparisonOperator(s string) ComparisonOperator {
 	}
 }
 
-func mapV1ThresholdFormat(s string) ThresholdFormat {
+// mapV1ThresholdFormat reads the raw value (not via readString) so a non-string
+// thresholdFormat — some v1 dashboards store it as a number — defaults to text
+// silently instead of being flagged malformed.
+func mapV1ThresholdFormat(raw any) ThresholdFormat {
+	s, _ := raw.(string)
 	switch strings.ToLower(s) {
 	case "background":
 		return ThresholdFormatBackground
