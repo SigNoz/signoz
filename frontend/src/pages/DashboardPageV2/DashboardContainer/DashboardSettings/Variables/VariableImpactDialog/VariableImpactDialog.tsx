@@ -7,7 +7,10 @@ import { Checkbox, Input as AntdInput } from 'antd';
 import cx from 'classnames';
 import { textContainsVariableReference } from 'lib/dashboardVariables/variableReference';
 
-import type { VariableImpactMode, VariableUsage } from '../variableUsages';
+import type {
+	VariableImpactMode,
+	VariableUsage,
+} from '../utils/variableUsages';
 import { useVariableImpactState } from './useVariableImpactState';
 import styles from './VariableImpactDialog.module.scss';
 
@@ -125,8 +128,9 @@ function VariableImpactDialog({
 										Current
 									</Typography.Text>
 									<AntdInput.TextArea
-										className={cx(styles.textArea, !row.included && styles.disabled)}
+										className={styles.textArea}
 										value={row.currentText}
+										disabled
 										readOnly
 										autoSize={{ minRows: 1, maxRows: 4 }}
 									/>
@@ -142,7 +146,7 @@ function VariableImpactDialog({
 										data-testid={`variable-impact-result-${row.id}`}
 									/>
 									{stillReferences ? (
-										<Typography.Text className={styles.warning}>
+										<Typography.Text size={'small'} color="warning">
 											Still references ${variableName}
 										</Typography.Text>
 									) : null}

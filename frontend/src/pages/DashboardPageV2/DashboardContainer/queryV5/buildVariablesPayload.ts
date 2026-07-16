@@ -8,7 +8,7 @@ import type {
 	VariableFormModel,
 	VariableType,
 } from '../DashboardSettings/Variables/variableFormModel';
-import { configuredDefaultValue } from '../VariablesBar/resolveVariableSelection';
+import { configuredDefaultValue } from '../VariablesBar/utils/resolveVariableSelection';
 import type {
 	VariableSelection,
 	VariableSelectionMap,

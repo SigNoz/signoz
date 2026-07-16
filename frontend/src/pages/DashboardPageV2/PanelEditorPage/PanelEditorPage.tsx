@@ -23,7 +23,7 @@ import {
 import { useSyncVariablesForSuggestions } from '../DashboardContainer/hooks/useSyncVariablesForSuggestions';
 import { createDefaultPanel } from '../DashboardContainer/patchOps';
 import { useDashboardStore } from '../DashboardContainer/store/useDashboardStore';
-import { useSeedVariableSelection } from '../DashboardContainer/VariablesBar/useSeedVariableSelection';
+import { useSeedVariableSelection } from '../DashboardContainer/VariablesBar/hooks/useSeedVariableSelection';
 import { buildNewPanelSeed } from './newPanelSeed';
 import styles from './PanelEditorPage.module.scss';
 

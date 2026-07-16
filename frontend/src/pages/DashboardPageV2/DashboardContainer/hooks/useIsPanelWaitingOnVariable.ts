@@ -1,4 +1,4 @@
-import { hasUsableValue } from '../VariablesBar/selectionUtils';
+import { hasUsableValue } from '../VariablesBar/utils/selectionUtils';
 import { VariableFetchState } from '../store/slices/variableFetchSlice';
 import { selectVariableValues } from '../store/slices/variableSelectionSlice';
 import { useDashboardStore } from '../store/useDashboardStore';

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import type { VariableUsage } from '../variableUsages';
+import type { VariableUsage } from '../utils/variableUsages';
 
 /** A usage row plus whether its edit will be applied on confirm. */
 export interface EditableVariableUsage extends VariableUsage {
