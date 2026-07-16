@@ -5,8 +5,10 @@ import {
 	parseAsJson,
 	parseAsString,
 	useQueryState,
+	useQueryStates,
 	UseQueryStateReturn,
 } from 'nuqs';
+import { useCallback, useMemo } from 'react';
 import {
 	IBuilderQuery,
 	TagFilter,
@@ -128,15 +130,69 @@ export const useInfraMonitoringCategory = (): UseQueryStateReturn<
 		parseAsString.withDefault(K8sCategories.PODS).withOptions(defaultNuqsOptions),
 	);
 
-export const useInfraMonitoringSelectedItem = (): UseQueryStateReturn<
-	string,
-	string | undefined
-> => {
-	return useQueryState(
-		INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM,
-		parseAsString,
-	);
+export interface SelectedItemParams {
+	selectedItem: string | null;
+	clusterName?: string | null;
+	namespaceName?: string | null;
+}
+
+const selectedItemParamsParsers = {
+	[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM]: parseAsString,
+	[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_CLUSTER_NAME]: parseAsString,
+	[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_NAMESPACE_NAME]: parseAsString,
 };
+
+export type UseSelectedItemParamsReturn = [
+	SelectedItemParams,
+	(params: SelectedItemParams | null) => void,
+];
+
+export const useInfraMonitoringSelectedItemParams =
+	(): UseSelectedItemParamsReturn => {
+		const [rawParams, setRawParams] = useQueryStates(
+			selectedItemParamsParsers,
+			defaultNuqsOptions,
+		);
+
+		const params: SelectedItemParams = useMemo(
+			() => ({
+				selectedItem:
+					rawParams[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM] ?? null,
+				clusterName:
+					rawParams[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_CLUSTER_NAME] ??
+					null,
+				namespaceName:
+					rawParams[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_NAMESPACE_NAME] ??
+					null,
+			}),
+			[rawParams],
+		);
+
+		const setParams = useCallback(
+			(newParams: Partial<SelectedItemParams> | null): void => {
+				if (newParams === null) {
+					void setRawParams({
+						[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM]: null,
+						[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_CLUSTER_NAME]: null,
+						[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_NAMESPACE_NAME]: null,
+					});
+					return;
+				}
+
+				void setRawParams({
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM]:
+						newParams.selectedItem ?? null,
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_CLUSTER_NAME]:
+						newParams.clusterName ?? null,
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_NAMESPACE_NAME]:
+						newParams.namespaceName ?? null,
+				});
+			},
+			[setRawParams],
+		);
+
+		return [params, setParams];
+	};
 
 export const useInfraMonitoringStatusFilter = (): UseQueryStateReturn<
 	string,

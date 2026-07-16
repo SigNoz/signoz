@@ -45,6 +45,7 @@ func isBodyJSONSearch(key *telemetrytypes.TelemetryFieldKey, columns []*schema.C
 // legacy string extraction (flag off); value[0] is the needle.
 func (c *conditionBuilder) conditionForArrayFunction(
 	ctx context.Context,
+	orgID valuer.UUID,
 	startNs, endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
 	operator qbtypes.FilterOperator,
@@ -63,8 +64,8 @@ func (c *conditionBuilder) conditionForArrayFunction(
 	}
 
 	var fieldExpr string
-	if c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})) {
-		fe, err := c.fm.FieldFor(ctx, startNs, endNs, key)
+	if c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID)) {
+		fe, err := c.fm.FieldFor(ctx, orgID, startNs, endNs, key)
 		if err != nil {
 			return "", err
 		}
@@ -82,6 +83,7 @@ func (c *conditionBuilder) conditionForArrayFunction(
 // name + use_json_body flag, validates the field/value, and tags errors with the doc URL.
 func (c *conditionBuilder) conditionForHasToken(
 	ctx context.Context,
+	orgID valuer.UUID,
 	key *telemetrytypes.TelemetryFieldKey,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
@@ -92,8 +94,7 @@ func (c *conditionBuilder) conditionForHasToken(
 		needle = args[0]
 	}
 
-	// TODO(Tushar): thread orgID here to evaluate correctly
-	bodyJSONEnabled := c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
+	bodyJSONEnabled := c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID))
 
 	columnName := LogsV2BodyColumn
 	if bodyJSONEnabled {
@@ -118,6 +119,7 @@ func (c *conditionBuilder) conditionForHasToken(
 
 func (c *conditionBuilder) conditionFor(
 	ctx context.Context,
+	orgID valuer.UUID,
 	startNs, endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
 	operator qbtypes.FilterOperator,
@@ -127,10 +129,10 @@ func (c *conditionBuilder) conditionFor(
 	// hasToken is a token search over the body column resolved purely from the key
 	// name + flag, independent of column resolution, so handle it before anything else.
 	if operator == qbtypes.FilterOperatorHasToken {
-		return c.conditionForHasToken(ctx, key, value, sb)
+		return c.conditionForHasToken(ctx, orgID, key, value, sb)
 	}
 
-	columns, err := c.fm.ColumnFor(ctx, startNs, endNs, key)
+	columns, err := c.fm.ColumnFor(ctx, orgID, startNs, endNs, key)
 	if err != nil {
 		return "", err
 	}
@@ -138,13 +140,12 @@ func (c *conditionBuilder) conditionFor(
 	// has/hasAny/hasAll build `has(<arrayFieldExpr>, value)` over body JSON arrays
 	// rather than going through the normal operator paths, so handle them up front.
 	if operator.IsArrayFunctionOperator() {
-		return c.conditionForArrayFunction(ctx, startNs, endNs, key, operator, value, columns, sb)
+		return c.conditionForArrayFunction(ctx, orgID, startNs, endNs, key, operator, value, columns, sb)
 	}
 
 	// TODO(Piyush): Update this to support multiple JSON columns based on evolutions
 	for _, column := range columns {
-		// TODO(Tushar): thread orgID here to evaluate correctly
-		if column.Type.GetType() == schema.ColumnTypeEnumJSON && isBodyJSONSearch(key, columns) && c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})) && key.Name != messageSubField {
+		if column.Type.GetType() == schema.ColumnTypeEnumJSON && isBodyJSONSearch(key, columns) && c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID)) && key.Name != messageSubField {
 			valueType, value := InferDataType(value, operator, key)
 			cond, err := NewJSONConditionBuilder(key, valueType).buildJSONCondition(operator, value, sb)
 			if err != nil {
@@ -158,14 +159,13 @@ func (c *conditionBuilder) conditionFor(
 		value = querybuilder.FormatValueForContains(value)
 	}
 
-	fieldExpression, err := c.fm.FieldFor(ctx, startNs, endNs, key)
+	fieldExpression, err := c.fm.FieldFor(ctx, orgID, startNs, endNs, key)
 	if err != nil {
 		return "", err
 	}
 
 	// Check if this is a body JSON search (legacy string-body path, JSON flag off).
-	// TODO(Tushar): thread orgID here to evaluate correctly
-	if isBodyJSONSearch(key, columns) && !c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})) {
+	if isBodyJSONSearch(key, columns) && !c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID)) {
 		fieldExpression, value = GetBodyJSONKey(ctx, key, operator, value)
 	}
 
@@ -276,8 +276,7 @@ func (c *conditionBuilder) conditionFor(
 	// in the UI based query builder, `exists` and `not exists` are used for
 	// key membership checks, so depending on the column type, the condition changes
 	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
-		// TODO(Tushar): thread orgID here to evaluate correctly
-		if isBodyJSONSearch(key, columns) && !c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})) {
+		if isBodyJSONSearch(key, columns) && !c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID)) {
 			if operator == qbtypes.FilterOperatorExists {
 				return GetBodyJSONKeyForExists(ctx, key, operator, value), nil
 			} else {
@@ -372,6 +371,7 @@ func (c *conditionBuilder) conditionFor(
 
 func (c *conditionBuilder) ConditionFor(
 	ctx context.Context,
+	orgID valuer.UUID,
 	startNs uint64,
 	endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
@@ -390,12 +390,11 @@ func (c *conditionBuilder) ConditionFor(
 	if len(keys) == 0 {
 		// No known field key matched. Legacy string-body mode still searches unknown
 		// Body-context keys as body JSON paths; JSON-body mode requires a metadata match.
-		// TODO(Tushar): thread orgID here to evaluate correctly
 		switch {
 		case key.FieldContext == telemetrytypes.FieldContextBody && key.Name == "":
 			return nil, warnings, errors.NewInvalidInputf(errors.CodeInvalidInput, "missing key for body json search - expected key of the form `body.key` (ex: `body.status`)")
 		case key.FieldContext == telemetrytypes.FieldContextBody &&
-			!c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})):
+			!c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID)):
 			keys = []*telemetrytypes.TelemetryFieldKey{key}
 		default:
 			return nil, warnings, querybuilder.NewKeyNotFoundError(key.Name)
@@ -405,7 +404,7 @@ func (c *conditionBuilder) ConditionFor(
 	// has/hasAny/hasAll need an array field: in JSON-body mode drop non-array matches so a
 	// scalar errors clearly instead of failing at ClickHouse runtime (legacy mode skips this).
 	if operator.IsArrayFunctionOperator() &&
-		c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})) {
+		c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID)) {
 		arrayKeys := make([]*telemetrytypes.TelemetryFieldKey, 0, len(keys))
 		for _, k := range keys {
 			if k.FieldDataType.IsArray() {
@@ -421,12 +420,12 @@ func (c *conditionBuilder) ConditionFor(
 
 	conds := make([]string, 0, len(keys))
 	for _, k := range keys {
-		cond, err := c.conditionForKey(ctx, startNs, endNs, k, operator, value, sb)
+		cond, err := c.conditionForKey(ctx, orgID, startNs, endNs, k, operator, value, sb)
 		if err != nil {
 			return nil, nil, err
 		}
 		conds = append(conds, cond)
-		if w := c.bodyFullTextDefaultWarning(ctx, startNs, endNs, k, operator); w != "" {
+		if w := c.bodyFullTextDefaultWarning(ctx, orgID, startNs, endNs, k, operator); w != "" {
 			warnings = append(warnings, w)
 		}
 	}
@@ -436,11 +435,11 @@ func (c *conditionBuilder) ConditionFor(
 // bodyFullTextDefaultWarning returns the advisory shown when a regexp full-text
 // search on `body` resolves to the body.message sub-field (JSON mode), else "". This
 // keeps the JSON-vs-legacy decision in the builder rather than the filter visitor.
-func (c *conditionBuilder) bodyFullTextDefaultWarning(ctx context.Context, startNs, endNs uint64, key *telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator) string {
+func (c *conditionBuilder) bodyFullTextDefaultWarning(ctx context.Context, orgID valuer.UUID, startNs, endNs uint64, key *telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator) string {
 	if operator != qbtypes.FilterOperatorRegexp || key.Name != LogsV2BodyColumn {
 		return ""
 	}
-	if field, err := c.fm.FieldFor(ctx, startNs, endNs, key); err == nil && field == messageSubColumn {
+	if field, err := c.fm.FieldFor(ctx, orgID, startNs, endNs, key); err == nil && field == messageSubColumn {
 		return querybuilder.BodyFullTextSearchDefaultWarning
 	}
 	return ""
@@ -448,6 +447,7 @@ func (c *conditionBuilder) bodyFullTextDefaultWarning(ctx context.Context, start
 
 func (c *conditionBuilder) conditionForKey(
 	ctx context.Context,
+	orgID valuer.UUID,
 	startNs uint64,
 	endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
@@ -456,7 +456,7 @@ func (c *conditionBuilder) conditionForKey(
 	sb *sqlbuilder.SelectBuilder,
 ) (string, error) {
 
-	condition, err := c.conditionFor(ctx, startNs, endNs, key, operator, value, sb)
+	condition, err := c.conditionFor(ctx, orgID, startNs, endNs, key, operator, value, sb)
 	if err != nil {
 		return "", err
 	}
@@ -473,14 +473,13 @@ func (c *conditionBuilder) conditionForKey(
 	case telemetrytypes.FieldContextBody:
 		// Querying JSON fields already account for Nullability of fields
 		// so additional exists checks are not needed
-		// TODO(Tushar): thread orgID here to evaluate correctly
-		if c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})) {
+		if c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID)) {
 			return condition, nil
 		}
 	}
 
 	if buildExistCondition {
-		existsCondition, err := c.conditionFor(ctx, startNs, endNs, key, qbtypes.FilterOperatorExists, nil, sb)
+		existsCondition, err := c.conditionFor(ctx, orgID, startNs, endNs, key, qbtypes.FilterOperatorExists, nil, sb)
 		if err != nil {
 			return "", err
 		}

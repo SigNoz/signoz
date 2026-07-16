@@ -1,8 +1,4 @@
-import { useCallback } from 'react';
-import { Button } from '@signozhq/ui/button';
-import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import history from 'lib/history';
-import { LifeBuoy, TriangleAlert } from '@signozhq/icons';
+import ErrorContent from 'components/ErrorModal/components/ErrorContent';
 
 import emptyStateUrl from '@/assets/Icons/emptyState.svg';
 import eyesEmojiUrl from '@/assets/Images/eyesEmoji.svg';
@@ -13,26 +9,12 @@ import styles from './K8sEmptyState.module.scss';
 
 type K8sEmptyStateProps = Partial<K8sBaseListEmptyStateContext>;
 
-const handleContactSupport = (isCloudUser: boolean): void => {
-	if (isCloudUser) {
-		history.push('/support');
-	} else {
-		window.open('https://signoz.io/slack', '_blank');
-	}
-};
-
 export function K8sEmptyState({
 	isError,
 	error,
 	isLoading,
 	endTimeBeforeRetention,
 }: K8sEmptyStateProps): JSX.Element | null {
-	const { isCloudUser } = useGetTenantLicense();
-
-	const handleSupport = useCallback(() => {
-		handleContactSupport(isCloudUser);
-	}, [isCloudUser]);
-
 	if (isLoading) {
 		return null;
 	}
@@ -40,25 +22,15 @@ export function K8sEmptyState({
 	if (isError || error) {
 		return (
 			<div className={styles.container}>
-				<div className={styles.content}>
-					<TriangleAlert size={32} className={styles.errorIcon} />
-					<span className={styles.message}>
-						{error || 'An error occurred while fetching data.'}
-					</span>
-					<p>
-						Our team is getting on top to resolve this. Please reach out to support if
-						the issue persists.
-					</p>
-					<div className={styles.actions}>
-						<Button
-							onClick={handleSupport}
-							variant="solid"
-							color="secondary"
-							prefix={<LifeBuoy size={14} />}
-						>
-							Contact Support
-						</Button>
-					</div>
+				<div className={styles.errorContent}>
+					<ErrorContent
+						error={
+							error ?? {
+								code: 500,
+								message: 'An error occurred while fetching data.',
+							}
+						}
+					/>
 				</div>
 			</div>
 		);

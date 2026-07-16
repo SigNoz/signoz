@@ -8,6 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 )
 
@@ -15,7 +16,10 @@ type defaultConditionBuilder struct {
 	fm qbtypes.FieldMapper
 }
 
-var _ qbtypes.ConditionBuilder = (*defaultConditionBuilder)(nil)
+var (
+	_ qbtypes.ConditionBuilder          = (*defaultConditionBuilder)(nil)
+	_ qbtypes.ResolvingConditionBuilder = (*defaultConditionBuilder)(nil)
+)
 
 func NewConditionBuilder(fm qbtypes.FieldMapper) *defaultConditionBuilder {
 	return &defaultConditionBuilder{fm: fm}
@@ -43,12 +47,46 @@ func keyIndexFilter(key *telemetrytypes.TelemetryFieldKey) any {
 	return fmt.Sprintf(`%%%s%%`, key.Name)
 }
 
+// ConditionFor builds resource-fingerprint conditions from the caller's pre-matched
+// fieldKeysForName. Resolution and the build live in conditionsForKeys.
 func (b *defaultConditionBuilder) ConditionFor(
 	ctx context.Context,
+	_ valuer.UUID,
 	startNs uint64,
 	endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
 	fieldKeysForName []*telemetrytypes.TelemetryFieldKey,
+	op qbtypes.FilterOperator,
+	value any,
+	sb *sqlbuilder.SelectBuilder,
+) ([]string, []string, error) {
+	return b.conditionsForKeys(ctx, startNs, endNs, key, fieldKeysForName, op, value, sb)
+}
+
+// ConditionForKeys owns key resolution from the full metadata map so the where-clause
+// visitor need not pre-resolve; SkipResourceFilter is not applicable here (the fingerprint
+// table only stores resource attributes). See qbtypes.ResolvingConditionBuilder.
+func (b *defaultConditionBuilder) ConditionForKeys(
+	ctx context.Context,
+	_ valuer.UUID,
+	startNs uint64,
+	endNs uint64,
+	key *telemetrytypes.TelemetryFieldKey,
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	_ qbtypes.ConditionBuilderOptions,
+	op qbtypes.FilterOperator,
+	value any,
+	sb *sqlbuilder.SelectBuilder,
+) ([]string, []string, error) {
+	return b.conditionsForKeys(ctx, startNs, endNs, key, querybuilder.MatchingFieldKeys(key, keys), op, value, sb)
+}
+
+func (b *defaultConditionBuilder) conditionsForKeys(
+	ctx context.Context,
+	startNs uint64,
+	endNs uint64,
+	key *telemetrytypes.TelemetryFieldKey,
+	matches []*telemetrytypes.TelemetryFieldKey,
 	op qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
@@ -60,7 +98,7 @@ func (b *defaultConditionBuilder) ConditionFor(
 		return nil, nil, nil
 	}
 
-	keys, warning := querybuilder.ResolveKeys(key, fieldKeysForName)
+	keys, warning := querybuilder.ResolveKeys(key, matches)
 	var warnings []string
 	if warning != "" {
 		warnings = append(warnings, warning)
@@ -97,7 +135,7 @@ func (b *defaultConditionBuilder) conditionForKey(
 	// as we store resource values as string
 	formattedValue := querybuilder.FormatValueForContains(value)
 
-	columns, err := b.fm.ColumnFor(ctx, startNs, endNs, key)
+	columns, err := b.fm.ColumnFor(ctx, valuer.UUID{}, startNs, endNs, key)
 	if err != nil {
 		return "", err
 	}
@@ -113,7 +151,7 @@ func (b *defaultConditionBuilder) conditionForKey(
 	keyIdxFilter := sb.Like(column.Name, keyIndexFilter(key))
 	valueForIndexFilter := valueForIndexFilter(op, key, value)
 
-	fieldName, err := b.fm.FieldFor(ctx, startNs, endNs, key)
+	fieldName, err := b.fm.FieldFor(ctx, valuer.UUID{}, startNs, endNs, key)
 	if err != nil {
 		return "", err
 	}
