@@ -10,7 +10,7 @@ import {
 	DraftGroup,
 	DraftMapper,
 } from 'container/LLMObservability/AttributeMapping/types';
-import { AttributeMappingStore } from 'container/LLMObservability/AttributeMapping/AttributeMappingsTab/hooks/useAttributeMappingStore';
+import { AttributeMappingEditor } from 'container/LLMObservability/AttributeMapping/hooks/useAttributeMappingEditor';
 import GroupHeader from './GroupHeader/GroupHeader';
 import GroupHeaderActions from './GroupHeaderActions/GroupHeaderActions';
 import GroupMappers from './GroupMappers/GroupMappers';
@@ -20,13 +20,13 @@ import styles from './MappingsTable.module.scss';
 const SKELETON_ROW_COUNT = 3;
 
 interface MappingsTableProps {
-	store: AttributeMappingStore;
+	editor: AttributeMappingEditor;
 	onEditGroup: (group: DraftGroup) => void;
 	onAddGroup: () => void;
 }
 
 function MappingsTable({
-	store,
+	editor,
 	onEditGroup,
 	onAddGroup,
 }: MappingsTableProps): JSX.Element {
@@ -34,7 +34,7 @@ function MappingsTable({
 	const [targetGroupId, setTargetGroupId] = useState<string | null>(null);
 	const drawer = useMapperFormDrawer();
 
-	const { upsertMapper, removeMapper } = store;
+	const { upsertMapper, removeMapper } = editor;
 
 	const handleAddMapper = useCallback(
 		(groupLocalId: string): void => {
@@ -70,23 +70,23 @@ function MappingsTable({
 		drawer.close();
 	}, [targetGroupId, removeMapper, drawer]);
 
-	const isEmpty = !store.isLoading && store.groups.length === 0;
+	const isEmpty = !editor.isLoading && editor.groups.length === 0;
 
-	const items: CollapseProps['items'] = store.groups.map((group) => ({
+	const items: CollapseProps['items'] = editor.groups.map((group) => ({
 		key: group.localId,
 		label: <GroupHeader group={group} />,
 		extra: (
 			<GroupHeaderActions
 				group={group}
-				onToggle={store.toggleGroup}
+				onToggle={editor.toggleGroup}
 				onEdit={onEditGroup}
-				onRemove={store.removeGroup}
+				onRemove={editor.removeGroup}
 			/>
 		),
 		children: (
 			<GroupMappers
 				group={group}
-				store={store}
+				editor={editor}
 				onAddMapper={handleAddMapper}
 				onEditMapper={handleEditMapper}
 			/>
@@ -127,7 +127,7 @@ function MappingsTable({
 					prefix={<Plus size={14} />}
 					onClick={onAddGroup}
 					testId="add-group-row"
-					disabled={store.isLoading}
+					disabled={editor.isLoading}
 				>
 					Add a new group
 				</Button>
@@ -152,7 +152,7 @@ function MappingsTable({
 							</tr>
 						</thead>
 					</table>
-					{store.isLoading ? (
+					{editor.isLoading ? (
 						skeletonBanners
 					) : (
 						<Collapse

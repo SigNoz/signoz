@@ -12,20 +12,20 @@ import {
 	useUpdateSpanMapperGroup,
 } from 'api/generated/services/spanmapper';
 
-import { persistDraft, SaveMutations } from '../../saveDraft';
+import { persistDraft, SaveMutations } from '../saveDraft';
 import {
 	DraftGroup,
 	GroupDraft,
 	Mapper,
 	MapperDraft,
 	MapperGroup,
-} from '../../types';
+} from '../types';
 import {
 	buildDraftGroup,
 	buildDraftMapper,
 	nodeFromGroupDraft,
 	nodeFromMapperDraft,
-} from '../../utils';
+} from '../utils';
 
 const GROUPS_KEY_PREFIX = '/api/v1/span_mapper_groups';
 
@@ -33,7 +33,7 @@ function clone(groups: DraftGroup[]): DraftGroup[] {
 	return cloneDeep(groups);
 }
 
-export interface AttributeMappingStore {
+export interface AttributeMappingEditor {
 	groups: DraftGroup[];
 	isLoading: boolean;
 	isError: boolean;
@@ -55,7 +55,7 @@ export interface AttributeMappingStore {
 	discard: () => void;
 }
 
-export function useAttributeMappingStore(): AttributeMappingStore {
+export function useAttributeMappingEditor(): AttributeMappingEditor {
 	const queryClient = useQueryClient();
 
 	const groupsQuery = useListSpanMapperGroups();

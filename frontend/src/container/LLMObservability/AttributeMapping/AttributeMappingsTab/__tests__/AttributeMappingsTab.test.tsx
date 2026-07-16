@@ -26,7 +26,7 @@ import {
 } from 'container/LLMObservability/AttributeMapping/__tests__/fixtures';
 import { DraftGroup } from 'container/LLMObservability/AttributeMapping/types';
 import AttributeMappingsTab from '../AttributeMappingsTab';
-import { useAttributeMappingStore } from '../hooks/useAttributeMappingStore';
+import { useAttributeMappingEditor } from '../../hooks/useAttributeMappingEditor';
 
 function setupGroups(groups = mockGroups): void {
 	server.use(
@@ -66,17 +66,17 @@ interface AttributeMappingsTabWithStoreProps {
 	onAddGroup?: () => void;
 }
 
-// The tab is a presentational view over a store owned by the container, so this
-// wrapper creates the store (via the hook, backed by the mocked API) and wires
-// the edit/add callbacks the tab needs.
+// The tab is a presentational view over an editor owned by the container, so
+// this wrapper creates the editor (via the hook, backed by the mocked API) and
+// wires the edit/add callbacks the tab needs.
 function AttributeMappingsTabWithStore({
 	onEditGroup,
 	onAddGroup,
 }: AttributeMappingsTabWithStoreProps): JSX.Element {
-	const store = useAttributeMappingStore();
+	const editor = useAttributeMappingEditor();
 	return (
 		<AttributeMappingsTab
-			store={store}
+			editor={editor}
 			onEditGroup={onEditGroup ?? jest.fn()}
 			onAddGroup={onAddGroup ?? jest.fn()}
 		/>
@@ -84,22 +84,22 @@ function AttributeMappingsTabWithStore({
 }
 
 // The real Save button lives in the page header; this harness exposes the same
-// store.save() path the header wires up, so the tab suite can exercise it.
+// editor.save() path the header wires up, so the tab suite can exercise it.
 function SaveableHarness(): JSX.Element {
-	const store = useAttributeMappingStore();
+	const editor = useAttributeMappingEditor();
 	return (
 		<>
 			<button
 				type="button"
 				data-testid="save-button"
 				onClick={(): void => {
-					void store.save();
+					void editor.save();
 				}}
 			>
 				Save
 			</button>
 			<AttributeMappingsTab
-				store={store}
+				editor={editor}
 				onEditGroup={jest.fn()}
 				onAddGroup={jest.fn()}
 			/>

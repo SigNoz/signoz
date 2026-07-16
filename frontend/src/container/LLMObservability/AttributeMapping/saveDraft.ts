@@ -14,7 +14,7 @@ import {
 	buildUpdatableMapper,
 } from './utils';
 
-// Thin persistence surface the store wires to the generated mutations.
+// Thin persistence surface the editor wires to the generated mutations.
 // createGroup returns the new server id so its mappers can be created under it.
 export interface SaveMutations {
 	createGroup: (data: SpantypesPostableSpanMapperGroupDTO) => Promise<string>;

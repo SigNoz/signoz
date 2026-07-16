@@ -8,14 +8,14 @@ import AttributeMappingsTab from './AttributeMappingsTab/AttributeMappingsTab';
 import DiscardChangesDialog from './components/DiscardChangesDialog/DiscardChangesDialog';
 import GroupFormDrawer from './components/GroupFormDrawer/GroupFormDrawer';
 import styles from './LLMObservabilityAttributeMapping.module.scss';
-import { useAttributeMappingStore } from './AttributeMappingsTab/hooks/useAttributeMappingStore';
+import { useAttributeMappingEditor } from './hooks/useAttributeMappingEditor';
 import { useGroupFormDrawer } from './components/GroupFormDrawer/hooks/useGroupFormDrawer';
 
 function LLMObservabilityAttributeMapping(): JSX.Element {
-	const store = useAttributeMappingStore();
+	const editor = useAttributeMappingEditor();
 	const groupDrawer = useGroupFormDrawer();
 
-	const { discard } = store;
+	const { discard } = editor;
 	// Discarding wipes the whole working copy, so gate it behind a confirm
 	// prompt rather than firing straight from the button.
 	const discardConfirm = useConfirmableAction(
@@ -25,9 +25,9 @@ function LLMObservabilityAttributeMapping(): JSX.Element {
 	);
 
 	const handleGroupSave = useCallback((): void => {
-		store.upsertGroup(groupDrawer.draft);
+		editor.upsertGroup(groupDrawer.draft);
 		groupDrawer.close();
-	}, [store, groupDrawer]);
+	}, [editor, groupDrawer]);
 
 	const tabItems = [
 		{
@@ -35,7 +35,7 @@ function LLMObservabilityAttributeMapping(): JSX.Element {
 			label: 'Attribute Mappings',
 			children: (
 				<AttributeMappingsTab
-					store={store}
+					editor={editor}
 					onEditGroup={groupDrawer.openForEdit}
 					onAddGroup={groupDrawer.openForAdd}
 				/>
@@ -56,15 +56,15 @@ function LLMObservabilityAttributeMapping(): JSX.Element {
 			data-testid="llm-observability-attribute-mapping-page"
 		>
 			<AttributeMappingHeader
-				isDirty={store.isDirty}
-				isSaving={store.isSaving}
+				isDirty={editor.isDirty}
+				isSaving={editor.isSaving}
 				onDiscard={discardConfirm.request}
-				onSave={store.save}
+				onSave={editor.save}
 			/>
 
-			{store.saveError && (
+			{editor.saveError && (
 				<div className={styles.pageError} role="alert">
-					{store.saveError}
+					{editor.saveError}
 				</div>
 			)}
 			<Divider />

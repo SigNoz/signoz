@@ -13,7 +13,7 @@ interface UseGroupFormDrawer {
 	close: () => void;
 }
 
-// Form state for the group drawer. Persistence is staged through the store,
+// Form state for the group drawer. Persistence is staged through the editor,
 // so this hook only owns open/draft/mode.
 export function useGroupFormDrawer(): UseGroupFormDrawer {
 	const [isOpen, setIsOpen] = useState<boolean>(false);
