@@ -32,7 +32,7 @@ import {
 import { createEmptySource, isMapperDraftValid } from '../../utils';
 
 const FIELD_CONTEXT_OPTIONS = [
-	{ value: FieldContext.attribute, label: 'Span attribute' },
+	{ value: FieldContext.attribute, label: 'Attribute' },
 	{ value: FieldContext.resource, label: 'Resource' },
 ];
 

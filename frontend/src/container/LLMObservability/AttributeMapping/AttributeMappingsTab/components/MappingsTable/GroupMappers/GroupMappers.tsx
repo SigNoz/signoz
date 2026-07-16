@@ -10,7 +10,7 @@ import {
 	DraftMapper,
 	Mapper,
 } from 'container/LLMObservability/AttributeMapping/types';
-import { AttributeMappingStore } from 'container/LLMObservability/AttributeMapping/AttributeMappingsTab/hooks/useAttributeMappingStore';
+import { useAttributeMappingStore } from 'container/LLMObservability/AttributeMapping/store/useAttributeMappingStore';
 import { COLUMN_COUNT } from '../constants';
 import MapperRow from '../MapperRow/MapperRow';
 import MapperRowSkeleton from '../MapperRow/MapperRowSkeleton';
@@ -27,18 +27,20 @@ const STATE_ROW_MOTION = {
 
 interface GroupMappersProps {
 	group: DraftGroup;
-	store: AttributeMappingStore;
 	onAddMapper: (groupLocalId: string) => void;
 	onEditMapper: (groupLocalId: string, mapper: DraftMapper) => void;
 }
 
 function GroupMappers({
 	group,
-	store,
 	onAddMapper,
 	onEditMapper,
 }: GroupMappersProps): JSX.Element {
-	const { hydrateGroupMappers, removeMapper, toggleMapper } = store;
+	const hydrateGroupMappers = useAttributeMappingStore(
+		(state) => state.hydrateGroupMappers,
+	);
+	const removeMapper = useAttributeMappingStore((state) => state.removeMapper);
+	const toggleMapper = useAttributeMappingStore((state) => state.toggleMapper);
 
 	const hasServerId = group.serverId !== null;
 	const { data, isLoading, isError } = useListSpanMappers(

@@ -2,6 +2,7 @@ import { rest, server } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import LLMObservabilityAttributeMapping from '../LLMObservabilityAttributeMapping';
+import { useAttributeMappingStore } from '../store/useAttributeMappingStore';
 import { GROUPS_ENDPOINT, makeGroupsResponse, mockGroups } from './fixtures';
 
 function setupGroups(): void {
@@ -20,6 +21,7 @@ describe('LLMObservabilityAttributeMapping', () => {
 
 	afterEach(() => {
 		server.resetHandlers();
+		useAttributeMappingStore.getState().reset();
 	});
 
 	it('renders the page shell', () => {

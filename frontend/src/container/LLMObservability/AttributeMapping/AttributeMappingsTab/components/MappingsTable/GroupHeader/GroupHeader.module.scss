@@ -13,17 +13,13 @@
 	text-overflow: ellipsis;
 }
 
-.groupCount {
-	color: var(--l3-foreground);
-	font-size: var(--font-size-xs);
-	white-space: nowrap;
-}
-
 .conditionCount {
-	composes: groupCount;
 	display: inline-flex;
 	align-items: center;
 	gap: var(--spacing-2);
+	color: var(--l3-foreground);
+	font-size: var(--font-size-xs);
+	white-space: nowrap;
 	cursor: help;
 }
 
