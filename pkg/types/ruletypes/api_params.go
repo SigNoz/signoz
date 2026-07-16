@@ -86,7 +86,7 @@ type NotificationSettings struct {
 type Renotify struct {
 	Enabled          bool                `json:"enabled"`
 	ReNotifyInterval valuer.TextDuration `json:"interval,omitzero"`
-	AlertStates      []AlertState        `json:"alertStates,omitempty"`
+	AlertStates      []AlertState        `json:"alertStates,omitzero"`
 }
 
 func (ns *NotificationSettings) GetAlertManagerNotificationConfig() alertmanagertypes.NotificationConfig {

@@ -207,6 +207,11 @@ func TestRenotifyRoundTrip(t *testing.T) {
 			wantRenotify: `{"enabled": false}`,
 		},
 		{
+			name:         "explicitly empty alert states are echoed",
+			settings:     `{"renotify": {"enabled": true, "alertStates": []}}`,
+			wantRenotify: `{"enabled": true, "alertStates": []}`,
+		},
+		{
 			name:         "enabled renotify with states is echoed",
 			settings:     `{"renotify": {"enabled": true, "interval": "30m", "alertStates": ["firing"]}}`,
 			wantRenotify: `{"enabled": true, "interval": "30m", "alertStates": ["firing"]}`,
