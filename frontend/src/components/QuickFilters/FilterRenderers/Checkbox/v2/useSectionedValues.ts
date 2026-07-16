@@ -11,6 +11,7 @@ interface SectionedValuesInput {
 	isNotInOperator: boolean;
 	hasExistingQuery: boolean;
 	visibleItemsCount: number;
+	relatedExclusions: string[];
 }
 
 export interface SectionedItem {
@@ -36,7 +37,7 @@ const SECTION_ORDER: SectionType[] = [
 	SectionType.ALL_VALUES,
 ];
 
-function buildSelectedSet(
+export function buildSelectedSet(
 	currentFilterState: Record<string, boolean>,
 	isSomeFilterPresentForCurrentAttribute: boolean,
 	isNotInOperator: boolean,
@@ -65,6 +66,7 @@ export function useSectionedValues({
 	isNotInOperator,
 	hasExistingQuery,
 	visibleItemsCount,
+	relatedExclusions,
 }: SectionedValuesInput): SectionedValuesOutput {
 	const items = useMemo(() => {
 		const selectedSet = buildSelectedSet(
@@ -73,14 +75,21 @@ export function useSectionedValues({
 			isNotInOperator,
 		);
 
+		const exclusionSet = new Set(relatedExclusions);
+		const effectiveRelatedValues = relatedValues.filter(
+			(value) => !exclusionSet.has(value),
+		);
+
 		// Combine all values - API already filters both arrays by searchText
-		const allUniqueValues = Array.from(new Set([...relatedValues, ...allValues]));
+		const allUniqueValues = Array.from(
+			new Set([...effectiveRelatedValues, ...allValues]),
+		);
 
 		// Include selected values at top - may not be in API response
 		const finalValues = [
 			...new Set([...Array.from(selectedSet), ...allUniqueValues]),
 		];
-		const relatedSet = new Set(relatedValues);
+		const relatedSet = new Set(effectiveRelatedValues);
 
 		return deriveItems(finalValues, relatedSet, selectedSet, {
 			isNotInOperator,
@@ -94,6 +103,7 @@ export function useSectionedValues({
 		isSomeFilterPresentForCurrentAttribute,
 		isNotInOperator,
 		hasExistingQuery,
+		relatedExclusions,
 	]);
 
 	const sections = useMemo(() => {

@@ -18,6 +18,7 @@ describe('useSectionedValues', () => {
 		isNotInOperator: false,
 		hasExistingQuery: false,
 		visibleItemsCount: 10,
+		relatedExclusions: [] as string[],
 	};
 
 	it('no query at all → all items in selected section, no badges', () => {
@@ -201,6 +202,106 @@ describe('useSectionedValues', () => {
 			expect(allValuesSection?.items).toHaveLength(3);
 			expect(allValuesSection?.items.map((i) => i.value)).toStrictEqual(
 				expect.arrayContaining(['pod-a-2', 'pod-b-2', 'pod-c-2']),
+			);
+		});
+	});
+
+	describe('stale related values during refresh (relatedExclusions)', () => {
+		// Scenario: key A selected (existing query) + key B had value "oldSelected".
+		// User selects a different value on key B -> "oldSelected" is de-selected.
+		// keepPreviousData keeps the stale response where "oldSelected" is still in
+		// relatedValues, so it would wrongly render as "related". It is excluded.
+		it('subtracts only the excluded value from the RELATED section', () => {
+			const { result } = renderHook(() =>
+				useSectionedValues({
+					...baseInput,
+					currentFilterState: { newValue: true },
+					isSomeFilterPresentForCurrentAttribute: true,
+					hasExistingQuery: true,
+					// stale API data kept via keepPreviousData
+					relatedValues: ['oldSelected', 'otherRelated'],
+					allValues: ['newValue'],
+					relatedExclusions: ['oldSelected'],
+				}),
+			);
+
+			const allItems = flattenSections(result.current.sections);
+
+			// oldSelected must NOT render as related (dropped entirely - not in
+			// allValues nor selected)
+			expect(
+				allItems.find((item) => item.value === 'oldSelected'),
+			).toBeUndefined();
+
+			// other related values are kept
+			expect(allItems.find((item) => item.value === 'otherRelated')?.section).toBe(
+				SectionType.RELATED,
+			);
+		});
+
+		it('preserves every related value that is not the excluded (previously selected) one', () => {
+			const { result } = renderHook(() =>
+				useSectionedValues({
+					...baseInput,
+					currentFilterState: { newValue: true },
+					isSomeFilterPresentForCurrentAttribute: true,
+					hasExistingQuery: true,
+					// oldSelected was just de-selected; the rest are genuinely related
+					relatedValues: ['oldSelected', 'relatedA', 'relatedB', 'relatedC'],
+					allValues: ['newValue'],
+					relatedExclusions: ['oldSelected'],
+				}),
+			);
+
+			const relatedSection = result.current.sections.find(
+				(s) => s.type === SectionType.RELATED,
+			);
+			const relatedValues = relatedSection?.items.map((i) => i.value) ?? [];
+
+			// all non-excluded related values are kept
+			expect(relatedValues).toStrictEqual(['relatedA', 'relatedB', 'relatedC']);
+			// and they stay checked
+			relatedSection?.items.forEach((item) => {
+				expect(item.checkedState).toBe('checked');
+			});
+			// the excluded value is gone
+			expect(relatedValues).not.toContain('oldSelected');
+		});
+
+		it('keeps the RELATED section when other related values remain', () => {
+			const { result } = renderHook(() =>
+				useSectionedValues({
+					...baseInput,
+					currentFilterState: { newValue: true },
+					isSomeFilterPresentForCurrentAttribute: true,
+					hasExistingQuery: true,
+					relatedValues: ['oldSelected', 'otherRelated'],
+					allValues: ['newValue'],
+					relatedExclusions: ['oldSelected'],
+				}),
+			);
+
+			const sectionTypes = result.current.sections.map((s) => s.type);
+			expect(sectionTypes).toContain(SectionType.RELATED);
+			expect(sectionTypes).toContain(SectionType.SELECTED);
+		});
+
+		it('shows the excluded value normally when exclusions are empty', () => {
+			const { result } = renderHook(() =>
+				useSectionedValues({
+					...baseInput,
+					currentFilterState: { newValue: true },
+					isSomeFilterPresentForCurrentAttribute: true,
+					hasExistingQuery: true,
+					relatedValues: ['oldSelected', 'otherRelated'],
+					allValues: ['newValue'],
+					relatedExclusions: [],
+				}),
+			);
+
+			const allItems = flattenSections(result.current.sections);
+			expect(allItems.find((item) => item.value === 'oldSelected')?.section).toBe(
+				SectionType.RELATED,
 			);
 		});
 	});

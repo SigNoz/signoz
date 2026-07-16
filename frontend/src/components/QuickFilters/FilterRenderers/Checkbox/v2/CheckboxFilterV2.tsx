@@ -24,7 +24,8 @@ import { isKeyMatch } from '../utils';
 
 import { CheckboxFilterV2Header } from './CheckboxFilterV2Header';
 import { CheckboxFilterV2Section } from './CheckboxFilterV2Section';
-import { useSectionedValues } from './useSectionedValues';
+import { buildSelectedSet, useSectionedValues } from './useSectionedValues';
+import { useStaleRelatedExclusions } from './useStaleRelatedExclusions';
 
 import styles from './CheckboxFilterV2.module.scss';
 
@@ -123,6 +124,24 @@ export default function CheckboxFilterV2(
 
 	const isNotInOperator = NON_SELECTED_OPERATORS.includes(currentFilterOp || '');
 
+	const selectedValues = useMemo(
+		() => [
+			...buildSelectedSet(
+				currentFilterState,
+				isSomeFilterPresentForCurrentAttribute,
+				isNotInOperator,
+			),
+		],
+		[currentFilterState, isSomeFilterPresentForCurrentAttribute, isNotInOperator],
+	);
+
+	const isRefreshing = isFetching && !isLoading && searchText === '';
+	const relatedExclusions = useStaleRelatedExclusions({
+		selectedValues,
+		isFetching,
+		isRefreshing,
+	});
+
 	const { sections, totalCount } = useSectionedValues({
 		relatedValues,
 		allValues,
@@ -131,6 +150,7 @@ export default function CheckboxFilterV2(
 		isNotInOperator,
 		hasExistingQuery,
 		visibleItemsCount,
+		relatedExclusions,
 	});
 
 	return (
