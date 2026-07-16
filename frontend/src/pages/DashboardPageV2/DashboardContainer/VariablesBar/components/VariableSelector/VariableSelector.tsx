@@ -86,7 +86,9 @@ function VariableSelector({
 			data-testid={`variable-${variable.name}`}
 		>
 			<Typography.Text className={styles.variableName}>
-				${variable.name}
+				<span className={styles.name} title={`$${variable.name}`}>
+					${variable.name}
+				</span>
 				{hasTooltip ? (
 					<Tooltip
 						title={
@@ -97,7 +99,7 @@ function VariableSelector({
 							/>
 						}
 					>
-						<SolidInfoCircle className={styles.infoIcon} size={14} />
+						<SolidInfoCircle className={styles.infoIcon} size={12} />
 					</Tooltip>
 				) : null}
 			</Typography.Text>

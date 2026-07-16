@@ -15,6 +15,7 @@
 .stripExpanded {
 	display: flex;
 	flex-wrap: wrap;
+	align-items: flex-end;
 	gap: 8px;
 	padding-top: 12px;
 	overflow: visible;
@@ -48,7 +49,7 @@
 	display: inline-flex;
 	align-items: center;
 	margin-right: 8px;
-	vertical-align: top;
+	vertical-align: bottom;
 }
 
 .variableSlotHidden {
@@ -58,12 +59,12 @@
 .moreButton {
 	display: inline-flex;
 	margin-right: 8px;
-	vertical-align: top;
+	vertical-align: bottom;
 }
 
 .addSlot {
 	display: inline-flex;
-	vertical-align: top;
+	vertical-align: bottom;
 }
 
 // Shared by the Text and value selectors: strips the antd control chrome so the
@@ -78,6 +79,12 @@
 		border: none !important;
 		background: transparent !important;
 		box-shadow: none !important;
+	}
+
+	// Keep the multi-select's tags on one line (paired with maxTagCount) so a
+	// selected value never wraps the control onto a second row.
+	:global(.ant-select-selection-overflow) {
+		flex-wrap: nowrap;
 	}
 }
 

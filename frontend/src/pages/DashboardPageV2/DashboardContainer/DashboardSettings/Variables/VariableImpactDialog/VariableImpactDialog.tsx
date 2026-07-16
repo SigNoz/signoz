@@ -128,8 +128,9 @@ function VariableImpactDialog({
 										Current
 									</Typography.Text>
 									<AntdInput.TextArea
-										className={cx(styles.textArea, !row.included && styles.disabled)}
+										className={styles.textArea}
 										value={row.currentText}
+										disabled
 										readOnly
 										autoSize={{ minRows: 1, maxRows: 4 }}
 									/>
@@ -145,7 +146,7 @@ function VariableImpactDialog({
 										data-testid={`variable-impact-result-${row.id}`}
 									/>
 									{stillReferences ? (
-										<Typography.Text className={styles.warning}>
+										<Typography.Text size={'small'} color="warning">
 											Still references ${variableName}
 										</Typography.Text>
 									) : null}

@@ -1,7 +1,9 @@
 .variableItem {
 	position: relative;
 	display: flex;
-	align-items: center;
+	width: 160px;
+	flex-direction: column;
+	padding-top: 7px;
 }
 
 // Loading indicator: an indeterminate bar flush along the control's bottom edge,
@@ -51,38 +53,47 @@
 }
 
 .variableName {
-	display: flex;
-	min-width: 56px;
-	height: 32px;
+	--typography-text-display: flex;
+	position: absolute;
+	top: -3px;
+	left: 4px;
+	z-index: 1;
 	align-items: center;
-	gap: 4px;
-	padding: 6px 6px 6px 8px;
-	border: 1px solid var(--l3-border);
-	border-radius: 2px 0 0 2px;
-	background: var(--l3-background);
-	color: var(--bg-robin-400);
+	gap: 5px;
+	// Equal left/right inset: left:8px in, and 8px reserved on the right (16 total),
+	// so a truncated name + info icon has matching space on both sides.
+	max-width: calc(100% - 10px);
+	overflow: hidden;
+	padding: 0 2px;
+	background-color: var(--l1-background);
+	color: var(--l2-foreground);
 	font-family: Inter;
-	font-size: 12px;
-	font-weight: 400;
-	line-height: 16px;
+	font-size: 11px;
+	font-weight: 500;
+	line-height: 14px;
+}
+
+.name {
+	overflow: hidden;
+	min-width: 0;
 	white-space: nowrap;
+	text-overflow: ellipsis;
 }
 
 .infoIcon {
 	display: inline-flex;
-	margin-left: 6px;
+	align-self: center;
+	flex-shrink: 0;
 	color: var(--l2-foreground);
-	vertical-align: middle;
 }
 
 .variableValue {
 	display: flex;
-	min-width: 120px;
-	height: 32px;
+	width: 100%;
+	height: 33px;
 	align-items: center;
 	border: 1px solid var(--l3-border);
-	border-left: none;
-	border-radius: 0 2px 2px 0;
+	border-radius: 2px;
 	background: var(--l2-background);
 	color: var(--l2-foreground);
 	font-size: 12px;
