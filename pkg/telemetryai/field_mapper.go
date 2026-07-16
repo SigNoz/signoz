@@ -97,3 +97,23 @@ func (p genAIColumnProvider) AggregateAliases() []string {
 	}
 	return aliases
 }
+
+// TraceAggregateFieldKeys returns the filterable/orderable per-trace aggregate columns
+// as trace-context field keys; the metadata store surfaces them for source=ai key
+// suggestions (`trace.` autocomplete in the filter bar and the order-by picker).
+func TraceAggregateFieldKeys() []*telemetrytypes.TelemetryFieldKey {
+	cols := genAIColumnProvider{}.Columns()
+	keys := make([]*telemetrytypes.TelemetryFieldKey, 0, len(cols))
+	for _, c := range cols {
+		if !c.Orderable {
+			continue
+		}
+		keys = append(keys, &telemetrytypes.TelemetryFieldKey{
+			Name:          c.Alias,
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  telemetrytypes.FieldContextTrace,
+			FieldDataType: telemetrytypes.FieldDataTypeFloat64,
+		})
+	}
+	return keys
+}
