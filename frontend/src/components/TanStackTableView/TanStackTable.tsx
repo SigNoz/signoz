@@ -5,6 +5,7 @@ import {
 	useCallback,
 	useEffect,
 	useImperativeHandle,
+	useLayoutEffect,
 	useMemo,
 	useRef,
 } from 'react';
@@ -44,6 +45,7 @@ import {
 	TanStackTableHandle,
 	TanStackTableProps,
 } from './types';
+import { measureTrack, perfNow } from './perfDevtools';
 import { useColumnDnd } from './useColumnDnd';
 import { useColumnHandlers } from './useColumnHandlers';
 import { useColumnState } from './useColumnState';
@@ -115,6 +117,8 @@ function TanStackTableInner<TData, TItemKey = string>(
 			'TanStackTable: Cannot use onEndReached with disableVirtualScroll. Infinite scroll requires virtualization.',
 		);
 	}
+
+	const renderStart = perfNow();
 
 	const virtuosoRef = useRef<TableVirtuosoHandle | null>(null);
 	const isDarkMode = useIsDarkMode();
@@ -343,6 +347,19 @@ function TanStackTableInner<TData, TItemKey = string>(
 	);
 
 	const visibleColumnsCount = table.getVisibleFlatColumns().length;
+
+	useLayoutEffect(() => {
+		measureTrack('Table render', renderStart, {
+			track: 'Table render',
+			color: 'primary',
+			tooltipText: 'TanStackTable render + commit',
+			properties: [
+				['rows', String(flatItems.length)],
+				['columns', String(visibleColumnsCount)],
+				['loading', String(isLoading)],
+			],
+		});
+	});
 
 	const columnOrderKey = useMemo(() => columnIds.join(','), [columnIds]);
 	const columnVisibilityKey = useMemo(

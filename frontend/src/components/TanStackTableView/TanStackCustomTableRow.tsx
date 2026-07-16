@@ -1,7 +1,8 @@
-import { ComponentProps, memo } from 'react';
+import { ComponentProps, memo, useCallback, useLayoutEffect } from 'react';
 import { TableComponents } from 'react-virtuoso';
 import cx from 'classnames';
 
+import { beginHover, measureTrack, perfNow } from './perfDevtools';
 import TanStackRowCells from './TanStackRow';
 import {
 	useClearRowHovered,
@@ -22,12 +23,30 @@ function TanStackCustomTableRow<TData, TItemKey = string>({
 	context,
 	...props
 }: VirtuosoTableRowProps<TData, TItemKey>): JSX.Element {
+	const renderStart = perfNow();
 	const rowId = item.row.id;
 	const rowData = item.row.original;
 
 	// Stable callbacks for hover state management
 	const setHovered = useSetRowHovered(rowId);
 	const clearHovered = useClearRowHovered(rowId);
+
+	const handleMouseEnter = useCallback((): void => {
+		beginHover(rowId);
+		setHovered();
+	}, [rowId, setHovered]);
+
+	useLayoutEffect(() => {
+		measureTrack('Row render', renderStart, {
+			track: 'Row render',
+			color: 'secondary',
+			tooltipText: 'Row render + commit',
+			properties: [
+				['rowId', rowId],
+				['kind', item.kind],
+			],
+		});
+	});
 
 	if (item.kind === 'expansion') {
 		return (
@@ -65,7 +84,7 @@ function TanStackCustomTableRow<TData, TItemKey = string>({
 			{...props}
 			className={rowClassName}
 			style={rowStyle}
-			onMouseEnter={setHovered}
+			onMouseEnter={handleMouseEnter}
 			onMouseLeave={clearHovered}
 		>
 			<TanStackRowCells
