@@ -438,7 +438,7 @@ func TestSpanGapsMapping(t *testing.T) {
 		expectedFillLessThan  string
 	}{
 		{scenario: "true spans every gap", rawSpanGaps: true, expectedFillOnlyBelow: false, expectedFillLessThan: ""},
-		{scenario: "false spans no gaps", rawSpanGaps: false, expectedFillOnlyBelow: true, expectedFillLessThan: ""},
+		{scenario: "false has no threshold so fill-only-below stays off", rawSpanGaps: false, expectedFillOnlyBelow: false, expectedFillLessThan: ""},
 		{scenario: "number is seconds threshold", rawSpanGaps: float64(30), expectedFillOnlyBelow: true, expectedFillLessThan: "30s"},
 		{scenario: "missing defaults to span all", rawSpanGaps: nil, expectedFillOnlyBelow: false, expectedFillLessThan: ""},
 	}
