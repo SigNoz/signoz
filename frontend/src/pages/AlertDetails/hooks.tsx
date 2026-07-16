@@ -38,9 +38,9 @@ import ROUTES from 'constants/routes';
 import AlertHistory from 'container/AlertHistory';
 import { TIMELINE_TABLE_PAGE_SIZE } from 'container/AlertHistory/constants';
 import {
-	useTimelineTableCursor,
-	useTimelineTableCursorHistory,
+	computeCursorForPage,
 	useTimelineTableOrder,
+	useTimelineTablePage,
 } from 'container/AlertHistory/Timeline/Table/useTimelineTableCursor';
 import { AlertDetailsTab, TimelineFilter } from 'container/AlertHistory/types';
 import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
@@ -263,8 +263,9 @@ export const useGetAlertRuleDetailsTimelineTable = ({
 }): GetAlertRuleDetailsTimelineTableProps => {
 	const queryClient = useQueryClient();
 	const { ruleId, startTime, endTime, params } = useAlertHistoryQueryParams();
-	const [cursor] = useTimelineTableCursor();
+	const [page] = useTimelineTablePage();
 	const [order] = useTimelineTableOrder();
+	const cursor = computeCursorForPage(page);
 
 	const updatedOrder = useMemo(
 		() =>
@@ -294,7 +295,7 @@ export const useGetAlertRuleDetailsTimelineTable = ({
 			end: endTime,
 			limit: TIMELINE_TABLE_PAGE_SIZE,
 			order: updatedOrder,
-			cursor: cursor ?? undefined,
+			cursor,
 			filterExpression: filterExpression || undefined,
 			state: stateFilter,
 		}),
@@ -355,11 +356,8 @@ export const useTimelineTable = ({
 	hasNextPage: boolean;
 	hasPrevPage: boolean;
 } => {
-	const [cursor, setCursor] = useTimelineTableCursor();
-	const [cursorHistory, setCursorHistory] = useTimelineTableCursorHistory();
+	const [page, setPage] = useTimelineTablePage();
 	const [, setOrder] = useTimelineTableOrder();
-
-	const currentPage = cursorHistory.length + 1;
 
 	const onChangeHandler: TableProps<AlertRuleTimelineTableResponse>['onChange'] =
 		useCallback(
@@ -373,38 +371,25 @@ export const useTimelineTable = ({
 				if (!Array.isArray(sorter)) {
 					const { order } = sorter;
 					const updatedOrder = order === 'ascend' ? 'asc' : 'desc';
-					void Promise.all([
-						setOrder(updatedOrder),
-						setCursor(null),
-						setCursorHistory([]),
-					]);
+					void Promise.all([setOrder(updatedOrder), setPage(1)]);
 				}
 			},
-			[setOrder, setCursor, setCursorHistory],
+			[setOrder, setPage],
 		);
 
 	const handleNextPage = useCallback(() => {
 		if (!nextCursor) {
 			return;
 		}
-		const newHistory = cursor ? [...cursorHistory, cursor] : cursorHistory;
-		void Promise.all([
-			setCursor(nextCursor),
-			setCursorHistory(newHistory.length > 0 ? newHistory : []),
-		]);
-	}, [nextCursor, cursor, cursorHistory, setCursor, setCursorHistory]);
+		void setPage(page + 1);
+	}, [nextCursor, page, setPage]);
 
 	const handlePrevPage = useCallback(() => {
-		if (cursorHistory.length === 0) {
+		if (page <= 1) {
 			return;
 		}
-		const newHistory = [...cursorHistory];
-		const prevCursor = newHistory.pop();
-		void Promise.all([
-			setCursor(prevCursor ?? null),
-			setCursorHistory(newHistory),
-		]);
-	}, [cursorHistory, setCursor, setCursorHistory]);
+		void setPage(page - 1);
+	}, [page, setPage]);
 
 	const paginationConfig: TablePaginationConfig = {
 		pageSize: TIMELINE_TABLE_PAGE_SIZE,
@@ -416,7 +401,7 @@ export const useTimelineTable = ({
 				<Typography.Text size="small"> of {total}</Typography.Text>
 			</span>
 		),
-		current: currentPage,
+		current: page,
 		showSizeChanger: false,
 		hideOnSinglePage: true,
 		total: totalItems,
@@ -428,7 +413,7 @@ export const useTimelineTable = ({
 		handleNextPage,
 		handlePrevPage,
 		hasNextPage: !!nextCursor,
-		hasPrevPage: cursorHistory.length > 0,
+		hasPrevPage: page > 1,
 	};
 };
 

@@ -1,43 +1,28 @@
 import {
 	Options,
-	parseAsString,
+	parseAsInteger,
 	parseAsStringLiteral,
 	useQueryState,
 	UseQueryStateReturn,
 } from 'nuqs';
-import { parseAsJsonNoValidate } from 'utils/nuqsParsers';
+import { TIMELINE_TABLE_PAGE_SIZE } from 'container/AlertHistory/constants';
 
 const defaultNuqsOptions: Options = {
 	history: 'push',
 };
 
 export const TIMELINE_TABLE_PARAMS = {
-	CURSOR: 'cursor',
-	CURSOR_HISTORY: 'cursorHistory',
+	PAGE: 'page',
 	ORDER: 'order',
 } as const;
 
 const ORDER_VALUES = ['asc', 'desc'] as const;
 export type OrderDirection = (typeof ORDER_VALUES)[number];
 
-export const useTimelineTableCursor = (): UseQueryStateReturn<
-	string,
-	undefined
-> =>
+export const useTimelineTablePage = (): UseQueryStateReturn<number, number> =>
 	useQueryState(
-		TIMELINE_TABLE_PARAMS.CURSOR,
-		parseAsString.withOptions(defaultNuqsOptions),
-	);
-
-export const useTimelineTableCursorHistory = (): UseQueryStateReturn<
-	string[],
-	string[]
-> =>
-	useQueryState(
-		TIMELINE_TABLE_PARAMS.CURSOR_HISTORY,
-		parseAsJsonNoValidate<string[]>()
-			.withDefault([])
-			.withOptions(defaultNuqsOptions),
+		TIMELINE_TABLE_PARAMS.PAGE,
+		parseAsInteger.withDefault(1).withOptions(defaultNuqsOptions),
 	);
 
 export const useTimelineTableOrder = (): UseQueryStateReturn<
@@ -50,3 +35,19 @@ export const useTimelineTableOrder = (): UseQueryStateReturn<
 			.withDefault('desc')
 			.withOptions(defaultNuqsOptions),
 	);
+
+export function encodeCursor(page: number, limit: number): string | undefined {
+	if (page <= 1) {
+		return undefined;
+	}
+	const offset = (page - 1) * limit;
+	// Backend uses base64.RawURLEncoding (URL-safe, no padding)
+	return btoa(JSON.stringify({ offset, limit }))
+		.replace(/\+/g, '-')
+		.replace(/\//g, '_')
+		.replace(/=+$/, '');
+}
+
+export function computeCursorForPage(page: number): string | undefined {
+	return encodeCursor(page, TIMELINE_TABLE_PAGE_SIZE);
+}
