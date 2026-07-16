@@ -74,12 +74,8 @@ func (d *v1Decoder) convertV1Panels(raw any) map[string]*Panel {
 			continue
 		}
 		if len(panel.Spec.Queries) == 0 {
-			d.note("widgets[%d] %q produced no queries; skipping", i, id)
-			continue
-		}
-		// A lone metric query with no aggregation or no metric name can't render (v1)
-		// and fails v2 validation; drop the widget silently, as v1 effectively does.
-		if isUnrenderableMetricQuery(panel) {
+			// No renderable queries — every query was dropped as unrenderable, or none
+			// were defined. v1 renders nothing, so skip the widget silently.
 			continue
 		}
 		panels[id] = panel

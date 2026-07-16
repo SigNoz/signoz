@@ -58,50 +58,16 @@ func (d *v1Decoder) convertV1WidgetQuery(widget map[string]any, panelKind PanelP
 	}}
 }
 
-// isUnrenderableMetricQuery reports whether the panel's only query is a metric
-// builder query that v2 rejects: no aggregations at all ("at least one aggregation
-// is required") or an aggregation with no metric name ("metric name is required").
-// v1 doesn't render either, so the widget is skipped silently.
-func isUnrenderableMetricQuery(panel *Panel) bool {
-	if len(panel.Spec.Queries) != 1 {
-		return false
-	}
-	plugin := panel.Spec.Queries[0].Spec.Plugin
-	if plugin.Kind != QueryKindBuilder {
-		return false
-	}
-	bqs, ok := plugin.Spec.(*BuilderQuerySpec)
-	if !ok {
-		return false
-	}
-	mq, ok := bqs.Spec.(qb.QueryBuilderQuery[qb.MetricAggregation])
-	if !ok {
-		return false
-	}
-	if len(mq.Aggregations) == 0 {
-		return true
-	}
-	for _, agg := range mq.Aggregations {
-		if agg.MetricName == "" {
-			return true
-		}
-	}
-	return false
-}
-
 // dropUnrenderableQueries removes queries whose aggregation can't render (see
-// queryIsUnrenderable) — but only when the widget has other renderable queries to keep
-// it alive. If every query is unrenderable, the list is returned unchanged so the
-// single-query path (isUnrenderableMetricQuery) can drop the whole widget silently.
+// queryIsUnrenderable). If every query is unrenderable the result is empty, so the
+// widget produces no panel and is skipped silently (convertV1Panels) — matching v1,
+// which renders nothing.
 func dropUnrenderableQueries(queries []map[string]any) []map[string]any {
 	renderable := make([]map[string]any, 0, len(queries))
 	for _, q := range queries {
 		if !queryIsUnrenderable(q) {
 			renderable = append(renderable, q)
 		}
-	}
-	if len(renderable) == 0 {
-		return queries
 	}
 	return renderable
 }
