@@ -153,9 +153,10 @@ func TestV2MinimalReadShape(t *testing.T) {
 
 	var ns map[string]json.RawMessage
 	require.NoError(t, json.Unmarshal(body["notificationSettings"], &ns))
-	for _, field := range []string{"renotify", "groupBy", "newGroupEvalDelay"} {
+	for _, field := range []string{"renotify", "newGroupEvalDelay"} {
 		assert.NotContains(t, ns, field, "notificationSettings.%s", field)
 	}
+	assert.JSONEq(t, `null`, string(ns["groupBy"]))
 	assert.JSONEq(t, `false`, string(ns["usePolicy"]))
 
 	assert.JSONEq(t, `false`, string(body["disabled"]))
