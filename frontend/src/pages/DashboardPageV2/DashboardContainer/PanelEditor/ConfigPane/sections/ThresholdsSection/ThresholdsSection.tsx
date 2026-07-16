@@ -12,6 +12,7 @@ import {
 	AnyThreshold,
 	ThresholdVariant,
 } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
+import { ThresholdColor } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/threshold';
 
 import type { TableColumnOption } from '../../../hooks/useTableColumns';
 import type { SectionEditorContext } from '../../sectionContext';
@@ -22,7 +23,7 @@ import TableThresholdRow from './rows/TableThresholdRow';
 import styles from './ThresholdsSection.module.scss';
 
 // New thresholds default to red (the first palette preset); the user recolors per rule.
-const DEFAULT_THRESHOLD_COLOR = '#F1575F';
+const DEFAULT_THRESHOLD_COLOR = ThresholdColor.RED;
 
 // Add-button testId per variant — kept stable so existing E2E/unit selectors hold.
 const ADD_TESTID: Record<ThresholdVariant, string> = {
