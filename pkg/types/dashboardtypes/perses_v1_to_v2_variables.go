@@ -111,7 +111,7 @@ func (d *v1Decoder) convertV1Variable(v map[string]any) (Variable, bool) {
 			AllowMultiple:   d.readBool(v, "multiSelect"),
 			CustomAllValue:  d.readString(v, "customAllValue"),
 			CapturingRegexp: d.readString(v, "capturingRegexp"),
-			Sort:            mapV1Sort(d.readString(v, "sort")),
+			Sort:            mapV1Sort(v["sort"]),
 			Plugin:          d.variablePluginFor(kind, v),
 			Name:            name,
 		}
@@ -204,7 +204,11 @@ func defaultValueFromAny(raw any, allowMultiple bool) *VariableDefaultValue {
 	return nil
 }
 
-func mapV1Sort(s string) ListVariableSpecSort {
+// mapV1Sort reads the raw value (not via readString) so a non-string sort — some v1
+// dashboards store it as a number (e.g. 0) — defaults to none silently instead of
+// being flagged malformed.
+func mapV1Sort(raw any) ListVariableSpecSort {
+	s, _ := raw.(string)
 	switch s {
 	case "ASC":
 		return SortAlphabeticalAsc
