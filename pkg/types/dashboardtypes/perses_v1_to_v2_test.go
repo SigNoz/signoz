@@ -228,14 +228,13 @@ func TestConvertV1Panels(t *testing.T) {
 	assert.NotContains(t, panels, "row1", "row widgets are handled by the layout pass")
 }
 
-// TestConvertV1PanelsFlagsUnknownType verifies an unrecognized panelTypes is
-// recorded as a problem (so the dashboard is logged and skipped) rather than
-// silently dropped.
-func TestConvertV1PanelsFlagsUnknownType(t *testing.T) {
+// TestConvertV1PanelsSkipsUnknownType verifies an unrecognized panelTypes is
+// dropped silently (v1 can't render it either) without failing the migration.
+func TestConvertV1PanelsSkipsUnknownType(t *testing.T) {
 	d := &v1Decoder{}
 	panels := d.convertV1Panels([]any{map[string]any{"id": "u1", "panelTypes": "somethingelse"}})
 	assert.NotContains(t, panels, "u1")
-	require.Error(t, d.errIfHasMalformedFields())
+	require.NoError(t, d.errIfHasMalformedFields())
 }
 
 func TestConvertGraphWidgetToTimeSeriesPanel(t *testing.T) {

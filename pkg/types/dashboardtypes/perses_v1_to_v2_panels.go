@@ -66,7 +66,9 @@ func (d *v1Decoder) convertV1Panels(raw any) map[string]*Panel {
 			// "row" (section header) is handled by the layout pass;
 			continue
 		default:
-			d.note("widgets[%d] has unknown panel type %q", i, panelType)
+			// Unknown/unsupported panel type — v1 can't render it either, so skip the
+			// widget silently rather than failing the whole migration.
+			continue
 		}
 		if panel == nil {
 			continue
