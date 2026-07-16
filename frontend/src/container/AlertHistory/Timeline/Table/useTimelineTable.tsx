@@ -8,7 +8,6 @@ import { AlertRuleTimelineTableResponse } from 'types/api/alerts/def';
 export const timelineTableColumns = ({
 	formatTimezoneAdjustedTimestamp,
 }: {
-	labels: Record<string, string | undefined>;
 	formatTimezoneAdjustedTimestamp: (
 		input: TimestampInput,
 		format?: string,

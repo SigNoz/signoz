@@ -20,7 +20,7 @@ import {
 } from 'pages/AlertDetails/hooks';
 import { labelsArrayToObject } from 'container/AlertHistory/utils/labelAdapters';
 import { useTimezone } from 'providers/Timezone';
-import { AlertRuleTimelineTableResponse, Labels } from 'types/api/alerts/def';
+import { AlertRuleTimelineTableResponse } from 'types/api/alerts/def';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { useAlertHistoryFilterSuggestions } from './useAlertHistoryFilterSuggestions';
@@ -52,7 +52,7 @@ function TimelineTableContent(): JSX.Element {
 	const { hardcodedAttributeKeys, valueSuggestionsOverride, isLoadingKeys } =
 		useAlertHistoryFilterSuggestions(ruleId ?? null);
 
-	const { timelineData, totalItems, labels, nextCursor } = useMemo(() => {
+	const { timelineData, totalItems, nextCursor } = useMemo(() => {
 		const response = data?.data;
 		const items: AlertRuleTimelineTableResponse[] | undefined =
 			response?.items?.map((item) => ({
@@ -68,21 +68,9 @@ function TimelineTableContent(): JSX.Element {
 				labels: labelsArrayToObject(item.labels),
 			}));
 
-		const labelsObj: Labels = {};
-		response?.items?.forEach((item) => {
-			item.labels?.forEach((label) => {
-				const key = label.key?.name ?? '';
-				const value = String(label.value ?? '');
-				if (key && !labelsObj[key]) {
-					labelsObj[key] = value;
-				}
-			});
-		});
-
 		return {
 			timelineData: items,
 			totalItems: response?.total ?? 0,
-			labels: labelsObj,
 			nextCursor: response?.nextCursor,
 		};
 	}, [data?.data]);
@@ -159,7 +147,6 @@ function TimelineTableContent(): JSX.Element {
 			<Table
 				rowKey={(row): string => `${row.fingerprint}-${row.value}-${row.unixMilli}`}
 				columns={timelineTableColumns({
-					labels: labels ?? {},
 					formatTimezoneAdjustedTimestamp,
 				})}
 				onRow={handleRowClick}
@@ -180,9 +167,11 @@ function TimelineTableContent(): JSX.Element {
 					<div className="timeline-table__pagination">
 						<div className="timeline-table__pagination-info">
 							{paginationConfig.showTotal?.(totalItems, [
-								((paginationConfig.current ?? 1) - 1) *
-									(paginationConfig.pageSize ?? 10) +
-									1,
+								totalItems === 0
+									? 0
+									: ((paginationConfig.current ?? 1) - 1) *
+											(paginationConfig.pageSize ?? 10) +
+										1,
 								Math.min(
 									(paginationConfig.current ?? 1) * (paginationConfig.pageSize ?? 10),
 									totalItems,
