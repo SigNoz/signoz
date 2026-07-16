@@ -1,7 +1,9 @@
+import PrebuiltDashboard from './PrebuiltDashboard/PrebuiltDashboard';
 import styles from './Overview.module.scss';
 
-// Overview tab content for LLM Observability. Currently the feature's landing
-// surface; usage/cost/performance widgets land in later PRs.
+// Overview tab content for LLM Observability. Renders the prebuilt AI Observability
+// dashboard (cost, tokens, latency, errors, tool-call RED, TTFT) read-only via
+// GridCard, following the Cost Meter breakdown pattern.
 function Overview(): JSX.Element {
 	return (
 		<div className={styles.overview} data-testid="llm-observability-overview">
@@ -13,6 +15,7 @@ function Overview(): JSX.Element {
 					</p>
 				</div>
 			</header>
+			<PrebuiltDashboard />
 		</div>
 	);
 }

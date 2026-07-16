@@ -1,0 +1,26 @@
+.prebuiltDashboard {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-6);
+	width: 100%;
+}
+
+.toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+}
+
+.grid {
+	display: grid;
+	grid-template-columns: repeat(12, 1fr);
+	gap: var(--spacing-4);
+	width: 100%;
+}
+
+.card {
+	// Each card spans a column range set inline from the widget's layout width; keep
+	// the grid content from overflowing horizontally.
+	min-width: 0;
+	overflow: hidden;
+}

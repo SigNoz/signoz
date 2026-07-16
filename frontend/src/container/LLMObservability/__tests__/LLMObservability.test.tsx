@@ -10,6 +10,13 @@ import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import LLMObservability from '../LLMObservability';
 
+// The Overview tab embeds DateTimeSelectionV2, which reads router navigation state via
+// react-router-dom-v5-compat; the test harness's router doesn't provide it.
+jest.mock('react-router-dom-v5-compat', () => ({
+	...jest.requireActual('react-router-dom-v5-compat'),
+	useNavigationType: jest.fn(() => 'PUSH'),
+}));
+
 function setupList(items = mockRules): void {
 	server.use(
 		rest.get(LLM_PRICING_ENDPOINT, (_req, res, ctx) =>
@@ -34,6 +41,7 @@ describe('LLMObservability (integration)', () => {
 
 		expect(screen.getByTestId('llm-observability-tabs')).toBeInTheDocument();
 		expect(screen.getByTestId('llm-observability-overview')).toBeInTheDocument();
+		expect(screen.getByTestId('llm-overview-dashboard')).toBeInTheDocument();
 		expect(screen.getByText('LLM Observability')).toBeInTheDocument();
 		expect(screen.getByRole('tab', { name: 'Overview' })).toBeInTheDocument();
 		expect(
