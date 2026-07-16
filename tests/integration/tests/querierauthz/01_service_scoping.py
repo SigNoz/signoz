@@ -84,9 +84,14 @@ def test_invalid_telemetry_selector_rejected(
 def test_allowed(
     signoz: types.SigNoz,
     get_token: Callable[[str, str], str],
+    insert_logs: Callable[[list[Logs]], None],
     expression: str,
 ) -> None:
     now = datetime.now(tz=UTC)
+    # Seed a service-a log so the resource-attribute key resolves; without any
+    # ingested data the querier rejects the filter with "key not found".
+    insert_logs([Logs(timestamp=now - timedelta(seconds=1), resources={"service.name": "service-a"}, body="service-a-0")])
+
     response = make_query_request(
         signoz,
         get_token(scoped_email, user_password),
@@ -151,8 +156,10 @@ def test_denied_message_names_resource(
 def test_variables_resolve_into_gate(
     signoz: types.SigNoz,
     get_token: Callable[[str, str], str],
+    insert_logs: Callable[[list[Logs]], None],
 ) -> None:
     now = datetime.now(tz=UTC)
+    insert_logs([Logs(timestamp=now - timedelta(seconds=1), resources={"service.name": "service-a"}, body="service-a-0")])
     start, end = int((now - timedelta(minutes=10)).timestamp() * 1000), int(now.timestamp() * 1000)
     token = get_token(scoped_email, user_password)
 

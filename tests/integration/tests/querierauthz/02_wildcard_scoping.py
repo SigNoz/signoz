@@ -35,8 +35,15 @@ def test_setup(
 def test_service_wildcard_allows_any_single_service(
     signoz: types.SigNoz,
     get_token: Callable[[str, str], str],
+    insert_logs: Callable[[list[Logs]], None],
 ) -> None:
     now = datetime.now(tz=UTC)
+    insert_logs(
+        [
+            Logs(timestamp=now - timedelta(seconds=1), resources={"service.name": "service-a"}, body="service-a-0"),
+            Logs(timestamp=now - timedelta(seconds=1), resources={"service.name": "service-b"}, body="service-b-0"),
+        ]
+    )
     start, end = int((now - timedelta(minutes=10)).timestamp() * 1000), int(now.timestamp() * 1000)
     token = get_token(any_service_email, user_password)
 

@@ -4,6 +4,7 @@ from http import HTTPStatus
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, change_user_role, create_active_user
+from fixtures.logs import Logs
 from fixtures.querier import build_raw_query, make_query_request
 from fixtures.role import transaction_group
 
@@ -29,8 +30,11 @@ def test_setup(
 def test_escaped_value_parity_allows_matching_service(
     signoz: types.SigNoz,
     get_token: Callable[[str, str], str],
+    insert_logs: Callable[[list[Logs]], None],
 ) -> None:
     now = datetime.now(tz=UTC)
+    insert_logs([Logs(timestamp=now - timedelta(seconds=1), resources={"service.name": spacey_service}, body="spacey-0")])
+
     response = make_query_request(
         signoz,
         get_token(spacey_email, user_password),
