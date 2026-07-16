@@ -45,7 +45,7 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 	return ruleStateHistoryColumns["labels"], nil
 }
 
-func (m *fieldMapper) FieldFor(ctx context.Context, _, _ uint64, key *telemetrytypes.TelemetryFieldKey) (string, error) {
+func (m *fieldMapper) FieldFor(ctx context.Context, _ valuer.UUID, _, _ uint64, key *telemetrytypes.TelemetryFieldKey) (string, error) {
 	col, err := m.getColumn(ctx, key)
 	if err != nil {
 		return "", err
@@ -56,7 +56,7 @@ func (m *fieldMapper) FieldFor(ctx context.Context, _, _ uint64, key *telemetryt
 	return col.Name, nil
 }
 
-func (m *fieldMapper) ColumnFor(ctx context.Context, _, _ uint64, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
+func (m *fieldMapper) ColumnFor(ctx context.Context, _ valuer.UUID, _, _ uint64, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
 	col, err := m.getColumn(ctx, key)
 	if err != nil {
 		return nil, err
@@ -64,8 +64,8 @@ func (m *fieldMapper) ColumnFor(ctx context.Context, _, _ uint64, key *telemetry
 	return []*schema.Column{col}, nil
 }
 
-func (m *fieldMapper) ColumnExpressionFor(ctx context.Context, _ valuer.UUID, tsStart, tsEnd uint64, field *telemetrytypes.TelemetryFieldKey, _ map[string][]*telemetrytypes.TelemetryFieldKey) (string, error) {
-	colName, err := m.FieldFor(ctx, tsStart, tsEnd, field)
+func (m *fieldMapper) ColumnExpressionFor(ctx context.Context, orgID valuer.UUID, tsStart, tsEnd uint64, field *telemetrytypes.TelemetryFieldKey, _ map[string][]*telemetrytypes.TelemetryFieldKey) (string, error) {
+	colName, err := m.FieldFor(ctx, orgID, tsStart, tsEnd, field)
 	if err != nil {
 		return "", err
 	}

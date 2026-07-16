@@ -1,13 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { listHosts } from 'api/generated/services/inframonitoring';
 import {
 	InframonitoringtypesHostRecordDTO,
 	InframonitoringtypesHostStatusDTO,
 	InframonitoringtypesResponseTypeDTO,
 	Querybuildertypesv5OrderDirectionDTO,
+	RenderErrorResponseDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import { AxiosError } from 'axios';
+import APIError from 'types/api/error';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource } from 'components/QuickFilters/types';
 import { InfraMonitoringEvents } from 'constants/events';
@@ -122,13 +126,12 @@ function Hosts(): JSX.Element {
 					endTimeBeforeRetention: data.endTimeBeforeRetention,
 				};
 			} catch (error) {
-				const errMsg =
-					error instanceof Error ? error.message : 'Failed to fetch hosts';
 				return {
 					type: 'list' as const,
 					records: [] as InframonitoringtypesHostRecordDTO[],
 					total: 0,
-					error: errMsg,
+					error:
+						convertToApiError(error as AxiosError<RenderErrorResponseDTO>) ?? null,
 				};
 			}
 		},
@@ -141,7 +144,7 @@ function Hosts(): JSX.Element {
 			signal?: AbortSignal,
 		): Promise<{
 			data: InframonitoringtypesHostRecordDTO | null;
-			error?: string | null;
+			error?: APIError | null;
 		}> => {
 			try {
 				const response = await listHosts(
@@ -159,11 +162,10 @@ function Hosts(): JSX.Element {
 					data: response.data.records.length > 0 ? response.data.records[0] : null,
 				};
 			} catch (error) {
-				const errMsg =
-					error instanceof Error ? error.message : 'Failed to fetch host';
 				return {
 					data: null,
-					error: errMsg,
+					error:
+						convertToApiError(error as AxiosError<RenderErrorResponseDTO>) ?? null,
 				};
 			}
 		},

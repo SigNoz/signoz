@@ -7,7 +7,7 @@ import ColumnHeader from '../Base/ColumnHeader';
 import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
 import { SelectedItemParams } from '../hooks';
-import { formatBytes, getPodPhaseStatusItems } from '../commonUtils';
+import { formatBytes, getPodStatusItems } from '../commonUtils';
 import {
 	CellValueTooltip,
 	EntityProgressBar,
@@ -81,11 +81,7 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 		visibilityBehavior: 'hidden-on-expand',
 		cell: ({ value }): React.ReactNode => {
 			const jobName = value as string;
-			return (
-				<CellValueTooltip value={jobName}>
-					<TanStackTable.Text>{jobName}</TanStackTable.Text>
-				</CellValueTooltip>
-			);
+			return <CellValueTooltip value={jobName} />;
 		},
 	},
 	{
@@ -102,33 +98,27 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 		enableResize: true,
 		cell: ({ value }): React.ReactNode => {
 			const namespaceName = value as string;
-			return (
-				<CellValueTooltip value={namespaceName}>
-					<TanStackTable.Text>{namespaceName}</TanStackTable.Text>
-				</CellValueTooltip>
-			);
+			return <CellValueTooltip value={namespaceName} />;
 		},
 	},
 	{
-		id: 'pod_counts_by_phase',
+		id: 'pod_counts_by_status',
 		header: (): React.ReactNode => (
-			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/jobs#pod-counts-by-phase">
-				Pod Phases
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/jobs#pod-counts-by-status">
+				Pod Status
 			</ColumnHeader>
 		),
-		accessorFn: (row): InframonitoringtypesJobRecordDTO['podCountsByPhase'] =>
-			row.podCountsByPhase,
+		accessorFn: (row): InframonitoringtypesJobRecordDTO['podCountsByStatus'] =>
+			row.podCountsByStatus,
 		width: { min: 250 },
 		enableSort: false,
 		enableResize: true,
 		cell: ({ row }): React.ReactNode => {
-			const podCountsByPhase = row.podCountsByPhase;
-			if (!podCountsByPhase) {
+			const podCountsByStatus = row.podCountsByStatus;
+			if (!podCountsByStatus) {
 				return <TanStackTable.Text>-</TanStackTable.Text>;
 			}
-			return (
-				<GroupedStatusCounts items={getPodPhaseStatusItems(podCountsByPhase)} />
-			);
+			return <GroupedStatusCounts items={getPodStatusItems(podCountsByStatus)} />;
 		},
 	},
 	{

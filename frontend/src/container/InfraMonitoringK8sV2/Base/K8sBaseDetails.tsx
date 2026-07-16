@@ -12,6 +12,8 @@ import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
+import ErrorContent from 'components/ErrorModal/components/ErrorContent';
+import APIError from 'types/api/error';
 import { combineInitialAndUserExpression } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
 import { InfraMonitoringEvents } from 'constants/events';
 import { QueryParams } from 'constants/query';
@@ -84,6 +86,23 @@ export interface K8sDetailsFilters {
 	end: number;
 }
 
+export interface CustomTabRenderProps<T> {
+	entity: T;
+	timeRange: { startTime: number; endTime: number };
+	selectedInterval: Time;
+	handleTimeChange: (
+		interval: Time | CustomTimeType,
+		dateTimeRange?: [number, number],
+	) => void;
+}
+
+export interface CustomTab<T> {
+	key: string;
+	label: string;
+	icon: React.ReactNode;
+	render: (props: CustomTabRenderProps<T>) => React.ReactNode;
+}
+
 export interface K8sBaseDetailsProps<T> {
 	category: InfraMonitoringEntity;
 	eventCategory: string;
@@ -92,7 +111,7 @@ export interface K8sBaseDetailsProps<T> {
 	fetchEntityData: (
 		filters: K8sDetailsFilters,
 		signal?: AbortSignal,
-	) => Promise<{ data: T | null; error?: string | null }>;
+	) => Promise<{ data: T | null; error?: APIError | null }>;
 	// Entity configuration
 	getEntityName: (entity: T) => string;
 	getInitialLogTracesExpression: (entity: T) => string;
@@ -120,20 +139,7 @@ export interface K8sBaseDetailsProps<T> {
 		showTraces?: boolean;
 		showEvents?: boolean;
 	};
-	customTabs?: Array<{
-		key: string;
-		label: string;
-		icon: React.ReactNode;
-		render: (props: {
-			entity: T;
-			timeRange: { startTime: number; endTime: number };
-			selectedInterval: Time;
-			handleTimeChange: (
-				interval: Time | CustomTimeType,
-				dateTimeRange?: [number, number],
-			) => void;
-		}) => React.ReactNode;
-	}>;
+	customTabs?: Array<CustomTab<T>>;
 }
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -269,6 +275,33 @@ export default function K8sBaseDetails<T>({
 	const [selectedView, setSelectedView] = useInfraMonitoringView();
 	const effectiveView = hideDetailViewTabs ? VIEW_TYPES.METRICS : selectedView;
 
+	const validTabs = useMemo(() => {
+		const tabs: string[] = [];
+		if (tabVisibility.showMetrics) {
+			tabs.push(VIEW_TYPES.METRICS);
+		}
+		if (tabVisibility.showLogs) {
+			tabs.push(VIEW_TYPES.LOGS);
+		}
+		if (tabVisibility.showTraces) {
+			tabs.push(VIEW_TYPES.TRACES);
+		}
+		if (tabVisibility.showEvents) {
+			tabs.push(VIEW_TYPES.EVENTS);
+		}
+		if (customTabs) {
+			tabs.push(...customTabs.map((t) => t.key));
+		}
+		return tabs;
+	}, [tabVisibility, customTabs]);
+
+	useEffect(() => {
+		if (!hideDetailViewTabs && !validTabs.includes(selectedView)) {
+			const firstValid = validTabs[0] || VIEW_TYPES.METRICS;
+			void setSelectedView(firstValid);
+		}
+	}, [hideDetailViewTabs, selectedView, validTabs, setSelectedView]);
+
 	const [, setLogFiltersParam] = useInfraMonitoringLogFilters();
 	const [, setTracesFiltersParam] = useInfraMonitoringTracesFilters();
 	const [, setEventsFiltersParam] = useInfraMonitoringEventsFilters();
@@ -304,7 +337,10 @@ export default function K8sBaseDetails<T>({
 		}
 	}, [getMinMaxTime, selectedTime]);
 
-	const handleTabChange = (value: string): void => {
+	const handleTabChange = (value: string | null): void => {
+		if (!value) {
+			return;
+		}
 		setSelectedView(value);
 		setLogFiltersParam(null);
 		setTracesFiltersParam(null);
@@ -447,12 +483,18 @@ export default function K8sBaseDetails<T>({
 			{isEntityLoading && <LoadingContainer />}
 			{(isEntityError || hasResponseError) && (
 				<div className="entity-error-container">
-					<Typography.Text color="danger">
-						{entityResponse?.error ||
-							(entityError instanceof Error
-								? entityError.message
-								: 'Failed to load entity details')}
-					</Typography.Text>
+					<ErrorContent
+						error={
+							entityResponse?.error ??
+							(entityError instanceof APIError ? entityError : null) ?? {
+								code: 500,
+								message:
+									entityError instanceof Error
+										? entityError.message
+										: 'Failed to load entity details',
+							}
+						}
+					/>
 				</div>
 			)}
 			{entity && !isEntityLoading && !hasResponseError && (
