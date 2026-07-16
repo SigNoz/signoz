@@ -3,10 +3,10 @@ import { SolidInfoCircle } from '@signozhq/icons';
 import { Typography } from '@signozhq/ui/typography';
 // eslint-disable-next-line signoz/no-antd-components -- lightweight description tooltip, matches V1
 import { Tooltip } from 'antd';
-import { textContainsVariableReference } from 'lib/dashboardVariables/variableReference';
 
 import type { VariableFormModel } from '../DashboardSettings/Variables/variableFormModel';
 import type { VariableSelection, VariableSelectionMap } from './selectionTypes';
+import { computeVariableDependencies } from './variableDependencies';
 import TextSelector from './selectors/TextSelector';
 import VariableValueControl from './selectors/VariableValueControl';
 import { useVariableFetchState } from './useVariableFetchState';
@@ -35,30 +35,15 @@ function VariableSelector({
 	onAutoSelect,
 }: VariableSelectorProps): JSX.Element {
 	// Dependency links shown in the hover tooltip: variables this one's query
-	// references (dependsOn) and query variables that reference this one (usedBy).
+	// references (dependsOn = its parents) and query variables that reference this
+	// one (usedBy = its children), from the shared dependency graph.
 	const { dependsOn, usedBy } = useMemo(() => {
-		const references = (text: string | undefined, name: string): boolean =>
-			!!text && !!name && textContainsVariableReference(text, name);
+		const { graph, parentGraph } = computeVariableDependencies(variables);
 		return {
-			dependsOn:
-				variable.type === 'QUERY'
-					? variables
-							.filter(
-								(v) =>
-									v.name !== variable.name && references(variable.queryValue, v.name),
-							)
-							.map((v) => v.name)
-					: [],
-			usedBy: variables
-				.filter(
-					(v) =>
-						v.type === 'QUERY' &&
-						v.name !== variable.name &&
-						references(v.queryValue, variable.name),
-				)
-				.map((v) => v.name),
+			dependsOn: parentGraph[variable.name] ?? [],
+			usedBy: graph[variable.name] ?? [],
 		};
-	}, [variable, variables]);
+	}, [variable.name, variables]);
 
 	const hasTooltip =
 		!!variable.description || dependsOn.length > 0 || usedBy.length > 0;

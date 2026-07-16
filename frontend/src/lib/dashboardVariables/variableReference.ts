@@ -178,25 +178,3 @@ export function rewriteVariableReferences(
 			`$1${newName}$2`,
 		);
 }
-
-/**
- * Best-effort removal of the clause that references `variableName` from an
- * ` AND `-joined filter expression (e.g. a builder query's `filter.expression`).
- * Any top-level `AND` part that references the variable is dropped. It does not
- * understand `OR`/nested parentheses, so it is a starting point the user reviews
- * before applying — never an automatic edit of raw PromQL/ClickHouse.
- */
-export function removeVariableReferenceClause(
-	expression: string,
-	variableName: string,
-): string {
-	if (!expression) {
-		return expression;
-	}
-	return expression
-		.split(' AND ')
-		.map((part) => part.trim())
-		.filter(Boolean)
-		.filter((part) => !textContainsVariableReference(part, variableName))
-		.join(' AND ');
-}

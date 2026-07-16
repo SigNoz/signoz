@@ -2,8 +2,8 @@ import type {
 	DashboardtypesGettableDashboardV2DTO,
 	Querybuildertypesv5QueryEnvelopeDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import { removeVariableFromExpression } from 'components/QueryBuilderV2/utils';
 import {
-	removeVariableReferenceClause,
 	rewriteVariableReferences,
 	textContainsVariableReference,
 } from 'lib/dashboardVariables/variableReference';
@@ -81,7 +81,7 @@ function computeResultingText(
 	// delete: only builder filter clauses can be safely auto-stripped; raw PromQL/
 	// ClickHouse and variable queries are left for the user to edit.
 	return kind === 'builder'
-		? removeVariableReferenceClause(text, variableName)
+		? removeVariableFromExpression(text, variableName)
 		: text;
 }
 

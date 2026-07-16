@@ -125,7 +125,7 @@ function VariableImpactDialog({
 										Current
 									</Typography.Text>
 									<AntdInput.TextArea
-										className={styles.textArea}
+										className={cx(styles.textArea, !row.included && styles.disabled)}
 										value={row.currentText}
 										readOnly
 										autoSize={{ minRows: 1, maxRows: 4 }}

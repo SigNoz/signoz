@@ -5,38 +5,51 @@ import type {
 } from './selectionTypes';
 import { ALL_SELECTED } from './variablesUrlState';
 
-/**
- * Single source of truth for "what value does this variable hold?", shared by the
- * three surfaces that used to each own a divergent copy of the rule:
- * - {@link resolveDefaultSelection} — the seed-time default (no options yet).
- * - {@link reconcileWithOptions} — the post-fetch reconcile (options known).
- * - {@link configuredDefaultValue} — the payload fallback when nothing is picked.
- *
- * Keeping them here means the variable bar, the fetch gate and the panel-query
- * payload can never disagree about a variable's default (the previous split
- * produced "bar shows ALL while the query omits the variable").
- */
+// One default resolver, shared by the seed, the post-fetch reconcile and the
+// payload fallback, so the bar, the fetch gate and the query payload can never
+// disagree about a variable's default.
 
-/** An "every option selected" (ALL) selection. */
 const ALL_SELECTION: VariableSelection = { value: null, allSelected: true };
 
-/** The `defaultValue` reduced to a single string, or undefined when unset. */
+/**
+ * A configured `defaultValue` reduced to its non-empty form (array as-is, string
+ * as-is), or undefined when unset — the one place the raw shapes are normalized.
+ */
+function configuredDefault(
+	defaultValue: VariableFormModel['defaultValue'],
+): Exclude<SelectedVariableValue, null> | undefined {
+	if (Array.isArray(defaultValue)) {
+		return defaultValue.length > 0 ? defaultValue : undefined;
+	}
+	return defaultValue || undefined;
+}
+
+/**
+ * The configured default as a single value (first of an array). undefined means
+ * "no configured default", so callers fall through to the first option / ALL.
+ */
 function firstConfiguredDefault(model: VariableFormModel): string | undefined {
-	const def = model.defaultValue;
-	if (Array.isArray(def)) {
-		return def.length > 0 ? String(def[0]) : undefined;
+	const value = configuredDefault(model.defaultValue);
+	if (value === undefined) {
+		return undefined;
 	}
-	if (typeof def === 'string' && def !== '') {
-		return def;
-	}
-	return undefined;
+	return Array.isArray(value) ? String(value[0]) : String(value);
+}
+
+/** A TEXT variable's default: its configured default, else its textValue (always a string). */
+function textDefault(model: VariableFormModel): string {
+	return firstConfiguredDefault(model) ?? model.textValue;
 }
 
 /** Whether the configured default marks the ALL sentinel. */
-function isAllDefault(def: VariableFormModel['defaultValue']): boolean {
+function isAllDefault(
+	defaultValue: VariableFormModel['defaultValue'],
+): boolean {
 	return (
-		def === ALL_SELECTED ||
-		(Array.isArray(def) && def.length === 1 && def[0] === ALL_SELECTED)
+		defaultValue === ALL_SELECTED ||
+		(Array.isArray(defaultValue) &&
+			defaultValue.length === 1 &&
+			defaultValue[0] === ALL_SELECTED)
 	);
 }
 
@@ -98,21 +111,19 @@ export function resolveDefaultSelection(
 	model: VariableFormModel,
 ): VariableSelection {
 	if (model.type === 'TEXT') {
-		return {
-			value: firstConfiguredDefault(model) ?? model.textValue ?? '',
-			allSelected: false,
-		};
+		return { value: textDefault(model), allSelected: false };
 	}
 
-	const def = model.defaultValue;
-	if (isAllDefault(def)) {
+	if (isAllDefault(model.defaultValue)) {
 		return ALL_SELECTION;
 	}
-	if (Array.isArray(def) && def.length > 0) {
-		return { value: def, allSelected: false };
-	}
-	if (typeof def === 'string' && def !== '') {
-		return { value: model.multiSelect ? [def] : def, allSelected: false };
+	const configured = configuredDefaultValue(model);
+	if (configured !== undefined) {
+		return {
+			value:
+				Array.isArray(configured) || !model.multiSelect ? configured : [configured],
+			allSelected: false,
+		};
 	}
 	if (model.multiSelect && model.showAllOption) {
 		return ALL_SELECTION;
@@ -171,13 +182,9 @@ export function reconcileWithOptions(
  */
 export function configuredDefaultValue(
 	model: VariableFormModel,
-): SelectedVariableValue | undefined {
+): Exclude<SelectedVariableValue, null> | undefined {
 	if (model.type === 'TEXT') {
-		return firstConfiguredDefault(model) ?? model.textValue ?? undefined;
+		return textDefault(model);
 	}
-	const def = model.defaultValue;
-	if (Array.isArray(def)) {
-		return def.length > 0 ? def : undefined;
-	}
-	return def || undefined;
+	return configuredDefault(model.defaultValue);
 }

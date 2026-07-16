@@ -22,9 +22,10 @@ export function isResolved(selection?: VariableSelection): boolean {
 
 /**
  * Whether a selection carries a value usable when scheduling a dependent
- * variable/panel fetch. Unlike {@link isResolved}, a QUERY/CUSTOM ALL counts only
- * once materialized into the concrete array (an unmaterialized ALL isn't usable),
- * while a DYNAMIC ALL is usable immediately via the `__all__` sentinel.
+ * variable/panel fetch. Unlike {@link isResolved}, an ALL selection counts only
+ * once it holds the concrete option array — for QUERY that's after its fetch, for
+ * CUSTOM it's materialized synchronously (no fetch). A DYNAMIC ALL is usable
+ * immediately via the `__all__` sentinel.
  */
 export function hasUsableValue(
 	selection: VariableSelection | undefined,

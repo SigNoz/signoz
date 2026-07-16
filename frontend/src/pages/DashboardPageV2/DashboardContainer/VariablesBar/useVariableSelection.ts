@@ -80,13 +80,16 @@ export function useVariableSelection(
 		if (!dashboardId || variables.length === 0) {
 			return undefined;
 		}
+
 		if (fetchCycleTimer.current) {
 			clearTimeout(fetchCycleTimer.current);
 		}
+
 		fetchCycleTimer.current = setTimeout(
 			() => enqueueFetchAll(fetchCycleKey),
 			FETCH_CYCLE_DEBOUNCE_MS,
 		);
+
 		return (): void => {
 			if (fetchCycleTimer.current) {
 				clearTimeout(fetchCycleTimer.current);

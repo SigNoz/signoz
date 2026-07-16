@@ -20,20 +20,30 @@ export function useIsPanelWaitingOnVariable(names: string[]): boolean {
 	const resolvedEmpty = useDashboardStore((s) => s.variableResolvedEmpty);
 	const selection = useDashboardStore(selectVariableValues(dashboardId));
 
+	// Before the variable bar seeds the fetch context there are no types to gate on;
+	// usePanelQuery holds such panels via its own `!fetchContext` check.
+	if (!variableTypes) {
+		return false;
+	}
+
 	return names.some((name) => {
-		const type = variableTypes?.[name];
+		const type = variableTypes[name];
 		if (type !== 'QUERY' && type !== 'DYNAMIC') {
 			return false;
 		}
+
 		const value = selection[name];
+
 		// A concrete pick is authoritative; a DYNAMIC ALL is the stable `__all__`
 		// sentinel — both ready without waiting.
 		if (value && !value.allSelected && hasUsableValue(value, type)) {
 			return false;
 		}
+
 		if (type === 'DYNAMIC' && value?.allSelected) {
 			return false;
 		}
+
 		// Unselected, or a QUERY/CUSTOM ALL whose array the fetch produces: wait while
 		// resolving, then until it settles with a usable value.
 		const state = fetchStates[name];
@@ -43,9 +53,11 @@ export function useIsPanelWaitingOnVariable(names: string[]): boolean {
 		) {
 			return true;
 		}
+
 		if (hasUsableValue(value, type)) {
 			return false;
 		}
+
 		return state !== VariableFetchState.Error && !resolvedEmpty[name];
 	});
 }
