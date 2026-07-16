@@ -56,8 +56,8 @@ func newFieldMapper(fm qbtypes.FieldMapper, cb qbtypes.ConditionBuilder, keys ma
 }
 
 // FieldFor returns the column expression for key via the field mapper.
-func (r *fieldMapper) FieldFor(ctx context.Context, startNs, endNs uint64, key *telemetrytypes.TelemetryFieldKey) (string, error) {
-	expr, err := r.fm.FieldFor(ctx, startNs, endNs, key)
+func (r *fieldMapper) FieldFor(ctx context.Context, orgID valuer.UUID, startNs, endNs uint64, key *telemetrytypes.TelemetryFieldKey) (string, error) {
+	expr, err := r.fm.FieldFor(ctx, orgID, startNs, endNs, key)
 	if err != nil {
 		return "", err
 	}

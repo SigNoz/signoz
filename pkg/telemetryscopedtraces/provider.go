@@ -97,7 +97,7 @@ func CountAll() Aggregate {
 // FieldReduce renders <fn>(<field>) over a field-mapper-resolved column.
 func FieldReduce(fn AggFunc, key *telemetrytypes.TelemetryFieldKey) Aggregate {
 	return Aggregate{render: func(ctx context.Context, orgID valuer.UUID, startNs, endNs uint64, m *fieldMapper) (string, []any, error) {
-		f, err := m.FieldFor(ctx, startNs, endNs, key)
+		f, err := m.FieldFor(ctx, orgID, startNs, endNs, key)
 		if err != nil {
 			return "", nil, err
 		}
@@ -109,11 +109,11 @@ func FieldReduce(fn AggFunc, key *telemetrytypes.TelemetryFieldKey) Aggregate {
 // span start.
 func TraceDuration(tsKey, durationKey *telemetrytypes.TelemetryFieldKey) Aggregate {
 	return Aggregate{render: func(ctx context.Context, orgID valuer.UUID, startNs, endNs uint64, m *fieldMapper) (string, []any, error) {
-		ts, err := m.FieldFor(ctx, startNs, endNs, tsKey)
+		ts, err := m.FieldFor(ctx, orgID, startNs, endNs, tsKey)
 		if err != nil {
 			return "", nil, err
 		}
-		dur, err := m.FieldFor(ctx, startNs, endNs, durationKey)
+		dur, err := m.FieldFor(ctx, orgID, startNs, endNs, durationKey)
 		if err != nil {
 			return "", nil, err
 		}
@@ -125,7 +125,7 @@ func TraceDuration(tsKey, durationKey *telemetrytypes.TelemetryFieldKey) Aggrega
 // matching the condition.
 func FieldAnyWhere(valueKey, condKey *telemetrytypes.TelemetryFieldKey, op qbtypes.FilterOperator, condValue any) Aggregate {
 	return Aggregate{render: func(ctx context.Context, orgID valuer.UUID, startNs, endNs uint64, m *fieldMapper) (string, []any, error) {
-		v, err := m.FieldFor(ctx, startNs, endNs, valueKey)
+		v, err := m.FieldFor(ctx, orgID, startNs, endNs, valueKey)
 		if err != nil {
 			return "", nil, err
 		}
@@ -169,7 +169,7 @@ func Reduce(fn AggFunc, valueKey *telemetrytypes.TelemetryFieldKey) Aggregate {
 // ScopedReduce renders <fn>If(<field>, <gate mask>) over a field-mapper-resolved column.
 func ScopedReduce(fn AggFunc, key *telemetrytypes.TelemetryFieldKey) Aggregate {
 	return Aggregate{render: func(ctx context.Context, orgID valuer.UUID, startNs, endNs uint64, m *fieldMapper) (string, []any, error) {
-		f, err := m.FieldFor(ctx, startNs, endNs, key)
+		f, err := m.FieldFor(ctx, orgID, startNs, endNs, key)
 		if err != nil {
 			return "", nil, err
 		}
@@ -181,7 +181,7 @@ func ScopedReduce(fn AggFunc, key *telemetrytypes.TelemetryFieldKey) Aggregate {
 // aggregated over spans carrying scopeKey (e.g. max LLM latency).
 func ScopedToKeyColumn(fn AggFunc, columnKey, scopeKey *telemetrytypes.TelemetryFieldKey) Aggregate {
 	return Aggregate{keys: keysOf(scopeKey), render: func(ctx context.Context, orgID valuer.UUID, startNs, endNs uint64, m *fieldMapper) (string, []any, error) {
-		col, err := m.FieldFor(ctx, startNs, endNs, columnKey)
+		col, err := m.FieldFor(ctx, orgID, startNs, endNs, columnKey)
 		if err != nil {
 			return "", nil, err
 		}
@@ -202,7 +202,7 @@ func PickBy(valueKey *telemetrytypes.TelemetryFieldKey, dt telemetrytypes.FieldD
 		if err != nil {
 			return "", nil, err
 		}
-		order, err := m.FieldFor(ctx, startNs, endNs, orderKey)
+		order, err := m.FieldFor(ctx, orgID, startNs, endNs, orderKey)
 		if err != nil {
 			return "", nil, err
 		}

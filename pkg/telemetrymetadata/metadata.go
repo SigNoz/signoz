@@ -1294,7 +1294,9 @@ func (t *telemetryMetaStore) GetKeys(ctx context.Context, orgID valuer.UUID, fie
 
 	applyBackwardCompatibleKeys(mapOfKeys)
 	mapOfKeys = enrichWithIntrinsicMetricKeys(mapOfKeys, selectors)
-	mapOfKeys = enrichWithGenAIKeys(mapOfKeys, selectors)
+	if t.fl.BooleanOrEmpty(ctx, flagger.FeatureEnableAIObservability, featuretypes.NewFlaggerEvaluationContext(orgID)) {
+		mapOfKeys = enrichWithGenAIKeys(mapOfKeys, selectors)
+	}
 
 	return mapOfKeys, complete, nil
 }
@@ -1373,7 +1375,9 @@ func (t *telemetryMetaStore) GetKeysMulti(ctx context.Context, orgID valuer.UUID
 
 	applyBackwardCompatibleKeys(mapOfKeys)
 	mapOfKeys = enrichWithIntrinsicMetricKeys(mapOfKeys, fieldKeySelectors)
-	mapOfKeys = enrichWithGenAIKeys(mapOfKeys, fieldKeySelectors)
+	if t.fl.BooleanOrEmpty(ctx, flagger.FeatureEnableAIObservability, featuretypes.NewFlaggerEvaluationContext(orgID)) {
+		mapOfKeys = enrichWithGenAIKeys(mapOfKeys, fieldKeySelectors)
+	}
 
 	return mapOfKeys, complete, nil
 }

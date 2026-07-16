@@ -166,7 +166,7 @@ func (b *scopedTraceStatementBuilder) buildTraceListQuery(
 	}
 
 	// Resolve keys and columns once; all attribute access goes through the field mapper.
-	keys, err := b.fetchKeys(ctx)
+	keys, err := b.fetchKeys(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
@@ -262,7 +262,7 @@ func (b *scopedTraceStatementBuilder) maybeAttachResourceFilter(
 // RESOLVE — turn keys/columns into field-mapper-aware SQL
 // ---------------------------------------------------------------------------
 
-func (b *scopedTraceStatementBuilder) fetchKeys(ctx context.Context) (map[string][]*telemetrytypes.TelemetryFieldKey, error) {
+func (b *scopedTraceStatementBuilder) fetchKeys(ctx context.Context, orgID valuer.UUID) (map[string][]*telemetrytypes.TelemetryFieldKey, error) {
 	fields := b.resolverFieldKeys()
 	selectors := make([]*telemetrytypes.FieldKeySelector, 0, len(fields))
 	for _, k := range fields {
@@ -273,7 +273,7 @@ func (b *scopedTraceStatementBuilder) fetchKeys(ctx context.Context) (map[string
 			SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeExact,
 		})
 	}
-	keys, _, err := b.metadataStore.GetKeysMulti(ctx, selectors)
+	keys, _, err := b.metadataStore.GetKeysMulti(ctx, orgID, selectors)
 	return keys, err
 }
 
@@ -453,7 +453,7 @@ func (b *scopedTraceStatementBuilder) resolveSpanPredicate(ctx context.Context, 
 	for i := range selectors {
 		selectors[i].Signal = telemetrytypes.SignalTraces
 	}
-	keys, _, err := b.metadataStore.GetKeysMulti(ctx, selectors)
+	keys, _, err := b.metadataStore.GetKeysMulti(ctx, orgID, selectors)
 	if err != nil {
 		return "", nil, nil, "", err
 	}
