@@ -83,7 +83,6 @@ function PanelEditorContainer({
 		setSpec,
 		isSpecDirty,
 		panelDefinition,
-		defaultSignal,
 		query,
 		runQuery,
 		isQueryDirty,
@@ -169,10 +168,11 @@ function PanelEditorContainer({
 		onChangeSpec: setSpec,
 	});
 
-	// Seed a new List panel's default columns so the Columns control isn't empty.
+	// Seed a new List panel's columns from the query's resolved signal (not the kind's
+	// default logs signal) so a traces-List export gets traces columns, not logs.
 	useSeedNewListColumns({
 		enabled: isNew && isListPanel,
-		signal: defaultSignal,
+		signal: listSignal,
 		spec,
 		onChangeSpec: setSpec,
 	});

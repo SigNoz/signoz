@@ -76,9 +76,9 @@ type PostableRule struct {
 }
 
 type NotificationSettings struct {
-	GroupBy   []string  `json:"groupBy,omitempty"`
+	GroupBy   []string  `json:"groupBy,omitzero"`
 	Renotify  *Renotify `json:"renotify,omitempty"`
-	UsePolicy bool      `json:"usePolicy,omitempty"`
+	UsePolicy bool      `json:"usePolicy"`
 	// NewGroupEvalDelay is the grace period for new series to be excluded from alerts evaluation
 	NewGroupEvalDelay valuer.TextDuration `json:"newGroupEvalDelay,omitzero"`
 }
@@ -86,7 +86,7 @@ type NotificationSettings struct {
 type Renotify struct {
 	Enabled          bool                `json:"enabled"`
 	ReNotifyInterval valuer.TextDuration `json:"interval,omitzero"`
-	AlertStates      []AlertState        `json:"alertStates,omitempty"`
+	AlertStates      []AlertState        `json:"alertStates,omitzero"`
 }
 
 func (ns *NotificationSettings) GetAlertManagerNotificationConfig() alertmanagertypes.NotificationConfig {

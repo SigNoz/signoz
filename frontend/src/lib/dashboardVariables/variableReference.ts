@@ -1,4 +1,4 @@
-import { isArray } from 'lodash-es';
+import { escapeRegExp, isArray } from 'lodash-es';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 
@@ -34,18 +34,27 @@ export function textContainsVariableReference(
 }
 
 /**
- * Extracts all text strings from a widget Query that could contain variable
- * references. Covers:
- * - QUERY_BUILDER: filter items' string values + filter.expression
- * - PROM: each promql[].query
- * - CLICKHOUSE: each clickhouse_sql[].query
+ * Matches *any* variable reference in a recognized syntax without knowing the
+ * name: `{{name}}`, `{{.name}}`, `[[name]]`, or `$name`. The `$` form excludes
+ * `$__…` macros and positional `$1` so built-ins don't read as variables.
  */
+const ANY_VARIABLE_REFERENCE =
+	/\{\{\s*\.?[\w.]+\s*\}\}|\[\[\s*[\w.]+\s*\]\]|\$(?!__)[a-zA-Z_][\w.]*/;
+
+/**
+ * Use when the set of variable names isn't known yet (e.g. before the fetch
+ * context initializes), so a name-based {@link textContainsVariableReference}
+ * check can't run.
+ */
+export function containsAnyVariableReference(text: string): boolean {
+	return !!text && ANY_VARIABLE_REFERENCE.test(text);
+}
+
 function extractQueryBuilderTexts(query: Query): string[] {
 	const texts: string[] = [];
 	const queryDataList = query.builder?.queryData;
 	if (isArray(queryDataList)) {
 		queryDataList.forEach((queryData) => {
-			// Collect string values from filter items
 			queryData.filters?.items?.forEach((filter: TagFilterItem) => {
 				if (isArray(filter.value)) {
 					filter.value.forEach((v) => {
@@ -58,7 +67,6 @@ function extractQueryBuilderTexts(query: Query): string[] {
 				}
 			});
 
-			// Collect filter expression
 			if (queryData.filter?.expression) {
 				texts.push(queryData.filter.expression);
 			}
@@ -115,11 +123,8 @@ export function extractQueryTextStrings(query: Query): string[] {
 }
 
 /**
- * Given a widget Query and an array of variable names, returns the subset of
- * variable names that are referenced in the query text.
- *
- * This performs text-based detection only. Structural checks (like
- * filter.key.key matching a variable attribute) are NOT included.
+ * Text-based detection only. Structural checks (like filter.key.key matching a
+ * variable attribute) are NOT included.
  */
 export function getVariableReferencesInQuery(
 	query: Query,
@@ -133,4 +138,31 @@ export function getVariableReferencesInQuery(
 	return variableNames.filter((name) =>
 		texts.some((text) => textContainsVariableReference(text, name)),
 	);
+}
+
+/**
+ * Rewrites every reference to `oldName` in `text` to `newName`, preserving the
+ * surrounding syntax for each recognized form ({{.x}}, {{x}}, $x, [[x]]). Used
+ * when a variable is renamed so its usages across queries stay valid.
+ */
+export function rewriteVariableReferences(
+	text: string,
+	oldName: string,
+	newName: string,
+): string {
+	if (!text || !oldName || oldName === newName) {
+		return text;
+	}
+	const name = escapeRegExp(oldName);
+	return text
+		.replace(
+			new RegExp(`(\\{\\{\\s*?\\.)${name}(\\s*?\\}\\})`, 'g'),
+			`$1${newName}$2`,
+		)
+		.replace(new RegExp(`(\\{\\{\\s*)${name}(\\s*\\}\\})`, 'g'), `$1${newName}$2`)
+		.replace(new RegExp(`\\$${name}\\b`, 'g'), `$${newName}`)
+		.replace(
+			new RegExp(`(\\[\\[\\s*)${name}(\\s*\\]\\])`, 'g'),
+			`$1${newName}$2`,
+		);
 }

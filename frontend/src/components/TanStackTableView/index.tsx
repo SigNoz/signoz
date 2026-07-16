@@ -123,6 +123,22 @@ export * from './useTableParams';
  * />
  * ```
  *
+ * @example Object itemKey — use generic `TItemKey` when selection needs compound keys.
+ * ```tsx
+ * type SelectionParams = { id: string; cluster: string; namespace: string };
+ *
+ * <TanStackTable<Row, SelectionParams>
+ *   data={data}
+ *   columns={columns}
+ *   getRowKey={(row) => row.uid}
+ *   getItemKey={(row) => ({ id: row.name, cluster: row.cluster, namespace: row.namespace })}
+ *   onRowClick={(row, itemKey) => {
+ *     // itemKey is typed as SelectionParams
+ *     setSelection(itemKey);
+ *   }}
+ * />
+ * ```
+ *
  * @example Expandable rows. `renderExpandedRow` receives `(row, rowKey, groupMeta?)`.
  * ```tsx
  * <TanStackTable
