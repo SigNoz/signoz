@@ -24,7 +24,6 @@ import { useSyncVariablesForSuggestions } from '../DashboardContainer/hooks/useS
 import { createDefaultPanel } from '../DashboardContainer/patchOps';
 import { useDashboardStore } from '../DashboardContainer/store/useDashboardStore';
 import { useSeedVariableSelection } from '../DashboardContainer/VariablesBar/useSeedVariableSelection';
-import { withVariablesSearch } from '../DashboardContainer/VariablesBar/variablesUrlState';
 import { buildNewPanelSeed } from './newPanelSeed';
 import styles from './PanelEditorPage.module.scss';
 
@@ -106,15 +105,10 @@ function PanelEditorPage(): JSX.Element {
 	const layoutIndex = parseNewPanelLayoutIndex(search);
 
 	const backToDashboard = useCallback((): void => {
-		// Carry only dashboard params; drop editor-only URL state (chiefly
-		// `compositeQuery`) so it doesn't leak into the dashboard. Time lives in Redux.
-		safeNavigate(
-			`${generatePath(ROUTES.DASHBOARD, { dashboardId })}${withVariablesSearch(
-				'',
-				search,
-			)}`,
-		);
-	}, [safeNavigate, dashboardId, search]);
+		// Drop editor-only URL state (chiefly `compositeQuery`); the dashboard reads its
+		// variable selection from the persisted store, and time lives in Redux.
+		safeNavigate(generatePath(ROUTES.DASHBOARD, { dashboardId }));
+	}, [safeNavigate, dashboardId]);
 
 	if (isLoading) {
 		return <Spinner tip="Loading dashboard..." />;

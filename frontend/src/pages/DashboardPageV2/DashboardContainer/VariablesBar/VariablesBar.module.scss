@@ -73,8 +73,55 @@
 }
 
 .variableItem {
+	position: relative;
 	display: flex;
 	align-items: center;
+}
+
+// Loading indicator: an indeterminate bar flush along the control's bottom edge,
+// full width and overlaying the border so it reads as the input's own edge rather
+// than a separate element. Non-interactive so the name/description stays hoverable.
+.loadingBar {
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	height: 2px;
+	overflow: hidden;
+	border-radius: 0 0 2px 2px;
+	background: color-mix(in srgb, var(--bg-robin-500) 20%, transparent);
+	pointer-events: none;
+}
+
+.loadingBar::after {
+	content: '';
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	width: 40%;
+	border-radius: 2px;
+	background: var(--bg-robin-500);
+	animation: variable-loading-slide 1.1s ease-in-out infinite;
+}
+
+@keyframes variable-loading-slide {
+	0% {
+		left: -40%;
+	}
+
+	100% {
+		left: 100%;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.loadingBar::after {
+		left: 0;
+		width: 100%;
+		animation: none;
+		opacity: 0.7;
+	}
 }
 
 .variableName {
@@ -87,7 +134,7 @@
 	border: 1px solid var(--l3-border);
 	border-radius: 2px 0 0 2px;
 	background: var(--l3-background);
-	color: var(--bg-robin-300);
+	color: var(--bg-robin-400);
 	font-family: Inter;
 	font-size: 12px;
 	font-weight: 400;
@@ -97,9 +144,61 @@
 
 .infoIcon {
 	display: inline-flex;
-	margin-left: 2px;
+	margin-left: 6px;
 	color: var(--l2-foreground);
 	vertical-align: middle;
+}
+
+.tooltipContent {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	max-width: 240px;
+}
+
+.tooltipDescription {
+	font-size: 12px;
+	line-height: 1.5;
+}
+
+// Divider and labels use the tooltip's own text color at reduced opacity so they
+// read on the tooltip surface in either theme without hard-coding a palette.
+.tooltipDivider {
+	height: 1px;
+	background: currentColor;
+	opacity: 0.16;
+}
+
+.tooltipSection {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.tooltipLabel {
+	font-size: 10px;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+
+.tooltipRefs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+}
+
+.tooltipRef {
+	font-size: 12px;
+}
+
+// Directional colors: parents (Depends on) in forest, children (Used by) in amber.
+.dependsColor {
+	color: var(--bg-forest-500);
+}
+
+.usedByColor {
+	color: var(--bg-amber-500);
 }
 
 .variableValue {

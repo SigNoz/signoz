@@ -59,7 +59,8 @@ function ValueSelector({
 				placeholder="Select value"
 				maxTagCount={2}
 				maxTagTextLength={20}
-				enableAllSelection={showAllOption}
+				// Offer ALL only once options load, else a concrete value reads as "all".
+				enableAllSelection={showAllOption && options.length > 0}
 				onChange={(next): void => {
 					const values = Array.isArray(next)
 						? next.map(String)

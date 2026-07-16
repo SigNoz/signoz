@@ -1,4 +1,3 @@
-import { QueryParams } from 'constants/query';
 import { parseAsJson } from 'nuqs';
 
 import type { SelectedVariableValue } from './selectionTypes';
@@ -14,21 +13,3 @@ export const variablesUrlParser = parseAsJson<
 		? (v as Record<string, SelectedVariableValue>)
 		: null,
 );
-
-/**
- * Extends a search string with the current `?variables=` param (unchanged when
- * absent), so the dashboard ↔ editor handoff keeps the selection in the URL and
- * it survives a refresh (V1 parity).
- */
-export function withVariablesSearch(
-	base: string,
-	currentSearch: string,
-): string {
-	const value = new URLSearchParams(currentSearch).get(QueryParams.variables);
-	if (!value) {
-		return base;
-	}
-	const params = new URLSearchParams(base);
-	params.set(QueryParams.variables, value);
-	return `?${params.toString()}`;
-}
