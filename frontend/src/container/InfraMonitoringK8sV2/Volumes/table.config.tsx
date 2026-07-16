@@ -1,6 +1,5 @@
-import { TableColumnDef } from 'components/TanStackTableView';
+import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
 import { InframonitoringtypesVolumeRecordDTO } from 'api/generated/services/sigNoz.schemas';
-import TanStackTable from 'components/TanStackTableView';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8sV2/components';
 
 import ColumnHeader from '../Base/ColumnHeader';
@@ -12,6 +11,7 @@ import {
 	INFRA_MONITORING_ATTR_KEYS,
 	InfraMonitoringEntity,
 } from '../constants';
+import { SelectedItemParams } from '../hooks';
 import { HardDrive } from '@signozhq/icons';
 
 export function getK8sVolumeRowKey(
@@ -26,8 +26,17 @@ export function getK8sVolumeRowKey(
 
 export function getK8sVolumeItemKey(
 	volume: InframonitoringtypesVolumeRecordDTO,
-): string {
-	return volume.persistentVolumeClaimName;
+): SelectedItemParams {
+	return {
+		selectedItem:
+			volume.persistentVolumeClaimName ??
+			volume.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_PERSISTENT_VOLUME_CLAIM_NAME] ??
+			null,
+		clusterName:
+			volume.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] ?? null,
+		namespaceName:
+			volume.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ?? null,
+	};
 }
 
 export type VolumeTableColumnConfig =
@@ -72,11 +81,7 @@ export const k8sVolumesColumnsConfig: VolumeTableColumnConfig[] = [
 		visibilityBehavior: 'hidden-on-expand',
 		cell: ({ value }): React.ReactNode => {
 			const pvcName = value as string;
-			return (
-				<CellValueTooltip value={pvcName}>
-					<TanStackTable.Text>{pvcName}</TanStackTable.Text>
-				</CellValueTooltip>
-			);
+			return <CellValueTooltip value={pvcName} />;
 		},
 	},
 	{
@@ -92,11 +97,7 @@ export const k8sVolumesColumnsConfig: VolumeTableColumnConfig[] = [
 		enableSort: false,
 		cell: ({ value }): React.ReactNode => {
 			const namespaceName = value as string;
-			return (
-				<CellValueTooltip value={namespaceName}>
-					<TanStackTable.Text>{namespaceName}</TanStackTable.Text>
-				</CellValueTooltip>
-			);
+			return <CellValueTooltip value={namespaceName} />;
 		},
 	},
 	{

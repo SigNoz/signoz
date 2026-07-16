@@ -256,3 +256,30 @@ func CanShortCircuitDelta(metricAgg MetricAggregation) bool {
 
 	return false
 }
+
+// CanShortCircuitReduced is like CanShortCircuitDelta but for reduced.
+func CanShortCircuitReduced(metricAgg MetricAggregation) bool {
+	if metricAgg.ValueFilter != nil {
+		return false
+	}
+
+	ta := metricAgg.TimeAggregation
+	sa := metricAgg.SpaceAggregation
+
+	if metricAgg.Type == metrictypes.SumType || metricAgg.Type == metrictypes.HistogramType {
+		return (ta == metrictypes.TimeAggregationRate || ta == metrictypes.TimeAggregationIncrease || ta == metrictypes.TimeAggregationSum) &&
+			sa == metrictypes.SpaceAggregationSum
+	}
+
+	if ta == metrictypes.TimeAggregationSum && sa == metrictypes.SpaceAggregationSum {
+		return true
+	}
+	if ta == metrictypes.TimeAggregationMin && sa == metrictypes.SpaceAggregationMin {
+		return true
+	}
+	if ta == metrictypes.TimeAggregationMax && sa == metrictypes.SpaceAggregationMax {
+		return true
+	}
+
+	return false
+}

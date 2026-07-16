@@ -6,12 +6,6 @@
 	min-width: 0;
 }
 
-.addVariable {
-	flex: none;
-	border-style: dashed !important;
-	border-color: var(--l3-border) !important;
-}
-
 .strip {
 	display: flow-root;
 	// Collapsed: one line only, so the trailing add "+" never wraps below.
@@ -21,6 +15,7 @@
 .stripExpanded {
 	display: flex;
 	flex-wrap: wrap;
+	align-items: flex-end;
 	gap: 8px;
 	padding-top: 12px;
 	overflow: visible;
@@ -54,7 +49,7 @@
 	display: inline-flex;
 	align-items: center;
 	margin-right: 8px;
-	vertical-align: top;
+	vertical-align: bottom;
 }
 
 .variableSlotHidden {
@@ -64,62 +59,16 @@
 .moreButton {
 	display: inline-flex;
 	margin-right: 8px;
-	vertical-align: top;
+	vertical-align: bottom;
 }
 
 .addSlot {
 	display: inline-flex;
-	vertical-align: top;
+	vertical-align: bottom;
 }
 
-.variableItem {
-	display: flex;
-	align-items: center;
-}
-
-.variableName {
-	display: flex;
-	min-width: 56px;
-	height: 32px;
-	align-items: center;
-	gap: 4px;
-	padding: 6px 6px 6px 8px;
-	border: 1px solid var(--l3-border);
-	border-radius: 2px 0 0 2px;
-	background: var(--l3-background);
-	color: var(--bg-robin-300);
-	font-family: Inter;
-	font-size: 12px;
-	font-weight: 400;
-	line-height: 16px;
-	white-space: nowrap;
-}
-
-.infoIcon {
-	display: inline-flex;
-	margin-left: 2px;
-	color: var(--l2-foreground);
-	vertical-align: middle;
-}
-
-.variableValue {
-	display: flex;
-	min-width: 120px;
-	height: 32px;
-	align-items: center;
-	border: 1px solid var(--l3-border);
-	border-left: none;
-	border-radius: 0 2px 2px 0;
-	background: var(--l2-background);
-	color: var(--l2-foreground);
-	font-size: 12px;
-
-	&:hover,
-	&:focus-within {
-		outline: 1px solid var(--bg-robin-400);
-	}
-}
-
+// Shared by the Text and value selectors: strips the antd control chrome so the
+// selector blends into the variable pill.
 .control {
 	width: 100%;
 	min-width: 120px;
@@ -130,6 +79,12 @@
 		border: none !important;
 		background: transparent !important;
 		box-shadow: none !important;
+	}
+
+	// Keep the multi-select's tags on one line (paired with maxTagCount) so a
+	// selected value never wraps the control onto a second row.
+	:global(.ant-select-selection-overflow) {
+		flex-wrap: nowrap;
 	}
 }
 

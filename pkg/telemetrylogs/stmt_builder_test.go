@@ -16,6 +16,7 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/require"
 )
 
@@ -237,7 +238,7 @@ func TestStatementBuilderTimeSeries(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 
-			q, err := statementBuilder.Build(ctx, c.startTs, c.endTs, c.requestType, c.query, nil)
+			q, err := statementBuilder.Build(ctx, valuer.UUID{}, c.startTs, c.endTs, c.requestType, c.query, nil)
 
 			if c.expectedErr != nil {
 				require.Error(t, err)
@@ -381,7 +382,7 @@ func TestStatementBuilderListQuery(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 
-			q, err := statementBuilder.Build(ctx, 1747947419000, 1747983448000, c.requestType, c.query, c.variables)
+			q, err := statementBuilder.Build(ctx, valuer.UUID{}, 1747947419000, 1747983448000, c.requestType, c.query, c.variables)
 
 			if c.expectedErr != nil {
 				require.Error(t, err)
@@ -530,7 +531,7 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 
-			q, err := statementBuilder.Build(ctx, 1747947419000, 1747983448000, c.requestType, c.query, nil)
+			q, err := statementBuilder.Build(ctx, valuer.UUID{}, 1747947419000, 1747983448000, c.requestType, c.query, nil)
 
 			if c.expectedErr != nil {
 				require.Error(t, err)
@@ -609,7 +610,7 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 
-			q, err := statementBuilder.Build(ctx, 1747947419000, 1747983448000, c.requestType, c.query, nil)
+			q, err := statementBuilder.Build(ctx, valuer.UUID{}, 1747947419000, 1747983448000, c.requestType, c.query, nil)
 
 			if c.expectedErrContains != "" {
 				require.Error(t, err)
@@ -707,7 +708,7 @@ func TestStatementBuilderListQueryServiceCollision(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 
-			q, err := statementBuilder.Build(ctx, 1747947419000, 1747983448000, c.requestType, c.query, nil)
+			q, err := statementBuilder.Build(ctx, valuer.UUID{}, 1747947419000, 1747983448000, c.requestType, c.query, nil)
 
 			if c.expectedErr != nil {
 				require.Error(t, err)
@@ -1079,7 +1080,7 @@ func TestStmtBuilderBodyField(t *testing.T) {
 				100000,
 			)
 
-			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, c.requestType, c.query, nil)
+			q, err := statementBuilder.Build(context.Background(), valuer.UUID{}, 1747947419000, 1747983448000, c.requestType, c.query, nil)
 			if c.expectedErr != nil {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), c.expectedErr.Error())
@@ -1181,7 +1182,7 @@ func TestStmtBuilderBodyFullTextSearch(t *testing.T) {
 				100000,
 			)
 
-			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, c.requestType, c.query, nil)
+			q, err := statementBuilder.Build(context.Background(), valuer.UUID{}, 1747947419000, 1747983448000, c.requestType, c.query, nil)
 			if c.expectedErr != nil {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), c.expectedErr.Error())
@@ -1220,7 +1221,7 @@ func TestSkipResourceFingerprintLogs(t *testing.T) {
 	t.Run("disabled uses the legacy CTE", func(t *testing.T) {
 		sb := newSkipResourceFingerprintLogsBuilder(t, nil, false, threshold)
 
-		stmt, err := sb.Build(context.Background(), startMs, endMs, qbtypes.RequestTypeRaw, query, nil)
+		stmt, err := sb.Build(context.Background(), valuer.UUID{}, startMs, endMs, qbtypes.RequestTypeRaw, query, nil)
 		require.NoError(t, err)
 		require.Contains(t, stmt.Query, "__resource_filter AS (SELECT fingerprint")
 		require.Contains(t, stmt.Query, "resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)")
@@ -1237,7 +1238,7 @@ func TestSkipResourceFingerprintLogs(t *testing.T) {
 
 		sb := newSkipResourceFingerprintLogsBuilder(t, mockStore, true, threshold)
 
-		stmt, err := sb.Build(context.Background(), startMs, endMs, qbtypes.RequestTypeRaw, query, nil)
+		stmt, err := sb.Build(context.Background(), valuer.UUID{}, startMs, endMs, qbtypes.RequestTypeRaw, query, nil)
 		require.NoError(t, err)
 
 		require.Contains(t, stmt.Query, "__resource_filter AS (SELECT fingerprint")
@@ -1257,7 +1258,7 @@ func TestSkipResourceFingerprintLogs(t *testing.T) {
 
 		sb := newSkipResourceFingerprintLogsBuilder(t, mockStore, true, threshold)
 
-		stmt, err := sb.Build(context.Background(), startMs, endMs, qbtypes.RequestTypeRaw, query, nil)
+		stmt, err := sb.Build(context.Background(), valuer.UUID{}, startMs, endMs, qbtypes.RequestTypeRaw, query, nil)
 		require.NoError(t, err)
 
 		require.NotContains(t, stmt.Query, "__resource_filter AS")

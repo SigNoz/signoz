@@ -5669,6 +5669,39 @@ export interface InframonitoringtypesChecksDTO {
 	type: InframonitoringtypesCheckTypeDTO;
 }
 
+export type InframonitoringtypesClusterRecordDTOCounts = {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	daemonSets: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	deployments: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	jobs: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	namespaces: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	nodes: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	statefulSets: number;
+};
+
 export type InframonitoringtypesClusterRecordDTOMetaAnyOf = {
 	[key: string]: string;
 };
@@ -5813,6 +5846,10 @@ export interface InframonitoringtypesClusterRecordDTO {
 	 * @type string
 	 */
 	clusterName: string;
+	/**
+	 * @type object
+	 */
+	counts: InframonitoringtypesClusterRecordDTOCounts;
 	/**
 	 * @type object,null
 	 */
@@ -6368,6 +6405,29 @@ export interface InframonitoringtypesJobsDTO {
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 
+export type InframonitoringtypesNamespaceRecordDTOCounts = {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	daemonSets: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	deployments: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	jobs: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	statefulSets: number;
+};
+
 export type InframonitoringtypesNamespaceRecordDTOMetaAnyOf = {
 	[key: string]: string;
 };
@@ -6379,6 +6439,10 @@ export type InframonitoringtypesNamespaceRecordDTOMeta =
 	InframonitoringtypesNamespaceRecordDTOMetaAnyOf | null;
 
 export interface InframonitoringtypesNamespaceRecordDTO {
+	/**
+	 * @type object
+	 */
+	counts: InframonitoringtypesNamespaceRecordDTOCounts;
 	/**
 	 * @type object,null
 	 */
@@ -9194,6 +9258,76 @@ export interface SpantypesGettableSpanMapperGroupsDTO {
 	items: SpantypesSpanMapperGroupDTO[];
 }
 
+export enum SpantypesSpanMapperOperationDTO {
+	move = 'move',
+	copy = 'copy',
+}
+export interface SpantypesSpanMapperSourceDTO {
+	context: SpantypesFieldContextDTO;
+	/**
+	 * @type string
+	 */
+	key: string;
+	operation: SpantypesSpanMapperOperationDTO;
+	/**
+	 * @type integer
+	 */
+	priority: number;
+}
+
+export interface SpantypesSpanMapperConfigDTO {
+	/**
+	 * @type array,null
+	 */
+	sources: SpantypesSpanMapperSourceDTO[] | null;
+}
+
+export interface SpantypesSpanMapperDTO {
+	config: SpantypesSpanMapperConfigDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	/**
+	 * @type string
+	 */
+	createdBy?: string;
+	/**
+	 * @type boolean
+	 */
+	enabled: boolean;
+	fieldContext: SpantypesFieldContextDTO;
+	/**
+	 * @type string
+	 */
+	groupId: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
+	/**
+	 * @type string
+	 */
+	updatedBy?: string;
+}
+
+export interface SpantypesGettableSpanMappersDTO {
+	/**
+	 * @type array
+	 */
+	items: SpantypesSpanMapperDTO[];
+}
+
 export enum SpantypesSpanAggregationTypeDTO {
 	span_count = 'span_count',
 	execution_time_percentage = 'execution_time_percentage',
@@ -9440,30 +9574,6 @@ export interface SpantypesPostableFlamegraphDTO {
 	selectedSpanId?: string;
 }
 
-export enum SpantypesSpanMapperOperationDTO {
-	move = 'move',
-	copy = 'copy',
-}
-export interface SpantypesSpanMapperSourceDTO {
-	context: SpantypesFieldContextDTO;
-	/**
-	 * @type string
-	 */
-	key: string;
-	operation: SpantypesSpanMapperOperationDTO;
-	/**
-	 * @type integer
-	 */
-	priority: number;
-}
-
-export interface SpantypesSpanMapperConfigDTO {
-	/**
-	 * @type array,null
-	 */
-	sources: SpantypesSpanMapperSourceDTO[] | null;
-}
-
 export interface SpantypesPostableSpanMapperDTO {
 	config: SpantypesSpanMapperConfigDTO;
 	/**
@@ -9510,45 +9620,6 @@ export interface SpantypesPostableWaterfallDTO {
 	 * @type array,null
 	 */
 	uncollapsedSpans?: string[] | null;
-}
-
-export interface SpantypesSpanMapperDTO {
-	config: SpantypesSpanMapperConfigDTO;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: string;
-	/**
-	 * @type string
-	 */
-	createdBy?: string;
-	/**
-	 * @type boolean
-	 */
-	enabled: boolean;
-	fieldContext: SpantypesFieldContextDTO;
-	/**
-	 * @type string
-	 */
-	group_id: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type string
-	 */
-	name: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: string;
-	/**
-	 * @type string
-	 */
-	updatedBy?: string;
 }
 
 export interface SpantypesUpdatableSpanMapperDTO {
@@ -10852,7 +10923,7 @@ export type ListSpanMappersPathParameters = {
 	groupId: string;
 };
 export type ListSpanMappers200 = {
-	data: SpantypesGettableSpanMapperGroupsDTO;
+	data: SpantypesGettableSpanMappersDTO;
 	/**
 	 * @type string
 	 */

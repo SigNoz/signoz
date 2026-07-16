@@ -191,14 +191,6 @@
 				min-height: 0;
 				overflow-y: visible;
 
-				.time-series-view-container-header {
-					display: flex;
-					justify-content: flex-start;
-					align-items: center;
-					padding: 12px;
-					flex-shrink: 0;
-				}
-
 				.time-series-view {
 					flex-shrink: 0;
 					height: 65vh;

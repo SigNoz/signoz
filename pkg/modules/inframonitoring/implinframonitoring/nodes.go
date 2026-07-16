@@ -177,6 +177,7 @@ func (m *module) getNodesTableMetadata(ctx context.Context, orgID valuer.UUID, r
 // Groups absent from the result map have implicit zero counts (caller default).
 func (m *module) getPerGroupNodeConditionCounts(
 	ctx context.Context,
+	orgID valuer.UUID,
 	start, end int64,
 	filter *qbtypes.Filter,
 	groupBy []qbtypes.GroupByKey,
@@ -217,7 +218,7 @@ func (m *module) getPerGroupNodeConditionCounts(
 		timeSeriesFPs.LE("unix_milli", flooredEndMs),
 	)
 	if mergedFilterExpr != "" {
-		filterClause, err := m.buildFilterClause(ctx, &qbtypes.Filter{Expression: mergedFilterExpr}, start, end)
+		filterClause, err := m.buildFilterClause(ctx, orgID, &qbtypes.Filter{Expression: mergedFilterExpr}, start, end)
 		if err != nil {
 			return nil, err
 		}
