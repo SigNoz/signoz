@@ -2682,6 +2682,7 @@ components:
         unit:
           type: string
         value:
+          format: double
           type: number
       required:
       - value
@@ -3654,6 +3655,7 @@ components:
         unit:
           type: string
         value:
+          format: double
           type: number
       required:
       - value
@@ -3690,6 +3692,7 @@ components:
         unit:
           type: string
         value:
+          format: double
           type: number
       required:
       - value

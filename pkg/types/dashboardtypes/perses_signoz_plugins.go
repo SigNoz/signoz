@@ -257,7 +257,7 @@ type ThresholdWithLabel struct {
 	// still fails, so a genuinely absent value is still rejected). nullable:"false"
 	// keeps it a plain required number in the schema — it is never null in valid
 	// data (validation rejects nil), so the pointer must not leak as `number|null`.
-	Value *float64 `json:"value" validate:"required" required:"true" nullable:"false"`
+	Value *float64 `json:"value" validate:"required" required:"true" nullable:"false" format:"double"`
 	Unit  string   `json:"unit"`
 	Color string   `json:"color" validate:"required" required:"true"`
 	Label string   `json:"label"`
@@ -265,7 +265,7 @@ type ThresholdWithLabel struct {
 
 type ComparisonThreshold struct {
 	// Value is a pointer so a threshold at 0 is valid (see ThresholdWithLabel.Value).
-	Value    *float64           `json:"value" validate:"required" required:"true" nullable:"false"`
+	Value    *float64           `json:"value" validate:"required" required:"true" nullable:"false" format:"double"`
 	Operator ComparisonOperator `json:"operator"`
 	Unit     string             `json:"unit"`
 	Color    string             `json:"color" validate:"required" required:"true"`

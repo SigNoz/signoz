@@ -3395,6 +3395,7 @@ export interface DashboardtypesThresholdWithLabelDTO {
 	unit?: string;
 	/**
 	 * @type number
+	 * @format double
 	 */
 	value: number;
 }
@@ -3922,6 +3923,7 @@ export interface DashboardtypesComparisonThresholdDTO {
 	unit?: string;
 	/**
 	 * @type number
+	 * @format double
 	 */
 	value: number;
 }
@@ -4210,6 +4212,7 @@ export interface DashboardtypesTableThresholdDTO {
 	unit?: string;
 	/**
 	 * @type number
+	 * @format double
 	 */
 	value: number;
 }
