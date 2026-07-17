@@ -28,7 +28,7 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import { FeatureKeys } from '../../constants/features';
 import { useAppContext } from '../../providers/App/App';
-import K8sClustersList from './Clusters/K8sClustersList';
+import { K8sDynamicList } from './Base/K8sDynamicList';
 import {
 	GetClustersQuickFiltersConfig,
 	GetDaemonsetsQuickFiltersConfig,
@@ -43,20 +43,12 @@ import {
 	K8sCategories,
 	METRIC_NAMESPACE_BY_ENTITY,
 } from './constants';
-import K8sDaemonSetsList from './DaemonSets/K8sDaemonSetsList';
-import K8sDeploymentsList from './Deployments/K8sDeploymentsList';
 import {
 	useInfraMonitoringCategory,
 	useInfraMonitoringGroupBy,
 	useInfraMonitoringOrderBy,
 	useInfraMonitoringSelectedItemParams,
 } from './hooks';
-import K8sJobsList from './Jobs/K8sJobsList';
-import K8sNamespacesList from './Namespaces/K8sNamespacesList';
-import K8sNodesList from './Nodes/K8sNodesList';
-import K8sPodLists from './Pods/K8sPodLists';
-import K8sStatefulSetsList from './StatefulSets/K8sStatefulSetsList';
-import K8sVolumesList from './Volumes/K8sVolumesList';
 
 import styles from './InfraMonitoringK8s.module.scss';
 import { InfraMonitoringEvents } from 'constants/events';
@@ -312,41 +304,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 							showFilters ? styles.listContainerFiltersVisible : ''
 						}`}
 					>
-						{selectedCategory === K8sCategories.PODS && (
-							<K8sPodLists controlListPrefix={showFiltersComp} />
-						)}
-
-						{selectedCategory === K8sCategories.NODES && (
-							<K8sNodesList controlListPrefix={showFiltersComp} />
-						)}
-
-						{selectedCategory === K8sCategories.CLUSTERS && (
-							<K8sClustersList controlListPrefix={showFiltersComp} />
-						)}
-
-						{selectedCategory === K8sCategories.DEPLOYMENTS && (
-							<K8sDeploymentsList controlListPrefix={showFiltersComp} />
-						)}
-
-						{selectedCategory === K8sCategories.NAMESPACES && (
-							<K8sNamespacesList controlListPrefix={showFiltersComp} />
-						)}
-
-						{selectedCategory === K8sCategories.STATEFULSETS && (
-							<K8sStatefulSetsList controlListPrefix={showFiltersComp} />
-						)}
-
-						{selectedCategory === K8sCategories.JOBS && (
-							<K8sJobsList controlListPrefix={showFiltersComp} />
-						)}
-
-						{selectedCategory === K8sCategories.DAEMONSETS && (
-							<K8sDaemonSetsList controlListPrefix={showFiltersComp} />
-						)}
-
-						{selectedCategory === K8sCategories.VOLUMES && (
-							<K8sVolumesList controlListPrefix={showFiltersComp} />
-						)}
+						<K8sDynamicList controlListPrefix={showFiltersComp} />
 					</div>
 				</div>
 			</div>

@@ -74,15 +74,15 @@ export type K8sBaseListProps<
 		warning?: Querybuildertypesv5QueryWarnDataDTO | null;
 	}>;
 	/** Function to get the unique key for a row. */
-	getRowKey?: (record: T) => string;
+	getRowKey: (record: T) => string;
 	/** Function to get the item key used for selection. Can return string or SelectedItemParams. */
-	getItemKey?: (record: T) => TItemKey;
+	getItemKey: (record: T) => TItemKey;
 	eventCategory: InfraMonitoringEvents;
 	renderEmptyState?: (
 		context: K8sBaseListEmptyStateContext,
 	) => React.ReactNode | null;
 	extraQueryKeyParts?: string[];
-	detailsQueryKeyPrefix?: string;
+	detailsQueryKeyPrefix: string;
 };
 
 export function K8sBaseList<
