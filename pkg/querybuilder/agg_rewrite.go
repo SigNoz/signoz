@@ -10,7 +10,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
-	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -22,7 +21,6 @@ type aggExprRewriter struct {
 	fullTextColumn   *telemetrytypes.TelemetryFieldKey
 	fieldMapper      qbtypes.FieldMapper
 	conditionBuilder qbtypes.ConditionBuilder
-	jsonKeyToKey     qbtypes.JsonKeyToFieldFunc
 	flagger          flagger.Flagger
 }
 
@@ -33,7 +31,6 @@ func NewAggExprRewriter(
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
 	fieldMapper qbtypes.FieldMapper,
 	conditionBuilder qbtypes.ConditionBuilder,
-	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
 	fl flagger.Flagger,
 ) *aggExprRewriter {
 	set := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/querybuilder/agg_rewrite")
@@ -43,7 +40,6 @@ func NewAggExprRewriter(
 		fullTextColumn:   fullTextColumn,
 		fieldMapper:      fieldMapper,
 		conditionBuilder: conditionBuilder,
-		jsonKeyToKey:     jsonKeyToKey,
 		flagger:          fl,
 	}
 }
@@ -92,7 +88,6 @@ func (r *aggExprRewriter) Rewrite(
 		r.fullTextColumn,
 		r.fieldMapper,
 		r.conditionBuilder,
-		r.jsonKeyToKey,
 		r.flagger,
 	)
 	// Rewrite the first select item (our expression)
@@ -147,7 +142,6 @@ type exprVisitor struct {
 	fullTextColumn   *telemetrytypes.TelemetryFieldKey
 	fieldMapper      qbtypes.FieldMapper
 	conditionBuilder qbtypes.ConditionBuilder
-	jsonKeyToKey     qbtypes.JsonKeyToFieldFunc
 	flagger          flagger.Flagger
 	Modified         bool
 	chArgs           []any
@@ -164,7 +158,6 @@ func newExprVisitor(
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
 	fieldMapper qbtypes.FieldMapper,
 	conditionBuilder qbtypes.ConditionBuilder,
-	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
 	fl flagger.Flagger,
 ) *exprVisitor {
 	return &exprVisitor{
@@ -177,7 +170,6 @@ func newExprVisitor(
 		fullTextColumn:   fullTextColumn,
 		fieldMapper:      fieldMapper,
 		conditionBuilder: conditionBuilder,
-		jsonKeyToKey:     jsonKeyToKey,
 		flagger:          fl,
 	}
 }
@@ -211,8 +203,6 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 	if aggFunc.Numeric {
 		dataType = telemetrytypes.FieldDataTypeFloat64
 	}
-
-	bodyJSONEnabled := v.flagger.BooleanOrEmpty(v.ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(v.orgID))
 
 	// Handle *If functions with predicate + values
 	if aggFunc.FuncCombinator {
@@ -254,12 +244,11 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		for i := 0; i < len(args)-1; i++ {
 			origVal := args[i].String()
 			fieldKey := telemetrytypes.GetFieldKeyFromKeyText(origVal)
-			expr, exprArgs, err := CollisionHandledFinalExpr(v.ctx, v.orgID, v.startNs, v.endNs, &fieldKey, v.fieldMapper, v.conditionBuilder, v.fieldKeys, dataType, v.jsonKeyToKey, bodyJSONEnabled)
+			expr, err := v.fieldMapper.ColumnExpressionFor(v.ctx, v.orgID, v.startNs, v.endNs, &fieldKey, dataType, v.fieldKeys)
 			if err != nil {
 				return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to get table field name for %q", origVal)
 			}
-			v.chArgs = append(v.chArgs, exprArgs...)
-			newVal := expr
+			newVal := sqlbuilder.Escape(expr)
 			parsedVal, err := parseFragment(newVal)
 			if err != nil {
 				return err
@@ -272,12 +261,11 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		for i, arg := range args {
 			orig := arg.String()
 			fieldKey := telemetrytypes.GetFieldKeyFromKeyText(orig)
-			expr, exprArgs, err := CollisionHandledFinalExpr(v.ctx, v.orgID, v.startNs, v.endNs, &fieldKey, v.fieldMapper, v.conditionBuilder, v.fieldKeys, dataType, v.jsonKeyToKey, bodyJSONEnabled)
+			expr, err := v.fieldMapper.ColumnExpressionFor(v.ctx, v.orgID, v.startNs, v.endNs, &fieldKey, dataType, v.fieldKeys)
 			if err != nil {
 				return err
 			}
-			v.chArgs = append(v.chArgs, exprArgs...)
-			newCol := expr
+			newCol := sqlbuilder.Escape(expr)
 			parsed, err := parseFragment(newCol)
 			if err != nil {
 				return err

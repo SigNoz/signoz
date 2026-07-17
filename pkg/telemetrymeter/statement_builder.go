@@ -126,7 +126,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 		stepSec,
 	))
 	for _, g := range query.GroupBy {
-		col, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &g.TelemetryFieldKey, keys)
+		col, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &g.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return "", nil, err
 		}
@@ -215,7 +215,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDelta(
 	))
 
 	for _, g := range query.GroupBy {
-		col, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &g.TelemetryFieldKey, keys)
+		col, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &g.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return "", nil, err
 		}
@@ -293,7 +293,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 		stepSec,
 	))
 	for _, g := range query.GroupBy {
-		col, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &g.TelemetryFieldKey, keys)
+		col, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &g.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return "", nil, err
 		}

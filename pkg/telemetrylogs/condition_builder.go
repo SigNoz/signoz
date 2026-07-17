@@ -21,6 +21,8 @@ type conditionBuilder struct {
 	fl flagger.Flagger
 }
 
+var _ qbtypes.ConditionBuilder = (*conditionBuilder)(nil)
+
 func NewConditionBuilder(fm qbtypes.FieldMapper, fl flagger.Flagger) *conditionBuilder {
 	return &conditionBuilder{fm: fm, fl: fl}
 }
@@ -163,6 +165,12 @@ func (c *conditionBuilder) conditionFor(
 	}
 
 	columns, err := c.fm.ColumnFor(ctx, orgID, startNs, endNs, key)
+	if errors.Is(err, qbtypes.ErrColumnNotFound) && key.FieldContext == telemetrytypes.FieldContextUnspecified {
+		bodyKey := *key
+		bodyKey.FieldContext = telemetrytypes.FieldContextBody
+		key = &bodyKey
+		columns, err = c.fm.ColumnFor(ctx, orgID, startNs, endNs, key)
+	}
 	if err != nil {
 		return "", err
 	}
@@ -176,6 +184,15 @@ func (c *conditionBuilder) conditionFor(
 	for _, column := range columns {
 		if column.Type.GetType() == schema.ColumnTypeEnumJSON && isBodyJSONSearch(key, columns) && c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID)) && key.Name != messageSubField {
 			valueType, value := InferDataType(value, operator, key)
+			if len(key.JSONPlan) == 0 {
+				keyCopy := *key
+				if err := keyCopy.SetExhaustiveJSONAccessPlan(
+					telemetrytypes.JSONColumnMetadata{BaseColumn: LogsV2BodyV2Column}, valueType,
+				); err != nil {
+					return "", err
+				}
+				key = &keyCopy
+			}
 			cond, err := NewJSONConditionBuilder(key, valueType).buildJSONCondition(operator, value, sb)
 			if err != nil {
 				return "", err
@@ -244,6 +261,19 @@ func (c *conditionBuilder) conditionFor(
 	case qbtypes.FilterOperatorNotILike:
 		return sb.NotILike(fieldExpression, value), nil
 
+	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
+		if isBodyJSONSearch(key, columns) && !c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID)) {
+			if operator == qbtypes.FilterOperatorExists {
+				return GetBodyJSONKeyForExists(ctx, key, operator, value), nil
+			}
+			return "NOT " + GetBodyJSONKeyForExists(ctx, key, operator, value), nil
+		}
+		pred, err := querybuilder.ExistsExpression(columns, key, startNs, endNs, fieldExpression, operator == qbtypes.FilterOperatorExists)
+		if err != nil {
+			return "", err
+		}
+		return sqlbuilder.Escape(pred), nil
+
 	case qbtypes.FilterOperatorContains:
 		return sb.ILike(fieldExpression, fmt.Sprintf("%%%s%%", value)), nil
 	case qbtypes.FilterOperatorNotContains:
@@ -301,133 +331,101 @@ func (c *conditionBuilder) conditionFor(
 		}
 		return sb.And(conditions...), nil
 
-	// exists and not exists
-	// in the UI based query builder, `exists` and `not exists` are used for
-	// key membership checks, so depending on the column type, the condition changes
-	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
-		if isBodyJSONSearch(key, columns) && !c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID)) {
-			if operator == qbtypes.FilterOperatorExists {
-				return GetBodyJSONKeyForExists(ctx, key, operator, value), nil
-			} else {
-				return "NOT " + GetBodyJSONKeyForExists(ctx, key, operator, value), nil
-			}
-		}
-
-		var value any
-		column := columns[0]
-		if len(key.Evolutions) > 0 {
-			// we will use the corresponding column and its evolution entry for the query
-			newColumns, _, err := qbtypes.SelectEvolutionsForColumns(columns, key.Evolutions, startNs, endNs)
-			if err != nil {
-				return "", err
-			}
-
-			if len(newColumns) == 0 {
-				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "no valid evolution found for field %s in the given time range", key.Name)
-			}
-
-			// This mean tblFieldName is with multiIf, we just need to do a null check.
-			if len(newColumns) > 1 {
-				if operator == qbtypes.FilterOperatorExists {
-					return sb.IsNotNull(fieldExpression), nil
-				} else {
-					return sb.IsNull(fieldExpression), nil
-				}
-			}
-
-			// otherwise we have to find the correct exist operator based on the column type
-			column = newColumns[0]
-		}
-
-		switch column.Type.GetType() {
-		case schema.ColumnTypeEnumJSON:
-			if operator == qbtypes.FilterOperatorExists {
-				return sb.IsNotNull(fieldExpression), nil
-			}
-			return sb.IsNull(fieldExpression), nil
-		case schema.ColumnTypeEnumLowCardinality:
-			switch elementType := column.Type.(schema.LowCardinalityColumnType).ElementType; elementType.GetType() {
-			case schema.ColumnTypeEnumString:
-				value = ""
-				if operator == qbtypes.FilterOperatorExists {
-					return sb.NE(fieldExpression, value), nil
-				}
-				return sb.E(fieldExpression, value), nil
-			default:
-				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for low cardinality column type %s", elementType)
-			}
-		case schema.ColumnTypeEnumString:
-			value = ""
-			if operator == qbtypes.FilterOperatorExists {
-				return sb.NE(fieldExpression, value), nil
-			} else {
-				return sb.E(fieldExpression, value), nil
-			}
-		case schema.ColumnTypeEnumUInt64, schema.ColumnTypeEnumUInt32, schema.ColumnTypeEnumUInt8:
-			value = 0
-			if operator == qbtypes.FilterOperatorExists {
-				return sb.NE(fieldExpression, value), nil
-			} else {
-				return sb.E(fieldExpression, value), nil
-			}
-		case schema.ColumnTypeEnumMap:
-			keyType := column.Type.(schema.MapColumnType).KeyType
-			if _, ok := keyType.(schema.LowCardinalityColumnType); !ok {
-				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "key type %s is not supported for map column type %s", keyType, column.Type)
-			}
-
-			switch valueType := column.Type.(schema.MapColumnType).ValueType; valueType.GetType() {
-			case schema.ColumnTypeEnumString, schema.ColumnTypeEnumBool, schema.ColumnTypeEnumFloat64:
-				leftOperand := fmt.Sprintf("mapContains(%s, '%s')", column.Name, key.Name)
-				if key.Materialized {
-					leftOperand = telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key)
-				}
-				if operator == qbtypes.FilterOperatorExists {
-					return sb.E(leftOperand, true), nil
-				} else {
-					return sb.NE(leftOperand, true), nil
-				}
-			default:
-				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for map column type %s", valueType)
-			}
-		default:
-			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for column type %s", column.Type)
-
-		}
 	}
 	return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported operator: %v", operator)
 }
 
-func (c *conditionBuilder) ConditionFor(
+func (c *conditionBuilder) ConditionForKeys(
 	ctx context.Context,
 	orgID valuer.UUID,
 	startNs uint64,
 	endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
-	fieldKeysForName []*telemetrytypes.TelemetryFieldKey,
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	options qbtypes.ConditionBuilderOptions,
+	operator qbtypes.FilterOperator,
+	value any,
+	sb *sqlbuilder.SelectBuilder,
+) ([]string, []string, error) {
+	return c.conditionsForKeys(ctx, orgID, startNs, endNs, key, querybuilder.MatchingFieldKeys(key, keys), keys, options.SkipResourceFilter, operator, value, sb)
+}
+
+// candidateLookupKeys returns the metadata map only for fold-contexts, where CandidateKeys
+// would otherwise fold the prefix into the key name. Handing it the map lets a same-named
+// key under another context resolve first (as ColumnExpressionFor does). Strict contexts
+// (resource/attribute/scope) get nil so their explicit context is always honored.
+func candidateLookupKeys(key *telemetrytypes.TelemetryFieldKey, fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey) map[string][]*telemetrytypes.TelemetryFieldKey {
+	if key.FieldContext == telemetrytypes.FieldContextLog {
+		return fieldKeys
+	}
+	return nil
+}
+
+func (c *conditionBuilder) conditionsForKeys(
+	ctx context.Context,
+	orgID valuer.UUID,
+	startNs uint64,
+	endNs uint64,
+	key *telemetrytypes.TelemetryFieldKey,
+	matches []*telemetrytypes.TelemetryFieldKey,
+	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
+	skipResourceFilter bool,
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) ([]string, []string, error) {
 
-	keys, warning := querybuilder.ResolveKeys(key, fieldKeysForName)
+	keys, warning := querybuilder.ResolveKeys(key, matches)
 	var warnings []string
 	if warning != "" {
 		warnings = append(warnings, warning)
 	}
 
+	synthesized := false
 	if len(keys) == 0 {
-		// No known field key matched. Legacy string-body mode still searches unknown
-		// Body-context keys as body JSON paths; JSON-body mode requires a metadata match.
+		_, isIntrinsicColumn := logsV2Columns[key.Name]
 		switch {
 		case key.FieldContext == telemetrytypes.FieldContextBody && key.Name == "":
 			return nil, warnings, errors.NewInvalidInputf(errors.CodeInvalidInput, "missing key for body json search - expected key of the form `body.key` (ex: `body.status`)")
-		case key.FieldContext == telemetrytypes.FieldContextBody &&
-			!c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID)):
+		case key.FieldContext == telemetrytypes.FieldContextLog && isIntrinsicColumn:
 			keys = []*telemetrytypes.TelemetryFieldKey{key}
 		default:
-			return nil, warnings, querybuilder.NewKeyNotFoundError(key.Name)
+			// Fold-contexts get the metadata map so a same-named key under another context
+			// wins before the prefix folds into the key name (matching ColumnExpressionFor);
+			// strict contexts pass nil and stay honored as-is.
+			keys = c.fm.CandidateKeys(ctx, orgID, key, value, candidateLookupKeys(key, fieldKeys))
+			if operator.IsFunctionOperator() {
+				if key.FieldContext != telemetrytypes.FieldContextBody &&
+					!c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID)) {
+					return nil, warnings, querybuilder.NewKeyNotFoundError(key.Name)
+				}
+				bodyKeys := make([]*telemetrytypes.TelemetryFieldKey, 0, len(keys))
+				for _, k := range keys {
+					if k.FieldContext == telemetrytypes.FieldContextBody {
+						bodyKeys = append(bodyKeys, k)
+					}
+				}
+				keys = bodyKeys
+			}
+			if len(keys) == 0 {
+				return nil, warnings, querybuilder.NewKeyNotFoundError(key.Name)
+			}
+			synthesized = true
+			warnings = append(warnings, querybuilder.NewKeyNotFoundWarning(key.Name))
 		}
+	}
+
+	if skipResourceFilter && !synthesized {
+		filtered := make([]*telemetrytypes.TelemetryFieldKey, 0, len(keys))
+		for _, k := range keys {
+			if k.FieldContext != telemetrytypes.FieldContextResource {
+				filtered = append(filtered, k)
+			}
+		}
+		if len(filtered) == 0 {
+			return nil, warnings, nil
+		}
+		keys = filtered
 	}
 
 	conds := make([]string, 0, len(keys))

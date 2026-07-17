@@ -836,7 +836,23 @@ _TRACES_TABLES_TO_TRUNCATE = [
     "tag_attributes_v2",
     "span_attributes_keys",
     "signoz_error_index_v2",
+    "top_level_operations",
 ]
+
+
+def insert_top_level_operations_to_clickhouse(conn, operations: list[tuple[str, str]]) -> None:
+    """Seed distributed_top_level_operations with (name, serviceName) rows so the
+    isEntryPoint span-scope filter has entries to match against. The `time`
+    column defaults to now(), which satisfies the filter's `time >= start`
+    guard for any recent query window."""
+    if not operations:
+        return
+    conn.insert(
+        database="signoz_traces",
+        table="distributed_top_level_operations",
+        column_names=["name", "serviceName"],
+        data=[[name, service_name] for name, service_name in operations],
+    )
 
 
 def truncate_traces_tables(conn, cluster: str) -> None:
@@ -859,6 +875,18 @@ def insert_traces(
         clickhouse.conn,
         clickhouse.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER"],
     )
+
+
+@pytest.fixture(name="insert_top_level_operations", scope="function")
+def insert_top_level_operations(
+    clickhouse: types.TestContainerClickhouse,
+) -> Generator[Callable[[list[tuple[str, str]]], None], Any]:
+    def _insert(operations: list[tuple[str, str]]) -> None:
+        insert_top_level_operations_to_clickhouse(clickhouse.conn, operations)
+
+    yield _insert
+
+    clickhouse.conn.query(f"TRUNCATE TABLE signoz_traces.top_level_operations ON CLUSTER '{clickhouse.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' SYNC")
 
 
 @pytest.fixture(name="remove_traces_ttl_and_storage_settings", scope="function")

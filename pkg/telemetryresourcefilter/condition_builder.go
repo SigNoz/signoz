@@ -16,10 +16,7 @@ type defaultConditionBuilder struct {
 	fm qbtypes.FieldMapper
 }
 
-var (
-	_ qbtypes.ConditionBuilder          = (*defaultConditionBuilder)(nil)
-	_ qbtypes.ResolvingConditionBuilder = (*defaultConditionBuilder)(nil)
-)
+var _ qbtypes.ConditionBuilder = (*defaultConditionBuilder)(nil)
 
 func NewConditionBuilder(fm qbtypes.FieldMapper) *defaultConditionBuilder {
 	return &defaultConditionBuilder{fm: fm}
@@ -47,25 +44,7 @@ func keyIndexFilter(key *telemetrytypes.TelemetryFieldKey) any {
 	return fmt.Sprintf(`%%%s%%`, key.Name)
 }
 
-// ConditionFor builds resource-fingerprint conditions from the caller's pre-matched
-// fieldKeysForName. Resolution and the build live in conditionsForKeys.
-func (b *defaultConditionBuilder) ConditionFor(
-	ctx context.Context,
-	_ valuer.UUID,
-	startNs uint64,
-	endNs uint64,
-	key *telemetrytypes.TelemetryFieldKey,
-	fieldKeysForName []*telemetrytypes.TelemetryFieldKey,
-	op qbtypes.FilterOperator,
-	value any,
-	sb *sqlbuilder.SelectBuilder,
-) ([]string, []string, error) {
-	return b.conditionsForKeys(ctx, startNs, endNs, key, fieldKeysForName, op, value, sb)
-}
-
-// ConditionForKeys owns key resolution from the full metadata map so the where-clause
-// visitor need not pre-resolve; SkipResourceFilter is not applicable here (the fingerprint
-// table only stores resource attributes). See qbtypes.ResolvingConditionBuilder.
+// SkipResourceFilter is not applicable here: the fingerprint table only stores resource attributes.
 func (b *defaultConditionBuilder) ConditionForKeys(
 	ctx context.Context,
 	_ valuer.UUID,

@@ -123,7 +123,15 @@ func GetBodyJSONKey(_ context.Context, key *telemetrytypes.TelemetryFieldKey, op
 		// for all types except strings, we need to extract the value from the JSON_VALUE
 		return fmt.Sprintf("JSONExtract(JSON_VALUE(body, '$.%s'), '%s')", getBodyJSONPath(key), dataType.CHDataType()), value
 	}
-	// for string types, we should compare with the JSON_VALUE
+	// JSON_VALUE returns a String; stringify list operands so a numeric element in a mixed
+	// set (e.g. IN ['alpha', 42]) doesn't hit a String-vs-number supertype error (CH 386).
+	if list, ok := value.([]any); ok {
+		strs := make([]any, len(list))
+		for i, e := range list {
+			strs[i] = fmt.Sprintf("%v", e)
+		}
+		value = strs
+	}
 	return fmt.Sprintf("JSON_VALUE(body, '$.%s')", getBodyJSONPath(key)), value
 }
 
