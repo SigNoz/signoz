@@ -297,7 +297,7 @@ export const defaultMoreMenuItems: SidebarItem[] = [
 		// Gated behind the `enable_ai_observability` feature flag in
 		// SideNav's `computedSecondaryMenuItems`; disabled by default.
 		isEnabled: false,
-		itemKey: 'llm-observability',
+		itemKey: 'ai-observability',
 	},
 	{
 		key: ROUTES.METER,
