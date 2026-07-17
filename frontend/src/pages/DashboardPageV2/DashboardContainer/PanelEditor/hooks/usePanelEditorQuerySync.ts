@@ -136,6 +136,17 @@ export function usePanelEditorQuerySync({
 		// eslint-disable-next-line react-hooks/exhaustive-deps -- structural change only
 	}, [currentQuery.queryType, dataSourceSignature]);
 
+	// Follow the staged (executed) query into the draft whenever the builder re-stages
+	// outside an explicit Run — chiefly a URL re-stage from browser Back/Forward, which
+	// reverts both currentQuery and stagedQuery via initQueryBuilderData. Without this the
+	// builder reverts but the preview keeps the last Run's result. Live edits only touch
+	// currentQuery, so the preview still waits for Run; commitQuery no-ops when unchanged.
+	useEffect(() => {
+		if (stagedQuery) {
+			commitRef.current(stagedQuery);
+		}
+	}, [stagedQuery]);
+
 	// Stage & Run / ⌘↵: stage, commit, and re-fetch when unchanged so it can be re-run.
 	const runQuery = useCallback((): void => {
 		handleRunQuery();

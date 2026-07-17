@@ -342,6 +342,47 @@ describe('usePanelEditorQuerySync', () => {
 		});
 	});
 
+	describe('staged-query re-sync (browser back/forward)', () => {
+		it('commits the staged query into the draft when it re-stages', () => {
+			const state = builderState();
+			mockUseQueryBuilder.mockImplementation(() => state);
+
+			const { setSpec, rerender } = setup();
+			setSpec.mockClear();
+
+			// Browser Back re-stages a different query via initQueryBuilderData; the
+			// preview must follow it instead of keeping the last Run's result.
+			mockGetIsQueryModified.mockReturnValue(true);
+			state.stagedQuery = {
+				id: 'restaged',
+				queryType: 'builder',
+			} as unknown as Query;
+			rerender();
+
+			expect(setSpec).toHaveBeenCalledWith({
+				...makeDraft().spec,
+				queries: CONVERTED_QUERIES,
+			});
+		});
+
+		it('does not commit when only the live query changes (no re-stage)', () => {
+			const state = builderState({
+				currentQuery: { id: 'a', queryType: 'builder' } as Query,
+			});
+			mockUseQueryBuilder.mockImplementation(() => state);
+			mockGetIsQueryModified.mockReturnValue(true);
+
+			const { setSpec, rerender } = setup();
+			setSpec.mockClear();
+
+			// Live edit: currentQuery changes, staged query + structure unchanged.
+			state.currentQuery = { id: 'b', queryType: 'builder' } as Query;
+			rerender();
+
+			expect(setSpec).not.toHaveBeenCalled();
+		});
+	});
+
 	describe('query dirty + save', () => {
 		it('compares the live query against the builder baseline (first staged query), not the raw seed', () => {
 			mockGetIsQueryModified.mockReturnValue(true);
