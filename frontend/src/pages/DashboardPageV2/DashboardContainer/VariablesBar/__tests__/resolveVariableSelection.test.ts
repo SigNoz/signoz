@@ -6,7 +6,7 @@ import {
 	configuredDefaultValue,
 	reconcileWithOptions,
 	resolveDefaultSelection,
-} from '../resolveVariableSelection';
+} from '../utils/resolveVariableSelection';
 
 function model(overrides: Partial<VariableFormModel>): VariableFormModel {
 	return { ...emptyVariableFormModel(), ...overrides };

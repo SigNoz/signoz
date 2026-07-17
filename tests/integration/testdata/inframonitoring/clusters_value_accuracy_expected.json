@@ -21,8 +21,8 @@
         "nodes": 2,
         "namespaces": 2,
         "deployments": 2,
-        "daemonSets": 0,
-        "jobs": 0,
+        "daemonSets": 1,
+        "jobs": 1,
         "statefulSets": 1
       }
     },

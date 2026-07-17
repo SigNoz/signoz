@@ -4,7 +4,7 @@ import {
 	emptyVariableFormModel,
 	type VariableFormModel,
 } from '../variableFormModel';
-import { findVariableUsages } from '../variableUsages';
+import { findVariableUsages } from '../utils/variableUsages';
 
 // Identity adapter so `spec.variables` can be plain form models in the test.
 jest.mock('../variableAdapters', () => ({

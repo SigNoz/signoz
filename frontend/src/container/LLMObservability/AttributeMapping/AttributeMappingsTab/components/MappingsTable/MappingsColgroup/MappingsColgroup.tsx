@@ -5,8 +5,7 @@ function MappingsColgroup(): JSX.Element {
 		<colgroup>
 			<col className={styles.colTarget} />
 			<col />
-			<col className={styles.colWritesTo} />
-			<col className={styles.colStatus} />
+			<col className={styles.colActions} />
 		</colgroup>
 	);
 }

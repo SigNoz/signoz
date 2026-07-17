@@ -9,9 +9,9 @@ import { useDashboardStore } from '../../store/useDashboardStore';
 import {
 	buildApplyVariableToPanelsPatch,
 	getPanelIdsReferencingVariable,
-} from './applyVariableToPanelsPatch';
-import { useSaveVariables } from './useSaveVariables';
-import { useVariableListActions } from './useVariableListActions';
+} from './utils/applyVariableToPanelsPatch';
+import { useSaveVariables } from './hooks/useSaveVariables';
+import { useVariableListActions } from './hooks/useVariableListActions';
 import { dtoToFormModel } from './variableAdapters';
 import {
 	emptyVariableFormModel,
@@ -19,7 +19,7 @@ import {
 } from './variableFormModel';
 import VariableForm from './VariableForm/VariableForm';
 import VariableImpactDialog from './VariableImpactDialog/VariableImpactDialog';
-import VariablesList from './VariablesList';
+import VariablesList from './components/VariablesList/VariablesList';
 import styles from './Variables.module.scss';
 import AddVariableButton from './components/AddVariableButton';
 import ApplyToAllDialog from './components/ApplyToAllDialog/ApplyToAllDialog';
@@ -154,7 +154,6 @@ function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 		);
 	}
 
-	// Master view — the variables list.
 	return (
 		<div className={cx(styles.container, settingsStyles.settingsCard)}>
 			{variables.length === 0 ? (

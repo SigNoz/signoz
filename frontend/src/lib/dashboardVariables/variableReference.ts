@@ -42,27 +42,19 @@ const ANY_VARIABLE_REFERENCE =
 	/\{\{\s*\.?[\w.]+\s*\}\}|\[\[\s*[\w.]+\s*\]\]|\$(?!__)[a-zA-Z_][\w.]*/;
 
 /**
- * Returns true if `text` contains a reference to any variable. Use when the set
- * of variable names isn't known yet (e.g. before the fetch context initializes),
- * so a name-based {@link textContainsVariableReference} check can't run.
+ * Use when the set of variable names isn't known yet (e.g. before the fetch
+ * context initializes), so a name-based {@link textContainsVariableReference}
+ * check can't run.
  */
 export function containsAnyVariableReference(text: string): boolean {
 	return !!text && ANY_VARIABLE_REFERENCE.test(text);
 }
 
-/**
- * Extracts all text strings from a widget Query that could contain variable
- * references. Covers:
- * - QUERY_BUILDER: filter items' string values + filter.expression
- * - PROM: each promql[].query
- * - CLICKHOUSE: each clickhouse_sql[].query
- */
 function extractQueryBuilderTexts(query: Query): string[] {
 	const texts: string[] = [];
 	const queryDataList = query.builder?.queryData;
 	if (isArray(queryDataList)) {
 		queryDataList.forEach((queryData) => {
-			// Collect string values from filter items
 			queryData.filters?.items?.forEach((filter: TagFilterItem) => {
 				if (isArray(filter.value)) {
 					filter.value.forEach((v) => {
@@ -75,7 +67,6 @@ function extractQueryBuilderTexts(query: Query): string[] {
 				}
 			});
 
-			// Collect filter expression
 			if (queryData.filter?.expression) {
 				texts.push(queryData.filter.expression);
 			}
@@ -132,11 +123,8 @@ export function extractQueryTextStrings(query: Query): string[] {
 }
 
 /**
- * Given a widget Query and an array of variable names, returns the subset of
- * variable names that are referenced in the query text.
- *
- * This performs text-based detection only. Structural checks (like
- * filter.key.key matching a variable attribute) are NOT included.
+ * Text-based detection only. Structural checks (like filter.key.key matching a
+ * variable attribute) are NOT included.
  */
 export function getVariableReferencesInQuery(
 	query: Query,

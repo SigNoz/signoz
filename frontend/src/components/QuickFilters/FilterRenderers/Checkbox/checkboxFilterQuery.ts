@@ -11,6 +11,8 @@ import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';
 
 import { isKeyMatch } from './utils';
+import { CheckedState } from '../../types';
+import { SectionType } from './v2/itemRules';
 
 export const SELECTED_OPERATORS = [OPERATORS['='], 'in'];
 export const NON_SELECTED_OPERATORS = [OPERATORS['!='], 'not in', 'nin'];
@@ -148,6 +150,8 @@ export function applyCheckboxToggle({
 	value,
 	checked,
 	isOnlyOrAllClicked,
+	previousState,
+	sectionType,
 }: {
 	currentQuery: Query;
 	activeQueryIndex: number;
@@ -157,6 +161,8 @@ export function applyCheckboxToggle({
 	value: string;
 	checked: boolean;
 	isOnlyOrAllClicked: boolean;
+	previousState?: CheckedState;
+	sectionType?: SectionType;
 }): Query {
 	const activeItems =
 		currentQuery.builder.queryData?.[activeQueryIndex]?.filters?.items;
@@ -216,6 +222,7 @@ export function applyCheckboxToggle({
 			);
 			if (currentFilter) {
 				const runningOperator = currentFilter?.op;
+
 				switch (runningOperator) {
 					case 'in':
 						if (checked) {
@@ -246,9 +253,29 @@ export function applyCheckboxToggle({
 								});
 							}
 						} else if (!checked) {
-							// if we are removing some value when the running operator is IN we filter.
-							// example - key IN [value1,currentSelectedValue] becomes key IN [value1] in case of array
-							if (isArray(currentFilter.value)) {
+							// Related section: clicking to exclude creates NOT_IN for just this value
+							if (sectionType === SectionType.RELATED) {
+								const newFilter: TagFilterItem = {
+									id: uuid(),
+									op: getNotInOperator(source),
+									key: filter.attributeKey,
+									value,
+								};
+								query.filters.items = query.filters.items.map((item) => {
+									if (isKeyMatch(item.key?.key, filter.attributeKey.key)) {
+										return newFilter;
+									}
+									return item;
+								});
+								if (query.filter?.expression) {
+									query.filter.expression = removeKeysFromExpression(
+										query.filter.expression,
+										[filter.attributeKey.key],
+									);
+								}
+							} else if (isArray(currentFilter.value)) {
+								// if we are removing some value when the running operator is IN we filter.
+								// example - key IN [value1,currentSelectedValue] becomes key IN [value1] in case of array
 								const newFilter = {
 									...currentFilter,
 									value: currentFilter.value.filter((val) => val !== value),
@@ -275,11 +302,38 @@ export function applyCheckboxToggle({
 						}
 						break;
 					case 'nin':
-					case 'not in':
-						// if the current running operator is NIN then when unchecking the value it gets
-						// added to the clause like key NIN [value1 , currentUnselectedValue]
-						if (!checked) {
-							// in case of array add the currentUnselectedValue to the list.
+					case 'not in': {
+						// NOT IN means "exclude these values"
+						// Check if value is currently in the exclusion list
+						const isValueInFilter = isArray(currentFilter.value)
+							? currentFilter.value.includes(value)
+							: currentFilter.value === value;
+
+						// When clicking unchecked "Other" item, user wants to SELECT it
+						// Replace NOT IN filter with IN [value]
+						if (previousState === 'unchecked' && checked) {
+							const newFilter: TagFilterItem = {
+								id: uuid(),
+								op: getOperatorValue(OPERATORS.IN),
+								key: filter.attributeKey,
+								value,
+							};
+							query.filters.items = query.filters.items.map((item) => {
+								if (isKeyMatch(item.key?.key, filter.attributeKey.key)) {
+									return newFilter;
+								}
+								return item;
+							});
+							if (query.filter?.expression) {
+								query.filter.expression = removeKeysFromExpression(
+									query.filter.expression,
+									[filter.attributeKey.key],
+								);
+							}
+						} else if (!checked || !isValueInFilter) {
+							// Add to NOT IN when:
+							// - checked=false (user explicitly unchecked to exclude)
+							// - checked=true but value not in filter (clicking "other" value to exclude)
 							if (isArray(currentFilter.value)) {
 								const newFilter = {
 									...currentFilter,
@@ -292,7 +346,6 @@ export function applyCheckboxToggle({
 									return item;
 								});
 							} else {
-								// in case of not an array make it one!
 								const newFilter = {
 									...currentFilter,
 									value: [currentFilter.value as string, value],
@@ -304,8 +357,9 @@ export function applyCheckboxToggle({
 									return item;
 								});
 							}
-						} else if (checked) {
-							// opposite of above!
+						} else {
+							// Remove from NOT IN when value IS in filter and checked=true
+							// (user wants to include this value back)
 							if (isArray(currentFilter.value)) {
 								const newFilter = {
 									...currentFilter,
@@ -346,6 +400,7 @@ export function applyCheckboxToggle({
 							}
 						}
 						break;
+					}
 					case '=':
 						if (checked) {
 							const newFilter = {
@@ -389,10 +444,11 @@ export function applyCheckboxToggle({
 				}
 			}
 		} else {
-			// case  - when there is no filter for the current key that means all are selected right now.
+			// No filter for this key - all are visually selected.
+			// checked=true → user wants to select (IN), checked=false → exclude (NOT IN)
 			const newFilterItem: TagFilterItem = {
 				id: uuid(),
-				op: getNotInOperator(source),
+				op: checked ? getOperatorValue(OPERATORS.IN) : getNotInOperator(source),
 				key: filter.attributeKey,
 				value,
 			};
