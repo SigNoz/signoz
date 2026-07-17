@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
@@ -31,11 +32,12 @@ func (enum *Signal) UnmarshalJSON(data []byte) error {
 }
 
 var (
-	SignalTraces        = Signal{valuer.NewString("traces")}
-	SignalLogs          = Signal{valuer.NewString("logs")}
-	SignalApiMonitoring = Signal{valuer.NewString("api_monitoring")}
-	SignalExceptions    = Signal{valuer.NewString("exceptions")}
-	SignalMeter         = Signal{valuer.NewString("meter")}
+	SignalTraces          = Signal{valuer.NewString("traces")}
+	SignalLogs            = Signal{valuer.NewString("logs")}
+	SignalApiMonitoring   = Signal{valuer.NewString("api_monitoring")}
+	SignalExceptions      = Signal{valuer.NewString("exceptions")}
+	SignalMeter           = Signal{valuer.NewString("meter")}
+	SignalAiObservability = Signal{valuer.NewString("ai_observability")}
 )
 
 // NewSignal creates a Signal from a string.
@@ -51,6 +53,8 @@ func NewSignal(s string) (Signal, error) {
 		return SignalExceptions, nil
 	case "meter":
 		return SignalMeter, nil
+	case "ai_observability":
+		return SignalAiObservability, nil
 	default:
 		return Signal{}, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid signal: %s", s)
 	}
@@ -187,6 +191,20 @@ func NewDefaultQuickFilter(orgID valuer.UUID) ([]*StorableQuickFilter, error) {
 		{"key": "host.name", "dataType": "float64", "type": "Sum"},
 	}
 
+	// AI observability (source=ai trace explorer): categorical gen_ai span attributes
+	// plus the usual service/environment/error narrowing. The per-trace aggregates
+	// (trace.output_tokens, …) are threshold filters with no value list, so they are
+	// not quick filters.
+	aiObservabilityFilters := []map[string]interface{}{
+		{"key": telemetrytypes.GenAIRequestModel, "dataType": "string", "type": "tag"},
+		{"key": telemetrytypes.GenAIProviderName, "dataType": "string", "type": "tag"},
+		{"key": telemetrytypes.GenAIToolName, "dataType": "string", "type": "tag"},
+		{"key": telemetrytypes.GenAIAgentName, "dataType": "string", "type": "tag"},
+		{"key": "deployment.environment", "dataType": "string", "type": "resource"},
+		{"key": "service.name", "dataType": "string", "type": "resource"},
+		{"key": "hasError", "dataType": "bool", "type": "tag"},
+	}
+
 	tracesJSON, err := json.Marshal(tracesFilters)
 	if err != nil {
 		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to marshal traces filters")
@@ -210,6 +228,11 @@ func NewDefaultQuickFilter(orgID valuer.UUID) ([]*StorableQuickFilter, error) {
 	meterJSON, err := json.Marshal(meterFilters)
 	if err != nil {
 		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to marshal meter filters")
+	}
+
+	aiObservabilityJSON, err := json.Marshal(aiObservabilityFilters)
+	if err != nil {
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to marshal ai observability filters")
 	}
 
 	timeRightNow := time.Now()
@@ -270,6 +293,18 @@ func NewDefaultQuickFilter(orgID valuer.UUID) ([]*StorableQuickFilter, error) {
 			OrgID:  orgID,
 			Filter: string(meterJSON),
 			Signal: SignalMeter,
+			TimeAuditable: types.TimeAuditable{
+				CreatedAt: timeRightNow,
+				UpdatedAt: timeRightNow,
+			},
+		},
+		{
+			Identifiable: types.Identifiable{
+				ID: valuer.GenerateUUID(),
+			},
+			OrgID:  orgID,
+			Filter: string(aiObservabilityJSON),
+			Signal: SignalAiObservability,
 			TimeAuditable: types.TimeAuditable{
 				CreatedAt: timeRightNow,
 				UpdatedAt: timeRightNow,
