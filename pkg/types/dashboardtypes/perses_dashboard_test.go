@@ -6,7 +6,6 @@ import (
 	"os"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/perses/spec/go/dashboard"
@@ -753,7 +752,7 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 						"spec": {
 							"plugin": {
 								"kind": "signoz/TimeSeriesPanel",
-								"spec": {"chartAppearance": {"spanGaps": {"fillLessThan": "notaduration"}}}
+								"spec": {"chartAppearance": {"spanGaps": {"fillOnlyBelow": true, "fillLessThan": "notaduration"}}}
 							}
 						}
 					}
@@ -1399,23 +1398,49 @@ func TestSpanGaps(t *testing.T) {
 	t.Run("defaults", func(t *testing.T) {
 		var sg SpanGaps
 		assert.False(t, sg.FillOnlyBelow, "expected FillOnlyBelow default false")
-		assert.True(t, sg.FillLessThan.IsZero(), "expected FillLessThan default zero")
+		assert.Empty(t, sg.FillLessThan, "expected FillLessThan default empty")
 	})
 
 	t.Run("fillOnlyBelow true", func(t *testing.T) {
-		sg := unmarshal(t, `{"fillOnlyBelow": true}`)
+		sg := unmarshal(t, `{"fillOnlyBelow": true, "fillLessThan": "5m"}`)
 		assert.True(t, sg.FillOnlyBelow)
 	})
 
-	t.Run("fillLessThan duration", func(t *testing.T) {
-		sg := unmarshal(t, `{"fillOnlyBelow": false, "fillLessThan": "5m"}`)
+	t.Run("fillLessThan ignored when fillOnlyBelow is false", func(t *testing.T) {
+		sg := unmarshal(t, `{"fillOnlyBelow": false, "fillLessThan": ""}`)
 		assert.False(t, sg.FillOnlyBelow)
-		assert.Equal(t, 5*time.Minute, sg.FillLessThan.Duration())
+		assert.Empty(t, sg.FillLessThan)
+	})
+
+	t.Run("fillLessThan duration", func(t *testing.T) {
+		sg := unmarshal(t, `{"fillOnlyBelow": true, "fillLessThan": "5m"}`)
+		assert.True(t, sg.FillOnlyBelow)
+		assert.Equal(t, "5m", sg.FillLessThan)
 	})
 
 	t.Run("fillLessThan compound duration", func(t *testing.T) {
-		sg := unmarshal(t, `{"fillLessThan": "1h30m"}`)
-		assert.Equal(t, 90*time.Minute, sg.FillLessThan.Duration())
+		sg := unmarshal(t, `{"fillOnlyBelow": true, "fillLessThan": "1h30m"}`)
+		assert.Equal(t, "1h30m", sg.FillLessThan)
+	})
+
+	t.Run("fillLessThan day duration", func(t *testing.T) {
+		sg := unmarshal(t, `{"fillOnlyBelow": true, "fillLessThan": "1d"}`)
+		assert.Equal(t, "1d", sg.FillLessThan)
+	})
+
+	t.Run("fillLessThan required when fillOnlyBelow is true", func(t *testing.T) {
+		var sg SpanGaps
+		require.Error(t, json.Unmarshal([]byte(`{"fillOnlyBelow": true}`), &sg))
+	})
+
+	t.Run("invalid fillLessThan rejected on unmarshal", func(t *testing.T) {
+		var sg SpanGaps
+		require.Error(t, json.Unmarshal([]byte(`{"fillOnlyBelow": true, "fillLessThan": "not-a-duration"}`), &sg))
+	})
+
+	t.Run("non-positive fillLessThan rejected on unmarshal", func(t *testing.T) {
+		var sg SpanGaps
+		require.Error(t, json.Unmarshal([]byte(`{"fillOnlyBelow": true, "fillLessThan": "0s"}`), &sg))
 	})
 }
 
@@ -1644,55 +1669,61 @@ func TestInvalidateDuplicatePanelReference(t *testing.T) {
 	assert.Contains(t, err.Error(), "spec.layouts[0].spec.items[1].content")
 }
 
-// Every display name — dashboard, panel, variable — and the grid layout title is
-// bounded at MaxDisplayNameLen. The name is one over the limit in each case, and
-// the message reads "<json path>: <field> name must be at most ...", pairing the
-// locatable path (like the other spec errors) with a human field label.
+// Every display name — dashboard, panel, variable — is bounded at MaxDisplayNameLen,
+// while the grid layout title has its own, larger bound (MaxLayoutTitleLen). The name
+// is one over the relevant limit in each case, and the message reads "<json path>:
+// <field> name must be at most ...", pairing the locatable path (like the other spec
+// errors) with a human field label.
 func TestInvalidateDisplayNameTooLong(t *testing.T) {
-	tooLong := strings.Repeat("x", MaxDisplayNameLen+1)
-	lengthMsg := fmt.Sprintf("must be at most %d characters, got %d", MaxDisplayNameLen, MaxDisplayNameLen+1)
-
 	testCases := []struct {
-		scenario      string
-		dashboardJSON string
-		expectedPath  string
-		expectedLabel string
+		scenario         string
+		limit            int
+		dashboardJSONFmt string
+		expectedPath     string
+		expectedLabel    string
 	}{
 		{
-			scenario:      "dashboard display name",
-			dashboardJSON: `{"display": {"name": "` + tooLong + `"}, "layouts": []}`,
-			expectedLabel: "dashboard",
-			expectedPath:  "spec.display.name",
+			scenario:         "dashboard display name",
+			limit:            MaxDisplayNameLen,
+			dashboardJSONFmt: `{"display": {"name": "%s"}, "layouts": []}`,
+			expectedLabel:    "dashboard",
+			expectedPath:     "spec.display.name",
 		},
 		{
-			scenario:      "panel display name",
-			dashboardJSON: `{"panels": {"p1": {"kind": "Panel", "spec": {"display": {"name": "` + tooLong + `"}, "plugin": {"kind": "signoz/TablePanel", "spec": {}}, "queries": []}}}, "layouts": []}`,
-			expectedLabel: "panel",
-			expectedPath:  "spec.panels.p1.spec.display.name",
+			scenario:         "panel display name",
+			limit:            MaxDisplayNameLen,
+			dashboardJSONFmt: `{"panels": {"p1": {"kind": "Panel", "spec": {"display": {"name": "%s"}, "plugin": {"kind": "signoz/TablePanel", "spec": {}}, "queries": []}}}, "layouts": []}`,
+			expectedLabel:    "panel",
+			expectedPath:     "spec.panels.p1.spec.display.name",
 		},
 		{
-			scenario:      "list variable display name",
-			dashboardJSON: `{"variables": [{"kind": "ListVariable", "spec": {"name": "svc", "display": {"name": "` + tooLong + `"}, "plugin": {"kind": "signoz/DynamicVariable", "spec": {"name": "service.name", "signal": "metrics"}}}}], "layouts": []}`,
-			expectedLabel: "variable",
-			expectedPath:  "spec.variables[0].spec.display.name",
+			scenario:         "list variable display name",
+			limit:            MaxDisplayNameLen,
+			dashboardJSONFmt: `{"variables": [{"kind": "ListVariable", "spec": {"name": "svc", "display": {"name": "%s"}, "plugin": {"kind": "signoz/DynamicVariable", "spec": {"name": "service.name", "signal": "metrics"}}}}], "layouts": []}`,
+			expectedLabel:    "variable",
+			expectedPath:     "spec.variables[0].spec.display.name",
 		},
 		{
-			scenario:      "text variable display name",
-			dashboardJSON: `{"variables": [{"kind": "TextVariable", "spec": {"name": "mytext", "value": "v", "display": {"name": "` + tooLong + `"}}}], "layouts": []}`,
-			expectedLabel: "variable",
-			expectedPath:  "spec.variables[0].spec.display.name",
+			scenario:         "text variable display name",
+			limit:            MaxDisplayNameLen,
+			dashboardJSONFmt: `{"variables": [{"kind": "TextVariable", "spec": {"name": "mytext", "value": "v", "display": {"name": "%s"}}}], "layouts": []}`,
+			expectedLabel:    "variable",
+			expectedPath:     "spec.variables[0].spec.display.name",
 		},
 		{
-			scenario:      "layout title",
-			dashboardJSON: `{"layouts": [{"kind": "Grid", "spec": {"display": {"title": "` + tooLong + `"}, "items": []}}]}`,
-			expectedLabel: "layout",
-			expectedPath:  "spec.layouts[0].spec.display.title",
+			scenario:         "layout title",
+			limit:            MaxLayoutTitleLen,
+			dashboardJSONFmt: `{"layouts": [{"kind": "Grid", "spec": {"display": {"title": "%s"}, "items": []}}]}`,
+			expectedLabel:    "layout",
+			expectedPath:     "spec.layouts[0].spec.display.title",
 		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.scenario, func(t *testing.T) {
-			_, err := unmarshalDashboard([]byte(testCase.dashboardJSON))
+			tooLong := strings.Repeat("x", testCase.limit+1)
+			lengthMsg := fmt.Sprintf("must be at most %d characters, got %d", testCase.limit, testCase.limit+1)
+			_, err := unmarshalDashboard([]byte(fmt.Sprintf(testCase.dashboardJSONFmt, tooLong)))
 			require.Error(t, err)
 			// Message is "<path>: <label> name must be at most N characters, got M".
 			want := testCase.expectedPath + ": " + testCase.expectedLabel + " name " + lengthMsg

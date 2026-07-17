@@ -79,6 +79,21 @@ describe('PanelBody', () => {
 		expect(screen.queryByTestId('mock-renderer')).not.toBeInTheDocument();
 	});
 
+	it('shows the loader while the fetch is deferred (panel not yet scrolled into view)', () => {
+		render(
+			<PanelBody
+				{...baseProps}
+				panel={runnablePanel()}
+				data={{} as PanelQueryData}
+				isFetching={false}
+				isVisible={false}
+			/>,
+		);
+
+		expect(screen.getByTestId('panel-loading')).toBeInTheDocument();
+		expect(screen.queryByTestId('mock-renderer')).not.toBeInTheDocument();
+	});
+
 	it('keeps the renderer mounted during a refetch over existing data (e.g. list page change)', () => {
 		render(
 			<PanelBody

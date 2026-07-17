@@ -1,5 +1,5 @@
 import { TooltipProvider } from '@signozhq/ui/tooltip';
-import { render, screen } from 'tests/test-utils';
+import { render, screen, waitFor } from 'tests/test-utils';
 
 import ViewRolePage from '../ViewRolePage';
 
@@ -19,7 +19,7 @@ describe('ViewRolePage - Managed Role', () => {
 		jest.restoreAllMocks();
 	});
 
-	it('disables Delete button for managed roles', () => {
+	it('disables Delete button for managed roles', async () => {
 		render(
 			<TooltipProvider>
 				<ViewRolePage />
@@ -30,10 +30,12 @@ describe('ViewRolePage - Managed Role', () => {
 			},
 		);
 
-		expect(screen.getByTestId('delete-button')).toBeDisabled();
+		await waitFor(() => {
+			expect(screen.getByTestId('delete-button')).toBeDisabled();
+		});
 	});
 
-	it('disables Update button for managed roles', () => {
+	it('disables Update button for managed roles', async () => {
 		render(
 			<TooltipProvider>
 				<ViewRolePage />
@@ -44,10 +46,12 @@ describe('ViewRolePage - Managed Role', () => {
 			},
 		);
 
-		expect(screen.getByTestId('save-button')).toBeDisabled();
+		await waitFor(() => {
+			expect(screen.getByTestId('save-button')).toBeDisabled();
+		});
 	});
 
-	it('still shows Cancel button for managed roles', () => {
+	it('still shows Cancel button for managed roles', async () => {
 		render(
 			<TooltipProvider>
 				<ViewRolePage />
@@ -58,6 +62,8 @@ describe('ViewRolePage - Managed Role', () => {
 			},
 		);
 
-		expect(screen.getByTestId('cancel-button')).toBeInTheDocument();
+		await expect(
+			screen.findByTestId('cancel-button'),
+		).resolves.toBeInTheDocument();
 	});
 });

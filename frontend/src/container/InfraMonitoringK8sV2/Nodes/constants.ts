@@ -1,113 +1,114 @@
+import { InframonitoringtypesNodeRecordDTO } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
+import { formatValueForExpression } from 'components/QueryBuilderV2/utils';
 import {
-	createFilterItem,
-	K8sDetailsMetadataConfig,
-} from '../Base/K8sBaseDetails';
-import { QUERY_KEYS } from '../EntityDetailsUtils/utils';
-import { K8sNodeData } from './api';
+	buildEventsExpression,
+	buildLogsTracesExpression,
+} from 'container/InfraMonitoringK8sV2/Base/utils';
 
-export const k8sNodeGetSelectedItemFilters = (
-	selectedItemId: string,
-): TagFilter => {
-	return {
-		op: 'AND',
-		items: [
-			{
-				id: 'k8s_node_name',
-				key: {
-					key: 'k8s_node_name',
-					type: null,
-				},
-				op: '=',
-				value: selectedItemId,
-			},
-		],
-	};
-};
+import { K8sDetailsMetadataConfig } from '../Base/K8sBaseDetails';
+import { INFRA_MONITORING_ATTR_KEYS } from '../constants';
+import { SelectedItemParams } from '../hooks';
 
-export const k8sNodeDetailsMetadataConfig: K8sDetailsMetadataConfig<K8sNodeData>[] =
+export const k8sNodeGetSelectedItemExpression = (
+	params: SelectedItemParams,
+): string =>
+	`k8s.node.name = ${formatValueForExpression(params.selectedItem ?? '')}`;
+
+export const k8sNodeDetailsMetadataConfig: K8sDetailsMetadataConfig<InframonitoringtypesNodeRecordDTO>[] =
 	[
-		{ label: 'Node Name', getValue: (p): string => p.meta.k8s_node_name },
+		{ label: 'Node Name', getValue: (p): string => p.nodeName || '' },
 		{
 			label: 'Cluster Name',
-			getValue: (p): string => p.meta.k8s_cluster_name,
+			getValue: (p): string =>
+				p.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] || '',
 		},
 	];
 
-export const k8sNodeInitialFilters = [
-	QUERY_KEYS.K8S_NODE_NAME,
-	QUERY_KEYS.K8S_CLUSTER_NAME,
-];
+export const k8sNodeInitialEventsExpression = (
+	item: InframonitoringtypesNodeRecordDTO,
+): string =>
+	buildEventsExpression({
+		objectKind: 'Node',
+		objectName: item.nodeName || '',
+		clusterName: item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME],
+	});
 
-export const k8sNodeInitialEventsFilter = (
-	item: K8sNodeData,
-): ReturnType<typeof createFilterItem>[] => [
-	createFilterItem(QUERY_KEYS.K8S_OBJECT_KIND, 'Node'),
-	createFilterItem(QUERY_KEYS.K8S_OBJECT_NAME, item.meta.k8s_node_name),
-];
+export const k8sNodeInitialLogTracesExpression = (
+	item: InframonitoringtypesNodeRecordDTO,
+): string =>
+	buildLogsTracesExpression({
+		mainAttributeKey: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME,
+		mainAttributeValue: item.nodeName,
+		clusterName: item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME],
+	});
 
-export const k8sNodeInitialLogTracesFilter = (
-	item: K8sNodeData,
-): ReturnType<typeof createFilterItem>[] => [
-	createFilterItem(QUERY_KEYS.K8S_NODE_NAME, item.meta.k8s_node_name),
-	createFilterItem(QUERY_KEYS.K8S_CLUSTER_NAME, item.meta.k8s_cluster_name),
-];
-
-export const k8sNodeGetEntityName = (item: K8sNodeData): string =>
-	item.meta.k8s_node_name;
+export const k8sNodeGetEntityName = (
+	item: InframonitoringtypesNodeRecordDTO,
+): string => item.nodeName || '';
 
 export const nodeWidgetInfo = [
 	{
 		title: 'CPU Usage (cores)',
 		yAxisUnit: '',
+		docPath: '/infrastructure-monitoring/kubernetes/nodes/#cpu-usage-cores',
 	},
 	{
 		title: 'Memory Usage (bytes)',
 		yAxisUnit: 'bytes',
+		docPath: '/infrastructure-monitoring/kubernetes/nodes/#memory-usage-bytes',
 	},
 	{
 		title: 'CPU Usage (%)',
 		yAxisUnit: 'percentunit',
+		docPath: '/infrastructure-monitoring/kubernetes/nodes/#cpu-usage-',
 	},
 	{
 		title: 'Memory Usage (%)',
 		yAxisUnit: 'percentunit',
+		docPath: '/infrastructure-monitoring/kubernetes/nodes/#memory-usage-',
 	},
 	{
 		title: 'Pods by CPU (top 10)',
 		yAxisUnit: '',
+		docPath: '/infrastructure-monitoring/kubernetes/nodes/#pods-by-cpu-top-10',
 	},
 	{
 		title: 'Pods by Memory (top 10)',
 		yAxisUnit: 'bytes',
+		docPath: '/infrastructure-monitoring/kubernetes/nodes/#pods-by-memory-top-10',
 	},
 	{
 		title: 'Network error count',
 		yAxisUnit: '',
+		docPath: '/infrastructure-monitoring/kubernetes/nodes/#network-error-count',
 	},
 	{
 		title: 'Network IO rate',
 		yAxisUnit: 'binBps',
+		docPath: '/infrastructure-monitoring/kubernetes/nodes/#network-io-rate',
 	},
 	{
 		title: 'Filesystem usage (bytes)',
 		yAxisUnit: 'bytes',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/nodes/#filesystem-usage-bytes',
 	},
 	{
 		title: 'Filesystem usage (%)',
 		yAxisUnit: 'percentunit',
+		docPath: '/infrastructure-monitoring/kubernetes/nodes/#filesystem-usage-',
 	},
 ];
 
 export const getNodeMetricsQueryPayload = (
-	node: K8sNodeData,
+	node: InframonitoringtypesNodeRecordDTO,
 	start: number,
 	end: number,
 	dotMetricsEnabled: boolean,
@@ -222,7 +223,7 @@ export const getNodeMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -261,7 +262,7 @@ export const getNodeMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -300,7 +301,7 @@ export const getNodeMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -339,7 +340,7 @@ export const getNodeMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -378,7 +379,7 @@ export const getNodeMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -451,7 +452,7 @@ export const getNodeMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -490,7 +491,7 @@ export const getNodeMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -529,7 +530,7 @@ export const getNodeMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -568,7 +569,7 @@ export const getNodeMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -607,7 +608,7 @@ export const getNodeMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -646,7 +647,7 @@ export const getNodeMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -685,7 +686,7 @@ export const getNodeMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -758,7 +759,7 @@ export const getNodeMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -797,7 +798,7 @@ export const getNodeMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -836,7 +837,7 @@ export const getNodeMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -922,7 +923,7 @@ export const getNodeMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -961,7 +962,7 @@ export const getNodeMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -1000,7 +1001,7 @@ export const getNodeMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -1086,7 +1087,7 @@ export const getNodeMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -1166,7 +1167,7 @@ export const getNodeMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -1246,7 +1247,7 @@ export const getNodeMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -1332,7 +1333,7 @@ export const getNodeMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -1418,7 +1419,7 @@ export const getNodeMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -1457,7 +1458,7 @@ export const getNodeMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -1496,7 +1497,7 @@ export const getNodeMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -1569,7 +1570,7 @@ export const getNodeMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -1608,7 +1609,7 @@ export const getNodeMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',

@@ -16,9 +16,13 @@ import (
 	"github.com/swaggest/jsonschema-go"
 )
 
-// MaxDisplayNameLen bounds every human-readable display name — dashboard, panel,
-// and variable display names, plus the grid layout title.
+// MaxDisplayNameLen bounds the human-readable display names — dashboard, panel,
+// and variable. The grid layout title has its own, larger bound (MaxLayoutTitleLen).
 const MaxDisplayNameLen = 128
+
+// MaxLayoutTitleLen bounds a grid layout title. It is larger than MaxDisplayNameLen
+// because v1 section (row) titles ran longer.
+const MaxLayoutTitleLen = 256
 
 type Display struct {
 	Name        string `json:"name" required:"true"`

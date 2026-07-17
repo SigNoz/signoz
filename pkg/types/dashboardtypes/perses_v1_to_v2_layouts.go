@@ -1,12 +1,60 @@
 package dashboardtypes
 
 import (
-	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/perses/spec/go/common"
 	"github.com/perses/spec/go/dashboard"
 )
+
+// panelRefPrefix is the JSON-ref prefix a grid item uses to point at a panel:
+// "#/spec/panels/<id>".
+const panelRefPrefix = "#/spec/panels/"
+
+// sanitizePanelID rewrites a widget id to something valid in a panel $ref. Perses
+// accepts only [a-zA-Z0-9_-] per ref segment (common.jsonRefMatching), so every
+// other rune (em dash, spaces, dots, unicode, …) is mapped to a hyphen.
+func sanitizePanelID(id string) string {
+	return strings.Map(func(r rune) rune {
+		switch {
+		case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r >= '0' && r <= '9', r == '_', r == '-':
+			return r
+		default:
+			return '-'
+		}
+	}, id)
+}
+
+// sanitizeWidgetIDs rewrites every widget id in the raw v1 data — widgets[].id,
+// layout[].i, panelMap keys and their widgets[].i — through sanitizePanelID, so a
+// panel's map key and the layout $ref pointing at it stay identical (an illegal char
+// in one but not the other would dangle the ref). Runs before panels/layouts build.
+func sanitizeWidgetIDs(data StorableDashboardData) {
+	sanitizeField := func(raw any, field string) {
+		items, _ := raw.([]any)
+		for _, it := range items {
+			if m, ok := it.(map[string]any); ok {
+				if s, ok := m[field].(string); ok {
+					m[field] = sanitizePanelID(s)
+				}
+			}
+		}
+	}
+	sanitizeField(data["widgets"], "id")
+	sanitizeField(data["layout"], "i")
+	if panelMap, ok := data["panelMap"].(map[string]any); ok {
+		for key, v := range panelMap {
+			if s := sanitizePanelID(key); s != key {
+				panelMap[s] = v
+				delete(panelMap, key)
+			}
+			if m, ok := v.(map[string]any); ok {
+				sanitizeField(m["widgets"], "i")
+			}
+		}
+	}
+}
 
 // ══════════════════════════════════════════════
 // Layouts (data.layout + data.panelMap)
@@ -23,12 +71,11 @@ func (d *v1Decoder) convertV1Layouts(data StorableDashboardData, panels map[stri
 		return nil
 	}
 
-	// react-grid-layout can persist the same widget id more than once. Drop the
-	// duplicates, mirroring the frontend's getUpdatedLayout: keep the first
-	// occurrence in stored order and discard the rest (the losing entry's
-	// geometry is thrown away, not merged). Dedupe here, before sortByPosition,
-	// so "first" means first-in-stored-order as the frontend sees it — not
-	// topmost. Entries with no id are left for the main loop to drop.
+	// react-grid-layout can persist the same widget id more than once. Keep the first
+	// occurrence in stored order (mirroring getUpdatedLayout — the losing entry's
+	// geometry is discarded, not merged) and drop the rest. Dedupe before sortByPosition
+	// so "first" means first-in-stored-order, not topmost. Entries with no id are left
+	// for the main loop to drop.
 	seenWidgetIds := make(map[string]bool, len(layout))
 	dedupedLayouts := layout[:0]
 	for _, item := range layout {
@@ -44,14 +91,12 @@ func (d *v1Decoder) convertV1Layouts(data StorableDashboardData, panels map[stri
 
 	rows := d.extractRowsAndCollapsedWidgets(data)
 
-	// Skip collapsed-row children a malformed dashboard lists in `layout` too.
-	isWidgetCollapsed := make(map[string]bool)
-	for _, row := range rows {
-		for _, child := range row.collapsedWidgets {
-			if id := d.readString(child, "i"); id != "" {
-				isWidgetCollapsed[id] = true
-				break
-			}
+	// ids placed directly in `layout`. A collapsed child also listed here is rendered from
+	// layout (the open section), so it's dropped from its collapsed section below.
+	placedInLayout := make(map[string]bool, len(layout))
+	for _, item := range layout {
+		if id := d.readString(item, "i"); id != "" {
+			placedInLayout[id] = true
 		}
 	}
 
@@ -66,12 +111,11 @@ func (d *v1Decoder) convertV1Layouts(data StorableDashboardData, panels map[stri
 	currentRowHeader := topSectionWithoutHeader
 	for _, item := range layout {
 		id := d.readString(item, "i")
-		if id == "" || isWidgetCollapsed[id] {
-			// widgets in collapsed sectinos will be added when those sections' row widgets are handled.
+		if id == "" {
 			continue
 		}
 		if row, ok := rows[id]; ok {
-			newRowHeader := &section{row: row, items: d.extractValidLayoutItemsForCollapsedSection(row.collapsedWidgets, panels)}
+			newRowHeader := &section{row: row, items: d.extractValidLayoutItemsForCollapsedSection(row.collapsedWidgets, panels, placedInLayout)}
 			sectionsWithHeader = append(sectionsWithHeader, newRowHeader)
 			// A collapsed row owns only its stashed children; later panels → ungrouped.
 			if row.collapsed {
@@ -100,17 +144,89 @@ func (d *v1Decoder) convertV1Layouts(data StorableDashboardData, panels map[stri
 	return out
 }
 
-// extractValidLayoutItemsForCollapsedSection keeps only the collapsed-row children
-// backed by a real panel, dropping ghosts. These come from panelMap and skip the
-// main loop's per-item panel check, so a grid never references a missing panel.
-func (d *v1Decoder) extractValidLayoutItemsForCollapsedSection(items []map[string]any, panels map[string]*Panel) []map[string]any {
-	out := make([]map[string]any, 0, len(items))
-	for _, item := range items {
-		if id := d.readString(item, "i"); id != "" {
-			if _, ok := panels[id]; ok {
-				out = append(out, item)
+// retainPlacedWidgets drops widgets the v1 layout never places, returning the
+// filtered widgets. v1 doesn't render an unplaced widget, so converting it — and
+// noting any problems it has — is pure noise; filter before conversion so only
+// rendered widgets reach convertV1Panels. A non-array widgets value is returned
+// untouched for convertV1Panels to flag; non-map entries are kept so it still
+// flags them as malformed.
+func retainPlacedWidgets(data StorableDashboardData) any {
+	widgets, ok := data["widgets"].([]any)
+	if !ok {
+		return data["widgets"]
+	}
+	placed := placedWidgetIDs(data)
+	kept := make([]any, 0, len(widgets))
+	for _, w := range widgets {
+		wm, ok := w.(map[string]any)
+		if !ok {
+			kept = append(kept, w) // malformed entry — leave it for convertV1Panels to note
+			continue
+		}
+		if id, _ := wm["id"].(string); placed[id] {
+			kept = append(kept, w)
+		}
+	}
+	return kept
+}
+
+// placedWidgetIDs returns the set of widget ids the v1 layout actually renders:
+// every id in `layout`, plus the collapsed-row children stashed in panelMap.
+// Read leniently (no malformed notes) — convertV1Layouts re-reads these and
+// reports any genuine problems.
+func placedWidgetIDs(data StorableDashboardData) map[string]bool {
+	ids := make(map[string]bool)
+	if layout, ok := data["layout"].([]any); ok {
+		for _, e := range layout {
+			if m, ok := e.(map[string]any); ok {
+				if i, ok := m["i"].(string); ok && i != "" {
+					ids[i] = true
+				}
 			}
 		}
+	}
+	if panelMap, ok := data["panelMap"].(map[string]any); ok {
+		for _, v := range panelMap {
+			m, ok := v.(map[string]any)
+			if !ok {
+				continue
+			}
+			widgets, ok := m["widgets"].([]any)
+			if !ok {
+				continue
+			}
+			for _, w := range widgets {
+				if wm, ok := w.(map[string]any); ok {
+					if i, ok := wm["i"].(string); ok && i != "" {
+						ids[i] = true
+					}
+				}
+			}
+		}
+	}
+	return ids
+}
+
+// extractValidLayoutItemsForCollapsedSection keeps only the collapsed-row children
+// backed by a real panel and not already placed in `layout`, dropping ghosts and any
+// child the open layout renders instead. These come from panelMap and skip the main
+// loop's per-item panel check, so a grid never references a missing or twice-placed panel.
+func (d *v1Decoder) extractValidLayoutItemsForCollapsedSection(items []map[string]any, panels map[string]*Panel, placedInLayout map[string]bool) []map[string]any {
+	out := make([]map[string]any, 0, len(items))
+	seen := make(map[string]bool, len(items))
+	for _, item := range items {
+		id := d.readString(item, "i")
+		if id == "" {
+			continue
+		}
+		if _, ok := panels[id]; !ok {
+			continue
+		}
+		if placedInLayout[id] || seen[id] {
+			continue
+		}
+		seen[id] = true
+		out = append(out, item)
 	}
 	return out
 }
@@ -127,7 +243,10 @@ func (d *v1Decoder) extractRowsAndCollapsedWidgets(data StorableDashboardData) m
 	panelMap := d.readObject(data, "panelMap")
 	rows := make(map[string]*rowInfo)
 	for _, w := range d.readObjects(data, "widgets") {
-		id := d.readString(w, "id")
+		// Read id directly (not via readString): a non-string id is skipped silently by
+		// convertV1Panels, so flagging it malformed here would fail the migration for a
+		// widget that's already been dropped.
+		id, _ := w["id"].(string)
 		if d.readString(w, "panelTypes") != "row" || id == "" {
 			continue
 		}
@@ -155,7 +274,7 @@ func (d *v1Decoder) buildV2GridLayout(row *rowInfo, items []map[string]any) Layo
 	spec := dashboard.GridLayoutSpec{Items: make([]dashboard.GridItem, 0, len(items))}
 	if row != nil {
 		spec.Display = &dashboard.GridLayoutDisplay{
-			Title:    row.title,
+			Title:    clipName(row.title, MaxLayoutTitleLen),
 			Collapse: &dashboard.GridLayoutCollapse{Open: !row.collapsed},
 		}
 	}
@@ -166,7 +285,7 @@ func (d *v1Decoder) buildV2GridLayout(row *rowInfo, items []map[string]any) Layo
 			Y:       d.readInt(item, "y"),
 			Width:   d.readInt(item, "w"),
 			Height:  d.readInt(item, "h"),
-			Content: &common.JSONRef{Ref: fmt.Sprintf("#/spec/panels/%s", d.readString(item, "i"))},
+			Content: &common.JSONRef{Ref: panelRefPrefix + d.readString(item, "i")},
 		})
 	}
 	compactGridItemsVertically(spec.Items)

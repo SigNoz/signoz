@@ -33,6 +33,11 @@ function DashboardContainer({
 		document.title = name;
 	}, [name]);
 
+	// Store is app-level and outlives the page: clear transient variable fetch state on
+	// unmount so the next visit doesn't inherit stale states / climbing cycle ids.
+	const resetVariableFetch = useDashboardStore((s) => s.resetVariableFetch);
+	useEffect(() => resetVariableFetch, [resetVariableFetch]);
+
 	const fullScreenHandle = useFullScreenHandle();
 
 	const { isLocked, canEditDashboard } = useDashboardEditGuard(dashboard);

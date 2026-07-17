@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 )
 
@@ -22,6 +23,7 @@ func newConditionBuilder(fm qbtypes.FieldMapper) qbtypes.ConditionBuilder {
 
 func (c *conditionBuilder) ConditionFor(
 	ctx context.Context,
+	orgID valuer.UUID,
 	startNs uint64,
 	endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
@@ -47,7 +49,7 @@ func (c *conditionBuilder) ConditionFor(
 
 	conds := make([]string, 0, len(keys))
 	for _, k := range keys {
-		cond, err := c.conditionForKey(ctx, startNs, endNs, k, operator, value, sb)
+		cond, err := c.conditionForKey(ctx, orgID, startNs, endNs, k, operator, value, sb)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -58,6 +60,7 @@ func (c *conditionBuilder) ConditionFor(
 
 func (c *conditionBuilder) conditionForKey(
 	ctx context.Context,
+	orgID valuer.UUID,
 	startNs uint64,
 	endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
@@ -69,7 +72,7 @@ func (c *conditionBuilder) conditionForKey(
 		value = querybuilder.FormatValueForContains(value)
 	}
 
-	fieldName, err := c.fm.FieldFor(ctx, startNs, endNs, key)
+	fieldName, err := c.fm.FieldFor(ctx, orgID, startNs, endNs, key)
 	if err != nil {
 		return "", err
 	}

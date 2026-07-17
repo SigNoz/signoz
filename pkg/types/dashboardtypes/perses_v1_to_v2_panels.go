@@ -34,15 +34,21 @@ func (d *v1Decoder) convertV1Panels(raw any) map[string]*Panel {
 			d.noteMalformedField(fmt.Sprintf("widgets[%d]", i), widgetRaw)
 			continue
 		}
-		id := d.readString(widget, "id")
-		if id == "" {
-			// dead widget that can't be referenced anywhere, skipping.
+		// A non-string (or missing) id can't be referenced by any layout entry, and
+		// v1 doesn't render such widgets either — skip silently, don't flag it as
+		// malformed. Read directly (not via readString) to avoid a malformed note.
+		id, ok := widget["id"].(string)
+		if !ok || id == "" {
 			continue
 		}
 		var panel *Panel
 		panelType := d.readString(widget, "panelTypes")
 		switch panelType {
 		case "graph":
+			panel = d.convertGraphWidget(widget)
+		case "time_series", "TIME_SERIES":
+			// Malformed panelTypes: the canonical v1 value is "graph". Some dashboards
+			// stored the v2/enum-style name instead; accept it as a time-series graph.
 			panel = d.convertGraphWidget(widget)
 		case "bar":
 			panel = d.convertBarWidget(widget)
@@ -60,9 +66,16 @@ func (d *v1Decoder) convertV1Panels(raw any) map[string]*Panel {
 			// "row" (section header) is handled by the layout pass;
 			continue
 		default:
-			d.note("widgets[%d] has unknown panel type %q", i, panelType)
+			// Unknown/unsupported panel type — v1 can't render it either, so skip the
+			// widget silently rather than failing the whole migration.
+			continue
 		}
 		if panel == nil {
+			continue
+		}
+		if len(panel.Spec.Queries) == 0 {
+			// No renderable queries — every query was dropped as unrenderable, or none
+			// were defined. v1 renders nothing, so skip the widget silently.
 			continue
 		}
 		panels[id] = panel
@@ -224,7 +237,7 @@ func (d *v1Decoder) convertListWidget(w map[string]any) *Panel {
 // ══════════════════════════════════════════════
 
 func (d *v1Decoder) widgetDisplay(w map[string]any) Display {
-	return Display{Name: d.readString(w, "title"), Description: d.readString(w, "description")}
+	return Display{Name: clipName(d.readString(w, "title"), MaxDisplayNameLen), Description: d.readString(w, "description")}
 }
 
 func (d *v1Decoder) basicVisualization(w map[string]any) BasicVisualization {
@@ -350,16 +363,9 @@ func mapV1Enum[T interface{ StringValue() string }](s string, fallback T, allowe
 func mapV1SpanGaps(raw any) SpanGaps {
 	switch v := raw.(type) {
 	case bool:
-		if v {
-			return SpanGaps{FillOnlyBelow: false}
-		}
-		return SpanGaps{FillOnlyBelow: true}
+		return SpanGaps{FillOnlyBelow: false}
 	case float64:
-		dur, err := valuer.ParseTextDuration(time.Duration(v * float64(time.Second)).String())
-		if err != nil {
-			return SpanGaps{FillOnlyBelow: false}
-		}
-		return SpanGaps{FillOnlyBelow: true, FillLessThan: dur}
+		return SpanGaps{FillOnlyBelow: true, FillLessThan: time.Duration(v * float64(time.Second)).String()}
 	}
 	return SpanGaps{FillOnlyBelow: false}
 }
@@ -403,7 +409,7 @@ func (d *v1Decoder) mapV1ComparisonThresholds(w map[string]any) []ComparisonThre
 			Operator: d.mapV1ComparisonOperator(d.readString(t, "thresholdOperator")),
 			Unit:     d.readString(t, "thresholdUnit"),
 			Color:    color,
-			Format:   mapV1ThresholdFormat(d.readString(t, "thresholdFormat")),
+			Format:   mapV1ThresholdFormat(t["thresholdFormat"]),
 		})
 	}
 	if len(out) == 0 {
@@ -431,7 +437,7 @@ func (d *v1Decoder) mapV1TableThresholds(w map[string]any) []TableThreshold {
 				Operator: d.mapV1ComparisonOperator(d.readString(t, "thresholdOperator")),
 				Unit:     d.readString(t, "thresholdUnit"),
 				Color:    color,
-				Format:   mapV1ThresholdFormat(d.readString(t, "thresholdFormat")),
+				Format:   mapV1ThresholdFormat(t["thresholdFormat"]),
 			},
 			ColumnName: columnName,
 		})
@@ -444,25 +450,30 @@ func (d *v1Decoder) mapV1TableThresholds(w map[string]any) []TableThreshold {
 
 func (d *v1Decoder) mapV1ComparisonOperator(s string) ComparisonOperator {
 	switch s {
-	case ">":
+	case ">", "gt":
 		return ComparisonOperatorAbove
-	case ">=":
+	case ">=", "gte":
 		return ComparisonOperatorAboveOrEqual
-	case "<":
+	case "<", "lt":
 		return ComparisonOperatorBelow
-	case "<=":
+	case "<=", "lte":
 		return ComparisonOperatorBelowOrEqual
-	case "=":
+	case "=", "==", "eq":
 		return ComparisonOperatorEqual
-	case "!=":
+	case "!=", "neq":
 		return ComparisonOperatorNotEqual
 	default:
-		d.note("threshold has unknown comparison operator %q", s)
+		// v1 often leaves the operator empty or carries an unknown value; default to
+		// "above" without flagging.
 		return ComparisonOperatorAbove
 	}
 }
 
-func mapV1ThresholdFormat(s string) ThresholdFormat {
+// mapV1ThresholdFormat reads the raw value (not via readString) so a non-string
+// thresholdFormat — some v1 dashboards store it as a number — defaults to text
+// silently instead of being flagged malformed.
+func mapV1ThresholdFormat(raw any) ThresholdFormat {
+	s, _ := raw.(string)
 	switch strings.ToLower(s) {
 	case "background":
 		return ThresholdFormatBackground

@@ -2,6 +2,7 @@ package dashboardtypes
 
 import (
 	"encoding/json"
+	"strconv"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -29,6 +30,11 @@ func (d *v1Decoder) convertV1WidgetQuery(widget map[string]any, panelKind PanelP
 	if len(envelopes) == 0 {
 		return nil
 	}
+	// List panels accept only a bare BuilderQuery — never a CompositeQuery. Keep the
+	// first query and drop the rest so a multi-query v1 list widget still migrates.
+	if panelKind == PanelKindList && len(envelopes) > 1 {
+		envelopes = envelopes[:1]
+	}
 	requestType := requestTypeForPanel(panelKind)
 
 	// A single query keeps its native kind — never wrapped in a CompositeQuery.
@@ -50,6 +56,50 @@ func (d *v1Decoder) convertV1WidgetQuery(widget map[string]any, panelKind PanelP
 			Plugin: QueryPlugin{Kind: QueryKindComposite, Spec: composite},
 		},
 	}}
+}
+
+// dropUnrenderableQueries removes queries whose aggregation can't render (see
+// queryIsUnrenderable). If every query is unrenderable the result is empty, so the
+// widget produces no panel and is skipped silently (convertV1Panels) — matching v1,
+// which renders nothing.
+func dropUnrenderableQueries(queries []map[string]any) []map[string]any {
+	renderable := make([]map[string]any, 0, len(queries))
+	for _, q := range queries {
+		if !queryIsUnrenderable(q) {
+			renderable = append(renderable, q)
+		}
+	}
+	return renderable
+}
+
+// queryIsUnrenderable reports whether a builder query can't render because of its
+// aggregations: a metrics query with none or an empty metric name, or a logs/traces
+// query with an empty aggregation expression. No aggregations is valid for a raw
+// logs/traces query, so that isn't flagged.
+func queryIsUnrenderable(q map[string]any) bool {
+	aggs, _ := q["aggregations"].([]any)
+	switch signalFromDataSource(q["dataSource"]) {
+	case telemetrytypes.SignalMetrics:
+		if len(aggs) == 0 {
+			return true
+		}
+		for _, a := range aggs {
+			if agg, ok := a.(map[string]any); ok {
+				if mn, _ := agg["metricName"].(string); mn == "" {
+					return true
+				}
+			}
+		}
+	case telemetrytypes.SignalLogs, telemetrytypes.SignalTraces:
+		for _, a := range aggs {
+			if agg, ok := a.(map[string]any); ok {
+				if expr, _ := agg["expression"].(string); expr == "" {
+					return true
+				}
+			}
+		}
+	}
+	return false
 }
 
 // requestTypeForPanel maps a v2 panel plugin kind to the request type (result
@@ -75,6 +125,7 @@ func requestTypeForPanel(panelKind PanelPluginKind) qb.RequestType {
 func (d *v1Decoder) collectV1QueryEnvelopes(widget map[string]any, panelKind PanelPluginKind) ([]map[string]any, telemetrytypes.Signal) {
 	queryMap := d.readObject(widget, "query")
 	if queryMap == nil {
+		d.note("widget %q has no query map", d.readString(widget, "id"))
 		return nil, telemetrytypes.Signal{}
 	}
 	rowLimitPanel := panelKind == PanelKindList || panelKind == PanelKindTable
@@ -84,55 +135,189 @@ func (d *v1Decoder) collectV1QueryEnvelopes(widget map[string]any, panelKind Pan
 	queryType := d.readString(queryMap, "queryType")
 	switch queryType {
 	case "promql":
+		promQueries := d.readObjects(queryMap, "promql")
 		var out []map[string]any
-		for _, q := range d.readObjects(queryMap, "promql") {
+		for _, q := range promQueries {
+			// Drop empty queries; if none remain the widget produces no queries and is
+			// skipped silently (convertV1Panels), as v1 renders nothing.
+			if d.readString(q, "query") == "" {
+				continue
+			}
 			out = append(out, promQLEnvelope(q))
 		}
 		return out, telemetrytypes.Signal{}
 
 	case "clickhouse_sql":
+		chQueries := d.readObjects(queryMap, "clickhouse_sql")
 		var out []map[string]any
-		for _, q := range d.readObjects(queryMap, "clickhouse_sql") {
+		for _, q := range chQueries {
+			// Drop empty queries; if none remain the widget produces no queries and is
+			// skipped silently (convertV1Panels), as v1 renders nothing.
+			if d.readString(q, "query") == "" {
+				continue
+			}
 			out = append(out, clickhouseEnvelope(q))
 		}
 		return out, telemetrytypes.Signal{}
 
-	case "builder":
+	// "builder" plus a blank queryType: v1 defaults an unset type to builder, so a
+	// missing value still carries a real builder query — try the builder path.
+	case "builder", "":
 		builder := d.readObject(queryMap, "builder")
 		if builder == nil {
+			d.note("widget %q has no builder data in the query map", d.readString(widget, "id"))
 			return nil, telemetrytypes.Signal{}
 		}
 		var out []map[string]any
 		var signal telemetrytypes.Signal
 		widgetType := d.readString(widget, "panelTypes")
-		for _, q := range d.readObjects(builder, "queryData") {
+		queries := d.readObjects(builder, "queryData")
+		assignQueryDataNames(queries)
+		for _, q := range queries {
 			normalizePreV5QueryData(q, widgetType)
 			normalizePreV5SelectColumns(q)
+			normalizePreV5GroupBy(q)
 			normalizePreV5PageSize(q, rowLimitPanel)
+			normalizeQueryLimit(q)
 			if needsAggregation {
 				ensureDefaultAggregation(q)
 			}
+		}
+		queries = dropUnrenderableQueries(queries)
+		for _, q := range queries {
 			name := d.readString(q, "queryName")
 			out = append(out, qb.WrapInV5Envelope(name, q, string(qb.QueryTypeBuilder.StringValue())))
 			if signal.IsZero() {
 				signal = signalFromDataSource(q["dataSource"])
 			}
 		}
-		for _, f := range d.readObjects(builder, "queryFormulas") {
+		formulas := d.readObjects(builder, "queryFormulas")
+		assignMissingFormulaNames(formulas)
+		for _, f := range formulas {
 			normalizePreV5QueryData(f, widgetType)
 			name := d.readString(f, "queryName")
-			out = append(out, qb.WrapInV5Envelope(name, f, string(qb.QueryTypeFormula.StringValue())))
+			env := qb.WrapInV5Envelope(name, f, string(qb.QueryTypeFormula.StringValue()))
+			// Drop a formula whose expression the validator rejects (blank/unparseable);
+			// v1 tolerated it but v2 fails the whole query. Reuse the real validator
+			// rather than reimplement it, as we do for functions.
+			if !formulaEnvelopeIsValid(env) {
+				continue
+			}
+			out = append(out, env)
 		}
 		for _, op := range d.readObjects(builder, "queryTraceOperator") {
+			// A trace operator's expression is the operation itself ("A=>B->C") and is
+			// required (ParseExpression rejects a blank one); drop it if empty.
+			expression := d.readString(op, "expression")
+			if expression == "" {
+				continue
+			}
 			normalizePreV5QueryData(op, widgetType)
+			normalizePreV5GroupBy(op)
 			name := d.readString(op, "queryName")
-			out = append(out, qb.WrapInV5Envelope(name, op, string(qb.QueryTypeTraceOperator.StringValue())))
+			out = append(out, traceOperatorEnvelope(name, expression, op))
 		}
 		return out, signal
 	default:
 		d.note("widget %q has unknown queryType %q", d.readString(widget, "id"), queryType)
 	}
 	return nil, telemetrytypes.Signal{}
+}
+
+// traceOperatorEnvelope builds a v5 builder_trace_operator envelope. WrapInV5Envelope
+// would misclassify a trace operator as a formula (its name differs from its
+// expression, e.g. "A=>B->C"), so route the map through the builder-query path —
+// temporarily aligning expression with name to dodge that heuristic — then restore the
+// real expression, drop the builder-only signal (a trace operator's spec has no signal
+// field), and set the trace-operator type.
+func traceOperatorEnvelope(name, expression string, op map[string]any) map[string]any {
+	op["expression"] = name
+	env := qb.WrapInV5Envelope(name, op, string(qb.QueryTypeBuilder.StringValue()))
+	if spec, ok := env["spec"].(map[string]any); ok {
+		delete(spec, "signal")
+		spec["expression"] = expression
+	}
+	env["type"] = string(qb.QueryTypeTraceOperator.StringValue())
+	return env
+}
+
+// maxQueries mirrors the frontend MAX_QUERIES; builder query names run A..Z.
+const maxQueries = 26
+
+// assignQueryDataNames names builder data queries the way the frontend does: each
+// unnamed query takes the first unused A..Z, deduped against existing names. It also
+// forces expression == queryName, since a data query's expression is always its own
+// name and WrapInV5Envelope's name != expression heuristic would otherwise
+// misclassify the query as a formula.
+func assignQueryDataNames(queries []map[string]any) {
+	taken := make(map[string]bool, len(queries))
+	for _, q := range queries {
+		if name, _ := q["queryName"].(string); name != "" {
+			taken[name] = true
+		}
+	}
+	for _, q := range queries {
+		name, _ := q["queryName"].(string)
+		if name == "" {
+			for i := 0; i < maxQueries; i++ {
+				candidate := string(rune('A' + i))
+				if !taken[candidate] {
+					name = candidate
+					taken[candidate] = true
+					break
+				}
+			}
+			q["queryName"] = name
+		}
+		q["expression"] = name
+	}
+}
+
+// formulaEnvelopeIsValid reports whether a builder_formula envelope's spec passes
+// QueryBuilderFormula.Validate (blank/unparseable expression, blank name, invalid
+// functions). Reuses the real validator rather than reimplementing it.
+func formulaEnvelopeIsValid(env map[string]any) bool {
+	spec, ok := env["spec"].(map[string]any)
+	if !ok {
+		return false
+	}
+	raw, err := json.Marshal(spec)
+	if err != nil {
+		return false
+	}
+	var f qb.QueryBuilderFormula
+	if err := json.Unmarshal(raw, &f); err != nil {
+		return false
+	}
+	return f.Validate() == nil
+}
+
+// maxFormulas mirrors the frontend MAX_FORMULAS; formula names run F1..F20.
+const maxFormulas = 20
+
+// assignMissingFormulaNames fills queryName for unnamed formulas, mirroring the
+// frontend: pick the first F{n} (n in 1..20) not already used by another formula.
+// Formulas that already have a name keep it.
+func assignMissingFormulaNames(formulas []map[string]any) {
+	taken := make(map[string]bool, len(formulas))
+	for _, f := range formulas {
+		if name, _ := f["queryName"].(string); name != "" {
+			taken[name] = true
+		}
+	}
+	for _, f := range formulas {
+		if name, _ := f["queryName"].(string); name != "" {
+			continue
+		}
+		for i := 1; i <= maxFormulas; i++ {
+			candidate := "F" + strconv.Itoa(i)
+			if !taken[candidate] {
+				f["queryName"] = candidate
+				taken[candidate] = true
+				break
+			}
+		}
+	}
 }
 
 func promQLEnvelope(q map[string]any) map[string]any {

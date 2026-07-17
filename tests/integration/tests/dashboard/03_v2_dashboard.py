@@ -723,7 +723,74 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
         assert response.status_code == HTTPStatus.OK, response.text
         assert {d["spec"]["display"]["name"] for d in response.json()["data"]["dashboards"]} == expected, query
 
-    # ── stage 5: name sort honours order ─────────────────────────────────────
+    # ── stage 5: free-text search (bare-word terms) ──────────────────────────
+    # A bare word is a case-insensitive substring search over the name and every
+    # tag key/value. Consecutive words are separate terms AND'd together (implicit
+    # AND); a quoted token matches the whole phrase; and a term composes with
+    # comparisons via AND/OR.
+    free_text_cases = [
+        # name substring, matched case-insensitively
+        ("overview", {"Alpha Overview", "Beta Overview", "Zeta Overview"}),
+        # matches a name substring on some rows and a tag value on the same rows
+        ("storage", {"Gamma Storage", "Delta Storage"}),
+        # tag value only (no name contains "pulse")
+        ("pulse", {"Alpha Overview", "Beta Overview", "Zeta Overview"}),
+        # tag value only
+        ("critical", {"Delta Storage", "Epsilon Metrics"}),
+        # tag key only
+        ("tier", {"Delta Storage", "Epsilon Metrics"}),
+        # tag key present on every dashboard
+        (
+            "env",
+            {
+                "Alpha Overview",
+                "Beta Overview",
+                "Gamma Storage",
+                "Delta Storage",
+                "Epsilon Metrics",
+                "Zeta Overview",
+            },
+        ),
+        # two words AND'd: only Delta matches both "delta" and "storage"
+        ("delta storage", {"Delta Storage"}),
+        # two words AND'd with no dashboard matching both
+        ("overview storage", set()),
+        # a quoted token matches the whole phrase
+        ('"Alpha Overview"', {"Alpha Overview"}),
+        # a free-text term AND'd with a comparison (the reviewer's case)
+        ("pulse AND env = 'prod'", {"Alpha Overview"}),
+        # a free-text term OR'd with a comparison
+        (
+            "storage OR env = 'staging'",
+            {"Gamma Storage", "Delta Storage", "Epsilon Metrics", "Zeta Overview"},
+        ),
+        # no match anywhere
+        ("nonexistent", set()),
+        # NOT over a term nothing matches returns everything — including these
+        # description-less dashboards, which a negated search must not exclude.
+        (
+            "NOT payment",
+            {
+                "Alpha Overview",
+                "Beta Overview",
+                "Gamma Storage",
+                "Delta Storage",
+                "Epsilon Metrics",
+                "Zeta Overview",
+            },
+        ),
+    ]
+    for query, expected in free_text_cases:
+        response = requests.get(
+            signoz.self.host_configs["8080"].get("/api/v2/users/me/dashboards"),
+            params={"query": query, "limit": 200},
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.OK, response.text
+        assert {d["spec"]["display"]["name"] for d in response.json()["data"]["dashboards"]} == expected, query
+
+    # ── stage 6: name sort honours order ─────────────────────────────────────
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v2/users/me/dashboards"),
         params={"sort": "name", "order": "asc", "limit": 200},
@@ -753,7 +820,7 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
         "Alpha Overview",
     ]
 
-    # ── stage 6: pinning floats a dashboard to the top of any ordering ───────
+    # ── stage 7: pinning floats a dashboard to the top of any ordering ───────
     assert (
         requests.put(
             signoz.self.host_configs["8080"].get(f"/api/v2/users/me/dashboards/{ids['lc-gamma']}/pins"),
@@ -791,7 +858,7 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
     ]
     assert all("pinned" not in d for d in response.json()["data"]["dashboards"])
 
-    # ── stage 7: unpinning restores the natural ordering ─────────────────────
+    # ── stage 8: unpinning restores the natural ordering ─────────────────────
     assert (
         requests.delete(
             signoz.self.host_configs["8080"].get(f"/api/v2/users/me/dashboards/{ids['lc-gamma']}/pins"),
@@ -815,7 +882,7 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
         "Zeta Overview",
     ]
 
-    # ── stage 8: update mutates the spec but keeps the immutable name ────────
+    # ── stage 9: update mutates the spec but keeps the immutable name ────────
     update_body = {
         "schemaVersion": "v6",
         "name": "lc-alpha",
@@ -840,7 +907,18 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
     )
     assert response.json()["data"]["spec"]["display"]["description"] == "now with a description"
 
-    # ── stage 9: a locked dashboard rejects updates until unlocked ───────────
+    # free-text search also matches the description (only Alpha has one now);
+    # quoted so the phrase matches as one substring rather than per-word
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v2/users/me/dashboards"),
+        params={"query": '"now with a description"', "limit": 200},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert {d["spec"]["display"]["name"] for d in response.json()["data"]["dashboards"]} == {"Alpha Overview"}
+
+    # ── stage 10: a locked dashboard rejects updates until unlocked ──────────
     assert (
         requests.put(
             signoz.self.host_configs["8080"].get(f"{BASE_URL}/{ids['lc-beta']}/lock"),
@@ -880,7 +958,7 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
         == HTTPStatus.OK
     )
 
-    # ── stage 10: delete removes the dashboard from get and list ─────────────
+    # ── stage 11: delete removes the dashboard from get and list ─────────────
     assert (
         requests.delete(
             signoz.self.host_configs["8080"].get(f"{BASE_URL}/{ids['lc-gamma']}"),
@@ -912,7 +990,7 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
         "Zeta Overview",
     }
 
-    # ── stage 11: clone suffixes the display name and mints a new, retrievable one ─
+    # ── stage 12: clone suffixes the display name and mints a new, retrievable one ─
     response = requests.post(
         signoz.self.host_configs["8080"].get(f"{BASE_URL}/{ids['lc-alpha']}/clone"),
         headers={"Authorization": f"Bearer {token}"},

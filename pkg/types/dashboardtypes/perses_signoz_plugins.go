@@ -8,6 +8,7 @@ import (
 	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/prometheus/common/model"
 	"github.com/swaggest/jsonschema-go"
 )
 
@@ -256,7 +257,7 @@ type ThresholdWithLabel struct {
 	// still fails, so a genuinely absent value is still rejected). nullable:"false"
 	// keeps it a plain required number in the schema — it is never null in valid
 	// data (validation rejects nil), so the pointer must not leak as `number|null`.
-	Value *float64 `json:"value" validate:"required" required:"true" nullable:"false"`
+	Value *float64 `json:"value" validate:"required" required:"true" nullable:"false" format:"double"`
 	Unit  string   `json:"unit"`
 	Color string   `json:"color" validate:"required" required:"true"`
 	Label string   `json:"label"`
@@ -264,7 +265,7 @@ type ThresholdWithLabel struct {
 
 type ComparisonThreshold struct {
 	// Value is a pointer so a threshold at 0 is valid (see ThresholdWithLabel.Value).
-	Value    *float64           `json:"value" validate:"required" required:"true" nullable:"false"`
+	Value    *float64           `json:"value" validate:"required" required:"true" nullable:"false" format:"double"`
 	Operator ComparisonOperator `json:"operator"`
 	Unit     string             `json:"unit"`
 	Color    string             `json:"color" validate:"required" required:"true"`
@@ -627,8 +628,39 @@ func (fm *FillMode) UnmarshalJSON(data []byte) error {
 }
 
 type SpanGaps struct {
-	FillOnlyBelow bool                `json:"fillOnlyBelow" description:"Controls whether lines connect across null values. When false (default), all gaps are connected. When true, only gaps smaller than fillLessThan are connected."`
-	FillLessThan  valuer.TextDuration `json:"fillLessThan" description:"The maximum gap size to connect when fillOnlyBelow is true. Gaps larger than this duration are left disconnected."`
+	FillOnlyBelow bool   `json:"fillOnlyBelow" description:"Controls whether lines connect across null values. When false (default), all gaps are connected. When true, only gaps smaller than fillLessThan are connected."`
+	FillLessThan  string `json:"fillLessThan" description:"The maximum gap size to connect when fillOnlyBelow is true. Gaps larger than this duration are left disconnected."`
+}
+
+func (sg *SpanGaps) UnmarshalJSON(data []byte) error {
+	type alias SpanGaps
+	var tmp alias
+	if err := json.Unmarshal(data, &tmp); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid spanGaps")
+	}
+	*sg = SpanGaps(tmp)
+	return sg.validate()
+}
+
+// validate enforces FillLessThan only when FillOnlyBelow is set, since that is
+// the only mode in which it applies. It must then be a valid positive duration.
+// prometheus's parser accepts day/week/year units (e.g. "1d"); time.ParseDuration
+// caps at hours.
+func (sg SpanGaps) validate() error {
+	if !sg.FillOnlyBelow {
+		return nil
+	}
+	if sg.FillLessThan == "" {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spanGaps.fillLessThan is required when fillOnlyBelow is true")
+	}
+	d, err := model.ParseDuration(sg.FillLessThan)
+	if err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid spanGaps.fillLessThan duration %q", sg.FillLessThan)
+	}
+	if d <= 0 {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spanGaps.fillLessThan duration must be positive, got %q", sg.FillLessThan)
+	}
+	return nil
 }
 
 type PrecisionOption struct{ valuer.String }

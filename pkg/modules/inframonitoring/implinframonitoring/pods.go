@@ -248,6 +248,7 @@ func (m *module) getPodsTableMetadata(ctx context.Context, orgID valuer.UUID, re
 // Groups absent from the result map have implicit zero counts (caller default).
 func (m *module) getPerGroupPodPhaseCounts(
 	ctx context.Context,
+	orgID valuer.UUID,
 	start, end int64,
 	filter *qbtypes.Filter,
 	groupBy []qbtypes.GroupByKey,
@@ -288,7 +289,7 @@ func (m *module) getPerGroupPodPhaseCounts(
 		timeSeriesFPs.LE("unix_milli", flooredEndMs),
 	)
 	if mergedFilterExpr != "" {
-		filterClause, err := m.buildFilterClause(ctx, &qbtypes.Filter{Expression: mergedFilterExpr}, start, end)
+		filterClause, err := m.buildFilterClause(ctx, orgID, &qbtypes.Filter{Expression: mergedFilterExpr}, start, end)
 		if err != nil {
 			return nil, err
 		}
@@ -397,6 +398,7 @@ func (m *module) getPerGroupPodPhaseCounts(
 // runs the query. The returned counts map is empty (never nil) when gated off.
 func (m *module) getPerGroupPodStatusCountsWithReqMetricChecks(
 	ctx context.Context,
+	orgID valuer.UUID,
 	start, end int64,
 	filter *qbtypes.Filter,
 	groupBy []qbtypes.GroupByKey,
@@ -426,7 +428,7 @@ func (m *module) getPerGroupPodStatusCountsWithReqMetricChecks(
 		return map[string]podStatusCounts{}, warning, nil
 	}
 
-	counts, err := m.getPerGroupPodStatusCounts(ctx, start, end, filter, groupBy, pageGroups)
+	counts, err := m.getPerGroupPodStatusCounts(ctx, orgID, start, end, filter, groupBy, pageGroups)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -448,6 +450,7 @@ func (m *module) getPerGroupPodStatusCountsWithReqMetricChecks(
 // Groups absent from the result map have implicit zero counts (caller default).
 func (m *module) getPerGroupPodStatusCounts(
 	ctx context.Context,
+	orgID valuer.UUID,
 	start, end int64,
 	filter *qbtypes.Filter,
 	groupBy []qbtypes.GroupByKey,
@@ -476,7 +479,7 @@ func (m *module) getPerGroupPodStatusCounts(
 		err          error
 	)
 	if mergedFilterExpr != "" {
-		filterClause, err = m.buildFilterClause(ctx, &qbtypes.Filter{Expression: mergedFilterExpr}, start, end)
+		filterClause, err = m.buildFilterClause(ctx, orgID, &qbtypes.Filter{Expression: mergedFilterExpr}, start, end)
 		if err != nil {
 			return nil, err
 		}
@@ -774,6 +777,7 @@ func (m *module) getPerGroupPodStatusCounts(
 // Groups absent from the result map have no data (caller default).
 func (m *module) getPerGroupPodRestartCounts(
 	ctx context.Context,
+	orgID valuer.UUID,
 	start, end int64,
 	filter *qbtypes.Filter,
 	groupBy []qbtypes.GroupByKey,
@@ -798,7 +802,7 @@ func (m *module) getPerGroupPodRestartCounts(
 		err          error
 	)
 	if mergedFilterExpr != "" {
-		filterClause, err = m.buildFilterClause(ctx, &qbtypes.Filter{Expression: mergedFilterExpr}, start, end)
+		filterClause, err = m.buildFilterClause(ctx, orgID, &qbtypes.Filter{Expression: mergedFilterExpr}, start, end)
 		if err != nil {
 			return nil, err
 		}

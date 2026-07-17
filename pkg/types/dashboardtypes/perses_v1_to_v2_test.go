@@ -142,14 +142,16 @@ func TestConvertV1DetectsMalformedFields(t *testing.T) {
 		{"widgets not an array", map[string]any{"widgets": "nope"}},
 		{"tags not an array", map[string]any{"tags": "nope"}},
 		{"non-string tag element", map[string]any{"tags": []any{"ok", 42}}},
-		{"scalar widget field wrong type", map[string]any{"widgets": []any{
-			map[string]any{"id": "w1", "panelTypes": "graph", "title": float64(3)},
-		}}},
-		{"nested query wrong type", map[string]any{"widgets": []any{
-			map[string]any{"id": "w1", "panelTypes": "graph", "query": "nope"},
-		}}},
+		{"scalar widget field wrong type", map[string]any{
+			"widgets": []any{map[string]any{"id": "w1", "panelTypes": "graph", "title": float64(3)}},
+			"layout":  []any{map[string]any{"i": "w1", "x": float64(0), "y": float64(0), "w": float64(6), "h": float64(6)}},
+		}},
+		{"nested query wrong type", map[string]any{
+			"widgets": []any{map[string]any{"id": "w1", "panelTypes": "graph", "query": "nope"}},
+			"layout":  []any{map[string]any{"i": "w1", "x": float64(0), "y": float64(0), "w": float64(6), "h": float64(6)}},
+		}},
 		{"deep layout coordinate wrong type", map[string]any{
-			"widgets": []any{map[string]any{"id": "w1", "panelTypes": "graph"}},
+			"widgets": []any{map[string]any{"id": "w1", "panelTypes": "graph", "query": singleLogsBuilderQuery()}},
 			"layout":  []any{map[string]any{"i": "w1", "x": "0", "y": float64(0)}},
 		}},
 	}
@@ -188,12 +190,27 @@ func TestMoldedV1TagsPassValidation(t *testing.T) {
 	}
 }
 
+// singleLogsBuilderQuery is a minimal renderable widget query — one logs builder
+// query (defaults to count()). Stand-in widgets in the layout tests attach it so
+// they produce a v2 query and aren't dropped as query-less. Fresh map per call:
+// conversion mutates the query in place.
+func singleLogsBuilderQuery() map[string]any {
+	return map[string]any{
+		"queryType": "builder",
+		"builder": map[string]any{
+			"queryData": []any{
+				map[string]any{"queryName": "A", "expression": "A", "dataSource": "logs"},
+			},
+		},
+	}
+}
+
 // TestConvertV1Panels covers the dispatcher itself: panels are keyed by widget
 // id, and row and empty-id widgets are dropped.
 func TestConvertV1Panels(t *testing.T) {
 	widgets := []any{
-		map[string]any{"id": "g1", "panelTypes": "graph", "title": "CPU"},
-		map[string]any{"id": "t1", "panelTypes": "table"},
+		map[string]any{"id": "g1", "panelTypes": "graph", "title": "CPU", "query": singleLogsBuilderQuery()},
+		map[string]any{"id": "t1", "panelTypes": "table", "query": singleLogsBuilderQuery()},
 		map[string]any{"id": "row1", "panelTypes": "row", "title": "section"},
 		map[string]any{"id": "", "panelTypes": "graph"},
 	}
@@ -211,14 +228,13 @@ func TestConvertV1Panels(t *testing.T) {
 	assert.NotContains(t, panels, "row1", "row widgets are handled by the layout pass")
 }
 
-// TestConvertV1PanelsFlagsUnknownType verifies an unrecognized panelTypes is
-// recorded as a problem (so the dashboard is logged and skipped) rather than
-// silently dropped.
-func TestConvertV1PanelsFlagsUnknownType(t *testing.T) {
+// TestConvertV1PanelsSkipsUnknownType verifies an unrecognized panelTypes is
+// dropped silently (v1 can't render it either) without failing the migration.
+func TestConvertV1PanelsSkipsUnknownType(t *testing.T) {
 	d := &v1Decoder{}
 	panels := d.convertV1Panels([]any{map[string]any{"id": "u1", "panelTypes": "somethingelse"}})
 	assert.NotContains(t, panels, "u1")
-	require.Error(t, d.errIfHasMalformedFields())
+	require.NoError(t, d.errIfHasMalformedFields())
 }
 
 func TestConvertGraphWidgetToTimeSeriesPanel(t *testing.T) {
@@ -278,7 +294,7 @@ func TestConvertGraphWidgetToTimeSeriesPanel(t *testing.T) {
 	assert.Equal(t, LineStyleDashed, spec.ChartAppearance.LineStyle)
 	assert.Equal(t, FillModeGradient, spec.ChartAppearance.FillMode)
 	assert.True(t, spec.ChartAppearance.SpanGaps.FillOnlyBelow)
-	assert.Equal(t, "1m0s", spec.ChartAppearance.SpanGaps.FillLessThan.StringValue())
+	assert.Equal(t, "1m0s", spec.ChartAppearance.SpanGaps.FillLessThan)
 
 	require.NotNil(t, spec.Axes.SoftMin)
 	assert.Equal(t, float64(0), *spec.Axes.SoftMin)
@@ -362,6 +378,10 @@ func TestConvertV1ToV2HappyPath(t *testing.T) {
 				// widget with missing id — dropped
 				map[string]any{"panelTypes": "graph", "title": "no id"},
 			},
+			"layout": []any{
+				map[string]any{"i": "panel-1", "x": float64(0), "y": float64(0), "w": float64(6), "h": float64(6)},
+				map[string]any{"i": "panel-2", "x": float64(6), "y": float64(0), "w": float64(6), "h": float64(6)},
+			},
 		},
 	}
 
@@ -417,17 +437,17 @@ func TestSpanGapsMapping(t *testing.T) {
 		expectedFillOnlyBelow bool
 		expectedFillLessThan  string
 	}{
-		{scenario: "true spans every gap", rawSpanGaps: true, expectedFillOnlyBelow: false, expectedFillLessThan: "0s"},
-		{scenario: "false spans no gaps", rawSpanGaps: false, expectedFillOnlyBelow: true, expectedFillLessThan: "0s"},
+		{scenario: "true spans every gap", rawSpanGaps: true, expectedFillOnlyBelow: false, expectedFillLessThan: ""},
+		{scenario: "false has no threshold so fill-only-below stays off", rawSpanGaps: false, expectedFillOnlyBelow: false, expectedFillLessThan: ""},
 		{scenario: "number is seconds threshold", rawSpanGaps: float64(30), expectedFillOnlyBelow: true, expectedFillLessThan: "30s"},
-		{scenario: "missing defaults to span all", rawSpanGaps: nil, expectedFillOnlyBelow: false, expectedFillLessThan: "0s"},
+		{scenario: "missing defaults to span all", rawSpanGaps: nil, expectedFillOnlyBelow: false, expectedFillLessThan: ""},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.scenario, func(t *testing.T) {
 			got := mapV1SpanGaps(tc.rawSpanGaps)
 			assert.Equal(t, tc.expectedFillOnlyBelow, got.FillOnlyBelow)
-			assert.Equal(t, tc.expectedFillLessThan, got.FillLessThan.StringValue())
+			assert.Equal(t, tc.expectedFillLessThan, got.FillLessThan)
 		})
 	}
 }
@@ -1034,8 +1054,8 @@ func TestConvertV1LayoutsRootOnly(t *testing.T) {
 			map[string]any{"i": "p-2", "x": float64(6), "y": float64(0), "w": float64(6), "h": float64(6)},
 		},
 		"widgets": []any{
-			map[string]any{"id": "p-1", "panelTypes": "graph"},
-			map[string]any{"id": "p-2", "panelTypes": "graph"},
+			map[string]any{"id": "p-1", "panelTypes": "graph", "query": singleLogsBuilderQuery()},
+			map[string]any{"id": "p-2", "panelTypes": "graph", "query": singleLogsBuilderQuery()},
 		},
 	}
 
@@ -1065,8 +1085,8 @@ func TestConvertV1LayoutsDropsDuplicateWidgetIDs(t *testing.T) {
 			map[string]any{"i": "p-2", "x": float64(6), "y": float64(0), "w": float64(6), "h": float64(6)},
 		},
 		"widgets": []any{
-			map[string]any{"id": "p-1", "panelTypes": "graph"},
-			map[string]any{"id": "p-2", "panelTypes": "graph"},
+			map[string]any{"id": "p-1", "panelTypes": "graph", "query": singleLogsBuilderQuery()},
+			map[string]any{"id": "p-2", "panelTypes": "graph", "query": singleLogsBuilderQuery()},
 		},
 	}
 
@@ -1094,8 +1114,8 @@ func TestConvertV1LayoutsWithCollapsedSection(t *testing.T) {
 	data := StorableDashboardData{
 		"widgets": []any{
 			map[string]any{"id": "row-1", "panelTypes": "row", "title": "Latency"},
-			map[string]any{"id": "p-1", "panelTypes": "graph"},
-			map[string]any{"id": "p-2", "panelTypes": "graph"},
+			map[string]any{"id": "p-1", "panelTypes": "graph", "query": singleLogsBuilderQuery()},
+			map[string]any{"id": "p-2", "panelTypes": "graph", "query": singleLogsBuilderQuery()},
 		},
 		"layout": []any{
 			map[string]any{"i": "row-1", "x": float64(0), "y": float64(0), "w": float64(12), "h": float64(1)},
@@ -1115,12 +1135,16 @@ func TestConvertV1LayoutsWithCollapsedSection(t *testing.T) {
 	d := &v1Decoder{}
 	layouts := d.convertV1Layouts(data, d.convertV1Panels(data["widgets"]))
 	require.NoError(t, d.errIfHasMalformedFields())
-	require.Len(t, layouts, 2, "one root grid (p-2) + one section grid (row-1 with p-1)")
+	require.Len(t, layouts, 2, "root grid (p-1 and p-2, both placed from layout) + empty collapsed section")
 
+	// p-1 appears in both `layout` and the collapsed row's panelMap. The layout entry
+	// wins — the frontend renders it under the open layout, not the collapsed row — so
+	// p-1 and p-2 both land in the root grid and the collapsed section is left empty.
 	rootSpec, ok := layouts[0].Spec.(*dashboard.GridLayoutSpec)
 	require.True(t, ok)
-	require.Len(t, rootSpec.Items, 1)
-	assert.Equal(t, "#/spec/panels/p-2", rootSpec.Items[0].Content.Ref)
+	require.Len(t, rootSpec.Items, 2)
+	assert.Equal(t, "#/spec/panels/p-1", rootSpec.Items[0].Content.Ref)
+	assert.Equal(t, "#/spec/panels/p-2", rootSpec.Items[1].Content.Ref)
 	assert.Nil(t, rootSpec.Display)
 
 	sectionSpec, ok := layouts[1].Spec.(*dashboard.GridLayoutSpec)
@@ -1129,8 +1153,7 @@ func TestConvertV1LayoutsWithCollapsedSection(t *testing.T) {
 	assert.Equal(t, "Latency", sectionSpec.Display.Title)
 	require.NotNil(t, sectionSpec.Display.Collapse)
 	assert.False(t, sectionSpec.Display.Collapse.Open, "collapsed=true → open=false")
-	require.Len(t, sectionSpec.Items, 1)
-	assert.Equal(t, "#/spec/panels/p-1", sectionSpec.Items[0].Content.Ref)
+	assert.Empty(t, sectionSpec.Items, "p-1 is rendered from layout, not the collapsed section")
 }
 
 // TestConvertV1LayoutsExpandedSectionsNoPanelMap covers the common real-world
@@ -1141,11 +1164,11 @@ func TestConvertV1LayoutsExpandedSectionsNoPanelMap(t *testing.T) {
 	data := StorableDashboardData{
 		"widgets": []any{
 			map[string]any{"id": "row_s1", "panelTypes": "row", "title": "section 1"},
-			map[string]any{"id": "s1p1", "panelTypes": "graph"},
-			map[string]any{"id": "s1p2", "panelTypes": "graph"},
+			map[string]any{"id": "s1p1", "panelTypes": "graph", "query": singleLogsBuilderQuery()},
+			map[string]any{"id": "s1p2", "panelTypes": "graph", "query": singleLogsBuilderQuery()},
 			map[string]any{"id": "row_s2", "panelTypes": "row", "title": "section 2"},
-			map[string]any{"id": "s2p1", "panelTypes": "graph"},
-			map[string]any{"id": "s2p2", "panelTypes": "graph"},
+			map[string]any{"id": "s2p1", "panelTypes": "graph", "query": singleLogsBuilderQuery()},
+			map[string]any{"id": "s2p2", "panelTypes": "graph", "query": singleLogsBuilderQuery()},
 		},
 		"layout": []any{
 			map[string]any{"i": "row_s1", "x": float64(0), "y": float64(0), "w": float64(12), "h": float64(1)},
@@ -1189,8 +1212,8 @@ func TestConvertV1LayoutsExpandedSectionsNoPanelMap(t *testing.T) {
 func TestConvertV1LayoutsCompactsOverlapping(t *testing.T) {
 	data := StorableDashboardData{
 		"widgets": []any{
-			map[string]any{"id": "w1", "panelTypes": "graph"},
-			map[string]any{"id": "w2", "panelTypes": "graph"},
+			map[string]any{"id": "w1", "panelTypes": "graph", "query": singleLogsBuilderQuery()},
+			map[string]any{"id": "w2", "panelTypes": "graph", "query": singleLogsBuilderQuery()},
 		},
 		"layout": []any{
 			map[string]any{"i": "w1", "x": float64(0), "y": float64(0), "w": float64(6), "h": float64(6)},
@@ -1216,7 +1239,7 @@ func TestConvertV1LayoutsCompactsOverlapping(t *testing.T) {
 
 func TestConvertV1LayoutsClampsNegativeY(t *testing.T) {
 	data := StorableDashboardData{
-		"widgets": []any{map[string]any{"id": "w1", "panelTypes": "graph"}},
+		"widgets": []any{map[string]any{"id": "w1", "panelTypes": "graph", "query": singleLogsBuilderQuery()}},
 		"layout": []any{
 			map[string]any{"i": "w1", "x": float64(0), "y": float64(-1), "w": float64(6), "h": float64(6)},
 		},
@@ -1236,8 +1259,8 @@ func TestConvertV1LayoutsClampsNegativeY(t *testing.T) {
 func TestConvertV1LayoutsClampsXBounds(t *testing.T) {
 	data := StorableDashboardData{
 		"widgets": []any{
-			map[string]any{"id": "w1", "panelTypes": "graph"},
-			map[string]any{"id": "w2", "panelTypes": "graph"},
+			map[string]any{"id": "w1", "panelTypes": "graph", "query": singleLogsBuilderQuery()},
+			map[string]any{"id": "w2", "panelTypes": "graph", "query": singleLogsBuilderQuery()},
 		},
 		"layout": []any{
 			map[string]any{"i": "w1", "x": float64(-2), "y": float64(0), "w": float64(6), "h": float64(6)},
@@ -1269,8 +1292,8 @@ func TestConvertV1LayoutsToleratesNonObjectPanelMap(t *testing.T) {
 	data := StorableDashboardData{
 		"widgets": []any{
 			map[string]any{"id": "row_overview", "panelTypes": "row", "title": "Overview"},
-			map[string]any{"id": "v_up", "panelTypes": "value"},
-			map[string]any{"id": "v_version", "panelTypes": "value"},
+			map[string]any{"id": "v_up", "panelTypes": "value", "query": singleLogsBuilderQuery()},
+			map[string]any{"id": "v_version", "panelTypes": "value", "query": singleLogsBuilderQuery()},
 		},
 		"layout": []any{
 			map[string]any{"i": "row_overview", "x": float64(0), "y": float64(0), "w": float64(12), "h": float64(1)},
@@ -1306,7 +1329,7 @@ func TestConvertV1LayoutsDropsEntryForUnrenderableWidget(t *testing.T) {
 	// records a malformed-field note; here we exercise the layout pass directly.)
 	data := StorableDashboardData{
 		"widgets": []any{
-			map[string]any{"id": "p-1", "panelTypes": "graph"},
+			map[string]any{"id": "p-1", "panelTypes": "graph", "query": singleLogsBuilderQuery()},
 			map[string]any{"id": "e-1", "panelTypes": "EMPTY_WIDGET"},
 		},
 		"layout": []any{
@@ -1336,7 +1359,7 @@ func TestConvertV1LayoutsDropsCollapsedChildWithNoPanel(t *testing.T) {
 	data := StorableDashboardData{
 		"widgets": []any{
 			map[string]any{"id": "row-1", "panelTypes": "row", "title": "S"},
-			map[string]any{"id": "p-1", "panelTypes": "graph"},
+			map[string]any{"id": "p-1", "panelTypes": "graph", "query": singleLogsBuilderQuery()},
 		},
 		"layout": []any{
 			map[string]any{"i": "row-1", "x": float64(0), "y": float64(0), "w": float64(12), "h": float64(1)},
@@ -1472,12 +1495,21 @@ func TestConvertV1VariablesSkipsDynamicMissingAttribute(t *testing.T) {
 }
 
 // TestConvertV1VariablesFlagsUnknownType verifies a named variable with an
-// unrecognized type is recorded as a problem (dashboard logged and skipped)
-// rather than silently dropped.
+// unrecognized (non-empty) type is recorded as a problem (dashboard logged and
+// skipped) rather than silently dropped.
 func TestConvertV1VariablesFlagsUnknownType(t *testing.T) {
 	d := &v1Decoder{}
 	d.convertV1Variables(map[string]any{"u-1": map[string]any{"name": "ok", "type": "WHATEVER"}})
 	require.Error(t, d.errIfHasMalformedFields())
+}
+
+// TestConvertV1VariablesSkipsEmptyType verifies a variable with no type is dropped
+// silently, without failing the migration.
+func TestConvertV1VariablesSkipsEmptyType(t *testing.T) {
+	d := &v1Decoder{}
+	vars := d.convertV1Variables(map[string]any{"u-1": map[string]any{"name": "ok", "type": ""}})
+	assert.Empty(t, vars)
+	require.NoError(t, d.errIfHasMalformedFields())
 }
 
 func TestConvertV1VariablesDefaultFromSelectedSlice(t *testing.T) {

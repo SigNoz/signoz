@@ -10,6 +10,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 )
 
@@ -87,6 +88,7 @@ func (b *resourceFilterStatementBuilder[T]) getKeySelectors(query qbtypes.QueryB
 // Build builds a SQL query based on the given parameters.
 func (b *resourceFilterStatementBuilder[T]) Build(
 	ctx context.Context,
+	orgID valuer.UUID,
 	start uint64,
 	end uint64,
 	requestType qbtypes.RequestType,
@@ -98,12 +100,12 @@ func (b *resourceFilterStatementBuilder[T]) Build(
 	q.From(fmt.Sprintf("%s.%s", b.dbName, b.tableName))
 
 	keySelectors := b.getKeySelectors(query)
-	keys, _, err := b.metadataStore.GetKeysMulti(ctx, keySelectors)
+	keys, _, err := b.metadataStore.GetKeysMulti(ctx, orgID, keySelectors)
 	if err != nil {
 		return nil, err
 	}
 
-	isNoOp, err := b.addConditions(ctx, q, start, end, query, keys, variables)
+	isNoOp, err := b.addConditions(ctx, orgID, q, start, end, query, keys, variables)
 	if err != nil {
 		return nil, err
 	}
@@ -126,12 +128,13 @@ func (b *resourceFilterStatementBuilder[T]) Build(
 // the resource filter. Returns (nil, nil) when the filter is a no-op.
 func (b *resourceFilterStatementBuilder[T]) BuildCount(
 	ctx context.Context,
+	orgID valuer.UUID,
 	start uint64,
 	end uint64,
 	query qbtypes.QueryBuilderQuery[T],
 	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
-	inner, err := b.Build(ctx, start, end, qbtypes.RequestTypeRaw, query, variables)
+	inner, err := b.Build(ctx, orgID, start, end, qbtypes.RequestTypeRaw, query, variables)
 	if err != nil || inner == nil {
 		return nil, err
 	}
@@ -146,6 +149,7 @@ func (b *resourceFilterStatementBuilder[T]) BuildCount(
 // meaning the CTE would select all fingerprints and should be skipped entirely.
 func (b *resourceFilterStatementBuilder[T]) addConditions(
 	ctx context.Context,
+	orgID valuer.UUID,
 	sb *sqlbuilder.SelectBuilder,
 	start, end uint64,
 	query qbtypes.QueryBuilderQuery[T],
@@ -159,6 +163,7 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 		// warnings would be encountered as part of the main condition already
 		filterWhereClause, err := querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
 			Context:            ctx,
+			OrgID:              orgID,
 			Logger:             b.logger,
 			FieldMapper:        b.fieldMapper,
 			ConditionBuilder:   b.conditionBuilder,

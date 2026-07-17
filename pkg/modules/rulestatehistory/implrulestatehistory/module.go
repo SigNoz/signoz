@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/rulestatehistorytypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type module struct {
@@ -23,20 +24,20 @@ func (m *module) GetLastSavedRuleStateHistory(ctx context.Context, ruleID string
 	return m.store.GetLastSavedRuleStateHistory(ctx, ruleID)
 }
 
-func (m *module) GetHistoryTimeline(ctx context.Context, ruleID string, query rulestatehistorytypes.Query) ([]rulestatehistorytypes.RuleStateHistory, uint64, error) {
-	return m.store.ReadRuleStateHistoryByRuleID(ctx, ruleID, &query)
+func (m *module) GetHistoryTimeline(ctx context.Context, orgID valuer.UUID, ruleID string, query rulestatehistorytypes.Query) ([]rulestatehistorytypes.RuleStateHistory, uint64, error) {
+	return m.store.ReadRuleStateHistoryByRuleID(ctx, orgID, ruleID, &query)
 }
 
-func (m *module) GetHistoryFilterKeys(ctx context.Context, ruleID string, query rulestatehistorytypes.Query, search string, limit int64) (*telemetrytypes.GettableFieldKeys, error) {
-	return m.store.ReadRuleStateHistoryFilterKeysByRuleID(ctx, ruleID, &query, search, limit)
+func (m *module) GetHistoryFilterKeys(ctx context.Context, orgID valuer.UUID, ruleID string, query rulestatehistorytypes.Query, search string, limit int64) (*telemetrytypes.GettableFieldKeys, error) {
+	return m.store.ReadRuleStateHistoryFilterKeysByRuleID(ctx, orgID, ruleID, &query, search, limit)
 }
 
-func (m *module) GetHistoryFilterValues(ctx context.Context, ruleID string, key string, query rulestatehistorytypes.Query, search string, limit int64) (*telemetrytypes.GettableFieldValues, error) {
-	return m.store.ReadRuleStateHistoryFilterValuesByRuleID(ctx, ruleID, key, &query, search, limit)
+func (m *module) GetHistoryFilterValues(ctx context.Context, orgID valuer.UUID, ruleID string, key string, query rulestatehistorytypes.Query, search string, limit int64) (*telemetrytypes.GettableFieldValues, error) {
+	return m.store.ReadRuleStateHistoryFilterValuesByRuleID(ctx, orgID, ruleID, key, &query, search, limit)
 }
 
-func (m *module) GetHistoryContributors(ctx context.Context, ruleID string, query rulestatehistorytypes.Query) ([]rulestatehistorytypes.RuleStateHistoryContributor, error) {
-	return m.store.ReadRuleStateHistoryTopContributorsByRuleID(ctx, ruleID, &query)
+func (m *module) GetHistoryContributors(ctx context.Context, orgID valuer.UUID, ruleID string, query rulestatehistorytypes.Query) ([]rulestatehistorytypes.RuleStateHistoryContributor, error) {
+	return m.store.ReadRuleStateHistoryTopContributorsByRuleID(ctx, orgID, ruleID, &query)
 }
 
 func (m *module) GetHistoryOverallStatus(ctx context.Context, ruleID string, query rulestatehistorytypes.Query) ([]rulestatehistorytypes.GettableRuleStateWindow, error) {

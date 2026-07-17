@@ -106,7 +106,7 @@ func (d *DashboardSpec) validatePanels() error {
 		}
 		panelKind := panel.Spec.Plugin.Kind
 		if len(panel.Spec.Queries) != 1 {
-			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s.spec.queries: panel must have one query", path)
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s.spec.queries: panel must have one query, found %d", path, len(panel.Spec.Queries))
 		}
 		allowed := allowedQueryKinds[panelKind]
 		for qi, q := range panel.Spec.Queries {
@@ -269,8 +269,8 @@ func (d *DashboardSpec) validateLayouts() error {
 			return errors.NewInternalf(errors.CodeInternal, "spec.layouts[%d].spec: unexpected layout spec type %T", li, layout.Spec)
 		}
 		if grid.Display != nil {
-			if n := utf8.RuneCountInString(grid.Display.Title); n > MaxDisplayNameLen {
-				return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.layouts[%d].spec.display.title: layout name must be at most %d characters, got %d", li, MaxDisplayNameLen, n)
+			if n := utf8.RuneCountInString(grid.Display.Title); n > MaxLayoutTitleLen {
+				return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.layouts[%d].spec.display.title: layout name must be at most %d characters, got %d", li, MaxLayoutTitleLen, n)
 			}
 		}
 		if err := validateGridLayoutGeometry(grid, li); err != nil {
