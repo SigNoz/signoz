@@ -1,8 +1,6 @@
 import { useCallback, useMemo, useRef } from 'react';
 import { UseQueryResult } from 'react-query';
-import { Link } from 'react-router-dom';
-import { Compass } from '@signozhq/icons';
-import { Skeleton, Tooltip } from 'antd';
+import { Skeleton } from 'antd';
 import cx from 'classnames';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import TimeSeries from 'container/DashboardContainer/visualization/charts/TimeSeries/TimeSeries';
@@ -24,6 +22,7 @@ import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { getMetricsExplorerUrl } from 'utils/explorerUtils';
 
 import { buildEntityMetricsChartConfig } from './configBuilder';
+import ChartHeader from './ChartHeader';
 
 import { useEntityMetrics } from './hooks';
 import { isKeyNotFoundError } from '../utils';
@@ -47,6 +46,7 @@ interface EntityMetricsProps<T> {
 	entityWidgetInfo: {
 		title: string;
 		yAxisUnit: string;
+		docPath?: string;
 	}[];
 	getEntityQueryPayload: (
 		node: T,
@@ -207,31 +207,24 @@ function EntityMetrics<T>({
 						key={entityWidgetInfo[idx].title}
 						className={styles.entityMetricsCol}
 					>
-						<div className={styles.entityMetricsTitleContainer}>
-							<span className={styles.entityMetricsTitle}>
-								{entityWidgetInfo[idx].title}
-							</span>
-							{queryPayloads[idx] &&
-								queryPayloads[idx].graphType !== PANEL_TYPES.TABLE && (
-									<Tooltip title="Open in Metrics Explorer">
-										<Link
-											to={getMetricsExplorerUrl({
-												query: queryPayloads[idx].query,
-												...(selectedInterval && selectedInterval !== 'custom'
-													? { relativeTime: selectedInterval }
-													: {
-															startTimeMs: timeRange.startTime * 1000,
-															endTimeMs: timeRange.endTime * 1000,
-														}),
-											})}
-											className={styles.metricsExplorerLink}
-											data-testid={`open-metrics-explorer-${idx}`}
-										>
-											<Compass size={14} />
-										</Link>
-									</Tooltip>
-								)}
-						</div>
+						<ChartHeader
+							title={entityWidgetInfo[idx].title}
+							docPath={entityWidgetInfo[idx].docPath}
+							metricsExplorerUrl={
+								queryPayloads[idx] && queryPayloads[idx].graphType !== PANEL_TYPES.TABLE
+									? getMetricsExplorerUrl({
+											query: queryPayloads[idx].query,
+											...(selectedInterval && selectedInterval !== 'custom'
+												? { relativeTime: selectedInterval }
+												: {
+														startTimeMs: timeRange.startTime * 1000,
+														endTimeMs: timeRange.endTime * 1000,
+													}),
+										})
+									: undefined
+							}
+							metricsExplorerTestId={`open-metrics-explorer-${idx}`}
+						/>
 						<div className={styles.entityMetricsCard} ref={graphRef}>
 							{renderCardContent(query, idx)}
 						</div>

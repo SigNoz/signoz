@@ -11,6 +11,7 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/require"
 )
 
@@ -213,7 +214,7 @@ func TestStatementBuilder(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			q, err := statementBuilder.Build(ctx, 1747947419000, 1747983448000, testCase.requestType, testCase.query, nil)
+			q, err := statementBuilder.Build(ctx, valuer.UUID{}, 1747947419000, 1747983448000, testCase.requestType, testCase.query, nil)
 			if testCase.expectedErr != nil {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), testCase.expectedErr.Error())

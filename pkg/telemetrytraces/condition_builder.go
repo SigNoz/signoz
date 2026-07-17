@@ -13,6 +13,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 	"golang.org/x/exp/maps"
 )
@@ -21,7 +22,10 @@ type conditionBuilder struct {
 	fm qbtypes.FieldMapper
 }
 
-var _ qbtypes.ConditionBuilder = (*conditionBuilder)(nil)
+var (
+	_ qbtypes.ConditionBuilder          = (*conditionBuilder)(nil)
+	_ qbtypes.ResolvingConditionBuilder = (*conditionBuilder)(nil)
+)
 
 func NewConditionBuilder(fm qbtypes.FieldMapper) *conditionBuilder {
 	return &conditionBuilder{fm: fm}
@@ -29,6 +33,7 @@ func NewConditionBuilder(fm qbtypes.FieldMapper) *conditionBuilder {
 
 func (c *conditionBuilder) conditionFor(
 	ctx context.Context,
+	orgID valuer.UUID,
 	startNs uint64,
 	endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
@@ -42,13 +47,13 @@ func (c *conditionBuilder) conditionFor(
 	}
 
 	// first, locate the raw column type (so we can choose the right EXISTS logic)
-	columns, err := c.fm.ColumnFor(ctx, startNs, endNs, key)
+	columns, err := c.fm.ColumnFor(ctx, orgID, startNs, endNs, key)
 	if err != nil {
 		return "", err
 	}
 
 	// then ask the mapper for the actual SQL reference
-	fieldExpression, err := c.fm.FieldFor(ctx, startNs, endNs, key)
+	fieldExpression, err := c.fm.FieldFor(ctx, orgID, startNs, endNs, key)
 	if err != nil {
 		return "", err
 	}
@@ -254,12 +259,49 @@ func (c *conditionBuilder) conditionFor(
 	return "", nil
 }
 
+// ConditionFor builds the conditions for a filter term from the caller's pre-matched
+// fieldKeysForName; skip-resource-filter is the caller's responsibility on this path.
 func (c *conditionBuilder) ConditionFor(
 	ctx context.Context,
+	orgID valuer.UUID,
 	startNs uint64,
 	endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
 	fieldKeysForName []*telemetrytypes.TelemetryFieldKey,
+	operator qbtypes.FilterOperator,
+	value any,
+	sb *sqlbuilder.SelectBuilder,
+) ([]string, []string, error) {
+	return c.conditionsForKeys(ctx, orgID, startNs, endNs, key, fieldKeysForName, false, operator, value, sb)
+}
+
+// ConditionForKeys owns key resolution from the full metadata map so the where-clause
+// visitor hands over the raw key + map. See qbtypes.ResolvingConditionBuilder.
+func (c *conditionBuilder) ConditionForKeys(
+	ctx context.Context,
+	orgID valuer.UUID,
+	startNs uint64,
+	endNs uint64,
+	key *telemetrytypes.TelemetryFieldKey,
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	options qbtypes.ConditionBuilderOptions,
+	operator qbtypes.FilterOperator,
+	value any,
+	sb *sqlbuilder.SelectBuilder,
+) ([]string, []string, error) {
+	return c.conditionsForKeys(ctx, orgID, startNs, endNs, key, querybuilder.MatchingFieldKeys(key, keys), options.SkipResourceFilter, operator, value, sb)
+}
+
+// conditionsForKeys resolves matches to the key(s) to filter on (ResolveKeys, else
+// synthesized keys with a warning) and builds one condition per resolved key.
+func (c *conditionBuilder) conditionsForKeys(
+	ctx context.Context,
+	orgID valuer.UUID,
+	startNs uint64,
+	endNs uint64,
+	key *telemetrytypes.TelemetryFieldKey,
+	matches []*telemetrytypes.TelemetryFieldKey,
+	skipResourceFilter bool,
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
@@ -270,18 +312,41 @@ func (c *conditionBuilder) ConditionFor(
 		return nil, nil, err
 	}
 
-	keys, warning := querybuilder.ResolveKeys(key, fieldKeysForName)
+	keys, warning := querybuilder.ResolveKeys(key, matches)
 	var warnings []string
 	if warning != "" {
 		warnings = append(warnings, warning)
 	}
+	synthesized := false
 	if len(keys) == 0 {
-		return nil, warnings, querybuilder.NewKeyNotFoundError(key.Name)
+		// Synthesize key(s) to query anyway; a mapper without synthesis returns nil and
+		// the unknown key stays a hard "not found" error.
+		keys = c.fm.CandidateKeys(ctx, orgID, key, value, nil)
+		if len(keys) == 0 {
+			return nil, warnings, querybuilder.NewKeyNotFoundError(key.Name)
+		}
+		synthesized = true
+		warnings = append(warnings, querybuilder.NewKeyNotFoundWarning(key.Name))
+	}
+
+	// When a resource sub-query already covers the term, drop resource keys from the main
+	// query. Synthesized keys are exempt: the sub-query skips keys absent from metadata.
+	if skipResourceFilter && !synthesized {
+		filtered := make([]*telemetrytypes.TelemetryFieldKey, 0, len(keys))
+		for _, k := range keys {
+			if k.FieldContext != telemetrytypes.FieldContextResource {
+				filtered = append(filtered, k)
+			}
+		}
+		if len(filtered) == 0 {
+			return nil, warnings, nil
+		}
+		keys = filtered
 	}
 
 	conds := make([]string, 0, len(keys))
 	for _, k := range keys {
-		cond, err := c.conditionForKey(ctx, startNs, endNs, k, operator, value, sb)
+		cond, err := c.conditionForKey(ctx, orgID, startNs, endNs, k, operator, value, sb)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -292,6 +357,7 @@ func (c *conditionBuilder) ConditionFor(
 
 func (c *conditionBuilder) conditionForKey(
 	ctx context.Context,
+	orgID valuer.UUID,
 	startNs uint64,
 	endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
@@ -303,14 +369,14 @@ func (c *conditionBuilder) conditionForKey(
 		return c.buildSpanScopeCondition(key, operator, value, startNs)
 	}
 
-	condition, err := c.conditionFor(ctx, startNs, endNs, key, operator, value, sb)
+	condition, err := c.conditionFor(ctx, orgID, startNs, endNs, key, operator, value, sb)
 	if err != nil {
 		return "", err
 	}
 
 	if operator.AddDefaultExistsFilter() {
 		// skip adding exists filter for intrinsic fields
-		field, _ := c.fm.FieldFor(ctx, startNs, endNs, key)
+		field, _ := c.fm.FieldFor(ctx, orgID, startNs, endNs, key)
 		if slices.Contains(maps.Keys(IntrinsicFields), field) ||
 			slices.Contains(maps.Keys(IntrinsicFieldsDeprecated), field) ||
 			slices.Contains(maps.Keys(CalculatedFields), field) ||
@@ -318,7 +384,7 @@ func (c *conditionBuilder) conditionForKey(
 			return condition, nil
 		}
 
-		existsCondition, err := c.conditionFor(ctx, startNs, endNs, key, qbtypes.FilterOperatorExists, nil, sb)
+		existsCondition, err := c.conditionFor(ctx, orgID, startNs, endNs, key, qbtypes.FilterOperatorExists, nil, sb)
 		if err != nil {
 			return "", err
 		}

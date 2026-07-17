@@ -63,5 +63,6 @@
 	"INTEGRATIONS_DETAIL": "SigNoz | Integration",
 	"PUBLIC_DASHBOARD": "SigNoz | Dashboard",
 	"LLM_OBSERVABILITY_OVERVIEW": "SigNoz | LLM Observability Overview",
-	"LLM_OBSERVABILITY_CONFIGURATION": "SigNoz | LLM Observability Configuration"
+	"LLM_OBSERVABILITY_CONFIGURATION": "SigNoz | LLM Observability Configuration",
+	"LLM_OBSERVABILITY_ATTRIBUTE_MAPPING": "SigNoz | LLM Observability Attribute Mapping"
 }
