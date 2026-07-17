@@ -122,10 +122,11 @@ func scaledUnits(factor float64, extArray []string, offset int) ValueFormatter {
 			return fmt.Sprintf("%f", value)
 		}
 
+		// The scale index depends only on the magnitude of the value; using
+		// math.Abs above already accounts for the sign. Negating the index for
+		// negative values (and then clamping to a non-negative range) forced the
+		// index to 0, so negative values were printed unscaled without a suffix.
 		siIndex := int(math.Floor(logb(factor, math.Abs(value))))
-		if value < 0 {
-			siIndex = -siIndex
-		}
 		siIndex = lo.Clamp(siIndex+offset, 0, len(extArray)-1)
 
 		suffix := extArray[siIndex]
