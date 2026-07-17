@@ -1,42 +1,41 @@
-import { useMemo } from 'react';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { useState } from 'react';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import ContextMenu from 'periscope/components/ContextMenu';
 import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/registry';
+import {
+	getPanelTimePreference,
+	panelTimePreferenceLabel,
+} from 'pages/DashboardPageV2/DashboardContainer/hooks/resolvePanelTimeWindow';
 import { usePanelQuery } from 'pages/DashboardPageV2/DashboardContainer/hooks/usePanelQuery';
-import type { Warning } from 'types/api';
-import type { DashboardtypesPanelPluginKindDTO as PanelKind } from 'api/generated/services/sigNoz.schemas';
 
 import type { DashboardSection } from '../../utils';
-import type { DeletePanelArgs } from './hooks/useDeletePanel';
+import { useDrilldown } from './hooks/useDrilldown';
 import { usePanelInteractions } from './hooks/usePanelInteractions';
-import type { MovePanelArgs } from './hooks/useMovePanelToSection';
 import PanelBody from './PanelBody/PanelBody';
-import UnsupportedPanelBody from './PanelBody/UnsupportedPanelBody';
 import PanelHeader from './PanelHeader/PanelHeader';
 import styles from './Panel.module.scss';
 
-/** Panel action context — present together only in editable sectioned mode. */
+/**
+ * Layout context for the panel actions menu — present only in editable mode. No
+ * callbacks: the menu resolves its own mutations from store-backed hooks.
+ */
 export interface PanelActionsConfig {
 	currentLayoutIndex: number;
 	sections: DashboardSection[];
-	onMovePanel: (args: MovePanelArgs) => void;
-	onDeletePanel: (args: DeletePanelArgs) => void;
 }
 
 interface PanelProps {
 	panel: DashboardtypesPanelDTO;
 	panelId: string;
-	/** True once this panel's section enters the viewport — gates the fetch. */
+	/** True once this panel enters the viewport — gates the fetch (owned by SectionGridItem). */
 	isVisible?: boolean;
 	/** Move/delete actions — present only in editable sectioned mode. */
 	panelActions?: PanelActionsConfig;
 }
 
 /**
- * A single dashboard panel: chrome (header) + content (body). Thin orchestrator
- * — data fetching lives in `usePanelQuery`, cross-panel interactions in
- * `usePanelInteractions`, and the loading/error/chart state machine in
- * `PanelBody`.
+ * A single dashboard panel (header + body). Thin orchestrator: fetching lives in
+ * `usePanelQuery`, interactions in `usePanelInteractions`, state in `PanelBody`.
  */
 function Panel({
 	panel,
@@ -44,67 +43,68 @@ function Panel({
 	isVisible,
 	panelActions,
 }: PanelProps): JSX.Element {
-	const name = panel.spec.display?.name;
-	const description = panel.spec.display?.description;
-	const fullKind = panel.spec.plugin?.kind as unknown as PanelKind;
-	const kind = fullKind?.replace(/^signoz\//, '') ?? 'unknown';
-	const queryCount = panel.spec.queries?.length ?? 0;
+	const timeLabel = panelTimePreferenceLabel(getPanelTimePreference(panel));
 
-	const panelDefinition = getPanelDefinition(fullKind);
+	const panelKind = panel.spec.plugin.kind;
+	const panelDefinition = getPanelDefinition(panelKind);
 
-	const { data, isLoading, isFetching, error, refetch } = usePanelQuery({
-		panel,
-		panelId,
-		// Lazy: only fetch once the section is on screen (undefined → treat as
-		// visible) and a renderer exists for the kind.
-		enabled: !!panelDefinition && isVisible !== false,
-	});
+	// Header search: only kinds that declare it render the box. The term is owned
+	// here and threaded to both the header (input) and renderer (filter).
+	const searchable = !!panelDefinition?.actions.search;
+	const [searchTerm, setSearchTerm] = useState('');
+
+	const { data, isFetching, isPreviousData, error, refetch, pagination } =
+		usePanelQuery({
+			panel,
+			panelId,
+			// Lazy: fetch only once on screen (undefined → visible) and a renderer exists.
+			enabled: !!panelDefinition && isVisible !== false,
+		});
 
 	const { onDragSelect, dashboardPreference } = usePanelInteractions();
-
-	const headerTitle = useMemo(() => {
-		if (!description) {
-			return name;
-		}
-		return (
-			<TooltipSimple title={description}>
-				<span>{name}</span>
-			</TooltipSimple>
-		);
-	}, [name, description]);
+	const drilldown = useDrilldown(panel, panelId);
 
 	return (
 		<div
 			className={styles.panel}
 			data-panel-visible={isVisible ? 'true' : 'false'}
+			// Stable locator so the "Download as PNG" action can find this node to
+			// capture, without threading a ref through the header/actions chain.
+			data-panel-root={panelId}
 		>
 			<PanelHeader
-				title={headerTitle}
 				panelId={panelId}
+				panel={panel}
+				data={data}
 				isFetching={isFetching}
 				error={error}
-				// The V5 response `warning` is the same object the legacy chain
-				// surfaced as `Warning` — passed through untouched; the cast is the
-				// generated-DTO → hand-written-type boundary.
-				warning={data.response?.data?.warning as Warning | undefined}
+				warning={data.response?.data?.warning}
+				timeLabel={timeLabel}
 				panelActions={panelActions}
+				searchable={searchable}
+				searchTerm={searchTerm}
+				onSearchChange={setSearchTerm}
 			/>
-			{panelDefinition ? (
+			{panelDefinition && (
 				<PanelBody
 					panelDefinition={panelDefinition}
 					panel={panel}
 					panelId={panelId}
 					data={data}
-					isLoading={isLoading}
+					isFetching={isFetching}
+					isVisible={isVisible}
+					isPreviousData={isPreviousData}
 					error={error}
 					refetch={refetch}
 					onDragSelect={onDragSelect}
 					dashboardPreference={dashboardPreference}
+					searchTerm={searchable ? searchTerm : undefined}
+					pagination={pagination}
+					onClick={drilldown.onPanelClick}
+					enableDrillDown={drilldown.enableDrillDown}
 				/>
-			) : (
-				// TODO: remove this after all panel kinds are supported
-				<UnsupportedPanelBody kind={kind} queryCount={queryCount} />
 			)}
+			<ContextMenu {...drilldown.contextMenuProps} />
 		</div>
 	);
 }

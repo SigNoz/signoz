@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 )
 
@@ -22,13 +23,14 @@ func NewConditionBuilder(fm qbtypes.FieldMapper) *conditionBuilder {
 
 func (c *conditionBuilder) conditionFor(
 	ctx context.Context,
+	orgID valuer.UUID,
 	startNs, endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) (string, error) {
-	columns, err := c.fm.ColumnFor(ctx, startNs, endNs, key)
+	columns, err := c.fm.ColumnFor(ctx, orgID, startNs, endNs, key)
 	if err != nil {
 		return "", err
 	}
@@ -37,7 +39,7 @@ func (c *conditionBuilder) conditionFor(
 		value = querybuilder.FormatValueForContains(value)
 	}
 
-	fieldExpression, err := c.fm.FieldFor(ctx, startNs, endNs, key)
+	fieldExpression, err := c.fm.FieldFor(ctx, orgID, startNs, endNs, key)
 	if err != nil {
 		return "", err
 	}
@@ -172,6 +174,44 @@ func (c *conditionBuilder) conditionFor(
 
 func (c *conditionBuilder) ConditionFor(
 	ctx context.Context,
+	orgID valuer.UUID,
+	startNs uint64,
+	endNs uint64,
+	key *telemetrytypes.TelemetryFieldKey,
+	fieldKeysForName []*telemetrytypes.TelemetryFieldKey,
+	operator qbtypes.FilterOperator,
+	value any,
+	sb *sqlbuilder.SelectBuilder,
+) ([]string, []string, error) {
+
+	// has/hasAny/hasAll/hasToken are logs-body-only; reject for audit.
+	if err := querybuilder.NewFunctionUnsupportedError(operator); err != nil {
+		return nil, nil, err
+	}
+
+	keys, warning := querybuilder.ResolveKeys(key, fieldKeysForName)
+	var warnings []string
+	if warning != "" {
+		warnings = append(warnings, warning)
+	}
+	if len(keys) == 0 {
+		return nil, warnings, querybuilder.NewKeyNotFoundError(key.Name)
+	}
+
+	conds := make([]string, 0, len(keys))
+	for _, k := range keys {
+		cond, err := c.conditionForKey(ctx, orgID, startNs, endNs, k, operator, value, sb)
+		if err != nil {
+			return nil, nil, err
+		}
+		conds = append(conds, cond)
+	}
+	return conds, warnings, nil
+}
+
+func (c *conditionBuilder) conditionForKey(
+	ctx context.Context,
+	orgID valuer.UUID,
 	startNs uint64,
 	endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
@@ -179,7 +219,7 @@ func (c *conditionBuilder) ConditionFor(
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) (string, error) {
-	condition, err := c.conditionFor(ctx, startNs, endNs, key, operator, value, sb)
+	condition, err := c.conditionFor(ctx, orgID, startNs, endNs, key, operator, value, sb)
 	if err != nil {
 		return "", err
 	}
@@ -189,7 +229,7 @@ func (c *conditionBuilder) ConditionFor(
 	}
 
 	if operator.AddDefaultExistsFilter() {
-		existsCondition, err := c.conditionFor(ctx, startNs, endNs, key, qbtypes.FilterOperatorExists, nil, sb)
+		existsCondition, err := c.conditionFor(ctx, orgID, startNs, endNs, key, qbtypes.FilterOperatorExists, nil, sb)
 		if err != nil {
 			return "", err
 		}

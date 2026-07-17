@@ -146,6 +146,7 @@ function FormAlertChannels({
 
 				<Form.Item>
 					<Button
+						data-testid="save-channel-button"
 						disabled={savingState}
 						loading={savingState}
 						type="primary"
@@ -154,6 +155,7 @@ function FormAlertChannels({
 						{t('button_save_channel')}
 					</Button>
 					<Button
+						data-testid="test-channel-button"
 						disabled={testingState}
 						loading={testingState}
 						onClick={(): void => onTestHandler(type)}
@@ -161,6 +163,7 @@ function FormAlertChannels({
 						{t('button_test_channel')}
 					</Button>
 					<Button
+						data-testid="return-button"
 						onClick={(): void => {
 							history.replace(ROUTES.ALL_CHANNELS);
 						}}

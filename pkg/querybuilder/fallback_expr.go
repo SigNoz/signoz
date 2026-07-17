@@ -13,12 +13,14 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 	"golang.org/x/exp/maps"
 )
 
 func CollisionHandledFinalExpr(
 	ctx context.Context,
+	orgID valuer.UUID,
 	startNs uint64,
 	endNs uint64,
 	field *telemetrytypes.TelemetryFieldKey,
@@ -47,11 +49,11 @@ func CollisionHandledFinalExpr(
 
 	addCondition := func(key *telemetrytypes.TelemetryFieldKey) error {
 		sb := sqlbuilder.NewSelectBuilder()
-		condition, err := cb.ConditionFor(ctx, startNs, endNs, key, qbtypes.FilterOperatorExists, nil, sb)
+		conds, _, err := cb.ConditionFor(ctx, orgID, startNs, endNs, key, []*telemetrytypes.TelemetryFieldKey{key}, qbtypes.FilterOperatorExists, nil, sb)
 		if err != nil {
 			return err
 		}
-		sb.Where(condition)
+		sb.Where(conds[0])
 
 		expr, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 		expr = strings.TrimPrefix(expr, "WHERE ")
@@ -60,7 +62,7 @@ func CollisionHandledFinalExpr(
 		return nil
 	}
 
-	fieldExpression, fieldForErr := fm.FieldFor(ctx, startNs, endNs, field)
+	fieldExpression, fieldForErr := fm.FieldFor(ctx, orgID, startNs, endNs, field)
 	if errors.Is(fieldForErr, qbtypes.ErrColumnNotFound) {
 		// the key didn't have the right context to be added to the query
 		// we try to use the context we know of
@@ -76,23 +78,23 @@ func CollisionHandledFinalExpr(
 		}
 
 		if len(keysForField) == 0 {
-			// - the context is not provided
-			// - there are not keys for the field
-			// - it is not a static field
-			// - the next best thing to do is see if there is a typo
-			// and suggest a correction
-			wrappedErr := errors.WithSuggestiveAdditionalf(fieldForErr, errors.SuggestionsOnLevenshteinDistance(field.Name, maps.Keys(keys)), "field `%s` not found", field.Name)
+			// No metadata match: let the field mapper synthesize type-variant keys.
+			// keys were already checked above, so pass nil here.
+			keysForField = fm.CandidateKeys(ctx, orgID, field, nil, nil)
+		}
+		if len(keysForField) == 0 {
+			// The mapper can't synthesize (e.g. metrics): fall back to the typo suggestion.
+			wrappedErr := errors.WithSuggestiveAdditionalf(fieldForErr, errors.NewSuggestionsOnLevenshteinDistance(field.Name, errors.NounKeys, maps.Keys(keys)), "field `%s` not found", field.Name)
 			return "", nil, wrappedErr
-		} else {
-			for _, key := range keysForField {
-				err := addCondition(key)
-				if err != nil {
-					return "", nil, err
-				}
-				fieldExpression, _ = fm.FieldFor(ctx, startNs, endNs, key)
-				fieldExpression, _ = DataTypeCollisionHandledFieldName(key, dummyValue, fieldExpression, qbtypes.FilterOperatorUnknown)
-				stmts = append(stmts, fieldExpression)
+		}
+		for _, key := range keysForField {
+			err := addCondition(key)
+			if err != nil {
+				return "", nil, err
 			}
+			fieldExpression, _ = fm.FieldFor(ctx, orgID, startNs, endNs, key)
+			fieldExpression, _ = DataTypeCollisionHandledFieldName(key, dummyValue, fieldExpression, qbtypes.FilterOperatorUnknown)
+			stmts = append(stmts, fieldExpression)
 		}
 	} else {
 		err := addCondition(field)

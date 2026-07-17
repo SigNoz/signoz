@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import logEvent from 'api/common/logEvent';
-import { useListDashboardsV2 } from 'api/generated/services/dashboard';
+import { useListDashboardsForUserV2 } from 'api/generated/services/dashboard';
 import {
 	DashboardtypesListOrderDTO,
 	DashboardtypesListSortDTO,
@@ -10,8 +10,12 @@ import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useAppContext } from 'providers/App/App';
 import { toAPIError } from 'utils/errorUtils';
 
-import { combineQueries } from '../../filterQuery';
+import {
+	type TagPair,
+	useAccumulatedTags,
+} from '../../hooks/useAccumulatedTags';
 import { useActiveView } from '../../hooks/useActiveView';
+import { useCreatorOptions } from '../../hooks/useCreatorOptions';
 import { useDashboardFilters } from '../../hooks/useDashboardFilters';
 import {
 	usePage,
@@ -20,10 +24,10 @@ import {
 } from '../../hooks/useDashboardsListQueryParams';
 import { useDashboardViewsStore } from '../../store/useDashboardViewsStore';
 import { useDashboardsListVisibleColumnsStore } from '../../store/useVisibleColumnsStore';
-import type { UpdatedWindow } from '../../types';
-import type { DashboardListItem } from '../../utils';
-import { applyClientView } from '../../views';
-import type { CreatorOption } from '../FilterZone/FilterChips';
+import { BuiltinViewId } from '../../types';
+import type { SuggestionSource } from '../../utils/dslSuggestions';
+import type { DashboardListItem } from '../../utils/helpers';
+import { applyClientView } from '../../utils/views';
 import FilterZone from '../FilterZone/FilterZone';
 import NewDashboardModal from '../NewDashboardModal/NewDashboardModal';
 import StatusBar from '../StatusBar/StatusBar';
@@ -43,21 +47,13 @@ function DashboardsList(): JSX.Element {
 	const { isCloudUser } = useGetTenantLicense();
 
 	const { user } = useAppContext();
-	const [action, canCreateNewDashboard] = useComponentPermission(
-		['action', 'create_new_dashboards'],
+	const [editDashboard, canCreateNewDashboard] = useComponentPermission(
+		['edit_dashboard', 'create_new_dashboards'],
 		user.role,
 	);
+	const canEdit = !!editDashboard;
 
-	const {
-		filters,
-		query,
-		isEmpty: filtersEmpty,
-		setSearch,
-		setCreatedBy,
-		setUpdated,
-		applyFilters,
-		clearAll,
-	} = useDashboardFilters();
+	const { query, isEmpty: filtersEmpty, setQuery } = useDashboardFilters();
 	const [sortColumn, setSortColumn] = useSortColumn();
 	const [sortOrder, setSortOrder] = useSortOrder();
 	const [page, setPage] = usePage();
@@ -66,49 +62,39 @@ function DashboardsList(): JSX.Element {
 		activeViewId,
 		builtinViews,
 		customViews,
+		customViewsLoading,
 		isCustomActive,
 		isModified,
-		viewQuery,
 		clientView,
 		selectView,
 		saveView,
 		saveActiveView,
 		resetView,
 		removeView,
-	} = useActiveView({ filters, applyFilters, userEmail: user.email });
+		renameView,
+	} = useActiveView({
+		query,
+		setQuery,
+		userEmail: user.email,
+		sortColumn,
+		sortOrder,
+		setSortColumn,
+		setSortOrder,
+	});
 
 	const railCollapsed = useDashboardViewsStore((s) => s.railCollapsed);
 	const setRailCollapsed = useDashboardViewsStore((s) => s.setRailCollapsed);
-	const favorites = useDashboardViewsStore((s) => s.favorites);
 	const recent = useDashboardViewsStore((s) => s.recent);
 
 	// Any filter change resets to the first page so the user isn't stranded on a
 	// now-out-of-range offset.
-	const handleSearchChange = useCallback(
+	const handleQueryChange = useCallback(
 		(value: string): void => {
-			setSearch(value);
+			setQuery(value);
 			void setPage(1);
 		},
-		[setSearch, setPage],
+		[setQuery, setPage],
 	);
-	const handleCreatedByChange = useCallback(
-		(emails: string[]): void => {
-			setCreatedBy(emails);
-			void setPage(1);
-		},
-		[setCreatedBy, setPage],
-	);
-	const handleUpdatedChange = useCallback(
-		(window: UpdatedWindow): void => {
-			setUpdated(window);
-			void setPage(1);
-		},
-		[setUpdated, setPage],
-	);
-	const handleClearAll = useCallback((): void => {
-		clearAll();
-		void setPage(1);
-	}, [clearAll, setPage]);
 
 	// View actions that change the result set reset pagination too.
 	const handleSelectView = useCallback(
@@ -135,13 +121,13 @@ function DashboardsList(): JSX.Element {
 
 	const listParams = useMemo(
 		() => ({
-			query: combineQueries(viewQuery, query) || undefined,
+			query: query || undefined,
 			sort: sortColumn,
 			order: sortOrder,
 			limit: clientView ? CLIENT_VIEW_LIMIT : PAGE_SIZE,
 			offset: clientView ? 0 : (page - 1) * PAGE_SIZE,
 		}),
-		[viewQuery, query, sortColumn, sortOrder, page, clientView],
+		[query, sortColumn, sortOrder, page, clientView],
 	);
 
 	const {
@@ -150,7 +136,9 @@ function DashboardsList(): JSX.Element {
 		isFetching,
 		error,
 		refetch,
-	} = useListDashboardsV2(listParams, { query: { keepPreviousData: true } });
+	} = useListDashboardsForUserV2(listParams, {
+		query: { keepPreviousData: true },
+	});
 
 	const apiError = useMemo(
 		() => (error ? toAPIError(error) : undefined),
@@ -169,30 +157,64 @@ function DashboardsList(): JSX.Element {
 	const dashboards = useMemo<DashboardListItem[]>(
 		() =>
 			clientView
-				? applyClientView(rawDashboards, activeViewId, favorites, recent)
+				? applyClientView(rawDashboards, activeViewId, recent)
 				: rawDashboards,
-		[clientView, rawDashboards, activeViewId, favorites, recent],
+		[clientView, rawDashboards, activeViewId, recent],
 	);
 	const total = clientView ? dashboards.length : (response?.data?.total ?? 0);
 
-	// Creator filter options: distinct authors on the loaded page plus the
-	// current user (so "me" is always selectable). Page-scoped until a members
-	// source backs this.
-	const creatorOptions = useMemo<CreatorOption[]>(() => {
-		const emails = new Set<string>();
-		if (user.email) {
-			emails.add(user.email);
+	// Step back a page when a delete empties the current one, instead of showing nothing.
+	useEffect(() => {
+		if (clientView || isFetching) {
+			return;
 		}
-		rawDashboards.forEach((d) => {
-			if (d.createdBy) {
-				emails.add(d.createdBy);
-			}
+		if (page > 1 && dashboards.length === 0) {
+			void setPage(page - 1);
+		}
+	}, [clientView, isFetching, dashboards.length, page, setPage]);
+
+	// Authors present on the loaded page — a fallback for the creator filter until
+	// the org-wide user list resolves.
+	const pageAuthorEmails = useMemo<string[]>(
+		() =>
+			rawDashboards
+				.map((d) => d.createdBy)
+				.filter((email): email is string => !!email),
+		[rawDashboards],
+	);
+	const creatorOptions = useCreatorOptions({
+		currentUserEmail: user.email,
+		fallbackEmails: pageAuthorEmails,
+	});
+
+	// All key:value tags the API reports for the org's dashboards, powering the
+	// DSL key/value autocomplete. Accumulated across refetches so previously-seen
+	// tags stay suggestable even when a filtered page omits them.
+	const responseTags = useMemo<TagPair[]>(
+		() =>
+			(response?.data?.tags ?? []).map((t) => ({ key: t.key, value: t.value })),
+		[response],
+	);
+	const availableTags = useAccumulatedTags(responseTags);
+
+	// Autocomplete data source: reserved keys from the response, tag keys/values
+	// accumulated across pages, and creator emails for `created_by` values.
+	const source = useMemo<SuggestionSource>(() => {
+		const tagValuesByKey: Record<string, string[]> = {};
+		const tagKeys = new Set<string>();
+		availableTags.forEach((t) => {
+			tagKeys.add(t.key);
+			const lower = t.key.toLowerCase();
+			(tagValuesByKey[lower] ??= []).push(t.value);
 		});
-		return [...emails].sort().map((email) => ({
-			email,
-			label: email === user.email ? `${email} (me)` : email,
-		}));
-	}, [rawDashboards, user.email]);
+		return {
+			reservedKeys: response?.data?.reservedKeywords,
+			tagKeys: Array.from(tagKeys),
+			tagValuesByKey,
+			creatorEmails: creatorOptions.map((o) => o.email),
+			currentUserEmail: user.email,
+		};
+	}, [availableTags, creatorOptions, response, user.email]);
 
 	const [isCreateOpen, setIsCreateOpen] = useState(false);
 	const visibleColumns = useDashboardsListVisibleColumnsStore(
@@ -239,7 +261,7 @@ function DashboardsList(): JSX.Element {
 	const showWorkspaceEmpty =
 		!error &&
 		dashboards.length === 0 &&
-		activeViewId === 'all' &&
+		activeViewId === BuiltinViewId.All &&
 		filtersEmpty &&
 		page === 1;
 
@@ -251,6 +273,7 @@ function DashboardsList(): JSX.Element {
 				activeViewId={activeViewId}
 				builtinViews={builtinViews}
 				customViews={customViews}
+				customViewsLoading={customViewsLoading}
 				isCustomActive={isCustomActive}
 				isModified={isModified}
 				collapsed={railCollapsed}
@@ -258,8 +281,9 @@ function DashboardsList(): JSX.Element {
 				onSave={saveView}
 				onSaveChanges={saveActiveView}
 				onReset={handleResetView}
-				onClearFilters={handleClearAll}
 				onDelete={handleRemoveView}
+				onRename={renameView}
+				canEdit={canEdit}
 			/>
 			<div className={styles.main}>
 				<div className={styles.mainScroll}>
@@ -274,19 +298,15 @@ function DashboardsList(): JSX.Element {
 								<CommandHeader
 									label={activeLabel}
 									count={total}
+									isModified={isModified}
 									canCreate={canCreateNewDashboard}
 									onCreate={openCreate}
 								/>
 								<FilterZone
-									search={filters.search}
-									createdBy={filters.createdBy}
-									updated={filters.updated}
+									query={query}
 									creatorOptions={creatorOptions}
-									isEmpty={filtersEmpty}
-									onSearchChange={handleSearchChange}
-									onCreatedByChange={handleCreatedByChange}
-									onUpdatedChange={handleUpdatedChange}
-									onClearAll={handleClearAll}
+									source={source}
+									onQueryChange={handleQueryChange}
 								/>
 							</div>
 							<div className={styles.viewContent}>
@@ -301,7 +321,7 @@ function DashboardsList(): JSX.Element {
 									errorMessage={errorMessage}
 									dashboards={dashboards}
 									activeViewId={activeViewId}
-									searchValue={filters.search}
+									searchValue={query}
 									hasFilters={!filtersEmpty}
 									sortColumn={sortColumn}
 									onSortChange={onSortChange}
@@ -311,7 +331,7 @@ function DashboardsList(): JSX.Element {
 									pageSize={clientView ? CLIENT_VIEW_LIMIT : PAGE_SIZE}
 									total={total}
 									onPageChange={setPage}
-									canAct={!!action}
+									canEdit={canEdit}
 									showUpdatedAt={visibleColumns.updatedAt}
 									showUpdatedBy={visibleColumns.updatedBy}
 									loading={isFetching}

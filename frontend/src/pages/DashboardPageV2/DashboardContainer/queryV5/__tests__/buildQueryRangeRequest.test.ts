@@ -164,6 +164,104 @@ describe('buildQueryRangeRequest', () => {
 		expect(request.formatOptions?.formatTableResultForUI).toBe(true);
 	});
 
+	it('passes through fillGaps into formatOptions', () => {
+		const request = buildQueryRangeRequest({
+			queries: bareBuilderQuery({ name: 'A' }),
+			panelType: PANEL_TYPES.TIME_SERIES,
+			startMs: START_MS,
+			endMs: START_MS + HOUR_MS,
+			fillGaps: true,
+		});
+		expect(request.formatOptions?.fillGaps).toBe(true);
+	});
+
+	it('stamps offset/limit onto builder queries when pagination is given', () => {
+		const request = buildQueryRangeRequest({
+			queries: bareBuilderQuery({ name: 'A', signal: 'logs' }),
+			panelType: PANEL_TYPES.LIST,
+			startMs: START_MS,
+			endMs: START_MS + HOUR_MS,
+			pagination: { offset: 100, limit: 50 },
+		});
+		expect(request.compositeQuery?.queries?.[0]?.spec).toStrictEqual({
+			name: 'A',
+			signal: 'logs',
+			offset: 100,
+			limit: 50,
+			order: [
+				{ key: { name: 'timestamp' }, direction: 'desc' },
+				{ key: { name: 'id' }, direction: 'desc' },
+			],
+		});
+	});
+
+	it('defaults a logs list with no order to timestamp desc + id tiebreaker', () => {
+		const request = buildQueryRangeRequest({
+			queries: bareBuilderQuery({ name: 'A', signal: 'logs' }),
+			panelType: PANEL_TYPES.LIST,
+			startMs: START_MS,
+			endMs: START_MS + HOUR_MS,
+		});
+		const spec = request.compositeQuery?.queries?.[0]?.spec as {
+			order?: { key?: { name?: string }; direction?: string }[];
+		};
+		expect(spec.order).toStrictEqual([
+			{ key: { name: 'timestamp' }, direction: 'desc' },
+			{ key: { name: 'id' }, direction: 'desc' },
+		]);
+	});
+
+	it('appends an id tiebreaker to a logs list order (mirroring the primary direction)', () => {
+		const request = buildQueryRangeRequest({
+			queries: bareBuilderQuery({
+				name: 'A',
+				signal: 'logs',
+				order: [{ key: { name: 'timestamp' }, direction: 'desc' }],
+			}),
+			panelType: PANEL_TYPES.LIST,
+			startMs: START_MS,
+			endMs: START_MS + HOUR_MS,
+		});
+		const spec = request.compositeQuery?.queries?.[0]?.spec as {
+			order?: { key?: { name?: string }; direction?: string }[];
+		};
+		expect(spec.order).toStrictEqual([
+			{ key: { name: 'timestamp' }, direction: 'desc' },
+			{ key: { name: 'id' }, direction: 'desc' },
+		]);
+	});
+
+	it('does not duplicate an id tiebreaker already present in the order', () => {
+		const order = [
+			{ key: { name: 'timestamp' }, direction: 'asc' },
+			{ key: { name: 'id' }, direction: 'asc' },
+		];
+		const request = buildQueryRangeRequest({
+			queries: bareBuilderQuery({ name: 'A', signal: 'logs', order }),
+			panelType: PANEL_TYPES.LIST,
+			startMs: START_MS,
+			endMs: START_MS + HOUR_MS,
+		});
+		const spec = request.compositeQuery?.queries?.[0]?.spec as {
+			order?: unknown[];
+		};
+		expect(spec.order).toStrictEqual(order);
+	});
+
+	it('does not add an id tiebreaker for a traces list order (explorer parity)', () => {
+		const order = [{ key: { name: 'timestamp' }, direction: 'desc' }];
+		const request = buildQueryRangeRequest({
+			queries: bareBuilderQuery({ name: 'A', signal: 'traces', order }),
+			panelType: PANEL_TYPES.LIST,
+			startMs: START_MS,
+			endMs: START_MS + HOUR_MS,
+		});
+		const spec = request.compositeQuery?.queries?.[0]?.spec as {
+			order?: unknown[];
+		};
+		expect(spec.order).toStrictEqual(order);
+	});
+
 	it('injects the range-derived stepInterval into BAR builder queries without one', () => {
 		const request = buildQueryRangeRequest({
 			queries: bareBuilderQuery({ name: 'A', signal: 'metrics' }),

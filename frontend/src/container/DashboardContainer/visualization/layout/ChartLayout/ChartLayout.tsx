@@ -63,6 +63,7 @@ export default function ChartLayout({
 				className={cx('chart-layout', {
 					'chart-layout--legend-right':
 						legendConfig.position === LegendPosition.RIGHT,
+					'chart-layout--with-layout-children': !!layoutChildren,
 				})}
 			>
 				<div className="chart-layout__content">

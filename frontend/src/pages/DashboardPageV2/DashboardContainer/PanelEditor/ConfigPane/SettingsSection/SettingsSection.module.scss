@@ -1,0 +1,54 @@
+.header {
+	display: flex;
+	align-items: center;
+	gap: 11px;
+	width: 100%;
+	height: 44px;
+	padding: 0 4px;
+	border: none;
+	background: transparent;
+	cursor: pointer;
+	color: var(--text-vanilla-100);
+	border-radius: 4px;
+}
+
+.iconTile {
+	display: grid;
+	place-items: center;
+	width: 27px;
+	height: 27px;
+	flex: none;
+	border-radius: 3px;
+	background: var(--l3-background);
+	color: var(--l3-foreground);
+	transition: all 0.15s ease;
+}
+
+.iconTileOpen {
+	background: color-mix(in srgb, var(--bg-robin-400) 14%, transparent);
+	color: var(--bg-robin-400);
+}
+
+.title {
+	flex: 1;
+	text-align: left;
+	font-weight: 600;
+	color: var(--l2-foreground);
+}
+
+.chevron {
+	flex: none;
+	color: var(--l2-border);
+	transition: transform 0.15s ease;
+
+	&.open {
+		transform: rotate(180deg);
+	}
+}
+
+.body {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding: 2px 0 18px;
+}

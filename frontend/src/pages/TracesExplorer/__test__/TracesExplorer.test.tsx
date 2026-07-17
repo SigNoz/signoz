@@ -759,19 +759,18 @@ describe('TracesExplorer -', () => {
 		expect(createDashboardBtn).toBeInTheDocument();
 		fireEvent.click(createDashboardBtn);
 
-		await expect(screen.findByText('Export Panel')).resolves.toBeInTheDocument();
-		const createDashboardModal = document.querySelector(
-			'.ant-modal-content',
-		) as HTMLElement;
+		const createDashboardModal = (await screen.findByRole(
+			'dialog',
+		)) as HTMLElement;
 		expect(createDashboardModal).toBeInTheDocument();
 
 		// assert modal content
 		expect(
-			within(createDashboardModal).getByText('Select Dashboard'),
+			within(createDashboardModal).getByTestId('export-panel-new-dashboard'),
 		).toBeInTheDocument();
 
 		expect(
-			within(createDashboardModal).getByText('New Dashboard'),
+			within(createDashboardModal).getByTestId('export-panel-export'),
 		).toBeInTheDocument();
 	});
 

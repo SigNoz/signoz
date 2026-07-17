@@ -7,7 +7,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/fields"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type handler struct {
@@ -31,7 +33,13 @@ func (handler *handler) GetFieldsKeys(rw http.ResponseWriter, req *http.Request)
 
 	fieldKeySelector := telemetrytypes.NewFieldKeySelectorFromPostableFieldKeysParams(params)
 
-	keys, complete, err := handler.telemetryMetadataStore.GetKeys(ctx, fieldKeySelector)
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	keys, complete, err := handler.telemetryMetadataStore.GetKeys(ctx, valuer.MustNewUUID(claims.OrgID), fieldKeySelector)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -54,13 +62,19 @@ func (handler *handler) GetFieldsValues(rw http.ResponseWriter, req *http.Reques
 
 	fieldValueSelector := telemetrytypes.NewFieldValueSelectorFromPostableFieldValueParams(params)
 
-	allValues, allComplete, err := handler.telemetryMetadataStore.GetAllValues(ctx, fieldValueSelector)
+	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	relatedValues, relatedComplete, err := handler.telemetryMetadataStore.GetRelatedValues(ctx, fieldValueSelector)
+	allValues, allComplete, err := handler.telemetryMetadataStore.GetAllValues(ctx, valuer.MustNewUUID(claims.OrgID), fieldValueSelector)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	relatedValues, relatedComplete, err := handler.telemetryMetadataStore.GetRelatedValues(ctx, valuer.MustNewUUID(claims.OrgID), fieldValueSelector)
 	if err != nil {
 		// we don't want to return error if we fail to get related values for some reason
 		relatedValues = []string{}

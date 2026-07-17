@@ -3,8 +3,8 @@ import {
 	DashboardtypesListSortDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
-import type { DashboardListItem } from '../../utils';
-import { noResultsCopy } from '../../views';
+import type { DashboardListItem } from '../../utils/helpers';
+import { noResultsCopy } from '../../utils/views';
 import ListHeader from '../ListHeader/ListHeader';
 import ErrorState from '../states/ErrorState/ErrorState';
 import LoadingState from '../states/LoadingState/LoadingState';
@@ -30,7 +30,7 @@ interface Props {
 	pageSize: number;
 	total: number;
 	onPageChange: (page: number) => void;
-	canAct: boolean;
+	canEdit: boolean;
 	showUpdatedAt: boolean;
 	showUpdatedBy: boolean;
 	loading: boolean;
@@ -55,7 +55,7 @@ function DashboardsResults({
 	pageSize,
 	total,
 	onPageChange,
-	canAct,
+	canEdit,
 	showUpdatedAt,
 	showUpdatedBy,
 	loading,
@@ -91,7 +91,7 @@ function DashboardsResults({
 				pageSize={pageSize}
 				total={total}
 				onPageChange={onPageChange}
-				canAct={canAct}
+				canEdit={canEdit}
 				showUpdatedAt={showUpdatedAt}
 				showUpdatedBy={showUpdatedBy}
 				loading={loading}

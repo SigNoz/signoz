@@ -8,6 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -131,8 +132,8 @@ func TestExistsConditionForWithEvolutions(t *testing.T) {
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-			cond, err := conditionBuilder.ConditionFor(ctx, tc.startTs, tc.endTs, &tc.key, tc.operator, tc.value, sb)
-			sb.Where(cond)
+			cond, _, err := conditionBuilder.ConditionFor(ctx, valuer.UUID{}, tc.startTs, tc.endTs, &tc.key, []*telemetrytypes.TelemetryFieldKey{&tc.key}, tc.operator, tc.value, sb)
+			sb.Where(cond...)
 
 			if tc.expectedError != nil {
 				assert.Equal(t, tc.expectedError, err)
@@ -522,8 +523,8 @@ func TestConditionFor(t *testing.T) {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
 			tc.key.Evolutions = tc.evolutions
-			cond, err := conditionBuilder.ConditionFor(ctx, 0, 0, &tc.key, tc.operator, tc.value, sb)
-			sb.Where(cond)
+			cond, _, err := conditionBuilder.ConditionFor(ctx, valuer.UUID{}, 0, 0, &tc.key, []*telemetrytypes.TelemetryFieldKey{&tc.key}, tc.operator, tc.value, sb)
+			sb.Where(cond...)
 
 			if tc.expectedError != nil {
 				assert.Equal(t, tc.expectedError, err)
@@ -578,7 +579,7 @@ func TestConditionForMultipleKeys(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			var err error
 			for _, key := range tc.keys {
-				cond, err := conditionBuilder.conditionFor(ctx, 0, 0, &key, tc.operator, tc.value, sb)
+				cond, err := conditionBuilder.conditionFor(ctx, valuer.UUID{}, 0, 0, &key, tc.operator, tc.value, sb)
 				sb.Where(cond)
 				if err != nil {
 					t.Fatalf("Error getting condition for key %s: %v", key.Name, err)
@@ -836,7 +837,7 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-			cond, err := conditionBuilder.conditionFor(ctx, 0, 0, &tc.key, tc.operator, tc.value, sb)
+			cond, err := conditionBuilder.conditionFor(ctx, valuer.UUID{}, 0, 0, &tc.key, tc.operator, tc.value, sb)
 			sb.Where(cond)
 
 			if tc.expectedError != nil {

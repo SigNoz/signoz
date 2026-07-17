@@ -1,0 +1,32 @@
+.chartHeader {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-2);
+}
+
+.infoIcon {
+	display: inline-flex;
+	align-items: center;
+	color: var(--l2-foreground);
+	cursor: pointer;
+
+	&:hover {
+		color: var(--text-slate-primary);
+	}
+}
+
+.metricsExplorerLink {
+	display: inline-flex;
+	align-items: center;
+	color: var(--l2-foreground);
+	transition: opacity 0.2s;
+
+	&:hover {
+		color: var(--l3-foreground);
+	}
+}
+
+.chartHeaderLabel {
+	font-size: var(--periscope-font-size-base);
+	color: var(--l2-foreground);
+}

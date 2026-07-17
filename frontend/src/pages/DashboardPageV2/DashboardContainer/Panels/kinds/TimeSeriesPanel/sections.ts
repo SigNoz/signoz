@@ -1,15 +1,30 @@
-import type { SectionConfig } from '../../types/sections';
+import {
+	SectionKind,
+	ThresholdVariant,
+	type SectionConfig,
+} from '../../types/sections';
 
 export const sections: SectionConfig[] = [
 	{
-		kind: 'formatting',
+		kind: SectionKind.Visualization,
+		controls: { switchPanelKind: true, timePreference: true, fillSpans: true },
+	},
+	{ kind: SectionKind.Formatting, controls: { unit: true, decimals: true } },
+	{ kind: SectionKind.Axes, controls: { minMax: true, logScale: true } },
+	{ kind: SectionKind.Legend, controls: { position: true, colors: true } },
+	{
+		kind: SectionKind.ChartAppearance,
 		controls: {
-			unit: true,
-			decimals: true,
+			lineStyle: true,
+			lineInterpolation: true,
+			fillMode: true,
+			showPoints: true,
+			spanGaps: true,
 		},
 	},
-	{ kind: 'axes', controls: { minMax: true, unit: true, logScale: true } },
-	{ kind: 'legend', controls: { position: true, mode: true } },
-	{ kind: 'thresholds', controls: { list: true } },
-	{ kind: 'chartAppearance', controls: { lineStyle: true, fillOpacity: true } },
+	{
+		kind: SectionKind.Thresholds,
+		controls: { variant: ThresholdVariant.LABEL },
+	},
+	{ kind: SectionKind.ContextLinks },
 ];
