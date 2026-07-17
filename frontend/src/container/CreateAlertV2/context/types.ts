@@ -136,6 +136,7 @@ export enum TimeDuration {
 
 export enum Algorithm {
 	STANDARD = 'standard',
+	ML = 'ml',
 }
 
 export enum Seasonality {

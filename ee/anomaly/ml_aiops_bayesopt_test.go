@@ -22,9 +22,9 @@ type aiopsFrozenCandidateSet struct {
 	CandidateChangedAfter bool
 	NABUsedForTuning      bool
 	TunedZScoreThreshold  float64
-	Balanced              netdataTuneConfig
-	HighRecall            netdataTuneConfig
-	LowNoise              netdataTuneConfig
+	Balanced              temporalTuneConfig
+	HighRecall            temporalTuneConfig
+	LowNoise              temporalTuneConfig
 }
 
 var frozenAIOPSCandidates = aiopsFrozenCandidateSet{
@@ -34,7 +34,7 @@ var frozenAIOPSCandidates = aiopsFrozenCandidateSet{
 	NABUsedForTuning:      false,
 }
 
-func TestBayesOptimizeNetdataAcrossAIOpsKPI(t *testing.T) {
+func TestBayesOptimizeTemporalAcrossAIOpsKPI(t *testing.T) {
 	corpus, err := loadAIOPSDevelopmentCorpusFromEnv()
 	if err != nil {
 		t.Skip(err.Error())

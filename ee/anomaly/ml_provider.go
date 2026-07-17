@@ -35,36 +35,37 @@ const (
 type mlAlgorithmMode string
 
 const (
-	mlAlgorithmRawEnsemble     mlAlgorithmMode = "raw_ensemble"
-	mlAlgorithmNetdataTemporal mlAlgorithmMode = "netdata_temporal"
+	mlAlgorithmRawEnsemble mlAlgorithmMode = "raw_ensemble"
+	mlAlgorithmTemporal    mlAlgorithmMode = "temporal"
 )
 
 type mlConfig struct {
-	AlgorithmMode                    mlAlgorithmMode
-	CriticalMass                     int
-	MaximumSamples                   int
-	KMeansIterations                 int
-	LearningScoreLimit               float64
-	MaximumScore                     float64
-	MinimumScale                     float64
-	TrainingWindows                  []int
-	ClusterCounts                    []int
-	ScaleFloorFactor                 float64
-	Aggregation                      mlEnsembleAggregation
-	NetdataDiffN                     int
-	NetdataSmoothN                   int
-	NetdataLagN                      int
-	NetdataTrainingWindow            time.Duration
-	NetdataTrainEvery                time.Duration
-	NetdataMaximumModels             int
-	NetdataMinimumModelsForConsensus int
-	NetdataDistanceQuantile          float64
-	NetdataConsensusFraction         float64
-	NetdataRecencyHalfLife           time.Duration
+	AlgorithmMode                     mlAlgorithmMode
+	CriticalMass                      int
+	MaximumSamples                    int
+	KMeansIterations                  int
+	LearningScoreLimit                float64
+	MaximumScore                      float64
+	MinimumScale                      float64
+	TrainingWindows                   []int
+	ClusterCounts                     []int
+	ScaleFloorFactor                  float64
+	Aggregation                       mlEnsembleAggregation
+	TemporalDiffN                     int
+	TemporalSmoothN                   int
+	TemporalLagN                      int
+	TemporalClusterCount              int
+	TemporalTrainingWindow            time.Duration
+	TemporalTrainEvery                time.Duration
+	TemporalMaximumModels             int
+	TemporalMinimumModelsForConsensus int
+	TemporalDistanceQuantile          float64
+	TemporalConsensusFraction         float64
+	TemporalRecencyHalfLife           time.Duration
 }
 
 var defaultMLConfig = mlConfig{
-	AlgorithmMode:      mlAlgorithmRawEnsemble,
+	AlgorithmMode:      mlAlgorithmTemporal,
 	CriticalMass:       mlCriticalMass,
 	MaximumSamples:     mlMaximumSamples,
 	KMeansIterations:   mlKMeansIterations,
@@ -81,18 +82,19 @@ var defaultMLConfig = mlConfig{
 		3,
 		4,
 	},
-	ScaleFloorFactor:                 0.05,
-	Aggregation:                      mlAggregationMedian,
-	NetdataDiffN:                     1,
-	NetdataSmoothN:                   3,
-	NetdataLagN:                      5,
-	NetdataTrainingWindow:            6 * time.Hour,
-	NetdataTrainEvery:                3 * time.Hour,
-	NetdataMaximumModels:             18,
-	NetdataMinimumModelsForConsensus: 1,
-	NetdataDistanceQuantile:          0.99,
-	NetdataConsensusFraction:         1.0,
-	NetdataRecencyHalfLife:           0,
+	ScaleFloorFactor:                  0.05,
+	Aggregation:                       mlAggregationMedian,
+	TemporalDiffN:                     1,
+	TemporalSmoothN:                   3,
+	TemporalLagN:                      5,
+	TemporalClusterCount:              2,
+	TemporalTrainingWindow:            6 * time.Hour,
+	TemporalTrainEvery:                3 * time.Hour,
+	TemporalMaximumModels:             18,
+	TemporalMinimumModelsForConsensus: 18,
+	TemporalDistanceQuantile:          0.99,
+	TemporalConsensusFraction:         1.0,
+	TemporalRecencyHalfLife:           0,
 }
 
 type MLProvider struct {
@@ -352,7 +354,7 @@ func (provider *MLProvider) applyMLScores(
 					),
 					slog.Int(
 						"ml.models_required",
-						provider.config.NetdataMinimumModelsForConsensus,
+						provider.config.TemporalMinimumModelsForConsensus,
 					),
 					slog.Float64(
 						"ml.consensus_ratio",
@@ -360,7 +362,7 @@ func (provider *MLProvider) applyMLScores(
 					),
 					slog.Float64(
 						"ml.consensus_fraction",
-						provider.config.NetdataConsensusFraction,
+						provider.config.TemporalConsensusFraction,
 					),
 					slog.Float64(
 						"ml.anomalous_fraction",
@@ -384,15 +386,15 @@ func (provider *MLProvider) applyMLScores(
 					),
 					slog.Duration(
 						"ml.training_window",
-						provider.config.NetdataTrainingWindow,
+						provider.config.TemporalTrainingWindow,
 					),
 					slog.Duration(
 						"ml.train_every",
-						provider.config.NetdataTrainEvery,
+						provider.config.TemporalTrainEvery,
 					),
 					slog.Duration(
 						"ml.recency_half_life",
-						provider.config.NetdataRecencyHalfLife,
+						provider.config.TemporalRecencyHalfLife,
 					),
 				)
 			}
@@ -769,7 +771,7 @@ func normalizeMLConfig(
 
 	switch normalized.AlgorithmMode {
 	case mlAlgorithmRawEnsemble,
-		mlAlgorithmNetdataTemporal:
+		mlAlgorithmTemporal:
 	default:
 		normalized.AlgorithmMode = defaultMLConfig.AlgorithmMode
 	}
@@ -833,60 +835,68 @@ func normalizeMLConfig(
 			defaultMLConfig.Aggregation
 	}
 
-	if normalized.NetdataDiffN <= 0 {
-		normalized.NetdataDiffN = defaultMLConfig.NetdataDiffN
+	if normalized.TemporalDiffN <= 0 {
+		normalized.TemporalDiffN = defaultMLConfig.TemporalDiffN
 	}
 
-	if normalized.NetdataSmoothN <= 0 {
-		normalized.NetdataSmoothN = defaultMLConfig.NetdataSmoothN
+	if normalized.TemporalSmoothN <= 0 {
+		normalized.TemporalSmoothN = defaultMLConfig.TemporalSmoothN
 	}
 
-	if normalized.NetdataLagN <= 0 {
-		normalized.NetdataLagN = defaultMLConfig.NetdataLagN
+	if normalized.TemporalLagN <= 0 {
+		normalized.TemporalLagN = defaultMLConfig.TemporalLagN
 	}
 
-	if normalized.NetdataTrainingWindow <= 0 {
-		normalized.NetdataTrainingWindow =
-			defaultMLConfig.NetdataTrainingWindow
+	if normalized.TemporalClusterCount <= 0 {
+		normalized.TemporalClusterCount =
+			defaultMLConfig.TemporalClusterCount
+	}
+	if normalized.TemporalClusterCount > 16 {
+		normalized.TemporalClusterCount = 16
 	}
 
-	if normalized.NetdataTrainEvery <= 0 {
-		normalized.NetdataTrainEvery =
-			defaultMLConfig.NetdataTrainEvery
+	if normalized.TemporalTrainingWindow <= 0 {
+		normalized.TemporalTrainingWindow =
+			defaultMLConfig.TemporalTrainingWindow
 	}
 
-	if normalized.NetdataMaximumModels <= 0 {
-		normalized.NetdataMaximumModels =
-			defaultMLConfig.NetdataMaximumModels
-	}
-	if normalized.NetdataMaximumModels > 64 {
-		normalized.NetdataMaximumModels = 64
+	if normalized.TemporalTrainEvery <= 0 {
+		normalized.TemporalTrainEvery =
+			defaultMLConfig.TemporalTrainEvery
 	}
 
-	if normalized.NetdataMinimumModelsForConsensus <= 0 {
-		normalized.NetdataMinimumModelsForConsensus =
-			defaultMLConfig.NetdataMinimumModelsForConsensus
+	if normalized.TemporalMaximumModels <= 0 {
+		normalized.TemporalMaximumModels =
+			defaultMLConfig.TemporalMaximumModels
 	}
-	if normalized.NetdataMinimumModelsForConsensus >
-		normalized.NetdataMaximumModels {
-		normalized.NetdataMinimumModelsForConsensus =
-			normalized.NetdataMaximumModels
+	if normalized.TemporalMaximumModels > 64 {
+		normalized.TemporalMaximumModels = 64
 	}
 
-	if normalized.NetdataDistanceQuantile <= 0 ||
-		normalized.NetdataDistanceQuantile > 1 {
-		normalized.NetdataDistanceQuantile =
-			defaultMLConfig.NetdataDistanceQuantile
+	if normalized.TemporalMinimumModelsForConsensus <= 0 {
+		normalized.TemporalMinimumModelsForConsensus =
+			defaultMLConfig.TemporalMinimumModelsForConsensus
+	}
+	if normalized.TemporalMinimumModelsForConsensus >
+		normalized.TemporalMaximumModels {
+		normalized.TemporalMinimumModelsForConsensus =
+			normalized.TemporalMaximumModels
 	}
 
-	if normalized.NetdataConsensusFraction < 0.5 ||
-		normalized.NetdataConsensusFraction > 1.0 {
-		normalized.NetdataConsensusFraction =
-			defaultMLConfig.NetdataConsensusFraction
+	if normalized.TemporalDistanceQuantile <= 0 ||
+		normalized.TemporalDistanceQuantile > 1 {
+		normalized.TemporalDistanceQuantile =
+			defaultMLConfig.TemporalDistanceQuantile
 	}
 
-	if normalized.NetdataRecencyHalfLife < 0 {
-		normalized.NetdataRecencyHalfLife = 0
+	if normalized.TemporalConsensusFraction < 0.5 ||
+		normalized.TemporalConsensusFraction > 1.0 {
+		normalized.TemporalConsensusFraction =
+			defaultMLConfig.TemporalConsensusFraction
+	}
+
+	if normalized.TemporalRecencyHalfLife < 0 {
+		normalized.TemporalRecencyHalfLife = 0
 	}
 
 	return normalized
@@ -918,7 +928,7 @@ func (provider *MLProvider) scoreSinglePointLocked(
 	fallbackScore float64,
 ) (float64, string, int) {
 	switch provider.config.AlgorithmMode {
-	case mlAlgorithmNetdataTemporal:
+	case mlAlgorithmTemporal:
 		return provider.scoreTemporalPointLocked(
 			seriesKey,
 			timestamp,
@@ -1028,7 +1038,7 @@ func (provider *MLProvider) scoreTemporalPointLocked(
 	}
 
 	if timestamp <= state.lastTimestamp {
-		return fallbackScore, "netdata_temporal_kmeans", len(state.temporalModels)
+		return fallbackScore, "temporal_kmeans", len(state.temporalModels)
 	}
 
 	state.lastTimestamp = timestamp
@@ -1063,9 +1073,9 @@ func (provider *MLProvider) scoreTemporalPointLocked(
 
 	if !featureReady ||
 		len(state.temporalModels) <
-			provider.config.NetdataMinimumModelsForConsensus {
+			provider.config.TemporalMinimumModelsForConsensus {
 		return fallbackScore,
-			"netdata_temporal_kmeans",
+			"temporal_kmeans",
 			len(state.temporalModels)
 	}
 
@@ -1083,7 +1093,7 @@ func (provider *MLProvider) scoreTemporalPointLocked(
 	state.lastWeightedConsensus = consensus.Weighted
 
 	if !consensus.FinalAnomalous || consensus.QuorumRatio <= 1 {
-		return 0, "netdata_temporal_kmeans", len(state.temporalModels)
+		return 0, "temporal_kmeans", len(state.temporalModels)
 	}
 
 	direction := 1.0
@@ -1103,7 +1113,7 @@ func (provider *MLProvider) scoreTemporalPointLocked(
 			provider.config.MaximumScore,
 		)
 
-	return score, "netdata_temporal_kmeans", len(state.temporalModels)
+	return score, "temporal_kmeans", len(state.temporalModels)
 }
 
 func appendTemporalRawValue(
@@ -1123,9 +1133,9 @@ func appendTemporalRawValue(
 	cutoffTimestamp :=
 		timestamp -
 			int64(
-				(config.NetdataTrainingWindow +
-					time.Duration(config.NetdataMaximumModels+2)*
-						config.NetdataTrainEvery).Milliseconds(),
+				(config.TemporalTrainingWindow +
+					time.Duration(config.TemporalMaximumModels+2)*
+						config.TemporalTrainEvery).Milliseconds(),
 			)
 
 	trimIndex := 0
@@ -1179,7 +1189,7 @@ func appendTemporalFeature(
 		state.featureContext.RecentRawValues,
 		value,
 	)
-	requiredRawValues := config.NetdataDiffN + 1
+	requiredRawValues := config.TemporalDiffN + 1
 	if len(state.featureContext.RecentRawValues) > requiredRawValues {
 		state.featureContext.RecentRawValues =
 			state.featureContext.RecentRawValues[len(state.featureContext.RecentRawValues)-requiredRawValues:]
@@ -1190,17 +1200,17 @@ func appendTemporalFeature(
 	}
 
 	diff := value -
-		state.featureContext.RecentRawValues[len(state.featureContext.RecentRawValues)-1-config.NetdataDiffN]
+		state.featureContext.RecentRawValues[len(state.featureContext.RecentRawValues)-1-config.TemporalDiffN]
 	state.featureContext.RecentDiffs = append(
 		state.featureContext.RecentDiffs,
 		diff,
 	)
-	if len(state.featureContext.RecentDiffs) > config.NetdataSmoothN {
+	if len(state.featureContext.RecentDiffs) > config.TemporalSmoothN {
 		state.featureContext.RecentDiffs =
-			state.featureContext.RecentDiffs[len(state.featureContext.RecentDiffs)-config.NetdataSmoothN:]
+			state.featureContext.RecentDiffs[len(state.featureContext.RecentDiffs)-config.TemporalSmoothN:]
 	}
 
-	if len(state.featureContext.RecentDiffs) < config.NetdataSmoothN {
+	if len(state.featureContext.RecentDiffs) < config.TemporalSmoothN {
 		return temporalFeaturePoint{}, false
 	}
 
@@ -1212,7 +1222,7 @@ func appendTemporalFeature(
 		smoothed,
 	)
 
-	requiredSmooths := config.NetdataLagN + 1
+	requiredSmooths := config.TemporalLagN + 1
 	if len(state.featureContext.RecentSmooths) > requiredSmooths {
 		state.featureContext.RecentSmooths =
 			state.featureContext.RecentSmooths[len(state.featureContext.RecentSmooths)-requiredSmooths:]
@@ -1251,9 +1261,9 @@ func appendTemporalFeature(
 	cutoffTimestamp :=
 		timestamp -
 			int64(
-				(config.NetdataTrainingWindow +
-					time.Duration(config.NetdataMaximumModels+2)*
-						config.NetdataTrainEvery).Milliseconds(),
+				(config.TemporalTrainingWindow +
+					time.Duration(config.TemporalMaximumModels+2)*
+						config.TemporalTrainEvery).Milliseconds(),
 			)
 	trimIndex := 0
 	for trimIndex < len(state.temporalFeatureHistory) &&
@@ -1359,7 +1369,7 @@ func (provider *MLProvider) maybeTrainTemporalModel(
 
 	if state.lastTrainingTimestamp > 0 &&
 		timestamp-state.lastTrainingTimestamp <
-			provider.config.NetdataTrainEvery.Milliseconds() {
+			provider.config.TemporalTrainEvery.Milliseconds() {
 		return
 	}
 
@@ -1368,7 +1378,7 @@ func (provider *MLProvider) maybeTrainTemporalModel(
 
 	windowStartTimestamp :=
 		timestamp -
-			provider.config.NetdataTrainingWindow.Milliseconds()
+			provider.config.TemporalTrainingWindow.Milliseconds()
 
 	trainingPoints := make(
 		[]temporalFeaturePoint,
@@ -1396,6 +1406,10 @@ func (provider *MLProvider) maybeTrainTemporalModel(
 		return
 	}
 
+	if trainingPoints[0].Timestamp > windowStartTimestamp {
+		return
+	}
+
 	model, ok := fitTemporalKMeansModel(
 		trainingPoints,
 		provider.config,
@@ -1409,9 +1423,9 @@ func (provider *MLProvider) maybeTrainTemporalModel(
 		model,
 	)
 	if len(state.temporalModels) >
-		provider.config.NetdataMaximumModels {
+		provider.config.TemporalMaximumModels {
 		state.temporalModels =
-			state.temporalModels[len(state.temporalModels)-provider.config.NetdataMaximumModels:]
+			state.temporalModels[len(state.temporalModels)-provider.config.TemporalMaximumModels:]
 	}
 
 	state.lastTrainingTimestamp = timestamp
@@ -1440,7 +1454,7 @@ func fitTemporalKMeansModel(
 
 	centers, ok := fitKMeansND(
 		vectors,
-		2,
+		config.TemporalClusterCount,
 		config.KMeansIterations,
 		config.MinimumScale,
 	)
@@ -1469,7 +1483,7 @@ func fitTemporalKMeansModel(
 
 	cutoff := percentileLinearInterpolation(
 		distances,
-		config.NetdataDistanceQuantile,
+		config.TemporalDistanceQuantile,
 	)
 	if cutoff < config.MinimumScale {
 		cutoff = config.MinimumScale
@@ -1611,7 +1625,7 @@ func evaluateTemporalConsensus(
 	totalWeight := 0.0
 	anomalousWeight := 0.0
 	unanimous := true
-	weighted := config.NetdataRecencyHalfLife > 0
+	weighted := config.TemporalRecencyHalfLife > 0
 
 	for _, model := range models {
 		ratio := temporalModelRatio(
@@ -1629,7 +1643,7 @@ func evaluateTemporalConsensus(
 		weight := temporalModelWeight(
 			model,
 			currentTimestamp,
-			config.NetdataRecencyHalfLife,
+			config.TemporalRecencyHalfLife,
 		)
 		if !isFinite(weight) || weight <= 0 {
 			continue
@@ -1655,7 +1669,7 @@ func evaluateTemporalConsensus(
 	anomalousFraction := anomalousWeight / totalWeight
 	quorumRatio := weightedUpperQuantileFloat64(
 		ratioWeights,
-		1-config.NetdataConsensusFraction,
+		1-config.TemporalConsensusFraction,
 	)
 	finalAnomalous := isFinite(quorumRatio) && quorumRatio > 1
 

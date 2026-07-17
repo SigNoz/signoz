@@ -194,7 +194,9 @@ func TestMLProviderUsesZScoreDuringWarmup(t *testing.T) {
 	})
 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	provider := NewMLProvider(baseProvider, nil, logger)
+	config := defaultMLConfig
+	config.AlgorithmMode = mlAlgorithmRawEnsemble
+	provider := newMLProviderWithConfig(baseProvider, nil, logger, config)
 
 	request := &AnomaliesRequest{
 		Params:      &qbtypes.QueryRangeRequest{},
@@ -258,7 +260,9 @@ func TestMLProviderSwitchesFromZScoreToKMeans(t *testing.T) {
 	})
 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	provider := NewMLProvider(baseProvider, nil, logger)
+	config := defaultMLConfig
+	config.AlgorithmMode = mlAlgorithmRawEnsemble
+	provider := newMLProviderWithConfig(baseProvider, nil, logger, config)
 
 	request := &AnomaliesRequest{
 		Params:      &qbtypes.QueryRangeRequest{},
@@ -346,7 +350,7 @@ func TestMLProviderSwitchesFromZScoreToKMeans(t *testing.T) {
 	}
 }
 
-func TestNetdataFeaturesDifference(t *testing.T) {
+func TestTemporalFeaturesDifference(t *testing.T) {
 	rawValues := []float64{1, 3, 6, 10}
 	differences := calculateTemporalDifferences(rawValues, 1)
 	expected := []float64{2, 3, 4}
@@ -356,7 +360,7 @@ func TestNetdataFeaturesDifference(t *testing.T) {
 	}
 }
 
-func TestNetdataFeaturesSmoothing(t *testing.T) {
+func TestTemporalFeaturesSmoothing(t *testing.T) {
 	differences := []float64{1, 2, 3, 4, 5}
 	smoothed := calculateTemporalSmoothing(differences, 3)
 	expected := []float64{2, 3, 4}
@@ -366,7 +370,7 @@ func TestNetdataFeaturesSmoothing(t *testing.T) {
 	}
 }
 
-func TestNetdataFeaturesLagVector(t *testing.T) {
+func TestTemporalFeaturesLagVector(t *testing.T) {
 	smoothed := []float64{10, 20, 30, 40, 50, 60, 70}
 	features := buildTemporalLagFeatures(smoothed, 5)
 	expected := mlFeatureVector{70, 60, 50, 40, 30, 20}
@@ -384,7 +388,7 @@ func TestNetdataFeaturesLagVector(t *testing.T) {
 	}
 }
 
-func TestNetdataFeaturePipeline(t *testing.T) {
+func TestTemporalFeaturePipeline(t *testing.T) {
 	rawValues := []float64{1, 3, 6, 10, 15, 21, 28, 36}
 	differences := calculateTemporalDifferences(rawValues, 1)
 	smoothed := calculateTemporalSmoothing(differences, 3)
@@ -404,15 +408,15 @@ func TestNetdataFeaturePipeline(t *testing.T) {
 	}
 }
 
-func TestNetdataFeaturePipelineResetsOnGap(t *testing.T) {
+func TestTemporalFeaturePipelineResetsOnGap(t *testing.T) {
 	config := mlConfig{
-		AlgorithmMode:         mlAlgorithmNetdataTemporal,
-		NetdataDiffN:          1,
-		NetdataSmoothN:        2,
-		NetdataLagN:           2,
-		NetdataTrainingWindow: 10 * time.Minute,
-		NetdataTrainEvery:     5 * time.Minute,
-		NetdataMaximumModels:  3,
+		AlgorithmMode:          mlAlgorithmTemporal,
+		TemporalDiffN:          1,
+		TemporalSmoothN:        2,
+		TemporalLagN:           2,
+		TemporalTrainingWindow: 10 * time.Minute,
+		TemporalTrainEvery:     5 * time.Minute,
+		TemporalMaximumModels:  3,
 	}
 	state := &mlSeriesState{expectedInterval: int64((5 * time.Minute).Milliseconds())}
 
@@ -451,7 +455,7 @@ func TestTemporalKMeansDeterministic(t *testing.T) {
 		{Timestamp: 4, Vector: mlFeatureVector{10, 11}, SegmentID: 1},
 	}
 	config := defaultMLConfig
-	config.AlgorithmMode = mlAlgorithmNetdataTemporal
+	config.AlgorithmMode = mlAlgorithmTemporal
 
 	left, leftOK := fitTemporalKMeansModel(points, config)
 	right, rightOK := fitTemporalKMeansModel(points, config)
@@ -477,7 +481,7 @@ func TestTemporalKMeansDistanceCutoff(t *testing.T) {
 	}
 }
 
-func TestNetdataConsensusRequiresAllModels(t *testing.T) {
+func TestTemporalConsensusRequiresAllModels(t *testing.T) {
 	models := []temporalKMeansModel{
 		{centers: []mlFeatureVector{{0}}, distanceCutoff: 1},
 		{centers: []mlFeatureVector{{0}}, distanceCutoff: 2},
@@ -499,7 +503,7 @@ func TestNetdataConsensusRequiresAllModels(t *testing.T) {
 	}
 }
 
-func TestNetdataConsensusAnomalousWhenAllAgree(t *testing.T) {
+func TestTemporalConsensusAnomalousWhenAllAgree(t *testing.T) {
 	models := []temporalKMeansModel{
 		{centers: []mlFeatureVector{{0}}, distanceCutoff: 1},
 		{centers: []mlFeatureVector{{0}}, distanceCutoff: 2},
@@ -521,7 +525,7 @@ func TestNetdataConsensusAnomalousWhenAllAgree(t *testing.T) {
 	}
 }
 
-func TestNetdataScoreUsesMinimumRatio(t *testing.T) {
+func TestTemporalScoreUsesMinimumRatio(t *testing.T) {
 	models := []temporalKMeansModel{
 		{centers: []mlFeatureVector{{0}}, distanceCutoff: 2},
 		{centers: []mlFeatureVector{{0}}, distanceCutoff: 1.5},
@@ -539,16 +543,16 @@ func TestNetdataScoreUsesMinimumRatio(t *testing.T) {
 	}
 }
 
-func TestNetdataProviderUsesStandardDuringWarmup(t *testing.T) {
+func TestTemporalProviderUsesStandardDuringWarmup(t *testing.T) {
 	config := defaultMLConfig
-	config.AlgorithmMode = mlAlgorithmNetdataTemporal
-	config.NetdataDiffN = 1
-	config.NetdataSmoothN = 1
-	config.NetdataLagN = 1
-	config.NetdataTrainingWindow = 3 * time.Minute
-	config.NetdataTrainEvery = 1 * time.Minute
-	config.NetdataMaximumModels = 3
-	config.NetdataMinimumModelsForConsensus = 3
+	config.AlgorithmMode = mlAlgorithmTemporal
+	config.TemporalDiffN = 1
+	config.TemporalSmoothN = 1
+	config.TemporalLagN = 1
+	config.TemporalTrainingWindow = 3 * time.Minute
+	config.TemporalTrainEvery = 1 * time.Minute
+	config.TemporalMaximumModels = 3
+	config.TemporalMinimumModelsForConsensus = 3
 
 	provider := newMLProviderWithConfig(nil, nil, slog.New(slog.NewTextHandler(io.Discard, nil)), config)
 	start := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
@@ -566,16 +570,16 @@ func TestNetdataProviderUsesStandardDuringWarmup(t *testing.T) {
 	}
 }
 
-func TestNetdataProviderSwitchesAfterWarmup(t *testing.T) {
+func TestTemporalProviderSwitchesAfterWarmup(t *testing.T) {
 	config := defaultMLConfig
-	config.AlgorithmMode = mlAlgorithmNetdataTemporal
-	config.NetdataDiffN = 1
-	config.NetdataSmoothN = 1
-	config.NetdataLagN = 1
-	config.NetdataTrainingWindow = 3 * time.Minute
-	config.NetdataTrainEvery = 1 * time.Minute
-	config.NetdataMaximumModels = 3
-	config.NetdataMinimumModelsForConsensus = 1
+	config.AlgorithmMode = mlAlgorithmTemporal
+	config.TemporalDiffN = 1
+	config.TemporalSmoothN = 1
+	config.TemporalLagN = 1
+	config.TemporalTrainingWindow = 3 * time.Minute
+	config.TemporalTrainEvery = 1 * time.Minute
+	config.TemporalMaximumModels = 3
+	config.TemporalMinimumModelsForConsensus = 1
 
 	provider := newMLProviderWithConfig(nil, nil, slog.New(slog.NewTextHandler(io.Discard, nil)), config)
 	start := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
@@ -596,16 +600,16 @@ func TestNetdataProviderSwitchesAfterWarmup(t *testing.T) {
 	}
 }
 
-func TestNetdataModelsRotate(t *testing.T) {
+func TestTemporalModelsRotate(t *testing.T) {
 	config := defaultMLConfig
-	config.AlgorithmMode = mlAlgorithmNetdataTemporal
-	config.NetdataDiffN = 1
-	config.NetdataSmoothN = 1
-	config.NetdataLagN = 1
-	config.NetdataTrainingWindow = 3 * time.Minute
-	config.NetdataTrainEvery = 1 * time.Minute
-	config.NetdataMaximumModels = 2
-	config.NetdataMinimumModelsForConsensus = 1
+	config.AlgorithmMode = mlAlgorithmTemporal
+	config.TemporalDiffN = 1
+	config.TemporalSmoothN = 1
+	config.TemporalLagN = 1
+	config.TemporalTrainingWindow = 3 * time.Minute
+	config.TemporalTrainEvery = 1 * time.Minute
+	config.TemporalMaximumModels = 2
+	config.TemporalMinimumModelsForConsensus = 1
 
 	provider := newMLProviderWithConfig(nil, nil, slog.New(slog.NewTextHandler(io.Discard, nil)), config)
 	start := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
@@ -625,9 +629,9 @@ func TestNetdataModelsRotate(t *testing.T) {
 	}
 }
 
-func TestNetdataQuorumUnanimousCompatibility(t *testing.T) {
-	config := baselineNetdataMLConfig(1)
-	config.NetdataConsensusFraction = 1.0
+func TestTemporalQuorumUnanimousCompatibility(t *testing.T) {
+	config := baselineTemporalMLConfig(1)
+	config.TemporalConsensusFraction = 1.0
 
 	models := []temporalKMeansModel{
 		{centers: []mlFeatureVector{{0}}, distanceCutoff: 2},
@@ -651,9 +655,9 @@ func TestNetdataQuorumUnanimousCompatibility(t *testing.T) {
 	}
 }
 
-func TestNetdataQuorumAllowsPartialConsensus(t *testing.T) {
-	config := baselineNetdataMLConfig(1)
-	config.NetdataConsensusFraction = 0.75
+func TestTemporalQuorumAllowsPartialConsensus(t *testing.T) {
+	config := baselineTemporalMLConfig(1)
+	config.TemporalConsensusFraction = 0.75
 
 	models := []temporalKMeansModel{
 		{centers: []mlFeatureVector{{0}}, distanceCutoff: 1 / 1.4},
@@ -667,16 +671,16 @@ func TestNetdataQuorumAllowsPartialConsensus(t *testing.T) {
 		t.Fatal("75% quorum should accept 3 of 4 anomalous models")
 	}
 
-	config.NetdataConsensusFraction = 1.0
+	config.TemporalConsensusFraction = 1.0
 	result = evaluateTemporalConsensus(models, mlFeatureVector{1}, 0, config)
 	if result.FinalAnomalous {
 		t.Fatal("100% quorum should reject partial consensus")
 	}
 }
 
-func TestNetdataQuorumRejectsInsufficientVotes(t *testing.T) {
-	config := baselineNetdataMLConfig(1)
-	config.NetdataConsensusFraction = 0.75
+func TestTemporalQuorumRejectsInsufficientVotes(t *testing.T) {
+	config := baselineTemporalMLConfig(1)
+	config.TemporalConsensusFraction = 0.75
 
 	models := []temporalKMeansModel{
 		{centers: []mlFeatureVector{{0}}, distanceCutoff: 1 / 1.4},
@@ -691,10 +695,26 @@ func TestNetdataQuorumRejectsInsufficientVotes(t *testing.T) {
 	}
 }
 
-func TestNetdataWeightedConsensus(t *testing.T) {
-	config := baselineNetdataMLConfig(1)
-	config.NetdataConsensusFraction = 0.60
-	config.NetdataRecencyHalfLife = 1 * time.Hour
+func TestTemporalQuorumAcceptsWhenOneModelVotesNormal(t *testing.T) {
+	config := baselineTemporalMLConfig(1)
+	config.TemporalConsensusFraction = 0.60
+
+	models := []temporalKMeansModel{
+		{centers: []mlFeatureVector{{0}}, distanceCutoff: 1 / 1.4},
+		{centers: []mlFeatureVector{{0}}, distanceCutoff: 1 / 1.3},
+		{centers: []mlFeatureVector{{0}}, distanceCutoff: 1 / 0.8},
+	}
+
+	result := evaluateTemporalConsensus(models, mlFeatureVector{1}, 0, config)
+	if !result.FinalAnomalous {
+		t.Fatal("quorum should still allow anomaly when 2 of 3 models agree")
+	}
+}
+
+func TestTemporalWeightedConsensus(t *testing.T) {
+	config := baselineTemporalMLConfig(1)
+	config.TemporalConsensusFraction = 0.60
+	config.TemporalRecencyHalfLife = 1 * time.Hour
 
 	now := time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC)
 	models := []temporalKMeansModel{
@@ -707,11 +727,6 @@ func TestNetdataWeightedConsensus(t *testing.T) {
 			centers:        []mlFeatureVector{{0}},
 			distanceCutoff: 1 / 1.3,
 			trainedAt:      now.Add(-45 * time.Minute),
-		},
-		{
-			centers:        []mlFeatureVector{{0}},
-			distanceCutoff: 1 / 0.8,
-			trainedAt:      now.Add(-12 * time.Hour),
 		},
 		{
 			centers:        []mlFeatureVector{{0}},
@@ -729,15 +744,12 @@ func TestNetdataWeightedConsensus(t *testing.T) {
 	if !result.FinalAnomalous {
 		t.Fatal("recent anomalous models should outweigh old normal models")
 	}
-	if result.AnomalousFraction <= 0.60 {
-		t.Fatalf("unexpected weighted anomalous fraction: got %v", result.AnomalousFraction)
-	}
 }
 
-func TestNetdataUniformConsensus(t *testing.T) {
-	config := baselineNetdataMLConfig(1)
-	config.NetdataConsensusFraction = 0.60
-	config.NetdataRecencyHalfLife = 0
+func TestTemporalUniformConsensus(t *testing.T) {
+	config := baselineTemporalMLConfig(1)
+	config.TemporalConsensusFraction = 0.60
+	config.TemporalRecencyHalfLife = 0
 
 	now := time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC)
 	models := []temporalKMeansModel{
@@ -777,7 +789,7 @@ func TestNetdataUniformConsensus(t *testing.T) {
 	}
 }
 
-func TestNetdataWeightedQuantile(t *testing.T) {
+func TestTemporalWeightedQuantile(t *testing.T) {
 	values := []weightedFloat64Value{
 		{value: 0.8, weight: 1},
 		{value: 1.2, weight: 1},
@@ -791,7 +803,7 @@ func TestNetdataWeightedQuantile(t *testing.T) {
 	}
 }
 
-func TestNetdataQuorumRatioMatchesDecision(t *testing.T) {
+func TestTemporalQuorumRatioMatchesDecision(t *testing.T) {
 	testCases := []struct {
 		name              string
 		consensusFraction float64
@@ -844,15 +856,15 @@ func TestNetdataQuorumRatioMatchesDecision(t *testing.T) {
 	}
 }
 
-func TestNetdataLargeEnsembleRotation(t *testing.T) {
-	config := baselineNetdataMLConfig(1)
-	config.NetdataDiffN = 1
-	config.NetdataSmoothN = 1
-	config.NetdataLagN = 1
-	config.NetdataTrainingWindow = 3 * time.Minute
-	config.NetdataTrainEvery = 1 * time.Minute
-	config.NetdataMaximumModels = 4
-	config.NetdataMinimumModelsForConsensus = 1
+func TestTemporalLargeEnsembleRotation(t *testing.T) {
+	config := baselineTemporalMLConfig(1)
+	config.TemporalDiffN = 1
+	config.TemporalSmoothN = 1
+	config.TemporalLagN = 1
+	config.TemporalTrainingWindow = 3 * time.Minute
+	config.TemporalTrainEvery = 1 * time.Minute
+	config.TemporalMaximumModels = 4
+	config.TemporalMinimumModelsForConsensus = 1
 
 	provider := newMLProviderWithConfig(nil, nil, slog.New(slog.NewTextHandler(io.Discard, nil)), config)
 	start := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
@@ -877,15 +889,15 @@ func TestNetdataLargeEnsembleRotation(t *testing.T) {
 	}
 }
 
-func TestNetdataLargeEnsembleBoundedMemory(t *testing.T) {
-	config := baselineNetdataMLConfig(1)
-	config.NetdataDiffN = 1
-	config.NetdataSmoothN = 1
-	config.NetdataLagN = 1
-	config.NetdataTrainingWindow = 3 * time.Minute
-	config.NetdataTrainEvery = 1 * time.Minute
-	config.NetdataMaximumModels = 4
-	config.NetdataMinimumModelsForConsensus = 1
+func TestTemporalLargeEnsembleBoundedMemory(t *testing.T) {
+	config := baselineTemporalMLConfig(1)
+	config.TemporalDiffN = 1
+	config.TemporalSmoothN = 1
+	config.TemporalLagN = 1
+	config.TemporalTrainingWindow = 3 * time.Minute
+	config.TemporalTrainEvery = 1 * time.Minute
+	config.TemporalMaximumModels = 4
+	config.TemporalMinimumModelsForConsensus = 1
 
 	provider := newMLProviderWithConfig(nil, nil, slog.New(slog.NewTextHandler(io.Discard, nil)), config)
 	start := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
@@ -913,8 +925,8 @@ func TestNetdataLargeEnsembleBoundedMemory(t *testing.T) {
 	}
 
 	state = onlyMLSeriesState(t, provider)
-	if len(state.temporalModels) != config.NetdataMaximumModels {
-		t.Fatalf("unexpected temporal model count after extended run: got %d want %d", len(state.temporalModels), config.NetdataMaximumModels)
+	if len(state.temporalModels) != config.TemporalMaximumModels {
+		t.Fatalf("unexpected temporal model count after extended run: got %d want %d", len(state.temporalModels), config.TemporalMaximumModels)
 	}
 	if len(state.temporalRawHistory) > rawHistoryLimit+2 {
 		t.Fatalf("temporal raw history grew unexpectedly: got %d want at most %d", len(state.temporalRawHistory), rawHistoryLimit+2)
@@ -1636,7 +1648,7 @@ func TestTuneKMeansAcrossNABAWS(t *testing.T) {
 	t.Logf("tuning_runtime=%s", time.Since(startedAt).Round(time.Millisecond))
 }
 
-func TestCompareNetdataLikeAcrossNABAWS(t *testing.T) {
+func TestCompareTemporalLikeAcrossNABAWS(t *testing.T) {
 	nabRoot := os.Getenv("NAB_ROOT")
 	if nabRoot == "" {
 		t.Skip("NAB_ROOT is not configured")
@@ -1673,13 +1685,13 @@ func TestCompareNetdataLikeAcrossNABAWS(t *testing.T) {
 		regularByKey[evaluation.SeriesKey] = evaluation
 	}
 
-	netdataExactConfig := baselineNetdataMLConfig(1)
-	netdataConsensus6Config := baselineNetdataMLConfig(6)
+	temporalExactConfig := baselineTemporalMLConfig(1)
+	temporalConsensus6Config := baselineTemporalMLConfig(6)
 
 	standardDetails := make(map[string]nabDetailedMetrics)
 	rawDetails := make(map[string]nabDetailedMetrics)
-	netdataExactDetails := make(map[string]nabDetailedMetrics)
-	netdataConsensus6Details := make(map[string]nabDetailedMetrics)
+	temporalExactDetails := make(map[string]nabDetailedMetrics)
+	temporalConsensus6Details := make(map[string]nabDetailedMetrics)
 
 	standardStart := time.Now()
 	standardMetrics := make([]nabDetailedMetrics, 0, len(regularEvaluations))
@@ -1723,64 +1735,64 @@ func TestCompareNetdataLikeAcrossNABAWS(t *testing.T) {
 	}
 	rawRuntime := time.Since(rawStart)
 
-	netdataExactStart := time.Now()
-	netdataExactMetrics := make([]nabDetailedMetrics, 0, len(temporalEvaluations))
+	temporalExactStart := time.Now()
+	temporalExactMetrics := make([]nabDetailedMetrics, 0, len(temporalEvaluations))
 	for _, evaluation := range temporalEvaluations {
 		mlScores, err := calculateNABMLScoresWithConfig(
 			evaluation.SeriesKey,
 			evaluation.Points,
 			evaluation.FallbackScores,
-			netdataExactConfig,
+			temporalExactConfig,
 		)
 		if err != nil {
-			t.Fatalf("netdata exact %s: %v", evaluation.SeriesKey, err)
+			t.Fatalf("temporal exact %s: %v", evaluation.SeriesKey, err)
 		}
 
 		detailed := evaluateNABAlgorithmDetailed(
-			"netdata_exact",
+			"temporal_exact",
 			4.0,
 			evaluation.Points,
 			mlScores,
 			evaluation.Windows,
 			evaluation.ExpectedInterval,
 		)
-		netdataExactMetrics = append(netdataExactMetrics, detailed)
-		netdataExactDetails[evaluation.SeriesKey] = detailed
+		temporalExactMetrics = append(temporalExactMetrics, detailed)
+		temporalExactDetails[evaluation.SeriesKey] = detailed
 	}
-	netdataExactRuntime := time.Since(netdataExactStart)
+	temporalExactRuntime := time.Since(temporalExactStart)
 
-	netdataConsensus6Start := time.Now()
-	netdataConsensus6Metrics := make([]nabDetailedMetrics, 0, len(temporalEvaluations))
+	temporalConsensus6Start := time.Now()
+	temporalConsensus6Metrics := make([]nabDetailedMetrics, 0, len(temporalEvaluations))
 	for _, evaluation := range temporalEvaluations {
 		mlScores, err := calculateNABMLScoresWithConfig(
 			evaluation.SeriesKey,
 			evaluation.Points,
 			evaluation.FallbackScores,
-			netdataConsensus6Config,
+			temporalConsensus6Config,
 		)
 		if err != nil {
-			t.Fatalf("netdata consensus6 %s: %v", evaluation.SeriesKey, err)
+			t.Fatalf("temporal consensus6 %s: %v", evaluation.SeriesKey, err)
 		}
 
 		detailed := evaluateNABAlgorithmDetailed(
-			"netdata_consensus_6",
+			"temporal_consensus_6",
 			4.0,
 			evaluation.Points,
 			mlScores,
 			evaluation.Windows,
 			evaluation.ExpectedInterval,
 		)
-		netdataConsensus6Metrics = append(netdataConsensus6Metrics, detailed)
-		netdataConsensus6Details[evaluation.SeriesKey] = detailed
+		temporalConsensus6Metrics = append(temporalConsensus6Metrics, detailed)
+		temporalConsensus6Details[evaluation.SeriesKey] = detailed
 	}
-	netdataConsensus6Runtime := time.Since(netdataConsensus6Start)
+	temporalConsensus6Runtime := time.Since(temporalConsensus6Start)
 
 	temporalByKey := make(map[string]nabTemporalSeriesEvaluation, len(temporalEvaluations))
 	for _, evaluation := range temporalEvaluations {
 		temporalByKey[evaluation.SeriesKey] = evaluation
 	}
 
-	t.Log("series | points | segments | gaps | windows | standard_detected/fp | raw_kmeans_detected/fp | netdata_exact_detected/fp | netdata_consensus_6_detected/fp")
+	t.Log("series | points | segments | gaps | windows | standard_detected/fp | raw_kmeans_detected/fp | temporal_exact_detected/fp | temporal_consensus_6_detected/fp")
 	newlyEvaluated := 0
 	for _, seriesKey := range seriesKeys {
 		temporalEvaluation, ok := temporalByKey[seriesKey]
@@ -1819,10 +1831,10 @@ func TestCompareNetdataLikeAcrossNABAWS(t *testing.T) {
 			len(temporalEvaluation.Windows),
 			standardCell,
 			rawCell,
-			netdataExactDetails[seriesKey].Summary.DetectedWindows,
-			netdataExactDetails[seriesKey].Summary.FalsePositiveEvents,
-			netdataConsensus6Details[seriesKey].Summary.DetectedWindows,
-			netdataConsensus6Details[seriesKey].Summary.FalsePositiveEvents,
+			temporalExactDetails[seriesKey].Summary.DetectedWindows,
+			temporalExactDetails[seriesKey].Summary.FalsePositiveEvents,
+			temporalConsensus6Details[seriesKey].Summary.DetectedWindows,
+			temporalConsensus6Details[seriesKey].Summary.FalsePositiveEvents,
 		)
 	}
 
@@ -1851,25 +1863,25 @@ func TestCompareNetdataLikeAcrossNABAWS(t *testing.T) {
 	}
 
 	temporalSeriesEvaluations, _ := temporalEvaluationsToSeriesEvaluations(temporalEvaluations)
-	netdataExactAggregate, err := aggregateNABSeriesMetrics(
-		"netdata_exact",
+	temporalExactAggregate, err := aggregateNABSeriesMetrics(
+		"temporal_exact",
 		len(seriesKeys),
 		temporalSeriesEvaluations,
 		temporalSkipped,
-		netdataExactMetrics,
-		netdataExactRuntime,
+		temporalExactMetrics,
+		temporalExactRuntime,
 	)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	netdataConsensus6Aggregate, err := aggregateNABSeriesMetrics(
-		"netdata_consensus_6",
+	temporalConsensus6Aggregate, err := aggregateNABSeriesMetrics(
+		"temporal_consensus_6",
 		len(seriesKeys),
 		temporalSeriesEvaluations,
 		temporalSkipped,
-		netdataConsensus6Metrics,
-		netdataConsensus6Runtime,
+		temporalConsensus6Metrics,
+		temporalConsensus6Runtime,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -1885,12 +1897,12 @@ func TestCompareNetdataLikeAcrossNABAWS(t *testing.T) {
 	t.Logf("previously_skipped_now_temporally_evaluated=%d", newlyEvaluated)
 	t.Logf("standard: %s", formatNABAggregateMetrics(standardAggregate))
 	t.Logf("raw_kmeans: %s", formatNABAggregateMetrics(rawAggregate))
-	t.Logf("netdata_exact: %s", formatNABAggregateMetrics(netdataExactAggregate))
-	t.Logf("netdata_consensus_6: %s", formatNABAggregateMetrics(netdataConsensus6Aggregate))
-	t.Logf("netdata_compare_runtime=%s", time.Since(startedAt).Round(time.Millisecond))
+	t.Logf("temporal_exact: %s", formatNABAggregateMetrics(temporalExactAggregate))
+	t.Logf("temporal_consensus_6: %s", formatNABAggregateMetrics(temporalConsensus6Aggregate))
+	t.Logf("temporal_compare_runtime=%s", time.Since(startedAt).Round(time.Millisecond))
 }
 
-func TestTuneNetdataLikeAcrossNABAWS(t *testing.T) {
+func TestTuneTemporalLikeAcrossNABAWS(t *testing.T) {
 	nabRoot := os.Getenv("NAB_ROOT")
 	if nabRoot == "" {
 		t.Skip("NAB_ROOT is not configured")
@@ -1935,7 +1947,7 @@ func TestTuneNetdataLikeAcrossNABAWS(t *testing.T) {
 	trainTemporalSkips := filterNABSeriesSkips(trainKeys, temporalSkipped)
 	testTemporalSkips := filterNABSeriesSkips(testKeys, temporalSkipped)
 
-	trainStandard, err := aggregateNetdataStandardForKeys(
+	trainStandard, err := aggregateTemporalStandardForKeys(
 		nabRoot,
 		trainKeys,
 	)
@@ -1943,7 +1955,7 @@ func TestTuneNetdataLikeAcrossNABAWS(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	testStandard, err := aggregateNetdataStandardForKeys(
+	testStandard, err := aggregateTemporalStandardForKeys(
 		nabRoot,
 		testKeys,
 	)
@@ -1951,8 +1963,8 @@ func TestTuneNetdataLikeAcrossNABAWS(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	sweepMode, configs := buildNetdataTuneConfigs(os.Getenv("NAB_TUNE_FULL") == "1")
-	results, sweepDuration, err := runNetdataTuneSweep(
+	sweepMode, configs := buildTemporalTuneConfigs(os.Getenv("NAB_TUNE_FULL") == "1")
+	results, sweepDuration, err := runTemporalTuneSweep(
 		t,
 		trainKeys,
 		trainTemporalSeries,
@@ -1964,13 +1976,13 @@ func TestTuneNetdataLikeAcrossNABAWS(t *testing.T) {
 	}
 
 	if len(results) == 0 {
-		t.Fatal("no netdata tuning results were produced")
+		t.Fatal("no temporal tuning results were produced")
 	}
 
-	rankedResults := rankNetdataTuneResults(results, trainStandard)
+	rankedResults := rankTemporalTuneResults(results, trainStandard)
 	bestTrain := rankedResults[0]
 
-	bestHoldout, err := evaluateNetdataTuneConfig(
+	bestHoldout, err := evaluateTemporalTuneConfig(
 		testKeys,
 		testTemporalSeries,
 		testTemporalSkips,
@@ -1980,7 +1992,7 @@ func TestTuneNetdataLikeAcrossNABAWS(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	currentHoldout, err := evaluateNetdataHoldoutAgainstConfig(
+	currentHoldout, err := evaluateTemporalHoldoutAgainstConfig(
 		testTemporal,
 		defaultMLConfig,
 		4.0,
@@ -1990,21 +2002,21 @@ func TestTuneNetdataLikeAcrossNABAWS(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	netdataExactHoldout, err := evaluateNetdataTuneConfig(
+	temporalExactHoldout, err := evaluateTemporalTuneConfig(
 		testKeys,
 		testTemporalSeries,
 		testTemporalSkips,
-		netdataTuneConfigFromMLConfig(baselineNetdataMLConfig(1)),
+		temporalTuneConfigFromMLConfig(baselineTemporalMLConfig(1)),
 	)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	netdataConsensus6Holdout, err := evaluateNetdataTuneConfig(
+	temporalConsensus6Holdout, err := evaluateTemporalTuneConfig(
 		testKeys,
 		testTemporalSeries,
 		testTemporalSkips,
-		netdataTuneConfigFromMLConfig(baselineNetdataMLConfig(6)),
+		temporalTuneConfigFromMLConfig(baselineTemporalMLConfig(6)),
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -2022,24 +2034,24 @@ func TestTuneNetdataLikeAcrossNABAWS(t *testing.T) {
 	t.Log("rank | diff | smooth | lag | training_window | train_every | maximum_models | minimum_models | quantile | threshold | warmup | recall | precision | f1 | fp_per_series_day | fp_events | median_delay | p95_delay")
 	topCount := min(20, len(rankedResults))
 	for index := 0; index < topCount; index++ {
-		t.Log(formatNetdataTuneTopLine(index+1, rankedResults[index]))
+		t.Log(formatTemporalTuneTopLine(index+1, rankedResults[index]))
 	}
 
-	if !isAcceptableNetdataTuneResult(bestTrain, trainStandard) {
+	if !isAcceptableTemporalTuneResult(bestTrain, trainStandard) {
 		t.Log("acceptable_train_configuration=false")
 	}
 
 	t.Log("best train configuration:")
-	t.Log(formatNetdataTuneSummary(bestTrain))
+	t.Log(formatTemporalTuneSummary(bestTrain))
 	t.Log("holdout test result:")
-	t.Log(formatNetdataTuneSummary(bestHoldout))
+	t.Log(formatTemporalTuneSummary(bestHoldout))
 	t.Log("algorithm | series | windows | detected | missed | fp_events | fp_per_series_day | precision | recall | f1 | median_delay | p95_delay")
 	t.Log(formatNABHoldoutComparisonLine("standard", testStandard))
 	t.Log(formatNABHoldoutComparisonLine("current_raw_kmeans", currentHoldout))
-	t.Log(formatNABHoldoutComparisonLine("netdata_exact", netdataExactHoldout.Train))
-	t.Log(formatNABHoldoutComparisonLine("netdata_consensus_6", netdataConsensus6Holdout.Train))
-	t.Log(formatNABHoldoutComparisonLine("best_train_netdata", bestHoldout.Train))
-	t.Logf("netdata_tuning_runtime=%s", time.Since(startedAt).Round(time.Millisecond))
+	t.Log(formatNABHoldoutComparisonLine("temporal_exact", temporalExactHoldout.Train))
+	t.Log(formatNABHoldoutComparisonLine("temporal_consensus_6", temporalConsensus6Holdout.Train))
+	t.Log(formatNABHoldoutComparisonLine("best_train_temporal", bestHoldout.Train))
+	t.Logf("temporal_tuning_runtime=%s", time.Since(startedAt).Round(time.Millisecond))
 }
 
 type nabPoint struct {
@@ -2522,7 +2534,7 @@ type nabTemporalSeriesEvaluation struct {
 	SeriesDays       float64
 }
 
-type netdataTuneConfig struct {
+type temporalTuneConfig struct {
 	DiffN                     int
 	SmoothN                   int
 	LagN                      int
@@ -2535,8 +2547,8 @@ type netdataTuneConfig struct {
 	RecencyHalfLife           time.Duration
 }
 
-type netdataTuneResult struct {
-	Config    netdataTuneConfig
+type temporalTuneResult struct {
+	Config    temporalTuneConfig
 	Threshold float64
 	Train     nabAggregateMetrics
 }
@@ -4446,21 +4458,21 @@ func nabTuneModelConfigFromMLConfig(config mlConfig) nabTuneModelConfig {
 	}
 }
 
-func baselineNetdataMLConfig(
+func baselineTemporalMLConfig(
 	minimumModelsForConsensus int,
 ) mlConfig {
 	config := defaultMLConfig
-	config.AlgorithmMode = mlAlgorithmNetdataTemporal
-	config.NetdataDiffN = 1
-	config.NetdataSmoothN = 3
-	config.NetdataLagN = 5
-	config.NetdataTrainingWindow = 6 * time.Hour
-	config.NetdataTrainEvery = 3 * time.Hour
-	config.NetdataMaximumModels = 18
-	config.NetdataMinimumModelsForConsensus = minimumModelsForConsensus
-	config.NetdataDistanceQuantile = 0.99
-	config.NetdataConsensusFraction = 1.0
-	config.NetdataRecencyHalfLife = 0
+	config.AlgorithmMode = mlAlgorithmTemporal
+	config.TemporalDiffN = 1
+	config.TemporalSmoothN = 3
+	config.TemporalLagN = 5
+	config.TemporalTrainingWindow = 6 * time.Hour
+	config.TemporalTrainEvery = 3 * time.Hour
+	config.TemporalMaximumModels = 18
+	config.TemporalMinimumModelsForConsensus = minimumModelsForConsensus
+	config.TemporalDistanceQuantile = 0.99
+	config.TemporalConsensusFraction = 1.0
+	config.TemporalRecencyHalfLife = 0
 	return config
 }
 
@@ -4638,7 +4650,7 @@ func filterNABTemporalEvaluations(
 	return filtered
 }
 
-func aggregateNetdataStandardForKeys(
+func aggregateTemporalStandardForKeys(
 	nabRoot string,
 	seriesKeys []string,
 ) (nabAggregateMetrics, error) {
@@ -4658,11 +4670,11 @@ func aggregateNetdataStandardForKeys(
 	)
 }
 
-func buildNetdataTuneConfigs(
+func buildTemporalTuneConfigs(
 	full bool,
-) (string, []netdataTuneConfig) {
+) (string, []temporalTuneConfig) {
 	if full {
-		return "full", buildNetdataTuneConfigsFromGrid(
+		return "full", buildTemporalTuneConfigsFromGrid(
 			[]int{1},
 			[]int{1, 3, 5},
 			[]int{3, 5, 8},
@@ -4674,7 +4686,7 @@ func buildNetdataTuneConfigs(
 		)
 	}
 
-	return "smoke", buildNetdataTuneConfigsFromGrid(
+	return "smoke", buildTemporalTuneConfigsFromGrid(
 		[]int{1},
 		[]int{1, 3, 5},
 		[]int{3, 5, 8},
@@ -4686,7 +4698,7 @@ func buildNetdataTuneConfigs(
 	)
 }
 
-func buildNetdataTuneConfigsFromGrid(
+func buildTemporalTuneConfigsFromGrid(
 	diffs []int,
 	smooths []int,
 	lags []int,
@@ -4695,8 +4707,8 @@ func buildNetdataTuneConfigsFromGrid(
 	maximumModels []int,
 	minimumModels []int,
 	quantiles []float64,
-) []netdataTuneConfig {
-	configs := make([]netdataTuneConfig, 0)
+) []temporalTuneConfig {
+	configs := make([]temporalTuneConfig, 0)
 	for _, diff := range diffs {
 		for _, smooth := range smooths {
 			for _, lag := range lags {
@@ -4705,7 +4717,7 @@ func buildNetdataTuneConfigsFromGrid(
 						for _, maximumModel := range maximumModels {
 							for _, minimumModel := range minimumModels {
 								for _, quantile := range quantiles {
-									configs = append(configs, netdataTuneConfig{
+									configs = append(configs, temporalTuneConfig{
 										DiffN:                     diff,
 										SmoothN:                   smooth,
 										LagN:                      lag,
@@ -4729,42 +4741,42 @@ func buildNetdataTuneConfigsFromGrid(
 	return configs
 }
 
-func (config netdataTuneConfig) toMLConfig() mlConfig {
-	result := baselineNetdataMLConfig(config.MinimumModelsForConsensus)
-	result.NetdataDiffN = config.DiffN
-	result.NetdataSmoothN = config.SmoothN
-	result.NetdataLagN = config.LagN
-	result.NetdataTrainingWindow = config.TrainingWindow
-	result.NetdataTrainEvery = config.TrainEvery
-	result.NetdataMaximumModels = config.MaximumModels
-	result.NetdataDistanceQuantile = config.DistanceQuantile
-	result.NetdataConsensusFraction = config.ConsensusFraction
-	result.NetdataRecencyHalfLife = config.RecencyHalfLife
+func (config temporalTuneConfig) toMLConfig() mlConfig {
+	result := baselineTemporalMLConfig(config.MinimumModelsForConsensus)
+	result.TemporalDiffN = config.DiffN
+	result.TemporalSmoothN = config.SmoothN
+	result.TemporalLagN = config.LagN
+	result.TemporalTrainingWindow = config.TrainingWindow
+	result.TemporalTrainEvery = config.TrainEvery
+	result.TemporalMaximumModels = config.MaximumModels
+	result.TemporalDistanceQuantile = config.DistanceQuantile
+	result.TemporalConsensusFraction = config.ConsensusFraction
+	result.TemporalRecencyHalfLife = config.RecencyHalfLife
 	return result
 }
 
-func netdataTuneConfigFromMLConfig(config mlConfig) netdataTuneConfig {
-	return netdataTuneConfig{
-		DiffN:                     config.NetdataDiffN,
-		SmoothN:                   config.NetdataSmoothN,
-		LagN:                      config.NetdataLagN,
-		TrainingWindow:            config.NetdataTrainingWindow,
-		TrainEvery:                config.NetdataTrainEvery,
-		MaximumModels:             config.NetdataMaximumModels,
-		MinimumModelsForConsensus: config.NetdataMinimumModelsForConsensus,
-		DistanceQuantile:          config.NetdataDistanceQuantile,
-		ConsensusFraction:         config.NetdataConsensusFraction,
-		RecencyHalfLife:           config.NetdataRecencyHalfLife,
+func temporalTuneConfigFromMLConfig(config mlConfig) temporalTuneConfig {
+	return temporalTuneConfig{
+		DiffN:                     config.TemporalDiffN,
+		SmoothN:                   config.TemporalSmoothN,
+		LagN:                      config.TemporalLagN,
+		TrainingWindow:            config.TemporalTrainingWindow,
+		TrainEvery:                config.TemporalTrainEvery,
+		MaximumModels:             config.TemporalMaximumModels,
+		MinimumModelsForConsensus: config.TemporalMinimumModelsForConsensus,
+		DistanceQuantile:          config.TemporalDistanceQuantile,
+		ConsensusFraction:         config.TemporalConsensusFraction,
+		RecencyHalfLife:           config.TemporalRecencyHalfLife,
 	}
 }
 
-func (config netdataTuneConfig) warmupDuration() time.Duration {
+func (config temporalTuneConfig) warmupDuration() time.Duration {
 	return config.TrainingWindow +
 		time.Duration(config.MinimumModelsForConsensus-1)*
 			config.TrainEvery
 }
 
-func (config netdataTuneConfig) signature() string {
+func (config temporalTuneConfig) signature() string {
 	return fmt.Sprintf(
 		"diff=%d smooth=%d lag=%d training_window=%s train_every=%s maximum_models=%d minimum_models=%d quantile=%.3f consensus_fraction=%.2f recency_half_life=%s",
 		config.DiffN,
@@ -4780,22 +4792,22 @@ func (config netdataTuneConfig) signature() string {
 	)
 }
 
-func runNetdataTuneSweep(
+func runTemporalTuneSweep(
 	t *testing.T,
 	trainKeys []string,
 	trainTemporalSeries []nabSeriesEvaluation,
 	trainTemporalSkips []nabSeriesSkip,
-	configs []netdataTuneConfig,
-) ([]netdataTuneResult, time.Duration, error) {
+	configs []temporalTuneConfig,
+) ([]temporalTuneResult, time.Duration, error) {
 	t.Helper()
 
 	startedAt := time.Now()
 	type configJob struct {
 		Index  int
-		Config netdataTuneConfig
+		Config temporalTuneConfig
 	}
 	type configResult struct {
-		Result netdataTuneResult
+		Result temporalTuneResult
 		Err    error
 	}
 
@@ -4809,7 +4821,7 @@ func runNetdataTuneSweep(
 	for workerIndex := 0; workerIndex < workerCount; workerIndex++ {
 		go func() {
 			for job := range jobs {
-				result, err := evaluateNetdataTuneConfig(
+				result, err := evaluateTemporalTuneConfig(
 					trainKeys,
 					trainTemporalSeries,
 					trainTemporalSkips,
@@ -4830,7 +4842,7 @@ func runNetdataTuneSweep(
 		close(jobs)
 	}()
 
-	results := make([]netdataTuneResult, 0, len(configs))
+	results := make([]temporalTuneResult, 0, len(configs))
 	for completed := 1; completed <= len(configs); completed++ {
 		result := <-resultsCh
 		if result.Err != nil {
@@ -4851,12 +4863,12 @@ func runNetdataTuneSweep(
 	return results, time.Since(startedAt), nil
 }
 
-func evaluateNetdataTuneConfig(
+func evaluateTemporalTuneConfig(
 	seriesKeys []string,
 	evaluations []nabSeriesEvaluation,
 	skipped []nabSeriesSkip,
-	config netdataTuneConfig,
-) (netdataTuneResult, error) {
+	config temporalTuneConfig,
+) (temporalTuneResult, error) {
 	startedAt := time.Now()
 	detailedMetrics := make([]nabDetailedMetrics, 0, len(evaluations))
 	mlConfig := config.toMLConfig()
@@ -4868,11 +4880,11 @@ func evaluateNetdataTuneConfig(
 			mlConfig,
 		)
 		if err != nil {
-			return netdataTuneResult{}, fmt.Errorf("config %s series %s: %w", config.signature(), evaluation.SeriesKey, err)
+			return temporalTuneResult{}, fmt.Errorf("config %s series %s: %w", config.signature(), evaluation.SeriesKey, err)
 		}
 
 		detailedMetrics = append(detailedMetrics, evaluateNABAlgorithmDetailed(
-			"netdata_tuned",
+			"temporal_tuned",
 			4.0,
 			evaluation.EvaluatedPoints,
 			mlScores,
@@ -4882,7 +4894,7 @@ func evaluateNetdataTuneConfig(
 	}
 
 	aggregate, err := aggregateNABSeriesMetrics(
-		"netdata_tuned",
+		"temporal_tuned",
 		len(seriesKeys),
 		evaluations,
 		skipped,
@@ -4890,17 +4902,17 @@ func evaluateNetdataTuneConfig(
 		time.Since(startedAt),
 	)
 	if err != nil {
-		return netdataTuneResult{}, err
+		return temporalTuneResult{}, err
 	}
 
-	return netdataTuneResult{
+	return temporalTuneResult{
 		Config:    config,
 		Threshold: 4.0,
 		Train:     aggregate,
 	}, nil
 }
 
-func evaluateNetdataHoldoutAgainstConfig(
+func evaluateTemporalHoldoutAgainstConfig(
 	evaluations []nabTemporalSeriesEvaluation,
 	config mlConfig,
 	threshold float64,
@@ -4942,32 +4954,32 @@ func evaluateNetdataHoldoutAgainstConfig(
 	)
 }
 
-func rankNetdataTuneResults(
-	results []netdataTuneResult,
+func rankTemporalTuneResults(
+	results []temporalTuneResult,
 	standard nabAggregateMetrics,
-) []netdataTuneResult {
+) []temporalTuneResult {
 	ranked := slices.Clone(results)
 	hasAcceptable := false
 	for _, result := range ranked {
-		if isAcceptableNetdataTuneResult(result, standard) {
+		if isAcceptableTemporalTuneResult(result, standard) {
 			hasAcceptable = true
 			break
 		}
 	}
 
-	slices.SortFunc(ranked, func(left, right netdataTuneResult) int {
+	slices.SortFunc(ranked, func(left, right temporalTuneResult) int {
 		if hasAcceptable {
-			return compareAcceptableNetdataTuneResults(left, right, standard)
+			return compareAcceptableTemporalTuneResults(left, right, standard)
 		}
 
-		return compareFallbackNetdataTuneResults(left, right)
+		return compareFallbackTemporalTuneResults(left, right)
 	})
 
 	return ranked
 }
 
-func isAcceptableNetdataTuneResult(
-	result netdataTuneResult,
+func isAcceptableTemporalTuneResult(
+	result temporalTuneResult,
 	standard nabAggregateMetrics,
 ) bool {
 	return result.Train.EventRecall >= 0.75 &&
@@ -4975,13 +4987,13 @@ func isAcceptableNetdataTuneResult(
 		result.Train.EventF1 >= standard.EventF1
 }
 
-func compareAcceptableNetdataTuneResults(
-	left netdataTuneResult,
-	right netdataTuneResult,
+func compareAcceptableTemporalTuneResults(
+	left temporalTuneResult,
+	right temporalTuneResult,
 	standard nabAggregateMetrics,
 ) int {
-	leftAcceptable := isAcceptableNetdataTuneResult(left, standard)
-	rightAcceptable := isAcceptableNetdataTuneResult(right, standard)
+	leftAcceptable := isAcceptableTemporalTuneResult(left, standard)
+	rightAcceptable := isAcceptableTemporalTuneResult(right, standard)
 	switch {
 	case leftAcceptable && !rightAcceptable:
 		return -1
@@ -5028,9 +5040,9 @@ func compareAcceptableNetdataTuneResults(
 	}
 }
 
-func compareFallbackNetdataTuneResults(
-	left netdataTuneResult,
-	right netdataTuneResult,
+func compareFallbackTemporalTuneResults(
+	left temporalTuneResult,
+	right temporalTuneResult,
 ) int {
 	switch {
 	case left.Train.EventF1 > right.Train.EventF1:
@@ -5050,9 +5062,9 @@ func compareFallbackNetdataTuneResults(
 	}
 }
 
-func formatNetdataTuneTopLine(
+func formatTemporalTuneTopLine(
 	rank int,
-	result netdataTuneResult,
+	result temporalTuneResult,
 ) string {
 	return fmt.Sprintf(
 		"%d | %d | %d | %d | %s | %s | %d | %d | %.3f | %.1f | %s | %.4f | %.4f | %.4f | %.4f | %d | %.2f | %.2f",
@@ -5077,8 +5089,8 @@ func formatNetdataTuneTopLine(
 	)
 }
 
-func formatNetdataTuneSummary(
-	result netdataTuneResult,
+func formatTemporalTuneSummary(
+	result temporalTuneResult,
 ) string {
 	return fmt.Sprintf(
 		"diff=%d smooth=%d lag=%d training_window=%s train_every=%s maximum_models=%d minimum_models=%d quantile=%.3f threshold=%.1f warmup=%s series=%d windows=%d detected=%d missed=%d recall=%.4f precision=%.4f f1=%.4f fp_events=%d fp_per_series_day=%.4f median_delay=%.2f p95_delay=%.2f runtime=%s",

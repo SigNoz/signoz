@@ -158,6 +158,7 @@ export const ANOMALY_TIME_DURATION_OPTIONS = [
 
 export const ANOMALY_ALGORITHM_OPTIONS = [
 	{ value: Algorithm.STANDARD, label: 'Standard' },
+	{ value: Algorithm.ML, label: 'ML' },
 ];
 
 export const ANOMALY_SEASONALITY_OPTIONS = [

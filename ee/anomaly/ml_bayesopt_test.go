@@ -16,9 +16,9 @@ import (
 )
 
 const (
-	netdataBayesDefaultSeed       int64 = 17062017
-	netdataBayesSearchSpaceV1           = "netdata_bayesopt_v1"
-	netdataBayesCandidatePoolSize       = 4096
+	temporalBayesDefaultSeed       int64 = 17062017
+	temporalBayesSearchSpaceV1           = "temporal_bayesopt_v1"
+	temporalBayesCandidatePoolSize       = 4096
 )
 
 type nabMLRunResult struct {
@@ -30,13 +30,13 @@ type nabMLRunResult struct {
 	QuorumRatios       []float64
 }
 
-type netdataCommonAlgorithmSpec struct {
+type temporalCommonAlgorithmSpec struct {
 	Name      string
 	Threshold float64
 	Config    *mlConfig
 }
 
-type netdataCommonSeriesResult struct {
+type temporalCommonSeriesResult struct {
 	Evaluation    nabSeriesEvaluation
 	CommonPoints  []nabPoint
 	CommonWindows []nabWindow
@@ -44,8 +44,8 @@ type netdataCommonSeriesResult struct {
 	Runs          map[string]nabMLRunResult
 }
 
-type netdataCommonBenchmarkResult struct {
-	Series           []netdataCommonSeriesResult
+type temporalCommonBenchmarkResult struct {
+	Series           []temporalCommonSeriesResult
 	Aggregates       map[string]nabAggregateMetrics
 	CommonSeries     int
 	CommonPoints     int
@@ -53,15 +53,15 @@ type netdataCommonBenchmarkResult struct {
 	CommonSeriesDays float64
 }
 
-type netdataBayesFoldMetrics struct {
+type temporalBayesFoldMetrics struct {
 	FoldIndex int
 	Candidate nabAggregateMetrics
 	Standard  nabAggregateMetrics
 	Utility   float64
 }
 
-type netdataBayesEvaluation struct {
-	Config               netdataTuneConfig
+type temporalBayesEvaluation struct {
+	Config               temporalTuneConfig
 	Objective            float64
 	MeanMetrics          nabAggregateMetrics
 	MeanStandardMetrics  nabAggregateMetrics
@@ -69,24 +69,24 @@ type netdataBayesEvaluation struct {
 	WorstFoldF1          float64
 	FoldsBeatingStandard int
 	Feasible             bool
-	Folds                []netdataBayesFoldMetrics
+	Folds                []temporalBayesFoldMetrics
 }
 
-type netdataBayesCheckpoint struct {
-	ElapsedDuration time.Duration            `json:"elapsed_duration"`
-	Evaluations     []netdataBayesEvaluation `json:"evaluations"`
-	SearchSpace     string                   `json:"search_space"`
-	Seed            int64                    `json:"seed"`
+type temporalBayesCheckpoint struct {
+	ElapsedDuration time.Duration             `json:"elapsed_duration"`
+	Evaluations     []temporalBayesEvaluation `json:"evaluations"`
+	SearchSpace     string                    `json:"search_space"`
+	Seed            int64                     `json:"seed"`
 }
 
-type netdataBayesSearchMode struct {
+type temporalBayesSearchMode struct {
 	Name               string
 	InitialSamples     int
 	BayesianIterations int
 	TotalEvaluations   int
 }
 
-type netdataBayesSearchSpace struct {
+type temporalBayesSearchSpace struct {
 	DiffN             []int
 	SmoothN           []int
 	LagN              []int
@@ -108,12 +108,12 @@ type gaussianProcessModel struct {
 
 type bayesOptimizerState struct {
 	CheckpointPath string
-	Mode           netdataBayesSearchMode
-	SearchSpace    netdataBayesSearchSpace
+	Mode           temporalBayesSearchMode
+	SearchSpace    temporalBayesSearchSpace
 	Seed           int64
 }
 
-type netdataWindowDiagnostic struct {
+type temporalWindowDiagnostic struct {
 	SeriesKey                string
 	WindowStart              time.Time
 	WindowEnd                time.Time
@@ -126,7 +126,7 @@ type netdataWindowDiagnostic struct {
 	StandardOnly             bool
 }
 
-func TestCompareNetdataQuorumOnCommonNABAWS(t *testing.T) {
+func TestCompareTemporalQuorumOnCommonNABAWS(t *testing.T) {
 	nabRoot := os.Getenv("NAB_ROOT")
 	if nabRoot == "" {
 		t.Skip("NAB_ROOT is not configured")
@@ -142,19 +142,19 @@ func TestCompareNetdataQuorumOnCommonNABAWS(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	relaxedConfig := baselineNetdataMLConfig(6)
-	relaxedConfig.NetdataMaximumModels = 32
-	relaxedConfig.NetdataConsensusFraction = 0.75
-	relaxedConfig.NetdataRecencyHalfLife = 24 * time.Hour
+	relaxedConfig := baselineTemporalMLConfig(6)
+	relaxedConfig.TemporalMaximumModels = 32
+	relaxedConfig.TemporalConsensusFraction = 0.75
+	relaxedConfig.TemporalRecencyHalfLife = 24 * time.Hour
 
-	result, err := evaluateNetdataCommonCoverageAcrossSeries(
+	result, err := evaluateTemporalCommonCoverageAcrossSeries(
 		evaluations,
 		skipped,
-		[]netdataCommonAlgorithmSpec{
+		[]temporalCommonAlgorithmSpec{
 			{Name: "standard_zscore", Threshold: 6.0, Config: nil},
 			{Name: "current_raw_kmeans", Threshold: 4.0, Config: configPtr(defaultMLConfig)},
-			{Name: "netdata_unanimous_6", Threshold: 4.0, Config: configPtr(baselineNetdataMLConfig(6))},
-			{Name: "netdata_relaxed_baseline", Threshold: 4.0, Config: configPtr(relaxedConfig)},
+			{Name: "temporal_unanimous_6", Threshold: 4.0, Config: configPtr(baselineTemporalMLConfig(6))},
+			{Name: "temporal_relaxed_baseline", Threshold: 4.0, Config: configPtr(relaxedConfig)},
 		},
 	)
 	if err != nil {
@@ -176,32 +176,32 @@ func TestCompareNetdataQuorumOnCommonNABAWS(t *testing.T) {
 			len(series.CommonWindows),
 			series.Details["standard_zscore"].Summary.F1,
 			series.Details["current_raw_kmeans"].Summary.F1,
-			series.Details["netdata_unanimous_6"].Summary.F1,
-			series.Details["netdata_relaxed_baseline"].Summary.F1,
+			series.Details["temporal_unanimous_6"].Summary.F1,
+			series.Details["temporal_relaxed_baseline"].Summary.F1,
 		)
 	}
 	for _, name := range []string{
 		"standard_zscore",
 		"current_raw_kmeans",
-		"netdata_unanimous_6",
-		"netdata_relaxed_baseline",
+		"temporal_unanimous_6",
+		"temporal_relaxed_baseline",
 	} {
 		t.Logf("%s: %s", name, formatNABAggregateMetrics(result.Aggregates[name]))
 	}
 }
 
-func TestBayesOptimizeNetdataAcrossNABAWS(t *testing.T) {
+func TestBayesOptimizeTemporalAcrossNABAWS(t *testing.T) {
 	nabRoot := os.Getenv("NAB_ROOT")
 	if nabRoot == "" {
 		t.Skip("NAB_ROOT is not configured")
 	}
 
 	startedAt := time.Now()
-	seed := resolveNetdataBayesSeed()
-	workers := resolveNetdataBayesWorkers()
-	mode := resolveNetdataBayesSearchMode()
+	seed := resolveTemporalBayesSeed()
+	workers := resolveTemporalBayesWorkers()
+	mode := resolveTemporalBayesSearchMode()
 	checkpointPath := os.Getenv("NAB_BAYESOPT_CHECKPOINT")
-	searchSpace := resolveNetdataBayesSearchSpace()
+	searchSpace := resolveTemporalBayesSearchSpace()
 
 	seriesKeys, err := listNABAWSSeriesKeys(nabRoot)
 	if err != nil {
@@ -232,7 +232,7 @@ func TestBayesOptimizeNetdataAcrossNABAWS(t *testing.T) {
 		t.Fatal("optimization and holdout evaluations must not be empty")
 	}
 
-	cvFolds := buildNetdataCVFolds(optimizationEvaluations)
+	cvFolds := buildTemporalCVFolds(optimizationEvaluations)
 	if len(cvFolds) != 3 {
 		t.Fatalf("unexpected CV fold count: got %d want 3", len(cvFolds))
 	}
@@ -260,7 +260,7 @@ func TestBayesOptimizeNetdataAcrossNABAWS(t *testing.T) {
 		t.Logf("cv_fold_%d=%s", index, strings.Join(fold, ","))
 	}
 
-	evaluations, err := runNetdataBayesOptimization(
+	evaluations, err := runTemporalBayesOptimization(
 		t,
 		optimizerState,
 		cvFolds,
@@ -275,36 +275,36 @@ func TestBayesOptimizeNetdataAcrossNABAWS(t *testing.T) {
 		t.Fatal("Bayesian optimization produced no evaluations")
 	}
 
-	ranked := rankNetdataBayesEvaluations(evaluations)
+	ranked := rankTemporalBayesEvaluations(evaluations)
 	topCount := min(20, len(ranked))
 	t.Log("rank | objective | diff | smooth | lag | training_window | train_every | maximum_models | minimum_models | quantile | consensus_fraction | recency_half_life | warmup | models | recall | precision | f1 | fp_per_day | median_delay | p95_delay | worst_fold_recall | folds_beating_standard | feasible")
 	for index := 0; index < topCount; index++ {
-		t.Log(formatNetdataBayesEvaluation(index+1, ranked[index]))
+		t.Log(formatTemporalBayesEvaluation(index+1, ranked[index]))
 	}
 
-	best, bestFeasible := selectBestNetdataBayesEvaluation(ranked)
+	best, bestFeasible := selectBestTemporalBayesEvaluation(ranked)
 	if bestFeasible {
 		t.Log("best_cv_configuration:")
-		t.Log(formatNetdataBayesSummary(best))
+		t.Log(formatTemporalBayesSummary(best))
 	} else {
 		t.Log("best_cv_configuration: no feasible config found, using diagnostic best")
-		t.Log(formatNetdataBayesSummary(best))
+		t.Log(formatTemporalBayesSummary(best))
 	}
 
-	relaxedConfig := baselineNetdataMLConfig(6)
-	relaxedConfig.NetdataMaximumModels = 32
-	relaxedConfig.NetdataConsensusFraction = 0.75
-	relaxedConfig.NetdataRecencyHalfLife = 24 * time.Hour
+	relaxedConfig := baselineTemporalMLConfig(6)
+	relaxedConfig.TemporalMaximumModels = 32
+	relaxedConfig.TemporalConsensusFraction = 0.75
+	relaxedConfig.TemporalRecencyHalfLife = 24 * time.Hour
 
-	holdoutResult, err := evaluateNetdataCommonCoverageAcrossSeries(
+	holdoutResult, err := evaluateTemporalCommonCoverageAcrossSeries(
 		holdoutEvaluations,
 		holdoutSkipped,
-		[]netdataCommonAlgorithmSpec{
+		[]temporalCommonAlgorithmSpec{
 			{Name: "standard_zscore", Threshold: 6.0, Config: nil},
 			{Name: "current_raw_kmeans", Threshold: 4.0, Config: configPtr(defaultMLConfig)},
-			{Name: "netdata_unanimous_6", Threshold: 4.0, Config: configPtr(baselineNetdataMLConfig(6))},
-			{Name: "netdata_relaxed_baseline", Threshold: 4.0, Config: configPtr(relaxedConfig)},
-			{Name: "best_bayes_netdata", Threshold: 4.0, Config: configPtr(best.Config.toMLConfig())},
+			{Name: "temporal_unanimous_6", Threshold: 4.0, Config: configPtr(baselineTemporalMLConfig(6))},
+			{Name: "temporal_relaxed_baseline", Threshold: 4.0, Config: configPtr(relaxedConfig)},
+			{Name: "best_bayes_temporal", Threshold: 4.0, Config: configPtr(best.Config.toMLConfig())},
 		},
 	)
 	if err != nil {
@@ -315,9 +315,9 @@ func TestBayesOptimizeNetdataAcrossNABAWS(t *testing.T) {
 	for _, algorithm := range []string{
 		"standard_zscore",
 		"current_raw_kmeans",
-		"netdata_unanimous_6",
-		"netdata_relaxed_baseline",
-		"best_bayes_netdata",
+		"temporal_unanimous_6",
+		"temporal_relaxed_baseline",
+		"best_bayes_temporal",
 	} {
 		aggregate := holdoutResult.Aggregates[algorithm]
 		t.Logf(
@@ -342,7 +342,7 @@ func TestBayesOptimizeNetdataAcrossNABAWS(t *testing.T) {
 	}
 
 	standardHoldout := holdoutResult.Aggregates["standard_zscore"]
-	bestHoldout := holdoutResult.Aggregates["best_bayes_netdata"]
+	bestHoldout := holdoutResult.Aggregates["best_bayes_temporal"]
 	beatsRecall := bestHoldout.EventRecall >= standardHoldout.EventRecall
 	beatsF1 := bestHoldout.EventF1 > standardHoldout.EventF1
 	beatsFP := bestHoldout.FalsePositiveEventsPerSeriesDay <= standardHoldout.FalsePositiveEventsPerSeriesDay
@@ -353,10 +353,10 @@ func TestBayesOptimizeNetdataAcrossNABAWS(t *testing.T) {
 	t.Logf("beats_standard_fp=%t", beatsFP)
 	t.Logf("beats_standard_all=%t", beatsAll)
 
-	diagnostics := collectNetdataWindowDiagnostics(
+	diagnostics := collectTemporalWindowDiagnostics(
 		holdoutResult,
 		"standard_zscore",
-		"best_bayes_netdata",
+		"best_bayes_temporal",
 		best.Config.toMLConfig(),
 	)
 	for _, diagnostic := range diagnostics {
@@ -382,14 +382,14 @@ func TestBayesOptimizeNetdataAcrossNABAWS(t *testing.T) {
 	t.Logf("runtime=%s", time.Since(startedAt).Round(time.Millisecond))
 }
 
-func evaluateNetdataCommonCoverageAcrossSeries(
+func evaluateTemporalCommonCoverageAcrossSeries(
 	evaluations []nabSeriesEvaluation,
 	skipped []nabSeriesSkip,
-	algorithms []netdataCommonAlgorithmSpec,
-) (netdataCommonBenchmarkResult, error) {
-	result := netdataCommonBenchmarkResult{
+	algorithms []temporalCommonAlgorithmSpec,
+) (temporalCommonBenchmarkResult, error) {
+	result := temporalCommonBenchmarkResult{
 		Aggregates: make(map[string]nabAggregateMetrics, len(algorithms)),
-		Series:     make([]netdataCommonSeriesResult, 0),
+		Series:     make([]temporalCommonSeriesResult, 0),
 	}
 
 	seriesCount := len(evaluations) + len(skipped)
@@ -411,12 +411,12 @@ func evaluateNetdataCommonCoverageAcrossSeries(
 				*algorithm.Config,
 			)
 			if err != nil {
-				return netdataCommonBenchmarkResult{}, fmt.Errorf("%s on %s: %w", algorithm.Name, evaluation.SeriesKey, err)
+				return temporalCommonBenchmarkResult{}, fmt.Errorf("%s on %s: %w", algorithm.Name, evaluation.SeriesKey, err)
 			}
 			runs[algorithm.Name] = run
 		}
 
-		commonMask := buildNetdataCommonReadyMask(evaluation.EvaluatedPoints, runs)
+		commonMask := buildTemporalCommonReadyMask(evaluation.EvaluatedPoints, runs)
 		commonPoints := filterNABPointsByMask(evaluation.EvaluatedPoints, commonMask)
 		if len(commonPoints) == 0 {
 			continue
@@ -466,7 +466,7 @@ func evaluateNetdataCommonCoverageAcrossSeries(
 			)
 		}
 
-		result.Series = append(result.Series, netdataCommonSeriesResult{
+		result.Series = append(result.Series, temporalCommonSeriesResult{
 			Evaluation:    evaluation,
 			CommonPoints:  commonPoints,
 			CommonWindows: commonWindows,
@@ -489,7 +489,7 @@ func evaluateNetdataCommonCoverageAcrossSeries(
 			0,
 		)
 		if err != nil {
-			return netdataCommonBenchmarkResult{}, err
+			return temporalCommonBenchmarkResult{}, err
 		}
 		result.Aggregates[algorithm.Name] = aggregate
 	}
@@ -567,9 +567,9 @@ func runNABMLSeriesWithConfig(
 			featureSize = state.lastFeatureSize
 			anomalousFraction = state.lastAnomalousFraction
 			quorumRatio = state.lastQuorumRatio
-			if config.AlgorithmMode == mlAlgorithmNetdataTemporal {
+			if config.AlgorithmMode == mlAlgorithmTemporal {
 				ready = featureSize > 0 &&
-					modelsAvailable >= config.NetdataMinimumModelsForConsensus
+					modelsAvailable >= config.TemporalMinimumModelsForConsensus
 			}
 		}
 
@@ -584,7 +584,7 @@ func runNABMLSeriesWithConfig(
 	return result, nil
 }
 
-func buildNetdataCommonReadyMask(
+func buildTemporalCommonReadyMask(
 	points []nabPoint,
 	runs map[string]nabMLRunResult,
 ) []bool {
@@ -681,7 +681,7 @@ func computeNABSeriesDays(
 	return seriesDays
 }
 
-func buildNetdataCVFolds(
+func buildTemporalCVFolds(
 	evaluations []nabSeriesEvaluation,
 ) [][]string {
 	folds := make([][]string, 3)
@@ -696,18 +696,18 @@ func buildNetdataCVFolds(
 	return folds
 }
 
-func runNetdataBayesOptimization(
+func runTemporalBayesOptimization(
 	t *testing.T,
 	state bayesOptimizerState,
 	cvFolds [][]string,
 	evaluationByKey map[string]nabSeriesEvaluation,
 	skipped []nabSeriesSkip,
 	workers int,
-) ([]netdataBayesEvaluation, error) {
+) ([]temporalBayesEvaluation, error) {
 	t.Helper()
 
 	startedAt := time.Now()
-	evaluations, err := loadNetdataBayesCheckpoint(state)
+	evaluations, err := loadTemporalBayesCheckpoint(state)
 	if err != nil {
 		return nil, err
 	}
@@ -718,7 +718,7 @@ func runNetdataBayesOptimization(
 		evaluated[evaluation.Config.signature()] = struct{}{}
 	}
 
-	initialConfigs := generateNetdataBayesInitialConfigs(
+	initialConfigs := generateTemporalBayesInitialConfigs(
 		state.SearchSpace,
 		state.Mode.InitialSamples,
 		rng,
@@ -726,7 +726,7 @@ func runNetdataBayesOptimization(
 	)
 
 	for _, config := range initialConfigs {
-		evaluation, err := evaluateNetdataBayesConfigCV(
+		evaluation, err := evaluateTemporalBayesConfigCV(
 			cvFolds,
 			evaluationByKey,
 			skipped,
@@ -738,15 +738,15 @@ func runNetdataBayesOptimization(
 		}
 		evaluations = append(evaluations, evaluation)
 		evaluated[config.signature()] = struct{}{}
-		saveNetdataBayesCheckpoint(state, evaluations, time.Since(startedAt))
-		logNetdataBayesProgress(t, len(evaluations), state.Mode.TotalEvaluations, "initial", evaluation, startedAt)
+		saveTemporalBayesCheckpoint(state, evaluations, time.Since(startedAt))
+		logTemporalBayesProgress(t, len(evaluations), state.Mode.TotalEvaluations, "initial", evaluation, startedAt)
 		if len(evaluations)%10 == 0 {
-			logNetdataBayesTop5(t, evaluations)
+			logTemporalBayesTop5(t, evaluations)
 		}
 	}
 
 	for len(evaluations) < state.Mode.TotalEvaluations {
-		nextConfig, err := selectNextNetdataBayesConfig(
+		nextConfig, err := selectNextTemporalBayesConfig(
 			state.SearchSpace,
 			rng,
 			evaluations,
@@ -756,7 +756,7 @@ func runNetdataBayesOptimization(
 			return nil, err
 		}
 
-		evaluation, err := evaluateNetdataBayesConfigCV(
+		evaluation, err := evaluateTemporalBayesConfigCV(
 			cvFolds,
 			evaluationByKey,
 			skipped,
@@ -768,24 +768,24 @@ func runNetdataBayesOptimization(
 		}
 		evaluations = append(evaluations, evaluation)
 		evaluated[nextConfig.signature()] = struct{}{}
-		saveNetdataBayesCheckpoint(state, evaluations, time.Since(startedAt))
-		logNetdataBayesProgress(t, len(evaluations), state.Mode.TotalEvaluations, "bayes", evaluation, startedAt)
+		saveTemporalBayesCheckpoint(state, evaluations, time.Since(startedAt))
+		logTemporalBayesProgress(t, len(evaluations), state.Mode.TotalEvaluations, "bayes", evaluation, startedAt)
 		if len(evaluations)%10 == 0 {
-			logNetdataBayesTop5(t, evaluations)
+			logTemporalBayesTop5(t, evaluations)
 		}
 	}
 
 	return evaluations, nil
 }
 
-func evaluateNetdataBayesConfigCV(
+func evaluateTemporalBayesConfigCV(
 	cvFolds [][]string,
 	evaluationByKey map[string]nabSeriesEvaluation,
 	skipped []nabSeriesSkip,
-	config netdataTuneConfig,
+	config temporalTuneConfig,
 	workers int,
-) (netdataBayesEvaluation, error) {
-	foldMetrics := make([]netdataBayesFoldMetrics, 0, len(cvFolds))
+) (temporalBayesEvaluation, error) {
+	foldMetrics := make([]temporalBayesFoldMetrics, 0, len(cvFolds))
 	for foldIndex, foldKeys := range cvFolds {
 		foldEvaluations := filterNABSeriesEvaluations(foldKeys, evaluationByKey)
 		foldSkipped := filterNABSeriesSkips(foldKeys, skipped)
@@ -796,19 +796,19 @@ func evaluateNetdataBayesConfigCV(
 			workers,
 		)
 		if err != nil {
-			return netdataBayesEvaluation{}, err
+			return temporalBayesEvaluation{}, err
 		}
-		foldMetrics = append(foldMetrics, netdataBayesFoldMetrics{
+		foldMetrics = append(foldMetrics, temporalBayesFoldMetrics{
 			FoldIndex: foldIndex,
 			Candidate: candidateAggregate,
 			Standard:  standardAggregate,
-			Utility:   computeNetdataBayesFoldUtility(candidateAggregate, standardAggregate),
+			Utility:   computeTemporalBayesFoldUtility(candidateAggregate, standardAggregate),
 		})
 	}
 
-	meanCandidate := meanNetdataAggregateMetrics(foldMetrics, true)
-	meanStandard := meanNetdataAggregateMetrics(foldMetrics, false)
-	objective := computeNetdataBayesObjective(foldMetrics)
+	meanCandidate := meanTemporalAggregateMetrics(foldMetrics, true)
+	meanStandard := meanTemporalAggregateMetrics(foldMetrics, false)
+	objective := computeTemporalBayesObjective(foldMetrics)
 	worstRecall := math.Inf(1)
 	worstF1 := math.Inf(1)
 	foldsBeatingStandard := 0
@@ -836,7 +836,7 @@ func evaluateNetdataBayesConfigCV(
 		meanCandidate.FalsePositiveEventsPerSeriesDay <= meanStandard.FalsePositiveEventsPerSeriesDay &&
 		foldsBeatingStandard >= 2
 
-	return netdataBayesEvaluation{
+	return temporalBayesEvaluation{
 		Config:               config,
 		Objective:            objective,
 		MeanMetrics:          meanCandidate,
@@ -886,7 +886,7 @@ func evaluateCandidateAgainstStandardCommonCoverage(
 					continue
 				}
 
-				mask := buildNetdataCommonReadyMask(
+				mask := buildTemporalCommonReadyMask(
 					evaluation.EvaluatedPoints,
 					map[string]nabMLRunResult{
 						"standard":  buildNABStandardRunResult(evaluation),
@@ -988,7 +988,7 @@ func evaluateCandidateAgainstStandardCommonCoverage(
 	return candidateAggregate, standardAggregate, nil
 }
 
-func computeNetdataBayesFoldUtility(
+func computeTemporalBayesFoldUtility(
 	candidate nabAggregateMetrics,
 	standard nabAggregateMetrics,
 ) float64 {
@@ -1017,8 +1017,8 @@ func computeNetdataBayesFoldUtility(
 	return utility
 }
 
-func computeNetdataBayesObjective(
-	folds []netdataBayesFoldMetrics,
+func computeTemporalBayesObjective(
+	folds []temporalBayesFoldMetrics,
 ) float64 {
 	if len(folds) == 0 {
 		return math.Inf(-1)
@@ -1040,8 +1040,8 @@ func computeNetdataBayesObjective(
 	return mean - 0.5*math.Sqrt(variance)
 }
 
-func meanNetdataAggregateMetrics(
-	folds []netdataBayesFoldMetrics,
+func meanTemporalAggregateMetrics(
+	folds []temporalBayesFoldMetrics,
 	candidate bool,
 ) nabAggregateMetrics {
 	mean := nabAggregateMetrics{}
@@ -1074,17 +1074,17 @@ func meanNetdataAggregateMetrics(
 	return mean
 }
 
-func rankNetdataBayesEvaluations(
-	evaluations []netdataBayesEvaluation,
-) []netdataBayesEvaluation {
+func rankTemporalBayesEvaluations(
+	evaluations []temporalBayesEvaluation,
+) []temporalBayesEvaluation {
 	ranked := slices.Clone(evaluations)
-	slices.SortFunc(ranked, compareNetdataBayesEvaluations)
+	slices.SortFunc(ranked, compareTemporalBayesEvaluations)
 	return ranked
 }
 
-func compareNetdataBayesEvaluations(
-	left netdataBayesEvaluation,
-	right netdataBayesEvaluation,
+func compareTemporalBayesEvaluations(
+	left temporalBayesEvaluation,
+	right temporalBayesEvaluation,
 ) int {
 	switch {
 	case left.Feasible && !right.Feasible:
@@ -1136,19 +1136,19 @@ func compareNetdataBayesEvaluations(
 	}
 }
 
-func selectBestNetdataBayesEvaluation(
-	ranked []netdataBayesEvaluation,
-) (netdataBayesEvaluation, bool) {
+func selectBestTemporalBayesEvaluation(
+	ranked []temporalBayesEvaluation,
+) (temporalBayesEvaluation, bool) {
 	if len(ranked) == 0 {
-		return netdataBayesEvaluation{}, false
+		return temporalBayesEvaluation{}, false
 	}
 
 	return ranked[0], ranked[0].Feasible
 }
 
-func formatNetdataBayesEvaluation(
+func formatTemporalBayesEvaluation(
 	rank int,
-	evaluation netdataBayesEvaluation,
+	evaluation temporalBayesEvaluation,
 ) string {
 	return fmt.Sprintf(
 		"%d | %.4f | %d | %d | %d | %s | %s | %d | %d | %.4f | %.2f | %s | %s | %d | %.4f | %.4f | %.4f | %.4f | %.2f | %.2f | %.4f | %d | %t",
@@ -1178,8 +1178,8 @@ func formatNetdataBayesEvaluation(
 	)
 }
 
-func formatNetdataBayesSummary(
-	evaluation netdataBayesEvaluation,
+func formatTemporalBayesSummary(
+	evaluation temporalBayesEvaluation,
 ) string {
 	return fmt.Sprintf(
 		"objective=%.4f diff=%d smooth=%d lag=%d training_window=%s train_every=%s maximum_models=%d minimum_models=%d quantile=%.4f consensus_fraction=%.2f recency_half_life=%s warmup=%s recall=%.4f precision=%.4f f1=%.4f fp_per_day=%.4f median_delay=%.2f p95_delay=%.2f worst_fold_recall=%.4f folds_beating_standard=%d feasible=%t",
@@ -1207,9 +1207,9 @@ func formatNetdataBayesSummary(
 	)
 }
 
-func resolveNetdataBayesSearchMode() netdataBayesSearchMode {
+func resolveTemporalBayesSearchMode() temporalBayesSearchMode {
 	if os.Getenv("NAB_BAYESOPT_FULL") == "1" {
-		return netdataBayesSearchMode{
+		return temporalBayesSearchMode{
 			Name:               "full",
 			InitialSamples:     32,
 			BayesianIterations: 168,
@@ -1217,7 +1217,7 @@ func resolveNetdataBayesSearchMode() netdataBayesSearchMode {
 		}
 	}
 
-	return netdataBayesSearchMode{
+	return temporalBayesSearchMode{
 		Name:               "smoke",
 		InitialSamples:     20,
 		BayesianIterations: 40,
@@ -1225,8 +1225,8 @@ func resolveNetdataBayesSearchMode() netdataBayesSearchMode {
 	}
 }
 
-func resolveNetdataBayesSearchSpace() netdataBayesSearchSpace {
-	return netdataBayesSearchSpace{
+func resolveTemporalBayesSearchSpace() temporalBayesSearchSpace {
+	return temporalBayesSearchSpace{
 		DiffN:             []int{1, 2, 3},
 		SmoothN:           []int{1, 2, 3, 4, 5, 7, 9},
 		LagN:              []int{2, 3, 4, 5, 6, 8, 10, 12},
@@ -1240,21 +1240,21 @@ func resolveNetdataBayesSearchSpace() netdataBayesSearchSpace {
 	}
 }
 
-func resolveNetdataBayesSeed() int64 {
+func resolveTemporalBayesSeed() int64 {
 	value := os.Getenv("NAB_BAYESOPT_SEED")
 	if value == "" {
-		return netdataBayesDefaultSeed
+		return temporalBayesDefaultSeed
 	}
 
 	parsed, err := strconv.ParseInt(value, 10, 64)
 	if err != nil {
-		return netdataBayesDefaultSeed
+		return temporalBayesDefaultSeed
 	}
 
 	return parsed
 }
 
-func resolveNetdataBayesWorkers() int {
+func resolveTemporalBayesWorkers() int {
 	value := os.Getenv("NAB_BAYESOPT_WORKERS")
 	if value != "" {
 		parsed, err := strconv.Atoi(value)
@@ -1266,13 +1266,13 @@ func resolveNetdataBayesWorkers() int {
 	return min(runtime.NumCPU(), 6)
 }
 
-func generateNetdataBayesInitialConfigs(
-	space netdataBayesSearchSpace,
+func generateTemporalBayesInitialConfigs(
+	space temporalBayesSearchSpace,
 	count int,
 	rng *rand.Rand,
 	seen map[string]struct{},
-) []netdataTuneConfig {
-	return generateNetdataBayesConfigsFromSamples(
+) []temporalTuneConfig {
+	return generateTemporalBayesConfigsFromSamples(
 		space,
 		generateLatinHypercubeSamples(10, count, rng),
 		count,
@@ -1280,25 +1280,25 @@ func generateNetdataBayesInitialConfigs(
 	)
 }
 
-func selectNextNetdataBayesConfig(
-	space netdataBayesSearchSpace,
+func selectNextTemporalBayesConfig(
+	space temporalBayesSearchSpace,
 	rng *rand.Rand,
-	evaluations []netdataBayesEvaluation,
+	evaluations []temporalBayesEvaluation,
 	seen map[string]struct{},
-) (netdataTuneConfig, error) {
-	candidates := generateNetdataBayesConfigsFromSamples(
+) (temporalTuneConfig, error) {
+	candidates := generateTemporalBayesConfigsFromSamples(
 		space,
-		generateLatinHypercubeSamples(10, netdataBayesCandidatePoolSize, rng),
-		netdataBayesCandidatePoolSize,
+		generateLatinHypercubeSamples(10, temporalBayesCandidatePoolSize, rng),
+		temporalBayesCandidatePoolSize,
 		seen,
 	)
 	if len(candidates) == 0 {
-		return netdataTuneConfig{}, fmt.Errorf("no BayesOpt candidates available")
+		return temporalTuneConfig{}, fmt.Errorf("no BayesOpt candidates available")
 	}
 
 	model, err := fitGaussianProcess(evaluations)
 	if err != nil {
-		return netdataTuneConfig{}, err
+		return temporalTuneConfig{}, err
 	}
 
 	bestObjective := math.Inf(-1)
@@ -1311,7 +1311,7 @@ func selectNextNetdataBayesConfig(
 	bestCandidate := candidates[0]
 	bestEI := math.Inf(-1)
 	for _, candidate := range candidates {
-		mean, variance := predictGaussianProcess(model, encodeNetdataTuneConfig(candidate, space))
+		mean, variance := predictGaussianProcess(model, encodeTemporalTuneConfig(candidate, space))
 		ei := expectedImprovement(mean, variance, bestObjective)
 		if ei > bestEI {
 			bestEI = ei
@@ -1322,20 +1322,20 @@ func selectNextNetdataBayesConfig(
 	return bestCandidate, nil
 }
 
-func generateNetdataBayesConfigsFromSamples(
-	space netdataBayesSearchSpace,
+func generateTemporalBayesConfigsFromSamples(
+	space temporalBayesSearchSpace,
 	samples [][]float64,
 	limit int,
 	seen map[string]struct{},
-) []netdataTuneConfig {
-	configs := make([]netdataTuneConfig, 0, limit)
+) []temporalTuneConfig {
+	configs := make([]temporalTuneConfig, 0, limit)
 	localSeen := make(map[string]struct{}, len(seen))
 	for key := range seen {
 		localSeen[key] = struct{}{}
 	}
 
 	for _, sample := range samples {
-		config, ok := decodeNetdataTuneConfig(sample, space)
+		config, ok := decodeTemporalTuneConfig(sample, space)
 		if !ok {
 			continue
 		}
@@ -1373,11 +1373,11 @@ func generateLatinHypercubeSamples(
 	return samples
 }
 
-func decodeNetdataTuneConfig(
+func decodeTemporalTuneConfig(
 	encoded []float64,
-	space netdataBayesSearchSpace,
-) (netdataTuneConfig, bool) {
-	config := netdataTuneConfig{
+	space temporalBayesSearchSpace,
+) (temporalTuneConfig, bool) {
+	config := temporalTuneConfig{
 		DiffN:                     decodeDiscreteInt(encoded[0], space.DiffN),
 		SmoothN:                   decodeDiscreteInt(encoded[1], space.SmoothN),
 		LagN:                      decodeDiscreteInt(encoded[2], space.LagN),
@@ -1391,21 +1391,21 @@ func decodeNetdataTuneConfig(
 	}
 
 	if config.MinimumModelsForConsensus > config.MaximumModels {
-		return netdataTuneConfig{}, false
+		return temporalTuneConfig{}, false
 	}
 	if config.TrainingWindow < config.TrainEvery {
-		return netdataTuneConfig{}, false
+		return temporalTuneConfig{}, false
 	}
 	if config.warmupDuration() > 7*24*time.Hour {
-		return netdataTuneConfig{}, false
+		return temporalTuneConfig{}, false
 	}
 
 	return config, true
 }
 
-func encodeNetdataTuneConfig(
-	config netdataTuneConfig,
-	space netdataBayesSearchSpace,
+func encodeTemporalTuneConfig(
+	config temporalTuneConfig,
+	space temporalBayesSearchSpace,
 ) []float64 {
 	return []float64{
 		encodeDiscreteInt(config.DiffN, space.DiffN),
@@ -1476,17 +1476,17 @@ func encodeDiscreteDuration(value time.Duration, allowed []time.Duration) float6
 }
 
 func fitGaussianProcess(
-	evaluations []netdataBayesEvaluation,
+	evaluations []temporalBayesEvaluation,
 ) (gaussianProcessModel, error) {
 	if len(evaluations) == 0 {
 		return gaussianProcessModel{}, fmt.Errorf("no evaluations for GP")
 	}
 
-	space := resolveNetdataBayesSearchSpace()
+	space := resolveTemporalBayesSearchSpace()
 	x := make([][]float64, 0, len(evaluations))
 	y := make([]float64, 0, len(evaluations))
 	for _, evaluation := range evaluations {
-		x = append(x, encodeNetdataTuneConfig(evaluation.Config, space))
+		x = append(x, encodeTemporalTuneConfig(evaluation.Config, space))
 		y = append(y, evaluation.Objective)
 	}
 
@@ -1661,12 +1661,12 @@ func normalPDF(value float64) float64 {
 	return math.Exp(-0.5*value*value) / math.Sqrt(2*math.Pi)
 }
 
-func logNetdataBayesProgress(
+func logTemporalBayesProgress(
 	t *testing.T,
 	evaluationIndex int,
 	total int,
 	phase string,
-	evaluation netdataBayesEvaluation,
+	evaluation temporalBayesEvaluation,
 	startedAt time.Time,
 ) {
 	t.Helper()
@@ -1692,21 +1692,21 @@ func logNetdataBayesProgress(
 	)
 }
 
-func logNetdataBayesTop5(
+func logTemporalBayesTop5(
 	t *testing.T,
-	evaluations []netdataBayesEvaluation,
+	evaluations []temporalBayesEvaluation,
 ) {
 	t.Helper()
-	ranked := rankNetdataBayesEvaluations(evaluations)
+	ranked := rankTemporalBayesEvaluations(evaluations)
 	topCount := min(5, len(ranked))
 	for index := 0; index < topCount; index++ {
-		t.Logf("top5 %s", formatNetdataBayesEvaluation(index+1, ranked[index]))
+		t.Logf("top5 %s", formatTemporalBayesEvaluation(index+1, ranked[index]))
 	}
 }
 
-func loadNetdataBayesCheckpoint(
+func loadTemporalBayesCheckpoint(
 	state bayesOptimizerState,
-) ([]netdataBayesEvaluation, error) {
+) ([]temporalBayesEvaluation, error) {
 	if state.CheckpointPath == "" {
 		return nil, nil
 	}
@@ -1719,12 +1719,12 @@ func loadNetdataBayesCheckpoint(
 		return nil, err
 	}
 
-	var checkpoint netdataBayesCheckpoint
+	var checkpoint temporalBayesCheckpoint
 	if err := json.Unmarshal(payload, &checkpoint); err != nil {
 		return nil, err
 	}
-	if checkpoint.SearchSpace != netdataBayesSearchSpaceV1 {
-		return nil, fmt.Errorf("checkpoint search-space mismatch: got %s want %s", checkpoint.SearchSpace, netdataBayesSearchSpaceV1)
+	if checkpoint.SearchSpace != temporalBayesSearchSpaceV1 {
+		return nil, fmt.Errorf("checkpoint search-space mismatch: got %s want %s", checkpoint.SearchSpace, temporalBayesSearchSpaceV1)
 	}
 	if checkpoint.Seed != state.Seed {
 		return nil, fmt.Errorf("checkpoint seed mismatch: got %d want %d", checkpoint.Seed, state.Seed)
@@ -1733,19 +1733,19 @@ func loadNetdataBayesCheckpoint(
 	return checkpoint.Evaluations, nil
 }
 
-func saveNetdataBayesCheckpoint(
+func saveTemporalBayesCheckpoint(
 	state bayesOptimizerState,
-	evaluations []netdataBayesEvaluation,
+	evaluations []temporalBayesEvaluation,
 	elapsed time.Duration,
 ) {
 	if state.CheckpointPath == "" {
 		return
 	}
 
-	checkpoint := netdataBayesCheckpoint{
+	checkpoint := temporalBayesCheckpoint{
 		ElapsedDuration: elapsed,
 		Evaluations:     evaluations,
-		SearchSpace:     netdataBayesSearchSpaceV1,
+		SearchSpace:     temporalBayesSearchSpaceV1,
 		Seed:            state.Seed,
 	}
 
@@ -1757,13 +1757,13 @@ func saveNetdataBayesCheckpoint(
 	_ = os.WriteFile(state.CheckpointPath, payload, 0o600)
 }
 
-func collectNetdataWindowDiagnostics(
-	result netdataCommonBenchmarkResult,
+func collectTemporalWindowDiagnostics(
+	result temporalCommonBenchmarkResult,
 	standardName string,
 	candidateName string,
 	config mlConfig,
-) []netdataWindowDiagnostic {
-	diagnostics := make([]netdataWindowDiagnostic, 0)
+) []temporalWindowDiagnostic {
+	diagnostics := make([]temporalWindowDiagnostic, 0)
 	for _, series := range result.Series {
 		standardRun := series.Runs[standardName]
 		candidateRun := series.Runs[candidateName]
@@ -1830,15 +1830,15 @@ func collectNetdataWindowDiagnostics(
 				reason = "no_common_coverage"
 			case !anyFeature:
 				reason = "no_valid_features"
-			case maxModelsAvailable < config.NetdataMinimumModelsForConsensus:
+			case maxModelsAvailable < config.TemporalMinimumModelsForConsensus:
 				reason = "warmup"
 			case !anyReady:
 				reason = "timestamp_gap"
-			case maxAnomalousFraction < config.NetdataConsensusFraction:
+			case maxAnomalousFraction < config.TemporalConsensusFraction:
 				reason = "insufficient_consensus"
 			}
 
-			diagnostic := netdataWindowDiagnostic{
+			diagnostic := temporalWindowDiagnostic{
 				SeriesKey:                series.Evaluation.SeriesKey,
 				WindowStart:              window.Start,
 				WindowEnd:                window.End,
