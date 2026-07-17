@@ -2,6 +2,7 @@ package sqlrulestore_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -55,5 +56,62 @@ func TestCreateRule_HappyPath(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, ruleID, gotID)
 	require.True(t, called, "CreateRule must invoke the post-insert callback")
+	require.NoError(t, store.AssertExpectations())
+}
+
+func TestEditRule_HappyPath(t *testing.T) {
+	ctx := context.Background()
+	store := rulestoretest.NewMockSQLRuleStore()
+
+	orgID := "org-edit-1"
+	ruleID := valuer.GenerateUUID()
+	rule := newTestRule(orgID, ruleID)
+
+	store.ExpectEditRule(rule)
+
+	called := false
+	err := store.EditRule(ctx, rule, func(_ context.Context) error {
+		called = true
+		return nil
+	})
+
+	require.NoError(t, err)
+	require.True(t, called, "EditRule must invoke the post-update callback")
+	require.NoError(t, store.AssertExpectations())
+}
+
+func TestDeleteRule_HappyPath(t *testing.T) {
+	ctx := context.Background()
+	store := rulestoretest.NewMockSQLRuleStore()
+
+	orgID := valuer.GenerateUUID()
+	ruleID := valuer.GenerateUUID()
+
+	store.ExpectDeleteRule(ruleID)
+
+	called := false
+	err := store.DeleteRule(ctx, orgID, ruleID, func(_ context.Context) error {
+		called = true
+		return nil
+	})
+
+	require.NoError(t, err)
+	require.True(t, called, "DeleteRule must invoke the post-delete callback")
+	require.NoError(t, store.AssertExpectations())
+}
+
+func TestGetStoredRule_NotFound(t *testing.T) {
+	ctx := context.Background()
+	store := rulestoretest.NewMockSQLRuleStore()
+
+	orgID := valuer.GenerateUUID()
+	ruleID := valuer.GenerateUUID()
+
+	store.Mock().ExpectQuery(`SELECT (.+) FROM "rule".+WHERE \(org_id = '.+'\) AND \(id = '` + ruleID.StringValue() + `'\)`).
+		WillReturnError(errors.New("sql: no rows in result set"))
+
+	_, err := store.GetStoredRule(ctx, orgID, ruleID)
+
+	require.Error(t, err, "GetStoredRule must wrap a missing row into a not-found error")
 	require.NoError(t, store.AssertExpectations())
 }
