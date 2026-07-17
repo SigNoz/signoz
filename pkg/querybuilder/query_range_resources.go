@@ -62,7 +62,7 @@ func TelemetrySelector(_ context.Context, resource coretypes.Resource, id string
 func QueryRangeResources(ec coretypes.ExtractorContext) ([]coretypes.ResourceWithID, error) {
 	queries := gjson.GetBytes(ec.RequestBody, "compositeQuery.queries")
 	if !queries.IsArray() || len(queries.Array()) == 0 {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "composite query has no queries")
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "atleast one query is required")
 	}
 
 	variables, err := queryRangeVariables(ec.RequestBody)
