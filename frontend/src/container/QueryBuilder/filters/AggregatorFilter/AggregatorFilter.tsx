@@ -22,7 +22,7 @@ import {
 import { MetricAggregation } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 import { ExtendedSelectOption } from 'types/common/select';
-import { popupContainer } from 'utils/selectPopupContainer';
+import { useSelectPopupContainer } from 'utils/selectPopupContainer';
 
 import { selectStyle } from '../QueryBuilderSearch/config';
 import OptionRenderer from '../QueryBuilderSearch/OptionRenderer';
@@ -39,6 +39,7 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 	signalSource,
 	setAttributeKeys,
 }: AgregatorFilterProps): JSX.Element {
+	const getPopupContainer = useSelectPopupContainer();
 	const queryClient = useQueryClient();
 	const [optionsData, setOptionsData] = useState<ExtendedSelectOption[]>([]);
 
@@ -289,7 +290,7 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 
 	return (
 		<AutoComplete
-			getPopupContainer={popupContainer}
+			getPopupContainer={getPopupContainer}
 			placeholder={getPlaceholder()}
 			style={selectStyle}
 			filterOption={false}

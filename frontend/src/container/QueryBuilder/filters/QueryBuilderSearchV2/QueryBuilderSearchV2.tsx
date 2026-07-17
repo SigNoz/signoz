@@ -50,7 +50,7 @@ import {
 	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
-import { popupContainer } from 'utils/selectPopupContainer';
+import { useSelectPopupContainer } from 'utils/selectPopupContainer';
 import { v4 as uuid } from 'uuid';
 
 import { selectStyle } from '../QueryBuilderSearch/config';
@@ -156,6 +156,8 @@ function QueryBuilderSearchV2(
 		skipQueryBuilderRedirect,
 		selectProps,
 	} = props;
+
+	const getPopupContainer = useSelectPopupContainer();
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
@@ -989,7 +991,7 @@ function QueryBuilderSearchV2(
 				{...selectProps}
 				data-testid={'qb-search-select'}
 				ref={selectRef}
-				{...(hasPopupContainer ? { getPopupContainer: popupContainer } : {})}
+				{...(hasPopupContainer ? { getPopupContainer } : {})}
 				{...(maxTagCount ? { maxTagCount } : {})}
 				key={queryTags.join('.')}
 				virtual={false}

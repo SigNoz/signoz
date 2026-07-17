@@ -6,6 +6,7 @@ import {
 	useDefaultLayout,
 } from '@signozhq/ui/resizable';
 import { toast } from '@signozhq/ui/sonner';
+import { ConfigProvider } from 'antd';
 import {
 	type DashboardtypesPanelDTO,
 	TelemetrytypesSignalDTO,
@@ -40,6 +41,13 @@ import ListColumnsEditor from './ListColumnsEditor/ListColumnsEditor';
 import styles from './PanelEditor.module.scss';
 import logEvent from '@/api/common/logEvent';
 import { DashboardEvents } from '../../constants/events';
+
+// The query builder sits in an `overflow:hidden` resizable pane, so its Select
+// popups (group-by, order-by, having, …) clip when they open into the short pane.
+// Portal them to the document body; the query-builder filters honor this via
+// `useSelectPopupContainer`. Scoped to the full-page editor — the View modal keeps
+// its own `ConfigProvider` so popups stay inside the focus-trapped dialog.
+const getBodyPopupContainer = (): HTMLElement => document.body;
 
 interface PanelEditorContainerProps {
 	dashboardId: string;
@@ -288,22 +296,24 @@ function PanelEditorContainer({
 							</ResizablePanel>
 							<ResizableHandle withHandle className={styles.handle} />
 							<ResizablePanel minSize="35%" maxSize="45%" defaultSize="40%">
-								<PanelEditorQueryBuilder
-									panelKind={panelKind}
-									signal={listSignal}
-									isLoadingQueries={isFetching}
-									onStageRunQuery={runQuery}
-									onCancelQuery={cancelQuery}
-									footer={
-										isListPanel ? (
-											<ListColumnsEditor
-												spec={spec}
-												onChangeSpec={setSpec}
-												signal={listSignal}
-											/>
-										) : undefined
-									}
-								/>
+								<ConfigProvider getPopupContainer={getBodyPopupContainer}>
+									<PanelEditorQueryBuilder
+										panelKind={panelKind}
+										signal={listSignal}
+										isLoadingQueries={isFetching}
+										onStageRunQuery={runQuery}
+										onCancelQuery={cancelQuery}
+										footer={
+											isListPanel ? (
+												<ListColumnsEditor
+													spec={spec}
+													onChangeSpec={setSpec}
+													signal={listSignal}
+												/>
+											) : undefined
+										}
+									/>
+								</ConfigProvider>
 							</ResizablePanel>
 						</ResizablePanelGroup>
 					</div>

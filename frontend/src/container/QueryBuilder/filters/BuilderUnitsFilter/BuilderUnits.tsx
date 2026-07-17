@@ -2,7 +2,7 @@ import { Select, SelectProps, Space } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { getCategorySelectOptionByName } from 'container/NewWidget/RightContainer/alertFomatCategories';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { popupContainer } from 'utils/selectPopupContainer';
+import { useSelectPopupContainer } from 'utils/selectPopupContainer';
 
 import { categoryToSupport } from './config';
 import { selectStyles } from './styles';
@@ -13,6 +13,7 @@ function BuilderUnitsFilter({
 	onChange,
 	yAxisUnit,
 }: IBuilderUnitsFilterProps): JSX.Element {
+	const getPopupContainer = useSelectPopupContainer();
 	const { currentQuery, handleOnUnitsChange } = useQueryBuilder();
 
 	const selectedValue = yAxisUnit || currentQuery?.unit;
@@ -36,7 +37,7 @@ function BuilderUnitsFilter({
 				Y-axis unit
 			</Typography.Text>
 			<Select
-				getPopupContainer={popupContainer}
+				getPopupContainer={getPopupContainer}
 				style={selectStyles}
 				onChange={onChangeHandler}
 				value={selectedValue}

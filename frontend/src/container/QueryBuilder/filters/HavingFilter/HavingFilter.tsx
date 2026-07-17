@@ -16,7 +16,7 @@ import {
 import { Having, HavingForm } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
-import { popupContainer } from 'utils/selectPopupContainer';
+import { useSelectPopupContainer } from 'utils/selectPopupContainer';
 
 import { getHavingObject, isValidHavingValue } from '../utils';
 // ** Types
@@ -27,6 +27,7 @@ export function HavingFilter({
 	query,
 	onChange,
 }: HavingFilterProps): JSX.Element {
+	const getPopupContainer = useSelectPopupContainer();
 	const { having } = query;
 	const [searchText, setSearchText] = useState<string>('');
 	const [options, setOptions] = useState<SelectOption<string, string>[]>([]);
@@ -231,7 +232,7 @@ export function HavingFilter({
 	return (
 		<>
 			<Select
-				getPopupContainer={popupContainer}
+				getPopupContainer={getPopupContainer}
 				autoClearSearchValue={false}
 				mode="multiple"
 				onSearch={handleSearch}
