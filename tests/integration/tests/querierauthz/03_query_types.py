@@ -12,9 +12,12 @@ chsql_role = "telemetry-scope-chsql"
 chsql_email = "scope-chsql@telemetry.test"
 svc_a_role = "telemetry-qt-svc-a"
 svc_a_email = "qt-svc-a@telemetry.test"
+viewer_email = "qt-managed-viewer@telemetry.test"
 
 clickhouse_query = [{"type": "clickhouse_sql", "spec": {"name": "A", "query": "SELECT toFloat64(1.5) AS `__result_0`", "disabled": False}}]
 promql_query = [{"type": "promql", "spec": {"name": "A", "query": "up", "disabled": False}}]
+meter_query = [{"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "source": "meter", "disabled": False, "aggregations": [{"metricName": "signoz_metering", "timeAggregation": "sum", "spaceAggregation": "sum"}]}}]
+audit_query = [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "source": "audit", "disabled": False}}]
 
 
 def test_setup(
@@ -25,6 +28,7 @@ def test_setup(
 ) -> None:
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
+    # Raw SQL can read any table, so clickhouse_sql requires all five kinds.
     create_role(
         admin_token,
         chsql_role,
@@ -32,6 +36,8 @@ def test_setup(
             transaction_group("read", "telemetryresource", "logs", ["clickhouse_sql/*"]),
             transaction_group("read", "telemetryresource", "traces", ["clickhouse_sql/*"]),
             transaction_group("read", "telemetryresource", "metrics", ["clickhouse_sql/*"]),
+            transaction_group("read", "telemetryresource", "meter-metrics", ["clickhouse_sql/*"]),
+            transaction_group("read", "telemetryresource", "audit-logs", ["clickhouse_sql/*"]),
         ],
     )
     chsql_user = create_active_user(signoz, admin_token, email=chsql_email, role="VIEWER", password=user_password)
@@ -40,6 +46,9 @@ def test_setup(
     create_role(admin_token, svc_a_role, [transaction_group("read", "telemetryresource", "traces", ["builder_query/service.name/service-a"])])
     svc_a_user = create_active_user(signoz, admin_token, email=svc_a_email, role="VIEWER", password=user_password)
     change_user_role(signoz, admin_token, svc_a_user, "signoz-viewer", svc_a_role)
+
+    # A plain managed viewer (signoz-viewer) — for the meter-metrics/audit-logs policy checks.
+    create_active_user(signoz, admin_token, email=viewer_email, role="VIEWER", password=user_password)
 
 
 def test_clickhouse_sql_requires_chsql_grant(
@@ -120,3 +129,25 @@ def test_formula_rides_on_referenced_queries(
 
     denied = make_query_request(signoz, token, start, end, formula_queries(b_filtered=False), request_type=querier.RequestType.SCALAR)
     assert denied.status_code == HTTPStatus.FORBIDDEN, denied.text
+
+
+def test_managed_viewer_meter_allowed_audit_and_clickhouse_denied(
+    signoz: types.SigNoz,
+    get_token: Callable[[str, str], str],
+) -> None:
+    now = datetime.now(tz=UTC)
+    start, end = int((now - timedelta(hours=1)).timestamp() * 1000), int(now.timestamp() * 1000)
+    token = get_token(viewer_email, user_password)
+
+    # meter-metrics is dashboard-able usage metrics, granted to viewers (authz passes;
+    # the query itself may still 4xx on data, but never 403).
+    meter = make_query_request(signoz, token, start, end, meter_query, request_type=querier.RequestType.SCALAR)
+    assert meter.status_code != HTTPStatus.FORBIDDEN, meter.text
+
+    # audit-logs is admin-only.
+    audit = make_query_request(signoz, token, start, end, audit_query, request_type=querier.RequestType.RAW)
+    assert audit.status_code == HTTPStatus.FORBIDDEN, audit.text
+
+    # raw SQL requires all kinds incl. audit-logs, so it is effectively admin-only.
+    clickhouse = make_query_request(signoz, token, start, end, clickhouse_query, request_type=querier.RequestType.SCALAR)
+    assert clickhouse.status_code == HTTPStatus.FORBIDDEN, clickhouse.text

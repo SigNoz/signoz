@@ -65,9 +65,11 @@ func (migration *addTelemetryTuples) Up(ctx context.Context, db *bun.DB) error {
 		{authtypes.SigNozEditorRoleName, "telemetryresource", "logs", "read"},
 		{authtypes.SigNozEditorRoleName, "telemetryresource", "traces", "read"},
 		{authtypes.SigNozEditorRoleName, "telemetryresource", "metrics", "read"},
+		{authtypes.SigNozEditorRoleName, "telemetryresource", "meter-metrics", "read"},
 		{authtypes.SigNozViewerRoleName, "telemetryresource", "logs", "read"},
 		{authtypes.SigNozViewerRoleName, "telemetryresource", "traces", "read"},
 		{authtypes.SigNozViewerRoleName, "telemetryresource", "metrics", "read"},
+		{authtypes.SigNozViewerRoleName, "telemetryresource", "meter-metrics", "read"},
 	}
 
 	for _, orgID := range orgIDs {
