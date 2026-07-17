@@ -425,7 +425,7 @@ export function K8sBaseList<
 						onRowClickNewTab={handleRowClickNewTab}
 						renderExpandedRow={isGroupedByAttribute ? renderExpandedRow : undefined}
 						getRowCanExpand={isGroupedByAttribute ? getRowCanExpand : undefined}
-						className={cx(styles.k8SListTable, expandedRowColumns)}
+						className={cx(styles.k8SListTable)}
 						enableQueryParams={{
 							page: INFRA_MONITORING_K8S_PARAMS_KEYS.PAGE,
 							limit: INFRA_MONITORING_K8S_PARAMS_KEYS.PAGE_SIZE,
