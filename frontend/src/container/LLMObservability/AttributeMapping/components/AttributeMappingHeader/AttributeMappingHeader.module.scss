@@ -1,0 +1,18 @@
+.pageHeader {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	margin-left: var(--spacing-2);
+	margin-top: var(--spacing-4);
+}
+
+.pageHeaderActions {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-6);
+}
+
+.unsavedChanges {
+	font-size: var(--periscope-font-size-base);
+	color: var(--accent-amber);
+}

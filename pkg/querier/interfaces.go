@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/SigNoz/signoz/pkg/statsreporter"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -12,6 +13,9 @@ import (
 type Querier interface {
 	QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest) (*qbtypes.QueryRangeResponse, error)
 	QueryRawStream(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest, client *qbtypes.RawStream)
+	statsreporter.StatsCollector
+	// QueryRangePreview validates and renders the queries without executing them.
+	QueryRangePreview(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest, opts qbtypes.QueryRangePreviewOptions) (*qbtypes.QueryRangePreviewResponse, error)
 }
 
 // BucketCache is the interface for bucket-based caching.
@@ -24,6 +28,8 @@ type BucketCache interface {
 
 type Handler interface {
 	QueryRange(rw http.ResponseWriter, req *http.Request)
+	// QueryRangePreview is the dry-run endpoint: validate and render without executing.
+	QueryRangePreview(rw http.ResponseWriter, req *http.Request)
 	QueryRawStream(rw http.ResponseWriter, req *http.Request)
 	ReplaceVariables(rw http.ResponseWriter, req *http.Request)
 }

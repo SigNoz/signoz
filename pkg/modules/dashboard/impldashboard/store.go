@@ -213,6 +213,41 @@ func (store *store) sortExprForListV2(sort dashboardtypes.ListSort) (string, err
 		"unsupported sort field %q", sort)
 }
 
+func (store *store) ListByDataContainsAny(ctx context.Context, orgID valuer.UUID, searches []string) ([]*dashboardtypes.StorableDashboard, error) {
+	storableDashboards := make([]*dashboardtypes.StorableDashboard, 0)
+	if len(searches) == 0 {
+		return storableDashboards, nil
+	}
+
+	clause, args := buildContainsAnyClauseForDataColumn(store.sqlstore.Formatter(), searches)
+	err := store.
+		sqlstore.
+		BunDB().
+		NewSelect().
+		Model(&storableDashboards).
+		Where("org_id = ?", orgID).
+		Where(clause, args...).
+		Scan(ctx)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't list dashboards by data")
+	}
+
+	return storableDashboards, nil
+}
+
+// buildContainsAnyClauseForDataColumn builds a parenthesised OR of `data LIKE` predicates, one
+// per search, matching the raw substring literally (LIKE wildcards escaped). It
+// returns the predicate and its bind args, ready for a single bun Where call.
+func buildContainsAnyClauseForDataColumn(formatter sqlstore.SQLFormatter, searches []string) (string, []any) {
+	conditions := make([]string, 0, len(searches))
+	args := make([]any, 0, len(searches))
+	for _, search := range searches {
+		conditions = append(conditions, "data LIKE ? ESCAPE '\\'")
+		args = append(args, "%"+formatter.EscapeLikePattern(search)+"%")
+	}
+	return "(" + strings.Join(conditions, " OR ") + ")", args
+}
+
 func (store *store) GetPublic(ctx context.Context, dashboardID string) (*dashboardtypes.StorablePublicDashboard, error) {
 	storable := new(dashboardtypes.StorablePublicDashboard)
 	err := store.
@@ -469,6 +504,95 @@ func (store *store) DeletePreferencesForUser(ctx context.Context, orgID valuer.U
 		Exec(ctx)
 	if err != nil {
 		return errors.WrapInternalf(err, errors.CodeInternal, "couldn't delete dashboard preferences")
+	}
+	return nil
+}
+
+func (store *store) CreateDashboardView(ctx context.Context, view *dashboardtypes.DashboardView) error {
+	_, err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewInsert().
+		Model(view).
+		Exec(ctx)
+	if err != nil {
+		return store.sqlstore.WrapAlreadyExistsErrf(err, errors.CodeAlreadyExists, "dashboard view with id %s already exists", view.ID)
+	}
+	return nil
+}
+
+func (store *store) GetDashboardView(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardView, error) {
+	view := new(dashboardtypes.DashboardView)
+	err := store.
+		sqlstore.
+		BunDB().
+		NewSelect().
+		Model(view).
+		Where("id = ?", id).
+		Where("org_id = ?", orgID).
+		Scan(ctx)
+	if err != nil {
+		return nil, store.sqlstore.WrapNotFoundErrf(err, dashboardtypes.ErrCodeDashboardViewNotFound, "dashboard view with id %s doesn't exist", id)
+	}
+	return view, nil
+}
+
+func (store *store) ListDashboardViews(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.DashboardView, error) {
+	views := make([]*dashboardtypes.DashboardView, 0)
+	err := store.
+		sqlstore.
+		BunDB().
+		NewSelect().
+		Model(&views).
+		Where("org_id = ?", orgID).
+		OrderExpr("updated_at DESC").
+		Scan(ctx)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't list dashboard views")
+	}
+	return views, nil
+}
+
+func (store *store) UpdateDashboardView(ctx context.Context, view *dashboardtypes.DashboardView) error {
+	res, err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewUpdate().
+		Model(view).
+		WherePK().
+		Where("org_id = ?", view.OrgID).
+		Exec(ctx)
+	if err != nil {
+		return errors.WrapInternalf(err, errors.CodeInternal, "couldn't update dashboard view")
+	}
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return errors.WrapInternalf(err, errors.CodeInternal, "couldn't read dashboard view update result")
+	}
+	if rows == 0 {
+		return errors.Newf(errors.TypeNotFound, dashboardtypes.ErrCodeDashboardViewNotFound, "dashboard view with id %s doesn't exist", view.ID)
+	}
+	return nil
+}
+
+func (store *store) DeleteDashboardView(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
+	res, err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewDelete().
+		Model(new(dashboardtypes.DashboardView)).
+		Where("id = ?", id).
+		Where("org_id = ?", orgID).
+		Exec(ctx)
+	if err != nil {
+		return errors.WrapInternalf(err, errors.CodeInternal, "couldn't delete dashboard view")
+	}
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return errors.WrapInternalf(err, errors.CodeInternal, "couldn't read dashboard view delete result")
+	}
+	if rows == 0 {
+		return errors.Newf(errors.TypeNotFound, dashboardtypes.ErrCodeDashboardViewNotFound, "dashboard view with id %s doesn't exist", id)
 	}
 	return nil
 }

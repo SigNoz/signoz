@@ -534,8 +534,6 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 
 	router.HandleFunc("/api/v2/traces/fields", am.ViewAccess(aH.traceFields)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v2/traces/fields", am.EditAccess(aH.updateTraceField)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v2/traces/flamegraph/{traceId}", am.ViewAccess(aH.GetFlamegraphSpansForTrace)).Methods(http.MethodPost)
-
 
 	router.HandleFunc("/api/v1/version", am.OpenAccess(aH.getVersion)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/features", am.ViewAccess(aH.getFeatureFlags)).Methods(http.MethodGet)
@@ -1446,40 +1444,6 @@ func (aH *APIHandler) SearchTraces(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (aH *APIHandler) GetFlamegraphSpansForTrace(w http.ResponseWriter, r *http.Request) {
-	claims, err := authtypes.ClaimsFromContext(r.Context())
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	traceID := mux.Vars(r)["traceId"]
-	if traceID == "" {
-		render.Error(w, errors.NewInvalidInputf(errors.CodeInvalidInput, "traceID is required"))
-		return
-	}
-
-	req := new(model.GetFlamegraphSpansForTraceParams)
-	err = json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-		RespondError(w, model.BadRequest(err), nil)
-		return
-	}
-
-	result, apiErr := aH.reader.GetFlamegraphSpansForTrace(r.Context(), orgID, traceID, req)
-	if apiErr != nil {
-		render.Error(w, apiErr)
-		return
-	}
-
-	aH.WriteJSON(w, r, result)
-}
-
 func (aH *APIHandler) listErrors(w http.ResponseWriter, r *http.Request) {
 
 	query, err := parseListErrorsRequest(r)
@@ -1709,6 +1673,24 @@ func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 	featureSet = append(featureSet, &licensetypes.Feature{
 		Name:       valuer.NewString(flagger.FeatureUseDashboardV2.String()),
 		Active:     useDashboardV2,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	})
+
+	aiObservability := aH.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureEnableAIObservability, evalCtx)
+	featureSet = append(featureSet, &licensetypes.Feature{
+		Name:       valuer.NewString(flagger.FeatureEnableAIObservability.String()),
+		Active:     aiObservability,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	})
+
+	infraMonitoringV2 := aH.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureUseInfraMonitoringV2, evalCtx)
+	featureSet = append(featureSet, &licensetypes.Feature{
+		Name:       valuer.NewString(flagger.FeatureUseInfraMonitoringV2.String()),
+		Active:     infraMonitoringV2,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
@@ -3072,7 +3054,7 @@ func (aH *APIHandler) calculateConnectionStatus(
 		}
 
 		statusForLastReceivedMetric, apiErr := aH.reader.GetLatestReceivedMetric(
-			ctx, connectionTests.Metrics, nil,
+			ctx, orgID, connectionTests.Metrics, nil,
 		)
 
 		resultLock.Lock()
@@ -3541,9 +3523,16 @@ func (aH *APIHandler) autoCompleteAttributeKeys(w http.ResponseWriter, r *http.R
 		return
 	}
 
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		aH.HandleError(w, err, http.StatusInternalServerError)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
 	switch req.DataSource {
 	case v3.DataSourceMetrics:
-		response, err = aH.reader.GetMetricAttributeKeys(r.Context(), req)
+		response, err = aH.reader.GetMetricAttributeKeys(r.Context(), orgID, req)
 	case v3.DataSourceMeter:
 		response, err = aH.reader.GetMeterAttributeKeys(r.Context(), req)
 	case v3.DataSourceLogs:
@@ -3572,9 +3561,16 @@ func (aH *APIHandler) autoCompleteAttributeValues(w http.ResponseWriter, r *http
 		return
 	}
 
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		aH.HandleError(w, err, http.StatusInternalServerError)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
 	switch req.DataSource {
 	case v3.DataSourceMetrics:
-		response, err = aH.reader.GetMetricAttributeValues(r.Context(), req)
+		response, err = aH.reader.GetMetricAttributeValues(r.Context(), orgID, req)
 	case v3.DataSourceLogs:
 		response, err = aH.reader.GetLogAttributeValues(r.Context(), req)
 	case v3.DataSourceTraces:
@@ -3601,9 +3597,16 @@ func (aH *APIHandler) autoCompleteAttributeValuesPost(w http.ResponseWriter, r *
 		return
 	}
 
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		aH.HandleError(w, err, http.StatusInternalServerError)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
 	switch req.DataSource {
 	case v3.DataSourceMetrics:
-		response, err = aH.reader.GetMetricAttributeValues(r.Context(), req)
+		response, err = aH.reader.GetMetricAttributeValues(r.Context(), orgID, req)
 	case v3.DataSourceLogs:
 		response, err = aH.reader.GetLogAttributeValues(r.Context(), req)
 	case v3.DataSourceTraces:

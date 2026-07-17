@@ -12,7 +12,6 @@ type StatefulSets struct {
 	Type                   ResponseType           `json:"type" required:"true"`
 	Records                []StatefulSetRecord    `json:"records" required:"true" nullable:"false"`
 	Total                  int                    `json:"total" required:"true"`
-	RequiredMetricsCheck   RequiredMetricsCheck   `json:"requiredMetricsCheck" required:"true"`
 	EndTimeBeforeRetention bool                   `json:"endTimeBeforeRetention" required:"true"`
 	Warning                *qbtypes.QueryWarnData `json:"warning,omitempty"`
 }
@@ -28,6 +27,7 @@ type StatefulSetRecord struct {
 	DesiredPods              int               `json:"desiredPods" required:"true"`
 	CurrentPods              int               `json:"currentPods" required:"true"`
 	PodCountsByPhase         PodCountsByPhase  `json:"podCountsByPhase" required:"true"`
+	PodCountsByStatus        PodCountsByStatus `json:"podCountsByStatus" required:"true"`
 	Meta                     map[string]string `json:"meta" required:"true"`
 }
 

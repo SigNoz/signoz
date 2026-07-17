@@ -1,15 +1,20 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { FullScreen, useFullScreenHandle } from 'react-full-screen';
 
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
-import PanelTypeSelectionModal from 'container/DashboardContainer/PanelTypeSelectionModal';
-import useComponentPermission from 'hooks/useComponentPermission';
-import { useAppContext } from 'providers/App/App';
 
-import DashboardDescription from './DashboardDescription';
+import DashboardPageToolbar from './DashboardPageToolbar';
 import PanelsAndSectionsLayout from './PanelsAndSectionsLayout';
+import { useDashboardEditGuard } from './hooks/useDashboardEditGuard';
+import { useResolvedVariables } from './hooks/useResolvedVariables';
+import { useSyncVariablesForSuggestions } from './hooks/useSyncVariablesForSuggestions';
 import { useDashboardStore } from './store/useDashboardStore';
 import styles from './DashboardContainer.module.scss';
+import DashboardPageHeader from './components/DashboardPageHeader/DashboardPageHeader';
+import LockedIndicator from './components/LockedIndicator/LockedIndicator';
+import DashboardChangedDialog from './components/DashboardChangedDialog/DashboardChangedDialog';
+import { useDashboardStaleCheck } from './hooks/useDashboardStaleCheck';
+import { Base64Icons } from './DashboardSettings/Overview/utils';
 
 interface DashboardContainerProps {
 	dashboard: DashboardtypesGettableDashboardV2DTO;
@@ -20,36 +25,62 @@ function DashboardContainer({
 	dashboard,
 	refetch,
 }: DashboardContainerProps): JSX.Element {
+	const spec = dashboard.spec;
+	const image = dashboard.image || Base64Icons[0];
+	const name = spec.display.name;
+
+	useEffect(() => {
+		document.title = name;
+	}, [name]);
+
+	// Store is app-level and outlives the page: clear transient variable fetch state on
+	// unmount so the next visit doesn't inherit stale states / climbing cycle ids.
+	const resetVariableFetch = useDashboardStore((s) => s.resetVariableFetch);
+	useEffect(() => resetVariableFetch, [resetVariableFetch]);
+
 	const fullScreenHandle = useFullScreenHandle();
 
-	const { user } = useAppContext();
-	const [editDashboard] = useComponentPermission(['edit_dashboard'], user.role);
-	const isEditable = !dashboard.locked && editDashboard;
+	const { isLocked, canEditDashboard } = useDashboardEditGuard(dashboard);
 
-	// Publish edit context to the store so hooks/components read it from there
-	// instead of receiving dashboardId/isEditable/refetch as props down the tree.
+	// Seed during render (not an effect) so the first Panel render already sees the id —
+	// useDashboardFetchRequired throws on a missing id. setEditContext self-guards.
 	const setEditContext = useDashboardStore((s) => s.setEditContext);
-	useEffect(() => {
-		setEditContext({ dashboardId: dashboard.id ?? '', isEditable, refetch });
-	}, [dashboard.id, isEditable, refetch, setEditContext]);
+	setEditContext({
+		dashboardId: dashboard.id,
+		isLocked,
+		canEditDashboard,
+		refetch,
+	});
 
-	const { spec } = dashboard;
-	const layouts = useMemo(() => spec?.layouts ?? [], [spec?.layouts]);
-	const panels = useMemo(() => spec?.panels ?? {}, [spec?.panels]);
+	// Resolve the variable selection into the V5 query payload and publish it to
+	// the store, so each panel's query substitutes the bar's selected values.
+	useResolvedVariables(dashboard);
 
+	// Publish variables to the shared store so the query builder autocomplete
+	// suggests them ($variable) in the panel editor and dashboards-page builder.
+	useSyncVariablesForSuggestions(dashboard);
+
+	const staleCheck = useDashboardStaleCheck(dashboard, refetch);
+
+	// In full screen show only the sections and panels — the header/toolbar chrome
+	// is hidden for a clean presentation view (exit with Esc).
 	return (
 		<FullScreen handle={fullScreenHandle}>
 			<div className={styles.container}>
-				<DashboardDescription
-					dashboard={dashboard}
-					handle={fullScreenHandle}
-					refetch={refetch}
+				{!fullScreenHandle.active && (
+					<>
+						<DashboardPageHeader title={name} image={image} />
+						<DashboardPageToolbar dashboard={dashboard} handle={fullScreenHandle} />
+					</>
+				)}
+				<PanelsAndSectionsLayout layouts={spec.layouts} panels={spec.panels} />
+				{isLocked && <LockedIndicator />}
+				<DashboardChangedDialog
+					open={staleCheck.showPrompt}
+					onReload={staleCheck.reload}
+					onDismiss={staleCheck.dismiss}
 				/>
-				<PanelsAndSectionsLayout layouts={layouts} panels={panels} />
 			</div>
-			{/* Shared panel-type picker (V1 component): opened from any "New Panel"
-			    trigger; navigates to the widget editor route on selection. */}
-			<PanelTypeSelectionModal />
 		</FullScreen>
 	);
 }

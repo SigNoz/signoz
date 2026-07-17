@@ -43,6 +43,10 @@ type Store interface {
 
 	ListForUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, params *ListDashboardsV2Params) ([]*StorableDashboardWithPinInfo, int64, error)
 
+	// ListByDataContainsAny returns the org's dashboards whose raw `data` JSON
+	// contains any of the given substrings (matched literally; LIKE wildcards escaped).
+	ListByDataContainsAny(ctx context.Context, orgID valuer.UUID, searches []string) ([]*StorableDashboard, error)
+
 	// Returns ErrCodePinnedDashboardLimitHit when the user is at MaxPinnedDashboardsPerUser.
 	PinForUser(ctx context.Context, preference *UserDashboardPreference) error
 
@@ -51,4 +55,17 @@ type Store interface {
 	DeletePreferencesForDashboard(ctx context.Context, orgID valuer.UUID, dashboardID valuer.UUID) error
 
 	DeletePreferencesForUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) error
+
+	// ════════════════════════════════════════════════════════════════════════
+	// Dashboard saved view methods
+	// ════════════════════════════════════════════════════════════════════════
+	CreateDashboardView(ctx context.Context, view *DashboardView) error
+
+	GetDashboardView(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*DashboardView, error)
+
+	ListDashboardViews(ctx context.Context, orgID valuer.UUID) ([]*DashboardView, error)
+
+	UpdateDashboardView(ctx context.Context, view *DashboardView) error
+
+	DeleteDashboardView(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
 }

@@ -11,19 +11,9 @@ from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.fs import get_testdata_file_path
 from fixtures.metrics import Metrics
-from fixtures.querier import compare_values
+from fixtures.querier import compare_values, get_all_warnings
 
 ENDPOINT = "/api/v2/infra_monitoring/pvcs"
-
-# Required metrics for the v2 volumes endpoint
-# (pkg/modules/inframonitoring/implinframonitoring/volumes_constants.go:20-27).
-REQUIRED_METRICS = {
-    "k8s.volume.available",
-    "k8s.volume.capacity",
-    "k8s.volume.inodes",
-    "k8s.volume.inodes.free",
-    "k8s.volume.inodes.used",
-}
 
 
 def test_volumes_accuracy(
@@ -71,7 +61,8 @@ def test_volumes_accuracy(
     # Shape/contract.
     assert data["total"] == len(expected["records"])
     assert len(data["records"]) == len(expected["records"])
-    assert data["requiredMetricsCheck"]["missingMetrics"] == []
+    # Full data present -> no warnings surfaced.
+    assert get_all_warnings(response.json()) == []
     assert data["endTimeBeforeRetention"] is False
     assert {r["persistentVolumeClaimName"] for r in data["records"]} == set(exp_by_name.keys())
 
@@ -117,38 +108,81 @@ def test_volumes_accuracy(
             assert compare_values(record[field], exp[field], 1e-6), f"{record['persistentVolumeClaimName']}.{field}: got {record[field]}, expected {exp[field]}"
 
 
-def test_volumes_missing_metrics(
+@pytest.mark.parametrize(
+    "case",
+    [
+        # Scenario 1: a metric was never ingested. Post-#11754 the querier drops it
+        # (no hard error), so the endpoint returns 200 with whatever flowed; the
+        # never-seen column is the -1 sentinel + a "have never been received"
+        # warning. Here we omit the FORMULA OPERAND k8s.volume.available
+        # (volumeUsage = capacity - available): since A uses TimeAggregationAvg it is
+        # NOT zero-defaultable, so the formula drops the group -> volumeUsage == -1
+        # (it does NOT fall back to capacity). capacity + inodes stay real.
+        pytest.param(
+            {
+                "dataset": "volumes_formula_operand_missing.jsonl",
+                "body": {"filter": {"expression": "k8s.persistentvolumeclaim.name = 'fop-pvc'"}},
+                "warn_substrings": ["never been received", "k8s.volume.available"],
+                "warn_names": [],
+                "data_fields": ["volumeCapacity", "volumeInodes", "volumeInodesFree", "volumeInodesUsed"],
+                "no_data_fields": ["volumeAvailable", "volumeUsage"],
+            },
+            id="metric_never_seen",
+        ),
+    ],
+)
+def test_volumes_warnings(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
+    case: dict,
 ) -> None:
-    """Seed only k8s.volume.available; other 4 required metrics flagged missing."""
+    """A never-ingested metric surfaces a non-blocking warning (200 + data), not a
+    hard error. Here the never-seen metric is the FORMULA OPERAND
+    k8s.volume.available (volumeUsage = capacity - available): since A uses
+    TimeAggregationAvg it is NOT zero-defaultable, so the formula drops the group
+    -> volumeUsage == -1 (it does NOT fall back to capacity); capacity + inodes
+    stay real. (The generic never-seen (metric, key)-pair-via-groupBy warning is
+    entity-agnostic and is exercised once, for hosts, in 01_hosts.py.)"""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/volumes_missing_metrics.jsonl"),
+            get_testdata_file_path(f"inframonitoring/{case['dataset']}"),
             base_time=now - timedelta(minutes=4),
         )
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    body: dict = {
+        "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+        "end": int(now.timestamp() * 1000),
+        "limit": 50,
+    }
+    body.update(case["body"])
+
     response = requests.post(
         signoz.self.host_configs["8080"].get(ENDPOINT),
         headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-        },
+        json=body,
         timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
+    warnings = get_all_warnings(response.json())
 
-    assert set(data["requiredMetricsCheck"]["missingMetrics"]) == (REQUIRED_METRICS - {"k8s.volume.available"})
-    assert data["records"] == []
-    assert data["total"] == 0
+    for substr in case["warn_substrings"]:
+        assert any(substr in w["message"] for w in warnings), f"{substr!r} not surfaced: {warnings!r}"
+    for name in case["warn_names"]:
+        assert any(name in w["message"] for w in warnings), f"{name!r} not surfaced: {warnings!r}"
+
+    assert len(data["records"]) >= 1, f"expected at least one record: {data!r}"
+    if case["data_fields"] or case["no_data_fields"]:
+        record = data["records"][0]
+        for field in case["data_fields"]:
+            assert record[field] != -1, f"expected {field} populated, got {record[field]}"
+        for field in case["no_data_fields"]:
+            assert record[field] == -1, f"expected {field} == -1 sentinel, got {record[field]}"
 
 
 @pytest.mark.parametrize(
@@ -376,22 +410,110 @@ def test_volumes_non_pvc_volume_filtered(
     assert rec["persistentVolumeClaimName"] == "np-real-pvc"
 
 
+# Float record fields compared with tolerance; everything else compared with ==.
+_GROUPBY_FLOAT_FIELDS = {
+    "volumeAvailable",
+    "volumeCapacity",
+    "volumeUsage",
+    "volumeInodes",
+    "volumeInodesFree",
+    "volumeInodesUsed",
+}
+
+
 @pytest.mark.parametrize(
-    "group_key,expected_groups",
+    "scenario",
     [
-        # groupBy=[k8s.persistentvolumeclaim.name]: one record per PVC,
-        # persistentVolumeClaimName populated (volumes.go:26-29).
+        # Explicit groupBy=[k8s.persistentvolumeclaim.name]: one record per PVC,
+        # persistentVolumeClaimName populated (volumes.go:26-29), response grouped_list.
         pytest.param(
-            "k8s.persistentvolumeclaim.name",
-            {"gb-pvc-a1", "gb-pvc-a2", "gb-pvc-b1", "gb-pvc-b2"},
+            {
+                "fixture": "volumes_groupby.jsonl",
+                "group_by": "k8s.persistentvolumeclaim.name",
+                "filter": None,
+                "group_meta_keys": ["k8s.persistentvolumeclaim.name"],
+                "expected_type": "grouped_list",
+                "groups": {
+                    "gb-pvc-a1": {"persistentVolumeClaimName": "gb-pvc-a1"},
+                    "gb-pvc-a2": {"persistentVolumeClaimName": "gb-pvc-a2"},
+                    "gb-pvc-b1": {"persistentVolumeClaimName": "gb-pvc-b1"},
+                    "gb-pvc-b2": {"persistentVolumeClaimName": "gb-pvc-b2"},
+                },
+            },
             id="pvc_name",
         ),
-        # groupBy=[k8s.namespace.name]: aggregated per namespace,
-        # persistentVolumeClaimName cleared (custom-groupBy branch).
+        # Explicit groupBy=[k8s.namespace.name]: aggregated per namespace,
+        # persistentVolumeClaimName cleared, response grouped_list.
         pytest.param(
-            "k8s.namespace.name",
-            {"gb-ns-a", "gb-ns-b"},
+            {
+                "fixture": "volumes_groupby.jsonl",
+                "group_by": "k8s.namespace.name",
+                "filter": None,
+                "group_meta_keys": ["k8s.namespace.name"],
+                "expected_type": "grouped_list",
+                "groups": {
+                    "gb-ns-a": {"persistentVolumeClaimName": ""},
+                    "gb-ns-b": {"persistentVolumeClaimName": ""},
+                },
+            },
             id="namespace",
+        ),
+        # Default groupBy (no groupBy in request) => [k8s.persistentvolumeclaim.name,
+        # k8s.namespace.name, k8s.cluster.name] (module.go ListVolumes), response list.
+        # Same PVC name must NOT collapse across namespaces OR clusters; the
+        # empty-cluster group (k8s.cluster.name label absent on the source series)
+        # must appear as its own row with real metrics, not be dropped.
+        # Single series per group => SpaceAggregationSum == seeded value.
+        # Fails on the pre-cluster default (name+ns) — the three ns-x groups would
+        # collapse into one summed row.
+        pytest.param(
+            {
+                "fixture": "volumes_same_name_across_ns_and_clusters.jsonl",
+                "group_by": None,
+                "filter": "k8s.persistentvolumeclaim.name = 'dup-pvc'",
+                "group_meta_keys": ["k8s.persistentvolumeclaim.name", "k8s.namespace.name", "k8s.cluster.name"],
+                "expected_type": "list",
+                "groups": {
+                    ("dup-pvc", "ns-x", "cluster-a"): {
+                        "persistentVolumeClaimName": "dup-pvc",
+                        "volumeCapacity": 100.0,
+                        "volumeAvailable": 60.0,
+                        "volumeUsage": 40.0,
+                        "volumeInodes": 1000.0,
+                        "volumeInodesFree": 600.0,
+                        "volumeInodesUsed": 400.0,
+                    },
+                    ("dup-pvc", "ns-y", "cluster-a"): {
+                        "persistentVolumeClaimName": "dup-pvc",
+                        "volumeCapacity": 500.0,
+                        "volumeAvailable": 100.0,
+                        "volumeUsage": 400.0,
+                        "volumeInodes": 5000.0,
+                        "volumeInodesFree": 1000.0,
+                        "volumeInodesUsed": 4000.0,
+                    },
+                    ("dup-pvc", "ns-x", "cluster-b"): {
+                        "persistentVolumeClaimName": "dup-pvc",
+                        "volumeCapacity": 300.0,
+                        "volumeAvailable": 50.0,
+                        "volumeUsage": 250.0,
+                        "volumeInodes": 3000.0,
+                        "volumeInodesFree": 500.0,
+                        "volumeInodesUsed": 2500.0,
+                    },
+                    # empty-cluster group: k8s.cluster.name label absent on the source series.
+                    ("dup-pvc", "ns-x", ""): {
+                        "persistentVolumeClaimName": "dup-pvc",
+                        "volumeCapacity": 200.0,
+                        "volumeAvailable": 0.0,
+                        "volumeUsage": 200.0,
+                        "volumeInodes": 2000.0,
+                        "volumeInodesFree": 0.0,
+                        "volumeInodesUsed": 2000.0,
+                    },
+                },
+            },
+            id="default_disambiguates_ns_and_cluster",
         ),
     ],
 )
@@ -400,51 +522,64 @@ def test_volumes_groupby(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
-    group_key: str,
-    expected_groups: set,
+    scenario: dict,
 ) -> None:
-    """groupBy returns one record per distinct group. persistentVolumeClaimName
-    is populated only when grouping by k8s.persistentvolumeclaim.name
-    (volumes.go:26-29 list-vs-grouped branch); meta surfaces the groupBy key."""
+    """groupBy determines row identity. Explicit groupBy returns one grouped_list
+    record per distinct group (persistentVolumeClaimName populated only when
+    grouping by k8s.persistentvolumeclaim.name; volumes.go:26-29). With no groupBy
+    the default is [k8s.persistentvolumeclaim.name, k8s.namespace.name,
+    k8s.cluster.name] (module.go ListVolumes), so same-named PVCs across
+    namespaces/clusters stay as separate, un-collapsed list rows (incl. an
+    absent-cluster group keyed by ""). meta always surfaces the grouping key(s)."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/volumes_groupby.jsonl"),
+            get_testdata_file_path(f"inframonitoring/{scenario['fixture']}"),
             base_time=now - timedelta(minutes=4),
         )
     )
+
+    body: dict = {
+        "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+        "end": int(now.timestamp() * 1000),
+        "limit": 50,
+    }
+    if scenario["group_by"] is not None:
+        body["groupBy"] = [{"name": scenario["group_by"], "fieldDataType": "string", "fieldContext": "resource"}]
+    if scenario["filter"] is not None:
+        body["filter"] = {"expression": scenario["filter"]}
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     response = requests.post(
         signoz.self.host_configs["8080"].get(ENDPOINT),
         headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-            "groupBy": [
-                {
-                    "name": group_key,
-                    "fieldDataType": "string",
-                    "fieldContext": "resource",
-                }
-            ],
-        },
+        json=body,
         timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
-    assert data["total"] == len(expected_groups)
 
-    is_pvc_group = group_key == "k8s.persistentvolumeclaim.name"
-    group_of = lambda r: r["persistentVolumeClaimName"] if is_pvc_group else r["meta"][group_key]  # noqa: E731  # pylint: disable=unnecessary-lambda-assignment
-    by_group = {group_of(r): r for r in data["records"]}
-    assert set(by_group.keys()) == expected_groups
+    groups = scenario["groups"]
+    meta_keys = scenario["group_meta_keys"]
+    assert data["type"] == scenario["expected_type"]
+    assert data["total"] == len(groups)
 
-    for group, rec in by_group.items():
-        # persistentVolumeClaimName populated per PVC when grouping by it, empty otherwise.
-        assert rec["persistentVolumeClaimName"] == (group if is_pvc_group else "")
-        assert group_key in rec["meta"], rec["meta"]
+    def _gid(rec: dict):
+        vals = [rec["meta"][k] for k in meta_keys]
+        return vals[0] if len(vals) == 1 else tuple(vals)
+
+    by_group = {_gid(r): r for r in data["records"]}
+    assert set(by_group.keys()) == set(groups.keys())
+
+    for gid, exp in groups.items():
+        rec = by_group[gid]
+        for k in meta_keys:
+            assert k in rec["meta"], rec["meta"]
+        for field, val in exp.items():
+            if field in _GROUPBY_FLOAT_FIELDS:
+                assert compare_values(rec[field], val, 1e-6), f"{gid}.{field}: got {rec[field]}, expected {val}"
+            else:
+                assert rec[field] == val, f"{gid}.{field}: got {rec[field]}, expected {val}"
 
 
 def test_volumes_pagination(

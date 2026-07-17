@@ -10,24 +10,11 @@ import requests
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.fs import get_testdata_file_path
+from fixtures.inframonitoring import expected_status_counts
 from fixtures.metrics import Metrics
-from fixtures.querier import compare_values
+from fixtures.querier import compare_values, get_all_warnings
 
 ENDPOINT = "/api/v2/infra_monitoring/deployments"
-
-# Required metrics for the v2 deployments endpoint
-# (pkg/modules/inframonitoring/implinframonitoring/deployments_constants.go:24-34).
-REQUIRED_METRICS = {
-    "k8s.pod.phase",
-    "k8s.pod.cpu.usage",
-    "k8s.pod.cpu_request_utilization",
-    "k8s.pod.cpu_limit_utilization",
-    "k8s.pod.memory.working_set",
-    "k8s.pod.memory_request_utilization",
-    "k8s.pod.memory_limit_utilization",
-    "k8s.deployment.desired",
-    "k8s.deployment.available",
-}
 
 
 def test_deployments_accuracy(
@@ -75,7 +62,8 @@ def test_deployments_accuracy(
     # Shape/contract.
     assert data["total"] == len(expected["records"])
     assert len(data["records"]) == len(expected["records"])
-    assert data["requiredMetricsCheck"]["missingMetrics"] == []
+    # Full data present -> no warnings surfaced.
+    assert get_all_warnings(response.json()) == []
     assert data["endTimeBeforeRetention"] is False
     assert {r["deploymentName"] for r in data["records"]} == set(exp_by_name.keys())
 
@@ -123,38 +111,89 @@ def test_deployments_accuracy(
         assert record["podCountsByPhase"] == exp["podCountsByPhase"]
 
 
-def test_deployments_missing_metrics(
+@pytest.mark.parametrize(
+    "case",
+    [
+        # Scenario 1: required metrics were never ingested. Post-#11754 the querier
+        # drops them (no hard error), so the endpoint returns 200 with the deployment
+        # that DOES have data; never-seen columns are the -1 sentinel + a
+        # "have never been received" warning. No formulas; pod- and deployment-level
+        # metrics each map to one column.
+        pytest.param(
+            {
+                "dataset": "deployments_missing_metrics.jsonl",  # seeds only k8s.pod.cpu.usage
+                "body": {"filter": {"expression": "k8s.deployment.name = 'miss-dep'"}},
+                "warn_substrings": ["never been received"],
+                "warn_names": [
+                    "k8s.pod.memory.working_set",
+                    "k8s.deployment.desired",
+                    "k8s.deployment.available",
+                ],
+                "data_fields": ["deploymentCPU"],
+                "no_data_fields": [
+                    "deploymentCPURequest",
+                    "deploymentCPULimit",
+                    "deploymentMemory",
+                    "deploymentMemoryRequest",
+                    "deploymentMemoryLimit",
+                    "desiredPods",
+                    "availablePods",
+                ],
+            },
+            id="metric_never_seen",
+        ),
+    ],
+)
+def test_deployments_warnings(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
+    case: dict,
 ) -> None:
-    """Seed only k8s.pod.cpu.usage; assert other 8 required metrics flagged missing."""
+    """A never-ingested metric surfaces a non-blocking warning (200 + data), not a
+    hard error: the endpoint returns the entity that DOES have data and the
+    never-seen columns carry the -1 sentinel. (The generic never-seen
+    (metric, key)-pair-via-groupBy warning is entity-agnostic and is exercised
+    once, for hosts, in 01_hosts.py.)"""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/deployments_missing_metrics.jsonl"),
+            get_testdata_file_path(f"inframonitoring/{case['dataset']}"),
             base_time=now - timedelta(minutes=4),
         )
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    body: dict = {
+        "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+        "end": int(now.timestamp() * 1000),
+        "limit": 50,
+    }
+    body.update(case["body"])
+
     response = requests.post(
         signoz.self.host_configs["8080"].get(ENDPOINT),
         headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-        },
+        json=body,
         timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
+    warnings = get_all_warnings(response.json())
 
-    assert set(data["requiredMetricsCheck"]["missingMetrics"]) == (REQUIRED_METRICS - {"k8s.pod.cpu.usage"})
-    assert data["records"] == []
-    assert data["total"] == 0
+    for substr in case["warn_substrings"]:
+        assert any(substr in w["message"] for w in warnings), f"{substr!r} not surfaced: {warnings!r}"
+    for name in case["warn_names"]:
+        assert any(name in w["message"] for w in warnings), f"{name!r} not surfaced: {warnings!r}"
+
+    assert len(data["records"]) >= 1, f"expected at least one record: {data!r}"
+    if case["data_fields"] or case["no_data_fields"]:
+        record = data["records"][0]
+        for field in case["data_fields"]:
+            assert record[field] != -1, f"expected {field} populated, got {record[field]}"
+        for field in case["no_data_fields"]:
+            assert record[field] == -1, f"expected {field} == -1 sentinel, got {record[field]}"
 
 
 @pytest.mark.parametrize(
@@ -347,6 +386,49 @@ def test_deployments_pod_phase_aggregation(
     }
 
 
+def test_deployments_pod_status_aggregation(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+) -> None:
+    """Deployment's pods aggregated by kubectl-style display status. Seeded states
+    in deployments_pod_phases.jsonl -> what kubectl would show:
+      pp-run-1/3/4 Running, pp-run-2 CrashLoopBackOff (phase Running),
+      pp-fail-1 Error, pp-fail-2 Evicted (pod-level), pp-pen-1 Pending.
+    """
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/deployments_pod_phases.jsonl"),
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": "k8s.deployment.name = 'pp-dep'"},
+        },
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()["data"]
+    assert data["total"] == 1
+    rec = data["records"][0]
+    assert rec["deploymentName"] == "pp-dep"
+    assert rec["podCountsByStatus"] == expected_status_counts(running=3, crashLoopBackOff=1, error=1, evicted=1, pending=1)
+    # Phase counts unchanged by the status enrichment.
+    assert rec["podCountsByPhase"] == {"pending": 1, "running": 4, "succeeded": 0, "failed": 2, "unknown": 0}
+    # All status metrics present -> gate satisfied -> no status warning.
+    assert all("Pod status could not be computed" not in w["message"] for w in get_all_warnings(response.json()))
+
+
 def test_deployments_desired_available_counts(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
@@ -424,22 +506,127 @@ def test_deployments_base_filter_drops_non_deployment_pods(
     assert all(r["deploymentName"] != "" for r in data["records"])
 
 
+# Float record fields compared with tolerance; everything else compared with ==.
+_GROUPBY_FLOAT_FIELDS = {
+    "deploymentCPU",
+    "deploymentCPURequest",
+    "deploymentCPULimit",
+    "deploymentMemory",
+    "deploymentMemoryRequest",
+    "deploymentMemoryLimit",
+}
+
+
+def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
+    return {"pending": pending, "running": running, "succeeded": succeeded, "failed": failed, "unknown": unknown}
+
+
 @pytest.mark.parametrize(
-    "group_key,expected_running",
+    "scenario",
     [
-        # groupBy=[k8s.deployment.name]: one record per deployment,
-        # deploymentName populated (deployments.go:28-31). 1 running pod each.
+        # Explicit groupBy=[k8s.deployment.name]: one record per deployment,
+        # deploymentName populated (deployments.go:28-31), response grouped_list.
+        # 1 running pod each.
         pytest.param(
-            "k8s.deployment.name",
-            {"gb-dep-a1": 1, "gb-dep-a2": 1, "gb-dep-b1": 1, "gb-dep-b2": 1},
+            {
+                "fixture": "deployments_groupby.jsonl",
+                "group_by": "k8s.deployment.name",
+                "filter": None,
+                "group_meta_keys": ["k8s.deployment.name"],
+                "expected_type": "grouped_list",
+                "groups": {
+                    "gb-dep-a1": {"deploymentName": "gb-dep-a1", "podCountsByPhase": _phase(running=1)},
+                    "gb-dep-a2": {"deploymentName": "gb-dep-a2", "podCountsByPhase": _phase(running=1)},
+                    "gb-dep-b1": {"deploymentName": "gb-dep-b1", "podCountsByPhase": _phase(running=1)},
+                    "gb-dep-b2": {"deploymentName": "gb-dep-b2", "podCountsByPhase": _phase(running=1)},
+                },
+            },
             id="deployment_name",
         ),
-        # groupBy=[k8s.namespace.name]: aggregated across each namespace's 2
-        # deployments, deploymentName cleared. 2 x 1 = 2 running pods each.
+        # Explicit groupBy=[k8s.namespace.name]: aggregated across each namespace's
+        # 2 deployments, deploymentName cleared, response grouped_list. 2 running each.
         pytest.param(
-            "k8s.namespace.name",
-            {"gb-ns-a": 2, "gb-ns-b": 2},
+            {
+                "fixture": "deployments_groupby.jsonl",
+                "group_by": "k8s.namespace.name",
+                "filter": None,
+                "group_meta_keys": ["k8s.namespace.name"],
+                "expected_type": "grouped_list",
+                "groups": {
+                    "gb-ns-a": {"deploymentName": "", "podCountsByPhase": _phase(running=2)},
+                    "gb-ns-b": {"deploymentName": "", "podCountsByPhase": _phase(running=2)},
+                },
+            },
             id="namespace",
+        ),
+        # Default groupBy (no groupBy in request) => [k8s.deployment.name,
+        # k8s.namespace.name, k8s.cluster.name] (module.go ListDeployments),
+        # response list. Same workload name must NOT collapse across namespaces OR
+        # clusters; the empty-cluster group (k8s.cluster.name label absent on the
+        # source pods) must appear as its own row with real metrics, not be dropped.
+        # Single pod per group => SpaceAggregationSum == Avg == seeded value.
+        # Fails on the pre-cluster default (name+ns) — the three ns-x groups would
+        # collapse into one summed row.
+        pytest.param(
+            {
+                "fixture": "deployments_same_name_across_ns_and_clusters.jsonl",
+                "group_by": None,
+                "filter": "k8s.deployment.name = 'dup-dep'",
+                "group_meta_keys": ["k8s.deployment.name", "k8s.namespace.name", "k8s.cluster.name"],
+                "expected_type": "list",
+                "groups": {
+                    ("dup-dep", "ns-x", "cluster-a"): {
+                        "deploymentName": "dup-dep",
+                        "deploymentCPU": 0.3,
+                        "deploymentCPURequest": 0.6,
+                        "deploymentCPULimit": 0.7,
+                        "deploymentMemory": 100000000.0,
+                        "deploymentMemoryRequest": 0.6,
+                        "deploymentMemoryLimit": 0.7,
+                        "desiredPods": 2,
+                        "availablePods": 2,
+                        "podCountsByPhase": _phase(running=1),
+                    },
+                    ("dup-dep", "ns-y", "cluster-a"): {
+                        "deploymentName": "dup-dep",
+                        "deploymentCPU": 0.9,
+                        "deploymentCPURequest": 0.2,
+                        "deploymentCPULimit": 0.3,
+                        "deploymentMemory": 500000000.0,
+                        "deploymentMemoryRequest": 0.2,
+                        "deploymentMemoryLimit": 0.3,
+                        "desiredPods": 3,
+                        "availablePods": 1,
+                        "podCountsByPhase": _phase(failed=1),
+                    },
+                    ("dup-dep", "ns-x", "cluster-b"): {
+                        "deploymentName": "dup-dep",
+                        "deploymentCPU": 0.5,
+                        "deploymentCPURequest": 0.4,
+                        "deploymentCPULimit": 0.5,
+                        "deploymentMemory": 300000000.0,
+                        "deploymentMemoryRequest": 0.4,
+                        "deploymentMemoryLimit": 0.5,
+                        "desiredPods": 4,
+                        "availablePods": 4,
+                        "podCountsByPhase": _phase(running=1),
+                    },
+                    # empty-cluster group: k8s.cluster.name label absent on the source pods.
+                    ("dup-dep", "ns-x", ""): {
+                        "deploymentName": "dup-dep",
+                        "deploymentCPU": 0.1,
+                        "deploymentCPURequest": 0.1,
+                        "deploymentCPULimit": 0.1,
+                        "deploymentMemory": 200000000.0,
+                        "deploymentMemoryRequest": 0.1,
+                        "deploymentMemoryLimit": 0.1,
+                        "desiredPods": 1,
+                        "availablePods": 0,
+                        "podCountsByPhase": _phase(pending=1),
+                    },
+                },
+            },
+            id="default_disambiguates_ns_and_cluster",
         ),
     ],
 )
@@ -448,55 +635,64 @@ def test_deployments_groupby(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
-    group_key: str,
-    expected_running: dict,
+    scenario: dict,
 ) -> None:
-    """groupBy returns one record per distinct group with aggregated pod-phase
-    counts. deploymentName is populated only when grouping by k8s.deployment.name
-    (deployments.go:28-31 list-vs-grouped branch); meta surfaces the groupBy key."""
+    """groupBy determines row identity. Explicit groupBy returns one grouped_list
+    record per distinct group (deploymentName populated only when grouping by
+    k8s.deployment.name; deployments.go:28-31). With no groupBy the default is
+    [k8s.deployment.name, k8s.namespace.name, k8s.cluster.name] (module.go
+    ListDeployments), so same-named deployments across namespaces/clusters stay as
+    separate, un-collapsed list rows (incl. an absent-cluster group keyed by "").
+    meta always surfaces the grouping key(s)."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/deployments_groupby.jsonl"),
+            get_testdata_file_path(f"inframonitoring/{scenario['fixture']}"),
             base_time=now - timedelta(minutes=4),
         )
     )
+
+    body: dict = {
+        "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+        "end": int(now.timestamp() * 1000),
+        "limit": 50,
+    }
+    if scenario["group_by"] is not None:
+        body["groupBy"] = [{"name": scenario["group_by"], "fieldDataType": "string", "fieldContext": "resource"}]
+    if scenario["filter"] is not None:
+        body["filter"] = {"expression": scenario["filter"]}
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     response = requests.post(
         signoz.self.host_configs["8080"].get(ENDPOINT),
         headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-            "groupBy": [
-                {
-                    "name": group_key,
-                    "fieldDataType": "string",
-                    "fieldContext": "resource",
-                }
-            ],
-        },
+        json=body,
         timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
-    assert data["total"] == len(expected_running)
 
-    is_dep_group = group_key == "k8s.deployment.name"
-    group_of = lambda r: r["deploymentName"] if is_dep_group else r["meta"][group_key]  # noqa: E731  # pylint: disable=unnecessary-lambda-assignment
-    by_group = {group_of(r): r for r in data["records"]}
-    assert set(by_group.keys()) == set(expected_running.keys())
+    groups = scenario["groups"]
+    meta_keys = scenario["group_meta_keys"]
+    assert data["type"] == scenario["expected_type"]
+    assert data["total"] == len(groups)
 
-    for group, running in expected_running.items():
-        rec = by_group[group]
-        # deploymentName populated per deployment when grouping by it, empty otherwise.
-        assert rec["deploymentName"] == (group if is_dep_group else "")
-        assert rec["podCountsByPhase"]["running"] == running
-        for other in ("pending", "succeeded", "failed", "unknown"):
-            assert rec["podCountsByPhase"][other] == 0
-        assert group_key in rec["meta"], rec["meta"]
+    def _gid(rec: dict):
+        vals = [rec["meta"][k] for k in meta_keys]
+        return vals[0] if len(vals) == 1 else tuple(vals)
+
+    by_group = {_gid(r): r for r in data["records"]}
+    assert set(by_group.keys()) == set(groups.keys())
+
+    for gid, exp in groups.items():
+        rec = by_group[gid]
+        for k in meta_keys:
+            assert k in rec["meta"], rec["meta"]
+        for field, val in exp.items():
+            if field in _GROUPBY_FLOAT_FIELDS:
+                assert compare_values(rec[field], val, 1e-6), f"{gid}.{field}: got {rec[field]}, expected {val}"
+            else:
+                assert rec[field] == val, f"{gid}.{field}: got {rec[field]}, expected {val}"
 
 
 def test_deployments_pagination(

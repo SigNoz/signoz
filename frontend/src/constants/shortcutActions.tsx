@@ -43,10 +43,17 @@ type ActionDeps = {
 	aiAssistant?: {
 		open: () => void;
 	};
+	/**
+	 * Provided only in development mode. Opens the AuthZ DevTools modal
+	 * for testing permission overrides.
+	 */
+	authzDevTools?: {
+		open: () => void;
+	};
 };
 
 export function createShortcutActions(deps: ActionDeps): CmdAction[] {
-	const { navigate, handleThemeChange, aiAssistant } = deps;
+	const { navigate, handleThemeChange, aiAssistant, authzDevTools } = deps;
 
 	const actions: CmdAction[] = [
 		{
@@ -299,6 +306,18 @@ export function createShortcutActions(deps: ActionDeps): CmdAction[] {
 			icon: <Noz size={16} />,
 			roles: ['ADMIN', 'EDITOR', 'VIEWER'],
 			perform: aiAssistant.open,
+		});
+	}
+
+	if (authzDevTools) {
+		actions.push({
+			id: 'authz-devtools',
+			name: 'AuthZ DevTools',
+			keywords: 'authz permissions rbac debug devtools override testing',
+			section: 'Dev',
+			icon: <Settings size={14} />,
+			roles: ['ADMIN', 'EDITOR', 'VIEWER'],
+			perform: authzDevTools.open,
 		});
 	}
 

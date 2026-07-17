@@ -1,0 +1,11 @@
+.pointer {
+	cursor: pointer;
+}
+
+.cellText {
+	color: var(--l2-foreground);
+
+	&[data-novalue='true'] {
+		opacity: 0.6;
+	}
+}

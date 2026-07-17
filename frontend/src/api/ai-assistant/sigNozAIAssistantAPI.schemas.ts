@@ -159,6 +159,25 @@ export interface CancelResponseDTO {
 	state: ExecutionStateDTO;
 }
 
+export interface ChipDTO {
+	/**
+	 * @type string
+	 * @description Stable chip id. Rule-engine chips use intent ids.
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	text: string;
+}
+
+export interface ChipsResponseDTO {
+	/**
+	 * @type array
+	 */
+	chips: ChipDTO[];
+}
+
 export type ClarificationFieldDTOOptions = string[] | null;
 
 export type ClarificationFieldDTODefault = string | string[] | null;
@@ -387,14 +406,73 @@ export type ErrorBodyDTOErrors = ErrorResponseAdditionalDTO[] | null;
 export type ErrorBodyDTOUrl = string | null;
 
 /**
+   * Machine-readable error codes carried on ``ErrorBody.code``.
+  
+  **Extensible set.** This enum is the single source of truth for every code
+  the backend can emit, on both the REST envelope and the SSE ``ErrorEvent``.
+  It is published in the OpenAPI schema (and therefore the generated TS
+  client) so clients get autocomplete and a typed discriminant. The set is
+  expected to *grow*: adding a member is a backward-compatible change (the
+  wire is still a plain JSON string), so clients MUST treat unknown codes
+  gracefully — branch on the codes they handle and keep a default fallback,
+  never hard-reject an unrecognized value. Re-exported from ``app.errors``
+  for convenience; ``AssistantError(code=...)`` requires a member of this
+  enum so a typo can never reach a client.
+   */
+export enum ErrorCodeDTO {
+	missing_signoz_url = 'missing_signoz_url',
+	invalid_signoz_url = 'invalid_signoz_url',
+	invalid_content_length = 'invalid_content_length',
+	invalid_fork_target = 'invalid_fork_target',
+	rate_limit_override_exceeds_ceiling = 'rate_limit_override_exceeds_ceiling',
+	thread_message_limit = 'thread_message_limit',
+	validation_error = 'validation_error',
+	missing_token = 'missing_token',
+	invalid_token = 'invalid_token',
+	permission_denied = 'permission_denied',
+	user_disabled = 'user_disabled',
+	org_disabled = 'org_disabled',
+	thread_not_found = 'thread_not_found',
+	message_not_found = 'message_not_found',
+	execution_not_found = 'execution_not_found',
+	approval_not_found = 'approval_not_found',
+	clarification_not_found = 'clarification_not_found',
+	action_metadata_not_found = 'action_metadata_not_found',
+	user_not_found = 'user_not_found',
+	region_not_configured = 'region_not_configured',
+	thread_busy = 'thread_busy',
+	thread_has_active_execution = 'thread_has_active_execution',
+	no_active_execution = 'no_active_execution',
+	approval_superseded = 'approval_superseded',
+	clarification_superseded = 'clarification_superseded',
+	undo_conflict = 'undo_conflict',
+	revert_conflict = 'revert_conflict',
+	revert_expired = 'revert_expired',
+	restore_expired = 'restore_expired',
+	connection_limit_exceeded = 'connection_limit_exceeded',
+	hourly_message_limit = 'hourly_message_limit',
+	daily_message_limit = 'daily_message_limit',
+	daily_token_limit = 'daily_token_limit',
+	daily_cost_limit = 'daily_cost_limit',
+	upstream_auth_error = 'upstream_auth_error',
+	max_turns_exceeded = 'max_turns_exceeded',
+	budget_exceeded = 'budget_exceeded',
+	agent_execution_error = 'agent_execution_error',
+	cli_not_found = 'cli_not_found',
+	cli_connection_error = 'cli_connection_error',
+	cli_process_error = 'cli_process_error',
+	sandbox_unavailable = 'sandbox_unavailable',
+	mcp_unavailable = 'mcp_unavailable',
+	internal_error = 'internal_error',
+	region_unreachable = 'region_unreachable',
+	heartbeat_expired = 'heartbeat_expired',
+	replay_unavailable = 'replay_unavailable',
+}
+/**
  * Inner error object — matches Go ErrorsJSON.
  */
 export interface ErrorBodyDTO {
-	/**
-	 * @type string
-	 * @pattern ^[a-z_]+$
-	 */
-	code: string;
+	code: ErrorCodeDTO;
 	/**
 	 * @type string
 	 */
@@ -490,6 +568,23 @@ export type MessageActionDTOQuery = MessageActionDTOQueryAnyOf | null;
 
 export type MessageActionDTOUrl = string | null;
 
+/**
+   * Explorer namespace a saved view belongs to — its ``sourcePage``.
+  
+  Mirrors the SigNoz product's saved-view ``sourcePage`` values so the
+  frontend can route an ``open_resource`` action for a view to the right
+  Explorer via its existing ``SOURCEPAGE_VS_ROUTES`` map. ``meter`` is the
+  Cost Meter Explorer and is intentionally distinct from ``metrics`` (the
+  product persists and lists meter views under ``sourcePage="meter"``).
+   */
+export enum SavedViewEntityDTO {
+	logs = 'logs',
+	traces = 'traces',
+	metrics = 'metrics',
+	meter = 'meter',
+}
+export type MessageActionDTOEntity = SavedViewEntityDTO | null;
+
 export enum MessageActionKindDTO {
 	undo = 'undo',
 	revert = 'revert',
@@ -500,7 +595,7 @@ export enum MessageActionKindDTO {
 	apply_filter = 'apply_filter',
 }
 /**
- * Assistant action. Kind-specific requirements: rollback actions require actionMetadataId/resourceType/resourceId; follow_up requires input.intent; open_resource requires resourceType/resourceId; apply_filter requires signal and query; open_docs requires a SigNoz docs url.
+ * Assistant action. Kind-specific requirements: rollback actions require actionMetadataId/resourceType/resourceId; follow_up requires input.intent; open_resource requires resourceType/resourceId; apply_filter requires signal and query; open_docs requires a SigNoz docs url. open_resource for a saved view also carries entity (logs/traces/metrics/meter) so the frontend routes to the correct Explorer.
  */
 export interface MessageActionDTO {
 	kind: MessageActionKindDTO;
@@ -517,6 +612,7 @@ export interface MessageActionDTO {
 	signal?: MessageActionDTOSignal;
 	query?: MessageActionDTOQuery;
 	url?: MessageActionDTOUrl;
+	entity?: MessageActionDTOEntity;
 }
 
 export enum MessageContentTypeDTO {
@@ -590,6 +686,26 @@ export interface MessageSummaryDTO {
 	updatedAt: string;
 }
 
+export enum PageTypeDTO {
+	homepage = 'homepage',
+	dashboard_detail = 'dashboard_detail',
+	dashboard_list = 'dashboard_list',
+	panel_edit = 'panel_edit',
+	panel_fullscreen = 'panel_fullscreen',
+	logs_explorer = 'logs_explorer',
+	log_detail = 'log_detail',
+	traces_explorer = 'traces_explorer',
+	trace_detail = 'trace_detail',
+	metrics_explorer = 'metrics_explorer',
+	service_detail = 'service_detail',
+	services_list = 'services_list',
+	alert_edit = 'alert_edit',
+	alert_list = 'alert_list',
+	alert_new = 'alert_new',
+	alerts_triggered = 'alerts_triggered',
+	infra_entity_detail = 'infra_entity_detail',
+	other = 'other',
+}
 export enum ReadinessChecksDTODatabase {
 	ok = 'ok',
 	failed = 'failed',
@@ -990,8 +1106,10 @@ export type MessageActionEventDTOQuery = MessageActionEventDTOQueryAnyOf | null;
 
 export type MessageActionEventDTOUrl = string | null;
 
+export type MessageActionEventDTOEntity = SavedViewEntityDTO | null;
+
 /**
- * Assistant action. Kind-specific requirements: rollback actions require actionMetadataId/resourceType/resourceId; follow_up requires input.intent; open_resource requires resourceType/resourceId; apply_filter requires signal and query; open_docs requires a SigNoz docs url.
+ * Assistant action. Kind-specific requirements: rollback actions require actionMetadataId/resourceType/resourceId; follow_up requires input.intent; open_resource requires resourceType/resourceId; apply_filter requires signal and query; open_docs requires a SigNoz docs url. open_resource for a saved view also carries entity (logs/traces/metrics/meter) so the frontend routes to the correct Explorer.
  */
 export interface MessageActionEventDTO {
 	kind: MessageActionKindDTO;
@@ -1008,6 +1126,7 @@ export interface MessageActionEventDTO {
 	signal?: MessageActionEventDTOSignal;
 	query?: MessageActionEventDTOQuery;
 	url?: MessageActionEventDTOUrl;
+	entity?: MessageActionEventDTOEntity;
 }
 
 export type MessageEventDTOActions = MessageActionEventDTO[] | null;
@@ -1376,6 +1495,24 @@ export type SubmitFeedbackApiV1AssistantMessagesMessageIdFeedbackPostHeaders = {
 };
 
 export type GetUsageApiV1AssistantUsageGetHeaders = {
+	/**
+	 * @description SigNoz auth token (Bearer or raw JWT)
+	 */
+	authorization?: string | null;
+	/**
+	 * @description SigNoz instance base URL for multi-tenant deployments. Falls back to SIGNOZ_API_URL env var when omitted.
+	 */
+	'X-SigNoz-URL'?: string | null;
+};
+
+export type GetChipsApiV1AssistantEmptyStateChipsGetParams = {
+	/**
+	 * @description Frontend-declared page type. Typed as an enum, but unrecognized values are coerced to 'other' (not rejected) so a new frontend page type works before the backend knows it. The page type alone identifies the focused entity (e.g. trace_detail) for the 'Explain this …' chip; the agent reads the concrete entity from page context once a chip is clicked, so no separate entity id is needed.
+	 */
+	page_type: PageTypeDTO;
+};
+
+export type GetChipsApiV1AssistantEmptyStateChipsGetHeaders = {
 	/**
 	 * @description SigNoz auth token (Bearer or raw JWT)
 	 */

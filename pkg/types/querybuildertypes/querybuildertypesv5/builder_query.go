@@ -1,9 +1,11 @@
 package querybuildertypesv5
 
 import (
+	"bytes"
 	"fmt"
 	"slices"
 
+	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/swaggest/jsonschema-go"
@@ -161,8 +163,8 @@ func (q *QueryBuilderQuery[T]) UnmarshalJSON(data []byte) error {
 	type Alias QueryBuilderQuery[T]
 
 	var temp Alias
-	// Use UnmarshalJSONWithContext for better error messages
-	if err := UnmarshalJSONWithContext(data, &temp, fmt.Sprintf("query spec for %T", q)); err != nil {
+	// Strict-decode the alias so unknown fields surface with field-name suggestions.
+	if err := binding.JSON.BindBody(bytes.NewReader(data), &temp, binding.WithDisallowUnknownFields(true), binding.WithUnknownFieldContext(fmt.Sprintf("query spec for %T", q))); err != nil {
 		return err
 	}
 
@@ -249,6 +251,33 @@ func CanShortCircuitDelta(metricAgg MetricAggregation) bool {
 		return true
 	}
 	if metricAgg.Type == metrictypes.ExpHistogramType && sa.IsPercentile() {
+		return true
+	}
+
+	return false
+}
+
+// CanShortCircuitReduced is like CanShortCircuitDelta but for reduced.
+func CanShortCircuitReduced(metricAgg MetricAggregation) bool {
+	if metricAgg.ValueFilter != nil {
+		return false
+	}
+
+	ta := metricAgg.TimeAggregation
+	sa := metricAgg.SpaceAggregation
+
+	if metricAgg.Type == metrictypes.SumType || metricAgg.Type == metrictypes.HistogramType {
+		return (ta == metrictypes.TimeAggregationRate || ta == metrictypes.TimeAggregationIncrease || ta == metrictypes.TimeAggregationSum) &&
+			sa == metrictypes.SpaceAggregationSum
+	}
+
+	if ta == metrictypes.TimeAggregationSum && sa == metrictypes.SpaceAggregationSum {
+		return true
+	}
+	if ta == metrictypes.TimeAggregationMin && sa == metrictypes.SpaceAggregationMin {
+		return true
+	}
+	if ta == metrictypes.TimeAggregationMax && sa == metrictypes.SpaceAggregationMax {
 		return true
 	}
 

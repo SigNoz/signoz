@@ -138,12 +138,13 @@ export function layoutsToSections(
 		.filter((s): s is DashboardSection => s !== null);
 }
 
-export function getPanelKindLabel(
-	panel: DashboardtypesPanelDTO | undefined,
-): string {
-	const kind = panel?.spec?.plugin?.kind;
-	if (!kind) {
-		return 'unknown';
-	}
-	return kind.replace(/^signoz\//, '');
+/**
+ * The untitled, free-flow root section that ungrouped panels live in — the
+ * first layout (`layoutIndex === 0`) when it has no title. Titled sections and
+ * any later untitled layout are never the root.
+ */
+export function findRootSection(
+	sections: DashboardSection[],
+): DashboardSection | undefined {
+	return sections.find((section) => !section.title && section.layoutIndex === 0);
 }

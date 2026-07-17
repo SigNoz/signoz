@@ -10,7 +10,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
@@ -143,10 +142,6 @@ func (client *client) queryToClickhouseQuery(_ context.Context, query *prompb.Qu
 	conditions = append(conditions, "temporality IN ['Cumulative', 'Unspecified']")
 	conditions = append(conditions, fmt.Sprintf("unix_milli >= %d AND unix_milli < %d", start, end))
 
-	normalized := !constants.IsDotMetricsEnabled
-
-	conditions = append(conditions, fmt.Sprintf("__normalized = %v", normalized))
-
 	args = append(args, metricName)
 	for _, m := range query.Matchers {
 		switch m.Type {
@@ -204,8 +199,9 @@ func (client *client) getFingerprintsFromClickhouseQuery(ctx context.Context, qu
 	return fingerprints, nil
 }
 
-func (client *client) querySamples(ctx context.Context, start int64, end int64, fingerprints map[uint64][]prompb.Label, metricName string, subQuery string, args []any) ([]*prompb.TimeSeries, error) {
-	ctx = client.withClickhousePrometheusContext(ctx, "querySamples")
+// buildSamplesQuery renders the samples SQL (and args) that fetches data
+// points for the series selected by subQuery.
+func buildSamplesQuery(start int64, end int64, metricName string, subQuery string, args []any) (string, []any) {
 	argCount := len(args)
 
 	query := fmt.Sprintf(`
@@ -217,6 +213,13 @@ func (client *client) querySamples(ctx context.Context, start int64, end int64, 
 
 	allArgs := append([]any{metricName}, args...)
 	allArgs = append(allArgs, start, end)
+	return query, allArgs
+}
+
+func (client *client) querySamples(ctx context.Context, start int64, end int64, fingerprints map[uint64][]prompb.Label, metricName string, subQuery string, args []any) ([]*prompb.TimeSeries, error) {
+	ctx = client.withClickhousePrometheusContext(ctx, "querySamples")
+
+	query, allArgs := buildSamplesQuery(start, end, metricName, subQuery, args)
 
 	rows, err := client.telemetryStore.ClickhouseDB().Query(ctx, query, allArgs...)
 	if err != nil {
