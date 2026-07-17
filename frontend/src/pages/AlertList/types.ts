@@ -1,8 +1,6 @@
 export enum AlertListSubTabs {
 	PLANNED_DOWNTIME = 'planned-downtime',
 	ROUTING_POLICIES = 'routing-policies',
-	CHANNELS = 'channels',
-	JIRA_CONNECTIONS = 'jira-connections',
 }
 
 export enum AlertListTabs {

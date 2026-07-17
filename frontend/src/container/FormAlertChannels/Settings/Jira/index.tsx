@@ -11,6 +11,7 @@ import { Trans, useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { Button, Form, Input, Select, Space } from 'antd';
 import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
+import { Typography } from '@signozhq/ui/typography';
 import {
 	fetchJiraProjectIssueTypes,
 	fetchJiraProjects,
@@ -161,14 +162,12 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 
 	// selectConnection stamps the chosen connection onto local state and the parent's config.
 	const selectConnection = (id: string): void => {
-		const connection = connections.find((conn) => conn.id === id);
 		setConnectionId(id);
 		form.setFieldValue('project', undefined);
 		form.setFieldValue('issue_type', undefined);
 		setSelectedConfig((current) => ({
 			...current,
 			connection_id: id,
-			api_url: connection?.site_url,
 			project: undefined,
 			issue_type: undefined,
 		}));
@@ -248,7 +247,7 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 			return true;
 		}
 		if (field.schema_type === 'array') {
-			return field.schema_items === 'string';
+			return field.schema_items === 'string' && !field.schema_custom;
 		}
 		return false;
 	};
@@ -734,6 +733,7 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 			allowed_values: row.allowedValues,
 			schema_type: row.schemaType,
 			schema_items: row.schemaItems,
+			schema_custom: row.schemaCustom,
 		} as JiraFieldMetadata;
 
 		if (isUserField(rowAsField)) {
@@ -875,7 +875,9 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 	): JSX.Element => (
 		<div>
 			<div style={{ marginBottom: 8 }}>
-				{t('jira_custom_field_id_label')}: {row.fieldId}
+				<Typography.Text color="muted" size="small">
+					{t('jira_custom_field_id_label')}: {row.fieldId}
+				</Typography.Text>
 			</div>
 			<ToggleGroupSimple
 				type="single"

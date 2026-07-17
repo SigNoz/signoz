@@ -6,7 +6,6 @@ import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection
 import ROUTES from 'constants/routes';
 import AllAlertChannels from 'container/AllAlertChannels';
 import AllAlertRules from 'container/ListAlertRules';
-import AtlassianConnections from 'container/AtlassianConnections';
 import { PlannedDowntime } from 'container/PlannedDowntime/PlannedDowntime';
 import RoutingPolicies from 'container/RoutingPolicies';
 import TriggeredAlerts from 'container/TriggeredAlerts';
@@ -45,17 +44,6 @@ function AllAlertList(): JSX.Element {
 		[safeNavigate],
 	);
 
-	const handleChannelsTabChange = useCallback(
-		(nextSubTab: string): void => {
-			const queryParams = new URLSearchParams();
-
-			queryParams.set('tab', AlertListTabs.CHANNELS);
-			queryParams.set('subTab', nextSubTab);
-			safeNavigate(`/alerts?${queryParams.toString()}`);
-		},
-		[safeNavigate],
-	);
-
 	const configurationTab = useMemo(() => {
 		const tabs = [
 			{
@@ -78,30 +66,6 @@ function AllAlertList(): JSX.Element {
 			/>
 		);
 	}, [subTab, handleConfigurationTabChange]);
-
-	const channelsTab = useMemo(() => {
-		const tabs = [
-			{
-				label: 'Channels',
-				key: AlertListSubTabs.CHANNELS,
-				children: <AllAlertChannels />,
-			},
-			{
-				label: 'Jira Connections',
-				key: AlertListSubTabs.JIRA_CONNECTIONS,
-				children: <AtlassianConnections />,
-			},
-		];
-
-		return (
-			<Tabs
-				className="configuration-tabs"
-				activeKey={subTab || AlertListSubTabs.CHANNELS}
-				items={tabs}
-				onChange={handleChannelsTabChange}
-			/>
-		);
-	}, [subTab, handleChannelsTabChange]);
 
 	const items: TabsProps['items'] = [
 		{
@@ -140,7 +104,7 @@ function AllAlertList(): JSX.Element {
 				<div className="alert-rules-container">
 					{isChannelsNew && <ChannelsNew />}
 					{isChannelsEdit && <ChannelsEdit />}
-					{!isChannelDetails && channelsTab}
+					{!isChannelDetails && <AllAlertChannels />}
 				</div>
 			),
 		},
@@ -180,8 +144,6 @@ function AllAlertList(): JSX.Element {
 				if (tab === AlertListTabs.CONFIGURATION) {
 					const currentSubTab = subTab || AlertListSubTabs.PLANNED_DOWNTIME;
 					queryParams.set('subTab', currentSubTab);
-				} else if (tab === AlertListTabs.CHANNELS) {
-					queryParams.set('subTab', AlertListSubTabs.CHANNELS);
 				} else {
 					// Clear subTab when navigating out of Configuration tab
 					queryParams.delete('subTab');

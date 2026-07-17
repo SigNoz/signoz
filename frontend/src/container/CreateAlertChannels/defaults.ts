@@ -1,4 +1,6 @@
 import {
+	Channel,
+	ChannelType,
 	EmailChannel,
 	JiraChannel,
 	OpsgenieChannel,
@@ -464,4 +466,13 @@ export const EmailInitialConfig: Partial<EmailChannel> = {
 	  </table>
 	</body>
   </html>`,
+};
+
+export const initialConfigByChannelType: Partial<
+	Record<ChannelType, Partial<Channel>>
+> = {
+	[ChannelType.Pagerduty]: PagerInitialConfig,
+	[ChannelType.Opsgenie]: OpsgenieInitialConfig,
+	[ChannelType.Jira]: JiraInitialConfig,
+	[ChannelType.Email]: EmailInitialConfig,
 };

@@ -20,6 +20,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 
 	"github.com/prometheus/alertmanager/notify"
@@ -170,7 +171,7 @@ type Notifier struct {
 	cloudGateway string
 }
 
-func New(cfg *alertmanagertypes.JiraReceiverConfig, t *template.Template, l *slog.Logger, templater alertmanagertypes.Templater, resolver ConnectionResolver) (*Notifier, error) {
+func New(cfg *alertmanagertypes.JiraReceiverConfig, t *template.Template, l *slog.Logger, templater alertmanagertypes.Templater, resolver ConnectionResolver, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
 	if cfg == nil {
 		return nil, errors.NewInternalf(errors.CodeInternal, "jira config is required")
 	}
@@ -184,12 +185,17 @@ func New(cfg *alertmanagertypes.JiraReceiverConfig, t *template.Template, l *slo
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "jira org_id is required")
 	}
 
+	client, err := notify.NewClientWithTracing(commoncfg.DefaultHTTPClientConfig, Integration, httpOpts...)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Notifier{
 		config:       cfg,
 		resolver:     resolver,
 		tmpl:         t,
 		logger:       l,
-		client:       &http.Client{Timeout: 30 * time.Second},
+		client:       client,
 		retrier:      &notify.Retrier{RetryCodes: []int{http.StatusTooManyRequests}},
 		templater:    templater,
 		cloudGateway: alertmanagertypes.CloudAPIGatewayURL,

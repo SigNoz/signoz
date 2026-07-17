@@ -38,8 +38,20 @@ func storeOAuthState(entry oauthStateEntry) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	sweepExpiredOAuthStates()
 	oauthStates.Store(state, entry)
 	return state, nil
+}
+
+// sweepExpiredOAuthStates removes state entries whose TTL has elapsed.
+func sweepExpiredOAuthStates() {
+	now := time.Now()
+	oauthStates.Range(func(key, value any) bool {
+		if entry, ok := value.(oauthStateEntry); ok && now.After(entry.expiry) {
+			oauthStates.Delete(key)
+		}
+		return true
+	})
 }
 
 // loadAndDeleteOAuthState consumes a state token exactly once.

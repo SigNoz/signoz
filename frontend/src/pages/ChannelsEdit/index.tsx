@@ -78,7 +78,6 @@ function ChannelsEdit(): JSX.Element {
 			const jiraConfig = value.jira_configs[0];
 			channel = {
 				...(jiraConfig as unknown as JiraChannel),
-				api_url: jiraConfig.api_url as unknown as string,
 				summary: jiraConfig.summary?.template || '',
 				description: jiraConfig.description?.template || '',
 				labels: jiraConfig.labels?.join(', ') || '',

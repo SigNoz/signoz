@@ -46,14 +46,24 @@ func writeBridge(rw http.ResponseWriter, openerOrigin string, message map[string
 </script>`, messageJSON, targetOriginJSON)
 	}
 
+	statusText := "You can close this window and return to SigNoz."
+	if openerOrigin == "" {
+		switch message["type"] {
+		case "atlassian_oauth_success":
+			statusText = "Atlassian connected successfully. You can close this window and return to SigNoz."
+		case "atlassian_oauth_error":
+			statusText = "Could not complete the Atlassian connection. You can close this window and try again in SigNoz."
+		}
+	}
+
 	html := fmt.Sprintf(`<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="utf-8"><meta name="robots" content="noindex"><title>Atlassian</title></head>
 <body>
-<p>You can close this window.</p>
+<p>%s</p>
 %s
 </body>
-</html>`, script)
+</html>`, statusText, script)
 
 	rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 	rw.WriteHeader(http.StatusOK)
@@ -193,7 +203,12 @@ func (h *Handler) OAuthCallback(rw http.ResponseWriter, req *http.Request) {
 func (h *Handler) persistConnection(ctx context.Context, orgID, cloudID, siteURL, accessToken, refreshToken string) (string, error) {
 	connStore := h.alertmanager.AtlassianConnectionStore()
 
-	if existing, err := connStore.GetByOrgAndSiteURL(ctx, orgID, siteURL); err == nil && existing != nil {
+	existing, err := connStore.GetByOrgAndSiteURL(ctx, orgID, siteURL)
+	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
+		// A real lookup error (not "no such row") must not be treated as "does not exist" — that would duplicate the connection below.
+		return "", err
+	}
+	if existing != nil {
 		existing.CloudID = cloudID
 		existing.AccessToken = accessToken
 		existing.RefreshToken = refreshToken

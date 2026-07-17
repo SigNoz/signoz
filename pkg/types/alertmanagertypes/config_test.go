@@ -394,7 +394,7 @@ func TestConfigPreservesJiraConnectionID(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	receiver, err := NewReceiver(`{"name":"jira-receiver","jira_configs":[{"api_url":"https://acme.atlassian.net","api_type":"auto","project":"OPS","issue_type":"Bug","connection_id":"conn-123","summary":{"template":"s"},"description":{"template":"d"}}]}`)
+	receiver, err := NewReceiver(`{"name":"jira-receiver","jira_configs":[{"project":"OPS","issue_type":"Bug","connection_id":"conn-123","summary":{"template":"s"},"description":{"template":"d"}}]}`)
 	require.NoError(t, err)
 	require.Len(t, receiver.JiraConfigs, 1)
 	assert.Equal(t, "conn-123", receiver.JiraConfigs[0].ConnectionID)
@@ -436,7 +436,7 @@ func TestSetJiraOrgID(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	receiver, err := NewReceiver(`{"name":"jira-receiver","jira_configs":[{"api_url":"https://acme.atlassian.net","api_type":"auto","project":"OPS","issue_type":"Bug","connection_id":"conn-123","summary":{"template":"s"},"description":{"template":"d"}}]}`)
+	receiver, err := NewReceiver(`{"name":"jira-receiver","jira_configs":[{"project":"OPS","issue_type":"Bug","connection_id":"conn-123","summary":{"template":"s"},"description":{"template":"d"}}]}`)
 	require.NoError(t, err)
 	require.NoError(t, cfg.CreateReceiver(receiver))
 

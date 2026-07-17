@@ -325,7 +325,6 @@ function EditAlertChannels({
 		() => ({
 			name: selectedConfig.name || '',
 			send_resolved: selectedConfig?.send_resolved || false,
-			api_url: selectedConfig.api_url || '',
 			connection_id: selectedConfig.connection_id || '',
 			project: selectedConfig.project || '',
 			issue_type: selectedConfig.issue_type || '',
@@ -346,7 +345,7 @@ function EditAlertChannels({
 	const onJiraEditHandler = useCallback(async () => {
 		setSavingState(true);
 
-		if (!selectedConfig.connection_id || !selectedConfig.api_url) {
+		if (!selectedConfig.connection_id) {
 			notifications.error({
 				message: 'Error',
 				description: t('jira_not_connected'),

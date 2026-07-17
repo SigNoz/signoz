@@ -229,7 +229,7 @@ func pageIssueTypes(ctx context.Context, baseURL *url.URL, accessToken, project 
 		issueTypes = append(issueTypes, items...)
 
 		startAt += len(items)
-		if result.IsLast || len(items) == 0 || startAt >= result.Total {
+		if result.IsLast || len(items) == 0 || (result.Total > 0 && startAt >= result.Total) {
 			break
 		}
 	}
@@ -283,7 +283,7 @@ func fetchFields(ctx context.Context, baseURL *url.URL, accessToken, project, is
 		}
 
 		startAt += len(items)
-		if result.IsLast || len(items) == 0 || startAt >= result.Total {
+		if result.IsLast || len(items) == 0 || (result.Total > 0 && startAt >= result.Total) {
 			break
 		}
 	}

@@ -103,6 +103,12 @@ export function useAtlassianConnect(
 						setIsConnecting(false);
 					}
 				}, 500);
+			} else {
+				setIsConnecting(false);
+				notifications.error({
+					message: 'Error',
+					description: t('atlassian_oauth_popup_blocked'),
+				});
 			}
 		} catch (error) {
 			setIsConnecting(false);

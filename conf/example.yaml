@@ -244,7 +244,7 @@ alertmanager:
       maintenance_interval: 15m
       # Retention of the notification logs.
       retention: 120h
-    jira:
+    atlassian:
       oauth:
         # Atlassian OAuth 2.0 (3LO) app credentials for the Jira alert channel.
         client_id: ""

@@ -34,12 +34,7 @@ import {
 	ValidatePagerChannel,
 	WebhookChannel,
 } from './config';
-import {
-	EmailInitialConfig,
-	JiraInitialConfig,
-	OpsgenieInitialConfig,
-	PagerInitialConfig,
-} from './defaults';
+import { initialConfigByChannelType } from './defaults';
 import { isChannelType } from './utils';
 
 import './CreateAlertChannels.styles.scss';
@@ -103,38 +98,31 @@ function CreateAlertChannels({
 			const currentType = type;
 			setType(value as ChannelType);
 
-			if (value === ChannelType.Pagerduty && currentType !== value) {
+			if (currentType === value) {
+				return;
+			}
+
+			const defaults = initialConfigByChannelType[value as ChannelType];
+			if (!defaults) {
+				return;
+			}
+
+			if (value === ChannelType.Pagerduty) {
 				// reset config to pager defaults
 				setSelectedConfig({
 					name: selectedConfig?.name,
 					send_resolved: selectedConfig.send_resolved,
-					...PagerInitialConfig,
+					...defaults,
 				});
-			}
-
-			if (value === ChannelType.Opsgenie && currentType !== value) {
+			} else {
 				setSelectedConfig((selectedConfig) => ({
 					...selectedConfig,
-					...OpsgenieInitialConfig,
+					...defaults,
 				}));
 			}
-
-			if (value === ChannelType.Jira && currentType !== value) {
-				setSelectedConfig((selectedConfig) => ({
-					...selectedConfig,
-					...JiraInitialConfig,
-				}));
-			}
-
-			// reset config to email defaults
-			if (value === ChannelType.Email && currentType !== value) {
-				setSelectedConfig((selectedConfig) => ({
-					...selectedConfig,
-					...EmailInitialConfig,
-				}));
-			}
+			formInstance.setFieldsValue(defaults);
 		},
-		[type, selectedConfig],
+		[type, selectedConfig, formInstance],
 	);
 
 	const prepareSlackRequest = useCallback(
@@ -341,7 +329,6 @@ function CreateAlertChannels({
 		() => ({
 			name: selectedConfig?.name || '',
 			send_resolved: selectedConfig?.send_resolved || false,
-			api_url: selectedConfig?.api_url || '',
 			connection_id: selectedConfig?.connection_id || '',
 			project: selectedConfig?.project || '',
 			issue_type: selectedConfig?.issue_type || '',
@@ -359,7 +346,7 @@ function CreateAlertChannels({
 	);
 
 	const onJiraHandler = useCallback(async () => {
-		if (!selectedConfig.connection_id || !selectedConfig.api_url) {
+		if (!selectedConfig.connection_id) {
 			notifications.error({
 				message: 'Error',
 				description: t('jira_not_connected'),
@@ -642,10 +629,7 @@ function CreateAlertChannels({
 					initialValue: {
 						type,
 						...selectedConfig,
-						...PagerInitialConfig,
-						...OpsgenieInitialConfig,
-						...JiraInitialConfig,
-						...EmailInitialConfig,
+						...initialConfigByChannelType[type],
 					},
 				}}
 			/>

@@ -4,8 +4,6 @@
 package atlassian
 
 import (
-	"net/url"
-	"strings"
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"

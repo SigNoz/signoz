@@ -21,8 +21,6 @@ const editJira = async (
 			jira_configs: [
 				{
 					connection_id: props.connection_id,
-					api_url: props.api_url,
-					api_type: 'auto',
 					project: props.project,
 					issue_type: props.issue_type,
 					summary: { template: props.summary },
