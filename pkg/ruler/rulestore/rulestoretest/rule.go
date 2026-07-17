@@ -109,7 +109,7 @@ func (m *MockSQLRuleStore) ExpectGetStoredRules(orgID string, rules []*ruletypes
 	for _, rule := range rules {
 		rows.AddRow(rule.ID, rule.CreatedAt, rule.UpdatedAt, rule.CreatedBy, rule.UpdatedBy, rule.Deleted, rule.Data, rule.OrgID)
 	}
-	expectedPattern := `SELECT (.+) FROM "rule".+WHERE \(.+org_id.+'` + orgID + `'\)`
+	expectedPattern := `SELECT (.+) FROM "rule".+WHERE \(org_id = '` + regexp.QuoteMeta(orgID) + `'\)`
 	m.mock.ExpectQuery(expectedPattern).
 		WillReturnRows(rows)
 }
@@ -120,7 +120,7 @@ func (m *MockSQLRuleStore) ExpectGetStoredRulesByMetricName(orgID string, metric
 	for _, rule := range rules {
 		rows.AddRow(rule.ID, rule.CreatedAt, rule.UpdatedAt, rule.CreatedBy, rule.UpdatedBy, rule.Deleted, rule.Data, rule.OrgID)
 	}
-	expectedPattern := `SELECT (.+) FROM "rule".+WHERE \(.+org_id.+'` + orgID + `'\)`
+	expectedPattern := `SELECT (.+) FROM "rule".+WHERE \(org_id = '` + regexp.QuoteMeta(orgID) + `'\)`
 	m.mock.ExpectQuery(expectedPattern).
 		WillReturnRows(rows)
 }
