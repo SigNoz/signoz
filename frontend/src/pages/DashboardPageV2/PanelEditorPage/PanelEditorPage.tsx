@@ -140,6 +140,7 @@ function PanelEditorPage(): JSX.Element {
 			dashboardId={dashboardId}
 			panelId={panelId}
 			panel={panel}
+			savedPanel={existingPanel}
 			isNew={!!newKind}
 			layoutIndex={layoutIndex}
 			isEditable={isEditable}

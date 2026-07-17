@@ -23,6 +23,12 @@ import { usePanelTypeSwitch } from './usePanelTypeSwitch';
 interface UsePanelEditSessionArgs {
 	panel: DashboardtypesPanelDTO;
 	panelId: string;
+	/**
+	 * The persisted panel the dirty check compares against. Distinct from `panel` (the
+	 * seed), which may carry unsaved edits handed off from View mode. Omit for a new
+	 * panel or the drilldown modal, where the seed is the baseline.
+	 */
+	savedPanel?: DashboardtypesPanelDTO;
 	/** Per-view time window (epoch ms); omit to follow the dashboard's global window. */
 	time?: PanelQueryTimeOverride;
 	/** Serialize the live builder query into the spec on save even if unchanged (new panels). */
@@ -67,12 +73,15 @@ export interface UsePanelEditSessionReturn {
 export function usePanelEditSession({
 	panel,
 	panelId,
+	savedPanel,
 	time,
 	alwaysSerializeQuery = false,
 	seedQuerySignal = false,
 }: UsePanelEditSessionArgs): UsePanelEditSessionReturn {
-	const { draft, spec, setSpec, isSpecDirty, reset } =
-		usePanelEditorDraft(panel);
+	const { draft, spec, setSpec, isSpecDirty, reset } = usePanelEditorDraft(
+		panel,
+		savedPanel,
+	);
 
 	const panelKind = draft.spec.plugin.kind;
 	const panelDefinition = getPanelDefinition(panelKind);
@@ -93,6 +102,7 @@ export function usePanelEditSession({
 		refetch: query.refetch,
 		alwaysSerializeQuery,
 		signal: seedQuerySignal ? defaultSignal : undefined,
+		savedQueries: savedPanel?.spec.queries,
 	});
 
 	const { onChangePanelKind } = usePanelTypeSwitch({

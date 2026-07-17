@@ -53,6 +53,11 @@ interface PanelEditorContainerProps {
 	dashboardId: string;
 	panelId: string;
 	panel: DashboardtypesPanelDTO;
+	/**
+	 * The persisted panel the dirty check compares against. Distinct from `panel` (the
+	 * seed), which may carry unsaved edits handed off from View mode. Omit for a new panel.
+	 */
+	savedPanel?: DashboardtypesPanelDTO;
 	/** Creating a new panel (seeded default) vs editing an existing one. */
 	isNew?: boolean;
 	/** Target section for a new panel; falls back to the last/new section. */
@@ -76,6 +81,7 @@ function PanelEditorContainer({
 	dashboardId,
 	panelId,
 	panel,
+	savedPanel,
 	isNew = false,
 	layoutIndex,
 	isEditable,
@@ -99,6 +105,7 @@ function PanelEditorContainer({
 	} = usePanelEditSession({
 		panel,
 		panelId,
+		savedPanel,
 		alwaysSerializeQuery: isNew,
 		seedQuerySignal: true,
 	});
