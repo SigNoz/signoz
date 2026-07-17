@@ -74,26 +74,20 @@ export function GroupedStatusCounts({
 	return (
 		<div className={styles.container}>
 			{visibleItems.map((item) => (
-				<div key={item.label} className={styles.itemWrapper}>
-					<div
-						className={styles.separator}
-						style={{ backgroundColor: item.color }}
-					/>
-					<div className={styles.valueWrapper}>
-						<TanStackTable.HoverTooltip
-							rowId={rowId}
-							title={buildTooltipContent(item)}
-							arrow
-							align="start"
-						>
-							<span className={styles.valueWrapperTooltip}>
-								<TanStackTable.Text className={styles.value}>
-									{item.value || '-'}
-								</TanStackTable.Text>
-							</span>
-						</TanStackTable.HoverTooltip>
-					</div>
-				</div>
+				<TanStackTable.HoverTooltip
+					key={item.label}
+					rowId={rowId}
+					title={buildTooltipContent(item)}
+					arrow
+					align="start"
+				>
+					<TanStackTable.Text
+						className={styles.item}
+						style={{ '--gsc-color': item.color } as React.CSSProperties}
+					>
+						{item.value || '-'}
+					</TanStackTable.Text>
+				</TanStackTable.HoverTooltip>
 			))}
 		</div>
 	);
