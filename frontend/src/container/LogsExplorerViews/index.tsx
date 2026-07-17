@@ -18,13 +18,18 @@ import { ENTITY_VERSION_V5 } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
 import { QueryParams } from 'constants/query';
-import { initialFilters, PANEL_TYPES } from 'constants/queryBuilder';
+import {
+	initialFilters,
+	initialQueriesMap,
+	PANEL_TYPES,
+} from 'constants/queryBuilder';
 import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
 import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
 import GoToTop from 'container/GoToTop';
 import LogsExplorerChart from 'container/LogsExplorerChart';
 import LogsExplorerList from 'container/LogsExplorerList';
+import ExportMenu from 'components/ExportMenu/ExportMenu';
 import LogsExplorerTable from 'container/LogsExplorerTable';
 import {
 	getExportQueryData,
@@ -484,6 +489,16 @@ function LogsExplorerViewsContainer({
 					)}
 					{selectedPanelType === PANEL_TYPES.TABLE && !showLiveLogs && (
 						<div className="table-view-container">
+							{data && !isError && (
+								<div className="table-view-container-header">
+									<ExportMenu
+										dataSource={DataSource.LOGS}
+										data={data}
+										query={stagedQuery || initialQueriesMap.metrics}
+										fileName="logs-table"
+									/>
+								</div>
+							)}
 							<LogsExplorerTable
 								data={
 									(data?.payload?.data?.newResult?.data?.result ||
