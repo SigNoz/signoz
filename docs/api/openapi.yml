@@ -24466,9 +24466,17 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       - tokenizer:
-        - VIEWER
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       summary: Query range
       tags:
       - querier
@@ -24535,9 +24543,17 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       - tokenizer:
-        - VIEWER
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       summary: Query range preview
       tags:
       - querier
