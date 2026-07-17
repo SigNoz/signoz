@@ -115,3 +115,65 @@ func TestGetStoredRule_NotFound(t *testing.T) {
 	require.Error(t, err, "GetStoredRule must wrap a missing row into a not-found error")
 	require.NoError(t, store.AssertExpectations())
 }
+
+func TestGetStoredRules_Empty(t *testing.T) {
+	ctx := context.Background()
+	store := rulestoretest.NewMockSQLRuleStore()
+
+	orgIDStr := "org-empty"
+	store.ExpectGetStoredRules(orgIDStr, nil)
+
+	rules, err := store.GetStoredRules(ctx, orgIDStr)
+
+	require.NoError(t, err)
+	require.Empty(t, rules)
+	require.NoError(t, store.AssertExpectations())
+}
+
+func TestGetStoredRules_Populated(t *testing.T) {
+	ctx := context.Background()
+	store := rulestoretest.NewMockSQLRuleStore()
+
+	orgIDStr := "org-populated-1"
+	want := []*ruletypes.StorableRule{
+		newTestRule(orgIDStr, valuer.GenerateUUID()),
+		newTestRule(orgIDStr, valuer.GenerateUUID()),
+	}
+
+	store.ExpectGetStoredRules(orgIDStr, want)
+
+	got, err := store.GetStoredRules(ctx, orgIDStr)
+
+	require.NoError(t, err)
+	require.Len(t, got, 2)
+	require.Equal(t, want[0].ID, got[0].ID)
+	require.Equal(t, want[1].ID, got[1].ID)
+	require.NoError(t, store.AssertExpectations())
+}
+
+// TestGetStoredRules_MultiOrgIsolation is the regression coverage for the
+// "first org instead of rule org" bug (#11351): a rule stored under org A
+// must not surface when querying GetStoredRules for org B.
+func TestGetStoredRules_MultiOrgIsolation(t *testing.T) {
+	ctx := context.Background()
+	store := rulestoretest.NewMockSQLRuleStore()
+
+	orgA := "org-A"
+	orgB := "org-B"
+
+	// The mock only knows about orgA's rules. Querying orgB's view must
+	// therefore return an empty slice even though orgA has rules.
+	rulesInA := []*ruletypes.StorableRule{newTestRule(orgA, valuer.GenerateUUID())}
+	store.ExpectGetStoredRules(orgA, rulesInA)
+	store.ExpectGetStoredRules(orgB, nil)
+
+	gotA, err := store.GetStoredRules(ctx, orgA)
+	require.NoError(t, err)
+	require.Len(t, gotA, 1, "org A should see its own rule")
+
+	gotB, err := store.GetStoredRules(ctx, orgB)
+	require.NoError(t, err)
+	require.Empty(t, gotB, "org B must not see org A's rules")
+
+	require.NoError(t, store.AssertExpectations())
+}
