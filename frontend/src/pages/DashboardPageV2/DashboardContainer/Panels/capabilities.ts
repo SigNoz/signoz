@@ -32,7 +32,7 @@ export function getSupportedQueryTypes(kind: PanelKind): EQueryType[] {
 	return getPanelDefinition(kind).supportedQueryTypes;
 }
 
-export function isQueryTypeSupported(
+export function isQueryTypeSupportedByPanelKind(
 	kind: PanelKind,
 	queryType: EQueryType,
 ): boolean {
@@ -53,7 +53,7 @@ export function isPanelCombinationValid({
 	queryType: EQueryType;
 	signal?: TelemetrytypesSignalDTO;
 }): boolean {
-	if (!isQueryTypeSupported(kind, queryType)) {
+	if (!isQueryTypeSupportedByPanelKind(kind, queryType)) {
 		return false;
 	}
 	if (signal !== undefined && !isSignalSupported(kind, signal)) {

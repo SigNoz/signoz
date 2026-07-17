@@ -1,0 +1,39 @@
+// Two-column (Variable / Description) table matching the V1 variables listing.
+// Keep $grid-columns in sync with VariableRow.module.scss so header and rows align.
+$grid-columns: minmax(0, 2fr) minmax(0, 3fr);
+
+.table {
+	display: flex;
+	flex-direction: column;
+	border: 1px solid var(--l2-border);
+	border-radius: 6px;
+	overflow: hidden;
+}
+
+.headerRow {
+	display: grid;
+	grid-template-columns: $grid-columns;
+	padding: 0 16px;
+	border-bottom: 1px solid var(--l2-border);
+}
+
+.headerCell {
+	padding: 12px 0;
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--l1-foreground);
+
+	&:first-child {
+		padding-right: 16px;
+		border-right: 1px solid var(--l2-border);
+	}
+
+	&:last-child {
+		padding-left: 16px;
+	}
+}
+
+.list {
+	display: flex;
+	flex-direction: column;
+}

@@ -57,42 +57,53 @@ export const nodeWidgetInfo = [
 	{
 		title: 'CPU Usage (cores)',
 		yAxisUnit: '',
+		docPath: '/infrastructure-monitoring/kubernetes/nodes/#cpu-usage-cores',
 	},
 	{
 		title: 'Memory Usage (bytes)',
 		yAxisUnit: 'bytes',
+		docPath: '/infrastructure-monitoring/kubernetes/nodes/#memory-usage-bytes',
 	},
 	{
 		title: 'CPU Usage (%)',
 		yAxisUnit: 'percentunit',
+		docPath: '/infrastructure-monitoring/kubernetes/nodes/#cpu-usage-',
 	},
 	{
 		title: 'Memory Usage (%)',
 		yAxisUnit: 'percentunit',
+		docPath: '/infrastructure-monitoring/kubernetes/nodes/#memory-usage-',
 	},
 	{
 		title: 'Pods by CPU (top 10)',
 		yAxisUnit: '',
+		docPath: '/infrastructure-monitoring/kubernetes/nodes/#pods-by-cpu-top-10',
 	},
 	{
 		title: 'Pods by Memory (top 10)',
 		yAxisUnit: 'bytes',
+		docPath: '/infrastructure-monitoring/kubernetes/nodes/#pods-by-memory-top-10',
 	},
 	{
 		title: 'Network error count',
 		yAxisUnit: '',
+		docPath: '/infrastructure-monitoring/kubernetes/nodes/#network-error-count',
 	},
 	{
 		title: 'Network IO rate',
 		yAxisUnit: 'binBps',
+		docPath: '/infrastructure-monitoring/kubernetes/nodes/#network-io-rate',
 	},
 	{
 		title: 'Filesystem usage (bytes)',
 		yAxisUnit: 'bytes',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/nodes/#filesystem-usage-bytes',
 	},
 	{
 		title: 'Filesystem usage (%)',
 		yAxisUnit: 'percentunit',
+		docPath: '/infrastructure-monitoring/kubernetes/nodes/#filesystem-usage-',
 	},
 ];
 

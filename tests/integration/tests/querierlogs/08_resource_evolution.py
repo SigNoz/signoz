@@ -7,8 +7,8 @@ from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.logs import Logs
 from fixtures.querier import (
     assert_grouped_series,
+    build_aggregation,
     build_group_by_field,
-    build_logs_aggregation,
     get_resource_evolution_time,
     index_series_by_label,
     make_query_request,
@@ -60,7 +60,7 @@ def _query_grouped_log_series(
                     "disabled": False,
                     "groupBy": [build_group_by_field(group_by)],
                     "having": {"expression": ""},
-                    "aggregations": [build_logs_aggregation(aggregation)],
+                    "aggregations": [build_aggregation(aggregation)],
                 },
             }
         ],

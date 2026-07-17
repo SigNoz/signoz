@@ -1,11 +1,15 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { listNamespaces } from 'api/generated/services/inframonitoring';
+import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import { AxiosError } from 'axios';
 import {
 	InframonitoringtypesNamespaceRecordDTO,
 	InframonitoringtypesResponseTypeDTO,
 	Querybuildertypesv5OrderDirectionDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { InfraMonitoringEvents } from 'constants/events';
+import APIError from 'types/api/error';
 
 import K8sBaseDetails, { K8sDetailsFilters } from '../Base/K8sBaseDetails';
 import { K8sBaseList } from '../Base/K8sBaseList';
@@ -14,7 +18,10 @@ import { InfraMonitoringEntity } from '../constants';
 import { SelectedItemParams } from '../hooks';
 import {
 	getNamespaceMetricsQueryPayload,
+	getNamespacePodMetricsQueryPayload,
+	k8sNamespaceDetailsCountsConfig,
 	k8sNamespaceDetailsMetadataConfig,
+	k8sNamespaceGetCountsFilterExpression,
 	k8sNamespaceGetEntityName,
 	k8sNamespaceGetSelectedItemExpression,
 	k8sNamespaceInitialEventsExpression,
@@ -26,6 +33,7 @@ import {
 	getK8sNamespaceRowKey,
 	k8sNamespacesColumnsConfig,
 } from './table.config';
+import { createPodMetricsTab } from 'container/InfraMonitoringK8sV2/EntityDetailsUtils/createPodMetricsTab';
 
 function K8sNamespacesList({
 	controlListPrefix,
@@ -68,13 +76,12 @@ function K8sNamespacesList({
 					warning: data.warning,
 				};
 			} catch (error) {
-				const errMsg =
-					error instanceof Error ? error.message : 'Failed to fetch namespaces';
 				return {
 					type: 'list' as const,
 					records: [] as InframonitoringtypesNamespaceRecordDTO[],
 					total: 0,
-					error: errMsg,
+					error:
+						convertToApiError(error as AxiosError<RenderErrorResponseDTO>) ?? null,
 				};
 			}
 		},
@@ -87,7 +94,7 @@ function K8sNamespacesList({
 			signal?: AbortSignal,
 		): Promise<{
 			data: InframonitoringtypesNamespaceRecordDTO | null;
-			error?: string | null;
+			error?: APIError | null;
 		}> => {
 			try {
 				const response = await listNamespaces(
@@ -105,14 +112,24 @@ function K8sNamespacesList({
 					data: response.data.records.length > 0 ? response.data.records[0] : null,
 				};
 			} catch (error) {
-				const errMsg =
-					error instanceof Error ? error.message : 'Failed to fetch namespace';
 				return {
 					data: null,
-					error: errMsg,
+					error:
+						convertToApiError(error as AxiosError<RenderErrorResponseDTO>) ?? null,
 				};
 			}
 		},
+		[],
+	);
+
+	const customTabs = useMemo(
+		() => [
+			createPodMetricsTab<InframonitoringtypesNamespaceRecordDTO>({
+				getQueryPayload: getNamespacePodMetricsQueryPayload,
+				category: InfraMonitoringEntity.NAMESPACES,
+				queryKey: 'namespacePodMetrics',
+			}),
+		],
 		[],
 	);
 
@@ -137,9 +154,12 @@ function K8sNamespacesList({
 				getInitialLogTracesExpression={k8sNamespaceInitialLogTracesExpression}
 				getInitialEventsExpression={k8sNamespaceInitialEventsExpression}
 				metadataConfig={k8sNamespaceDetailsMetadataConfig}
+				countsConfig={k8sNamespaceDetailsCountsConfig}
+				getCountsFilterExpression={k8sNamespaceGetCountsFilterExpression}
 				entityWidgetInfo={namespaceWidgetInfo}
 				getEntityQueryPayload={getNamespaceMetricsQueryPayload}
 				queryKeyPrefix="namespace"
+				customTabs={customTabs}
 			/>
 		</>
 	);

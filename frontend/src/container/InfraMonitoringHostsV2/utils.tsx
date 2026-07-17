@@ -11,8 +11,6 @@ import { INFRA_MONITORING_ATTR_KEYS } from 'container/InfraMonitoringK8sV2/const
 import { CellValueTooltip } from 'container/InfraMonitoringK8sV2/components';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
-import TanStackTable from 'components/TanStackTableView';
-
 const HOSTNAME_DOCS_URL =
 	'https://signoz.io/docs/infrastructure-monitoring/hostmetrics/#host-name-is-blankempty';
 
@@ -23,11 +21,7 @@ export function HostnameCell({
 }): React.ReactElement {
 	const isEmpty = !hostName || !hostName.trim();
 	if (!isEmpty) {
-		return (
-			<CellValueTooltip value={hostName}>
-				<TanStackTable.Text>{hostName}</TanStackTable.Text>
-			</CellValueTooltip>
-		);
+		return <CellValueTooltip value={hostName} />;
 	}
 	return (
 		<>

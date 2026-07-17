@@ -110,7 +110,7 @@ function ModelCostDrawer({
 		>
 			<div className={styles.drawerSection}>
 				<label htmlFor="billing-model-id">
-					Billing model ID{' '}
+					Billing Model ID{' '}
 					<span className={styles.required} aria-hidden="true">
 						*
 					</span>
