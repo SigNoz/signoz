@@ -93,13 +93,14 @@ export const k8sClustersColumnsConfig: ClusterTableColumnConfig[] = [
 			row.nodeCountsByReadiness,
 		width: { min: 180 },
 		enableSort: false,
-		cell: ({ row }): React.ReactNode => {
+		cell: ({ row, rowId }): React.ReactNode => {
 			if (!row.nodeCountsByReadiness) {
 				return <TanStackTable.Text>-</TanStackTable.Text>;
 			}
 
 			return (
 				<GroupedStatusCounts
+					rowId={rowId}
 					items={[
 						{
 							value: row.nodeCountsByReadiness.ready,
@@ -129,13 +130,16 @@ export const k8sClustersColumnsConfig: ClusterTableColumnConfig[] = [
 			row.podCountsByStatus,
 		width: { min: 250 },
 		enableSort: false,
-		cell: ({ row }): React.ReactNode => {
+		cell: ({ row, rowId }): React.ReactNode => {
 			const podCountsByStatus = row.podCountsByStatus;
 			if (!podCountsByStatus) {
 				return <TanStackTable.Text>-</TanStackTable.Text>;
 			}
 			return (
-				<GroupedStatusCounts items={getPodStatusItems(row.podCountsByStatus)} />
+				<GroupedStatusCounts
+					rowId={rowId}
+					items={getPodStatusItems(row.podCountsByStatus)}
+				/>
 			);
 		},
 	},

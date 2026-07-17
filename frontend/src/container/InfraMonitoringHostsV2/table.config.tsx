@@ -130,12 +130,13 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 		accessorFn: (row): string => row.status,
 		width: { min: 140 },
 		enableSort: false,
-		cell: ({ value, groupMeta, row }): React.ReactNode => {
+		cell: ({ value, groupMeta, row, rowId }): React.ReactNode => {
 			const status = value as InframonitoringtypesHostStatusDTO;
 
 			if (groupMeta) {
 				return (
 					<GroupedStatusCounts
+						rowId={rowId}
 						items={[
 							{
 								value: row.activeHostCount,

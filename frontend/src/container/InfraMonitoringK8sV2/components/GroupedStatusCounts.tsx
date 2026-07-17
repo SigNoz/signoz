@@ -1,5 +1,3 @@
-import { TooltipSimple } from '@signozhq/ui/tooltip';
-
 import styles from './GroupedStatusCounts.module.scss';
 import TanStackTable from 'components/TanStackTableView';
 import { Typography } from '@signozhq/ui/typography';
@@ -18,6 +16,7 @@ export interface StatusCountItem {
 
 interface GroupedStatusCountsProps {
 	items: StatusCountItem[];
+	rowId: string;
 	showZeroValues?: boolean;
 }
 
@@ -62,6 +61,7 @@ function buildTooltipContent(item: StatusCountItem): React.ReactNode {
 
 export function GroupedStatusCounts({
 	items,
+	rowId,
 	showZeroValues = true,
 }: GroupedStatusCountsProps): JSX.Element {
 	const visibleItems =
@@ -80,13 +80,18 @@ export function GroupedStatusCounts({
 						style={{ backgroundColor: item.color }}
 					/>
 					<div className={styles.valueWrapper}>
-						<TooltipSimple title={buildTooltipContent(item)} arrow align="start">
+						<TanStackTable.HoverTooltip
+							rowId={rowId}
+							title={buildTooltipContent(item)}
+							arrow
+							align="start"
+						>
 							<span className={styles.valueWrapperTooltip}>
 								<TanStackTable.Text className={styles.value}>
 									{item.value || '-'}
 								</TanStackTable.Text>
 							</span>
-						</TooltipSimple>
+						</TanStackTable.HoverTooltip>
 					</div>
 				</div>
 			))}
