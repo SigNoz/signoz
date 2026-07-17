@@ -138,9 +138,9 @@ func (d *v1Decoder) collectV1QueryEnvelopes(widget map[string]any, panelKind Pan
 		promQueries := d.readObjects(queryMap, "promql")
 		var out []map[string]any
 		for _, q := range promQueries {
-			// With multiple promql queries, drop the empty ones; a lone query is
-			// kept even if empty (nothing else would remain).
-			if len(promQueries) > 1 && d.readString(q, "query") == "" {
+			// Drop empty queries; if none remain the widget produces no queries and is
+			// skipped silently (convertV1Panels), as v1 renders nothing.
+			if d.readString(q, "query") == "" {
 				continue
 			}
 			out = append(out, promQLEnvelope(q))
@@ -151,16 +151,18 @@ func (d *v1Decoder) collectV1QueryEnvelopes(widget map[string]any, panelKind Pan
 		chQueries := d.readObjects(queryMap, "clickhouse_sql")
 		var out []map[string]any
 		for _, q := range chQueries {
-			// With multiple clickhouse queries, drop the empty ones; a lone query is
-			// kept even if empty (nothing else would remain).
-			if len(chQueries) > 1 && d.readString(q, "query") == "" {
+			// Drop empty queries; if none remain the widget produces no queries and is
+			// skipped silently (convertV1Panels), as v1 renders nothing.
+			if d.readString(q, "query") == "" {
 				continue
 			}
 			out = append(out, clickhouseEnvelope(q))
 		}
 		return out, telemetrytypes.Signal{}
 
-	case "builder":
+	// "builder" plus a blank queryType: v1 defaults an unset type to builder, so a
+	// missing value still carries a real builder query — try the builder path.
+	case "builder", "":
 		builder := d.readObject(queryMap, "builder")
 		if builder == nil {
 			d.note("widget %q has no builder data in the query map", d.readString(widget, "id"))

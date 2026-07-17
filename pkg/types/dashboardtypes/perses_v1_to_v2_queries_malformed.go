@@ -108,11 +108,15 @@ func normalizeFunctionArgs(query map[string]any) {
 // through (the query-service resolves them), but the v2 dashboard validator only accepts
 // a real aggregation key.
 var malformedOrderByValueKeys = map[string]bool{
-	"#SIGNOZ_VALUE": true,
-	"A":             true,
-	"A.count()":     true,
-	"__result":      true,
-	"value":         true,
+	"#SIGNOZ_VALUE":                  true,
+	"A":                              true,
+	"A.count()":                      true,
+	"__result":                       true,
+	"value":                          true,
+	"A.p99(duration_nano)":           true,
+	"aws_Kafka_MessagesInPerSec_max": true,
+	"byte_in_count":                  true,
+	"(http_server_request_duration_ms.bucket)": true,
 }
 
 // normalizeOrderByKeys rewrites any orderBy columnName in orderByValueKeys to the
@@ -231,11 +235,6 @@ func normalizeMetricAggregations(query map[string]any) {
 	}
 }
 
-// aggExprRe matches one "func(args)" with an optional "as alias". Mirrors the
-// frontend's parseAggregations regex; matching only well-formed func(args)
-// discards trailing junk ("sum(x) ) )" → "sum(x)").
-var aggExprRe = regexp.MustCompile(`([a-zA-Z0-9_]+\([^)]*\))(?:\s*as\s+('[^']*'|"[^"]*"|[a-zA-Z0-9_-]+))?`)
-
 // normalizePreV5LogTraceAggregations reshapes an existing logs/traces aggregations[]
 // via parseAggregations (extract func(args), lift inline "as alias", split
 // multi-part, drop metric-only fields; empty → count()). Covers the case the
@@ -283,11 +282,26 @@ func ensureDefaultAggregation(query map[string]any) {
 	query["aggregations"] = []any{map[string]any{"expression": "count()"}}
 }
 
+// aggExprRe matches one "func(args)" with an optional "as alias". Mirrors the
+// frontend's parseAggregations regex; matching only well-formed func(args)
+// discards trailing junk ("sum(x) ) )" → "sum(x)").
+var aggExprRe = regexp.MustCompile(`([a-zA-Z0-9_]+\([^)]*\))(?:\s*as\s+('[^']*'|"[^"]*"|[a-zA-Z0-9_-]+))?`)
+
+// aggExprNestedRe is a backup for aggExprRe that tolerates one level of nested
+// parens in args (rate(count())). HACK: the flat aggExprRe (and the frontend it
+// mirrors) truncates such exprs to an unbalanced "rate(count()"; the UI fails
+// these today, so this is best-effort beyond v1. Tried only when the flat match
+// comes back unbalanced.
+var aggExprNestedRe = regexp.MustCompile(`([a-zA-Z0-9_]+\((?:[a-zA-Z0-9_]+\([^()]*\)|[^()])*\))(?:\s*as\s+('[^']*'|"[^"]*"|[a-zA-Z0-9_-]+))?`)
+
 // parseAggregations pulls every func(args) (with inline or passed-through alias,
 // quotes stripped) out of a v1 expression. Mirrors the frontend's
 // parseAggregations; empty result if none.
 func parseAggregations(expression, availableAlias string) []any {
 	matches := aggExprRe.FindAllStringSubmatch(expression, -1)
+	if hasUnbalancedParens(matches) {
+		matches = aggExprNestedRe.FindAllStringSubmatch(expression, -1)
+	}
 	out := make([]any, 0, len(matches))
 	for _, m := range matches {
 		alias := m[2]
@@ -301,6 +315,17 @@ func parseAggregations(expression, availableAlias string) []any {
 		out = append(out, agg)
 	}
 	return out
+}
+
+// hasUnbalancedParens reports whether any matched expression has mismatched
+// parens — the signature of aggExprRe truncating a nested expr ("rate(count()").
+func hasUnbalancedParens(matches [][]string) bool {
+	for _, m := range matches {
+		if strings.Count(m[1], "(") != strings.Count(m[1], ")") {
+			return true
+		}
+	}
+	return false
 }
 
 // normalizePreV5SelectColumns / normalizePreV5GroupBy let WrapInV5Envelope (which
