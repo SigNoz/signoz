@@ -2,6 +2,7 @@ package sqlrulestore_test
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"testing"
 	"time"
@@ -9,32 +10,62 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/SigNoz/signoz/pkg/ruler/rulestore/rulestoretest"
-	"github.com/SigNoz/signoz/pkg/types"
-	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	ruletypes "github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/metrictypes"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	ruleruleTypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-// testTime is reused across the test cases below so the created_at/updated_at
-// columns match what the sqlmock fixture expects.
 var testTime = time.Date(2026, 7, 17, 0, 0, 0, 0, time.UTC)
 
-// newTestRule returns a minimal StorableRule wired to the given orgID and id.
-// CreatedAt/UpdatedAt are populated because the fixture's expected row shape
-// includes those columns.
-func newTestRule(orgID string, id valuer.UUID) *ruletypes.StorableRule {
-	return &ruletypes.StorableRule{
-		Identifiable: types.Identifiable{ID: id},
-		TimeAuditable: types.TimeAuditable{
-			CreatedAt: testTime,
-			UpdatedAt: testTime,
-		},
-		UserAuditable: types.UserAuditable{
-			CreatedBy: "test-user",
-			UpdatedBy: "test-user",
-		},
-		OrgID: orgID,
-		Data:  `{"alert":"test","alertType":"metric","ruleType":"threshold","condition":null}`,
+func newTestRule(orgID string, id valuer.UUID) *ruleruleTypes.StorableRule {
+	return &ruleruleTypes.StorableRule{
+		Identifiable:  ruletypes.Identifiable{ID: id},
+		TimeAuditable: ruletypes.TimeAuditable{CreatedAt: testTime, UpdatedAt: testTime},
+		UserAuditable: ruletypes.UserAuditable{CreatedBy: "test-user", UpdatedBy: "test-user"},
+		OrgID:         orgID,
+		Data:          `{"alert":"test","alertType":"metric","ruleType":"threshold","condition":null}`,
 	}
+}
+
+// metricAlertRuleData builds a PostableRule JSON payload that contains a
+// metric-builder query referencing the given metric name. Used as the Data
+// column when constructing StorableRule fixtures for
+// GetStoredRulesByMetricName tests.
+func metricAlertRuleData(t *testing.T, alertName, metricName string) string {
+	t.Helper()
+
+	pr := ruleruleTypes.PostableRule{
+		AlertName: alertName,
+		AlertType: ruleruleTypes.AlertTypeMetric,
+		RuleType:  ruleruleTypes.RuleTypeThreshold,
+		RuleCondition: &ruleruleTypes.RuleCondition{
+			CompositeQuery: &ruleruleTypes.AlertCompositeQuery{
+				Queries: []qbtypes.QueryEnvelope{{
+					Type: qbtypes.QueryTypeBuilder,
+					Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+						Name:         "A",
+						StepInterval: qbtypes.Step{Duration: 60 * time.Second},
+						Signal:       telemetrytypes.SignalMetrics,
+						Aggregations: []qbtypes.MetricAggregation{{
+							MetricName:       metricName,
+							Temporality:      metrictypes.Cumulative,
+							TimeAggregation:  metrictypes.TimeAggregationRate,
+							SpaceAggregation: metrictypes.SpaceAggregationSum,
+						}},
+					},
+				}},
+				PanelType: ruleruleTypes.PanelTypeGraph,
+				QueryType: ruleruleTypes.QueryTypeBuilder,
+			},
+		},
+	}
+
+	encoded, err := json.Marshal(pr)
+	require.NoError(t, err)
+	return string(encoded)
 }
 
 func TestCreateRule_HappyPath(t *testing.T) {
@@ -135,7 +166,7 @@ func TestGetStoredRules_Populated(t *testing.T) {
 	store := rulestoretest.NewMockSQLRuleStore()
 
 	orgIDStr := "org-populated-1"
-	want := []*ruletypes.StorableRule{
+	want := []*ruleruleTypes.StorableRule{
 		newTestRule(orgIDStr, valuer.GenerateUUID()),
 		newTestRule(orgIDStr, valuer.GenerateUUID()),
 	}
@@ -161,9 +192,7 @@ func TestGetStoredRules_MultiOrgIsolation(t *testing.T) {
 	orgA := "org-A"
 	orgB := "org-B"
 
-	// The mock only knows about orgA's rules. Querying orgB's view must
-	// therefore return an empty slice even though orgA has rules.
-	rulesInA := []*ruletypes.StorableRule{newTestRule(orgA, valuer.GenerateUUID())}
+	rulesInA := []*ruleruleTypes.StorableRule{newTestRule(orgA, valuer.GenerateUUID())}
 	store.ExpectGetStoredRules(orgA, rulesInA)
 	store.ExpectGetStoredRules(orgB, nil)
 
@@ -174,6 +203,84 @@ func TestGetStoredRules_MultiOrgIsolation(t *testing.T) {
 	gotB, err := store.GetStoredRules(ctx, orgB)
 	require.NoError(t, err)
 	require.Empty(t, gotB, "org B must not see org A's rules")
+
+	require.NoError(t, store.AssertExpectations())
+}
+
+// TestGetStoredRulesByMetricName_EmptyMetricName covers the short-circuit
+// path: an empty metric name returns an empty RuleAlert slice without
+// hitting the database.
+func TestGetStoredRulesByMetricName_EmptyMetricName(t *testing.T) {
+	ctx := context.Background()
+	store := rulestoretest.NewMockSQLRuleStore()
+
+	alerts, err := store.GetStoredRulesByMetricName(ctx, "org-metric-1", "")
+
+	require.NoError(t, err)
+	require.Empty(t, alerts)
+	require.NoError(t, store.AssertExpectations())
+}
+
+func TestGetStoredRulesByMetricName_NoMatchingRules(t *testing.T) {
+	ctx := context.Background()
+	store := rulestoretest.NewMockSQLRuleStore()
+
+	orgIDStr := "org-metric-2"
+	store.ExpectGetStoredRules(orgIDStr, nil)
+
+	alerts, err := store.GetStoredRulesByMetricName(ctx, orgIDStr, "any-metric")
+
+	require.NoError(t, err)
+	require.Empty(t, alerts)
+	require.NoError(t, store.AssertExpectations())
+}
+
+func TestGetStoredRulesByMetricName_MatchesByMetricName(t *testing.T) {
+	ctx := context.Background()
+	store := rulestoretest.NewMockSQLRuleStore()
+
+	orgIDStr := "org-metric-3"
+	alertID := valuer.GenerateUUID()
+
+	matchingRule := newTestRule(orgIDStr, alertID)
+	matchingRule.Data = metricAlertRuleData(t, "cpu-saturation", "cpu_usage")
+	otherRule := newTestRule(orgIDStr, valuer.GenerateUUID())
+	otherRule.Data = metricAlertRuleData(t, "mem-saturation", "memory_usage")
+
+	store.ExpectGetStoredRules(orgIDStr, []*ruleruleTypes.StorableRule{matchingRule, otherRule})
+
+	alerts, err := store.GetStoredRulesByMetricName(ctx, orgIDStr, "cpu_usage")
+
+	require.NoError(t, err)
+	require.Len(t, alerts, 1, "only the cpu_usage rule should surface")
+	require.Equal(t, "cpu-saturation", alerts[0].AlertName)
+	require.Equal(t, alertID.StringValue(), alerts[0].AlertID)
+	require.NoError(t, store.AssertExpectations())
+}
+
+func TestGetStoredRulesByMetricName_OrgScoped(t *testing.T) {
+	ctx := context.Background()
+	store := rulestoretest.NewMockSQLRuleStore()
+
+	// org-A has a rule on "cpu_usage". org-B has no rules at all.
+	// The second GetStoredRulesByMetricName call against org-B must not
+	// surface org-A's rule — the underlying GetStoredRules is org-scoped.
+	orgA := "org-A-metric"
+	alertAID := valuer.GenerateUUID()
+	ruleA := newTestRule(orgA, alertAID)
+	ruleA.Data = metricAlertRuleData(t, "cpu-A", "cpu_usage")
+
+	store.ExpectGetStoredRules(orgA, []*ruleruleTypes.StorableRule{ruleA})
+	store.ExpectGetStoredRules("org-B-metric", nil)
+
+	alertsA, err := store.GetStoredRulesByMetricName(ctx, orgA, "cpu_usage")
+	require.NoError(t, err)
+	require.Len(t, alertsA, 1)
+	require.Equal(t, alertAID.StringValue(), alertsA[0].AlertID)
+
+	alertsB, err := store.GetStoredRulesByMetricName(ctx, "org-B-metric", "cpu_usage")
+	require.NoError(t, err)
+	require.Empty(t, alertsB, "org B must not see org A's rule")
 
 	require.NoError(t, store.AssertExpectations())
 }
