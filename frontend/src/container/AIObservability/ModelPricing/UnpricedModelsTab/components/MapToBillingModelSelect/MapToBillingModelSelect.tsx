@@ -15,10 +15,10 @@ import { Plus } from '@signozhq/icons';
 import { Skeleton } from 'antd';
 
 import styles from './MapToBillingModelSelect.module.scss';
-import { RULE_OPTIONS_LIMIT } from 'container/AIObservability/Settings/ModelPricing/constants';
-import type { PricingRule } from 'container/AIObservability/Settings/ModelPricing/types';
-import { getRuleOptionLabel } from 'container/AIObservability/Settings/ModelPricing/utils';
-import { usePendingMappingLabel } from 'container/AIObservability/Settings/ModelPricing/UnpricedModelsTab/usePendingMappingStore';
+import { RULE_OPTIONS_LIMIT } from 'container/AIObservability/ModelPricing/constants';
+import type { PricingRule } from 'container/AIObservability/ModelPricing/types';
+import { getRuleOptionLabel } from 'container/AIObservability/ModelPricing/utils';
+import { usePendingMappingLabel } from 'container/AIObservability/ModelPricing/UnpricedModelsTab/usePendingMappingStore';
 import { useMapToBillingModelSearch } from './useMapToBillingModelSearch';
 
 // One placeholder row per fetched option, so the skeleton height matches the

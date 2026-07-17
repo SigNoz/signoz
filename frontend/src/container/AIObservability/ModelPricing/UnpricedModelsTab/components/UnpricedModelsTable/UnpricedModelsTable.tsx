@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import TanStackTable from 'components/TanStackTableView';
 
-import { SKELETON_ROW_COUNT } from 'container/AIObservability/Settings/ModelPricing/constants';
-import type { UnpricedModel } from 'container/AIObservability/Settings/ModelPricing/types';
+import { SKELETON_ROW_COUNT } from 'container/AIObservability/ModelPricing/constants';
+import type { UnpricedModel } from 'container/AIObservability/ModelPricing/types';
 import styles from './UnpricedModelsTable.module.scss';
 import {
 	getUnpricedModelsColumns,

@@ -8,12 +8,12 @@ import styles from './MapConfirmDialog.module.scss';
 import type {
 	PricingRule,
 	UnpricedModel,
-} from 'container/AIObservability/Settings/ModelPricing/types';
+} from 'container/AIObservability/ModelPricing/types';
 import {
 	formatPricePerMillion,
 	getCanonicalId,
 	getExtraBuckets,
-} from 'container/AIObservability/Settings/ModelPricing/utils';
+} from 'container/AIObservability/ModelPricing/utils';
 
 interface MapConfirmDialogProps {
 	open: boolean;

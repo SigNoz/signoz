@@ -2,13 +2,13 @@ import { LlmpricingruletypesLLMPricingRuleUnitDTO as UnitDTO } from 'api/generat
 import {
 	TOAST_MODEL_COST_DELETED,
 	TOAST_MODEL_COST_UPDATED,
-} from 'container/AIObservability/Settings/ModelPricing/constants';
+} from 'container/AIObservability/ModelPricing/constants';
 import {
 	LLM_PRICING_ENDPOINT,
 	LLM_PRICING_RULE_ENDPOINT,
 	makeListResponse,
 	mockRules,
-} from 'container/AIObservability/Settings/ModelPricing/__tests__/fixtures';
+} from 'container/AIObservability/ModelPricing/__tests__/fixtures';
 import { rest, server } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
 

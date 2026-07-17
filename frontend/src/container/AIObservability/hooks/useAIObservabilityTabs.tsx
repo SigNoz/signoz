@@ -6,7 +6,7 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 
 import AIObservabilityAttributeMapping from '../AttributeMapping/AIObservabilityAttributeMapping';
 import Overview from '../Overview/Overview';
-import AIObservabilityModelPricing from '../Settings/ModelPricing/AIObservabilityModelPricing';
+import AIObservabilityModelPricing from '../ModelPricing/AIObservabilityModelPricing';
 
 const OVERVIEW_KEY = ROUTES.AI_OBSERVABILITY_OVERVIEW;
 const CONFIGURATION_KEY = ROUTES.AI_OBSERVABILITY_CONFIGURATION;

@@ -11,16 +11,16 @@ import {
 	EMPTY_DRAFT,
 	TOAST_MODEL_COST_ADDED,
 	TOAST_MODEL_COST_UPDATED,
-} from 'container/AIObservability/Settings/ModelPricing/constants';
+} from 'container/AIObservability/ModelPricing/constants';
 import type {
 	DrawerDraft,
 	DrawerMode,
 	PricingRule,
-} from 'container/AIObservability/Settings/ModelPricing/types';
+} from 'container/AIObservability/ModelPricing/types';
 import {
 	buildRulePayload,
 	draftFromRule,
-} from 'container/AIObservability/Settings/ModelPricing/utils';
+} from 'container/AIObservability/ModelPricing/utils';
 
 interface UseModelCostDrawerResult {
 	isOpen: boolean;

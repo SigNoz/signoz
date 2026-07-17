@@ -2,12 +2,12 @@ import { Badge } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
 import type { TableColumnDef } from 'components/TanStackTableView';
 
-import MapToBillingModelSelect from 'container/AIObservability/Settings/ModelPricing/UnpricedModelsTab/components/MapToBillingModelSelect';
+import MapToBillingModelSelect from 'container/AIObservability/ModelPricing/UnpricedModelsTab/components/MapToBillingModelSelect';
 import type {
 	PricingRule,
 	UnpricedModel,
-} from 'container/AIObservability/Settings/ModelPricing/types';
-import { formatSpanCount } from 'container/AIObservability/Settings/ModelPricing/utils';
+} from 'container/AIObservability/ModelPricing/types';
+import { formatSpanCount } from 'container/AIObservability/ModelPricing/utils';
 import styles from './tableConfig.module.scss';
 
 export interface UnpricedColumnsConfig {

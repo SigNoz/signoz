@@ -10,8 +10,8 @@ import {
 import type {
 	PricingRule,
 	UnpricedModel,
-} from 'container/AIObservability/Settings/ModelPricing/types';
-import { buildPatternMappingPayload } from 'container/AIObservability/Settings/ModelPricing/utils';
+} from 'container/AIObservability/ModelPricing/types';
+import { buildPatternMappingPayload } from 'container/AIObservability/ModelPricing/utils';
 
 // A single row's choice: map this unpriced model onto this billing rule.
 export interface UnpricedModelMapping {

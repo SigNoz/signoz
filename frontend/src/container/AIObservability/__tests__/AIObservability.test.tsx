@@ -4,7 +4,7 @@ import {
 	LLM_PRICING_ENDPOINT,
 	makeListResponse,
 	mockRules,
-} from 'container/AIObservability/Settings/ModelPricing/__tests__/fixtures';
+} from 'container/AIObservability/ModelPricing/__tests__/fixtures';
 import { rest, server } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 

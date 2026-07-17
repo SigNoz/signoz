@@ -1,6 +1,6 @@
-import { makePricingRule } from 'container/AIObservability/Settings/ModelPricing/__tests__/fixtures';
-import { EMPTY_DRAFT } from 'container/AIObservability/Settings/ModelPricing/constants';
-import { draftFromRule } from 'container/AIObservability/Settings/ModelPricing/utils';
+import { makePricingRule } from 'container/AIObservability/ModelPricing/__tests__/fixtures';
+import { EMPTY_DRAFT } from 'container/AIObservability/ModelPricing/constants';
+import { draftFromRule } from 'container/AIObservability/ModelPricing/utils';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import ModelCostDrawer from '../ModelCostDrawer';

@@ -5,7 +5,7 @@ import {
 	makeListResponse,
 	makeUnmappedResponse,
 	mockRules,
-} from 'container/AIObservability/Settings/ModelPricing/__tests__/fixtures';
+} from 'container/AIObservability/ModelPricing/__tests__/fixtures';
 import { rest, server } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
 

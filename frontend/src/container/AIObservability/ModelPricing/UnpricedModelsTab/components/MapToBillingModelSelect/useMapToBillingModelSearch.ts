@@ -5,8 +5,8 @@ import useDebounce from 'hooks/useDebounce';
 import {
 	RULE_OPTIONS_LIMIT,
 	SEARCH_DEBOUNCE_MS,
-} from 'container/AIObservability/Settings/ModelPricing/constants';
-import type { PricingRule } from 'container/AIObservability/Settings/ModelPricing/types';
+} from 'container/AIObservability/ModelPricing/constants';
+import type { PricingRule } from 'container/AIObservability/ModelPricing/types';
 
 interface UseMapToBillingModelSearch {
 	searchText: string;
