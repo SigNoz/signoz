@@ -108,7 +108,6 @@ func TestQueryRangeResources(t *testing.T) {
 				{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "clickhouse_sql/*"},
 				{Resource: coretypes.ResourceTelemetryResourceMetrics, ID: "clickhouse_sql/*"},
 				{Resource: coretypes.ResourceTelemetryResourceMeterMetrics, ID: "clickhouse_sql/*"},
-				{Resource: coretypes.ResourceTelemetryResourceAuditLogs, ID: "clickhouse_sql/*"},
 			},
 		},
 		{

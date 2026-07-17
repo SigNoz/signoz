@@ -28,7 +28,6 @@ def test_setup(
 ) -> None:
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    # Raw SQL can read any table, so clickhouse_sql requires all five kinds.
     create_role(
         admin_token,
         chsql_role,
@@ -37,7 +36,6 @@ def test_setup(
             transaction_group("read", "telemetryresource", "traces", ["clickhouse_sql/*"]),
             transaction_group("read", "telemetryresource", "metrics", ["clickhouse_sql/*"]),
             transaction_group("read", "telemetryresource", "meter-metrics", ["clickhouse_sql/*"]),
-            transaction_group("read", "telemetryresource", "audit-logs", ["clickhouse_sql/*"]),
         ],
     )
     chsql_user = create_active_user(signoz, admin_token, email=chsql_email, role="VIEWER", password=user_password)
@@ -131,7 +129,7 @@ def test_formula_rides_on_referenced_queries(
     assert denied.status_code == HTTPStatus.FORBIDDEN, denied.text
 
 
-def test_managed_viewer_meter_allowed_audit_and_clickhouse_denied(
+def test_managed_viewer_meter_and_clickhouse_allowed_audit_denied(
     signoz: types.SigNoz,
     get_token: Callable[[str, str], str],
 ) -> None:
@@ -144,10 +142,11 @@ def test_managed_viewer_meter_allowed_audit_and_clickhouse_denied(
     meter = make_query_request(signoz, token, start, end, meter_query, request_type=querier.RequestType.SCALAR)
     assert meter.status_code != HTTPStatus.FORBIDDEN, meter.text
 
-    # audit-logs is admin-only.
+    # clickhouse_sql omits audit-logs until audit logs ship, so a viewer (logs/traces/
+    # metrics/meter-metrics) satisfies its grants.
+    clickhouse = make_query_request(signoz, token, start, end, clickhouse_query, request_type=querier.RequestType.SCALAR)
+    assert clickhouse.status_code != HTTPStatus.FORBIDDEN, clickhouse.text
+
+    # audit-logs builder queries remain admin-only.
     audit = make_query_request(signoz, token, start, end, audit_query, request_type=querier.RequestType.RAW)
     assert audit.status_code == HTTPStatus.FORBIDDEN, audit.text
-
-    # raw SQL requires all kinds incl. audit-logs, so it is effectively admin-only.
-    clickhouse = make_query_request(signoz, token, start, end, clickhouse_query, request_type=querier.RequestType.SCALAR)
-    assert clickhouse.status_code == HTTPStatus.FORBIDDEN, clickhouse.text

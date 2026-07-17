@@ -121,7 +121,6 @@ func resourcesForQuery(query gjson.Result, variables map[string]qbtypes.Variable
 			{Resource: coretypes.ResourceTelemetryResourceTraces, ID: typeWildcard},
 			{Resource: coretypes.ResourceTelemetryResourceMetrics, ID: typeWildcard},
 			{Resource: coretypes.ResourceTelemetryResourceMeterMetrics, ID: typeWildcard},
-			{Resource: coretypes.ResourceTelemetryResourceAuditLogs, ID: typeWildcard},
 		}, nil
 	case qbtypes.QueryTypeFormula.StringValue(), qbtypes.QueryTypeJoin.StringValue(), qbtypes.QueryTypeTraceOperator.StringValue():
 		return nil, nil
