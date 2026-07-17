@@ -7,7 +7,7 @@ import ColumnHeader from '../Base/ColumnHeader';
 import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
 import { SelectedItemParams } from '../hooks';
-import { formatBytes, getPodPhaseStatusItems } from '../commonUtils';
+import { formatBytes, getPodStatusItems } from '../commonUtils';
 import {
 	CellValueTooltip,
 	EntityProgressBar,
@@ -88,11 +88,7 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<InframonitoringtypesDep
 			visibilityBehavior: 'hidden-on-expand',
 			cell: ({ value }): React.ReactNode => {
 				const deploymentName = value as string;
-				return (
-					<CellValueTooltip value={deploymentName}>
-						<TanStackTable.Text>{deploymentName}</TanStackTable.Text>
-					</CellValueTooltip>
-				);
+				return <CellValueTooltip value={deploymentName} />;
 			},
 		},
 		{
@@ -112,31 +108,29 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<InframonitoringtypesDep
 			),
 		},
 		{
-			id: 'podCountsByPhase',
+			id: 'podCountsByStatus',
 			header: (): React.ReactNode => (
-				<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/deployments#pod-counts-by-phase">
-					Pod Phases
+				<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/deployments#pod-counts-by-status">
+					Pod Status
 				</ColumnHeader>
 			),
-			accessorFn: (row): object | undefined => row.podCountsByPhase,
+			accessorFn: (row): object | undefined => row.podCountsByStatus,
 			width: { min: 250 },
 			enableSort: false,
 			enableResize: true,
 			cell: ({ row }): React.ReactNode => {
-				const podCountsByPhase = row.podCountsByPhase;
-				if (!podCountsByPhase) {
+				const podCountsByStatus = row.podCountsByStatus;
+				if (!podCountsByStatus) {
 					return <TanStackTable.Text>-</TanStackTable.Text>;
 				}
-				return (
-					<GroupedStatusCounts items={getPodPhaseStatusItems(podCountsByPhase)} />
-				);
+				return <GroupedStatusCounts items={getPodStatusItems(podCountsByStatus)} />;
 			},
 		},
 		{
-			id: 'replica_status',
+			id: 'pod_replicas',
 			header: (): React.ReactNode => (
-				<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/deployments#replica-status">
-					Replica Status
+				<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/deployments#pod-replicas">
+					Pod Replicas
 				</ColumnHeader>
 			),
 			accessorFn: (row): number => row.availablePods,

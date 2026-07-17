@@ -7,7 +7,10 @@ import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
 import { K8sDetailsMetadataConfig } from '../Base/K8sBaseDetails';
-import { INFRA_MONITORING_ATTR_KEYS } from '../constants';
+import {
+	getPodUtilizationByPodQueryPayloads,
+	INFRA_MONITORING_ATTR_KEYS,
+} from '../constants';
 import { SelectedItemParams } from '../hooks';
 import {
 	buildEventsExpression,
@@ -70,18 +73,22 @@ export const jobWidgetInfo = [
 	{
 		title: 'CPU usage',
 		yAxisUnit: '',
+		docPath: '/infrastructure-monitoring/kubernetes/jobs/#cpu-usage',
 	},
 	{
 		title: 'Memory Usage',
 		yAxisUnit: 'bytes',
+		docPath: '/infrastructure-monitoring/kubernetes/jobs/#memory-usage',
 	},
 	{
 		title: 'Network IO',
 		yAxisUnit: 'binBps',
+		docPath: '/infrastructure-monitoring/kubernetes/jobs/#network-io',
 	},
 	{
 		title: 'Network errors count',
 		yAxisUnit: '',
+		docPath: '/infrastructure-monitoring/kubernetes/jobs/#network-errors-count',
 	},
 ];
 
@@ -424,4 +431,26 @@ export const getJobMetricsQueryPayload = (
 			end,
 		},
 	];
+};
+
+export const getJobPodMetricsQueryPayload = (
+	job: InframonitoringtypesJobRecordDTO,
+	start: number,
+	end: number,
+	dotMetricsEnabled: boolean,
+): GetQueryResultsProps[] => {
+	const k8sJobNameKey = dotMetricsEnabled ? 'k8s.job.name' : 'k8s_job_name';
+
+	return getPodUtilizationByPodQueryPayloads(
+		{
+			workloadNameKey: k8sJobNameKey,
+			workloadNameValue: job.jobName ?? '',
+			clusterName: job.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] ?? '',
+			namespaceName:
+				job.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ?? '',
+		},
+		start,
+		end,
+		dotMetricsEnabled,
+	);
 };

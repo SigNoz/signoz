@@ -289,6 +289,7 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeTelemetryResource, Kind: KindLogs}, WildCardSelectorString)},
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeTelemetryResource, Kind: KindTraces}, WildCardSelectorString)},
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeTelemetryResource, Kind: KindMetrics}, WildCardSelectorString)},
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeTelemetryResource, Kind: KindMeterMetrics}, WildCardSelectorString)},
 		// logs-field — editor reads+updates
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindLogsField}, WildCardSelectorString)},
 		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindLogsField}, WildCardSelectorString)},
@@ -346,6 +347,7 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeTelemetryResource, Kind: KindLogs}, WildCardSelectorString)},
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeTelemetryResource, Kind: KindTraces}, WildCardSelectorString)},
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeTelemetryResource, Kind: KindMetrics}, WildCardSelectorString)},
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeTelemetryResource, Kind: KindMeterMetrics}, WildCardSelectorString)},
 		// logs-field — viewer reads
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindLogsField}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindLogsField}, WildCardSelectorString)},

@@ -57,4 +57,7 @@ export enum QueryParams {
 	isTestAlert = 'isTestAlert',
 	yAxisUnit = 'yAxisUnit',
 	ruleName = 'ruleName',
+	matchType = 'matchType',
+	compareOp = 'compareOp',
+	evaluationWindowPreset = 'evaluationWindowPreset',
 }

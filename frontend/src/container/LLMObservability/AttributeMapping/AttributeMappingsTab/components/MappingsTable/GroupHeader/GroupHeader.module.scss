@@ -7,6 +7,7 @@
 
 .groupName {
 	color: var(--l1-foreground);
+	font-weight: var(--font-weight-semibold);
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -16,4 +17,16 @@
 	color: var(--l3-foreground);
 	font-size: var(--font-size-xs);
 	white-space: nowrap;
+}
+
+.conditionCount {
+	composes: groupCount;
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-2);
+	cursor: help;
+}
+
+.conditionInfoIcon {
+	color: var(--l3-foreground);
 }

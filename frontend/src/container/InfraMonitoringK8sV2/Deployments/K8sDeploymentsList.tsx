@@ -1,11 +1,15 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { listDeployments } from 'api/generated/services/inframonitoring';
+import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import { AxiosError } from 'axios';
 import {
 	InframonitoringtypesDeploymentRecordDTO,
 	InframonitoringtypesResponseTypeDTO,
 	Querybuildertypesv5OrderDirectionDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { InfraMonitoringEvents } from 'constants/events';
+import APIError from 'types/api/error';
 
 import K8sBaseDetails, { K8sDetailsFilters } from '../Base/K8sBaseDetails';
 import { K8sBaseList } from '../Base/K8sBaseList';
@@ -15,6 +19,7 @@ import { SelectedItemParams } from '../hooks';
 import {
 	deploymentWidgetInfo,
 	getDeploymentMetricsQueryPayload,
+	getDeploymentPodMetricsQueryPayload,
 	k8sDeploymentDetailsMetadataConfig,
 	k8sDeploymentGetEntityName,
 	k8sDeploymentGetSelectedItemExpression,
@@ -26,6 +31,7 @@ import {
 	getK8sDeploymentRowKey,
 	k8sDeploymentsColumnsConfig,
 } from './table.config';
+import { createPodMetricsTab } from 'container/InfraMonitoringK8sV2/EntityDetailsUtils/createPodMetricsTab';
 
 function K8sDeploymentsList({
 	controlListPrefix,
@@ -68,13 +74,12 @@ function K8sDeploymentsList({
 					warning: data.warning,
 				};
 			} catch (error) {
-				const errMsg =
-					error instanceof Error ? error.message : 'Failed to fetch deployments';
 				return {
 					type: 'list' as const,
 					records: [] as InframonitoringtypesDeploymentRecordDTO[],
 					total: 0,
-					error: errMsg,
+					error:
+						convertToApiError(error as AxiosError<RenderErrorResponseDTO>) ?? null,
 				};
 			}
 		},
@@ -87,7 +92,7 @@ function K8sDeploymentsList({
 			signal?: AbortSignal,
 		): Promise<{
 			data: InframonitoringtypesDeploymentRecordDTO | null;
-			error?: string | null;
+			error?: APIError | null;
 		}> => {
 			try {
 				const response = await listDeployments(
@@ -105,14 +110,24 @@ function K8sDeploymentsList({
 					data: response.data.records.length > 0 ? response.data.records[0] : null,
 				};
 			} catch (error) {
-				const errMsg =
-					error instanceof Error ? error.message : 'Failed to fetch deployment';
 				return {
 					data: null,
-					error: errMsg,
+					error:
+						convertToApiError(error as AxiosError<RenderErrorResponseDTO>) ?? null,
 				};
 			}
 		},
+		[],
+	);
+
+	const customTabs = useMemo(
+		() => [
+			createPodMetricsTab<InframonitoringtypesDeploymentRecordDTO>({
+				getQueryPayload: getDeploymentPodMetricsQueryPayload,
+				category: InfraMonitoringEntity.DEPLOYMENTS,
+				queryKey: 'deploymentPodMetrics',
+			}),
+		],
 		[],
 	);
 
@@ -140,6 +155,7 @@ function K8sDeploymentsList({
 				entityWidgetInfo={deploymentWidgetInfo}
 				getEntityQueryPayload={getDeploymentMetricsQueryPayload}
 				queryKeyPrefix="deployment"
+				customTabs={customTabs}
 			/>
 		</>
 	);

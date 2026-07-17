@@ -7571,6 +7571,7 @@ components:
         groupBy:
           items:
             type: string
+          nullable: true
           type: array
         newGroupEvalDelay:
           type: string
@@ -7642,6 +7643,7 @@ components:
         alertStates:
           items:
             $ref: '#/components/schemas/RuletypesAlertState'
+          nullable: true
           type: array
         enabled:
           type: boolean
@@ -24464,9 +24466,17 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       - tokenizer:
-        - VIEWER
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       summary: Query range
       tags:
       - querier
@@ -24533,9 +24543,17 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       - tokenizer:
-        - VIEWER
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       summary: Query range preview
       tags:
       - querier

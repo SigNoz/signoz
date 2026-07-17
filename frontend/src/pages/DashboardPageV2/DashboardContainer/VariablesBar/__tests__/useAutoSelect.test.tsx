@@ -5,7 +5,7 @@ import {
 	type VariableFormModel,
 } from '../../DashboardSettings/Variables/variableFormModel';
 import type { VariableSelection } from '../selectionTypes';
-import { useAutoSelect } from '../useAutoSelect';
+import { useAutoSelect } from '../hooks/useAutoSelect';
 
 function model(overrides: Partial<VariableFormModel>): VariableFormModel {
 	return { ...emptyVariableFormModel(), ...overrides };

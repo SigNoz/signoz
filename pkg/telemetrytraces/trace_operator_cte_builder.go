@@ -213,7 +213,7 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(ctx context.Context, queryName s
 
 	keySelectors := getKeySelectors(*query)
 	b.stmtBuilder.logger.DebugContext(ctx, "Key selectors for query", slog.String("query_name", queryName), slog.Any("key_selectors", keySelectors))
-	keys, _, err := b.stmtBuilder.metadataStore.GetKeysMulti(ctx, keySelectors)
+	keys, _, err := b.stmtBuilder.metadataStore.GetKeysMulti(ctx, b.orgID, keySelectors)
 	if err != nil {
 		return "", err
 	}
@@ -443,7 +443,7 @@ func (b *traceOperatorCTEBuilder) buildFinalQuery(ctx context.Context, selectFro
 	}
 
 	keySelectors := b.getKeySelectors()
-	keys, _, err := b.stmtBuilder.metadataStore.GetKeysMulti(ctx, keySelectors)
+	keys, _, err := b.stmtBuilder.metadataStore.GetKeysMulti(ctx, b.orgID, keySelectors)
 	if err != nil {
 		return nil, err
 	}

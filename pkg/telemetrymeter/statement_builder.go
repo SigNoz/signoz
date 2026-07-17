@@ -54,7 +54,7 @@ func (b *meterQueryStatementBuilder) Build(
 	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
 	keySelectors := telemetrymetrics.GetKeySelectors(query)
-	keys, _, err := b.metadataStore.GetKeysMulti(ctx, keySelectors)
+	keys, _, err := b.metadataStore.GetKeysMulti(ctx, orgID, keySelectors)
 	if err != nil {
 		return nil, err
 	}
