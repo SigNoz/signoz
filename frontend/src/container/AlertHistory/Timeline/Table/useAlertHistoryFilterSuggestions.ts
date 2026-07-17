@@ -3,63 +3,13 @@ import {
 	getRuleHistoryFilterValues,
 	useGetRuleHistoryFilterKeys,
 } from 'api/generated/services/rules';
-import {
-	TelemetrytypesFieldDataTypeDTO,
-	TelemetrytypesFieldContextDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import { QUERY_BUILDER_KEY_TYPES } from 'constants/antlrQueryConstants';
 import { useAlertHistoryQueryParams } from 'pages/AlertDetails/hooks';
 import { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
-
-function dataTypeToKeyType(
-	dt: TelemetrytypesFieldDataTypeDTO | undefined,
-): QUERY_BUILDER_KEY_TYPES {
-	if (
-		dt === TelemetrytypesFieldDataTypeDTO.float64 ||
-		dt === TelemetrytypesFieldDataTypeDTO.int64 ||
-		dt === TelemetrytypesFieldDataTypeDTO.number
-	) {
-		return QUERY_BUILDER_KEY_TYPES.NUMBER;
-	}
-	if (dt === TelemetrytypesFieldDataTypeDTO.bool) {
-		return QUERY_BUILDER_KEY_TYPES.BOOLEAN;
-	}
-	return QUERY_BUILDER_KEY_TYPES.STRING;
-}
-
-function fieldContextToSuggestionContext(
-	fc: TelemetrytypesFieldContextDTO | undefined,
-): QueryKeyDataSuggestionsProps['fieldContext'] {
-	if (fc === TelemetrytypesFieldContextDTO.resource) {
-		return 'resource';
-	}
-	if (fc === TelemetrytypesFieldContextDTO.span) {
-		return 'span';
-	}
-	if (fc === TelemetrytypesFieldContextDTO.attribute) {
-		return 'attribute';
-	}
-	return undefined;
-}
-
-function dataTypeToSuggestionType(
-	dt: TelemetrytypesFieldDataTypeDTO | undefined,
-): string {
-	if (dt === TelemetrytypesFieldDataTypeDTO.string) {
-		return 'keyword';
-	}
-	if (
-		dt === TelemetrytypesFieldDataTypeDTO.float64 ||
-		dt === TelemetrytypesFieldDataTypeDTO.int64 ||
-		dt === TelemetrytypesFieldDataTypeDTO.number
-	) {
-		return 'number';
-	}
-	if (dt === TelemetrytypesFieldDataTypeDTO.bool) {
-		return 'bool';
-	}
-	return 'keyword';
-}
+import {
+	dataTypeToKeyType,
+	dataTypeToSuggestionType,
+	fieldContextToSuggestionContext,
+} from 'container/AlertHistory/Timeline/Table/utils';
 
 export interface AlertHistoryFilterSuggestions {
 	hardcodedAttributeKeys: QueryKeyDataSuggestionsProps[] | undefined;
@@ -81,7 +31,7 @@ export function useAlertHistoryFilterSuggestions(
 			{ startUnixMilli: startTime, endUnixMilli: endTime },
 			{
 				query: {
-					enabled: !!ruleId && startTime !== null && endTime !== null,
+					enabled: !!ruleId,
 					refetchOnMount: false,
 					refetchOnWindowFocus: false,
 				},
