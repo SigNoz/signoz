@@ -3489,9 +3489,9 @@ export enum Querybuildertypesv5FunctionNameDTO {
 }
 export interface Querybuildertypesv5FunctionDTO {
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	args?: Querybuildertypesv5FunctionArgDTO[];
+	args?: Querybuildertypesv5FunctionArgDTO[] | null;
 	name?: Querybuildertypesv5FunctionNameDTO;
 }
 
@@ -3593,18 +3593,18 @@ export interface Querybuildertypesv5SecondaryAggregationDTO {
 	 */
 	expression?: string;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	groupBy?: Querybuildertypesv5GroupByKeyDTO[];
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
 	/**
 	 * @type integer
 	 */
 	limit?: number;
 	limitBy?: Querybuildertypesv5LimitByDTO;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	order?: Querybuildertypesv5OrderByDTO[];
+	order?: Querybuildertypesv5OrderByDTO[] | null;
 	stepInterval?: Querybuildertypesv5StepDTO;
 }
 
@@ -3634,9 +3634,9 @@ export enum TelemetrytypesSourceDTO {
 }
 export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTO {
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	aggregations?: Querybuildertypesv5LogAggregationDTO[];
+	aggregations?: Querybuildertypesv5LogAggregationDTO[] | null;
 	/**
 	 * @type string
 	 */
@@ -3647,13 +3647,13 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	disabled?: boolean;
 	filter?: Querybuildertypesv5FilterDTO;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	functions?: Querybuildertypesv5FunctionDTO[];
+	functions?: Querybuildertypesv5FunctionDTO[] | null;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	groupBy?: Querybuildertypesv5GroupByKeyDTO[];
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
 	having?: Querybuildertypesv5HavingDTO;
 	/**
 	 * @type string
@@ -3673,17 +3673,17 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	 */
 	offset?: number;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	order?: Querybuildertypesv5OrderByDTO[];
+	order?: Querybuildertypesv5OrderByDTO[] | null;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	secondaryAggregations?: Querybuildertypesv5SecondaryAggregationDTO[];
+	secondaryAggregations?: Querybuildertypesv5SecondaryAggregationDTO[] | null;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[];
+	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[] | null;
 	/**
 	 * @enum logs
 	 * @type string
@@ -3759,9 +3759,9 @@ export enum Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQue
 }
 export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTO {
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	aggregations?: Querybuildertypesv5MetricAggregationDTO[];
+	aggregations?: Querybuildertypesv5MetricAggregationDTO[] | null;
 	/**
 	 * @type string
 	 */
@@ -3772,13 +3772,13 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	disabled?: boolean;
 	filter?: Querybuildertypesv5FilterDTO;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	functions?: Querybuildertypesv5FunctionDTO[];
+	functions?: Querybuildertypesv5FunctionDTO[] | null;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	groupBy?: Querybuildertypesv5GroupByKeyDTO[];
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
 	having?: Querybuildertypesv5HavingDTO;
 	/**
 	 * @type string
@@ -3798,17 +3798,17 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	 */
 	offset?: number;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	order?: Querybuildertypesv5OrderByDTO[];
+	order?: Querybuildertypesv5OrderByDTO[] | null;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	secondaryAggregations?: Querybuildertypesv5SecondaryAggregationDTO[];
+	secondaryAggregations?: Querybuildertypesv5SecondaryAggregationDTO[] | null;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[];
+	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[] | null;
 	/**
 	 * @enum metrics
 	 * @type string
@@ -3834,9 +3834,9 @@ export enum Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQue
 }
 export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTO {
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	aggregations?: Querybuildertypesv5TraceAggregationDTO[];
+	aggregations?: Querybuildertypesv5TraceAggregationDTO[] | null;
 	/**
 	 * @type string
 	 */
@@ -3847,13 +3847,13 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	disabled?: boolean;
 	filter?: Querybuildertypesv5FilterDTO;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	functions?: Querybuildertypesv5FunctionDTO[];
+	functions?: Querybuildertypesv5FunctionDTO[] | null;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	groupBy?: Querybuildertypesv5GroupByKeyDTO[];
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
 	having?: Querybuildertypesv5HavingDTO;
 	/**
 	 * @type string
@@ -3873,17 +3873,17 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	 */
 	offset?: number;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	order?: Querybuildertypesv5OrderByDTO[];
+	order?: Querybuildertypesv5OrderByDTO[] | null;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	secondaryAggregations?: Querybuildertypesv5SecondaryAggregationDTO[];
+	secondaryAggregations?: Querybuildertypesv5SecondaryAggregationDTO[] | null;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[];
+	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[] | null;
 	/**
 	 * @enum traces
 	 * @type string
@@ -4272,9 +4272,9 @@ export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboa
 }
 export interface DashboardtypesListPanelSpecDTO {
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[];
+	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[] | null;
 }
 
 export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpecDTO {
@@ -4344,9 +4344,9 @@ export interface Querybuildertypesv5QueryBuilderFormulaDTO {
 	 */
 	expression?: string;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	functions?: Querybuildertypesv5FunctionDTO[];
+	functions?: Querybuildertypesv5FunctionDTO[] | null;
 	having?: Querybuildertypesv5HavingDTO;
 	/**
 	 * @type string
@@ -4361,9 +4361,9 @@ export interface Querybuildertypesv5QueryBuilderFormulaDTO {
 	 */
 	name?: string;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	order?: Querybuildertypesv5OrderByDTO[];
+	order?: Querybuildertypesv5OrderByDTO[] | null;
 }
 
 export enum Querybuildertypesv5QueryEnvelopeFormulaDTOType {
@@ -4380,9 +4380,9 @@ export interface Querybuildertypesv5QueryEnvelopeFormulaDTO {
 
 export interface Querybuildertypesv5QueryBuilderTraceOperatorDTO {
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	aggregations?: Querybuildertypesv5TraceAggregationDTO[];
+	aggregations?: Querybuildertypesv5TraceAggregationDTO[] | null;
 	/**
 	 * @type string
 	 */
@@ -4397,13 +4397,13 @@ export interface Querybuildertypesv5QueryBuilderTraceOperatorDTO {
 	expression?: string;
 	filter?: Querybuildertypesv5FilterDTO;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	functions?: Querybuildertypesv5FunctionDTO[];
+	functions?: Querybuildertypesv5FunctionDTO[] | null;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	groupBy?: Querybuildertypesv5GroupByKeyDTO[];
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
 	having?: Querybuildertypesv5HavingDTO;
 	/**
 	 * @type string
@@ -4422,17 +4422,17 @@ export interface Querybuildertypesv5QueryBuilderTraceOperatorDTO {
 	 */
 	offset?: number;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	order?: Querybuildertypesv5OrderByDTO[];
+	order?: Querybuildertypesv5OrderByDTO[] | null;
 	/**
 	 * @type string
 	 */
 	returnSpansFrom?: string;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[];
+	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[] | null;
 	stepInterval?: Querybuildertypesv5StepDTO;
 }
 
