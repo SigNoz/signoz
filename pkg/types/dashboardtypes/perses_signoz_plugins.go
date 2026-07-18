@@ -207,7 +207,7 @@ type HistogramBuckets struct {
 }
 
 type ListPanelSpec struct {
-	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitempty" validate:"dive"`
+	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitzero" validate:"dive"`
 }
 
 // ══════════════════════════════════════════════
