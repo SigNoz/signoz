@@ -7,7 +7,7 @@
     "email": "fcduarte@gmail.com",
     "homepage": "https://signoz.io"
   },
-  "icon": "file://icon.svg",
+  "icon": "file://icon.png",
   "categories": [
     "Error Monitoring",
     "Mobile"
