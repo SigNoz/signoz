@@ -121,7 +121,7 @@ func (c *conditionBuilder) conditionFor(
 	return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported operator: %v", operator)
 }
 
-func (c *conditionBuilder) ConditionForKeys(
+func (c *conditionBuilder) ConditionFor(
 	ctx context.Context,
 	orgID valuer.UUID,
 	startNs uint64,

@@ -66,6 +66,16 @@ func (c *conditionBuilder) conditionForArrayFunction(
 	if c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID)) {
 		// JSON access plan: data-type collision handling, nested array paths.
 		valueType, needle := InferDataType(needle, operator, key)
+		// A not-found (synthesized) body path carries no metadata plan; build an exhaustive
+		// one so the query runs against the underlying data (with the not-found warning)
+		// instead of erroring, matching the regular-operator path.
+		if len(key.JSONPlan) == 0 {
+			keyCopy := telemetrytypes.NewTelemetryFieldKey(key.Name, key.FieldContext, key.FieldDataType)
+			if err := keyCopy.SetExhaustiveJSONAccessPlan(telemetrytypes.JSONColumnMetadata{BaseColumn: LogsV2BodyV2Column}, valueType); err != nil {
+				return "", err
+			}
+			key = keyCopy
+		}
 		return NewJSONConditionBuilder(key, valueType).buildArrayFunctionCondition(operator, needle, sb)
 	}
 
@@ -144,13 +154,22 @@ func (c *conditionBuilder) conditionForHasToken(
 		return fmt.Sprintf("hasToken(LOWER(%s), LOWER(%s))", bodyMessageField, sb.Var(needle)), nil
 	}
 	if key.FieldContext == telemetrytypes.FieldContextBody {
+		// A not-found (synthesized) body path carries no metadata plan; build an exhaustive
+		// one so hasToken runs against the underlying data instead of erroring.
+		if len(key.JSONPlan) == 0 {
+			keyCopy := telemetrytypes.NewTelemetryFieldKey(key.Name, key.FieldContext, key.FieldDataType)
+			if err := keyCopy.SetExhaustiveJSONAccessPlan(telemetrytypes.JSONColumnMetadata{BaseColumn: LogsV2BodyV2Column}, telemetrytypes.FieldDataTypeString); err != nil {
+				return "", err
+			}
+			key = keyCopy
+		}
 		return NewJSONConditionBuilder(key, telemetrytypes.FieldDataTypeString).buildTokenFunctionCondition(needle, sb)
 	}
 	return "", errors.NewInvalidInputf(errors.CodeInvalidInput,
 		"function `hasToken` only supports the body field or a body JSON string field as first parameter").WithUrl(hasTokenFunctionDocURL)
 }
 
-func (c *conditionBuilder) conditionFor(
+func (c *conditionBuilder) conditionForResolvedKey(
 	ctx context.Context,
 	orgID valuer.UUID,
 	startNs, endNs uint64,
@@ -166,9 +185,7 @@ func (c *conditionBuilder) conditionFor(
 
 	columns, err := c.fm.ColumnFor(ctx, orgID, startNs, endNs, key)
 	if errors.Is(err, qbtypes.ErrColumnNotFound) && key.FieldContext == telemetrytypes.FieldContextUnspecified {
-		bodyKey := *key
-		bodyKey.FieldContext = telemetrytypes.FieldContextBody
-		key = &bodyKey
+		key = telemetrytypes.NewTelemetryFieldKey(key.Name, telemetrytypes.FieldContextBody, key.FieldDataType)
 		columns, err = c.fm.ColumnFor(ctx, orgID, startNs, endNs, key)
 	}
 	if err != nil {
@@ -185,13 +202,13 @@ func (c *conditionBuilder) conditionFor(
 		if column.Type.GetType() == schema.ColumnTypeEnumJSON && isBodyJSONSearch(key, columns) && c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID)) && key.Name != messageSubField {
 			valueType, value := InferDataType(value, operator, key)
 			if len(key.JSONPlan) == 0 {
-				keyCopy := *key
+				keyCopy := telemetrytypes.NewTelemetryFieldKey(key.Name, key.FieldContext, key.FieldDataType)
 				if err := keyCopy.SetExhaustiveJSONAccessPlan(
 					telemetrytypes.JSONColumnMetadata{BaseColumn: LogsV2BodyV2Column}, valueType,
 				); err != nil {
 					return "", err
 				}
-				key = &keyCopy
+				key = keyCopy
 			}
 			cond, err := NewJSONConditionBuilder(key, valueType).buildJSONCondition(operator, value, sb)
 			if err != nil {
@@ -335,21 +352,6 @@ func (c *conditionBuilder) conditionFor(
 	return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported operator: %v", operator)
 }
 
-func (c *conditionBuilder) ConditionForKeys(
-	ctx context.Context,
-	orgID valuer.UUID,
-	startNs uint64,
-	endNs uint64,
-	key *telemetrytypes.TelemetryFieldKey,
-	keys map[string][]*telemetrytypes.TelemetryFieldKey,
-	options qbtypes.ConditionBuilderOptions,
-	operator qbtypes.FilterOperator,
-	value any,
-	sb *sqlbuilder.SelectBuilder,
-) ([]string, []string, error) {
-	return c.conditionsForKeys(ctx, orgID, startNs, endNs, key, querybuilder.MatchingFieldKeys(key, keys), keys, options.SkipResourceFilter, operator, value, sb)
-}
-
 // candidateLookupKeys returns the metadata map only for fold-contexts, where CandidateKeys
 // would otherwise fold the prefix into the key name. Handing it the map lets a same-named
 // key under another context resolve first (as ColumnExpressionFor does). Strict contexts
@@ -361,19 +363,20 @@ func candidateLookupKeys(key *telemetrytypes.TelemetryFieldKey, fieldKeys map[st
 	return nil
 }
 
-func (c *conditionBuilder) conditionsForKeys(
+func (c *conditionBuilder) ConditionFor(
 	ctx context.Context,
 	orgID valuer.UUID,
 	startNs uint64,
 	endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
-	matches []*telemetrytypes.TelemetryFieldKey,
 	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
-	skipResourceFilter bool,
+	options qbtypes.ConditionBuilderOptions,
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) ([]string, []string, error) {
+	matches := querybuilder.MatchingFieldKeys(key, fieldKeys)
+	skipResourceFilter := options.SkipResourceFilter
 
 	keys, warning := querybuilder.ResolveKeys(key, matches)
 	var warnings []string
@@ -395,9 +398,9 @@ func (c *conditionBuilder) conditionsForKeys(
 			// strict contexts pass nil and stay honored as-is.
 			keys = c.fm.CandidateKeys(ctx, orgID, key, value, candidateLookupKeys(key, fieldKeys))
 			if operator.IsFunctionOperator() {
-				if key.FieldContext != telemetrytypes.FieldContextBody &&
-					!c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID)) {
-					return nil, warnings, querybuilder.NewKeyNotFoundError(key.Name)
+				if key.FieldContext != telemetrytypes.FieldContextBody {
+					// has/hasAny/hasAll/hasToken are body-JSON only
+					return nil, warnings, querybuilder.NewFunctionUnsupportedError(operator)
 				}
 				bodyKeys := make([]*telemetrytypes.TelemetryFieldKey, 0, len(keys))
 				for _, k := range keys {
@@ -466,7 +469,7 @@ func (c *conditionBuilder) conditionForKey(
 	sb *sqlbuilder.SelectBuilder,
 ) (string, error) {
 
-	condition, err := c.conditionFor(ctx, orgID, startNs, endNs, key, operator, value, sb)
+	condition, err := c.conditionForResolvedKey(ctx, orgID, startNs, endNs, key, operator, value, sb)
 	if err != nil {
 		return "", err
 	}
@@ -489,7 +492,7 @@ func (c *conditionBuilder) conditionForKey(
 	}
 
 	if buildExistCondition {
-		existsCondition, err := c.conditionFor(ctx, orgID, startNs, endNs, key, qbtypes.FilterOperatorExists, nil, sb)
+		existsCondition, err := c.conditionForResolvedKey(ctx, orgID, startNs, endNs, key, qbtypes.FilterOperatorExists, nil, sb)
 		if err != nil {
 			return "", err
 		}

@@ -39,7 +39,7 @@ type FieldMapper interface {
 // ConditionBuilder builds the conditions for a filter term. The builder owns key resolution:
 // the visitor hands it the raw key + full metadata map + options, not a pre-matched key list.
 type ConditionBuilder interface {
-	ConditionForKeys(ctx context.Context, orgID valuer.UUID, startNs uint64, endNs uint64, key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey, options ConditionBuilderOptions, operator FilterOperator, value any, sb *sqlbuilder.SelectBuilder) ([]string, []string, error)
+	ConditionFor(ctx context.Context, orgID valuer.UUID, startNs uint64, endNs uint64, key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey, options ConditionBuilderOptions, operator FilterOperator, value any, sb *sqlbuilder.SelectBuilder) ([]string, []string, error)
 }
 
 type ConditionBuilderOptions struct {

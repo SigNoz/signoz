@@ -206,11 +206,12 @@ func legacyCoerceNeedle(v any, dt telemetrytypes.FieldDataType) any {
 // getBodyJSONArrayKey extracts the leaf as Array(Nullable(<dt>)) — Nullable so a value of a
 // different JSON type maps to NULL instead of corrupting (e.g. a non-numeric string → 0).
 func getBodyJSONArrayKey(key *telemetrytypes.TelemetryFieldKey, dt telemetrytypes.FieldDataType) string {
-	arrKey := *key
-	if !strings.HasSuffix(arrKey.Name, "[*]") && !strings.HasSuffix(arrKey.Name, "[]") {
-		arrKey.Name += "[*]"
+	name := key.Name
+	if !strings.HasSuffix(name, "[*]") && !strings.HasSuffix(name, "[]") {
+		name += "[*]"
 	}
-	return fmt.Sprintf("JSONExtract(JSON_QUERY(body, '$.%s'), 'Array(Nullable(%s))')", getBodyJSONPath(&arrKey), dt.CHDataType())
+	arrKey := telemetrytypes.NewTelemetryFieldKey(name, key.FieldContext, key.FieldDataType)
+	return fmt.Sprintf("JSONExtract(JSON_QUERY(body, '$.%s'), 'Array(Nullable(%s))')", getBodyJSONPath(arrKey), dt.CHDataType())
 }
 
 // getBodyJSONScalarKey builds the single-element-set fallback for a scalar body value: the leaf
@@ -223,9 +224,8 @@ func getBodyJSONScalarKey(key *telemetrytypes.TelemetryFieldKey, dt telemetrytyp
 	if strings.Contains(name, "[") {
 		return "", "", false
 	}
-	scalarKey := *key
-	scalarKey.Name = name
-	path := getBodyJSONPath(&scalarKey)
+	scalarKey := telemetrytypes.NewTelemetryFieldKey(name, key.FieldContext, key.FieldDataType)
+	path := getBodyJSONPath(scalarKey)
 	if dt == telemetrytypes.FieldDataTypeString {
 		expr = fmt.Sprintf("JSON_VALUE(body, '$.%s')", path)
 	} else {

@@ -21,7 +21,7 @@ func NewConditionBuilder(fm qbtypes.FieldMapper) *conditionBuilder {
 }
 
 // Metadata has no resource sub-query, so options are unused.
-func (c *conditionBuilder) ConditionForKeys(
+func (c *conditionBuilder) ConditionFor(
 	ctx context.Context,
 	orgID valuer.UUID,
 	tsStart, tsEnd uint64,

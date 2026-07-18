@@ -166,21 +166,6 @@ func (c *conditionBuilder) conditionFor(
 	return "", nil
 }
 
-func (c *conditionBuilder) ConditionForKeys(
-	ctx context.Context,
-	orgID valuer.UUID,
-	startNs uint64,
-	endNs uint64,
-	key *telemetrytypes.TelemetryFieldKey,
-	keys map[string][]*telemetrytypes.TelemetryFieldKey,
-	options qbtypes.ConditionBuilderOptions,
-	operator qbtypes.FilterOperator,
-	value any,
-	sb *sqlbuilder.SelectBuilder,
-) ([]string, []string, error) {
-	return c.conditionsForKeys(ctx, orgID, startNs, endNs, key, querybuilder.MatchingFieldKeys(key, keys), keys, options.SkipResourceFilter, operator, value, sb)
-}
-
 // isFoldContext reports whether the context is one CandidateKeys would fold the prefix into
 // the key name for (span/trace). These behave like a default context that also addresses
 // columns and attributes, unlike strict resource/attribute/scope contexts.
@@ -203,18 +188,17 @@ func candidateLookupKeys(key *telemetrytypes.TelemetryFieldKey, fieldKeys map[st
 	return nil
 }
 
-// conditionsForKeys resolves matches to the key(s) to filter on (ResolveKeys, else
-// synthesized keys with a warning) and builds one condition per resolved key. fieldKeys
-// is the full metadata map (nil on the pre-matched ConditionFor path).
-func (c *conditionBuilder) conditionsForKeys(
+// ConditionFor resolves the referenced key to the key(s) to filter on (ResolveKeys, else
+// synthesized keys with a warning) and builds one condition per resolved key. fieldKeys is
+// the full metadata map; the builder owns key resolution.
+func (c *conditionBuilder) ConditionFor(
 	ctx context.Context,
 	orgID valuer.UUID,
 	startNs uint64,
 	endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
-	matches []*telemetrytypes.TelemetryFieldKey,
 	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
-	skipResourceFilter bool,
+	options qbtypes.ConditionBuilderOptions,
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
@@ -224,6 +208,9 @@ func (c *conditionBuilder) conditionsForKeys(
 	if err := querybuilder.NewFunctionUnsupportedError(operator); err != nil {
 		return nil, nil, err
 	}
+
+	matches := querybuilder.MatchingFieldKeys(key, fieldKeys)
+	skipResourceFilter := options.SkipResourceFilter
 
 	keys, warning := querybuilder.ResolveKeys(key, matches)
 	var warnings []string
@@ -242,11 +229,10 @@ func (c *conditionBuilder) conditionsForKeys(
 			}
 		}
 		if !hasColumn {
-			probe := *key
-			probe.FieldContext = telemetrytypes.FieldContextSpan
-			if cols, colErr := c.fm.ColumnFor(ctx, orgID, startNs, endNs, &probe); colErr == nil && len(cols) > 0 {
+			probe := telemetrytypes.NewTelemetryFieldKey(key.Name, telemetrytypes.FieldContextSpan, key.FieldDataType)
+			if cols, colErr := c.fm.ColumnFor(ctx, orgID, startNs, endNs, probe); colErr == nil && len(cols) > 0 {
 				combined := make([]*telemetrytypes.TelemetryFieldKey, 0, len(keys)+1)
-				combined = append(combined, &probe)
+				combined = append(combined, probe)
 				for _, k := range keys {
 					if columnMatchesDataType(cols[0], k.FieldDataType) {
 						combined = append(combined, k)

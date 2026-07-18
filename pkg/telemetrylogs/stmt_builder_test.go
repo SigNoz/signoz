@@ -578,7 +578,7 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 					},
 				},
 			},
-			expectedErrContains: "Group by/Aggregation isn't available for the body column",
+			expectedErrContains: "Operation isn't available for the body column",
 		},
 	}
 

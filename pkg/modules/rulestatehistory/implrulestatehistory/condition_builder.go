@@ -22,7 +22,7 @@ func newConditionBuilder(fm qbtypes.FieldMapper) qbtypes.ConditionBuilder {
 }
 
 // Rule state history has no resource sub-query, so options are unused.
-func (c *conditionBuilder) ConditionForKeys(
+func (c *conditionBuilder) ConditionFor(
 	ctx context.Context,
 	orgID valuer.UUID,
 	startNs uint64,

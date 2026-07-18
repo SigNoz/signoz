@@ -455,10 +455,9 @@ func (m *defaultFieldMapper) CandidateKeys(ctx context.Context, _ valuer.UUID, f
 	case telemetrytypes.FieldContextUnspecified:
 		// bare key: the column comes first, alongside same-named metadata keys under other
 		// contexts whose type is consistent with the column (corrupt entries dropped).
-		probe := *field
-		probe.FieldContext = telemetrytypes.FieldContextSpan
-		if cols, err := m.getColumn(ctx, 0, 0, &probe); err == nil && len(cols) > 0 {
-			candidates := []*telemetrytypes.TelemetryFieldKey{&probe}
+		probe := telemetrytypes.NewTelemetryFieldKey(field.Name, telemetrytypes.FieldContextSpan, field.FieldDataType)
+		if cols, err := m.getColumn(ctx, 0, 0, probe); err == nil && len(cols) > 0 {
+			candidates := []*telemetrytypes.TelemetryFieldKey{probe}
 			for _, match := range keys[field.Name] {
 				if match.FieldContext != telemetrytypes.FieldContextSpan &&
 					columnMatchesDataType(cols[0], match.FieldDataType) {
@@ -470,8 +469,7 @@ func (m *defaultFieldMapper) CandidateKeys(ctx context.Context, _ valuer.UUID, f
 	case telemetrytypes.FieldContextSpan, telemetrytypes.FieldContextTrace:
 		// forgiving context honored as-is: a real column wins (span.duration_nano -> col).
 		if _, err := m.getColumn(ctx, 0, 0, field); err == nil {
-			clone := *field
-			return []*telemetrytypes.TelemetryFieldKey{&clone}
+			return []*telemetrytypes.TelemetryFieldKey{telemetrytypes.NewTelemetryFieldKey(field.Name, field.FieldContext, field.FieldDataType)}
 		}
 	}
 
@@ -491,14 +489,12 @@ func (m *defaultFieldMapper) CandidateKeys(ctx context.Context, _ valuer.UUID, f
 		return querybuilder.SynthesizeKeys(field, value)
 	case telemetrytypes.FieldContextSpan, telemetrytypes.FieldContextTrace:
 		// honored as-is: the stripped name lives in the attribute maps
-		stripped := *field
-		stripped.FieldContext = telemetrytypes.FieldContextUnspecified
-		return querybuilder.SynthesizeKeys(&stripped, value)
+		stripped := telemetrytypes.NewTelemetryFieldKey(field.Name, telemetrytypes.FieldContextUnspecified, field.FieldDataType)
+		return querybuilder.SynthesizeKeys(stripped, value)
 	case telemetrytypes.FieldContextAttribute, telemetrytypes.FieldContextResource:
 		// strict context honored as-is: stripped interpretation first, literal spelling second
-		literal := *field
-		literal.Name = field.FieldContext.StringValue() + "." + field.Name
-		return append(querybuilder.SynthesizeKeys(field, value), querybuilder.SynthesizeKeys(&literal, value)...)
+		literal := telemetrytypes.NewTelemetryFieldKey(field.FieldContext.StringValue()+"."+field.Name, field.FieldContext, field.FieldDataType)
+		return append(querybuilder.SynthesizeKeys(field, value), querybuilder.SynthesizeKeys(literal, value)...)
 	}
 	// contexts that don't exist on spans (log, body, scope, …) have nothing to synthesize
 	return nil

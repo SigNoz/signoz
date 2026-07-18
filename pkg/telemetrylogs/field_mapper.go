@@ -15,8 +15,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
-
-	"golang.org/x/exp/maps"
 )
 
 var (
@@ -234,7 +232,7 @@ func (m *fieldMapper) ColumnExpressionFor(
 	switch _, err := m.FieldFor(ctx, orgID, tsStart, tsEnd, field); {
 	case err == nil:
 		if field.FieldContext == telemetrytypes.FieldContextBody && !bodyJSONEnabled {
-			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "Group by/Aggregation isn't available for the body column")
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "Operation isn't available for the body column")
 		}
 		candidates = []*telemetrytypes.TelemetryFieldKey{field}
 	case errors.Is(err, qbtypes.ErrColumnNotFound):
@@ -259,7 +257,7 @@ func (m *fieldMapper) ColumnExpressionFor(
 			}
 		}
 		if len(candidates) == 0 {
-			return "", errors.WithSuggestiveAdditionalf(err, errors.NewSuggestionsOnLevenshteinDistance(field.Name, errors.NounKeys, maps.Keys(keys)), "field `%s` not found", field.Name)
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "field `%s` not found", field.Name)
 		}
 	default:
 		return "", err
@@ -363,45 +361,35 @@ func (m *fieldMapper) CandidateKeys(_ context.Context, _ valuer.UUID, field *tel
 		if field.Name == "" {
 			return nil
 		}
-		clone := *field
-		return []*telemetrytypes.TelemetryFieldKey{&clone}
+		return []*telemetrytypes.TelemetryFieldKey{telemetrytypes.NewTelemetryFieldKey(field.Name, field.FieldContext, field.FieldDataType)}
 	case telemetrytypes.FieldContextUnspecified:
 		// a real column wins before synthesis (so adjustKeys is not needed to resolve these)
 		if _, ok := logsV2Columns[field.Name]; ok {
-			clone := *field
-			clone.FieldContext = telemetrytypes.FieldContextLog
-			return []*telemetrytypes.TelemetryFieldKey{&clone}
+			return []*telemetrytypes.TelemetryFieldKey{{Name: field.Name, FieldContext: telemetrytypes.FieldContextLog}}
 		}
-		bodyKey := *field
-		bodyKey.FieldContext = telemetrytypes.FieldContextBody
+		bodyKey := telemetrytypes.NewTelemetryFieldKey(field.Name, telemetrytypes.FieldContextBody, field.FieldDataType)
 		if value == nil && bodyKey.FieldDataType == telemetrytypes.FieldDataTypeUnspecified {
 			bodyKey.FieldDataType = telemetrytypes.FieldDataTypeString
 		}
-		return append(querybuilder.SynthesizeKeys(field, value), &bodyKey)
+		return append(querybuilder.SynthesizeKeys(field, value), bodyKey)
 	case telemetrytypes.FieldContextAttribute, telemetrytypes.FieldContextResource:
 		// stripped interpretation first, the literal `{context}.{name}` spelling second
-		literal := *field
-		literal.Name = field.FieldContext.StringValue() + "." + field.Name
-		return append(querybuilder.SynthesizeKeys(field, value), querybuilder.SynthesizeKeys(&literal, value)...)
+		literal := telemetrytypes.NewTelemetryFieldKey(field.FieldContext.StringValue()+"."+field.Name, field.FieldContext, field.FieldDataType)
+		return append(querybuilder.SynthesizeKeys(field, value), querybuilder.SynthesizeKeys(literal, value)...)
 	case telemetrytypes.FieldContextLog:
 		if _, ok := logsV2Columns[field.Name]; ok {
-			clone := *field
-			return []*telemetrytypes.TelemetryFieldKey{&clone}
+			return []*telemetrytypes.TelemetryFieldKey{telemetrytypes.NewTelemetryFieldKey(field.Name, field.FieldContext, field.FieldDataType)}
 		}
-		stripped := *field
-		stripped.FieldContext = telemetrytypes.FieldContextUnspecified
-		literal := *field
-		literal.Name = field.FieldContext.StringValue() + "." + field.Name
-		literal.FieldContext = telemetrytypes.FieldContextUnspecified
+		stripped := telemetrytypes.NewTelemetryFieldKey(field.Name, telemetrytypes.FieldContextUnspecified, field.FieldDataType)
+		literal := telemetrytypes.NewTelemetryFieldKey(field.FieldContext.StringValue()+"."+field.Name, telemetrytypes.FieldContextUnspecified, field.FieldDataType)
 		// attribute candidates first (stripped, then literal), body paths last
-		candidates := append(querybuilder.SynthesizeKeys(&stripped, value), querybuilder.SynthesizeKeys(&literal, value)...)
-		for _, key := range []telemetrytypes.TelemetryFieldKey{stripped, literal} {
-			bodyKey := key
-			bodyKey.FieldContext = telemetrytypes.FieldContextBody
+		candidates := append(querybuilder.SynthesizeKeys(stripped, value), querybuilder.SynthesizeKeys(literal, value)...)
+		for _, key := range []*telemetrytypes.TelemetryFieldKey{stripped, literal} {
+			bodyKey := telemetrytypes.NewTelemetryFieldKey(key.Name, telemetrytypes.FieldContextBody, key.FieldDataType)
 			if value == nil && bodyKey.FieldDataType == telemetrytypes.FieldDataTypeUnspecified {
 				bodyKey.FieldDataType = telemetrytypes.FieldDataTypeString
 			}
-			candidates = append(candidates, &bodyKey)
+			candidates = append(candidates, bodyKey)
 		}
 		return candidates
 	}
@@ -413,7 +401,7 @@ func (m *fieldMapper) buildFieldForJSON(key *telemetrytypes.TelemetryFieldKey) (
 	plan := key.JSONPlan
 	if len(plan) == 0 {
 		if key.KeyNameContainsArray() {
-			keyCopy := *key
+			keyCopy := telemetrytypes.NewTelemetryFieldKey(key.Name, key.FieldContext, key.FieldDataType)
 			if err := keyCopy.SetExhaustiveJSONAccessPlan(
 				telemetrytypes.JSONColumnMetadata{BaseColumn: LogsV2BodyV2Column}, key.FieldDataType,
 			); err != nil {
@@ -590,10 +578,8 @@ func (m *fieldMapper) existsExpressionFor(
 ) (string, error) {
 	columns, err := m.getColumn(ctx, orgID, key)
 	if errors.Is(err, qbtypes.ErrColumnNotFound) && key.FieldContext == telemetrytypes.FieldContextUnspecified {
-		bodyKey := *key
-		bodyKey.FieldContext = telemetrytypes.FieldContextBody
-		key = &bodyKey
-		columns, err = m.getColumn(ctx, orgID, key)
+		bodyKey := telemetrytypes.NewTelemetryFieldKey(key.Name, telemetrytypes.FieldContextBody, key.FieldDataType)
+		columns, err = m.getColumn(ctx, orgID, bodyKey)
 	}
 	if err != nil {
 		return "", err
@@ -610,13 +596,13 @@ func (m *fieldMapper) existsExpressionFor(
 		if column.Type.GetType() == schema.ColumnTypeEnumJSON && isBodyJSONSearch(key, columns) && bodyJSONEnabled && key.Name != messageSubField {
 			valueType, value := InferDataType(nil, operator, key)
 			if len(key.JSONPlan) == 0 {
-				keyCopy := *key
+				keyCopy := telemetrytypes.NewTelemetryFieldKey(key.Name, key.FieldContext, key.FieldDataType)
 				if err := keyCopy.SetExhaustiveJSONAccessPlan(
 					telemetrytypes.JSONColumnMetadata{BaseColumn: LogsV2BodyV2Column}, valueType,
 				); err != nil {
 					return "", err
 				}
-				key = &keyCopy
+				key = keyCopy
 			}
 			sb := sqlbuilder.NewSelectBuilder()
 			cond, err := NewJSONConditionBuilder(key, valueType).buildJSONCondition(operator, value, sb)

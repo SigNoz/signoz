@@ -45,31 +45,19 @@ func keyIndexFilter(key *telemetrytypes.TelemetryFieldKey) any {
 }
 
 // SkipResourceFilter is not applicable here: the fingerprint table only stores resource attributes.
-func (b *defaultConditionBuilder) ConditionForKeys(
+func (b *defaultConditionBuilder) ConditionFor(
 	ctx context.Context,
 	_ valuer.UUID,
 	startNs uint64,
 	endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
-	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
 	_ qbtypes.ConditionBuilderOptions,
 	op qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) ([]string, []string, error) {
-	return b.conditionsForKeys(ctx, startNs, endNs, key, querybuilder.MatchingFieldKeys(key, keys), op, value, sb)
-}
-
-func (b *defaultConditionBuilder) conditionsForKeys(
-	ctx context.Context,
-	startNs uint64,
-	endNs uint64,
-	key *telemetrytypes.TelemetryFieldKey,
-	matches []*telemetrytypes.TelemetryFieldKey,
-	op qbtypes.FilterOperator,
-	value any,
-	sb *sqlbuilder.SelectBuilder,
-) ([]string, []string, error) {
+	matches := querybuilder.MatchingFieldKeys(key, fieldKeys)
 
 	// has/hasAny/hasAll/hasToken are logs-body-only functions; they never apply to the
 	// resource fingerprint table, so skip them (the main query still evaluates them).

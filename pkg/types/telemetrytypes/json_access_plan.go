@@ -242,11 +242,10 @@ func (key *TelemetryFieldKey) SetExhaustiveJSONAccessPlan(columnInfo JSONColumnM
 		terminalType = FieldDataTypeString
 	}
 
-	keyForPlan := *key
-	keyForPlan.FieldDataType = terminalType
+	keyForPlan := NewTelemetryFieldKey(key.Name, key.FieldContext, terminalType)
 
 	pb := &planBuilder{
-		key:        &keyForPlan,
+		key:        keyForPlan,
 		paths:      key.ArrayParentPaths(),
 		segments:   key.ArrayPathSegments(),
 		exhaustive: true,

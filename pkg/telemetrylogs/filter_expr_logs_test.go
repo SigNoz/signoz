@@ -2278,7 +2278,7 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            false,
 			expectedQuery:         "",
 			expectedArgs:          nil,
-			expectedErrorContains: "key `features` not found",
+			expectedErrorContains: "function `has` supports only body JSON search",
 		},
 
 		// More common filter patterns

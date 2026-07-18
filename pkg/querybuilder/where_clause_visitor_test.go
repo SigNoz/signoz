@@ -748,7 +748,7 @@ var visitTestKeys = map[string][]*telemetrytypes.TelemetryFieldKey{
 
 type resourceConditionBuilder struct{}
 
-func (b *resourceConditionBuilder) ConditionForKeys(
+func (b *resourceConditionBuilder) ConditionFor(
 	_ context.Context,
 	_ valuer.UUID,
 	_ uint64,
@@ -785,7 +785,7 @@ func (b *resourceConditionBuilder) ConditionForKeys(
 
 type conditionBuilder struct{}
 
-func (b *conditionBuilder) ConditionForKeys(
+func (b *conditionBuilder) ConditionFor(
 	_ context.Context,
 	_ valuer.UUID,
 	_ uint64,
