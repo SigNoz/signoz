@@ -925,19 +925,17 @@ func TestPromRuleUnitCombinations(t *testing.T) {
 		}
 		samplesRows := cmock.NewRows(samplesCols, samplesData)
 
-		// args: $1=metric_name, $2=label_name, $3=label_value
+		// args: $1=metric_name (the __name__ matcher maps onto the column)
 		telemetryStore.Mock().
 			ExpectQuery("SELECT fingerprint, any").
-			WithArgs("test_metric", "__name__", "test_metric").
+			WithArgs("test_metric").
 			WillReturnRows(fingerprintRows)
 
-		// args: $1=metric_name (outer), $2=metric_name (subquery), $3=label_name, $4=label_value, $5=start, $6=end
+		// args: $1=metric_name IN (discovered names), $2=metric_name (subquery), $3=start, $4=end
 		telemetryStore.Mock().
 			ExpectQuery("SELECT metric_name, fingerprint, unix_milli").
 			WithArgs(
 				"test_metric",
-				"test_metric",
-				"__name__",
 				"test_metric",
 				queryStart,
 				queryEnd,
@@ -1063,7 +1061,7 @@ func TestPromRuleNoData(t *testing.T) {
 		// no rows == no data
 		telemetryStore.Mock().
 			ExpectQuery("SELECT fingerprint, any").
-			WithArgs("test_metric", "__name__", "test_metric").
+			WithArgs("test_metric").
 			WillReturnRows(fingerprintRows)
 
 		promProvider := prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{Timeout: 2 * time.Minute}, telemetryStore)
@@ -1273,15 +1271,13 @@ func TestMultipleThresholdPromRule(t *testing.T) {
 
 		telemetryStore.Mock().
 			ExpectQuery("SELECT fingerprint, any").
-			WithArgs("test_metric", "__name__", "test_metric").
+			WithArgs("test_metric").
 			WillReturnRows(fingerprintRows)
 
 		telemetryStore.Mock().
 			ExpectQuery("SELECT metric_name, fingerprint, unix_milli").
 			WithArgs(
 				"test_metric",
-				"test_metric",
-				"__name__",
 				"test_metric",
 				queryStart,
 				queryEnd,
@@ -1439,12 +1435,12 @@ func TestPromRule_NoData(t *testing.T) {
 			labelsJSON := `{"__name__":"test_metric"}`
 			telemetryStore.Mock().
 				ExpectQuery("SELECT fingerprint, any").
-				WithArgs("test_metric", "__name__", "test_metric").
+				WithArgs("test_metric").
 				WillReturnRows(cmock.NewRows(fingerprintCols, [][]any{{fingerprint, labelsJSON}}))
 
 			telemetryStore.Mock().
 				ExpectQuery("SELECT metric_name, fingerprint, unix_milli").
-				WithArgs("test_metric", "test_metric", "__name__", "test_metric", queryStart, queryEnd).
+				WithArgs("test_metric", "test_metric", queryStart, queryEnd).
 				WillReturnRows(cmock.NewRows(samplesCols, [][]any{}))
 
 			promProvider := prometheustest.New(
@@ -1575,11 +1571,11 @@ func TestPromRule_NoData_AbsentFor(t *testing.T) {
 			queryStart1, queryEnd1 := calcQueryRange(t1)
 			telemetryStore.Mock().
 				ExpectQuery("SELECT fingerprint, any").
-				WithArgs("test_metric", "__name__", "test_metric").
+				WithArgs("test_metric").
 				WillReturnRows(cmock.NewRows(fingerprintCols, [][]any{{fingerprint, labelsJSON}}))
 			telemetryStore.Mock().
 				ExpectQuery("SELECT metric_name, fingerprint, unix_milli").
-				WithArgs("test_metric", "test_metric", "__name__", "test_metric", queryStart1, queryEnd1).
+				WithArgs("test_metric", "test_metric", queryStart1, queryEnd1).
 				WillReturnRows(cmock.NewRows(samplesCols, [][]any{
 					// Data points in the past relative to t1
 					{"test_metric", fingerprint, baseTime.UnixMilli(), 100.0, uint32(0)},
@@ -1591,11 +1587,11 @@ func TestPromRule_NoData_AbsentFor(t *testing.T) {
 			queryStart2, queryEnd2 := calcQueryRange(t2)
 			telemetryStore.Mock().
 				ExpectQuery("SELECT fingerprint, any").
-				WithArgs("test_metric", "__name__", "test_metric").
+				WithArgs("test_metric").
 				WillReturnRows(cmock.NewRows(fingerprintCols, [][]any{{fingerprint, labelsJSON}}))
 			telemetryStore.Mock().
 				ExpectQuery("SELECT metric_name, fingerprint, unix_milli").
-				WithArgs("test_metric", "test_metric", "__name__", "test_metric", queryStart2, queryEnd2).
+				WithArgs("test_metric", "test_metric", queryStart2, queryEnd2).
 				WillReturnRows(cmock.NewRows(samplesCols, [][]any{})) // empty - no data
 
 			promProvider := prometheustest.New(
@@ -1752,11 +1748,11 @@ func TestPromRuleEval_RequireMinPoints(t *testing.T) {
 			telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &queryMatcherAny{})
 			telemetryStore.Mock().
 				ExpectQuery("SELECT fingerprint, any").
-				WithArgs("test_metric", "__name__", "test_metric").
+				WithArgs("test_metric").
 				WillReturnRows(cmock.NewRows(fingerprintCols, fingerprintData))
 			telemetryStore.Mock().
 				ExpectQuery("SELECT metric_name, fingerprint, unix_milli").
-				WithArgs("test_metric", "test_metric", "__name__", "test_metric", queryStart, queryEnd).
+				WithArgs("test_metric", "test_metric", queryStart, queryEnd).
 				WillReturnRows(cmock.NewRows(samplesCols, samplesData))
 			promProvider := prometheustest.New(
 				context.Background(),
