@@ -1,5 +1,7 @@
 # ML Anomaly Alert Mode
 
+Related to #9360 (`AI/ML forecasting for metrics`)
+
 ## Summary
 
 PR adds a new `ML` anomaly detection mode for SigNoz anomaly alerts alongside the existing `Standard` mode.
@@ -16,10 +18,9 @@ Suggested screenshot slots for the PR:
 2. Case where `ML` detects a labeled anomaly that `Standard` misses
 3. Case where `ML` reduces false positives on recurring bursty behavior
 
-## Interactive comparison
+## Visual comparison
 
 ![ML vs Standard anomaly detection on NAB AWS metrics](docs/images/ml-vs-standard-nab-multicase-all.png)
-[Open interactive chart](docs/interactive/ml-vs-standard-nab-multicase.html)
 
 ## Benchmark summary
 
@@ -39,7 +40,7 @@ $env:NAB_ROOT='C:\Users\kacha\NAB'
 go test ./ee/anomaly -run TestCompareTemporalLikeAcrossNABAWS -count=1 -v
 ```
 
-These are common-coverage benchmark metrics. The three charts above are illustrative examples chosen from the same NAB AWS corpus.
+These are common-coverage benchmark metrics. The chart above shows representative examples chosen from the same NAB AWS corpus.
 
 ### Metric definitions
 
@@ -56,7 +57,7 @@ We evaluated the detector on the Numenta Anomaly Benchmark (NAB), using the `rea
 
 - [Numenta Anomaly Benchmark (NAB)](https://github.com/numenta/NAB)
 
-The three plots in this PR are representative examples from that same corpus.
+The visual comparison in this PR is taken from that same corpus.
 
 
 ## What Changed
