@@ -56,19 +56,21 @@ func (c *captureClient) Read(ctx context.Context, query *prompb.Query, _ bool) (
 		}
 	}
 
-	var metricName string
+	// Without executing the series lookup, only an exact-name selector's
+	// metric name is known.
+	var metricNames []string
 	for _, matcher := range query.Matchers {
-		if matcher.Name == "__name__" {
-			metricName = matcher.Value
+		if matcher.Name == "__name__" && matcher.Type == prompb.LabelMatcher_EQ {
+			metricNames = []string{matcher.Value}
 		}
 	}
 
 	// Build the executing path's queries, but only record them.
-	subQuery, args, err := c.queryToClickhouseQuery(ctx, query, metricName, true)
+	subQuery, args, err := c.queryToClickhouseQuery(ctx, query, len(metricNames), true)
 	if err != nil {
 		return nil, err
 	}
-	samplesQuery, samplesArgs := buildSamplesQuery(int64(query.StartTimestampMs), int64(query.EndTimestampMs), metricName, subQuery, args)
+	samplesQuery, samplesArgs := buildSamplesQuery(int64(query.StartTimestampMs), int64(query.EndTimestampMs), metricNames, subQuery, args)
 	c.recorder.record(samplesQuery, samplesArgs)
 
 	return storage.EmptySeriesSet(), nil

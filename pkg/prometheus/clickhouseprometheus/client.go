@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -56,19 +57,12 @@ func (client *client) Read(ctx context.Context, query *prompb.Query, sortSeries 
 		}
 	}
 
-	var metricName string
-	for _, matcher := range query.Matchers {
-		if matcher.Name == "__name__" {
-			metricName = matcher.Value
-		}
-	}
-
-	clickhouseQuery, args, err := client.queryToClickhouseQuery(ctx, query, metricName, false)
+	clickhouseQuery, args, err := client.queryToClickhouseQuery(ctx, query, 0, false)
 	if err != nil {
 		return nil, err
 	}
 
-	fingerprints, err := client.getFingerprintsFromClickhouseQuery(ctx, clickhouseQuery, args)
+	fingerprints, metricNames, err := client.getFingerprintsFromClickhouseQuery(ctx, clickhouseQuery, args)
 	if err != nil {
 		return nil, err
 	}
@@ -76,13 +70,13 @@ func (client *client) Read(ctx context.Context, query *prompb.Query, sortSeries 
 		return remote.FromQueryResult(sortSeries, new(prompb.QueryResult)), nil
 	}
 
-	clickhouseSubQuery, args, err := client.queryToClickhouseQuery(ctx, query, metricName, true)
+	clickhouseSubQuery, subArgs, err := client.queryToClickhouseQuery(ctx, query, len(metricNames), true)
 	if err != nil {
 		return nil, err
 	}
 
 	res := new(prompb.QueryResult)
-	timeseries, err := client.querySamples(ctx, int64(query.StartTimestampMs), int64(query.EndTimestampMs), fingerprints, metricName, clickhouseSubQuery, args)
+	timeseries, err := client.querySamples(ctx, int64(query.StartTimestampMs), int64(query.EndTimestampMs), fingerprints, metricNames, clickhouseSubQuery, subArgs)
 	if err != nil {
 		return nil, err
 	}
@@ -126,20 +120,30 @@ func (c *client) ReadMultiple(ctx context.Context, queries []*prompb.Query, sort
 	return storage.NewMergeSeriesSet(sets, 0, storage.ChainedSeriesMerge), nil
 }
 
-func (client *client) queryToClickhouseQuery(_ context.Context, query *prompb.Query, metricName string, subQuery bool) (string, []any, error) {
-	var clickHouseQuery string
-	var conditions []string
-	var argCount = 0
-	var selectString = "fingerprint, any(labels)"
+// anchorRegex makes a pattern fully anchored, the way Prometheus compiles
+// matcher regexes; ClickHouse's match() would otherwise substring-match.
+func anchorRegex(pattern string) string {
+	return "^(?:" + pattern + ")$"
+}
+
+// queryToClickhouseQuery renders the time-series lookup. argOffset shifts
+// the positional placeholders so the SQL can nest after preceding args (the
+// samples query prefixes its metric-name args before splicing this in).
+func (client *client) queryToClickhouseQuery(_ context.Context, query *prompb.Query, argOffset int, subQuery bool) (string, []any, error) {
+	selectString := "fingerprint, any(labels)"
 	if subQuery {
-		argCount = 1
 		selectString = "fingerprint"
 	}
 
 	start, end, tableName := getStartAndEndAndTableName(query.StartTimestampMs, query.EndTimestampMs)
 
+	var conditions []string
 	var args []any
-	conditions = append(conditions, fmt.Sprintf("metric_name = $%d", argCount+1))
+	nextArg := func(v any) string {
+		args = append(args, v)
+		return fmt.Sprintf("$%d", argOffset+len(args))
+	}
+
 	conditions = append(conditions, "temporality IN ['Cumulative', 'Unspecified']")
 	// Inclusive upper bound: registration rows are hour-floored by the
 	// exporter, so a series first registered in the hour starting exactly at
@@ -147,65 +151,91 @@ func (client *client) queryToClickhouseQuery(_ context.Context, query *prompb.Qu
 	// range.
 	conditions = append(conditions, fmt.Sprintf("unix_milli >= %d AND unix_milli <= %d", start, end))
 
-	args = append(args, metricName)
 	for _, m := range query.Matchers {
+		if m.Name == "__name__" {
+			// __name__ maps onto the metric_name column per matcher type;
+			// reducing regex/negated/absent name matchers to one equality
+			// made such selectors silently return empty.
+			switch m.Type {
+			case prompb.LabelMatcher_EQ:
+				conditions = append(conditions, fmt.Sprintf("metric_name = %s", nextArg(m.Value)))
+			case prompb.LabelMatcher_NEQ:
+				conditions = append(conditions, fmt.Sprintf("metric_name != %s", nextArg(m.Value)))
+			case prompb.LabelMatcher_RE:
+				conditions = append(conditions, fmt.Sprintf("match(metric_name, %s)", nextArg(anchorRegex(m.Value))))
+			case prompb.LabelMatcher_NRE:
+				conditions = append(conditions, fmt.Sprintf("not match(metric_name, %s)", nextArg(anchorRegex(m.Value))))
+			default:
+				return "", nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported or invalid matcher type: %s", m.Type.String())
+			}
+			continue
+		}
 		switch m.Type {
 		case prompb.LabelMatcher_EQ:
-			conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, $%d) = $%d", argCount+2, argCount+3))
+			conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, %s) = %s", nextArg(m.Name), nextArg(m.Value)))
 		case prompb.LabelMatcher_NEQ:
-			conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, $%d) != $%d", argCount+2, argCount+3))
+			conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, %s) != %s", nextArg(m.Name), nextArg(m.Value)))
 		case prompb.LabelMatcher_RE:
-			conditions = append(conditions, fmt.Sprintf("match(JSONExtractString(labels, $%d), $%d)", argCount+2, argCount+3))
+			conditions = append(conditions, fmt.Sprintf("match(JSONExtractString(labels, %s), %s)", nextArg(m.Name), nextArg(anchorRegex(m.Value))))
 		case prompb.LabelMatcher_NRE:
-			conditions = append(conditions, fmt.Sprintf("not match(JSONExtractString(labels, $%d), $%d)", argCount+2, argCount+3))
+			conditions = append(conditions, fmt.Sprintf("not match(JSONExtractString(labels, %s), %s)", nextArg(m.Name), nextArg(anchorRegex(m.Value))))
 		default:
 			return "", nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported or invalid matcher type: %s", m.Type.String())
 		}
-		args = append(args, m.Name, m.Value)
-		argCount += 2
 	}
 
 	whereClause := strings.Join(conditions, " AND ")
 
-	clickHouseQuery = fmt.Sprintf(`SELECT %s FROM %s.%s WHERE %s GROUP BY fingerprint`, selectString, databaseName, tableName, whereClause)
+	clickHouseQuery := fmt.Sprintf(`SELECT %s FROM %s.%s WHERE %s GROUP BY fingerprint`, selectString, databaseName, tableName, whereClause)
 
 	return clickHouseQuery, args, nil
 }
 
-func (client *client) getFingerprintsFromClickhouseQuery(ctx context.Context, query string, args []any) (map[uint64][]prompb.Label, error) {
+func (client *client) getFingerprintsFromClickhouseQuery(ctx context.Context, query string, args []any) (map[uint64][]prompb.Label, []string, error) {
 	ctx = client.withClickhousePrometheusContext(ctx, "getFingerprintsFromClickhouseQuery")
 	rows, err := client.telemetryStore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	defer rows.Close()
 
 	fingerprints := make(map[uint64][]prompb.Label)
+	nameSet := make(map[string]struct{})
 
 	var fingerprint uint64
 	var labelString string
 	for rows.Next() {
 		if err = rows.Scan(&fingerprint, &labelString); err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
-		labels, _, err := unmarshalLabels(labelString)
+		labels, metricName, err := unmarshalLabels(labelString)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		fingerprints[fingerprint] = labels
+		if metricName != "" {
+			nameSet[metricName] = struct{}{}
+		}
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return fingerprints, nil
+	metricNames := make([]string, 0, len(nameSet))
+	for name := range nameSet {
+		metricNames = append(metricNames, name)
+	}
+	sort.Strings(metricNames)
+
+	return fingerprints, metricNames, nil
 }
 
-// buildSamplesQuery renders the samples SQL (and args) that fetches data
-// points for the series selected by subQuery.
+// buildSamplesQuery renders the samples SQL for the series selected by
+// subQuery. The metric_name condition exists only for primary-key pruning;
+// the fingerprint filter already selects the right rows.
 //
 // Time bounds are inclusive on both ends because that is Prometheus's
 // storage contract: Select(mint, maxt) returns [start, end] and the engine
@@ -215,25 +245,39 @@ func (client *client) getFingerprintsFromClickhouseQuery(ctx context.Context, qu
 // its own model — toStartOfInterval buckets covering [t, t+step), where a
 // sample at `end` falls in an unrendered bucket and end-exclusive ranges
 // tile exactly across cached time slices.
-func buildSamplesQuery(start int64, end int64, metricName string, subQuery string, args []any) (string, []any) {
-	argCount := len(args)
+func buildSamplesQuery(start int64, end int64, metricNames []string, subQuery string, args []any) (string, []any) {
+	allArgs := make([]any, 0, len(metricNames)+len(args)+2)
+	var conditions []string
+
+	if len(metricNames) > 0 {
+		placeholders := make([]string, len(metricNames))
+		for i, name := range metricNames {
+			placeholders[i] = fmt.Sprintf("$%d", i+1)
+			allArgs = append(allArgs, name)
+		}
+		conditions = append(conditions, fmt.Sprintf("metric_name IN (%s)", strings.Join(placeholders, ", ")))
+	}
+	allArgs = append(allArgs, args...)
+
+	argCount := len(metricNames) + len(args)
+	conditions = append(conditions, fmt.Sprintf("fingerprint GLOBAL IN (%s)", subQuery))
+	conditions = append(conditions, fmt.Sprintf("unix_milli >= $%s AND unix_milli <= $%s", strconv.Itoa(argCount+1), strconv.Itoa(argCount+2)))
+	allArgs = append(allArgs, start, end)
 
 	query := fmt.Sprintf(`
 		SELECT metric_name, fingerprint, unix_milli, value, flags
 			FROM %s.%s
-			WHERE metric_name = $1 AND fingerprint GLOBAL IN (%s) AND unix_milli >= $%s AND unix_milli <= $%s ORDER BY fingerprint, unix_milli;`,
-		databaseName, distributedSamplesV4, subQuery, strconv.Itoa(argCount+2), strconv.Itoa(argCount+3))
+			WHERE %s ORDER BY fingerprint, unix_milli;`,
+		databaseName, distributedSamplesV4, strings.Join(conditions, " AND "))
 	query = strings.TrimSpace(query)
 
-	allArgs := append([]any{metricName}, args...)
-	allArgs = append(allArgs, start, end)
 	return query, allArgs
 }
 
-func (client *client) querySamples(ctx context.Context, start int64, end int64, fingerprints map[uint64][]prompb.Label, metricName string, subQuery string, args []any) ([]*prompb.TimeSeries, error) {
+func (client *client) querySamples(ctx context.Context, start int64, end int64, fingerprints map[uint64][]prompb.Label, metricNames []string, subQuery string, args []any) ([]*prompb.TimeSeries, error) {
 	ctx = client.withClickhousePrometheusContext(ctx, "querySamples")
 
-	query, allArgs := buildSamplesQuery(start, end, metricName, subQuery, args)
+	query, allArgs := buildSamplesQuery(start, end, metricNames, subQuery, args)
 
 	rows, err := client.telemetryStore.ClickhouseDB().Query(ctx, query, allArgs...)
 	if err != nil {
@@ -243,6 +287,7 @@ func (client *client) querySamples(ctx context.Context, start int64, end int64, 
 
 	var res []*prompb.TimeSeries
 	var ts *prompb.TimeSeries
+	var metricName string
 	var fingerprint, prevFingerprint uint64
 	var timestampMs, prevTimestamp int64
 	var value float64
