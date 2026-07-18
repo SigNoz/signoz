@@ -328,6 +328,11 @@ func roundToNonZeroDecimals(val float64, n int) float64 {
 		// Round to n decimal places
 		multiplier := math.Pow(10, float64(n))
 		rounded := math.Round(val*multiplier) / multiplier
+		if math.IsInf(rounded, 0) {
+			// val*multiplier overflowed for near-max float64 values; the
+			// finite input must stay finite or the JSON encoder rejects it.
+			return val
+		}
 
 		// If the result is a whole number, return it as such
 		if rounded == math.Trunc(rounded) {
