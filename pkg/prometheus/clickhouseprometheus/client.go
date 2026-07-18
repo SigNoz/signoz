@@ -141,7 +141,11 @@ func (client *client) queryToClickhouseQuery(_ context.Context, query *prompb.Qu
 	var args []any
 	conditions = append(conditions, fmt.Sprintf("metric_name = $%d", argCount+1))
 	conditions = append(conditions, "temporality IN ['Cumulative', 'Unspecified']")
-	conditions = append(conditions, fmt.Sprintf("unix_milli >= %d AND unix_milli < %d", start, end))
+	// Inclusive upper bound: registration rows are hour-floored by the
+	// exporter, so a series first registered in the hour starting exactly at
+	// `end` would otherwise be invisible while its samples (<= end) are in
+	// range.
+	conditions = append(conditions, fmt.Sprintf("unix_milli >= %d AND unix_milli <= %d", start, end))
 
 	args = append(args, metricName)
 	for _, m := range query.Matchers {
@@ -202,6 +206,15 @@ func (client *client) getFingerprintsFromClickhouseQuery(ctx context.Context, qu
 
 // buildSamplesQuery renders the samples SQL (and args) that fetches data
 // points for the series selected by subQuery.
+//
+// Time bounds are inclusive on both ends because that is Prometheus's
+// storage contract: Select(mint, maxt) returns [start, end] and the engine
+// itself trims each evaluation window to left-open (T-window, T], so the
+// sample at exactly `end` belongs to the last point. This deliberately
+// differs from the query builder's `unix_milli < end`, which is correct for
+// its own model — toStartOfInterval buckets covering [t, t+step), where a
+// sample at `end` falls in an unrendered bucket and end-exclusive ranges
+// tile exactly across cached time slices.
 func buildSamplesQuery(start int64, end int64, metricName string, subQuery string, args []any) (string, []any) {
 	argCount := len(args)
 
