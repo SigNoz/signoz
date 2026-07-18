@@ -349,6 +349,11 @@ func roundToNonZeroDecimals(val float64, n int) float64 {
 	order := math.Floor(math.Log10(absVal))
 	scale := math.Pow(10, -order+float64(n)-1)
 	rounded := math.Round(val*scale) / scale
+	if math.IsNaN(rounded) || math.IsInf(rounded, 0) {
+		// scale overflowed for subnormal values (order below ~-308); the
+		// finite input must stay finite or it serializes as "NaN".
+		return val
+	}
 
 	// Clean up floating point precision
 	str := strconv.FormatFloat(rounded, 'f', -1, 64)
