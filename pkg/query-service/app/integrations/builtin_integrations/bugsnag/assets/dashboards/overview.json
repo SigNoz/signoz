@@ -1,0 +1,1217 @@
+{
+  "id": "overview",
+  "name": "",
+  "title": "Bugsnag — Errors & Crashes",
+  "description": "Error and crash events forwarded from Bugsnag via webhook (collector webhookevent receiver). Volume, unhandled share, affected users, top exceptions, device/OS breakdowns.",
+  "tags": [
+    "bugsnag",
+    "errors",
+    "crashes",
+    "mobile"
+  ],
+  "layout": [
+    {
+      "h": 6,
+      "i": "18983979-e3a5-486a-b514-7dad063f4440",
+      "moved": false,
+      "static": false,
+      "w": 3,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "h": 6,
+      "i": "1725d471-02fd-4b1c-861e-bf5f9a0607ed",
+      "moved": false,
+      "static": false,
+      "w": 3,
+      "x": 3,
+      "y": 0
+    },
+    {
+      "h": 6,
+      "i": "10020874-7f8c-4aa5-9551-464922ed17c5",
+      "moved": false,
+      "static": false,
+      "w": 3,
+      "x": 6,
+      "y": 0
+    },
+    {
+      "h": 6,
+      "i": "03914555-7e5c-43d3-acbb-fe809d1eedb3",
+      "moved": false,
+      "static": false,
+      "w": 3,
+      "x": 9,
+      "y": 0
+    },
+    {
+      "h": 6,
+      "i": "cebf4c7e-0ce5-4165-8993-c5b789985a8b",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 6
+    },
+    {
+      "h": 6,
+      "i": "d2a6c96f-c2fb-4e80-875d-ec24db4585d0",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 6
+    },
+    {
+      "h": 6,
+      "i": "4a033855-2c2f-4b7a-9ace-7902a6ca2ab9",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 12
+    },
+    {
+      "h": 6,
+      "i": "965d189e-42c8-4f32-ba4d-1d9cf5fc8dff",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 12
+    },
+    {
+      "h": 6,
+      "i": "33885bfe-9291-4cf9-9952-d43d886b17e7",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 18
+    },
+    {
+      "h": 8,
+      "i": "22df07f9-5715-4e2c-9bdd-b9529c68c584",
+      "moved": false,
+      "static": false,
+      "w": 12,
+      "x": 0,
+      "y": 24
+    }
+  ],
+  "variables": {},
+  "widgets": [
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "All Bugsnag webhook events received in the selected window.",
+      "fillSpans": false,
+      "id": "18983979-e3a5-486a-b514-7dad063f4440",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "value",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "expression": "count()"
+                }
+              ],
+              "dataSource": "logs",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "service.name = 'bugsnag'"
+              },
+              "filters": {
+                "items": [
+                  {
+                    "id": "aa03aa1e-d64a-4f7d-85e6-ca7ee06c2ff4",
+                    "key": {
+                      "dataType": "string",
+                      "id": "service.name--string--resource--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "service.name",
+                      "type": "resource"
+                    },
+                    "op": "=",
+                    "value": "bugsnag"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [],
+              "having": {
+                "expression": ""
+              },
+              "legend": "",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "8485ac0b-c4d2-4d21-95bf-ab95fa8de3d3",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Total Error Events",
+      "yAxisUnit": "short"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "Share of events flagged unhandled by Bugsnag - the headline stability signal.",
+      "fillSpans": false,
+      "id": "1725d471-02fd-4b1c-861e-bf5f9a0607ed",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "value",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "expression": "count()"
+                }
+              ],
+              "dataSource": "logs",
+              "disabled": true,
+              "expression": "A",
+              "filter": {
+                "expression": "service.name = 'bugsnag' AND bugsnag.error.unhandled = true"
+              },
+              "filters": {
+                "items": [
+                  {
+                    "id": "812f9b15-ed3c-47ce-878f-340eea192d54",
+                    "key": {
+                      "dataType": "string",
+                      "id": "service.name--string--resource--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "service.name",
+                      "type": "resource"
+                    },
+                    "op": "=",
+                    "value": "bugsnag"
+                  },
+                  {
+                    "id": "7e36579b-430d-44f5-8e12-38171220bf9f",
+                    "key": {
+                      "dataType": "bool",
+                      "id": "bugsnag.error.unhandled--bool--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "bugsnag.error.unhandled",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "true"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [],
+              "having": {
+                "expression": ""
+              },
+              "legend": "",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A"
+            },
+            {
+              "aggregations": [
+                {
+                  "expression": "count()"
+                }
+              ],
+              "dataSource": "logs",
+              "disabled": true,
+              "expression": "B",
+              "filter": {
+                "expression": "service.name = 'bugsnag'"
+              },
+              "filters": {
+                "items": [
+                  {
+                    "id": "6a14e30b-ff90-4506-b969-17f98d3b14aa",
+                    "key": {
+                      "dataType": "string",
+                      "id": "service.name--string--resource--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "service.name",
+                      "type": "resource"
+                    },
+                    "op": "=",
+                    "value": "bugsnag"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [],
+              "having": {
+                "expression": ""
+              },
+              "legend": "",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "B"
+            }
+          ],
+          "queryFormulas": [
+            {
+              "disabled": false,
+              "expression": "A/B*100",
+              "legend": "unhandled %",
+              "queryName": "F1"
+            }
+          ]
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "caf0c9fd-a13e-4894-8749-7366c4382ddf",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Unhandled Crashes %",
+      "yAxisUnit": "percent"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "Distinct users that hit an error (user.id from Bugsnag payloads).",
+      "fillSpans": false,
+      "id": "10020874-7f8c-4aa5-9551-464922ed17c5",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "value",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "expression": "count_distinct(user.id)"
+                }
+              ],
+              "dataSource": "logs",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "service.name = 'bugsnag'"
+              },
+              "filters": {
+                "items": [
+                  {
+                    "id": "fdeaa566-f3de-4a9a-b301-aac0df548e1a",
+                    "key": {
+                      "dataType": "string",
+                      "id": "service.name--string--resource--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "service.name",
+                      "type": "resource"
+                    },
+                    "op": "=",
+                    "value": "bugsnag"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [],
+              "having": {
+                "expression": ""
+              },
+              "legend": "",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "100e6285-8835-4f70-83cb-14c560091dc5",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Affected Users",
+      "yAxisUnit": "short"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "Distinct app versions producing errors in the window.",
+      "fillSpans": false,
+      "id": "03914555-7e5c-43d3-acbb-fe809d1eedb3",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "value",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "expression": "count_distinct(app.version)"
+                }
+              ],
+              "dataSource": "logs",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "service.name = 'bugsnag'"
+              },
+              "filters": {
+                "items": [
+                  {
+                    "id": "ee6233e4-0506-4d23-88e8-5c0c91926443",
+                    "key": {
+                      "dataType": "string",
+                      "id": "service.name--string--resource--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "service.name",
+                      "type": "resource"
+                    },
+                    "op": "=",
+                    "value": "bugsnag"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [],
+              "having": {
+                "expression": ""
+              },
+              "legend": "",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "690a8f83-afc5-4170-9022-89d7c2ff05e3",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "App Versions Reporting",
+      "yAxisUnit": "short"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "Event volume over time, split by mapped severity.",
+      "fillSpans": false,
+      "id": "cebf4c7e-0ce5-4165-8993-c5b789985a8b",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "expression": "count()"
+                }
+              ],
+              "dataSource": "logs",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "service.name = 'bugsnag'"
+              },
+              "filters": {
+                "items": [
+                  {
+                    "id": "9cdbf646-f59e-4422-aca2-5b9e5c06fbc9",
+                    "key": {
+                      "dataType": "string",
+                      "id": "service.name--string--resource--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "service.name",
+                      "type": "resource"
+                    },
+                    "op": "=",
+                    "value": "bugsnag"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "severity_text--string----true",
+                  "isColumn": true,
+                  "isJSON": false,
+                  "key": "severity_text",
+                  "type": ""
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{severity_text}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "aa91752c-0b2f-4fb7-bc99-0aa2992564a4",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Error Events by Severity",
+      "yAxisUnit": "short"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "Event volume over time per app version - release regressions show up here.",
+      "fillSpans": false,
+      "id": "d2a6c96f-c2fb-4e80-875d-ec24db4585d0",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "expression": "count()"
+                }
+              ],
+              "dataSource": "logs",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "service.name = 'bugsnag'"
+              },
+              "filters": {
+                "items": [
+                  {
+                    "id": "7bd0c0a4-1717-423b-af31-16a13a71946d",
+                    "key": {
+                      "dataType": "string",
+                      "id": "service.name--string--resource--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "service.name",
+                      "type": "resource"
+                    },
+                    "op": "=",
+                    "value": "bugsnag"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "app.version--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "app.version",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{app.version}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "15c8826e-30ab-4ff0-becc-e5838074d142",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Error Events by App Version",
+      "yAxisUnit": "short"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "Exception classes ranked by event count.",
+      "fillSpans": false,
+      "id": "4a033855-2c2f-4b7a-9ace-7902a6ca2ab9",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "table",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "expression": "count()"
+                }
+              ],
+              "dataSource": "logs",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "service.name = 'bugsnag'"
+              },
+              "filters": {
+                "items": [
+                  {
+                    "id": "f4715113-d1b1-4ba8-a28a-3d23b0c3bb7c",
+                    "key": {
+                      "dataType": "string",
+                      "id": "service.name--string--resource--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "service.name",
+                      "type": "resource"
+                    },
+                    "op": "=",
+                    "value": "bugsnag"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "exception.type--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "exception.type",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "",
+              "limit": 10,
+              "orderBy": [
+                {
+                  "columnName": "count()",
+                  "order": "desc"
+                }
+              ],
+              "queryName": "A"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "e4063f67-7081-4ccd-9c55-cf7a2584b605",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Top Exception Classes",
+      "yAxisUnit": "short"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "Event count per OS name and version.",
+      "fillSpans": false,
+      "id": "965d189e-42c8-4f32-ba4d-1d9cf5fc8dff",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "table",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "expression": "count()"
+                }
+              ],
+              "dataSource": "logs",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "service.name = 'bugsnag'"
+              },
+              "filters": {
+                "items": [
+                  {
+                    "id": "7ef050db-a2e3-4049-92ae-283f29af9273",
+                    "key": {
+                      "dataType": "string",
+                      "id": "service.name--string--resource--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "service.name",
+                      "type": "resource"
+                    },
+                    "op": "=",
+                    "value": "bugsnag"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "os.name--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "os.name",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "os.version--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "os.version",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "",
+              "limit": 10,
+              "orderBy": [
+                {
+                  "columnName": "count()",
+                  "order": "desc"
+                }
+              ],
+              "queryName": "A"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "b38fbf16-023c-482f-8ee8-c2afeac86c70",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Errors by OS Version",
+      "yAxisUnit": "short"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "Event count per device model.",
+      "fillSpans": false,
+      "id": "33885bfe-9291-4cf9-9952-d43d886b17e7",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "table",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "expression": "count()"
+                }
+              ],
+              "dataSource": "logs",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "service.name = 'bugsnag'"
+              },
+              "filters": {
+                "items": [
+                  {
+                    "id": "9c1171f2-527c-4909-b82b-71a9205e0485",
+                    "key": {
+                      "dataType": "string",
+                      "id": "service.name--string--resource--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "service.name",
+                      "type": "resource"
+                    },
+                    "op": "=",
+                    "value": "bugsnag"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "device.model.name--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "device.model.name",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "",
+              "limit": 10,
+              "orderBy": [
+                {
+                  "columnName": "count()",
+                  "order": "desc"
+                }
+              ],
+              "queryName": "A"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "5de31e85-8832-459b-9bcb-7b828b3e8b76",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Errors by Device Model",
+      "yAxisUnit": "short"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "Latest Bugsnag events - open one for full payload and the bugsnag.error.url deep link.",
+      "fillSpans": false,
+      "id": "22df07f9-5715-4e2c-9bdd-b9529c68c584",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "list",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [],
+              "dataSource": "logs",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "service.name = 'bugsnag'"
+              },
+              "filters": {
+                "items": [
+                  {
+                    "id": "604ffbc3-0c1e-401e-8318-995c352b1d3c",
+                    "key": {
+                      "dataType": "string",
+                      "id": "service.name--string--resource--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "service.name",
+                      "type": "resource"
+                    },
+                    "op": "=",
+                    "value": "bugsnag"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [],
+              "having": {
+                "expression": ""
+              },
+              "legend": "",
+              "limit": null,
+              "orderBy": [
+                {
+                  "columnName": "timestamp",
+                  "order": "desc"
+                }
+              ],
+              "queryName": "A"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "50b40cd4-d8a8-4eb9-a3f0-f9d9518095b1",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Recent Error Events",
+      "yAxisUnit": "short"
+    }
+  ],
+  "version": "v5"
+}
