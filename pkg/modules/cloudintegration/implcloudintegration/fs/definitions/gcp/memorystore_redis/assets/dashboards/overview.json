@@ -96,7 +96,7 @@
       "static": false,
       "w": 6,
       "x": 0,
-      "y": 20
+      "y": 38
     },
     {
       "h": 6,
@@ -105,7 +105,7 @@
       "static": false,
       "w": 6,
       "x": 6,
-      "y": 20
+      "y": 38
     },
     {
       "h": 6,
@@ -114,7 +114,7 @@
       "static": false,
       "w": 6,
       "x": 0,
-      "y": 26
+      "y": 44
     },
     {
       "h": 6,
@@ -123,7 +123,7 @@
       "static": false,
       "w": 6,
       "x": 6,
-      "y": 26
+      "y": 44
     }
   ],
   "panelMap": {
@@ -137,7 +137,7 @@
           "static": false,
           "w": 6,
           "x": 0,
-          "y": 20
+          "y": 38
         },
         {
           "h": 6,
@@ -146,7 +146,7 @@
           "static": false,
           "w": 6,
           "x": 6,
-          "y": 20
+          "y": 38
         },
         {
           "h": 6,
@@ -155,7 +155,7 @@
           "static": false,
           "w": 6,
           "x": 0,
-          "y": 26
+          "y": 44
         },
         {
           "h": 6,
@@ -164,7 +164,7 @@
           "static": false,
           "w": 6,
           "x": 6,
-          "y": 26
+          "y": 44
         }
       ]
     },
@@ -176,7 +176,7 @@
           "i": "cacab28d-fb1a-433a-9f07-6cbbea58a596",
           "moved": false,
           "static": false,
-          "w": 1,
+          "w": 2,
           "x": 0,
           "y": 1
         },
@@ -186,7 +186,7 @@
           "moved": false,
           "static": false,
           "w": 5,
-          "x": 1,
+          "x": 2,
           "y": 1
         },
         {
@@ -194,8 +194,8 @@
           "i": "6d77f2b5-587e-4201-85ba-0f776ec643c4",
           "moved": false,
           "static": false,
-          "w": 6,
-          "x": 6,
+          "w": 5,
+          "x": 7,
           "y": 1
         },
         {
@@ -238,7 +238,7 @@
     }
   },
   "tags": [],
-  "title": "GCP Memorystory Redis overview",
+  "title": "Signoz GCP Memorystory Redis overview",
   "uploadedGrafana": false,
   "uuid": "019f6016-1c55-7f29-adb2-20ab94c5d94e",
   "variables": {
@@ -843,7 +843,7 @@
       },
       "customLegendColors": {},
       "decimalPrecision": 2,
-      "description": "CPU-seconds consumed by the Redis server main thread, broken down by system/user space and parent/child relationship.",
+      "description": "% CPU utilisation calculated by rate at which CPU-seconds are consumed by the Redis server main thread, broken down by system/user space.",
       "fillMode": "none",
       "fillSpans": false,
       "id": "5d2e13cb-4a6e-4713-b5a3-4f38b2c43a18",
@@ -869,10 +869,10 @@
                 }
               ],
               "dataSource": "metrics",
-              "disabled": false,
+              "disabled": true,
               "expression": "A",
               "filter": {
-                "expression": "project_id = $project_id AND instance_id in $instance_id AND gcp.resource_type = 'redis_instance' "
+                "expression": "project_id = $project_id AND instance_id in $instance_id AND gcp.resource_type = 'redis_instance'"
               },
               "functions": [],
               "groupBy": [
@@ -909,10 +909,17 @@
               "orderBy": [],
               "queryName": "A",
               "source": "",
-              "stepInterval": null
+              "stepInterval": 0
             }
           ],
-          "queryFormulas": [],
+          "queryFormulas": [
+            {
+              "disabled": false,
+              "expression": "(A/60)*100",
+              "legend": "{{node_id}}/{{role}}/{{space}}",
+              "queryName": "F1"
+            }
+          ],
           "queryTraceOperator": []
         },
         "clickhouse_sql": [
@@ -923,7 +930,7 @@
             "query": ""
           }
         ],
-        "id": "c7c9b5e8-5e75-4445-b4b9-65ce8994f4e4",
+        "id": "465172e6-d504-49fc-8757-f23e11fe3943",
         "promql": [
           {
             "disabled": false,
@@ -994,8 +1001,8 @@
       "stackedBarChart": false,
       "thresholds": [],
       "timePreferance": "GLOBAL_TIME",
-      "title": "Main Thread CPU seconds",
-      "yAxisUnit": "{count}"
+      "title": "% Main Thread CPU Utilisation",
+      "yAxisUnit": "%"
     },
     {
       "bucketCount": 30,
