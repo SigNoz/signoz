@@ -28,10 +28,12 @@ from fixtures.traces import (
     TracesLink,
     TracesRefType,
     TracesStatusCode,
+    trace_noise,
 )
 
-# The clean/corrupt `trace_noise` factor lives in conftest.py (shared across the
-# traces querier tests).
+# The clean/corrupt `trace_noise` factor (fixtures/traces.py) is applied per test via
+# @pytest.mark.parametrize("noise", ["clean", "corrupt"]) so each test doubles as a
+# collision-robustness check.
 
 
 def _query_window(now: datetime) -> tuple[int, int]:
@@ -87,12 +89,13 @@ def _expected_list_row(span: Traces) -> dict[str, Any]:
 # ============================================================================
 
 
+@pytest.mark.parametrize("noise", ["clean", "corrupt"])
 def test_traces_list(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    trace_noise: tuple[dict[str, Any], dict[str, Any]],
+    noise: str,
 ) -> None:
     """
     Setup:
@@ -108,7 +111,7 @@ def test_traces_list(
     Under the corrupt variant the projected columns still resolve to the real
     intrinsic/calculated/resource values (never the colliding attributes).
     """
-    extra_attrs, extra_resources = trace_noise
+    extra_attrs, extra_resources = trace_noise(noise)
     http_service_trace_id = TraceIdGenerator.trace_id()
     http_service_span_id = TraceIdGenerator.span_id()
     http_service_db_span_id = TraceIdGenerator.span_id()
@@ -277,12 +280,13 @@ def _verify_events_links_skip(rows: list[dict], traces: list[Traces]) -> None:
         ),
     ],
 )
+@pytest.mark.parametrize("noise", ["clean", "corrupt"])
 def test_traces_list_select_fields(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    trace_noise: tuple[dict[str, Any], dict[str, Any]],
+    noise: str,
     select_fields: list[TelemetryFieldKey],
     expected_keys: list[str],
     verify_values: Callable[[list[dict], list[Traces]], None],
@@ -300,7 +304,7 @@ def test_traces_list_select_fields(
        and span_id.
     The returned key set is invariant to the corrupt-variant collisions.
     """
-    extra_attrs, extra_resources = trace_noise
+    extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
     parent_trace_id = TraceIdGenerator.trace_id()
@@ -397,12 +401,13 @@ def test_traces_list_select_fields(
         pytest.param(TelemetryFieldKey("does_not_exist"), "does_not_exist", lambda s: None, type(None), id="nonexistent_attr_bare"),
     ],
 )
+@pytest.mark.parametrize("noise", ["clean", "corrupt"])
 def test_traces_list_select_field_types(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    trace_noise: tuple[dict[str, Any], dict[str, Any]],
+    noise: str,
     select_field: TelemetryFieldKey,
     key: str,
     expected: Callable[[Traces], Any],
@@ -419,7 +424,7 @@ def test_traces_list_select_field_types(
     projects as null. Under the corrupt variant the same-named colliding
     attributes must not shadow the intrinsic/calculated columns.
     """
-    extra_attrs, extra_resources = trace_noise
+    extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(microsecond=0)
     span = Traces(
         timestamp=now - timedelta(seconds=1),
@@ -458,12 +463,13 @@ def test_traces_list_select_field_types(
         assert isinstance(data[key], expected_type)
 
 
+@pytest.mark.parametrize("noise", ["clean", "corrupt"])
 def test_traces_list_select_field_dedup(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    trace_noise: tuple[dict[str, Any], dict[str, Any]],
+    noise: str,
 ) -> None:
     """
     Setup:
@@ -472,7 +478,7 @@ def test_traces_list_select_field_dedup(
     Tests:
     Selecting the same field twice collapses to a single key in the response.
     """
-    extra_attrs, extra_resources = trace_noise
+    extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(microsecond=0)
     span = Traces(
         timestamp=now - timedelta(seconds=1),
@@ -566,12 +572,13 @@ def test_traces_list_select_calculated_field_collision(
     assert rows[0]["data"][projected_key] == expected(span)
 
 
+@pytest.mark.parametrize("noise", ["clean", "corrupt"])
 def test_traces_list_response_shape_values(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    trace_noise: tuple[dict[str, Any], dict[str, Any]],
+    noise: str,
 ) -> None:
     """
     Setup:
@@ -586,7 +593,7 @@ def test_traces_list_response_shape_values(
     `attributes` map preserves string / number / bool types. Under the corrupt
     variant these columns keep winning over the same-named colliding attributes.
     """
-    extra_attrs, extra_resources = trace_noise
+    extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(microsecond=0)
     trace_id = TraceIdGenerator.trace_id()
 
@@ -664,12 +671,13 @@ def test_traces_list_response_shape_values(
         pytest.param(TelemetryFieldKey("span.priority:number"), lambda m: m["priority"], id="number_span_attribute"),
     ],
 )
+@pytest.mark.parametrize("noise", ["clean", "corrupt"])
 def test_traces_list_ordering(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    trace_noise: tuple[dict[str, Any], dict[str, Any]],
+    noise: str,
     order_key: TelemetryFieldKey,
     sort_value: Callable[[dict[str, Any]], Any],
     direction: str,
@@ -685,7 +693,7 @@ def test_traces_list_ordering(
     span attribute all sort correctly in both directions — including when
     same-named corrupt attributes collide with those columns.
     """
-    extra_attrs, extra_resources = trace_noise
+    extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(microsecond=0)
     trace_id = TraceIdGenerator.trace_id()
     metas: list[dict[str, Any]] = [
@@ -736,12 +744,13 @@ def test_traces_list_ordering(
     assert [row["data"]["marker"] for row in rows] == expected
 
 
+@pytest.mark.parametrize("noise", ["clean", "corrupt"])
 def test_traces_list_order_multi_key_tiebreak(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    trace_noise: tuple[dict[str, Any], dict[str, Any]],
+    noise: str,
 ) -> None:
     """
     Setup:
@@ -751,7 +760,7 @@ def test_traces_list_order_multi_key_tiebreak(
     A secondary order key (duration_nano) breaks the timestamp tie
     deterministically, and flipping its direction flips the tie-break.
     """
-    extra_attrs, extra_resources = trace_noise
+    extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(microsecond=0)
     trace_id = TraceIdGenerator.trace_id()
     shared_ts = now - timedelta(seconds=5)
@@ -795,12 +804,13 @@ def test_traces_list_order_multi_key_tiebreak(
     assert query("asc") == [by_duration_secs[1], by_duration_secs[2], by_duration_secs[3]]
 
 
+@pytest.mark.parametrize("noise", ["clean", "corrupt"])
 def test_traces_list_no_default_order(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    trace_noise: tuple[dict[str, Any], dict[str, Any]],
+    noise: str,
 ) -> None:
     """
     Setup:
@@ -810,7 +820,7 @@ def test_traces_list_no_default_order(
     A raw list query with no order clause succeeds and returns every matching
     span (the builder adds no default ORDER BY, so only membership is pinned).
     """
-    extra_attrs, extra_resources = trace_noise
+    extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(microsecond=0)
     trace_id = TraceIdGenerator.trace_id()
     spans = [
@@ -859,12 +869,13 @@ def test_traces_list_no_default_order(
         pytest.param(2, 10, id="offset_past_end"),
     ],
 )
+@pytest.mark.parametrize("noise", ["clean", "corrupt"])
 def test_traces_list_pagination(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    trace_noise: tuple[dict[str, Any], dict[str, Any]],
+    noise: str,
     limit: int | None,
     offset: int,
 ) -> None:
@@ -876,7 +887,7 @@ def test_traces_list_pagination(
     Ordered by timestamp desc, limit caps the row count and offset pages
     through the result; an offset past the end returns no rows.
     """
-    extra_attrs, extra_resources = trace_noise
+    extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(microsecond=0)
     trace_id = TraceIdGenerator.trace_id()
     spans = [
@@ -927,12 +938,13 @@ def test_traces_list_pagination(
 # ============================================================================
 
 
+@pytest.mark.parametrize("noise", ["clean", "corrupt"])
 def test_traces_list_time_boundaries(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    trace_noise: tuple[dict[str, Any], dict[str, Any]],
+    noise: str,
 ) -> None:
     """
     Setup:
@@ -943,7 +955,7 @@ def test_traces_list_time_boundaries(
     The query window is [start, end): the span at start is included and the
     span at end is excluded.
     """
-    extra_attrs, extra_resources = trace_noise
+    extra_attrs, extra_resources = trace_noise(noise)
     start_dt = datetime.now(tz=UTC).replace(microsecond=0) - timedelta(seconds=30)
     end_dt = start_dt + timedelta(seconds=10)
     mid_dt = start_dt + timedelta(seconds=5)
@@ -974,12 +986,13 @@ def test_traces_list_time_boundaries(
     assert end_span.span_id not in returned
 
 
+@pytest.mark.parametrize("noise", ["clean", "corrupt"])
 def test_traces_list_empty_result(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    trace_noise: tuple[dict[str, Any], dict[str, Any]],
+    noise: str,
 ) -> None:
     """
     Setup:
@@ -989,7 +1002,7 @@ def test_traces_list_empty_result(
     A filter matching no span, and a time window that excludes the span, both
     return zero rows (rows is null, surfaced as an empty list).
     """
-    extra_attrs, extra_resources = trace_noise
+    extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_traces(
         [
@@ -1037,13 +1050,14 @@ def test_traces_list_empty_result(
 # ============================================================================
 
 
+@pytest.mark.parametrize("noise", ["clean", "corrupt"])
 def test_traces_list_span_scope(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
     insert_top_level_operations: Callable[[list[tuple[str, str]]], None],
-    trace_noise: tuple[dict[str, Any], dict[str, Any]],
+    noise: str,
 ) -> None:
     """
     Setup:
@@ -1055,7 +1069,7 @@ def test_traces_list_span_scope(
     2. isEntryPoint = 'true' returns only the non-root span whose operation is
        registered in top_level_operations.
     """
-    extra_attrs, extra_resources = trace_noise
+    extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(microsecond=0)
     trace_id = TraceIdGenerator.trace_id()
     root_span_id = TraceIdGenerator.span_id()

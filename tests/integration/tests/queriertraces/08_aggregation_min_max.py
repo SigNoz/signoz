@@ -1,7 +1,8 @@
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
-from typing import Any
+
+import pytest
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
@@ -13,7 +14,7 @@ from fixtures.querier import (
     index_series_by_label,
     make_query_request,
 )
-from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCode
+from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCode, trace_noise
 
 # min()/max() aggregation expressions over duration_nano, grouped by service.name
 # (the time_series counterpart of the scalar min/max in 02_aggregation.py). Under
@@ -21,12 +22,13 @@ from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCo
 # not divert the aggregation off the numeric intrinsic column.
 
 
+@pytest.mark.parametrize("noise", ["clean", "corrupt"])
 def test_traces_aggregate_min_max(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    trace_noise: tuple[dict[str, Any], dict[str, Any]],
+    noise: str,
 ) -> None:
     """
     Setup:
@@ -36,7 +38,7 @@ def test_traces_aggregate_min_max(
     max(duration_nano) / min(duration_nano) grouped by service.name return each
     service's duration extremes, derived from the inserted spans.
     """
-    extra_attrs, extra_resources = trace_noise
+    extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     specs = [
         ("http-service", 3, "POST /x", TracesKind.SPAN_KIND_SERVER),

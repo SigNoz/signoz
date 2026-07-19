@@ -1,7 +1,8 @@
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
-from typing import Any
+
+import pytest
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
@@ -13,7 +14,7 @@ from fixtures.querier import (
     TelemetryFieldKey,
     make_query_request,
 )
-from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCode
+from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCode, trace_noise
 
 # The trace_id filter drives a trace_summary-backed time-range optimization
 # (short-circuit outside the trace's window, no duplicate spans across the
@@ -24,12 +25,13 @@ from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCo
 OUTSIDE_RANGE_MSG = "lies outside the selected time range"
 
 
+@pytest.mark.parametrize("noise", ["clean", "corrupt"])
 def test_traces_list_filter_by_trace_id(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    trace_noise: tuple[dict[str, Any], dict[str, Any]],
+    noise: str,
 ) -> None:
     """
     Setup:
@@ -42,7 +44,7 @@ def test_traces_list_filter_by_trace_id(
     3. A window that does not contain the trace returns nothing and warns that it
        lies outside the selected time range.
     """
-    extra_attrs, extra_resources = trace_noise
+    extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     resources = {"deployment.environment": "production", "service.name": "trace-filter-service", "cloud.provider": "integration", **extra_resources}
 
@@ -119,12 +121,13 @@ def test_traces_list_filter_by_trace_id(
     assert any(OUTSIDE_RANGE_MSG in m for m in past_warnings)
 
 
+@pytest.mark.parametrize("noise", ["clean", "corrupt"])
 def test_traces_aggregation_filter_by_trace_id(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    trace_noise: tuple[dict[str, Any], dict[str, Any]],
+    noise: str,
 ) -> None:
     """
     Setup:
@@ -136,7 +139,7 @@ def test_traces_aggregation_filter_by_trace_id(
     3. A trace_id with no row in trace_summary short-circuits to empty with no
        outside-range warning (trace_summary is authoritative).
     """
-    extra_attrs, extra_resources = trace_noise
+    extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     resources = {"deployment.environment": "production", "service.name": "traces-agg-filter-service", "cloud.provider": "integration", **extra_resources}
 

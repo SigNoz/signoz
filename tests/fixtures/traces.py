@@ -969,12 +969,11 @@ CORRUPT_RESOURCES: dict[str, Any] = {
 }
 
 
-@pytest.fixture(name="trace_noise", params=["clean", "corrupt"])
-def trace_noise(request: pytest.FixtureRequest) -> tuple[dict[str, Any], dict[str, Any]]:
-    """(extra_attributes, extra_resources) merged into every span a traces test
-    seeds. The 'clean' variant adds nothing; the 'corrupt' variant injects
-    colliding intrinsic/calculated field names and an attribute/resource
-    collision so each test doubles as a collision-robustness check."""
-    if request.param == "clean":
+def trace_noise(variant: str) -> tuple[dict[str, Any], dict[str, Any]]:
+    """(extra_attributes, extra_resources) to merge into every span a traces test seeds, keyed by
+    variant. "clean" adds nothing; "corrupt" injects colliding intrinsic/calculated field names and
+    an attribute/resource collision so a test parametrized over both doubles as a
+    collision-robustness check. Returns fresh dicts so callers can mutate them safely."""
+    if variant == "clean":
         return {}, {}
     return dict(CORRUPT_ATTRIBUTES), dict(CORRUPT_RESOURCES)

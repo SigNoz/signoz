@@ -25,10 +25,10 @@ from fixtures.querier import (
     make_query_request,
     make_scalar_query_request,
 )
-from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCode
+from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCode, trace_noise
 
-# The clean/corrupt `trace_noise` factor lives in conftest.py (shared across the
-# traces querier tests). Aggregating duration_nano, counting on the calculated
+# The clean/corrupt `trace_noise` factor (fixtures/traces.py) is applied per test via
+# @pytest.mark.parametrize("noise", …). Aggregating duration_nano, counting on the calculated
 # response_status_code and grouping by service.name must all keep resolving to
 # the real intrinsic/calculated/resource columns even when same-named colliding
 # attributes are present, so the corrupt variant yields identical values.
@@ -133,12 +133,13 @@ def test_traces_aggregate_order_by_count(
 # ============================================================================
 
 
+@pytest.mark.parametrize("noise", ["clean", "corrupt"])
 def test_traces_aggregate_functions(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    trace_noise: tuple[dict[str, Any], dict[str, Any]],
+    noise: str,
 ) -> None:
     """
     Setup:
@@ -153,7 +154,7 @@ def test_traces_aggregate_functions(
     derived from the inserted spans. Under the corrupt variant the same-named
     colliding attributes must not change any of these.
     """
-    extra_attrs, extra_resources = trace_noise
+    extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
     def mk(service: str, dur_s: float, status: TracesStatusCode, rsc: str, latency: float) -> Traces:
@@ -272,12 +273,13 @@ def test_traces_aggregate_calculated_range_countif(
 # ============================================================================
 
 
+@pytest.mark.parametrize("noise", ["clean", "corrupt"])
 def test_traces_aggregate_having(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    trace_noise: tuple[dict[str, Any], dict[str, Any]],
+    noise: str,
 ) -> None:
     """
     Setup:
@@ -287,7 +289,7 @@ def test_traces_aggregate_having(
     A grouped scalar query with `having count() > 2` returns only the groups
     whose count qualifies (svc-a), derived from the inserted spans.
     """
-    extra_attrs, extra_resources = trace_noise
+    extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     counts = {"svc-a": 3, "svc-b": 1}
     spans = [
@@ -338,12 +340,13 @@ def test_traces_aggregate_having(
         pytest.param(10, "desc", id="limit_exceeds_group_count"),
     ],
 )
+@pytest.mark.parametrize("noise", ["clean", "corrupt"])
 def test_traces_aggregate_time_series_limit(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    trace_noise: tuple[dict[str, Any], dict[str, Any]],
+    noise: str,
     limit: int,
     direction: str,
 ) -> None:
@@ -357,7 +360,7 @@ def test_traces_aggregate_time_series_limit(
     summing to that service's span count. Under the corrupt variant the grouping
     (resource.service.name) and count are unaffected by the colliding attributes.
     """
-    extra_attrs, extra_resources = trace_noise
+    extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     counts = {"svc-a": 5, "svc-b": 3, "svc-c": 7, "svc-d": 1}
     spans = [

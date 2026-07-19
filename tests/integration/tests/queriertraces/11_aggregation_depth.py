@@ -1,7 +1,6 @@
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
-from typing import Any
 
 import numpy as np
 import pytest
@@ -16,7 +15,7 @@ from fixtures.querier import (
     get_scalar_table_data,
     make_scalar_query_request,
 )
-from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCode
+from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCode, trace_noise
 
 # Aggregation depth for traces, beyond 02_aggregation.py: the higher percentiles
 # (p25/p95/p99, vs only p50/p90 there), grouping by a non-resource key (an intrinsic
@@ -27,12 +26,13 @@ from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCo
 # intrinsic column.
 
 
+@pytest.mark.parametrize("noise", ["clean", "corrupt"])
 def test_traces_aggregate_percentiles(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    trace_noise: tuple[dict[str, Any], dict[str, Any]],
+    noise: str,
 ) -> None:
     """
     Setup:
@@ -42,7 +42,7 @@ def test_traces_aggregate_percentiles(
     p25 / p50 / p90 / p95 / p99 over duration_nano match numpy's linear-interpolated
     percentiles (ClickHouse quantile() uses the same interpolation for small inputs).
     """
-    extra_attrs, extra_resources = trace_noise
+    extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     durations_s = [1, 2, 3, 4, 5]
     spans = [
@@ -85,12 +85,13 @@ def test_traces_aggregate_percentiles(
         pytest.param("endpoint", {"/a": 2, "/b": 1}, id="string_span_attr"),
     ],
 )
+@pytest.mark.parametrize("noise", ["clean", "corrupt"])
 def test_traces_aggregate_group_by_non_resource(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    trace_noise: tuple[dict[str, Any], dict[str, Any]],
+    noise: str,
     group_key: str,
     expected: dict[str, int],
 ) -> None:
@@ -103,7 +104,7 @@ def test_traces_aggregate_group_by_non_resource(
     not just a resource key — buckets by the real value; under the corrupt variant a
     same-named colliding attribute must not divert the grouping.
     """
-    extra_attrs, extra_resources = trace_noise
+    extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     specs = [("op-a", "/a"), ("op-a", "/a"), ("op-b", "/b")]
     spans = [
@@ -135,12 +136,13 @@ def test_traces_aggregate_group_by_non_resource(
     assert {row[0]: row[-1] for row in data} == expected
 
 
+@pytest.mark.parametrize("noise", ["clean", "corrupt"])
 def test_traces_aggregate_multi_group_by(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    trace_noise: tuple[dict[str, Any], dict[str, Any]],
+    noise: str,
 ) -> None:
     """
     Setup:
@@ -151,7 +153,7 @@ def test_traces_aggregate_multi_group_by(
     Grouping by two keys (a resource key and an intrinsic column) returns one row per
     present pair with the correct per-pair count.
     """
-    extra_attrs, extra_resources = trace_noise
+    extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     pair_counts = {("svc-1", "op-a"): 2, ("svc-1", "op-b"): 1, ("svc-2", "op-a"): 1}
     spans = [
@@ -196,12 +198,13 @@ def test_traces_aggregate_multi_group_by(
         pytest.param("count() >= 1 AND sum(duration_nano) < 4000000000", {"svc-a"}, id="compound_and"),
     ],
 )
+@pytest.mark.parametrize("noise", ["clean", "corrupt"])
 def test_traces_aggregate_having_breadth(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    trace_noise: tuple[dict[str, Any], dict[str, Any]],
+    noise: str,
     having_expression: str,
     expected_services: set[str],
 ) -> None:
@@ -214,7 +217,7 @@ def test_traces_aggregate_having_breadth(
     each keep only the qualifying groups — extending the count()-only HAVING in
     02_aggregation.py.
     """
-    extra_attrs, extra_resources = trace_noise
+    extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     specs = [("svc-a", 1), ("svc-a", 1), ("svc-a", 1), ("svc-b", 5)]
     spans = [

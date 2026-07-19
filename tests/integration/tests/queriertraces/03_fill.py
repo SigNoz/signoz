@@ -1,7 +1,6 @@
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
-from typing import Any
 
 import pytest
 
@@ -19,12 +18,12 @@ from fixtures.querier import (
     index_series_by_label,
     make_query_request,
 )
-from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCode
+from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCode, trace_noise
 
 # Each fill test runs under two mechanisms that both 0-fill empty time buckets:
 #   - "fillGaps": the `fillGaps` format option (fills the query-window timeline)
 #   - "fillZero": the `fillZero` function (applied to the query / formula series)
-# and under the shared clean/corrupt `trace_noise` factor (conftest.py): count()
+# and under the shared clean/corrupt `trace_noise` factor (fixtures/traces.py): count()
 # and group-by(resource.service.name) buckets must be identical whether or not
 # same-named colliding attributes are present.
 FILL_MODES = ["fillGaps", "fillZero"]
@@ -36,12 +35,13 @@ def _bucket_ms(span: Traces) -> int:
 
 
 @pytest.mark.parametrize("fill_mode", FILL_MODES)
+@pytest.mark.parametrize("noise", ["clean", "corrupt"])
 def test_traces_fill_plain(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    trace_noise: tuple[dict[str, Any], dict[str, Any]],
+    noise: str,
     fill_mode: str,
 ) -> None:
     """
@@ -52,7 +52,7 @@ def test_traces_fill_plain(
     fillGaps / fillZero over count() with no group by leave the single populated
     bucket at the span count and every other bucket in the window at 0.
     """
-    extra_attrs, extra_resources = trace_noise
+    extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     span = Traces(
         timestamp=now - timedelta(minutes=3),
@@ -88,12 +88,13 @@ def test_traces_fill_plain(
 
 
 @pytest.mark.parametrize("fill_mode", FILL_MODES)
+@pytest.mark.parametrize("noise", ["clean", "corrupt"])
 def test_traces_fill_group_by(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    trace_noise: tuple[dict[str, Any], dict[str, Any]],
+    noise: str,
     fill_mode: str,
 ) -> None:
     """
@@ -104,7 +105,7 @@ def test_traces_fill_group_by(
     fillGaps / fillZero over count() grouped by service.name yield one series per
     service, each with its single populated bucket and zeros elsewhere.
     """
-    extra_attrs, extra_resources = trace_noise
+    extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     span_a = Traces(
         timestamp=now - timedelta(minutes=3),
@@ -161,12 +162,13 @@ def test_traces_fill_group_by(
 
 
 @pytest.mark.parametrize("fill_mode", FILL_MODES)
+@pytest.mark.parametrize("noise", ["clean", "corrupt"])
 def test_traces_fill_formula(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    trace_noise: tuple[dict[str, Any], dict[str, Any]],
+    noise: str,
     fill_mode: str,
 ) -> None:
     """
@@ -177,7 +179,7 @@ def test_traces_fill_formula(
     A formula F1 = A + B over two disabled per-service count() queries fills empty
     buckets to 0, so F1 carries a 1 in each service's populated bucket.
     """
-    extra_attrs, extra_resources = trace_noise
+    extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     span_test = Traces(
         timestamp=now - timedelta(minutes=3),
@@ -230,12 +232,13 @@ def test_traces_fill_formula(
 
 
 @pytest.mark.parametrize("fill_mode", FILL_MODES)
+@pytest.mark.parametrize("noise", ["clean", "corrupt"])
 def test_traces_fill_formula_group_by(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    trace_noise: tuple[dict[str, Any], dict[str, Any]],
+    noise: str,
     fill_mode: str,
 ) -> None:
     """
@@ -247,7 +250,7 @@ def test_traces_fill_formula_group_by(
     series per service, each carrying A+B (=2) in its populated bucket and zeros
     elsewhere.
     """
-    extra_attrs, extra_resources = trace_noise
+    extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     span_g1 = Traces(
         timestamp=now - timedelta(minutes=3),
