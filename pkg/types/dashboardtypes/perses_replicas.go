@@ -21,8 +21,10 @@ import (
 const MaxDisplayNameLen = 128
 
 type Display struct {
-	Name        string `json:"name" required:"true"`
-	Description string `json:"description,omitempty"`
+	Name string `json:"name" required:"true"`
+	// Description always serializes ("" included) so a create -> GET round-trip
+	// preserves what a typed client sent; omitempty would drop an explicit "".
+	Description string `json:"description"`
 }
 
 func (d Display) Validate(label, path string) error {
@@ -73,10 +75,22 @@ func (k *PanelKind) UnmarshalJSON(data []byte) error {
 }
 
 type PanelSpec struct {
-	Display Display          `json:"display" required:"true"`
-	Plugin  PanelPlugin      `json:"plugin" required:"true"`
-	Queries []Query          `json:"queries" required:"true" nullable:"false"`
-	Links   []dashboard.Link `json:"links,omitempty"`
+	Display Display     `json:"display" required:"true"`
+	Plugin  PanelPlugin `json:"plugin" required:"true"`
+	Queries []Query     `json:"queries" required:"true" nullable:"false"`
+	Links   []Link      `json:"links,omitzero"`
+}
+
+// Link replicates dashboard.Link (Perses) so its zero-valued fields survive the
+// create -> GET round-trip. Perses tags name/tooltip/renderVariables/targetBlank
+// omitempty, which drops "" and false; here every field always serializes so a
+// typed client reads back exactly what it sent.
+type Link struct {
+	Name            string `json:"name"`
+	URL             string `json:"url"`
+	Tooltip         string `json:"tooltip"`
+	RenderVariables bool   `json:"renderVariables"`
+	TargetBlank     bool   `json:"targetBlank"`
 }
 
 // ══════════════════════════════════════════════
@@ -161,8 +175,8 @@ type ListVariableSpec struct {
 	DefaultValue    *VariableDefaultValue `json:"defaultValue,omitempty"`
 	AllowAllValue   bool                  `json:"allowAllValue"`
 	AllowMultiple   bool                  `json:"allowMultiple"`
-	CustomAllValue  string                `json:"customAllValue,omitempty"`
-	CapturingRegexp string                `json:"capturingRegexp,omitempty"`
+	CustomAllValue  string                `json:"customAllValue"`
+	CapturingRegexp string                `json:"capturingRegexp"`
 	Sort            ListVariableSpecSort  `json:"sort,omitzero"`
 	Plugin          VariablePlugin        `json:"plugin"`
 	Name            string                `json:"name" required:"true" minLength:"1"`
@@ -278,7 +292,7 @@ func (s *ListVariableSpecSort) UnmarshalJSON(data []byte) error {
 type TextVariableSpec struct {
 	Display  Display `json:"display" required:"true"`
 	Value    string  `json:"value" required:"true"`
-	Constant bool    `json:"constant,omitempty"`
+	Constant bool    `json:"constant"`
 	Name     string  `json:"name" required:"true" minLength:"1"`
 }
 

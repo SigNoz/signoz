@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import type { DashboardLinkDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesLinkDTO } from 'api/generated/services/sigNoz.schemas';
 
 import ContextLinksSection from '../ContextLinksSection';
 
@@ -12,11 +12,11 @@ jest.mock('../useContextLinkVariables', () => ({
 	],
 }));
 
-const LINKS: DashboardLinkDTO[] = [
+const LINKS: DashboardtypesLinkDTO[] = [
 	{ name: 'Docs', url: 'https://signoz.io', targetBlank: true },
 ];
 
-const lastCall = (fn: jest.Mock): DashboardLinkDTO[] =>
+const lastCall = (fn: jest.Mock): DashboardtypesLinkDTO[] =>
 	fn.mock.calls[fn.mock.calls.length - 1][0];
 
 describe('ContextLinksSection', () => {
