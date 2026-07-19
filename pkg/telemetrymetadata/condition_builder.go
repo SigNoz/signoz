@@ -20,12 +20,14 @@ func NewConditionBuilder(fm qbtypes.FieldMapper) *conditionBuilder {
 	return &conditionBuilder{fm: fm}
 }
 
+// Metadata has no resource sub-query, so options are unused.
 func (c *conditionBuilder) ConditionFor(
 	ctx context.Context,
 	orgID valuer.UUID,
 	tsStart, tsEnd uint64,
 	key *telemetrytypes.TelemetryFieldKey,
-	fieldKeysForName []*telemetrytypes.TelemetryFieldKey,
+	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
+	_ qbtypes.ConditionBuilderOptions,
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
@@ -36,9 +38,8 @@ func (c *conditionBuilder) ConditionFor(
 		return nil, nil, err
 	}
 
-	// metadata builds best-effort filters for related-values lookups; an unknown key
-	// simply yields no condition rather than an error.
-	keys, warning := querybuilder.ResolveKeys(key, fieldKeysForName)
+	// an unknown key simply yields no condition rather than an error.
+	keys, warning := querybuilder.ResolveKeys(key, querybuilder.MatchingFieldKeys(key, fieldKeys))
 	var warnings []string
 	if warning != "" {
 		warnings = append(warnings, warning)
