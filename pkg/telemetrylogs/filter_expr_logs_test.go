@@ -1561,6 +1561,25 @@ func TestFilterExprLogs(t *testing.T) {
 			expectedArgs:          []any{"download"},
 			expectedErrorContains: "function `hasToken` expects value parameter to be a string",
 		},
+		// extra / mis-shaped value arguments are rejected, not silently dropped.
+		{
+			category:              "hasExtraArgs",
+			query:                 "has(body.tags[*], \"a\", \"b\")",
+			shouldPass:            false,
+			expectedErrorContains: "function `has` expects exactly one value argument",
+		},
+		{
+			category:              "hasArrayArg",
+			query:                 "has(body.tags[*], [\"a\", \"b\"])",
+			shouldPass:            false,
+			expectedErrorContains: "function `has` expects a single scalar value, not an array",
+		},
+		{
+			category:              "hasTokenExtraArgs",
+			query:                 "hasToken(body, \"a\", \"b\")",
+			shouldPass:            false,
+			expectedErrorContains: "function `hasToken` expects exactly one value argument",
+		},
 
 		// Basic materialized key
 		{
