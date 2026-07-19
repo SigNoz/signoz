@@ -1570,6 +1570,11 @@ def test_dashboard_v2_rejects_comma_separated_aggregation(
 # the required-tag validation used to reject on create), builder slices set to an
 # explicit [] that must echo back as [] (yet stay absent, never null, when unset),
 # and scalars disabled/legend that must always echo false/"".
+#
+# It also covers the spec-wide zero values: a display description "", a text
+# variable's constant false, a list variable's customAllValue/capturingRegexp "",
+# an explicit [] of panel links, and a link whose own zero-valued fields
+# (name/tooltip "", renderVariables/targetBlank false) must echo back.
 
 
 def test_dashboard_v2_roundtrip_preserves_zero_values(
@@ -1585,7 +1590,27 @@ def test_dashboard_v2_roundtrip_preserves_zero_values(
         "name": "roundtrip-zero-values",
         "tags": [],
         "spec": {
-            "display": {"name": "Roundtrip Zero Values"},
+            "display": {"name": "Roundtrip Zero Values", "description": ""},
+            "variables": [
+                # TextVariable: constant false must echo back (not be dropped).
+                {"kind": "TextVariable", "spec": {"display": {"name": "tv"}, "value": "x", "constant": False, "name": "tv"}},
+                # ListVariable: customAllValue / capturingRegexp "" must echo back.
+                {
+                    "kind": "ListVariable",
+                    "spec": {
+                        "display": {"name": "lv"},
+                        "allowAllValue": False,
+                        "allowMultiple": False,
+                        "customAllValue": "",
+                        "capturingRegexp": "",
+                        "plugin": {"kind": "signoz/DynamicVariable", "spec": {"name": "service.name", "signal": "metrics"}},
+                        "name": "lv",
+                    },
+                },
+            ],
+            # Dashboard-level link with zero-valued inner fields: the replicated Link
+            # type must echo name/tooltip "" and renderVariables/targetBlank false.
+            "links": [{"url": "https://example.com", "name": "", "tooltip": "", "renderVariables": False, "targetBlank": False}],
             "panels": {
                 # NumberPanel: ComparisonThreshold value 0 + a builder query whose
                 # zero-valued slices/scalars are all set explicitly.
@@ -1593,6 +1618,8 @@ def test_dashboard_v2_roundtrip_preserves_zero_values(
                     "kind": "Panel",
                     "spec": {
                         "display": {"name": "number"},
+                        # Explicit empty panel links must round-trip as [].
+                        "links": [],
                         "plugin": {
                             "kind": "signoz/NumberPanel",
                             "spec": {"thresholds": [{"value": 0, "operator": "above_or_equal", "color": "#c2780b", "format": "background"}]},
@@ -1702,7 +1729,10 @@ def test_dashboard_v2_roundtrip_preserves_zero_values(
             timeout=5,
         )
         assert response.status_code == HTTPStatus.OK, response.text
-        panels = response.json()["data"]["spec"]["panels"]
+        result_spec = response.json()["data"]["spec"]
+        panels = result_spec["panels"]
+        variables = {v["kind"]: v["spec"] for v in result_spec["variables"]}
+        link = result_spec["links"][0]
 
         def query_spec(panel_id: str) -> dict:
             return panels[panel_id]["spec"]["queries"][0]["spec"]["plugin"]["spec"]
@@ -1731,6 +1761,15 @@ def test_dashboard_v2_roundtrip_preserves_zero_values(
             ("promql legend empty", promql["legend"], ""),
             ("clickhouse disabled false", clickhouse["disabled"], False),
             ("clickhouse legend empty", clickhouse["legend"], ""),
+            ("dashboard display description empty", result_spec["display"]["description"], ""),
+            ("text variable constant false", variables["TextVariable"]["constant"], False),
+            ("list variable customAllValue empty", variables["ListVariable"]["customAllValue"], ""),
+            ("list variable capturingRegexp empty", variables["ListVariable"]["capturingRegexp"], ""),
+            ("panel empty links round-trip", panels["number"]["spec"]["links"], []),
+            ("dashboard link name empty", link["name"], ""),
+            ("dashboard link tooltip empty", link["tooltip"], ""),
+            ("dashboard link renderVariables false", link["renderVariables"], False),
+            ("dashboard link targetBlank false", link["targetBlank"], False),
         ]
         for description, actual, expected in roundtrip_cases:
             assert actual == expected, description
@@ -1741,6 +1780,7 @@ def test_dashboard_v2_roundtrip_preserves_zero_values(
             ("bare builder omits order", timeseries, "order"),
             ("bare builder omits selectFields", timeseries, "selectFields"),
             ("bare builder omits functions", timeseries, "functions"),
+            ("panel without links omits links", panels["timeseries"]["spec"], "links"),
         ]
         for description, spec, key in absent_cases:
             assert key not in spec, description
