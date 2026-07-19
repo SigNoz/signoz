@@ -656,20 +656,26 @@ func TestQueryBuilderQuery_MarshalJSONEnumRoundTrip(t *testing.T) {
 	testCases := []struct {
 		name    string
 		query   QueryBuilderQuery[MetricAggregation]
-		absent  []string
 		present []string
 	}{
 		{
-			// An unset enum serializes as "", which fails the schema enum on read
-			// back (the terraform provider rejects "" for source/temporality/etc).
-			// ,omitzero drops the invalid unset state instead of emitting "".
-			name: "UnsetEnumsAreOmitted",
+			// The server accepts an unset source/temporality/timeAggregation, so it
+			// echoes "" back rather than dropping it (spaceAggregation is required, so
+			// its "" is 400'd at creation and never reaches a stored query). "" is a
+			// member of each of those enums, so a typed client round-trips faithfully.
+			name: "AcceptedEmptyEnumsAreEchoed",
 			query: QueryBuilderQuery[MetricAggregation]{
-				Name:         "A",
-				Signal:       telemetrytypes.SignalMetrics,
-				Aggregations: []MetricAggregation{{MetricName: "system.cpu.usage"}},
+				Name:   "A",
+				Signal: telemetrytypes.SignalMetrics,
+				Source: telemetrytypes.SourceUnspecified,
+				Aggregations: []MetricAggregation{{
+					MetricName:       "system.cpu.usage",
+					Temporality:      metrictypes.Unknown,
+					TimeAggregation:  metrictypes.TimeAggregationUnspecified,
+					SpaceAggregation: metrictypes.SpaceAggregationSum,
+				}},
 			},
-			absent: []string{`"source"`, `"temporality"`, `"timeAggregation"`, `"spaceAggregation"`},
+			present: []string{`"source":""`, `"temporality":""`, `"timeAggregation":""`, `"spaceAggregation":"sum"`},
 		},
 		{
 			name: "SetEnumsAreSerialized",
@@ -693,15 +699,12 @@ func TestQueryBuilderQuery_MarshalJSONEnumRoundTrip(t *testing.T) {
 			expected, err := json.Marshal(testCase.query)
 			require.NoError(t, err)
 
-			for _, fragment := range testCase.absent {
-				assert.NotContains(t, string(expected), fragment)
-			}
 			for _, fragment := range testCase.present {
 				assert.Contains(t, string(expected), fragment)
 			}
 
 			// Marshal -> unmarshal -> marshal must be stable so a create -> GET
-			// round-trip never reintroduces an invalid empty enum value.
+			// round-trip preserves exactly what the client sent.
 			var decoded QueryBuilderQuery[MetricAggregation]
 			require.NoError(t, json.Unmarshal(expected, &decoded))
 			actual, err := json.Marshal(decoded)
@@ -711,11 +714,11 @@ func TestQueryBuilderQuery_MarshalJSONEnumRoundTrip(t *testing.T) {
 	}
 }
 
-func TestQueryBuilderQuery_UnmarshalEmptyEnumsAreDropped(t *testing.T) {
-	// A client may send explicit empty enum values (e.g. terraform emits
-	// source:"" for a non-meter metric, temporality:"" when unset). Unmarshaling
-	// must accept them and normalize to the zero value, and re-marshaling must
-	// drop them so a create -> GET round-trip never echoes an invalid "" back.
+func TestQueryBuilderQuery_UnmarshalEmptyEnumsAreEchoed(t *testing.T) {
+	// A client may send explicit empty enum values (e.g. terraform emits source:""
+	// for a non-meter metric, temporality:"" when unset). Unmarshaling accepts them
+	// and re-marshaling echoes them back, so a create -> GET round-trip returns
+	// exactly what was sent instead of silently dropping the value.
 	input := `{
 		"name": "A",
 		"signal": "metrics",
@@ -724,7 +727,7 @@ func TestQueryBuilderQuery_UnmarshalEmptyEnumsAreDropped(t *testing.T) {
 			"metricName": "system.cpu.usage",
 			"temporality": "",
 			"timeAggregation": "",
-			"spaceAggregation": ""
+			"spaceAggregation": "sum"
 		}]
 	}`
 
@@ -734,12 +737,11 @@ func TestQueryBuilderQuery_UnmarshalEmptyEnumsAreDropped(t *testing.T) {
 	assert.True(t, query.Source.IsZero())
 	assert.True(t, query.Aggregations[0].Temporality.IsZero())
 	assert.True(t, query.Aggregations[0].TimeAggregation.IsZero())
-	assert.True(t, query.Aggregations[0].SpaceAggregation.IsZero())
 
 	actual, err := json.Marshal(query)
 	require.NoError(t, err)
 
-	for _, fragment := range []string{`"source"`, `"temporality"`, `"timeAggregation"`, `"spaceAggregation"`} {
-		assert.NotContains(t, string(actual), fragment)
+	for _, fragment := range []string{`"source":""`, `"temporality":""`, `"timeAggregation":""`, `"spaceAggregation":"sum"`} {
+		assert.Contains(t, string(actual), fragment)
 	}
 }
