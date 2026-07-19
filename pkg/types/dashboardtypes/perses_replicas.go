@@ -21,8 +21,10 @@ import (
 const MaxDisplayNameLen = 128
 
 type Display struct {
-	Name        string `json:"name" required:"true"`
-	Description string `json:"description,omitempty"`
+	Name string `json:"name" required:"true"`
+	// Description always serializes ("" included) so a create -> GET round-trip
+	// preserves what a typed client sent; omitempty would drop an explicit "".
+	Description string `json:"description"`
 }
 
 func (d Display) Validate(label, path string) error {
@@ -161,8 +163,8 @@ type ListVariableSpec struct {
 	DefaultValue    *VariableDefaultValue `json:"defaultValue,omitempty"`
 	AllowAllValue   bool                  `json:"allowAllValue"`
 	AllowMultiple   bool                  `json:"allowMultiple"`
-	CustomAllValue  string                `json:"customAllValue,omitempty"`
-	CapturingRegexp string                `json:"capturingRegexp,omitempty"`
+	CustomAllValue  string                `json:"customAllValue"`
+	CapturingRegexp string                `json:"capturingRegexp"`
 	Sort            ListVariableSpecSort  `json:"sort,omitzero"`
 	Plugin          VariablePlugin        `json:"plugin"`
 	Name            string                `json:"name" required:"true" minLength:"1"`
@@ -278,7 +280,7 @@ func (s *ListVariableSpecSort) UnmarshalJSON(data []byte) error {
 type TextVariableSpec struct {
 	Display  Display `json:"display" required:"true"`
 	Value    string  `json:"value" required:"true"`
-	Constant bool    `json:"constant,omitempty"`
+	Constant bool    `json:"constant"`
 	Name     string  `json:"name" required:"true" minLength:"1"`
 }
 
