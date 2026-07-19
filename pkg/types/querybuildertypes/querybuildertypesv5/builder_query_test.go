@@ -710,3 +710,36 @@ func TestQueryBuilderQuery_MarshalJSONEnumRoundTrip(t *testing.T) {
 		})
 	}
 }
+
+func TestQueryBuilderQuery_UnmarshalEmptyEnumsAreDropped(t *testing.T) {
+	// A client may send explicit empty enum values (e.g. terraform emits
+	// source:"" for a non-meter metric, temporality:"" when unset). Unmarshaling
+	// must accept them and normalize to the zero value, and re-marshaling must
+	// drop them so a create -> GET round-trip never echoes an invalid "" back.
+	input := `{
+		"name": "A",
+		"signal": "metrics",
+		"source": "",
+		"aggregations": [{
+			"metricName": "system.cpu.usage",
+			"temporality": "",
+			"timeAggregation": "",
+			"spaceAggregation": ""
+		}]
+	}`
+
+	var query QueryBuilderQuery[MetricAggregation]
+	require.NoError(t, json.Unmarshal([]byte(input), &query))
+
+	assert.True(t, query.Source.IsZero())
+	assert.True(t, query.Aggregations[0].Temporality.IsZero())
+	assert.True(t, query.Aggregations[0].TimeAggregation.IsZero())
+	assert.True(t, query.Aggregations[0].SpaceAggregation.IsZero())
+
+	actual, err := json.Marshal(query)
+	require.NoError(t, err)
+
+	for _, fragment := range []string{`"source"`, `"temporality"`, `"timeAggregation"`, `"spaceAggregation"`} {
+		assert.NotContains(t, string(actual), fragment)
+	}
+}
