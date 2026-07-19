@@ -1728,3 +1728,94 @@ func TestValidate_AlertOnAbsent(t *testing.T) {
 		}
 	})
 }
+
+// builderWithGroupBy returns a valid v1 builder rule JSON whose metrics query
+// groups by service.name, with an optional disabled flag on the query.
+func builderWithGroupBy(disabled bool) string {
+	disabledStr := "false"
+	if disabled {
+		disabledStr = "true"
+	}
+	return `{
+		"alert": "TestAlert",
+		"version": "v5",
+		"condition": {
+			"compositeQuery": {
+				"queryType": "builder",
+				"queries": [{
+					"type": "builder_query",
+					"spec": {
+						"name": "A",
+						"signal": "metrics",
+						"disabled": ` + disabledStr + `,
+						"aggregations": [{"metricName": "cpu", "spaceAggregation": "p50"}],
+						"stepInterval": "5m",
+						"groupBy": [{"name": "service.name"}]
+					}
+				}]
+			},
+			"target": 10.0,
+			"matchType": "1",
+			"op": "1"
+		}
+	}`
+}
+
+func TestValidate_LabelGroupByConflict(t *testing.T) {
+	tests := []struct {
+		name      string
+		json      string
+		wantErr   bool
+		errSubstr string
+	}{
+		{
+			name:      "label conflicts with group by key",
+			json:      patchJSON(builderWithGroupBy(false), `{"labels": {"service.name": "override"}}`),
+			wantErr:   true,
+			errSubstr: "conflicts with a group by attribute",
+		},
+		{
+			name: "label does not conflict with group by key",
+			json: patchJSON(builderWithGroupBy(false), `{"labels": {"team": "platform"}}`),
+		},
+		{
+			name: "conflicting label on disabled query is allowed",
+			json: patchJSON(builderWithGroupBy(true), `{"labels": {"service.name": "override"}}`),
+		},
+		{
+			name: "labels without group by are allowed",
+			json: patchJSON(validV1Builder(), `{"labels": {"service.name": "checkout"}}`),
+		},
+		{
+			name: "promql rule with labels is allowed",
+			json: patchJSON(validV1Promql(), `{"labels": {"service.name": "checkout"}}`),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			unmarshalErr, validateErr := unmarshalAndValidate(tt.json)
+			if unmarshalErr != nil {
+				t.Fatalf("unexpected unmarshal error: %v", unmarshalErr)
+			}
+			if tt.wantErr {
+				if validateErr == nil {
+					t.Fatal("expected validation error, got nil")
+				}
+				if !errorContains(validateErr, tt.errSubstr) {
+					t.Errorf("expected error containing %q, got: %v", tt.errSubstr, validateErr)
+				}
+			} else if validateErr != nil {
+				t.Errorf("unexpected validation error: %v", validateErr)
+			}
+		})
+	}
+
+	t.Run("stored rule with conflict still loads on read path", func(t *testing.T) {
+		j := patchJSON(builderWithGroupBy(false), `{"labels": {"service.name": "override"}}`)
+		var rule PostableRule
+		if err := json.Unmarshal([]byte(j), &rule); err != nil {
+			t.Fatalf("stored rule with label/group by conflict must still unmarshal, got: %v", err)
+		}
+	})
+}
