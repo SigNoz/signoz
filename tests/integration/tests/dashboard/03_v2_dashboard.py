@@ -1780,10 +1780,15 @@ def test_dashboard_v2_roundtrip_preserves_zero_values(
             ("bare builder omits order", timeseries, "order"),
             ("bare builder omits selectFields", timeseries, "selectFields"),
             ("bare builder omits functions", timeseries, "functions"),
-            ("panel without links omits links", panels["timeseries"]["spec"], "links"),
         ]
         for description, spec, key in absent_cases:
             assert key not in spec, description
+
+        # A panel with no links comes back with no links value (null or absent);
+        # either is fine for a typed client (an unset optional attribute stays
+        # unset), so this is not a drift. The explicit [] case above is what the
+        # fix guarantees round-trips.
+        assert panels["timeseries"]["spec"].get("links") is None, "unset panel links stays unset"
     finally:
         requests.delete(
             signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard_id}"),
