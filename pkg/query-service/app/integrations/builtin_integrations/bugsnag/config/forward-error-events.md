@@ -23,6 +23,7 @@ processors:
       - 'set(resource.attributes["service.name"], "bugsnag")'
       - 'set(attributes["source"], "bugsnag")'
       - 'merge_maps(cache, ParseJSON(body), "upsert")'
+      - 'set(attributes["bugsnag.payload"], body)'
       - 'set(severity_text, "ERROR") where cache["error"]["severity"] == "error"'
       - 'set(severity_number, 17) where cache["error"]["severity"] == "error"'
       - 'set(severity_text, "WARN") where cache["error"]["severity"] == "warning"'
@@ -48,7 +49,12 @@ processors:
       - 'set(attributes["os.version"], cache["error"]["device"]["osVersion"])'
       - 'set(attributes["user.id"], cache["error"]["user"]["id"])'
       - 'set(attributes["bugsnag.release.version"], cache["release"]["version"])'
+      - 'set(attributes["exception.stacktrace"], String(cache["error"]["exceptions"][0]["stacktrace"]))'
+      - 'set(body, Concat([cache["error"]["exceptionClass"], ": ", cache["error"]["message"]], "")) where cache["error"]["exceptionClass"] != nil'
+      - 'set(body, cache["trigger"]["message"]) where cache["error"] == nil and cache["trigger"]["message"] != nil'
 ```
+
+The transform stores the raw webhook payload in the `bugsnag.payload` attribute and rewrites the log body to a readable `ExceptionClass: message` line, so the logs explorer and dashboards stay scannable while nothing is lost.
 
 Add the pipeline to the `service` section:
 
