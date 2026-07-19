@@ -13,6 +13,10 @@ func RemoveExtraLabels(res *promql.Result, labelsToRemove ...string) error {
 		return nil
 	}
 
+	if res.Err != nil {
+		return nil
+	}
+
 	switch res.Value.(type) {
 	case promql.Vector:
 		value := res.Value.(promql.Vector)
