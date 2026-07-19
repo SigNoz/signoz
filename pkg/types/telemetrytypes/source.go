@@ -13,8 +13,6 @@ var (
 )
 
 // Enum returns the acceptable values for Source.
-// The unspecified (empty) value is accepted and echoed back by the server for a
-// non-meter query, so it is a valid enum member a typed client can round-trip.
 // TODO: Add SourceAudit once the frontend is ready for consumption.
 func (Source) Enum() []any {
 	return []any{
