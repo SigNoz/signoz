@@ -659,12 +659,6 @@ func TestQueryBuilderQuery_MetricAggregation_MarshalJSONEnumRoundTrip(t *testing
 		present []string
 	}{
 		{
-			// The server accepts an unset source/temporality/timeAggregation, so it
-			// echoes "" back rather than dropping it (spaceAggregation is required, so
-			// its "" is 400'd at creation and never reaches a stored query). "" is a
-			// member of each of those enums, so a typed client round-trips faithfully.
-			// The marshal -> unmarshal -> marshal check below also covers the reverse
-			// path: a client that sends "" reads back exactly what it sent.
 			name: "AcceptedEmptyEnumsAreEchoed",
 			query: QueryBuilderQuery[MetricAggregation]{
 				Name:   "A",

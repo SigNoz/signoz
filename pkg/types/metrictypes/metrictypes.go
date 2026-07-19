@@ -69,9 +69,6 @@ func (t *Temporality) Scan(src any) error {
 	return nil
 }
 
-// Enum returns the acceptable values for Temporality. The unknown (empty) value
-// is accepted and echoed back by the server when a query omits temporality, so
-// it is a valid enum member a typed client can round-trip.
 func (Temporality) Enum() []any {
 	return []any{
 		Delta,
@@ -180,9 +177,6 @@ var (
 	TimeAggregationIncrease      = TimeAggregation{valuer.NewString("increase")}
 )
 
-// Enum returns the acceptable values for TimeAggregation. The unspecified
-// (empty) value is accepted and echoed back by the server when a query omits
-// time aggregation, so it is a valid enum member a typed client can round-trip.
 func (TimeAggregation) Enum() []any {
 	return []any{
 		TimeAggregationLatest,
