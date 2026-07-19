@@ -3631,6 +3631,7 @@ export enum Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQue
 }
 export enum TelemetrytypesSourceDTO {
 	meter = 'meter',
+	'' = '',
 }
 export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTO {
 	/**
@@ -3730,6 +3731,7 @@ export enum MetrictypesTemporalityDTO {
 	delta = 'delta',
 	cumulative = 'cumulative',
 	unspecified = 'unspecified',
+	'' = '',
 }
 export enum MetrictypesTimeAggregationDTO {
 	latest = 'latest',
@@ -3741,6 +3743,7 @@ export enum MetrictypesTimeAggregationDTO {
 	count_distinct = 'count_distinct',
 	rate = 'rate',
 	increase = 'increase',
+	'' = '',
 }
 export interface Querybuildertypesv5MetricAggregationDTO {
 	comparisonSpaceAggregationParam?: MetrictypesComparisonSpaceAggregationParamDTO;
