@@ -514,11 +514,11 @@ type MetricAggregation struct {
 	// type of the metric
 	Type metrictypes.Type `json:"-"`
 	// temporality to apply to the query
-	Temporality metrictypes.Temporality `json:"temporality,omitzero"`
+	Temporality metrictypes.Temporality `json:"temporality"`
 	// time aggregation to apply to the query
-	TimeAggregation metrictypes.TimeAggregation `json:"timeAggregation,omitzero"`
+	TimeAggregation metrictypes.TimeAggregation `json:"timeAggregation"`
 	// space aggregation to apply to the query
-	SpaceAggregation metrictypes.SpaceAggregation `json:"spaceAggregation,omitzero"`
+	SpaceAggregation metrictypes.SpaceAggregation `json:"spaceAggregation"`
 	// param for space aggregation if needed
 	ComparisonSpaceAggregationParam *metrictypes.ComparisonSpaceAggregationParam `json:"comparisonSpaceAggregationParam,omitempty"`
 	// table hints to use for the query

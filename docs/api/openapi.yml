@@ -6334,6 +6334,7 @@ components:
       - delta
       - cumulative
       - unspecified
+      - ""
       type: string
     MetrictypesTimeAggregation:
       enum:
@@ -6346,6 +6347,7 @@ components:
       - count_distinct
       - rate
       - increase
+      - ""
       type: string
     MetrictypesType:
       enum:
@@ -8596,6 +8598,7 @@ components:
     TelemetrytypesSource:
       enum:
       - meter
+      - ""
       type: string
     TelemetrytypesTelemetryFieldKey:
       properties:
