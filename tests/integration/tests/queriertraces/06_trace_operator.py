@@ -33,6 +33,7 @@ import requests
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.querier import (
+    RequestType,
     assert_grouped_scalar,
     assert_raw_row_subset,
     assert_scalar_value,
@@ -426,30 +427,23 @@ def test_trace_operator(
     if case.get("order"):
         spec["order"] = case["order"]
 
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
-        timeout=5,
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "schemaVersion": "v1",
-            "start": start_ms,
-            "end": end_ms,
-            "requestType": "raw",
-            "compositeQuery": {
-                "queries": [
-                    {
-                        "type": "builder_query",
-                        "spec": {"name": "A", "signal": "traces", "filter": {"expression": case["filter_a"]}, "limit": 100},
-                    },
-                    {
-                        "type": "builder_query",
-                        "spec": {"name": "B", "signal": "traces", "filter": {"expression": case["filter_b"]}, "limit": 100},
-                    },
-                    {"type": "builder_trace_operator", "spec": spec},
-                ]
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=start_ms,
+        end_ms=end_ms,
+        request_type=RequestType.RAW,
+        queries=[
+            {
+                "type": "builder_query",
+                "spec": {"name": "A", "signal": "traces", "filter": {"expression": case["filter_a"]}, "limit": 100},
             },
-            "formatOptions": {"formatTableResultForUI": False, "fillGaps": False},
-        },
+            {
+                "type": "builder_query",
+                "spec": {"name": "B", "signal": "traces", "filter": {"expression": case["filter_b"]}, "limit": 100},
+            },
+            {"type": "builder_trace_operator", "spec": spec},
+        ],
     )
     assert response.status_code == HTTPStatus.OK, f"HTTP {response.status_code}: {response.text}"
     assert case["validate"](response), f"validation failed: {response.json()}"
@@ -497,7 +491,7 @@ def _expected_trace_subset(trace: Traces) -> dict[str, Any]:
                     },
                 },
             ],
-            "raw",
+            RequestType.RAW,
             lambda response, traces: assert_raw_row_subset(response, "C", _expected_trace_subset(traces[0])),
             id="deprecated-intrinsic-filter",
         ),
@@ -529,7 +523,7 @@ def _expected_trace_subset(trace: Traces) -> dict[str, Any]:
                     },
                 },
             ],
-            "raw",
+            RequestType.RAW,
             lambda response, traces: assert_raw_row_subset(response, "C", _expected_trace_subset(traces[0])),
             id="deprecated-calculated-filter",
         ),
@@ -555,7 +549,7 @@ def _expected_trace_subset(trace: Traces) -> dict[str, Any]:
                     },
                 },
             ],
-            "scalar",
+            RequestType.SCALAR,
             lambda response, traces: assert_scalar_value(response, "C", len(traces)),
             id="context-prefixed-aggregation-alias-order",
         ),
@@ -585,7 +579,7 @@ def _expected_trace_subset(trace: Traces) -> dict[str, Any]:
                     },
                 },
             ],
-            "scalar",
+            RequestType.SCALAR,
             lambda response, traces: assert_grouped_scalar(response, "C", expected_groups=1, expected_columns=2, last_col_value=len(traces)),
             id="duplicate-group-by-deduplicated",
         ),
@@ -788,7 +782,7 @@ def test_trace_operator_select_fields(
         token,
         start_ms=int((datetime.now(tz=UTC) - timedelta(minutes=5)).timestamp() * 1000),
         end_ms=int(datetime.now(tz=UTC).timestamp() * 1000),
-        request_type="raw",
+        request_type=RequestType.RAW,
         queries=queries,
     )
 
@@ -796,5 +790,6 @@ def test_trace_operator_select_fields(
 
     results = response.json()["data"]["data"]["results"]
     trace_operator_result = find_named_result(results, "C")
+    assert trace_operator_result is not None, "trace_operator result C not found"
     rows = trace_operator_result["rows"]
     verify_values(rows, parent_trace)

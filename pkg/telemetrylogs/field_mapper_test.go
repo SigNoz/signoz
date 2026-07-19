@@ -29,7 +29,7 @@ func TestGetColumn(t *testing.T) {
 				Name:         "service.name",
 				FieldContext: telemetrytypes.FieldContextResource,
 			},
-			expectedCol:   []*schema.Column{logsV2Columns["resources_string"], logsV2Columns["resource"]},
+			expectedCol:   []*schema.Column{logsV2Columns["resource"], logsV2Columns["resources_string"]},
 			expectedError: nil,
 		},
 		{
@@ -580,7 +580,7 @@ func TestFieldForWithMaterialized(t *testing.T) {
 			name:           "Multi evolution - both columns (JSON + materialized)",
 			start:          time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
 			end:            time.Date(2024, 4, 2, 0, 0, 0, 0, time.UTC),
-			expectedResult: "multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, `resource_string_service$$name_exists`==true, `resource_string_service$$name`, NULL)",
+			expectedResult: "multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, `resource_string_service$$name_exists`, `resource_string_service$$name`, NULL)",
 		},
 	}
 
