@@ -1587,10 +1587,16 @@ def test_dashboard_v2_roundtrip_preserves_zero_values(
 
     dashboard = {
         "schemaVersion": "v6",
+        # image (dashboard-level) and spec duration/refreshInterval/datasources
+        # each round-trip their zero value ("" / {}) rather than being dropped.
+        "image": "",
         "name": "roundtrip-zero-values",
         "tags": [],
         "spec": {
             "display": {"name": "Roundtrip Zero Values", "description": ""},
+            "duration": "",
+            "refreshInterval": "",
+            "datasources": {},
             "variables": [
                 # TextVariable: constant false must echo back (not be dropped).
                 {"kind": "TextVariable", "spec": {"display": {"name": "tv"}, "value": "x", "constant": False, "name": "tv"}},
@@ -1729,7 +1735,8 @@ def test_dashboard_v2_roundtrip_preserves_zero_values(
             timeout=5,
         )
         assert response.status_code == HTTPStatus.OK, response.text
-        result_spec = response.json()["data"]["spec"]
+        result_data = response.json()["data"]
+        result_spec = result_data["spec"]
         panels = result_spec["panels"]
         variables = {v["kind"]: v["spec"] for v in result_spec["variables"]}
         link = result_spec["links"][0]
@@ -1770,6 +1777,10 @@ def test_dashboard_v2_roundtrip_preserves_zero_values(
             ("dashboard link tooltip empty", link["tooltip"], ""),
             ("dashboard link renderVariables false", link["renderVariables"], False),
             ("dashboard link targetBlank false", link["targetBlank"], False),
+            ("dashboard image empty", result_data["image"], ""),
+            ("spec duration empty", result_spec["duration"], ""),
+            ("spec refreshInterval empty", result_spec["refreshInterval"], ""),
+            ("spec empty datasources round-trip", result_spec["datasources"], {}),
         ]
         for description, actual, expected in roundtrip_cases:
             assert actual == expected, description
