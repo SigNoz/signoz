@@ -40,13 +40,11 @@ func isBodyJSONSearch(key *telemetrytypes.TelemetryFieldKey, columns []*schema.C
 	return false
 }
 
-// conditionForArrayFunction builds `has/hasAny/hasAll(<arrayFieldExpr>, value)` over a
-// body JSON array field. The field expression uses the JSON accessor (flag on) or
-// legacy string extraction (flag off); value[0] is the needle.
+// conditionForArrayFunction builds has/hasAny/hasAll over a body JSON path — via the JSON
+// access plan (flag on) or legacy typed extraction (flag off).
 func (c *conditionBuilder) conditionForArrayFunction(
 	ctx context.Context,
 	orgID valuer.UUID,
-	startNs, endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
 	operator qbtypes.FilterOperator,
 	value any,
@@ -63,24 +61,48 @@ func (c *conditionBuilder) conditionForArrayFunction(
 		needle = args[0]
 	}
 
-	var fieldExpr string
 	if c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID)) {
-		fe, err := c.fm.FieldFor(ctx, orgID, startNs, endNs, key)
-		if err != nil {
-			return "", err
-		}
-		fieldExpr = fe
-	} else {
-		// legacy string-body path; value drives array-type inference (e.g. `[*]` paths)
-		fieldExpr, _ = GetBodyJSONKey(ctx, key, qbtypes.FilterOperatorUnknown, value)
+		// JSON access plan: data-type collision handling, nested array paths.
+		valueType, needle := InferDataType(needle, operator, key)
+		return NewJSONConditionBuilder(key, valueType).buildArrayFunctionCondition(operator, needle, sb)
 	}
 
-	return fmt.Sprintf("%s(%s, %s)", operator.FunctionName(), fieldExpr, sb.Var(needle)), nil
+	// legacy string-body path: type-matched array extraction, OR-ed with a scalar comparison
+	// for a scalar body value (coalesced to false so NOT has() matches missing-key rows).
+	elemType := legacyElemType(needle)
+	arrayExpr := getBodyJSONArrayKey(key, elemType)
+	scalarExpr, scalarGuard, hasScalar := getBodyJSONScalarKey(key, elemType)
+	if list, ok := needle.([]any); ok {
+		vals := make([]any, len(list))
+		for i, v := range list {
+			vals[i] = legacyCoerceNeedle(v, elemType)
+		}
+		arrayCond := fmt.Sprintf("%s(%s, %s)", operator.FunctionName(), arrayExpr, sb.Var(vals))
+		if !hasScalar {
+			return arrayCond, nil
+		}
+		var membership string
+		if operator == qbtypes.FilterOperatorHasAll {
+			eqs := make([]string, len(vals))
+			for i, v := range vals {
+				eqs[i] = sb.E(scalarExpr, v)
+			}
+			membership = sb.And(eqs...)
+		} else {
+			membership = sb.In(scalarExpr, vals...)
+		}
+		return fmt.Sprintf("(%s OR ifNull(%s, false))", arrayCond, sb.And(membership, scalarGuard)), nil
+	}
+	typedNeedle := legacyCoerceNeedle(needle, elemType)
+	arrayCond := fmt.Sprintf("%s(%s, %s)", operator.FunctionName(), arrayExpr, sb.Var(typedNeedle))
+	if !hasScalar {
+		return arrayCond, nil
+	}
+	return fmt.Sprintf("(%s OR ifNull(%s, false))", arrayCond, sb.And(sb.E(scalarExpr, typedNeedle), scalarGuard)), nil
 }
 
-// conditionForHasToken builds `hasToken(LOWER(<bodyColumn>), LOWER(<needle>))`, a
-// full-text token search over the body column. It resolves the column from the key
-// name + use_json_body flag, validates the field/value, and tags errors with the doc URL.
+// conditionForHasToken builds a hasToken full-text search over the body column, resolving the
+// column from the key name + use_json_body flag.
 func (c *conditionBuilder) conditionForHasToken(
 	ctx context.Context,
 	orgID valuer.UUID,
@@ -94,27 +116,36 @@ func (c *conditionBuilder) conditionForHasToken(
 		needle = args[0]
 	}
 
-	bodyJSONEnabled := c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID))
-
-	columnName := LogsV2BodyColumn
-	if bodyJSONEnabled {
-		if key.Name != LogsV2BodyColumn && key.Name != bodyMessageField {
-			return "", errors.NewInvalidInputf(errors.CodeInvalidInput,
-				"function `hasToken` only supports body/body.message field as first parameter").WithUrl(hasTokenFunctionDocURL)
-		}
-		columnName = bodyMessageField
-	} else if key.Name != LogsV2BodyColumn {
-		return "", errors.NewInvalidInputf(errors.CodeInvalidInput,
-			"function `hasToken` only supports body field as first parameter").WithUrl(hasTokenFunctionDocURL)
-	}
-
 	// hasToken matches string tokens only.
 	if _, ok := needle.(string); !ok {
 		return "", errors.NewInvalidInputf(errors.CodeInvalidInput,
 			"function `hasToken` expects value parameter to be a string").WithUrl(hasTokenFunctionDocURL)
 	}
 
-	return fmt.Sprintf("hasToken(LOWER(%s), LOWER(%s))", columnName, sb.Var(needle)), nil
+	bodyJSONEnabled := c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID))
+
+	if !bodyJSONEnabled {
+		// legacy: token search over the plain body string column only.
+		if key.Name != LogsV2BodyColumn {
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput,
+				"function `hasToken` only supports body field as first parameter").WithUrl(hasTokenFunctionDocURL)
+		}
+		return fmt.Sprintf("hasToken(LOWER(%s), LOWER(%s))", LogsV2BodyColumn, sb.Var(needle)), nil
+	}
+
+	// JSON mode: a bare body/body.message key searches the body.message column; any other body
+	// field is a token search over its JSON string field, incl. strings nested in arrays.
+	// `body.message` resolves to a body-context key named `message`, so match that too — else it
+	// falls through and emits dynamicElement over the already-typed String column, which errors.
+	if key.Name == LogsV2BodyColumn || key.Name == bodyMessageField ||
+		(key.FieldContext == telemetrytypes.FieldContextBody && key.Name == messageSubField) {
+		return fmt.Sprintf("hasToken(LOWER(%s), LOWER(%s))", bodyMessageField, sb.Var(needle)), nil
+	}
+	if key.FieldContext == telemetrytypes.FieldContextBody {
+		return NewJSONConditionBuilder(key, telemetrytypes.FieldDataTypeString).buildTokenFunctionCondition(needle, sb)
+	}
+	return "", errors.NewInvalidInputf(errors.CodeInvalidInput,
+		"function `hasToken` only supports the body field or a body JSON string field as first parameter").WithUrl(hasTokenFunctionDocURL)
 }
 
 func (c *conditionBuilder) conditionFor(
@@ -126,8 +157,7 @@ func (c *conditionBuilder) conditionFor(
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) (string, error) {
-	// hasToken is a token search over the body column resolved purely from the key
-	// name + flag, independent of column resolution, so handle it before anything else.
+	// hasToken resolves from the key name + flag alone (no column resolution), so handle it first.
 	if operator == qbtypes.FilterOperatorHasToken {
 		return c.conditionForHasToken(ctx, orgID, key, value, sb)
 	}
@@ -137,10 +167,9 @@ func (c *conditionBuilder) conditionFor(
 		return "", err
 	}
 
-	// has/hasAny/hasAll build `has(<arrayFieldExpr>, value)` over body JSON arrays
-	// rather than going through the normal operator paths, so handle them up front.
+	// has/hasAny/hasAll take the body-JSON path, not the normal operator paths.
 	if operator.IsArrayFunctionOperator() {
-		return c.conditionForArrayFunction(ctx, orgID, startNs, endNs, key, operator, value, columns, sb)
+		return c.conditionForArrayFunction(ctx, orgID, key, operator, value, columns, sb)
 	}
 
 	// TODO(Piyush): Update this to support multiple JSON columns based on evolutions
@@ -399,23 +428,6 @@ func (c *conditionBuilder) ConditionFor(
 		default:
 			return nil, warnings, querybuilder.NewKeyNotFoundError(key.Name)
 		}
-	}
-
-	// has/hasAny/hasAll need an array field: in JSON-body mode drop non-array matches so a
-	// scalar errors clearly instead of failing at ClickHouse runtime (legacy mode skips this).
-	if operator.IsArrayFunctionOperator() &&
-		c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID)) {
-		arrayKeys := make([]*telemetrytypes.TelemetryFieldKey, 0, len(keys))
-		for _, k := range keys {
-			if k.FieldDataType.IsArray() {
-				arrayKeys = append(arrayKeys, k)
-			}
-		}
-		if len(arrayKeys) == 0 {
-			return nil, warnings, errors.NewInvalidInputf(errors.CodeInvalidInput,
-				"function `%s` expects key parameter to be an array field; no array fields found", operator.FunctionName())
-		}
-		keys = arrayKeys
 	}
 
 	conds := make([]string, 0, len(keys))
