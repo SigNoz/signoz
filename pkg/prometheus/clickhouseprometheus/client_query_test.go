@@ -11,6 +11,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/huandu/go-sqlbuilder"
 	"github.com/prometheus/prometheus/prompb"
 	"github.com/stretchr/testify/assert"
 )
@@ -100,7 +101,7 @@ func TestClient_QuerySamples(t *testing.T) {
 				tt.setupMock(telemetryStore.Mock(), "cpu_usage", tt.start, tt.end)
 
 			}
-			result, err := readClient.querySamples(ctx, tt.start, tt.end, tt.fingerprints, tt.metricNames, tt.subQuery, tt.args)
+			result, err := readClient.querySamples(ctx, tt.subQuery, []any{"cpu_usage", tt.start, tt.end}, tt.fingerprints)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -156,7 +157,7 @@ func TestClient_QuerySamplesMergesIdenticalLabelSets(t *testing.T) {
 		WillReturnRows(cmock.NewRows(cols, values))
 
 	readClient := client{telemetryStore: telemetryStore}
-	result, err := readClient.querySamples(ctx, 1000, 3000, fingerprints, []string{"requests"}, "SELECT metric_name, fingerprint, unix_milli, value, flags", nil)
+	result, err := readClient.querySamples(ctx, "SELECT metric_name, fingerprint, unix_milli, value, flags", []any{"requests", int64(1000), int64(3000)}, fingerprints)
 	require.NoError(t, err)
 
 	assert.Equal(t, []*prompb.TimeSeries{
@@ -282,7 +283,6 @@ func TestClient_getFingerprintsFromClickhouseQuery(t *testing.T) {
 // (empty string when absent). Regexes must come out anchored — Prometheus
 // matcher semantics, while ClickHouse match() substring-matches.
 func TestQueryToClickhouseQueryNameMatchers(t *testing.T) {
-	c := client{}
 	query := func(matchers ...*prompb.LabelMatcher) *prompb.Query {
 		return &prompb.Query{StartTimestampMs: 0, EndTimestampMs: 1000, Matchers: matchers}
 	}
@@ -297,13 +297,13 @@ func TestQueryToClickhouseQueryNameMatchers(t *testing.T) {
 		{
 			name:     "exact name",
 			query:    query(&prompb.LabelMatcher{Type: prompb.LabelMatcher_EQ, Name: "__name__", Value: "cpu_usage"}),
-			contains: []string{"metric_name = $1"},
+			contains: []string{"metric_name = ?"},
 			args:     []any{"cpu_usage"},
 		},
 		{
 			name:     "regex name is anchored",
 			query:    query(&prompb.LabelMatcher{Type: prompb.LabelMatcher_RE, Name: "__name__", Value: ".+"}),
-			contains: []string{"match(metric_name, $1)"},
+			contains: []string{"match(metric_name, ?)"},
 			args:     []any{"^(?:.+)$"},
 		},
 		{
@@ -313,8 +313,8 @@ func TestQueryToClickhouseQueryNameMatchers(t *testing.T) {
 				&prompb.LabelMatcher{Type: prompb.LabelMatcher_NRE, Name: "group", Value: "can.*"},
 			),
 			contains: []string{
-				"JSONExtractString(labels, $1) = $2",
-				"not match(JSONExtractString(labels, $3), $4)",
+				"JSONExtractString(labels, ?) = ?",
+				"not match(JSONExtractString(labels, ?), ?)",
 			},
 			absent: []string{"metric_name"},
 			args:   []any{"job", "api", "group", "^(?:can.*)$"},
@@ -323,8 +323,9 @@ func TestQueryToClickhouseQueryNameMatchers(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			sql, args, err := c.queryToClickhouseQuery(context.Background(), tt.query, 0, false)
+			lookup, err := seriesLookupQuery(tt.query, false)
 			require.NoError(t, err)
+			sql, args := lookup.BuildWithFlavor(sqlbuilder.ClickHouse)
 			for _, want := range tt.contains {
 				assert.Contains(t, sql, want)
 			}
@@ -336,17 +337,26 @@ func TestQueryToClickhouseQueryNameMatchers(t *testing.T) {
 	}
 }
 
-// The samples query narrows by the metric names the lookup discovered,
-// with subquery placeholders shifted past the name args.
+// The samples query narrows by the metric names the lookup discovered and
+// embeds the series lookup as a subquery, the builder merging its args in
+// render order.
 func TestBuildSamplesQueryMetricNames(t *testing.T) {
-	sql, args := buildSamplesQuery(5, 9, []string{"a_total", "b_total"}, "SUBQ", []any{"x"})
-	assert.Contains(t, sql, "metric_name IN ($1, $2)")
-	assert.Contains(t, sql, "unix_milli >= $4 AND unix_milli <= $5")
-	assert.Equal(t, []any{"a_total", "b_total", "x", int64(5), int64(9)}, args)
+	sub := sqlbuilder.NewSelectBuilder()
+	sub.Select("fingerprint")
+	sub.From("t")
+	sub.Where(sub.E("k", "v"))
 
-	sql, args = buildSamplesQuery(5, 9, nil, "SUBQ", nil)
+	sql, args := buildSamplesQuery(5, 9, []string{"a_total", "b_total"}, sub)
+	assert.Contains(t, sql, "metric_name IN (?, ?)")
+	assert.Contains(t, sql, "fingerprint GLOBAL IN (SELECT fingerprint FROM t WHERE k = ?)")
+	assert.Contains(t, sql, "unix_milli >= ? AND unix_milli <= ?")
+	assert.Equal(t, []any{"a_total", "b_total", "v", int64(5), int64(9)}, args)
+
+	sub2 := sqlbuilder.NewSelectBuilder()
+	sub2.Select("fingerprint")
+	sub2.From("t")
+	sql, args = buildSamplesQuery(5, 9, nil, sub2)
 	assert.NotContains(t, sql, "metric_name IN")
-	assert.Contains(t, sql, "unix_milli >= $1 AND unix_milli <= $2")
 	assert.Equal(t, []any{int64(5), int64(9)}, args)
 }
 

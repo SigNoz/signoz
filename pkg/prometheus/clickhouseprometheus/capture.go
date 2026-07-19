@@ -66,11 +66,11 @@ func (c *captureClient) Read(ctx context.Context, query *prompb.Query, _ bool) (
 	}
 
 	// Build the executing path's queries, but only record them.
-	subQuery, args, err := c.queryToClickhouseQuery(ctx, query, len(metricNames), true)
+	sub, err := seriesLookupQuery(query, true)
 	if err != nil {
 		return nil, err
 	}
-	samplesQuery, samplesArgs := buildSamplesQuery(int64(query.StartTimestampMs), int64(query.EndTimestampMs), metricNames, subQuery, args)
+	samplesQuery, samplesArgs := buildSamplesQuery(int64(query.StartTimestampMs), int64(query.EndTimestampMs), metricNames, sub)
 	c.recorder.record(samplesQuery, samplesArgs)
 
 	return storage.EmptySeriesSet(), nil
