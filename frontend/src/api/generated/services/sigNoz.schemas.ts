@@ -4011,9 +4011,15 @@ export interface DashboardtypesDatasourceSpecDTO {
 	plugin?: DashboardtypesDatasourcePluginDTO;
 }
 
-export type DashboardtypesDashboardSpecDTODatasources = {
+export type DashboardtypesDashboardSpecDTODatasourcesAnyOf = {
 	[key: string]: DashboardtypesDatasourceSpecDTO;
 };
+
+/**
+ * @nullable
+ */
+export type DashboardtypesDashboardSpecDTODatasources =
+	DashboardtypesDashboardSpecDTODatasourcesAnyOf | null;
 
 export enum DashboardtypesPanelKindDTO {
 	Panel = 'Panel',
@@ -4789,7 +4795,7 @@ export type DashboardtypesVariableDTO =
 
 export interface DashboardtypesDashboardSpecDTO {
 	/**
-	 * @type object
+	 * @type object,null
 	 */
 	datasources?: DashboardtypesDashboardSpecDTODatasources;
 	display: DashboardtypesDisplayDTO;
