@@ -651,3 +651,62 @@ func TestQueryBuilderQuery_UnmarshalJSON(t *testing.T) {
 		assert.Equal(t, telemetrytypes.FieldContextSpan, query.Order[0].Key.FieldContext)
 	})
 }
+
+func TestQueryBuilderQuery_MarshalJSONEnumRoundTrip(t *testing.T) {
+	testCases := []struct {
+		name    string
+		query   QueryBuilderQuery[MetricAggregation]
+		absent  []string
+		present []string
+	}{
+		{
+			// An unset enum serializes as "", which fails the schema enum on read
+			// back (the terraform provider rejects "" for source/temporality/etc).
+			// ,omitzero drops the invalid unset state instead of emitting "".
+			name: "UnsetEnumsAreOmitted",
+			query: QueryBuilderQuery[MetricAggregation]{
+				Name:         "A",
+				Signal:       telemetrytypes.SignalMetrics,
+				Aggregations: []MetricAggregation{{MetricName: "system.cpu.usage"}},
+			},
+			absent: []string{`"source"`, `"temporality"`, `"timeAggregation"`, `"spaceAggregation"`},
+		},
+		{
+			name: "SetEnumsAreSerialized",
+			query: QueryBuilderQuery[MetricAggregation]{
+				Name:   "A",
+				Signal: telemetrytypes.SignalMetrics,
+				Source: telemetrytypes.SourceMeter,
+				Aggregations: []MetricAggregation{{
+					MetricName:       "system.cpu.usage",
+					Temporality:      metrictypes.Cumulative,
+					TimeAggregation:  metrictypes.TimeAggregationRate,
+					SpaceAggregation: metrictypes.SpaceAggregationSum,
+				}},
+			},
+			present: []string{`"source":"meter"`, `"temporality":"cumulative"`, `"timeAggregation":"rate"`, `"spaceAggregation":"sum"`},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			expected, err := json.Marshal(testCase.query)
+			require.NoError(t, err)
+
+			for _, fragment := range testCase.absent {
+				assert.NotContains(t, string(expected), fragment)
+			}
+			for _, fragment := range testCase.present {
+				assert.Contains(t, string(expected), fragment)
+			}
+
+			// Marshal -> unmarshal -> marshal must be stable so a create -> GET
+			// round-trip never reintroduces an invalid empty enum value.
+			var decoded QueryBuilderQuery[MetricAggregation]
+			require.NoError(t, json.Unmarshal(expected, &decoded))
+			actual, err := json.Marshal(decoded)
+			require.NoError(t, err)
+			assert.JSONEq(t, string(expected), string(actual))
+		})
+	}
+}
