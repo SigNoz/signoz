@@ -3300,29 +3300,6 @@ export interface DashboardGridLayoutSpecDTO {
 	repeatVariable?: string;
 }
 
-export interface DashboardLinkDTO {
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type boolean
-	 */
-	renderVariables?: boolean;
-	/**
-	 * @type boolean
-	 */
-	targetBlank?: boolean;
-	/**
-	 * @type string
-	 */
-	tooltip?: string;
-	/**
-	 * @type string
-	 */
-	url?: string;
-}
-
 export interface DashboardtypesAxesDTO {
 	/**
 	 * @type boolean
@@ -4052,6 +4029,29 @@ export interface DashboardtypesDisplayDTO {
 	name: string;
 }
 
+export interface DashboardtypesLinkDTO {
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type boolean
+	 */
+	renderVariables?: boolean;
+	/**
+	 * @type boolean
+	 */
+	targetBlank?: boolean;
+	/**
+	 * @type string
+	 */
+	tooltip?: string;
+	/**
+	 * @type string
+	 */
+	url?: string;
+}
+
 export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpecDTOKind {
 	'signoz/TimeSeriesPanel' = 'signoz/TimeSeriesPanel',
 }
@@ -4613,9 +4613,9 @@ export interface DashboardtypesQueryDTO {
 export interface DashboardtypesPanelSpecDTO {
 	display: DashboardtypesDisplayDTO;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	links?: DashboardLinkDTO[];
+	links?: DashboardtypesLinkDTO[] | null;
 	plugin: DashboardtypesPanelPluginDTO;
 	/**
 	 * @type array
@@ -4802,9 +4802,9 @@ export interface DashboardtypesDashboardSpecDTO {
 	 */
 	layouts: DashboardtypesLayoutDTO[];
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	links?: DashboardLinkDTO[];
+	links?: DashboardtypesLinkDTO[] | null;
 	/**
 	 * @type object
 	 */

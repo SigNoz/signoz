@@ -75,10 +75,22 @@ func (k *PanelKind) UnmarshalJSON(data []byte) error {
 }
 
 type PanelSpec struct {
-	Display Display          `json:"display" required:"true"`
-	Plugin  PanelPlugin      `json:"plugin" required:"true"`
-	Queries []Query          `json:"queries" required:"true" nullable:"false"`
-	Links   []dashboard.Link `json:"links,omitempty"`
+	Display Display     `json:"display" required:"true"`
+	Plugin  PanelPlugin `json:"plugin" required:"true"`
+	Queries []Query     `json:"queries" required:"true" nullable:"false"`
+	Links   []Link      `json:"links,omitzero"`
+}
+
+// Link replicates dashboard.Link (Perses) so its zero-valued fields survive the
+// create -> GET round-trip. Perses tags name/tooltip/renderVariables/targetBlank
+// omitempty, which drops "" and false; here every field always serializes so a
+// typed client reads back exactly what it sent.
+type Link struct {
+	Name            string `json:"name"`
+	URL             string `json:"url"`
+	Tooltip         string `json:"tooltip"`
+	RenderVariables bool   `json:"renderVariables"`
+	TargetBlank     bool   `json:"targetBlank"`
 }
 
 // ══════════════════════════════════════════════

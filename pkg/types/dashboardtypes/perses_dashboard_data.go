@@ -26,7 +26,7 @@ type DashboardSpec struct {
 	Layouts         []Layout                   `json:"layouts" required:"true" nullable:"false"`
 	Duration        common.DurationString      `json:"duration,omitempty"`
 	RefreshInterval common.DurationString      `json:"refreshInterval,omitempty"`
-	Links           []dashboard.Link           `json:"links,omitempty"`
+	Links           []Link                     `json:"links,omitzero"`
 }
 
 // ══════════════════════════════════════════════
