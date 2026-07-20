@@ -177,7 +177,7 @@ func builderQuerySelectors(queryType, expression string, variables map[string]qb
 			continue
 		}
 
-		key, ok := telemetrytypes.CanonicalTelemetryGrantKey(condition.Key)
+		key, ok := telemetrytypes.NewTelemetryGrantKey(condition.Key)
 		if !ok {
 			continue
 		}

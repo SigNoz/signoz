@@ -189,7 +189,7 @@ func newTransactionGroup(raw rawTransactionGroup, index int) (*TransactionGroup,
 	selectors := make([]coretypes.Selector, 0, len(raw.ObjectGroup.Selectors))
 	for selectorIndex, rawSelector := range raw.ObjectGroup.Selectors {
 		if resourceType.Equals(coretypes.TypeTelemetryResource) {
-			rawSelector, err = telemetrytypes.CanonicalizeTelemetryGrantSelector(rawSelector)
+			rawSelector, err = telemetrytypes.NewTelemetryGrantSelector(rawSelector)
 			if err != nil {
 				return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "transactionGroups[%d].objectGroup.selectors[%d]: %s", index, selectorIndex, err.Error())
 			}

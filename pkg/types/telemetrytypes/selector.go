@@ -19,10 +19,10 @@ var telemetryGrantKeys = map[string]struct{}{
 	"service.name": {},
 }
 
-// CanonicalTelemetryGrantKey folds a key spelling to its canonical grant key and
+// NewTelemetryGrantKey folds a key spelling to its canonical grant key and
 // reports whether it is an allowed telemetry grant key. resource-context and
 // unspecified spellings of service.name both fold to "service.name".
-func CanonicalTelemetryGrantKey(keyText string) (string, bool) {
+func NewTelemetryGrantKey(keyText string) (string, bool) {
 	fieldKey := GetFieldKeyFromKeyText(keyText)
 	if fieldKey.FieldContext != FieldContextUnspecified && fieldKey.FieldContext != FieldContextResource {
 		return "", false
@@ -35,7 +35,7 @@ func CanonicalTelemetryGrantKey(keyText string) (string, bool) {
 	return fieldKey.Name, true
 }
 
-func CanonicalizeTelemetryGrantSelector(input string) (string, error) {
+func NewTelemetryGrantSelector(input string) (string, error) {
 	if input == wildcardSelector {
 		return input, nil
 	}
@@ -54,7 +54,7 @@ func CanonicalizeTelemetryGrantSelector(input string) (string, error) {
 		return queryType + "/" + wildcardSelector, nil
 	}
 
-	key, ok := CanonicalTelemetryGrantKey(parts[1])
+	key, ok := NewTelemetryGrantKey(parts[1])
 	if !ok {
 		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "telemetry selector %q must use a supported key: %s", input, strings.Join(telemetryGrantKeyNames(), ", "))
 	}

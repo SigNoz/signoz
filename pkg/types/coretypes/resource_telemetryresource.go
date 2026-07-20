@@ -33,12 +33,12 @@ func (resourceTelemetryResource *resourceTelemetryResource) Object(orgID valuer.
 		return resourceTelemetryResource.Prefix(orgID) + "/" + selector
 	}
 
-	return resourceTelemetryResource.Prefix(orgID) + "/" + TelemetrySelectorHash(selector)
+	return resourceTelemetryResource.Prefix(orgID) + "/" + telemetrySelectorHash(selector)
 }
 
 // Must stay stable: grant-time and check-time tuple objects both hash the selector
 // here, so changing this invalidates every stored telemetry grant tuple.
-func TelemetrySelectorHash(selector string) string {
+func telemetrySelectorHash(selector string) string {
 	sum := sha256.Sum256([]byte(selector))
 	return hex.EncodeToString(sum[:16])
 }

@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCanonicalizeTelemetryGrantSelector(t *testing.T) {
+func TestNewTelemetryGrantSelector(t *testing.T) {
 	valid := map[string]string{
 		"*":                                   "*",
 		"builder_query":                       "builder_query/*",
@@ -21,7 +21,7 @@ func TestCanonicalizeTelemetryGrantSelector(t *testing.T) {
 		"builder_query/service.name/a/b":               "builder_query/service.name/a/b",
 	}
 	for input, expected := range valid {
-		canonical, err := CanonicalizeTelemetryGrantSelector(input)
+		canonical, err := NewTelemetryGrantSelector(input)
 		require.NoError(t, err, "input %q", input)
 		assert.Equal(t, expected, canonical, "input %q", input)
 	}
@@ -38,20 +38,20 @@ func TestCanonicalizeTelemetryGrantSelector(t *testing.T) {
 		"builder_query/service.name",
 	}
 	for _, input := range invalid {
-		_, err := CanonicalizeTelemetryGrantSelector(input)
+		_, err := NewTelemetryGrantSelector(input)
 		assert.Error(t, err, "input %q", input)
 	}
 }
 
-func TestCanonicalTelemetryGrantKey(t *testing.T) {
+func TestNewTelemetryGrantKey(t *testing.T) {
 	for _, keyText := range []string{"service.name", "resource.service.name"} {
-		key, ok := CanonicalTelemetryGrantKey(keyText)
+		key, ok := NewTelemetryGrantKey(keyText)
 		assert.True(t, ok, keyText)
 		assert.Equal(t, "service.name", key)
 	}
 
 	for _, keyText := range []string{"deployment.environment", "attribute.service.name", "body.service.name"} {
-		_, ok := CanonicalTelemetryGrantKey(keyText)
+		_, ok := NewTelemetryGrantKey(keyText)
 		assert.False(t, ok, keyText)
 	}
 }
