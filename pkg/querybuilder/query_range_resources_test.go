@@ -2,7 +2,6 @@ package querybuilder
 
 import (
 	"context"
-	"strings"
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
@@ -80,10 +79,10 @@ func TestQueryRangeResources(t *testing.T) {
 			},
 		},
 		{
-			name: "unsafe value bytes are escaped",
+			name: "value with spaces and slashes stays plaintext in the id",
 			body: builderQueryBody("logs", "service.name = 'check out/2'"),
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/service.name/check%20out%2F2"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/service.name/check out/2"},
 			},
 		},
 		{
@@ -176,9 +175,9 @@ func TestTelemetrySelector(t *testing.T) {
 	}
 
 	assert.Equal(t, []string{"builder_query/service.name/a", "builder_query/service.name/*", "builder_query/*", "*"}, selectorValues("builder_query/service.name/a"))
-	assert.Equal(t, []string{"builder_query/*", "*"}, selectorValues("builder_query/*"))
-	assert.Equal(t, []string{"promql/*", "*"}, selectorValues("promql/*"))
-
-	_, err := TelemetrySelector(context.Background(), coretypes.ResourceTelemetryResourceLogs, strings.Repeat("a", 256), orgID)
-	assert.Error(t, err)
+	assert.Equal(t, []string{"builder_query/*", "*"}, selectorValues("builder_query"))
+	assert.Equal(t, []string{"promql/*", "*"}, selectorValues("promql"))
+	assert.Equal(t, []string{"*"}, selectorValues("*"))
+	// a value containing "/" stays one logical segment (SplitN 3).
+	assert.Equal(t, []string{"builder_query/service.name/a/b", "builder_query/service.name/*", "builder_query/*", "*"}, selectorValues("builder_query/service.name/a/b"))
 }

@@ -22,7 +22,7 @@ def test_setup(
     create_role: Callable[..., str],
 ) -> None:
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    create_role(admin_token, spacey_role, [transaction_group("read", "telemetryresource", "logs", ["builder_query/service.name/check%20out"])])
+    create_role(admin_token, spacey_role, [transaction_group("read", "telemetryresource", "logs", ["builder_query/service.name/check out"])])
     user_id = create_active_user(signoz, admin_token, email=spacey_email, role="VIEWER", password=user_password)
     change_user_role(signoz, admin_token, user_id, "signoz-viewer", spacey_role)
 

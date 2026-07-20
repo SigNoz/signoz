@@ -3,7 +3,6 @@ package querybuilder
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -14,38 +13,8 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-var telemetryGrantKeys = map[string]struct{}{
-	"service.name": {},
-}
-
-const telemetryValueSafeBytes = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._-"
-
-func EscapeTelemetryValue(value string) string {
-	var escaped strings.Builder
-	for _, character := range []byte(value) {
-		if strings.IndexByte(telemetryValueSafeBytes, character) >= 0 {
-			escaped.WriteByte(character)
-			continue
-		}
-		escaped.WriteString(fmt.Sprintf("%%%02X", character))
-	}
-
-	return escaped.String()
-}
-
 func TelemetrySelector(_ context.Context, resource coretypes.Resource, id string, _ valuer.UUID) ([]coretypes.Selector, error) {
-	values := []string{id}
-	segments := strings.Split(id, "/")
-	for level := len(segments) - 1; level >= 1; level-- {
-		value := strings.Join(segments[:level], "/") + "/" + coretypes.WildCardSelectorString
-		if value == id {
-			continue
-		}
-		values = append(values, value)
-	}
-	if id != coretypes.WildCardSelectorString {
-		values = append(values, coretypes.WildCardSelectorString)
-	}
+	values := telemetrySelectorLadder(id)
 
 	selectors := make([]coretypes.Selector, 0, len(values))
 	for _, value := range values {
@@ -57,6 +26,27 @@ func TelemetrySelector(_ context.Context, resource coretypes.Resource, id string
 	}
 
 	return selectors, nil
+}
+
+func telemetrySelectorLadder(id string) []string {
+	if id == coretypes.WildCardSelectorString {
+		return []string{coretypes.WildCardSelectorString}
+	}
+
+	parts := strings.SplitN(id, "/", 3)
+	queryType := parts[0]
+
+	if len(parts) < 3 {
+		return []string{queryType + "/" + coretypes.WildCardSelectorString, coretypes.WildCardSelectorString}
+	}
+
+	key, value := parts[1], parts[2]
+	return []string{
+		queryType + "/" + key + "/" + value,
+		queryType + "/" + key + "/" + coretypes.WildCardSelectorString,
+		queryType + "/" + coretypes.WildCardSelectorString,
+		coretypes.WildCardSelectorString,
+	}
 }
 
 func QueryRangeResources(ec coretypes.ExtractorContext) ([]coretypes.ResourceWithID, error) {
@@ -187,14 +177,14 @@ func builderQuerySelectors(queryType, expression string, variables map[string]qb
 			continue
 		}
 
-		key, ok := canonicalTelemetryGrantKey(condition.Key)
+		key, ok := telemetrytypes.CanonicalTelemetryGrantKey(condition.Key)
 		if !ok {
 			continue
 		}
 
 		if condition.Operator == "=" || condition.Operator == "IN" {
 			for _, value := range condition.Values {
-				ids = append(ids, queryType+"/"+key+"/"+EscapeTelemetryValue(value))
+				ids = append(ids, queryType+"/"+key+"/"+value)
 			}
 		}
 	}
@@ -204,17 +194,4 @@ func builderQuerySelectors(queryType, expression string, variables map[string]qb
 	}
 
 	return ids, nil
-}
-
-func canonicalTelemetryGrantKey(keyText string) (string, bool) {
-	fieldKey := telemetrytypes.GetFieldKeyFromKeyText(keyText)
-	if fieldKey.FieldContext != telemetrytypes.FieldContextUnspecified && fieldKey.FieldContext != telemetrytypes.FieldContextResource {
-		return "", false
-	}
-
-	if _, ok := telemetryGrantKeys[fieldKey.Name]; !ok {
-		return "", false
-	}
-
-	return fieldKey.Name, true
 }

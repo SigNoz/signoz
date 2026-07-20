@@ -49,9 +49,11 @@ def test_setup(
     "selector",
     [
         "service.name = 'service-a'",  # expression form, not the wire form
-        "builder_query/service.name/check out",  # raw space
-        "builder_query/service.name/'quoted'",  # quote
-        "builder_query/service.name/a/b/c",  # too deep
+        "unknown_query_type/service.name/service-a",  # unsupported query type
+        "builder_query/deployment.environment/prod",  # unsupported key
+        "*/service.name/service-a",  # non-prefix wildcard
+        "builder_query/service.name/",  # empty value
+        "builder_query/service.name",  # missing value, not a wildcard
     ],
 )
 def test_invalid_telemetry_selector_rejected(
