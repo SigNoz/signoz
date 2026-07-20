@@ -25,7 +25,6 @@ type auditQueryStatementBuilder struct {
 	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation]
 	aggExprRewriter           qbtypes.AggExprRewriter
 	fullTextColumn            *telemetrytypes.TelemetryFieldKey
-	jsonKeyToKey              qbtypes.JsonKeyToFieldFunc
 }
 
 var _ qbtypes.StatementBuilder[qbtypes.LogAggregation] = (*auditQueryStatementBuilder)(nil)
@@ -37,7 +36,6 @@ func NewAuditQueryStatementBuilder(
 	conditionBuilder qbtypes.ConditionBuilder,
 	aggExprRewriter qbtypes.AggExprRewriter,
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
-	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
 	flagger flagger.Flagger,
 ) *auditQueryStatementBuilder {
 	auditSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetryaudit")
@@ -61,7 +59,6 @@ func NewAuditQueryStatementBuilder(
 		resourceFilterStmtBuilder: resourceFilterStmtBuilder,
 		aggExprRewriter:           aggExprRewriter,
 		fullTextColumn:            fullTextColumn,
-		jsonKeyToKey:              jsonKeyToKey,
 	}
 }
 
@@ -245,7 +242,7 @@ func (b *auditQueryStatementBuilder) buildListQuery(
 				continue
 			}
 
-			colExpr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &query.SelectFields[index], keys)
+			colExpr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &query.SelectFields[index], telemetrytypes.FieldDataTypeUnspecified, keys)
 			if err != nil {
 				return nil, err
 			}
@@ -261,7 +258,7 @@ func (b *auditQueryStatementBuilder) buildListQuery(
 	}
 
 	for _, orderBy := range query.Order {
-		colExpr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &orderBy.Key.TelemetryFieldKey, keys)
+		colExpr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &orderBy.Key.TelemetryFieldKey, telemetrytypes.FieldDataTypeUnspecified, keys)
 		if err != nil {
 			return nil, err
 		}
@@ -323,13 +320,12 @@ func (b *auditQueryStatementBuilder) buildTimeSeriesQuery(
 
 	fieldNames := make([]string, 0, len(query.GroupBy))
 	for _, gb := range query.GroupBy {
-		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, orgID, start, end, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey, false)
+		expr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return nil, err
 		}
 
-		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.Name)
-		allGroupByArgs = append(allGroupByArgs, args...)
+		colExpr := fmt.Sprintf("toString(%s) AS `%s`", sqlbuilder.Escape(expr), gb.Name)
 		sb.SelectMore(colExpr)
 		fieldNames = append(fieldNames, fmt.Sprintf("`%s`", gb.Name))
 	}
@@ -459,13 +455,12 @@ func (b *auditQueryStatementBuilder) buildScalarQuery(
 	var allGroupByArgs []any
 
 	for _, gb := range query.GroupBy {
-		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, orgID, start, end, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey, false)
+		expr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return nil, err
 		}
 
-		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.Name)
-		allGroupByArgs = append(allGroupByArgs, args...)
+		colExpr := fmt.Sprintf("toString(%s) AS `%s`", sqlbuilder.Escape(expr), gb.Name)
 		sb.SelectMore(colExpr)
 	}
 

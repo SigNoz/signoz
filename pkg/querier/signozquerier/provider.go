@@ -79,7 +79,7 @@ func newProvider(
 	traceFieldMapper := telemetrytraces.NewFieldMapper()
 	traceConditionBuilder := telemetrytraces.NewConditionBuilder(traceFieldMapper)
 
-	traceAggExprRewriter := querybuilder.NewAggExprRewriter(settings, nil, traceFieldMapper, traceConditionBuilder, nil, flagger)
+	traceAggExprRewriter := querybuilder.NewAggExprRewriter(settings, nil, traceFieldMapper, traceConditionBuilder, flagger)
 	traceStmtBuilder := telemetrytraces.NewTraceQueryStatementBuilder(
 		settings,
 		telemetryMetadataStore,
@@ -111,7 +111,6 @@ func newProvider(
 		telemetrylogs.DefaultFullTextColumn,
 		logFieldMapper,
 		logConditionBuilder,
-		telemetrylogs.GetBodyJSONKey,
 		flagger,
 	)
 	logStmtBuilder := telemetrylogs.NewLogQueryStatementBuilder(
@@ -121,7 +120,6 @@ func newProvider(
 		logConditionBuilder,
 		logAggExprRewriter,
 		telemetrylogs.DefaultFullTextColumn,
-		telemetrylogs.GetBodyJSONKey,
 		flagger,
 		telemetryStore,
 		cfg.SkipResourceFingerprint.Enabled,
@@ -136,7 +134,6 @@ func newProvider(
 		telemetryaudit.DefaultFullTextColumn,
 		auditFieldMapper,
 		auditConditionBuilder,
-		nil,
 		flagger,
 	)
 	auditStmtBuilder := telemetryaudit.NewAuditQueryStatementBuilder(
@@ -146,7 +143,6 @@ func newProvider(
 		auditConditionBuilder,
 		auditAggExprRewriter,
 		telemetryaudit.DefaultFullTextColumn,
-		nil,
 		flagger,
 	)
 

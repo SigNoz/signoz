@@ -104,6 +104,7 @@ type planBuilder struct {
 	paths      []string // cumulative paths for type cache lookups
 	segments   []string // individual path segments for node names
 	isPromoted bool
+	exhaustive bool
 	typeCache  map[string][]FieldDataType
 }
 
@@ -159,16 +160,18 @@ func (pb *planBuilder) buildPlan(index int, parent *JSONAccessNode, isDynArrChil
 		}
 	} else {
 		var err error
-		// Use cached types from the batched metadata query
-		types, ok := pb.typeCache[pathSoFar]
-		if !ok {
-			return nil, errors.NewInternalf(errors.CodeInvalidInput, "types missing for path %s", pathSoFar)
-		}
+		hasJSON, hasDynamic := pb.exhaustive, pb.exhaustive
+		if !pb.exhaustive {
+			types, ok := pb.typeCache[pathSoFar]
+			if !ok {
+				return nil, errors.NewInternalf(errors.CodeInvalidInput, "types missing for path %s", pathSoFar)
+			}
 
-		hasJSON := slices.Contains(types, FieldDataTypeArrayJSON)
-		hasDynamic := slices.Contains(types, FieldDataTypeArrayDynamic)
-		if !hasJSON && !hasDynamic {
-			return nil, errors.NewInternalf(CodePlanFieldDataTypeMissing, "array data type missing for path %s", pathSoFar)
+			hasJSON = slices.Contains(types, FieldDataTypeArrayJSON)
+			hasDynamic = slices.Contains(types, FieldDataTypeArrayDynamic)
+			if !hasJSON && !hasDynamic {
+				return nil, errors.NewInternalf(CodePlanFieldDataTypeMissing, "array data type missing for path %s", pathSoFar)
+			}
 		}
 
 		if hasJSON {
@@ -226,6 +229,33 @@ func (key *TelemetryFieldKey) SetJSONAccessPlan(columnInfo JSONColumnMetadata, t
 		}
 		key.JSONPlan = append(key.JSONPlan, node)
 	}
+
+	return nil
+}
+
+func (key *TelemetryFieldKey) SetExhaustiveJSONAccessPlan(columnInfo JSONColumnMetadata, terminalType FieldDataType) error {
+	if key.Name == "" {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "path is empty")
+	}
+
+	if terminalType == FieldDataTypeUnspecified {
+		terminalType = FieldDataTypeString
+	}
+
+	keyForPlan := NewTelemetryFieldKey(key.Name, key.FieldContext, terminalType)
+
+	pb := &planBuilder{
+		key:        keyForPlan,
+		paths:      key.ArrayParentPaths(),
+		segments:   key.ArrayPathSegments(),
+		exhaustive: true,
+	}
+
+	node, err := pb.buildPlan(0, NewRootJSONAccessNode(columnInfo.BaseColumn, 32, 0), false)
+	if err != nil {
+		return err
+	}
+	key.JSONPlan = append(key.JSONPlan, node)
 
 	return nil
 }
