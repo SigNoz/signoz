@@ -1,11 +1,6 @@
 import { expect, test } from '../../fixtures/auth';
-import {
-	setupTheme,
-	tokenColor,
-	typeExpression,
-} from '@tests/query-builder/utils';
+import { setupTheme, tokenColor, typeExpression } from '@helpers/query-builder';
 
-const SPANS = '.query-where-clause-editor .cm-line span';
 const LOGS_EXPLORER = '/logs/logs-explorer';
 
 type ThemeConfig = {
@@ -57,25 +52,15 @@ for (const { name, theme, colors } of THEMES) {
 			expect(await tokenColor(page, 'name')).toBe(colors.property);
 		});
 
-		test(`['value', 'value'] — string tokens have native theme color`, async ({
+		test(`['value', 'value2'] — string tokens have native theme color`, async ({
 			authedPage: page,
 		}) => {
 			await setupTheme(page, theme);
 			await page.goto(LOGS_EXPLORER);
-			await typeExpression(page, "['value', 'value']");
+			await typeExpression(page, "['value', 'value2']");
 
-			const allStringColors: string[] = await page.evaluate(
-				({ selector, text }) =>
-					Array.from(document.querySelectorAll<HTMLSpanElement>(selector))
-						.filter((el) => el.textContent === text)
-						.map((el) => window.getComputedStyle(el).color),
-				{ selector: SPANS, text: "'value'" },
-			);
-
-			expect(allStringColors.length).toBe(2);
-			for (const color of allStringColors) {
-				expect(color).toBe(colors.string);
-			}
+			expect(await tokenColor(page, "'value'")).toBe(colors.string);
+			expect(await tokenColor(page, "'value2'")).toBe(colors.string);
 		});
 	});
 }

@@ -1,5 +1,4 @@
 import { Page } from '@playwright/test';
-import { expect, test } from '../../fixtures/auth';
 
 const EDITOR_CONTENT = '.query-where-clause-editor .cm-content';
 const SPANS = '.query-where-clause-editor .cm-line span';
