@@ -99,7 +99,6 @@ export function useAlertHistoryFilterSuggestions(
 				{
 					name: key,
 					searchText,
-					limit: 10,
 					startUnixMilli: startTime,
 					endUnixMilli: endTime,
 				},
