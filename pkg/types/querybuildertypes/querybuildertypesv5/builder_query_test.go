@@ -709,3 +709,40 @@ func TestQueryBuilderQuery_MetricAggregation_MarshalJSONEnumRoundTrip(t *testing
 		})
 	}
 }
+
+// stepInterval is a struct-backed Step, so omitempty had no effect and an unset
+// value serialized as 0; ,omitzero omits it when unset while still echoing a set
+// value (as seconds), keeping the create -> GET round-trip stable.
+func TestQueryBuilderQuery_StepInterval_MarshalRoundTrip(t *testing.T) {
+	testCases := []struct {
+		name    string
+		query   QueryBuilderQuery[LogAggregation]
+		present []string
+		absent  []string
+	}{
+		{
+			name:   "UnsetStepIntervalIsOmitted",
+			query:  QueryBuilderQuery[LogAggregation]{Name: "A", Signal: telemetrytypes.SignalLogs},
+			absent: []string{`"stepInterval"`},
+		},
+		{
+			name:    "SetStepIntervalIsSerializedAsSeconds",
+			query:   QueryBuilderQuery[LogAggregation]{Name: "A", Signal: telemetrytypes.SignalLogs, StepInterval: Step{60 * time.Second}},
+			present: []string{`"stepInterval":60`},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			expected, err := json.Marshal(testCase.query)
+			require.NoError(t, err)
+
+			for _, fragment := range testCase.present {
+				assert.Contains(t, string(expected), fragment)
+			}
+			for _, fragment := range testCase.absent {
+				assert.NotContains(t, string(expected), fragment)
+			}
+		})
+	}
+}
