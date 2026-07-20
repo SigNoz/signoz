@@ -307,3 +307,62 @@ func TestConditionForMultipleKeys(t *testing.T) {
 		})
 	}
 }
+
+// TestConditionForKeyNotInMetadata covers the len(keys)==0 branch: the key is not
+// present in the resolved metadata (as happens for the full-text search column and
+// for filters on labels absent from metadata). Metrics has no per-context storage, so
+// FieldFor resolves any key directly: intrinsics to their column, every label context
+// (bare/attribute./resource./scope.) to a labels JSON extract. Nothing errors, and no
+// key-not-found warning is emitted.
+func TestConditionForKeyNotInMetadata(t *testing.T) {
+	ctx := context.Background()
+
+	testCases := []struct {
+		name        string
+		key         telemetrytypes.TelemetryFieldKey
+		operator    qbtypes.FilterOperator
+		value       any
+		expectedSQL string
+	}{
+		{
+			// The metrics-explorer full-text search routes bare/quoted terms through
+			// the metric_name intrinsic column, which is never in the metadata keys.
+			name:        "intrinsic metric_name full-text (regexp) resolves directly",
+			key:         telemetrytypes.TelemetryFieldKey{Name: "metric_name", FieldContext: telemetrytypes.FieldContextMetric},
+			operator:    qbtypes.FilterOperatorRegexp,
+			value:       "k8s",
+			expectedSQL: "match(metric_name, ?)",
+		},
+		{
+			name:        "context-less label resolves to labels JSON extract",
+			key:         telemetrytypes.TelemetryFieldKey{Name: "foo", FieldContext: telemetrytypes.FieldContextUnspecified},
+			operator:    qbtypes.FilterOperatorEqual,
+			value:       "bar",
+			expectedSQL: "JSONExtractString(labels, 'foo') = ?",
+		},
+		{
+			// An explicit context is a no-op for metrics: it also resolves to labels.
+			name:        "explicit resource context resolves to labels JSON extract",
+			key:         telemetrytypes.TelemetryFieldKey{Name: "region", FieldContext: telemetrytypes.FieldContextResource},
+			operator:    qbtypes.FilterOperatorEqual,
+			value:       "us",
+			expectedSQL: "JSONExtractString(labels, 'region') = ?",
+		},
+	}
+
+	fm := NewFieldMapper()
+	conditionBuilder := NewConditionBuilder(fm)
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			sb := sqlbuilder.NewSelectBuilder()
+			// Empty fieldKeys map => the key is not resolvable from metadata.
+			cond, warnings, err := conditionBuilder.ConditionFor(ctx, valuer.UUID{}, 0, 0, &tc.key, map[string][]*telemetrytypes.TelemetryFieldKey{}, qbtypes.ConditionBuilderOptions{}, tc.operator, tc.value, sb)
+			require.NoError(t, err)
+			sb.Where(cond...)
+			sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+			assert.Contains(t, sql, tc.expectedSQL)
+			assert.Empty(t, warnings)
+		})
+	}
+}

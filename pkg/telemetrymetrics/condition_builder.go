@@ -168,7 +168,12 @@ func (c *conditionBuilder) ConditionFor(
 		warnings = append(warnings, warning)
 	}
 	if len(keys) == 0 {
-		return nil, warnings, querybuilder.NewKeyNotFoundError(key.Name)
+		// Metrics keeps every label in the `labels` JSON with no per-context storage, so
+		// FieldFor maps any key on its own: intrinsics (incl. the full-text column
+		// metric_name) to their column, every label context to a labels JSON extract.
+		// Use the key directly so a full-text term or an unregistered context resolves
+		// and the query runs instead of 400ing.
+		keys = []*telemetrytypes.TelemetryFieldKey{key}
 	}
 
 	conds := make([]string, 0, len(keys))
