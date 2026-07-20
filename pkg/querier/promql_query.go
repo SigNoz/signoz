@@ -327,11 +327,14 @@ func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {
 		return nil, errors.WrapInternalf(promErr, errors.CodeInternal, "error getting matrix from promql query %q", query)
 	}
 
+	// Hide only known SigNoz storage keys: label names are user data and may
+	// legitimately start with "__" (e.g. __address__), so a blanket dunder
+	// strip mangles user labelsets. The __scope./__resource. prefixes cover
+	// every exporter version's keys.
 	excludeLabel := func(labelName string) bool {
-		if labelName == "__name__" {
-			return false
-		}
-		return strings.HasPrefix(labelName, "__") || labelName == "fingerprint"
+		return labelName == "__temporality__" ||
+			strings.HasPrefix(labelName, "__scope.") ||
+			strings.HasPrefix(labelName, "__resource.")
 	}
 
 	var series []*qbv5.TimeSeries

@@ -25,9 +25,16 @@ def test_histogram_p90_returns_warning_outside_data_window(
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     metric_name = "test_p90_last_seen_bucket"
 
+    # Registration rows are written per (series, hour bucket) with
+    # hour-floored timestamps (the exporter's shape), and metadata lookups
+    # floor their window start to the hour. Data must therefore end a couple
+    # of hours back for the last-15m window to be genuinely outside every
+    # registration bucket; data merely 30 minutes stale shares an hour
+    # bucket with the floored window and does not warn (matching
+    # production behavior).
     metrics = Metrics.load_from_file(
         HISTOGRAM_FILE,
-        base_time=now - timedelta(minutes=90),
+        base_time=now - timedelta(hours=3),
         metric_name_override=metric_name,
     )
     insert_metrics(metrics)
@@ -42,8 +49,8 @@ def test_histogram_p90_returns_warning_outside_data_window(
 
     end_ms = int(now.timestamp() * 1000)
 
-    start_2h = int((now - timedelta(hours=2)).timestamp() * 1000)
-    response = make_query_request(signoz, token, start_2h, end_ms, [query])
+    start_4h = int((now - timedelta(hours=4)).timestamp() * 1000)
+    response = make_query_request(signoz, token, start_4h, end_ms, [query])
     assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
 
