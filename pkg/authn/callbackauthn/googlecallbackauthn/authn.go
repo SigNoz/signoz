@@ -53,7 +53,7 @@ func New(ctx context.Context, store authtypes.AuthNStore, providerSettings facto
 	}, nil
 }
 
-func (a *AuthN) LoginURL(ctx context.Context, authDomain *authtypes.AuthDomain) (string, error) {
+func (a *AuthN) LoginURL(ctx context.Context, siteURL *url.URL, authDomain *authtypes.AuthDomain) (string, error) {
 	oidcProvider, err := oidc.NewProvider(ctx, issuerURL)
 	if err != nil {
 		return "", err
@@ -62,8 +62,6 @@ func (a *AuthN) LoginURL(ctx context.Context, authDomain *authtypes.AuthDomain) 
 	if authDomain.AuthDomainConfig().AuthNProvider != authtypes.AuthNProviderGoogleAuth {
 		return "", errors.Newf(errors.TypeInternal, authtypes.ErrCodeAuthDomainMismatch, "domain type is not google")
 	}
-
-	siteURL := a.globalConfig.ExternalURL.JoinPath("login")
 
 	oauth2Config := a.oauth2Config(siteURL, authDomain, oidcProvider)
 

@@ -52,12 +52,10 @@ func New(store authtypes.AuthNStore, licensing licensing.Licensing, providerSett
 	}, nil
 }
 
-func (a *AuthN) LoginURL(ctx context.Context, authDomain *authtypes.AuthDomain) (string, error) {
+func (a *AuthN) LoginURL(ctx context.Context, siteURL *url.URL, authDomain *authtypes.AuthDomain) (string, error) {
 	if authDomain.AuthDomainConfig().AuthNProvider != authtypes.AuthNProviderOIDC {
 		return "", errors.Newf(errors.TypeInternal, authtypes.ErrCodeAuthDomainMismatch, "domain type is not oidc")
 	}
-
-	siteURL := a.globalConfig.ExternalURL.JoinPath("login")
 
 	_, oauth2Config, err := a.oidcProviderAndoauth2Config(ctx, siteURL, authDomain)
 	if err != nil {

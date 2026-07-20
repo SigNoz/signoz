@@ -12,7 +12,7 @@ import (
 
 type Module interface {
 	// Gets the session context for the user. The context contains information on what the user has to do in order to create a session.
-	GetSessionContext(ctx context.Context, email valuer.Email) (*authtypes.SessionContext, error)
+	GetSessionContext(ctx context.Context, email valuer.Email, siteURL *url.URL) (*authtypes.SessionContext, error)
 
 	// Create a session for a user using password authn provider.
 	CreatePasswordAuthNSession(ctx context.Context, authNProvider authtypes.AuthNProvider, email valuer.Email, password string, orgID valuer.UUID) (*authtypes.Token, error)

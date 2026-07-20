@@ -39,12 +39,10 @@ func New(ctx context.Context, store authtypes.AuthNStore, licensing licensing.Li
 	}, nil
 }
 
-func (a *AuthN) LoginURL(ctx context.Context, authDomain *authtypes.AuthDomain) (string, error) {
+func (a *AuthN) LoginURL(ctx context.Context, siteURL *url.URL, authDomain *authtypes.AuthDomain) (string, error) {
 	if authDomain.AuthDomainConfig().AuthNProvider != authtypes.AuthNProviderSAML {
 		return "", errors.Newf(errors.TypeInternal, authtypes.ErrCodeAuthDomainMismatch, "saml: domain type is not saml")
 	}
-
-	siteURL := a.globalConfig.ExternalURL.JoinPath("login")
 
 	sp, err := a.serviceProvider(siteURL, authDomain)
 	if err != nil {

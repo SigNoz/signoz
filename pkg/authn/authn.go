@@ -17,8 +17,8 @@ type PasswordAuthN interface {
 }
 
 type CallbackAuthN interface {
-	// The initial URL to redirect the user to. Takes the org domain to be used in the callback.
-	LoginURL(context.Context, *authtypes.AuthDomain) (string, error)
+	// The initial URL to redirect the user to. Takes the site url and org domain to be used in the callback.
+	LoginURL(context.Context, *url.URL, *authtypes.AuthDomain) (string, error)
 
 	// Handle the callback from the provider.
 	HandleCallback(context.Context, url.Values) (*authtypes.CallbackIdentity, error)

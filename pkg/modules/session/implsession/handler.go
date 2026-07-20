@@ -35,7 +35,13 @@ func (handler *handler) GetSessionContext(rw http.ResponseWriter, req *http.Requ
 		return
 	}
 
-	sessionContext, err := handler.module.GetSessionContext(ctx, email)
+	siteURL, err := handler.siteURLFromRef(req.URL.Query().Get("ref"))
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	sessionContext, err := handler.module.GetSessionContext(ctx, email, siteURL)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -153,6 +159,19 @@ func (handler *handler) DeleteSession(rw http.ResponseWriter, req *http.Request)
 	}
 
 	render.Success(rw, http.StatusNoContent, nil)
+}
+
+func (handler *handler) siteURLFromRef(ref string) (*url.URL, error) {
+	siteURL, err := url.Parse(ref)
+	if err != nil {
+		return nil, err
+	}
+
+	if !handler.globalConfig.IsOriginAllowed(siteURL) {
+		return nil, errors.Newf(errors.TypeInvalidInput, global.ErrCodeOriginNotAllowed, "ref %q is not an allowed origin", ref)
+	}
+
+	return siteURL, nil
 }
 
 func (handler *handler) getRedirectURLFromErr(err error) string {
