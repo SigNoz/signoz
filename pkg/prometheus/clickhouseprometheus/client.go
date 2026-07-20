@@ -14,6 +14,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/cespare/xxhash/v2"
 	promValue "github.com/prometheus/prometheus/model/value"
 	"github.com/prometheus/prometheus/prompb"
 	"github.com/prometheus/prometheus/storage"
@@ -140,7 +141,11 @@ func (client *client) queryToClickhouseQuery(_ context.Context, query *prompb.Qu
 	var args []any
 	conditions = append(conditions, fmt.Sprintf("metric_name = $%d", argCount+1))
 	conditions = append(conditions, "temporality IN ['Cumulative', 'Unspecified']")
-	conditions = append(conditions, fmt.Sprintf("unix_milli >= %d AND unix_milli < %d", start, end))
+	// Inclusive upper bound: registration rows are hour-floored by the
+	// exporter, so a series first registered in the hour starting exactly at
+	// `end` would otherwise be invisible while its samples (<= end) are in
+	// range.
+	conditions = append(conditions, fmt.Sprintf("unix_milli >= %d AND unix_milli <= %d", start, end))
 
 	args = append(args, metricName)
 	for _, m := range query.Matchers {
@@ -184,7 +189,7 @@ func (client *client) getFingerprintsFromClickhouseQuery(ctx context.Context, qu
 			return nil, err
 		}
 
-		labels, _, err := unmarshalLabels(labelString, fingerprint)
+		labels, _, err := unmarshalLabels(labelString)
 		if err != nil {
 			return nil, err
 		}
@@ -201,6 +206,15 @@ func (client *client) getFingerprintsFromClickhouseQuery(ctx context.Context, qu
 
 // buildSamplesQuery renders the samples SQL (and args) that fetches data
 // points for the series selected by subQuery.
+//
+// Time bounds are inclusive on both ends because that is Prometheus's
+// storage contract: Select(mint, maxt) returns [start, end] and the engine
+// itself trims each evaluation window to left-open (T-window, T], so the
+// sample at exactly `end` belongs to the last point. This deliberately
+// differs from the query builder's `unix_milli < end`, which is correct for
+// its own model — toStartOfInterval buckets covering [t, t+step), where a
+// sample at `end` falls in an unrendered bucket and end-exclusive ranges
+// tile exactly across cached time slices.
 func buildSamplesQuery(start int64, end int64, metricName string, subQuery string, args []any) (string, []any) {
 	argCount := len(args)
 
@@ -281,7 +295,138 @@ func (client *client) querySamples(ctx context.Context, start int64, end int64, 
 		return nil, err
 	}
 
-	return res, nil
+	return mergeSeriesWithIdenticalLabels(res), nil
+}
+
+// mergeSeriesWithIdenticalLabels collapses series sharing one labelset into
+// one series each. Distinct fingerprints can map to one labelset: a label
+// value goes empty over a series' lifetime (#8563), the fingerprint
+// algorithm changes across exporter versions, or the env changes. The
+// engine treats the labelset as series identity — duplicates raise
+// "duplicate series", and #8563's workaround of injecting a synthetic
+// fingerprint label silently broke without() and vector matching. Merging
+// at the last point before hand-off keeps any future input-side label
+// normalization collision-safe. Grouping is by an order-insensitive 64-bit
+// hash so the common no-collision case costs one hash and one map insert
+// per series; hash-equal groups are confirmed by exact labelset equality
+// before any merge. Regression:
+// TestClient_QuerySamplesMergesIdenticalLabelSets and
+// tests/integration/tests/promqlconformance/02_fingerprint_probe.py.
+func mergeSeriesWithIdenticalLabels(series []*prompb.TimeSeries) []*prompb.TimeSeries {
+	if len(series) < 2 {
+		return series
+	}
+
+	groups := make(map[uint64][]*prompb.TimeSeries, len(series))
+	order := make([]uint64, 0, len(series))
+	for _, ts := range series {
+		key := labelsHash(ts.Labels)
+		if _, ok := groups[key]; !ok {
+			order = append(order, key)
+		}
+		groups[key] = append(groups[key], ts)
+	}
+	if len(order) == len(series) {
+		return series
+	}
+
+	res := make([]*prompb.TimeSeries, 0, len(order))
+	for _, key := range order {
+		group := groups[key]
+		if len(group) == 1 {
+			res = append(res, group[0])
+			continue
+		}
+		for _, sub := range splitByLabelSet(group) {
+			if len(sub) == 1 {
+				res = append(res, sub[0])
+				continue
+			}
+			res = append(res, mergeSamples(sub))
+		}
+	}
+	return res
+}
+
+var labelHashSep = []byte{0xff}
+
+// labelsHash combines per-label hashes commutatively, so the stored JSON's
+// key order (not canonical across fingerprints) needs no sort.
+func labelsHash(lbls []prompb.Label) uint64 {
+	var h uint64
+	var d xxhash.Digest
+	for _, l := range lbls {
+		d.Reset()
+		_, _ = d.WriteString(l.Name)
+		_, _ = d.Write(labelHashSep)
+		_, _ = d.WriteString(l.Value)
+		h += d.Sum64()
+	}
+	return h
+}
+
+// splitByLabelSet partitions a hash-equal group into sub-groups of exactly
+// equal labelsets, preserving input order; series that merely collide on the
+// 64-bit hash must not be merged.
+func splitByLabelSet(group []*prompb.TimeSeries) [][]*prompb.TimeSeries {
+	var out [][]*prompb.TimeSeries
+outer:
+	for _, ts := range group {
+		for i, sub := range out {
+			if labelSetsEqual(sub[0].Labels, ts.Labels) {
+				out[i] = append(out[i], ts)
+				continue outer
+			}
+		}
+		out = append(out, []*prompb.TimeSeries{ts})
+	}
+	return out
+}
+
+func labelSetsEqual(a, b []prompb.Label) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for _, la := range a {
+		found := false
+		for _, lb := range b {
+			if la.Name == lb.Name {
+				found = la.Value == lb.Value
+				break
+			}
+		}
+		if !found {
+			return false
+		}
+	}
+	return true
+}
+
+// mergeSamples k-way merges sample streams that share one labelset. On
+// equal timestamps the highest fingerprint wins: the input is in ascending
+// fingerprint order (samples SQL), keeping the choice deterministic.
+func mergeSamples(group []*prompb.TimeSeries) *prompb.TimeSeries {
+	merged := &prompb.TimeSeries{Labels: group[0].Labels}
+	idx := make([]int, len(group))
+	for {
+		minTs := int64(math.MaxInt64)
+		for i, ts := range group {
+			if idx[i] < len(ts.Samples) && ts.Samples[idx[i]].Timestamp < minTs {
+				minTs = ts.Samples[idx[i]].Timestamp
+			}
+		}
+		if minTs == math.MaxInt64 {
+			return merged
+		}
+		var chosen prompb.Sample
+		for i, ts := range group {
+			if idx[i] < len(ts.Samples) && ts.Samples[idx[i]].Timestamp == minTs {
+				chosen = ts.Samples[idx[i]]
+				idx[i]++
+			}
+		}
+		merged.Samples = append(merged.Samples, chosen)
+	}
 }
 
 func (client *client) queryRaw(ctx context.Context, query string, ts int64) (*prompb.QueryResult, error) {

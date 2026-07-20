@@ -2,14 +2,15 @@ package clickhouseprometheus
 
 import (
 	"encoding/json"
-	"strconv"
 
-	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/prometheus/prometheus/prompb"
 )
 
 // Unmarshals JSON into Prometheus labels. It does not preserve order.
-func unmarshalLabels(s string, fingerprint uint64) ([]prompb.Label, string, error) {
+// Empty-valued labels are dropped: Prometheus treats them as absent, and
+// keeping them lets two fingerprints present duplicate labelsets to the
+// engine (the incident behind #8563).
+func unmarshalLabels(s string) ([]prompb.Label, string, error) {
 	var metricName string
 	m := make(map[string]string)
 	if err := json.Unmarshal([]byte(s), &m); err != nil {
@@ -17,6 +18,9 @@ func unmarshalLabels(s string, fingerprint uint64) ([]prompb.Label, string, erro
 	}
 	res := make([]prompb.Label, 0, len(m))
 	for n, v := range m {
+		if v == "" {
+			continue
+		}
 		if n == "__name__" {
 			metricName = v
 		}
@@ -26,9 +30,5 @@ func unmarshalLabels(s string, fingerprint uint64) ([]prompb.Label, string, erro
 			Value: v,
 		})
 	}
-	res = append(res, prompb.Label{
-		Name:  prometheus.FingerprintAsPromLabelName,
-		Value: strconv.FormatUint(fingerprint, 10),
-	})
 	return res, metricName, nil
 }

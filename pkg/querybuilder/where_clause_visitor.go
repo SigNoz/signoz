@@ -371,24 +371,6 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 	key := v.Visit(ctx.Key()).(*telemetrytypes.TelemetryFieldKey)
 	matching := MatchingFieldKeys(key, v.fieldKeys)
 
-	// Skip resource filtering on the main table when a sub-query covers it; a resolving
-	// condition builder applies this itself in ConditionForKeys.
-	if _, resolvesKeys := v.conditionBuilder.(qbtypes.ResolvingConditionBuilder); v.skipResourceFilter && len(matching) > 0 && !resolvesKeys {
-		resolved, warning := ResolveKeys(key, matching)
-		// emit the ambiguity warning even when the term is skipped below
-		v.addWarnings([]string{warning}, len(matching) > 1)
-		filtered := []*telemetrytypes.TelemetryFieldKey{}
-		for _, k := range resolved {
-			if k.FieldContext != telemetrytypes.FieldContextResource {
-				filtered = append(filtered, k)
-			}
-		}
-		if len(filtered) == 0 {
-			return SkipConditionLiteral
-		}
-		matching = filtered
-	}
-
 	// Handle EXISTS specially
 	if ctx.EXISTS() != nil {
 		op := qbtypes.FilterOperatorExists
@@ -732,7 +714,11 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 		return ErrorConditionLiteral
 	}
 
-	value := params[1:]
+	value, err := normalizeFunctionValue(operator, functionName, params[1:])
+	if err != nil {
+		v.errors = append(v.errors, err.Error())
+		return ErrorConditionLiteral
+	}
 
 	conds, ok := v.buildConditions(key, MatchingFieldKeys(key, v.fieldKeys), operator, value)
 	if !ok {
@@ -746,6 +732,44 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 		return conds[0]
 	}
 	return v.builder.Or(conds...)
+}
+
+// normalizeFunctionValue validates and normalizes the value argument(s) of a has-family
+// function call, returning them in the wrapper slice the condition builder unwraps.
+//
+//   - has/hasToken take exactly one scalar value. More than one argument, or an array
+//     argument, is rejected rather than silently dropping the extras.
+//   - hasAny/hasAll take a set of values, supplied either as a single array literal
+//     (hasAny(k, ['a','b'])) or as several scalar arguments (hasAny(k, 'a', 'b')); the
+//     latter are folded into one list so no argument is silently ignored.
+func normalizeFunctionValue(operator qbtypes.FilterOperator, functionName string, valueParams []any) (any, error) {
+	switch operator {
+	case qbtypes.FilterOperatorHas, qbtypes.FilterOperatorHasToken:
+		if len(valueParams) != 1 {
+			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "function `%s` expects exactly one value argument", functionName)
+		}
+		if _, isArray := valueParams[0].([]any); isArray {
+			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "function `%s` expects a single scalar value, not an array", functionName)
+		}
+		return valueParams, nil
+	case qbtypes.FilterOperatorHasAny, qbtypes.FilterOperatorHasAll:
+		// A single array literal is already the value set.
+		if len(valueParams) == 1 {
+			if _, isArray := valueParams[0].([]any); isArray {
+				return valueParams, nil
+			}
+		}
+		// Otherwise fold the positional scalar arguments into one list.
+		values := make([]any, 0, len(valueParams))
+		for _, p := range valueParams {
+			if _, isArray := p.([]any); isArray {
+				return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "function `%s` expects either a single array literal or scalar values, not a mix of the two", functionName)
+			}
+			values = append(values, p)
+		}
+		return []any{values}, nil
+	}
+	return valueParams, nil
 }
 
 // VisitFunctionParamList handles the parameter list for function calls.
@@ -816,18 +840,7 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 // buildConditions invokes the condition builder for a filter term, folding its
 // warnings/errors into visitor state; returns false if an error was recorded.
 func (v *filterExpressionVisitor) buildConditions(key *telemetrytypes.TelemetryFieldKey, matching []*telemetrytypes.TelemetryFieldKey, op qbtypes.FilterOperator, value any) ([]string, bool) {
-	var (
-		conds []string
-		warns []string
-		err   error
-	)
-	// A resolving condition builder owns key resolution, so hand it the raw key + full map;
-	// other signals use the pre-matched ConditionFor path.
-	if rcb, ok := v.conditionBuilder.(qbtypes.ResolvingConditionBuilder); ok {
-		conds, warns, err = rcb.ConditionForKeys(v.context, v.orgID, v.startNs, v.endNs, key, v.fieldKeys, qbtypes.ConditionBuilderOptions{SkipResourceFilter: v.skipResourceFilter}, op, value, v.builder)
-	} else {
-		conds, warns, err = v.conditionBuilder.ConditionFor(v.context, v.orgID, v.startNs, v.endNs, key, matching, op, value, v.builder)
-	}
+	conds, warns, err := v.conditionBuilder.ConditionFor(v.context, v.orgID, v.startNs, v.endNs, key, v.fieldKeys, qbtypes.ConditionBuilderOptions{SkipResourceFilter: v.skipResourceFilter}, op, value, v.builder)
 	if err != nil {
 		_, _, _, _, errURL, _ := errors.Unwrapb(err)
 		assignIfEmpty(&v.mainErrorURL, errURL)

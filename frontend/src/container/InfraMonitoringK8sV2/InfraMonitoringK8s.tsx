@@ -3,7 +3,10 @@ import * as Sentry from '@sentry/react';
 import { Button, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
-import { QuickFiltersSource } from 'components/QuickFilters/types';
+import {
+	QuickFilterCheckboxUseFieldApis,
+	QuickFiltersSource,
+} from 'components/QuickFilters/types';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -36,7 +39,9 @@ import {
 	GetPodsQuickFiltersConfig,
 	GetStatefulsetsQuickFiltersConfig,
 	GetVolumesQuickFiltersConfig,
+	InfraMonitoringEntity,
 	K8sCategories,
+	METRIC_NAMESPACE_BY_ENTITY,
 } from './constants';
 import K8sDaemonSetsList from './DaemonSets/K8sDaemonSetsList';
 import K8sDeploymentsList from './Deployments/K8sDeploymentsList';
@@ -56,6 +61,7 @@ import K8sVolumesList from './Volumes/K8sVolumesList';
 import styles from './InfraMonitoringK8s.module.scss';
 import { InfraMonitoringEvents } from 'constants/events';
 import logEvent from 'api/common/logEvent';
+import { NANO_SECOND_MULTIPLIER, useGlobalTimeStore } from 'store/globalTime';
 
 export default function InfraMonitoringK8s(): JSX.Element {
 	const [showFilters, setShowFilters] = useState(true);
@@ -68,6 +74,31 @@ export default function InfraMonitoringK8s(): JSX.Element {
 	const compositeQuery = useGetCompositeQueryParam();
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 	const isInitialized = useRef(false);
+
+	const selectedTime = useGlobalTimeStore((state) => state.selectedTime);
+	const getMinMaxTime = useGlobalTimeStore((state) => state.getMinMaxTime);
+	const { startUnixMilli, endUnixMilli } = useMemo(() => {
+		const { minTime, maxTime } = getMinMaxTime();
+		return {
+			startUnixMilli: Math.floor(minTime / NANO_SECOND_MULTIPLIER),
+			endUnixMilli: Math.floor(maxTime / NANO_SECOND_MULTIPLIER),
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [selectedTime, getMinMaxTime]);
+
+	const getUseFieldApis = useCallback(
+		(entity: InfraMonitoringEntity): QuickFilterCheckboxUseFieldApis => ({
+			metricNamespace: METRIC_NAMESPACE_BY_ENTITY[entity],
+			startUnixMilli,
+			endUnixMilli,
+		}),
+		[startUnixMilli, endUnixMilli],
+	);
+
+	const selectedCategoryUseFieldApis = useMemo(
+		() => getUseFieldApis(selectedCategory as InfraMonitoringEntity),
+		[getUseFieldApis, selectedCategory],
+	);
 
 	useEffect(() => {
 		if (isInitialized.current) {
@@ -269,6 +300,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 										source={QuickFiltersSource.INFRA_MONITORING}
 										config={selectedCategoryConfig}
 										handleFilterVisibilityChange={handleFilterVisibilityChange}
+										useFieldApis={selectedCategoryUseFieldApis}
 									/>
 								)}
 							</div>

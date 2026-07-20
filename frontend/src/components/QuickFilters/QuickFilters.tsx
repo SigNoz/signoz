@@ -32,6 +32,7 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { USER_ROLES } from 'types/roles';
 
 import Checkbox from './FilterRenderers/Checkbox/Checkbox';
+import CheckboxV2 from './FilterRenderers/Checkbox/v2/CheckboxFilterV2';
 import Duration from './FilterRenderers/Duration/Duration';
 import Slider from './FilterRenderers/Slider/Slider';
 import useFilterConfig from './hooks/useFilterConfig';
@@ -51,6 +52,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		signal,
 		showFilterCollapse = true,
 		showQueryName = true,
+		useFieldApis,
 	} = props;
 	const { user } = useAppContext();
 	const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -297,21 +299,45 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 				{filterConfig.map((filter) => {
 					switch (filter.type) {
 						case FiltersType.CHECKBOX:
-							return (
+							return useFieldApis ? (
+								<CheckboxV2
+									key={filter.attributeKey.key}
+									source={source}
+									filter={filter}
+									onFilterChange={onFilterChange}
+									useFieldApis={useFieldApis}
+								/>
+							) : (
 								<Checkbox
+									key={filter.attributeKey.key}
 									source={source}
 									filter={filter}
 									onFilterChange={onFilterChange}
 								/>
 							);
 						case FiltersType.DURATION:
-							return <Duration filter={filter} onFilterChange={onFilterChange} />;
+							return (
+								<Duration
+									key={filter.attributeKey.key}
+									filter={filter}
+									onFilterChange={onFilterChange}
+								/>
+							);
 						case FiltersType.SLIDER:
-							return <Slider />;
+							return <Slider key={filter.attributeKey.key} />;
 						// eslint-disable-next-line sonarjs/no-duplicated-branches
 						default:
-							return (
+							return useFieldApis ? (
+								<CheckboxV2
+									key={filter.attributeKey.key}
+									source={source}
+									filter={filter}
+									onFilterChange={onFilterChange}
+									useFieldApis={useFieldApis}
+								/>
+							) : (
 								<Checkbox
+									key={filter.attributeKey.key}
 									source={source}
 									filter={filter}
 									onFilterChange={onFilterChange}
@@ -381,4 +407,5 @@ QuickFilters.defaultProps = {
 	config: [],
 	showFilterCollapse: true,
 	showQueryName: true,
+	useFieldApis: undefined,
 };
