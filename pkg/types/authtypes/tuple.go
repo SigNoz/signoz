@@ -3,6 +3,7 @@ package authtypes
 import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 )
@@ -141,22 +142,52 @@ func NewTuplesFromTransactionsWithCorrelations(transactions []*Transaction, subj
 			return nil, nil, err
 		}
 
+		selectorStrings, err := newCheckSelectors(txn.Object.Resource.Type, txn.Object.Selector)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		selectors := make([]coretypes.Selector, 0, len(selectorStrings))
+		for _, selectorString := range selectorStrings {
+			selector, err := txn.Object.Resource.Type.Selector(selectorString)
+			if err != nil {
+				return nil, nil, err
+			}
+			selectors = append(selectors, selector)
+		}
+
 		txnID := txn.ID.StringValue()
-
-		txnTuples := NewTuples(resource, subject, txn.Relation, []coretypes.Selector{txn.Object.Selector}, orgID)
-		tuples[txnID] = txnTuples[0]
-
-		if txn.Object.Selector.String() != coretypes.WildCardSelectorString {
-			wildcardSelector := txn.Object.Resource.Type.MustSelector(coretypes.WildCardSelectorString)
-			wildcardTuples := NewTuples(resource, subject, txn.Relation, []coretypes.Selector{wildcardSelector}, orgID)
+		for index, tuple := range NewTuples(resource, subject, txn.Relation, selectors, orgID) {
+			if index == 0 {
+				tuples[txnID] = tuple
+				continue
+			}
 
 			correlationID := valuer.GenerateUUID().StringValue()
-			tuples[correlationID] = wildcardTuples[0]
+			tuples[correlationID] = tuple
 			correlations[txnID] = append(correlations[txnID], correlationID)
 		}
 	}
 
 	return tuples, correlations, nil
+}
+
+func newCheckSelectors(resourceType coretypes.Type, selector coretypes.Selector) ([]string, error) {
+	if resourceType.Equals(coretypes.TypeTelemetryResource) {
+		canonical, err := telemetrytypes.NewTelemetryGrantSelector(selector.String())
+		if err != nil {
+			return nil, err
+		}
+
+		return telemetrytypes.NewTelemetryGrantSelectors(canonical), nil
+	}
+
+	selectorStrings := []string{selector.String()}
+	if selector.String() != coretypes.WildCardSelectorString {
+		selectorStrings = append(selectorStrings, coretypes.WildCardSelectorString)
+	}
+
+	return selectorStrings, nil
 }
 
 func NewTuplesFromTransactionsWithManagedRoles(

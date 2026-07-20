@@ -70,6 +70,35 @@ func NewTelemetryGrantSelector(input string) (string, error) {
 	return queryType + "/" + key + "/" + value, nil
 }
 
+func NewTelemetryGrantSelectors(selector string) []string {
+	if selector == wildcardSelector {
+		return []string{wildcardSelector}
+	}
+
+	parts := strings.SplitN(selector, "/", 3)
+	queryType := parts[0]
+
+	if len(parts) < 3 {
+		return []string{queryType + "/" + wildcardSelector, wildcardSelector}
+	}
+
+	key, value := parts[1], parts[2]
+	if value == wildcardSelector {
+		return []string{
+			queryType + "/" + key + "/" + wildcardSelector,
+			queryType + "/" + wildcardSelector,
+			wildcardSelector,
+		}
+	}
+
+	return []string{
+		queryType + "/" + key + "/" + value,
+		queryType + "/" + key + "/" + wildcardSelector,
+		queryType + "/" + wildcardSelector,
+		wildcardSelector,
+	}
+}
+
 func telemetryGrantKeyNames() []string {
 	names := make([]string, 0, len(telemetryGrantKeys))
 	for name := range telemetryGrantKeys {

@@ -55,3 +55,17 @@ func TestNewTelemetryGrantKey(t *testing.T) {
 		assert.False(t, ok, keyText)
 	}
 }
+
+func TestNewTelemetryGrantSelectors(t *testing.T) {
+	ladders := map[string][]string{
+		"*":                              {"*"},
+		"builder_query/*":                {"builder_query/*", "*"},
+		"promql/*":                       {"promql/*", "*"},
+		"builder_query/service.name/*":   {"builder_query/service.name/*", "builder_query/*", "*"},
+		"builder_query/service.name/a":   {"builder_query/service.name/a", "builder_query/service.name/*", "builder_query/*", "*"},
+		"builder_query/service.name/a/b": {"builder_query/service.name/a/b", "builder_query/service.name/*", "builder_query/*", "*"},
+	}
+	for selector, expected := range ladders {
+		assert.Equal(t, expected, NewTelemetryGrantSelectors(selector), "selector %q", selector)
+	}
+}

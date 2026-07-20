@@ -14,7 +14,7 @@ import (
 )
 
 func TelemetrySelector(_ context.Context, resource coretypes.Resource, id string, _ valuer.UUID) ([]coretypes.Selector, error) {
-	values := telemetrySelectorLadder(id)
+	values := telemetrytypes.NewTelemetryGrantSelectors(id)
 
 	selectors := make([]coretypes.Selector, 0, len(values))
 	for _, value := range values {
@@ -26,27 +26,6 @@ func TelemetrySelector(_ context.Context, resource coretypes.Resource, id string
 	}
 
 	return selectors, nil
-}
-
-func telemetrySelectorLadder(id string) []string {
-	if id == coretypes.WildCardSelectorString {
-		return []string{coretypes.WildCardSelectorString}
-	}
-
-	parts := strings.SplitN(id, "/", 3)
-	queryType := parts[0]
-
-	if len(parts) < 3 {
-		return []string{queryType + "/" + coretypes.WildCardSelectorString, coretypes.WildCardSelectorString}
-	}
-
-	key, value := parts[1], parts[2]
-	return []string{
-		queryType + "/" + key + "/" + value,
-		queryType + "/" + key + "/" + coretypes.WildCardSelectorString,
-		queryType + "/" + coretypes.WildCardSelectorString,
-		coretypes.WildCardSelectorString,
-	}
 }
 
 func QueryRangeResources(ec coretypes.ExtractorContext) ([]coretypes.ResourceWithID, error) {
