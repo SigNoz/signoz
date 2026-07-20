@@ -93,6 +93,7 @@ function CloudAccountSetupDrawer({
 					color="primary"
 					onClick={handleSubmit(connectAccount)}
 					loading={isLoading}
+					disabled={isConnectionParamsLoading}
 					testId="gcp-connect-account-btn"
 				>
 					Connect Account

@@ -103,16 +103,13 @@ export function useCloudAccountSetupDrawer({
 						},
 					},
 					credentials: {
-						// Fields are always visible & pre-filled, so user-edited values win;
-						// fall back to fetched credentials if the form hasn't hydrated yet.
-						ingestionUrl:
-							values.ingestionUrl || connectionParams?.data?.ingestionUrl || '',
-						ingestionKey:
-							values.ingestionKey || connectionParams?.data?.ingestionKey || '',
-						sigNozApiUrl:
-							values.sigNozApiUrl || connectionParams?.data?.sigNozApiUrl || '',
-						sigNozApiKey:
-							values.sigNozApiKey || connectionParams?.data?.sigNozApiKey || '',
+						// Cloud users can't edit these — the backend-provided credentials are
+						// authoritative. Enterprise users have no backend defaults and enter
+						// their own (validated non-empty), so their form values are used.
+						ingestionUrl: connectionParams?.data?.ingestionUrl || values.ingestionUrl,
+						ingestionKey: connectionParams?.data?.ingestionKey || values.ingestionKey,
+						sigNozApiUrl: connectionParams?.data?.sigNozApiUrl || values.sigNozApiUrl,
+						sigNozApiKey: connectionParams?.data?.sigNozApiKey || values.sigNozApiKey,
 					},
 				};
 
