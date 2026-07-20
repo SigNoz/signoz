@@ -1,0 +1,2782 @@
+{
+  "description": "Dashboard for GCP Compute Engine overview",
+  "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNHB4IiBoZWlnaHQ9IjI0cHgiIHZpZXdCb3g9IjAgMCAyNCAyNCI+PGRlZnM+PHN0eWxlPi5jbHMtMXtmaWxsOiNhZWNiZmE7fS5jbHMtMntmaWxsOiM2NjlkZjY7fS5jbHMtM3tmaWxsOiM0Mjg1ZjQ7fTwvc3R5bGU+PC9kZWZzPjx0aXRsZT5JY29uXzI0cHhfQ29tcHV0ZUVuZ2luZV9Db2xvcjwvdGl0bGU+PGcgZGF0YS1uYW1lPSJQcm9kdWN0IEljb25zIj48cmVjdCBjbGFzcz0iY2xzLTEiIHg9IjkiIHk9IjkiIHdpZHRoPSI2IiBoZWlnaHQ9IjYiLz48cmVjdCBjbGFzcz0iY2xzLTIiIHg9IjExIiB5PSIyIiB3aWR0aD0iMiIgaGVpZ2h0PSI0Ii8+PHJlY3QgY2xhc3M9ImNscy0yIiB4PSI3IiB5PSIyIiB3aWR0aD0iMiIgaGVpZ2h0PSI0Ii8+PHJlY3QgY2xhc3M9ImNscy0yIiB4PSIxNSIgeT0iMiIgd2lkdGg9IjIiIGhlaWdodD0iNCIvPjxyZWN0IGNsYXNzPSJjbHMtMyIgeD0iMTEiIHk9IjE4IiB3aWR0aD0iMiIgaGVpZ2h0PSI0Ii8+PHJlY3QgY2xhc3M9ImNscy0zIiB4PSI3IiB5PSIxOCIgd2lkdGg9IjIiIGhlaWdodD0iNCIvPjxyZWN0IGNsYXNzPSJjbHMtMyIgeD0iMTUiIHk9IjE4IiB3aWR0aD0iMiIgaGVpZ2h0PSI0Ii8+PHJlY3QgY2xhc3M9ImNscy0zIiB4PSIxOSIgeT0iMTAiIHdpZHRoPSIyIiBoZWlnaHQ9IjQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDggMzIpIHJvdGF0ZSgtOTApIi8+PHJlY3QgY2xhc3M9ImNscy0zIiB4PSIxOSIgeT0iMTQiIHdpZHRoPSIyIiBoZWlnaHQ9IjQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDQgMzYpIHJvdGF0ZSgtOTApIi8+PHJlY3QgY2xhc3M9ImNscy0zIiB4PSIxOSIgeT0iNiIgd2lkdGg9IjIiIGhlaWdodD0iNCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTIgMjgpIHJvdGF0ZSgtOTApIi8+PHJlY3QgY2xhc3M9ImNscy0yIiB4PSIzIiB5PSIxMCIgd2lkdGg9IjIiIGhlaWdodD0iNCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTggMTYpIHJvdGF0ZSgtOTApIi8+PHJlY3QgY2xhc3M9ImNscy0yIiB4PSIzIiB5PSIxNCIgd2lkdGg9IjIiIGhlaWdodD0iNCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTEyIDIwKSByb3RhdGUoLTkwKSIvPjxyZWN0IGNsYXNzPSJjbHMtMiIgeD0iMyIgeT0iNiIgd2lkdGg9IjIiIGhlaWdodD0iNCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTQgMTIpIHJvdGF0ZSgtOTApIi8+PHBhdGggY2xhc3M9ImNscy0xIiBkPSJNNSw1VjE5SDE5VjVaTTE3LDE3SDdWN0gxN1oiLz48cG9seWdvbiBjbGFzcz0iY2xzLTIiIHBvaW50cz0iOSAxNSAxNSAxNSAxMiAxMiA5IDE1Ii8+PHBvbHlnb24gY2xhc3M9ImNscy0zIiBwb2ludHM9IjEyIDEyIDE1IDE1IDE1IDkgMTIgMTIiLz48L2c+PC9zdmc+",
+  "layout": [
+    {
+      "h": 6,
+      "i": "ef53af26-93af-40e7-8588-65a17100f9a9",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "h": 1,
+      "i": "83e0d81d-6487-4232-b3de-62a453cb09c9",
+      "maxH": 1,
+      "minH": 1,
+      "minW": 12,
+      "moved": false,
+      "static": false,
+      "w": 12,
+      "x": 0,
+      "y": 6
+    },
+    {
+      "h": 6,
+      "i": "1d9e2225-799c-4c10-9866-651a0c7aa28b",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 7
+    },
+    {
+      "h": 6,
+      "i": "4361db71-32d0-4b23-9e7a-6372a1a0c0be",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 7
+    },
+    {
+      "h": 6,
+      "i": "113668c5-fb85-4eab-9b31-1cae4ff06127",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 13
+    },
+    {
+      "h": 6,
+      "i": "1ee5e2e3-847b-49aa-a8aa-aa098d959468",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 13
+    },
+    {
+      "h": 1,
+      "i": "9faa9b6f-0329-4445-9b92-8165703a20a3",
+      "maxH": 1,
+      "minH": 1,
+      "minW": 12,
+      "moved": false,
+      "static": false,
+      "w": 12,
+      "x": 0,
+      "y": 19
+    },
+    {
+      "h": 6,
+      "i": "b8b4b938-1995-4927-a286-d8cba19ef81f",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 20
+    },
+    {
+      "h": 6,
+      "i": "c8aad8b0-09fe-4e94-8af2-ed13c145f006",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 20
+    },
+    {
+      "h": 6,
+      "i": "4b5bfcca-f9d4-4118-996d-0a2deed0a02c",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 26
+    },
+    {
+      "h": 6,
+      "i": "cd2d5ebb-d1ec-4d61-89a2-82e99aa2583d",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 26
+    },
+    {
+      "h": 6,
+      "i": "48229d1e-52f9-49b7-9f15-b3fe17341540",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 32
+    },
+    {
+      "h": 6,
+      "i": "c06ce3ad-67f8-4e69-a8cd-44120416db42",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 32
+    },
+    {
+      "h": 1,
+      "i": "8bb0ee05-a4f3-4dce-a094-06d84d275612",
+      "maxH": 1,
+      "minH": 1,
+      "minW": 12,
+      "moved": false,
+      "static": false,
+      "w": 12,
+      "x": 0,
+      "y": 38
+    },
+    {
+      "h": 6,
+      "i": "89c9a054-a281-485c-8b17-46590ac9804e",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 39
+    },
+    {
+      "h": 6,
+      "i": "adfe59ed-f188-4efd-b22a-b021577ca97c",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 39
+    },
+    {
+      "h": 6,
+      "i": "e90a9573-b523-4fd2-9b12-36915679a8bd",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 45
+    },
+    {
+      "h": 6,
+      "i": "d4fc8b10-aac3-437a-91d6-2f19ba4d6681",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 45
+    },
+    {
+      "h": 6,
+      "i": "503a1db2-69af-413f-8f5b-6e0c4eb7763a",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 51
+    }
+  ],
+  "panelMap": {
+    "83e0d81d-6487-4232-b3de-62a453cb09c9": {
+      "collapsed": false,
+      "widgets": [
+        {
+          "h": 6,
+          "i": "1d9e2225-799c-4c10-9866-651a0c7aa28b",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 0,
+          "y": 7
+        },
+        {
+          "h": 6,
+          "i": "4361db71-32d0-4b23-9e7a-6372a1a0c0be",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 6,
+          "y": 7
+        },
+        {
+          "h": 6,
+          "i": "113668c5-fb85-4eab-9b31-1cae4ff06127",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 0,
+          "y": 13
+        },
+        {
+          "h": 6,
+          "i": "1ee5e2e3-847b-49aa-a8aa-aa098d959468",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 6,
+          "y": 13
+        }
+      ]
+    },
+    "8bb0ee05-a4f3-4dce-a094-06d84d275612": {
+      "collapsed": false,
+      "widgets": [
+        {
+          "h": 6,
+          "i": "503a1db2-69af-413f-8f5b-6e0c4eb7763a",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 0,
+          "y": 45
+        }
+      ]
+    },
+    "9faa9b6f-0329-4445-9b92-8165703a20a3": {
+      "collapsed": false,
+      "widgets": [
+        {
+          "h": 6,
+          "i": "b8b4b938-1995-4927-a286-d8cba19ef81f",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 0,
+          "y": 32
+        },
+        {
+          "h": 6,
+          "i": "c8aad8b0-09fe-4e94-8af2-ed13c145f006",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 6,
+          "y": 32
+        }
+      ]
+    }
+  },
+  "tags": [],
+  "title": "GCP Compute Engine Overview",
+  "uploadedGrafana": false,
+  "variables": {
+    "17c30908-4599-4e74-8281-aaee07d78715": {
+      "allSelected": true,
+      "customValue": "",
+      "defaultValue": "",
+      "description": "Compute Engine Instance ID",
+      "dynamicVariablesAttribute": "instance_id",
+      "dynamicVariablesSource": "Metrics",
+      "haveCustomValuesSelected": false,
+      "id": "17c30908-4599-4e74-8281-aaee07d78715",
+      "modificationUUID": "69657c3b-41e8-4150-9892-e82942dc6aa9",
+      "multiSelect": true,
+      "name": "instance_id",
+      "order": 1,
+      "queryValue": "",
+      "showALLOption": true,
+      "sort": "DISABLED",
+      "textboxValue": "",
+      "type": "DYNAMIC"
+    },
+    "c2670762-b683-464b-be4f-47e5cc8da7f4": {
+      "allSelected": false,
+      "customValue": "",
+      "defaultValue": "",
+      "description": "GCP Project ID",
+      "dynamicVariablesAttribute": "project_id",
+      "dynamicVariablesSource": "Metrics",
+      "id": "c2670762-b683-464b-be4f-47e5cc8da7f4",
+      "key": "c2670762-b683-464b-be4f-47e5cc8da7f4",
+      "modificationUUID": "8ccdce88-6dc9-4e54-81b0-1c01aa010800",
+      "multiSelect": false,
+      "name": "project_id",
+      "order": 0,
+      "queryValue": "",
+      "showALLOption": true,
+      "sort": "DISABLED",
+      "textboxValue": "",
+      "type": "DYNAMIC"
+    }
+  },
+  "version": "v5",
+  "widgets": [
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "Current CPU utilization represented as a percentage of the reserved CPU that is currently in use.\nIt can shot up above 100% for certain workloads",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "1d9e2225-799c-4c10-9866-651a0c7aa28b",
+      "isLogScale": false,
+      "legendPosition": "right",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "compute.googleapis.com/instance/cpu/utilization",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "max",
+                  "temporality": "",
+                  "timeAggregation": "max"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": true,
+              "expression": "A",
+              "filter": {
+                "expression": "project_id = $project_id AND instance_id in $instance_id AND gcp.resource_type = 'gce_instance' "
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "instance_name--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "instance_name",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [
+            {
+              "disabled": false,
+              "expression": "100*A",
+              "legend": "{{instance_name}}",
+              "queryName": "F1"
+            }
+          ],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "1b429483-7cd6-445c-9570-d4ed7c9fe0fe",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "% CPU Utilization",
+      "yAxisUnit": "%"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "Percentage of total system memory actively in use.",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "4361db71-32d0-4b23-9e7a-6372a1a0c0be",
+      "isLogScale": false,
+      "legendPosition": "right",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "compute.googleapis.com/guest/memory/percent_used",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "max",
+                  "temporality": "",
+                  "timeAggregation": "max"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "project_id = $project_id AND instance_id in $instance_id AND gcp.resource_type = 'gce_instance' "
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "instance_name--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "instance_name",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{instance_name}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "3f92f7ca-8ef4-41db-b140-29b056135434",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "% Memory Utilization",
+      "yAxisUnit": "%"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "Memory usage by each memory state, in Bytes. Applied to only Container-Optimised OS.",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "1ee5e2e3-847b-49aa-a8aa-aa098d959468",
+      "isLogScale": false,
+      "legendPosition": "right",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "compute.googleapis.com/guest/memory/bytes_used",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "sum",
+                  "temporality": "",
+                  "timeAggregation": "max"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "project_id = $project_id AND instance_id in $instance_id AND gcp.resource_type = 'gce_instance'"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "instance_name--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "instance_name",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "state--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "state",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{instance_name}}/{{state}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "29de0594-942c-4e9d-9e36-29892bb75568",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Memory Used in Bytes",
+      "yAxisUnit": "By"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "Percentage of total system memory actively in use. Collected by Ops Agent.",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "113668c5-fb85-4eab-9b31-1cae4ff06127",
+      "isLogScale": false,
+      "legendPosition": "right",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "agent.googleapis.com/memory/percent_used",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "max",
+                  "temporality": "",
+                  "timeAggregation": "max"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "project_id = $project_id AND instance_id in $instance_id AND gcp.resource_type = 'gce_instance' AND state = 'used'"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "instance_id--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "instance_id",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{instance_id}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "2d855ab9-eee5-42e8-9c74-d14732492e67",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "% Memory Utilization via Ops Agent",
+      "yAxisUnit": "%"
+    },
+    {
+      "description": "",
+      "id": "83e0d81d-6487-4232-b3de-62a453cb09c9",
+      "panelTypes": "row",
+      "title": "CPU & Memory"
+    },
+    {
+      "description": "",
+      "id": "9faa9b6f-0329-4445-9b92-8165703a20a3",
+      "panelTypes": "row",
+      "title": "Disk"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "Disk's average io latency",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "b8b4b938-1995-4927-a286-d8cba19ef81f",
+      "isLogScale": false,
+      "legendPosition": "right",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "compute.googleapis.com/instance/disk/average_io_latency",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "sum",
+                  "temporality": "",
+                  "timeAggregation": "avg"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "project_id = $project_id AND instance_id in $instance_id AND gcp.resource_type = 'gce_instance'"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "instance_id--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "instance_id",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "device_name--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "device_name",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{instance_id}}/{{device_name}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "30e2b5ed-bd0a-432e-a447-35a0f98ff9b1",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "[us] Disk average latency",
+      "yAxisUnit": "us"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {
+        "A": ""
+      },
+      "columnWidths": {
+        "A": 145,
+        "instance_id": 145,
+        "performance_status": 145,
+        "storage_type": 145
+      },
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "Whether the disk performance is normal or could potentially be impacted by an issue within Compute Engine. One of [\"Healthy\", \"Degraded\" or \"Severely Degraded\"].",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "c8aad8b0-09fe-4e94-8af2-ed13c145f006",
+      "isLogScale": false,
+      "legendPosition": "right",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "table",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "compute.googleapis.com/instance/disk/performance_status",
+                  "reduceTo": "last",
+                  "spaceAggregation": "avg",
+                  "temporality": "",
+                  "timeAggregation": "avg"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "project_id = $project_id AND instance_id in $instance_id AND gcp.resource_type = 'gce_instance'"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "instance_id--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "instance_id",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "performance_status--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "performance_status",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "storage_type--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "storage_type",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "value",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "cb77fc35-4fcc-46a7-bb3d-97d73856dbc1",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Disk performance status",
+      "yAxisUnit": "us"
+    },
+    {
+      "description": "",
+      "id": "8bb0ee05-a4f3-4dce-a094-06d84d275612",
+      "panelTypes": "row",
+      "title": "Network"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "Count of incoming packets dropped by the firewall.",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "503a1db2-69af-413f-8f5b-6e0c4eb7763a",
+      "isLogScale": false,
+      "legendPosition": "bottom",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "compute.googleapis.com/instance/firewall/dropped_packets_count",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "sum",
+                  "temporality": "",
+                  "timeAggregation": "max"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "project_id = $project_id AND instance_id in $instance_id AND gcp.resource_type = 'gce_instance'"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "",
+                  "id": "instance_name----",
+                  "key": "instance_name",
+                  "type": ""
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{instance_name}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "9fe78697-fc49-481c-8043-adc52a16fb8a",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Dropped packets",
+      "yAxisUnit": "{count}"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {
+        "A": "s"
+      },
+      "columnWidths": {
+        "A": 145,
+        "instance_name": 145
+      },
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "Elapsed time since the VM was started, in seconds.",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "ef53af26-93af-40e7-8588-65a17100f9a9",
+      "isLogScale": false,
+      "legendPosition": "bottom",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "table",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "compute.googleapis.com/instance/uptime_total",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "avg",
+                  "temporality": "",
+                  "timeAggregation": "avg"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "project_id = $project_id AND instance_id in $instance_id AND gcp.resource_type = 'gce_instance'"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "instance_name--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "instance_name",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "Age",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "54416098-4f59-49bc-978a-9c8e298f4789",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Uptime total",
+      "yAxisUnit": "none"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "Rate of disk data being read",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "4b5bfcca-f9d4-4118-996d-0a2deed0a02c",
+      "isLogScale": false,
+      "legendPosition": "right",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "compute.googleapis.com/instance/disk/read_bytes_count",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "sum",
+                  "temporality": "",
+                  "timeAggregation": "max"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": true,
+              "expression": "A",
+              "filter": {
+                "expression": "project_id = $project_id AND instance_id in $instance_id AND gcp.resource_type = 'gce_instance'"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "instance_name--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "instance_name",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{instance_id}}/{{device_name}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [
+            {
+              "disabled": false,
+              "expression": "(A/60)",
+              "legend": "{{instance_name}}",
+              "queryName": "F1"
+            }
+          ],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "c8a605da-ffe7-4534-b948-734fc7bf5df2",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Disk Read Throughput",
+      "yAxisUnit": "By/s"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "Disk writes rate",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "cd2d5ebb-d1ec-4d61-89a2-82e99aa2583d",
+      "isLogScale": false,
+      "legendPosition": "right",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "compute.googleapis.com/instance/disk/write_bytes_count",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "sum",
+                  "temporality": "",
+                  "timeAggregation": "avg"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": true,
+              "expression": "A",
+              "filter": {
+                "expression": "project_id = $project_id AND instance_id in $instance_id AND gcp.resource_type = 'gce_instance'"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "instance_name--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "instance_name",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{instance_id}}/{{device_name}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [
+            {
+              "disabled": false,
+              "expression": "(A/60)",
+              "legend": "{{instance_name}}",
+              "queryName": "F1"
+            }
+          ],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "19d06c04-86c0-44fe-8c12-69d185aca1bb",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Disk Write Throughput",
+      "yAxisUnit": "By/s"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "Read operations rate",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "48229d1e-52f9-49b7-9f15-b3fe17341540",
+      "isLogScale": false,
+      "legendPosition": "right",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "compute.googleapis.com/instance/disk/read_ops_count",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "sum",
+                  "temporality": "",
+                  "timeAggregation": "latest"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": true,
+              "expression": "A",
+              "filter": {
+                "expression": "project_id = $project_id AND instance_id in $instance_id AND gcp.resource_type = 'gce_instance'"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "instance_name--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "instance_name",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{instance_id}}/{{device_name}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [
+            {
+              "disabled": false,
+              "expression": "(A/60)",
+              "legend": "{{instance_name}}",
+              "queryName": "F1"
+            }
+          ],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "4406e915-6bf9-4ddf-843d-1b74119802d7",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Disk Read IOPS",
+      "yAxisUnit": "{count}/s"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "Write operations rate",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "c06ce3ad-67f8-4e69-a8cd-44120416db42",
+      "isLogScale": false,
+      "legendPosition": "right",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "compute.googleapis.com/instance/disk/write_ops_count",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "sum",
+                  "temporality": "",
+                  "timeAggregation": "latest"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": true,
+              "expression": "A",
+              "filter": {
+                "expression": "project_id = $project_id AND instance_id in $instance_id AND gcp.resource_type = 'gce_instance'"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "instance_name--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "instance_name",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{instance_id}}/{{device_name}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [
+            {
+              "disabled": false,
+              "expression": "(A/60)",
+              "legend": "{{instance_name}}",
+              "queryName": "F1"
+            }
+          ],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "c3bb85e2-2d67-4611-bd9d-073cbd8dd84c",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Disk Write IOPS",
+      "yAxisUnit": "{count}/s"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "Received network traffic throughput (rate)",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "89c9a054-a281-485c-8b17-46590ac9804e",
+      "isLogScale": false,
+      "legendPosition": "right",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "compute.googleapis.com/instance/network/received_bytes_count",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "sum",
+                  "temporality": "",
+                  "timeAggregation": "max"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": true,
+              "expression": "A",
+              "filter": {
+                "expression": "project_id = $project_id AND instance_id in $instance_id AND gcp.resource_type = 'gce_instance'"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "",
+                  "id": "instance_name----",
+                  "key": "instance_name",
+                  "type": ""
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{instance_name}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [
+            {
+              "disabled": false,
+              "expression": "(A/60)",
+              "legend": "{{instance_name}}",
+              "queryName": "F1"
+            }
+          ],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "c3f4605c-a9e2-41a8-b56e-afd3cecc69b1",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Received traffic",
+      "yAxisUnit": "By/s"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "Sent network traffic throughput (rate)",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "adfe59ed-f188-4efd-b22a-b021577ca97c",
+      "isLogScale": false,
+      "legendPosition": "right",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "compute.googleapis.com/instance/network/sent_bytes_count",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "sum",
+                  "temporality": "",
+                  "timeAggregation": "max"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": true,
+              "expression": "A",
+              "filter": {
+                "expression": "project_id = $project_id AND instance_id in $instance_id AND gcp.resource_type = 'gce_instance'"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "",
+                  "id": "instance_name----",
+                  "key": "instance_name",
+                  "type": ""
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{instance_name}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [
+            {
+              "disabled": false,
+              "expression": "(A/60)",
+              "legend": "{{instance_name}}",
+              "queryName": "F1"
+            }
+          ],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "14c400ed-a540-43a4-923c-dd8599bc06a0",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Sent traffic",
+      "yAxisUnit": "By/s"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "Rate at which network packets are sent out",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "d4fc8b10-aac3-437a-91d6-2f19ba4d6681",
+      "isLogScale": false,
+      "legendPosition": "right",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "compute.googleapis.com/instance/network/sent_packets_count",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "sum",
+                  "temporality": "",
+                  "timeAggregation": "max"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": true,
+              "expression": "A",
+              "filter": {
+                "expression": "project_id = $project_id AND instance_id in $instance_id AND gcp.resource_type = 'gce_instance'"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "",
+                  "id": "instance_name----",
+                  "key": "instance_name",
+                  "type": ""
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{instance_name}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [
+            {
+              "disabled": false,
+              "expression": "(A/60)",
+              "legend": "{{instance_name}}",
+              "queryName": "F1"
+            }
+          ],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "bac4076f-5fdb-4042-89b1-5a938d5cbee6",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Sent packets",
+      "yAxisUnit": "{count}/s"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "Rate at which network packets are received",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "e90a9573-b523-4fd2-9b12-36915679a8bd",
+      "isLogScale": false,
+      "legendPosition": "right",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "compute.googleapis.com/instance/network/received_packets_count",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "sum",
+                  "temporality": "",
+                  "timeAggregation": "max"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": true,
+              "expression": "A",
+              "filter": {
+                "expression": "project_id = $project_id AND instance_id in $instance_id AND gcp.resource_type = 'gce_instance'"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "",
+                  "id": "instance_name----",
+                  "key": "instance_name",
+                  "type": ""
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{instance_name}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [
+            {
+              "disabled": false,
+              "expression": "(A/60)",
+              "legend": "{{instance_name}}",
+              "queryName": "F1"
+            }
+          ],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "5456c33a-b719-4443-9885-e2e1024c265f",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Received packets",
+      "yAxisUnit": "{count}/s"
+    }
+  ],
+  "uuid": "019f6997-5482-778d-90da-fc840cf08512"
+}
