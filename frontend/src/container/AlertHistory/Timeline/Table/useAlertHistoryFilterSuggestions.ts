@@ -3,6 +3,7 @@ import {
 	getRuleHistoryFilterValues,
 	useGetRuleHistoryFilterKeys,
 } from 'api/generated/services/rules';
+import { QUERY_BUILDER_KEY_TYPES } from 'constants/antlrQueryConstants';
 import { useAlertHistoryQueryParams } from 'pages/AlertDetails/hooks';
 import { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
 import {
@@ -11,8 +12,26 @@ import {
 	fieldContextToSuggestionContext,
 } from 'container/AlertHistory/Timeline/Table/utils';
 
+export const ALERT_HISTORY_FALLBACK_FILTER_KEYS: QueryKeyDataSuggestionsProps[] =
+	[
+		{
+			label: 'severity',
+			name: 'severity',
+			type: 'keyword',
+			signal: 'logs' as const,
+			fieldDataType: QUERY_BUILDER_KEY_TYPES.STRING,
+		},
+		{
+			label: 'threshold.name',
+			name: 'threshold.name',
+			type: 'keyword',
+			signal: 'logs' as const,
+			fieldDataType: QUERY_BUILDER_KEY_TYPES.STRING,
+		},
+	];
+
 export interface AlertHistoryFilterSuggestions {
-	hardcodedAttributeKeys: QueryKeyDataSuggestionsProps[] | undefined;
+	hardcodedAttributeKeys: QueryKeyDataSuggestionsProps[];
 	valueSuggestionsOverride: (
 		key: string,
 		searchText: string,
@@ -38,12 +57,10 @@ export function useAlertHistoryFilterSuggestions(
 			},
 		);
 
-	const hardcodedAttributeKeys = useMemo(():
-		| QueryKeyDataSuggestionsProps[]
-		| undefined => {
+	const hardcodedAttributeKeys = useMemo((): QueryKeyDataSuggestionsProps[] => {
 		const keys = filterKeysData?.data?.keys;
 		if (!keys) {
-			return undefined;
+			return ALERT_HISTORY_FALLBACK_FILTER_KEYS;
 		}
 		return Object.values(keys).flatMap((items) =>
 			items.map((item) => ({
