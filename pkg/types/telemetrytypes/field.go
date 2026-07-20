@@ -33,12 +33,11 @@ type TelemetryFieldKey struct {
 	Name        string `json:"name" validate:"required" required:"true"`
 	Description string `json:"description,omitempty"`
 	Unit        string `json:"unit,omitempty"`
-	Signal      Signal `json:"signal,omitzero"`
-	// fieldContext/fieldDataType always serialize (empty included): the empty value
-	// is a first-class "unspecified / any" selection a client can set, so it must
-	// round-trip verbatim rather than be dropped. Their Enum()s include the empty
-	// member so the "" is a valid schema value. signal stays omitzero — its empty
-	// value is invalid for the query/variable signal contexts that share the enum.
+	// signal/fieldContext/fieldDataType always serialize (empty included): the empty
+	// value is a first-class "unspecified / any" selection a client can set, so it
+	// must round-trip verbatim rather than be dropped. Their Enum()s include the
+	// empty member so the "" is a valid schema value.
+	Signal        Signal        `json:"signal"`
 	FieldContext  FieldContext  `json:"fieldContext"`
 	FieldDataType FieldDataType `json:"fieldDataType"`
 
