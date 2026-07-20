@@ -172,24 +172,6 @@ func NewTuplesFromTransactionsWithCorrelations(transactions []*Transaction, subj
 	return tuples, correlations, nil
 }
 
-func newCheckSelectors(resourceType coretypes.Type, selector coretypes.Selector) ([]string, error) {
-	if resourceType.Equals(coretypes.TypeTelemetryResource) {
-		canonical, err := telemetrytypes.NewTelemetryGrantSelector(selector.String())
-		if err != nil {
-			return nil, err
-		}
-
-		return telemetrytypes.NewTelemetryGrantSelectors(canonical), nil
-	}
-
-	selectorStrings := []string{selector.String()}
-	if selector.String() != coretypes.WildCardSelectorString {
-		selectorStrings = append(selectorStrings, coretypes.WildCardSelectorString)
-	}
-
-	return selectorStrings, nil
-}
-
 func NewTuplesFromTransactionsWithManagedRoles(
 	transactions []*Transaction,
 	subject string,
@@ -276,4 +258,22 @@ func NewTransactionWithAuthorizationFromBatchResults(
 	}
 
 	return output
+}
+
+func newCheckSelectors(resourceType coretypes.Type, selector coretypes.Selector) ([]string, error) {
+	if resourceType.Equals(coretypes.TypeTelemetryResource) {
+		canonical, err := telemetrytypes.NewTelemetryGrantSelector(selector.String())
+		if err != nil {
+			return nil, err
+		}
+
+		return telemetrytypes.NewTelemetryGrantSelectors(canonical), nil
+	}
+
+	selectorStrings := []string{selector.String()}
+	if selector.String() != coretypes.WildCardSelectorString {
+		selectorStrings = append(selectorStrings, coretypes.WildCardSelectorString)
+	}
+
+	return selectorStrings, nil
 }
