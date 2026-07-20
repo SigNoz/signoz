@@ -1,4 +1,6 @@
 import {
+	Channel,
+	ChannelType,
 	EmailChannel,
 	JsmOpsChannel,
 	OpsgenieChannel,
@@ -462,4 +464,13 @@ Severity: {{ .Labels.severity }}{{ end }}{{ if .Annotations.summary }}
 Summary: {{ .Annotations.summary }}{{ end }}{{ if .Annotations.description }}
 Description: {{ .Annotations.description }}{{ end }}
 {{ end }}`,
+};
+
+export const initialConfigByChannelType: Partial<
+	Record<ChannelType, Partial<Channel>>
+> = {
+	[ChannelType.Pagerduty]: PagerInitialConfig,
+	[ChannelType.Opsgenie]: OpsgenieInitialConfig,
+	[ChannelType.Email]: EmailInitialConfig,
+	[ChannelType.JsmOps]: JsmOpsInitialConfig,
 };

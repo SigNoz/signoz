@@ -1,7 +1,9 @@
-import { Dispatch, SetStateAction, useMemo, useState } from 'react';
+import { Dispatch, SetStateAction, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { matchPath, useLocation } from 'react-router-dom';
 import { Button, Form, Input, Select, Space } from 'antd';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
+import ROUTES from 'constants/routes';
 
 import { JsmOpsChannel } from '../../../CreateAlertChannels/config';
 import { useAtlassianConnect } from '../Atlassian/useAtlassianConnect';
@@ -20,13 +22,6 @@ function splitResponders(value?: string): string[] {
 		: [];
 }
 
-function getChannelIdFromPath(): string | undefined {
-	const match = window.location.pathname.match(
-		/\/alerts\/channels\/edit\/([^/]+)/,
-	);
-	return match ? match[1] : undefined;
-}
-
 function JsmOps({ setSelectedConfig }: JsmOpsProps): JSX.Element {
 	const { t } = useTranslation('channels');
 	const form = Form.useFormInstance();
@@ -42,7 +37,10 @@ function JsmOps({ setSelectedConfig }: JsmOpsProps): JSX.Element {
 		splitResponders(savedResponders),
 	);
 
-	const channelId = useMemo(getChannelIdFromPath, []);
+	const { pathname } = useLocation();
+	const channelId = matchPath<{ channelId: string }>(pathname, {
+		path: ROUTES.CHANNELS_EDIT,
+	})?.params?.channelId;
 
 	const {
 		connections,

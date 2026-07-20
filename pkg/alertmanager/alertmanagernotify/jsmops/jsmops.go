@@ -77,6 +77,7 @@ func New(cfg *alertmanagertypes.JsmOpsReceiverConfig, t *template.Template, l *s
 		logger:   l,
 		client:   client,
 		retrier:  &notify.Retrier{RetryCodes: []int{http.StatusTooManyRequests}},
+		baseURL:  defaultBaseURL,
 	}, nil
 }
 
@@ -112,32 +113,26 @@ func (n *Notifier) Notify(ctx context.Context, alerts ...*types.Alert) (bool, er
 		return false, errors.NewInternalf(errors.CodeInternal, "failed to resolve jsm ops connection: %v", err)
 	}
 
-	alertsGroup := types.Alerts(alerts...)
-	data := notify.GetTemplateData(ctx, n.tmpl, alerts, logger)
-	var tmplErr error
-	tmplText := notify.TmplText(n.tmpl, data, &tmplErr)
-	if tmplErr != nil {
-		return false, errors.NewInternalf(errors.CodeInternal, "failed to render templates: %v", tmplErr)
-	}
-
-	message := strings.TrimSpace(tmplText(n.config.Message))
-	description := strings.TrimSpace(tmplText(n.config.Description))
 	alias := key.Hash()
 
-	message, msgTruncated := notify.TruncateInRunes(message, maxMessageLenRunes)
-	if msgTruncated {
-		logger.WarnContext(ctx, "truncated jsm ops message to fit the field limit", slog.Int("max_runes", maxMessageLenRunes))
-	}
-	description, descTruncated := notify.TruncateInRunes(description, maxDescriptionLenRunes)
-	if descTruncated {
-		logger.WarnContext(ctx, "truncated jsm ops description to fit the field limit", slog.Int("max_runes", maxDescriptionLenRunes))
-	}
-
-	if alertsGroup.Status() == model.AlertResolved {
+	if types.Alerts(alerts...).Status() == model.AlertResolved {
 		if !n.config.SendResolved() {
 			return false, nil
 		}
 		return n.closeAlert(ctx, alias, conn)
+	}
+
+	data := notify.GetTemplateData(ctx, n.tmpl, alerts, logger)
+	var tmplErr error
+	tmplText := notify.TmplText(n.tmpl, data, &tmplErr)
+
+	message, msgTruncated := notify.TruncateInRunes(strings.TrimSpace(tmplText(n.config.Message)), maxMessageLenRunes)
+	if msgTruncated {
+		logger.WarnContext(ctx, "truncated jsm ops message to fit the field limit", slog.Int("max_runes", maxMessageLenRunes))
+	}
+	description, descTruncated := notify.TruncateInRunes(strings.TrimSpace(tmplText(n.config.Description)), maxDescriptionLenRunes)
+	if descTruncated {
+		logger.WarnContext(ctx, "truncated jsm ops description to fit the field limit", slog.Int("max_runes", maxDescriptionLenRunes))
 	}
 
 	request := createAlertRequest{
@@ -148,6 +143,10 @@ func (n *Notifier) Notify(ctx context.Context, alerts ...*types.Alert) (bool, er
 		Priority:    strings.TrimSpace(tmplText(n.config.Priority)),
 		Alias:       alias,
 		Source:      sourceName,
+	}
+
+	if tmplErr != nil {
+		return false, errors.WrapInternalf(tmplErr, errors.CodeInternal, "failed to template JSM Ops alert")
 	}
 
 	if shouldRetry, err := n.postAlert(ctx, request, conn); err != nil || shouldRetry {
@@ -208,7 +207,7 @@ func (n *Notifier) postAlert(ctx context.Context, req createAlertRequest, conn *
 		return shouldRetry, notify.NewErrorWithReason(notify.GetFailureReasonFromStatusCode(resp.StatusCode), err)
 	}
 
-	return shouldRetry, err
+	return shouldRetry, nil
 }
 
 func (n *Notifier) updateAlert(ctx context.Context, alias string, req createAlertRequest, conn *alertmanagertypes.AtlassianConnection, logger *slog.Logger) {
@@ -268,7 +267,7 @@ func (n *Notifier) closeAlert(ctx context.Context, alias string, conn *alertmana
 	if err != nil {
 		return shouldRetry, notify.NewErrorWithReason(notify.GetFailureReasonFromStatusCode(resp.StatusCode), err)
 	}
-	return shouldRetry, err
+	return shouldRetry, nil
 }
 
 func (n *Notifier) fetchAlertID(ctx context.Context, alias string, conn *alertmanagertypes.AtlassianConnection) (string, bool, error) {
@@ -383,11 +382,7 @@ func (n *Notifier) descriptionURL(alertID, cloudID string) string {
 }
 
 func (n *Notifier) buildURL(cloudID, path string) string {
-	base := n.baseURL
-	if base == "" {
-		base = defaultBaseURL
-	}
-	base = strings.TrimRight(base, "/")
+	base := strings.TrimRight(n.baseURL, "/")
 	path = strings.TrimLeft(path, "/")
 	return fmt.Sprintf("%s/%s/jsm/ops/api/v1/%s", base, cloudID, path)
 }

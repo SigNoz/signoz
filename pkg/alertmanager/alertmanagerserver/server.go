@@ -53,22 +53,22 @@ type Server struct {
 	stateStore alertmanagertypes.StateStore
 
 	// alertmanager primitives from upstream alertmanager
-	alerts              *mem.Alerts
-	nflog               *nflog.Log
-	dispatcher          *Dispatcher
-	dispatcherMetrics   *DispatcherMetrics
-	inhibitor           *inhibit.Inhibitor
-	silencer            *silence.Silencer
-	silences            *silence.Silences
-	timeIntervals       map[string][]timeinterval.TimeInterval
-	pipelineBuilder     *pipelineBuilder
-	muter               *MaintenanceMuter
-	marker              *types.MemMarker
-	tmpl                *template.Template
-	templater           alertmanagertypes.Templater
-	wg                  sync.WaitGroup
-	stopc               chan struct{}
-	notificationManager nfmanager.NotificationManager
+	alerts               *mem.Alerts
+	nflog                *nflog.Log
+	dispatcher           *Dispatcher
+	dispatcherMetrics    *DispatcherMetrics
+	inhibitor            *inhibit.Inhibitor
+	silencer             *silence.Silencer
+	silences             *silence.Silences
+	timeIntervals        map[string][]timeinterval.TimeInterval
+	pipelineBuilder      *pipelineBuilder
+	muter                *MaintenanceMuter
+	marker               *types.MemMarker
+	tmpl                 *template.Template
+	templater            alertmanagertypes.Templater
+	wg                   sync.WaitGroup
+	stopc                chan struct{}
+	notificationManager  nfmanager.NotificationManager
 	receiverIntegrations alertmanagertypes.ReceiverIntegrationsFunc
 }
 

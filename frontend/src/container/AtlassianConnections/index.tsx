@@ -1,14 +1,22 @@
 import { useTranslation } from 'react-i18next';
-import { Plus } from '@signozhq/icons';
-import { Button, Flex, Popconfirm, Table } from 'antd';
+import { LoaderCircle, Plus } from '@signozhq/icons';
+import { Button as AntdButton, Flex } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import { Typography } from '@signozhq/ui/typography';
+import { ResizeTable } from 'components/ResizeTable';
 import { AtlassianConnection } from 'types/api/channels/atlassian';
+import {
+	Button,
+	ButtonContainer,
+	RightActionContainer,
+} from 'container/AllAlertChannels/styles';
 import { useAtlassianConnections } from 'container/FormAlertChannels/Settings/Atlassian/useAtlassianConnections';
 import { useDeleteAtlassianConnection } from 'container/FormAlertChannels/Settings/Atlassian/useDeleteAtlassianConnection';
 import { useAtlassianConnect } from 'container/FormAlertChannels/Settings/Atlassian/useAtlassianConnect';
 import { useNotifications } from 'hooks/useNotifications';
 import APIError from 'types/api/error';
+
+import 'container/AllAlertChannels/AllAlertChannels.styles.scss';
 
 const { Text } = Typography;
 
@@ -56,46 +64,53 @@ function AtlassianConnections(): JSX.Element {
 			key: 'actions',
 			width: 120,
 			render: (_, record): JSX.Element => (
-				<Popconfirm
-					title={t('atlassian_connection_delete_confirm')}
-					onConfirm={(): Promise<void> => handleDelete(record.id)}
-					okButtonProps={{ loading: isDeleting }}
+				<AntdButton
+					danger
+					type="text"
+					loading={isDeleting}
+					data-testid={`atlassian-connection-delete-${record.id}`}
+					onClick={(): Promise<void> => handleDelete(record.id)}
 				>
-					<Button
-						danger
-						type="text"
-						data-testid={`atlassian-connection-delete-${record.id}`}
-					>
-						{t('atlassian_connection_delete')}
-					</Button>
-				</Popconfirm>
+					{t('atlassian_connection_delete')}
+				</AntdButton>
 			),
 		},
 	];
 
 	return (
-		<div className="atlassian-connections-container">
-			<Flex justify="space-between" align="center" style={{ marginBottom: 12 }}>
-				<Text>{t('atlassian_connections_title')}</Text>
-				<Button
-					icon={<Plus size="md" />}
-					onClick={(): void => {
-						void connect();
-					}}
-					loading={isConnecting}
-					data-testid="atlassian-connection-add"
-				>
-					{t('button_add_atlassian_connection')}
-				</Button>
-			</Flex>
+		<div className="alert-channels-container">
+			<ButtonContainer>
+				<Text truncate={1} color="muted">
+					{t('atlassian_connections_title')}
+				</Text>
 
-			<Table<AtlassianConnection>
+				<RightActionContainer>
+					<Button
+						onClick={(): void => {
+							void connect();
+						}}
+						disabled={isConnecting}
+						data-testid="atlassian-connection-add"
+					>
+						<Flex align="center" gap={4} style={{ display: 'inline-flex' }}>
+							{isConnecting ? (
+								<LoaderCircle className="animate-spin" size={16} />
+							) : (
+								<Plus size="md" />
+							)}
+							{t('button_add_atlassian_connection')}
+						</Flex>
+					</Button>
+				</RightActionContainer>
+			</ButtonContainer>
+
+			<ResizeTable
 				rowKey="id"
 				loading={isLoading}
 				dataSource={connections}
 				columns={columns}
 				pagination={false}
-				locale={{ emptyText: t('atlassian_connections_empty') }}
+				bordered
 				data-testid="atlassian-connections-table"
 			/>
 		</div>

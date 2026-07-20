@@ -15,24 +15,6 @@ var (
 	ErrCodeAtlassianConnectionInUse    = errors.MustNewCode("atlassian_connection_in_use")
 )
 
-// JsmOpsReceiverConfig represents a JSM Ops notification configuration.
-type JsmOpsReceiverConfig struct {
-	ConnectionID      string   `json:"connection_id,omitempty" yaml:"connection_id,omitempty"`
-	OrgID             string   `json:"-" yaml:"-"`
-	Responders        []string `json:"responders,omitempty" yaml:"responders,omitempty"`
-	Message           string   `json:"message" yaml:"message"`
-	Description       string   `json:"description" yaml:"description"`
-	Tags              []string `json:"tags,omitempty" yaml:"tags,omitempty"`
-	Priority          string   `json:"priority,omitempty" yaml:"priority,omitempty"`
-	SendResolvedValue bool     `json:"send_resolved" yaml:"send_resolved"`
-	UpdateAlerts      bool     `json:"update_alerts,omitempty" yaml:"update_alerts,omitempty"`
-}
-
-// SendResolved returns whether resolved notifications should be sent.
-func (c *JsmOpsReceiverConfig) SendResolved() bool {
-	return c != nil && c.SendResolvedValue
-}
-
 type AtlassianConnection struct {
 	bun.BaseModel `bun:"table:atlassian_connection"`
 
@@ -102,14 +84,3 @@ type AtlassianBackedConfig interface {
 	// ChannelKind names the channel type in user-facing errors.
 	ChannelKind() string
 }
-
-var _ AtlassianBackedConfig = (*JsmOpsReceiverConfig)(nil)
-
-// GetConnectionID returns the id of the AtlassianConnection this config uses.
-func (c *JsmOpsReceiverConfig) GetConnectionID() string { return c.ConnectionID }
-
-// SetOrgID stamps the runtime-only org id used to resolve live credentials.
-func (c *JsmOpsReceiverConfig) SetOrgID(orgID string) { c.OrgID = orgID }
-
-// ChannelKind names the channel type in user-facing errors.
-func (c *JsmOpsReceiverConfig) ChannelKind() string { return "JSM Ops" }

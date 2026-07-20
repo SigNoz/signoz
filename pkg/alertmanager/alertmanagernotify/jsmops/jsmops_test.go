@@ -20,6 +20,7 @@ import (
 	signoztypes "github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -286,11 +287,11 @@ func TestJsmOpsCloseAlert(t *testing.T) {
 	resolver := &fakeResolver{accessToken: "test-access-token", refreshToken: "rt", cloudID: "cloud"}
 	tmpl := test.CreateTmpl(t)
 	notifier, err := New(&alertmanagertypes.JsmOpsReceiverConfig{
-		ConnectionID:      "conn-1",
-		OrgID:             "org-1",
-		Message:           "Alert: {{ .CommonLabels.alertname }}",
-		Description:       "Body",
-		SendResolvedValue: true,
+		NotifierConfig: config.NotifierConfig{VSendResolved: true},
+		ConnectionID:   "conn-1",
+		OrgID:          "org-1",
+		Message:        "Alert: {{ .CommonLabels.alertname }}",
+		Description:    "Body",
 	}, tmpl, slog.New(slog.DiscardHandler), newTestTemplater(tmpl), resolver)
 	require.NoError(t, err)
 	notifier.baseURL = server.URL

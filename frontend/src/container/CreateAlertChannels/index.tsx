@@ -34,12 +34,7 @@ import {
 	ValidatePagerChannel,
 	WebhookChannel,
 } from './config';
-import {
-	EmailInitialConfig,
-	JsmOpsInitialConfig,
-	OpsgenieInitialConfig,
-	PagerInitialConfig,
-} from './defaults';
+import { initialConfigByChannelType } from './defaults';
 import { isChannelType } from './utils';
 
 import './CreateAlertChannels.styles.scss';
@@ -103,39 +98,27 @@ function CreateAlertChannels({
 			const currentType = type;
 			setType(value as ChannelType);
 
-			if (value === ChannelType.Pagerduty && currentType !== value) {
-				// reset config to pager defaults
-				setSelectedConfig({
-					name: selectedConfig?.name,
-					send_resolved: selectedConfig.send_resolved,
-					...PagerInitialConfig,
-				});
+			if (currentType === value) {
+				return;
 			}
 
-			if (value === ChannelType.Opsgenie && currentType !== value) {
-				setSelectedConfig((selectedConfig) => ({
-					...selectedConfig,
-					...OpsgenieInitialConfig,
-				}));
+			const defaults = initialConfigByChannelType[value as ChannelType];
+			if (!defaults) {
+				return;
 			}
 
-			// reset config to email defaults
-			if (value === ChannelType.Email && currentType !== value) {
-				setSelectedConfig((selectedConfig) => ({
-					...selectedConfig,
-					...EmailInitialConfig,
-				}));
-			}
-
-			// reset config to JSM Ops defaults
-			if (value === ChannelType.JsmOps && currentType !== value) {
-				setSelectedConfig((selectedConfig) => ({
-					...selectedConfig,
-					...JsmOpsInitialConfig,
-				}));
-			}
+			setSelectedConfig((selectedConfig) =>
+				value === ChannelType.Pagerduty
+					? {
+							name: selectedConfig?.name,
+							send_resolved: selectedConfig?.send_resolved,
+							...defaults,
+						}
+					: { ...selectedConfig, ...defaults },
+			);
+			formInstance.setFieldsValue(defaults);
 		},
-		[type, selectedConfig],
+		[type, formInstance],
 	);
 
 	const prepareSlackRequest = useCallback(
@@ -637,10 +620,7 @@ function CreateAlertChannels({
 					initialValue: {
 						type,
 						...selectedConfig,
-						...PagerInitialConfig,
-						...OpsgenieInitialConfig,
-						...EmailInitialConfig,
-						...JsmOpsInitialConfig,
+						...initialConfigByChannelType[type],
 					},
 				}}
 			/>
