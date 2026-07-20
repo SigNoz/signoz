@@ -16,10 +16,7 @@ type defaultConditionBuilder struct {
 	fm qbtypes.FieldMapper
 }
 
-var (
-	_ qbtypes.ConditionBuilder          = (*defaultConditionBuilder)(nil)
-	_ qbtypes.ResolvingConditionBuilder = (*defaultConditionBuilder)(nil)
-)
+var _ qbtypes.ConditionBuilder = (*defaultConditionBuilder)(nil)
 
 func NewConditionBuilder(fm qbtypes.FieldMapper) *defaultConditionBuilder {
 	return &defaultConditionBuilder{fm: fm}
@@ -47,50 +44,20 @@ func keyIndexFilter(key *telemetrytypes.TelemetryFieldKey) any {
 	return fmt.Sprintf(`%%%s%%`, key.Name)
 }
 
-// ConditionFor builds resource-fingerprint conditions from the caller's pre-matched
-// fieldKeysForName. Resolution and the build live in conditionsForKeys.
+// SkipResourceFilter is not applicable here: the fingerprint table only stores resource attributes.
 func (b *defaultConditionBuilder) ConditionFor(
 	ctx context.Context,
 	_ valuer.UUID,
 	startNs uint64,
 	endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
-	fieldKeysForName []*telemetrytypes.TelemetryFieldKey,
-	op qbtypes.FilterOperator,
-	value any,
-	sb *sqlbuilder.SelectBuilder,
-) ([]string, []string, error) {
-	return b.conditionsForKeys(ctx, startNs, endNs, key, fieldKeysForName, op, value, sb)
-}
-
-// ConditionForKeys owns key resolution from the full metadata map so the where-clause
-// visitor need not pre-resolve; SkipResourceFilter is not applicable here (the fingerprint
-// table only stores resource attributes). See qbtypes.ResolvingConditionBuilder.
-func (b *defaultConditionBuilder) ConditionForKeys(
-	ctx context.Context,
-	_ valuer.UUID,
-	startNs uint64,
-	endNs uint64,
-	key *telemetrytypes.TelemetryFieldKey,
-	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
 	_ qbtypes.ConditionBuilderOptions,
 	op qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) ([]string, []string, error) {
-	return b.conditionsForKeys(ctx, startNs, endNs, key, querybuilder.MatchingFieldKeys(key, keys), op, value, sb)
-}
-
-func (b *defaultConditionBuilder) conditionsForKeys(
-	ctx context.Context,
-	startNs uint64,
-	endNs uint64,
-	key *telemetrytypes.TelemetryFieldKey,
-	matches []*telemetrytypes.TelemetryFieldKey,
-	op qbtypes.FilterOperator,
-	value any,
-	sb *sqlbuilder.SelectBuilder,
-) ([]string, []string, error) {
+	matches := querybuilder.MatchingFieldKeys(key, fieldKeys)
 
 	// has/hasAny/hasAll/hasToken are logs-body-only functions; they never apply to the
 	// resource fingerprint table, so skip them (the main query still evaluates them).

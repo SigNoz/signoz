@@ -177,7 +177,7 @@ func nextCloneDisplayName(name string) string {
 
 type DashboardV2MetadataBase struct {
 	SchemaVersion string `json:"schemaVersion" required:"true"`
-	Image         string `json:"image,omitempty"`
+	Image         string `json:"image"`
 }
 
 // ════════════════════════════════════════════════════════════════════════

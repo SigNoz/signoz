@@ -20,13 +20,13 @@ import (
 // per-site discriminated oneOf.
 type DashboardSpec struct {
 	Display         Display                    `json:"display" required:"true"`
-	Datasources     map[string]*DatasourceSpec `json:"datasources,omitempty"`
+	Datasources     map[string]*DatasourceSpec `json:"datasources,omitzero"`
 	Variables       []Variable                 `json:"variables" required:"true" nullable:"false"`
 	Panels          map[string]*Panel          `json:"panels" required:"true" nullable:"false"`
 	Layouts         []Layout                   `json:"layouts" required:"true" nullable:"false"`
-	Duration        common.DurationString      `json:"duration,omitempty"`
-	RefreshInterval common.DurationString      `json:"refreshInterval,omitempty"`
-	Links           []dashboard.Link           `json:"links,omitempty"`
+	Duration        common.DurationString      `json:"duration"`
+	RefreshInterval common.DurationString      `json:"refreshInterval"`
+	Links           []Link                     `json:"links,omitzero"`
 }
 
 // ══════════════════════════════════════════════

@@ -174,7 +174,7 @@ func (m *defaultFieldMapper) getColumn(
 ) ([]*schema.Column, error) {
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:
-		return []*schema.Column{indexV3Columns["resources_string"], indexV3Columns["resource"]}, nil
+		return []*schema.Column{indexV3Columns["resource"], indexV3Columns["resources_string"]}, nil
 	case telemetrytypes.FieldContextScope:
 		return []*schema.Column{}, qbtypes.ErrColumnNotFound
 	case telemetrytypes.FieldContextAttribute:
@@ -188,26 +188,12 @@ func (m *defaultFieldMapper) getColumn(
 		case telemetrytypes.FieldDataTypeBool:
 			return []*schema.Column{indexV3Columns["attributes_bool"]}, nil
 		}
-	case telemetrytypes.FieldContextSpan, telemetrytypes.FieldContextUnspecified:
-		/*
-			TODO: This is incorrect, we cannot assume all unspecified context fields are span context.
-			User could be referring to attributes, but we cannot fix this until we fix where_clause vistior
-			https://github.com/SigNoz/signoz/pull/10102
-		*/
+	case telemetrytypes.FieldContextSpan:
 		// Check if this is a span scope field
 		if strings.ToLower(key.Name) == SpanSearchScopeRoot || strings.ToLower(key.Name) == SpanSearchScopeEntryPoint {
 			// The actual SQL will be generated in the condition builder
 			return []*schema.Column{{Name: key.Name, Type: schema.ColumnTypeBool}}, nil
 		}
-
-		// TODO(srikanthccv): remove this when it's safe to remove
-		// issue with CH aliasing
-
-		/*
-			NOTE: There are fields which are deprecated for only to not show up as user suggestion and is possible that
-			they don't have a mapping in oldToNew map. So we need to look up in indexV3Columns directly for those fields.
-			For example: kind, timestamp etc.
-		*/
 		if _, ok := CalculatedFieldsDeprecated[key.Name]; ok {
 			// Check if we have a mapping for the deprecated calculated field
 			if col, ok := indexV3Columns[oldToNew[key.Name]]; ok {
@@ -287,16 +273,9 @@ func (m *defaultFieldMapper) resolveColumnExprs(
 		return nil, nil, nil, err
 	}
 
-	var newColumns []*schema.Column
-	var evolutionsEntries []*telemetrytypes.EvolutionEntry
-	if len(key.Evolutions) > 0 {
-		// we will use the corresponding column and its evolution entry for the query
-		newColumns, evolutionsEntries, err = qbtypes.SelectEvolutionsForColumns(columns, key.Evolutions, startNs, endNs)
-		if err != nil {
-			return nil, nil, nil, err
-		}
-	} else {
-		newColumns = columns
+	newColumns, evolutionsEntries, err := qbtypes.SelectEvolutionsForColumns(columns, key.Evolutions, startNs, endNs)
+	if err != nil {
+		return nil, nil, nil, err
 	}
 
 	for i, column := range newColumns {
@@ -343,7 +322,7 @@ func (m *defaultFieldMapper) resolveColumnExprs(
 				// a key could have been materialized, if so return the materialized column name
 				if key.Materialized {
 					exprs = append(exprs, telemetrytypes.FieldKeyToMaterializedColumnName(key))
-					existExprs = append(existExprs, fmt.Sprintf("%s==true", telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key)))
+					existExprs = append(existExprs, telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key))
 				} else {
 					exprs = append(exprs, fmt.Sprintf("%s['%s']", columnName, key.Name))
 					existExprs = append(existExprs, fmt.Sprintf("mapContains(%s, '%s')", columnName, key.Name))
@@ -365,6 +344,7 @@ func (m *defaultFieldMapper) ColumnExpressionFor(
 	orgID valuer.UUID,
 	startNs, endNs uint64,
 	field *telemetrytypes.TelemetryFieldKey,
+	requiredDataType telemetrytypes.FieldDataType,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
 
@@ -374,23 +354,40 @@ func (m *defaultFieldMapper) ColumnExpressionFor(
 	case err == nil:
 		candidates = []*telemetrytypes.TelemetryFieldKey{field}
 	case errors.Is(err, qbtypes.ErrColumnNotFound):
-		// is it a static field? attach the column directly.
-		if _, ok := indexV3Columns[field.Name]; ok {
-			field.FieldContext = telemetrytypes.FieldContextSpan
-			candidates = []*telemetrytypes.TelemetryFieldKey{field}
-		} else {
-			// metadata matches (incl. the collision set) or synthesized type-variant keys.
-			candidates = m.CandidateKeys(ctx, orgID, field, nil, keys)
-			if len(candidates) == 0 {
-				return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name).WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(field.Name, errors.NounKeys, maps.Keys(keys))...)
-			}
+		// column (when the bare name is one) plus metadata matches, else synthesized
+		// type-variant keys.
+		candidates = m.CandidateKeys(ctx, orgID, field, nil, keys)
+		if len(candidates) == 0 {
+			return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name).WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(field.Name, errors.NounKeys, maps.Keys(keys))...)
 		}
 	default:
 		return "", err
 	}
 
-	// Single candidate: exists-guard wrap so an absent key yields NULL; multi-column and
-	// physical columns stay bare.
+	// Group-by/order (String) and aggregation (String/Float64): every candidate is
+	// exists-guarded and coerced to requiredDataType, in a single multiIf. Raw select
+	// (Unspecified) keeps the lighter native shape below.
+	if requiredDataType != telemetrytypes.FieldDataTypeUnspecified {
+		var dummyValue any = ""
+		if requiredDataType == telemetrytypes.FieldDataTypeFloat64 {
+			dummyValue = 0.0
+		}
+		stmts := make([]string, 0, len(candidates)*2)
+		for _, key := range candidates {
+			value, err := m.FieldFor(ctx, orgID, startNs, endNs, key)
+			if err != nil {
+				return "", err
+			}
+			guard, err := m.existsExpressionFor(ctx, orgID, startNs, endNs, key, true)
+			if err != nil {
+				return "", err
+			}
+			coerced, _ := querybuilder.DataTypeCollisionHandledFieldName(key, dummyValue, value, qbtypes.FilterOperatorUnknown)
+			stmts = append(stmts, guard, coerced)
+		}
+		return fmt.Sprintf("multiIf(%s, NULL)", strings.Join(stmts, ", ")), nil
+	}
+
 	if len(candidates) == 1 {
 		value, err := m.FieldFor(ctx, orgID, startNs, endNs, candidates[0])
 		if err != nil {
@@ -398,7 +395,11 @@ func (m *defaultFieldMapper) ColumnExpressionFor(
 		}
 		exprs, existExprs, _, _ := m.resolveColumnExprs(ctx, startNs, endNs, candidates[0])
 		if len(exprs) == 1 && len(existExprs) == 1 {
-			return fmt.Sprintf("multiIf(%s, %s, NULL)", existExprs[0], value), nil
+			guard, err := m.existsExpressionFor(ctx, orgID, startNs, endNs, candidates[0], true)
+			if err != nil {
+				return "", err
+			}
+			return fmt.Sprintf("multiIf(%s, %s, NULL)", guard, value), nil
 		}
 		return value, nil
 	}
@@ -411,41 +412,108 @@ func (m *defaultFieldMapper) ColumnExpressionFor(
 		if err != nil {
 			return "", err
 		}
-		args = append(args, fmt.Sprintf("%s, toString(%s)", m.existsGuardFor(ctx, startNs, endNs, key, value), value))
+		guard, err := m.existsExpressionFor(ctx, orgID, startNs, endNs, key, true)
+		if err != nil {
+			return "", err
+		}
+		args = append(args, fmt.Sprintf("%s, toString(%s)", guard, value))
 	}
 	return fmt.Sprintf("multiIf(%s, NULL)", strings.Join(args, ", ")), nil
 }
 
-// membershipGuard returns the key's existence guard (mapContains / IS NOT NULL / _exists),
-// OR-combined across its columns, or "" when the column type has none (physical column).
-func (m *defaultFieldMapper) membershipGuard(ctx context.Context, startNs, endNs uint64, key *telemetrytypes.TelemetryFieldKey) string {
-	_, existExprs, _, err := m.resolveColumnExprs(ctx, startNs, endNs, key)
-	if err != nil || len(existExprs) == 0 {
-		return ""
+// columnMatchesDataType reports whether a metadata field's data type is consistent with a
+// column's ClickHouse type. A bare key's column is only unioned with same-named metadata
+// keys that could be the same field; a string attribute named `timestamp` is corrupt
+// metadata against the DateTime column and must not degrade the intrinsic.
+func columnMatchesDataType(col *schema.Column, dt telemetrytypes.FieldDataType) bool {
+	if dt == telemetrytypes.FieldDataTypeUnspecified {
+		return true
 	}
-	if len(existExprs) == 1 {
-		return existExprs[0]
+	switch col.Type.GetType() {
+	case schema.ColumnTypeEnumBool:
+		return dt == telemetrytypes.FieldDataTypeBool
+	case schema.ColumnTypeEnumUInt64, schema.ColumnTypeEnumUInt32,
+		schema.ColumnTypeEnumInt8, schema.ColumnTypeEnumInt16,
+		schema.ColumnTypeEnumFloat64, schema.ColumnTypeEnumDateTime64:
+		return dt == telemetrytypes.FieldDataTypeInt64 ||
+			dt == telemetrytypes.FieldDataTypeFloat64 ||
+			dt == telemetrytypes.FieldDataTypeNumber
+	default: // String, FixedString, LowCardinality(String), …
+		return dt == telemetrytypes.FieldDataTypeString
 	}
-	return "(" + strings.Join(existExprs, " OR ") + ")"
 }
 
-// existsGuardFor is membershipGuard with a non-empty fallback, for use as a multiIf branch
-// condition where a bare guard-less column still needs a discriminator.
-func (m *defaultFieldMapper) existsGuardFor(ctx context.Context, startNs, endNs uint64, key *telemetrytypes.TelemetryFieldKey, value string) string {
-	if g := m.membershipGuard(ctx, startNs, endNs, key); g != "" {
-		return g
+// CandidateKeys resolves a referenced field to the key(s) to query when it isn't already a
+// resolved column. A bare key unions the real column with type-consistent same-named
+// metadata keys; a forgiving span/trace context is honored as-is, correcting to a
+// metadata match for the stripped name when present; strict attribute/resource contexts
+// are honored as-is. Falls back to synthesized type-variant keys.
+func (m *defaultFieldMapper) CandidateKeys(ctx context.Context, _ valuer.UUID, field *telemetrytypes.TelemetryFieldKey, value any, keys map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.TelemetryFieldKey {
+	// A real column is considered before metadata for bare and forgiving contexts, so a
+	// same-named corrupt attribute can't shadow the intrinsic/calculated column.
+	switch field.FieldContext {
+	case telemetrytypes.FieldContextUnspecified:
+		// bare key: the column comes first, alongside same-named metadata keys under other
+		// contexts whose type is consistent with the column (corrupt entries dropped).
+		probe := telemetrytypes.NewTelemetryFieldKey(field.Name, telemetrytypes.FieldContextSpan, field.FieldDataType)
+		if cols, err := m.getColumn(ctx, 0, 0, probe); err == nil && len(cols) > 0 {
+			candidates := []*telemetrytypes.TelemetryFieldKey{probe}
+			for _, match := range keys[field.Name] {
+				if match.FieldContext != telemetrytypes.FieldContextSpan &&
+					columnMatchesDataType(cols[0], match.FieldDataType) {
+					candidates = append(candidates, match)
+				}
+			}
+			return candidates
+		}
+	case telemetrytypes.FieldContextSpan, telemetrytypes.FieldContextTrace:
+		// forgiving context honored as-is: a real column wins (span.duration_nano -> col).
+		if _, err := m.getColumn(ctx, 0, 0, field); err == nil {
+			return []*telemetrytypes.TelemetryFieldKey{telemetrytypes.NewTelemetryFieldKey(field.Name, field.FieldContext, field.FieldDataType)}
+		}
 	}
-	return fmt.Sprintf("toString(%s) != ''", value)
-}
 
-// CandidateKeys prefers metadata matches for the name (or `{context}.{name}`); when none
-// match it synthesizes type-variant keys across the span attribute maps.
-func (m *defaultFieldMapper) CandidateKeys(_ context.Context, _ valuer.UUID, field *telemetrytypes.TelemetryFieldKey, value any, keys map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.TelemetryFieldKey {
+	// Metadata match by name, then the literal `{context}.{name}` spelling (a context can be
+	// a legitimate prefix in user data, e.g. `metric.max_count`). For a forgiving context
+	// this is the correction step (span.http.method -> attribute http.method).
 	if matches := keys[field.Name]; len(matches) > 0 {
 		return matches
 	}
 	if matches := keys[fmt.Sprintf("%s.%s", field.FieldContext.StringValue(), field.Name)]; len(matches) > 0 {
 		return matches
 	}
-	return querybuilder.SynthesizeKeys(field, value)
+
+	// No metadata: synthesize per context.
+	switch field.FieldContext {
+	case telemetrytypes.FieldContextUnspecified:
+		return querybuilder.SynthesizeKeys(field, value)
+	case telemetrytypes.FieldContextSpan, telemetrytypes.FieldContextTrace:
+		// honored as-is: the stripped name lives in the attribute maps
+		stripped := telemetrytypes.NewTelemetryFieldKey(field.Name, telemetrytypes.FieldContextUnspecified, field.FieldDataType)
+		return querybuilder.SynthesizeKeys(stripped, value)
+	case telemetrytypes.FieldContextAttribute, telemetrytypes.FieldContextResource:
+		// strict context honored as-is: stripped interpretation first, literal spelling second
+		literal := telemetrytypes.NewTelemetryFieldKey(field.FieldContext.StringValue()+"."+field.Name, field.FieldContext, field.FieldDataType)
+		return append(querybuilder.SynthesizeKeys(field, value), querybuilder.SynthesizeKeys(literal, value)...)
+	}
+	// contexts that don't exist on spans (log, body, scope, …) have nothing to synthesize
+	return nil
+}
+
+func (m *defaultFieldMapper) existsExpressionFor(
+	ctx context.Context,
+	orgID valuer.UUID,
+	tsStart, tsEnd uint64,
+	key *telemetrytypes.TelemetryFieldKey,
+	exists bool,
+) (string, error) {
+	columns, err := m.getColumn(ctx, tsStart, tsEnd, key)
+	if err != nil {
+		return "", err
+	}
+	fieldExpression, err := m.FieldFor(ctx, orgID, tsStart, tsEnd, key)
+	if err != nil {
+		return "", err
+	}
+	return querybuilder.ExistsExpression(columns, key, tsStart, tsEnd, fieldExpression, exists)
 }

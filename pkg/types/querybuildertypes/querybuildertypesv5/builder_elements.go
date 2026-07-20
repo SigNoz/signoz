@@ -619,9 +619,9 @@ type SecondaryAggregation struct {
 	// if any, it will be used as the alias of the aggregation in the result
 	Alias string `json:"alias,omitempty"`
 	// groupBy fields to group by
-	GroupBy []GroupByKey `json:"groupBy,omitempty"`
+	GroupBy []GroupByKey `json:"groupBy,omitzero"`
 	// order by keys and directions
-	Order []OrderBy `json:"order,omitempty"`
+	Order []OrderBy `json:"order,omitzero"`
 	// limit the maximum number of rows to return
 	Limit int `json:"limit,omitempty"`
 	// limitBy fields to limit by
@@ -691,7 +691,7 @@ type Function struct {
 	Name FunctionName `json:"name"`
 
 	// args is the arguments to the function
-	Args []FunctionArg `json:"args,omitempty"`
+	Args []FunctionArg `json:"args,omitzero"`
 }
 
 // Copy creates a deep copy of Function.
