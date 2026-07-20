@@ -120,9 +120,9 @@ type Querier interface {
 }
 
 type QueryCache interface {
-	FindMissingTimeRanges(orgID valuer.UUID, start, end int64, step int64, cacheKey string) []querycache.MissInterval
-	FindMissingTimeRangesV2(orgID valuer.UUID, start, end int64, step int64, cacheKey string) []querycache.MissInterval
-	MergeWithCachedSeriesData(orgID valuer.UUID, cacheKey string, newData []querycache.CachedSeriesData) []querycache.CachedSeriesData
-	StoreSeriesInCache(orgID valuer.UUID, cacheKey string, series []querycache.CachedSeriesData)
-	MergeWithCachedSeriesDataV2(orgID valuer.UUID, cacheKey string, series []querycache.CachedSeriesData) []querycache.CachedSeriesData
+	FindMissingTimeRanges(ctx context.Context, orgID valuer.UUID, start, end int64, step int64, cacheKey string) []querycache.MissInterval
+	FindMissingTimeRangesV2(ctx context.Context, orgID valuer.UUID, start, end int64, step int64, cacheKey string) []querycache.MissInterval
+	MergeWithCachedSeriesData(ctx context.Context, orgID valuer.UUID, cacheKey string, newData []querycache.CachedSeriesData) []querycache.CachedSeriesData
+	StoreSeriesInCache(ctx context.Context, orgID valuer.UUID, cacheKey string, series []querycache.CachedSeriesData)
+	MergeWithCachedSeriesDataV2(ctx context.Context, orgID valuer.UUID, cacheKey string, series []querycache.CachedSeriesData) []querycache.CachedSeriesData
 }
