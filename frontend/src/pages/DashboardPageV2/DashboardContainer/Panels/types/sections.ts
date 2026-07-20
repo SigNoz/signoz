@@ -1,5 +1,5 @@
 import type {
-	DashboardLinkDTO,
+	DashboardtypesLinkDTO,
 	DashboardtypesAxesDTO,
 	DashboardtypesBarChartVisualizationDTO,
 	DashboardtypesComparisonThresholdDTO,
@@ -89,7 +89,7 @@ export interface SectionSpecMap {
 	// the `controls` bag gates which fields each kind writes.
 	[SectionKind.Visualization]: DashboardtypesBarChartVisualizationDTO;
 	[SectionKind.Thresholds]: AnyThreshold[]; // spec.plugin.spec.thresholds (variant picks the editor)
-	[SectionKind.ContextLinks]: DashboardLinkDTO[]; // spec.links (PANEL-level)
+	[SectionKind.ContextLinks]: DashboardtypesLinkDTO[]; // spec.links (PANEL-level)
 	[SectionKind.Columns]: TelemetrytypesTelemetryFieldKeyDTO[]; // spec.plugin.spec.selectFields (List)
 }
 

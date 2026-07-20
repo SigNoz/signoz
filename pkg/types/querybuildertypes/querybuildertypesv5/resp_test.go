@@ -395,3 +395,36 @@ func TestRawData_MarshalJSON(t *testing.T) {
 		})
 	}
 }
+
+func TestRoundToNonZeroDecimals(t *testing.T) {
+	cases := []struct {
+		name string
+		in   float64
+		n    int
+		want float64
+	}{
+		{"whole number", 42, 3, 42},
+		{"ge one rounds to three decimals", 123.45678, 3, 123.457},
+		{"ge one rounds to two decimals", 123.45678, 2, 123.46},
+		{"trailing zeros trimmed", 1.5, 3, 1.5},
+		{"lt one keeps three significant digits", 0.0001234567, 3, 0.000123},
+		{"lt one keeps two significant digits", 0.0001234567, 2, 0.00012},
+		{"negative", -123.45678, 3, -123.457},
+		{"zero", 0, 3, 0},
+		// val*multiplier overflows to +Inf for near-max values (#12151).
+		{"near max stays finite", 1.6e308, 3, 1.6e308},
+		{"negative near max stays finite", -1.6e308, 3, -1.6e308},
+		// scale overflows to +Inf for subnormal values; Inf/Inf made NaN.
+		{"smallest subnormal stays finite", 5e-324, 3, 5e-324},
+		{"subnormal stays finite", 1e-310, 3, 1e-310},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.want, roundToNonZeroDecimals(tc.in, tc.n))
+		})
+	}
+
+	assert.True(t, math.IsNaN(roundToNonZeroDecimals(math.NaN(), 3)))
+	assert.Equal(t, math.Inf(1), roundToNonZeroDecimals(math.Inf(1), 3))
+	assert.Equal(t, math.Inf(-1), roundToNonZeroDecimals(math.Inf(-1), 3))
+}
