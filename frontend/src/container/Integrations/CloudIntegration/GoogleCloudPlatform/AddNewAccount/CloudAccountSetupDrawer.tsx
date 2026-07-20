@@ -4,10 +4,11 @@ import { Callout } from '@signozhq/ui/callout';
 import { ComboboxSimple } from '@signozhq/ui/combobox';
 import { DrawerWrapper } from '@signozhq/ui/drawer';
 import { Input } from '@signozhq/ui/input';
+import { Typography } from '@signozhq/ui/typography';
 import { Select } from 'antd';
 import { GCP_REGIONS } from 'container/Integrations/constants';
 import { IntegrationModalProps } from 'container/Integrations/HeroSection/types';
-import { useIntegrationModal } from 'hooks/integration/gcp/useIntegrationModal';
+import { useCloudAccountSetupDrawer } from 'hooks/integration/gcp/useCloudAccountSetupDrawer';
 import { Controller, useForm } from 'react-hook-form';
 import { popupContainer } from 'utils/selectPopupContainer';
 
@@ -44,7 +45,7 @@ function CloudAccountSetupDrawer({
 		isConnectionParamsLoading,
 		submitError,
 		clearSubmitError,
-	} = useIntegrationModal({ onClose });
+	} = useCloudAccountSetupDrawer({ onClose });
 
 	const { control, handleSubmit, setValue } = useForm<GcpSetupFormValues>({
 		defaultValues: DEFAULT_VALUES,
@@ -145,9 +146,14 @@ function CloudAccountSetupDrawer({
 								testId="gcp-account-name-input"
 							/>
 							{fieldState.error && (
-								<span className={styles.fieldError} role="alert">
+								<Typography.Text
+									as="span"
+									size="small"
+									role="alert"
+									className={styles.fieldError}
+								>
 									{fieldState.error.message}
-								</span>
+								</Typography.Text>
 							)}
 						</>
 					)}
@@ -175,9 +181,14 @@ function CloudAccountSetupDrawer({
 								testId="gcp-deployment-project-id-input"
 							/>
 							{fieldState.error && (
-								<span className={styles.fieldError} role="alert">
+								<Typography.Text
+									as="span"
+									size="small"
+									role="alert"
+									className={styles.fieldError}
+								>
 									{fieldState.error.message}
-								</span>
+								</Typography.Text>
 							)}
 						</>
 					)}
@@ -208,9 +219,14 @@ function CloudAccountSetupDrawer({
 								testId="gcp-deployment-region-select"
 							/>
 							{fieldState.error && (
-								<span className={styles.fieldError} role="alert">
+								<Typography.Text
+									as="span"
+									size="small"
+									role="alert"
+									className={styles.fieldError}
+								>
 									{fieldState.error.message}
-								</span>
+								</Typography.Text>
 							)}
 						</>
 					)}
@@ -246,9 +262,14 @@ function CloudAccountSetupDrawer({
 								data-testid="gcp-project-ids-select"
 							/>
 							{fieldState.error && (
-								<span className={styles.fieldError} role="alert">
+								<Typography.Text
+									as="span"
+									size="small"
+									role="alert"
+									className={styles.fieldError}
+								>
 									{fieldState.error.message}
-								</span>
+								</Typography.Text>
 							)}
 						</>
 					)}

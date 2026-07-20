@@ -16,13 +16,13 @@ import { isEqual } from 'lodash-es';
 
 import logEvent from '../../../api/common/logEvent';
 
-interface UseAccountSettingsModalProps {
+interface UseAccountSettingsDrawerProps {
 	onClose: () => void;
 	account: CloudAccount;
 	setActiveAccount: Dispatch<SetStateAction<CloudAccount | null>>;
 }
 
-interface UseAccountSettingsModal {
+interface UseAccountSettingsDrawer {
 	form: FormInstance;
 	isLoading: boolean;
 	projectIds: string[];
@@ -32,11 +32,11 @@ interface UseAccountSettingsModal {
 	handleClose: () => void;
 }
 
-export function useAccountSettingsModal({
+export function useAccountSettingsDrawer({
 	onClose,
 	account,
 	setActiveAccount,
-}: UseAccountSettingsModalProps): UseAccountSettingsModal {
+}: UseAccountSettingsDrawerProps): UseAccountSettingsDrawer {
 	const [form] = Form.useForm();
 	const { mutate: updateAccount, isLoading } = useUpdateAccount();
 	const accountConfig = useMemo(

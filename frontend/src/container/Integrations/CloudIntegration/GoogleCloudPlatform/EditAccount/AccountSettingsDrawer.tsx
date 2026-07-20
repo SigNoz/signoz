@@ -8,7 +8,7 @@ import { invalidateListAccounts } from 'api/generated/services/cloudintegration'
 import { INTEGRATION_TYPES } from 'container/Integrations/constants';
 import { CloudAccount } from 'container/Integrations/types';
 
-import { useAccountSettingsModal } from '../../../../../hooks/integration/gcp/useAccountSettingsModal';
+import { useAccountSettingsDrawer } from '../../../../../hooks/integration/gcp/useAccountSettingsDrawer';
 import RemoveIntegrationAccount from '../../RemoveAccount/RemoveIntegrationAccount';
 
 import '../../AmazonWebServices/EditAccount/AccountSettingsModal.style.scss';
@@ -32,7 +32,7 @@ function AccountSettingsDrawer({
 		setProjectIds,
 		handleSubmit,
 		handleClose,
-	} = useAccountSettingsModal({ onClose, account, setActiveAccount });
+	} = useAccountSettingsDrawer({ onClose, account, setActiveAccount });
 
 	const queryClient = useQueryClient();
 

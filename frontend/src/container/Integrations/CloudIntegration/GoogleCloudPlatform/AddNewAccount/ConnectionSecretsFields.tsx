@@ -86,10 +86,10 @@ function ConnectionSecretsFields({
 					Deployment details &amp; ingestion secrets
 				</Typography.Text>
 				{!hasMissingValue && (
-					<span className={styles.headLabel}>
+					<Typography.Text as="span" size="small" className={styles.headLabel}>
 						<Lock size={12} />
 						Auto-filled by SigNoz
-					</span>
+					</Typography.Text>
 				)}
 			</div>
 
@@ -114,14 +114,15 @@ function ConnectionSecretsFields({
 								<div key={field.name} className={styles.drawerSection}>
 									<label htmlFor={field.testId}>{field.label}</label>
 									<div className={styles.readonlyField}>
-										<span
+										<Typography.Text
+											as="span"
 											id={field.testId}
 											className={cx(styles.readonlyValue, styles.mono)}
 											title={providedValue}
-											data-testid={field.testId}
+											testId={field.testId}
 										>
 											{providedValue}
-										</span>
+										</Typography.Text>
 										<Button
 											type="button"
 											size="sm"
@@ -160,9 +161,14 @@ function ConnectionSecretsFields({
 												testId={field.testId}
 											/>
 											{fieldState.error && (
-												<span className={styles.fieldError} role="alert">
+												<Typography.Text
+													as="span"
+													size="small"
+													role="alert"
+													className={styles.fieldError}
+												>
 													{fieldState.error.message}
-												</span>
+												</Typography.Text>
 											)}
 										</>
 									)}
