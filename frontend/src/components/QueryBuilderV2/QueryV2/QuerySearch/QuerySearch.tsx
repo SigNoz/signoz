@@ -101,10 +101,10 @@ interface QuerySearchProps {
 		key: string,
 		searchText: string,
 	) => Promise<{
-		stringValues?: string[];
-		numberValues?: number[];
-		complete?: boolean;
-	} | null>;
+		stringValues: string[];
+		numberValues: number[];
+		complete: boolean;
+	}>;
 }
 
 function QuerySearch({
@@ -476,47 +476,37 @@ function QuerySearch({
 			const sanitizedSearchText = searchText ? searchText?.trim() : '';
 
 			try {
-				let stringValues: string[] = [];
-				let numberValues: number[] = [];
+				const values = valueSuggestionsOverride
+					? await valueSuggestionsOverride(key, sanitizedSearchText)
+					: await getValueSuggestions({
+							key,
+							searchText: sanitizedSearchText,
+							signal: dataSource,
+							signalSource: signalSource as 'meter' | '',
+							metricName: debouncedMetricName ?? undefined,
+						}).then((response) => {
+							const responseData = response.data as any;
+							const data = responseData.data || {};
+							const values = data.values || {};
+							return {
+								stringValues: values.stringValues || [],
+								numberValues: values.numberValues || [],
+								complete: data.complete ?? false,
+							};
+						});
 
-				if (valueSuggestionsOverride) {
-					const overrideData = await valueSuggestionsOverride(
-						key,
-						sanitizedSearchText,
-					);
-					if (
-						!isMountedRef.current ||
-						lastKeyRef.current !== key ||
-						lastValueRef.current !== sanitizedSearchText
-					) {
-						return;
-					}
-					stringValues = overrideData?.stringValues ?? [];
-					numberValues = overrideData?.numberValues ?? [];
-				} else {
-					const response = await getValueSuggestions({
-						key,
-						searchText: sanitizedSearchText,
-						signal: dataSource,
-						signalSource: signalSource as 'meter' | '',
-						metricName: debouncedMetricName ?? undefined,
-					});
-
-					// Skip updates if component unmounted or key changed
-					if (
-						!isMountedRef.current ||
-						lastKeyRef.current !== key ||
-						lastValueRef.current !== sanitizedSearchText
-					) {
-						return; // Skip updating if key has changed or component unmounted
-					}
-
-					// Process the response data
-					const responseData = response.data as any;
-					const values = responseData.data?.values || {};
-					stringValues = values.stringValues || [];
-					numberValues = values.numberValues || [];
+				// Skip updates if component unmounted or key changed
+				if (
+					!isMountedRef.current ||
+					lastKeyRef.current !== key ||
+					lastValueRef.current !== sanitizedSearchText
+				) {
+					return; // Skip updating if key has changed or component unmounted
 				}
+
+				// Process the response data
+				const stringValues = values.stringValues || [];
+				const numberValues = values.numberValues || [];
 
 				// Generate options from string values - explicitly handle empty strings
 				const stringOptions = stringValues

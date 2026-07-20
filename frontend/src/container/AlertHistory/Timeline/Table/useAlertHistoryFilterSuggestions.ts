@@ -36,10 +36,10 @@ export interface AlertHistoryFilterSuggestions {
 		key: string,
 		searchText: string,
 	) => Promise<{
-		stringValues?: string[];
-		numberValues?: number[];
-		complete?: boolean;
-	} | null>;
+		stringValues: string[];
+		numberValues: number[];
+		complete: boolean;
+	}>;
 	isLoadingKeys: boolean;
 }
 
@@ -83,12 +83,16 @@ export function useAlertHistoryFilterSuggestions(
 			key: string,
 			searchText: string,
 		): Promise<{
-			stringValues?: string[];
-			numberValues?: number[];
-			complete?: boolean;
-		} | null> => {
+			stringValues: string[];
+			numberValues: number[];
+			complete: boolean;
+		}> => {
 			if (!ruleId) {
-				return null;
+				return {
+					stringValues: [],
+					numberValues: [],
+					complete: true,
+				};
 			}
 			const response = await getRuleHistoryFilterValues(
 				{ id: ruleId },
@@ -101,12 +105,9 @@ export function useAlertHistoryFilterSuggestions(
 				},
 			);
 			const values = response.data?.values;
-			if (!values) {
-				return null;
-			}
 			return {
-				stringValues: values.stringValues ?? [],
-				numberValues: values.numberValues ?? [],
+				stringValues: values?.stringValues ?? [],
+				numberValues: values?.numberValues ?? [],
 				complete: response.data?.complete ?? false,
 			};
 		},
