@@ -1,6 +1,6 @@
 import awsDarkLogo from '@/assets/Logos/aws-dark.svg';
 import azureOpenaiLogo from '@/assets/Logos/azure-openai.svg';
-import gcpLogo from '@/assets/Logos/gcp-cloud-monitoring.svg';
+import gcpLogo from '@/assets/Logos/gcp.svg';
 
 import { AzureRegion, GCPRegion } from './types';
 
