@@ -1,6 +1,7 @@
 """Fixtures for cloud integration tests."""
 
 from collections.abc import Callable
+from dataclasses import dataclass, field
 from http import HTTPStatus
 
 import pytest
@@ -18,6 +19,84 @@ from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Provider account specs
+#
+# Each cloud provider stores account config under a different shape (AWS uses
+# `regions`, GCP uses `deploymentProjectId`/`projectIds`, Azure uses
+# `resourceGroups`). A ProviderAccountSpec is the single source of truth for one
+# provider's config shape: how to build the POST/PUT `config` block, and how to
+# read back the value we assert on. Both `create_cloud_integration_account` and
+# the parametrized account tests consume these, so adding a new provider is one
+# new entry in PROVIDER_ACCOUNT_SPECS — no test-body changes required.
+# ---------------------------------------------------------------------------
+@dataclass(frozen=True)
+class ProviderAccountSpec:
+    # provider slug used in the URL path and config key (e.g. "aws", "gcp").
+    provider: str
+    # params for the account created by default.
+    initial_params: dict
+    # params for the config an update (PUT) test sends.
+    updated_params: dict
+    # params -> the provider-keyed `config` block for a POST/PUT body.
+    build_config: Callable[[dict], dict]
+    # params -> the full config block the API is expected to return under
+    # config[provider] on GET/list. This may differ from what build_config sends:
+    # e.g. AWS accepts deploymentRegion on POST but the API does not echo it back.
+    expected_config: Callable[[dict], dict]
+    # id shown in parametrized test names; defaults to the provider slug.
+    id: str = field(default="")
+
+    def __post_init__(self) -> None:
+        if not self.id:
+            object.__setattr__(self, "id", self.provider)
+
+
+AWS_ACCOUNT_SPEC = ProviderAccountSpec(
+    provider="aws",
+    initial_params={"deployment_region": "us-east-1", "regions": ["us-east-1"]},
+    updated_params={"deployment_region": "us-east-1", "regions": ["us-east-1", "us-west-2", "eu-west-1"]},
+    # POST requires deploymentRegion (validated server-side); the GET response
+    # only echoes back `regions`, so expected_config omits deploymentRegion.
+    build_config=lambda p: {"aws": {"deploymentRegion": p["deployment_region"], "regions": p["regions"]}},
+    expected_config=lambda p: {"regions": p["regions"]},
+)
+
+GCP_ACCOUNT_SPEC = ProviderAccountSpec(
+    provider="gcp",
+    initial_params={
+        "deployment_project_id": "signoz-test-project",
+        "deployment_region": "us-central1",
+        "project_ids": ["signoz-test-project"],
+    },
+    updated_params={
+        "deployment_project_id": "signoz-test-project",
+        "deployment_region": "us-central1",
+        "project_ids": ["signoz-test-project", "signoz-test-project-2"],
+    },
+    # GCP echoes back all three fields on GET, so expected_config asserts every
+    # one round-trips (this is exactly the config the "list gcp accounts was
+    # missing config" fix restored).
+    build_config=lambda p: {
+        "gcp": {
+            "deploymentProjectId": p["deployment_project_id"],
+            "deploymentRegion": p["deployment_region"],
+            "projectIds": p["project_ids"],
+        }
+    },
+    expected_config=lambda p: {
+        "deploymentProjectId": p["deployment_project_id"],
+        "deploymentRegion": p["deployment_region"],
+        "projectIds": p["project_ids"],
+    },
+)
+
+# Providers covered by the parametrized account tests. Add a provider here (e.g.
+# an AZURE_ACCOUNT_SPEC with resourceGroups) to extend coverage without touching
+# any test body.
+PROVIDER_ACCOUNT_SPECS = [AWS_ACCOUNT_SPEC, GCP_ACCOUNT_SPEC]
 
 
 @pytest.fixture(scope="function")
@@ -97,19 +176,26 @@ def create_cloud_integration_account(
         cloud_provider: str = "aws",
         deployment_region: str = "us-east-1",
         regions: list[str] | None = None,
+        config: dict | None = None,
     ) -> dict:
-        if regions is None:
-            regions = ["us-east-1"]
-
-        endpoint = f"/api/v1/cloud_integrations/{cloud_provider}/accounts"
-
-        request_payload = {
-            "config": {
+        # `config`, when given, is the fully-formed provider-keyed config block
+        # (e.g. built via a ProviderAccountSpec.build_config) and is used as-is.
+        # Otherwise fall back to the AWS shape built from deployment_region/regions,
+        # preserving existing AWS callers.
+        if config is None:
+            if regions is None:
+                regions = ["us-east-1"]
+            config = {
                 cloud_provider: {
                     "deploymentRegion": deployment_region,
                     "regions": regions,
                 }
-            },
+            }
+
+        endpoint = f"/api/v1/cloud_integrations/{cloud_provider}/accounts"
+
+        request_payload = {
+            "config": config,
             "credentials": {
                 "sigNozApiURL": "https://test-deployment.test.signoz.cloud",
                 "sigNozApiKey": "test-api-key-789",
