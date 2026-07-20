@@ -9,7 +9,7 @@ import {
 
 const jiraMetadata = async (
 	props: JiraMetadataRequest,
-): Promise<SuccessResponseV2<RawSuccessResponse<JiraMetadataResponse>>> => {
+): Promise<SuccessResponseV2<JiraMetadataResponse>> => {
 	try {
 		const response = await axios.post<RawSuccessResponse<JiraMetadataResponse>>(
 			'/channels/jira/metadata',
@@ -18,11 +18,10 @@ const jiraMetadata = async (
 
 		return {
 			httpStatusCode: response.status,
-			data: response.data,
+			data: response.data.data,
 		};
 	} catch (error) {
-		ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
-		throw error;
+		return ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
 	}
 };
 

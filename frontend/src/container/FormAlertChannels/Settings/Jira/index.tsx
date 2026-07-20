@@ -99,13 +99,18 @@ function JiraUserSelect({
 		},
 	);
 
-	const users: JiraUser[] = usersQuery.data?.data?.users || [];
+	const users: JiraUser[] = useMemo(
+		() => usersQuery.data?.data?.users || [],
+		[usersQuery.data],
+	);
 	const isLoading = usersQuery.isLoading || usersQuery.isFetching;
 
-	users.forEach((user) => {
-		labelCacheRef.current[user.account_id] =
-			user.display_name || user.email_address || user.account_id;
-	});
+	useEffect(() => {
+		users.forEach((user) => {
+			labelCacheRef.current[user.account_id] =
+				user.display_name || user.email_address || user.account_id;
+		});
+	}, [users]);
 
 	const options = useMemo(() => {
 		const selectedIds = Array.isArray(value) ? value : [value].filter(Boolean);
@@ -262,6 +267,9 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 		return false;
 	};
 
+	const isDefaultableUserField = (fieldId: string): boolean =>
+		fieldId === 'reporter';
+
 	const inferDefaultMode = (field: JiraFieldMetadata): FieldMode => {
 		if (isSelectField(field)) {
 			return 'select';
@@ -369,23 +377,23 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 
 				if (isUserField(field)) {
 					const value = resolveSelectFieldValue(existingValue, isArrayField);
+					const emptyMode = isDefaultableUserField(field.id) ? 'default' : 'none';
 					return {
 						...meta,
 						value,
-						mode: hasFieldValue(value) ? 'select' : 'default',
+						mode: hasFieldValue(value) ? 'select' : emptyMode,
 					};
 				}
 
 				const extracted = extractCustomFieldValue(existingValue);
-				const hasValue = hasFieldValue(extracted.value);
 				const defaultMode = inferDefaultMode(field);
-				const mode = hasValue
-					? extracted.mode === 'json'
-						? 'json'
-						: defaultMode
-					: field.required
-						? defaultMode
-						: 'none';
+
+				let mode: FieldMode;
+				if (hasFieldValue(extracted.value)) {
+					mode = extracted.mode === 'json' ? 'json' : defaultMode;
+				} else {
+					mode = field.required ? defaultMode : 'none';
+				}
 
 				const value = coerceRowValue(mode, extracted, isArrayField);
 				return { ...meta, value, mode };
@@ -434,7 +442,10 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 
 	const buildCustomFields = (
 		rows: CustomFieldRow[],
-	): Record<string, unknown> => {
+	): {
+		fields: Record<string, unknown>;
+		errors: Record<number, string>;
+	} => {
 		const nextErrors: Record<number, string> = {};
 		const nextFields: Record<string, unknown> = {};
 
@@ -480,19 +491,19 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 			nextFields[row.fieldId.trim()] = serializeRowValue(row);
 		});
 
-		setCustomFieldErrors(nextErrors);
-		return nextFields;
+		return { fields: nextFields, errors: nextErrors };
 	};
 
 	useEffect(() => {
 		if (!customFieldsSeededRef.current) {
 			return;
 		}
-		const customFields = buildCustomFields(customFieldRows);
-		currentCustomFieldsRef.current = customFields;
+		const { fields, errors } = buildCustomFields(customFieldRows);
+		setCustomFieldErrors(errors);
+		currentCustomFieldsRef.current = fields;
 		setSelectedConfig((value) => ({
 			...value,
-			custom_fields: customFields,
+			custom_fields: fields,
 		}));
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [customFieldRows]);
@@ -598,7 +609,7 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 				project,
 				issue_type: issueType,
 			});
-			const fields = response.data.data?.fields || [];
+			const fields = response.data?.fields || [];
 			if (!customFieldsSeededRef.current) {
 				const raw =
 					(form.getFieldValue('custom_fields') as Record<string, unknown>) ?? {};
@@ -645,12 +656,9 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 	// Reload projects whenever the selected connection changes.
 	useEffect(() => {
 		if (!connectionId) {
-			return undefined;
+			return;
 		}
-		const handle = setTimeout((): void => {
-			void loadProjects();
-		}, 500);
-		return (): void => clearTimeout(handle);
+		void loadProjects();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [connectionId]);
 
@@ -737,7 +745,9 @@ function JiraSettings({ setSelectedConfig }: JiraSettingsProps): JSX.Element {
 		} as JiraFieldMetadata;
 
 		if (isUserField(rowAsField)) {
-			return ['default', 'select', 'json'];
+			return isDefaultableUserField(row.fieldId)
+				? ['default', 'select', 'json']
+				: ['none', 'select', 'json'];
 		}
 
 		const modes: FieldMode[] = [];

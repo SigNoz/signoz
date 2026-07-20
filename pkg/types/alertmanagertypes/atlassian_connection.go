@@ -9,7 +9,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/prometheus/alertmanager/config"
 	"github.com/uptrace/bun"
 )
 
@@ -20,14 +19,6 @@ var (
 
 // CloudAPIGatewayURL is the gateway through which Jira Cloud sites are addressed by cloud id.
 const CloudAPIGatewayURL = "https://api.atlassian.com/ex/jira"
-
-// JiraReceiverConfig represents a Jira notification configuration.
-type JiraReceiverConfig struct {
-	config.JiraConfig `yaml:",inline"`
-
-	ConnectionID string `json:"connection_id,omitempty" yaml:"connection_id,omitempty"`
-	OrgID        string `json:"-" yaml:"-"`
-}
 
 type AtlassianConnection struct {
 	bun.BaseModel `bun:"table:atlassian_connection"`
@@ -108,14 +99,3 @@ type AtlassianBackedConfig interface {
 	// ChannelKind names the channel type in user-facing errors.
 	ChannelKind() string
 }
-
-var _ AtlassianBackedConfig = (*JiraReceiverConfig)(nil)
-
-// GetConnectionID returns the id of the AtlassianConnection this config uses.
-func (c *JiraReceiverConfig) GetConnectionID() string { return c.ConnectionID }
-
-// SetOrgID stamps the runtime-only org id used to resolve live credentials.
-func (c *JiraReceiverConfig) SetOrgID(orgID string) { c.OrgID = orgID }
-
-// ChannelKind names the channel type in user-facing errors.
-func (c *JiraReceiverConfig) ChannelKind() string { return "Jira" }

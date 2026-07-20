@@ -23,7 +23,7 @@ import (
 type Receiver struct {
 	*config.Receiver
 	GoogleChatConfigs []*GoogleChatReceiverConfig `json:"googlechat_configs,omitempty" yaml:"googlechat_configs,omitempty"`
-	JiraConfigs []*JiraReceiverConfig `json:"jira_configs,omitempty" yaml:"jira_configs,omitempty"`
+	JiraConfigs       []*JiraReceiverConfig       `json:"jira_configs,omitempty" yaml:"jira_configs,omitempty"`
 }
 
 // NewReceiver builds a Receiver from its JSON input, applying each notifier
@@ -40,7 +40,7 @@ func NewReceiver(input string) (*Receiver, error) {
 	}
 	receiver.Receiver = withDefaults
 
-	// Extend this block when adding another custom notifier type.
+	// Extend this block when adding another native notifier type.
 	for i, gc := range receiver.GoogleChatConfigs {
 		defaulted, err := defaultedNotifierConfig(gc)
 		if err != nil {
@@ -65,7 +65,7 @@ func defaultedJiraConfig(jc *JiraReceiverConfig) (*JiraReceiverConfig, error) {
 	if err != nil {
 		return nil, err
 	}
-	// yaml.v2 decodes Fields (map[string]any) into map[interface{}]interface{},
+	// yaml.v2 decodes Fields map[string]any into map[interface{}]interface{},
 	// which breaks later JSON marshaling. Restore the original.
 	defaulted.Fields = jc.JiraConfig.Fields
 	return &JiraReceiverConfig{JiraConfig: *defaulted, ConnectionID: jc.ConnectionID}, nil

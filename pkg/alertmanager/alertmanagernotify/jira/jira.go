@@ -161,13 +161,13 @@ func (i issueFields) MarshalJSON() ([]byte, error) {
 
 // Notifier implements a Notifier for Jira notifications over Jira Cloud OAuth 2.0 (3LO).
 type Notifier struct {
-	config    *alertmanagertypes.JiraReceiverConfig
-	resolver  ConnectionResolver
-	tmpl      *template.Template
-	logger    *slog.Logger
-	client    *http.Client
-	retrier   *notify.Retrier
-	templater alertmanagertypes.Templater
+	config       *alertmanagertypes.JiraReceiverConfig
+	resolver     ConnectionResolver
+	tmpl         *template.Template
+	logger       *slog.Logger
+	client       *http.Client
+	retrier      *notify.Retrier
+	templater    alertmanagertypes.Templater
 	cloudGateway string
 }
 

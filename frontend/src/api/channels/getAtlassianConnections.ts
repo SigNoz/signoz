@@ -17,8 +17,7 @@ const getAtlassianConnections = async (): Promise<
 			data: response.data.data,
 		};
 	} catch (error) {
-		ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
-		throw error;
+		return ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
 	}
 };
 

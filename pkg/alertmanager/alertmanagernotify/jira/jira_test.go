@@ -42,10 +42,8 @@ func newTestTemplater(tmpl *template.Template) alertmanagertypes.Templater {
 }
 
 func newTestConfig() *alertmanagertypes.JiraReceiverConfig {
-	apiURL, _ := url.Parse("https://acme.atlassian.net")
 	return &alertmanagertypes.JiraReceiverConfig{
 		JiraConfig: config.JiraConfig{
-			APIURL:      &config.URL{URL: apiURL},
 			Project:     "TEST",
 			IssueType:   "Incident",
 			Summary:     config.JiraFieldConfig{Template: "Alert: {{ .GroupLabels.alertname }}"},
@@ -111,10 +109,6 @@ func alertLabelFor(groupKey string) string {
 // server, with a resolver that hands out a static "cloud" cloudid.
 func newNotifierWithConfig(t *testing.T, cfg *config.JiraConfig, baseURL string) *Notifier {
 	t.Helper()
-	if cfg.APIURL == nil {
-		apiURL, _ := url.Parse("https://acme.atlassian.net")
-		cfg.APIURL = &config.URL{URL: apiURL}
-	}
 	tmpl := createTestTemplate(t)
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	resolver := &fakeResolver{access: "tok", refresh: "rt", cloud: "cloud"}
