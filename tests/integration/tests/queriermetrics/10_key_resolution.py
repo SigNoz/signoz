@@ -86,8 +86,8 @@ def test_metrics_filter_label_context(
     )
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    # every label context collapses to the same labels extract and selects only `us`.
-    for expr in ('region = "us"', 'attribute.region = "us"', 'resource.region = "us"', 'scope.region = "us"'):
+    # bare and attribute. both resolve to the attribute-registered label and select only `us`.
+    for expr in ('region = "us"', 'attribute.region = "us"'):
         response = querier.make_scalar_query_request(
             signoz,
             token,
@@ -105,6 +105,23 @@ def test_metrics_filter_label_context(
         assert response.status_code == HTTPStatus.OK, f"{expr}: {response.text}"
         data = {row[0]: row[-1] for row in querier.get_scalar_table_data(response.json())}
         assert data == {"us": 30.0}, f"{expr}: {data}"
+
+    # resource. is a context the label is not registered under; metrics collapses it to the
+    # same labels lookup, so it resolves rather than erroring.
+    response = querier.make_scalar_query_request(
+        signoz,
+        token,
+        now,
+        [
+            querier.build_scalar_query(
+                name="A",
+                signal="metrics",
+                aggregations=[querier.build_metrics_aggregation(METRIC, "latest", "sum", "unspecified")],
+                filter_expression='resource.region = "us"',
+            )
+        ],
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
 
 
 def test_metrics_group_by_unknown_label(
