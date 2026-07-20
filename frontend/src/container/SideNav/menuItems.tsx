@@ -290,14 +290,14 @@ export const defaultMoreMenuItems: SidebarItem[] = [
 		itemKey: 'external-apis',
 	},
 	{
-		key: ROUTES.LLM_OBSERVABILITY_OVERVIEW,
-		label: 'LLM Observability',
+		key: ROUTES.AI_OBSERVABILITY_OVERVIEW,
+		label: 'AI Observability',
 		icon: <Brain size={16} />,
 		isNew: true,
 		// Gated behind the `enable_ai_observability` feature flag in
 		// SideNav's `computedSecondaryMenuItems`; disabled by default.
 		isEnabled: false,
-		itemKey: 'llm-observability',
+		itemKey: 'ai-observability',
 	},
 	{
 		key: ROUTES.METER,
@@ -576,7 +576,7 @@ export const NEW_ROUTES_MENU_ITEM_KEY_MAP: Record<string, string> = {
 		ROUTES.INFRASTRUCTURE_MONITORING_HOSTS,
 	[ROUTES.API_MONITORING_BASE]: ROUTES.API_MONITORING,
 	[ROUTES.MESSAGING_QUEUES_BASE]: ROUTES.MESSAGING_QUEUES_OVERVIEW,
-	[ROUTES.LLM_OBSERVABILITY_BASE]: ROUTES.LLM_OBSERVABILITY_OVERVIEW,
+	[ROUTES.AI_OBSERVABILITY_BASE]: ROUTES.AI_OBSERVABILITY_OVERVIEW,
 	// `getActiveMenuKeyFromPath` strips the URL down to its first segment;
 	// `/ai-assistant/<id>` reduces to `/ai-assistant`, which we point back
 	// to the AI Assistant menu item's concrete key.
