@@ -54,6 +54,7 @@ def test_setup(
         "*/service.name/service-a",  # non-prefix wildcard
         "builder_query/service.name/",  # empty value
         "builder_query/service.name",  # missing value, not a wildcard
+        "clickhouse_sql/service.name/signoz",  # clickhouse_sql does not support key-scoped selectors
     ],
 )
 def test_invalid_telemetry_selector_rejected(

@@ -8,11 +8,11 @@ import (
 
 const wildcardSelector = "*"
 
-var telemetryGrantQueryTypes = map[string]struct{}{
-	"builder_query":     {},
-	"builder_sub_query": {},
-	"promql":            {},
-	"clickhouse_sql":    {},
+var telemetryGrantQueryTypes = map[string]bool{
+	"builder_query":     true,
+	"builder_sub_query": true,
+	"promql":            false,
+	"clickhouse_sql":    false,
 }
 
 var telemetryGrantKeys = map[string]struct{}{
@@ -42,7 +42,8 @@ func NewTelemetryGrantSelector(input string) (string, error) {
 
 	parts := strings.SplitN(input, "/", 3)
 
-	if _, ok := telemetryGrantQueryTypes[parts[0]]; !ok {
+	keyScoped, ok := telemetryGrantQueryTypes[parts[0]]
+	if !ok {
 		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "telemetry selector %q must start with a supported query type or be %q", input, wildcardSelector)
 	}
 	queryType := parts[0]
@@ -52,6 +53,10 @@ func NewTelemetryGrantSelector(input string) (string, error) {
 			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "telemetry selector %q must be <query_type>, <query_type>/*, <query_type>/<key>/* or <query_type>/<key>/<value>", input)
 		}
 		return queryType + "/" + wildcardSelector, nil
+	}
+
+	if !keyScoped {
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "telemetry selector %q is invalid: query type %q supports only %q or %q", input, queryType, queryType, queryType+"/"+wildcardSelector)
 	}
 
 	key, ok := NewTelemetryGrantKey(parts[1])

@@ -36,6 +36,9 @@ func TestNewTelemetryGrantSelector(t *testing.T) {
 		"builder_query/service.name/$svc",
 		"*/service.name/checkout",
 		"builder_query/service.name",
+		"clickhouse_sql/service.name/signoz",
+		"clickhouse_sql/service.name/*",
+		"promql/service.name/signoz",
 	}
 	for _, input := range invalid {
 		_, err := NewTelemetryGrantSelector(input)
