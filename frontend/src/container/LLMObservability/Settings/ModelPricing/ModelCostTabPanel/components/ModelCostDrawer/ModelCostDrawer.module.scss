@@ -18,14 +18,10 @@
 	--dialog-footer-padding: var(--spacing-8) var(--spacing-12);
 
 	display: flex;
-	// Keep the scroll off the content container so the header and footer stay
-	// pinned; only the body scrolls (see [data-slot='drawer-description'] below).
 	overflow: hidden;
 
 	// The drawer body — children render inside [data-slot='drawer-description']
 	// (this is the @signozhq drawer, not antd, so .ant-drawer-body was a no-op).
-	// flex:1 + min-height:0 lets it shrink and scroll within the fixed-height
-	// flex column, leaving the fit-content header/footer sticky.
 	[data-slot='drawer-description'] {
 		display: flex;
 		flex-direction: column;
