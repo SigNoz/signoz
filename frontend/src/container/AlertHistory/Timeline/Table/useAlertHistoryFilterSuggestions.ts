@@ -35,7 +35,11 @@ export interface AlertHistoryFilterSuggestions {
 	valueSuggestionsOverride: (
 		key: string,
 		searchText: string,
-	) => Promise<{ stringValues?: string[]; numberValues?: number[] } | null>;
+	) => Promise<{
+		stringValues?: string[];
+		numberValues?: number[];
+		complete?: boolean;
+	} | null>;
 	isLoadingKeys: boolean;
 }
 
@@ -78,7 +82,11 @@ export function useAlertHistoryFilterSuggestions(
 		async (
 			key: string,
 			searchText: string,
-		): Promise<{ stringValues?: string[]; numberValues?: number[] } | null> => {
+		): Promise<{
+			stringValues?: string[];
+			numberValues?: number[];
+			complete?: boolean;
+		} | null> => {
 			if (!ruleId) {
 				return null;
 			}
@@ -99,6 +107,7 @@ export function useAlertHistoryFilterSuggestions(
 			return {
 				stringValues: values.stringValues ?? [],
 				numberValues: values.numberValues ?? [],
+				complete: response.data?.complete ?? false,
 			};
 		},
 		[ruleId, startTime, endTime],

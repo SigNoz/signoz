@@ -100,7 +100,11 @@ interface QuerySearchProps {
 	valueSuggestionsOverride?: (
 		key: string,
 		searchText: string,
-	) => Promise<{ stringValues?: string[]; numberValues?: number[] } | null>;
+	) => Promise<{
+		stringValues?: string[];
+		numberValues?: number[];
+		complete?: boolean;
+	} | null>;
 }
 
 function QuerySearch({
