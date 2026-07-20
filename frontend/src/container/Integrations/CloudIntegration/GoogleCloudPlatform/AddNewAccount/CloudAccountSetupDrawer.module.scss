@@ -1,6 +1,4 @@
 .setupDrawer {
-	// Uniform horizontal padding across header / body / footer, mirroring the
-	// LLM-Observability model-cost drawer.
 	--dialog-header-padding: var(--spacing-10) var(--spacing-12);
 	--dialog-footer-padding: var(--spacing-8) var(--spacing-12);
 
@@ -31,9 +29,6 @@
 		width: var(--radix-select-trigger-width);
 	}
 
-	// Non-portaled combobox popover (region select) renders inline, so it needs
-	// an explicit solid surface + stacking so it overlays fields instead of
-	// letting them bleed through.
 	[data-slot='combobox-content'] {
 		z-index: 5;
 		background: var(--l1-background);
@@ -81,10 +76,6 @@
 	composes: fieldError from './shared.module.scss';
 }
 
-// The "Projects to Monitor" field is an antd tags Select, which otherwise renders
-// with antd's default light selector + tag chips. Align it with the drawer's dark
-// surface: the selector matches the sibling inputs (--l2-background) and the tag
-// chips use the darker drawer black (--l1-background).
 .projectIdsSelect {
 	:global(.ant-select-selector) {
 		min-height: 36px;
@@ -123,7 +114,6 @@
 	}
 }
 
-/* --- Setup guide callout --- */
 .guideCallout {
 	display: flex;
 	gap: var(--spacing-3);

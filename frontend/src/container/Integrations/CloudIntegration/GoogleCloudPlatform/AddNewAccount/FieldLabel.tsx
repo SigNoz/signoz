@@ -19,11 +19,7 @@ function FieldLabel({
 	return (
 		<label className={styles.fieldLabel} htmlFor={htmlFor}>
 			{label}
-			{required && (
-				<span className={styles.required} aria-hidden="true">
-					*
-				</span>
-			)}
+
 			<TooltipSimple title={tooltip} side="top">
 				<span
 					className={styles.infoTrigger}
@@ -33,6 +29,11 @@ function FieldLabel({
 					<Info size={12} />
 				</span>
 			</TooltipSimple>
+			{required && (
+				<span className={styles.required} aria-hidden="true">
+					*
+				</span>
+			)}
 		</label>
 	);
 }
