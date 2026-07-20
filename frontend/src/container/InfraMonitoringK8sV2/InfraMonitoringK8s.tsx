@@ -54,6 +54,7 @@ import styles from './InfraMonitoringK8s.module.scss';
 import { InfraMonitoringEvents } from 'constants/events';
 import logEvent from 'api/common/logEvent';
 import { NANO_SECOND_MULTIPLIER, useGlobalTimeStore } from 'store/globalTime';
+import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 
 export default function InfraMonitoringK8s(): JSX.Element {
 	const [showFilters, setShowFilters] = useState(true);
@@ -244,58 +245,62 @@ export default function InfraMonitoringK8s(): JSX.Element {
 				<div className={styles.infraContentRow}>
 					{showFilters && (
 						<div className={styles.quickFiltersContainer}>
-							<div className={styles.categorySelectorSection}>
-								<div className={styles.sectionHeader} data-type="resource">
-									<Typography.Text className={styles.sectionLabel}>
-										Viewing · Resource
-									</Typography.Text>
-									<div className={styles.sectionLine} />
-									<Tooltip title="Collapse Filters">
-										<ArrowUpToLine
-											style={{ transform: 'rotate(270deg)' }}
-											onClick={handleFilterVisibilityChange}
-											size="md"
-										/>
-									</Tooltip>
-								</div>
-								<div className={styles.categoryCard}>
-									<div className={styles.categoryList}>
-										{categories.map((category) => (
-											<button
-												key={category.key}
-												type="button"
-												className={`${styles.categoryItem} ${
-													selectedCategory === category.key
-														? styles.categoryItemSelected
-														: ''
-												}`}
-												onClick={(): void => handleCategorySelect(category.key)}
-												data-testid={`category-${category.key}`}
-											>
-												{category.icon}
-												<Typography.Text>{category.label}</Typography.Text>
-											</button>
-										))}
+							<OverlayScrollbar>
+								<>
+									<div className={styles.categorySelectorSection}>
+										<div className={styles.sectionHeader} data-type="resource">
+											<Typography.Text className={styles.sectionLabel}>
+												Viewing · Resource
+											</Typography.Text>
+											<div className={styles.sectionLine} />
+											<Tooltip title="Collapse Filters">
+												<ArrowUpToLine
+													style={{ transform: 'rotate(270deg)' }}
+													onClick={handleFilterVisibilityChange}
+													size="md"
+												/>
+											</Tooltip>
+										</div>
+										<div className={styles.categoryCard}>
+											<div className={styles.categoryList}>
+												{categories.map((category) => (
+													<button
+														key={category.key}
+														type="button"
+														className={`${styles.categoryItem} ${
+															selectedCategory === category.key
+																? styles.categoryItemSelected
+																: ''
+														}`}
+														onClick={(): void => handleCategorySelect(category.key)}
+														data-testid={`category-${category.key}`}
+													>
+														{category.icon}
+														<Typography.Text>{category.label}</Typography.Text>
+													</button>
+												))}
+											</div>
+										</div>
 									</div>
-								</div>
-							</div>
 
-							<div className={styles.quickFiltersSection}>
-								<div className={styles.sectionHeader} data-type="filter">
-									<Typography.Text className={styles.sectionLabel}>
-										Filter by
-									</Typography.Text>
-									<div className={styles.sectionLine} />
-								</div>
-								{selectedCategoryConfig && (
-									<QuickFilters
-										source={QuickFiltersSource.INFRA_MONITORING}
-										config={selectedCategoryConfig}
-										handleFilterVisibilityChange={handleFilterVisibilityChange}
-										useFieldApis={selectedCategoryUseFieldApis}
-									/>
-								)}
-							</div>
+									<div className={styles.quickFiltersSection}>
+										<div className={styles.sectionHeader} data-type="filter">
+											<Typography.Text className={styles.sectionLabel}>
+												Filter by
+											</Typography.Text>
+											<div className={styles.sectionLine} />
+										</div>
+										{selectedCategoryConfig && (
+											<QuickFilters
+												source={QuickFiltersSource.INFRA_MONITORING}
+												config={selectedCategoryConfig}
+												handleFilterVisibilityChange={handleFilterVisibilityChange}
+												useFieldApis={selectedCategoryUseFieldApis}
+											/>
+										)}
+									</div>
+								</>
+							</OverlayScrollbar>
 						</div>
 					)}
 
