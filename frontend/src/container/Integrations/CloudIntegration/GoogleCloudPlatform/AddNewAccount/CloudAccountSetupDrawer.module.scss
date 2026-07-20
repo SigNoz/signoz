@@ -1,0 +1,149 @@
+.content {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-6);
+	padding-bottom: var(--spacing-4);
+}
+
+.form {
+	display: flex;
+	flex-direction: column;
+}
+
+.formItem {
+	margin-bottom: var(--spacing-5);
+
+	:global(.ant-form-item-label) > label {
+		font-size: var(--font-size-sm);
+		font-weight: 600;
+		color: var(--l1-foreground);
+	}
+}
+
+.monoInput {
+	font-family: var(--font-family-mono);
+}
+
+.divider {
+	height: 1px;
+	margin: var(--spacing-2) 0 var(--spacing-6);
+	background: var(--l2-border);
+}
+
+/* --- Setup guide callout --- */
+.guideCallout {
+	display: flex;
+	gap: var(--spacing-3);
+	align-items: flex-start;
+	padding: var(--spacing-4);
+	background: var(--l2-background);
+	border: 1px solid var(--l2-border);
+	border-radius: var(--radius-3);
+}
+
+.guideIcon {
+	flex-shrink: 0;
+	margin-top: 2px;
+	color: var(--l2-foreground);
+}
+
+.guideBody {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-2);
+}
+
+.guideText {
+	font-size: var(--font-size-sm);
+	line-height: 1.5;
+	color: var(--l2-foreground);
+}
+
+.guideLink {
+	display: inline-flex;
+	gap: var(--spacing-1);
+	align-items: center;
+	width: fit-content;
+	padding: 0;
+	font-size: var(--font-size-sm);
+	font-weight: 500;
+	color: var(--bg-robin-400);
+	cursor: pointer;
+	background: none;
+	border: none;
+
+	&:hover {
+		color: var(--bg-robin-300);
+	}
+}
+
+/* --- Deployment details & ingestion secrets --- */
+.secretsSection {
+	display: flex;
+	flex-direction: column;
+}
+
+.sectionHeader {
+	display: flex;
+	gap: var(--spacing-2);
+	align-items: center;
+	margin-bottom: var(--spacing-5);
+}
+
+.sectionIcon {
+	color: var(--bg-robin-400);
+}
+
+.sectionTitle {
+	font-size: var(--font-size-sm);
+	font-weight: 600;
+	color: var(--l1-foreground);
+}
+
+.secretsSkeleton {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-5);
+}
+
+.skeletonRow {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-2);
+}
+
+.skeletonLabel :global(.ant-skeleton-input) {
+	width: 120px;
+	min-width: 120px;
+	height: 14px;
+}
+
+.skeletonInput :global(.ant-skeleton-input) {
+	width: 100%;
+	min-width: 100%;
+	height: 40px;
+}
+
+.enterpriseCallout {
+	display: flex;
+	gap: var(--spacing-3);
+	align-items: flex-start;
+	padding: var(--spacing-4);
+	font-size: var(--font-size-sm);
+	line-height: 1.5;
+	color: var(--l2-foreground);
+	background: var(--primary-background);
+	border: 1px solid var(--accent-primary);
+	border-radius: var(--radius-3);
+}
+
+.enterpriseIcon {
+	flex-shrink: 0;
+	margin-top: 2px;
+	color: var(--bg-robin-400);
+}
+
+/* --- Footer --- */
+.connectButton {
+	width: 100%;
+}

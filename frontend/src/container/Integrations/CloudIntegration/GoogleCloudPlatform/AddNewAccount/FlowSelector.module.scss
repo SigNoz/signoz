@@ -1,0 +1,111 @@
+.flowSelector {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-3);
+}
+
+.label {
+	font-size: var(--font-size-xs);
+	font-weight: 500;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--l3-foreground);
+}
+
+.option {
+	display: flex;
+	gap: var(--spacing-4);
+	align-items: center;
+	width: 100%;
+	padding: var(--spacing-4);
+	text-align: left;
+	cursor: pointer;
+	background: var(--l2-background);
+	border: 1px solid var(--l2-border);
+	border-radius: var(--radius-3);
+	transition:
+		border-color 0.15s ease,
+		background 0.15s ease;
+
+	&:hover:not(.isDisabled) {
+		border-color: var(--l1-border);
+	}
+
+	&.isSelected {
+		border-color: var(--accent-primary);
+		background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
+	}
+
+	&.isDisabled {
+		cursor: not-allowed;
+		opacity: 0.55;
+	}
+}
+
+.iconBox {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	color: var(--l1-foreground);
+	background: var(--l1-background);
+	border: 1px solid var(--l2-border);
+	border-radius: var(--radius-2);
+
+	.isSelected & {
+		color: var(--accent-primary);
+	}
+}
+
+.optionBody {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	gap: var(--spacing-1);
+	min-width: 0;
+}
+
+.optionTitle {
+	display: flex;
+	gap: var(--spacing-2);
+	align-items: center;
+	font-size: var(--font-size-sm);
+	font-weight: 600;
+	color: var(--l1-foreground);
+}
+
+.optionDescription {
+	font-size: var(--font-size-xs);
+	color: var(--l2-foreground);
+}
+
+.soonBadge {
+	padding: 2px var(--spacing-2);
+	font-size: 10px;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--bg-robin-400);
+	background: var(--primary-background);
+	border-radius: var(--radius-1);
+}
+
+.radio {
+	position: relative;
+	flex-shrink: 0;
+	width: 16px;
+	height: 16px;
+	background: transparent;
+	border: 2px solid var(--l2-border);
+	border-radius: 50%;
+
+	.isSelected & {
+		border-color: var(--accent-primary);
+		background: var(--accent-primary);
+		box-shadow:
+			inset 0 0 0 2px var(--l1-background),
+			inset 0 0 0 5px var(--accent-primary);
+	}
+}

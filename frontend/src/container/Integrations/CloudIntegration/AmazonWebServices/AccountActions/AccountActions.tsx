@@ -17,9 +17,12 @@ import { ChevronDown, Dot, PencilLine, Plug, Plus } from '@signozhq/icons';
 
 import AzureCloudAccountSetupModal from '../../AzureCloudServices/AddNewAccount/CloudAccountSetupModal';
 import AzureAccountSettingsModal from '../../AzureCloudServices/EditAccount/AccountSettingsModal';
+import GcpCloudAccountSetupDrawer from '../../GoogleCloudPlatform/AddNewAccount/CloudAccountSetupDrawer';
+import GcpAccountSettingsDrawer from '../../GoogleCloudPlatform/EditAccount/AccountSettingsDrawer';
 import {
 	mapAccountDtoToAwsCloudAccount,
 	mapAccountDtoToAzureCloudAccount,
+	mapAccountDtoToGcpCloudAccount,
 } from '../../mapCloudAccountFromDto';
 import AwsCloudAccountSetupModal from '../AddNewAccount/CloudAccountSetupModal';
 import AwsAccountSettingsModal from '../EditAccount/AccountSettingsModal';
@@ -156,6 +159,18 @@ function AccountActions({ type }: { type: IntegrationType }): JSX.Element {
 			});
 		}
 
+		if (type === IntegrationType.GCP_SERVICES) {
+			raw.forEach((account) => {
+				if (!account) {
+					return;
+				}
+				const mapped = mapAccountDtoToGcpCloudAccount(account);
+				if (mapped) {
+					mappedAccounts.push(mapped);
+				}
+			});
+		}
+
 		return mappedAccounts;
 	}, [listAccountsResponse, type]);
 
@@ -207,13 +222,20 @@ function AccountActions({ type }: { type: IntegrationType }): JSX.Element {
 	// log telemetry event when an account is viewed.
 	useEffect(() => {
 		if (activeAccount) {
+			const { config } = activeAccount;
+			let enabledRegions: string[];
+			if ('regions' in config) {
+				enabledRegions = config.regions;
+			} else if ('resource_groups' in config) {
+				enabledRegions = config.resource_groups;
+			} else {
+				enabledRegions = config.project_ids;
+			}
+
 			logEvent(`${type} Integration: Account viewed`, {
 				cloudAccountId: activeAccount?.cloud_account_id,
 				status: activeAccount?.status,
-				enabledRegions:
-					'regions' in activeAccount.config
-						? activeAccount.config.regions
-						: activeAccount.config.resource_groups,
+				enabledRegions,
 			});
 		}
 	}, [activeAccount, type]);
@@ -260,6 +282,11 @@ function AccountActions({ type }: { type: IntegrationType }): JSX.Element {
 							onClose={(): void => setIsIntegrationModalOpen(false)}
 						/>
 					)}
+					{type === IntegrationType.GCP_SERVICES && (
+						<GcpCloudAccountSetupDrawer
+							onClose={(): void => setIsIntegrationModalOpen(false)}
+						/>
+					)}
 				</>
 			)}
 
@@ -276,6 +303,13 @@ function AccountActions({ type }: { type: IntegrationType }): JSX.Element {
 					)}
 					{type === IntegrationType.AZURE_SERVICES && (
 						<AzureAccountSettingsModal
+							onClose={(): void => setIsAccountSettingsModalOpen(false)}
+							account={activeAccount}
+							setActiveAccount={setActiveAccount}
+						/>
+					)}
+					{type === IntegrationType.GCP_SERVICES && (
+						<GcpAccountSettingsDrawer
 							onClose={(): void => setIsAccountSettingsModalOpen(false)}
 							account={activeAccount}
 							setActiveAccount={setActiveAccount}

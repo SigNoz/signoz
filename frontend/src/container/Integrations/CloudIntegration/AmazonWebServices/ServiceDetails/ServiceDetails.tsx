@@ -22,6 +22,7 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import CloudServiceDataCollected from 'components/CloudIntegrations/CloudServiceDataCollected/CloudServiceDataCollected';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
+import DataCollectedCallout from 'container/Integrations/CloudIntegration/GoogleCloudPlatform/DataCollectedCallout';
 import ServiceDashboards from 'container/Integrations/CloudIntegration/ServiceDashboards/ServiceDashboards';
 import { IntegrationType, IServiceStatus } from 'container/Integrations/types';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -46,14 +47,31 @@ const EMPTY_FORM_VALUES: ServiceConfigFormValues = {
 	s3BucketsByRegion: {},
 };
 
+function getIntegrationServiceConfig(
+	type: IntegrationType,
+	serviceDetailsData?: ServiceDetailsData,
+):
+	| { logs?: { enabled?: boolean }; metrics?: { enabled?: boolean } }
+	| undefined {
+	const config = serviceDetailsData?.cloudIntegrationService?.config;
+
+	if (type === IntegrationType.AWS_SERVICES) {
+		return config?.aws;
+	}
+	if (type === IntegrationType.GCP_SERVICES) {
+		return config?.gcp;
+	}
+	return config?.azure;
+}
+
 function getInitialFormValues(
 	type: IntegrationType,
 	serviceDetailsData?: ServiceDetailsData,
 ): ServiceConfigFormValues {
-	const integrationConfig =
-		type === IntegrationType.AWS_SERVICES
-			? serviceDetailsData?.cloudIntegrationService?.config?.aws
-			: serviceDetailsData?.cloudIntegrationService?.config?.azure;
+	const integrationConfig = getIntegrationServiceConfig(
+		type,
+		serviceDetailsData,
+	);
 
 	return {
 		logsEnabled: integrationConfig?.logs?.enabled || false,
@@ -98,16 +116,21 @@ function getServiceConfigPayload({
 		};
 	}
 
-	return {
-		azure: {
-			logs: {
-				enabled: isLogsSupported ? logsEnabled : false,
-			},
-			metrics: {
-				enabled: isMetricsSupported ? metricsEnabled : false,
-			},
+	// Azure and GCP share the same simple logs/metrics enable-flag shape.
+	const signalConfig = {
+		logs: {
+			enabled: isLogsSupported ? logsEnabled : false,
+		},
+		metrics: {
+			enabled: isMetricsSupported ? metricsEnabled : false,
 		},
 	};
+
+	if (type === IntegrationType.GCP_SERVICES) {
+		return { gcp: signalConfig };
+	}
+
+	return { azure: signalConfig };
 }
 
 function ServiceDetails({
@@ -163,10 +186,10 @@ function ServiceDetails({
 		? isAccountServiceLoading
 		: isReadOnlyServiceLoading;
 
-	const integrationConfig =
-		type === IntegrationType.AWS_SERVICES
-			? serviceDetailsData?.cloudIntegrationService?.config?.aws
-			: serviceDetailsData?.cloudIntegrationService?.config?.azure;
+	const integrationConfig = getIntegrationServiceConfig(
+		type,
+		serviceDetailsData,
+	);
 	const isServiceEnabledInPersistedConfig =
 		Boolean(integrationConfig?.logs?.enabled) ||
 		Boolean(integrationConfig?.metrics?.enabled);
@@ -475,6 +498,7 @@ function ServiceDetails({
 	const renderDataCollected = (): JSX.Element => {
 		return (
 			<div className="aws-service-details-data-collected-table">
+				{type === IntegrationType.GCP_SERVICES && <DataCollectedCallout />}
 				<CloudServiceDataCollected
 					logsData={serviceDetailsData?.dataCollected?.logs || []}
 					metricsData={serviceDetailsData?.dataCollected?.metrics || []}

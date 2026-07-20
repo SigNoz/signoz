@@ -1,43 +1,43 @@
 import { Dispatch, SetStateAction, useMemo } from 'react';
 import { useQueryClient } from 'react-query';
+import { Save } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { DrawerWrapper } from '@signozhq/ui/drawer';
 import { Form, Select } from 'antd';
 import { invalidateListAccounts } from 'api/generated/services/cloudintegration';
 import { INTEGRATION_TYPES } from 'container/Integrations/constants';
 import { CloudAccount } from 'container/Integrations/types';
-import { Save } from '@signozhq/icons';
 
-import { useAccountSettingsModal } from '../../../../../hooks/integration/azure/useAccountSettingsModal';
+import { useAccountSettingsModal } from '../../../../../hooks/integration/gcp/useAccountSettingsModal';
 import RemoveIntegrationAccount from '../../RemoveAccount/RemoveIntegrationAccount';
 
 import '../../AmazonWebServices/EditAccount/AccountSettingsModal.style.scss';
 
-interface AccountSettingsModalProps {
+interface AccountSettingsDrawerProps {
 	onClose: () => void;
 	account: CloudAccount;
 	setActiveAccount: Dispatch<SetStateAction<CloudAccount | null>>;
 }
 
-function AccountSettingsModal({
+function AccountSettingsDrawer({
 	onClose,
 	account,
 	setActiveAccount,
-}: AccountSettingsModalProps): JSX.Element {
+}: AccountSettingsDrawerProps): JSX.Element {
 	const {
 		form,
 		isLoading,
-		resourceGroups,
+		projectIds,
 		isSaveDisabled,
-		setResourceGroups,
+		setProjectIds,
 		handleSubmit,
 		handleClose,
 	} = useAccountSettingsModal({ onClose, account, setActiveAccount });
 
 	const queryClient = useQueryClient();
 
-	const azureConfig = useMemo(
-		() => ('resource_groups' in account.config ? account.config : null),
+	const gcpConfig = useMemo(
+		() => ('project_ids' in account.config ? account.config : null),
 		[account.config],
 	);
 
@@ -60,12 +60,12 @@ function AccountSettingsModal({
 						accountId={account?.id}
 						onRemoveIntegrationAccountSuccess={(): void => {
 							void invalidateListAccounts(queryClient, {
-								cloudProvider: INTEGRATION_TYPES.AZURE,
+								cloudProvider: INTEGRATION_TYPES.GCP,
 							});
 							setActiveAccount(null);
 							handleClose();
 						}}
-						cloudProvider={INTEGRATION_TYPES.AZURE}
+						cloudProvider={INTEGRATION_TYPES.GCP}
 					/>
 					<Button
 						variant="solid"
@@ -74,6 +74,7 @@ function AccountSettingsModal({
 						onClick={handleSubmit}
 						loading={isLoading}
 						prefix={<Save size={14} />}
+						data-testid="gcp-update-account-btn"
 					>
 						Update Changes
 					</Button>
@@ -84,7 +85,7 @@ function AccountSettingsModal({
 				form={form}
 				layout="vertical"
 				initialValues={{
-					resourceGroups: azureConfig?.resource_groups || [],
+					projectIds: gcpConfig?.project_ids || [],
 				}}
 			>
 				<div className="account-settings-modal__body">
@@ -94,7 +95,7 @@ function AccountSettingsModal({
 								Connected Account details
 							</div>
 							<div className="account-settings-modal__body-account-info-connected-account-details-account-id">
-								Azure Subscription:{' '}
+								Account Name:{' '}
 								<span className="account-settings-modal__body-account-info-connected-account-details-account-id-account-id">
 									{account?.providerAccountId}
 								</span>
@@ -102,43 +103,56 @@ function AccountSettingsModal({
 						</div>
 					</div>
 
-					{azureConfig?.deployment_region && (
+					{gcpConfig?.deployment_project_id && (
+						<div className="account-settings-modal__body-region-selector">
+							<div className="account-settings-modal__body-region-selector-title">
+								Deployment project ID
+							</div>
+							<div className="account-settings-modal__body-region-selector-description">
+								{gcpConfig.deployment_project_id}
+							</div>
+						</div>
+					)}
+
+					{gcpConfig?.deployment_region && (
 						<div className="account-settings-modal__body-region-selector">
 							<div className="account-settings-modal__body-region-selector-title">
 								Deployment region
 							</div>
 							<div className="account-settings-modal__body-region-selector-description">
-								{azureConfig.deployment_region}
+								{gcpConfig.deployment_region}
 							</div>
 						</div>
 					)}
 
 					<div className="account-settings-modal__body-region-selector">
 						<div className="account-settings-modal__body-region-selector-title">
-							Resource groups
+							Projects to monitor
 						</div>
 						<div className="account-settings-modal__body-region-selector-description">
-							Update the resource groups that should be monitored.
+							Update the GCP project IDs that should be monitored.
 						</div>
 
 						<Form.Item
-							name="resourceGroups"
+							name="projectIds"
 							rules={[
 								{
 									required: true,
 									type: 'array',
 									min: 1,
-									message: 'Please add at least one resource group',
+									message: 'Please add at least one project ID',
 								},
 							]}
 						>
 							<Select
 								mode="tags"
-								value={resourceGroups}
+								value={projectIds}
+								tokenSeparators={[',']}
 								onChange={(values): void => {
-									setResourceGroups(values);
-									form.setFieldValue('resourceGroups', values);
+									setProjectIds(values);
+									form.setFieldValue('projectIds', values);
 								}}
+								data-testid="gcp-edit-project-ids-select"
 							/>
 						</Form.Item>
 					</div>
@@ -148,4 +162,4 @@ function AccountSettingsModal({
 	);
 }
 
-export default AccountSettingsModal;
+export default AccountSettingsDrawer;
