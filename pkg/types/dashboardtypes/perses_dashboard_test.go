@@ -1688,7 +1688,7 @@ func TestInvalidateDisplayNameTooLong(t *testing.T) {
 		t.Run(testCase.scenario, func(t *testing.T) {
 			tooLong := strings.Repeat("x", testCase.limit+1)
 			lengthMsg := fmt.Sprintf("must be at most %d characters, got %d", testCase.limit, testCase.limit+1)
-			_, err := unmarshalDashboard([]byte(fmt.Sprintf(testCase.dashboardJSONFmt, tooLong)))
+			_, err := unmarshalDashboard(fmt.Appendf(nil, testCase.dashboardJSONFmt, tooLong))
 			require.Error(t, err)
 			// Message is "<path>: <label> name must be at most N characters, got M".
 			want := testCase.expectedPath + ": " + testCase.expectedLabel + " name " + lengthMsg
