@@ -126,6 +126,7 @@ export function createCustomTabs(): K8sDetailsCustomTab<InframonitoringtypesDepl
 			getQueryPayload: getDeploymentPodMetricsQueryPayload,
 			category: InfraMonitoringEntity.DEPLOYMENTS,
 			queryKey: 'deploymentPodMetrics',
+			docBasePath: '/infrastructure-monitoring/kubernetes/deployments/',
 		}),
 	];
 }
