@@ -16,12 +16,9 @@ var telemetryGrantQueryTypes = map[string]bool{
 }
 
 var telemetryGrantKeys = map[string]struct{}{
-	"service.name": {},
+	"signoz.workspace.key.id": {},
 }
 
-// NewTelemetryGrantKey folds a key spelling to its canonical grant key and
-// reports whether it is an allowed telemetry grant key. resource-context and
-// unspecified spellings of service.name both fold to "service.name".
 func NewTelemetryGrantKey(keyText string) (string, bool) {
 	fieldKey := GetFieldKeyFromKeyText(keyText)
 	if fieldKey.FieldContext != FieldContextUnspecified && fieldKey.FieldContext != FieldContextResource {

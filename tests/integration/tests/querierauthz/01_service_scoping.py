@@ -19,8 +19,8 @@ from fixtures.querier import build_raw_query, get_column_data_from_response, mak
 from fixtures.role import transaction_group
 
 user_password = "password123Z$"
-scoped_role = "telemetry-scope-svc-a"
-scoped_email = "scope-svc-a@telemetry.test"
+scoped_role = "telemetry-scope-key-a"
+scoped_email = "scope-key-a@telemetry.test"
 
 
 def test_setup(
@@ -37,8 +37,8 @@ def test_setup(
         admin_token,
         scoped_role,
         [
-            transaction_group("read", "telemetryresource", "logs", ["builder_query/service.name/service-a"]),
-            transaction_group("read", "telemetryresource", "traces", ["builder_query/service.name/service-a"]),
+            transaction_group("read", "telemetryresource", "logs", ["builder_query/signoz.workspace.key.id/key-a"]),
+            transaction_group("read", "telemetryresource", "traces", ["builder_query/signoz.workspace.key.id/key-a"]),
         ],
     )
     user_id = create_active_user(signoz, admin_token, email=scoped_email, role="VIEWER", password=user_password)
@@ -48,13 +48,13 @@ def test_setup(
 @pytest.mark.parametrize(
     "selector",
     [
-        "service.name = 'service-a'",  # expression form, not the wire form
-        "unknown_query_type/service.name/service-a",  # unsupported query type
-        "builder_query/deployment.environment/prod",  # unsupported key
-        "*/service.name/service-a",  # non-prefix wildcard
-        "builder_query/service.name/",  # empty value
-        "builder_query/service.name",  # missing value, not a wildcard
-        "clickhouse_sql/service.name/signoz",  # clickhouse_sql does not support key-scoped selectors
+        "signoz.workspace.key.id = 'key-a'",  # expression form, not the wire form
+        "unknown_query_type/signoz.workspace.key.id/key-a",  # unsupported query type
+        "builder_query/service.name/frontend",  # service.name is not a supported grant key
+        "*/signoz.workspace.key.id/key-a",  # non-prefix wildcard
+        "builder_query/signoz.workspace.key.id/",  # empty value
+        "builder_query/signoz.workspace.key.id",  # missing value, not a wildcard
+        "clickhouse_sql/signoz.workspace.key.id/key-a",  # clickhouse_sql does not support key-scoped selectors
     ],
 )
 def test_invalid_telemetry_selector_rejected(
@@ -78,10 +78,10 @@ def test_invalid_telemetry_selector_rejected(
 @pytest.mark.parametrize(
     "expression",
     [
-        "service.name = 'service-a'",
-        "service.name IN ('service-a')",
-        "resource.service.name = 'service-a'",
-        "service.name = 'service-a' AND severity_text = 'ERROR'",
+        "signoz.workspace.key.id = 'key-a'",
+        "signoz.workspace.key.id IN ('key-a')",
+        "resource.signoz.workspace.key.id = 'key-a'",
+        "signoz.workspace.key.id = 'key-a' AND severity_text = 'ERROR'",
     ],
 )
 def test_allowed(
@@ -91,9 +91,9 @@ def test_allowed(
     expression: str,
 ) -> None:
     now = datetime.now(tz=UTC)
-    # Seed a service-a log so the resource-attribute key resolves; without any
+    # Seed a key-a log so the resource-attribute key resolves; without any
     # ingested data the querier rejects the filter with "key not found".
-    insert_logs([Logs(timestamp=now - timedelta(seconds=1), resources={"service.name": "service-a"}, body="service-a-0")])
+    insert_logs([Logs(timestamp=now - timedelta(seconds=1), resources={"signoz.workspace.key.id": "key-a"}, body="key-a-0")])
 
     response = make_query_request(
         signoz,
@@ -110,15 +110,15 @@ def test_allowed(
     "expression",
     [
         None,  # no filter
-        "service.name = 'service-b'",
-        "service.name IN ('service-a', 'service-b')",
-        "service.name = 'service-a' OR severity_text = 'ERROR'",
-        "NOT service.name = 'service-a'",
-        "service.name != 'service-b'",
-        # Same result set as IN ('service-a','service-b'), but the OR spelling is not
+        "signoz.workspace.key.id = 'key-b'",
+        "signoz.workspace.key.id IN ('key-a', 'key-b')",
+        "signoz.workspace.key.id = 'key-a' OR severity_text = 'ERROR'",
+        "NOT signoz.workspace.key.id = 'key-a'",
+        "signoz.workspace.key.id != 'key-b'",
+        # Same result set as IN ('key-a','key-b'), but the OR spelling is not
         # yet recognized as a bounded set, so it is denied today. This flips to
         # allowed-with-both-grants once the where-clause bound evaluation lands.
-        "service.name = 'service-a' OR service.name = 'service-b'",
+        "signoz.workspace.key.id = 'key-a' OR signoz.workspace.key.id = 'key-b'",
     ],
 )
 def test_denied(
@@ -149,11 +149,11 @@ def test_denied_message_names_resource(
         get_token(scoped_email, user_password),
         int((now - timedelta(minutes=10)).timestamp() * 1000),
         int(now.timestamp() * 1000),
-        [build_raw_query("A", "logs", limit=50, filter_expression="service.name = 'service-b'")],
+        [build_raw_query("A", "logs", limit=50, filter_expression="signoz.workspace.key.id = 'key-b'")],
         request_type="raw",
     )
     assert response.status_code == HTTPStatus.FORBIDDEN, response.text
-    assert "builder_query/service.name/service-b" in response.text
+    assert "builder_query/signoz.workspace.key.id/key-b" in response.text
 
 
 def test_variables_resolve_into_gate(
@@ -162,7 +162,7 @@ def test_variables_resolve_into_gate(
     insert_logs: Callable[[list[Logs]], None],
 ) -> None:
     now = datetime.now(tz=UTC)
-    insert_logs([Logs(timestamp=now - timedelta(seconds=1), resources={"service.name": "service-a"}, body="service-a-0")])
+    insert_logs([Logs(timestamp=now - timedelta(seconds=1), resources={"signoz.workspace.key.id": "key-a"}, body="key-a-0")])
     start, end = int((now - timedelta(minutes=10)).timestamp() * 1000), int(now.timestamp() * 1000)
     token = get_token(scoped_email, user_password)
 
@@ -171,9 +171,9 @@ def test_variables_resolve_into_gate(
         token,
         start,
         end,
-        [build_raw_query("A", "logs", limit=50, filter_expression="service.name = $svc")],
+        [build_raw_query("A", "logs", limit=50, filter_expression="signoz.workspace.key.id = $key")],
         request_type="raw",
-        variables={"svc": {"value": "service-a"}},
+        variables={"key": {"value": "key-a"}},
     )
     assert allowed.status_code == HTTPStatus.OK, allowed.text
 
@@ -182,9 +182,9 @@ def test_variables_resolve_into_gate(
         token,
         start,
         end,
-        [build_raw_query("A", "logs", limit=50, filter_expression="service.name = $svc")],
+        [build_raw_query("A", "logs", limit=50, filter_expression="signoz.workspace.key.id = $key")],
         request_type="raw",
-        variables={"svc": {"value": "service-b"}},
+        variables={"key": {"value": "key-b"}},
     )
     assert denied.status_code == HTTPStatus.FORBIDDEN, denied.text
 
@@ -195,17 +195,17 @@ def test_returns_only_scoped_rows(
     insert_logs: Callable[[list[Logs]], None],
 ) -> None:
     now = datetime.now(tz=UTC)
-    insert_logs([Logs(timestamp=now - timedelta(seconds=i + 1), resources={"service.name": "service-a"}, body=f"service-a-{i}") for i in range(3)] + [Logs(timestamp=now - timedelta(seconds=i + 1), resources={"service.name": "service-b"}, body=f"service-b-{i}") for i in range(3)])
+    insert_logs([Logs(timestamp=now - timedelta(seconds=i + 1), resources={"signoz.workspace.key.id": "key-a"}, body=f"key-a-{i}") for i in range(3)] + [Logs(timestamp=now - timedelta(seconds=i + 1), resources={"signoz.workspace.key.id": "key-b"}, body=f"key-b-{i}") for i in range(3)])
 
     response = make_query_request(
         signoz,
         get_token(scoped_email, user_password),
         int((now - timedelta(minutes=10)).timestamp() * 1000),
         int(now.timestamp() * 1000),
-        [build_raw_query("A", "logs", limit=50, filter_expression="service.name = 'service-a'")],
+        [build_raw_query("A", "logs", limit=50, filter_expression="signoz.workspace.key.id = 'key-a'")],
         request_type="raw",
     )
     assert response.status_code == HTTPStatus.OK, response.text
     bodies = get_column_data_from_response(response.json(), "body")
-    assert bodies, "expected rows for service-a"
-    assert all(body.startswith("service-a") for body in bodies), bodies
+    assert bodies, "expected rows for key-a"
+    assert all(body.startswith("key-a") for body in bodies), bodies

@@ -20,7 +20,7 @@ def test_setup(
     create_role: Callable[..., str],
 ) -> None:
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    create_role(admin_token, keywild_role, [transaction_group("read", "telemetryresource", "logs", ["builder_query/service.name/*"])])
+    create_role(admin_token, keywild_role, [transaction_group("read", "telemetryresource", "logs", ["builder_query/signoz.workspace.key.id/*"])])
     user_id = create_active_user(signoz, admin_token, email=keywild_email, role="VIEWER", password=user_password)
     change_user_role(signoz, admin_token, user_id, "signoz-viewer", keywild_role)
 
@@ -28,9 +28,9 @@ def test_setup(
 @pytest.mark.parametrize(
     ("selector", "authorized"),
     [
-        ("builder_query/service.name/service-a", True),  # concrete value resolves up the ladder to the key wildcard grant
-        ("builder_query/service.name/*", True),  # exact grant
-        ("builder_query/resource.service.name/service-a", True),  # resource.service.name folds to service.name before laddering
+        ("builder_query/signoz.workspace.key.id/key-a", True),  # concrete value resolves up the ladder to the key wildcard grant
+        ("builder_query/signoz.workspace.key.id/*", True),  # exact grant
+        ("builder_query/resource.signoz.workspace.key.id/key-a", True),  # resource.signoz.workspace.key.id folds before laddering
         ("promql/*", False),  # different query type never reaches the builder_query grant
     ],
 )
