@@ -69,10 +69,6 @@
 	composes: drawerSection from './shared.module.scss';
 }
 
-.required {
-	composes: required from './shared.module.scss';
-}
-
 .mono {
 	composes: mono from './shared.module.scss';
 }

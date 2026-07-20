@@ -13,6 +13,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import ConnectionSecretsFields from './ConnectionSecretsFields';
+import FieldLabel from './FieldLabel';
 import FlowSelector from './FlowSelector';
 import { GcpSetupFormValues, SetupFlow } from './types';
 
@@ -126,12 +127,12 @@ function CloudAccountSetupDrawer({
 					}
 				/> */}
 			<div className={styles.drawerSection}>
-				<label htmlFor="gcp-account-name-input">
-					Account Name{' '}
-					<span className={styles.required} aria-hidden="true">
-						*
-					</span>
-				</label>
+				<FieldLabel
+					htmlFor="gcp-account-name-input"
+					label="Account Name"
+					tooltip="A label to identify this group of GCP projects (org ID, billing email, or any descriptive name)"
+					required
+				/>
 				<Controller
 					name="accountName"
 					control={control}
@@ -161,12 +162,12 @@ function CloudAccountSetupDrawer({
 				/>
 			</div>
 			<div className={styles.drawerSection}>
-				<label htmlFor="gcp-deployment-project-id-input">
-					Deployment Project ID{' '}
-					<span className={styles.required} aria-hidden="true">
-						*
-					</span>
-				</label>
+				<FieldLabel
+					htmlFor="gcp-deployment-project-id-input"
+					label="Deployment Project ID"
+					tooltip="The GCP project that hosts your OTel Collector deployment — often separate from the projects you actually monitor"
+					required
+				/>
 				<Controller
 					name="deploymentProjectId"
 					control={control}
@@ -196,12 +197,12 @@ function CloudAccountSetupDrawer({
 				/>
 			</div>
 			<div className={styles.drawerSection}>
-				<label htmlFor="gcp-deployment-region-select">
-					Deployment Region{' '}
-					<span className={styles.required} aria-hidden="true">
-						*
-					</span>
-				</label>
+				<FieldLabel
+					htmlFor="gcp-deployment-region-select"
+					label="Deployment Region"
+					tooltip="The GCP region where your OTel Collector will be deployed"
+					required
+				/>
 				<Controller
 					name="deploymentRegion"
 					control={control}
@@ -234,12 +235,12 @@ function CloudAccountSetupDrawer({
 				/>
 			</div>
 			<div className={styles.drawerSection}>
-				<label htmlFor="gcp-project-ids-select">
-					Projects to Monitor{' '}
-					<span className={styles.required} aria-hidden="true">
-						*
-					</span>
-				</label>
+				<FieldLabel
+					htmlFor="gcp-project-ids-select"
+					label="Projects to Monitor"
+					tooltip="Enter each GCP project ID then press Enter"
+					required
+				/>
 				<Controller
 					name="projectIds"
 					control={control}
