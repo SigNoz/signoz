@@ -323,9 +323,9 @@ export const AIAssistantPage = Loadable(
 		),
 );
 
-export const AIObservabilityPage = Loadable(
+export const LLMObservabilityPage = Loadable(
 	() =>
 		import(
-			/* webpackChunkName: "AI Observability Page" */ 'pages/AIObservability'
+			/* webpackChunkName: "LLM Observability Page" */ 'pages/LLMObservability'
 		),
 );
