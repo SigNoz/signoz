@@ -1,0 +1,39 @@
+.groupForm {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-10);
+	padding: var(--spacing-2) 0;
+}
+
+.groupFormField {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+}
+
+.groupFormFieldRow {
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.groupFormLabel {
+	font-size: var(--font-size-xs);
+	font-weight: var(--font-weight-semibold);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--l3-foreground);
+}
+
+.groupFormHint {
+	font-size: var(--font-size-xs);
+	color: var(--l3-foreground);
+}
+
+.groupFormFooter {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	width: 100%;
+	gap: var(--spacing-4);
+}

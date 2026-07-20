@@ -1,8 +1,9 @@
-import { useCallback, type ReactNode, type MouseEvent } from 'react';
+import { useCallback, type MouseEvent } from 'react';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { toast } from '@signozhq/ui/sonner';
 import { Copy, Minus, Plus } from '@signozhq/icons';
 import { useCopyToClipboard } from 'react-use';
+import TanStackTable from 'components/TanStackTableView';
 
 import { useInfraMonitoringCellActionsStore } from './useInfraMonitoringCellActionsStore';
 
@@ -11,12 +12,10 @@ import { Divider } from '@signozhq/ui/divider';
 
 export interface CellValueTooltipProps {
 	value: string;
-	children: ReactNode;
 }
 
 export function CellValueTooltip({
 	value,
-	children,
 }: CellValueTooltipProps): JSX.Element {
 	const [, copyToClipboard] = useCopyToClipboard();
 	const { lineClamp, increaseLineClamp, decreaseLineClamp } =
@@ -94,7 +93,7 @@ export function CellValueTooltip({
 				className: styles.tooltipContentWrapper,
 			}}
 		>
-			{children}
+			<TanStackTable.Text className={styles.value}>{value}</TanStackTable.Text>
 		</TooltipSimple>
 	);
 }

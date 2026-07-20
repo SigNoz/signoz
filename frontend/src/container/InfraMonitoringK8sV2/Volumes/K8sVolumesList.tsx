@@ -1,16 +1,21 @@
 import { useCallback } from 'react';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { listVolumes } from 'api/generated/services/inframonitoring';
+import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import { AxiosError } from 'axios';
 import {
 	InframonitoringtypesResponseTypeDTO,
 	InframonitoringtypesVolumeRecordDTO,
 	Querybuildertypesv5OrderDirectionDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { InfraMonitoringEvents } from 'constants/events';
+import APIError from 'types/api/error';
 
 import K8sBaseDetails, { K8sDetailsFilters } from '../Base/K8sBaseDetails';
 import { K8sBaseList } from '../Base/K8sBaseList';
 import { K8sBaseFilters } from '../Base/types';
 import { InfraMonitoringEntity } from '../constants';
+import { SelectedItemParams } from '../hooks';
 import {
 	getVolumeMetricsQueryPayload,
 	k8sVolumeDetailsMetadataConfig,
@@ -67,13 +72,12 @@ function K8sVolumesList({
 					warning: data.warning,
 				};
 			} catch (error) {
-				const errMsg =
-					error instanceof Error ? error.message : 'Failed to fetch volumes';
 				return {
 					type: 'list' as const,
 					records: [] as InframonitoringtypesVolumeRecordDTO[],
 					total: 0,
-					error: errMsg,
+					error:
+						convertToApiError(error as AxiosError<RenderErrorResponseDTO>) ?? null,
 				};
 			}
 		},
@@ -86,7 +90,7 @@ function K8sVolumesList({
 			signal?: AbortSignal,
 		): Promise<{
 			data: InframonitoringtypesVolumeRecordDTO | null;
-			error?: string | null;
+			error?: APIError | null;
 		}> => {
 			try {
 				const response = await listVolumes(
@@ -104,11 +108,10 @@ function K8sVolumesList({
 					data: response.data.records.length > 0 ? response.data.records[0] : null,
 				};
 			} catch (error) {
-				const errMsg =
-					error instanceof Error ? error.message : 'Failed to fetch volume';
 				return {
 					data: null,
-					error: errMsg,
+					error:
+						convertToApiError(error as AxiosError<RenderErrorResponseDTO>) ?? null,
 				};
 			}
 		},
@@ -117,7 +120,7 @@ function K8sVolumesList({
 
 	return (
 		<>
-			<K8sBaseList<InframonitoringtypesVolumeRecordDTO>
+			<K8sBaseList<InframonitoringtypesVolumeRecordDTO, SelectedItemParams>
 				controlListPrefix={controlListPrefix}
 				entity={InfraMonitoringEntity.VOLUMES}
 				tableColumns={k8sVolumesColumnsConfig}

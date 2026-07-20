@@ -1,18 +1,24 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { listStatefulSets } from 'api/generated/services/inframonitoring';
+import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import { AxiosError } from 'axios';
 import {
 	InframonitoringtypesResponseTypeDTO,
 	InframonitoringtypesStatefulSetRecordDTO,
 	Querybuildertypesv5OrderDirectionDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { InfraMonitoringEvents } from 'constants/events';
+import APIError from 'types/api/error';
 
 import K8sBaseDetails, { K8sDetailsFilters } from '../Base/K8sBaseDetails';
 import { K8sBaseList } from '../Base/K8sBaseList';
 import { K8sBaseFilters } from '../Base/types';
 import { InfraMonitoringEntity } from '../constants';
+import { SelectedItemParams } from '../hooks';
 import {
 	getStatefulSetMetricsQueryPayload,
+	getStatefulSetPodMetricsQueryPayload,
 	k8sStatefulSetDetailsMetadataConfig,
 	k8sStatefulSetGetEntityName,
 	k8sStatefulSetGetSelectedItemExpression,
@@ -25,6 +31,7 @@ import {
 	getK8sStatefulSetRowKey,
 	k8sStatefulSetsColumnsConfig,
 } from './table.config';
+import { createPodMetricsTab } from 'container/InfraMonitoringK8sV2/EntityDetailsUtils/createPodMetricsTab';
 
 function K8sStatefulSetsList({
 	controlListPrefix,
@@ -67,13 +74,12 @@ function K8sStatefulSetsList({
 					warning: data.warning,
 				};
 			} catch (error) {
-				const errMsg =
-					error instanceof Error ? error.message : 'Failed to fetch statefulsets';
 				return {
 					type: 'list' as const,
 					records: [] as InframonitoringtypesStatefulSetRecordDTO[],
 					total: 0,
-					error: errMsg,
+					error:
+						convertToApiError(error as AxiosError<RenderErrorResponseDTO>) ?? null,
 				};
 			}
 		},
@@ -86,7 +92,7 @@ function K8sStatefulSetsList({
 			signal?: AbortSignal,
 		): Promise<{
 			data: InframonitoringtypesStatefulSetRecordDTO | null;
-			error?: string | null;
+			error?: APIError | null;
 		}> => {
 			try {
 				const response = await listStatefulSets(
@@ -104,20 +110,30 @@ function K8sStatefulSetsList({
 					data: response.data.records.length > 0 ? response.data.records[0] : null,
 				};
 			} catch (error) {
-				const errMsg =
-					error instanceof Error ? error.message : 'Failed to fetch statefulset';
 				return {
 					data: null,
-					error: errMsg,
+					error:
+						convertToApiError(error as AxiosError<RenderErrorResponseDTO>) ?? null,
 				};
 			}
 		},
 		[],
 	);
 
+	const customTabs = useMemo(
+		() => [
+			createPodMetricsTab<InframonitoringtypesStatefulSetRecordDTO>({
+				getQueryPayload: getStatefulSetPodMetricsQueryPayload,
+				category: InfraMonitoringEntity.STATEFULSETS,
+				queryKey: 'statefulSetPodMetrics',
+			}),
+		],
+		[],
+	);
+
 	return (
 		<>
-			<K8sBaseList<InframonitoringtypesStatefulSetRecordDTO>
+			<K8sBaseList<InframonitoringtypesStatefulSetRecordDTO, SelectedItemParams>
 				controlListPrefix={controlListPrefix}
 				entity={InfraMonitoringEntity.STATEFULSETS}
 				tableColumns={k8sStatefulSetsColumnsConfig}
@@ -139,6 +155,7 @@ function K8sStatefulSetsList({
 				entityWidgetInfo={statefulSetWidgetInfo}
 				getEntityQueryPayload={getStatefulSetMetricsQueryPayload}
 				queryKeyPrefix="statefulSet"
+				customTabs={customTabs}
 			/>
 		</>
 	);

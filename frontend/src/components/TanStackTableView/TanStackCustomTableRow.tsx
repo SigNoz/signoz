@@ -11,17 +11,17 @@ import { FlatItem, TableRowContext } from './types';
 
 import tableStyles from './TanStackTable.module.scss';
 
-type VirtuosoTableRowProps<TData> = ComponentProps<
+type VirtuosoTableRowProps<TData, TItemKey = string> = ComponentProps<
 	NonNullable<
-		TableComponents<FlatItem<TData>, TableRowContext<TData>>['TableRow']
+		TableComponents<FlatItem<TData>, TableRowContext<TData, TItemKey>>['TableRow']
 	>
 >;
 
-function TanStackCustomTableRow<TData>({
+function TanStackCustomTableRow<TData, TItemKey = string>({
 	item,
 	context,
 	...props
-}: VirtuosoTableRowProps<TData>): JSX.Element {
+}: VirtuosoTableRowProps<TData, TItemKey>): JSX.Element {
 	const rowId = item.row.id;
 	const rowData = item.row.original;
 
@@ -84,9 +84,9 @@ function TanStackCustomTableRow<TData>({
 // This looks overkill but ensures the table is stable and doesn't re-render on every change
 // If you add any new prop to context, remember to update this function
 // eslint-disable-next-line sonarjs/cognitive-complexity
-function areTableRowPropsEqual<TData>(
-	prev: Readonly<VirtuosoTableRowProps<TData>>,
-	next: Readonly<VirtuosoTableRowProps<TData>>,
+function areTableRowPropsEqual<TData, TItemKey = string>(
+	prev: Readonly<VirtuosoTableRowProps<TData, TItemKey>>,
+	next: Readonly<VirtuosoTableRowProps<TData, TItemKey>>,
 ): boolean {
 	if (prev.item.row.id !== next.item.row.id) {
 		return false;
@@ -141,7 +141,9 @@ function areTableRowPropsEqual<TData>(
 	return true;
 }
 
-export default memo(
-	TanStackCustomTableRow,
-	areTableRowPropsEqual,
-) as typeof TanStackCustomTableRow;
+export default memo(TanStackCustomTableRow, areTableRowPropsEqual as any) as <
+	TData,
+	TItemKey = string,
+>(
+	props: VirtuosoTableRowProps<TData, TItemKey>,
+) => JSX.Element;

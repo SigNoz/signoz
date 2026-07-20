@@ -8,6 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -54,7 +55,7 @@ func TestExistsConditionForWithEvolutions(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorExists,
 			value:         nil,
-			expectedSQL:   "WHERE resource.`service.name`::String IS NOT NULL",
+			expectedSQL:   "WHERE resource.`service.name` IS NOT NULL",
 			expectedError: nil,
 		},
 		{
@@ -86,8 +87,8 @@ func TestExistsConditionForWithEvolutions(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorExists,
 			value:         nil,
-			expectedSQL:   "WHERE mapContains(resources_string, 'service.name') = ?",
-			expectedArgs:  []any{true},
+			expectedSQL:   "WHERE mapContains(resources_string, 'service.name')",
+			expectedArgs:  nil,
 			expectedError: nil,
 		},
 		{
@@ -131,7 +132,7 @@ func TestExistsConditionForWithEvolutions(t *testing.T) {
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-			cond, _, err := conditionBuilder.ConditionFor(ctx, tc.startTs, tc.endTs, &tc.key, []*telemetrytypes.TelemetryFieldKey{&tc.key}, tc.operator, tc.value, sb)
+			cond, _, err := conditionBuilder.ConditionFor(ctx, valuer.UUID{}, tc.startTs, tc.endTs, &tc.key, map[string][]*telemetrytypes.TelemetryFieldKey{tc.key.Name: {&tc.key}}, qbtypes.ConditionBuilderOptions{}, tc.operator, tc.value, sb)
 			sb.Where(cond...)
 
 			if tc.expectedError != nil {
@@ -181,8 +182,8 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorGreaterThan,
 			value:         float64(100),
-			expectedSQL:   "(toFloat64(attributes_number['request.duration']) > ? AND mapContains(attributes_number, 'request.duration') = ?)",
-			expectedArgs:  []any{float64(100), true},
+			expectedSQL:   "(toFloat64(attributes_number['request.duration']) > ? AND mapContains(attributes_number, 'request.duration'))",
+			expectedArgs:  []any{float64(100)},
 			expectedError: nil,
 		},
 		{
@@ -194,8 +195,8 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorLessThan,
 			value:         float64(1024),
-			expectedSQL:   "(toFloat64(attributes_number['request.size']) < ? AND mapContains(attributes_number, 'request.size') = ?)",
-			expectedArgs:  []any{float64(1024), true},
+			expectedSQL:   "(toFloat64(attributes_number['request.size']) < ? AND mapContains(attributes_number, 'request.size'))",
+			expectedArgs:  []any{float64(1024)},
 			expectedError: nil,
 		},
 		{
@@ -231,8 +232,8 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorILike,
 			value:         "%admin%",
-			expectedSQL:   "(LOWER(attributes_string['user.id']) LIKE LOWER(?) AND mapContains(attributes_string, 'user.id') = ?)",
-			expectedArgs:  []any{"%admin%", true},
+			expectedSQL:   "(LOWER(attributes_string['user.id']) LIKE LOWER(?) AND mapContains(attributes_string, 'user.id'))",
+			expectedArgs:  []any{"%admin%"},
 			expectedError: nil,
 		},
 		{
@@ -258,7 +259,7 @@ func TestConditionFor(t *testing.T) {
 			operator:      qbtypes.FilterOperatorContains,
 			value:         521509198310,
 			expectedSQL:   "LOWER(attributes_string['user.id']) LIKE LOWER(?)",
-			expectedArgs:  []any{"%521509198310%", true},
+			expectedArgs:  []any{"%521509198310%"},
 			expectedError: nil,
 		},
 		{
@@ -282,8 +283,8 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorContains,
 			value:         "admin",
-			expectedSQL:   "(LOWER(attributes_string['user.id']) LIKE LOWER(?) AND mapContains(attributes_string, 'user.id') = ?)",
-			expectedArgs:  []any{"%admin%", true},
+			expectedSQL:   "(LOWER(attributes_string['user.id']) LIKE LOWER(?) AND mapContains(attributes_string, 'user.id'))",
+			expectedArgs:  []any{"%admin%"},
 			expectedError: nil,
 		},
 		{
@@ -329,8 +330,8 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorExists,
 			value:         nil,
-			expectedSQL:   "WHERE body <> ?",
-			expectedArgs:  []any{""},
+			expectedSQL:   "WHERE body <> ''",
+			expectedArgs:  nil,
 			expectedError: nil,
 		},
 		{
@@ -341,8 +342,8 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorNotExists,
 			value:         nil,
-			expectedSQL:   "WHERE body = ?",
-			expectedArgs:  []any{""},
+			expectedSQL:   "WHERE body = ''",
+			expectedArgs:  nil,
 			expectedError: nil,
 		},
 		{
@@ -354,8 +355,8 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorExists,
 			value:         nil,
-			expectedSQL:   "mapContains(attributes_string, 'user.id') = ?",
-			expectedArgs:  []any{true},
+			expectedSQL:   "mapContains(attributes_string, 'user.id')",
+			expectedArgs:  nil,
 			expectedError: nil,
 		},
 		{
@@ -367,8 +368,8 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorNotExists,
 			value:         nil,
-			expectedSQL:   "mapContains(attributes_string, 'user.id') <> ?",
-			expectedArgs:  []any{true},
+			expectedSQL:   "NOT mapContains(attributes_string, 'user.id')",
+			expectedArgs:  nil,
 			expectedError: nil,
 		},
 		{
@@ -381,8 +382,8 @@ func TestConditionFor(t *testing.T) {
 			evolutions:    mockEvolution,
 			operator:      qbtypes.FilterOperatorExists,
 			value:         nil,
-			expectedSQL:   "mapContains(resources_string, 'service.name') = ?",
-			expectedArgs:  []any{true},
+			expectedSQL:   "mapContains(resources_string, 'service.name')",
+			expectedArgs:  nil,
 			expectedError: nil,
 		},
 		{
@@ -395,8 +396,8 @@ func TestConditionFor(t *testing.T) {
 			evolutions:    mockEvolution,
 			operator:      qbtypes.FilterOperatorNotExists,
 			value:         nil,
-			expectedSQL:   "mapContains(resources_string, 'service.name') <> ?",
-			expectedArgs:  []any{true},
+			expectedSQL:   "NOT mapContains(resources_string, 'service.name')",
+			expectedArgs:  nil,
 			expectedError: nil,
 		},
 		{
@@ -432,8 +433,8 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorRegexp,
 			value:         "^https://.*\\.example\\.com.*$",
-			expectedSQL:   "(match(attributes_string['http.url'], ?) AND mapContains(attributes_string, 'http.url') = ?)",
-			expectedArgs:  []any{"^https://.*\\.example\\.com.*$", true},
+			expectedSQL:   "(match(attributes_string['http.url'], ?) AND mapContains(attributes_string, 'http.url'))",
+			expectedArgs:  []any{"^https://.*\\.example\\.com.*$"},
 			expectedError: nil,
 		},
 		{
@@ -460,8 +461,8 @@ func TestConditionFor(t *testing.T) {
 			evolutions:    mockEvolution,
 			operator:      qbtypes.FilterOperatorRegexp,
 			value:         "frontend-.*",
-			expectedSQL:   "WHERE (match(`resource_string_service$$name`, ?) AND `resource_string_service$$name_exists` = ?)",
-			expectedArgs:  []any{"frontend-.*", true},
+			expectedSQL:   "WHERE (match(`resource_string_service$$name`, ?) AND `resource_string_service$$name_exists`)",
+			expectedArgs:  []any{"frontend-.*"},
 			expectedError: nil,
 		},
 		{
@@ -522,7 +523,7 @@ func TestConditionFor(t *testing.T) {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
 			tc.key.Evolutions = tc.evolutions
-			cond, _, err := conditionBuilder.ConditionFor(ctx, 0, 0, &tc.key, []*telemetrytypes.TelemetryFieldKey{&tc.key}, tc.operator, tc.value, sb)
+			cond, _, err := conditionBuilder.ConditionFor(ctx, valuer.UUID{}, 0, 0, &tc.key, map[string][]*telemetrytypes.TelemetryFieldKey{tc.key.Name: {&tc.key}}, qbtypes.ConditionBuilderOptions{}, tc.operator, tc.value, sb)
 			sb.Where(cond...)
 
 			if tc.expectedError != nil {
@@ -535,6 +536,61 @@ func TestConditionFor(t *testing.T) {
 			}
 		})
 	}
+}
+
+// A prefixed key absent from metadata synthesizes both spellings: the stripped
+// interpretation first, the literal `{context}.{name}` spelling second.
+func TestConditionForSynthesizedPrefixedKeys(t *testing.T) {
+	ctx := context.Background()
+	fl := flaggertest.New(t)
+	cb := NewConditionBuilder(NewFieldMapper(fl), fl)
+
+	t.Run("bare intrinsic column resolves to the column, not synthesized attributes", func(t *testing.T) {
+		sb := sqlbuilder.NewSelectBuilder()
+		key := telemetrytypes.TelemetryFieldKey{Name: "severity_text"}
+		conds, _, err := cb.ConditionFor(ctx, valuer.UUID{}, 0, 0, &key, nil, qbtypes.ConditionBuilderOptions{},qbtypes.FilterOperatorEqual, "ERROR", sb)
+		require.NoError(t, err)
+		require.Len(t, conds, 1)
+		sb.Where(conds...)
+		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+		assert.Contains(t, sql, "severity_text = ?")
+		assert.NotContains(t, sql, "mapContains")
+	})
+
+	t.Run("attribute context", func(t *testing.T) {
+		sb := sqlbuilder.NewSelectBuilder()
+		key := telemetrytypes.TelemetryFieldKey{Name: "custom.key", FieldContext: telemetrytypes.FieldContextAttribute}
+		conds, warnings, err := cb.ConditionFor(ctx, valuer.UUID{}, 0, 0, &key, nil, qbtypes.ConditionBuilderOptions{},qbtypes.FilterOperatorEqual, "v", sb)
+		require.NoError(t, err)
+		assert.NotEmpty(t, warnings)
+		require.Len(t, conds, 2)
+		assert.Contains(t, conds[0], "mapContains(attributes_string, 'custom.key')")
+		assert.Contains(t, conds[1], "mapContains(attributes_string, 'attribute.custom.key')")
+	})
+
+	t.Run("resource context", func(t *testing.T) {
+		sb := sqlbuilder.NewSelectBuilder()
+		key := telemetrytypes.TelemetryFieldKey{Name: "custom.key", FieldContext: telemetrytypes.FieldContextResource}
+		conds, warnings, err := cb.ConditionFor(ctx, valuer.UUID{}, 0, 0, &key, nil, qbtypes.ConditionBuilderOptions{},qbtypes.FilterOperatorEqual, "v", sb)
+		require.NoError(t, err)
+		assert.NotEmpty(t, warnings)
+		require.Len(t, conds, 2)
+		assert.Contains(t, conds[0], "mapContains(resources_string, 'custom.key')")
+		assert.Contains(t, conds[1], "mapContains(resources_string, 'resource.custom.key')")
+	})
+
+	t.Run("log context folds to attributes then body", func(t *testing.T) {
+		sb := sqlbuilder.NewSelectBuilder()
+		key := telemetrytypes.TelemetryFieldKey{Name: "custom.key", FieldContext: telemetrytypes.FieldContextLog}
+		conds, warnings, err := cb.ConditionFor(ctx, valuer.UUID{}, 0, 0, &key, nil, qbtypes.ConditionBuilderOptions{},qbtypes.FilterOperatorEqual, "v", sb)
+		require.NoError(t, err)
+		assert.NotEmpty(t, warnings)
+		require.Len(t, conds, 4)
+		assert.Contains(t, conds[0], "mapContains(attributes_string, 'custom.key')")
+		assert.Contains(t, conds[1], "mapContains(attributes_string, 'log.custom.key')")
+		assert.Contains(t, conds[2], `"custom"."key"`)
+		assert.Contains(t, conds[3], `"log"."custom"."key"`)
+	})
 }
 
 func TestConditionForMultipleKeys(t *testing.T) {
@@ -578,7 +634,7 @@ func TestConditionForMultipleKeys(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			var err error
 			for _, key := range tc.keys {
-				cond, err := conditionBuilder.conditionFor(ctx, 0, 0, &key, tc.operator, tc.value, sb)
+				cond, err := conditionBuilder.conditionForResolvedKey(ctx, valuer.UUID{}, 0, 0, &key, tc.operator, tc.value, sb)
 				sb.Where(cond)
 				if err != nil {
 					t.Fatalf("Error getting condition for key %s: %v", key.Name, err)
@@ -836,7 +892,7 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-			cond, err := conditionBuilder.conditionFor(ctx, 0, 0, &tc.key, tc.operator, tc.value, sb)
+			cond, err := conditionBuilder.conditionForResolvedKey(ctx, valuer.UUID{}, 0, 0, &tc.key, tc.operator, tc.value, sb)
 			sb.Where(cond)
 
 			if tc.expectedError != nil {

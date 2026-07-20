@@ -19,7 +19,6 @@ let mockSelectionMap: Record<string, { value: unknown; allSelected: boolean }> =
 	{};
 
 const mockSetVariableValue = jest.fn();
-const mockSetUrlValues = jest.fn();
 const mockPatchAsync = jest.fn().mockResolvedValue(undefined);
 
 const DYNAMIC_KIND = 'signoz/DynamicVariable';
@@ -67,16 +66,6 @@ jest.mock(
 		DYNAMIC_SIGNAL_ALL: 'all',
 	}),
 );
-jest.mock(
-	'pages/DashboardPageV2/DashboardContainer/VariablesBar/variablesUrlState',
-	() => ({
-		ALL_SELECTED: '__ALL__',
-		variablesUrlParser: { withOptions: (): unknown => ({}) },
-	}),
-);
-jest.mock('nuqs', () => ({
-	useQueryState: (): unknown => [null, mockSetUrlValues],
-}));
 jest.mock('components/OverlayScrollbar/OverlayScrollbar', () => ({
 	__esModule: true,
 	default: ({ children }: { children: React.ReactNode }): JSX.Element => (

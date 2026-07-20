@@ -4,11 +4,14 @@ import {
 	downloadFile,
 	getTimestampedFileName,
 } from 'lib/exportData/downloadFile';
+import { exportScalarData } from 'lib/exportData/exportScalarData';
 import { exportTimeseriesData } from 'lib/exportData/exportTimeseriesData';
 import { toCsv } from 'lib/exportData/toCsv';
 import { toJsonl } from 'lib/exportData/toJsonl';
 import { ExportFormat, SerializedTable } from 'lib/exportData/types';
 import { useCallback, useState } from 'react';
+import { SuccessResponse } from 'types/api';
+import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryRangeResponseV5, TimeSeriesData } from 'types/api/v5/queryRange';
 
@@ -20,33 +23,44 @@ const FORMAT_META: Record<ExportFormat, { mime: string; extension: string }> = {
 	},
 };
 
-// Picks the serializer for the response's request type. Narrows the results
-// union via the response discriminant. scalar lands with #5591; raw/trace are
-// server-exported, distribution is never emitted.
+/** The queryRange response object views hold — structural (params left
+ * unconstrained) so both explorer variants assign cleanly. */
+export type ClientExportData = SuccessResponse<MetricRangePayloadProps> & {
+	rawV5Response?: QueryRangeResponseV5;
+	legendMap?: Record<string, string>;
+};
+
+// Picks the serializer from what the queryRange response carries: timeseries
+// queries surface the raw V5 tree (rawV5Response); table queries carry the
+// formatForWeb webTables payload (resultType 'scalar'). raw/trace stay
+// server-exported via useServerExport.
 function serialize(
-	response: QueryRangeResponseV5,
+	data: ClientExportData,
 	yAxisUnit?: string,
-	legendMap?: Record<string, string>,
 	query?: Query,
 ): SerializedTable {
-	if (response.type === REQUEST_TYPES.TIME_SERIES) {
+	if (data.rawV5Response?.type === REQUEST_TYPES.TIME_SERIES) {
 		return exportTimeseriesData({
-			data: response.data.results as TimeSeriesData[],
+			data: data.rawV5Response.data.results as TimeSeriesData[],
 			yAxisUnit,
-			legendMap,
+			legendMap: data.legendMap,
 			query,
 		});
 	}
 
-	throw new Error(`Export is not supported for "${response.type}" results`);
+	if (data.payload?.data?.resultType === 'scalar' && query) {
+		return exportScalarData({ data, query });
+	}
+
+	throw new Error('Export is not supported for this result type');
 }
 
 interface UseClientExportProps {
-	response?: QueryRangeResponseV5;
+	// currently supports only qb v5 responses. Can extend to support future responses.
+	data?: ClientExportData;
 	query?: Query;
 	yAxisUnit?: string;
 	fileName?: string;
-	legendMap?: Record<string, string>;
 }
 
 interface ClientExportOptions {
@@ -59,23 +73,22 @@ interface UseClientExportReturn {
 }
 
 export function useClientExport({
-	response, // currently supports only qb v5 response. Can extend to support future responses.
+	data,
 	query,
 	yAxisUnit,
 	fileName = 'export',
-	legendMap,
 }: UseClientExportProps): UseClientExportReturn {
 	const [isExporting, setIsExporting] = useState<boolean>(false);
 
 	const handleExport = useCallback(
 		({ format }: ClientExportOptions): void => {
-			if (!response) {
+			if (!data) {
 				return;
 			}
 
 			setIsExporting(true);
 			try {
-				const table = serialize(response, yAxisUnit, legendMap, query);
+				const table = serialize(data, yAxisUnit, query);
 				const content =
 					format === ExportFormat.Jsonl ? toJsonl(table) : toCsv(table);
 				const { mime, extension } = FORMAT_META[format];
@@ -86,7 +99,7 @@ export function useClientExport({
 				setIsExporting(false);
 			}
 		},
-		[response, query, yAxisUnit, fileName, legendMap],
+		[data, query, yAxisUnit, fileName],
 	);
 
 	return { isExporting, handleExport };

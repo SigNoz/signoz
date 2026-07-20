@@ -17,5 +17,6 @@ var (
 func (Source) Enum() []any {
 	return []any{
 		SourceMeter,
+		SourceUnspecified,
 	}
 }
