@@ -123,6 +123,17 @@ describe('buildApplyVariableToPanelsPatch', () => {
 		expect(expressionOf(ops[0])).toBe('env = "prod" AND service.name IN $svc');
 	});
 
+	it('parenthesises an existing OR before appending (precedence-safe)', () => {
+		const ops = buildApplyVariableToPanelsPatch(
+			panels({ p1: compositePanel('service.name = "x" OR env = "y"') }),
+			'C',
+			'C',
+		);
+		expect(expressionOf(ops[0])).toBe(
+			'(service.name = "x" OR env = "y") AND C IN $C',
+		);
+	});
+
 	it('sets the clause when the filter is empty', () => {
 		const ops = buildApplyVariableToPanelsPatch(
 			panels({ p1: compositePanel('') }),

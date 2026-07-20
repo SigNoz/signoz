@@ -6,16 +6,16 @@ import type {
 	Querybuildertypesv5CompositeQueryDTO,
 	Querybuildertypesv5QueryEnvelopeBuilderDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import {
+	appendAndClause,
+	removeVariableFromExpression,
+} from 'components/QueryBuilderV2/utils';
 import { cloneDeep } from 'lodash-es';
-
-// Injects/removes a dynamic variable's filter (`attribute IN $name`) in panel
-// builder queries as JSON-Patch ops. Only builder queries carry a filter.
 
 function clauseFor(attribute: string, variableName: string): string {
 	return `${attribute} IN $${variableName}`;
 }
 
-/** Runs `fn` on every builder-query spec in a panel's single query (Composite or bare Builder). */
 function forEachBuilderSpec(
 	queries: DashboardtypesQueryDTO[],
 	fn: (spec: Querybuildertypesv5BuilderQuerySpecDTO) => void,
@@ -39,7 +39,6 @@ function forEachBuilderSpec(
 	}
 }
 
-/** Appends the clause to every builder query's filter. Returns whether anything changed. */
 function addClause(queries: DashboardtypesQueryDTO[], clause: string): boolean {
 	let changed = false;
 	forEachBuilderSpec(queries, (spec) => {
@@ -48,18 +47,15 @@ function addClause(queries: DashboardtypesQueryDTO[], clause: string): boolean {
 		if (existing?.includes(clause)) {
 			return;
 		}
-		spec.filter = {
-			expression: existing ? `${existing} AND ${clause}` : clause,
-		};
+		spec.filter = { expression: appendAndClause(existing, clause) };
 		changed = true;
 	});
 	return changed;
 }
 
-/** Removes the managed clause (an ` AND `-joined part) from every builder filter. */
 function removeClause(
 	queries: DashboardtypesQueryDTO[],
-	clause: string,
+	variableName: string,
 ): boolean {
 	let changed = false;
 	forEachBuilderSpec(queries, (spec) => {
@@ -67,20 +63,15 @@ function removeClause(
 		if (!existing) {
 			return;
 		}
-		const parts = existing
-			.split(' AND ')
-			.map((part) => part.trim())
-			.filter(Boolean);
-		const kept = parts.filter((part) => part !== clause);
-		if (kept.length !== parts.length) {
-			spec.filter = { expression: kept.join(' AND ') };
+		const next = removeVariableFromExpression(existing, variableName);
+		if (next !== existing) {
+			spec.filter = { expression: next };
 			changed = true;
 		}
 	});
 	return changed;
 }
 
-/** Whether any builder query in the panel already carries the clause. */
 function panelHasClause(
 	queries: DashboardtypesQueryDTO[],
 	clause: string,
@@ -154,7 +145,7 @@ export function buildSyncVariableToPanelsPatch(
 		const queries = cloneDeep(panel.spec.queries);
 		const changed = selected.has(id)
 			? addClause(queries, clause)
-			: removeClause(queries, clause);
+			: removeClause(queries, variableName);
 		if (changed) {
 			ops.push(replaceQueriesOp(id, queries));
 		}
