@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -30,11 +29,6 @@ func (c *conditionBuilder) conditionFor(
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) (string, error) {
-	columns, err := c.fm.ColumnFor(ctx, orgID, startNs, endNs, key)
-	if err != nil {
-		return "", err
-	}
-
 	if operator.IsStringSearchOperator() {
 		value = querybuilder.FormatValueForContains(value)
 	}
@@ -114,60 +108,15 @@ func (c *conditionBuilder) conditionFor(
 		}
 		return sb.And(conditions...), nil
 	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
-		var value any
-		column := columns[0]
-
-		switch column.Type.GetType() {
-		case schema.ColumnTypeEnumJSON:
-			if operator == qbtypes.FilterOperatorExists {
-				return sb.IsNotNull(fieldExpression), nil
-			}
-			return sb.IsNull(fieldExpression), nil
-		case schema.ColumnTypeEnumLowCardinality:
-			switch elementType := column.Type.(schema.LowCardinalityColumnType).ElementType; elementType.GetType() {
-			case schema.ColumnTypeEnumString:
-				value = ""
-				if operator == qbtypes.FilterOperatorExists {
-					return sb.NE(fieldExpression, value), nil
-				}
-				return sb.E(fieldExpression, value), nil
-			default:
-				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for low cardinality column type %s", elementType)
-			}
-		case schema.ColumnTypeEnumString:
-			value = ""
-			if operator == qbtypes.FilterOperatorExists {
-				return sb.NE(fieldExpression, value), nil
-			}
-			return sb.E(fieldExpression, value), nil
-		case schema.ColumnTypeEnumUInt64, schema.ColumnTypeEnumUInt32, schema.ColumnTypeEnumUInt8:
-			value = 0
-			if operator == qbtypes.FilterOperatorExists {
-				return sb.NE(fieldExpression, value), nil
-			}
-			return sb.E(fieldExpression, value), nil
-		case schema.ColumnTypeEnumMap:
-			keyType := column.Type.(schema.MapColumnType).KeyType
-			if _, ok := keyType.(schema.LowCardinalityColumnType); !ok {
-				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "key type %s is not supported for map column type %s", keyType, column.Type)
-			}
-
-			switch valueType := column.Type.(schema.MapColumnType).ValueType; valueType.GetType() {
-			case schema.ColumnTypeEnumString, schema.ColumnTypeEnumBool, schema.ColumnTypeEnumFloat64:
-				leftOperand := fmt.Sprintf("mapContains(%s, '%s')", column.Name, key.Name)
-				if key.Materialized {
-					leftOperand = telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key)
-				}
-				if operator == qbtypes.FilterOperatorExists {
-					return sb.E(leftOperand, true), nil
-				}
-				return sb.NE(leftOperand, true), nil
-			default:
-				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for map column type %s", valueType)
-			}
-		default:
-			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for column type %s", column.Type)
+		columns, err := c.fm.ColumnFor(ctx, orgID, startNs, endNs, key)
+		if err != nil {
+			return "", err
 		}
+		pred, err := querybuilder.ExistsExpression(columns, key, startNs, endNs, fieldExpression, operator == qbtypes.FilterOperatorExists)
+		if err != nil {
+			return "", err
+		}
+		return sqlbuilder.Escape(pred), nil
 	}
 	return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported operator: %v", operator)
 }
@@ -178,7 +127,8 @@ func (c *conditionBuilder) ConditionFor(
 	startNs uint64,
 	endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
-	fieldKeysForName []*telemetrytypes.TelemetryFieldKey,
+	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
+	options qbtypes.ConditionBuilderOptions,
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
@@ -189,13 +139,27 @@ func (c *conditionBuilder) ConditionFor(
 		return nil, nil, err
 	}
 
-	keys, warning := querybuilder.ResolveKeys(key, fieldKeysForName)
+	keys, warning := querybuilder.ResolveKeys(key, querybuilder.MatchingFieldKeys(key, fieldKeys))
 	var warnings []string
 	if warning != "" {
 		warnings = append(warnings, warning)
 	}
 	if len(keys) == 0 {
 		return nil, warnings, querybuilder.NewKeyNotFoundError(key.Name)
+	}
+
+	// Drop resource keys the sub-query already covers; if none remain, skip the term (not an error).
+	if options.SkipResourceFilter {
+		filtered := make([]*telemetrytypes.TelemetryFieldKey, 0, len(keys))
+		for _, k := range keys {
+			if k.FieldContext != telemetrytypes.FieldContextResource {
+				filtered = append(filtered, k)
+			}
+		}
+		if len(filtered) == 0 {
+			return nil, warnings, nil
+		}
+		keys = filtered
 	}
 
 	conds := make([]string, 0, len(keys))

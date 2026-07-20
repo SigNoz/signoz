@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import type { DashboardLinkDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesLinkDTO } from 'api/generated/services/sigNoz.schemas';
 import type {
 	SectionEditorProps,
 	SectionKind,
@@ -34,7 +34,7 @@ function ContextLinksSection({
 	const removeAt = (index: number): void =>
 		onChange(links.filter((_, i) => i !== index));
 
-	const handleSave = (link: DashboardLinkDTO): void => {
+	const handleSave = (link: DashboardtypesLinkDTO): void => {
 		onChange(
 			dialog.index === null
 				? [...links, link]

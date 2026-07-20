@@ -356,6 +356,14 @@ func NewFieldValueSelectorFromPostableFieldValueParams(params PostableFieldValue
 	return fieldValueSelector
 }
 
+func NewTelemetryFieldKey(name string, fieldContext FieldContext, fieldDataType FieldDataType) *TelemetryFieldKey {
+	return &TelemetryFieldKey{
+		Name:          name,
+		FieldContext:  fieldContext,
+		FieldDataType: fieldDataType,
+	}
+}
+
 type TelemetryFieldKeySkipIndex struct {
 	Name            string        `json:"name"` // Name is TelemetryFieldKey.Name not IndexName from ClickHouse
 	FieldContext    FieldContext  `json:"fieldContext,omitzero"`

@@ -1,4 +1,4 @@
-import type { DashboardLinkDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesLinkDTO } from 'api/generated/services/sigNoz.schemas';
 import { resolveTexts } from 'hooks/dashboard/useContextVariables';
 
 import { resolveContextLinkUrl } from './resolveContextLinkUrl';
@@ -15,7 +15,7 @@ export interface ResolvedDrilldownLink {
  * label + URL, drops links without a URL, and skips substitution when `renderVariables === false`.
  */
 export function resolvePanelContextLinks(
-	links: DashboardLinkDTO[] | undefined,
+	links: DashboardtypesLinkDTO[] | undefined,
 	processedVariables: Record<string, string>,
 ): ResolvedDrilldownLink[] {
 	const usable = (links ?? []).filter((link) => !!link.url);

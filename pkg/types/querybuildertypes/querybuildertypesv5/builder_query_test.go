@@ -651,3 +651,61 @@ func TestQueryBuilderQuery_UnmarshalJSON(t *testing.T) {
 		assert.Equal(t, telemetrytypes.FieldContextSpan, query.Order[0].Key.FieldContext)
 	})
 }
+
+func TestQueryBuilderQuery_MetricAggregation_MarshalJSONEnumRoundTrip(t *testing.T) {
+	testCases := []struct {
+		name    string
+		query   QueryBuilderQuery[MetricAggregation]
+		present []string
+	}{
+		{
+			name: "AcceptedEmptyEnumsAreEchoed",
+			query: QueryBuilderQuery[MetricAggregation]{
+				Name:   "A",
+				Signal: telemetrytypes.SignalMetrics,
+				Source: telemetrytypes.SourceUnspecified,
+				Aggregations: []MetricAggregation{{
+					MetricName:       "system.cpu.usage",
+					Temporality:      metrictypes.Unknown,
+					TimeAggregation:  metrictypes.TimeAggregationUnspecified,
+					SpaceAggregation: metrictypes.SpaceAggregationSum,
+				}},
+			},
+			present: []string{`"source":""`, `"temporality":""`, `"timeAggregation":""`, `"spaceAggregation":"sum"`},
+		},
+		{
+			name: "SetEnumsAreSerialized",
+			query: QueryBuilderQuery[MetricAggregation]{
+				Name:   "A",
+				Signal: telemetrytypes.SignalMetrics,
+				Source: telemetrytypes.SourceMeter,
+				Aggregations: []MetricAggregation{{
+					MetricName:       "system.cpu.usage",
+					Temporality:      metrictypes.Cumulative,
+					TimeAggregation:  metrictypes.TimeAggregationRate,
+					SpaceAggregation: metrictypes.SpaceAggregationSum,
+				}},
+			},
+			present: []string{`"source":"meter"`, `"temporality":"cumulative"`, `"timeAggregation":"rate"`, `"spaceAggregation":"sum"`},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			expected, err := json.Marshal(testCase.query)
+			require.NoError(t, err)
+
+			for _, fragment := range testCase.present {
+				assert.Contains(t, string(expected), fragment)
+			}
+
+			// Marshal -> unmarshal -> marshal must be stable so a create -> GET
+			// round-trip preserves exactly what the client sent.
+			var decoded QueryBuilderQuery[MetricAggregation]
+			require.NoError(t, json.Unmarshal(expected, &decoded))
+			actual, err := json.Marshal(decoded)
+			require.NoError(t, err)
+			assert.JSONEq(t, string(expected), string(actual))
+		})
+	}
+}

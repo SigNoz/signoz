@@ -362,11 +362,13 @@ def test_logs_json_body_function_scalar_path(
 
 
 @pytest.mark.parametrize(
-    "expression",
+    "expression, expected_error",
     [
-        pytest.param('has(code.function, "main")', id="has_non_body_key"),
-        pytest.param('hasToken(code.function, "main")', id="hastoken_non_body_key"),
-        pytest.param("hasToken(body, 123)", id="hastoken_non_string_value"),
+        # A has-family function on a non-body key is unsupported (not merely "key not found"):
+        # the error names the body-only restriction so the user knows to prefix with `body.`.
+        pytest.param('has(code.function, "main")', "function `has` supports only body JSON search", id="has_non_body_key"),
+        pytest.param('hasToken(code.function, "main")', "function `hasToken` only supports body field as first parameter", id="hastoken_non_body_key"),
+        pytest.param("hasToken(body, 123)", "expects value parameter to be a string", id="hastoken_non_string_value"),
     ],
 )
 def test_logs_json_body_function_errors(
@@ -374,8 +376,10 @@ def test_logs_json_body_function_errors(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     expression: str,
+    expected_error: str,
 ) -> None:
-    """has/hasToken support only the body JSON field; misuse is rejected (400)."""
+    """has/hasToken support only the body JSON field; misuse is rejected (400) with a message that
+    names the body-only restriction rather than a generic "key not found"."""
     now = datetime.now(tz=UTC)
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     response = make_query_request(
@@ -386,7 +390,8 @@ def test_logs_json_body_function_errors(
         request_type=RequestType.RAW,
         queries=[build_raw_query("A", "logs", order=[build_order_by("timestamp")], limit=100, filter_expression=expression)],
     )
-    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert expected_error in response.text, f"{expression}: expected {expected_error!r} in {response.text}"
 
 
 @pytest.mark.parametrize(
@@ -1174,3 +1179,100 @@ def test_logs_json_body_quote_unicode_needles(
         )
         assert response.status_code == HTTPStatus.OK, f"{expression}: {response.text}"
         assert len(get_rows(response)) == 1, f"{expression}: expected 1 row"
+
+
+@pytest.mark.parametrize(
+    "needle",
+    [
+        pytest.param("192.168.1.1", id="dotted_ip"),
+        pytest.param("user_id", id="underscore"),
+        pytest.param("error-code", id="hyphen"),
+        pytest.param("production node", id="whitespace"),
+    ],
+)
+def test_logs_json_body_hastoken_separator_needle_errors(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_logs: Callable[[list[Logs]], None],
+    needle: str,
+) -> None:
+    """KNOWN BUG (currently 500). hasToken maps to ClickHouse hasToken(LOWER(body), LOWER(?)),
+    which rejects a needle containing whitespace or separator characters (`.`/`_`/`-`/space) with
+    error code 36 ("Needle must not contain whitespace or separator characters"). The querier
+    passes the user needle straight through, so the query fails during execution and the raw CH
+    error surfaces as a 500 rather than a 400 / graceful fallback. Common needles like an IP,
+    `user_id` or a UUID hit this. Flip this to 400 (or a fallback match) once the needle is
+    validated."""
+    now = datetime.now(tz=UTC)
+    insert_logs(
+        [
+            Logs(timestamp=now - timedelta(seconds=1), resources={"service.name": "app-service"}, body=json.dumps({"message": "client 192.168.1.1 user_id error-code production node"}), severity_text="INFO"),
+        ]
+    )
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=int((now - timedelta(seconds=10)).timestamp() * 1000),
+        end_ms=int(now.timestamp() * 1000),
+        request_type=RequestType.RAW,
+        queries=[build_raw_query("A", "logs", order=[build_order_by("timestamp")], limit=100, filter_expression=f"hasToken(body, '{needle}')")],
+    )
+    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR, f"{needle}: expected 500, got {response.status_code}: {response.text}"
+    assert "Needle must not contain whitespace or separator characters" in response.text, response.text
+
+
+@pytest.mark.parametrize(
+    "func",
+    [
+        pytest.param("hasAny", id="hasany"),
+        pytest.param("hasAll", id="hasall"),
+    ],
+)
+def test_logs_json_body_hasany_hasall_large_quoted_int_errors(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_logs: Callable[[list[Logs]], None],
+    func: str,
+) -> None:
+    """KNOWN BUG (currently 500). A quoted integer needle >= 2^32 in hasAny/hasAll fails with
+    ClickHouse code 386 ("no supertype for types UInt64, Int64") -> 500. The body array is
+    extracted as Array(Nullable(Int64)), but the needle array is bound as Array(UInt64) for values
+    that don't fit UInt32, and CH has no Int64/UInt64 supertype at the array-vs-array type level.
+    Single has() is unaffected because scalar-vs-array coercion is value-level (asserted below as a
+    contrast). When fixed (bind the needle array as Int64) this should return 200 with an exact
+    match like has()."""
+    now = datetime.now(tz=UTC)
+    insert_logs(
+        [
+            Logs(timestamp=now - timedelta(seconds=1), resources={"service.name": "app-service"}, body=json.dumps({"id": [9007199254740993]}), severity_text="INFO"),
+        ]
+    )
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    start_ms = int((now - timedelta(seconds=10)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+
+    # hasAny/hasAll with a quoted big int (>= 2^32) -> 500 (no supertype).
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=start_ms,
+        end_ms=end_ms,
+        request_type=RequestType.RAW,
+        queries=[build_raw_query("A", "logs", order=[build_order_by("timestamp")], limit=100, filter_expression=f"{func}(body.id, ['9007199254740993'])")],
+    )
+    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR, f"{func}: expected 500, got {response.status_code}: {response.text}"
+
+    # Contrast: single has() with the same quoted big int works (exact Int64 match, 1 row).
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=start_ms,
+        end_ms=end_ms,
+        request_type=RequestType.RAW,
+        queries=[build_raw_query("A", "logs", order=[build_order_by("timestamp")], limit=100, filter_expression="has(body.id, '9007199254740993')")],
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert len(get_rows(response)) == 1, "single has() with a quoted big int should match exactly one log"

@@ -37,7 +37,7 @@ describe('LLMObservability (integration)', () => {
 
 	it('renders the overview panel and the tab bar on the overview route', () => {
 		render(<LLMObservability />, undefined, {
-			initialRoute: ROUTES.LLM_OBSERVABILITY_OVERVIEW,
+			initialRoute: ROUTES.AI_OBSERVABILITY_OVERVIEW,
 		});
 
 		expect(screen.getByTestId('llm-observability-tabs')).toBeInTheDocument();
@@ -55,32 +55,32 @@ describe('LLMObservability (integration)', () => {
 	it('navigates to the configuration route when the Model pricing tab is clicked', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(<LLMObservability />, undefined, {
-			initialRoute: ROUTES.LLM_OBSERVABILITY_OVERVIEW,
+			initialRoute: ROUTES.AI_OBSERVABILITY_OVERVIEW,
 		});
 
 		await user.click(screen.getByRole('tab', { name: 'Model pricing' }));
 
 		expect(safeNavigateMock).toHaveBeenCalledWith(
-			ROUTES.LLM_OBSERVABILITY_CONFIGURATION,
+			ROUTES.AI_OBSERVABILITY_CONFIGURATION,
 		);
 	});
 
 	it('navigates to the attribute mapping route when that tab is clicked', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(<LLMObservability />, undefined, {
-			initialRoute: ROUTES.LLM_OBSERVABILITY_OVERVIEW,
+			initialRoute: ROUTES.AI_OBSERVABILITY_OVERVIEW,
 		});
 
 		await user.click(screen.getByRole('tab', { name: 'Attribute Mapping' }));
 
 		expect(safeNavigateMock).toHaveBeenCalledWith(
-			ROUTES.LLM_OBSERVABILITY_ATTRIBUTE_MAPPING,
+			ROUTES.AI_OBSERVABILITY_ATTRIBUTE_MAPPING,
 		);
 	});
 
 	it('renders the attribute mapping page on the attribute mapping route', () => {
 		render(<LLMObservability />, undefined, {
-			initialRoute: ROUTES.LLM_OBSERVABILITY_ATTRIBUTE_MAPPING,
+			initialRoute: ROUTES.AI_OBSERVABILITY_ATTRIBUTE_MAPPING,
 		});
 
 		expect(
@@ -91,7 +91,7 @@ describe('LLMObservability (integration)', () => {
 	it('renders the model-pricing page on the configuration route', async () => {
 		setupList();
 		render(<LLMObservability />, undefined, {
-			initialRoute: ROUTES.LLM_OBSERVABILITY_CONFIGURATION,
+			initialRoute: ROUTES.AI_OBSERVABILITY_CONFIGURATION,
 		});
 
 		await waitFor(() =>
