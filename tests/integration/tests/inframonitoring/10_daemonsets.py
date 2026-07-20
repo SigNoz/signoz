@@ -117,18 +117,16 @@ def test_daemonsets_accuracy(
 
 
 @pytest.mark.parametrize(
-    "expression,expected,expected_warn",
+    "expression,expected",
     [
         pytest.param(
             "k8s.namespace.name = 'ns-a' AND env = 'prod'",
             {"logs-a-prod", "metrics-a-prod"},
-            None,
             id="and",
         ),
         pytest.param(
             "k8s.daemonset.name IN ('logs-a-prod', 'metrics-b-dev')",
             {"logs-a-prod", "metrics-b-dev"},
-            None,
             id="in",
         ),
         # NOT IN on the partition key (k8s.daemonset.name) returns the rest.
@@ -137,40 +135,34 @@ def test_daemonsets_accuracy(
         pytest.param(
             "k8s.daemonset.name NOT IN ('logs-a-prod', 'logs-a-dev', 'metrics-a-prod', 'metrics-a-dev')",
             {"logs-b-prod", "logs-b-dev", "metrics-b-prod", "metrics-b-dev"},
-            None,
             id="not_in",
         ),
         pytest.param(
             "k8s.daemonset.name CONTAINS 'logs'",
             {"logs-a-prod", "logs-a-dev", "logs-b-prod", "logs-b-dev"},
-            None,
             id="contains",
         ),
         pytest.param(
             "k8s.namespace.name = 'ns-a' AND k8s.daemonset.name IN ('logs-a-prod', 'metrics-a-prod')",
             {"logs-a-prod", "metrics-a-prod"},
-            None,
             id="and_in",
         ),
         pytest.param(
             "k8s.namespace.name = 'ns-a' AND k8s.daemonset.name NOT IN ('logs-a-prod', 'logs-a-dev')",
             {"metrics-a-prod", "metrics-a-dev"},
-            None,
             id="and_not_in",
         ),
         pytest.param(
             "env = 'prod' AND k8s.daemonset.name CONTAINS 'logs'",
             {"logs-a-prod", "logs-b-prod"},
-            None,
             id="and_contains",
         ),
         pytest.param(
             "k8s.daemonset.name IN ('logs-a-prod', 'logs-b-prod', 'metrics-a-prod') AND k8s.daemonset.name CONTAINS 'logs'",
             {"logs-a-prod", "logs-b-prod"},
-            None,
             id="in_contains",
         ),
-        pytest.param("k8s.daemonset.namee = 'logs-a-prod'", set(), None, id="unresolved_key"),
+        pytest.param("k8s.daemonset.namee = 'logs-a-prod'", set(), id="unresolved_key"),
     ],
 )
 def test_daemonsets_filter(
@@ -180,7 +172,6 @@ def test_daemonsets_filter(
     insert_metrics,
     expression: str,
     expected: set,
-    expected_warn,
 ) -> None:
     """Filter operators (=, IN, NOT IN, CONTAINS) and their AND-combinations
     return exactly the matching daemonsets, with undistorted per-DS metric
@@ -221,9 +212,6 @@ def test_daemonsets_filter(
     data = response.json()["data"]
     assert {r["daemonSetName"] for r in data["records"]} == expected
     assert data["total"] == len(expected)
-    if expected_warn is not None:
-        warnings = get_all_warnings(response.json())
-        assert any(expected_warn in w["message"] for w in warnings), f"{expected_warn!r} not surfaced: {warnings}"
 
     # Filtering must not distort per-daemonset aggregation values.
     for record in data["records"]:

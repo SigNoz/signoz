@@ -188,18 +188,16 @@ def test_clusters_warnings(
 
 
 @pytest.mark.parametrize(
-    "expression,expected,expected_warn",
+    "expression,expected",
     [
         pytest.param(
             "cloud.provider = 'gcp' AND env = 'prod'",
             {"web-gcp-prod", "api-gcp-prod"},
-            None,
             id="and",
         ),
         pytest.param(
             "k8s.cluster.name IN ('web-gcp-prod', 'api-aws-dev')",
             {"web-gcp-prod", "api-aws-dev"},
-            None,
             id="in",
         ),
         # NOT IN on the partition key returns the rest. NOT IN on a
@@ -208,40 +206,34 @@ def test_clusters_warnings(
         pytest.param(
             "k8s.cluster.name NOT IN ('web-gcp-prod', 'web-gcp-dev', 'api-gcp-prod', 'api-gcp-dev')",
             {"web-aws-prod", "web-aws-dev", "api-aws-prod", "api-aws-dev"},
-            None,
             id="not_in",
         ),
         pytest.param(
             "k8s.cluster.name CONTAINS 'web'",
             {"web-gcp-prod", "web-gcp-dev", "web-aws-prod", "web-aws-dev"},
-            None,
             id="contains",
         ),
         pytest.param(
             "cloud.provider = 'gcp' AND k8s.cluster.name IN ('web-gcp-prod', 'api-gcp-prod')",
             {"web-gcp-prod", "api-gcp-prod"},
-            None,
             id="and_in",
         ),
         pytest.param(
             "cloud.provider = 'gcp' AND k8s.cluster.name NOT IN ('web-gcp-prod', 'web-gcp-dev')",
             {"api-gcp-prod", "api-gcp-dev"},
-            None,
             id="and_not_in",
         ),
         pytest.param(
             "env = 'prod' AND k8s.cluster.name CONTAINS 'web'",
             {"web-gcp-prod", "web-aws-prod"},
-            None,
             id="and_contains",
         ),
         pytest.param(
             "k8s.cluster.name IN ('web-gcp-prod', 'web-aws-prod', 'api-gcp-prod') AND k8s.cluster.name CONTAINS 'web'",
             {"web-gcp-prod", "web-aws-prod"},
-            None,
             id="in_contains",
         ),
-        pytest.param("k8s.cluster.namee = 'web-gcp-prod'", set(), None, id="unresolved_key"),
+        pytest.param("k8s.cluster.namee = 'web-gcp-prod'", set(), id="unresolved_key"),
     ],
 )
 def test_clusters_filter(
@@ -251,7 +243,6 @@ def test_clusters_filter(
     insert_metrics,
     expression: str,
     expected: set,
-    expected_warn,
 ) -> None:
     """Filter operators (=, IN, NOT IN, CONTAINS) and their AND-combinations
     return exactly the matching clusters, with undistorted per-cluster metric
@@ -290,9 +281,6 @@ def test_clusters_filter(
     data = response.json()["data"]
     assert {r["clusterName"] for r in data["records"]} == expected
     assert data["total"] == len(expected)
-    if expected_warn is not None:
-        warnings = get_all_warnings(response.json())
-        assert any(expected_warn in w["message"] for w in warnings), f"{expected_warn!r} not surfaced: {warnings}"
 
     # Filtering must not distort per-cluster aggregation values.
     for record in data["records"]:

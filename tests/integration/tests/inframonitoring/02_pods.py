@@ -248,57 +248,49 @@ def test_pods_warnings(
 
 
 @pytest.mark.parametrize(
-    "expression,expected_pods,expected_warn",
+    "expression,expected_pods",
     [
         pytest.param(
             "k8s.namespace.name = 'ns-prod' AND k8s.deployment.name = 'web'",
             {"web-prod-1", "web-prod-2"},
-            None,
             id="and",
         ),
         pytest.param(
             "k8s.pod.name IN ('web-prod-1', 'api-dev-1')",
             {"web-prod-1", "api-dev-1"},
-            None,
             id="in",
         ),
         pytest.param(
             "k8s.deployment.name NOT IN ('api')",
             {"web-prod-1", "web-prod-2", "web-dev-1", "web-dev-2"},
-            None,
             id="not_in",
         ),
         pytest.param(
             "k8s.pod.name CONTAINS 'web'",
             {"web-prod-1", "web-prod-2", "web-dev-1", "web-dev-2"},
-            None,
             id="contains",
         ),
         pytest.param(
             "k8s.namespace.name = 'ns-prod' AND k8s.pod.name IN ('web-prod-1', 'api-prod-1')",
             {"web-prod-1", "api-prod-1"},
-            None,
             id="and_in",
         ),
         pytest.param(
             "k8s.namespace.name = 'ns-prod' AND k8s.pod.name NOT IN ('web-prod-1', 'web-prod-2')",
             {"api-prod-1", "api-prod-2"},
-            None,
             id="and_not_in",
         ),
         pytest.param(
             "k8s.namespace.name = 'ns-dev' AND k8s.pod.name CONTAINS 'web'",
             {"web-dev-1", "web-dev-2"},
-            None,
             id="and_contains",
         ),
         pytest.param(
             "k8s.pod.name IN ('web-prod-1', 'web-dev-1', 'api-dev-1') AND k8s.pod.name CONTAINS 'web'",
             {"web-prod-1", "web-dev-1"},
-            None,
             id="in_contains",
         ),
-        pytest.param("k8s.pod.namee = 'web-prod-1'", set(), None, id="unresolved_key"),
+        pytest.param("k8s.pod.namee = 'web-prod-1'", set(), id="unresolved_key"),
     ],
 )
 def test_pods_filter(
@@ -308,7 +300,6 @@ def test_pods_filter(
     insert_metrics,
     expression: str,
     expected_pods: set,
-    expected_warn,
 ) -> None:
     """Filter operators (=, IN, NOT IN, CONTAINS) and their AND-combinations
     return exactly the matching pods, with undistorted per-pod metric values."""
@@ -348,9 +339,6 @@ def test_pods_filter(
     data = response.json()["data"]
     assert {r["meta"]["k8s.pod.name"] for r in data["records"]} == expected_pods
     assert data["total"] == len(expected_pods)
-    if expected_warn is not None:
-        warnings = get_all_warnings(response.json())
-        assert any(expected_warn in w["message"] for w in warnings), f"{expected_warn!r} not surfaced: {warnings}"
 
     # Filtering must not distort per-pod aggregation values.
     for record in data["records"]:

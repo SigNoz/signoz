@@ -201,18 +201,16 @@ def test_jobs_warnings(
 
 
 @pytest.mark.parametrize(
-    "expression,expected,expected_warn",
+    "expression,expected",
     [
         pytest.param(
             "k8s.namespace.name = 'ns-a' AND env = 'prod'",
             {"etl-a-prod", "cron-a-prod"},
-            None,
             id="and",
         ),
         pytest.param(
             "k8s.job.name IN ('etl-a-prod', 'cron-b-dev')",
             {"etl-a-prod", "cron-b-dev"},
-            None,
             id="in",
         ),
         # NOT IN on the partition key (k8s.job.name) returns the rest.
@@ -221,40 +219,34 @@ def test_jobs_warnings(
         pytest.param(
             "k8s.job.name NOT IN ('etl-a-prod', 'etl-a-dev', 'cron-a-prod', 'cron-a-dev')",
             {"etl-b-prod", "etl-b-dev", "cron-b-prod", "cron-b-dev"},
-            None,
             id="not_in",
         ),
         pytest.param(
             "k8s.job.name CONTAINS 'etl'",
             {"etl-a-prod", "etl-a-dev", "etl-b-prod", "etl-b-dev"},
-            None,
             id="contains",
         ),
         pytest.param(
             "k8s.namespace.name = 'ns-a' AND k8s.job.name IN ('etl-a-prod', 'cron-a-prod')",
             {"etl-a-prod", "cron-a-prod"},
-            None,
             id="and_in",
         ),
         pytest.param(
             "k8s.namespace.name = 'ns-a' AND k8s.job.name NOT IN ('etl-a-prod', 'etl-a-dev')",
             {"cron-a-prod", "cron-a-dev"},
-            None,
             id="and_not_in",
         ),
         pytest.param(
             "env = 'prod' AND k8s.job.name CONTAINS 'etl'",
             {"etl-a-prod", "etl-b-prod"},
-            None,
             id="and_contains",
         ),
         pytest.param(
             "k8s.job.name IN ('etl-a-prod', 'etl-b-prod', 'cron-a-prod') AND k8s.job.name CONTAINS 'etl'",
             {"etl-a-prod", "etl-b-prod"},
-            None,
             id="in_contains",
         ),
-        pytest.param("k8s.job.namee = 'etl-a-prod'", set(), None, id="unresolved_key"),
+        pytest.param("k8s.job.namee = 'etl-a-prod'", set(), id="unresolved_key"),
     ],
 )
 def test_jobs_filter(
@@ -264,7 +256,6 @@ def test_jobs_filter(
     insert_metrics,
     expression: str,
     expected: set,
-    expected_warn,
 ) -> None:
     """Filter operators (=, IN, NOT IN, CONTAINS) and their AND-combinations
     return exactly the matching jobs, with undistorted per-job metric values."""
@@ -304,9 +295,6 @@ def test_jobs_filter(
     data = response.json()["data"]
     assert {r["jobName"] for r in data["records"]} == expected
     assert data["total"] == len(expected)
-    if expected_warn is not None:
-        warnings = get_all_warnings(response.json())
-        assert any(expected_warn in w["message"] for w in warnings), f"{expected_warn!r} not surfaced: {warnings}"
 
     # Filtering must not distort per-job aggregation values.
     for record in data["records"]:

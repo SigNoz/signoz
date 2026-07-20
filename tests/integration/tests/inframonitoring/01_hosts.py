@@ -158,57 +158,49 @@ def test_hosts_warnings(
 
 
 @pytest.mark.parametrize(
-    "expression,expected_hosts,expected_warn",
+    "expression,expected_hosts",
     [
         pytest.param(
             "host.name = 'prod-linux-1' AND os.type = 'linux'",
             {"prod-linux-1"},
-            None,
             id="and",
         ),
         pytest.param(
             "host.name IN ('prod-linux-1', 'prod-windows-1')",
             {"prod-linux-1", "prod-windows-1"},
-            None,
             id="in",
         ),
         pytest.param(
             "host.name NOT IN ('prod-linux-1', 'prod-windows-1')",
             {"dev-linux-1", "dev-windows-1"},
-            None,
             id="not_in",
         ),
         pytest.param(
             "host.name CONTAINS 'prod-'",
             {"prod-linux-1", "prod-windows-1"},
-            None,
             id="contains",
         ),
         pytest.param(
             "os.type = 'linux' AND host.name IN ('prod-linux-1', 'prod-windows-1')",
             {"prod-linux-1"},
-            None,
             id="and_in",
         ),
         pytest.param(
             "os.type = 'linux' AND host.name NOT IN ('prod-linux-1', 'prod-windows-1')",
             {"dev-linux-1"},
-            None,
             id="and_not_in",
         ),
         pytest.param(
             "os.type = 'linux' AND host.name CONTAINS 'prod-'",
             {"prod-linux-1"},
-            None,
             id="and_contains",
         ),
         pytest.param(
             "host.name IN ('prod-linux-1', 'prod-windows-1', 'dev-linux-1') AND host.name CONTAINS 'linux'",
             {"prod-linux-1", "dev-linux-1"},
-            None,
             id="in_contains",
         ),
-        pytest.param("host.namee = 'prod-linux-1'", set(), None, id="unresolved_key"),
+        pytest.param("host.namee = 'prod-linux-1'", set(), id="unresolved_key"),
     ],
 )
 def test_hosts_filter(
@@ -218,7 +210,6 @@ def test_hosts_filter(
     insert_metrics,
     expression: str,
     expected_hosts: set,
-    expected_warn,
 ) -> None:
     """Filter operators (=, IN, NOT IN, CONTAINS) and their AND-combinations
     return exactly the matching hosts, with undistorted per-host metric values."""
@@ -257,9 +248,6 @@ def test_hosts_filter(
     data = response.json()["data"]
     assert {r["hostName"] for r in data["records"]} == expected_hosts
     assert data["total"] == len(expected_hosts)
-    if expected_warn is not None:
-        warnings = get_all_warnings(response.json())
-        assert any(expected_warn in w["message"] for w in warnings), f"{expected_warn!r} not surfaced: {warnings}"
 
     # Filtering must not distort per-host aggregation values.
     for record in data["records"]:
