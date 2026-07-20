@@ -1,7 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { toast } from '@signozhq/ui/sonner';
-import { Form, FormInstance } from 'antd';
 import {
 	CreateAccountMutationResult,
 	GetConnectionCredentialsQueryResult,
@@ -15,6 +14,7 @@ import {
 	CloudintegrationtypesPostableAccountDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { INTEGRATION_TYPES } from 'container/Integrations/constants';
+import { GcpSetupFormValues } from 'container/Integrations/CloudIntegration/GoogleCloudPlatform/AddNewAccount/types';
 import useAxiosError from 'hooks/useAxiosError';
 
 import logEvent from '../../../api/common/logEvent';
@@ -24,9 +24,8 @@ interface UseIntegrationModalProps {
 }
 
 interface UseGCPIntegrationModal {
-	form: FormInstance;
 	isLoading: boolean;
-	handleSubmit: () => Promise<void>;
+	connectAccount: (values: GcpSetupFormValues) => Promise<void>;
 	handleClose: () => void;
 	connectionParams?: CloudintegrationtypesCredentialsDTO;
 	isConnectionParamsLoading: boolean;
@@ -36,7 +35,6 @@ export function useIntegrationModal({
 	onClose,
 }: UseIntegrationModalProps): UseGCPIntegrationModal {
 	const queryClient = useQueryClient();
-	const [form] = Form.useForm();
 	const [isLoading, setIsLoading] = useState(false);
 
 	const { mutateAsync: createAccount } = useCreateAccount();
@@ -79,71 +77,71 @@ export function useIntegrationModal({
 		[handleClose, queryClient],
 	);
 
-	const handleSubmit = useCallback(async (): Promise<void> => {
-		try {
-			setIsLoading(true);
-			const values = await form.validateFields();
+	const connectAccount = useCallback(
+		async (values: GcpSetupFormValues): Promise<void> => {
+			try {
+				setIsLoading(true);
 
-			const payload: CloudintegrationtypesPostableAccountDTO = {
-				config: {
-					gcp: {
-						deploymentRegion: values.deploymentRegion,
-						deploymentProjectId: values.deploymentProjectId,
-						projectIds: values.projectIds || [],
+				const payload: CloudintegrationtypesPostableAccountDTO = {
+					config: {
+						gcp: {
+							deploymentRegion: values.deploymentRegion,
+							deploymentProjectId: values.deploymentProjectId,
+							projectIds: values.projectIds || [],
+						},
 					},
-				},
-				credentials: {
-					// Fields are always visible & pre-filled, so user-edited values win;
-					// fall back to fetched credentials if the form hasn't hydrated yet.
-					ingestionUrl: values.ingestionUrl || connectionParams?.data?.ingestionUrl,
-					ingestionKey: values.ingestionKey || connectionParams?.data?.ingestionKey,
-					sigNozApiUrl: values.sigNozApiUrl || connectionParams?.data?.sigNozApiUrl,
-					sigNozApiKey: values.sigNozApiKey || connectionParams?.data?.sigNozApiKey,
-				},
-			};
+					credentials: {
+						// Fields are always visible & pre-filled, so user-edited values win;
+						// fall back to fetched credentials if the form hasn't hydrated yet.
+						ingestionUrl:
+							values.ingestionUrl || connectionParams?.data?.ingestionUrl || '',
+						ingestionKey:
+							values.ingestionKey || connectionParams?.data?.ingestionKey || '',
+						sigNozApiUrl:
+							values.sigNozApiUrl || connectionParams?.data?.sigNozApiUrl || '',
+						sigNozApiKey:
+							values.sigNozApiKey || connectionParams?.data?.sigNozApiKey || '',
+					},
+				};
 
-			// Step 1: create the integration account.
-			const createResponse: CreateAccountMutationResult = await createAccount({
-				pathParams: { cloudProvider: INTEGRATION_TYPES.GCP },
-				data: payload,
-			});
+				// Step 1: create the integration account.
+				const createResponse: CreateAccountMutationResult = await createAccount({
+					pathParams: { cloudProvider: INTEGRATION_TYPES.GCP },
+					data: payload,
+				});
 
-			const cloudIntegrationId = createResponse.data.id;
-			const providerAccountId = values.accountName;
+				const cloudIntegrationId = createResponse.data.id;
+				const providerAccountId = values.accountName;
 
-			void logEvent('GCP Integration: Account created', {
-				id: cloudIntegrationId,
-			});
+				void logEvent('GCP Integration: Account created', {
+					id: cloudIntegrationId,
+				});
 
-			// Step 2: mimic the agent by checking in from the frontend (manual flow).
-			await checkIn({
-				pathParams: { cloudProvider: INTEGRATION_TYPES.GCP },
-				data: {
-					providerAccountId,
-					cloudIntegrationId,
-					data: {},
-				},
-			});
+				// Step 2: mimic the agent by checking in from the frontend (manual flow).
+				await checkIn({
+					pathParams: { cloudProvider: INTEGRATION_TYPES.GCP },
+					data: {
+						providerAccountId,
+						cloudIntegrationId,
+						data: {},
+					},
+				});
 
-			handleConnectionSuccess({ cloudIntegrationId, providerAccountId });
-		} catch (error) {
-			// antd's validateFields rejects with an errorFields object; only surface
-			// a toast for real (network/server) failures, not validation misses.
-			if (error && typeof error === 'object' && 'errorFields' in error) {
-				return;
+				handleConnectionSuccess({ cloudIntegrationId, providerAccountId });
+			} catch {
+				toast.error('Failed to connect GCP account', {
+					position: 'bottom-right',
+				});
+			} finally {
+				setIsLoading(false);
 			}
-			toast.error('Failed to connect GCP account', {
-				position: 'bottom-right',
-			});
-		} finally {
-			setIsLoading(false);
-		}
-	}, [form, connectionParams, createAccount, checkIn, handleConnectionSuccess]);
+		},
+		[connectionParams, createAccount, checkIn, handleConnectionSuccess],
+	);
 
 	return {
-		form,
 		isLoading,
-		handleSubmit,
+		connectAccount,
 		handleClose,
 		connectionParams: connectionParams?.data as
 			| CloudintegrationtypesCredentialsDTO

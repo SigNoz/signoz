@@ -1,9 +1,10 @@
-import { SquareTerminal, Star } from '@signozhq/icons';
+import { Badge } from '@signozhq/ui/badge';
+import { RadioGroup, RadioGroupItem } from '@signozhq/ui/radio-group';
+import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 
+import { SetupFlow } from './types';
 import styles from './FlowSelector.module.scss';
-
-export type SetupFlow = 'manual' | 'agent';
 
 interface FlowSelectorProps {
 	value: SetupFlow;
@@ -12,49 +13,62 @@ interface FlowSelectorProps {
 
 function FlowSelector({ value, onChange }: FlowSelectorProps): JSX.Element {
 	return (
-		<div className={styles.flowSelector}>
-			<div className={styles.label}>Connection method</div>
+		<div className={cx(styles.drawerSection, styles.drawerSurface)}>
+			<div className={styles.drawerSurfaceHead}>
+				<Typography.Text weight="bold" size="base">
+					Connection method
+				</Typography.Text>
+			</div>
 
-			<button
-				type="button"
-				data-testid="gcp-flow-manual"
-				className={cx(styles.option, {
-					[styles.isSelected]: value === 'manual',
-				})}
-				onClick={(): void => onChange('manual')}
+			<RadioGroup
+				value={value}
+				onChange={(next): void => onChange(next as SetupFlow)}
+				className={styles.flowRadioGroup}
 			>
-				<span className={styles.iconBox}>
-					<SquareTerminal size={18} />
-				</span>
-				<span className={styles.optionBody}>
-					<span className={styles.optionTitle}>Connect Manually</span>
-					<span className={styles.optionDescription}>
-						Deploy your own OTel Collector and configure log sinks
-					</span>
-				</span>
-				<span className={styles.radio} aria-hidden />
-			</button>
+				<RadioGroupItem
+					value="manual"
+					containerClassName={cx(styles.flowRadio, styles.flowRadioManual)}
+					testId="gcp-flow-manual"
+				>
+					<div className={styles.flowRadioTitle}>
+						<Typography.Text weight="semibold" size="base">
+							Connect Manually
+						</Typography.Text>
+					</div>
+					<Typography.Text
+						as="p"
+						size="small"
+						color="muted"
+						className={styles.flowRadioDesc}
+					>
+						Deploy your own OTel Collector and configure log sinks.
+					</Typography.Text>
+				</RadioGroupItem>
 
-			<button
-				type="button"
-				data-testid="gcp-flow-agent"
-				className={cx(styles.option, styles.isDisabled)}
-				disabled
-				aria-disabled
-			>
-				<span className={styles.iconBox}>
-					<Star size={18} />
-				</span>
-				<span className={styles.optionBody}>
-					<span className={styles.optionTitle}>
-						Connect via Agent
-						<span className={styles.soonBadge}>Soon</span>
-					</span>
-					<span className={styles.optionDescription}>
-						SigNoz deploys and manages the collector for you
-					</span>
-				</span>
-			</button>
+				<RadioGroupItem
+					value="agent"
+					containerClassName={styles.flowRadio}
+					testId="gcp-flow-agent"
+					disabled
+				>
+					<div className={styles.flowRadioTitle}>
+						<Typography.Text weight="semibold" size="base">
+							Connect via Agent
+						</Typography.Text>
+						<Badge color="robin" variant="default">
+							Soon
+						</Badge>
+					</div>
+					<Typography.Text
+						as="p"
+						size="small"
+						color="muted"
+						className={styles.flowRadioDesc}
+					>
+						SigNoz deploys and manages the collector for you.
+					</Typography.Text>
+				</RadioGroupItem>
+			</RadioGroup>
 		</div>
 	);
 }

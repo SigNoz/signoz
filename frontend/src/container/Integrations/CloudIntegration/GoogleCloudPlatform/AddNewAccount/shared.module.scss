@@ -1,0 +1,43 @@
+/* Shared drawer primitives, mirroring the LLM-Observability model-cost drawer. */
+/* This file is a `composes` target, so it is parsed as plain CSS — keep it flat */
+/* (no nesting, no // comments). */
+
+.drawerSection {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-3);
+}
+
+.drawerSection > label {
+	font-size: var(--periscope-font-size-normal);
+	color: var(--l2-foreground);
+}
+
+.required {
+	color: var(--accent-cherry);
+}
+
+.drawerSurface {
+	padding: var(--spacing-7);
+	border-radius: 6px;
+	border: 1px solid var(--l2-border);
+}
+
+.drawerSurfaceHead {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: var(--spacing-5);
+}
+
+.surfaceHeadLabel {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-2);
+	font-size: var(--periscope-font-size-small);
+	color: var(--l3-foreground);
+}
+
+.mono {
+	font-family: var(--font-family-mono);
+}
