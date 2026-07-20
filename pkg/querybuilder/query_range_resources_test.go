@@ -21,33 +21,33 @@ func TestQueryRangeResources(t *testing.T) {
 		expected []coretypes.ResourceWithID
 	}{
 		{
-			name: "top level service equality",
-			body: builderQueryBody("logs", "service.name = 'checkout' AND status = 500"),
+			name: "top level key equality",
+			body: builderQueryBody("logs", "signoz.workspace.key.id = 'checkout' AND status = 500"),
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/service.name/checkout"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/signoz.workspace.key.id/checkout"},
 			},
 		},
 		{
-			name: "resource prefixed service key",
-			body: builderQueryBody("traces", "resource.service.name = 'checkout'"),
+			name: "resource prefixed key",
+			body: builderQueryBody("traces", "resource.signoz.workspace.key.id = 'checkout'"),
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "builder_query/service.name/checkout"},
+				{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "builder_query/signoz.workspace.key.id/checkout"},
 			},
 		},
 		{
 			name: "in atom requires every value",
-			body: builderQueryBody("logs", "service.name IN ('b', 'a')"),
+			body: builderQueryBody("logs", "signoz.workspace.key.id IN ('b', 'a')"),
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/service.name/a"},
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/service.name/b"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/signoz.workspace.key.id/a"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/signoz.workspace.key.id/b"},
 			},
 		},
 		{
 			name: "multiple equality atoms each require a grant",
-			body: builderQueryBody("logs", "service.name = 'b' AND service.name = 'a'"),
+			body: builderQueryBody("logs", "signoz.workspace.key.id = 'b' AND signoz.workspace.key.id = 'a'"),
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/service.name/a"},
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/service.name/b"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/signoz.workspace.key.id/a"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/signoz.workspace.key.id/b"},
 			},
 		},
 		{
@@ -58,38 +58,38 @@ func TestQueryRangeResources(t *testing.T) {
 			},
 		},
 		{
-			name: "service atom under or does not qualify",
-			body: builderQueryBody("logs", "service.name = 'a' OR status = 500"),
+			name: "key atom under or does not qualify",
+			body: builderQueryBody("logs", "signoz.workspace.key.id = 'a' OR status = 500"),
 			expected: []coretypes.ResourceWithID{
 				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/*"},
 			},
 		},
 		{
-			name: "negated service atom does not qualify",
-			body: builderQueryBody("logs", "NOT service.name = 'a'"),
+			name: "negated key atom does not qualify",
+			body: builderQueryBody("logs", "NOT signoz.workspace.key.id = 'a'"),
 			expected: []coretypes.ResourceWithID{
 				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/*"},
 			},
 		},
 		{
-			name: "service inequality does not qualify",
-			body: builderQueryBody("logs", "service.name != 'a'"),
+			name: "key inequality does not qualify",
+			body: builderQueryBody("logs", "signoz.workspace.key.id != 'a'"),
 			expected: []coretypes.ResourceWithID{
 				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/*"},
 			},
 		},
 		{
 			name: "value with spaces and slashes stays plaintext in the id",
-			body: builderQueryBody("logs", "service.name = 'check out/2'"),
+			body: builderQueryBody("logs", "signoz.workspace.key.id = 'check out/2'"),
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/service.name/check out/2"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/signoz.workspace.key.id/check out/2"},
 			},
 		},
 		{
 			name: "audit source maps to audit logs resource",
-			body: `{"compositeQuery":{"queries":[{"type":"builder_query","spec":{"signal":"logs","source":"audit","filter":{"expression":"service.name = 'a'"}}}]}}`,
+			body: `{"compositeQuery":{"queries":[{"type":"builder_query","spec":{"signal":"logs","source":"audit","filter":{"expression":"signoz.workspace.key.id = 'a'"}}}]}}`,
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceAuditLogs, ID: "builder_query/service.name/a"},
+				{Resource: coretypes.ResourceTelemetryResourceAuditLogs, ID: "builder_query/signoz.workspace.key.id/a"},
 			},
 		},
 		{
@@ -116,23 +116,23 @@ func TestQueryRangeResources(t *testing.T) {
 		},
 		{
 			name: "trace operator rides on its referenced queries",
-			body: `{"compositeQuery":{"queries":[{"type":"builder_query","spec":{"name":"A","signal":"traces","disabled":true,"filter":{"expression":"service.name = 'checkout'"}}},{"type":"builder_query","spec":{"name":"B","signal":"traces","disabled":true,"filter":{"expression":"service.name = 'checkout' AND has_error = true"}}},{"type":"builder_trace_operator","spec":{"name":"T1","expression":"A => B","returnSpansFrom":"A"}}]}}`,
+			body: `{"compositeQuery":{"queries":[{"type":"builder_query","spec":{"name":"A","signal":"traces","disabled":true,"filter":{"expression":"signoz.workspace.key.id = 'checkout'"}}},{"type":"builder_query","spec":{"name":"B","signal":"traces","disabled":true,"filter":{"expression":"signoz.workspace.key.id = 'checkout' AND has_error = true"}}},{"type":"builder_trace_operator","spec":{"name":"T1","expression":"A => B","returnSpansFrom":"A"}}]}}`,
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "builder_query/service.name/checkout"},
+				{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "builder_query/signoz.workspace.key.id/checkout"},
 			},
 		},
 		{
 			name: "variable substitution qualifies",
-			body: `{"variables":{"svc":{"value":"checkout"}},"compositeQuery":{"queries":[{"type":"builder_query","spec":{"signal":"logs","filter":{"expression":"service.name = $svc"}}}]}}`,
+			body: `{"variables":{"key":{"value":"checkout"}},"compositeQuery":{"queries":[{"type":"builder_query","spec":{"signal":"logs","filter":{"expression":"signoz.workspace.key.id = $key"}}}]}}`,
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/service.name/checkout"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/signoz.workspace.key.id/checkout"},
 			},
 		},
 		{
 			name: "duplicate queries dedupe",
-			body: `{"compositeQuery":{"queries":[{"type":"builder_query","spec":{"signal":"logs","filter":{"expression":"service.name = 'a'"}}},{"type":"builder_query","spec":{"signal":"logs","filter":{"expression":"service.name='a'"}}}]}}`,
+			body: `{"compositeQuery":{"queries":[{"type":"builder_query","spec":{"signal":"logs","filter":{"expression":"signoz.workspace.key.id = 'a'"}}},{"type":"builder_query","spec":{"signal":"logs","filter":{"expression":"signoz.workspace.key.id='a'"}}}]}}`,
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/service.name/a"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/signoz.workspace.key.id/a"},
 			},
 		},
 	}
@@ -150,7 +150,7 @@ func TestQueryRangeResourcesErrors(t *testing.T) {
 	bodies := []string{
 		`{"compositeQuery":{"queries":[]}}`,
 		`{}`,
-		builderQueryBody("logs", "service.name = "),
+		builderQueryBody("logs", "signoz.workspace.key.id = "),
 		`{"compositeQuery":{"queries":[{"type":"builder_query","spec":{"signal":"unknown"}}]}}`,
 		`{"compositeQuery":{"queries":[{"type":"unknown_type"}]}}`,
 	}
@@ -174,10 +174,10 @@ func TestTelemetrySelector(t *testing.T) {
 		return values
 	}
 
-	assert.Equal(t, []string{"builder_query/service.name/a", "builder_query/service.name/*", "builder_query/*", "*"}, selectorValues("builder_query/service.name/a"))
+	assert.Equal(t, []string{"builder_query/signoz.workspace.key.id/a", "builder_query/signoz.workspace.key.id/*", "builder_query/*", "*"}, selectorValues("builder_query/signoz.workspace.key.id/a"))
 	assert.Equal(t, []string{"builder_query/*", "*"}, selectorValues("builder_query"))
 	assert.Equal(t, []string{"promql/*", "*"}, selectorValues("promql"))
 	assert.Equal(t, []string{"*"}, selectorValues("*"))
 	// a value containing "/" stays one logical segment (SplitN 3).
-	assert.Equal(t, []string{"builder_query/service.name/a/b", "builder_query/service.name/*", "builder_query/*", "*"}, selectorValues("builder_query/service.name/a/b"))
+	assert.Equal(t, []string{"builder_query/signoz.workspace.key.id/a/b", "builder_query/signoz.workspace.key.id/*", "builder_query/*", "*"}, selectorValues("builder_query/signoz.workspace.key.id/a/b"))
 }
