@@ -174,48 +174,57 @@ def test_nodes_warnings(
 
 
 @pytest.mark.parametrize(
-    "expression,expected_nodes",
+    "expression,expected_nodes,expected_warn",
     [
         pytest.param(
             "k8s.cluster.name = 'cluster-a' AND zone = 'us'",
             {"web-a-us-1", "api-a-us-1"},
+            None,
             id="and",
         ),
         pytest.param(
             "k8s.node.name IN ('web-a-us-1', 'api-b-eu-1')",
             {"web-a-us-1", "api-b-eu-1"},
+            None,
             id="in",
         ),
         pytest.param(
             "k8s.cluster.name NOT IN ('cluster-a')",
             {"web-b-us-1", "web-b-eu-1", "api-b-us-1", "api-b-eu-1"},
+            None,
             id="not_in",
         ),
         pytest.param(
             "k8s.node.name CONTAINS 'web'",
             {"web-a-us-1", "web-a-eu-1", "web-b-us-1", "web-b-eu-1"},
+            None,
             id="contains",
         ),
         pytest.param(
             "k8s.cluster.name = 'cluster-a' AND k8s.node.name IN ('web-a-us-1', 'api-a-us-1')",
             {"web-a-us-1", "api-a-us-1"},
+            None,
             id="and_in",
         ),
         pytest.param(
             "k8s.cluster.name = 'cluster-a' AND k8s.node.name NOT IN ('web-a-us-1', 'web-a-eu-1')",
             {"api-a-us-1", "api-a-eu-1"},
+            None,
             id="and_not_in",
         ),
         pytest.param(
             "zone = 'us' AND k8s.node.name CONTAINS 'web'",
             {"web-a-us-1", "web-b-us-1"},
+            None,
             id="and_contains",
         ),
         pytest.param(
             "k8s.node.name IN ('web-a-us-1', 'web-b-us-1', 'api-a-us-1') AND k8s.node.name CONTAINS 'web'",
             {"web-a-us-1", "web-b-us-1"},
+            None,
             id="in_contains",
         ),
+        pytest.param("k8s.node.namee = 'web-a-us-1'", set(), None, id="unresolved_key"),
     ],
 )
 def test_nodes_filter(
@@ -225,6 +234,7 @@ def test_nodes_filter(
     insert_metrics,
     expression: str,
     expected_nodes: set,
+    expected_warn,
 ) -> None:
     """Filter operators (=, IN, NOT IN, CONTAINS) and their AND-combinations
     return exactly the matching nodes, with undistorted per-node metric values."""
@@ -262,6 +272,11 @@ def test_nodes_filter(
     data = response.json()["data"]
     assert {r["nodeName"] for r in data["records"]} == expected_nodes
     assert data["total"] == len(expected_nodes)
+    warnings = get_all_warnings(response.json())
+    if expected_warn is None:
+        assert warnings == [], f"{expression!r}: unexpected warnings {warnings}"
+    else:
+        assert any(expected_warn in w["message"] for w in warnings), f"{expected_warn!r} not surfaced: {warnings}"
 
     # Filtering must not distort per-node aggregation values.
     for record in data["records"]:
@@ -272,7 +287,6 @@ def test_nodes_filter(
 @pytest.mark.parametrize(
     "expression,err_substr",
     [
-        pytest.param("k8s.node.namee = 'web-a-us-1'", "k8s.node.namee", id="bad_attr_name"),
         pytest.param("k8s.node.name =", None, id="trailing_op"),
         pytest.param("(k8s.node.name = 'web-a-us-1'", None, id="unclosed_paren"),
     ],
@@ -285,8 +299,8 @@ def test_nodes_filter_invalid(
     expression: str,
     err_substr,
 ) -> None:
-    """Invalid filter expressions (typo'd attribute key, malformed grammar) return
-    400 invalid_input with structured errors; bad attribute keys are named in them."""
+    """Malformed filter grammar (trailing operator, unclosed paren) returns
+    400 invalid_input with structured errors."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(

@@ -111,16 +111,18 @@ def test_statefulsets_accuracy(
 
 
 @pytest.mark.parametrize(
-    "expression,expected",
+    "expression,expected,expected_warn",
     [
         pytest.param(
             "k8s.namespace.name = 'ns-a' AND env = 'prod'",
             {"web-a-prod", "api-a-prod"},
+            None,
             id="and",
         ),
         pytest.param(
             "k8s.statefulset.name IN ('web-a-prod', 'api-b-dev')",
             {"web-a-prod", "api-b-dev"},
+            None,
             id="in",
         ),
         # NOT IN on the partition key (k8s.statefulset.name) returns the rest.
@@ -129,33 +131,40 @@ def test_statefulsets_accuracy(
         pytest.param(
             "k8s.statefulset.name NOT IN ('web-a-prod', 'web-a-dev', 'api-a-prod', 'api-a-dev')",
             {"web-b-prod", "web-b-dev", "api-b-prod", "api-b-dev"},
+            None,
             id="not_in",
         ),
         pytest.param(
             "k8s.statefulset.name CONTAINS 'web'",
             {"web-a-prod", "web-a-dev", "web-b-prod", "web-b-dev"},
+            None,
             id="contains",
         ),
         pytest.param(
             "k8s.namespace.name = 'ns-a' AND k8s.statefulset.name IN ('web-a-prod', 'api-a-prod')",
             {"web-a-prod", "api-a-prod"},
+            None,
             id="and_in",
         ),
         pytest.param(
             "k8s.namespace.name = 'ns-a' AND k8s.statefulset.name NOT IN ('web-a-prod', 'web-a-dev')",
             {"api-a-prod", "api-a-dev"},
+            None,
             id="and_not_in",
         ),
         pytest.param(
             "env = 'prod' AND k8s.statefulset.name CONTAINS 'web'",
             {"web-a-prod", "web-b-prod"},
+            None,
             id="and_contains",
         ),
         pytest.param(
             "k8s.statefulset.name IN ('web-a-prod', 'web-b-prod', 'api-a-prod') AND k8s.statefulset.name CONTAINS 'web'",
             {"web-a-prod", "web-b-prod"},
+            None,
             id="in_contains",
         ),
+        pytest.param("k8s.statefulset.namee = 'web-a-prod'", set(), None, id="unresolved_key"),
     ],
 )
 def test_statefulsets_filter(
@@ -165,6 +174,7 @@ def test_statefulsets_filter(
     insert_metrics,
     expression: str,
     expected: set,
+    expected_warn,
 ) -> None:
     """Filter operators (=, IN, NOT IN, CONTAINS) and their AND-combinations
     return exactly the matching statefulsets, with undistorted per-SS metric
@@ -205,6 +215,11 @@ def test_statefulsets_filter(
     data = response.json()["data"]
     assert {r["statefulSetName"] for r in data["records"]} == expected
     assert data["total"] == len(expected)
+    warnings = get_all_warnings(response.json())
+    if expected_warn is None:
+        assert warnings == [], f"{expression!r}: unexpected warnings {warnings}"
+    else:
+        assert any(expected_warn in w["message"] for w in warnings), f"{expected_warn!r} not surfaced: {warnings}"
 
     # Filtering must not distort per-statefulset aggregation values.
     for record in data["records"]:
@@ -215,7 +230,6 @@ def test_statefulsets_filter(
 @pytest.mark.parametrize(
     "expression,err_substr",
     [
-        pytest.param("k8s.statefulset.namee = 'web-a-prod'", "k8s.statefulset.namee", id="bad_attr_name"),
         pytest.param("k8s.statefulset.name =", None, id="trailing_op"),
         pytest.param("(k8s.statefulset.name = 'web-a-prod'", None, id="unclosed_paren"),
     ],
@@ -228,8 +242,8 @@ def test_statefulsets_filter_invalid(
     expression: str,
     err_substr,
 ) -> None:
-    """Invalid filter expressions (typo'd attribute key, malformed grammar) return
-    400 invalid_input with structured errors; bad attribute keys are named in them."""
+    """Malformed filter grammar (trailing operator, unclosed paren) returns
+    400 invalid_input with structured errors."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(

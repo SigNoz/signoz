@@ -248,48 +248,57 @@ def test_pods_warnings(
 
 
 @pytest.mark.parametrize(
-    "expression,expected_pods",
+    "expression,expected_pods,expected_warn",
     [
         pytest.param(
             "k8s.namespace.name = 'ns-prod' AND k8s.deployment.name = 'web'",
             {"web-prod-1", "web-prod-2"},
+            None,
             id="and",
         ),
         pytest.param(
             "k8s.pod.name IN ('web-prod-1', 'api-dev-1')",
             {"web-prod-1", "api-dev-1"},
+            None,
             id="in",
         ),
         pytest.param(
             "k8s.deployment.name NOT IN ('api')",
             {"web-prod-1", "web-prod-2", "web-dev-1", "web-dev-2"},
+            None,
             id="not_in",
         ),
         pytest.param(
             "k8s.pod.name CONTAINS 'web'",
             {"web-prod-1", "web-prod-2", "web-dev-1", "web-dev-2"},
+            None,
             id="contains",
         ),
         pytest.param(
             "k8s.namespace.name = 'ns-prod' AND k8s.pod.name IN ('web-prod-1', 'api-prod-1')",
             {"web-prod-1", "api-prod-1"},
+            None,
             id="and_in",
         ),
         pytest.param(
             "k8s.namespace.name = 'ns-prod' AND k8s.pod.name NOT IN ('web-prod-1', 'web-prod-2')",
             {"api-prod-1", "api-prod-2"},
+            None,
             id="and_not_in",
         ),
         pytest.param(
             "k8s.namespace.name = 'ns-dev' AND k8s.pod.name CONTAINS 'web'",
             {"web-dev-1", "web-dev-2"},
+            None,
             id="and_contains",
         ),
         pytest.param(
             "k8s.pod.name IN ('web-prod-1', 'web-dev-1', 'api-dev-1') AND k8s.pod.name CONTAINS 'web'",
             {"web-prod-1", "web-dev-1"},
+            None,
             id="in_contains",
         ),
+        pytest.param("k8s.pod.namee = 'web-prod-1'", set(), None, id="unresolved_key"),
     ],
 )
 def test_pods_filter(
@@ -299,6 +308,7 @@ def test_pods_filter(
     insert_metrics,
     expression: str,
     expected_pods: set,
+    expected_warn,
 ) -> None:
     """Filter operators (=, IN, NOT IN, CONTAINS) and their AND-combinations
     return exactly the matching pods, with undistorted per-pod metric values."""
@@ -338,6 +348,11 @@ def test_pods_filter(
     data = response.json()["data"]
     assert {r["meta"]["k8s.pod.name"] for r in data["records"]} == expected_pods
     assert data["total"] == len(expected_pods)
+    warnings = get_all_warnings(response.json())
+    if expected_warn is None:
+        assert warnings == [], f"{expression!r}: unexpected warnings {warnings}"
+    else:
+        assert any(expected_warn in w["message"] for w in warnings), f"{expected_warn!r} not surfaced: {warnings}"
 
     # Filtering must not distort per-pod aggregation values.
     for record in data["records"]:
@@ -348,7 +363,6 @@ def test_pods_filter(
 @pytest.mark.parametrize(
     "expression,err_substr",
     [
-        pytest.param("k8s.pod.namee = 'web-prod-1'", "k8s.pod.namee", id="bad_attr_name"),
         pytest.param("k8s.pod.name =", None, id="trailing_op"),
         pytest.param("(k8s.pod.name = 'web-prod-1'", None, id="unclosed_paren"),
     ],
@@ -361,8 +375,8 @@ def test_pods_filter_invalid(
     expression: str,
     err_substr,
 ) -> None:
-    """Invalid filter expressions (typo'd attribute key, malformed grammar) return
-    400 invalid_input with structured errors; bad attribute keys are named in them."""
+    """Malformed filter grammar (trailing operator, unclosed paren) returns
+    400 invalid_input with structured errors."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         _load_pods_metrics(

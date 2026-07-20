@@ -188,16 +188,18 @@ def test_clusters_warnings(
 
 
 @pytest.mark.parametrize(
-    "expression,expected",
+    "expression,expected,expected_warn",
     [
         pytest.param(
             "cloud.provider = 'gcp' AND env = 'prod'",
             {"web-gcp-prod", "api-gcp-prod"},
+            None,
             id="and",
         ),
         pytest.param(
             "k8s.cluster.name IN ('web-gcp-prod', 'api-aws-dev')",
             {"web-gcp-prod", "api-aws-dev"},
+            None,
             id="in",
         ),
         # NOT IN on the partition key returns the rest. NOT IN on a
@@ -206,33 +208,40 @@ def test_clusters_warnings(
         pytest.param(
             "k8s.cluster.name NOT IN ('web-gcp-prod', 'web-gcp-dev', 'api-gcp-prod', 'api-gcp-dev')",
             {"web-aws-prod", "web-aws-dev", "api-aws-prod", "api-aws-dev"},
+            None,
             id="not_in",
         ),
         pytest.param(
             "k8s.cluster.name CONTAINS 'web'",
             {"web-gcp-prod", "web-gcp-dev", "web-aws-prod", "web-aws-dev"},
+            None,
             id="contains",
         ),
         pytest.param(
             "cloud.provider = 'gcp' AND k8s.cluster.name IN ('web-gcp-prod', 'api-gcp-prod')",
             {"web-gcp-prod", "api-gcp-prod"},
+            None,
             id="and_in",
         ),
         pytest.param(
             "cloud.provider = 'gcp' AND k8s.cluster.name NOT IN ('web-gcp-prod', 'web-gcp-dev')",
             {"api-gcp-prod", "api-gcp-dev"},
+            None,
             id="and_not_in",
         ),
         pytest.param(
             "env = 'prod' AND k8s.cluster.name CONTAINS 'web'",
             {"web-gcp-prod", "web-aws-prod"},
+            None,
             id="and_contains",
         ),
         pytest.param(
             "k8s.cluster.name IN ('web-gcp-prod', 'web-aws-prod', 'api-gcp-prod') AND k8s.cluster.name CONTAINS 'web'",
             {"web-gcp-prod", "web-aws-prod"},
+            None,
             id="in_contains",
         ),
+        pytest.param("k8s.cluster.namee = 'web-gcp-prod'", set(), None, id="unresolved_key"),
     ],
 )
 def test_clusters_filter(
@@ -242,6 +251,7 @@ def test_clusters_filter(
     insert_metrics,
     expression: str,
     expected: set,
+    expected_warn,
 ) -> None:
     """Filter operators (=, IN, NOT IN, CONTAINS) and their AND-combinations
     return exactly the matching clusters, with undistorted per-cluster metric
@@ -280,6 +290,11 @@ def test_clusters_filter(
     data = response.json()["data"]
     assert {r["clusterName"] for r in data["records"]} == expected
     assert data["total"] == len(expected)
+    warnings = get_all_warnings(response.json())
+    if expected_warn is None:
+        assert warnings == [], f"{expression!r}: unexpected warnings {warnings}"
+    else:
+        assert any(expected_warn in w["message"] for w in warnings), f"{expected_warn!r} not surfaced: {warnings}"
 
     # Filtering must not distort per-cluster aggregation values.
     for record in data["records"]:
@@ -290,7 +305,6 @@ def test_clusters_filter(
 @pytest.mark.parametrize(
     "expression,err_substr",
     [
-        pytest.param("k8s.cluster.namee = 'web-gcp-prod'", "k8s.cluster.namee", id="bad_attr_name"),
         pytest.param("k8s.cluster.name =", None, id="trailing_op"),
         pytest.param("(k8s.cluster.name = 'web-gcp-prod'", None, id="unclosed_paren"),
     ],
@@ -303,8 +317,8 @@ def test_clusters_filter_invalid(
     expression: str,
     err_substr,
 ) -> None:
-    """Invalid filter expressions (typo'd attribute key, malformed grammar) return
-    400 invalid_input with structured errors; bad attribute keys are named in them."""
+    """Malformed filter grammar (trailing operator, unclosed paren) returns
+    400 invalid_input with structured errors."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(

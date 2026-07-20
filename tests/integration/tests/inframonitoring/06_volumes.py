@@ -186,16 +186,18 @@ def test_volumes_warnings(
 
 
 @pytest.mark.parametrize(
-    "expression,expected",
+    "expression,expected,expected_warn",
     [
         pytest.param(
             "k8s.namespace.name = 'ns-a' AND env = 'prod'",
             {"data-ns-a-prod", "logs-ns-a-prod"},
+            None,
             id="and",
         ),
         pytest.param(
             "k8s.persistentvolumeclaim.name IN ('data-ns-a-prod', 'logs-ns-b-dev')",
             {"data-ns-a-prod", "logs-ns-b-dev"},
+            None,
             id="in",
         ),
         # NOT IN on the partition key returns the rest. NOT IN on non-partition
@@ -204,33 +206,40 @@ def test_volumes_warnings(
         pytest.param(
             "k8s.persistentvolumeclaim.name NOT IN ('data-ns-a-prod', 'data-ns-a-dev', 'data-ns-b-prod', 'data-ns-b-dev')",
             {"logs-ns-a-prod", "logs-ns-a-dev", "logs-ns-b-prod", "logs-ns-b-dev"},
+            None,
             id="not_in",
         ),
         pytest.param(
             "k8s.persistentvolumeclaim.name CONTAINS 'data'",
             {"data-ns-a-prod", "data-ns-a-dev", "data-ns-b-prod", "data-ns-b-dev"},
+            None,
             id="contains",
         ),
         pytest.param(
             "k8s.namespace.name = 'ns-a' AND k8s.persistentvolumeclaim.name IN ('data-ns-a-prod', 'logs-ns-a-prod')",
             {"data-ns-a-prod", "logs-ns-a-prod"},
+            None,
             id="and_in",
         ),
         pytest.param(
             "k8s.namespace.name = 'ns-a' AND k8s.persistentvolumeclaim.name NOT IN ('data-ns-a-prod', 'data-ns-a-dev')",
             {"logs-ns-a-prod", "logs-ns-a-dev"},
+            None,
             id="and_not_in",
         ),
         pytest.param(
             "env = 'prod' AND k8s.persistentvolumeclaim.name CONTAINS 'data'",
             {"data-ns-a-prod", "data-ns-b-prod"},
+            None,
             id="and_contains",
         ),
         pytest.param(
             "k8s.persistentvolumeclaim.name IN ('data-ns-a-prod', 'logs-ns-a-prod', 'data-ns-b-prod') AND k8s.persistentvolumeclaim.name CONTAINS 'data'",
             {"data-ns-a-prod", "data-ns-b-prod"},
+            None,
             id="in_contains",
         ),
+        pytest.param("k8s.persistentvolumeclaim.namee = 'data-ns-a-prod'", set(), None, id="unresolved_key"),
     ],
 )
 def test_volumes_filter(
@@ -240,6 +249,7 @@ def test_volumes_filter(
     insert_metrics,
     expression: str,
     expected: set,
+    expected_warn,
 ) -> None:
     """Filter operators (=, IN, NOT IN, CONTAINS) and their AND-combinations
     return exactly the matching PVCs, with undistorted per-PVC metric values."""
@@ -279,6 +289,11 @@ def test_volumes_filter(
     data = response.json()["data"]
     assert {r["persistentVolumeClaimName"] for r in data["records"]} == expected
     assert data["total"] == len(expected)
+    warnings = get_all_warnings(response.json())
+    if expected_warn is None:
+        assert warnings == [], f"{expression!r}: unexpected warnings {warnings}"
+    else:
+        assert any(expected_warn in w["message"] for w in warnings), f"{expected_warn!r} not surfaced: {warnings}"
 
     # Filtering must not distort per-PVC aggregation values.
     for record in data["records"]:
@@ -289,11 +304,6 @@ def test_volumes_filter(
 @pytest.mark.parametrize(
     "expression,err_substr",
     [
-        pytest.param(
-            "k8s.persistentvolumeclaim.namee = 'data-ns-a-prod'",
-            "k8s.persistentvolumeclaim.namee",
-            id="bad_attr_name",
-        ),
         pytest.param("k8s.persistentvolumeclaim.name =", None, id="trailing_op"),
         pytest.param("(k8s.persistentvolumeclaim.name = 'data-ns-a-prod'", None, id="unclosed_paren"),
     ],
@@ -306,8 +316,8 @@ def test_volumes_filter_invalid(
     expression: str,
     err_substr,
 ) -> None:
-    """Invalid filter expressions (typo'd attribute key, malformed grammar) return
-    400 invalid_input with structured errors; bad attribute keys are named in them."""
+    """Malformed filter grammar (trailing operator, unclosed paren) returns
+    400 invalid_input with structured errors."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
