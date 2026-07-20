@@ -208,21 +208,27 @@ func (handler *handler) QueryRawStream(rw http.ResponseWriter, req *http.Request
 
 	for {
 		select {
+		case <-ctx.Done():
+			return
 		case log := <-client.Logs:
 			var buf bytes.Buffer
 			enc := json.NewEncoder(&buf)
 			err := enc.Encode(log)
 			if err != nil {
-				fmt.Fprintf(rw, "event: error\ndata: %v\n\n", err.Error())
+				_, _ = fmt.Fprintf(rw, "event: error\ndata: %v\n\n", err.Error())
 				flusher.Flush()
 				return
 			}
-			fmt.Fprintf(rw, "data: %v\n\n", buf.String())
+			if _, err := fmt.Fprintf(rw, "data: %v\n\n", buf.String()); err != nil {
+				return
+			}
 			flusher.Flush()
 		case <-client.Done:
 			return
 		case err := <-client.Error:
-			fmt.Fprintf(rw, "event: error\ndata: %v\n\n", err.Error())
+			if _, writeErr := fmt.Fprintf(rw, "event: error\ndata: %v\n\n", err.Error()); writeErr != nil {
+				return
+			}
 			flusher.Flush()
 			return
 		}
