@@ -384,7 +384,7 @@ func (d *v1Decoder) mapV1ThresholdsWithLabel(w map[string]any) []ThresholdWithLa
 			continue
 		}
 		value := d.readFloat(t, "thresholdValue")
-		out = append(out, ThresholdWithLabel{Value: &value, Unit: d.readString(t, "thresholdUnit"), Color: color, Label: label})
+		out = append(out, ThresholdWithLabel{Value: value, Unit: d.readString(t, "thresholdUnit"), Color: color, Label: label})
 	}
 	if len(out) == 0 {
 		return nil
@@ -405,7 +405,7 @@ func (d *v1Decoder) mapV1ComparisonThresholds(w map[string]any) []ComparisonThre
 		}
 		value := d.readFloat(t, "thresholdValue")
 		out = append(out, ComparisonThreshold{
-			Value:    &value,
+			Value:    value,
 			Operator: d.mapV1ComparisonOperator(d.readString(t, "thresholdOperator")),
 			Unit:     d.readString(t, "thresholdUnit"),
 			Color:    color,
@@ -433,7 +433,7 @@ func (d *v1Decoder) mapV1TableThresholds(w map[string]any) []TableThreshold {
 		value := d.readFloat(t, "thresholdValue")
 		out = append(out, TableThreshold{
 			ComparisonThreshold: ComparisonThreshold{
-				Value:    &value,
+				Value:    value,
 				Operator: d.mapV1ComparisonOperator(d.readString(t, "thresholdOperator")),
 				Unit:     d.readString(t, "thresholdUnit"),
 				Color:    color,

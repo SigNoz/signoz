@@ -308,7 +308,7 @@ func TestConvertGraphWidgetToTimeSeriesPanel(t *testing.T) {
 	require.Len(t, spec.Thresholds, 1, "threshold with missing color should be dropped")
 	threshold := spec.Thresholds[0]
 	require.NotNil(t, threshold.Value)
-	assert.Equal(t, float64(90), *threshold.Value)
+	assert.Equal(t, float64(90), threshold.Value)
 	assert.Equal(t, "reqps", threshold.Unit)
 	assert.Equal(t, "#ff0000", threshold.Color)
 	assert.Equal(t, "high", threshold.Label)
@@ -513,7 +513,7 @@ func TestConvertValueWidgetToNumberPanel(t *testing.T) {
 	require.True(t, ok)
 	require.Len(t, spec.Thresholds, 1)
 	require.NotNil(t, spec.Thresholds[0].Value)
-	assert.Equal(t, float64(100), *spec.Thresholds[0].Value)
+	assert.Equal(t, float64(100), spec.Thresholds[0].Value)
 	assert.Equal(t, ComparisonOperatorAboveOrEqual, spec.Thresholds[0].Operator)
 	assert.Equal(t, "#ff0000", spec.Thresholds[0].Color)
 	assert.Equal(t, ThresholdFormatBackground, spec.Thresholds[0].Format)
