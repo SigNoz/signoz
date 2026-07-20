@@ -55,18 +55,26 @@ function TimelineTableContent(): JSX.Element {
 	const { timelineData, totalItems, nextCursor } = useMemo(() => {
 		const response = data?.data;
 		const items: AlertRuleTimelineTableResponse[] | undefined =
-			response?.items?.map((item) => ({
-				ruleID: item.ruleId,
-				ruleName: item.ruleName,
-				overallState: item.overallState as string,
-				overallStateChanged: item.overallStateChanged,
-				state: item.state as string,
-				stateChanged: item.stateChanged,
-				unixMilli: item.unixMilli,
-				fingerprint: item.fingerprint,
-				value: item.value,
-				labels: labelsArrayToObject(item.labels),
-			}));
+			response?.items?.map((item) => {
+				const itemWithLinks = item as typeof item & {
+					relatedLogsLink?: string;
+					relatedTracesLink?: string;
+				};
+				return {
+					ruleID: item.ruleId,
+					ruleName: item.ruleName,
+					overallState: item.overallState as string,
+					overallStateChanged: item.overallStateChanged,
+					state: item.state as string,
+					stateChanged: item.stateChanged,
+					unixMilli: item.unixMilli,
+					fingerprint: item.fingerprint,
+					value: item.value,
+					labels: labelsArrayToObject(item.labels),
+					relatedLogsLink: itemWithLinks.relatedLogsLink,
+					relatedTracesLink: itemWithLinks.relatedTracesLink,
+				};
+			});
 
 		return {
 			timelineData: items,

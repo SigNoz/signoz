@@ -1,5 +1,7 @@
-import { TableColumnsType as ColumnsType } from 'antd';
+import { Ellipsis } from '@signozhq/icons';
+import { Button, TableColumnsType as ColumnsType, Tooltip } from 'antd';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
+import { ConditionalAlertPopover } from 'container/AlertHistory/AlertPopover/AlertPopover';
 import { TimestampInput } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
 import AlertLabels from 'pages/AlertDetails/AlertHeader/AlertLabels/AlertLabels';
 import AlertState from 'pages/AlertDetails/AlertHeader/AlertState/AlertState';
@@ -42,5 +44,32 @@ export const timelineTableColumns = ({
 				{formatTimezoneAdjustedTimestamp(value, DATE_TIME_FORMATS.DASH_DATETIME)}
 			</div>
 		),
+	},
+	{
+		title: 'ACTIONS',
+		width: 140,
+		align: 'right',
+		render: (_, record): JSX.Element => {
+			if (!record.relatedTracesLink && !record.relatedLogsLink) {
+				return (
+					<Tooltip title="No links available for this item">
+						<Button type="text" ghost disabled>
+							<Ellipsis className="dropdown-icon" size="md" />
+						</Button>
+					</Tooltip>
+				);
+			}
+
+			return (
+				<ConditionalAlertPopover
+					relatedTracesLink={record.relatedTracesLink ?? ''}
+					relatedLogsLink={record.relatedLogsLink ?? ''}
+				>
+					<Button type="text" ghost>
+						<Ellipsis className="dropdown-icon" size="md" />
+					</Button>
+				</ConditionalAlertPopover>
+			);
+		},
 	},
 ];

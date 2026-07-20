@@ -92,6 +92,8 @@ export interface AlertRuleTimelineTableResponse {
 	labels: Labels;
 	fingerprint: number;
 	value: number;
+	relatedLogsLink?: string;
+	relatedTracesLink?: string;
 }
 
 export interface AlertRuleTimelineGraphResponse {
