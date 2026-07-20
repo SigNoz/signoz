@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
+import { Callout } from '@signozhq/ui/callout';
 import { ComboboxSimple } from '@signozhq/ui/combobox';
 import { DrawerWrapper } from '@signozhq/ui/drawer';
 import { Input } from '@signozhq/ui/input';
@@ -41,6 +42,8 @@ function CloudAccountSetupDrawer({
 		handleClose,
 		connectionParams,
 		isConnectionParamsLoading,
+		submitError,
+		clearSubmitError,
 	} = useIntegrationModal({ onClose });
 
 	const { control, handleSubmit, setValue } = useForm<GcpSetupFormValues>({
@@ -61,24 +64,39 @@ function CloudAccountSetupDrawer({
 	}, [connectionParams, setValue]);
 
 	const footer = (
-		<div className={styles.footer}>
-			<Button
-				variant="outlined"
-				color="secondary"
-				onClick={handleClose}
-				testId="gcp-cancel-btn"
-			>
-				Cancel
-			</Button>
-			<Button
-				variant="solid"
-				color="primary"
-				onClick={handleSubmit(connectAccount)}
-				loading={isLoading}
-				testId="gcp-connect-account-btn"
-			>
-				Connect Account
-			</Button>
+		<div className={styles.footerContainer}>
+			{submitError && (
+				<Callout
+					type="error"
+					size="small"
+					showIcon
+					action="dismissible"
+					onClick={clearSubmitError}
+					title="Failed to connect GCP account"
+					testId="gcp-connect-error"
+				>
+					{submitError}
+				</Callout>
+			)}
+			<div className={styles.footer}>
+				<Button
+					variant="outlined"
+					color="secondary"
+					onClick={handleClose}
+					testId="gcp-cancel-btn"
+				>
+					Cancel
+				</Button>
+				<Button
+					variant="solid"
+					color="primary"
+					onClick={handleSubmit(connectAccount)}
+					loading={isLoading}
+					testId="gcp-connect-account-btn"
+				>
+					Connect Account
+				</Button>
+			</div>
 		</div>
 	);
 
@@ -216,7 +234,7 @@ function CloudAccountSetupDrawer({
 						<>
 							<Select
 								id="gcp-project-ids-select"
-								className={styles.fullWidth}
+								className={`${styles.fullWidth} ${styles.projectIdsSelect}`}
 								mode="tags"
 								value={field.value}
 								onChange={(value): void => field.onChange(value)}

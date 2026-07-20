@@ -11,6 +11,7 @@ import { Control, Controller } from 'react-hook-form';
 import { useCopyToClipboard } from 'react-use';
 
 import { GcpSetupFormValues } from './types';
+import { SecretFieldType, validateSecretValue } from './validators';
 import styles from './ConnectionSecretsFields.module.scss';
 
 type CredentialField = keyof CloudintegrationtypesCredentialsDTO;
@@ -20,6 +21,7 @@ interface FieldConfig {
 	label: string;
 	placeholder: string;
 	testId: string;
+	type: SecretFieldType;
 }
 
 const FIELDS: FieldConfig[] = [
@@ -28,24 +30,28 @@ const FIELDS: FieldConfig[] = [
 		label: 'SigNoz API URL',
 		placeholder: 'https://<tenant>.signoz.cloud',
 		testId: 'gcp-signoz-api-url-input',
+		type: 'url',
 	},
 	{
 		name: 'sigNozApiKey',
 		label: 'SigNoz API Key',
 		placeholder: 'Enter SigNoz API key',
 		testId: 'gcp-signoz-api-key-input',
+		type: 'text',
 	},
 	{
 		name: 'ingestionUrl',
 		label: 'Ingestion URL',
 		placeholder: 'https://ingest.<region>.signoz.cloud',
 		testId: 'gcp-ingestion-url-input',
+		type: 'url',
 	},
 	{
 		name: 'ingestionKey',
 		label: 'Ingestion Key',
 		placeholder: 'Enter ingestion key',
 		testId: 'gcp-ingestion-key-input',
+		type: 'text',
 	},
 ];
 
@@ -79,7 +85,7 @@ function ConnectionSecretsFields({
 				<Typography.Text weight="bold" size="base">
 					Deployment details &amp; ingestion secrets
 				</Typography.Text>
-				{hasMissingValue && (
+				{!hasMissingValue && (
 					<span className={styles.headLabel}>
 						<Lock size={12} />
 						Auto-filled by SigNoz
@@ -139,15 +145,26 @@ function ConnectionSecretsFields({
 								<Controller
 									name={field.name}
 									control={control}
-									render={({ field: rhfField }): JSX.Element => (
-										<Input
-											id={field.testId}
-											className={cx(styles.fullWidth, styles.mono)}
-											placeholder={field.placeholder}
-											value={rhfField.value}
-											onChange={(e): void => rhfField.onChange(e.target.value)}
-											testId={field.testId}
-										/>
+									rules={{
+										validate: (value): true | string =>
+											validateSecretValue(field.label, field.type, value),
+									}}
+									render={({ field: rhfField, fieldState }): JSX.Element => (
+										<>
+											<Input
+												id={field.testId}
+												className={cx(styles.fullWidth, styles.mono)}
+												placeholder={field.placeholder}
+												value={rhfField.value}
+												onChange={(e): void => rhfField.onChange(e.target.value)}
+												testId={field.testId}
+											/>
+											{fieldState.error && (
+												<span className={styles.fieldError} role="alert">
+													{fieldState.error.message}
+												</span>
+											)}
+										</>
 									)}
 								/>
 							</div>

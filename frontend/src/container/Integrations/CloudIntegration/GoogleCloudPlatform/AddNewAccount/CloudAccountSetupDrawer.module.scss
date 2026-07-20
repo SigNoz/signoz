@@ -50,6 +50,13 @@
 	}
 }
 
+.footerContainer {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+	width: 100%;
+}
+
 .footer {
 	display: flex;
 	align-items: center;
@@ -75,8 +82,49 @@
 }
 
 .fieldError {
-	font-size: var(--periscope-font-size-small);
-	color: var(--accent-cherry);
+	composes: fieldError from './shared.module.scss';
+}
+
+// The "Projects to Monitor" field is an antd tags Select, which otherwise renders
+// with antd's default light selector + tag chips. Align it with the drawer's dark
+// surface: the selector matches the sibling inputs (--l2-background) and the tag
+// chips use the darker drawer black (--l1-background).
+.projectIdsSelect {
+	:global(.ant-select-selector) {
+		min-height: 36px;
+		background: var(--l2-background);
+		border: 1px solid var(--l2-border);
+		border-radius: var(--radius-2);
+	}
+
+	&:hover :global(.ant-select-selector),
+	&:global(.ant-select-focused) :global(.ant-select-selector) {
+		border-color: var(--l2-border);
+		box-shadow: none;
+	}
+
+	:global(.ant-select-selection-placeholder) {
+		color: var(--l3-foreground);
+	}
+
+	:global(.ant-select-selection-search-input) {
+		color: var(--l1-foreground);
+	}
+
+	:global(.ant-select-selection-item) {
+		color: var(--l1-foreground);
+		background: var(--l1-background);
+		border: 1px solid var(--l2-border);
+		border-radius: var(--radius-2);
+	}
+
+	:global(.ant-select-selection-item-remove) {
+		color: var(--l3-foreground);
+
+		&:hover {
+			color: var(--l1-foreground);
+		}
+	}
 }
 
 /* --- Setup guide callout --- */

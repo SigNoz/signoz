@@ -12,10 +12,13 @@ import {
 import {
 	CloudintegrationtypesCredentialsDTO,
 	CloudintegrationtypesPostableAccountDTO,
+	RenderErrorResponseDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import { ErrorType } from 'api/generatedAPIInstance';
 import { INTEGRATION_TYPES } from 'container/Integrations/constants';
 import { GcpSetupFormValues } from 'container/Integrations/CloudIntegration/GoogleCloudPlatform/AddNewAccount/types';
 import useAxiosError from 'hooks/useAxiosError';
+import { toAPIError } from 'utils/errorUtils';
 
 import logEvent from '../../../api/common/logEvent';
 
@@ -29,6 +32,9 @@ interface UseGCPIntegrationModal {
 	handleClose: () => void;
 	connectionParams?: CloudintegrationtypesCredentialsDTO;
 	isConnectionParamsLoading: boolean;
+	/** Backend error from the last connect attempt, shown inline in the drawer. */
+	submitError: string | null;
+	clearSubmitError: () => void;
 }
 
 export function useIntegrationModal({
@@ -36,6 +42,11 @@ export function useIntegrationModal({
 }: UseIntegrationModalProps): UseGCPIntegrationModal {
 	const queryClient = useQueryClient();
 	const [isLoading, setIsLoading] = useState(false);
+	const [submitError, setSubmitError] = useState<string | null>(null);
+
+	const clearSubmitError = useCallback((): void => {
+		setSubmitError(null);
+	}, []);
 
 	const { mutateAsync: createAccount } = useCreateAccount();
 	const { mutateAsync: checkIn } = useAgentCheckIn();
@@ -81,6 +92,7 @@ export function useIntegrationModal({
 		async (values: GcpSetupFormValues): Promise<void> => {
 			try {
 				setIsLoading(true);
+				setSubmitError(null);
 
 				const payload: CloudintegrationtypesPostableAccountDTO = {
 					config: {
@@ -128,10 +140,14 @@ export function useIntegrationModal({
 				});
 
 				handleConnectionSuccess({ cloudIntegrationId, providerAccountId });
-			} catch {
-				toast.error('Failed to connect GCP account', {
-					position: 'bottom-right',
-				});
+			} catch (error) {
+				// Surface the backend's message inline in the drawer instead of a
+				// generic failure string.
+				const message = toAPIError(
+					error as ErrorType<RenderErrorResponseDTO>,
+					'Failed to connect GCP account',
+				).getErrorMessage();
+				setSubmitError(message);
 			} finally {
 				setIsLoading(false);
 			}
@@ -147,5 +163,7 @@ export function useIntegrationModal({
 			| CloudintegrationtypesCredentialsDTO
 			| undefined,
 		isConnectionParamsLoading,
+		submitError,
+		clearSubmitError,
 	};
 }
