@@ -196,13 +196,13 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 			<ColumnHeader
 				tooltip="Excluding cache memory."
 				docPath="/infrastructure-monitoring/host-monitoring#memory-usage"
-				className={styles.memoryUsageHeader}
 			>
-				Memory Usage (WSS)
+				Memory Usage
+				<br /> (WSS)
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.memory,
-		width: { min: 240 },
+		width: { min: 200 },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
 			const memory = value as number;
@@ -249,11 +249,12 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 		id: 'load15',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/host-monitoring#load-avg">
-				Load Avg (15min)
+				Load Avg
+				<br /> (15min)
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.load15,
-		width: { min: 200 },
+		width: { min: 160 },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
 			const load15 = Number(value);
