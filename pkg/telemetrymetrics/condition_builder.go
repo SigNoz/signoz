@@ -162,45 +162,32 @@ func (c *conditionBuilder) ConditionFor(
 		return nil, nil, err
 	}
 
-	keys, warning := querybuilder.ResolveKeys(key, querybuilder.MatchingFieldKeys(key, fieldKeys))
+	keys := querybuilder.MatchingFieldKeys(key, fieldKeys)
 	var warnings []string
-	if warning != "" {
-		warnings = append(warnings, warning)
-	}
 	if len(keys) == 0 {
-		// Metrics keeps every label in the `labels` JSON with no per-context storage, so
-		// FieldFor maps any key on its own: intrinsics (incl. the full-text column
-		// metric_name) to their column, every label context to a labels JSON extract.
-		// Use the key directly so a full-text term or an unregistered context resolves
-		// and the query runs instead of 400ing.
-		keys = []*telemetrytypes.TelemetryFieldKey{key}
+		if _, isColumn := timeSeriesV4Columns[key.Name]; isColumn {
+			keys = []*telemetrytypes.TelemetryFieldKey{key}
+		} else {
+			if len(fieldKeys[key.Name]) == 0 {
+				warnings = append(warnings, fmt.Sprintf("label `%s` not found in metadata; check the label name for typos", key.Name))
+			}
+			keys = []*telemetrytypes.TelemetryFieldKey{
+				telemetrytypes.NewTelemetryFieldKey(key.Name, telemetrytypes.FieldContextAttribute, key.FieldDataType),
+			}
+			if key.FieldContext != telemetrytypes.FieldContextUnspecified {
+				keys = append(keys, telemetrytypes.NewTelemetryFieldKey(
+					key.FieldContext.StringValue()+"."+key.Name, telemetrytypes.FieldContextAttribute, key.FieldDataType))
+			}
+		}
 	}
 
 	conds := make([]string, 0, len(keys))
 	for _, k := range keys {
-		cond, err := c.conditionForKey(ctx, orgID, startNs, endNs, k, operator, value, sb)
+		cond, err := c.conditionFor(ctx, orgID, startNs, endNs, k, operator, value, sb)
 		if err != nil {
 			return nil, nil, err
 		}
 		conds = append(conds, cond)
 	}
 	return conds, warnings, nil
-}
-
-func (c *conditionBuilder) conditionForKey(
-	ctx context.Context,
-	orgID valuer.UUID,
-	startNs uint64,
-	endNs uint64,
-	key *telemetrytypes.TelemetryFieldKey,
-	operator qbtypes.FilterOperator,
-	value any,
-	sb *sqlbuilder.SelectBuilder,
-) (string, error) {
-	condition, err := c.conditionFor(ctx, orgID, startNs, endNs, key, operator, value, sb)
-	if err != nil {
-		return "", err
-	}
-
-	return condition, nil
 }

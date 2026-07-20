@@ -308,45 +308,64 @@ func TestConditionForMultipleKeys(t *testing.T) {
 	}
 }
 
-// TestConditionForKeyNotInMetadata covers the len(keys)==0 branch: the key is not
-// present in the resolved metadata (as happens for the full-text search column and
-// for filters on labels absent from metadata). Metrics has no per-context storage, so
-// FieldFor resolves any key directly: intrinsics to their column, every label context
-// (bare/attribute./resource./scope.) to a labels JSON extract. Nothing errors, and no
-// key-not-found warning is emitted.
 func TestConditionForKeyNotInMetadata(t *testing.T) {
 	ctx := context.Background()
 
 	testCases := []struct {
 		name        string
 		key         telemetrytypes.TelemetryFieldKey
+		fieldKeys   map[string][]*telemetrytypes.TelemetryFieldKey
 		operator    qbtypes.FilterOperator
 		value       any
-		expectedSQL string
+		expectedSQL []string
+		expectWarn  bool
 	}{
 		{
-			// The metrics-explorer full-text search routes bare/quoted terms through
-			// the metric_name intrinsic column, which is never in the metadata keys.
-			name:        "intrinsic metric_name full-text (regexp) resolves directly",
+			name:        "intrinsic metric_name full-text resolves without warning",
 			key:         telemetrytypes.TelemetryFieldKey{Name: "metric_name", FieldContext: telemetrytypes.FieldContextMetric},
+			fieldKeys:   map[string][]*telemetrytypes.TelemetryFieldKey{},
 			operator:    qbtypes.FilterOperatorRegexp,
 			value:       "k8s",
-			expectedSQL: "match(metric_name, ?)",
+			expectedSQL: []string{"match(metric_name, ?)"},
+			expectWarn:  false,
 		},
 		{
-			name:        "context-less label resolves to labels JSON extract",
+			name:        "unknown label resolves to labels extract with a typo warning",
 			key:         telemetrytypes.TelemetryFieldKey{Name: "foo", FieldContext: telemetrytypes.FieldContextUnspecified},
+			fieldKeys:   map[string][]*telemetrytypes.TelemetryFieldKey{},
 			operator:    qbtypes.FilterOperatorEqual,
 			value:       "bar",
-			expectedSQL: "JSONExtractString(labels, 'foo') = ?",
+			expectedSQL: []string{"JSONExtractString(labels, 'foo') = ?"},
+			expectWarn:  true,
 		},
 		{
-			// An explicit context is a no-op for metrics: it also resolves to labels.
-			name:        "explicit resource context resolves to labels JSON extract",
-			key:         telemetrytypes.TelemetryFieldKey{Name: "region", FieldContext: telemetrytypes.FieldContextResource},
+			name:        "context prefix that may be part of the name tries both readings",
+			key:         telemetrytypes.TelemetryFieldKey{Name: "a.b.c", FieldContext: telemetrytypes.FieldContextScope},
+			fieldKeys:   map[string][]*telemetrytypes.TelemetryFieldKey{},
+			operator:    qbtypes.FilterOperatorEqual,
+			value:       "x",
+			expectedSQL: []string{"JSONExtractString(labels, 'a.b.c') = ?", "JSONExtractString(labels, 'scope.a.b.c') = ?"},
+			expectWarn:  true,
+		},
+		{
+			name:        "unresolved metric-context name is treated as a label prefix",
+			key:         telemetrytypes.TelemetryFieldKey{Name: "foo", FieldContext: telemetrytypes.FieldContextMetric},
+			fieldKeys:   map[string][]*telemetrytypes.TelemetryFieldKey{},
+			operator:    qbtypes.FilterOperatorEqual,
+			value:       "bar",
+			expectedSQL: []string{"JSONExtractString(labels, 'foo') = ?", "JSONExtractString(labels, 'metric.foo') = ?"},
+			expectWarn:  true,
+		},
+		{
+			name: "known label under a mismatched context collapses without warning",
+			key:  telemetrytypes.TelemetryFieldKey{Name: "region", FieldContext: telemetrytypes.FieldContextResource},
+			fieldKeys: map[string][]*telemetrytypes.TelemetryFieldKey{
+				"region": {{Name: "region", FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString}},
+			},
 			operator:    qbtypes.FilterOperatorEqual,
 			value:       "us",
-			expectedSQL: "JSONExtractString(labels, 'region') = ?",
+			expectedSQL: []string{"JSONExtractString(labels, 'region') = ?"},
+			expectWarn:  false,
 		},
 	}
 
@@ -356,13 +375,18 @@ func TestConditionForKeyNotInMetadata(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			sb := sqlbuilder.NewSelectBuilder()
-			// Empty fieldKeys map => the key is not resolvable from metadata.
-			cond, warnings, err := conditionBuilder.ConditionFor(ctx, valuer.UUID{}, 0, 0, &tc.key, map[string][]*telemetrytypes.TelemetryFieldKey{}, qbtypes.ConditionBuilderOptions{}, tc.operator, tc.value, sb)
+			cond, warnings, err := conditionBuilder.ConditionFor(ctx, valuer.UUID{}, 0, 0, &tc.key, tc.fieldKeys, qbtypes.ConditionBuilderOptions{}, tc.operator, tc.value, sb)
 			require.NoError(t, err)
 			sb.Where(cond...)
 			sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-			assert.Contains(t, sql, tc.expectedSQL)
-			assert.Empty(t, warnings)
+			for _, want := range tc.expectedSQL {
+				assert.Contains(t, sql, want)
+			}
+			if tc.expectWarn {
+				assert.NotEmpty(t, warnings)
+			} else {
+				assert.Empty(t, warnings)
+			}
 		})
 	}
 }
