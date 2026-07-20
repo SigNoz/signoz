@@ -277,7 +277,6 @@ export const useGetAlertRuleDetailsTimelineTable = ({
 	const timelineFilter = params.get('timelineFilter');
 
 	const isValidRuleId = ruleId !== null && String(ruleId).length !== 0;
-	const hasStartAndEnd = startTime !== null && endTime !== null;
 
 	const stateFilter = useMemo(() => {
 		if (!timelineFilter || timelineFilter === TimelineFilter.ALL) {
@@ -288,7 +287,7 @@ export const useGetAlertRuleDetailsTimelineTable = ({
 			: RuletypesAlertStateDTO.inactive;
 	}, [timelineFilter]);
 
-	const filtersKey = `${filterExpression}|${stateFilter ?? ''}`;
+	const filtersKey = `${filterExpression}|${stateFilter ?? ''}|${startTime}|${endTime}`;
 	const prevFiltersKeyRef = useRef(filtersKey);
 	const filtersChanged = prevFiltersKeyRef.current !== filtersKey;
 	const cursor = computeCursorForPage(filtersChanged ? 1 : page);
@@ -320,7 +319,7 @@ export const useGetAlertRuleDetailsTimelineTable = ({
 		queryParams,
 		{
 			query: {
-				enabled: isValidRuleId && hasStartAndEnd,
+				enabled: isValidRuleId,
 				refetchOnMount: false,
 				refetchOnWindowFocus: false,
 			},
