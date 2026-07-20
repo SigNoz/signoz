@@ -289,7 +289,7 @@ func TestBuildFunnelStepOverviewQuery(t *testing.T) {
 			stepStart: 1,
 			stepEnd:   2,
 			wantContains: []string{
-				"round(total_s2_spans * 100.0 / total_s1_spans, 2) AS conversion_rate",
+				"round(if(total_s2_spans > 0, total_s2_spans * 100.0 / total_s1_spans, 0), 2) AS conversion_rate",
 				"quantileIf(0.95)",
 				"t2_time > t1_time",
 			},
@@ -315,7 +315,7 @@ func TestBuildFunnelStepOverviewQuery(t *testing.T) {
 			stepStart: 2,
 			stepEnd:   4,
 			wantContains: []string{
-				"round(total_s4_spans * 100.0 / total_s2_spans, 2) AS conversion_rate",
+				"round(if(total_s4_spans > 0, total_s4_spans * 100.0 / total_s2_spans, 0), 2) AS conversion_rate",
 				"t3_time > t2_time AND t4_time > t3_time",
 				"quantileIf(0.90)",
 			},
