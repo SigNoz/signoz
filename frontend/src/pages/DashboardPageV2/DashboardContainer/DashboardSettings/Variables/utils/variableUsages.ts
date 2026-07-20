@@ -2,7 +2,10 @@ import type {
 	DashboardtypesGettableDashboardV2DTO,
 	Querybuildertypesv5QueryEnvelopeDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { removeVariableFromExpression } from 'components/QueryBuilderV2/utils';
+import {
+	appendAndClause,
+	removeVariableFromExpression,
+} from 'components/QueryBuilderV2/utils';
 import {
 	rewriteVariableReferences,
 	textContainsVariableReference,
@@ -18,8 +21,7 @@ export type VariableUsageKind =
 	| 'clickhouse'
 	| 'variable';
 
-/** Whether the impact is a rename (rewrite refs) or a delete (remove refs). */
-export type VariableImpactMode = 'rename' | 'delete';
+export type VariableImpactMode = 'rename' | 'delete' | 'apply';
 
 /**
  * One place a variable is referenced — a panel query's builder filter expression,
@@ -156,6 +158,69 @@ export function findVariableUsages(
 				mode,
 				newName,
 			),
+		});
+	});
+
+	return usages;
+}
+
+// `matchName` is the name in the current query text (the old name during a
+// simultaneous rename); `injectName` is written into newly added clauses. Equal
+// outside of a rename.
+export function findApplyUsages(
+	dashboard: DashboardtypesGettableDashboardV2DTO,
+	attribute: string,
+	injectName: string,
+	matchName: string,
+	selectedPanelIds: string[],
+): VariableUsage[] {
+	if (!attribute || !injectName) {
+		return [];
+	}
+	const clause = `${attribute} IN $${injectName}`;
+	const existingClause = `${attribute} IN $${matchName}`;
+	const selected = new Set(selectedPanelIds);
+	const usages: VariableUsage[] = [];
+
+	Object.entries(dashboard.spec.panels ?? {}).forEach(([panelId, panel]) => {
+		const queries = panel?.spec?.queries;
+		if (!queries?.length) {
+			return;
+		}
+		toQueryEnvelopes(queries).forEach((envelope, index) => {
+			if (envelope.type !== 'builder_query') {
+				return;
+			}
+			const spec = envelope.spec as
+				| { filter?: { expression?: string } }
+				| undefined;
+			const current = spec?.filter?.expression ?? '';
+
+			let resultingText: string;
+			if (selected.has(panelId)) {
+				// Already carries the clause (under either name) — a rename usage, if any,
+				// fixes the name; don't append a duplicate.
+				if (current.includes(clause) || current.includes(existingClause)) {
+					return;
+				}
+				resultingText = appendAndClause(current, clause);
+			} else {
+				resultingText = removeVariableFromExpression(current, matchName);
+				if (resultingText === current) {
+					return;
+				}
+			}
+
+			usages.push({
+				id: `panel:${panelId}:${index}`,
+				sourceType: 'panel',
+				sourceId: panelId,
+				sourceLabel: panel.spec?.display?.name || panelId,
+				kind: 'builder',
+				envelopeIndex: index,
+				currentText: current,
+				resultingText,
+			});
 		});
 	});
 

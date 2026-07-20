@@ -13,7 +13,6 @@ import type {
 import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 
 import { useDashboardStore } from '../../../store/useDashboardStore';
-import { buildSyncVariableToPanelsPatch } from '../utils/applyVariableToPanelsPatch';
 import {
 	VARIABLE_TYPE_EVENT_LABEL,
 	type VariableFormModel,
@@ -23,6 +22,7 @@ import {
 	buildVariableImpactPatch,
 } from '../utils/variableImpactPatch';
 import {
+	findApplyUsages,
 	findVariableUsages,
 	type VariableImpactMode,
 	type VariableUsage,
@@ -107,68 +107,52 @@ export function useVariableListActions({
 				next[editingIndex] = formModel;
 			}
 
-			// A rename that other queries/variables reference must be reviewed first, so
-			// the references are rewritten alongside the rename (never left dangling).
-			if (oldName && oldName !== formModel.name) {
-				const usages = findVariableUsages(
-					dashboard,
-					oldName,
-					'rename',
-					formModel.name,
-				);
-				if (usages.length > 0) {
-					setIsEditing(null);
-					setImpact({
-						mode: 'rename',
-						variableName: oldName,
-						newName: formModel.name,
-						usages,
-						nextVariables: next,
-					});
-					return;
-				}
+			const isRename = !!oldName && oldName !== formModel.name;
+			// Both rename and apply-to-panels edits are reviewed in the impact dialog
+			// before persisting — never applied silently.
+			const renameUsages = isRename
+				? findVariableUsages(dashboard, oldName as string, 'rename', formModel.name)
+				: [];
+			const applyUsages =
+				formModel.type === 'DYNAMIC' && formModel.dynamicAttribute
+					? findApplyUsages(
+							dashboard,
+							formModel.dynamicAttribute,
+							formModel.name,
+							oldName ?? formModel.name,
+							selectedPanelIds,
+						)
+					: [];
+
+			// Apply usages win per (panel, envelope) over a plain rename rewrite.
+			const byId = new Map<string, VariableUsage>();
+			renameUsages.forEach((usage) => byId.set(usage.id, usage));
+			applyUsages.forEach((usage) => byId.set(usage.id, usage));
+			const usages = [...byId.values()];
+
+			if (usages.length > 0) {
+				setIsEditing(null);
+				setImpact({
+					mode: isRename ? 'rename' : 'apply',
+					variableName: oldName ?? formModel.name,
+					newName: formModel.name,
+					usages,
+					nextVariables: next,
+				});
+				return;
 			}
 
+			// No cross-query impact — persist directly; keep the form open on failure.
 			void (async (): Promise<void> => {
 				const saved = await save(next);
 				if (!saved) {
 					return;
 				}
-
 				setIsEditing(null);
 				setVariables(next);
-
-				if (formModel.type !== 'DYNAMIC') {
-					return;
-				}
-
-				const ops = buildSyncVariableToPanelsPatch(
-					dashboard.spec.panels,
-					formModel.dynamicAttribute,
-					formModel.name,
-					selectedPanelIds,
-				);
-
-				if (ops.length === 0) {
-					return;
-				}
-
-				try {
-					await patchAsync(ops);
-				} catch {
-					toast.error('Could not update panels');
-				}
 			})();
 		},
-		[
-			dashboard,
-			isEditing,
-			patchAsync,
-			save,
-			setIsEditing,
-			setVariables,
-			variables,
-		],
+		[dashboard, isEditing, save, setIsEditing, setVariables, variables],
 	);
 
 	const handleMove = useCallback(
@@ -245,11 +229,15 @@ export function useVariableListActions({
 			setVariables(nextVariables);
 			try {
 				await patchAsync(ops);
-				toast.success(
-					impact.mode === 'rename'
-						? `Renamed to $${impact.newName}`
-						: `Deleted $${impact.variableName}`,
-				);
+				let message: string;
+				if (impact.mode === 'rename') {
+					message = `Renamed to $${impact.newName}`;
+				} else if (impact.mode === 'apply') {
+					message = `Applied $${impact.variableName} to panels`;
+				} else {
+					message = `Deleted $${impact.variableName}`;
+				}
+				toast.success(message);
 				if (impact.mode === 'delete') {
 					const deleted = variables.find((v) => v.name === impact.variableName);
 					void logEvent(DashboardDetailEvents.VariableDeleted, {
@@ -261,11 +249,15 @@ export function useVariableListActions({
 					});
 				}
 			} catch {
-				toast.error(
-					impact.mode === 'rename'
-						? 'Could not rename the variable'
-						: 'Could not delete the variable',
-				);
+				let message: string;
+				if (impact.mode === 'rename') {
+					message = 'Could not rename the variable';
+				} else if (impact.mode === 'apply') {
+					message = 'Could not apply the variable to panels';
+				} else {
+					message = 'Could not delete the variable';
+				}
+				toast.error(message);
 			}
 			setImpact(null);
 		},
