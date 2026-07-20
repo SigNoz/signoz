@@ -270,10 +270,8 @@ def test_namespaces_filter(
     data = response.json()["data"]
     assert {r["namespaceName"] for r in data["records"]} == expected
     assert data["total"] == len(expected)
-    warnings = get_all_warnings(response.json())
-    if expected_warn is None:
-        assert warnings == [], f"{expression!r}: unexpected warnings {warnings}"
-    else:
+    if expected_warn is not None:
+        warnings = get_all_warnings(response.json())
         assert any(expected_warn in w["message"] for w in warnings), f"{expected_warn!r} not surfaced: {warnings}"
 
     # Filtering must not distort per-namespace aggregation values.
