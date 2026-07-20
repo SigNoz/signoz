@@ -13,6 +13,7 @@
 	border: 1px solid color-mix(in srgb, var(--bg-amber-400) 30%, transparent);
 	background: color-mix(in srgb, var(--bg-amber-400) 8%, transparent);
 	color: var(--bg-amber-300, var(--bg-amber-400));
+	margin-top: var(--spacing-4);
 }
 
 .bannerIcon {

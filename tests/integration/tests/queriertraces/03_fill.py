@@ -2,934 +2,306 @@ from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 
-import requests
+import pytest
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.querier import (
+    RequestType,
     assert_minutely_bucket_values,
+    build_aggregation,
+    build_formula_query,
+    build_group_by_field,
+    build_traces_scalar_query,
     find_named_result,
+    get_all_series,
     index_series_by_label,
+    make_query_request,
 )
-from fixtures.traces import (
-    TraceIdGenerator,
-    Traces,
-    TracesKind,
-    TracesStatusCode,
-)
+from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCode, trace_noise
+
+# Each fill test runs under two mechanisms that both 0-fill empty time buckets:
+#   - "fillGaps": the `fillGaps` format option (fills the query-window timeline)
+#   - "fillZero": the `fillZero` function (applied to the query / formula series)
+# and under the shared clean/corrupt `trace_noise` factor (fixtures/traces.py): count()
+# and group-by(resource.service.name) buckets must be identical whether or not
+# same-named colliding attributes are present.
+FILL_MODES = ["fillGaps", "fillZero"]
 
 
-def test_traces_fill_gaps(
+def _bucket_ms(span: Traces) -> int:
+    """The minutely bucket (epoch millis) a seeded span lands in."""
+    return int(span.timestamp.timestamp() * 1000)
+
+
+@pytest.mark.parametrize("fill_mode", FILL_MODES)
+@pytest.mark.parametrize("noise", ["clean", "corrupt"])
+def test_traces_fill_plain(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
+    noise: str,
+    fill_mode: str,
 ) -> None:
     """
-    Test fillGaps for traces without groupBy.
-    """
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-    trace_id = TraceIdGenerator.trace_id()
+    Setup:
+    One span 3 minutes ago.
 
-    traces: list[Traces] = [
-        Traces(
-            timestamp=now - timedelta(minutes=3),
-            duration=timedelta(seconds=1),
-            trace_id=trace_id,
-            span_id=TraceIdGenerator.span_id(),
-            parent_span_id="",
-            name="test-span",
-            kind=TracesKind.SPAN_KIND_SERVER,
-            status_code=TracesStatusCode.STATUS_CODE_OK,
-            status_message="",
-            resources={"service.name": "test-service"},
-            attributes={"http.method": "GET"},
-        ),
-    ]
-    insert_traces(traces)
+    Tests:
+    fillGaps / fillZero over count() with no group by leave the single populated
+    bucket at the span count and every other bucket in the window at 0.
+    """
+    extra_attrs, extra_resources = trace_noise(noise)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    span = Traces(
+        timestamp=now - timedelta(minutes=3),
+        duration=timedelta(seconds=1),
+        trace_id=TraceIdGenerator.trace_id(),
+        span_id=TraceIdGenerator.span_id(),
+        name="test-span",
+        kind=TracesKind.SPAN_KIND_SERVER,
+        status_code=TracesStatusCode.STATUS_CODE_OK,
+        resources={"service.name": "fill-service", **extra_resources},
+        attributes={"http.method": "GET", **extra_attrs},
+    )
+    insert_traces([span])
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    functions = [{"name": "fillZero"}] if fill_mode == "fillZero" else None
+    format_options = {"formatTableResultForUI": False, "fillGaps": fill_mode == "fillGaps"}
 
-    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
-    end_ms = int(now.timestamp() * 1000)
-
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
-        timeout=5,
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "schemaVersion": "v1",
-            "start": start_ms,
-            "end": end_ms,
-            "requestType": "time_series",
-            "compositeQuery": {
-                "queries": [
-                    {
-                        "type": "builder_query",
-                        "spec": {
-                            "name": "A",
-                            "signal": "traces",
-                            "stepInterval": 60,
-                            "disabled": False,
-                            "having": {"expression": ""},
-                            "aggregations": [{"expression": "count()"}],
-                        },
-                    }
-                ]
-            },
-            "formatOptions": {"formatTableResultForUI": False, "fillGaps": True},
-        },
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=int((now - timedelta(minutes=5)).timestamp() * 1000),
+        end_ms=int(now.timestamp() * 1000),
+        request_type=RequestType.TIME_SERIES,
+        queries=[build_traces_scalar_query(aggregations=[build_aggregation("count()")], functions=functions)],
+        format_options=format_options,
     )
 
-    assert response.status_code == HTTPStatus.OK
-    assert response.json()["status"] == "success"
-
-    results = response.json()["data"]["data"]["results"]
-    assert len(results) == 1
-
-    aggregations = results[0]["aggregations"]
-    assert len(aggregations) == 1
-
-    series = aggregations[0]["series"]
+    assert response.status_code == HTTPStatus.OK, response.text
+    series = get_all_series(response.json(), "A")
     assert len(series) >= 1
-
-    values = series[0]["values"]
-    ts_min_3 = int((now - timedelta(minutes=3)).timestamp() * 1000)
-    assert_minutely_bucket_values(
-        values,
-        now,
-        expected_by_ts={ts_min_3: 1},
-        context="traces/fillGaps",
-    )
+    assert_minutely_bucket_values(series[0]["values"], now, expected_by_ts={_bucket_ms(span): 1}, context=f"traces/{fill_mode}")
 
 
-def test_traces_fill_gaps_with_group_by(
+@pytest.mark.parametrize("fill_mode", FILL_MODES)
+@pytest.mark.parametrize("noise", ["clean", "corrupt"])
+def test_traces_fill_group_by(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
+    noise: str,
+    fill_mode: str,
 ) -> None:
     """
-    Test fillGaps for traces with groupBy.
-    """
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    Setup:
+    service-a span 3 minutes ago, service-b span 2 minutes ago.
 
-    traces: list[Traces] = [
-        Traces(
-            timestamp=now - timedelta(minutes=3),
-            duration=timedelta(seconds=1),
-            trace_id=TraceIdGenerator.trace_id(),
-            span_id=TraceIdGenerator.span_id(),
-            parent_span_id="",
-            name="span-a",
-            kind=TracesKind.SPAN_KIND_SERVER,
-            status_code=TracesStatusCode.STATUS_CODE_OK,
-            status_message="",
-            resources={"service.name": "service-a"},
-            attributes={"http.method": "GET"},
-        ),
-        Traces(
-            timestamp=now - timedelta(minutes=2),
-            duration=timedelta(seconds=1),
-            trace_id=TraceIdGenerator.trace_id(),
-            span_id=TraceIdGenerator.span_id(),
-            parent_span_id="",
-            name="span-b",
-            kind=TracesKind.SPAN_KIND_SERVER,
-            status_code=TracesStatusCode.STATUS_CODE_OK,
-            status_message="",
-            resources={"service.name": "service-b"},
-            attributes={"http.method": "POST"},
-        ),
-    ]
-    insert_traces(traces)
+    Tests:
+    fillGaps / fillZero over count() grouped by service.name yield one series per
+    service, each with its single populated bucket and zeros elsewhere.
+    """
+    extra_attrs, extra_resources = trace_noise(noise)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    span_a = Traces(
+        timestamp=now - timedelta(minutes=3),
+        duration=timedelta(seconds=1),
+        trace_id=TraceIdGenerator.trace_id(),
+        span_id=TraceIdGenerator.span_id(),
+        name="span-a",
+        kind=TracesKind.SPAN_KIND_SERVER,
+        status_code=TracesStatusCode.STATUS_CODE_OK,
+        resources={"service.name": "service-a", **extra_resources},
+        attributes={"http.method": "GET", **extra_attrs},
+    )
+    span_b = Traces(
+        timestamp=now - timedelta(minutes=2),
+        duration=timedelta(seconds=1),
+        trace_id=TraceIdGenerator.trace_id(),
+        span_id=TraceIdGenerator.span_id(),
+        name="span-b",
+        kind=TracesKind.SPAN_KIND_SERVER,
+        status_code=TracesStatusCode.STATUS_CODE_OK,
+        resources={"service.name": "service-b", **extra_resources},
+        attributes={"http.method": "POST", **extra_attrs},
+    )
+    insert_traces([span_a, span_b])
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    functions = [{"name": "fillZero"}] if fill_mode == "fillZero" else None
+    format_options = {"formatTableResultForUI": False, "fillGaps": fill_mode == "fillGaps"}
 
-    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
-    end_ms = int(now.timestamp() * 1000)
-
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
-        timeout=5,
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "schemaVersion": "v1",
-            "start": start_ms,
-            "end": end_ms,
-            "requestType": "time_series",
-            "compositeQuery": {
-                "queries": [
-                    {
-                        "type": "builder_query",
-                        "spec": {
-                            "name": "A",
-                            "signal": "traces",
-                            "stepInterval": 60,
-                            "disabled": False,
-                            "groupBy": [
-                                {
-                                    "name": "service.name",
-                                    "fieldDataType": "string",
-                                    "fieldContext": "resource",
-                                }
-                            ],
-                            "having": {"expression": ""},
-                            "aggregations": [{"expression": "count()"}],
-                        },
-                    }
-                ]
-            },
-            "formatOptions": {"formatTableResultForUI": False, "fillGaps": True},
-        },
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=int((now - timedelta(minutes=5)).timestamp() * 1000),
+        end_ms=int(now.timestamp() * 1000),
+        request_type=RequestType.TIME_SERIES,
+        queries=[
+            build_traces_scalar_query(
+                aggregations=[build_aggregation("count()")],
+                group_by=[build_group_by_field("service.name", "string", "resource")],
+                functions=functions,
+            )
+        ],
+        format_options=format_options,
     )
 
-    assert response.status_code == HTTPStatus.OK
-    assert response.json()["status"] == "success"
-
-    results = response.json()["data"]["data"]["results"]
-    assert len(results) == 1
-
-    aggregations = results[0]["aggregations"]
-    assert len(aggregations) == 1
-
-    series = aggregations[0]["series"]
-    assert len(series) == 2, "Expected 2 series for 2 service groups"
-
-    ts_min_2 = int((now - timedelta(minutes=2)).timestamp() * 1000)
-    ts_min_3 = int((now - timedelta(minutes=3)).timestamp() * 1000)
-
-    series_by_service = index_series_by_label(series, "service.name")
-    assert set(series_by_service.keys()) == {"service-a", "service-b"}
-
-    expectations: dict[str, dict[int, float]] = {
-        "service-a": {ts_min_3: 1},
-        "service-b": {ts_min_2: 1},
-    }
-
-    for service_name, s in series_by_service.items():
-        assert_minutely_bucket_values(
-            s["values"],
-            now,
-            expected_by_ts=expectations[service_name],
-            context=f"traces/fillGaps/{service_name}",
-        )
-
-
-def test_traces_fill_gaps_formula(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    insert_traces: Callable[[list[Traces]], None],
-) -> None:
-    """
-    Test fillGaps for traces with formula.
-    """
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-
-    traces: list[Traces] = [
-        Traces(
-            timestamp=now - timedelta(minutes=3),
-            duration=timedelta(seconds=1),
-            trace_id=TraceIdGenerator.trace_id(),
-            span_id=TraceIdGenerator.span_id(),
-            parent_span_id="",
-            name="test-span",
-            kind=TracesKind.SPAN_KIND_SERVER,
-            status_code=TracesStatusCode.STATUS_CODE_OK,
-            status_message="",
-            resources={"service.name": "test"},
-            attributes={"http.method": "GET"},
-        ),
-        Traces(
-            timestamp=now - timedelta(minutes=2),
-            duration=timedelta(seconds=1),
-            trace_id=TraceIdGenerator.trace_id(),
-            span_id=TraceIdGenerator.span_id(),
-            parent_span_id="",
-            name="another-test-span",
-            kind=TracesKind.SPAN_KIND_SERVER,
-            status_code=TracesStatusCode.STATUS_CODE_OK,
-            status_message="",
-            resources={"service.name": "another-test"},
-            attributes={"http.method": "POST"},
-        ),
-    ]
-    insert_traces(traces)
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
-    end_ms = int(now.timestamp() * 1000)
-
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
-        timeout=5,
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "schemaVersion": "v1",
-            "start": start_ms,
-            "end": end_ms,
-            "requestType": "time_series",
-            "compositeQuery": {
-                "queries": [
-                    {
-                        "type": "builder_query",
-                        "spec": {
-                            "name": "A",
-                            "signal": "traces",
-                            "stepInterval": 60,
-                            "disabled": True,
-                            "filter": {"expression": "service.name = 'test'"},
-                            "having": {"expression": ""},
-                            "aggregations": [{"expression": "count()"}],
-                        },
-                    },
-                    {
-                        "type": "builder_query",
-                        "spec": {
-                            "name": "B",
-                            "signal": "traces",
-                            "stepInterval": 60,
-                            "disabled": True,
-                            "filter": {"expression": "service.name = 'another-test'"},
-                            "having": {"expression": ""},
-                            "aggregations": [{"expression": "count()"}],
-                        },
-                    },
-                    {
-                        "type": "builder_formula",
-                        "spec": {
-                            "name": "F1",
-                            "expression": "A + B",
-                            "disabled": False,
-                        },
-                    },
-                ]
-            },
-            "formatOptions": {"formatTableResultForUI": False, "fillGaps": True},
-        },
-    )
-
-    assert response.status_code == HTTPStatus.OK
-    assert response.json()["status"] == "success"
-
-    results = response.json()["data"]["data"]["results"]
-    assert len(results) == 1
-
-    ts_min_2 = int((now - timedelta(minutes=2)).timestamp() * 1000)
-    ts_min_3 = int((now - timedelta(minutes=3)).timestamp() * 1000)
-
-    f1 = find_named_result(results, "F1")
-    assert f1 is not None, "Expected formula result named F1"
-
-    aggregations = f1.get("aggregations") or []
-    assert len(aggregations) == 1
-    series = aggregations[0]["series"]
-    assert len(series) >= 1
-
-    assert_minutely_bucket_values(
-        series[0]["values"],
-        now,
-        expected_by_ts={ts_min_3: 1, ts_min_2: 1},
-        context="traces/fillGaps/F1",
-    )
-
-
-def test_traces_fill_gaps_formula_with_group_by(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    insert_traces: Callable[[list[Traces]], None],
-) -> None:
-    """
-    Test fillGaps for traces with formula and groupBy.
-    """
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-
-    traces: list[Traces] = [
-        Traces(
-            timestamp=now - timedelta(minutes=3),
-            duration=timedelta(seconds=1),
-            trace_id=TraceIdGenerator.trace_id(),
-            span_id=TraceIdGenerator.span_id(),
-            parent_span_id="",
-            name="span-group1",
-            kind=TracesKind.SPAN_KIND_SERVER,
-            status_code=TracesStatusCode.STATUS_CODE_OK,
-            status_message="",
-            resources={"service.name": "group1"},
-            attributes={"http.method": "GET"},
-        ),
-        Traces(
-            timestamp=now - timedelta(minutes=2),
-            duration=timedelta(seconds=1),
-            trace_id=TraceIdGenerator.trace_id(),
-            span_id=TraceIdGenerator.span_id(),
-            parent_span_id="",
-            name="span-group2",
-            kind=TracesKind.SPAN_KIND_SERVER,
-            status_code=TracesStatusCode.STATUS_CODE_OK,
-            status_message="",
-            resources={"service.name": "group2"},
-            attributes={"http.method": "POST"},
-        ),
-    ]
-    insert_traces(traces)
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
-    end_ms = int(now.timestamp() * 1000)
-
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
-        timeout=5,
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "schemaVersion": "v1",
-            "start": start_ms,
-            "end": end_ms,
-            "requestType": "time_series",
-            "compositeQuery": {
-                "queries": [
-                    {
-                        "type": "builder_query",
-                        "spec": {
-                            "name": "A",
-                            "signal": "traces",
-                            "stepInterval": 60,
-                            "disabled": True,
-                            "groupBy": [
-                                {
-                                    "name": "service.name",
-                                    "fieldDataType": "string",
-                                    "fieldContext": "resource",
-                                }
-                            ],
-                            "having": {"expression": ""},
-                            "aggregations": [{"expression": "count()"}],
-                        },
-                    },
-                    {
-                        "type": "builder_query",
-                        "spec": {
-                            "name": "B",
-                            "signal": "traces",
-                            "stepInterval": 60,
-                            "disabled": True,
-                            "groupBy": [
-                                {
-                                    "name": "service.name",
-                                    "fieldDataType": "string",
-                                    "fieldContext": "resource",
-                                }
-                            ],
-                            "having": {"expression": ""},
-                            "aggregations": [{"expression": "count()"}],
-                        },
-                    },
-                    {
-                        "type": "builder_formula",
-                        "spec": {
-                            "name": "F1",
-                            "expression": "A + B",
-                            "disabled": False,
-                        },
-                    },
-                ]
-            },
-            "formatOptions": {"formatTableResultForUI": False, "fillGaps": True},
-        },
-    )
-
-    assert response.status_code == HTTPStatus.OK
-    assert response.json()["status"] == "success"
-
-    results = response.json()["data"]["data"]["results"]
-    assert len(results) == 1
-
-    ts_min_2 = int((now - timedelta(minutes=2)).timestamp() * 1000)
-    ts_min_3 = int((now - timedelta(minutes=3)).timestamp() * 1000)
-
-    f1 = find_named_result(results, "F1")
-    assert f1 is not None, "Expected formula result named F1"
-
-    aggregations = f1.get("aggregations") or []
-    assert len(aggregations) == 1
-    series = aggregations[0]["series"]
+    assert response.status_code == HTTPStatus.OK, response.text
+    series = get_all_series(response.json(), "A")
     assert len(series) == 2
 
-    series_by_service = index_series_by_label(series, "service.name")
-    assert set(series_by_service.keys()) == {"group1", "group2"}
-
-    expectations: dict[str, dict[int, float]] = {
-        "group1": {ts_min_3: 2},
-        "group2": {ts_min_2: 2},
-    }
-
-    for service_name, s in series_by_service.items():
-        assert_minutely_bucket_values(
-            s["values"],
-            now,
-            expected_by_ts=expectations[service_name],
-            context=f"traces/fillGaps/F1/{service_name}",
-        )
+    by_service = index_series_by_label(series, "service.name")
+    assert set(by_service) == {"service-a", "service-b"}
+    assert_minutely_bucket_values(by_service["service-a"]["values"], now, expected_by_ts={_bucket_ms(span_a): 1}, context=f"traces/{fill_mode}/service-a")
+    assert_minutely_bucket_values(by_service["service-b"]["values"], now, expected_by_ts={_bucket_ms(span_b): 1}, context=f"traces/{fill_mode}/service-b")
 
 
-def test_traces_fill_zero(
+@pytest.mark.parametrize("fill_mode", FILL_MODES)
+@pytest.mark.parametrize("noise", ["clean", "corrupt"])
+def test_traces_fill_formula(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
+    noise: str,
+    fill_mode: str,
 ) -> None:
     """
-    Test fillZero function for traces without groupBy.
-    """
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    Setup:
+    'test' service span 3 minutes ago, 'another-test' service span 2 minutes ago.
 
-    traces: list[Traces] = [
-        Traces(
-            timestamp=now - timedelta(minutes=3),
-            duration=timedelta(seconds=1),
-            trace_id=TraceIdGenerator.trace_id(),
-            span_id=TraceIdGenerator.span_id(),
-            parent_span_id="",
-            name="test-span",
-            kind=TracesKind.SPAN_KIND_SERVER,
-            status_code=TracesStatusCode.STATUS_CODE_OK,
-            status_message="",
-            resources={"service.name": "test"},
-            attributes={"http.method": "GET"},
-        ),
-    ]
-    insert_traces(traces)
+    Tests:
+    A formula F1 = A + B over two disabled per-service count() queries fills empty
+    buckets to 0, so F1 carries a 1 in each service's populated bucket.
+    """
+    extra_attrs, extra_resources = trace_noise(noise)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    span_test = Traces(
+        timestamp=now - timedelta(minutes=3),
+        duration=timedelta(seconds=1),
+        trace_id=TraceIdGenerator.trace_id(),
+        span_id=TraceIdGenerator.span_id(),
+        name="test-span",
+        kind=TracesKind.SPAN_KIND_SERVER,
+        status_code=TracesStatusCode.STATUS_CODE_OK,
+        resources={"service.name": "test", **extra_resources},
+        attributes={"http.method": "GET", **extra_attrs},
+    )
+    span_other = Traces(
+        timestamp=now - timedelta(minutes=2),
+        duration=timedelta(seconds=1),
+        trace_id=TraceIdGenerator.trace_id(),
+        span_id=TraceIdGenerator.span_id(),
+        name="another-test-span",
+        kind=TracesKind.SPAN_KIND_SERVER,
+        status_code=TracesStatusCode.STATUS_CODE_OK,
+        resources={"service.name": "another-test", **extra_resources},
+        attributes={"http.method": "POST", **extra_attrs},
+    )
+    insert_traces([span_test, span_other])
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    functions = [{"name": "fillZero"}] if fill_mode == "fillZero" else None
+    format_options = {"formatTableResultForUI": False, "fillGaps": fill_mode == "fillGaps"}
 
-    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
-    end_ms = int(now.timestamp() * 1000)
-
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
-        timeout=5,
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "schemaVersion": "v1",
-            "start": start_ms,
-            "end": end_ms,
-            "requestType": "time_series",
-            "compositeQuery": {
-                "queries": [
-                    {
-                        "type": "builder_query",
-                        "spec": {
-                            "name": "A",
-                            "signal": "traces",
-                            "stepInterval": 60,
-                            "disabled": False,
-                            "having": {"expression": ""},
-                            "aggregations": [{"expression": "count()"}],
-                            "functions": [{"name": "fillZero"}],
-                        },
-                    }
-                ]
-            },
-            "formatOptions": {"formatTableResultForUI": False, "fillGaps": False},
-        },
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=int((now - timedelta(minutes=5)).timestamp() * 1000),
+        end_ms=int(now.timestamp() * 1000),
+        request_type=RequestType.TIME_SERIES,
+        queries=[
+            build_traces_scalar_query(aggregations=[build_aggregation("count()")], filter_expression="resource.service.name = 'test'", disabled=True),
+            build_traces_scalar_query(name="B", aggregations=[build_aggregation("count()")], filter_expression="resource.service.name = 'another-test'", disabled=True),
+            build_formula_query("F1", "A + B", functions=functions),
+        ],
+        format_options=format_options,
     )
 
-    assert response.status_code == HTTPStatus.OK
-    assert response.json()["status"] == "success"
-
-    results = response.json()["data"]["data"]["results"]
-    assert len(results) == 1
-
-    aggregations = results[0].get("aggregations") or []
-    assert len(aggregations) == 1
-    series = aggregations[0]["series"]
+    assert response.status_code == HTTPStatus.OK, response.text
+    f1 = find_named_result(response.json()["data"]["data"]["results"], "F1")
+    assert f1 is not None
+    series = f1["aggregations"][0]["series"]
     assert len(series) >= 1
-    values = series[0]["values"]
-
-    ts_min_3 = int((now - timedelta(minutes=3)).timestamp() * 1000)
-    assert_minutely_bucket_values(
-        values,
-        now,
-        expected_by_ts={ts_min_3: 1},
-        context="traces/fillZero",
-    )
+    assert_minutely_bucket_values(series[0]["values"], now, expected_by_ts={_bucket_ms(span_test): 1, _bucket_ms(span_other): 1}, context=f"traces/{fill_mode}/F1")
 
 
-def test_traces_fill_zero_with_group_by(
+@pytest.mark.parametrize("fill_mode", FILL_MODES)
+@pytest.mark.parametrize("noise", ["clean", "corrupt"])
+def test_traces_fill_formula_group_by(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
+    noise: str,
+    fill_mode: str,
 ) -> None:
     """
-    Test fillZero function for traces with groupBy.
-    """
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    Setup:
+    group1 span 3 minutes ago, group2 span 2 minutes ago.
 
-    traces: list[Traces] = [
-        Traces(
-            timestamp=now - timedelta(minutes=3),
-            duration=timedelta(seconds=1),
-            trace_id=TraceIdGenerator.trace_id(),
-            span_id=TraceIdGenerator.span_id(),
-            parent_span_id="",
-            name="span-a",
-            kind=TracesKind.SPAN_KIND_SERVER,
-            status_code=TracesStatusCode.STATUS_CODE_OK,
-            status_message="",
-            resources={"service.name": "service-a"},
-            attributes={"http.method": "GET"},
-        ),
-        Traces(
-            timestamp=now - timedelta(minutes=2),
-            duration=timedelta(seconds=1),
-            trace_id=TraceIdGenerator.trace_id(),
-            span_id=TraceIdGenerator.span_id(),
-            parent_span_id="",
-            name="span-b",
-            kind=TracesKind.SPAN_KIND_SERVER,
-            status_code=TracesStatusCode.STATUS_CODE_OK,
-            status_message="",
-            resources={"service.name": "service-b"},
-            attributes={"http.method": "POST"},
-        ),
-    ]
-    insert_traces(traces)
+    Tests:
+    A formula F1 = A + B over two disabled group-by count() queries yields one
+    series per service, each carrying A+B (=2) in its populated bucket and zeros
+    elsewhere.
+    """
+    extra_attrs, extra_resources = trace_noise(noise)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    span_g1 = Traces(
+        timestamp=now - timedelta(minutes=3),
+        duration=timedelta(seconds=1),
+        trace_id=TraceIdGenerator.trace_id(),
+        span_id=TraceIdGenerator.span_id(),
+        name="span-group1",
+        kind=TracesKind.SPAN_KIND_SERVER,
+        status_code=TracesStatusCode.STATUS_CODE_OK,
+        resources={"service.name": "group1", **extra_resources},
+        attributes={"http.method": "GET", **extra_attrs},
+    )
+    span_g2 = Traces(
+        timestamp=now - timedelta(minutes=2),
+        duration=timedelta(seconds=1),
+        trace_id=TraceIdGenerator.trace_id(),
+        span_id=TraceIdGenerator.span_id(),
+        name="span-group2",
+        kind=TracesKind.SPAN_KIND_SERVER,
+        status_code=TracesStatusCode.STATUS_CODE_OK,
+        resources={"service.name": "group2", **extra_resources},
+        attributes={"http.method": "POST", **extra_attrs},
+    )
+    insert_traces([span_g1, span_g2])
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    functions = [{"name": "fillZero"}] if fill_mode == "fillZero" else None
+    format_options = {"formatTableResultForUI": False, "fillGaps": fill_mode == "fillGaps"}
 
-    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
-    end_ms = int(now.timestamp() * 1000)
-
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
-        timeout=5,
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "schemaVersion": "v1",
-            "start": start_ms,
-            "end": end_ms,
-            "requestType": "time_series",
-            "compositeQuery": {
-                "queries": [
-                    {
-                        "type": "builder_query",
-                        "spec": {
-                            "name": "A",
-                            "signal": "traces",
-                            "stepInterval": 60,
-                            "disabled": False,
-                            "groupBy": [
-                                {
-                                    "name": "service.name",
-                                    "fieldDataType": "string",
-                                    "fieldContext": "resource",
-                                }
-                            ],
-                            "having": {"expression": ""},
-                            "aggregations": [{"expression": "count()"}],
-                            "functions": [{"name": "fillZero"}],
-                        },
-                    }
-                ]
-            },
-            "formatOptions": {"formatTableResultForUI": False, "fillGaps": False},
-        },
+    group_by = [build_group_by_field("service.name", "string", "resource")]
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=int((now - timedelta(minutes=5)).timestamp() * 1000),
+        end_ms=int(now.timestamp() * 1000),
+        request_type=RequestType.TIME_SERIES,
+        queries=[
+            build_traces_scalar_query(aggregations=[build_aggregation("count()")], group_by=group_by, disabled=True),
+            build_traces_scalar_query(name="B", aggregations=[build_aggregation("count()")], group_by=group_by, disabled=True),
+            build_formula_query("F1", "A + B", functions=functions),
+        ],
+        format_options=format_options,
     )
 
-    assert response.status_code == HTTPStatus.OK
-    assert response.json()["status"] == "success"
-
-    results = response.json()["data"]["data"]["results"]
-    assert len(results) == 1
-
-    aggregations = results[0]["aggregations"]
-    assert len(aggregations) == 1
-
-    series = aggregations[0]["series"]
-    assert len(series) == 2, "Expected 2 series for 2 service groups"
-
-    ts_min_2 = int((now - timedelta(minutes=2)).timestamp() * 1000)
-    ts_min_3 = int((now - timedelta(minutes=3)).timestamp() * 1000)
-
-    series_by_service = index_series_by_label(series, "service.name")
-    assert set(series_by_service.keys()) == {"service-a", "service-b"}
-
-    expectations: dict[str, dict[int, float]] = {
-        "service-a": {ts_min_3: 1},
-        "service-b": {ts_min_2: 1},
-    }
-
-    for service_name, s in series_by_service.items():
-        assert_minutely_bucket_values(
-            s["values"],
-            now,
-            expected_by_ts=expectations[service_name],
-            context=f"traces/fillZero/{service_name}",
-        )
-
-
-def test_traces_fill_zero_formula(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    insert_traces: Callable[[list[Traces]], None],
-) -> None:
-    """
-    Test fillZero function for traces with formula.
-    """
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-
-    traces: list[Traces] = [
-        Traces(
-            timestamp=now - timedelta(minutes=3),
-            duration=timedelta(seconds=1),
-            trace_id=TraceIdGenerator.trace_id(),
-            span_id=TraceIdGenerator.span_id(),
-            parent_span_id="",
-            name="test-span",
-            kind=TracesKind.SPAN_KIND_SERVER,
-            status_code=TracesStatusCode.STATUS_CODE_OK,
-            status_message="",
-            resources={"service.name": "test"},
-            attributes={"http.method": "GET"},
-        ),
-        Traces(
-            timestamp=now - timedelta(minutes=2),
-            duration=timedelta(seconds=1),
-            trace_id=TraceIdGenerator.trace_id(),
-            span_id=TraceIdGenerator.span_id(),
-            parent_span_id="",
-            name="another-test-span",
-            kind=TracesKind.SPAN_KIND_SERVER,
-            status_code=TracesStatusCode.STATUS_CODE_OK,
-            status_message="",
-            resources={"service.name": "another-test"},
-            attributes={"http.method": "POST"},
-        ),
-    ]
-    insert_traces(traces)
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
-    end_ms = int(now.timestamp() * 1000)
-
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
-        timeout=5,
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "schemaVersion": "v1",
-            "start": start_ms,
-            "end": end_ms,
-            "requestType": "time_series",
-            "compositeQuery": {
-                "queries": [
-                    {
-                        "type": "builder_query",
-                        "spec": {
-                            "name": "A",
-                            "signal": "traces",
-                            "stepInterval": 60,
-                            "disabled": True,
-                            "filter": {"expression": "service.name = 'test'"},
-                            "having": {"expression": ""},
-                            "aggregations": [{"expression": "count()"}],
-                        },
-                    },
-                    {
-                        "type": "builder_query",
-                        "spec": {
-                            "name": "B",
-                            "signal": "traces",
-                            "stepInterval": 60,
-                            "disabled": True,
-                            "filter": {"expression": "service.name = 'another-test'"},
-                            "having": {"expression": ""},
-                            "aggregations": [{"expression": "count()"}],
-                        },
-                    },
-                    {
-                        "type": "builder_formula",
-                        "spec": {
-                            "name": "F1",
-                            "expression": "A + B",
-                            "disabled": False,
-                            "functions": [{"name": "fillZero"}],
-                        },
-                    },
-                ]
-            },
-            "formatOptions": {"formatTableResultForUI": False, "fillGaps": False},
-        },
-    )
-
-    assert response.status_code == HTTPStatus.OK
-    assert response.json()["status"] == "success"
-
-    results = response.json()["data"]["data"]["results"]
-    assert len(results) == 1
-
-    ts_min_2 = int((now - timedelta(minutes=2)).timestamp() * 1000)
-    ts_min_3 = int((now - timedelta(minutes=3)).timestamp() * 1000)
-
-    f1 = find_named_result(results, "F1")
-    assert f1 is not None, "Expected formula result named F1"
-    aggregations = f1.get("aggregations") or []
-    assert len(aggregations) == 1
-    series = aggregations[0]["series"]
-    assert len(series) >= 1
-
-    assert_minutely_bucket_values(
-        series[0]["values"],
-        now,
-        expected_by_ts={ts_min_3: 1, ts_min_2: 1},
-        context="traces/fillZero/F1",
-    )
-
-
-def test_traces_fill_zero_formula_with_group_by(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    insert_traces: Callable[[list[Traces]], None],
-) -> None:
-    """
-    Test fillZero function for traces with formula and groupBy.
-    """
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-
-    traces: list[Traces] = [
-        Traces(
-            timestamp=now - timedelta(minutes=3),
-            duration=timedelta(seconds=1),
-            trace_id=TraceIdGenerator.trace_id(),
-            span_id=TraceIdGenerator.span_id(),
-            parent_span_id="",
-            name="span-group1",
-            kind=TracesKind.SPAN_KIND_SERVER,
-            status_code=TracesStatusCode.STATUS_CODE_OK,
-            status_message="",
-            resources={"service.name": "group1"},
-            attributes={"http.method": "GET"},
-        ),
-        Traces(
-            timestamp=now - timedelta(minutes=2),
-            duration=timedelta(seconds=1),
-            trace_id=TraceIdGenerator.trace_id(),
-            span_id=TraceIdGenerator.span_id(),
-            parent_span_id="",
-            name="span-group2",
-            kind=TracesKind.SPAN_KIND_SERVER,
-            status_code=TracesStatusCode.STATUS_CODE_OK,
-            status_message="",
-            resources={"service.name": "group2"},
-            attributes={"http.method": "POST"},
-        ),
-    ]
-    insert_traces(traces)
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
-    end_ms = int(now.timestamp() * 1000)
-
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
-        timeout=5,
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "schemaVersion": "v1",
-            "start": start_ms,
-            "end": end_ms,
-            "requestType": "time_series",
-            "compositeQuery": {
-                "queries": [
-                    {
-                        "type": "builder_query",
-                        "spec": {
-                            "name": "A",
-                            "signal": "traces",
-                            "stepInterval": 60,
-                            "disabled": True,
-                            "groupBy": [
-                                {
-                                    "name": "service.name",
-                                    "fieldDataType": "string",
-                                    "fieldContext": "resource",
-                                }
-                            ],
-                            "having": {"expression": ""},
-                            "aggregations": [{"expression": "count()"}],
-                        },
-                    },
-                    {
-                        "type": "builder_query",
-                        "spec": {
-                            "name": "B",
-                            "signal": "traces",
-                            "stepInterval": 60,
-                            "disabled": True,
-                            "groupBy": [
-                                {
-                                    "name": "service.name",
-                                    "fieldDataType": "string",
-                                    "fieldContext": "resource",
-                                }
-                            ],
-                            "having": {"expression": ""},
-                            "aggregations": [{"expression": "count()"}],
-                        },
-                    },
-                    {
-                        "type": "builder_formula",
-                        "spec": {
-                            "name": "F1",
-                            "expression": "A + B",
-                            "disabled": False,
-                            "functions": [{"name": "fillZero"}],
-                        },
-                    },
-                ]
-            },
-            "formatOptions": {"formatTableResultForUI": False, "fillGaps": False},
-        },
-    )
-
-    assert response.status_code == HTTPStatus.OK
-    assert response.json()["status"] == "success"
-
-    results = response.json()["data"]["data"]["results"]
-    assert len(results) == 1
-
-    ts_min_2 = int((now - timedelta(minutes=2)).timestamp() * 1000)
-    ts_min_3 = int((now - timedelta(minutes=3)).timestamp() * 1000)
-
-    f1 = find_named_result(results, "F1")
-    assert f1 is not None, "Expected formula result named F1"
-    aggregations = f1.get("aggregations") or []
-    assert len(aggregations) == 1
-    series = aggregations[0]["series"]
+    assert response.status_code == HTTPStatus.OK, response.text
+    f1 = find_named_result(response.json()["data"]["data"]["results"], "F1")
+    assert f1 is not None
+    series = f1["aggregations"][0]["series"]
     assert len(series) == 2
 
-    series_by_service = index_series_by_label(series, "service.name")
-    assert set(series_by_service.keys()) == {"group1", "group2"}
-
-    expectations: dict[str, dict[int, float]] = {
-        "group1": {ts_min_3: 2},
-        "group2": {ts_min_2: 2},
-    }
-
-    for service_name, s in series_by_service.items():
-        assert_minutely_bucket_values(
-            s["values"],
-            now,
-            expected_by_ts=expectations[service_name],
-            context=f"traces/fillZero/F1/{service_name}",
-        )
+    by_service = index_series_by_label(series, "service.name")
+    assert set(by_service) == {"group1", "group2"}
+    assert_minutely_bucket_values(by_service["group1"]["values"], now, expected_by_ts={_bucket_ms(span_g1): 2}, context=f"traces/{fill_mode}/F1/group1")
+    assert_minutely_bucket_values(by_service["group2"]["values"], now, expected_by_ts={_bucket_ms(span_g2): 2}, context=f"traces/{fill_mode}/F1/group2")

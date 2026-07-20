@@ -4,42 +4,43 @@ import { Popover, PopoverContent, PopoverTrigger } from '@signozhq/ui/popover';
 import { RadioGroup, RadioGroupItem } from '@signozhq/ui/radio-group';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
-import { useClientExport } from 'hooks/useExportData/useClientExport';
+import {
+	ClientExportData,
+	useClientExport,
+} from 'hooks/useExportData/useClientExport';
 import { ExportFormat } from 'lib/exportData/types';
 import { useCallback, useState } from 'react';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { QueryRangeResponseV5 } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
-import './TimeseriesExportMenu.styles.scss';
+import './ExportMenu.styles.scss';
 
-interface TimeseriesExportMenuProps {
+interface ExportMenuProps {
 	dataSource: DataSource;
-	queryResponse: QueryRangeResponseV5;
+	// The queryRange response object the view holds — the hook picks the
+	// serializer (timeseries / table) from what it carries.
+	data: ClientExportData;
 	query?: Query;
 	yAxisUnit?: string;
-	legendMap?: Record<string, string>;
 	fileName?: string;
 }
 
-// Download menu for in-memory timeseries data (client-side serialization).
+// Download menu for in-memory query results (client-side serialization).
 // The raw/list backend export keeps its own menu in DownloadOptionsMenu.
-export default function TimeseriesExportMenu({
+export default function ExportMenu({
 	dataSource,
-	queryResponse,
+	data,
 	query,
 	yAxisUnit,
-	legendMap,
 	fileName,
-}: TimeseriesExportMenuProps): JSX.Element {
+}: ExportMenuProps): JSX.Element {
 	const [exportFormat, setExportFormat] = useState<string>(ExportFormat.Csv);
 	const [isPopoverOpen, setIsPopoverOpen] = useState<boolean>(false);
 
 	const { isExporting, handleExport: handleClientExport } = useClientExport({
-		response: queryResponse,
+		data,
 		query,
 		yAxisUnit,
-		legendMap,
 		fileName,
 	});
 
@@ -57,7 +58,7 @@ export default function TimeseriesExportMenu({
 						color="secondary"
 						size="icon"
 						aria-label="Download"
-						data-testid={`timeseries-export-${dataSource}`}
+						data-testid={`export-menu-${dataSource}`}
 						disabled={isExporting}
 						loading={isExporting}
 					>
@@ -65,7 +66,7 @@ export default function TimeseriesExportMenu({
 					</Button>
 				</PopoverTrigger>
 			</TooltipSimple>
-			<PopoverContent align="end" className="timeseries-export-popover">
+			<PopoverContent align="end" className="export-menu-popover">
 				<div className="export-format">
 					<Typography.Text className="title">FORMAT</Typography.Text>
 					<RadioGroup value={exportFormat} onChange={setExportFormat}>

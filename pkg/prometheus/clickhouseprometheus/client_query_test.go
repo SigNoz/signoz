@@ -152,21 +152,22 @@ func TestClient_getFingerprintsFromClickhouseQuery(t *testing.T) {
 			setupMock: func(m cmock.ClickConnMockCommon, args ...any) {
 				rows := [][]any{
 					{uint64(123), `{"t1":"s1","t2":"s2"}`},
-					{uint64(234), `{"t1":"s1","t2":"s2"}`},
+					{uint64(234), `{"t1":"s1","t2":"s2","empty":""}`},
 				}
 				m.ExpectQuery(`SELECT fingerprint,labels`).WithArgs(args...).WillReturnRows(
 					cmock.NewRows(cols, rows),
 				)
 			},
 
+			// No synthetic fingerprint label (#8563), empty-valued labels
+			// dropped: both fingerprints present one labelset for
+			// querySamples to merge.
 			want: map[uint64][]prompb.Label{
 				123: {
-					{Name: "fingerprint", Value: "123"},
 					{Name: "t1", Value: "s1"},
 					{Name: "t2", Value: "s2"},
 				},
 				234: {
-					{Name: "fingerprint", Value: "234"},
 					{Name: "t1", Value: "s1"},
 					{Name: "t2", Value: "s2"},
 				},
@@ -207,4 +208,87 @@ func TestClient_getFingerprintsFromClickhouseQuery(t *testing.T) {
 			}
 		})
 	}
+}
+
+// Regression for the duplicate-series class behind #8563: fingerprints
+// sharing one labelset must come back as one merged series, the higher
+// fingerprint winning equal timestamps.
+func TestClient_QuerySamplesMergesIdenticalLabelSets(t *testing.T) {
+	ctx := context.Background()
+	cols := []cmock.ColumnType{
+		{Name: "metric_name", Type: "String"},
+		{Name: "fingerprint", Type: "UInt64"},
+		{Name: "unix_milli", Type: "Int64"},
+		{Name: "value", Type: "Float64"},
+		{Name: "flags", Type: "UInt32"},
+	}
+
+	canary := []prompb.Label{
+		{Name: "__name__", Value: "requests"},
+		{Name: "group", Value: "canary"},
+	}
+	production := []prompb.Label{
+		{Name: "__name__", Value: "requests"},
+		{Name: "group", Value: "production"},
+	}
+	fingerprints := map[uint64][]prompb.Label{
+		100: canary,
+		200: canary,
+		300: production,
+	}
+
+	telemetryStore := telemetrystoretest.New(telemetrystore.Config{Provider: "clickhouse"}, sqlmock.QueryMatcherRegexp)
+	// Rows arrive ordered by (fingerprint, unix_milli), matching the SQL.
+	values := [][]any{
+		{"requests", uint64(100), int64(1000), float64(1.0), uint32(0)},
+		{"requests", uint64(100), int64(2000), float64(2.0), uint32(0)},
+		{"requests", uint64(200), int64(2000), float64(20.0), uint32(0)},
+		{"requests", uint64(200), int64(3000), float64(30.0), uint32(0)},
+		{"requests", uint64(300), int64(1500), float64(5.0), uint32(0)},
+	}
+	telemetryStore.Mock().ExpectQuery("SELECT metric_name, fingerprint, unix_milli, value, flags").
+		WithArgs("requests", int64(1000), int64(3000)).
+		WillReturnRows(cmock.NewRows(cols, values))
+
+	readClient := client{telemetryStore: telemetryStore}
+	result, err := readClient.querySamples(ctx, 1000, 3000, fingerprints, "requests", "SELECT metric_name, fingerprint, unix_milli, value, flags", nil)
+	require.NoError(t, err)
+
+	assert.Equal(t, []*prompb.TimeSeries{
+		{
+			Labels: canary,
+			Samples: []prompb.Sample{
+				{Timestamp: 1000, Value: 1.0},
+				{Timestamp: 2000, Value: 20.0},
+				{Timestamp: 3000, Value: 30.0},
+			},
+		},
+		{
+			Labels: production,
+			Samples: []prompb.Sample{
+				{Timestamp: 1500, Value: 5.0},
+			},
+		},
+	}, result)
+}
+
+// Hash grouping must stay order-insensitive (stored JSON key order is not
+// canonical across fingerprints), and a 64-bit hash collision between
+// distinct labelsets must not merge them — splitByLabelSet is that guard.
+func TestLabelsHashAndCollisionSplit(t *testing.T) {
+	lbls := []prompb.Label{
+		{Name: "__name__", Value: "requests"},
+		{Name: "job", Value: "api"},
+		{Name: "instance", Value: "0"},
+	}
+	reversed := []prompb.Label{lbls[2], lbls[1], lbls[0]}
+	assert.Equal(t, labelsHash(lbls), labelsHash(reversed))
+
+	a := &prompb.TimeSeries{Labels: []prompb.Label{{Name: "job", Value: "x"}}}
+	b := &prompb.TimeSeries{Labels: []prompb.Label{{Name: "job", Value: "y"}}}
+	c := &prompb.TimeSeries{Labels: []prompb.Label{{Name: "job", Value: "x"}}}
+	got := splitByLabelSet([]*prompb.TimeSeries{a, b, c})
+	require.Len(t, got, 2)
+	assert.Equal(t, []*prompb.TimeSeries{a, c}, got[0])
+	assert.Equal(t, []*prompb.TimeSeries{b}, got[1])
 }

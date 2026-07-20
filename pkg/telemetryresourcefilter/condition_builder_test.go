@@ -206,7 +206,7 @@ func TestConditionBuilder(t *testing.T) {
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-			cond, _, err := conditionBuilder.ConditionFor(context.Background(), valuer.UUID{}, 0, 0, tc.key, []*telemetrytypes.TelemetryFieldKey{tc.key}, tc.op, tc.value, sb)
+			cond, _, err := conditionBuilder.ConditionFor(context.Background(), valuer.UUID{}, 0, 0, tc.key, map[string][]*telemetrytypes.TelemetryFieldKey{tc.key.Name: {tc.key}}, qbtypes.ConditionBuilderOptions{}, tc.op, tc.value, sb)
 			sb.Where(cond...)
 
 			if tc.expectedErr != nil {

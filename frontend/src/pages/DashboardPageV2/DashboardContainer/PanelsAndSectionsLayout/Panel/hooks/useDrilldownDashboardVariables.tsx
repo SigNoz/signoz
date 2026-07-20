@@ -105,7 +105,8 @@ export function useDrilldownDashboardVariables({
 				type: 'DYNAMIC',
 				multiSelect: true,
 				dynamicAttribute: fieldName,
-				dynamicSignal: signal ?? DYNAMIC_SIGNAL_ALL,
+				// `||` (not `??`): an empty "any" signal maps to All, same as unset.
+				dynamicSignal: signal || DYNAMIC_SIGNAL_ALL,
 			};
 			try {
 				await patchAsync(
