@@ -44,6 +44,7 @@ func (s *store) ListByResource(ctx context.Context, orgID valuer.UUID, kind core
 		Where("tr.kind = ?", kind).
 		Where("tr.resource_id = ?", resourceID).
 		Where("tag.org_id = ?", orgID).
+		OrderExpr("lower(tag.key) ASC, lower(tag.value) ASC").
 		Scan(ctx)
 	if err != nil {
 		return nil, err
@@ -71,6 +72,7 @@ func (s *store) ListByResources(ctx context.Context, orgID valuer.UUID, kind cor
 		Where("tr.kind = ?", kind).
 		Where("tr.resource_id IN (?)", bun.In(resourceIDs)).
 		Where("tag.org_id = ?", orgID).
+		OrderExpr("lower(tag.key) ASC, lower(tag.value) ASC").
 		Scan(ctx)
 	if err != nil {
 		return nil, err

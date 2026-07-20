@@ -570,7 +570,11 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
     assert alpha["schemaVersion"] == "v6"
     assert alpha["source"] == "user"
     assert alpha["locked"] is False
-    assert {"key": "team", "value": "pulse"} in alpha["tags"]
+    # tags sorted by (key, value); created team/pulse, env/prod, so order flips
+    assert alpha["tags"] == [
+        {"key": "env", "value": "prod"},
+        {"key": "team", "value": "pulse"},
+    ]
 
     # ── stage 3: list everything ─────────────────────────────────────────────
     response = requests.get(
@@ -590,6 +594,13 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
         "Epsilon Metrics",
         "Zeta Overview",
     }
+    # per-dashboard tags sorted too; created team/storage, env/dev, tier/critical
+    delta = next(d for d in body["data"]["dashboards"] if d["spec"]["display"]["name"] == "Delta Storage")
+    assert delta["tags"] == [
+        {"key": "env", "value": "dev"},
+        {"key": "team", "value": "storage"},
+        {"key": "tier", "value": "critical"},
+    ]
     # top-level tags = org-wide distinct tag set, sorted case-insensitively
     # by (key, value). Asserting the exact list (not a set) locks in the sort.
     assert body["data"]["tags"] == [
