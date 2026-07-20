@@ -519,8 +519,8 @@ type CompositeQuery struct {
 
 	Queries []qbtypes.QueryEnvelope `json:"queries,omitempty"`
 
-	PanelType PanelType `json:"panelType"`
-	QueryType QueryType `json:"queryType"`
+	PanelType PanelType `json:"panelType" required:"true"`
+	QueryType QueryType `json:"queryType" required:"true"`
 	// Unit for the time series data shown in the graph
 	// This is used in alerts to format the value and threshold
 	Unit string `json:"unit,omitempty"`
@@ -1429,17 +1429,17 @@ func (p *Point) UnmarshalJSON(data []byte) error {
 // The source page could be "traces", "logs", "metrics".
 type SavedView struct {
 	ID             valuer.UUID     `json:"id,omitempty"`
-	Name           string          `json:"name"`
-	Category       string          `json:"category"`
-	CreatedAt      time.Time       `json:"createdAt"`
-	CreatedBy      string          `json:"createdBy"`
-	UpdatedAt      time.Time       `json:"updatedAt"`
-	UpdatedBy      string          `json:"updatedBy"`
-	SourcePage     string          `json:"sourcePage"`
-	Tags           []string        `json:"tags"`
-	CompositeQuery *CompositeQuery `json:"compositeQuery"`
+	Name           string          `json:"name" required:"true"`
+	Category       string          `json:"category" required:"true"`
+	CreatedAt      time.Time       `json:"createdAt" required:"true"`
+	CreatedBy      string          `json:"createdBy" required:"true"`
+	UpdatedAt      time.Time       `json:"updatedAt" required:"true"`
+	UpdatedBy      string          `json:"updatedBy" required:"true"`
+	SourcePage     string          `json:"sourcePage" required:"true"`
+	Tags           []string        `json:"tags" required:"true" nullable:"true"`
+	CompositeQuery *CompositeQuery `json:"compositeQuery" required:"true"`
 	// ExtraData is JSON encoded data used by frontend to store additional data
-	ExtraData string `json:"extraData"`
+	ExtraData string `json:"extraData" required:"true"`
 }
 
 func (eq *SavedView) Validate() error {

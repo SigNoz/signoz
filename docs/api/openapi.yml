@@ -8844,6 +8844,215 @@ components:
       required:
       - id
       type: object
+    V3AttributeKey:
+      properties:
+        dataType:
+          type: string
+        isColumn:
+          type: boolean
+        isJSON:
+          type: boolean
+        key:
+          type: string
+        type:
+          type: string
+      type: object
+    V3BuilderQuery:
+      properties:
+        aggregateAttribute:
+          $ref: '#/components/schemas/V3AttributeKey'
+        aggregateOperator:
+          type: string
+        dataSource:
+          type: string
+        disabled:
+          type: boolean
+        expression:
+          type: string
+        filters:
+          $ref: '#/components/schemas/V3FilterSet'
+        functions:
+          items:
+            $ref: '#/components/schemas/V3Function'
+          type: array
+        groupBy:
+          items:
+            $ref: '#/components/schemas/V3AttributeKey'
+          type: array
+        having:
+          items:
+            $ref: '#/components/schemas/V3Having'
+          type: array
+        legend:
+          type: string
+        limit:
+          minimum: 0
+          type: integer
+        offset:
+          minimum: 0
+          type: integer
+        orderBy:
+          items:
+            $ref: '#/components/schemas/V3OrderBy'
+          type: array
+        pageSize:
+          minimum: 0
+          type: integer
+        queryName:
+          type: string
+        reduceTo:
+          type: string
+        selectColumns:
+          items:
+            $ref: '#/components/schemas/V3AttributeKey'
+          type: array
+        seriesAggregation:
+          type: string
+        spaceAggregation:
+          type: string
+        stepInterval:
+          format: int64
+          type: integer
+        temporality:
+          type: string
+        timeAggregation:
+          type: string
+      type: object
+    V3ClickHouseQuery:
+      properties:
+        disabled:
+          type: boolean
+        legend:
+          type: string
+        query:
+          type: string
+      type: object
+    V3CompositeQuery:
+      properties:
+        builderQueries:
+          additionalProperties:
+            $ref: '#/components/schemas/V3BuilderQuery'
+          type: object
+        chQueries:
+          additionalProperties:
+            $ref: '#/components/schemas/V3ClickHouseQuery'
+          type: object
+        fillGaps:
+          type: boolean
+        panelType:
+          type: string
+        promQueries:
+          additionalProperties:
+            $ref: '#/components/schemas/V3PromQuery'
+          type: object
+        queries:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelope'
+          type: array
+        queryType:
+          type: string
+        unit:
+          type: string
+      required:
+      - panelType
+      - queryType
+      type: object
+    V3FilterItem:
+      properties:
+        key:
+          $ref: '#/components/schemas/V3AttributeKey'
+        op:
+          type: string
+        value: {}
+      type: object
+    V3FilterSet:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/V3FilterItem'
+          nullable: true
+          type: array
+        op:
+          type: string
+      type: object
+    V3Function:
+      properties:
+        args:
+          items: {}
+          type: array
+        name:
+          type: string
+        namedArgs:
+          additionalProperties: {}
+          type: object
+      type: object
+    V3Having:
+      properties:
+        columnName:
+          type: string
+        op:
+          type: string
+        value: {}
+      type: object
+    V3OrderBy:
+      properties:
+        columnName:
+          type: string
+        order:
+          type: string
+      type: object
+    V3PromQuery:
+      properties:
+        disabled:
+          type: boolean
+        legend:
+          type: string
+        query:
+          type: string
+        stats:
+          type: string
+      type: object
+    V3SavedView:
+      properties:
+        category:
+          type: string
+        compositeQuery:
+          $ref: '#/components/schemas/V3CompositeQuery'
+        createdAt:
+          format: date-time
+          type: string
+        createdBy:
+          type: string
+        extraData:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        sourcePage:
+          type: string
+        tags:
+          items:
+            type: string
+          nullable: true
+          type: array
+        updatedAt:
+          format: date-time
+          type: string
+        updatedBy:
+          type: string
+      required:
+      - name
+      - category
+      - createdAt
+      - createdBy
+      - updatedAt
+      - updatedBy
+      - sourcePage
+      - tags
+      - compositeQuery
+      - extraData
+      type: object
     ZeustypesGettableHost:
       properties:
         hosts:
@@ -22531,6 +22740,313 @@ paths:
       summary: Test alert rule
       tags:
       - rules
+  /api/v2/saved_views:
+    get:
+      deprecated: false
+      description: Returns saved views for the calling user's org, optionally filtered
+        by source page, name, and category.
+      operationId: ListSavedViews
+      parameters:
+      - in: query
+        name: sourcePage
+        schema:
+          type: string
+      - in: query
+        name: name
+        schema:
+          type: string
+      - in: query
+        name: category
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/V3SavedView'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List saved views
+      tags:
+      - saved_view
+    post:
+      deprecated: false
+      description: Persists a saved view for the explore page. Returns the id of the
+        created view.
+      operationId: CreateSavedView
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/V3SavedView'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    nullable: true
+                    type: string
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Create saved view
+      tags:
+      - saved_view
+  /api/v2/saved_views/{viewId}:
+    delete:
+      deprecated: false
+      description: Deletes a saved view by id.
+      operationId: DeleteSavedView
+      parameters:
+      - in: path
+        name: viewId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Delete saved view
+      tags:
+      - saved_view
+    get:
+      deprecated: false
+      description: Returns a saved view by id.
+      operationId: GetSavedView
+      parameters:
+      - in: path
+        name: viewId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/V3SavedView'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get saved view
+      tags:
+      - saved_view
+    put:
+      deprecated: false
+      description: Replaces a saved view's name, tags, and query.
+      operationId: UpdateSavedView
+      parameters:
+      - in: path
+        name: viewId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/V3SavedView'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/V3SavedView'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Update saved view
+      tags:
+      - saved_view
   /api/v2/sessions:
     delete:
       deprecated: false
