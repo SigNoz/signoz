@@ -60,7 +60,7 @@ function SourceSelector({
 			>
 				<RadioGroupItem
 					value="auto"
-					containerClassName={cx(styles.sourceRadio, styles.sourceRadioAuto)}
+					containerClassName={styles.sourceRadio}
 					testId="drawer-source-auto"
 					disabled={disableAuto}
 				>
@@ -73,7 +73,7 @@ function SourceSelector({
 				</RadioGroupItem>
 				<RadioGroupItem
 					value="override"
-					containerClassName={cx(styles.sourceRadio, styles.sourceRadioOverride)}
+					containerClassName={styles.sourceRadio}
 					testId="drawer-source-override"
 				>
 					<div className={styles.sourceRadioTitle}>User override</div>

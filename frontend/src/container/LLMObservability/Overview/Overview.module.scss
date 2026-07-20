@@ -9,6 +9,4 @@
 	:global([class*='dashboardPageHeader']) {
 		display: none;
 	}
-	// remove margin added by the hidden header to avoid extra whitespace at the top of the page
-	margin-top: calc(var(--spacing-8) * -1);
 }
