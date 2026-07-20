@@ -3479,6 +3479,7 @@ export enum TelemetrytypesFieldContextDTO {
 	resource = 'resource',
 	attribute = 'attribute',
 	body = 'body',
+	'' = '',
 }
 export enum TelemetrytypesFieldDataTypeDTO {
 	string = 'string',
@@ -3486,11 +3487,13 @@ export enum TelemetrytypesFieldDataTypeDTO {
 	float64 = 'float64',
 	int64 = 'int64',
 	number = 'number',
+	'' = '',
 }
 export enum TelemetrytypesSignalDTO {
 	traces = 'traces',
 	logs = 'logs',
 	metrics = 'metrics',
+	'' = '',
 }
 export interface Querybuildertypesv5GroupByKeyDTO {
 	/**

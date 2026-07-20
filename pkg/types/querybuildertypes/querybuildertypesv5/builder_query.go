@@ -16,7 +16,7 @@ type QueryBuilderQuery[T any] struct {
 	Name string `json:"name"`
 
 	// stepInterval of the query
-	StepInterval Step `json:"stepInterval,omitempty"`
+	StepInterval Step `json:"stepInterval,omitzero"`
 
 	// signal to query
 	Signal telemetrytypes.Signal `json:"signal,omitempty"`
