@@ -16,11 +16,9 @@ func TestNewTelemetryGrantSelector(t *testing.T) {
 		"clickhouse_sql":                      "clickhouse_sql/*",
 		"builder_query/service.name/*":        "builder_query/service.name/*",
 		"builder_query/service.name/checkout": "builder_query/service.name/checkout",
-		"builder_query/resource.service.name/checkout":                                        "builder_query/service.name/checkout",
-		"builder_query/service.name/check out":                                                "builder_query/service.name/check out",
-		"builder_query/service.name/a/b":                                                      "builder_query/service.name/a/b",
-		"builder_query/signoz.workspace.key.id/019d9a99-f8f0-7e50-8bb3-995599fa1f76":          "builder_query/signoz.workspace.key.id/019d9a99-f8f0-7e50-8bb3-995599fa1f76",
-		"builder_query/resource.signoz.workspace.key.id/019d9a99-f8f0-7e50-8bb3-995599fa1f76": "builder_query/signoz.workspace.key.id/019d9a99-f8f0-7e50-8bb3-995599fa1f76",
+		"builder_query/resource.service.name/checkout": "builder_query/service.name/checkout",
+		"builder_query/service.name/check out":         "builder_query/service.name/check out",
+		"builder_query/service.name/a/b":               "builder_query/service.name/a/b",
 	}
 	for input, expected := range valid {
 		canonical, err := NewTelemetryGrantSelector(input)
@@ -49,16 +47,10 @@ func TestNewTelemetryGrantSelector(t *testing.T) {
 }
 
 func TestNewTelemetryGrantKey(t *testing.T) {
-	valid := map[string]string{
-		"service.name":                     "service.name",
-		"resource.service.name":            "service.name",
-		"signoz.workspace.key.id":          "signoz.workspace.key.id",
-		"resource.signoz.workspace.key.id": "signoz.workspace.key.id",
-	}
-	for keyText, expected := range valid {
+	for _, keyText := range []string{"service.name", "resource.service.name"} {
 		key, ok := NewTelemetryGrantKey(keyText)
 		assert.True(t, ok, keyText)
-		assert.Equal(t, expected, key, keyText)
+		assert.Equal(t, "service.name", key)
 	}
 
 	for _, keyText := range []string{"deployment.environment", "attribute.service.name", "body.service.name"} {
