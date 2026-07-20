@@ -294,7 +294,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			if (item.key === ROUTES.INTEGRATIONS) {
 				return shouldShowIntegrationsValue;
 			}
-			if (item.key === ROUTES.LLM_OBSERVABILITY_OVERVIEW) {
+			if (item.key === ROUTES.AI_OBSERVABILITY_OVERVIEW) {
 				return isAIObservabilityEnabled;
 			}
 			return item.isEnabled;
