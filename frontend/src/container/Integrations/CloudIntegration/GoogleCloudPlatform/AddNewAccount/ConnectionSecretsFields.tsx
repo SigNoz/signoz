@@ -10,6 +10,7 @@ import cx from 'classnames';
 import { Control, Controller } from 'react-hook-form';
 import { useCopyToClipboard } from 'react-use';
 
+import FieldLabel from './FieldLabel';
 import { GcpSetupFormValues } from './types';
 import { SecretFieldType, validateSecretValue } from './validators';
 import styles from './ConnectionSecretsFields.module.scss';
@@ -19,6 +20,7 @@ type CredentialField = keyof CloudintegrationtypesCredentialsDTO;
 interface FieldConfig {
 	name: CredentialField;
 	label: string;
+	tooltip: string;
 	placeholder: string;
 	testId: string;
 	type: SecretFieldType;
@@ -28,6 +30,7 @@ const FIELDS: FieldConfig[] = [
 	{
 		name: 'sigNozApiUrl',
 		label: 'SigNoz API URL',
+		tooltip: 'Base URL of your SigNoz instance the collector reports to',
 		placeholder: 'https://<tenant>.signoz.cloud',
 		testId: 'gcp-signoz-api-url-input',
 		type: 'url',
@@ -35,6 +38,7 @@ const FIELDS: FieldConfig[] = [
 	{
 		name: 'sigNozApiKey',
 		label: 'SigNoz API Key',
+		tooltip: 'API key used to authenticate with your SigNoz instance',
 		placeholder: 'Enter SigNoz API key',
 		testId: 'gcp-signoz-api-key-input',
 		type: 'text',
@@ -42,6 +46,7 @@ const FIELDS: FieldConfig[] = [
 	{
 		name: 'ingestionUrl',
 		label: 'Ingestion URL',
+		tooltip: 'OTLP ingestion endpoint your OTel Collector sends telemetry to',
 		placeholder: 'https://ingest.<region>.signoz.cloud',
 		testId: 'gcp-ingestion-url-input',
 		type: 'url',
@@ -49,6 +54,7 @@ const FIELDS: FieldConfig[] = [
 	{
 		name: 'ingestionKey',
 		label: 'Ingestion Key',
+		tooltip: 'Ingestion key that authorizes telemetry sent to SigNoz',
 		placeholder: 'Enter ingestion key',
 		testId: 'gcp-ingestion-key-input',
 		type: 'text',
@@ -112,7 +118,11 @@ function ConnectionSecretsFields({
 						if (providedValue) {
 							return (
 								<div key={field.name} className={styles.drawerSection}>
-									<label htmlFor={field.testId}>{field.label}</label>
+									<FieldLabel
+										htmlFor={field.testId}
+										label={field.label}
+										tooltip={field.tooltip}
+									/>
 									<div className={styles.readonlyField}>
 										<Typography.Text
 											as="span"
@@ -142,7 +152,11 @@ function ConnectionSecretsFields({
 
 						return (
 							<div key={field.name} className={styles.drawerSection}>
-								<label htmlFor={field.testId}>{field.label}</label>
+								<FieldLabel
+									htmlFor={field.testId}
+									label={field.label}
+									tooltip={field.tooltip}
+								/>
 								<Controller
 									name={field.name}
 									control={control}
