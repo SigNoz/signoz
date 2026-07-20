@@ -10,6 +10,7 @@ import (
 	grammar "github.com/SigNoz/signoz/pkg/parser/filterquery/grammar"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/antlr4-go/antlr/v4"
 	sqlbuilder "github.com/huandu/go-sqlbuilder"
 	"github.com/stretchr/testify/assert"
@@ -588,7 +589,7 @@ func TestVisitKey(t *testing.T) {
 			// VisitKey only parses; the condition builder matches, resolves ambiguity
 			// and decides not-found handling. Replay that here against the generic
 			// builder behavior (error unless the key is ignored).
-			matching := matchingFieldKeys(key, tt.fieldKeys)
+			matching := MatchingFieldKeys(key, tt.fieldKeys)
 			keys, warning := ResolveKeys(key, matching)
 
 			var gotErrors []string
@@ -740,16 +741,21 @@ var visitTestKeys = map[string][]*telemetrytypes.TelemetryFieldKey{
 		{Name: "by", FieldContext: telemetrytypes.FieldContextResource, FieldDataType: telemetrytypes.FieldDataTypeString}},
 	"cz": {{Name: "cz", FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeNumber},
 		{Name: "cz", FieldContext: telemetrytypes.FieldContextResource, FieldDataType: telemetrytypes.FieldDataTypeString}},
+	// full-text column: a real intrinsic (log context, never resource) so it resolves via the
+	// map and is not dropped under SkipResourceFilter — mirrors logs' DefaultFullTextColumn.
+	"body": {{Name: "body", FieldContext: telemetrytypes.FieldContextLog, FieldDataType: telemetrytypes.FieldDataTypeString}},
 }
 
 type resourceConditionBuilder struct{}
 
 func (b *resourceConditionBuilder) ConditionFor(
 	_ context.Context,
+	_ valuer.UUID,
 	_ uint64,
 	_ uint64,
 	key *telemetrytypes.TelemetryFieldKey,
-	fieldKeysForName []*telemetrytypes.TelemetryFieldKey,
+	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
+	_ qbtypes.ConditionBuilderOptions,
 	operator qbtypes.FilterOperator,
 	_ any,
 	_ *sqlbuilder.SelectBuilder,
@@ -760,7 +766,7 @@ func (b *resourceConditionBuilder) ConditionFor(
 		return nil, nil, nil
 	}
 
-	keys, warning := ResolveKeys(key, fieldKeysForName)
+	keys, warning := ResolveKeys(key, MatchingFieldKeys(key, fieldKeys))
 	var warnings []string
 	if warning != "" {
 		warnings = append(warnings, warning)
@@ -781,10 +787,12 @@ type conditionBuilder struct{}
 
 func (b *conditionBuilder) ConditionFor(
 	_ context.Context,
+	_ valuer.UUID,
 	_ uint64,
 	_ uint64,
 	key *telemetrytypes.TelemetryFieldKey,
-	fieldKeysForName []*telemetrytypes.TelemetryFieldKey,
+	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
+	options qbtypes.ConditionBuilderOptions,
 	operator qbtypes.FilterOperator,
 	_ any,
 	_ *sqlbuilder.SelectBuilder,
@@ -800,7 +808,7 @@ func (b *conditionBuilder) ConditionFor(
 		return []string{fmt.Sprintf("%s_cond", key.Name)}, nil, nil
 	}
 
-	keys, warning := ResolveKeys(key, fieldKeysForName)
+	keys, warning := ResolveKeys(key, MatchingFieldKeys(key, fieldKeys))
 	var warnings []string
 	if warning != "" {
 		warnings = append(warnings, warning)
@@ -808,6 +816,20 @@ func (b *conditionBuilder) ConditionFor(
 	if len(keys) == 0 {
 		// errors on unknown keys (no IgnoreNotFoundKeys equivalent for this builder)
 		return nil, warnings, NewKeyNotFoundError(key.Name)
+	}
+
+	// A resource sub-query already covers the term; drop resource keys from the main query.
+	if options.SkipResourceFilter {
+		filtered := make([]*telemetrytypes.TelemetryFieldKey, 0, len(keys))
+		for _, k := range keys {
+			if k.FieldContext != telemetrytypes.FieldContextResource {
+				filtered = append(filtered, k)
+			}
+		}
+		if len(filtered) == 0 {
+			return nil, warnings, nil
+		}
+		keys = filtered
 	}
 
 	conds := make([]string, 0, len(keys))
@@ -847,7 +869,7 @@ func visitComparisonOpts(t *testing.T) (rsbOpts, sbOpts FilterExprVisitorOpts) {
 	// bodyCol is the full-text column; conditionBuilder returns "body_cond" for it.
 	bodyCol := &telemetrytypes.TelemetryFieldKey{
 		Name:          "body",
-		FieldContext:  telemetrytypes.FieldContextResource,
+		FieldContext:  telemetrytypes.FieldContextLog,
 		FieldDataType: telemetrytypes.FieldDataTypeString,
 	}
 	rsbOpts = FilterExprVisitorOpts{

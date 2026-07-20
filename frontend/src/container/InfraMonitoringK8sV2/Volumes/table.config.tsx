@@ -81,11 +81,7 @@ export const k8sVolumesColumnsConfig: VolumeTableColumnConfig[] = [
 		visibilityBehavior: 'hidden-on-expand',
 		cell: ({ value }): React.ReactNode => {
 			const pvcName = value as string;
-			return (
-				<CellValueTooltip value={pvcName}>
-					<TanStackTable.Text>{pvcName}</TanStackTable.Text>
-				</CellValueTooltip>
-			);
+			return <CellValueTooltip value={pvcName} />;
 		},
 	},
 	{
@@ -101,11 +97,7 @@ export const k8sVolumesColumnsConfig: VolumeTableColumnConfig[] = [
 		enableSort: false,
 		cell: ({ value }): React.ReactNode => {
 			const namespaceName = value as string;
-			return (
-				<CellValueTooltip value={namespaceName}>
-					<TanStackTable.Text>{namespaceName}</TanStackTable.Text>
-				</CellValueTooltip>
-			);
+			return <CellValueTooltip value={namespaceName} />;
 		},
 	},
 	{

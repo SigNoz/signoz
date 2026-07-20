@@ -48,7 +48,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import uPlot from 'uplot';
 import { getTimeRange } from 'utils/getTimeRange';
 
-import TimeseriesExportMenu from './TimeseriesExportMenu';
+import ExportMenu from 'components/ExportMenu/ExportMenu';
 
 import './TimeSeriesView.styles.scss';
 
@@ -265,12 +265,11 @@ function TimeSeriesView({
 						)}
 					</div>
 					{showExport && data?.rawV5Response && (
-						<TimeseriesExportMenu
+						<ExportMenu
 							dataSource={dataSource}
 							yAxisUnit={yAxisUnit}
-							queryResponse={data.rawV5Response}
+							data={data}
 							query={currentQuery}
-							legendMap={data.legendMap}
 							fileName={`${dataSource}-timeseries`}
 						/>
 					)}

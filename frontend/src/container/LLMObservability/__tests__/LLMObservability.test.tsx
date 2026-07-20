@@ -10,6 +10,14 @@ import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import LLMObservability from '../LLMObservability';
 
+// The Overview tab renders the full V2 DashboardContainer (toolbar + date picker
+// call useNavigationType, which needs a data router this integration test doesn't
+// set up). These cases assert tab routing, not dashboard rendering, so stub it.
+jest.mock('pages/DashboardPageV2/DashboardContainer', () => ({
+	__esModule: true,
+	default: (): JSX.Element => <div data-testid="llm-overview-dashboard" />,
+}));
+
 function setupList(items = mockRules): void {
 	server.use(
 		rest.get(LLM_PRICING_ENDPOINT, (_req, res, ctx) =>
@@ -34,7 +42,7 @@ describe('LLMObservability (integration)', () => {
 
 		expect(screen.getByTestId('llm-observability-tabs')).toBeInTheDocument();
 		expect(screen.getByTestId('llm-observability-overview')).toBeInTheDocument();
-		expect(screen.getByText('LLM Observability')).toBeInTheDocument();
+		expect(screen.getByTestId('llm-overview-dashboard')).toBeInTheDocument();
 		expect(screen.getByRole('tab', { name: 'Overview' })).toBeInTheDocument();
 		expect(
 			screen.getByRole('tab', { name: 'Model pricing' }),

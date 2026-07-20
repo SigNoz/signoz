@@ -7,7 +7,10 @@ import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
 import { K8sDetailsMetadataConfig } from '../Base/K8sBaseDetails';
-import { INFRA_MONITORING_ATTR_KEYS } from '../constants';
+import {
+	getPodUtilizationByPodQueryPayloads,
+	INFRA_MONITORING_ATTR_KEYS,
+} from '../constants';
 import { SelectedItemParams } from '../hooks';
 import {
 	buildEventsExpression,
@@ -72,26 +75,37 @@ export const statefulSetWidgetInfo = [
 	{
 		title: 'CPU usage, request, limits',
 		yAxisUnit: '',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/statefulsets/#cpu-usage-request-limits',
 	},
 	{
 		title: 'CPU request, limit util (%)',
 		yAxisUnit: 'percentunit',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/statefulsets/#cpu-request-limit-utilization-',
 	},
 	{
 		title: 'Memory usage, request, limits',
 		yAxisUnit: 'bytes',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/statefulsets/#memory-usage-request-limits',
 	},
 	{
 		title: 'Memory request, limit util (%)',
 		yAxisUnit: 'percentunit',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/statefulsets/#memory-request-limit-utilization-',
 	},
 	{
 		title: 'Network IO',
 		yAxisUnit: 'binBps',
+		docPath: '/infrastructure-monitoring/kubernetes/statefulsets/#network-io',
 	},
 	{
 		title: 'Network errors count',
 		yAxisUnit: '',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/statefulsets/#network-errors-count',
 	},
 ];
 
@@ -847,4 +861,30 @@ export const getStatefulSetMetricsQueryPayload = (
 			end,
 		},
 	];
+};
+
+export const getStatefulSetPodMetricsQueryPayload = (
+	statefulSet: InframonitoringtypesStatefulSetRecordDTO,
+	start: number,
+	end: number,
+	dotMetricsEnabled: boolean,
+): GetQueryResultsProps[] => {
+	const k8sStatefulSetNameKey = dotMetricsEnabled
+		? INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME
+		: 'k8s_statefulset_name';
+
+	return getPodUtilizationByPodQueryPayloads(
+		{
+			workloadNameKey: k8sStatefulSetNameKey,
+			workloadNameValue:
+				statefulSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME] ?? '',
+			clusterName:
+				statefulSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] ?? '',
+			namespaceName:
+				statefulSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ?? '',
+		},
+		start,
+		end,
+		dotMetricsEnabled,
+	);
 };

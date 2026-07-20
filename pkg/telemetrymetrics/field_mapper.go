@@ -8,6 +8,7 @@ import (
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 )
 
@@ -37,6 +38,12 @@ var (
 
 type fieldMapper struct{}
 
+// CandidateKeys returns nil: metrics has no attribute-map fallback, so a context-missing
+// key stays unresolved and the caller errors.
+func (m *fieldMapper) CandidateKeys(_ context.Context, _ valuer.UUID, _ *telemetrytypes.TelemetryFieldKey, _ any, _ map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.TelemetryFieldKey {
+	return nil
+}
+
 func NewFieldMapper() qbtypes.FieldMapper {
 	return &fieldMapper{}
 }
@@ -65,7 +72,7 @@ func (m *fieldMapper) getColumn(_ context.Context, _, _ uint64, key *telemetryty
 	return nil, qbtypes.ErrColumnNotFound
 }
 
-func (m *fieldMapper) FieldFor(ctx context.Context, startNs, endNs uint64, key *telemetrytypes.TelemetryFieldKey) (string, error) {
+func (m *fieldMapper) FieldFor(ctx context.Context, _ valuer.UUID, startNs, endNs uint64, key *telemetrytypes.TelemetryFieldKey) (string, error) {
 	columns, err := m.getColumn(ctx, startNs, endNs, key)
 	if err != nil {
 		return "", err
@@ -86,18 +93,20 @@ func (m *fieldMapper) FieldFor(ctx context.Context, startNs, endNs uint64, key *
 	return columns[0].Name, nil
 }
 
-func (m *fieldMapper) ColumnFor(ctx context.Context, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
+func (m *fieldMapper) ColumnFor(ctx context.Context, _ valuer.UUID, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
 	return m.getColumn(ctx, tsStart, tsEnd, key)
 }
 
 func (m *fieldMapper) ColumnExpressionFor(
 	ctx context.Context,
+	orgID valuer.UUID,
 	startNs, endNs uint64,
 	field *telemetrytypes.TelemetryFieldKey,
+	_ telemetrytypes.FieldDataType,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
 
-	fieldExpression, err := m.FieldFor(ctx, startNs, endNs, field)
+	fieldExpression, err := m.FieldFor(ctx, orgID, startNs, endNs, field)
 	if err != nil {
 		return "", err
 	}

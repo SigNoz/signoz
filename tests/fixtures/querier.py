@@ -79,6 +79,7 @@ class BuilderQuery:
     name: str = "A"
     source: str | None = None
     limit: int | None = None
+    offset: int | None = None
     filter_expression: str | None = None
     select_fields: list[TelemetryFieldKey] | None = None
     order: list[OrderBy] | None = None
@@ -94,6 +95,8 @@ class BuilderQuery:
             spec["source"] = self.source
         if self.limit is not None:
             spec["limit"] = self.limit
+        if self.offset is not None:
+            spec["offset"] = self.offset
         if self.filter_expression:
             spec["filter"] = {"expression": self.filter_expression}
         if self.select_fields:
@@ -187,6 +190,38 @@ def make_query_request(
         headers={"authorization": f"Bearer {token}"},
         json=payload,
     )
+
+
+def aligned_epoch(ago: timedelta, step_seconds: int = DEFAULT_STEP_INTERVAL) -> int:
+    """Epoch seconds for `now - ago`, floored to a step boundary so seeded
+    points land exactly on the query's toStartOfInterval buckets."""
+    epoch = (int((datetime.now(tz=UTC) - ago).timestamp()) // step_seconds) * step_seconds
+    if epoch % 3600 == 0:
+        epoch += step_seconds
+    return epoch
+
+
+def query_metric_values(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+    signoz: types.SigNoz,
+    token: str,
+    metric_name: str,
+    start_epoch: int,
+    end_epoch: int,
+    time_agg: str,
+    space_agg: str,
+    step_interval: int = DEFAULT_STEP_INTERVAL,
+) -> list[dict]:
+    """Run a single metrics builder query over [start_epoch, end_epoch) in
+    epoch seconds and return its series values sorted by timestamp."""
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=start_epoch * 1000,
+        end_ms=end_epoch * 1000,
+        queries=[build_builder_query("A", metric_name, time_agg, space_agg, step_interval=step_interval)],
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    return sorted(get_series_values(response.json(), "A"), key=lambda v: v["timestamp"])
 
 
 def build_builder_query(
@@ -538,6 +573,7 @@ def build_scalar_query(
     having_expression: str | None = None,
     step_interval: int = DEFAULT_STEP_INTERVAL,
     disabled: bool = False,
+    functions: list[dict] | None = None,
 ) -> dict:
     spec: dict[str, Any] = {
         "name": name,
@@ -565,7 +601,39 @@ def build_scalar_query(
     if having_expression:
         spec["having"] = {"expression": having_expression}
 
+    if functions:
+        spec["functions"] = functions
+
     return {"type": "builder_query", "spec": spec}
+
+
+def build_traces_scalar_query(
+    aggregations: list[dict],
+    *,
+    name: str = "A",
+    group_by: list[dict] | None = None,
+    order: list[dict] | None = None,
+    limit: int | None = None,
+    filter_expression: str | None = None,
+    having_expression: str | None = None,
+    step_interval: int = DEFAULT_STEP_INTERVAL,
+    disabled: bool = False,
+    functions: list[dict] | None = None,
+) -> dict:
+    """build_scalar_query pinned to the traces signal, with name defaulting to 'A'."""
+    return build_scalar_query(
+        name=name,
+        signal="traces",
+        aggregations=aggregations,
+        group_by=group_by,
+        order=order,
+        limit=limit,
+        filter_expression=filter_expression,
+        having_expression=having_expression,
+        step_interval=step_interval,
+        disabled=disabled,
+        functions=functions,
+    )
 
 
 def build_raw_query(
@@ -613,7 +681,7 @@ def build_order_by(name: str, direction: str = "desc") -> dict:
     return {"key": {"name": name}, "direction": direction}
 
 
-def build_logs_aggregation(expression: str, alias: str | None = None) -> dict:
+def build_aggregation(expression: str, alias: str | None = None) -> dict:
     agg: dict[str, Any] = {"expression": expression}
     if alias:
         agg["alias"] = alias

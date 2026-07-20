@@ -7,7 +7,10 @@ import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
 import { K8sDetailsMetadataConfig } from '../Base/K8sBaseDetails';
-import { INFRA_MONITORING_ATTR_KEYS } from '../constants';
+import {
+	getPodUtilizationByPodQueryPayloads,
+	INFRA_MONITORING_ATTR_KEYS,
+} from '../constants';
 import { SelectedItemParams } from '../hooks';
 import {
 	buildEventsExpression,
@@ -71,18 +74,25 @@ export const daemonSetWidgetInfo = [
 	{
 		title: 'CPU usage, request, limits',
 		yAxisUnit: '',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/daemonsets/#cpu-usage-request-limits',
 	},
 	{
 		title: 'Memory usage, request, limits',
 		yAxisUnit: 'bytes',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/daemonsets/#memory-usage-request-limits',
 	},
 	{
 		title: 'Network IO',
 		yAxisUnit: 'binBps',
+		docPath: '/infrastructure-monitoring/kubernetes/daemonsets/#network-io',
 	},
 	{
 		title: 'Network errors count',
 		yAxisUnit: '',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/daemonsets/#network-errors-count',
 	},
 ];
 
@@ -668,4 +678,30 @@ export const getDaemonSetMetricsQueryPayload = (
 			end,
 		},
 	];
+};
+
+export const getDaemonSetPodMetricsQueryPayload = (
+	daemonSet: InframonitoringtypesDaemonSetRecordDTO,
+	start: number,
+	end: number,
+	dotMetricsEnabled: boolean,
+): GetQueryResultsProps[] => {
+	const k8sDaemonSetNameKey = dotMetricsEnabled
+		? 'k8s.daemonset.name'
+		: 'k8s_daemonset_name';
+
+	return getPodUtilizationByPodQueryPayloads(
+		{
+			workloadNameKey: k8sDaemonSetNameKey,
+			workloadNameValue:
+				daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME] ?? '',
+			clusterName:
+				daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] ?? '',
+			namespaceName:
+				daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ?? '',
+		},
+		start,
+		end,
+		dotMetricsEnabled,
+	);
 };

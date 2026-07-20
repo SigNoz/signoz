@@ -44,13 +44,11 @@
 	width: 32px;
 }
 
-.errorIcon {
-	color: var(--danger-background);
-}
-
-.actions {
+.errorContent {
 	display: flex;
+	flex-direction: column;
 	align-items: center;
-	gap: 8px;
-	margin-top: 16px;
+	gap: var(--spacing-3);
+	max-width: 500px;
+	padding: 24px;
 }

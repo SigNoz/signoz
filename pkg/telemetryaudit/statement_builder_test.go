@@ -11,6 +11,7 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/require"
 )
 
@@ -55,7 +56,7 @@ func newTestAuditStatementBuilder(t *testing.T) *auditQueryStatementBuilder {
 
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, fl)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl)
 
 	return NewAuditQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
@@ -64,7 +65,6 @@ func newTestAuditStatementBuilder(t *testing.T) *auditQueryStatementBuilder {
 		cb,
 		aggExprRewriter,
 		DefaultFullTextColumn,
-		nil,
 		fl,
 	)
 }
@@ -93,8 +93,8 @@ func TestStatementBuilder(t *testing.T) {
 				Limit: 100,
 			},
 			expected: qbtypes.Statement{
-				Query: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, event_name, attributes_string, attributes_number, attributes_bool, resource, scope_string FROM signoz_audit.distributed_logs WHERE (`attribute_string_signoz$$audit$$principal$$id` = ? AND `attribute_string_signoz$$audit$$principal$$id_exists` = ?) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
-				Args:  []any{"019a-1234-abcd-5678", true, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 100},
+				Query: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, event_name, attributes_string, attributes_number, attributes_bool, resource, scope_string FROM signoz_audit.distributed_logs WHERE (`attribute_string_signoz$$audit$$principal$$id` = ? AND `attribute_string_signoz$$audit$$principal$$id_exists`) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{"019a-1234-abcd-5678", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 100},
 			},
 		},
 		// List: all failed actions (materialized outcome filter)
@@ -110,8 +110,8 @@ func TestStatementBuilder(t *testing.T) {
 				Limit: 100,
 			},
 			expected: qbtypes.Statement{
-				Query: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, event_name, attributes_string, attributes_number, attributes_bool, resource, scope_string FROM signoz_audit.distributed_logs WHERE (`attribute_string_signoz$$audit$$outcome` = ? AND `attribute_string_signoz$$audit$$outcome_exists` = ?) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
-				Args:  []any{"failure", true, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 100},
+				Query: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, event_name, attributes_string, attributes_number, attributes_bool, resource, scope_string FROM signoz_audit.distributed_logs WHERE (`attribute_string_signoz$$audit$$outcome` = ? AND `attribute_string_signoz$$audit$$outcome_exists`) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{"failure", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 100},
 			},
 		},
 		// List: change history of a specific dashboard (two materialized column AND)
@@ -144,8 +144,8 @@ func TestStatementBuilder(t *testing.T) {
 				Limit: 100,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_audit.distributed_logs_resource WHERE (simpleJSONExtractString(labels, 'signoz.audit.resource.kind') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, event_name, attributes_string, attributes_number, attributes_bool, resource, scope_string FROM signoz_audit.distributed_logs WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (`attribute_string_signoz$$audit$$action` = ? AND `attribute_string_signoz$$audit$$action_exists` = ?) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
-				Args:  []any{"dashboard", "%signoz.audit.resource.kind%", "%signoz.audit.resource.kind\":\"dashboard%", uint64(1747945619), uint64(1747983448), "delete", true, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 100},
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_audit.distributed_logs_resource WHERE (simpleJSONExtractString(labels, 'signoz.audit.resource.kind') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, event_name, attributes_string, attributes_number, attributes_bool, resource, scope_string FROM signoz_audit.distributed_logs WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (`attribute_string_signoz$$audit$$action` = ? AND `attribute_string_signoz$$audit$$action_exists`) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{"dashboard", "%signoz.audit.resource.kind%", "%signoz.audit.resource.kind\":\"dashboard%", uint64(1747945619), uint64(1747983448), "delete", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 100},
 			},
 		},
 		// List: all actions by service accounts (materialized principal.type)
@@ -161,8 +161,8 @@ func TestStatementBuilder(t *testing.T) {
 				Limit: 100,
 			},
 			expected: qbtypes.Statement{
-				Query: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, event_name, attributes_string, attributes_number, attributes_bool, resource, scope_string FROM signoz_audit.distributed_logs WHERE (`attribute_string_signoz$$audit$$principal$$type` = ? AND `attribute_string_signoz$$audit$$principal$$type_exists` = ?) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
-				Args:  []any{"service_account", true, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 100},
+				Query: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, event_name, attributes_string, attributes_number, attributes_bool, resource, scope_string FROM signoz_audit.distributed_logs WHERE (`attribute_string_signoz$$audit$$principal$$type` = ? AND `attribute_string_signoz$$audit$$principal$$type_exists`) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{"service_account", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 100},
 			},
 		},
 		// Scalar: alert — count forbidden errors (outcome + action AND)
@@ -181,8 +181,8 @@ func TestStatementBuilder(t *testing.T) {
 				},
 			},
 			expected: qbtypes.Statement{
-				Query: "SELECT count() AS __result_0 FROM signoz_audit.distributed_logs WHERE ((`attribute_string_signoz$$audit$$outcome` = ? AND `attribute_string_signoz$$audit$$outcome_exists` = ?) AND (`attribute_string_signoz$$audit$$action` = ? AND `attribute_string_signoz$$audit$$action_exists` = ?)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? ORDER BY __result_0 DESC",
-				Args:  []any{"failure", true, "update", true, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
+				Query: "SELECT count() AS __result_0 FROM signoz_audit.distributed_logs WHERE ((`attribute_string_signoz$$audit$$outcome` = ? AND `attribute_string_signoz$$audit$$outcome_exists`) AND (`attribute_string_signoz$$audit$$action` = ? AND `attribute_string_signoz$$audit$$action_exists`)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? ORDER BY __result_0 DESC",
+				Args:  []any{"failure", "update", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
 			},
 		},
 		// TimeSeries: failures grouped by principal email with top-N limit
@@ -205,15 +205,15 @@ func TestStatementBuilder(t *testing.T) {
 				Limit: 5,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __limit_cte AS (SELECT toString(multiIf(`attribute_string_signoz$$audit$$principal$$email_exists` = ?, `attribute_string_signoz$$audit$$principal$$email`, NULL)) AS `signoz.audit.principal.email`, count() AS __result_0 FROM signoz_audit.distributed_logs WHERE (`attribute_string_signoz$$audit$$outcome` = ? AND `attribute_string_signoz$$audit$$outcome_exists` = ?) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY `signoz.audit.principal.email` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toString(multiIf(`attribute_string_signoz$$audit$$principal$$email_exists` = ?, `attribute_string_signoz$$audit$$principal$$email`, NULL)) AS `signoz.audit.principal.email`, count() AS __result_0 FROM signoz_audit.distributed_logs WHERE (`attribute_string_signoz$$audit$$outcome` = ? AND `attribute_string_signoz$$audit$$outcome_exists` = ?) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? AND (`signoz.audit.principal.email`) GLOBAL IN (SELECT `signoz.audit.principal.email` FROM __limit_cte) GROUP BY ts, `signoz.audit.principal.email`",
-				Args:  []any{true, "failure", true, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 5, true, "failure", true, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
+				Query: "WITH __limit_cte AS (SELECT toString(multiIf(`attribute_string_signoz$$audit$$principal$$email_exists`, `attribute_string_signoz$$audit$$principal$$email`, NULL)) AS `signoz.audit.principal.email`, count() AS __result_0 FROM signoz_audit.distributed_logs WHERE (`attribute_string_signoz$$audit$$outcome` = ? AND `attribute_string_signoz$$audit$$outcome_exists`) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY `signoz.audit.principal.email` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toString(multiIf(`attribute_string_signoz$$audit$$principal$$email_exists`, `attribute_string_signoz$$audit$$principal$$email`, NULL)) AS `signoz.audit.principal.email`, count() AS __result_0 FROM signoz_audit.distributed_logs WHERE (`attribute_string_signoz$$audit$$outcome` = ? AND `attribute_string_signoz$$audit$$outcome_exists`) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? AND (`signoz.audit.principal.email`) GLOBAL IN (SELECT `signoz.audit.principal.email` FROM __limit_cte) GROUP BY ts, `signoz.audit.principal.email`",
+				Args:  []any{"failure", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 5, "failure", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
 			},
 		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			q, err := statementBuilder.Build(ctx, 1747947419000, 1747983448000, testCase.requestType, testCase.query, nil)
+			q, err := statementBuilder.Build(ctx, valuer.UUID{}, 1747947419000, 1747983448000, testCase.requestType, testCase.query, nil)
 			if testCase.expectedErr != nil {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), testCase.expectedErr.Error())
