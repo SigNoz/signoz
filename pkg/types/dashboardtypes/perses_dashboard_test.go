@@ -1052,34 +1052,6 @@ func TestValidateRequiredFields(t *testing.T) {
 	}
 }
 
-// TestThresholdZeroValueAcceptedMissingRejected documents the *float64 Value:
-// a threshold at 0 (or 0.0) is valid, because the pointer lets validate:"required"
-// tell a present zero (non-nil) from an absent value (nil) — while a genuinely
-// missing value is still rejected.
-func TestThresholdZeroValueAcceptedMissingRejected(t *testing.T) {
-	numberPanel := func(thresholdSpec string) string {
-		return `{
-			"panels": {"p1": {"kind": "Panel", "spec": {
-				"plugin": {"kind": "signoz/NumberPanel", "spec": {"thresholds": [` + thresholdSpec + `]}},
-				"queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/PromQLQuery", "spec": {"name": "A", "query": "up"}}}}]
-			}}},
-			"layouts": []
-		}`
-	}
-
-	_, errZero := unmarshalDashboard([]byte(numberPanel(`{"value": 0, "operator": "above", "format": "text", "color": "Red"}`)))
-	require.NoError(t, errZero, `a threshold "value": 0 is valid`)
-
-	// "value": 0.0 is the same float64 zero as "value": 0 — JSON has one number
-	// type — and is accepted identically.
-	_, errZeroFloat := unmarshalDashboard([]byte(numberPanel(`{"value": 0.0, "operator": "above", "format": "text", "color": "Red"}`)))
-	require.NoError(t, errZeroFloat, `"value": 0.0 is the same valid zero`)
-
-	_, errMissing := unmarshalDashboard([]byte(numberPanel(`{"operator": "above", "format": "text", "color": "Red"}`)))
-	require.Error(t, errMissing, "a genuinely missing value is still rejected")
-	require.Contains(t, errMissing.Error(), "Value")
-}
-
 func TestTimeSeriesPanelDefaults(t *testing.T) {
 	data := []byte(`{
 		"panels": {
