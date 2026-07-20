@@ -31,7 +31,7 @@ def test_setup(
         ("builder_query/service.name/service-a", True),  # concrete value resolves up the ladder to the key wildcard grant
         ("builder_query/service.name/*", True),  # exact grant
         ("builder_query/resource.service.name/service-a", True),  # resource.service.name folds to service.name before laddering
-        ("promql/service.name/service-a", False),  # grant is scoped to builder_query, promql never reaches it
+        ("promql/*", False),  # different query type never reaches the builder_query grant
     ],
 )
 def test_check_ladders_to_key_wildcard_grant(
