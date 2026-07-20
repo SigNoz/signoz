@@ -35,13 +35,7 @@ func (handler *handler) GetSessionContext(rw http.ResponseWriter, req *http.Requ
 		return
 	}
 
-	siteURL, err := url.Parse(req.URL.Query().Get("ref"))
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	sessionContext, err := handler.module.GetSessionContext(ctx, email, siteURL)
+	sessionContext, err := handler.module.GetSessionContext(ctx, email)
 	if err != nil {
 		render.Error(rw, err)
 		return

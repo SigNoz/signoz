@@ -46,7 +46,7 @@ func NewModule(providerSettings factory.ProviderSettings, authNs map[authtypes.A
 	}
 }
 
-func (module *module) GetSessionContext(ctx context.Context, email valuer.Email, siteURL *url.URL) (*authtypes.SessionContext, error) {
+func (module *module) GetSessionContext(ctx context.Context, email valuer.Email) (*authtypes.SessionContext, error) {
 	context := authtypes.NewSessionContext()
 
 	orgs, err := module.orgGetter.ListByOwnedKeyRange(ctx)
@@ -79,7 +79,7 @@ func (module *module) GetSessionContext(ctx context.Context, email valuer.Email,
 		context.Exists = false
 
 		for _, org := range orgs {
-			orgContext, err := module.getOrgSessionContext(ctx, org, name, siteURL)
+			orgContext, err := module.getOrgSessionContext(ctx, org, name)
 			if err != nil {
 				// For some reason, there was an error in getting the org session context. Instead of failing the context call, we create a PasswordAuthNSupport for the org and add a warning.
 				orgContext = authtypes.NewOrgSessionContext(org.ID, org.Name).AddPasswordAuthNSupport(authtypes.AuthNProviderEmailPassword).AddWarning(err)
@@ -102,7 +102,7 @@ func (module *module) GetSessionContext(ctx context.Context, email valuer.Email,
 		}
 
 		org := orgs[idx]
-		orgContext, err := module.getOrgSessionContext(ctx, org, name, siteURL)
+		orgContext, err := module.getOrgSessionContext(ctx, org, name)
 		if err != nil {
 			// For some reason, there was an error in getting the org session context. Instead of failing the context call, we create a PasswordAuthNSupport for the org and add a warning.
 			orgContext = authtypes.NewOrgSessionContext(org.ID, org.Name).AddPasswordAuthNSupport(authtypes.AuthNProviderEmailPassword).AddWarning(err)
@@ -198,7 +198,7 @@ func (module *module) GetRotationInterval(context.Context) time.Duration {
 	return module.tokenizer.Config().Rotation.Interval
 }
 
-func (module *module) getOrgSessionContext(ctx context.Context, org *types.Organization, name string, siteURL *url.URL) (*authtypes.OrgSessionContext, error) {
+func (module *module) getOrgSessionContext(ctx context.Context, org *types.Organization, name string) (*authtypes.OrgSessionContext, error) {
 	authDomain, err := module.authDomain.GetByNameAndOrgID(ctx, name, org.ID)
 	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		return nil, err
@@ -217,7 +217,7 @@ func (module *module) getOrgSessionContext(ctx context.Context, org *types.Organ
 		return nil, err
 	}
 
-	loginURL, err := provider.LoginURL(ctx, siteURL, authDomain)
+	loginURL, err := provider.LoginURL(ctx, authDomain)
 	if err != nil {
 		return nil, err
 	}
