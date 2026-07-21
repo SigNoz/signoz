@@ -123,7 +123,15 @@ func GetBodyJSONKey(_ context.Context, key *telemetrytypes.TelemetryFieldKey, op
 		// for all types except strings, we need to extract the value from the JSON_VALUE
 		return fmt.Sprintf("JSONExtract(JSON_VALUE(body, '$.%s'), '%s')", getBodyJSONPath(key), dataType.CHDataType()), value
 	}
-	// for string types, we should compare with the JSON_VALUE
+	// JSON_VALUE returns a String; stringify list operands so a numeric element in a mixed
+	// set (e.g. IN ['alpha', 42]) doesn't hit a String-vs-number supertype error (CH 386).
+	if list, ok := value.([]any); ok {
+		strs := make([]any, len(list))
+		for i, e := range list {
+			strs[i] = fmt.Sprintf("%v", e)
+		}
+		value = strs
+	}
 	return fmt.Sprintf("JSON_VALUE(body, '$.%s')", getBodyJSONPath(key)), value
 }
 
@@ -198,11 +206,12 @@ func legacyCoerceNeedle(v any, dt telemetrytypes.FieldDataType) any {
 // getBodyJSONArrayKey extracts the leaf as Array(Nullable(<dt>)) — Nullable so a value of a
 // different JSON type maps to NULL instead of corrupting (e.g. a non-numeric string → 0).
 func getBodyJSONArrayKey(key *telemetrytypes.TelemetryFieldKey, dt telemetrytypes.FieldDataType) string {
-	arrKey := *key
-	if !strings.HasSuffix(arrKey.Name, "[*]") && !strings.HasSuffix(arrKey.Name, "[]") {
-		arrKey.Name += "[*]"
+	name := key.Name
+	if !strings.HasSuffix(name, "[*]") && !strings.HasSuffix(name, "[]") {
+		name += "[*]"
 	}
-	return fmt.Sprintf("JSONExtract(JSON_QUERY(body, '$.%s'), 'Array(Nullable(%s))')", getBodyJSONPath(&arrKey), dt.CHDataType())
+	arrKey := telemetrytypes.NewTelemetryFieldKey(name, key.FieldContext, key.FieldDataType)
+	return fmt.Sprintf("JSONExtract(JSON_QUERY(body, '$.%s'), 'Array(Nullable(%s))')", getBodyJSONPath(arrKey), dt.CHDataType())
 }
 
 // getBodyJSONScalarKey builds the single-element-set fallback for a scalar body value: the leaf
@@ -215,9 +224,8 @@ func getBodyJSONScalarKey(key *telemetrytypes.TelemetryFieldKey, dt telemetrytyp
 	if strings.Contains(name, "[") {
 		return "", "", false
 	}
-	scalarKey := *key
-	scalarKey.Name = name
-	path := getBodyJSONPath(&scalarKey)
+	scalarKey := telemetrytypes.NewTelemetryFieldKey(name, key.FieldContext, key.FieldDataType)
+	path := getBodyJSONPath(scalarKey)
 	if dt == telemetrytypes.FieldDataTypeString {
 		expr = fmt.Sprintf("JSON_VALUE(body, '$.%s')", path)
 	} else {

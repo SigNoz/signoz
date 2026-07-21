@@ -16,13 +16,13 @@ type QueryBuilderQuery[T any] struct {
 	Name string `json:"name"`
 
 	// stepInterval of the query
-	StepInterval Step `json:"stepInterval,omitempty"`
+	StepInterval Step `json:"stepInterval,omitzero"`
 
 	// signal to query
 	Signal telemetrytypes.Signal `json:"signal,omitempty"`
 
 	// source for query
-	Source telemetrytypes.Source `json:"source,omitempty"`
+	Source telemetrytypes.Source `json:"source"`
 
 	// we want to support multiple aggregations
 	// currently supported: []Aggregation, []MetricAggregation

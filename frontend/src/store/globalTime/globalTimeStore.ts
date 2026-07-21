@@ -5,6 +5,7 @@ import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constan
 import {
 	GlobalTimeSelectedTime,
 	GlobalTimeState,
+	GlobalTimeStoreApiRef,
 	GlobalTimeStore,
 	ParsedTimeRange,
 } from './types';
@@ -18,6 +19,10 @@ import {
 export type GlobalTimeStoreApi = StoreApi<GlobalTimeStore>;
 export type IGlobalTimeStore = GlobalTimeStore;
 
+export interface CreateGlobalTimeStoreOptions extends Partial<GlobalTimeState> {
+	parentStore?: GlobalTimeStoreApiRef;
+}
+
 function computeIsRefreshEnabled(
 	selectedTime: GlobalTimeSelectedTime,
 	refreshInterval: number,
@@ -29,11 +34,12 @@ function computeIsRefreshEnabled(
 }
 
 export function createGlobalTimeStore(
-	initialState?: Partial<GlobalTimeState>,
+	options?: CreateGlobalTimeStoreOptions,
 ): GlobalTimeStoreApi {
-	const selectedTime = initialState?.selectedTime ?? DEFAULT_TIME_RANGE;
-	const refreshInterval = initialState?.refreshInterval ?? 0;
-	const name = initialState?.name;
+	const selectedTime = options?.selectedTime ?? DEFAULT_TIME_RANGE;
+	const refreshInterval = options?.refreshInterval ?? 0;
+	const name = options?.name;
+	const parentStore = options?.parentStore;
 
 	return createStore<GlobalTimeStore>((set, get) => ({
 		name,
@@ -42,6 +48,8 @@ export function createGlobalTimeStore(
 		isRefreshEnabled: computeIsRefreshEnabled(selectedTime, refreshInterval),
 		lastRefreshTimestamp: 0,
 		lastComputedMinMax: safeParseSelectedTime(selectedTime),
+		parentStore,
+		shouldClearUrlParams: false,
 
 		setSelectedTime: (
 			time: GlobalTimeSelectedTime,
@@ -129,6 +137,29 @@ export function createGlobalTimeStore(
 				];
 			}
 			return [REACT_QUERY_KEY.AUTO_REFRESH_QUERY, ...queryParts, selectedTime];
+		},
+
+		resetToParentTime: (): boolean => {
+			const state = get();
+			if (!state.parentStore) {
+				return false;
+			}
+
+			const parentSelectedTime = state.parentStore.getState().selectedTime;
+			const computedMinMax = parseSelectedTime(parentSelectedTime);
+
+			set({
+				selectedTime: parentSelectedTime,
+				lastComputedMinMax: computedMinMax,
+				lastRefreshTimestamp: Date.now(),
+				shouldClearUrlParams: true,
+			});
+
+			return true;
+		},
+
+		clearUrlParamsFlag: (): void => {
+			set({ shouldClearUrlParams: false });
 		},
 	}));
 }

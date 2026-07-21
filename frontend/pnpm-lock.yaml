@@ -187,11 +187,11 @@ importers:
         specifier: 2.8.8
         version: 2.8.8(react-router-dom@5.3.4(react@18.2.0))(react-router@6.30.4(react@18.2.0))(react@18.2.0)
       overlayscrollbars:
-        specifier: ^2.8.1
-        version: 2.9.2
+        specifier: ^2.16.0
+        version: 2.16.0
       overlayscrollbars-react:
         specifier: ^0.5.6
-        version: 0.5.6(overlayscrollbars@2.9.2)(react@18.2.0)
+        version: 0.5.6(overlayscrollbars@2.16.0)(react@18.2.0)
       papaparse:
         specifier: 5.4.1
         version: 5.4.1
@@ -6941,8 +6941,8 @@ packages:
       overlayscrollbars: ^2.0.0
       react: '>=16.8.0'
 
-  overlayscrollbars@2.9.2:
-    resolution: {integrity: sha512-iDT84r39i7oWP72diZN2mbJUsn/taCq568aQaIrc84S87PunBT7qtsVltAF2esk7ORTRjQDnfjVYoqqTzgs8QA==}
+  overlayscrollbars@2.16.0:
+    resolution: {integrity: sha512-N03oje/q7j93D0aLZtoCdsDSYLmhheSsv8H7oSLE7HhdV9P/bmCURtLV/KbPye7P/bpfyt/obSfDpGUYoJ0OWg==}
 
   oxfmt@0.54.0:
     resolution: {integrity: sha512-DjnMwn7smSLF+Mc2+pRItnuPftm/dkUFpY/d4+33y9TfKrsHZo8GLhmUg9BrOIUEy94Rlom1Q11N6vuhE+e0oQ==}
@@ -16456,12 +16456,12 @@ snapshots:
 
   outvariant@1.4.0: {}
 
-  overlayscrollbars-react@0.5.6(overlayscrollbars@2.9.2)(react@18.2.0):
+  overlayscrollbars-react@0.5.6(overlayscrollbars@2.16.0)(react@18.2.0):
     dependencies:
-      overlayscrollbars: 2.9.2
+      overlayscrollbars: 2.16.0
       react: 18.2.0
 
-  overlayscrollbars@2.9.2: {}
+  overlayscrollbars@2.16.0: {}
 
   oxfmt@0.54.0:
     dependencies:

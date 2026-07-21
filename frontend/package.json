@@ -89,7 +89,7 @@
     "lodash-es": "^4.17.21",
     "motion": "12.4.13",
     "nuqs": "2.8.8",
-    "overlayscrollbars": "^2.8.1",
+    "overlayscrollbars": "^2.16.0",
     "overlayscrollbars-react": "^0.5.6",
     "papaparse": "5.4.1",
     "posthog-js": "1.298.0",
@@ -221,5 +221,18 @@
     "*.(scss|css)": [
       "stylelint"
     ]
+  },
+  "overrides": {
+    "@babel/core@<=7.29.0": ">=7.29.6 <8",
+    "@istanbuljs/load-nyc-config>js-yaml": ">=4.2.0 <5",
+    "cookie@<0.7.0": ">=0.7.1 <1",
+    "dompurify@<=3.4.10": ">=3.4.11 <4",
+    "esbuild@>=0.27.3 <0.28.1": ">=0.28.1 <0.29.0",
+    "js-cookie@<=3.0.5": ">=3.0.7 <4",
+    "js-yaml@>=4.0.0 <=4.1.1": ">=4.2.0 <5",
+    "prismjs@<1.30.0": ">=1.30.0 <2",
+    "react-router@>=6.7.0 <6.30.4": ">=6.30.4 <7",
+    "tmp@<0.2.6": ">=0.2.6 <0.3.0",
+    "yaml@>=1.0.0 <1.10.3": ">=1.10.3 <2"
   }
 }
