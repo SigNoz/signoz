@@ -162,10 +162,10 @@ func BuildFunnelOverviewQuery(
 		fullCondition := strings.Join(append([]string{"t1_time > 0"}, fullConditions...), " AND ")
 
 		conversionFields = append(conversionFields,
-			fmt.Sprintf("avgIf((toUnixTimestamp64Nano(t%d_time) - toUnixTimestamp64Nano(t1_time))/1e6, %s) AS avg_duration",
+			fmt.Sprintf("coalesce(avgIf((toUnixTimestamp64Nano(t%d_time) - toUnixTimestamp64Nano(t1_time))/1e6, %s), 0) AS avg_duration",
 				numSteps, fullCondition))
 		conversionFields = append(conversionFields,
-			fmt.Sprintf("quantileIf(0.99)((toUnixTimestamp64Nano(t%d_time) - toUnixTimestamp64Nano(t1_time))/1e6, %s) AS latency",
+			fmt.Sprintf("coalesce(quantileIf(0.99)((toUnixTimestamp64Nano(t%d_time) - toUnixTimestamp64Nano(t1_time))/1e6, %s), 0) AS latency",
 				numSteps, fullCondition))
 	}
 
@@ -407,7 +407,7 @@ WITH
     %s
 
 SELECT
-    round(total_s%d_spans * 100.0 / total_s%d_spans, 2) AS conversion_rate,
+    round(if(total_s%d_spans > 0, total_s%d_spans * 100.0 / total_s%d_spans, 0), 2) AS conversion_rate,
     total_s%d_spans / time_window_sec AS avg_rate,
     greatest(sum_s%d_error, sum_s%d_error) AS errors,
     avg_duration,
@@ -419,15 +419,15 @@ FROM (
         count(DISTINCT CASE WHEN s%d_error = 1 THEN trace_id END) AS sum_s%d_error,
         count(DISTINCT CASE WHEN s%d_error = 1 THEN trace_id END) AS sum_s%d_error,
 
-        avgIf(
+        coalesce(avgIf(
             (toUnixTimestamp64Nano(t%d_time) - toUnixTimestamp64Nano(t%d_time)) / 1e6,
             t%d_time > 0 AND %s
-        ) AS avg_duration,
+        ), 0) AS avg_duration,
 
-        quantileIf(%s)(
+        coalesce(quantileIf(%s)(
             (toUnixTimestamp64Nano(t%d_time) - toUnixTimestamp64Nano(t%d_time)) / 1e6,
             t%d_time > 0 AND %s
-        ) AS latency
+        ), 0) AS latency
     FROM (
         SELECT
             %s
@@ -442,7 +442,7 @@ FROM (
 
 	return fmt.Sprintf(queryTemplate,
 		strings.Join(withParts, ",\n    "),
-		stepEnd, stepStart, // conversion_rate calculation
+		stepEnd, stepEnd, stepStart, // conversion_rate calculation (if guard)
 		stepEnd,            // avg_rate
 		stepStart, stepEnd, // errors
 		stepStart,                    // total start spans
