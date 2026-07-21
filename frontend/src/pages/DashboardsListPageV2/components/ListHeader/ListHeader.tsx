@@ -5,10 +5,12 @@ import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 import { ArrowDown, ArrowUp, Check, Columns3 } from '@signozhq/icons';
 
+import logEvent from 'api/common/logEvent';
 import {
 	DashboardtypesListOrderDTO,
 	DashboardtypesListSortDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import { DashboardListEvents } from 'pages/DashboardsListPageV2/constants/events';
 
 import {
 	type DashboardDynamicColumns,
@@ -61,9 +63,13 @@ function ListHeader({
 					<Switch
 						value={visibleColumns[col.key]}
 						testId={`metadata-toggle-${col.key}`}
-						onChange={(checked): void =>
-							setVisibleColumns({ ...visibleColumns, [col.key]: checked })
-						}
+						onChange={(checked): void => {
+							void logEvent(DashboardListEvents.ColumnsToggled, {
+								column: col.key,
+								visible: checked,
+							});
+							setVisibleColumns({ ...visibleColumns, [col.key]: checked });
+						}}
 					/>
 				</div>
 			))}

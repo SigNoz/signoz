@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from '@signozhq/ui/sonner';
+import logEvent from 'api/common/logEvent';
 import { updateDashboardV2 } from 'api/generated/services/dashboard';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 import type {
 	DashboardtypesDashboardSpecDTO,
 	DashboardtypesGettableDashboardV2DTO,
@@ -140,14 +142,22 @@ export function useJsonEditor({
 	const format = useCallback((): void => {
 		try {
 			setDraft(JSON.stringify(JSON.parse(draft), null, 2));
+			void logEvent(DashboardDetailEvents.JsonEditorAction, {
+				action: 'format',
+				dashboardId,
+			});
 		} catch {
 			// Leave the draft untouched when it can't be parsed.
 		}
-	}, [draft]);
+	}, [draft, dashboardId]);
 
 	const reset = useCallback((): void => {
 		setDraft(appliedText);
-	}, [appliedText]);
+		void logEvent(DashboardDetailEvents.JsonEditorAction, {
+			action: 'reset',
+			dashboardId,
+		});
+	}, [appliedText, dashboardId]);
 
 	const apply = useCallback(async (): Promise<void> => {
 		if (readOnly || !validity.valid || !isDirty) {
@@ -163,6 +173,10 @@ export function useJsonEditor({
 				dashboardToUpdatable({ ...dashboard, ...edited }),
 			);
 			toast.success('Dashboard updated');
+			void logEvent(DashboardDetailEvents.JsonEditorAction, {
+				action: 'apply',
+				dashboardId,
+			});
 			refetch();
 			onApplied();
 		} catch (error) {
