@@ -7,23 +7,25 @@ import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
+import { InfraAttributeKeys } from 'types/generated/infraAttributeKeys';
 import { v4 } from 'uuid';
 
-// TODO(backend): Find a way to generate this via openapi
+// Identity/resource attribute keys are generated from the backend enum
+// (InfraAttributeKeys). Metric-name entries below remain FE-only for now.
 export const INFRA_MONITORING_ATTR_KEYS = {
 	// Host
-	HOST_NAME: 'host.name',
+	HOST_NAME: InfraAttributeKeys.HOST_NAME,
 
 	// Cluster
-	K8S_CLUSTER_NAME: 'k8s.cluster.name',
-	K8S_CLUSTER_UID: 'k8s.cluster.uid',
+	K8S_CLUSTER_NAME: InfraAttributeKeys.K8S_CLUSTER_NAME,
+	K8S_CLUSTER_UID: InfraAttributeKeys.K8S_CLUSTER_UID,
 
 	// Namespace
-	K8S_NAMESPACE_NAME: 'k8s.namespace.name',
+	K8S_NAMESPACE_NAME: InfraAttributeKeys.K8S_NAMESPACE_NAME,
 
 	// Node
-	K8S_NODE_NAME: 'k8s.node.name',
-	K8S_NODE_UID: 'k8s.node.uid',
+	K8S_NODE_NAME: InfraAttributeKeys.K8S_NODE_NAME,
+	K8S_NODE_UID: InfraAttributeKeys.K8S_NODE_UID,
 	K8S_NODE_CPU_USAGE: 'k8s.node.cpu.usage',
 	K8S_NODE_ALLOCATABLE_CPU: 'k8s.node.allocatable_cpu',
 	K8S_NODE_ALLOCATABLE_MEMORY: 'k8s.node.allocatable_memory',
@@ -38,8 +40,8 @@ export const INFRA_MONITORING_ATTR_KEYS = {
 	K8S_NODE_NETWORK_ERRORS: 'k8s.node.network.errors',
 
 	// Pod
-	K8S_POD_NAME: 'k8s.pod.name',
-	K8S_POD_UID: 'k8s.pod.uid',
+	K8S_POD_NAME: InfraAttributeKeys.K8S_POD_NAME,
+	K8S_POD_UID: InfraAttributeKeys.K8S_POD_UID,
 	K8S_POD_CPU_USAGE: 'k8s.pod.cpu.usage',
 	K8S_POD_CPU_LIMIT_UTILIZATION: 'k8s.pod.cpu_limit_utilization',
 	K8S_POD_CPU_REQUEST_UTILIZATION: 'k8s.pod.cpu_request_utilization',
@@ -56,59 +58,60 @@ export const INFRA_MONITORING_ATTR_KEYS = {
 	K8S_POD_NETWORK_ERRORS: 'k8s.pod.network.errors',
 
 	// Container
-	K8S_CONTAINER_NAME: 'k8s.container.name',
+	K8S_CONTAINER_NAME: InfraAttributeKeys.K8S_CONTAINER_NAME,
 	K8S_CONTAINER_CPU_REQUEST: 'k8s.container.cpu_request',
 	K8S_CONTAINER_CPU_LIMIT: 'k8s.container.cpu_limit',
 	K8S_CONTAINER_MEMORY_REQUEST: 'k8s.container.memory_request',
 	K8S_CONTAINER_MEMORY_LIMIT: 'k8s.container.memory_limit',
 
 	// Deployment
-	K8S_DEPLOYMENT_NAME: 'k8s.deployment.name',
+	K8S_DEPLOYMENT_NAME: InfraAttributeKeys.K8S_DEPLOYMENT_NAME,
 	K8S_DEPLOYMENT_AVAILABLE: 'k8s.deployment.available',
 	K8S_DEPLOYMENT_DESIRED: 'k8s.deployment.desired',
 
 	// StatefulSet
-	K8S_STATEFULSET_NAME: 'k8s.statefulset.name',
+	K8S_STATEFULSET_NAME: InfraAttributeKeys.K8S_STATEFULSET_NAME,
 	K8S_STATEFULSET_CURRENT_PODS: 'k8s.statefulset.current_pods',
 	K8S_STATEFULSET_DESIRED_PODS: 'k8s.statefulset.desired_pods',
 	K8S_STATEFULSET_READY_PODS: 'k8s.statefulset.ready_pods',
 	K8S_STATEFULSET_UPDATED_PODS: 'k8s.statefulset.updated_pods',
 
 	// DaemonSet
-	K8S_DAEMONSET_NAME: 'k8s.daemonset.name',
+	K8S_DAEMONSET_NAME: InfraAttributeKeys.K8S_DAEMONSET_NAME,
 	K8S_DAEMONSET_CURRENT_SCHEDULED_NODES: 'k8s.daemonset.current_scheduled_nodes',
 	K8S_DAEMONSET_DESIRED_SCHEDULED_NODES: 'k8s.daemonset.desired_scheduled_nodes',
 	K8S_DAEMONSET_MISSCHEDULED_NODES: 'k8s.daemonset.misscheduled_nodes',
 	K8S_DAEMONSET_READY_NODES: 'k8s.daemonset.ready_nodes',
 
 	// ReplicaSet
-	K8S_REPLICASET_NAME: 'k8s.replicaset.name',
+	K8S_REPLICASET_NAME: InfraAttributeKeys.K8S_REPLICASET_NAME,
 	K8S_REPLICASET_AVAILABLE: 'k8s.replicaset.available',
 	K8S_REPLICASET_DESIRED: 'k8s.replicaset.desired',
 
 	// Job
-	K8S_JOB_NAME: 'k8s.job.name',
-	K8S_CRONJOB_NAME: 'k8s.cronjob.name',
+	K8S_JOB_NAME: InfraAttributeKeys.K8S_JOB_NAME,
+	K8S_CRONJOB_NAME: InfraAttributeKeys.K8S_CRONJOB_NAME,
 	K8S_JOB_ACTIVE_PODS: 'k8s.job.active_pods',
 	K8S_JOB_DESIRED_SUCCESSFUL_PODS: 'k8s.job.desired_successful_pods',
 	K8S_JOB_FAILED_PODS: 'k8s.job.failed_pods',
 	K8S_JOB_SUCCESSFUL_PODS: 'k8s.job.successful_pods',
 
 	// Volume
-	K8S_PERSISTENT_VOLUME_CLAIM_NAME: 'k8s.persistentvolumeclaim.name',
+	K8S_PERSISTENT_VOLUME_CLAIM_NAME:
+		InfraAttributeKeys.K8S_PERSISTENT_VOLUME_CLAIM_NAME,
 	K8S_VOLUME_AVAILABLE: 'k8s.volume.available',
 	K8S_VOLUME_CAPACITY: 'k8s.volume.capacity',
 	K8S_VOLUME_INODES: 'k8s.volume.inodes',
 	K8S_VOLUME_INODES_FREE: 'k8s.volume.inodes.free',
 	K8S_VOLUME_INODES_USED: 'k8s.volume.inodes.used',
-	K8S_VOLUME_TYPE: 'k8s.volume.type',
+	K8S_VOLUME_TYPE: InfraAttributeKeys.K8S_VOLUME_TYPE,
 
 	// K8s events
-	K8S_OBJECT_KIND: 'k8s.object.kind',
-	K8S_OBJECT_NAME: 'k8s.object.name',
+	K8S_OBJECT_KIND: InfraAttributeKeys.K8S_OBJECT_KIND,
+	K8S_OBJECT_NAME: InfraAttributeKeys.K8S_OBJECT_NAME,
 
 	// Environment
-	DEPLOYMENT_ENVIRONMENT: 'deployment.environment',
+	DEPLOYMENT_ENVIRONMENT: InfraAttributeKeys.DEPLOYMENT_ENVIRONMENT,
 } as const;
 
 export const DEFAULT_PAGE_SIZE = 10;

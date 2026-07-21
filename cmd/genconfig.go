@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
 	"github.com/SigNoz/signoz/pkg/web"
 	"github.com/spf13/cobra"
 	"github.com/swaggest/jsonschema-go"
@@ -15,6 +16,8 @@ import (
 const webSettingsSchemaPath = "frontend/src/schemas/generated/webSettings.schema.json"
 
 const transactionGroupsSchemaPath = "frontend/src/schemas/generated/transactionGroups.schema.json"
+
+const infraAttributeKeysSchemaPath = "frontend/src/schemas/generated/infraAttributeKeys.schema.json"
 
 func registerGenerateConfig(parentCmd *cobra.Command) {
 	configCmd := &cobra.Command{
@@ -35,6 +38,14 @@ func registerGenerateConfig(parentCmd *cobra.Command) {
 		Short: "Generate JSON Schema for transaction groups",
 		RunE: func(currCmd *cobra.Command, args []string) error {
 			return generateTransactionGroups()
+		},
+	})
+
+	configCmd.AddCommand(&cobra.Command{
+		Use:   "infra-attribute-keys",
+		Short: "Generate JSON Schema for infra monitoring attribute keys",
+		RunE: func(currCmd *cobra.Command, args []string) error {
+			return generateInfraAttributeKeys()
 		},
 	})
 
@@ -98,4 +109,26 @@ func generateTransactionGroups() error {
 	}
 
 	return os.WriteFile(transactionGroupsSchemaPath, append(data, '\n'), 0o600)
+}
+
+func generateInfraAttributeKeys() error {
+	enum := make([]any, 0, len(inframonitoringtypes.AttributeKeyMembers))
+	names := make([]any, 0, len(inframonitoringtypes.AttributeKeyMembers))
+	for _, member := range inframonitoringtypes.AttributeKeyMembers {
+		enum = append(enum, member.Key.StringValue())
+		names = append(names, member.Name)
+	}
+
+	schema := jsonschema.Schema{}
+	schema.WithTitle("InfraAttributeKeys")
+	schema.WithType(*(&jsonschema.Type{}).WithSimpleTypes(jsonschema.String))
+	schema.WithEnum(enum...)
+	schema.WithExtraPropertiesItem("tsEnumNames", names)
+
+	data, err := json.MarshalIndent(schema, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(infraAttributeKeysSchemaPath, append(data, '\n'), 0o600)
 }
