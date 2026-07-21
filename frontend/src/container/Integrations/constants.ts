@@ -58,7 +58,7 @@ export const AZURE_INTEGRATION = {
 export const GCP_INTEGRATION = {
 	id: INTEGRATION_TYPES.GCP,
 	title: 'Google Cloud Platform',
-	description: 'One click setup for GCP monitoring with SigNoz',
+	description: 'Setup for GCP monitoring with SigNoz',
 	author: {
 		name: 'SigNoz',
 		email: 'integrations@signoz.io',
