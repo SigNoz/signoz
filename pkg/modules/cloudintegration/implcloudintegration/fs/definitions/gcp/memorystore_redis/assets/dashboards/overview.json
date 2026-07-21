@@ -240,7 +240,7 @@
   "tags": [],
   "title": "Signoz GCP Memorystory Redis overview",
   "uploadedGrafana": false,
-  "uuid": "019f6016-1c55-7f29-adb2-20ab94c5d94e",
+  "uuid": "019f85e9-3846-7dc9-9bce-b626b8a3eaff",
   "variables": {
     "650b757d-2d3b-4929-8bfd-e5c5fb90a5f9": {
       "allSelected": false,
@@ -249,6 +249,7 @@
       "description": "Instance ID",
       "dynamicVariablesAttribute": "instance_id",
       "dynamicVariablesSource": "Metrics",
+      "haveCustomValuesSelected": false,
       "id": "650b757d-2d3b-4929-8bfd-e5c5fb90a5f9",
       "modificationUUID": "b4fec3d9-b821-41b7-ad77-b56f7bfdd051",
       "multiSelect": false,
@@ -267,6 +268,7 @@
       "description": "GCP Project ID",
       "dynamicVariablesAttribute": "project_id",
       "dynamicVariablesSource": "Metrics",
+      "haveCustomValuesSelected": false,
       "id": "dabcf41a-4121-4a03-8738-927576cc90bf",
       "key": "dabcf41a-4121-4a03-8738-927576cc90bf",
       "modificationUUID": "ae57b6eb-54ad-4dc3-bac6-0b4480821265",
@@ -865,7 +867,7 @@
                   "reduceTo": "avg",
                   "spaceAggregation": "sum",
                   "temporality": "",
-                  "timeAggregation": "max"
+                  "timeAggregation": "rate"
                 }
               ],
               "dataSource": "metrics",
@@ -876,14 +878,6 @@
               },
               "functions": [],
               "groupBy": [
-                {
-                  "dataType": "string",
-                  "id": "space--string--tag",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "space",
-                  "type": "tag"
-                },
                 {
                   "dataType": "string",
                   "id": "node_id--string--tag",
@@ -898,6 +892,14 @@
                   "isColumn": false,
                   "isJSON": false,
                   "key": "role",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "space--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "space",
                   "type": "tag"
                 }
               ],
@@ -915,7 +917,7 @@
           "queryFormulas": [
             {
               "disabled": false,
-              "expression": "(A/60)*100",
+              "expression": "A * 100",
               "legend": "{{node_id}}/{{role}}/{{space}}",
               "queryName": "F1"
             }
@@ -930,7 +932,7 @@
             "query": ""
           }
         ],
-        "id": "465172e6-d504-49fc-8757-f23e11fe3943",
+        "id": "e6941cde-486e-4566-9896-e7fcb67d1979",
         "promql": [
           {
             "disabled": false,
