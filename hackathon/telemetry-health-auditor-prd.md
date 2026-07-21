@@ -373,14 +373,18 @@ The RCA agent calls the same gate: if `Trusted` is false, the diagnosis is `inde
 
 ## 12. Detect stage
 
-Triggers:
+The MVP is alert-driven.
+The sidekick runs in `watch` mode and exposes an HTTP webhook receiver.
+A SigNoz notification channel of type webhook points at that receiver, so when one of our generated alerts fires (SLO burn-rate high, telemetry-quality dropped, or SLO turned indeterminate) SigNoz posts to the sidekick and the loop starts autonomously.
 
-- A SigNoz alert fires (a webhook receiver in the sidekick, registered as a notification channel).
-- One of our generated alerts fires (SLO burn-rate high, telemetry-quality dropped, SLO turned indeterminate).
-- A human asks the sidekick a question in chat.
+Mechanics:
 
-Each trigger carries a service, an environment, a window, and the alert or question context.
-Detection is deterministic; no LLM is involved in deciding that an incident exists.
+- The sidekick and SigNoz run on the same Foundry compose network, so the receiver is reachable at a stable in-network address.
+- The bootstrap step registers the webhook channel and attaches it to the generated alerts.
+- The webhook payload is parsed into `(service, environment, window, alert)`; labels on our alerts (`service`, `slo`, `severity`) carry the scope, so no LLM is needed to route the incident.
+
+A human `ask` path (a Slack slash command) is supported behind the same entry point but is not the MVP demo trigger.
+Detection is deterministic; no LLM decides that an incident exists.
 
 ---
 
@@ -429,30 +433,38 @@ When `status` is `indeterminate`, `root_cause` and `proposed_fix` are omitted an
 ### 13.4 Presentation rules (rule-based, not soft confidence)
 
 How a diagnosis is presented is decided by an explicit, configured rule set, not by a raw LLM confidence number.
-The rules operate on deterministic evidence signals (how many error spans, whether a deploy correlates, whether the gate is trusted, how many distinct root-cause candidates the evidence supports).
+The rules operate on deterministic evidence signals derived from standard observability frameworks rather than ad-hoc heuristics:
 
-Example rules:
+- The Four Golden Signals (Google SRE): latency, traffic, errors, saturation.
+- RED (rate, errors, duration) for request-driven services.
+- USE (utilization, saturation, errors) for resources and dependencies.
 
-- If the gate is not trusted, present `indeterminate` and name the missing evidence. Never state a root cause.
-- If a single cause is supported by correlated evidence across at least two signals (for example error spans plus a deploy marker), present it as a conclusion.
+From the retrieved evidence the sidekick computes a small set of deterministic signals: the error-rate delta versus the window baseline, the latency shift (p95/p99), whether errors concentrate in one exception type or one downstream span (a dependency failure), any saturation indicator, and whether the onset aligns with a change or deploy marker when that telemetry exists.
+
+The presentation rules:
+
+- If the completeness gate is not trusted, present `indeterminate` and name the missing evidence. Never state a root cause.
+- If a single cause is supported across at least two golden signals (for example an errors spike concentrated in one dependency span plus a latency shift), present it as a conclusion.
 - If the evidence supports more than one candidate, present them as ranked hypotheses, not a conclusion.
-- If the evidence is thin (below a configured minimum), present "could not determine" rather than a guess.
+- If the evidence is below a configured minimum (too few error samples, no dominant pattern), present "could not determine" rather than a guess.
 
 The agent must never state a root cause it did not find evidence for.
-The rule set lives in `sidekick.yaml` so it is auditable and tunable without touching code.
+The signals and thresholds live in `sidekick.yaml` so the rule set is auditable and tunable without touching code.
 
 ---
 
 ## 14. Communicate stage
 
-MVP adapter: Slack (#11655). Telegram and voice (#11654) are stretch adapters behind the same `Notifier` interface.
+MVP adapter: a full Slack app (#11655). Telegram and voice (#11654) are stretch adapters behind the same `Notifier` interface.
 
-The loop runs one pass on a trigger and then posts to Slack and stops.
+The Slack app is a proper bot (bot token, `chat.postMessage`, Block Kit formatting, and a `/diagnose` slash command for the human `ask` path), not just an incoming webhook.
+Interactivity in the MVP is limited to acknowledgement; because the MVP is advisory only, there is no execute button.
+
+The loop runs one pass on a trigger, posts to Slack, and stops.
 It does not act on its own; it hands the diagnosis to a human and waits for review.
 
-Message contract: the deterministic grounding block (SLO, state, budget, burn, trusted or indeterminate), the root cause or the indeterminate reason, evidence deep links, and the recommended advisory action.
+Message contract (Block Kit): the deterministic grounding block (SLO, state, budget, burn, trusted or indeterminate), the root cause or the indeterminate reason, evidence deep links to SigNoz, and the recommended advisory action.
 The natural-language phrasing is the only LLM-authored part of the message; the facts, numbers, and links are deterministic.
-Because the MVP is advisory only, the message recommends an action but offers no execute button; the human acts outside the agent.
 Every message is logged with a correlation id.
 
 ---
@@ -554,7 +566,9 @@ Repo shape:
 /                             fork of SigNoz, UNMODIFIED
 casting.yaml, casting.yaml.lock   stock SigNoz + MCP, reproducible
 sre-sidekick/                 the third-layer service (our code, all Go)
-hackathon/seed/               deterministic OTLP telemetry seeder
+demo-agent/                   dummy instrumented app: traces + logs + metrics,
+                              with a --buggy mode that plants a traceable failure
+hackathon/seed/               deterministic OTLP metric seeder (SLO demo)
 hackathon/DEMO.md             runbook
 ```
 
@@ -581,6 +595,16 @@ hackathon/DEMO.md             runbook
 6. The service is named `sre-sidekick`. The existing `reliability-agent` module is renamed and grows into it.
 7. The loop runs one pass on a trigger (detect, ground, diagnose, communicate) and then stops and waits for human review. It never acts on its own; the human reviews the diagnosis and the advisory before anything further happens.
 
+### 21.1 Implementation decisions
+
+1. Demo subject: we build a small dummy instrumented application (`demo-agent`) that emits OpenTelemetry traces, logs, and metrics simulating an AI agent (retrieve, tool call, model call, answer). It is a test fixture, not the deliverable.
+2. The dummy app ships a buggy mode: intentionally broken code (for example a tool call that times out and raises an exception) that produces a failure with a real, traceable cause in the trace tree, so the RCA agent has genuine evidence to reason over.
+3. Detect is alert-driven via a webhook receiver in the sidekick, registered as a SigNoz notification channel, with the alert payload mapped to service, environment, and window (section 12).
+4. The OpenRouter API key for DeepSeek is provided by the team via the environment. RCA requires it; this is documented. The deterministic engine reproduces fully without it.
+5. The Slack interface is a full Slack app (bot token, Block Kit, `/diagnose` slash command), not a bare webhook (section 14).
+6. The rule-based presentation is grounded in standard observability frameworks (Four Golden Signals, RED, USE) rather than ad-hoc heuristics (section 13.4).
+7. The trigger is alert-driven: a failure raises a SigNoz alert, the sidekick runs one autonomous pass, and posts to Slack.
+
 Everything below reflects these decisions.
 
 ---
@@ -599,14 +623,17 @@ Everything below reflects these decisions.
 
 ```text
 1. foundryctl cast -f casting.yaml    -> stock SigNoz + MCP.
-2. Bootstrap + seed telemetry. Show the SLO healthy and the generated dashboard.
-3. Break the agent (raise errors / drop a required metric).
-4a. If a required metric is missing: the sidekick messages "SLO indeterminate,
-    telemetry incomplete, cannot diagnose reliably" - the honesty beat.
-4b. If errors spike: burn-rate alert fires -> sidekick grounds -> MCP RCA ->
-    Telegram message with root cause, evidence links, and a proposed fix.
-5. Approve the fix in chat. The action runs (advisory or patch).
-6. The sidekick re-verifies and reports the SLO recovering.
+2. Bootstrap. Run demo-agent (healthy). Show the SLO healthy and the generated dashboard.
+3a. Honesty beat: drop a required metric -> SLO indeterminate -> the sidekick posts
+    to Slack "telemetry incomplete, cannot diagnose reliably" instead of guessing.
+3b. Real incident: switch demo-agent to --buggy (a tool call now times out and raises).
+4. Errors spike -> our burn-rate alert fires -> SigNoz webhooks the sidekick.
+5. The sidekick grounds on the SLO (unhealthy, burn 20x), pulls the failing trace tree
+   and exception logs via MCP, runs DeepSeek RCA, and posts a Slack message:
+   root cause (tool.search_kb timeout after the buggy change), evidence links,
+   and a recommended advisory action. Then it stops for human review.
+6. The human applies the fix (revert demo-agent to healthy) and re-runs the check;
+   the SLO recovers.
 7. Pitch: an AI SRE agent that keeps AI-era systems reliable, grounded on SigNoz,
    that refuses to guess when the telemetry cannot be trusted.
 ```
