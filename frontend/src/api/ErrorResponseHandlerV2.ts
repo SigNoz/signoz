@@ -17,12 +17,8 @@ export function ErrorResponseHandlerV2(error: AxiosError<ErrorV2Resp>): never {
 	// The request was made and the server responded with a status code
 	// that falls out of the range of 2xx
 	if (response) {
-		// The AxiosError type claims response.data is a V2 envelope, but that's an
-		// unchecked assumption about untrusted network data — e.g. during a
-		// deployment the gateway (nginx/LB) returns a 5xx with an HTML or empty
-		// body. Launder it back to `unknown` and verify the shape before reading
-		// it; otherwise synthesize an error from the status so the handler never
-		// throws itself.
+		// response.data isn't guaranteed to be a V2 envelope (e.g. a gateway 5xx
+		// with an HTML/empty body during a deploy), so verify the shape first.
 		const data: unknown = response.data;
 		if (isErrorV2Resp(data)) {
 			const { code, message, url, errors } = data.error;
@@ -34,7 +30,7 @@ export function ErrorResponseHandlerV2(error: AxiosError<ErrorV2Resp>): never {
 		throw new APIError({
 			httpStatusCode: response.status || 500,
 			error: {
-				code: String(response.status || 500),
+				code: 'UPSTREAM_UNAVAILABLE',
 				message: error.message || 'Something went wrong',
 				url: '',
 				errors: [],
