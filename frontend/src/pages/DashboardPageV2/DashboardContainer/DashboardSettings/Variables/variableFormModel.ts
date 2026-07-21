@@ -15,6 +15,14 @@ import { sortBy } from 'lodash-es';
  */
 export type VariableType = 'QUERY' | 'CUSTOM' | 'TEXT' | 'DYNAMIC';
 
+/** Analytics label for each variable type (TEXT is surfaced as "textbox"). */
+export const VARIABLE_TYPE_EVENT_LABEL: Record<VariableType, string> = {
+	QUERY: 'query',
+	CUSTOM: 'custom',
+	TEXT: 'textbox',
+	DYNAMIC: 'dynamic',
+};
+
 /** Telemetry signal — the generated enum (traces / logs / metrics). */
 // A query/variable signal is only logs/traces/metrics. TelemetrytypesSignalDTO
 // also carries the empty "any" value used on field keys, which is not a valid
