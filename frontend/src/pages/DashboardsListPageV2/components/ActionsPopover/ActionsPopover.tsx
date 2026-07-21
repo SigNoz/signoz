@@ -15,6 +15,7 @@ import {
 	Tag,
 } from '@signozhq/icons';
 import { useCopyToClipboard } from 'react-use';
+import logEvent from 'api/common/logEvent';
 import {
 	cloneDashboardV2,
 	invalidateListDashboardsForUserV2,
@@ -23,6 +24,7 @@ import {
 } from 'api/generated/services/dashboard';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import { DashboardListEvents } from 'pages/DashboardsListPageV2/constants/events';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
@@ -75,6 +77,10 @@ function ActionsPopover({
 		mutationFn: () => cloneDashboardV2({ id: dashboardId }),
 		onSuccess: (response) => {
 			toast.success(`Duplicated "${dashboardName}"`);
+			void logEvent(DashboardListEvents.RowAction, {
+				action: 'duplicate',
+				dashboardId,
+			});
 			safeNavigate(
 				generatePath(ROUTES.DASHBOARD, { dashboardId: response.data.id }),
 			);
@@ -99,6 +105,10 @@ function ActionsPopover({
 				: lockDashboardV2({ id: dashboardId }),
 		onSuccess: async () => {
 			toast.success(isLocked ? 'Dashboard unlocked' : 'Dashboard locked');
+			void logEvent(DashboardListEvents.RowAction, {
+				action: isLocked ? 'unlock' : 'lock',
+				dashboardId,
+			});
 			await invalidateListDashboardsForUserV2(queryClient);
 		},
 		onError: (error: APIError) => {
@@ -133,6 +143,10 @@ function ActionsPopover({
 										e.stopPropagation();
 										e.preventDefault();
 										openInNewTab(link);
+										void logEvent(DashboardListEvents.RowAction, {
+											action: 'openNewTab',
+											dashboardId,
+										});
 									}}
 									testId="dashboard-action-open-new-tab"
 								>
@@ -146,6 +160,10 @@ function ActionsPopover({
 										e.stopPropagation();
 										e.preventDefault();
 										setCopy(getAbsoluteUrl(link));
+										void logEvent(DashboardListEvents.RowAction, {
+											action: 'copyLink',
+											dashboardId,
+										});
 									}}
 									testId="dashboard-action-copy-link"
 								>

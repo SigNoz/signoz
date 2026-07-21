@@ -4,8 +4,10 @@ import { Typography } from '@signozhq/ui/typography';
 import { ArrowUpRight, Copy } from '@signozhq/icons';
 import { useCopyToClipboard } from 'react-use';
 import { toast } from '@signozhq/ui/sonner';
+import logEvent from 'api/common/logEvent';
 import { handleContactSupport } from 'container/Integrations/utils';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
+import { DashboardListEvents } from 'pages/DashboardsListPageV2/constants/events';
 
 import styles from './LegacyDashboardDialog.module.scss';
 
@@ -33,6 +35,10 @@ function LegacyDashboardDialog({
 	const onCopyId = (): void => {
 		copyToClipboard(dashboardId);
 		toast.success('Dashboard ID copied');
+		void logEvent(DashboardListEvents.LegacyDialogAction, {
+			action: 'copyId',
+			dashboardId,
+		});
 	};
 
 	return (
@@ -61,7 +67,13 @@ function LegacyDashboardDialog({
 						color="primary"
 						size="md"
 						suffix={<ArrowUpRight size={14} />}
-						onClick={(): void => handleContactSupport(!!isCloudUser)}
+						onClick={(): void => {
+							handleContactSupport(!!isCloudUser);
+							void logEvent(DashboardListEvents.LegacyDialogAction, {
+								action: 'contactSupport',
+								dashboardId,
+							});
+						}}
 						testId="legacy-dashboard-contact-support"
 					>
 						Contact Support

@@ -1,7 +1,9 @@
 import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import { ArrowUpRight, RotateCw } from '@signozhq/icons';
+import logEvent from 'api/common/logEvent';
 import { handleContactSupport } from 'container/Integrations/utils';
+import { DashboardListEvents } from 'pages/DashboardsListPageV2/constants/events';
 
 import awwSnapUrl from '@/assets/Icons/awwSnap.svg';
 
@@ -57,7 +59,12 @@ function ErrorState({
 						variant="outlined"
 						color="secondary"
 						prefix={<RotateCw size={16} />}
-						onClick={onRetry}
+						onClick={(): void => {
+							void logEvent(DashboardListEvents.ErrorStateAction, {
+								action: 'retry',
+							});
+							onRetry();
+						}}
 						testId="dashboards-list-retry"
 					>
 						Retry
@@ -67,7 +74,12 @@ function ErrorState({
 					variant="link"
 					color="primary"
 					className={styles.learnMore}
-					onClick={(): void => handleContactSupport(isCloudUser)}
+					onClick={(): void => {
+						void logEvent(DashboardListEvents.ErrorStateAction, {
+							action: 'contactSupport',
+						});
+						handleContactSupport(isCloudUser);
+					}}
 					testId="dashboards-list-contact-support"
 				>
 					Contact Support

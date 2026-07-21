@@ -12,6 +12,7 @@ import { Base64Icons } from 'container/DashboardContainer/DashboardSettings/Gene
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import { DashboardListEvents } from 'pages/DashboardsListPageV2/constants/events';
 import { useTimezone } from 'providers/Timezone';
 import { isModifierKeyPressed } from 'utils/app';
 
@@ -97,6 +98,10 @@ function DashboardRow({
 			return;
 		}
 		togglePin(id, isPinned);
+		void logEvent(DashboardListEvents.DashboardPinned, {
+			pinned: !isPinned,
+			dashboardId: id,
+		});
 	};
 
 	const pinLabel = isPinned ? 'Unpin dashboard' : 'Pin dashboard';
