@@ -1,14 +1,15 @@
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { AxiosError } from 'axios';
+import { ErrorV2Resp } from 'types/api';
 import APIError from 'types/api/error';
 
-function asAxiosError(partial: Partial<AxiosError>): AxiosError<unknown> {
-	return partial as AxiosError<unknown>;
+function asAxiosError(partial: Partial<AxiosError>): AxiosError<ErrorV2Resp> {
+	return partial as AxiosError<ErrorV2Resp>;
 }
 
 // ErrorResponseHandlerV2 always throws — capture the APIError so assertions stay
 // unconditional.
-function runHandler(error: AxiosError<unknown>): APIError {
+function runHandler(error: AxiosError<ErrorV2Resp>): APIError {
 	try {
 		ErrorResponseHandlerV2(error);
 	} catch (thrown) {
