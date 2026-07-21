@@ -22,6 +22,11 @@ function NewDashboardModal({ open, onClose }: Props): JSX.Element {
 		}
 	}, [open]);
 
+	const handleTabChange = (key: string): void => {
+		setTab(key);
+		void logEvent(DashboardListEvents.CreateModalTabChanged, { tab: key });
+	};
+
 	return (
 		<DialogWrapper
 			title="New dashboard"
@@ -35,10 +40,7 @@ function NewDashboardModal({ open, onClose }: Props): JSX.Element {
 		>
 			<Tabs
 				value={tab}
-				onChange={(key): void => {
-					setTab(key);
-					void logEvent(DashboardListEvents.CreateModalTabChanged, { tab: key });
-				}}
+				onChange={handleTabChange}
 				items={[
 					{
 						key: 'blank',

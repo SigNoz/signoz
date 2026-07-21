@@ -101,6 +101,14 @@ function DashboardInfo({
 		}
 	};
 
+	const handleOpenPublicUrl = (): void => {
+		void logEvent(DashboardDetailEvents.PublicUrlOpened, {
+			dashboardId,
+			dashboardName: title,
+		});
+		openInNewTab(publicUrl);
+	};
+
 	return (
 		<div className={styles.dashboardInfo}>
 			<img src={image} alt={title} className={styles.dashboardImage} />
@@ -185,13 +193,7 @@ function DashboardInfo({
 						className={styles.publicLink}
 						aria-label="Open public dashboard"
 						testId="dashboard-public-link"
-						onClick={(): void => {
-							void logEvent(DashboardDetailEvents.PublicUrlOpened, {
-								dashboardId,
-								dashboardName: title,
-							});
-							openInNewTab(publicUrl);
-						}}
+						onClick={handleOpenPublicUrl}
 					>
 						<Globe size={14} />
 					</Button>

@@ -116,6 +116,26 @@ function ActionsPopover({
 		},
 	});
 
+	const handleOpenInNewTab = (e: React.MouseEvent<HTMLElement>): void => {
+		e.stopPropagation();
+		e.preventDefault();
+		openInNewTab(link);
+		void logEvent(DashboardListEvents.RowAction, {
+			action: 'openNewTab',
+			dashboardId,
+		});
+	};
+
+	const handleCopyLink = (e: React.MouseEvent<HTMLElement>): void => {
+		e.stopPropagation();
+		e.preventDefault();
+		setCopy(getAbsoluteUrl(link));
+		void logEvent(DashboardListEvents.RowAction, {
+			action: 'copyLink',
+			dashboardId,
+		});
+	};
+
 	return (
 		<>
 			<Popover
@@ -139,15 +159,7 @@ function ActionsPopover({
 									color="secondary"
 									className={styles.menuItem}
 									prefix={<SquareArrowOutUpRight size={14} />}
-									onClick={(e): void => {
-										e.stopPropagation();
-										e.preventDefault();
-										openInNewTab(link);
-										void logEvent(DashboardListEvents.RowAction, {
-											action: 'openNewTab',
-											dashboardId,
-										});
-									}}
+									onClick={handleOpenInNewTab}
 									testId="dashboard-action-open-new-tab"
 								>
 									Open in New Tab
@@ -156,15 +168,7 @@ function ActionsPopover({
 									color="secondary"
 									className={styles.menuItem}
 									prefix={<Link2 size={14} />}
-									onClick={(e): void => {
-										e.stopPropagation();
-										e.preventDefault();
-										setCopy(getAbsoluteUrl(link));
-										void logEvent(DashboardListEvents.RowAction, {
-											action: 'copyLink',
-											dashboardId,
-										});
-									}}
+									onClick={handleCopyLink}
 									testId="dashboard-action-copy-link"
 								>
 									Copy Link

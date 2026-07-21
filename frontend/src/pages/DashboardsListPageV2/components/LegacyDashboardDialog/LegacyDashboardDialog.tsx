@@ -41,6 +41,14 @@ function LegacyDashboardDialog({
 		});
 	};
 
+	const onContactSupport = (): void => {
+		handleContactSupport(!!isCloudUser);
+		void logEvent(DashboardListEvents.LegacyDialogAction, {
+			action: 'contactSupport',
+			dashboardId,
+		});
+	};
+
 	return (
 		<DialogWrapper
 			title="This dashboard isn't available in the new experience"
@@ -67,13 +75,7 @@ function LegacyDashboardDialog({
 						color="primary"
 						size="md"
 						suffix={<ArrowUpRight size={14} />}
-						onClick={(): void => {
-							handleContactSupport(!!isCloudUser);
-							void logEvent(DashboardListEvents.LegacyDialogAction, {
-								action: 'contactSupport',
-								dashboardId,
-							});
-						}}
+						onClick={onContactSupport}
 						testId="legacy-dashboard-contact-support"
 					>
 						Contact Support

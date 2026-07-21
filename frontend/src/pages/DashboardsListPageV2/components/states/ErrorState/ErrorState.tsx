@@ -34,6 +34,20 @@ function ErrorState({
 
 	const cleanedDetail = formatQueryErrorMessage(errorMessage);
 
+	const handleRetry = (): void => {
+		void logEvent(DashboardListEvents.ErrorStateAction, {
+			action: 'retry',
+		});
+		onRetry();
+	};
+
+	const handleContactSupportClick = (): void => {
+		void logEvent(DashboardListEvents.ErrorStateAction, {
+			action: 'contactSupport',
+		});
+		handleContactSupport(isCloudUser);
+	};
+
 	return (
 		<div className={styles.wrapper}>
 			<img src={awwSnapUrl} alt="something went wrong" className={styles.img} />
@@ -59,12 +73,7 @@ function ErrorState({
 						variant="outlined"
 						color="secondary"
 						prefix={<RotateCw size={16} />}
-						onClick={(): void => {
-							void logEvent(DashboardListEvents.ErrorStateAction, {
-								action: 'retry',
-							});
-							onRetry();
-						}}
+						onClick={handleRetry}
 						testId="dashboards-list-retry"
 					>
 						Retry
@@ -74,12 +83,7 @@ function ErrorState({
 					variant="link"
 					color="primary"
 					className={styles.learnMore}
-					onClick={(): void => {
-						void logEvent(DashboardListEvents.ErrorStateAction, {
-							action: 'contactSupport',
-						});
-						handleContactSupport(isCloudUser);
-					}}
+					onClick={handleContactSupportClick}
 					testId="dashboards-list-contact-support"
 				>
 					Contact Support

@@ -27,6 +27,22 @@ function CrossPanelSync({ dashboardId }: CrossPanelSyncProps): JSX.Element {
 	const [syncTooltipFilterMode, setSyncTooltipFilterMode] =
 		useSyncTooltipFilterMode(dashboardId);
 
+	const handleCursorSyncChange = (value: DashboardCursorSync): void => {
+		void logEvent(DashboardDetailEvents.CursorSyncChanged, {
+			mode: value,
+			dashboardId,
+		});
+		setCursorSyncMode(value);
+	};
+
+	const handleTooltipFilterModeChange = (value: SyncTooltipFilterMode): void => {
+		void logEvent(Events.TOOLTIP_SYNC_MODE_CHANGED, {
+			path: getAbsoluteUrl(window.location.pathname),
+			mode: value,
+		});
+		setSyncTooltipFilterMode(value);
+	};
+
 	return (
 		<div className={cx(settingsStyles.settingsCard, styles.crossPanelSyncGroup)}>
 			<div className={styles.crossPanelSyncSectionHeader}>
@@ -73,13 +89,7 @@ function CrossPanelSync({ dashboardId }: CrossPanelSyncProps): JSX.Element {
 				<SegmentedControl
 					testId="cursor-sync-mode"
 					value={cursorSyncMode}
-					onChange={(value): void => {
-						void logEvent(DashboardDetailEvents.CursorSyncChanged, {
-							mode: value,
-							dashboardId,
-						});
-						setCursorSyncMode(value);
-					}}
+					onChange={handleCursorSyncChange}
 					options={[
 						{ label: 'No Sync', value: DashboardCursorSync.None },
 						{ label: 'Crosshair', value: DashboardCursorSync.Crosshair },
@@ -103,13 +113,7 @@ function CrossPanelSync({ dashboardId }: CrossPanelSyncProps): JSX.Element {
 					<SegmentedControl
 						testId="sync-tooltip-filter-mode"
 						value={syncTooltipFilterMode}
-						onChange={(value): void => {
-							void logEvent(Events.TOOLTIP_SYNC_MODE_CHANGED, {
-								path: getAbsoluteUrl(window.location.pathname),
-								mode: value,
-							});
-							setSyncTooltipFilterMode(value);
-						}}
+						onChange={handleTooltipFilterModeChange}
 						options={[
 							{ label: 'All', value: SyncTooltipFilterMode.All },
 							{ label: 'Filtered', value: SyncTooltipFilterMode.Filtered },

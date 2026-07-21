@@ -143,6 +143,29 @@ function DashboardActions({
 		});
 	}, [deleteDashboardMutation, dashboard.id, dashboard.spec.panels]);
 
+	const handleOpenSettings = useCallback((): void => {
+		void logEvent(DashboardDetailEvents.SettingsOpened, {
+			dashboardId: dashboard.id,
+		});
+		setIsSettingsDrawerOpen(true);
+	}, [dashboard.id]);
+
+	const handleOpenJsonEditor = useCallback((): void => {
+		void logEvent(DashboardDetailEvents.JsonEditorOpened, {
+			dashboardId: dashboard.id,
+			readOnly: !isEditable,
+		});
+		setIsJsonEditorOpen(true);
+	}, [dashboard.id, isEditable]);
+
+	const handleEnterFullScreen = useCallback((): void => {
+		void logEvent(DashboardDetailEvents.FullScreenToggled, {
+			dashboardId: dashboard.id,
+			enabled: true,
+		});
+		void handle.enter();
+	}, [dashboard.id, handle]);
+
 	// Shown only to edit-permitted users, so the only disabled reason is the lock.
 	const editLabel = useCallback(
 		(text: string): ReactNode =>
@@ -188,13 +211,7 @@ function DashboardActions({
 			key: 'fullscreen',
 			label: 'Full screen',
 			icon: <Fullscreen size={14} />,
-			onClick: (): void => {
-				void logEvent(DashboardDetailEvents.FullScreenToggled, {
-					dashboardId: dashboard.id,
-					enabled: true,
-				});
-				void handle.enter();
-			},
+			onClick: handleEnterFullScreen,
 		});
 
 		const items: MenuItem[] = [
@@ -243,11 +260,10 @@ function DashboardActions({
 		user.role,
 		isDashboardLocked,
 		dashboard.createdBy,
-		dashboard.id,
 		onOpenRename,
 		handleClone,
 		onLockToggle,
-		handle,
+		handleEnterFullScreen,
 	]);
 
 	return (
@@ -277,12 +293,7 @@ function DashboardActions({
 							prefix={<Configure size="md" />}
 							testId="show-drawer"
 							disabled={isLocked}
-							onClick={(): void => {
-								void logEvent(DashboardDetailEvents.SettingsOpened, {
-									dashboardId: dashboard.id,
-								});
-								setIsSettingsDrawerOpen(true);
-							}}
+							onClick={handleOpenSettings}
 							size="md"
 						>
 							Configure
@@ -307,13 +318,7 @@ function DashboardActions({
 				className={styles.toolbarButton}
 				prefix={<Braces size="md" />}
 				testId="edit-json"
-				onClick={(): void => {
-					void logEvent(DashboardDetailEvents.JsonEditorOpened, {
-						dashboardId: dashboard.id,
-						readOnly: !isEditable,
-					});
-					setIsJsonEditorOpen(true);
-				}}
+				onClick={handleOpenJsonEditor}
 				size="md"
 			>
 				JSON

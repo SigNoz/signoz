@@ -36,6 +36,11 @@ function PanelHeaderSearch({
 		setExpanded(false);
 	};
 
+	const handleSearchChange = (e: ChangeEvent<HTMLInputElement>): void => {
+		onChange(e.target.value);
+		void logEvent(DashboardDetailEvents.PanelSearched, {}, 'track', true);
+	};
+
 	if (!expanded) {
 		return (
 			<TooltipSimple title="Search" arrow>
@@ -78,10 +83,7 @@ function PanelHeaderSearch({
 					<X size={14} />
 				</Button>
 			}
-			onChange={(e: ChangeEvent<HTMLInputElement>): void => {
-				onChange(e.target.value);
-				void logEvent(DashboardDetailEvents.PanelSearched, {}, 'track', true);
-			}}
+			onChange={handleSearchChange}
 			onBlur={collapseIfEmpty}
 			onKeyDown={(e: KeyboardEvent<HTMLInputElement>): void => {
 				if (e.key === 'Escape') {

@@ -118,6 +118,16 @@ function ViewsRail({
 		[modal, onDelete],
 	);
 
+	const handleSaveAsView = (name: string): void => {
+		void logEvent(DashboardListEvents.ViewSaved, { mode: 'new' });
+		onSave(name);
+	};
+
+	const handleSaveViewChanges = (): void => {
+		void logEvent(DashboardListEvents.ViewSaved, { mode: 'update' });
+		onSaveChanges();
+	};
+
 	const renderItem = (row: ViewRow): JSX.Element => {
 		const Icon = row.icon;
 		const active = row.id === activeViewId;
@@ -191,10 +201,7 @@ function ViewsRail({
 					<ViewNamePopover
 						open={saveOpen}
 						onOpenChange={setSaveOpen}
-						onSubmit={(name): void => {
-							void logEvent(DashboardListEvents.ViewSaved, { mode: 'new' });
-							onSave(name);
-						}}
+						onSubmit={handleSaveAsView}
 						title="Save as view"
 						confirmLabel="Save view"
 						testIdPrefix="save-view"
@@ -286,10 +293,7 @@ function ViewsRail({
 									variant="solid"
 									color="primary"
 									size="sm"
-									onClick={(): void => {
-										void logEvent(DashboardListEvents.ViewSaved, { mode: 'update' });
-										onSaveChanges();
-									}}
+									onClick={handleSaveViewChanges}
 									testId="dashboards-view-save-changes"
 								>
 									Save

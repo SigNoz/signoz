@@ -74,6 +74,20 @@ function DrilldownAggregateMenu({
 		[context.filters],
 	);
 
+	const handleViewLogs = (): void => {
+		void logEvent(DashboardDetailEvents.DrilldownAction, {
+			action: 'viewLogs',
+		});
+		onViewLogs();
+	};
+
+	const handleViewTraces = (): void => {
+		void logEvent(DashboardDetailEvents.DrilldownAction, {
+			action: 'viewTraces',
+		});
+		onViewTraces();
+	};
+
 	return (
 		<>
 			<ContextMenu.Header>
@@ -106,12 +120,7 @@ function DrilldownAggregateMenu({
 						</span>
 					)
 				}
-				onClick={(): void => {
-					void logEvent(DashboardDetailEvents.DrilldownAction, {
-						action: 'viewLogs',
-					});
-					onViewLogs();
-				}}
+				onClick={handleViewLogs}
 				disabled={isResolving}
 			>
 				<span data-testid="drilldown-view-logs">View in Logs</span>
@@ -126,12 +135,7 @@ function DrilldownAggregateMenu({
 						</span>
 					)
 				}
-				onClick={(): void => {
-					void logEvent(DashboardDetailEvents.DrilldownAction, {
-						action: 'viewTraces',
-					});
-					onViewTraces();
-				}}
+				onClick={handleViewTraces}
 				disabled={isResolving}
 			>
 				<span data-testid="drilldown-view-traces">View in Traces</span>
