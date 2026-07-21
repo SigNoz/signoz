@@ -5681,6 +5681,14 @@ export interface InframonitoringtypesChecksDTO {
 	type: InframonitoringtypesCheckTypeDTO;
 }
 
+export interface InframonitoringtypesClusterMetaDTO {
+	/**
+	 * @type string
+	 */
+	'k8s.cluster.name': string;
+	[key: string]: string;
+}
+
 export type InframonitoringtypesClusterRecordDTOCounts = {
 	/**
 	 * @type integer
@@ -5713,16 +5721,6 @@ export type InframonitoringtypesClusterRecordDTOCounts = {
 	 */
 	statefulSets: number;
 };
-
-export type InframonitoringtypesClusterRecordDTOMetaAnyOf = {
-	[key: string]: string;
-};
-
-/**
- * @nullable
- */
-export type InframonitoringtypesClusterRecordDTOMeta =
-	InframonitoringtypesClusterRecordDTOMetaAnyOf | null;
 
 export interface InframonitoringtypesNodeCountsByReadinessDTO {
 	/**
@@ -5862,10 +5860,7 @@ export interface InframonitoringtypesClusterRecordDTO {
 	 * @type object
 	 */
 	counts: InframonitoringtypesClusterRecordDTOCounts;
-	/**
-	 * @type object,null
-	 */
-	meta: InframonitoringtypesClusterRecordDTOMeta;
+	meta: InframonitoringtypesClusterMetaDTO;
 	nodeCountsByReadiness: InframonitoringtypesNodeCountsByReadinessDTO;
 	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
 	podCountsByStatus: InframonitoringtypesPodCountsByStatusDTO;
@@ -5980,21 +5975,67 @@ export interface InframonitoringtypesContainerCountsByStatusDTO {
 	waiting: number;
 }
 
+export interface InframonitoringtypesContainerMetaDTO {
+	/**
+	 * @type string
+	 */
+	'container.image.name': string;
+	/**
+	 * @type string
+	 */
+	'container.image.tag': string;
+	/**
+	 * @type string
+	 */
+	'k8s.cluster.name': string;
+	/**
+	 * @type string
+	 */
+	'k8s.container.name': string;
+	/**
+	 * @type string
+	 */
+	'k8s.cronjob.name': string;
+	/**
+	 * @type string
+	 */
+	'k8s.daemonset.name': string;
+	/**
+	 * @type string
+	 */
+	'k8s.deployment.name': string;
+	/**
+	 * @type string
+	 */
+	'k8s.job.name': string;
+	/**
+	 * @type string
+	 */
+	'k8s.namespace.name': string;
+	/**
+	 * @type string
+	 */
+	'k8s.node.name': string;
+	/**
+	 * @type string
+	 */
+	'k8s.pod.name': string;
+	/**
+	 * @type string
+	 */
+	'k8s.pod.uid': string;
+	/**
+	 * @type string
+	 */
+	'k8s.statefulset.name': string;
+	[key: string]: string;
+}
+
 export enum InframonitoringtypesContainerReadyDTO {
 	ready = 'ready',
 	not_ready = 'not_ready',
 	no_data = 'no_data',
 }
-export type InframonitoringtypesContainerRecordDTOMetaAnyOf = {
-	[key: string]: string;
-};
-
-/**
- * @nullable
- */
-export type InframonitoringtypesContainerRecordDTOMeta =
-	InframonitoringtypesContainerRecordDTOMetaAnyOf | null;
-
 export enum InframonitoringtypesContainerStatusDTO {
 	running = 'running',
 	waiting = 'waiting',
@@ -6048,10 +6089,7 @@ export interface InframonitoringtypesContainerRecordDTO {
 	 * @format double
 	 */
 	memoryRequestUtilization: number;
-	/**
-	 * @type object,null
-	 */
-	meta: InframonitoringtypesContainerRecordDTOMeta;
+	meta: InframonitoringtypesContainerMetaDTO;
 	/**
 	 * @type string
 	 */
@@ -6082,15 +6120,21 @@ export interface InframonitoringtypesContainersDTO {
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 
-export type InframonitoringtypesDaemonSetRecordDTOMetaAnyOf = {
+export interface InframonitoringtypesDaemonSetMetaDTO {
+	/**
+	 * @type string
+	 */
+	'k8s.cluster.name': string;
+	/**
+	 * @type string
+	 */
+	'k8s.daemonset.name': string;
+	/**
+	 * @type string
+	 */
+	'k8s.namespace.name': string;
 	[key: string]: string;
-};
-
-/**
- * @nullable
- */
-export type InframonitoringtypesDaemonSetRecordDTOMeta =
-	InframonitoringtypesDaemonSetRecordDTOMetaAnyOf | null;
+}
 
 export interface InframonitoringtypesDaemonSetRecordDTO {
 	/**
@@ -6135,10 +6179,7 @@ export interface InframonitoringtypesDaemonSetRecordDTO {
 	 * @type integer
 	 */
 	desiredNodes: number;
-	/**
-	 * @type object,null
-	 */
-	meta: InframonitoringtypesDaemonSetRecordDTOMeta;
+	meta: InframonitoringtypesDaemonSetMetaDTO;
 	/**
 	 * @type integer
 	 */
@@ -6168,15 +6209,21 @@ export interface InframonitoringtypesDaemonSetsDTO {
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 
-export type InframonitoringtypesDeploymentRecordDTOMetaAnyOf = {
+export interface InframonitoringtypesDeploymentMetaDTO {
+	/**
+	 * @type string
+	 */
+	'k8s.cluster.name': string;
+	/**
+	 * @type string
+	 */
+	'k8s.deployment.name': string;
+	/**
+	 * @type string
+	 */
+	'k8s.namespace.name': string;
 	[key: string]: string;
-};
-
-/**
- * @nullable
- */
-export type InframonitoringtypesDeploymentRecordDTOMeta =
-	InframonitoringtypesDeploymentRecordDTOMetaAnyOf | null;
+}
 
 export interface InframonitoringtypesDeploymentRecordDTO {
 	/**
@@ -6221,10 +6268,7 @@ export interface InframonitoringtypesDeploymentRecordDTO {
 	 * @type integer
 	 */
 	desiredPods: number;
-	/**
-	 * @type object,null
-	 */
-	meta: InframonitoringtypesDeploymentRecordDTOMeta;
+	meta: InframonitoringtypesDeploymentMetaDTO;
 	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
 	podCountsByStatus: InframonitoringtypesPodCountsByStatusDTO;
 }
@@ -6259,15 +6303,17 @@ export interface InframonitoringtypesHostFilterDTO {
 	filterByStatus?: InframonitoringtypesHostStatusDTO;
 }
 
-export type InframonitoringtypesHostRecordDTOMetaAnyOf = {
+export interface InframonitoringtypesHostMetaDTO {
+	/**
+	 * @type string
+	 */
+	'host.name': string;
+	/**
+	 * @type string
+	 */
+	'os.type': string;
 	[key: string]: string;
-};
-
-/**
- * @nullable
- */
-export type InframonitoringtypesHostRecordDTOMeta =
-	InframonitoringtypesHostRecordDTOMetaAnyOf | null;
+}
 
 export interface InframonitoringtypesHostRecordDTO {
 	/**
@@ -6302,10 +6348,7 @@ export interface InframonitoringtypesHostRecordDTO {
 	 * @format double
 	 */
 	memory: number;
-	/**
-	 * @type object,null
-	 */
-	meta: InframonitoringtypesHostRecordDTOMeta;
+	meta: InframonitoringtypesHostMetaDTO;
 	status: InframonitoringtypesHostStatusDTO;
 	/**
 	 * @type number
@@ -6331,15 +6374,21 @@ export interface InframonitoringtypesHostsDTO {
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 
-export type InframonitoringtypesJobRecordDTOMetaAnyOf = {
+export interface InframonitoringtypesJobMetaDTO {
+	/**
+	 * @type string
+	 */
+	'k8s.cluster.name': string;
+	/**
+	 * @type string
+	 */
+	'k8s.job.name': string;
+	/**
+	 * @type string
+	 */
+	'k8s.namespace.name': string;
 	[key: string]: string;
-};
-
-/**
- * @nullable
- */
-export type InframonitoringtypesJobRecordDTOMeta =
-	InframonitoringtypesJobRecordDTOMetaAnyOf | null;
+}
 
 export interface InframonitoringtypesJobRecordDTO {
 	/**
@@ -6388,10 +6437,7 @@ export interface InframonitoringtypesJobRecordDTO {
 	 * @type string
 	 */
 	jobName: string;
-	/**
-	 * @type object,null
-	 */
-	meta: InframonitoringtypesJobRecordDTOMeta;
+	meta: InframonitoringtypesJobMetaDTO;
 	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
 	podCountsByStatus: InframonitoringtypesPodCountsByStatusDTO;
 	/**
@@ -6417,6 +6463,18 @@ export interface InframonitoringtypesJobsDTO {
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 
+export interface InframonitoringtypesNamespaceMetaDTO {
+	/**
+	 * @type string
+	 */
+	'k8s.cluster.name': string;
+	/**
+	 * @type string
+	 */
+	'k8s.namespace.name': string;
+	[key: string]: string;
+}
+
 export type InframonitoringtypesNamespaceRecordDTOCounts = {
 	/**
 	 * @type integer
@@ -6440,25 +6498,12 @@ export type InframonitoringtypesNamespaceRecordDTOCounts = {
 	statefulSets: number;
 };
 
-export type InframonitoringtypesNamespaceRecordDTOMetaAnyOf = {
-	[key: string]: string;
-};
-
-/**
- * @nullable
- */
-export type InframonitoringtypesNamespaceRecordDTOMeta =
-	InframonitoringtypesNamespaceRecordDTOMetaAnyOf | null;
-
 export interface InframonitoringtypesNamespaceRecordDTO {
 	/**
 	 * @type object
 	 */
 	counts: InframonitoringtypesNamespaceRecordDTOCounts;
-	/**
-	 * @type object,null
-	 */
-	meta: InframonitoringtypesNamespaceRecordDTOMeta;
+	meta: InframonitoringtypesNamespaceMetaDTO;
 	/**
 	 * @type number
 	 * @format double
@@ -6499,22 +6544,25 @@ export enum InframonitoringtypesNodeConditionDTO {
 	not_ready = 'not_ready',
 	no_data = 'no_data',
 }
-export type InframonitoringtypesNodeRecordDTOMetaAnyOf = {
+export interface InframonitoringtypesNodeMetaDTO {
+	/**
+	 * @type string
+	 */
+	'k8s.cluster.name': string;
+	/**
+	 * @type string
+	 */
+	'k8s.node.name': string;
+	/**
+	 * @type string
+	 */
+	'k8s.node.uid': string;
 	[key: string]: string;
-};
-
-/**
- * @nullable
- */
-export type InframonitoringtypesNodeRecordDTOMeta =
-	InframonitoringtypesNodeRecordDTOMetaAnyOf | null;
+}
 
 export interface InframonitoringtypesNodeRecordDTO {
 	condition: InframonitoringtypesNodeConditionDTO;
-	/**
-	 * @type object,null
-	 */
-	meta: InframonitoringtypesNodeRecordDTOMeta;
+	meta: InframonitoringtypesNodeMetaDTO;
 	/**
 	 * @type number
 	 * @format double
@@ -6561,6 +6609,54 @@ export interface InframonitoringtypesNodesDTO {
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 
+export interface InframonitoringtypesPodMetaDTO {
+	/**
+	 * @type string
+	 */
+	'k8s.cluster.name': string;
+	/**
+	 * @type string
+	 */
+	'k8s.cronjob.name': string;
+	/**
+	 * @type string
+	 */
+	'k8s.daemonset.name': string;
+	/**
+	 * @type string
+	 */
+	'k8s.deployment.name': string;
+	/**
+	 * @type string
+	 */
+	'k8s.job.name': string;
+	/**
+	 * @type string
+	 */
+	'k8s.namespace.name': string;
+	/**
+	 * @type string
+	 */
+	'k8s.node.name': string;
+	/**
+	 * @type string
+	 */
+	'k8s.pod.name': string;
+	/**
+	 * @type string
+	 */
+	'k8s.pod.start_time': string;
+	/**
+	 * @type string
+	 */
+	'k8s.pod.uid': string;
+	/**
+	 * @type string
+	 */
+	'k8s.statefulset.name': string;
+	[key: string]: string;
+}
+
 export enum InframonitoringtypesPodPhaseDTO {
 	pending = 'pending',
 	running = 'running',
@@ -6569,16 +6665,6 @@ export enum InframonitoringtypesPodPhaseDTO {
 	unknown = 'unknown',
 	no_data = 'no_data',
 }
-export type InframonitoringtypesPodRecordDTOMetaAnyOf = {
-	[key: string]: string;
-};
-
-/**
- * @nullable
- */
-export type InframonitoringtypesPodRecordDTOMeta =
-	InframonitoringtypesPodRecordDTOMetaAnyOf | null;
-
 export enum InframonitoringtypesPodStatusDTO {
 	pending = 'pending',
 	running = 'running',
@@ -6601,10 +6687,7 @@ export enum InframonitoringtypesPodStatusDTO {
 	no_data = 'no_data',
 }
 export interface InframonitoringtypesPodRecordDTO {
-	/**
-	 * @type object,null
-	 */
-	meta: InframonitoringtypesPodRecordDTOMeta;
+	meta: InframonitoringtypesPodMetaDTO;
 	/**
 	 * @type integer
 	 * @format int64
@@ -6969,15 +7052,21 @@ export interface InframonitoringtypesPostableVolumesDTO {
 	start: number;
 }
 
-export type InframonitoringtypesStatefulSetRecordDTOMetaAnyOf = {
+export interface InframonitoringtypesStatefulSetMetaDTO {
+	/**
+	 * @type string
+	 */
+	'k8s.cluster.name': string;
+	/**
+	 * @type string
+	 */
+	'k8s.namespace.name': string;
+	/**
+	 * @type string
+	 */
+	'k8s.statefulset.name': string;
 	[key: string]: string;
-};
-
-/**
- * @nullable
- */
-export type InframonitoringtypesStatefulSetRecordDTOMeta =
-	InframonitoringtypesStatefulSetRecordDTOMetaAnyOf | null;
+}
 
 export interface InframonitoringtypesStatefulSetRecordDTO {
 	/**
@@ -6988,10 +7077,7 @@ export interface InframonitoringtypesStatefulSetRecordDTO {
 	 * @type integer
 	 */
 	desiredPods: number;
-	/**
-	 * @type object,null
-	 */
-	meta: InframonitoringtypesStatefulSetRecordDTOMeta;
+	meta: InframonitoringtypesStatefulSetMetaDTO;
 	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
 	podCountsByStatus: InframonitoringtypesPodCountsByStatusDTO;
 	/**
@@ -7047,21 +7133,40 @@ export interface InframonitoringtypesStatefulSetsDTO {
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 
-export type InframonitoringtypesVolumeRecordDTOMetaAnyOf = {
+export interface InframonitoringtypesVolumeMetaDTO {
+	/**
+	 * @type string
+	 */
+	'k8s.cluster.name': string;
+	/**
+	 * @type string
+	 */
+	'k8s.namespace.name': string;
+	/**
+	 * @type string
+	 */
+	'k8s.node.name': string;
+	/**
+	 * @type string
+	 */
+	'k8s.persistentvolumeclaim.name': string;
+	/**
+	 * @type string
+	 */
+	'k8s.pod.name': string;
+	/**
+	 * @type string
+	 */
+	'k8s.pod.uid': string;
+	/**
+	 * @type string
+	 */
+	'k8s.statefulset.name': string;
 	[key: string]: string;
-};
-
-/**
- * @nullable
- */
-export type InframonitoringtypesVolumeRecordDTOMeta =
-	InframonitoringtypesVolumeRecordDTOMetaAnyOf | null;
+}
 
 export interface InframonitoringtypesVolumeRecordDTO {
-	/**
-	 * @type object,null
-	 */
-	meta: InframonitoringtypesVolumeRecordDTOMeta;
+	meta: InframonitoringtypesVolumeMetaDTO;
 	/**
 	 * @type string
 	 */
