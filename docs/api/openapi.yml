@@ -2843,12 +2843,19 @@ components:
       required:
       - name
       type: object
+    DashboardtypesDynamicVariableSignal:
+      enum:
+      - traces
+      - logs
+      - metrics
+      - all
+      type: string
     DashboardtypesDynamicVariableSpec:
       properties:
         name:
           type: string
         signal:
-          $ref: '#/components/schemas/TelemetrytypesSignal'
+          $ref: '#/components/schemas/DashboardtypesDynamicVariableSignal'
       required:
       - name
       type: object
