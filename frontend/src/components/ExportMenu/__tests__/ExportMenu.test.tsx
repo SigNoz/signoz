@@ -1,8 +1,8 @@
+import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
 import { fireEvent, render, screen } from 'tests/test-utils';
-import { QueryRangeResponseV5 } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
-import TimeseriesExportMenu from '../TimeseriesExportMenu';
+import ExportMenu from '../ExportMenu';
 
 const mockHandleExport = jest.fn();
 let mockIsExporting = false;
@@ -14,25 +14,26 @@ jest.mock('hooks/useExportData/useClientExport', () => ({
 	}),
 }));
 
-const response = {
-	type: 'time_series',
-	data: { results: [] },
-	meta: {},
-} as unknown as QueryRangeResponseV5;
+const data = {
+	statusCode: 200,
+	error: null,
+	message: '',
+	payload: { data: { result: [], resultType: 'time_series' } },
+} as unknown as MetricQueryRangeSuccessResponse;
 
-const TEST_ID = `timeseries-export-${DataSource.LOGS}`;
+const TEST_ID = `export-menu-${DataSource.LOGS}`;
 
 function renderMenu(): void {
 	render(
-		<TimeseriesExportMenu
+		<ExportMenu
 			dataSource={DataSource.LOGS}
-			queryResponse={response}
+			data={data}
 			fileName="logs-timeseries"
 		/>,
 	);
 }
 
-describe('TimeseriesExportMenu', () => {
+describe('ExportMenu', () => {
 	beforeEach(() => {
 		mockHandleExport.mockReset();
 		mockIsExporting = false;

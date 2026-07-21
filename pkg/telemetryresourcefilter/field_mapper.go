@@ -76,6 +76,7 @@ func (m *defaultFieldMapper) ColumnExpressionFor(
 	orgID valuer.UUID,
 	tsStart, tsEnd uint64,
 	key *telemetrytypes.TelemetryFieldKey,
+	_ telemetrytypes.FieldDataType,
 	_ map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
 	fieldExpression, err := m.FieldFor(ctx, orgID, tsStart, tsEnd, key)

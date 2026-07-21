@@ -296,7 +296,7 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 	}
 
 	for i, field := range query.SelectFields {
-		expr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &field, keys)
+		expr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &field, telemetrytypes.FieldDataTypeUnspecified, keys)
 		if err != nil {
 			return nil, err
 		}
@@ -320,7 +320,7 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 
 	// Add order by
 	for _, orderBy := range query.Order {
-		expr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &orderBy.Key.TelemetryFieldKey, keys)
+		expr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &orderBy.Key.TelemetryFieldKey, telemetrytypes.FieldDataTypeUnspecified, keys)
 		if err != nil {
 			return nil, err
 		}
@@ -504,7 +504,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 	// Keep original column expressions so we can build the tuple
 	fieldNames := make([]string, 0, len(query.GroupBy))
 	for i, gb := range query.GroupBy {
-		expr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &gb.TelemetryFieldKey, keys)
+		expr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return nil, err
 		}
@@ -660,7 +660,7 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 
 	fieldNames := make([]string, 0, len(query.GroupBy))
 	for i, gb := range query.GroupBy {
-		expr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &gb.TelemetryFieldKey, keys)
+		expr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return nil, err
 		}

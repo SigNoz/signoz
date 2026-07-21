@@ -38,7 +38,7 @@ const (
 
 type QueryBuilderTraceOperator struct {
 	Name     string `json:"name"`
-	Disabled bool   `json:"disabled,omitempty"`
+	Disabled bool   `json:"disabled"`
 
 	Expression string `json:"expression"`
 
@@ -48,11 +48,11 @@ type QueryBuilderTraceOperator struct {
 	ReturnSpansFrom string `json:"returnSpansFrom,omitempty"`
 
 	// Trace-specific ordering (only span_count and trace_duration allowed)
-	Order []OrderBy `json:"order,omitempty"`
+	Order []OrderBy `json:"order,omitzero"`
 
-	Aggregations []TraceAggregation `json:"aggregations,omitempty"`
-	StepInterval Step               `json:"stepInterval,omitempty"`
-	GroupBy      []GroupByKey       `json:"groupBy,omitempty"`
+	Aggregations []TraceAggregation `json:"aggregations,omitzero"`
+	StepInterval Step               `json:"stepInterval,omitzero"`
+	GroupBy      []GroupByKey       `json:"groupBy,omitzero"`
 
 	// having clause to apply to the aggregated query results
 	Having *Having `json:"having,omitempty"`
@@ -61,11 +61,11 @@ type QueryBuilderTraceOperator struct {
 	Offset int    `json:"offset,omitempty"`
 	Cursor string `json:"cursor,omitempty"`
 
-	Legend string `json:"legend,omitempty"`
+	Legend string `json:"legend"`
 
 	// Other post-processing options
-	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitempty"`
-	Functions    []Function                         `json:"functions,omitempty"`
+	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitzero"`
+	Functions    []Function                         `json:"functions,omitzero"`
 
 	// Internal parsed representation (not exposed in JSON)
 	ParsedExpression *TraceOperand `json:"-"`

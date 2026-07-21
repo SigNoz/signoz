@@ -64,7 +64,7 @@ func (m *fieldMapper) ColumnFor(ctx context.Context, _ valuer.UUID, _, _ uint64,
 	return []*schema.Column{col}, nil
 }
 
-func (m *fieldMapper) ColumnExpressionFor(ctx context.Context, orgID valuer.UUID, tsStart, tsEnd uint64, field *telemetrytypes.TelemetryFieldKey, _ map[string][]*telemetrytypes.TelemetryFieldKey) (string, error) {
+func (m *fieldMapper) ColumnExpressionFor(ctx context.Context, orgID valuer.UUID, tsStart, tsEnd uint64, field *telemetrytypes.TelemetryFieldKey, _ telemetrytypes.FieldDataType, _ map[string][]*telemetrytypes.TelemetryFieldKey) (string, error) {
 	colName, err := m.FieldFor(ctx, orgID, tsStart, tsEnd, field)
 	if err != nil {
 		return "", err

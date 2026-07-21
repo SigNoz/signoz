@@ -1561,3 +1561,248 @@ def test_dashboard_v2_rejects_comma_separated_aggregation(
             headers={"Authorization": f"Bearer {token}"},
             timeout=5,
         )
+
+
+# ─── round-trip serialization of zero-valued fields ──────────────────────────
+# A minimal dashboard stripped from SigNoz/dashboards (cicd-perses.json), whose
+# NumberPanel carries a real `threshold value: 0`. It packs every field whose zero
+# value the create -> GET round-trip must preserve: thresholds with value 0 (which
+# the required-tag validation used to reject on create), builder slices set to an
+# explicit [] that must echo back as [] (yet stay absent, never null, when unset),
+# and scalars disabled/legend that must always echo false/"".
+#
+# It also covers the spec-wide zero values: a display description "", a text
+# variable's constant false, a list variable's customAllValue/capturingRegexp "",
+# an explicit [] of panel links, and a link whose own zero-valued fields
+# (name/tooltip "", renderVariables/targetBlank false) must echo back.
+
+
+def test_dashboard_v2_roundtrip_preserves_zero_values(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    headers = {"Authorization": f"Bearer {token}"}
+
+    dashboard = {
+        "schemaVersion": "v6",
+        # image (dashboard-level) and spec duration/refreshInterval/datasources
+        # each round-trip their zero value ("" / {}) rather than being dropped.
+        "image": "",
+        "name": "roundtrip-zero-values",
+        "tags": [],
+        "spec": {
+            "display": {"name": "Roundtrip Zero Values", "description": ""},
+            "duration": "",
+            "refreshInterval": "",
+            "datasources": {},
+            "variables": [
+                # TextVariable: constant false must echo back (not be dropped).
+                {"kind": "TextVariable", "spec": {"display": {"name": "tv"}, "value": "x", "constant": False, "name": "tv"}},
+                # ListVariable: customAllValue / capturingRegexp "" must echo back.
+                {
+                    "kind": "ListVariable",
+                    "spec": {
+                        "display": {"name": "lv"},
+                        "allowAllValue": False,
+                        "allowMultiple": False,
+                        "customAllValue": "",
+                        "capturingRegexp": "",
+                        "plugin": {"kind": "signoz/DynamicVariable", "spec": {"name": "service.name", "signal": "metrics"}},
+                        "name": "lv",
+                    },
+                },
+            ],
+            # Dashboard-level link with zero-valued inner fields: the replicated Link
+            # type must echo name/tooltip "" and renderVariables/targetBlank false.
+            "links": [{"url": "https://example.com", "name": "", "tooltip": "", "renderVariables": False, "targetBlank": False}],
+            "panels": {
+                # NumberPanel: ComparisonThreshold value 0 + a builder query whose
+                # zero-valued slices/scalars are all set explicitly.
+                "number": {
+                    "kind": "Panel",
+                    "spec": {
+                        "display": {"name": "number"},
+                        # Explicit empty panel links must round-trip as [].
+                        "links": [],
+                        "plugin": {
+                            "kind": "signoz/NumberPanel",
+                            "spec": {"thresholds": [{"value": 0, "operator": "above_or_equal", "color": "#c2780b", "format": "background"}]},
+                        },
+                        "queries": [
+                            {
+                                "kind": "scalar",
+                                "spec": {
+                                    "plugin": {
+                                        "kind": "signoz/BuilderQuery",
+                                        "spec": {
+                                            "name": "A",
+                                            "signal": "logs",
+                                            "aggregations": [{"expression": "count()"}],
+                                            "disabled": False,
+                                            "legend": "",
+                                            "groupBy": [],
+                                            "order": [],
+                                            "selectFields": [],
+                                            "functions": [],
+                                        },
+                                    }
+                                },
+                            }
+                        ],
+                    },
+                },
+                # TimeSeriesPanel: ThresholdWithLabel value 0 + a bare builder query
+                # whose unset slices must be omitted (not null) on read-back.
+                "timeseries": {
+                    "kind": "Panel",
+                    "spec": {
+                        "display": {"name": "timeseries"},
+                        "plugin": {
+                            "kind": "signoz/TimeSeriesPanel",
+                            "spec": {"thresholds": [{"value": 0, "color": "#c2780b"}]},
+                        },
+                        "queries": [
+                            {
+                                "kind": "time_series",
+                                "spec": {
+                                    "plugin": {
+                                        "kind": "signoz/BuilderQuery",
+                                        "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]},
+                                    }
+                                },
+                            }
+                        ],
+                    },
+                },
+                # PromQL query: legend/disabled must echo "" / false.
+                "promql": {
+                    "kind": "Panel",
+                    "spec": {
+                        "display": {"name": "promql"},
+                        "plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
+                        "queries": [
+                            {
+                                "kind": "time_series",
+                                "spec": {
+                                    "plugin": {
+                                        "kind": "signoz/PromQLQuery",
+                                        "spec": {"name": "A", "query": "up", "disabled": False, "legend": ""},
+                                    }
+                                },
+                            }
+                        ],
+                    },
+                },
+                # ClickHouse query: legend/disabled must echo "" / false.
+                "clickhouse": {
+                    "kind": "Panel",
+                    "spec": {
+                        "display": {"name": "clickhouse"},
+                        "plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
+                        "queries": [
+                            {
+                                "kind": "time_series",
+                                "spec": {
+                                    "plugin": {
+                                        "kind": "signoz/ClickHouseSQL",
+                                        "spec": {"name": "A", "query": "SELECT 1", "disabled": False, "legend": ""},
+                                    }
+                                },
+                            }
+                        ],
+                    },
+                },
+            },
+        },
+    }
+
+    # Create also asserts Bug 1: a threshold with value 0 is no longer rejected.
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json=dashboard,
+        headers=headers,
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    dashboard_id = response.json()["data"]["id"]
+
+    try:
+        response = requests.get(
+            signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard_id}"),
+            headers=headers,
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.OK, response.text
+        result_data = response.json()["data"]
+        result_spec = result_data["spec"]
+        panels = result_spec["panels"]
+        variables = {v["kind"]: v["spec"] for v in result_spec["variables"]}
+        link = result_spec["links"][0]
+
+        def query_spec(panel_id: str) -> dict:
+            return panels[panel_id]["spec"]["queries"][0]["spec"]["plugin"]["spec"]
+
+        def threshold(panel_id: str) -> dict:
+            return panels[panel_id]["spec"]["plugin"]["spec"]["thresholds"][0]
+
+        number = query_spec("number")
+        timeseries = query_spec("timeseries")
+        promql = query_spec("promql")
+        clickhouse = query_spec("clickhouse")
+
+        # A value the create round-trips back verbatim: (description, actual, expected).
+        roundtrip_cases = [
+            ("comparison threshold value 0", threshold("number")["value"], 0),
+            ("threshold-with-label value 0", threshold("timeseries")["value"], 0),
+            ("builder disabled false", number["disabled"], False),
+            ("builder legend empty", number["legend"], ""),
+            ("builder empty groupBy", number["groupBy"], []),
+            ("builder empty order", number["order"], []),
+            ("builder empty selectFields", number["selectFields"], []),
+            ("builder empty functions", number["functions"], []),
+            ("bare builder disabled false", timeseries["disabled"], False),
+            ("bare builder legend empty", timeseries["legend"], ""),
+            ("promql disabled false", promql["disabled"], False),
+            ("promql legend empty", promql["legend"], ""),
+            ("clickhouse disabled false", clickhouse["disabled"], False),
+            ("clickhouse legend empty", clickhouse["legend"], ""),
+            ("dashboard display description empty", result_spec["display"]["description"], ""),
+            ("text variable constant false", variables["TextVariable"]["constant"], False),
+            ("list variable customAllValue empty", variables["ListVariable"]["customAllValue"], ""),
+            ("list variable capturingRegexp empty", variables["ListVariable"]["capturingRegexp"], ""),
+            ("panel empty links round-trip", panels["number"]["spec"]["links"], []),
+            ("dashboard link name empty", link["name"], ""),
+            ("dashboard link tooltip empty", link["tooltip"], ""),
+            ("dashboard link renderVariables false", link["renderVariables"], False),
+            ("dashboard link targetBlank false", link["targetBlank"], False),
+            ("dashboard image empty", result_data["image"], ""),
+            ("spec duration empty", result_spec["duration"], ""),
+            ("spec refreshInterval empty", result_spec["refreshInterval"], ""),
+            ("spec empty datasources round-trip", result_spec["datasources"], {}),
+        ]
+        for description, actual, expected in roundtrip_cases:
+            assert actual == expected, description
+
+        # An unset slice is omitted, never serialized as null: (description, spec, key).
+        absent_cases = [
+            ("bare builder omits groupBy", timeseries, "groupBy"),
+            ("bare builder omits order", timeseries, "order"),
+            ("bare builder omits selectFields", timeseries, "selectFields"),
+            ("bare builder omits functions", timeseries, "functions"),
+        ]
+        for description, spec, key in absent_cases:
+            assert key not in spec, description
+
+        # A panel with no links comes back with no links value (null or absent);
+        # either is fine for a typed client (an unset optional attribute stays
+        # unset), so this is not a drift. The explicit [] case above is what the
+        # fix guarantees round-trips.
+        assert panels["timeseries"]["spec"].get("links") is None, "unset panel links stays unset"
+    finally:
+        requests.delete(
+            signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard_id}"),
+            headers=headers,
+            timeout=5,
+        )

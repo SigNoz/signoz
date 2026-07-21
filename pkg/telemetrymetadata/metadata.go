@@ -1444,20 +1444,20 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, orgID valuer.
 
 			// search on attributes
 			key.FieldContext = telemetrytypes.FieldContextAttribute
-			attrConds, _, err := t.conditionBuilder.ConditionFor(ctx, orgID, 0, 0, key, []*telemetrytypes.TelemetryFieldKey{key}, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
+			attrConds, _, err := t.conditionBuilder.ConditionFor(ctx, orgID, 0, 0, key, map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {key}}, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
 			if err == nil {
 				conds = append(conds, attrConds...)
 			}
 
 			// search on resource
 			key.FieldContext = telemetrytypes.FieldContextResource
-			resourceConds, _, err := t.conditionBuilder.ConditionFor(ctx, orgID, 0, 0, key, []*telemetrytypes.TelemetryFieldKey{key}, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
+			resourceConds, _, err := t.conditionBuilder.ConditionFor(ctx, orgID, 0, 0, key, map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {key}}, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
 			if err == nil {
 				conds = append(conds, resourceConds...)
 			}
 			key.FieldContext = origContext
 		} else {
-			keyConds, _, err := t.conditionBuilder.ConditionFor(ctx, orgID, 0, 0, key, []*telemetrytypes.TelemetryFieldKey{key}, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
+			keyConds, _, err := t.conditionBuilder.ConditionFor(ctx, orgID, 0, 0, key, map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {key}}, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
 			if err == nil {
 				conds = append(conds, keyConds...)
 			}
