@@ -12,17 +12,20 @@ function isErrorV2Resp(data: unknown): data is ErrorV2Resp {
 }
 
 // reference - https://axios-http.com/docs/handling_errors
-export function ErrorResponseHandlerV2(error: AxiosError<unknown>): never {
+export function ErrorResponseHandlerV2(error: AxiosError<ErrorV2Resp>): never {
 	const { response, request } = error;
 	// The request was made and the server responded with a status code
 	// that falls out of the range of 2xx
 	if (response) {
-		// The body isn't guaranteed to be the V2 error envelope — e.g. during a
+		// The AxiosError type claims response.data is a V2 envelope, but that's an
+		// unchecked assumption about untrusted network data — e.g. during a
 		// deployment the gateway (nginx/LB) returns a 5xx with an HTML or empty
-		// body. Only read the envelope once we've verified its shape; otherwise
-		// synthesize an error from the status so the handler never throws itself.
-		if (isErrorV2Resp(response.data)) {
-			const { code, message, url, errors } = response.data.error;
+		// body. Launder it back to `unknown` and verify the shape before reading
+		// it; otherwise synthesize an error from the status so the handler never
+		// throws itself.
+		const data: unknown = response.data;
+		if (isErrorV2Resp(data)) {
+			const { code, message, url, errors } = data.error;
 			throw new APIError({
 				httpStatusCode: response.status || 500,
 				error: { code, message, url, errors },
