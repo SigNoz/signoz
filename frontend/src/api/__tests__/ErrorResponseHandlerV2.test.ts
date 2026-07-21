@@ -59,7 +59,7 @@ describe('ErrorResponseHandlerV2', () => {
 
 		expect(apiError).toBeInstanceOf(APIError);
 		expect(apiError.getHttpStatusCode()).toBe(503);
-		expect(apiError.getErrorCode()).toBe('503');
+		expect(apiError.getErrorCode()).toBe('UPSTREAM_UNAVAILABLE');
 		expect(apiError.getErrorMessage()).toBe(
 			'Request failed with status code 503',
 		);
@@ -78,7 +78,7 @@ describe('ErrorResponseHandlerV2', () => {
 
 		expect(apiError).toBeInstanceOf(APIError);
 		expect(apiError.getHttpStatusCode()).toBe(502);
-		expect(apiError.getErrorCode()).toBe('502');
+		expect(apiError.getErrorCode()).toBe('UPSTREAM_UNAVAILABLE');
 	});
 
 	it('falls back to error metadata when no response was received', () => {
