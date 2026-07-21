@@ -7,11 +7,13 @@ import pytest
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
+from fixtures.jsontypes import JSONPathType
 from fixtures.logs import Logs
 from fixtures.querier import (
     RequestType,
     build_order_by,
     build_raw_query,
+    get_all_warnings,
     get_rows,
     make_query_request,
 )
@@ -253,11 +255,13 @@ def test_logs_json_body_function_scalar_path(
 
 
 @pytest.mark.parametrize(
-    "expression",
+    "expression, expected_error",
     [
-        pytest.param('has(code.function, "main")', id="has_non_body_key"),
-        pytest.param('hasToken(code.function, "main")', id="hastoken_non_body_key"),
-        pytest.param("hasToken(body, 123)", id="hastoken_non_string_value"),
+        # A has-family function on a non-body key is unsupported (same message as flag-off);
+        # a not-found *body* path instead warns and queries (see test_logs_json_body_unregistered_path_warns).
+        pytest.param('has(code.function, "main")', "function `has` supports only body JSON search", id="has_non_body_key"),
+        pytest.param('hasToken(code.function, "main")', "function `hasToken` only supports body field as first parameter", id="hastoken_non_body_key"),
+        pytest.param("hasToken(body, 123)", "expects value parameter to be a string", id="hastoken_non_string_value"),
     ],
 )
 def test_logs_json_body_function_errors(
@@ -265,8 +269,10 @@ def test_logs_json_body_function_errors(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     expression: str,
+    expected_error: str,
 ) -> None:
-    """has/hasToken misuse (non-body key, non-string token) is rejected (400)."""
+    """has/hasToken misuse (non-body key, non-string token) is rejected (400) with a message that
+    names the body-only restriction rather than a generic "key not found"."""
     now = datetime.now(tz=UTC)
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     response = make_query_request(
@@ -277,7 +283,8 @@ def test_logs_json_body_function_errors(
         request_type=RequestType.RAW,
         queries=[build_raw_query("A", "logs", order=[build_order_by("timestamp")], limit=100, filter_expression=expression)],
     )
-    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert expected_error in response.text, f"{expression}: expected {expected_error!r} in {response.text}"
 
 
 @pytest.mark.parametrize(
@@ -914,8 +921,9 @@ def test_logs_json_body_array_hop_syntax(
     insert_logs: Callable[[list[Logs]], None],
     export_json_types: Callable[[list[Logs]], None],
 ) -> None:
-    """In JSON mode the array-hop is written body.edu[].name; the legacy body.edu[*].name form is
-    rejected (400) during field resolution."""
+    """In JSON mode the array-hop is written body.edu[].name (resolved from metadata). The legacy
+    body.edu[*].name form is no longer a hard error: it is an unregistered body path, so it warns
+    and queries the underlying data (200) like any other not-found body path."""
     now = datetime.now(tz=UTC)
     logs = [
         Logs(timestamp=now - timedelta(seconds=2), resources={"service.name": "app-service"}, body_v2=json.dumps({"edu": [{"name": "IIT"}, {"name": "MIT"}]}), body_promoted="", severity_text="INFO"),
@@ -939,7 +947,8 @@ def test_logs_json_body_array_hop_syntax(
     assert response.status_code == HTTPStatus.OK, response.text
     assert len(get_rows(response)) == 1
 
-    # [*] is not accepted in JSON mode.
+    # [*] is not the JSON-mode hop syntax; it is treated as an unregistered body path and
+    # warns + queries (200) rather than erroring.
     response = make_query_request(
         signoz,
         token,
@@ -948,7 +957,7 @@ def test_logs_json_body_array_hop_syntax(
         request_type=RequestType.RAW,
         queries=[build_raw_query("A", "logs", order=[build_order_by("timestamp")], limit=100, filter_expression="has(body.edu[*].name, 'MIT')")],
     )
-    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert response.status_code == HTTPStatus.OK, response.text
 
 
 def test_logs_json_body_nested_family(
@@ -1048,8 +1057,10 @@ def test_logs_json_body_degenerate_targets(
     insert_logs: Callable[[list[Logs]], None],
     export_json_types: Callable[[list[Logs]], None],
 ) -> None:
-    """has on an unsupported target — an object leaf, the bare body, or an array-of-arrays — is
-    rejected (400) during field resolution, never a ClickHouse 500."""
+    """has on a degenerate target, never a ClickHouse 500. An object leaf or an array-of-arrays has
+    no primitive leaf registered in metadata, so it is a not-found body path — it warns and queries
+    (200, no match), the same as any other unregistered body path. Only the bare body (a full-text
+    target, not a JSON path) stays a 400."""
     now = datetime.now(tz=UTC)
     logs = [
         Logs(timestamp=now - timedelta(seconds=1), resources={"service.name": "app-service"}, body_v2=json.dumps({"obj": {"b": "x"}, "matrix": [[1, 2], [3]]}), body_promoted="", severity_text="INFO"),
@@ -1060,7 +1071,8 @@ def test_logs_json_body_degenerate_targets(
     start_ms = int((now - timedelta(seconds=10)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
 
-    for expression in ["has(body.obj, 'x')", "has(body, 'x')", "has(body.matrix, 1)"]:
+    # An object leaf / array-of-arrays: no primitive leaf in metadata -> warn + query (200, no match).
+    for expression in ["has(body.obj, 'x')", "has(body.matrix, 1)"]:
         response = make_query_request(
             signoz,
             token,
@@ -1069,7 +1081,20 @@ def test_logs_json_body_degenerate_targets(
             request_type=RequestType.RAW,
             queries=[build_raw_query("A", "logs", order=[build_order_by("timestamp")], limit=100, filter_expression=expression)],
         )
-        assert response.status_code == HTTPStatus.BAD_REQUEST, f"{expression}: expected 400, got {response.status_code}: {response.text}"
+        assert response.status_code == HTTPStatus.OK, f"{expression}: expected 200, got {response.status_code}: {response.text}"
+        assert get_rows(response) == [], f"{expression}: degenerate target should match nothing"
+
+    # The bare body is not a JSON path -> has-family is unsupported on it (400).
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=start_ms,
+        end_ms=end_ms,
+        request_type=RequestType.RAW,
+        queries=[build_raw_query("A", "logs", order=[build_order_by("timestamp")], limit=100, filter_expression="has(body, 'x')")],
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST, f"has(body): expected 400, got {response.status_code}: {response.text}"
+    assert "function `has` supports only body JSON search" in response.text, response.text
 
 
 def test_logs_json_body_genuine_empty_and_zero_elements(
@@ -1134,3 +1159,80 @@ def test_logs_json_body_quote_unicode_needles(
         )
         assert response.status_code == HTTPStatus.OK, f"{expression}: {response.text}"
         assert len(get_rows(response)) == 1, f"{expression}: expected 1 row"
+
+
+@pytest.mark.parametrize(
+    "needle",
+    [
+        pytest.param("192.168.1.1", id="dotted_ip"),
+        pytest.param("user_id", id="underscore"),
+        pytest.param("error-code", id="hyphen"),
+        pytest.param("production node", id="whitespace"),
+    ],
+)
+def test_logs_json_body_hastoken_separator_needle_errors(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_logs: Callable[[list[Logs]], None],
+    export_json_types: Callable[[list[Logs]], None],
+    needle: str,
+) -> None:
+    """KNOWN BUG (currently 500) — same defect as the flag-off path. In JSON mode hasToken searches
+    body.message via ClickHouse hasToken(LOWER(body.message), LOWER(?)), which rejects a needle
+    containing whitespace or separator characters (`.`/`_`/`-`/space) with error code 36. The needle
+    is passed straight through, so the query fails at execution and the raw error surfaces as a 500
+    instead of a 400 / graceful fallback. Flip to 400 (or a fallback match) once the needle is
+    validated."""
+    now = datetime.now(tz=UTC)
+    logs = [
+        Logs(timestamp=now - timedelta(seconds=1), resources={"service.name": "app-service"}, body_v2=json.dumps({"message": "client 192.168.1.1 user_id error-code production node"}), body_promoted="", severity_text="INFO"),
+    ]
+    export_json_types(logs)
+    insert_logs(logs)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=int((now - timedelta(seconds=10)).timestamp() * 1000),
+        end_ms=int(now.timestamp() * 1000),
+        request_type=RequestType.RAW,
+        queries=[build_raw_query("A", "logs", order=[build_order_by("timestamp")], limit=100, filter_expression=f"hasToken(body, '{needle}')")],
+    )
+    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR, f"{needle}: expected 500, got {response.status_code}: {response.text}"
+    assert "Needle must not contain whitespace or separator characters" in response.text, response.text
+
+
+def test_logs_json_body_unregistered_path_warns(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_logs: Callable[[list[Logs]], None],
+    export_json_types: Callable[[list[JSONPathType]], None],
+) -> None:
+    """A has-family call on a body path that is absent from metadata is NOT a 400: it emits the
+    key-not-found warning and queries the underlying data (200), the same as a regular filter
+    operator on an unknown key. Here only `known` is registered; `unknown` is not.
+
+    (Note: like a regular filter, a not-found *flat* body path in JSON mode currently resolves to
+    no match even when the value is present — an operator-wide JSON limitation — so we assert the
+    200 + warning contract rather than a match count.)"""
+    now = datetime.now(tz=UTC)
+    logs = [
+        Logs(timestamp=now - timedelta(seconds=1), resources={"service.name": "app-service"}, body_v2=json.dumps({"known": ["a"], "unknown": ["a", "b"]}), body_promoted="", severity_text="INFO"),
+    ]
+    export_json_types([JSONPathType("known", "[]string")])  # register only `known`
+    insert_logs(logs)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    for expression in ["has(body.unknown, 'a')", "hasAny(body.unknown, ['a'])", "hasAll(body.unknown, ['a', 'b'])", "hasToken(body.unknown, 'a')"]:
+        response = make_query_request(
+            signoz,
+            token,
+            start_ms=int((now - timedelta(seconds=10)).timestamp() * 1000),
+            end_ms=int(now.timestamp() * 1000),
+            request_type=RequestType.RAW,
+            queries=[build_raw_query("A", "logs", order=[build_order_by("timestamp")], limit=100, filter_expression=expression)],
+        )
+        assert response.status_code == HTTPStatus.OK, f"{expression}: expected 200, got {response.status_code}: {response.text}"
+        warnings = [w.get("message", "") for w in get_all_warnings(response.json())]
+        assert any("not found in metadata" in w for w in warnings), f"{expression}: expected a key-not-found warning, got {warnings}"

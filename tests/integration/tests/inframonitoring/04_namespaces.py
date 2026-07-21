@@ -215,6 +215,7 @@ def test_namespaces_warnings(
             {"web-a-prod", "web-b-prod"},
             id="in_contains",
         ),
+        pytest.param("k8s.namespace.namee = 'web-a-prod'", set(), id="unresolved_key"),
     ],
 )
 def test_namespaces_filter(
@@ -270,7 +271,6 @@ def test_namespaces_filter(
 @pytest.mark.parametrize(
     "expression,err_substr",
     [
-        pytest.param("k8s.namespace.namee = 'web-a-prod'", "k8s.namespace.namee", id="bad_attr_name"),
         pytest.param("k8s.namespace.name =", None, id="trailing_op"),
         pytest.param("(k8s.namespace.name = 'web-a-prod'", None, id="unclosed_paren"),
     ],
@@ -283,8 +283,8 @@ def test_namespaces_filter_invalid(
     expression: str,
     err_substr,
 ) -> None:
-    """Invalid filter expressions (typo'd attribute key, malformed grammar) return
-    400 invalid_input with structured errors; bad attribute keys are named in them."""
+    """Malformed filter grammar (trailing operator, unclosed paren) returns
+    400 invalid_input with structured errors."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(

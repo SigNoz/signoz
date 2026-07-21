@@ -17,6 +17,9 @@ const SIGNAL_LABEL: Record<TelemetrytypesSignalDTO, string> = {
 	[TelemetrytypesSignalDTO.logs]: 'logs',
 	[TelemetrytypesSignalDTO.traces]: 'traces',
 	[TelemetrytypesSignalDTO.metrics]: 'metrics',
+	// The empty "any" signal only appears on field keys, never on a panel query;
+	// mapped for exhaustiveness.
+	[TelemetrytypesSignalDTO['']]: '',
 };
 
 /**
