@@ -225,7 +225,7 @@ func (m *module) getTopPodGroups(
 
 func (m *module) getPodsTableMetadata(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostablePods) (map[string]map[string]string, error) {
 	var nonGroupByAttrs []string
-	for _, key := range podAttrKeysForMetadata {
+	for _, key := range inframonitoringtypes.PodMetaKeys {
 		if !isKeyInGroupByAttrs(req.GroupBy, key) {
 			nonGroupByAttrs = append(nonGroupByAttrs, key)
 		}

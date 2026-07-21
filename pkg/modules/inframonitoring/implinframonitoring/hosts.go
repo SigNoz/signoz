@@ -331,7 +331,7 @@ func (m *module) applyHostsActiveStatusFilter(req *inframonitoringtypes.Postable
 
 func (m *module) getHostsTableMetadata(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableHosts) (map[string]map[string]string, error) {
 	var nonGroupByAttrs []string
-	for _, key := range hostAttrKeysForMetadata {
+	for _, key := range inframonitoringtypes.HostMetaKeys {
 		if !isKeyInGroupByAttrs(req.GroupBy, key) {
 			nonGroupByAttrs = append(nonGroupByAttrs, key)
 		}

@@ -124,7 +124,7 @@ type HostMeta struct {
 	Extra    map[string]string `json:"-"`
 }
 
-var HostMetaKeys = metaKeys(&HostMeta{})
+var HostMetaKeys = getMetaKeys(&HostMeta{})
 
 func NewHostMeta(attrs map[string]string) HostMeta {
 	var m HostMeta

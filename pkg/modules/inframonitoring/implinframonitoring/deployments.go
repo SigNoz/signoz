@@ -145,7 +145,7 @@ func (m *module) getTopDeploymentGroups(
 
 func (m *module) getDeploymentsTableMetadata(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableDeployments) (map[string]map[string]string, error) {
 	var nonGroupByAttrs []string
-	for _, key := range deploymentAttrKeysForMetadata {
+	for _, key := range inframonitoringtypes.DeploymentMetaKeys {
 		if !isKeyInGroupByAttrs(req.GroupBy, key) {
 			nonGroupByAttrs = append(nonGroupByAttrs, key)
 		}

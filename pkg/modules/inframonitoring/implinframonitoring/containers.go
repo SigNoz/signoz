@@ -190,7 +190,7 @@ func (m *module) getTopContainerGroups(
 
 func (m *module) getContainersTableMetadata(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableContainers) (map[string]map[string]string, error) {
 	var nonGroupByAttrs []string
-	for _, key := range containerAttrKeysForMetadata {
+	for _, key := range inframonitoringtypes.ContainerMetaKeys {
 		if !isKeyInGroupByAttrs(req.GroupBy, key) {
 			nonGroupByAttrs = append(nonGroupByAttrs, key)
 		}

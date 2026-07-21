@@ -118,7 +118,7 @@ type VolumeMeta struct {
 	Extra           map[string]string `json:"-"`
 }
 
-var VolumeMetaKeys = metaKeys(&VolumeMeta{})
+var VolumeMetaKeys = getMetaKeys(&VolumeMeta{})
 
 func NewVolumeMeta(attrs map[string]string) VolumeMeta {
 	var m VolumeMeta

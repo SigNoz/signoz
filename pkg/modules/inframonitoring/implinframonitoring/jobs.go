@@ -153,7 +153,7 @@ func (m *module) getTopJobGroups(
 
 func (m *module) getJobsTableMetadata(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableJobs) (map[string]map[string]string, error) {
 	var nonGroupByAttrs []string
-	for _, key := range jobAttrKeysForMetadata {
+	for _, key := range inframonitoringtypes.JobMetaKeys {
 		if !isKeyInGroupByAttrs(req.GroupBy, key) {
 			nonGroupByAttrs = append(nonGroupByAttrs, key)
 		}

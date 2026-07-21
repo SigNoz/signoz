@@ -147,7 +147,7 @@ func (m *module) getTopClusterGroups(
 
 func (m *module) getClustersTableMetadata(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableClusters) (map[string]map[string]string, error) {
 	var nonGroupByAttrs []string
-	for _, key := range clusterAttrKeysForMetadata {
+	for _, key := range inframonitoringtypes.ClusterMetaKeys {
 		if !isKeyInGroupByAttrs(req.GroupBy, key) {
 			nonGroupByAttrs = append(nonGroupByAttrs, key)
 		}

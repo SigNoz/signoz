@@ -120,7 +120,7 @@ func (m *module) getTopVolumeGroups(
 
 func (m *module) getVolumesTableMetadata(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableVolumes) (map[string]map[string]string, error) {
 	var nonGroupByAttrs []string
-	for _, key := range volumeAttrKeysForMetadata {
+	for _, key := range inframonitoringtypes.VolumeMetaKeys {
 		if !isKeyInGroupByAttrs(req.GroupBy, key) {
 			nonGroupByAttrs = append(nonGroupByAttrs, key)
 		}

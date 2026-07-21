@@ -128,7 +128,7 @@ func (m *module) getTopNamespaceGroups(
 
 func (m *module) getNamespacesTableMetadata(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableNamespaces) (map[string]map[string]string, error) {
 	var nonGroupByAttrs []string
-	for _, key := range namespaceAttrKeysForMetadata {
+	for _, key := range inframonitoringtypes.NamespaceMetaKeys {
 		if !isKeyInGroupByAttrs(req.GroupBy, key) {
 			nonGroupByAttrs = append(nonGroupByAttrs, key)
 		}

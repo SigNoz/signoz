@@ -117,7 +117,7 @@ type NamespaceMeta struct {
 	Extra         map[string]string `json:"-"`
 }
 
-var NamespaceMetaKeys = metaKeys(&NamespaceMeta{})
+var NamespaceMetaKeys = getMetaKeys(&NamespaceMeta{})
 
 func NewNamespaceMeta(attrs map[string]string) NamespaceMeta {
 	var m NamespaceMeta

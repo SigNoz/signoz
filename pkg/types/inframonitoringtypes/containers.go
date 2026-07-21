@@ -168,7 +168,7 @@ type ContainerMeta struct {
 	Extra           map[string]string `json:"-"`
 }
 
-var ContainerMetaKeys = metaKeys(&ContainerMeta{})
+var ContainerMetaKeys = getMetaKeys(&ContainerMeta{})
 
 func NewContainerMeta(attrs map[string]string) ContainerMeta {
 	var m ContainerMeta

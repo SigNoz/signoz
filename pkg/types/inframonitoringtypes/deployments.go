@@ -118,7 +118,7 @@ type DeploymentMeta struct {
 	Extra          map[string]string `json:"-"`
 }
 
-var DeploymentMetaKeys = metaKeys(&DeploymentMeta{})
+var DeploymentMetaKeys = getMetaKeys(&DeploymentMeta{})
 
 func NewDeploymentMeta(attrs map[string]string) DeploymentMeta {
 	var m DeploymentMeta

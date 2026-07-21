@@ -120,7 +120,7 @@ type JobMeta struct {
 	Extra         map[string]string `json:"-"`
 }
 
-var JobMetaKeys = metaKeys(&JobMeta{})
+var JobMetaKeys = getMetaKeys(&JobMeta{})
 
 func NewJobMeta(attrs map[string]string) JobMeta {
 	var m JobMeta

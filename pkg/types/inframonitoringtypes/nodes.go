@@ -123,7 +123,7 @@ type NodeMeta struct {
 	Extra       map[string]string `json:"-"`
 }
 
-var NodeMetaKeys = metaKeys(&NodeMeta{})
+var NodeMetaKeys = getMetaKeys(&NodeMeta{})
 
 func NewNodeMeta(attrs map[string]string) NodeMeta {
 	var m NodeMeta

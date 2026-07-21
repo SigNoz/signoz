@@ -45,8 +45,6 @@ var podsTableMetricNamesList = []string{
 	// "k8s.container.restarts",
 }
 
-var podAttrKeysForMetadata = inframonitoringtypes.PodMetaKeys
-
 var orderByToPodsQueryNames = map[string][]string{
 	inframonitoringtypes.PodsOrderByCPU:           {"A"},
 	inframonitoringtypes.PodsOrderByCPURequest:    {"B"},

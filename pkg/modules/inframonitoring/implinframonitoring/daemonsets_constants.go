@@ -39,7 +39,6 @@ var daemonSetsTableMetricNamesList = []string{
 
 // Carried forward from v1 daemonSetAttrsToEnrich
 // (pkg/query-service/app/inframetrics/daemonsets.go:29-33).
-var daemonSetAttrKeysForMetadata = inframonitoringtypes.DaemonSetMetaKeys
 
 // orderByToDaemonSetsQueryNames maps the orderBy column to the query name
 // used for ranking daemonset groups. v2 B/C/E/F are direct metrics, no

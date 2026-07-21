@@ -118,7 +118,7 @@ type StatefulSetMeta struct {
 	Extra           map[string]string `json:"-"`
 }
 
-var StatefulSetMetaKeys = metaKeys(&StatefulSetMeta{})
+var StatefulSetMetaKeys = getMetaKeys(&StatefulSetMeta{})
 
 func NewStatefulSetMeta(attrs map[string]string) StatefulSetMeta {
 	var m StatefulSetMeta

@@ -145,7 +145,7 @@ func (m *module) getTopStatefulSetGroups(
 
 func (m *module) getStatefulSetsTableMetadata(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableStatefulSets) (map[string]map[string]string, error) {
 	var nonGroupByAttrs []string
-	for _, key := range statefulSetAttrKeysForMetadata {
+	for _, key := range inframonitoringtypes.StatefulSetMetaKeys {
 		if !isKeyInGroupByAttrs(req.GroupBy, key) {
 			nonGroupByAttrs = append(nonGroupByAttrs, key)
 		}

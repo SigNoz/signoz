@@ -124,7 +124,7 @@ type ClusterMeta struct {
 	Extra       map[string]string `json:"-"`
 }
 
-var ClusterMetaKeys = metaKeys(&ClusterMeta{})
+var ClusterMetaKeys = getMetaKeys(&ClusterMeta{})
 
 func NewClusterMeta(attrs map[string]string) ClusterMeta {
 	var m ClusterMeta

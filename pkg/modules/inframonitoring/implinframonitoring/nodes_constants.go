@@ -30,8 +30,6 @@ var nodesTableMetricNamesList = []string{
 	"k8s.container.status.reason",
 }
 
-var nodeAttrKeysForMetadata = inframonitoringtypes.NodeMetaKeys
-
 var orderByToNodesQueryNames = map[string][]string{
 	inframonitoringtypes.NodesOrderByCPU:               {"A"},
 	inframonitoringtypes.NodesOrderByCPUAllocatable:    {"B"},

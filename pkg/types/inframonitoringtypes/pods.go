@@ -166,7 +166,7 @@ type PodMeta struct {
 	Extra           map[string]string `json:"-"`
 }
 
-var PodMetaKeys = metaKeys(&PodMeta{})
+var PodMetaKeys = getMetaKeys(&PodMeta{})
 
 func NewPodMeta(attrs map[string]string) PodMeta {
 	var m PodMeta

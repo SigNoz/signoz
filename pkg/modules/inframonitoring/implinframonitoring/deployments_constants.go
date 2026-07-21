@@ -37,7 +37,6 @@ var deploymentsTableMetricNamesList = []string{
 
 // Carried forward from v1 deploymentAttrsToEnrich
 // (pkg/query-service/app/inframetrics/deployments.go:29-33).
-var deploymentAttrKeysForMetadata = inframonitoringtypes.DeploymentMetaKeys
 
 // orderByToDeploymentsQueryNames maps the orderBy column to the query name
 // used for ranking deployment groups. v2 B/C/E/F are direct metrics, no

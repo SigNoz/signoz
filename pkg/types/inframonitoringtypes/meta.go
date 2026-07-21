@@ -5,7 +5,6 @@ import (
 	"maps"
 	"reflect"
 	"strings"
-	"sync"
 
 	"github.com/swaggest/jsonschema-go"
 )
@@ -50,14 +49,9 @@ type metaField struct {
 	key   string
 }
 
-var metaFieldCache sync.Map // reflect.Type -> []metaField
-
 // metaFieldsOf reflects the string fields of an XMeta struct (skipping json:"-"
-// fields like Extra) and caches the result per type.
+// fields like Extra).
 func metaFieldsOf(t reflect.Type) []metaField {
-	if cached, ok := metaFieldCache.Load(t); ok {
-		return cached.([]metaField)
-	}
 	fields := make([]metaField, 0, t.NumField())
 	for i := range t.NumField() {
 		f := t.Field(i)
@@ -67,7 +61,6 @@ func metaFieldsOf(t reflect.Type) []metaField {
 		}
 		fields = append(fields, metaField{index: i, key: key})
 	}
-	metaFieldCache.Store(t, fields)
 	return fields
 }
 
@@ -96,10 +89,10 @@ func marshalMeta(m any, extra map[string]string) ([]byte, error) {
 	return flattenMeta(extra, known)
 }
 
-// metaKeys returns the guaranteed keys of an XMeta, in struct-field order. Used
+// getMetaKeys returns the guaranteed keys of an XMeta, in struct-field order. Used
 // by implinframonitoring as the metadata fetch column list, keeping the key set
 // defined once (on the struct).
-func metaKeys(m any) []string {
+func getMetaKeys(m any) []string {
 	rv := reflect.ValueOf(m).Elem()
 	fields := metaFieldsOf(rv.Type())
 	keys := make([]string, 0, len(fields))

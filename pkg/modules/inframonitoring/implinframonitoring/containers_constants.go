@@ -58,8 +58,6 @@ var containersTableMetricNamesList = []string{
 	"k8s.container.status.state",
 }
 
-var containerAttrKeysForMetadata = inframonitoringtypes.ContainerMetaKeys
-
 var orderByToContainersQueryNames = map[string][]string{
 	inframonitoringtypes.ContainersOrderByCPU:           {"A"},
 	inframonitoringtypes.ContainersOrderByCPURequest:    {"B"},

@@ -153,7 +153,7 @@ func (m *module) getTopDaemonSetGroups(
 
 func (m *module) getDaemonSetsTableMetadata(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableDaemonSets) (map[string]map[string]string, error) {
 	var nonGroupByAttrs []string
-	for _, key := range daemonSetAttrKeysForMetadata {
+	for _, key := range inframonitoringtypes.DaemonSetMetaKeys {
 		if !isKeyInGroupByAttrs(req.GroupBy, key) {
 			nonGroupByAttrs = append(nonGroupByAttrs, key)
 		}

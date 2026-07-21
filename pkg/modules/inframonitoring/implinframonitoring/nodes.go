@@ -154,7 +154,7 @@ func (m *module) getTopNodeGroups(
 
 func (m *module) getNodesTableMetadata(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableNodes) (map[string]map[string]string, error) {
 	var nonGroupByAttrs []string
-	for _, key := range nodeAttrKeysForMetadata {
+	for _, key := range inframonitoringtypes.NodeMetaKeys {
 		if !isKeyInGroupByAttrs(req.GroupBy, key) {
 			nonGroupByAttrs = append(nonGroupByAttrs, key)
 		}

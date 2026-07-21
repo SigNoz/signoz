@@ -120,7 +120,7 @@ type DaemonSetMeta struct {
 	Extra         map[string]string `json:"-"`
 }
 
-var DaemonSetMetaKeys = metaKeys(&DaemonSetMeta{})
+var DaemonSetMetaKeys = getMetaKeys(&DaemonSetMeta{})
 
 func NewDaemonSetMeta(attrs map[string]string) DaemonSetMeta {
 	var m DaemonSetMeta

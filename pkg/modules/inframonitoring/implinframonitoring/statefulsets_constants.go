@@ -37,7 +37,6 @@ var statefulSetsTableMetricNamesList = []string{
 
 // Carried forward from v1 statefulSetAttrsToEnrich
 // (pkg/query-service/app/inframetrics/statefulsets.go:29-33).
-var statefulSetAttrKeysForMetadata = inframonitoringtypes.StatefulSetMetaKeys
 
 // orderByToStatefulSetsQueryNames maps the orderBy column to the query name
 // used for ranking statefulset groups. v2 B/C/E/F are direct metrics, no
