@@ -1,4 +1,5 @@
 import { useCallback, useMemo } from 'react';
+import logEvent from 'api/common/logEvent';
 import type { PANEL_TYPES } from 'constants/queryBuilder';
 import { getQueryData } from 'container/QueryTable/Drilldown/drilldownUtils';
 import {
@@ -7,6 +8,7 @@ import {
 } from 'container/QueryTable/Drilldown/tableDrilldownUtils';
 import type { BreakoutAttributeType } from 'container/QueryTable/Drilldown/types';
 import type { AggregateData } from 'container/QueryTable/Drilldown/useAggregateDrilldown';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 import type {
 	IBuilderQuery,
 	Query,
@@ -54,6 +56,10 @@ export function useDrilldownBreakout({
 			if (!aggregateData) {
 				return;
 			}
+			void logEvent(DashboardDetailEvents.DrilldownAction, {
+				action: 'breakout',
+				panelType,
+			});
 			const breakoutQuery = getBreakoutQuery(
 				v1Query,
 				aggregateData,

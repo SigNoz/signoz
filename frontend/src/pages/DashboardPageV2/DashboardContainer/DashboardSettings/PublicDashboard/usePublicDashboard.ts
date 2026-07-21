@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { useCopyToClipboard } from 'react-use';
 import { toast } from '@signozhq/ui/sonner';
+import logEvent from 'api/common/logEvent';
 import {
 	invalidateGetPublicDashboard,
 	useCreatePublicDashboard,
@@ -9,6 +10,7 @@ import {
 	useUpdatePublicDashboard,
 } from 'api/generated/services/dashboard';
 import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
@@ -131,6 +133,11 @@ export function usePublicDashboard(
 		if (!dashboardId) {
 			return;
 		}
+		void logEvent(DashboardDetailEvents.PublicDashboardAction, {
+			action: 'publish',
+			timeRangeEnabled,
+			dashboardId,
+		});
 		createPublicDashboard({
 			pathParams: { id: dashboardId },
 			data: { timeRangeEnabled, defaultTimeRange },
@@ -141,6 +148,10 @@ export function usePublicDashboard(
 		if (!dashboardId) {
 			return;
 		}
+		void logEvent(DashboardDetailEvents.PublicDashboardAction, {
+			action: 'update',
+			dashboardId,
+		});
 		updatePublicDashboard({
 			pathParams: { id: dashboardId },
 			data: { timeRangeEnabled, defaultTimeRange },
@@ -151,6 +162,10 @@ export function usePublicDashboard(
 		if (!dashboardId) {
 			return;
 		}
+		void logEvent(DashboardDetailEvents.PublicDashboardAction, {
+			action: 'unpublish',
+			dashboardId,
+		});
 		deletePublicDashboard({ pathParams: { id: dashboardId } });
 	}, [deletePublicDashboard, dashboardId]);
 
@@ -160,13 +175,21 @@ export function usePublicDashboard(
 		}
 		copyToClipboard(publicUrl);
 		toast.success('Copied public dashboard URL successfully');
-	}, [copyToClipboard, publicUrl]);
+		void logEvent(DashboardDetailEvents.PublicDashboardAction, {
+			action: 'copyUrl',
+			dashboardId,
+		});
+	}, [copyToClipboard, publicUrl, dashboardId]);
 
 	const onOpenUrl = useCallback((): void => {
 		if (publicUrl) {
 			openInNewTab(publicUrl);
+			void logEvent(DashboardDetailEvents.PublicDashboardAction, {
+				action: 'openUrl',
+				dashboardId,
+			});
 		}
-	}, [publicUrl]);
+	}, [publicUrl, dashboardId]);
 
 	const isLoading =
 		isLoadingMeta || isFetching || isPublishing || isUpdating || isUnpublishing;

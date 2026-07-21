@@ -1,9 +1,11 @@
 import { useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
+import logEvent from 'api/common/logEvent';
 import { QueryParams } from 'constants/query';
 import type { PANEL_TYPES } from 'constants/queryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { clearViewPanelHandoff } from '../ViewPanelModal/viewPanelHandoffStore';
@@ -48,6 +50,7 @@ export function useViewPanel(): UseViewPanelApi {
 			next.delete(QueryParams.compositeQuery);
 			next.delete(QueryParams.graphType);
 			clearViewPanelHandoff();
+			void logEvent(DashboardDetailEvents.PanelViewed, { panelId });
 			safeNavigate(`${pathname}?${next.toString()}`);
 		},
 		[pathname, safeNavigate, urlQuery],
