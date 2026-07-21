@@ -22,7 +22,6 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import CloudServiceDataCollected from 'components/CloudIntegrations/CloudServiceDataCollected/CloudServiceDataCollected';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
-import DataCollectedCallout from 'container/Integrations/CloudIntegration/GoogleCloudPlatform/DataCollectedCallout';
 import ServiceDashboards from 'container/Integrations/CloudIntegration/ServiceDashboards/ServiceDashboards';
 import { IntegrationType, IServiceStatus } from 'container/Integrations/types';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -498,7 +497,6 @@ function ServiceDetails({
 	const renderDataCollected = (): JSX.Element => {
 		return (
 			<div className="aws-service-details-data-collected-table">
-				{type === IntegrationType.GCP_SERVICES && <DataCollectedCallout />}
 				<CloudServiceDataCollected
 					logsData={serviceDetailsData?.dataCollected?.logs || []}
 					metricsData={serviceDetailsData?.dataCollected?.metrics || []}
