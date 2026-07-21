@@ -72,6 +72,15 @@ const mockLogsRetentionWithoutS3: PayloadPropsLogs = {
 	status: '',
 };
 
+const mockLogsRetentionFailed: PayloadPropsLogs = {
+	version: 'v2',
+	default_ttl_days: 30,
+	cold_storage_ttl_days: 24,
+	status: 'failed',
+	error_message: 'S3 disk not configured',
+	expected_logs_ttl_duration_hrs: 720,
+};
+
 const mockDisksWithS3: IDiskType[] = [
 	{
 		name: 'default',
@@ -423,6 +432,40 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 			// Save buttons should be visible for non-cloud users (these are from retentions)
 			const saveButtons = screen.getAllByRole('button', { name: /save/i });
 			expect(saveButtons.length).toBeGreaterThan(0);
+		});
+	});
+	describe('Test 5: Logs Retention Failed - Error Message Display', () => {
+		it('should display error_message when status is failed', () => {
+			render(
+				<GeneralSettings
+					metricsTtlValuesPayload={mockMetricsRetention}
+					tracesTtlValuesPayload={mockTracesRetention}
+					logsTtlValuesPayload={mockLogsRetentionFailed}
+					getAvailableDiskPayload={mockDisksWithS3}
+					metricsTtlValuesRefetch={jest.fn()}
+					tracesTtlValuesRefetch={jest.fn()}
+					logsTtlValuesRefetch={jest.fn()}
+				/>,
+			);
+
+			expect(screen.getByText('S3 disk not configured')).toBeInTheDocument();
+		});
+
+		it('should not crash when error_message is absent (older backend)', () => {
+			render(
+				<GeneralSettings
+					metricsTtlValuesPayload={mockMetricsRetention}
+					tracesTtlValuesPayload={mockTracesRetention}
+					logsTtlValuesPayload={mockLogsRetentionWithS3}
+					getAvailableDiskPayload={mockDisksWithS3}
+					metricsTtlValuesRefetch={jest.fn()}
+					tracesTtlValuesRefetch={jest.fn()}
+					logsTtlValuesRefetch={jest.fn()}
+				/>,
+			);
+
+			const logsRow = getLogsRow();
+			expect(logsRow).toBeInTheDocument();
 		});
 	});
 });
