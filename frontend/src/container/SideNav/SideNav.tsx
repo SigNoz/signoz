@@ -1,37 +1,37 @@
 ﻿import {
-    MouseEvent,
-    ReactNode,
-    useCallback,
-    useEffect,
-    useMemo,
-    useRef,
-    useState,
+	MouseEvent,
+	ReactNode,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
 } from 'react';
 import { useMutation } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import {
-    closestCenter,
-    DndContext,
-    DragEndEvent,
-    PointerSensor,
-    useSensor,
-    useSensors,
+	closestCenter,
+	DndContext,
+	DragEndEvent,
+	PointerSensor,
+	useSensor,
+	useSensors,
 } from '@dnd-kit/core';
 import {
-    arrayMove,
-    SortableContext,
-    useSortable,
-    verticalListSortingStrategy,
+	arrayMove,
+	SortableContext,
+	useSortable,
+	verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
 } from '@signozhq/ui/dropdown-menu';
 import { Button, MenuProps, Modal, Tooltip } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -47,25 +47,26 @@ import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
+import { useIsAIObservabilityEnabled } from 'hooks/useIsAIObservabilityEnabled';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { isArray } from 'lodash-es';
 import {
-    ArrowUpRight,
-    Check,
-    ChevronDown,
-    ChevronsDown,
-    ChevronUp,
-    Cog,
-    Ellipsis,
-    GitCommitVertical,
-    GripVertical,
-    LampDesk,
-    List,
-    MousePointerClick,
-    PackagePlus,
-    ScrollText,
-    X,
+	ArrowUpRight,
+	Check,
+	ChevronDown,
+	ChevronsDown,
+	ChevronUp,
+	Cog,
+	Ellipsis,
+	GitCommitVertical,
+	GripVertical,
+	LampDesk,
+	List,
+	MousePointerClick,
+	PackagePlus,
+	ScrollText,
+	X,
 } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { AppState } from 'store/reducers';
@@ -82,1272 +83,1306 @@ import { useCmdK } from '../../providers/cmdKProvider';
 import { routeConfig } from './config';
 import { buildNavUrl, getQueryString } from './helper';
 import {
-    defaultMoreMenuItems,
-    getUserSettingsDropdownMenuItems,
-    helpSupportDropdownMenuItems as DefaultHelpSupportDropdownMenuItems,
-    helpSupportMenuItem,
-    primaryMenuItems,
-    aiAssistantMenuItem,
+	defaultMoreMenuItems,
+	getUserSettingsDropdownMenuItems,
+	helpSupportDropdownMenuItems as DefaultHelpSupportDropdownMenuItems,
+	helpSupportMenuItem,
+	primaryMenuItems,
+	aiAssistantMenuItem,
 } from './menuItems';
 import NavItem from './NavItem/NavItem';
 import {
-    CHANGELOG_LABEL,
-    DropdownSeparator,
-    SidebarItem,
+	CHANGELOG_LABEL,
+	DropdownSeparator,
+	SidebarItem,
 } from './sideNav.types';
 import { getActiveMenuKeyFromPath } from './sideNav.utils';
 
 import './SideNav.styles.scss';
 
 function SortableFilter({ item }: { item: SidebarItem }): JSX.Element {
-    const { attributes, listeners, setNodeRef, transform, transition } =
-        useSortable({ id: item.key });
+	const { attributes, listeners, setNodeRef, transform, transition } =
+		useSortable({ id: item.key });
 
-    const style = {
-        transform: CSS.Transform.toString(transform),
-        transition,
-    };
+	const style = {
+		transform: CSS.Transform.toString(transform),
+		transition,
+	};
 
-    return (
-        <div ref={setNodeRef} style={style} className="reorder-shortcut-nav-item">
-            <div
-                {...attributes}
-                {...listeners}
-                className="reorder-shortcut-nav-item drag-handle"
-                key={item.key}
-            >
-                <div className="reorder-shortcut-nav-item-grab-icon">
-                    <GripVertical size={16} />
-                </div>
+	return (
+		<div ref={setNodeRef} style={style} className="reorder-shortcut-nav-item">
+			<div
+				{...attributes}
+				{...listeners}
+				className="reorder-shortcut-nav-item drag-handle"
+				key={item.key}
+			>
+				<div className="reorder-shortcut-nav-item-grab-icon">
+					<GripVertical size={16} />
+				</div>
 
-                <div className="reorder-shortcut-nav-item-icon">{item.icon}</div>
+				<div className="reorder-shortcut-nav-item-icon">{item.icon}</div>
 
-                <div className="reorder-shortcut-nav-item-label">{item.label}</div>
-            </div>
-        </div>
-    );
+				<div className="reorder-shortcut-nav-item-label">{item.label}</div>
+			</div>
+		</div>
+	);
 }
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
-    const { openCmdK } = useCmdK();
-    const { pathname, search } = useLocation();
-    const { currentVersion, latestVersion, isCurrentVersionError } = useSelector<
-        AppState,
-        AppReducer
-    >((state) => state.app);
-
-    const {
-        user,
-        featureFlags,
-        trialInfo,
-        isLoggedIn,
-        userPreferences,
-        changelog,
-        toggleChangelogModal,
-        updateUserPreferenceInContext,
-    } = useAppContext();
-
-    const { notifications } = useNotifications();
-
-    const { mutate: updateUserPreferenceMutation } = useMutation(
-        updateUserPreference,
-        {
-            onError: (error: Error) => {
-                showErrorNotification(notifications, error);
-            },
-        },
-    );
-
-    const [helpSupportDropdownMenuItems, setHelpSupportDropdownMenuItems] =
-        useState<(SidebarItem | DropdownSeparator)[]>(
-            DefaultHelpSupportDropdownMenuItems,
-        );
-
-    const [tempPinnedMenuItems, setTempPinnedMenuItems] = useState<SidebarItem[]>(
-        [],
-    );
-
-    const [hasScroll, setHasScroll] = useState(false);
-    const navTopSectionRef = useRef<HTMLDivElement>(null);
-    const sidenavRef = useRef<HTMLDivElement>(null);
-    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-    const isDropdownOpenRef = useRef(false);
-
-    const [isHovered, setIsHovered] = useState(false);
-    const [pinnedMenuItems, setPinnedMenuItems] = useState<SidebarItem[]>([]);
-    const [secondaryMenuItems, setSecondaryMenuItems] = useState<SidebarItem[]>(
-        [],
-    );
-
-    const handleMouseEnter = useCallback(() => {
-        setIsHovered(true);
-    }, []);
-
-    const handleMouseLeave = useCallback(() => {
-        if (isDropdownOpenRef.current) {
-            return;
-        }
-        setIsHovered(false);
-    }, []);
-
-    const handleDropdownOpenChange = useCallback((open: boolean): void => {
-        isDropdownOpenRef.current = open;
-        setIsDropdownOpen(open);
-        if (!open) {
-            requestAnimationFrame(() => {
-                setIsHovered(sidenavRef.current?.matches(':hover') ?? false);
-            });
-        }
-    }, []);
-
-    const checkScroll = useCallback((): void => {
-        if (navTopSectionRef.current) {
-            const { scrollHeight, clientHeight, scrollTop } = navTopSectionRef.current;
-            const isAtBottom = scrollHeight - clientHeight - scrollTop <= 8;
-            setHasScroll(scrollHeight > clientHeight + 24 && !isAtBottom);
-        }
-    }, []);
-
-    useEffect(() => {
-        checkScroll();
-        window.addEventListener('resize', checkScroll);
-
-        const observer = new MutationObserver(checkScroll);
-        const navTopSection = navTopSectionRef.current;
-
-        if (navTopSection) {
-            observer.observe(navTopSection, {
-                childList: true,
-                subtree: true,
-                attributes: true,
-            });
-
-            navTopSection.addEventListener('scroll', checkScroll);
-        }
-
-        return (): void => {
-            window.removeEventListener('resize', checkScroll);
-            observer.disconnect();
-            if (navTopSection) {
-                navTopSection.removeEventListener('scroll', checkScroll);
-            }
-        };
-    }, [checkScroll]);
-
-    const {
-        isCloudUser,
-        isEnterpriseSelfHostedUser,
-        isCommunityUser,
-        isCommunityEnterpriseUser,
-    } = useGetTenantLicense();
-
-    const [licenseTag, setLicenseTag] = useState('');
-    const isAdmin = user.role === USER_ROLES.ADMIN;
-    const isEditor = user.role === USER_ROLES.EDITOR;
-    const isAIAssistantEnabled = useIsAIAssistantEnabled();
-    const aiAssistantActiveConversationId = useAIAssistantStore(
-        (s) => s.activeConversationId,
-    );
-
-    const computedPinnedMenuItems = useMemo(() => {
-        const navShortcutsPreference = userPreferences?.find(
-            (preference) => preference.name === USER_PREFERENCES.NAV_SHORTCUTS,
-        );
-        const navShortcuts = navShortcutsPreference?.value as unknown as
-            | string[]
-            | undefined;
-
-        if (userPreferences === null) {
-            return [];
-        }
-
-        if (isArray(navShortcuts) && navShortcuts.length > 0) {
-            return navShortcuts
-                .map((shortcut) =>
-                    defaultMoreMenuItems.find((item) => item.itemKey === shortcut),
-                )
-                .filter((item): item is SidebarItem => item !== undefined);
-        }
-
-        return defaultMoreMenuItems.filter((item) => item.isPinned);
-    }, [userPreferences]);
-
-    const computedSecondaryMenuItems = useMemo(() => {
-        const shouldShowIntegrationsValue =
-            (isCloudUser || isEnterpriseSelfHostedUser) && (isAdmin || isEditor);
-
-        return defaultMoreMenuItems.map((item) => ({
-            ...item,
-            isPinned: computedPinnedMenuItems.some(
-                (pinned) => pinned.itemKey === item.itemKey,
-            ),
-            isEnabled:
-                item.key === ROUTES.INTEGRATIONS
-                    ? shouldShowIntegrationsValue
-                    : item.isEnabled,
-        }));
-    }, [
-        computedPinnedMenuItems,
-        isCloudUser,
-        isEnterpriseSelfHostedUser,
-        isAdmin,
-        isEditor,
-    ]);
-
-    const hasInitializedRef = useRef(false);
-
-    useEffect(() => {
-        if (!hasInitializedRef.current && userPreferences !== null) {
-            setPinnedMenuItems(computedPinnedMenuItems);
-            setSecondaryMenuItems(computedSecondaryMenuItems);
-            hasInitializedRef.current = true;
-        }
-    }, [computedPinnedMenuItems, computedSecondaryMenuItems, userPreferences]);
-
-    const isChatSupportEnabled = featureFlags?.find(
-        (flag) => flag.name === FeatureKeys.CHAT_SUPPORT,
-    )?.active;
-
-    const isPremiumSupportEnabled = featureFlags?.find(
-        (flag) => flag.name === FeatureKeys.PREMIUM_SUPPORT,
-    )?.active;
-
-    const userSettingsMenuItem = {
-        key: ROUTES.SETTINGS,
-        label: 'Settings',
-        icon: <Cog size={16} />,
-    };
-
-    const isLatestVersion = checkVersionState(currentVersion, latestVersion);
-
-    const [showVersionUpdateNotification, setShowVersionUpdateNotification] =
-        useState(false);
-
-    const [isMoreMenuCollapsed, setIsMoreMenuCollapsed] = useState(false);
-
-    const [
-        isReorderShortcutNavItemsModalOpen,
-        setIsReorderShortcutNavItemsModalOpen,
-    ] = useState(false);
-
-    const handleDragEnd = (event: DragEndEvent): void => {
-        const { active, over } = event;
-
-        if (over && active.id !== over.id) {
-            setTempPinnedMenuItems((items) => {
-                const oldIndex = items.findIndex((item) => item.key === active.id);
-                const newIndex = items.findIndex((item) => item.key === over.id);
-
-                return arrayMove(items, oldIndex, newIndex);
-            });
-        }
-    };
-
-    const updateNavShortcutsPreference = useCallback(
-        (items: SidebarItem[]): void => {
-            const navShortcuts = items
-                .map((item) => item.itemKey)
-                .filter(Boolean) as string[];
-
-            updateUserPreferenceInContext({
-                name: USER_PREFERENCES.NAV_SHORTCUTS,
-                description: USER_PREFERENCES.NAV_SHORTCUTS,
-                valueType: 'array',
-                defaultValue: false,
-                allowedValues: [],
-                allowedScopes: ['user'],
-                value: navShortcuts,
-            });
-
-            updateUserPreferenceMutation(
-                {
-                    name: USER_PREFERENCES.NAV_SHORTCUTS,
-                    value: navShortcuts,
-                },
-                {
-                    onSuccess: (response) => {
-                        if (response.data) {
-                            updateUserPreferenceInContext({
-                                name: USER_PREFERENCES.NAV_SHORTCUTS,
-                                description: USER_PREFERENCES.NAV_SHORTCUTS,
-                                valueType: 'array',
-                                defaultValue: false,
-                                allowedValues: [],
-                                allowedScopes: ['user'],
-                                value: navShortcuts,
-                            });
-                        }
-                    },
-                },
-            );
-        },
-        [updateUserPreferenceInContext, updateUserPreferenceMutation],
-    );
-
-    const onTogglePin = useCallback(
-        (item: SidebarItem): void => {
-            setSecondaryMenuItems((prevItems) =>
-                prevItems.map((i) => ({
-                    ...i,
-                    isPinned: i.key === item.key ? !i.isPinned : i.isPinned,
-                })),
-            );
-
-            setPinnedMenuItems((prevItems) => {
-                const isCurrentlyPinned = prevItems.some((i) => i.key === item.key);
-                if (isCurrentlyPinned) {
-                    return prevItems.filter((i) => i.key !== item.key);
-                }
-                return [...prevItems, item];
-            });
-
-            const updatedPinnedItems = pinnedMenuItems.some((i) => i.key === item.key)
-                ? pinnedMenuItems.filter((i) => i.key !== item.key)
-                : [...pinnedMenuItems, item];
-
-            updateNavShortcutsPreference(updatedPinnedItems);
-        },
-        [pinnedMenuItems, updateNavShortcutsPreference],
-    );
-
-    const handleReorderShortcutNavItems = (): void => {
-        void logEvent('Sidebar V2: Save shortcuts clicked', {
-            shortcuts: tempPinnedMenuItems.map((item) => item.key),
-        });
-        setPinnedMenuItems(tempPinnedMenuItems);
-
-        updateNavShortcutsPreference(tempPinnedMenuItems);
-
-        setIsReorderShortcutNavItemsModalOpen(false);
-    };
-
-    const sensors = useSensors(useSensor(PointerSensor));
-
-    const hideReorderShortcutNavItemsModal = (): void => {
-        setIsReorderShortcutNavItemsModalOpen(false);
-    };
-
-    useEffect(() => {
-        if (isReorderShortcutNavItemsModalOpen) {
-            setTempPinnedMenuItems(pinnedMenuItems);
-        }
-    }, [isReorderShortcutNavItemsModalOpen, pinnedMenuItems]);
-
-    const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
-
-    const isWorkspaceBlocked = trialInfo?.workSpaceBlock || false;
-
-    const onClickGetStarted = (event: MouseEvent): void => {
-        void logEvent('Sidebar: Menu clicked', {
-            menuRoute: ROUTES.GET_STARTED_WITH_CLOUD,
-            menuLabel: 'Get Started',
-        });
-
-        if (isModifierKeyPressed(event)) {
-            openInNewTab(ROUTES.GET_STARTED_WITH_CLOUD);
-        } else {
-            history.push(ROUTES.GET_STARTED_WITH_CLOUD);
-        }
-    };
-
-    const getItemHref = useCallback(
-        (key: string): string => {
-            const params = new URLSearchParams(search);
-            const availableParams = routeConfig[key];
-            const queryString = getQueryString(availableParams || [], params);
-            return buildNavUrl(key, queryString);
-        },
-        [search],
-    );
-
-    const onClickHandler = useCallback(
-        (key: string, event: MouseEvent | null) => {
-            const params = new URLSearchParams(search);
-            const availableParams = routeConfig[key];
-
-            const queryString = getQueryString(availableParams || [], params);
-            const url = buildNavUrl(key, queryString);
-
-            if (pathname !== key) {
-                if (event && isModifierKeyPressed(event)) {
-                    openInNewTab(url);
-                } else {
-                    event?.preventDefault();
-                    history.push(url, {
-                        from: pathname,
-                    });
-                }
-            } else {
-                event?.preventDefault();
-            }
-        },
-        [pathname, search],
-    );
-
-    const activeMenuKey = useMemo(
-        () => getActiveMenuKeyFromPath(pathname),
-        [pathname],
-    );
-
-    const isSettingsPage = useMemo(
-        () => pathname.startsWith(ROUTES.SETTINGS),
-        [pathname],
-    );
-
-    const userSettingsDropdownMenuItems: MenuProps['items'] = useMemo(
-        () =>
-            getUserSettingsDropdownMenuItems({
-                userEmail: user.email,
-                isWorkspaceBlocked,
-                isEnterpriseSelfHostedUser,
-                isCommunityEnterpriseUser,
-            }),
-        [
-            isEnterpriseSelfHostedUser,
-            isCommunityEnterpriseUser,
-            user.email,
-            isWorkspaceBlocked,
-        ],
-    );
-
-    useEffect(() => {
-        if (isCloudUser) {
-            setLicenseTag('Cloud');
-        } else if (isEnterpriseSelfHostedUser) {
-            setLicenseTag('Enterprise');
-        } else if (isCommunityEnterpriseUser) {
-            setLicenseTag('Free');
-        } else if (isCommunityUser) {
-            setLicenseTag('Community');
-        }
-    }, [
-        isCloudUser,
-        isEnterpriseSelfHostedUser,
-        isCommunityEnterpriseUser,
-        isCommunityUser,
-    ]);
-
-    useEffect(() => {
-        if (!isAdmin) {
-            setHelpSupportDropdownMenuItems((prevState) =>
-                prevState.filter(
-                    (item) => !('key' in item) || item.key !== 'invite-collaborators',
-                ),
-            );
-        }
-
-        const showAddCreditCardModal =
-            !isPremiumSupportEnabled && !trialInfo?.trialConvertedToSubscription;
-
-        if (
-            !(
-                isLoggedIn &&
-                isChatSupportEnabled &&
-                !showAddCreditCardModal &&
-                (isCloudUser || isEnterpriseSelfHostedUser)
-            )
-        ) {
-            setHelpSupportDropdownMenuItems((prevState) =>
-                prevState.filter((item) => !('key' in item) || item.key !== 'chat-support'),
-            );
-        }
-
-        if (changelog) {
-            const firstTwoFeatures = changelog.features.slice(0, 2);
-            const dropdownItems: SidebarItem[] = firstTwoFeatures.map(
-                (feature, idx) => ({
-                    key: `changelog-${idx + 1}`,
-                    label: (
-                        <div className="nav-item-label-container">
-                            <span>{feature.title}</span>
-                        </div>
-                    ),
-                    icon: idx === 0 ? <LampDesk size={14} /> : <GitCommitVertical size={14} />,
-                    itemKey: `changelog-${idx + 1}`,
-                }),
-            );
-            const changelogKey = CHANGELOG_LABEL.toLowerCase().replace(' ', '-');
-            setHelpSupportDropdownMenuItems((prevState) => {
-                if (dropdownItems.length === 0) {
-                    return [
-                        ...prevState,
-                        {
-                            type: 'divider',
-                        },
-                        {
-                            key: changelogKey,
-                            label: (
-                                <div className="nav-item-label-container">
-                                    <span>{CHANGELOG_LABEL}</span>
-                                    <ArrowUpRight size={14} />
-                                </div>
-                            ),
-                            icon: <ScrollText size={14} />,
-                            itemKey: changelogKey,
-                            isExternal: true,
-                            url: 'https://signoz.io/changelog/',
-                        },
-                    ];
-                }
-
-                return [
-                    ...prevState,
-                    {
-                        type: 'divider',
-                    },
-                    {
-                        type: 'group',
-                        label: "WHAT'S NEW",
-                    },
-                    ...dropdownItems,
-                    {
-                        key: changelogKey,
-                        label: (
-                            <div className="nav-item-label-container">
-                                <span>{CHANGELOG_LABEL}</span>
-                                <ArrowUpRight size={14} />
-                            </div>
-                        ),
-                        icon: <ScrollText size={14} />,
-                        itemKey: changelogKey,
-                        isExternal: true,
-                        url: 'https://signoz.io/changelog/',
-                    },
-                ];
-            });
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [
-        isAdmin,
-        isChatSupportEnabled,
-        isPremiumSupportEnabled,
-        isCloudUser,
-        trialInfo,
-        changelog,
-    ]);
-
-    const [isCurrentOrgSettings] = useComponentPermission(
-        ['current_org_settings'],
-        user.role,
-    );
-
-    const settingsRoute = isCurrentOrgSettings
-        ? ROUTES.ORG_SETTINGS
-        : ROUTES.SETTINGS;
-
-    const handleMenuItemClick = (event: MouseEvent, item: SidebarItem): void => {
-        if (item.key === ROUTES.SETTINGS) {
-            if (isModifierKeyPressed(event)) {
-                openInNewTab(settingsRoute);
-            } else {
-                event.preventDefault();
-                history.push(settingsRoute);
-            }
-        } else if (item.key === 'quick-search') {
-            event.preventDefault();
-            openCmdK();
-        } else if (item.key === aiAssistantMenuItem.key) {
-            const aiPath = aiAssistantActiveConversationId
-                ? ROUTES.AI_ASSISTANT.replace(
-                        ':conversationId',
-                        aiAssistantActiveConversationId,
-                    )
-                : aiAssistantMenuItem.key;
-            if (isModifierKeyPressed(event)) {
-                openInNewTab(aiPath);
-            } else {
-                event.preventDefault();
-                history.push(aiPath);
-            }
-        } else if (item) {
-            onClickHandler(item?.key as string, event);
-        }
-        void logEvent('Sidebar V2: Menu clicked', {
-            menuRoute: item?.key,
-            menuLabel: item?.label,
-        });
-    };
-
-    useEffect(() => {
-        registerShortcut(GlobalShortcuts.NavigateToHome, () =>
-            onClickHandler(ROUTES.HOME, null),
-        );
-        registerShortcut(GlobalShortcuts.NavigateToServices, () =>
-            onClickHandler(ROUTES.APPLICATION, null),
-        );
-        registerShortcut(GlobalShortcuts.NavigateToTraces, () =>
-            onClickHandler(ROUTES.TRACES_EXPLORER, null),
-        );
-
-        registerShortcut(GlobalShortcuts.NavigateToLogs, () =>
-            onClickHandler(ROUTES.LOGS, null),
-        );
-
-        registerShortcut(GlobalShortcuts.NavigateToDashboards, () =>
-            onClickHandler(ROUTES.ALL_DASHBOARD, null),
-        );
-
-        registerShortcut(GlobalShortcuts.NavigateToMessagingQueues, () =>
-            onClickHandler(ROUTES.MESSAGING_QUEUES_OVERVIEW, null),
-        );
-
-        registerShortcut(GlobalShortcuts.NavigateToAlerts, () =>
-            onClickHandler(ROUTES.LIST_ALL_ALERT, null),
-        );
-        registerShortcut(GlobalShortcuts.NavigateToExceptions, () =>
-            onClickHandler(ROUTES.ALL_ERROR, null),
-        );
-        registerShortcut(GlobalShortcuts.NavigateToTracesFunnel, () =>
-            onClickHandler(ROUTES.TRACES_FUNNELS, null),
-        );
-        registerShortcut(GlobalShortcuts.NavigateToTracesViews, () =>
-            onClickHandler(ROUTES.TRACES_SAVE_VIEWS, null),
-        );
-        registerShortcut(GlobalShortcuts.NavigateToMetricsSummary, () =>
-            onClickHandler(ROUTES.METRICS_EXPLORER, null),
-        );
-        registerShortcut(GlobalShortcuts.NavigateToMetricsExplorer, () =>
-            onClickHandler(ROUTES.METRICS_EXPLORER_EXPLORER, null),
-        );
-        registerShortcut(GlobalShortcuts.NavigateToMetricsViews, () =>
-            onClickHandler(ROUTES.METRICS_EXPLORER_VIEWS, null),
-        );
-        registerShortcut(GlobalShortcuts.NavigateToSettings, () =>
-            onClickHandler(ROUTES.SETTINGS, null),
-        );
-        registerShortcut(GlobalShortcuts.NavigateToSettingsIngestion, () =>
-            onClickHandler(ROUTES.INGESTION_SETTINGS, null),
-        );
-        registerShortcut(GlobalShortcuts.NavigateToSettingsBilling, () =>
-            onClickHandler(ROUTES.BILLING, null),
-        );
-        registerShortcut(GlobalShortcuts.NavigateToSettingsNotificationChannels, () =>
-            onClickHandler(ROUTES.ALL_CHANNELS, null),
-        );
-        registerShortcut(GlobalShortcuts.NavigateToSettingsServiceAccounts, () =>
-            onClickHandler(ROUTES.SERVICE_ACCOUNTS_SETTINGS, null),
-        );
-        registerShortcut(GlobalShortcuts.NavigateToSettingsRoles, () =>
-            onClickHandler(ROUTES.ROLES_SETTINGS, null),
-        );
-        registerShortcut(GlobalShortcuts.NavigateToSettingsMembers, () =>
-            onClickHandler(ROUTES.MEMBERS_SETTINGS, null),
-        );
-        registerShortcut(GlobalShortcuts.NavigateToLogsPipelines, () =>
-            onClickHandler(ROUTES.LOGS_PIPELINES, null),
-        );
-        registerShortcut(GlobalShortcuts.NavigateToLogsViews, () =>
-            onClickHandler(ROUTES.LOGS_SAVE_VIEWS, null),
-        );
-        return (): void => {
-            deregisterShortcut(GlobalShortcuts.NavigateToHome);
-            deregisterShortcut(GlobalShortcuts.NavigateToServices);
-            deregisterShortcut(GlobalShortcuts.NavigateToTraces);
-            deregisterShortcut(GlobalShortcuts.NavigateToLogs);
-            deregisterShortcut(GlobalShortcuts.NavigateToDashboards);
-            deregisterShortcut(GlobalShortcuts.NavigateToAlerts);
-            deregisterShortcut(GlobalShortcuts.NavigateToExceptions);
-            deregisterShortcut(GlobalShortcuts.NavigateToMessagingQueues);
-            deregisterShortcut(GlobalShortcuts.NavigateToTracesFunnel);
-            deregisterShortcut(GlobalShortcuts.NavigateToMetricsSummary);
-            deregisterShortcut(GlobalShortcuts.NavigateToMetricsExplorer);
-            deregisterShortcut(GlobalShortcuts.NavigateToMetricsViews);
-            deregisterShortcut(GlobalShortcuts.NavigateToSettings);
-            deregisterShortcut(GlobalShortcuts.NavigateToSettingsIngestion);
-            deregisterShortcut(GlobalShortcuts.NavigateToSettingsBilling);
-            deregisterShortcut(GlobalShortcuts.NavigateToSettingsNotificationChannels);
-            deregisterShortcut(GlobalShortcuts.NavigateToSettingsServiceAccounts);
-            deregisterShortcut(GlobalShortcuts.NavigateToSettingsRoles);
-            deregisterShortcut(GlobalShortcuts.NavigateToSettingsMembers);
-            deregisterShortcut(GlobalShortcuts.NavigateToLogsPipelines);
-            deregisterShortcut(GlobalShortcuts.NavigateToLogsViews);
-            deregisterShortcut(GlobalShortcuts.NavigateToTracesViews);
-        };
-    }, [deregisterShortcut, onClickHandler, registerShortcut]);
-
-    const isPinnedItem = useMemo(
-        () =>
-            (item: SidebarItem): boolean =>
-                secondaryMenuItems.some((i) => i.key === item.key && i.isPinned),
-        [secondaryMenuItems],
-    );
-
-    const moreMenuItems = useMemo(
-        () => secondaryMenuItems.filter((i) => !i.isPinned && i.isEnabled),
-        [secondaryMenuItems],
-    );
-
-    const activeMoreMenuItems = useMemo(
-        () => moreMenuItems.filter((item) => activeMenuKey === item.key),
-        [moreMenuItems, activeMenuKey],
-    );
-
-    const isCollapsed = !isPinned && !isHovered && !isDropdownOpen;
-
-    const renderNavItems = (
-        items: SidebarItem[],
-        allowPin?: boolean,
-    ): JSX.Element => (
-        <>
-            {items.map((item, index) => (
-                <NavItem
-                    showIcon
-                    key={item.key || index}
-                    item={item}
-                    isActive={activeMenuKey === item.key}
-                    isDisabled={
-                        isWorkspaceBlocked &&
-                        item.key !== ROUTES.BILLING &&
-                        item.key !== ROUTES.SETTINGS
-                    }
-                    onTogglePin={
-                        allowPin
-                            ? (item): void => {
-                                    void logEvent(
-                                        `Sidebar V2: Menu item ${item.isPinned ? 'unpinned' : 'pinned'}`,
-                                        {
-                                            menuRoute: item.key,
-                                            menuLabel: item.label,
-                                        },
-                                    );
-                                    onTogglePin(item);
-                                }
-                            : undefined
-                    }
-                    onClick={(event): void => {
-                        handleMenuItemClick(event, item);
-                    }}
-                    isPinned={isPinnedItem(item)}
-                    href={
-                        item.key !== 'quick-search' && item.key !== aiAssistantMenuItem.key
-                            ? getItemHref(String(item.key))
-                            : undefined
-                    }
-                />
-            ))}
-        </>
-    );
-
-    useEffect(() => {
-        checkScroll();
-    }, [checkScroll, pinnedMenuItems, moreMenuItems]);
-
-    const handleScrollForMore = (): void => {
-        if (navTopSectionRef.current) {
-            navTopSectionRef.current.scrollTo({
-                top: navTopSectionRef.current.scrollHeight,
-                behavior: 'smooth',
-            });
-        }
-    };
-
-    // eslint-disable-next-line sonarjs/cognitive-complexity
-    const handleHelpSupportMenuItemClick = (info: SidebarItem): void => {
-        const item = helpSupportDropdownMenuItems.find(
-            (item) => !('type' in item) && item.key === info.key,
-        );
-
-        if (item && !('type' in item) && item.isExternal && item.url) {
-            openInNewTab(item.url);
-        }
-
-        const event = (info as SidebarItem & { domEvent?: MouseEvent }).domEvent;
-
-        if (item && !('type' in item)) {
-            void logEvent('Help Popover: Item clicked', {
-                menuRoute: item.key,
-                menuLabel: String(item.label),
-            });
-
-            switch (item.key) {
-                case ROUTES.SHORTCUTS:
-                    if (event && isModifierKeyPressed(event)) {
-                        openInNewTab(ROUTES.SHORTCUTS);
-                    } else {
-                        history.push(ROUTES.SHORTCUTS);
-                    }
-                    break;
-                case 'invite-collaborators':
-                    if (event && isModifierKeyPressed(event)) {
-                        openInNewTab(`${ROUTES.MEMBERS_SETTINGS}?invite=true`);
-                    } else {
-                        history.push(`${ROUTES.MEMBERS_SETTINGS}?invite=true`);
-                    }
-                    break;
-                case 'chat-support':
-                    if (window.pylon) {
-                        window.Pylon('show');
-                    }
-                    break;
-                case 'changelog-1':
-                case 'changelog-2':
-                    toggleChangelogModal();
-                    break;
-                default:
-                    break;
-            }
-        }
-    };
-
-    // eslint-disable-next-line sonarjs/cognitive-complexity
-    const handleSettingsMenuItemClick = (info: SidebarItem): void => {
-        const item = (userSettingsDropdownMenuItems ?? []).find(
-            (item) => item?.key === info.key,
-        );
-        let menuLabel = '';
-        if (
-            item &&
-            !('type' in item && item.type === 'divider') &&
-            typeof item.label === 'string'
-        ) {
-            menuLabel = item.label;
-        }
-
-        void logEvent('Settings Popover: Item clicked', {
-            menuRoute: item?.key,
-            menuLabel,
-        });
-
-        const event = (info as SidebarItem & { domEvent?: MouseEvent }).domEvent;
-
-        switch (info.key) {
-            case 'account':
-                if (event && isModifierKeyPressed(event)) {
-                    openInNewTab(ROUTES.MY_SETTINGS);
-                } else {
-                    history.push(ROUTES.MY_SETTINGS);
-                }
-                break;
-            case 'workspace':
-                if (event && isModifierKeyPressed(event)) {
-                    openInNewTab(ROUTES.SETTINGS);
-                } else {
-                    history.push(ROUTES.SETTINGS);
-                }
-                break;
-            case 'license':
-                if (event && isModifierKeyPressed(event)) {
-                    openInNewTab(ROUTES.LIST_LICENSES);
-                } else {
-                    history.push(ROUTES.LIST_LICENSES);
-                }
-                break;
-            case 'keyboard-shortcuts':
-                if (event && isModifierKeyPressed(event)) {
-                    openInNewTab(ROUTES.SHORTCUTS);
-                } else {
-                    history.push(ROUTES.SHORTCUTS);
-                }
-                break;
-            case 'logout':
-                void Logout();
-                break;
-            default:
-        }
-    };
-
-    const onClickVersionHandler = useCallback((): void => {
-        if (!changelog) {
-            return;
-        }
-
-        toggleChangelogModal();
-    }, [changelog, toggleChangelogModal]);
-
-    useEffect(() => {
-        if (!isLatestVersion && !isCloudUser) {
-            setShowVersionUpdateNotification(true);
-        } else {
-            setShowVersionUpdateNotification(false);
-        }
-    }, [
-        currentVersion,
-        latestVersion,
-        isCurrentVersionError,
-        isLatestVersion,
-        isCloudUser,
-        isEnterpriseSelfHostedUser,
-    ]);
-
-    return (
-        <div className={cx('sidenav-container', isPinned && 'pinned')}>
-            <div
-                ref={sidenavRef}
-                className={cx(
-                    'sideNav',
-                    isPinned && 'pinned',
-                    isHovered && 'is-hovered',
-                    isDropdownOpen && 'dropdown-open',
-                )}
-                onMouseEnter={handleMouseEnter}
-                onMouseLeave={handleMouseLeave}
-            >
-                <div className="brand-container">
-                    <div className="brand">
-                        <div className="brand-company-meta">
-                            <div
-                                className="brand-logo"
-                                onClick={(event: MouseEvent): void => {
-                                    onClickHandler(ROUTES.HOME, event);
-                                }}
-                            >
-                                <img src={signozBrandLogoUrl} alt="SigNoz" />
-                            </div>
-
-                            {(licenseTag || currentVersion) && (
-                                <div
-                                    className={cx(
-                                        'brand-title-section',
-                                        isCommunityEnterpriseUser && 'community-enterprise-user',
-                                        isCloudUser && 'cloud-user',
-                                        showVersionUpdateNotification &&
-                                            changelog &&
-                                            'version-update-notification',
-                                    )}
-                                >
-                                    {licenseTag && <span className="license-type"> {licenseTag} </span>}
-
-                                    {currentVersion && (
-                                        <Tooltip
-                                            placement="bottomLeft"
-                                            overlayClassName="version-tooltip-overlay"
-                                            arrow={false}
-                                            overlay={
-                                                showVersionUpdateNotification &&
-                                                changelog && (
-                                                    <div className="version-update-notification-tooltip">
-                                                        <div className="version-update-notification-tooltip-title">
-                                                            There&apos;s a new version available.
-                                                        </div>
-
-                                                        <div className="version-update-notification-tooltip-content">
-                                                            {latestVersion}
-                                                        </div>
-                                                    </div>
-                                                )
-                                            }
-                                        >
-                                            <div
-                                                className={cx(
-                                                    'version-container',
-                                                    !licenseTag && 'version-container-standalone',
-                                                )}
-                                            >
-                                                <span
-                                                    className={cx('version', changelog && 'version-clickable')}
-                                                    onClick={onClickVersionHandler}
-                                                >
-                                                    {currentVersion}
-                                                </span>
-
-                                                {showVersionUpdateNotification && changelog && (
-                                                    <span className="version-update-notification-dot-icon" />
-                                                )}
-                                            </div>
-                                        </Tooltip>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-
-                <div
-                    className={cx(
-                        `nav-wrapper`,
-                        isCloudUser && 'nav-wrapper-cloud',
-                        hasScroll && 'scroll-available',
-                    )}
-                >
-                    <div className={cx('nav-top-section')} ref={navTopSectionRef}>
-                        {isCloudUser && user?.role !== USER_ROLES.VIEWER && (
-                            <div className="get-started-nav-items">
-                                <Button
-                                    className="get-started-btn"
-                                    disabled={isWorkspaceBlocked}
-                                    onClick={(event: MouseEvent): void => {
-                                        if (isWorkspaceBlocked) {
-                                            return;
-                                        }
-                                        onClickGetStarted(event);
-                                    }}
-                                >
-                                    <PackagePlus size={16} />
-                                    <div className="license tag nav-item-label"> New source </div>
-                                </Button>
-                            </div>
-                        )}
-
-                        <div className="primary-nav-items">
-                            {renderNavItems(primaryMenuItems)}
-                        </div>
-
-                        {(pinnedMenuItems.length > 0 || !isCollapsed) && (
-                            <div
-                                className={cx('shortcut-nav-items', isCollapsed && 'sidebar-collapsed')}
-                            >
-                                {!isCollapsed && (
-                                    <div className="nav-title-section">
-                                        <div className="nav-section-title">
-                                            <div className="nav-section-title-icon">
-                                                <MousePointerClick size={16} />
-                                            </div>
-
-                                            <div className="nav-section-title-text">SHORTCUTS</div>
-
-                                            {pinnedMenuItems.length > 1 && (
-                                                <Tooltip title="Manage shortcuts" placement="right">
-                                                    <div
-                                                        className="nav-section-title-icon reorder"
-                                                        onClick={(): void => {
-                                                            void logEvent('Sidebar V2: Manage shortcuts clicked', {});
-                                                            setIsReorderShortcutNavItemsModalOpen(true);
-                                                        }}
-                                                    >
-                                                        <List size={16} />
-                                                    </div>
-                                                </Tooltip>
-                                            )}
-                                        </div>
-
-                                        {pinnedMenuItems.length === 0 && (
-                                            <div className="nav-section-subtitle">
-                                                You have not added any shortcuts yet.
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-
-                                {(pinnedMenuItems.length > 0 || isCollapsed) && (
-                                    <div className="nav-items-section">
-                                        {renderNavItems(
-                                            pinnedMenuItems.filter((item) => item.isEnabled),
-                                            true,
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {moreMenuItems.length > 0 && (
-                            <div
-                                className={cx(
-                                    'more-nav-items',
-                                    isMoreMenuCollapsed ? 'collapsed' : 'expanded',
-                                    isCollapsed && 'sidebar-collapsed',
-                                )}
-                            >
-                                {!isCollapsed && (
-                                    <div className="nav-title-section">
-                                        <div
-                                            className="nav-section-title"
-                                            onClick={(): void => {
-                                                if (isCollapsed) {
-                                                    return;
-                                                }
-                                                const newCollapsedState = !isMoreMenuCollapsed;
-                                                void logEvent('Sidebar V2: More menu clicked', {
-                                                    action: isMoreMenuCollapsed ? 'expand' : 'collapse',
-                                                });
-                                                setIsMoreMenuCollapsed(newCollapsedState);
-                                            }}
-                                        >
-                                            <div className="nav-section-title-icon">
-                                                <Ellipsis size={16} />
-                                            </div>
-
-                                            <div className="nav-section-title-text">MORE</div>
-
-                                            <div className="collapse-expand-section-icon">
-                                                {isMoreMenuCollapsed ? (
-                                                    <ChevronDown size={16} />
-                                                ) : (
-                                                    <ChevronUp size={16} />
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-
-                                <div className="nav-items-section">
-                                    {isCollapsed
-                                        ? renderNavItems(
-                                                activeMoreMenuItems.filter((item) => item.isEnabled),
-                                                true,
-                                            )
-                                        : renderNavItems(
-                                                moreMenuItems.filter((item) => item.isEnabled),
-                                                true,
-                                            )}
-                                </div>
-                            </div>
-                        )}
-
-                        <div className="scroll-for-more-container">
-                            <div className="scroll-for-more" onClick={handleScrollForMore}>
-                                <div className="scroll-for-more-icon">
-                                    <ChevronsDown size={16} />
-                                </div>
-
-                                <div className="scroll-for-more-label">Scroll for more</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="nav-bottom-section">
-                        <div className="secondary-nav-items">
-                            {isAIAssistantEnabled && renderNavItems([aiAssistantMenuItem], false)}
-
-                            <div className="nav-dropdown-item">
-                                <DropdownMenu onOpenChange={handleDropdownOpenChange}>
-                                    <DropdownMenuTrigger asChild>
-                                        <div className="nav-item">
-                                            <div className="nav-item-data" data-testid="help-support-nav-item">
-                                                <div className="nav-item-icon">{helpSupportMenuItem.icon}</div>
-
-                                                <div className="nav-item-label">{helpSupportMenuItem.label}</div>
-                                            </div>
-                                        </div>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent
-                                        side="top"
-                                        align="start"
-                                        className="nav-dropdown-overlay help-support-dropdown"
-                                    >
-                                        {helpSupportDropdownMenuItems.map((item, idx) => {
-                                            if ('type' in item) {
-                                                // eslint-disable-next-line react/no-array-index-key
-                                                return <DropdownMenuSeparator key={`help-sep-${idx}`} />;
-                                            }
-                                            return (
-                                                <DropdownMenuItem
-                                                    key={String(item.key)}
-                                                    leftIcon={item.icon}
-                                                    onClick={(e): void =>
-                                                        handleHelpSupportMenuItemClick({
-                                                            ...item,
-                                                            key: String(item.key),
-                                                            domEvent: e.nativeEvent,
-                                                        } as unknown as SidebarItem)
-                                                    }
-                                                >
-                                                    {item.label}
-                                                </DropdownMenuItem>
-                                            );
-                                        })}
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            </div>
-
-                            <div className="nav-dropdown-item">
-                                <DropdownMenu onOpenChange={handleDropdownOpenChange}>
-                                    <DropdownMenuTrigger asChild>
-                                        <div className={cx('nav-item', isSettingsPage && 'active')}>
-                                            <div className="nav-item-active-marker" />
-                                            <div className="nav-item-data" data-testid="settings-nav-item">
-                                                <div className="nav-item-icon">{userSettingsMenuItem.icon}</div>
-
-                                                <div className="nav-item-label">{userSettingsMenuItem.label}</div>
-                                            </div>
-                                        </div>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent
-                                        side="top"
-                                        align="start"
-                                        className="nav-dropdown-overlay settings-dropdown"
-                                    >
-                                        {(userSettingsDropdownMenuItems ?? []).map((item, idx) => {
-                                            if (!item) {
-                                                return null;
-                                            }
-                                            if ('type' in item && item.type === 'divider') {
-                                                // eslint-disable-next-line react/no-array-index-key
-                                                return <DropdownMenuSeparator key={`settings-sep-${idx}`} />;
-                                            }
-                                            const settingsItem = item as {
-                                                key?: string | number;
-                                                label?: ReactNode;
-                                                icon?: ReactNode;
-                                                disabled?: boolean;
-                                            };
-                                            return (
-                                                <DropdownMenuItem
-                                                    key={String(settingsItem.key)}
-                                                    leftIcon={settingsItem.icon}
-                                                    disabled={settingsItem.disabled}
-                                                    onClick={(e): void =>
-                                                        handleSettingsMenuItemClick({
-                                                            key: String(settingsItem.key),
-                                                            domEvent: e.nativeEvent,
-                                                        } as unknown as SidebarItem)
-                                                    }
-                                                >
-                                                    {settingsItem.label}
-                                                </DropdownMenuItem>
-                                            );
-                                        })}
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <Modal
-                className="reorder-shortcut-nav-items-modal"
-                title={<span className="title">Manage Shortcuts</span>}
-                open={isReorderShortcutNavItemsModalOpen}
-                closable
-                onCancel={(): void => {
-                    void logEvent('Sidebar V2: Manage shortcuts dismissed', {});
-                    hideReorderShortcutNavItemsModal();
-                }}
-                footer={[
-                    <Button
-                        key="cancel"
-                        onClick={(): void => {
-                            void logEvent('Sidebar V2: Manage shortcuts dismissed', {});
-                            hideReorderShortcutNavItemsModal();
-                        }}
-                        className="periscope-btn cancel-btn secondary-btn"
-                        icon={<X size={16} />}
-                    >
-                        Cancel
-                    </Button>,
-                    <Button
-                        key="submit"
-                        type="primary"
-                        icon={<Check size={16} />}
-                        onClick={handleReorderShortcutNavItems}
-                        data-testid="save-changes-btn"
-                    >
-                        Save Changes
-                    </Button>,
-                ]}
-            >
-                <div className="reorder-shortcut-nav-items-container">
-                    <div className="reorder-shortcut-nav-items">
-                        <DndContext
-                            sensors={sensors}
-                            collisionDetection={closestCenter}
-                            onDragEnd={handleDragEnd}
-                        >
-                            <SortableContext
-                                items={tempPinnedMenuItems.map((f) => f.key)}
-                                strategy={verticalListSortingStrategy}
-                            >
-                                {tempPinnedMenuItems.map((item) => (
-                                    <SortableFilter key={item.key} item={item} />
-                                ))}
-                            </SortableContext>
-                        </DndContext>
-                    </div>
-                </div>
-            </Modal>
-        </div>
-    );
+	const { openCmdK } = useCmdK();
+	const { pathname, search } = useLocation();
+	const { currentVersion, latestVersion, isCurrentVersionError } = useSelector<
+		AppState,
+		AppReducer
+	>((state) => state.app);
+
+	const {
+		user,
+		featureFlags,
+		trialInfo,
+		isLoggedIn,
+		userPreferences,
+		changelog,
+		toggleChangelogModal,
+		updateUserPreferenceInContext,
+	} = useAppContext();
+
+	const { notifications } = useNotifications();
+
+	const { mutate: updateUserPreferenceMutation } = useMutation(
+		updateUserPreference,
+		{
+			onError: (error: Error) => {
+				showErrorNotification(notifications, error);
+			},
+		},
+	);
+
+	const [helpSupportDropdownMenuItems, setHelpSupportDropdownMenuItems] =
+		useState<(SidebarItem | DropdownSeparator)[]>(
+			DefaultHelpSupportDropdownMenuItems,
+		);
+
+	const [tempPinnedMenuItems, setTempPinnedMenuItems] = useState<SidebarItem[]>(
+		[],
+	);
+
+	const [hasScroll, setHasScroll] = useState(false);
+	const navTopSectionRef = useRef<HTMLDivElement>(null);
+	const sidenavRef = useRef<HTMLDivElement>(null);
+	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+	const isDropdownOpenRef = useRef(false);
+
+	const [isHovered, setIsHovered] = useState(false);
+	const [pinnedMenuItems, setPinnedMenuItems] = useState<SidebarItem[]>([]);
+	const [secondaryMenuItems, setSecondaryMenuItems] = useState<SidebarItem[]>(
+		[],
+	);
+
+	const handleMouseEnter = useCallback(() => {
+		setIsHovered(true);
+	}, []);
+
+	const handleMouseLeave = useCallback(() => {
+		// When the dropdown is open its content renders in a portal outside
+		// the sidenav, which causes the browser to fire mouseleave on the
+		// sidenav. Keep the sidenav expanded in that case.
+		if (isDropdownOpenRef.current) {
+			return;
+		}
+		setIsHovered(false);
+	}, []);
+
+	const handleDropdownOpenChange = useCallback((open: boolean): void => {
+		isDropdownOpenRef.current = open;
+		setIsDropdownOpen(open);
+		if (!open) {
+			// Re-sync hover state on close: the cursor may have moved to the
+			// portal content (outside .sideNav), so mouseleave never fired.
+			requestAnimationFrame(() => {
+				setIsHovered(sidenavRef.current?.matches(':hover') ?? false);
+			});
+		}
+	}, []);
+
+	const checkScroll = useCallback((): void => {
+		if (navTopSectionRef.current) {
+			const { scrollHeight, clientHeight, scrollTop } = navTopSectionRef.current;
+			const isAtBottom = scrollHeight - clientHeight - scrollTop <= 8;
+			setHasScroll(scrollHeight > clientHeight + 24 && !isAtBottom); // 24px - buffer height to show show more
+		}
+	}, []);
+
+	useEffect(() => {
+		checkScroll();
+		window.addEventListener('resize', checkScroll);
+
+		// Create a MutationObserver to watch for content changes
+		const observer = new MutationObserver(checkScroll);
+		const navTopSection = navTopSectionRef.current;
+
+		if (navTopSection) {
+			observer.observe(navTopSection, {
+				childList: true,
+				subtree: true,
+				attributes: true,
+			});
+
+			// Add scroll event listener
+			navTopSection.addEventListener('scroll', checkScroll);
+		}
+
+		return (): void => {
+			window.removeEventListener('resize', checkScroll);
+			observer.disconnect();
+			if (navTopSection) {
+				navTopSection.removeEventListener('scroll', checkScroll);
+			}
+		};
+	}, [checkScroll]);
+
+	const {
+		isCloudUser,
+		isEnterpriseSelfHostedUser,
+		isCommunityUser,
+		isCommunityEnterpriseUser,
+	} = useGetTenantLicense();
+
+	const [licenseTag, setLicenseTag] = useState('');
+	const isAdmin = user.role === USER_ROLES.ADMIN;
+	const isEditor = user.role === USER_ROLES.EDITOR;
+	const isAIAssistantEnabled = useIsAIAssistantEnabled();
+	const isAIObservabilityEnabled = useIsAIObservabilityEnabled();
+	const aiAssistantActiveConversationId = useAIAssistantStore(
+		(s) => s.activeConversationId,
+	);
+
+	// Compute initial pinned items and secondary menu items synchronously to avoid flash
+	const computedPinnedMenuItems = useMemo(() => {
+		const navShortcutsPreference = userPreferences?.find(
+			(preference) => preference.name === USER_PREFERENCES.NAV_SHORTCUTS,
+		);
+		const navShortcuts = navShortcutsPreference?.value as unknown as
+			| string[]
+			| undefined;
+
+		// If userPreferences not loaded yet, return empty to avoid showing defaults before preferences load
+		if (userPreferences === null) {
+			return [];
+		}
+
+		// If preference exists with non-empty array, use stored shortcuts
+		if (isArray(navShortcuts) && navShortcuts.length > 0) {
+			return navShortcuts
+				.map((shortcut) =>
+					defaultMoreMenuItems.find((item) => item.itemKey === shortcut),
+				)
+				.filter((item): item is SidebarItem => item !== undefined);
+		}
+
+		// No preference, or empty array â†’ use defaults
+		return defaultMoreMenuItems.filter((item) => item.isPinned);
+	}, [userPreferences]);
+
+	const computedSecondaryMenuItems = useMemo(() => {
+		const shouldShowIntegrationsValue =
+			(isCloudUser || isEnterpriseSelfHostedUser) && (isAdmin || isEditor);
+
+		const isEnabledForItem = (item: SidebarItem): boolean | undefined => {
+			if (item.key === ROUTES.INTEGRATIONS) {
+				return shouldShowIntegrationsValue;
+			}
+			if (item.key === ROUTES.AI_OBSERVABILITY_OVERVIEW) {
+				return isAIObservabilityEnabled;
+			}
+			return item.isEnabled;
+		};
+
+		return defaultMoreMenuItems.map((item) => ({
+			...item,
+			isPinned: computedPinnedMenuItems.some(
+				(pinned) => pinned.itemKey === item.itemKey,
+			),
+			isEnabled: isEnabledForItem(item),
+		}));
+	}, [
+		computedPinnedMenuItems,
+		isCloudUser,
+		isEnterpriseSelfHostedUser,
+		isAdmin,
+		isEditor,
+		isAIObservabilityEnabled,
+	]);
+
+	// Track if we've done the initial sync (to avoid overwriting user actions during session)
+	const hasInitializedRef = useRef(false);
+
+	// Sync state only on initial load when userPreferences first becomes available
+	useEffect(() => {
+		// Only sync once: when userPreferences loads for the first time
+		if (!hasInitializedRef.current && userPreferences !== null) {
+			setPinnedMenuItems(computedPinnedMenuItems);
+			setSecondaryMenuItems(computedSecondaryMenuItems);
+			hasInitializedRef.current = true;
+		}
+	}, [computedPinnedMenuItems, computedSecondaryMenuItems, userPreferences]);
+
+	const isChatSupportEnabled = featureFlags?.find(
+		(flag) => flag.name === FeatureKeys.CHAT_SUPPORT,
+	)?.active;
+
+	const isPremiumSupportEnabled = featureFlags?.find(
+		(flag) => flag.name === FeatureKeys.PREMIUM_SUPPORT,
+	)?.active;
+
+	const userSettingsMenuItem = {
+		key: ROUTES.SETTINGS,
+		label: 'Settings',
+		icon: <Cog size={16} />,
+	};
+
+	const isLatestVersion = checkVersionState(currentVersion, latestVersion);
+
+	const [showVersionUpdateNotification, setShowVersionUpdateNotification] =
+		useState(false);
+
+	const [isMoreMenuCollapsed, setIsMoreMenuCollapsed] = useState(false);
+
+	const [
+		isReorderShortcutNavItemsModalOpen,
+		setIsReorderShortcutNavItemsModalOpen,
+	] = useState(false);
+
+	const handleDragEnd = (event: DragEndEvent): void => {
+		const { active, over } = event;
+
+		if (over && active.id !== over.id) {
+			setTempPinnedMenuItems((items) => {
+				const oldIndex = items.findIndex((item) => item.key === active.id);
+				const newIndex = items.findIndex((item) => item.key === over.id);
+
+				return arrayMove(items, oldIndex, newIndex);
+			});
+		}
+	};
+
+	const updateNavShortcutsPreference = useCallback(
+		(items: SidebarItem[]): void => {
+			const navShortcuts = items
+				.map((item) => item.itemKey)
+				.filter(Boolean) as string[];
+
+			// Update context immediately (optimistically) so computed values reflect the change
+			updateUserPreferenceInContext({
+				name: USER_PREFERENCES.NAV_SHORTCUTS,
+				description: USER_PREFERENCES.NAV_SHORTCUTS,
+				valueType: 'array',
+				defaultValue: false,
+				allowedValues: [],
+				allowedScopes: ['user'],
+				value: navShortcuts,
+			});
+
+			updateUserPreferenceMutation(
+				{
+					name: USER_PREFERENCES.NAV_SHORTCUTS,
+					value: navShortcuts,
+				},
+				{
+					onSuccess: (response) => {
+						if (response.data) {
+							// Update context again on success to ensure consistency
+							updateUserPreferenceInContext({
+								name: USER_PREFERENCES.NAV_SHORTCUTS,
+								description: USER_PREFERENCES.NAV_SHORTCUTS,
+								valueType: 'array',
+								defaultValue: false,
+								allowedValues: [],
+								allowedScopes: ['user'],
+								value: navShortcuts,
+							});
+						}
+					},
+				},
+			);
+		},
+		[updateUserPreferenceInContext, updateUserPreferenceMutation],
+	);
+
+	const onTogglePin = useCallback(
+		(item: SidebarItem): void => {
+			// Update secondary menu items first with new isPinned state
+			setSecondaryMenuItems((prevItems) =>
+				prevItems.map((i) => ({
+					...i,
+					isPinned: i.key === item.key ? !i.isPinned : i.isPinned,
+				})),
+			);
+
+			// Update pinned menu items
+			setPinnedMenuItems((prevItems) => {
+				const isCurrentlyPinned = prevItems.some((i) => i.key === item.key);
+				if (isCurrentlyPinned) {
+					return prevItems.filter((i) => i.key !== item.key);
+				}
+				return [...prevItems, item];
+			});
+
+			// Get the updated pinned menu items for preference update
+			const updatedPinnedItems = pinnedMenuItems.some((i) => i.key === item.key)
+				? pinnedMenuItems.filter((i) => i.key !== item.key)
+				: [...pinnedMenuItems, item];
+
+			// Update user preference with the ordered list of item keys
+			updateNavShortcutsPreference(updatedPinnedItems);
+		},
+		[pinnedMenuItems, updateNavShortcutsPreference],
+	);
+
+	const handleReorderShortcutNavItems = (): void => {
+		void logEvent('Sidebar V2: Save shortcuts clicked', {
+			shortcuts: tempPinnedMenuItems.map((item) => item.key),
+		});
+		setPinnedMenuItems(tempPinnedMenuItems);
+
+		// Update user preference with the new order
+		updateNavShortcutsPreference(tempPinnedMenuItems);
+
+		setIsReorderShortcutNavItemsModalOpen(false);
+	};
+
+	const sensors = useSensors(useSensor(PointerSensor));
+
+	const hideReorderShortcutNavItemsModal = (): void => {
+		setIsReorderShortcutNavItemsModalOpen(false);
+	};
+
+	useEffect(() => {
+		if (isReorderShortcutNavItemsModalOpen) {
+			setTempPinnedMenuItems(pinnedMenuItems);
+		}
+	}, [isReorderShortcutNavItemsModalOpen, pinnedMenuItems]);
+
+	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
+
+	const isWorkspaceBlocked = trialInfo?.workSpaceBlock || false;
+
+	const onClickGetStarted = (event: MouseEvent): void => {
+		void logEvent('Sidebar: Menu clicked', {
+			menuRoute: ROUTES.GET_STARTED_WITH_CLOUD,
+			menuLabel: 'Get Started',
+		});
+
+		if (isModifierKeyPressed(event)) {
+			openInNewTab(ROUTES.GET_STARTED_WITH_CLOUD);
+		} else {
+			history.push(ROUTES.GET_STARTED_WITH_CLOUD);
+		}
+	};
+
+	const getItemHref = useCallback(
+		(key: string): string => {
+			const params = new URLSearchParams(search);
+			const availableParams = routeConfig[key];
+			const queryString = getQueryString(availableParams || [], params);
+			return buildNavUrl(key, queryString);
+		},
+		[search],
+	);
+
+	const onClickHandler = useCallback(
+		(key: string, event: MouseEvent | null) => {
+			const params = new URLSearchParams(search);
+			const availableParams = routeConfig[key];
+
+			const queryString = getQueryString(availableParams || [], params);
+			const url = buildNavUrl(key, queryString);
+
+			if (pathname !== key) {
+				if (event && isModifierKeyPressed(event)) {
+					openInNewTab(url);
+				} else {
+					history.push(url, {
+						from: pathname,
+					});
+				}
+			}
+		},
+		[pathname, search],
+	);
+
+	const activeMenuKey = useMemo(
+		() => getActiveMenuKeyFromPath(pathname),
+		[pathname],
+	);
+
+	const isSettingsPage = useMemo(
+		() => pathname.startsWith(ROUTES.SETTINGS),
+		[pathname],
+	);
+
+	const userSettingsDropdownMenuItems: MenuProps['items'] = useMemo(
+		() =>
+			getUserSettingsDropdownMenuItems({
+				userEmail: user.email,
+				isWorkspaceBlocked,
+				isEnterpriseSelfHostedUser,
+				isCommunityEnterpriseUser,
+			}),
+		[
+			isEnterpriseSelfHostedUser,
+			isCommunityEnterpriseUser,
+			user.email,
+			isWorkspaceBlocked,
+		],
+	);
+
+	useEffect(() => {
+		if (isCloudUser) {
+			setLicenseTag('Cloud');
+		} else if (isEnterpriseSelfHostedUser) {
+			setLicenseTag('Enterprise');
+		} else if (isCommunityEnterpriseUser) {
+			setLicenseTag('Free');
+		} else if (isCommunityUser) {
+			setLicenseTag('Community');
+		}
+	}, [
+		isCloudUser,
+		isEnterpriseSelfHostedUser,
+		isCommunityEnterpriseUser,
+		isCommunityUser,
+	]);
+
+	useEffect(() => {
+		if (!isAdmin) {
+			setHelpSupportDropdownMenuItems((prevState) =>
+				prevState.filter(
+					(item) => !('key' in item) || item.key !== 'invite-collaborators',
+				),
+			);
+		}
+
+		const showAddCreditCardModal =
+			!isPremiumSupportEnabled && !trialInfo?.trialConvertedToSubscription;
+
+		if (
+			!(
+				isLoggedIn &&
+				isChatSupportEnabled &&
+				!showAddCreditCardModal &&
+				(isCloudUser || isEnterpriseSelfHostedUser)
+			)
+		) {
+			setHelpSupportDropdownMenuItems((prevState) =>
+				prevState.filter((item) => !('key' in item) || item.key !== 'chat-support'),
+			);
+		}
+
+		if (changelog) {
+			const firstTwoFeatures = changelog.features.slice(0, 2);
+			const dropdownItems: SidebarItem[] = firstTwoFeatures.map(
+				(feature, idx) => ({
+					key: `changelog-${idx + 1}`,
+					label: (
+						<div className="nav-item-label-container">
+							<span>{feature.title}</span>
+						</div>
+					),
+					icon: idx === 0 ? <LampDesk size={14} /> : <GitCommitVertical size={14} />,
+					itemKey: `changelog-${idx + 1}`,
+				}),
+			);
+			const changelogKey = CHANGELOG_LABEL.toLowerCase().replace(' ', '-');
+			setHelpSupportDropdownMenuItems((prevState) => {
+				if (dropdownItems.length === 0) {
+					return [
+						...prevState,
+						{
+							type: 'divider',
+						},
+						{
+							key: changelogKey,
+							label: (
+								<div className="nav-item-label-container">
+									<span>{CHANGELOG_LABEL}</span>
+									<ArrowUpRight size={14} />
+								</div>
+							),
+							icon: <ScrollText size={14} />,
+							itemKey: changelogKey,
+							isExternal: true,
+							url: 'https://signoz.io/changelog/',
+						},
+					];
+				}
+
+				return [
+					...prevState,
+					{
+						type: 'divider',
+					},
+					{
+						type: 'group',
+						label: "WHAT'S NEW",
+					},
+					...dropdownItems,
+					{
+						key: changelogKey,
+						label: (
+							<div className="nav-item-label-container">
+								<span>{CHANGELOG_LABEL}</span>
+								<ArrowUpRight size={14} />
+							</div>
+						),
+						icon: <ScrollText size={14} />,
+						itemKey: changelogKey,
+						isExternal: true,
+						url: 'https://signoz.io/changelog/',
+					},
+				];
+			});
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [
+		isAdmin,
+		isChatSupportEnabled,
+		isPremiumSupportEnabled,
+		isCloudUser,
+		trialInfo,
+		changelog,
+	]);
+
+	const [isCurrentOrgSettings] = useComponentPermission(
+		['current_org_settings'],
+		user.role,
+	);
+
+	const settingsRoute = isCurrentOrgSettings
+		? ROUTES.ORG_SETTINGS
+		: ROUTES.SETTINGS;
+
+	const handleMenuItemClick = (event: MouseEvent, item: SidebarItem): void => {
+		if (item.key === ROUTES.SETTINGS) {
+			if (isModifierKeyPressed(event)) {
+				openInNewTab(settingsRoute);
+			} else {
+				history.push(settingsRoute);
+			}
+		} else if (item.key === 'quick-search') {
+			openCmdK();
+		} else if (item.key === aiAssistantMenuItem.key) {
+			// Resume the active conversation when one exists â€” without this
+			// every sidenav click hits `/ai-assistant/new` which the page
+			// resolves by spawning a fresh thread. Only fall back to /new
+			// when there's no active conversation to resume.
+			const aiPath = aiAssistantActiveConversationId
+				? ROUTES.AI_ASSISTANT.replace(
+						':conversationId',
+						aiAssistantActiveConversationId,
+					)
+				: aiAssistantMenuItem.key;
+			if (isModifierKeyPressed(event)) {
+				openInNewTab(aiPath);
+			} else {
+				history.push(aiPath);
+			}
+		} else if (item) {
+			onClickHandler(item?.key as string, event);
+		}
+		void logEvent('Sidebar V2: Menu clicked', {
+			menuRoute: item?.key,
+			menuLabel: item?.label,
+		});
+	};
+
+	useEffect(() => {
+		registerShortcut(GlobalShortcuts.NavigateToHome, () =>
+			onClickHandler(ROUTES.HOME, null),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToServices, () =>
+			onClickHandler(ROUTES.APPLICATION, null),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToTraces, () =>
+			onClickHandler(ROUTES.TRACES_EXPLORER, null),
+		);
+
+		registerShortcut(GlobalShortcuts.NavigateToLogs, () =>
+			onClickHandler(ROUTES.LOGS, null),
+		);
+
+		registerShortcut(GlobalShortcuts.NavigateToDashboards, () =>
+			onClickHandler(ROUTES.ALL_DASHBOARD, null),
+		);
+
+		registerShortcut(GlobalShortcuts.NavigateToMessagingQueues, () =>
+			onClickHandler(ROUTES.MESSAGING_QUEUES_OVERVIEW, null),
+		);
+
+		registerShortcut(GlobalShortcuts.NavigateToAlerts, () =>
+			onClickHandler(ROUTES.LIST_ALL_ALERT, null),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToExceptions, () =>
+			onClickHandler(ROUTES.ALL_ERROR, null),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToTracesFunnel, () =>
+			onClickHandler(ROUTES.TRACES_FUNNELS, null),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToTracesViews, () =>
+			onClickHandler(ROUTES.TRACES_SAVE_VIEWS, null),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToMetricsSummary, () =>
+			onClickHandler(ROUTES.METRICS_EXPLORER, null),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToMetricsExplorer, () =>
+			onClickHandler(ROUTES.METRICS_EXPLORER_EXPLORER, null),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToMetricsViews, () =>
+			onClickHandler(ROUTES.METRICS_EXPLORER_VIEWS, null),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToSettings, () =>
+			onClickHandler(ROUTES.SETTINGS, null),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToSettingsIngestion, () =>
+			onClickHandler(ROUTES.INGESTION_SETTINGS, null),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToSettingsBilling, () =>
+			onClickHandler(ROUTES.BILLING, null),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToSettingsNotificationChannels, () =>
+			onClickHandler(ROUTES.ALL_CHANNELS, null),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToSettingsServiceAccounts, () =>
+			onClickHandler(ROUTES.SERVICE_ACCOUNTS_SETTINGS, null),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToSettingsRoles, () =>
+			onClickHandler(ROUTES.ROLES_SETTINGS, null),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToSettingsMembers, () =>
+			onClickHandler(ROUTES.MEMBERS_SETTINGS, null),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToLogsPipelines, () =>
+			onClickHandler(ROUTES.LOGS_PIPELINES, null),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToLogsViews, () =>
+			onClickHandler(ROUTES.LOGS_SAVE_VIEWS, null),
+		);
+		return (): void => {
+			deregisterShortcut(GlobalShortcuts.NavigateToHome);
+			deregisterShortcut(GlobalShortcuts.NavigateToServices);
+			deregisterShortcut(GlobalShortcuts.NavigateToTraces);
+			deregisterShortcut(GlobalShortcuts.NavigateToLogs);
+			deregisterShortcut(GlobalShortcuts.NavigateToDashboards);
+			deregisterShortcut(GlobalShortcuts.NavigateToAlerts);
+			deregisterShortcut(GlobalShortcuts.NavigateToExceptions);
+			deregisterShortcut(GlobalShortcuts.NavigateToMessagingQueues);
+			deregisterShortcut(GlobalShortcuts.NavigateToTracesFunnel);
+			deregisterShortcut(GlobalShortcuts.NavigateToMetricsSummary);
+			deregisterShortcut(GlobalShortcuts.NavigateToMetricsExplorer);
+			deregisterShortcut(GlobalShortcuts.NavigateToMetricsViews);
+			deregisterShortcut(GlobalShortcuts.NavigateToSettings);
+			deregisterShortcut(GlobalShortcuts.NavigateToSettingsIngestion);
+			deregisterShortcut(GlobalShortcuts.NavigateToSettingsBilling);
+			deregisterShortcut(GlobalShortcuts.NavigateToSettingsNotificationChannels);
+			deregisterShortcut(GlobalShortcuts.NavigateToSettingsServiceAccounts);
+			deregisterShortcut(GlobalShortcuts.NavigateToSettingsRoles);
+			deregisterShortcut(GlobalShortcuts.NavigateToSettingsMembers);
+			deregisterShortcut(GlobalShortcuts.NavigateToLogsPipelines);
+			deregisterShortcut(GlobalShortcuts.NavigateToLogsViews);
+			deregisterShortcut(GlobalShortcuts.NavigateToTracesViews);
+		};
+	}, [deregisterShortcut, onClickHandler, registerShortcut]);
+
+	const isPinnedItem = useMemo(
+		() =>
+			(item: SidebarItem): boolean =>
+				secondaryMenuItems.some((i) => i.key === item.key && i.isPinned),
+		[secondaryMenuItems],
+	);
+
+	const moreMenuItems = useMemo(
+		() => secondaryMenuItems.filter((i) => !i.isPinned && i.isEnabled),
+		[secondaryMenuItems],
+	);
+
+	// Get active "More" items that should be visible in collapsed state
+	const activeMoreMenuItems = useMemo(
+		() => moreMenuItems.filter((item) => activeMenuKey === item.key),
+		[moreMenuItems, activeMenuKey],
+	);
+
+	// Check if sidebar is collapsed (not pinned, not hovered, and no dropdown open)
+	const isCollapsed = !isPinned && !isHovered && !isDropdownOpen;
+
+	const renderNavItems = (
+		items: SidebarItem[],
+		allowPin?: boolean,
+	): JSX.Element => (
+		<>
+			{items.map((item, index) => (
+				<NavItem
+					showIcon
+					key={item.key || index}
+					item={item}
+					isActive={activeMenuKey === item.key}
+					isDisabled={
+						isWorkspaceBlocked &&
+						item.key !== ROUTES.BILLING &&
+						item.key !== ROUTES.SETTINGS
+					}
+					onTogglePin={
+						allowPin
+							? (item): void => {
+									void logEvent(
+										`Sidebar V2: Menu item ${item.isPinned ? 'unpinned' : 'pinned'}`,
+										{
+											menuRoute: item.key,
+											menuLabel: item.label,
+										},
+									);
+									onTogglePin(item);
+								}
+							: undefined
+					}
+					onClick={(event): void => {
+						handleMenuItemClick(event, item);
+					}}
+					isPinned={isPinnedItem(item)}
+					href={
+						item.key !== 'quick-search' && item.key !== aiAssistantMenuItem.key
+						? getItemHref(String(item.key))
+						: undefined
+					}
+				/>
+			))}
+		</>
+	);
+
+	// Check scroll when menu items change
+	useEffect(() => {
+		checkScroll();
+	}, [checkScroll, pinnedMenuItems, moreMenuItems]);
+
+	const handleScrollForMore = (): void => {
+		if (navTopSectionRef.current) {
+			navTopSectionRef.current.scrollTo({
+				top: navTopSectionRef.current.scrollHeight,
+				behavior: 'smooth',
+			});
+		}
+	};
+
+	// eslint-disable-next-line sonarjs/cognitive-complexity
+	const handleHelpSupportMenuItemClick = (info: SidebarItem): void => {
+		const item = helpSupportDropdownMenuItems.find(
+			(item) => !('type' in item) && item.key === info.key,
+		);
+
+		if (item && !('type' in item) && item.isExternal && item.url) {
+			openInNewTab(item.url);
+		}
+
+		const event = (info as SidebarItem & { domEvent?: MouseEvent }).domEvent;
+
+		if (item && !('type' in item)) {
+			void logEvent('Help Popover: Item clicked', {
+				menuRoute: item.key,
+				menuLabel: String(item.label),
+			});
+
+			switch (item.key) {
+				case ROUTES.SHORTCUTS:
+					if (event && isModifierKeyPressed(event)) {
+						openInNewTab(ROUTES.SHORTCUTS);
+					} else {
+						history.push(ROUTES.SHORTCUTS);
+					}
+					break;
+				case 'invite-collaborators':
+					if (event && isModifierKeyPressed(event)) {
+						openInNewTab(`${ROUTES.MEMBERS_SETTINGS}?invite=true`);
+					} else {
+						history.push(`${ROUTES.MEMBERS_SETTINGS}?invite=true`);
+					}
+					break;
+				case 'chat-support':
+					if (window.pylon) {
+						window.Pylon('show');
+					}
+					break;
+				case 'changelog-1':
+				case 'changelog-2':
+					toggleChangelogModal();
+					break;
+				default:
+					break;
+			}
+		}
+	};
+
+	// eslint-disable-next-line sonarjs/cognitive-complexity
+	const handleSettingsMenuItemClick = (info: SidebarItem): void => {
+		const item = (userSettingsDropdownMenuItems ?? []).find(
+			(item) => item?.key === info.key,
+		);
+		let menuLabel = '';
+		if (
+			item &&
+			!('type' in item && item.type === 'divider') &&
+			typeof item.label === 'string'
+		) {
+			menuLabel = item.label;
+		}
+
+		void logEvent('Settings Popover: Item clicked', {
+			menuRoute: item?.key,
+			menuLabel,
+		});
+
+		const event = (info as SidebarItem & { domEvent?: MouseEvent }).domEvent;
+
+		switch (info.key) {
+			case 'account':
+				if (event && isModifierKeyPressed(event)) {
+					openInNewTab(ROUTES.MY_SETTINGS);
+				} else {
+					history.push(ROUTES.MY_SETTINGS);
+				}
+				break;
+			case 'workspace':
+				if (event && isModifierKeyPressed(event)) {
+					openInNewTab(ROUTES.SETTINGS);
+				} else {
+					history.push(ROUTES.SETTINGS);
+				}
+				break;
+			case 'license':
+				if (event && isModifierKeyPressed(event)) {
+					openInNewTab(ROUTES.LIST_LICENSES);
+				} else {
+					history.push(ROUTES.LIST_LICENSES);
+				}
+				break;
+			case 'keyboard-shortcuts':
+				if (event && isModifierKeyPressed(event)) {
+					openInNewTab(ROUTES.SHORTCUTS);
+				} else {
+					history.push(ROUTES.SHORTCUTS);
+				}
+				break;
+			case 'logout':
+				void Logout();
+				break;
+			default:
+		}
+	};
+
+	const onClickVersionHandler = useCallback((): void => {
+		if (!changelog) {
+			return;
+		}
+
+		toggleChangelogModal();
+	}, [changelog, toggleChangelogModal]);
+
+	useEffect(() => {
+		if (!isLatestVersion && !isCloudUser) {
+			setShowVersionUpdateNotification(true);
+		} else {
+			setShowVersionUpdateNotification(false);
+		}
+	}, [
+		currentVersion,
+		latestVersion,
+		isCurrentVersionError,
+		isLatestVersion,
+		isCloudUser,
+		isEnterpriseSelfHostedUser,
+	]);
+
+	return (
+		<div className={cx('sidenav-container', isPinned && 'pinned')}>
+			<div
+				ref={sidenavRef}
+				className={cx(
+					'sideNav',
+					isPinned && 'pinned',
+					isHovered && 'is-hovered',
+					isDropdownOpen && 'dropdown-open',
+				)}
+				onMouseEnter={handleMouseEnter}
+				onMouseLeave={handleMouseLeave}
+			>
+				<div className="brand-container">
+					<div className="brand">
+						<div className="brand-company-meta">
+							<div
+								className="brand-logo"
+								onClick={(event: MouseEvent): void => {
+									// Current home page
+									onClickHandler(ROUTES.HOME, event);
+								}}
+							>
+								<img src={signozBrandLogoUrl} alt="SigNoz" />
+							</div>
+
+							{(licenseTag || currentVersion) && (
+								<div
+									className={cx(
+										'brand-title-section',
+										isCommunityEnterpriseUser && 'community-enterprise-user',
+										isCloudUser && 'cloud-user',
+										showVersionUpdateNotification &&
+											changelog &&
+											'version-update-notification',
+									)}
+								>
+									{licenseTag && <span className="license-type"> {licenseTag} </span>}
+
+									{currentVersion && (
+										<Tooltip
+											placement="bottomLeft"
+											overlayClassName="version-tooltip-overlay"
+											arrow={false}
+											overlay={
+												showVersionUpdateNotification &&
+												changelog && (
+													<div className="version-update-notification-tooltip">
+														<div className="version-update-notification-tooltip-title">
+															There&apos;s a new version available.
+														</div>
+
+														<div className="version-update-notification-tooltip-content">
+															{latestVersion}
+														</div>
+													</div>
+												)
+											}
+										>
+											<div
+												className={cx(
+													'version-container',
+													!licenseTag && 'version-container-standalone',
+												)}
+											>
+												<span
+													className={cx('version', changelog && 'version-clickable')}
+													onClick={onClickVersionHandler}
+												>
+													{currentVersion}
+												</span>
+
+												{showVersionUpdateNotification && changelog && (
+													<span className="version-update-notification-dot-icon" />
+												)}
+											</div>
+										</Tooltip>
+									)}
+								</div>
+							)}
+						</div>
+					</div>
+				</div>
+
+				<div
+					className={cx(
+						`nav-wrapper`,
+						isCloudUser && 'nav-wrapper-cloud',
+						hasScroll && 'scroll-available',
+					)}
+				>
+					<div className={cx('nav-top-section')} ref={navTopSectionRef}>
+						{isCloudUser && user?.role !== USER_ROLES.VIEWER && (
+							<div className="get-started-nav-items">
+								<Button
+									className="get-started-btn"
+									disabled={isWorkspaceBlocked}
+									onClick={(event: MouseEvent): void => {
+										if (isWorkspaceBlocked) {
+											return;
+										}
+										onClickGetStarted(event);
+									}}
+								>
+									<PackagePlus size={16} />
+									<div className="license tag nav-item-label"> New source </div>
+								</Button>
+							</div>
+						)}
+
+						<div className="primary-nav-items">
+							{renderNavItems(primaryMenuItems)}
+						</div>
+
+						{(pinnedMenuItems.length > 0 || !isCollapsed) && (
+							<div
+								className={cx('shortcut-nav-items', isCollapsed && 'sidebar-collapsed')}
+							>
+								{!isCollapsed && (
+									<div className="nav-title-section">
+										<div className="nav-section-title">
+											<div className="nav-section-title-icon">
+												<MousePointerClick size={16} />
+											</div>
+
+											<div className="nav-section-title-text">SHORTCUTS</div>
+
+											{pinnedMenuItems.length > 1 && (
+												<Tooltip title="Manage shortcuts" placement="right">
+													<div
+														className="nav-section-title-icon reorder"
+														onClick={(): void => {
+															void logEvent('Sidebar V2: Manage shortcuts clicked', {});
+															setIsReorderShortcutNavItemsModalOpen(true);
+														}}
+													>
+														<List size={16} />
+													</div>
+												</Tooltip>
+											)}
+										</div>
+
+										{pinnedMenuItems.length === 0 && (
+											<div className="nav-section-subtitle">
+												You have not added any shortcuts yet.
+											</div>
+										)}
+									</div>
+								)}
+
+								{(pinnedMenuItems.length > 0 || isCollapsed) && (
+									<div className="nav-items-section">
+										{renderNavItems(
+											pinnedMenuItems.filter((item) => item.isEnabled),
+											true,
+										)}
+									</div>
+								)}
+							</div>
+						)}
+
+						{moreMenuItems.length > 0 && (
+							<div
+								className={cx(
+									'more-nav-items',
+									isMoreMenuCollapsed ? 'collapsed' : 'expanded',
+									isCollapsed && 'sidebar-collapsed',
+								)}
+							>
+								{!isCollapsed && (
+									<div className="nav-title-section">
+										<div
+											className="nav-section-title"
+											onClick={(): void => {
+												// Only allow toggling when sidebar is open (pinned, hovered, or dropdown open)
+												if (isCollapsed) {
+													return;
+												}
+												const newCollapsedState = !isMoreMenuCollapsed;
+												void logEvent('Sidebar V2: More menu clicked', {
+													action: isMoreMenuCollapsed ? 'expand' : 'collapse',
+												});
+												setIsMoreMenuCollapsed(newCollapsedState);
+											}}
+										>
+											<div className="nav-section-title-icon">
+												<Ellipsis size={16} />
+											</div>
+
+											<div className="nav-section-title-text">MORE</div>
+
+											<div className="collapse-expand-section-icon">
+												{isMoreMenuCollapsed ? (
+													<ChevronDown size={16} />
+												) : (
+													<ChevronUp size={16} />
+												)}
+											</div>
+										</div>
+									</div>
+								)}
+
+								<div className="nav-items-section">
+									{/* Show all items when expanded, only active items when collapsed */}
+									{isCollapsed
+										? renderNavItems(
+												activeMoreMenuItems.filter((item) => item.isEnabled),
+												true,
+											)
+										: renderNavItems(
+												moreMenuItems.filter((item) => item.isEnabled),
+												true,
+											)}
+								</div>
+							</div>
+						)}
+
+						<div className="scroll-for-more-container">
+							<div className="scroll-for-more" onClick={handleScrollForMore}>
+								<div className="scroll-for-more-icon">
+									<ChevronsDown size={16} />
+								</div>
+
+								<div className="scroll-for-more-label">Scroll for more</div>
+							</div>
+						</div>
+					</div>
+
+					<div className="nav-bottom-section">
+						<div className="secondary-nav-items">
+							{isAIAssistantEnabled && renderNavItems([aiAssistantMenuItem], false)}
+
+							<div className="nav-dropdown-item">
+								<DropdownMenu onOpenChange={handleDropdownOpenChange}>
+									<DropdownMenuTrigger asChild>
+										<div className="nav-item">
+											<div className="nav-item-data" data-testid="help-support-nav-item">
+												<div className="nav-item-icon">{helpSupportMenuItem.icon}</div>
+
+												<div className="nav-item-label">{helpSupportMenuItem.label}</div>
+											</div>
+										</div>
+									</DropdownMenuTrigger>
+									<DropdownMenuContent
+										side="top"
+										align="start"
+										className="nav-dropdown-overlay help-support-dropdown"
+									>
+										{helpSupportDropdownMenuItems.map((item, idx) => {
+											if ('type' in item) {
+												// eslint-disable-next-line react/no-array-index-key
+												return <DropdownMenuSeparator key={`help-sep-${idx}`} />;
+											}
+											return (
+												<DropdownMenuItem
+													key={String(item.key)}
+													leftIcon={item.icon}
+													onClick={(e): void =>
+														handleHelpSupportMenuItemClick({
+															...item,
+															key: String(item.key),
+															domEvent: e.nativeEvent,
+														} as unknown as SidebarItem)
+													}
+												>
+													{item.label}
+												</DropdownMenuItem>
+											);
+										})}
+									</DropdownMenuContent>
+								</DropdownMenu>
+							</div>
+
+							<div className="nav-dropdown-item">
+								<DropdownMenu onOpenChange={handleDropdownOpenChange}>
+									<DropdownMenuTrigger asChild>
+										<div className={cx('nav-item', isSettingsPage && 'active')}>
+											<div className="nav-item-active-marker" />
+											<div className="nav-item-data" data-testid="settings-nav-item">
+												<div className="nav-item-icon">{userSettingsMenuItem.icon}</div>
+
+												<div className="nav-item-label">{userSettingsMenuItem.label}</div>
+											</div>
+										</div>
+									</DropdownMenuTrigger>
+									<DropdownMenuContent
+										side="top"
+										align="start"
+										className="nav-dropdown-overlay settings-dropdown"
+									>
+										{(userSettingsDropdownMenuItems ?? []).map((item, idx) => {
+											if (!item) {
+												return null;
+											}
+											if ('type' in item && item.type === 'divider') {
+												// eslint-disable-next-line react/no-array-index-key
+												return <DropdownMenuSeparator key={`settings-sep-${idx}`} />;
+											}
+											const settingsItem = item as {
+												key?: string | number;
+												label?: ReactNode;
+												icon?: ReactNode;
+												disabled?: boolean;
+											};
+											return (
+												<DropdownMenuItem
+													key={String(settingsItem.key)}
+													leftIcon={settingsItem.icon}
+													disabled={settingsItem.disabled}
+													onClick={(e): void =>
+														handleSettingsMenuItemClick({
+															key: String(settingsItem.key),
+															domEvent: e.nativeEvent,
+														} as unknown as SidebarItem)
+													}
+												>
+													{settingsItem.label}
+												</DropdownMenuItem>
+											);
+										})}
+									</DropdownMenuContent>
+								</DropdownMenu>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<Modal
+				className="reorder-shortcut-nav-items-modal"
+				title={<span className="title">Manage Shortcuts</span>}
+				open={isReorderShortcutNavItemsModalOpen}
+				closable
+				onCancel={(): void => {
+					void logEvent('Sidebar V2: Manage shortcuts dismissed', {});
+					hideReorderShortcutNavItemsModal();
+				}}
+				footer={[
+					<Button
+						key="cancel"
+						onClick={(): void => {
+							void logEvent('Sidebar V2: Manage shortcuts dismissed', {});
+							hideReorderShortcutNavItemsModal();
+						}}
+						className="periscope-btn cancel-btn secondary-btn"
+						icon={<X size={16} />}
+					>
+						Cancel
+					</Button>,
+					<Button
+						key="submit"
+						type="primary"
+						icon={<Check size={16} />}
+						onClick={handleReorderShortcutNavItems}
+						data-testid="save-changes-btn"
+					>
+						Save Changes
+					</Button>,
+				]}
+			>
+				<div className="reorder-shortcut-nav-items-container">
+					<div className="reorder-shortcut-nav-items">
+						<DndContext
+							sensors={sensors}
+							collisionDetection={closestCenter}
+							onDragEnd={handleDragEnd}
+						>
+							<SortableContext
+								items={tempPinnedMenuItems.map((f) => f.key)}
+								strategy={verticalListSortingStrategy}
+							>
+								{tempPinnedMenuItems.map((item) => (
+									<SortableFilter key={item.key} item={item} />
+								))}
+							</SortableContext>
+						</DndContext>
+					</div>
+				</div>
+			</Modal>
+		</div>
+	);
 }
 
 export default SideNav;
