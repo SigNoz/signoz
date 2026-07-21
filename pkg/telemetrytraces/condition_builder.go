@@ -49,22 +49,23 @@ func (c *conditionBuilder) conditionFor(
 
 	// TODO(srikanthccv): maybe extend this to every possible attribute
 	if key.Name == "duration_nano" || key.Name == "durationNano" { // QoL improvement
-		if strDuration, ok := value.(string); ok {
-			duration, err := time.ParseDuration(strDuration)
-			if err == nil {
+		switch v := value.(type) {
+		case string:
+			if duration, err := time.ParseDuration(v); err == nil {
 				value = duration.Nanoseconds()
+			} else if f, err := strconv.ParseFloat(v, 64); err == nil {
+				value = int64(f)
 			} else {
-				duration, err := strconv.ParseFloat(strDuration, 64)
-				if err == nil {
-					value = duration
-				} else {
-					return "", errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid duration value: %s", strDuration)
-				}
+				return "", errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid duration value: %s", v)
 			}
+		case float64:
+			value = int64(v)
+		case float32:
+			value = int64(v)
 		}
-	} else {
-		fieldExpression, value = querybuilder.DataTypeCollisionHandledFieldName(key, value, fieldExpression, operator)
 	}
+
+	fieldExpression, value = querybuilder.DataTypeCollisionHandledFieldName(key, value, fieldExpression, operator)
 
 	// regular operators
 	switch operator {
