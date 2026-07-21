@@ -119,7 +119,7 @@ func newTestBuilderWithKeys(t *testing.T, keysMap map[string][]*telemetrytypes.T
 	// In production the metadata store enriches gen_ai keys (enrichWithGenAIKeys);
 	// here the mock is seeded directly via keysMap.
 	metadataStore := telemetrytypes.MetadataStore(mockMetadataStore)
-	rewriter := querybuilder.NewAggExprRewriter(settings, nil, fm, cb, nil, fl)
+	rewriter := querybuilder.NewAggExprRewriter(settings, nil, fm, cb, fl)
 	traceStmtBuilder := telemetrytraces.NewTraceQueryStatementBuilder(
 		settings,
 		metadataStore,

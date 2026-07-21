@@ -8,9 +8,9 @@ import LLMObservabilityAttributeMapping from '../AttributeMapping/LLMObservabili
 import Overview from '../Overview/Overview';
 import LLMObservabilityModelPricing from '../Settings/ModelPricing/LLMObservabilityModelPricing';
 
-const OVERVIEW_KEY = ROUTES.LLM_OBSERVABILITY_OVERVIEW;
-const CONFIGURATION_KEY = ROUTES.LLM_OBSERVABILITY_CONFIGURATION;
-const ATTRIBUTE_MAPPING_KEY = ROUTES.LLM_OBSERVABILITY_ATTRIBUTE_MAPPING;
+const OVERVIEW_KEY = ROUTES.AI_OBSERVABILITY_OVERVIEW;
+const CONFIGURATION_KEY = ROUTES.AI_OBSERVABILITY_CONFIGURATION;
+const ATTRIBUTE_MAPPING_KEY = ROUTES.AI_OBSERVABILITY_ATTRIBUTE_MAPPING;
 
 interface UseLLMObservabilityTabsResult {
 	items: TabItemProps[];

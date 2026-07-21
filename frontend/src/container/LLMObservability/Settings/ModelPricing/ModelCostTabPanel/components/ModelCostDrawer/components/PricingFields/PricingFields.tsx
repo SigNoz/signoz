@@ -39,7 +39,7 @@ function PricingFields({
 			<div className={styles.pricingGrid}>
 				<div className={styles.pricingField}>
 					<label htmlFor="input-cost">
-						Input cost{' '}
+						Input Cost{' '}
 						<span className={styles.required} aria-hidden="true">
 							*
 						</span>
@@ -59,7 +59,7 @@ function PricingFields({
 				</div>
 				<div className={styles.pricingField}>
 					<label htmlFor="output-cost">
-						Output cost{' '}
+						Output Cost{' '}
 						<span className={styles.required} aria-hidden="true">
 							*
 						</span>

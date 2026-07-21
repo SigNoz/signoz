@@ -19,5 +19,6 @@ func (Source) Enum() []any {
 	return []any{
 		SourceMeter,
 		SourceAI,
+		SourceUnspecified,
 	}
 }

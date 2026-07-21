@@ -4,7 +4,6 @@ import (
 	"context"
 	"strings"
 
-	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -67,17 +66,15 @@ func (r *fieldMapper) FieldFor(ctx context.Context, orgID valuer.UUID, startNs, 
 // ConditionFor returns a boolean predicate for key via the condition builder
 // (materialized column when present, else map access).
 func (r *fieldMapper) ConditionFor(ctx context.Context, orgID valuer.UUID, startNs, endNs uint64, key *telemetrytypes.TelemetryFieldKey, op qbtypes.FilterOperator, value any) (string, []any, error) {
-	resolvedKey := key
-	cands := r.keys[key.Name]
-	if len(cands) == 0 {
-		cands = []*telemetrytypes.TelemetryFieldKey{key}
-	} else {
-		resolvedKey = cands[0]
-	}
 	sb := sqlbuilder.NewSelectBuilder()
-	conds, _, err := r.cb.ConditionFor(ctx, orgID, startNs, endNs, resolvedKey, cands, op, value, sb)
+	// The condition builder owns key resolution: hand it the raw key plus the full
+	// metadata map and it matches/synthesizes the candidates itself.
+	conds, _, err := r.cb.ConditionFor(ctx, orgID, startNs, endNs, key, r.keys, qbtypes.ConditionBuilderOptions{}, op, value, sb)
 	if err != nil {
 		return "", nil, err
+	}
+	if len(conds) == 0 {
+		return "", nil, nil
 	}
 	// One condition per candidate variant (a key can be ingested under several data
 	// types); OR them all, like the visitor does for EXISTS.
@@ -103,5 +100,9 @@ func (r *fieldMapper) ValueFor(ctx context.Context, orgID valuer.UUID, startNs, 
 	if cands := r.keys[key.Name]; len(cands) > 0 {
 		key = cands[0]
 	}
-	return querybuilder.CollisionHandledFinalExpr(ctx, orgID, startNs, endNs, key, r.fm, r.cb, r.keys, dt, nil, false)
+	expr, err := r.fm.ColumnExpressionFor(ctx, orgID, startNs, endNs, key, dt, r.keys)
+	if err != nil {
+		return "", nil, err
+	}
+	return expr, nil, nil
 }

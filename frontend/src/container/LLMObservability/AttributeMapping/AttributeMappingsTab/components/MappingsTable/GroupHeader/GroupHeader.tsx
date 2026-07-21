@@ -1,10 +1,14 @@
+import { Info } from '@signozhq/icons';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
-import { MappingGroup } from 'container/LLMObservability/AttributeMapping/types';
 
+import { DraftGroup } from 'container/LLMObservability/AttributeMapping/types';
+
+import ConditionsTooltip from './ConditionsTooltip';
 import styles from './GroupHeader.module.scss';
 
 interface GroupHeaderProps {
-	group: MappingGroup;
+	group: DraftGroup;
 }
 
 function GroupHeader({ group }: GroupHeaderProps): JSX.Element {
@@ -13,22 +17,33 @@ function GroupHeader({ group }: GroupHeaderProps): JSX.Element {
 	return (
 		<div
 			className={styles.groupHeaderLabel}
-			data-testid={`group-expand-${group.id}`}
+			data-testid={`group-expand-${group.localId}`}
 		>
 			<Typography.Text
 				as="span"
 				className={styles.groupName}
-				testId={`group-name-${group.id}`}
+				testId={`group-name-${group.localId}`}
 			>
 				{group.name}
 			</Typography.Text>
-			<Typography.Text
-				as="span"
-				className={styles.groupCount}
-				testId={`group-condition-count-${group.id}`}
+			<TooltipSimple
+				title={
+					<ConditionsTooltip
+						attributes={group.attributes}
+						resource={group.resource}
+					/>
+				}
+				side="bottom"
+				align="start"
 			>
-				· {conditionCount} {conditionCount === 1 ? 'condition' : 'conditions'}
-			</Typography.Text>
+				<span
+					className={styles.conditionCount}
+					data-testid={`group-condition-count-${group.localId}`}
+				>
+					· {conditionCount} {conditionCount === 1 ? 'condition' : 'conditions'}
+					<Info size={12} className={styles.conditionInfoIcon} />
+				</span>
+			</TooltipSimple>
 		</div>
 	);
 }

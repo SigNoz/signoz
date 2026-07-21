@@ -16,6 +16,7 @@ import { useDashboardStore } from 'pages/DashboardPageV2/DashboardContainer/stor
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import { deriveAlertPrefill } from '../utils/deriveAlertPrefill';
 import {
 	buildAlertUrl,
 	buildCreateAlertUrl,
@@ -75,10 +76,12 @@ export function useCreateAlertFromPanel(): (
 							response.data.compositeQuery?.queries ?? [],
 							panelType,
 						);
+						const unit = readPanelUnit(panel.spec.plugin);
 						const url = buildAlertUrl(
 							query,
 							panelType,
-							readPanelUnit(panel.spec.plugin),
+							unit,
+							deriveAlertPrefill(panel, query, unit),
 						);
 						safeNavigate(url, { newTab: true });
 					},

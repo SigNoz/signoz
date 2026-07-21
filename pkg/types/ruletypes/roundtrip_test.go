@@ -153,9 +153,10 @@ func TestV2MinimalReadShape(t *testing.T) {
 
 	var ns map[string]json.RawMessage
 	require.NoError(t, json.Unmarshal(body["notificationSettings"], &ns))
-	for _, field := range []string{"renotify", "groupBy", "newGroupEvalDelay", "usePolicy"} {
+	for _, field := range []string{"renotify", "groupBy", "newGroupEvalDelay"} {
 		assert.NotContains(t, ns, field, "notificationSettings.%s", field)
 	}
+	assert.JSONEq(t, `false`, string(ns["usePolicy"]))
 
 	assert.JSONEq(t, `false`, string(body["disabled"]))
 	assert.JSONEq(t, `"v5"`, string(body["version"]))
@@ -206,6 +207,11 @@ func TestRenotifyRoundTrip(t *testing.T) {
 			wantRenotify: `{"enabled": false}`,
 		},
 		{
+			name:         "explicitly empty alert states are echoed",
+			settings:     `{"renotify": {"enabled": true, "alertStates": []}}`,
+			wantRenotify: `{"enabled": true, "alertStates": []}`,
+		},
+		{
 			name:         "enabled renotify with states is echoed",
 			settings:     `{"renotify": {"enabled": true, "interval": "30m", "alertStates": ["firing"]}}`,
 			wantRenotify: `{"enabled": true, "interval": "30m", "alertStates": ["firing"]}`,
@@ -221,6 +227,59 @@ func TestRenotifyRoundTrip(t *testing.T) {
 				assert.NotContains(t, ns, "renotify")
 			} else {
 				assert.JSONEq(t, tc.wantRenotify, string(ns["renotify"]))
+			}
+		})
+	}
+}
+
+func TestGroupByRoundTrip(t *testing.T) {
+	base := `{
+		"alert": "cpu high",
+		"alertType": "METRIC_BASED_ALERT",
+		"ruleType": "threshold_rule",
+		"schemaVersion": "v2alpha1",
+		"condition": {
+			"compositeQuery": {
+				"queries": [{"type": "promql", "spec": {"name": "A", "query": "up"}}],
+				"panelType": "graph",
+				"queryType": "promql"
+			},
+			"thresholds": {"kind": "basic", "spec": [{"name": "critical", "target": 90, "matchType": "at_least_once", "op": "above"}]}
+		},
+		"evaluation": {"kind": "rolling", "spec": {"evalWindow": "5m", "frequency": "1m"}},
+		"notificationSettings": %s
+	}`
+
+	cases := []struct {
+		name        string
+		settings    string
+		wantGroupBy string
+	}{
+		{
+			name:     "unset group by stays absent",
+			settings: `{"usePolicy": false}`,
+		},
+		{
+			name:        "explicitly empty group by is echoed",
+			settings:    `{"groupBy": []}`,
+			wantGroupBy: `[]`,
+		},
+		{
+			name:        "populated group by is echoed",
+			settings:    `{"groupBy": ["service.name", "deployment.environment"]}`,
+			wantGroupBy: `["service.name", "deployment.environment"]`,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			body := readBody(t, strings.Replace(base, "%s", tc.settings, 1))
+			var ns map[string]json.RawMessage
+			require.NoError(t, json.Unmarshal(body["notificationSettings"], &ns))
+			if tc.wantGroupBy == "" {
+				assert.NotContains(t, ns, "groupBy")
+			} else {
+				assert.JSONEq(t, tc.wantGroupBy, string(ns["groupBy"]))
 			}
 		})
 	}

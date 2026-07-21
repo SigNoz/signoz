@@ -37,10 +37,20 @@ jest.mock('api/generated/services/querier', () => ({
 }));
 
 // Stub the builders so this asserts only the hook's orchestration.
+const mockBuildAlertUrl = jest.fn(
+	(..._args: unknown[]) => '/alerts/new?composite=substituted',
+);
 jest.mock('../../utils/buildCreateAlertUrl', () => ({
 	buildCreateAlertUrl: (): string => '/alerts/new?composite=sync',
-	buildAlertUrl: (): string => '/alerts/new?composite=substituted',
+	buildAlertUrl: (...args: unknown[]): string => mockBuildAlertUrl(...args),
 	readPanelUnit: (): string | undefined => undefined,
+}));
+
+// Prefill derivation has its own coverage; return a sentinel so the hook test can
+// assert it is threaded into the resolved-alert URL.
+const mockPrefill = { matchType: 'in_total' };
+jest.mock('../../utils/deriveAlertPrefill', () => ({
+	deriveAlertPrefill: (): unknown => mockPrefill,
 }));
 
 // Keep the real exports (getPanelQueryType reads them); stub only the builder.
@@ -155,6 +165,13 @@ describe('useCreateAlertFromPanel', () => {
 			const { onSuccess } = mockSubstituteVars.mock.calls[0][1];
 			onSuccess({ data: { compositeQuery: { queries: [{ type: 'builder' }] } } });
 
+			// The resolved query is seeded with the panel-derived alert prefill.
+			expect(mockBuildAlertUrl).toHaveBeenCalledWith(
+				{ resolved: 'query' },
+				PANEL_TYPES.TIME_SERIES,
+				undefined,
+				mockPrefill,
+			);
 			expect(mockSafeNavigate).toHaveBeenCalledWith(
 				'/alerts/new?composite=substituted',
 				{ newTab: true },

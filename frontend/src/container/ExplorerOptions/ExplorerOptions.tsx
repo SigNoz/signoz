@@ -53,6 +53,7 @@ import {
 	defaultTraceSelectedColumns,
 } from 'container/OptionsMenu/constants';
 import { OptionsQuery } from 'container/OptionsMenu/types';
+import { ExportDashboard } from 'hooks/dashboard/useExportDashboards';
 import { useGetSearchQueryParam } from 'hooks/queryBuilder/useGetSearchQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGetAllViews } from 'hooks/saveViews/useGetAllViews';
@@ -66,7 +67,6 @@ import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMapp
 import { cloneDeep, isEqual, omit } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { FormattingOptions } from 'providers/preferences/types';
-import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { ViewProps } from 'types/api/saveViews/types';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
@@ -1031,26 +1031,19 @@ function ExplorerOptions({
 					/>
 				</div>
 			</Modal>
-			<Modal
-				footer={null}
-				onOk={onCancel(false)}
-				onCancel={onCancel(false)}
+			<ExportPanelContainer
 				open={isExport}
-				centered
-				destroyOnClose
-			>
-				<ExportPanelContainer
-					query={isOneChartPerQuery ? queryToExport : query}
-					isLoading={isLoading}
-					onExport={(dashboard, isNewDashboard): void => {
-						if (isOneChartPerQuery && queryToExport) {
-							onExport(dashboard, isNewDashboard, queryToExport);
-						} else {
-							onExport(dashboard, isNewDashboard);
-						}
-					}}
-				/>
-			</Modal>
+				onClose={onCancel(false)}
+				query={isOneChartPerQuery ? queryToExport : query}
+				isLoading={isLoading}
+				onExport={(dashboard, isNewDashboard): void => {
+					if (isOneChartPerQuery && queryToExport) {
+						onExport(dashboard, isNewDashboard, queryToExport);
+					} else {
+						onExport(dashboard, isNewDashboard);
+					}
+				}}
+			/>
 		</div>
 	);
 }
@@ -1058,7 +1051,7 @@ function ExplorerOptions({
 export interface ExplorerOptionsProps {
 	isLoading?: boolean;
 	onExport: (
-		dashboard: Dashboard | null,
+		dashboard: ExportDashboard | null,
 		isNewDashboard?: boolean,
 		queryToExport?: Query,
 	) => void;

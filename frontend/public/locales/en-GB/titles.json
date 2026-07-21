@@ -62,6 +62,7 @@
 	"TRACES_FUNNELS_DETAIL": "SigNoz | Funnel",
 	"INTEGRATIONS_DETAIL": "SigNoz | Integration",
 	"PUBLIC_DASHBOARD": "SigNoz | Dashboard",
-	"LLM_OBSERVABILITY_OVERVIEW": "SigNoz | LLM Observability Overview",
-	"LLM_OBSERVABILITY_CONFIGURATION": "SigNoz | LLM Observability Configuration"
+	"AI_OBSERVABILITY_OVERVIEW": "SigNoz | AI Observability Overview",
+	"AI_OBSERVABILITY_CONFIGURATION": "SigNoz | AI Observability Configuration",
+	"AI_OBSERVABILITY_ATTRIBUTE_MAPPING": "SigNoz | AI Observability Attribute Mapping"
 }

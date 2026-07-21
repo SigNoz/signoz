@@ -182,6 +182,14 @@
 				flex: 1;
 				min-height: 0;
 				overflow-y: visible;
+
+				.table-view-container-header {
+					display: flex;
+					justify-content: flex-end;
+					align-items: center;
+					padding: 12px;
+					flex-shrink: 0;
+				}
 			}
 
 			.time-series-view-container {

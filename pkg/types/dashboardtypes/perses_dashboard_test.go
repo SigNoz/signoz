@@ -1018,20 +1018,13 @@ func TestValidateRequiredFields(t *testing.T) {
 			data:        wrapVariable("signoz/CustomVariable", `{}`),
 			wantContain: "CustomValue",
 		},
-		{
-			name:        "ThresholdWithLabel missing value",
-			data:        wrapPanel("signoz/TimeSeriesPanel", `{"thresholds": [{"color": "Red", "label": "high"}]}`),
-			wantContain: "Value",
-		},
+		// Value is intentionally not validate:"required" — 0 is a legitimate threshold
+		// (go-playground's required rejects a zero float), so a missing/zero value is
+		// accepted and only Color remains required on these threshold structs.
 		{
 			name:        "ThresholdWithLabel missing color",
 			data:        wrapPanel("signoz/TimeSeriesPanel", `{"thresholds": [{"value": 100, "label": "high", "color": ""}]}`),
 			wantContain: "Color",
-		},
-		{
-			name:        "ComparisonThreshold missing value",
-			data:        wrapPanel("signoz/NumberPanel", `{"thresholds": [{"operator": "above", "format": "text", "color": "Red"}]}`),
-			wantContain: "Value",
 		},
 		{
 			name:        "ComparisonThreshold missing color",
