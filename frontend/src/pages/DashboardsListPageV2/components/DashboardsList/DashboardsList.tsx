@@ -7,6 +7,7 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
+import { DashboardListEvents } from 'pages/DashboardsListPageV2/constants/events';
 import { useAppContext } from 'providers/App/App';
 import { toAPIError } from 'utils/errorUtils';
 
@@ -99,12 +100,17 @@ function DashboardsList(): JSX.Element {
 	// View actions that change the result set reset pagination too.
 	const handleSelectView = useCallback(
 		(id: string): void => {
+			void logEvent(DashboardListEvents.ViewSelected, {
+				viewId: id,
+				viewType: builtinViews.some((v) => v.id === id) ? 'builtin' : 'custom',
+			});
 			selectView(id);
 			void setPage(1);
 		},
-		[selectView, setPage],
+		[selectView, setPage, builtinViews],
 	);
 	const handleResetView = useCallback((): void => {
+		void logEvent(DashboardListEvents.ViewReset, {});
 		resetView();
 		void setPage(1);
 	}, [resetView, setPage]);
@@ -116,6 +122,7 @@ function DashboardsList(): JSX.Element {
 		[removeView, setPage],
 	);
 	const toggleRail = useCallback((): void => {
+		void logEvent(DashboardListEvents.RailToggled, { collapsed: !railCollapsed });
 		setRailCollapsed(!railCollapsed);
 	}, [setRailCollapsed, railCollapsed]);
 
@@ -228,18 +235,23 @@ function DashboardsList(): JSX.Element {
 
 	const onSortChange = useCallback(
 		(column: DashboardtypesListSortDTO): void => {
+			void logEvent(DashboardListEvents.SortChanged, { column, order: sortOrder });
 			void setSortColumn(column);
 			void setPage(1);
 		},
-		[setSortColumn, setPage],
+		[setSortColumn, setPage, sortOrder],
 	);
 
 	const onOrderChange = useCallback(
 		(order: DashboardtypesListOrderDTO): void => {
+			void logEvent(DashboardListEvents.SortChanged, {
+				column: sortColumn,
+				order,
+			});
 			void setSortOrder(order);
 			void setPage(1);
 		},
-		[setSortOrder, setPage],
+		[setSortOrder, setPage, sortColumn],
 	);
 
 	const visitLoggedRef = useRef(false);

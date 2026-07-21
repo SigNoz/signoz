@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { toast } from '@signozhq/ui/sonner';
+import logEvent from 'api/common/logEvent';
 import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import type { FilterData } from 'container/QueryTable/Drilldown/drilldownUtils';
 import {
@@ -17,6 +18,7 @@ import { useOptimisticPatch } from 'pages/DashboardPageV2/DashboardContainer/hoo
 import { selectVariableValues } from 'pages/DashboardPageV2/DashboardContainer/store/slices/variableSelectionSlice';
 import { useDashboardStore } from 'pages/DashboardPageV2/DashboardContainer/store/useDashboardStore';
 import type { VariableSelection } from 'pages/DashboardPageV2/DashboardContainer/VariablesBar/selectionTypes';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 
 interface UseDrilldownDashboardVariablesArgs {
 	/** Group-by field filters from the clicked point (empty when the click has no group-by). */
@@ -98,6 +100,10 @@ export function useDrilldownDashboardVariables({
 				toast.error(`Variable "${fieldName}" already exists`);
 				return;
 			}
+			void logEvent(DashboardDetailEvents.DrilldownAction, {
+				action: 'createVariable',
+				dashboardId,
+			});
 			const model: VariableFormModel = {
 				...emptyVariableFormModel(),
 				name: fieldName,
@@ -120,7 +126,15 @@ export function useDrilldownDashboardVariables({
 			}
 			onClose();
 		},
-		[existingNames, signal, variables, patchAsync, setSelection, onClose],
+		[
+			existingNames,
+			signal,
+			variables,
+			patchAsync,
+			setSelection,
+			onClose,
+			dashboardId,
+		],
 	);
 
 	const actions = useMemo<DrilldownVariableAction[]>(
@@ -156,6 +170,10 @@ export function useDrilldownDashboardVariables({
 						? DrilldownVariableActionKind.Unset
 						: DrilldownVariableActionKind.Set,
 					onClick: (): void => {
+						void logEvent(DashboardDetailEvents.DrilldownAction, {
+							action: 'setVariable',
+							dashboardId,
+						});
 						setSelection(existing.name, {
 							value: isSame ? cleared : assigned,
 							allSelected: false,
@@ -171,6 +189,7 @@ export function useDrilldownDashboardVariables({
 			setSelection,
 			handleCreate,
 			onClose,
+			dashboardId,
 		],
 	);
 

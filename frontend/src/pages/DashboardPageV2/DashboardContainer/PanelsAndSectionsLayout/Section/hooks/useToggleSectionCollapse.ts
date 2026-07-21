@@ -1,5 +1,8 @@
 import { useCallback } from 'react';
 
+import logEvent from 'api/common/logEvent';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
+
 import {
 	selectIsSectionOpen,
 	useDashboardStore,
@@ -29,8 +32,13 @@ export function useToggleSectionCollapse({ sectionId }: Params): Result {
 	const toggle = useCallback((): void => {
 		if (dashboardId) {
 			toggleSectionCollapse(dashboardId, sectionId);
+			// `open` flips on toggle, so the resulting collapsed state is the current `open`.
+			void logEvent(DashboardDetailEvents.SectionCollapsed, {
+				collapsed: open,
+				dashboardId,
+			});
 		}
-	}, [dashboardId, sectionId, toggleSectionCollapse]);
+	}, [dashboardId, sectionId, toggleSectionCollapse, open]);
 
 	return { open, toggle };
 }

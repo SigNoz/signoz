@@ -4,14 +4,20 @@ import {
 	useCallback,
 	useState,
 } from 'react';
+import logEvent from 'api/common/logEvent';
 import { toast } from '@signozhq/ui/sonner';
 import type {
 	DashboardtypesGettableDashboardV2DTO,
 	DashboardtypesJSONPatchOperationDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 
+import { useDashboardStore } from '../../../store/useDashboardStore';
 import { buildSyncVariableToPanelsPatch } from '../utils/applyVariableToPanelsPatch';
-import type { VariableFormModel } from '../variableFormModel';
+import {
+	VARIABLE_TYPE_EVENT_LABEL,
+	type VariableFormModel,
+} from '../variableFormModel';
 import {
 	applyVariableQueryEdits,
 	buildVariableImpactPatch,
@@ -75,6 +81,7 @@ export function useVariableListActions({
 	save,
 	patchAsync,
 }: UseVariableListActionsParams): UseVariableListActions {
+	const dashboardId = useDashboardStore((s) => s.dashboardId);
 	const [confirmDeleteIndex, setConfirmDeleteIndex] = useState<number | null>(
 		null,
 	);
@@ -165,16 +172,27 @@ export function useVariableListActions({
 			const [moved] = next.splice(from, 1);
 			next.splice(to, 0, moved);
 			persist(next);
+			void logEvent(DashboardDetailEvents.VariableReordered, {
+				variableType: VARIABLE_TYPE_EVENT_LABEL[moved.type],
+				fromIndex: from,
+				toIndex: to,
+				dashboardId,
+			});
 		},
-		[persist, variables],
+		[dashboardId, persist, variables],
 	);
 
 	const handleConfirmDelete = useCallback(
 		(index: number): void => {
+			void logEvent(DashboardDetailEvents.VariableDeleted, {
+				variableType: VARIABLE_TYPE_EVENT_LABEL[variables[index].type],
+				hadReferences: false,
+				dashboardId,
+			});
 			persist(variables.filter((_, i) => i !== index));
 			setConfirmDeleteIndex(null);
 		},
-		[persist, variables],
+		[dashboardId, persist, variables],
 	);
 
 	// Delete requested from the list: if the variable is referenced anywhere, block
@@ -224,6 +242,16 @@ export function useVariableListActions({
 						? `Renamed to $${impact.newName}`
 						: `Deleted $${impact.variableName}`,
 				);
+				if (impact.mode === 'delete') {
+					const deleted = variables.find((v) => v.name === impact.variableName);
+					void logEvent(DashboardDetailEvents.VariableDeleted, {
+						variableType: deleted
+							? VARIABLE_TYPE_EVENT_LABEL[deleted.type]
+							: undefined,
+						hadReferences: true,
+						dashboardId,
+					});
+				}
 			} catch {
 				toast.error(
 					impact.mode === 'rename'
@@ -233,7 +261,7 @@ export function useVariableListActions({
 			}
 			setImpact(null);
 		},
-		[dashboard, impact, patchAsync, setVariables],
+		[dashboard, dashboardId, impact, patchAsync, setVariables, variables],
 	);
 
 	return {

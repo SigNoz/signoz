@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { DialogWrapper } from '@signozhq/ui/dialog';
 import { Tabs } from '@signozhq/ui/tabs';
+import logEvent from 'api/common/logEvent';
+import { DashboardListEvents } from 'pages/DashboardsListPageV2/constants/events';
 
 import BlankDashboardPanel from './BlankDashboardPanel';
 import ImportJsonPanel from './ImportJsonPanel';
@@ -20,6 +22,11 @@ function NewDashboardModal({ open, onClose }: Props): JSX.Element {
 		}
 	}, [open]);
 
+	const handleTabChange = (key: string): void => {
+		setTab(key);
+		void logEvent(DashboardListEvents.CreateModalTabChanged, { tab: key });
+	};
+
 	return (
 		<DialogWrapper
 			title="New dashboard"
@@ -33,7 +40,7 @@ function NewDashboardModal({ open, onClose }: Props): JSX.Element {
 		>
 			<Tabs
 				value={tab}
-				onChange={(key): void => setTab(key)}
+				onChange={handleTabChange}
 				items={[
 					{
 						key: 'blank',
