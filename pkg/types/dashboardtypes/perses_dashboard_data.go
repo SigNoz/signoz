@@ -45,20 +45,12 @@ func (d *DashboardSpec) UnmarshalJSON(data []byte) error {
 	return d.Validate()
 }
 
-// validateLinksPresent enforces the required, non-nullable links field on the
-// create/update request paths: a missing/null links value (spec- or panel-level)
-// is rejected rather than silently defaulted, so a typed client's value round-trips
-// faithfully. Deliberately not part of Validate() — reads, clones and patches of
-// already-stored specs must not re-reject, and Validate() covers only cross-field
-// semantic checks (never required-field presence, matching its sibling slices).
-func (d *DashboardSpec) validateLinksPresent() error {
+// validateLinks rejects a missing/null spec.links value: a typed client must
+// send [] rather than omitting links, so its value round-trips faithfully.
+// Panel links are the panel spec's concern, validated in validatePanels.
+func (d *DashboardSpec) validateLinks() error {
 	if d.Links == nil {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.links is required; send [] when there are no links")
-	}
-	for key, panel := range d.Panels {
-		if panel != nil && panel.Spec.Links == nil {
-			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.panels.%s.spec.links is required; send [] when there are no links", key)
-		}
 	}
 	return nil
 }
@@ -69,6 +61,9 @@ func (d *DashboardSpec) validateLinksPresent() error {
 
 func (d *DashboardSpec) Validate() error {
 	if err := d.Display.Validate("dashboard", "spec.display.name"); err != nil {
+		return err
+	}
+	if err := d.validateLinks(); err != nil {
 		return err
 	}
 	if err := d.validateVariables(); err != nil {
@@ -120,6 +115,9 @@ func (d *DashboardSpec) validatePanels() error {
 		}
 		path := fmt.Sprintf("spec.panels.%s", key)
 		if err := panel.Spec.Display.Validate("panel", path+".spec.display.name"); err != nil {
+			return err
+		}
+		if err := panel.Spec.validateLinks(path); err != nil {
 			return err
 		}
 		panelKind := panel.Spec.Plugin.Kind

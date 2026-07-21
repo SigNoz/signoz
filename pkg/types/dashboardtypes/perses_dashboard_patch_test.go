@@ -502,7 +502,7 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 			"path": "/spec/panels/p1",
 			"value": {
 				"kind": "Panel",
-				"spec": {"plugin": {"kind": "signoz/NotAPanel", "spec": {}}}
+				"spec": {"links": [], "plugin": {"kind": "signoz/NotAPanel", "spec": {}}}
 			}
 		}]`).Apply(base)
 		require.Error(t, err)
@@ -518,6 +518,7 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 			"value": {
 				"kind": "Panel",
 				"spec": {
+					"links": [],
 					"plugin": {"kind": "signoz/ListPanel", "spec": {}},
 					"queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/PromQLQuery", "spec": {"name": "A", "query": "up"}}}}]
 				}
@@ -543,6 +544,7 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 			"value": {
 				"kind": "Panel",
 				"spec": {
+					"links": [],
 					"plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
 					"queries": [
 						{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {

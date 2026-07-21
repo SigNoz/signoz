@@ -81,6 +81,16 @@ type PanelSpec struct {
 	Links   []Link      `json:"links" required:"true" nullable:"false"`
 }
 
+// validateLinks rejects a missing/null links field, where path is the panel's
+// location (e.g. "spec.panels.<key>"). A typed client must send [] rather than
+// omitting links, so its value round-trips faithfully.
+func (s *PanelSpec) validateLinks(path string) error {
+	if s.Links == nil {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s.spec.links is required; send [] when there are no links", path)
+	}
+	return nil
+}
+
 // Link replicates dashboard.Link (Perses) so its zero-valued fields survive the
 // create -> GET round-trip. Perses tags name/tooltip/renderVariables/targetBlank
 // omitempty, which drops "" and false; here every field always serializes so a
