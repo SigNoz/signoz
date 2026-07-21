@@ -380,4 +380,88 @@ describe('convertV5ResponseToLegacy', () => {
 			},
 		});
 	});
+
+	describe('raw logs body: extract lone `message` field', () => {
+		function makeRawResult(
+			rows: Array<{ timestamp: string; data: Record<string, any> }>,
+			type: 'raw' | 'trace' = 'raw',
+		): ReturnType<typeof convertV5ResponseToLegacy> {
+			const v5Data = {
+				type,
+				data: { results: [{ queryName: 'A', rows }] },
+				meta: { rowsScanned: 0, bytesScanned: 0, durationMs: 0, stepIntervals: {} },
+			} as unknown as QueryRangeResponseV5;
+
+			const params = makeBaseParams(type as RequestType, [
+				{
+					type: 'builder_query',
+					spec: {
+						name: 'A',
+						signal: type === 'trace' ? 'traces' : 'logs',
+						stepInterval: 60,
+						disabled: false,
+						aggregations: [],
+					},
+				},
+			]);
+
+			const input: SuccessResponse<MetricRangePayloadV5, QueryRangeRequestV5> =
+				makeBaseSuccess({ data: v5Data }, params);
+
+			return convertV5ResponseToLegacy(input, { A: 'A' }, false);
+		}
+
+		it('unwraps body when it is an object with only a message field', () => {
+			const result = makeRawResult([
+				{ timestamp: '2026-07-21T00:00:00Z', data: { body: { message: 'hello' } } },
+			]);
+
+			expect(result.payload.data.result[0].list?.[0]?.data?.body).toBe('hello');
+		});
+
+		it('leaves body unchanged when the object has keys besides message', () => {
+			const body = { message: 'hello', level: 'INFO' };
+			const result = makeRawResult([
+				{ timestamp: '2026-07-21T00:00:00Z', data: { body } },
+			]);
+
+			expect(result.payload.data.result[0].list?.[0]?.data?.body).toStrictEqual(
+				body,
+			);
+		});
+
+		it('leaves a string body unchanged (use_json_body off)', () => {
+			const result = makeRawResult([
+				{
+					timestamp: '2026-07-21T00:00:00Z',
+					data: { body: '{"message":"hello"}' },
+				},
+			]);
+
+			expect(result.payload.data.result[0].list?.[0]?.data?.body).toBe(
+				'{"message":"hello"}',
+			);
+		});
+
+		it('stringifies the nested object when message is an object', () => {
+			const nested = { a: 1, b: 2 };
+			const result = makeRawResult([
+				{ timestamp: '2026-07-21T00:00:00Z', data: { body: { message: nested } } },
+			]);
+
+			expect(result.payload.data.result[0].list?.[0]?.data?.body).toBe(
+				JSON.stringify(nested),
+			);
+		});
+
+		it('does not add a body key to rows without a body (traces)', () => {
+			const result = makeRawResult(
+				[{ timestamp: '2026-07-21T00:00:00Z', data: { name: 'span-1' } }],
+				'trace',
+			);
+
+			const data = (result.payload.data.result[0].list?.[0] as any)?.data ?? {};
+			expect('body' in data).toBe(false);
+		});
+	});
 });
