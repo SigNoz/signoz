@@ -70,15 +70,10 @@ SRE Sidekick implements the full loop and lets each interface (Slack, Telegram, 
 
 ```mermaid
 flowchart LR
-    D[1. Detect] --> G[2. Ground] --> X[3. Diagnose] --> C[4. Communicate] --> A[5. Act] --> V[6. Verify]
-    V -. re-evaluate .-> G
-
-    D -.- d1["SigNoz alerts + our SLO burn-rate / indeterminate alerts"]
-    G -.- g1["deterministic reliability engine:\nSLO state, error budget, trust-state"]
-    X -.- x1["agentic RCA over live telemetry via SigNoz MCP"]
-    C -.- c1["Slack / Telegram / voice on-call"]
-    A -.- a1["advise -> scale (KEDA) -> patch -> PR, human-approved"]
-    V -.- v1["re-audit: did the SLO / score recover"]
+    D["1. Detect<br/>SigNoz + our burn-rate / indeterminate alerts"] --> G["2. Ground<br/>SLO state, error budget, trust-state"]
+    G --> X["3. Diagnose<br/>agentic RCA via SigNoz MCP"] --> C["4. Communicate<br/>Slack / Telegram / voice"]
+    C --> A["5. Act<br/>advise, scale, patch, PR - human-approved"] --> V["6. Verify<br/>re-audit: did the SLO recover"]
+    V -.-> G
 ```
 
 | Stage | What happens | Deterministic or AI |
@@ -207,40 +202,40 @@ Any modification to SigNoz source or its Foundry deployment.
 
 ```mermaid
 flowchart TD
-    subgraph apps[Instrumented apps and AI agents]
-        SDK[OpenTelemetry SDK]
+    subgraph apps["Instrumented apps and AI agents"]
+        SDK["OpenTelemetry SDK"]
     end
 
-    subgraph foundry[Reproducible via Foundry - casting.yaml + casting.yaml.lock]
-        COL[OTel Collector 4317/4318]
-        SZ[Stock SigNoz]
-        MCP[SigNoz MCP server, port 8000]
-        CH[(ClickHouse)]
+    subgraph foundry["Reproducible via Foundry - casting.yaml plus lock"]
+        COL["OTel Collector 4317 / 4318"]
+        SZ["Stock SigNoz"]
+        MCP["SigNoz MCP server, port 8000"]
+        CH[("ClickHouse")]
         SDK -->|OTLP| COL --> CH
         SZ --- CH
         MCP --> SZ
     end
 
-    subgraph sidekick[SRE Sidekick - our third-layer Go service]
-        AUD[Telemetry auditor]
-        SLO[SLO engine]
-        RCA[RCA agent]
-        NOTIFY[Chat + voice adapters]
-        ACT[Action adapters, human-approved]
+    subgraph sidekick["SRE Sidekick - third-layer Go service"]
+        AUD["Telemetry auditor"]
+        SLO["SLO engine"]
+        RCA["RCA agent"]
+        NOTIFY["Chat and voice adapters"]
+        ACT["Action adapters - human-approved"]
         AUD --> SLO
         SLO --> RCA
         AUD --> RCA
         RCA --> NOTIFY
         NOTIFY --> ACT
-        ACT -. re-verify .-> SLO
+        ACT -.-> SLO
     end
 
-    AUD -->|read: fields, cardinality, metrics| SZ
-    SLO -->|read: query_range| SZ
-    RCA -->|read: traces, logs, metrics via MCP tools| MCP
-    SLO -->|emit slo_* + telemetry_quality_*| COL
-    SLO -->|create dashboards + alerts| SZ
-    NOTIFY <-->|messages + approvals| USER[On-call engineer]
+    AUD -->|"read fields, cardinality, metrics"| SZ
+    SLO -->|"read query_range"| SZ
+    RCA -->|"read traces, logs, metrics via MCP"| MCP
+    SLO -->|"emit slo and quality metrics"| COL
+    SLO -->|"create dashboards and alerts"| SZ
+    NOTIFY <-->|"messages and approvals"| USER["On-call engineer"]
 ```
 
 Nothing inside the `foundry` box is modified; the sidekick is a separate container that authenticates with a service-account API key.
@@ -249,20 +244,20 @@ Nothing inside the `foundry` box is modified; the sidekick is a separate contain
 
 ```mermaid
 flowchart LR
-    subgraph det[Deterministic - reproducible, no LLM]
-        A[audit checks + score]
-        B[SLI / budget / burn]
-        S[trust state machine]
-        G[completeness gate]
+    subgraph det["Deterministic - reproducible, no LLM"]
+        A["audit checks and score"]
+        B["SLI, budget, burn"]
+        S["trust state machine"]
+        G["completeness gate"]
     end
-    subgraph ai[AI - reasoning and language, never scoring]
-        R[RCA over telemetry via MCP]
-        J[LLM-as-judge for agent quality]
-        E[natural-language explanation]
+    subgraph ai["AI - reasoning and language, never scoring"]
+        R["RCA over telemetry via MCP"]
+        J["LLM-as-judge for agent quality"]
+        E["natural-language explanation"]
     end
-    det -->|verified facts| ai
-    ai -->|proposals, explanations| H[Human approval]
-    H -->|approved| ACT[Action]
+    det -->|"verified facts"| ai
+    ai -->|"proposals, explanations"| H["Human approval"]
+    H -->|"approved"| ACTION["Action"]
 ```
 
 ### 9.3 A diagnosis, end to end
@@ -271,25 +266,25 @@ flowchart LR
 sequenceDiagram
     participant SZ as SigNoz alertmanager
     participant SK as SRE Sidekick
-    participant SLO as SLO engine (deterministic)
+    participant SLO as SLO engine
     participant MCP as SigNoz MCP
-    participant U as On-call (Telegram)
+    participant U as On-call
 
-    SZ->>SK: webhook: burn-rate alert for support-agent
-    SK->>SLO: ground(service, window)
-    SLO-->>SK: state=unhealthy, budget=-19, burn=20x, telemetry trusted
+    SZ->>SK: webhook - burn-rate alert for support-agent
+    SK->>SLO: ground service and window
+    SLO-->>SK: state unhealthy, budget -19, burn 20x, trusted
     alt telemetry not trusted
-        SK->>U: "SLO indeterminate: telemetry incomplete (missing X). Cannot diagnose reliably."
+        SK->>U: SLO indeterminate - telemetry incomplete, cannot diagnose
     else trusted
-        SK->>MCP: search_traces / aggregate_logs for service, window
+        SK->>MCP: search traces and aggregate logs
         MCP-->>SK: error spans, top exceptions, latency shift
-        SK->>SK: LLM RCA over evidence -> root cause + confidence
-        SK->>U: root cause + evidence links + proposed fix + [Approve] [Reject]
+        SK->>SK: LLM RCA over evidence to root cause plus confidence
+        SK->>U: root cause, evidence links, proposed fix, Approve or Reject
         U-->>SK: Approve
-        SK->>SK: execute action adapter (human-approved)
-        SK->>SLO: verify(service, window)
+        SK->>SK: execute action adapter
+        SK->>SLO: verify service and window
         SLO-->>SK: state recovering
-        SK->>U: "Applied. Burn rate falling; SLO recovering."
+        SK->>U: applied - burn rate falling, SLO recovering
     end
 ```
 
