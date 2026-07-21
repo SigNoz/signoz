@@ -222,9 +222,6 @@ function AccountActions({ type }: { type: IntegrationType }): JSX.Element {
 	// log telemetry event when an account is viewed.
 	useEffect(() => {
 		if (activeAccount) {
-			// The account config is a per-provider union, and each provider exposes
-			// its monitored scope under a different key: AWS → regions,
-			// Azure → resource groups, GCP → project IDs.
 			const { config } = activeAccount;
 			let enabledRegions: string[];
 			if ('regions' in config) {

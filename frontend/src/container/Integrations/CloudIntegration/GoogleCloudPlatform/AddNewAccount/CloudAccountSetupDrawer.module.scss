@@ -109,8 +109,7 @@
 	:global(.ant-select-selector) {
 		min-height: 36px;
 		background: var(--l2-background);
-		border: 1px solid var(--l2-border);
-		border-radius: var(--radius-2);
+		border: 1px solid var(--l2-border) !important;
 	}
 
 	&:hover :global(.ant-select-selector),
@@ -136,7 +135,7 @@
 
 	:global(.ant-select-selection-item) {
 		color: var(--l1-foreground);
-		background: var(--l1-background);
+		background: var(--l2-background);
 		border: 1px solid var(--l2-border);
 		border-radius: var(--radius-2);
 	}

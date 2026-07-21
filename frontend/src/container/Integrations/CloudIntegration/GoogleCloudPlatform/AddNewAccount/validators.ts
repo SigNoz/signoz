@@ -1,14 +1,10 @@
 /** Whether the connection-secret field expects a URL or a free-form secret. */
 export type SecretFieldType = 'url' | 'text';
 
-/** Protocols accepted for URL fields. */
-const ALLOWED_URL_PROTOCOLS = ['http:', 'https:'];
-
-/** A parseable URL using an allowed protocol (http, https, ftp) is valid. */
+/** Basic check: a value the URL constructor can parse is treated as a valid URL. */
 export function isValidUrl(value: string): boolean {
 	try {
-		const { protocol } = new URL(value);
-		return ALLOWED_URL_PROTOCOLS.includes(protocol);
+		return Boolean(new URL(value));
 	} catch {
 		return false;
 	}
@@ -16,8 +12,8 @@ export function isValidUrl(value: string): boolean {
 
 /**
  * Validates a single editable connection-secret field.
- * All fields are required (non-empty); `url` fields must additionally be a
- * valid http(s) URL. Returns `true` when valid, else the error message.
+ * All fields are required (non-empty); `url` fields must additionally parse as a URL.
+ * Returns `true` when valid, else the error message.
  */
 export function validateSecretValue(
 	label: string,
