@@ -2,6 +2,25 @@
 	--dialog-header-padding: var(--spacing-10) var(--spacing-12);
 	--dialog-footer-padding: var(--spacing-8) var(--spacing-12);
 
+	// Fill every field with --l2-background (Input/ComboboxSimple default to transparent).
+	--input-background: var(--l2-background);
+	--input-hover-background: var(--l2-background);
+	--input-focus-background: var(--l2-background);
+	--combobox-trigger-background-color: var(--l2-background);
+
+	// Text uses the brighter --l1-foreground, placeholders the duller --l3-foreground.
+	--input-foreground: var(--l1-foreground);
+	--input-placeholder-color: var(--l3-foreground);
+	--combobox-trigger-placeholder-color: var(--l3-foreground);
+
+	// Shared resting border (--l2-border) and text size; focus borders stay per-component.
+	--input-border-color: var(--l2-border);
+	--input-hover-border-color: var(--l2-border);
+	--combobox-trigger-border-color: var(--l2-border);
+	--input-font-size: var(--periscope-font-size-base);
+	--combobox-trigger-font-size: var(--periscope-font-size-base);
+	--combobox-trigger-value-font-size: var(--periscope-font-size-base);
+
 	// Bounded flex column so the header/footer stay put and only the body
 	// scrolls when content overflows.
 	display: flex;
@@ -34,6 +53,16 @@
 		background: var(--l1-background);
 		border: 1px solid var(--l2-border);
 		border-radius: var(--radius-2);
+	}
+
+	// Selected region value: bright, like every other field's text.
+	[data-slot='combobox-value'] {
+		color: var(--l1-foreground);
+	}
+
+	// Empty trigger (.regionEmpty, set from the RHF value): dull the placeholder text.
+	.regionEmpty [data-slot='combobox-value'] {
+		color: var(--l3-foreground);
 	}
 }
 
@@ -88,6 +117,13 @@
 	&:global(.ant-select-focused) :global(.ant-select-selector) {
 		border-color: var(--l2-border);
 		box-shadow: none;
+	}
+
+	// antd defaults to 14px; pin to 13px to line up with the Input/Combobox fields.
+	:global(.ant-select-selection-placeholder),
+	:global(.ant-select-selection-search-input),
+	:global(.ant-select-selection-item) {
+		font-size: var(--periscope-font-size-base);
 	}
 
 	:global(.ant-select-selection-placeholder) {

@@ -1,6 +1,5 @@
 import { Callout } from '@signozhq/ui/callout';
 
-// TODO(gcp): confirm final warning copy against the design artifact.
 function DataCollectedCallout(): JSX.Element {
 	return (
 		<div

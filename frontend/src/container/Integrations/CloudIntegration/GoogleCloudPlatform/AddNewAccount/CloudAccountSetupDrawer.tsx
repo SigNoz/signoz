@@ -205,7 +205,11 @@ function CloudAccountSetupDrawer({
 						<>
 							<ComboboxSimple
 								id="gcp-deployment-region-select"
-								className={styles.fullWidth}
+								className={
+									field.value
+										? styles.fullWidth
+										: `${styles.fullWidth} ${styles.regionEmpty}`
+								}
 								items={REGION_ITEMS}
 								value={field.value}
 								onChange={(value): void => field.onChange(value as string)}
