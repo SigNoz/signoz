@@ -2,6 +2,7 @@ package tracefunnel
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -313,6 +314,36 @@ FROM (
 	)
 }
 
+// defaultLatencyQuantile is the quantile used when a step does not specify a
+// latency type, or specifies one that is not a valid percentile.
+const defaultLatencyQuantile = "0.99"
+
+// parseLatencyQuantile converts a percentile label such as "p50", "p90" or "p99"
+// into the 0-1 quantile literal expected by ClickHouse's quantileIf. It reports
+// false when latencyType is empty or is not a percentile in the (0, 100) range,
+// in which case callers should fall back to defaultLatencyQuantile.
+func parseLatencyQuantile(latencyType string) (string, bool) {
+	normalized := strings.ToLower(strings.TrimSpace(latencyType))
+	if !strings.HasPrefix(normalized, "p") {
+		return "", false
+	}
+
+	digits := strings.TrimPrefix(normalized, "p")
+	percentile, err := strconv.ParseFloat(digits, 64)
+	if err != nil || !(percentile > 0 && percentile < 100) {
+		return "", false
+	}
+
+	// Two decimals keep p90/p95/p99 identical to the previously hardcoded values,
+	// while fractional percentiles such as "p99.9" get the precision they need.
+	precision := 2
+	if dot := strings.IndexByte(digits, '.'); dot >= 0 {
+		precision += len(digits) - dot - 1
+	}
+
+	return strconv.FormatFloat(percentile/100, 'f', precision, 64), true
+}
+
 // BuildFunnelStepOverviewQuery builds a step overview query for transitions between any specified steps.
 func BuildFunnelStepOverviewQuery(
 	steps []struct {
@@ -381,17 +412,9 @@ func BuildFunnelStepOverviewQuery(
 	}
 
 	// Determine latency quantile for the end step
-	latencyQuantile := "0.99"
-	if steps[endIdx].LatencyType != "" {
-		latency := strings.ToLower(steps[endIdx].LatencyType)
-		switch latency {
-		case "p90":
-			latencyQuantile = "0.90"
-		case "p95":
-			latencyQuantile = "0.95"
-		default:
-			latencyQuantile = "0.99"
-		}
+	latencyQuantile := defaultLatencyQuantile
+	if quantile, ok := parseLatencyQuantile(steps[endIdx].LatencyType); ok {
+		latencyQuantile = quantile
 	}
 
 	// Build conversion condition - all steps from start to end must be in order
