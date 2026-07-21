@@ -177,7 +177,7 @@ type ListVariableSpec struct {
 	AllowMultiple   bool                  `json:"allowMultiple"`
 	CustomAllValue  string                `json:"customAllValue"`
 	CapturingRegexp string                `json:"capturingRegexp"`
-	Sort            ListVariableSpecSort  `json:"sort,omitzero"`
+	Sort            ListVariableSpecSort  `json:"sort"`
 	Plugin          VariablePlugin        `json:"plugin"`
 	Name            string                `json:"name" required:"true" minLength:"1"`
 }
@@ -267,16 +267,27 @@ func (s ListVariableSpecSort) IsValid() bool {
 	return slices.ContainsFunc(s.Enum(), func(v any) bool { return v == s })
 }
 
+func (s ListVariableSpecSort) ValueOrDefault() string {
+	if s.IsZero() {
+		return SortNone.StringValue()
+	}
+	return s.StringValue()
+}
+
+func (s ListVariableSpecSort) MarshalJSON() ([]byte, error) {
+	return json.Marshal(s.ValueOrDefault())
+}
+
 // UnmarshalJSON validates against the enum on decode (valuer.String alone
-// accepts any string). An empty value is allowed and means "no sort", matching
-// Perses.
+// accepts any string). An empty value maps to the default `none`, matching the
+// other v2 dashboard enums and Perses' "no sort" semantics.
 func (s *ListVariableSpecSort) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid sort: must be a string, one of `none`, `alphabetical-asc`, `alphabetical-desc`, `numerical-asc`, `numerical-desc`, `alphabetical-ci-asc`, or `alphabetical-ci-desc`")
 	}
 	if v == "" {
-		*s = ListVariableSpecSort{}
+		*s = SortNone
 		return nil
 	}
 	sort := ListVariableSpecSort{valuer.NewString(v)}

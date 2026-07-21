@@ -241,9 +241,34 @@ func TestInvalidateListVariableCrossFields(t *testing.T) {
 		assert.Contains(t, err.Error(), "allowMultiple")
 	})
 
+	extractVariableSort := func(t *testing.T, d *DashboardSpec) ListVariableSpecSort {
+		require.Len(t, d.Variables, 1)
+		spec, ok := d.Variables[0].Spec.(*ListVariableSpec)
+		require.True(t, ok, "variable spec should be a *ListVariableSpec")
+		return spec.Sort
+	}
+
 	t.Run("valid sort is accepted", func(t *testing.T) {
-		_, err := unmarshalDashboard(listVar(`"sort": "alphabetical-asc",`))
-		assert.NoError(t, err)
+		d, err := unmarshalDashboard(listVar(`"sort": "alphabetical-asc",`))
+		require.NoError(t, err)
+		assert.Equal(t, SortAlphabeticalAsc, extractVariableSort(t, d))
+	})
+
+	t.Run("empty sort defaults to none", func(t *testing.T) {
+		d, err := unmarshalDashboard(listVar(`"sort": "",`))
+		require.NoError(t, err)
+		assert.Equal(t, SortNone, extractVariableSort(t, d))
+	})
+
+	t.Run("omitted sort defaults to none", func(t *testing.T) {
+		d, err := unmarshalDashboard(listVar(``))
+		require.NoError(t, err)
+		assert.Equal(t, "none", extractVariableSort(t, d).ValueOrDefault())
+
+		// Re-marshal (what we'd store / return): the default surfaces explicitly.
+		out, err := json.Marshal(d)
+		require.NoError(t, err)
+		assert.Contains(t, string(out), `"sort":"none"`)
 	})
 
 	t.Run("unknown sort is rejected", func(t *testing.T) {
