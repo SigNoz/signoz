@@ -2,15 +2,11 @@ import { useCallback, useMemo, useRef } from 'react';
 import { UseQueryResult } from 'react-query';
 import { Skeleton } from 'antd';
 import cx from 'classnames';
+import { InfraMonitoringEvents } from 'constants/events';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import TimeSeries from 'container/DashboardContainer/visualization/charts/TimeSeries/TimeSeries';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
-import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
-import {
-	CustomTimeType,
-	Time,
-} from 'container/TopNav/DateTimeSelectionV2/types';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
@@ -24,25 +20,17 @@ import { getMetricsExplorerUrl } from 'utils/explorerUtils';
 import { buildEntityMetricsChartConfig } from './configBuilder';
 import ChartHeader from './ChartHeader';
 
+import EntityDateTimeSelector from '../EntityDateTimeSelector/EntityDateTimeSelector';
+import { useEntityDetailsTime } from '../EntityDateTimeSelector/useEntityDetailsTime';
 import { useEntityMetrics } from './hooks';
 import { isKeyNotFoundError } from '../utils';
 
 import styles from './EntityMetrics.module.scss';
 import { MetricsTable } from './MetricsTable';
-import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
 
 interface EntityMetricsProps<T> {
-	timeRange: {
-		startTime: number;
-		endTime: number;
-	};
-	isModalTimeSelection: boolean;
-	handleTimeChange: (
-		interval: Time | CustomTimeType,
-		dateTimeRange?: [number, number],
-	) => void;
-	selectedInterval: Time;
 	entity: T;
+	eventEntity: string;
 	entityWidgetInfo: {
 		title: string;
 		yAxisUnit: string;
@@ -59,16 +47,16 @@ interface EntityMetricsProps<T> {
 }
 
 function EntityMetrics<T>({
-	selectedInterval,
 	entity,
-	timeRange,
-	handleTimeChange,
-	isModalTimeSelection,
+	eventEntity,
 	entityWidgetInfo,
 	getEntityQueryPayload,
 	queryKey,
 	category,
 }: EntityMetricsProps<T>): JSX.Element {
+	const { timeRange, selectedInterval, handleTimeChange } =
+		useEntityDetailsTime();
+
 	const { visibilities, setElement } = useMultiIntersectionObserver(
 		entityWidgetInfo.length,
 		{ threshold: 0.1 },
@@ -91,10 +79,8 @@ function EntityMetrics<T>({
 
 	const onDragSelect = useCallback(
 		(start: number, end: number): void => {
-			const startTimestamp = Math.trunc(start);
-			const endTimestamp = Math.trunc(end);
-
-			handleTimeChange('custom', [startTimestamp, endTimestamp]);
+			// UPlotConfigBuilder's setSelect hook already delivers milliseconds
+			handleTimeChange('custom', [Math.trunc(start), Math.trunc(end)]);
 		},
 		[handleTimeChange],
 	);
@@ -188,16 +174,10 @@ function EntityMetrics<T>({
 	return (
 		<>
 			<div className={styles.metricsHeader}>
-				<DateTimeSelectionV2
-					showAutoRefresh
-					showRefreshText={false}
-					hideShareModal
-					onTimeChange={handleTimeChange}
-					defaultRelativeTime={DEFAULT_TIME_RANGE}
-					isModalTimeSelection={isModalTimeSelection}
-					modalSelectedInterval={selectedInterval}
-					modalInitialStartTime={timeRange.startTime * 1000}
-					modalInitialEndTime={timeRange.endTime * 1000}
+				<EntityDateTimeSelector
+					eventEntity={eventEntity}
+					category={category}
+					view={InfraMonitoringEvents.MetricsView}
 				/>
 			</div>
 			<div className={styles.entityMetricsContainer}>

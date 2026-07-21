@@ -30,7 +30,6 @@ type logQueryStatementBuilder struct {
 	skipResourceFingerprintEnabled bool
 
 	fullTextColumn *telemetrytypes.TelemetryFieldKey
-	jsonKeyToKey   qbtypes.JsonKeyToFieldFunc
 }
 
 var _ qbtypes.StatementBuilder[qbtypes.LogAggregation] = (*logQueryStatementBuilder)(nil)
@@ -42,7 +41,6 @@ func NewLogQueryStatementBuilder(
 	conditionBuilder qbtypes.ConditionBuilder,
 	aggExprRewriter qbtypes.AggExprRewriter,
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
-	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
 	fl flagger.Flagger,
 	telemetryStore telemetrystore.TelemetryStore,
 	skipResourceFingerprintEnable bool,
@@ -73,7 +71,6 @@ func NewLogQueryStatementBuilder(
 		fl:                             fl,
 		skipResourceFingerprintEnabled: skipResourceFingerprintEnable,
 		fullTextColumn:                 fullTextColumn,
-		jsonKeyToKey:                   jsonKeyToKey,
 	}
 }
 
@@ -273,9 +270,8 @@ func (b *logQueryStatementBuilder) buildListQuery(
 ) (*qbtypes.Statement, error) {
 
 	var (
-		cteFragments    []string
-		cteArgs         [][]any
-		bodyJSONEnabled = b.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID))
+		cteFragments []string
+		cteArgs      [][]any
 	)
 
 	frag, args, skipResourceFilter, err := b.maybeAttachResourceFilter(ctx, orgID, sb, query, start, end, variables)
@@ -299,7 +295,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 		sb.SelectMore(LogsV2SeverityNumberColumn)
 		sb.SelectMore(LogsV2ScopeNameColumn)
 		sb.SelectMore(LogsV2ScopeVersionColumn)
-		sb.SelectMore(bodyAliasExpression(bodyJSONEnabled))
+		sb.SelectMore(bodyAliasExpression(b.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID))))
 		sb.SelectMore(LogsV2AttributesStringColumn)
 		sb.SelectMore(LogsV2AttributesNumberColumn)
 		sb.SelectMore(LogsV2AttributesBoolColumn)
@@ -314,11 +310,11 @@ func (b *logQueryStatementBuilder) buildListQuery(
 			}
 
 			// get column expression for the field - use array index directly to avoid pointer to loop variable
-			colExpr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &query.SelectFields[index], keys)
+			colExpr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &query.SelectFields[index], telemetrytypes.FieldDataTypeUnspecified, keys)
 			if err != nil {
 				return nil, err
 			}
-			sb.SelectMore(colExpr)
+			sb.SelectMore(fmt.Sprintf("%s AS `%s`", sqlbuilder.Escape(colExpr), selectColumnAlias(index, query.SelectFields[index].Name)))
 		}
 	}
 
@@ -333,11 +329,11 @@ func (b *logQueryStatementBuilder) buildListQuery(
 	// Add order by
 	for _, orderBy := range query.Order {
 
-		colExpr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &orderBy.Key.TelemetryFieldKey, keys)
+		colExpr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &orderBy.Key.TelemetryFieldKey, telemetrytypes.FieldDataTypeUnspecified, keys)
 		if err != nil {
 			return nil, err
 		}
-		sb.OrderBy(fmt.Sprintf("%s %s", colExpr, orderBy.Direction.StringValue()))
+		sb.OrderBy(fmt.Sprintf("%s %s", sqlbuilder.Escape(colExpr), orderBy.Direction.StringValue()))
 	}
 
 	// Add limit and offset
@@ -377,9 +373,8 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 ) (*qbtypes.Statement, error) {
 
 	var (
-		cteFragments    []string
-		cteArgs         [][]any
-		bodyJSONEnabled = b.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID))
+		cteFragments []string
+		cteArgs      [][]any
 	)
 
 	frag, args, skipResourceFilter, err := b.maybeAttachResourceFilter(ctx, orgID, sb, query, start, end, variables)
@@ -396,20 +391,21 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 		int64(query.StepInterval.Seconds()),
 	))
 
-	var allGroupByArgs []any
-
 	// Keep original column expressions so we can build the tuple
+	bodyJSONEnabled := b.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID))
 	fieldNames := make([]string, 0, len(query.GroupBy))
-	for _, gb := range query.GroupBy {
-		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, orgID, start, end, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey, bodyJSONEnabled)
+	for i, gb := range query.GroupBy {
+		if !bodyJSONEnabled && (strings.Contains(gb.Name, telemetrytypes.ArraySep) || strings.Contains(gb.Name, telemetrytypes.ArrayAnyIndex)) {
+			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "Group by/Aggregation isn't available for the Array Paths: %s", gb.Name)
+		}
+		expr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return nil, err
 		}
 
-		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.Name)
-		allGroupByArgs = append(allGroupByArgs, args...)
-		sb.SelectMore(colExpr)
-		fieldNames = append(fieldNames, fmt.Sprintf("`%s`", gb.Name))
+		fieldAlias := groupByColumnAlias(i, gb.Name)
+		sb.SelectMore(fmt.Sprintf("toString(%s) AS `%s`", sqlbuilder.Escape(expr), fieldAlias))
+		fieldNames = append(fieldNames, fmt.Sprintf("`%s`", fieldAlias))
 	}
 
 	// Aggregations
@@ -456,7 +452,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 
 		// Group by all dimensions
 		sb.GroupBy("ts")
-		sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
+		sb.GroupBy(fieldNames...)
 		if query.Having != nil && query.Having.Expression != "" {
 			// Rewrite having expression to use SQL column names
 			rewriter := querybuilder.NewHavingExpressionRewriter()
@@ -471,13 +467,17 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 			for _, orderBy := range query.Order {
 				_, ok := aggOrderBy(orderBy, query)
 				if !ok {
-					sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
+					orderCol := orderBy.Key.Name
+					if alias, ok := groupByOrderAlias(orderBy.Key.Name, query.GroupBy); ok {
+						orderCol = alias
+					}
+					sb.OrderBy(fmt.Sprintf("`%s` %s", orderCol, orderBy.Direction.StringValue()))
 				}
 			}
 			sb.OrderBy("ts desc")
 		}
 
-		combinedArgs := append(allGroupByArgs, allAggChArgs...)
+		combinedArgs := allAggChArgs
 		mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
 
 		// Stitch it all together:  WITH … SELECT …
@@ -486,7 +486,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 
 	} else {
 		sb.GroupBy("ts")
-		sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
+		sb.GroupBy(fieldNames...)
 		if query.Having != nil && query.Having.Expression != "" {
 			rewriter := querybuilder.NewHavingExpressionRewriter()
 			rewrittenExpr, err := rewriter.RewriteForLogs(query.Having.Expression, query.Aggregations)
@@ -500,13 +500,17 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 			for _, orderBy := range query.Order {
 				_, ok := aggOrderBy(orderBy, query)
 				if !ok {
-					sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
+					orderCol := orderBy.Key.Name
+					if alias, ok := groupByOrderAlias(orderBy.Key.Name, query.GroupBy); ok {
+						orderCol = alias
+					}
+					sb.OrderBy(fmt.Sprintf("`%s` %s", orderCol, orderBy.Direction.StringValue()))
 				}
 			}
 			sb.OrderBy("ts desc")
 		}
 
-		combinedArgs := append(allGroupByArgs, allAggChArgs...)
+		combinedArgs := allAggChArgs
 		mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
 
 		// Stitch it all together:  WITH … SELECT …
@@ -537,9 +541,8 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 ) (*qbtypes.Statement, error) {
 
 	var (
-		cteFragments    []string
-		cteArgs         [][]any
-		bodyJSONEnabled = b.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID))
+		cteFragments []string
+		cteArgs      [][]any
 	)
 
 	frag, args, skipResourceFilter, err := b.maybeAttachResourceFilter(ctx, orgID, sb, query, start, end, variables)
@@ -553,17 +556,20 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 
 	allAggChArgs := []any{}
 
-	var allGroupByArgs []any
-
-	for _, gb := range query.GroupBy {
-		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, orgID, start, end, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey, bodyJSONEnabled)
+	bodyJSONEnabled := b.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID))
+	fieldNames := make([]string, 0, len(query.GroupBy))
+	for i, gb := range query.GroupBy {
+		if !bodyJSONEnabled && (strings.Contains(gb.Name, telemetrytypes.ArraySep) || strings.Contains(gb.Name, telemetrytypes.ArrayAnyIndex)) {
+			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "Group by/Aggregation isn't available for the Array Paths: %s", gb.Name)
+		}
+		expr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return nil, err
 		}
 
-		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.Name)
-		allGroupByArgs = append(allGroupByArgs, args...)
-		sb.SelectMore(colExpr)
+		fieldAlias := groupByColumnAlias(i, gb.Name)
+		sb.SelectMore(fmt.Sprintf("toString(%s) AS `%s`", sqlbuilder.Escape(expr), fieldAlias))
+		fieldNames = append(fieldNames, fmt.Sprintf("`%s`", fieldAlias))
 	}
 
 	// for scalar queries, the rate would be end-start
@@ -596,7 +602,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 	}
 
 	// Group by dimensions
-	sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
+	sb.GroupBy(fieldNames...)
 
 	// Add having clause if needed
 	if query.Having != nil && query.Having.Expression != "" {
@@ -614,7 +620,11 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 		if ok {
 			sb.OrderBy(fmt.Sprintf("__result_%d %s", idx, orderBy.Direction.StringValue()))
 		} else {
-			sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
+			orderCol := orderBy.Key.Name
+			if alias, ok := groupByOrderAlias(orderBy.Key.Name, query.GroupBy); ok {
+				orderCol = alias
+			}
+			sb.OrderBy(fmt.Sprintf("`%s` %s", orderCol, orderBy.Direction.StringValue()))
 		}
 	}
 
@@ -628,7 +638,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 		sb.Limit(query.Limit)
 	}
 
-	combinedArgs := append(allGroupByArgs, allAggChArgs...)
+	combinedArgs := allAggChArgs
 
 	mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
 
@@ -711,6 +721,23 @@ func aggOrderBy(k qbtypes.OrderBy, q qbtypes.QueryBuilderQuery[qbtypes.LogAggreg
 		}
 	}
 	return 0, false
+}
+
+func groupByColumnAlias(i int, name string) string {
+	return fmt.Sprintf("__GROUP_BY_KEY_%d_%s", i, name)
+}
+
+func selectColumnAlias(i int, name string) string {
+	return fmt.Sprintf("__SELECT_KEY_%d_%s", i, name)
+}
+
+func groupByOrderAlias(orderKey string, groupBy []qbtypes.GroupByKey) (string, bool) {
+	for i := range groupBy {
+		if groupBy[i].Name == orderKey {
+			return groupByColumnAlias(i, groupBy[i].Name), true
+		}
+	}
+	return "", false
 }
 
 func (b *logQueryStatementBuilder) maybeAttachResourceFilter(

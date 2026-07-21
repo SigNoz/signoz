@@ -218,7 +218,7 @@ export function useDrilldown(
 				context={context}
 				query={v1Query}
 				isResolving={isResolving}
-				links={panel.spec.links}
+				links={panel.spec.links ?? undefined}
 				canSetDashboardVariables={dashboardVariables.hasFieldVariables}
 				onViewLogs={(): void => navigate('view_logs')}
 				onViewTraces={(): void => navigate('view_traces')}
