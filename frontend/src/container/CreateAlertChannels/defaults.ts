@@ -1,4 +1,11 @@
-import { EmailChannel, OpsgenieChannel, PagerChannel } from './config';
+import {
+	Channel,
+	ChannelType,
+	EmailChannel,
+	JsmOpsChannel,
+	OpsgenieChannel,
+	PagerChannel,
+} from './config';
 
 export const PagerInitialConfig: Partial<PagerChannel> = {
 	description: `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}
@@ -445,4 +452,25 @@ export const EmailInitialConfig: Partial<EmailChannel> = {
 	  </table>
 	</body>
   </html>`,
+};
+
+export const JsmOpsInitialConfig: Partial<JsmOpsChannel> = {
+	priority:
+		'{{ if eq (index .Alerts 0).Labels.severity "critical" }}P1{{ else if eq (index .Alerts 0).Labels.severity "warning" }}P2{{ else if eq (index .Alerts 0).Labels.severity "info" }}P3{{ else }}P4{{ end }}',
+	message: `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}`,
+	description: `{{ range .Alerts -}}
+Alert: {{ .Labels.alertname }}{{ if .Labels.severity }}
+Severity: {{ .Labels.severity }}{{ end }}{{ if .Annotations.summary }}
+Summary: {{ .Annotations.summary }}{{ end }}{{ if .Annotations.description }}
+Description: {{ .Annotations.description }}{{ end }}
+{{ end }}`,
+};
+
+export const initialConfigByChannelType: Partial<
+	Record<ChannelType, Partial<Channel>>
+> = {
+	[ChannelType.Pagerduty]: PagerInitialConfig,
+	[ChannelType.Opsgenie]: OpsgenieInitialConfig,
+	[ChannelType.Email]: EmailInitialConfig,
+	[ChannelType.JsmOps]: JsmOpsInitialConfig,
 };

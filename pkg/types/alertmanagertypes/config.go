@@ -70,15 +70,17 @@ type Config struct {
 // on Receiver, and extensions to customConfigsOf + isEmpty.
 type customReceiverConfigs struct {
 	GoogleChat []*GoogleChatReceiverConfig
+	JsmOps     []*JsmOpsReceiverConfig
 }
 
 func (c customReceiverConfigs) isEmpty() bool {
-	return len(c.GoogleChat) == 0
+	return len(c.GoogleChat) == 0 && len(c.JsmOps) == 0
 }
 
 func customConfigsOf(receiver *Receiver) customReceiverConfigs {
 	return customReceiverConfigs{
 		GoogleChat: receiver.GoogleChatConfigs,
+		JsmOps:     receiver.JsmOpsConfigs,
 	}
 }
 
@@ -182,6 +184,7 @@ func newRawFromConfig(c *config.Config, customConfigs map[string]customReceiverC
 		receivers[i] = &Receiver{
 			Receiver:          &base,
 			GoogleChatConfigs: custom.GoogleChat,
+			JsmOpsConfigs:     custom.JsmOps,
 		}
 	}
 
@@ -305,6 +308,7 @@ func (c *Config) GetReceiver(name string) (*Receiver, error) {
 			return &Receiver{
 				Receiver:          &base,
 				GoogleChatConfigs: custom.GoogleChat,
+				JsmOpsConfigs:     custom.JsmOps,
 			}, nil
 		}
 	}
@@ -364,6 +368,16 @@ func (c *Config) setCustomConfigs(receiver *Receiver) {
 		c.customConfigs[receiver.Name] = custom
 	} else {
 		delete(c.customConfigs, receiver.Name)
+	}
+}
+
+// SetJsmOpsOrgID stamps the runtime-only OrgID onto every JSM Ops config so
+// notifiers can look up live credentials from the connection store on each fire.
+func (c *Config) SetJsmOpsOrgID(orgID string) {
+	for _, custom := range c.customConfigs {
+		for _, cfg := range custom.JsmOps {
+			cfg.OrgID = orgID
+		}
 	}
 }
 

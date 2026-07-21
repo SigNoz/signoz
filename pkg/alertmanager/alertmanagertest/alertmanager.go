@@ -8,6 +8,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -150,6 +151,96 @@ func (_c *MockAlertmanager_Config_Call) Return(config alertmanagerserver.Config)
 }
 
 func (_c *MockAlertmanager_Config_Call) RunAndReturn(run func() alertmanagerserver.Config) *MockAlertmanager_Config_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// AtlassianOAuthConfig provides a mock function for the type MockAlertmanager
+func (_mock *MockAlertmanager) AtlassianOAuthConfig() alertmanager.AtlassianOAuthConfig {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for AtlassianOAuthConfig")
+	}
+
+	var r0 alertmanager.AtlassianOAuthConfig
+	if returnFunc, ok := ret.Get(0).(func() alertmanager.AtlassianOAuthConfig); ok {
+		r0 = returnFunc()
+	} else {
+		r0 = ret.Get(0).(alertmanager.AtlassianOAuthConfig)
+	}
+	return r0
+}
+
+// MockAlertmanager_AtlassianOAuthConfig_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AtlassianOAuthConfig'
+type MockAlertmanager_AtlassianOAuthConfig_Call struct {
+	*mock.Call
+}
+
+// AtlassianOAuthConfig is a helper method to define mock.On call
+func (_e *MockAlertmanager_Expecter) AtlassianOAuthConfig() *MockAlertmanager_AtlassianOAuthConfig_Call {
+	return &MockAlertmanager_AtlassianOAuthConfig_Call{Call: _e.mock.On("AtlassianOAuthConfig")}
+}
+
+func (_c *MockAlertmanager_AtlassianOAuthConfig_Call) Run(run func()) *MockAlertmanager_AtlassianOAuthConfig_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockAlertmanager_AtlassianOAuthConfig_Call) Return(atlassianOAuthConfig alertmanager.AtlassianOAuthConfig) *MockAlertmanager_AtlassianOAuthConfig_Call {
+	_c.Call.Return(atlassianOAuthConfig)
+	return _c
+}
+
+func (_c *MockAlertmanager_AtlassianOAuthConfig_Call) RunAndReturn(run func() alertmanager.AtlassianOAuthConfig) *MockAlertmanager_AtlassianOAuthConfig_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// AtlassianConnectionStore provides a mock function for the type MockAlertmanager
+func (_mock *MockAlertmanager) AtlassianConnectionStore() alertmanagertypes.AtlassianConnectionStore {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for AtlassianConnectionStore")
+	}
+
+	var r0 alertmanagertypes.AtlassianConnectionStore
+	if returnFunc, ok := ret.Get(0).(func() alertmanagertypes.AtlassianConnectionStore); ok {
+		r0 = returnFunc()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(alertmanagertypes.AtlassianConnectionStore)
+		}
+	}
+	return r0
+}
+
+// MockAlertmanager_AtlassianConnectionStore_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AtlassianConnectionStore'
+type MockAlertmanager_AtlassianConnectionStore_Call struct {
+	*mock.Call
+}
+
+// AtlassianConnectionStore is a helper method to define mock.On call
+func (_e *MockAlertmanager_Expecter) AtlassianConnectionStore() *MockAlertmanager_AtlassianConnectionStore_Call {
+	return &MockAlertmanager_AtlassianConnectionStore_Call{Call: _e.mock.On("AtlassianConnectionStore")}
+}
+
+func (_c *MockAlertmanager_AtlassianConnectionStore_Call) Run(run func()) *MockAlertmanager_AtlassianConnectionStore_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockAlertmanager_AtlassianConnectionStore_Call) Return(jsmOpsConnectionStore alertmanagertypes.AtlassianConnectionStore) *MockAlertmanager_AtlassianConnectionStore_Call {
+	_c.Call.Return(jsmOpsConnectionStore)
+	return _c
+}
+
+func (_c *MockAlertmanager_AtlassianConnectionStore_Call) RunAndReturn(run func() alertmanagertypes.AtlassianConnectionStore) *MockAlertmanager_AtlassianConnectionStore_Call {
 	_c.Call.Return(run)
 	return _c
 }

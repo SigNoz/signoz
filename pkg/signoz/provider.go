@@ -221,6 +221,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddRoleTransactionGroupsFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddTagUniqueIndexFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddTelemetryTuplesFactory(sqlstore),
+		sqlmigration.NewAddAtlassianConnectionFactory(sqlstore, sqlschema),
 	)
 }
 

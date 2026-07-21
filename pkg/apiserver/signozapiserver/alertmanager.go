@@ -112,6 +112,26 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v1/channels/atlassian/oauth/session", provider.authzMiddleware.EditAccess(provider.alertmanagerHandler.AtlassianOAuthSession)).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v1/channels/atlassian/oauth/callback", http.HandlerFunc(provider.alertmanagerHandler.AtlassianOAuthCallback)).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v1/channels/jsmops/teams", provider.authzMiddleware.EditAccess(provider.alertmanagerHandler.JsmOpsTeams)).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v1/channels/atlassian/connections", provider.authzMiddleware.ViewAccess(provider.alertmanagerHandler.AtlassianConnections)).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v1/channels/atlassian/connections/{id}", provider.authzMiddleware.AdminAccess(provider.alertmanagerHandler.AtlassianConnectionDelete)).Methods(http.MethodDelete).GetError(); err != nil {
+		return err
+	}
+
 	if err := router.Handle("/api/v1/testChannel", handler.New(provider.authzMiddleware.EditAccess(provider.alertmanagerHandler.TestReceiver), handler.OpenAPIDef{
 		ID:                  "TestChannelDeprecated",
 		Tags:                []string{"channels"},

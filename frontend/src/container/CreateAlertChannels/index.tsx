@@ -2,12 +2,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Form } from 'antd';
 import createEmail from 'api/channels/createEmail';
+import createJsmOps from 'api/channels/createJsmOps';
 import createMsTeamsApi from 'api/channels/createMsTeams';
 import createOpsgenie from 'api/channels/createOpsgenie';
 import createPagerApi from 'api/channels/createPager';
 import createSlackApi from 'api/channels/createSlack';
 import createWebhookApi from 'api/channels/createWebhook';
 import testEmail from 'api/channels/testEmail';
+import testJsmOps from 'api/channels/testJsmOps';
 import testMsTeamsApi from 'api/channels/testMsTeams';
 import testOpsGenie from 'api/channels/testOpsgenie';
 import testPagerApi from 'api/channels/testPager';
@@ -24,6 +26,7 @@ import APIError from 'types/api/error';
 import {
 	ChannelType,
 	EmailChannel,
+	JsmOpsChannel,
 	MsTeamsChannel,
 	OpsgenieChannel,
 	PagerChannel,
@@ -31,11 +34,7 @@ import {
 	ValidatePagerChannel,
 	WebhookChannel,
 } from './config';
-import {
-	EmailInitialConfig,
-	OpsgenieInitialConfig,
-	PagerInitialConfig,
-} from './defaults';
+import { initialConfigByChannelType } from './defaults';
 import { isChannelType } from './utils';
 
 import './CreateAlertChannels.styles.scss';
@@ -59,6 +58,7 @@ function CreateAlertChannels({
 				WebhookChannel &
 				PagerChannel &
 				MsTeamsChannel &
+				JsmOpsChannel &
 				OpsgenieChannel &
 				EmailChannel
 		>
@@ -98,31 +98,27 @@ function CreateAlertChannels({
 			const currentType = type;
 			setType(value as ChannelType);
 
-			if (value === ChannelType.Pagerduty && currentType !== value) {
-				// reset config to pager defaults
-				setSelectedConfig({
-					name: selectedConfig?.name,
-					send_resolved: selectedConfig.send_resolved,
-					...PagerInitialConfig,
-				});
+			if (currentType === value) {
+				return;
 			}
 
-			if (value === ChannelType.Opsgenie && currentType !== value) {
-				setSelectedConfig((selectedConfig) => ({
-					...selectedConfig,
-					...OpsgenieInitialConfig,
-				}));
+			const defaults = initialConfigByChannelType[value as ChannelType];
+			if (!defaults) {
+				return;
 			}
 
-			// reset config to email defaults
-			if (value === ChannelType.Email && currentType !== value) {
-				setSelectedConfig((selectedConfig) => ({
-					...selectedConfig,
-					...EmailInitialConfig,
-				}));
-			}
+			setSelectedConfig((selectedConfig) =>
+				value === ChannelType.Pagerduty
+					? {
+							name: selectedConfig?.name,
+							send_resolved: selectedConfig?.send_resolved,
+							...defaults,
+						}
+					: { ...selectedConfig, ...defaults },
+			);
+			formInstance.setFieldsValue(defaults);
 		},
-		[type, selectedConfig],
+		[type, formInstance],
 	);
 
 	const prepareSlackRequest = useCallback(
@@ -374,6 +370,20 @@ function CreateAlertChannels({
 		[selectedConfig],
 	);
 
+	const prepareJsmOpsRequest = useCallback(
+		() => ({
+			name: selectedConfig?.name || '',
+			send_resolved: selectedConfig?.send_resolved || false,
+			connection_id: selectedConfig?.connection_id || '',
+			responders: selectedConfig?.responders || '',
+			message: selectedConfig?.message || '',
+			description: selectedConfig?.description || '',
+			tags: selectedConfig?.tags || '',
+			priority: selectedConfig?.priority || '',
+		}),
+		[selectedConfig],
+	);
+
 	const onMsTeamsHandler = useCallback(async () => {
 		if (!selectedConfig.webhook_url) {
 			notifications.error({
@@ -407,6 +417,47 @@ function CreateAlertChannels({
 		showErrorModal,
 	]);
 
+	const onJsmOpsHandler = useCallback(async () => {
+		if (!selectedConfig.connection_id) {
+			notifications.error({
+				message: 'Error',
+				description: t('jsmops_not_connected'),
+			});
+			return;
+		}
+		if (!selectedConfig.message) {
+			notifications.error({
+				message: 'Error',
+				description: t('jsmops_message_required'),
+			});
+			return;
+		}
+
+		setSavingState(true);
+
+		try {
+			await createJsmOps(prepareJsmOpsRequest());
+			notifications.success({
+				message: 'Success',
+				description: t('channel_creation_done'),
+			});
+			history.replace(ROUTES.ALL_CHANNELS);
+			return { status: 'success', statusMessage: t('channel_creation_done') };
+		} catch (error) {
+			showErrorModal(error as APIError);
+			return { status: 'failed', statusMessage: t('channel_creation_failed') };
+		} finally {
+			setSavingState(false);
+		}
+	}, [
+		selectedConfig.connection_id,
+		selectedConfig.message,
+		notifications,
+		t,
+		prepareJsmOpsRequest,
+		showErrorModal,
+	]);
+
 	const onSaveHandler = useCallback(
 		async (value: ChannelType) => {
 			if (!selectedConfig.name) {
@@ -424,6 +475,7 @@ function CreateAlertChannels({
 				[ChannelType.Opsgenie]: onOpsgenieHandler,
 				[ChannelType.MsTeams]: onMsTeamsHandler,
 				[ChannelType.Email]: onEmailHandler,
+				[ChannelType.JsmOps]: onJsmOpsHandler,
 			};
 
 			if (isChannelType(value)) {
@@ -455,6 +507,7 @@ function CreateAlertChannels({
 			onOpsgenieHandler,
 			onMsTeamsHandler,
 			onEmailHandler,
+			onJsmOpsHandler,
 			notifications,
 			t,
 		],
@@ -491,6 +544,10 @@ function CreateAlertChannels({
 					case ChannelType.Email:
 						request = prepareEmailRequest();
 						await testEmail(request);
+						break;
+					case ChannelType.JsmOps:
+						request = prepareJsmOpsRequest();
+						await testJsmOps(request);
 						break;
 					default:
 						notifications.error({
@@ -534,6 +591,7 @@ function CreateAlertChannels({
 			prepareOpsgenieRequest,
 			prepareSlackRequest,
 			prepareMsTeamsRequest,
+			prepareJsmOpsRequest,
 			prepareEmailRequest,
 			notifications,
 		],
@@ -562,9 +620,7 @@ function CreateAlertChannels({
 					initialValue: {
 						type,
 						...selectedConfig,
-						...PagerInitialConfig,
-						...OpsgenieInitialConfig,
-						...EmailInitialConfig,
+						...initialConfigByChannelType[type],
 					},
 				}}
 			/>

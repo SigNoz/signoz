@@ -104,6 +104,7 @@ export enum ChannelType {
 	Pagerduty = 'pagerduty',
 	Opsgenie = 'opsgenie',
 	MsTeams = 'msteams',
+	JsmOps = 'jsmops',
 }
 
 // LabelFilterStatement will be used for preparing filter conditions / matchers
@@ -124,4 +125,15 @@ export interface MsTeamsChannel extends Channel {
 	webhook_url?: string;
 	title?: string;
 	text?: string;
+}
+
+export interface JsmOpsChannel extends Channel {
+	// connection_id references a persisted OAuth connection in the jsmops_connection table
+	connection_id?: string;
+	// responders is a comma-separated list of team IDs to notify for this alert
+	responders?: string;
+	message?: string;
+	description?: string;
+	tags?: string;
+	priority?: string;
 }

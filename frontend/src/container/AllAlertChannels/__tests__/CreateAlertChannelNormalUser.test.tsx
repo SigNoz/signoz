@@ -332,5 +332,42 @@ describe('Create Alert Channel (Normal User)', () => {
 				).toBeDisabled();
 			});
 		});
+		describe('JSM Ops', () => {
+			beforeEach(() => {
+				render(<CreateAlertChannels preType={ChannelType.JsmOps} />);
+			});
+
+			it('Should check if the selected item in the type dropdown has text "JSM Ops"', () => {
+				expect(screen.getByText('JSM Ops')).toBeInTheDocument();
+			});
+
+			it('Should check if OAuth label and connection picker are displayed properly', () => {
+				testLabelInputAndHelpValue({
+					labelText: 'field_jsmops_oauth',
+					testId: 'jsmops-connection-select',
+				});
+			});
+
+			it('Should check if the Add connection button is displayed', () => {
+				expect(screen.getByTestId('jsmops-oauth-connect')).toBeInTheDocument();
+				expect(
+					screen.getByText('button_add_atlassian_connection'),
+				).toBeInTheDocument();
+			});
+
+			it('Should check if Message label and text area are displayed properly', () => {
+				testLabelInputAndHelpValue({
+					labelText: 'field_jsmops_message',
+					testId: 'jsmops-message-textarea',
+				});
+			});
+
+			it('Should check if Description label and text area are displayed properly', () => {
+				testLabelInputAndHelpValue({
+					labelText: 'field_jsmops_description',
+					testId: 'jsmops-description-textarea',
+				});
+			});
+		});
 	});
 });

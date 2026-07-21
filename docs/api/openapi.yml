@@ -195,6 +195,8 @@ components:
       - required:
         - jira_configs
       - required:
+        - jsmops_configs
+      - required:
         - rocketchat_configs
       - required:
         - mattermost_configs
@@ -218,6 +220,10 @@ components:
         jira_configs:
           items:
             $ref: '#/components/schemas/ConfigJiraConfig'
+          type: array
+        jsmops_configs:
+          items:
+            $ref: '#/components/schemas/ConfigJsmOpsConfig'
           type: array
         mattermost_configs:
           items:
@@ -345,6 +351,10 @@ components:
         jira_configs:
           items:
             $ref: '#/components/schemas/ConfigJiraConfig'
+          type: array
+        jsmops_configs:
+          items:
+            $ref: '#/components/schemas/ConfigJsmOpsConfig'
           type: array
         mattermost_configs:
           items:
@@ -1792,6 +1802,29 @@ components:
           type: boolean
         template:
           type: string
+      type: object
+    ConfigJsmOpsConfig:
+      properties:
+        connection_id:
+          type: string
+        description:
+          type: string
+        message:
+          type: string
+        priority:
+          type: string
+        responders:
+          items:
+            type: string
+          type: array
+        send_resolved:
+          type: boolean
+        tags:
+          items:
+            type: string
+          type: array
+        update_alerts:
+          type: boolean
       type: object
     ConfigMSTeamsConfig:
       properties:

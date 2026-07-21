@@ -9,6 +9,7 @@ import {
 	Boxes,
 	Bug,
 	Building2,
+	Cable,
 	ChartArea,
 	Cloudy,
 	DraftingCompass,
@@ -349,6 +350,13 @@ export const settingsNavSections: SettingsNavSection[] = [
 				icon: <FileKey2 size={16} />,
 				isEnabled: true,
 				itemKey: 'notification-channels',
+			},
+			{
+				key: ROUTES.CONNECTIONS_SETTINGS,
+				label: 'Connections',
+				icon: <Cable size={16} />,
+				isEnabled: true,
+				itemKey: 'connections',
 			},
 			{
 				key: ROUTES.BILLING,

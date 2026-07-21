@@ -28,4 +28,14 @@ type Handler interface {
 	UpdateRoutePolicy(http.ResponseWriter, *http.Request)
 
 	DeleteRoutePolicyByID(http.ResponseWriter, *http.Request)
+
+	AtlassianOAuthSession(http.ResponseWriter, *http.Request)
+
+	AtlassianOAuthCallback(http.ResponseWriter, *http.Request)
+
+	JsmOpsTeams(http.ResponseWriter, *http.Request)
+
+	AtlassianConnections(http.ResponseWriter, *http.Request)
+
+	AtlassianConnectionDelete(http.ResponseWriter, *http.Request)
 }

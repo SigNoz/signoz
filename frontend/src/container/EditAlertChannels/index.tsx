@@ -2,12 +2,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Form } from 'antd';
 import editEmail from 'api/channels/editEmail';
+import editJsmOps from 'api/channels/editJsmOps';
 import editMsTeamsApi from 'api/channels/editMsTeams';
 import editOpsgenie from 'api/channels/editOpsgenie';
 import editPagerApi from 'api/channels/editPager';
 import editSlackApi from 'api/channels/editSlack';
 import editWebhookApi from 'api/channels/editWebhook';
 import testEmail from 'api/channels/testEmail';
+import testJsmOps from 'api/channels/testJsmOps';
 import testMsTeamsApi from 'api/channels/testMsTeams';
 import testOpsgenie from 'api/channels/testOpsgenie';
 import testPagerApi from 'api/channels/testPager';
@@ -18,6 +20,7 @@ import ROUTES from 'constants/routes';
 import {
 	ChannelType,
 	EmailChannel,
+	JsmOpsChannel,
 	MsTeamsChannel,
 	OpsgenieChannel,
 	PagerChannel,
@@ -44,6 +47,7 @@ function EditAlertChannels({
 				WebhookChannel &
 				PagerChannel &
 				MsTeamsChannel &
+				JsmOpsChannel &
 				OpsgenieChannel &
 				EmailChannel
 		>
@@ -364,6 +368,62 @@ function EditAlertChannels({
 		}
 	}, [prepareMsTeamsRequest, t, notifications, selectedConfig]);
 
+	const prepareJsmOpsRequest = useCallback(
+		() => ({
+			name: selectedConfig?.name || '',
+			send_resolved: selectedConfig?.send_resolved || false,
+			connection_id: selectedConfig?.connection_id || '',
+			responders: selectedConfig?.responders || '',
+			message: selectedConfig?.message || '',
+			description: selectedConfig?.description || '',
+			tags: selectedConfig?.tags || '',
+			priority: selectedConfig?.priority || '',
+			id,
+		}),
+		[id, selectedConfig],
+	);
+
+	const onJsmOpsEditHandler = useCallback(async () => {
+		if (!selectedConfig?.connection_id) {
+			notifications.error({
+				message: 'Error',
+				description: t('jsmops_not_connected'),
+			});
+			return { status: 'failed', statusMessage: t('jsmops_not_connected') };
+		}
+		if (!selectedConfig?.message) {
+			notifications.error({
+				message: 'Error',
+				description: t('jsmops_message_required'),
+			});
+			return { status: 'failed', statusMessage: t('jsmops_message_required') };
+		}
+
+		setSavingState(true);
+
+		try {
+			await editJsmOps(prepareJsmOpsRequest());
+			notifications.success({
+				message: 'Success',
+				description: t('channel_edit_done'),
+			});
+			history.replace(ROUTES.ALL_CHANNELS);
+			return { status: 'success', statusMessage: t('channel_edit_done') };
+		} catch (error) {
+			notifications.error({
+				message: (error as APIError).getErrorCode(),
+				description: (error as APIError).getErrorMessage(),
+			});
+			return {
+				status: 'failed',
+				statusMessage:
+					(error as APIError).getErrorMessage() || t('channel_edit_failed'),
+			};
+		} finally {
+			setSavingState(false);
+		}
+	}, [prepareJsmOpsRequest, t, notifications, selectedConfig]);
+
 	const onSaveHandler = useCallback(
 		async (value: ChannelType) => {
 			let result;
@@ -379,6 +439,8 @@ function EditAlertChannels({
 				result = await onOpsgenieEditHandler();
 			} else if (value === ChannelType.Email) {
 				result = await onEmailEditHandler();
+			} else if (value === ChannelType.JsmOps) {
+				result = await onJsmOpsEditHandler();
 			}
 			logEvent('Alert Channel: Save channel', {
 				type: value,
@@ -397,6 +459,7 @@ function EditAlertChannels({
 			onMsTeamsEditHandler,
 			onOpsgenieEditHandler,
 			onEmailEditHandler,
+			onJsmOpsEditHandler,
 		],
 	);
 
@@ -436,6 +499,12 @@ function EditAlertChannels({
 						request = prepareEmailRequest();
 						if (request) {
 							await testEmail(request);
+						}
+						break;
+					case ChannelType.JsmOps:
+						request = prepareJsmOpsRequest();
+						if (request) {
+							await testJsmOps(request);
 						}
 						break;
 					default:
@@ -481,6 +550,7 @@ function EditAlertChannels({
 			prepareSlackRequest,
 			prepareMsTeamsRequest,
 			prepareOpsgenieRequest,
+			prepareJsmOpsRequest,
 			prepareEmailRequest,
 			notifications,
 		],

@@ -5,6 +5,7 @@ import (
 	"slices"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/email"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/jsmops"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/msteamsv2"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/opsgenie"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/pagerduty"
@@ -24,9 +25,16 @@ var customNotifierIntegrations = []string{
 	opsgenie.Integration,
 	slack.Integration,
 	msteamsv2.Integration,
+	jsmops.Integration,
 }
 
-func NewReceiverIntegrations(nc *alertmanagertypes.Receiver, tmpl *template.Template, logger *slog.Logger, templater alertmanagertypes.Templater) ([]notify.Integration, error) {
+func NewReceiverIntegrationsFactory(jsmOpsResolver jsmops.ConnectionResolver) alertmanagertypes.ReceiverIntegrationsFunc {
+	return func(nc *alertmanagertypes.Receiver, tmpl *template.Template, logger *slog.Logger, templater alertmanagertypes.Templater) ([]notify.Integration, error) {
+		return newReceiverIntegrations(nc, tmpl, logger, templater, jsmOpsResolver)
+	}
+}
+
+func newReceiverIntegrations(nc *alertmanagertypes.Receiver, tmpl *template.Template, logger *slog.Logger, templater alertmanagertypes.Templater, jsmOpsResolver jsmops.ConnectionResolver) ([]notify.Integration, error) {
 	upstreamIntegrations, err := receiver.BuildReceiverIntegrations(*nc.Receiver, tmpl, logger)
 	if err != nil {
 		return nil, err
@@ -73,6 +81,9 @@ func NewReceiverIntegrations(nc *alertmanagertypes.Receiver, tmpl *template.Temp
 		add(msteamsv2.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) {
 			return msteamsv2.New(c, tmpl, `{{ template "msteamsv2.default.titleLink" . }}`, l, templater)
 		})
+	}
+	for i, c := range nc.JsmOpsConfigs {
+		add(jsmops.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return jsmops.New(c, tmpl, l, templater, jsmOpsResolver) })
 	}
 
 	if errs.Len() > 0 {
