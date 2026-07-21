@@ -1,169 +1,209 @@
-# PRD: SigNoz Reliability & Telemetry Auditor (third-layer)
+# PRD: SRE Sidekick - an AI reliability agent grounded on SigNoz
 
-Status: Draft (design only)
+Status: Draft for team review
 Owner: NarayanaSabari
-Target: `guruvedhanth-s/signoz` fork (hackathon)
+Target: `guruvedhanth-s/signoz` fork (hackathon: Agents of SigNoz)
 Repo base for file links: `https://github.com/guruvedhanth-s/signoz/blob/main`
 
-> Architecture note (v2): this PRD supersedes the earlier "inbuilt module" design.
-> The project is now a **third layer** that runs beside a **stock, unmodified SigNoz**
-> and integrates only through public interfaces (REST API, MCP server, OTLP).
-> See section 2 for why this change was made.
+> Read me first.
+> This PRD supersedes the earlier "third-layer SLO engine" draft and folds it into a larger product.
+> The SLO and telemetry-audit work already built (the `reliability-agent`) becomes the deterministic, trustworthy **brain** that an AI SRE agent reasons over.
+> Fixed constraints (not up for debate): third layer only, stock SigNoz via Foundry, full Go, deterministic scoring, human-in-the-loop for any action.
+> Everything else in this document is open for team input; see section 21.
 
 ---
 
 ## 1. Executive summary
 
-This project adds an AI-assisted reliability layer on top of SigNoz.
+SRE Sidekick is an AI reliability agent that lives on a stock SigNoz deployment and runs the incident loop end to end: it **detects** problems, **grounds** itself in verifiable reliability facts, **diagnoses** root cause by reasoning over live telemetry through the SigNoz MCP server, **tells** an on-call engineer wherever they are, and - only with human approval - **acts** to heal the system, then **verifies** the fix.
 
-SigNoz already provides OpenTelemetry ingestion, logs, metrics, traces, dashboards, alerts, and an MCP server for agent access.
-This project does not rebuild any of that.
-It answers two higher-level questions that SigNoz does not answer on its own:
+The defining idea is grounded, trust-aware AI.
+An AI agent that does root-cause analysis is only as good as the telemetry it reasons over.
+If the telemetry is incomplete, an ungrounded agent hallucinates a root cause.
+SRE Sidekick refuses to.
+A deterministic reliability engine (SLOs, error budgets, and a telemetry-trust state) supplies the agent with verifiable facts and, when the data cannot be trusted, forces the agent to say so instead of guessing.
 
-1. Can we trust the telemetry being ingested into SigNoz?
-2. Is the monitored service or AI agent meeting its reliability objectives?
+The AI does the work only AI can do (reason over messy telemetry, judge AI-agent output quality, explain in natural language).
+The math that must be trustworthy (scores, SLIs, budgets, burn rates, alert thresholds) stays deterministic and reproducible.
+Nothing in SigNoz is modified, so the whole stack remains reproducible by Foundry.
 
-The solution is a single standalone service (the "reliability agent") that combines two engines:
+---
 
-- Telemetry Health Auditor: inspects SigNoz data for completeness, correctness, cost, and queryability, and produces a deterministic health score with actionable findings.
-- SLO and Error-Budget Engine: reads SLO definitions as code, computes SLIs, error budgets, and multi-window burn rates, and gates the result on telemetry trust via an `indeterminate` state.
+## 2. Why this, and why now
 
-Both engines read from SigNoz over its public API and MCP server, and write their results back into SigNoz as metrics, dashboards, and alerts.
-Nothing in the SigNoz deployment is modified, so the whole stack stays reproducible by Foundry.
+Classic observability answers "did the request fail and how slow was it".
+It does not answer the questions that dominate real incidents and AI systems:
 
-The closed loop:
+- Why did this break, in plain language, with evidence?
+- Can I even trust this dashboard, or is the telemetry incomplete?
+- Did the AI agent give an ungrounded or unsafe answer even though it returned HTTP 200?
+- What should I do about it, and can something safe be done automatically?
 
-```text
-instrument -> ingest into stock SigNoz -> audit telemetry quality ->
-calculate SLOs -> gate on trust (indeterminate) -> emit score + SLO metrics ->
-generate dashboards + burn-rate alerts -> recommend remediation -> verify improvement
+Two gaps compound:
+
+1. Toil: on-call engineers manually pivot across traces, metrics, and logs to build a root cause under pressure.
+2. Trust: AI agents fail silently (200 OK, wrong answer), and their telemetry is often incomplete or unstructured, so the dashboards lie.
+
+SRE Sidekick closes both: an agent that grounds itself in trustworthy reliability facts, does the cross-signal RCA a human would, and never pretends to be sure when the data is not.
+
+---
+
+## 3. What it is: five hackathon ideas merged
+
+This product deliberately unifies five SigNoz hackathon issues into one coherent incident loop rather than picking one.
+
+| Issue | Idea | Stage it maps to |
+|---|---|---|
+| [#11656](https://github.com/SigNoz/signoz/issues/11656) | SRE Sidekick built on SigNoz | the whole loop |
+| [#11660](https://github.com/SigNoz/signoz/issues/11660) | Build agents + E2E observability (alert -> RCA -> notify -> approve fix) | Detect, Diagnose, Communicate, Act |
+| [#11654](https://github.com/SigNoz/signoz/issues/11654) | Debug production over call with SigNoz MCP | Diagnose (MCP), Communicate (voice) |
+| [#11655](https://github.com/SigNoz/signoz/issues/11655) | Observability Slackbot on SigNoz | Communicate (Slack) |
+| [#11653](https://github.com/SigNoz/signoz/issues/11653) | Self-healing infra (KEDA scaler / autoscaling advisor) | Act (self-heal) |
+
+They are all one thing: an AI SRE agent on SigNoz that runs detect -> diagnose -> tell -> act.
+They differ only in which stage each emphasizes.
+SRE Sidekick implements the full loop and lets each interface (Slack, Telegram, voice) and each action (advise, scale, patch, PR) be a pluggable adapter.
+
+---
+
+## 4. The incident loop
+
+```mermaid
+flowchart LR
+    D[1. Detect] --> G[2. Ground] --> X[3. Diagnose] --> C[4. Communicate] --> A[5. Act] --> V[6. Verify]
+    V -. re-evaluate .-> G
+
+    D -.- d1["SigNoz alerts + our SLO burn-rate / indeterminate alerts"]
+    G -.- g1["deterministic reliability engine:\nSLO state, error budget, trust-state"]
+    X -.- x1["agentic RCA over live telemetry via SigNoz MCP"]
+    C -.- c1["Slack / Telegram / voice on-call"]
+    A -.- a1["advise -> scale (KEDA) -> patch -> PR, human-approved"]
+    V -.- v1["re-audit: did the SLO / score recover"]
 ```
 
----
+| Stage | What happens | Deterministic or AI |
+|---|---|---|
+| 1. Detect | A SigNoz alert or our SLO burn-rate / indeterminate alert fires, or a human asks. | Deterministic |
+| 2. Ground | The agent pulls verifiable reliability facts: which SLO, error budget left, burn rate, and whether the telemetry is even trustworthy. | Deterministic |
+| 3. Diagnose | The agent reasons over live telemetry through the SigNoz MCP server and produces a root cause with evidence and a confidence, or an honest indeterminate. | AI |
+| 4. Communicate | The diagnosis and a suggested fix are delivered where the engineer is: Slack, Telegram, or a voice call. | AI phrasing, deterministic payload |
+| 5. Act | The agent proposes and, only after human approval, executes a safe remediation: an autoscaling advisory or action, a config patch, or a pull request. | Human-gated |
+| 6. Verify | The agent re-runs the audit and SLO evaluation to confirm the score and SLO recovered. | Deterministic |
 
-## 2. Why a third layer (and why not modify SigNoz)
-
-The hackathon requires installing SigNoz with Foundry and making the deployment reproducible: the repo must ship `casting.yaml` and `casting.yaml.lock`, and judges re-run Foundry to reproduce the stack.
-
-That model assumes a **stock** SigNoz.
-An earlier version of this project modified SigNoz source (a Go module plus a React page).
-That approach is wrong for this hackathon for two reasons:
-
-1. Use SigNoz as-is.
-   Judges install stock SigNoz; a source fork would require publishing a custom SigNoz image and pointing `casting.yaml` at it, which fights the "reproducible stock deployment" rule and forces a re-fork on every upstream release.
-2. Clean integration surface exists.
-   Stock SigNoz already exposes everything this project needs through its public API, MCP server, and OTLP ingestion (see section 4). There is no need to touch core.
-
-Decision: build an independent service that runs beside a stock, Foundry-installed SigNoz and integrates only through public interfaces.
+The loop can start from an alert (autonomous) or from a human question (interactive).
 
 ---
 
-## 3. Goals and non-goals
+## 5. Goals and non-goals
 
 ### Goals
 
-1. A deterministic, reproducible telemetry health score per service and per signal.
-2. At least 5 quality checks run against real SigNoz data via its public API and MCP tools.
-3. SLO definitions as typed code, with SLI, error budget, and multi-window burn rate.
-4. The `healthy` / `unhealthy` / `indeterminate` trust state, gated by the auditor.
-5. Results written back into SigNoz as metrics, generated dashboards, and burn-rate alerts, using only public endpoints.
-6. LLM used only to phrase developer feedback, never to compute a score.
-7. The SigNoz deployment stays stock and reproducible by Foundry.
-8. The entire deliverable is a single Go service. The user interface is the Go CLI plus the dashboards it generates inside SigNoz; there is no separate frontend.
+1. An end-to-end incident loop: detect, ground, diagnose, communicate, act, verify.
+2. Grounding on a deterministic reliability engine: SLOs, error budgets, burn rates, and a telemetry-trust state (`healthy` / `unhealthy` / `indeterminate`).
+3. Agentic root-cause analysis over live telemetry via the SigNoz MCP server, with evidence and calibrated confidence.
+4. The agent must never diagnose confidently on untrustworthy telemetry; incomplete evidence yields an explicit `indeterminate` diagnosis.
+5. At least one chat interface (Telegram or Slack) that delivers diagnoses and takes approvals.
+6. At least one human-approved remediation path.
+7. Results written back into SigNoz as metrics, dashboards, and alerts, using only public endpoints.
+8. The deliverable is a single Go service; the interface is the Go CLI, the chat adapters, and the dashboards it generates in SigNoz. There is no separate web frontend.
+9. The SigNoz deployment stays stock and reproducible by Foundry.
 
 ### Non-goals
 
 1. Modifying SigNoz source, or shipping a custom SigNoz image.
 2. Modifying the Foundry-generated deployment (`pours/`, compose files) to enable features. Everything must work on the stock deployment exactly as `foundryctl cast` produces it.
 3. Any frontend, JavaScript, or React code. The deliverable is Go only.
-4. Rebuilding ingestion, storage, dashboards, alerting, or LLM tracing that SigNoz already provides.
-5. Destructive remediation without explicit human approval.
-6. Depending on SigNoz Cloud only features. The service must work against self-hosted SigNoz.
+4. Any autonomous destructive action. Every remediation is proposed and requires explicit human approval.
+5. Letting an LLM compute a score, SLI, SLO state, budget, burn rate, or alert threshold. AI reasons and explains; it never does the trustworthy math.
+6. Rebuilding ingestion, storage, dashboards, alerting, or MCP that SigNoz already provides.
+7. Depending on SigNoz Cloud only features. Everything must work on self-hosted SigNoz.
 
 ---
 
-## 4. SigNoz integration surface (researched, stock endpoints)
+## 6. Personas and user stories
 
-The service integrates through three channels, all available on stock SigNoz. No source changes.
+On-call engineer.
 
-### 4.1 Authentication (machine-to-machine)
+- As on-call, when an alert fires at 2am, I want a plain-language root cause with evidence links, so I do not have to pivot across traces and logs half-asleep.
+- As on-call, I want the agent to tell me when it is not sure and why, so I never chase a hallucinated cause.
+- As on-call, I want to approve or reject a proposed fix from my phone, so I stay in control.
 
-- Create a service account (Settings -> Service Accounts, admin role) and an API key.
-- Send the header `SIGNOZ-API-KEY: <key>` on every REST call.
-- The same key authenticates the MCP server (with `X-SigNoz-URL: <instance-url>`).
+AI-agent developer.
 
-### 4.2 Read (query telemetry)
+- As a developer, I want to know whether my agent's answers are grounded and whether my telemetry is complete enough to trust the SLO, so I fix instrumentation before I trust a dashboard.
 
-| Purpose | REST endpoint | MCP tool |
-|---|---|---|
-| Run PromQL / builder / ClickHouse queries (SLIs) | `POST /api/v5/query_range` | `execute_builder_query`, `query_metrics` |
-| List attribute keys (missing-attribute checks) | `GET /api/v1/fields/keys` | `get_field_keys` |
-| List attribute values | `GET /api/v1/fields/values` | `get_field_values` |
-| Metric names / metadata / temporality | `GET /api/v2/metrics`, `/api/v2/metrics/metadata` | `list_metrics` |
-| Metric cardinality / usage | `POST /api/v2/metrics/stats` | `check_metric_cardinality`, `check_metric_usage` |
+Platform / SRE owner.
 
-`POST /api/v5/query_range` is validated end to end in the current prototype.
-
-### 4.3 Write-back (create artifacts)
-
-| Purpose | REST endpoint | MCP tool |
-|---|---|---|
-| Create / update dashboards | `POST` / `PUT /api/v2/dashboards` | `create_dashboard`, `update_dashboard` |
-| Create burn-rate alerts | `POST /api/v2/rules` | `create_alert` |
-
-Dashboard payload is a plain JSON object (`map[string]interface{}`), so a dashboard can be assembled directly by the service.
-
-### 4.4 Emit metrics back
-
-- Send `slo.*` and `telemetry.quality.*` metrics to the OTel collector over OTLP (gRPC 4317 or HTTP 4318). No auth header.
-- Custom metrics flow to ClickHouse and become queryable through `POST /api/v5/query_range`, so generated dashboards can chart them.
-- This path is validated in the current prototype (the seeder).
-
-### 4.5 MCP server (first-class read path)
-
-- The SigNoz MCP server is deployed by Foundry via `mcp.spec.enabled: true` in `casting.yaml` (port 8000, `/mcp`).
-- Verified on self-hosted SigNoz: the Foundry cast brings up `signoz-mcp`, and a JSON-RPC `initialize` succeeds with header auth (`SIGNOZ-API-KEY` + `X-SigNoz-URL`), returning the tool-capable `SigNozMCP` server. Local self-hosted SigNoz supports MCP; it is not Cloud-only.
-- It exposes ~40 `signoz_` tools; the ones this project uses map almost 1:1 onto the auditor and generator needs (see the tables above).
-- Posture: MCP is a first-class read path. The Telemetry Health Auditor uses MCP tools (`signoz_get_field_keys`, `signoz_get_field_values`, `signoz_check_metric_cardinality`, `signoz_list_metrics`) as its primary way to inspect telemetry, and can generate dashboards/alerts via MCP (`signoz_create_dashboard`, `signoz_create_alert`).
-- REST (`POST /api/v5/query_range`) remains the deterministic path for SLO SLI evaluation and is the fallback for any tool the MCP server does not expose, so a transient MCP issue never blocks a live demo.
-- Auth for both paths is the same service-account API key, satisfying the hackathon recommendation to use the MCP server, the Query Builder, dashboards, and alerts.
+- As a platform owner, I want the sidekick to enforce that reliability decisions are only made on trustworthy telemetry, and to log every diagnosis and action for audit.
 
 ---
 
-## 5. Scope
+## 7. Product boundary
 
-The team is four people, so the build runs as two parallel tracks that meet at the `indeterminate` coupling.
-Both ship in the hackathon.
+The following split is mandatory and is the core of the design.
 
-### Track A: Telemetry Health Auditor (in scope)
+| Question | Owner | Nature |
+|---|---|---|
+| Is the telemetry present and structurally valid? | Telemetry auditor | Deterministic |
+| Can this SLO be trusted for this window? | Completeness gate | Deterministic |
+| Is the SLI above target; how fast is the budget burning? | SLO engine | Deterministic |
+| Why did this break, and what should we do? | RCA agent | AI, grounded on the above |
+| Should we act, and did it recover? | Human approval + verify | Human + deterministic |
 
-- 5 checks: `missing_service_name`, `missing_model_name`, `missing_token_usage`, `high_cardinality_attribute`, `stale_service`.
-- Deterministic weighted score, emitted back as `telemetry.quality.*` metrics.
-- Findings report (CLI and JSON), each with severity, affected signal, count, recommendation, and a SigNoz deep link.
+The AI never produces an SLO verdict, a score, or a threshold.
+It consumes the deterministic facts and produces reasoning, explanation, and proposals.
+The audit output must never contain `slo_status`, `slo_compliance`, `error_budget_remaining`, `burn_rate`, or a per-SLO impact.
 
-### Track B: SLO and Error-Budget Engine (in scope)
+---
 
-- SLO definitions as typed YAML.
-- SLI types: ratio (shipping), latency threshold, completeness, grounded answers.
-- Compliance, error budget, multi-window multi-burn-rate (MWMB).
-- The `healthy` / `unhealthy` / `indeterminate` state machine, gated by the auditor.
-- `slo.*` metrics emitted over OTLP; generated SLO dashboard and burn-rate alerts, created idempotently via the API.
+## 8. Scope
+
+Two tracks build the deterministic spine; two more build the AI loop.
+Fixed constraints apply to all.
+
+### Track A: Telemetry Health Auditor (deterministic)
+
+- Five checks: `missing_service_name`, `missing_model_name`, `missing_token_usage`, `high_cardinality_attribute`, `stale_service`.
+- Per-check status `pass` / `fail` / `indeterminate`; deterministic weighted score; findings with SigNoz deep links.
+- Emits `telemetry_quality_*` metrics.
+
+### Track B: SLO and Error-Budget Engine (deterministic, already built)
+
+- SLO-as-code; four SLI types (`ratio`, `latency_threshold`, `completeness`, `grounded_answers`).
+- Compliance, error budget, multi-window burn rate; the `healthy` / `unhealthy` / `indeterminate` trust state.
+- Emits `slo_*` metrics; generates dashboard, channel, and burn-rate alerts idempotently.
+
+### Track C: RCA Agent (AI)
+
+- Triggered by an alert or a human question.
+- Grounds on Tracks A and B, gathers evidence via the SigNoz MCP server, and produces a diagnosis with confidence, or `indeterminate`.
+
+### Track D: Interface and Action (AI + human)
+
+- At least one chat adapter (Telegram or Slack) that posts diagnoses and takes approvals.
+- At least one human-approved remediation adapter (advisory, or a config patch / PR, or a KEDA scaling action).
+
+### MVP (hackathon)
+
+The thinnest full loop on one scenario:
+burn-rate or indeterminate alert fires -> agent grounds on the SLO report -> MCP-driven RCA on the offending service -> Telegram (or Slack) message with root cause and a proposed fix -> human approves -> one safe action -> re-verify.
 
 ### Stretch
 
-- LLM feedback layer generating prose and SDK snippets per finding.
-- More auditor checks (trace parent-child integrity, counter/gauge misuse, missing severity, trace-log correlation).
-- Remediation delivered as a pull request rather than a copyable patch.
+- Voice / on-call call interface (#11654).
+- KEDA external scaler / autoscaling action (#11653).
+- LLM-as-judge for AI-agent quality SLIs (grounded, safe, correct-tool).
+- Remediation delivered as a pull request.
 
 ### Explicitly out of scope
 
-- Any modification to SigNoz source or its container image.
+Any modification to SigNoz source or its Foundry deployment.
 
 ---
 
-## 6. Architecture
+## 9. Architecture
 
-### 6.1 System context
+### 9.1 System context
 
 ```mermaid
 flowchart TD
@@ -172,174 +212,129 @@ flowchart TD
     end
 
     subgraph foundry[Reproducible via Foundry - casting.yaml + casting.yaml.lock]
-        COL[OTel Collector\n 4317 / 4318]
-        SZ[Stock SigNoz\n signoz/signoz image]
-        MCP[SigNoz MCP server\n mcp: block, port 8000]
+        COL[OTel Collector 4317/4318]
+        SZ[Stock SigNoz]
+        MCP[SigNoz MCP server, port 8000]
         CH[(ClickHouse)]
         SDK -->|OTLP| COL --> CH
         SZ --- CH
         MCP --> SZ
     end
 
-    subgraph ours[Reliability agent - our third layer, separate image]
-        AUD[Telemetry Health Auditor]
-        SLO[SLO + Error-Budget Engine]
-        CFG[audit rules + slo.yaml as code]
-        OUT[CLI + optional mini web UI]
-        CFG --> AUD
-        CFG --> SLO
+    subgraph sidekick[SRE Sidekick - our third-layer Go service]
+        AUD[Telemetry auditor]
+        SLO[SLO engine]
+        RCA[RCA agent]
+        NOTIFY[Chat + voice adapters]
+        ACT[Action adapters, human-approved]
         AUD --> SLO
-        SLO --> OUT
-        AUD --> OUT
+        SLO --> RCA
+        AUD --> RCA
+        RCA --> NOTIFY
+        NOTIFY --> ACT
+        ACT -. re-verify .-> SLO
     end
 
-    AUD -->|read: fields, cardinality, metrics\n SIGNOZ-API-KEY / MCP| SZ
-    SLO -->|read: query_range\n SIGNOZ-API-KEY| SZ
-    AUD -->|read via MCP tools| MCP
-    AUD -->|emit telemetry.quality.* via OTLP| COL
-    SLO -->|emit slo.* via OTLP| COL
+    AUD -->|read: fields, cardinality, metrics| SZ
+    SLO -->|read: query_range| SZ
+    RCA -->|read: traces, logs, metrics via MCP tools| MCP
+    SLO -->|emit slo_* + telemetry_quality_*| COL
     SLO -->|create dashboards + alerts| SZ
+    NOTIFY <-->|messages + approvals| USER[On-call engineer]
 ```
 
-Nothing inside the `foundry` box is modified.
-The reliability agent is a separate container that authenticates with an API key.
+Nothing inside the `foundry` box is modified; the sidekick is a separate container that authenticates with a service-account API key.
 
-### 6.2 The trust state machine (the differentiator)
+### 9.2 The deterministic / AI boundary
 
 ```mermaid
-stateDiagram-v2
-    [*] --> Evaluate
-    Evaluate --> CheckTelemetry: requires_completeness
-    CheckTelemetry --> Indeterminate: auditor completeness < gate
-    CheckTelemetry --> Compute: auditor completeness >= gate
-    Compute --> Healthy: SLI >= target
-    Compute --> Unhealthy: SLI < target
-    Indeterminate --> [*]: alert explains the SLO cannot be trusted
-    Healthy --> [*]
-    Unhealthy --> [*]
+flowchart LR
+    subgraph det[Deterministic - reproducible, no LLM]
+        A[audit checks + score]
+        B[SLI / budget / burn]
+        S[trust state machine]
+        G[completeness gate]
+    end
+    subgraph ai[AI - reasoning and language, never scoring]
+        R[RCA over telemetry via MCP]
+        J[LLM-as-judge for agent quality]
+        E[natural-language explanation]
+    end
+    det -->|verified facts| ai
+    ai -->|proposals, explanations| H[Human approval]
+    H -->|approved| ACT[Action]
 ```
 
-```text
-healthy       = telemetry is complete AND SLI >= target
-unhealthy     = telemetry is complete AND SLI <  target
-indeterminate = telemetry is incomplete, so the SLO cannot be trusted
-```
-
-### 6.3 Request and scoring flow
+### 9.3 A diagnosis, end to end
 
 ```mermaid
 sequenceDiagram
-    participant CLI as reliability-agent CLI
-    participant SLO as SLO engine
-    participant AUD as Auditor
-    participant SZ as Stock SigNoz API
-    participant COL as OTel Collector
+    participant SZ as SigNoz alertmanager
+    participant SK as SRE Sidekick
+    participant SLO as SLO engine (deterministic)
+    participant MCP as SigNoz MCP
+    participant U as On-call (Telegram)
 
-    CLI->>SLO: evaluate(slo.yaml)
-    SLO->>AUD: completeness(service, window)
-    AUD->>SZ: GET /fields/keys, /metrics/stats
-    SZ-->>AUD: attributes, cardinality
-    AUD-->>SLO: completeness 0..1
-    alt completeness < gate
-        SLO-->>CLI: indeterminate (no query spent)
-    else
-        SLO->>SZ: POST /api/v5/query_range (good, total)
-        SZ-->>SLO: scalar values
-        SLO->>SLO: SLI, budget, burn, state
+    SZ->>SK: webhook: burn-rate alert for support-agent
+    SK->>SLO: ground(service, window)
+    SLO-->>SK: state=unhealthy, budget=-19, burn=20x, telemetry trusted
+    alt telemetry not trusted
+        SK->>U: "SLO indeterminate: telemetry incomplete (missing X). Cannot diagnose reliably."
+    else trusted
+        SK->>MCP: search_traces / aggregate_logs for service, window
+        MCP-->>SK: error spans, top exceptions, latency shift
+        SK->>SK: LLM RCA over evidence -> root cause + confidence
+        SK->>U: root cause + evidence links + proposed fix + [Approve] [Reject]
+        U-->>SK: Approve
+        SK->>SK: execute action adapter (human-approved)
+        SK->>SLO: verify(service, window)
+        SLO-->>SK: state recovering
+        SK->>U: "Applied. Burn rate falling; SLO recovering."
     end
-    SLO-->>COL: emit slo.* via OTLP
-    SLO->>SZ: POST /api/v2/dashboards, /api/v2/rules
-    SLO-->>CLI: report
 ```
 
 ---
 
-## 7. Telemetry Health Auditor: check catalog (MVP)
+## 10. SigNoz integration surface (stock, reused)
 
-Each check is backed by a stock SigNoz read endpoint or MCP tool. No new queries against ClickHouse directly.
+All through public interfaces, authenticated with a service-account API key (`SIGNOZ-API-KEY`).
 
-| Check id | Severity | Detects | Backing endpoint / tool |
-|---|---|---|---|
-| `missing_service_name` | critical | spans/metrics without `service.name` | `get_field_keys` / `/api/v1/fields/keys` |
-| `missing_model_name` | critical | LLM spans without `gen_ai.request.model` | `get_field_keys` |
-| `missing_token_usage` | warning | LLM spans without token attributes | `get_field_keys` |
-| `high_cardinality_attribute` | warning | attributes above a cardinality threshold | `check_metric_cardinality` / `/api/v2/metrics/stats` |
-| `stale_service` | warning | services with no recent data | `list_metrics` + `query_metrics` (last-seen) |
+| Purpose | REST | MCP tool |
+|---|---|---|
+| SLI evaluation, metric presence | `POST /api/v5/query_range` | `signoz_execute_builder_query`, `signoz_query_metrics` |
+| Attribute keys / values (audit) | `GET /api/v1/fields/keys`, `/values` | `signoz_get_field_keys`, `signoz_get_field_values` |
+| Metric metadata / cardinality | `GET /api/v2/metrics/metadata`, `POST /api/v2/metrics/stats` | `signoz_list_metrics`, `signoz_check_metric_cardinality` |
+| RCA evidence (traces, logs) | `POST /api/v5/query_range` | `signoz_search_traces`, `signoz_get_trace_details`, `signoz_aggregate_logs`, `signoz_search_logs` |
+| Create dashboards / alerts | `POST/PUT /api/v1/dashboards`, `POST /api/v2/rules` | `signoz_create_dashboard`, `signoz_create_alert` |
+| Emit results | OTLP to the collector (4317 / 4318) | n/a |
 
-Phase 2 candidates: `counter_gauge_misuse` (`/api/v2/metrics/metadata`), `unmapped_llm_model`, `broken_trace_context` (`search_traces`).
-
----
-
-## 8. Deterministic health score
-
-The score is reproducible: identical telemetry in produces an identical score out.
-The LLM never touches this computation.
-
-```text
-score = clamp(100 - 15*count(critical) - 5*count(warning) - 1*count(info), 0, 100)
-```
-
-Finding shape:
-
-```json
-{
-  "rule": "missing_service_name",
-  "severity": "critical",
-  "affected_signal": "traces",
-  "affected_count": 18,
-  "signoz_link": "https://<host>/traces-explorer?...",
-  "recommendation": "Set service.name in the OpenTelemetry Resource."
-}
-```
-
-### 8.1 Per-check status (distinct from SLO state)
-
-Each check returns exactly one status:
-
-- `pass`: complete evidence was evaluated and the pass condition held;
-- `fail`: complete evidence was evaluated and the pass condition did not hold;
-- `indeterminate`: required evidence was unavailable, partial, stale beyond the threshold, or invalid.
-
-An empty result page, an API error, a partial or truncated response, an unknown metric, or incomplete pagination must never be counted as a `pass`.
-Audit `indeterminate` is a telemetry-evidence state; it is not an SLO state.
-The score subtracts only `fail` results by severity, so an `indeterminate` check neither passes nor silently lowers the score.
-
-### 8.2 The auditor and the SLO engine are separate
-
-Mandatory boundary: the audit output must never contain an SLO verdict.
-It must not include `slo_status`, `slo_compliance`, `error_budget_remaining`, `burn_rate`, or any per-SLO impact.
-The auditor answers "can this telemetry be trusted?"; the SLO engine answers "given trusted telemetry, is the target met?".
-The only thing that crosses the boundary is the completeness-gate result (section 9.6), and it flows auditor to SLO engine, never the reverse.
+MCP is verified working on self-hosted SigNoz (the Foundry cast with `mcp.enabled` brings up `signoz-mcp` on port 8000; the JSON-RPC `initialize` succeeds with `SIGNOZ-API-KEY` + `X-SigNoz-URL`).
+MCP is the first-class read path for RCA evidence; REST `query_range` is the deterministic path for the SLO math and the fallback if a tool is unavailable, so a transient MCP failure never stops the deterministic engine.
 
 ---
 
-## 9. SLO and Error-Budget Engine
+## 11. Grounding: the deterministic reliability engine
 
-### 9.1 SLO-as-code
+This is the already-built spine (Tracks A and B). It is summarized here; the query and gate rules below are mandatory.
+
+### 11.1 SLO-as-code
 
 ```yaml
 service: support-agent
 environment: local
+completeness:
+  expected_metrics: [agent_requests_total, agent_success_total]
 slos:
   - name: successful-agent-runs
     type: ratio
-    target: 99          # 99 or 0.99 both accepted
+    target: 99
     window: 30d
-    good_query: agent_success_total     # single-vector PromQL
+    good_query: agent_success_total
     total_query: agent_requests_total
-    requires_completeness: true         # gate on the auditor
+    requires_completeness: true
 ```
 
-### 9.2 SLI computation
-
-| Type | SLI | How |
-|---|---|---|
-| `ratio` | good / total | two windowed scalar queries |
-| `latency_threshold` | under-threshold / total | windowed histogram bucket and count |
-| `completeness` | complete runs / total | windowed good/total over a completeness marker |
-| `grounded_answers` | grounded / total | windowed good/total over a grounded-verdict count |
-
-### 9.3 Query correctness (mandatory)
+### 11.2 Query correctness (mandatory)
 
 Every SLO query must:
 
@@ -349,209 +344,296 @@ Every SLO query must:
 - use windowed histogram bucket and count expressions for latency, never raw cumulative buckets;
 - distinguish a real zero, no data, partial data, and query failure;
 - treat a zero denominator as `indeterminate` unless an explicit no-traffic policy is set;
-- treat missing, stale, partial, or failed evidence as `indeterminate`, never as a pass or a healthy result;
-- validate the target as a fraction in `(0, 1]`, and handle a 100% target (zero allowed budget) explicitly;
+- treat missing, stale, partial, or failed evidence as `indeterminate`, never as a pass;
+- validate the target as a fraction in `(0, 1]`, and handle a 100% target (zero budget) explicitly;
 - return the evaluated start and end timestamps and preserve SigNoz query-completeness metadata.
 
-A raw value read is correct only for a gauge. For a cumulative counter the SLI numerator and denominator are `sum(increase(metric{service_name="..."}[window]))`.
-
-### 9.4 Error budget and burn rate
+### 11.3 Error budget, burn rate, trust state
 
 ```text
 error_budget           = (1 - target) * total
-error_budget_remaining = 1 - (error_rate / (1 - target))   # over the window
-burn_rate              = error_rate / (1 - target)          # 1.0 exhausts by end of window
+error_budget_remaining = 1 - (error_rate / (1 - target))
+burn_rate              = error_rate / (1 - target)
+
+healthy       = telemetry trusted AND SLI >= target
+unhealthy     = telemetry trusted AND SLI <  target
+indeterminate = telemetry not trusted or SLI evidence incomplete
 ```
 
-### 9.5 Multi-window multi-burn-rate alerting
+Multi-window burn rate follows the Google SRE ladder (fast 1h+5m at 14.4x page; medium 6h+30m at 6x; slow 24h+2h at 3x), implemented by emitting per-window burn metrics and alerting on a threshold that requires both windows to exceed it.
 
-Google SRE style: a tier fires only when the burn rate exceeds its threshold over both a long and a short window.
-
-| Alert | Long | Short | Burn threshold | Severity |
-|---|---|---|---|---|
-| Fast | 1h | 5m | 14.4x | page |
-| Medium | 6h | 30m | 6x | ticket |
-| Slow | 24h | 2h | 3x | ticket |
-
-Implementation: the agent computes the burn rate for each window itself and emits it as a labelled metric (`slo_burn_rate{window="1h"}`, `{window="5m"}`, `{window="6h"}`, and so on).
-Each tier is a SigNoz threshold alert whose condition requires both the long-window and the short-window series to exceed the threshold (a two-query rule with an AND join, or two coordinated rules).
-Precomputing the burn rate as a plain metric and alerting on a threshold avoids the upstream formula-alert bugs ([#10823](https://github.com/SigNoz/signoz/issues/10823), [#10881](https://github.com/SigNoz/signoz/issues/10881)).
-The MVP may ship the fast tier first; the full three-tier ladder is required for completeness.
-
-### 9.6 Completeness gate
-
-The gate is the only interface from the SLO engine to the auditor, and it is service-, environment-, and window-scoped:
+### 11.4 Completeness gate (the seam to grounding)
 
 ```go
 type CompletenessGate interface {
     Check(ctx context.Context, service, environment string, window time.Duration) (GateResult, error)
 }
-
 type GateResult struct {
     Coverage      float64 // 0..1 fraction of required evidence present
-    QueryComplete bool    // SigNoz reported the query as complete
-    Trusted       bool    // Coverage >= threshold AND QueryComplete
-    Reason        string  // why the evidence is not trusted, when applicable
+    QueryComplete bool
+    Trusted       bool
+    Reason        string
 }
 ```
 
-When `Trusted` is false and the SLO requires completeness, the SLO resolves to `indeterminate` before any SLI query is spent.
-The gate must use the service and environment so one service cannot satisfy another's gate.
-SLO state never flows back into the gate.
-
-### 9.7 Metric contract
-
-The producer and the SLO config must agree on one canonical metric contract.
-Names are normalized to PromQL-safe form (dots become underscores): `agent_requests_total`, `agent_success_total`, `agent_errors_total`, and a latency histogram such as `gen_ai_server_request_duration`.
-Counters are cumulative and queried with `increase(...)`; the latency metric is a histogram queried with windowed bucket and count expressions.
-Every metric carries `service.name` (and `deployment.environment` when present) so queries can be scoped.
+The RCA agent calls the same gate: if `Trusted` is false, the diagnosis is `indeterminate` and the agent explains what evidence is missing instead of guessing.
 
 ---
 
-## 10. Emitted metrics schema (via OTLP)
+## 12. Detect stage
 
-| Metric | Type | Labels |
-|---|---|---|
-| `telemetry_quality_score` | gauge | `service` |
-| `telemetry_quality_findings` | gauge | `service`, `severity` |
-| `telemetry_quality_coverage` | gauge | `service` |
-| `slo_compliance` | gauge | `service`, `slo`, `window` |
-| `slo_state` | gauge (0 unhealthy, 1 healthy, 2 indeterminate) | `service`, `slo` |
-| `slo_error_budget_remaining` | gauge | `service`, `slo` |
-| `slo_burn_rate` | gauge | `service`, `slo`, `window` |
+Triggers:
 
-Instrument names use underscores so the metrics are directly queryable in PromQL; OTLP dotted names are kept as-is in ClickHouse and are not PromQL-queryable.
-Emitted over OTLP to the collector, so they land in ClickHouse and chart on generated dashboards.
+- A SigNoz alert fires (a webhook receiver in the sidekick, registered as a notification channel).
+- One of our generated alerts fires (SLO burn-rate high, telemetry-quality dropped, SLO turned indeterminate).
+- A human asks the sidekick a question in chat.
+
+Each trigger carries a service, an environment, a window, and the alert or question context.
+Detection is deterministic; no LLM is involved in deciding that an incident exists.
 
 ---
 
-## 11. Generated dashboards and alerts
+## 13. Diagnose stage (the RCA agent)
 
-- The engine assembles an SLO dashboard (PromQL panels for `slo_compliance`, `slo_error_budget_remaining`, `slo_burn_rate`, `slo_state`) and creates or updates it via the SigNoz dashboard API (or MCP `create_dashboard`).
-- Dashboard API version: use the API that renders on the **stock** deployment, verified against the UI. Do not modify `pours/` or compose to enable a dashboard version. If the stock UI renders the classic (v1) format, use v1; only use v2 if stock requires it.
-- Creation is idempotent, keyed by a stable dashboard title, so re-running never duplicates.
-- A notification channel is ensured (idempotent) because SigNoz rules require at least one channel.
-- Burn-rate alerts are created via `POST /api/v2/rules` (or MCP `create_alert`) as simple threshold rules over `slo_burn_rate`, one per tier (section 9.5).
+### 13.1 Inputs
 
----
+- The trigger context (service, environment, window, alert).
+- The grounded facts: SLO state, error budget, burn rate, and the completeness gate result.
 
-## 12. LLM feedback layer (stretch, bounded)
+### 13.2 Behavior
 
-- Input: a structured finding. Output: a friendly explanation plus a suggested SDK snippet.
-- It never returns or alters the numeric score, and the service works fully without it.
-- This mirrors how SigNoz separates its deterministic query engine from the Noz AI layer.
+1. If the gate says the telemetry is not trusted, return an `indeterminate` diagnosis that names the missing or incomplete evidence. Do not proceed to reasoning.
+2. Otherwise, gather bounded evidence via MCP tools: error spans, top exceptions, latency distribution shift, correlated logs, recent deploys or version changes.
+3. Run an LLM over the structured evidence to produce a root cause, a confidence, and a proposed remediation.
+4. The LLM only reasons over the retrieved evidence; it must cite the evidence it used and must not invent metrics or services.
 
----
+### 13.3 Diagnosis contract
 
-## 13. Standalone service design
-
-A single Go service, `reliability-agent`, packaged as its own container.
-
-```text
-reliability-agent/
-  cmd/agent/            entrypoint: `audit`, `slo`, `generate` subcommands
-  internal/signozclient/  REST + MCP client (SIGNOZ-API-KEY), query_range, fields, dashboards, rules
-  internal/otlp/          OTLP metric exporter (telemetry.quality.*, slo.*)
-  internal/audit/         check registry + deterministic score
-  internal/slo/           config, SLI evaluators, budget/burn, state machine, generator
-  internal/config/        typed YAML loaders
-  Dockerfile
-  slo.yaml, audit.yaml    example configs
+```json
+{
+  "service": "support-agent",
+  "window": "1h",
+  "status": "diagnosed",            // diagnosed | indeterminate
+  "grounding": {
+    "slo": "successful-agent-runs",
+    "slo_state": "unhealthy",
+    "burn_rate": 20.0,
+    "error_budget_remaining": -19.0,
+    "telemetry_trusted": true
+  },
+  "root_cause": "Error rate rose after the 12:40 deploy; 78% of failures are TimeoutError from tool.search_knowledge_base.",
+  "confidence": 0.72,
+  "evidence": [
+    {"kind": "trace", "signoz_link": "https://<host>/trace/...", "note": "timeout span"},
+    {"kind": "logs",  "signoz_link": "https://<host>/logs?...", "note": "connection reset spike"}
+  ],
+  "proposed_fix": "Roll back support-agent to the previous revision, or raise the tool timeout to 5s.",
+  "reversible": true
+}
 ```
 
-The interface seam between Track A and Track B is the single `CompletenessGate` from section 9.6: the SLO engine calls the auditor for a service, environment, and window, receives a `GateResult`, and short-circuits to `indeterminate` when the evidence is not trusted. The auditor never learns SLO names or SLO state.
+When `status` is `indeterminate`, `root_cause` and `proposed_fix` are omitted and a `missing_evidence` list is included instead.
+
+### 13.4 Confidence and honesty rules
+
+- A diagnosis with confidence below a configured floor is presented as a hypothesis, not a conclusion.
+- The agent must never state a root cause it did not find evidence for.
+- The agent must prefer "I could not determine this" over a low-evidence guess.
 
 ---
 
-## 14. Deployment and Foundry reproducibility
+## 14. Communicate stage
 
-- `casting.yaml` installs stock SigNoz + collector + the MCP server (`mcp:` block). Standard, no custom image.
-- `casting.yaml.lock` is generated once by running `foundryctl cast` and committed to the repo.
-- The reliability agent ships its own `Dockerfile` and a compose snippet (or documented `docker run`) that points at the Foundry-installed SigNoz via `SIGNOZ_URL` and `SIGNOZ_API_KEY`.
-- Judges reproduce the SigNoz deployment with `foundryctl cast -f casting.yaml`, then run the agent container against it.
+Adapters (pluggable; MVP ships one):
 
-Suggested repo shape:
+- Telegram bot (simple, mobile, good for a demo).
+- Slack app (#11655).
+- Voice / on-call call (#11654, stretch).
+
+Message contract: the deterministic grounding block, the root cause, evidence deep links, the proposed fix, and inline `Approve` / `Reject` controls.
+The natural-language phrasing is the only LLM-authored part of the message; the facts and links are deterministic.
+Every message and every approval decision is logged with a correlation id.
+
+---
+
+## 15. Act stage (human-approved)
+
+Principles:
+
+- No action without explicit human approval.
+- Prefer reversible actions; label irreversible ones and require stronger confirmation.
+- Every action is scoped to the affected service and environment and is logged.
+
+Adapters (pluggable; MVP ships one, likely advisory or config patch):
+
+- Advisory only: post the recommended action, take no automated step.
+- Autoscaling: a KEDA external scaler or an autoscaling advisory driven by SigNoz metrics and anomalies (#11653).
+- Config patch or pull request: open a change for human review.
+
+The action adapter receives the approved proposal and returns an outcome that feeds the Verify stage.
+
+---
+
+## 16. Verify stage
+
+After an action, the sidekick re-runs the deterministic audit and SLO evaluation for the service and window and reports whether the score, SLO state, and burn rate are recovering.
+Verification is deterministic and is the honest close of the loop: the agent does not claim success; it measures it.
+
+---
+
+## 17. Emitted metrics, dashboards, alerts
+
+Metrics (OTLP, underscore names so they are PromQL-queryable):
+
+| Metric | Labels |
+|---|---|
+| `telemetry_quality_score` | `service` |
+| `telemetry_quality_findings` | `service`, `severity` |
+| `telemetry_quality_coverage` | `service` |
+| `slo_compliance` | `service`, `slo`, `window` |
+| `slo_state` | `service`, `slo` |
+| `slo_error_budget_remaining` | `service`, `slo` |
+| `slo_burn_rate` | `service`, `slo`, `window` |
+| `sidekick_incidents` | `service`, `status` |
+| `sidekick_actions` | `service`, `action`, `outcome` |
+
+Dashboards and alerts are generated idempotently through the public API.
+Dashboard API version is chosen by what renders on the stock deployment; the deployment is never modified to enable a version.
+
+---
+
+## 18. Standalone Go service design
+
+A single Go service, `sre-sidekick` (the `reliability-agent` module grows into it).
 
 ```text
-/                             fork of SigNoz, UNMODIFIED (reference + Foundry target)
+sre-sidekick/
+  cmd/agent/            CLI + long-running modes: audit, slo, generate, watch, ask
+  internal/audit/       check registry + deterministic score (Track A)
+  internal/slo/         config, SLI evaluators, budget/burn, state machine, generator (Track B, built)
+  internal/rca/         evidence gathering + LLM reasoning + diagnosis contract (Track C)
+  internal/judge/       optional LLM-as-judge for agent-quality SLIs
+  internal/notify/      chat + voice adapters (telegram, slack, ...) (Track D)
+  internal/act/         action adapters (advisory, keda, patch/pr) (Track D)
+  internal/signoz/      REST + MCP client (SIGNOZ-API-KEY), query_range, fields, traces, logs, dashboards, rules
+  internal/otlp/        OTLP emitter
+  internal/config/      typed YAML loaders
+  Dockerfile
+  configs/              slo.yaml, audit.yaml, sidekick.yaml (channels, action policy, thresholds)
+```
+
+Interfaces are the seams between tracks:
+
+- `CompletenessGate` (auditor -> SLO and -> RCA).
+- `Notifier` (RCA -> chat/voice).
+- `Actuator` (approved proposal -> action).
+- `LLM` (a thin interface so the model provider is swappable and the deterministic core never imports it).
+
+Modes:
+
+- `watch`: run as a service, receive SigNoz alert webhooks, run the loop.
+- `ask`: interactive, answer a human question with a grounded diagnosis.
+- `audit` / `slo` / `generate`: the deterministic commands (built).
+
+---
+
+## 19. Deployment and Foundry reproducibility
+
+- `casting.yaml` installs stock SigNoz + collector + the MCP server (`mcp.spec.enabled: true`). No custom image.
+- `casting.yaml.lock` is committed. Judges reproduce with `foundryctl cast -f casting.yaml`.
+- The sidekick ships its own `Dockerfile` and points at the Foundry-installed SigNoz via `SIGNOZ_URL` and `SIGNOZ_API_KEY`.
+- A bootstrap script creates the service account, admin role, API key, and a webhook notification channel that points at the sidekick's `watch` receiver.
+
+Repo shape:
+
+```text
+/                             fork of SigNoz, UNMODIFIED
 casting.yaml, casting.yaml.lock   stock SigNoz + MCP, reproducible
-reliability-agent/            the third-layer service (our code)
-hackathon/seed/               deterministic OTLP telemetry seeder (reused)
+sre-sidekick/                 the third-layer service (our code, all Go)
+hackathon/seed/               deterministic OTLP telemetry seeder
 hackathon/DEMO.md             runbook
 ```
 
 ---
 
-## 15. What we reuse from the prototype
+## 20. Security and safety
 
-The prototype built the SLO logic as an in-tree module.
-Because the SLI evaluation was written behind a `ScalarQuerier` seam, the pure logic ports to the standalone service with only the transport swapped from in-process calls to HTTP.
-
-| Component | Ports to third layer |
-|---|---|
-| SLO types, config, YAML parsing | as-is |
-| error budget, burn-rate, MWMB math | as-is |
-| the `indeterminate` state machine | as-is |
-| ratio SLI evaluator | unchanged (new `ScalarQuerier` HTTP impl) |
-| dashboard JSON builder | as-is |
-| all unit tests | as-is |
-| OTLP seeder | reused as-is |
-
-Transport pieces to rewrite: query client (HTTP `query_range`), OTLP emitter (direct exporter), dashboard/alert client (HTTP), CLI. The in-SigNoz React page is dropped; the primary UI becomes the generated SigNoz dashboard plus the agent CLI.
+- No autonomous destructive action; every action requires explicit human approval.
+- The LLM never receives write credentials; actions run through typed adapters with scoped permissions.
+- Evidence sent to the LLM is bounded and redacted of secrets and sensitive fields.
+- Every diagnosis, message, approval, and action is logged with a correlation id for audit.
+- The deterministic engine never imports the LLM interface, so scoring cannot be influenced by a model.
+- The service account uses the least role that works; admin is used only where channel and rule creation require it.
 
 ---
 
-## 16. Test plan
+## 21. Open questions for the team
 
-- Unit test every check and SLI/budget/burn function (pure, table-driven).
-- Unit test the state machine, including that a failing completeness gate forces `indeterminate` even when the raw SLI would pass.
-- Contract test the SigNoz client against recorded responses.
-- Integration test against a live Foundry-installed SigNoz with the deterministic seeder: assert the SLO flips indeterminate -> healthy -> unhealthy and that generation is idempotent.
+1. First chat adapter: Telegram (simplest for a demo) or Slack (#11655)? Voice (#11654) as stretch?
+2. First action adapter: advisory only, a config patch / PR, or a KEDA scaling action (#11653)?
+3. LLM provider and where the key comes from in the demo environment. Any self-hosted option (Ollama) for reproducibility?
+4. Do we include the LLM-as-judge agent-quality SLIs in the MVP, or keep them as stretch?
+5. Confidence floor and how we present low-confidence diagnoses.
+6. Rename the repo module from `reliability-agent` to `sre-sidekick`, or keep the existing name?
+7. How much of the loop runs autonomously on an alert vs waits for a human "go" in chat?
 
 ---
 
-## 17. Demo script (7 minutes)
+## 22. Test plan
+
+- Deterministic units: audit checks, SLI/budget/burn math, state machine, gate (built for Track B; extend for Track A).
+- RCA: golden tests that feed fixed evidence and assert the diagnosis contract, including the `indeterminate` path when the gate says untrusted.
+- Notify: adapter contract tests with a fake transport; assert approvals are logged.
+- Act: adapter tests that assert no action runs without approval and every action is scoped and logged.
+- Integration against a live Foundry SigNoz: alert -> diagnosis -> notify -> approve -> act -> verify, plus the indeterminate branch.
+
+---
+
+## 23. Demo script (7 minutes)
 
 ```text
-1. foundryctl cast -f casting.yaml   -> stock SigNoz + MCP come up.
-2. Run the agent: `reliability-agent audit`. Show telemetry health score ~48 with findings.
-3. Run `reliability-agent slo`. successful-agent-runs is INDETERMINATE (no trustworthy data).
-4. Seed healthy telemetry. Re-run: score climbs, SLO flips to HEALTHY (sli 0.995, budget 50%, burn 0.5x).
-5. Run `reliability-agent generate`. Show the generated SLO dashboard inside SigNoz.
-6. Seed failing telemetry. SLO flips to UNHEALTHY, burn 20x, fast-burn alert fires.
-7. Pitch: our layer verifies SigNoz's telemetry is trustworthy, then measures reliability against it.
+1. foundryctl cast -f casting.yaml    -> stock SigNoz + MCP.
+2. Bootstrap + seed telemetry. Show the SLO healthy and the generated dashboard.
+3. Break the agent (raise errors / drop a required metric).
+4a. If a required metric is missing: the sidekick messages "SLO indeterminate,
+    telemetry incomplete, cannot diagnose reliably" - the honesty beat.
+4b. If errors spike: burn-rate alert fires -> sidekick grounds -> MCP RCA ->
+    Telegram message with root cause, evidence links, and a proposed fix.
+5. Approve the fix in chat. The action runs (advisory or patch).
+6. The sidekick re-verifies and reports the SLO recovering.
+7. Pitch: an AI SRE agent that keeps AI-era systems reliable, grounded on SigNoz,
+   that refuses to guess when the telemetry cannot be trusted.
 ```
 
 ---
 
-## 18. Judging criteria mapping
+## 24. Judging criteria mapping
 
-| Criterion | How this project scores |
+| Criterion | How this scores |
 |---|---|
-| Potential Impact | prevents teams trusting dashboards and SLOs built on incomplete telemetry |
-| Creativity | the `indeterminate` trust state; auditing the trustworthiness of the data itself |
-| Technical Excellence | deterministic scoring, typed config, bounded queries, unit + integration tests, idempotent generation |
-| Best Use of SigNoz | reads via query API + fields + cardinality, writes dashboards + alerts, emits metrics via OTLP, uses the MCP server |
-| User Experience | one CLI, a clear score, actionable findings with SigNoz deep links, plus generated dashboards |
-| Presentation | reproducible Foundry deployment; deterministic before/after demo |
-| Reproducibility | stock SigNoz via `casting.yaml` + `casting.yaml.lock`; agent runs as a separate container |
+| Potential impact | Cuts on-call toil and prevents reliability decisions on untrustworthy telemetry. |
+| Creativity | Grounded, trust-aware AI SRE; the `indeterminate` diagnosis is the differentiator. |
+| Technical excellence | Deterministic engine + AI reasoning, clean boundary, human-in-the-loop, tests, reproducible. |
+| Best use of SigNoz | Alerts, dashboards, query API, OTLP, and the MCP server as the RCA read path. |
+| AI and agents | An agent that detects, reasons, communicates, and acts - grounded, not hallucinating. |
+| Reproducibility | Stock SigNoz via `casting.yaml` + `.lock`; the sidekick runs as a separate container. |
 
 ---
 
-## 19. Risks and mitigations
+## 25. Risks and mitigations
 
 | Risk | Mitigation |
 |---|---|
-| MCP transient failure in the demo | MCP is verified working on self-hosted SigNoz (not Cloud-only) and is the first-class read path, but REST (`query_range`) is a deterministic fallback so the agent still runs fully if MCP is briefly unavailable. |
-| Programmatic alert bugs (`#10823`, `#10881`) | precompute burn rate as a metric; alert with a simple threshold, not a formula |
-| Emitted metrics not queryable | emit via OTLP to the collector (validated), not an in-process meter |
-| Two tracks diverging across four people | the only seam is the `CompletenessGate`; freeze it first |
-| Generation duplicates on re-run | idempotent, keyed by stable dashboard/alert names |
+| LLM hallucinates a root cause | Grounding + evidence citations + the `indeterminate` gate; low confidence is shown as a hypothesis. |
+| MCP transient failure | Verified self-hosted; REST is the deterministic fallback; the SLO engine never depends on the LLM or MCP. |
+| Autonomous action goes wrong | No action without human approval; reversible-first; scoped, logged adapters. |
+| Scope too big for the hackathon | MVP is the thinnest full loop on one scenario; every stage beyond it is a pluggable adapter marked stretch. |
+| Token cost / latency of MCP + LLM | Bounded evidence, single-pass reasoning, deterministic engine carries the load; MCP only for RCA. |
+| Two PRDs / drift | This document is the single PRD; the earlier third-layer draft is folded in here. |
 
 ---
 
-## 20. Open questions
+## 26. Appendix: what already exists
 
-1. MCP-first or REST-first for the read path in the demo (recommendation: REST spine, MCP optional).
-2. Which LLM provider for the Phase 2 feedback prose, and is a key available in the demo environment.
-3. Standalone mini web UI for the health score, or CLI plus generated dashboards only.
+The `reliability-agent` module (Tracks A and B) is built and verified live against a stock, Foundry-installed SigNoz: SLO evaluation, the trust state, OTLP emit of `slo_*`, idempotent dashboard and burn-rate alert generation, and a minimal real completeness gate.
+This PRD keeps all of it as the deterministic grounding and adds Tracks C and D (the AI RCA agent and the interface / action adapters).
