@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
+import logEvent from 'api/common/logEvent';
 import { commaValuesParser } from 'lib/dashboardVariables/customCommaValuesParser';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 import type { PayloadVariables } from 'types/api/dashboard/variables/query';
 
 import type { VariableSelectionMap } from '../../../VariablesBar/selectionTypes';
@@ -7,6 +9,7 @@ import { useDashboardStore } from '../../../store/useDashboardStore';
 import { detectVariableCycle } from '../utils/variableCycleDetection';
 import {
 	sortValuesByOrder,
+	VARIABLE_TYPE_EVENT_LABEL,
 	type VariableFormModel,
 	type VariableType,
 } from '../variableFormModel';
@@ -167,6 +170,13 @@ export function useVariableForm({
 			return;
 		}
 		setCycleError(null);
+		void logEvent(DashboardDetailEvents.VariableSaved, {
+			variableType: VARIABLE_TYPE_EVENT_LABEL[next.type],
+			multiSelect: next.multiSelect,
+			hasAllOption: next.showAllOption,
+			isNew,
+			dashboardId,
+		});
 		onSave(next);
 	};
 
