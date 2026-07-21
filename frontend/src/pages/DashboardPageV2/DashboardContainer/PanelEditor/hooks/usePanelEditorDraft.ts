@@ -13,9 +13,14 @@ import type { PanelEditorDraftApi } from '../types';
  * preview renders it through the dashboard's renderer registry and the save hook
  * patches it without conversion. Everything the config pane edits flows through the
  * single `spec`/`setSpec` pair.
+ *
+ * `savedPanel` is the persisted panel the dirty check compares against — distinct from
+ * `initialPanel` (the seed), which may carry unsaved edits handed off from View mode.
+ * Defaults to the seed when there's no separate saved baseline (a new panel).
  */
 export function usePanelEditorDraft(
 	initialPanel: DashboardtypesPanelDTO,
+	savedPanel: DashboardtypesPanelDTO = initialPanel,
 ): PanelEditorDraftApi {
 	const [draft, setDraft] = useState<DashboardtypesPanelDTO>(initialPanel);
 
@@ -35,9 +40,9 @@ export function usePanelEditorDraft(
 		() =>
 			!isEqual(
 				{ ...draft, spec: { ...draft.spec, queries: null } },
-				{ ...initialPanel, spec: { ...initialPanel.spec, queries: null } },
+				{ ...savedPanel, spec: { ...savedPanel.spec, queries: null } },
 			),
-		[draft, initialPanel],
+		[draft, savedPanel],
 	);
 
 	return {

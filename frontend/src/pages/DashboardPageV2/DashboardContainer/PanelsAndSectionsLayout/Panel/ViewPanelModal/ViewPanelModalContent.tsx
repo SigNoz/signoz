@@ -122,7 +122,9 @@ function ViewPanelModalContent({
 		logEvent(DashboardEvents.SWITCH_TO_EDIT_MODE, {
 			panelId: panelId,
 		});
-		openPanelEditor(panelId, { editSpec: buildSaveSpec(draft.spec) });
+		openPanelEditor(panelId, {
+			handoffState: { editSpec: buildSaveSpec(draft.spec) },
+		});
 	};
 
 	return (

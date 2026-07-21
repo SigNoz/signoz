@@ -7,21 +7,21 @@ import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 
 import type { PanelEditorHandoffState } from '../PanelEditor/panelEditorHandoff';
 import { useDashboardStore } from '../store/useDashboardStore';
+import { useTimeSearchParams } from './useTimeSearchParams';
 
-/**
- * Returns a callback that opens the V2 panel editor by navigating to its full-page route
- * (`/dashboard/:dashboardId/panel/:panelId`). The dashboard id comes from the store, so any
- * caller can open the editor with just the panel id. Variable selection is read from the
- * persisted store (localStorage), not carried in the URL. The optional `handoffState` is
- * passed as router location state — the View modal uses it to hand its drilldown-edited spec
- * off to the editor (view → edit) so the editor opens on those edits rather than the saved
- * panel.
- */
+interface OpenPanelEditorOptions {
+	handoffState?: PanelEditorHandoffState;
+	/** Extra query merged into the editor URL (leading `?` optional). */
+	search?: string;
+}
+
+/** Opens the V2 panel editor, carrying the active time window in the URL. */
 export function useOpenPanelEditor(): (
 	panelId: string,
-	handoffState?: PanelEditorHandoffState,
+	options?: OpenPanelEditorOptions,
 ) => void {
 	const { safeNavigate } = useSafeNavigate();
+	const timeSearch = useTimeSearchParams();
 	const dashboardId = useDashboardStore((s) => s.dashboardId);
 
 	return useCallback(
@@ -32,10 +32,10 @@ export function useOpenPanelEditor(): (
 				dashboardId,
 			});
 			safeNavigate(
-				generatePath(ROUTES.DASHBOARD_PANEL_EDITOR, { dashboardId, panelId }),
-				handoffState ? { state: handoffState } : undefined,
+				search ? `${path}?${search}` : path,
+				options?.handoffState ? { state: options.handoffState } : undefined,
 			);
 		},
-		[safeNavigate, dashboardId],
+		[safeNavigate, dashboardId, timeSearch],
 	);
 }

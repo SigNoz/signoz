@@ -21,7 +21,7 @@ import { isEqual, uniqWith } from 'lodash-es';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
-import { popupContainer } from 'utils/selectPopupContainer';
+import { useSelectPopupContainer } from 'utils/selectPopupContainer';
 
 import { selectStyle } from '../QueryBuilderSearch/config';
 import OptionRenderer from '../QueryBuilderSearch/OptionRenderer';
@@ -33,6 +33,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 	disabled,
 	signalSource,
 }: GroupByFilterProps): JSX.Element {
+	const getPopupContainer = useSelectPopupContainer();
 	const queryClient = useQueryClient();
 	const [searchText, setSearchText] = useState<string>('');
 	const [optionsData, setOptionsData] = useState<
@@ -174,7 +175,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 
 	return (
 		<Select
-			getPopupContainer={popupContainer}
+			getPopupContainer={getPopupContainer}
 			mode="tags"
 			style={selectStyle}
 			onSearch={handleSearchKeys}

@@ -29,8 +29,7 @@ interface UseCreatePanelResult {
  * until save.
  */
 export function useCreatePanel(): UseCreatePanelResult {
-	const { safeNavigate } = useSafeNavigate();
-	const dashboardId = useDashboardStore((s) => s.dashboardId);
+	const openPanelEditor = useOpenPanelEditor();
 
 	const [isPickerOpen, setIsPickerOpen] = useState(false);
 	// Captured on open, consumed on select.
@@ -57,10 +56,11 @@ export function useCreatePanel(): UseCreatePanelResult {
 				panelId: NEW_PANEL_ID,
 			});
 			const target = targetIndex ?? layoutIndex;
-			// Variable selection is read from the persisted store, not the URL.
-			safeNavigate(`${path}${newPanelSearch(panelKind, target)}`);
+			openPanelEditor(NEW_PANEL_ID, {
+				search: newPanelSearch(panelKind, target),
+			});
 		},
-		[safeNavigate, dashboardId, layoutIndex],
+		[openPanelEditor, layoutIndex],
 	);
 
 	return {
