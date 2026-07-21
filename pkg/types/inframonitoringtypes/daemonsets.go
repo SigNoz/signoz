@@ -6,6 +6,8 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+
+	"github.com/swaggest/jsonschema-go"
 )
 
 type DaemonSets struct {
@@ -30,7 +32,7 @@ type DaemonSetRecord struct {
 	MisscheduledNodes      int               `json:"misscheduledNodes" required:"true"`
 	PodCountsByPhase       PodCountsByPhase  `json:"podCountsByPhase" required:"true"`
 	PodCountsByStatus      PodCountsByStatus `json:"podCountsByStatus" required:"true"`
-	Meta                   map[string]string `json:"meta" required:"true"`
+	Meta                   DaemonSetMeta     `json:"meta" required:"true"`
 }
 
 // PostableDaemonSets is the request body for the v2 daemonsets list API.
@@ -107,4 +109,39 @@ func (req *PostableDaemonSets) UnmarshalJSON(data []byte) error {
 	}
 	*req = PostableDaemonSets(decoded)
 	return req.Validate()
+}
+
+// DaemonSetMeta carries the guaranteed daemonset metadata keys as typed fields
+// plus any dynamic group-by keys in Extra.
+type DaemonSetMeta struct {
+	DaemonSetName string            `json:"k8s.daemonset.name" required:"true"`
+	NamespaceName string            `json:"k8s.namespace.name" required:"true"`
+	ClusterName   string            `json:"k8s.cluster.name" required:"true"`
+	Extra         map[string]string `json:"-"`
+}
+
+var DaemonSetMetaKeys = metaKeys(&DaemonSetMeta{})
+
+func NewDaemonSetMeta(attrs map[string]string) DaemonSetMeta {
+	var m DaemonSetMeta
+	m.Extra = populateMeta(&m, attrs)
+	return m
+}
+
+func (m DaemonSetMeta) MarshalJSON() ([]byte, error) {
+	return marshalMeta(&m, m.Extra)
+}
+
+func (m *DaemonSetMeta) UnmarshalJSON(data []byte) error {
+	raw, err := splitMeta(data)
+	if err != nil {
+		return err
+	}
+	m.Extra = populateMeta(m, raw)
+	return nil
+}
+
+func (DaemonSetMeta) PrepareJSONSchema(s *jsonschema.Schema) error {
+	addStringAdditionalProps(s)
+	return nil
 }

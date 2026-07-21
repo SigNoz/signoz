@@ -40,7 +40,7 @@ func buildJobRecords(
 			ActivePods:            -1,
 			FailedPods:            -1,
 			SuccessfulPods:        -1,
-			Meta:                  map[string]string{},
+			Meta:                  inframonitoringtypes.NewJobMeta(nil),
 		}
 
 		if metrics, ok := metricsMap[compositeKey]; ok {
@@ -91,9 +91,7 @@ func buildJobRecords(
 		}
 
 		if attrs, ok := metadataMap[compositeKey]; ok {
-			for k, v := range attrs {
-				record.Meta[k] = v
-			}
+			record.Meta = inframonitoringtypes.NewJobMeta(attrs)
 		}
 
 		records = append(records, record)

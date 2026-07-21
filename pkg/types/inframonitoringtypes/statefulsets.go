@@ -6,6 +6,8 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+
+	"github.com/swaggest/jsonschema-go"
 )
 
 type StatefulSets struct {
@@ -28,7 +30,7 @@ type StatefulSetRecord struct {
 	CurrentPods              int               `json:"currentPods" required:"true"`
 	PodCountsByPhase         PodCountsByPhase  `json:"podCountsByPhase" required:"true"`
 	PodCountsByStatus        PodCountsByStatus `json:"podCountsByStatus" required:"true"`
-	Meta                     map[string]string `json:"meta" required:"true"`
+	Meta                     StatefulSetMeta   `json:"meta" required:"true"`
 }
 
 // PostableStatefulSets is the request body for the v2 statefulsets list API.
@@ -105,4 +107,39 @@ func (req *PostableStatefulSets) UnmarshalJSON(data []byte) error {
 	}
 	*req = PostableStatefulSets(decoded)
 	return req.Validate()
+}
+
+// StatefulSetMeta carries the guaranteed statefulset metadata keys as typed
+// fields plus any dynamic group-by keys in Extra.
+type StatefulSetMeta struct {
+	StatefulSetName string            `json:"k8s.statefulset.name" required:"true"`
+	NamespaceName   string            `json:"k8s.namespace.name" required:"true"`
+	ClusterName     string            `json:"k8s.cluster.name" required:"true"`
+	Extra           map[string]string `json:"-"`
+}
+
+var StatefulSetMetaKeys = metaKeys(&StatefulSetMeta{})
+
+func NewStatefulSetMeta(attrs map[string]string) StatefulSetMeta {
+	var m StatefulSetMeta
+	m.Extra = populateMeta(&m, attrs)
+	return m
+}
+
+func (m StatefulSetMeta) MarshalJSON() ([]byte, error) {
+	return marshalMeta(&m, m.Extra)
+}
+
+func (m *StatefulSetMeta) UnmarshalJSON(data []byte) error {
+	raw, err := splitMeta(data)
+	if err != nil {
+		return err
+	}
+	m.Extra = populateMeta(m, raw)
+	return nil
+}
+
+func (StatefulSetMeta) PrepareJSONSchema(s *jsonschema.Schema) error {
+	addStringAdditionalProps(s)
+	return nil
 }

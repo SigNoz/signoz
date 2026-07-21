@@ -49,7 +49,7 @@ func buildPodRecords(
 			PodMemoryRequest: -1,
 			PodMemoryLimit:   -1,
 			PodAge:           -1,
-			Meta:             map[string]string{},
+			Meta:             inframonitoringtypes.NewPodMeta(nil),
 		}
 
 		if metrics, ok := metricsMap[compositeKey]; ok {
@@ -163,9 +163,7 @@ func buildPodRecords(
 					}
 				}
 			}
-			for k, v := range attrs {
-				record.Meta[k] = v
-			}
+			record.Meta = inframonitoringtypes.NewPodMeta(attrs)
 		}
 
 		records = append(records, record)

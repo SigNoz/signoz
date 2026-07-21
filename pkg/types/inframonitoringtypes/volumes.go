@@ -6,6 +6,8 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+
+	"github.com/swaggest/jsonschema-go"
 )
 
 type Volumes struct {
@@ -17,14 +19,14 @@ type Volumes struct {
 }
 
 type VolumeRecord struct {
-	PersistentVolumeClaimName string            `json:"persistentVolumeClaimName" required:"true"`
-	VolumeAvailable           float64           `json:"volumeAvailable" required:"true"`
-	VolumeCapacity            float64           `json:"volumeCapacity" required:"true"`
-	VolumeUsage               float64           `json:"volumeUsage" required:"true"`
-	VolumeInodes              float64           `json:"volumeInodes" required:"true"`
-	VolumeInodesFree          float64           `json:"volumeInodesFree" required:"true"`
-	VolumeInodesUsed          float64           `json:"volumeInodesUsed" required:"true"`
-	Meta                      map[string]string `json:"meta" required:"true"`
+	PersistentVolumeClaimName string     `json:"persistentVolumeClaimName" required:"true"`
+	VolumeAvailable           float64    `json:"volumeAvailable" required:"true"`
+	VolumeCapacity            float64    `json:"volumeCapacity" required:"true"`
+	VolumeUsage               float64    `json:"volumeUsage" required:"true"`
+	VolumeInodes              float64    `json:"volumeInodes" required:"true"`
+	VolumeInodesFree          float64    `json:"volumeInodesFree" required:"true"`
+	VolumeInodesUsed          float64    `json:"volumeInodesUsed" required:"true"`
+	Meta                      VolumeMeta `json:"meta" required:"true"`
 }
 
 // PostableVolumes is the request body for the v2 volumes (PVCs) list API.
@@ -101,4 +103,43 @@ func (req *PostableVolumes) UnmarshalJSON(data []byte) error {
 	}
 	*req = PostableVolumes(decoded)
 	return req.Validate()
+}
+
+// VolumeMeta carries the guaranteed volume (PVC) metadata keys as typed fields
+// plus any dynamic group-by keys in Extra.
+type VolumeMeta struct {
+	PVCName         string            `json:"k8s.persistentvolumeclaim.name" required:"true"`
+	PodUID          string            `json:"k8s.pod.uid" required:"true"`
+	PodName         string            `json:"k8s.pod.name" required:"true"`
+	NamespaceName   string            `json:"k8s.namespace.name" required:"true"`
+	NodeName        string            `json:"k8s.node.name" required:"true"`
+	StatefulSetName string            `json:"k8s.statefulset.name" required:"true"`
+	ClusterName     string            `json:"k8s.cluster.name" required:"true"`
+	Extra           map[string]string `json:"-"`
+}
+
+var VolumeMetaKeys = metaKeys(&VolumeMeta{})
+
+func NewVolumeMeta(attrs map[string]string) VolumeMeta {
+	var m VolumeMeta
+	m.Extra = populateMeta(&m, attrs)
+	return m
+}
+
+func (m VolumeMeta) MarshalJSON() ([]byte, error) {
+	return marshalMeta(&m, m.Extra)
+}
+
+func (m *VolumeMeta) UnmarshalJSON(data []byte) error {
+	raw, err := splitMeta(data)
+	if err != nil {
+		return err
+	}
+	m.Extra = populateMeta(m, raw)
+	return nil
+}
+
+func (VolumeMeta) PrepareJSONSchema(s *jsonschema.Schema) error {
+	addStringAdditionalProps(s)
+	return nil
 }

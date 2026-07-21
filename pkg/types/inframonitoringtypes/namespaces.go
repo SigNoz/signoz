@@ -6,6 +6,8 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+
+	"github.com/swaggest/jsonschema-go"
 )
 
 type Namespaces struct {
@@ -28,7 +30,7 @@ type NamespaceRecord struct {
 		Jobs         int64 `json:"jobs" required:"true"`
 		StatefulSets int64 `json:"statefulSets" required:"true"`
 	} `json:"counts" required:"true"`
-	Meta map[string]string `json:"meta" required:"true"`
+	Meta NamespaceMeta `json:"meta" required:"true"`
 }
 
 // PostableNamespaces is the request body for the v2 namespaces list API.
@@ -105,4 +107,38 @@ func (req *PostableNamespaces) UnmarshalJSON(data []byte) error {
 	}
 	*req = PostableNamespaces(decoded)
 	return req.Validate()
+}
+
+// NamespaceMeta carries the guaranteed namespace metadata keys as typed fields
+// plus any dynamic group-by keys in Extra.
+type NamespaceMeta struct {
+	NamespaceName string            `json:"k8s.namespace.name" required:"true"`
+	ClusterName   string            `json:"k8s.cluster.name" required:"true"`
+	Extra         map[string]string `json:"-"`
+}
+
+var NamespaceMetaKeys = metaKeys(&NamespaceMeta{})
+
+func NewNamespaceMeta(attrs map[string]string) NamespaceMeta {
+	var m NamespaceMeta
+	m.Extra = populateMeta(&m, attrs)
+	return m
+}
+
+func (m NamespaceMeta) MarshalJSON() ([]byte, error) {
+	return marshalMeta(&m, m.Extra)
+}
+
+func (m *NamespaceMeta) UnmarshalJSON(data []byte) error {
+	raw, err := splitMeta(data)
+	if err != nil {
+		return err
+	}
+	m.Extra = populateMeta(m, raw)
+	return nil
+}
+
+func (NamespaceMeta) PrepareJSONSchema(s *jsonschema.Schema) error {
+	addStringAdditionalProps(s)
+	return nil
 }

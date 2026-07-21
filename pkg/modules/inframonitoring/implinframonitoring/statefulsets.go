@@ -38,7 +38,7 @@ func buildStatefulSetRecords(
 			StatefulSetMemoryLimit:   -1,
 			DesiredPods:              -1,
 			CurrentPods:              -1,
-			Meta:                     map[string]string{},
+			Meta:                     inframonitoringtypes.NewStatefulSetMeta(nil),
 		}
 
 		if metrics, ok := metricsMap[compositeKey]; ok {
@@ -83,9 +83,7 @@ func buildStatefulSetRecords(
 		}
 
 		if attrs, ok := metadataMap[compositeKey]; ok {
-			for k, v := range attrs {
-				record.Meta[k] = v
-			}
+			record.Meta = inframonitoringtypes.NewStatefulSetMeta(attrs)
 		}
 
 		records = append(records, record)

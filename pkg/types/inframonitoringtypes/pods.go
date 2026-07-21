@@ -6,6 +6,8 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+
+	"github.com/swaggest/jsonschema-go"
 )
 
 type Pods struct {
@@ -68,7 +70,7 @@ type PodRecord struct {
 	PodCountsByStatus PodCountsByStatus `json:"podCountsByStatus" required:"true"`
 	PodRestarts       int64             `json:"podRestarts" required:"true"`
 	PodAge            int64             `json:"podAge" required:"true"`
-	Meta              map[string]string `json:"meta" required:"true"`
+	Meta              PodMeta           `json:"meta" required:"true"`
 }
 
 // PostablePods is the request body for the v2 pods list API.
@@ -145,4 +147,47 @@ func (req *PostablePods) UnmarshalJSON(data []byte) error {
 	}
 	*req = PostablePods(decoded)
 	return req.Validate()
+}
+
+// PodMeta carries the guaranteed pod metadata keys as typed fields plus any
+// dynamic group-by keys in Extra.
+type PodMeta struct {
+	PodUID          string            `json:"k8s.pod.uid" required:"true"`
+	PodName         string            `json:"k8s.pod.name" required:"true"`
+	NamespaceName   string            `json:"k8s.namespace.name" required:"true"`
+	NodeName        string            `json:"k8s.node.name" required:"true"`
+	DeploymentName  string            `json:"k8s.deployment.name" required:"true"`
+	StatefulSetName string            `json:"k8s.statefulset.name" required:"true"`
+	DaemonSetName   string            `json:"k8s.daemonset.name" required:"true"`
+	JobName         string            `json:"k8s.job.name" required:"true"`
+	CronJobName     string            `json:"k8s.cronjob.name" required:"true"`
+	ClusterName     string            `json:"k8s.cluster.name" required:"true"`
+	PodStartTime    string            `json:"k8s.pod.start_time" required:"true"`
+	Extra           map[string]string `json:"-"`
+}
+
+var PodMetaKeys = metaKeys(&PodMeta{})
+
+func NewPodMeta(attrs map[string]string) PodMeta {
+	var m PodMeta
+	m.Extra = populateMeta(&m, attrs)
+	return m
+}
+
+func (m PodMeta) MarshalJSON() ([]byte, error) {
+	return marshalMeta(&m, m.Extra)
+}
+
+func (m *PodMeta) UnmarshalJSON(data []byte) error {
+	raw, err := splitMeta(data)
+	if err != nil {
+		return err
+	}
+	m.Extra = populateMeta(m, raw)
+	return nil
+}
+
+func (PodMeta) PrepareJSONSchema(s *jsonschema.Schema) error {
+	addStringAdditionalProps(s)
+	return nil
 }

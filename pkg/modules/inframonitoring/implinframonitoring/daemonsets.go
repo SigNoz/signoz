@@ -40,7 +40,7 @@ func buildDaemonSetRecords(
 			CurrentNodes:           -1,
 			ReadyNodes:             -1,
 			MisscheduledNodes:      -1,
-			Meta:                   map[string]string{},
+			Meta:                   inframonitoringtypes.NewDaemonSetMeta(nil),
 		}
 
 		if metrics, ok := metricsMap[compositeKey]; ok {
@@ -91,9 +91,7 @@ func buildDaemonSetRecords(
 		}
 
 		if attrs, ok := metadataMap[compositeKey]; ok {
-			for k, v := range attrs {
-				record.Meta[k] = v
-			}
+			record.Meta = inframonitoringtypes.NewDaemonSetMeta(attrs)
 		}
 
 		records = append(records, record)

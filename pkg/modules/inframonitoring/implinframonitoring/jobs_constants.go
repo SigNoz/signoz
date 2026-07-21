@@ -39,11 +39,7 @@ var jobsTableMetricNamesList = []string{
 
 // Carried forward from v1 jobAttrsToEnrich
 // (pkg/query-service/app/inframetrics/jobs.go:31-35).
-var jobAttrKeysForMetadata = []string{
-	"k8s.job.name",
-	"k8s.namespace.name",
-	"k8s.cluster.name",
-}
+var jobAttrKeysForMetadata = inframonitoringtypes.JobMetaKeys
 
 // orderByToJobsQueryNames maps the orderBy column to the query name
 // used for ranking job groups. v2 B/C/E/F are direct metrics, no

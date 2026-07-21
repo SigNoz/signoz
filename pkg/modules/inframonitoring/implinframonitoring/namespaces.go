@@ -32,7 +32,7 @@ func buildNamespaceRecords(
 			NamespaceName:   namespaceName,
 			NamespaceCPU:    -1,
 			NamespaceMemory: -1,
-			Meta:            map[string]string{},
+			Meta:            inframonitoringtypes.NewNamespaceMeta(nil),
 		}
 
 		if metrics, ok := metricsMap[compositeKey]; ok {
@@ -66,9 +66,7 @@ func buildNamespaceRecords(
 		}
 
 		if attrs, ok := metadataMap[compositeKey]; ok {
-			for k, v := range attrs {
-				record.Meta[k] = v
-			}
+			record.Meta = inframonitoringtypes.NewNamespaceMeta(attrs)
 		}
 
 		records = append(records, record)

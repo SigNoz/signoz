@@ -31,9 +31,7 @@ var clustersTableMetricNamesList = []string{
 	"k8s.container.status.reason",
 }
 
-var clusterAttrKeysForMetadata = []string{
-	"k8s.cluster.name",
-}
+var clusterAttrKeysForMetadata = inframonitoringtypes.ClusterMetaKeys
 
 // clusterCountAttrKeys are the resource attributes whose distinct values are
 // counted per cluster. Node name is read from the node metric universe, while

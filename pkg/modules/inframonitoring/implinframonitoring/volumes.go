@@ -33,7 +33,7 @@ func buildVolumeRecords(
 			VolumeInodes:              -1,
 			VolumeInodesFree:          -1,
 			VolumeInodesUsed:          -1,
-			Meta:                      map[string]string{},
+			Meta:                      inframonitoringtypes.NewVolumeMeta(nil),
 		}
 
 		if metrics, ok := metricsMap[compositeKey]; ok {
@@ -58,9 +58,7 @@ func buildVolumeRecords(
 		}
 
 		if attrs, ok := metadataMap[compositeKey]; ok {
-			for k, v := range attrs {
-				record.Meta[k] = v
-			}
+			record.Meta = inframonitoringtypes.NewVolumeMeta(attrs)
 		}
 
 		records = append(records, record)

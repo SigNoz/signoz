@@ -38,7 +38,7 @@ func buildDeploymentRecords(
 			DeploymentMemoryLimit:   -1,
 			DesiredPods:             -1,
 			AvailablePods:           -1,
-			Meta:                    map[string]string{},
+			Meta:                    inframonitoringtypes.NewDeploymentMeta(nil),
 		}
 
 		if metrics, ok := metricsMap[compositeKey]; ok {
@@ -83,9 +83,7 @@ func buildDeploymentRecords(
 		}
 
 		if attrs, ok := metadataMap[compositeKey]; ok {
-			for k, v := range attrs {
-				record.Meta[k] = v
-			}
+			record.Meta = inframonitoringtypes.NewDeploymentMeta(attrs)
 		}
 
 		records = append(records, record)

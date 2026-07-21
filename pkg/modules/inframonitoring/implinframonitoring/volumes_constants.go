@@ -28,15 +28,7 @@ var volumesTableMetricNamesList = []string{
 
 // Carried forward from v1 volumeAttrsToEnrich
 // (pkg/query-service/app/inframetrics/pvcs.go:23-31).
-var volumeAttrKeysForMetadata = []string{
-	"k8s.persistentvolumeclaim.name",
-	"k8s.pod.uid",
-	"k8s.pod.name",
-	"k8s.namespace.name",
-	"k8s.node.name",
-	"k8s.statefulset.name",
-	"k8s.cluster.name",
-}
+var volumeAttrKeysForMetadata = inframonitoringtypes.VolumeMetaKeys
 
 // orderByToVolumesQueryNames maps the orderBy column to the query/formula names
 // from newVolumesTableListQuery used for ranking volume groups. For "usage",

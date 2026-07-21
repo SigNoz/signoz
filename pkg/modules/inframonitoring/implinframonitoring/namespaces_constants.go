@@ -59,10 +59,7 @@ var namespacesMetricNamesListForCounts = []string{
 	"k8s.pod.status_reason",
 }
 
-var namespaceAttrKeysForMetadata = []string{
-	"k8s.namespace.name",
-	"k8s.cluster.name",
-}
+var namespaceAttrKeysForMetadata = inframonitoringtypes.NamespaceMetaKeys
 
 // namespaceCountAttrKeys are the workload resource attributes whose distinct
 // values are counted per namespace. They are read from the pod metric universe,

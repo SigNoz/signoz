@@ -36,7 +36,7 @@ func buildClusterRecords(
 			ClusterCPUAllocatable:    -1,
 			ClusterMemory:            -1,
 			ClusterMemoryAllocatable: -1,
-			Meta:                     map[string]string{},
+			Meta:                     inframonitoringtypes.NewClusterMeta(nil),
 		}
 
 		if metrics, ok := metricsMap[compositeKey]; ok {
@@ -85,9 +85,7 @@ func buildClusterRecords(
 		}
 
 		if attrs, ok := metadataMap[compositeKey]; ok {
-			for k, v := range attrs {
-				record.Meta[k] = v
-			}
+			record.Meta = inframonitoringtypes.NewClusterMeta(attrs)
 		}
 
 		records = append(records, record)

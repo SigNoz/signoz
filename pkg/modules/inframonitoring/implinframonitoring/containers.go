@@ -48,7 +48,7 @@ func buildContainerRecords(
 			Memory:                   -1,
 			MemoryRequestUtilization: -1,
 			MemoryLimitUtilization:   -1,
-			Meta:                     map[string]string{},
+			Meta:                     inframonitoringtypes.NewContainerMeta(nil),
 		}
 
 		if metrics, ok := metricsMap[compositeKey]; ok {
@@ -128,9 +128,7 @@ func buildContainerRecords(
 		}
 
 		if attrs, ok := metadataMap[compositeKey]; ok {
-			for k, v := range attrs {
-				record.Meta[k] = v
-			}
+			record.Meta = inframonitoringtypes.NewContainerMeta(attrs)
 		}
 
 		records = append(records, record)

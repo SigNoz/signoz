@@ -216,7 +216,7 @@ func buildHostRecords(
 			Wait:              -1,
 			Load15:            -1,
 			DiskUsage:         -1,
-			Meta:              map[string]string{},
+			Meta:              inframonitoringtypes.NewHostMeta(nil),
 		}
 
 		if metrics, ok := metricsMap[compositeKey]; ok {
@@ -238,9 +238,7 @@ func buildHostRecords(
 		}
 
 		if attrs, ok := metadataMap[compositeKey]; ok {
-			for k, v := range attrs {
-				record.Meta[k] = v
-			}
+			record.Meta = inframonitoringtypes.NewHostMeta(attrs)
 		}
 
 		records = append(records, record)
