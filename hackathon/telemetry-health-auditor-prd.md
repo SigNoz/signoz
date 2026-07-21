@@ -219,7 +219,7 @@ flowchart TD
     subgraph sidekick["SRE Sidekick - third-layer Go service"]
         AUD["Telemetry auditor"]
         SLO["SLO engine"]
-        RCA["RCA agent"]
+        RCA["RCA agent - Google ADK Go"]
         NOTIFY["Chat and voice adapters"]
         ACT["Action adapters - human-approved"]
         AUD --> SLO
@@ -399,9 +399,9 @@ Detection is deterministic; no LLM decides that an incident exists.
 
 1. If the gate says the telemetry is not trusted, return an `indeterminate` diagnosis that names the missing or incomplete evidence. Do not proceed to reasoning.
 2. Otherwise, gather bounded evidence via MCP tools: error spans, top exceptions, latency distribution shift, correlated logs, recent deploys or version changes.
-3. Run the OpenRouter DeepSeek model over the structured evidence to produce a root cause and a recommended advisory action.
+3. The RCA agent is a Google ADK Go agent. ADK orchestrates the reasoning loop and calls the SigNoz MCP tools natively; the DeepSeek model (via an OpenAI-compatible OpenRouter client) produces the root cause and a recommended advisory action.
 4. The model only reasons over the retrieved evidence; it must cite the evidence it used and must not invent metrics or services.
-5. Rule-based presentation (section 13.4) decides whether the result is a conclusion, ranked hypotheses, or `indeterminate`.
+5. Rule-based presentation (section 13.4) decides whether the result is a conclusion, ranked hypotheses, or `indeterminate`. ADK produces the reasoning; the deterministic rule set governs how it is presented.
 
 ### 13.3 Diagnosis contract
 
@@ -526,8 +526,8 @@ sre-sidekick/
   cmd/agent/            CLI + long-running modes: audit, slo, generate, watch, ask
   internal/audit/       check registry + deterministic score (Track A)
   internal/slo/         config, SLI evaluators, budget/burn, state machine, generator (Track B, built)
-  internal/rca/         evidence gathering + LLM reasoning + diagnosis contract (Track C)
-  internal/llm/         provider interface; OpenRouter DeepSeek client (deterministic core never imports it)
+  internal/rca/         Google ADK Go agent; SigNoz MCP tools + diagnosis contract (Track C)
+  internal/llm/         OpenAI-compatible OpenRouter (DeepSeek) client, supplied to ADK; deterministic core never imports it
   internal/notify/      Notifier interface; Slack adapter (Telegram, voice = stretch) (Track D)
   internal/act/         Actuator interface; advisory adapter (keda, patch/pr = stretch) (Track D)
   internal/signoz/      REST + MCP client (SIGNOZ-API-KEY), query_range, fields, traces, logs, dashboards, rules
@@ -604,6 +604,7 @@ hackathon/DEMO.md             runbook
 5. The Slack interface is a full Slack app (bot token, Block Kit, `/diagnose` slash command), not a bare webhook (section 14).
 6. The rule-based presentation is grounded in standard observability frameworks (Four Golden Signals, RED, USE) rather than ad-hoc heuristics (section 13.4).
 7. The trigger is alert-driven: a failure raises a SigNoz alert, the sidekick runs one autonomous pass, and posts to Slack.
+8. The agentic layer (Track C, RCA) is built with Google ADK Go (`google.golang.org/adk/v2`, ADK 2.0). ADK is code-first Go, so the full-Go constraint holds. ADK consumes the SigNoz MCP server as native tools for evidence gathering, and the DeepSeek model is provided to ADK through an OpenAI-compatible OpenRouter client. The deterministic engine does not import ADK.
 
 Everything below reflects these decisions.
 
@@ -662,6 +663,7 @@ Everything below reflects these decisions.
 | Autonomous action goes wrong | No action without human approval; reversible-first; scoped, logged adapters. |
 | Scope too big for the hackathon | MVP is the thinnest full loop on one scenario; every stage beyond it is a pluggable adapter marked stretch. |
 | Token cost / latency of MCP + LLM | Bounded evidence, single-pass reasoning, deterministic engine carries the load; MCP only for RCA. |
+| Google ADK Go 2.0 is new (recent GA) | ADK is isolated to `internal/rca`; the diagnosis contract is stable, so ADK could be swapped for a plain MCP + LLM loop without touching the rest. |
 | Two PRDs / drift | This document is the single PRD; the earlier third-layer draft is folded in here. |
 
 ---
