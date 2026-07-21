@@ -62,9 +62,7 @@ export function convertToApiError(
 	return new APIError({
 		httpStatusCode: response?.status || error.status || 500,
 		error: {
-			code:
-				errorData?.code ||
-				String(response?.status || error.code || 'unknown_error'),
+			code: errorData?.code || 'UPSTREAM_UNAVAILABLE',
 			message:
 				errorData?.message ||
 				response?.statusText ||
