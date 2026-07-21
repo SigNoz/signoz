@@ -1,16 +1,8 @@
 import { useCallback, useState } from 'react';
-import { generatePath } from 'react-router-dom';
-import logEvent from 'api/common/logEvent';
-import ROUTES from 'constants/routes';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 
 import { newPanelSearch, NEW_PANEL_ID } from '../PanelEditor/newPanelRoute';
-import {
-	PANEL_KIND_TO_PANEL_TYPE,
-	type PanelKind,
-} from '../Panels/types/panelKind';
-import { useDashboardStore } from '../store/useDashboardStore';
+import type { PanelKind } from '../Panels/types/panelKind';
+import { useOpenPanelEditor } from './useOpenPanelEditor';
 
 interface UseCreatePanelResult {
 	isPickerOpen: boolean;
@@ -47,14 +39,6 @@ export function useCreatePanel(): UseCreatePanelResult {
 	const createPanel = useCallback(
 		(panelKind: PanelKind, targetIndex?: number): void => {
 			setIsPickerOpen(false);
-			void logEvent(DashboardDetailEvents.PanelAdded, {
-				panelType: PANEL_KIND_TO_PANEL_TYPE[panelKind],
-				dashboardId,
-			});
-			const path = generatePath(ROUTES.DASHBOARD_PANEL_EDITOR, {
-				dashboardId,
-				panelId: NEW_PANEL_ID,
-			});
 			const target = targetIndex ?? layoutIndex;
 			openPanelEditor(NEW_PANEL_ID, {
 				search: newPanelSearch(panelKind, target),
