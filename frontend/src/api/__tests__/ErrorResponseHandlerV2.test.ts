@@ -18,81 +18,109 @@ function runHandler(error: AxiosError<ErrorV2Resp>): APIError {
 	throw new Error('expected ErrorResponseHandlerV2 to throw');
 }
 
-describe('ErrorResponseHandlerV2', () => {
-	it('surfaces the V2 error envelope when the body is well-formed', () => {
-		const apiError = runHandler(
-			asAxiosError({
-				message: 'Request failed with status code 400',
-				response: {
-					status: 400,
-					data: {
-						error: {
-							code: 'bad_request',
-							message: 'Invalid dashboard payload',
-							url: 'https://signoz.io/docs',
-							errors: [{ message: 'name is required' }],
-						},
+type ExpectedError = {
+	httpStatusCode: number;
+	code: string;
+	message: string;
+	errors: { message: string }[];
+};
+
+// One row per response shape the handler must normalize. New shapes (with
+// different bodies) can be added here without a new test block.
+const cases: {
+	name: string;
+	error: AxiosError<ErrorV2Resp>;
+	expected: ExpectedError;
+}[] = [
+	{
+		name: 'well-formed V2 error envelope',
+		error: asAxiosError({
+			message: 'Request failed with status code 400',
+			response: {
+				status: 400,
+				data: {
+					error: {
+						code: 'bad_request',
+						message: 'Invalid dashboard payload',
+						url: 'https://signoz.io/docs',
+						errors: [{ message: 'name is required' }, { message: 'name too long' }],
 					},
-				} as AxiosError['response'],
-			}),
-		);
+				},
+			} as AxiosError['response'],
+		}),
+		expected: {
+			httpStatusCode: 400,
+			code: 'bad_request',
+			message: 'Invalid dashboard payload',
+			errors: [{ message: 'name is required' }, { message: 'name too long' }],
+		},
+	},
+	{
+		// Regression: during a deployment the gateway returns a 5xx with a
+		// non-envelope body. Reading response.data.error.code used to throw a
+		// TypeError from inside the handler itself. See engineering-pod#5760.
+		name: '5xx with a non-envelope HTML body',
+		error: asAxiosError({
+			message: 'Request failed with status code 503',
+			response: {
+				status: 503,
+				data: '<html><body>503 Service Temporarily Unavailable</body></html>',
+			} as AxiosError['response'],
+		}),
+		expected: {
+			httpStatusCode: 503,
+			code: 'UPSTREAM_UNAVAILABLE',
+			message: 'Request failed with status code 503',
+			errors: [],
+		},
+	},
+	{
+		name: '5xx with an empty body',
+		error: asAxiosError({
+			message: 'Request failed with status code 502',
+			response: {
+				status: 502,
+				data: undefined,
+			} as AxiosError['response'],
+		}),
+		expected: {
+			httpStatusCode: 502,
+			code: 'UPSTREAM_UNAVAILABLE',
+			message: 'Request failed with status code 502',
+			errors: [],
+		},
+	},
+	{
+		name: 'no response received (network error)',
+		error: asAxiosError({
+			message: 'Network Error',
+			code: 'ERR_NETWORK',
+			name: 'AxiosError',
+			request: {},
+		}),
+		expected: {
+			httpStatusCode: 500,
+			code: 'ERR_NETWORK',
+			message: 'Network Error',
+			errors: [],
+		},
+	},
+];
 
-		expect(apiError).toBeInstanceOf(APIError);
-		expect(apiError.getHttpStatusCode()).toBe(400);
-		expect(apiError.getErrorCode()).toBe('bad_request');
-		expect(apiError.getErrorMessage()).toBe('Invalid dashboard payload');
-	});
+describe('ErrorResponseHandlerV2', () => {
+	it.each(cases)(
+		'normalizes $name into a consistent APIError',
+		({ error, expected }) => {
+			const apiError = runHandler(error);
 
-	// Regression: during a deployment the gateway returns a 5xx with a non-envelope
-	// (HTML/empty) body. Reading response.data.error.code used to throw a TypeError
-	// from inside the handler itself. See engineering-pod#5760.
-	it('does not throw a TypeError when the 5xx body is not a V2 envelope', () => {
-		const apiError = runHandler(
-			asAxiosError({
-				message: 'Request failed with status code 503',
-				response: {
-					status: 503,
-					data: '<html><body>503 Service Temporarily Unavailable</body></html>',
-				} as AxiosError['response'],
-			}),
-		);
-
-		expect(apiError).toBeInstanceOf(APIError);
-		expect(apiError.getHttpStatusCode()).toBe(503);
-		expect(apiError.getErrorCode()).toBe('UPSTREAM_UNAVAILABLE');
-		expect(apiError.getErrorMessage()).toBe(
-			'Request failed with status code 503',
-		);
-	});
-
-	it('handles a 5xx with an empty body', () => {
-		const apiError = runHandler(
-			asAxiosError({
-				message: 'Request failed with status code 502',
-				response: {
-					status: 502,
-					data: undefined,
-				} as AxiosError['response'],
-			}),
-		);
-
-		expect(apiError).toBeInstanceOf(APIError);
-		expect(apiError.getHttpStatusCode()).toBe(502);
-		expect(apiError.getErrorCode()).toBe('UPSTREAM_UNAVAILABLE');
-	});
-
-	it('falls back to error metadata when no response was received', () => {
-		const apiError = runHandler(
-			asAxiosError({
-				message: 'Network Error',
-				code: 'ERR_NETWORK',
-				name: 'AxiosError',
-				request: {},
-			}),
-		);
-
-		expect(apiError).toBeInstanceOf(APIError);
-		expect(apiError.getErrorCode()).toBe('ERR_NETWORK');
-		expect(apiError.getErrorMessage()).toBe('Network Error');
-	});
+			expect(apiError).toBeInstanceOf(APIError);
+			expect(apiError.getHttpStatusCode()).toBe(expected.httpStatusCode);
+			expect(apiError.getErrorCode()).toBe(expected.code);
+			expect(apiError.getErrorMessage()).toBe(expected.message);
+			// The sub-error messages feed several parts of the UI, so assert them.
+			expect(apiError.getErrorDetails().error.errors).toStrictEqual(
+				expected.errors,
+			);
+		},
+	);
 });
