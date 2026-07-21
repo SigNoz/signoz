@@ -224,6 +224,10 @@ func (module *module) getOrgSessionContext(ctx context.Context, org *types.Organ
 		return nil, err
 	}
 
+	if !module.globalConfig.IsOriginAllowed(siteURL) {
+		return nil, errors.Newf(errors.TypeInvalidInput, global.ErrCodeOriginNotAllowed, "ref %q is not an allowed origin", siteURL.String())
+	}
+
 	loginURL, err := provider.LoginURL(ctx, siteURL, authDomain)
 	if err != nil {
 		return nil, err
