@@ -95,10 +95,10 @@ The loop can start from an alert (autonomous) or from a human question (interact
 
 1. An end-to-end incident loop: detect, ground, diagnose, communicate, act, verify.
 2. Grounding on a deterministic reliability engine: SLOs, error budgets, burn rates, and a telemetry-trust state (`healthy` / `unhealthy` / `indeterminate`).
-3. Agentic root-cause analysis over live telemetry via the SigNoz MCP server, with evidence and calibrated confidence.
-4. The agent must never diagnose confidently on untrustworthy telemetry; incomplete evidence yields an explicit `indeterminate` diagnosis.
-5. At least one chat interface (Telegram or Slack) that delivers diagnoses and takes approvals.
-6. At least one human-approved remediation path.
+3. Agentic root-cause analysis over live telemetry via the SigNoz MCP server, using an OpenRouter DeepSeek model, with evidence and rule-based presentation.
+4. The agent must never diagnose on untrustworthy telemetry; incomplete evidence yields an explicit `indeterminate` diagnosis.
+5. A Slack interface that delivers grounded diagnoses to on-call.
+6. Advisory remediation: the agent recommends an action; a human performs it. The loop runs one pass and then waits for human review; it never acts on its own.
 7. Results written back into SigNoz as metrics, dashboards, and alerts, using only public endpoints.
 8. The deliverable is a single Go service; the interface is the Go CLI, the chat adapters, and the dashboards it generates in SigNoz. There is no separate web frontend.
 9. The SigNoz deployment stays stock and reproducible by Foundry.
@@ -171,24 +171,24 @@ Fixed constraints apply to all.
 ### Track C: RCA Agent (AI)
 
 - Triggered by an alert or a human question.
-- Grounds on Tracks A and B, gathers evidence via the SigNoz MCP server, and produces a diagnosis with confidence, or `indeterminate`.
+- Grounds on Tracks A and B, gathers evidence via the SigNoz MCP server, reasons with an OpenRouter DeepSeek model, and produces a diagnosis or an `indeterminate` result.
+- Presentation is rule-based (section 13.4), not a soft model confidence.
 
 ### Track D: Interface and Action (AI + human)
 
-- At least one chat adapter (Telegram or Slack) that posts diagnoses and takes approvals.
-- At least one human-approved remediation adapter (advisory, or a config patch / PR, or a KEDA scaling action).
+- Slack adapter that posts grounded diagnoses to on-call.
+- Advisory action: the agent recommends an action; it executes nothing. The loop runs one pass and stops for human review.
 
 ### MVP (hackathon)
 
-The thinnest full loop on one scenario:
-burn-rate or indeterminate alert fires -> agent grounds on the SLO report -> MCP-driven RCA on the offending service -> Telegram (or Slack) message with root cause and a proposed fix -> human approves -> one safe action -> re-verify.
+The thinnest one-pass loop on one scenario:
+a burn-rate or indeterminate alert fires -> the agent grounds on the SLO report -> MCP-driven RCA on the offending service with DeepSeek -> a Slack message with the grounded facts, root cause (or indeterminate reason), evidence links, and a recommended advisory action -> the agent stops and waits for human review.
 
 ### Stretch
 
-- Voice / on-call call interface (#11654).
-- KEDA external scaler / autoscaling action (#11653).
+- Telegram and voice / on-call interfaces (#11654).
+- Executing action adapters: KEDA autoscaling (#11653), config patch, or pull request.
 - LLM-as-judge for AI-agent quality SLIs (grounded, safe, correct-tool).
-- Remediation delivered as a pull request.
 
 ### Explicitly out of scope
 
@@ -268,24 +268,20 @@ sequenceDiagram
     participant SK as SRE Sidekick
     participant SLO as SLO engine
     participant MCP as SigNoz MCP
-    participant U as On-call
+    participant U as On-call on Slack
 
     SZ->>SK: webhook - burn-rate alert for support-agent
     SK->>SLO: ground service and window
     SLO-->>SK: state unhealthy, budget -19, burn 20x, trusted
     alt telemetry not trusted
-        SK->>U: SLO indeterminate - telemetry incomplete, cannot diagnose
+        SK->>U: Slack - SLO indeterminate, telemetry incomplete, cannot diagnose
     else trusted
         SK->>MCP: search traces and aggregate logs
         MCP-->>SK: error spans, top exceptions, latency shift
-        SK->>SK: LLM RCA over evidence to root cause plus confidence
-        SK->>U: root cause, evidence links, proposed fix, Approve or Reject
-        U-->>SK: Approve
-        SK->>SK: execute action adapter
-        SK->>SLO: verify service and window
-        SLO-->>SK: state recovering
-        SK->>U: applied - burn rate falling, SLO recovering
+        SK->>SK: DeepSeek RCA over evidence, rule-based presentation
+        SK->>U: Slack - grounded facts, root cause, evidence links, recommended action
     end
+    Note over SK,U: one pass, then wait for human review (advisory MVP)
 ```
 
 ---
@@ -399,8 +395,9 @@ Detection is deterministic; no LLM is involved in deciding that an incident exis
 
 1. If the gate says the telemetry is not trusted, return an `indeterminate` diagnosis that names the missing or incomplete evidence. Do not proceed to reasoning.
 2. Otherwise, gather bounded evidence via MCP tools: error spans, top exceptions, latency distribution shift, correlated logs, recent deploys or version changes.
-3. Run an LLM over the structured evidence to produce a root cause, a confidence, and a proposed remediation.
-4. The LLM only reasons over the retrieved evidence; it must cite the evidence it used and must not invent metrics or services.
+3. Run the OpenRouter DeepSeek model over the structured evidence to produce a root cause and a recommended advisory action.
+4. The model only reasons over the retrieved evidence; it must cite the evidence it used and must not invent metrics or services.
+5. Rule-based presentation (section 13.4) decides whether the result is a conclusion, ranked hypotheses, or `indeterminate`.
 
 ### 13.3 Diagnosis contract
 
@@ -429,43 +426,54 @@ Detection is deterministic; no LLM is involved in deciding that an incident exis
 
 When `status` is `indeterminate`, `root_cause` and `proposed_fix` are omitted and a `missing_evidence` list is included instead.
 
-### 13.4 Confidence and honesty rules
+### 13.4 Presentation rules (rule-based, not soft confidence)
 
-- A diagnosis with confidence below a configured floor is presented as a hypothesis, not a conclusion.
-- The agent must never state a root cause it did not find evidence for.
-- The agent must prefer "I could not determine this" over a low-evidence guess.
+How a diagnosis is presented is decided by an explicit, configured rule set, not by a raw LLM confidence number.
+The rules operate on deterministic evidence signals (how many error spans, whether a deploy correlates, whether the gate is trusted, how many distinct root-cause candidates the evidence supports).
+
+Example rules:
+
+- If the gate is not trusted, present `indeterminate` and name the missing evidence. Never state a root cause.
+- If a single cause is supported by correlated evidence across at least two signals (for example error spans plus a deploy marker), present it as a conclusion.
+- If the evidence supports more than one candidate, present them as ranked hypotheses, not a conclusion.
+- If the evidence is thin (below a configured minimum), present "could not determine" rather than a guess.
+
+The agent must never state a root cause it did not find evidence for.
+The rule set lives in `sidekick.yaml` so it is auditable and tunable without touching code.
 
 ---
 
 ## 14. Communicate stage
 
-Adapters (pluggable; MVP ships one):
+MVP adapter: Slack (#11655). Telegram and voice (#11654) are stretch adapters behind the same `Notifier` interface.
 
-- Telegram bot (simple, mobile, good for a demo).
-- Slack app (#11655).
-- Voice / on-call call (#11654, stretch).
+The loop runs one pass on a trigger and then posts to Slack and stops.
+It does not act on its own; it hands the diagnosis to a human and waits for review.
 
-Message contract: the deterministic grounding block, the root cause, evidence deep links, the proposed fix, and inline `Approve` / `Reject` controls.
-The natural-language phrasing is the only LLM-authored part of the message; the facts and links are deterministic.
-Every message and every approval decision is logged with a correlation id.
+Message contract: the deterministic grounding block (SLO, state, budget, burn, trusted or indeterminate), the root cause or the indeterminate reason, evidence deep links, and the recommended advisory action.
+The natural-language phrasing is the only LLM-authored part of the message; the facts, numbers, and links are deterministic.
+Because the MVP is advisory only, the message recommends an action but offers no execute button; the human acts outside the agent.
+Every message is logged with a correlation id.
 
 ---
 
-## 15. Act stage (human-approved)
+## 15. Act stage (advisory only in the MVP)
 
-Principles:
+MVP: advisory only. The agent posts the recommended action to Slack and takes no automated step. A human performs the action outside the agent.
 
-- No action without explicit human approval.
+Principles that hold now and for later executing adapters:
+
+- No automated action without explicit human approval.
 - Prefer reversible actions; label irreversible ones and require stronger confirmation.
 - Every action is scoped to the affected service and environment and is logged.
+- The LLM never receives write credentials.
 
-Adapters (pluggable; MVP ships one, likely advisory or config patch):
+Stretch adapters, behind the same `Actuator` interface:
 
-- Advisory only: post the recommended action, take no automated step.
 - Autoscaling: a KEDA external scaler or an autoscaling advisory driven by SigNoz metrics and anomalies (#11653).
 - Config patch or pull request: open a change for human review.
 
-The action adapter receives the approved proposal and returns an outcome that feeds the Verify stage.
+When an executing adapter is added, it receives the approved proposal and returns an outcome that feeds the Verify stage. In the advisory MVP, verification is triggered by the human re-running the check after they act.
 
 ---
 
@@ -507,14 +515,15 @@ sre-sidekick/
   internal/audit/       check registry + deterministic score (Track A)
   internal/slo/         config, SLI evaluators, budget/burn, state machine, generator (Track B, built)
   internal/rca/         evidence gathering + LLM reasoning + diagnosis contract (Track C)
-  internal/judge/       optional LLM-as-judge for agent-quality SLIs
-  internal/notify/      chat + voice adapters (telegram, slack, ...) (Track D)
-  internal/act/         action adapters (advisory, keda, patch/pr) (Track D)
+  internal/llm/         provider interface; OpenRouter DeepSeek client (deterministic core never imports it)
+  internal/notify/      Notifier interface; Slack adapter (Telegram, voice = stretch) (Track D)
+  internal/act/         Actuator interface; advisory adapter (keda, patch/pr = stretch) (Track D)
   internal/signoz/      REST + MCP client (SIGNOZ-API-KEY), query_range, fields, traces, logs, dashboards, rules
   internal/otlp/        OTLP emitter
   internal/config/      typed YAML loaders
   Dockerfile
-  configs/              slo.yaml, audit.yaml, sidekick.yaml (channels, action policy, thresholds)
+  configs/              slo.yaml, audit.yaml, sidekick.yaml (slack, llm provider, presentation rules)
+  # internal/judge/ (LLM-as-judge agent-quality SLIs) is stretch, not in the MVP
 ```
 
 Interfaces are the seams between tracks:
@@ -562,15 +571,17 @@ hackathon/DEMO.md             runbook
 
 ---
 
-## 21. Open questions for the team
+## 21. Decisions (resolved with the team)
 
-1. First chat adapter: Telegram (simplest for a demo) or Slack (#11655)? Voice (#11654) as stretch?
-2. First action adapter: advisory only, a config patch / PR, or a KEDA scaling action (#11653)?
-3. LLM provider and where the key comes from in the demo environment. Any self-hosted option (Ollama) for reproducibility?
-4. Do we include the LLM-as-judge agent-quality SLIs in the MVP, or keep them as stretch?
-5. Confidence floor and how we present low-confidence diagnoses.
-6. Rename the repo module from `reliability-agent` to `sre-sidekick`, or keep the existing name?
-7. How much of the loop runs autonomously on an alert vs waits for a human "go" in chat?
+1. Chat adapter: Slack (#11655) is the MVP interface. Telegram and voice (#11654) are stretch.
+2. Action adapter: advisory only for now. The agent posts the recommended action; it does not execute anything. KEDA scaling (#11653) and config patch / PR are stretch.
+3. LLM provider: OpenRouter, DeepSeek model. Configured via `sidekick.yaml` and an API key from the environment. A single provider interface keeps the model swappable.
+4. No LLM in telemetry audit. The auditor and SLO engine stay fully deterministic. LLM-as-judge agent-quality SLIs are dropped from the MVP (stretch only).
+5. Diagnosis presentation is rule-based, not a soft LLM confidence. A configured rule set decides whether a diagnosis is presented as a conclusion, a hypothesis, or escalated (see section 13.4).
+6. The service is named `sre-sidekick`. The existing `reliability-agent` module is renamed and grows into it.
+7. The loop runs one pass on a trigger (detect, ground, diagnose, communicate) and then stops and waits for human review. It never acts on its own; the human reviews the diagnosis and the advisory before anything further happens.
+
+Everything below reflects these decisions.
 
 ---
 
