@@ -69,13 +69,16 @@ Decision: build an independent service that runs beside a stock, Foundry-install
 5. Results written back into SigNoz as metrics, generated dashboards, and burn-rate alerts, using only public endpoints.
 6. LLM used only to phrase developer feedback, never to compute a score.
 7. The SigNoz deployment stays stock and reproducible by Foundry.
+8. The entire deliverable is a single Go service. The user interface is the Go CLI plus the dashboards it generates inside SigNoz; there is no separate frontend.
 
 ### Non-goals
 
 1. Modifying SigNoz source, or shipping a custom SigNoz image.
-2. Rebuilding ingestion, storage, dashboards, alerting, or LLM tracing that SigNoz already provides.
-3. Destructive remediation without explicit human approval.
-4. Depending on SigNoz Cloud only features. The service must work against self-hosted SigNoz.
+2. Modifying the Foundry-generated deployment (`pours/`, compose files) to enable features. Everything must work on the stock deployment exactly as `foundryctl cast` produces it.
+3. Any frontend, JavaScript, or React code. The deliverable is Go only.
+4. Rebuilding ingestion, storage, dashboards, alerting, or LLM tracing that SigNoz already provides.
+5. Destructive remediation without explicit human approval.
+6. Depending on SigNoz Cloud only features. The service must work against self-hosted SigNoz.
 
 ---
 
@@ -286,6 +289,25 @@ Finding shape:
 }
 ```
 
+### 8.1 Per-check status (distinct from SLO state)
+
+Each check returns exactly one status:
+
+- `pass`: complete evidence was evaluated and the pass condition held;
+- `fail`: complete evidence was evaluated and the pass condition did not hold;
+- `indeterminate`: required evidence was unavailable, partial, stale beyond the threshold, or invalid.
+
+An empty result page, an API error, a partial or truncated response, an unknown metric, or incomplete pagination must never be counted as a `pass`.
+Audit `indeterminate` is a telemetry-evidence state; it is not an SLO state.
+The score subtracts only `fail` results by severity, so an `indeterminate` check neither passes nor silently lowers the score.
+
+### 8.2 The auditor and the SLO engine are separate
+
+Mandatory boundary: the audit output must never contain an SLO verdict.
+It must not include `slo_status`, `slo_compliance`, `error_budget_remaining`, `burn_rate`, or any per-SLO impact.
+The auditor answers "can this telemetry be trusted?"; the SLO engine answers "given trusted telemetry, is the target met?".
+The only thing that crosses the boundary is the completeness-gate result (section 9.6), and it flows auditor to SLO engine, never the reverse.
+
 ---
 
 ## 9. SLO and Error-Budget Engine
@@ -309,12 +331,28 @@ slos:
 
 | Type | SLI | How |
 |---|---|---|
-| `ratio` | good / total | two scalar `query_range` calls |
-| `latency_threshold` | under-threshold / total | percentile query |
-| `completeness` | complete traces / total | trace query for expected spans |
-| `grounded_answers` | grounded / total | attribute count over agent spans |
+| `ratio` | good / total | two windowed scalar queries |
+| `latency_threshold` | under-threshold / total | windowed histogram bucket and count |
+| `completeness` | complete runs / total | windowed good/total over a completeness marker |
+| `grounded_answers` | grounded / total | windowed good/total over a grounded-verdict count |
 
-### 9.3 Error budget and burn rate
+### 9.3 Query correctness (mandatory)
+
+Every SLO query must:
+
+- scope to the requested `service` and `environment` (for example `{service_name="support-agent"}`);
+- evaluate over the configured window, not an instant;
+- use `increase(...)` or `rate(...)` for cumulative counters, never the latest raw counter value;
+- use windowed histogram bucket and count expressions for latency, never raw cumulative buckets;
+- distinguish a real zero, no data, partial data, and query failure;
+- treat a zero denominator as `indeterminate` unless an explicit no-traffic policy is set;
+- treat missing, stale, partial, or failed evidence as `indeterminate`, never as a pass or a healthy result;
+- validate the target as a fraction in `(0, 1]`, and handle a 100% target (zero allowed budget) explicitly;
+- return the evaluated start and end timestamps and preserve SigNoz query-completeness metadata.
+
+A raw value read is correct only for a gauge. For a cumulative counter the SLI numerator and denominator are `sum(increase(metric{service_name="..."}[window]))`.
+
+### 9.4 Error budget and burn rate
 
 ```text
 error_budget           = (1 - target) * total
@@ -322,7 +360,7 @@ error_budget_remaining = 1 - (error_rate / (1 - target))   # over the window
 burn_rate              = error_rate / (1 - target)          # 1.0 exhausts by end of window
 ```
 
-### 9.4 Multi-window multi-burn-rate alerting
+### 9.5 Multi-window multi-burn-rate alerting
 
 Google SRE style: a tier fires only when the burn rate exceeds its threshold over both a long and a short window.
 
@@ -332,7 +370,38 @@ Google SRE style: a tier fires only when the burn rate exceeds its threshold ove
 | Medium | 6h | 30m | 6x | ticket |
 | Slow | 24h | 2h | 3x | ticket |
 
-Alerts are precomputed as a plain `slo.burn_rate` metric and alerted with a simple threshold rule, avoiding the upstream formula-alert bugs ([#10823](https://github.com/SigNoz/signoz/issues/10823), [#10881](https://github.com/SigNoz/signoz/issues/10881)).
+Implementation: the agent computes the burn rate for each window itself and emits it as a labelled metric (`slo_burn_rate{window="1h"}`, `{window="5m"}`, `{window="6h"}`, and so on).
+Each tier is a SigNoz threshold alert whose condition requires both the long-window and the short-window series to exceed the threshold (a two-query rule with an AND join, or two coordinated rules).
+Precomputing the burn rate as a plain metric and alerting on a threshold avoids the upstream formula-alert bugs ([#10823](https://github.com/SigNoz/signoz/issues/10823), [#10881](https://github.com/SigNoz/signoz/issues/10881)).
+The MVP may ship the fast tier first; the full three-tier ladder is required for completeness.
+
+### 9.6 Completeness gate
+
+The gate is the only interface from the SLO engine to the auditor, and it is service-, environment-, and window-scoped:
+
+```go
+type CompletenessGate interface {
+    Check(ctx context.Context, service, environment string, window time.Duration) (GateResult, error)
+}
+
+type GateResult struct {
+    Coverage      float64 // 0..1 fraction of required evidence present
+    QueryComplete bool    // SigNoz reported the query as complete
+    Trusted       bool    // Coverage >= threshold AND QueryComplete
+    Reason        string  // why the evidence is not trusted, when applicable
+}
+```
+
+When `Trusted` is false and the SLO requires completeness, the SLO resolves to `indeterminate` before any SLI query is spent.
+The gate must use the service and environment so one service cannot satisfy another's gate.
+SLO state never flows back into the gate.
+
+### 9.7 Metric contract
+
+The producer and the SLO config must agree on one canonical metric contract.
+Names are normalized to PromQL-safe form (dots become underscores): `agent_requests_total`, `agent_success_total`, `agent_errors_total`, and a latency histogram such as `gen_ai_server_request_duration`.
+Counters are cumulative and queried with `increase(...)`; the latency metric is a histogram queried with windowed bucket and count expressions.
+Every metric carries `service.name` (and `deployment.environment` when present) so queries can be scoped.
 
 ---
 
@@ -340,22 +409,26 @@ Alerts are precomputed as a plain `slo.burn_rate` metric and alerted with a simp
 
 | Metric | Type | Labels |
 |---|---|---|
-| `telemetry.quality.score` | gauge | `service` |
-| `telemetry.quality.findings` | gauge | `service`, `severity` |
-| `slo.compliance` | gauge | `service`, `slo`, `window` |
-| `slo.state` | gauge (0 unhealthy, 1 healthy, 2 indeterminate) | `service`, `slo` |
-| `slo.error_budget_remaining` | gauge | `service`, `slo` |
-| `slo.burn_rate` | gauge | `service`, `slo`, `window` |
+| `telemetry_quality_score` | gauge | `service` |
+| `telemetry_quality_findings` | gauge | `service`, `severity` |
+| `telemetry_quality_coverage` | gauge | `service` |
+| `slo_compliance` | gauge | `service`, `slo`, `window` |
+| `slo_state` | gauge (0 unhealthy, 1 healthy, 2 indeterminate) | `service`, `slo` |
+| `slo_error_budget_remaining` | gauge | `service`, `slo` |
+| `slo_burn_rate` | gauge | `service`, `slo`, `window` |
 
+Instrument names use underscores so the metrics are directly queryable in PromQL; OTLP dotted names are kept as-is in ClickHouse and are not PromQL-queryable.
 Emitted over OTLP to the collector, so they land in ClickHouse and chart on generated dashboards.
 
 ---
 
 ## 11. Generated dashboards and alerts
 
-- The engine assembles an SLO dashboard (PromQL panels for `slo_compliance`, `slo_error_budget_remaining`, `slo_burn_rate`, `slo_state`) and creates or updates it via `POST/PUT /api/v2/dashboards` (or MCP `create_dashboard`).
+- The engine assembles an SLO dashboard (PromQL panels for `slo_compliance`, `slo_error_budget_remaining`, `slo_burn_rate`, `slo_state`) and creates or updates it via the SigNoz dashboard API (or MCP `create_dashboard`).
+- Dashboard API version: use the API that renders on the **stock** deployment, verified against the UI. Do not modify `pours/` or compose to enable a dashboard version. If the stock UI renders the classic (v1) format, use v1; only use v2 if stock requires it.
 - Creation is idempotent, keyed by a stable dashboard title, so re-running never duplicates.
-- Burn-rate alerts are created via `POST /api/v2/rules` (or MCP `create_alert`) as simple threshold rules over `slo_burn_rate`.
+- A notification channel is ensured (idempotent) because SigNoz rules require at least one channel.
+- Burn-rate alerts are created via `POST /api/v2/rules` (or MCP `create_alert`) as simple threshold rules over `slo_burn_rate`, one per tier (section 9.5).
 
 ---
 
@@ -383,7 +456,7 @@ reliability-agent/
   slo.yaml, audit.yaml    example configs
 ```
 
-The interface seam between Track A and Track B is a single `CompletenessGate`: the SLO engine calls the auditor for a service/window and short-circuits to `indeterminate` below the gate threshold.
+The interface seam between Track A and Track B is the single `CompletenessGate` from section 9.6: the SLO engine calls the auditor for a service, environment, and window, receives a `GateResult`, and short-circuits to `indeterminate` when the evidence is not trusted. The auditor never learns SLO names or SLO state.
 
 ---
 
