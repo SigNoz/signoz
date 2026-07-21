@@ -9,13 +9,6 @@ from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 GROUPS_PATH = "/api/v1/span_mapper_groups"
 
 
-def _auth_headers(token: str) -> dict[str, str]:
-    return {
-        "authorization": f"Bearer {token}",
-        "content-type": "application/json",
-    }
-
-
 def test_create_groups_and_simulate_with_backfill(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
@@ -42,7 +35,10 @@ def test_create_groups_and_simulate_with_backfill(
     create_group = requests.post(
         signoz.self.host_configs["8080"].get(GROUPS_PATH),
         timeout=10,
-        headers=_auth_headers(token),
+        headers={
+            "authorization": f"Bearer {token}",
+            "content-type": "application/json",
+        },
         json={
             "name": "llm-backfill",
             "condition": {"attributes": ["model"], "resource": []},
@@ -59,7 +55,10 @@ def test_create_groups_and_simulate_with_backfill(
     create_mapper = requests.post(
         signoz.self.host_configs["8080"].get(f"{GROUPS_PATH}/{groupId}/span_mappers"),
         timeout=10,
-        headers=_auth_headers(token),
+        headers={
+            "authorization": f"Bearer {token}",
+            "content-type": "application/json",
+        },
         json={
             "name": "gen_ai.request.model",
             "fieldContext": "attribute",
@@ -85,7 +84,10 @@ def test_create_groups_and_simulate_with_backfill(
     list_groups = requests.get(
         signoz.self.host_configs["8080"].get(GROUPS_PATH),
         timeout=10,
-        headers=_auth_headers(token),
+        headers={
+            "authorization": f"Bearer {token}",
+            "content-type": "application/json",
+        },
     )
     assert list_groups.status_code == HTTPStatus.OK
     assert groupId in [g["id"] for g in list_groups.json()["data"]["items"]]
@@ -93,7 +95,10 @@ def test_create_groups_and_simulate_with_backfill(
     list_mappers = requests.get(
         signoz.self.host_configs["8080"].get(f"{GROUPS_PATH}/{groupId}/span_mappers"),
         timeout=10,
-        headers=_auth_headers(token),
+        headers={
+            "authorization": f"Bearer {token}",
+            "content-type": "application/json",
+        },
     )
     assert list_mappers.status_code == HTTPStatus.OK
     assert "gen_ai.request.model" in [m["name"] for m in list_mappers.json()["data"]["items"]]
@@ -101,7 +106,10 @@ def test_create_groups_and_simulate_with_backfill(
     simulate = requests.post(
         signoz.self.host_configs["8080"].get(f"{GROUPS_PATH}/test"),
         timeout=10,
-        headers=_auth_headers(token),
+        headers={
+            "authorization": f"Bearer {token}",
+            "content-type": "application/json",
+        },
         json={
             "spans": [
                 {
@@ -161,14 +169,20 @@ def test_create_groups_and_simulate_with_backfill(
     delete_group = requests.delete(
         signoz.self.host_configs["8080"].get(f"{GROUPS_PATH}/{groupId}"),
         timeout=10,
-        headers=_auth_headers(token),
+        headers={
+            "authorization": f"Bearer {token}",
+            "content-type": "application/json",
+        },
     )
     assert delete_group.status_code == HTTPStatus.NO_CONTENT
 
     list_after_delete = requests.get(
         signoz.self.host_configs["8080"].get(GROUPS_PATH),
         timeout=10,
-        headers=_auth_headers(token),
+        headers={
+            "authorization": f"Bearer {token}",
+            "content-type": "application/json",
+        },
     )
     assert list_after_delete.status_code == HTTPStatus.OK
     assert groupId not in [g["id"] for g in list_after_delete.json()["data"]["items"]]
