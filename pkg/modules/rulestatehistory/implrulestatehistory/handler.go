@@ -113,6 +113,8 @@ func (h *handler) GetRuleHistoryTimeline(w http.ResponseWriter, r *http.Request)
 			Labels:              item.Labels.ToQBLabels(),
 			Fingerprint:         item.Fingerprint,
 			Value:               item.Value,
+			RelatedTracesLink:   item.RelatedTracesLink,
+			RelatedLogsLink:     item.RelatedLogsLink,
 		})
 	}
 	resp.Total = timelineTotal
