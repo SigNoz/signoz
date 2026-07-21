@@ -14,3 +14,9 @@
 	color: var(--l3-foreground);
 	cursor: help;
 }
+
+.tooltipContent {
+	max-width: 240px;
+	white-space: normal;
+	word-break: break-word;
+}

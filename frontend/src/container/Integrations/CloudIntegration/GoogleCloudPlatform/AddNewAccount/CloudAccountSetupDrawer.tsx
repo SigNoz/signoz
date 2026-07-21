@@ -120,12 +120,6 @@ function CloudAccountSetupDrawer({
 			drawerHeaderProps={{ className: styles.title }}
 		>
 			<FlowSelector value={flow} onChange={setFlow} />
-			{/* TODO(gcp): re-enable the setup-guide callout once the GCP guide is live.
-				<SetupGuideCallout
-					onOpenGuide={(): void =>
-						window.open('https://signoz.io/docs/cloud-integrations/gcp/', '_blank')
-					}
-				/> */}
 			<div className={styles.drawerSection}>
 				<FieldLabel
 					htmlFor="gcp-account-name-input"
