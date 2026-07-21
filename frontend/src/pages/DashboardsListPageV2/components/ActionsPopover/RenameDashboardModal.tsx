@@ -4,12 +4,14 @@ import { Button } from '@signozhq/ui/button';
 import { DialogWrapper } from '@signozhq/ui/dialog';
 import { Input } from '@signozhq/ui/input';
 import { toast } from '@signozhq/ui/sonner';
+import logEvent from 'api/common/logEvent';
 import {
 	invalidateListDashboardsForUserV2,
 	// eslint-disable-next-line no-restricted-imports -- list rename targets another dashboard by id; useOptimisticPatch is bound to the open dashboard's store/cache.
 	patchDashboardV2,
 } from 'api/generated/services/dashboard';
 import type { DashboardtypesJSONPatchOperationDTO } from 'api/generated/services/sigNoz.schemas';
+import { DashboardListEvents } from 'pages/DashboardsListPageV2/constants/events';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
@@ -54,6 +56,10 @@ function RenameDashboardModal({
 		},
 		onSuccess: async () => {
 			toast.success('Dashboard renamed');
+			void logEvent(DashboardListEvents.RowAction, {
+				action: 'rename',
+				dashboardId,
+			});
 			await invalidateListDashboardsForUserV2(queryClient);
 			onClose();
 		},

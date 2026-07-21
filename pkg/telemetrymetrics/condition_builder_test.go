@@ -307,3 +307,86 @@ func TestConditionForMultipleKeys(t *testing.T) {
 		})
 	}
 }
+
+func TestConditionForKeyNotInMetadata(t *testing.T) {
+	ctx := context.Background()
+
+	testCases := []struct {
+		name        string
+		key         telemetrytypes.TelemetryFieldKey
+		fieldKeys   map[string][]*telemetrytypes.TelemetryFieldKey
+		operator    qbtypes.FilterOperator
+		value       any
+		expectedSQL []string
+		expectWarn  bool
+	}{
+		{
+			name:        "intrinsic metric_name full-text resolves without warning",
+			key:         telemetrytypes.TelemetryFieldKey{Name: "metric_name", FieldContext: telemetrytypes.FieldContextMetric},
+			fieldKeys:   map[string][]*telemetrytypes.TelemetryFieldKey{},
+			operator:    qbtypes.FilterOperatorRegexp,
+			value:       "k8s",
+			expectedSQL: []string{"match(metric_name, ?)"},
+			expectWarn:  false,
+		},
+		{
+			name:        "unknown label resolves to labels extract with a typo warning",
+			key:         telemetrytypes.TelemetryFieldKey{Name: "foo", FieldContext: telemetrytypes.FieldContextUnspecified},
+			fieldKeys:   map[string][]*telemetrytypes.TelemetryFieldKey{},
+			operator:    qbtypes.FilterOperatorEqual,
+			value:       "bar",
+			expectedSQL: []string{"JSONExtractString(labels, 'foo') = ?"},
+			expectWarn:  true,
+		},
+		{
+			name:        "context prefix that may be part of the name tries both readings",
+			key:         telemetrytypes.TelemetryFieldKey{Name: "a.b.c", FieldContext: telemetrytypes.FieldContextScope},
+			fieldKeys:   map[string][]*telemetrytypes.TelemetryFieldKey{},
+			operator:    qbtypes.FilterOperatorEqual,
+			value:       "x",
+			expectedSQL: []string{"JSONExtractString(labels, 'a.b.c') = ?", "JSONExtractString(labels, 'scope.a.b.c') = ?"},
+			expectWarn:  true,
+		},
+		{
+			name:        "unresolved metric-context name is treated as a label prefix",
+			key:         telemetrytypes.TelemetryFieldKey{Name: "foo", FieldContext: telemetrytypes.FieldContextMetric},
+			fieldKeys:   map[string][]*telemetrytypes.TelemetryFieldKey{},
+			operator:    qbtypes.FilterOperatorEqual,
+			value:       "bar",
+			expectedSQL: []string{"JSONExtractString(labels, 'foo') = ?", "JSONExtractString(labels, 'metric.foo') = ?"},
+			expectWarn:  true,
+		},
+		{
+			name: "known label under a mismatched context collapses without warning",
+			key:  telemetrytypes.TelemetryFieldKey{Name: "region", FieldContext: telemetrytypes.FieldContextResource},
+			fieldKeys: map[string][]*telemetrytypes.TelemetryFieldKey{
+				"region": {{Name: "region", FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString}},
+			},
+			operator:    qbtypes.FilterOperatorEqual,
+			value:       "us",
+			expectedSQL: []string{"JSONExtractString(labels, 'region') = ?"},
+			expectWarn:  false,
+		},
+	}
+
+	fm := NewFieldMapper()
+	conditionBuilder := NewConditionBuilder(fm)
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			sb := sqlbuilder.NewSelectBuilder()
+			cond, warnings, err := conditionBuilder.ConditionFor(ctx, valuer.UUID{}, 0, 0, &tc.key, tc.fieldKeys, qbtypes.ConditionBuilderOptions{}, tc.operator, tc.value, sb)
+			require.NoError(t, err)
+			sb.Where(cond...)
+			sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+			for _, want := range tc.expectedSQL {
+				assert.Contains(t, sql, want)
+			}
+			if tc.expectWarn {
+				assert.NotEmpty(t, warnings)
+			} else {
+				assert.Empty(t, warnings)
+			}
+		})
+	}
+}

@@ -26,7 +26,7 @@ from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCo
 # intrinsic column.
 
 
-@pytest.mark.parametrize("noise", ["clean", "corrupt"])
+@pytest.mark.parametrize("noise", ["clean", "corrupt", "collision"])
 def test_traces_aggregate_percentiles(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
@@ -41,6 +41,10 @@ def test_traces_aggregate_percentiles(
     Tests:
     p25 / p50 / p90 / p95 / p99 over duration_nano match numpy's linear-interpolated
     percentiles (ClickHouse quantile() uses the same interpolation for small inputs).
+    Under the "collision" variant a numeric span attribute named duration_nano unions
+    with the intrinsic column into a multiIf; the aggregation must still resolve to the
+    intrinsic column rather than error with ClickHouse NO_COMMON_TYPE (386) — the
+    regression behind the span_percentile 500.
     """
     extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
@@ -249,3 +253,61 @@ def test_traces_aggregate_having_breadth(
     assert response.status_code == HTTPStatus.OK, response.text
     data = get_scalar_table_data(response.json())
     assert {row[0] for row in data} == expected_services
+
+
+@pytest.mark.parametrize(
+    "duration_filter",
+    [
+        pytest.param("duration_nano > '2s'", id="duration_string"),
+        pytest.param("duration_nano > 2000000000", id="raw_nanoseconds"),
+    ],
+)
+def test_traces_duration_nano_qol_filter_with_collision(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[list[Traces]], None],
+    duration_filter: str,
+) -> None:
+    """
+    Setup:
+    5 spans (durations 1s..5s) that also carry a same-named `duration_nano` span
+    attribute (numeric on some, string on others).
+
+    Tests the duration_nano QoL filter — as a duration string ('2s') and as raw
+    nanoseconds — resolves to the intrinsic column despite the collision: it parses the
+    duration, filters on the real durations (3 spans exceed 2s), and doesn't error with
+    ClickHouse NO_COMMON_TYPE (386). The string attribute is cast; the intrinsic column
+    stays a bare comparison.
+    """
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    durations_s = [1, 2, 3, 4, 5]
+    spans = [
+        Traces(
+            timestamp=now - timedelta(seconds=i + 1),
+            duration=timedelta(seconds=dur_s),
+            trace_id=TraceIdGenerator.trace_id(),
+            span_id=TraceIdGenerator.span_id(),
+            name=f"dur-qol-{dur_s}",
+            kind=TracesKind.SPAN_KIND_SERVER,
+            status_code=TracesStatusCode.STATUS_CODE_OK,
+            resources={"service.name": "dur-qol-svc"},
+            attributes={"duration_nano": 42.0} if i % 2 == 0 else {"duration_nano": "boom"},
+        )
+        for i, dur_s in enumerate(durations_s)
+    ]
+    insert_traces(spans)
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    query = build_traces_scalar_query(
+        aggregations=[build_aggregation("count()", "cnt")],
+        filter_expression=duration_filter,
+    )
+    response = make_scalar_query_request(signoz, token, now, [query])
+
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = get_scalar_table_data(response.json())
+    assert len(data) == 1
+    # durations 3s/4s/5s exceed 2s -> 3 spans; the collision must not change this.
+    assert data[0][0] == 3, f"expected 3 spans with duration > 2s, got {data[0]}"

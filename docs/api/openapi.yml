@@ -8615,6 +8615,7 @@ components:
       - resource
       - attribute
       - body
+      - ""
       type: string
     TelemetrytypesFieldDataType:
       enum:
@@ -8623,6 +8624,7 @@ components:
       - float64
       - int64
       - number
+      - ""
       type: string
     TelemetrytypesGettableFieldKeys:
       properties:
@@ -8654,6 +8656,7 @@ components:
       - traces
       - logs
       - metrics
+      - ""
       type: string
     TelemetrytypesSource:
       enum:
