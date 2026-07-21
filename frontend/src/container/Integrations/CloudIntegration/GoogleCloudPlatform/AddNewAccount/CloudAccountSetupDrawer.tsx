@@ -6,6 +6,7 @@ import { DrawerWrapper } from '@signozhq/ui/drawer';
 import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
 import { Select } from 'antd';
+import cx from 'classnames';
 import { GCP_REGIONS } from 'container/Integrations/constants';
 import { IntegrationModalProps } from 'container/Integrations/HeroSection/types';
 import { useCloudAccountSetupDrawer } from 'hooks/integration/gcp/useCloudAccountSetupDrawer';
@@ -170,7 +171,7 @@ function CloudAccountSetupDrawer({
 						<>
 							<Input
 								id="gcp-deployment-project-id-input"
-								className={`${styles.fullWidth} ${styles.mono}`}
+								className={cx(styles.fullWidth, styles.mono)}
 								placeholder="e.g. my-deployment-project-123"
 								value={field.value}
 								onChange={(e): void => field.onChange(e.target.value)}
@@ -205,11 +206,9 @@ function CloudAccountSetupDrawer({
 						<>
 							<ComboboxSimple
 								id="gcp-deployment-region-select"
-								className={
-									field.value
-										? styles.fullWidth
-										: `${styles.fullWidth} ${styles.regionEmpty}`
-								}
+								className={cx(styles.fullWidth, {
+									[styles.regionEmpty]: !field.value,
+								})}
 								items={REGION_ITEMS}
 								value={field.value}
 								onChange={(value): void => field.onChange(value as string)}
@@ -250,7 +249,7 @@ function CloudAccountSetupDrawer({
 						<>
 							<Select
 								id="gcp-project-ids-select"
-								className={`${styles.fullWidth} ${styles.projectIdsSelect}`}
+								className={cx(styles.fullWidth, styles.projectIdsSelect)}
 								mode="tags"
 								value={field.value}
 								onChange={(value): void => field.onChange(value)}
