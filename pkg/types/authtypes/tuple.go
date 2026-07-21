@@ -3,6 +3,7 @@ package authtypes
 import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 )
@@ -68,6 +69,38 @@ func NewTuplesFromTransactionGroups(name string, orgID valuer.UUID, transactionG
 	return tuples, nil
 }
 
+func DiffTuples(existing, desired []*openfgav1.TupleKey) (additions, deletions []*openfgav1.TupleKey) {
+	key := func(tuple *openfgav1.TupleKey) string {
+		return tuple.GetUser() + "|" + tuple.GetRelation() + "|" + tuple.GetObject()
+	}
+
+	existingSet := make(map[string]struct{}, len(existing))
+	for _, tuple := range existing {
+		existingSet[key(tuple)] = struct{}{}
+	}
+
+	desiredSet := make(map[string]struct{}, len(desired))
+	for _, tuple := range desired {
+		desiredSet[key(tuple)] = struct{}{}
+	}
+
+	additions = make([]*openfgav1.TupleKey, 0)
+	for _, tuple := range desired {
+		if _, ok := existingSet[key(tuple)]; !ok {
+			additions = append(additions, tuple)
+		}
+	}
+
+	deletions = make([]*openfgav1.TupleKey, 0)
+	for _, tuple := range existing {
+		if _, ok := desiredSet[key(tuple)]; !ok {
+			deletions = append(deletions, tuple)
+		}
+	}
+
+	return additions, deletions
+}
+
 func MustNewTransactionGroupsFromTuples(tuples []*openfgav1.TupleKey) TransactionGroups {
 	objectsByRelation := make(map[string][]*coretypes.Object)
 
@@ -109,17 +142,29 @@ func NewTuplesFromTransactionsWithCorrelations(transactions []*Transaction, subj
 			return nil, nil, err
 		}
 
+		selectorStrings, err := newCheckSelectors(txn.Object.Resource.Type, txn.Object.Selector)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		selectors := make([]coretypes.Selector, 0, len(selectorStrings))
+		for _, selectorString := range selectorStrings {
+			selector, err := txn.Object.Resource.Type.Selector(selectorString)
+			if err != nil {
+				return nil, nil, err
+			}
+			selectors = append(selectors, selector)
+		}
+
 		txnID := txn.ID.StringValue()
-
-		txnTuples := NewTuples(resource, subject, txn.Relation, []coretypes.Selector{txn.Object.Selector}, orgID)
-		tuples[txnID] = txnTuples[0]
-
-		if txn.Object.Selector.String() != coretypes.WildCardSelectorString {
-			wildcardSelector := txn.Object.Resource.Type.MustSelector(coretypes.WildCardSelectorString)
-			wildcardTuples := NewTuples(resource, subject, txn.Relation, []coretypes.Selector{wildcardSelector}, orgID)
+		for index, tuple := range NewTuples(resource, subject, txn.Relation, selectors, orgID) {
+			if index == 0 {
+				tuples[txnID] = tuple
+				continue
+			}
 
 			correlationID := valuer.GenerateUUID().StringValue()
-			tuples[correlationID] = wildcardTuples[0]
+			tuples[correlationID] = tuple
 			correlations[txnID] = append(correlations[txnID], correlationID)
 		}
 	}
@@ -213,4 +258,22 @@ func NewTransactionWithAuthorizationFromBatchResults(
 	}
 
 	return output
+}
+
+func newCheckSelectors(resourceType coretypes.Type, selector coretypes.Selector) ([]string, error) {
+	if resourceType.Equals(coretypes.TypeTelemetryResource) {
+		canonical, err := telemetrytypes.NewTelemetryGrantSelector(selector.String())
+		if err != nil {
+			return nil, err
+		}
+
+		return telemetrytypes.NewTelemetryGrantSelectors(canonical), nil
+	}
+
+	selectorStrings := []string{selector.String()}
+	if selector.String() != coretypes.WildCardSelectorString {
+		selectorStrings = append(selectorStrings, coretypes.WildCardSelectorString)
+	}
+
+	return selectorStrings, nil
 }
