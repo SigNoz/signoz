@@ -24,8 +24,8 @@ func NewModule(sqlstore sqlstore.SQLStore) savedview.Module {
 	return &module{sqlstore: sqlstore}
 }
 
-func (module *module) GetViewsForFilters(ctx context.Context, orgID string, sourcePage string, name string, category string) ([]*v3.SavedView, error) {
-	var views []savedviewtypes.SavedView
+func (module *module) GetViewsForFilters(ctx context.Context, orgID string, sourcePage string, name string, category string) ([]*savedviewtypes.SavedView, error) {
+	var views []savedviewtypes.StorableSavedView
 	var err error
 	if len(category) == 0 {
 		err = module.sqlstore.BunDB().NewSelect().Model(&views).Where("org_id = ? AND source_page = ? AND name LIKE ?", orgID, sourcePage, "%"+name+"%").Scan(ctx)
@@ -36,14 +36,14 @@ func (module *module) GetViewsForFilters(ctx context.Context, orgID string, sour
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error in getting saved views")
 	}
 
-	var savedViews []*v3.SavedView
+	var savedViews []*savedviewtypes.SavedView
 	for _, view := range views {
 		var compositeQuery v3.CompositeQuery
 		err = json.Unmarshal([]byte(view.Data), &compositeQuery)
 		if err != nil {
 			return nil, errors.WrapInternalf(err, errors.CodeInternal, "error in unmarshalling explorer query data: %s", err.Error())
 		}
-		savedViews = append(savedViews, &v3.SavedView{
+		savedViews = append(savedViews, &savedviewtypes.SavedView{
 			ID:             view.ID,
 			Name:           view.Name,
 			CreatedAt:      view.CreatedAt,
@@ -59,7 +59,7 @@ func (module *module) GetViewsForFilters(ctx context.Context, orgID string, sour
 	return savedViews, nil
 }
 
-func (module *module) CreateView(ctx context.Context, orgID string, view v3.SavedView) (valuer.UUID, error) {
+func (module *module) CreateView(ctx context.Context, orgID string, view savedviewtypes.SavedView) (valuer.UUID, error) {
 	data, err := json.Marshal(view.CompositeQuery)
 	if err != nil {
 		return valuer.UUID{}, errors.WrapInternalf(err, errors.CodeInternal, "error in marshalling explorer query data")
@@ -77,7 +77,7 @@ func (module *module) CreateView(ctx context.Context, orgID string, view v3.Save
 	createBy := claims.Email
 	updatedBy := claims.Email
 
-	dbView := savedviewtypes.SavedView{
+	dbView := savedviewtypes.StorableSavedView{
 		TimeAuditable: types.TimeAuditable{
 			CreatedAt: createdAt,
 			UpdatedAt: updatedAt,
@@ -105,8 +105,8 @@ func (module *module) CreateView(ctx context.Context, orgID string, view v3.Save
 	return uuid, nil
 }
 
-func (module *module) GetView(ctx context.Context, orgID string, uuid valuer.UUID) (*v3.SavedView, error) {
-	var view savedviewtypes.SavedView
+func (module *module) GetView(ctx context.Context, orgID string, uuid valuer.UUID) (*savedviewtypes.SavedView, error) {
+	var view savedviewtypes.StorableSavedView
 	err := module.sqlstore.BunDB().NewSelect().Model(&view).Where("org_id = ? AND id = ?", orgID, uuid.StringValue()).Scan(ctx)
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error in getting saved view")
@@ -117,7 +117,7 @@ func (module *module) GetView(ctx context.Context, orgID string, uuid valuer.UUI
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error in unmarshalling explorer query data")
 	}
-	return &v3.SavedView{
+	return &savedviewtypes.SavedView{
 		ID:             view.ID,
 		Name:           view.Name,
 		Category:       view.Category,
@@ -132,7 +132,7 @@ func (module *module) GetView(ctx context.Context, orgID string, uuid valuer.UUI
 	}, nil
 }
 
-func (module *module) UpdateView(ctx context.Context, orgID string, uuid valuer.UUID, view v3.SavedView) error {
+func (module *module) UpdateView(ctx context.Context, orgID string, uuid valuer.UUID, view savedviewtypes.SavedView) error {
 	data, err := json.Marshal(view.CompositeQuery)
 	if err != nil {
 		return errors.WrapInternalf(err, errors.CodeInternal, "error in marshalling explorer query data")
@@ -147,7 +147,7 @@ func (module *module) UpdateView(ctx context.Context, orgID string, uuid valuer.
 	updatedBy := claims.Email
 
 	_, err = module.sqlstore.BunDB().NewUpdate().
-		Model(&savedviewtypes.SavedView{}).
+		Model(&savedviewtypes.StorableSavedView{}).
 		Set("updated_at = ?, updated_by = ?, name = ?, category = ?, source_page = ?, tags = ?, data = ?, extra_data = ?",
 			updatedAt, updatedBy, view.Name, view.Category, view.SourcePage, strings.Join(view.Tags, ","), data, view.ExtraData).
 		Where("id = ?", uuid.StringValue()).
@@ -161,7 +161,7 @@ func (module *module) UpdateView(ctx context.Context, orgID string, uuid valuer.
 
 func (module *module) DeleteView(ctx context.Context, orgID string, uuid valuer.UUID) error {
 	_, err := module.sqlstore.BunDB().NewDelete().
-		Model(&savedviewtypes.SavedView{}).
+		Model(&savedviewtypes.StorableSavedView{}).
 		Where("id = ?", uuid.StringValue()).
 		Where("org_id = ?", orgID).
 		Exec(ctx)
@@ -172,7 +172,7 @@ func (module *module) DeleteView(ctx context.Context, orgID string, uuid valuer.
 }
 
 func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any, error) {
-	savedViews := []*savedviewtypes.SavedView{}
+	savedViews := []*savedviewtypes.StorableSavedView{}
 
 	err := module.
 		sqlstore.

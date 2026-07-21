@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/savedviewtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -20,7 +19,7 @@ func (provider *provider) addSavedViewRoutes(router *mux.Router) error {
 		Request:             nil,
 		RequestQuery:        new(savedviewtypes.ListSavedViewsParams),
 		RequestContentType:  "",
-		Response:            new(v3.SavedView),
+		Response:            new(savedviewtypes.SavedView),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusBadRequest},
@@ -35,7 +34,7 @@ func (provider *provider) addSavedViewRoutes(router *mux.Router) error {
 		Tags:                []string{"saved_view"},
 		Summary:             "Create saved view",
 		Description:         "Persists a saved view for the explore page. Returns the id of the created view.",
-		Request:             new(v3.SavedView),
+		Request:             new(savedviewtypes.SavedView),
 		RequestContentType:  "application/json",
 		Response:            new(valuer.UUID),
 		ResponseContentType: "application/json",
@@ -54,7 +53,7 @@ func (provider *provider) addSavedViewRoutes(router *mux.Router) error {
 		Description:         "Returns a saved view by id.",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            new(v3.SavedView),
+		Response:            new(savedviewtypes.SavedView),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
@@ -69,9 +68,9 @@ func (provider *provider) addSavedViewRoutes(router *mux.Router) error {
 		Tags:                []string{"saved_view"},
 		Summary:             "Update saved view",
 		Description:         "Replaces a saved view's name, tags, and query.",
-		Request:             new(v3.SavedView),
+		Request:             new(savedviewtypes.SavedView),
 		RequestContentType:  "application/json",
-		Response:            new(v3.SavedView),
+		Response:            new(savedviewtypes.SavedView),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},

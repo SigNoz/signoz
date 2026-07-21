@@ -7,7 +7,9 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type SavedView struct {
+// StorableSavedView is the bun-persisted row shape for the saved_views
+// table. CompositeQuery is stored JSON-encoded in Data.
+type StorableSavedView struct {
 	bun.BaseModel `bun:"table:saved_views"`
 
 	types.Identifiable
@@ -22,7 +24,7 @@ type SavedView struct {
 	ExtraData  string `json:"extraData" bun:"extra_data,type:text"`
 }
 
-func NewStatsFromSavedViews(savedViews []*SavedView) map[string]any {
+func NewStatsFromSavedViews(savedViews []*StorableSavedView) map[string]any {
 	stats := make(map[string]any)
 	for _, savedView := range savedViews {
 		key := "savedview.source." + strings.ToLower(string(savedView.SourcePage)) + ".count"

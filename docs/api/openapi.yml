@@ -7831,6 +7831,47 @@ components:
       enum:
       - basic
       type: string
+    SavedviewtypesSavedView:
+      properties:
+        category:
+          type: string
+        compositeQuery:
+          $ref: '#/components/schemas/V3CompositeQuery'
+        createdAt:
+          format: date-time
+          type: string
+        createdBy:
+          type: string
+        extraData:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        sourcePage:
+          type: string
+        tags:
+          items:
+            type: string
+          nullable: true
+          type: array
+        updatedAt:
+          format: date-time
+          type: string
+        updatedBy:
+          type: string
+      required:
+      - name
+      - category
+      - createdAt
+      - createdBy
+      - updatedAt
+      - updatedBy
+      - sourcePage
+      - tags
+      - compositeQuery
+      - extraData
+      type: object
     ServiceaccounttypesDeprecatedPostableServiceAccountRole:
       properties:
         id:
@@ -9011,47 +9052,6 @@ components:
           type: string
         stats:
           type: string
-      type: object
-    V3SavedView:
-      properties:
-        category:
-          type: string
-        compositeQuery:
-          $ref: '#/components/schemas/V3CompositeQuery'
-        createdAt:
-          format: date-time
-          type: string
-        createdBy:
-          type: string
-        extraData:
-          type: string
-        id:
-          type: string
-        name:
-          type: string
-        sourcePage:
-          type: string
-        tags:
-          items:
-            type: string
-          nullable: true
-          type: array
-        updatedAt:
-          format: date-time
-          type: string
-        updatedBy:
-          type: string
-      required:
-      - name
-      - category
-      - createdAt
-      - createdBy
-      - updatedAt
-      - updatedBy
-      - sourcePage
-      - tags
-      - compositeQuery
-      - extraData
       type: object
     ZeustypesGettableHost:
       properties:
@@ -22766,7 +22766,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/V3SavedView'
+                    $ref: '#/components/schemas/SavedviewtypesSavedView'
                   status:
                     type: string
                 required:
@@ -22815,7 +22815,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/V3SavedView'
+              $ref: '#/components/schemas/SavedviewtypesSavedView'
       responses:
         "200":
           content:
@@ -22933,7 +22933,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/V3SavedView'
+                    $ref: '#/components/schemas/SavedviewtypesSavedView'
                   status:
                     type: string
                 required:
@@ -22993,7 +22993,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/V3SavedView'
+              $ref: '#/components/schemas/SavedviewtypesSavedView'
       responses:
         "200":
           content:
@@ -23001,7 +23001,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/V3SavedView'
+                    $ref: '#/components/schemas/SavedviewtypesSavedView'
                   status:
                     type: string
                 required:
