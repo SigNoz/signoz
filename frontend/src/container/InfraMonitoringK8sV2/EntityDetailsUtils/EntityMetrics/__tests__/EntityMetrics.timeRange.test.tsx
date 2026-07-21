@@ -85,7 +85,6 @@ describe('EntityMetrics time range wiring', () => {
 			entity,
 			START_SECONDS,
 			END_SECONDS,
-			false,
 		);
 		expect(mockBuildChartConfig).toHaveBeenCalledWith(
 			expect.objectContaining({
