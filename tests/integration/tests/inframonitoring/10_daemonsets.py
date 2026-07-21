@@ -162,6 +162,7 @@ def test_daemonsets_accuracy(
             {"logs-a-prod", "logs-b-prod"},
             id="in_contains",
         ),
+        pytest.param("k8s.daemonset.namee = 'logs-a-prod'", set(), id="unresolved_key"),
     ],
 )
 def test_daemonsets_filter(
@@ -221,7 +222,6 @@ def test_daemonsets_filter(
 @pytest.mark.parametrize(
     "expression,err_substr",
     [
-        pytest.param("k8s.daemonset.namee = 'logs-a-prod'", "k8s.daemonset.namee", id="bad_attr_name"),
         pytest.param("k8s.daemonset.name =", None, id="trailing_op"),
         pytest.param("(k8s.daemonset.name = 'logs-a-prod'", None, id="unclosed_paren"),
     ],
@@ -234,8 +234,8 @@ def test_daemonsets_filter_invalid(
     expression: str,
     err_substr,
 ) -> None:
-    """Invalid filter expressions (typo'd attribute key, malformed grammar) return
-    400 invalid_input with structured errors; bad attribute keys are named in them."""
+    """Malformed filter grammar (trailing operator, unclosed paren) returns
+    400 invalid_input with structured errors."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
