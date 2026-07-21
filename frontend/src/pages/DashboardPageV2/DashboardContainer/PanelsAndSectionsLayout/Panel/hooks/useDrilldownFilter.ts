@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import logEvent from 'api/common/logEvent';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import {
 	addFilterToQuery,
@@ -6,6 +7,7 @@ import {
 	isNumberDataType,
 } from 'container/QueryTable/Drilldown/drilldownUtils';
 import type { DrilldownContext } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/drilldown';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 interface UseDrilldownFilterArgs {
@@ -59,6 +61,10 @@ export function useDrilldownFilter({
 			const refinedQuery = addFilterToQuery(v1Query, [
 				{ filterKey: context.clickedKey, filterValue, operator },
 			]);
+			void logEvent(DashboardDetailEvents.DrilldownAction, {
+				action: 'filterByValue',
+				panelType,
+			});
 			openViewWithQuery(panelId, refinedQuery, panelType);
 			onClose();
 		},

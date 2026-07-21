@@ -1,6 +1,8 @@
 import { useCallback, useState } from 'react';
 
+import logEvent from 'api/common/logEvent';
 import type { DashboardtypesLayoutDTO } from 'api/generated/services/sigNoz.schemas';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
@@ -48,6 +50,10 @@ export function useAddSection({ layouts }: Params): Result {
 			try {
 				setIsSaving(true);
 				await patchAsync([op]);
+				void logEvent(DashboardDetailEvents.SectionAction, {
+					action: 'add',
+					dashboardId,
+				});
 				// The new empty section is appended, so its layout index is the prior count;
 				// key it the way `getSectionStableId` does so it reveals itself on render.
 				const newIndex = isFirstSection ? 0 : layouts.length;

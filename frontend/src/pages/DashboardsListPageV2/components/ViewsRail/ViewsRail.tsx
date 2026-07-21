@@ -1,5 +1,6 @@
 import { type ChangeEvent, useCallback, useState } from 'react';
 import { Modal } from 'antd';
+import logEvent from 'api/common/logEvent';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
@@ -12,6 +13,8 @@ import {
 	Trash2,
 } from '@signozhq/icons';
 import cx from 'classnames';
+
+import { DashboardListEvents } from 'pages/DashboardsListPageV2/constants/events';
 
 import type { SavedView } from '../../types';
 import { type BuiltinView } from '../../utils/views';
@@ -104,6 +107,7 @@ function ViewsRail({
 					onClick: (e): void => {
 						e.preventDefault();
 						e.stopPropagation();
+						void logEvent(DashboardListEvents.ViewDeleted, {});
 						onDelete(id);
 						destroy();
 					},
@@ -113,6 +117,16 @@ function ViewsRail({
 		},
 		[modal, onDelete],
 	);
+
+	const handleSaveAsView = (name: string): void => {
+		void logEvent(DashboardListEvents.ViewSaved, { mode: 'new' });
+		onSave(name);
+	};
+
+	const handleSaveViewChanges = (): void => {
+		void logEvent(DashboardListEvents.ViewSaved, { mode: 'update' });
+		onSaveChanges();
+	};
 
 	const renderItem = (row: ViewRow): JSX.Element => {
 		const Icon = row.icon;
@@ -137,7 +151,10 @@ function ViewsRail({
 						<ViewNamePopover
 							open={renamingId === row.id}
 							onOpenChange={(open): void => setRenamingId(open ? row.id : null)}
-							onSubmit={(name): void => onRename(row.id, name)}
+							onSubmit={(name): void => {
+								void logEvent(DashboardListEvents.ViewRenamed, {});
+								onRename(row.id, name);
+							}}
 							title="Rename view"
 							confirmLabel="Rename"
 							initialName={row.label}
@@ -184,7 +201,7 @@ function ViewsRail({
 					<ViewNamePopover
 						open={saveOpen}
 						onOpenChange={setSaveOpen}
-						onSubmit={onSave}
+						onSubmit={handleSaveAsView}
 						title="Save as view"
 						confirmLabel="Save view"
 						testIdPrefix="save-view"
@@ -276,7 +293,7 @@ function ViewsRail({
 									variant="solid"
 									color="primary"
 									size="sm"
-									onClick={onSaveChanges}
+									onClick={handleSaveViewChanges}
 									testId="dashboards-view-save-changes"
 								>
 									Save
