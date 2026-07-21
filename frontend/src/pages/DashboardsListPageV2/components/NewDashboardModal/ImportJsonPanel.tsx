@@ -13,6 +13,7 @@ import { createDashboardV2 } from 'api/generated/services/dashboard';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useErrorModal } from 'providers/ErrorModalProvider';
+import { DashboardListEvents } from 'pages/DashboardsListPageV2/constants/events';
 import APIError from 'types/api/error';
 
 import { normalizeToPostable } from './importUtils';
@@ -51,6 +52,7 @@ function ImportJsonPanel({ onClose }: Props): JSX.Element {
 				setIsUploadError(false);
 			} catch {
 				setIsUploadError(true);
+				void logEvent(DashboardListEvents.ImportFailed, { reason: 'parse' });
 			}
 		};
 		reader.readAsText(lastFile.originFileObj);
@@ -63,6 +65,7 @@ function ImportJsonPanel({ onClose }: Props): JSX.Element {
 			const parsed = JSON.parse(editorValue) as Record<string, unknown>;
 			const payload = normalizeToPostable(parsed);
 			const response = await createDashboardV2(payload);
+			void logEvent(DashboardListEvents.DashboardCreated, { method: 'import' });
 			onClose();
 			safeNavigate(
 				generatePath(ROUTES.DASHBOARD, { dashboardId: response.data.id }),
@@ -70,6 +73,7 @@ function ImportJsonPanel({ onClose }: Props): JSX.Element {
 		} catch (error) {
 			showErrorModal(error as APIError);
 			setIsCreateError(true);
+			void logEvent(DashboardListEvents.ImportFailed, { reason: 'schema' });
 			toast.error(
 				error instanceof Error ? error.message : t('error_loading_json'),
 			);

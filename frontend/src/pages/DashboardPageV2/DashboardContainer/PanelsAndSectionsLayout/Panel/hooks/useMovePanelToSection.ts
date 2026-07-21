@@ -1,4 +1,7 @@
 import { useCallback } from 'react';
+import logEvent from 'api/common/logEvent';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
+import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
 
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
@@ -66,6 +69,14 @@ export function useMovePanelToSection({
 						targetItems,
 					}),
 				);
+				void logEvent(DashboardDetailEvents.PanelAction, {
+					action: 'move',
+					panelType: moved.panel
+						? PANEL_KIND_TO_PANEL_TYPE[moved.panel.spec.plugin.kind]
+						: undefined,
+					panelId,
+					dashboardId,
+				});
 			} catch (error) {
 				showErrorModal(error as APIError);
 			}
