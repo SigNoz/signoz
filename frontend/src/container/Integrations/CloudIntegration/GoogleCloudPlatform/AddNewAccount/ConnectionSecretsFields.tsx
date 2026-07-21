@@ -92,10 +92,12 @@ function ConnectionSecretsFields({
 					Deployment details &amp; ingestion secrets
 				</Typography.Text>
 				{!hasMissingValue && (
-					<Typography.Text as="span" size="small" className={styles.headLabel}>
+					<div className={styles.headLabel}>
 						<Lock size={12} />
-						Auto-filled by SigNoz
-					</Typography.Text>
+						<Typography.Text as="span" size="small" className={styles.headLabel}>
+							Auto-filled by SigNoz
+						</Typography.Text>
+					</div>
 				)}
 			</div>
 
