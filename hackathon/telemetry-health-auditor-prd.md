@@ -119,11 +119,14 @@ Dashboard payload is a plain JSON object (`map[string]interface{}`), so a dashbo
 - Custom metrics flow to ClickHouse and become queryable through `POST /api/v5/query_range`, so generated dashboards can chart them.
 - This path is validated in the current prototype (the seeder).
 
-### 4.5 MCP server
+### 4.5 MCP server (first-class read path)
 
-- The SigNoz MCP server is a standalone service deployable by Foundry via an `mcp:` block in `casting.yaml` (port 8000, `/mcp`).
+- The SigNoz MCP server is deployed by Foundry via `mcp.spec.enabled: true` in `casting.yaml` (port 8000, `/mcp`).
+- Verified on self-hosted SigNoz: the Foundry cast brings up `signoz-mcp`, and a JSON-RPC `initialize` succeeds with header auth (`SIGNOZ-API-KEY` + `X-SigNoz-URL`), returning the tool-capable `SigNozMCP` server. Local self-hosted SigNoz supports MCP; it is not Cloud-only.
 - It exposes ~40 `signoz_` tools; the ones this project uses map almost 1:1 onto the auditor and generator needs (see the tables above).
-- Recommended posture: REST is the reliable spine for the demo; MCP is a thin optional path used for the "agent investigates in natural language" moment, so a flaky or Cloud-only MCP never blocks the live demo.
+- Posture: MCP is a first-class read path. The Telemetry Health Auditor uses MCP tools (`signoz_get_field_keys`, `signoz_get_field_values`, `signoz_check_metric_cardinality`, `signoz_list_metrics`) as its primary way to inspect telemetry, and can generate dashboards/alerts via MCP (`signoz_create_dashboard`, `signoz_create_alert`).
+- REST (`POST /api/v5/query_range`) remains the deterministic path for SLO SLI evaluation and is the fallback for any tool the MCP server does not expose, so a transient MCP issue never blocks a live demo.
+- Auth for both paths is the same service-account API key, satisfying the hackathon recommendation to use the MCP server, the Query Builder, dashboards, and alerts.
 
 ---
 
@@ -539,7 +542,7 @@ Transport pieces to rewrite: query client (HTTP `query_range`), OTLP emitter (di
 
 | Risk | Mitigation |
 |---|---|
-| MCP is Cloud-only or flaky in the demo | REST is the reliable spine; MCP is an optional path. The agent runs fully on self-hosted REST. |
+| MCP transient failure in the demo | MCP is verified working on self-hosted SigNoz (not Cloud-only) and is the first-class read path, but REST (`query_range`) is a deterministic fallback so the agent still runs fully if MCP is briefly unavailable. |
 | Programmatic alert bugs (`#10823`, `#10881`) | precompute burn rate as a metric; alert with a simple threshold, not a formula |
 | Emitted metrics not queryable | emit via OTLP to the collector (validated), not an in-process meter |
 | Two tracks diverging across four people | the only seam is the `CompletenessGate`; freeze it first |
