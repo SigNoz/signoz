@@ -1,7 +1,7 @@
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
-import { listJobs } from 'api/generated/services/inframonitoring';
+import { listDaemonSets } from 'api/generated/services/inframonitoring';
 import {
-	InframonitoringtypesJobRecordDTO,
+	InframonitoringtypesDaemonSetRecordDTO,
 	InframonitoringtypesResponseTypeDTO,
 	Querybuildertypesv5OrderDirectionDTO,
 	RenderErrorResponseDTO,
@@ -9,25 +9,25 @@ import {
 import { AxiosError } from 'axios';
 import { InfraMonitoringEvents } from 'constants/events';
 
-import { K8sEntityConfig } from '../Base/entityConfig.types';
+import { K8sEntityConfig } from '../Base/entity.config.types';
 import { K8sBaseFilters, K8sDetailsFilters } from '../Base/types';
 import { InfraMonitoringEntity } from '../constants';
 import { createPodMetricsTab } from '../EntityDetailsUtils/createPodMetricsTab';
 import { SelectedItemParams } from '../hooks';
 import {
-	getJobMetricsQueryPayload,
-	getJobPodMetricsQueryPayload,
-	jobWidgetInfo,
-	k8sJobDetailsMetadataConfig,
-	k8sJobGetEntityName,
-	k8sJobGetSelectedItemExpression,
-	k8sJobInitialEventsExpression,
-	k8sJobInitialLogTracesExpression,
+	daemonSetWidgetInfo,
+	getDaemonSetMetricsQueryPayload,
+	getDaemonSetPodMetricsQueryPayload,
+	k8sDaemonSetDetailsMetadataConfig,
+	k8sDaemonSetGetEntityName,
+	k8sDaemonSetGetSelectedItemExpression,
+	k8sDaemonSetInitialEventsExpression,
+	k8sDaemonSetInitialLogTracesExpression,
 } from './constants';
 import {
-	getK8sJobItemKey,
-	getK8sJobRowKey,
-	k8sJobsColumnsConfig,
+	getK8sDaemonSetItemKey,
+	getK8sDaemonSetRowKey,
+	k8sDaemonSetsColumnsConfig,
 } from './table.config';
 
 async function fetchListData(
@@ -35,12 +35,12 @@ async function fetchListData(
 	signal?: AbortSignal,
 ): ReturnType<
 	K8sEntityConfig<
-		InframonitoringtypesJobRecordDTO,
+		InframonitoringtypesDaemonSetRecordDTO,
 		SelectedItemParams
 	>['list']['fetchListData']
 > {
 	try {
-		const response = await listJobs(
+		const response = await listDaemonSets(
 			{
 				filter: { expression: filters.filter.expression },
 				groupBy: filters.groupBy?.map((g) => ({ name: g.name })),
@@ -75,7 +75,7 @@ async function fetchListData(
 	} catch (error) {
 		return {
 			type: 'list' as const,
-			records: [] as InframonitoringtypesJobRecordDTO[],
+			records: [] as InframonitoringtypesDaemonSetRecordDTO[],
 			total: 0,
 			error:
 				convertToApiError(error as AxiosError<RenderErrorResponseDTO>) ?? null,
@@ -88,12 +88,12 @@ async function fetchEntityData(
 	signal?: AbortSignal,
 ): ReturnType<
 	K8sEntityConfig<
-		InframonitoringtypesJobRecordDTO,
+		InframonitoringtypesDaemonSetRecordDTO,
 		SelectedItemParams
 	>['details']['fetchEntityData']
 > {
 	try {
-		const response = await listJobs(
+		const response = await listDaemonSets(
 			{
 				filter: { expression: filters.filter.expression },
 				start: filters.start,
@@ -116,37 +116,37 @@ async function fetchEntityData(
 	}
 }
 
-export const jobEntityConfig: K8sEntityConfig<
-	InframonitoringtypesJobRecordDTO,
+export const daemonSetEntityConfig: K8sEntityConfig<
+	InframonitoringtypesDaemonSetRecordDTO,
 	SelectedItemParams
 > = {
 	list: {
-		entity: InfraMonitoringEntity.JOBS,
-		eventCategory: InfraMonitoringEvents.Job,
-		tableColumns: k8sJobsColumnsConfig,
+		entity: InfraMonitoringEntity.DAEMONSETS,
+		eventCategory: InfraMonitoringEvents.DaemonSet,
+		tableColumns: k8sDaemonSetsColumnsConfig,
 		fetchListData,
-		getRowKey: getK8sJobRowKey,
-		getItemKey: getK8sJobItemKey,
-		detailsQueryKeyPrefix: 'job',
+		getRowKey: getK8sDaemonSetRowKey,
+		getItemKey: getK8sDaemonSetItemKey,
+		detailsQueryKeyPrefix: 'daemonset',
 	},
 	details: {
-		category: InfraMonitoringEntity.JOBS,
-		eventCategory: InfraMonitoringEvents.Job,
-		queryKeyPrefix: 'job',
-		getSelectedItemExpression: k8sJobGetSelectedItemExpression,
+		category: InfraMonitoringEntity.DAEMONSETS,
+		eventCategory: InfraMonitoringEvents.DaemonSet,
+		queryKeyPrefix: 'daemonset',
+		getSelectedItemExpression: k8sDaemonSetGetSelectedItemExpression,
 		fetchEntityData,
-		getEntityName: k8sJobGetEntityName,
-		getInitialLogTracesExpression: k8sJobInitialLogTracesExpression,
-		getInitialEventsExpression: k8sJobInitialEventsExpression,
-		metadataConfig: k8sJobDetailsMetadataConfig,
-		entityWidgetInfo: jobWidgetInfo,
-		getEntityQueryPayload: getJobMetricsQueryPayload,
+		getEntityName: k8sDaemonSetGetEntityName,
+		getInitialLogTracesExpression: k8sDaemonSetInitialLogTracesExpression,
+		getInitialEventsExpression: k8sDaemonSetInitialEventsExpression,
+		metadataConfig: k8sDaemonSetDetailsMetadataConfig,
+		entityWidgetInfo: daemonSetWidgetInfo,
+		getEntityQueryPayload: getDaemonSetMetricsQueryPayload,
 		customTabs: [
-			createPodMetricsTab<InframonitoringtypesJobRecordDTO>({
-				getQueryPayload: getJobPodMetricsQueryPayload,
-				category: InfraMonitoringEntity.JOBS,
-				queryKey: 'jobPodMetrics',
-				docBasePath: '/infrastructure-monitoring/kubernetes/jobs/',
+			createPodMetricsTab<InframonitoringtypesDaemonSetRecordDTO>({
+				getQueryPayload: getDaemonSetPodMetricsQueryPayload,
+				category: InfraMonitoringEntity.DAEMONSETS,
+				queryKey: 'daemonSetPodMetrics',
+				docBasePath: '/infrastructure-monitoring/kubernetes/daemonsets/',
 			}),
 		],
 	},

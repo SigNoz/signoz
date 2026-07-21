@@ -1,7 +1,7 @@
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
-import { listNodes } from 'api/generated/services/inframonitoring';
+import { listClusters } from 'api/generated/services/inframonitoring';
 import {
-	InframonitoringtypesNodeRecordDTO,
+	InframonitoringtypesClusterRecordDTO,
 	InframonitoringtypesResponseTypeDTO,
 	Querybuildertypesv5OrderDirectionDTO,
 	RenderErrorResponseDTO,
@@ -9,35 +9,34 @@ import {
 import { AxiosError } from 'axios';
 import { InfraMonitoringEvents } from 'constants/events';
 
-import { K8sEntityConfig } from '../Base/entityConfig.types';
+import { K8sEntityConfig } from '../Base/entity.config.types';
 import { K8sBaseFilters, K8sDetailsFilters } from '../Base/types';
 import { InfraMonitoringEntity } from '../constants';
 import {
-	getNodeMetricsQueryPayload,
-	k8sNodeDetailsMetadataConfig,
-	k8sNodeGetEntityName,
-	k8sNodeGetSelectedItemExpression,
-	k8sNodeInitialEventsExpression,
-	k8sNodeInitialLogTracesExpression,
-	nodeWidgetInfo,
+	clusterWidgetInfo,
+	getClusterMetricsQueryPayload,
+	k8sClusterDetailsCountsConfig,
+	k8sClusterDetailsMetadataConfig,
+	k8sClusterGetCountsFilterExpression,
+	k8sClusterGetEntityName,
+	k8sClusterGetSelectedItemExpression,
+	k8sClusterInitialEventsExpression,
+	k8sClusterInitialLogTracesExpression,
 } from './constants';
 import {
-	getK8sNodeItemKey,
-	getK8sNodeRowKey,
-	k8sNodesColumnsConfig,
+	getK8sClusterItemKey,
+	getK8sClusterRowKey,
+	k8sClustersColumnsConfig,
 } from './table.config';
 
 async function fetchListData(
 	filters: K8sBaseFilters,
 	signal?: AbortSignal,
 ): ReturnType<
-	K8sEntityConfig<
-		InframonitoringtypesNodeRecordDTO,
-		string
-	>['list']['fetchListData']
+	K8sEntityConfig<InframonitoringtypesClusterRecordDTO>['list']['fetchListData']
 > {
 	try {
-		const response = await listNodes(
+		const response = await listClusters(
 			{
 				filter: { expression: filters.filter.expression },
 				groupBy: filters.groupBy?.map((g) => ({ name: g.name })),
@@ -72,7 +71,7 @@ async function fetchListData(
 	} catch (error) {
 		return {
 			type: 'list' as const,
-			records: [] as InframonitoringtypesNodeRecordDTO[],
+			records: [] as InframonitoringtypesClusterRecordDTO[],
 			total: 0,
 			error:
 				convertToApiError(error as AxiosError<RenderErrorResponseDTO>) ?? null,
@@ -84,13 +83,10 @@ async function fetchEntityData(
 	filters: K8sDetailsFilters,
 	signal?: AbortSignal,
 ): ReturnType<
-	K8sEntityConfig<
-		InframonitoringtypesNodeRecordDTO,
-		string
-	>['details']['fetchEntityData']
+	K8sEntityConfig<InframonitoringtypesClusterRecordDTO>['details']['fetchEntityData']
 > {
 	try {
-		const response = await listNodes(
+		const response = await listClusters(
 			{
 				filter: { expression: filters.filter.expression },
 				start: filters.start,
@@ -113,30 +109,30 @@ async function fetchEntityData(
 	}
 }
 
-export const nodeEntityConfig: K8sEntityConfig<
-	InframonitoringtypesNodeRecordDTO,
-	string
-> = {
-	list: {
-		entity: InfraMonitoringEntity.NODES,
-		eventCategory: InfraMonitoringEvents.Node,
-		tableColumns: k8sNodesColumnsConfig,
-		fetchListData,
-		getRowKey: getK8sNodeRowKey,
-		getItemKey: getK8sNodeItemKey,
-		detailsQueryKeyPrefix: 'node',
-	},
-	details: {
-		category: InfraMonitoringEntity.NODES,
-		eventCategory: InfraMonitoringEvents.Node,
-		queryKeyPrefix: 'node',
-		getSelectedItemExpression: k8sNodeGetSelectedItemExpression,
-		fetchEntityData,
-		getEntityName: k8sNodeGetEntityName,
-		getInitialLogTracesExpression: k8sNodeInitialLogTracesExpression,
-		getInitialEventsExpression: k8sNodeInitialEventsExpression,
-		metadataConfig: k8sNodeDetailsMetadataConfig,
-		entityWidgetInfo: nodeWidgetInfo,
-		getEntityQueryPayload: getNodeMetricsQueryPayload,
-	},
-};
+export const clusterEntityConfig: K8sEntityConfig<InframonitoringtypesClusterRecordDTO> =
+	{
+		list: {
+			entity: InfraMonitoringEntity.CLUSTERS,
+			eventCategory: InfraMonitoringEvents.Cluster,
+			tableColumns: k8sClustersColumnsConfig,
+			fetchListData,
+			getRowKey: getK8sClusterRowKey,
+			getItemKey: getK8sClusterItemKey,
+			detailsQueryKeyPrefix: 'cluster',
+		},
+		details: {
+			category: InfraMonitoringEntity.CLUSTERS,
+			eventCategory: InfraMonitoringEvents.Cluster,
+			queryKeyPrefix: 'cluster',
+			getSelectedItemExpression: k8sClusterGetSelectedItemExpression,
+			fetchEntityData,
+			getEntityName: k8sClusterGetEntityName,
+			getInitialLogTracesExpression: k8sClusterInitialLogTracesExpression,
+			getInitialEventsExpression: k8sClusterInitialEventsExpression,
+			metadataConfig: k8sClusterDetailsMetadataConfig,
+			entityWidgetInfo: clusterWidgetInfo,
+			getEntityQueryPayload: getClusterMetricsQueryPayload,
+			countsConfig: k8sClusterDetailsCountsConfig,
+			getCountsFilterExpression: k8sClusterGetCountsFilterExpression,
+		},
+	};

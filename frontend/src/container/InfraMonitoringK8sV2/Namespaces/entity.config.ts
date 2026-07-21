@@ -10,7 +10,7 @@ import { AxiosError } from 'axios';
 import { InfraMonitoringEvents } from 'constants/events';
 import { createPodMetricsTab } from 'container/InfraMonitoringK8sV2/EntityDetailsUtils/createPodMetricsTab';
 
-import { K8sEntityConfig } from '../Base/entityConfig.types';
+import { K8sEntityConfig } from '../Base/entity.config.types';
 import { K8sBaseFilters, K8sDetailsFilters } from '../Base/types';
 import { InfraMonitoringEntity } from '../constants';
 import { SelectedItemParams } from '../hooks';

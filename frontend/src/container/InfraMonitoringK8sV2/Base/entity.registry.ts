@@ -1,16 +1,16 @@
 import { K8sCategories } from '../constants';
 import { SelectedItemParams } from '../hooks';
-import { K8sEntityConfig, K8sEntityData } from './entityConfig.types';
+import { K8sEntityConfig, K8sEntityData } from './entity.config.types';
 
-import { podEntityConfig } from '../Pods/entityConfig';
-import { nodeEntityConfig } from '../Nodes/entityConfig';
-import { clusterEntityConfig } from '../Clusters/entityConfig';
-import { deploymentEntityConfig } from '../Deployments/entityConfig';
-import { namespaceEntityConfig } from '../Namespaces/entityConfig';
-import { jobEntityConfig } from '../Jobs/entityConfig';
-import { daemonSetEntityConfig } from '../DaemonSets/entityConfig';
-import { statefulSetEntityConfig } from '../StatefulSets/entityConfig';
-import { volumeEntityConfig } from '../Volumes/entityConfig';
+import { podEntityConfig } from '../Pods/entity.config';
+import { nodeEntityConfig } from '../Nodes/entity.config';
+import { clusterEntityConfig } from '../Clusters/entity.config';
+import { deploymentEntityConfig } from '../Deployments/entity.config';
+import { namespaceEntityConfig } from '../Namespaces/entity.config';
+import { jobEntityConfig } from '../Jobs/entity.config';
+import { daemonSetEntityConfig } from '../DaemonSets/entity.config';
+import { statefulSetEntityConfig } from '../StatefulSets/entity.config';
+import { volumeEntityConfig } from '../Volumes/entity.config';
 
 type AnyEntityConfig = K8sEntityConfig<
 	K8sEntityData,
@@ -24,7 +24,7 @@ function registerConfig<
 	return config as unknown as AnyEntityConfig;
 }
 
-export const entityConfigRegistry: Record<string, AnyEntityConfig> = {
+export const entityRegistry: Record<string, AnyEntityConfig> = {
 	[K8sCategories.PODS]: registerConfig(podEntityConfig),
 	[K8sCategories.NODES]: registerConfig(nodeEntityConfig),
 	[K8sCategories.CLUSTERS]: registerConfig(clusterEntityConfig),
@@ -37,5 +37,5 @@ export const entityConfigRegistry: Record<string, AnyEntityConfig> = {
 };
 
 export function getEntityConfig(category: string): AnyEntityConfig | undefined {
-	return entityConfigRegistry[category];
+	return entityRegistry[category];
 }

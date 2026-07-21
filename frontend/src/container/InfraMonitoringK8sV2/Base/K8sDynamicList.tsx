@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 import { useInfraMonitoringCategory } from '../hooks';
-import { getEntityConfig } from './entityConfigRegistry';
+import { getEntityConfig } from './entity.registry';
 import { K8sBaseList } from './K8sBaseList';
 import K8sBaseDetails from './K8sBaseDetails';
 

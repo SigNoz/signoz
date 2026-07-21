@@ -9,7 +9,7 @@ import {
 import { AxiosError } from 'axios';
 import { InfraMonitoringEvents } from 'constants/events';
 
-import { K8sEntityConfig } from '../Base/entityConfig.types';
+import { K8sEntityConfig } from '../Base/entity.config.types';
 import {
 	K8sBaseFilters,
 	K8sDetailsCustomTab,
