@@ -73,6 +73,25 @@ describe('usePanelEditorDraft', () => {
 		expect(result.current.isSpecDirty).toBe(false);
 	});
 
+	it('flags spec-dirty when the seed differs from the saved baseline (View handoff)', () => {
+		// The editor opens on a handed-off, already-edited spec (`seed`) but compares
+		// against the persisted panel (`saved`) — so it starts dirty, not clean.
+		const seed = panel('Memory', 'usage');
+		const saved = panel('CPU', 'usage');
+
+		const { result } = renderHook(() => usePanelEditorDraft(seed, saved));
+
+		expect(result.current.isSpecDirty).toBe(true);
+	});
+
+	it('is clean when the seed matches the saved baseline', () => {
+		const { result } = renderHook(() =>
+			usePanelEditorDraft(panel('CPU', 'usage'), panel('CPU', 'usage')),
+		);
+
+		expect(result.current.isSpecDirty).toBe(false);
+	});
+
 	it('reset restores the spec and clears dirty after an edit', () => {
 		const { result } = renderHook(() => usePanelEditorDraft(panel()));
 

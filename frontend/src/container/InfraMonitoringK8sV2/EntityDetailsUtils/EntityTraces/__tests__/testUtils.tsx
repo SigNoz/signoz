@@ -1,7 +1,5 @@
-import { ENVIRONMENT } from 'constants/env';
+import { mockFieldsAPIsWithEmptyResponse } from '__tests__/fields_api.util';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
-import { server } from 'mocks-server/server';
-import { rest } from 'msw';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { render, RenderResult } from 'tests/test-utils';
 import { QueryRangePayloadV5 } from 'types/api/v5/queryRange';
@@ -9,39 +7,19 @@ import { QueryRangePayloadV5 } from 'types/api/v5/queryRange';
 import EntityTraces from '../EntityTraces';
 import { K8S_ENTITY_TRACES_EXPRESSION_KEY } from '../hooks';
 
-// QuerySearch fires autocomplete requests on mount; without handlers MSW
-// passes them through to the real network and the resulting AxiosError fails
-// whichever test happens to be running.
 beforeEach(() => {
-	server.use(
-		rest.get(`${ENVIRONMENT.baseURL}/api/v1/fields/keys`, (_, res, ctx) =>
-			res(
-				ctx.status(200),
-				ctx.json({ status: 'success', data: { keys: {}, complete: true } }),
-			),
-		),
-		rest.get(`${ENVIRONMENT.baseURL}/api/v1/fields/values`, (_, res, ctx) =>
-			res(
-				ctx.status(200),
-				ctx.json({ status: 'success', data: { values: {}, complete: true } }),
-			),
-		),
-	);
+	mockFieldsAPIsWithEmptyResponse();
 });
 
 export interface RenderEntityTracesOptions {
 	expression?: string;
-	timeRange?: { startTime: number; endTime: number };
 	category?: InfraMonitoringEntity;
-	selectedInterval?: '5m' | '15m' | '30m' | '1h';
 	pagination?: { offset: number; limit: number };
 }
 
 export function renderEntityTraces({
 	expression = 'k8s.pod.name = "test-pod"',
-	timeRange = { startTime: 1, endTime: 2 },
 	category = InfraMonitoringEntity.PODS,
-	selectedInterval = '5m',
 	pagination,
 }: RenderEntityTracesOptions = {}): RenderResult {
 	const encodedExpression = encodeURIComponent(expression);
@@ -55,10 +33,7 @@ export function renderEntityTraces({
 	return render(
 		<NuqsTestingAdapter searchParams={searchParams}>
 			<EntityTraces
-				timeRange={timeRange}
-				isModalTimeSelection={false}
-				handleTimeChange={jest.fn()}
-				selectedInterval={selectedInterval}
+				eventEntity="test"
 				queryKey="test"
 				category={category}
 				initialExpression={expression}
@@ -101,21 +76,21 @@ export function verifyQueryPayload({
 	expect(orderKeys).toContain('timestamp');
 }
 
-jest.mock('container/TopNav/DateTimeSelectionV2/index.tsx', () => ({
+jest.mock('../../EntityDateTimeSelector/EntityDateTimeSelector', () => ({
 	__esModule: true,
-	default: ({
-		onTimeChange,
-	}: {
-		onTimeChange?: (interval: string, dateTimeRange?: [number, number]) => void;
-	}): JSX.Element => (
-		<button
-			type="button"
-			data-testid="mock-datetime-selection"
-			onClick={(): void => {
-				onTimeChange?.('5m');
-			}}
-		>
-			Select Time
-		</button>
+	default: (): JSX.Element => (
+		<div data-testid="mock-datetime-selection">Date Time</div>
 	),
+}));
+
+jest.mock('../../EntityDateTimeSelector/useEntityDetailsTime', () => ({
+	useEntityDetailsTime: (): {
+		timeRange: { startTime: number; endTime: number };
+		selectedInterval: string;
+		handleTimeChange: jest.Mock;
+	} => ({
+		timeRange: { startTime: 1, endTime: 2 },
+		selectedInterval: '5m',
+		handleTimeChange: jest.fn(),
+	}),
 }));

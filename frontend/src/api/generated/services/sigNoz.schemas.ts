@@ -3300,29 +3300,6 @@ export interface DashboardGridLayoutSpecDTO {
 	repeatVariable?: string;
 }
 
-export interface DashboardLinkDTO {
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type boolean
-	 */
-	renderVariables?: boolean;
-	/**
-	 * @type boolean
-	 */
-	targetBlank?: boolean;
-	/**
-	 * @type string
-	 */
-	tooltip?: string;
-	/**
-	 * @type string
-	 */
-	url?: string;
-}
-
 export interface DashboardtypesAxesDTO {
 	/**
 	 * @type boolean
@@ -3502,6 +3479,7 @@ export enum TelemetrytypesFieldContextDTO {
 	resource = 'resource',
 	attribute = 'attribute',
 	body = 'body',
+	'' = '',
 }
 export enum TelemetrytypesFieldDataTypeDTO {
 	string = 'string',
@@ -3509,11 +3487,13 @@ export enum TelemetrytypesFieldDataTypeDTO {
 	float64 = 'float64',
 	int64 = 'int64',
 	number = 'number',
+	'' = '',
 }
 export enum TelemetrytypesSignalDTO {
 	traces = 'traces',
 	logs = 'logs',
 	metrics = 'metrics',
+	'' = '',
 }
 export interface Querybuildertypesv5GroupByKeyDTO {
 	/**
@@ -3631,6 +3611,7 @@ export enum Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQue
 }
 export enum TelemetrytypesSourceDTO {
 	meter = 'meter',
+	'' = '',
 }
 export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTO {
 	/**
@@ -3730,6 +3711,7 @@ export enum MetrictypesTemporalityDTO {
 	delta = 'delta',
 	cumulative = 'cumulative',
 	unspecified = 'unspecified',
+	'' = '',
 }
 export enum MetrictypesTimeAggregationDTO {
 	latest = 'latest',
@@ -3741,6 +3723,7 @@ export enum MetrictypesTimeAggregationDTO {
 	count_distinct = 'count_distinct',
 	rate = 'rate',
 	increase = 'increase',
+	'' = '',
 }
 export interface Querybuildertypesv5MetricAggregationDTO {
 	comparisonSpaceAggregationParam?: MetrictypesComparisonSpaceAggregationParamDTO;
@@ -4034,9 +4017,15 @@ export interface DashboardtypesDatasourceSpecDTO {
 	plugin?: DashboardtypesDatasourcePluginDTO;
 }
 
-export type DashboardtypesDashboardSpecDTODatasources = {
+export type DashboardtypesDashboardSpecDTODatasourcesAnyOf = {
 	[key: string]: DashboardtypesDatasourceSpecDTO;
 };
+
+/**
+ * @nullable
+ */
+export type DashboardtypesDashboardSpecDTODatasources =
+	DashboardtypesDashboardSpecDTODatasourcesAnyOf | null;
 
 export enum DashboardtypesPanelKindDTO {
 	Panel = 'Panel',
@@ -4050,6 +4039,29 @@ export interface DashboardtypesDisplayDTO {
 	 * @type string
 	 */
 	name: string;
+}
+
+export interface DashboardtypesLinkDTO {
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type boolean
+	 */
+	renderVariables?: boolean;
+	/**
+	 * @type boolean
+	 */
+	targetBlank?: boolean;
+	/**
+	 * @type string
+	 */
+	tooltip?: string;
+	/**
+	 * @type string
+	 */
+	url?: string;
 }
 
 export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpecDTOKind {
@@ -4613,9 +4625,9 @@ export interface DashboardtypesQueryDTO {
 export interface DashboardtypesPanelSpecDTO {
 	display: DashboardtypesDisplayDTO;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	links?: DashboardLinkDTO[];
+	links?: DashboardtypesLinkDTO[] | null;
 	plugin: DashboardtypesPanelPluginDTO;
 	/**
 	 * @type array
@@ -4789,7 +4801,7 @@ export type DashboardtypesVariableDTO =
 
 export interface DashboardtypesDashboardSpecDTO {
 	/**
-	 * @type object
+	 * @type object,null
 	 */
 	datasources?: DashboardtypesDashboardSpecDTODatasources;
 	display: DashboardtypesDisplayDTO;
@@ -4802,9 +4814,9 @@ export interface DashboardtypesDashboardSpecDTO {
 	 */
 	layouts: DashboardtypesLayoutDTO[];
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	links?: DashboardLinkDTO[];
+	links?: DashboardtypesLinkDTO[] | null;
 	/**
 	 * @type object
 	 */

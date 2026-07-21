@@ -371,24 +371,6 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 	key := v.Visit(ctx.Key()).(*telemetrytypes.TelemetryFieldKey)
 	matching := MatchingFieldKeys(key, v.fieldKeys)
 
-	// Skip resource filtering on the main table when a sub-query covers it; a resolving
-	// condition builder applies this itself in ConditionForKeys.
-	if _, resolvesKeys := v.conditionBuilder.(qbtypes.ResolvingConditionBuilder); v.skipResourceFilter && len(matching) > 0 && !resolvesKeys {
-		resolved, warning := ResolveKeys(key, matching)
-		// emit the ambiguity warning even when the term is skipped below
-		v.addWarnings([]string{warning}, len(matching) > 1)
-		filtered := []*telemetrytypes.TelemetryFieldKey{}
-		for _, k := range resolved {
-			if k.FieldContext != telemetrytypes.FieldContextResource {
-				filtered = append(filtered, k)
-			}
-		}
-		if len(filtered) == 0 {
-			return SkipConditionLiteral
-		}
-		matching = filtered
-	}
-
 	// Handle EXISTS specially
 	if ctx.EXISTS() != nil {
 		op := qbtypes.FilterOperatorExists
@@ -858,18 +840,7 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 // buildConditions invokes the condition builder for a filter term, folding its
 // warnings/errors into visitor state; returns false if an error was recorded.
 func (v *filterExpressionVisitor) buildConditions(key *telemetrytypes.TelemetryFieldKey, matching []*telemetrytypes.TelemetryFieldKey, op qbtypes.FilterOperator, value any) ([]string, bool) {
-	var (
-		conds []string
-		warns []string
-		err   error
-	)
-	// A resolving condition builder owns key resolution, so hand it the raw key + full map;
-	// other signals use the pre-matched ConditionFor path.
-	if rcb, ok := v.conditionBuilder.(qbtypes.ResolvingConditionBuilder); ok {
-		conds, warns, err = rcb.ConditionForKeys(v.context, v.orgID, v.startNs, v.endNs, key, v.fieldKeys, qbtypes.ConditionBuilderOptions{SkipResourceFilter: v.skipResourceFilter}, op, value, v.builder)
-	} else {
-		conds, warns, err = v.conditionBuilder.ConditionFor(v.context, v.orgID, v.startNs, v.endNs, key, matching, op, value, v.builder)
-	}
+	conds, warns, err := v.conditionBuilder.ConditionFor(v.context, v.orgID, v.startNs, v.endNs, key, v.fieldKeys, qbtypes.ConditionBuilderOptions{SkipResourceFilter: v.skipResourceFilter}, op, value, v.builder)
 	if err != nil {
 		_, _, _, _, errURL, _ := errors.Unwrapb(err)
 		assignIfEmpty(&v.mainErrorURL, errURL)
