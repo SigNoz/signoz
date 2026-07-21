@@ -10,8 +10,8 @@ from fixtures.role import transaction_group
 user_password = "password123Z$"
 chsql_role = "telemetry-scope-chsql"
 chsql_email = "scope-chsql@telemetry.test"
-svc_a_role = "telemetry-qt-svc-a"
-svc_a_email = "qt-svc-a@telemetry.test"
+key_a_role = "telemetry-qt-key-a"
+key_a_email = "qt-key-a@telemetry.test"
 viewer_email = "qt-managed-viewer@telemetry.test"
 
 clickhouse_query = [{"type": "clickhouse_sql", "spec": {"name": "A", "query": "SELECT toFloat64(1.5) AS `__result_0`", "disabled": False}}]
@@ -41,9 +41,9 @@ def test_setup(
     chsql_user = create_active_user(signoz, admin_token, email=chsql_email, role="VIEWER", password=user_password)
     change_user_role(signoz, admin_token, chsql_user, "signoz-viewer", chsql_role)
 
-    create_role(admin_token, svc_a_role, [transaction_group("read", "telemetryresource", "traces", ["builder_query/service.name/service-a"])])
-    svc_a_user = create_active_user(signoz, admin_token, email=svc_a_email, role="VIEWER", password=user_password)
-    change_user_role(signoz, admin_token, svc_a_user, "signoz-viewer", svc_a_role)
+    create_role(admin_token, key_a_role, [transaction_group("read", "telemetryresource", "traces", ["builder_query/signoz.workspace.key.id/key-a"])])
+    key_a_user = create_active_user(signoz, admin_token, email=key_a_email, role="VIEWER", password=user_password)
+    change_user_role(signoz, admin_token, key_a_user, "signoz-viewer", key_a_role)
 
     # A plain managed viewer (signoz-viewer) — for the meter-metrics/audit-logs policy checks.
     create_active_user(signoz, admin_token, email=viewer_email, role="VIEWER", password=user_password)
@@ -59,7 +59,7 @@ def test_clickhouse_sql_requires_chsql_grant(
     granted = make_query_request(signoz, get_token(chsql_email, user_password), start, end, clickhouse_query, request_type=querier.RequestType.SCALAR)
     assert granted.status_code == HTTPStatus.OK, granted.text
 
-    scoped = make_query_request(signoz, get_token(svc_a_email, user_password), start, end, clickhouse_query, request_type=querier.RequestType.SCALAR)
+    scoped = make_query_request(signoz, get_token(key_a_email, user_password), start, end, clickhouse_query, request_type=querier.RequestType.SCALAR)
     assert scoped.status_code == HTTPStatus.FORBIDDEN, scoped.text
 
     admin = make_query_request(signoz, get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD), start, end, clickhouse_query, request_type=querier.RequestType.SCALAR)
@@ -73,8 +73,8 @@ def test_promql_requires_promql_grant(
     now = datetime.now(tz=UTC)
     start, end = int((now - timedelta(hours=1)).timestamp() * 1000), int(now.timestamp() * 1000)
 
-    # Neither the chsql grant nor a builder-service grant covers promql.
-    scoped = make_query_request(signoz, get_token(svc_a_email, user_password), start, end, promql_query, request_type=querier.RequestType.TIME_SERIES)
+    # Neither the chsql grant nor a builder-key grant covers promql.
+    scoped = make_query_request(signoz, get_token(key_a_email, user_password), start, end, promql_query, request_type=querier.RequestType.TIME_SERIES)
     assert scoped.status_code == HTTPStatus.FORBIDDEN, scoped.text
 
     # Admin holds the wildcard; authz passes (the handler may still 2xx/4xx, never 403).
@@ -88,19 +88,19 @@ def test_trace_operator_rides_on_referenced_queries(
 ) -> None:
     now = datetime.now(tz=UTC)
     start, end = int((now - timedelta(minutes=10)).timestamp() * 1000), int(now.timestamp() * 1000)
-    token = get_token(svc_a_email, user_password)
+    token = get_token(key_a_email, user_password)
 
-    def operator_queries(b_service: str) -> list[dict]:
+    def operator_queries(b_key: str) -> list[dict]:
         return [
-            {"type": "builder_query", "spec": {"name": "A", "signal": "traces", "disabled": True, "filter": {"expression": "service.name = 'service-a'"}, "aggregations": [{"expression": "count()"}]}},
-            {"type": "builder_query", "spec": {"name": "B", "signal": "traces", "disabled": True, "filter": {"expression": f"service.name = '{b_service}'"}, "aggregations": [{"expression": "count()"}]}},
+            {"type": "builder_query", "spec": {"name": "A", "signal": "traces", "disabled": True, "filter": {"expression": "signoz.workspace.key.id = 'key-a'"}, "aggregations": [{"expression": "count()"}]}},
+            {"type": "builder_query", "spec": {"name": "B", "signal": "traces", "disabled": True, "filter": {"expression": f"signoz.workspace.key.id = '{b_key}'"}, "aggregations": [{"expression": "count()"}]}},
             {"type": "builder_trace_operator", "spec": {"name": "T1", "expression": "A => B", "returnSpansFrom": "A", "disabled": False}},
         ]
 
-    allowed = make_query_request(signoz, token, start, end, operator_queries("service-a"), request_type=querier.RequestType.RAW)
+    allowed = make_query_request(signoz, token, start, end, operator_queries("key-a"), request_type=querier.RequestType.RAW)
     assert allowed.status_code == HTTPStatus.OK, allowed.text
 
-    denied = make_query_request(signoz, token, start, end, operator_queries("service-b"), request_type=querier.RequestType.RAW)
+    denied = make_query_request(signoz, token, start, end, operator_queries("key-b"), request_type=querier.RequestType.RAW)
     assert denied.status_code == HTTPStatus.FORBIDDEN, denied.text
 
 
@@ -110,14 +110,14 @@ def test_formula_rides_on_referenced_queries(
 ) -> None:
     now = datetime.now(tz=UTC)
     start, end = int((now - timedelta(minutes=10)).timestamp() * 1000), int(now.timestamp() * 1000)
-    token = get_token(svc_a_email, user_password)
+    token = get_token(key_a_email, user_password)
 
     def formula_queries(b_filtered: bool) -> list[dict]:
         b_spec = {"name": "B", "signal": "traces", "disabled": True, "aggregations": [{"expression": "count()"}]}
         if b_filtered:
-            b_spec["filter"] = {"expression": "service.name = 'service-a'"}
+            b_spec["filter"] = {"expression": "signoz.workspace.key.id = 'key-a'"}
         return [
-            {"type": "builder_query", "spec": {"name": "A", "signal": "traces", "disabled": True, "filter": {"expression": "service.name = 'service-a'"}, "aggregations": [{"expression": "count()"}]}},
+            {"type": "builder_query", "spec": {"name": "A", "signal": "traces", "disabled": True, "filter": {"expression": "signoz.workspace.key.id = 'key-a'"}, "aggregations": [{"expression": "count()"}]}},
             {"type": "builder_query", "spec": b_spec},
             {"type": "builder_formula", "spec": {"name": "F1", "expression": "A/B", "disabled": False}},
         ]
