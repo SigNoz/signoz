@@ -3,6 +3,7 @@ import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { Events } from 'constants/events';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 import { useDashboardCursorSyncMode } from 'hooks/dashboard/useDashboardCursorSyncMode';
 import { useSyncTooltipFilterMode } from 'hooks/dashboard/useSyncTooltipFilterMode';
 import {
@@ -72,7 +73,13 @@ function CrossPanelSync({ dashboardId }: CrossPanelSyncProps): JSX.Element {
 				<SegmentedControl
 					testId="cursor-sync-mode"
 					value={cursorSyncMode}
-					onChange={setCursorSyncMode}
+					onChange={(value): void => {
+						void logEvent(DashboardDetailEvents.CursorSyncChanged, {
+							mode: value,
+							dashboardId,
+						});
+						setCursorSyncMode(value);
+					}}
 					options={[
 						{ label: 'No Sync', value: DashboardCursorSync.None },
 						{ label: 'Crosshair', value: DashboardCursorSync.Crosshair },

@@ -1,7 +1,9 @@
 import { useCallback } from 'react';
 import { generatePath } from 'react-router-dom';
+import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 
 import type { PanelEditorHandoffState } from '../PanelEditor/panelEditorHandoff';
 import { useDashboardStore } from '../store/useDashboardStore';
@@ -24,6 +26,11 @@ export function useOpenPanelEditor(): (
 
 	return useCallback(
 		(panelId: string, handoffState?: PanelEditorHandoffState): void => {
+			void logEvent(DashboardDetailEvents.PanelAction, {
+				action: 'edit',
+				panelId,
+				dashboardId,
+			});
 			safeNavigate(
 				generatePath(ROUTES.DASHBOARD_PANEL_EDITOR, { dashboardId, panelId }),
 				handoffState ? { state: handoffState } : undefined,

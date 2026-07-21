@@ -7,12 +7,14 @@ import {
 	Loader,
 	ScrollText,
 } from '@signozhq/icons';
+import logEvent from 'api/common/logEvent';
 import type { DashboardtypesLinkDTO } from 'api/generated/services/sigNoz.schemas';
 import { getAggregateColumnHeader } from 'container/QueryTable/Drilldown/drilldownUtils';
 import ContextMenu from 'periscope/components/ContextMenu';
 import type { DrilldownContext } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/drilldown';
 import { getDataLinks } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/drilldown/getDataLinks';
 import { resolvePanelContextLinks } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/drilldown/resolvePanelContextLinks';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { openInNewTab } from 'utils/navigation';
 
@@ -104,7 +106,12 @@ function DrilldownAggregateMenu({
 						</span>
 					)
 				}
-				onClick={onViewLogs}
+				onClick={(): void => {
+					void logEvent(DashboardDetailEvents.DrilldownAction, {
+						action: 'viewLogs',
+					});
+					onViewLogs();
+				}}
 				disabled={isResolving}
 			>
 				<span data-testid="drilldown-view-logs">View in Logs</span>
@@ -119,7 +126,12 @@ function DrilldownAggregateMenu({
 						</span>
 					)
 				}
-				onClick={onViewTraces}
+				onClick={(): void => {
+					void logEvent(DashboardDetailEvents.DrilldownAction, {
+						action: 'viewTraces',
+					});
+					onViewTraces();
+				}}
 				disabled={isResolving}
 			>
 				<span data-testid="drilldown-view-traces">View in Traces</span>
@@ -139,6 +151,9 @@ function DrilldownAggregateMenu({
 					key={link.id}
 					icon={<Link size={16} color={context.seriesColor} />}
 					onClick={(): void => {
+						void logEvent(DashboardDetailEvents.DrilldownAction, {
+							action: 'contextLink',
+						});
 						openInNewTab(link.url);
 						onClose();
 					}}
@@ -151,6 +166,9 @@ function DrilldownAggregateMenu({
 					key={link.id}
 					icon={<Link size={16} color={context.seriesColor} />}
 					onClick={(): void => {
+						void logEvent(DashboardDetailEvents.DrilldownAction, {
+							action: 'contextLink',
+						});
 						openInNewTab(link.url);
 						onClose();
 					}}
