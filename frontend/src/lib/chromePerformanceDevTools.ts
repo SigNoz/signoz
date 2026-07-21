@@ -1,39 +1,35 @@
 import { IS_DEV } from 'lib/env';
 
-export type DevtoolsColor =
-	| 'primary'
-	| 'primary-light'
-	| 'primary-dark'
-	| 'secondary'
-	| 'secondary-light'
-	| 'secondary-dark'
-	| 'tertiary'
-	| 'tertiary-light'
-	| 'tertiary-dark'
-	| 'warning'
-	| 'error';
-
-const PERF_ENABLED =
+const CHROME_DEVTOOLS_TRACK_PERFORMANCE_ENABLED =
 	IS_DEV &&
 	typeof performance !== 'undefined' &&
 	typeof performance.measure === 'function' &&
 	typeof performance.now === 'function';
 
-export function perfNow(): number {
-	return PERF_ENABLED ? performance.now() : 0;
+export function chromePerformanceNow(): number {
+	return CHROME_DEVTOOLS_TRACK_PERFORMANCE_ENABLED ? performance.now() : 0;
 }
 
-export type PerfProperties = [string, string][];
-
-export interface TrackEntryOptions {
+export interface ChromePerformanceTrackEntryOptions {
 	trackGroup: string;
 	track: string;
-	color?: DevtoolsColor;
+	color?:
+		| 'primary'
+		| 'primary-light'
+		| 'primary-dark'
+		| 'secondary'
+		| 'secondary-light'
+		| 'secondary-dark'
+		| 'tertiary'
+		| 'tertiary-light'
+		| 'tertiary-dark'
+		| 'warning'
+		| 'error';
 	tooltipText?: string;
-	properties?: PerfProperties;
+	properties?: [string, string][];
 }
 
-export function measureTrack(
+export function chromePerformanceMeasure(
 	name: string,
 	start: number,
 	{
@@ -42,9 +38,9 @@ export function measureTrack(
 		color = 'primary',
 		tooltipText,
 		properties,
-	}: TrackEntryOptions,
+	}: ChromePerformanceTrackEntryOptions,
 ): void {
-	if (!PERF_ENABLED) {
+	if (!CHROME_DEVTOOLS_TRACK_PERFORMANCE_ENABLED) {
 		return;
 	}
 	try {
@@ -66,7 +62,7 @@ export function measureTrack(
 	}
 }
 
-export function createInteractionTracker(
+export function createChromePerformanceInteractionTracker(
 	trackGroup: string,
 	track: string,
 	name: string,
@@ -78,13 +74,13 @@ export function createInteractionTracker(
 
 	return {
 		begin(id: string): void {
-			if (!PERF_ENABLED) {
+			if (!CHROME_DEVTOOLS_TRACK_PERFORMANCE_ENABLED) {
 				return;
 			}
 			startById.set(id, performance.now());
 		},
 		end(id: string): void {
-			if (!PERF_ENABLED) {
+			if (!CHROME_DEVTOOLS_TRACK_PERFORMANCE_ENABLED) {
 				return;
 			}
 			const start = startById.get(id);
@@ -92,7 +88,7 @@ export function createInteractionTracker(
 				return;
 			}
 			startById.delete(id);
-			measureTrack(name, start, {
+			chromePerformanceMeasure(name, start, {
 				trackGroup,
 				track,
 				color: 'tertiary',

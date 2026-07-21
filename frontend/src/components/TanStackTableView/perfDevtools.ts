@@ -1,15 +1,12 @@
 import {
-	createInteractionTracker,
-	measureTrack as measureTrackLib,
-	perfNow,
-	TrackEntryOptions,
-} from 'lib/perfDevtools';
-
-export { perfNow };
+	createChromePerformanceInteractionTracker,
+	chromePerformanceMeasure,
+	ChromePerformanceTrackEntryOptions,
+} from 'lib/chromePerformanceDevTools';
 
 const TABLE_TRACK_GROUP = 'SigNoz Table';
 
-export function measureTrack(
+export function chromePerformanceMeasureTanstackTable(
 	name: string,
 	start: number,
 	{
@@ -17,9 +14,9 @@ export function measureTrack(
 		color,
 		tooltipText,
 		properties,
-	}: Omit<TrackEntryOptions, 'trackGroup'>,
+	}: Omit<ChromePerformanceTrackEntryOptions, 'trackGroup'>,
 ): void {
-	measureTrackLib(name, start, {
+	chromePerformanceMeasure(name, start, {
 		trackGroup: TABLE_TRACK_GROUP,
 		track,
 		color,
@@ -28,11 +25,11 @@ export function measureTrack(
 	});
 }
 
-const hoverTracker = createInteractionTracker(
+const hoverTracker = createChromePerformanceInteractionTracker(
 	TABLE_TRACK_GROUP,
 	'Hover',
 	'Row hover',
 );
 
-export const beginHover = hoverTracker.begin;
-export const endHover = hoverTracker.end;
+export const chromePerformanceTanstackTableBeginHover = hoverTracker.begin;
+export const chromePerformanceTanstackTableEndHover = hoverTracker.end;

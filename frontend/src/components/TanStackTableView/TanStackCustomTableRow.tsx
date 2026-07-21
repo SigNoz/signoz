@@ -2,7 +2,10 @@ import { ComponentProps, memo, useCallback, useLayoutEffect } from 'react';
 import { TableComponents } from 'react-virtuoso';
 import cx from 'classnames';
 
-import { beginHover, measureTrack, perfNow } from './perfDevtools';
+import {
+	chromePerformanceTanstackTableBeginHover,
+	chromePerformanceMeasureTanstackTable,
+} from './perfDevtools';
 import TanStackRowCells from './TanStackRow';
 import {
 	useClearRowHovered,
@@ -11,6 +14,7 @@ import {
 import { FlatItem, TableRowContext } from './types';
 
 import tableStyles from './TanStackTable.module.scss';
+import { chromePerformanceNow } from 'lib/chromePerformanceDevTools';
 
 type VirtuosoTableRowProps<TData, TItemKey = string> = ComponentProps<
 	NonNullable<
@@ -23,7 +27,7 @@ function TanStackCustomTableRow<TData, TItemKey = string>({
 	context,
 	...props
 }: VirtuosoTableRowProps<TData, TItemKey>): JSX.Element {
-	const renderStart = perfNow();
+	const renderStart = chromePerformanceNow();
 	const rowId = item.row.id;
 	const rowData = item.row.original;
 
@@ -32,12 +36,12 @@ function TanStackCustomTableRow<TData, TItemKey = string>({
 	const clearHovered = useClearRowHovered(rowId);
 
 	const handleMouseEnter = useCallback((): void => {
-		beginHover(rowId);
+		chromePerformanceTanstackTableBeginHover(rowId);
 		setHovered();
 	}, [rowId, setHovered]);
 
 	useLayoutEffect(() => {
-		measureTrack('Row render', renderStart, {
+		chromePerformanceMeasureTanstackTable('Row render', renderStart, {
 			track: 'Row render',
 			color: 'secondary',
 			tooltipText: 'Row render + commit',

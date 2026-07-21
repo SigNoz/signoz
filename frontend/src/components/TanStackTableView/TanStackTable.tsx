@@ -45,7 +45,7 @@ import {
 	TanStackTableHandle,
 	TanStackTableProps,
 } from './types';
-import { measureTrack, perfNow } from './perfDevtools';
+import { chromePerformanceMeasureTanstackTable } from './perfDevtools';
 import { useColumnDnd } from './useColumnDnd';
 import { useColumnHandlers } from './useColumnHandlers';
 import { useColumnState } from './useColumnState';
@@ -58,6 +58,7 @@ import { VirtuosoTableColGroup } from './VirtuosoTableColGroup';
 
 import tableStyles from './TanStackTable.module.scss';
 import viewStyles from './TanStackTableView.module.scss';
+import { chromePerformanceNow } from 'lib/chromePerformanceDevTools';
 
 const COLUMN_DND_AUTO_SCROLL = {
 	layoutShiftCompensation: false as const,
@@ -118,7 +119,7 @@ function TanStackTableInner<TData, TItemKey = string>(
 		);
 	}
 
-	const renderStart = perfNow();
+	const renderStart = chromePerformanceNow();
 
 	const virtuosoRef = useRef<TableVirtuosoHandle | null>(null);
 	const isDarkMode = useIsDarkMode();
@@ -349,7 +350,7 @@ function TanStackTableInner<TData, TItemKey = string>(
 	const visibleColumnsCount = table.getVisibleFlatColumns().length;
 
 	useLayoutEffect(() => {
-		measureTrack('Table render', renderStart, {
+		chromePerformanceMeasureTanstackTable('Table render', renderStart, {
 			track: 'Table render',
 			color: 'primary',
 			tooltipText: 'TanStackTable render + commit',

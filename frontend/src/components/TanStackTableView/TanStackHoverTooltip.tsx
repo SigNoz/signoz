@@ -1,6 +1,6 @@
 import { useLayoutEffect, type ReactNode } from 'react';
 
-import { endHover } from './perfDevtools';
+import { chromePerformanceTanstackTableEndHover } from './perfDevtools';
 import { useIsRowHovered } from './TanStackTableStateContext';
 import { TooltipSimple, TooltipSimpleProps } from '@signozhq/ui/tooltip';
 
@@ -18,7 +18,7 @@ export function TanStackHoverTooltip({
 
 	useLayoutEffect(() => {
 		if (isHovered) {
-			endHover(rowId);
+			chromePerformanceTanstackTableEndHover(rowId);
 		}
 	}, [isHovered, rowId]);
 
