@@ -3,6 +3,7 @@ import {
 	SpantypesSpanMapperDTO as Mapper,
 	SpantypesSpanMapperGroupDTO as MapperGroup,
 	SpantypesSpanMapperOperationDTO as MapperOperation,
+	SpantypesSpanMapperTestSpanDTO as TestSpan,
 } from 'api/generated/services/sigNoz.schemas';
 
 // Endpoint globs used by MSW handlers. The generated client hits relative
@@ -12,6 +13,7 @@ export const GROUPS_ENDPOINT = '*/api/v1/span_mapper_groups';
 export function mappersEndpoint(groupId: string): string {
 	return `*/api/v1/span_mapper_groups/${groupId}/span_mappers`;
 }
+export const TEST_ENDPOINT = '*/api/v1/span_mapper_groups/test';
 
 export function makeGroup(overrides: Partial<MapperGroup> = {}): MapperGroup {
 	return {
@@ -69,6 +71,15 @@ export function makeMappersResponse(mappers: Mapper[]): {
 	data: { items: Mapper[] };
 } {
 	return { status: 'ok', data: { items: mappers } };
+}
+
+// The test endpoint echoes back the transformed spans under `data.spans`
+// (see useTestSpanMapper: `response.data?.spans`).
+export function makeTestResponse(spans: TestSpan[]): {
+	status: string;
+	data: { spans: TestSpan[] };
+} {
+	return { status: 'ok', data: { spans } };
 }
 
 export const mockGroups: MapperGroup[] = [
