@@ -147,6 +147,9 @@ function SignUp(): JSX.Element {
 										placeholder="Enter new password"
 										disabled={loading}
 										className="signup-antd-input"
+										onChange={(): void => {
+											if (formError) setFormError(null);
+										}}
 									/>
 								</FormContainer.Item>
 							</div>
