@@ -1495,6 +1495,7 @@ components:
       - cassandradb
       - redis
       - cloudsql_postgres
+      - memorystore_redis
       type: string
     CloudintegrationtypesServiceMetadata:
       properties:
@@ -8084,6 +8085,19 @@ components:
       required:
       - items
       type: object
+    SpantypesGettableSpanMapperTest:
+      properties:
+        collectorLogs:
+          items:
+            type: string
+          nullable: true
+          type: array
+        spans:
+          items:
+            $ref: '#/components/schemas/SpantypesSpanMapperTestSpan'
+          nullable: true
+          type: array
+      type: object
     SpantypesGettableSpanMappers:
       properties:
         items:
@@ -8174,6 +8188,39 @@ components:
           $ref: '#/components/schemas/SpantypesSpanMapperGroupCondition'
         enabled:
           type: boolean
+        name:
+          type: string
+      required:
+      - name
+      - condition
+      type: object
+    SpantypesPostableSpanMapperTest:
+      properties:
+        groups:
+          items:
+            $ref: '#/components/schemas/SpantypesPostableSpanMapperTestGroup'
+          nullable: true
+          type: array
+        spans:
+          items:
+            $ref: '#/components/schemas/SpantypesSpanMapperTestSpan'
+          nullable: true
+          type: array
+      required:
+      - spans
+      - groups
+      type: object
+    SpantypesPostableSpanMapperTestGroup:
+      properties:
+        condition:
+          $ref: '#/components/schemas/SpantypesSpanMapperGroupCondition'
+        enabled:
+          type: boolean
+        mappers:
+          items:
+            $ref: '#/components/schemas/SpantypesPostableSpanMapper'
+          nullable: true
+          type: array
         name:
           type: string
       required:
@@ -8340,6 +8387,17 @@ components:
       - context
       - operation
       - priority
+      type: object
+    SpantypesSpanMapperTestSpan:
+      properties:
+        attributes:
+          additionalProperties: {}
+          nullable: true
+          type: object
+        resource:
+          additionalProperties: {}
+          nullable: true
+          type: object
       type: object
     SpantypesUpdatableSpanMapper:
       properties:
@@ -14072,6 +14130,69 @@ paths:
       - tokenizer:
         - ADMIN
       summary: Update a span mapper
+      tags:
+      - spanmapper
+  /api/v1/span_mapper_groups/test:
+    post:
+      deprecated: false
+      description: Tests how span mappers would transform sample spans
+      operationId: TestSpanMappers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpantypesPostableSpanMapperTest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SpantypesGettableSpanMapperTest'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Test span mappers against sample spans
       tags:
       - spanmapper
   /api/v1/stats:

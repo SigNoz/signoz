@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from '@signozhq/ui/sonner';
+import logEvent from 'api/common/logEvent';
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
 import cx from 'classnames';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 
 import settingsStyles from '../DashboardSettings.module.scss';
 import { useOptimisticPatch } from '../../hooks/useOptimisticPatch';
@@ -32,6 +34,7 @@ interface VariablesSettingsProps {
 
 function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 	const isEditable = useDashboardStore((s) => s.isEditable);
+	const dashboardId = useDashboardStore((s) => s.dashboardId);
 	// The drawer destroys on close, so reading this once on mount is enough to
 	// open the add-form when deep-linked (e.g. the bar's "Add variable" button).
 	const openAddOnMount = useDashboardStore(
@@ -133,6 +136,10 @@ function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 		try {
 			await patchAsync(ops);
 			toast.success(`Applied $${applyToAllVariable.name} to all panels`);
+			void logEvent(DashboardDetailEvents.ApplyToAllConfirmed, {
+				variableType: 'dynamic',
+				dashboardId,
+			});
 		} catch {
 			toast.error('Could not apply the variable to panels');
 		}

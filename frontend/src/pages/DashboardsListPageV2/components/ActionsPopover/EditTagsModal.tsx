@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from 'react-query';
 import { Button } from '@signozhq/ui/button';
 import { DialogWrapper } from '@signozhq/ui/dialog';
 import { toast } from '@signozhq/ui/sonner';
+import logEvent from 'api/common/logEvent';
 import {
 	invalidateListDashboardsForUserV2,
 	// eslint-disable-next-line no-restricted-imports -- list tag-edit targets another dashboard by id; useOptimisticPatch is bound to the open dashboard's store/cache.
@@ -10,6 +11,7 @@ import {
 } from 'api/generated/services/dashboard';
 import type { DashboardtypesJSONPatchOperationDTO } from 'api/generated/services/sigNoz.schemas';
 import TagKeyValueInput from 'components/TagKeyValueInput/TagKeyValueInput';
+import { DashboardListEvents } from 'pages/DashboardsListPageV2/constants/events';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
@@ -63,6 +65,10 @@ function EditTagsModal({
 		},
 		onSuccess: async () => {
 			toast.success('Tags updated');
+			void logEvent(DashboardListEvents.RowAction, {
+				action: 'editTags',
+				dashboardId,
+			});
 			await invalidateListDashboardsForUserV2(queryClient);
 			onClose();
 		},

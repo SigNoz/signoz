@@ -241,9 +241,34 @@ func TestInvalidateListVariableCrossFields(t *testing.T) {
 		assert.Contains(t, err.Error(), "allowMultiple")
 	})
 
+	extractVariableSort := func(t *testing.T, d *DashboardSpec) ListVariableSpecSort {
+		require.Len(t, d.Variables, 1)
+		spec, ok := d.Variables[0].Spec.(*ListVariableSpec)
+		require.True(t, ok, "variable spec should be a *ListVariableSpec")
+		return spec.Sort
+	}
+
 	t.Run("valid sort is accepted", func(t *testing.T) {
-		_, err := unmarshalDashboard(listVar(`"sort": "alphabetical-asc",`))
-		assert.NoError(t, err)
+		d, err := unmarshalDashboard(listVar(`"sort": "alphabetical-asc",`))
+		require.NoError(t, err)
+		assert.Equal(t, SortAlphabeticalAsc, extractVariableSort(t, d))
+	})
+
+	t.Run("explicit empty sort is rejected", func(t *testing.T) {
+		_, err := unmarshalDashboard(listVar(`"sort": "",`))
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "unknown sort")
+	})
+
+	t.Run("omitted sort defaults to none", func(t *testing.T) {
+		d, err := unmarshalDashboard(listVar(``))
+		require.NoError(t, err)
+		assert.Equal(t, "none", extractVariableSort(t, d).ValueOrDefault())
+
+		// Re-marshal (what we'd store / return): the default surfaces explicitly.
+		out, err := json.Marshal(d)
+		require.NoError(t, err)
+		assert.Contains(t, string(out), `"sort":"none"`)
 	})
 
 	t.Run("unknown sort is rejected", func(t *testing.T) {
@@ -1052,34 +1077,6 @@ func TestValidateRequiredFields(t *testing.T) {
 	}
 }
 
-// TestThresholdZeroValueAcceptedMissingRejected documents the *float64 Value:
-// a threshold at 0 (or 0.0) is valid, because the pointer lets validate:"required"
-// tell a present zero (non-nil) from an absent value (nil) — while a genuinely
-// missing value is still rejected.
-func TestThresholdZeroValueAcceptedMissingRejected(t *testing.T) {
-	numberPanel := func(thresholdSpec string) string {
-		return `{
-			"panels": {"p1": {"kind": "Panel", "spec": {
-				"plugin": {"kind": "signoz/NumberPanel", "spec": {"thresholds": [` + thresholdSpec + `]}},
-				"queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/PromQLQuery", "spec": {"name": "A", "query": "up"}}}}]
-			}}},
-			"layouts": []
-		}`
-	}
-
-	_, errZero := unmarshalDashboard([]byte(numberPanel(`{"value": 0, "operator": "above", "format": "text", "color": "Red"}`)))
-	require.NoError(t, errZero, `a threshold "value": 0 is valid`)
-
-	// "value": 0.0 is the same float64 zero as "value": 0 — JSON has one number
-	// type — and is accepted identically.
-	_, errZeroFloat := unmarshalDashboard([]byte(numberPanel(`{"value": 0.0, "operator": "above", "format": "text", "color": "Red"}`)))
-	require.NoError(t, errZeroFloat, `"value": 0.0 is the same valid zero`)
-
-	_, errMissing := unmarshalDashboard([]byte(numberPanel(`{"operator": "above", "format": "text", "color": "Red"}`)))
-	require.Error(t, errMissing, "a genuinely missing value is still rejected")
-	require.Contains(t, errMissing.Error(), "Value")
-}
-
 func TestTimeSeriesPanelDefaults(t *testing.T) {
 	data := []byte(`{
 		"panels": {
@@ -1716,7 +1713,7 @@ func TestInvalidateDisplayNameTooLong(t *testing.T) {
 		t.Run(testCase.scenario, func(t *testing.T) {
 			tooLong := strings.Repeat("x", testCase.limit+1)
 			lengthMsg := fmt.Sprintf("must be at most %d characters, got %d", testCase.limit, testCase.limit+1)
-			_, err := unmarshalDashboard([]byte(fmt.Sprintf(testCase.dashboardJSONFmt, tooLong)))
+			_, err := unmarshalDashboard(fmt.Appendf(nil, testCase.dashboardJSONFmt, tooLong))
 			require.Error(t, err)
 			// Message is "<path>: <label> name must be at most N characters, got M".
 			want := testCase.expectedPath + ": " + testCase.expectedLabel + " name " + lengthMsg

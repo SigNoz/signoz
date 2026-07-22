@@ -30,6 +30,7 @@ async function storageFor(browser: Browser, user: User): Promise<StorageState> {
 		const ctx = await browser.newContext();
 		const page = await ctx.newPage();
 		await login(page, user);
+		await pinSidenav(page);
 		const state = await ctx.storageState();
 		await ctx.close();
 		return state;
@@ -56,6 +57,24 @@ async function login(page: Page, user: User): Promise<void> {
 	// welcome). Wait for URL to move off /login — whichever page follows
 	// is fine, each spec navigates to the feature under test anyway.
 	await page.waitForURL((url) => !url.pathname.startsWith('/login'));
+}
+
+// Pin the nav suite-wide: unpinned it flies out on hover and overlays content.
+// Server-side pref, so set once per user at login.
+async function pinSidenav(page: Page): Promise<void> {
+	const token = await page.evaluate(
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		() => (globalThis as any).localStorage.getItem('AUTH_TOKEN') || '',
+	);
+	const res = await page.request.put('/api/v1/user/preferences/sidenav_pinned', {
+		data: { value: true },
+		headers: { Authorization: `Bearer ${token}` },
+	});
+	if (!res.ok()) {
+		throw new Error(
+			`PUT /api/v1/user/preferences/sidenav_pinned ${res.status()}: ${await res.text()}`,
+		);
+	}
 }
 
 export const test = base.extend<{

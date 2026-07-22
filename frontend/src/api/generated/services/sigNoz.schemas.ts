@@ -2814,6 +2814,7 @@ export enum CloudintegrationtypesServiceIDDTO {
 	cassandradb = 'cassandradb',
 	redis = 'redis',
 	cloudsql_postgres = 'cloudsql_postgres',
+	memorystore_redis = 'memorystore_redis',
 }
 export type CloudintegrationtypesCloudIntegrationServiceDTOAnyOf = {
 	/**
@@ -9270,6 +9271,48 @@ export interface SpantypesGettableSpanMapperGroupsDTO {
 	items: SpantypesSpanMapperGroupDTO[];
 }
 
+export type SpantypesSpanMapperTestSpanDTOAttributesAnyOf = {
+	[key: string]: unknown;
+};
+
+/**
+ * @nullable
+ */
+export type SpantypesSpanMapperTestSpanDTOAttributes =
+	SpantypesSpanMapperTestSpanDTOAttributesAnyOf | null;
+
+export type SpantypesSpanMapperTestSpanDTOResourceAnyOf = {
+	[key: string]: unknown;
+};
+
+/**
+ * @nullable
+ */
+export type SpantypesSpanMapperTestSpanDTOResource =
+	SpantypesSpanMapperTestSpanDTOResourceAnyOf | null;
+
+export interface SpantypesSpanMapperTestSpanDTO {
+	/**
+	 * @type object,null
+	 */
+	attributes?: SpantypesSpanMapperTestSpanDTOAttributes;
+	/**
+	 * @type object,null
+	 */
+	resource?: SpantypesSpanMapperTestSpanDTOResource;
+}
+
+export interface SpantypesGettableSpanMapperTestDTO {
+	/**
+	 * @type array,null
+	 */
+	collectorLogs?: string[] | null;
+	/**
+	 * @type array,null
+	 */
+	spans?: SpantypesSpanMapperTestSpanDTO[] | null;
+}
+
 export enum SpantypesSpanMapperOperationDTO {
 	move = 'move',
 	copy = 'copy',
@@ -9609,6 +9652,33 @@ export interface SpantypesPostableSpanMapperGroupDTO {
 	 * @type string
 	 */
 	name: string;
+}
+
+export interface SpantypesPostableSpanMapperTestGroupDTO {
+	condition: SpantypesSpanMapperGroupConditionDTO | null;
+	/**
+	 * @type boolean
+	 */
+	enabled?: boolean;
+	/**
+	 * @type array,null
+	 */
+	mappers?: SpantypesPostableSpanMapperDTO[] | null;
+	/**
+	 * @type string
+	 */
+	name: string;
+}
+
+export interface SpantypesPostableSpanMapperTestDTO {
+	/**
+	 * @type array,null
+	 */
+	groups: SpantypesPostableSpanMapperTestGroupDTO[] | null;
+	/**
+	 * @type array,null
+	 */
+	spans: SpantypesSpanMapperTestSpanDTO[] | null;
 }
 
 export interface SpantypesSpanAggregationDTO {
@@ -10961,6 +11031,14 @@ export type UpdateSpanMapperPathParameters = {
 	groupId: string;
 	mapperId: string;
 };
+export type TestSpanMappers200 = {
+	data: SpantypesGettableSpanMapperTestDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type GetStats200Data = { [key: string]: unknown };
 
 export type GetStats200 = {
