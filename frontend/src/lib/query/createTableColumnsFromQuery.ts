@@ -645,11 +645,17 @@ const generateTableColumns = (
 		ColumnsType<RowData>
 	>((acc, item) => {
 		const dataIndex = item.id || item.dataIndex;
-		const column: ColumnType<RowData> = {
+		const column: ColumnType<RowData> & {
+			isValueColumn?: boolean;
+			queryName?: string;
+		} = {
 			dataIndex,
 			title: item.title,
 			width: QUERY_TABLE_CONFIG.width,
 			render: renderColumnCell && renderColumnCell[dataIndex],
+			// 'operator' and 'formula' types are value columns, 'field' type is not
+			isValueColumn: item.type === 'operator' || item.type === 'formula',
+			queryName: get(item.query, 'queryName', '') || get(item.query, 'name', ''),
 			sorter: (a: RowData, b: RowData): number => {
 				const valueA = Number(a[`${dataIndex}_without_unit`] ?? a[dataIndex]);
 				const valueB = Number(b[`${dataIndex}_without_unit`] ?? b[dataIndex]);

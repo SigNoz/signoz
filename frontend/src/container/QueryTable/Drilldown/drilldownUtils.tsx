@@ -136,12 +136,16 @@ export const getAggregateColumnHeader = (
 	queryName: string,
 ): { dataSource: string; aggregations: string } => {
 	// Find the query step with the matching queryName
-	const queryStep = query?.builder?.queryData.find(
+	const queryStep = query?.builder?.queryData?.find(
 		(step) => step.queryName === queryName,
 	);
 
 	if (!queryStep) {
-		return { dataSource: '', aggregations: '' };
+		const isClickHouse = query?.queryType === 'clickhouse_sql';
+		return {
+			dataSource: isClickHouse ? 'ClickHouse SQL' : '',
+			aggregations: '',
+		};
 	}
 
 	const { dataSource, aggregations } = queryStep; // TODO: check if this is correct
@@ -266,10 +270,27 @@ export const getQueryData = (
 	query: Query,
 	queryName: string,
 ): IBuilderQuery => {
-	const queryData = query?.builder?.queryData?.filter(
+	const queryData = query?.builder?.queryData?.find(
 		(item: IBuilderQuery) => item.queryName === queryName,
 	);
-	return queryData[0];
+
+	if (queryData) {
+		return queryData;
+	}
+
+	if (query?.queryType === 'clickhouse_sql') {
+		const chQuery = query.clickhouse_sql?.find((q) => q.name === queryName);
+		if (chQuery) {
+			return {
+				queryName: chQuery.name,
+				legend: chQuery.legend,
+				disabled: chQuery.disabled,
+				expression: chQuery.query,
+			} as IBuilderQuery;
+		}
+	}
+
+	return undefined as any;
 };
 
 /**

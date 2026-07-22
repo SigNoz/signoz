@@ -31,10 +31,11 @@ export function setDashboardVariablesStore({
 	variables: IDashboardVariablesStoreState['variables'];
 }): void {
 	dashboardVariablesStore.set(() => {
+		const safeVariables = variables || {};
 		return {
 			dashboardId,
-			variables,
-			...computeDerivedValues(variables),
+			variables: safeVariables,
+			...computeDerivedValues(safeVariables),
 		} as IDashboardVariablesStoreState;
 	});
 }
@@ -54,7 +55,7 @@ export function updateDashboardVariablesStore({
 			// If dashboardId doesn't match, we replace the entire state
 			draft.dashboardId = dashboardId;
 		}
-		draft.variables = variables;
+		draft.variables = variables || {};
 
 		updateDerivedValues(draft);
 	});
