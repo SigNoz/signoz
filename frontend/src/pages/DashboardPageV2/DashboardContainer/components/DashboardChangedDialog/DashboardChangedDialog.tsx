@@ -1,7 +1,10 @@
 import { RotateCcw } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { DialogWrapper } from '@signozhq/ui/dialog';
+import logEvent from 'api/common/logEvent';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 
+import { useDashboardStore } from '../../store/useDashboardStore';
 import styles from './DashboardChangedDialog.module.scss';
 
 interface DashboardChangedDialogProps {
@@ -15,12 +18,30 @@ function DashboardChangedDialog({
 	onReload,
 	onDismiss,
 }: DashboardChangedDialogProps): JSX.Element {
+	const dashboardId = useDashboardStore((s) => s.dashboardId);
+
+	const handleReload = (): void => {
+		void logEvent(DashboardDetailEvents.StaleReloadPrompted, {
+			dashboardId,
+			action: 'reload',
+		});
+		onReload();
+	};
+
+	const handleDismiss = (): void => {
+		void logEvent(DashboardDetailEvents.StaleReloadPrompted, {
+			dashboardId,
+			action: 'dismiss',
+		});
+		onDismiss();
+	};
+
 	const footer = (
 		<div className={styles.footer}>
 			<Button
 				variant="solid"
 				color="secondary"
-				onClick={onDismiss}
+				onClick={handleDismiss}
 				testId="dashboard-changed-dismiss"
 			>
 				Dismiss
@@ -29,7 +50,7 @@ function DashboardChangedDialog({
 				variant="solid"
 				color="primary"
 				prefix={<RotateCcw size={12} />}
-				onClick={onReload}
+				onClick={handleReload}
 				testId="dashboard-changed-reload"
 			>
 				Reload

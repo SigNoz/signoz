@@ -15,6 +15,7 @@ import type {
 } from 'api/generated/services/sigNoz.schemas';
 import { Base64Icons } from 'container/DashboardContainer/DashboardSettings/General/utils';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
@@ -87,38 +88,47 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 	const { isPublic, publicMeta } = usePublicDashboardMeta(id);
 	const publicUrl = getAbsoluteUrl(publicMeta?.publicPath ?? '');
 
-	const handleLockDashboardToggle = useCallback(async (): Promise<void> => {
-		if (!id) {
-			return;
-		}
-		const next = !isDashboardLocked;
-		setIsDashboardLocked(next);
-		if (next) {
-			setShowLockToggle(true);
-		}
-		try {
+	const handleLockDashboardToggle = useCallback(
+		async (source: 'menu' | 'header'): Promise<void> => {
+			if (!id) {
+				return;
+			}
+			const next = !isDashboardLocked;
+			setIsDashboardLocked(next);
 			if (next) {
-				await lockDashboardV2({ id });
-				toast.success('Dashboard locked');
-			} else {
-				await unlockDashboardV2({ id });
-				toast.success('Dashboard unlocked');
+				setShowLockToggle(true);
 			}
-			// Patch just the `locked` flag in the cache — a full refetch would reload
-			// every panel's chart data for a metadata-only change.
-			const key = getGetDashboardV2QueryKey({ id });
-			const cached = queryClient.getQueryData<GetDashboardV2200>(key);
-			if (cached) {
-				queryClient.setQueryData<GetDashboardV2200>(key, {
-					...cached,
-					data: { ...cached.data, locked: next },
+			try {
+				if (next) {
+					await lockDashboardV2({ id });
+					toast.success('Dashboard locked');
+				} else {
+					await unlockDashboardV2({ id });
+					toast.success('Dashboard unlocked');
+				}
+				// Patch just the `locked` flag in the cache — a full refetch would reload
+				// every panel's chart data for a metadata-only change.
+				const key = getGetDashboardV2QueryKey({ id });
+				const cached = queryClient.getQueryData<GetDashboardV2200>(key);
+				if (cached) {
+					queryClient.setQueryData<GetDashboardV2200>(key, {
+						...cached,
+						data: { ...cached.data, locked: next },
+					});
+				}
+				void logEvent(DashboardDetailEvents.LockToggled, {
+					dashboardId: id,
+					dashboardName: title,
+					locked: next,
+					source,
 				});
+			} catch (error) {
+				setIsDashboardLocked(!next);
+				showErrorModal(error as APIError);
 			}
-		} catch (error) {
-			setIsDashboardLocked(!next);
-			showErrorModal(error as APIError);
-		}
-	}, [id, isDashboardLocked, queryClient, showErrorModal]);
+		},
+		[id, title, isDashboardLocked, queryClient, showErrorModal],
+	);
 
 	const onNameSave = useCallback(
 		async (next: string): Promise<void> => {
@@ -135,6 +145,11 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 				];
 				await patchAsync(patch);
 				toast.success('Dashboard renamed successfully');
+				void logEvent(DashboardDetailEvents.Renamed, {
+					dashboardId: id,
+					dashboardName: next,
+					source: 'inline',
+				});
 			} catch (error) {
 				showErrorModal(error as APIError);
 			}
@@ -167,7 +182,11 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 					publicUrl={publicUrl}
 					isDashboardLocked={isDashboardLocked}
 					showLockToggle={showLockToggle}
-					onToggleLock={canToggleLock ? handleLockDashboardToggle : undefined}
+					onToggleLock={
+						canToggleLock
+							? (): void => void handleLockDashboardToggle('header')
+							: undefined
+					}
 					isEditing={isEditing}
 					draft={draft}
 					onDraftChange={setDraft}
@@ -182,7 +201,7 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 					isDashboardLocked={isDashboardLocked}
 					isAuthor={isAuthor}
 					onAddPanel={onAddPanel}
-					onLockToggle={handleLockDashboardToggle}
+					onLockToggle={(): void => void handleLockDashboardToggle('menu')}
 					onOpenRename={startEdit}
 				/>
 			</div>
@@ -190,7 +209,7 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 			{/* Row 2: the time selector floats top-right (declared first so the
 			    variables bar's content wraps around it); the variables bar
 			    collapses to one line and, when expanded, wraps full-width under it. */}
-			<div className={styles.toolbarRow2}>
+			<div className={styles.toolbarRow}>
 				<div className={styles.timeCluster}>
 					<DateTimeSelectionV2 showAutoRefresh hideShareModal />
 				</div>

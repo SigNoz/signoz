@@ -169,12 +169,10 @@ func TestValidate_PostableRule_Common(t *testing.T) {
 			errSubstr: "alert",
 		},
 
-		// only "v5" is allowed
+		// only "v5" is allowed; missing/empty defaults to "v5"
 		{
-			name:      "missing version",
-			json:      removeField(validV1Builder(), "version"),
-			wantErr:   true,
-			errSubstr: "version",
+			name: "missing version defaults to v5",
+			json: removeField(validV1Builder(), "version"),
 		},
 		{
 			name:      "wrong version v4",
@@ -189,10 +187,8 @@ func TestValidate_PostableRule_Common(t *testing.T) {
 			errSubstr: "version",
 		},
 		{
-			name:      "empty version",
-			json:      patchJSON(validV1Builder(), `{"version": ""}`),
-			wantErr:   true,
-			errSubstr: "version",
+			name: "empty version defaults to v5",
+			json: patchJSON(validV1Builder(), `{"version": ""}`),
 		},
 
 		// alert type, capital case to avoid breaking changes

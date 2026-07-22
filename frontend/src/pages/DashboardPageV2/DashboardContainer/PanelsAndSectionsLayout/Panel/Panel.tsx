@@ -92,6 +92,7 @@ function Panel({
 					panelId={panelId}
 					data={data}
 					isFetching={isFetching}
+					isVisible={isVisible}
 					isPreviousData={isPreviousData}
 					error={error}
 					refetch={refetch}

@@ -11,6 +11,7 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type LabelsString string
@@ -88,10 +89,10 @@ type RuleStateHistoryContributor struct {
 type Store interface {
 	AddRuleStateHistory(ctx context.Context, entries []RuleStateHistory) error
 	GetLastSavedRuleStateHistory(ctx context.Context, ruleID string) ([]RuleStateHistory, error)
-	ReadRuleStateHistoryByRuleID(ctx context.Context, ruleID string, query *Query) ([]RuleStateHistory, uint64, error)
-	ReadRuleStateHistoryFilterKeysByRuleID(ctx context.Context, ruleID string, query *Query, search string, limit int64) (*telemetrytypes.GettableFieldKeys, error)
-	ReadRuleStateHistoryFilterValuesByRuleID(ctx context.Context, ruleID string, key string, query *Query, search string, limit int64) (*telemetrytypes.GettableFieldValues, error)
-	ReadRuleStateHistoryTopContributorsByRuleID(ctx context.Context, ruleID string, query *Query) ([]RuleStateHistoryContributor, error)
+	ReadRuleStateHistoryByRuleID(ctx context.Context, orgID valuer.UUID, ruleID string, query *Query) ([]RuleStateHistory, uint64, error)
+	ReadRuleStateHistoryFilterKeysByRuleID(ctx context.Context, orgID valuer.UUID, ruleID string, query *Query, search string, limit int64) (*telemetrytypes.GettableFieldKeys, error)
+	ReadRuleStateHistoryFilterValuesByRuleID(ctx context.Context, orgID valuer.UUID, ruleID string, key string, query *Query, search string, limit int64) (*telemetrytypes.GettableFieldValues, error)
+	ReadRuleStateHistoryTopContributorsByRuleID(ctx context.Context, orgID valuer.UUID, ruleID string, query *Query) ([]RuleStateHistoryContributor, error)
 	GetOverallStateTransitions(ctx context.Context, ruleID string, query *Query) ([]GettableRuleStateWindow, error)
 	GetTotalTriggers(ctx context.Context, ruleID string, query *Query) (uint64, error)
 	GetTriggersByInterval(ctx context.Context, ruleID string, query *Query) (*qbtypes.TimeSeries, error)

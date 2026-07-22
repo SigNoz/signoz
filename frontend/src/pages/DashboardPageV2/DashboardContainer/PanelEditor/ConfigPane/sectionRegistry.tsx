@@ -1,6 +1,6 @@
 import type { ComponentType } from 'react';
 import type {
-	DashboardLinkDTO,
+	DashboardtypesLinkDTO,
 	DashboardtypesAxesDTO,
 	DashboardtypesBarChartVisualizationDTO,
 	DashboardtypesHistogramBucketsDTO,
@@ -120,7 +120,7 @@ export const SECTION_REGISTRY: {
 	[SectionKind.ContextLinks]: {
 		Component: ContextLinksSection,
 		// Panel-level slice (spec.links), not under the plugin spec — no cast needed.
-		get: (spec): DashboardLinkDTO[] | undefined => spec.links,
+		get: (spec): DashboardtypesLinkDTO[] | undefined => spec.links ?? undefined,
 		update: (spec, links): PanelSpec => ({ ...spec, links }),
 	},
 	// One editor for every threshold variant (label / comparison / table); the kind's

@@ -10,6 +10,7 @@ import {
 import { K8sDetailsMetadataConfig } from 'container/InfraMonitoringK8sV2/Base/K8sBaseDetails';
 import { formatValueForExpression } from 'components/QueryBuilderV2/utils';
 import { INFRA_MONITORING_ATTR_KEYS } from 'container/InfraMonitoringK8sV2/constants';
+import { SelectedItemParams } from 'container/InfraMonitoringK8sV2/hooks';
 import {
 	getHostQueryPayload,
 	hostWidgetInfo,
@@ -107,8 +108,10 @@ export function getHostMetricsQueryPayload(
 
 export { hostWidgetInfo };
 
-export const hostGetSelectedItemExpression = (hostName: string): string =>
-	`host.name = ${formatValueForExpression(hostName)}`;
+export const hostGetSelectedItemExpression = (
+	params: SelectedItemParams,
+): string =>
+	`host.name = ${formatValueForExpression(params.selectedItem ?? '')}`;
 
 export function hostInitialLogTracesExpression(
 	host: InframonitoringtypesHostRecordDTO,

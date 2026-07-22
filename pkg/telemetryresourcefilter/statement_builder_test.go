@@ -9,6 +9,7 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/require"
 )
 
@@ -366,7 +367,7 @@ func TestResourceFilterStatementBuilder_Traces(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			stmt, err := builder.Build(context.Background(), c.start, c.end, qbtypes.RequestTypeTimeSeries, c.query, nil)
+			stmt, err := builder.Build(context.Background(), valuer.UUID{}, c.start, c.end, qbtypes.RequestTypeTimeSeries, c.query, nil)
 
 			if c.expectedErr != nil {
 				require.Error(t, err)
@@ -559,7 +560,7 @@ func TestResourceFilterStatementBuilder_Logs(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			stmt, err := builder.Build(context.Background(), c.start, c.end, qbtypes.RequestTypeTimeSeries, c.query, nil)
+			stmt, err := builder.Build(context.Background(), valuer.UUID{}, c.start, c.end, qbtypes.RequestTypeTimeSeries, c.query, nil)
 
 			if c.expectedErr != nil {
 				require.Error(t, err)
@@ -626,7 +627,7 @@ func TestResourceFilterStatementBuilder_Variables(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			stmt, err := builder.Build(context.Background(), c.start, c.end, qbtypes.RequestTypeTimeSeries, c.query, c.variables)
+			stmt, err := builder.Build(context.Background(), valuer.UUID{}, c.start, c.end, qbtypes.RequestTypeTimeSeries, c.query, c.variables)
 
 			if c.expectedErr != nil {
 				require.Error(t, err)

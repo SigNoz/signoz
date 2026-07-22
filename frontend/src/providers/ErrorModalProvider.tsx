@@ -8,11 +8,17 @@ import {
 	useMemo,
 	useState,
 } from 'react';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import ErrorModal from 'components/ErrorModal/ErrorModal';
 import APIError from 'types/api/error';
 
 interface ErrorModalContextType {
-	showErrorModal: (error: APIError) => void;
+	/**
+	 * Accepts any thrown value. Generated-client calls reject with a raw
+	 * `AxiosError`, so we normalize to `APIError` here — otherwise the modal would
+	 * show a generic "status 400" instead of the backend's `error.message`.
+	 */
+	showErrorModal: (error: unknown) => void;
 	hideErrorModal: () => void;
 	isErrorModalVisible: boolean;
 }
@@ -29,8 +35,15 @@ export function ErrorModalProvider({
 	const [error, setError] = useState<APIError | null>(null);
 	const [isVisible, setIsVisible] = useState(false);
 
-	const showErrorModal = useCallback((error: APIError): void => {
-		setError(error);
+	const showErrorModal = useCallback((rawError: unknown): void => {
+		const apiError =
+			rawError instanceof APIError
+				? rawError
+				: convertToApiError(rawError as Parameters<typeof convertToApiError>[0]);
+		if (!apiError) {
+			return;
+		}
+		setError(apiError);
 		setIsVisible(true);
 	}, []);
 

@@ -6,15 +6,22 @@ import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
-import { formatValueForExpression } from 'components/QueryBuilderV2/utils';
-
 import { K8sDetailsMetadataConfig } from '../Base/K8sBaseDetails';
 import { INFRA_MONITORING_ATTR_KEYS } from '../constants';
+import { SelectedItemParams } from '../hooks';
+import {
+	buildEventsExpression,
+	buildExpressionFromSelectedItemParams,
+	buildLogsTracesExpression,
+} from 'container/InfraMonitoringK8sV2/Base/utils';
 
 export const k8sVolumeGetSelectedItemExpression = (
-	selectedItemId: string,
+	params: SelectedItemParams,
 ): string =>
-	`${INFRA_MONITORING_ATTR_KEYS.K8S_PERSISTENT_VOLUME_CLAIM_NAME} = ${formatValueForExpression(selectedItemId)}`;
+	buildExpressionFromSelectedItemParams(
+		params,
+		INFRA_MONITORING_ATTR_KEYS.K8S_PERSISTENT_VOLUME_CLAIM_NAME,
+	);
 
 export const k8sVolumeDetailsMetadataConfig: K8sDetailsMetadataConfig<InframonitoringtypesVolumeRecordDTO>[] =
 	[
@@ -36,22 +43,23 @@ export const k8sVolumeDetailsMetadataConfig: K8sDetailsMetadataConfig<Inframonit
 
 export const k8sVolumeInitialEventsExpression = (
 	item: InframonitoringtypesVolumeRecordDTO,
-): string => {
-	const objectName = formatValueForExpression(
-		item.persistentVolumeClaimName || '',
-	);
-	return `${INFRA_MONITORING_ATTR_KEYS.K8S_OBJECT_KIND} = 'PersistentVolumeClaim' AND ${INFRA_MONITORING_ATTR_KEYS.K8S_OBJECT_NAME} = ${objectName}`;
-};
+): string =>
+	buildEventsExpression({
+		objectKind: 'PersistentVolumeClaim',
+		objectName: item.persistentVolumeClaimName || '',
+		clusterName: item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME],
+		namespaceName: item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME],
+	});
 
 export const k8sVolumeInitialLogTracesExpression = (
 	item: InframonitoringtypesVolumeRecordDTO,
-): string => {
-	const pvcName = formatValueForExpression(item.persistentVolumeClaimName || '');
-	const namespaceName = formatValueForExpression(
-		item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
-	);
-	return `${INFRA_MONITORING_ATTR_KEYS.K8S_PERSISTENT_VOLUME_CLAIM_NAME} = ${pvcName} AND ${INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME} = ${namespaceName}`;
-};
+): string =>
+	buildLogsTracesExpression({
+		mainAttributeKey: INFRA_MONITORING_ATTR_KEYS.K8S_PERSISTENT_VOLUME_CLAIM_NAME,
+		mainAttributeValue: item.persistentVolumeClaimName,
+		clusterName: item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME],
+		namespaceName: item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME],
+	});
 
 export const k8sVolumeGetEntityName = (
 	item: InframonitoringtypesVolumeRecordDTO,
@@ -61,22 +69,27 @@ export const volumeWidgetInfo = [
 	{
 		title: 'Volume available',
 		yAxisUnit: 'bytes',
+		docPath: '/infrastructure-monitoring/kubernetes/volumes/#volume-available',
 	},
 	{
 		title: 'Volume capacity',
 		yAxisUnit: 'bytes',
+		docPath: '/infrastructure-monitoring/kubernetes/volumes/#volume-capacity',
 	},
 	{
 		title: 'Volume inodes used',
 		yAxisUnit: 'short',
+		docPath: '/infrastructure-monitoring/kubernetes/volumes/#volume-inodes-used',
 	},
 	{
 		title: 'Volume inodes',
 		yAxisUnit: 'short',
+		docPath: '/infrastructure-monitoring/kubernetes/volumes/#volume-inodes',
 	},
 	{
 		title: 'Volume inodes free',
 		yAxisUnit: 'short',
+		docPath: '/infrastructure-monitoring/kubernetes/volumes/#volume-inodes-free',
 	},
 ];
 

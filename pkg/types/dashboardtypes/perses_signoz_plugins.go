@@ -207,7 +207,7 @@ type HistogramBuckets struct {
 }
 
 type ListPanelSpec struct {
-	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitempty" validate:"dive"`
+	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitzero" validate:"dive"`
 }
 
 // ══════════════════════════════════════════════
@@ -252,14 +252,20 @@ type Legend struct {
 }
 
 type ThresholdWithLabel struct {
-	Value float64 `json:"value" validate:"required" required:"true"`
+	// Value is always present in the schema (required:"true"), but 0 is a legitimate
+	// threshold, so it drops validate:"required" — go-playground's required treats a
+	// zero float as unset and would wrongly reject value: 0.
+	Value float64 `json:"value" required:"true"`
 	Unit  string  `json:"unit"`
 	Color string  `json:"color" validate:"required" required:"true"`
 	Label string  `json:"label"`
 }
 
 type ComparisonThreshold struct {
-	Value    float64            `json:"value" validate:"required" required:"true"`
+	// Value is always present in the schema (required:"true"), but 0 is a legitimate
+	// threshold, so it drops validate:"required" — go-playground's required treats a
+	// zero float as unset and would wrongly reject value: 0.
+	Value    float64            `json:"value" required:"true"`
 	Operator ComparisonOperator `json:"operator"`
 	Unit     string             `json:"unit"`
 	Color    string             `json:"color" validate:"required" required:"true"`

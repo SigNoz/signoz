@@ -8,7 +8,7 @@ import { ExpandButtonWrapper } from 'container/InfraMonitoringK8sV2/components';
 import ColumnHeader from '../Base/ColumnHeader';
 import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
-import { formatBytes, getPodPhaseStatusItems } from '../commonUtils';
+import { formatBytes, getPodStatusItems } from '../commonUtils';
 import {
 	CellValueTooltip,
 	GroupedStatusCounts,
@@ -77,11 +77,7 @@ export const k8sClustersColumnsConfig: ClusterTableColumnConfig[] = [
 		visibilityBehavior: 'hidden-on-expand',
 		cell: ({ value }): React.ReactNode => {
 			const clusterName = value as string;
-			return (
-				<CellValueTooltip value={clusterName}>
-					<TanStackTable.Text>{clusterName}</TanStackTable.Text>
-				</CellValueTooltip>
-			);
+			return <CellValueTooltip value={clusterName} />;
 		},
 	},
 	{
@@ -97,13 +93,14 @@ export const k8sClustersColumnsConfig: ClusterTableColumnConfig[] = [
 			row.nodeCountsByReadiness,
 		width: { min: 180 },
 		enableSort: false,
-		cell: ({ row }): React.ReactNode => {
+		cell: ({ row, rowId }): React.ReactNode => {
 			if (!row.nodeCountsByReadiness) {
 				return <TanStackTable.Text>-</TanStackTable.Text>;
 			}
 
 			return (
 				<GroupedStatusCounts
+					rowId={rowId}
 					items={[
 						{
 							value: row.nodeCountsByReadiness.ready,
@@ -121,23 +118,28 @@ export const k8sClustersColumnsConfig: ClusterTableColumnConfig[] = [
 		},
 	},
 	{
-		id: 'podCountsByPhase',
+		id: 'podCountsByStatus',
 		header: (): React.ReactNode => (
-			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/clusters#pod-counts-by-phase">
-				Pod Phases
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/clusters#pod-counts-by-status">
+				Pod Status
 			</ColumnHeader>
 		),
-		accessorFn: (row): InframonitoringtypesClusterRecordDTO['podCountsByPhase'] =>
-			row.podCountsByPhase,
+		accessorFn: (
+			row,
+		): InframonitoringtypesClusterRecordDTO['podCountsByStatus'] =>
+			row.podCountsByStatus,
 		width: { min: 250 },
 		enableSort: false,
-		cell: ({ row }): React.ReactNode => {
-			const podCountsByPhase = row.podCountsByPhase;
-			if (!podCountsByPhase) {
+		cell: ({ row, rowId }): React.ReactNode => {
+			const podCountsByStatus = row.podCountsByStatus;
+			if (!podCountsByStatus) {
 				return <TanStackTable.Text>-</TanStackTable.Text>;
 			}
 			return (
-				<GroupedStatusCounts items={getPodPhaseStatusItems(row.podCountsByPhase)} />
+				<GroupedStatusCounts
+					rowId={rowId}
+					items={getPodStatusItems(row.podCountsByStatus)}
+				/>
 			);
 		},
 	},

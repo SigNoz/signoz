@@ -89,8 +89,12 @@ export const getTraceListColumns = (
 				if (value === '') {
 					return (
 						<BlockLink to={getTraceLink(itemData)} openInNewTab>
-							<Typography data-testid={key} className={styles.cellText}>
-								N/A
+							<Typography
+								data-testid={key}
+								className={styles.cellText}
+								data-novalue="true"
+							>
+								-
 							</Typography>
 						</BlockLink>
 					);
@@ -102,7 +106,9 @@ export const getTraceListColumns = (
 					if (!httpMethod) {
 						return (
 							<BlockLink to={getTraceLink(itemData)} openInNewTab>
-								<Typography className={styles.cellText}>N/A</Typography>
+								<Typography className={styles.cellText} data-novalue="true">
+									-
+								</Typography>
 							</BlockLink>
 						);
 					}
@@ -129,8 +135,11 @@ export const getTraceListColumns = (
 					if (!isValidCode) {
 						return (
 							<BlockLink to={getTraceLink(itemData)} openInNewTab>
-								<Typography className={styles.cellText}>
-									{numericCode === 0 || !statusCode ? 'N/A' : statusCode}
+								<Typography
+									className={styles.cellText}
+									data-novalue={numericCode === 0 || !statusCode}
+								>
+									{numericCode === 0 || !statusCode ? '-' : statusCode}
 								</Typography>
 							</BlockLink>
 						);

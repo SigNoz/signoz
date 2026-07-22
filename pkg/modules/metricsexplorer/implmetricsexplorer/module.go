@@ -565,7 +565,7 @@ func (m *module) InspectMetrics(
 	start := uint64(req.Start)
 	end := uint64(req.End)
 
-	filterWhereClause, err := m.buildFilterClause(ctx, req.Filter, req.Start, req.End)
+	filterWhereClause, err := m.buildFilterClause(ctx, orgID, req.Filter, req.Start, req.End)
 	if err != nil {
 		return nil, err
 	}
@@ -950,7 +950,7 @@ func (m *module) insertMetricsMetadata(ctx context.Context, orgID valuer.UUID, r
 	return nil
 }
 
-func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, startMillis, endMillis int64) (*sqlbuilder.WhereClause, error) {
+func (m *module) buildFilterClause(ctx context.Context, orgID valuer.UUID, filter *qbtypes.Filter, startMillis, endMillis int64) (*sqlbuilder.WhereClause, error) {
 	expression := ""
 	if filter != nil {
 		expression = strings.TrimSpace(filter.Expression)
@@ -969,7 +969,7 @@ func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, 
 		// whereClauseSelectors[idx].Source = query.Source
 	}
 
-	keys, _, err := m.telemetryMetadataStore.GetKeysMulti(ctx, whereClauseSelectors)
+	keys, _, err := m.telemetryMetadataStore.GetKeysMulti(ctx, orgID, whereClauseSelectors)
 	if err != nil {
 		return nil, err
 	}
@@ -1010,7 +1010,7 @@ func (m *module) fetchMetricsStatsWithSamples(
 	var filterWhereClause *sqlbuilder.WhereClause
 	if hasFilter {
 		var err error
-		filterWhereClause, err = m.buildFilterClause(ctx, req.Filter, req.Start, req.End)
+		filterWhereClause, err = m.buildFilterClause(ctx, orgID, req.Filter, req.Start, req.End)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -1214,7 +1214,7 @@ func (m *module) computeTimeseriesTreemap(ctx context.Context, orgID valuer.UUID
 	var filterWhereClause *sqlbuilder.WhereClause
 	if hasFilter {
 		var err error
-		filterWhereClause, err = m.buildFilterClause(ctx, req.Filter, req.Start, req.End)
+		filterWhereClause, err = m.buildFilterClause(ctx, orgID, req.Filter, req.Start, req.End)
 		if err != nil {
 			return nil, err
 		}
@@ -1332,7 +1332,7 @@ func (m *module) computeSamplesTreemap(ctx context.Context, orgID valuer.UUID, r
 	var filterWhereClause *sqlbuilder.WhereClause
 	if hasFilter {
 		var err error
-		filterWhereClause, err = m.buildFilterClause(ctx, req.Filter, req.Start, req.End)
+		filterWhereClause, err = m.buildFilterClause(ctx, orgID, req.Filter, req.Start, req.End)
 		if err != nil {
 			return nil, err
 		}

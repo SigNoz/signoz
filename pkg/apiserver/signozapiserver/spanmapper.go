@@ -98,7 +98,7 @@ func (provider *provider) addSpanMapperRoutes(router *mux.Router) error {
 			Description:         "Returns all mappers belonging to a mapping group.",
 			Request:             nil,
 			RequestContentType:  "",
-			Response:            new(spantypes.GettableSpanMapperGroups),
+			Response:            new(spantypes.GettableSpanMappers),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},

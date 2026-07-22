@@ -100,4 +100,47 @@ describe('buildCreateAlertUrl', () => {
 		);
 		expect(decoded.unit).toBeUndefined();
 	});
+
+	it('omits the alert-condition params when the panel has no reduceTo or thresholds', () => {
+		const params = parse(buildCreateAlertUrl(makePanel()));
+
+		expect(params.get(QueryParams.thresholds)).toBeNull();
+		expect(params.get(QueryParams.matchType)).toBeNull();
+		expect(params.get(QueryParams.compareOp)).toBeNull();
+	});
+
+	it('seeds the alert condition from the panel Reduce To + highest-danger threshold', () => {
+		mockFromPerses.mockReturnValue({
+			...translatedQuery,
+			builder: {
+				queryData: [{ aggregations: [{ reduceTo: 'sum' }] }],
+				queryFormulas: [],
+				queryTraceOperator: [],
+			},
+		});
+		const numberPanel = {
+			kind: 'Panel',
+			spec: {
+				display: { name: 'CPU' },
+				plugin: {
+					kind: 'signoz/NumberPanel',
+					spec: {
+						thresholds: [{ color: '#F1575F', value: 90, operator: 'above' }],
+					},
+				},
+				queries: [{ some: 'query' }],
+			},
+		} as unknown as DashboardtypesPanelDTO;
+
+		const params = parse(buildCreateAlertUrl(numberPanel));
+
+		expect(params.get(QueryParams.matchType)).toBe('in_total');
+		expect(params.get(QueryParams.compareOp)).toBe('above');
+		// The alert page parses this param directly (no decodeURIComponent), so it
+		// must be single-encoded — reading it the same way guards against
+		// double-encoding regressions.
+		const thresholds = JSON.parse(params.get(QueryParams.thresholds) as string);
+		expect(thresholds).toHaveLength(1);
+		expect(thresholds[0].thresholdValue).toBe(90);
+	});
 });

@@ -2872,17 +2872,72 @@ export const nodeWidgetInfo = [
 ];
 
 export const hostWidgetInfo = [
-	{ title: 'CPU Usage', yAxisUnit: 'percentunit' },
-	{ title: 'Memory Usage', yAxisUnit: 'bytes' },
-	{ title: 'System Load Average', yAxisUnit: '' },
-	{ title: 'Network usage (bytes)', yAxisUnit: 'bytes' },
-	{ title: 'Network usage (packet/s)', yAxisUnit: 'pps' },
-	{ title: 'Network errors', yAxisUnit: 'short' },
-	{ title: 'Network drops', yAxisUnit: 'short' },
-	{ title: 'Network connections', yAxisUnit: 'short' },
-	{ title: 'System disk io (bytes transferred)', yAxisUnit: 'bytes' },
-	{ title: 'System disk operations/s', yAxisUnit: 'short' },
-	{ title: 'Queue size', yAxisUnit: 'short' },
-	{ title: 'System disk operation time/s', yAxisUnit: 's' },
-	{ title: 'Disk Usage (%) by mountpoint', yAxisUnit: 'percentunit' },
+	{
+		title: 'CPU Usage',
+		yAxisUnit: 'percentunit',
+		docPath: '/infrastructure-monitoring/host-monitoring/#cpu-usage',
+	},
+	{
+		title: 'Memory Usage',
+		yAxisUnit: 'bytes',
+		docPath: '/infrastructure-monitoring/host-monitoring/#memory-usage',
+	},
+	{
+		title: 'System Load Average',
+		yAxisUnit: '',
+		docPath: '/infrastructure-monitoring/host-monitoring/#system-load-average',
+	},
+	{
+		title: 'Network usage (bytes)',
+		yAxisUnit: 'bytes',
+		docPath: '/infrastructure-monitoring/host-monitoring/#network-usage-bytes',
+	},
+	{
+		title: 'Network usage (packet/s)',
+		yAxisUnit: 'pps',
+		docPath: '/infrastructure-monitoring/host-monitoring/#network-usage-packetss',
+	},
+	{
+		title: 'Network errors',
+		yAxisUnit: 'short',
+		docPath: '/infrastructure-monitoring/host-monitoring/#network-errors',
+	},
+	{
+		title: 'Network drops',
+		yAxisUnit: 'short',
+		docPath: '/infrastructure-monitoring/host-monitoring/#network-drops',
+	},
+	{
+		title: 'Network connections',
+		yAxisUnit: 'short',
+		docPath: '/infrastructure-monitoring/host-monitoring/#network-connections',
+	},
+	{
+		title: 'System disk io (bytes transferred)',
+		yAxisUnit: 'bytes',
+		docPath: '/infrastructure-monitoring/host-monitoring/#system-disk-io-bytes',
+	},
+	{
+		title: 'System disk operations/s',
+		yAxisUnit: 'short',
+		docPath:
+			'/infrastructure-monitoring/host-monitoring/#system-disk-operationss',
+	},
+	{
+		title: 'Queue size',
+		yAxisUnit: 'short',
+		docPath: '/infrastructure-monitoring/host-monitoring/#queue-size',
+	},
+	{
+		title: 'System disk operation time/s',
+		yAxisUnit: 's',
+		docPath:
+			'/infrastructure-monitoring/host-monitoring/#system-disk-operation-times',
+	},
+	{
+		title: 'Disk Usage (%) by mountpoint',
+		yAxisUnit: 'percentunit',
+		docPath:
+			'/infrastructure-monitoring/host-monitoring/#disk-usage--by-mountpoint',
+	},
 ];

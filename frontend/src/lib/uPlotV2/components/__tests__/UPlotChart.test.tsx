@@ -327,6 +327,32 @@ describe('UPlotChart', () => {
 			expect(firstInstance.destroy).toHaveBeenCalled();
 			expect(instances).toHaveLength(2);
 		});
+
+		it('destroys the instance and notifies callbacks on unmount', () => {
+			const plotRef = jest.fn();
+			const onDestroy = jest.fn();
+
+			const { unmount } = render(
+				<UPlotChart
+					config={createMockConfig()}
+					data={validData}
+					width={600}
+					height={400}
+					plotRef={plotRef}
+					onDestroy={onDestroy}
+				/>,
+				{ wrapper: Wrapper },
+			);
+
+			const firstInstance = instances[0];
+			plotRef.mockClear();
+
+			unmount();
+
+			expect(onDestroy).toHaveBeenCalledWith(firstInstance);
+			expect(firstInstance.destroy).toHaveBeenCalledTimes(1);
+			expect(plotRef).toHaveBeenCalledWith(null);
+		});
 	});
 
 	describe('spanGaps data transformation', () => {

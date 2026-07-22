@@ -10,9 +10,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/rulestatehistorytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
 
@@ -85,7 +87,13 @@ func (h *handler) GetRuleHistoryTimeline(w http.ResponseWriter, r *http.Request)
 		req.Query.Limit = 50
 	}
 
-	timelineItems, timelineTotal, err := h.module.GetHistoryTimeline(r.Context(), ruleID, req.Query)
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	timelineItems, timelineTotal, err := h.module.GetHistoryTimeline(r.Context(), valuer.MustNewUUID(claims.OrgID), ruleID, req.Query)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -127,7 +135,13 @@ func (h *handler) GetRuleHistoryContributors(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	res, err := h.module.GetHistoryContributors(r.Context(), ruleID, query)
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	res, err := h.module.GetHistoryContributors(r.Context(), valuer.MustNewUUID(claims.OrgID), ruleID, query)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -152,7 +166,13 @@ func (h *handler) GetRuleHistoryFilterKeys(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	res, err := h.module.GetHistoryFilterKeys(r.Context(), ruleID, query, search, limit)
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	res, err := h.module.GetHistoryFilterKeys(r.Context(), valuer.MustNewUUID(claims.OrgID), ruleID, query, search, limit)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -167,7 +187,13 @@ func (h *handler) GetRuleHistoryFilterValues(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	res, err := h.module.GetHistoryFilterValues(r.Context(), ruleID, key, query, search, limit)
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	res, err := h.module.GetHistoryFilterValues(r.Context(), valuer.MustNewUUID(claims.OrgID), ruleID, key, query, search, limit)
 	if err != nil {
 		render.Error(w, err)
 		return

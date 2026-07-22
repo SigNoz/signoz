@@ -7,13 +7,24 @@ import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
 import { K8sDetailsMetadataConfig } from '../Base/K8sBaseDetails';
-import { formatValueForExpression } from 'components/QueryBuilderV2/utils';
-import { INFRA_MONITORING_ATTR_KEYS } from '../constants';
+import {
+	getPodUtilizationByPodQueryPayloads,
+	INFRA_MONITORING_ATTR_KEYS,
+} from '../constants';
+import { SelectedItemParams } from '../hooks';
+import {
+	buildEventsExpression,
+	buildExpressionFromSelectedItemParams,
+	buildLogsTracesExpression,
+} from 'container/InfraMonitoringK8sV2/Base/utils';
 
 export const k8sDaemonSetGetSelectedItemExpression = (
-	selectedItemId: string,
+	params: SelectedItemParams,
 ): string =>
-	`${INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME} = ${formatValueForExpression(selectedItemId)}`;
+	buildExpressionFromSelectedItemParams(
+		params,
+		INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME,
+	);
 
 export const k8sDaemonSetDetailsMetadataConfig: K8sDetailsMetadataConfig<InframonitoringtypesDaemonSetRecordDTO>[] =
 	[
@@ -37,12 +48,23 @@ export const k8sDaemonSetDetailsMetadataConfig: K8sDetailsMetadataConfig<Inframo
 export const k8sDaemonSetInitialEventsExpression = (
 	item: InframonitoringtypesDaemonSetRecordDTO,
 ): string =>
-	`${INFRA_MONITORING_ATTR_KEYS.K8S_OBJECT_KIND} = 'DaemonSet' AND ${INFRA_MONITORING_ATTR_KEYS.K8S_OBJECT_NAME} = ${formatValueForExpression(item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME] ?? '')}`;
+	buildEventsExpression({
+		objectKind: 'DaemonSet',
+		objectName: item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME] ?? '',
+		clusterName: item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME],
+		namespaceName: item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME],
+	});
 
 export const k8sDaemonSetInitialLogTracesExpression = (
 	item: InframonitoringtypesDaemonSetRecordDTO,
 ): string =>
-	`${INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME} = ${formatValueForExpression(item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME] ?? '')} AND ${INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME} = ${formatValueForExpression(item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ?? '')}`;
+	buildLogsTracesExpression({
+		mainAttributeKey: INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME,
+		mainAttributeValue:
+			item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME],
+		clusterName: item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME],
+		namespaceName: item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME],
+	});
 
 export const k8sDaemonSetGetEntityName = (
 	item: InframonitoringtypesDaemonSetRecordDTO,
@@ -52,18 +74,25 @@ export const daemonSetWidgetInfo = [
 	{
 		title: 'CPU usage, request, limits',
 		yAxisUnit: '',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/daemonsets/#cpu-usage-request-limits',
 	},
 	{
 		title: 'Memory usage, request, limits',
 		yAxisUnit: 'bytes',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/daemonsets/#memory-usage-request-limits',
 	},
 	{
 		title: 'Network IO',
 		yAxisUnit: 'binBps',
+		docPath: '/infrastructure-monitoring/kubernetes/daemonsets/#network-io',
 	},
 	{
 		title: 'Network errors count',
 		yAxisUnit: '',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/daemonsets/#network-errors-count',
 	},
 ];
 
@@ -115,6 +144,40 @@ export const getDaemonSetMetricsQueryPayload = (
 		? 'k8s.namespace.name'
 		: 'k8s_namespace_name';
 
+	const k8sClusterNameKey = dotMetricsEnabled
+		? 'k8s.cluster.name'
+		: 'k8s_cluster_name';
+
+	const clusterName =
+		daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] ?? '';
+	const namespaceName =
+		daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ?? '';
+
+	const filters = [
+		{
+			id: 'f1',
+			key: {
+				dataType: DataTypes.String,
+				id: 'k8s_cluster_name--string--tag--false',
+				key: k8sClusterNameKey,
+				type: 'tag',
+			},
+			op: '=',
+			value: clusterName,
+		},
+		{
+			id: 'f2',
+			key: {
+				dataType: DataTypes.String,
+				id: 'k8s_namespace_name--string--tag--false',
+				key: k8sNamespaceNameKey,
+				type: 'tag',
+			},
+			op: '=',
+			value: namespaceName,
+		},
+	];
+
 	return [
 		{
 			selectedTime: 'GLOBAL_TIME',
@@ -148,19 +211,7 @@ export const getDaemonSetMetricsQueryPayload = (
 											daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME] ??
 											'',
 									},
-									{
-										id: '47b3adae',
-										key: {
-											dataType: DataTypes.String,
-											id: 'k8s_namespace_name--string--tag--false',
-											key: k8sNamespaceNameKey,
-											type: 'tag',
-										},
-										op: '=',
-										value:
-											daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ??
-											'',
-									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -202,19 +253,7 @@ export const getDaemonSetMetricsQueryPayload = (
 											daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME] ??
 											'',
 									},
-									{
-										id: '47b3adae',
-										key: {
-											dataType: DataTypes.String,
-											id: 'k8s_namespace_name--string--tag--false',
-											key: k8sNamespaceNameKey,
-											type: 'tag',
-										},
-										op: '=',
-										value:
-											daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ??
-											'',
-									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -256,19 +295,7 @@ export const getDaemonSetMetricsQueryPayload = (
 											daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME] ??
 											'',
 									},
-									{
-										id: '47b3adae',
-										key: {
-											dataType: DataTypes.String,
-											id: 'k8s_namespace_name--string--tag--false',
-											key: k8sNamespaceNameKey,
-											type: 'tag',
-										},
-										op: '=',
-										value:
-											daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ??
-											'',
-									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -344,19 +371,7 @@ export const getDaemonSetMetricsQueryPayload = (
 											daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME] ??
 											'',
 									},
-									{
-										id: '47b3adae',
-										key: {
-											dataType: DataTypes.String,
-											id: 'k8s_namespace_name--string--tag--false',
-											key: k8sNamespaceNameKey,
-											type: 'tag',
-										},
-										op: '=',
-										value:
-											daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ??
-											'',
-									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -398,19 +413,7 @@ export const getDaemonSetMetricsQueryPayload = (
 											daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME] ??
 											'',
 									},
-									{
-										id: '47b3adae',
-										key: {
-											dataType: DataTypes.String,
-											id: 'k8s_namespace_name--string--tag--false',
-											key: k8sNamespaceNameKey,
-											type: 'tag',
-										},
-										op: '=',
-										value:
-											daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ??
-											'',
-									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -452,19 +455,7 @@ export const getDaemonSetMetricsQueryPayload = (
 											daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME] ??
 											'',
 									},
-									{
-										id: '47b3adae',
-										key: {
-											dataType: DataTypes.String,
-											id: 'k8s_namespace_name--string--tag--false',
-											key: k8sNamespaceNameKey,
-											type: 'tag',
-										},
-										op: '=',
-										value:
-											daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ??
-											'',
-									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -540,19 +531,7 @@ export const getDaemonSetMetricsQueryPayload = (
 											daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME] ??
 											'',
 									},
-									{
-										id: '47b3adae',
-										key: {
-											dataType: DataTypes.String,
-											id: 'k8s_namespace_name--string--tag--false',
-											key: k8sNamespaceNameKey,
-											type: 'tag',
-										},
-										op: '=',
-										value:
-											daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ??
-											'',
-									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -641,19 +620,7 @@ export const getDaemonSetMetricsQueryPayload = (
 											daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME] ??
 											'',
 									},
-									{
-										id: '47b3adae',
-										key: {
-											dataType: DataTypes.String,
-											id: 'k8s_namespace_name--string--tag--false',
-											key: k8sNamespaceNameKey,
-											type: 'tag',
-										},
-										op: '=',
-										value:
-											daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ??
-											'',
-									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -711,4 +678,30 @@ export const getDaemonSetMetricsQueryPayload = (
 			end,
 		},
 	];
+};
+
+export const getDaemonSetPodMetricsQueryPayload = (
+	daemonSet: InframonitoringtypesDaemonSetRecordDTO,
+	start: number,
+	end: number,
+	dotMetricsEnabled: boolean,
+): GetQueryResultsProps[] => {
+	const k8sDaemonSetNameKey = dotMetricsEnabled
+		? 'k8s.daemonset.name'
+		: 'k8s_daemonset_name';
+
+	return getPodUtilizationByPodQueryPayloads(
+		{
+			workloadNameKey: k8sDaemonSetNameKey,
+			workloadNameValue:
+				daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME] ?? '',
+			clusterName:
+				daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] ?? '',
+			namespaceName:
+				daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ?? '',
+		},
+		start,
+		end,
+		dotMetricsEnabled,
+	);
 };

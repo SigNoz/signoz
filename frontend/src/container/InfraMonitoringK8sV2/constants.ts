@@ -2,8 +2,12 @@ import {
 	FiltersType,
 	IQuickFiltersConfig,
 } from 'components/QuickFilters/types';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { DataSource } from 'types/common/queryBuilder';
+import { EQueryType } from 'types/common/dashboard';
+import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
+import { v4 } from 'uuid';
 
 // TODO(backend): Find a way to generate this via openapi
 export const INFRA_MONITORING_ATTR_KEYS = {
@@ -130,6 +134,7 @@ export enum VIEWS {
 	CONTAINERS = 'containers',
 	PROCESSES = 'processes',
 	EVENTS = 'events',
+	POD_METRICS = 'pod_metrics',
 }
 
 export const VIEW_TYPES = {
@@ -137,6 +142,7 @@ export const VIEW_TYPES = {
 	LOGS: VIEWS.LOGS,
 	TRACES: VIEWS.TRACES,
 	EVENTS: VIEWS.EVENTS,
+	POD_METRICS: VIEWS.POD_METRICS,
 };
 
 export const K8sCategories = {
@@ -897,6 +903,11 @@ export const INFRA_MONITORING_K8S_PARAMS_KEYS = {
 	PAGE_SIZE: 'pageSize',
 	EXPANDED: 'expanded',
 	SELECTED_ITEM: 'selectedItem',
+	SELECTED_ITEM_CLUSTER_NAME: 'selectedItemClusterName',
+	SELECTED_ITEM_NAMESPACE_NAME: 'selectedItemNamespaceName',
+	DETAIL_RELATIVE_TIME: 'detailRelativeTime',
+	DETAIL_START_TIME: 'detailStartTime',
+	DETAIL_END_TIME: 'detailEndTime',
 };
 
 /** Metric namespace prefixes for /fields/keys and /fields/values APIs */
@@ -914,3 +925,266 @@ export const METRIC_NAMESPACE_BY_ENTITY: Record<InfraMonitoringEntity, string> =
 		[InfraMonitoringEntity.JOBS]: 'k8s.',
 		[InfraMonitoringEntity.VOLUMES]: 'k8s.volume.',
 	};
+
+export interface WorkloadFilterContext {
+	workloadNameKey: string;
+	workloadNameValue: string;
+	clusterName: string;
+	namespaceName?: string;
+}
+
+export const podUtilizationByPodWidgetInfo = [
+	{
+		title: 'CPU Limit Utilization By Pod Name',
+		yAxisUnit: 'percentunit',
+		docPath: '#cpu-limit-utilization-by-pod-name',
+	},
+	{
+		title: 'CPU Request Utilization By Pod Name',
+		yAxisUnit: 'percentunit',
+		docPath: '#cpu-request-utilization-by-pod-name',
+	},
+	{
+		title: 'Memory Limit Utilization By Pod Name',
+		yAxisUnit: 'percentunit',
+		docPath: '#memory-limit-utilization-by-pod-name',
+	},
+	{
+		title: 'Memory Request Utilization By Pod Name',
+		yAxisUnit: 'percentunit',
+		docPath: '#memory-request-utilization-by-pod-name',
+	},
+	{
+		title: 'FileSystem Usage Percentage By Pod Name',
+		yAxisUnit: 'percentunit',
+		docPath: '#filesystem-usage-percentage-by-pod-name',
+	},
+];
+
+export function getPodUtilizationByPodQueryPayloads(
+	context: WorkloadFilterContext,
+	start: number,
+	end: number,
+	dotMetricsEnabled: boolean,
+): GetQueryResultsProps[] {
+	const getKey = (dotKey: string, underscoreKey: string): string =>
+		dotMetricsEnabled ? dotKey : underscoreKey;
+
+	const k8sPodCpuLimitUtilKey = getKey(
+		'k8s.pod.cpu_limit_utilization',
+		'k8s_pod_cpu_limit_utilization',
+	);
+	const k8sPodCpuRequestUtilKey = getKey(
+		'k8s.pod.cpu_request_utilization',
+		'k8s_pod_cpu_request_utilization',
+	);
+	const k8sPodMemLimitUtilKey = getKey(
+		'k8s.pod.memory_limit_utilization',
+		'k8s_pod_memory_limit_utilization',
+	);
+	const k8sPodMemRequestUtilKey = getKey(
+		'k8s.pod.memory_request_utilization',
+		'k8s_pod_memory_request_utilization',
+	);
+	const k8sPodFsUsageKey = getKey(
+		'k8s.pod.filesystem.usage',
+		'k8s_pod_filesystem_usage',
+	);
+	const k8sPodFsCapacityKey = getKey(
+		'k8s.pod.filesystem.capacity',
+		'k8s_pod_filesystem_capacity',
+	);
+	const k8sPodNameKey = getKey('k8s.pod.name', 'k8s_pod_name');
+	const k8sClusterNameKey = getKey('k8s.cluster.name', 'k8s_cluster_name');
+	const k8sNamespaceNameKey = getKey('k8s.namespace.name', 'k8s_namespace_name');
+
+	const baseFilters = [
+		{
+			id: 'workload',
+			key: {
+				dataType: DataTypes.String,
+				id: `${context.workloadNameKey}--string--tag--false`,
+				key: context.workloadNameKey,
+				type: 'tag',
+			},
+			op: '=',
+			value: context.workloadNameValue,
+		},
+		{
+			id: 'cluster',
+			key: {
+				dataType: DataTypes.String,
+				id: `${k8sClusterNameKey}--string--tag--false`,
+				key: k8sClusterNameKey,
+				type: 'tag',
+			},
+			op: '=',
+			value: context.clusterName,
+		},
+		...(context.namespaceName
+			? [
+					{
+						id: 'namespace',
+						key: {
+							dataType: DataTypes.String,
+							id: `${k8sNamespaceNameKey}--string--tag--false`,
+							key: k8sNamespaceNameKey,
+							type: 'tag',
+						},
+						op: '=',
+						value: context.namespaceName,
+					},
+				]
+			: []),
+	];
+
+	const podNameGroupBy = [
+		{
+			dataType: DataTypes.String,
+			id: `${k8sPodNameKey}--string--tag--false`,
+			key: k8sPodNameKey,
+			type: 'tag',
+		},
+	];
+
+	const buildSingleMetricQuery = (
+		metricKey: string,
+		metricId: string,
+	): GetQueryResultsProps => ({
+		selectedTime: 'GLOBAL_TIME',
+		graphType: PANEL_TYPES.TIME_SERIES,
+		query: {
+			builder: {
+				queryData: [
+					{
+						aggregateAttribute: {
+							dataType: DataTypes.Float64,
+							id: metricId,
+							key: metricKey,
+							type: 'Gauge',
+						},
+						aggregateOperator: 'avg',
+						dataSource: DataSource.METRICS,
+						disabled: false,
+						expression: 'A',
+						filters: {
+							items: [...baseFilters],
+							op: 'AND',
+						},
+						functions: [],
+						groupBy: podNameGroupBy,
+						having: [],
+						legend: `{{${k8sPodNameKey}}}`,
+						limit: null,
+						orderBy: [],
+						queryName: 'A',
+						reduceTo: ReduceOperators.AVG,
+						spaceAggregation: 'sum',
+						stepInterval: 60,
+						timeAggregation: 'avg',
+					},
+				],
+				queryFormulas: [],
+				queryTraceOperator: [],
+			},
+			clickhouse_sql: [{ disabled: false, legend: '', name: 'A', query: '' }],
+			id: v4(),
+			promql: [{ disabled: false, legend: '', name: 'A', query: '' }],
+			queryType: EQueryType.QUERY_BUILDER,
+		},
+		variables: {},
+		formatForWeb: false,
+		start,
+		end,
+	});
+
+	const filesystemUsagePercentQuery: GetQueryResultsProps = {
+		selectedTime: 'GLOBAL_TIME',
+		graphType: PANEL_TYPES.TIME_SERIES,
+		query: {
+			builder: {
+				queryData: [
+					{
+						aggregateAttribute: {
+							dataType: DataTypes.Float64,
+							id: 'fs_usage',
+							key: k8sPodFsUsageKey,
+							type: 'Gauge',
+						},
+						aggregateOperator: 'avg',
+						dataSource: DataSource.METRICS,
+						disabled: true,
+						expression: 'A',
+						filters: {
+							items: [...baseFilters],
+							op: 'AND',
+						},
+						functions: [],
+						groupBy: podNameGroupBy,
+						having: [],
+						legend: `{{${k8sPodNameKey}}}`,
+						limit: null,
+						orderBy: [],
+						queryName: 'A',
+						reduceTo: ReduceOperators.AVG,
+						spaceAggregation: 'sum',
+						stepInterval: 60,
+						timeAggregation: 'avg',
+					},
+					{
+						aggregateAttribute: {
+							dataType: DataTypes.Float64,
+							id: 'fs_capacity',
+							key: k8sPodFsCapacityKey,
+							type: 'Gauge',
+						},
+						aggregateOperator: 'avg',
+						dataSource: DataSource.METRICS,
+						disabled: true,
+						expression: 'B',
+						filters: {
+							items: [...baseFilters],
+							op: 'AND',
+						},
+						functions: [],
+						groupBy: podNameGroupBy,
+						having: [],
+						legend: `{{${k8sPodNameKey}}}`,
+						limit: null,
+						orderBy: [],
+						queryName: 'B',
+						reduceTo: ReduceOperators.AVG,
+						spaceAggregation: 'sum',
+						stepInterval: 60,
+						timeAggregation: 'avg',
+					},
+				],
+				queryFormulas: [
+					{
+						disabled: false,
+						expression: 'A/B',
+						legend: `{{${k8sPodNameKey}}}`,
+						queryName: 'F1',
+					},
+				],
+				queryTraceOperator: [],
+			},
+			clickhouse_sql: [{ disabled: false, legend: '', name: 'A', query: '' }],
+			id: v4(),
+			promql: [{ disabled: false, legend: '', name: 'A', query: '' }],
+			queryType: EQueryType.QUERY_BUILDER,
+		},
+		variables: {},
+		formatForWeb: false,
+		start,
+		end,
+	};
+
+	return [
+		buildSingleMetricQuery(k8sPodCpuLimitUtilKey, 'cpu_limit_util'),
+		buildSingleMetricQuery(k8sPodCpuRequestUtilKey, 'cpu_request_util'),
+		buildSingleMetricQuery(k8sPodMemLimitUtilKey, 'mem_limit_util'),
+		buildSingleMetricQuery(k8sPodMemRequestUtilKey, 'mem_request_util'),
+		filesystemUsagePercentQuery,
+	];
+}

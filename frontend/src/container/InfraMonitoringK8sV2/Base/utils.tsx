@@ -2,7 +2,12 @@ import { Badge } from '@signozhq/ui/badge';
 
 import styles from './utils.module.scss';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
-import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
+import {
+	convertFiltersToExpression,
+	formatValueForExpression,
+} from 'components/QueryBuilderV2/utils';
+import { SelectedItemParams } from 'container/InfraMonitoringK8sV2/hooks';
+import { INFRA_MONITORING_ATTR_KEYS } from 'container/InfraMonitoringK8sV2/constants';
 
 const dotToUnder: Record<string, string> = {
 	'os.type': 'os_type',
@@ -88,4 +93,92 @@ export function buildExpressionFromGroupMeta(
 		return `${parent} AND ${metaExpression}`;
 	}
 	return parent || metaExpression;
+}
+
+export interface EventsExpressionParams {
+	objectKind: string;
+	objectName: string;
+	clusterName?: string | null;
+	namespaceName?: string | null;
+}
+
+export function buildEventsExpression(params: EventsExpressionParams): string {
+	const clauses: string[] = [
+		`${INFRA_MONITORING_ATTR_KEYS.K8S_OBJECT_KIND} = ${formatValueForExpression(params.objectKind)}`,
+		`${INFRA_MONITORING_ATTR_KEYS.K8S_OBJECT_NAME} = ${formatValueForExpression(params.objectName)}`,
+	];
+
+	if (params.clusterName) {
+		clauses.push(
+			`${INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME} = ${formatValueForExpression(params.clusterName)}`,
+		);
+	}
+
+	// the other attributes are resource., and fallbacks correctly without prefix
+	// this one needs attribute. prefix otherwise it fails the query
+	if (params.namespaceName) {
+		clauses.push(
+			`attribute.${INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME} = ${formatValueForExpression(params.namespaceName)}`,
+		);
+	}
+
+	return clauses.join(' AND ');
+}
+
+export interface LogsTracesExpressionParams {
+	mainAttributeKey: string;
+	mainAttributeValue?: string | null;
+	clusterName?: string | null;
+	namespaceName?: string | null;
+}
+
+export function buildLogsTracesExpression(
+	params: LogsTracesExpressionParams,
+): string {
+	const clauses: string[] = [];
+
+	if (params.mainAttributeValue) {
+		clauses.push(
+			`${params.mainAttributeKey} = ${formatValueForExpression(params.mainAttributeValue)}`,
+		);
+	}
+
+	if (params.clusterName) {
+		clauses.push(
+			`${INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME} = ${formatValueForExpression(params.clusterName)}`,
+		);
+	}
+
+	if (params.namespaceName) {
+		clauses.push(
+			`${INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME} = ${formatValueForExpression(params.namespaceName)}`,
+		);
+	}
+
+	return clauses.join(' AND ');
+}
+
+export function buildExpressionFromSelectedItemParams(
+	params: SelectedItemParams,
+	mainAttributeKey: string,
+): string {
+	const clauses: string[] = [];
+
+	if (params.selectedItem) {
+		clauses.push(
+			`${mainAttributeKey} = ${formatValueForExpression(params.selectedItem)}`,
+		);
+	}
+	if (params.clusterName) {
+		clauses.push(
+			`${INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME} = ${formatValueForExpression(params.clusterName)}`,
+		);
+	}
+	if (params.namespaceName) {
+		clauses.push(
+			`${INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME} = ${formatValueForExpression(params.namespaceName)}`,
+		);
+	}
+
+	return clauses.join(' AND ');
 }

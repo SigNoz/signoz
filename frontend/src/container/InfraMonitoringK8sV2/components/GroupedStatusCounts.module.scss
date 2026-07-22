@@ -4,22 +4,44 @@
 	gap: 4px;
 }
 
-.itemWrapper {
-	display: flex;
+.item {
+	display: inline-flex;
 	align-items: center;
 	gap: 4px;
+	// 4ch value slot (old .valueWrapper) + 3px color bar + 4px gap
+	min-width: calc(4ch + 7px);
+	font-variant-numeric: tabular-nums;
+	text-align: left;
+	cursor: default;
 }
 
-.separator {
+.item::before {
+	content: '';
 	width: 3px;
 	height: 14px;
 	border-radius: 1px;
 	flex-shrink: 0;
+	background-color: var(--gsc-color);
 }
 
-.value {
+.tooltipContent {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	min-width: 120px;
+}
+
+.tooltipHeader {
+	font-weight: 600;
+	margin-bottom: 2px;
+}
+
+.tooltipRow {
+	display: flex;
+	justify-content: space-between;
+	gap: 12px;
+}
+
+.tooltipValue {
 	font-variant-numeric: tabular-nums;
-	min-width: 4ch;
-	text-align: left;
-	cursor: default;
 }
