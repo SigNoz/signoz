@@ -233,7 +233,16 @@ export type QueryBuilderData = {
 	queryTraceOperator: IBuilderTraceOperator[];
 };
 
+export type CompositeQueryStoreMode = 'url' | 'memory';
+
 export type QueryBuilderContextType = {
+	/** Where the staged query is persisted: the URL (default) or in memory. */
+	mode: CompositeQueryStoreMode;
+	/**
+	 * The query currently persisted in the store (URL param or memory),
+	 * synchronously available — unlike stagedQuery, which is set by effects.
+	 */
+	committedQuery: Query | null;
 	currentQuery: Query;
 	stagedQuery: Query | null;
 	lastUsedQuery: number | null;
