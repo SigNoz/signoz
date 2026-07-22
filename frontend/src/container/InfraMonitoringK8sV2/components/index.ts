@@ -5,7 +5,3 @@ export {
 	GroupedStatusCounts,
 	type StatusCountItem,
 } from './GroupedStatusCounts';
-export {
-	useInfraMonitoringCellActionsStore,
-	useInfraMonitoringLineClamp,
-} from './CellValueTooltip';

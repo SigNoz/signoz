@@ -27,10 +27,13 @@ import {
 	useInfraMonitoringSelectedItemParams,
 	useInfraMonitoringStatusFilter,
 } from '../hooks';
-import { useInfraMonitoringLineClamp } from '../components';
+import {
+	useInfraMonitoringFontSize,
+	useInfraMonitoringLineClamp,
+} from './useInfraMonitoringTablePreferencesStore';
 import { K8sEmptyState } from './K8sEmptyState';
 import { K8sExpandedRow } from './K8sExpandedRow';
-import K8sFiltersSidePanel from './K8sFiltersSidePanel';
+import K8sOptionsSidePanel from './K8sOptionsSidePanel';
 import K8sHeader from './K8sHeader';
 import { K8sPaginationWarning } from './K8sPaginationWarning';
 import K8sTableToolbar from './K8sTableToolbar';
@@ -106,6 +109,7 @@ export function K8sBaseList<
 	const { currentQuery } = useQueryBuilder();
 	const expression = currentQuery.builder.queryData[0]?.filter?.expression || '';
 	const lineClamp = useInfraMonitoringLineClamp();
+	const fontSize = useInfraMonitoringFontSize();
 	const [groupBy] = useInfraMonitoringGroupBy();
 	const [orderBy] = useInfraMonitoringOrderBy();
 	const [statusFilter] = useInfraMonitoringStatusFilter();
@@ -115,7 +119,7 @@ export function K8sBaseList<
 
 	const columnStorageKey = `k8s-${entity}-columns`;
 	const hiddenColumnIds = useHiddenColumnIds(columnStorageKey);
-	const [isColumnDrawerOpen, setIsColumnDrawerOpen] = useState(false);
+	const [isOptionsDrawerOpen, setIsOptionsDrawerOpen] = useState(false);
 
 	const { containerRef, calculatedPageSize } = useCalculatedPageSize({
 		rowHeight: 42,
@@ -220,12 +224,12 @@ export function K8sBaseList<
 		void queryClient.cancelQueries({ queryKey });
 	}, [queryClient, queryKey]);
 
-	const handleOpenColumnDrawer = useCallback((): void => {
-		setIsColumnDrawerOpen(true);
+	const handleOpenOptionsDrawer = useCallback((): void => {
+		setIsOptionsDrawerOpen(true);
 	}, []);
 
-	const handleCloseColumnDrawer = useCallback((): void => {
-		setIsColumnDrawerOpen(false);
+	const handleCloseOptionsDrawer = useCallback((): void => {
+		setIsOptionsDrawerOpen(false);
 	}, []);
 
 	const pageData = data?.data ?? [];
@@ -414,7 +418,7 @@ export function K8sBaseList<
 				<K8sTableToolbar
 					entity={entity}
 					leftFilters={leftFilters}
-					onOpenColumnDrawer={handleOpenColumnDrawer}
+					onOpenOptionsDrawer={handleOpenOptionsDrawer}
 				/>
 
 				{isError && (
@@ -454,6 +458,7 @@ export function K8sBaseList<
 							onLimitChange: setLimit,
 						}}
 						plainTextCellLineClamp={lineClamp}
+						cellTypographySize={fontSize}
 						prefixPaginationContent={paginationWarningContent}
 						paginationClassname={styles.paginationContainer}
 						resetScrollKey={entity}
@@ -461,11 +466,11 @@ export function K8sBaseList<
 				)}
 			</div>
 
-			<K8sFiltersSidePanel
-				open={isColumnDrawerOpen}
+			<K8sOptionsSidePanel
+				open={isOptionsDrawerOpen}
 				columns={tableColumns}
 				storageKey={columnStorageKey}
-				onClose={handleCloseColumnDrawer}
+				onClose={handleCloseOptionsDrawer}
 			/>
 		</>
 	);

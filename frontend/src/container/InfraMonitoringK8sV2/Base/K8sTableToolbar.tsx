@@ -18,14 +18,14 @@ import styles from './K8sTableToolbar.module.scss';
 interface K8sTableToolbarProps {
 	entity: InfraMonitoringEntity;
 	leftFilters?: React.ReactNode;
-	onOpenColumnDrawer: () => void;
+	onOpenOptionsDrawer: () => void;
 	onDownload?: () => void;
 }
 
 function K8sTableToolbar({
 	entity,
 	leftFilters,
-	onOpenColumnDrawer,
+	onOpenOptionsDrawer,
 	onDownload,
 }: K8sTableToolbarProps): JSX.Element {
 	const { groupByOptions, isLoading: isLoadingGroupByFilters } =
@@ -85,14 +85,14 @@ function K8sTableToolbar({
 				</TooltipSimple>
 			)}
 
-			<TooltipSimple title="Columns">
+			<TooltipSimple title="Options">
 				<Button
 					type="button"
 					variant="ghost"
 					size="icon"
 					color="secondary"
-					data-testid="k8s-table-columns-button"
-					onClick={onOpenColumnDrawer}
+					data-testid="k8s-table-options-button"
+					onClick={onOpenOptionsDrawer}
 					className={styles.toolbarButton}
 				>
 					<SlidersVertical size={14} />
