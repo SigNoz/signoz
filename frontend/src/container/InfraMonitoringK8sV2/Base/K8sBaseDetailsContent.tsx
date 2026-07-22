@@ -6,9 +6,10 @@ import {
 	DraftingCompass,
 	ScrollText,
 } from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
 import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
-import { Button, Tooltip } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { combineInitialAndUserExpression } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
 import { InfraMonitoringEvents } from 'constants/events';
@@ -42,6 +43,8 @@ import {
 
 import { EntityCountsSection } from './components/EntityCountsSection/EntityCountsSection';
 import { K8sBaseDetailsContentProps } from './types';
+
+import styles from '../EntityDetailsUtils/entityDetails.module.scss';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export default function K8sBaseDetailsContent<T>({
@@ -209,34 +212,39 @@ export default function K8sBaseDetailsContent<T>({
 
 	return (
 		<>
-			<div className="entity-detail-drawer__entity">
-				<div className="entity-details-grid">
-					<div className="labels-row">
+			<div className={styles.entityDetailsEntity}>
+				<div className={styles.entityDetailsGrid}>
+					<div className={styles.labelsRow}>
 						{metadataConfig.map((config) => (
 							<Typography.Text
 								key={config.label}
 								color="muted"
-								className="entity-details-metadata-label"
+								size="small"
+								weight="medium"
+								className={styles.entityDetailsMetadataLabel}
 							>
 								{config.label}
 							</Typography.Text>
 						))}
 					</div>
 
-					<div className="values-row">
+					<div className={styles.valuesRow}>
 						{metadataConfig.map((config) => {
 							const value = config.getValue(entity);
+
+							if (config.render) {
+								return config.render(value, entity);
+							}
+
 							const displayValue = String(value);
 							return (
 								<Typography.Text
 									key={config.label}
-									className="entity-details-metadata-value"
+									size="small"
+									weight="medium"
+									className={styles.entityDetailsMetadataValue}
 								>
-									{config.render ? (
-										config.render(value, entity)
-									) : (
-										<Tooltip title={displayValue}>{displayValue}</Tooltip>
-									)}
+									{displayValue}
 								</Typography.Text>
 							);
 						})}
@@ -258,10 +266,10 @@ export default function K8sBaseDetailsContent<T>({
 			</div>
 
 			{!hideDetailViewTabs && (
-				<div className="views-tabs-container">
+				<div className={styles.viewsTabsContainer}>
 					<ToggleGroupSimple
 						type="single"
-						className="views-tabs"
+						className={styles.viewsTabs}
 						onChange={handleTabChange}
 						value={selectedView}
 						items={[
@@ -270,7 +278,7 @@ export default function K8sBaseDetailsContent<T>({
 										{
 											value: VIEW_TYPES.METRICS,
 											label: (
-												<div className="view-title">
+												<div className={styles.viewTitle}>
 													<BarChart size={14} />
 													Metrics
 												</div>
@@ -283,7 +291,7 @@ export default function K8sBaseDetailsContent<T>({
 										{
 											value: VIEW_TYPES.LOGS,
 											label: (
-												<div className="view-title">
+												<div className={styles.viewTitle}>
 													<ScrollText size={14} />
 													Logs
 												</div>
@@ -296,7 +304,7 @@ export default function K8sBaseDetailsContent<T>({
 										{
 											value: VIEW_TYPES.TRACES,
 											label: (
-												<div className="view-title">
+												<div className={styles.viewTitle}>
 													<DraftingCompass size={14} />
 													Traces
 												</div>
@@ -309,7 +317,7 @@ export default function K8sBaseDetailsContent<T>({
 										{
 											value: VIEW_TYPES.EVENTS,
 											label: (
-												<div className="view-title">
+												<div className={styles.viewTitle}>
 													<ChevronsLeftRight size={14} />
 													Events
 												</div>
@@ -320,7 +328,7 @@ export default function K8sBaseDetailsContent<T>({
 							...(customTabs?.map((tab) => ({
 								value: tab.key,
 								label: (
-									<div className="view-title">
+									<div className={styles.viewTitle}>
 										{tab.icon}
 										{tab.label}
 									</div>
@@ -330,22 +338,30 @@ export default function K8sBaseDetailsContent<T>({
 					/>
 
 					{selectedView === VIEW_TYPES.LOGS && (
-						<Tooltip title="Go to Logs Explorer" placement="left">
+						<TooltipSimple title="Go to Logs Explorer" side="left" arrow>
 							<Button
-								icon={<Compass size={18} />}
-								className="compass-button"
+								variant="ghost"
+								size="icon"
+								color="secondary"
+								className={styles.compassButton}
 								onClick={handleExplorePagesRedirect}
-							/>
-						</Tooltip>
+							>
+								<Compass size={18} />
+							</Button>
+						</TooltipSimple>
 					)}
 					{selectedView === VIEW_TYPES.TRACES && (
-						<Tooltip title="Go to Traces Explorer" placement="left">
+						<TooltipSimple title="Go to Traces Explorer" side="left" arrow>
 							<Button
-								icon={<Compass size={18} />}
-								className="compass-button"
+								variant="ghost"
+								size="icon"
+								color="secondary"
+								className={styles.compassButton}
 								onClick={handleExplorePagesRedirect}
-							/>
-						</Tooltip>
+							>
+								<Compass size={18} />
+							</Button>
+						</TooltipSimple>
 					)}
 				</div>
 			)}
