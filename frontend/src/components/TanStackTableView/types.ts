@@ -209,6 +209,8 @@ export type TanStackTableProps<TData, TItemKey = string> = {
 	enableAlternatingRowColors?: boolean;
 	/** Disable virtual scrolling and render all rows at once. Cannot be used with onEndReached. */
 	disableVirtualScroll?: boolean;
+	/** When this value changes, the table's scroll resets to the start. Useful for resetting scroll when the data context changes (e.g., switching categories). */
+	resetScrollKey?: string;
 };
 
 export type TanStackTableHandle = TableVirtuosoHandle & {

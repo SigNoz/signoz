@@ -213,6 +213,16 @@ export * from './useTableParams';
  * />
  * ```
  *
+ * @example Reset scroll on context change — use `resetScrollKey` to scroll back to start
+ * when the data context changes (e.g., switching between categories or tabs).
+ * ```tsx
+ * <TanStackTable
+ *   data={data}
+ *   columns={columns}
+ *   resetScrollKey={selectedCategory}
+ * />
+ * ```
+ *
  * @example useTableParams — manages pagination state with URL sync and persistence
  *
  * The `useTableParams` hook handles page, limit, orderBy, and expanded state. It can sync
