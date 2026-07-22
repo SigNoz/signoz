@@ -1,6 +1,8 @@
+// oxlint-disable jsx-a11y/click-events-have-key-events
 import styles from './GroupedStatusCounts.module.scss';
 import TanStackTable from 'components/TanStackTableView';
 import { Typography } from '@signozhq/ui/typography';
+import { MouseEventHandler } from 'react';
 
 export interface StatusBreakdownItem {
 	label: string;
@@ -21,18 +23,25 @@ interface GroupedStatusCountsProps {
 }
 
 function buildTooltipContent(item: StatusCountItem): React.ReactNode {
+	const onClickHandle: MouseEventHandler = (e) => {
+		e.preventDefault();
+		e.stopPropagation();
+	};
+
 	if (!item.breakdown || item.breakdown.length === 0) {
 		return (
-			<Typography.Text>
-				{item.label}: {item.value}
-			</Typography.Text>
+			<div onClick={onClickHandle}>
+				<Typography.Text>
+					{item.label}: {item.value}
+				</Typography.Text>
+			</div>
 		);
 	}
 
 	const nonZeroBreakdown = item.breakdown.filter((b) => b.value > 0);
 	if (nonZeroBreakdown.length === 0) {
 		return (
-			<div className={styles.tooltipContent}>
+			<div className={styles.tooltipContent} onClick={onClickHandle}>
 				<Typography.Text className={styles.tooltipHeader}>
 					{item.label}
 				</Typography.Text>
@@ -43,7 +52,7 @@ function buildTooltipContent(item: StatusCountItem): React.ReactNode {
 	}
 
 	return (
-		<div className={styles.tooltipContent}>
+		<div className={styles.tooltipContent} onClick={onClickHandle}>
 			<Typography.Text className={styles.tooltipHeader}>
 				{item.label}
 			</Typography.Text>
