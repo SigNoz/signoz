@@ -75,3 +75,7 @@ ignore = [
 
 [tool.ruff.format]
 # Defaults align with black (double quotes, 4-space indent).
+
+[tool.ruff.lint.per-file-ignores]
+"integration/src/alertmanager/*" = ["E501"]
+"fixtures/notification_channel.py" = ["E501"]

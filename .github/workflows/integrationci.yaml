@@ -39,6 +39,7 @@ jobs:
       matrix:
         suite:
           - alerts
+          - alertmanager
           - basepath
           - callbackauthn
           - cloudintegrations

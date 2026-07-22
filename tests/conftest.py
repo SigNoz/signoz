@@ -28,6 +28,7 @@ pytest_plugins = [
     "fixtures.serviceaccount",
     "fixtures.role",
     "fixtures.seed_golden_dataset",
+    "fixtures.maildev",
 ]
 
 
