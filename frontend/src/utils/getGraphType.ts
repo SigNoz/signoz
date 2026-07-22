@@ -5,7 +5,8 @@ export const getGraphType = (panelType: PANEL_TYPES): PANEL_TYPES => {
 	if (panelType === PANEL_TYPES.BAR || panelType === PANEL_TYPES.HISTOGRAM) {
 		return PANEL_TYPES.TIME_SERIES;
 	}
-	if (panelType === PANEL_TYPES.PIE) {
+	// scatter pairs scalar values from two queries, so it consumes table data
+	if (panelType === PANEL_TYPES.PIE || panelType === PANEL_TYPES.SCATTER) {
 		return PANEL_TYPES.TABLE;
 	}
 	return panelType;

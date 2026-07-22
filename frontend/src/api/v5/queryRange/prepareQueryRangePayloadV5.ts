@@ -51,6 +51,7 @@ export function mapPanelTypeToRequestType(panelType: PANEL_TYPES): RequestType {
 			return 'time_series';
 		case PANEL_TYPES.TABLE:
 		case PANEL_TYPES.PIE:
+		case PANEL_TYPES.SCATTER:
 		case PANEL_TYPES.VALUE:
 			return 'scalar';
 		case PANEL_TYPES.TRACE:

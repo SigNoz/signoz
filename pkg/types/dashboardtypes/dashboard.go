@@ -495,7 +495,7 @@ func (dashboard *Dashboard) getQueryRequestTypeFromPanelType(panelType string) q
 	switch panelType {
 	case "graph", "bar":
 		return querybuildertypesv5.RequestTypeTimeSeries
-	case "table", "pie", "value":
+	case "table", "pie", "scatter", "value":
 		return querybuildertypesv5.RequestTypeScalar
 	case "trace":
 		return querybuildertypesv5.RequestTypeTrace

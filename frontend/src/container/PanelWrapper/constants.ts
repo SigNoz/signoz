@@ -5,6 +5,7 @@ import HistogramPanel from 'container/DashboardContainer/visualization/panels/Hi
 import TimeSeriesPanel from '../DashboardContainer/visualization/panels/TimeSeriesPanel/TimeSeriesPanel';
 import ListPanelWrapper from './ListPanelWrapper';
 import PiePanelWrapper from './PiePanelWrapper';
+import ScatterPanelWrapper from './ScatterPanelWrapper';
 import TablePanelWrapper from './TablePanelWrapper';
 import ValuePanelWrapper from './ValuePanelWrapper';
 
@@ -18,6 +19,7 @@ export const PanelTypeVsPanelWrapper = {
 	[PANEL_TYPES.PIE]: PiePanelWrapper,
 	[PANEL_TYPES.BAR]: BarPanel,
 	[PANEL_TYPES.HISTOGRAM]: HistogramPanel,
+	[PANEL_TYPES.SCATTER]: ScatterPanelWrapper,
 };
 
 export const DEFAULT_BUCKET_COUNT = 30;
