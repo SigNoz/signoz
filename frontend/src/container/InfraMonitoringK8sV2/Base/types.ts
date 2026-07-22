@@ -3,6 +3,7 @@ import {
 	CustomTimeType,
 	Time,
 } from 'container/TopNav/DateTimeSelectionV2/types';
+import { InfraMonitoringEvents } from 'constants/events';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import APIError from 'types/api/error';
 
@@ -99,7 +100,7 @@ export interface K8sDetailsCustomTab<T> {
 
 export interface K8sBaseDetailsProps<T> {
 	category: InfraMonitoringEntity;
-	eventCategory: string;
+	eventCategory: InfraMonitoringEvents;
 	// Data fetching configuration
 	getSelectedItemExpression: (params: SelectedItemParams) => string;
 	fetchEntityData: (
@@ -125,7 +126,7 @@ export interface K8sBaseDetailsProps<T> {
 export interface K8sBaseDetailsContentProps<T> {
 	entity: T;
 	category: InfraMonitoringEntity;
-	eventCategory: string;
+	eventCategory: InfraMonitoringEvents;
 	metadataConfig: K8sDetailsMetadataConfig<T>[];
 	countsConfig?: K8sDetailsCountConfig<T>[];
 	getCountsFilterExpression?: (entity: T) => string;

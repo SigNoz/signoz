@@ -937,22 +937,27 @@ export const podUtilizationByPodWidgetInfo = [
 	{
 		title: 'CPU Limit Utilization By Pod Name',
 		yAxisUnit: 'percentunit',
+		docPath: '#cpu-limit-utilization-by-pod-name',
 	},
 	{
 		title: 'CPU Request Utilization By Pod Name',
 		yAxisUnit: 'percentunit',
+		docPath: '#cpu-request-utilization-by-pod-name',
 	},
 	{
 		title: 'Memory Limit Utilization By Pod Name',
 		yAxisUnit: 'percentunit',
+		docPath: '#memory-limit-utilization-by-pod-name',
 	},
 	{
 		title: 'Memory Request Utilization By Pod Name',
 		yAxisUnit: 'percentunit',
+		docPath: '#memory-request-utilization-by-pod-name',
 	},
 	{
 		title: 'FileSystem Usage Percentage By Pod Name',
 		yAxisUnit: 'percentunit',
+		docPath: '#filesystem-usage-percentage-by-pod-name',
 	},
 ];
 

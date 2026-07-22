@@ -21,6 +21,7 @@ export type TableCellContext<TData, TValue> = {
 	value: TValue;
 	isActive: boolean;
 	rowIndex: number;
+	rowId: string;
 	isExpanded: boolean;
 	canExpand: boolean;
 	toggleExpanded: () => void;
