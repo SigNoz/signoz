@@ -2,6 +2,7 @@ import { Tooltip } from 'antd';
 import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import { Compass } from '@signozhq/icons';
+import { TextNoData } from '../../../components/TextNoData';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
@@ -116,9 +117,17 @@ export function EntityCountsSection<T>({
 					>
 						{config.label}
 					</Typography.Text>
-					<Typography.Text className={styles.countValue} size="xl" weight="semibold">
-						{config.getValue(entity) || '-'}
-					</Typography.Text>
+					{config.getValue(entity) ? (
+						<Typography.Text
+							className={styles.countValue}
+							size="xl"
+							weight="semibold"
+						>
+							{config.getValue(entity)}
+						</Typography.Text>
+					) : (
+						<TextNoData type="typography" className={styles.countValue} />
+					)}
 					<Link
 						to={buildNavigationUrl(config.targetCategory)}
 						onClick={closeDrawer}
