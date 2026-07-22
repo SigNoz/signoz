@@ -254,10 +254,10 @@ func TestInvalidateListVariableCrossFields(t *testing.T) {
 		assert.Equal(t, SortAlphabeticalAsc, extractVariableSort(t, d))
 	})
 
-	t.Run("empty sort defaults to none", func(t *testing.T) {
-		d, err := unmarshalDashboard(listVar(`"sort": "",`))
-		require.NoError(t, err)
-		assert.Equal(t, SortNone, extractVariableSort(t, d))
+	t.Run("explicit empty sort is rejected", func(t *testing.T) {
+		_, err := unmarshalDashboard(listVar(`"sort": "",`))
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "unknown sort")
 	})
 
 	t.Run("omitted sort defaults to none", func(t *testing.T) {

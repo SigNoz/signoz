@@ -279,16 +279,12 @@ func (s ListVariableSpecSort) MarshalJSON() ([]byte, error) {
 }
 
 // UnmarshalJSON validates against the enum on decode (valuer.String alone
-// accepts any string). An empty value maps to the default `none`, matching the
-// other v2 dashboard enums and Perses' "no sort" semantics.
+// accepts any string). An omitted sort defaults to `none` via ValueOrDefault; an
+// explicit value present in the JSON — including `""` — is validated as-is.
 func (s *ListVariableSpecSort) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid sort: must be a string, one of `none`, `alphabetical-asc`, `alphabetical-desc`, `numerical-asc`, `numerical-desc`, `alphabetical-ci-asc`, or `alphabetical-ci-desc`")
-	}
-	if v == "" {
-		*s = SortNone
-		return nil
 	}
 	sort := ListVariableSpecSort{valuer.NewString(v)}
 	if !sort.IsValid() {
