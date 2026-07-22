@@ -122,10 +122,16 @@ func (store *store) ListForUser(
 	}
 
 	// COUNT(*) OVER () is computed pre-LIMIT, so any returned row carries the
-	// full filter total. Empty result page => zero matches.
+	// full filter total. An empty page with a non-zero offset needs a separate
+	// count because the window function has no row on which to return its value.
 	var total int64
 	if len(rows) > 0 {
 		total = rows[0].Total
+	} else if params.Offset > 0 {
+		total, err = store.countListV2(ctx, orgID, compiled)
+		if err != nil {
+			return nil, 0, err
+		}
 	}
 
 	out := make([]*dashboardtypes.StorableDashboardWithPinInfo, len(rows))
@@ -184,10 +190,16 @@ func (store *store) ListV2(
 	}
 
 	// COUNT(*) OVER () is computed pre-LIMIT, so any returned row carries the
-	// full filter total. Empty result page => zero matches.
+	// full filter total. An empty page with a non-zero offset needs a separate
+	// count because the window function has no row on which to return its value.
 	var total int64
 	if len(rows) > 0 {
 		total = rows[0].Total
+	} else if params.Offset > 0 {
+		total, err = store.countListV2(ctx, orgID, compiled)
+		if err != nil {
+			return nil, 0, err
+		}
 	}
 
 	out := make([]*dashboardtypes.StorableDashboard, len(rows))
@@ -195,6 +207,25 @@ func (store *store) ListV2(
 		out[i] = r.StorableDashboard
 	}
 	return out, total, nil
+}
+
+func (store *store) countListV2(ctx context.Context, orgID valuer.UUID, compiled *Compiled) (int64, error) {
+	q := store.sqlstore.
+		BunDB().
+		NewSelect().
+		Model((*dashboardtypes.StorableDashboard)(nil)).
+		Where("dashboard.org_id = ?", orgID).
+		Where("dashboard.source != ?", dashboardtypes.SourceSystem)
+
+	if !compiled.IsEmpty() {
+		q = q.Where(compiled.SQL, compiled.Args...)
+	}
+
+	total, err := q.Count(ctx)
+	if err != nil {
+		return 0, errors.WrapInternalf(err, errors.CodeInternal, "couldn't count dashboards")
+	}
+	return int64(total), nil
 }
 
 // sortExprForListV2 maps a sort enum to the SQL expression to plug into
