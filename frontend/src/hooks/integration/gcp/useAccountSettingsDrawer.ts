@@ -16,39 +16,35 @@ import { isEqual } from 'lodash-es';
 
 import logEvent from '../../../api/common/logEvent';
 
-interface UseAccountSettingsModalProps {
+interface UseAccountSettingsDrawerProps {
 	onClose: () => void;
 	account: CloudAccount;
 	setActiveAccount: Dispatch<SetStateAction<CloudAccount | null>>;
 }
 
-interface UseAccountSettingsModal {
+interface UseAccountSettingsDrawer {
 	form: FormInstance;
 	isLoading: boolean;
-	resourceGroups: string[];
+	projectIds: string[];
 	isSaveDisabled: boolean;
-	setResourceGroups: Dispatch<SetStateAction<string[]>>;
+	setProjectIds: Dispatch<SetStateAction<string[]>>;
 	handleSubmit: () => Promise<void>;
 	handleClose: () => void;
 }
 
-export function useAccountSettingsModal({
+export function useAccountSettingsDrawer({
 	onClose,
 	account,
 	setActiveAccount,
-}: UseAccountSettingsModalProps): UseAccountSettingsModal {
+}: UseAccountSettingsDrawerProps): UseAccountSettingsDrawer {
 	const [form] = Form.useForm();
 	const { mutate: updateAccount, isLoading } = useUpdateAccount();
-	// `account.config` is the shared per-provider union (Azure | AWS | GCP).
-	// Narrow to Azure by `resource_groups` (Azure-only) rather than
-	// `deployment_region`, which GCP also has — so it no longer identifies
-	// Azure uniquely.
 	const accountConfig = useMemo(
-		() => ('resource_groups' in account.config ? account.config : null),
+		() => ('project_ids' in account.config ? account.config : null),
 		[account.config],
 	);
-	const [resourceGroups, setResourceGroups] = useState<string[]>(
-		accountConfig?.resource_groups || [],
+	const [projectIds, setProjectIds] = useState<string[]>(
+		accountConfig?.project_ids || [],
 	);
 
 	useEffect(() => {
@@ -57,26 +53,33 @@ export function useAccountSettingsModal({
 		}
 
 		form.setFieldsValue({
-			region: accountConfig.deployment_region,
-			resourceGroups: accountConfig.resource_groups,
+			projectIds: accountConfig.project_ids,
 		});
-		setResourceGroups(accountConfig.resource_groups);
+		setProjectIds(accountConfig.project_ids);
 	}, [accountConfig, form]);
 
 	const handleSubmit = useCallback(async (): Promise<void> => {
 		try {
 			const values = await form.validateFields();
 
+			if (!accountConfig) {
+				return;
+			}
+
 			updateAccount(
 				{
 					pathParams: {
-						cloudProvider: INTEGRATION_TYPES.AZURE,
+						cloudProvider: INTEGRATION_TYPES.GCP,
 						id: account?.id || '',
 					},
 					data: {
 						config: {
-							azure: {
-								resourceGroups: values.resourceGroups || [],
+							gcp: {
+								// Deployment region & project ID are immutable in the UI, but the
+								// Updatable GCP DTO requires all three fields to be sent.
+								deploymentRegion: accountConfig.deployment_region,
+								deploymentProjectId: accountConfig.deployment_project_id,
+								projectIds: values.projectIds || [],
 							},
 						},
 					},
@@ -84,8 +87,9 @@ export function useAccountSettingsModal({
 				{
 					onSuccess: () => {
 						const nextConfig = {
-							deployment_region: accountConfig?.deployment_region || '',
-							resource_groups: values.resourceGroups || [],
+							deployment_region: accountConfig.deployment_region,
+							deployment_project_id: accountConfig.deployment_project_id,
+							project_ids: values.projectIds || [],
 						};
 
 						setActiveAccount({
@@ -98,10 +102,10 @@ export function useAccountSettingsModal({
 							position: 'bottom-right',
 						});
 
-						logEvent('Azure Integration: Account settings updated', {
+						void logEvent('GCP Integration: Account settings updated', {
 							cloudAccountId: account.cloud_account_id,
 							deploymentRegion: nextConfig.deployment_region,
-							resourceGroups: nextConfig.resource_groups,
+							projectIds: nextConfig.project_ids,
 						});
 					},
 					onError: (error) => {
@@ -115,20 +119,18 @@ export function useAccountSettingsModal({
 		} catch (error) {
 			console.error('Form submission failed:', error);
 		}
-	}, [form, updateAccount, account, setActiveAccount, onClose]);
+	}, [form, updateAccount, account, accountConfig, setActiveAccount, onClose]);
 
 	const isSaveDisabled = useMemo(() => {
 		if (!accountConfig) {
 			return true;
 		}
 
-		const formResourceGroups = resourceGroups || [];
-
 		return isEqual(
-			[...formResourceGroups].sort(),
-			[...accountConfig.resource_groups].sort(),
+			[...(projectIds || [])].sort(),
+			[...accountConfig.project_ids].sort(),
 		);
-	}, [accountConfig, resourceGroups, form]);
+	}, [accountConfig, projectIds]);
 
 	const handleClose = useCallback(() => {
 		onClose();
@@ -137,9 +139,9 @@ export function useAccountSettingsModal({
 	return {
 		form,
 		isLoading,
-		resourceGroups,
+		projectIds,
 		isSaveDisabled,
-		setResourceGroups,
+		setProjectIds,
 		handleSubmit,
 		handleClose,
 	};

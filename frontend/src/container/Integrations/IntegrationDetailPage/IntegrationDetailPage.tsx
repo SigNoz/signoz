@@ -55,19 +55,14 @@ function IntegrationDetailPage(): JSX.Element {
 		),
 	);
 
-	if (
-		integrationId === INTEGRATION_TYPES.AWS ||
-		integrationId === INTEGRATION_TYPES.AZURE
-	) {
-		return (
-			<CloudIntegration
-				type={
-					integrationId === INTEGRATION_TYPES.AWS
-						? IntegrationType.AWS_SERVICES
-						: IntegrationType.AZURE_SERVICES
-				}
-			/>
-		);
+	const cloudIntegrationTypeById: Record<string, IntegrationType> = {
+		[INTEGRATION_TYPES.AWS]: IntegrationType.AWS_SERVICES,
+		[INTEGRATION_TYPES.AZURE]: IntegrationType.AZURE_SERVICES,
+		[INTEGRATION_TYPES.GCP]: IntegrationType.GCP_SERVICES,
+	};
+
+	if (integrationId && cloudIntegrationTypeById[integrationId]) {
+		return <CloudIntegration type={cloudIntegrationTypeById[integrationId]} />;
 	}
 
 	return (
