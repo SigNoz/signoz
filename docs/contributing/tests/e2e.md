@@ -199,7 +199,7 @@ Three Claude agents in `.claude/agents/` accelerate writing and maintaining E2E 
 - **`playwright-test-generator`** — converts a test plan into Playwright spec files under `tests/e2e/tests/<feature>/`. Drives each scenario through MCP browser tools and emits TC-NN-titled tests using the `authedPage` fixture and the API-seed pattern.
 - **`playwright-test-healer`** — runs failing specs, debugs them with snapshots / console / network introspection, and edits the spec to fix selector drift, timing, or state-leak issues.
 
-The agents rely on the Playwright-test MCP server (`mcp__playwright-test__*` tools). Configure it in your Claude MCP settings; the permission allowlist lives in [.claude/settings.local.json](../../../.claude/settings.local.json).
+The agents rely on the Playwright-test MCP server (`mcp__playwright-test__*` tools). Configure it in your Claude MCP settings; the permission allowlist lives in `.claude/settings.local.json` (a per-developer local file that is not committed to the repo).
 
 ## How to run E2E tests?
 
