@@ -20,6 +20,7 @@ import AzureAccountSettingsModal from '../../AzureCloudServices/EditAccount/Acco
 import {
 	mapAccountDtoToAwsCloudAccount,
 	mapAccountDtoToAzureCloudAccount,
+	mapAccountDtoToGcpCloudAccount,
 } from '../../mapCloudAccountFromDto';
 import AwsCloudAccountSetupModal from '../AddNewAccount/CloudAccountSetupModal';
 import AwsAccountSettingsModal from '../EditAccount/AccountSettingsModal';
@@ -156,6 +157,18 @@ function AccountActions({ type }: { type: IntegrationType }): JSX.Element {
 			});
 		}
 
+		if (type === IntegrationType.GCP_SERVICES) {
+			raw.forEach((account) => {
+				if (!account) {
+					return;
+				}
+				const mapped = mapAccountDtoToGcpCloudAccount(account);
+				if (mapped) {
+					mappedAccounts.push(mapped);
+				}
+			});
+		}
+
 		return mappedAccounts;
 	}, [listAccountsResponse, type]);
 
@@ -207,13 +220,23 @@ function AccountActions({ type }: { type: IntegrationType }): JSX.Element {
 	// log telemetry event when an account is viewed.
 	useEffect(() => {
 		if (activeAccount) {
+			const { config } = activeAccount;
+			let enabledRegions: string[];
+			if ('regions' in config) {
+				// AWS
+				enabledRegions = config.regions;
+			} else if ('resource_groups' in config) {
+				// Azure
+				enabledRegions = config.resource_groups;
+			} else {
+				// GCP
+				enabledRegions = config.project_ids;
+			}
+
 			logEvent(`${type} Integration: Account viewed`, {
 				cloudAccountId: activeAccount?.cloud_account_id,
 				status: activeAccount?.status,
-				enabledRegions:
-					'regions' in activeAccount.config
-						? activeAccount.config.regions
-						: activeAccount.config.resource_groups,
+				enabledRegions,
 			});
 		}
 	}, [activeAccount, type]);
