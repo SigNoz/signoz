@@ -11,9 +11,11 @@ func sampleDiagnosis() Diagnosis {
 	return Diagnosis{
 		CorrelationID: "corr-1",
 		Service:       "support-agent",
+		Environment:   "prod",
 		Window:        "1h",
 		Status:        StatusDiagnosed,
 		Grounding: Grounding{
+			Environment:          "prod",
 			SLO:                  "successful-agent-runs",
 			SLOState:             "unhealthy",
 			BurnRate:             20.0,
@@ -23,10 +25,9 @@ func sampleDiagnosis() Diagnosis {
 		RootCause:   "Error rate rose after the 12:40 deploy; 78% of failures are TimeoutError from tool.search_knowledge_base.",
 		ProposedFix: "Roll back support-agent to the previous revision, or raise the tool timeout to 5s.",
 		Reversible:  true,
-		Confidence:  0.72,
 		Evidence: []Evidence{
-			{Kind: EvidenceKindTrace, SignozLink: "https://example/trace/1", Note: "timeout span"},
-			{Kind: EvidenceKindLog, SignozLink: "https://example/logs?x=1", Note: "connection reset spike"},
+			{ID: "ev-1", Kind: EvidenceKindTrace, SignozLink: "https://example/trace/1", Note: "timeout span"},
+			{ID: "ev-2", Kind: EvidenceKindLog, SignozLink: "https://example/logs?x=1", Note: "connection reset spike"},
 		},
 		Timestamp: time.Now(),
 	}
@@ -36,8 +37,10 @@ func sampleIndeterminate() IndeterminateReason {
 	return IndeterminateReason{
 		CorrelationID: "corr-2",
 		Service:       "support-agent",
+		Environment:   "prod",
 		Window:        "30d",
 		Grounding: Grounding{
+			Environment:      "prod",
 			SLO:              "successful-agent-runs",
 			SLOState:         "indeterminate",
 			TelemetryTrusted: false,
@@ -111,9 +114,10 @@ func TestIndeterminateDiagnosis_OmitsRootCause(t *testing.T) {
 	d := Diagnosis{
 		CorrelationID:   "corr-3",
 		Service:         "support-agent",
+		Environment:     "prod",
 		Window:          "1h",
 		Status:          StatusIndeterminate,
-		Grounding:       Grounding{TelemetryTrusted: false},
+		Grounding:       Grounding{Environment: "prod", TelemetryTrusted: false},
 		MissingEvidence: []string{"agent_success_total"},
 		Timestamp:       time.Now(),
 	}
@@ -122,5 +126,40 @@ func TestIndeterminateDiagnosis_OmitsRootCause(t *testing.T) {
 	}
 	if len(d.MissingEvidence) == 0 {
 		t.Error("MissingEvidence should be set for an indeterminate diagnosis")
+	}
+}
+
+// TestAmbiguousDiagnosis_UsesCandidates covers the ranked-hypotheses path
+// (PRD section 13.4): when evidence supports more than one cause, Candidates
+// is populated instead of RootCause/ProposedFix, and each candidate cites
+// its supporting evidence by ID.
+func TestAmbiguousDiagnosis_UsesCandidates(t *testing.T) {
+	d := Diagnosis{
+		CorrelationID: "corr-4",
+		Service:       "support-agent",
+		Environment:   "prod",
+		Window:        "1h",
+		Status:        StatusDiagnosed,
+		Grounding:     Grounding{Environment: "prod", TelemetryTrusted: true},
+		Evidence: []Evidence{
+			{ID: "ev-1", Kind: EvidenceKindTrace, SignozLink: "https://example/trace/1", Note: "timeout span"},
+			{ID: "ev-2", Kind: EvidenceKindMetric, SignozLink: "https://example/metric/1", Note: "cpu saturation"},
+		},
+		Candidates: []Candidate{
+			{RootCause: "downstream tool timeout", EvidenceIDs: []string{"ev-1"}},
+			{RootCause: "node CPU saturation", EvidenceIDs: []string{"ev-2"}},
+		},
+		Timestamp: time.Now(),
+	}
+	if d.RootCause != "" {
+		t.Error("RootCause should be empty when presenting ranked hypotheses")
+	}
+	if len(d.Candidates) != 2 {
+		t.Fatalf("len(Candidates) = %d, want 2", len(d.Candidates))
+	}
+	for _, c := range d.Candidates {
+		if len(c.EvidenceIDs) == 0 {
+			t.Errorf("candidate %q has no EvidenceIDs", c.RootCause)
+		}
 	}
 }

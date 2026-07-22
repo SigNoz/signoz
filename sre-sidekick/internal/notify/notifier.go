@@ -34,6 +34,10 @@ const (
 // are computed by the SLO engine and completeness gate; Notifier
 // implementations only render them.
 type Grounding struct {
+	// Environment scopes the SLO to a deployment environment (e.g. "prod",
+	// "local"). Required so two environments sharing a service name are not
+	// conflated (e.g. "support-agent" in prod vs. staging).
+	Environment string `json:"environment"`
 	// SLO is the name of the SLO this incident is scoped to.
 	SLO string `json:"slo"`
 	// SLOState is one of "healthy", "unhealthy", "indeterminate" (see
@@ -63,9 +67,29 @@ const (
 // with a deep link back into SigNoz so a human can verify it (PRD section
 // 13.3).
 type Evidence struct {
+	// ID is a stable identifier for this evidence item within a Diagnosis.
+	// RootCause and each Candidate cite evidence by ID (EvidenceIDs); a
+	// cited id must resolve to an entry here (PRD section 13.4: the agent
+	// must cite the evidence it used).
+	ID         string       `json:"id"`
 	Kind       EvidenceKind `json:"kind"`
 	SignozLink string       `json:"signozLink"`
 	Note       string       `json:"note"`
+}
+
+// Candidate is one ranked hypothesis for the root cause. Used instead of
+// RootCause/ProposedFix when the evidence supports more than one candidate
+// cause and the presentation rules (PRD section 13.4) decide the diagnosis
+// should be shown as ranked hypotheses rather than a single conclusion.
+// Candidates carry no confidence score: ranking and presentation are decided
+// by the deterministic rule set, not a soft model number.
+type Candidate struct {
+	RootCause   string `json:"rootCause"`
+	ProposedFix string `json:"proposedFix,omitempty"`
+	Reversible  bool   `json:"reversible,omitempty"`
+	// EvidenceIDs cites the Evidence entries (by ID) that support this
+	// candidate.
+	EvidenceIDs []string `json:"evidenceIds,omitempty"`
 }
 
 // Diagnosis is the full result of the diagnose stage for one incident,
@@ -77,15 +101,17 @@ type Diagnosis struct {
 	// 20).
 	CorrelationID string `json:"correlationId"`
 
-	Service string `json:"service"`
-	Window  string `json:"window"`
-	Status  Status `json:"status"`
+	Service     string `json:"service"`
+	Environment string `json:"environment"`
+	Window      string `json:"window"`
+	Status      Status `json:"status"`
 
 	Grounding Grounding `json:"grounding"`
 
-	// RootCause and ProposedFix are set only when Status ==
-	// StatusDiagnosed. The RCA model must cite the Evidence it used and must
-	// not invent metrics or services (PRD section 13.2).
+	// RootCause and ProposedFix are set only when Status == StatusDiagnosed
+	// and the presentation rules (PRD section 13.4) resolve to a single
+	// conclusion. The RCA model must cite the Evidence it used (by Evidence
+	// ID) and must not invent metrics or services (PRD section 13.2).
 	RootCause   string `json:"rootCause,omitempty"`
 	ProposedFix string `json:"proposedFix,omitempty"`
 	// Reversible flags whether ProposedFix is a reversible action; PRD
@@ -93,10 +119,12 @@ type Diagnosis struct {
 	// stronger confirmation.
 	Reversible bool `json:"reversible,omitempty"`
 
-	// Confidence is a presentation hint only (PRD section 13.4: presentation
-	// is rule-based, not a soft LLM confidence number, so this is informative,
-	// not the thing that decides how the diagnosis is rendered).
-	Confidence float64 `json:"confidence,omitempty"`
+	// Candidates is set instead of RootCause/ProposedFix when the evidence
+	// supports more than one cause: the presentation rules (PRD section
+	// 13.4) present ranked hypotheses rather than a single conclusion. There
+	// is no top-level confidence score; presentation is rule-based, not a
+	// soft LLM confidence.
+	Candidates []Candidate `json:"candidates,omitempty"`
 
 	Evidence []Evidence `json:"evidence,omitempty"`
 
@@ -115,6 +143,7 @@ type Diagnosis struct {
 type IndeterminateReason struct {
 	CorrelationID string    `json:"correlationId"`
 	Service       string    `json:"service"`
+	Environment   string    `json:"environment"`
 	Window        string    `json:"window"`
 	Grounding     Grounding `json:"grounding"`
 	// Reason is a human-readable explanation of why telemetry is not
