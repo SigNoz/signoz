@@ -9,11 +9,7 @@ import ColumnHeader from '../Base/ColumnHeader';
 import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
 import { formatBytes, getPodStatusItems } from '../commonUtils';
-import {
-	CellValueTooltip,
-	GroupedStatusCounts,
-	ValidateColumnValueWrapper,
-} from '../components';
+import { GroupedStatusCounts, ValidateColumnValueWrapper } from '../components';
 import {
 	INFRA_MONITORING_ATTR_KEYS,
 	InfraMonitoringEntity,
@@ -75,10 +71,9 @@ export const k8sClustersColumnsConfig: ClusterTableColumnConfig[] = [
 		enableMove: false,
 		pin: 'left',
 		visibilityBehavior: 'hidden-on-expand',
-		cell: ({ value }): React.ReactNode => {
-			const clusterName = value as string;
-			return <CellValueTooltip value={clusterName} />;
-		},
+		cell: ({ value }): React.ReactNode => (
+			<TanStackTable.Text>{value}</TanStackTable.Text>
+		),
 	},
 	{
 		id: 'nodeCountsByReadiness',

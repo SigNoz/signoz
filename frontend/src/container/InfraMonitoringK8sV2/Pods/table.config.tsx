@@ -17,7 +17,6 @@ import {
 	POD_STATUS_COLORS,
 } from '../commonUtils';
 import {
-	CellValueTooltip,
 	EntityProgressBar,
 	GroupedStatusCounts,
 	ValidateColumnValueWrapper,
@@ -86,10 +85,9 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 		enableMove: false,
 		pin: 'left',
 		visibilityBehavior: 'hidden-on-expand',
-		cell: ({ value }): React.ReactNode => {
-			const podName = value as string;
-			return <CellValueTooltip value={podName} />;
-		},
+		cell: ({ value }): React.ReactNode => (
+			<TanStackTable.Text>{value}</TanStackTable.Text>
+		),
 	},
 	{
 		id: 'podStatus',

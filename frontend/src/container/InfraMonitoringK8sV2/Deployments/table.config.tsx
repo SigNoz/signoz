@@ -9,7 +9,6 @@ import K8sGroupCell from '../Base/K8sGroupCell';
 import { SelectedItemParams } from '../hooks';
 import { formatBytes, getPodStatusItems } from '../commonUtils';
 import {
-	CellValueTooltip,
 	EntityProgressBar,
 	GroupedStatusCounts,
 	ValidateColumnValueWrapper,
@@ -86,10 +85,9 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<InframonitoringtypesDep
 			enableMove: false,
 			pin: 'left',
 			visibilityBehavior: 'hidden-on-expand',
-			cell: ({ value }): React.ReactNode => {
-				const deploymentName = value as string;
-				return <CellValueTooltip value={deploymentName} />;
-			},
+			cell: ({ value }): React.ReactNode => (
+				<TanStackTable.Text>{value}</TanStackTable.Text>
+			),
 		},
 		{
 			id: 'namespaceName',
