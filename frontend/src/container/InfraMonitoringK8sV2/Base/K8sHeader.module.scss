@@ -5,25 +5,10 @@
 	align-items: stretch;
 	gap: var(--spacing-4);
 	width: 100%;
-
-	:global(.ant-select-selector) {
-		border-radius: 2px;
-		border: 1px solid var(--l2-border) !important;
-		background-color: var(--l2-background) !important;
-
-		input {
-			font-size: 12px;
-		}
-
-		:global([data-slot='badge'] .ant-typography) {
-			font-size: 12px;
-		}
-	}
 }
 
 .k8SListControlsRow {
 	display: flex;
-	flex-wrap: wrap;
 	gap: var(--spacing-4);
 	width: 100%;
 	align-items: center;
@@ -32,27 +17,6 @@
 
 .k8SQbSearchContainer {
 	width: 100%;
-}
-
-.k8SFiltersGroupByRow {
-	display: flex;
-	flex: 1 1 auto;
-	align-items: center;
-	justify-content: flex-end;
-	gap: var(--spacing-4);
-	min-width: 0;
-
-	@media (max-width: 1600px) {
-		flex: 1 1 100%;
-		order: 9;
-	}
-}
-
-.k8SAttributeSearchContainer {
-	flex: 1 1 240px;
-	max-width: 400px;
-	display: flex;
-	align-items: center;
 }
 
 .k8SRunButton {
@@ -64,16 +28,11 @@
 }
 
 .k8SDateTimeSelection {
-	flex: 0 0 auto;
+	margin-left: auto;
 	display: flex;
 	justify-content: flex-end;
 
 	--date-time-selector-border-color: var(--l2-border);
-
-	@media (max-width: 1200px) {
-		flex: 1 1 100%;
-		order: 10;
-	}
 
 	:global(.timeSelection-input) {
 		height: 32px;
@@ -94,43 +53,4 @@
 			min-height: unset;
 		}
 	}
-}
-
-.groupByLabel {
-	min-width: max-content;
-	font-size: var(--periscope-font-size-base, 13px);
-	font-weight: var(--periscope-font-weight-regular, 400);
-	line-height: 18px;
-	letter-spacing: -0.07px;
-
-	border-radius: 2px 0px 0px 2px;
-	border: 1px solid var(--l2-border);
-	border-right: none;
-	border-top-right-radius: 0px;
-	border-bottom-right-radius: 0px;
-
-	display: flex;
-	height: 32px;
-	padding: var(--spacing-3) var(--spacing-3) var(--spacing-3) var(--spacing-4);
-	justify-content: center;
-	align-items: center;
-	gap: var(--spacing-2);
-}
-
-.groupBySelect {
-	width: 100%;
-
-	:global(.ant-select-selector) {
-		border-left: none;
-		border-top-left-radius: 0px;
-		border-bottom-left-radius: 0px;
-	}
-}
-
-.k8SListControlsRight {
-	min-width: 240px;
-
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-2);
 }
