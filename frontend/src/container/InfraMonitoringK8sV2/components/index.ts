@@ -6,7 +6,6 @@ export {
 	type StatusCountItem,
 } from './GroupedStatusCounts';
 export {
-	CellValueTooltip,
 	useInfraMonitoringCellActionsStore,
 	useInfraMonitoringLineClamp,
 } from './CellValueTooltip';

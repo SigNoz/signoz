@@ -9,11 +9,7 @@ import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
 import { formatBytes, getPodStatusItems } from '../commonUtils';
 import { INFRA_MONITORING_ATTR_KEYS } from '../constants';
-import {
-	CellValueTooltip,
-	GroupedStatusCounts,
-	ValidateColumnValueWrapper,
-} from '../components';
+import { GroupedStatusCounts, ValidateColumnValueWrapper } from '../components';
 import { InfraMonitoringEntity } from '../constants';
 import { Workflow } from '@signozhq/icons';
 
@@ -83,10 +79,9 @@ export const k8sNodesColumnsConfig: NodeTableColumnConfig[] = [
 		enableMove: false,
 		pin: 'left',
 		visibilityBehavior: 'hidden-on-expand',
-		cell: ({ value }): React.ReactNode => {
-			const nodeName = value as string;
-			return <CellValueTooltip value={nodeName} />;
-		},
+		cell: ({ value }): React.ReactNode => (
+			<TanStackTable.Text>{value}</TanStackTable.Text>
+		),
 	},
 	{
 		id: 'condition',

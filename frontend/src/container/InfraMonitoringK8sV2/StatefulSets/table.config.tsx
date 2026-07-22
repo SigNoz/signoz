@@ -9,7 +9,6 @@ import K8sGroupCell from '../Base/K8sGroupCell';
 import { SelectedItemParams } from '../hooks';
 import { formatBytes, getPodStatusItems } from '../commonUtils';
 import {
-	CellValueTooltip,
 	EntityProgressBar,
 	GroupedStatusCounts,
 	ValidateColumnValueWrapper,
@@ -86,10 +85,9 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<InframonitoringtypesSt
 			enableMove: false,
 			pin: 'left',
 			visibilityBehavior: 'hidden-on-expand',
-			cell: ({ value }): React.ReactNode => {
-				const statefulsetName = value as string;
-				return <CellValueTooltip value={statefulsetName} />;
-			},
+			cell: ({ value }): React.ReactNode => (
+				<TanStackTable.Text>{value}</TanStackTable.Text>
+			),
 		},
 		{
 			id: 'namespaceName',
@@ -103,10 +101,9 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<InframonitoringtypesSt
 			width: { min: 180 },
 			enableSort: false,
 			enableResize: true,
-			cell: ({ value }): React.ReactNode => {
-				const namespaceName = value as string;
-				return <CellValueTooltip value={namespaceName} />;
-			},
+			cell: ({ value }): React.ReactNode => (
+				<TanStackTable.Text>{value}</TanStackTable.Text>
+			),
 		},
 		{
 			id: 'pod_counts_by_status',
