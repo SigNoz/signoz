@@ -66,7 +66,7 @@ function ChartHeader({
 			<span className={styles.chartHeaderLabel}>{title}</span>
 			{renderInfoIcon()}
 			{metricsExplorerUrl && (
-				<Tooltip title="Open in Metrics Explorer">
+				<Tooltip title="Go to Metrics Explorer">
 					<Link
 						to={metricsExplorerUrl}
 						className={styles.metricsExplorerLink}
