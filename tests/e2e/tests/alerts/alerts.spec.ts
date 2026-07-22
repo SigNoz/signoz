@@ -40,9 +40,6 @@ test.describe('alerts — threshold persists on edit-page load', () => {
 	});
 
 	test.afterAll(async ({ browser }) => {
-		if (!ruleId && !channelId) {
-			return;
-		}
 		const ctx = await newAdminContext(browser);
 		const page = await ctx.newPage();
 		try {
