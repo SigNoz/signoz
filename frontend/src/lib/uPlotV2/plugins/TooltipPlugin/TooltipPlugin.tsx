@@ -4,6 +4,7 @@ import cx from 'classnames';
 import uPlot from 'uplot';
 import logEvent from 'api/common/logEvent';
 
+import { syncCursorRegistry } from './syncCursorRegistry';
 import { createSyncDisplayHook } from './syncDisplayHook';
 import {
 	createInitialControllerState,
@@ -12,6 +13,7 @@ import {
 	createSetSeriesHandler,
 	getPlot,
 	isScrollEventInPlot,
+	shouldShowTooltipForSync,
 	updatePlotVisibility,
 	updateWindowSize,
 } from './tooltipController';
@@ -300,49 +302,17 @@ export default function TooltipPlugin({
 			}
 		};
 
-		// Handles all tooltip-pin keyboard interactions:
-		//   Escape  — always releases the tooltip when pinned (never steals Escape
-		//             from other handlers since we do not call stopPropagation).
-		//   pinKey  — toggles: pins when hovering+unpinned, unpins when pinned.
-		const handleKeyDown = (event: KeyboardEvent): void => {
-			// Escape: release-only (never toggles on).
-			if (event.key === 'Escape') {
-				if (controller.pinned) {
-					logEvent(Events.TOOLTIP_UNPINNED, {
-						id: config.getId(),
-					});
-					dismissTooltip();
-				}
-				return;
-			}
-
-			if (event.key.toLowerCase() !== pinKey.toLowerCase()) {
-				return;
-			}
-
-			// Toggle off: P pressed while already pinned.
-			if (controller.pinned) {
-				logEvent(Events.TOOLTIP_UNPINNED, {
-					id: config.getId(),
-				});
-				dismissTooltip();
-				return;
-			}
-
-			// Toggle on: P pressed while hovering.
+		// Returns false when the cursor is offscreen so the caller can bail
+		// without scheduling side effects.
+		function pinAtCursor(): boolean {
 			const plot = getPlot(controller);
-			if (
-				!plot ||
-				!controller.hoverActive ||
-				controller.focusedSeriesIndex == null
-			) {
-				return;
+			if (!plot) {
+				return false;
 			}
-
 			const cursorLeft = plot.cursor.left ?? -1;
 			const cursorTop = plot.cursor.top ?? -1;
 			if (cursorLeft < 0 || cursorTop < 0) {
-				return;
+				return false;
 			}
 
 			const plotRect = plot.over.getBoundingClientRect();
@@ -360,7 +330,70 @@ export default function TooltipPlugin({
 				id: config.getId(),
 			});
 			scheduleRender(true);
+			return true;
+		}
+
+		// Escape always releases (never pins); pinKey toggles. Unpin fans out
+		// naturally — every pinned panel's document listener sees the same key
+		// event and dismisses itself — so only pinning needs a broadcast.
+		const handleKeyDown = (event: KeyboardEvent): void => {
+			if (event.key === 'Escape') {
+				if (controller.pinned) {
+					logEvent(Events.TOOLTIP_UNPINNED, {
+						id: config.getId(),
+					});
+					dismissTooltip();
+				}
+				return;
+			}
+
+			if (event.key.toLowerCase() !== pinKey.toLowerCase()) {
+				return;
+			}
+
+			if (controller.pinned) {
+				logEvent(Events.TOOLTIP_UNPINNED, {
+					id: config.getId(),
+				});
+				dismissTooltip();
+				return;
+			}
+
+			if (!controller.hoverActive || controller.focusedSeriesIndex == null) {
+				return;
+			}
+
+			if (!pinAtCursor()) {
+				return;
+			}
+
+			// Deferred to a macrotask so the same P keydown finishes dispatching
+			// to every panel's listener first. A microtask is not enough — those
+			// run between listener invocations, and once a receiver's `pinned`
+			// flips, its own listener takes the unpin branch on the same event.
+			if (syncTooltipWithDashboard) {
+				setTimeout(() => {
+					syncCursorRegistry.broadcastPin(syncKey);
+				}, 0);
+			}
 		};
+
+		// Skips the focusedSeriesIndex guard so single-series or no-overlap
+		// receivers still pin at the synced timestamp.
+		const handleSyncPinBroadcast = (): void => {
+			if (controller.pinned) {
+				return;
+			}
+			if (!shouldShowTooltipForSync(controller, syncTooltipWithDashboard)) {
+				return;
+			}
+			pinAtCursor();
+		};
+
+		const unsubscribeSyncPin =
+			syncTooltipWithDashboard && canPinTooltip
+				? syncCursorRegistry.subscribePin(syncKey, handleSyncPinBroadcast)
+				: null;
 
 		// Forward overlay clicks to the consumer-provided onClick callback.
 		const handleOverClick = (event: MouseEvent): void => {
@@ -453,6 +486,7 @@ export default function TooltipPlugin({
 			removeSetLegendHook();
 			removeSetCursorHook();
 			removeSyncDisplayHook?.();
+			unsubscribeSyncPin?.();
 			if (overClickHandler) {
 				const plot = getPlot(controller);
 				plot?.over.removeEventListener('click', overClickHandler);
