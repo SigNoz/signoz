@@ -73,14 +73,20 @@ export function useTestSpanMapper(
 		}
 	}, [input]);
 
-	const run = useCallback((): void => {
+	const reset = useCallback((): void => {
 		setError(null);
+		setResult(null);
+		setTestedAttributes(null);
+		setTestedResource(null);
+	}, []);
+
+	const run = useCallback((): void => {
+		reset();
 
 		let body;
 		try {
 			body = buildTestRequest(snapshot, draft, input);
 		} catch (parseError) {
-			setResult(null);
 			setError(apiErrorMessage(parseError));
 			return;
 		}
@@ -104,14 +110,7 @@ export function useTestSpanMapper(
 				},
 			},
 		);
-	}, [snapshot, draft, input, mutate]);
-
-	const reset = useCallback((): void => {
-		setError(null);
-		setResult(null);
-		setTestedAttributes(null);
-		setTestedResource(null);
-	}, []);
+	}, [snapshot, draft, input, mutate, reset]);
 
 	return {
 		input,

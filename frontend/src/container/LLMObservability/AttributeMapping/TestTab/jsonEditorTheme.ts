@@ -2,8 +2,8 @@
 import { Monaco } from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
 
-export const SIGNOZ_JSON_THEME_DARK = 'signoz-dark';
-export const SIGNOZ_JSON_THEME_LIGHT = 'signoz-light';
+export const SIGNOZ_JSON_THEME_DARK = 'signoz-attr-mapping-json-dark';
+export const SIGNOZ_JSON_THEME_LIGHT = 'signoz-attr-mapping-json-light';
 
 const SHARED_THEME = {
 	inherit: true,
