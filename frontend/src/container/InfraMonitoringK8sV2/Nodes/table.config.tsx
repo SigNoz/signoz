@@ -9,7 +9,11 @@ import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
 import { formatBytes, getPodStatusItems } from '../commonUtils';
 import { INFRA_MONITORING_ATTR_KEYS } from '../constants';
-import { GroupedStatusCounts, ValidateColumnValueWrapper } from '../components';
+import {
+	GroupedStatusCounts,
+	TextNoData,
+	ValidateColumnValueWrapper,
+} from '../components';
 import { InfraMonitoringEntity } from '../constants';
 import { Workflow } from '@signozhq/icons';
 
@@ -97,6 +101,11 @@ export const k8sNodesColumnsConfig: NodeTableColumnConfig[] = [
 			if (!groupMeta) {
 				const color =
 					NODE_CONDITION_COLORS[row.condition] || NODE_CONDITION_COLORS.no_data;
+
+				if (color === NODE_CONDITION_COLORS.no_data) {
+					return <TextNoData type="tanstack" />;
+				}
+
 				return (
 					<Badge color={color} variant="outline">
 						{NODE_CONDITION_LABEL_MAP[row.condition] || 'Unknown'}
@@ -137,7 +146,7 @@ export const k8sNodesColumnsConfig: NodeTableColumnConfig[] = [
 		cell: ({ row, rowId }): React.ReactNode => {
 			const podCountsByStatus = row.podCountsByStatus;
 			if (!podCountsByStatus) {
-				return <TanStackTable.Text>-</TanStackTable.Text>;
+				return <TextNoData type="tanstack" />;
 			}
 			return (
 				<GroupedStatusCounts

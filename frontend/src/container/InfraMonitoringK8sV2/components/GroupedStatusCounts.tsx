@@ -2,6 +2,7 @@
 import styles from './GroupedStatusCounts.module.scss';
 import TanStackTable from 'components/TanStackTableView';
 import { Typography } from '@signozhq/ui/typography';
+import { TextNoData } from './TextNoData';
 import { MouseEventHandler } from 'react';
 
 export interface StatusBreakdownItem {
@@ -77,7 +78,7 @@ export function GroupedStatusCounts({
 		showZeroValues === false ? items.filter((item) => item.value > 0) : items;
 
 	if (visibleItems.length === 0) {
-		return <TanStackTable.Text>-</TanStackTable.Text>;
+		return <TextNoData type="tanstack" />;
 	}
 
 	return (
@@ -90,12 +91,20 @@ export function GroupedStatusCounts({
 					arrow
 					align="start"
 				>
-					<TanStackTable.Text
-						className={styles.item}
-						style={{ '--gsc-color': item.color } as React.CSSProperties}
-					>
-						{item.value || '-'}
-					</TanStackTable.Text>
+					{item.value ? (
+						<TanStackTable.Text
+							className={styles.item}
+							style={{ '--gsc-color': item.color } as React.CSSProperties}
+						>
+							{item.value}
+						</TanStackTable.Text>
+					) : (
+						<TextNoData
+							type="tanstack"
+							className={styles.item}
+							style={{ '--gsc-color': item.color } as React.CSSProperties}
+						/>
+					)}
 				</TanStackTable.HoverTooltip>
 			))}
 		</div>

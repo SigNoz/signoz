@@ -9,7 +9,11 @@ import ColumnHeader from '../Base/ColumnHeader';
 import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
 import { formatBytes, getPodStatusItems } from '../commonUtils';
-import { GroupedStatusCounts, ValidateColumnValueWrapper } from '../components';
+import {
+	GroupedStatusCounts,
+	TextNoData,
+	ValidateColumnValueWrapper,
+} from '../components';
 import {
 	INFRA_MONITORING_ATTR_KEYS,
 	InfraMonitoringEntity,
@@ -90,7 +94,7 @@ export const k8sClustersColumnsConfig: ClusterTableColumnConfig[] = [
 		enableSort: false,
 		cell: ({ row, rowId }): React.ReactNode => {
 			if (!row.nodeCountsByReadiness) {
-				return <TanStackTable.Text>-</TanStackTable.Text>;
+				return <TextNoData type="tanstack" />;
 			}
 
 			return (
@@ -128,7 +132,7 @@ export const k8sClustersColumnsConfig: ClusterTableColumnConfig[] = [
 		cell: ({ row, rowId }): React.ReactNode => {
 			const podCountsByStatus = row.podCountsByStatus;
 			if (!podCountsByStatus) {
-				return <TanStackTable.Text>-</TanStackTable.Text>;
+				return <TextNoData type="tanstack" />;
 			}
 			return (
 				<GroupedStatusCounts

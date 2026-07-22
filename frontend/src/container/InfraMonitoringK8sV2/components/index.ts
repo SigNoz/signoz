@@ -5,3 +5,4 @@ export {
 	GroupedStatusCounts,
 	type StatusCountItem,
 } from './GroupedStatusCounts';
+export { TextNoData } from './TextNoData';
