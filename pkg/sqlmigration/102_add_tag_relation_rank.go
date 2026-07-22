@@ -50,6 +50,14 @@ func (migration *addTagRelationRank) Up(ctx context.Context, db *bun.DB) error {
 	}
 	sqls := migration.sqlschema.Operator().AddColumn(table, uniqueConstraints, rankColumn, 0)
 
+	// AddColumn recreates the table for a NOT NULL column on SQLite, which drops
+	// standalone indices. GetTable only reports inline table constraints, so
+	// restore the standalone unique index from migration 082.
+	sqls = append(sqls, migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{
+		TableName:   sqlschema.TableName("tag_relation"),
+		ColumnNames: []sqlschema.ColumnName{"kind", "resource_id", "tag_id"},
+	})...)
+
 	for _, sql := range sqls {
 		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
 			return err
