@@ -1196,16 +1196,14 @@ func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) 
 
 	if res.Err != nil {
 		aH.logger.ErrorContext(r.Context(), "error in query range metrics", errors.Attr(res.Err))
-	}
-
-	if res.Err != nil {
 		switch res.Err.(type) {
 		case promql.ErrQueryCanceled:
 			RespondError(w, &model.ApiError{Typ: model.ErrorCanceled, Err: res.Err}, nil)
 		case promql.ErrQueryTimeout:
 			RespondError(w, &model.ApiError{Typ: model.ErrorTimeout, Err: res.Err}, nil)
+		default:
+			RespondError(w, &model.ApiError{Typ: model.ErrorExec, Err: res.Err}, nil)
 		}
-		RespondError(w, &model.ApiError{Typ: model.ErrorExec, Err: res.Err}, nil)
 		return
 	}
 
@@ -1251,16 +1249,15 @@ func (aH *APIHandler) queryMetrics(w http.ResponseWriter, r *http.Request) {
 
 	if res.Err != nil {
 		aH.logger.ErrorContext(r.Context(), "error in query range metrics", errors.Attr(res.Err))
-	}
-
-	if res.Err != nil {
 		switch res.Err.(type) {
 		case promql.ErrQueryCanceled:
 			RespondError(w, &model.ApiError{Typ: model.ErrorCanceled, Err: res.Err}, nil)
 		case promql.ErrQueryTimeout:
 			RespondError(w, &model.ApiError{Typ: model.ErrorTimeout, Err: res.Err}, nil)
+		default:
+			RespondError(w, &model.ApiError{Typ: model.ErrorExec, Err: res.Err}, nil)
 		}
-		RespondError(w, &model.ApiError{Typ: model.ErrorExec, Err: res.Err}, nil)
+		return
 	}
 
 	responseData := &model.QueryData{
