@@ -10,6 +10,8 @@
       "daemonSetMemoryLimit": 0.4,
       "desiredNodes": 3,
       "currentNodes": 2,
+      "readyNodes": 2,
+      "misscheduledNodes": 1,
       "podCountsByPhase": {
         "pending": 0,
         "running": 2,
@@ -28,6 +30,8 @@
       "daemonSetMemoryLimit": 0.3,
       "desiredNodes": 4,
       "currentNodes": 4,
+      "readyNodes": 4,
+      "misscheduledNodes": 0,
       "podCountsByPhase": {
         "pending": 0,
         "running": 3,

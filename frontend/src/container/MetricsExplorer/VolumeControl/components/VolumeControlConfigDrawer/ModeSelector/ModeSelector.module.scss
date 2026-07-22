@@ -1,0 +1,29 @@
+.modeOptions {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 10px;
+}
+
+.modeOption {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	text-align: left;
+	border: 1px solid var(--bg-slate-400, #1d212d);
+	border-radius: 6px;
+	background: var(--bg-ink-300, #16181d);
+	padding: 12px;
+	cursor: pointer;
+	transition:
+		border-color 0.12s ease,
+		background 0.12s ease;
+
+	&:hover {
+		border-color: var(--bg-slate-200, #2c3140);
+	}
+}
+
+.modeOptionSelected {
+	border-color: var(--bg-robin-500, #4e74f8);
+	background: var(--callout-primary-background);
+}

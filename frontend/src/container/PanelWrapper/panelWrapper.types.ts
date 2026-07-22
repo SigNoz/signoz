@@ -32,6 +32,7 @@ export type PanelWrapperProps = {
 	panelMode: PanelMode;
 	onColumnWidthsChange?: (widths: Record<string, number>) => void;
 	groupByPerQuery?: Record<string, BaseAutocompleteData[]>;
+	hidePagination?: boolean;
 };
 
 export type TooltipData = {

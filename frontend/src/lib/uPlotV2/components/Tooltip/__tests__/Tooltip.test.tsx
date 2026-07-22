@@ -177,7 +177,8 @@ describe('Tooltip', () => {
 		renderTooltip({ uPlotInstance, content });
 
 		const list = screen.getByTestId('uplot-tooltip-list');
-		expect(list).toHaveStyle({ height: '200px' });
+		// Measured height (200) + the scroll viewport's vertical padding (16)
+		expect(list).toHaveStyle({ height: '216px' });
 	});
 
 	it('sets tooltip list height based on content length when Virtuoso reports 0 height', () => {
@@ -188,8 +189,8 @@ describe('Tooltip', () => {
 		renderTooltip({ uPlotInstance, content });
 
 		const list = screen.getByTestId('uplot-tooltip-list');
-		// Falls back to content length: 2 items * 38px = 76px
-		expect(list).toHaveStyle({ height: '76px' });
+		// Falls back to content length (2 * 38 = 76) + vertical padding (16) = 92px
+		expect(list).toHaveStyle({ height: '92px' });
 	});
 });
 

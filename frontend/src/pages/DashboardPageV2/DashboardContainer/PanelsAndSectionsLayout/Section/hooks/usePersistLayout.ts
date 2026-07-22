@@ -1,10 +1,12 @@
 import { useCallback, useState } from 'react';
 import type { Layout } from 'react-grid-layout';
 
-import { patchDashboardV2 } from 'api/generated/services/dashboard';
+import logEvent from 'api/common/logEvent';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
+import { useOptimisticPatch } from '../../../hooks/useOptimisticPatch';
 import { replaceSectionItemsOp } from '../../../patchOps';
 import { useDashboardStore } from '../../../store/useDashboardStore';
 import type { GridItem } from '../../../utils';
@@ -65,7 +67,7 @@ function hasGeometryChanged(next: GridItem[], prev: GridItem[]): boolean {
  */
 export function usePersistLayout({ layoutIndex, items }: Params): Result {
 	const dashboardId = useDashboardStore((s) => s.dashboardId);
-	const refetch = useDashboardStore((s) => s.refetch);
+	const { patchAsync } = useOptimisticPatch();
 	const [isSaving, setIsSaving] = useState(false);
 	const { showErrorModal } = useErrorModal();
 
@@ -78,19 +80,19 @@ export function usePersistLayout({ layoutIndex, items }: Params): Result {
 			if (!hasGeometryChanged(nextItems, items)) {
 				return;
 			}
+			// High-frequency (drag/resize stop) — rate-limited. Single handler can't tell
+			// drag from resize, so changeType is omitted.
+			void logEvent(DashboardDetailEvents.LayoutChanged, {}, 'track', true);
 			try {
 				setIsSaving(true);
-				await patchDashboardV2({ id: dashboardId }, [
-					replaceSectionItemsOp(layoutIndex, nextItems),
-				]);
-				refetch();
+				await patchAsync([replaceSectionItemsOp(layoutIndex, nextItems)]);
 			} catch (error) {
 				showErrorModal(error as APIError);
 			} finally {
 				setIsSaving(false);
 			}
 		},
-		[dashboardId, items, layoutIndex, refetch, showErrorModal],
+		[dashboardId, items, layoutIndex, patchAsync, showErrorModal],
 	);
 
 	return { handleLayoutChange, isSaving };

@@ -23,6 +23,9 @@ const editorOptions: EditorProps['options'] = {
 	lineHeight: 18,
 	colorDecorators: true,
 	scrollBeyondLastLine: false,
+	// Disabled: the transparent editor background leaves the sticky-scroll widget
+	// without an opaque backing, so scrolling lines bleed through and overlap it.
+	stickyScroll: { enabled: false },
 	scrollbar: {
 		vertical: 'hidden',
 		horizontal: 'hidden',

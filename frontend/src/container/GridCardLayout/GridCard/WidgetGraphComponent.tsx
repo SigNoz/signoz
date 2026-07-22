@@ -66,6 +66,7 @@ function WidgetGraphComponent({
 	customOnRowClick,
 	customTimeRangeWindowForCoRelation,
 	enableDrillDown,
+	hidePagination,
 }: WidgetGraphComponentProps): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 	const [deleteModal, setDeleteModal] = useState(false);
@@ -430,6 +431,7 @@ function WidgetGraphComponent({
 						customSeries={customSeries}
 						customOnRowClick={customOnRowClick}
 						enableDrillDown={enableDrillDown}
+						hidePagination={hidePagination}
 						onColumnWidthsChange={onColumnWidthsChange}
 					/>
 				</div>

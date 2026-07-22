@@ -111,6 +111,13 @@ const (
 
 	FilterOperatorContains
 	FilterOperatorNotContains
+
+	// has/hasAny/hasAll are array membership functions; hasToken is a full-text token
+	// search (not array membership), so it is excluded from IsArrayFunctionOperator.
+	FilterOperatorHas
+	FilterOperatorHasToken
+	FilterOperatorHasAny
+	FilterOperatorHasAll
 )
 
 var operatorInverseMapping = map[FilterOperator]FilterOperator{
@@ -221,6 +228,45 @@ func (f FilterOperator) IsArrayOperator() bool {
 		return true
 	default:
 		return false
+	}
+}
+
+// IsArrayFunctionOperator reports whether the operator is one of the array
+// membership functions (has/hasAny/hasAll) that operate over array fields.
+func (f FilterOperator) IsArrayFunctionOperator() bool {
+	switch f {
+	case FilterOperatorHas, FilterOperatorHasAny, FilterOperatorHasAll:
+		return true
+	default:
+		return false
+	}
+}
+
+// IsFunctionOperator reports whether the operator is a query function
+// (has/hasAny/hasAll/hasToken); these apply to the logs body column only.
+func (f FilterOperator) IsFunctionOperator() bool {
+	switch f {
+	case FilterOperatorHas, FilterOperatorHasAny, FilterOperatorHasAll, FilterOperatorHasToken:
+		return true
+	default:
+		return false
+	}
+}
+
+// FunctionName returns the query-text name of a function operator
+// (has/hasAny/hasAll/hasToken), or "" for any non-function operator.
+func (f FilterOperator) FunctionName() string {
+	switch f {
+	case FilterOperatorHas:
+		return "has"
+	case FilterOperatorHasAny:
+		return "hasAny"
+	case FilterOperatorHasAll:
+		return "hasAll"
+	case FilterOperatorHasToken:
+		return "hasToken"
+	default:
+		return ""
 	}
 }
 
@@ -480,7 +526,9 @@ type MetricAggregation struct {
 	// value filter to apply to the query
 	ValueFilter *metrictypes.MetricValueFilter `json:"-"`
 	// reduce to operator for metric scalar requests
-	ReduceTo ReduceTo `json:"reduceTo,omitempty"`
+	ReduceTo ReduceTo `json:"reduceTo,omitzero"`
+
+	Reduced bool `json:"-"`
 }
 
 // Copy creates a deep copy of MetricAggregation.
@@ -565,15 +613,15 @@ func (o OrderBy) Copy() OrderBy {
 type SecondaryAggregation struct {
 	// stepInterval of the query
 	// if not set, it will use the step interval of the primary aggregation
-	StepInterval Step `json:"stepInterval,omitempty"`
+	StepInterval Step `json:"stepInterval,omitzero"`
 	// expression to aggregate. example: count(), sum(item_price), countIf(day > 10)
 	Expression string `json:"expression"`
 	// if any, it will be used as the alias of the aggregation in the result
 	Alias string `json:"alias,omitempty"`
 	// groupBy fields to group by
-	GroupBy []GroupByKey `json:"groupBy,omitempty"`
+	GroupBy []GroupByKey `json:"groupBy,omitzero"`
 	// order by keys and directions
-	Order []OrderBy `json:"order,omitempty"`
+	Order []OrderBy `json:"order,omitzero"`
 	// limit the maximum number of rows to return
 	Limit int `json:"limit,omitempty"`
 	// limitBy fields to limit by
@@ -619,12 +667,31 @@ func (f FunctionArg) Copy() FunctionArg {
 	return f
 }
 
+var _ jsonschema.Preparer = FunctionArg{}
+
+// PrepareJSONSchema types `value` as a number-or-string scalar instead of an
+// untyped {}. The Go field stays `any`; this only shapes the generated schema.
+func (FunctionArg) PrepareJSONSchema(s *jsonschema.Schema) error {
+	if _, ok := s.Properties["value"]; !ok {
+		return nil
+	}
+
+	value := jsonschema.Schema{}
+	value.OneOf = []jsonschema.SchemaOrBool{
+		jsonschema.Number.ToSchemaOrBool(),
+		jsonschema.String.ToSchemaOrBool(),
+	}
+	s.Properties["value"] = value.ToSchemaOrBool()
+
+	return nil
+}
+
 type Function struct {
 	// name of the function
 	Name FunctionName `json:"name"`
 
 	// args is the arguments to the function
-	Args []FunctionArg `json:"args,omitempty"`
+	Args []FunctionArg `json:"args,omitzero"`
 }
 
 // Copy creates a deep copy of Function.

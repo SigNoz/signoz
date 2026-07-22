@@ -32,6 +32,7 @@ type chSQLQuery struct {
 }
 
 var _ qbtypes.Query = (*chSQLQuery)(nil)
+var _ qbtypes.StatementProvider = (*chSQLQuery)(nil)
 
 func newchSQLQuery(
 	logger *slog.Logger,
@@ -97,6 +98,15 @@ func (q *chSQLQuery) renderVars(query string, vars map[string]qbtypes.VariableIt
 		return "", errors.WrapInternalf(err, errors.CodeInternal, "error while replacing template variables")
 	}
 	return newQuery.String(), nil
+}
+
+// Statement renders the SQL without executing it, for the preview path.
+func (q *chSQLQuery) Statement(_ context.Context) (*qbtypes.Statement, error) {
+	rendered, err := q.renderVars(q.query.Query, q.vars, q.fromMS, q.toMS)
+	if err != nil {
+		return nil, err
+	}
+	return &qbtypes.Statement{Query: rendered, Args: q.args}, nil
 }
 
 func (q *chSQLQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {

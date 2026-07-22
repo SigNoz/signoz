@@ -1,42 +1,9 @@
-import {
-	DashboardtypesComparisonOperatorDTO,
-	DashboardtypesComparisonThresholdDTO,
-	DashboardtypesThresholdFormatDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesComparisonThresholdDTO } from 'api/generated/services/sigNoz.schemas';
 
-import type {
-	PanelThreshold,
-	ThresholdComparisonOperator,
-	ThresholdDisplayFormat,
-} from '../../types/threshold';
+import type { PanelThreshold } from '../../types/threshold';
+import { toPanelThreshold } from '../../utils/mapComparisonThreshold';
 
-// Perses comparison operators → the symbol operators V2 threshold evaluation
-// uses.
-const OPERATOR_MAP: Record<
-	DashboardtypesComparisonOperatorDTO,
-	ThresholdComparisonOperator
-> = {
-	[DashboardtypesComparisonOperatorDTO.above]: '>',
-	[DashboardtypesComparisonOperatorDTO.below]: '<',
-	[DashboardtypesComparisonOperatorDTO.above_or_equal]: '>=',
-	[DashboardtypesComparisonOperatorDTO.below_or_equal]: '<=',
-	[DashboardtypesComparisonOperatorDTO.equal]: '=',
-	[DashboardtypesComparisonOperatorDTO.not_equal]: '!=',
-};
-
-const FORMAT_MAP: Record<
-	DashboardtypesThresholdFormatDTO,
-	ThresholdDisplayFormat
-> = {
-	[DashboardtypesThresholdFormatDTO.text]: 'text',
-	[DashboardtypesThresholdFormatDTO.background]: 'background',
-};
-
-/**
- * Maps the panel-spec threshold shape (`ComparisonThresholdDTO`) onto the
- * V2-native `PanelThreshold` consumed by `ValueDisplay` / threshold
- * evaluation. No dependency on the V1 `ThresholdProps` shape.
- */
+/** Maps spec `ComparisonThresholdDTO`s onto the V2-native `PanelThreshold` (no V1 `ThresholdProps` dependency). */
 export function mapNumberThresholds(
 	thresholds: DashboardtypesComparisonThresholdDTO[] | null | undefined,
 ): PanelThreshold[] {
@@ -44,11 +11,5 @@ export function mapNumberThresholds(
 		return [];
 	}
 
-	return thresholds.map((threshold) => ({
-		color: threshold.color,
-		operator: threshold.operator ? OPERATOR_MAP[threshold.operator] : undefined,
-		value: threshold.value,
-		unit: threshold.unit,
-		format: threshold.format ? FORMAT_MAP[threshold.format] : undefined,
-	}));
+	return thresholds.map(toPanelThreshold);
 }

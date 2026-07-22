@@ -1,0 +1,121 @@
+.infraMonitoringContainer {
+	display: flex;
+	height: 100%;
+	flex-direction: column;
+}
+
+.infraContentRow {
+	display: flex;
+	flex-direction: row;
+	height: calc(100vh - 45px);
+	width: 100%;
+	position: relative;
+	overflow-y: auto;
+
+	:global(.periscope-btn) {
+		&.ghost:not(:disabled) {
+			border: none;
+			background: transparent;
+
+			&:hover {
+				background: transparent;
+				color: var(--bg-robin-500) !important;
+				font-weight: 500;
+			}
+		}
+	}
+
+	&::-webkit-scrollbar {
+		width: 8px;
+		height: 8px;
+	}
+
+	&::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	&::-webkit-scrollbar-thumb {
+		background: color-mix(in srgb, var(--l1-foreground) 20%, transparent);
+		border-radius: 9999px;
+	}
+
+	&::-webkit-scrollbar-thumb:hover {
+		background: color-mix(in srgb, var(--l1-foreground) 30%, transparent);
+	}
+}
+
+.quickFiltersContainer {
+	width: 280px;
+	min-width: 280px;
+	border-right: 1px solid var(--l1-border);
+
+	:global(.ant-collapse-header) {
+		border-bottom: 1px solid var(--l1-border);
+		padding: 12px 8px;
+	}
+
+	:global(.ant-collapse-content-box) {
+		padding: 0 !important;
+		padding-block: 0 !important;
+
+		:global(.quick-filters .checkbox-filter) {
+			padding-left: 18px;
+		}
+	}
+}
+
+.quickFiltersContainerHeader {
+	padding: 8px;
+	border-bottom: 1px solid var(--l1-border);
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.listContainer {
+	flex: 1;
+	max-width: 100%;
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	min-width: 595px;
+
+	> * {
+		min-width: 0;
+		max-width: 100%;
+		box-sizing: border-box;
+	}
+}
+
+.listContainerFiltersVisible {
+	max-width: calc(100% - 280px);
+}
+
+.quickFiltersToggleContainer {
+	grid-area: quickFilters;
+}
+
+.infraMonitoringTags {
+	width: fit-content;
+	font-family: Inter;
+	font-size: 11px;
+	font-style: normal;
+	font-weight: 500;
+	line-height: 18px;
+	letter-spacing: 0.44px;
+	text-transform: uppercase;
+	border-radius: 50px;
+	padding: 2px 8px;
+}
+
+.tagsActive {
+	color: var(--bg-forest-500, #25e192);
+	border: 1px solid rgba(37, 225, 146, 0.2);
+	background: rgba(37, 225, 146, 0.1);
+}
+
+.tagsInactive {
+	color: var(--bg-slate-50, #62687c);
+	border: 1px solid rgba(98, 104, 124, 0.2);
+	background: rgba(98, 104, 124, 0.1);
+}

@@ -1,0 +1,22 @@
+.popover {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+	max-width: 50vw;
+}
+
+.preview {
+	max-height: 40vh;
+	overflow-y: auto;
+	white-space: pre-wrap;
+	word-break: break-all;
+	padding: var(--spacing-4);
+	border-radius: 4px;
+}
+
+.expandButton {
+	align-self: flex-end;
+	display: flex;
+	align-items: center;
+	flex-grow: 0;
+}

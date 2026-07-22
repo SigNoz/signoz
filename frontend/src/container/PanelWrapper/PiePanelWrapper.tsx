@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Group } from '@visx/group';
 import { Pie } from '@visx/shape';
@@ -8,12 +8,10 @@ import { themeColors } from 'constants/theme';
 import { getPieChartClickData } from 'container/QueryTable/Drilldown/drilldownUtils';
 import useGraphContextMenu from 'container/QueryTable/Drilldown/useGraphContextMenu';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import getLabelName from 'lib/getLabelName';
-import { generateColor } from 'lib/uPlotLib/utils/generateColor';
-import { isNaN } from 'lodash-es';
 import ContextMenu, { useCoordinates } from 'periscope/components/ContextMenu';
 
 import { PanelWrapperProps, TooltipData } from './panelWrapper.types';
+import { preparePieChartData } from './preparePieChartData';
 import { lightenColor, tooltipStyles } from './utils';
 
 import './PiePanelWrapper.styles.scss';
@@ -44,37 +42,15 @@ function PiePanelWrapper({
 		detectBounds: true,
 	});
 
-	const panelData = queryResponse.data?.payload?.data?.result || [];
-
 	const isDarkMode = useIsDarkMode();
 
-	let pieChartData: {
-		label: string;
-		value: string;
-		color: string;
-		record: any;
-	}[] = [].concat(
-		...(panelData
-			.map((d) => {
-				const label = getLabelName(d.metric, d.queryName || '', d.legend || '');
-				return {
-					label,
-					value: d?.values?.[0]?.[1],
-					record: d,
-					color:
-						widget?.customLegendColors?.[label] ||
-						generateColor(
-							label,
-							isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
-						),
-				};
-			})
-			.filter((d) => d !== undefined) as never[]),
-	);
-
-	pieChartData = pieChartData.filter(
-		(arc) =>
-			arc.value && !isNaN(parseFloat(arc.value)) && parseFloat(arc.value) > 0,
+	const pieChartData = useMemo(
+		() =>
+			preparePieChartData(queryResponse.data?.payload, {
+				customLegendColors: widget?.customLegendColors,
+				colorMap: isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
+			}),
+		[queryResponse.data?.payload, widget?.customLegendColors, isDarkMode],
 	);
 
 	let size = 0;

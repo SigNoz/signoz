@@ -49,59 +49,6 @@
 	flex-direction: column;
 }
 
-.missingSpans {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	height: 44px;
-	margin: 16px;
-	padding: 12px;
-	border-radius: 4px;
-	background: rgba(69, 104, 220, 0.1);
-}
-
-.leftInfo {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	color: var(--bg-robin-400);
-	font-family: Inter;
-	font-size: 14px;
-	font-style: normal;
-	font-weight: 400;
-	line-height: 20px;
-	letter-spacing: -0.07px;
-}
-
-.text {
-	color: var(--bg-robin-400);
-	font-family: Inter;
-	font-size: 14px;
-	font-style: normal;
-	font-weight: 400;
-	line-height: 20px;
-	letter-spacing: -0.07px;
-}
-
-.rightInfo {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	gap: 8px;
-	color: var(--bg-robin-400);
-	font-family: Inter;
-	font-size: 14px;
-	font-style: normal;
-	font-weight: 400;
-	line-height: 20px;
-	letter-spacing: -0.07px;
-
-	&:hover {
-		background-color: unset;
-		color: var(--bg-robin-200);
-	}
-}
-
 .splitPanel {
 	flex: 1;
 	min-height: 0;
@@ -125,6 +72,9 @@
 
 .sidebarHeader {
 	flex-shrink: 0;
+	// Matches the body `.sidebar` border-right so the span-name / timeline
+	// divider is continuous from the top of the container through the ruler.
+	border-right: 1px solid var(--l2-border);
 }
 
 .resizeHandleHeader {
@@ -170,7 +120,7 @@
 	overflow-x: auto;
 	overflow-y: hidden;
 	flex-shrink: 0;
-	border-right: 1px solid var(--l1-border);
+	border-right: 1px solid var(--l2-border);
 
 	// ResizableBox child renders with a global `.resizable-box__content` class
 	// — give it independent horizontal scrolling.
@@ -183,6 +133,18 @@
 		}
 
 		scrollbar-width: none;
+	}
+
+	// The drag handle is painted --l2-border by default, which would stack with
+	// our border-right into a 2px divider. Keep it as a hover-only affordance so
+	// the border-right stays the sole 1px divider (matching the header segment).
+	:global(.resizable-box__handle--right) {
+		background: transparent;
+
+		&:hover,
+		&:active {
+			background: var(--primary);
+		}
 	}
 
 	&::-webkit-scrollbar {
@@ -216,10 +178,12 @@
 
 .treeRow:hover,
 .treeRow.hoveredSpan {
-	border-radius: 4px;
+	// Left end of the row band — round only the outer (left) corners so the
+	// highlight joins the status + timeline segments into one continuous band.
+	border-radius: 4px 0 0 4px;
 	background: color-mix(
 		in srgb,
-		var(--l3-background) 20%,
+		var(--l3-background) 60%,
 		transparent
 	) !important;
 
@@ -262,20 +226,22 @@
 	--badge-border-width: 0px;
 
 	&.hoveredSpan {
-		border-radius: 4px;
+		// Middle segment of the row band — square so it butts up against the
+		// name and timeline segments (no rounded corner at the badge column).
+		border-radius: 0;
 		background: color-mix(
 			in srgb,
-			var(--l3-background) 20%,
+			var(--l3-background) 60%,
 			transparent
 		) !important;
 	}
 
 	&.isInterested,
 	&.isSelectedNonMatching {
-		border-radius: 4px;
+		border-radius: 0;
 		background: color-mix(
 			in srgb,
-			var(--l3-background) 40%,
+			var(--l3-background) 80%,
 			transparent
 		) !important;
 	}
@@ -309,20 +275,21 @@
 
 	&:hover,
 	&.hoveredSpan {
-		border-radius: 4px;
+		// Right end of the row band — round only the outer (right) corners.
+		border-radius: 0 4px 4px 0;
 		background: color-mix(
 			in srgb,
-			var(--l3-background) 20%,
+			var(--l3-background) 60%,
 			transparent
 		) !important;
 	}
 
 	&:has(.isInterested),
 	&:has(.isSelectedNonMatching) {
-		border-radius: 4px;
+		border-radius: 0 4px 4px 0;
 		background: color-mix(
 			in srgb,
-			var(--l3-background) 40%,
+			var(--l3-background) 80%,
 			transparent
 		) !important;
 	}
@@ -345,10 +312,11 @@
 
 	&.isInterested,
 	&.isSelectedNonMatching {
-		border-radius: 4px;
+		// Left end of the row band — outer (left) corners only.
+		border-radius: 4px 0 0 4px;
 		background: color-mix(
 			in srgb,
-			var(--l3-background) 40%,
+			var(--l3-background) 80%,
 			transparent
 		) !important;
 	}
@@ -471,7 +439,7 @@
 	padding-left: 8px;
 	flex-shrink: 0;
 	height: 100%;
-	background: linear-gradient(to left, var(--l1-background) 60%, transparent);
+	background: linear-gradient(to left, var(--l2-background) 40%, transparent);
 	z-index: 2;
 	opacity: 0;
 	pointer-events: none;
@@ -597,6 +565,18 @@
 
 .isDimmed {
 	opacity: 0.15;
+}
+
+// A dimmed span must still show the full-opacity hover state when hovered.
+// These win over `.isDimmed` on specificity so brightness is restored across
+// the whole row (name column, status cell, and timeline bar) on hover.
+.treeRow:hover .isDimmed,
+.treeRow.hoveredSpan .isDimmed,
+.timelineRow:hover .isDimmed,
+.timelineRow.hoveredSpan .isDimmed,
+.statusCell:hover.isDimmed,
+.statusCell.hoveredSpan.isDimmed {
+	opacity: 1;
 }
 
 .isHighlighted {

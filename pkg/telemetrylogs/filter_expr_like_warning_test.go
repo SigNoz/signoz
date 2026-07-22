@@ -28,7 +28,6 @@ func TestLikeAndILikeWithoutWildcards_Warns(t *testing.T) {
 		ConditionBuilder: cb,
 		FieldKeys:        keys,
 		FullTextColumn:   DefaultFullTextColumn,
-		JsonKeyToKey:     GetBodyJSONKey,
 	}
 
 	tests := []string{
@@ -66,9 +65,7 @@ func TestLikeAndILikeWithWildcards_NoWarn(t *testing.T) {
 		FieldMapper:      fm,
 		ConditionBuilder: cb,
 		FieldKeys:        keys,
-		FullTextColumn:   DefaultFullTextColumn,
-		JsonKeyToKey:     GetBodyJSONKey,
-	}
+		FullTextColumn:   DefaultFullTextColumn}
 
 	tests := []string{
 		"service.name LIKE 'demo-%'",

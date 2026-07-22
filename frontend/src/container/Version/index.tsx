@@ -100,7 +100,7 @@ function Version(): JSX.Element {
 					{!isError && !isLatestVersion && (
 						<div className="version-page-upgrade-container">
 							<Button
-								href="https://signoz.io/docs/operate/docker-standalone/#upgrade"
+								href="https://signoz.io/docs/opentelemetry-collection-agents/docker/overview/"
 								target="_blank"
 								type="primary"
 								className="periscope-btn primary"

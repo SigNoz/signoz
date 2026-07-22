@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/SigNoz/signoz/pkg/authn"
+	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -12,13 +13,18 @@ import (
 type module struct {
 	store  authtypes.AuthDomainStore
 	authNs map[authtypes.AuthNProvider]authn.AuthN
+	authz  authz.AuthZ
 }
 
-func NewModule(store authtypes.AuthDomainStore, authNs map[authtypes.AuthNProvider]authn.AuthN) authdomain.Module {
-	return &module{store: store, authNs: authNs}
+func NewModule(store authtypes.AuthDomainStore, authNs map[authtypes.AuthNProvider]authn.AuthN, authz authz.AuthZ) authdomain.Module {
+	return &module{store: store, authNs: authNs, authz: authz}
 }
 
 func (module *module) Create(ctx context.Context, domain *authtypes.AuthDomain) error {
+	if err := module.validateRoleMapping(ctx, domain); err != nil {
+		return err
+	}
+
 	return module.store.Create(ctx, domain)
 }
 
@@ -50,6 +56,10 @@ func (module *module) ListByOrgID(ctx context.Context, orgID valuer.UUID) ([]*au
 }
 
 func (module *module) Update(ctx context.Context, domain *authtypes.AuthDomain) error {
+	if err := module.validateRoleMapping(ctx, domain); err != nil {
+		return err
+	}
+
 	return module.store.Update(ctx, domain)
 }
 
@@ -73,4 +83,14 @@ func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[strin
 	stats["authdomain.count"] = len(domains)
 
 	return stats, nil
+}
+
+func (module *module) validateRoleMapping(ctx context.Context, domain *authtypes.AuthDomain) error {
+	roleNames := domain.AuthDomainConfig().RoleMapping.RoleNames()
+	if len(roleNames) == 0 {
+		return nil
+	}
+
+	_, err := module.authz.ListByOrgIDAndNames(ctx, domain.StorableAuthDomain().OrgID, roleNames)
+	return err
 }

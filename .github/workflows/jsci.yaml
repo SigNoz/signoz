@@ -56,17 +56,6 @@ jobs:
       PRIMUS_REF: main
       JS_SRC: frontend
       JS_PKG_MANAGER: pnpm
-  languages:
-    if: |
-      github.event_name == 'merge_group' ||
-      (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
-      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
-    runs-on: ubuntu-latest
-    steps:
-      - name: self-checkout
-        uses: actions/checkout@v4
-      - name: run
-        run: bash frontend/scripts/validate-md-languages.sh
   openapi:
     if: |
       github.event_name == 'merge_group' ||

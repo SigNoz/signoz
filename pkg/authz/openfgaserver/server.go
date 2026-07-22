@@ -212,6 +212,30 @@ func (server *Server) CheckWithTupleCreationWithoutClaims(ctx context.Context, o
 }
 
 func (server *Server) Write(ctx context.Context, additions []*openfgav1.TupleKey, deletions []*openfgav1.TupleKey) error {
+	maxTuplesPerWrite := server.config.OpenFGA.MaxTuplesPerWrite
+
+	if len(additions)+len(deletions) <= maxTuplesPerWrite {
+		return server.write(ctx, additions, deletions)
+	}
+
+	for idx := 0; idx < len(additions); idx += maxTuplesPerWrite {
+		end := min(idx+maxTuplesPerWrite, len(additions))
+		if err := server.write(ctx, additions[idx:end], nil); err != nil {
+			return err
+		}
+	}
+
+	for idx := 0; idx < len(deletions); idx += maxTuplesPerWrite {
+		end := min(idx+maxTuplesPerWrite, len(deletions))
+		if err := server.write(ctx, nil, deletions[idx:end]); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (server *Server) write(ctx context.Context, additions []*openfgav1.TupleKey, deletions []*openfgav1.TupleKey) error {
 	if len(additions) == 0 && len(deletions) == 0 {
 		return nil
 	}

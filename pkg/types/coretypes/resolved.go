@@ -18,8 +18,8 @@ type ResolvedResource interface {
 	SourceResource() Resource
 	SourceIDs() []string
 	SourceSelector() SelectorFunc
+	Err() error
 	ResolveResponse(ec ExtractorContext)
-	// hasResponsePhase reports whether an id is resolved from the response body.
 	hasResponsePhase() bool
 }
 

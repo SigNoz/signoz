@@ -5,6 +5,7 @@ import type {
 
 import {
 	extractAggregationsPerQuery,
+	extractClickhouseQueryNames,
 	prepareScalarTables,
 } from '../prepareScalarTables';
 
@@ -53,6 +54,24 @@ describe('extractAggregationsPerQuery', () => {
 
 	it('returns empty for an undefined payload', () => {
 		expect(extractAggregationsPerQuery(undefined)).toStrictEqual({});
+	});
+});
+
+describe('extractClickhouseQueryNames', () => {
+	it('collects names of clickhouse_sql queries, ignoring other envelope types', () => {
+		const request = requestWith([
+			{ type: 'clickhouse_sql', spec: { name: 'A', query: 'SELECT 1' } },
+			{
+				type: 'builder_query',
+				spec: { name: 'B', aggregations: [{ expression: 'count()' }] },
+			},
+			{ type: 'promql', spec: { name: 'P', query: 'up' } },
+		]);
+		expect(extractClickhouseQueryNames(request)).toStrictEqual(new Set(['A']));
+	});
+
+	it('returns an empty set for an undefined payload', () => {
+		expect(extractClickhouseQueryNames(undefined)).toStrictEqual(new Set());
 	});
 });
 
@@ -194,18 +213,115 @@ describe('prepareScalarTables', () => {
 		expect(tables.map((t) => t.queryName)).toStrictEqual(['A', 'B']);
 	});
 
-	it('queries without aggregation metadata fall back to legend || queryName', () => {
+	it('clickhouse_sql single value column uses the SQL alias over the legend', () => {
 		const [table] = prepareScalarTables({
 			results: [
+				scalarResult(
+					[
+						{
+							name: 'current_availability',
+							queryName: 'A',
+							columnType: 'aggregation',
+						},
+					],
+					[],
+				),
+			],
+			legendMap: { A: 'Legend' },
+			requestPayload: requestWith([
+				{ type: 'clickhouse_sql', spec: { name: 'A', query: 'SELECT ...' } },
+			]),
+		});
+		// The query is clickhouse_sql, so the response column's real SQL alias is
+		// used for both header and key (a single legend can't be the column name).
+		expect(table.columns[0].name).toBe('current_availability');
+		expect(table.columns[0].id).toBe('current_availability');
+	});
+
+	it('non-clickhouse query without aggregation metadata falls back to legend || queryName', () => {
+		const [table] = prepareScalarTables({
+			results: [
+				// Formulas/promql carry placeholder names and are not clickhouse_sql,
+				// so they must not adopt the response column name.
 				scalarResult(
 					[{ name: '__result_0', queryName: 'A', columnType: 'aggregation' }],
 					[],
 				),
 			],
 			legendMap: { A: 'Legend' },
-			requestPayload: requestWith([]),
+			requestPayload: requestWith([
+				{ type: 'promql', spec: { name: 'A', query: 'up' } },
+			]),
 		});
 		expect(table.columns[0].name).toBe('Legend');
 		expect(table.columns[0].id).toBe('A');
+	});
+
+	it('clickhouse_sql query keeps each value column distinct (regression: all-"A" collapse)', () => {
+		const [table] = prepareScalarTables({
+			results: [
+				scalarResult(
+					[
+						{ name: 'service.name', queryName: 'A', columnType: 'group' },
+						{
+							name: 'current_availability',
+							queryName: 'A',
+							columnType: 'aggregation',
+							aggregationIndex: 0,
+						},
+						{
+							name: 'error_budget_remaining',
+							queryName: 'A',
+							columnType: 'aggregation',
+							aggregationIndex: 1,
+						},
+						{ name: 'budget_status', queryName: 'A', columnType: 'group' },
+						{
+							name: 'total_requests',
+							queryName: 'A',
+							columnType: 'aggregation',
+							aggregationIndex: 4,
+						},
+					],
+					[['demo-service', 99.985, 0.985, 'Healthy ✅', 2181216]],
+				),
+			],
+			legendMap: { A: '' },
+			// A clickhouse_sql envelope contributes no aggregation metadata.
+			requestPayload: requestWith([
+				{
+					type: 'clickhouse_sql',
+					spec: { name: 'A', query: 'SELECT ...' },
+				},
+			]),
+		});
+
+		// Headers keep their real names instead of collapsing to "A".
+		expect(table.columns.map((col) => col.name)).toStrictEqual([
+			'service.name',
+			'current_availability',
+			'error_budget_remaining',
+			'budget_status',
+			'total_requests',
+		]);
+		// Ids are unique, so value columns don't overwrite each other in the row.
+		expect(table.columns.map((col) => col.id)).toStrictEqual([
+			'service.name',
+			'current_availability',
+			'error_budget_remaining',
+			'budget_status',
+			'total_requests',
+		]);
+		expect(table.rows).toStrictEqual([
+			{
+				data: {
+					'service.name': 'demo-service',
+					current_availability: 99.985,
+					error_budget_remaining: 0.985,
+					budget_status: 'Healthy ✅',
+					total_requests: 2181216,
+				},
+			},
+		]);
 	});
 });

@@ -1,10 +1,12 @@
 import { useCallback, useState } from 'react';
 
-import { patchDashboardV2 } from 'api/generated/services/dashboard';
+import logEvent from 'api/common/logEvent';
 import type { DashboardtypesJSONPatchOperationDTO } from 'api/generated/services/sigNoz.schemas';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
+import { useOptimisticPatch } from '../../../hooks/useOptimisticPatch';
 import { addSectionOp, titleUntitledSectionOp } from '../../../patchOps';
 import { useDashboardStore } from '../../../store/useDashboardStore';
 import type { DashboardSection } from '../../../utils';
@@ -26,7 +28,7 @@ interface Result {
  */
 export function useFirstSectionMigration({ sections }: Params): Result {
 	const dashboardId = useDashboardStore((s) => s.dashboardId);
-	const refetch = useDashboardStore((s) => s.refetch);
+	const { patchAsync } = useOptimisticPatch();
 	const [isSaving, setIsSaving] = useState(false);
 	const { showErrorModal } = useErrorModal();
 
@@ -49,15 +51,17 @@ export function useFirstSectionMigration({ sections }: Params): Result {
 
 			try {
 				setIsSaving(true);
-				await patchDashboardV2({ id: dashboardId }, ops);
-				refetch();
+				await patchAsync(ops);
+				void logEvent(DashboardDetailEvents.FirstSectionMigrationConfirmed, {
+					dashboardId,
+				});
 			} catch (error) {
 				showErrorModal(error as APIError);
 			} finally {
 				setIsSaving(false);
 			}
 		},
-		[sections, dashboardId, refetch, showErrorModal],
+		[sections, dashboardId, patchAsync, showErrorModal],
 	);
 
 	return { migrate, isSaving };

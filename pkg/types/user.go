@@ -24,6 +24,7 @@ var (
 	ErrCodeRootUserOperationUnsupported = errors.MustNewCode("root_user_operation_unsupported")
 	ErrCodeUserStatusDeleted            = errors.MustNewCode("user_status_deleted")
 	ErrCodeUserStatusPendingInvite      = errors.MustNewCode("user_status_pending_invite")
+	ErrCodeUserStatusNotPendingInvite   = errors.MustNewCode("user_status_not_pending_invite")
 )
 
 var (
@@ -210,6 +211,15 @@ func (u *User) ErrIfDeleted() error {
 func (u *User) ErrIfPending() error {
 	if u.Status == UserStatusPendingInvite {
 		return errors.New(errors.TypeUnsupported, ErrCodeUserStatusPendingInvite, "unsupported operation for pending user")
+	}
+	return nil
+}
+
+// ErrIfNotPending returns an error if the user is not in pending invite state.
+// This error can be enriched with specific operation by the called using errors.WithAdditionalf.
+func (u *User) ErrIfNotPending() error {
+	if u.Status != UserStatusPendingInvite {
+		return errors.New(errors.TypeInvalidInput, ErrCodeUserStatusNotPendingInvite, "operation is only supported for pending invite user")
 	}
 	return nil
 }

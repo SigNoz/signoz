@@ -8,6 +8,7 @@ import (
 	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/prometheus/common/model"
 	"github.com/swaggest/jsonschema-go"
 )
 
@@ -146,6 +147,11 @@ func (DatasourcePluginKind) Enum() []any {
 	return []any{DatasourceKindSigNoz}
 }
 
+// SigNozDatasourceSpec is the (empty) signoz/Datasource plugin spec. Naming the
+// type gives the variant a concrete, non-nullable spec schema instead of an
+// inline free-form one.
+type SigNozDatasourceSpec struct{}
+
 type TimeSeriesPanelSpec struct {
 	Visualization   TimeSeriesVisualization   `json:"visualization"`
 	Formatting      PanelFormatting           `json:"formatting"`
@@ -201,7 +207,7 @@ type HistogramBuckets struct {
 }
 
 type ListPanelSpec struct {
-	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitempty" validate:"dive"`
+	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitzero" validate:"dive"`
 }
 
 // ══════════════════════════════════════════════
@@ -241,18 +247,25 @@ type TableFormatting struct {
 
 type Legend struct {
 	Position     LegendPosition    `json:"position"`
+	Mode         LegendMode        `json:"mode"`
 	CustomColors map[string]string `json:"customColors"`
 }
 
 type ThresholdWithLabel struct {
-	Value float64 `json:"value" validate:"required" required:"true"`
+	// Value is always present in the schema (required:"true"), but 0 is a legitimate
+	// threshold, so it drops validate:"required" — go-playground's required treats a
+	// zero float as unset and would wrongly reject value: 0.
+	Value float64 `json:"value" required:"true"`
 	Unit  string  `json:"unit"`
 	Color string  `json:"color" validate:"required" required:"true"`
-	Label string  `json:"label" validate:"required" required:"true"`
+	Label string  `json:"label"`
 }
 
 type ComparisonThreshold struct {
-	Value    float64            `json:"value" validate:"required" required:"true"`
+	// Value is always present in the schema (required:"true"), but 0 is a legitimate
+	// threshold, so it drops validate:"required" — go-playground's required treats a
+	// zero float as unset and would wrongly reject value: 0.
+	Value    float64            `json:"value" required:"true"`
 	Operator ComparisonOperator `json:"operator"`
 	Unit     string             `json:"unit"`
 	Color    string             `json:"color" validate:"required" required:"true"`
@@ -355,6 +368,47 @@ func (l *LegendPosition) UnmarshalJSON(data []byte) error {
 		return nil
 	default:
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid legend position %q: must be `bottom` or `right`", v)
+	}
+}
+
+type LegendMode struct{ valuer.String }
+
+var (
+	LegendModeList  = LegendMode{valuer.NewString("list")} // default
+	LegendModeTable = LegendMode{valuer.NewString("table")}
+)
+
+func (LegendMode) Enum() []any {
+	return []any{LegendModeList} // others are not supported in UI yet
+}
+
+func (m LegendMode) ValueOrDefault() string {
+	if m.IsZero() {
+		return LegendModeList.StringValue()
+	}
+	return m.StringValue()
+}
+
+func (m LegendMode) MarshalJSON() ([]byte, error) {
+	return json.Marshal(m.ValueOrDefault())
+}
+
+func (m *LegendMode) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid legend mode: must be a string, one of `list` or `table`")
+	}
+	if v == "" {
+		*m = LegendModeList
+		return nil
+	}
+	lm := LegendMode{valuer.NewString(v)}
+	switch lm {
+	case LegendModeList, LegendModeTable:
+		*m = lm
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid legend mode %q: must be `list` or `table`", v)
 	}
 }
 
@@ -534,9 +588,9 @@ func (ls *LineStyle) UnmarshalJSON(data []byte) error {
 type FillMode struct{ valuer.String }
 
 var (
-	FillModeSolid    = FillMode{valuer.NewString("solid")} // default
+	FillModeSolid    = FillMode{valuer.NewString("solid")}
 	FillModeGradient = FillMode{valuer.NewString("gradient")}
-	FillModeNone     = FillMode{valuer.NewString("none")}
+	FillModeNone     = FillMode{valuer.NewString("none")} // default
 )
 
 func (FillMode) Enum() []any {
@@ -545,7 +599,7 @@ func (FillMode) Enum() []any {
 
 func (fm FillMode) ValueOrDefault() string {
 	if fm.IsZero() {
-		return FillModeSolid.StringValue()
+		return FillModeNone.StringValue()
 	}
 	return fm.StringValue()
 }
@@ -560,7 +614,7 @@ func (fm *FillMode) UnmarshalJSON(data []byte) error {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid fill mode: must be a string, one of `solid`, `gradient`, or `none`")
 	}
 	if v == "" {
-		*fm = FillModeSolid
+		*fm = FillModeNone
 		return nil
 	}
 	val := FillMode{valuer.NewString(v)}
@@ -573,12 +627,40 @@ func (fm *FillMode) UnmarshalJSON(data []byte) error {
 	}
 }
 
-// SpanGaps controls whether lines connect across null values.
-// When FillOnlyBelow is false (default), all gaps are connected.
-// When FillOnlyBelow is true, only gaps smaller than FillLessThan are connected.
 type SpanGaps struct {
-	FillOnlyBelow bool                `json:"fillOnlyBelow"`
-	FillLessThan  valuer.TextDuration `json:"fillLessThan"`
+	FillOnlyBelow bool   `json:"fillOnlyBelow" description:"Controls whether lines connect across null values. When false (default), all gaps are connected. When true, only gaps smaller than fillLessThan are connected."`
+	FillLessThan  string `json:"fillLessThan" description:"The maximum gap size to connect when fillOnlyBelow is true. Gaps larger than this duration are left disconnected."`
+}
+
+func (sg *SpanGaps) UnmarshalJSON(data []byte) error {
+	type alias SpanGaps
+	var tmp alias
+	if err := json.Unmarshal(data, &tmp); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid spanGaps")
+	}
+	*sg = SpanGaps(tmp)
+	return sg.validate()
+}
+
+// validate enforces FillLessThan only when FillOnlyBelow is set, since that is
+// the only mode in which it applies. It must then be a valid positive duration.
+// prometheus's parser accepts day/week/year units (e.g. "1d"); time.ParseDuration
+// caps at hours.
+func (sg SpanGaps) validate() error {
+	if !sg.FillOnlyBelow {
+		return nil
+	}
+	if sg.FillLessThan == "" {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spanGaps.fillLessThan is required when fillOnlyBelow is true")
+	}
+	d, err := model.ParseDuration(sg.FillLessThan)
+	if err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid spanGaps.fillLessThan duration %q", sg.FillLessThan)
+	}
+	if d <= 0 {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spanGaps.fillLessThan duration must be positive, got %q", sg.FillLessThan)
+	}
+	return nil
 }
 
 type PrecisionOption struct{ valuer.String }

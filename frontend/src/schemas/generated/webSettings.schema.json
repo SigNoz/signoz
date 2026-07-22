@@ -1,0 +1,99 @@
+{
+  "title": "WebSettings",
+  "required": [
+    "posthog",
+    "appcues",
+    "sentry",
+    "pylon"
+  ],
+  "additionalProperties": false,
+  "definitions": {
+    "Appcues": {
+      "required": [
+        "enabled"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "appId": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "Posthog": {
+      "required": [
+        "enabled"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "apiHost": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "key": {
+          "type": "string"
+        },
+        "uiHost": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "Pylon": {
+      "required": [
+        "enabled"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "appId": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "identitySecret": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "Sentry": {
+      "required": [
+        "enabled"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "dsn": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "tunnel": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "properties": {
+    "appcues": {
+      "$ref": "#/definitions/Appcues"
+    },
+    "posthog": {
+      "$ref": "#/definitions/Posthog"
+    },
+    "pylon": {
+      "$ref": "#/definitions/Pylon"
+    },
+    "sentry": {
+      "$ref": "#/definitions/Sentry"
+    }
+  },
+  "type": "object"
+}

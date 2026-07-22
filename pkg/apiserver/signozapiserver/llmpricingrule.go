@@ -49,6 +49,26 @@ func (provider *provider) addLLMPricingRuleRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v1/llm_pricing_rules/unmapped_models", handler.New(
+		provider.authzMiddleware.ViewAccess(provider.llmPricingRuleHandler.ListUnmappedModels),
+		handler.OpenAPIDef{
+			ID:                  "ListUnmappedLLMModels",
+			Tags:                []string{"llmpricingrules"},
+			Summary:             "List unmapped models",
+			Description:         "Returns models seen in the last hour of trace data (gen_ai.request.model) that no pricing rule pattern matches, so the user can add them to an existing rule or create a new one.",
+			Request:             nil,
+			RequestContentType:  "",
+			Response:            new(llmpricingruletypes.GettableUnmappedModels),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{http.StatusBadRequest},
+			Deprecated:          false,
+			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+		},
+	)).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
 	if err := router.Handle("/api/v1/llm_pricing_rules/{id}", handler.New(
 		provider.authzMiddleware.ViewAccess(provider.llmPricingRuleHandler.Get),
 		handler.OpenAPIDef{

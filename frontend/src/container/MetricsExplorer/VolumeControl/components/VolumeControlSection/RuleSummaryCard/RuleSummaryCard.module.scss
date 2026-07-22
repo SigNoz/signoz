@@ -1,0 +1,48 @@
+.card {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	border: 1px solid var(--bg-slate-400, #1d212d);
+	border-radius: 6px;
+	padding: 12px 14px;
+	background: var(--bg-ink-300, #16181d);
+}
+
+.cardRow {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.statusIndicator {
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	flex: 0 0 auto;
+}
+
+.statusActive {
+	background: var(--bg-forest-500, #25e192);
+}
+
+.statusPending {
+	background: var(--bg-amber-500, #ffcc56);
+}
+
+.editButton {
+	margin-left: auto;
+}
+
+.chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.labelChip {
+	font-family: 'Geist Mono', monospace;
+	padding: 2px 8px;
+	border-radius: 4px;
+	background: var(--bg-ink-200, #23262e);
+	border: 1px solid var(--bg-slate-400, #1d212d);
+}

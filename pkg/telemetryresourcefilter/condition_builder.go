@@ -8,6 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 )
 
@@ -43,7 +44,51 @@ func keyIndexFilter(key *telemetrytypes.TelemetryFieldKey) any {
 	return fmt.Sprintf(`%%%s%%`, key.Name)
 }
 
+// SkipResourceFilter is not applicable here: the fingerprint table only stores resource attributes.
 func (b *defaultConditionBuilder) ConditionFor(
+	ctx context.Context,
+	_ valuer.UUID,
+	startNs uint64,
+	endNs uint64,
+	key *telemetrytypes.TelemetryFieldKey,
+	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
+	_ qbtypes.ConditionBuilderOptions,
+	op qbtypes.FilterOperator,
+	value any,
+	sb *sqlbuilder.SelectBuilder,
+) ([]string, []string, error) {
+	matches := querybuilder.MatchingFieldKeys(key, fieldKeys)
+
+	// has/hasAny/hasAll/hasToken are logs-body-only functions; they never apply to the
+	// resource fingerprint table, so skip them (the main query still evaluates them).
+	if op.IsFunctionOperator() {
+		return nil, nil, nil
+	}
+
+	keys, warning := querybuilder.ResolveKeys(key, matches)
+	var warnings []string
+	if warning != "" {
+		warnings = append(warnings, warning)
+	}
+
+	conds := make([]string, 0, len(keys))
+	for _, k := range keys {
+		// the resource fingerprint table only stores resource attributes; keys from
+		// any other context contribute no condition and are omitted. An empty result
+		// (including an unknown key) lets the caller skip this filter entirely.
+		if k.FieldContext != telemetrytypes.FieldContextResource {
+			continue
+		}
+		cond, err := b.conditionForKey(ctx, startNs, endNs, k, op, value, sb)
+		if err != nil {
+			return nil, nil, err
+		}
+		conds = append(conds, cond)
+	}
+	return conds, warnings, nil
+}
+
+func (b *defaultConditionBuilder) conditionForKey(
 	ctx context.Context,
 	startNs uint64,
 	endNs uint64,
@@ -53,15 +98,11 @@ func (b *defaultConditionBuilder) ConditionFor(
 	sb *sqlbuilder.SelectBuilder,
 ) (string, error) {
 
-	if key.FieldContext != telemetrytypes.FieldContextResource {
-		return querybuilder.SkipConditionLiteral, nil
-	}
-
 	// except for in, not in, between, not between all other operators should have formatted value
 	// as we store resource values as string
 	formattedValue := querybuilder.FormatValueForContains(value)
 
-	columns, err := b.fm.ColumnFor(ctx, startNs, endNs, key)
+	columns, err := b.fm.ColumnFor(ctx, valuer.UUID{}, startNs, endNs, key)
 	if err != nil {
 		return "", err
 	}
@@ -77,7 +118,7 @@ func (b *defaultConditionBuilder) ConditionFor(
 	keyIdxFilter := sb.Like(column.Name, keyIndexFilter(key))
 	valueForIndexFilter := valueForIndexFilter(op, key, value)
 
-	fieldName, err := b.fm.FieldFor(ctx, startNs, endNs, key)
+	fieldName, err := b.fm.FieldFor(ctx, valuer.UUID{}, startNs, endNs, key)
 	if err != nil {
 		return "", err
 	}

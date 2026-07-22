@@ -47,6 +47,7 @@ import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
+import { useIsAIObservabilityEnabled } from 'hooks/useIsAIObservabilityEnabled';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { isArray } from 'lodash-es';
@@ -253,6 +254,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	const isAdmin = user.role === USER_ROLES.ADMIN;
 	const isEditor = user.role === USER_ROLES.EDITOR;
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
+	const isAIObservabilityEnabled = useIsAIObservabilityEnabled();
 	const aiAssistantActiveConversationId = useAIAssistantStore(
 		(s) => s.activeConversationId,
 	);
@@ -288,15 +290,22 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		const shouldShowIntegrationsValue =
 			(isCloudUser || isEnterpriseSelfHostedUser) && (isAdmin || isEditor);
 
+		const isEnabledForItem = (item: SidebarItem): boolean | undefined => {
+			if (item.key === ROUTES.INTEGRATIONS) {
+				return shouldShowIntegrationsValue;
+			}
+			if (item.key === ROUTES.AI_OBSERVABILITY_OVERVIEW) {
+				return isAIObservabilityEnabled;
+			}
+			return item.isEnabled;
+		};
+
 		return defaultMoreMenuItems.map((item) => ({
 			...item,
 			isPinned: computedPinnedMenuItems.some(
 				(pinned) => pinned.itemKey === item.itemKey,
 			),
-			isEnabled:
-				item.key === ROUTES.INTEGRATIONS
-					? shouldShowIntegrationsValue
-					: item.isEnabled,
+			isEnabled: isEnabledForItem(item),
 		}));
 	}, [
 		computedPinnedMenuItems,
@@ -304,6 +313,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		isEnterpriseSelfHostedUser,
 		isAdmin,
 		isEditor,
+		isAIObservabilityEnabled,
 	]);
 
 	// Track if we've done the initial sync (to avoid overwriting user actions during session)
@@ -318,10 +328,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			hasInitializedRef.current = true;
 		}
 	}, [computedPinnedMenuItems, computedSecondaryMenuItems, userPreferences]);
-
-	const isOnboardingV3Enabled = featureFlags?.find(
-		(flag) => flag.name === FeatureKeys.ONBOARDING_V3,
-	)?.active;
 
 	const isChatSupportEnabled = featureFlags?.find(
 		(flag) => flag.name === FeatureKeys.CHAT_SUPPORT,
@@ -465,18 +471,14 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 
 	const onClickGetStarted = (event: MouseEvent): void => {
 		void logEvent('Sidebar: Menu clicked', {
-			menuRoute: '/get-started',
+			menuRoute: ROUTES.GET_STARTED_WITH_CLOUD,
 			menuLabel: 'Get Started',
 		});
 
-		const onboaringRoute = isOnboardingV3Enabled
-			? ROUTES.GET_STARTED_WITH_CLOUD
-			: ROUTES.GET_STARTED;
-
 		if (isModifierKeyPressed(event)) {
-			openInNewTab(onboaringRoute);
+			openInNewTab(ROUTES.GET_STARTED_WITH_CLOUD);
 		} else {
-			history.push(onboaringRoute);
+			history.push(ROUTES.GET_STARTED_WITH_CLOUD);
 		}
 	};
 
@@ -885,9 +887,9 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 					break;
 				case 'invite-collaborators':
 					if (event && isModifierKeyPressed(event)) {
-						openInNewTab(`${ROUTES.ORG_SETTINGS}#invite-team-members`);
+						openInNewTab(`${ROUTES.MEMBERS_SETTINGS}?invite=true`);
 					} else {
-						history.push(`${ROUTES.ORG_SETTINGS}#invite-team-members`);
+						history.push(`${ROUTES.MEMBERS_SETTINGS}?invite=true`);
 					}
 					break;
 				case 'chat-support':

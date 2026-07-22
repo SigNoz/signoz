@@ -4,6 +4,48 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
+const (
+
+	// Internal Columns.
+	SpanTimestampBucketStartColumn = "ts_bucket_start"
+	SpanResourceFingerPrintColumn  = "resource_fingerprint"
+
+	// Intrinsic Columns.
+	SpanTimestampColumn        = "timestamp"
+	SpanTraceIDColumn          = "trace_id"
+	SpanSpanIDColumn           = "span_id"
+	SpanTraceStateColumn       = "trace_state"
+	SpanParentSpanIDColumn     = "parent_span_id"
+	SpanFlagsColumn            = "flags"
+	SpanNameColumn             = "name"
+	SpanKindColumn             = "kind"
+	SpanKindStringColumn       = "kind_string"
+	SpanDurationNanoColumn     = "duration_nano"
+	SpanStatusCodeColumn       = "status_code"
+	SpanStatusMessageColumn    = "status_message"
+	SpanStatusCodeStringColumn = "status_code_string"
+	SpanEventsColumn           = "events"
+	SpanLinksColumn            = "links"
+
+	// Calculated Columns.
+	SpanResponseStatusCodeColumn = "response_status_code"
+	SpanExternalHTTPURLColumn    = "external_http_url"
+	SpanHTTPURLColumn            = "http_url"
+	SpanExternalHTTPMethodColumn = "external_http_method"
+	SpanHTTPMethodColumn         = "http_method"
+	SpanHTTPHostColumn           = "http_host"
+	SpanDBNameColumn             = "db_name"
+	SpanDBOperationColumn        = "db_operation"
+	SpanHasErrorColumn           = "has_error"
+	SpanIsRemoteColumn           = "is_remote"
+
+	// Contextual Columns.
+	SpanAttributesStringColumn = "attributes_string"
+	SpanAttributesNumberColumn = "attributes_number"
+	SpanAttributesBoolColumn   = "attributes_bool"
+	SpanResourcesStringColumn  = "resources_string"
+)
+
 var (
 	IntrinsicFields = map[string]telemetrytypes.TelemetryFieldKey{
 		"trace_id": {
@@ -335,6 +377,51 @@ var (
 	}
 	SpanSearchScopeRoot       = "isroot"
 	SpanSearchScopeEntryPoint = "isentrypoint"
+
+	// IntrinsicSpanFields lists the intrinsic span columns, in the order they
+	// should appear when a raw query expands its SelectFields.
+	IntrinsicSpanFields = []telemetrytypes.TelemetryFieldKey{
+		{Name: SpanTimestampColumn, FieldContext: telemetrytypes.FieldContextSpan},
+		{Name: SpanTraceIDColumn, FieldContext: telemetrytypes.FieldContextSpan},
+		{Name: SpanSpanIDColumn, FieldContext: telemetrytypes.FieldContextSpan},
+		{Name: SpanTraceStateColumn, FieldContext: telemetrytypes.FieldContextSpan},
+		{Name: SpanParentSpanIDColumn, FieldContext: telemetrytypes.FieldContextSpan},
+		{Name: SpanFlagsColumn, FieldContext: telemetrytypes.FieldContextSpan},
+		{Name: SpanNameColumn, FieldContext: telemetrytypes.FieldContextSpan},
+		{Name: SpanKindColumn, FieldContext: telemetrytypes.FieldContextSpan},
+		{Name: SpanKindStringColumn, FieldContext: telemetrytypes.FieldContextSpan},
+		{Name: SpanDurationNanoColumn, FieldContext: telemetrytypes.FieldContextSpan},
+		{Name: SpanStatusCodeColumn, FieldContext: telemetrytypes.FieldContextSpan},
+		{Name: SpanStatusMessageColumn, FieldContext: telemetrytypes.FieldContextSpan},
+		{Name: SpanStatusCodeStringColumn, FieldContext: telemetrytypes.FieldContextSpan},
+		{Name: SpanEventsColumn, FieldContext: telemetrytypes.FieldContextSpan},
+		{Name: SpanLinksColumn, FieldContext: telemetrytypes.FieldContextSpan},
+	}
+
+	// CalculatedSpanFields lists the calculated/derived span columns, in the
+	// order they should appear when a raw query expands its SelectFields.
+	CalculatedSpanFields = []telemetrytypes.TelemetryFieldKey{
+		{Name: SpanResponseStatusCodeColumn, FieldContext: telemetrytypes.FieldContextSpan},
+		{Name: SpanExternalHTTPURLColumn, FieldContext: telemetrytypes.FieldContextSpan},
+		{Name: SpanHTTPURLColumn, FieldContext: telemetrytypes.FieldContextSpan},
+		{Name: SpanExternalHTTPMethodColumn, FieldContext: telemetrytypes.FieldContextSpan},
+		{Name: SpanHTTPMethodColumn, FieldContext: telemetrytypes.FieldContextSpan},
+		{Name: SpanHTTPHostColumn, FieldContext: telemetrytypes.FieldContextSpan},
+		{Name: SpanDBNameColumn, FieldContext: telemetrytypes.FieldContextSpan},
+		{Name: SpanDBOperationColumn, FieldContext: telemetrytypes.FieldContextSpan},
+		{Name: SpanHasErrorColumn, FieldContext: telemetrytypes.FieldContextSpan},
+		{Name: SpanIsRemoteColumn, FieldContext: telemetrytypes.FieldContextSpan},
+	}
+
+	// ContextualSpanColumns lists the typed attribute and resource columns
+	// selected raw (rather than via ColumnExpressionFor) so that consume.go
+	// can merge them into unified "attributes" and "resource" maps.
+	ContextualSpanColumns = []string{
+		SpanAttributesStringColumn,
+		SpanAttributesNumberColumn,
+		SpanAttributesBoolColumn,
+		SpanResourcesStringColumn,
+	}
 
 	DefaultFields = map[string]telemetrytypes.TelemetryFieldKey{
 		"timestamp": {

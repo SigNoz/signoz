@@ -1,0 +1,16 @@
+.body {
+	font-size: 13px;
+	line-height: 20px;
+	color: var(--l2-foreground);
+}
+
+.variableName {
+	font-family: 'Space Mono', monospace;
+	color: var(--bg-robin-400);
+}
+
+.footer {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+}

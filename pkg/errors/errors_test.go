@@ -1,6 +1,7 @@
 package errors
 
 import (
+	"context"
 	"errors" //nolint:depguard
 	"testing"
 	"time"
@@ -84,7 +85,7 @@ func TestWithSuggestiveAdditional(t *testing.T) {
 	assert.Equal(t, []responseerroradditional{
 		{Message: "field `filed` not found", Suggestions: []string{"did you mean: `field`"}},
 	}, j.Errors)
-	assert.Nil(t, j.Suggestions, "detail-scoped suggestions must not leak into the error-wide list")
+	assert.Empty(t, j.Suggestions, "detail-scoped suggestions must not leak into the error-wide list")
 }
 
 func TestWithRetryAfter(t *testing.T) {
@@ -106,7 +107,12 @@ func TestAsJSONBaseError(t *testing.T) {
 	assert.Equal(t, "bad_input", j.Code)
 	assert.Equal(t, "field foo is bad", j.Message)
 	assert.Equal(t, "https://docs/bad_input", j.Url)
-	assert.Equal(t, []responseerroradditional{{Message: "hint1"}, {Message: "hint2"}}, j.Errors)
+	// A detail with no suggestions carries an empty (non-nil) slice — the
+	// suggestions field is non-nullable, so it marshals to [] rather than null.
+	assert.Equal(t, []responseerroradditional{
+		{Message: "hint1", Suggestions: []string{}},
+		{Message: "hint2", Suggestions: []string{}},
+	}, j.Errors)
 
 	// InvalidInput auto-applies the after_fix policy via NewInvalidInputf — but
 	// New (bare constructor) does not. The retry block should reflect that.
@@ -157,9 +163,16 @@ func TestAsJSONRetryBlock(t *testing.T) {
 	})
 }
 
-func TestAsJSONOptionalFieldsOmittedWhenEmpty(t *testing.T) {
+func TestAsJSONEmptyWhenNoneSet(t *testing.T) {
+	// errors and suggestions are non-nullable in the OpenAPI spec, so AsJSON
+	// leaves them as empty (non-nil) slices when the error carries none — they
+	// marshal to [] rather than null.
 	j := AsJSON(New(TypeInternal, MustNewCode("boom"), "boom"))
-	assert.Nil(t, j.Suggestions, "no suggestions set => Suggestions must be nil so json omitempty drops it")
+
+	assert.NotNil(t, j.Suggestions)
+	assert.Empty(t, j.Suggestions)
+	assert.NotNil(t, j.Errors)
+	assert.Empty(t, j.Errors)
 }
 
 func TestWithStacktrace(t *testing.T) {
@@ -172,4 +185,17 @@ func TestWithStacktrace(t *testing.T) {
 	assert.Equal(t, TypeInternal, typ)
 	assert.Equal(t, "test_code", code.String())
 	assert.Equal(t, "panic", message)
+}
+
+// Wrapped context sentinels must remain detectable via errors.Is so callers
+// that branch on context.Canceled / context.DeadlineExceeded keep working
+// after the error passes through one of the signoz Wrap* helpers.
+func TestWrapPreservesContextSentinels(t *testing.T) {
+	canceled := WrapCanceledf(context.Canceled, MustNewCode("canceled"), "op canceled")
+	assert.True(t, Is(canceled, context.Canceled))
+	assert.False(t, Is(canceled, context.DeadlineExceeded))
+
+	deadline := WrapTimeoutf(context.DeadlineExceeded, MustNewCode("timeout"), "op timed out")
+	assert.True(t, Is(deadline, context.DeadlineExceeded))
+	assert.False(t, Is(deadline, context.Canceled))
 }

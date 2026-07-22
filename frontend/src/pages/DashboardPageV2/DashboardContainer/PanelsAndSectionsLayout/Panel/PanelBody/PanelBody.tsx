@@ -1,92 +1,137 @@
-import { Spin } from 'antd';
-import { Button } from '@signozhq/ui/button';
-import { Typography } from '@signozhq/ui/typography';
-import { Loader, TriangleAlert } from '@signozhq/icons';
+import { RotateCw, SquarePlus, TriangleAlert } from '@signozhq/icons';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
+import PanelLoader from 'pages/DashboardPageV2/DashboardContainer/Panels/components/PanelLoader/PanelLoader';
+import PanelMessage from 'pages/DashboardPageV2/DashboardContainer/Panels/components/PanelMessage/PanelMessage';
+import type { AnyPanelInteractionProps } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/interactions';
 import type { RenderablePanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelDefinition';
 import type { DashboardPreference } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/rendererProps';
-import type { PanelQueryData } from 'pages/DashboardPageV2/DashboardContainer/queryV5/types';
+import { hasRunnableQueries } from 'pages/DashboardPageV2/DashboardContainer/queryV5/buildQueryRangeRequest';
+import { getResponseType } from 'pages/DashboardPageV2/DashboardContainer/queryV5/v5ResponseData';
+import type {
+	PanelPagination,
+	PanelQueryData,
+} from 'pages/DashboardPageV2/DashboardContainer/queryV5/types';
 
+import { panelStatusFromError } from '../PanelStatus/utils';
 import styles from './PanelBody.module.scss';
 
 interface PanelBodyProps {
-	/** Resolved renderer for the panel kind — always present (`Panel` renders the
-	 * unsupported fallback itself when no renderer is registered). */
+	/** Resolved renderer for the panel kind (`Panel` handles the unsupported case). */
 	panelDefinition: RenderablePanelDefinition;
 	panel: DashboardtypesPanelDTO;
 	panelId: string;
 	data: PanelQueryData;
-	isLoading: boolean;
+	isFetching: boolean;
+	/** Panel not yet scrolled into view — its fetch is deferred, so show the loader rather than NoData. */
+	isVisible?: boolean;
+	/** Showing a prior page's data while the next loads; forwarded so list renderers can show skeletons. */
+	isPreviousData?: boolean;
 	error: Error | null;
 	refetch: () => void;
 	onDragSelect: (start: number, end: number) => void;
-	dashboardPreference: DashboardPreference;
+	/** Dashboard-wide preferences (cursor sync, …); absent in the editor preview. */
+	dashboardPreference?: DashboardPreference;
+	/** Render context — defaults to the dashboard view; the editor preview passes EDIT. */
+	panelMode?: PanelMode;
+	/** Header search term — only consumed by kinds that declare header search. */
+	searchTerm?: string;
+	/** Server-side paging handles — only consumed by raw/list renderers. */
+	pagination?: PanelPagination;
+	/** Close the standalone View modal — only consumed by the time-series/bar graph manager. */
+	onCloseStandaloneView?: () => void;
+	/** Opens the drill-down context menu; threaded to interactive renderers. */
+	onClick?: AnyPanelInteractionProps['onClick'];
+	/** Gate for the drill-down menu — kind supported and the panel has a builder query. */
+	enableDrillDown?: boolean;
 }
 
 /**
- * Renders the content of a panel whose kind has a registered renderer, as an
- * explicit state machine so each state is handled deliberately (no implicit
- * fall-through):
- *
- *   error + no data → error message with retry
- *   first load (no data) → loading indicator
- *   otherwise → the kind's renderer (which owns its own "No Data" state, and
- *               keeps stale data mounted during background refetches)
+ * Renders a panel's body as a state machine: not-configured / error+no-data /
+ * first-load / renderer. The renderer keeps stale data mounted across refetches.
  */
 function PanelBody({
 	panelDefinition,
 	panel,
 	panelId,
 	data,
-	isLoading,
+	isFetching,
+	isVisible,
+	isPreviousData,
 	error,
 	refetch,
 	onDragSelect,
 	dashboardPreference,
+	panelMode = PanelMode.DASHBOARD_VIEW,
+	searchTerm,
+	pagination,
+	onCloseStandaloneView,
+	onClick,
+	enableDrillDown = false,
 }: PanelBodyProps): JSX.Element {
-	// Surface a hard failure only when there's no (stale) data to show; otherwise
-	// keep the last-good chart and let the header indicate the refresh.
-	// react-query keeps the previous response during background refetches, so
-	// `data.response` presence is the "have something to show" signal.
-	const hasData = !!data.response;
+	// A retained response (keepPreviousData) counts as data only if its type matches the current
+	// request — else a prior panel kind's response (time_series → raw) flashes NoData on switch.
+	const hasData =
+		!!data.response &&
+		getResponseType(data.response) === data.requestPayload?.requestType;
+	const queries = panel.spec.queries;
 
-	if (error && !hasData) {
+	// Not-configured panel: no runnable query, so nothing to error/load on.
+	if (!hasRunnableQueries(queries)) {
 		return (
-			<div className={styles.error} data-testid="panel-error">
-				<TriangleAlert size={20} className={styles.errorIcon} />
-				<Typography.Text className={styles.errorMessage}>
-					{error.message || 'Failed to load panel data'}
-				</Typography.Text>
-				<Button variant="outlined" color="secondary" onClick={refetch}>
-					Retry
-				</Button>
-			</div>
+			<PanelMessage
+				icon={<SquarePlus size={18} />}
+				title="Nothing to visualize yet"
+				description="This panel has no query. Add one to start plotting data."
+				data-testid="panel-no-query"
+			/>
 		);
 	}
 
-	// First load only — background refetches keep the response populated so the
-	// chart stays mounted instead of blinking.
-	if (isLoading && !hasData) {
+	if (error && !hasData) {
+		// Parse the API error (as the header popover does) to show the backend
+		// message, not the raw axios "status code 4xx".
+		const errorDetail = panelStatusFromError(error);
 		return (
-			<div className={styles.body} data-testid="panel-loading">
-				<Spin indicator={<Loader size={14} className="animate-spin" />} />
-			</div>
+			<PanelMessage
+				icon={<TriangleAlert size={18} />}
+				tone="danger"
+				title="Couldn’t load panel data"
+				description={errorDetail?.message || 'Something went wrong while fetching.'}
+				action={{
+					label: 'Retry',
+					onClick: refetch,
+					icon: <RotateCw size={14} />,
+				}}
+				data-testid="panel-error"
+			/>
 		);
+	}
+
+	// Full-panel loader on first fetch or while the fetch is deferred (off-screen); a refetch
+	// over existing data keeps the renderer mounted, empty data loads via NoData.
+	if ((isFetching || isVisible === false) && !hasData) {
+		return <PanelLoader />;
 	}
 
 	return (
-		<div className={styles.chartContainer}>
+		<div className={styles.panelContainer}>
 			<panelDefinition.Renderer
 				panelId={panelId}
 				panel={panel}
 				data={data}
-				isLoading={isLoading}
+				isFetching={isFetching}
+				isPreviousData={isPreviousData}
 				error={error}
+				refetch={refetch}
 				onDragSelect={onDragSelect}
-				panelMode={PanelMode.DASHBOARD_VIEW}
-				enableDrillDown={false}
+				panelMode={panelMode}
+				enableDrillDown={enableDrillDown}
+				onClick={onClick}
 				dashboardPreference={dashboardPreference}
+				searchTerm={searchTerm}
+				pagination={pagination}
+				onCloseStandaloneView={onCloseStandaloneView}
 			/>
 		</div>
 	);

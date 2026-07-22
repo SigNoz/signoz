@@ -10,27 +10,3 @@
 	background: var(--l2-background);
 	border-radius: 3px;
 }
-
-.pending-invites-container,
-.members-container,
-.auth-domains-container {
-	display: flex;
-	flex-direction: column;
-	gap: 8px;
-
-	h3 {
-		margin-bottom: 0px;
-	}
-}
-
-.auth-domains-title-container {
-	display: flex;
-	flex-direction: row;
-	justify-content: space-between;
-	align-items: center;
-	gap: 8px;
-
-	h3 {
-		margin-bottom: 0px;
-	}
-}

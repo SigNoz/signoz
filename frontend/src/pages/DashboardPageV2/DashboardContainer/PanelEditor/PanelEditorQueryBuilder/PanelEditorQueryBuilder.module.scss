@@ -1,0 +1,58 @@
+@use '../../../../../styles/scrollbar' as *;
+.container {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	min-height: 0;
+	overflow: auto;
+	background-color: var(--l1-background);
+	@include custom-scrollbar;
+}
+
+.scrollArea {
+	// Top padding lives on the sticky tab nav instead, so the nav keeps its
+	// breathing room both at rest and when pinned to the top.
+	padding: 0 12px 12px 12px;
+}
+
+.tabsContainer {
+	width: 100%;
+
+	:global(.ant-tabs-tab) {
+		background-color: var(--l2-background) !important;
+		border-color: var(--l2-border) !important;
+	}
+	:global(.ant-tabs-tab-active) {
+		background-color: var(--l1-background) !important;
+	}
+	:global(.ant-tabs-nav) {
+		// `padding-top` owns the nav's top spacing (moved off `.scrollArea`).
+		padding-top: 12px;
+		background-color: var(--l1-background);
+
+		&::before {
+			border-color: var(--l2-border);
+		}
+	}
+}
+
+// Opt-in pin to the top of the scroll area; the View modal opts out (shares a scroll area with its own header).
+.stickyNav :global(.ant-tabs-nav) {
+	position: sticky;
+	top: 0px;
+	z-index: 1100;
+}
+.queryTypeTab {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
+}
+.runQueryBtnContainer {
+	padding: 4px 0 8px 0;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	gap: 1rem;
+}

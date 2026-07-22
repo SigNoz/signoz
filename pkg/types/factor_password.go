@@ -127,7 +127,7 @@ func GenerateFactorPassword(userID string) (*FactorPassword, error) {
 		return nil, err
 	}
 
-	return NewFactorPassword(password+"Z", userID)
+	return NewFactorPassword(password+"zZ", userID)
 }
 
 func MustGenerateFactorPassword(userID string) *FactorPassword {

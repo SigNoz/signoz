@@ -8,6 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 )
 
@@ -19,8 +20,45 @@ func NewConditionBuilder(fm qbtypes.FieldMapper) *conditionBuilder {
 	return &conditionBuilder{fm: fm}
 }
 
+// Metadata has no resource sub-query, so options are unused.
 func (c *conditionBuilder) ConditionFor(
 	ctx context.Context,
+	orgID valuer.UUID,
+	tsStart, tsEnd uint64,
+	key *telemetrytypes.TelemetryFieldKey,
+	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
+	_ qbtypes.ConditionBuilderOptions,
+	operator qbtypes.FilterOperator,
+	value any,
+	sb *sqlbuilder.SelectBuilder,
+) ([]string, []string, error) {
+
+	// has/hasAny/hasAll/hasToken are logs-body-only; reject to avoid malformed related-values SQL.
+	if err := querybuilder.NewFunctionUnsupportedError(operator); err != nil {
+		return nil, nil, err
+	}
+
+	// an unknown key simply yields no condition rather than an error.
+	keys, warning := querybuilder.ResolveKeys(key, querybuilder.MatchingFieldKeys(key, fieldKeys))
+	var warnings []string
+	if warning != "" {
+		warnings = append(warnings, warning)
+	}
+
+	conds := make([]string, 0, len(keys))
+	for _, k := range keys {
+		cond, err := c.conditionForKey(ctx, orgID, tsStart, tsEnd, k, operator, value, sb)
+		if err != nil {
+			return nil, nil, err
+		}
+		conds = append(conds, cond)
+	}
+	return conds, warnings, nil
+}
+
+func (c *conditionBuilder) conditionForKey(
+	ctx context.Context,
+	orgID valuer.UUID,
 	tsStart, tsEnd uint64,
 	key *telemetrytypes.TelemetryFieldKey,
 	operator qbtypes.FilterOperator,
@@ -38,13 +76,13 @@ func (c *conditionBuilder) ConditionFor(
 		value = querybuilder.FormatValueForContains(value)
 	}
 
-	columns, err := c.fm.ColumnFor(ctx, tsStart, tsEnd, key)
+	columns, err := c.fm.ColumnFor(ctx, orgID, tsStart, tsEnd, key)
 	if err != nil {
 		// if we don't have a column, we can't build a condition for related values
 		return "", nil
 	}
 
-	fieldExpression, err := c.fm.FieldFor(ctx, tsStart, tsEnd, key)
+	fieldExpression, err := c.fm.FieldFor(ctx, orgID, tsStart, tsEnd, key)
 	if err != nil {
 		// if we don't have a table field name, we can't build a condition for related values
 		return "", nil

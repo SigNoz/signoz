@@ -7,7 +7,7 @@ import (
 )
 
 type Store interface {
-	List(ctx context.Context, orgID valuer.UUID, offset, limit int) ([]*LLMPricingRule, int, error)
+	List(ctx context.Context, orgID valuer.UUID, offset, limit int, search string, isOverride *bool) ([]*LLMPricingRule, int, error)
 	Get(ctx context.Context, orgID, id valuer.UUID) (*LLMPricingRule, error)
 	GetBySourceID(ctx context.Context, orgID, sourceID valuer.UUID) (*LLMPricingRule, error)
 	Create(ctx context.Context, rule *LLMPricingRule) error

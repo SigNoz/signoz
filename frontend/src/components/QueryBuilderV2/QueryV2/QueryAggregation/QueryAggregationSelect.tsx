@@ -676,7 +676,7 @@ function QueryAggregationSelect({
 						</span>
 						<br />
 						<a
-							href="https://signoz.io/docs/userguide/query-builder-v5/#core-aggregation-functions"
+							href="https://signoz.io/docs/querying/aggregation-grouping/#core-aggregation-functions-logs--traces"
 							target="_blank"
 							rel="noopener noreferrer"
 							style={{ color: '#1890ff', textDecoration: 'underline' }}

@@ -111,31 +111,9 @@
 	&__select {
 		width: 100%;
 
-		&.ant-select {
-			.ant-select-selector {
-				height: 32px;
-				background: var(--l2-background) !important;
-				border: 1px solid var(--l2-border) !important;
-				border-radius: 2px;
-				color: var(--l2-foreground) !important;
-
-				.ant-select-selection-item {
-					color: var(--l2-foreground) !important;
-				}
-			}
-
-			&:hover .ant-select-selector {
-				border-color: var(--l2-border) !important;
-			}
-
-			&.ant-select-focused .ant-select-selector {
-				border-color: var(--primary) !important;
-				box-shadow: none !important;
-			}
-
-			.ant-select-arrow {
-				color: var(--l2-foreground);
-			}
+		.ant-select-selection-search {
+			inset-inline-start: var(--padding-2) !important;
+			inset-inline-end: var(--padding-2) !important;
 		}
 	}
 
@@ -185,7 +163,7 @@
 
 		&--role {
 			flex: 1;
-			min-width: 120px;
+			min-width: 180px;
 		}
 	}
 
@@ -272,7 +250,7 @@
 	}
 
 	// todo: https://github.com/SigNoz/components/issues/116
-	input {
+	input:not(.ant-select-selection-search-input) {
 		height: 32px;
 		background: var(--l2-background) !important;
 		border: 1px solid var(--l2-border) !important;

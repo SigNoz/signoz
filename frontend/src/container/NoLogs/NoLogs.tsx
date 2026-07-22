@@ -33,15 +33,7 @@ export default function NoLogs({
 			} else if (dataSource === DataSource.METRICS) {
 				logEvent('Metrics Explorer: Navigate to onboarding', {});
 			}
-			let link;
-			if (dataSource === DataSource.TRACES) {
-				link = ROUTES.GET_STARTED_APPLICATION_MONITORING;
-			} else if (dataSource === DataSource.METRICS) {
-				link = ROUTES.GET_STARTED_WITH_CLOUD;
-			} else {
-				link = ROUTES.GET_STARTED_LOGS_MANAGEMENT;
-			}
-			history.push(link);
+			history.push(ROUTES.GET_STARTED_WITH_CLOUD);
 		} else if (dataSource === 'traces') {
 			openInNewTab(DOCLINKS.TRACES_EXPLORER_EMPTY_STATE);
 		} else if (dataSource === DataSource.METRICS) {

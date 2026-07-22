@@ -26,7 +26,12 @@ jest.mock('components/MarkdownRenderer/MarkdownRenderer', () => ({
 
 describe('Should check if the edit alert channel is properly displayed', () => {
 	beforeEach(() => {
-		render(<EditAlertChannels initialValue={editAlertChannelInitialValue} />);
+		render(
+			<EditAlertChannels
+				channelId="3"
+				initialValue={editAlertChannelInitialValue}
+			/>,
+		);
 	});
 	afterEach(() => {
 		jest.clearAllMocks();

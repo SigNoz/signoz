@@ -79,9 +79,12 @@
 
 		.settings-page-content {
 			flex: 1;
+			min-height: 0;
 			background: var(--l1-background);
 			padding: 10px 8px;
 			overflow-y: auto;
+			display: flex;
+			flex-direction: column;
 
 			&::-webkit-scrollbar {
 				width: 0.3rem;
@@ -98,6 +101,34 @@
 
 			&::-webkit-scrollbar-thumb:hover {
 				background: var(--l3-background);
+			}
+
+			.ant-tabs {
+				flex: 1;
+				min-height: 0;
+				display: flex;
+				flex-direction: column;
+
+				.ant-tabs-content-holder {
+					flex: 1;
+					min-height: 0;
+					display: flex;
+					flex-direction: column;
+
+					.ant-tabs-content {
+						flex: 1;
+						min-height: 0;
+						display: flex;
+						flex-direction: column;
+
+						.ant-tabs-tabpane-active {
+							flex: 1;
+							min-height: 0;
+							display: flex;
+							flex-direction: column;
+						}
+					}
+				}
 			}
 		}
 	}

@@ -9,7 +9,7 @@ import FunnelItemPopover from 'pages/TracesFunnels/components/FunnelsList/Funnel
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import CopyToClipboard from 'periscope/components/CopyToClipboard';
 import { useAppContext } from 'providers/App/App';
-import { Span } from 'types/api/trace/getTraceV2';
+import { SpanV3 } from 'types/api/trace/getTraceV3';
 import { FunnelData } from 'types/api/traceFunnels';
 
 import AddFunnelDescriptionModal from './AddFunnelDescriptionModal';
@@ -23,7 +23,7 @@ import './FunnelConfiguration.styles.scss';
 interface FunnelConfigurationProps {
 	funnel: FunnelData;
 	isTraceDetailsPage?: boolean;
-	span?: Span;
+	span?: SpanV3;
 	triggerAutoSave?: boolean;
 	showNotifications?: boolean;
 }

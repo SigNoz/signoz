@@ -1,0 +1,11 @@
+.backToAllVariables {
+	gap: 8px;
+	padding: 8px;
+	border-bottom: 1px solid var(--l3-border);
+}
+
+.backToAllVariablesButton {
+	--button-font-size: 14px;
+	--button-padding: var(--spacing-5) var(--spacing-3);
+	color: var(--l1-foreground);
+}

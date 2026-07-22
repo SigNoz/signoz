@@ -56,14 +56,14 @@ def test_create_account_unsupported_provider(
 ) -> None:
     """Test that creating an account with an unsupported cloud provider returns 400."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    cloud_provider = "gcp"
+    cloud_provider = "unknown"
     endpoint = f"/api/v1/cloud_integrations/{cloud_provider}/accounts"
 
     response = requests.post(
         signoz.self.host_configs["8080"].get(endpoint),
         headers={"Authorization": f"Bearer {admin_token}"},
         json={
-            "config": {"gcp": {"deploymentRegion": "us-central1", "regions": ["us-central1"]}},
+            "config": {"unknown": {"deploymentRegion": "us-central1", "regions": ["us-central1"]}},
             "credentials": {
                 "sigNozApiURL": "https://test.signoz.cloud",
                 "sigNozApiKey": "test-key",

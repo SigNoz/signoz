@@ -36,7 +36,7 @@ func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	role := authtypes.NewRole(req.Name, req.Description, authtypes.RoleTypeCustom, valuer.MustNewUUID(claims.OrgID))
+	role := authtypes.NewRole(req.Name, req.Description, authtypes.RoleTypeCustom, valuer.MustNewUUID(claims.OrgID), req.TransactionGroups)
 	err = handler.authz.Create(ctx, valuer.MustNewUUID(claims.OrgID), role)
 	if err != nil {
 		render.Error(rw, err)
@@ -74,46 +74,6 @@ func (handler *handler) Get(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusOK, role)
 }
 
-func (handler *handler) GetObjects(rw http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	id, ok := mux.Vars(r)["id"]
-	if !ok {
-		render.Error(rw, errors.New(errors.TypeInvalidInput, authtypes.ErrCodeRoleInvalidInput, "id is missing from the request"))
-		return
-	}
-	roleID, err := valuer.NewUUID(id)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	relationStr, ok := mux.Vars(r)["relation"]
-	if !ok {
-		render.Error(rw, errors.New(errors.TypeInvalidInput, authtypes.ErrCodeRoleInvalidInput, "relation is missing from the request"))
-		return
-	}
-
-	relation, err := coretypes.NewVerb(relationStr)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	objects, err := handler.authz.GetObjects(ctx, valuer.MustNewUUID(claims.OrgID), roleID, authtypes.Relation{Verb: relation})
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	render.Success(rw, http.StatusOK, coretypes.NewObjectGroupsFromObjects(objects))
-}
-
 func (handler *handler) List(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	claims, err := authtypes.ClaimsFromContext(ctx)
@@ -128,10 +88,10 @@ func (handler *handler) List(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusOK, roles)
+	render.Success(rw, http.StatusOK, authtypes.NewGettableRolesFromRoles(roles))
 }
 
-func (handler *handler) Patch(rw http.ResponseWriter, r *http.Request) {
+func (handler *handler) Update(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
@@ -145,7 +105,7 @@ func (handler *handler) Patch(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := new(authtypes.PatchableRole)
+	req := new(authtypes.UpdatableRole)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
 		return
@@ -157,65 +117,13 @@ func (handler *handler) Patch(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = role.PatchMetadata(req.Description)
+	err = role.Update(req.Description, req.TransactionGroups)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	err = handler.authz.Patch(ctx, valuer.MustNewUUID(claims.OrgID), role)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	render.Success(rw, http.StatusNoContent, nil)
-}
-
-func (handler *handler) PatchObjects(rw http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	id, err := valuer.NewUUID(mux.Vars(r)["id"])
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	relation, err := coretypes.NewVerb(mux.Vars(r)["relation"])
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	role, err := handler.authz.Get(ctx, valuer.MustNewUUID(claims.OrgID), id)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	if err := role.ErrIfManaged(); err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	req := new(coretypes.PatchableObjects)
-	if err := binding.JSON.BindBody(r.Body, req); err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	additions, deletions, err := coretypes.NewPatchableObjects(req.Additions, req.Deletions, relation)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	err = handler.authz.PatchObjects(ctx, valuer.MustNewUUID(claims.OrgID), role.Name, authtypes.Relation{Verb: relation}, additions, deletions)
+	err = handler.authz.Update(ctx, valuer.MustNewUUID(claims.OrgID), role)
 	if err != nil {
 		render.Error(rw, err)
 		return

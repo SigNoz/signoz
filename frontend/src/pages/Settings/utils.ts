@@ -12,7 +12,9 @@ import {
 	multiIngestionSettings,
 	mySettings,
 	organizationSettings,
+	roleCreate,
 	roleDetails,
+	roleEdit,
 	rolesSettings,
 	serviceAccountsSettings,
 } from './config';
@@ -61,7 +63,9 @@ export const getRoutes = (
 	settings.push(
 		...serviceAccountsSettings(t),
 		...rolesSettings(t),
+		...roleCreate(t),
 		...roleDetails(t),
+		...roleEdit(t),
 	);
 
 	// Admin-only: members management

@@ -35,7 +35,6 @@ import {
 	ChevronsLeftRight,
 	Compass,
 	DraftingCompass,
-	Package2,
 	ScrollText,
 	X,
 } from '@signozhq/icons';
@@ -54,12 +53,10 @@ import { openInNewTab } from 'utils/navigation';
 import { v4 as uuidv4 } from 'uuid';
 
 import { InfraMonitoringEntity, VIEW_TYPES } from '../constants';
-import EntityContainers from '../EntityDetailsUtils/EntityContainers';
 import EntityEvents from '../EntityDetailsUtils/EntityEvents';
 import EntityLogs from '../EntityDetailsUtils/EntityLogs';
 import { K8S_ENTITY_LOGS_EXPRESSION_KEY } from '../EntityDetailsUtils/EntityLogs/hooks';
 import EntityMetrics from '../EntityDetailsUtils/EntityMetrics';
-import EntityProcesses from '../EntityDetailsUtils/EntityProcesses';
 import EntityTraces from '../EntityDetailsUtils/EntityTraces';
 import { K8S_ENTITY_TRACES_EXPRESSION_KEY } from '../EntityDetailsUtils/EntityTraces/hooks';
 import {
@@ -120,8 +117,6 @@ export interface K8sBaseDetailsProps<T> {
 		showLogs?: boolean;
 		showTraces?: boolean;
 		showEvents?: boolean;
-		showContainers?: boolean;
-		showProcesses?: boolean;
 	};
 	customTabs?: Array<{
 		key: string;
@@ -259,8 +254,6 @@ export default function K8sBaseDetails<T>({
 			showLogs: true,
 			showTraces: true,
 			showEvents: true,
-			showContainers: false,
-			showProcesses: false,
 			...tabsConfig,
 		}),
 		[tabsConfig],
@@ -575,32 +568,6 @@ export default function K8sBaseDetails<T>({
 												},
 											]
 										: []),
-									...(tabVisibility.showContainers
-										? [
-												{
-													value: VIEW_TYPES.CONTAINERS,
-													label: (
-														<div className="view-title">
-															<Package2 size={14} />
-															Containers
-														</div>
-													),
-												},
-											]
-										: []),
-									...(tabVisibility.showProcesses
-										? [
-												{
-													value: VIEW_TYPES.PROCESSES,
-													label: (
-														<div className="view-title">
-															<ChevronsLeftRight size={14} />
-															Processes
-														</div>
-													),
-												},
-											]
-										: []),
 									...(customTabs?.map((tab) => ({
 										value: tab.key,
 										label: (
@@ -679,11 +646,6 @@ export default function K8sBaseDetails<T>({
 							queryKey={`${queryKeyPrefix}Events`}
 							initialExpression={eventsInitialExpression}
 						/>
-					)}
-					{effectiveView === VIEW_TYPES.CONTAINERS &&
-						tabVisibility.showContainers && <EntityContainers />}
-					{effectiveView === VIEW_TYPES.PROCESSES && tabVisibility.showProcesses && (
-						<EntityProcesses />
 					)}
 					{customTabs?.map((tab) =>
 						selectedView === tab.key ? (

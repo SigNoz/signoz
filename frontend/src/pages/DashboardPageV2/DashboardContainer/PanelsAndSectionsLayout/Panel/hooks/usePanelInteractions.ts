@@ -9,26 +9,20 @@ import { useDashboardCursorSyncMode } from 'hooks/dashboard/useDashboardCursorSy
 import { useSyncTooltipFilterMode } from 'hooks/dashboard/useSyncTooltipFilterMode';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
+import logEvent from 'api/common/logEvent';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 import { UpdateTimeInterval } from 'store/actions';
 
 export interface PanelInteractions {
-	/**
-	 * Drag-select a time range on a chart → write the window to the URL + global
-	 * time so every panel re-fetches against the same range.
-	 */
+	/** Drag-select a chart range → write it to the URL + global time so every panel re-fetches the same range. */
 	onDragSelect: (start: number, end: number) => void;
-	/**
-	 * Dashboard-wide rendering preferences (cursor sync, tooltip filter) keyed
-	 * off the dashboard id from the route.
-	 */
+	/** Dashboard-wide rendering preferences (cursor sync, tooltip filter). */
 	dashboardPreference: DashboardPreference;
 }
 
 /**
- * Encapsulates the cross-panel interactions shared by every dashboard-view
- * panel: drag-to-zoom time selection and the cursor-sync / tooltip-filter
- * preferences. Keeping this out of the `Panel` component keeps the component a
- * thin render orchestrator and lets the wiring be unit-tested in isolation.
+ * Cross-panel interactions shared by every dashboard-view panel: drag-to-zoom
+ * time selection and the cursor-sync / tooltip-filter preferences.
  */
 export function usePanelInteractions(): PanelInteractions {
 	const dispatch = useDispatch();
@@ -59,6 +53,7 @@ export function usePanelInteractions(): PanelInteractions {
 
 			if (startTimestamp !== endTimestamp) {
 				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
+				void logEvent(DashboardDetailEvents.PanelZoomed, { context: 'panel' });
 			}
 		},
 		[dispatch, pathname, safeNavigate, urlQuery],

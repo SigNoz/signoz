@@ -5,7 +5,7 @@ import { render, screen } from 'tests/test-utils';
 import ChartManager from '../ChartManager';
 
 const mockSyncSeriesVisibilityToLocalStorage = jest.fn();
-const mockNotificationsSuccess = jest.fn();
+const mockToastSuccess = jest.fn();
 
 jest.mock('lib/uPlotV2/context/PlotContext', () => ({
 	usePlotContext: (): {
@@ -46,12 +46,11 @@ jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
 	}): boolean => s.dashboardData?.locked ?? false,
 }));
 
-jest.mock('hooks/useNotifications', () => ({
-	useNotifications: (): { notifications: { success: jest.Mock } } => ({
-		notifications: {
-			success: mockNotificationsSuccess,
-		},
-	}),
+jest.mock('@signozhq/ui/sonner', () => ({
+	...jest.requireActual('@signozhq/ui/sonner'),
+	toast: {
+		success: (...args: unknown[]): unknown => mockToastSuccess(...args),
+	},
 }));
 
 jest.mock('components/ResizeTable', () => {
@@ -160,7 +159,7 @@ describe('ChartManager', () => {
 		expect(screen.queryByTestId('row-2')).not.toBeInTheDocument();
 	});
 
-	it('calls syncSeriesVisibilityToLocalStorage, notifications.success, and onCancel when Save is clicked', async () => {
+	it('calls syncSeriesVisibilityToLocalStorage, toast.success, and onCancel when Save is clicked', async () => {
 		render(
 			<ChartManager
 				config={createMockConfig() as UPlotConfigBuilder}
@@ -172,9 +171,9 @@ describe('ChartManager', () => {
 		await userEvent.click(screen.getByRole('button', { name: /Save/ }));
 
 		expect(mockSyncSeriesVisibilityToLocalStorage).toHaveBeenCalledTimes(1);
-		expect(mockNotificationsSuccess).toHaveBeenCalledWith({
-			message: 'The updated graphs & legends are saved',
-		});
+		expect(mockToastSuccess).toHaveBeenCalledWith(
+			'The updated graphs & legends are saved',
+		);
 		expect(mockOnCancel).toHaveBeenCalledTimes(1);
 	});
 });

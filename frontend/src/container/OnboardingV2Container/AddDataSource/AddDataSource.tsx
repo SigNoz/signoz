@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Check, Goal, Search, UserPlus, X } from '@signozhq/icons';
+import { ArrowRight, Check, Goal, Search, UserPlus, X } from '@signozhq/icons';
 import {
 	Button,
 	Flex,
@@ -10,14 +10,18 @@ import {
 	Space,
 	Steps,
 } from 'antd';
+import { Button as SignozButton } from '@signozhq/ui/button';
+import { toast } from '@signozhq/ui/sonner';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
 import { DOCS_BASE_URL } from 'constants/app';
+import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { useGetGlobalConfig } from 'api/generated/services/global';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { isEmpty } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { isModifierKeyPressed } from 'utils/app';
@@ -25,7 +29,7 @@ import { isModifierKeyPressed } from 'utils/app';
 import signozBrandLogoUrl from '@/assets/Logos/signoz-brand-logo.svg';
 
 import OnboardingIngestionDetails from '../IngestionDetails/IngestionDetails';
-import InviteTeamMembers from '../InviteTeamMembers/InviteTeamMembers';
+import InviteMembers from 'components/InviteMembers/InviteMembers';
 import onboardingConfigWithLinks from '../onboarding-configs/onboarding-config-with-links';
 
 import '../OnboardingV2.styles.scss';
@@ -117,6 +121,10 @@ const ONBOARDING_V3_ANALYTICS_EVENTS_MAP = {
 	GET_HELP_BUTTON_CLICKED: 'Get help clicked',
 	GET_EXPERT_ASSISTANCE_BUTTON_CLICKED: 'Get expert assistance clicked',
 	INVITE_TEAM_MEMBER_BUTTON_CLICKED: 'Invite team member clicked',
+	INVITE_TEAM_MEMBER_SEND_CLICKED: 'Send invites clicked',
+	INVITE_TEAM_MEMBER_SUCCESS: 'Invite team members success',
+	INVITE_TEAM_MEMBER_PARTIAL_SUCCESS: 'Invite team members partial success',
+	INVITE_TEAM_MEMBER_FAILED: 'Invite team members failed',
 	CLOSE_ONBOARDING_CLICKED: 'Close onboarding clicked',
 	DATA_SOURCE_REQUESTED: 'Datasource requested',
 	DATA_SOURCE_SEARCHED: 'Searched',
@@ -146,6 +154,7 @@ const allGroupedDataSources = groupDataSourcesByTags(
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function OnboardingAddDataSource(): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
+	const urlQuery = useUrlQuery();
 	const [groupedDataSources, setGroupedDataSources] = useState<{
 		[tag: string]: Entity[];
 	}>(allGroupedDataSources);
@@ -208,12 +217,58 @@ function OnboardingAddDataSource(): JSX.Element {
 		}, 100);
 	};
 
+	const getStartedSource = urlQuery.get(QueryParams.getStartedSource);
+	const getStartedSourceService = urlQuery.get(
+		QueryParams.getStartedSourceService,
+	);
+
 	useEffect(() => {
 		void logEvent(
 			`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.STARTED}`,
 			{},
 		);
 	}, []);
+
+	const orgName = org?.[0]?.displayName;
+
+	useEffect(() => {
+		if (!getStartedSource || selectedDataSource) {
+			return;
+		}
+
+		const matchingDataSource = onboardingConfigWithLinks.find(
+			(ds) => ds.dataSource === getStartedSource,
+		) as Entity | undefined;
+
+		if (!matchingDataSource) {
+			return;
+		}
+
+		setSelectedDataSource(matchingDataSource);
+		setHasMoreQuestions(false);
+		updateUrl(matchingDataSource.link || '', null);
+		setCurrentStep(2);
+		setSetupStepItems([
+			{
+				...setupStepItemsBase[0],
+				description: orgName || '',
+			},
+			{
+				...setupStepItemsBase[1],
+				description: matchingDataSource.label,
+			},
+			...setupStepItemsBase.slice(2),
+		]);
+
+		void logEvent(
+			`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.DATA_SOURCE_SELECTED}`,
+			{
+				dataSource: matchingDataSource.label,
+				source: 'query_param',
+			},
+		);
+		// oxlint-disable-next-line react-hooks/exhaustive-deps Ignore update url since it's not stable
+	}, [getStartedSource, orgName, selectedDataSource]);
 
 	const updateUrl = (url: string, selectedEnvironment: string | null): void => {
 		if (!url || url === '') {
@@ -230,6 +285,10 @@ function OnboardingAddDataSource(): JSX.Element {
 
 		if (selectedEnvironment) {
 			urlObj.searchParams.set('environment', selectedEnvironment);
+		}
+
+		if (getStartedSourceService) {
+			urlObj.searchParams.set('service', getStartedSourceService);
 		}
 
 		const ingestionUrl = globalConfig?.data?.ingestion_url;
@@ -1094,12 +1153,54 @@ function OnboardingAddDataSource(): JSX.Element {
 					destroyOnClose
 				>
 					<div className="invite-team-member-modal-content">
-						<InviteTeamMembers
-							isLoading={false}
-							teamMembers={null}
-							setTeamMembers={(): void => {}}
-							onNext={(): void => setShowInviteTeamMembersModal(false)}
-							onClose={(): void => setShowInviteTeamMembersModal(false)}
+						<InviteMembers
+							onSuccess={(): void => {
+								void logEvent(
+									`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INVITE_TEAM_MEMBER_SUCCESS}`,
+									{},
+								);
+								setShowInviteTeamMembersModal(false);
+
+								toast.success('Invites sent successfully', { position: 'top-center' });
+							}}
+							onPartialSuccess={(): void => {
+								void logEvent(
+									`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INVITE_TEAM_MEMBER_PARTIAL_SUCCESS}`,
+									{},
+								);
+							}}
+							onAllFailed={(): void => {
+								void logEvent(
+									`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INVITE_TEAM_MEMBER_FAILED}`,
+									{},
+								);
+							}}
+							renderFooter={({ submit, canSubmit, isSubmitting }): JSX.Element => (
+								<div className="invite-team-member-modal-footer">
+									<SignozButton
+										variant="solid"
+										color="secondary"
+										onClick={(): void => setShowInviteTeamMembersModal(false)}
+									>
+										Cancel
+									</SignozButton>
+									<SignozButton
+										variant="solid"
+										onClick={(): void => {
+											void logEvent(
+												`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INVITE_TEAM_MEMBER_SEND_CLICKED}`,
+												{},
+											);
+											void submit();
+										}}
+										disabled={!canSubmit}
+										loading={isSubmitting}
+										suffix={<ArrowRight size={14} />}
+									>
+										Send Invites
+									</SignozButton>
+								</div>
+							)}
 						/>
 					</div>
 				</Modal>

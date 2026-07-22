@@ -20,7 +20,7 @@ import { Globe, Inbox, SquarePen } from '@signozhq/icons';
 
 import AnnouncementsModal from './AnnouncementsModal';
 import FeedbackModal from './FeedbackModal';
-import ShareURLModal from './ShareURLModal';
+import ShareURLModal, { type ShareURLExtraOption } from './ShareURLModal';
 
 import './HeaderRightSection.styles.scss';
 import { Typography } from '@signozhq/ui/typography';
@@ -29,12 +29,15 @@ interface HeaderRightSectionProps {
 	enableAnnouncements: boolean;
 	enableShare: boolean;
 	enableFeedback: boolean;
+	/** Optional page-specific toggle for the share dialog (e.g. "Include variables"). */
+	shareModalExtraOption?: ShareURLExtraOption;
 }
 
 function HeaderRightSection({
 	enableAnnouncements,
 	enableShare,
 	enableFeedback,
+	shareModalExtraOption,
 }: HeaderRightSectionProps): JSX.Element | null {
 	const location = useLocation();
 
@@ -185,7 +188,7 @@ function HeaderRightSection({
 					rootClassName="header-section-popover-root"
 					className="shareable-link-popover"
 					placement="bottomRight"
-					content={<ShareURLModal />}
+					content={<ShareURLModal extraOption={shareModalExtraOption} />}
 					open={openShareURLModal}
 					destroyTooltipOnHide
 					arrow={false}

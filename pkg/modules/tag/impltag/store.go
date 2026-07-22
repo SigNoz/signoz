@@ -26,6 +26,7 @@ func (s *store) List(ctx context.Context, orgID valuer.UUID, kind coretypes.Kind
 		Model(&tags).
 		Where("org_id = ?", orgID).
 		Where("kind = ?", kind).
+		OrderExpr("lower(key) ASC, lower(value) ASC").
 		Scan(ctx)
 	if err != nil {
 		return nil, err
@@ -97,7 +98,7 @@ func (s *store) CreateOrGet(ctx context.Context, tags []*tagtypes.Tag) ([]*tagty
 		BunDBCtx(ctx).
 		NewInsert().
 		Model(&tags).
-		// On("CONFLICT (org_id, kind, (LOWER(key)), (LOWER(value))) DO UPDATE").
+		On("CONFLICT (org_id, kind, (LOWER(key)), (LOWER(value))) DO UPDATE").
 		Set("key = tag.key").
 		Returning("*").
 		Scan(ctx)

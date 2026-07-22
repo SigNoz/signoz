@@ -1,6 +1,6 @@
 services:
   init-clickhouse:
-    image: clickhouse/clickhouse-server:25.5.6
+    image: clickhouse/clickhouse-server:25.12.5
     container_name: init-clickhouse
     command:
       - bash
@@ -18,7 +18,7 @@ services:
     volumes:
       - ${PWD}/fs/tmp/var/lib/clickhouse/user_scripts/:/var/lib/clickhouse/user_scripts/
   clickhouse:
-    image: clickhouse/clickhouse-server:25.5.6
+    image: clickhouse/clickhouse-server:25.12.5
     container_name: clickhouse
     volumes:
       - ${PWD}/fs/etc/clickhouse-server/config.d/config.xml:/etc/clickhouse-server/config.d/config.xml
@@ -67,7 +67,7 @@ services:
       timeout: 5s
       retries: 3
   telemetrystore-migrator:
-    image: signoz/signoz-otel-collector:v0.142.0
+    image: signoz/signoz-otel-collector:v0.144.6
     container_name: telemetrystore-migrator
     environment:
       - SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_DSN=tcp://clickhouse:9000

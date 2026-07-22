@@ -23,10 +23,9 @@
 		"resolveJsonModule": true,
 		"isolatedModules": true,
 		"noEmit": true,
+		"incremental": true,
+		"tsBuildInfoFile": "./node_modules/.cache/ts/tsconfig.tsbuildinfo",
 		"paths": {
-			"*": [
-				"./src/*"
-			],
 			"@constants/*": [
 				"./src/container/OnboardingContainer/constants/*"
 			],
@@ -35,7 +34,32 @@
 			],
 			"test-mocks/*": [
 				"./__mocks__/*"
-			]
+			],
+			"api": ["./src/api"],
+			"AppRoutes": ["./src/AppRoutes"],
+			"ReactI18": ["./src/ReactI18"],
+			"store": ["./src/store"],
+			"styles.scss": ["./src/styles.scss"],
+			"api/*": ["./src/api/*"],
+			"AppRoutes/*": ["./src/AppRoutes/*"],
+			"assets/*": ["./src/assets/*"],
+			"components/*": ["./src/components/*"],
+			"constants/*": ["./src/constants/*"],
+			"container/*": ["./src/container/*"],
+			"hooks/*": ["./src/hooks/*"],
+			"lib/*": ["./src/lib/*"],
+			"mocks-server/*": ["./src/mocks-server/*"],
+			"modules/*": ["./src/modules/*"],
+			"pages/*": ["./src/pages/*"],
+			"parser/*": ["./src/parser/*"],
+			"periscope/*": ["./src/periscope/*"],
+			"providers/*": ["./src/providers/*"],
+			"schemas/*": ["./src/schemas/*"],
+			"store/*": ["./src/store/*"],
+			"__tests__/*": ["./src/__tests__/*"],
+			"tests/*": ["./src/tests/*"],
+			"types/*": ["./src/types/*"],
+			"utils/*": ["./src/utils/*"]
 		},
 		"plugins": [
 			{
@@ -52,18 +76,11 @@
 	],
 	"include": [
 		"./src",
-		"./src/**/*.ts",
-		"src/**/*.tsx",
-		"src/**/*.d.ts",
-		"babel.config.cjs",
-		"./jest.config.ts",
 		"./__mocks__",
-		"./conf/default.conf",
-		"./public",
-		"./commitlint.config.ts",
-		"./vite.config.ts",
+		"./babel.config.cjs",
+		"./jest.config.ts",
 		"./jest.setup.ts",
-		"./tests/**.ts",
-		"./**/*.d.ts"
+		"./vite.config.ts",
+		"./commitlint.config.ts"
 	]
 }

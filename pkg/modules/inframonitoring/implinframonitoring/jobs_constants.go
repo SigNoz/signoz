@@ -23,6 +23,8 @@ var jobNameGroupByKey = qbtypes.GroupByKey{
 // response to short-circuit cleanly when the phase metric is absent.
 var jobsTableMetricNamesList = []string{
 	"k8s.pod.phase",
+	"k8s.pod.status_reason",
+	"k8s.container.status.reason",
 	"k8s.pod.cpu.usage",
 	"k8s.pod.cpu_request_utilization",
 	"k8s.pod.cpu_limit_utilization",

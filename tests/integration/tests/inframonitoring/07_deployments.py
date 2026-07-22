@@ -10,24 +10,11 @@ import requests
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.fs import get_testdata_file_path
+from fixtures.inframonitoring import expected_status_counts
 from fixtures.metrics import Metrics
-from fixtures.querier import compare_values
+from fixtures.querier import compare_values, get_all_warnings
 
 ENDPOINT = "/api/v2/infra_monitoring/deployments"
-
-# Required metrics for the v2 deployments endpoint
-# (pkg/modules/inframonitoring/implinframonitoring/deployments_constants.go:24-34).
-REQUIRED_METRICS = {
-    "k8s.pod.phase",
-    "k8s.pod.cpu.usage",
-    "k8s.pod.cpu_request_utilization",
-    "k8s.pod.cpu_limit_utilization",
-    "k8s.pod.memory.working_set",
-    "k8s.pod.memory_request_utilization",
-    "k8s.pod.memory_limit_utilization",
-    "k8s.deployment.desired",
-    "k8s.deployment.available",
-}
 
 
 def test_deployments_accuracy(
@@ -75,7 +62,8 @@ def test_deployments_accuracy(
     # Shape/contract.
     assert data["total"] == len(expected["records"])
     assert len(data["records"]) == len(expected["records"])
-    assert data["requiredMetricsCheck"]["missingMetrics"] == []
+    # Full data present -> no warnings surfaced.
+    assert get_all_warnings(response.json()) == []
     assert data["endTimeBeforeRetention"] is False
     assert {r["deploymentName"] for r in data["records"]} == set(exp_by_name.keys())
 
@@ -123,38 +111,89 @@ def test_deployments_accuracy(
         assert record["podCountsByPhase"] == exp["podCountsByPhase"]
 
 
-def test_deployments_missing_metrics(
+@pytest.mark.parametrize(
+    "case",
+    [
+        # Scenario 1: required metrics were never ingested. Post-#11754 the querier
+        # drops them (no hard error), so the endpoint returns 200 with the deployment
+        # that DOES have data; never-seen columns are the -1 sentinel + a
+        # "have never been received" warning. No formulas; pod- and deployment-level
+        # metrics each map to one column.
+        pytest.param(
+            {
+                "dataset": "deployments_missing_metrics.jsonl",  # seeds only k8s.pod.cpu.usage
+                "body": {"filter": {"expression": "k8s.deployment.name = 'miss-dep'"}},
+                "warn_substrings": ["never been received"],
+                "warn_names": [
+                    "k8s.pod.memory.working_set",
+                    "k8s.deployment.desired",
+                    "k8s.deployment.available",
+                ],
+                "data_fields": ["deploymentCPU"],
+                "no_data_fields": [
+                    "deploymentCPURequest",
+                    "deploymentCPULimit",
+                    "deploymentMemory",
+                    "deploymentMemoryRequest",
+                    "deploymentMemoryLimit",
+                    "desiredPods",
+                    "availablePods",
+                ],
+            },
+            id="metric_never_seen",
+        ),
+    ],
+)
+def test_deployments_warnings(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
+    case: dict,
 ) -> None:
-    """Seed only k8s.pod.cpu.usage; assert other 8 required metrics flagged missing."""
+    """A never-ingested metric surfaces a non-blocking warning (200 + data), not a
+    hard error: the endpoint returns the entity that DOES have data and the
+    never-seen columns carry the -1 sentinel. (The generic never-seen
+    (metric, key)-pair-via-groupBy warning is entity-agnostic and is exercised
+    once, for hosts, in 01_hosts.py.)"""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/deployments_missing_metrics.jsonl"),
+            get_testdata_file_path(f"inframonitoring/{case['dataset']}"),
             base_time=now - timedelta(minutes=4),
         )
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    body: dict = {
+        "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+        "end": int(now.timestamp() * 1000),
+        "limit": 50,
+    }
+    body.update(case["body"])
+
     response = requests.post(
         signoz.self.host_configs["8080"].get(ENDPOINT),
         headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-        },
+        json=body,
         timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
+    warnings = get_all_warnings(response.json())
 
-    assert set(data["requiredMetricsCheck"]["missingMetrics"]) == (REQUIRED_METRICS - {"k8s.pod.cpu.usage"})
-    assert data["records"] == []
-    assert data["total"] == 0
+    for substr in case["warn_substrings"]:
+        assert any(substr in w["message"] for w in warnings), f"{substr!r} not surfaced: {warnings!r}"
+    for name in case["warn_names"]:
+        assert any(name in w["message"] for w in warnings), f"{name!r} not surfaced: {warnings!r}"
+
+    assert len(data["records"]) >= 1, f"expected at least one record: {data!r}"
+    if case["data_fields"] or case["no_data_fields"]:
+        record = data["records"][0]
+        for field in case["data_fields"]:
+            assert record[field] != -1, f"expected {field} populated, got {record[field]}"
+        for field in case["no_data_fields"]:
+            assert record[field] == -1, f"expected {field} == -1 sentinel, got {record[field]}"
 
 
 @pytest.mark.parametrize(
@@ -203,6 +242,7 @@ def test_deployments_missing_metrics(
             {"web-a-prod", "web-b-prod"},
             id="in_contains",
         ),
+        pytest.param("k8s.deployment.namee = 'web-a-prod'", set(), id="unresolved_key"),
     ],
 )
 def test_deployments_filter(
@@ -262,7 +302,6 @@ def test_deployments_filter(
 @pytest.mark.parametrize(
     "expression,err_substr",
     [
-        pytest.param("k8s.deployment.namee = 'web-a-prod'", "k8s.deployment.namee", id="bad_attr_name"),
         pytest.param("k8s.deployment.name =", None, id="trailing_op"),
         pytest.param("(k8s.deployment.name = 'web-a-prod'", None, id="unclosed_paren"),
     ],
@@ -275,8 +314,8 @@ def test_deployments_filter_invalid(
     expression: str,
     err_substr,
 ) -> None:
-    """Invalid filter expressions (typo'd attribute key, malformed grammar) return
-    400 invalid_input with structured errors; bad attribute keys are named in them."""
+    """Malformed filter grammar (trailing operator, unclosed paren) returns
+    400 invalid_input with structured errors."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -345,6 +384,49 @@ def test_deployments_pod_phase_aggregation(
         "failed": 2,
         "unknown": 0,
     }
+
+
+def test_deployments_pod_status_aggregation(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+) -> None:
+    """Deployment's pods aggregated by kubectl-style display status. Seeded states
+    in deployments_pod_phases.jsonl -> what kubectl would show:
+      pp-run-1/3/4 Running, pp-run-2 CrashLoopBackOff (phase Running),
+      pp-fail-1 Error, pp-fail-2 Evicted (pod-level), pp-pen-1 Pending.
+    """
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/deployments_pod_phases.jsonl"),
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": "k8s.deployment.name = 'pp-dep'"},
+        },
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()["data"]
+    assert data["total"] == 1
+    rec = data["records"][0]
+    assert rec["deploymentName"] == "pp-dep"
+    assert rec["podCountsByStatus"] == expected_status_counts(running=3, crashLoopBackOff=1, error=1, evicted=1, pending=1)
+    # Phase counts unchanged by the status enrichment.
+    assert rec["podCountsByPhase"] == {"pending": 1, "running": 4, "succeeded": 0, "failed": 2, "unknown": 0}
+    # All status metrics present -> gate satisfied -> no status warning.
+    assert all("Pod status could not be computed" not in w["message"] for w in get_all_warnings(response.json()))
 
 
 def test_deployments_desired_available_counts(

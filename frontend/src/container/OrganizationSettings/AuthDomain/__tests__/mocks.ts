@@ -75,12 +75,12 @@ export const mockDomainWithRoleMapping: AuthtypesGettableAuthDomainDTO = {
 			samlCert: 'MOCK_CERTIFICATE',
 		},
 		roleMapping: {
-			defaultRole: 'EDITOR',
+			defaultRole: 'signoz-editor',
 			useRoleAttribute: false,
 			groupMappings: {
-				'admin-group': 'ADMIN',
-				'dev-team': 'EDITOR',
-				viewers: 'VIEWER',
+				'admin-group': 'signoz-admin',
+				'dev-team': 'signoz-editor',
+				viewers: 'signoz-viewer',
 			},
 		},
 	},
@@ -103,7 +103,7 @@ export const mockDomainWithDirectRoleAttribute: AuthtypesGettableAuthDomainDTO =
 				clientSecret: 'direct-role-client-secret',
 			},
 			roleMapping: {
-				defaultRole: 'VIEWER',
+				defaultRole: 'signoz-viewer',
 				useRoleAttribute: true,
 			},
 		},

@@ -7,8 +7,12 @@ import { CircleAlert, Trash2 } from '@signozhq/icons';
 import { toast } from '@signozhq/ui/sonner';
 import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
-import deleteDashboard from 'api/v1/dashboards/id/delete';
-import { invalidateListDashboardsV2 } from 'api/generated/services/dashboard';
+import logEvent from 'api/common/logEvent';
+import {
+	deleteDashboardV2,
+	invalidateListDashboardsForUserV2,
+} from 'api/generated/services/dashboard';
+import { DashboardListEvents } from 'pages/DashboardsListPageV2/constants/events';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
@@ -21,6 +25,9 @@ interface Props {
 	dashboardName: string;
 	createdBy: string;
 	isLocked: boolean;
+	// Delete sits below the other actions, so it leads with a divider. When it's
+	// the only item (a legacy dashboard), the divider is suppressed.
+	showDivider?: boolean;
 }
 
 function DeleteActionItem({
@@ -28,6 +35,7 @@ function DeleteActionItem({
 	dashboardName,
 	createdBy,
 	isLocked,
+	showDivider = true,
 }: Props): JSX.Element {
 	const { t } = useTranslation(['dashboard']);
 	const { user } = useAppContext();
@@ -39,12 +47,16 @@ function DeleteActionItem({
 	const isDisabled = isLocked || (user.role === USER_ROLES.VIEWER && !isAuthor);
 
 	const { mutate: runDelete } = useMutation({
-		mutationFn: () => deleteDashboard({ id: dashboardId }),
+		mutationFn: () => deleteDashboardV2({ id: dashboardId }),
 		onSuccess: async () => {
 			toast.success(
 				t('dashboard:delete_dashboard_success', { name: dashboardName }),
 			);
-			await invalidateListDashboardsV2(queryClient);
+			void logEvent(DashboardListEvents.RowAction, {
+				action: 'delete',
+				dashboardId,
+			});
+			await invalidateListDashboardsForUserV2(queryClient);
 		},
 		onError: (error: APIError) => {
 			showErrorModal(error);
@@ -52,7 +64,7 @@ function DeleteActionItem({
 	});
 
 	const openConfirm = useCallback((): void => {
-		const { destroy } = modal.confirm({
+		modal.confirm({
 			title: (
 				<Typography.Title level={5}>
 					Are you sure you want to delete the
@@ -70,12 +82,16 @@ function DeleteActionItem({
 				/>
 			),
 			okText: 'Delete',
-			okButtonProps: {
-				danger: true,
+			okButtonProps: { danger: true },
+			// Returning a promise keeps the Delete button in a loading state and blocks
+			// re-clicks until the mutation settles, then closes the confirm.
+			onOk: () =>
+				new Promise<void>((resolve) => {
+					runDelete(undefined, { onSettled: () => resolve() });
+				}),
+			cancelButtonProps: {
 				onClick: (e): void => {
-					e.preventDefault();
 					e.stopPropagation();
-					runDelete(undefined, { onSettled: () => destroy() });
 				},
 			},
 			centered: true,
@@ -94,25 +110,27 @@ function DeleteActionItem({
 
 	return (
 		<>
-			<Divider />
+			{showDivider && <Divider />}
 			<Tooltip placement="left" title={tooltip}>
-				<Button
-					variant="ghost"
-					color="destructive"
-					className={styles.menuItem}
-					prefix={<Trash2 size={14} />}
-					disabled={isDisabled}
-					onClick={(e): void => {
-						e.preventDefault();
-						e.stopPropagation();
-						if (!isDisabled) {
-							openConfirm();
-						}
-					}}
-					testId="dashboard-action-delete"
-				>
-					Delete Dashboard
-				</Button>
+				<span className={styles.menuItemWrap}>
+					<Button
+						variant="ghost"
+						color="destructive"
+						className={styles.menuItem}
+						prefix={<Trash2 size={14} />}
+						disabled={isDisabled}
+						onClick={(e): void => {
+							e.preventDefault();
+							e.stopPropagation();
+							if (!isDisabled) {
+								openConfirm();
+							}
+						}}
+						testId="dashboard-action-delete"
+					>
+						Delete Dashboard
+					</Button>
+				</span>
 			</Tooltip>
 			{contextHolder}
 		</>

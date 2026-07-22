@@ -19,6 +19,7 @@ func buildJobRecords(
 	groupBy []qbtypes.GroupByKey,
 	metadataMap map[string]map[string]string,
 	phaseCounts map[string]podPhaseCounts,
+	podStatusCounts map[string]podStatusCounts,
 ) []inframonitoringtypes.JobRecord {
 	metricsMap := parseFullQueryResponse(resp, groupBy)
 
@@ -85,6 +86,10 @@ func buildJobRecords(
 			}
 		}
 
+		if podStatusCountsForGroup, ok := podStatusCounts[compositeKey]; ok {
+			record.PodCountsByStatus = podStatusCountsToResponse(podStatusCountsForGroup)
+		}
+
 		if attrs, ok := metadataMap[compositeKey]; ok {
 			for k, v := range attrs {
 				record.Meta[k] = v
@@ -148,12 +153,12 @@ func (m *module) getTopJobGroups(
 	return paginateWithBackfill(allMetricGroups, metadataMap, req.GroupBy, req.Offset, req.Limit), nil
 }
 
-func (m *module) getJobsTableMetadata(ctx context.Context, req *inframonitoringtypes.PostableJobs) (map[string]map[string]string, error) {
+func (m *module) getJobsTableMetadata(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableJobs) (map[string]map[string]string, error) {
 	var nonGroupByAttrs []string
 	for _, key := range jobAttrKeysForMetadata {
 		if !isKeyInGroupByAttrs(req.GroupBy, key) {
 			nonGroupByAttrs = append(nonGroupByAttrs, key)
 		}
 	}
-	return m.getMetadata(ctx, jobsTableMetricNamesList, req.GroupBy, nonGroupByAttrs, req.Filter, req.Start, req.End)
+	return m.getMetadata(ctx, orgID, jobsTableMetricNamesList, req.GroupBy, nonGroupByAttrs, req.Filter, req.Start, req.End)
 }

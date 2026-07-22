@@ -1,145 +1,205 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Plus } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
-import { Typography } from '@signozhq/ui/typography';
+import { toast } from '@signozhq/ui/sonner';
+import logEvent from 'api/common/logEvent';
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
+import cx from 'classnames';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 
+import settingsStyles from '../DashboardSettings.module.scss';
+import { useOptimisticPatch } from '../../hooks/useOptimisticPatch';
 import { useDashboardStore } from '../../store/useDashboardStore';
-import { useSaveVariables } from './useSaveVariables';
+import {
+	buildApplyVariableToPanelsPatch,
+	getPanelIdsReferencingVariable,
+} from './utils/applyVariableToPanelsPatch';
+import { useSaveVariables } from './hooks/useSaveVariables';
+import { useVariableListActions } from './hooks/useVariableListActions';
 import { dtoToFormModel } from './variableAdapters';
 import {
 	emptyVariableFormModel,
 	type VariableFormModel,
-} from './variableModel';
+} from './variableFormModel';
 import VariableForm from './VariableForm/VariableForm';
-import VariablesList from './VariablesList';
+import VariableImpactDialog from './VariableImpactDialog/VariableImpactDialog';
+import VariablesList from './components/VariablesList/VariablesList';
 import styles from './Variables.module.scss';
+import AddVariableButton from './components/AddVariableButton';
+import ApplyToAllDialog from './components/ApplyToAllDialog/ApplyToAllDialog';
+import NoVariablesCard from './components/NoVariablesCard/NoVariablesCard';
+import { EditingState } from './types';
 
 interface VariablesSettingsProps {
 	dashboard: DashboardtypesGettableDashboardV2DTO;
 }
 
-/** `null` index = adding a new variable; a number = editing that row. */
-type EditingState = { index: number | null } | null;
-
 function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 	const isEditable = useDashboardStore((s) => s.isEditable);
-	const { save, isSaving } = useSaveVariables();
-
-	const initialModels = useMemo(
-		() => (dashboard.spec?.variables ?? []).map(dtoToFormModel),
-		[dashboard.spec?.variables],
+	const dashboardId = useDashboardStore((s) => s.dashboardId);
+	// The drawer destroys on close, so reading this once on mount is enough to
+	// open the add-form when deep-linked (e.g. the bar's "Add variable" button).
+	const openAddOnMount = useDashboardStore(
+		(s) => s.settingsRequest?.addVariable ?? false,
 	);
-	const [variables, setVariables] = useState<VariableFormModel[]>(initialModels);
+	const { save, isSaving } = useSaveVariables();
+	const { patchAsync, isPatching } = useOptimisticPatch();
+
+	const initialFormModels = useMemo(
+		() => dashboard.spec.variables.map(dtoToFormModel),
+		[dashboard.spec.variables],
+	);
+	const [variables, setVariables] =
+		useState<VariableFormModel[]>(initialFormModels);
 
 	// Resync from the dashboard after a save round-trips (refetch bumps updatedAt).
 	useEffect(() => {
-		setVariables(initialModels);
+		setVariables(initialFormModels);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [dashboard.updatedAt]);
 
-	const [editing, setEditing] = useState<EditingState>(null);
-	const [confirmDeleteIndex, setConfirmDeleteIndex] = useState<number | null>(
-		null,
+	const [isEditing, setIsEditing] = useState<EditingState>(
+		openAddOnMount && isEditable ? { type: 'new' } : null,
 	);
+	const [applyToAllIndex, setApplyToAllIndex] = useState<number | null>(null);
 
-	const editingModel: VariableFormModel | null = useMemo(() => {
-		if (!editing) {
+	const {
+		confirmDeleteIndex,
+		setConfirmDeleteIndex,
+		impact,
+		setImpact,
+		handleFormSave,
+		handleMove,
+		requestDelete,
+		handleConfirmDelete,
+		handleImpactConfirm,
+	} = useVariableListActions({
+		dashboard,
+		variables,
+		setVariables,
+		isEditing,
+		setIsEditing,
+		save,
+		patchAsync,
+	});
+
+	const editingFormModel: VariableFormModel | null = useMemo(() => {
+		if (!isEditing) {
 			return null;
 		}
-		return editing.index === null
+		return isEditing.type === 'new'
 			? emptyVariableFormModel()
-			: variables[editing.index];
-	}, [editing, variables]);
+			: variables[isEditing.index];
+	}, [isEditing, variables]);
 
-	const existingNames = useMemo(() => {
-		const self = editing?.index ?? null;
-		return variables.filter((_, i) => i !== self).map((v) => v.name);
-	}, [variables, editing]);
+	const siblings = useMemo(() => {
+		const self = isEditing?.type === 'edit' ? isEditing.index : null;
+		return variables.filter((_, i) => i !== self);
+	}, [variables, isEditing]);
 
-	const persist = (next: VariableFormModel[]): void => {
-		setVariables(next);
-		void save(next);
-	};
+	const panelOptions = useMemo(
+		() =>
+			Object.entries(dashboard.spec.panels ?? {}).map(([id, panel]) => ({
+				value: id,
+				label: panel.spec?.display?.name || id,
+			})),
+		[dashboard.spec.panels],
+	);
 
-	const handleFormSave = (model: VariableFormModel): void => {
-		const next = [...variables];
-		if (editing?.index == null) {
-			next.push(model);
-		} else {
-			next[editing.index] = model;
+	// Panels the edited variable is already applied to — pre-checks the picker.
+	const appliedPanelIds = useMemo(() => {
+		if (!editingFormModel || editingFormModel.type !== 'DYNAMIC') {
+			return [];
 		}
-		setEditing(null);
-		persist(next);
-	};
+		return getPanelIdsReferencingVariable(
+			dashboard.spec.panels,
+			editingFormModel.dynamicAttribute,
+			editingFormModel.name,
+		);
+	}, [editingFormModel, dashboard.spec.panels]);
 
-	const handleMove = (from: number, to: number): void => {
-		if (to < 0 || to >= variables.length) {
+	const applyToAllVariable =
+		applyToAllIndex === null ? null : variables[applyToAllIndex];
+
+	const handleConfirmApplyToAll = async (): Promise<void> => {
+		if (!applyToAllVariable) {
 			return;
 		}
-		const next = [...variables];
-		const [moved] = next.splice(from, 1);
-		next.splice(to, 0, moved);
-		persist(next);
+		const ops = buildApplyVariableToPanelsPatch(
+			dashboard.spec.panels,
+			applyToAllVariable.dynamicAttribute,
+			applyToAllVariable.name,
+		);
+		if (ops.length === 0) {
+			toast.info('No panels needed this filter.');
+			setApplyToAllIndex(null);
+			return;
+		}
+		try {
+			await patchAsync(ops);
+			toast.success(`Applied $${applyToAllVariable.name} to all panels`);
+			void logEvent(DashboardDetailEvents.ApplyToAllConfirmed, {
+				variableType: 'dynamic',
+				dashboardId,
+			});
+		} catch {
+			toast.error('Could not apply the variable to panels');
+		}
+		setApplyToAllIndex(null);
 	};
 
-	const handleConfirmDelete = (index: number): void => {
-		persist(variables.filter((_, i) => i !== index));
-		setConfirmDeleteIndex(null);
-	};
-
-	// Detail view — edit/new form replaces the list in place (no modal).
-	if (editingModel) {
+	if (editingFormModel) {
 		return (
 			<VariableForm
-				initial={editingModel}
-				existingNames={existingNames}
+				initial={editingFormModel}
+				siblings={siblings}
+				isNew={isEditing?.type === 'new'}
 				isSaving={isSaving}
-				onClose={(): void => setEditing(null)}
+				panelOptions={panelOptions}
+				appliedPanelIds={appliedPanelIds}
+				onClose={(): void => setIsEditing(null)}
 				onSave={handleFormSave}
 			/>
 		);
 	}
 
-	// Master view — the variables list.
 	return (
-		<div className={styles.container}>
-			<div className={styles.header}>
-				<div className={styles.titleRow}>
-					<Typography.Text className={styles.title}>Variables</Typography.Text>
-					<Typography.Text className={styles.subtitle}>
-						Define variables to parameterize panel queries.
-					</Typography.Text>
-				</div>
-				{isEditable ? (
-					<Button
-						variant="solid"
-						color="primary"
-						prefix={<Plus size={14} />}
-						onClick={(): void => setEditing({ index: null })}
-						testId="add-variable"
-					>
-						New variable
-					</Button>
-				) : null}
-			</div>
-
+		<div className={cx(styles.container, settingsStyles.settingsCard)}>
 			{variables.length === 0 ? (
-				<div className={styles.empty}>
-					<Typography.Text>No variables defined yet.</Typography.Text>
-				</div>
+				<NoVariablesCard isEditable={isEditable} setIsEditing={setIsEditing} />
 			) : (
-				<VariablesList
-					variables={variables}
-					canEdit={isEditable}
-					confirmingIndex={confirmDeleteIndex}
-					onEdit={(index): void => setEditing({ index })}
-					onRequestDelete={(index): void => setConfirmDeleteIndex(index)}
-					onConfirmDelete={handleConfirmDelete}
-					onCancelDelete={(): void => setConfirmDeleteIndex(null)}
-					onMove={handleMove}
-				/>
+				<>
+					<VariablesList
+						variables={variables}
+						canEdit={isEditable}
+						confirmingIndex={confirmDeleteIndex}
+						onEdit={(index): void => setIsEditing({ type: 'edit', index })}
+						onRequestDelete={requestDelete}
+						onConfirmDelete={handleConfirmDelete}
+						onCancelDelete={(): void => setConfirmDeleteIndex(null)}
+						onMove={handleMove}
+						onApplyToAll={(index): void => setApplyToAllIndex(index)}
+					/>
+					<div className={styles.footer}>
+						<AddVariableButton isEditable={isEditable} setIsEditing={setIsEditing} />
+					</div>
+				</>
 			)}
+			<ApplyToAllDialog
+				open={applyToAllVariable !== null}
+				variableName={applyToAllVariable?.name ?? ''}
+				isLoading={isPatching}
+				onConfirm={(): void => void handleConfirmApplyToAll()}
+				onClose={(): void => setApplyToAllIndex(null)}
+			/>
+			<VariableImpactDialog
+				open={impact !== null}
+				mode={impact?.mode ?? 'delete'}
+				variableName={impact?.variableName ?? ''}
+				newName={impact?.newName}
+				usages={impact?.usages ?? []}
+				isLoading={isPatching}
+				onConfirm={(resolved): void => void handleImpactConfirm(resolved)}
+				onClose={(): void => setImpact(null)}
+			/>
 		</div>
 	);
 }

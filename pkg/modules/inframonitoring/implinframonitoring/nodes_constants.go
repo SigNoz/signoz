@@ -26,6 +26,8 @@ var nodesTableMetricNamesList = []string{
 	"k8s.node.allocatable_memory",
 	"k8s.node.condition_ready",
 	"k8s.pod.phase",
+	"k8s.pod.status_reason",
+	"k8s.container.status.reason",
 }
 
 var nodeAttrKeysForMetadata = []string{

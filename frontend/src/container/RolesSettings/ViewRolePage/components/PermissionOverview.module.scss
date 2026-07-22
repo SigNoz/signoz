@@ -1,0 +1,21 @@
+.container {
+	display: flex;
+	flex-direction: column;
+	padding-bottom: var(--spacing-8);
+}
+
+.collapseAction {
+	display: flex;
+	justify-content: flex-start;
+	padding-bottom: var(--spacing-4);
+}
+
+.grid {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-10);
+}
+
+.errorText {
+	padding: var(--spacing-4);
+}

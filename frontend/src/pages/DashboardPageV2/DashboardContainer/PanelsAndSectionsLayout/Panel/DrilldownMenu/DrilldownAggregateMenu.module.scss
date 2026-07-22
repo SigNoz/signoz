@@ -1,0 +1,10 @@
+.signal {
+	text-transform: capitalize;
+}
+
+.label {
+	overflow: hidden;
+	font-weight: normal;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}

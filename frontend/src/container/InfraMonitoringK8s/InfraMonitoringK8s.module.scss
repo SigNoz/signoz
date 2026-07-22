@@ -66,20 +66,6 @@
 		background: colox-mix(var(--accent-primary), var(--bg-vanilla-100), 20%);
 	}
 
-	:global(.ant-collapse-header) {
-		border-bottom: 1px solid var(--l1-border);
-		padding: 12px 8px;
-	}
-
-	:global(.ant-collapse-content-box) {
-		padding: 0 !important;
-		padding-block: 0 !important;
-
-		:global(.quick-filters .checkbox-filter) {
-			padding-left: 18px;
-		}
-	}
-
 	:global(.quick-filters) {
 		overflow-y: auto;
 		overflow-x: hidden;
@@ -109,22 +95,6 @@
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-}
-
-.quickFiltersCategoryLabel {
-	display: flex;
-	align-items: center;
-	gap: 4px;
-}
-
-.quickFiltersCategoryLabelIcon {
-	margin-right: 8px;
-}
-
-.quickFiltersCategoryLabelContainer {
-	display: flex;
-	align-items: center;
-	gap: 4px;
 }
 
 .listContainer {
@@ -159,4 +129,107 @@
 
 .listContainerFiltersVisible {
 	max-width: calc(100% - 280px);
+}
+
+.categorySelectorSection {
+	padding: var(--spacing-4);
+}
+
+.sectionHeader {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-4);
+	margin-bottom: var(--spacing-4);
+
+	&[data-type='filter'] {
+		padding: 0 var(--spacing-4);
+	}
+}
+
+.sectionLabel {
+	font-size: var(--periscope-font-size-small);
+	font-weight: var(--font-weight-semibold);
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	color: var(--l3-foreground);
+	white-space: nowrap;
+}
+
+.sectionLine {
+	flex: 1;
+	height: 1px;
+	background: var(--l1-border);
+}
+
+.categoryCard {
+	background: var(--l2-background);
+	border: 1px solid var(--l2-border);
+	border-radius: var(--spacing-3);
+	padding: var(--spacing-2);
+}
+
+.categoryList {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-1);
+}
+
+.categoryItem {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-5);
+	padding: var(--spacing-3) var(--spacing-4);
+	border: none;
+	border-radius: var(--spacing-2);
+	background: transparent;
+	cursor: pointer;
+	width: 100%;
+	text-align: left;
+	transition:
+		background-color 0.2s ease,
+		color 0.2s ease;
+	color: var(--l2-foreground);
+	font-size: var(--periscope-font-size-base);
+	--typography-color: var(--l1-foreground);
+
+	&:hover:not(.categoryItemSelected) {
+		background: var(--l2-background-hover);
+	}
+
+	svg {
+		color: var(--l3-foreground);
+		flex-shrink: 0;
+		transition: color 0.2s ease;
+	}
+
+	&.categoryItemSelected {
+		background: var(--accent-primary);
+		color: var(--l1-background);
+		font-weight: 600;
+
+		&:hover {
+			background: var(--accent-primary-hover, var(--accent-primary));
+		}
+
+		svg {
+			color: var(--l1-foreground);
+		}
+	}
+}
+
+.quickFiltersSection {
+	flex: 1;
+	overflow-y: auto;
+
+	&::-webkit-scrollbar {
+		width: 0.1rem;
+	}
+
+	&::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	&::-webkit-scrollbar-thumb {
+		background: var(--accent-primary);
+	}
 }

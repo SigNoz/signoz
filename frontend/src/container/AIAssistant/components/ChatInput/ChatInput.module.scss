@@ -377,9 +377,63 @@
 }
 
 .contextPopoverEmpty {
+	// Fill the entity panel so the state sits centred in the dead space rather
+	// than clinging to the top-left corner.
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 10px;
+	padding: 24px 20px;
+	text-align: center;
 	font-size: 12px;
 	color: var(--l3-foreground);
-	padding: 10px 8px;
+}
+
+.contextPopoverEmptyIcon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	// `--empty-accent` is set per category on the root (robin/cherry/forest).
+	color: var(--empty-accent);
+	background: color-mix(in srgb, var(--empty-accent), transparent 88%);
+	border-radius: var(--radius-2);
+}
+
+.contextPopoverEmptyTitle {
+	margin: 0;
+	max-width: 280px;
+	color: var(--l2-foreground);
+	font-size: 13px;
+	font-weight: 600;
+	line-height: 1.4;
+	// Clamp to 2 lines with an ellipsis so a long query can't blow out the
+	// popover height. The CTA below is a stock DS link button, so the query is
+	// kept readable here rather than forcing the button to wrap.
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	overflow-wrap: anywhere;
+}
+
+.contextPopoverEmptyCta {
+	max-width: 100%;
+}
+
+.contextPopoverEmptyCtaLabel {
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	overflow-wrap: anywhere;
+	text-align: center;
 }
 
 .micBtn {

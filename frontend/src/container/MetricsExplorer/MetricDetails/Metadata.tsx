@@ -237,9 +237,6 @@ function Metadata({
 	const handleSave = useCallback(() => {
 		updateMetricMetadata(
 			{
-				pathParams: {
-					metricName,
-				},
 				data: transformUpdateMetricMetadataRequest(metricName, metricMetadataState),
 			},
 			{

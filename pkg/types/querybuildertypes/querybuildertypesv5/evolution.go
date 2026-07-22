@@ -19,6 +19,9 @@ import (
 //   - For each column, includes its evolution if it's >= latest base evolution and <= tsEndTime
 //   - Results are sorted by ReleaseTime descending (newest first)
 func SelectEvolutionsForColumns(columns []*schema.Column, evolutions []*telemetrytypes.EvolutionEntry, tsStart, tsEnd uint64) ([]*schema.Column, []*telemetrytypes.EvolutionEntry, error) {
+	if len(evolutions) == 0 {
+		return columns, nil, nil
+	}
 
 	sortedEvolutions := make([]*telemetrytypes.EvolutionEntry, len(evolutions))
 	copy(sortedEvolutions, evolutions)

@@ -140,3 +140,20 @@ jobs:
         run: |
           go run cmd/enterprise/*.go generate config web-settings
           git diff --compact-summary --exit-code || (echo; echo "Unexpected difference in web settings schema. Run go run cmd/enterprise/*.go generate config web-settings locally and commit."; exit 1)
+  transaction-groups:
+    if: |
+      github.event_name == 'merge_group' ||
+      (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
+      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
+    runs-on: ubuntu-latest
+    steps:
+      - name: self-checkout
+        uses: actions/checkout@v4
+      - name: go-install
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+      - name: generate-transaction-groups
+        run: |
+          go run cmd/enterprise/*.go generate config transaction-groups
+          git diff --compact-summary --exit-code || (echo; echo "Unexpected difference in transaction groups schema. Run go run cmd/enterprise/*.go generate config transaction-groups locally and commit."; exit 1)

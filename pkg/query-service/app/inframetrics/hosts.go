@@ -130,7 +130,7 @@ func NewHostsRepo(reader interfaces.Reader, querierV2 interfaces.Querier) *Hosts
 	return &HostsRepo{reader: reader, querierV2: querierV2}
 }
 
-func (h *HostsRepo) GetHostAttributeKeys(ctx context.Context, req v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
+func (h *HostsRepo) GetHostAttributeKeys(ctx context.Context, orgID valuer.UUID, req v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
 	// TODO(srikanthccv): remove hardcoded metric name and support keys from any system metric
 	req.DataSource = v3.DataSourceMetrics
 	req.AggregateAttribute = metricToUseForHostAttributes
@@ -138,7 +138,7 @@ func (h *HostsRepo) GetHostAttributeKeys(ctx context.Context, req v3.FilterAttri
 		req.Limit = 50
 	}
 
-	attributeKeysResponse, err := h.reader.GetMetricAttributeKeys(ctx, &req)
+	attributeKeysResponse, err := h.reader.GetMetricAttributeKeys(ctx, orgID, &req)
 	if err != nil {
 		return nil, err
 	}
@@ -156,14 +156,14 @@ func (h *HostsRepo) GetHostAttributeKeys(ctx context.Context, req v3.FilterAttri
 	return &v3.FilterAttributeKeyResponse{AttributeKeys: filteredKeys}, nil
 }
 
-func (h *HostsRepo) GetHostAttributeValues(ctx context.Context, req v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
+func (h *HostsRepo) GetHostAttributeValues(ctx context.Context, orgID valuer.UUID, req v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
 	req.DataSource = v3.DataSourceMetrics
 	req.AggregateAttribute = metricToUseForHostAttributes
 	if req.Limit == 0 {
 		req.Limit = 50
 	}
 
-	attributeValuesResponse, err := h.reader.GetMetricAttributeValues(ctx, &req)
+	attributeValuesResponse, err := h.reader.GetMetricAttributeValues(ctx, orgID, &req)
 	if err != nil {
 		return nil, err
 	}

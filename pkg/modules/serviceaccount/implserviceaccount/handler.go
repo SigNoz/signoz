@@ -15,10 +15,11 @@ import (
 
 type handler struct {
 	module serviceaccount.Module
+	getter serviceaccount.Getter
 }
 
-func NewHandler(module serviceaccount.Module) serviceaccount.Handler {
-	return &handler{module: module}
+func NewHandler(module serviceaccount.Module, getter serviceaccount.Getter) serviceaccount.Handler {
+	return &handler{module: module, getter: getter}
 }
 
 func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
@@ -227,13 +228,13 @@ func (handler *handler) SetRole(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := new(serviceaccounttypes.PostableServiceAccountRole)
+	req := new(serviceaccounttypes.DeprecatedPostableServiceAccountRole)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	err = handler.module.SetRole(ctx, valuer.MustNewUUID(claims.OrgID), id, req.ID)
+	_, err = handler.module.SetRole(ctx, valuer.MustNewUUID(claims.OrgID), id, req.ID)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -263,6 +264,81 @@ func (handler *handler) DeleteRole(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	err = handler.module.DeleteRole(ctx, valuer.MustNewUUID(claims.OrgID), id, roleID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusNoContent, nil)
+}
+
+func (handler *handler) CreateServiceAccountRole(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	req := new(serviceaccounttypes.PostableServiceAccountRole)
+	if err := binding.JSON.BindBody(r.Body, req); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	serviceAccountRole, err := handler.module.SetRole(ctx, valuer.MustNewUUID(claims.OrgID), req.ServiceAccountID, req.RoleID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusCreated, types.Identifiable{ID: serviceAccountRole.ID})
+}
+
+func (handler *handler) GetServiceAccountRole(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	id, err := valuer.NewUUID(mux.Vars(r)["id"])
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	serviceAccountRole, err := handler.getter.GetServiceAccountRole(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, serviceAccountRole)
+}
+
+func (handler *handler) DeleteServiceAccountRole(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	id, err := valuer.NewUUID(mux.Vars(r)["id"])
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	serviceAccountRole, err := handler.getter.GetServiceAccountRole(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	err = handler.module.DeleteRole(ctx, valuer.MustNewUUID(claims.OrgID), serviceAccountRole.ServiceAccountID, serviceAccountRole.RoleID)
 	if err != nil {
 		render.Error(rw, err)
 		return

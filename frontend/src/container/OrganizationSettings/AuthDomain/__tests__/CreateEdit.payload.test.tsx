@@ -9,6 +9,7 @@ import {
 	mockUpdateSuccessResponse,
 } from './mocks';
 
+// TODO: https://github.com/SigNoz/platform-pod/issues/2602
 // The real @signozhq/ui/button has internal effects that prevent form.validateFields()
 // from resolving inside act(). Mirror the pattern from SSOEnforcementToggle.test.tsx
 // which mocks @signozhq/ui/switch for the same reason.

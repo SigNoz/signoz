@@ -1,0 +1,32 @@
+.trigger {
+	display: flex;
+	width: 32px;
+	min-width: 32px;
+	height: 32px;
+	padding: 6px;
+	justify-content: center;
+	align-items: center;
+	background: var(--l3-background);
+
+	// icon-only trigger: drop the dropdown chevron, keep just the selected icon
+	svg {
+		display: none;
+	}
+}
+
+.options {
+	min-width: min-content;
+}
+
+.item {
+	width: min-content;
+
+	span {
+		vertical-align: middle;
+	}
+}
+
+.image {
+	height: 16px;
+	width: 16px;
+}

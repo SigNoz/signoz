@@ -1,158 +1,190 @@
 <p align="center">
-  <img src="https://res.cloudinary.com/dcv3epinx/image/upload/v1618904450/signoz-images/LogoGithub_sigfbu.svg" alt="SigNoz-logo" width="240" />
-
-  <p align="center">Monitore seus aplicativos e solucione problemas em seus aplicativos implantados, uma alternativa de código aberto para soluções como DataDog, New Relic, entre outras.</p>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/readme-assets/signoz-hero-dark.png" width="900">
+    <source media="(prefers-color-scheme: light)" srcset="docs/readme-assets/signoz-hero-light.png" width="900">
+    <img alt="SigNoz - Observabilidade nos seus termos, baseada em padrões abertos." src="docs/readme-assets/signoz-hero-light.png" width="900">
+  </picture>
 </p>
 
 <p align="center">
-    <img alt="Downloads" src="https://img.shields.io/docker/pulls/signoz/frontend?label=Downloads"> </a>
-    <img alt="GitHub issues" src="https://img.shields.io/github/issues/signoz/signoz"> </a>
-    <a href="https://twitter.com/intent/tweet?text=Monitor%20your%20applications%20and%20troubleshoot%20problems%20with%20SigNoz,%20an%20open-source%20alternative%20to%20DataDog,%20NewRelic.&url=https://signoz.io/&via=SigNozHQ&hashtags=opensource,signoz,observability"> 
-        <img alt="tweet" src="https://img.shields.io/twitter/url/http/shields.io.svg?style=social"> </a> 
+  <a href="README.md">English</a> ·
+  <a href="README.zh-cn.md">中文</a> ·
+  <a href="README.de-de.md">Deutsch</a>
 </p>
-  
-  
-<h3 align="center">
-  <a href="https://signoz.io/docs"><b>Documentação</b></a> &bull;
-  <a href="https://signoz.io/slack"><b>Comunidade no Slack</b></a> &bull;
-  <a href="https://twitter.com/SigNozHq"><b>Twitter</b></a>
-</h3>
 
-##
+<p align="center">
+  <a href="https://github.com/SigNoz/signoz/issues"><img alt="GitHub issues" src="https://img.shields.io/github/issues/SigNoz/signoz"></a>
+  <a href="https://github.com/SigNoz/signoz/releases"><img alt="GitHub release" src="https://img.shields.io/github/v/release/SigNoz/signoz?label=release"></a>
+  <a href="https://signoz.io/slack"><img alt="Slack community" src="https://img.shields.io/badge/slack-community-4A154B?logo=slack&logoColor=white"></a>
+  <a href="https://www.linkedin.com/company/signozio/"><img alt="LinkedIn" src="https://img.shields.io/badge/linkedin-SigNoz-0A66C2?logo=linkedin&logoColor=white"></a>
+  <a href="https://twitter.com/intent/tweet?text=Monitor%20your%20applications%20and%20troubleshoot%20problems%20with%20SigNoz,%20an%20open-source%20alternative%20to%20DataDog,%20NewRelic.&url=https://signoz.io/&via=SigNozHQ&hashtags=opensource,signoz,observability"><img alt="Tweet" src="https://img.shields.io/twitter/url/http/shields.io.svg?style=social"></a>
+</p>
 
-SigNoz auxilia os desenvolvedores a monitorarem aplicativos e solucionar problemas em seus aplicativos implantados. SigNoz usa rastreamento distribuído para obter visibilidade em sua pilha de software. 
+SigNoz é uma plataforma de observabilidade open-source construída sobre OpenTelemetry. Estamos criando uma alternativa de nível empresarial a stacks de monitoramento fragmentadas, com logs, métricas, traces, alertas e dashboards em um só lugar.
 
-👉 Você pode verificar métricas como latência p99, taxas de erro em seus serviços, requisições às APIs externas e endpoints individuais.
+### Escolha como executar o SigNoz
 
-👉 Você pode encontrar a causa raiz do problema acessando os rastreamentos exatos que estão causando o problema e verificar os quadros detalhados de cada requisição individual.
+#### SigNoz Cloud (recomendado)
 
-👉 Execute agregações em dados de rastreamento para obter métricas de negócios relevantes.
+SigNoz totalmente gerenciado, com teste gratuito de 30 dias, sem cartão de crédito, preço baseado em uso a partir de US$ 49 e hospedagem de dados por região.
 
+[**Comece gratuitamente →**](https://signoz.io/teams/)
 
-![SigNoz Feature](https://signoz-public.s3.us-east-2.amazonaws.com/signoz_hero_github.png)
+#### Enterprise
 
-<br /><br />
+Enterprise Cloud, BYOC ou Enterprise Self-Hosted com compliance, suporte, retenção personalizada, RBAC, controles de ingestão, residência de dados e seleção de região.
 
-<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/Contributing.svg" width="50px" />
+[**Conheça o Enterprise →**](https://signoz.io/enterprise/)
 
-## Junte-se à nossa comunidade no Slack 
+#### Community
 
-Venha dizer oi para nós no [Slack](https://signoz.io/slack) 👋
+SigNoz open-source gratuito, executado na sua própria infraestrutura. Faça o deploy com Docker, Kubernetes ou Linux e mantenha controle total sobre o seu plano de dados.
 
-<br /><br />
+[**Instale o SigNoz →**](https://signoz.io/docs/install/self-host/)
 
-<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/Features.svg" width="50px" />
+### O que você pode monitorar?
 
-## Funções:
+O SigNoz ajuda equipes a depurar problemas de produção mais rapidamente ao conectar logs, métricas, traces, alertas, dashboards, exceções e fluxos agent-native em um só lugar.
 
-- Métricas de visão geral do aplicativo, como RPS, latências de percentual 50/90/99 e taxa de erro
-- Endpoints mais lentos em seu aplicativo
-- Visualize o rastreamento preciso de requisições de rede para descobrir problemas em serviços downstream, consultas lentas de banco de dados, chamadas para serviços de terceiros, como gateways de pagamento, etc. 
-- Filtre os rastreamentos por nome de serviço, operação, latência, erro, tags / anotações.
-- Execute agregações em dados de rastreamento (eventos / extensões) para obter métricas de negócios relevantes, como por exemplo, você pode obter a taxa de erro e a latência do 99º percentil de `customer_type: gold` or `deployment_version: v2` or `external_call: paypal`
-- Interface de Usuário unificada para métricas e rastreios. Não há necessidade de mudar de Prometheus para Jaeger para depurar problemas.
+#### Visão geral de APM
 
-<br /><br />
+Monitore latência de serviço, taxa de erro, throughput, Apdex, principais endpoints, chamadas ao banco de dados e chamadas externas.
 
-<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/WhatsCool.svg" width="50px" />
+<p align="center">
+  <img alt="Dashboard de APM do SigNoz mostrando latência, throughput, Apdex e operações principais" src="docs/readme-assets/monitor/apm.png" width="900">
+</p>
 
-## Por que escolher SigNoz?
+Saiba mais: [documentação de APM](https://signoz.io/docs/instrumentation/overview/)
 
-Sendo desenvolvedores, achamos irritante contar com fornecedores de SaaS de código fechado para cada pequeno recurso que queríamos. Fornecedores de código fechado costumam surpreendê-lo com enormes contas no final do mês de uso sem qualquer transparência .
+#### Gerenciamento de logs
 
-Queríamos fazer uma versão auto-hospedada e de código aberto de ferramentas como DataDog, NewRelic para empresas que têm preocupações com privacidade e segurança em ter dados de clientes indo para serviços de terceiros. 
+Ingira, pesquise, agregue e correlacione logs com traces e métricas usando um construtor visual de consultas.
 
-Ser open source também oferece controle completo de sua configuração, amostragem e tempos de atividade. Você também pode construir módulos sobre o SigNoz para estender recursos específicos do negócio.
+<p align="center">
+  <img alt="Explorador de logs do SigNoz com filtros, gráfico de frequência e linhas de log" src="docs/readme-assets/monitor/log-management.svg" width="900">
+</p>
 
-### Linguagens Suportadas:
+Saiba mais: [documentação de gerenciamento de logs](https://signoz.io/docs/logs-management/overview/)
 
-Nós apoiamos a biblioteca [OpenTelemetry](https://opentelemetry.io) como a biblioteca que você pode usar para instrumentar seus aplicativos. Em outras palavras, SigNoz oferece suporte a qualquer framework e linguagem que suporte a biblioteca OpenTelemetry. As principais linguagens suportadas incluem: 
+#### Métricas e dashboards
 
-- Java
-- Python
-- NodeJS
-- Go
+Crie dashboards para métricas de aplicação, infraestrutura e métricas personalizadas usando Query Builder, PromQL ou ClickHouse SQL.
 
-Você pode encontrar a lista completa de linguagens aqui - https://opentelemetry.io/docs/
+<p align="center">
+  <img alt="Dashboard de métricas de host do SigNoz com gráficos de carga do sistema e rede" src="docs/readme-assets/monitor/metrics.png" width="900">
+</p>
 
-<br /><br />
+Saiba mais: [documentação de métricas](https://signoz.io/docs/metrics-management/overview/)
 
-<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/Philosophy.svg" width="50px" />
+#### Monitoramento de infraestrutura
 
-## Iniciando
-  
-  
-### Implantar usando Docker
+Monitore clusters Kubernetes, pods, nodes, workloads e CPU, memória, disco, rede, logs e traces em nível de host.
 
-Siga as etapas listadas [aqui](https://signoz.io/docs/install/docker/) para instalar usando o Docker.
+<p align="center">
+  <img alt="Dashboard de infraestrutura Kubernetes do SigNoz com métricas de pods e nodes" src="docs/readme-assets/monitor/infrastructure.png" width="900">
+</p>
 
-Esse [guia para solução de problemas](https://signoz.io/docs/install/troubleshooting/) pode ser útil se você enfrentar quaisquer problemas. 
+Saiba mais: [documentação de monitoramento de infraestrutura](https://signoz.io/docs/infrastructure-monitoring/overview/)
 
-<p>&nbsp  </p>
-  
-  
-### Implentar no Kubernetes usando Helm
+#### Observabilidade de LLM e AI
 
-Siga as etapas listadas [aqui](https://signoz.io/docs/deployment/helm_chart) para instalar usando helm charts.
-  
+Rastreie apps LLM, pipelines RAG, prompts, chamadas de ferramentas, tokens, latência e custos junto com telemetria de aplicação e infraestrutura.
 
-<br /><br />
+<p align="center">
+  <img alt="Dashboard de observabilidade de LLM do SigNoz para traces, uso de tokens, latência e custos" src="docs/readme-assets/monitor/llm.png" width="900">
+</p>
 
-<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/UseSigNoz.svg" width="50px" />
+Saiba mais: [documentação de observabilidade de LLM](https://signoz.io/docs/llm-observability/)
 
-## Comparações com ferramentas similares 
+#### Observabilidade agent-native e MCP
 
-### SigNoz ou Prometheus
+Use o servidor MCP do SigNoz para levar telemetria aos agentes de programação, ou use o Noz dentro do SigNoz para investigar incidentes, ajustar alertas e criar dashboards com contexto de produção. O [Noz](https://signoz.io/docs/ai/noz/) está disponível apenas no SigNoz Cloud.
 
-Prometheus é bom se você quiser apenas fazer métricas. Mas se você quiser ter uma experiência perfeita entre métricas e rastreamentos, a experiência atual de unir Prometheus e Jaeger não é ótima.
+<p align="center">
+  <img alt="Interface Noz do SigNoz ao lado de um fluxo agent via MCP" src="docs/readme-assets/monitor/agent-native.png" width="900">
+</p>
 
-Nosso objetivo é fornecer uma interface do usuário integrada entre métricas e rastreamentos - semelhante ao que fornecedores de SaaS como o Datadog fornecem - e fornecer filtragem e agregação avançada sobre rastreamentos, algo que a Jaeger atualmente carece. 
+Saiba mais: [documentação do servidor MCP do SigNoz](https://signoz.io/docs/ai/signoz-mcp-server/) · [documentação de agent skills](https://signoz.io/docs/ai/agent-skills/#install-the-plugin)
 
-<p>&nbsp  </p>
+#### Tracing distribuído
 
-### SigNoz ou Jaeger
+Acompanhe requisições entre serviços com flamegraphs, waterfalls, eventos de span, filtros e análise de traces.
 
-Jaeger só faz rastreamento distribuído. SigNoz faz métricas e rastreia, e também temos gerenciamento de log em nossos planos.
+<p align="center">
+  <img alt="Visualização de tracing distribuído do SigNoz com flamegraph e spans em waterfall" src="docs/readme-assets/monitor/distributed-tracing.png" width="900">
+</p>
 
-Além disso, SigNoz tem alguns recursos mais avançados do que Jaeger:
+Saiba mais: [documentação de tracing distribuído](https://signoz.io/docs/instrumentation/)
 
-- A interface de usuário do Jaegar não mostra nenhuma métrica em traces ou em traces filtrados
-- Jaeger não pode obter agregados em rastros filtrados. Por exemplo, latência p99 de solicitações que possuem tag - customer_type='premium'. Isso pode ser feito facilmente com SigNoz.
+#### Trace Funnels
 
-<br /><br />
+Crie funis a partir de traces para entender quedas no fluxo de requisições, transições com falha e problemas sistêmicos de workflow.
 
-<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/Contributors.svg" width="50px" />
+<p align="center">
+  <img alt="Trace Funnels do SigNoz mostrando quedas no fluxo de requisições e transições com falha" src="docs/readme-assets/monitor/trace-funnels.png" width="900">
+</p>
+
+Saiba mais: [documentação de Trace Funnels](https://signoz.io/docs/trace-funnels/overview/)
+
+Também monitore: [**exceções**](https://signoz.io/docs/userguide/exceptions/), [**alertas**](https://signoz.io/docs/alerts/), [**APIs externas**](https://signoz.io/docs/external-api-monitoring/overview/) e [**integrações**](https://signoz.io/docs/integrations/integrations-list/) para OpenTelemetry, Prometheus, Kubernetes, provedores de nuvem, SDKs de linguagem, frameworks de aplicação, bancos de dados e ferramentas de LLM.
+
+### Por que equipes usam o SigNoz
+
+1. **Nativo em OpenTelemetry**<br>
+   Instrumente uma vez com padrões abertos e mantenha a posse da sua telemetria.
+2. **Sinais correlacionados**<br>
+   Vá de gráficos de serviço para traces, logs, métricas de infraestrutura e exceções sem trocar de ferramenta.
+3. **Um único banco de dados colunar**<br>
+   Construído para workloads de observabilidade de alto volume e alta cardinalidade.
+4. **Preço previsível**<br>
+   Sem cobrança por host, sem cobrança por usuário e sem preço especial para métricas personalizadas.
+5. **Pronto para enterprise**<br>
+   Compliance SOC 2 Type II e HIPAA, RBAC, controles de ingestão, retenção personalizada, suporte, BYOC e self-hosting.
+
+### Primeiros passos
+
+#### Comece na Cloud
+
+Crie um workspace gerenciado do SigNoz e obtenha seu primeiro dashboard sem operar infraestrutura de observabilidade.
+
+[**Comece gratuitamente no SigNoz Cloud**](https://signoz.io/teams/)
+
+#### Self-host SigNoz
+
+Execute o SigNoz na sua própria infraestrutura com Foundry, Docker, Kubernetes ou Linux.
+
+[**Foundry**](https://github.com/SigNoz/foundry) · [**Docker**](https://signoz.io/docs/install/docker/) · [**Kubernetes**](https://signoz.io/docs/install/kubernetes/) · [**Linux**](https://signoz.io/docs/install/linux/)
+
+#### Envie dados
+
+Instrumente aplicações e infraestrutura com OpenTelemetry, Prometheus, SDKs de linguagem e integrações.
+
+[**Instrumentação**](https://signoz.io/docs/instrumentation/) · [**Integrações**](https://signoz.io/docs/integrations/integrations-list/)
+
+### Comparações com ferramentas conhecidas
+
+O SigNoz é frequentemente adotado por equipes que estão migrando de ferramentas de propósito único ou plataformas comerciais com preços imprevisíveis.
+
+**Prometheus**<br>
+Bom se você precisa apenas de métricas. O SigNoz mantém métricas, logs, traces, dashboards e alertas juntos para que equipes possam depurar com contexto correlacionado.
+
+**Jaeger**<br>
+Jaeger faz apenas tracing distribuído. O SigNoz adiciona métricas, logs, análise de traces, dashboards, alertas, exceções e fluxos de trace para log.
+
+**Elastic**<br>
+O SigNoz usa banco de dados colunar para análises de observabilidade eficientes e workloads de logs de alta cardinalidade, com 50% menos necessidade de recursos em comparação ao Elastic durante a ingestão. Confira o [estudo detalhado](https://signoz.io/blog/logs-performance-benchmark/?utm_source=github-readme&utm_medium=logs-benchmark).
+
+**Loki**<br>
+No benchmark vinculado, o SigNoz indexou todas as chaves na configuração de teste, enquanto o Loki atingiu erros de max streams ao adicionar mais labels. Confira o [estudo detalhado](https://signoz.io/blog/logs-performance-benchmark/?utm_source=github-readme&utm_medium=logs-benchmark).
 
 ## Contribuindo
 
+Adoramos contribuições grandes ou pequenas. Leia [CONTRIBUTING.md](CONTRIBUTING.md) para começar a contribuir com o SigNoz.
 
-Nós ❤️ contribuições grandes ou pequenas. Leia [CONTRIBUTING.md](CONTRIBUTING.md) para começar a fazer contribuições para o SigNoz. 
+Não sabe como começar? **Fale conosco no `#contributing` na nossa [comunidade Slack](https://signoz.io/slack).**
 
-Não sabe como começar? Basta enviar um sinal para nós no canal `#contributing` em nossa [comunidade no Slack.](https://signoz.io/slack)
-
-<br /><br />
-
-<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/DevelopingLocally.svg" width="50px" />
-
-## Documentação
-
-Você pode encontrar a documentação em https://signoz.io/docs/. Se você tiver alguma dúvida ou sentir falta de algo, sinta-se à vontade para criar uma issue com a tag `documentation` no GitHub ou entre em contato conosco no canal da comunidade no Slack.
-
-<br /><br />
-
-<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/Contributing.svg" width="50px" />
-
-## Comunidade
-
-Junte-se a [comunidade no Slack](https://signoz.io/slack) para saber mais sobre rastreamento distribuído, observabilidade ou SigNoz e para se conectar com outros usuários e colaboradores. 
-
-Se você tiver alguma ideia, pergunta ou feedback, compartilhe em nosso [Github Discussões](https://github.com/SigNoz/signoz/discussions)
-
-Como sempre, obrigado aos nossos incríveis colaboradores! 
+Como sempre, obrigado aos nossos incríveis contribuidores!
 
 <a href="https://github.com/signoz/signoz/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=signoz/signoz" />
+  <img alt="Contribuidores do SigNoz" src="https://contrib.rocks/image?repo=signoz/signoz" />
 </a>
-
-
-

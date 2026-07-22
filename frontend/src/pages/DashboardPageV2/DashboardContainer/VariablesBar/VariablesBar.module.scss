@@ -1,0 +1,99 @@
+// Block (not flex) so the strip wraps around the floated time selector: one line
+// beside it when collapsed, and — via `.stripExpanded`'s `clear: both` — dropping
+// full-width below it when expanded. A flex `.bar` would be a BFC that sits beside
+// the float and makes the child strip's `clear` inert.
+.bar {
+	min-width: 0;
+}
+
+.strip {
+	display: flow-root;
+	// Collapsed: one line only, so the trailing add "+" never wraps below.
+	white-space: nowrap;
+}
+
+.stripExpanded {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	gap: 8px;
+	padding-top: 12px;
+	overflow: visible;
+	white-space: normal;
+	clear: both;
+
+	.variableSlot,
+	.moreButton,
+	.addSlot {
+		margin: 0;
+	}
+
+	@media (prefers-reduced-motion: no-preference) {
+		animation: variablesExpandIn 200ms ease-out;
+	}
+}
+
+@keyframes variablesExpandIn {
+	from {
+		opacity: 0;
+		transform: translateY(-6px);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.variableSlot {
+	display: inline-flex;
+	align-items: center;
+	margin-right: 8px;
+	vertical-align: bottom;
+}
+
+.variableSlotHidden {
+	display: none;
+}
+
+.moreButton {
+	display: inline-flex;
+	margin-right: 8px;
+	vertical-align: bottom;
+}
+
+.addSlot {
+	display: inline-flex;
+	vertical-align: bottom;
+}
+
+// Shared by the Text and value selectors: strips the antd control chrome so the
+// selector blends into the variable pill.
+.control {
+	width: 100%;
+	min-width: 120px;
+
+	:global(.ant-select-selector),
+	:global(.ant-input),
+	&:global(.ant-input) {
+		border: none !important;
+		background: transparent !important;
+		box-shadow: none !important;
+	}
+
+	// Keep the multi-select's tags on one line (paired with maxTagCount) so a
+	// selected value never wraps the control onto a second row.
+	:global(.ant-select-selection-overflow) {
+		flex-wrap: nowrap;
+	}
+}
+
+.overflowTooltip {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.overflowName {
+	font-weight: var(--font-weight-medium);
+}

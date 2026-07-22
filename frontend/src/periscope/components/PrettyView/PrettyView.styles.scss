@@ -12,8 +12,10 @@
 
 	&__search-input {
 		width: 100%;
-		border: 1px solid var(--l2-border) !important;
-		border-radius: 4px;
+		border: 0 !important;
+		border-top: 1px solid var(--l2-border) !important;
+		border-bottom: 1px solid var(--l2-border) !important;
+		border-radius: 0 !important;
 		font-family: 'SF Mono', 'Geist Mono', 'Fira Code', monospace !important;
 		font-size: 12px !important;
 		line-height: 18px !important;
@@ -22,6 +24,7 @@
 		box-shadow: none !important;
 
 		&:focus {
+			border: 1px solid var(--l2-border) !important;
 			border-color: var(--primary) !important;
 			outline: none !important;
 			box-shadow: none !important;
@@ -47,6 +50,9 @@
 	> ul,
 	&__pinned > ul {
 		padding-left: 0 !important;
+		// Clip the hover bleed to the panel width. `clip` (not `hidden`) does
+		// not create a scroll container, so the sticky search stays working.
+		overflow-x: clip;
 	}
 
 	// Force font on all tree elements
@@ -71,43 +77,85 @@
 		margin-right: 16px;
 	}
 
-	// Leaf node row — hover highlights only this row
+	// Leaf node row — full-width hover highlight
 	&__row {
-		border-radius: 2px;
 		display: flex !important;
 		align-items: baseline;
+		position: relative;
+		isolation: isolate; // own stacking context so ::before sits behind content, not the panel bg
 
-		&:hover {
-			background-color: var(--l3-background);
+		// Keep actions visible on hover, or while this row's menu is open
+		&:hover .pretty-view__actions,
+		&:has(> span [data-state='open']) .pretty-view__actions {
+			opacity: 1;
+		}
 
-			.pretty-view__actions {
-				opacity: 1;
-			}
+		// Edge-to-edge highlight, bled past indentation, clipped by `> ul`.
+		// Persists while this row's ... menu is open (the trigger stays in the
+		// row and carries data-state=open, even though the menu is portaled out).
+		&:hover::before,
+		&:has(> span [data-state='open'])::before {
+			content: '';
+			position: absolute;
+			inset: 0 -9999px;
+			background: var(--l3-background);
+			z-index: -1;
 		}
 
 		// Push actions to the right edge
 		> span {
 			flex: 1;
 		}
+
+		// Brighten the value text from its default grey to foreground-hover
+		// while the row is active (hover, or its ... menu open). !important
+		// overrides react-json-tree's per-type inline color on the value span.
+		&:hover > span,
+		&:has(> span [data-state='open']) > span {
+			color: var(--l1-foreground-hover) !important;
+		}
 	}
 
-	// Nested node (object/array) — hover only on the label line, not children
+	// Nested node (object/array) — full-width hover on the header line only
 	&__nested-row {
+		position: relative;
+		isolation: isolate;
+
 		> label,
 		> span:not(ul span) {
-			border-radius: 2px;
 			padding: 1px 2px;
 			display: inline !important; // keep item string inline with label
 		}
 
-		// Highlight label + item string on hover, show actions
-		&:hover > label,
-		&:hover > label + span {
-			background-color: var(--l3-background);
+		// Edge-to-edge highlight, capped to the header line so it doesn't
+		// cover the children this <li> contains. Persists while this row's own
+		// menu is open — `> span` scopes it so a child row's open menu (nested
+		// in `> ul`) doesn't light up this parent.
+		&:hover::before,
+		&:has(> span [data-state='open'])::before {
+			content: '';
+			position: absolute;
+			top: 0;
+			height: 20px; // 18px line-height + 2px top padding
+			left: -9999px;
+			right: -9999px;
+			background: var(--l3-background);
+			z-index: -1;
 		}
 
-		&:hover > label + span .pretty-view__actions {
+		&:hover > label + span .pretty-view__actions,
+		&:has(> span [data-state='open']) > label + span .pretty-view__actions {
 			opacity: 1;
+		}
+
+		// Push the ... to the right edge of the row instead of hugging the key.
+		// Absolute (not flex) so the arrow/label/children layout stays intact;
+		// the row <li> is position: relative (react-json-tree sets it inline).
+		.pretty-view__actions {
+			position: absolute;
+			top: 2px; // align with the header line (li padding-top)
+			right: 0;
+			height: 18px; // line-height — centers the icon (span is align-items: center)
 		}
 
 		// In nested rows, value-row should not take full width
@@ -172,6 +220,7 @@
 		display: inline-flex;
 		align-items: baseline;
 		gap: 6px;
+		padding-left: 6px !important;
 	}
 
 	&__pinned-icon {

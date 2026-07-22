@@ -28,6 +28,9 @@ export interface SpanRect {
 	width: number;
 	height: number;
 	level: number;
+	// Resting fill color for the current colour-by grouping. Optional: only the
+	// draw path sets it; consumers (e.g. the e2e colour-by hook) read it.
+	color?: string;
 }
 
 export interface EventRect {

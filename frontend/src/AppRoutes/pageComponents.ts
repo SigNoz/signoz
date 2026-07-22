@@ -57,13 +57,6 @@ export const TraceFilter = Loadable(
 	() => import(/* webpackChunkName: "Trace Filter Page" */ 'pages/Trace'),
 );
 
-export const TraceDetail = Loadable(
-	() =>
-		import(
-			/* webpackChunkName: "TraceDetail Page" */ 'pages/TraceDetailV2/index'
-		),
-);
-
 export const TraceDetailOldRedirect = Loadable(
 	() =>
 		import(
@@ -90,14 +83,6 @@ export const SettingsPage = Loadable(
 	() => import(/* webpackChunkName: "SettingsPage" */ 'pages/Settings'),
 );
 
-export const GettingStarted = Loadable(
-	() => import(/* webpackChunkName: "GettingStarted" */ 'pages/GettingStarted'),
-);
-
-export const Onboarding = Loadable(
-	() => import(/* webpackChunkName: "Onboarding" */ 'pages/OnboardingPage'),
-);
-
 export const OrgOnboarding = Loadable(
 	() => import(/* webpackChunkName: "OrgOnboarding" */ 'pages/OrgOnboarding'),
 );
@@ -120,6 +105,13 @@ export const DashboardPage = Loadable(
 export const DashboardWidget = Loadable(
 	() =>
 		import(/* webpackChunkName: "DashboardWidgetPage" */ 'pages/DashboardWidget'),
+);
+
+export const DashboardPanelEditorPage = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "DashboardPanelEditorPage" */ 'pages/DashboardPageV2/PanelEditorPage/PanelEditorPage'
+		),
 );
 
 export const EditRulesPage = Loadable(
@@ -328,5 +320,12 @@ export const AIAssistantPage = Loadable(
 	() =>
 		import(
 			/* webpackChunkName: "AI Assistant Page" */ 'pages/AIAssistantPage/AIAssistantPage'
+		),
+);
+
+export const LLMObservabilityPage = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "LLM Observability Page" */ 'pages/LLMObservability'
 		),
 );

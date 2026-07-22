@@ -1,10 +1,13 @@
 import { useCallback } from 'react';
+import logEvent from 'api/common/logEvent';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
+import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
 
-import { patchDashboardV2 } from 'api/generated/services/dashboard';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
-import { movePanelBetweenSectionsOps } from '../../../patchOps';
+import { useOptimisticPatch } from '../../../hooks/useOptimisticPatch';
+import { bottomRowSlot, movePanelBetweenSectionsOps } from '../../../patchOps';
 import { useDashboardStore } from '../../../store/useDashboardStore';
 import type { DashboardSection } from '../../../utils';
 
@@ -20,14 +23,14 @@ interface Params {
 
 /**
  * Relocates a panel's item ref from one section to another. The panel itself
- * stays in `spec.panels`; only the grid item moves, dropped into a free row at
- * the bottom of the target section. Persisted as one atomic patch.
+ * stays in `spec.panels`; only the grid item moves, dropped into a fresh row at
+ * the bottom of the target section (`bottomRowSlot`). Persisted as one atomic patch.
  */
 export function useMovePanelToSection({
 	sections,
 }: Params): (args: MovePanelArgs) => Promise<void> {
 	const dashboardId = useDashboardStore((s) => s.dashboardId);
-	const refetch = useDashboardStore((s) => s.refetch);
+	const { patchAsync } = useOptimisticPatch();
 	const { showErrorModal } = useErrorModal();
 
 	return useCallback(
@@ -52,16 +55,13 @@ export function useMovePanelToSection({
 			}
 
 			const sourceItems = source.items.filter((i) => i.id !== panelId);
-			// Place at a fresh row at the bottom of the target section.
-			const nextY = target.items.reduce(
-				(max, i) => Math.max(max, i.y + i.height),
-				0,
-			);
-			const targetItems = [...target.items, { ...moved, x: 0, y: nextY }];
+			// Land at the section bottom, not backfilled into a gap — least disruptive
+			// to the arrangement the user already made in the target section.
+			const { x, y } = bottomRowSlot(target.items);
+			const targetItems = [...target.items, { ...moved, x, y }];
 
 			try {
-				await patchDashboardV2(
-					{ id: dashboardId },
+				await patchAsync(
 					movePanelBetweenSectionsOps({
 						sourceIndex: fromLayoutIndex,
 						sourceItems,
@@ -69,11 +69,18 @@ export function useMovePanelToSection({
 						targetItems,
 					}),
 				);
-				refetch();
+				void logEvent(DashboardDetailEvents.PanelAction, {
+					action: 'move',
+					panelType: moved.panel
+						? PANEL_KIND_TO_PANEL_TYPE[moved.panel.spec.plugin.kind]
+						: undefined,
+					panelId,
+					dashboardId,
+				});
 			} catch (error) {
 				showErrorModal(error as APIError);
 			}
 		},
-		[sections, dashboardId, refetch, showErrorModal],
+		[sections, dashboardId, patchAsync, showErrorModal],
 	);
 }

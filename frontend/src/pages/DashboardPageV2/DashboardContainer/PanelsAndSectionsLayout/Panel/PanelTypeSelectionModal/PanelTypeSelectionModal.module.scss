@@ -1,22 +1,69 @@
+.panelTypeSection {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	align-items: center;
+}
+
 .grid {
+	align-self: stretch;
 	display: grid;
 	grid-template-columns: repeat(2, 1fr);
 	gap: 8px;
 }
 
-.typeButton {
+.panelTypeCard {
 	display: flex;
+	flex-direction: column;
 	align-items: center;
-	gap: 8px;
+	border: 1px solid var(--l2-border);
+	background: var(--l2-background);
 	padding: 12px;
-	background: var(--bg-ink-400, #0b0c0e);
-	border: 1px solid var(--l1-border);
+	gap: 12px;
+	cursor: pointer;
+	font: inherit;
 	border-radius: 4px;
 	color: var(--l1-foreground);
-	cursor: pointer;
-	text-align: left;
+	transition:
+		transform 180ms ease,
+		border-color 180ms ease;
 
 	&:hover {
-		border-color: var(--bg-robin-500);
+		background-color: var(--l2-background-hover);
+		border-color: var(--bg-robin-400);
 	}
+	&:active {
+		transform: translateY(2px);
+	}
+}
+
+.panelTypeCardSelected {
+	border-color: var(--bg-robin-400);
+	background-color: var(--l2-background-hover);
+	box-shadow: inset 0 0 0 1px var(--bg-robin-400);
+}
+
+.footerActions {
+	display: flex;
+	align-items: flex-end;
+	justify-content: flex-end;
+	gap: 8px;
+	width: 100%;
+}
+
+.footerPicker {
+	// Take all the width left over by the (natural-width) confirm button.
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	gap: 6px;
+	min-width: 0;
+}
+
+.pickerLabel {
+	color: var(--l3-foreground);
+	font-size: 11px;
+	font-weight: 500;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
 }

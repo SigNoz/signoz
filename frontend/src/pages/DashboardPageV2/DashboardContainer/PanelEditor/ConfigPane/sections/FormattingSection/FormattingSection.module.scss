@@ -1,0 +1,37 @@
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.unitSelector {
+	:global(.ant-select) {
+		width: 100%;
+	}
+}
+
+// Stacked per-column unit pickers; each column keeps the standard field layout.
+.columnUnits {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+
+	:global(.ant-select) {
+		width: 100%;
+	}
+}
+
+.columnUnitsHint {
+	font-size: 12px;
+	color: var(--l2-foreground);
+}
+
+.columnField {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 16px;
+}
+.columnUnitSelector {
+	flex: 1;
+}

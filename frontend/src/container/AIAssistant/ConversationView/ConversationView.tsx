@@ -177,7 +177,13 @@ export default function ConversationView({
 				conversationId={conversationId}
 				messages={messages}
 				isStreaming={isStreamingHere}
-				onSendSuggestedPrompt={(text): void => handleSend(text)}
+				onSendSuggestedPrompt={(text): void => {
+					handleSend(
+						text,
+						undefined,
+						autoContexts.length > 0 ? autoContexts : undefined,
+					);
+				}}
 			/>
 			{showDisclaimer && (
 				<div className={disclaimerClass} role="note" aria-live="polite">

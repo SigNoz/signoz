@@ -1,350 +1,230 @@
-import { useEffect, useState } from 'react';
-import { ArrowLeft, Check, X } from '@signozhq/icons';
-import { Badge } from '@signozhq/ui/badge';
+import { useRef, useState } from 'react';
+import { Check, X } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
-import { SelectSimple } from '@signozhq/ui/select';
-import { Switch } from '@signozhq/ui/switch';
+import { TabsContent, TabsRoot } from '@signozhq/ui/tabs';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
-// eslint-disable-next-line signoz/no-antd-components -- TextArea/Collapse/searchable Select: no @signozhq/ui equivalent
-import { Collapse, Input as AntdInput, Select } from 'antd';
-import { commaValuesParser } from 'lib/dashboardVariables/customCommaValuesParser';
-import sortValues from 'lib/dashboardVariables/sortVariableValues';
+// eslint-disable-next-line signoz/no-antd-components -- TextArea/Collapse: no @signozhq/ui equivalent
+import { Collapse, Input as AntdInput } from 'antd';
+import { CustomMultiSelect } from 'components/NewSelect';
 
-import {
-	VARIABLE_SORTS,
-	type VariableFormModel,
-	type VariableSort,
-	type VariableType,
-} from '../variableModel';
+import type { VariableType } from '../variableFormModel';
 import DynamicVariableFields from './DynamicVariableFields';
+import ListVariableFields from './ListVariableFields';
 import QueryVariableFields from './QueryVariableFields';
-import VariableTypeSelector from './VariableTypeSelector';
+import { useVariableForm } from './useVariableForm';
+import VariableTypeTabs from './VariableTypeTabs';
 import styles from './VariableForm.module.scss';
-
-const SORT_LABEL: Record<VariableSort, string> = {
-	DISABLED: 'Disabled',
-	ASC: 'Ascending',
-	DESC: 'Descending',
-};
-
-function getNameError(name: string, existingNames: string[]): string | null {
-	if (name === '') {
-		return 'Variable name is required';
-	}
-	if (/\s/.test(name)) {
-		return 'Variable name cannot contain whitespaces';
-	}
-	if (existingNames.includes(name)) {
-		return 'Variable name already exists';
-	}
-	return null;
-}
-
-interface VariableFormProps {
-	initial: VariableFormModel;
-	/** Names of the other variables, for uniqueness validation. */
-	existingNames: string[];
-	isSaving: boolean;
-	onClose: () => void;
-	onSave: (model: VariableFormModel) => void;
-}
+import BackToAllVariables from '../components/BackToAllVariables/BackToAllVariables';
+import { VariableFormProps } from '../types';
+import VariableInfoForm from '../components/VariableInfoForm/VariableInfoForm';
 
 /**
  * In-drawer variable editor reproducing the V1 VariableItem layout, built on
  * @signozhq components (antd kept only for the monaco editor, TextArea, Collapse
- * and searchable selects). Master→detail: renders in place of the list.
+ * and searchable selects). Master→detail: renders in place of the list. Form
+ * state/handlers live in {@link useVariableForm}; the shared list-type rows in
+ * {@link ListVariableFields}.
  */
 function VariableForm({
 	initial,
-	existingNames,
+	siblings,
+	isNew,
 	isSaving,
+	panelOptions,
+	appliedPanelIds,
 	onClose,
 	onSave,
 }: VariableFormProps): JSX.Element {
-	const [model, setModel] = useState<VariableFormModel>(initial);
-	const [previewValues, setPreviewValues] = useState<(string | number)[]>([]);
-	const [previewError, setPreviewError] = useState<string | null>(null);
-	const [defaultValue, setDefaultValue] = useState<string>(
-		((initial.defaultValue as { value?: string })?.value ?? '') as string,
-	);
+	// The "apply to panels" selection is transient form state, seeded from the
+	// panels that already reference this variable. Held in a ref so the save
+	// callback (owned by useVariableForm) reads the latest value.
+	const [selectedPanelIds, setSelectedPanelIds] =
+		useState<string[]>(appliedPanelIds);
+	const selectedPanelIdsRef = useRef(selectedPanelIds);
+	selectedPanelIdsRef.current = selectedPanelIds;
 
-	useEffect(() => {
-		setModel(initial);
-		setPreviewValues([]);
-		setPreviewError(null);
-		setDefaultValue(
-			((initial.defaultValue as { value?: string })?.value ?? '') as string,
-		);
-	}, [initial]);
+	const {
+		model,
+		set,
+		onNameChange,
+		selectType,
+		onCustomChange,
+		onDynamicChange,
+		setRawPreview,
+		previewValues,
+		previewError,
+		setPreviewError,
+		defaultValue,
+		setDefaultValue,
+		visibleNameError,
+		nameError,
+		attributeError,
+		cycleError,
+		isListType,
+		showAllOptionField,
+		payloadVariables,
+		handleSave,
+	} = useVariableForm({
+		initial,
+		siblings,
+		isNew,
+		onSave: (next): void => onSave(next, selectedPanelIdsRef.current),
+	});
 
-	const set = (patch: Partial<VariableFormModel>): void =>
-		setModel((prev) => ({ ...prev, ...patch }));
-
-	const selectType = (type: VariableType): void => {
-		set({ type });
-		setPreviewValues([]);
-		setPreviewError(null);
-	};
-
-	const onCustomChange = (value: string): void => {
-		set({ customValue: value });
-		setPreviewValues(
-			sortValues(commaValuesParser(value), model.sort) as (string | number)[],
-		);
-	};
-
-	const trimmedName = model.name.trim();
-	const nameError = getNameError(trimmedName, existingNames);
-
-	const isListType =
-		model.type === 'QUERY' || model.type === 'CUSTOM' || model.type === 'DYNAMIC';
-	const showAllOptionField = model.type === 'QUERY' || model.type === 'CUSTOM';
-
-	const handleSave = (): void => {
-		onSave({
-			...model,
-			name: trimmedName,
-			defaultValue: defaultValue ? { value: defaultValue } : undefined,
-		});
-	};
+	// Shared list rows (preview/sort/multi/default) for the list-type variables;
+	// rendered as a sibling inside each list-type panel. Only the active panel
+	// mounts (Tabs unmounts the rest), so reusing one element is safe.
+	const listFields = isListType ? (
+		<ListVariableFields
+			model={model}
+			onChange={set}
+			previewValues={previewValues}
+			previewError={previewError}
+			defaultValue={defaultValue}
+			onDefaultValueChange={setDefaultValue}
+			showAllOptionField={showAllOptionField}
+		/>
+	) : null;
 
 	return (
-		<>
-			<div className={styles.container}>
-				<div className={styles.allVariables}>
-					<Button
-						variant="ghost"
-						color="secondary"
-						className={styles.allVariablesBtn}
-						prefix={<ArrowLeft size={14} />}
-						onClick={onClose}
-						testId="variable-form-back"
-					>
-						All variables
-					</Button>
-				</div>
+		<div className={styles.container}>
+			<BackToAllVariables onClose={onClose} />
 
-				<div className={styles.content}>
-					{/* Name */}
-					<div className={cx(styles.row, styles.column)}>
-						<Typography.Text className={styles.label}>Name</Typography.Text>
-						<Input
-							className={styles.input}
-							value={model.name}
-							placeholder="Unique name of the variable"
-							onChange={(e): void => set({ name: e.target.value })}
-							testId="variable-name-input"
-						/>
-						{nameError ? (
-							<Typography.Text className={styles.errorText}>
-								{nameError}
-							</Typography.Text>
-						) : null}
-					</div>
+			<div className={styles.content}>
+				<VariableInfoForm
+					title={model.name}
+					description={model.description}
+					onTitleChange={onNameChange}
+					onDescriptionChange={(value): void => set({ description: value })}
+					visibleNameError={visibleNameError}
+				/>
 
-					{/* Description */}
-					<div className={cx(styles.row, styles.column)}>
-						<Typography.Text className={styles.label}>Description</Typography.Text>
-						<AntdInput.TextArea
-							className={styles.textarea}
-							value={model.description}
-							placeholder="Enter a description for the variable"
-							rows={3}
-							onChange={(e): void => set({ description: e.target.value })}
-							data-testid="variable-description-input"
-						/>
-					</div>
+				<TabsRoot
+					className={styles.typeSection}
+					value={model.type}
+					onValueChange={(next): void => selectType(next as VariableType)}
+				>
+					<VariableTypeTabs />
 
-					{/* Variable Type */}
-					<VariableTypeSelector value={model.type} onChange={selectType} />
-
-					{/* Type-specific body */}
-					{model.type === 'DYNAMIC' ? (
-						<DynamicVariableFields
-							attribute={model.dynamicAttribute}
-							signal={model.dynamicSignal}
-							onChange={(patch): void => set(patch)}
-							onPreview={setPreviewValues}
-						/>
-					) : null}
-
-					{model.type === 'QUERY' ? (
-						<QueryVariableFields
-							queryValue={model.queryValue}
-							sort={model.sort}
-							onChange={(queryValue): void => set({ queryValue })}
-							onPreview={setPreviewValues}
-							onError={setPreviewError}
-						/>
-					) : null}
-
-					{model.type === 'CUSTOM' ? (
-						<div className={cx(styles.row, styles.customSection)}>
-							<Collapse
-								collapsible="header"
-								rootClassName="custom-collapse"
-								defaultActiveKey={['1']}
-								items={[
-									{
-										key: '1',
-										label: 'Options',
-										children: (
-											<AntdInput.TextArea
-												value={model.customValue}
-												placeholder="Enter options separated by commas."
-												rootClassName="comma-input"
-												onChange={(e): void => onCustomChange(e.target.value)}
-												data-testid="variable-custom-input"
-											/>
-										),
-									},
-								]}
+					<TabsContent value="DYNAMIC" className={styles.typePanel}>
+						<div className={styles.typeContent}>
+							<DynamicVariableFields
+								attribute={model.dynamicAttribute}
+								signal={model.dynamicSignal}
+								onChange={onDynamicChange}
+								onPreview={setRawPreview}
+								attributeError={attributeError}
 							/>
-						</div>
-					) : null}
-
-					{model.type === 'TEXT' ? (
-						<div className={cx(styles.row, styles.textboxSection)}>
-							<div className={styles.labelContainer}>
-								<Typography.Text className={styles.label}>
-									Default Value
-								</Typography.Text>
-							</div>
-							<Input
-								className={styles.defaultInput}
-								value={model.textValue}
-								placeholder="Enter a default value (if any)..."
-								onChange={(e): void => set({ textValue: e.target.value })}
-								testId="variable-text-input"
-							/>
-						</div>
-					) : null}
-
-					{/* Shared rows for list-type variables */}
-					{isListType ? (
-						<>
-							<div className={cx(styles.row, styles.previewSection)}>
-								<Typography.Text className={styles.previewLabel}>
-									Preview of Values
-								</Typography.Text>
-								<div className={styles.previewValues}>
-									{previewError ? (
-										<Typography.Text className={styles.previewError}>
-											{previewError}
-										</Typography.Text>
-									) : (
-										previewValues.map((value, idx) => (
-											<Badge
-												// eslint-disable-next-line react/no-array-index-key -- preview values are display-only and may contain duplicates
-												key={`${value}-${idx}`}
-												color="vanilla"
-											>
-												{value.toString()}
-											</Badge>
-										))
-									)}
-								</div>
-							</div>
-
-							<div className={cx(styles.row, styles.sortSection)}>
+							{listFields}
+							<div className={styles.row}>
 								<div className={styles.labelContainer}>
-									<Typography.Text className={styles.label}>Sort Values</Typography.Text>
-								</div>
-								<SelectSimple
-									className={styles.sortSelect}
-									value={model.sort}
-									items={VARIABLE_SORTS.map((sort) => ({
-										label: SORT_LABEL[sort],
-										value: sort,
-									}))}
-									onChange={(value): void => set({ sort: value as VariableSort })}
-									testId="variable-sort-select"
-								/>
-							</div>
-
-							<div className={cx(styles.row, styles.multiSection)}>
-								<Typography.Text className={styles.rowLabel}>
-									Enable multiple values to be checked
-								</Typography.Text>
-								<Switch
-									value={model.multiSelect}
-									onChange={(checked): void => {
-										set({
-											multiSelect: checked,
-											showAllOption: checked ? model.showAllOption : false,
-										});
-									}}
-									testId="variable-multi-switch"
-								/>
-							</div>
-
-							{model.multiSelect && showAllOptionField ? (
-								<div className={cx(styles.row, styles.allOptionSection)}>
-									<Typography.Text className={styles.rowLabel}>
-										Include an option for ALL values
+									<Typography.Text className={styles.label}>
+										Apply to panels
 									</Typography.Text>
-									<Switch
-										value={model.showAllOption}
-										onChange={(checked): void => set({ showAllOption: checked })}
-										testId="variable-all-switch"
-									/>
 								</div>
-							) : null}
+								<CustomMultiSelect
+									placeholder="Select panels"
+									options={panelOptions}
+									value={selectedPanelIds}
+									onChange={(value): void => setSelectedPanelIds(value as string[])}
+									data-testid="variable-apply-panels"
+								/>
+							</div>
+						</div>
+					</TabsContent>
 
-							<div className={cx(styles.row, styles.defaultValueSection)}>
+					<TabsContent value="QUERY" className={styles.typePanel}>
+						<div className={styles.typeContent}>
+							<QueryVariableFields
+								queryValue={model.queryValue}
+								variables={payloadVariables}
+								onChange={(queryValue): void => set({ queryValue })}
+								onPreview={setRawPreview}
+								onError={setPreviewError}
+							/>
+							{listFields}
+						</div>
+					</TabsContent>
+
+					<TabsContent value="CUSTOM" className={styles.typePanel}>
+						<div className={styles.typeContent}>
+							<div className={cx(styles.row, styles.customSection)}>
+								<Collapse
+									collapsible="header"
+									rootClassName="custom-collapse"
+									defaultActiveKey={['1']}
+									items={[
+										{
+											key: '1',
+											label: 'Options',
+											children: (
+												<AntdInput.TextArea
+													value={model.customValue}
+													placeholder="Enter options separated by commas."
+													rootClassName="comma-input"
+													onChange={(e): void => onCustomChange(e.target.value)}
+													data-testid="variable-custom-input"
+												/>
+											),
+										},
+									]}
+								/>
+							</div>
+							{listFields}
+						</div>
+					</TabsContent>
+
+					<TabsContent value="TEXT" className={styles.typePanel}>
+						<div className={styles.typeContent}>
+							<div className={cx(styles.row, styles.textboxSection)}>
 								<div className={styles.labelContainer}>
 									<Typography.Text className={styles.label}>
 										Default Value
 									</Typography.Text>
-									<Typography.Text className={styles.defaultValueDesc}>
-										{model.type === 'QUERY'
-											? 'Click Test Run Query to see the values or add custom value'
-											: 'Select a value from the preview values or add custom value'}
-									</Typography.Text>
 								</div>
-								<Select
-									className={styles.searchSelect}
-									showSearch
-									allowClear
-									placeholder="Select a default value"
-									value={defaultValue || undefined}
-									onChange={(value): void => setDefaultValue(value ?? '')}
-									options={previewValues.map((value) => ({
-										label: value.toString(),
-										value: value.toString(),
-									}))}
-									data-testid="variable-default-select"
+								<Input
+									className={styles.defaultInput}
+									value={model.textValue}
+									placeholder="Enter a default value (if any)..."
+									onChange={(e): void => set({ textValue: e.target.value })}
+									testId="variable-text-input"
 								/>
 							</div>
-						</>
-					) : null}
+						</div>
+					</TabsContent>
+				</TabsRoot>
+
+				{cycleError ? (
+					<Typography.Text className={styles.errorText}>
+						{cycleError}
+					</Typography.Text>
+				) : null}
+
+				<div className={styles.actionButtons}>
+					<Button
+						variant="outlined"
+						color="secondary"
+						prefix={<X size={14} />}
+						onClick={onClose}
+					>
+						Discard
+					</Button>
+					<Button
+						variant="solid"
+						color="primary"
+						prefix={<Check size={14} />}
+						disabled={!!nameError || !!attributeError}
+						loading={isSaving}
+						onClick={handleSave}
+						testId="variable-save"
+					>
+						Save Variable
+					</Button>
 				</div>
 			</div>
-
-			<div className={styles.footer}>
-				<Button
-					variant="solid"
-					color="secondary"
-					prefix={<X size={14} />}
-					onClick={onClose}
-				>
-					Discard
-				</Button>
-				<Button
-					variant="solid"
-					color="primary"
-					prefix={<Check size={14} />}
-					disabled={!!nameError}
-					loading={isSaving}
-					onClick={handleSave}
-					testId="variable-save"
-				>
-					Save Variable
-				</Button>
-			</div>
-		</>
+		</div>
 	);
 }
 

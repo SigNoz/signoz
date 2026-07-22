@@ -25,7 +25,6 @@
 
 	.welcome {
 		color: var(--l1-foreground);
-		font-family: Inter;
 		font-size: 16px;
 		font-weight: 500;
 		line-height: 24px;
@@ -34,52 +33,56 @@
 
 	.welcomeInfo {
 		color: var(--l3-foreground);
-		font-family: Inter;
 		font-size: 13px;
 		font-weight: 400;
 		line-height: 18px;
 	}
 }
 
-.addPanel {
+.steps {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.step {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
 	gap: 16px;
 	padding: 16px;
-	border: 1px dashed var(--l1-border);
+	border: 1px dashed var(--l3-border);
 	border-radius: 6px;
 }
 
-.addPanelText {
+.stepText {
 	display: flex;
 	align-items: flex-start;
 	gap: 10px;
 
-	.icon {
+	.stepIcon {
 		height: 14px;
 		width: 14px;
 		margin-top: 2px;
+		flex: none;
 	}
 }
 
-.addPanelCopy {
+.stepCopy {
 	display: flex;
 	flex-direction: column;
 	gap: 2px;
 }
 
-.addPanelTitle {
+.stepTitle {
 	color: var(--l1-foreground);
-	font-family: Inter;
 	font-size: 14px;
 	font-weight: 500;
 	line-height: 20px;
 }
 
-.addPanelInfo {
+.stepInfo {
 	color: var(--l3-foreground);
-	font-family: Inter;
 	font-size: 13px;
 	font-weight: 400;
 	line-height: 18px;

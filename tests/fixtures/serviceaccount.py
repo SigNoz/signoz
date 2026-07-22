@@ -6,11 +6,20 @@ import requests
 
 from fixtures import types
 from fixtures.logger import setup_logger
-from fixtures.role import ROLES_BASE, find_role_by_name  # noqa: F401 — re-export for existing callers
 
 logger = setup_logger(__name__)
 
 SERVICE_ACCOUNT_BASE = "/api/v1/service_accounts"
+
+
+def find_role_by_name(signoz: types.SigNoz, token: str, name: str) -> str:
+    resp = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/roles"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert resp.status_code == HTTPStatus.OK, resp.text
+    return next(r["id"] for r in resp.json()["data"] if r["name"] == name)
 
 
 def create_service_account(signoz: types.SigNoz, token: str, name: str, role: str = "signoz-viewer") -> str:

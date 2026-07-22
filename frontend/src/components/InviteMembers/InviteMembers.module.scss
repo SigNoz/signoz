@@ -1,0 +1,163 @@
+.inviteMembers {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-8);
+	width: 100%;
+}
+
+.table {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+	width: 100%;
+}
+
+.header {
+	display: flex;
+	gap: var(--spacing-8);
+	align-items: center;
+	width: 100%;
+}
+
+.headerCellEmail {
+	flex: 1 1 0;
+	min-width: 0;
+}
+
+.headerCellRole {
+	flex: 0 0 160px;
+	width: 160px;
+}
+
+.headerCellAction {
+	flex: 0 0 32px;
+	width: 32px;
+}
+
+.rows {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-6);
+	width: 100%;
+}
+
+.row {
+	display: flex;
+	gap: var(--spacing-8);
+	align-items: flex-start;
+	width: 100%;
+}
+
+.cellEmail {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-2);
+	flex: 1 1 0;
+	min-width: 0;
+
+	--input-background: var(
+		--invite-members-field-background,
+		var(--l2-background)
+	);
+	--input-hover-background: var(
+		--invite-members-field-background,
+		var(--l2-background)
+	);
+	--input-focus-background: var(
+		--invite-members-field-background,
+		var(--l2-background)
+	);
+	--input-disabled-background: var(
+		--invite-members-field-background,
+		var(--l2-background)
+	);
+
+	input::placeholder {
+		color: var(--l3-foreground);
+	}
+}
+
+.cellRole {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-2);
+	flex: 0 0 160px;
+	width: 160px;
+
+	:global(.roles-single-select) {
+		width: 100%;
+
+		:global(.ant-select-selector) {
+			background-color: var(
+				--invite-members-field-background,
+				var(--l2-background)
+			) !important;
+		}
+	}
+}
+
+.cellAction {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-2);
+	flex: 0 0 32px;
+	width: 32px;
+	height: 32px;
+	align-items: center;
+	justify-content: center;
+}
+
+.errorText {
+	color: var(--danger-background);
+}
+
+.addRow {
+	display: flex;
+	justify-content: flex-start;
+	margin-top: var(--spacing-2);
+}
+
+.callout {
+	animation: shake 300ms ease-out;
+
+	&[data-type='success'] {
+		animation: none;
+	}
+}
+
+.results {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-2);
+}
+
+.resultsList {
+	margin: var(--spacing-2) 0 0 var(--spacing-8);
+	padding: 0;
+
+	li {
+		margin-bottom: var(--spacing-1);
+	}
+}
+
+@keyframes shake {
+	0% {
+		transform: translateX(0);
+	}
+
+	25% {
+		transform: translateX(5px);
+	}
+
+	50% {
+		transform: translateX(-5px);
+	}
+
+	75% {
+		transform: translateX(5px);
+	}
+
+	100% {
+		transform: translateX(0);
+	}
+}

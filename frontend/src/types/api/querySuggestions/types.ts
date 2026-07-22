@@ -28,6 +28,7 @@ export interface QueryKeyRequestProps {
 	fieldContext?: 'resource' | 'scope' | 'attribute' | 'span';
 	fieldDataType?: QUERY_BUILDER_KEY_TYPES;
 	metricName?: string;
+	metricNamespace?: string;
 	signalSource?: 'meter' | '';
 }
 

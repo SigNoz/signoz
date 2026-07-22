@@ -119,4 +119,8 @@ type SQLFormatter interface {
 
 	// LowerExpression wraps any SQL expression with lower() function for case-insensitive operations
 	LowerExpression(expression string) []byte
+
+	// EscapeLikePattern escapes LIKE wildcards (`%`, `_`, and the escape char `\`)
+	// in a value so it matches literally. Pair the pattern with `ESCAPE '\'`.
+	EscapeLikePattern(value string) string
 }

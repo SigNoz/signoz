@@ -1,0 +1,22 @@
+.readOnlyJsonViewer {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	min-height: 0;
+}
+
+.editorContainer {
+	position: relative;
+	border: 1px solid var(--l2-border);
+	border-radius: 4px;
+	overflow: hidden;
+	flex: 1;
+	min-height: 300px;
+}
+
+.copyButton {
+	position: absolute;
+	top: 8px;
+	right: 24px;
+	z-index: 10;
+}

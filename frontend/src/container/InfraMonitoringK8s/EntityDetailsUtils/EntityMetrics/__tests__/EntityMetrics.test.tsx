@@ -3,6 +3,7 @@ import { InfraMonitoringEntity } from 'container/InfraMonitoringK8s/constants';
 import { Time } from 'container/TopNav/DateTimeSelectionV2/types';
 import * as appContextHooks from 'providers/App/App';
 import { LicenseEvent } from 'types/api/licensesV3/getActive';
+import uPlot from 'uplot';
 
 import EntityMetrics from '../EntityMetrics';
 import { useEntityMetrics } from '../hooks';
@@ -15,12 +16,15 @@ const mockUseEntityMetrics = useEntityMetrics as jest.MockedFunction<
 	typeof useEntityMetrics
 >;
 
-jest.mock('lib/uPlotLib/getUplotChartOptions', () => ({
-	getUPlotChartOptions: jest.fn().mockReturnValue({}),
+jest.mock('../configBuilder', () => ({
+	buildEntityMetricsChartConfig: jest.fn().mockReturnValue({
+		getId: jest.fn().mockReturnValue('mock-id'),
+	}),
 }));
 
-jest.mock('lib/uPlotLib/utils/getUplotChartData', () => ({
-	getUPlotChartData: jest.fn().mockReturnValue([]),
+jest.mock('lib/uPlotV2/utils/dataUtils', () => ({
+	prepareChartData: jest.fn().mockReturnValue([]),
+	hasSingleVisiblePoint: jest.fn().mockReturnValue(false),
 }));
 
 jest.mock('container/TopNav/DateTimeSelectionV2', () => ({
@@ -30,9 +34,20 @@ jest.mock('container/TopNav/DateTimeSelectionV2', () => ({
 	),
 }));
 
-jest.mock('components/Uplot', () => ({
-	__esModule: true,
-	default: (): JSX.Element => <div data-testid="uplot-chart">Uplot Chart</div>,
+jest.mock(
+	'container/DashboardContainer/visualization/charts/TimeSeries/TimeSeries',
+	() => ({
+		__esModule: true,
+		default: (): JSX.Element => (
+			<div data-testid="uplot-chart">TimeSeries Chart</div>
+		),
+	}),
+);
+
+jest.mock('providers/Timezone', () => ({
+	useTimezone: (): { timezone: { value: string } } => ({
+		timezone: { value: 'UTC' },
+	}),
 }));
 
 jest.mock('../MetricsTable', () => ({
@@ -294,20 +309,28 @@ const renderEntityMetrics = (overrides = {}): any => {
 	);
 };
 
-const mockChartData = [
-	[], // time_series chart data (uplot handles empty array)
+const mockChartData: (uPlot.AlignedData | null)[] = [
+	[
+		[1705315200, 1705318800],
+		[42.5, 43.2],
+	], // time_series chart data (AlignedData)
+	null, // table uses tableData
+];
+
+const mockTableData: (import('../utils').MetricsTableData[] | null)[] = [
+	null, // time_series uses chartData
 	[
 		{
 			rows: [
-				{ data: { timestamp: '2024-01-15T10:00:00Z', value: '1024' } },
-				{ data: { timestamp: '2024-01-15T10:01:00Z', value: '1028' } },
+				{ timestamp: '2024-01-15T10:00:00Z', value: '1024' },
+				{ timestamp: '2024-01-15T10:01:00Z', value: '1028' },
 			],
 			columns: [
 				{ key: 'timestamp', label: 'Timestamp', isValueColumn: false },
 				{ key: 'value', label: 'Value', isValueColumn: true },
 			],
 		},
-	], // table chart data
+	], // table data
 ];
 
 const mockQueryPayloads = [
@@ -321,6 +344,7 @@ describe('EntityMetrics', () => {
 		mockUseEntityMetrics.mockReturnValue({
 			queries: mockQueries as any,
 			chartData: mockChartData,
+			tableData: mockTableData,
 			queryPayloads: mockQueryPayloads as any,
 		});
 		mockUseQuery.mockReturnValue({
@@ -351,7 +375,8 @@ describe('EntityMetrics', () => {
 	it('renders loading state when fetching metrics', () => {
 		mockUseEntityMetrics.mockReturnValue({
 			queries: mockLoadingQueries as any,
-			chartData: [[], []],
+			chartData: [null, null],
+			tableData: [null, null],
 			queryPayloads: mockQueryPayloads as any,
 		});
 		renderEntityMetrics();
@@ -362,7 +387,8 @@ describe('EntityMetrics', () => {
 	it('renders error state when query fails', () => {
 		mockUseEntityMetrics.mockReturnValue({
 			queries: mockErrorQueries as any,
-			chartData: [[], []],
+			chartData: [null, null],
+			tableData: [null, null],
 			queryPayloads: mockQueryPayloads as any,
 		});
 		renderEntityMetrics();
@@ -373,8 +399,9 @@ describe('EntityMetrics', () => {
 	it('renders empty state when no metrics data', () => {
 		mockUseEntityMetrics.mockReturnValue({
 			queries: mockEmptyQueries as any,
-			chartData: [
-				[],
+			chartData: [[[]], null],
+			tableData: [
+				null,
 				[
 					{
 						rows: [],

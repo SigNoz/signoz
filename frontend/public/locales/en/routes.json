@@ -15,6 +15,8 @@
 	"logs_to_metrics": "Logs To Metrics",
 	"roles": "Roles",
 	"role_details": "Role Details",
+	"role_edit": "Edit Role",
+	"role_create": "Create Role",
 	"members": "Members",
 	"service_accounts": "Service Accounts",
 	"mcp_server": "MCP Server"

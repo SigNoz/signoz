@@ -80,6 +80,7 @@ describe('PieArc', () => {
 		expect(onLeave).toHaveBeenCalledTimes(1);
 
 		fireEvent.click(g);
-		expect(onClick).toHaveBeenCalledWith(SLICE);
+		// onClick now also receives the DOM event (for drill-down popover positioning).
+		expect(onClick).toHaveBeenCalledWith(SLICE, expect.anything());
 	});
 });

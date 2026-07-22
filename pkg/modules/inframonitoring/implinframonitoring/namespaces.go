@@ -18,6 +18,8 @@ func buildNamespaceRecords(
 	groupBy []qbtypes.GroupByKey,
 	metadataMap map[string]map[string]string,
 	phaseCounts map[string]podPhaseCounts,
+	podStatusCounts map[string]podStatusCounts,
+	resourceCounts map[string]map[string]int64,
 ) []inframonitoringtypes.NamespaceRecord {
 	metricsMap := parseFullQueryResponse(resp, groupBy)
 
@@ -50,6 +52,17 @@ func buildNamespaceRecords(
 				Failed:    phaseCountsForGroup.Failed,
 				Unknown:   phaseCountsForGroup.Unknown,
 			}
+		}
+
+		if podStatusCountsForGroup, ok := podStatusCounts[compositeKey]; ok {
+			record.PodCountsByStatus = podStatusCountsToResponse(podStatusCountsForGroup)
+		}
+
+		if counts, ok := resourceCounts[compositeKey]; ok {
+			record.Counts.Deployments = counts[inframonitoringtypes.DeploymentNameAttrKey]
+			record.Counts.DaemonSets = counts[inframonitoringtypes.DaemonSetNameAttrKey]
+			record.Counts.Jobs = counts[inframonitoringtypes.JobNameAttrKey]
+			record.Counts.StatefulSets = counts[inframonitoringtypes.StatefulSetNameAttrKey]
 		}
 
 		if attrs, ok := metadataMap[compositeKey]; ok {
@@ -115,12 +128,12 @@ func (m *module) getTopNamespaceGroups(
 	return paginateWithBackfill(allMetricGroups, metadataMap, req.GroupBy, req.Offset, req.Limit), nil
 }
 
-func (m *module) getNamespacesTableMetadata(ctx context.Context, req *inframonitoringtypes.PostableNamespaces) (map[string]map[string]string, error) {
+func (m *module) getNamespacesTableMetadata(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableNamespaces) (map[string]map[string]string, error) {
 	var nonGroupByAttrs []string
 	for _, key := range namespaceAttrKeysForMetadata {
 		if !isKeyInGroupByAttrs(req.GroupBy, key) {
 			nonGroupByAttrs = append(nonGroupByAttrs, key)
 		}
 	}
-	return m.getMetadata(ctx, namespacesTableMetricNamesList, req.GroupBy, nonGroupByAttrs, req.Filter, req.Start, req.End)
+	return m.getMetadata(ctx, orgID, namespacesTableMetricNamesList, req.GroupBy, nonGroupByAttrs, req.Filter, req.Start, req.End)
 }

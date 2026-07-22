@@ -1,0 +1,65 @@
+.actionToggle {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+	padding: var(--spacing-6) var(--spacing-8);
+
+	&::after {
+		content: '';
+		position: absolute;
+		right: var(--spacing-8);
+		bottom: 0;
+		left: var(--spacing-8);
+		height: 1px;
+		background: var(--l2-border);
+	}
+
+	&:last-child::after {
+		display: none;
+	}
+}
+
+.actionToggleHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--spacing-8);
+}
+
+.actionToggleScopeToggle {
+	flex-shrink: 0;
+	width: fit-content;
+
+	--toggle-group-item-size: 1.4rem;
+	--toggle-group-item-padding-right: 0.4rem;
+	--toggle-group-item-border-style: none;
+	--toggle-group-secondary-active-bg: var(--bg-robin-800);
+	--toggle-group-item-align-items: baseline;
+
+	gap: var(--spacing-2);
+	padding: var(--spacing-2);
+
+	button {
+		min-width: 46px;
+		font-weight: bold;
+
+		&[data-state='on'] {
+			color: var(--bg-robin-200);
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--bg-robin-500);
+			outline-offset: 2px;
+			border-radius: var(--radius-2);
+		}
+	}
+}
+
+.actionToggleSelectorWrapper {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+
+	--divider-color: var(--l2-border);
+}

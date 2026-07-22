@@ -13,6 +13,11 @@ import Styles from './TooltipList.module.scss';
 // Fallback per-item height before Virtuoso reports the real total.
 const TOOLTIP_ITEM_HEIGHT = 38;
 const LIST_MAX_HEIGHT = 300;
+// Vertical padding (spacing-4 top + bottom) the SCSS applies to the scroll
+// viewport. Virtuoso's reported height covers only the items, so it must be
+// added back — otherwise the box is short by this amount, clipping the last
+// row and showing a scrollbar even when every row would fit.
+const LIST_VERTICAL_PADDING = 16;
 
 interface TooltipListProps {
 	id: string;
@@ -30,13 +35,13 @@ export default function TooltipList({
 	// Use the measured height from Virtuoso when available; fall back to a
 	// per-item estimate on first render. Math.ceil prevents a 1 px
 	// subpixel rounding gap from triggering a spurious scrollbar.
-	const height = useMemo(
-		() =>
-			totalListHeight > 0
-				? Math.ceil(Math.min(totalListHeight, LIST_MAX_HEIGHT))
-				: Math.min(content.length * TOOLTIP_ITEM_HEIGHT, LIST_MAX_HEIGHT),
-		[totalListHeight, content.length],
-	);
+	const height = useMemo(() => {
+		const contentHeight =
+			totalListHeight > 0 ? totalListHeight : content.length * TOOLTIP_ITEM_HEIGHT;
+		return Math.ceil(
+			Math.min(contentHeight + LIST_VERTICAL_PADDING, LIST_MAX_HEIGHT),
+		);
+	}, [totalListHeight, content.length]);
 
 	const handleScroll = useCallback(() => {
 		if (!isScrollEventTriggered.current) {

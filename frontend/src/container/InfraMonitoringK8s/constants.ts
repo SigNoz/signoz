@@ -34,8 +34,6 @@ export const VIEW_TYPES = {
 	METRICS: VIEWS.METRICS,
 	LOGS: VIEWS.LOGS,
 	TRACES: VIEWS.TRACES,
-	CONTAINERS: VIEWS.CONTAINERS,
-	PROCESSES: VIEWS.PROCESSES,
 	EVENTS: VIEWS.EVENTS,
 };
 
@@ -379,41 +377,6 @@ export function GetClustersQuickFiltersConfig(
 			aggregateOperator: 'noop',
 			aggregateAttribute: cpuUtilMetric,
 			dataSource: DataSource.METRICS,
-			defaultOpen: true,
-		},
-		{
-			type: FiltersType.CHECKBOX,
-			title: 'Environment',
-			attributeKey: {
-				key: environmentKey,
-				dataType: DataTypes.String,
-				type: 'resource',
-			},
-			defaultOpen: true,
-		},
-	];
-}
-
-export function GetContainersQuickFiltersConfig(
-	dotMetricsEnabled: boolean,
-): IQuickFiltersConfig[] {
-	const containerKey = dotMetricsEnabled
-		? 'k8s.container.name'
-		: 'k8s_container_name';
-	const environmentKey = dotMetricsEnabled
-		? 'deployment.environment'
-		: 'deployment_environment';
-
-	return [
-		{
-			type: FiltersType.CHECKBOX,
-			title: 'Container',
-			attributeKey: {
-				key: containerKey,
-				dataType: DataTypes.String,
-				type: 'resource',
-				id: `${containerKey}--string--resource`,
-			},
 			defaultOpen: true,
 		},
 		{

@@ -26,8 +26,8 @@ export default function AIAssistantPage(): JSX.Element {
 
 	// Skip the mount-time Opened fire when the user expanded an already-open
 	// drawer/modal — that surface already emitted Opened with the right source.
-	// Router state (vs a module flag) survives StrictMode double-mount and
-	// aborted navigations.
+	// Router state (vs a module flag) survives page remounts and aborted
+	// navigations.
 	const fromInApp = location.state?.fromInApp === true;
 	useEffect(() => {
 		if (fromInApp) {
@@ -52,18 +52,34 @@ export default function AIAssistantPage(): JSX.Element {
 		(s) => s.startNewConversation,
 	);
 
-	// Keep a ref so the effect can read latest conversations without re-firing
-	// when startNewConversation mutates the store mid-effect.
+	// Keep refs so the effect can read the latest store state without re-firing
+	// when it mutates the store mid-effect (it only depends on the URL param).
 	const conversationsRef = useRef(conversations);
 	conversationsRef.current = conversations;
+	const activeConversationIdRef = useRef(activeConversationId);
+	activeConversationIdRef.current = activeConversationId;
 
 	useEffect(() => {
-		if (conversationsRef.current[conversationId]) {
+		// URL points at a known conversation → just activate it.
+		if (conversationId && conversationsRef.current[conversationId]) {
 			setActiveConversation(conversationId);
-		} else {
-			const newId = startNewConversation();
-			history.replace(ROUTES.AI_ASSISTANT.replace(':conversationId', newId));
+			return;
 		}
+
+		// The URL has no usable conversation id (bare `/ai-assistant`, or a stale
+		// param). Prefer resuming the active conversation — including the
+		// rehydrating placeholder for the persisted thread — over minting a new
+		// one. This is what stops a throwaway blank chat from flashing as a
+		// second thread during load, and stops a duplicate when the page
+		// remounts during startup route churn (the active id is already set, so
+		// we resume instead of create). Starting fresh is the last resort, only
+		// when there is genuinely nothing to resume.
+		const activeId = activeConversationIdRef.current;
+		const resumeId =
+			activeId && conversationsRef.current[activeId]
+				? activeId
+				: startNewConversation();
+		history.replace(ROUTES.AI_ASSISTANT.replace(':conversationId', resumeId));
 		// Only re-run when the URL param changes, not when conversations mutates.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [conversationId]);

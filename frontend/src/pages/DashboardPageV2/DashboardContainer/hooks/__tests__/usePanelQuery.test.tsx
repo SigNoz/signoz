@@ -1,13 +1,25 @@
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	DASHBOARD_CACHE_TIME,
+	DASHBOARD_CACHE_TIME_ON_REFRESH_ENABLED,
+} from 'constants/queryCacheTime';
 
 import { usePanelQuery } from '../usePanelQuery';
 import { useGetQueryRangeV5 } from '../useGetQueryRangeV5';
 
 jest.mock('react-redux', () => ({
 	useSelector: jest.fn(),
+}));
+
+// usePanelQuery reads the query client only to cancel in-flight fetches; the
+// fetch hook itself is mocked, so a stub client is enough.
+jest.mock('react-query', () => ({
+	useQueryClient: (): { cancelQueries: jest.Mock } => ({
+		cancelQueries: jest.fn(),
+	}),
 }));
 
 jest.mock('../useGetQueryRangeV5', () => ({
@@ -164,10 +176,26 @@ describe('usePanelQuery', () => {
 		expect(result.current.error?.message).toBe('boom');
 	});
 
-	it('combines isLoading and isFetching into a single isLoading flag', () => {
+	it('exposes isLoading (first fetch) and isFetching (any fetch) as distinct flags', () => {
+		// A background refetch (data present elsewhere) is in flight: isFetching is
+		// true but isLoading stays false so the panel keeps showing its data.
 		mockUseGetQueryRangeV5.mockReturnValue({
 			data: undefined,
 			isLoading: false,
+			isFetching: true,
+			error: null,
+		});
+		const { result } = renderHook(() =>
+			usePanelQuery({ panel: builderPanel(), panelId: 'p1' }),
+		);
+		expect(result.current.isLoading).toBe(false);
+		expect(result.current.isFetching).toBe(true);
+	});
+
+	it('reports isLoading on the first fetch (no cached data yet)', () => {
+		mockUseGetQueryRangeV5.mockReturnValue({
+			data: undefined,
+			isLoading: true,
 			isFetching: true,
 			error: null,
 		});
@@ -237,10 +265,199 @@ describe('usePanelQuery', () => {
 		);
 	});
 
-	it('builds an empty composite and disables the fetch when panel is undefined (no crash)', () => {
-		renderHook(() => usePanelQuery({ panel: undefined, panelId: 'p-none' }));
-		const [{ requestPayload, enabled }] = mockUseGetQueryRangeV5.mock.calls[0];
-		expect(requestPayload.compositeQuery.queries).toStrictEqual([]);
-		expect(enabled).toBe(false);
+	it('uses the time override (not redux) for the request window and cache key', () => {
+		const panel = builderPanel();
+		renderHook(() =>
+			usePanelQuery({
+				panel,
+				panelId: 'p1',
+				time: { startMs: 1_700_000_000_000, endMs: 1_700_000_600_000 },
+			}),
+		);
+		const [{ requestPayload, queryKey }] = mockUseGetQueryRangeV5.mock.calls[0];
+		// Window comes from the override, not the redux nanosecond time.
+		expect(requestPayload.start).toBe(1_700_000_000_000);
+		expect(requestPayload.end).toBe(1_700_000_600_000);
+		// Cache key keys off the override so the preview refetches independently
+		// of the dashboard and never collides with its redux-keyed entry.
+		expect(queryKey).toStrictEqual(
+			expect.arrayContaining([
+				'p1',
+				'override-1700000000000-1700000600000',
+				'signoz/TimeSeriesPanel',
+				panel.spec?.queries,
+			]),
+		);
+		expect(queryKey).not.toContain(DEFAULT_GLOBAL_TIME.minTime);
+	});
+
+	it('floors fractional override ms — V1 time helpers emit floats but start/end are int64', () => {
+		renderHook(() =>
+			usePanelQuery({
+				panel: builderPanel(),
+				panelId: 'p1',
+				time: { startMs: 1_700_000_000_000.546, endMs: 1_700_000_600_000.999 },
+			}),
+		);
+		const [{ requestPayload, queryKey }] = mockUseGetQueryRangeV5.mock.calls[0];
+		expect(requestPayload.start).toBe(1_700_000_000_000);
+		expect(requestPayload.end).toBe(1_700_000_600_000);
+		// The cache key carries the floored values so it matches the request.
+		expect(queryKey).toStrictEqual(
+			expect.arrayContaining(['override-1700000000000-1700000600000']),
+		);
+	});
+
+	describe('list pagination', () => {
+		const listPanel = (
+			querySpec: Record<string, unknown>,
+		): DashboardtypesPanelDTO =>
+			panelWith('signoz/ListPanel', { name: 'A', signal: 'logs', ...querySpec });
+
+		it('exposes server paging at the default page size when the query has no limit', () => {
+			const { result } = renderHook(() =>
+				usePanelQuery({ panel: listPanel({}), panelId: 'p1' }),
+			);
+			expect(result.current.pagination).toBeDefined();
+			expect(result.current.pagination?.pageSize).toBe(25);
+			expect(result.current.pagination?.pageSizeOptions).toStrictEqual([
+				10, 25, 50, 100, 200,
+			]);
+		});
+
+		it('disables the server pager when the query has an explicit limit (V1 parity)', () => {
+			const { result } = renderHook(() =>
+				usePanelQuery({ panel: listPanel({ limit: 100 }), panelId: 'p1' }),
+			);
+			expect(result.current.pagination).toBeUndefined();
+		});
+
+		it('keeps previous data while paging so the table/pager stay mounted on page change', () => {
+			renderHook(() => usePanelQuery({ panel: listPanel({}), panelId: 'p1' }));
+			const [{ keepPreviousData }] = mockUseGetQueryRangeV5.mock.calls[0];
+			expect(keepPreviousData).toBe(true);
+		});
+
+		it('changes the page size (and re-requests with the new limit) via setPageSize', () => {
+			const { result } = renderHook(() =>
+				usePanelQuery({ panel: listPanel({}), panelId: 'p1' }),
+			);
+
+			act(() => result.current.pagination?.setPageSize(50));
+
+			expect(result.current.pagination?.pageSize).toBe(50);
+			const lastCall = mockUseGetQueryRangeV5.mock.calls.at(-1) as [
+				{ queryKey: unknown[] },
+			];
+			// Page size participates in the cache key so each size is its own entry.
+			expect(lastCall[0].queryKey).toStrictEqual(expect.arrayContaining([50]));
+		});
+
+		// A raw V5 response carrying `rowCount` rows (+ an optional cursor), shaped
+		// the way getRawResults reads it.
+		const rawResponse = (rowCount: number, nextCursor?: string): unknown => ({
+			data: {
+				type: 'raw',
+				data: {
+					results: [
+						{
+							rows: Array.from({ length: rowCount }, () => ({ data: {} })),
+							...(nextCursor ? { nextCursor } : {}),
+						},
+					],
+				},
+			},
+		});
+
+		const withResponse = (response: unknown): void => {
+			mockUseGetQueryRangeV5.mockReturnValue({
+				data: response,
+				isLoading: false,
+				isFetching: false,
+				error: null,
+			});
+		};
+
+		it('starts on page 0 with no prev/next and does not throw before data arrives', () => {
+			const { result } = renderHook(() =>
+				usePanelQuery({ panel: listPanel({}), panelId: 'p1' }),
+			);
+			expect(result.current.pagination?.pageIndex).toBe(0);
+			expect(result.current.pagination?.canPrev).toBe(false);
+			expect(result.current.pagination?.canNext).toBe(false);
+		});
+
+		it('drives canNext from the response cursor, not the row count', () => {
+			// Full page but no cursor → backend says these are the last rows.
+			withResponse(rawResponse(25));
+			const noCursor = renderHook(() =>
+				usePanelQuery({ panel: listPanel({}), panelId: 'p1' }),
+			);
+			expect(noCursor.result.current.pagination?.canNext).toBe(false);
+
+			// Cursor present (even on a partial page) → more rows.
+			withResponse(rawResponse(3, 'cursor-1'));
+			const withCursor = renderHook(() =>
+				usePanelQuery({ panel: listPanel({}), panelId: 'p1' }),
+			);
+			expect(withCursor.result.current.pagination?.canNext).toBe(true);
+		});
+
+		it('advances pageIndex and enables canPrev after goNext', () => {
+			withResponse(rawResponse(25));
+			// Stable panel reference: a fresh one each render would change the
+			// `queries` identity and trip the offset-reset effect (real props are stable).
+			const panel = listPanel({});
+			const { result } = renderHook(() => usePanelQuery({ panel, panelId: 'p1' }));
+			expect(result.current.pagination?.pageIndex).toBe(0);
+
+			act(() => result.current.pagination?.goNext());
+
+			expect(result.current.pagination?.pageIndex).toBe(1);
+			expect(result.current.pagination?.canPrev).toBe(true);
+		});
+
+		it('stays defined and zero-paged for a non-raw (scalar) response', () => {
+			withResponse({ data: { type: 'scalar', data: { results: [] } } });
+			const { result } = renderHook(() =>
+				usePanelQuery({ panel: listPanel({}), panelId: 'p1' }),
+			);
+			expect(result.current.pagination).toBeDefined();
+			expect(result.current.pagination?.canNext).toBe(false);
+			expect(result.current.pagination?.pageIndex).toBe(0);
+		});
+
+		it('ignores a non-positive page size so paging never goes invalid', () => {
+			const { result } = renderHook(() =>
+				usePanelQuery({ panel: listPanel({}), panelId: 'p1' }),
+			);
+			act(() => result.current.pagination?.setPageSize(0));
+			expect(result.current.pagination?.pageSize).toBe(25);
+			expect(result.current.pagination?.pageIndex).toBe(0);
+		});
+	});
+
+	describe('cacheTime (auto-refresh OOM guard)', () => {
+		const withAutoRefreshDisabled = (disabled: boolean): void => {
+			mockUseSelector.mockImplementation((selector: unknown) =>
+				(selector as (state: { globalTime: unknown }) => unknown)({
+					globalTime: { ...DEFAULT_GLOBAL_TIME, isAutoRefreshDisabled: disabled },
+				}),
+			);
+		};
+
+		it('caches for DASHBOARD_CACHE_TIME when auto-refresh is disabled', () => {
+			withAutoRefreshDisabled(true);
+			renderHook(() => usePanelQuery({ panel: builderPanel(), panelId: 'p1' }));
+			const [{ cacheTime }] = mockUseGetQueryRangeV5.mock.calls[0];
+			expect(cacheTime).toBe(DASHBOARD_CACHE_TIME);
+		});
+
+		it('drops cacheTime to 0 when auto-refresh is enabled', () => {
+			withAutoRefreshDisabled(false);
+			renderHook(() => usePanelQuery({ panel: builderPanel(), panelId: 'p1' }));
+			const [{ cacheTime }] = mockUseGetQueryRangeV5.mock.calls[0];
+			expect(cacheTime).toBe(DASHBOARD_CACHE_TIME_ON_REFRESH_ENABLED);
+		});
 	});
 });

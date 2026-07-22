@@ -9,8 +9,8 @@ from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.logs import Logs
 from fixtures.querier import (
+    build_aggregation,
     build_group_by_field,
-    build_logs_aggregation,
     build_order_by,
     build_raw_query,
     build_scalar_query,
@@ -58,7 +58,7 @@ def _scalar(
     q = build_scalar_query(
         name=name,
         signal="logs",
-        aggregations=[build_logs_aggregation(aggregation)],
+        aggregations=[build_aggregation(aggregation)],
         filter_expression=expression,
         group_by=group_by,
         step_interval=60,
@@ -150,7 +150,7 @@ def test_non_body_filter_groupby_aggregation(
     ]
     export_json_types(logs_list)
     insert_logs(logs_list)
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     cases = [
         # 1. Filter — resource + log attr + top-level in WHERE (all three non-body contexts at once)
@@ -246,7 +246,7 @@ def test_non_body_orderby(
     ]
     export_json_types(logs_list)
     insert_logs(logs_list)
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     cases = [
         # resource attr ASC: svc-a×2 before svc-b×2

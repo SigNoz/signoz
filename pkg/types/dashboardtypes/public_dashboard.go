@@ -2,6 +2,7 @@ package dashboardtypes
 
 import (
 	"encoding/json"
+	"strconv"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -210,6 +211,30 @@ func (typ *PublicDashboard) Update(timeRangeEnabled bool, defaultTimeRange strin
 
 func (typ *PublicDashboard) PublicPath() string {
 	return "/public/dashboard/" + typ.ID.StringValue()
+}
+
+// ResolveTimeRange returns the [start, end] window in epoch millis for a public
+// widget/panel query: the caller-supplied range when the dashboard allows it,
+// otherwise now minus the configured default range.
+func (typ *PublicDashboard) ResolveTimeRange(startTimeRaw, endTimeRaw string) (uint64, uint64, error) {
+	if typ.TimeRangeEnabled {
+		startTime, err := strconv.ParseUint(startTimeRaw, 10, 64)
+		if err != nil {
+			return 0, 0, errors.New(errors.TypeInvalidInput, ErrCodePublicDashboardInvalidInput, "invalid startTime")
+		}
+		endTime, err := strconv.ParseUint(endTimeRaw, 10, 64)
+		if err != nil {
+			return 0, 0, errors.New(errors.TypeInvalidInput, ErrCodePublicDashboardInvalidInput, "invalid endTime")
+		}
+		return startTime, endTime, nil
+	}
+
+	timeRange, err := time.ParseDuration(typ.DefaultTimeRange)
+	if err != nil {
+		return 0, 0, errors.WrapInternalf(err, errors.CodeInternal, "stored defaultTimeRange %q is not a valid duration", typ.DefaultTimeRange)
+	}
+	now := time.Now()
+	return uint64(now.Add(-timeRange).UnixMilli()), uint64(now.UnixMilli()), nil
 }
 
 func (typ *PostablePublicDashboard) UnmarshalJSON(data []byte) error {

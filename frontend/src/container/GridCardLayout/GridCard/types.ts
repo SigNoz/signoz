@@ -42,6 +42,8 @@ export interface WidgetGraphComponentProps {
 	customOnRowClick?: (record: RowData) => void;
 	customTimeRangeWindowForCoRelation?: string | undefined;
 	enableDrillDown?: boolean;
+	/** Hide list-panel pagination controls (e.g. public dashboards, where paging isn't supported). */
+	hidePagination?: boolean;
 }
 
 export interface GridCardGraphProps {

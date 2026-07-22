@@ -1,0 +1,30 @@
+.card {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 12px 14px;
+	border: 1px solid var(--l2-border);
+	border-radius: 6px;
+	background: var(--l2-background-60);
+}
+
+.text {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+}
+
+.title {
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--l2-foreground);
+}
+
+.description {
+	font-size: 12px;
+	color: var(--l3-foreground);
+}

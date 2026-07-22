@@ -149,6 +149,18 @@
 		line-height: 22px; /* 157.143% */
 		letter-spacing: -0.07px;
 		padding: 20px 16px 0px 16px;
+		/* Preserve author-entered line breaks in the description. */
+		white-space: pre-wrap;
+		overflow-wrap: anywhere;
+
+		a {
+			color: var(--accent-primary);
+			text-decoration: underline;
+
+			&:hover {
+				text-decoration: none;
+			}
+		}
 	}
 
 	.dashboard-variables {

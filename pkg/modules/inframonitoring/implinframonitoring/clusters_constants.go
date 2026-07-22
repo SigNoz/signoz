@@ -27,10 +27,66 @@ var clustersTableMetricNamesList = []string{
 	"k8s.node.allocatable_memory",
 	"k8s.node.condition_ready", //TODO(nikhilmantri0902): should these metrics be used to count groups k8s.node.condition_ready and k8s.pod.phase
 	"k8s.pod.phase",
+	"k8s.pod.status_reason",
+	"k8s.container.status.reason",
 }
 
 var clusterAttrKeysForMetadata = []string{
 	"k8s.cluster.name",
+}
+
+// clusterCountAttrKeys are the resource attributes whose distinct values are
+// counted per cluster. Node name is read from the node metric universe, while
+// namespace + workload names come from the pod metric universe — both unioned
+// into clusterCountMetricNamesList.
+var clusterCountAttrKeys = []string{
+	inframonitoringtypes.NodeNameAttrKey,
+	inframonitoringtypes.NamespaceNameAttrKey,
+	inframonitoringtypes.DeploymentNameAttrKey,
+	inframonitoringtypes.DaemonSetNameAttrKey,
+	inframonitoringtypes.JobNameAttrKey,
+	inframonitoringtypes.StatefulSetNameAttrKey,
+}
+
+// clusterMetricNamesListForCounts is the metric universe for per-cluster distinct
+// counts.
+var clusterMetricNamesListForCounts = []string{
+	// for nodes lookup
+	"k8s.node.cpu.usage",
+	"k8s.node.allocatable_cpu",
+	"k8s.node.memory.working_set",
+	"k8s.node.allocatable_memory",
+	"k8s.node.condition_ready",
+
+	// for daemonsets lookup
+	"k8s.daemonset.desired_scheduled_nodes",
+	"k8s.daemonset.current_scheduled_nodes",
+	"k8s.daemonset.ready_nodes",
+	"k8s.daemonset.misscheduled_nodes",
+
+	// for deployments lookup
+	"k8s.deployment.desired",
+	"k8s.deployment.available",
+
+	// for jobs lookup
+	"k8s.job.active_pods",
+	"k8s.job.failed_pods",
+	"k8s.job.successful_pods",
+	"k8s.job.desired_successful_pods",
+
+	// for statefulsets lookup
+	"k8s.statefulset.desired_pods",
+	"k8s.statefulset.current_pods",
+
+	// for namespaces and general lookup for all
+	"k8s.pod.cpu.usage",
+	"k8s.pod.cpu_request_utilization",
+	"k8s.pod.cpu_limit_utilization",
+	"k8s.pod.memory.working_set",
+	"k8s.pod.memory_request_utilization",
+	"k8s.pod.memory_limit_utilization",
+	"k8s.pod.phase",
+	"k8s.pod.status_reason",
 }
 
 var orderByToClustersQueryNames = map[string][]string{

@@ -143,7 +143,7 @@ func NewJobsRepo(reader interfaces.Reader, querierV2 interfaces.Querier) *JobsRe
 	return &JobsRepo{reader: reader, querierV2: querierV2}
 }
 
-func (d *JobsRepo) GetJobAttributeKeys(ctx context.Context, req v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
+func (d *JobsRepo) GetJobAttributeKeys(ctx context.Context, orgID valuer.UUID, req v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
 	// TODO(srikanthccv): remove hardcoded metric name and support keys from any pod metric
 	req.DataSource = v3.DataSourceMetrics
 	req.AggregateAttribute = metricToUseForJobs
@@ -151,7 +151,7 @@ func (d *JobsRepo) GetJobAttributeKeys(ctx context.Context, req v3.FilterAttribu
 		req.Limit = 50
 	}
 
-	attributeKeysResponse, err := d.reader.GetMetricAttributeKeys(ctx, &req)
+	attributeKeysResponse, err := d.reader.GetMetricAttributeKeys(ctx, orgID, &req)
 	if err != nil {
 		return nil, err
 	}
@@ -169,14 +169,14 @@ func (d *JobsRepo) GetJobAttributeKeys(ctx context.Context, req v3.FilterAttribu
 	return &v3.FilterAttributeKeyResponse{AttributeKeys: filteredKeys}, nil
 }
 
-func (d *JobsRepo) GetJobAttributeValues(ctx context.Context, req v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
+func (d *JobsRepo) GetJobAttributeValues(ctx context.Context, orgID valuer.UUID, req v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
 	req.DataSource = v3.DataSourceMetrics
 	req.AggregateAttribute = metricToUseForJobs
 	if req.Limit == 0 {
 		req.Limit = 50
 	}
 
-	attributeValuesResponse, err := d.reader.GetMetricAttributeValues(ctx, &req)
+	attributeValuesResponse, err := d.reader.GetMetricAttributeValues(ctx, orgID, &req)
 	if err != nil {
 		return nil, err
 	}

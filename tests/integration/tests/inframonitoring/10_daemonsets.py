@@ -11,23 +11,9 @@ from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.fs import get_testdata_file_path
 from fixtures.metrics import Metrics
-from fixtures.querier import compare_values
+from fixtures.querier import compare_values, get_all_warnings
 
 ENDPOINT = "/api/v2/infra_monitoring/daemonsets"
-
-# Required metrics for the v2 daemonsets endpoint
-# (pkg/modules/inframonitoring/implinframonitoring/daemonsets_constants.go:24-34).
-REQUIRED_METRICS = {
-    "k8s.pod.phase",
-    "k8s.pod.cpu.usage",
-    "k8s.pod.cpu_request_utilization",
-    "k8s.pod.cpu_limit_utilization",
-    "k8s.pod.memory.working_set",
-    "k8s.pod.memory_request_utilization",
-    "k8s.pod.memory_limit_utilization",
-    "k8s.daemonset.desired_scheduled_nodes",
-    "k8s.daemonset.current_scheduled_nodes",
-}
 
 
 def test_daemonsets_accuracy(
@@ -75,7 +61,8 @@ def test_daemonsets_accuracy(
     # Shape/contract.
     assert data["total"] == len(expected["records"])
     assert len(data["records"]) == len(expected["records"])
-    assert data["requiredMetricsCheck"]["missingMetrics"] == []
+    # Full data present -> no warnings surfaced.
+    assert get_all_warnings(response.json()) == []
     assert data["endTimeBeforeRetention"] is False
     assert {r["daemonSetName"] for r in data["records"]} == set(exp_by_name.keys())
 
@@ -90,6 +77,8 @@ def test_daemonsets_accuracy(
             "daemonSetMemoryLimit",
             "desiredNodes",
             "currentNodes",
+            "readyNodes",
+            "misscheduledNodes",
             "podCountsByPhase",
             "meta",
         ):
@@ -98,6 +87,8 @@ def test_daemonsets_accuracy(
         # ints (not floats) for node counts.
         assert isinstance(record["desiredNodes"], int)
         assert isinstance(record["currentNodes"], int)
+        assert isinstance(record["readyNodes"], int)
+        assert isinstance(record["misscheduledNodes"], int)
 
         for bucket in ("pending", "running", "succeeded", "failed", "unknown"):
             assert bucket in record["podCountsByPhase"]
@@ -120,41 +111,9 @@ def test_daemonsets_accuracy(
             assert compare_values(record[field], exp[field], 1e-6), f"{record['daemonSetName']}.{field}: got {record[field]}, expected {exp[field]}"
         assert record["desiredNodes"] == exp["desiredNodes"]
         assert record["currentNodes"] == exp["currentNodes"]
+        assert record["readyNodes"] == exp["readyNodes"]
+        assert record["misscheduledNodes"] == exp["misscheduledNodes"]
         assert record["podCountsByPhase"] == exp["podCountsByPhase"]
-
-
-def test_daemonsets_missing_metrics(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-) -> None:
-    """Seed only k8s.pod.cpu.usage; assert other 8 required metrics flagged missing."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/daemonsets_missing_metrics.jsonl"),
-            base_time=now - timedelta(minutes=4),
-        )
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(ENDPOINT),
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-        },
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()["data"]
-
-    assert set(data["requiredMetricsCheck"]["missingMetrics"]) == (REQUIRED_METRICS - {"k8s.pod.cpu.usage"})
-    assert data["records"] == []
-    assert data["total"] == 0
 
 
 @pytest.mark.parametrize(
@@ -203,6 +162,7 @@ def test_daemonsets_missing_metrics(
             {"logs-a-prod", "logs-b-prod"},
             id="in_contains",
         ),
+        pytest.param("k8s.daemonset.namee = 'logs-a-prod'", set(), id="unresolved_key"),
     ],
 )
 def test_daemonsets_filter(
@@ -262,7 +222,6 @@ def test_daemonsets_filter(
 @pytest.mark.parametrize(
     "expression,err_substr",
     [
-        pytest.param("k8s.daemonset.namee = 'logs-a-prod'", "k8s.daemonset.namee", id="bad_attr_name"),
         pytest.param("k8s.daemonset.name =", None, id="trailing_op"),
         pytest.param("(k8s.daemonset.name = 'logs-a-prod'", None, id="unclosed_paren"),
     ],
@@ -275,8 +234,8 @@ def test_daemonsets_filter_invalid(
     expression: str,
     err_substr,
 ) -> None:
-    """Invalid filter expressions (typo'd attribute key, malformed grammar) return
-    400 invalid_input with structured errors; bad attribute keys are named in them."""
+    """Malformed filter grammar (trailing operator, unclosed paren) returns
+    400 invalid_input with structured errors."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -674,6 +633,8 @@ def test_daemonsets_pagination(
         pytest.param("memory_limit", "daemonSetMemoryLimit", id="memory_limit"),
         pytest.param("desired_nodes", "desiredNodes", id="desired_nodes"),
         pytest.param("current_nodes", "currentNodes", id="current_nodes"),
+        pytest.param("ready_nodes", "readyNodes", id="ready_nodes"),
+        pytest.param("misscheduled_nodes", "misscheduledNodes", id="misscheduled_nodes"),
         pytest.param("k8s.daemonset.name", "daemonSetName", id="daemonset_name"),
     ],
 )

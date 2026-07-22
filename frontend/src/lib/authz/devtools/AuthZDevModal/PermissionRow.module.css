@@ -1,0 +1,63 @@
+.permissionRow {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--spacing-6);
+	padding: var(--spacing-2);
+	border: 1px solid transparent;
+	border-radius: var(--radius-2);
+	cursor: pointer;
+	transition:
+		background 120ms ease,
+		border-color 120ms ease;
+}
+
+.permissionRow:hover {
+	background: var(--l2-background-hover);
+}
+
+/* Overridden rows carry a faint full border in the override color. */
+.permissionRow.rowGranted {
+	border-color: color-mix(in srgb, var(--accent-forest) 45%, transparent);
+}
+
+.permissionRow.rowDenied {
+	border-color: color-mix(in srgb, var(--accent-cherry) 45%, transparent);
+}
+
+.permissionRow.rowDelay {
+	border-color: color-mix(in srgb, var(--accent-amber) 45%, transparent);
+}
+
+.permissionRow.rowError {
+	border-color: color-mix(in srgb, var(--accent-cherry) 45%, transparent);
+}
+
+.permissionInfo {
+	display: flex;
+	flex: 1 1 auto;
+	align-items: baseline;
+	gap: var(--spacing-2);
+	min-width: 0;
+}
+
+.relation {
+	flex: 0 0 auto;
+	--typography-color: var(--accent-primary);
+}
+
+.separator {
+	flex: 0 0 auto;
+}
+
+.object {
+	flex: 0 1 auto;
+	min-width: 0;
+}
+
+.permissionMeta {
+	display: flex;
+	flex: 0 0 auto;
+	align-items: center;
+	gap: var(--spacing-5);
+}

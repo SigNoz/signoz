@@ -60,7 +60,7 @@ function DockModeSwitcher({
 				{DOCK_OPTIONS.map((option) => (
 					<TooltipRoot key={option.value}>
 						<TooltipTrigger asChild>
-							<span>
+							<span data-testid={`dock-mode-${option.value}`}>
 								<ToggleGroupItem value={option.value}>{option.icon}</ToggleGroupItem>
 							</span>
 						</TooltipTrigger>

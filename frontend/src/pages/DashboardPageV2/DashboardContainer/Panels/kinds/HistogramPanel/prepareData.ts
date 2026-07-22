@@ -22,12 +22,10 @@ const BUCKET_OFFSET = 0;
 const sortAscending = (a: number, b: number): number => a - b;
 
 /**
- * Bins raw series values into a uPlot-aligned histogram. Picks a bucket size
- * either from `bucketWidth` (explicit override) or the smallest predefined
- * Grafana bucket that fits the data's `range / bucketCount` target while
- * staying ≥ the data's smallest non-zero delta (so we never sub-divide below
- * the resolution of the input).
- *
+ * Bins raw series values into a uPlot-aligned histogram. Bucket size is the
+ * `bucketWidth` override, else the smallest predefined Grafana bucket that fits
+ * the `range / bucketCount` target while staying ≥ the input's smallest non-zero
+ * delta (never sub-dividing below the input resolution).
  * Empty input → `[[]]` (a valid empty AlignedData uPlot accepts).
  */
 export function prepareHistogramData({
@@ -58,10 +56,9 @@ export function prepareHistogramData({
 		roundDecimals(incrRoundDn(v - BUCKET_OFFSET, bucketSize) + BUCKET_OFFSET, 9);
 
 	const frames = buildFrames(series, mergeAllActiveQueries);
-	// Merged mode folds every query into frame 0 and leaves trailing empty
-	// frames — drop those. Per-query mode must keep one column per result row
-	// (even empty queries), or the data column count drifts below the series
-	// count `buildHistogramConfig` adds per row → uPlot renders nothing.
+	// Merged mode leaves trailing empty frames — drop those. Per-query mode keeps
+	// one column per result row (even empty ones), else the column count falls below
+	// the series count `buildHistogramConfig` adds per row → uPlot renders nothing.
 	const histograms: AlignedData[] = frames
 		.filter((frame) => !mergeAllActiveQueries || frame.length > 0)
 		.map((frame) => buildHistogramBuckets(frame, getBucket, sortAscending));
@@ -76,7 +73,7 @@ export function prepareHistogramData({
 	return merged;
 }
 
-// Non-finite samples degrade to 0 (legacy `parseFloat(...) || 0` parity).
+/** Non-finite samples degrade to 0 (legacy `parseFloat(...) || 0` parity). */
 function toBinnableValue(value: number): number {
 	return Number.isFinite(value) ? value : 0;
 }
@@ -128,8 +125,10 @@ function selectBucketSize({
 	return 0;
 }
 
-// When merging is on, fold all frames into the first; the trailing empty
-// frames stay in the array so downstream `.filter(length > 0)` drops them.
+/**
+ * When merging is on, fold all frames into the first; the trailing empty
+ * frames stay in the array so downstream `.filter(length > 0)` drops them.
+ */
 function buildFrames(
 	series: PanelSeries[],
 	mergeAllActiveQueries: boolean,

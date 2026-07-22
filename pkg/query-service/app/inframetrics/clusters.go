@@ -43,14 +43,14 @@ func NewClustersRepo(reader interfaces.Reader, querierV2 interfaces.Querier) *Cl
 	return &ClustersRepo{reader: reader, querierV2: querierV2}
 }
 
-func (n *ClustersRepo) GetClusterAttributeKeys(ctx context.Context, req v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
+func (n *ClustersRepo) GetClusterAttributeKeys(ctx context.Context, orgID valuer.UUID, req v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
 	req.DataSource = v3.DataSourceMetrics
 	req.AggregateAttribute = metricToUseForClusters
 	if req.Limit == 0 {
 		req.Limit = 50
 	}
 
-	attributeKeysResponse, err := n.reader.GetMetricAttributeKeys(ctx, &req)
+	attributeKeysResponse, err := n.reader.GetMetricAttributeKeys(ctx, orgID, &req)
 	if err != nil {
 		return nil, err
 	}
@@ -58,14 +58,14 @@ func (n *ClustersRepo) GetClusterAttributeKeys(ctx context.Context, req v3.Filte
 	return attributeKeysResponse, nil
 }
 
-func (n *ClustersRepo) GetClusterAttributeValues(ctx context.Context, req v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
+func (n *ClustersRepo) GetClusterAttributeValues(ctx context.Context, orgID valuer.UUID, req v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
 	req.DataSource = v3.DataSourceMetrics
 	req.AggregateAttribute = metricToUseForClusters
 	if req.Limit == 0 {
 		req.Limit = 50
 	}
 
-	attributeValuesResponse, err := n.reader.GetMetricAttributeValues(ctx, &req)
+	attributeValuesResponse, err := n.reader.GetMetricAttributeValues(ctx, orgID, &req)
 	if err != nil {
 		return nil, err
 	}

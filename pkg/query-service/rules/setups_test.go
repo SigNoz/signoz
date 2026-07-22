@@ -3,6 +3,7 @@ package rules
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
@@ -54,6 +55,8 @@ func prepareQuerierForMetrics(t *testing.T, telemetryStore telemetrystore.Teleme
 		nil, // traceOperatorStmtBuilder
 		nil, // bucketCache
 		flagger,
+		0,
+		0, // maxConcurrentQueries (0 means default)
 	), metadataStore
 }
 
@@ -77,7 +80,6 @@ func prepareQuerierForLogs(t *testing.T, telemetryStore telemetrystore.Telemetry
 		telemetrylogs.DefaultFullTextColumn,
 		logFieldMapper,
 		logConditionBuilder,
-		telemetrylogs.GetBodyJSONKey,
 		fl,
 	)
 	logStmtBuilder := telemetrylogs.NewLogQueryStatementBuilder(
@@ -87,7 +89,6 @@ func prepareQuerierForLogs(t *testing.T, telemetryStore telemetrystore.Telemetry
 		logConditionBuilder,
 		logAggExprRewriter,
 		telemetrylogs.DefaultFullTextColumn,
-		telemetrylogs.GetBodyJSONKey,
 		fl,
 		nil,
 		false,
@@ -107,6 +108,8 @@ func prepareQuerierForLogs(t *testing.T, telemetryStore telemetrystore.Telemetry
 		nil,            // traceOperatorStmtBuilder
 		nil,            // bucketCache
 		fl,
+		5*time.Minute, // logTraceIDWindowPadding
+		0,             // maxConcurrentQueries (0 means default)
 	)
 }
 
@@ -128,7 +131,7 @@ func prepareQuerierForTraces(t *testing.T, telemetryStore telemetrystore.Telemet
 	traceConditionBuilder := telemetrytraces.NewConditionBuilder(traceFieldMapper)
 
 	fl := flaggertest.New(t)
-	traceAggExprRewriter := querybuilder.NewAggExprRewriter(providerSettings, nil, traceFieldMapper, traceConditionBuilder, nil, fl)
+	traceAggExprRewriter := querybuilder.NewAggExprRewriter(providerSettings, nil, traceFieldMapper, traceConditionBuilder, fl)
 	traceStmtBuilder := telemetrytraces.NewTraceQueryStatementBuilder(
 		providerSettings,
 		metadataStore,
@@ -154,5 +157,7 @@ func prepareQuerierForTraces(t *testing.T, telemetryStore telemetrystore.Telemet
 		nil,              // traceOperatorStmtBuilder
 		nil,              // bucketCache
 		fl,
+		0,
+		0, // maxConcurrentQueries (0 means default)
 	)
 }

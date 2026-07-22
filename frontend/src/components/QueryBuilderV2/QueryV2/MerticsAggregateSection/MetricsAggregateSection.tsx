@@ -131,7 +131,7 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 												Set the time interval for aggregation
 												<br />
 												<a
-													href="https://signoz.io/docs/userguide/query-builder-v5/#time-aggregation-windows"
+													href="https://signoz.io/docs/userguide/query-builder-v5/#temporal-aggregation-within-each-time-series"
 													target="_blank"
 													rel="noopener noreferrer"
 													style={{ color: '#1890ff', textDecoration: 'underline' }}
@@ -254,7 +254,7 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 										Set the time interval for aggregation
 										<br />
 										<a
-											href="https://signoz.io/docs/userguide/query-builder-v5/#time-aggregation-windows"
+											href="https://signoz.io/docs/userguide/query-builder-v5/#temporal-aggregation-within-each-time-series"
 											target="_blank"
 											rel="noopener noreferrer"
 											style={{ color: '#1890ff', textDecoration: 'underline' }}

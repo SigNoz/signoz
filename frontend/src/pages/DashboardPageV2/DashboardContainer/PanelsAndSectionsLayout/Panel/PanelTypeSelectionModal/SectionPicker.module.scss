@@ -1,0 +1,55 @@
+.select {
+	width: 100%;
+}
+
+.dropdown {
+	min-width: 260px;
+}
+
+.rootIcon {
+	color: var(--bg-robin-400);
+	flex-shrink: 0;
+}
+
+.sectionIcon {
+	color: var(--l3-foreground);
+	flex-shrink: 0;
+}
+
+.triggerValue {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	overflow: hidden;
+}
+
+.triggerLabel {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.optionRow {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 4px 0;
+}
+
+.optionText {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	overflow: hidden;
+}
+
+.optionLabel {
+	color: var(--l1-foreground);
+	line-height: 1.2;
+}
+
+.optionDescription {
+	color: var(--l3-foreground);
+	font-size: 12px;
+	line-height: 1.2;
+}

@@ -1,0 +1,9 @@
+.trigger {
+	display: inline-flex;
+}
+
+.aboveOverlay {
+	// Lift the tooltip above the dropdown menu (z 50) and the antd Drawer (z 1000)
+	// so it is never clipped behind them. The tooltip content reads this variable.
+	--tooltip-z-index: 1100;
+}
