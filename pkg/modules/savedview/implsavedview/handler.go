@@ -33,7 +33,7 @@ func (handler *handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var view savedviewtypes.SavedView
+	var view savedviewtypes.PostableSavedView
 	if err := json.NewDecoder(r.Body).Decode(&view); err != nil {
 		render.Error(w, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to decode request body"))
 		return
@@ -95,7 +95,7 @@ func (handler *handler) Update(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to parse view id"))
 		return
 	}
-	var view savedviewtypes.SavedView
+	var view savedviewtypes.UpdatableSavedView
 	if err := json.NewDecoder(r.Body).Decode(&view); err != nil {
 		render.Error(w, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to decode request body"))
 		return
@@ -112,7 +112,13 @@ func (handler *handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(w, http.StatusOK, view)
+	updated, err := handler.module.GetView(ctx, claims.OrgID, viewUUID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	render.Success(w, http.StatusOK, updated)
 }
 
 func (handler *handler) Delete(w http.ResponseWriter, r *http.Request) {

@@ -518,8 +518,8 @@ type CompositeQuery struct {
 
 	Queries []qbtypes.QueryEnvelope `json:"queries,omitempty"`
 
-	PanelType PanelType `json:"panelType" required:"true"`
-	QueryType QueryType `json:"queryType" required:"true"`
+	PanelType PanelType `json:"panelType"`
+	QueryType QueryType `json:"queryType"`
 	// Unit for the time series data shown in the graph
 	// This is used in alerts to format the value and threshold
 	Unit string `json:"unit,omitempty"`

@@ -7831,12 +7831,28 @@ components:
       enum:
       - basic
       type: string
-    SavedviewtypesSavedView:
+    SavedviewtypesCompositeQuery:
+      properties:
+        panelType:
+          type: string
+        queries:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelope'
+          nullable: true
+          type: array
+        queryType:
+          type: string
+      required:
+      - panelType
+      - queryType
+      - queries
+      type: object
+    SavedviewtypesGettableSavedView:
       properties:
         category:
           type: string
         compositeQuery:
-          $ref: '#/components/schemas/V3CompositeQuery'
+          $ref: '#/components/schemas/SavedviewtypesCompositeQuery'
         createdAt:
           format: date-time
           type: string
@@ -7861,12 +7877,38 @@ components:
         updatedBy:
           type: string
       required:
+      - id
       - name
       - category
       - createdAt
       - createdBy
       - updatedAt
       - updatedBy
+      - sourcePage
+      - tags
+      - compositeQuery
+      - extraData
+      type: object
+    SavedviewtypesPostableSavedView:
+      properties:
+        category:
+          type: string
+        compositeQuery:
+          $ref: '#/components/schemas/SavedviewtypesCompositeQuery'
+        extraData:
+          type: string
+        name:
+          type: string
+        sourcePage:
+          type: string
+        tags:
+          items:
+            type: string
+          nullable: true
+          type: array
+      required:
+      - name
+      - category
       - sourcePage
       - tags
       - compositeQuery
@@ -8884,174 +8926,6 @@ components:
           type: string
       required:
       - id
-      type: object
-    V3AttributeKey:
-      properties:
-        dataType:
-          type: string
-        isColumn:
-          type: boolean
-        isJSON:
-          type: boolean
-        key:
-          type: string
-        type:
-          type: string
-      type: object
-    V3BuilderQuery:
-      properties:
-        aggregateAttribute:
-          $ref: '#/components/schemas/V3AttributeKey'
-        aggregateOperator:
-          type: string
-        dataSource:
-          type: string
-        disabled:
-          type: boolean
-        expression:
-          type: string
-        filters:
-          $ref: '#/components/schemas/V3FilterSet'
-        functions:
-          items:
-            $ref: '#/components/schemas/V3Function'
-          type: array
-        groupBy:
-          items:
-            $ref: '#/components/schemas/V3AttributeKey'
-          type: array
-        having:
-          items:
-            $ref: '#/components/schemas/V3Having'
-          type: array
-        legend:
-          type: string
-        limit:
-          minimum: 0
-          type: integer
-        offset:
-          minimum: 0
-          type: integer
-        orderBy:
-          items:
-            $ref: '#/components/schemas/V3OrderBy'
-          type: array
-        pageSize:
-          minimum: 0
-          type: integer
-        queryName:
-          type: string
-        reduceTo:
-          type: string
-        selectColumns:
-          items:
-            $ref: '#/components/schemas/V3AttributeKey'
-          type: array
-        seriesAggregation:
-          type: string
-        spaceAggregation:
-          type: string
-        stepInterval:
-          format: int64
-          type: integer
-        temporality:
-          type: string
-        timeAggregation:
-          type: string
-      type: object
-    V3ClickHouseQuery:
-      properties:
-        disabled:
-          type: boolean
-        legend:
-          type: string
-        query:
-          type: string
-      type: object
-    V3CompositeQuery:
-      properties:
-        builderQueries:
-          additionalProperties:
-            $ref: '#/components/schemas/V3BuilderQuery'
-          type: object
-        chQueries:
-          additionalProperties:
-            $ref: '#/components/schemas/V3ClickHouseQuery'
-          type: object
-        fillGaps:
-          type: boolean
-        panelType:
-          type: string
-        promQueries:
-          additionalProperties:
-            $ref: '#/components/schemas/V3PromQuery'
-          type: object
-        queries:
-          items:
-            $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelope'
-          type: array
-        queryType:
-          type: string
-        unit:
-          type: string
-      required:
-      - panelType
-      - queryType
-      type: object
-    V3FilterItem:
-      properties:
-        key:
-          $ref: '#/components/schemas/V3AttributeKey'
-        op:
-          type: string
-        value: {}
-      type: object
-    V3FilterSet:
-      properties:
-        items:
-          items:
-            $ref: '#/components/schemas/V3FilterItem'
-          nullable: true
-          type: array
-        op:
-          type: string
-      type: object
-    V3Function:
-      properties:
-        args:
-          items: {}
-          type: array
-        name:
-          type: string
-        namedArgs:
-          additionalProperties: {}
-          type: object
-      type: object
-    V3Having:
-      properties:
-        columnName:
-          type: string
-        op:
-          type: string
-        value: {}
-      type: object
-    V3OrderBy:
-      properties:
-        columnName:
-          type: string
-        order:
-          type: string
-      type: object
-    V3PromQuery:
-      properties:
-        disabled:
-          type: boolean
-        legend:
-          type: string
-        query:
-          type: string
-        stats:
-          type: string
       type: object
     ZeustypesGettableHost:
       properties:
@@ -22766,7 +22640,10 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/SavedviewtypesSavedView'
+                    items:
+                      $ref: '#/components/schemas/SavedviewtypesGettableSavedView'
+                    nullable: true
+                    type: array
                   status:
                     type: string
                 required:
@@ -22815,7 +22692,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SavedviewtypesSavedView'
+              $ref: '#/components/schemas/SavedviewtypesPostableSavedView'
       responses:
         "200":
           content:
@@ -22933,7 +22810,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/SavedviewtypesSavedView'
+                    $ref: '#/components/schemas/SavedviewtypesGettableSavedView'
                   status:
                     type: string
                 required:
@@ -22993,7 +22870,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SavedviewtypesSavedView'
+              $ref: '#/components/schemas/SavedviewtypesPostableSavedView'
       responses:
         "200":
           content:
@@ -23001,7 +22878,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/SavedviewtypesSavedView'
+                    $ref: '#/components/schemas/SavedviewtypesGettableSavedView'
                   status:
                     type: string
                 required:

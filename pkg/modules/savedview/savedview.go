@@ -10,13 +10,13 @@ import (
 )
 
 type Module interface {
-	GetViewsForFilters(ctx context.Context, orgID string, sourcePage string, name string, category string) ([]*savedviewtypes.SavedView, error)
+	GetViewsForFilters(ctx context.Context, orgID string, sourcePage string, name string, category string) ([]*savedviewtypes.GettableSavedView, error)
 
-	CreateView(ctx context.Context, orgID string, view savedviewtypes.SavedView) (valuer.UUID, error)
+	CreateView(ctx context.Context, orgID string, view savedviewtypes.PostableSavedView) (valuer.UUID, error)
 
-	GetView(ctx context.Context, orgID string, uuid valuer.UUID) (*savedviewtypes.SavedView, error)
+	GetView(ctx context.Context, orgID string, uuid valuer.UUID) (*savedviewtypes.GettableSavedView, error)
 
-	UpdateView(ctx context.Context, orgID string, uuid valuer.UUID, view savedviewtypes.SavedView) error
+	UpdateView(ctx context.Context, orgID string, uuid valuer.UUID, view savedviewtypes.UpdatableSavedView) error
 
 	DeleteView(ctx context.Context, orgID string, uuid valuer.UUID) error
 
