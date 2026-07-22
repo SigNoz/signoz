@@ -238,7 +238,7 @@
     }
   },
   "tags": [],
-  "title": "Signoz GCP Memorystory Redis overview",
+  "title": "Signoz GCP Memorystore Redis overview",
   "uploadedGrafana": false,
   "uuid": "019f85e9-3846-7dc9-9bce-b626b8a3eaff",
   "variables": {
@@ -262,7 +262,7 @@
       "type": "DYNAMIC"
     },
     "dabcf41a-4121-4a03-8738-927576cc90bf": {
-      "allSelected": true,
+      "allSelected": false,
       "customValue": "",
       "defaultValue": "",
       "description": "GCP Project ID",
@@ -390,7 +390,7 @@
             "disabled": false,
             "legend": "",
             "name": "A",
-            "query": "rate({\"redis.googleapis.com/server/uptime\", project_id=\"$project_id\"}[5m])"
+            "query": ""
           }
         ],
         "queryType": "builder",
