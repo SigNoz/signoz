@@ -10,6 +10,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
+const (
+	MaxFilterExpressionLength = 300_000
+	MaxClickHouseQueryLength  = 300_000
+	MaxPromQLQueryLength      = 300_000
+)
+
 // getQueryIdentifier returns a friendly identifier for a query based on its type and name/content.
 func getQueryIdentifier(envelope QueryEnvelope, index int) string {
 	name := envelope.GetQueryName()
@@ -176,6 +182,10 @@ func (q *QueryBuilderQuery[T]) Validate(opts ...ValidationOption) error {
 	}
 
 	if err := q.validateSelectFields(cfg); err != nil {
+		return err
+	}
+
+	if err := q.validateFilterExpression(); err != nil {
 		return err
 	}
 
@@ -398,6 +408,20 @@ func (q *QueryBuilderQuery[T]) validateFunctions() error {
 			}
 			return wrapValidationError(err, fnId, "invalid %s: %s")
 		}
+	}
+	return nil
+}
+
+func (q *QueryBuilderQuery[T]) validateFilterExpression() error {
+	if q.Filter == nil || q.Filter.Expression == "" {
+		return nil
+	}
+	if len(q.Filter.Expression) > MaxFilterExpressionLength {
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"filter expression exceeds maximum allowed length of %d characters",
+			MaxFilterExpressionLength,
+		)
 	}
 	return nil
 }
@@ -752,13 +776,7 @@ func validateQueryEnvelope(envelope QueryEnvelope, opts ...ValidationOption) err
 				"invalid PromQL spec",
 			)
 		}
-		if spec.Query == "" {
-			return errors.NewInvalidInputf(
-				errors.CodeInvalidInput,
-				"PromQL query is required",
-			)
-		}
-		return nil
+		return spec.Validate()
 	case QueryTypeClickHouseSQL:
 		spec, ok := envelope.Spec.(ClickHouseQuery)
 		if !ok {
@@ -767,13 +785,7 @@ func validateQueryEnvelope(envelope QueryEnvelope, opts ...ValidationOption) err
 				"invalid ClickHouse SQL spec",
 			)
 		}
-		if spec.Query == "" {
-			return errors.NewInvalidInputf(
-				errors.CodeInvalidInput,
-				"ClickHouse SQL query is required",
-			)
-		}
-		return nil
+		return spec.Validate()
 	default:
 		return errors.NewInvalidInputf(
 			errors.CodeInvalidInput,
