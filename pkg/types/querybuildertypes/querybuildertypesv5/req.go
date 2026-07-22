@@ -543,6 +543,65 @@ func (q *QueryEnvelope) UseDefaultOrderByForListQuery() {
 	}
 }
 
+// DefaultGroupByLimit caps groups for a group by query with no explicit limit. The query runs
+// with one extra row so the querier can detect when the cap was hit and warn.
+const DefaultGroupByLimit = 1000
+
+// Normalize prepares scalar/time series group by queries: it makes the implicit order explicit
+// and caps unbounded body group by queries at DefaultGroupByLimit+1 rows, recording the implicit
+// limit so the querier can trim and warn.
+func (r *QueryRangeRequest) Normalize() {
+	if r.RequestType != RequestTypeScalar && r.RequestType != RequestTypeTimeSeries {
+		return
+	}
+
+	for idx := range r.CompositeQuery.Queries {
+		qe := &r.CompositeQuery.Queries[idx]
+		qe.UseDefaultGroupByOrder()
+
+		// Only body group by is capped for now; relax this gate to cap others.
+		if qe.GetLimit() == 0 && qe.HasBodyContextGroupBy() {
+			qe.SetImplicitLimit(DefaultGroupByLimit)
+			qe.SetLimit(DefaultGroupByLimit + 1)
+		}
+	}
+}
+
+// UseDefaultGroupByOrder defaults a log/trace group by query's order to the first aggregation
+// descending (the SQL default) when none is set. Metrics order themselves.
+func (q *QueryEnvelope) UseDefaultGroupByOrder() {
+
+	if len(q.GetGroupBy()) == 0 {
+		return
+	}
+
+	var aggExpr string
+
+	switch spec := q.Spec.(type) {
+	case QueryBuilderQuery[LogAggregation]:
+		if len(spec.Aggregations) > 0 {
+			aggExpr = spec.Aggregations[0].Expression
+		}
+	case QueryBuilderQuery[TraceAggregation]:
+		if len(spec.Aggregations) > 0 {
+			aggExpr = spec.Aggregations[0].Expression
+		}
+	default:
+		return
+	}
+
+	order := q.GetOrder()
+
+	if len(order) == 0 && aggExpr != "" {
+		order = append(order, OrderBy{
+			Key:       OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: aggExpr}},
+			Direction: OrderDirectionDesc,
+		})
+	}
+
+	q.SetOrder(order)
+}
+
 func (r *QueryRangeRequest) FuncsForQuery(name string) []Function {
 	funcs := []Function{}
 	for _, query := range r.CompositeQuery.Queries {

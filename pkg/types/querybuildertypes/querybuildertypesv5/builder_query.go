@@ -71,6 +71,10 @@ type QueryBuilderQuery[T any] struct {
 	// ShiftBy is extracted from timeShift function for internal use
 	// This field is not serialized to JSON
 	ShiftBy int64 `json:"-"`
+
+	// implicitLimit is the row cap we imposed when the query had no explicit limit; 0 means the
+	// user set the limit (or none was imposed). The querier trims results back to this value.
+	implicitLimit int `json:"-"`
 }
 
 // PrepareJSONSchema pins `signal` to the single value implied by the aggregation
