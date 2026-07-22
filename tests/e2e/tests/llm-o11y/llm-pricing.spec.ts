@@ -6,9 +6,6 @@ import {
 	gotoLlmPricing,
 } from '../../helpers/llm-pricing';
 
-// One basic-flow test that mutates backend state — run serially. Add/save
-// controls only render for a user with `manage_llm_pricing` (admin); the
-// pytest-bootstrap user is an admin.
 test.describe.configure({ mode: 'serial' });
 
 // Unique model name so the flow is isolated and cleanup can target it.

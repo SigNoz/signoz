@@ -1,14 +1,8 @@
 import type { APIRequestContext, Page } from '@playwright/test';
 
-// Helpers for the LLM Observability "Model Pricing" page. The page lives under
-// the "Model pricing" LLM-Observability tab at `/ai-observability/configuration`
-// and defaults to the "Model costs" sub-tab. Rules are managed via
-// `/api/v1/llm_pricing_rules` (GET list, PUT create/update, DELETE by id).
-
 export const LLM_PRICING_PATH = '/ai-observability/configuration';
 export const LLM_PRICING_PAGE_TESTID = 'llm-observability-model-pricing-page';
 
-/** Navigate to the Model Pricing page and wait for its root container. */
 export async function gotoLlmPricing(page: Page): Promise<void> {
 	await page.goto(LLM_PRICING_PATH);
 	await page.getByTestId(LLM_PRICING_PAGE_TESTID).waitFor({ state: 'visible' });
@@ -37,11 +31,6 @@ export async function listPricingRules(
 	return body.data?.items ?? [];
 }
 
-/**
- * Best-effort delete of every rule whose modelName is in `modelNames`. Errors
- * are swallowed so suite cleanup stays resilient. The PUT create response is
- * empty, so the rule id is resolved from the list API by modelName.
- */
 export async function deletePricingRulesByModelName(
 	request: APIRequestContext,
 	token: string,

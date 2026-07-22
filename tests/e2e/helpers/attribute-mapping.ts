@@ -1,10 +1,5 @@
 import type { APIRequestContext, Page } from '@playwright/test';
 
-// Helpers for the LLM Observability "Attribute Mapping" page
-// (`/ai-observability/attribute-mapping`). The page edits an in-memory draft
-// tree of groups + mappers and only persists to the backend when the header
-// "Save changes" button is clicked (see saveDraft.ts `persistDraft`).
-
 export const ATTRIBUTE_MAPPING_PATH = '/ai-observability/attribute-mapping';
 export const ATTRIBUTE_MAPPING_PAGE_TESTID =
 	'llm-observability-attribute-mapping-page';
@@ -37,11 +32,6 @@ export async function listSpanMapperGroups(
 	return body.data?.items ?? [];
 }
 
-/**
- * Best-effort delete of every group whose name is in `names`. Deleting a group
- * cascades its mappers server-side. Errors are swallowed so suite cleanup stays
- * resilient when a UI flow already removed the group or the stack is mid-shutdown.
- */
 export async function deleteSpanMapperGroupsByName(
 	request: APIRequestContext,
 	token: string,
