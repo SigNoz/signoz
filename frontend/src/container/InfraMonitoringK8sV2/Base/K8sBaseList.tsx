@@ -442,6 +442,7 @@ export function K8sBaseList<
 						plainTextCellLineClamp={lineClamp}
 						prefixPaginationContent={paginationWarningContent}
 						paginationClassname={styles.paginationContainer}
+						resetScrollKey={entity}
 					/>
 				)}
 			</div>
