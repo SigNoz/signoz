@@ -7,6 +7,10 @@
 	:global(table) tbody tr {
 		cursor: default;
 	}
+
+	:global(.tanstack-header-title) {
+		color: var(--l2-foreground);
+	}
 }
 
 .modelCostsEmpty {

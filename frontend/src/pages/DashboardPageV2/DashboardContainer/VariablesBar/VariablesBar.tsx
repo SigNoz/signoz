@@ -7,11 +7,11 @@ import { useInlineOverflowCount } from 'hooks/useInlineOverflowCount';
 
 import { selectVariablesExpanded } from '../store/slices/collapseSlice';
 import { useDashboardStore } from '../store/useDashboardStore';
-import AddVariableFull from './AddVariableFull';
-import AddVariableIcon from './AddVariableIcon';
+import AddVariableFull from './components/AddVariable/AddVariableFull';
+import AddVariableIcon from './components/AddVariable/AddVariableIcon';
 import type { VariableSelection } from './selectionTypes';
-import { useVariableSelection } from './useVariableSelection';
-import VariableSelector from './VariableSelector';
+import { useVariableSelection } from './hooks/useVariableSelection';
+import VariableSelector from './components/VariableSelector/VariableSelector';
 import styles from './VariablesBar.module.scss';
 
 // Short display of a variable's current selection, for the collapsed +N tooltip.

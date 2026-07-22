@@ -5,7 +5,8 @@ import { SpantypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas'
 import cx from 'classnames';
 import { motion } from 'motion/react';
 
-import { Mapping } from 'container/LLMObservability/AttributeMapping/types';
+import { DraftMapper } from 'container/LLMObservability/AttributeMapping/types';
+import MapperActionsMenu from '../MapperActionsMenu/MapperActionsMenu';
 import styles from './MapperRow.module.scss';
 
 const MAX_VISIBLE_SOURCES = 3;
@@ -15,11 +16,20 @@ const MAX_STAGGERED_ROWS = 6;
 const STAGGER_STEP = 0.03;
 
 interface MapperRowProps {
-	mapper: Mapping;
+	mapper: DraftMapper;
 	index: number;
+	onEdit: (mapper: DraftMapper) => void;
+	onRemove: (localId: string) => void;
+	onToggle: (localId: string, enabled: boolean) => void;
 }
 
-function MapperRow({ mapper, index }: MapperRowProps): JSX.Element {
+function MapperRow({
+	mapper,
+	index,
+	onEdit,
+	onRemove,
+	onToggle,
+}: MapperRowProps): JSX.Element {
 	const sources = mapper.sources ?? [];
 	const visibleSources = sources.slice(0, MAX_VISIBLE_SOURCES);
 	const remainingSources = sources.length - visibleSources.length;
@@ -27,7 +37,7 @@ function MapperRow({ mapper, index }: MapperRowProps): JSX.Element {
 	return (
 		<motion.tr
 			className={styles.mapperRow}
-			data-testid={`mapper-row-${mapper.id}`}
+			data-testid={`mapper-row-${mapper.localId}`}
 			initial={{ opacity: 0, y: -4 }}
 			animate={{ opacity: 1, y: 0 }}
 			transition={{
@@ -37,22 +47,38 @@ function MapperRow({ mapper, index }: MapperRowProps): JSX.Element {
 		>
 			<td className={cx(styles.cell, styles.targetCell)}>
 				<Typography.Text
+					weight="semibold"
 					truncate={1}
 					title={mapper.name}
-					data-testid={`mapper-target-${mapper.id}`}
+					className={styles.targetName}
+					data-testid={`mapper-target-${mapper.localId}`}
 				>
 					{mapper.name}
 				</Typography.Text>
+				<Badge
+					color={
+						mapper.fieldContext === SpantypesFieldContextDTO.resource
+							? 'amber'
+							: 'robin'
+					}
+					variant="outline"
+					className={styles.targetContextBadge}
+				>
+					{mapper.fieldContext}
+				</Badge>
 			</td>
 			<td className={styles.cell}>
 				{sources.length === 0 ? (
-					<span className={styles.muted} data-testid={`mapper-sources-${mapper.id}`}>
+					<span
+						className={styles.muted}
+						data-testid={`mapper-sources-${mapper.localId}`}
+					>
 						—
 					</span>
 				) : (
 					<div
 						className={styles.sources}
-						data-testid={`mapper-sources-${mapper.id}`}
+						data-testid={`mapper-sources-${mapper.localId}`}
 					>
 						{visibleSources.map((source) => (
 							<Badge
@@ -74,25 +100,14 @@ function MapperRow({ mapper, index }: MapperRowProps): JSX.Element {
 					</div>
 				)}
 			</td>
-			<td className={styles.cell}>
-				<Badge
-					color={
-						mapper.fieldContext === SpantypesFieldContextDTO.resource
-							? 'amber'
-							: 'robin'
-					}
-					variant="outline"
-				>
-					{mapper.fieldContext}
-				</Badge>
-			</td>
-			<td className={cx(styles.cell, styles.statusCell)}>
+			<td className={cx(styles.cell, styles.actionsCell)}>
 				<div className={styles.rowActions}>
 					<Switch
 						value={mapper.enabled}
-						disabled
-						testId={`mapper-enabled-${mapper.id}`}
+						onChange={(checked): void => onToggle(mapper.localId, checked)}
+						testId={`mapper-enabled-${mapper.localId}`}
 					/>
+					<MapperActionsMenu mapper={mapper} onEdit={onEdit} onRemove={onRemove} />
 				</div>
 			</td>
 		</motion.tr>

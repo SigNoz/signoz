@@ -64,7 +64,7 @@ func (m *module) getPerGroupHostStatusCounts(
 		var filterClause *sqlbuilder.WhereClause
 		if filterExpr != "" {
 			var err error
-			filterClause, err = m.buildFilterClause(ctx, &qbtypes.Filter{Expression: filterExpr}, req.Start, req.End)
+			filterClause, err = m.buildFilterClause(ctx, orgID, &qbtypes.Filter{Expression: filterExpr}, req.Start, req.End)
 			if err != nil {
 				return nil, err
 			}
@@ -110,7 +110,7 @@ func (m *module) getPerGroupHostStatusCounts(
 		)
 
 		if filterExpr != "" {
-			filterClause, err := m.buildFilterClause(ctx, &qbtypes.Filter{Expression: filterExpr}, req.Start, req.End)
+			filterClause, err := m.buildFilterClause(ctx, orgID, &qbtypes.Filter{Expression: filterExpr}, req.Start, req.End)
 			if err != nil {
 				return nil, err
 			}

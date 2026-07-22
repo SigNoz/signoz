@@ -3302,29 +3302,6 @@ export interface DashboardGridLayoutSpecDTO {
 	repeatVariable?: string;
 }
 
-export interface DashboardLinkDTO {
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type boolean
-	 */
-	renderVariables?: boolean;
-	/**
-	 * @type boolean
-	 */
-	targetBlank?: boolean;
-	/**
-	 * @type string
-	 */
-	tooltip?: string;
-	/**
-	 * @type string
-	 */
-	url?: string;
-}
-
 export interface DashboardtypesAxesDTO {
 	/**
 	 * @type boolean
@@ -3491,9 +3468,9 @@ export enum Querybuildertypesv5FunctionNameDTO {
 }
 export interface Querybuildertypesv5FunctionDTO {
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	args?: Querybuildertypesv5FunctionArgDTO[];
+	args?: Querybuildertypesv5FunctionArgDTO[] | null;
 	name?: Querybuildertypesv5FunctionNameDTO;
 }
 
@@ -3504,6 +3481,7 @@ export enum TelemetrytypesFieldContextDTO {
 	resource = 'resource',
 	attribute = 'attribute',
 	body = 'body',
+	'' = '',
 }
 export enum TelemetrytypesFieldDataTypeDTO {
 	string = 'string',
@@ -3511,11 +3489,13 @@ export enum TelemetrytypesFieldDataTypeDTO {
 	float64 = 'float64',
 	int64 = 'int64',
 	number = 'number',
+	'' = '',
 }
 export enum TelemetrytypesSignalDTO {
 	traces = 'traces',
 	logs = 'logs',
 	metrics = 'metrics',
+	'' = '',
 }
 export interface Querybuildertypesv5GroupByKeyDTO {
 	/**
@@ -3595,18 +3575,18 @@ export interface Querybuildertypesv5SecondaryAggregationDTO {
 	 */
 	expression?: string;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	groupBy?: Querybuildertypesv5GroupByKeyDTO[];
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
 	/**
 	 * @type integer
 	 */
 	limit?: number;
 	limitBy?: Querybuildertypesv5LimitByDTO;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	order?: Querybuildertypesv5OrderByDTO[];
+	order?: Querybuildertypesv5OrderByDTO[] | null;
 	stepInterval?: Querybuildertypesv5StepDTO;
 }
 
@@ -3633,12 +3613,13 @@ export enum Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQue
 }
 export enum TelemetrytypesSourceDTO {
 	meter = 'meter',
+	'' = '',
 }
 export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTO {
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	aggregations?: Querybuildertypesv5LogAggregationDTO[];
+	aggregations?: Querybuildertypesv5LogAggregationDTO[] | null;
 	/**
 	 * @type string
 	 */
@@ -3649,13 +3630,13 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	disabled?: boolean;
 	filter?: Querybuildertypesv5FilterDTO;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	functions?: Querybuildertypesv5FunctionDTO[];
+	functions?: Querybuildertypesv5FunctionDTO[] | null;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	groupBy?: Querybuildertypesv5GroupByKeyDTO[];
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
 	having?: Querybuildertypesv5HavingDTO;
 	/**
 	 * @type string
@@ -3675,17 +3656,17 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	 */
 	offset?: number;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	order?: Querybuildertypesv5OrderByDTO[];
+	order?: Querybuildertypesv5OrderByDTO[] | null;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	secondaryAggregations?: Querybuildertypesv5SecondaryAggregationDTO[];
+	secondaryAggregations?: Querybuildertypesv5SecondaryAggregationDTO[] | null;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[];
+	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[] | null;
 	/**
 	 * @enum logs
 	 * @type string
@@ -3732,6 +3713,7 @@ export enum MetrictypesTemporalityDTO {
 	delta = 'delta',
 	cumulative = 'cumulative',
 	unspecified = 'unspecified',
+	'' = '',
 }
 export enum MetrictypesTimeAggregationDTO {
 	latest = 'latest',
@@ -3743,6 +3725,7 @@ export enum MetrictypesTimeAggregationDTO {
 	count_distinct = 'count_distinct',
 	rate = 'rate',
 	increase = 'increase',
+	'' = '',
 }
 export interface Querybuildertypesv5MetricAggregationDTO {
 	comparisonSpaceAggregationParam?: MetrictypesComparisonSpaceAggregationParamDTO;
@@ -3761,9 +3744,9 @@ export enum Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQue
 }
 export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTO {
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	aggregations?: Querybuildertypesv5MetricAggregationDTO[];
+	aggregations?: Querybuildertypesv5MetricAggregationDTO[] | null;
 	/**
 	 * @type string
 	 */
@@ -3774,13 +3757,13 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	disabled?: boolean;
 	filter?: Querybuildertypesv5FilterDTO;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	functions?: Querybuildertypesv5FunctionDTO[];
+	functions?: Querybuildertypesv5FunctionDTO[] | null;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	groupBy?: Querybuildertypesv5GroupByKeyDTO[];
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
 	having?: Querybuildertypesv5HavingDTO;
 	/**
 	 * @type string
@@ -3800,17 +3783,17 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	 */
 	offset?: number;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	order?: Querybuildertypesv5OrderByDTO[];
+	order?: Querybuildertypesv5OrderByDTO[] | null;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	secondaryAggregations?: Querybuildertypesv5SecondaryAggregationDTO[];
+	secondaryAggregations?: Querybuildertypesv5SecondaryAggregationDTO[] | null;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[];
+	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[] | null;
 	/**
 	 * @enum metrics
 	 * @type string
@@ -3836,9 +3819,9 @@ export enum Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQue
 }
 export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTO {
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	aggregations?: Querybuildertypesv5TraceAggregationDTO[];
+	aggregations?: Querybuildertypesv5TraceAggregationDTO[] | null;
 	/**
 	 * @type string
 	 */
@@ -3849,13 +3832,13 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	disabled?: boolean;
 	filter?: Querybuildertypesv5FilterDTO;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	functions?: Querybuildertypesv5FunctionDTO[];
+	functions?: Querybuildertypesv5FunctionDTO[] | null;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	groupBy?: Querybuildertypesv5GroupByKeyDTO[];
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
 	having?: Querybuildertypesv5HavingDTO;
 	/**
 	 * @type string
@@ -3875,17 +3858,17 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	 */
 	offset?: number;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	order?: Querybuildertypesv5OrderByDTO[];
+	order?: Querybuildertypesv5OrderByDTO[] | null;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	secondaryAggregations?: Querybuildertypesv5SecondaryAggregationDTO[];
+	secondaryAggregations?: Querybuildertypesv5SecondaryAggregationDTO[] | null;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[];
+	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[] | null;
 	/**
 	 * @enum traces
 	 * @type string
@@ -4036,9 +4019,15 @@ export interface DashboardtypesDatasourceSpecDTO {
 	plugin?: DashboardtypesDatasourcePluginDTO;
 }
 
-export type DashboardtypesDashboardSpecDTODatasources = {
+export type DashboardtypesDashboardSpecDTODatasourcesAnyOf = {
 	[key: string]: DashboardtypesDatasourceSpecDTO;
 };
+
+/**
+ * @nullable
+ */
+export type DashboardtypesDashboardSpecDTODatasources =
+	DashboardtypesDashboardSpecDTODatasourcesAnyOf | null;
 
 export enum DashboardtypesPanelKindDTO {
 	Panel = 'Panel',
@@ -4052,6 +4041,29 @@ export interface DashboardtypesDisplayDTO {
 	 * @type string
 	 */
 	name: string;
+}
+
+export interface DashboardtypesLinkDTO {
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type boolean
+	 */
+	renderVariables?: boolean;
+	/**
+	 * @type boolean
+	 */
+	targetBlank?: boolean;
+	/**
+	 * @type string
+	 */
+	tooltip?: string;
+	/**
+	 * @type string
+	 */
+	url?: string;
 }
 
 export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpecDTOKind {
@@ -4274,9 +4286,9 @@ export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboa
 }
 export interface DashboardtypesListPanelSpecDTO {
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[];
+	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[] | null;
 }
 
 export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpecDTO {
@@ -4346,9 +4358,9 @@ export interface Querybuildertypesv5QueryBuilderFormulaDTO {
 	 */
 	expression?: string;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	functions?: Querybuildertypesv5FunctionDTO[];
+	functions?: Querybuildertypesv5FunctionDTO[] | null;
 	having?: Querybuildertypesv5HavingDTO;
 	/**
 	 * @type string
@@ -4363,9 +4375,9 @@ export interface Querybuildertypesv5QueryBuilderFormulaDTO {
 	 */
 	name?: string;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	order?: Querybuildertypesv5OrderByDTO[];
+	order?: Querybuildertypesv5OrderByDTO[] | null;
 }
 
 export enum Querybuildertypesv5QueryEnvelopeFormulaDTOType {
@@ -4382,9 +4394,9 @@ export interface Querybuildertypesv5QueryEnvelopeFormulaDTO {
 
 export interface Querybuildertypesv5QueryBuilderTraceOperatorDTO {
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	aggregations?: Querybuildertypesv5TraceAggregationDTO[];
+	aggregations?: Querybuildertypesv5TraceAggregationDTO[] | null;
 	/**
 	 * @type string
 	 */
@@ -4399,13 +4411,13 @@ export interface Querybuildertypesv5QueryBuilderTraceOperatorDTO {
 	expression?: string;
 	filter?: Querybuildertypesv5FilterDTO;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	functions?: Querybuildertypesv5FunctionDTO[];
+	functions?: Querybuildertypesv5FunctionDTO[] | null;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	groupBy?: Querybuildertypesv5GroupByKeyDTO[];
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
 	having?: Querybuildertypesv5HavingDTO;
 	/**
 	 * @type string
@@ -4424,17 +4436,17 @@ export interface Querybuildertypesv5QueryBuilderTraceOperatorDTO {
 	 */
 	offset?: number;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	order?: Querybuildertypesv5OrderByDTO[];
+	order?: Querybuildertypesv5OrderByDTO[] | null;
 	/**
 	 * @type string
 	 */
 	returnSpansFrom?: string;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[];
+	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[] | null;
 	stepInterval?: Querybuildertypesv5StepDTO;
 }
 
@@ -4615,9 +4627,9 @@ export interface DashboardtypesQueryDTO {
 export interface DashboardtypesPanelSpecDTO {
 	display: DashboardtypesDisplayDTO;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	links?: DashboardLinkDTO[];
+	links?: DashboardtypesLinkDTO[] | null;
 	plugin: DashboardtypesPanelPluginDTO;
 	/**
 	 * @type array
@@ -4791,7 +4803,7 @@ export type DashboardtypesVariableDTO =
 
 export interface DashboardtypesDashboardSpecDTO {
 	/**
-	 * @type object
+	 * @type object,null
 	 */
 	datasources?: DashboardtypesDashboardSpecDTODatasources;
 	display: DashboardtypesDisplayDTO;
@@ -4804,9 +4816,9 @@ export interface DashboardtypesDashboardSpecDTO {
 	 */
 	layouts: DashboardtypesLayoutDTO[];
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	links?: DashboardLinkDTO[];
+	links?: DashboardtypesLinkDTO[] | null;
 	/**
 	 * @type object
 	 */
@@ -5671,6 +5683,39 @@ export interface InframonitoringtypesChecksDTO {
 	type: InframonitoringtypesCheckTypeDTO;
 }
 
+export type InframonitoringtypesClusterRecordDTOCounts = {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	daemonSets: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	deployments: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	jobs: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	namespaces: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	nodes: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	statefulSets: number;
+};
+
 export type InframonitoringtypesClusterRecordDTOMetaAnyOf = {
 	[key: string]: string;
 };
@@ -5815,6 +5860,10 @@ export interface InframonitoringtypesClusterRecordDTO {
 	 * @type string
 	 */
 	clusterName: string;
+	/**
+	 * @type object
+	 */
+	counts: InframonitoringtypesClusterRecordDTOCounts;
 	/**
 	 * @type object,null
 	 */
@@ -6370,6 +6419,29 @@ export interface InframonitoringtypesJobsDTO {
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 
+export type InframonitoringtypesNamespaceRecordDTOCounts = {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	daemonSets: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	deployments: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	jobs: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	statefulSets: number;
+};
+
 export type InframonitoringtypesNamespaceRecordDTOMetaAnyOf = {
 	[key: string]: string;
 };
@@ -6381,6 +6453,10 @@ export type InframonitoringtypesNamespaceRecordDTOMeta =
 	InframonitoringtypesNamespaceRecordDTOMetaAnyOf | null;
 
 export interface InframonitoringtypesNamespaceRecordDTO {
+	/**
+	 * @type object
+	 */
+	counts: InframonitoringtypesNamespaceRecordDTOCounts;
 	/**
 	 * @type object,null
 	 */
@@ -8613,9 +8689,9 @@ export interface RuletypesGettableTestRuleDTO {
 
 export interface RuletypesRenotifyDTO {
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	alertStates?: RuletypesAlertStateDTO[];
+	alertStates?: RuletypesAlertStateDTO[] | null;
 	/**
 	 * @type boolean
 	 */
@@ -8628,9 +8704,9 @@ export interface RuletypesRenotifyDTO {
 
 export interface RuletypesNotificationSettingsDTO {
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	groupBy?: string[];
+	groupBy?: string[] | null;
 	/**
 	 * @type string
 	 */
@@ -9196,6 +9272,118 @@ export interface SpantypesGettableSpanMapperGroupsDTO {
 	items: SpantypesSpanMapperGroupDTO[];
 }
 
+export type SpantypesSpanMapperTestSpanDTOAttributesAnyOf = {
+	[key: string]: unknown;
+};
+
+/**
+ * @nullable
+ */
+export type SpantypesSpanMapperTestSpanDTOAttributes =
+	SpantypesSpanMapperTestSpanDTOAttributesAnyOf | null;
+
+export type SpantypesSpanMapperTestSpanDTOResourceAnyOf = {
+	[key: string]: unknown;
+};
+
+/**
+ * @nullable
+ */
+export type SpantypesSpanMapperTestSpanDTOResource =
+	SpantypesSpanMapperTestSpanDTOResourceAnyOf | null;
+
+export interface SpantypesSpanMapperTestSpanDTO {
+	/**
+	 * @type object,null
+	 */
+	attributes?: SpantypesSpanMapperTestSpanDTOAttributes;
+	/**
+	 * @type object,null
+	 */
+	resource?: SpantypesSpanMapperTestSpanDTOResource;
+}
+
+export interface SpantypesGettableSpanMapperTestDTO {
+	/**
+	 * @type array,null
+	 */
+	collectorLogs?: string[] | null;
+	/**
+	 * @type array,null
+	 */
+	spans?: SpantypesSpanMapperTestSpanDTO[] | null;
+}
+
+export enum SpantypesSpanMapperOperationDTO {
+	move = 'move',
+	copy = 'copy',
+}
+export interface SpantypesSpanMapperSourceDTO {
+	context: SpantypesFieldContextDTO;
+	/**
+	 * @type string
+	 */
+	key: string;
+	operation: SpantypesSpanMapperOperationDTO;
+	/**
+	 * @type integer
+	 */
+	priority: number;
+}
+
+export interface SpantypesSpanMapperConfigDTO {
+	/**
+	 * @type array,null
+	 */
+	sources: SpantypesSpanMapperSourceDTO[] | null;
+}
+
+export interface SpantypesSpanMapperDTO {
+	config: SpantypesSpanMapperConfigDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	/**
+	 * @type string
+	 */
+	createdBy?: string;
+	/**
+	 * @type boolean
+	 */
+	enabled: boolean;
+	fieldContext: SpantypesFieldContextDTO;
+	/**
+	 * @type string
+	 */
+	groupId: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
+	/**
+	 * @type string
+	 */
+	updatedBy?: string;
+}
+
+export interface SpantypesGettableSpanMappersDTO {
+	/**
+	 * @type array
+	 */
+	items: SpantypesSpanMapperDTO[];
+}
+
 export enum SpantypesSpanAggregationTypeDTO {
 	span_count = 'span_count',
 	execution_time_percentage = 'execution_time_percentage',
@@ -9442,30 +9630,6 @@ export interface SpantypesPostableFlamegraphDTO {
 	selectedSpanId?: string;
 }
 
-export enum SpantypesSpanMapperOperationDTO {
-	move = 'move',
-	copy = 'copy',
-}
-export interface SpantypesSpanMapperSourceDTO {
-	context: SpantypesFieldContextDTO;
-	/**
-	 * @type string
-	 */
-	key: string;
-	operation: SpantypesSpanMapperOperationDTO;
-	/**
-	 * @type integer
-	 */
-	priority: number;
-}
-
-export interface SpantypesSpanMapperConfigDTO {
-	/**
-	 * @type array,null
-	 */
-	sources: SpantypesSpanMapperSourceDTO[] | null;
-}
-
 export interface SpantypesPostableSpanMapperDTO {
 	config: SpantypesSpanMapperConfigDTO;
 	/**
@@ -9491,6 +9655,33 @@ export interface SpantypesPostableSpanMapperGroupDTO {
 	name: string;
 }
 
+export interface SpantypesPostableSpanMapperTestGroupDTO {
+	condition: SpantypesSpanMapperGroupConditionDTO | null;
+	/**
+	 * @type boolean
+	 */
+	enabled?: boolean;
+	/**
+	 * @type array,null
+	 */
+	mappers?: SpantypesPostableSpanMapperDTO[] | null;
+	/**
+	 * @type string
+	 */
+	name: string;
+}
+
+export interface SpantypesPostableSpanMapperTestDTO {
+	/**
+	 * @type array,null
+	 */
+	groups: SpantypesPostableSpanMapperTestGroupDTO[] | null;
+	/**
+	 * @type array,null
+	 */
+	spans: SpantypesSpanMapperTestSpanDTO[] | null;
+}
+
 export interface SpantypesSpanAggregationDTO {
 	aggregation: SpantypesSpanAggregationTypeDTO;
 	field: TelemetrytypesTelemetryFieldKeyDTO;
@@ -9512,45 +9703,6 @@ export interface SpantypesPostableWaterfallDTO {
 	 * @type array,null
 	 */
 	uncollapsedSpans?: string[] | null;
-}
-
-export interface SpantypesSpanMapperDTO {
-	config: SpantypesSpanMapperConfigDTO;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: string;
-	/**
-	 * @type string
-	 */
-	createdBy?: string;
-	/**
-	 * @type boolean
-	 */
-	enabled: boolean;
-	fieldContext: SpantypesFieldContextDTO;
-	/**
-	 * @type string
-	 */
-	group_id: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type string
-	 */
-	name: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: string;
-	/**
-	 * @type string
-	 */
-	updatedBy?: string;
 }
 
 export interface SpantypesUpdatableSpanMapperDTO {
@@ -10854,7 +11006,7 @@ export type ListSpanMappersPathParameters = {
 	groupId: string;
 };
 export type ListSpanMappers200 = {
-	data: SpantypesGettableSpanMapperGroupsDTO;
+	data: SpantypesGettableSpanMappersDTO;
 	/**
 	 * @type string
 	 */
@@ -10880,6 +11032,14 @@ export type UpdateSpanMapperPathParameters = {
 	groupId: string;
 	mapperId: string;
 };
+export type TestSpanMappers200 = {
+	data: SpantypesGettableSpanMapperTestDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type GetStats200Data = { [key: string]: unknown };
 
 export type GetStats200 = {

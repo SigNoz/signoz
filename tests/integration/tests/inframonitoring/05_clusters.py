@@ -78,6 +78,7 @@ def test_clusters_accuracy(
             "clusterMemoryAllocatable",
             "nodeCountsByReadiness",
             "podCountsByPhase",
+            "counts",
             "meta",
         ):
             assert field in record, f"missing {field} in {record!r}"
@@ -88,6 +89,9 @@ def test_clusters_accuracy(
         for bucket in ("pending", "running", "succeeded", "failed", "unknown"):
             assert bucket in record["podCountsByPhase"]
             assert isinstance(record["podCountsByPhase"][bucket], int)
+        for bucket in ("nodes", "namespaces", "deployments", "daemonSets", "jobs", "statefulSets"):
+            assert bucket in record["counts"]
+            assert isinstance(record["counts"][bucket], int)
 
         assert record["meta"].get("k8s.cluster.name") == record["clusterName"]
 
@@ -102,6 +106,7 @@ def test_clusters_accuracy(
             assert compare_values(record[field], exp[field], 1e-6), f"{record['clusterName']}.{field}: got {record[field]}, expected {exp[field]}"
         assert record["nodeCountsByReadiness"] == exp["nodeCountsByReadiness"]
         assert record["podCountsByPhase"] == exp["podCountsByPhase"]
+        assert record["counts"] == exp["counts"]
 
 
 @pytest.mark.parametrize(
@@ -228,6 +233,7 @@ def test_clusters_warnings(
             {"web-gcp-prod", "web-aws-prod"},
             id="in_contains",
         ),
+        pytest.param("k8s.cluster.namee = 'web-gcp-prod'", set(), id="unresolved_key"),
     ],
 )
 def test_clusters_filter(
@@ -285,7 +291,6 @@ def test_clusters_filter(
 @pytest.mark.parametrize(
     "expression,err_substr",
     [
-        pytest.param("k8s.cluster.namee = 'web-gcp-prod'", "k8s.cluster.namee", id="bad_attr_name"),
         pytest.param("k8s.cluster.name =", None, id="trailing_op"),
         pytest.param("(k8s.cluster.name = 'web-gcp-prod'", None, id="unclosed_paren"),
     ],
@@ -298,8 +303,8 @@ def test_clusters_filter_invalid(
     expression: str,
     err_substr,
 ) -> None:
-    """Invalid filter expressions (typo'd attribute key, malformed grammar) return
-    400 invalid_input with structured errors; bad attribute keys are named in them."""
+    """Malformed filter grammar (trailing operator, unclosed paren) returns
+    400 invalid_input with structured errors."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(

@@ -332,17 +332,17 @@ func (m *module) ListPods(ctx context.Context, orgID valuer.UUID, req *inframoni
 	})
 	g.Go(func() error {
 		var err error
-		phaseCounts, err = m.getPerGroupPodPhaseCounts(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		phaseCounts, err = m.getPerGroupPodPhaseCounts(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
 		return err
 	})
 	g.Go(func() error {
 		var err error
-		statusCounts, statusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		statusCounts, statusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
 		return err
 	})
 	g.Go(func() error {
 		var err error
-		restartCounts, err = m.getPerGroupPodRestartCounts(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		restartCounts, err = m.getPerGroupPodRestartCounts(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
 		return err
 	})
 
@@ -436,17 +436,17 @@ func (m *module) ListContainers(ctx context.Context, orgID valuer.UUID, req *inf
 	})
 	g.Go(func() error {
 		var err error
-		statusCounts, statusWarning, err = m.getPerGroupContainerStatusCountsWithReqMetricChecks(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		statusCounts, statusWarning, err = m.getPerGroupContainerStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
 		return err
 	})
 	g.Go(func() error {
 		var err error
-		restartCounts, err = m.getPerGroupContainerRestartCounts(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		restartCounts, err = m.getPerGroupContainerRestartCounts(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
 		return err
 	})
 	g.Go(func() error {
 		var err error
-		readyCounts, err = m.getPerGroupContainerReadyCounts(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		readyCounts, err = m.getPerGroupContainerReadyCounts(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
 		return err
 	})
 
@@ -540,17 +540,17 @@ func (m *module) ListNodes(ctx context.Context, orgID valuer.UUID, req *inframon
 	})
 	g.Go(func() error {
 		var err error
-		nodeConditionCounts, err = m.getPerGroupNodeConditionCounts(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		nodeConditionCounts, err = m.getPerGroupNodeConditionCounts(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
 		return err
 	})
 	g.Go(func() error {
 		var err error
-		podPhaseCounts, err = m.getPerGroupPodPhaseCounts(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		podPhaseCounts, err = m.getPerGroupPodPhaseCounts(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
 		return err
 	})
 	g.Go(func() error {
 		var err error
-		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
 		return err
 	})
 
@@ -632,6 +632,7 @@ func (m *module) ListNamespaces(ctx context.Context, orgID valuer.UUID, req *inf
 		phaseCounts      map[string]podPhaseCounts
 		podStatusCounts  map[string]podStatusCounts
 		podStatusWarning *qbtypes.QueryWarnData
+		resourceCounts   map[string]map[string]int64
 	)
 
 	g, gCtx := errgroup.WithContext(ctx)
@@ -643,12 +644,17 @@ func (m *module) ListNamespaces(ctx context.Context, orgID valuer.UUID, req *inf
 	})
 	g.Go(func() error {
 		var err error
-		phaseCounts, err = m.getPerGroupPodPhaseCounts(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		phaseCounts, err = m.getPerGroupPodPhaseCounts(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
 		return err
 	})
 	g.Go(func() error {
 		var err error
-		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		return err
+	})
+	g.Go(func() error {
+		var err error
+		resourceCounts, err = m.getPerGroupDistinctCounts(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups, namespaceCountAttrKeys, namespacesMetricNamesListForCounts)
 		return err
 	})
 
@@ -656,7 +662,7 @@ func (m *module) ListNamespaces(ctx context.Context, orgID valuer.UUID, req *inf
 		return nil, err
 	}
 
-	resp.Records = buildNamespaceRecords(queryResp, pageGroups, req.GroupBy, metadataMap, phaseCounts, podStatusCounts)
+	resp.Records = buildNamespaceRecords(queryResp, pageGroups, req.GroupBy, metadataMap, phaseCounts, podStatusCounts, resourceCounts)
 	resp.Warning = mergeQueryWarnings(queryResp.Warning, podStatusWarning)
 
 	return resp, nil
@@ -732,6 +738,7 @@ func (m *module) ListClusters(ctx context.Context, orgID valuer.UUID, req *infra
 		podPhaseCountsMap      map[string]podPhaseCounts
 		podStatusCounts        map[string]podStatusCounts
 		podStatusWarning       *qbtypes.QueryWarnData
+		resourceCounts         map[string]map[string]int64
 	)
 
 	g, gCtx := errgroup.WithContext(ctx)
@@ -743,17 +750,22 @@ func (m *module) ListClusters(ctx context.Context, orgID valuer.UUID, req *infra
 	})
 	g.Go(func() error {
 		var err error
-		nodeConditionCountsMap, err = m.getPerGroupNodeConditionCounts(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		nodeConditionCountsMap, err = m.getPerGroupNodeConditionCounts(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
 		return err
 	})
 	g.Go(func() error {
 		var err error
-		podPhaseCountsMap, err = m.getPerGroupPodPhaseCounts(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		podPhaseCountsMap, err = m.getPerGroupPodPhaseCounts(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
 		return err
 	})
 	g.Go(func() error {
 		var err error
-		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		return err
+	})
+	g.Go(func() error {
+		var err error
+		resourceCounts, err = m.getPerGroupDistinctCounts(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups, clusterCountAttrKeys, clusterMetricNamesListForCounts)
 		return err
 	})
 
@@ -761,7 +773,7 @@ func (m *module) ListClusters(ctx context.Context, orgID valuer.UUID, req *infra
 		return nil, err
 	}
 
-	resp.Records = buildClusterRecords(queryResp, pageGroups, req.GroupBy, metadataMap, nodeConditionCountsMap, podPhaseCountsMap, podStatusCounts)
+	resp.Records = buildClusterRecords(queryResp, pageGroups, req.GroupBy, metadataMap, nodeConditionCountsMap, podPhaseCountsMap, podStatusCounts, resourceCounts)
 	resp.Warning = mergeQueryWarnings(queryResp.Warning, podStatusWarning)
 
 	return resp, nil
@@ -929,12 +941,12 @@ func (m *module) ListDeployments(ctx context.Context, orgID valuer.UUID, req *in
 	})
 	g.Go(func() error {
 		var err error
-		phaseCounts, err = m.getPerGroupPodPhaseCounts(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		phaseCounts, err = m.getPerGroupPodPhaseCounts(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
 		return err
 	})
 	g.Go(func() error {
 		var err error
-		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
 		return err
 	})
 
@@ -1034,12 +1046,12 @@ func (m *module) ListStatefulSets(ctx context.Context, orgID valuer.UUID, req *i
 	})
 	g.Go(func() error {
 		var err error
-		phaseCounts, err = m.getPerGroupPodPhaseCounts(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		phaseCounts, err = m.getPerGroupPodPhaseCounts(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
 		return err
 	})
 	g.Go(func() error {
 		var err error
-		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
 		return err
 	})
 
@@ -1139,12 +1151,12 @@ func (m *module) ListJobs(ctx context.Context, orgID valuer.UUID, req *inframoni
 	})
 	g.Go(func() error {
 		var err error
-		phaseCounts, err = m.getPerGroupPodPhaseCounts(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		phaseCounts, err = m.getPerGroupPodPhaseCounts(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
 		return err
 	})
 	g.Go(func() error {
 		var err error
-		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
 		return err
 	})
 
@@ -1244,12 +1256,12 @@ func (m *module) ListDaemonSets(ctx context.Context, orgID valuer.UUID, req *inf
 	})
 	g.Go(func() error {
 		var err error
-		phaseCounts, err = m.getPerGroupPodPhaseCounts(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		phaseCounts, err = m.getPerGroupPodPhaseCounts(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
 		return err
 	})
 	g.Go(func() error {
 		var err error
-		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
 		return err
 	})
 

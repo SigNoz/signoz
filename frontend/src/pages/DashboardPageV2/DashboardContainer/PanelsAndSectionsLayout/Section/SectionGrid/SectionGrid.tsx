@@ -22,6 +22,7 @@ function SectionGrid({
 	sections,
 }: SectionGridProps): JSX.Element {
 	const isEditable = useDashboardStore((s) => s.isEditable);
+
 	const rglLayout = useMemo<Layout[]>(
 		() =>
 			items.map((item) => ({

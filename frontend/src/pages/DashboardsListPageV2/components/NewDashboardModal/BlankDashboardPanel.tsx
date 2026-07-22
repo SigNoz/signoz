@@ -12,6 +12,7 @@ import { createDashboardV2 } from 'api/generated/services/dashboard';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useErrorModal } from 'providers/ErrorModalProvider';
+import { DashboardListEvents } from 'pages/DashboardsListPageV2/constants/events';
 import APIError from 'types/api/error';
 import TagKeyValueInput from 'components/TagKeyValueInput/TagKeyValueInput';
 
@@ -62,6 +63,12 @@ function BlankDashboardPanel({ onClose }: Props): JSX.Element {
 					panels: {},
 					variables: [],
 				},
+			});
+			void logEvent(DashboardListEvents.DashboardCreated, {
+				method: 'blank',
+				hasDescription: Boolean(description.trim()),
+				tagCount: postableTags.length,
+				hasImage: Boolean(image),
 			});
 			onClose();
 			safeNavigate(

@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 
 	"github.com/huandu/go-sqlbuilder"
 )
@@ -23,6 +24,7 @@ func NewConditionBuilder(fm qbtypes.FieldMapper) *conditionBuilder {
 
 func (c *conditionBuilder) conditionFor(
 	ctx context.Context,
+	orgID valuer.UUID,
 	startNs uint64,
 	endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
@@ -35,7 +37,7 @@ func (c *conditionBuilder) conditionFor(
 		value = querybuilder.FormatValueForContains(value)
 	}
 
-	fieldExpression, err := c.fm.FieldFor(ctx, startNs, endNs, key)
+	fieldExpression, err := c.fm.FieldFor(ctx, orgID, startNs, endNs, key)
 	if err != nil {
 		return "", err
 	}
@@ -141,12 +143,15 @@ func (c *conditionBuilder) conditionFor(
 	return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported operator: %v", operator)
 }
 
+// Metrics has no resource sub-query, so options are unused.
 func (c *conditionBuilder) ConditionFor(
 	ctx context.Context,
+	orgID valuer.UUID,
 	startNs uint64,
 	endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
-	fieldKeysForName []*telemetrytypes.TelemetryFieldKey,
+	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
+	_ qbtypes.ConditionBuilderOptions,
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
@@ -157,39 +162,32 @@ func (c *conditionBuilder) ConditionFor(
 		return nil, nil, err
 	}
 
-	keys, warning := querybuilder.ResolveKeys(key, fieldKeysForName)
+	keys := querybuilder.MatchingFieldKeys(key, fieldKeys)
 	var warnings []string
-	if warning != "" {
-		warnings = append(warnings, warning)
-	}
 	if len(keys) == 0 {
-		return nil, warnings, querybuilder.NewKeyNotFoundError(key.Name)
+		if _, isColumn := timeSeriesV4Columns[key.Name]; isColumn {
+			keys = []*telemetrytypes.TelemetryFieldKey{key}
+		} else {
+			if len(fieldKeys[key.Name]) == 0 {
+				warnings = append(warnings, fmt.Sprintf("label `%s` not found in metadata; check the label name for typos", key.Name))
+			}
+			keys = []*telemetrytypes.TelemetryFieldKey{
+				telemetrytypes.NewTelemetryFieldKey(key.Name, telemetrytypes.FieldContextAttribute, key.FieldDataType),
+			}
+			if key.FieldContext != telemetrytypes.FieldContextUnspecified {
+				keys = append(keys, telemetrytypes.NewTelemetryFieldKey(
+					key.FieldContext.StringValue()+"."+key.Name, telemetrytypes.FieldContextAttribute, key.FieldDataType))
+			}
+		}
 	}
 
 	conds := make([]string, 0, len(keys))
 	for _, k := range keys {
-		cond, err := c.conditionForKey(ctx, startNs, endNs, k, operator, value, sb)
+		cond, err := c.conditionFor(ctx, orgID, startNs, endNs, k, operator, value, sb)
 		if err != nil {
 			return nil, nil, err
 		}
 		conds = append(conds, cond)
 	}
 	return conds, warnings, nil
-}
-
-func (c *conditionBuilder) conditionForKey(
-	ctx context.Context,
-	startNs uint64,
-	endNs uint64,
-	key *telemetrytypes.TelemetryFieldKey,
-	operator qbtypes.FilterOperator,
-	value any,
-	sb *sqlbuilder.SelectBuilder,
-) (string, error) {
-	condition, err := c.conditionFor(ctx, startNs, endNs, key, operator, value, sb)
-	if err != nil {
-		return "", err
-	}
-
-	return condition, nil
 }

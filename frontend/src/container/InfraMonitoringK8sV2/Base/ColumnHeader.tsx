@@ -51,7 +51,7 @@ function ColumnHeader({
 							<a
 								href={`${DOCS_BASE_URL}${docPath}`}
 								target="_blank"
-								rel="noopener noreferrer"
+								rel="noopener"
 								onClick={(e): void => e.stopPropagation()}
 							>
 								Learn more.

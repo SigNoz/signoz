@@ -113,8 +113,8 @@ function ViewPanelModalHeader({
 				/>
 				<Button
 					size="icon"
-					variant="solid"
-					color="primary"
+					variant="outlined"
+					color="secondary"
 					onClick={onRefresh}
 					disabled={isFetching}
 					aria-label="Refresh"

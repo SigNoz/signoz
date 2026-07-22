@@ -5,9 +5,12 @@ import {
 	useMemo,
 	useState,
 } from 'react';
+import logEvent from 'api/common/logEvent';
 import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import { X } from '@signozhq/icons';
+
+import { DashboardListEvents } from 'pages/DashboardsListPageV2/constants/events';
 
 import type { SuggestionSource } from '../../utils/dslSuggestions';
 import {
@@ -65,6 +68,10 @@ function FilterZone({
 	// Created-by (multi-select) only STAGES its clause into the draft; the query runs
 	// when the dropdown closes (FilterChips fires onApply), not on each pick.
 	const handleCreatedByChange = useCallback((emails: string[]): void => {
+		void logEvent(DashboardListEvents.FilterApplied, {
+			filterType: 'createdBy',
+			valueCount: emails.length,
+		});
 		setDraft((d) => spliceClause(d, 'created_by', createdByClause(emails)));
 	}, []);
 
@@ -72,6 +79,9 @@ function FilterZone({
 	// immediately (with the fresh value, avoiding the async draft-state lag).
 	const handleUpdatedChange = useCallback(
 		(window: UpdatedWindow): void => {
+			void logEvent(DashboardListEvents.FilterApplied, {
+				filterType: 'updatedWindow',
+			});
 			const next = spliceClause(draft, 'updated_at', updatedClause(window));
 			setDraft(next);
 			const trimmed = next.trim();
@@ -94,6 +104,7 @@ function FilterZone({
 
 	// Clear resets the draft and runs immediately (empty query).
 	const handleClear = useCallback((): void => {
+		void logEvent(DashboardListEvents.FiltersCleared, {});
 		setDraft('');
 		if (query !== '') {
 			onQueryChange('');

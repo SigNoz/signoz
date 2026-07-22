@@ -8,11 +8,17 @@ import { v4 } from 'uuid';
 
 import { K8sDetailsMetadataConfig } from '../Base/K8sBaseDetails';
 import { formatValueForExpression } from 'components/QueryBuilderV2/utils';
+import {
+	buildEventsExpression,
+	buildLogsTracesExpression,
+} from 'container/InfraMonitoringK8sV2/Base/utils';
 import { INFRA_MONITORING_ATTR_KEYS } from '../constants';
+import { SelectedItemParams } from '../hooks';
 
 export const k8sPodGetSelectedItemExpression = (
-	selectedItemId: string,
-): string => `k8s.pod.uid = ${formatValueForExpression(selectedItemId)}`;
+	params: SelectedItemParams,
+): string =>
+	`k8s.pod.uid = ${formatValueForExpression(params.selectedItem ?? '')}`;
 
 export const k8sPodDetailsMetadataConfig: K8sDetailsMetadataConfig<InframonitoringtypesPodRecordDTO>[] =
 	[
@@ -35,21 +41,23 @@ export const k8sPodDetailsMetadataConfig: K8sDetailsMetadataConfig<Inframonitori
 
 export const k8sPodInitialEventsExpression = (
 	pod: InframonitoringtypesPodRecordDTO,
-): string => {
-	const podName = formatValueForExpression(
-		pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
-	);
-	return `${INFRA_MONITORING_ATTR_KEYS.K8S_OBJECT_KIND} = 'Pod' AND ${INFRA_MONITORING_ATTR_KEYS.K8S_OBJECT_NAME} = ${podName}`;
-};
+): string =>
+	buildEventsExpression({
+		objectKind: 'Pod',
+		objectName: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
+		clusterName: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME],
+		namespaceName: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME],
+	});
 
 export const k8sPodInitialLogTracesExpression = (
 	pod: InframonitoringtypesPodRecordDTO,
-): string => {
-	const podName = formatValueForExpression(
-		pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
-	);
-	return `${INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME} = ${podName}`;
-};
+): string =>
+	buildLogsTracesExpression({
+		mainAttributeKey: INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME,
+		mainAttributeValue: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME],
+		clusterName: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME],
+		namespaceName: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME],
+	});
 
 export const k8sPodGetEntityName = (
 	pod: InframonitoringtypesPodRecordDTO,
@@ -59,54 +67,74 @@ export const podWidgetInfo = [
 	{
 		title: 'CPU Usage (cores)',
 		yAxisUnit: '',
+		docPath: '/infrastructure-monitoring/kubernetes/pods/#cpu-usage-cores-1',
 	},
 	{
 		title: 'CPU Request, Limit Utilization',
 		yAxisUnit: 'percentunit',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/pods/#cpu-request-limit-utilization',
 	},
 	{
 		title: 'Memory Usage (bytes)',
 		yAxisUnit: 'bytes',
+		docPath: '/infrastructure-monitoring/kubernetes/pods/#memory-usage-bytes',
 	},
 	{
 		title: 'Memory Request, Limit Utilization',
 		yAxisUnit: 'percentunit',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/pods/#memory-request-limit-utilization',
 	},
 	{
 		title: 'Memory by State',
 		yAxisUnit: 'bytes',
+		docPath: '/infrastructure-monitoring/kubernetes/pods/#memory-by-state',
 	},
 	{
 		title: 'Memory Major Page Faults',
 		yAxisUnit: '',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/pods/#memory-major-page-faults',
 	},
 	{
 		title: 'CPU Usage by Container (cores)',
 		yAxisUnit: '',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/pods/#cpu-usage-by-container-cores',
 	},
 	{
 		title: 'CPU Request, Limit Utilization by Container',
 		yAxisUnit: 'percentunit',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/pods/#cpu-request-limit-utilization-by-container',
 	},
 	{
 		title: 'Memory Usage by Container (bytes)',
 		yAxisUnit: 'bytes',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/pods/#memory-usage-by-container-bytes',
 	},
 	{
 		title: 'Memory Request, Limit Utilization by Container',
 		yAxisUnit: 'percentunit',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/pods/#memory-request-limit-utilization-by-container',
 	},
 	{
 		title: 'Network rate',
 		yAxisUnit: 'binBps',
+		docPath: '/infrastructure-monitoring/kubernetes/pods/#network-rate',
 	},
 	{
 		title: 'Network errors',
 		yAxisUnit: '',
+		docPath: '/infrastructure-monitoring/kubernetes/pods/#network-errors',
 	},
 	{
 		title: 'File system (bytes)',
 		yAxisUnit: 'bytes',
+		docPath: '/infrastructure-monitoring/kubernetes/pods/#file-system-bytes',
 	},
 ];
 

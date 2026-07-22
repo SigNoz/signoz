@@ -208,6 +208,7 @@ func (m *module) getContainersTableMetadata(ctx context.Context, orgID valuer.UU
 // runs the query. The returned counts map is empty (never nil) when gated off.
 func (m *module) getPerGroupContainerStatusCountsWithReqMetricChecks(
 	ctx context.Context,
+	orgID valuer.UUID,
 	start, end int64,
 	filter *qbtypes.Filter,
 	groupBy []qbtypes.GroupByKey,
@@ -237,7 +238,7 @@ func (m *module) getPerGroupContainerStatusCountsWithReqMetricChecks(
 		return map[string]containerStatusCounts{}, warning, nil
 	}
 
-	counts, err := m.getPerGroupContainerStatusCounts(ctx, start, end, filter, groupBy, pageGroups)
+	counts, err := m.getPerGroupContainerStatusCounts(ctx, orgID, start, end, filter, groupBy, pageGroups)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -263,6 +264,7 @@ func (m *module) getPerGroupContainerStatusCountsWithReqMetricChecks(
 // Groups absent from the result map have implicit zero counts (caller default).
 func (m *module) getPerGroupContainerStatusCounts(
 	ctx context.Context,
+	orgID valuer.UUID,
 	start, end int64,
 	filter *qbtypes.Filter,
 	groupBy []qbtypes.GroupByKey,
@@ -288,7 +290,7 @@ func (m *module) getPerGroupContainerStatusCounts(
 		err          error
 	)
 	if mergedFilterExpr != "" {
-		filterClause, err = m.buildFilterClause(ctx, &qbtypes.Filter{Expression: mergedFilterExpr}, start, end)
+		filterClause, err = m.buildFilterClause(ctx, orgID, &qbtypes.Filter{Expression: mergedFilterExpr}, start, end)
 		if err != nil {
 			return nil, err
 		}
@@ -527,6 +529,7 @@ func (m *module) getPerGroupContainerStatusCounts(
 // Groups absent from the result map have no data (caller default).
 func (m *module) getPerGroupContainerRestartCounts(
 	ctx context.Context,
+	orgID valuer.UUID,
 	start, end int64,
 	filter *qbtypes.Filter,
 	groupBy []qbtypes.GroupByKey,
@@ -550,7 +553,7 @@ func (m *module) getPerGroupContainerRestartCounts(
 		err          error
 	)
 	if mergedFilterExpr != "" {
-		filterClause, err = m.buildFilterClause(ctx, &qbtypes.Filter{Expression: mergedFilterExpr}, start, end)
+		filterClause, err = m.buildFilterClause(ctx, orgID, &qbtypes.Filter{Expression: mergedFilterExpr}, start, end)
 		if err != nil {
 			return nil, err
 		}
@@ -670,6 +673,7 @@ func (m *module) getPerGroupContainerRestartCounts(
 // Groups absent from the result map have no data (caller default).
 func (m *module) getPerGroupContainerReadyCounts(
 	ctx context.Context,
+	orgID valuer.UUID,
 	start, end int64,
 	filter *qbtypes.Filter,
 	groupBy []qbtypes.GroupByKey,
@@ -693,7 +697,7 @@ func (m *module) getPerGroupContainerReadyCounts(
 		err          error
 	)
 	if mergedFilterExpr != "" {
-		filterClause, err = m.buildFilterClause(ctx, &qbtypes.Filter{Expression: mergedFilterExpr}, start, end)
+		filterClause, err = m.buildFilterClause(ctx, orgID, &qbtypes.Filter{Expression: mergedFilterExpr}, start, end)
 		if err != nil {
 			return nil, err
 		}

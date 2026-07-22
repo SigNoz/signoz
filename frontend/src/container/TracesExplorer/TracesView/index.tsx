@@ -11,6 +11,7 @@ import {
 import { useSelector } from 'react-redux';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
+import DownloadOptionsMenu from 'components/DownloadOptionsMenu/DownloadOptionsMenu';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import { ResizeTable } from 'components/ResizeTable';
 import { ENTITY_VERSION_V5 } from 'constants/app';
@@ -152,6 +153,11 @@ function TracesView({
 					</Typography>
 
 					<div className="trace-explorer-controls">
+						<DownloadOptionsMenu
+							dataSource={DataSource.TRACES}
+							panelType={PANEL_TYPES.TRACE}
+						/>
+
 						<TraceExplorerControls
 							isLoading={isLoading}
 							totalCount={responseData?.length || 0}

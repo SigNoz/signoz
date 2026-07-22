@@ -2598,19 +2598,6 @@ components:
         repeatVariable:
           type: string
       type: object
-    DashboardLink:
-      properties:
-        name:
-          type: string
-        renderVariables:
-          type: boolean
-        targetBlank:
-          type: boolean
-        tooltip:
-          type: string
-        url:
-          type: string
-      type: object
     DashboardtypesAxes:
       properties:
         isLogScale:
@@ -2749,6 +2736,7 @@ components:
         datasources:
           additionalProperties:
             $ref: '#/components/schemas/DashboardtypesDatasourceSpec'
+          nullable: true
           type: object
         display:
           $ref: '#/components/schemas/DashboardtypesDisplay'
@@ -2760,7 +2748,8 @@ components:
           type: array
         links:
           items:
-            $ref: '#/components/schemas/DashboardLink'
+            $ref: '#/components/schemas/DashboardtypesLink'
+          nullable: true
           type: array
         panels:
           additionalProperties:
@@ -3031,6 +3020,19 @@ components:
       - solid
       - dashed
       type: string
+    DashboardtypesLink:
+      properties:
+        name:
+          type: string
+        renderVariables:
+          type: boolean
+        targetBlank:
+          type: boolean
+        tooltip:
+          type: string
+        url:
+          type: string
+      type: object
     DashboardtypesListOrder:
       enum:
       - asc
@@ -3041,6 +3043,7 @@ components:
         selectFields:
           items:
             $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          nullable: true
           type: array
       type: object
     DashboardtypesListSort:
@@ -3390,7 +3393,8 @@ components:
           $ref: '#/components/schemas/DashboardtypesDisplay'
         links:
           items:
-            $ref: '#/components/schemas/DashboardLink'
+            $ref: '#/components/schemas/DashboardtypesLink'
+          nullable: true
           type: array
         plugin:
           $ref: '#/components/schemas/DashboardtypesPanelPlugin'
@@ -4261,6 +4265,34 @@ components:
           type: number
         clusterName:
           type: string
+        counts:
+          properties:
+            daemonSets:
+              format: int64
+              type: integer
+            deployments:
+              format: int64
+              type: integer
+            jobs:
+              format: int64
+              type: integer
+            namespaces:
+              format: int64
+              type: integer
+            nodes:
+              format: int64
+              type: integer
+            statefulSets:
+              format: int64
+              type: integer
+          required:
+          - nodes
+          - namespaces
+          - deployments
+          - daemonSets
+          - jobs
+          - statefulSets
+          type: object
         meta:
           additionalProperties:
             type: string
@@ -4281,6 +4313,7 @@ components:
       - nodeCountsByReadiness
       - podCountsByPhase
       - podCountsByStatus
+      - counts
       - meta
       type: object
     InframonitoringtypesClusters:
@@ -4802,6 +4835,26 @@ components:
       type: object
     InframonitoringtypesNamespaceRecord:
       properties:
+        counts:
+          properties:
+            daemonSets:
+              format: int64
+              type: integer
+            deployments:
+              format: int64
+              type: integer
+            jobs:
+              format: int64
+              type: integer
+            statefulSets:
+              format: int64
+              type: integer
+          required:
+          - deployments
+          - daemonSets
+          - jobs
+          - statefulSets
+          type: object
         meta:
           additionalProperties:
             type: string
@@ -4825,6 +4878,7 @@ components:
       - namespaceMemory
       - podCountsByPhase
       - podCountsByStatus
+      - counts
       - meta
       type: object
     InframonitoringtypesNamespaces:
@@ -6285,6 +6339,7 @@ components:
       - delta
       - cumulative
       - unspecified
+      - ""
       type: string
     MetrictypesTimeAggregation:
       enum:
@@ -6297,6 +6352,7 @@ components:
       - count_distinct
       - rate
       - increase
+      - ""
       type: string
     MetrictypesType:
       enum:
@@ -6504,6 +6560,7 @@ components:
         args:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5FunctionArg'
+          nullable: true
           type: array
         name:
           $ref: '#/components/schemas/Querybuildertypesv5FunctionName'
@@ -6674,6 +6731,7 @@ components:
         functions:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5Function'
+          nullable: true
           type: array
         having:
           $ref: '#/components/schemas/Querybuildertypesv5Having'
@@ -6686,6 +6744,7 @@ components:
         order:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+          nullable: true
           type: array
       type: object
     Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregation:
@@ -6693,6 +6752,7 @@ components:
         aggregations:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5LogAggregation'
+          nullable: true
           type: array
         cursor:
           type: string
@@ -6703,10 +6763,12 @@ components:
         functions:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5Function'
+          nullable: true
           type: array
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          nullable: true
           type: array
         having:
           $ref: '#/components/schemas/Querybuildertypesv5Having'
@@ -6723,14 +6785,17 @@ components:
         order:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+          nullable: true
           type: array
         secondaryAggregations:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5SecondaryAggregation'
+          nullable: true
           type: array
         selectFields:
           items:
             $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          nullable: true
           type: array
         signal:
           enum:
@@ -6748,6 +6813,7 @@ components:
         aggregations:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5MetricAggregation'
+          nullable: true
           type: array
         cursor:
           type: string
@@ -6758,10 +6824,12 @@ components:
         functions:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5Function'
+          nullable: true
           type: array
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          nullable: true
           type: array
         having:
           $ref: '#/components/schemas/Querybuildertypesv5Having'
@@ -6778,14 +6846,17 @@ components:
         order:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+          nullable: true
           type: array
         secondaryAggregations:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5SecondaryAggregation'
+          nullable: true
           type: array
         selectFields:
           items:
             $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          nullable: true
           type: array
         signal:
           enum:
@@ -6803,6 +6874,7 @@ components:
         aggregations:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5TraceAggregation'
+          nullable: true
           type: array
         cursor:
           type: string
@@ -6813,10 +6885,12 @@ components:
         functions:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5Function'
+          nullable: true
           type: array
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          nullable: true
           type: array
         having:
           $ref: '#/components/schemas/Querybuildertypesv5Having'
@@ -6833,14 +6907,17 @@ components:
         order:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+          nullable: true
           type: array
         secondaryAggregations:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5SecondaryAggregation'
+          nullable: true
           type: array
         selectFields:
           items:
             $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          nullable: true
           type: array
         signal:
           enum:
@@ -6858,6 +6935,7 @@ components:
         aggregations:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5TraceAggregation'
+          nullable: true
           type: array
         cursor:
           type: string
@@ -6870,10 +6948,12 @@ components:
         functions:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5Function'
+          nullable: true
           type: array
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          nullable: true
           type: array
         having:
           $ref: '#/components/schemas/Querybuildertypesv5Having'
@@ -6888,12 +6968,14 @@ components:
         order:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+          nullable: true
           type: array
         returnSpansFrom:
           type: string
         selectFields:
           items:
             $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          nullable: true
           type: array
         stepInterval:
           $ref: '#/components/schemas/Querybuildertypesv5Step'
@@ -7133,6 +7215,7 @@ components:
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          nullable: true
           type: array
         limit:
           type: integer
@@ -7141,6 +7224,7 @@ components:
         order:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+          nullable: true
           type: array
         stepInterval:
           $ref: '#/components/schemas/Querybuildertypesv5Step'
@@ -7523,6 +7607,7 @@ components:
         groupBy:
           items:
             type: string
+          nullable: true
           type: array
         newGroupEvalDelay:
           type: string
@@ -7594,6 +7679,7 @@ components:
         alertStates:
           items:
             $ref: '#/components/schemas/RuletypesAlertState'
+          nullable: true
           type: array
         enabled:
           type: boolean
@@ -8000,6 +8086,28 @@ components:
       required:
       - items
       type: object
+    SpantypesGettableSpanMapperTest:
+      properties:
+        collectorLogs:
+          items:
+            type: string
+          nullable: true
+          type: array
+        spans:
+          items:
+            $ref: '#/components/schemas/SpantypesSpanMapperTestSpan'
+          nullable: true
+          type: array
+      type: object
+    SpantypesGettableSpanMappers:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/SpantypesSpanMapper'
+          type: array
+      required:
+      - items
+      type: object
     SpantypesGettableTraceAggregations:
       properties:
         aggregations:
@@ -8087,6 +8195,39 @@ components:
       - name
       - condition
       type: object
+    SpantypesPostableSpanMapperTest:
+      properties:
+        groups:
+          items:
+            $ref: '#/components/schemas/SpantypesPostableSpanMapperTestGroup'
+          nullable: true
+          type: array
+        spans:
+          items:
+            $ref: '#/components/schemas/SpantypesSpanMapperTestSpan'
+          nullable: true
+          type: array
+      required:
+      - spans
+      - groups
+      type: object
+    SpantypesPostableSpanMapperTestGroup:
+      properties:
+        condition:
+          $ref: '#/components/schemas/SpantypesSpanMapperGroupCondition'
+        enabled:
+          type: boolean
+        mappers:
+          items:
+            $ref: '#/components/schemas/SpantypesPostableSpanMapper'
+          nullable: true
+          type: array
+        name:
+          type: string
+      required:
+      - name
+      - condition
+      type: object
     SpantypesPostableTraceAggregations:
       properties:
         aggregations:
@@ -8152,7 +8293,7 @@ components:
           type: boolean
         fieldContext:
           $ref: '#/components/schemas/SpantypesFieldContext'
-        group_id:
+        groupId:
           type: string
         id:
           type: string
@@ -8165,7 +8306,7 @@ components:
           type: string
       required:
       - id
-      - group_id
+      - groupId
       - name
       - fieldContext
       - config
@@ -8247,6 +8388,17 @@ components:
       - context
       - operation
       - priority
+      type: object
+    SpantypesSpanMapperTestSpan:
+      properties:
+        attributes:
+          additionalProperties: {}
+          nullable: true
+          type: object
+        resource:
+          additionalProperties: {}
+          nullable: true
+          type: object
       type: object
     SpantypesUpdatableSpanMapper:
       properties:
@@ -8465,6 +8617,7 @@ components:
       - resource
       - attribute
       - body
+      - ""
       type: string
     TelemetrytypesFieldDataType:
       enum:
@@ -8473,6 +8626,7 @@ components:
       - float64
       - int64
       - number
+      - ""
       type: string
     TelemetrytypesGettableFieldKeys:
       properties:
@@ -8504,10 +8658,12 @@ components:
       - traces
       - logs
       - metrics
+      - ""
       type: string
     TelemetrytypesSource:
       enum:
       - meter
+      - ""
       type: string
     TelemetrytypesTelemetryFieldKey:
       properties:
@@ -13744,7 +13900,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/SpantypesGettableSpanMapperGroups'
+                    $ref: '#/components/schemas/SpantypesGettableSpanMappers'
                   status:
                     type: string
                 required:
@@ -13975,6 +14131,69 @@ paths:
       - tokenizer:
         - ADMIN
       summary: Update a span mapper
+      tags:
+      - spanmapper
+  /api/v1/span_mapper_groups/test:
+    post:
+      deprecated: false
+      description: Tests how span mappers would transform sample spans
+      operationId: TestSpanMappers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpantypesPostableSpanMapperTest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SpantypesGettableSpanMapperTest'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Test span mappers against sample spans
       tags:
       - spanmapper
   /api/v1/stats:
@@ -24407,9 +24626,17 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       - tokenizer:
-        - VIEWER
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       summary: Query range
       tags:
       - querier
@@ -24476,9 +24703,17 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       - tokenizer:
-        - VIEWER
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       summary: Query range preview
       tags:
       - querier

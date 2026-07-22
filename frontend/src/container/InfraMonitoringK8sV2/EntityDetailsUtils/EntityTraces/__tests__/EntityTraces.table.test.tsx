@@ -87,7 +87,7 @@ describe('EntityTraces - Table Rendering', () => {
 		expect(badge).toHaveAttribute('data-variant', 'outline');
 	});
 
-	it('should render N/A when http method is empty', async () => {
+	it('should render - when http method is empty', async () => {
 		mockQueryRangeV5WithTracesResponse({
 			customTraces: [{ httpMethod: '', responseStatusCode: '200' }],
 		});
@@ -96,7 +96,7 @@ describe('EntityTraces - Table Rendering', () => {
 			renderEntityTraces();
 		});
 
-		await expect(screen.findByText('N/A')).resolves.toBeInTheDocument();
+		await expect(screen.findByText('-')).resolves.toBeInTheDocument();
 		expect(screen.queryByTestId('httpMethod')).not.toBeInTheDocument();
 	});
 

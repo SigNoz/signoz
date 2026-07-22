@@ -10,6 +10,7 @@ import {
 import { useSelector } from 'react-redux';
 import { Space } from 'antd';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
+import ExportMenu from 'components/ExportMenu/ExportMenu';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -20,7 +21,10 @@ import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
 import APIError from 'types/api/error';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
+import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
+
+import './TableView.styles.scss';
 
 function TableView({
 	setWarning,
@@ -97,6 +101,16 @@ function TableView({
 	return (
 		<Space.Compact block direction="vertical">
 			{isError && error && <ErrorInPlace error={error as APIError} />}
+			{!isError && data && (
+				<div className="traces-table-view-header">
+					<ExportMenu
+						dataSource={DataSource.TRACES}
+						data={data}
+						query={stagedQuery || initialQueriesMap.traces}
+						fileName="traces-table"
+					/>
+				</div>
+			)}
 			{!isError && (
 				<QueryTable
 					query={stagedQuery || initialQueriesMap.traces}

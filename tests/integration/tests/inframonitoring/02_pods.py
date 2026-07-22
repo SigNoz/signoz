@@ -290,6 +290,7 @@ def test_pods_warnings(
             {"web-prod-1", "web-dev-1"},
             id="in_contains",
         ),
+        pytest.param("k8s.pod.namee = 'web-prod-1'", set(), id="unresolved_key"),
     ],
 )
 def test_pods_filter(
@@ -348,7 +349,6 @@ def test_pods_filter(
 @pytest.mark.parametrize(
     "expression,err_substr",
     [
-        pytest.param("k8s.pod.namee = 'web-prod-1'", "k8s.pod.namee", id="bad_attr_name"),
         pytest.param("k8s.pod.name =", None, id="trailing_op"),
         pytest.param("(k8s.pod.name = 'web-prod-1'", None, id="unclosed_paren"),
     ],
@@ -361,8 +361,8 @@ def test_pods_filter_invalid(
     expression: str,
     err_substr,
 ) -> None:
-    """Invalid filter expressions (typo'd attribute key, malformed grammar) return
-    400 invalid_input with structured errors; bad attribute keys are named in them."""
+    """Malformed filter grammar (trailing operator, unclosed paren) returns
+    400 invalid_input with structured errors."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         _load_pods_metrics(

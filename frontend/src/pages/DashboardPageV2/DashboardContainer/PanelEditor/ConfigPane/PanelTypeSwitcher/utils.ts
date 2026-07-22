@@ -2,7 +2,7 @@ import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import { EQueryType } from 'types/common/dashboard';
 
 import {
-	isQueryTypeSupported,
+	isQueryTypeSupportedByPanelKind,
 	isSignalSupported,
 } from '../../../Panels/capabilities';
 import type { PanelKind } from '../../../Panels/types/panelKind';
@@ -17,6 +17,9 @@ const SIGNAL_LABEL: Record<TelemetrytypesSignalDTO, string> = {
 	[TelemetrytypesSignalDTO.logs]: 'logs',
 	[TelemetrytypesSignalDTO.traces]: 'traces',
 	[TelemetrytypesSignalDTO.metrics]: 'metrics',
+	// The empty "any" signal only appears on field keys, never on a panel query;
+	// mapped for exhaustiveness.
+	[TelemetrytypesSignalDTO['']]: '',
 };
 
 /**
@@ -36,7 +39,7 @@ export function getPanelTypeDisabledReason({
 	signal?: TelemetrytypesSignalDTO;
 	label: string;
 }): string | undefined {
-	if (!isQueryTypeSupported(kind, queryType)) {
+	if (!isQueryTypeSupportedByPanelKind(kind, queryType)) {
 		return `${label} isn't available for ${QUERY_TYPE_LABEL[queryType]} queries`;
 	}
 	if (signal !== undefined && !isSignalSupported(kind, signal)) {

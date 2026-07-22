@@ -28,6 +28,8 @@ import { defaultSelectedColumns } from 'container/TracesExplorer/ListView/config
 import QuerySection from 'container/TracesExplorer/QuerySection';
 import TableView from 'container/TracesExplorer/TableView';
 import TracesView from 'container/TracesExplorer/TracesView';
+import { ExportDashboard } from 'hooks/dashboard/useExportDashboards';
+import { useGetExportToDashboardLink } from 'hooks/dashboard/useGetExportToDashboardLink';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
@@ -42,10 +44,8 @@ import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFall
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import { TOOLBAR_VIEWS } from 'pages/TracesExplorer/constants';
 import { Warning } from 'types/api';
-import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
-import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
 import {
 	explorerViewToPanelType,
 	getExplorerViewFromUrl,
@@ -129,6 +129,7 @@ function TracesExplorer(): JSX.Element {
 
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 	const { safeNavigate } = useSafeNavigate();
+	const getExportToDashboardLink = useGetExportToDashboardLink();
 
 	const handleChangeSelectedView = useCallback(
 		(view: ExplorerViews, querySearchParameters?: ICurrentQueryData): void => {
@@ -193,7 +194,7 @@ function TracesExplorer(): JSX.Element {
 	);
 
 	const handleExport = useCallback(
-		(dashboard: Dashboard | null, isNewDashboard?: boolean): void => {
+		(dashboard: ExportDashboard | null, isNewDashboard?: boolean): void => {
 			if (!dashboard || !panelType) {
 				return;
 			}
@@ -213,19 +214,27 @@ function TracesExplorer(): JSX.Element {
 			logEvent('Traces Explorer: Add to dashboard successful', {
 				panelType,
 				isNewDashboard,
-				dashboardName: dashboard?.data?.title,
+				dashboardName: dashboard?.title,
 			});
 
-			const dashboardEditView = generateExportToDashboardLink({
+			const dashboardEditView = getExportToDashboardLink({
 				query,
 				panelType: panelTypeParam,
 				dashboardId: dashboard.id,
 				widgetId,
 			});
 
-			safeNavigate(dashboardEditView);
+			if (dashboardEditView) {
+				safeNavigate(dashboardEditView);
+			}
 		},
-		[exportDefaultQuery, panelType, safeNavigate, options],
+		[
+			exportDefaultQuery,
+			panelType,
+			safeNavigate,
+			options,
+			getExportToDashboardLink,
+		],
 	);
 
 	useShareBuilderUrl({ defaultValue: defaultQuery });

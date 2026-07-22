@@ -38,7 +38,7 @@ func (q QueryRef) Copy() QueryRef {
 
 type QueryBuilderJoin struct {
 	Name     string `json:"name"`
-	Disabled bool   `json:"disabled,omitempty"`
+	Disabled bool   `json:"disabled"`
 
 	// references into flat registry of queries
 	Left  QueryRef `json:"left"`
@@ -50,18 +50,18 @@ type QueryBuilderJoin struct {
 
 	// primary aggregations: if empty ⇒ raw columns. Untyped — joins are deferred
 	// (see the commented JoinAggregation below).
-	Aggregations []any `json:"aggregations,omitempty"`
+	Aggregations []any `json:"aggregations,omitzero"`
 	// select columns to select
-	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitempty"`
+	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitzero"`
 
 	// post-join clauses (also used for aggregated joins)
 	Filter                *Filter                `json:"filter,omitempty"`
-	GroupBy               []GroupByKey           `json:"groupBy,omitempty"`
+	GroupBy               []GroupByKey           `json:"groupBy,omitzero"`
 	Having                *Having                `json:"having,omitempty"`
-	Order                 []OrderBy              `json:"order,omitempty"`
+	Order                 []OrderBy              `json:"order,omitzero"`
 	Limit                 int                    `json:"limit,omitempty"`
-	SecondaryAggregations []SecondaryAggregation `json:"secondaryAggregations,omitempty"`
-	Functions             []Function             `json:"functions,omitempty"`
+	SecondaryAggregations []SecondaryAggregation `json:"secondaryAggregations,omitzero"`
+	Functions             []Function             `json:"functions,omitzero"`
 }
 
 // JoinAggregation modelled a join aggregation as a trace/log/metric oneOf. Deferred:

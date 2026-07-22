@@ -28,7 +28,15 @@ type ClusterRecord struct {
 	NodeCountsByReadiness    NodeCountsByReadiness `json:"nodeCountsByReadiness" required:"true"`
 	PodCountsByPhase         PodCountsByPhase      `json:"podCountsByPhase" required:"true"`
 	PodCountsByStatus        PodCountsByStatus     `json:"podCountsByStatus" required:"true"`
-	Meta                     map[string]string     `json:"meta" required:"true"`
+	Counts                   struct {
+		Nodes        int64 `json:"nodes" required:"true"`
+		Namespaces   int64 `json:"namespaces" required:"true"`
+		Deployments  int64 `json:"deployments" required:"true"`
+		DaemonSets   int64 `json:"daemonSets" required:"true"`
+		Jobs         int64 `json:"jobs" required:"true"`
+		StatefulSets int64 `json:"statefulSets" required:"true"`
+	} `json:"counts" required:"true"`
+	Meta map[string]string `json:"meta" required:"true"`
 }
 
 // PostableClusters is the request body for the v2 clusters list API.

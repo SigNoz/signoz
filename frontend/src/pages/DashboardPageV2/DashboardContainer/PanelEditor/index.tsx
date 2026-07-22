@@ -6,6 +6,7 @@ import {
 	useDefaultLayout,
 } from '@signozhq/ui/resizable';
 import { toast } from '@signozhq/ui/sonner';
+import { ConfigProvider } from 'antd';
 import {
 	type DashboardtypesPanelDTO,
 	TelemetrytypesSignalDTO,
@@ -41,10 +42,22 @@ import styles from './PanelEditor.module.scss';
 import logEvent from '@/api/common/logEvent';
 import { DashboardEvents } from '../../constants/events';
 
+// The query builder sits in an `overflow:hidden` resizable pane, so its Select
+// popups (group-by, order-by, having, …) clip when they open into the short pane.
+// Portal them to the document body; the query-builder filters honor this via
+// `useSelectPopupContainer`. Scoped to the full-page editor — the View modal keeps
+// its own `ConfigProvider` so popups stay inside the focus-trapped dialog.
+const getBodyPopupContainer = (): HTMLElement => document.body;
+
 interface PanelEditorContainerProps {
 	dashboardId: string;
 	panelId: string;
 	panel: DashboardtypesPanelDTO;
+	/**
+	 * The persisted panel the dirty check compares against. Distinct from `panel` (the
+	 * seed), which may carry unsaved edits handed off from View mode. Omit for a new panel.
+	 */
+	savedPanel?: DashboardtypesPanelDTO;
 	/** Creating a new panel (seeded default) vs editing an existing one. */
 	isNew?: boolean;
 	/** Target section for a new panel; falls back to the last/new section. */
@@ -68,6 +81,7 @@ function PanelEditorContainer({
 	dashboardId,
 	panelId,
 	panel,
+	savedPanel,
 	isNew = false,
 	layoutIndex,
 	isEditable,
@@ -83,7 +97,6 @@ function PanelEditorContainer({
 		setSpec,
 		isSpecDirty,
 		panelDefinition,
-		defaultSignal,
 		query,
 		runQuery,
 		isQueryDirty,
@@ -92,6 +105,7 @@ function PanelEditorContainer({
 	} = usePanelEditSession({
 		panel,
 		panelId,
+		savedPanel,
 		alwaysSerializeQuery: isNew,
 		seedQuerySignal: true,
 	});
@@ -169,10 +183,11 @@ function PanelEditorContainer({
 		onChangeSpec: setSpec,
 	});
 
-	// Seed a new List panel's default columns so the Columns control isn't empty.
+	// Seed a new List panel's columns from the query's resolved signal (not the kind's
+	// default logs signal) so a traces-List export gets traces columns, not logs.
 	useSeedNewListColumns({
 		enabled: isNew && isListPanel,
-		signal: defaultSignal,
+		signal: listSignal,
 		spec,
 		onChangeSpec: setSpec,
 	});
@@ -288,22 +303,24 @@ function PanelEditorContainer({
 							</ResizablePanel>
 							<ResizableHandle withHandle className={styles.handle} />
 							<ResizablePanel minSize="35%" maxSize="45%" defaultSize="40%">
-								<PanelEditorQueryBuilder
-									panelKind={panelKind}
-									signal={listSignal}
-									isLoadingQueries={isFetching}
-									onStageRunQuery={runQuery}
-									onCancelQuery={cancelQuery}
-									footer={
-										isListPanel ? (
-											<ListColumnsEditor
-												spec={spec}
-												onChangeSpec={setSpec}
-												signal={listSignal}
-											/>
-										) : undefined
-									}
-								/>
+								<ConfigProvider getPopupContainer={getBodyPopupContainer}>
+									<PanelEditorQueryBuilder
+										panelKind={panelKind}
+										signal={listSignal}
+										isLoadingQueries={isFetching}
+										onStageRunQuery={runQuery}
+										onCancelQuery={cancelQuery}
+										footer={
+											isListPanel ? (
+												<ListColumnsEditor
+													spec={spec}
+													onChangeSpec={setSpec}
+													signal={listSignal}
+												/>
+											) : undefined
+										}
+									/>
+								</ConfigProvider>
 							</ResizablePanel>
 						</ResizablePanelGroup>
 					</div>

@@ -30,7 +30,7 @@ export function makeGroup(overrides: Partial<MapperGroup> = {}): MapperGroup {
 export function makeMapper(overrides: Partial<Mapper> = {}): Mapper {
 	return {
 		id: 'mapper-1',
-		group_id: 'group-1',
+		groupId: 'group-1',
 		name: 'gen_ai.request.model',
 		enabled: true,
 		fieldContext: FieldContext.attribute,
@@ -89,5 +89,5 @@ export const mockGroups: MapperGroup[] = [
 ];
 
 export const mockMappers: Mapper[] = [
-	makeMapper({ id: 'mapper-1', group_id: 'group-1' }),
+	makeMapper({ id: 'mapper-1', groupId: 'group-1' }),
 ];

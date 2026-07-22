@@ -6,7 +6,8 @@ import { ExpandButtonWrapper } from 'container/InfraMonitoringK8sV2/components';
 import ColumnHeader from '../Base/ColumnHeader';
 import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
-import { formatBytes, getPodPhaseStatusItems } from '../commonUtils';
+import { SelectedItemParams } from '../hooks';
+import { formatBytes, getPodStatusItems } from '../commonUtils';
 import {
 	CellValueTooltip,
 	EntityProgressBar,
@@ -31,8 +32,15 @@ export function getK8sDeploymentRowKey(
 
 export function getK8sDeploymentItemKey(
 	deployment: InframonitoringtypesDeploymentRecordDTO,
-): string {
-	return deployment.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DEPLOYMENT_NAME] || '';
+): SelectedItemParams {
+	return {
+		selectedItem:
+			deployment.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DEPLOYMENT_NAME] ?? null,
+		clusterName:
+			deployment.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] ?? null,
+		namespaceName:
+			deployment.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ?? null,
+	};
 }
 
 export const k8sDeploymentsColumnsConfig: TableColumnDef<InframonitoringtypesDeploymentRecordDTO>[] =
@@ -80,11 +88,7 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<InframonitoringtypesDep
 			visibilityBehavior: 'hidden-on-expand',
 			cell: ({ value }): React.ReactNode => {
 				const deploymentName = value as string;
-				return (
-					<CellValueTooltip value={deploymentName}>
-						<TanStackTable.Text>{deploymentName}</TanStackTable.Text>
-					</CellValueTooltip>
-				);
+				return <CellValueTooltip value={deploymentName} />;
 			},
 		},
 		{
@@ -104,39 +108,43 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<InframonitoringtypesDep
 			),
 		},
 		{
-			id: 'podCountsByPhase',
+			id: 'podCountsByStatus',
 			header: (): React.ReactNode => (
-				<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/deployments#pod-counts-by-phase">
-					Pod Phases
+				<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/deployments#pod-counts-by-status">
+					Pod Status
 				</ColumnHeader>
 			),
-			accessorFn: (row): object | undefined => row.podCountsByPhase,
+			accessorFn: (row): object | undefined => row.podCountsByStatus,
 			width: { min: 250 },
 			enableSort: false,
 			enableResize: true,
-			cell: ({ row }): React.ReactNode => {
-				const podCountsByPhase = row.podCountsByPhase;
-				if (!podCountsByPhase) {
+			cell: ({ row, rowId }): React.ReactNode => {
+				const podCountsByStatus = row.podCountsByStatus;
+				if (!podCountsByStatus) {
 					return <TanStackTable.Text>-</TanStackTable.Text>;
 				}
 				return (
-					<GroupedStatusCounts items={getPodPhaseStatusItems(podCountsByPhase)} />
+					<GroupedStatusCounts
+						rowId={rowId}
+						items={getPodStatusItems(podCountsByStatus)}
+					/>
 				);
 			},
 		},
 		{
-			id: 'replica_status',
+			id: 'pod_replicas',
 			header: (): React.ReactNode => (
-				<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/deployments#replica-status">
-					Replica Status
+				<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/deployments#pod-replicas">
+					Pod Replicas
 				</ColumnHeader>
 			),
 			accessorFn: (row): number => row.availablePods,
 			width: { min: 180 },
 			enableSort: false,
 			enableResize: true,
-			cell: ({ row }): React.ReactNode => (
+			cell: ({ row, rowId }): React.ReactNode => (
 				<GroupedStatusCounts
+					rowId={rowId}
 					items={[
 						{
 							value: row.availablePods,

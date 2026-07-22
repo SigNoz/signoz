@@ -33,7 +33,7 @@ function LLMObservabilityModelPricing(): JSX.Element {
 				items={[
 					{
 						key: MODEL_COSTS_TAB,
-						label: 'Model costs',
+						label: 'Model Costs',
 						children: <ModelCostTabPanel />,
 					},
 					{

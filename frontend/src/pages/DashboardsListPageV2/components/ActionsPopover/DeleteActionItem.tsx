@@ -7,10 +7,12 @@ import { CircleAlert, Trash2 } from '@signozhq/icons';
 import { toast } from '@signozhq/ui/sonner';
 import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
+import logEvent from 'api/common/logEvent';
 import {
 	deleteDashboardV2,
 	invalidateListDashboardsForUserV2,
 } from 'api/generated/services/dashboard';
+import { DashboardListEvents } from 'pages/DashboardsListPageV2/constants/events';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
@@ -50,6 +52,10 @@ function DeleteActionItem({
 			toast.success(
 				t('dashboard:delete_dashboard_success', { name: dashboardName }),
 			);
+			void logEvent(DashboardListEvents.RowAction, {
+				action: 'delete',
+				dashboardId,
+			});
 			await invalidateListDashboardsForUserV2(queryClient);
 		},
 		onError: (error: APIError) => {

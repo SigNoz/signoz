@@ -54,7 +54,7 @@ type SpanMapper struct {
 	types.UserAuditable
 
 	ID           valuer.UUID      `json:"id"            required:"true"`
-	GroupID      valuer.UUID      `json:"group_id"      required:"true"`
+	GroupID      valuer.UUID      `json:"groupId"       required:"true"`
 	Name         string           `json:"name"          required:"true"`
 	FieldContext FieldContext     `json:"fieldContext"  required:"true"`
 	Config       SpanMapperConfig `json:"config"        required:"true"`
@@ -63,7 +63,7 @@ type SpanMapper struct {
 
 type PostableSpanMapper struct {
 	Name         string           `json:"name"          required:"true"`
-	FieldContext FieldContext     `json:"fieldContext" required:"true"`
+	FieldContext FieldContext     `json:"fieldContext"  required:"true"`
 	Config       SpanMapperConfig `json:"config"        required:"true"`
 	Enabled      bool             `json:"enabled"`
 }

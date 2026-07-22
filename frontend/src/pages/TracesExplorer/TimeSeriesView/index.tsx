@@ -10,7 +10,6 @@ import { useSelector } from 'react-redux';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { BuilderUnitsFilter } from 'container/QueryBuilder/filters';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { convertDataValueToMs } from 'container/TimeSeriesView/utils';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
@@ -116,9 +115,6 @@ function TimeSeriesViewContainer({
 
 	return (
 		<div className="trace-explorer-time-series-view-container">
-			<div className="trace-explorer-time-series-view-container-header">
-				<BuilderUnitsFilter onChange={onUnitChange} yAxisUnit={yAxisUnit} />
-			</div>
 			<TimeSeriesView
 				isFilterApplied={isFilterApplied}
 				isError={isError}
@@ -126,8 +122,10 @@ function TimeSeriesViewContainer({
 				isLoading={isLoading || isFetching}
 				data={responseData}
 				yAxisUnit={yAxisUnit}
+				onYAxisUnitChange={onUnitChange}
 				dataSource={dataSource}
 				setWarning={setWarning}
+				allowExport
 			/>
 		</div>
 	);
