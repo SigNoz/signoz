@@ -36,6 +36,15 @@ func (AlertType) Enum() []any {
 	}
 }
 
+// NormalizeAlertType corrects known legacy alert type values that were stored
+// before strict validation was introduced. The corrected value is persisted on
+// the next write, so the DB self-heals without a migration.
+func (r *PostableRule) NormalizeAlertType() {
+	if r.AlertType == "LOG_BASED_ALERT" {
+		r.AlertType = AlertTypeLogs
+	}
+}
+
 const (
 	DefaultSchemaVersion  = "v1"
 	SchemaVersionV2Alpha1 = "v2alpha1"
