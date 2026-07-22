@@ -20,14 +20,14 @@ func TestModule_Resolve(t *testing.T) {
 		store := tagtypestest.NewStore()
 		m := &module{store: store}
 
-		toCreate, matched, err := m.resolve(context.Background(), valuer.GenerateUUID(), testKind, nil)
+		ordered, toCreate, err := m.resolve(context.Background(), valuer.GenerateUUID(), testKind, nil)
 		require.NoError(t, err)
+		assert.Empty(t, ordered)
 		assert.Empty(t, toCreate)
-		assert.Empty(t, matched)
 		assert.Zero(t, store.ListCallCount, "should not hit store when input is empty")
 	})
 
-	t.Run("creates missing pairs and reuses existing", func(t *testing.T) {
+	t.Run("creates missing pairs and reuses existing, in request order", func(t *testing.T) {
 		orgID := valuer.GenerateUUID()
 		dbTag := tagtypes.NewTag(orgID, testKind, "team", "Pulse")
 		dbTag2 := tagtypes.NewTag(orgID, testKind, "Database", "redis")
@@ -35,12 +35,20 @@ func TestModule_Resolve(t *testing.T) {
 		store.Tags = []*tagtypes.Tag{dbTag, dbTag2}
 		m := &module{store: store}
 
-		toCreate, matched, err := m.resolve(context.Background(), orgID, testKind, []tagtypes.PostableTag{
+		ordered, toCreate, err := m.resolve(context.Background(), orgID, testKind, []tagtypes.PostableTag{
 			{Key: "team", Value: "events"},    // new
 			{Key: "DATABASE", Value: "REDIS"}, // case-only conflict
 			{Key: "Brand", Value: "New"},      // new
 		})
 		require.NoError(t, err)
+
+		// ordered mirrors the request: new, existing (reused pointer), new.
+		require.Len(t, ordered, 3)
+		assert.Equal(t, "team", ordered[0].Key)
+		assert.Equal(t, "events", ordered[0].Value)
+		assert.Same(t, dbTag2, ordered[1], "case-only conflict reuses the existing pointer with its authoritative ID")
+		assert.Equal(t, "Brand", ordered[2].Key)
+		assert.Equal(t, "New", ordered[2].Value)
 
 		createdLowerKVs := []string{}
 		for _, tg := range toCreate {
@@ -48,9 +56,7 @@ func TestModule_Resolve(t *testing.T) {
 		}
 		assert.ElementsMatch(t, []string{"team\x00events", "brand\x00new"}, createdLowerKVs,
 			"only the two missing pairs should be returned for insertion")
-
-		require.Len(t, matched, 1, "DATABASE:REDIS should hit the existing 'Database:redis' tag")
-		assert.Same(t, dbTag2, matched[0], "matched should return the existing pointer with its authoritative ID")
+		assert.Same(t, ordered[0], toCreate[0], "toCreate shares pointers with ordered so inserted IDs propagate")
 	})
 
 	t.Run("dedupes inputs that map to the same lower(key)+lower(value)", func(t *testing.T) {
@@ -58,14 +64,14 @@ func TestModule_Resolve(t *testing.T) {
 		store := tagtypestest.NewStore()
 		m := &module{store: store}
 
-		toCreate, matched, err := m.resolve(context.Background(), orgID, testKind, []tagtypes.PostableTag{
+		ordered, toCreate, err := m.resolve(context.Background(), orgID, testKind, []tagtypes.PostableTag{
 			{Key: "Foo", Value: "Bar"},
 			{Key: "foo", Value: "bar"},
 			{Key: "FOO", Value: "BAR"},
 		})
 		require.NoError(t, err)
 
-		require.Empty(t, matched)
+		require.Len(t, ordered, 1, "duplicate inputs must collapse into a single tag")
 		require.Len(t, toCreate, 1, "duplicate inputs must collapse into a single insert")
 		assert.Equal(t, "Foo", toCreate[0].Key, "first input's casing wins")
 		assert.Equal(t, "Bar", toCreate[0].Value, "first input's casing wins")
@@ -78,15 +84,15 @@ func TestModule_Resolve(t *testing.T) {
 		store.Tags = []*tagtypes.Tag{dbTag}
 		m := &module{store: store}
 
-		toCreate, matched, err := m.resolve(context.Background(), orgID, testKind, []tagtypes.PostableTag{
+		ordered, toCreate, err := m.resolve(context.Background(), orgID, testKind, []tagtypes.PostableTag{
 			{Key: "team", Value: "PULSE"},
 		})
 		require.NoError(t, err)
 
 		assert.Empty(t, toCreate)
-		require.Len(t, matched, 1)
-		assert.Equal(t, "Team", matched[0].Key)
-		assert.Equal(t, "Pulse", matched[0].Value)
+		require.Len(t, ordered, 1)
+		assert.Equal(t, "Team", ordered[0].Key)
+		assert.Equal(t, "Pulse", ordered[0].Value)
 	})
 
 	t.Run("propagates validation error from any input", func(t *testing.T) {

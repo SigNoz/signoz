@@ -570,7 +570,11 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
     assert alpha["schemaVersion"] == "v6"
     assert alpha["source"] == "user"
     assert alpha["locked"] is False
-    assert {"key": "team", "value": "pulse"} in alpha["tags"]
+    # tags round-trip in the order sent — no reordering, no drift
+    assert alpha["tags"] == [
+        {"key": "team", "value": "pulse"},
+        {"key": "env", "value": "prod"},
+    ]
 
     # ── stage 3: list everything ─────────────────────────────────────────────
     response = requests.get(
@@ -590,6 +594,13 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
         "Epsilon Metrics",
         "Zeta Overview",
     }
+    # per-dashboard tags also round-trip in the order sent
+    delta = next(d for d in body["data"]["dashboards"] if d["spec"]["display"]["name"] == "Delta Storage")
+    assert delta["tags"] == [
+        {"key": "team", "value": "storage"},
+        {"key": "env", "value": "dev"},
+        {"key": "tier", "value": "critical"},
+    ]
     # top-level tags = org-wide distinct tag set, sorted case-insensitively
     # by (key, value). Asserting the exact list (not a set) locks in the sort.
     assert body["data"]["tags"] == [
@@ -1011,6 +1022,99 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
     )
     assert response.status_code == HTTPStatus.OK, response.text
     assert response.json()["data"]["id"] == clone["id"]
+
+
+def test_dashboard_v2_tag_order_round_trips(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    """Tags must round-trip in the order the client sent them across every write
+    path — create, update, patch — so GitOps/Terraform state never drifts."""
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    def tags_of(response: requests.Response) -> list[dict]:
+        return response.json()["data"]["tags"]
+
+    # ── create with tags in a deliberate order; "env" repeats with two values ─
+    created_order = [
+        {"key": "team", "value": "pulse"},
+        {"key": "env", "value": "prod"},
+        {"key": "env", "value": "staging"},
+        {"key": "tier", "value": "critical"},
+    ]
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={"schemaVersion": "v6", "name": "tag-order", "spec": {"display": {"name": "Tag Order"}}, "tags": created_order},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    dashboard_id = response.json()["data"]["id"]
+    assert tags_of(response) == created_order
+
+    # ── get echoes the same order ────────────────────────────────────────────
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard_id}"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert tags_of(response) == created_order
+
+    # ── update reordered; the two "env" values land at non-adjacent positions ─
+    reordered = [
+        {"key": "tier", "value": "critical"},
+        {"key": "env", "value": "staging"},
+        {"key": "team", "value": "pulse"},
+        {"key": "env", "value": "prod"},
+    ]
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard_id}"),
+        json={"schemaVersion": "v6", "name": "tag-order", "spec": {"display": {"name": "Tag Order"}}, "tags": reordered},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert tags_of(response) == reordered
+
+    # ── patch appends a new tag (a third "env" value); it lands at the end ────
+    response = requests.patch(
+        signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard_id}"),
+        json=[{"op": "add", "path": "/tags/-", "value": {"key": "env", "value": "dev"}}],
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert tags_of(response) == reordered + [{"key": "env", "value": "dev"}]
+
+    # ── update reorders everything and adds another new tag → all in the new order ─
+    # "env" now carries three interleaved values
+    new_order = [
+        {"key": "env", "value": "prod"},
+        {"key": "team", "value": "pulse"},
+        {"key": "env", "value": "dev"},
+        {"key": "tier", "value": "critical"},
+        {"key": "env", "value": "staging"},
+        {"key": "team", "value": "storage"},
+    ]
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard_id}"),
+        json={"schemaVersion": "v6", "name": "tag-order", "spec": {"display": {"name": "Tag Order"}}, "tags": new_order},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert tags_of(response) == new_order
+
+    # ── and the final order persists on a fresh read ─────────────────────────
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard_id}"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert tags_of(response) == new_order
 
 
 def test_dashboard_v2_pin_limit(
