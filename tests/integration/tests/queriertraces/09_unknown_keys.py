@@ -9,7 +9,7 @@ from fixtures.querier import (
     build_aggregation,
     build_group_by_field,
     build_raw_query,
-    build_scalar_query,
+    build_traces_scalar_query,
     get_rows,
     get_scalar_table_data,
     make_query_request,
@@ -37,9 +37,7 @@ def test_traces_filter_unknown_key_synthesizes(
         end_ms=int(now.timestamp() * 1000),
         request_type=RequestType.SCALAR,
         queries=[
-            build_scalar_query(
-                "A",
-                "traces",
+            build_traces_scalar_query(
                 [build_aggregation("count()")],
                 filter_expression='totally.unknown.key = "x"',
             )
@@ -137,9 +135,7 @@ def test_traces_group_by_unknown_key_null_bucket(
         end_ms=int(now.timestamp() * 1000),
         request_type=RequestType.SCALAR,
         queries=[
-            build_scalar_query(
-                "A",
-                "traces",
+            build_traces_scalar_query(
                 [build_aggregation("count()")],
                 group_by=[build_group_by_field("totally.unknown.key", field_data_type="", field_context="")],
                 filter_expression='service.name = "groupby-unknown-svc"',

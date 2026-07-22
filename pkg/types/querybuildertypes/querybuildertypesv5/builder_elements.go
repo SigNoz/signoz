@@ -613,7 +613,7 @@ func (o OrderBy) Copy() OrderBy {
 type SecondaryAggregation struct {
 	// stepInterval of the query
 	// if not set, it will use the step interval of the primary aggregation
-	StepInterval Step `json:"stepInterval,omitempty"`
+	StepInterval Step `json:"stepInterval,omitzero"`
 	// expression to aggregate. example: count(), sum(item_price), countIf(day > 10)
 	Expression string `json:"expression"`
 	// if any, it will be used as the alias of the aggregation in the result

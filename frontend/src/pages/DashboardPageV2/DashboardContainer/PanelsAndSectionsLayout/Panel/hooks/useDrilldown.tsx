@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
+import logEvent from 'api/common/logEvent';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import type { FilterData } from 'container/QueryTable/Drilldown/drilldownUtils';
 import useBaseDrilldownNavigate from 'container/QueryTable/Drilldown/useBaseDrilldownNavigate';
@@ -18,6 +19,7 @@ import { buildAggregateData } from 'pages/DashboardPageV2/DashboardContainer/Pan
 import { getBuilderQueries } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/getBuilderQueries';
 import { getPanelQueryType } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/getPanelQueryType';
 import { fromPerses } from 'pages/DashboardPageV2/DashboardContainer/queryV5/persesQueryAdapters';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 import { EQueryType } from 'types/common/dashboard';
 
 import DrilldownAggregateMenu from '../DrilldownMenu/DrilldownAggregateMenu';
@@ -125,10 +127,11 @@ export function useDrilldown(
 
 	const onPanelClick = useCallback(
 		(payload: DrilldownClickPayload): void => {
+			void logEvent(DashboardDetailEvents.DrilldownOpened, { panelType });
 			setSubMenu(DrilldownSubMenu.Base);
 			onClick(payload.coordinates, payload.context);
 		},
-		[onClick],
+		[onClick, panelType],
 	);
 
 	const handleClose = useCallback((): void => {
@@ -218,7 +221,7 @@ export function useDrilldown(
 				context={context}
 				query={v1Query}
 				isResolving={isResolving}
-				links={panel.spec.links}
+				links={panel.spec.links ?? undefined}
 				canSetDashboardVariables={dashboardVariables.hasFieldVariables}
 				onViewLogs={(): void => navigate('view_logs')}
 				onViewTraces={(): void => navigate('view_traces')}

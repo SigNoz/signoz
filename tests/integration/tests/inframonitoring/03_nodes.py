@@ -216,6 +216,7 @@ def test_nodes_warnings(
             {"web-a-us-1", "web-b-us-1"},
             id="in_contains",
         ),
+        pytest.param("k8s.node.namee = 'web-a-us-1'", set(), id="unresolved_key"),
     ],
 )
 def test_nodes_filter(
@@ -272,7 +273,6 @@ def test_nodes_filter(
 @pytest.mark.parametrize(
     "expression,err_substr",
     [
-        pytest.param("k8s.node.namee = 'web-a-us-1'", "k8s.node.namee", id="bad_attr_name"),
         pytest.param("k8s.node.name =", None, id="trailing_op"),
         pytest.param("(k8s.node.name = 'web-a-us-1'", None, id="unclosed_paren"),
     ],
@@ -285,8 +285,8 @@ def test_nodes_filter_invalid(
     expression: str,
     err_substr,
 ) -> None:
-    """Invalid filter expressions (typo'd attribute key, malformed grammar) return
-    400 invalid_input with structured errors; bad attribute keys are named in them."""
+    """Malformed filter grammar (trailing operator, unclosed paren) returns
+    400 invalid_input with structured errors."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(

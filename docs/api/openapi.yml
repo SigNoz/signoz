@@ -2596,19 +2596,6 @@ components:
         repeatVariable:
           type: string
       type: object
-    DashboardLink:
-      properties:
-        name:
-          type: string
-        renderVariables:
-          type: boolean
-        targetBlank:
-          type: boolean
-        tooltip:
-          type: string
-        url:
-          type: string
-      type: object
     DashboardtypesAxes:
       properties:
         isLogScale:
@@ -2747,6 +2734,7 @@ components:
         datasources:
           additionalProperties:
             $ref: '#/components/schemas/DashboardtypesDatasourceSpec'
+          nullable: true
           type: object
         display:
           $ref: '#/components/schemas/DashboardtypesDisplay'
@@ -2758,7 +2746,8 @@ components:
           type: array
         links:
           items:
-            $ref: '#/components/schemas/DashboardLink'
+            $ref: '#/components/schemas/DashboardtypesLink'
+          nullable: true
           type: array
         panels:
           additionalProperties:
@@ -3029,6 +3018,19 @@ components:
       - solid
       - dashed
       type: string
+    DashboardtypesLink:
+      properties:
+        name:
+          type: string
+        renderVariables:
+          type: boolean
+        targetBlank:
+          type: boolean
+        tooltip:
+          type: string
+        url:
+          type: string
+      type: object
     DashboardtypesListOrder:
       enum:
       - asc
@@ -3389,7 +3391,8 @@ components:
           $ref: '#/components/schemas/DashboardtypesDisplay'
         links:
           items:
-            $ref: '#/components/schemas/DashboardLink'
+            $ref: '#/components/schemas/DashboardtypesLink'
+          nullable: true
           type: array
         plugin:
           $ref: '#/components/schemas/DashboardtypesPanelPlugin'
@@ -6334,6 +6337,7 @@ components:
       - delta
       - cumulative
       - unspecified
+      - ""
       type: string
     MetrictypesTimeAggregation:
       enum:
@@ -6346,6 +6350,7 @@ components:
       - count_distinct
       - rate
       - increase
+      - ""
       type: string
     MetrictypesType:
       enum:
@@ -8079,6 +8084,19 @@ components:
       required:
       - items
       type: object
+    SpantypesGettableSpanMapperTest:
+      properties:
+        collectorLogs:
+          items:
+            type: string
+          nullable: true
+          type: array
+        spans:
+          items:
+            $ref: '#/components/schemas/SpantypesSpanMapperTestSpan'
+          nullable: true
+          type: array
+      type: object
     SpantypesGettableSpanMappers:
       properties:
         items:
@@ -8169,6 +8187,39 @@ components:
           $ref: '#/components/schemas/SpantypesSpanMapperGroupCondition'
         enabled:
           type: boolean
+        name:
+          type: string
+      required:
+      - name
+      - condition
+      type: object
+    SpantypesPostableSpanMapperTest:
+      properties:
+        groups:
+          items:
+            $ref: '#/components/schemas/SpantypesPostableSpanMapperTestGroup'
+          nullable: true
+          type: array
+        spans:
+          items:
+            $ref: '#/components/schemas/SpantypesSpanMapperTestSpan'
+          nullable: true
+          type: array
+      required:
+      - spans
+      - groups
+      type: object
+    SpantypesPostableSpanMapperTestGroup:
+      properties:
+        condition:
+          $ref: '#/components/schemas/SpantypesSpanMapperGroupCondition'
+        enabled:
+          type: boolean
+        mappers:
+          items:
+            $ref: '#/components/schemas/SpantypesPostableSpanMapper'
+          nullable: true
+          type: array
         name:
           type: string
       required:
@@ -8335,6 +8386,17 @@ components:
       - context
       - operation
       - priority
+      type: object
+    SpantypesSpanMapperTestSpan:
+      properties:
+        attributes:
+          additionalProperties: {}
+          nullable: true
+          type: object
+        resource:
+          additionalProperties: {}
+          nullable: true
+          type: object
       type: object
     SpantypesUpdatableSpanMapper:
       properties:
@@ -8553,6 +8615,7 @@ components:
       - resource
       - attribute
       - body
+      - ""
       type: string
     TelemetrytypesFieldDataType:
       enum:
@@ -8561,6 +8624,7 @@ components:
       - float64
       - int64
       - number
+      - ""
       type: string
     TelemetrytypesGettableFieldKeys:
       properties:
@@ -8592,10 +8656,12 @@ components:
       - traces
       - logs
       - metrics
+      - ""
       type: string
     TelemetrytypesSource:
       enum:
       - meter
+      - ""
       type: string
     TelemetrytypesTelemetryFieldKey:
       properties:
@@ -14063,6 +14129,69 @@ paths:
       - tokenizer:
         - ADMIN
       summary: Update a span mapper
+      tags:
+      - spanmapper
+  /api/v1/span_mapper_groups/test:
+    post:
+      deprecated: false
+      description: Tests how span mappers would transform sample spans
+      operationId: TestSpanMappers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpantypesPostableSpanMapperTest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SpantypesGettableSpanMapperTest'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Test span mappers against sample spans
       tags:
       - spanmapper
   /api/v1/stats:

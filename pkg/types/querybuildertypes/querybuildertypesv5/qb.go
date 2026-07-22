@@ -18,39 +18,28 @@ var (
 	ErrUnsupportedOperator = errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported operator")
 )
 
-type JsonKeyToFieldFunc func(context.Context, *telemetrytypes.TelemetryFieldKey, FilterOperator, any) (string, any)
-
 // FieldMapper maps the telemetry field key to the table field name.
 type FieldMapper interface {
 	// FieldFor returns the field name for the given key.
 	FieldFor(ctx context.Context, orgID valuer.UUID, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey) (string, error)
 	// ColumnFor returns the column for the given key.
 	ColumnFor(ctx context.Context, orgID valuer.UUID, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error)
-	// ColumnExpressionFor returns the column expression for the given key. Most mappers
-	// return it aliased (`expr AS name`); the traces mapper returns a bare expression and
-	// callers add their own alias.
-	ColumnExpressionFor(ctx context.Context, orgID valuer.UUID, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) (string, error)
+	// ColumnExpressionFor returns the column expression for the given key. The audit,
+	// metrics, metadata, and resource-filter mappers return it aliased (`expr AS name`);
+	// the logs and traces mappers return a bare expression and callers add their own alias.
+	// requiredDataType selects the mode: Unspecified builds a group-by/select expression;
+	// a concrete type (String/Float64) builds an aggregation-argument expression coerced to it.
+	ColumnExpressionFor(ctx context.Context, orgID valuer.UUID, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey, requiredDataType telemetrytypes.FieldDataType, keys map[string][]*telemetrytypes.TelemetryFieldKey) (string, error)
 	// CandidateKeys returns the key(s) to query for a referenced field: metadata matches for
 	// the name (or `{context}.{name}`) first, else synthesized type-variant keys for sources
 	// that support it, else nil (caller errors). value is the filter operand, nil otherwise.
 	CandidateKeys(ctx context.Context, orgID valuer.UUID, field *telemetrytypes.TelemetryFieldKey, value any, keys map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.TelemetryFieldKey
 }
 
-// ConditionBuilder builds the conditions for the filter.
+// ConditionBuilder builds the conditions for a filter term. The builder owns key resolution:
+// the visitor hands it the raw key + full metadata map + options, not a pre-matched key list.
 type ConditionBuilder interface {
-	// ConditionFor returns the conditions and any advisory warnings for a filter
-	// term. key is the field key as parsed from the query text; fieldKeysForName is
-	// the set of known field keys matching it (may be empty). The builder owns the
-	// decision of what to do — resolve ambiguity, fall back to a body JSON search,
-	// emit a "not found" error, or skip — and which errors/warnings are apt.
-	ConditionFor(ctx context.Context, orgID valuer.UUID, startNs uint64, endNs uint64, key *telemetrytypes.TelemetryFieldKey, fieldKeysForName []*telemetrytypes.TelemetryFieldKey, operator FilterOperator, value any, sb *sqlbuilder.SelectBuilder) ([]string, []string, error)
-}
-
-// ResolvingConditionBuilder is an optional ConditionBuilder that owns key resolution itself:
-// the where-clause visitor hands over the raw key + full metadata map instead of pre-matching,
-// so lookup, collision handling, resource-filter skip, and synthesis live in one place.
-type ResolvingConditionBuilder interface {
-	ConditionForKeys(ctx context.Context, orgID valuer.UUID, startNs uint64, endNs uint64, key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey, options ConditionBuilderOptions, operator FilterOperator, value any, sb *sqlbuilder.SelectBuilder) ([]string, []string, error)
+	ConditionFor(ctx context.Context, orgID valuer.UUID, startNs uint64, endNs uint64, key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey, options ConditionBuilderOptions, operator FilterOperator, value any, sb *sqlbuilder.SelectBuilder) ([]string, []string, error)
 }
 
 type ConditionBuilderOptions struct {
