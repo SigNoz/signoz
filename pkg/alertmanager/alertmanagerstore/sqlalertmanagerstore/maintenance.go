@@ -163,17 +163,46 @@ func (r *maintenance) CreatePlannedMaintenance(ctx context.Context, maintenance 
 }
 
 func (r *maintenance) DeletePlannedMaintenance(ctx context.Context, id valuer.UUID) error {
-	_, err := r.sqlstore.
-		BunDB().
-		NewDelete().
-		Model(new(alertmanagertypes.StorablePlannedMaintenance)).
-		Where("id = ?", id.StringValue()).
-		Exec(ctx)
+	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
-		return r.sqlstore.WrapAlreadyExistsErrf(err, errors.CodeAlreadyExists, "cannot delete planned maintenance because it is referenced by associated rules, remove the rules from the planned maintenance first")
+		return err
 	}
 
-	return nil
+	return r.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
+		// Verify ownership before cascade-deleting rule associations; without
+		// this check a caller could strip another org's maintenance window of
+		// its rules while the parent delete silently affects zero rows.
+		exists, err := r.sqlstore.
+			BunDBCtx(ctx).
+			NewSelect().
+			Model(new(alertmanagertypes.StorablePlannedMaintenance)).
+			Where("id = ? AND org_id = ?", id.StringValue(), claims.OrgID).
+			Exists(ctx)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			return errors.Newf(errors.TypeNotFound, errors.CodeNotFound, "planned maintenance with ID: %s does not exist", id.StringValue())
+		}
+
+		_, err = r.sqlstore.
+			BunDBCtx(ctx).
+			NewDelete().
+			Model(new(alertmanagertypes.StorablePlannedMaintenanceRule)).
+			Where("planned_maintenance_id = ?", id.StringValue()).
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
+
+		_, err = r.sqlstore.
+			BunDBCtx(ctx).
+			NewDelete().
+			Model(new(alertmanagertypes.StorablePlannedMaintenance)).
+			Where("id = ? AND org_id = ?", id.StringValue(), claims.OrgID).
+			Exec(ctx)
+		return err
+	})
 }
 
 func (r *maintenance) UpdatePlannedMaintenance(ctx context.Context, maintenance *alertmanagertypes.PostablePlannedMaintenance, id valuer.UUID) error {
