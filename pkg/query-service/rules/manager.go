@@ -78,7 +78,8 @@ type ManagerOptions struct {
 	Logger      *slog.Logger
 	Cache       cache.Cache
 
-	EvalDelay valuer.TextDuration
+	EvalDelay    valuer.TextDuration
+	EvalInterval valuer.TextDuration
 
 	RuleStateHistoryModule rulestatehistory.Module
 
@@ -118,6 +119,9 @@ type Manager struct {
 func defaultOptions(o *ManagerOptions) *ManagerOptions {
 	if o.ResendDelay == time.Duration(0) {
 		o.ResendDelay = 1 * time.Minute
+	}
+	if !o.EvalInterval.IsPositive() {
+		o.EvalInterval = valuer.MustParseTextDuration("60s")
 	}
 	if o.Logger == nil {
 		o.Logger = slog.Default()
@@ -180,6 +184,7 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 			WithQueryParser(opts.ManagerOpts.QueryParser),
 			WithMetadataStore(opts.ManagerOpts.MetadataStore),
 			WithRuleStateHistoryModule(opts.ManagerOpts.RuleStateHistoryModule),
+			WithEvalInterval(opts.ManagerOpts.EvalInterval),
 		)
 		if err != nil {
 			return task, err

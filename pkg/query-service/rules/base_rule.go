@@ -44,6 +44,10 @@ type BaseRule struct {
 	// this is useful in cases where the data is not available immediately
 	evalDelay valuer.TextDuration
 
+	// evalInterval is the step used when building the PromQL range query
+	// inside buildAndRunQuery. Defaults to 60s when not set.
+	evalInterval valuer.TextDuration
+
 	// holds the static set of labels and annotations for the rule
 	// these are the same for all alerts created for this rule
 	labels      ruletypes.Labels
@@ -106,6 +110,12 @@ func WithSendUnmatched() RuleOption {
 func WithEvalDelay(dur valuer.TextDuration) RuleOption {
 	return func(r *BaseRule) {
 		r.evalDelay = dur
+	}
+}
+
+func WithEvalInterval(dur valuer.TextDuration) RuleOption {
+	return func(r *BaseRule) {
+		r.evalInterval = dur
 	}
 }
 

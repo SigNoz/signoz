@@ -7,7 +7,8 @@ import (
 )
 
 type Config struct {
-	EvalDelay time.Duration `mapstructure:"eval_delay"`
+	EvalDelay    time.Duration `mapstructure:"eval_delay"`
+	EvalInterval time.Duration `mapstructure:"eval_interval"`
 }
 
 func NewConfigFactory() factory.ConfigFactory {
@@ -16,7 +17,8 @@ func NewConfigFactory() factory.ConfigFactory {
 
 func newConfig() factory.Config {
 	return Config{
-		EvalDelay: 2 * time.Minute,
+		EvalDelay:    2 * time.Minute,
+		EvalInterval: 60 * time.Second,
 	}
 }
 
