@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { useQuery } from 'react-query';
 import { Color, Spacing } from '@signozhq/design-tokens';
-import { X } from '@signozhq/icons';
+import { Copy, X } from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
 import { Divider } from '@signozhq/ui/divider';
+import { toast } from '@signozhq/ui/sonner';
 import { Typography } from '@signozhq/ui/typography';
-import { Drawer } from 'antd';
+import { Drawer, Tooltip } from 'antd';
+import { useCopyToClipboard } from 'hooks/useCopyToClipboard';
 import logEvent from 'api/common/logEvent';
 import ErrorContent from 'components/ErrorModal/components/ErrorContent';
 import APIError from 'types/api/error';
@@ -125,6 +128,15 @@ export default function K8sBaseDetails<T>({
 		setSelectedItemParams(null);
 	}, [setSelectedItemParams]);
 
+	const { copyToClipboard } = useCopyToClipboard();
+
+	const handleCopyId = useCallback((): void => {
+		if (selectedItem) {
+			copyToClipboard(selectedItem);
+			toast.success('ID copied to clipboard', { position: 'bottom-center' });
+		}
+	}, [copyToClipboard, selectedItem]);
+
 	const entityName = entity ? getEntityName(entity) : '';
 
 	useEffect(() => {
@@ -150,6 +162,21 @@ export default function K8sBaseDetails<T>({
 							(isEntityLoading && 'Loading...') ||
 							'-'}
 					</Typography.Text>
+					{selectedItem && (
+						<>
+							<Tooltip title="Copy ID">
+								<Button
+									variant="ghost"
+									size="sm"
+									color="secondary"
+									onClick={handleCopyId}
+									data-testid="copy-id-button"
+								>
+									<Copy size={14} />
+								</Button>
+							</Tooltip>
+						</>
+					)}
 				</>
 			}
 			placement="right"

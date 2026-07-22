@@ -32,6 +32,10 @@
 		font-weight: 500;
 		line-height: 20px; /* 142.857% */
 		letter-spacing: -0.07px;
+
+		margin-right: var(--spacing-4);
+
+		--button-padding: var(--spacing-2);
 	}
 
 	.radio-button {
