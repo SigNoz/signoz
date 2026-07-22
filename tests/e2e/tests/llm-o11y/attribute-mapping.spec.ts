@@ -111,9 +111,7 @@ test.describe('LLM Observability — Attribute Mapping', () => {
 		expect((await createMapper).ok()).toBeTruthy();
 
 		// Persist succeeded: success toast shows and the dirty marker clears.
-		await expect(
-			page.getByText('Attribute mapping changes saved'),
-		).toBeVisible();
+		await expect(page.getByText('Attribute mapping changes saved')).toBeVisible();
 		await expect(page.getByTestId('unsaved-changes')).toHaveCount(0);
 	});
 });
