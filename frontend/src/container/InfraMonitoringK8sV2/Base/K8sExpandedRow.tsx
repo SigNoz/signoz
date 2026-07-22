@@ -30,6 +30,7 @@ import {
 	useInfraMonitoringSelectedItemParams,
 } from '../hooks';
 import { K8sBaseFilters } from './types';
+import { useInfraMonitoringFontSize } from './useInfraMonitoringTablePreferencesStore';
 
 import styles from './K8sExpandedRow.module.scss';
 import { buildExpressionFromGroupMeta } from './utils';
@@ -74,6 +75,7 @@ export function K8sExpandedRow<T, TItemKey = string>({
 	getRowKey,
 	getItemKey,
 }: K8sExpandedRowProps<T, TItemKey>): JSX.Element {
+	const fontSize = useInfraMonitoringFontSize();
 	const [, setGroupBy] = useInfraMonitoringGroupBy();
 	const [, setCurrentPage] = useInfraMonitoringPageListing();
 	const { currentQuery } = useQueryBuilder();
@@ -264,7 +266,7 @@ export function K8sExpandedRow<T, TItemKey = string>({
 							className: styles.expandedTable,
 						}}
 						disableVirtualScroll
-						cellTypographySize="medium"
+						cellTypographySize={fontSize}
 					/>
 				</TanStackTableStateProvider>
 				{!isLoading && expandedData.length > 0 && (
