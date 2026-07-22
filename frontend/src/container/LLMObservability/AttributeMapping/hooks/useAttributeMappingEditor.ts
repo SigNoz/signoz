@@ -35,8 +35,6 @@ function clone(groups: DraftGroup[]): DraftGroup[] {
 
 export interface AttributeMappingEditor {
 	groups: DraftGroup[];
-	// Server baseline (last-saved state) the working `groups` diff against.
-	// Consumed by the Test tab to send only changed groups' mappers.
 	snapshot: DraftGroup[];
 	isLoading: boolean;
 	isError: boolean;
