@@ -78,7 +78,7 @@ func (q *querier) QueryRangePreview(
 			skip[name] = true
 		}
 	}
-	providers, buildErrs := q.buildPreviewProviders(orgID, req, dependencyQueries, missingMetricQuerySet, skip)
+	providers, buildErrs := q.buildPreviewProviders(ctx, orgID, req, dependencyQueries, missingMetricQuerySet, skip)
 
 	// Render each executing query's statement and collect the ClickHouse-bound
 	// analysis work to run concurrently.
@@ -192,6 +192,7 @@ func missingMetricNames(env qbtypes.QueryEnvelope) []string {
 }
 
 func (q *querier) buildPreviewProviders(
+	ctx context.Context,
 	orgID valuer.UUID,
 	req *qbtypes.QueryRangeRequest,
 	dependencyQueries map[string]bool,
@@ -231,7 +232,7 @@ func (q *querier) buildPreviewProviders(
 			sub.CompositeQuery = qbtypes.CompositeQuery{Queries: []qbtypes.QueryEnvelope{query}}
 		}
 
-		built, _, bErr := q.buildQueries(orgID, &sub, deps, missingMetricQuerySet, event)
+		built, _, bErr := q.buildQueries(ctx, orgID, &sub, deps, missingMetricQuerySet, event)
 		if bErr != nil {
 			errs[name] = bErr
 			continue

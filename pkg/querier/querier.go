@@ -23,6 +23,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -132,7 +133,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 		missingMetricQuerySet[name] = true
 	}
 
-	queries, steps, err := q.buildQueries(orgID, req, dependencyQueries, missingMetricQuerySet, event)
+	queries, steps, err := q.buildQueries(ctx, orgID, req, dependencyQueries, missingMetricQuerySet, event)
 	if err != nil {
 		return nil, err
 	}
@@ -176,6 +177,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 }
 
 func (q *querier) buildQueries(
+	ctx context.Context,
 	orgID valuer.UUID,
 	req *qbtypes.QueryRangeRequest,
 	dependencyQueries map[string]bool,
@@ -266,7 +268,16 @@ func (q *querier) buildQueries(
 					event.Source = telemetrytypes.SourceMeter.StringValue()
 					bq = newBuilderQuery(q.logger, q.telemetryStore, orgID, q.meterStmtBuilder, spec, timeRange, req.RequestType, tmplVars, builderConfig{})
 				} else {
-					bq = newBuilderQuery(q.logger, q.telemetryStore, orgID, q.metricStmtBuilder, spec, timeRange, req.RequestType, tmplVars, builderConfig{})
+					// the epoch pipeline changes cumulative rate/increase
+					// results, so its rollout state must be part of the cache
+					// identity: cached legacy buckets and fresh epoch buckets
+					// must never stitch into one series
+					cfg := builderConfig{}
+					if metricSpecUsesCounterEpochs(spec) &&
+						q.fl.BooleanOrEmpty(ctx, flagger.FeatureUseCounterEpochs, featuretypes.NewFlaggerEvaluationContext(orgID)) {
+						cfg.fingerprintSuffix = "counterepochs=v1"
+					}
+					bq = newBuilderQuery(q.logger, q.telemetryStore, orgID, q.metricStmtBuilder, spec, timeRange, req.RequestType, tmplVars, cfg)
 				}
 
 				queries[spec.Name] = bq

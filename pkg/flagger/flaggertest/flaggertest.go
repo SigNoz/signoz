@@ -27,6 +27,24 @@ func New(t *testing.T) flagger.Flagger {
 	return fl
 }
 
+// WithBooleans returns a Flagger with the given boolean flags overriding the
+// registry defaults.
+func WithBooleans(t *testing.T, flags map[string]bool) flagger.Flagger {
+	t.Helper()
+	registry := flagger.MustNewRegistry()
+	cfg := flagger.Config{}
+	cfg.Config.Boolean = flags
+	fl, err := flagger.New(
+		context.Background(),
+		instrumentationtest.New().ToProviderSettings(),
+		cfg,
+		registry,
+		configflagger.NewFactory(registry),
+	)
+	require.NoError(t, err)
+	return fl
+}
+
 // WithUseJSONBody returns a Flagger with use_json_body set to the given value.
 func WithUseJSONBody(t *testing.T, enabled bool) flagger.Flagger {
 	t.Helper()

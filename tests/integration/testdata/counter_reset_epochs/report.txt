@@ -1,0 +1,67 @@
+A1 step=60     s01_steady         bucket_spec=5760         point_truth=5760         OK
+A1 step=60     s02_midreset       bucket_spec=8644         point_truth=8644         OK
+A1 step=60     s03_multireset     bucket_spec=3969         point_truth=3969         OK
+A1 step=60     s04_regrow         bucket_spec=43705        point_truth=43705        OK
+A1 step=60     s07_gap            bucket_spec=0            point_truth=0            OK
+A1 step=60     s08_singlepoint    bucket_spec=42           point_truth=42           OK
+A1 step=60     s09_slow           bucket_spec=2864         point_truth=2864         OK
+A1 step=60     s10_boundaryreset  bucket_spec=11518        point_truth=11518        OK
+A1 step=60     s11_dupooo         bucket_spec=5764         point_truth=5764         OK
+A1 step=60     s12_twowriter      bucket_spec=8640         point_truth=8640         OK
+A1 step=60     s16_stale          bucket_spec=5760         point_truth=5760         OK
+A1 step=300    s01_steady         bucket_spec=5760         point_truth=5760         OK
+A1 step=300    s02_midreset       bucket_spec=8644         point_truth=8644         OK
+A1 step=300    s03_multireset     bucket_spec=3969         point_truth=3969         OK
+A1 step=300    s04_regrow         bucket_spec=43705        point_truth=43705        OK
+A1 step=300    s07_gap            bucket_spec=0            point_truth=0            OK
+A1 step=300    s08_singlepoint    bucket_spec=42           point_truth=42           OK
+A1 step=300    s09_slow           bucket_spec=2874         point_truth=2874         OK
+A1 step=300    s10_boundaryreset  bucket_spec=11518        point_truth=11518        OK
+A1 step=300    s11_dupooo         bucket_spec=5764         point_truth=5764         OK
+A1 step=300    s12_twowriter      bucket_spec=8640         point_truth=8640         OK
+A1 step=300    s16_stale          bucket_spec=5760         point_truth=5760         OK
+A1 step=1800   s01_steady         bucket_spec=5760         point_truth=5760         OK
+A1 step=1800   s02_midreset       bucket_spec=8644         point_truth=8644         OK
+A1 step=1800   s03_multireset     bucket_spec=3969         point_truth=3969         OK
+A1 step=1800   s04_regrow         bucket_spec=43705        point_truth=43705        OK
+A1 step=1800   s07_gap            bucket_spec=0            point_truth=0            OK
+A1 step=1800   s08_singlepoint    bucket_spec=42           point_truth=42           OK
+A1 step=1800   s09_slow           bucket_spec=2874         point_truth=2874         OK
+A1 step=1800   s10_boundaryreset  bucket_spec=11518        point_truth=11518        OK
+A1 step=1800   s11_dupooo         bucket_spec=5764         point_truth=5764         OK
+A1 step=1800   s12_twowriter      bucket_spec=8640         point_truth=8640         OK
+A1 step=1800   s16_stale          bucket_spec=5760         point_truth=5760         OK
+A1 step=86400  s01_steady         bucket_spec=5760         point_truth=5760         OK
+A1 step=86400  s02_midreset       bucket_spec=8644         point_truth=8644         OK
+A1 step=86400  s03_multireset     bucket_spec=3969         point_truth=3969         OK
+A1 step=86400  s04_regrow         bucket_spec=43705        point_truth=43705        OK
+A1 step=86400  s07_gap            bucket_spec=0            point_truth=0            OK
+A1 step=86400  s08_singlepoint    bucket_spec=42           point_truth=42           OK
+A1 step=86400  s09_slow           bucket_spec=2874         point_truth=2874         OK
+A1 step=86400  s10_boundaryreset  bucket_spec=11518        point_truth=11518        OK
+A1 step=86400  s11_dupooo         bucket_spec=5764         point_truth=5764         OK
+A1 step=86400  s12_twowriter      bucket_spec=8640         point_truth=8640         OK
+A1 step=86400  s16_stale          bucket_spec=5760         point_truth=5760         OK
+A3 zoom s01_steady         totals={60: 5760.0, 300: 5760.0, 1800: 5760.0, 86400: 5760.0} OK
+A3 zoom s02_midreset       totals={60: 8644.0, 300: 8644.0, 1800: 8644.0, 86400: 8644.0} OK
+A3 zoom s03_multireset     totals={60: 3969.0, 300: 3969.0, 1800: 3969.0, 86400: 3969.0} OK
+A3 zoom s04_regrow         totals={60: 43705.0, 300: 43705.0, 1800: 43705.0, 86400: 43705.0} OK
+A3 zoom s07_gap            totals={60: 0.0, 300: 0.0, 1800: 0.0, 86400: 0.0} OK
+A3 zoom s08_singlepoint    totals={60: 42.0, 300: 42.0, 1800: 42.0, 86400: 42.0} OK
+A3 zoom s09_slow           totals={300: 2874.0, 1800: 2874.0, 86400: 2874.0} OK
+A3 zoom s10_boundaryreset  totals={60: 11518.0, 300: 11518.0, 1800: 11518.0, 86400: 11518.0} OK
+A3 zoom s11_dupooo         totals={60: 5764.0, 300: 5764.0, 1800: 5764.0, 86400: 5764.0} OK
+A3 zoom s12_twowriter      totals={60: 8640.0, 300: 8640.0, 1800: 8640.0, 86400: 8640.0} OK
+A3 zoom s16_stale          totals={60: 5760.0, 300: 5760.0, 1800: 5760.0, 86400: 5760.0} OK
+A4 legacy zoom s03_multireset: step60=3969 step86400=242 (inconsistent by design of legacy)
+A4 legacy zoom s04_regrow: step60=39605 step86400=39605 (inconsistent by design of legacy)
+A5 step=60     s05_legacy         epoch==legacy OK (1440 buckets)
+A5 step=60     s14_updown         epoch==legacy OK (1440 buckets)
+A5 step=300    s05_legacy         epoch==legacy OK (288 buckets)
+A5 step=300    s14_updown         epoch==legacy OK (288 buckets)
+A5 step=86400  s05_legacy         epoch==legacy OK (1 buckets)
+A5 step=86400  s14_updown         epoch==legacy OK (1 buckets)
+A6 step=60     s01_steady         epoch==legacy OK (1440 buckets)
+A6 step=60     s07_gap            epoch==legacy OK (1430 buckets)
+A6 step=300    s01_steady         epoch==legacy OK (288 buckets)
+A6 step=300    s07_gap            epoch==legacy OK (286 buckets)

@@ -15,6 +15,7 @@ var (
 	FeatureEnableAIObservability  = featuretypes.MustNewName("enable_ai_observability")
 	FeatureEnableMetricsReduction = featuretypes.MustNewName("enable_metrics_reduction")
 	FeatureUseInfraMonitoringV2   = featuretypes.MustNewName("use_infra_monitoring_v2")
+	FeatureUseCounterEpochs       = featuretypes.MustNewName("use_counter_epochs")
 )
 
 func MustNewRegistry() featuretypes.Registry {
@@ -112,6 +113,14 @@ func MustNewRegistry() featuretypes.Registry {
 			Kind:           featuretypes.KindBoolean,
 			Stage:          featuretypes.StageExperimental,
 			Description:    "Controls whether infra monitoring v2 is enabled",
+			DefaultVariant: featuretypes.MustNewName("disabled"),
+			Variants:       featuretypes.NewBooleanVariants(),
+		},
+		&featuretypes.Feature{
+			Name:           FeatureUseCounterEpochs,
+			Kind:           featuretypes.KindBoolean,
+			Stage:          featuretypes.StageExperimental,
+			Description:    "Controls whether cumulative rate/increase use the reset-exact start_ts epoch pipeline (requires collector schema migration 1012)",
 			DefaultVariant: featuretypes.MustNewName("disabled"),
 			Variants:       featuretypes.NewBooleanVariants(),
 		},

@@ -15,6 +15,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
+	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -42,6 +43,23 @@ var _ qbtypes.StatementProvider = (*builderQuery[any])(nil)
 
 type builderConfig struct {
 	logTraceIDWindowPaddingMS uint64
+	// fingerprintSuffix distinguishes cache entries produced by semantically
+	// different pipelines for the same spec (e.g. the counter-epoch rollout)
+	fingerprintSuffix string
+}
+
+// metricSpecUsesCounterEpochs reports whether the epoch pipeline would change
+// this spec's results: cumulative (or mixed) rate/increase aggregations.
+func metricSpecUsesCounterEpochs(spec qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]) bool {
+	for _, agg := range spec.Aggregations {
+		if agg.Temporality == metrictypes.Delta || agg.Temporality == metrictypes.Unspecified {
+			continue
+		}
+		if agg.TimeAggregation == metrictypes.TimeAggregationRate || agg.TimeAggregation == metrictypes.TimeAggregationIncrease {
+			return true
+		}
+	}
+	return false
 }
 
 func newBuilderQuery[T any](
@@ -169,6 +187,10 @@ func (q *builderQuery[T]) Fingerprint() string {
 
 	if q.spec.ShiftBy != 0 {
 		parts = append(parts, fmt.Sprintf("shiftby=%d", q.spec.ShiftBy))
+	}
+
+	if q.builderConfig.fingerprintSuffix != "" {
+		parts = append(parts, q.builderConfig.fingerprintSuffix)
 	}
 
 	return strings.Join(parts, "&")

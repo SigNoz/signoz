@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -202,6 +203,10 @@ func (b *MetricQueryStatementBuilder) buildPipelineStatement(
 		return nil, err
 	}
 
+	// the reset-exact epoch pipeline needs the start_ts column and epoch map
+	// rollup columns from collector schema migration 1012
+	epochsEnabled := b.flagger.BooleanOrEmpty(ctx, flagger.FeatureUseCounterEpochs, featuretypes.NewFlaggerEvaluationContext(orgID))
+
 	if qbtypes.CanShortCircuitDelta(query.Aggregations[0]) {
 		// spatial_aggregation_cte directly for certain delta queries
 		if frag, args, err := b.buildTemporalAggDeltaFastPath(start, end, query, samplesTable, timeSeriesCTE, timeSeriesCTEArgs); err != nil {
@@ -212,7 +217,7 @@ func (b *MetricQueryStatementBuilder) buildPipelineStatement(
 		}
 	} else {
 		// temporal_aggregation_cte
-		if frag, args, err := b.buildTemporalAggregationCTE(ctx, start, end, query, keys, samplesTable, timeSeriesCTE, timeSeriesCTEArgs); err != nil {
+		if frag, args, err := b.buildTemporalAggregationCTE(ctx, start, end, query, keys, samplesTable, timeSeriesCTE, timeSeriesCTEArgs, epochsEnabled); err != nil {
 			return nil, err
 		} else if frag != "" {
 			cteFragments = append(cteFragments, frag)
@@ -575,10 +580,26 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggregationCTE(
 	samplesTable string,
 	timeSeriesCTE string,
 	timeSeriesCTEArgs []any,
+	epochsEnabled bool,
 ) (string, []any, error) {
-	if query.Aggregations[0].Temporality == metrictypes.Delta {
+	agg := query.Aggregations[0]
+	if agg.Temporality == metrictypes.Delta {
 		return b.buildTemporalAggDelta(ctx, start, end, query, samplesTable, timeSeriesCTE, timeSeriesCTEArgs)
-	} else if query.Aggregations[0].Temporality != metrictypes.Multiple {
+	}
+
+	// reset-exact pipeline for cumulative counters; Unspecified temporality
+	// has no counter semantics and stays on the legacy path
+	isRateOrIncrease := agg.TimeAggregation == metrictypes.TimeAggregationRate || agg.TimeAggregation == metrictypes.TimeAggregationIncrease
+	if epochsEnabled && isRateOrIncrease {
+		if agg.Temporality == metrictypes.Cumulative {
+			return b.buildTemporalAggCumulativeEpochs(start, end, query, samplesTable, timeSeriesCTE, timeSeriesCTEArgs, "", true)
+		}
+		if agg.Temporality == metrictypes.Multiple {
+			return b.buildTemporalAggMultiTemporalityEpochs(start, end, query, samplesTable, timeSeriesCTE, timeSeriesCTEArgs)
+		}
+	}
+
+	if agg.Temporality != metrictypes.Multiple {
 		return b.buildTemporalAggCumulativeOrUnspecified(ctx, start, end, query, samplesTable, timeSeriesCTE, timeSeriesCTEArgs)
 	}
 	return b.buildTemporalAggForMultipleTemporalities(ctx, start, end, query, samplesTable, timeSeriesCTE, timeSeriesCTEArgs)
