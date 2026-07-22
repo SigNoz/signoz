@@ -197,8 +197,7 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 				tooltip="Excluding cache memory."
 				docPath="/infrastructure-monitoring/host-monitoring#memory-usage"
 			>
-				Memory Usage
-				<br /> (WSS)
+				Memory Usage (WSS)
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.memory,
@@ -275,8 +274,7 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 		id: 'load15',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/host-monitoring#load-avg">
-				Load Avg
-				<br /> (15min)
+				Load Avg (15min)
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.load15,
