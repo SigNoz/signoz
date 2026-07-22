@@ -137,6 +137,57 @@ func TestBuildFunnelStepOverviewQuery_WithLatencyPointer(t *testing.T) {
 				"minIf(timestamp, resource_string_service$$name = step2.1 AND name = step2.2) + toIntervalNanosecond(minIf(duration_nano, resource_string_service$$name = step2.1 AND name = step2.2)) AS t2_time",
 			},
 		},
+		{
+			name: "p50 latency type uses 0.50 quantile",
+			steps: []struct {
+				ServiceName    string
+				SpanName       string
+				ContainsError  int
+				LatencyPointer string
+				LatencyType    string
+				Clause         string
+			}{
+				{ServiceName: "svc", SpanName: "op1", LatencyPointer: "start", LatencyType: "p50", Clause: ""},
+				{ServiceName: "svc", SpanName: "op2", LatencyPointer: "start", LatencyType: "p50", Clause: ""},
+			},
+			stepStart:    1,
+			stepEnd:      2,
+			wantContains: []string{"quantileIf(0.50)"},
+		},
+		{
+			name: "p75 latency type uses 0.75 quantile",
+			steps: []struct {
+				ServiceName    string
+				SpanName       string
+				ContainsError  int
+				LatencyPointer string
+				LatencyType    string
+				Clause         string
+			}{
+				{ServiceName: "svc", SpanName: "op1", LatencyPointer: "start", LatencyType: "p75", Clause: ""},
+				{ServiceName: "svc", SpanName: "op2", LatencyPointer: "start", LatencyType: "p75", Clause: ""},
+			},
+			stepStart:    1,
+			stepEnd:      2,
+			wantContains: []string{"quantileIf(0.75)"},
+		},
+		{
+			name: "unknown latency type falls back to p99",
+			steps: []struct {
+				ServiceName    string
+				SpanName       string
+				ContainsError  int
+				LatencyPointer string
+				LatencyType    string
+				Clause         string
+			}{
+				{ServiceName: "svc", SpanName: "op1", LatencyPointer: "start", LatencyType: "p42", Clause: ""},
+				{ServiceName: "svc", SpanName: "op2", LatencyPointer: "start", LatencyType: "p42", Clause: ""},
+			},
+			stepStart:    1,
+			stepEnd:      2,
+			wantContains: []string{"quantileIf(0.99)"},
+		},
 	}
 
 	for _, tt := range tests {

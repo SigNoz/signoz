@@ -380,15 +380,21 @@ func BuildFunnelStepOverviewQuery(
 		whereConditions = append(whereConditions, fmt.Sprintf("(%s)", strings.Join(orConditions, " OR ")))
 	}
 
-	// Determine latency quantile for the end step
+	// Determine latency quantile for the end step.
+	// All standard percentiles are supported; unknown values fall back to p99.
 	latencyQuantile := "0.99"
 	if steps[endIdx].LatencyType != "" {
-		latency := strings.ToLower(steps[endIdx].LatencyType)
-		switch latency {
+		switch strings.ToLower(steps[endIdx].LatencyType) {
+		case "p50":
+			latencyQuantile = "0.50"
+		case "p75":
+			latencyQuantile = "0.75"
 		case "p90":
 			latencyQuantile = "0.90"
 		case "p95":
 			latencyQuantile = "0.95"
+		case "p99":
+			latencyQuantile = "0.99"
 		default:
 			latencyQuantile = "0.99"
 		}
