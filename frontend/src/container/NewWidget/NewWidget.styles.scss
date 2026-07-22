@@ -72,3 +72,22 @@
 		}
 	}
 }
+
+.widget-resizable-panel-group {
+	height: 100%;
+}
+
+.resizable-panel-left-container,
+.resizable-panel-right-container {
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	height: 100%;
+}
+
+.left-panel-scrollbar,
+.right-panel-scrollbar {
+	flex: 1;
+	min-height: 0;
+	overflow: hidden;
+}
