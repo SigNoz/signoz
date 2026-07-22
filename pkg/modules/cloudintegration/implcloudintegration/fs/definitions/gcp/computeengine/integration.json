@@ -48,25 +48,25 @@
       {
         "name": "compute.googleapis.com/instance/disk/read_bytes_count",
         "unit": "Bytes",
-        "type": "Counter",
+        "type": "Sum",
         "description": ""
       },
       {
         "name": "compute.googleapis.com/instance/disk/write_bytes_count",
         "unit": "Bytes",
-        "type": "Counter",
+        "type": "Sum",
         "description": ""
       },
       {
         "name": "compute.googleapis.com/instance/disk/read_ops_count",
         "unit": "Count",
-        "type": "Counter",
+        "type": "Sum",
         "description": ""
       },
       {
         "name": "compute.googleapis.com/instance/disk/write_ops_count",
         "unit": "Count",
-        "type": "Counter",
+        "type": "Sum",
         "description": ""
       },
       {
@@ -78,31 +78,31 @@
       {
         "name": "compute.googleapis.com/instance/network/received_bytes_count",
         "unit": "Bytes",
-        "type": "Counter",
+        "type": "Sum",
         "description": ""
       },
       {
         "name": "compute.googleapis.com/instance/network/sent_bytes_count",
         "unit": "Bytes",
-        "type": "Counter",
+        "type": "Sum",
         "description": ""
       },
       {
         "name": "compute.googleapis.com/instance/network/received_packets_count",
         "unit": "Count",
-        "type": "Counter",
+        "type": "Sum",
         "description": ""
       },
       {
         "name": "compute.googleapis.com/instance/network/sent_packets_count",
         "unit": "Count",
-        "type": "Counter",
+        "type": "Sum",
         "description": ""
       },
       {
         "name": "compute.googleapis.com/instance/firewall/dropped_packets_count",
         "unit": "Count",
-        "type": "Counter",
+        "type": "Sum",
         "description": ""
       }
     ],

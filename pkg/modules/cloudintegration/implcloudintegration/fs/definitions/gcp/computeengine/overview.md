@@ -1,3 +1,3 @@
-### Monitor GCP Memorystore Redis with SigNoz
+### Monitor GCP Compute Engine with SigNoz
 
-Collect key GCP Memorystore Redis metrics and view them with an out of the box dashboard.
+Collect key GCP Compute Engine metrics and view them with an out of the box dashboard.
