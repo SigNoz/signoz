@@ -1,0 +1,4 @@
+{
+	"delete_confirm_message": "{{keyName}}을(를) 삭제하시겠습니까? 수집 키 삭제는 되돌릴 수 없습니다.",
+	"delete_limit_confirm_message": "수집 키 {{keyName}}의 {{limit_name}} 한도를 삭제하시겠습니까?"
+}

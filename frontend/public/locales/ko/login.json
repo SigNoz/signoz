@@ -1,0 +1,22 @@
+{
+  "label_email": "이메일",
+  "placeholder_email": "name@yourcompany.com",
+  "label_password": "비밀번호",
+  "button_initiate_login": "다음",
+  "button_login": "로그인",
+  "login_page_title": "SigNoz로 로그인",
+  "login_with_sso": "SSO로 로그인",
+  "login_with_pwd": "비밀번호로 로그인",
+  "forgot_password": "비밀번호를 잊으셨나요?",
+  "create_an_account": "계정 만들기",
+  "prompt_if_admin": "관리자이신 경우,",
+  "prompt_create_account": "SigNoz를 처음 설정하시는 경우,",
+  "prompt_no_account": "계정이 없으신가요? 관리자에게 초대 링크를 요청하세요.",
+  "prompt_forgot_password": "관리자에게 비밀번호 재설정과 새 초대 링크 발송을 요청하세요",
+  "prompt_on_sso_error": "SSO 설정 문제를 해결하려고 하시나요?",
+  "unexpected_error": "죄송합니다. 문제가 발생했습니다",
+  "failed_to_login": "죄송합니다. 로그인에 실패했습니다",
+  "invalid_email": "유효한 이메일 주소를 입력해 주세요",
+  "invalid_account": "이 계정은 존재하지 않습니다. 새 계정을 만들려면 관리자에게 초대 링크를 요청하세요",
+  "invalid_config": "잘못된 설정이 감지되었습니다. 관리자에게 문의해 주세요"
+}

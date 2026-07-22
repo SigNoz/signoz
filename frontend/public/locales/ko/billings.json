@@ -1,0 +1,16 @@
+{
+	"days_remaining": "결제 기간이 남은 일수입니다.",
+	"billing": "결제",
+	"manage_billing_and_costs": "결제 정보, 청구서를 관리하고 비용을 모니터링하세요.",
+	"enterprise_cloud": "엔터프라이즈 클라우드",
+	"teams_cloud": "팀 클라우드",
+	"enterprise": "엔터프라이즈",
+	"teams": "팀",
+	"card_details_recieved_and_billing_info": "카드 정보를 받았습니다. 결제는 무료 체험 기간이 끝난 후에 시작됩니다.",
+	"upgrade_plan": "플랜 업그레이드",
+	"manage_billing": "결제 관리",
+	"upgrade_now_text": "지금 업그레이드하여 끊김 없이 이용하세요",
+	"billing_start_info": "결제는 체험 기간이 끝난 후에만 시작됩니다",
+	"checkout_plans": "유료 플랜 기능 살펴보기",
+	"here": "여기"
+}
