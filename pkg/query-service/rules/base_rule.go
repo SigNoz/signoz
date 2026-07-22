@@ -44,6 +44,9 @@ type BaseRule struct {
 	// this is useful in cases where the data is not available immediately
 	evalDelay valuer.TextDuration
 
+	// evalInterval is the step used for PromQL range queries
+	evalInterval valuer.TextDuration
+
 	// holds the static set of labels and annotations for the rule
 	// these are the same for all alerts created for this rule
 	labels      ruletypes.Labels
@@ -106,6 +109,12 @@ func WithSendUnmatched() RuleOption {
 func WithEvalDelay(dur valuer.TextDuration) RuleOption {
 	return func(r *BaseRule) {
 		r.evalDelay = dur
+	}
+}
+
+func WithEvalInterval(dur valuer.TextDuration) RuleOption {
+	return func(r *BaseRule) {
+		r.evalInterval = dur
 	}
 }
 
@@ -229,6 +238,10 @@ func (r *BaseRule) ActiveAlertsLabelFP() map[uint64]struct{} {
 
 func (r *BaseRule) EvalDelay() valuer.TextDuration {
 	return r.evalDelay
+}
+
+func (r *BaseRule) EvalInterval() valuer.TextDuration {
+	return r.evalInterval
 }
 
 func (r *BaseRule) EvalWindow() valuer.TextDuration {

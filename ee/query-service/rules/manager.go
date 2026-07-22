@@ -61,6 +61,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 			opts.Logger,
 			opts.ManagerOpts.Prometheus,
 			opts.ManagerOpts.Alertmanager.Config().ExternalURL,
+			baserules.WithEvalInterval(opts.ManagerOpts.EvalInterval),
 			baserules.WithSQLStore(opts.SQLStore),
 			baserules.WithQueryParser(opts.ManagerOpts.QueryParser),
 			baserules.WithMetadataStore(opts.ManagerOpts.MetadataStore),

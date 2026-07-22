@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pql "github.com/prometheus/prometheus/promql"
 	cmock "github.com/SigNoz/clickhouse-go-mock"
+	pql "github.com/prometheus/prometheus/promql"
 
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/prometheus"
@@ -1619,6 +1619,61 @@ func TestPromRule_NoData_AbsentFor(t *testing.T) {
 			assert.Equal(t, c.expectAlertOnEval2, alertsFound2)
 		})
 	}
+}
+
+func TestPromRuleEvalIntervalHonored(t *testing.T) {
+	newRule := func(name string, extraOpts ...RuleOption) *PromRule {
+		target := 1.0
+		rule := &ruletypes.PostableRule{
+			AlertName: name,
+			AlertType: ruletypes.AlertTypeMetric,
+			RuleType:  ruletypes.RuleTypeProm,
+			Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
+				EvalWindow: valuer.MustParseTextDuration("5m"),
+				Frequency:  valuer.MustParseTextDuration("1m"),
+			}},
+			RuleCondition: &ruletypes.RuleCondition{
+				CompositeQuery: &ruletypes.AlertCompositeQuery{
+					QueryType: ruletypes.QueryTypePromQL,
+					Queries: []qbtypes.QueryEnvelope{{
+						Type: qbtypes.QueryTypePromQL,
+						Spec: qbtypes.PromQuery{Query: "noop"},
+					}},
+				},
+				Thresholds: &ruletypes.RuleThresholdData{
+					Kind: ruletypes.BasicThresholdKind,
+					Spec: ruletypes.BasicRuleThresholds{{
+						Name:            name,
+						TargetValue:     &target,
+						MatchType:       ruletypes.AtleastOnce,
+						CompareOperator: ruletypes.ValueIsAbove,
+					}},
+				},
+			},
+		}
+
+		opts := append([]RuleOption(nil), extraOpts...)
+		pr, err := NewPromRule(
+			name,
+			valuer.GenerateUUID(),
+			rule,
+			instrumentationtest.New().Logger(),
+			nil,
+			mustParseURL(t, "http://localhost:8080"),
+			opts...,
+		)
+		require.NoError(t, err)
+		return pr
+	}
+
+	// Default: no option applied, field is zero so the buildAndRunQuery fallback
+	// of 60s applies.
+	defaultRule := newRule("default")
+	assert.Equal(t, valuer.TextDuration{}, defaultRule.EvalInterval(), "no option applied leaves the field zero so the engine fallback applies")
+
+	// With WithEvalInterval applied, the field is observable via the accessor.
+	customRule := newRule("custom", WithEvalInterval(valuer.MustParseTextDuration("5s")))
+	assert.Equal(t, 5*time.Second, customRule.EvalInterval().Duration(), "WithEvalInterval should set the field on the rule")
 }
 
 func TestPromRuleEval_RequireMinPoints(t *testing.T) {

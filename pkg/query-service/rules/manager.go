@@ -80,6 +80,10 @@ type ManagerOptions struct {
 
 	EvalDelay valuer.TextDuration
 
+	// EvalInterval is the step used for PromQL range queries inside
+	// PromRule. Defaults to 60s when zero so existing behavior is preserved.
+	EvalInterval valuer.TextDuration
+
 	RuleStateHistoryModule rulestatehistory.Module
 
 	PrepareTaskFunc     func(opts PrepareTaskOptions) (Task, error)
@@ -119,6 +123,9 @@ func defaultOptions(o *ManagerOptions) *ManagerOptions {
 	if o.ResendDelay == time.Duration(0) {
 		o.ResendDelay = 1 * time.Minute
 	}
+	if !o.EvalInterval.IsPositive() {
+		o.EvalInterval = valuer.MustParseTextDuration("60s")
+	}
 	if o.Logger == nil {
 		o.Logger = slog.Default()
 	}
@@ -152,6 +159,7 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 			opts.Logger,
 			opts.ManagerOpts.Alertmanager.Config().ExternalURL,
 			WithEvalDelay(opts.ManagerOpts.EvalDelay),
+			WithEvalInterval(opts.ManagerOpts.EvalInterval),
 			WithSQLStore(opts.SQLStore),
 			WithQueryParser(opts.ManagerOpts.QueryParser),
 			WithMetadataStore(opts.ManagerOpts.MetadataStore),

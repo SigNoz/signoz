@@ -57,6 +57,7 @@ func NewFactory(
 			Logger:                 providerSettings.Logger,
 			Cache:                  cache,
 			EvalDelay:              valuer.MustParseTextDuration(config.EvalDelay.String()),
+			EvalInterval:           valuer.MustParseTextDuration(config.EvalInterval.String()),
 			PrepareTaskFunc:        prepareTaskFunc,
 			PrepareTestRuleFunc:    prepareTestRuleFunc,
 			Alertmanager:           alertmanager,

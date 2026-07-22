@@ -92,7 +92,10 @@ func (r *PromRule) matrixToCommonSeries(res promql.Matrix) []*qbtypes.TimeSeries
 
 func (r *PromRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletypes.Vector, error) {
 	start, end := r.Timestamps(ts)
-	interval := 60 * time.Second // TODO(srikanthccv): this should be configurable
+	interval := r.evalInterval.Duration()
+	if interval == 0 {
+		interval = 60 * time.Second
+	}
 
 	q, err := r.getPqlQuery(ctx)
 	if err != nil {
