@@ -161,12 +161,15 @@ func BuildFunnelOverviewQuery(
 		}
 		fullCondition := strings.Join(append([]string{"t1_time > 0"}, fullConditions...), " AND ")
 
+		// Wrap with if(isNaN(...), 0, ...) so that an empty set — where ClickHouse
+		// returns NaN — is coerced to 0 instead of propagating through to
+		// encoding/json which cannot marshal NaN (producing HTTP 500).
 		conversionFields = append(conversionFields,
-			fmt.Sprintf("avgIf((toUnixTimestamp64Nano(t%d_time) - toUnixTimestamp64Nano(t1_time))/1e6, %s) AS avg_duration",
-				numSteps, fullCondition))
+			fmt.Sprintf("if(isNaN(avgIf((toUnixTimestamp64Nano(t%d_time) - toUnixTimestamp64Nano(t1_time))/1e6, %s)), 0, avgIf((toUnixTimestamp64Nano(t%d_time) - toUnixTimestamp64Nano(t1_time))/1e6, %s)) AS avg_duration",
+				numSteps, fullCondition, numSteps, fullCondition))
 		conversionFields = append(conversionFields,
-			fmt.Sprintf("quantileIf(0.99)((toUnixTimestamp64Nano(t%d_time) - toUnixTimestamp64Nano(t1_time))/1e6, %s) AS latency",
-				numSteps, fullCondition))
+			fmt.Sprintf("if(isNaN(quantileIf(0.99)((toUnixTimestamp64Nano(t%d_time) - toUnixTimestamp64Nano(t1_time))/1e6, %s)), 0, quantileIf(0.99)((toUnixTimestamp64Nano(t%d_time) - toUnixTimestamp64Nano(t1_time))/1e6, %s)) AS latency",
+				numSteps, fullCondition, numSteps, fullCondition))
 	}
 
 	// Build error aggregation
@@ -401,13 +404,17 @@ func BuildFunnelStepOverviewQuery(
 	}
 	conversionCondition := strings.Join(conversionConditions, " AND ")
 
-	// Build the query for step transition
+	// Build the query for step transition.
+	// Guards:
+	//   - conversion_rate: divide only when start-step count > 0 (avoids NaN/Inf).
+	//   - avg_duration / latency: avgIf/quantileIf return NaN on empty sets; wrap
+	//     with if(isNaN(...), 0, ...) so encoding/json never sees a NaN (HTTP 500).
 	queryTemplate := `
 WITH
     %s
 
 SELECT
-    round(total_s%d_spans * 100.0 / total_s%d_spans, 2) AS conversion_rate,
+    round(if(total_s%d_spans > 0, total_s%d_spans * 100.0 / total_s%d_spans, 0), 2) AS conversion_rate,
     total_s%d_spans / time_window_sec AS avg_rate,
     greatest(sum_s%d_error, sum_s%d_error) AS errors,
     avg_duration,
@@ -419,15 +426,21 @@ FROM (
         count(DISTINCT CASE WHEN s%d_error = 1 THEN trace_id END) AS sum_s%d_error,
         count(DISTINCT CASE WHEN s%d_error = 1 THEN trace_id END) AS sum_s%d_error,
 
-        avgIf(
+        if(isNaN(avgIf(
             (toUnixTimestamp64Nano(t%d_time) - toUnixTimestamp64Nano(t%d_time)) / 1e6,
             t%d_time > 0 AND %s
-        ) AS avg_duration,
+        )), 0, avgIf(
+            (toUnixTimestamp64Nano(t%d_time) - toUnixTimestamp64Nano(t%d_time)) / 1e6,
+            t%d_time > 0 AND %s
+        )) AS avg_duration,
 
-        quantileIf(%s)(
+        if(isNaN(quantileIf(%s)(
             (toUnixTimestamp64Nano(t%d_time) - toUnixTimestamp64Nano(t%d_time)) / 1e6,
             t%d_time > 0 AND %s
-        ) AS latency
+        )), 0, quantileIf(%s)(
+            (toUnixTimestamp64Nano(t%d_time) - toUnixTimestamp64Nano(t%d_time)) / 1e6,
+            t%d_time > 0 AND %s
+        )) AS latency
     FROM (
         SELECT
             %s
@@ -442,17 +455,22 @@ FROM (
 
 	return fmt.Sprintf(queryTemplate,
 		strings.Join(withParts, ",\n    "),
-		stepEnd, stepStart, // conversion_rate calculation
+		stepStart, stepEnd, stepStart, // conversion_rate: if(start>0, end*100/start, 0)
 		stepEnd,            // avg_rate
 		stepStart, stepEnd, // errors
 		stepStart,                    // total start spans
 		conversionCondition, stepEnd, // total end spans with condition
-		stepStart, stepStart, // error counts
+		stepStart, stepStart,         // error counts
 		stepEnd, stepEnd,
-		stepEnd, stepStart, // avg_duration calculation
+		stepEnd, stepStart, // avg_duration outer isNaN check
 		stepStart, conversionCondition,
-		latencyQuantile,    // quantile value
-		stepEnd, stepStart, // latency calculation
+		stepEnd, stepStart, // avg_duration inner avgIf
+		stepStart, conversionCondition,
+		latencyQuantile,    // quantile value outer isNaN check
+		stepEnd, stepStart, // latency outer check
+		stepStart, conversionCondition,
+		latencyQuantile,    // quantile value inner
+		stepEnd, stepStart, // latency inner quantileIf
 		stepStart, conversionCondition,
 		strings.Join(funnelSelectFields, ",\n            "),
 		strings.Join(whereConditions, "\n            AND "),

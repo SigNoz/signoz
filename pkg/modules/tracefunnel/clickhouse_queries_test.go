@@ -133,8 +133,8 @@ func TestBuildFunnelOverviewQuery(t *testing.T) {
 				"'start' AS latency_pointer_t1",
 				"'end' AS latency_pointer_t2",
 				"count(DISTINCT CASE WHEN t2_time > t1_time THEN trace_id END) AS total_s2_spans",
-				"avgIf((toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time))/1e6",
-				"quantileIf(0.99)((toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time))/1e6",
+				"if(isNaN(avgIf(",
+				"if(isNaN(quantileIf(0.99)",
 				"round(if(total_s1_spans > 0, total_s2_spans * 100.0 / total_s1_spans, 0), 2) AS conversion_rate",
 			},
 		},
@@ -160,7 +160,7 @@ func TestBuildFunnelOverviewQuery(t *testing.T) {
 				"count(DISTINCT CASE WHEN t2_time > t1_time AND t3_time > t2_time THEN trace_id END) AS total_s3_spans",
 				"count(DISTINCT CASE WHEN t2_time > t1_time AND t3_time > t2_time AND t4_time > t3_time THEN trace_id END) AS total_s4_spans",
 				"round(if(total_s1_spans > 0, total_s4_spans * 100.0 / total_s1_spans, 0), 2) AS conversion_rate",
-				"avgIf((toUnixTimestamp64Nano(t4_time) - toUnixTimestamp64Nano(t1_time))/1e6",
+				"if(isNaN(avgIf((toUnixTimestamp64Nano(t4_time) - toUnixTimestamp64Nano(t1_time))/1e6",
 			},
 		},
 	}
@@ -289,8 +289,8 @@ func TestBuildFunnelStepOverviewQuery(t *testing.T) {
 			stepStart: 1,
 			stepEnd:   2,
 			wantContains: []string{
-				"round(total_s2_spans * 100.0 / total_s1_spans, 2) AS conversion_rate",
-				"quantileIf(0.95)",
+				"round(if(total_s1_spans > 0, total_s2_spans * 100.0 / total_s1_spans, 0), 2) AS conversion_rate",
+				"if(isNaN(quantileIf(0.95)",
 				"t2_time > t1_time",
 			},
 		},
@@ -315,9 +315,9 @@ func TestBuildFunnelStepOverviewQuery(t *testing.T) {
 			stepStart: 2,
 			stepEnd:   4,
 			wantContains: []string{
-				"round(total_s4_spans * 100.0 / total_s2_spans, 2) AS conversion_rate",
+				"round(if(total_s2_spans > 0, total_s4_spans * 100.0 / total_s2_spans, 0), 2) AS conversion_rate",
 				"t3_time > t2_time AND t4_time > t3_time",
-				"quantileIf(0.90)",
+				"if(isNaN(quantileIf(0.90)",
 			},
 		},
 		{
