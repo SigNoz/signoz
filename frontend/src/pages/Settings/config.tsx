@@ -16,6 +16,7 @@ import {
 	Backpack,
 	Bot,
 	Building,
+	Cable,
 	Cpu,
 	CreditCard,
 	Keyboard,
@@ -24,6 +25,7 @@ import {
 	User,
 	Users,
 } from '@signozhq/icons';
+import ConnectionsSettings from 'pages/ConnectionsSettings';
 import MembersSettings from 'pages/MembersSettings';
 import ServiceAccountsSettings from 'pages/ServiceAccountsSettings';
 import Shortcuts from 'pages/Shortcuts';
@@ -92,6 +94,19 @@ export const generalSettingsCloud = (t: TFunction): RouteTabProps['routes'] => [
 		),
 		route: ROUTES.SETTINGS,
 		key: ROUTES.SETTINGS,
+	},
+];
+
+export const connectionsSettings = (t: TFunction): RouteTabProps['routes'] => [
+	{
+		Component: ConnectionsSettings,
+		name: (
+			<div className="periscope-tab">
+				<Cable size={16} /> {t('routes:connections').toString()}
+			</div>
+		),
+		route: ROUTES.CONNECTIONS_SETTINGS,
+		key: ROUTES.CONNECTIONS_SETTINGS,
 	},
 ];
 

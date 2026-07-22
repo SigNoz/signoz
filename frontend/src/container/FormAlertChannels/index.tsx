@@ -9,6 +9,7 @@ import ROUTES from 'constants/routes';
 import {
 	ChannelType,
 	EmailChannel,
+	JiraChannel,
 	OpsgenieChannel,
 	PagerChannel,
 	SlackChannel,
@@ -17,6 +18,7 @@ import {
 import history from 'lib/history';
 
 import EmailSettings from './Settings/Email';
+import JiraSettings from './Settings/Jira';
 import MsTeamsSettings from './Settings/MsTeams';
 import OpsgenieSettings from './Settings/Opsgenie';
 import PagerSettings from './Settings/Pager';
@@ -51,6 +53,8 @@ function FormAlertChannels({
 				return <MsTeamsSettings setSelectedConfig={setSelectedConfig} />;
 			case ChannelType.Opsgenie:
 				return <OpsgenieSettings setSelectedConfig={setSelectedConfig} />;
+			case ChannelType.Jira:
+				return <JiraSettings setSelectedConfig={setSelectedConfig} />;
 			case ChannelType.Email:
 				return <EmailSettings setSelectedConfig={setSelectedConfig} />;
 			default:
@@ -122,6 +126,9 @@ function FormAlertChannels({
 						>
 							Opsgenie
 						</Select.Option>
+						<Select.Option value="jira" key="jira" data-testid="select-option">
+							Jira
+						</Select.Option>
 						<Select.Option value="email" key="email" data-testid="select-option">
 							Email
 						</Select.Option>
@@ -176,6 +183,7 @@ interface FormAlertChannelsProps {
 					WebhookChannel &
 					PagerChannel &
 					OpsgenieChannel &
+					JiraChannel &
 					EmailChannel
 			>
 		>

@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager/atlassian"
+	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager/jira"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
@@ -18,10 +20,36 @@ import (
 
 type handler struct {
 	alertmanager alertmanager.Alertmanager
+	atlassian    *atlassian.Handler
+	jira         *jira.Handler
 }
 
 func NewHandler(alertmanager alertmanager.Alertmanager) alertmanager.Handler {
-	return &handler{alertmanager: alertmanager}
+	return &handler{
+		alertmanager: alertmanager,
+		atlassian:    atlassian.NewHandler(alertmanager),
+		jira:         jira.NewHandler(alertmanager),
+	}
+}
+
+// AtlassianOAuthSession starts the Atlassian OAuth flow and returns the consent URL.
+func (handler *handler) AtlassianOAuthSession(rw http.ResponseWriter, req *http.Request) {
+	handler.atlassian.OAuthSession(rw, req)
+}
+
+// AtlassianOAuthCallback completes the Atlassian OAuth flow and persists the connection.
+func (handler *handler) AtlassianOAuthCallback(rw http.ResponseWriter, req *http.Request) {
+	handler.atlassian.OAuthCallback(rw, req)
+}
+
+// AtlassianConnections lists the org's reusable Atlassian OAuth connections.
+func (handler *handler) AtlassianConnections(rw http.ResponseWriter, req *http.Request) {
+	handler.atlassian.ListConnections(rw, req)
+}
+
+// AtlassianConnectionDelete removes an Atlassian OAuth connection.
+func (handler *handler) AtlassianConnectionDelete(rw http.ResponseWriter, req *http.Request) {
+	handler.atlassian.DeleteConnection(rw, req)
 }
 
 func (handler *handler) GetAlerts(rw http.ResponseWriter, req *http.Request) {
@@ -72,6 +100,11 @@ func (handler *handler) TestReceiver(rw http.ResponseWriter, req *http.Request) 
 		return
 	}
 
+	if err := handler.atlassian.ResolveConnections(ctx, claims.OrgID, receiver); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
 	err = handler.alertmanager.TestReceiver(ctx, claims.OrgID, receiver)
 	if err != nil {
 		render.Error(rw, err)
@@ -79,6 +112,26 @@ func (handler *handler) TestReceiver(rw http.ResponseWriter, req *http.Request) 
 	}
 
 	render.Success(rw, http.StatusNoContent, nil)
+}
+
+// GetJiraMetadata returns the create-issue field metadata for a project and issue type.
+func (handler *handler) GetJiraMetadata(rw http.ResponseWriter, req *http.Request) {
+	handler.jira.Metadata(rw, req)
+}
+
+// ListJiraProjects lists the Jira projects visible to a connection.
+func (handler *handler) ListJiraProjects(rw http.ResponseWriter, req *http.Request) {
+	handler.jira.Projects(rw, req)
+}
+
+// ListJiraProjectIssueTypes lists the creatable issue types for a project.
+func (handler *handler) ListJiraProjectIssueTypes(rw http.ResponseWriter, req *http.Request) {
+	handler.jira.ProjectIssueTypes(rw, req)
+}
+
+// ListJiraUsers lists the users assignable to issues in a project.
+func (handler *handler) ListJiraUsers(rw http.ResponseWriter, req *http.Request) {
+	handler.jira.Users(rw, req)
 }
 
 func (handler *handler) ListChannels(rw http.ResponseWriter, req *http.Request) {
@@ -196,6 +249,12 @@ func (handler *handler) UpdateChannelByID(rw http.ResponseWriter, req *http.Requ
 		return
 	}
 
+	// For Jira, validate the referenced connection belongs to the org and stamp OrgID.
+	if err := handler.atlassian.ResolveConnections(ctx, claims.OrgID, receiver); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
 	err = handler.alertmanager.UpdateChannelByReceiverAndID(ctx, claims.OrgID, receiver, id)
 	if err != nil {
 		render.Error(rw, err)
@@ -262,6 +321,11 @@ func (handler *handler) CreateChannel(rw http.ResponseWriter, req *http.Request)
 
 	receiver, err := alertmanagertypes.NewReceiver(string(body))
 	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	if err := handler.atlassian.ResolveConnections(ctx, claims.OrgID, receiver); err != nil {
 		render.Error(rw, err)
 		return
 	}

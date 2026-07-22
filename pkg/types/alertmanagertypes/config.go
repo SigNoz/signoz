@@ -70,15 +70,17 @@ type Config struct {
 // on Receiver, and extensions to customConfigsOf + isEmpty.
 type customReceiverConfigs struct {
 	GoogleChat []*GoogleChatReceiverConfig
+	Jira       []*JiraReceiverConfig
 }
 
 func (c customReceiverConfigs) isEmpty() bool {
-	return len(c.GoogleChat) == 0
+	return len(c.GoogleChat) == 0 && len(c.Jira) == 0
 }
 
 func customConfigsOf(receiver *Receiver) customReceiverConfigs {
 	return customReceiverConfigs{
 		GoogleChat: receiver.GoogleChatConfigs,
+		Jira:       receiver.JiraConfigs,
 	}
 }
 
@@ -182,6 +184,7 @@ func newRawFromConfig(c *config.Config, customConfigs map[string]customReceiverC
 		receivers[i] = &Receiver{
 			Receiver:          &base,
 			GoogleChatConfigs: custom.GoogleChat,
+			JiraConfigs:       custom.Jira,
 		}
 	}
 
@@ -305,6 +308,7 @@ func (c *Config) GetReceiver(name string) (*Receiver, error) {
 			return &Receiver{
 				Receiver:          &base,
 				GoogleChatConfigs: custom.GoogleChat,
+				JiraConfigs:       custom.Jira,
 			}, nil
 		}
 	}
@@ -364,6 +368,16 @@ func (c *Config) setCustomConfigs(receiver *Receiver) {
 		c.customConfigs[receiver.Name] = custom
 	} else {
 		delete(c.customConfigs, receiver.Name)
+	}
+}
+
+// SetJiraOrgID stamps the runtime-only OrgID onto every Jira config so the
+// notifier can look up live credentials from the connection store on each fire.
+func (c *Config) SetJiraOrgID(orgID string) {
+	for _, custom := range c.customConfigs {
+		for _, cfg := range custom.Jira {
+			cfg.OrgID = orgID
+		}
 	}
 }
 

@@ -419,5 +419,42 @@ describe('Create Alert Channel', () => {
 				expect(descriptionTextArea).toHaveTextContent(slackDescriptionDefaultValue);
 			});
 		});
+		describe('Jira', () => {
+			beforeEach(() => {
+				render(<CreateAlertChannels preType={ChannelType.Jira} />);
+			});
+
+			it('Should check if the selected item in the type dropdown has text "Jira"', () => {
+				expect(screen.getByText('Jira')).toBeInTheDocument();
+			});
+
+			it('Should check if OAuth label and connection picker are displayed properly', () => {
+				testLabelInputAndHelpValue({
+					labelText: 'field_jira_oauth',
+					testId: 'jira-connection-select',
+				});
+			});
+
+			it('Should check if the Add connection button is displayed', () => {
+				expect(screen.getByTestId('jira-oauth-connect')).toBeInTheDocument();
+				expect(
+					screen.getByText('button_add_atlassian_connection'),
+				).toBeInTheDocument();
+			});
+
+			it('Should check if Summary label and input are displayed properly', () => {
+				testLabelInputAndHelpValue({
+					labelText: 'field_jira_summary',
+					testId: 'jira-summary-textbox',
+				});
+			});
+
+			it('Should check if Description label and text area are displayed properly', () => {
+				testLabelInputAndHelpValue({
+					labelText: 'field_jira_description',
+					testId: 'jira-description-textarea',
+				});
+			});
+		});
 	});
 });

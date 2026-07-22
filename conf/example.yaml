@@ -249,6 +249,14 @@ alertmanager:
       maintenance_interval: 15m
       # Retention of the notification logs.
       retention: 120h
+    atlassian:
+      oauth:
+        # Atlassian OAuth 2.0 (3LO) app credentials for the Jira alert channel.
+        client_id: ""
+        client_secret: ""
+        redirect_uri: ""
+        # Extra origins besides the redirect URI's own origin allowed to receive the OAuth popup result.
+        allowed_opener_origins: []
 
 ##################### Emailing #####################
 emailing:

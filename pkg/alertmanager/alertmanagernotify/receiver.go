@@ -5,6 +5,7 @@ import (
 	"slices"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/email"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/jira"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/msteamsv2"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/opsgenie"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/pagerduty"
@@ -22,11 +23,18 @@ var customNotifierIntegrations = []string{
 	email.Integration,
 	pagerduty.Integration,
 	opsgenie.Integration,
+	jira.Integration,
 	slack.Integration,
 	msteamsv2.Integration,
 }
 
-func NewReceiverIntegrations(nc *alertmanagertypes.Receiver, tmpl *template.Template, logger *slog.Logger, templater alertmanagertypes.Templater) ([]notify.Integration, error) {
+func NewReceiverIntegrationsFactory(jiraResolver jira.ConnectionResolver) alertmanagertypes.ReceiverIntegrationsFunc {
+	return func(nc *alertmanagertypes.Receiver, tmpl *template.Template, logger *slog.Logger, templater alertmanagertypes.Templater) ([]notify.Integration, error) {
+		return buildReceiverIntegrations(nc, tmpl, logger, templater, jiraResolver)
+	}
+}
+
+func buildReceiverIntegrations(nc *alertmanagertypes.Receiver, tmpl *template.Template, logger *slog.Logger, templater alertmanagertypes.Templater, jiraResolver jira.ConnectionResolver) ([]notify.Integration, error) {
 	upstreamIntegrations, err := receiver.BuildReceiverIntegrations(*nc.Receiver, tmpl, logger)
 	if err != nil {
 		return nil, err
@@ -65,6 +73,9 @@ func NewReceiverIntegrations(nc *alertmanagertypes.Receiver, tmpl *template.Temp
 	}
 	for i, c := range nc.OpsGenieConfigs {
 		add(opsgenie.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return opsgenie.New(c, tmpl, l, templater) })
+	}
+	for i, c := range nc.JiraConfigs {
+		add(jira.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return jira.New(c, tmpl, l, templater, jiraResolver) })
 	}
 	for i, c := range nc.SlackConfigs {
 		add(slack.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return slack.New(c, tmpl, l, templater) })

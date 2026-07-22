@@ -1755,6 +1755,8 @@ components:
           type: string
         api_url:
           $ref: '#/components/schemas/ConfigURLType2'
+        connection_id:
+          type: string
         custom_fields:
           additionalProperties: {}
           type: object

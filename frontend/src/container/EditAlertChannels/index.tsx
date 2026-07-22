@@ -2,12 +2,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Form } from 'antd';
 import editEmail from 'api/channels/editEmail';
+import editJira from 'api/channels/editJira';
 import editMsTeamsApi from 'api/channels/editMsTeams';
 import editOpsgenie from 'api/channels/editOpsgenie';
 import editPagerApi from 'api/channels/editPager';
 import editSlackApi from 'api/channels/editSlack';
 import editWebhookApi from 'api/channels/editWebhook';
 import testEmail from 'api/channels/testEmail';
+import testJira from 'api/channels/testJira';
 import testMsTeamsApi from 'api/channels/testMsTeams';
 import testOpsgenie from 'api/channels/testOpsgenie';
 import testPagerApi from 'api/channels/testPager';
@@ -18,6 +20,7 @@ import ROUTES from 'constants/routes';
 import {
 	ChannelType,
 	EmailChannel,
+	JiraChannel,
 	MsTeamsChannel,
 	OpsgenieChannel,
 	PagerChannel,
@@ -45,6 +48,7 @@ function EditAlertChannels({
 				PagerChannel &
 				MsTeamsChannel &
 				OpsgenieChannel &
+				JiraChannel &
 				EmailChannel
 		>
 	>({
@@ -317,6 +321,78 @@ function EditAlertChannels({
 		}
 	}, [prepareOpsgenieRequest, t, notifications, selectedConfig]);
 
+	const prepareJiraRequest = useCallback(
+		() => ({
+			name: selectedConfig.name || '',
+			send_resolved: selectedConfig?.send_resolved || false,
+			connection_id: selectedConfig.connection_id || '',
+			project: selectedConfig.project || '',
+			issue_type: selectedConfig.issue_type || '',
+			summary: selectedConfig.summary || '',
+			description: selectedConfig.description || '',
+			priority: selectedConfig.priority || '',
+			labels: selectedConfig.labels || '',
+			reopen_transition: selectedConfig.reopen_transition || '',
+			reopen_duration: selectedConfig.reopen_duration || '',
+			resolve_transition: selectedConfig.resolve_transition || '',
+			wont_fix_resolution: selectedConfig.wont_fix_resolution || '',
+			custom_fields: selectedConfig.custom_fields,
+			id,
+		}),
+		[id, selectedConfig],
+	);
+
+	const onJiraEditHandler = useCallback(async () => {
+		setSavingState(true);
+
+		if (!selectedConfig.connection_id) {
+			notifications.error({
+				message: 'Error',
+				description: t('jira_not_connected'),
+			});
+			setSavingState(false);
+			return { status: 'failed', statusMessage: t('jira_not_connected') };
+		}
+		if (!selectedConfig.project) {
+			notifications.error({
+				message: 'Error',
+				description: t('jira_project_required'),
+			});
+			setSavingState(false);
+			return { status: 'failed', statusMessage: t('jira_project_required') };
+		}
+		if (!selectedConfig.issue_type) {
+			notifications.error({
+				message: 'Error',
+				description: t('jira_issue_type_required'),
+			});
+			setSavingState(false);
+			return { status: 'failed', statusMessage: t('jira_issue_type_required') };
+		}
+
+		try {
+			await editJira(prepareJiraRequest());
+			notifications.success({
+				message: 'Success',
+				description: t('channel_edit_done'),
+			});
+			history.replace(ROUTES.ALL_CHANNELS);
+			return { status: 'success', statusMessage: t('channel_edit_done') };
+		} catch (error) {
+			notifications.error({
+				message: (error as APIError).getErrorCode(),
+				description: (error as APIError).getErrorMessage(),
+			});
+			return {
+				status: 'failed',
+				statusMessage:
+					(error as APIError).getErrorMessage() || t('channel_edit_failed'),
+			};
+		} finally {
+			setSavingState(false);
+		}
+	}, [prepareJiraRequest, t, notifications, selectedConfig]);
+
 	const prepareMsTeamsRequest = useCallback(
 		() => ({
 			webhook_url: selectedConfig?.webhook_url || '',
@@ -377,6 +453,8 @@ function EditAlertChannels({
 				result = await onMsTeamsEditHandler();
 			} else if (value === ChannelType.Opsgenie) {
 				result = await onOpsgenieEditHandler();
+			} else if (value === ChannelType.Jira) {
+				result = await onJiraEditHandler();
 			} else if (value === ChannelType.Email) {
 				result = await onEmailEditHandler();
 			}
@@ -396,6 +474,7 @@ function EditAlertChannels({
 			onPagerEditHandler,
 			onMsTeamsEditHandler,
 			onOpsgenieEditHandler,
+			onJiraEditHandler,
 			onEmailEditHandler,
 		],
 	);
@@ -430,6 +509,12 @@ function EditAlertChannels({
 						request = prepareOpsgenieRequest();
 						if (request) {
 							await testOpsgenie(request);
+						}
+						break;
+					case ChannelType.Jira:
+						request = prepareJiraRequest();
+						if (request) {
+							await testJira(request);
 						}
 						break;
 					case ChannelType.Email:
@@ -481,6 +566,7 @@ function EditAlertChannels({
 			prepareSlackRequest,
 			prepareMsTeamsRequest,
 			prepareOpsgenieRequest,
+			prepareJiraRequest,
 			prepareEmailRequest,
 			notifications,
 		],

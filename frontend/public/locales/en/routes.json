@@ -19,5 +19,6 @@
 	"role_create": "Create Role",
 	"members": "Members",
 	"service_accounts": "Service Accounts",
-	"mcp_server": "MCP Server"
+	"mcp_server": "MCP Server",
+	"connections": "Connections"
 }

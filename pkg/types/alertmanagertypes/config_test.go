@@ -384,3 +384,75 @@ func TestConfigPreservesGoogleChatConfigs(t *testing.T) {
 	require.Len(t, updated.GoogleChatConfigs, 1)
 	assert.Equal(t, "Updated", updated.GoogleChatConfigs[0].Title)
 }
+
+// TestConfigPreservesJiraConnectionID verifies the connection_id, survives create, get, the stored-JSON round-trip.
+func TestConfigPreservesJiraConnectionID(t *testing.T) {
+	cfg, err := NewDefaultConfig(
+		GlobalConfig{SMTPSmarthost: config.HostPort{Host: "localhost", Port: "25"}, SMTPFrom: "test@example.com"},
+		RouteConfig{GroupInterval: time.Minute, GroupWait: time.Minute, RepeatInterval: time.Minute},
+		"1",
+	)
+	require.NoError(t, err)
+
+	receiver, err := NewReceiver(`{"name":"jira-receiver","jira_configs":[{"project":"OPS","issue_type":"Bug","connection_id":"conn-123","summary":{"template":"s"},"description":{"template":"d"}}]}`)
+	require.NoError(t, err)
+	require.Len(t, receiver.JiraConfigs, 1)
+	assert.Equal(t, "conn-123", receiver.JiraConfigs[0].ConnectionID)
+	require.NoError(t, cfg.CreateReceiver(receiver))
+
+	got, err := cfg.GetReceiver("jira-receiver")
+	require.NoError(t, err)
+	require.Len(t, got.JiraConfigs, 1)
+	assert.Equal(t, "conn-123", got.JiraConfigs[0].ConnectionID)
+	assert.Equal(t, "OPS", got.JiraConfigs[0].Project)
+	assert.Equal(t, "Bug", got.JiraConfigs[0].IssueType)
+
+	// connection_id must be part of the persisted config.
+	assert.Contains(t, cfg.StoreableConfig().Config, "conn-123")
+
+	reloaded, err := NewConfigFromStoreableConfig(cfg.StoreableConfig())
+	require.NoError(t, err)
+	reloadedReceiver, err := reloaded.GetReceiver("jira-receiver")
+	require.NoError(t, err)
+	require.Len(t, reloadedReceiver.JiraConfigs, 1)
+	assert.Equal(t, "conn-123", reloadedReceiver.JiraConfigs[0].ConnectionID)
+	assert.Equal(t, "OPS", reloadedReceiver.JiraConfigs[0].Project)
+
+	// Updating the connection rotates it in place.
+	receiver.JiraConfigs[0].ConnectionID = "conn-456"
+	require.NoError(t, cfg.UpdateReceiver(receiver))
+	updated, err := cfg.GetReceiver("jira-receiver")
+	require.NoError(t, err)
+	require.Len(t, updated.JiraConfigs, 1)
+	assert.Equal(t, "conn-456", updated.JiraConfigs[0].ConnectionID)
+}
+
+// TestSetJiraOrgID verifies the runtime-only OrgID is stamped on demand and is never persisted to the stored config.
+func TestSetJiraOrgID(t *testing.T) {
+	cfg, err := NewDefaultConfig(
+		GlobalConfig{SMTPSmarthost: config.HostPort{Host: "localhost", Port: "25"}, SMTPFrom: "test@example.com"},
+		RouteConfig{GroupInterval: time.Minute, GroupWait: time.Minute, RepeatInterval: time.Minute},
+		"1",
+	)
+	require.NoError(t, err)
+
+	receiver, err := NewReceiver(`{"name":"jira-receiver","jira_configs":[{"project":"OPS","issue_type":"Bug","connection_id":"conn-123","summary":{"template":"s"},"description":{"template":"d"}}]}`)
+	require.NoError(t, err)
+	require.NoError(t, cfg.CreateReceiver(receiver))
+
+	// OrgID starts empty (never sent over the wire).
+	got, err := cfg.GetReceiver("jira-receiver")
+	require.NoError(t, err)
+	require.Len(t, got.JiraConfigs, 1)
+	assert.Empty(t, got.JiraConfigs[0].OrgID)
+
+	cfg.SetJiraOrgID("org-secret-xyz")
+
+	got, err = cfg.GetReceiver("jira-receiver")
+	require.NoError(t, err)
+	assert.Equal(t, "org-secret-xyz", got.JiraConfigs[0].OrgID)
+
+	// A flush must not leak the runtime-only OrgID into the stored config.
+	require.NoError(t, cfg.SetRouteConfig(RouteConfig{GroupInterval: time.Minute, GroupWait: time.Minute, RepeatInterval: time.Minute}))
+	assert.NotContains(t, cfg.StoreableConfig().Config, "org-secret-xyz")
+}

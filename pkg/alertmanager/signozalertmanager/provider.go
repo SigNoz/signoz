@@ -8,9 +8,11 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerstore/sqlalertmanagerstore"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager/jira"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
@@ -27,6 +29,7 @@ type provider struct {
 	config              alertmanager.Config
 	settings            factory.ScopedProviderSettings
 	configStore         alertmanagertypes.ConfigStore
+	atlassianConnStore  alertmanagertypes.AtlassianConnectionStore
 	stateStore          alertmanagertypes.StateStore
 	notificationManager nfmanager.NotificationManager
 	maintenanceStore    alertmanagertypes.MaintenanceStore
@@ -54,7 +57,10 @@ func New(
 ) (*provider, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager")
 	configStore := sqlalertmanagerstore.NewConfigStore(sqlstore)
+	atlassianConnStore := sqlalertmanagerstore.NewAtlassianConnectionStore(sqlstore)
 	stateStore := sqlalertmanagerstore.NewStateStore(sqlstore)
+	jiraResolver := jira.NewConnectionResolver(atlassianConnStore, config.Signoz.Atlassian.OAuth, settings.Logger())
+	receiverIntegrations := alertmanagernotify.NewReceiverIntegrationsFactory(jiraResolver)
 
 	p := &provider{
 		service: alertmanager.New(
@@ -65,10 +71,12 @@ func New(
 			orgGetter,
 			notificationManager,
 			maintenanceStore,
+			receiverIntegrations,
 		),
 		settings:            settings,
 		config:              config,
 		configStore:         configStore,
+		atlassianConnStore:  atlassianConnStore,
 		stateStore:          stateStore,
 		notificationManager: notificationManager,
 		maintenanceStore:    maintenanceStore,
@@ -76,6 +84,16 @@ func New(
 	}
 
 	return p, nil
+}
+
+// AtlassianOAuthConfig returns the configured Atlassian OAuth app credentials.
+func (provider *provider) AtlassianOAuthConfig() alertmanager.AtlassianOAuthConfig {
+	return provider.config.Signoz.Atlassian.OAuth
+}
+
+// AtlassianConnectionStore returns the store for reusable Atlassian OAuth connections.
+func (provider *provider) AtlassianConnectionStore() alertmanagertypes.AtlassianConnectionStore {
+	return provider.atlassianConnStore
 }
 
 func (provider *provider) Start(ctx context.Context) error {

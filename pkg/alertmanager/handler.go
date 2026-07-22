@@ -7,6 +7,22 @@ type Handler interface {
 
 	TestReceiver(http.ResponseWriter, *http.Request)
 
+	GetJiraMetadata(http.ResponseWriter, *http.Request)
+
+	ListJiraProjects(http.ResponseWriter, *http.Request)
+
+	ListJiraProjectIssueTypes(http.ResponseWriter, *http.Request)
+
+	ListJiraUsers(http.ResponseWriter, *http.Request)
+
+	AtlassianOAuthSession(http.ResponseWriter, *http.Request)
+
+	AtlassianOAuthCallback(http.ResponseWriter, *http.Request)
+
+	AtlassianConnections(http.ResponseWriter, *http.Request)
+
+	AtlassianConnectionDelete(http.ResponseWriter, *http.Request)
+
 	ListChannels(http.ResponseWriter, *http.Request)
 
 	ListAllChannels(http.ResponseWriter, *http.Request)

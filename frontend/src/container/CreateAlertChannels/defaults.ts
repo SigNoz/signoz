@@ -1,4 +1,11 @@
-import { EmailChannel, OpsgenieChannel, PagerChannel } from './config';
+import {
+	Channel,
+	ChannelType,
+	EmailChannel,
+	JiraChannel,
+	OpsgenieChannel,
+	PagerChannel,
+} from './config';
 
 export const PagerInitialConfig: Partial<PagerChannel> = {
 	description: `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}
@@ -49,6 +56,20 @@ export const OpsgenieInitialConfig: Partial<OpsgenieChannel> = {
 	{{- end }}`,
 	priority:
 		'{{ if eq (index .Alerts 0).Labels.severity "critical" }}P1{{ else if eq (index .Alerts 0).Labels.severity "warning" }}P2{{ else if eq (index .Alerts 0).Labels.severity "info" }}P3{{ else }}P4{{ end }}',
+};
+
+export const JiraInitialConfig: Partial<JiraChannel> = {
+	summary:
+		'[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}',
+	description: `Alert: {{ .CommonLabels.alertname }}
+Severity: {{ .CommonLabels.severity }}
+
+{{ range .Alerts }}
+Message: {{ .Annotations.description }}
+Generator URL: {{ .GeneratorURL }}
+{{ end }}`,
+	priority:
+		'{{ if eq (index .Alerts 0).Labels.severity "critical" }}Highest{{ else if eq (index .Alerts 0).Labels.severity "warning" }}High{{ else if eq (index .Alerts 0).Labels.severity "info" }}Low{{ else }}Medium{{ end }}',
 };
 
 export const EmailInitialConfig: Partial<EmailChannel> = {
@@ -445,4 +466,13 @@ export const EmailInitialConfig: Partial<EmailChannel> = {
 	  </table>
 	</body>
   </html>`,
+};
+
+export const initialConfigByChannelType: Partial<
+	Record<ChannelType, Partial<Channel>>
+> = {
+	[ChannelType.Pagerduty]: PagerInitialConfig,
+	[ChannelType.Opsgenie]: OpsgenieInitialConfig,
+	[ChannelType.Jira]: JiraInitialConfig,
+	[ChannelType.Email]: EmailInitialConfig,
 };

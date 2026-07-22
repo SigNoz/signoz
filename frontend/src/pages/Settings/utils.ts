@@ -4,6 +4,7 @@ import { ROLES, USER_ROLES } from 'types/roles';
 
 import {
 	billingSettings,
+	connectionsSettings,
 	generalSettings,
 	ingestionSettings,
 	keyboardShortcuts,
@@ -58,6 +59,8 @@ export const getRoutes = (
 	if (isCloudUser && !isGatewayEnabled) {
 		settings.push(...ingestionSettings(t));
 	}
+
+	settings.push(...connectionsSettings(t));
 
 	// Visible to all authenticated users
 	settings.push(
