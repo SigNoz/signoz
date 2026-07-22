@@ -29,16 +29,11 @@ func (migration *addTagRelationRank) Register(migrations *migrate.Migrations) er
 }
 
 func (migration *addTagRelationRank) Up(ctx context.Context, db *bun.DB) error {
-	// tag_relation has an FK to tag; disable FK enforcement for SQLite's
-	// recreate-table fallback.
-	if err := migration.sqlschema.ToggleFKEnforcement(ctx, db, false); err != nil {
-		return err
-	}
-
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
+
 	defer func() {
 		_ = tx.Rollback()
 	}()
@@ -48,7 +43,6 @@ func (migration *addTagRelationRank) Up(ctx context.Context, db *bun.DB) error {
 		return err
 	}
 
-	// rank records a tag's position within its resource. Existing rows backfill to 0.
 	rankColumn := &sqlschema.Column{
 		Name:     sqlschema.ColumnName("rank"),
 		DataType: sqlschema.DataTypeInteger,
@@ -62,11 +56,7 @@ func (migration *addTagRelationRank) Up(ctx context.Context, db *bun.DB) error {
 		}
 	}
 
-	if err := tx.Commit(); err != nil {
-		return err
-	}
-
-	return migration.sqlschema.ToggleFKEnforcement(ctx, db, true)
+	return tx.Commit()
 }
 
 func (migration *addTagRelationRank) Down(context.Context, *bun.DB) error {
