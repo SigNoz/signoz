@@ -551,12 +551,12 @@ func (module *module) provisionDashboards(ctx context.Context, orgID valuer.UUID
 			continue
 		}
 
-		createdDashboard, err := module.dashboardModule.Create(ctx, orgID, createdBy, creator, dashboardtypes.SourceIntegration, dashboardtypes.PostableDashboard(dashboard.Definition))
+		createdDashboard, err := module.dashboardModule.CreateV2(ctx, orgID, createdBy, creator, dashboardtypes.SourceIntegration, dashboard.Definition)
 		if err != nil {
 			return err
 		}
 
-		integrationDashboard := cloudintegrationtypes.NewStorableIntegrationDashboard(createdDashboard.ID, cloudintegrationtypes.IntegrationDashboardProviderCloudIntegration, slug)
+		integrationDashboard := cloudintegrationtypes.NewStorableIntegrationDashboard(createdDashboard.ID.StringValue(), cloudintegrationtypes.IntegrationDashboardProviderCloudIntegration, slug)
 		if err := module.store.CreateIntegrationDashboard(ctx, integrationDashboard); err != nil {
 			return err
 		}

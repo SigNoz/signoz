@@ -125,10 +125,10 @@ type CollectedMetric struct {
 // This is used to show available pre-made dashboards for a service,
 // hence has additional fields like id, title and description.
 type Dashboard struct {
-	ID          string                               `json:"id"`
-	Title       string                               `json:"title"`
-	Description string                               `json:"description"`
-	Definition  dashboardtypes.StorableDashboardData `json:"definition,omitempty"`
+	ID          string                             `json:"id"`
+	Title       string                             `json:"title"`
+	Description string                             `json:"description"`
+	Definition  dashboardtypes.PostableDashboardV2 `json:"definition"`
 }
 
 type ServiceDashboard struct {

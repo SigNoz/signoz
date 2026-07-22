@@ -1,1169 +1,1298 @@
 {
-    "description": "This dashboard provides a high-level overview of your PostgreSQL databases. It includes replication, locks, and throughput etc...",
-    "id": "overview",
-    "layout": [
-        {
-            "h": 3,
-            "i": "9552123d-6265-48a7-8624-3f4a3fc3c9c0",
-            "moved": false,
-            "static": false,
-            "w": 6,
-            "x": 0,
-            "y": 18
-        },
-        {
-            "h": 3,
-            "i": "d7838815-4f5b-4454-86fd-f658b201f3a9",
-            "moved": false,
-            "static": false,
-            "w": 6,
-            "x": 6,
-            "y": 15
-        },
-        {
-            "h": 3,
-            "i": "f9a6f683-7455-4643-acc8-467cc5ea52cf",
-            "moved": false,
-            "static": false,
-            "w": 6,
-            "x": 0,
-            "y": 15
-        },
-        {
-            "h": 3,
-            "i": "8638a199-20a0-4255-b0a2-3b1ba06c485b",
-            "moved": false,
-            "static": false,
-            "w": 6,
-            "x": 3,
-            "y": 12
-        },
-        {
-            "h": 3,
-            "i": "e9341e70-ccb3-47fc-af95-56ba8942c4f2",
-            "moved": false,
-            "static": false,
-            "w": 6,
-            "x": 6,
-            "y": 9
-        },
-        {
-            "h": 3,
-            "i": "6b700035-e3c2-4c48-99fa-ebfd6202eed3",
-            "moved": false,
-            "static": false,
-            "w": 6,
-            "x": 0,
-            "y": 9
-        },
-        {
-            "h": 3,
-            "i": "bada7864-1d23-4d49-a868-c6b8a93c738f",
-            "moved": false,
-            "static": false,
-            "w": 6,
-            "x": 3,
-            "y": 6
-        },
-        {
-            "h": 3,
-            "i": "191d09a6-40b0-4de8-a5b0-aa4254454b99",
-            "moved": false,
-            "static": false,
-            "w": 6,
-            "x": 0,
-            "y": 0
-        },
-        {
-            "h": 3,
-            "i": "fa941c00-ce19-49cc-baf2-c38598767dee",
-            "moved": false,
-            "static": false,
-            "w": 6,
-            "x": 6,
-            "y": 0
-        },
-        {
-            "h": 3,
-            "i": "114fcf80-e1de-4716-b1aa-0e0738dba10e",
-            "moved": false,
-            "static": false,
-            "w": 6,
-            "x": 0,
-            "y": 3
-        },
-        {
-            "h": 3,
-            "i": "667428ef-9b9a-4e91-bd1e-938e0dc1ff32",
-            "moved": false,
-            "static": false,
-            "w": 6,
-            "x": 6,
-            "y": 3
-        }
-    ],
-    "name": "",
-    "tags": [
-        "postgres",
-        "database"
-    ],
-    "title": "Postgres overview",
-    "variables": {
-        "4250ef7b-8f42-4a24-902a-a764d070b92d": {
-            "allSelected": true,
-            "customValue": "",
-            "description": "List of hosts sending Postgres metrics",
-            "id": "4250ef7b-8f42-4a24-902a-a764d070b92d",
-            "key": "4250ef7b-8f42-4a24-902a-a764d070b92d",
-            "modificationUUID": "4427b655-c8d2-40ce-84ed-7cb058bd3041",
-            "multiSelect": true,
-            "name": "host.name",
-            "order": 0,
-            "queryValue": "SELECT JSONExtractString(labels, 'host.name') AS `host.name`\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'postgresql.operations'\nGROUP BY `host.name`",
-            "selectedValue": [
-                "Srikanths-MacBook-Pro.local"
-            ],
-            "showALLOption": true,
-            "sort": "ASC",
-            "textboxValue": "",
-            "type": "QUERY"
-        },
-        "8ecaee70-640f-46fd-83d9-a4fd18bc66e6": {
-            "allSelected": true,
-            "customValue": "",
-            "description": "List of tables",
-            "id": "8ecaee70-640f-46fd-83d9-a4fd18bc66e6",
-            "modificationUUID": "a51321cd-47a2-470a-8df4-372e5bb36f2c",
-            "multiSelect": true,
-            "name": "table.name",
-            "order": 0,
-            "queryValue": "SELECT JSONExtractString(labels, 'postgresql.table.name') AS `table.name`\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'postgresql.operations' AND JSONExtractString(labels, 'postgresql.database.name') IN {{.db.name}}\nGROUP BY `table.name`",
-            "selectedValue": [
-                "public.activations",
-                "public.licenses",
-                "public.plans",
-                "public.subscription_items",
-                "public.subscriptions",
-                "public.trials",
-                "public.usage"
-            ],
-            "showALLOption": true,
-            "sort": "ASC",
-            "textboxValue": "",
-            "type": "QUERY"
-        },
-        "c66d1581-e5e1-440d-8ff6-ebcf078ab6dd": {
-            "allSelected": true,
-            "customValue": "",
-            "description": "List of databases",
-            "id": "c66d1581-e5e1-440d-8ff6-ebcf078ab6dd",
-            "key": "c66d1581-e5e1-440d-8ff6-ebcf078ab6dd",
-            "modificationUUID": "564a3f43-98f8-4189-b5e4-dcb518d73852",
-            "multiSelect": true,
-            "name": "db.name",
-            "order": 0,
-            "queryValue": "SELECT JSONExtractString(labels, 'postgresql.database.name') AS `db.name`\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'postgresql.operations'\nGROUP BY `db.name`",
-            "selectedValue": [
-                "postgres"
-            ],
-            "showALLOption": true,
-            "sort": "DISABLED",
-            "textboxValue": "",
-            "type": "QUERY"
-        }
+  "schemaVersion": "v6",
+  "image": "",
+  "name": "",
+  "generateName": true,
+  "tags": [
+    {
+      "key": "tag",
+      "value": "postgres"
     },
-    "version": "v5",
-    "widgets": [
-        {
-            "description": "The average number of db insert operations.",
-            "fillSpans": false,
-            "id": "191d09a6-40b0-4de8-a5b0-aa4254454b99",
-            "isStacked": false,
-            "nullZeroValues": "zero",
-            "opacity": "1",
-            "panelTypes": "graph",
-            "query": {
-                "builder": {
-                    "queryData": [
-                        {
-                            "aggregations": [
-                                {
-                                    "metricName": "postgresql.operations",
-                                    "reduceTo": "sum",
-                                    "spaceAggregation": "avg",
-                                    "temporality": null,
-                                    "timeAggregation": "avg"
-                                }
-                            ],
-                            "dataSource": "metrics",
-                            "disabled": false,
-                            "expression": "A",
-                            "filter": {
-                                "expression": "(operation = 'ins' AND host.name IN $host.name AND postgresql.database.name IN $db.name)"
-                            },
-                            "groupBy": [
-                                {
-                                    "dataType": "string",
-                                    "id": "postgresql.database.name--string--tag--false",
-                                    "isColumn": false,
-                                    "isJSON": false,
-                                    "key": "postgresql.database.name",
-                                    "type": "tag"
-                                }
-                            ],
-                            "having": {
-                                "expression": ""
-                            },
-                            "legend": "{{postgresql.database.name}}",
-                            "limit": null,
-                            "orderBy": [],
-                            "queryName": "A",
-                            "stepInterval": 60
-                        }
-                    ],
-                    "queryFormulas": []
-                },
-                "clickhouse_sql": [
-                    {
-                        "disabled": false,
-                        "legend": "",
-                        "name": "A",
-                        "query": ""
-                    }
-                ],
-                "id": "bf48ac4c-bc0c-41a0-87f4-6f8ae7888d1f",
-                "promql": [
-                    {
-                        "disabled": false,
-                        "legend": "",
-                        "name": "A",
-                        "query": ""
-                    }
-                ],
-                "queryType": "builder"
-            },
-            "softMax": null,
-            "softMin": null,
-            "thresholds": [],
-            "timePreferance": "GLOBAL_TIME",
-            "title": "Inserts",
-            "yAxisUnit": "none"
-        },
-        {
-            "description": "The average number of db update operations.",
-            "fillSpans": false,
-            "id": "fa941c00-ce19-49cc-baf2-c38598767dee",
-            "isStacked": false,
-            "nullZeroValues": "zero",
-            "opacity": "1",
-            "panelTypes": "graph",
-            "query": {
-                "builder": {
-                    "queryData": [
-                        {
-                            "aggregations": [
-                                {
-                                    "metricName": "postgresql.operations",
-                                    "reduceTo": "sum",
-                                    "spaceAggregation": "avg",
-                                    "temporality": null,
-                                    "timeAggregation": "avg"
-                                }
-                            ],
-                            "dataSource": "metrics",
-                            "disabled": false,
-                            "expression": "A",
-                            "filter": {
-                                "expression": "(operation = 'upd' AND host.name IN $host.name AND postgresql.database.name IN $db.name)"
-                            },
-                            "groupBy": [
-                                {
-                                    "dataType": "string",
-                                    "id": "postgresql.database.name--string--tag--false",
-                                    "isColumn": false,
-                                    "isJSON": false,
-                                    "key": "postgresql.database.name",
-                                    "type": "tag"
-                                }
-                            ],
-                            "having": {
-                                "expression": ""
-                            },
-                            "legend": "{{postgresql.database.name}}",
-                            "limit": null,
-                            "orderBy": [],
-                            "queryName": "A",
-                            "stepInterval": 60
-                        }
-                    ],
-                    "queryFormulas": []
-                },
-                "clickhouse_sql": [
-                    {
-                        "disabled": false,
-                        "legend": "",
-                        "name": "A",
-                        "query": ""
-                    }
-                ],
-                "id": "34a6ac3a-b7f6-4b5f-a084-a44378033d82",
-                "promql": [
-                    {
-                        "disabled": false,
-                        "legend": "",
-                        "name": "A",
-                        "query": ""
-                    }
-                ],
-                "queryType": "builder"
-            },
-            "softMax": null,
-            "softMin": null,
-            "thresholds": [],
-            "timePreferance": "GLOBAL_TIME",
-            "title": "Updates",
-            "yAxisUnit": "none"
-        },
-        {
-            "description": "The average number of db delete operations.",
-            "fillSpans": false,
-            "id": "114fcf80-e1de-4716-b1aa-0e0738dba10e",
-            "isStacked": false,
-            "nullZeroValues": "zero",
-            "opacity": "1",
-            "panelTypes": "graph",
-            "query": {
-                "builder": {
-                    "queryData": [
-                        {
-                            "aggregations": [
-                                {
-                                    "metricName": "postgresql.operations",
-                                    "reduceTo": "sum",
-                                    "spaceAggregation": "avg",
-                                    "temporality": null,
-                                    "timeAggregation": "avg"
-                                }
-                            ],
-                            "dataSource": "metrics",
-                            "disabled": false,
-                            "expression": "A",
-                            "filter": {
-                                "expression": "(operation = 'del' AND host.name IN $host.name AND postgresql.database.name IN $db.name)"
-                            },
-                            "groupBy": [
-                                {
-                                    "dataType": "string",
-                                    "id": "postgresql.database.name--string--tag--false",
-                                    "isColumn": false,
-                                    "isJSON": false,
-                                    "key": "postgresql.database.name",
-                                    "type": "tag"
-                                }
-                            ],
-                            "having": {
-                                "expression": ""
-                            },
-                            "legend": "{{postgresql.database.name}}",
-                            "limit": null,
-                            "orderBy": [],
-                            "queryName": "A",
-                            "stepInterval": 60
-                        }
-                    ],
-                    "queryFormulas": []
-                },
-                "clickhouse_sql": [
-                    {
-                        "disabled": false,
-                        "legend": "",
-                        "name": "A",
-                        "query": ""
-                    }
-                ],
-                "id": "734393d1-76ed-4f4f-bef8-0a91d27ebec4",
-                "promql": [
-                    {
-                        "disabled": false,
-                        "legend": "",
-                        "name": "A",
-                        "query": ""
-                    }
-                ],
-                "queryType": "builder"
-            },
-            "softMax": null,
-            "softMin": null,
-            "thresholds": [],
-            "timePreferance": "GLOBAL_TIME",
-            "title": "Deleted",
-            "yAxisUnit": "none"
-        },
-        {
-            "description": "The average number of db heap-only update operations.",
-            "fillSpans": false,
-            "id": "667428ef-9b9a-4e91-bd1e-938e0dc1ff32",
-            "isStacked": false,
-            "nullZeroValues": "zero",
-            "opacity": "1",
-            "panelTypes": "graph",
-            "query": {
-                "builder": {
-                    "queryData": [
-                        {
-                            "aggregations": [
-                                {
-                                    "metricName": "postgresql.operations",
-                                    "reduceTo": "sum",
-                                    "spaceAggregation": "avg",
-                                    "temporality": null,
-                                    "timeAggregation": "avg"
-                                }
-                            ],
-                            "dataSource": "metrics",
-                            "disabled": false,
-                            "expression": "A",
-                            "filter": {
-                                "expression": "(operation = 'hot_upd' AND host.name IN $host.name AND postgresql.database.name IN $db.name)"
-                            },
-                            "groupBy": [
-                                {
-                                    "dataType": "string",
-                                    "id": "postgresql.database.name--string--tag--false",
-                                    "isColumn": false,
-                                    "isJSON": false,
-                                    "key": "postgresql.database.name",
-                                    "type": "tag"
-                                }
-                            ],
-                            "having": {
-                                "expression": ""
-                            },
-                            "legend": "{{postgresql.database.name}}",
-                            "limit": null,
-                            "orderBy": [],
-                            "queryName": "A",
-                            "stepInterval": 60
-                        }
-                    ],
-                    "queryFormulas": []
-                },
-                "clickhouse_sql": [
-                    {
-                        "disabled": false,
-                        "legend": "",
-                        "name": "A",
-                        "query": ""
-                    }
-                ],
-                "id": "f43c2d19-4abc-4f5e-881b-db7add4a870a",
-                "promql": [
-                    {
-                        "disabled": false,
-                        "legend": "",
-                        "name": "A",
-                        "query": ""
-                    }
-                ],
-                "queryType": "builder"
-            },
-            "softMax": null,
-            "softMin": null,
-            "thresholds": [],
-            "timePreferance": "GLOBAL_TIME",
-            "title": "Heap updates",
-            "yAxisUnit": "none"
-        },
-        {
-            "description": "",
-            "fillSpans": false,
-            "id": "bada7864-1d23-4d49-a868-c6b8a93c738f",
-            "isStacked": false,
-            "nullZeroValues": "zero",
-            "opacity": "1",
-            "panelTypes": "table",
-            "query": {
-                "builder": {
-                    "queryData": [
-                        {
-                            "aggregations": [
-                                {
-                                    "metricName": "postgresql.operations",
-                                    "reduceTo": "avg",
-                                    "spaceAggregation": "avg",
-                                    "temporality": null,
-                                    "timeAggregation": "avg"
-                                }
-                            ],
-                            "dataSource": "metrics",
-                            "disabled": false,
-                            "expression": "A",
-                            "filter": {
-                                "expression": "(operation = 'ins' AND host.name IN $host.name AND postgresql.database.name IN $db.name)"
-                            },
-                            "groupBy": [
-                                {
-                                    "dataType": "string",
-                                    "id": "postgresql.database.name--string--tag--false",
-                                    "isColumn": false,
-                                    "isJSON": false,
-                                    "key": "postgresql.database.name",
-                                    "type": "tag"
-                                }
-                            ],
-                            "having": {
-                                "expression": ""
-                            },
-                            "legend": "Inserted",
-                            "limit": null,
-                            "orderBy": [],
-                            "queryName": "A",
-                            "stepInterval": 60
-                        },
-                        {
-                            "aggregations": [
-                                {
-                                    "metricName": "postgresql.operations",
-                                    "reduceTo": "avg",
-                                    "spaceAggregation": "avg",
-                                    "temporality": null,
-                                    "timeAggregation": "avg"
-                                }
-                            ],
-                            "dataSource": "metrics",
-                            "disabled": false,
-                            "expression": "B",
-                            "filter": {
-                                "expression": "(operation = 'upd' AND host.name IN $host.name AND postgresql.database.name IN $db.name)"
-                            },
-                            "groupBy": [
-                                {
-                                    "dataType": "string",
-                                    "id": "postgresql.database.name--string--tag--false",
-                                    "isColumn": false,
-                                    "isJSON": false,
-                                    "key": "postgresql.database.name",
-                                    "type": "tag"
-                                }
-                            ],
-                            "having": {
-                                "expression": ""
-                            },
-                            "legend": "Updated",
-                            "limit": null,
-                            "orderBy": [],
-                            "queryName": "B",
-                            "stepInterval": 60
-                        },
-                        {
-                            "aggregations": [
-                                {
-                                    "metricName": "postgresql.operations",
-                                    "reduceTo": "avg",
-                                    "spaceAggregation": "avg",
-                                    "temporality": null,
-                                    "timeAggregation": "avg"
-                                }
-                            ],
-                            "dataSource": "metrics",
-                            "disabled": false,
-                            "expression": "C",
-                            "filter": {
-                                "expression": "(operation = 'del' AND host.name IN $host.name AND postgresql.database.name IN $db.name)"
-                            },
-                            "groupBy": [
-                                {
-                                    "dataType": "string",
-                                    "id": "postgresql.database.name--string--tag--false",
-                                    "isColumn": false,
-                                    "isJSON": false,
-                                    "key": "postgresql.database.name",
-                                    "type": "tag"
-                                }
-                            ],
-                            "having": {
-                                "expression": ""
-                            },
-                            "legend": "Deleted",
-                            "limit": null,
-                            "orderBy": [],
-                            "queryName": "C",
-                            "stepInterval": 60
-                        }
-                    ],
-                    "queryFormulas": []
-                },
-                "clickhouse_sql": [
-                    {
-                        "disabled": false,
-                        "legend": "",
-                        "name": "A",
-                        "query": ""
-                    }
-                ],
-                "id": "5056105b-1c30-4d27-8187-64457f2a1ec6",
-                "promql": [
-                    {
-                        "disabled": false,
-                        "legend": "",
-                        "name": "A",
-                        "query": ""
-                    }
-                ],
-                "queryType": "builder"
-            },
-            "softMax": null,
-            "softMin": null,
-            "thresholds": [],
-            "timePreferance": "GLOBAL_TIME",
-            "title": "Operation by database",
-            "yAxisUnit": "none"
-        },
-        {
-            "description": "The number of database locks.",
-            "fillSpans": false,
-            "id": "6b700035-e3c2-4c48-99fa-ebfd6202eed3",
-            "isStacked": false,
-            "nullZeroValues": "zero",
-            "opacity": "1",
-            "panelTypes": "graph",
-            "query": {
-                "builder": {
-                    "queryData": [
-                        {
-                            "aggregations": [
-                                {
-                                    "metricName": "postgresql.database.locks",
-                                    "reduceTo": "sum",
-                                    "spaceAggregation": "sum",
-                                    "temporality": null,
-                                    "timeAggregation": "sum"
-                                }
-                            ],
-                            "dataSource": "metrics",
-                            "disabled": false,
-                            "expression": "A",
-                            "filter": {
-                                "expression": "host.name IN $host.name"
-                            },
-                            "groupBy": [
-                                {
-                                    "dataType": "string",
-                                    "id": "mode--string--tag--false",
-                                    "isColumn": false,
-                                    "isJSON": false,
-                                    "key": "mode",
-                                    "type": "tag"
-                                }
-                            ],
-                            "having": {
-                                "expression": ""
-                            },
-                            "legend": "{{mode}}",
-                            "limit": null,
-                            "orderBy": [],
-                            "queryName": "A",
-                            "stepInterval": 60
-                        }
-                    ],
-                    "queryFormulas": []
-                },
-                "clickhouse_sql": [
-                    {
-                        "disabled": false,
-                        "legend": "",
-                        "name": "A",
-                        "query": ""
-                    }
-                ],
-                "id": "877b0df3-9ae3-455e-ad27-bc3aa40b3f4c",
-                "promql": [
-                    {
-                        "disabled": false,
-                        "legend": "",
-                        "name": "A",
-                        "query": ""
-                    }
-                ],
-                "queryType": "builder"
-            },
-            "softMax": null,
-            "softMin": null,
-            "thresholds": [],
-            "timePreferance": "GLOBAL_TIME",
-            "title": "Locks by lock mode",
-            "yAxisUnit": "none"
-        },
-        {
-            "description": "",
-            "fillSpans": false,
-            "id": "e9341e70-ccb3-47fc-af95-56ba8942c4f2",
-            "isStacked": false,
-            "nullZeroValues": "zero",
-            "opacity": "1",
-            "panelTypes": "graph",
-            "query": {
-                "builder": {
-                    "queryData": [
-                        {
-                            "aggregations": [
-                                {
-                                    "metricName": "postgresql.deadlocks",
-                                    "reduceTo": "sum",
-                                    "spaceAggregation": "sum",
-                                    "temporality": null,
-                                    "timeAggregation": "rate"
-                                }
-                            ],
-                            "dataSource": "metrics",
-                            "disabled": false,
-                            "expression": "A",
-                            "filter": {
-                                "expression": "(host.name IN $host.name AND postgresql.database.name IN $db.name)"
-                            },
-                            "groupBy": [
-                                {
-                                    "dataType": "string",
-                                    "id": "postgresql.database.name--string--tag--false",
-                                    "isColumn": false,
-                                    "isJSON": false,
-                                    "key": "postgresql.database.name",
-                                    "type": "tag"
-                                }
-                            ],
-                            "having": {
-                                "expression": ""
-                            },
-                            "legend": "{{postgresql.database.name}}",
-                            "limit": null,
-                            "orderBy": [],
-                            "queryName": "A",
-                            "stepInterval": 60
-                        }
-                    ],
-                    "queryFormulas": []
-                },
-                "clickhouse_sql": [
-                    {
-                        "disabled": false,
-                        "legend": "",
-                        "name": "A",
-                        "query": ""
-                    }
-                ],
-                "id": "5056105b-1c30-4d27-8187-64457f2a1ec6",
-                "promql": [
-                    {
-                        "disabled": false,
-                        "legend": "",
-                        "name": "A",
-                        "query": ""
-                    }
-                ],
-                "queryType": "builder"
-            },
-            "softMax": null,
-            "softMin": null,
-            "thresholds": [],
-            "timePreferance": "GLOBAL_TIME",
-            "title": "Deadlocks count",
-            "yAxisUnit": "none"
-        },
-        {
-            "description": "",
-            "fillSpans": false,
-            "id": "8638a199-20a0-4255-b0a2-3b1ba06c485b",
-            "isStacked": false,
-            "nullZeroValues": "zero",
-            "opacity": "1",
-            "panelTypes": "graph",
-            "query": {
-                "builder": {
-                    "queryData": [
-                        {
-                            "aggregations": [
-                                {
-                                    "metricName": "postgresql.backends",
-                                    "reduceTo": "sum",
-                                    "spaceAggregation": "avg",
-                                    "temporality": null,
-                                    "timeAggregation": "avg"
-                                }
-                            ],
-                            "dataSource": "metrics",
-                            "disabled": false,
-                            "expression": "A",
-                            "filter": {
-                                "expression": "(host.name IN $host.name AND postgresql.database.name IN $db.name)"
-                            },
-                            "groupBy": [
-                                {
-                                    "dataType": "string",
-                                    "id": "postgresql.database.name--string--tag--false",
-                                    "isColumn": false,
-                                    "isJSON": false,
-                                    "key": "postgresql.database.name",
-                                    "type": "tag"
-                                }
-                            ],
-                            "having": {
-                                "expression": ""
-                            },
-                            "legend": "{{postgresql.database.name}}",
-                            "limit": null,
-                            "orderBy": [],
-                            "queryName": "A",
-                            "stepInterval": 60
-                        }
-                    ],
-                    "queryFormulas": []
-                },
-                "clickhouse_sql": [
-                    {
-                        "disabled": false,
-                        "legend": "",
-                        "name": "A",
-                        "query": ""
-                    }
-                ],
-                "id": "205b99a0-2f1c-4bd2-9ba0-cc2da6ef247a",
-                "promql": [
-                    {
-                        "disabled": false,
-                        "legend": "",
-                        "name": "A",
-                        "query": ""
-                    }
-                ],
-                "queryType": "builder"
-            },
-            "softMax": null,
-            "softMin": null,
-            "thresholds": [],
-            "timePreferance": "GLOBAL_TIME",
-            "title": "Connections per db",
-            "yAxisUnit": "none"
-        },
-        {
-            "description": "",
-            "fillSpans": false,
-            "id": "f9a6f683-7455-4643-acc8-467cc5ea52cf",
-            "isStacked": false,
-            "nullZeroValues": "zero",
-            "opacity": "1",
-            "panelTypes": "graph",
-            "query": {
-                "builder": {
-                    "queryData": [
-                        {
-                            "aggregations": [
-                                {
-                                    "metricName": "postgresql.rows",
-                                    "reduceTo": "sum",
-                                    "spaceAggregation": "sum",
-                                    "temporality": null,
-                                    "timeAggregation": "sum"
-                                }
-                            ],
-                            "dataSource": "metrics",
-                            "disabled": false,
-                            "expression": "A",
-                            "filter": {
-                                "expression": "(state = 'dead' AND host.name IN $host.name AND postgresql.database.name IN $db.name AND postgresql.table.name IN $table.name)"
-                            },
-                            "groupBy": [],
-                            "having": {
-                                "expression": ""
-                            },
-                            "legend": "Dead rows",
-                            "limit": null,
-                            "orderBy": [],
-                            "queryName": "A",
-                            "stepInterval": 60
-                        }
-                    ],
-                    "queryFormulas": []
-                },
-                "clickhouse_sql": [
-                    {
-                        "disabled": false,
-                        "legend": "",
-                        "name": "A",
-                        "query": ""
-                    }
-                ],
-                "id": "cc7452c8-118b-4676-959e-7062bafc41ee",
-                "promql": [
-                    {
-                        "disabled": false,
-                        "legend": "",
-                        "name": "A",
-                        "query": ""
-                    }
-                ],
-                "queryType": "builder"
-            },
-            "softMax": null,
-            "softMin": null,
-            "thresholds": [],
-            "timePreferance": "GLOBAL_TIME",
-            "title": "Dead rows",
-            "yAxisUnit": "none"
-        },
-        {
-            "description": "",
-            "fillSpans": false,
-            "id": "d7838815-4f5b-4454-86fd-f658b201f3a9",
-            "isStacked": false,
-            "nullZeroValues": "zero",
-            "opacity": "1",
-            "panelTypes": "graph",
-            "query": {
-                "builder": {
-                    "queryData": [
-                        {
-                            "aggregations": [
-                                {
-                                    "metricName": "postgresql.index.scans",
-                                    "reduceTo": "sum",
-                                    "spaceAggregation": "sum",
-                                    "temporality": null,
-                                    "timeAggregation": "rate"
-                                }
-                            ],
-                            "dataSource": "metrics",
-                            "disabled": false,
-                            "expression": "A",
-                            "filter": {
-                                "expression": "(host.name IN $host.name AND postgresql.database.name IN $db.name AND postgresql.table.name IN $table.name)"
-                            },
-                            "groupBy": [
-                                {
-                                    "dataType": "string",
-                                    "id": "postgresql.index.name--string--tag--false",
-                                    "isColumn": false,
-                                    "isJSON": false,
-                                    "key": "postgresql.index.name",
-                                    "type": "tag"
-                                }
-                            ],
-                            "having": {
-                                "expression": ""
-                            },
-                            "legend": "{{postgresql.index.name}}",
-                            "limit": null,
-                            "orderBy": [],
-                            "queryName": "A",
-                            "stepInterval": 60
-                        }
-                    ],
-                    "queryFormulas": []
-                },
-                "clickhouse_sql": [
-                    {
-                        "disabled": false,
-                        "legend": "",
-                        "name": "A",
-                        "query": ""
-                    }
-                ],
-                "id": "2c6b630b-8bd9-4001-815b-f2b1f439a9dd",
-                "promql": [
-                    {
-                        "disabled": false,
-                        "legend": "",
-                        "name": "A",
-                        "query": ""
-                    }
-                ],
-                "queryType": "builder"
-            },
-            "softMax": null,
-            "softMin": null,
-            "thresholds": [],
-            "timePreferance": "GLOBAL_TIME",
-            "title": "Index scans by index",
-            "yAxisUnit": "none"
-        },
-        {
-            "description": "",
-            "fillSpans": false,
-            "id": "9552123d-6265-48a7-8624-3f4a3fc3c9c0",
-            "isStacked": false,
-            "nullZeroValues": "zero",
-            "opacity": "1",
-            "panelTypes": "table",
-            "query": {
-                "builder": {
-                    "queryData": [
-                        {
-                            "aggregations": [
-                                {
-                                    "metricName": "postgresql.rows",
-                                    "reduceTo": "avg",
-                                    "spaceAggregation": "avg",
-                                    "temporality": null,
-                                    "timeAggregation": "avg"
-                                }
-                            ],
-                            "dataSource": "metrics",
-                            "disabled": false,
-                            "expression": "A",
-                            "filter": {
-                                "expression": "(state = 'dead' AND host.name IN $host.name AND postgresql.database.name IN $db.name AND postgresql.table.name IN $table.name)"
-                            },
-                            "groupBy": [
-                                {
-                                    "dataType": "string",
-                                    "id": "postgresql.table.name--string--tag--false",
-                                    "isColumn": false,
-                                    "isJSON": false,
-                                    "key": "postgresql.table.name",
-                                    "type": "tag"
-                                }
-                            ],
-                            "having": {
-                                "expression": ""
-                            },
-                            "legend": "Dead rows",
-                            "limit": null,
-                            "orderBy": [],
-                            "queryName": "A",
-                            "stepInterval": 60
-                        },
-                        {
-                            "aggregations": [
-                                {
-                                    "metricName": "postgresql.rows",
-                                    "reduceTo": "avg",
-                                    "spaceAggregation": "avg",
-                                    "temporality": null,
-                                    "timeAggregation": "avg"
-                                }
-                            ],
-                            "dataSource": "metrics",
-                            "disabled": false,
-                            "expression": "B",
-                            "filter": {
-                                "expression": "(state = 'live' AND host.name IN $host.name AND postgresql.database.name IN $db.name AND postgresql.table.name IN $table.name)"
-                            },
-                            "groupBy": [
-                                {
-                                    "dataType": "string",
-                                    "id": "postgresql.table.name--string--tag--false",
-                                    "isColumn": false,
-                                    "isJSON": false,
-                                    "key": "postgresql.table.name",
-                                    "type": "tag"
-                                }
-                            ],
-                            "having": {
-                                "expression": ""
-                            },
-                            "legend": "Live rows",
-                            "limit": null,
-                            "orderBy": [],
-                            "queryName": "B",
-                            "stepInterval": 60
-                        },
-                        {
-                            "aggregations": [
-                                {
-                                    "metricName": "postgresql.index.scans",
-                                    "reduceTo": "sum",
-                                    "spaceAggregation": "sum",
-                                    "temporality": null,
-                                    "timeAggregation": "rate"
-                                }
-                            ],
-                            "dataSource": "metrics",
-                            "disabled": false,
-                            "expression": "C",
-                            "filter": {
-                                "expression": "(host.name IN $host.name AND postgresql.database.name IN $db.name AND postgresql.table.name IN $table.name)"
-                            },
-                            "groupBy": [
-                                {
-                                    "dataType": "string",
-                                    "id": "postgresql.table.name--string--tag--false",
-                                    "isColumn": false,
-                                    "isJSON": false,
-                                    "key": "postgresql.table.name",
-                                    "type": "tag"
-                                }
-                            ],
-                            "having": {
-                                "expression": ""
-                            },
-                            "legend": "Index scans",
-                            "limit": null,
-                            "orderBy": [],
-                            "queryName": "C",
-                            "stepInterval": 60
-                        },
-                        {
-                            "aggregations": [
-                                {
-                                    "metricName": "postgresql.table.size",
-                                    "reduceTo": "avg",
-                                    "spaceAggregation": "avg",
-                                    "temporality": null,
-                                    "timeAggregation": "avg"
-                                }
-                            ],
-                            "dataSource": "metrics",
-                            "disabled": false,
-                            "expression": "D",
-                            "filter": {
-                                "expression": "(host.name IN $host.name AND postgresql.database.name IN $db.name AND postgresql.table.name IN $table.name)"
-                            },
-                            "groupBy": [
-                                {
-                                    "dataType": "string",
-                                    "id": "postgresql.table.name--string--tag--false",
-                                    "isColumn": false,
-                                    "isJSON": false,
-                                    "key": "postgresql.table.name",
-                                    "type": "tag"
-                                }
-                            ],
-                            "having": {
-                                "expression": ""
-                            },
-                            "legend": "Table size",
-                            "limit": null,
-                            "orderBy": [],
-                            "queryName": "D",
-                            "stepInterval": 60
-                        }
-                    ],
-                    "queryFormulas": []
-                },
-                "clickhouse_sql": [
-                    {
-                        "disabled": false,
-                        "legend": "",
-                        "name": "A",
-                        "query": ""
-                    }
-                ],
-                "id": "26a9dcbf-4fc7-4ddd-b786-2078def1f462",
-                "promql": [
-                    {
-                        "disabled": false,
-                        "legend": "",
-                        "name": "A",
-                        "query": ""
-                    }
-                ],
-                "queryType": "builder"
-            },
-            "softMax": null,
-            "softMin": null,
-            "thresholds": [],
-            "timePreferance": "GLOBAL_TIME",
-            "title": "Table stats",
-            "yAxisUnit": "none"
+    {
+      "key": "tag",
+      "value": "database"
+    }
+  ],
+  "spec": {
+    "display": {
+      "name": "Postgres overview",
+      "description": "This dashboard provides a high-level overview of your PostgreSQL databases. It includes replication, locks, and throughput etc..."
+    },
+    "variables": [
+      {
+        "kind": "ListVariable",
+        "spec": {
+          "display": {
+            "name": "host.name",
+            "description": "List of hosts sending Postgres metrics"
+          },
+          "defaultValue": [
+            "Srikanths-MacBook-Pro.local"
+          ],
+          "allowAllValue": true,
+          "allowMultiple": true,
+          "customAllValue": "",
+          "capturingRegexp": "",
+          "sort": "alphabetical-asc",
+          "plugin": {
+            "kind": "signoz/QueryVariable",
+            "spec": {
+              "queryValue": "SELECT JSONExtractString(labels, 'host.name') AS `host.name`\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'postgresql.operations'\nGROUP BY `host.name`"
+            }
+          },
+          "name": "host.name"
         }
-    ]
+      },
+      {
+        "kind": "ListVariable",
+        "spec": {
+          "display": {
+            "name": "table.name",
+            "description": "List of tables"
+          },
+          "defaultValue": [
+            "public.activations",
+            "public.licenses",
+            "public.plans",
+            "public.subscription_items",
+            "public.subscriptions",
+            "public.trials",
+            "public.usage"
+          ],
+          "allowAllValue": true,
+          "allowMultiple": true,
+          "customAllValue": "",
+          "capturingRegexp": "",
+          "sort": "alphabetical-asc",
+          "plugin": {
+            "kind": "signoz/QueryVariable",
+            "spec": {
+              "queryValue": "SELECT JSONExtractString(labels, 'postgresql.table.name') AS `table.name`\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'postgresql.operations' AND JSONExtractString(labels, 'postgresql.database.name') IN {{.db.name}}\nGROUP BY `table.name`"
+            }
+          },
+          "name": "table.name"
+        }
+      },
+      {
+        "kind": "ListVariable",
+        "spec": {
+          "display": {
+            "name": "db.name",
+            "description": "List of databases"
+          },
+          "defaultValue": [
+            "postgres"
+          ],
+          "allowAllValue": true,
+          "allowMultiple": true,
+          "customAllValue": "",
+          "capturingRegexp": "",
+          "sort": "none",
+          "plugin": {
+            "kind": "signoz/QueryVariable",
+            "spec": {
+              "queryValue": "SELECT JSONExtractString(labels, 'postgresql.database.name') AS `db.name`\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'postgresql.operations'\nGROUP BY `db.name`"
+            }
+          },
+          "name": "db.name"
+        }
+      }
+    ],
+    "panels": {
+      "114fcf80-e1de-4716-b1aa-0e0738dba10e": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Deleted",
+            "description": "The average number of db delete operations."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": null,
+                "softMax": null,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 60,
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "postgresql.operations",
+                        "temporality": "",
+                        "timeAggregation": "avg",
+                        "spaceAggregation": "avg",
+                        "reduceTo": "sum"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "(operation = 'del' AND host.name IN $host.name AND postgresql.database.name IN $db.name)"
+                    },
+                    "groupBy": [
+                      {
+                        "name": "postgresql.database.name",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "legend": "{{postgresql.database.name}}"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "191d09a6-40b0-4de8-a5b0-aa4254454b99": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Inserts",
+            "description": "The average number of db insert operations."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": null,
+                "softMax": null,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 60,
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "postgresql.operations",
+                        "temporality": "",
+                        "timeAggregation": "avg",
+                        "spaceAggregation": "avg",
+                        "reduceTo": "sum"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "(operation = 'ins' AND host.name IN $host.name AND postgresql.database.name IN $db.name)"
+                    },
+                    "groupBy": [
+                      {
+                        "name": "postgresql.database.name",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "legend": "{{postgresql.database.name}}"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "667428ef-9b9a-4e91-bd1e-938e0dc1ff32": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Heap updates",
+            "description": "The average number of db heap-only update operations."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": null,
+                "softMax": null,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 60,
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "postgresql.operations",
+                        "temporality": "",
+                        "timeAggregation": "avg",
+                        "spaceAggregation": "avg",
+                        "reduceTo": "sum"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "(operation = 'hot_upd' AND host.name IN $host.name AND postgresql.database.name IN $db.name)"
+                    },
+                    "groupBy": [
+                      {
+                        "name": "postgresql.database.name",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "legend": "{{postgresql.database.name}}"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "6b700035-e3c2-4c48-99fa-ebfd6202eed3": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Locks by lock mode",
+            "description": "The number of database locks."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": null,
+                "softMax": null,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 60,
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "postgresql.database.locks",
+                        "temporality": "",
+                        "timeAggregation": "sum",
+                        "spaceAggregation": "sum",
+                        "reduceTo": "sum"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "host.name IN $host.name"
+                    },
+                    "groupBy": [
+                      {
+                        "name": "mode",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "legend": "{{mode}}"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "8638a199-20a0-4255-b0a2-3b1ba06c485b": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Connections per db",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": null,
+                "softMax": null,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 60,
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "postgresql.backends",
+                        "temporality": "",
+                        "timeAggregation": "avg",
+                        "spaceAggregation": "avg",
+                        "reduceTo": "sum"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "(host.name IN $host.name AND postgresql.database.name IN $db.name)"
+                    },
+                    "groupBy": [
+                      {
+                        "name": "postgresql.database.name",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "legend": "{{postgresql.database.name}}"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "9552123d-6265-48a7-8624-3f4a3fc3c9c0": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Table stats",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/TablePanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "columnUnits": null,
+                "decimalPrecision": "2"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "stepInterval": 60,
+                          "signal": "metrics",
+                          "source": "",
+                          "aggregations": [
+                            {
+                              "metricName": "postgresql.rows",
+                              "temporality": "",
+                              "timeAggregation": "avg",
+                              "spaceAggregation": "avg",
+                              "reduceTo": "avg"
+                            }
+                          ],
+                          "disabled": false,
+                          "filter": {
+                            "expression": "(state = 'dead' AND host.name IN $host.name AND postgresql.database.name IN $db.name AND postgresql.table.name IN $table.name)"
+                          },
+                          "groupBy": [
+                            {
+                              "name": "postgresql.table.name",
+                              "signal": "",
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string"
+                            }
+                          ],
+                          "order": [],
+                          "having": {
+                            "expression": ""
+                          },
+                          "legend": "Dead rows"
+                        }
+                      },
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "B",
+                          "stepInterval": 60,
+                          "signal": "metrics",
+                          "source": "",
+                          "aggregations": [
+                            {
+                              "metricName": "postgresql.rows",
+                              "temporality": "",
+                              "timeAggregation": "avg",
+                              "spaceAggregation": "avg",
+                              "reduceTo": "avg"
+                            }
+                          ],
+                          "disabled": false,
+                          "filter": {
+                            "expression": "(state = 'live' AND host.name IN $host.name AND postgresql.database.name IN $db.name AND postgresql.table.name IN $table.name)"
+                          },
+                          "groupBy": [
+                            {
+                              "name": "postgresql.table.name",
+                              "signal": "",
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string"
+                            }
+                          ],
+                          "order": [],
+                          "having": {
+                            "expression": ""
+                          },
+                          "legend": "Live rows"
+                        }
+                      },
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "C",
+                          "stepInterval": 60,
+                          "signal": "metrics",
+                          "source": "",
+                          "aggregations": [
+                            {
+                              "metricName": "postgresql.index.scans",
+                              "temporality": "",
+                              "timeAggregation": "rate",
+                              "spaceAggregation": "sum",
+                              "reduceTo": "sum"
+                            }
+                          ],
+                          "disabled": false,
+                          "filter": {
+                            "expression": "(host.name IN $host.name AND postgresql.database.name IN $db.name AND postgresql.table.name IN $table.name)"
+                          },
+                          "groupBy": [
+                            {
+                              "name": "postgresql.table.name",
+                              "signal": "",
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string"
+                            }
+                          ],
+                          "order": [],
+                          "having": {
+                            "expression": ""
+                          },
+                          "legend": "Index scans"
+                        }
+                      },
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "D",
+                          "stepInterval": 60,
+                          "signal": "metrics",
+                          "source": "",
+                          "aggregations": [
+                            {
+                              "metricName": "postgresql.table.size",
+                              "temporality": "",
+                              "timeAggregation": "avg",
+                              "spaceAggregation": "avg",
+                              "reduceTo": "avg"
+                            }
+                          ],
+                          "disabled": false,
+                          "filter": {
+                            "expression": "(host.name IN $host.name AND postgresql.database.name IN $db.name AND postgresql.table.name IN $table.name)"
+                          },
+                          "groupBy": [
+                            {
+                              "name": "postgresql.table.name",
+                              "signal": "",
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string"
+                            }
+                          ],
+                          "order": [],
+                          "having": {
+                            "expression": ""
+                          },
+                          "legend": "Table size"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "bada7864-1d23-4d49-a868-c6b8a93c738f": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Operation by database",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/TablePanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "columnUnits": null,
+                "decimalPrecision": "2"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "stepInterval": 60,
+                          "signal": "metrics",
+                          "source": "",
+                          "aggregations": [
+                            {
+                              "metricName": "postgresql.operations",
+                              "temporality": "",
+                              "timeAggregation": "avg",
+                              "spaceAggregation": "avg",
+                              "reduceTo": "avg"
+                            }
+                          ],
+                          "disabled": false,
+                          "filter": {
+                            "expression": "(operation = 'ins' AND host.name IN $host.name AND postgresql.database.name IN $db.name)"
+                          },
+                          "groupBy": [
+                            {
+                              "name": "postgresql.database.name",
+                              "signal": "",
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string"
+                            }
+                          ],
+                          "order": [],
+                          "having": {
+                            "expression": ""
+                          },
+                          "legend": "Inserted"
+                        }
+                      },
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "B",
+                          "stepInterval": 60,
+                          "signal": "metrics",
+                          "source": "",
+                          "aggregations": [
+                            {
+                              "metricName": "postgresql.operations",
+                              "temporality": "",
+                              "timeAggregation": "avg",
+                              "spaceAggregation": "avg",
+                              "reduceTo": "avg"
+                            }
+                          ],
+                          "disabled": false,
+                          "filter": {
+                            "expression": "(operation = 'upd' AND host.name IN $host.name AND postgresql.database.name IN $db.name)"
+                          },
+                          "groupBy": [
+                            {
+                              "name": "postgresql.database.name",
+                              "signal": "",
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string"
+                            }
+                          ],
+                          "order": [],
+                          "having": {
+                            "expression": ""
+                          },
+                          "legend": "Updated"
+                        }
+                      },
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "C",
+                          "stepInterval": 60,
+                          "signal": "metrics",
+                          "source": "",
+                          "aggregations": [
+                            {
+                              "metricName": "postgresql.operations",
+                              "temporality": "",
+                              "timeAggregation": "avg",
+                              "spaceAggregation": "avg",
+                              "reduceTo": "avg"
+                            }
+                          ],
+                          "disabled": false,
+                          "filter": {
+                            "expression": "(operation = 'del' AND host.name IN $host.name AND postgresql.database.name IN $db.name)"
+                          },
+                          "groupBy": [
+                            {
+                              "name": "postgresql.database.name",
+                              "signal": "",
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string"
+                            }
+                          ],
+                          "order": [],
+                          "having": {
+                            "expression": ""
+                          },
+                          "legend": "Deleted"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "d7838815-4f5b-4454-86fd-f658b201f3a9": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Index scans by index",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": null,
+                "softMax": null,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 60,
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "postgresql.index.scans",
+                        "temporality": "",
+                        "timeAggregation": "rate",
+                        "spaceAggregation": "sum",
+                        "reduceTo": "sum"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "(host.name IN $host.name AND postgresql.database.name IN $db.name AND postgresql.table.name IN $table.name)"
+                    },
+                    "groupBy": [
+                      {
+                        "name": "postgresql.index.name",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "legend": "{{postgresql.index.name}}"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "e9341e70-ccb3-47fc-af95-56ba8942c4f2": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Deadlocks count",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": null,
+                "softMax": null,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 60,
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "postgresql.deadlocks",
+                        "temporality": "",
+                        "timeAggregation": "rate",
+                        "spaceAggregation": "sum",
+                        "reduceTo": "sum"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "(host.name IN $host.name AND postgresql.database.name IN $db.name)"
+                    },
+                    "groupBy": [
+                      {
+                        "name": "postgresql.database.name",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "legend": "{{postgresql.database.name}}"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "f9a6f683-7455-4643-acc8-467cc5ea52cf": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Dead rows",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": null,
+                "softMax": null,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 60,
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "postgresql.rows",
+                        "temporality": "",
+                        "timeAggregation": "sum",
+                        "spaceAggregation": "sum",
+                        "reduceTo": "sum"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "(state = 'dead' AND host.name IN $host.name AND postgresql.database.name IN $db.name AND postgresql.table.name IN $table.name)"
+                    },
+                    "groupBy": [],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "legend": "Dead rows"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "fa941c00-ce19-49cc-baf2-c38598767dee": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Updates",
+            "description": "The average number of db update operations."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": null,
+                "softMax": null,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 60,
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "postgresql.operations",
+                        "temporality": "",
+                        "timeAggregation": "avg",
+                        "spaceAggregation": "avg",
+                        "reduceTo": "sum"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "(operation = 'upd' AND host.name IN $host.name AND postgresql.database.name IN $db.name)"
+                    },
+                    "groupBy": [
+                      {
+                        "name": "postgresql.database.name",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "legend": "{{postgresql.database.name}}"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "layouts": [
+      {
+        "kind": "Grid",
+        "spec": {
+          "items": [
+            {
+              "x": 0,
+              "y": 0,
+              "width": 6,
+              "height": 3,
+              "content": {
+                "$ref": "#/spec/panels/191d09a6-40b0-4de8-a5b0-aa4254454b99"
+              }
+            },
+            {
+              "x": 6,
+              "y": 0,
+              "width": 6,
+              "height": 3,
+              "content": {
+                "$ref": "#/spec/panels/fa941c00-ce19-49cc-baf2-c38598767dee"
+              }
+            },
+            {
+              "x": 0,
+              "y": 3,
+              "width": 6,
+              "height": 3,
+              "content": {
+                "$ref": "#/spec/panels/114fcf80-e1de-4716-b1aa-0e0738dba10e"
+              }
+            },
+            {
+              "x": 6,
+              "y": 3,
+              "width": 6,
+              "height": 3,
+              "content": {
+                "$ref": "#/spec/panels/667428ef-9b9a-4e91-bd1e-938e0dc1ff32"
+              }
+            },
+            {
+              "x": 3,
+              "y": 6,
+              "width": 6,
+              "height": 3,
+              "content": {
+                "$ref": "#/spec/panels/bada7864-1d23-4d49-a868-c6b8a93c738f"
+              }
+            },
+            {
+              "x": 0,
+              "y": 9,
+              "width": 6,
+              "height": 3,
+              "content": {
+                "$ref": "#/spec/panels/6b700035-e3c2-4c48-99fa-ebfd6202eed3"
+              }
+            },
+            {
+              "x": 6,
+              "y": 9,
+              "width": 6,
+              "height": 3,
+              "content": {
+                "$ref": "#/spec/panels/e9341e70-ccb3-47fc-af95-56ba8942c4f2"
+              }
+            },
+            {
+              "x": 3,
+              "y": 12,
+              "width": 6,
+              "height": 3,
+              "content": {
+                "$ref": "#/spec/panels/8638a199-20a0-4255-b0a2-3b1ba06c485b"
+              }
+            },
+            {
+              "x": 0,
+              "y": 15,
+              "width": 6,
+              "height": 3,
+              "content": {
+                "$ref": "#/spec/panels/f9a6f683-7455-4643-acc8-467cc5ea52cf"
+              }
+            },
+            {
+              "x": 6,
+              "y": 15,
+              "width": 6,
+              "height": 3,
+              "content": {
+                "$ref": "#/spec/panels/d7838815-4f5b-4454-86fd-f658b201f3a9"
+              }
+            },
+            {
+              "x": 0,
+              "y": 18,
+              "width": 6,
+              "height": 3,
+              "content": {
+                "$ref": "#/spec/panels/9552123d-6265-48a7-8624-3f4a3fc3c9c0"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "duration": "",
+    "refreshInterval": ""
+  }
 }

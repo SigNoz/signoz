@@ -1,1102 +1,826 @@
 {
-  "description": "Overview of EC2 instances",
+  "schemaVersion": "v6",
   "image": "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPHN2ZyB3aWR0aD0iODAwcHgiIGhlaWdodD0iODAwcHgiIHZpZXdCb3g9IjAgMCAxNiAxNiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBmaWxsPSJub25lIj4KICA8cGF0aCBmaWxsPSIjOUQ1MDI1IiBkPSJNMS43MDIgMi45OEwxIDMuMzEydjkuMzc2bC43MDIuMzMyIDIuODQyLTQuNzc3TDEuNzAyIDIuOTh6IiAvPgogIDxwYXRoIGZpbGw9IiNGNTg1MzYiIGQ9Ik0zLjMzOSAxMi42NTdsLTEuNjM3LjM2M1YyLjk4bDEuNjM3LjM1M3Y5LjMyNHoiIC8+CiAgPHBhdGggZmlsbD0iIzlENTAyNSIgZD0iTTIuNDc2IDIuNjEybC44NjMtLjQwNiA0LjA5NiA2LjIxNi00LjA5NiA1LjM3Mi0uODYzLS40MDZWMi42MTJ6IiAvPgogIDxwYXRoIGZpbGw9IiNGNTg1MzYiIGQ9Ik01LjM4IDEzLjI0OGwtMi4wNDEuNTQ2VjIuMjA2bDIuMDQuNTQ4djEwLjQ5NHoiIC8+CiAgPHBhdGggZmlsbD0iIzlENTAyNSIgZD0iTTQuMyAxLjc1bDEuMDgtLjUxMiA2LjA0MyA3Ljg2NC02LjA0MyA1LjY2LTEuMDgtLjUxMVYxLjc0OXoiIC8+CiAgPHBhdGggZmlsbD0iI0Y1ODUzNiIgZD0iTTcuOTk4IDEzLjg1NmwtMi42MTguOTA2VjEuMjM4bDIuNjE4LjkwOHYxMS43MXoiIC8+CiAgPHBhdGggZmlsbD0iIzlENTAyNSIgZD0iTTYuNjAyLjY2TDcuOTk4IDBsNi41MzggOC40NTNMNy45OTggMTZsLTEuMzk2LS42NlYuNjZ6IiAvPgogIDxwYXRoIGZpbGw9IiNGNTg1MzYiIGQ9Ik0xNSAxMi42ODZMNy45OTggMTZWMEwxNSAzLjMxNHY5LjM3MnoiIC8+Cjwvc3ZnPg==",
-  "layout": [
-    {
-      "h": 5,
-      "i": "b8a20569-7e4f-40d0-ada6-7736cfadae06",
-      "moved": false,
-      "static": false,
-      "w": 6,
-      "x": 0,
-      "y": 0
-    },
-    {
-      "h": 5,
-      "i": "b668ba49-d126-4f2d-9eb5-b4cfbfaf94d1",
-      "moved": false,
-      "static": false,
-      "w": 6,
-      "x": 6,
-      "y": 0
-    },
-    {
-      "h": 5,
-      "i": "6fced7be-8a73-4b9b-8440-f2142230268c",
-      "moved": false,
-      "static": false,
-      "w": 6,
-      "x": 0,
-      "y": 5
-    },
-    {
-      "h": 5,
-      "i": "20dbaec7-9a16-47ad-af3b-f56375db8e69",
-      "moved": false,
-      "static": false,
-      "w": 6,
-      "x": 6,
-      "y": 5
-    },
-    {
-      "h": 5,
-      "i": "827a354b-1fff-400b-8172-c41e4c830eb5",
-      "moved": false,
-      "static": false,
-      "w": 6,
-      "x": 0,
-      "y": 10
-    },
-    {
-      "h": 5,
-      "i": "05de543a-73a2-4221-b784-263749d39b1e",
-      "moved": false,
-      "static": false,
-      "w": 6,
-      "x": 6,
-      "y": 10
-    }
-  ],
-  "panelMap": {},
+  "name": "",
+  "generateName": true,
   "tags": [],
-  "title": "EC2 Overview",
-  "uploadedGrafana": false,
-  "variables": {
-    "11b96105-b752-47ef-88bc-832f248cf855": {
-      "allSelected": false,
-      "customValue": "",
-      "description": "AWS Account",
-      "id": "11b96105-b752-47ef-88bc-832f248cf855",
-      "key": "11b96105-b752-47ef-88bc-832f248cf855",
-      "modificationUUID": "23866855-0966-45ae-99cd-53fab002a1fa",
-      "multiSelect": false,
-      "name": "Account",
-      "order": 0,
-      "queryValue": "SELECT JSONExtractString(labels, 'cloud.account.id') as `cloud.account.id`\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE \n    metric_name like 'aws_EC2_CPUUtilization_sum'\nGROUP BY `cloud.account.id`",
-      "showALLOption": false,
-      "sort": "DISABLED",
-      "textboxValue": "",
-      "type": "QUERY"
+  "spec": {
+    "display": {
+      "name": "EC2 Overview",
+      "description": "Overview of EC2 instances"
     },
-    "63a394bf-4acd-4f14-bf0a-f9dc5e4f00c2": {
-      "allSelected": false,
-      "customValue": "",
-      "description": "AWS Region",
-      "id": "63a394bf-4acd-4f14-bf0a-f9dc5e4f00c2",
-      "modificationUUID": "d3060c9c-fa76-4fc3-bcfa-e417c90717fa",
-      "multiSelect": false,
-      "name": "Region",
-      "order": 0,
-      "queryValue": "\nSELECT JSONExtractString(labels, 'cloud.region') as `cloud.region`\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE \n    metric_name like 'aws_EC2_CPUUtilization_sum'\n    and JSONExtractString(labels, 'cloud.account.id') IN {{.Account}}\nGROUP BY `cloud.region`",
-      "showALLOption": false,
-      "sort": "DISABLED",
-      "textboxValue": "",
-      "type": "QUERY"
-    }
-  },
-  "version": "v5",
-  "widgets": [
-    {
-      "bucketCount": 30,
-      "bucketWidth": 0,
-      "columnUnits": {},
-      "description": "",
-      "fillSpans": false,
-      "id": "b8a20569-7e4f-40d0-ada6-7736cfadae06",
-      "isStacked": false,
-      "mergeAllActiveQueries": false,
-      "nullZeroValues": "zero",
-      "opacity": "1",
-      "panelTypes": "graph",
-      "query": {
-        "builder": {
-          "queryData": [
-            {
-              "aggregations": [
-                {
-                  "metricName": "aws_EC2_CPUUtilization_max",
-                  "reduceTo": "avg",
-                  "spaceAggregation": "max",
-                  "timeAggregation": "max"
-                }
-              ],
-              "dataSource": "metrics",
-              "disabled": false,
-              "expression": "A",
-              "filter": {
-                "expression": "(service.instance.id != '' AND cloud.account.id = $Account AND cloud.region = $Region)"
-              },
-              "functions": [],
-              "groupBy": [
-                {
-                  "dataType": "string",
-                  "id": "service.instance.id--string--tag--false",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "service.instance.id",
-                  "type": "tag"
-                },
-                {
-                  "dataType": "string",
-                  "id": "cloud.account.id--string--tag--false",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "cloud.account.id",
-                  "type": "tag"
-                },
-                {
-                  "dataType": "string",
-                  "id": "cloud.region--string--tag--false",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "cloud.region",
-                  "type": "tag"
-                }
-              ],
-              "having": {
-                "expression": ""
-              },
-              "legend": "{{service.instance.id}}",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "A",
-              "stepInterval": 60
+    "variables": [
+      {
+        "kind": "ListVariable",
+        "spec": {
+          "display": {
+            "name": "Account",
+            "description": "AWS Account"
+          },
+          "allowAllValue": false,
+          "allowMultiple": false,
+          "customAllValue": "",
+          "capturingRegexp": "",
+          "sort": "none",
+          "plugin": {
+            "kind": "signoz/QueryVariable",
+            "spec": {
+              "queryValue": "SELECT JSONExtractString(labels, 'cloud.account.id') as `cloud.account.id`\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE \n    metric_name like 'aws_EC2_CPUUtilization_sum'\nGROUP BY `cloud.account.id`"
             }
-          ],
-          "queryFormulas": []
-        },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "id": "170f1610-b7d0-4628-aca4-207c122b3709",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "queryType": "builder"
+          },
+          "name": "Account"
+        }
       },
-      "selectedLogFields": [
-        {
-          "dataType": "string",
-          "name": "body",
-          "type": ""
-        },
-        {
-          "dataType": "string",
-          "name": "timestamp",
-          "type": ""
-        }
-      ],
-      "selectedTracesFields": [
-        {
-          "dataType": "string",
-          "id": "serviceName--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "serviceName",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "name--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "name",
-          "type": "tag"
-        },
-        {
-          "dataType": "float64",
-          "id": "durationNano--float64--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "durationNano",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "httpMethod--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "httpMethod",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "responseStatusCode--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "responseStatusCode",
-          "type": "tag"
-        }
-      ],
-      "softMax": 0,
-      "softMin": 0,
-      "stackedBarChart": false,
-      "thresholds": [],
-      "timePreferance": "GLOBAL_TIME",
-      "title": "CPU Utilization",
-      "yAxisUnit": "percent"
-    },
-    {
-      "bucketCount": 30,
-      "bucketWidth": 0,
-      "columnUnits": {},
-      "description": "Percentage of available CPU credits that were utilizaed",
-      "fillSpans": false,
-      "id": "b668ba49-d126-4f2d-9eb5-b4cfbfaf94d1",
-      "isStacked": false,
-      "mergeAllActiveQueries": false,
-      "nullZeroValues": "zero",
-      "opacity": "1",
-      "panelTypes": "graph",
-      "query": {
-        "builder": {
-          "queryData": [
-            {
-              "aggregations": [
-                {
-                  "metricName": "aws_EC2_CPUCreditUsage_max",
-                  "reduceTo": "avg",
-                  "spaceAggregation": "max",
-                  "timeAggregation": "max"
-                }
-              ],
-              "dataSource": "metrics",
-              "disabled": false,
-              "expression": "A",
-              "filter": {
-                "expression": "(service.instance.id != '' AND cloud.account.id = $Account AND cloud.region = $Region)"
-              },
-              "functions": [],
-              "groupBy": [
-                {
-                  "dataType": "string",
-                  "id": "service.instance.id--string--tag--false",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "service.instance.id",
-                  "type": "tag"
-                },
-                {
-                  "dataType": "string",
-                  "id": "cloud.account.id--string--tag--false",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "cloud.account.id",
-                  "type": "tag"
-                },
-                {
-                  "dataType": "string",
-                  "id": "cloud.region--string--tag--false",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "cloud.region",
-                  "type": "tag"
-                }
-              ],
-              "having": {
-                "expression": ""
-              },
-              "legend": "{{service.instance.id}}",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "A",
-              "stepInterval": 60
+      {
+        "kind": "ListVariable",
+        "spec": {
+          "display": {
+            "name": "Region",
+            "description": "AWS Region"
+          },
+          "allowAllValue": false,
+          "allowMultiple": false,
+          "customAllValue": "",
+          "capturingRegexp": "",
+          "sort": "none",
+          "plugin": {
+            "kind": "signoz/QueryVariable",
+            "spec": {
+              "queryValue": "\nSELECT JSONExtractString(labels, 'cloud.region') as `cloud.region`\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE \n    metric_name like 'aws_EC2_CPUUtilization_sum'\n    and JSONExtractString(labels, 'cloud.account.id') IN {{.Account}}\nGROUP BY `cloud.region`"
             }
-          ],
-          "queryFormulas": []
-        },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "id": "0643cc76-eedd-4101-bd7a-ec810a3e9b8a",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "queryType": "builder"
-      },
-      "selectedLogFields": [
-        {
-          "dataType": "string",
-          "name": "body",
-          "type": ""
-        },
-        {
-          "dataType": "string",
-          "name": "timestamp",
-          "type": ""
+          },
+          "name": "Region"
         }
-      ],
-      "selectedTracesFields": [
-        {
-          "dataType": "string",
-          "id": "serviceName--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "serviceName",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "name--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "name",
-          "type": "tag"
-        },
-        {
-          "dataType": "float64",
-          "id": "durationNano--float64--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "durationNano",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "httpMethod--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "httpMethod",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "responseStatusCode--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "responseStatusCode",
-          "type": "tag"
-        }
-      ],
-      "softMax": 0,
-      "softMin": 0,
-      "stackedBarChart": false,
-      "thresholds": [],
-      "timePreferance": "GLOBAL_TIME",
-      "title": "CPU Credits Utilization",
-      "yAxisUnit": "percentunit"
-    },
-    {
-      "bucketCount": 30,
-      "bucketWidth": 0,
-      "columnUnits": {},
-      "description": "",
-      "fillSpans": false,
-      "id": "6fced7be-8a73-4b9b-8440-f2142230268c",
-      "isStacked": false,
-      "mergeAllActiveQueries": false,
-      "nullZeroValues": "zero",
-      "opacity": "1",
-      "panelTypes": "graph",
-      "query": {
-        "builder": {
-          "queryData": [
+      }
+    ],
+    "panels": {
+      "05de543a-73a2-4221-b784-263749d39b1e": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Network Outgoing",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "binBps",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
             {
-              "aggregations": [
-                {
-                  "metricName": "aws_EC2_EBSReadBytes_max",
-                  "reduceTo": "avg",
-                  "spaceAggregation": "max",
-                  "timeAggregation": "max"
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 60,
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "aws_EC2_NetworkOut_max",
+                        "temporality": "",
+                        "timeAggregation": "max",
+                        "spaceAggregation": "max",
+                        "reduceTo": "avg"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "(service.instance.id != '' AND cloud.account.id = $Account AND cloud.region = $Region)"
+                    },
+                    "groupBy": [
+                      {
+                        "name": "service.instance.id",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "cloud.account.id",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "cloud.region",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{service.instance.id}}"
+                  }
                 }
-              ],
-              "dataSource": "metrics",
-              "disabled": false,
-              "expression": "A",
-              "filter": {
-                "expression": "(service.instance.id != '' AND cloud.account.id = $Account AND cloud.region = $Region)"
+              }
+            }
+          ]
+        }
+      },
+      "20dbaec7-9a16-47ad-af3b-f56375db8e69": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "EBS Read/Write Ops",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
               },
-              "functions": [],
-              "groupBy": [
-                {
-                  "dataType": "string",
-                  "id": "service.instance.id--string--tag--false",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "service.instance.id",
-                  "type": "tag"
-                },
-                {
-                  "dataType": "string",
-                  "id": "cloud.account.id--string--tag--false",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "cloud.account.id",
-                  "type": "tag"
-                },
-                {
-                  "dataType": "string",
-                  "id": "cloud.region--string--tag--false",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "cloud.region",
-                  "type": "tag"
+              "formatting": {
+                "unit": "cps",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
                 }
-              ],
-              "having": {
-                "expression": ""
               },
-              "legend": "{{service.instance.id}} - Reads",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "A",
-              "stepInterval": 60
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "stepInterval": 60,
+                          "signal": "metrics",
+                          "source": "",
+                          "aggregations": [
+                            {
+                              "metricName": "aws_EC2_EBSReadOps_max",
+                              "temporality": "",
+                              "timeAggregation": "max",
+                              "spaceAggregation": "max",
+                              "reduceTo": "avg"
+                            }
+                          ],
+                          "disabled": false,
+                          "filter": {
+                            "expression": "(service.instance.id != '' AND cloud.account.id = $Account AND cloud.region = $Region)"
+                          },
+                          "groupBy": [
+                            {
+                              "name": "service.instance.id",
+                              "signal": "",
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string"
+                            },
+                            {
+                              "name": "cloud.account.id",
+                              "signal": "",
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string"
+                            },
+                            {
+                              "name": "cloud.region",
+                              "signal": "",
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string"
+                            }
+                          ],
+                          "order": [],
+                          "having": {
+                            "expression": ""
+                          },
+                          "functions": [],
+                          "legend": "{{service.instance.id}} - Reads"
+                        }
+                      },
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "B",
+                          "stepInterval": 60,
+                          "signal": "metrics",
+                          "source": "",
+                          "aggregations": [
+                            {
+                              "metricName": "aws_EC2_EBSWriteOps_max",
+                              "temporality": "",
+                              "timeAggregation": "max",
+                              "spaceAggregation": "max",
+                              "reduceTo": "avg"
+                            }
+                          ],
+                          "disabled": false,
+                          "filter": {
+                            "expression": "(service.instance.id != '' AND cloud.account.id = $Account AND cloud.region = $Region)"
+                          },
+                          "groupBy": [
+                            {
+                              "name": "service.instance.id",
+                              "signal": "",
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string"
+                            },
+                            {
+                              "name": "cloud.account.id",
+                              "signal": "",
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string"
+                            },
+                            {
+                              "name": "cloud.region",
+                              "signal": "",
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string"
+                            }
+                          ],
+                          "order": [],
+                          "having": {
+                            "expression": ""
+                          },
+                          "functions": [],
+                          "legend": "{{service.instance.id}} - Writes"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "6fced7be-8a73-4b9b-8440-f2142230268c": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "EBS Read/Write Bytes",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "binBps",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "stepInterval": 60,
+                          "signal": "metrics",
+                          "source": "",
+                          "aggregations": [
+                            {
+                              "metricName": "aws_EC2_EBSReadBytes_max",
+                              "temporality": "",
+                              "timeAggregation": "max",
+                              "spaceAggregation": "max",
+                              "reduceTo": "avg"
+                            }
+                          ],
+                          "disabled": false,
+                          "filter": {
+                            "expression": "(service.instance.id != '' AND cloud.account.id = $Account AND cloud.region = $Region)"
+                          },
+                          "groupBy": [
+                            {
+                              "name": "service.instance.id",
+                              "signal": "",
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string"
+                            },
+                            {
+                              "name": "cloud.account.id",
+                              "signal": "",
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string"
+                            },
+                            {
+                              "name": "cloud.region",
+                              "signal": "",
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string"
+                            }
+                          ],
+                          "order": [],
+                          "having": {
+                            "expression": ""
+                          },
+                          "functions": [],
+                          "legend": "{{service.instance.id}} - Reads"
+                        }
+                      },
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "B",
+                          "stepInterval": 60,
+                          "signal": "metrics",
+                          "source": "",
+                          "aggregations": [
+                            {
+                              "metricName": "aws_EC2_EBSWriteBytes_max",
+                              "temporality": "",
+                              "timeAggregation": "max",
+                              "spaceAggregation": "max",
+                              "reduceTo": "avg"
+                            }
+                          ],
+                          "disabled": false,
+                          "filter": {
+                            "expression": "(service.instance.id != '' AND cloud.account.id = $Account AND cloud.region = $Region)"
+                          },
+                          "groupBy": [
+                            {
+                              "name": "service.instance.id",
+                              "signal": "",
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string"
+                            },
+                            {
+                              "name": "cloud.account.id",
+                              "signal": "",
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string"
+                            },
+                            {
+                              "name": "cloud.region",
+                              "signal": "",
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string"
+                            }
+                          ],
+                          "order": [],
+                          "having": {
+                            "expression": ""
+                          },
+                          "functions": [],
+                          "legend": "{{service.instance.id}} - Writes"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "827a354b-1fff-400b-8172-c41e4c830eb5": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Network Incoming",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "binBps",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 60,
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "aws_EC2_NetworkIn_max",
+                        "temporality": "",
+                        "timeAggregation": "max",
+                        "spaceAggregation": "max",
+                        "reduceTo": "avg"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "(service.instance.id != '' AND cloud.account.id = $Account AND cloud.region = $Region)"
+                    },
+                    "groupBy": [
+                      {
+                        "name": "service.instance.id",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "cloud.account.id",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "cloud.region",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{service.instance.id}}"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "b668ba49-d126-4f2d-9eb5-b4cfbfaf94d1": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "CPU Credits Utilization",
+            "description": "Percentage of available CPU credits that were utilizaed"
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "percentunit",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 60,
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "aws_EC2_CPUCreditUsage_max",
+                        "temporality": "",
+                        "timeAggregation": "max",
+                        "spaceAggregation": "max",
+                        "reduceTo": "avg"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "(service.instance.id != '' AND cloud.account.id = $Account AND cloud.region = $Region)"
+                    },
+                    "groupBy": [
+                      {
+                        "name": "service.instance.id",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "cloud.account.id",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "cloud.region",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{service.instance.id}}"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "b8a20569-7e4f-40d0-ada6-7736cfadae06": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "CPU Utilization",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "percent",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 60,
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "aws_EC2_CPUUtilization_max",
+                        "temporality": "",
+                        "timeAggregation": "max",
+                        "spaceAggregation": "max",
+                        "reduceTo": "avg"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "(service.instance.id != '' AND cloud.account.id = $Account AND cloud.region = $Region)"
+                    },
+                    "groupBy": [
+                      {
+                        "name": "service.instance.id",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "cloud.account.id",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "cloud.region",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{service.instance.id}}"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "layouts": [
+      {
+        "kind": "Grid",
+        "spec": {
+          "items": [
+            {
+              "x": 0,
+              "y": 0,
+              "width": 6,
+              "height": 5,
+              "content": {
+                "$ref": "#/spec/panels/b8a20569-7e4f-40d0-ada6-7736cfadae06"
+              }
             },
             {
-              "aggregations": [
-                {
-                  "metricName": "aws_EC2_EBSWriteBytes_max",
-                  "reduceTo": "avg",
-                  "spaceAggregation": "max",
-                  "timeAggregation": "max"
-                }
-              ],
-              "dataSource": "metrics",
-              "disabled": false,
-              "expression": "B",
-              "filter": {
-                "expression": "(service.instance.id != '' AND cloud.account.id = $Account AND cloud.region = $Region)"
-              },
-              "functions": [],
-              "groupBy": [
-                {
-                  "dataType": "string",
-                  "id": "service.instance.id--string--tag--false",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "service.instance.id",
-                  "type": "tag"
-                },
-                {
-                  "dataType": "string",
-                  "id": "cloud.account.id--string--tag--false",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "cloud.account.id",
-                  "type": "tag"
-                },
-                {
-                  "dataType": "string",
-                  "id": "cloud.region--string--tag--false",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "cloud.region",
-                  "type": "tag"
-                }
-              ],
-              "having": {
-                "expression": ""
-              },
-              "legend": "{{service.instance.id}} - Writes",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "B",
-              "stepInterval": 60
-            }
-          ],
-          "queryFormulas": []
-        },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "id": "43627952-52aa-40fd-9c04-cb0e3c123f98",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "queryType": "builder"
-      },
-      "selectedLogFields": [
-        {
-          "dataType": "string",
-          "name": "body",
-          "type": ""
-        },
-        {
-          "dataType": "string",
-          "name": "timestamp",
-          "type": ""
-        }
-      ],
-      "selectedTracesFields": [
-        {
-          "dataType": "string",
-          "id": "serviceName--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "serviceName",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "name--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "name",
-          "type": "tag"
-        },
-        {
-          "dataType": "float64",
-          "id": "durationNano--float64--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "durationNano",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "httpMethod--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "httpMethod",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "responseStatusCode--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "responseStatusCode",
-          "type": "tag"
-        }
-      ],
-      "softMax": 0,
-      "softMin": 0,
-      "stackedBarChart": false,
-      "thresholds": [],
-      "timePreferance": "GLOBAL_TIME",
-      "title": "EBS Read/Write Bytes",
-      "yAxisUnit": "binBps"
-    },
-    {
-      "bucketCount": 30,
-      "bucketWidth": 0,
-      "columnUnits": {},
-      "description": "",
-      "fillSpans": false,
-      "id": "20dbaec7-9a16-47ad-af3b-f56375db8e69",
-      "isStacked": false,
-      "mergeAllActiveQueries": false,
-      "nullZeroValues": "zero",
-      "opacity": "1",
-      "panelTypes": "graph",
-      "query": {
-        "builder": {
-          "queryData": [
-            {
-              "aggregations": [
-                {
-                  "metricName": "aws_EC2_EBSReadOps_max",
-                  "reduceTo": "avg",
-                  "spaceAggregation": "max",
-                  "timeAggregation": "max"
-                }
-              ],
-              "dataSource": "metrics",
-              "disabled": false,
-              "expression": "A",
-              "filter": {
-                "expression": "(service.instance.id != '' AND cloud.account.id = $Account AND cloud.region = $Region)"
-              },
-              "functions": [],
-              "groupBy": [
-                {
-                  "dataType": "string",
-                  "id": "service.instance.id--string--tag--false",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "service.instance.id",
-                  "type": "tag"
-                },
-                {
-                  "dataType": "string",
-                  "id": "cloud.account.id--string--tag--false",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "cloud.account.id",
-                  "type": "tag"
-                },
-                {
-                  "dataType": "string",
-                  "id": "cloud.region--string--tag--false",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "cloud.region",
-                  "type": "tag"
-                }
-              ],
-              "having": {
-                "expression": ""
-              },
-              "legend": "{{service.instance.id}} - Reads",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "A",
-              "stepInterval": 60
+              "x": 6,
+              "y": 0,
+              "width": 6,
+              "height": 5,
+              "content": {
+                "$ref": "#/spec/panels/b668ba49-d126-4f2d-9eb5-b4cfbfaf94d1"
+              }
             },
             {
-              "aggregations": [
-                {
-                  "metricName": "aws_EC2_EBSWriteOps_max",
-                  "reduceTo": "avg",
-                  "spaceAggregation": "max",
-                  "timeAggregation": "max"
-                }
-              ],
-              "dataSource": "metrics",
-              "disabled": false,
-              "expression": "B",
-              "filter": {
-                "expression": "(service.instance.id != '' AND cloud.account.id = $Account AND cloud.region = $Region)"
-              },
-              "functions": [],
-              "groupBy": [
-                {
-                  "dataType": "string",
-                  "id": "service.instance.id--string--tag--false",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "service.instance.id",
-                  "type": "tag"
-                },
-                {
-                  "dataType": "string",
-                  "id": "cloud.account.id--string--tag--false",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "cloud.account.id",
-                  "type": "tag"
-                },
-                {
-                  "dataType": "string",
-                  "id": "cloud.region--string--tag--false",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "cloud.region",
-                  "type": "tag"
-                }
-              ],
-              "having": {
-                "expression": ""
-              },
-              "legend": "{{service.instance.id}} - Writes",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "B",
-              "stepInterval": 60
-            }
-          ],
-          "queryFormulas": []
-        },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "id": "a70e41d1-27dc-4e91-bf13-23d8bd2f3c49",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "queryType": "builder"
-      },
-      "selectedLogFields": [
-        {
-          "dataType": "string",
-          "name": "body",
-          "type": ""
-        },
-        {
-          "dataType": "string",
-          "name": "timestamp",
-          "type": ""
-        }
-      ],
-      "selectedTracesFields": [
-        {
-          "dataType": "string",
-          "id": "serviceName--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "serviceName",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "name--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "name",
-          "type": "tag"
-        },
-        {
-          "dataType": "float64",
-          "id": "durationNano--float64--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "durationNano",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "httpMethod--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "httpMethod",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "responseStatusCode--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "responseStatusCode",
-          "type": "tag"
-        }
-      ],
-      "softMax": 0,
-      "softMin": 0,
-      "stackedBarChart": false,
-      "thresholds": [],
-      "timePreferance": "GLOBAL_TIME",
-      "title": "EBS Read/Write Ops",
-      "yAxisUnit": "cps"
-    },
-    {
-      "bucketCount": 30,
-      "bucketWidth": 0,
-      "columnUnits": {},
-      "description": "",
-      "fillSpans": false,
-      "id": "827a354b-1fff-400b-8172-c41e4c830eb5",
-      "isStacked": false,
-      "mergeAllActiveQueries": false,
-      "nullZeroValues": "zero",
-      "opacity": "1",
-      "panelTypes": "graph",
-      "query": {
-        "builder": {
-          "queryData": [
+              "x": 0,
+              "y": 5,
+              "width": 6,
+              "height": 5,
+              "content": {
+                "$ref": "#/spec/panels/6fced7be-8a73-4b9b-8440-f2142230268c"
+              }
+            },
             {
-              "aggregations": [
-                {
-                  "metricName": "aws_EC2_NetworkIn_max",
-                  "reduceTo": "avg",
-                  "spaceAggregation": "max",
-                  "timeAggregation": "max"
-                }
-              ],
-              "dataSource": "metrics",
-              "disabled": false,
-              "expression": "A",
-              "filter": {
-                "expression": "(service.instance.id != '' AND cloud.account.id = $Account AND cloud.region = $Region)"
-              },
-              "functions": [],
-              "groupBy": [
-                {
-                  "dataType": "string",
-                  "id": "service.instance.id--string--tag--false",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "service.instance.id",
-                  "type": "tag"
-                },
-                {
-                  "dataType": "string",
-                  "id": "cloud.account.id--string--tag--false",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "cloud.account.id",
-                  "type": "tag"
-                },
-                {
-                  "dataType": "string",
-                  "id": "cloud.region--string--tag--false",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "cloud.region",
-                  "type": "tag"
-                }
-              ],
-              "having": {
-                "expression": ""
-              },
-              "legend": "{{service.instance.id}}",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "A",
-              "stepInterval": 60
-            }
-          ],
-          "queryFormulas": []
-        },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "id": "ac2ce4a6-f595-4d2a-bc22-ddc51c2d59ff",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "queryType": "builder"
-      },
-      "selectedLogFields": [
-        {
-          "dataType": "string",
-          "name": "body",
-          "type": ""
-        },
-        {
-          "dataType": "string",
-          "name": "timestamp",
-          "type": ""
-        }
-      ],
-      "selectedTracesFields": [
-        {
-          "dataType": "string",
-          "id": "serviceName--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "serviceName",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "name--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "name",
-          "type": "tag"
-        },
-        {
-          "dataType": "float64",
-          "id": "durationNano--float64--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "durationNano",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "httpMethod--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "httpMethod",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "responseStatusCode--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "responseStatusCode",
-          "type": "tag"
-        }
-      ],
-      "softMax": 0,
-      "softMin": 0,
-      "stackedBarChart": false,
-      "thresholds": [],
-      "timePreferance": "GLOBAL_TIME",
-      "title": "Network Incoming",
-      "yAxisUnit": "binBps"
-    },
-    {
-      "bucketCount": 30,
-      "bucketWidth": 0,
-      "columnUnits": {},
-      "description": "",
-      "fillSpans": false,
-      "id": "05de543a-73a2-4221-b784-263749d39b1e",
-      "isStacked": false,
-      "mergeAllActiveQueries": false,
-      "nullZeroValues": "zero",
-      "opacity": "1",
-      "panelTypes": "graph",
-      "query": {
-        "builder": {
-          "queryData": [
+              "x": 6,
+              "y": 5,
+              "width": 6,
+              "height": 5,
+              "content": {
+                "$ref": "#/spec/panels/20dbaec7-9a16-47ad-af3b-f56375db8e69"
+              }
+            },
             {
-              "aggregations": [
-                {
-                  "metricName": "aws_EC2_NetworkOut_max",
-                  "reduceTo": "avg",
-                  "spaceAggregation": "max",
-                  "timeAggregation": "max"
-                }
-              ],
-              "dataSource": "metrics",
-              "disabled": false,
-              "expression": "A",
-              "filter": {
-                "expression": "(service.instance.id != '' AND cloud.account.id = $Account AND cloud.region = $Region)"
-              },
-              "functions": [],
-              "groupBy": [
-                {
-                  "dataType": "string",
-                  "id": "service.instance.id--string--tag--false",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "service.instance.id",
-                  "type": "tag"
-                },
-                {
-                  "dataType": "string",
-                  "id": "cloud.account.id--string--tag--false",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "cloud.account.id",
-                  "type": "tag"
-                },
-                {
-                  "dataType": "string",
-                  "id": "cloud.region--string--tag--false",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "cloud.region",
-                  "type": "tag"
-                }
-              ],
-              "having": {
-                "expression": ""
-              },
-              "legend": "{{service.instance.id}}",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "A",
-              "stepInterval": 60
+              "x": 0,
+              "y": 10,
+              "width": 6,
+              "height": 5,
+              "content": {
+                "$ref": "#/spec/panels/827a354b-1fff-400b-8172-c41e4c830eb5"
+              }
+            },
+            {
+              "x": 6,
+              "y": 10,
+              "width": 6,
+              "height": 5,
+              "content": {
+                "$ref": "#/spec/panels/05de543a-73a2-4221-b784-263749d39b1e"
+              }
             }
-          ],
-          "queryFormulas": []
-        },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "id": "94027537-0da8-4ac5-a880-532b975a818c",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "queryType": "builder"
-      },
-      "selectedLogFields": [
-        {
-          "dataType": "string",
-          "name": "body",
-          "type": ""
-        },
-        {
-          "dataType": "string",
-          "name": "timestamp",
-          "type": ""
+          ]
         }
-      ],
-      "selectedTracesFields": [
-        {
-          "dataType": "string",
-          "id": "serviceName--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "serviceName",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "name--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "name",
-          "type": "tag"
-        },
-        {
-          "dataType": "float64",
-          "id": "durationNano--float64--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "durationNano",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "httpMethod--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "httpMethod",
-          "type": "tag"
-        },
-        {
-          "dataType": "string",
-          "id": "responseStatusCode--string--tag--true",
-          "isColumn": true,
-          "isJSON": false,
-          "key": "responseStatusCode",
-          "type": "tag"
-        }
-      ],
-      "softMax": 0,
-      "softMin": 0,
-      "stackedBarChart": false,
-      "thresholds": [],
-      "timePreferance": "GLOBAL_TIME",
-      "title": "Network Outgoing",
-      "yAxisUnit": "binBps"
-    }
-  ]
+      }
+    ],
+    "duration": "",
+    "refreshInterval": ""
+  }
 }
