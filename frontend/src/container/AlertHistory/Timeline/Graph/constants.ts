@@ -1,11 +1,17 @@
 import { Color } from '@signozhq/design-tokens';
+import { RuletypesAlertStateDTO } from 'api/generated/services/sigNoz.schemas';
 
-export const ALERT_STATUS: { [key: string]: number } = {
-	firing: 0,
-	inactive: 1,
+export const ALERT_STATUS: Record<RuletypesAlertStateDTO, number> & {
+	[key: string]: number;
+} = {
+	[RuletypesAlertStateDTO.firing]: 0,
+	[RuletypesAlertStateDTO.inactive]: 1,
 	normal: 1,
+	[RuletypesAlertStateDTO.pending]: 1,
+	[RuletypesAlertStateDTO.recovering]: 1,
 	'no-data': 2,
-	disabled: 3,
+	[RuletypesAlertStateDTO.nodata]: 2,
+	[RuletypesAlertStateDTO.disabled]: 3,
 	muted: 4,
 };
 
