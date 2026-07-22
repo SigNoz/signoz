@@ -464,6 +464,7 @@ func (q *querier) resolveMetricMetadata(ctx context.Context, orgID valuer.UUID, 
 }
 
 func (q *querier) QueryRawStream(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest, client *qbtypes.RawStream) {
+	defer close(client.Done)
 
 	// Coerce the window to epoch milliseconds up front (End may be 0 for the
 	// open-ended stream, which ToMilliSecs leaves untouched).
@@ -484,12 +485,12 @@ func (q *querier) QueryRawStream(ctx context.Context, orgID valuer.UUID, req *qb
 				event.FilterApplied = spec.Filter != nil && spec.Filter.Expression != ""
 			default:
 				// return if it's not log aggregation
-				client.Error <- errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported builder spec type %T", query.Spec)
+				sendRawStreamError(ctx, client.Error, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported builder spec type %T", query.Spec))
 				return
 			}
 		} else {
 			// return if it's not of type query builder
-			client.Error <- errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported query type %s", query.Type)
+			sendRawStreamError(ctx, client.Error, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported query type %s", query.Type))
 			return
 		}
 	}
@@ -515,54 +516,71 @@ func (q *querier) QueryRawStream(ctx context.Context, orgID valuer.UUID, req *qb
 	ticker := time.NewTicker(q.liveDataRefresh)
 	defer ticker.Stop()
 
-	// we are creating a custom ticker wrapper to trigger it instantly
-	tick := make(chan time.Time, 1)
-	tick <- time.Now() // initial tick
-	go func() {
-		for t := range ticker.C {
-			tick <- t
-		}
-	}()
-
+	firstQuery := true
 	for {
-		select {
-		case <-ctx.Done():
-			done := true
-			client.Done <- &done
-			return
-		case <-tick:
-			// timestamp end is not specified here
-			timeRange := adjustTimeRangeForShift(spec, qbtypes.TimeRange{From: tsStart}, req.RequestType)
-			liveTailStmtBuilder := q.logStmtBuilder
-			if spec.Source == telemetrytypes.SourceAudit {
-				liveTailStmtBuilder = q.auditStmtBuilder
-			}
-			bq := newBuilderQuery(q.logger, q.telemetryStore, orgID, liveTailStmtBuilder, spec, timeRange, req.RequestType, map[string]qbtypes.VariableItem{
-				"id": {
-					Value: updatedLogID,
-				},
-			}, q.builderConfig)
-			queries[spec.Name] = bq
-
-			qbResp, qbErr := q.run(ctx, orgID, queries, req, nil, event, nil)
-			if qbErr != nil {
-				client.Error <- qbErr
+		if firstQuery {
+			firstQuery = false
+			if ctx.Err() != nil {
 				return
 			}
-
-			if qbResp == nil || len(qbResp.Data.Results) == 0 || qbResp.Data.Results[0] == nil {
-				continue
+		} else {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
 			}
-			data := qbResp.Data.Results[0].(*qbtypes.RawData)
-			for i := len(data.Rows) - 1; i >= 0; i-- {
-				client.Logs <- data.Rows[i]
-				if i == 0 {
-					tsStart = uint64(data.Rows[i].Timestamp.UnixNano())
-					updatedLogID = data.Rows[i].Data["id"].(string)
-				}
-			}
-
 		}
+
+		// timestamp end is not specified here
+		timeRange := adjustTimeRangeForShift(spec, qbtypes.TimeRange{From: tsStart}, req.RequestType)
+		liveTailStmtBuilder := q.logStmtBuilder
+		if spec.Source == telemetrytypes.SourceAudit {
+			liveTailStmtBuilder = q.auditStmtBuilder
+		}
+		bq := newBuilderQuery(q.logger, q.telemetryStore, orgID, liveTailStmtBuilder, spec, timeRange, req.RequestType, map[string]qbtypes.VariableItem{
+			"id": {
+				Value: updatedLogID,
+			},
+		}, q.builderConfig)
+		queries[spec.Name] = bq
+
+		qbResp, qbErr := q.run(ctx, orgID, queries, req, nil, event, nil)
+		if qbErr != nil {
+			sendRawStreamError(ctx, client.Error, qbErr)
+			return
+		}
+
+		if qbResp == nil || len(qbResp.Data.Results) == 0 || qbResp.Data.Results[0] == nil {
+			continue
+		}
+		data := qbResp.Data.Results[0].(*qbtypes.RawData)
+		for i := len(data.Rows) - 1; i >= 0; i-- {
+			if !sendRawStreamLog(ctx, client.Logs, data.Rows[i]) {
+				return
+			}
+			if i == 0 {
+				tsStart = uint64(data.Rows[i].Timestamp.UnixNano())
+				updatedLogID = data.Rows[i].Data["id"].(string)
+			}
+		}
+	}
+}
+
+func sendRawStreamLog(ctx context.Context, logs chan<- *qbtypes.RawRow, log *qbtypes.RawRow) bool {
+	select {
+	case logs <- log:
+		return true
+	case <-ctx.Done():
+		return false
+	}
+}
+
+func sendRawStreamError(ctx context.Context, errors chan<- error, err error) bool {
+	select {
+	case errors <- err:
+		return true
+	case <-ctx.Done():
+		return false
 	}
 }
 
