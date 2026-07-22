@@ -8,6 +8,7 @@ import AttributeMappingsTab from './AttributeMappingsTab/AttributeMappingsTab';
 import DiscardChangesDialog from './components/DiscardChangesDialog/DiscardChangesDialog';
 import GroupFormDrawer from './components/GroupFormDrawer/GroupFormDrawer';
 import styles from './LLMObservabilityAttributeMapping.module.scss';
+import TestTab from './TestTab/TestTab';
 import { useAttributeMappingEditor } from './hooks/useAttributeMappingEditor';
 import { useGroupFormDrawer } from './components/GroupFormDrawer/hooks/useGroupFormDrawer';
 
@@ -44,9 +45,7 @@ function LLMObservabilityAttributeMapping(): JSX.Element {
 		{
 			key: 'test',
 			label: 'Test',
-			disabled: true,
-			disabledReason: 'Coming soon',
-			children: null,
+			children: <TestTab editor={editor} />,
 		},
 	];
 

@@ -1,6 +1,7 @@
 import { Switch } from '@signozhq/ui/switch';
 
 import { DraftGroup } from 'container/LLMObservability/AttributeMapping/types';
+import { useCanManageAttributeMapping } from 'container/LLMObservability/AttributeMapping/hooks/useCanManageAttributeMapping';
 import GroupActionsMenu from '../GroupActionsMenu/GroupActionsMenu';
 import styles from './GroupHeaderActions.module.scss';
 
@@ -16,7 +17,11 @@ function GroupHeaderActions({
 	onToggle,
 	onEdit,
 	onRemove,
-}: GroupHeaderActionsProps): JSX.Element {
+}: GroupHeaderActionsProps): JSX.Element | null {
+	const canManage = useCanManageAttributeMapping();
+	if (!canManage) {
+		return null;
+	}
 	return (
 		<div
 			className={styles.actions}

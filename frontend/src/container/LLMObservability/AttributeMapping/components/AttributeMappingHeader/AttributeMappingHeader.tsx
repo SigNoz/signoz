@@ -1,6 +1,7 @@
 import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 
+import { useCanManageAttributeMapping } from '../../hooks/useCanManageAttributeMapping';
 import styles from './AttributeMappingHeader.module.scss';
 
 interface AttributeMappingHeaderProps {
@@ -16,12 +17,13 @@ function AttributeMappingHeader({
 	onDiscard,
 	onSave,
 }: AttributeMappingHeaderProps): JSX.Element {
+	const canManage = useCanManageAttributeMapping();
 	return (
 		<header className={styles.pageHeader}>
 			<Typography.Text as="p" size="base" color="muted">
 				Configure source-to-target attribute remapping for LLM traces
 			</Typography.Text>
-			{isDirty && (
+			{canManage && isDirty && (
 				<div className={styles.pageHeaderActions}>
 					<span className={styles.unsavedChanges} data-testid="unsaved-changes">
 						Unsaved changes

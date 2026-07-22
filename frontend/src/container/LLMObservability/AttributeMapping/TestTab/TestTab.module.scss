@@ -1,0 +1,171 @@
+.testTab {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-6);
+	margin-top: var(--spacing-6);
+}
+
+// Heading + description on the left, Run button pinned to the top-right.
+.header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: var(--spacing-6);
+}
+
+.headerText {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-2);
+	min-width: 0;
+}
+
+.heading {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-3);
+	margin: 0;
+	font-size: var(--periscope-font-size-base);
+	font-weight: var(--font-weight-semibold);
+}
+
+.description {
+	margin: 0;
+	font-size: var(--periscope-font-size-base);
+	color: var(--l3-foreground);
+}
+
+.body {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--spacing-6);
+	height: calc(100vh - 320px);
+	min-height: 320px;
+}
+
+.editor {
+	width: 100%;
+	height: 100%;
+	border: 1px solid var(--l2-border);
+	border-radius: var(--radius-2);
+	overflow: hidden;
+}
+.validationCallout {
+	width: 100%;
+}
+
+// No top padding so results align with the editor's first line, which sits
+// flush against the top of its own panel.
+.resultsPanel {
+	height: 100%;
+	overflow-y: auto;
+	padding: var(--padding-4);
+	border: 1px solid var(--l2-border);
+	border-radius: var(--radius-2);
+	background: var(--l1-background);
+}
+
+// Pre-run empty state that fills the blank right half.
+.placeholder {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: var(--spacing-2);
+	height: 100%;
+	text-align: center;
+	color: var(--l3-foreground);
+	font-size: var(--periscope-font-size-base);
+}
+
+.placeholderTitle {
+	font-weight: var(--font-weight-semibold);
+	color: var(--l2-foreground);
+}
+
+.error {
+	padding: var(--padding-3) var(--padding-4);
+	border-radius: var(--radius-2);
+	background: var(--callout-error-background);
+	color: var(--callout-error-title);
+	font-size: var(--periscope-font-size-base);
+}
+
+.results {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-6);
+}
+
+.resultCard {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-6);
+	border-radius: var(--radius-2);
+	background: var(--l1-background);
+}
+
+.resultSection {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+}
+
+.resultTitle {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-3);
+	font-size: var(--periscope-font-size-base);
+	font-weight: var(--font-weight-semibold);
+}
+
+.resultEmpty {
+	color: var(--l3-foreground);
+	font-size: var(--periscope-font-size-base);
+}
+
+.attrRows {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-2);
+}
+
+.attrRow {
+	display: grid;
+	grid-template-columns: clamp(200px, 40%, 340px) minmax(0, 1fr) auto;
+	align-items: center;
+	gap: var(--spacing-4);
+	padding: var(--spacing-2) var(--padding-3);
+	border-radius: var(--radius-2);
+	font-family: 'Geist Mono', monospace;
+	font-size: var(--font-size-xs);
+
+	&.added {
+		background: var(--callout-success-background);
+	}
+
+	&.removed {
+		opacity: 0.65;
+
+		.attrKey,
+		.attrValue {
+			text-decoration: line-through;
+		}
+	}
+}
+
+.attrKey,
+.attrValue {
+	min-width: 0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.attrKey {
+	font-weight: var(--font-weight-medium);
+}
+
+.attrValue {
+	color: var(--l3-foreground);
+}

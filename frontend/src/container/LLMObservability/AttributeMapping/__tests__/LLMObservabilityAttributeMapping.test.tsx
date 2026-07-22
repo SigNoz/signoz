@@ -1,5 +1,12 @@
 import { rest, server } from 'mocks-server/server';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
+import { mockUseAuthZGrantAll } from 'lib/authz/utils/authz-test-utils';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+
+// The header's Save/Discard and the group toggle are Admin-gated via useAuthZ;
+// render as an admin so those controls are present.
+jest.mock('lib/authz/hooks/useAuthZ/useAuthZ');
+const mockedUseAuthZ = useAuthZ as jest.MockedFunction<typeof useAuthZ>;
 
 import LLMObservabilityAttributeMapping from '../LLMObservabilityAttributeMapping';
 import { GROUPS_ENDPOINT, makeGroupsResponse, mockGroups } from './fixtures';
@@ -16,6 +23,7 @@ describe('LLMObservabilityAttributeMapping', () => {
 	beforeEach(() => {
 		window.history.pushState(null, '', '/');
 		setupGroups();
+		mockedUseAuthZ.mockImplementation(mockUseAuthZGrantAll);
 	});
 
 	afterEach(() => {
