@@ -18,6 +18,7 @@ import { ChevronDown, Dot, PencilLine, Plug, Plus } from '@signozhq/icons';
 import AzureCloudAccountSetupModal from '../../AzureCloudServices/AddNewAccount/CloudAccountSetupModal';
 import AzureAccountSettingsModal from '../../AzureCloudServices/EditAccount/AccountSettingsModal';
 import GcpCloudAccountSetupDrawer from '../../GoogleCloudPlatform/AddNewAccount/CloudAccountSetupDrawer';
+import GcpAccountSettingsDrawer from '../../GoogleCloudPlatform/EditAccount/AccountSettingsDrawer';
 import {
 	mapAccountDtoToAwsCloudAccount,
 	mapAccountDtoToAzureCloudAccount,
@@ -305,6 +306,13 @@ function AccountActions({ type }: { type: IntegrationType }): JSX.Element {
 					)}
 					{type === IntegrationType.AZURE_SERVICES && (
 						<AzureAccountSettingsModal
+							onClose={(): void => setIsAccountSettingsModalOpen(false)}
+							account={activeAccount}
+							setActiveAccount={setActiveAccount}
+						/>
+					)}
+					{type === IntegrationType.GCP_SERVICES && (
+						<GcpAccountSettingsDrawer
 							onClose={(): void => setIsAccountSettingsModalOpen(false)}
 							account={activeAccount}
 							setActiveAccount={setActiveAccount}
