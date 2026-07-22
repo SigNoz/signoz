@@ -317,7 +317,7 @@
       },
       "customLegendColors": {},
       "decimalPrecision": 2,
-      "description": "Current CPU utilization represented as a percentage of the reserved CPU that is currently in use.\nIt can shot up above 100% for certain workloads",
+      "description": "Current CPU utilization represented as a percentage of the reserved CPU that is currently in use.\nIt can shoot up above 100% for certain workloads",
       "fillMode": "none",
       "fillSpans": false,
       "id": "1d9e2225-799c-4c10-9866-651a0c7aa28b",
@@ -1247,7 +1247,7 @@
       "thresholds": [],
       "timePreferance": "GLOBAL_TIME",
       "title": "Disk performance status",
-      "yAxisUnit": "us"
+      "yAxisUnit": "none"
     },
     {
       "description": "",
