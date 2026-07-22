@@ -18,6 +18,8 @@ export interface ILog {
 	scope_string: Record<string, never>;
 	attributesString: Record<string, never>;
 	attributes_string: Record<string, never>;
+	attributes_number?: Record<string, number>;
+	attributes_bool?: Record<string, boolean>;
 	attributesInt: Record<string, never>;
 	attributesFloat: Record<string, never>;
 	severity_text: string;
@@ -33,6 +35,8 @@ type OmitAttributesResources = Pick<
 		| 'scope_string'
 		| 'attributesString'
 		| 'attributes_string'
+		| 'attributes_number'
+		| 'attributes_bool'
 		| 'attributesInt'
 		| 'attributesFloat'
 	>
