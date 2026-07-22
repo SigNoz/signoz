@@ -190,8 +190,7 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 		id: 'cpu_request',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/pods#cpu-req-usage-">
-				CPU Request
-				<br /> Usage (%)
+				CPU Request Usage (%)
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.podCPURequest,
@@ -215,8 +214,7 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 		id: 'cpu_limit',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/pods#cpu-limit-usage-">
-				CPU Limit
-				<br /> Usage (%)
+				CPU Limit Usage (%)
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.podCPULimit,
@@ -239,8 +237,7 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 		id: 'cpu',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/pods#cpu-usage-cores">
-				CPU Usage
-				<br /> (cores)
+				CPU Usage (cores)
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.podCPU,
@@ -263,8 +260,7 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 		id: 'memory_request',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/pods#mem-req-usage-">
-				Memory Request
-				<br /> Usage (%)
+				Memory Request Usage (%)
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.podMemoryRequest,
@@ -288,8 +284,7 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 		id: 'memory_limit',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/pods#mem-limit-usage-">
-				Memory Limit
-				<br /> Usage (%)
+				Memory Limit Usage (%)
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.podMemoryLimit,
@@ -312,8 +307,7 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 		id: 'memory',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/pods#mem-usage-wss">
-				Memory Usage
-				<br /> (WSS)
+				Memory Usage (WSS)
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.podMemory,

@@ -165,8 +165,7 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<InframonitoringtypesSt
 			id: 'cpu_request',
 			header: (): React.ReactNode => (
 				<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/statefulsets#cpu-req-usage-">
-					CPU Request
-					<br /> Usage (%)
+					CPU Request Usage (%)
 				</ColumnHeader>
 			),
 			accessorFn: (row): number => row.statefulSetCPURequest,
@@ -191,8 +190,7 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<InframonitoringtypesSt
 			id: 'cpu_limit',
 			header: (): React.ReactNode => (
 				<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/statefulsets#cpu-limit-usage-">
-					CPU Limit
-					<br /> Usage (%)
+					CPU Limit Usage (%)
 				</ColumnHeader>
 			),
 			accessorFn: (row): number => row.statefulSetCPULimit,
@@ -216,8 +214,7 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<InframonitoringtypesSt
 			id: 'cpu',
 			header: (): React.ReactNode => (
 				<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/statefulsets#cpu-usage-cores">
-					CPU Usage
-					<br /> (cores)
+					CPU Usage (cores)
 				</ColumnHeader>
 			),
 			accessorFn: (row): number => row.statefulSetCPU,
@@ -242,8 +239,7 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<InframonitoringtypesSt
 			id: 'memory_request',
 			header: (): React.ReactNode => (
 				<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/statefulsets#mem-req-usage-">
-					Memory Request
-					<br /> Usage (%)
+					Memory Request Usage (%)
 				</ColumnHeader>
 			),
 			accessorFn: (row): number => row.statefulSetMemoryRequest,
@@ -268,8 +264,7 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<InframonitoringtypesSt
 			id: 'memory_limit',
 			header: (): React.ReactNode => (
 				<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/statefulsets#mem-limit-usage-">
-					Memory Limit
-					<br /> Usage (%)
+					Memory Limit Usage (%)
 				</ColumnHeader>
 			),
 			accessorFn: (row): number => row.statefulSetMemoryLimit,
@@ -293,8 +288,7 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<InframonitoringtypesSt
 			id: 'memory',
 			header: (): React.ReactNode => (
 				<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/statefulsets#mem-usage-wss">
-					Memory Usage
-					<br /> (WSS)
+					Memory Usage (WSS)
 				</ColumnHeader>
 			),
 			accessorFn: (row): number => row.statefulSetMemory,

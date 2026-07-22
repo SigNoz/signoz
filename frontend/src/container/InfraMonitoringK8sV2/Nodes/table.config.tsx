@@ -167,8 +167,7 @@ export const k8sNodesColumnsConfig: NodeTableColumnConfig[] = [
 		id: 'cpu',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/nodes#cpu-usage-cores">
-				CPU Usage
-				<br /> (cores)
+				CPU Usage (cores)
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.nodeCPU,
@@ -191,8 +190,7 @@ export const k8sNodesColumnsConfig: NodeTableColumnConfig[] = [
 		id: 'cpu_allocatable',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/nodes#cpu-alloc-cores">
-				CPU Allocatable
-				<br /> (cores)
+				CPU Allocatable (cores)
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.nodeCPUAllocatable,
@@ -215,8 +213,7 @@ export const k8sNodesColumnsConfig: NodeTableColumnConfig[] = [
 		id: 'memory',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/nodes#memory-usage-wss">
-				Memory Usage
-				<br /> (WSS)
+				Memory Usage (WSS)
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.nodeMemory,
@@ -239,8 +236,7 @@ export const k8sNodesColumnsConfig: NodeTableColumnConfig[] = [
 		id: 'memory_allocatable',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/nodes#memory-allocatable">
-				Memory
-				<br /> Allocatable
+				Memory Allocatable
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.nodeMemoryAllocatable,

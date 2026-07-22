@@ -162,8 +162,7 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<InframonitoringtypesDep
 			id: 'cpu_request',
 			header: (): React.ReactNode => (
 				<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/deployments#cpu-req-usage-">
-					CPU Request
-					<br /> Usage (%)
+					CPU Request Usage (%)
 				</ColumnHeader>
 			),
 			accessorFn: (row): number => row.deploymentCPURequest,
@@ -188,8 +187,7 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<InframonitoringtypesDep
 			id: 'cpu_limit',
 			header: (): React.ReactNode => (
 				<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/deployments#cpu-limit-usage-">
-					CPU Limit
-					<br /> Usage (%)
+					CPU Limit Usage (%)
 				</ColumnHeader>
 			),
 			accessorFn: (row): number => row.deploymentCPULimit,
@@ -213,8 +211,7 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<InframonitoringtypesDep
 			id: 'cpu',
 			header: (): React.ReactNode => (
 				<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/deployments#cpu-usage-cores">
-					CPU Usage
-					<br /> (cores)
+					CPU Usage (cores)
 				</ColumnHeader>
 			),
 			accessorFn: (row): number => row.deploymentCPU,
@@ -238,8 +235,7 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<InframonitoringtypesDep
 			id: 'memory_request',
 			header: (): React.ReactNode => (
 				<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/deployments#mem-req-usage-">
-					Memory Request
-					<br /> Usage (%)
+					Memory Request Usage (%)
 				</ColumnHeader>
 			),
 			accessorFn: (row): number => row.deploymentMemoryRequest,
@@ -264,8 +260,7 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<InframonitoringtypesDep
 			id: 'memory_limit',
 			header: (): React.ReactNode => (
 				<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/deployments#mem-limit-usage-">
-					Memory Limit
-					<br /> Usage (%)
+					Memory Limit Usage (%)
 				</ColumnHeader>
 			),
 			accessorFn: (row): number => row.deploymentMemoryLimit,
@@ -289,8 +284,7 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<InframonitoringtypesDep
 			id: 'memory',
 			header: (): React.ReactNode => (
 				<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/deployments#mem-usage-wss">
-					Memory Usage
-					<br /> (WSS)
+					Memory Usage (WSS)
 				</ColumnHeader>
 			),
 			accessorFn: (row): number => row.deploymentMemory,

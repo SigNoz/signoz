@@ -174,8 +174,7 @@ export const k8sDaemonSetsColumnsConfig: DaemonSetTableColumnConfig[] = [
 		id: 'cpu_request',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/daemonsets#cpu-req-usage-">
-				CPU Request
-				<br /> Usage (%)
+				CPU Request Usage (%)
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.daemonSetCPURequest,
@@ -200,8 +199,7 @@ export const k8sDaemonSetsColumnsConfig: DaemonSetTableColumnConfig[] = [
 		id: 'cpu_limit',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/daemonsets#cpu-limit-usage-">
-				CPU Limit
-				<br /> Usage (%)
+				CPU Limit Usage (%)
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.daemonSetCPULimit,
@@ -225,8 +223,7 @@ export const k8sDaemonSetsColumnsConfig: DaemonSetTableColumnConfig[] = [
 		id: 'cpu',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/daemonsets#cpu-usage-cores">
-				CPU Usage
-				<br /> (cores)
+				CPU Usage (cores)
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.daemonSetCPU,
@@ -251,8 +248,7 @@ export const k8sDaemonSetsColumnsConfig: DaemonSetTableColumnConfig[] = [
 		id: 'memory_request',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/daemonsets#mem-req-usage-">
-				Memory Request
-				<br /> Usage (%)
+				Memory Request Usage (%)
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.daemonSetMemoryRequest,
@@ -277,8 +273,7 @@ export const k8sDaemonSetsColumnsConfig: DaemonSetTableColumnConfig[] = [
 		id: 'memory_limit',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/daemonsets#mem-limit-usage-">
-				Memory Limit
-				<br /> Usage (%)
+				Memory Limit Usage (%)
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.daemonSetMemoryLimit,
@@ -302,8 +297,7 @@ export const k8sDaemonSetsColumnsConfig: DaemonSetTableColumnConfig[] = [
 		id: 'memory',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/daemonsets#mem-usage-wss">
-				Memory Usage
-				<br /> (WSS)
+				Memory Usage (WSS)
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.daemonSetMemory,

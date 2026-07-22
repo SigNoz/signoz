@@ -158,8 +158,7 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 		id: 'cpu_request',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/jobs#cpu-req-usage-">
-				CPU Request
-				<br /> Usage (%)
+				CPU Request Usage (%)
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.jobCPURequest,
@@ -184,8 +183,7 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 		id: 'cpu_limit',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/jobs#cpu-limit-usage-">
-				CPU Limit
-				<br /> Usage (%)
+				CPU Limit Usage (%)
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.jobCPULimit,
@@ -209,8 +207,7 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 		id: 'cpu',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/jobs#cpu-usage-cores">
-				CPU Usage
-				<br /> (cores)
+				CPU Usage (cores)
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.jobCPU,
@@ -234,8 +231,7 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 		id: 'memory_request',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/jobs#mem-req-usage-">
-				Memory Request
-				<br /> Usage (%)
+				Memory Request Usage (%)
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.jobMemoryRequest,
@@ -260,8 +256,7 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 		id: 'memory_limit',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/jobs#mem-limit-usage-">
-				Memory Limit
-				<br /> Usage (%)
+				Memory Limit Usage (%)
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.jobMemoryLimit,
@@ -285,8 +280,7 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 		id: 'memory',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/jobs#mem-usage-wss">
-				Memory Usage
-				<br /> (WSS)
+				Memory Usage (WSS)
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.jobMemory,
