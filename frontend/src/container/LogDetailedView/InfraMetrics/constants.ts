@@ -1825,6 +1825,155 @@ export const getHostQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
+								id: 'system_filesystem_usage--float64--Gauge--true',
+
+								key: fsUsageKey,
+								type: 'Gauge',
+							},
+							aggregateOperator: 'avg',
+							dataSource: DataSource.METRICS,
+							disabled: true,
+							expression: 'A',
+							filters: {
+								items: [
+									{
+										id: 'fs_f1',
+										key: {
+											dataType: DataTypes.String,
+											id: 'host_name--string--tag--false',
+
+											key: hostNameKey,
+											type: 'tag',
+										},
+										op: '=',
+										value: hostName,
+									},
+									{
+										id: 'fs_f2',
+										key: {
+											dataType: DataTypes.String,
+											id: 'state--string--tag--false',
+
+											key: 'state',
+											type: 'tag',
+										},
+										op: '=',
+										value: 'used',
+									},
+								],
+								op: 'AND',
+							},
+							functions: [],
+							groupBy: [
+								{
+									dataType: DataTypes.String,
+									id: 'mountpoint--string--tag--false',
+
+									key: 'mountpoint',
+									type: 'tag',
+								},
+							],
+							having: [
+								{
+									columnName: `SUM(${fsUsageKey})`,
+									op: '>',
+									value: 0,
+								},
+							],
+							legend: '{{mountpoint}}',
+							limit: null,
+							orderBy: [],
+							queryName: 'A',
+							reduceTo: ReduceOperators.AVG,
+							spaceAggregation: 'sum',
+							stepInterval: 60,
+							timeAggregation: 'avg',
+						},
+						{
+							aggregateAttribute: {
+								dataType: DataTypes.Float64,
+								id: 'system_filesystem_usage--float64--Gauge--true',
+
+								key: fsUsageKey,
+								type: 'Gauge',
+							},
+							aggregateOperator: 'avg',
+							dataSource: DataSource.METRICS,
+							disabled: true,
+							expression: 'B',
+							filters: {
+								items: [
+									{
+										id: 'fs_f3',
+										key: {
+											dataType: DataTypes.String,
+											id: 'host_name--string--tag--false',
+
+											key: hostNameKey,
+											type: 'tag',
+										},
+										op: '=',
+										value: hostName,
+									},
+								],
+								op: 'AND',
+							},
+							functions: [],
+							groupBy: [
+								{
+									dataType: DataTypes.String,
+									id: 'mountpoint--string--tag--false',
+
+									key: 'mountpoint',
+									type: 'tag',
+								},
+							],
+							having: [
+								{
+									columnName: `SUM(${fsUsageKey})`,
+									op: '>',
+									value: 0,
+								},
+							],
+							legend: '{{mountpoint}}',
+							limit: null,
+							orderBy: [],
+							queryName: 'B',
+							reduceTo: ReduceOperators.AVG,
+							spaceAggregation: 'sum',
+							stepInterval: 60,
+							timeAggregation: 'avg',
+						},
+					],
+					queryFormulas: [
+						{
+							disabled: false,
+							expression: 'A/B',
+							legend: '{{mountpoint}}',
+							queryName: 'F1',
+						},
+					],
+					queryTraceOperator: [],
+				},
+				clickhouse_sql: [{ disabled: false, legend: '', name: 'A', query: '' }],
+				id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+				promql: [{ disabled: false, legend: '', name: 'A', query: '' }],
+				queryType: EQueryType.QUERY_BUILDER,
+			},
+			variables: {},
+			formatForWeb: false,
+			start,
+			end,
+		},
+		{
+			selectedTime: 'GLOBAL_TIME',
+			graphType: PANEL_TYPES.TIME_SERIES,
+			query: {
+				builder: {
+					queryData: [
+						{
+							aggregateAttribute: {
+								dataType: DataTypes.Float64,
 								id: 'system_cpu_load_average_1m--float64--Gauge--true',
 
 								key: load1mKey,
@@ -2660,155 +2809,6 @@ export const getHostQueryPayload = (
 			start,
 			end,
 		},
-		{
-			selectedTime: 'GLOBAL_TIME',
-			graphType: PANEL_TYPES.TIME_SERIES,
-			query: {
-				builder: {
-					queryData: [
-						{
-							aggregateAttribute: {
-								dataType: DataTypes.Float64,
-								id: 'system_filesystem_usage--float64--Gauge--true',
-
-								key: fsUsageKey,
-								type: 'Gauge',
-							},
-							aggregateOperator: 'avg',
-							dataSource: DataSource.METRICS,
-							disabled: true,
-							expression: 'A',
-							filters: {
-								items: [
-									{
-										id: 'fs_f1',
-										key: {
-											dataType: DataTypes.String,
-											id: 'host_name--string--tag--false',
-
-											key: hostNameKey,
-											type: 'tag',
-										},
-										op: '=',
-										value: hostName,
-									},
-									{
-										id: 'fs_f2',
-										key: {
-											dataType: DataTypes.String,
-											id: 'state--string--tag--false',
-
-											key: 'state',
-											type: 'tag',
-										},
-										op: '=',
-										value: 'used',
-									},
-								],
-								op: 'AND',
-							},
-							functions: [],
-							groupBy: [
-								{
-									dataType: DataTypes.String,
-									id: 'mountpoint--string--tag--false',
-
-									key: 'mountpoint',
-									type: 'tag',
-								},
-							],
-							having: [
-								{
-									columnName: `SUM(${fsUsageKey})`,
-									op: '>',
-									value: 0,
-								},
-							],
-							legend: '{{mountpoint}}',
-							limit: null,
-							orderBy: [],
-							queryName: 'A',
-							reduceTo: ReduceOperators.AVG,
-							spaceAggregation: 'sum',
-							stepInterval: 60,
-							timeAggregation: 'avg',
-						},
-						{
-							aggregateAttribute: {
-								dataType: DataTypes.Float64,
-								id: 'system_filesystem_usage--float64--Gauge--true',
-
-								key: fsUsageKey,
-								type: 'Gauge',
-							},
-							aggregateOperator: 'avg',
-							dataSource: DataSource.METRICS,
-							disabled: true,
-							expression: 'B',
-							filters: {
-								items: [
-									{
-										id: 'fs_f3',
-										key: {
-											dataType: DataTypes.String,
-											id: 'host_name--string--tag--false',
-
-											key: hostNameKey,
-											type: 'tag',
-										},
-										op: '=',
-										value: hostName,
-									},
-								],
-								op: 'AND',
-							},
-							functions: [],
-							groupBy: [
-								{
-									dataType: DataTypes.String,
-									id: 'mountpoint--string--tag--false',
-
-									key: 'mountpoint',
-									type: 'tag',
-								},
-							],
-							having: [
-								{
-									columnName: `SUM(${fsUsageKey})`,
-									op: '>',
-									value: 0,
-								},
-							],
-							legend: '{{mountpoint}}',
-							limit: null,
-							orderBy: [],
-							queryName: 'B',
-							reduceTo: ReduceOperators.AVG,
-							spaceAggregation: 'sum',
-							stepInterval: 60,
-							timeAggregation: 'avg',
-						},
-					],
-					queryFormulas: [
-						{
-							disabled: false,
-							expression: 'A/B',
-							legend: '{{mountpoint}}',
-							queryName: 'F1',
-						},
-					],
-					queryTraceOperator: [],
-				},
-				clickhouse_sql: [{ disabled: false, legend: '', name: 'A', query: '' }],
-				id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-				promql: [{ disabled: false, legend: '', name: 'A', query: '' }],
-				queryType: EQueryType.QUERY_BUILDER,
-			},
-			variables: {},
-			formatForWeb: false,
-			start,
-			end,
-		},
 	];
 };
 
@@ -2883,6 +2883,12 @@ export const hostWidgetInfo = [
 		docPath: '/infrastructure-monitoring/host-monitoring/#memory-usage',
 	},
 	{
+		title: 'Disk Usage (%) by mountpoint',
+		yAxisUnit: 'percentunit',
+		docPath:
+			'/infrastructure-monitoring/host-monitoring/#disk-usage--by-mountpoint',
+	},
+	{
 		title: 'System Load Average',
 		yAxisUnit: '',
 		docPath: '/infrastructure-monitoring/host-monitoring/#system-load-average',
@@ -2933,11 +2939,5 @@ export const hostWidgetInfo = [
 		yAxisUnit: 's',
 		docPath:
 			'/infrastructure-monitoring/host-monitoring/#system-disk-operation-times',
-	},
-	{
-		title: 'Disk Usage (%) by mountpoint',
-		yAxisUnit: 'percentunit',
-		docPath:
-			'/infrastructure-monitoring/host-monitoring/#disk-usage--by-mountpoint',
 	},
 ];
