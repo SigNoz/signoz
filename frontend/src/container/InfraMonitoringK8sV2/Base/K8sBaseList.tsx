@@ -74,14 +74,15 @@ export type K8sBaseListProps<
 		warning?: Querybuildertypesv5QueryWarnDataDTO | null;
 	}>;
 	/** Function to get the unique key for a row. */
-	getRowKey?: (record: T) => string;
+	getRowKey: (record: T) => string;
 	/** Function to get the item key used for selection. Can return string or SelectedItemParams. */
-	getItemKey?: (record: T) => TItemKey;
+	getItemKey: (record: T) => TItemKey;
 	eventCategory: InfraMonitoringEvents;
 	renderEmptyState?: (
 		context: K8sBaseListEmptyStateContext,
 	) => React.ReactNode | null;
 	extraQueryKeyParts?: string[];
+	detailsQueryKeyPrefix: string;
 };
 
 export function K8sBaseList<
@@ -98,6 +99,7 @@ export function K8sBaseList<
 	eventCategory,
 	renderEmptyState,
 	extraQueryKeyParts = [],
+	detailsQueryKeyPrefix,
 }: K8sBaseListProps<T, TItemKey>): JSX.Element {
 	const { currentQuery } = useQueryBuilder();
 	const expression = currentQuery.builder.queryData[0]?.filter?.expression || '';
@@ -234,17 +236,29 @@ export function K8sBaseList<
 	}, [eventCategory, totalCount]);
 
 	const handleRowClick = useCallback(
-		(_record: T, itemKey: TItemKey): void => {
+		(record: T, itemKey: TItemKey): void => {
 			if (groupBy.length === 0) {
-				if (typeof itemKey === 'object' && itemKey !== null) {
-					setSelectedItemParams(itemKey);
-				} else {
-					setSelectedItemParams({
-						selectedItem: itemKey,
-						clusterName: null,
-						namespaceName: null,
-					});
+				const params: SelectedItemParams =
+					typeof itemKey === 'object'
+						? itemKey
+						: {
+								selectedItem: itemKey,
+								clusterName: null,
+								namespaceName: null,
+							};
+
+				if (detailsQueryKeyPrefix) {
+					const detailQueryKey = getAutoRefreshQueryKey(
+						selectedTime,
+						`${detailsQueryKeyPrefix}EntityDetails`,
+						params.selectedItem,
+						params.clusterName,
+						params.namespaceName,
+					);
+					queryClient.setQueryData(detailQueryKey, { data: record });
 				}
+
+				setSelectedItemParams(params);
 			}
 
 			void logEvent(InfraMonitoringEvents.ItemClicked, {
@@ -253,7 +267,15 @@ export function K8sBaseList<
 				category: eventCategory,
 			});
 		},
-		[eventCategory, groupBy.length, setSelectedItemParams],
+		[
+			eventCategory,
+			groupBy.length,
+			setSelectedItemParams,
+			detailsQueryKeyPrefix,
+			getAutoRefreshQueryKey,
+			selectedTime,
+			queryClient,
+		],
 	);
 
 	const handleRowClickNewTab = useCallback(
@@ -403,7 +425,7 @@ export function K8sBaseList<
 						onRowClickNewTab={handleRowClickNewTab}
 						renderExpandedRow={isGroupedByAttribute ? renderExpandedRow : undefined}
 						getRowCanExpand={isGroupedByAttribute ? getRowCanExpand : undefined}
-						className={cx(styles.k8SListTable, expandedRowColumns)}
+						className={cx(styles.k8SListTable)}
 						enableQueryParams={{
 							page: INFRA_MONITORING_K8S_PARAMS_KEYS.PAGE,
 							limit: INFRA_MONITORING_K8S_PARAMS_KEYS.PAGE_SIZE,
