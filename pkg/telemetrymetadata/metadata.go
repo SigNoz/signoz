@@ -2323,7 +2323,7 @@ func (t *telemetryMetaStore) fetchTemporalityTypeForTable(ctx context.Context, t
 	types := make(map[string]metrictypes.Type)
 
 	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select("metric_name", "temporality", "any(type) AS type", "any(is_monotonic) as is_monotonic")
+	sb.Select("metric_name", "temporality", "any(type) AS type", "argMax(is_monotonic, unix_milli) as is_monotonic")
 	sb.From(t.metricsDBName + "." + tableName)
 	conds := []string{
 		sb.In("metric_name", metricNames),
@@ -2379,7 +2379,7 @@ func (t *telemetryMetaStore) fetchMeterSourceMetricsTemporalityAndType(ctx conte
 		"metric_name",
 		"argMax(temporality, unix_milli) as temporality",
 		"any(type) AS type",
-		"any(is_monotonic) as is_monotonic",
+		"argMax(is_monotonic, unix_milli) as is_monotonic",
 	).From(t.meterDBName + "." + t.meterFieldsTblName)
 
 	// Filter by metric names (in the temporality column due to data mix-up)
