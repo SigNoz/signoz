@@ -548,7 +548,10 @@ func (b *scopedTraceStatementBuilder) buildMatchedCTE(start, end, startBucket, e
 			return "", nil, err
 		}
 		if hv != "" {
-			having = append(having, hv)
+			// hv carries user text with values inlined by the rewriter; escape it so a
+			// literal $ can't be read as an interpolation marker at Build time. The
+			// countIf entries above hold live placeholders and must stay unescaped.
+			having = append(having, sqlbuilder.Escape(hv))
 		}
 	}
 	if len(having) > 0 {

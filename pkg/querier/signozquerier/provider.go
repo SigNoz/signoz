@@ -93,7 +93,7 @@ func newProvider(
 		cfg.SkipResourceFingerprint.Threshold,
 	)
 
-	// AI trace statement builder (source=ai). The gen_ai gate/column keys are
+	// AI trace statement builder (builder_ai_query). The gen_ai gate/column keys are
 	// surfaced by the metadata store itself (enrichWithGenAIKeys), so queries work
 	// before any gen_ai metadata is ingested — no per-builder decoration needed.
 	// The standard trace builder doubles as the delegate for the span-list path.
