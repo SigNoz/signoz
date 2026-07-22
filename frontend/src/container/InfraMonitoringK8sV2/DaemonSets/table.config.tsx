@@ -121,12 +121,17 @@ export const k8sDaemonSetsColumnsConfig: DaemonSetTableColumnConfig[] = [
 		width: { min: 250 },
 		enableSort: false,
 		enableResize: true,
-		cell: ({ row }): React.ReactNode => {
+		cell: ({ row, rowId }): React.ReactNode => {
 			const podCountsByStatus = row.podCountsByStatus;
 			if (!podCountsByStatus) {
 				return <TanStackTable.Text>-</TanStackTable.Text>;
 			}
-			return <GroupedStatusCounts items={getPodStatusItems(podCountsByStatus)} />;
+			return (
+				<GroupedStatusCounts
+					rowId={rowId}
+					items={getPodStatusItems(podCountsByStatus)}
+				/>
+			);
 		},
 	},
 	{
@@ -140,8 +145,9 @@ export const k8sDaemonSetsColumnsConfig: DaemonSetTableColumnConfig[] = [
 		width: { min: 210 },
 		enableSort: false,
 		enableResize: true,
-		cell: ({ row }): React.ReactNode => (
+		cell: ({ row, rowId }): React.ReactNode => (
 			<GroupedStatusCounts
+				rowId={rowId}
 				items={[
 					{
 						value: row.readyNodes,

@@ -9,7 +9,7 @@ require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/SigNoz/clickhouse-go-mock v0.14.0
 	github.com/SigNoz/govaluate v0.0.0-20240203125216-988004ccc7fd
-	github.com/SigNoz/signoz-otel-collector v0.144.3
+	github.com/SigNoz/signoz-otel-collector v0.144.6
 	github.com/antlr4-go/antlr/v4 v4.13.1
 	github.com/antonmedv/expr v1.15.3
 	github.com/bytedance/sonic v1.14.1
@@ -150,10 +150,6 @@ require (
 	github.com/ugorji/go/codec v1.3.0 // indirect
 	github.com/uptrace/opentelemetry-go-extra/otelsql v0.3.2 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
-	go.opentelemetry.io/collector/client v1.54.0 // indirect
-	go.opentelemetry.io/collector/config/configoptional v1.50.0 // indirect
-	go.opentelemetry.io/collector/config/configretry v1.50.0 // indirect
-	go.opentelemetry.io/collector/exporter/exporterhelper v0.144.0 // indirect
 	go.opentelemetry.io/collector/internal/componentalias v0.148.0 // indirect
 	go.opentelemetry.io/collector/pdata/xpdata v0.148.0 // indirect
 	go.uber.org/goleak v1.3.0 // indirect

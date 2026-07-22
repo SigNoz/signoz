@@ -51,6 +51,7 @@ import { getHostsQuickFiltersConfig } from './utils';
 import styles from './InfraMonitoringHosts.module.scss';
 import { ArrowUpToLine, Filter } from '@signozhq/icons';
 import { NANO_SECOND_MULTIPLIER, useGlobalTimeStore } from 'store/globalTime';
+import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 
 function Hosts(): JSX.Element {
 	const [showFilters, setShowFilters] = useState(true);
@@ -211,27 +212,31 @@ function Hosts(): JSX.Element {
 				<div className={styles.infraContentRow}>
 					{showFilters && (
 						<div className={styles.quickFiltersContainer}>
-							<div className={styles.quickFiltersContainerHeader}>
-								<Typography.Text>Filters</Typography.Text>
-								<Tooltip title="Collapse Filters">
-									<ArrowUpToLine
-										style={{ rotate: '270deg', cursor: 'pointer' }}
-										onClick={handleFilterVisibilityChange}
-										size="md"
+							<OverlayScrollbar>
+								<>
+									<div className={styles.quickFiltersContainerHeader}>
+										<Typography.Text>Filters</Typography.Text>
+										<Tooltip title="Collapse Filters">
+											<ArrowUpToLine
+												style={{ rotate: '270deg', cursor: 'pointer' }}
+												onClick={handleFilterVisibilityChange}
+												size="md"
+											/>
+										</Tooltip>
+									</div>
+									<QuickFilters
+										source={QuickFiltersSource.INFRA_MONITORING}
+										config={getHostsQuickFiltersConfig(dotMetricsEnabled)}
+										handleFilterVisibilityChange={handleFilterVisibilityChange}
+										useFieldApis={{
+											metricNamespace:
+												METRIC_NAMESPACE_BY_ENTITY[InfraMonitoringEntity.HOSTS],
+											startUnixMilli,
+											endUnixMilli,
+										}}
 									/>
-								</Tooltip>
-							</div>
-							<QuickFilters
-								source={QuickFiltersSource.INFRA_MONITORING}
-								config={getHostsQuickFiltersConfig(dotMetricsEnabled)}
-								handleFilterVisibilityChange={handleFilterVisibilityChange}
-								useFieldApis={{
-									metricNamespace:
-										METRIC_NAMESPACE_BY_ENTITY[InfraMonitoringEntity.HOSTS],
-									startUnixMilli,
-									endUnixMilli,
-								}}
-							/>
+								</>
+							</OverlayScrollbar>
 						</div>
 					)}
 					<div
@@ -248,6 +253,7 @@ function Hosts(): JSX.Element {
 							getRowKey={getHostRowKey}
 							getItemKey={getHostItemKey}
 							eventCategory={InfraMonitoringEvents.HostEntity}
+							detailsQueryKeyPrefix="hosts"
 						/>
 					</div>
 				</div>

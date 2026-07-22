@@ -570,7 +570,11 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
     assert alpha["schemaVersion"] == "v6"
     assert alpha["source"] == "user"
     assert alpha["locked"] is False
-    assert {"key": "team", "value": "pulse"} in alpha["tags"]
+    # tags round-trip in the order sent — no reordering, no drift
+    assert alpha["tags"] == [
+        {"key": "team", "value": "pulse"},
+        {"key": "env", "value": "prod"},
+    ]
 
     # ── stage 3: list everything ─────────────────────────────────────────────
     response = requests.get(
@@ -590,6 +594,13 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
         "Epsilon Metrics",
         "Zeta Overview",
     }
+    # per-dashboard tags also round-trip in the order sent
+    delta = next(d for d in body["data"]["dashboards"] if d["spec"]["display"]["name"] == "Delta Storage")
+    assert delta["tags"] == [
+        {"key": "team", "value": "storage"},
+        {"key": "env", "value": "dev"},
+        {"key": "tier", "value": "critical"},
+    ]
     # top-level tags = org-wide distinct tag set, sorted case-insensitively
     # by (key, value). Asserting the exact list (not a set) locks in the sort.
     assert body["data"]["tags"] == [
@@ -1011,6 +1022,99 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
     )
     assert response.status_code == HTTPStatus.OK, response.text
     assert response.json()["data"]["id"] == clone["id"]
+
+
+def test_dashboard_v2_tag_order_round_trips(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    """Tags must round-trip in the order the client sent them across every write
+    path — create, update, patch — so GitOps/Terraform state never drifts."""
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    def tags_of(response: requests.Response) -> list[dict]:
+        return response.json()["data"]["tags"]
+
+    # ── create with tags in a deliberate order; "env" repeats with two values ─
+    created_order = [
+        {"key": "team", "value": "pulse"},
+        {"key": "env", "value": "prod"},
+        {"key": "env", "value": "staging"},
+        {"key": "tier", "value": "critical"},
+    ]
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={"schemaVersion": "v6", "name": "tag-order", "spec": {"display": {"name": "Tag Order"}}, "tags": created_order},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    dashboard_id = response.json()["data"]["id"]
+    assert tags_of(response) == created_order
+
+    # ── get echoes the same order ────────────────────────────────────────────
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard_id}"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert tags_of(response) == created_order
+
+    # ── update reordered; the two "env" values land at non-adjacent positions ─
+    reordered = [
+        {"key": "tier", "value": "critical"},
+        {"key": "env", "value": "staging"},
+        {"key": "team", "value": "pulse"},
+        {"key": "env", "value": "prod"},
+    ]
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard_id}"),
+        json={"schemaVersion": "v6", "name": "tag-order", "spec": {"display": {"name": "Tag Order"}}, "tags": reordered},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert tags_of(response) == reordered
+
+    # ── patch appends a new tag (a third "env" value); it lands at the end ────
+    response = requests.patch(
+        signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard_id}"),
+        json=[{"op": "add", "path": "/tags/-", "value": {"key": "env", "value": "dev"}}],
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert tags_of(response) == reordered + [{"key": "env", "value": "dev"}]
+
+    # ── update reorders everything and adds another new tag → all in the new order ─
+    # "env" now carries three interleaved values
+    new_order = [
+        {"key": "env", "value": "prod"},
+        {"key": "team", "value": "pulse"},
+        {"key": "env", "value": "dev"},
+        {"key": "tier", "value": "critical"},
+        {"key": "env", "value": "staging"},
+        {"key": "team", "value": "storage"},
+    ]
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard_id}"),
+        json={"schemaVersion": "v6", "name": "tag-order", "spec": {"display": {"name": "Tag Order"}}, "tags": new_order},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert tags_of(response) == new_order
+
+    # ── and the final order persists on a fresh read ─────────────────────────
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard_id}"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert tags_of(response) == new_order
 
 
 def test_dashboard_v2_pin_limit(
@@ -1806,3 +1910,190 @@ def test_dashboard_v2_roundtrip_preserves_zero_values(
             headers=headers,
             timeout=5,
         )
+
+
+# ─── enum defaulting: absent applies the default, explicit "" is rejected ─────
+# The v2 dashboard enums (timePreference, decimalPrecision, lineInterpolation,
+# lineStyle, fillMode, legend position/mode, comparison operator, threshold
+# format, list-variable sort) apply their default only when the field is omitted
+# entirely: UnmarshalJSON never runs, so the zero value marshals back as the
+# default. An explicit "" is validated like any other string and, since "" is
+# never an allowed enum member, rejected.
+
+
+def test_dashboard_v2_omitted_enums_apply_defaults(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # The TimeSeriesPanel carries an empty plugin spec (every enum omitted); the
+    # NumberPanel threshold omits operator and format. Each must read back as its
+    # default.
+    dashboard = {
+        "schemaVersion": "v6",
+        "name": f"enum-{uuid.uuid4().hex[:8]}",
+        "tags": [],
+        "spec": {
+            "display": {"name": "Enum"},
+            "panels": {
+                "ts": {
+                    "kind": "Panel",
+                    "spec": {
+                        "display": {"name": "ts"},
+                        "plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
+                        "queries": [
+                            {
+                                "kind": "time_series",
+                                "spec": {
+                                    "plugin": {
+                                        "kind": "signoz/BuilderQuery",
+                                        "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]},
+                                    }
+                                },
+                            }
+                        ],
+                    },
+                },
+                "num": {
+                    "kind": "Panel",
+                    "spec": {
+                        "display": {"name": "num"},
+                        "plugin": {
+                            "kind": "signoz/NumberPanel",
+                            "spec": {"thresholds": [{"value": 1, "color": "#c2780b"}]},
+                        },
+                        "queries": [
+                            {
+                                "kind": "scalar",
+                                "spec": {
+                                    "plugin": {
+                                        "kind": "signoz/BuilderQuery",
+                                        "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]},
+                                    }
+                                },
+                            }
+                        ],
+                    },
+                },
+            },
+        },
+    }
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json=dashboard,
+        headers=headers,
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    dashboard_id = response.json()["data"]["id"]
+
+    try:
+        response = requests.get(
+            signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard_id}"),
+            headers=headers,
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.OK, response.text
+        panels = response.json()["data"]["spec"]["panels"]
+        ts = panels["ts"]["spec"]["plugin"]["spec"]
+        num_threshold = panels["num"]["spec"]["plugin"]["spec"]["thresholds"][0]
+
+        default_cases = [
+            ("timePreference", ts["visualization"]["timePreference"], "global_time"),
+            ("decimalPrecision", ts["formatting"]["decimalPrecision"], "2"),
+            ("lineInterpolation", ts["chartAppearance"]["lineInterpolation"], "spline"),
+            ("lineStyle", ts["chartAppearance"]["lineStyle"], "solid"),
+            ("fillMode", ts["chartAppearance"]["fillMode"], "none"),
+            ("legend position", ts["legend"]["position"], "bottom"),
+            ("legend mode", ts["legend"]["mode"], "list"),
+            ("comparison operator", num_threshold["operator"], "above"),
+            ("threshold format", num_threshold["format"], "text"),
+        ]
+        for description, actual, expected in default_cases:
+            assert actual == expected, description
+    finally:
+        requests.delete(
+            signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard_id}"),
+            headers=headers,
+            timeout=5,
+        )
+
+
+# Every v2 enum shares the same UnmarshalJSON validation, so one panel enum
+# (timePreference) and the list-variable sort are enough to prove an explicit ""
+# is rejected; the rest behave identically.
+def test_dashboard_v2_rejects_explicit_empty_enum(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    headers = {"Authorization": f"Bearer {token}"}
+
+    bad_dashboards = [
+        # A panel scalar enum: timePreference set to "".
+        {
+            "schemaVersion": "v6",
+            "name": f"enum-{uuid.uuid4().hex[:8]}",
+            "tags": [],
+            "spec": {
+                "display": {"name": "Enum"},
+                "panels": {
+                    "p": {
+                        "kind": "Panel",
+                        "spec": {
+                            "display": {"name": "ts"},
+                            "plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {"visualization": {"timePreference": ""}}},
+                            "queries": [
+                                {
+                                    "kind": "time_series",
+                                    "spec": {
+                                        "plugin": {
+                                            "kind": "signoz/BuilderQuery",
+                                            "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]},
+                                        }
+                                    },
+                                }
+                            ],
+                        },
+                    }
+                },
+            },
+        },
+        # A variable enum: list-variable sort set to "".
+        {
+            "schemaVersion": "v6",
+            "name": f"enum-{uuid.uuid4().hex[:8]}",
+            "tags": [],
+            "spec": {
+                "display": {"name": "Enum"},
+                "variables": [
+                    {
+                        "kind": "ListVariable",
+                        "spec": {
+                            "display": {"name": "lv"},
+                            "allowAllValue": False,
+                            "allowMultiple": False,
+                            "plugin": {"kind": "signoz/DynamicVariable", "spec": {"name": "service.name", "signal": "metrics"}},
+                            "name": "lv",
+                            "sort": "",
+                        },
+                    }
+                ],
+            },
+        },
+    ]
+
+    for body in bad_dashboards:
+        response = requests.post(
+            signoz.self.host_configs["8080"].get(BASE_URL),
+            json=body,
+            headers=headers,
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+        assert response.json()["error"]["code"] == "dashboard_invalid_input", response.text

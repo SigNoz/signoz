@@ -1,4 +1,7 @@
-import type { VariableFormModel } from '../../../DashboardSettings/Variables/variableFormModel';
+import {
+	VARIABLE_TYPE_EVENT_LABEL,
+	type VariableFormModel,
+} from '../../../DashboardSettings/Variables/variableFormModel';
 import type {
 	VariableSelection,
 	VariableSelectionMap,
@@ -44,6 +47,7 @@ function VariableValueControl({
 	return (
 		<ValueSelector
 			options={options}
+			variableType={VARIABLE_TYPE_EVENT_LABEL[variable.type]}
 			multiSelect={variable.multiSelect}
 			showAllOption={variable.showAllOption}
 			loading={loading}

@@ -2,6 +2,8 @@ import { useCallback, useRef, useState } from 'react';
 import type { InputRef } from 'antd';
 // eslint-disable-next-line signoz/no-antd-components -- match V1 textbox behaviour (commit on blur/Enter, borderless)
 import { Input } from 'antd';
+import logEvent from 'api/common/logEvent';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 
 import type { VariableSelection } from '../../selectionTypes';
 import styles from '../../VariablesBar.module.scss';
@@ -30,7 +32,19 @@ function TextSelector({
 	);
 
 	const commit = useCallback(
-		(next: string): void => onChange({ value: next, allSelected: false }),
+		(next: string): void => {
+			void logEvent(
+				DashboardDetailEvents.VariableValueSelected,
+				{
+					variableType: 'textbox',
+					multiSelect: false,
+					selectionCount: next ? 1 : 0,
+				},
+				'track',
+				true,
+			);
+			onChange({ value: next, allSelected: false });
+		},
 		[onChange],
 	);
 
