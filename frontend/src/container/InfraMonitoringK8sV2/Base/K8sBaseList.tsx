@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
@@ -30,8 +30,10 @@ import {
 import { useInfraMonitoringLineClamp } from '../components';
 import { K8sEmptyState } from './K8sEmptyState';
 import { K8sExpandedRow } from './K8sExpandedRow';
+import K8sFiltersSidePanel from './K8sFiltersSidePanel';
 import K8sHeader from './K8sHeader';
 import { K8sPaginationWarning } from './K8sPaginationWarning';
+import K8sTableToolbar from './K8sTableToolbar';
 import { K8sBaseFilters } from './types';
 import { getGroupedByMeta } from './utils';
 import { K8sInstrumentationChecksCallout } from './components/K8sInstrumentationChecksCallout/K8sInstrumentationChecksCallout';
@@ -113,6 +115,7 @@ export function K8sBaseList<
 
 	const columnStorageKey = `k8s-${entity}-columns`;
 	const hiddenColumnIds = useHiddenColumnIds(columnStorageKey);
+	const [isColumnDrawerOpen, setIsColumnDrawerOpen] = useState(false);
 
 	const { containerRef, calculatedPageSize } = useCalculatedPageSize({
 		rowHeight: 42,
@@ -216,6 +219,14 @@ export function K8sBaseList<
 	const cancelQuery = useCallback((): void => {
 		void queryClient.cancelQueries({ queryKey });
 	}, [queryClient, queryKey]);
+
+	const handleOpenColumnDrawer = useCallback((): void => {
+		setIsColumnDrawerOpen(true);
+	}, []);
+
+	const handleCloseColumnDrawer = useCallback((): void => {
+		setIsColumnDrawerOpen(false);
+	}, []);
 
 	const pageData = data?.data ?? [];
 	const totalCount = data?.total || 0;
@@ -392,16 +403,19 @@ export function K8sBaseList<
 		<>
 			<K8sHeader
 				controlListPrefix={controlListPrefix}
-				leftFilters={leftFilters}
 				entity={entity}
 				showAutoRefresh={!selectedItem}
-				columns={tableColumns}
-				columnStorageKey={columnStorageKey}
 				isFetching={isFetching}
 				cancelQuery={cancelQuery}
 			/>
 			<div ref={containerRef} className={styles.tableContainer}>
 				<K8sInstrumentationChecksCallout entity={entity} />
+
+				<K8sTableToolbar
+					entity={entity}
+					leftFilters={leftFilters}
+					onOpenColumnDrawer={handleOpenColumnDrawer}
+				/>
 
 				{isError && (
 					<Typography>
@@ -446,6 +460,13 @@ export function K8sBaseList<
 					/>
 				)}
 			</div>
+
+			<K8sFiltersSidePanel
+				open={isColumnDrawerOpen}
+				columns={tableColumns}
+				storageKey={columnStorageKey}
+				onClose={handleCloseColumnDrawer}
+			/>
 		</>
 	);
 }
