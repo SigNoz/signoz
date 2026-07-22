@@ -30,12 +30,13 @@ func (p *genAIBaseConditionProvider) FilterExpression() string {
 }
 
 func (p *genAIBaseConditionProvider) FieldKeys() []*telemetrytypes.TelemetryFieldKey {
-	// Definitions come from GenAIFieldDefinitions so they can't drift from the
-	// canonical semconv keys; copy to take the address.
 	keys := make([]*telemetrytypes.TelemetryFieldKey, 0, len(p.keys))
-	for _, k := range p.keys {
-		def := telemetrytypes.GenAIFieldDefinitions[k]
-		keys = append(keys, &def)
+	for _, name := range p.keys {
+		keys = append(keys, &telemetrytypes.TelemetryFieldKey{
+			Name:         name,
+			Signal:       telemetrytypes.SignalTraces,
+			FieldContext: telemetrytypes.FieldContextAttribute,
+		})
 	}
 	return keys
 }

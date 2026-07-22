@@ -242,7 +242,7 @@ func (handler *handler) ReplaceVariables(rw http.ResponseWriter, req *http.Reque
 	errs := []error{}
 
 	for idx, item := range queryRangeRequest.CompositeQuery.Queries {
-		if item.Type == qbtypes.QueryTypeBuilder {
+		if item.Type == qbtypes.QueryTypeBuilder || item.Type == qbtypes.QueryTypeBuilderAI {
 			switch spec := item.Spec.(type) {
 			case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
 				if spec.Filter != nil && spec.Filter.Expression != "" {

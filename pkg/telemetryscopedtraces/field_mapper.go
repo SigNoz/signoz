@@ -104,5 +104,8 @@ func (r *fieldMapper) ValueFor(ctx context.Context, orgID valuer.UUID, startNs, 
 	if err != nil {
 		return "", nil, err
 	}
-	return expr, nil, nil
+	// Escape before embedding in the outer builder: a materialized column name carries
+	// `$$` (from the dotted attribute name), which go-sqlbuilder's Build would otherwise
+	// unescape to a single `$` and reference the wrong column.
+	return sqlbuilder.Escape(expr), nil, nil
 }

@@ -78,6 +78,7 @@ class BuilderQuery:
     signal: str
     name: str = "A"
     source: str | None = None
+    query_type: str = "builder_query"
     limit: int | None = None
     offset: int | None = None
     filter_expression: str | None = None
@@ -114,7 +115,7 @@ class BuilderQuery:
         if self.step_interval is not None:
             spec["stepInterval"] = self.step_interval
 
-        return {"type": "builder_query", "spec": spec}
+        return {"type": self.query_type, "spec": spec}
 
 
 @dataclass
