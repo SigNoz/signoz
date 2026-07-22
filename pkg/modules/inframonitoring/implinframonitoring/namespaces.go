@@ -9,15 +9,13 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-// buildNamespaceRecords assembles the page records. Pod phase counts come from
-// phaseCounts in both modes; every row is a group of pods, so there's no
-// per-row "current phase" concept (unlike pods/nodes list mode).
+// buildNamespaceRecords assembles the page records. Pod status counts come from
+// podStatusCounts in both modes; every row is a group of pods.
 func buildNamespaceRecords(
 	resp *qbtypes.QueryRangeResponse,
 	pageGroups []map[string]string,
 	groupBy []qbtypes.GroupByKey,
 	metadataMap map[string]map[string]string,
-	phaseCounts map[string]podPhaseCounts,
 	podStatusCounts map[string]podStatusCounts,
 	resourceCounts map[string]map[string]int64,
 ) []inframonitoringtypes.NamespaceRecord {
@@ -41,16 +39,6 @@ func buildNamespaceRecords(
 			}
 			if v, exists := metrics["D"]; exists {
 				record.NamespaceMemory = v
-			}
-		}
-
-		if phaseCountsForGroup, ok := phaseCounts[compositeKey]; ok {
-			record.PodCountsByPhase = inframonitoringtypes.PodCountsByPhase{
-				Pending:   phaseCountsForGroup.Pending,
-				Running:   phaseCountsForGroup.Running,
-				Succeeded: phaseCountsForGroup.Succeeded,
-				Failed:    phaseCountsForGroup.Failed,
-				Unknown:   phaseCountsForGroup.Unknown,
 			}
 		}
 

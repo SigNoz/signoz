@@ -2,30 +2,6 @@ package inframonitoringtypes
 
 import "github.com/SigNoz/signoz/pkg/valuer"
 
-type PodPhase struct {
-	valuer.String
-}
-
-var (
-	PodPhasePending   = PodPhase{valuer.NewString("pending")}
-	PodPhaseRunning   = PodPhase{valuer.NewString("running")}
-	PodPhaseSucceeded = PodPhase{valuer.NewString("succeeded")}
-	PodPhaseFailed    = PodPhase{valuer.NewString("failed")}
-	PodPhaseUnknown   = PodPhase{valuer.NewString("unknown")}
-	PodPhaseNoData    = PodPhase{valuer.NewString("no_data")}
-)
-
-func (PodPhase) Enum() []any {
-	return []any{
-		PodPhasePending,
-		PodPhaseRunning,
-		PodPhaseSucceeded,
-		PodPhaseFailed,
-		PodPhaseUnknown,
-		PodPhaseNoData,
-	}
-}
-
 // PodStatus is the kubectl-style pod display status, derived from
 // k8s.pod.phase + k8s.pod.status_reason + k8s.container.status.reason
 // (priority cascade: container reason > pod-level reason > phase).
@@ -89,16 +65,6 @@ func (PodStatus) Enum() []any {
 		PodStatusNoData,
 	}
 }
-
-// Numeric pod phase values emitted by the k8s.pod.phase metric
-// (source: OTel kubeletstats receiver).
-const (
-	PodPhaseNumPending   = 1
-	PodPhaseNumRunning   = 2
-	PodPhaseNumSucceeded = 3
-	PodPhaseNumFailed    = 4
-	PodPhaseNumUnknown   = 5
-)
 
 const PodNameAttrKey = "k8s.pod.name"
 
