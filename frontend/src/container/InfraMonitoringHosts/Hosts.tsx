@@ -26,8 +26,9 @@ import {
 	hostDetailsMetadataConfig,
 	hostGetEntityName,
 	hostGetSelectedItemFilters,
+	hostInitialLogFilter,
 	hostInitialEventsFilter,
-	hostInitialLogTracesFilter,
+	hostInitialTracesFilter,
 	hostWidgetInfo,
 } from './constants';
 import {
@@ -115,9 +116,15 @@ function Hosts(): JSX.Element {
 		[dotMetricsEnabled],
 	);
 
+	const getInitialLogFilters = useCallback(
+		(host: import('api/infraMonitoring/getHostLists').HostData) =>
+			hostInitialLogFilter(host),
+		[],
+	);
+
 	const getInitialLogTracesFilters = useCallback(
 		(host: import('api/infraMonitoring/getHostLists').HostData) =>
-			hostInitialLogTracesFilter(host, dotMetricsEnabled),
+			hostInitialTracesFilter(host, dotMetricsEnabled),
 		[dotMetricsEnabled],
 	);
 
@@ -181,7 +188,9 @@ function Hosts(): JSX.Element {
 				getSelectedItemFilters={getSelectedItemFilters}
 				fetchEntityData={fetchEntityData}
 				getEntityName={hostGetEntityName}
+				getInitialLogFilters={getInitialLogFilters}
 				getInitialLogTracesFilters={getInitialLogTracesFilters}
+				getInitialTracesFilters={getInitialLogTracesFilters}
 				getInitialEventsFilters={hostInitialEventsFilter}
 				metadataConfig={hostDetailsMetadataConfig}
 				entityWidgetInfo={hostWidgetInfo}
