@@ -1,9 +1,11 @@
 import { QueryClient, QueryClientProvider } from 'react-query';
-import { MemoryRouter } from 'react-router-dom';
-import { render, screen } from '@testing-library/react';
+import { MemoryRouter, useHistory } from 'react-router-dom';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
+import { INITIAL_CREATE_ALERT_STATE } from '../constants';
 import { CreateAlertProvider, useCreateAlertState } from '../index';
+import { AlertThresholdMatchType } from '../types';
 
 // The provider only needs a query with a unit + empty builder for these assertions.
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
@@ -106,5 +108,69 @@ describe('CreateAlertProvider — URL-declared prefill (issue #5291)', () => {
 		expect(screen.getByTestId('match-type')).toHaveTextContent('in_total');
 		expect(screen.getByTestId('threshold-value')).toHaveTextContent('500');
 		expect(screen.getByTestId('window-type')).toHaveTextContent('cumulative');
+	});
+});
+
+// Reproduces the #12137 regression: on the alert overview page the query builder
+// rewrites location.search after the alert loads, which used to re-run the prefill
+// effect and RESET the loaded threshold back to 0.
+function SearchMutator(): JSX.Element {
+	const routerHistory = useHistory();
+	return (
+		<button
+			type="button"
+			data-testid="mutate-search"
+			onClick={(): void =>
+				routerHistory.replace(
+					'/alerts/overview?compositeQuery=normalized&ruleId=r1',
+				)
+			}
+		>
+			change search
+		</button>
+	);
+}
+
+describe('CreateAlertProvider — edit mode ignores URL prefill', () => {
+	it('keeps loaded thresholds when the query builder rewrites location.search', () => {
+		const initialAlertState = {
+			...INITIAL_CREATE_ALERT_STATE,
+			threshold: {
+				...INITIAL_CREATE_ALERT_STATE.threshold,
+				matchType: AlertThresholdMatchType.AT_LEAST_ONCE,
+				thresholds: [
+					{
+						...INITIAL_CREATE_ALERT_STATE.threshold.thresholds[0],
+						thresholdValue: 245,
+					},
+				],
+			},
+		};
+
+		const queryClient = new QueryClient({
+			defaultOptions: { queries: { retry: false } },
+		});
+		render(
+			<MemoryRouter initialEntries={['/alerts/overview?ruleId=r1']}>
+				<QueryClientProvider client={queryClient}>
+					<CreateAlertProvider
+						initialAlertType={AlertTypes.METRICS_BASED_ALERT}
+						isEditMode
+						ruleId="r1"
+						initialAlertState={initialAlertState}
+					>
+						<Probe />
+						<SearchMutator />
+					</CreateAlertProvider>
+				</QueryClientProvider>
+			</MemoryRouter>,
+		);
+
+		expect(screen.getByTestId('threshold-value')).toHaveTextContent('245');
+
+		// Simulate the query builder normalizing the query into the URL post-load.
+		fireEvent.click(screen.getByTestId('mutate-search'));
+
+		expect(screen.getByTestId('threshold-value')).toHaveTextContent('245');
 	});
 });
