@@ -67,10 +67,6 @@ func (s *DynamicVariableSignal) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &v); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid signal: must be a string, one of `traces`, `logs`, `metrics`, or `all`")
 	}
-	if v == "" {
-		*s = DynamicVariableSignalAll
-		return nil
-	}
 	sig := DynamicVariableSignal{valuer.NewString(v)}
 	switch sig {
 	case DynamicVariableSignalTraces, DynamicVariableSignalLogs, DynamicVariableSignalMetrics, DynamicVariableSignalAll:
