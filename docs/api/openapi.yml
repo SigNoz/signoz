@@ -6992,6 +6992,7 @@ components:
     Querybuildertypesv5QueryEnvelope:
       discriminator:
         mapping:
+          builder_ai_query: '#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilderAI'
           builder_formula: '#/components/schemas/Querybuildertypesv5QueryEnvelopeFormula'
           builder_query: '#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilder'
           builder_trace_operator: '#/components/schemas/Querybuildertypesv5QueryEnvelopeTraceOperator'
@@ -7000,6 +7001,7 @@ components:
         propertyName: type
       oneOf:
       - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilder'
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilderAI'
       - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeFormula'
       - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeTraceOperator'
       - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopePromQL'
@@ -7009,6 +7011,15 @@ components:
       properties:
         spec:
           $ref: '#/components/schemas/Querybuildertypesv5BuilderQuerySpec'
+        type:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+      required:
+      - type
+      type: object
+    Querybuildertypesv5QueryEnvelopeBuilderAI:
+      properties:
+        spec:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregation'
         type:
           $ref: '#/components/schemas/Querybuildertypesv5QueryType'
       required:
@@ -7127,6 +7138,7 @@ components:
     Querybuildertypesv5QueryType:
       enum:
       - builder_query
+      - builder_ai_query
       - builder_formula
       - builder_trace_operator
       - clickhouse_sql
@@ -8604,7 +8616,6 @@ components:
     TelemetrytypesSource:
       enum:
       - meter
-      - ai
       - ""
       type: string
     TelemetrytypesTelemetryFieldKey:
