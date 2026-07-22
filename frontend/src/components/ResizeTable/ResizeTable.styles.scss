@@ -13,6 +13,27 @@
 }
 
 .resize-main-table {
+	.resize-handle {
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		inset-inline-end: -5px;
+		width: 10px;
+		cursor: col-resize;
+
+		&::after {
+			content: '';
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			width: 1px;
+			height: 1.6em;
+			background-color: var(--l3-background);
+			transform: translate(-50%, -50%);
+			transition: background-color 0.2s;
+		}
+	}
+
 	.ant-table-body {
 		.ant-table-tbody {
 			.ant-table-row {
@@ -21,32 +42,6 @@
 						white-space: unset;
 					}
 				}
-			}
-		}
-	}
-}
-
-.logs-table,
-.traces-table {
-	.resize-table {
-		.resize-handle {
-			position: absolute;
-			top: 0;
-			bottom: 0;
-			inset-inline-end: -5px;
-			width: 10px;
-			cursor: col-resize;
-
-			&::after {
-				content: '';
-				position: absolute;
-				top: 50%;
-				left: 50%;
-				transform: translate(-50%, -50%);
-				width: 1px;
-				height: 1.6em;
-				background-color: var(--l3-background);
-				transition: background-color 0.2s;
 			}
 		}
 	}

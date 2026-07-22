@@ -18,6 +18,7 @@ function WidgetGraphContainer({
 	selectedWidget,
 	isLoadingPanelData,
 	enableDrillDown = false,
+	onColumnWidthsChange,
 }: WidgetGraphContainerProps): JSX.Element {
 	if (queryResponse.data && selectedGraph === PANEL_TYPES.BAR) {
 		const sortedSeriesData = getSortedSeriesData(
@@ -65,6 +66,7 @@ function WidgetGraphContainer({
 			setRequestData={setRequestData}
 			selectedGraph={selectedGraph}
 			enableDrillDown={enableDrillDown}
+			onColumnWidthsChange={onColumnWidthsChange}
 		/>
 	);
 }
