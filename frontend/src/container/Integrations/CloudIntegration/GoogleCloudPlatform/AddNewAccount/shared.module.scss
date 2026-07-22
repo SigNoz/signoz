@@ -1,0 +1,36 @@
+.drawerSection {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-3);
+}
+
+.drawerSection > label {
+	font-size: var(--periscope-font-size-normal);
+	color: var(--l2-foreground);
+}
+
+.required {
+	color: var(--accent-cherry);
+}
+
+.fieldError {
+	font-size: var(--periscope-font-size-small);
+	color: var(--accent-cherry);
+}
+
+.drawerSurface {
+	padding: var(--spacing-7);
+	border-radius: 6px;
+	border: 1px solid var(--l2-border);
+}
+
+.drawerSurfaceHead {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: var(--spacing-5);
+}
+
+.mono {
+	font-family: var(--font-family-mono);
+}

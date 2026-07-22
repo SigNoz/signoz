@@ -16,6 +16,8 @@ export interface CopyButtonProps {
 	/** Extra class merged onto the button. */
 	className?: string;
 	testId?: string;
+	/** Called after the copy is triggered (e.g. to show a toast). */
+	onCopy?: () => void;
 }
 
 /**
@@ -29,12 +31,14 @@ function CopyButton({
 	ariaLabel = 'Copy',
 	className,
 	testId,
+	onCopy,
 }: CopyButtonProps): JSX.Element {
 	const { copyToClipboard, isCopied } = useCopyToClipboard();
 
 	const handleClick = useCallback((): void => {
 		copyToClipboard(value);
-	}, [copyToClipboard, value]);
+		onCopy?.();
+	}, [copyToClipboard, value, onCopy]);
 
 	const stackStyle: CSSProperties = { width: size, height: size };
 
@@ -61,6 +65,7 @@ CopyButton.defaultProps = {
 	ariaLabel: 'Copy',
 	className: undefined,
 	testId: undefined,
+	onCopy: undefined,
 };
 
 export default CopyButton;
