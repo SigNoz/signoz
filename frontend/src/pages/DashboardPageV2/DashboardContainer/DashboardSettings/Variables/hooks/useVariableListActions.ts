@@ -129,22 +129,30 @@ export function useVariableListActions({
 				}
 			}
 
-			setIsEditing(null);
-			setVariables(next);
 			void (async (): Promise<void> => {
 				const saved = await save(next);
-				if (!saved || formModel.type !== 'DYNAMIC') {
+				if (!saved) {
 					return;
 				}
+
+				setIsEditing(null);
+				setVariables(next);
+
+				if (formModel.type !== 'DYNAMIC') {
+					return;
+				}
+
 				const ops = buildSyncVariableToPanelsPatch(
 					dashboard.spec.panels,
 					formModel.dynamicAttribute,
 					formModel.name,
 					selectedPanelIds,
 				);
+
 				if (ops.length === 0) {
 					return;
 				}
+
 				try {
 					await patchAsync(ops);
 				} catch {
