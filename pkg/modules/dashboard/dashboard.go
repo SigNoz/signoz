@@ -61,6 +61,10 @@ type Module interface {
 
 	CloneV2(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error)
 
+	// ConvertAllV1ToV2 converts every dashboard in the org from v1 to v2 in place,
+	// overwriting the stored data and syncing tags. Temporary scaffolding for the schema migration.
+	ConvertAllV1ToV2(ctx context.Context, orgID valuer.UUID) (*dashboardtypes.V1ToV2MigrationResult, error)
+
 	GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error)
 
 	ListV2(ctx context.Context, orgID valuer.UUID, params *dashboardtypes.ListDashboardsV2Params) (*dashboardtypes.ListableDashboardV2, error)
