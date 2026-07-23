@@ -1464,9 +1464,12 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, orgID valuer.
 		}
 
 		if len(conds) != 0 {
-			// see `expr` in condition_builder.go, if key doesn't exist we don't check for value
-			// hence, this is join of conditions on resource and attributes
-			sb.Where(sb.And(conds...))
+			// OR (not AND) across the attribute and resource probes: a key lives in
+			// only one of the two maps, and the positive Contains condition now falls
+			// back to false for the map that lacks it (see `expr` in condition_builder.go).
+			// false is the identity for OR, so the absent-map probe drops out and the
+			// present-map match decides — matching the value in either context.
+			sb.Where(sb.Or(conds...))
 		}
 	}
 
