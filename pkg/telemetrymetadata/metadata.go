@@ -1469,8 +1469,8 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, orgID valuer.
 		}
 
 		if len(conds) != 0 {
-			// the key may sit in the resource or attribute map (or both), so OR
-			// the two conditions — match if either map's value contains the text.
+			// the key may sit in the resource or attribute map (or both), so OR the
+			// two conditions — match if the key's value in either map contains searchText.
 			sb.Where(sb.Or(conds...))
 		}
 	}
