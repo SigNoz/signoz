@@ -22,7 +22,7 @@ import (
 //	TEXTBOX  → TextVariable
 func (d *v1Decoder) convertV1Variables(raw any) []Variable {
 	if raw == nil {
-		return nil
+		return []Variable{}
 	}
 	rawVariablesMap, ok := raw.(map[string]any)
 	if !ok {
