@@ -9,7 +9,11 @@ import {
 	calculateEnhancedLegendConfig,
 } from 'container/PanelWrapper/enhancedLegend';
 import { Dimensions } from 'hooks/useDimensions';
-import { getLegend } from 'lib/dashboard/getQueryResults';
+import {
+	FORMULA_MISSING_DATA_LEGEND_TOOLTIP,
+	getLegend,
+	shouldShowFormulaMissingDataLegendInfo,
+} from 'lib/dashboard/getQueryResults';
 import { convertValue } from 'lib/getConvertedValue';
 import getLabelName from 'lib/getLabelName';
 import { cloneDeep, isUndefined } from 'lodash-es';
@@ -235,6 +239,16 @@ export const getUPlotChartOptions = ({
 	const seriesLabels = enhancedLegend
 		? (apiResponse?.data?.result || []).map((item) =>
 				getLegend(
+					item,
+					query || currentQuery,
+					getLabelName(item.metric || {}, item.queryName || '', item.legend || ''),
+				),
+			)
+		: [];
+
+	const formulaMissingDataLegendInfo = enhancedLegend
+		? (apiResponse?.data?.result || []).map((item) =>
+				shouldShowFormulaMissingDataLegendInfo(
 					item,
 					query || currentQuery,
 					getLabelName(item.metric || {}, item.queryName || '', item.legend || ''),
@@ -576,6 +590,18 @@ export const getUPlotChartOptions = ({
 								textSpan.className = 'legend-text';
 								textSpan.textContent = legendText;
 								fragment.appendChild(textSpan);
+
+								if (formulaMissingDataLegendInfo[index]) {
+									const infoIcon = document.createElement('span');
+									infoIcon.className = 'legend-info-icon';
+									infoIcon.textContent = 'i';
+									infoIcon.title = FORMULA_MISSING_DATA_LEGEND_TOOLTIP;
+									infoIcon.setAttribute(
+										'aria-label',
+										FORMULA_MISSING_DATA_LEGEND_TOOLTIP,
+									);
+									fragment.appendChild(infoIcon);
+								}
 
 								// Replace the children in a single operation
 								thElement.replaceChildren(fragment);

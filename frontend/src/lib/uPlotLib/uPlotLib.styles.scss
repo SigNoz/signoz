@@ -37,3 +37,20 @@
 		}
 	}
 }
+
+.legend-info-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 12px;
+	height: 12px;
+	margin-left: 6px;
+	border: 1px solid currentColor;
+	border-radius: 50%;
+	font-size: 9px;
+	font-weight: 600;
+	line-height: 1;
+	opacity: 0.75;
+	vertical-align: middle;
+	cursor: help;
+}
