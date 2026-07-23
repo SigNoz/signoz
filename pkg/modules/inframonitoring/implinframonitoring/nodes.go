@@ -42,7 +42,7 @@ func buildNodeRecords(
 			NodeCPUAllocatable:    -1,
 			NodeMemory:            -1,
 			NodeMemoryAllocatable: -1,
-			Meta:                  map[string]string{},
+			Meta:                  inframonitoringtypes.NewNodeMeta(nil),
 		}
 
 		if metrics, ok := metricsMap[compositeKey]; ok {
@@ -92,9 +92,7 @@ func buildNodeRecords(
 		}
 
 		if attrs, ok := metadataMap[compositeKey]; ok {
-			for k, v := range attrs {
-				record.Meta[k] = v
-			}
+			record.Meta = inframonitoringtypes.NewNodeMeta(attrs)
 		}
 
 		records = append(records, record)
@@ -156,7 +154,7 @@ func (m *module) getTopNodeGroups(
 
 func (m *module) getNodesTableMetadata(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableNodes) (map[string]map[string]string, error) {
 	var nonGroupByAttrs []string
-	for _, key := range nodeAttrKeysForMetadata {
+	for _, key := range inframonitoringtypes.NodeMetaKeys {
 		if !isKeyInGroupByAttrs(req.GroupBy, key) {
 			nonGroupByAttrs = append(nonGroupByAttrs, key)
 		}

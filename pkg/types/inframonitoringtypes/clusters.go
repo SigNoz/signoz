@@ -6,6 +6,8 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+
+	"github.com/swaggest/jsonschema-go"
 )
 
 type Clusters struct {
@@ -36,7 +38,7 @@ type ClusterRecord struct {
 		Jobs         int64 `json:"jobs" required:"true"`
 		StatefulSets int64 `json:"statefulSets" required:"true"`
 	} `json:"counts" required:"true"`
-	Meta map[string]string `json:"meta" required:"true"`
+	Meta ClusterMeta `json:"meta" required:"true"`
 }
 
 // PostableClusters is the request body for the v2 clusters list API.
@@ -113,4 +115,37 @@ func (req *PostableClusters) UnmarshalJSON(data []byte) error {
 	}
 	*req = PostableClusters(decoded)
 	return req.Validate()
+}
+
+// ClusterMeta carries the guaranteed cluster metadata keys as typed fields plus
+// any dynamic group-by keys in Extra.
+type ClusterMeta struct {
+	ClusterName string            `json:"k8s.cluster.name" required:"true"`
+	Extra       map[string]string `json:"-"`
+}
+
+var ClusterMetaKeys = getMetaKeys(&ClusterMeta{})
+
+func NewClusterMeta(attrs map[string]string) ClusterMeta {
+	var m ClusterMeta
+	m.Extra = populateMeta(&m, attrs)
+	return m
+}
+
+func (m ClusterMeta) MarshalJSON() ([]byte, error) {
+	return marshalMeta(&m, m.Extra)
+}
+
+func (m *ClusterMeta) UnmarshalJSON(data []byte) error {
+	raw, err := splitMeta(data)
+	if err != nil {
+		return err
+	}
+	m.Extra = populateMeta(m, raw)
+	return nil
+}
+
+func (ClusterMeta) PrepareJSONSchema(s *jsonschema.Schema) error {
+	addStringAdditionalProps(s)
+	return nil
 }

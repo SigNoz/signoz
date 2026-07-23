@@ -38,7 +38,7 @@ func buildStatefulSetRecords(
 			StatefulSetMemoryLimit:   -1,
 			DesiredPods:              -1,
 			CurrentPods:              -1,
-			Meta:                     map[string]string{},
+			Meta:                     inframonitoringtypes.NewStatefulSetMeta(nil),
 		}
 
 		if metrics, ok := metricsMap[compositeKey]; ok {
@@ -83,9 +83,7 @@ func buildStatefulSetRecords(
 		}
 
 		if attrs, ok := metadataMap[compositeKey]; ok {
-			for k, v := range attrs {
-				record.Meta[k] = v
-			}
+			record.Meta = inframonitoringtypes.NewStatefulSetMeta(attrs)
 		}
 
 		records = append(records, record)
@@ -147,7 +145,7 @@ func (m *module) getTopStatefulSetGroups(
 
 func (m *module) getStatefulSetsTableMetadata(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableStatefulSets) (map[string]map[string]string, error) {
 	var nonGroupByAttrs []string
-	for _, key := range statefulSetAttrKeysForMetadata {
+	for _, key := range inframonitoringtypes.StatefulSetMetaKeys {
 		if !isKeyInGroupByAttrs(req.GroupBy, key) {
 			nonGroupByAttrs = append(nonGroupByAttrs, key)
 		}

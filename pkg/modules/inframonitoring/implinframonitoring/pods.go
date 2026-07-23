@@ -49,7 +49,7 @@ func buildPodRecords(
 			PodMemoryRequest: -1,
 			PodMemoryLimit:   -1,
 			PodAge:           -1,
-			Meta:             map[string]string{},
+			Meta:             inframonitoringtypes.NewPodMeta(nil),
 		}
 
 		if metrics, ok := metricsMap[compositeKey]; ok {
@@ -163,9 +163,7 @@ func buildPodRecords(
 					}
 				}
 			}
-			for k, v := range attrs {
-				record.Meta[k] = v
-			}
+			record.Meta = inframonitoringtypes.NewPodMeta(attrs)
 		}
 
 		records = append(records, record)
@@ -227,7 +225,7 @@ func (m *module) getTopPodGroups(
 
 func (m *module) getPodsTableMetadata(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostablePods) (map[string]map[string]string, error) {
 	var nonGroupByAttrs []string
-	for _, key := range podAttrKeysForMetadata {
+	for _, key := range inframonitoringtypes.PodMetaKeys {
 		if !isKeyInGroupByAttrs(req.GroupBy, key) {
 			nonGroupByAttrs = append(nonGroupByAttrs, key)
 		}

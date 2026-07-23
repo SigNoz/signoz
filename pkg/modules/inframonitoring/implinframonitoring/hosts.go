@@ -216,7 +216,7 @@ func buildHostRecords(
 			Wait:              -1,
 			Load15:            -1,
 			DiskUsage:         -1,
-			Meta:              map[string]string{},
+			Meta:              inframonitoringtypes.NewHostMeta(nil),
 		}
 
 		if metrics, ok := metricsMap[compositeKey]; ok {
@@ -238,9 +238,7 @@ func buildHostRecords(
 		}
 
 		if attrs, ok := metadataMap[compositeKey]; ok {
-			for k, v := range attrs {
-				record.Meta[k] = v
-			}
+			record.Meta = inframonitoringtypes.NewHostMeta(attrs)
 		}
 
 		records = append(records, record)
@@ -333,7 +331,7 @@ func (m *module) applyHostsActiveStatusFilter(req *inframonitoringtypes.Postable
 
 func (m *module) getHostsTableMetadata(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableHosts) (map[string]map[string]string, error) {
 	var nonGroupByAttrs []string
-	for _, key := range hostAttrKeysForMetadata {
+	for _, key := range inframonitoringtypes.HostMetaKeys {
 		if !isKeyInGroupByAttrs(req.GroupBy, key) {
 			nonGroupByAttrs = append(nonGroupByAttrs, key)
 		}

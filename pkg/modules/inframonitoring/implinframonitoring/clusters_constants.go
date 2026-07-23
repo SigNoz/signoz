@@ -31,10 +31,6 @@ var clustersTableMetricNamesList = []string{
 	"k8s.container.status.reason",
 }
 
-var clusterAttrKeysForMetadata = []string{
-	"k8s.cluster.name",
-}
-
 // clusterCountAttrKeys are the resource attributes whose distinct values are
 // counted per cluster. Node name is read from the node metric universe, while
 // namespace + workload names come from the pod metric universe — both unioned

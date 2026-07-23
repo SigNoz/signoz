@@ -6,6 +6,8 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+
+	"github.com/swaggest/jsonschema-go"
 )
 
 type Nodes struct {
@@ -33,7 +35,7 @@ type NodeRecord struct {
 	NodeCPUAllocatable    float64               `json:"nodeCPUAllocatable" required:"true"`
 	NodeMemory            float64               `json:"nodeMemory" required:"true"`
 	NodeMemoryAllocatable float64               `json:"nodeMemoryAllocatable" required:"true"`
-	Meta                  map[string]string     `json:"meta" required:"true"`
+	Meta                  NodeMeta              `json:"meta" required:"true"`
 }
 
 // PostableNodes is the request body for the v2 nodes list API.
@@ -110,4 +112,39 @@ func (req *PostableNodes) UnmarshalJSON(data []byte) error {
 	}
 	*req = PostableNodes(decoded)
 	return req.Validate()
+}
+
+// NodeMeta carries the guaranteed node metadata keys as typed fields plus any
+// dynamic group-by keys in Extra.
+type NodeMeta struct {
+	NodeUID     string            `json:"k8s.node.uid" required:"true"`
+	ClusterName string            `json:"k8s.cluster.name" required:"true"`
+	NodeName    string            `json:"k8s.node.name" required:"true"`
+	Extra       map[string]string `json:"-"`
+}
+
+var NodeMetaKeys = getMetaKeys(&NodeMeta{})
+
+func NewNodeMeta(attrs map[string]string) NodeMeta {
+	var m NodeMeta
+	m.Extra = populateMeta(&m, attrs)
+	return m
+}
+
+func (m NodeMeta) MarshalJSON() ([]byte, error) {
+	return marshalMeta(&m, m.Extra)
+}
+
+func (m *NodeMeta) UnmarshalJSON(data []byte) error {
+	raw, err := splitMeta(data)
+	if err != nil {
+		return err
+	}
+	m.Extra = populateMeta(m, raw)
+	return nil
+}
+
+func (NodeMeta) PrepareJSONSchema(s *jsonschema.Schema) error {
+	addStringAdditionalProps(s)
+	return nil
 }

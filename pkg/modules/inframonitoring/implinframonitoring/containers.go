@@ -48,7 +48,7 @@ func buildContainerRecords(
 			Memory:                   -1,
 			MemoryRequestUtilization: -1,
 			MemoryLimitUtilization:   -1,
-			Meta:                     map[string]string{},
+			Meta:                     inframonitoringtypes.NewContainerMeta(nil),
 		}
 
 		if metrics, ok := metricsMap[compositeKey]; ok {
@@ -128,9 +128,7 @@ func buildContainerRecords(
 		}
 
 		if attrs, ok := metadataMap[compositeKey]; ok {
-			for k, v := range attrs {
-				record.Meta[k] = v
-			}
+			record.Meta = inframonitoringtypes.NewContainerMeta(attrs)
 		}
 
 		records = append(records, record)
@@ -192,7 +190,7 @@ func (m *module) getTopContainerGroups(
 
 func (m *module) getContainersTableMetadata(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableContainers) (map[string]map[string]string, error) {
 	var nonGroupByAttrs []string
-	for _, key := range containerAttrKeysForMetadata {
+	for _, key := range inframonitoringtypes.ContainerMetaKeys {
 		if !isKeyInGroupByAttrs(req.GroupBy, key) {
 			nonGroupByAttrs = append(nonGroupByAttrs, key)
 		}

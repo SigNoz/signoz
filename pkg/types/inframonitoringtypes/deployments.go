@@ -6,6 +6,8 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+
+	"github.com/swaggest/jsonschema-go"
 )
 
 type Deployments struct {
@@ -28,7 +30,7 @@ type DeploymentRecord struct {
 	AvailablePods           int               `json:"availablePods" required:"true"`
 	PodCountsByPhase        PodCountsByPhase  `json:"podCountsByPhase" required:"true"`
 	PodCountsByStatus       PodCountsByStatus `json:"podCountsByStatus" required:"true"`
-	Meta                    map[string]string `json:"meta" required:"true"`
+	Meta                    DeploymentMeta    `json:"meta" required:"true"`
 }
 
 // PostableDeployments is the request body for the v2 deployments list API.
@@ -105,4 +107,39 @@ func (req *PostableDeployments) UnmarshalJSON(data []byte) error {
 	}
 	*req = PostableDeployments(decoded)
 	return req.Validate()
+}
+
+// DeploymentMeta carries the guaranteed deployment metadata keys as typed fields
+// plus any dynamic group-by keys in Extra.
+type DeploymentMeta struct {
+	DeploymentName string            `json:"k8s.deployment.name" required:"true"`
+	NamespaceName  string            `json:"k8s.namespace.name" required:"true"`
+	ClusterName    string            `json:"k8s.cluster.name" required:"true"`
+	Extra          map[string]string `json:"-"`
+}
+
+var DeploymentMetaKeys = getMetaKeys(&DeploymentMeta{})
+
+func NewDeploymentMeta(attrs map[string]string) DeploymentMeta {
+	var m DeploymentMeta
+	m.Extra = populateMeta(&m, attrs)
+	return m
+}
+
+func (m DeploymentMeta) MarshalJSON() ([]byte, error) {
+	return marshalMeta(&m, m.Extra)
+}
+
+func (m *DeploymentMeta) UnmarshalJSON(data []byte) error {
+	raw, err := splitMeta(data)
+	if err != nil {
+		return err
+	}
+	m.Extra = populateMeta(m, raw)
+	return nil
+}
+
+func (DeploymentMeta) PrepareJSONSchema(s *jsonschema.Schema) error {
+	addStringAdditionalProps(s)
+	return nil
 }

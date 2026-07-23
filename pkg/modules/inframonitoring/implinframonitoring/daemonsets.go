@@ -40,7 +40,7 @@ func buildDaemonSetRecords(
 			CurrentNodes:           -1,
 			ReadyNodes:             -1,
 			MisscheduledNodes:      -1,
-			Meta:                   map[string]string{},
+			Meta:                   inframonitoringtypes.NewDaemonSetMeta(nil),
 		}
 
 		if metrics, ok := metricsMap[compositeKey]; ok {
@@ -91,9 +91,7 @@ func buildDaemonSetRecords(
 		}
 
 		if attrs, ok := metadataMap[compositeKey]; ok {
-			for k, v := range attrs {
-				record.Meta[k] = v
-			}
+			record.Meta = inframonitoringtypes.NewDaemonSetMeta(attrs)
 		}
 
 		records = append(records, record)
@@ -155,7 +153,7 @@ func (m *module) getTopDaemonSetGroups(
 
 func (m *module) getDaemonSetsTableMetadata(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableDaemonSets) (map[string]map[string]string, error) {
 	var nonGroupByAttrs []string
-	for _, key := range daemonSetAttrKeysForMetadata {
+	for _, key := range inframonitoringtypes.DaemonSetMetaKeys {
 		if !isKeyInGroupByAttrs(req.GroupBy, key) {
 			nonGroupByAttrs = append(nonGroupByAttrs, key)
 		}
