@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import logEvent from 'api/common/logEvent';
 import { commaValuesParser } from 'lib/dashboardVariables/customCommaValuesParser';
 import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
@@ -92,6 +92,36 @@ export function useVariableForm({
 		[rawPreview, model.sort],
 	);
 
+	// QUERY: drop a now-invalid default when the user re-runs the query and the
+	// returned values actually change. The query preview is populated only by the
+	// manual "Test Run" (never on edit-open), so keying off `rawPreview` here is
+	// effectively "on run"; the signature guard skips a re-run that yields the same
+	// values so a still-valid default is left untouched. DYNAMIC/CUSTOM resets are
+	// handled in their change handlers instead (see below).
+	const lastQueryPreviewRef = useRef<string | null>(null);
+	useEffect(() => {
+		lastQueryPreviewRef.current = null;
+	}, [initial]);
+
+	useEffect(() => {
+		if (model.type !== 'QUERY' || rawPreview.length === 0) {
+			return;
+		}
+		const optionValues = rawPreview.map(String);
+		const signature = JSON.stringify(optionValues);
+		if (signature === lastQueryPreviewRef.current) {
+			return;
+		}
+
+		lastQueryPreviewRef.current = signature;
+
+		setDefaultValue((current) =>
+			current && !optionValues.includes(current)
+				? (optionValues[0] ?? '')
+				: current,
+		);
+	}, [rawPreview, model.type]);
+
 	const existingNames = useMemo(() => siblings.map((v) => v.name), [siblings]);
 
 	const existingDynamicAttributes = useMemo(
@@ -140,12 +170,30 @@ export function useVariableForm({
 
 	const onCustomChange = (value: string): void => {
 		set({ customValue: value });
-		setRawPreview(commaValuesParser(value));
+		const parsed = commaValuesParser(value);
+		setRawPreview(parsed);
+
+		const optionValues = parsed.map(String);
+		setDefaultValue((current) =>
+			current && !optionValues.includes(current)
+				? (optionValues[0] ?? '')
+				: current,
+		);
 	};
 
 	// In add mode, mirror the selected attribute into the name until the user
 	// edits the name themselves (matches the V1 dynamic-variable behaviour).
 	const onDynamicChange = (patch: Partial<VariableFormModel>): void => {
+		const attributeChanged =
+			patch.dynamicAttribute !== undefined &&
+			patch.dynamicAttribute !== model.dynamicAttribute;
+		const signalChanged =
+			patch.dynamicSignal !== undefined &&
+			patch.dynamicSignal !== model.dynamicSignal;
+		if (attributeChanged || signalChanged) {
+			setDefaultValue('');
+		}
+
 		if (isNew && !nameTouched && patch.dynamicAttribute) {
 			set({ ...patch, name: patch.dynamicAttribute });
 		} else {
