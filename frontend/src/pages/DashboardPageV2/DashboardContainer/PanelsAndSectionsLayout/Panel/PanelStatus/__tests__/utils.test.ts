@@ -1,6 +1,8 @@
-import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import type {
+	Querybuildertypesv5QueryWarnDataDTO as WarningDTO,
+	RenderErrorResponseDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import type { AxiosError } from 'axios';
-import type { Querybuildertypesv5QueryWarnDataDTO as WarningDTO } from 'api/generated/services/sigNoz.schemas';
 import { StatusCodes } from 'http-status-codes';
 
 import { panelStatusFromError, panelStatusFromWarning } from '../utils';
@@ -44,7 +46,7 @@ describe('panelStatusFromError', () => {
 
 	it('falls back to the error message when there is no structured body', () => {
 		expect(panelStatusFromError(new Error('boom'))).toStrictEqual({
-			code: 'unknown_error',
+			code: 'UPSTREAM_UNAVAILABLE',
 			message: 'boom',
 			docsUrl: undefined,
 			messages: [],
