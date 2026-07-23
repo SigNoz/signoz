@@ -1,6 +1,8 @@
 import CreateAlertChannels from 'container/CreateAlertChannels';
 import { ChannelType } from 'container/CreateAlertChannels/config';
 import {
+	googleChatTextDefaultValue,
+	googleChatTitleDefaultValue,
 	opsGenieDescriptionDefaultValue,
 	opsGenieMessageDefaultValue,
 	opsGeniePriorityDefaultValue,
@@ -330,6 +332,43 @@ describe('Create Alert Channel (Normal User)', () => {
 				expect(
 					screen.getByRole('button', { name: 'button_test_channel' }),
 				).toBeDisabled();
+			});
+		});
+		describe('Google Chat', () => {
+			beforeEach(() => {
+				render(<CreateAlertChannels preType={ChannelType.GoogleChat} />);
+			});
+
+			it('Should check if the selected item in the type dropdown has text "Google Chat"', () => {
+				expect(screen.getByText('Google Chat')).toBeInTheDocument();
+			});
+			it('Should check if Webhook URL label and input are displayed properly', () => {
+				testLabelInputAndHelpValue({
+					labelText: 'field_webhook_url',
+					testId: 'webhook-url-textbox',
+				});
+			});
+			it('Should check if Title label and text area are displayed properly', () => {
+				testLabelInputAndHelpValue({
+					labelText: 'field_googlechat_title',
+					testId: 'title-textarea',
+				});
+			});
+			it('Should check if Title contains template', () => {
+				const titleTextArea = screen.getByTestId('title-textarea');
+
+				expect(titleTextArea).toHaveTextContent(googleChatTitleDefaultValue);
+			});
+			it('Should check if Description label and text area are displayed properly', () => {
+				testLabelInputAndHelpValue({
+					labelText: 'field_googlechat_description',
+					testId: 'description-textarea',
+				});
+			});
+			it('Should check if Description contains template', () => {
+				const descriptionTextArea = screen.getByTestId('description-textarea');
+
+				expect(descriptionTextArea).toHaveTextContent(googleChatTextDefaultValue);
 			});
 		});
 	});

@@ -69,3 +69,53 @@ func TestNewReceiverGoogleChatPreservesUserOverrides(t *testing.T) {
 	assert.Equal(t, "Y", got.Text)
 	assert.True(t, got.SendResolved())
 }
+
+// TestNewReceiverGoogleChatValidation tests webhook URL validation.
+func TestNewReceiverGoogleChatValidation(t *testing.T) {
+	testCases := []struct {
+		name        string
+		input       string
+		expectError bool
+		errorMsg    string
+	}{
+		{
+			name:        "valid webhook URL",
+			input:       `{"name":"googlechat","googlechat_configs":[{"webhook_url":"https://chat.googleapis.com/v1/spaces/test/messages"}]}`,
+			expectError: false,
+		},
+		{
+			name:        "missing webhook URL",
+			input:       `{"name":"googlechat","googlechat_configs":[{"title":"Test"}]}`,
+			expectError: true,
+			errorMsg:    "webhook_url is required",
+		},
+		{
+			name:        "non-https webhook URL",
+			input:       `{"name":"googlechat","googlechat_configs":[{"webhook_url":"http://chat.googleapis.com/v1/spaces/test/messages"}]}`,
+			expectError: true,
+			errorMsg:    "must use https",
+		},
+		{
+			name:        "invalid domain",
+			input:       `{"name":"googlechat","googlechat_configs":[{"webhook_url":"https://example.com/webhook"}]}`,
+			expectError: true,
+			errorMsg:    "must use chat.googleapis.com",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			receiver, err := NewReceiver(tc.input)
+			if tc.expectError {
+				require.Error(t, err)
+				if tc.errorMsg != "" {
+					assert.Contains(t, err.Error(), tc.errorMsg)
+				}
+				assert.Nil(t, receiver)
+			} else {
+				require.NoError(t, err)
+				assert.NotNil(t, receiver)
+			}
+		})
+	}
+}

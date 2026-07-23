@@ -2,12 +2,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Form } from 'antd';
 import createEmail from 'api/channels/createEmail';
+import createGoogleChat from 'api/channels/createGoogleChat';
 import createMsTeamsApi from 'api/channels/createMsTeams';
 import createOpsgenie from 'api/channels/createOpsgenie';
 import createPagerApi from 'api/channels/createPager';
 import createSlackApi from 'api/channels/createSlack';
 import createWebhookApi from 'api/channels/createWebhook';
 import testEmail from 'api/channels/testEmail';
+import testGoogleChat from 'api/channels/testGoogleChat';
 import testMsTeamsApi from 'api/channels/testMsTeams';
 import testOpsGenie from 'api/channels/testOpsgenie';
 import testPagerApi from 'api/channels/testPager';
@@ -24,6 +26,7 @@ import APIError from 'types/api/error';
 import {
 	ChannelType,
 	EmailChannel,
+	GoogleChatChannel,
 	MsTeamsChannel,
 	OpsgenieChannel,
 	PagerChannel,
@@ -33,6 +36,7 @@ import {
 } from './config';
 import {
 	EmailInitialConfig,
+	GoogleChatInitialConfig,
 	OpsgenieInitialConfig,
 	PagerInitialConfig,
 } from './defaults';
@@ -59,6 +63,7 @@ function CreateAlertChannels({
 				WebhookChannel &
 				PagerChannel &
 				MsTeamsChannel &
+				GoogleChatChannel &
 				OpsgenieChannel &
 				EmailChannel
 		>
@@ -119,6 +124,14 @@ function CreateAlertChannels({
 				setSelectedConfig((selectedConfig) => ({
 					...selectedConfig,
 					...EmailInitialConfig,
+				}));
+			}
+
+			// reset config to Google Chat defaults
+			if (value === ChannelType.GoogleChat && currentType !== value) {
+				setSelectedConfig((selectedConfig) => ({
+					...selectedConfig,
+					...GoogleChatInitialConfig,
 				}));
 			}
 		},
@@ -406,7 +419,49 @@ function CreateAlertChannels({
 		prepareMsTeamsRequest,
 		showErrorModal,
 	]);
+	const prepareGoogleChatRequest = useCallback(
+		() => ({
+			webhook_url: selectedConfig?.webhook_url || '',
+			name: selectedConfig?.name || '',
+			send_resolved: selectedConfig?.send_resolved || false,
+			text: selectedConfig?.text || '',
+			title: selectedConfig?.title || '',
+		}),
+		[selectedConfig],
+	);
 
+	const onGoogleChatHandler = useCallback(async () => {
+		if (!selectedConfig.webhook_url) {
+			notifications.error({
+				message: 'Error',
+				description: t('googlechat_webhook_url_required'),
+			});
+			return;
+		}
+
+		setSavingState(true);
+
+		try {
+			await createGoogleChat(prepareGoogleChatRequest());
+			notifications.success({
+				message: 'Success',
+				description: t('channel_creation_done'),
+			});
+			history.replace(ROUTES.ALL_CHANNELS);
+			return { status: 'success', statusMessage: t('channel_creation_done') };
+		} catch (error) {
+			showErrorModal(error as APIError);
+			return { status: 'failed', statusMessage: t('channel_creation_failed') };
+		} finally {
+			setSavingState(false);
+		}
+	}, [
+		selectedConfig.webhook_url,
+		notifications,
+		t,
+		prepareGoogleChatRequest,
+		showErrorModal,
+	]);
 	const onSaveHandler = useCallback(
 		async (value: ChannelType) => {
 			if (!selectedConfig.name) {
@@ -424,6 +479,7 @@ function CreateAlertChannels({
 				[ChannelType.Opsgenie]: onOpsgenieHandler,
 				[ChannelType.MsTeams]: onMsTeamsHandler,
 				[ChannelType.Email]: onEmailHandler,
+				[ChannelType.GoogleChat]: onGoogleChatHandler,
 			};
 
 			if (isChannelType(value)) {
@@ -455,6 +511,7 @@ function CreateAlertChannels({
 			onOpsgenieHandler,
 			onMsTeamsHandler,
 			onEmailHandler,
+			onGoogleChatHandler,
 			notifications,
 			t,
 		],
@@ -491,6 +548,10 @@ function CreateAlertChannels({
 					case ChannelType.Email:
 						request = prepareEmailRequest();
 						await testEmail(request);
+						break;
+					case ChannelType.GoogleChat:
+						request = prepareGoogleChatRequest();
+						await testGoogleChat(request);
 						break;
 					default:
 						notifications.error({
@@ -534,6 +595,7 @@ function CreateAlertChannels({
 			prepareOpsgenieRequest,
 			prepareSlackRequest,
 			prepareMsTeamsRequest,
+			prepareGoogleChatRequest,
 			prepareEmailRequest,
 			notifications,
 		],
@@ -545,6 +607,23 @@ function CreateAlertChannels({
 		},
 		[performChannelTest],
 	);
+
+	const getInitialConfigForType = (): Partial<
+		PagerChannel & OpsgenieChannel & EmailChannel & GoogleChatChannel
+	> => {
+		switch (type) {
+			case ChannelType.Pagerduty:
+				return PagerInitialConfig;
+			case ChannelType.Opsgenie:
+				return OpsgenieInitialConfig;
+			case ChannelType.Email:
+				return EmailInitialConfig;
+			case ChannelType.GoogleChat:
+				return GoogleChatInitialConfig;
+			default:
+				return {};
+		}
+	};
 
 	return (
 		<div className="create-alert-channels-container">
@@ -562,9 +641,7 @@ function CreateAlertChannels({
 					initialValue: {
 						type,
 						...selectedConfig,
-						...PagerInitialConfig,
-						...OpsgenieInitialConfig,
-						...EmailInitialConfig,
+						...getInitialConfigForType(),
 					},
 				}}
 			/>
