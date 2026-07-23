@@ -54,11 +54,18 @@ function VariableImpactDialog({
 		useVariableImpactState(usages, open);
 
 	const isRename = mode === 'rename';
+	const isDelete = mode === 'delete';
 	const count = usages.length;
 	const plural = count === 1 ? '' : 's';
-	const intro = isRename
-		? `$${variableName} is used in ${count} place${plural}. Review the updated queries before renaming to $${newName}.`
-		: `$${variableName} is used in ${count} place${plural}. Edit or remove each usage before deleting.`;
+	let intro: string;
+	if (isRename) {
+		intro = `$${variableName} is used in ${count} place${plural}. Review the updated queries before renaming to $${newName}.`;
+	} else if (isDelete) {
+		intro = `$${variableName} is used in ${count} place${plural}. Edit or remove each usage before deleting.`;
+	} else {
+		intro = `Applying $${variableName} can update upto ${count} panel quer${count === 1 ? 'y' : 'ies'}. Review the changes before applying.`;
+	}
+	const confirmLabel = isRename ? 'Rename' : isDelete ? 'Delete' : 'Apply';
 
 	const footer = (
 		<div className={styles.footer}>
@@ -73,13 +80,13 @@ function VariableImpactDialog({
 			</Button>
 			<Button
 				variant="solid"
-				color={isRename ? 'primary' : 'destructive'}
+				color={isDelete ? 'destructive' : 'primary'}
 				loading={isLoading}
 				onClick={(): void => onConfirm(resolvedUsages)}
 				testId="variable-impact-confirm"
 			>
 				<Check size={12} />
-				{isRename ? 'Rename' : 'Delete'}
+				{confirmLabel}
 			</Button>
 		</div>
 	);
@@ -92,7 +99,14 @@ function VariableImpactDialog({
 					onClose();
 				}
 			}}
-			title={isRename ? `Rename $${variableName}` : `Delete $${variableName}`}
+			title={
+				// eslint-disable-next-line no-nested-ternary
+				isRename
+					? `Rename $${variableName}`
+					: isDelete
+						? `Delete $${variableName}`
+						: `Apply $${variableName} to panels`
+			}
 			width="wide"
 			showCloseButton={false}
 			// Lift above the settings drawer (z ~1000); overlay off (it would only half-dim).
@@ -104,7 +118,9 @@ function VariableImpactDialog({
 				<Typography.Text className={styles.intro}>{intro}</Typography.Text>
 				<div className={styles.rows}>
 					{rows.map((row) => {
+						// Only warn on delete: an apply result is meant to reference the variable.
 						const stillReferences =
+							isDelete &&
 							row.included &&
 							textContainsVariableReference(row.resultingText, variableName);
 						return (

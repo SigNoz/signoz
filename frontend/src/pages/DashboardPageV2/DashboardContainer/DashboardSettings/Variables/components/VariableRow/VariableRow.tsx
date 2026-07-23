@@ -22,6 +22,8 @@ interface VariableRowProps {
 	onCancelDelete: () => void;
 	/** Apply this variable's filter to all panels. Dynamic variables only. */
 	onApplyToAll: (index: number) => void;
+	/** True when this dynamic variable is already applied to every panel. */
+	isAppliedToAll: boolean;
 }
 
 /** A single draggable variable row in the two-column (name / description) table. */
@@ -35,6 +37,7 @@ function VariableRow({
 	onConfirmDelete,
 	onCancelDelete,
 	onApplyToAll,
+	isAppliedToAll,
 }: VariableRowProps): JSX.Element {
 	const {
 		attributes,
@@ -121,12 +124,17 @@ function VariableRow({
 								{variable.type === 'DYNAMIC' ? (
 									<TooltipSimple
 										side="top"
-										title="Add this variable as a filter to every panel"
+										title={
+											isAppliedToAll
+												? 'Already applied to all panels'
+												: 'Add this variable as a filter to every panel'
+										}
 									>
 										<Button
 											variant="ghost"
 											color="secondary"
 											size="sm"
+											disabled={isAppliedToAll}
 											className={styles.applyAllButton}
 											onClick={(): void => onApplyToAll(index)}
 											testId={`variable-apply-all-${variable.name}`}
