@@ -280,12 +280,15 @@ func (d *v1Decoder) buildV2GridLayout(row *rowInfo, items []map[string]any) Layo
 	}
 
 	for _, item := range items {
+		id := d.readString(item, "i")
 		spec.Items = append(spec.Items, dashboard.GridItem{
-			X:       d.readInt(item, "x"),
-			Y:       d.readInt(item, "y"),
-			Width:   d.readInt(item, "w"),
-			Height:  d.readInt(item, "h"),
-			Content: &common.JSONRef{Ref: panelRefPrefix + d.readString(item, "i")},
+			X:      d.readInt(item, "x"),
+			Y:      d.readInt(item, "y"),
+			Width:  d.readInt(item, "w"),
+			Height: d.readInt(item, "h"),
+			// Path mirrors what JSONRef.validate derives on decode (each "/segment"
+			// of the ref; the leading "#" captures nothing).
+			Content: &common.JSONRef{Ref: panelRefPrefix + id, Path: []string{"spec", "panels", id}},
 		})
 	}
 	compactGridItemsVertically(spec.Items)
