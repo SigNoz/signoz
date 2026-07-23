@@ -38,11 +38,15 @@ func (c *Client) postJSON(ctx context.Context, path string, request any, respons
 }
 
 func (c *Client) requestJSON(ctx context.Context, method, path string, request any, response any) error {
-	body, err := json.Marshal(request)
-	if err != nil {
-		return fmt.Errorf("encode SigNoz request: %w", err)
+	var bodyReader io.Reader = http.NoBody
+	if request != nil {
+		body, err := json.Marshal(request)
+		if err != nil {
+			return fmt.Errorf("encode SigNoz request: %w", err)
+		}
+		bodyReader = bytes.NewReader(body)
 	}
-	req, err := http.NewRequestWithContext(ctx, method, c.BaseURL+path, bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(ctx, method, c.BaseURL+path, bodyReader)
 	if err != nil {
 		return fmt.Errorf("create SigNoz request: %w", err)
 	}
