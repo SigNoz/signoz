@@ -26,7 +26,7 @@
             "kind": "signoz/DynamicVariable",
             "spec": {
               "name": "azuremonitor.subscription_id",
-              "signal": ""
+              "signal": "all"
             }
           },
           "name": "azuremonitor.subscription_id"
@@ -48,7 +48,7 @@
             "kind": "signoz/DynamicVariable",
             "spec": {
               "name": "name",
-              "signal": ""
+              "signal": "all"
             }
           },
           "name": "name"
@@ -145,7 +145,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "19451248-758a-4de3-b6bc-82db00621f0b": {
@@ -231,7 +232,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "2f29fe54-f471-4e8b-9e11-e23ac35fa605": {
@@ -323,7 +325,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "361ea35c-46f8-47e7-9830-a6fb4be87d13": {
@@ -409,7 +412,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "4217a6c7-b27a-4d45-83e2-884624edf0f8": {
@@ -501,7 +505,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "b9b330e4-2522-483b-bd8d-33af321db838": {
@@ -587,7 +592,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       }
     },
@@ -655,6 +661,7 @@
       }
     ],
     "duration": "",
-    "refreshInterval": ""
+    "refreshInterval": "",
+    "links": []
   }
 }

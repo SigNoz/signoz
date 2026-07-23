@@ -26,7 +26,7 @@
             "kind": "signoz/DynamicVariable",
             "spec": {
               "name": "azuremonitor.subscription_id",
-              "signal": ""
+              "signal": "all"
             }
           },
           "name": "azuremonitor.subscription_id"
@@ -48,7 +48,7 @@
             "kind": "signoz/DynamicVariable",
             "spec": {
               "name": "name",
-              "signal": ""
+              "signal": "all"
             }
           },
           "name": "name"
@@ -140,7 +140,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "0562f446-ec2c-494d-a826-97e859afb12a": {
@@ -231,7 +232,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "096cd019-c069-44da-b5a6-983349cb3f9d": {
@@ -322,7 +324,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "0d00dc4c-6e0a-40cf-8c6e-c431fd53d77d": {
@@ -413,7 +416,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "175b3ff4-027b-481c-bf99-e815b57a59d7": {
@@ -498,7 +502,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "187b5e6b-684d-477d-8451-ed8e6564aade": {
@@ -583,7 +588,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "3563fdb3-431c-4191-925b-752f3449c51e": {
@@ -668,7 +674,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "5d27fb6a-36e7-45fb-875c-a129b0c01e33": {
@@ -759,7 +766,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "77676a12-bb4b-49aa-a19f-75ccf91640dc": {
@@ -844,7 +852,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "a241ba7b-0a9c-402c-afd7-dcdef8209775": {
@@ -935,7 +944,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "bc525de2-6e94-47f7-8dc6-6c3b994c55d1": {
@@ -1022,7 +1032,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "bef9ae79-3ca7-4ff3-bc75-a9abbe69ba0d": {
@@ -1113,7 +1124,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "c5a2e85d-4fcf-485b-b401-cb20ba337887": {
@@ -1198,7 +1210,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "cc89f66b-6793-408e-ac96-48fff7b2c5cd": {
@@ -1285,7 +1298,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       }
     },
@@ -1483,6 +1497,7 @@
       }
     ],
     "duration": "",
-    "refreshInterval": ""
+    "refreshInterval": "",
+    "links": []
   }
 }

@@ -161,7 +161,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "w-avgwsconnectionduration": {
@@ -247,7 +248,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "w-bytehitratio": {
@@ -333,7 +335,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "w-originhealthpercentage": {
@@ -419,7 +422,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "w-originlatency": {
@@ -505,7 +509,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "w-originrequestcount": {
@@ -591,7 +596,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "w-percentage4xx": {
@@ -677,7 +683,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "w-percentage5xx": {
@@ -763,7 +770,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "w-requestcount": {
@@ -849,7 +857,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "w-requestsize": {
@@ -935,7 +944,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "w-responsesize": {
@@ -1021,7 +1031,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "w-totallatency": {
@@ -1107,7 +1118,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "w-wafcaptcharequestcount": {
@@ -1193,7 +1205,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "w-wafjsrequestcount": {
@@ -1279,7 +1292,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "w-wafrequestcount": {
@@ -1365,7 +1379,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "w-websocketconnections": {
@@ -1451,7 +1466,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       }
     },
@@ -1654,6 +1670,7 @@
       }
     ],
     "duration": "",
-    "refreshInterval": ""
+    "refreshInterval": "",
+    "links": []
   }
 }

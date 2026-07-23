@@ -26,7 +26,7 @@
             "kind": "signoz/DynamicVariable",
             "spec": {
               "name": "azuremonitor.subscription_id",
-              "signal": ""
+              "signal": "all"
             }
           },
           "name": "azuremonitor.subscription_id"
@@ -48,7 +48,7 @@
             "kind": "signoz/DynamicVariable",
             "spec": {
               "name": "name",
-              "signal": ""
+              "signal": "all"
             }
           },
           "name": "name"
@@ -139,7 +139,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "20261743-0aee-46a1-8a4e-9616f40e09c0": {
@@ -227,7 +228,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "5331daf5-3c60-4c7e-8f2f-3b429ed5bece": {
@@ -315,7 +317,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "632ec396-b8a2-4909-aee9-e5fe82cfefb0": {
@@ -403,7 +406,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "76464120-38b7-46b7-994f-91a7064bc712": {
@@ -491,7 +495,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "969faee4-b796-4df7-86c3-950c346d937d": {
@@ -579,7 +584,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "9e542f6a-ca29-4743-98cd-36ab8c8ea756": {
@@ -667,7 +673,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "c4ca3b08-7bae-49d2-a2bd-ffd19bb1e6c1": {
@@ -755,7 +762,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "d02bb961-2df5-4323-89ca-7d2e674e3230": {
@@ -843,7 +851,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       }
     },
@@ -970,6 +979,7 @@
       }
     ],
     "duration": "",
-    "refreshInterval": ""
+    "refreshInterval": "",
+    "links": []
   }
 }

@@ -143,7 +143,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "http_4xx": {
@@ -229,7 +230,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "http_5xx": {
@@ -315,7 +317,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "http_count": {
@@ -401,7 +404,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "http_data_processed": {
@@ -487,7 +491,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "http_latency": {
@@ -573,7 +578,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "rest_5xx": {
@@ -659,7 +665,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "rest_cache_hit": {
@@ -745,7 +752,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "rest_cache_miss": {
@@ -831,7 +839,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "rest_integration_latency": {
@@ -917,7 +926,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "rest_latency": {
@@ -1003,7 +1013,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "rest_requests": {
@@ -1089,7 +1100,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "ws_client_error": {
@@ -1175,7 +1187,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "ws_connect_count": {
@@ -1261,7 +1274,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "ws_execution_error": {
@@ -1347,7 +1361,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "ws_integration_error": {
@@ -1433,7 +1448,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "ws_message_count": {
@@ -1519,7 +1535,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       }
     },
@@ -1731,6 +1748,7 @@
       }
     ],
     "duration": "",
-    "refreshInterval": ""
+    "refreshInterval": "",
+    "links": []
   }
 }

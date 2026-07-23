@@ -26,7 +26,7 @@
             "kind": "signoz/DynamicVariable",
             "spec": {
               "name": "azuremonitor.subscription_id",
-              "signal": ""
+              "signal": "all"
             }
           },
           "name": "azuremonitor.subscription_id"
@@ -48,7 +48,7 @@
             "kind": "signoz/DynamicVariable",
             "spec": {
               "name": "name",
-              "signal": ""
+              "signal": "all"
             }
           },
           "name": "name"
@@ -138,7 +138,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "66d6ca8f-2b34-8962-60f0-23402f8c34ef": {
@@ -223,7 +224,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "7ce704c5-2e76-7756-ae8d-f441fe8f85cc": {
@@ -308,7 +310,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "7d4e391d-3703-68ff-c0c1-c914944dcd0c": {
@@ -393,7 +396,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "a59a9faa-4ada-1f7d-078d-515eafc515a1": {
@@ -478,7 +482,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "b6d49d53-bd13-6874-cc3a-cae7ea69a6c7": {
@@ -563,7 +568,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "e571d229-eb59-094c-1d7e-defdaeb6acfc": {
@@ -648,7 +654,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       }
     },
@@ -725,6 +732,7 @@
       }
     ],
     "duration": "",
-    "refreshInterval": ""
+    "refreshInterval": "",
+    "links": []
   }
 }

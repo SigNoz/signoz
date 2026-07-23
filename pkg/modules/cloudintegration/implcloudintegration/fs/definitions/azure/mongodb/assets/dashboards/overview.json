@@ -26,7 +26,7 @@
             "kind": "signoz/DynamicVariable",
             "spec": {
               "name": "azuremonitor.subscription_id",
-              "signal": ""
+              "signal": "all"
             }
           },
           "name": "azuremonitor.subscription_id"
@@ -48,7 +48,7 @@
             "kind": "signoz/DynamicVariable",
             "spec": {
               "name": "name",
-              "signal": ""
+              "signal": "all"
             }
           },
           "name": "name"
@@ -138,7 +138,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "1de2ed5a-68f1-1d79-6d2a-973528593767": {
@@ -223,7 +224,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "21a68cbc-30df-d024-ec8e-b1bffdc569cb": {
@@ -308,7 +310,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "25395ad2-f7ec-bc26-8b97-7fa658432aa1": {
@@ -393,7 +396,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "30ce2af6-1605-2cf8-547c-8a1c984a103f": {
@@ -478,7 +482,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "36d8402a-3e3a-283a-f4ad-49ea0913af6d": {
@@ -563,7 +568,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "747a96a4-1796-b001-0fa9-01b9c7c345c3": {
@@ -648,7 +654,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "c893d73f-9b2b-ef76-0110-b1e8034b6223": {
@@ -733,7 +740,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "cd071781-ca8c-38f2-bb67-09157cc4415d": {
@@ -818,7 +826,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       },
       "ce6c2722-7b6e-4900-f725-e9351029ca08": {
@@ -903,7 +912,8 @@
                 }
               }
             }
-          ]
+          ],
+          "links": []
         }
       }
     },
@@ -1007,6 +1017,7 @@
       }
     ],
     "duration": "",
-    "refreshInterval": ""
+    "refreshInterval": "",
+    "links": []
   }
 }
