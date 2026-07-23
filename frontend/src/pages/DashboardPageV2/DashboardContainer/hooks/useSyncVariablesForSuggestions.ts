@@ -1,5 +1,8 @@
 import { useEffect, useMemo } from 'react';
-import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	DashboardtypesDynamicVariableSignalDTO,
+	type DashboardtypesGettableDashboardV2DTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { setDashboardVariablesStore } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStore';
 import type {
 	IDashboardVariable,
@@ -8,7 +11,6 @@ import type {
 
 import { dtoToFormModel } from '../DashboardSettings/Variables/variableAdapters';
 import {
-	DYNAMIC_SIGNAL_ALL,
 	type VariableFormModel,
 	type VariableType,
 } from '../DashboardSettings/Variables/variableFormModel';
@@ -35,7 +37,7 @@ function toV1Variable(model: VariableFormModel): IDashboardVariable {
 		showALLOption: model.showAllOption,
 		dynamicVariablesAttribute: model.dynamicAttribute,
 		dynamicVariablesSource:
-			model.dynamicSignal === DYNAMIC_SIGNAL_ALL
+			model.dynamicSignal === DashboardtypesDynamicVariableSignalDTO.all
 				? 'all sources'
 				: model.dynamicSignal,
 	};

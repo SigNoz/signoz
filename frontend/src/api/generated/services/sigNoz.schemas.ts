@@ -4626,9 +4626,9 @@ export interface DashboardtypesQueryDTO {
 export interface DashboardtypesPanelSpecDTO {
 	display: DashboardtypesDisplayDTO;
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	links?: DashboardtypesLinkDTO[] | null;
+	links: DashboardtypesLinkDTO[];
 	plugin: DashboardtypesPanelPluginDTO;
 	/**
 	 * @type array
@@ -4668,12 +4668,18 @@ export type DashboardtypesVariableDefaultValueDTO = string | string[];
 export enum DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDynamicVariableSpecDTOKind {
 	'signoz/DynamicVariable' = 'signoz/DynamicVariable',
 }
+export enum DashboardtypesDynamicVariableSignalDTO {
+	traces = 'traces',
+	logs = 'logs',
+	metrics = 'metrics',
+	all = 'all',
+}
 export interface DashboardtypesDynamicVariableSpecDTO {
 	/**
 	 * @type string
 	 */
 	name: string;
-	signal?: TelemetrytypesSignalDTO;
+	signal: DashboardtypesDynamicVariableSignalDTO;
 }
 
 export interface DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDynamicVariableSpecDTO {
@@ -4815,9 +4821,9 @@ export interface DashboardtypesDashboardSpecDTO {
 	 */
 	layouts: DashboardtypesLayoutDTO[];
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	links?: DashboardtypesLinkDTO[] | null;
+	links: DashboardtypesLinkDTO[];
 	/**
 	 * @type object
 	 */

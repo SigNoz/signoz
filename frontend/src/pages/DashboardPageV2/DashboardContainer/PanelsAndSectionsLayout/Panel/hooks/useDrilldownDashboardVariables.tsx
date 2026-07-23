@@ -1,14 +1,13 @@
 import { useCallback, useMemo } from 'react';
 import { toast } from '@signozhq/ui/sonner';
 import logEvent from 'api/common/logEvent';
-import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesDynamicVariableSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import type { FilterData } from 'container/QueryTable/Drilldown/drilldownUtils';
 import {
 	dtoToFormModel,
 	formModelToDto,
 } from 'pages/DashboardPageV2/DashboardContainer/DashboardSettings/Variables/variableAdapters';
 import {
-	DYNAMIC_SIGNAL_ALL,
 	emptyVariableFormModel,
 	type VariableFormModel,
 } from 'pages/DashboardPageV2/DashboardContainer/DashboardSettings/Variables/variableFormModel';
@@ -23,8 +22,8 @@ import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 interface UseDrilldownDashboardVariablesArgs {
 	/** Group-by field filters from the clicked point (empty when the click has no group-by). */
 	filters: FilterData[];
-	/** Clicked query's telemetry signal — seeds a created variable's `dynamicSignal`. */
-	signal?: TelemetrytypesSignalDTO;
+	/** Dynamic-variable signal derived from the clicked query — seeds a created variable's `dynamicSignal`. */
+	signal?: DashboardtypesDynamicVariableSignalDTO;
 	onClose: () => void;
 }
 
@@ -111,8 +110,7 @@ export function useDrilldownDashboardVariables({
 				type: 'DYNAMIC',
 				multiSelect: true,
 				dynamicAttribute: fieldName,
-				// `||` (not `??`): an empty "any" signal maps to All, same as unset.
-				dynamicSignal: signal || DYNAMIC_SIGNAL_ALL,
+				dynamicSignal: signal ?? DashboardtypesDynamicVariableSignalDTO.all,
 			};
 			try {
 				await patchAsync(

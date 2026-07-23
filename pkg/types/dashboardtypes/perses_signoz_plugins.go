@@ -32,7 +32,49 @@ type DynamicVariableSpec struct {
 	// Name is the name of the attribute being fetched dynamically from the
 	// signal. This could be extended to a richer selector in the future.
 	Name   string                `json:"name" validate:"required" required:"true"`
-	Signal telemetrytypes.Signal `json:"signal"`
+	Signal DynamicVariableSignal `json:"signal" required:"true" nullable:"false"`
+}
+
+// DynamicVariableSignal is the telemetry signal a dynamic variable draws its
+// values from. Separate from telemetrytypes.Signal because it carries "all"
+// (values span every signal) rather than "" for an unpinned query signal.
+type DynamicVariableSignal struct{ valuer.String }
+
+var (
+	DynamicVariableSignalTraces  = DynamicVariableSignal{valuer.NewString("traces")}
+	DynamicVariableSignalLogs    = DynamicVariableSignal{valuer.NewString("logs")}
+	DynamicVariableSignalMetrics = DynamicVariableSignal{valuer.NewString("metrics")}
+	DynamicVariableSignalAll     = DynamicVariableSignal{valuer.NewString("all")} // default
+)
+
+func (DynamicVariableSignal) Enum() []any {
+	return []any{DynamicVariableSignalTraces, DynamicVariableSignalLogs, DynamicVariableSignalMetrics, DynamicVariableSignalAll}
+}
+
+func (s DynamicVariableSignal) ValueOrDefault() string {
+	if s.IsZero() {
+		return DynamicVariableSignalAll.StringValue()
+	}
+	return s.StringValue()
+}
+
+func (s DynamicVariableSignal) MarshalJSON() ([]byte, error) {
+	return json.Marshal(s.ValueOrDefault())
+}
+
+func (s *DynamicVariableSignal) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid signal: must be a string, one of `traces`, `logs`, `metrics`, or `all`")
+	}
+	sig := DynamicVariableSignal{valuer.NewString(v)}
+	switch sig {
+	case DynamicVariableSignalTraces, DynamicVariableSignalLogs, DynamicVariableSignalMetrics, DynamicVariableSignalAll:
+		*s = sig
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid signal %q: must be `traces`, `logs`, `metrics`, or `all`", v)
+	}
 }
 
 type QueryVariableSpec struct {
