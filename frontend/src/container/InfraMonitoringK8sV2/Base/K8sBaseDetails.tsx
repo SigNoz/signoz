@@ -26,6 +26,7 @@ import K8sBaseDetailsContent from './K8sBaseDetailsContent';
 import { K8sBaseDetailsProps } from './types';
 
 import styles from '../EntityDetailsUtils/entityDetails.module.scss';
+import { INFRA_MONITORING_DETAILS_CACHE_TIME } from 'constants/queryCacheTime';
 
 export type {
 	CustomTab,
@@ -118,6 +119,8 @@ export default function K8sBaseDetails<T>({
 
 			return fetchEntityData({ filter: { expression }, start, end }, signal);
 		},
+		cacheTime: INFRA_MONITORING_DETAILS_CACHE_TIME,
+		staleTime: INFRA_MONITORING_DETAILS_CACHE_TIME,
 		enabled: !!selectedItem,
 	});
 
