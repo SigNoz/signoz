@@ -1,5 +1,5 @@
-import { Tooltip } from 'antd';
 import { Button } from '@signozhq/ui/button';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import { Compass } from '@signozhq/icons';
 import { TextNoData } from '../../../components/TextNoData';
@@ -133,9 +133,10 @@ export function EntityCountsSection<T>({
 						onClick={closeDrawer}
 						data-testid={`navigate-${config.label.toLowerCase().replace(/\s+/g, '-')}`}
 					>
-						<Tooltip
+						<TooltipSimple
 							title={`View ${config.label.toLowerCase()} of '${selectedItem}'`}
-							placement="top"
+							side="top"
+							arrow
 						>
 							<Button
 								size="icon"
@@ -144,7 +145,7 @@ export function EntityCountsSection<T>({
 								className={styles.navigateButton}
 								prefix={<Compass size={14} />}
 							/>
-						</Tooltip>
+						</TooltipSimple>
 					</Link>
 				</div>
 			))}

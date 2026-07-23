@@ -1,4 +1,4 @@
-import { Tooltip } from 'antd';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 
 import {
 	getInvalidValueTooltipText,
@@ -21,9 +21,9 @@ export function ValidateColumnValueWrapper({
 		let element = <TextNoData type="tanstack" />;
 		if (entity && attribute) {
 			element = (
-				<Tooltip title={getInvalidValueTooltipText(entity, attribute)}>
+				<TooltipSimple title={getInvalidValueTooltipText(entity, attribute)}>
 					{element}
-				</Tooltip>
+				</TooltipSimple>
 			);
 		}
 
