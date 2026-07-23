@@ -96,28 +96,7 @@ export const getJobMetricsQueryPayload = (
 	job: InframonitoringtypesJobRecordDTO,
 	start: number,
 	end: number,
-	dotMetricsEnabled: boolean,
 ): GetQueryResultsProps[] => {
-	const k8sPodCpuUtilizationKey = dotMetricsEnabled
-		? 'k8s.pod.cpu.usage'
-		: 'k8s_pod_cpu_usage';
-	const k8sPodMemoryUsageKey = dotMetricsEnabled
-		? 'k8s.pod.memory.usage'
-		: 'k8s_pod_memory_usage';
-	const k8sPodNetworkIoKey = dotMetricsEnabled
-		? 'k8s.pod.network.io'
-		: 'k8s_pod_network_io';
-	const k8sPodNetworkErrorsKey = dotMetricsEnabled
-		? 'k8s.pod.network.errors'
-		: 'k8s_pod_network_errors';
-	const k8sJobNameKey = dotMetricsEnabled ? 'k8s.job.name' : 'k8s_job_name';
-	const k8sClusterNameKey = dotMetricsEnabled
-		? 'k8s.cluster.name'
-		: 'k8s_cluster_name';
-	const k8sNamespaceNameKey = dotMetricsEnabled
-		? 'k8s.namespace.name'
-		: 'k8s_namespace_name';
-
 	const clusterName =
 		job.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] ?? '';
 	const namespaceName =
@@ -129,7 +108,7 @@ export const getJobMetricsQueryPayload = (
 			key: {
 				dataType: DataTypes.String,
 				id: 'k8s_job_name--string--tag--false',
-				key: k8sJobNameKey,
+				key: INFRA_MONITORING_ATTR_KEYS.K8S_JOB_NAME,
 				type: 'tag',
 			},
 			op: '=',
@@ -140,7 +119,7 @@ export const getJobMetricsQueryPayload = (
 			key: {
 				dataType: DataTypes.String,
 				id: 'k8s_cluster_name--string--tag--false',
-				key: k8sClusterNameKey,
+				key: INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME,
 				type: 'tag',
 			},
 			op: '=',
@@ -151,7 +130,7 @@ export const getJobMetricsQueryPayload = (
 			key: {
 				dataType: DataTypes.String,
 				id: 'k8s_namespace_name--string--tag--false',
-				key: k8sNamespaceNameKey,
+				key: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
 				type: 'tag',
 			},
 			op: '=',
@@ -170,7 +149,7 @@ export const getJobMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_cpu_usage--float64--Gauge--true',
-								key: k8sPodCpuUtilizationKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_USAGE,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -231,7 +210,7 @@ export const getJobMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_memory_usage--float64--Gauge--true',
-								key: k8sPodMemoryUsageKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_MEMORY_USAGE,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -292,7 +271,7 @@ export const getJobMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_network_io--float64--Sum--true',
-								key: k8sPodNetworkIoKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_NETWORK_IO,
 								type: 'Sum',
 							},
 							aggregateOperator: 'rate',
@@ -366,7 +345,7 @@ export const getJobMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_network_errors--float64--Sum--true',
-								key: k8sPodNetworkErrorsKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_NETWORK_ERRORS,
 								type: 'Sum',
 							},
 							aggregateOperator: 'increase',
@@ -437,13 +416,10 @@ export const getJobPodMetricsQueryPayload = (
 	job: InframonitoringtypesJobRecordDTO,
 	start: number,
 	end: number,
-	dotMetricsEnabled: boolean,
-): GetQueryResultsProps[] => {
-	const k8sJobNameKey = dotMetricsEnabled ? 'k8s.job.name' : 'k8s_job_name';
-
-	return getPodUtilizationByPodQueryPayloads(
+): GetQueryResultsProps[] =>
+	getPodUtilizationByPodQueryPayloads(
 		{
-			workloadNameKey: k8sJobNameKey,
+			workloadNameKey: INFRA_MONITORING_ATTR_KEYS.K8S_JOB_NAME,
 			workloadNameValue: job.jobName ?? '',
 			clusterName: job.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] ?? '',
 			namespaceName:
@@ -451,6 +427,4 @@ export const getJobPodMetricsQueryPayload = (
 		},
 		start,
 		end,
-		dotMetricsEnabled,
 	);
-};
