@@ -13,11 +13,7 @@ import type {
 } from 'api/generated/services/sigNoz.schemas';
 
 import {
-	DYNAMIC_SIGNAL_ALL,
-	DYNAMIC_SIGNALS,
-	type DynamicSignalOption,
 	emptyVariableFormModel,
-	signalForApi,
 	VARIABLE_SORT_DISABLED,
 	type VariableFormModel,
 } from './variableFormModel';
@@ -69,12 +65,8 @@ export function dtoToFormModel(
 			...listCommon,
 			type: 'DYNAMIC',
 			dynamicAttribute: plugin.spec.name ?? '',
-			// Unrecognized/empty signal → "all telemetry", so the source always shows.
-			dynamicSignal: DYNAMIC_SIGNALS.includes(
-				plugin.spec.signal as DynamicSignalOption,
-			)
-				? (plugin.spec.signal as DynamicSignalOption)
-				: DYNAMIC_SIGNAL_ALL,
+			// signal is a required wire field (`all` = every telemetry signal), used as-is.
+			dynamicSignal: plugin.spec.signal,
 		};
 	}
 	// Default to Query (also covers a query plugin or a missing/unknown plugin).
@@ -102,7 +94,7 @@ function buildPlugin(
 				kind: DynamicPluginKind['signoz/DynamicVariable'],
 				spec: {
 					name: model.dynamicAttribute,
-					signal: signalForApi(model.dynamicSignal),
+					signal: model.dynamicSignal,
 				},
 			};
 		case 'QUERY':

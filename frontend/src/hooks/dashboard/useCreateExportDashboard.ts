@@ -55,6 +55,7 @@ export function useCreateExportDashboard({
 					layouts: [],
 					panels: {},
 					variables: [],
+					links: [],
 				},
 			}),
 		{
