@@ -32,6 +32,7 @@ var preV5Migrator = transition.NewDashboardMigrateV5(slog.New(slog.DiscardHandle
 // shared migrator, then a reshape of any existing aggregations[] it leaves alone.
 func normalizePreV5QueryData(query map[string]any, widgetType string) {
 	dropLegacyFilter(query)
+	normalizeFilterItemOps(query)
 	preV5Migrator.MigrateQueryDataShapeSafe(context.Background(), query, widgetType)
 	normalizePreV5LogTraceAggregations(query)
 	normalizeMetricAggregations(query)
@@ -184,6 +185,37 @@ func dropLegacyFilter(query map[string]any) {
 	_, hasOp := filter["op"]
 	if hasItems || hasOp {
 		delete(query, "filter")
+	}
+}
+
+// normalizeFilterItemOps lowercases exists/nexists filter ops (frontend stores them
+// uppercase) to the spelling transition's buildCondition (pkg/transition/migrate_common.go)
+// matches; otherwise it appends a spurious empty value ("svc EXISTS ''"). Value
+// operators already round-trip via that switch's default case.
+func normalizeFilterItemOps(query map[string]any) {
+	filters, ok := query["filters"].(map[string]any)
+	if !ok {
+		return
+	}
+	items, ok := filters["items"].([]any)
+	if !ok {
+		return
+	}
+	for _, it := range items {
+		item, ok := it.(map[string]any)
+		if !ok {
+			continue
+		}
+		op, ok := item["op"].(string)
+		if !ok {
+			continue
+		}
+		switch strings.ToLower(strings.ReplaceAll(op, "_", " ")) {
+		case "exists":
+			item["op"] = "exists"
+		case "nexists", "not exists":
+			item["op"] = "nexists"
+		}
 	}
 }
 
