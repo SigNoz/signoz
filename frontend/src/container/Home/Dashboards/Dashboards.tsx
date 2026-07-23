@@ -9,8 +9,6 @@ import {
 	DashboardtypesListSortDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import ROUTES from 'constants/routes';
-import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
-import { useIsDashboardV2 } from 'hooks/useIsDashboardV2';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { ArrowRight, ArrowUpRight, Plus } from '@signozhq/icons';
 import Card from 'periscope/components/Card/Card';
@@ -22,7 +20,7 @@ import dialsUrl from '@/assets/Icons/dials.svg';
 
 import { getItemIcon } from '../constants';
 
-// The five most-recent dashboards, normalised across the v1 and v2 list APIs.
+// The five most-recent dashboards from the V2 list API.
 interface RecentDashboard {
 	id: string;
 	title: string;
@@ -38,52 +36,27 @@ export default function Dashboards({
 }): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 	const { user } = useAppContext();
-	const isDashboardV2 = useIsDashboardV2();
-
-	// Fetch the recent dashboards from whichever API the `use_dashboard_v2` flag
-	// selects; the inactive one stays disabled so it never fires.
-	const {
-		data: v1List,
-		isLoading: v1Loading,
-		isError: v1Error,
-	} = useGetAllDashboard({ enabled: !isDashboardV2 });
 
 	const {
 		data: v2List,
-		isLoading: v2Loading,
-		isError: v2Error,
-	} = useListDashboardsForUserV2(
-		{
-			sort: DashboardtypesListSortDTO.updated_at,
-			order: DashboardtypesListOrderDTO.desc,
-			limit: 5,
-			offset: 0,
-		},
-		{ query: { enabled: isDashboardV2 } },
-	);
+		isLoading: isDashboardListLoading,
+		isError: isDashboardListError,
+	} = useListDashboardsForUserV2({
+		sort: DashboardtypesListSortDTO.updated_at,
+		order: DashboardtypesListOrderDTO.desc,
+		limit: 5,
+		offset: 0,
+	});
 
-	const isDashboardListLoading = isDashboardV2 ? v2Loading : v1Loading;
-	const isDashboardListError = isDashboardV2 ? v2Error : v1Error;
-
-	const sortedDashboards = useMemo<RecentDashboard[]>(() => {
-		if (isDashboardV2) {
-			return (v2List?.data?.dashboards ?? []).map((d) => ({
+	const sortedDashboards = useMemo<RecentDashboard[]>(
+		() =>
+			(v2List?.data?.dashboards ?? []).map((d) => ({
 				id: d.id,
 				title: d.spec?.display?.name ?? d.name,
 				tags: (d.tags ?? []).map((t) => (t.value ? `${t.key}:${t.value}` : t.key)),
-			}));
-		}
-		return [...(v1List?.data ?? [])]
-			.sort(
-				(a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
-			)
-			.slice(0, 5)
-			.map((d) => ({
-				id: d.id,
-				title: d.data.title,
-				tags: d.data.tags ?? [],
-			}));
-	}, [isDashboardV2, v1List, v2List]);
+			})),
+		[v2List],
+	);
 
 	useEffect(() => {
 		if (sortedDashboards.length > 0 && !loadingUserPreferences) {
