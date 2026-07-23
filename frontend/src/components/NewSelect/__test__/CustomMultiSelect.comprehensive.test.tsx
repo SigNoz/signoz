@@ -1,5 +1,5 @@
 import { VirtuosoMockContext } from 'react-virtuoso';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import CustomMultiSelect from '../CustomMultiSelect';
@@ -654,6 +654,29 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 				const onlyButtons = screen.getAllByText(/Only|All/);
 				expect(onlyButtons.length).toBeGreaterThan(0);
 			});
+		});
+
+		it('UI-03b: clicking "Only" selects just that value', async () => {
+			renderWithVirtuoso(
+				<CustomMultiSelect
+					options={mockOptions}
+					onChange={mockOnChange}
+					value={['frontend']}
+				/>,
+			);
+
+			const combobox = screen.getByRole('combobox');
+			await user.click(combobox);
+
+			// "Only" renders for the non-selected rows; it's revealed on hover via CSS
+			// (not applied in jsdom) so it sits at display:none — click it directly
+			// rather than through userEvent's visibility gate.
+			const onlyButtons = await screen.findAllByText('Only');
+			mockOnChange.mockClear();
+			fireEvent.click(onlyButtons[0]);
+
+			expect(mockOnChange).toHaveBeenCalledTimes(1);
+			expect(mockOnChange.mock.calls[0][0]).toEqual(['backend']);
 		});
 
 		it('UI-04: Should display values with loading info at bottom', async () => {

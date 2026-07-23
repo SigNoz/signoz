@@ -535,9 +535,8 @@ $custom-border-color: #2c3044;
 				}
 			}
 
-			// Size the buttons to the row's resting content height (20px) and fully
-			// override antd's default 32px Button box, so revealing them on hover
-			// never changes the row height.
+			// Bordered pills sized to the row's resting height so they read as
+			// clickable and revealing them on hover never shifts the row height.
 			.only-btn,
 			.toggle-btn {
 				display: none;
@@ -548,32 +547,30 @@ $custom-border-color: #2c3044;
 				padding: 0 6px;
 				font-size: 12px;
 				line-height: 1;
-				border: none;
+				border: 1px solid var(--l2-border);
+				border-radius: 2px;
+				background-color: var(--l1-background);
 				box-shadow: none;
 
 				&:hover {
-					background-color: unset;
-				}
-			}
-
-			.option-content:hover {
-				.only-btn {
-					display: flex;
-				}
-				.toggle-btn {
-					display: none;
-				}
-
-				.option-badge {
-					display: none;
+					border-color: var(--primary-background);
+					background-color: color-mix(
+						in srgb,
+						var(--primary-background) 15%,
+						transparent
+					);
 				}
 			}
 		}
 
-		.option-checkbox:hover {
+		// Reveal both actions on row hover, wherever the cursor is: "Only/All"
+		// selects only this value, "Toggle" flips it. Both are real buttons now.
+		&:hover {
+			.only-btn,
 			.toggle-btn {
 				display: flex;
 			}
+
 			.option-badge {
 				display: none;
 			}
