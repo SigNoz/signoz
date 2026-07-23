@@ -8920,6 +8920,91 @@ export interface RuletypesRuleDTO {
 export enum RuletypesThresholdKindDTO {
 	basic = 'basic',
 }
+export interface SavedviewtypesCompositeQueryDTO {
+	/**
+	 * @type string
+	 */
+	panelType: string;
+	/**
+	 * @type array,null
+	 */
+	queries: Querybuildertypesv5QueryEnvelopeDTO[] | null;
+	/**
+	 * @type string
+	 */
+	queryType: string;
+}
+
+export interface SavedviewtypesGettableSavedViewDTO {
+	/**
+	 * @type string
+	 */
+	category: string;
+	compositeQuery: SavedviewtypesCompositeQueryDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt: string;
+	/**
+	 * @type string
+	 */
+	createdBy: string;
+	/**
+	 * @type string
+	 */
+	extraData: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	sourcePage: string;
+	/**
+	 * @type array,null
+	 */
+	tags: string[] | null;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt: string;
+	/**
+	 * @type string
+	 */
+	updatedBy: string;
+}
+
+export interface SavedviewtypesPostableSavedViewDTO {
+	/**
+	 * @type string
+	 */
+	category: string;
+	compositeQuery: SavedviewtypesCompositeQueryDTO;
+	/**
+	 * @type string
+	 */
+	extraData: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	sourcePage: string;
+	/**
+	 * @type array,null
+	 */
+	tags: string[] | null;
+}
+
 export interface ServiceaccounttypesDeprecatedPostableServiceAccountRoleDTO {
 	/**
 	 * @type string
@@ -12040,6 +12125,71 @@ export type GetRuleHistoryTopContributors200 = {
 
 export type TestRule200 = {
 	data: RuletypesGettableTestRuleDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListSavedViewsParams = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	sourcePage?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	category?: string;
+};
+
+export type ListSavedViews200 = {
+	/**
+	 * @type array,null
+	 */
+	data: SavedviewtypesGettableSavedViewDTO[] | null;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateSavedView200 = {
+	/**
+	 * @type string,null
+	 */
+	data: string | null;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteSavedViewPathParameters = {
+	viewId: string;
+};
+export type GetSavedViewPathParameters = {
+	viewId: string;
+};
+export type GetSavedView200 = {
+	data: SavedviewtypesGettableSavedViewDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UpdateSavedViewPathParameters = {
+	viewId: string;
+};
+export type UpdateSavedView200 = {
+	data: SavedviewtypesGettableSavedViewDTO;
 	/**
 	 * @type string
 	 */
