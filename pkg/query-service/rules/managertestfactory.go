@@ -115,7 +115,7 @@ func NewTestManager(t *testing.T, testOpts *TestManagerOptions) *Manager {
 		Alertmanager:   fAlert,
 		Querier:        mockQuerier,
 		TelemetryStore: telemetryStore,
-		SQLStore:       sqlStore, // SQLStore needed for SendAlerts to query organizations
+		SQLStore:       sqlStore,
 	}
 
 	// Call the ManagerOptions hook if provided to allow customization
