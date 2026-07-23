@@ -21,7 +21,7 @@ export interface UseExportDashboardsResult {
 	refetch: () => void;
 }
 
-function fromV2(
+function toExportDashboard(
 	item: DashboardtypesListedDashboardForUserV2DTO,
 ): ExportDashboard {
 	return { id: item.id, title: item.spec.display?.name || item.name };
@@ -38,24 +38,24 @@ function toNameQuery(search: string): string | undefined {
 export function useExportDashboards(search = ''): UseExportDashboardsResult {
 	const debouncedSearch = useDebounce(search, SEARCH_DEBOUNCE_MS);
 
-	const v2 = useListDashboardsForUserV2(
+	const listQuery = useListDashboardsForUserV2(
 		{ limit: V2_LIST_LIMIT, query: toNameQuery(debouncedSearch) },
 		{ query: { keepPreviousData: true } },
 	);
 
 	const dashboards = useMemo<ExportDashboard[]>(
-		() => (v2.data?.data?.dashboards ?? []).map(fromV2),
-		[v2.data],
+		() => (listQuery.data?.data?.dashboards ?? []).map(toExportDashboard),
+		[listQuery.data],
 	);
 
 	const refetch = useCallback((): void => {
-		void v2.refetch();
-	}, [v2]);
+		void listQuery.refetch();
+	}, [listQuery]);
 
 	return {
 		dashboards,
-		isLoading: v2.isLoading,
-		isFetching: v2.isFetching,
+		isLoading: listQuery.isLoading,
+		isFetching: listQuery.isFetching,
 		refetch,
 	};
 }

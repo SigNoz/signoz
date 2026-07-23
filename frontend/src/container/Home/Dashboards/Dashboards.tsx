@@ -38,7 +38,7 @@ export default function Dashboards({
 	const { user } = useAppContext();
 
 	const {
-		data: v2List,
+		data: dashboardsList,
 		isLoading: isDashboardListLoading,
 		isError: isDashboardListError,
 	} = useListDashboardsForUserV2({
@@ -50,12 +50,12 @@ export default function Dashboards({
 
 	const sortedDashboards = useMemo<RecentDashboard[]>(
 		() =>
-			(v2List?.data?.dashboards ?? []).map((d) => ({
+			(dashboardsList?.data?.dashboards ?? []).map((d) => ({
 				id: d.id,
 				title: d.spec?.display?.name ?? d.name,
 				tags: (d.tags ?? []).map((t) => (t.value ? `${t.key}:${t.value}` : t.key)),
 			})),
-		[v2List],
+		[dashboardsList],
 	);
 
 	useEffect(() => {

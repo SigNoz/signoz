@@ -31,7 +31,7 @@ export function useCreateExportDashboard({
 		[showErrorModal],
 	);
 
-	const v2 = useMutation(
+	const createMutation = useMutation(
 		() =>
 			createDashboardV2({
 				schemaVersion: 'v6',
@@ -53,11 +53,11 @@ export function useCreateExportDashboard({
 	);
 
 	const create = useCallback((): void => {
-		v2.mutate();
-	}, [v2]);
+		createMutation.mutate();
+	}, [createMutation]);
 
 	return {
 		create,
-		isLoading: v2.isLoading,
+		isLoading: createMutation.isLoading,
 	};
 }
