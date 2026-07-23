@@ -726,13 +726,6 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 						selected: isSelected,
 						active: isActive,
 					})}
-					onClick={(e): void => {
-						e.stopPropagation();
-						e.preventDefault();
-						handleItemSelection('option');
-						setActiveChipIndex(-1);
-						setActiveIndex(-1);
-					}}
 					onKeyDown={(e): void => {
 						if ((e.key === 'Enter' || e.key === SPACEKEY) && isActive) {
 							e.stopPropagation();
@@ -768,11 +761,34 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 								<div className="option-badge">{capitalize(option.type)}</div>
 							)}
 							{option.value && ensureValidOption(option.value) && (
-								<Button type="text" className="only-btn">
+								<Button
+									type="text"
+									className="only-btn"
+									onClick={(e): void => {
+										// Own handler + preventDefault so the visible "Only/All"
+										// button actually selects only this value, instead of the
+										// wrapping checkbox toggling it.
+										e.stopPropagation();
+										e.preventDefault();
+										handleItemSelection('option');
+										setActiveChipIndex(-1);
+										setActiveIndex(-1);
+									}}
+								>
 									{currentToggleTagValue({ option: option.value })}
 								</Button>
 							)}
-							<Button type="text" className="toggle-btn">
+							<Button
+								type="text"
+								className="toggle-btn"
+								onClick={(e): void => {
+									e.stopPropagation();
+									e.preventDefault();
+									handleItemSelection('checkbox');
+									setActiveChipIndex(-1);
+									setActiveIndex(-1);
+								}}
+							>
 								Toggle
 							</Button>
 						</div>
