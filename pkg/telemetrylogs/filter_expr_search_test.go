@@ -50,6 +50,10 @@ func TestFilterExprSearch(t *testing.T) {
 	legacyBody := "match(LOWER(body), LOWER(?))"
 	jsonBody := "match(LOWER(toString(body_v2)), LOWER(?))"
 
+	// Single-context scope fragments (the fan-out narrowed to one context).
+	logScope := "(match(LOWER(severity_text), LOWER(?)) OR match(LOWER(trace_id), LOWER(?)) OR match(LOWER(span_id), LOWER(?)))"
+	resourceScope := "(arrayExists(x -> match(LOWER(x), LOWER(?)), mapKeys(resources_string)) OR arrayExists(x -> match(LOWER(x), LOWER(?)), mapValues(resources_string)))"
+
 	serviceNameEq := "(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? " +
 		"AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL)"
 
@@ -175,13 +179,69 @@ func TestFilterExprSearch(t *testing.T) {
 			expectWarning:  true,
 		},
 		{
-			name:                  "too many parameters",
+			name:           "scoped to body, legacy",
+			query:          "search('error', body)",
+			fullTextColumn: DefaultFullTextColumn,
+			startNs:        inWindowStart,
+			endNs:          inWindowEnd,
+			shouldPass:     true,
+			expectedQuery:  "WHERE (" + legacyBody + ")",
+			expectedArgs:   []any{"error"},
+			expectWarning:  true,
+		},
+		{
+			name:            "scoped to body, json",
+			query:           "search('error', body)",
+			jsonBodyEnabled: true,
+			fullTextColumn:  DefaultFullTextColumn,
+			startNs:         inWindowStart,
+			endNs:           inWindowEnd,
+			shouldPass:      true,
+			expectedQuery:   "WHERE (" + jsonBody + ")",
+			expectedArgs:    []any{"error"},
+			expectWarning:   true,
+		},
+		{
+			name:           "scoped to resource (quoted scope)",
+			query:          "search('error', 'resource')",
+			fullTextColumn: DefaultFullTextColumn,
+			startNs:        inWindowStart,
+			endNs:          inWindowEnd,
+			shouldPass:     true,
+			expectedQuery:  "WHERE (" + resourceScope + ")",
+			expectedArgs:   []any{"error", "error"},
+			expectWarning:  true,
+		},
+		{
+			name:           "scoped to log fields",
+			query:          "search('error', log)",
+			fullTextColumn: DefaultFullTextColumn,
+			startNs:        inWindowStart,
+			endNs:          inWindowEnd,
+			shouldPass:     true,
+			expectedQuery:  "WHERE " + logScope,
+			expectedArgs:   []any{"error", "error", "error"},
+			expectWarning:  true,
+		},
+		{
+			name:           "scoped to multiple contexts",
+			query:          "search('error', body, resource)",
+			fullTextColumn: DefaultFullTextColumn,
+			startNs:        inWindowStart,
+			endNs:          inWindowEnd,
+			shouldPass:     true,
+			expectedQuery:  "WHERE ((" + legacyBody + ") OR (" + resourceScope + "))",
+			expectedArgs:   []any{"error", "error", "error"},
+			expectWarning:  true,
+		},
+		{
+			name:                  "invalid scope",
 			query:                 "search('error', 'timeout')",
 			fullTextColumn:        DefaultFullTextColumn,
 			startNs:               inWindowStart,
 			endNs:                 inWindowEnd,
 			shouldPass:            false,
-			expectedErrorContains: "currently supports a single argument",
+			expectedErrorContains: "invalid search scope",
 		},
 	}
 

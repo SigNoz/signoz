@@ -112,15 +112,12 @@ functionCall
     ;
 
 /*
- * Full-text search call: search('needle')
- *
- * Uses the shared functionParamList so future scoped forms like
- * search(body, 'abc') / search(attribute, 'abc') need no grammar change. Today
- * only a single needle is supported. Unlike bare/quoted free text (`fullText`),
- * which only targets the body column, search() fans out across every field.
+ * Full-text search: search('needle') or scoped search('needle', body, ...).
+ * First param is the needle; the rest are field-context scopes (body/attribute/
+ * resource/log), quoted or bare. Handled in the visitor — no grammar change.
  */
 searchCall
-    : SEARCH LPAREN functionParamList RPAREN
+    : SEARCH LPAREN valueList RPAREN
     ;
 
 // Function parameters can be keys, single scalar values, or arrays

@@ -779,52 +779,58 @@ func normalizeFunctionValue(operator qbtypes.FilterOperator, functionName string
 	return valueParams, nil
 }
 
-// VisitSearchCall handles search('needle'): a keyless full-text search. The
-// visitor emits FilterOperatorSearch; the signal's condition builder owns the
-// behavior (logs fan out across all columns, other signals reject it).
+// VisitSearchCall handles search('needle') and its scoped forms, e.g.
+// search('needle', body, resource). The first arg is the case-insensitive needle; the
+// rest are field-context scopes (bare or quoted). Emits one FilterOperatorSearch per
+// scope (none = keyless, covering every field) and ORs them.
 func (v *filterExpressionVisitor) VisitSearchCall(ctx *grammar.SearchCallContext) any {
 	// Flag scan-heavy so the statement builder attaches the cost guard.
 	v.requiresCostGuard = true
 
-	paramList := ctx.FunctionParamList()
-	if paramList == nil {
-		v.errors = append(v.errors, "function `search` expects a single value parameter, e.g. search('error')")
+	valueList := ctx.ValueList()
+	if valueList == nil {
+		v.errors = append(v.errors, "function `search` expects a needle, e.g. search('error')")
 		return ErrorConditionLiteral
 	}
-	// Single needle today; functionParamList leaves room for scoped forms
-	// (search(body, 'abc')) without a grammar change.
-	params := paramList.AllFunctionParam()
-	if len(params) != 1 {
-		v.errors = append(v.errors, fmt.Sprintf("function `search` currently supports a single argument, e.g. search('error'), but got %d", len(params)))
-		return ErrorConditionLiteral
-	}
-
-	// Use the raw needle: a bare word parses as a key but we take its literal text
-	// (not the normalized key, which would strip a `context.` prefix or `:type`).
-	param := params[0]
-	var searchText string
-	switch {
-	case param.Value() != nil:
-		// The search needle is always a literal string: take the token text rather
-		// than visiting (which parses NUMBER to float64 and would render large/round
-		// integers as scientific notation, e.g. search(1000000) -> "1e+06").
-		valCtx := param.Value()
-		if valCtx.QUOTED_TEXT() != nil {
-			searchText = trimQuotes(valCtx.QUOTED_TEXT().GetText())
-		} else {
-			searchText = valCtx.GetText()
-		}
-	case param.Key() != nil:
-		searchText = param.Key().GetText()
-	default:
-		v.errors = append(v.errors, "function `search` expects a quoted string, e.g. search('error')")
+	params := valueList.AllValue()
+	if len(params) == 0 {
+		v.errors = append(v.errors, "function `search` expects a needle, e.g. search('error')")
 		return ErrorConditionLiteral
 	}
 
-	// Keyless: pass an empty key as a placeholder for the ConditionFor signature.
-	conds, ok := v.buildConditions(&telemetrytypes.TelemetryFieldKey{}, nil, qbtypes.FilterOperatorSearch, searchText)
+	searchText, ok := searchParamText(params[0])
 	if !ok {
+		v.errors = append(v.errors, "function `search` expects a needle as its first argument, e.g. search('error')")
 		return ErrorConditionLiteral
+	}
+
+	var fieldContexts []telemetrytypes.FieldContext
+	if len(params) == 1 {
+		fieldContexts = []telemetrytypes.FieldContext{telemetrytypes.FieldContextUnspecified}
+	} else {
+		for _, p := range params[1:] {
+			scopeText, sok := searchParamText(p)
+			if !sok {
+				v.errors = append(v.errors, "function `search` expects each scope to be a context, e.g. search('error', body, resource)")
+				return ErrorConditionLiteral
+			}
+			fc, fok := telemetrytypes.FieldContextFromText(scopeText)
+			if !fok {
+				v.errors = append(v.errors, fmt.Sprintf("invalid search scope %q; expected a field context: body, attribute, resource, or log", scopeText))
+				return ErrorConditionLiteral
+			}
+			fieldContexts = append(fieldContexts, fc)
+		}
+	}
+
+	var conds []string
+	for _, fieldContext := range fieldContexts {
+		key := telemetrytypes.NewTelemetryFieldKey("", fieldContext, telemetrytypes.FieldDataTypeUnspecified)
+		scoped, cok := v.buildConditions(key, nil, qbtypes.FilterOperatorSearch, searchText)
+		if !cok {
+			return ErrorConditionLiteral
+		}
+		conds = append(conds, scoped...)
 	}
 	if len(conds) == 0 {
 		return SkipConditionLiteral
@@ -833,6 +839,19 @@ func (v *filterExpressionVisitor) VisitSearchCall(ctx *grammar.SearchCallContext
 		return conds[0]
 	}
 	return v.builder.Or(conds...)
+}
+
+// searchParamText returns the raw token text of a search() argument (quoted or bare),
+// not the visited value — so a bare word stays literal and search(1000000) doesn't
+// become "1e+06".
+func searchParamText(val grammar.IValueContext) (string, bool) {
+	if val == nil {
+		return "", false
+	}
+	if val.QUOTED_TEXT() != nil {
+		return trimQuotes(val.QUOTED_TEXT().GetText()), true
+	}
+	return val.GetText(), true
 }
 
 // VisitFunctionParamList handles the parameter list for function calls.

@@ -662,6 +662,10 @@ func searchColumns(fieldContext telemetrytypes.FieldContext, useJSONBody bool) [
 			logsV2Columns[LogsV2ResourcesStringColumn],
 		}
 	default:
-		return nil
+		columns := searchColumns(telemetrytypes.FieldContextLog, useJSONBody)
+		columns = append(columns, searchColumns(telemetrytypes.FieldContextBody, useJSONBody)...)
+		columns = append(columns, searchColumns(telemetrytypes.FieldContextAttribute, useJSONBody)...)
+		columns = append(columns, searchColumns(telemetrytypes.FieldContextResource, useJSONBody)...)
+		return columns
 	}
 }
