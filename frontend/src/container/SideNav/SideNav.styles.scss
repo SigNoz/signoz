@@ -268,6 +268,11 @@
 				}
 			}
 
+			.nav-divider {
+				height: 16px;
+				margin-top: 18px;
+			}
+
 			.shortcut-nav-items,
 			.more-nav-items {
 				.nav-title-section {
@@ -279,7 +284,7 @@
 				}
 
 				.nav-section-title {
-					color: var(--l1-foreground);
+					color: var(--l3-foreground);
 					font-family: Inter;
 					font-size: 11px;
 					font-style: normal;
@@ -359,6 +364,11 @@
 			.more-nav-items {
 				.nav-section-title {
 					cursor: pointer;
+					transition: color 0.2s;
+
+					&:hover {
+						color: var(--l1-foreground);
+					}
 				}
 
 				&.collapsed {
@@ -393,14 +403,6 @@
 						transition: all 0.08s ease;
 						height: auto;
 						overflow: visible;
-					}
-				}
-			}
-
-			.shortcut-nav-items {
-				&.sidebar-collapsed {
-					.nav-items-section {
-						margin-top: 0;
 					}
 				}
 			}
