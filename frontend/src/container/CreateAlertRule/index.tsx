@@ -11,6 +11,7 @@ import CreateAlertV2 from 'container/CreateAlertV2';
 import FormAlertRules, { AlertDetectionTypes } from 'container/FormAlertRules';
 import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
+import useReducedMotion from 'hooks/useReducedMotion';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { AlertListTabs } from 'pages/AlertList/types';
@@ -26,6 +27,7 @@ import './CreateAlertRule.styles.scss';
 
 function CreateRules(): JSX.Element {
 	const [formInstance] = Form.useForm();
+	const prefersReducedMotion = useReducedMotion();
 	const compositeQuery = useGetCompositeQueryParam();
 	const queryParams = useUrlQuery();
 	const { safeNavigate } = useSafeNavigate();
@@ -41,7 +43,7 @@ function CreateRules(): JSX.Element {
 
 	useEffect(() => {
 		if (isTypeSelectionMode) {
-			logEvent('Alert: New alert data source selection page visited', {});
+			void logEvent('Alert: New alert data source selection page visited', {});
 		}
 	}, [isTypeSelectionMode]);
 
@@ -187,6 +189,7 @@ function CreateRules(): JSX.Element {
 	return (
 		<Tabs
 			destroyInactiveTabPane
+			animated={!prefersReducedMotion}
 			items={items}
 			activeKey={AlertListTabs.ALERT_RULES}
 			onChange={handleTabChange}
