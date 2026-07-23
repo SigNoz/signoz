@@ -121,10 +121,10 @@
 	}
 
 	:global(
-			.ant-select-selector
-				.ant-select-selection-search
-				.ant-select-selection-search-input
-		) {
+		.ant-select-selector
+			.ant-select-selection-search
+			.ant-select-selection-search-input
+	) {
 		min-width: 0 !important;
 	}
 }
