@@ -55,6 +55,11 @@ export default function LegendSection({
 								<Typography.Text className="display">Right</Typography.Text>
 							</div>
 						</Option>
+						<Option value={LegendPosition.NONE}>
+							<div className="select-option">
+								<Typography.Text className="display">None</Typography.Text>
+							</div>
+						</Option>
 					</Select>
 				</section>
 			)}

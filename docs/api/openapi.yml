@@ -3014,6 +3014,7 @@ components:
       enum:
       - bottom
       - right
+      - none
       type: string
     DashboardtypesLineInterpolation:
       enum:
