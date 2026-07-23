@@ -78,6 +78,12 @@ function JsonEditorDrawer({
 	const onKeyDown = useCallback(
 		(event: KeyboardEvent<HTMLDivElement>): void => {
 			event.stopPropagation();
+
+			if (event.key === 'Escape') {
+				onClose();
+				return;
+			}
+
 			if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
 				event.preventDefault();
 				if (!readOnly) {
@@ -85,7 +91,7 @@ function JsonEditorDrawer({
 				}
 			}
 		},
-		[apply, readOnly],
+		[apply, readOnly, onClose],
 	);
 
 	const applyDisabled = readOnly || !isDirty || !validity.valid || isSaving;
