@@ -10,6 +10,13 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
+const (
+	// minEpochMs and maxEpochMs bound a plausible ms timestamp to
+	// 1990-01-01 .. 2100-01-01, used to reject malformed Start/End values.
+	minEpochMs uint64 = 631_152_000_000
+	maxEpochMs uint64 = 4_102_444_800_000
+)
+
 // getQueryIdentifier returns a friendly identifier for a query based on its type and name/content.
 func getQueryIdentifier(envelope QueryEnvelope, index int) string {
 	name := envelope.GetQueryName()
@@ -527,7 +534,24 @@ func (q *QueryBuilderQuery[T]) validateOrderByForAggregation() error {
 
 // Validate validates the entire query range request.
 func (r *QueryRangeRequest) Validate(opts ...ValidationOption) error {
-	// Validate time range
+	// Validate time range. Start/End are assumed to be normalized to ms (see
+	// QueryRangeRequest.Normalize); reject non-zero values outside the plausible
+	// 1990-2100 range as malformed.
+	if r.Start != 0 && (r.Start < minEpochMs || r.Start > maxEpochMs) {
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"start timestamp %d is outside the supported range (1990-2100)",
+			r.Start,
+		)
+	}
+	if r.End != 0 && (r.End < minEpochMs || r.End > maxEpochMs) {
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"end timestamp %d is outside the supported range (1990-2100)",
+			r.End,
+		)
+	}
+
 	if r.RequestType != RequestTypeRawStream && r.Start >= r.End {
 		return errors.NewInvalidInputf(
 			errors.CodeInvalidInput,

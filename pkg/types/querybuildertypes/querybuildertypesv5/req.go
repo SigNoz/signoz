@@ -614,7 +614,14 @@ func (r *QueryRangeRequest) SkipFillGaps(name string) bool {
 	return false
 }
 
-// UnmarshalJSON implements custom JSON unmarshaling to disallow unknown fields.
+// Normalize coerces Start and End to epoch milliseconds, inferring the source
+// resolution (s/ms/µs/ns) from each value's magnitude. Lets downstream consumers
+// assume ms regardless of what the caller sent. This is a pure transformation;
+// range validation of the resulting values lives in Validate.
+func (r *QueryRangeRequest) Normalize() {
+	r.Start, r.End = toMilliSecs(r.Start), toMilliSecs(r.End)
+}
+
 func (r *QueryRangeRequest) UnmarshalJSON(data []byte) error {
 	// Define a type alias to avoid infinite recursion
 	type Alias QueryRangeRequest
@@ -654,6 +661,10 @@ func (r *QueryRangeRequest) UnmarshalJSON(data []byte) error {
 
 	// Copy the decoded values back to the original struct
 	*r = QueryRangeRequest(temp)
+
+	// Coerce Start/End to ms at decode time for HTTP requests. Range validation
+	// of the coerced values happens later in Validate.
+	r.Normalize()
 
 	return nil
 }
@@ -707,4 +718,20 @@ func (r *QueryRangeRequest) GetQueriesSupportingZeroDefault() map[string]bool {
 	}
 
 	return canDefaultZero
+}
+
+// toMilliSecs scales an epoch to milliseconds based on its magnitude: seconds are
+// scaled up, micro/nanoseconds down, milliseconds left as-is. Zero is returned
+// unchanged.
+func toMilliSecs(epoch uint64) uint64 {
+	switch {
+	case epoch < 1e12: // seconds
+		return epoch * 1_000
+	case epoch < 1e15: // milliseconds
+		return epoch
+	case epoch < 1e18: // microseconds
+		return epoch / 1_000
+	default: // nanoseconds
+		return epoch / 1_000_000
+	}
 }
