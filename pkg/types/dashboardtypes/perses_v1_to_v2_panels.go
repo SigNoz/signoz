@@ -20,7 +20,7 @@ import (
 // and consumed by convertV1Layouts as section headers.
 func (d *v1Decoder) convertV1Panels(raw any) map[string]*Panel {
 	if raw == nil {
-		return nil
+		return map[string]*Panel{}
 	}
 	widgetsRaw, ok := raw.([]any)
 	if !ok {
