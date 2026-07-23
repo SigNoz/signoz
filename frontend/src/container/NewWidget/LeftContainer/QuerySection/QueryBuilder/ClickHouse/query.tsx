@@ -1,7 +1,8 @@
-import { ChangeEvent, useCallback } from 'react';
+import { ChangeEvent, useCallback, useState } from 'react';
 import MEditor, { Monaco } from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
-import { Input } from 'antd';
+import { Fullscreen } from '@signozhq/icons';
+import { Button, Input, Modal, Tooltip } from 'antd';
 import { LEGEND } from 'constants/global';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -24,6 +25,7 @@ function ClickHouseQueryBuilder({
 }: IClickHouseQueryBuilderProps): JSX.Element | null {
 	const { handleSetQueryItemData, removeQueryTypeItemByIndex } =
 		useQueryBuilder();
+	const [isEditorExpanded, setIsEditorExpanded] = useState(false);
 
 	const handleRemoveQuery = useCallback(() => {
 		removeQueryTypeItemByIndex(EQueryType.CLICKHOUSE, queryIndex);
@@ -87,6 +89,25 @@ function ClickHouseQueryBuilder({
 		});
 	}
 
+	const editorOptions = {
+		scrollbar: {
+			alwaysConsumeMouseWheel: false,
+		},
+		minimap: {
+			enabled: false,
+		},
+		fontSize: 14,
+		fontFamily: 'Space Mono',
+		automaticLayout: true,
+	};
+
+	const handleEditorMount = (_: unknown, monaco: Monaco): void => {
+		void document.fonts.ready.then(() => {
+			monaco.editor.remeasureFonts();
+			return undefined;
+		});
+	};
+
 	return (
 		<QueryHeader
 			name={queryData?.name}
@@ -95,29 +116,48 @@ function ClickHouseQueryBuilder({
 			onDelete={handleRemoveQuery}
 			deletable={deletable}
 		>
+			<div className="clickhouse-query-editor-toolbar">
+				<Tooltip title="Expand editor">
+					<Button
+						aria-label="Expand ClickHouse query editor"
+						className="action-btn"
+						icon={<Fullscreen size="md" />}
+						onClick={(): void => setIsEditorExpanded(true)}
+						type="default"
+					/>
+				</Tooltip>
+			</div>
 			<MEditor
 				language="sql"
 				height="200px"
 				onChange={handleUpdateEditor}
 				value={queryData?.query}
-				onMount={(_, monaco): void => {
-					document.fonts.ready.then(() => {
-						monaco.editor.remeasureFonts();
-					});
-				}}
-				options={{
-					scrollbar: {
-						alwaysConsumeMouseWheel: false,
-					},
-					minimap: {
-						enabled: false,
-					},
-					fontSize: 14,
-					fontFamily: 'Space Mono',
-				}}
+				onMount={handleEditorMount}
+				options={editorOptions}
 				theme={isDarkMode ? 'my-theme' : 'light'}
 				beforeMount={setEditorTheme}
 			/>
+			<Modal
+				centered
+				className="clickhouse-query-editor-modal"
+				destroyOnClose
+				footer={null}
+				onCancel={(): void => setIsEditorExpanded(false)}
+				open={isEditorExpanded}
+				title={`${queryData?.name} ClickHouse query`}
+				width="90vw"
+			>
+				<MEditor
+					beforeMount={setEditorTheme}
+					height="70vh"
+					language="sql"
+					onChange={handleUpdateEditor}
+					onMount={handleEditorMount}
+					options={editorOptions}
+					theme={isDarkMode ? 'my-theme' : 'light'}
+					value={queryData?.query}
+				/>
+			</Modal>
 			<Input
 				onChange={handleUpdateInput}
 				name="legend"
