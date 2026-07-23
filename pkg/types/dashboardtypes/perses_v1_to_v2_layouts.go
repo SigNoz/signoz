@@ -68,7 +68,7 @@ func sanitizeWidgetIDs(data StorableDashboardData) {
 func (d *v1Decoder) convertV1Layouts(data StorableDashboardData, panels map[string]*Panel) []Layout {
 	layout := d.readObjects(data, "layout")
 	if len(layout) == 0 {
-		return nil
+		return []Layout{}
 	}
 
 	// react-grid-layout can persist the same widget id more than once. Keep the first
