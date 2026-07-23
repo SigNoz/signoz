@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { SolidInfoCircle } from '@signozhq/icons';
+import { Info } from '@signozhq/icons';
 import { Typography } from '@signozhq/ui/typography';
 // eslint-disable-next-line signoz/no-antd-components -- lightweight description tooltip, matches V1
 import { Tooltip } from 'antd';
@@ -99,7 +99,7 @@ function VariableSelector({
 							/>
 						}
 					>
-						<SolidInfoCircle className={styles.infoIcon} size={12} />
+						<Info className={styles.infoIcon} size={12} />
 					</Tooltip>
 				) : null}
 			</Typography.Text>
