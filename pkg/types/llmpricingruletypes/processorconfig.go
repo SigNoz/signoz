@@ -2,6 +2,7 @@ package llmpricingruletypes
 
 import (
 	"bytes"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"gopkg.in/yaml.v3"
@@ -133,9 +134,63 @@ func GenerateCollectorConfigWithLLMPricingProcessor(
 	processors[ProcessorName] = buildProcessorConfig(rules)
 	collectorConf["processors"] = processors
 
+	// Defining the processor under `processors` is not enough: the collector only
+	// runs a processor that also appears in a pipeline's processor list. Wire it
+	// into service.pipelines.traces.processors (ahead of `batch`), mirroring the
+	// logs pipeline builder in logparsingpipeline/collector_config.go:187.
+	insertProcessorIntoTracesPipeline(collectorConf, ProcessorName)
+
 	out, err := yaml.Marshal(collectorConf)
 	if err != nil {
 		return nil, errors.Wrapf(err, errors.TypeInternal, ErrCodeBuildPricingProcessorConf, "failed to marshal llm pricing processor config")
 	}
 	return out, nil
+}
+
+// insertProcessorIntoTracesPipeline adds processorName to
+// service.pipelines.traces.processors so the collector actually executes it.
+// The processor is placed immediately before the first `batch` processor
+// (so it runs before spans are batched and exported), and the call is
+// idempotent: if the processor is already listed the pipeline is unchanged.
+// If there is no traces pipeline, the config is left untouched.
+func insertProcessorIntoTracesPipeline(collectorConf map[string]any, processorName string) {
+	service, ok := collectorConf["service"].(map[string]any)
+	if !ok {
+		return
+	}
+	pipelines, ok := service["pipelines"].(map[string]any)
+	if !ok {
+		return
+	}
+	traces, ok := pipelines["traces"].(map[string]any)
+	if !ok {
+		return
+	}
+
+	existing, ok := traces["processors"].([]any)
+	if !ok && traces["processors"] != nil {
+		// `processors` is present but not a sequence; leave it rather than clobber.
+		return
+	}
+
+	for _, p := range existing {
+		if name, ok := p.(string); ok && name == processorName {
+			return // already wired
+		}
+	}
+
+	updated := make([]any, 0, len(existing)+1)
+	placed := false
+	for _, p := range existing {
+		if name, ok := p.(string); ok && !placed &&
+			(name == "batch" || strings.HasPrefix(name, "batch/")) {
+			updated = append(updated, processorName)
+			placed = true
+		}
+		updated = append(updated, p)
+	}
+	if !placed {
+		updated = append(updated, processorName)
+	}
+	traces["processors"] = updated
 }
