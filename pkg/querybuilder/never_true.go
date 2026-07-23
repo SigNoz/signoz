@@ -15,8 +15,8 @@ import (
 type FieldConstraint struct {
 	Field    string
 	Operator qbtypes.FilterOperator
-	Value    interface{}
-	Values   []interface{} // For IN, NOT IN operations
+	Value    any
+	Values   []any // For IN, NOT IN operations
 }
 
 // ConstraintSet represents a set of constraints that must all be true (AND).
@@ -103,7 +103,7 @@ func (d *LogicalContradictionDetector) popNotContext() {
 }
 
 // Visit dispatches to the appropriate visit method.
-func (d *LogicalContradictionDetector) Visit(tree antlr.ParseTree) interface{} {
+func (d *LogicalContradictionDetector) Visit(tree antlr.ParseTree) any {
 	if tree == nil {
 		return nil
 	}
@@ -111,7 +111,7 @@ func (d *LogicalContradictionDetector) Visit(tree antlr.ParseTree) interface{} {
 }
 
 // VisitQuery is the entry point.
-func (d *LogicalContradictionDetector) VisitQuery(ctx *grammar.QueryContext) interface{} {
+func (d *LogicalContradictionDetector) VisitQuery(ctx *grammar.QueryContext) any {
 	d.Visit(ctx.Expression())
 	// Check final constraints
 	d.checkContradictions(d.currentConstraints())
@@ -119,12 +119,12 @@ func (d *LogicalContradictionDetector) VisitQuery(ctx *grammar.QueryContext) int
 }
 
 // VisitExpression just passes through to OrExpression.
-func (d *LogicalContradictionDetector) VisitExpression(ctx *grammar.ExpressionContext) interface{} {
+func (d *LogicalContradictionDetector) VisitExpression(ctx *grammar.ExpressionContext) any {
 	return d.Visit(ctx.OrExpression())
 }
 
 // VisitOrExpression handles OR logic.
-func (d *LogicalContradictionDetector) VisitOrExpression(ctx *grammar.OrExpressionContext) interface{} {
+func (d *LogicalContradictionDetector) VisitOrExpression(ctx *grammar.OrExpressionContext) any {
 	andExpressions := ctx.AllAndExpression()
 
 	if len(andExpressions) == 1 {
@@ -149,7 +149,7 @@ func (d *LogicalContradictionDetector) VisitOrExpression(ctx *grammar.OrExpressi
 }
 
 // VisitAndExpression handles AND logic (including implicit AND).
-func (d *LogicalContradictionDetector) VisitAndExpression(ctx *grammar.AndExpressionContext) interface{} {
+func (d *LogicalContradictionDetector) VisitAndExpression(ctx *grammar.AndExpressionContext) any {
 	unaryExpressions := ctx.AllUnaryExpression()
 
 	// Visit each unary expression, accumulating constraints
@@ -161,7 +161,7 @@ func (d *LogicalContradictionDetector) VisitAndExpression(ctx *grammar.AndExpres
 }
 
 // VisitUnaryExpression handles NOT operator.
-func (d *LogicalContradictionDetector) VisitUnaryExpression(ctx *grammar.UnaryExpressionContext) interface{} {
+func (d *LogicalContradictionDetector) VisitUnaryExpression(ctx *grammar.UnaryExpressionContext) any {
 	hasNot := ctx.NOT() != nil
 
 	if hasNot {
@@ -180,7 +180,7 @@ func (d *LogicalContradictionDetector) VisitUnaryExpression(ctx *grammar.UnaryEx
 }
 
 // VisitPrimary handles different primary expressions.
-func (d *LogicalContradictionDetector) VisitPrimary(ctx *grammar.PrimaryContext) interface{} {
+func (d *LogicalContradictionDetector) VisitPrimary(ctx *grammar.PrimaryContext) any {
 	if ctx.OrExpression() != nil {
 		// Parenthesized expression
 		// If we're in an AND context, we continue with the same constraint set
@@ -191,6 +191,9 @@ func (d *LogicalContradictionDetector) VisitPrimary(ctx *grammar.PrimaryContext)
 	} else if ctx.FunctionCall() != nil {
 		// Handle function calls if needed
 		return nil
+	} else if ctx.SearchCall() != nil {
+		// search() spans all fields; it can never be a logical contradiction
+		return nil
 	} else if ctx.FullText() != nil {
 		// Handle full text search if needed
 		return nil
@@ -200,7 +203,7 @@ func (d *LogicalContradictionDetector) VisitPrimary(ctx *grammar.PrimaryContext)
 }
 
 // VisitComparison extracts constraints from comparisons.
-func (d *LogicalContradictionDetector) VisitComparison(ctx *grammar.ComparisonContext) interface{} {
+func (d *LogicalContradictionDetector) VisitComparison(ctx *grammar.ComparisonContext) any {
 	if ctx.Key() == nil {
 		return nil
 	}
@@ -274,7 +277,7 @@ func (d *LogicalContradictionDetector) VisitComparison(ctx *grammar.ComparisonCo
 			constraint := FieldConstraint{
 				Field:    field,
 				Operator: operator,
-				Values:   []interface{}{val1, val2},
+				Values:   []any{val1, val2},
 			}
 			d.addConstraint(constraint)
 		}
@@ -343,7 +346,7 @@ func (d *LogicalContradictionDetector) VisitComparison(ctx *grammar.ComparisonCo
 }
 
 // extractValue extracts the actual value from a ValueContext.
-func (d *LogicalContradictionDetector) extractValue(ctx grammar.IValueContext) interface{} {
+func (d *LogicalContradictionDetector) extractValue(ctx grammar.IValueContext) any {
 	if ctx.QUOTED_TEXT() != nil {
 		text := ctx.QUOTED_TEXT().GetText()
 		// Remove quotes
@@ -362,12 +365,12 @@ func (d *LogicalContradictionDetector) extractValue(ctx grammar.IValueContext) i
 }
 
 // extractValueList extracts values from a ValueListContext.
-func (d *LogicalContradictionDetector) extractValueList(ctx grammar.IValueListContext) []interface{} {
+func (d *LogicalContradictionDetector) extractValueList(ctx grammar.IValueListContext) []any {
 	if ctx == nil {
 		return nil
 	}
 
-	values := []interface{}{}
+	values := []any{}
 	for _, val := range ctx.AllValue() {
 		values = append(values, d.extractValue(val))
 	}
@@ -763,7 +766,7 @@ func (d *LogicalContradictionDetector) checkRangeContradictions(constraints []Fi
 }
 
 // valuesSatisfyRanges checks if a value satisfies all range constraints.
-func (d *LogicalContradictionDetector) valuesSatisfyRanges(value interface{}, constraints []FieldConstraint) bool {
+func (d *LogicalContradictionDetector) valuesSatisfyRanges(value any, constraints []FieldConstraint) bool {
 	val, err := parseNumericValue(value)
 	if err != nil {
 		return true // If not numeric, we can't check
@@ -799,7 +802,7 @@ func (d *LogicalContradictionDetector) valuesSatisfyRanges(value interface{}, co
 }
 
 // valueSatisfiesBetween checks if a value is within a BETWEEN range.
-func (d *LogicalContradictionDetector) valueSatisfiesBetween(value interface{}, between FieldConstraint) bool {
+func (d *LogicalContradictionDetector) valueSatisfiesBetween(value any, between FieldConstraint) bool {
 	if len(between.Values) != 2 {
 		return false
 	}
@@ -848,7 +851,7 @@ func (d *LogicalContradictionDetector) cloneConstraintSet(set *ConstraintSet) *C
 }
 
 // parseNumericValue attempts to parse a value as a number.
-func parseNumericValue(value interface{}) (float64, error) {
+func parseNumericValue(value any) (float64, error) {
 	switch v := value.(type) {
 	case float64:
 		return v, nil
