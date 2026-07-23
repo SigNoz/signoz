@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/url"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/contextlinks"
@@ -85,19 +86,35 @@ func (r *ThresholdRule) prepareQueryRange(ctx context.Context, ts time.Time) (*q
 	return req, nil
 }
 
-func (r *ThresholdRule) prepareParamsForLogs(ctx context.Context, ts time.Time, lbls ruletypes.Labels) url.Values {
+// logSamples* bound the recent log lines we attach to a firing log-based alert.
+// They are kept small to bound the notification payload size.
+const (
+	// logSamplesMaxCount is the number of most-recent matching log records sampled.
+	logSamplesMaxCount = 5
+	// logSampleBodyMaxLen truncates each sampled body (in runes) so a single large
+	// record cannot blow up the annotation/notification.
+	logSampleBodyMaxLen = 512
+)
+
+// logsQueryParams extracts, for a log-based alert, the evaluation window and the
+// per-group where clause: the rule's filter combined with the breaching group's
+// label values (lbls). The same where clause backs both the related-logs link and
+// the sample-logs query, so they always refer to the same set of logs. ok is false
+// when the rule is not a single log builder query (e.g. a formula or non-logs
+// signal), in which case there is nothing to link to or sample.
+func (r *ThresholdRule) logsQueryParams(ctx context.Context, ts time.Time, lbls ruletypes.Labels) (start, end time.Time, whereClause string, ok bool) {
 	selectedQuery := r.SelectedQuery(ctx)
 
 	qr, err := r.prepareQueryRange(ctx, ts)
 	if err != nil {
-		return nil
+		return time.Time{}, time.Time{}, "", false
 	}
-	start := time.UnixMilli(int64(qr.Start))
-	end := time.UnixMilli(int64(qr.End))
+	start = time.UnixMilli(int64(qr.Start))
+	end = time.UnixMilli(int64(qr.End))
 
 	// TODO(srikanthccv): handle formula queries
 	if selectedQuery < "A" || selectedQuery > "Z" {
-		return nil
+		return time.Time{}, time.Time{}, "", false
 	}
 
 	var q qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
@@ -112,7 +129,7 @@ func (r *ThresholdRule) prepareParamsForLogs(ctx context.Context, ts time.Time, 
 	}
 
 	if q.Signal != telemetrytypes.SignalLogs {
-		return nil
+		return time.Time{}, time.Time{}, "", false
 	}
 
 	filterExpr := ""
@@ -120,9 +137,151 @@ func (r *ThresholdRule) prepareParamsForLogs(ctx context.Context, ts time.Time, 
 		filterExpr = q.Filter.Expression
 	}
 
-	whereClause := contextlinks.PrepareFilterExpression(lbls.Map(), filterExpr, q.GroupBy)
+	whereClause = contextlinks.PrepareFilterExpression(lbls.Map(), filterExpr, q.GroupBy)
+	return start, end, whereClause, true
+}
 
+func (r *ThresholdRule) prepareParamsForLogs(ctx context.Context, ts time.Time, lbls ruletypes.Labels) url.Values {
+	start, end, whereClause, ok := r.logsQueryParams(ctx, ts, lbls)
+	if !ok {
+		return nil
+	}
 	return contextlinks.PrepareParamsForLogsV5(start, end, whereClause)
+}
+
+// fetchLogSamples returns up to logSamplesMaxCount of the most-recent log records
+// matching the alert's filter for the breaching group (lbls), newest first. It
+// reuses the same where clause as the related-logs link, so the samples are exactly
+// the logs that link points to.
+//
+// Sampling is best-effort enrichment: any failure is logged and yields no samples
+// rather than failing the rule evaluation.
+func (r *ThresholdRule) fetchLogSamples(ctx context.Context, ts time.Time, lbls ruletypes.Labels) []*qbtypes.RawRow {
+	start, end, whereClause, ok := r.logsQueryParams(ctx, ts, lbls)
+	if !ok {
+		return nil
+	}
+
+	req := &qbtypes.QueryRangeRequest{
+		Start:       uint64(start.UnixMilli()),
+		End:         uint64(end.UnixMilli()),
+		RequestType: qbtypes.RequestTypeRaw,
+		CompositeQuery: qbtypes.CompositeQuery{
+			Queries: []qbtypes.QueryEnvelope{
+				{
+					Type: qbtypes.QueryTypeBuilder,
+					Spec: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+						Signal: telemetrytypes.SignalLogs,
+						Name:   "log_samples",
+						Filter: &qbtypes.Filter{Expression: whereClause},
+						Limit:  logSamplesMaxCount,
+						// timestamp,id DESC => most recent first. Both keys with an
+						// identical direction are also what enables the window-list
+						// fast path for raw log queries.
+						Order: []qbtypes.OrderBy{
+							{
+								Direction: qbtypes.OrderDirectionDesc,
+								Key:       qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "timestamp", Materialized: true}},
+							},
+							{
+								Direction: qbtypes.OrderDirectionDesc,
+								Key:       qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "id", Materialized: true}},
+							},
+						},
+					},
+				},
+			},
+		},
+		NoCache: true,
+	}
+
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "rules",
+		instrumentationtypes.CodeFunctionName: "fetchLogSamples",
+	})
+
+	resp, err := r.querier.QueryRange(ctx, r.orgID, req)
+	if err != nil {
+		r.logger.WarnContext(ctx, "failed to fetch log samples for alert annotation", errors.Attr(err))
+		return nil
+	}
+
+	for _, item := range resp.Data.Results {
+		if raw, ok := item.(*qbtypes.RawData); ok {
+			return raw.Rows
+		}
+	}
+	return nil
+}
+
+// formatLogSamples renders sampled log records as a compact, monospaced markdown
+// block: one line per record as "[RFC3339] SEVERITY body". Records without a body
+// are skipped (mirroring Datadog), each body is collapsed to a single line and
+// truncated to logSampleBodyMaxLen. Returns "" when there is nothing to show.
+func formatLogSamples(rows []*qbtypes.RawRow) string {
+	lines := make([]string, 0, len(rows))
+	for _, row := range rows {
+		if row == nil {
+			continue
+		}
+
+		body := strings.TrimSpace(rawRowStringField(row, "body"))
+		if body == "" {
+			continue
+		}
+		body = truncateRunes(logSampleSingleLine(body), logSampleBodyMaxLen)
+
+		var sb strings.Builder
+		if !row.Timestamp.IsZero() {
+			sb.WriteString("[")
+			sb.WriteString(row.Timestamp.UTC().Format(time.RFC3339))
+			sb.WriteString("] ")
+		}
+		if sev := strings.TrimSpace(rawRowStringField(row, "severity_text")); sev != "" {
+			sb.WriteString(sev)
+			sb.WriteString(" ")
+		}
+		sb.WriteString(body)
+		lines = append(lines, sb.String())
+	}
+
+	if len(lines) == 0 {
+		return ""
+	}
+	return "```\n" + strings.Join(lines, "\n") + "\n```"
+}
+
+// rawRowStringField returns the named field from a raw row as a string, or "" if it
+// is absent or not a string.
+func rawRowStringField(row *qbtypes.RawRow, key string) string {
+	if row == nil || row.Data == nil {
+		return ""
+	}
+	if v, ok := row.Data[key]; ok {
+		if s, ok := v.(string); ok {
+			return s
+		}
+	}
+	return ""
+}
+
+// logSampleSingleLine collapses newlines so a multi-line log body renders as one
+// line within the samples block.
+func logSampleSingleLine(s string) string {
+	replacer := strings.NewReplacer("\r\n", " ", "\n", " ", "\r", " ")
+	return replacer.Replace(s)
+}
+
+// truncateRunes shortens s to at most max runes, appending an ellipsis when trimmed.
+func truncateRunes(s string, max int) string {
+	if max <= 0 {
+		return s
+	}
+	runes := []rune(s)
+	if len(runes) <= max {
+		return s
+	}
+	return string(runes[:max]) + "…"
 }
 
 func (r *ThresholdRule) prepareParamsForTraces(ctx context.Context, ts time.Time, lbls ruletypes.Labels) url.Values {
@@ -351,6 +510,14 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 				link := r.ExternalURL("logs/logs-explorer", params)
 				r.logger.InfoContext(ctx, "adding logs link to annotations", slog.String("annotation.link", link))
 				annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationRelatedLogs, Value: link})
+			}
+			// Attach a few recent matching log lines so responders see what fired
+			// the alert without leaving the notification. Skipped for no-data
+			// alerts, which by definition have no matching logs.
+			if !smpl.IsMissing {
+				if samples := formatLogSamples(r.fetchLogSamples(ctx, ts, smpl.Metric)); samples != "" {
+					annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationRelatedLogsSamples, Value: samples})
+				}
 			}
 		}
 

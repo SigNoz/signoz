@@ -30,12 +30,13 @@ const (
 // {{ .Annotations.value }}, {{ .Annotations.threshold.value }}, etc. in
 // their channel templates.
 const (
-	AnnotationTitleTemplate  = "_title_template"
-	AnnotationBodyTemplate   = "_body_template"
-	AnnotationRelatedLogs    = "related_logs"
-	AnnotationRelatedTraces  = "related_traces"
-	AnnotationValue          = "value"
-	AnnotationThresholdValue = "threshold.value"
-	AnnotationCompareOp      = "compare_op"
-	AnnotationMatchType      = "match_type"
+	AnnotationTitleTemplate      = "_title_template"
+	AnnotationBodyTemplate       = "_body_template"
+	AnnotationRelatedLogs        = "related_logs"
+	AnnotationRelatedLogsSamples = "related_logs_samples"
+	AnnotationRelatedTraces      = "related_traces"
+	AnnotationValue              = "value"
+	AnnotationThresholdValue     = "threshold.value"
+	AnnotationCompareOp          = "compare_op"
+	AnnotationMatchType          = "match_type"
 )
