@@ -8,10 +8,15 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"text/tabwriter"
 	"time"
 
+	"github.com/guruvedhanth-s/reliability-agent/internal/alerting"
 	"github.com/guruvedhanth-s/reliability-agent/internal/api"
+	"github.com/guruvedhanth-s/reliability-agent/internal/audit"
+	"github.com/guruvedhanth-s/reliability-agent/internal/monitor"
 	"github.com/guruvedhanth-s/reliability-agent/internal/profile"
 	"github.com/guruvedhanth-s/reliability-agent/internal/registry"
 	"github.com/guruvedhanth-s/reliability-agent/internal/slo"
@@ -19,14 +24,94 @@ import (
 )
 
 func main() {
-	if len(os.Args) > 1 && os.Args[1] == "slo" {
-		if err := runSLO(os.Args[2:]); err != nil {
+	if len(os.Args) > 1 {
+		var err error
+		switch os.Args[1] {
+		case "slo":
+			err = runSLO(os.Args[2:])
+		case "audit-watch":
+			err = runAuditWatch(os.Args[2:])
+		default:
+			runServer(os.Args[1:])
+			return
+		}
+		if err != nil {
 			fmt.Fprintln(os.Stderr, "error:", err)
 			os.Exit(1)
 		}
 		return
 	}
 	runServer(os.Args[1:])
+}
+
+func runAuditWatch(args []string) error {
+	fs := flag.NewFlagSet("audit-watch", flag.ContinueOnError)
+	profilePath := fs.String("profile", "examples/log-demo-backend.yaml", "telemetry profile YAML path")
+	signozURL := fs.String("signoz-url", os.Getenv("SIGNOZ_URL"), "SigNoz base URL")
+	apiKey := fs.String("api-key", os.Getenv("SIGNOZ_API_KEY"), "SigNoz service-account API key")
+	interval := fs.Duration("interval", 2*time.Second, "audit interval")
+	lookback := fs.Duration("lookback", 15*time.Second, "SigNoz query lookback")
+	limit := fs.Int("limit", 200, "maximum logs per audit")
+	alertSeverity := fs.String("alert-severity", "blocker", "minimum failed finding severity that opens an alert")
+	failuresBeforeAlert := fs.Int("failures-before-alert", 2, "consecutive alertable failures required")
+	webhookURL := fs.String("webhook-url", "", "optional alert webhook URL")
+	if err := fs.Parse(args); err != nil {
+		if err == flag.ErrHelp {
+			return nil
+		}
+		return err
+	}
+
+	p, err := profile.LoadFile(*profilePath)
+	if err != nil {
+		return err
+	}
+	if p.Spec.Source.Adapter != "signoz" {
+		return fmt.Errorf("audit-watch currently supports the signoz source adapter")
+	}
+	if *signozURL == "" {
+		*signozURL = p.Spec.Source.Endpoint
+	}
+	if *apiKey == "" {
+		return fmt.Errorf("SigNoz API key is required; set SIGNOZ_API_KEY or use --api-key")
+	}
+	client := signoz.NewClient(*signozURL, *apiKey)
+	sinks := alerting.MultiSink{&alerting.JSONSink{Writer: os.Stdout}}
+	if *webhookURL != "" {
+		sinks = append(sinks, alerting.WebhookSink{URL: *webhookURL})
+	}
+
+	runner := &monitor.Runner{
+		Profile:             p,
+		Source:              signoz.NewLogSource(client, *limit),
+		Audit:               audit.Engine{},
+		Sink:                sinks,
+		Interval:            *interval,
+		Lookback:            *lookback,
+		AlertSeverity:       *alertSeverity,
+		FailuresBeforeAlert: *failuresBeforeAlert,
+		OnReport: func(report audit.Report) {
+			slog.Info("track-a audit",
+				"service", report.Service,
+				"status", report.OverallStatus,
+				"score", report.Score,
+				"coverage", report.Coverage,
+				"blockers", report.Counts["blocker"],
+				"warnings", report.Counts["warning"])
+		},
+		OnError: func(err error) { slog.Error("track-a audit cycle", "error", err) },
+	}
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	slog.Info("track-a log monitor started",
+		"service", p.Metadata.Service,
+		"environment", p.Metadata.Environment,
+		"interval", *interval,
+		"lookback", *lookback,
+		"alert_severity", *alertSeverity,
+		"failures_before_alert", *failuresBeforeAlert,
+		"signoz_url", *signozURL)
+	return runner.Run(ctx)
 }
 
 func runServer(args []string) {
