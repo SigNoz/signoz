@@ -1,7 +1,12 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
+import logEvent from 'api/common/logEvent';
 import { commaValuesParser } from 'lib/dashboardVariables/customCommaValuesParser';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 
-import { sortValuesByOrder } from '../../DashboardSettings/Variables/variableFormModel';
+import {
+	sortValuesByOrder,
+	VARIABLE_TYPE_EVENT_LABEL,
+} from '../../DashboardSettings/Variables/variableFormModel';
 import type { VariableFormModel } from '../../DashboardSettings/Variables/variableFormModel';
 import type { VariableSelectionMap } from '../selectionTypes';
 import {
@@ -35,6 +40,15 @@ export function useVariableOptions(
 				: ([] as string[]),
 		[variable.type, variable.customValue, variable.sort],
 	);
+
+	// One-shot per distinct fetch error (effect only re-runs when it changes).
+	useEffect(() => {
+		if (fetched.errorMessage) {
+			void logEvent(DashboardDetailEvents.VariableOptionsFetchFailed, {
+				variableType: VARIABLE_TYPE_EVENT_LABEL[variable.type],
+			});
+		}
+	}, [fetched.errorMessage, variable.type]);
 
 	if (variable.type === 'CUSTOM') {
 		return { options: customOptions, loading: false, errorMessage: null };

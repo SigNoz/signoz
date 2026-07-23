@@ -1,12 +1,16 @@
 import { useMemo } from 'react';
+import logEvent from 'api/common/logEvent';
 import { CustomMultiSelect, CustomSelect } from 'components/NewSelect';
 import type { OptionData } from 'components/NewSelect/types';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 
 import type { VariableSelection } from '../../selectionTypes';
 import styles from '../../VariablesBar.module.scss';
 
 interface ValueSelectorProps {
 	options: string[];
+	/** Analytics label for the variable type (query / custom / dynamic). */
+	variableType: string;
 	multiSelect: boolean;
 	showAllOption: boolean;
 	loading?: boolean;
@@ -25,6 +29,7 @@ interface ValueSelectorProps {
  */
 function ValueSelector({
 	options,
+	variableType,
 	multiSelect,
 	showAllOption,
 	loading,
@@ -67,6 +72,12 @@ function ValueSelector({
 						: next
 							? [String(next)]
 							: [];
+					void logEvent(
+						DashboardDetailEvents.VariableValueSelected,
+						{ variableType, multiSelect: true, selectionCount: values.length },
+						'track',
+						true,
+					);
 					if (values.length === 0) {
 						onChange({ value: [], allSelected: false });
 						return;
@@ -78,7 +89,12 @@ function ValueSelector({
 						options.every((option) => values.includes(option));
 					onChange({ value: values, allSelected: isAll });
 				}}
-				onClear={(): void => onChange({ value: [], allSelected: false })}
+				onClear={(): void => {
+					void logEvent(DashboardDetailEvents.VariableMultiSelectCleared, {
+						variableType,
+					});
+					onChange({ value: [], allSelected: false });
+				}}
 			/>
 		);
 	}
@@ -98,9 +114,15 @@ function ValueSelector({
 			onRetry={onRetry}
 			showSearch
 			placeholder="Select value"
-			onChange={(next): void =>
-				onChange({ value: next == null ? '' : String(next), allSelected: false })
-			}
+			onChange={(next): void => {
+				void logEvent(
+					DashboardDetailEvents.VariableValueSelected,
+					{ variableType, multiSelect: false, selectionCount: next == null ? 0 : 1 },
+					'track',
+					true,
+				);
+				onChange({ value: next == null ? '' : String(next), allSelected: false });
+			}}
 		/>
 	);
 }

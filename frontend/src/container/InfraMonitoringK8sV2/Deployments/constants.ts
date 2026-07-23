@@ -100,52 +100,7 @@ export const getDeploymentMetricsQueryPayload = (
 	deployment: InframonitoringtypesDeploymentRecordDTO,
 	start: number,
 	end: number,
-	dotMetricsEnabled: boolean,
 ): GetQueryResultsProps[] => {
-	const k8sPodCpuUtilizationKey = dotMetricsEnabled
-		? 'k8s.pod.cpu.usage'
-		: 'k8s_pod_cpu_usage';
-
-	const k8sContainerCpuRequestKey = dotMetricsEnabled
-		? 'k8s.container.cpu_request'
-		: 'k8s_container_cpu_request';
-
-	const k8sContainerCpuLimitKey = dotMetricsEnabled
-		? 'k8s.container.cpu_limit'
-		: 'k8s_container_cpu_limit';
-
-	const k8sPodMemoryUsageKey = dotMetricsEnabled
-		? 'k8s.pod.memory.usage'
-		: 'k8s_pod_memory_usage';
-
-	const k8sContainerMemoryRequestKey = dotMetricsEnabled
-		? 'k8s.container.memory_request'
-		: 'k8s_container_memory_request';
-
-	const k8sContainerMemoryLimitKey = dotMetricsEnabled
-		? 'k8s.container.memory_limit'
-		: 'k8s_container_memory_limit';
-
-	const k8sPodNetworkIoKey = dotMetricsEnabled
-		? 'k8s.pod.network.io'
-		: 'k8s_pod_network_io';
-
-	const k8sPodNetworkErrorsKey = dotMetricsEnabled
-		? 'k8s.pod.network.errors'
-		: 'k8s_pod_network_errors';
-
-	const k8sDeploymentNameKey = dotMetricsEnabled
-		? 'k8s.deployment.name'
-		: 'k8s_deployment_name';
-
-	const k8sPodNameKey = dotMetricsEnabled ? 'k8s.pod.name' : 'k8s_pod_name';
-	const k8sClusterNameKey = dotMetricsEnabled
-		? 'k8s.cluster.name'
-		: 'k8s_cluster_name';
-	const k8sNamespaceNameKey = dotMetricsEnabled
-		? 'k8s.namespace.name'
-		: 'k8s_namespace_name';
-
 	const clusterName =
 		deployment.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] ?? '';
 
@@ -158,7 +113,7 @@ export const getDeploymentMetricsQueryPayload = (
 			key: {
 				dataType: DataTypes.String,
 				id: 'k8s_cluster_name--string--tag--false',
-				key: k8sClusterNameKey,
+				key: INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME,
 				type: 'tag',
 			},
 			op: '=',
@@ -169,7 +124,7 @@ export const getDeploymentMetricsQueryPayload = (
 			key: {
 				dataType: DataTypes.String,
 				id: 'k8s_namespace_name--string--tag--false',
-				key: k8sNamespaceNameKey,
+				key: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
 				type: 'tag',
 			},
 			op: '=',
@@ -188,7 +143,7 @@ export const getDeploymentMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_cpu_usage--float64--Gauge--true',
-								key: k8sPodCpuUtilizationKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_USAGE,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -202,7 +157,7 @@ export const getDeploymentMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_deployment_name--string--tag--false',
-											key: k8sDeploymentNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_DEPLOYMENT_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -230,7 +185,7 @@ export const getDeploymentMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_container_cpu_request--float64--Gauge--true',
-								key: k8sContainerCpuRequestKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_CONTAINER_CPU_REQUEST,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -244,7 +199,7 @@ export const getDeploymentMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											key: k8sPodNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME,
 											type: 'tag',
 										},
 										op: 'contains',
@@ -272,7 +227,7 @@ export const getDeploymentMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_container_cpu_limit--float64--Gauge--true',
-								key: k8sContainerCpuLimitKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_CONTAINER_CPU_LIMIT,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -286,7 +241,7 @@ export const getDeploymentMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											key: k8sPodNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME,
 											type: 'tag',
 										},
 										op: 'contains',
@@ -348,7 +303,7 @@ export const getDeploymentMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_memory_usage--float64--Gauge--true',
-								key: k8sPodMemoryUsageKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_MEMORY_USAGE,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -362,7 +317,7 @@ export const getDeploymentMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_deployment_name--string--tag--false',
-											key: k8sDeploymentNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_DEPLOYMENT_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -390,7 +345,7 @@ export const getDeploymentMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_container_memory_request--float64--Gauge--true',
-								key: k8sContainerMemoryRequestKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_CONTAINER_MEMORY_REQUEST,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -404,7 +359,7 @@ export const getDeploymentMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											key: k8sPodNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME,
 											type: 'tag',
 										},
 										op: 'contains',
@@ -432,7 +387,7 @@ export const getDeploymentMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_container_memory_limit--float64--Gauge--true',
-								key: k8sContainerMemoryLimitKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_CONTAINER_MEMORY_LIMIT,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -446,7 +401,7 @@ export const getDeploymentMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											key: k8sPodNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME,
 											type: 'tag',
 										},
 										op: 'contains',
@@ -508,7 +463,7 @@ export const getDeploymentMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_network_io--float64--Sum--true',
-								key: k8sPodNetworkIoKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_NETWORK_IO,
 								type: 'Sum',
 							},
 							aggregateOperator: 'rate',
@@ -522,7 +477,7 @@ export const getDeploymentMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_deployment_name--string--tag--false',
-											key: k8sDeploymentNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_DEPLOYMENT_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -597,7 +552,7 @@ export const getDeploymentMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_network_errors--float64--Sum--true',
-								key: k8sPodNetworkErrorsKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_NETWORK_ERRORS,
 								type: 'Sum',
 							},
 							aggregateOperator: 'increase',
@@ -611,7 +566,7 @@ export const getDeploymentMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_deployment_name--string--tag--false',
-											key: k8sDeploymentNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_DEPLOYMENT_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -683,15 +638,10 @@ export const getDeploymentPodMetricsQueryPayload = (
 	deployment: InframonitoringtypesDeploymentRecordDTO,
 	start: number,
 	end: number,
-	dotMetricsEnabled: boolean,
-): GetQueryResultsProps[] => {
-	const k8sDeploymentNameKey = dotMetricsEnabled
-		? 'k8s.deployment.name'
-		: 'k8s_deployment_name';
-
-	return getPodUtilizationByPodQueryPayloads(
+): GetQueryResultsProps[] =>
+	getPodUtilizationByPodQueryPayloads(
 		{
-			workloadNameKey: k8sDeploymentNameKey,
+			workloadNameKey: INFRA_MONITORING_ATTR_KEYS.K8S_DEPLOYMENT_NAME,
 			workloadNameValue:
 				deployment.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DEPLOYMENT_NAME] ?? '',
 			clusterName:
@@ -701,6 +651,4 @@ export const getDeploymentPodMetricsQueryPayload = (
 		},
 		start,
 		end,
-		dotMetricsEnabled,
 	);
-};
