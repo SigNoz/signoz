@@ -6,6 +6,7 @@ import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
 
 import { VIEWS } from './constants';
+import { MouseEventHandler } from 'react';
 
 export type LogDetailProps = {
 	log: ILog | null;
@@ -16,6 +17,7 @@ export type LogDetailProps = {
 	logs?: ILog[];
 	onNavigateLog?: (log: ILog) => void;
 	onScrollToLog?: (logId: string) => void;
+	handleOpenInExplorer?: MouseEventHandler;
 } & Pick<AddToQueryHOCProps, 'onAddToQuery'> &
 	Partial<Pick<ActionItemProps, 'onClickActionItem'>> &
 	Pick<DrawerProps, 'onClose'>;
