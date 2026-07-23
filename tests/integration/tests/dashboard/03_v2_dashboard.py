@@ -113,7 +113,7 @@ def test_create_rejects_unknown_field(
         json={
             "schemaVersion": "v6",
             "name": "rejects-unknown",
-            "spec": {"display": {"name": "Rejects Unknown"}},
+            "spec": {"display": {"name": "Rejects Unknown"}, "links": []},
             "tags": [],
             "unknownfield": "boom",
         },
@@ -250,6 +250,7 @@ def test_create_rejects_invalid_grid_layout(
                         },
                     }
                 ],
+                "links": [],
             },
             "tags": [],
         },
@@ -281,6 +282,7 @@ def test_create_rejects_invalid_grid_layout(
                         },
                     }
                 ],
+                "links": [],
             },
             "tags": [],
         },
@@ -306,6 +308,7 @@ def test_create_rejects_invalid_grid_layout(
                         "spec": {"items": [{"x": 0, "y": 0, "width": 1, "height": 1} for _ in range(101)]},
                     }
                 ],
+                "links": [],
             },
             "tags": [],
         },
@@ -1046,7 +1049,7 @@ def test_dashboard_v2_tag_order_round_trips(
     ]
     response = requests.post(
         signoz.self.host_configs["8080"].get(BASE_URL),
-        json={"schemaVersion": "v6", "name": "tag-order", "spec": {"display": {"name": "Tag Order"}}, "tags": created_order},
+        json={"schemaVersion": "v6", "name": "tag-order", "spec": {"display": {"name": "Tag Order"}, "links": []}, "tags": created_order},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -1072,7 +1075,7 @@ def test_dashboard_v2_tag_order_round_trips(
     ]
     response = requests.put(
         signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard_id}"),
-        json={"schemaVersion": "v6", "name": "tag-order", "spec": {"display": {"name": "Tag Order"}}, "tags": reordered},
+        json={"schemaVersion": "v6", "name": "tag-order", "spec": {"display": {"name": "Tag Order"}, "links": []}, "tags": reordered},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -1101,7 +1104,7 @@ def test_dashboard_v2_tag_order_round_trips(
     ]
     response = requests.put(
         signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard_id}"),
-        json={"schemaVersion": "v6", "name": "tag-order", "spec": {"display": {"name": "Tag Order"}}, "tags": new_order},
+        json={"schemaVersion": "v6", "name": "tag-order", "spec": {"display": {"name": "Tag Order"}, "links": []}, "tags": new_order},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -1970,6 +1973,7 @@ def test_dashboard_v2_omitted_enums_apply_defaults(
                                 },
                             }
                         ],
+                        "links": [],
                     },
                 },
                 "num": {
@@ -1991,9 +1995,11 @@ def test_dashboard_v2_omitted_enums_apply_defaults(
                                 },
                             }
                         ],
+                        "links": [],
                     },
                 },
             },
+            "links": [],
         },
     }
 
