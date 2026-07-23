@@ -1,13 +1,11 @@
-// Align the alert icon with the title line (not the centre of the whole body),
-// so it stays put whether or not the description wraps to multiple lines.
+// Vertically centre the alert icon against the confirm body, matching the v1
+// dashboard delete button.
 .deleteModal :global(.ant-modal-confirm-body) {
-	align-items: flex-start;
+	align-items: center;
 }
 
 .icon {
 	color: var(--danger-background);
 	margin-inline-end: 12px;
-	// Nudge the icon down to optically centre it on the title's cap height.
-	margin-top: 2px;
 	flex-shrink: 0;
 }

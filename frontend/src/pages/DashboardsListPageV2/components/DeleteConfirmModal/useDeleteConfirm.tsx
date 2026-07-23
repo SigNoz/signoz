@@ -35,7 +35,7 @@ export function useDeleteConfirm(): UseDeleteConfirm {
 			className: styles.deleteModal,
 			title,
 			content,
-			icon: <CircleAlert className={styles.icon} size={20} />,
+			icon: <CircleAlert className={styles.icon} size="3xl" />,
 			okText: confirmText,
 			okButtonProps: { danger: true },
 			// Returning a promise keeps Delete in a loading state until the action
