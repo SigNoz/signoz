@@ -24,7 +24,7 @@ def test_clusters_accuracy(
     insert_metrics,
 ) -> None:
     """Assert response shape/contract + exact per-cluster metric sums + node
-    readiness + pod phase counts.
+    readiness.
 
     SpaceAggregationSum across nodes per cluster (clusters_constants.go:62,82,100,119).
     acc-cluster-1: 2 nodes @ cpu=0.5, alloc_cpu=4, mem=1e9, alloc_mem=8e9
@@ -77,7 +77,6 @@ def test_clusters_accuracy(
             "clusterMemory",
             "clusterMemoryAllocatable",
             "nodeCountsByReadiness",
-            "podCountsByPhase",
             "counts",
             "meta",
         ):
@@ -86,9 +85,6 @@ def test_clusters_accuracy(
         for bucket in ("ready", "notReady"):
             assert bucket in record["nodeCountsByReadiness"]
             assert isinstance(record["nodeCountsByReadiness"][bucket], int)
-        for bucket in ("pending", "running", "succeeded", "failed", "unknown"):
-            assert bucket in record["podCountsByPhase"]
-            assert isinstance(record["podCountsByPhase"][bucket], int)
         for bucket in ("nodes", "namespaces", "deployments", "daemonSets", "jobs", "statefulSets"):
             assert bucket in record["counts"]
             assert isinstance(record["counts"][bucket], int)
@@ -105,7 +101,6 @@ def test_clusters_accuracy(
         ):
             assert compare_values(record[field], exp[field], 1e-6), f"{record['clusterName']}.{field}: got {record[field]}, expected {exp[field]}"
         assert record["nodeCountsByReadiness"] == exp["nodeCountsByReadiness"]
-        assert record["podCountsByPhase"] == exp["podCountsByPhase"]
         assert record["counts"] == exp["counts"]
 
 
@@ -369,47 +364,6 @@ def test_clusters_node_readiness_aggregation(
     assert rec["nodeCountsByReadiness"] == {"ready": 3, "notReady": 2}
 
 
-def test_clusters_pod_phase_aggregation(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-) -> None:
-    """Cluster with mixed pod phases: 4 running + 1 pending + 2 failed."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/clusters_pod_phases.jsonl"),
-            base_time=now - timedelta(minutes=4),
-        )
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(ENDPOINT),
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-            "filter": {"expression": "k8s.cluster.name = 'pp-cluster'"},
-        },
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()["data"]
-    assert data["total"] == 1
-    rec = data["records"][0]
-    assert rec["clusterName"] == "pp-cluster"
-    assert rec["podCountsByPhase"] == {
-        "pending": 1,
-        "running": 4,
-        "succeeded": 0,
-        "failed": 2,
-        "unknown": 0,
-    }
-
-
 def test_clusters_pod_status_aggregation(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
@@ -447,8 +401,6 @@ def test_clusters_pod_status_aggregation(
     rec = data["records"][0]
     assert rec["clusterName"] == "pp-cluster"
     assert rec["podCountsByStatus"] == expected_status_counts(running=3, crashLoopBackOff=1, error=1, evicted=1, pending=1)
-    # Phase counts unchanged by the status enrichment.
-    assert rec["podCountsByPhase"] == {"pending": 1, "running": 4, "succeeded": 0, "failed": 2, "unknown": 0}
     # All status metrics present -> gate satisfied -> no status warning.
     assert all("Pod status could not be computed" not in w["message"] for w in get_all_warnings(response.json()))
 
@@ -461,10 +413,10 @@ def test_clusters_pod_status_aggregation(
         pytest.param(
             "k8s.cluster.name",
             {
-                "gb-gcp-1": {"readiness": {"ready": 1, "notReady": 0}, "running": 1},
-                "gb-gcp-2": {"readiness": {"ready": 1, "notReady": 0}, "running": 1},
-                "gb-aws-1": {"readiness": {"ready": 1, "notReady": 0}, "running": 1},
-                "gb-aws-2": {"readiness": {"ready": 1, "notReady": 0}, "running": 1},
+                "gb-gcp-1": {"readiness": {"ready": 1, "notReady": 0}},
+                "gb-gcp-2": {"readiness": {"ready": 1, "notReady": 0}},
+                "gb-aws-1": {"readiness": {"ready": 1, "notReady": 0}},
+                "gb-aws-2": {"readiness": {"ready": 1, "notReady": 0}},
             },
             id="cluster_name",
         ),
@@ -473,8 +425,8 @@ def test_clusters_pod_status_aggregation(
         pytest.param(
             "cloud.provider",
             {
-                "gcp": {"readiness": {"ready": 2, "notReady": 0}, "running": 2},
-                "aws": {"readiness": {"ready": 2, "notReady": 0}, "running": 2},
+                "gcp": {"readiness": {"ready": 2, "notReady": 0}},
+                "aws": {"readiness": {"ready": 2, "notReady": 0}},
             },
             id="cloud_provider",
         ),
@@ -488,10 +440,9 @@ def test_clusters_groupby(
     group_key: str,
     expected: dict,
 ) -> None:
-    """groupBy returns one record per distinct group with aggregated readiness
-    and pod-phase counts. clusterName is populated only when grouping by
-    k8s.cluster.name (clusters.go:29-32 list-vs-grouped branch); meta surfaces
-    the groupBy key."""
+    """groupBy returns one record per distinct group with aggregated readiness.
+    clusterName is populated only when grouping by k8s.cluster.name
+    (clusters.go:29-32 list-vs-grouped branch); meta surfaces the groupBy key."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -532,9 +483,6 @@ def test_clusters_groupby(
         # empty otherwise.
         assert rec["clusterName"] == (group if group_key == "k8s.cluster.name" else "")
         assert rec["nodeCountsByReadiness"] == exp["readiness"]
-        assert rec["podCountsByPhase"]["running"] == exp["running"]
-        for other in ("pending", "succeeded", "failed", "unknown"):
-            assert rec["podCountsByPhase"][other] == 0
         assert group_key in rec["meta"], rec["meta"]
 
 

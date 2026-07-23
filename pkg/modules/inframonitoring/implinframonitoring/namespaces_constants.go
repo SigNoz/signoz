@@ -18,7 +18,7 @@ var namespaceNameGroupByKey = qbtypes.GroupByKey{
 // namespacesTableMetricNamesList drives the existence/retention check.
 // Includes k8s.pod.phase so the response short-circuits cleanly when a
 // cluster doesn't ship the metric — even though phase isn't part of the
-// QB composite query (it's queried separately via getPerGroupPodPhaseCounts).
+// QB composite query (it's queried separately via getPerGroupPodStatusCounts).
 var namespacesTableMetricNamesList = []string{
 	"k8s.pod.cpu.usage",
 	"k8s.pod.memory.working_set",
@@ -80,8 +80,8 @@ var orderByToNamespacesQueryNames = map[string][]string{
 }
 
 // newNamespacesTableListQuery builds the composite QB v5 request for the namespaces list.
-// Pod phase counts are derived separately via getPerGroupPodPhaseCounts (works for both
-// list and grouped_list modes), so no phase query is included here.
+// Pod status counts are derived separately via getPerGroupPodStatusCounts (works for both
+// list and grouped_list modes), so no status query is included here.
 // Query letters A and D are kept aligned with the v1 implementation.
 func (m *module) newNamespacesTableListQuery() *qbtypes.QueryRangeRequest {
 	queries := []qbtypes.QueryEnvelope{

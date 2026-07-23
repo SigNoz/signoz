@@ -40,7 +40,6 @@ interface EntityMetricsProps<T> {
 		node: T,
 		start: number,
 		end: number,
-		dotMetricsEnabled: boolean,
 	) => GetQueryResultsProps[];
 	queryKey: string;
 	category: InfraMonitoringEntity;

@@ -30,7 +30,6 @@ interface CreatePodMetricsTabParams<T> {
 		entity: T,
 		start: number,
 		end: number,
-		dotMetricsEnabled: boolean,
 	) => GetQueryResultsProps[];
 	queryKey: string;
 	category: InfraMonitoringEntity;
