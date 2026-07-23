@@ -12,10 +12,12 @@
             }
         }
     },
+    "links": [],
     "panels": {
         "b424e23b": {
             "kind": "Panel",
             "spec": {
+                "links": [],
                 "display": {
                     "name": ""
                 },
@@ -58,6 +60,7 @@
         "251df4d5": {
             "kind": "Panel",
             "spec": {
+                "links": [],
                 "display": {
                     "name": ""
                 },

@@ -21,6 +21,7 @@ import { DataSource } from 'types/common/queryBuilder';
 import { TraceDetailEventKeys, TraceDetailEvents } from '../events';
 import { useTraceDetailLogEvent } from '../hooks/useTraceDetailLogEvent';
 import { useTraceStore } from '../stores/traceStore';
+import TraceDownloadPanel from './TraceDownloadPanel';
 import EntityMetadataRow from '../EntityMetadata/EntityMetadataRow';
 import AnalyticsPanel from '../SpanDetailsPanel/AnalyticsPanel/AnalyticsPanel';
 import Filters from '../TraceWaterfall/TraceWaterfallStates/Success/Filters/Filters';
@@ -43,6 +44,7 @@ export interface TraceMetadataForHeader {
 	rootServiceEntryPoint: string;
 	rootSpanStatusCode: string;
 	hasMissingSpans: boolean;
+	totalSpansCount: number;
 }
 
 interface TraceDetailsHeaderProps {
@@ -168,6 +170,10 @@ function TraceDetailsHeader({
 										showTraceDetails={showTraceDetails}
 										onToggleTraceDetails={handleToggleTraceDetails}
 										onOpenPreviewFields={(): void => setIsPreviewFieldsOpen(true)}
+										traceId={traceID || ''}
+										startTime={filterMetadata.startTime}
+										endTime={filterMetadata.endTime}
+										totalSpansCount={traceMetadata?.totalSpansCount || 0}
 									/>
 								</div>
 							</TooltipProvider>
@@ -228,6 +234,8 @@ function TraceDetailsHeader({
 				onClose={(): void => setIsAnalyticsOpen(false)}
 				onTabChange={handleAnalyticsTabChange}
 			/>
+
+			<TraceDownloadPanel />
 		</div>
 	);
 }

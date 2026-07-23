@@ -228,7 +228,7 @@ func TestRedactVariableQueries(t *testing.T) {
 
 	t.Run("leaves non-query variables untouched", func(t *testing.T) {
 		spec := DashboardSpec{Variables: []Variable{
-			{Kind: variable.KindList, Spec: &ListVariableSpec{Name: "signal", Plugin: VariablePlugin{Kind: VariableKindDynamic, Spec: &DynamicVariableSpec{Name: "service.name", Signal: telemetrytypes.SignalTraces}}}},
+			{Kind: variable.KindList, Spec: &ListVariableSpec{Name: "signal", Plugin: VariablePlugin{Kind: VariableKindDynamic, Spec: &DynamicVariableSpec{Name: "service.name", Signal: DynamicVariableSignalTraces}}}},
 			{Kind: variable.KindList, Spec: &ListVariableSpec{Name: "env", Plugin: VariablePlugin{Kind: VariableKindCustom, Spec: &CustomVariableSpec{CustomValue: "prod,staging"}}}},
 		}}
 
