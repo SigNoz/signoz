@@ -164,7 +164,7 @@ func (m *PlannedMaintenance) IsActive(now time.Time) bool {
 		return false
 	}
 
-	// Check if maintenance window has expired
+	// Check if the window has expired. Zero means it is active forever.
 	if !m.Schedule.EndTime.IsZero() && now.After(m.Schedule.EndTime) {
 		return false
 	}
@@ -187,6 +187,7 @@ func (m *PlannedMaintenance) IsActive(now time.Time) bool {
 	case RepeatTypeMonthly:
 		return m.checkMonthly(now, loc)
 	default:
+		// unreachable: invalid repeat type
 		return false
 	}
 }
@@ -293,37 +294,6 @@ func (m *PlannedMaintenance) IsUpcoming() bool {
 
 func (m *PlannedMaintenance) IsRecurring() bool {
 	return m.Schedule.Recurrence != nil
-}
-
-func (m *PlannedMaintenance) Validate() error {
-	if m.Name == "" {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "missing name in the payload")
-	}
-	if m.Schedule == nil {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "missing schedule in the payload")
-	}
-	if !m.Schedule.EndTime.IsZero() && m.Schedule.StartTime.After(m.Schedule.EndTime) {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "start time cannot be after end time")
-	}
-
-	if m.Schedule.Recurrence != nil {
-		if m.Schedule.Recurrence.RepeatType.IsZero() {
-			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "missing repeat type in the payload")
-		}
-		if m.Schedule.Recurrence.Duration.IsZero() {
-			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "missing duration in the payload")
-		}
-	}
-	if m.Scope != "" {
-		if _, err := expr.Compile(m.Scope, expr.AllowUndefinedVariables(), expr.AsBool()); err != nil {
-			err := errors.Newf(
-				errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload,
-				"invalid scope: %s", err.Error(),
-			)
-			return err.WithUrl(scopeDocUrl)
-		}
-	}
-	return nil
 }
 
 func (m PlannedMaintenance) MarshalJSON() ([]byte, error) {
