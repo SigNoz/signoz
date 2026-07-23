@@ -85,7 +85,7 @@ import { buildNavUrl, getQueryString } from './helper';
 import {
 	defaultMoreMenuItems,
 	getUserSettingsDropdownMenuItems,
-	helpSupportDropdownMenuItems as DefaultHelpSupportDropdownMenuItems,
+	buildHelpSupportDropdownMenuItems,
 	helpSupportMenuItem,
 	primaryMenuItems,
 	aiAssistantMenuItem,
@@ -162,7 +162,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 
 	const [helpSupportDropdownMenuItems, setHelpSupportDropdownMenuItems] =
 		useState<(SidebarItem | DropdownSeparator)[]>(
-			DefaultHelpSupportDropdownMenuItems,
+			buildHelpSupportDropdownMenuItems(currentVersion),
 		);
 
 	const [tempPinnedMenuItems, setTempPinnedMenuItems] = useState<SidebarItem[]>(
@@ -986,6 +986,28 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		isCloudUser,
 		isEnterpriseSelfHostedUser,
 	]);
+
+	// Keep the Help & Support dropdown's version label in sync with the
+	// running SigNoz version. Issue #11602 — make the version visible from
+	// the most discoverable menu so users can include it in bug reports.
+	//
+	// Strategy: strip any previous version entry, then re-append the current
+	// one (if available). Preserves everything else (license, changelog, etc.)
+	// added by other effects.
+	useEffect(() => {
+		setHelpSupportDropdownMenuItems((prevState) => {
+			const withoutVersion = prevState.filter(
+				(item) =>
+					!('type' in item) ? item.itemKey !== 'version' : true,
+			);
+			if (!currentVersion) {
+				return withoutVersion;
+			}
+			const rebuilt = buildHelpSupportDropdownMenuItems(currentVersion);
+			const tail = rebuilt.slice(rebuilt.length - 2);
+			return [...withoutVersion, ...tail];
+		});
+	}, [currentVersion]);
 
 	return (
 		<div className={cx('sidenav-container', isPinned && 'pinned')}>
