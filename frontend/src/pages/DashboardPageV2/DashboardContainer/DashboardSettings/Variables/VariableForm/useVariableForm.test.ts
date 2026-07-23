@@ -1,4 +1,4 @@
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, type RenderHookResult } from '@testing-library/react';
 
 import {
 	DYNAMIC_SIGNALS,
@@ -6,7 +6,7 @@ import {
 	VARIABLE_SORT,
 	type VariableFormModel,
 } from '../variableFormModel';
-import { useVariableForm } from './useVariableForm';
+import { useVariableForm, type UseVariableForm } from './useVariableForm';
 
 // Mock the store (its full slice graph is huge to transform and irrelevant here;
 // the hook only reads dashboardId + variableValues for the Test-Run payload).
@@ -34,9 +34,18 @@ const args = (
 	onSave: jest.fn(),
 });
 
+// The hook resets its form state whenever the `initial` reference changes (open a
+// different variable), so the args must be stable across re-renders — otherwise a
+// fresh `initial` each render would loop the reset effect. Real callers memoize
+// `initial`; mirror that here by building the props once and closing over them.
+const renderForm = (
+	props: Parameters<typeof useVariableForm>[0],
+): RenderHookResult<UseVariableForm, unknown> =>
+	renderHook(() => useVariableForm(props));
+
 describe('useVariableForm default reset — QUERY (on Test Run)', () => {
 	it('keeps the default when only the sort order changes', () => {
-		const { result } = renderHook(() => useVariableForm(args(initial())));
+		const { result } = renderForm(args(initial()));
 
 		act(() => result.current.setRawPreview(['foo', 'bar']));
 		expect(result.current.defaultValue).toBe('foo');
@@ -47,7 +56,7 @@ describe('useVariableForm default reset — QUERY (on Test Run)', () => {
 	});
 
 	it('resets the default when a Test Run returns values that no longer contain it', () => {
-		const { result } = renderHook(() => useVariableForm(args(initial())));
+		const { result } = renderForm(args(initial()));
 
 		act(() => result.current.setRawPreview(['foo', 'bar']));
 		expect(result.current.defaultValue).toBe('foo');
@@ -57,7 +66,7 @@ describe('useVariableForm default reset — QUERY (on Test Run)', () => {
 	});
 
 	it('keeps the default when a Test Run still contains it', () => {
-		const { result } = renderHook(() => useVariableForm(args(initial())));
+		const { result } = renderForm(args(initial()));
 
 		act(() => result.current.setRawPreview(['foo', 'bar']));
 		act(() => result.current.setRawPreview(['foo', 'baz', 'qux']));
@@ -65,9 +74,7 @@ describe('useVariableForm default reset — QUERY (on Test Run)', () => {
 	});
 
 	it('keeps the default when a re-run yields the same values (no actual change)', () => {
-		const { result } = renderHook(() =>
-			useVariableForm(args(initial({ defaultValue: 'bar' }))),
-		);
+		const { result } = renderForm(args(initial({ defaultValue: 'bar' })));
 
 		act(() => result.current.setRawPreview(['foo', 'bar']));
 		// same set again — re-running an unchanged query must not disturb the default
@@ -88,23 +95,21 @@ describe('useVariableForm default reset — DYNAMIC (on attribute/signal change)
 	it('does not reset on the passive edit-open auto-fetch', () => {
 		// The auto-fetch populates the preview without going through onDynamicChange,
 		// so opening an existing variable must never clear its saved default.
-		const { result } = renderHook(() =>
-			useVariableForm(args(dynamic({ defaultValue: 'zzz' }))),
-		);
+		const { result } = renderForm(args(dynamic({ defaultValue: 'zzz' })));
 
 		act(() => result.current.setRawPreview(['foo', 'bar']));
 		expect(result.current.defaultValue).toBe('zzz');
 	});
 
 	it('resets when the attribute changes', () => {
-		const { result } = renderHook(() => useVariableForm(args(dynamic())));
+		const { result } = renderForm(args(dynamic()));
 
 		act(() => result.current.onDynamicChange({ dynamicAttribute: 'host.name' }));
 		expect(result.current.defaultValue).toBe('');
 	});
 
 	it('resets when the signal changes', () => {
-		const { result } = renderHook(() => useVariableForm(args(dynamic())));
+		const { result } = renderForm(args(dynamic()));
 
 		act(() =>
 			result.current.onDynamicChange({ dynamicSignal: DYNAMIC_SIGNALS[2] }),
@@ -113,7 +118,7 @@ describe('useVariableForm default reset — DYNAMIC (on attribute/signal change)
 	});
 
 	it('keeps the default when the attribute is set to the same value', () => {
-		const { result } = renderHook(() => useVariableForm(args(dynamic())));
+		const { result } = renderForm(args(dynamic()));
 
 		act(() =>
 			result.current.onDynamicChange({ dynamicAttribute: 'service.name' }),
@@ -127,14 +132,14 @@ describe('useVariableForm default reset — CUSTOM (on options edit)', () => {
 		initial({ type: 'CUSTOM', ...overrides });
 
 	it('resets when the edited options no longer contain the default', () => {
-		const { result } = renderHook(() => useVariableForm(args(custom())));
+		const { result } = renderForm(args(custom()));
 
 		act(() => result.current.onCustomChange('bar, baz'));
 		expect(result.current.defaultValue).toBe('');
 	});
 
 	it('keeps the default when the edited options still contain it', () => {
-		const { result } = renderHook(() => useVariableForm(args(custom())));
+		const { result } = renderForm(args(custom()));
 
 		act(() => result.current.onCustomChange('foo, bar, baz'));
 		expect(result.current.defaultValue).toBe('foo');

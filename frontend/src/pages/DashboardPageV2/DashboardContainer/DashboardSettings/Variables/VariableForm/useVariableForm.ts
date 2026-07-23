@@ -115,10 +115,9 @@ export function useVariableForm({
 
 		lastQueryPreviewRef.current = signature;
 
+		// Clear a now-invalid default; resolution falls back to the first option/ALL.
 		setDefaultValue((current) =>
-			current && !optionValues.includes(current)
-				? (optionValues[0] ?? '')
-				: current,
+			current && !optionValues.includes(current) ? '' : current,
 		);
 	}, [rawPreview, model.type]);
 
@@ -175,9 +174,7 @@ export function useVariableForm({
 
 		const optionValues = parsed.map(String);
 		setDefaultValue((current) =>
-			current && !optionValues.includes(current)
-				? (optionValues[0] ?? '')
-				: current,
+			current && !optionValues.includes(current) ? '' : current,
 		);
 	};
 
