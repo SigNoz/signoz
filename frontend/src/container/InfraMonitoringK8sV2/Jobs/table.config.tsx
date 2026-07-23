@@ -127,7 +127,7 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 	{
 		id: 'completion',
 		header: (): React.ReactNode => (
-			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/jobs#completion">
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/jobs#completions">
 				Completions
 			</ColumnHeader>
 		),
