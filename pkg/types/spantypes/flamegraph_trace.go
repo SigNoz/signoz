@@ -2,6 +2,7 @@ package spantypes
 
 import (
 	"sort"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
@@ -119,6 +120,12 @@ func (t *FlamegraphTrace) updateTimeRange(timestamp, durationNano uint64) {
 	if end := timestamp + durationNano; end > t.endTime {
 		t.endTime = end
 	}
+}
+
+// TimeRange returns the actual trace start and end computed from span timestamps
+// and durations (end = max(span_start + span_duration)), NOT from the summary table.
+func (t *FlamegraphTrace) TimeRange() (start, end time.Time) {
+	return time.Unix(0, int64(t.startTime)), time.Unix(0, int64(t.endTime))
 }
 
 func (t *FlamegraphTrace) buildSpanTree() {
