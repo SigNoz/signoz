@@ -86,6 +86,15 @@
 	:global(.ant-select-selection-overflow) {
 		flex-wrap: nowrap;
 	}
+
+	// The shared NewSelect selector scrolls (max-height: 200px; overflow: auto),
+	// which surfaces horizontal + vertical scrollbars inside the fixed-width
+	// variable pill. Clip instead — the value is a single line (maxTagCount + "+N"),
+	// so there is nothing to scroll to.
+	:global(.ant-select-selector) {
+		max-height: none !important;
+		overflow: hidden !important;
+	}
 }
 
 .overflowTooltip {
