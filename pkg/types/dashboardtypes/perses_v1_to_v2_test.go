@@ -9,7 +9,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/tagtypes"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/perses/spec/go/dashboard"
 	"github.com/perses/spec/go/dashboard/variable"
@@ -1390,7 +1389,7 @@ func TestConvertV1LayoutsEmpty(t *testing.T) {
 	d := &v1Decoder{}
 	layouts := d.convertV1Layouts(StorableDashboardData{}, nil)
 	require.NoError(t, d.errIfHasMalformedFields())
-	assert.Nil(t, layouts)
+	assert.Empty(t, layouts)
 }
 
 // ══════════════════════════════════════════════
@@ -1444,7 +1443,7 @@ func TestConvertV1VariablesAllTypes(t *testing.T) {
 	assert.Equal(t, VariableKindDynamic, dyn.Plugin.Kind)
 	dynSpec, ok := dyn.Plugin.Spec.(*DynamicVariableSpec)
 	require.True(t, ok)
-	assert.Equal(t, telemetrytypes.SignalTraces, dynSpec.Signal)
+	assert.Equal(t, DynamicVariableSignalTraces, dynSpec.Signal)
 
 	q, ok := vars[1].Spec.(*ListVariableSpec)
 	require.True(t, ok)

@@ -120,7 +120,7 @@ export const SECTION_REGISTRY: {
 	[SectionKind.ContextLinks]: {
 		Component: ContextLinksSection,
 		// Panel-level slice (spec.links), not under the plugin spec — no cast needed.
-		get: (spec): DashboardtypesLinkDTO[] | undefined => spec.links ?? undefined,
+		get: (spec): DashboardtypesLinkDTO[] => spec.links,
 		update: (spec, links): PanelSpec => ({ ...spec, links }),
 	},
 	// One editor for every threshold variant (label / comparison / table); the kind's

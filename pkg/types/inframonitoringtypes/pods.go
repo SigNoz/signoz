@@ -16,16 +16,6 @@ type Pods struct {
 	Warning                *qbtypes.QueryWarnData `json:"warning,omitempty"`
 }
 
-// PodCountsByPhase buckets pod counts by their latest phase in the time window.
-// Reusable across record types (pod / namespace / cluster).
-type PodCountsByPhase struct {
-	Pending   int `json:"pending" required:"true"`
-	Running   int `json:"running" required:"true"`
-	Succeeded int `json:"succeeded" required:"true"`
-	Failed    int `json:"failed" required:"true"`
-	Unknown   int `json:"unknown" required:"true"`
-}
-
 // PodCountsByStatus buckets pod counts by their latest kubectl-style display
 // status in the time window (see PodStatus). One field per derivable status.
 type PodCountsByStatus struct {
@@ -62,8 +52,6 @@ type PodRecord struct {
 	PodMemory         float64           `json:"podMemory" required:"true"`
 	PodMemoryRequest  float64           `json:"podMemoryRequest" required:"true"`
 	PodMemoryLimit    float64           `json:"podMemoryLimit" required:"true"`
-	PodPhase          PodPhase          `json:"podPhase" required:"true"`
-	PodCountsByPhase  PodCountsByPhase  `json:"podCountsByPhase" required:"true"`
 	PodStatus         PodStatus         `json:"podStatus" required:"true"`
 	PodCountsByStatus PodCountsByStatus `json:"podCountsByStatus" required:"true"`
 	PodRestarts       int64             `json:"podRestarts" required:"true"`

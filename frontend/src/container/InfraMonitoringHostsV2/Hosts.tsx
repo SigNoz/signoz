@@ -15,7 +15,6 @@ import APIError from 'types/api/error';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource } from 'components/QuickFilters/types';
 import { InfraMonitoringEvents } from 'constants/events';
-import { FeatureKeys } from 'constants/features';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import K8sBaseDetails, {
 	K8sDetailsFilters,
@@ -29,7 +28,6 @@ import {
 } from 'container/InfraMonitoringK8sV2/constants';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useAppContext } from 'providers/App/App';
 import { DataSource } from 'types/common/queryBuilder';
 
 import {
@@ -92,11 +90,6 @@ function Hosts(): JSX.Element {
 			});
 		}
 	}, [compositeQuery, redirectWithQueryBuilderData]);
-
-	const { featureFlags } = useAppContext();
-	const dotMetricsEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
-			?.active || false;
 
 	const handleFilterVisibilityChange = (): void => {
 		setShowFilters(!showFilters);
@@ -190,8 +183,8 @@ function Hosts(): JSX.Element {
 
 	const getInitialLogTracesExpression = useCallback(
 		(host: InframonitoringtypesHostRecordDTO) =>
-			hostInitialLogTracesExpression(host, dotMetricsEnabled),
-		[dotMetricsEnabled],
+			hostInitialLogTracesExpression(host),
+		[],
 	);
 	const controlListPrefix = !showFilters ? (
 		<div className={styles.quickFiltersToggleContainer}>
@@ -226,7 +219,7 @@ function Hosts(): JSX.Element {
 									</div>
 									<QuickFilters
 										source={QuickFiltersSource.INFRA_MONITORING}
-										config={getHostsQuickFiltersConfig(dotMetricsEnabled)}
+										config={getHostsQuickFiltersConfig()}
 										handleFilterVisibilityChange={handleFilterVisibilityChange}
 										useFieldApis={{
 											metricNamespace:

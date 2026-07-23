@@ -59,6 +59,7 @@ def test_public_dashboard_v2(
             "spec": {
                 "display": {"name": "Sample Dashboard", "description": "Used for integration tests"},
                 "duration": "1h",
+                "links": [],
                 "variables": [
                     {
                         "kind": "ListVariable",
@@ -77,6 +78,7 @@ def test_public_dashboard_v2(
                         "kind": "Panel",
                         "spec": {
                             "display": {"name": "total"},
+                            "links": [],
                             "plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {"visualization": {"fillSpans": True}}},
                             "queries": [
                                 {

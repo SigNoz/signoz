@@ -346,6 +346,7 @@ function TraceDetailsV3(): JSX.Element {
 			rootServiceEntryPoint: payload.rootServiceEntryPoint,
 			rootSpanStatusCode: rootSpan?.response_status_code || '',
 			hasMissingSpans: payload.hasMissingSpans || false,
+			totalSpansCount: payload.totalSpansCount || 0,
 		};
 	}, [traceData?.payload]);
 
