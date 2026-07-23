@@ -53,12 +53,14 @@ function CheckboxValueRow({
 						</Typography.Text>
 					</TooltipSimple>
 				)}
-				<Button type="text" className="only-btn">
-					{onlyButtonLabel}
-				</Button>
-				<Button type="text" className="toggle-btn">
-					Toggle
-				</Button>
+				<div className="value-actions">
+					<Button type="text" className="only-btn">
+						{onlyButtonLabel}
+					</Button>
+					<Button type="text" className="toggle-btn">
+						Toggle
+					</Button>
+				</div>
 			</div>
 		</div>
 	);
