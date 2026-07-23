@@ -18,6 +18,7 @@ export type LogDetailProps = {
 	onNavigateLog?: (log: ILog) => void;
 	onScrollToLog?: (logId: string) => void;
 	handleOpenInExplorer?: MouseEventHandler;
+	getContainer?: DrawerProps['getContainer'];
 } & Pick<AddToQueryHOCProps, 'onAddToQuery'> &
 	Partial<Pick<ActionItemProps, 'onClickActionItem'>> &
 	Pick<DrawerProps, 'onClose'>;

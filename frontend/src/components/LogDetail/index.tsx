@@ -67,6 +67,7 @@ function LogDetailInner({
 	onNavigateLog,
 	onScrollToLog,
 	handleOpenInExplorer,
+	getContainer,
 }: LogDetailInnerProps): JSX.Element {
 	const initialContextQuery = useInitialQuery(log);
 	const [contextQuery, setContextQuery] = useState<Query | undefined>(
@@ -335,6 +336,7 @@ function LogDetailInner({
 			width="60%"
 			mask={false}
 			maskClosable={false}
+			getContainer={getContainer}
 			title={
 				<div className="log-detail-drawer__title" data-log-detail-ignore="true">
 					<div className="log-detail-drawer__title-left">
