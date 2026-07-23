@@ -8,6 +8,7 @@ import apacheDruidUrl from '@/assets/Logos/apache-druid.svg';
 import apiGatewayUrl from '@/assets/Logos/api-gateway.svg';
 import argocdUrl from '@/assets/Logos/argocd.svg';
 import aspnetUrl from '@/assets/Logos/aspnet.svg';
+import auth0Url from '@/assets/Logos/auth0.svg';
 import autogenUrl from '@/assets/Logos/autogen.svg';
 import awsAlbUrl from '@/assets/Logos/aws-alb.svg';
 import azureAppServiceUrl from '@/assets/Logos/azure-app-service.svg';
@@ -27,6 +28,7 @@ import claudeCodeUrl from '@/assets/Logos/claude-code.svg';
 import clickhouseUrl from '@/assets/Logos/clickhouse.svg';
 import cloudflareUrl from '@/assets/Logos/cloudflare.svg';
 import cloudwatchLogsUrl from '@/assets/Logos/cloudwatch-logs.svg';
+import cohereUrl from '@/assets/Logos/cohere.svg';
 import confluentKafkaUrl from '@/assets/Logos/confluent-kafka.svg';
 import convexLogoUrl from '@/assets/Logos/convex-logo.svg';
 import cppUrl from '@/assets/Logos/cpp.svg';
@@ -75,6 +77,7 @@ import grokUrl from '@/assets/Logos/grok.svg';
 import groqUrl from '@/assets/Logos/groq.svg';
 import hasuraUrl from '@/assets/Logos/hasura.svg';
 import haystackUrl from '@/assets/Logos/haystack.svg';
+import hcpVaultUrl from '@/assets/Logos/hcp-vault.svg';
 import herokuUrl from '@/assets/Logos/heroku.svg';
 import honeycombUrl from '@/assets/Logos/honeycomb.svg';
 import hostmetricsUrl from '@/assets/Logos/hostmetrics.svg';
@@ -92,6 +95,7 @@ import kafkaUrl from '@/assets/Logos/kafka.svg';
 import kubernetesUrl from '@/assets/Logos/kubernetes.svg';
 import lambdaUrl from '@/assets/Logos/lambda.svg';
 import langchainUrl from '@/assets/Logos/langchain.svg';
+import langflowUrl from '@/assets/Logos/langflow.svg';
 import langtraceUrl from '@/assets/Logos/langtrace.svg';
 import litellmUrl from '@/assets/Logos/litellm.svg';
 import livekitUrl from '@/assets/Logos/livekit.svg';
@@ -3938,6 +3942,58 @@ const onboardingConfigWithLinks = [
 		link: '/docs/claude-code-monitoring/',
 	},
 	{
+		dataSource: 'cohere',
+		label: 'Cohere',
+		imgUrl: cohereUrl,
+		tags: ['LLM Monitoring'],
+		module: 'metrics',
+		relatedSearchKeywords: [
+			'cohere',
+			'cohere api',
+			'cohere logs',
+			'cohere metrics',
+			'cohere monitoring',
+			'cohere observability',
+			'cohere traces',
+			'llm',
+			'llm monitoring',
+			'logging',
+			'logs',
+			'metrics',
+			'monitoring',
+			'observability',
+			'otel cohere integration',
+			'telemetry',
+		],
+		link: '/docs/cohere-monitoring/',
+	},
+	{
+		dataSource: 'langflow',
+		label: 'Langflow',
+		imgUrl: langflowUrl,
+		tags: ['LLM Monitoring'],
+		module: 'metrics',
+		relatedSearchKeywords: [
+			'langflow',
+			'langflow logs',
+			'langflow metrics',
+			'langflow monitoring',
+			'langflow observability',
+			'langflow traces',
+			'llm',
+			'llm monitoring',
+			'logging',
+			'logs',
+			'low code ai',
+			'metrics',
+			'monitoring',
+			'observability',
+			'otel langflow integration',
+			'telemetry',
+		],
+		link: '/docs/langflow-observability/',
+	},
+	{
 		dataSource: 'deepseek-api',
 		label: 'DeepSeek API',
 		imgUrl: deepseekUrl,
@@ -6468,6 +6524,30 @@ const onboardingConfigWithLinks = [
 		link: '/docs/infrastructure-monitoring/cert-manager/',
 	},
 	{
+		dataSource: 'pgbouncer',
+		label: 'PgBouncer',
+		imgUrl: postgresqlUrl,
+		tags: ['infrastructure monitoring', 'metrics'],
+		module: 'metrics',
+		relatedSearchKeywords: [
+			'connection pooler',
+			'connection pooling',
+			'database',
+			'metrics',
+			'monitoring',
+			'observability',
+			'opentelemetry pgbouncer',
+			'pgbouncer',
+			'pgbouncer metrics',
+			'pgbouncer monitoring',
+			'pgbouncer observability',
+			'postgres',
+			'postgresql',
+		],
+		id: 'pgbouncer',
+		link: '/docs/metrics-management/opentelemetry-pgbouncer/',
+	},
+	{
 		dataSource: 'graphql',
 		label: 'GraphQL',
 		imgUrl: graphqlUrl,
@@ -6492,6 +6572,28 @@ const onboardingConfigWithLinks = [
 		link: '/docs/instrumentation/javascript/opentelemetry-graphql/',
 	},
 	{
+		dataSource: 'opentelemetry-ebpf',
+		label: 'OpenTelemetry eBPF (OBI)',
+		imgUrl: opentelemetryUrl,
+		tags: ['apm/traces'],
+		module: 'apm',
+		relatedSearchKeywords: [
+			'auto instrumentation',
+			'ebpf',
+			'obi',
+			'opentelemetry ebpf',
+			'opentelemetry obi',
+			'otel ebpf',
+			'zero code instrumentation',
+			'monitoring',
+			'observability',
+			'traces',
+			'tracing',
+		],
+		id: 'opentelemetry-ebpf',
+		link: '/docs/instrumentation/opentelemetry-ebpf/',
+	},
+	{
 		dataSource: 'railway',
 		label: 'Railway',
 		imgUrl: railwayUrl,
@@ -6512,6 +6614,54 @@ const onboardingConfigWithLinks = [
 		],
 		id: 'railway',
 		link: '/docs/integrations/outposts/railway/',
+	},
+	{
+		dataSource: 'hcp-vault',
+		label: 'HCP Vault',
+		imgUrl: hcpVaultUrl,
+		tags: ['logs'],
+		module: 'logs',
+		relatedSearchKeywords: [
+			'hashicorp',
+			'hashicorp vault',
+			'hcp',
+			'hcp vault',
+			'hcp vault logs',
+			'hcp vault monitoring',
+			'hcp vault observability',
+			'log forwarding',
+			'logging',
+			'logs',
+			'monitoring',
+			'observability',
+			'secrets management',
+			'vault',
+		],
+		id: 'hcp-vault',
+		link: '/docs/integrations/outposts/hcp-vault/',
+	},
+	{
+		dataSource: 'auth0',
+		label: 'Auth0',
+		imgUrl: auth0Url,
+		tags: ['logs'],
+		module: 'logs',
+		relatedSearchKeywords: [
+			'auth0',
+			'auth0 logs',
+			'auth0 monitoring',
+			'auth0 observability',
+			'authentication',
+			'authorization',
+			'identity',
+			'log forwarding',
+			'logging',
+			'logs',
+			'monitoring',
+			'observability',
+		],
+		id: 'auth0',
+		link: '/docs/integrations/outposts/auth0/',
 	},
 	{
 		dataSource: 'aspnet-core-metrics',
