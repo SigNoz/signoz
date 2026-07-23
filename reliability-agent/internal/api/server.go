@@ -11,15 +11,21 @@ import (
 	"github.com/guruvedhanth-s/reliability-agent/internal/evidence"
 	"github.com/guruvedhanth-s/reliability-agent/internal/profile"
 	"github.com/guruvedhanth-s/reliability-agent/internal/registry"
+	"github.com/guruvedhanth-s/reliability-agent/internal/slo"
 )
 
 type Server struct {
 	Registry *registry.Registry
 	Audit    audit.Engine
+	SLO      *slo.Engine
 }
 
 func New(reg *registry.Registry) http.Handler {
-	return Server{Registry: reg, Audit: audit.Engine{}}
+	return NewWithSLO(reg, nil)
+}
+
+func NewWithSLO(reg *registry.Registry, engine *slo.Engine) http.Handler {
+	return Server{Registry: reg, Audit: audit.Engine{}, SLO: engine}
 }
 
 func (s Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -32,6 +38,8 @@ func (s Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.createProfile(w, r)
 	case r.Method == http.MethodPost && r.URL.Path == "/v1/audit":
 		s.runAudit(w, r)
+	case r.Method == http.MethodPost && r.URL.Path == "/v1/slo/evaluate":
+		s.evaluateSLO(w, r)
 	default:
 		s.profileAction(w, r)
 	}
@@ -111,6 +119,33 @@ func (s Server) runAudit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, report)
+}
+
+type sloRequest struct {
+	Config slo.Config `json:"config"`
+	Now    *time.Time `json:"now,omitempty"`
+}
+
+func (s Server) evaluateSLO(w http.ResponseWriter, r *http.Request) {
+	if s.SLO == nil {
+		writeError(w, http.StatusServiceUnavailable, errors.New("SLO engine is not configured"))
+		return
+	}
+	var request sloRequest
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	now := time.Time{}
+	if request.Now != nil {
+		now = *request.Now
+	}
+	reports, err := s.SLO.Evaluate(r.Context(), request.Config, now)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"reports": reports})
 }
 
 func writeJSON(w http.ResponseWriter, status int, value any) {
