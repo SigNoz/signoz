@@ -873,6 +873,47 @@ func TestConvertV1WidgetQueryPrefersV5FilterOverLegacyFilters(t *testing.T) {
 	assert.Equal(t, "service.name = 'checkout'", spec.Filter.Expression, "the v5 filter wins; the legacy filters ('frontend') is dropped")
 }
 
+// An uppercase EXISTS op migrates to a bare EXISTS, not "host.name EXISTS ''".
+func TestConvertV1WidgetQueryNormalizesUppercaseExistsOp(t *testing.T) {
+	widget := map[string]any{
+		"id":         "l-1",
+		"panelTypes": "list",
+		"query": map[string]any{
+			"queryType": "builder",
+			"builder": map[string]any{
+				"queryData": []any{
+					map[string]any{
+						"queryName":  "A",
+						"expression": "A",
+						"dataSource": "logs",
+						"filters": map[string]any{
+							"op": "AND",
+							"items": []any{
+								map[string]any{
+									"key":   map[string]any{"key": "host.name", "dataType": "string", "type": "resource"},
+									"op":    "EXISTS",
+									"value": "",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	queries := (&v1Decoder{}).convertV1WidgetQuery(widget, PanelKindList)
+	require.Len(t, queries, 1)
+
+	wrapper, ok := queries[0].Spec.Plugin.Spec.(*BuilderQuerySpec)
+	require.True(t, ok)
+	spec, ok := wrapper.Spec.(qb.QueryBuilderQuery[qb.LogAggregation])
+	require.True(t, ok, "list logs query should dispatch to LogAggregation, got %T", wrapper.Spec)
+
+	require.NotNil(t, spec.Filter)
+	assert.Equal(t, "host.name EXISTS", spec.Filter.Expression, `uppercase EXISTS op migrates to a bare EXISTS, not "EXISTS ''"`)
+}
+
 func TestConvertV1WidgetQueryIgnoresPageSizeOnNonRowLimitPanel(t *testing.T) {
 	widget := map[string]any{
 		"id":         "b-1",
