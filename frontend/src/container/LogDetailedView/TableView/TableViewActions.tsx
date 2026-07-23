@@ -144,9 +144,13 @@ export default function TableViewActions(
 	const viewName = useGetSearchQueryParam(QueryParams.viewName) || '';
 	const { dataType, logType: fieldType } = getFieldAttributes(record.field);
 
-	// there is no option for where clause in old logs explorer and live logs page
+	// there is no option for where clause in old logs explorer and live logs page or infra monitoring
 	const isOldLogsExplorerOrLiveLogsPage = useMemo(
-		() => pathname === ROUTES.OLD_LOGS_EXPLORER || pathname === ROUTES.LIVE_LOGS,
+		() =>
+			pathname === ROUTES.OLD_LOGS_EXPLORER ||
+			pathname === ROUTES.LIVE_LOGS ||
+			pathname === ROUTES.INFRASTRUCTURE_MONITORING_HOSTS ||
+			pathname === ROUTES.INFRASTRUCTURE_MONITORING_KUBERNETES,
 		[pathname],
 	);
 
