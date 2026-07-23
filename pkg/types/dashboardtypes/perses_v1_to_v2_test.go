@@ -1390,7 +1390,7 @@ func TestConvertV1LayoutsEmpty(t *testing.T) {
 	d := &v1Decoder{}
 	layouts := d.convertV1Layouts(StorableDashboardData{}, nil)
 	require.NoError(t, d.errIfHasMalformedFields())
-	assert.Nil(t, layouts)
+	assert.Empty(t, layouts)
 }
 
 // ══════════════════════════════════════════════
