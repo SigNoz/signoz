@@ -6,9 +6,9 @@ from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.logs import Logs
 from fixtures.querier import (
+    build_aggregation,
     build_formula_query,
     build_group_by_field,
-    build_logs_aggregation,
     build_order_by,
     build_scalar_query,
     find_named_result,
@@ -99,7 +99,7 @@ def test_logs_formula_orderby_and_limit(
             build_scalar_query(
                 name="A",
                 signal="logs",
-                aggregations=[build_logs_aggregation("count()")],
+                aggregations=[build_aggregation("count()")],
                 group_by=[build_group_by_field("service.name")],
                 filter_expression="severity_text = 'ERROR'",
                 disabled=True,
@@ -107,7 +107,7 @@ def test_logs_formula_orderby_and_limit(
             build_scalar_query(
                 name="B",
                 signal="logs",
-                aggregations=[build_logs_aggregation("count()")],
+                aggregations=[build_aggregation("count()")],
                 group_by=[build_group_by_field("service.name")],
                 filter_expression="severity_text = 'INFO'",
                 disabled=True,

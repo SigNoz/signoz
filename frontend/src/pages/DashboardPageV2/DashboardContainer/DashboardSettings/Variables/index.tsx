@@ -1,24 +1,27 @@
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from '@signozhq/ui/sonner';
+import logEvent from 'api/common/logEvent';
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
 import cx from 'classnames';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 
 import settingsStyles from '../DashboardSettings.module.scss';
 import { useOptimisticPatch } from '../../hooks/useOptimisticPatch';
 import { useDashboardStore } from '../../store/useDashboardStore';
 import {
 	buildApplyVariableToPanelsPatch,
-	buildSyncVariableToPanelsPatch,
 	getPanelIdsReferencingVariable,
-} from './applyVariableToPanelsPatch';
-import { useSaveVariables } from './useSaveVariables';
+} from './utils/applyVariableToPanelsPatch';
+import { useSaveVariables } from './hooks/useSaveVariables';
+import { useVariableListActions } from './hooks/useVariableListActions';
 import { dtoToFormModel } from './variableAdapters';
 import {
 	emptyVariableFormModel,
 	type VariableFormModel,
 } from './variableFormModel';
 import VariableForm from './VariableForm/VariableForm';
-import VariablesList from './VariablesList';
+import VariableImpactDialog from './VariableImpactDialog/VariableImpactDialog';
+import VariablesList from './components/VariablesList/VariablesList';
 import styles from './Variables.module.scss';
 import AddVariableButton from './components/AddVariableButton';
 import ApplyToAllDialog from './components/ApplyToAllDialog/ApplyToAllDialog';
@@ -31,6 +34,7 @@ interface VariablesSettingsProps {
 
 function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 	const isEditable = useDashboardStore((s) => s.isEditable);
+	const dashboardId = useDashboardStore((s) => s.dashboardId);
 	// The drawer destroys on close, so reading this once on mount is enough to
 	// open the add-form when deep-linked (e.g. the bar's "Add variable" button).
 	const openAddOnMount = useDashboardStore(
@@ -55,10 +59,27 @@ function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 	const [isEditing, setIsEditing] = useState<EditingState>(
 		openAddOnMount && isEditable ? { type: 'new' } : null,
 	);
-	const [confirmDeleteIndex, setConfirmDeleteIndex] = useState<number | null>(
-		null,
-	);
 	const [applyToAllIndex, setApplyToAllIndex] = useState<number | null>(null);
+
+	const {
+		confirmDeleteIndex,
+		setConfirmDeleteIndex,
+		impact,
+		setImpact,
+		handleFormSave,
+		handleMove,
+		requestDelete,
+		handleConfirmDelete,
+		handleImpactConfirm,
+	} = useVariableListActions({
+		dashboard,
+		variables,
+		setVariables,
+		isEditing,
+		setIsEditing,
+		save,
+		patchAsync,
+	});
 
 	const editingFormModel: VariableFormModel | null = useMemo(() => {
 		if (!isEditing) {
@@ -95,60 +116,6 @@ function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 		);
 	}, [editingFormModel, dashboard.spec.panels]);
 
-	const persist = (next: VariableFormModel[]): void => {
-		setVariables(next);
-		void save(next);
-	};
-
-	const handleFormSave = (
-		formModel: VariableFormModel,
-		selectedPanelIds: string[],
-	): void => {
-		const next = [...variables];
-		if (isEditing?.type === 'new') {
-			next.push(formModel);
-		} else if (isEditing?.type === 'edit') {
-			next[isEditing.index] = formModel;
-		}
-		setIsEditing(null);
-		setVariables(next);
-		void (async (): Promise<void> => {
-			const saved = await save(next);
-			if (!saved || formModel.type !== 'DYNAMIC') {
-				return;
-			}
-			const ops = buildSyncVariableToPanelsPatch(
-				dashboard.spec.panels,
-				formModel.dynamicAttribute,
-				formModel.name,
-				selectedPanelIds,
-			);
-			if (ops.length === 0) {
-				return;
-			}
-			try {
-				await patchAsync(ops);
-			} catch {
-				toast.error('Could not update panels');
-			}
-		})();
-	};
-
-	const handleMove = (from: number, to: number): void => {
-		if (to < 0 || to >= variables.length) {
-			return;
-		}
-		const next = [...variables];
-		const [moved] = next.splice(from, 1);
-		next.splice(to, 0, moved);
-		persist(next);
-	};
-
-	const handleConfirmDelete = (index: number): void => {
-		persist(variables.filter((_, i) => i !== index));
-		setConfirmDeleteIndex(null);
-	};
-
 	const applyToAllVariable =
 		applyToAllIndex === null ? null : variables[applyToAllIndex];
 
@@ -169,6 +136,10 @@ function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 		try {
 			await patchAsync(ops);
 			toast.success(`Applied $${applyToAllVariable.name} to all panels`);
+			void logEvent(DashboardDetailEvents.ApplyToAllConfirmed, {
+				variableType: 'dynamic',
+				dashboardId,
+			});
 		} catch {
 			toast.error('Could not apply the variable to panels');
 		}
@@ -190,7 +161,6 @@ function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 		);
 	}
 
-	// Master view — the variables list.
 	return (
 		<div className={cx(styles.container, settingsStyles.settingsCard)}>
 			{variables.length === 0 ? (
@@ -202,7 +172,7 @@ function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 						canEdit={isEditable}
 						confirmingIndex={confirmDeleteIndex}
 						onEdit={(index): void => setIsEditing({ type: 'edit', index })}
-						onRequestDelete={(index): void => setConfirmDeleteIndex(index)}
+						onRequestDelete={requestDelete}
 						onConfirmDelete={handleConfirmDelete}
 						onCancelDelete={(): void => setConfirmDeleteIndex(null)}
 						onMove={handleMove}
@@ -219,6 +189,16 @@ function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 				isLoading={isPatching}
 				onConfirm={(): void => void handleConfirmApplyToAll()}
 				onClose={(): void => setApplyToAllIndex(null)}
+			/>
+			<VariableImpactDialog
+				open={impact !== null}
+				mode={impact?.mode ?? 'delete'}
+				variableName={impact?.variableName ?? ''}
+				newName={impact?.newName}
+				usages={impact?.usages ?? []}
+				isLoading={isPatching}
+				onConfirm={(resolved): void => void handleImpactConfirm(resolved)}
+				onClose={(): void => setImpact(null)}
 			/>
 		</div>
 	);

@@ -189,7 +189,9 @@ go.mod @therealpandey
 ## Infrastructure Monitoring
 /frontend/src/pages/InfrastructureMonitoring/ @SigNoz/pulse-frontend
 /frontend/src/container/InfraMonitoringHosts/ @SigNoz/pulse-frontend
+/frontend/src/container/InfraMonitoringHostsV2/ @SigNoz/pulse-frontend
 /frontend/src/container/InfraMonitoringK8s/ @SigNoz/pulse-frontend
+/frontend/src/container/InfraMonitoringK8sV2/ @SigNoz/pulse-frontend
 
 ## Alerts
 /frontend/src/pages/AlertList/ @SigNoz/pulse-frontend

@@ -1,109 +1,124 @@
+import dayjs from 'dayjs';
+
 import {
-	areFilterStatesEqual,
-	combineQueries,
-	DEFAULT_FILTER_STATE,
-	filterStateToQuery,
-	isFilterStateEmpty,
+	areQueriesEqual,
+	createdByClause,
+	isQueryEmpty,
+	parseReflectedClauses,
+	spliceClause,
+	updatedWindowFromTimestamp,
 } from './filterQuery';
-import type { DashboardFilterState } from '../types';
 
-const state = (patch: Partial<DashboardFilterState>): DashboardFilterState => ({
-	...DEFAULT_FILTER_STATE,
-	...patch,
+describe('createdByClause', () => {
+	it('is null for no emails, = for one, IN for many', () => {
+		expect(createdByClause([])).toBeNull();
+		expect(createdByClause(['a@x.io'])).toBe("created_by = 'a@x.io'");
+		expect(createdByClause(['a@x.io', 'b@x.io'])).toBe(
+			"created_by IN ['a@x.io', 'b@x.io']",
+		);
+	});
 });
 
-describe('filterStateToQuery', () => {
-	it('passes the raw search through, wrapped in parentheses', () => {
-		expect(filterStateToQuery(state({ search: 'name contains "prod"' }))).toBe(
-			'(name contains "prod")',
-		);
-	});
-
-	it('emits an equality clause for a single creator', () => {
-		expect(filterStateToQuery(state({ createdBy: ['a@b.com'] }))).toBe(
-			"created_by = 'a@b.com'",
-		);
-	});
-
-	it('emits an IN clause for multiple creators', () => {
-		expect(filterStateToQuery(state({ createdBy: ['a@b.com', 'c@d.com'] }))).toBe(
-			"created_by IN ['a@b.com', 'c@d.com']",
-		);
-	});
-
-	it('emits an exact equality clause per selected tag', () => {
+describe('parseReflectedClauses', () => {
+	it('reflects a top-level created_by equality', () => {
 		expect(
-			filterStateToQuery(
-				state({
-					tags: [
-						{ key: 'env', value: 'prod' },
-						{ key: 'team', value: 'core' },
-					],
-				}),
+			parseReflectedClauses("created_by = 'a@x.io'").createdBy,
+		).toStrictEqual(['a@x.io']);
+	});
+
+	it('reflects a created_by IN list', () => {
+		expect(
+			parseReflectedClauses("created_by IN ['a@x.io','b@x.io']").createdBy,
+		).toStrictEqual(['a@x.io', 'b@x.io']);
+	});
+
+	it('does not reflect a non =/IN created_by operator', () => {
+		expect(
+			parseReflectedClauses("created_by != 'a@x.io'").createdBy,
+		).toStrictEqual([]);
+	});
+
+	it('does not reflect a nested (parenthesised) clause', () => {
+		expect(
+			parseReflectedClauses("(created_by = 'a@x.io') AND name = 'x'").createdBy,
+		).toStrictEqual([]);
+	});
+
+	it('does not reflect a duplicated key', () => {
+		expect(
+			parseReflectedClauses("created_by = 'a@x.io' AND created_by = 'b@x.io'")
+				.createdBy,
+		).toStrictEqual([]);
+	});
+
+	it('reflects a recent updated_at >= as the nearest window', () => {
+		const iso = dayjs().subtract(7, 'day').toISOString();
+		expect(parseReflectedClauses(`updated_at >= '${iso}'`).updated).toBe('7d');
+	});
+
+	it('falls back to any for an unrecognised updated_at cutoff', () => {
+		const iso = dayjs().subtract(400, 'day').toISOString();
+		expect(parseReflectedClauses(`updated_at >= '${iso}'`).updated).toBe('any');
+	});
+});
+
+describe('spliceClause', () => {
+	it('appends a clause when the key is absent', () => {
+		expect(
+			spliceClause("name = 'x'", 'created_by', "created_by = 'a@x.io'"),
+		).toBe("name = 'x' AND created_by = 'a@x.io'");
+	});
+
+	it('replaces an existing top-level clause for the key', () => {
+		expect(
+			spliceClause(
+				"created_by = 'old' AND name = 'x'",
+				'created_by',
+				"created_by = 'new'",
 			),
-		).toBe("env = 'prod' AND team = 'core'");
+		).toBe("created_by = 'new' AND name = 'x'");
 	});
 
-	it('ANDs raw search with the structured chips', () => {
+	it('removes the clause when passed null', () => {
 		expect(
-			filterStateToQuery(
-				state({
-					search: 'name contains "x"',
-					createdBy: ['a@b.com'],
-					tags: [{ key: 'env', value: 'prod' }],
-				}),
+			spliceClause("created_by = 'a@x.io' AND name = 'x'", 'created_by', null),
+		).toBe("name = 'x'");
+	});
+
+	it('leaves a nested clause untouched and appends instead', () => {
+		expect(
+			spliceClause(
+				"(created_by = 'a') AND name = 'x'",
+				'created_by',
+				"created_by = 'b'",
 			),
-		).toBe("(name contains \"x\") AND created_by = 'a@b.com' AND env = 'prod'");
+		).toBe("(created_by = 'a') AND name = 'x' AND created_by = 'b'");
 	});
 
-	it('returns an empty string for the default state', () => {
-		expect(filterStateToQuery(DEFAULT_FILTER_STATE)).toBe('');
+	it('is a no-op removing an absent key', () => {
+		expect(spliceClause("name = 'x'", 'updated_at', null)).toBe("name = 'x'");
 	});
 });
 
-describe('isFilterStateEmpty', () => {
-	it('is true for the default state', () => {
-		expect(isFilterStateEmpty(DEFAULT_FILTER_STATE)).toBe(true);
-	});
-
-	it('is false when any tag is selected', () => {
+describe('updatedWindowFromTimestamp', () => {
+	it('maps a ~1 day cutoff to today', () => {
 		expect(
-			isFilterStateEmpty(state({ tags: [{ key: 'env', value: 'prod' }] })),
-		).toBe(false);
+			updatedWindowFromTimestamp(dayjs().subtract(1, 'day').toISOString()),
+		).toBe('today');
+	});
+
+	it('returns null for an unquoted invalid value', () => {
+		expect(updatedWindowFromTimestamp('not-a-date')).toBeNull();
 	});
 });
 
-describe('areFilterStatesEqual', () => {
-	it('ignores tag ordering', () => {
-		const a = state({
-			tags: [
-				{ key: 'env', value: 'prod' },
-				{ key: 'team', value: 'core' },
-			],
-		});
-		const b = state({
-			tags: [
-				{ key: 'team', value: 'core' },
-				{ key: 'env', value: 'prod' },
-			],
-		});
-		expect(areFilterStatesEqual(a, b)).toBe(true);
+describe('query helpers', () => {
+	it('isQueryEmpty ignores whitespace', () => {
+		expect(isQueryEmpty('   ')).toBe(true);
+		expect(isQueryEmpty("name = 'x'")).toBe(false);
 	});
 
-	it('distinguishes differing tag selections', () => {
-		expect(
-			areFilterStatesEqual(
-				state({ tags: [{ key: 'env', value: 'prod' }] }),
-				state({ tags: [{ key: 'env', value: 'dev' }] }),
-			),
-		).toBe(false);
-	});
-});
-
-describe('combineQueries', () => {
-	it('drops empty fragments and ANDs the rest', () => {
-		expect(combineQueries('locked = true', '', undefined, 'name = "x"')).toBe(
-			'locked = true AND name = "x"',
-		);
+	it('areQueriesEqual trims before comparing', () => {
+		expect(areQueriesEqual("name = 'x' ", "  name = 'x'")).toBe(true);
 	});
 });

@@ -11,9 +11,20 @@
 	font-size: var(--periscope-font-size-base);
 }
 
-// Indent the first cell so mapper rows read as nested under their group.
 .targetCell {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-3);
+	min-width: 0;
 	padding-left: var(--spacing-12);
+}
+
+.targetName {
+	min-width: 0;
+}
+
+.targetContextBadge {
+	flex-shrink: 0;
 }
 
 // Shorter vertical padding so the loading state reads as a compact placeholder.
@@ -29,7 +40,7 @@
 	}
 }
 
-.statusCell {
+.actionsCell {
 	text-align: right;
 }
 
@@ -45,6 +56,10 @@
 	flex-wrap: wrap;
 	align-items: center;
 	gap: var(--spacing-3);
+}
+
+.sourceChip {
+	font-family: var(--font-mono, monospace);
 }
 
 .sourceChipText {

@@ -1,8 +1,11 @@
-import { AuthtypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	AuthtypesGettableRoleDTO,
+	AuthtypesRoleDTO,
+} from 'api/generated/services/sigNoz.schemas';
 
 const orgId = '019ba2bb-2fa1-7b24-8159-cfca08617ef9';
 
-export const managedRoles: AuthtypesRoleDTO[] = [
+export const managedRoles: AuthtypesGettableRoleDTO[] = [
 	{
 		id: '019c24aa-2248-756f-9833-984f1ab63819',
 		createdAt: '2026-02-03T18:00:55.624356Z',
@@ -35,7 +38,7 @@ export const managedRoles: AuthtypesRoleDTO[] = [
 	},
 ];
 
-export const customRoles: AuthtypesRoleDTO[] = [
+export const customRoles: AuthtypesGettableRoleDTO[] = [
 	{
 		id: '019c24aa-3333-0001-aaaa-111111111111',
 		createdAt: '2026-02-10T10:30:00.000Z',
@@ -56,12 +59,24 @@ export const customRoles: AuthtypesRoleDTO[] = [
 	},
 ];
 
-export const allRoles: AuthtypesRoleDTO[] = [...managedRoles, ...customRoles];
+export const allRoles: AuthtypesGettableRoleDTO[] = [
+	...managedRoles,
+	...customRoles,
+];
 
 export const listRolesSuccessResponse = {
 	status: 'success',
 	data: allRoles,
 };
 
-export const customRoleResponse = { status: 'success', data: customRoles[0] };
-export const managedRoleResponse = { status: 'success', data: managedRoles[0] };
+const customRole: AuthtypesRoleDTO = {
+	...customRoles[0],
+	transactionGroups: [],
+};
+const managedRole: AuthtypesRoleDTO = {
+	...managedRoles[0],
+	transactionGroups: [],
+};
+
+export const customRoleResponse = { status: 'success', data: customRole };
+export const managedRoleResponse = { status: 'success', data: managedRole };

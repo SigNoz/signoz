@@ -25,7 +25,6 @@ func buildNodeRecords(
 	groupBy []qbtypes.GroupByKey,
 	metadataMap map[string]map[string]string,
 	nodeConditionCounts map[string]nodeConditionCounts,
-	podPhaseCounts map[string]podPhaseCounts,
 	podStatusCounts map[string]podStatusCounts,
 ) []inframonitoringtypes.NodeRecord {
 	metricsMap := parseFullQueryResponse(resp, groupBy)
@@ -74,16 +73,6 @@ func buildNodeRecords(
 				case nodeConditionCountsForGroup.NotReady == 1:
 					record.Condition = inframonitoringtypes.NodeConditionNotReady
 				}
-			}
-		}
-
-		if podPhaseCountsForGroup, ok := podPhaseCounts[compositeKey]; ok {
-			record.PodCountsByPhase = inframonitoringtypes.PodCountsByPhase{
-				Pending:   podPhaseCountsForGroup.Pending,
-				Running:   podPhaseCountsForGroup.Running,
-				Succeeded: podPhaseCountsForGroup.Succeeded,
-				Failed:    podPhaseCountsForGroup.Failed,
-				Unknown:   podPhaseCountsForGroup.Unknown,
 			}
 		}
 
@@ -177,6 +166,7 @@ func (m *module) getNodesTableMetadata(ctx context.Context, orgID valuer.UUID, r
 // Groups absent from the result map have implicit zero counts (caller default).
 func (m *module) getPerGroupNodeConditionCounts(
 	ctx context.Context,
+	orgID valuer.UUID,
 	start, end int64,
 	filter *qbtypes.Filter,
 	groupBy []qbtypes.GroupByKey,
@@ -217,7 +207,7 @@ func (m *module) getPerGroupNodeConditionCounts(
 		timeSeriesFPs.LE("unix_milli", flooredEndMs),
 	)
 	if mergedFilterExpr != "" {
-		filterClause, err := m.buildFilterClause(ctx, &qbtypes.Filter{Expression: mergedFilterExpr}, start, end)
+		filterClause, err := m.buildFilterClause(ctx, orgID, &qbtypes.Filter{Expression: mergedFilterExpr}, start, end)
 		if err != nil {
 			return nil, err
 		}

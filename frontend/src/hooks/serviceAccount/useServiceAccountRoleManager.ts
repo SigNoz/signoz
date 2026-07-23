@@ -6,7 +6,7 @@ import {
 	useDeleteServiceAccountRoleDeprecated,
 	useGetServiceAccountRoles,
 } from 'api/generated/services/serviceaccount';
-import type { AuthtypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
+import type { AuthtypesGettableRoleDTO } from 'api/generated/services/sigNoz.schemas';
 import { retryOn429 } from 'utils/errorUtils';
 
 const enum PromiseStatus {
@@ -21,11 +21,11 @@ export interface RoleUpdateFailure {
 }
 
 interface UseServiceAccountRoleManagerResult {
-	currentRoles: AuthtypesRoleDTO[];
+	currentRoles: AuthtypesGettableRoleDTO[];
 	isLoading: boolean;
 	applyDiff: (
 		localRoleIds: string[],
-		availableRoles: AuthtypesRoleDTO[],
+		availableRoles: AuthtypesGettableRoleDTO[],
 	) => Promise<RoleUpdateFailure[]>;
 }
 
@@ -40,7 +40,7 @@ export function useServiceAccountRoleManager(
 		{ query: { enabled: options?.enabled ?? true } },
 	);
 
-	const currentRoles = useMemo<AuthtypesRoleDTO[]>(
+	const currentRoles = useMemo<AuthtypesGettableRoleDTO[]>(
 		() => data?.data ?? [],
 		[data?.data],
 	);
@@ -64,7 +64,7 @@ export function useServiceAccountRoleManager(
 	const applyDiff = useCallback(
 		async (
 			localRoleIds: string[],
-			availableRoles: AuthtypesRoleDTO[],
+			availableRoles: AuthtypesGettableRoleDTO[],
 		): Promise<RoleUpdateFailure[]> => {
 			const currentRoleIds = new Set(
 				currentRoles.map((r) => r.id).filter(Boolean),

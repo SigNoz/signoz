@@ -21,6 +21,11 @@ import (
 
 var (
 	aggRe = regexp.MustCompile(`^__result_(\d+)$`)
+	// keyAliasRe matches the traces statement builder's positional column-alias prefix
+	// `__SELECT_KEY_<n>_` / `__GROUP_BY_KEY_<n>_`, which disambiguates select/group-by
+	// aliases from real table columns in the generated SQL. It is stripped here so the
+	// original field name surfaces as the label / column / raw-data key.
+	keyAliasRe = regexp.MustCompile(`^__(?:SELECT|GROUP_BY)_KEY_\d+_`)
 	// legacyReservedColumnTargetAliases identifies result value from a user
 	// written clickhouse query. The column alias indcate which value is
 	// to be considered as final result (or target).
@@ -28,6 +33,12 @@ var (
 
 	CodeFailUnmarshalJSONColumn = errors.MustNewCode("fail_unmarshal_json_column")
 )
+
+// stripKeyAlias removes the __SELECT_KEY_<n>_ / __GROUP_BY_KEY_<n>_ prefix from a result
+// column name, recovering the field name; unprefixed names are returned unchanged.
+func stripKeyAlias(name string) string {
+	return keyAliasRe.ReplaceAllString(name, "")
+}
 
 // consume reads every row and shapes it into the payload expected for the
 // given request type.
@@ -126,7 +137,7 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 		)
 
 		for idx, ptr := range slots {
-			name := colNames[idx]
+			name := stripKeyAlias(colNames[idx])
 
 			switch v := ptr.(type) {
 			case *time.Time:
@@ -296,6 +307,7 @@ func readAsScalar(rows driver.Rows, queryName string) (*qbtypes.ScalarData, erro
 
 	var aggIndex int64
 	for i, name := range colNames {
+		name = stripKeyAlias(name)
 		colType := qbtypes.ColumnTypeGroup
 		// Builder queries aliases aggregation columns as __result_N (always numeric) and wraps group-by keys with toString (always string);
 		// Raw ClickHouse queries may use any aliases.
@@ -406,7 +418,7 @@ func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 		}
 
 		for i, cellPtr := range scan {
-			name := colNames[i]
+			name := stripKeyAlias(colNames[i])
 
 			// de-reference the typed pointer to any
 			val := reflect.ValueOf(cellPtr).Elem().Interface()

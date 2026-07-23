@@ -8,7 +8,7 @@ from fixtures.logger import setup_logger
 logger = setup_logger(__name__)
 
 
-def create_migrator(
+def create_migrator(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     network: Network,
     clickhouse: types.TestContainerClickhouse,
     request: pytest.FixtureRequest,
@@ -17,18 +17,19 @@ def create_migrator(
     env_overrides: dict | None = None,
 ) -> types.Operation:
     """
-    Factory function for running schema migrations.
-    Accepts optional env_overrides to customize the migrator environment.
+    Factory function for running schema migrations. Accepts optional
+    env_overrides to customize the migrator environment; the release comes
+    from the --schema-migrator-version option.
     """
 
     def create() -> None:
-        version = request.config.getoption("--schema-migrator-version")
+        migrator_version = request.config.getoption("--schema-migrator-version")
         client = docker.from_env()
 
         environment = dict(env_overrides) if env_overrides else {}
 
         container = client.containers.run(
-            image=f"signoz/signoz-schema-migrator:{version}",
+            image=f"signoz/signoz-schema-migrator:{migrator_version}",
             command=f"sync --replication=true --cluster-name=cluster --up= --dsn={clickhouse.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN']}",
             detach=True,
             auto_remove=False,
@@ -47,7 +48,7 @@ def create_migrator(
         container.remove()
 
         container = client.containers.run(
-            image=f"signoz/signoz-schema-migrator:{version}",
+            image=f"signoz/signoz-schema-migrator:{migrator_version}",
             command=f"async --replication=true --cluster-name=cluster --up= --dsn={clickhouse.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN']}",
             detach=True,
             auto_remove=False,

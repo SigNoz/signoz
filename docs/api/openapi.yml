@@ -543,6 +543,31 @@ components:
       required:
       - id
       type: object
+    AuthtypesGettableRole:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        description:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        orgId:
+          type: string
+        type:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - id
+      - name
+      - description
+      - type
+      - orgId
+      type: object
     AuthtypesGettableToken:
       properties:
         accessToken:
@@ -706,43 +731,6 @@ components:
           type: string
         orgId:
           type: string
-        type:
-          type: string
-        updatedAt:
-          format: date-time
-          type: string
-      required:
-      - id
-      - name
-      - description
-      - type
-      - orgId
-      type: object
-    AuthtypesRoleMapping:
-      properties:
-        defaultRole:
-          type: string
-        groupMappings:
-          additionalProperties:
-            type: string
-          nullable: true
-          type: object
-        useRoleAttribute:
-          type: boolean
-      type: object
-    AuthtypesRoleWithTransactionGroups:
-      properties:
-        createdAt:
-          format: date-time
-          type: string
-        description:
-          type: string
-        id:
-          type: string
-        name:
-          type: string
-        orgId:
-          type: string
         transactionGroups:
           $ref: '#/components/schemas/AuthtypesTransactionGroups'
         type:
@@ -757,6 +745,18 @@ components:
       - type
       - orgId
       - transactionGroups
+      type: object
+    AuthtypesRoleMapping:
+      properties:
+        defaultRole:
+          type: string
+        groupMappings:
+          additionalProperties:
+            type: string
+          nullable: true
+          type: object
+        useRoleAttribute:
+          type: boolean
       type: object
     AuthtypesSamlConfig:
       properties:
@@ -1495,6 +1495,7 @@ components:
       - cassandradb
       - redis
       - cloudsql_postgres
+      - memorystore_redis
       type: string
     CloudintegrationtypesServiceMetadata:
       properties:
@@ -2596,19 +2597,6 @@ components:
         repeatVariable:
           type: string
       type: object
-    DashboardLink:
-      properties:
-        name:
-          type: string
-        renderVariables:
-          type: boolean
-        targetBlank:
-          type: boolean
-        tooltip:
-          type: string
-        url:
-          type: string
-      type: object
     DashboardtypesAxes:
       properties:
         isLogScale:
@@ -2747,6 +2735,7 @@ components:
         datasources:
           additionalProperties:
             $ref: '#/components/schemas/DashboardtypesDatasourceSpec'
+          nullable: true
           type: object
         display:
           $ref: '#/components/schemas/DashboardtypesDisplay'
@@ -2758,7 +2747,7 @@ components:
           type: array
         links:
           items:
-            $ref: '#/components/schemas/DashboardLink'
+            $ref: '#/components/schemas/DashboardtypesLink'
           type: array
         panels:
           additionalProperties:
@@ -2775,6 +2764,7 @@ components:
       - variables
       - panels
       - layouts
+      - links
       type: object
     DashboardtypesDashboardView:
       properties:
@@ -2853,14 +2843,22 @@ components:
       required:
       - name
       type: object
+    DashboardtypesDynamicVariableSignal:
+      enum:
+      - traces
+      - logs
+      - metrics
+      - all
+      type: string
     DashboardtypesDynamicVariableSpec:
       properties:
         name:
           type: string
         signal:
-          $ref: '#/components/schemas/TelemetrytypesSignal'
+          $ref: '#/components/schemas/DashboardtypesDynamicVariableSignal'
       required:
       - name
+      - signal
       type: object
     DashboardtypesFillMode:
       enum:
@@ -3029,6 +3027,19 @@ components:
       - solid
       - dashed
       type: string
+    DashboardtypesLink:
+      properties:
+        name:
+          type: string
+        renderVariables:
+          type: boolean
+        targetBlank:
+          type: boolean
+        tooltip:
+          type: string
+        url:
+          type: string
+      type: object
     DashboardtypesListOrder:
       enum:
       - asc
@@ -3039,6 +3050,7 @@ components:
         selectFields:
           items:
             $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          nullable: true
           type: array
       type: object
     DashboardtypesListSort:
@@ -3388,7 +3400,7 @@ components:
           $ref: '#/components/schemas/DashboardtypesDisplay'
         links:
           items:
-            $ref: '#/components/schemas/DashboardLink'
+            $ref: '#/components/schemas/DashboardtypesLink'
           type: array
         plugin:
           $ref: '#/components/schemas/DashboardtypesPanelPlugin'
@@ -3400,6 +3412,7 @@ components:
       - display
       - plugin
       - queries
+      - links
       type: object
     DashboardtypesPatchOp:
       enum:
@@ -4259,6 +4272,34 @@ components:
           type: number
         clusterName:
           type: string
+        counts:
+          properties:
+            daemonSets:
+              format: int64
+              type: integer
+            deployments:
+              format: int64
+              type: integer
+            jobs:
+              format: int64
+              type: integer
+            namespaces:
+              format: int64
+              type: integer
+            nodes:
+              format: int64
+              type: integer
+            statefulSets:
+              format: int64
+              type: integer
+          required:
+          - nodes
+          - namespaces
+          - deployments
+          - daemonSets
+          - jobs
+          - statefulSets
+          type: object
         meta:
           additionalProperties:
             type: string
@@ -4266,8 +4307,6 @@ components:
           type: object
         nodeCountsByReadiness:
           $ref: '#/components/schemas/InframonitoringtypesNodeCountsByReadiness'
-        podCountsByPhase:
-          $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
         podCountsByStatus:
           $ref: '#/components/schemas/InframonitoringtypesPodCountsByStatus'
       required:
@@ -4277,8 +4316,8 @@ components:
       - clusterMemory
       - clusterMemoryAllocatable
       - nodeCountsByReadiness
-      - podCountsByPhase
       - podCountsByStatus
+      - counts
       - meta
       type: object
     InframonitoringtypesClusters:
@@ -4486,8 +4525,6 @@ components:
           type: object
         misscheduledNodes:
           type: integer
-        podCountsByPhase:
-          $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
         podCountsByStatus:
           $ref: '#/components/schemas/InframonitoringtypesPodCountsByStatus'
         readyNodes:
@@ -4504,7 +4541,6 @@ components:
       - currentNodes
       - readyNodes
       - misscheduledNodes
-      - podCountsByPhase
       - podCountsByStatus
       - meta
       type: object
@@ -4559,8 +4595,6 @@ components:
             type: string
           nullable: true
           type: object
-        podCountsByPhase:
-          $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
         podCountsByStatus:
           $ref: '#/components/schemas/InframonitoringtypesPodCountsByStatus'
       required:
@@ -4573,7 +4607,6 @@ components:
       - deploymentMemoryLimit
       - desiredPods
       - availablePods
-      - podCountsByPhase
       - podCountsByStatus
       - meta
       type: object
@@ -4705,8 +4738,6 @@ components:
             type: string
           nullable: true
           type: object
-        podCountsByPhase:
-          $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
         podCountsByStatus:
           $ref: '#/components/schemas/InframonitoringtypesPodCountsByStatus'
         successfulPods:
@@ -4723,7 +4754,6 @@ components:
       - activePods
       - failedPods
       - successfulPods
-      - podCountsByPhase
       - podCountsByStatus
       - meta
       type: object
@@ -4800,6 +4830,26 @@ components:
       type: object
     InframonitoringtypesNamespaceRecord:
       properties:
+        counts:
+          properties:
+            daemonSets:
+              format: int64
+              type: integer
+            deployments:
+              format: int64
+              type: integer
+            jobs:
+              format: int64
+              type: integer
+            statefulSets:
+              format: int64
+              type: integer
+          required:
+          - deployments
+          - daemonSets
+          - jobs
+          - statefulSets
+          type: object
         meta:
           additionalProperties:
             type: string
@@ -4813,16 +4863,14 @@ components:
           type: number
         namespaceName:
           type: string
-        podCountsByPhase:
-          $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
         podCountsByStatus:
           $ref: '#/components/schemas/InframonitoringtypesPodCountsByStatus'
       required:
       - namespaceName
       - namespaceCPU
       - namespaceMemory
-      - podCountsByPhase
       - podCountsByStatus
+      - counts
       - meta
       type: object
     InframonitoringtypesNamespaces:
@@ -4886,15 +4934,12 @@ components:
           type: number
         nodeName:
           type: string
-        podCountsByPhase:
-          $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
         podCountsByStatus:
           $ref: '#/components/schemas/InframonitoringtypesPodCountsByStatus'
       required:
       - nodeName
       - condition
       - nodeCountsByReadiness
-      - podCountsByPhase
       - podCountsByStatus
       - nodeCPU
       - nodeCPUAllocatable
@@ -4921,25 +4966,6 @@ components:
       - records
       - total
       - endTimeBeforeRetention
-      type: object
-    InframonitoringtypesPodCountsByPhase:
-      properties:
-        failed:
-          type: integer
-        pending:
-          type: integer
-        running:
-          type: integer
-        succeeded:
-          type: integer
-        unknown:
-          type: integer
-      required:
-      - pending
-      - running
-      - succeeded
-      - failed
-      - unknown
       type: object
     InframonitoringtypesPodCountsByStatus:
       properties:
@@ -4999,15 +5025,6 @@ components:
       - shutdown
       - unexpectedAdmissionError
       type: object
-    InframonitoringtypesPodPhase:
-      enum:
-      - pending
-      - running
-      - succeeded
-      - failed
-      - unknown
-      - no_data
-      type: string
     InframonitoringtypesPodRecord:
       properties:
         meta:
@@ -5027,8 +5044,6 @@ components:
         podCPURequest:
           format: double
           type: number
-        podCountsByPhase:
-          $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
         podCountsByStatus:
           $ref: '#/components/schemas/InframonitoringtypesPodCountsByStatus'
         podMemory:
@@ -5040,8 +5055,6 @@ components:
         podMemoryRequest:
           format: double
           type: number
-        podPhase:
-          $ref: '#/components/schemas/InframonitoringtypesPodPhase'
         podRestarts:
           format: int64
           type: integer
@@ -5057,8 +5070,6 @@ components:
       - podMemory
       - podMemoryRequest
       - podMemoryLimit
-      - podPhase
-      - podCountsByPhase
       - podStatus
       - podCountsByStatus
       - podRestarts
@@ -5409,8 +5420,6 @@ components:
             type: string
           nullable: true
           type: object
-        podCountsByPhase:
-          $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
         podCountsByStatus:
           $ref: '#/components/schemas/InframonitoringtypesPodCountsByStatus'
         statefulSetCPU:
@@ -5443,7 +5452,6 @@ components:
       - statefulSetMemoryLimit
       - desiredPods
       - currentPods
-      - podCountsByPhase
       - podCountsByStatus
       - meta
       type: object
@@ -6283,6 +6291,7 @@ components:
       - delta
       - cumulative
       - unspecified
+      - ""
       type: string
     MetrictypesTimeAggregation:
       enum:
@@ -6295,6 +6304,7 @@ components:
       - count_distinct
       - rate
       - increase
+      - ""
       type: string
     MetrictypesType:
       enum:
@@ -6502,6 +6512,7 @@ components:
         args:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5FunctionArg'
+          nullable: true
           type: array
         name:
           $ref: '#/components/schemas/Querybuildertypesv5FunctionName'
@@ -6672,6 +6683,7 @@ components:
         functions:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5Function'
+          nullable: true
           type: array
         having:
           $ref: '#/components/schemas/Querybuildertypesv5Having'
@@ -6684,6 +6696,7 @@ components:
         order:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+          nullable: true
           type: array
       type: object
     Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregation:
@@ -6691,6 +6704,7 @@ components:
         aggregations:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5LogAggregation'
+          nullable: true
           type: array
         cursor:
           type: string
@@ -6701,10 +6715,12 @@ components:
         functions:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5Function'
+          nullable: true
           type: array
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          nullable: true
           type: array
         having:
           $ref: '#/components/schemas/Querybuildertypesv5Having'
@@ -6721,14 +6737,17 @@ components:
         order:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+          nullable: true
           type: array
         secondaryAggregations:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5SecondaryAggregation'
+          nullable: true
           type: array
         selectFields:
           items:
             $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          nullable: true
           type: array
         signal:
           enum:
@@ -6746,6 +6765,7 @@ components:
         aggregations:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5MetricAggregation'
+          nullable: true
           type: array
         cursor:
           type: string
@@ -6756,10 +6776,12 @@ components:
         functions:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5Function'
+          nullable: true
           type: array
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          nullable: true
           type: array
         having:
           $ref: '#/components/schemas/Querybuildertypesv5Having'
@@ -6776,14 +6798,17 @@ components:
         order:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+          nullable: true
           type: array
         secondaryAggregations:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5SecondaryAggregation'
+          nullable: true
           type: array
         selectFields:
           items:
             $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          nullable: true
           type: array
         signal:
           enum:
@@ -6801,6 +6826,7 @@ components:
         aggregations:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5TraceAggregation'
+          nullable: true
           type: array
         cursor:
           type: string
@@ -6811,10 +6837,12 @@ components:
         functions:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5Function'
+          nullable: true
           type: array
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          nullable: true
           type: array
         having:
           $ref: '#/components/schemas/Querybuildertypesv5Having'
@@ -6831,14 +6859,17 @@ components:
         order:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+          nullable: true
           type: array
         secondaryAggregations:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5SecondaryAggregation'
+          nullable: true
           type: array
         selectFields:
           items:
             $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          nullable: true
           type: array
         signal:
           enum:
@@ -6856,6 +6887,7 @@ components:
         aggregations:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5TraceAggregation'
+          nullable: true
           type: array
         cursor:
           type: string
@@ -6868,10 +6900,12 @@ components:
         functions:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5Function'
+          nullable: true
           type: array
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          nullable: true
           type: array
         having:
           $ref: '#/components/schemas/Querybuildertypesv5Having'
@@ -6886,12 +6920,14 @@ components:
         order:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+          nullable: true
           type: array
         returnSpansFrom:
           type: string
         selectFields:
           items:
             $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          nullable: true
           type: array
         stepInterval:
           $ref: '#/components/schemas/Querybuildertypesv5Step'
@@ -7131,6 +7167,7 @@ components:
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          nullable: true
           type: array
         limit:
           type: integer
@@ -7139,6 +7176,7 @@ components:
         order:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+          nullable: true
           type: array
         stepInterval:
           $ref: '#/components/schemas/Querybuildertypesv5Step'
@@ -7521,6 +7559,7 @@ components:
         groupBy:
           items:
             type: string
+          nullable: true
           type: array
         newGroupEvalDelay:
           type: string
@@ -7592,6 +7631,7 @@ components:
         alertStates:
           items:
             $ref: '#/components/schemas/RuletypesAlertState'
+          nullable: true
           type: array
         enabled:
           type: boolean
@@ -7998,6 +8038,28 @@ components:
       required:
       - items
       type: object
+    SpantypesGettableSpanMapperTest:
+      properties:
+        collectorLogs:
+          items:
+            type: string
+          nullable: true
+          type: array
+        spans:
+          items:
+            $ref: '#/components/schemas/SpantypesSpanMapperTestSpan'
+          nullable: true
+          type: array
+      type: object
+    SpantypesGettableSpanMappers:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/SpantypesSpanMapper'
+          type: array
+      required:
+      - items
+      type: object
     SpantypesGettableTraceAggregations:
       properties:
         aggregations:
@@ -8085,6 +8147,39 @@ components:
       - name
       - condition
       type: object
+    SpantypesPostableSpanMapperTest:
+      properties:
+        groups:
+          items:
+            $ref: '#/components/schemas/SpantypesPostableSpanMapperTestGroup'
+          nullable: true
+          type: array
+        spans:
+          items:
+            $ref: '#/components/schemas/SpantypesSpanMapperTestSpan'
+          nullable: true
+          type: array
+      required:
+      - spans
+      - groups
+      type: object
+    SpantypesPostableSpanMapperTestGroup:
+      properties:
+        condition:
+          $ref: '#/components/schemas/SpantypesSpanMapperGroupCondition'
+        enabled:
+          type: boolean
+        mappers:
+          items:
+            $ref: '#/components/schemas/SpantypesPostableSpanMapper'
+          nullable: true
+          type: array
+        name:
+          type: string
+      required:
+      - name
+      - condition
+      type: object
     SpantypesPostableTraceAggregations:
       properties:
         aggregations:
@@ -8150,7 +8245,7 @@ components:
           type: boolean
         fieldContext:
           $ref: '#/components/schemas/SpantypesFieldContext'
-        group_id:
+        groupId:
           type: string
         id:
           type: string
@@ -8163,7 +8258,7 @@ components:
           type: string
       required:
       - id
-      - group_id
+      - groupId
       - name
       - fieldContext
       - config
@@ -8245,6 +8340,17 @@ components:
       - context
       - operation
       - priority
+      type: object
+    SpantypesSpanMapperTestSpan:
+      properties:
+        attributes:
+          additionalProperties: {}
+          nullable: true
+          type: object
+        resource:
+          additionalProperties: {}
+          nullable: true
+          type: object
       type: object
     SpantypesUpdatableSpanMapper:
       properties:
@@ -8463,6 +8569,7 @@ components:
       - resource
       - attribute
       - body
+      - ""
       type: string
     TelemetrytypesFieldDataType:
       enum:
@@ -8471,6 +8578,7 @@ components:
       - float64
       - int64
       - number
+      - ""
       type: string
     TelemetrytypesGettableFieldKeys:
       properties:
@@ -8502,10 +8610,12 @@ components:
       - traces
       - logs
       - metrics
+      - ""
       type: string
     TelemetrytypesSource:
       enum:
       - meter
+      - ""
       type: string
     TelemetrytypesTelemetryFieldKey:
       properties:
@@ -12022,7 +12132,7 @@ paths:
                 properties:
                   data:
                     items:
-                      $ref: '#/components/schemas/AuthtypesRole'
+                      $ref: '#/components/schemas/AuthtypesGettableRole'
                     type: array
                   status:
                     type: string
@@ -12206,7 +12316,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/AuthtypesRoleWithTransactionGroups'
+                    $ref: '#/components/schemas/AuthtypesRole'
                   status:
                     type: string
                 required:
@@ -13742,7 +13852,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/SpantypesGettableSpanMapperGroups'
+                    $ref: '#/components/schemas/SpantypesGettableSpanMappers'
                   status:
                     type: string
                 required:
@@ -13973,6 +14083,69 @@ paths:
       - tokenizer:
         - ADMIN
       summary: Update a span mapper
+      tags:
+      - spanmapper
+  /api/v1/span_mapper_groups/test:
+    post:
+      deprecated: false
+      description: Tests how span mappers would transform sample spans
+      operationId: TestSpanMappers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpantypesPostableSpanMapperTest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SpantypesGettableSpanMapperTest'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Test span mappers against sample spans
       tags:
       - spanmapper
   /api/v1/stats:
@@ -15932,17 +16105,19 @@ paths:
         metrics derived by summing per-node values within the group: CPU usage, CPU
         allocatable, memory working set, memory allocatable. Each row also reports
         per-group nodeCountsByReadiness ({ ready, notReady } from each node''s latest
-        k8s.node.condition_ready value) and per-group podCountsByPhase ({ pending,
-        running, succeeded, failed, unknown } from each pod''s latest k8s.pod.phase
-        value). Each cluster includes metadata attributes (k8s.cluster.name). The
-        response type is ''list'' for the default k8s.cluster.name grouping or ''grouped_list''
-        for custom groupBy keys; in both modes every row aggregates nodes and pods
-        in the group. Supports filtering via a filter expression, custom groupBy,
-        ordering by cpu / cpu_allocatable / memory / memory_allocatable, and pagination
-        via offset/limit. Also reports whether the requested time range falls before
-        the data retention boundary. Numeric metric fields (clusterCPU, clusterCPUAllocatable,
-        clusterMemory, clusterMemoryAllocatable) return -1 as a sentinel when no data
-        is available for that field.'
+        k8s.node.condition_ready value) and per-group podCountsByStatus ({ pending,
+        running, failed, unknown, crashLoopBackOff, imagePullBackOff, errImagePull,
+        createContainerConfigError, containerCreating, oomKilled, completed, error,
+        containerCannotRun, evicted, nodeAffinity, nodeLost, shutdown, unexpectedAdmissionError
+        } reflecting each pod''s latest kubectl-style display status). Each cluster
+        includes metadata attributes (k8s.cluster.name). The response type is ''list''
+        for the default k8s.cluster.name grouping or ''grouped_list'' for custom groupBy
+        keys; in both modes every row aggregates nodes and pods in the group. Supports
+        filtering via a filter expression, custom groupBy, ordering by cpu / cpu_allocatable
+        / memory / memory_allocatable, and pagination via offset/limit. Also reports
+        whether the requested time range falls before the data retention boundary.
+        Numeric metric fields (clusterCPU, clusterCPUAllocatable, clusterMemory, clusterMemoryAllocatable)
+        return -1 as a sentinel when no data is available for that field.'
       operationId: ListClusters
       requestBody:
         content:
@@ -16010,13 +16185,16 @@ paths:
         the number of nodes running at least one ready daemon pod) and misscheduledNodes
         (k8s.daemonset.misscheduled_nodes, the number of nodes running the daemon
         pod but not supposed to) — note these are node counts, not pod counts. It
-        also reports per-group podCountsByPhase ({ pending, running, succeeded, failed,
-        unknown } from each pod''s latest k8s.pod.phase value). Each daemonset includes
-        metadata attributes (k8s.daemonset.name, k8s.namespace.name, k8s.cluster.name).
-        The response type is ''list'' for the default k8s.daemonset.name grouping
-        or ''grouped_list'' for custom groupBy keys; in both modes every row aggregates
-        pods owned by daemonsets in the group. Supports filtering via a filter expression,
-        custom groupBy, ordering by cpu / cpu_request / cpu_limit / memory / memory_request
+        also reports per-group podCountsByStatus ({ pending, running, failed, unknown,
+        crashLoopBackOff, imagePullBackOff, errImagePull, createContainerConfigError,
+        containerCreating, oomKilled, completed, error, containerCannotRun, evicted,
+        nodeAffinity, nodeLost, shutdown, unexpectedAdmissionError } reflecting each
+        pod''s latest kubectl-style display status). Each daemonset includes metadata
+        attributes (k8s.daemonset.name, k8s.namespace.name, k8s.cluster.name). The
+        response type is ''list'' for the default k8s.daemonset.name grouping or ''grouped_list''
+        for custom groupBy keys; in both modes every row aggregates pods owned by
+        daemonsets in the group. Supports filtering via a filter expression, custom
+        groupBy, ordering by cpu / cpu_request / cpu_limit / memory / memory_request
         / memory_limit / desired_nodes / current_nodes / ready_nodes / misscheduled_nodes,
         and pagination via offset/limit. Also reports whether the requested time range
         falls before the data retention boundary. Numeric metric fields (daemonSetCPU,
@@ -16084,17 +16262,19 @@ paths:
         the deployment, plus average CPU/memory request and limit utilization (deploymentCPURequest,
         deploymentCPULimit, deploymentMemoryRequest, deploymentMemoryLimit). Each
         row also reports the latest known desiredPods (k8s.deployment.desired) and
-        availablePods (k8s.deployment.available) replica counts and per-group podCountsByPhase
-        ({ pending, running, succeeded, failed, unknown } from each pod''s latest
-        k8s.pod.phase value). Each deployment includes metadata attributes (k8s.deployment.name,
-        k8s.namespace.name, k8s.cluster.name). The response type is ''list'' for the
-        default k8s.deployment.name grouping or ''grouped_list'' for custom groupBy
-        keys; in both modes every row aggregates pods owned by deployments in the
-        group. Supports filtering via a filter expression, custom groupBy, ordering
-        by cpu / cpu_request / cpu_limit / memory / memory_request / memory_limit
-        / desired_pods / available_pods, and pagination via offset/limit. Also reports
-        whether the requested time range falls before the data retention boundary.
-        Numeric metric fields (deploymentCPU, deploymentCPURequest, deploymentCPULimit,
+        availablePods (k8s.deployment.available) replica counts and per-group podCountsByStatus
+        ({ pending, running, failed, unknown, crashLoopBackOff, imagePullBackOff,
+        errImagePull, createContainerConfigError, containerCreating, oomKilled, completed,
+        error, containerCannotRun, evicted, nodeAffinity, nodeLost, shutdown, unexpectedAdmissionError
+        } reflecting each pod''s latest kubectl-style display status). Each deployment
+        includes metadata attributes (k8s.deployment.name, k8s.namespace.name, k8s.cluster.name).
+        The response type is ''list'' for the default k8s.deployment.name grouping
+        or ''grouped_list'' for custom groupBy keys; in both modes every row aggregates
+        pods owned by deployments in the group. Supports filtering via a filter expression,
+        custom groupBy, ordering by cpu / cpu_request / cpu_limit / memory / memory_request
+        / memory_limit / desired_pods / available_pods, and pagination via offset/limit.
+        Also reports whether the requested time range falls before the data retention
+        boundary. Numeric metric fields (deploymentCPU, deploymentCPURequest, deploymentCPULimit,
         deploymentMemory, deploymentMemoryRequest, deploymentMemoryLimit, desiredPods,
         availablePods) return -1 as a sentinel when no data is available for that
         field.'
@@ -16229,9 +16409,12 @@ paths:
         (k8s.job.desired_successful_pods, the target completion count), activePods
         (k8s.job.active_pods), failedPods (k8s.job.failed_pods, cumulative across
         the lifetime of the job), and successfulPods (k8s.job.successful_pods, cumulative).
-        It also reports per-group podCountsByPhase ({ pending, running, succeeded,
-        failed, unknown } from each pod''s latest k8s.pod.phase value); note podCountsByPhase.failed
-        (current pod-phase) is distinct from failedPods (cumulative job kube-state-metric).
+        It also reports per-group podCountsByStatus ({ pending, running, failed, unknown,
+        crashLoopBackOff, imagePullBackOff, errImagePull, createContainerConfigError,
+        containerCreating, oomKilled, completed, error, containerCannotRun, evicted,
+        nodeAffinity, nodeLost, shutdown, unexpectedAdmissionError } reflecting each
+        pod''s latest kubectl-style display status); note podCountsByStatus.failed
+        (current pod status) is distinct from failedPods (cumulative job kube-state-metric).
         Each job includes metadata attributes (k8s.job.name, k8s.namespace.name, k8s.cluster.name).
         The response type is ''list'' for the default k8s.job.name grouping or ''grouped_list''
         for custom groupBy keys; in both modes every row aggregates pods owned by
@@ -16381,16 +16564,18 @@ paths:
       deprecated: false
       description: 'Returns a paginated list of Kubernetes namespaces with key aggregated
         pod metrics: CPU usage and memory working set (summed across pods in the group),
-        plus per-group podCountsByPhase ({ pending, running, succeeded, failed, unknown
-        } from each pod''s latest k8s.pod.phase value in the window). Each namespace
-        includes metadata attributes (k8s.namespace.name, k8s.cluster.name). The response
-        type is ''list'' for the default k8s.namespace.name grouping or ''grouped_list''
-        for custom groupBy keys; in both modes every row aggregates pods in the group.
-        Supports filtering via a filter expression, custom groupBy, ordering by cpu
-        / memory, and pagination via offset/limit. Also reports whether the requested
-        time range falls before the data retention boundary. Numeric metric fields
-        (namespaceCPU, namespaceMemory) return -1 as a sentinel when no data is available
-        for that field.'
+        plus per-group podCountsByStatus ({ pending, running, failed, unknown, crashLoopBackOff,
+        imagePullBackOff, errImagePull, createContainerConfigError, containerCreating,
+        oomKilled, completed, error, containerCannotRun, evicted, nodeAffinity, nodeLost,
+        shutdown, unexpectedAdmissionError } reflecting each pod''s latest kubectl-style
+        display status in the window). Each namespace includes metadata attributes
+        (k8s.namespace.name, k8s.cluster.name). The response type is ''list'' for
+        the default k8s.namespace.name grouping or ''grouped_list'' for custom groupBy
+        keys; in both modes every row aggregates pods in the group. Supports filtering
+        via a filter expression, custom groupBy, ordering by cpu / memory, and pagination
+        via offset/limit. Also reports whether the requested time range falls before
+        the data retention boundary. Numeric metric fields (namespaceCPU, namespaceMemory)
+        return -1 as a sentinel when no data is available for that field.'
       operationId: ListNamespaces
       requestBody:
         content:
@@ -16450,18 +16635,21 @@ paths:
       description: 'Returns a paginated list of Kubernetes nodes with key metrics:
         CPU usage, CPU allocatable, memory working set, memory allocatable, per-group
         nodeCountsByReadiness ({ ready, notReady } from each node''s latest k8s.node.condition_ready
-        in the window) and per-group podCountsByPhase ({ pending, running, succeeded,
-        failed, unknown } for pods scheduled on the listed nodes). Each node includes
-        metadata attributes (k8s.node.uid, k8s.cluster.name). The response type is
-        ''list'' for the default k8s.node.name grouping (each row is one node with
-        its current condition string: ready / not_ready / no_data) or ''grouped_list''
-        for custom groupBy keys (each row aggregates nodes in the group; condition
-        stays no_data). Supports filtering via a filter expression, custom groupBy,
-        ordering by cpu / cpu_allocatable / memory / memory_allocatable, and pagination
-        via offset/limit. Also reports whether the requested time range falls before
-        the data retention boundary. Numeric metric fields (nodeCPU, nodeCPUAllocatable,
-        nodeMemory, nodeMemoryAllocatable) return -1 as a sentinel when no data is
-        available for that field.'
+        in the window) and per-group podCountsByStatus ({ pending, running, failed,
+        unknown, crashLoopBackOff, imagePullBackOff, errImagePull, createContainerConfigError,
+        containerCreating, oomKilled, completed, error, containerCannotRun, evicted,
+        nodeAffinity, nodeLost, shutdown, unexpectedAdmissionError } for pods scheduled
+        on the listed nodes, reflecting each pod''s latest kubectl-style display status).
+        Each node includes metadata attributes (k8s.node.uid, k8s.cluster.name). The
+        response type is ''list'' for the default k8s.node.name grouping (each row
+        is one node with its current condition string: ready / not_ready / no_data)
+        or ''grouped_list'' for custom groupBy keys (each row aggregates nodes in
+        the group; condition stays no_data). Supports filtering via a filter expression,
+        custom groupBy, ordering by cpu / cpu_allocatable / memory / memory_allocatable,
+        and pagination via offset/limit. Also reports whether the requested time range
+        falls before the data retention boundary. Numeric metric fields (nodeCPU,
+        nodeCPUAllocatable, nodeMemory, nodeMemoryAllocatable) return -1 as a sentinel
+        when no data is available for that field.'
       operationId: ListNodes
       requestBody:
         content:
@@ -16520,20 +16708,23 @@ paths:
       deprecated: false
       description: 'Returns a paginated list of Kubernetes pods with key metrics:
         CPU usage, CPU request/limit utilization, memory working set, memory request/limit
-        utilization, current pod phase (pending/running/succeeded/failed/unknown/no_data),
-        and pod age (ms since start time). Each pod includes metadata attributes (namespace,
-        node, workload owner such as deployment/statefulset/daemonset/job/cronjob,
+        utilization, current pod status (kubectl-style display status such as Running/Pending/CrashLoopBackOff,
+        or no_data), and pod age (ms since start time). Each pod includes metadata
+        attributes (namespace, node, workload owner such as deployment/statefulset/daemonset/job/cronjob,
         cluster). Supports filtering via a filter expression, custom groupBy to aggregate
         pods by any attribute, ordering by any of the six metrics (cpu, cpu_request,
         cpu_limit, memory, memory_request, memory_limit), and pagination via offset/limit.
         The response type is ''list'' for the default k8s.pod.uid grouping (each row
-        is one pod with its current phase) or ''grouped_list'' for custom groupBy
-        keys (each row aggregates pods in the group with per-phase counts under podCountsByPhase:
-        { pending, running, succeeded, failed, unknown } derived from each pod''s
-        latest phase in the window). Also reports whether the requested time range
-        falls before the data retention boundary. Numeric metric fields (podCPU, podCPURequest,
-        podCPULimit, podMemory, podMemoryRequest, podMemoryLimit, podAge) return -1
-        as a sentinel when no data is available for that field.'
+        is one pod with its current status) or ''grouped_list'' for custom groupBy
+        keys (each row aggregates pods in the group with per-status counts under podCountsByStatus:
+        { pending, running, failed, unknown, crashLoopBackOff, imagePullBackOff, errImagePull,
+        createContainerConfigError, containerCreating, oomKilled, completed, error,
+        containerCannotRun, evicted, nodeAffinity, nodeLost, shutdown, unexpectedAdmissionError
+        } derived from each pod''s latest kubectl-style display status in the window).
+        Also reports whether the requested time range falls before the data retention
+        boundary. Numeric metric fields (podCPU, podCPURequest, podCPULimit, podMemory,
+        podMemoryRequest, podMemoryLimit, podAge) return -1 as a sentinel when no
+        data is available for that field.'
       operationId: ListPods
       requestBody:
         content:
@@ -16666,16 +16857,19 @@ paths:
         statefulSetCPULimit, statefulSetMemoryRequest, statefulSetMemoryLimit). Each
         row also reports the latest known desiredPods (k8s.statefulset.desired_pods)
         and currentPods (k8s.statefulset.current_pods) replica counts and per-group
-        podCountsByPhase ({ pending, running, succeeded, failed, unknown } from each
-        pod''s latest k8s.pod.phase value). Each statefulset includes metadata attributes
-        (k8s.statefulset.name, k8s.namespace.name, k8s.cluster.name). The response
-        type is ''list'' for the default k8s.statefulset.name grouping or ''grouped_list''
-        for custom groupBy keys; in both modes every row aggregates pods owned by
-        statefulsets in the group. Supports filtering via a filter expression, custom
-        groupBy, ordering by cpu / cpu_request / cpu_limit / memory / memory_request
-        / memory_limit / desired_pods / current_pods, and pagination via offset/limit.
-        Also reports whether the requested time range falls before the data retention
-        boundary. Numeric metric fields (statefulSetCPU, statefulSetCPURequest, statefulSetCPULimit,
+        podCountsByStatus ({ pending, running, failed, unknown, crashLoopBackOff,
+        imagePullBackOff, errImagePull, createContainerConfigError, containerCreating,
+        oomKilled, completed, error, containerCannotRun, evicted, nodeAffinity, nodeLost,
+        shutdown, unexpectedAdmissionError } reflecting each pod''s latest kubectl-style
+        display status). Each statefulset includes metadata attributes (k8s.statefulset.name,
+        k8s.namespace.name, k8s.cluster.name). The response type is ''list'' for the
+        default k8s.statefulset.name grouping or ''grouped_list'' for custom groupBy
+        keys; in both modes every row aggregates pods owned by statefulsets in the
+        group. Supports filtering via a filter expression, custom groupBy, ordering
+        by cpu / cpu_request / cpu_limit / memory / memory_request / memory_limit
+        / desired_pods / current_pods, and pagination via offset/limit. Also reports
+        whether the requested time range falls before the data retention boundary.
+        Numeric metric fields (statefulSetCPU, statefulSetCPURequest, statefulSetCPULimit,
         statefulSetMemory, statefulSetMemoryRequest, statefulSetMemoryLimit, desiredPods,
         currentPods) return -1 as a sentinel when no data is available for that field.'
       operationId: ListStatefulSets
@@ -24405,9 +24599,17 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       - tokenizer:
-        - VIEWER
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       summary: Query range
       tags:
       - querier
@@ -24474,9 +24676,17 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       - tokenizer:
-        - VIEWER
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       summary: Query range preview
       tags:
       - querier

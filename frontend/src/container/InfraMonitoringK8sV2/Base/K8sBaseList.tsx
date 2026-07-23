@@ -10,19 +10,21 @@ import TanStackTable, {
 } from 'components/TanStackTableView';
 import { InfraMonitoringEvents } from 'constants/events';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { parseAsString, useQueryState } from 'nuqs';
 import { useGlobalTimeStore } from 'store/globalTime';
 import { NANO_SECOND_MULTIPLIER } from 'store/globalTime/utils';
 import { Querybuildertypesv5QueryWarnDataDTO } from 'api/generated/services/sigNoz.schemas';
 import { openInNewTab } from 'utils/navigation';
+import APIError from 'types/api/error';
 
 import {
 	INFRA_MONITORING_K8S_PARAMS_KEYS,
 	InfraMonitoringEntity,
 } from '../constants';
 import {
+	SelectedItemParams,
 	useInfraMonitoringGroupBy,
 	useInfraMonitoringOrderBy,
+	useInfraMonitoringSelectedItemParams,
 	useInfraMonitoringStatusFilter,
 } from '../hooks';
 import { useInfraMonitoringLineClamp } from '../components';
@@ -32,13 +34,14 @@ import K8sHeader from './K8sHeader';
 import { K8sPaginationWarning } from './K8sPaginationWarning';
 import { K8sBaseFilters } from './types';
 import { getGroupedByMeta } from './utils';
+import { K8sInstrumentationChecksCallout } from './components/K8sInstrumentationChecksCallout/K8sInstrumentationChecksCallout';
 
 import styles from './K8sBaseList.module.scss';
 import cx from 'classnames';
 
 export type K8sBaseListEmptyStateContext = {
 	isError: boolean;
-	error?: string | null;
+	error?: APIError | null;
 	totalCount: number;
 	hasFilters: boolean;
 	isLoading: boolean;
@@ -49,7 +52,10 @@ export type K8sBaseListEmptyStateContext = {
 /** Base type constraint for K8s entity data */
 export type K8sEntityData = { meta?: Record<string, string> | null };
 
-export type K8sBaseListProps<T extends K8sEntityData> = {
+export type K8sBaseListProps<
+	T extends K8sEntityData,
+	TItemKey extends string | SelectedItemParams = string,
+> = {
 	controlListPrefix?: React.ReactNode;
 	leftFilters?: React.ReactNode;
 	entity: InfraMonitoringEntity;
@@ -62,23 +68,27 @@ export type K8sBaseListProps<T extends K8sEntityData> = {
 		records?: T[];
 		data?: T[];
 		total: number;
-		error?: string | null;
+		error?: APIError | null;
 		rawData?: unknown;
 		endTimeBeforeRetention?: boolean;
 		warning?: Querybuildertypesv5QueryWarnDataDTO | null;
 	}>;
 	/** Function to get the unique key for a row. */
-	getRowKey?: (record: T) => string;
-	/** Function to get the item key used for selection. Defaults to getRowKey if not provided. */
-	getItemKey?: (record: T) => string;
+	getRowKey: (record: T) => string;
+	/** Function to get the item key used for selection. Can return string or SelectedItemParams. */
+	getItemKey: (record: T) => TItemKey;
 	eventCategory: InfraMonitoringEvents;
 	renderEmptyState?: (
 		context: K8sBaseListEmptyStateContext,
 	) => React.ReactNode | null;
 	extraQueryKeyParts?: string[];
+	detailsQueryKeyPrefix: string;
 };
 
-export function K8sBaseList<T extends K8sEntityData>({
+export function K8sBaseList<
+	T extends K8sEntityData,
+	TItemKey extends string | SelectedItemParams = string,
+>({
 	controlListPrefix,
 	leftFilters,
 	entity,
@@ -89,17 +99,17 @@ export function K8sBaseList<T extends K8sEntityData>({
 	eventCategory,
 	renderEmptyState,
 	extraQueryKeyParts = [],
-}: K8sBaseListProps<T>): JSX.Element {
+	detailsQueryKeyPrefix,
+}: K8sBaseListProps<T, TItemKey>): JSX.Element {
 	const { currentQuery } = useQueryBuilder();
 	const expression = currentQuery.builder.queryData[0]?.filter?.expression || '';
 	const lineClamp = useInfraMonitoringLineClamp();
 	const [groupBy] = useInfraMonitoringGroupBy();
 	const [orderBy] = useInfraMonitoringOrderBy();
 	const [statusFilter] = useInfraMonitoringStatusFilter();
-	const [selectedItem, setSelectedItem] = useQueryState(
-		'selectedItem',
-		parseAsString,
-	);
+	const [selectedItemParams, setSelectedItemParams] =
+		useInfraMonitoringSelectedItemParams();
+	const selectedItem = selectedItemParams.selectedItem;
 
 	const columnStorageKey = `k8s-${entity}-columns`;
 	const hiddenColumnIds = useHiddenColumnIds(columnStorageKey);
@@ -226,9 +236,29 @@ export function K8sBaseList<T extends K8sEntityData>({
 	}, [eventCategory, totalCount]);
 
 	const handleRowClick = useCallback(
-		(_record: T, itemKey: string): void => {
+		(record: T, itemKey: TItemKey): void => {
 			if (groupBy.length === 0) {
-				void setSelectedItem(itemKey);
+				const params: SelectedItemParams =
+					typeof itemKey === 'object'
+						? itemKey
+						: {
+								selectedItem: itemKey,
+								clusterName: null,
+								namespaceName: null,
+							};
+
+				if (detailsQueryKeyPrefix) {
+					const detailQueryKey = getAutoRefreshQueryKey(
+						selectedTime,
+						`${detailsQueryKeyPrefix}EntityDetails`,
+						params.selectedItem,
+						params.clusterName,
+						params.namespaceName,
+					);
+					queryClient.setQueryData(detailQueryKey, { data: record });
+				}
+
+				setSelectedItemParams(params);
 			}
 
 			void logEvent(InfraMonitoringEvents.ItemClicked, {
@@ -237,18 +267,51 @@ export function K8sBaseList<T extends K8sEntityData>({
 				category: eventCategory,
 			});
 		},
-		[eventCategory, groupBy.length, setSelectedItem],
+		[
+			eventCategory,
+			groupBy.length,
+			setSelectedItemParams,
+			detailsQueryKeyPrefix,
+			getAutoRefreshQueryKey,
+			selectedTime,
+			queryClient,
+		],
 	);
 
 	const handleRowClickNewTab = useCallback(
-		(_record: T, itemKey: string): void => {
+		(_record: T, itemKey: TItemKey): void => {
 			if (groupBy.length > 0) {
 				return;
 			}
 
-			// Build URL with selectedItem param
+			// Build URL with selectedItem params
 			const url = new URL(window.location.href);
-			url.searchParams.set('selectedItem', itemKey);
+			if (typeof itemKey === 'object' && itemKey !== null) {
+				const params = itemKey;
+				if (params.selectedItem) {
+					url.searchParams.set(
+						INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM,
+						params.selectedItem,
+					);
+				}
+				if (params.clusterName) {
+					url.searchParams.set(
+						INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_CLUSTER_NAME,
+						params.clusterName,
+					);
+				}
+				if (params.namespaceName) {
+					url.searchParams.set(
+						INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_NAMESPACE_NAME,
+						params.namespaceName,
+					);
+				}
+			} else {
+				url.searchParams.set(
+					INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM,
+					itemKey,
+				);
+			}
 			openInNewTab(url.pathname + url.search);
 
 			void logEvent(InfraMonitoringEvents.ItemClicked, {
@@ -274,7 +337,7 @@ export function K8sBaseList<T extends K8sEntityData>({
 			rowKey: string,
 			groupMeta?: Record<string, string>,
 		): JSX.Element => (
-			<K8sExpandedRow<T>
+			<K8sExpandedRow<T, TItemKey>
 				rowKey={rowKey}
 				groupMeta={groupMeta}
 				entity={entity}
@@ -338,6 +401,8 @@ export function K8sBaseList<T extends K8sEntityData>({
 				cancelQuery={cancelQuery}
 			/>
 			<div ref={containerRef} className={styles.tableContainer}>
+				<K8sInstrumentationChecksCallout entity={entity} />
+
 				{isError && (
 					<Typography>
 						{data?.error?.toString() || 'Something went wrong'}
@@ -347,7 +412,7 @@ export function K8sBaseList<T extends K8sEntityData>({
 				{showEmptyState ? (
 					<div className={styles.emptyStateContainer}>{emptyTableMessage}</div>
 				) : (
-					<TanStackTable<T>
+					<TanStackTable<T, TItemKey>
 						data={pageData}
 						columns={tableColumns}
 						columnStorageKey={columnStorageKey}
@@ -360,7 +425,7 @@ export function K8sBaseList<T extends K8sEntityData>({
 						onRowClickNewTab={handleRowClickNewTab}
 						renderExpandedRow={isGroupedByAttribute ? renderExpandedRow : undefined}
 						getRowCanExpand={isGroupedByAttribute ? getRowCanExpand : undefined}
-						className={cx(styles.k8SListTable, expandedRowColumns)}
+						className={cx(styles.k8SListTable)}
 						enableQueryParams={{
 							page: INFRA_MONITORING_K8S_PARAMS_KEYS.PAGE,
 							limit: INFRA_MONITORING_K8S_PARAMS_KEYS.PAGE_SIZE,

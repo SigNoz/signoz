@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
+import logEvent from 'api/common/logEvent';
 import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQuery';
 import Editor from 'components/Editor';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 import type { PayloadVariables } from 'types/api/dashboard/variables/query';
 
 import styles from './VariableForm.module.scss';
@@ -29,10 +31,12 @@ function QueryVariableFields({
 	const runTest = async (): Promise<void> => {
 		setIsRunning(true);
 		onError(null);
+		let success = false;
 		try {
 			const res = await dashboardVariablesQuery({ query: queryValue, variables });
 			if (res.statusCode === 200 && res.payload) {
 				onPreview(res.payload.variableValues ?? []);
+				success = true;
 			} else {
 				onError(res.error || 'Failed to run query');
 				onPreview([]);
@@ -48,6 +52,10 @@ function QueryVariableFields({
 			onPreview([]);
 		} finally {
 			setIsRunning(false);
+			void logEvent(DashboardDetailEvents.VariableQueryTested, {
+				variableType: 'query',
+				success,
+			});
 		}
 	};
 

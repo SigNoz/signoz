@@ -8,6 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 )
 
@@ -43,16 +44,20 @@ func keyIndexFilter(key *telemetrytypes.TelemetryFieldKey) any {
 	return fmt.Sprintf(`%%%s%%`, key.Name)
 }
 
+// SkipResourceFilter is not applicable here: the fingerprint table only stores resource attributes.
 func (b *defaultConditionBuilder) ConditionFor(
 	ctx context.Context,
+	_ valuer.UUID,
 	startNs uint64,
 	endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
-	fieldKeysForName []*telemetrytypes.TelemetryFieldKey,
+	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
+	_ qbtypes.ConditionBuilderOptions,
 	op qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) ([]string, []string, error) {
+	matches := querybuilder.MatchingFieldKeys(key, fieldKeys)
 
 	// has/hasAny/hasAll/hasToken are logs-body-only functions; they never apply to the
 	// resource fingerprint table, so skip them (the main query still evaluates them).
@@ -60,7 +65,7 @@ func (b *defaultConditionBuilder) ConditionFor(
 		return nil, nil, nil
 	}
 
-	keys, warning := querybuilder.ResolveKeys(key, fieldKeysForName)
+	keys, warning := querybuilder.ResolveKeys(key, matches)
 	var warnings []string
 	if warning != "" {
 		warnings = append(warnings, warning)
@@ -97,7 +102,7 @@ func (b *defaultConditionBuilder) conditionForKey(
 	// as we store resource values as string
 	formattedValue := querybuilder.FormatValueForContains(value)
 
-	columns, err := b.fm.ColumnFor(ctx, startNs, endNs, key)
+	columns, err := b.fm.ColumnFor(ctx, valuer.UUID{}, startNs, endNs, key)
 	if err != nil {
 		return "", err
 	}
@@ -113,7 +118,7 @@ func (b *defaultConditionBuilder) conditionForKey(
 	keyIdxFilter := sb.Like(column.Name, keyIndexFilter(key))
 	valueForIndexFilter := valueForIndexFilter(op, key, value)
 
-	fieldName, err := b.fm.FieldFor(ctx, startNs, endNs, key)
+	fieldName, err := b.fm.FieldFor(ctx, valuer.UUID{}, startNs, endNs, key)
 	if err != nil {
 		return "", err
 	}

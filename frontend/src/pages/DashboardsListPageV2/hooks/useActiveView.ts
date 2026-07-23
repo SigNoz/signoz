@@ -1,21 +1,17 @@
 import { useCallback, useMemo } from 'react';
-import { parseAsString, useQueryState, type Options } from 'nuqs';
+import { type Options, parseAsString, useQueryState } from 'nuqs';
 import type {
 	DashboardtypesListOrderDTO,
 	DashboardtypesListSortDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
-import {
-	areFilterStatesEqual,
-	DEFAULT_FILTER_STATE,
-	filterStateToQuery,
-} from '../utils/filterQuery';
+import { areQueriesEqual } from '../utils/filterQuery';
 import { BuiltinViewId } from '../types';
-import type { DashboardFilterState, SavedView } from '../types';
+import type { SavedView } from '../types';
 import {
 	BUILTIN_VIEWS,
-	builtinViewSnapshot,
 	type BuiltinView,
+	builtinViewQuery,
 	isClientView,
 } from '../utils/views';
 import { useSavedViews } from './useSavedViews';
@@ -23,8 +19,8 @@ import { useSavedViews } from './useSavedViews';
 const opts: Options = { history: 'push' };
 
 interface UseActiveViewArgs {
-	filters: DashboardFilterState;
-	applyFilters: (next: DashboardFilterState) => void;
+	query: string;
+	setQuery: (next: string) => void;
 	userEmail: string;
 	sortColumn: DashboardtypesListSortDTO;
 	sortOrder: DashboardtypesListOrderDTO;
@@ -38,7 +34,7 @@ export interface UseActiveViewResult {
 	customViews: SavedView[];
 	customViewsLoading: boolean;
 	isCustomActive: boolean;
-	// Current filters diverge from the active view's canonical snapshot.
+	// The current query diverges from the active view's canonical query.
 	isModified: boolean;
 	// Whether the active view constrains the list client-side (pinned/recent).
 	clientView: boolean;
@@ -50,19 +46,13 @@ export interface UseActiveViewResult {
 	renameView: (id: string, name: string) => void;
 }
 
-// The canonical filter snapshot a saved view "is": the backend stores a flat
-// query, so a view folds entirely into the search box with empty chips.
-const customSnapshot = (view: SavedView): DashboardFilterState => ({
-	...DEFAULT_FILTER_STATE,
-	search: view.query,
-});
-
 // Orchestrates the active view: which view is selected (URL `view` param),
-// merging built-in + org-shared saved views, applying a view's snapshot on
-// select, dirty detection, and save/reset/delete via the Views API.
+// merging built-in + org-shared saved views, applying a view's query on select,
+// dirty detection, and save/reset/delete via the Views API. A view now simply
+// "is" a query string, so dirty detection is a trimmed string compare.
 export function useActiveView({
-	filters,
-	applyFilters,
+	query,
+	setQuery,
 	userEmail,
 	sortColumn,
 	sortOrder,
@@ -87,35 +77,34 @@ export function useActiveView({
 		[customViews, activeViewId],
 	);
 
-	// The filter state the active view "is" — used to detect divergence.
-	const canonicalSnapshot = useMemo<DashboardFilterState | null>(
+	// The query the active view "is" — used to detect divergence.
+	const canonicalQuery = useMemo<string | null>(
 		() =>
 			activeCustom
-				? customSnapshot(activeCustom)
-				: builtinViewSnapshot(activeViewId, userEmail),
+				? activeCustom.query
+				: builtinViewQuery(activeViewId, userEmail),
 		[activeCustom, activeViewId, userEmail],
 	);
 
-	const isModified = canonicalSnapshot
-		? !areFilterStatesEqual(filters, canonicalSnapshot)
-		: false;
+	const isModified =
+		canonicalQuery !== null && !areQueriesEqual(query, canonicalQuery);
 
 	const selectView = useCallback(
 		(id: string): void => {
 			void setActiveViewId(id);
 			const custom = customViews.find((v) => v.id === id);
 			if (custom) {
-				applyFilters(customSnapshot(custom));
+				setQuery(custom.query);
 				setSortColumn(custom.sort);
 				setSortOrder(custom.order);
 				return;
 			}
-			applyFilters(builtinViewSnapshot(id, userEmail) ?? DEFAULT_FILTER_STATE);
+			setQuery(builtinViewQuery(id, userEmail) ?? '');
 		},
 		[
 			setActiveViewId,
 			customViews,
-			applyFilters,
+			setQuery,
 			userEmail,
 			setSortColumn,
 			setSortOrder,
@@ -124,9 +113,6 @@ export function useActiveView({
 
 	const saveView = useCallback(
 		(name: string): void => {
-			// The active view's clause already lives in the filter state (e.g. Locked
-			// seeds `locked = true` into search), so the chips fold into one query.
-			const query = filterStateToQuery(filters);
 			void (async (): Promise<void> => {
 				const created = await createView({
 					name,
@@ -136,55 +122,44 @@ export function useActiveView({
 				});
 				if (created) {
 					void setActiveViewId(created.id);
-					// Re-apply the folded representation so the new view isn't
-					// immediately flagged as modified.
-					applyFilters(customSnapshot(created));
 				}
 			})();
 		},
-		[filters, createView, sortColumn, sortOrder, setActiveViewId, applyFilters],
+		[query, createView, sortColumn, sortOrder, setActiveViewId],
 	);
 
 	const saveActiveView = useCallback((): void => {
 		if (!activeCustom) {
 			return;
 		}
-		const query = filterStateToQuery(filters);
 		updateView(activeCustom.id, {
 			name: activeCustom.name,
 			query,
 			sort: sortColumn,
 			order: sortOrder,
 		});
-		applyFilters({ ...DEFAULT_FILTER_STATE, search: query });
-	}, [activeCustom, filters, updateView, sortColumn, sortOrder, applyFilters]);
+	}, [activeCustom, query, updateView, sortColumn, sortOrder]);
 
 	const resetView = useCallback((): void => {
-		if (!canonicalSnapshot) {
+		if (canonicalQuery === null) {
 			return;
 		}
-		applyFilters(canonicalSnapshot);
+		setQuery(canonicalQuery);
 		if (activeCustom) {
 			setSortColumn(activeCustom.sort);
 			setSortOrder(activeCustom.order);
 		}
-	}, [
-		canonicalSnapshot,
-		applyFilters,
-		activeCustom,
-		setSortColumn,
-		setSortOrder,
-	]);
+	}, [canonicalQuery, setQuery, activeCustom, setSortColumn, setSortOrder]);
 
 	const removeView = useCallback(
 		(id: string): void => {
 			deleteView(id);
 			if (activeViewId === id) {
 				void setActiveViewId(BuiltinViewId.All);
-				applyFilters(DEFAULT_FILTER_STATE);
+				setQuery('');
 			}
 		},
-		[deleteView, activeViewId, setActiveViewId, applyFilters],
+		[deleteView, activeViewId, setActiveViewId, setQuery],
 	);
 
 	// Rename only touches the view's name; its stored query/sort/order are preserved.

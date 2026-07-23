@@ -57,5 +57,8 @@ export function useGetQueryRangeV5({
 		retry: retryUnlessClientError,
 		keepPreviousData,
 		cacheTime,
+		// A resolved window is immutable per key, so a panel scrolled back into view
+		// serves cache instead of refetching; a key change or manual refetch still runs.
+		staleTime: Infinity,
 	});
 }

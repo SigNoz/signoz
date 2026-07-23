@@ -10,10 +10,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type traceOperatorQuery struct {
 	telemetryStore telemetrystore.TelemetryStore
+	orgID          valuer.UUID
 	stmtBuilder    qbtypes.TraceOperatorStatementBuilder
 	spec           qbtypes.QueryBuilderTraceOperator
 	compositeQuery *qbtypes.CompositeQuery
@@ -35,12 +37,13 @@ func (q *traceOperatorQuery) Window() (uint64, uint64) {
 
 // Statement renders the SQL without executing it, for the preview path.
 func (q *traceOperatorQuery) Statement(ctx context.Context) (*qbtypes.Statement, error) {
-	return q.stmtBuilder.Build(ctx, q.fromMS, q.toMS, q.kind, q.spec, q.compositeQuery)
+	return q.stmtBuilder.Build(ctx, q.orgID, q.fromMS, q.toMS, q.kind, q.spec, q.compositeQuery)
 }
 
 func (q *traceOperatorQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
 	stmt, err := q.stmtBuilder.Build(
 		ctx,
+		q.orgID,
 		q.fromMS,
 		q.toMS,
 		q.kind,

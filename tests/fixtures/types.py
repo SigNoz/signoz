@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Literal
 from urllib.parse import urljoin
 
@@ -84,11 +84,16 @@ class TestContainerClickhouse:
     container: TestContainerDocker
     conn: clickhouse_connect.driver.client.Client
     env: dict[str, str]
+    # Per-node containers when running a multi-node cluster. Empty for the
+    # default single-node setup; nodes[0] is the node `conn`/`env` point at
+    # (the initiator every query goes through).
+    nodes: list[TestContainerDocker] = field(default_factory=list)
 
     def __cache__(self) -> dict:
         return {
             "container": self.container.__cache__(),
             "env": self.env,
+            "nodes": [node.__cache__() for node in self.nodes],
         }
 
     def __log__(self) -> str:

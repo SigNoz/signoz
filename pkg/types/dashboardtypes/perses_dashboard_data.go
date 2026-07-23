@@ -20,13 +20,13 @@ import (
 // per-site discriminated oneOf.
 type DashboardSpec struct {
 	Display         Display                    `json:"display" required:"true"`
-	Datasources     map[string]*DatasourceSpec `json:"datasources,omitempty"`
+	Datasources     map[string]*DatasourceSpec `json:"datasources,omitzero"`
 	Variables       []Variable                 `json:"variables" required:"true" nullable:"false"`
 	Panels          map[string]*Panel          `json:"panels" required:"true" nullable:"false"`
 	Layouts         []Layout                   `json:"layouts" required:"true" nullable:"false"`
-	Duration        common.DurationString      `json:"duration,omitempty"`
-	RefreshInterval common.DurationString      `json:"refreshInterval,omitempty"`
-	Links           []dashboard.Link           `json:"links,omitempty"`
+	Duration        common.DurationString      `json:"duration"`
+	RefreshInterval common.DurationString      `json:"refreshInterval"`
+	Links           []Link                     `json:"links" required:"true" nullable:"false"`
 }
 
 // ══════════════════════════════════════════════
@@ -45,12 +45,25 @@ func (d *DashboardSpec) UnmarshalJSON(data []byte) error {
 	return d.Validate()
 }
 
+// validateLinks rejects a missing/null spec.links value: a typed client must
+// send [] rather than omitting links, so its value round-trips faithfully.
+// Panel links are the panel spec's concern, validated in validatePanels.
+func (d *DashboardSpec) validateLinks() error {
+	if d.Links == nil {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.links is required; send [] when there are no links")
+	}
+	return nil
+}
+
 // ══════════════════════════════════════════════
 // Cross-field validation
 // ══════════════════════════════════════════════
 
 func (d *DashboardSpec) Validate() error {
 	if err := d.Display.Validate("dashboard", "spec.display.name"); err != nil {
+		return err
+	}
+	if err := d.validateLinks(); err != nil {
 		return err
 	}
 	if err := d.validateVariables(); err != nil {
@@ -102,6 +115,9 @@ func (d *DashboardSpec) validatePanels() error {
 		}
 		path := fmt.Sprintf("spec.panels.%s", key)
 		if err := panel.Spec.Display.Validate("panel", path+".spec.display.name"); err != nil {
+			return err
+		}
+		if err := panel.Spec.validateLinks(path); err != nil {
 			return err
 		}
 		panelKind := panel.Spec.Plugin.Kind

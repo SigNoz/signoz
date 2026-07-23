@@ -8,7 +8,26 @@
 	color: var(--l3-foreground);
 }
 
+.stateContent {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-2);
+
+	svg {
+		flex-shrink: 0;
+	}
+}
+
+.addMapperRow .stateCell {
+	padding-top: var(--spacing-2);
+	padding-bottom: var(--spacing-2);
+}
+
 .stateCell {
 	padding: var(--spacing-4) var(--spacing-6) var(--spacing-4) var(--spacing-12);
 	font-size: var(--periscope-font-size-base);
+}
+
+.addMapperCell {
+	padding: var(--spacing-4) var(--spacing-6) var(--spacing-4) var(--spacing-6);
 }

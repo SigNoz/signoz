@@ -9,7 +9,6 @@
 .patternBox {
 	display: flex;
 	flex-direction: column;
-	gap: var(--spacing-6);
 	padding: var(--spacing-6);
 	border-radius: 6px;
 	border: 1px solid var(--l2-border);
@@ -18,14 +17,14 @@
 .patternChips {
 	display: flex;
 	flex-wrap: wrap;
-	gap: var(--spacing-3);
-	min-height: 28px;
+	gap: var(--spacing-0) var(--spacing-3);
 }
 
 .patternChip {
 	display: inline-flex;
 	align-items: center;
 	gap: var(--spacing-2);
+	margin-bottom: var(--spacing-4);
 }
 
 .patternChipRemove {

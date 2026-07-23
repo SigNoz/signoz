@@ -1,7 +1,4 @@
-import { useMemo } from 'react';
-import { Button } from '@signozhq/ui/button';
-import { DropdownMenuSimple, type MenuItem } from '@signozhq/ui/dropdown-menu';
-import { CalendarClock, ChevronDown, User } from '@signozhq/icons';
+import { Checkbox, Select } from 'antd';
 import cx from 'classnames';
 
 import type { UpdatedWindow } from '../../types';
@@ -21,6 +18,10 @@ const UPDATED_LABELS: Record<UpdatedWindow, string> = {
 };
 
 const UPDATED_WINDOWS: UpdatedWindow[] = ['any', 'today', '7d', '30d'];
+const UPDATED_OPTIONS = UPDATED_WINDOWS.map((w) => ({
+	value: w,
+	label: UPDATED_LABELS[w],
+}));
 
 interface Props {
 	createdBy: string[];
@@ -28,6 +29,10 @@ interface Props {
 	creatorOptions: CreatorOption[];
 	onCreatedByChange: (emails: string[]) => void;
 	onUpdatedChange: (window: UpdatedWindow) => void;
+	// Run the staged draft — fired when a dropdown closes.
+	onApply: () => void;
+	// Clear all Created-by selections and run immediately.
+	onClearCreatedBy: () => void;
 }
 
 function FilterChips({
@@ -36,92 +41,57 @@ function FilterChips({
 	creatorOptions,
 	onCreatedByChange,
 	onUpdatedChange,
+	onApply,
+	onClearCreatedBy,
 }: Props): JSX.Element {
-	const createdByLabel = useMemo((): string => {
-		if (createdBy.length === 0) {
-			return 'Anyone';
-		}
-		if (createdBy.length === 1) {
-			const match = creatorOptions.find((o) => o.email === createdBy[0]);
-			return match?.label ?? createdBy[0];
-		}
-		return `${createdBy.length} people`;
-	}, [createdBy, creatorOptions]);
+	const creatorOptionsData = creatorOptions.map((o) => ({
+		value: o.email,
+		label: o.label,
+	}));
 
-	const createdByItems = useMemo<MenuItem[]>(() => {
-		const items: MenuItem[] = creatorOptions.map((option) => ({
-			type: 'checkbox',
-			key: option.email,
-			label: option.label,
-			checked: createdBy.includes(option.email),
-			onCheckedChange: (checked: boolean): void =>
-				onCreatedByChange(
-					checked
-						? [...createdBy, option.email]
-						: createdBy.filter((e) => e !== option.email),
-				),
-		}));
-		if (createdBy.length > 0) {
-			items.push({ type: 'divider', key: 'sep' });
-			items.push({
-				key: 'clear',
-				label: 'Clear selection',
-				onClick: (): void => onCreatedByChange([]),
-			});
+	const runOnClose = (open: boolean): void => {
+		if (!open) {
+			onApply();
 		}
-		return items;
-	}, [creatorOptions, createdBy, onCreatedByChange]);
-
-	const updatedItems = useMemo<MenuItem[]>(
-		() => [
-			{
-				type: 'radio-group',
-				value: updated,
-				onChange: (value: string): void => onUpdatedChange(value as UpdatedWindow),
-				children: UPDATED_WINDOWS.map((window) => ({
-					type: 'radio',
-					key: window,
-					value: window,
-					label: UPDATED_LABELS[window],
-				})),
-			},
-		],
-		[updated, onUpdatedChange],
-	);
+	};
 
 	return (
 		<div className={styles.chips}>
-			<DropdownMenuSimple menu={{ items: createdByItems }} align="start">
-				<Button
-					variant="outlined"
-					color="secondary"
-					size="sm"
-					prefix={<User size={12} />}
-					suffix={<ChevronDown size={12} />}
-					className={cx(styles.chip, {
-						[styles.chipActive]: createdBy.length > 0,
-					})}
-					testId="dashboards-filter-created-by"
-				>
-					Created by: {createdByLabel}
-				</Button>
-			</DropdownMenuSimple>
-
-			<DropdownMenuSimple menu={{ items: updatedItems }} align="start">
-				<Button
-					variant="outlined"
-					color="secondary"
-					size="sm"
-					prefix={<CalendarClock size={12} />}
-					suffix={<ChevronDown size={12} />}
-					className={cx(styles.chip, {
-						[styles.chipActive]: updated !== 'any',
-					})}
-					testId="dashboards-filter-updated"
-				>
-					Updated: {UPDATED_LABELS[updated]}
-				</Button>
-			</DropdownMenuSimple>
+			<Select
+				mode="multiple"
+				showSearch
+				allowClear
+				className={cx(styles.select, styles.selectWide)}
+				placeholder="Created by"
+				value={createdBy}
+				options={creatorOptionsData}
+				optionFilterProp="label"
+				maxTagCount={1}
+				menuItemSelectedIcon={null}
+				data-testid="dashboards-filter-created-by"
+				onClear={onClearCreatedBy}
+				optionRender={(option): JSX.Element => (
+					<div className={styles.creatorOption}>
+						<Checkbox
+							checked={createdBy.includes(option.value as string)}
+							className={styles.creatorCheck}
+						/>
+						<span className={styles.creatorLabel}>{option.label}</span>
+					</div>
+				)}
+				onChange={(value): void => onCreatedByChange(value as string[])}
+				onDropdownVisibleChange={runOnClose}
+			/>
+			<Select
+				showSearch
+				className={cx(styles.select, styles.selectNarrow)}
+				placeholder="Updated"
+				value={updated}
+				options={UPDATED_OPTIONS}
+				optionFilterProp="label"
+				data-testid="dashboards-filter-updated"
+				onChange={(value): void => onUpdatedChange(value as UpdatedWindow)}
+			/>
 		</div>
 	);
 }

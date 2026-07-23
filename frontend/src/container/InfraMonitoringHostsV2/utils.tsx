@@ -7,12 +7,10 @@ import {
 	IQuickFiltersConfig,
 } from 'components/QuickFilters/types';
 import { TriangleAlert } from '@signozhq/icons';
-import { INFRA_MONITORING_ATTR_KEYS } from 'container/InfraMonitoringK8sV2/constants';
 import { CellValueTooltip } from 'container/InfraMonitoringK8sV2/components';
+import { INFRA_MONITORING_ATTR_KEYS } from 'container/InfraMonitoringK8sV2/constants';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
-import TanStackTable from 'components/TanStackTableView';
-
 const HOSTNAME_DOCS_URL =
 	'https://signoz.io/docs/infrastructure-monitoring/hostmetrics/#host-name-is-blankempty';
 
@@ -23,11 +21,7 @@ export function HostnameCell({
 }): React.ReactElement {
 	const isEmpty = !hostName || !hostName.trim();
 	if (!isEmpty) {
-		return (
-			<CellValueTooltip value={hostName}>
-				<TanStackTable.Text>{hostName}</TanStackTable.Text>
-			</CellValueTooltip>
-		);
+		return <CellValueTooltip value={hostName} />;
 	}
 	return (
 		<>
@@ -68,32 +62,18 @@ export function HostnameCell({
 	);
 }
 
-export function getHostsQuickFiltersConfig(
-	dotMetricsEnabled: boolean,
-): IQuickFiltersConfig[] {
-	const hostNameKey = dotMetricsEnabled
-		? INFRA_MONITORING_ATTR_KEYS.HOST_NAME
-		: 'host_name';
-	const osTypeKey = dotMetricsEnabled ? 'os.type' : 'os_type';
-	const metricName = dotMetricsEnabled
-		? 'system.cpu.load_average.15m'
-		: 'system_cpu_load_average_15m';
-
-	const environmentKey = dotMetricsEnabled
-		? 'deployment.environment'
-		: 'deployment_environment';
-
+export function getHostsQuickFiltersConfig(): IQuickFiltersConfig[] {
 	return [
 		{
 			type: FiltersType.CHECKBOX,
 			title: 'Host Name',
 			attributeKey: {
-				key: hostNameKey,
+				key: INFRA_MONITORING_ATTR_KEYS.HOST_NAME,
 				dataType: DataTypes.String,
 				type: 'resource',
 			},
 			aggregateOperator: 'noop',
-			aggregateAttribute: metricName,
+			aggregateAttribute: INFRA_MONITORING_ATTR_KEYS.SYSTEM_CPU_LOAD_AVERAGE_15M,
 			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
@@ -101,12 +81,12 @@ export function getHostsQuickFiltersConfig(
 			type: FiltersType.CHECKBOX,
 			title: 'OS Type',
 			attributeKey: {
-				key: osTypeKey,
+				key: INFRA_MONITORING_ATTR_KEYS.OS_TYPE,
 				dataType: DataTypes.String,
 				type: 'resource',
 			},
 			aggregateOperator: 'noop',
-			aggregateAttribute: metricName,
+			aggregateAttribute: INFRA_MONITORING_ATTR_KEYS.SYSTEM_CPU_LOAD_AVERAGE_15M,
 			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
@@ -114,7 +94,7 @@ export function getHostsQuickFiltersConfig(
 			type: FiltersType.CHECKBOX,
 			title: 'Environment',
 			attributeKey: {
-				key: environmentKey,
+				key: INFRA_MONITORING_ATTR_KEYS.DEPLOYMENT_ENVIRONMENT,
 				dataType: DataTypes.String,
 				type: 'resource',
 			},

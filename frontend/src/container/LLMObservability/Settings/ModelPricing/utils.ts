@@ -86,6 +86,7 @@ export const draftFromRule = (rule: PricingRule): DrawerDraft => ({
 	provider: rule.provider,
 	patterns: rule.modelPattern || [],
 	isOverride: !!rule.isOverride,
+	enabled: rule.enabled,
 	pricing: {
 		input: rule.pricing?.input ?? 0,
 		output: rule.pricing?.output ?? 0,
@@ -129,7 +130,7 @@ export const buildRulePayload = (
 	provider: draft.provider.trim(),
 	modelPattern: draft.patterns,
 	isOverride: draft.isOverride,
-	enabled: true,
+	enabled: draft.enabled,
 	unit: UnitDTO.per_million_tokens,
 	pricing: buildPricingPayload(draft),
 });
@@ -160,4 +161,39 @@ export const validatePricing = (
 		return 'Cache costs must be non-negative.';
 	}
 	return true;
+};
+
+const spanCountFormatter = new Intl.NumberFormat('en', {
+	notation: 'compact',
+	maximumFractionDigits: 1,
+});
+
+export const formatSpanCount = (count: number): string =>
+	spanCountFormatter.format(count);
+
+// Label for the "Map to billing model" dropdown, e.g. "openai:gpt-4o ($15.00/$60.00)".
+export const getRuleOptionLabel = (rule: PricingRule): string =>
+	`${getCanonicalId(rule)} (${formatPricePerMillion(
+		rule.pricing?.input,
+	)}/${formatPricePerMillion(rule.pricing?.output)})`;
+
+export const buildPatternMappingPayload = (
+	rule: PricingRule,
+	modelName: string,
+): LlmpricingruletypesUpdatableLLMPricingRuleDTO => {
+	const existing = rule.modelPattern ?? [];
+	const modelPattern = existing.includes(modelName)
+		? existing
+		: [...existing, modelName];
+	return {
+		id: rule.id,
+		sourceId: rule.sourceId,
+		modelName: rule.modelName,
+		provider: rule.provider,
+		modelPattern,
+		isOverride: rule.isOverride,
+		enabled: rule.enabled,
+		unit: rule.unit,
+		pricing: rule.pricing,
+	};
 };

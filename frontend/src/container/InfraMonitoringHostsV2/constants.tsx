@@ -8,8 +8,9 @@ import {
 	InframonitoringtypesHostStatusDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { K8sDetailsMetadataConfig } from 'container/InfraMonitoringK8sV2/Base/K8sBaseDetails';
-import { formatValueForExpression } from 'components/QueryBuilderV2/utils';
 import { INFRA_MONITORING_ATTR_KEYS } from 'container/InfraMonitoringK8sV2/constants';
+import { formatValueForExpression } from 'components/QueryBuilderV2/utils';
+import { SelectedItemParams } from 'container/InfraMonitoringK8sV2/hooks';
 import {
 	getHostQueryPayload,
 	hostWidgetInfo,
@@ -62,7 +63,7 @@ export const hostDetailsMetadataConfig: HostDetailMetadataConfigType[] = [
 	},
 	{
 		label: 'OPERATING SYSTEM',
-		getValue: (h): string => h.meta?.['os.type'] || '-',
+		getValue: (h): string => h.meta?.[INFRA_MONITORING_ATTR_KEYS.OS_TYPE] || '-',
 		render: (value): React.ReactNode =>
 			value !== '-' ? (
 				<Badge variant="outline" className={infraHostsStyles.infraMonitoringTags}>
@@ -100,25 +101,22 @@ export function getHostMetricsQueryPayload(
 	host: InframonitoringtypesHostRecordDTO,
 	start: number,
 	end: number,
-	dotMetricsEnabled: boolean,
 ): ReturnType<typeof getHostQueryPayload> {
-	return getHostQueryPayload(host.hostName, start, end, dotMetricsEnabled);
+	return getHostQueryPayload(host.hostName, start, end, true);
 }
 
 export { hostWidgetInfo };
 
-export const hostGetSelectedItemExpression = (hostName: string): string =>
-	`host.name = ${formatValueForExpression(hostName)}`;
+export const hostGetSelectedItemExpression = (
+	params: SelectedItemParams,
+): string =>
+	`${INFRA_MONITORING_ATTR_KEYS.HOST_NAME} = ${formatValueForExpression(params.selectedItem ?? '')}`;
 
 export function hostInitialLogTracesExpression(
 	host: InframonitoringtypesHostRecordDTO,
-	dotMetricsEnabled: boolean,
 ): string {
-	const hostKey = dotMetricsEnabled
-		? INFRA_MONITORING_ATTR_KEYS.HOST_NAME
-		: 'host_name';
 	const hostName = formatValueForExpression(host.hostName || '');
-	return `${hostKey} = ${hostName}`;
+	return `${INFRA_MONITORING_ATTR_KEYS.HOST_NAME} = ${hostName}`;
 }
 
 export function hostInitialEventsExpression(

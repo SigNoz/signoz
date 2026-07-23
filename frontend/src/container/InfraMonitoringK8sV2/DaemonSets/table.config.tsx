@@ -6,7 +6,8 @@ import { ExpandButtonWrapper } from 'container/InfraMonitoringK8sV2/components';
 import ColumnHeader from '../Base/ColumnHeader';
 import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
-import { formatBytes, getPodPhaseStatusItems } from '../commonUtils';
+import { SelectedItemParams } from '../hooks';
+import { formatBytes, getPodStatusItems } from '../commonUtils';
 import {
 	CellValueTooltip,
 	EntityProgressBar,
@@ -31,8 +32,15 @@ export function getK8sDaemonSetRowKey(
 
 export function getK8sDaemonSetItemKey(
 	daemonSet: InframonitoringtypesDaemonSetRecordDTO,
-): string {
-	return daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME] || '';
+): SelectedItemParams {
+	return {
+		selectedItem:
+			daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME] ?? null,
+		clusterName:
+			daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] ?? null,
+		namespaceName:
+			daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ?? null,
+	};
 }
 
 export type DaemonSetTableColumnConfig =
@@ -79,11 +87,7 @@ export const k8sDaemonSetsColumnsConfig: DaemonSetTableColumnConfig[] = [
 		visibilityBehavior: 'hidden-on-expand',
 		cell: ({ value }): React.ReactNode => {
 			const daemonsetName = value as string;
-			return (
-				<CellValueTooltip value={daemonsetName}>
-					<TanStackTable.Text>{daemonsetName}</TanStackTable.Text>
-				</CellValueTooltip>
-			);
+			return <CellValueTooltip value={daemonsetName} />;
 		},
 	},
 	{
@@ -100,60 +104,70 @@ export const k8sDaemonSetsColumnsConfig: DaemonSetTableColumnConfig[] = [
 		enableResize: true,
 		cell: ({ value }): React.ReactNode => {
 			const namespaceName = value as string;
-			return (
-				<CellValueTooltip value={namespaceName}>
-					<TanStackTable.Text>{namespaceName}</TanStackTable.Text>
-				</CellValueTooltip>
-			);
+			return <CellValueTooltip value={namespaceName} />;
 		},
 	},
 	{
-		id: 'pod_counts_by_phase',
+		id: 'pod_counts_by_status',
 		header: (): React.ReactNode => (
-			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/daemonsets#pod-counts-by-phase">
-				Pod Phases
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/daemonsets#pod-counts-by-status">
+				Pod Status
 			</ColumnHeader>
 		),
 		accessorFn: (
 			row,
-		): InframonitoringtypesDaemonSetRecordDTO['podCountsByPhase'] =>
-			row.podCountsByPhase,
+		): InframonitoringtypesDaemonSetRecordDTO['podCountsByStatus'] =>
+			row.podCountsByStatus,
 		width: { min: 250 },
 		enableSort: false,
 		enableResize: true,
-		cell: ({ row }): React.ReactNode => {
-			const podCountsByPhase = row.podCountsByPhase;
-			if (!podCountsByPhase) {
+		cell: ({ row, rowId }): React.ReactNode => {
+			const podCountsByStatus = row.podCountsByStatus;
+			if (!podCountsByStatus) {
 				return <TanStackTable.Text>-</TanStackTable.Text>;
 			}
 			return (
-				<GroupedStatusCounts items={getPodPhaseStatusItems(podCountsByPhase)} />
+				<GroupedStatusCounts
+					rowId={rowId}
+					items={getPodStatusItems(podCountsByStatus)}
+				/>
 			);
 		},
 	},
 	{
-		id: 'node_status',
+		id: 'scheduled_nodes',
 		header: (): React.ReactNode => (
-			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/daemonsets#node-status">
-				Node Status
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/daemonsets#scheduled-nodes">
+				Scheduled Nodes
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.currentNodes,
-		width: { min: 180 },
+		width: { min: 210 },
 		enableSort: false,
 		enableResize: true,
-		cell: ({ row }): React.ReactNode => (
+		cell: ({ row, rowId }): React.ReactNode => (
 			<GroupedStatusCounts
+				rowId={rowId}
 				items={[
+					{
+						value: row.readyNodes,
+						label: 'Ready',
+						color: Color.BG_FOREST_500,
+					},
 					{
 						value: row.currentNodes,
 						label: 'Current',
-						color: Color.BG_FOREST_500,
+						color: Color.BG_ROBIN_500,
 					},
 					{
 						value: row.desiredNodes,
 						label: 'Desired',
-						color: Color.BG_ROBIN_500,
+						color: Color.BG_SAKURA_400,
+					},
+					{
+						value: row.misscheduledNodes,
+						label: 'Misscheduled',
+						color: Color.BG_AMBER_500,
 					},
 				]}
 			/>
@@ -313,6 +327,30 @@ export const k8sDaemonSetsColumnsConfig: DaemonSetTableColumnConfig[] = [
 		},
 	},
 	{
+		id: 'ready_nodes',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/daemonsets#ready">
+				Ready Nodes
+			</ColumnHeader>
+		),
+		accessorFn: (row): number => row.readyNodes,
+		width: { min: 140 },
+		enableSort: true,
+		defaultVisibility: false,
+		cell: ({ value }): React.ReactNode => {
+			const readyNodes = value as number;
+			return (
+				<ValidateColumnValueWrapper
+					value={readyNodes}
+					entity={InfraMonitoringEntity.DAEMONSETS}
+					attribute="ready node"
+				>
+					<TanStackTable.Text>{readyNodes}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
+	},
+	{
 		id: 'current_nodes',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/daemonsets#current">
@@ -356,6 +394,30 @@ export const k8sDaemonSetsColumnsConfig: DaemonSetTableColumnConfig[] = [
 					attribute="desired node"
 				>
 					<TanStackTable.Text>{desiredNodes}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
+	},
+	{
+		id: 'misscheduled_nodes',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/daemonsets#misscheduled">
+				Misscheduled Nodes
+			</ColumnHeader>
+		),
+		accessorFn: (row): number => row.misscheduledNodes,
+		width: { min: 140 },
+		enableSort: true,
+		defaultVisibility: false,
+		cell: ({ value }): React.ReactNode => {
+			const misscheduledNodes = value as number;
+			return (
+				<ValidateColumnValueWrapper
+					value={misscheduledNodes}
+					entity={InfraMonitoringEntity.DAEMONSETS}
+					attribute="misscheduled node"
+				>
+					<TanStackTable.Text>{misscheduledNodes}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
 			);
 		},

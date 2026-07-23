@@ -628,7 +628,7 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 		queryString := "SELECT any"
 		telemetryStore.Mock().
 			ExpectQuery(queryString).
-			WithArgs(nil, nil, nil, nil, nil, nil, nil, nil, nil).
+			WithArgs(nil, nil, nil, nil, nil, nil, nil, nil).
 			WillReturnRows(rows)
 		postableRule.RuleCondition.CompareOperator = c.compareOperator
 		postableRule.RuleCondition.MatchType = c.matchType
@@ -737,7 +737,7 @@ func TestThresholdRuleNoData(t *testing.T) {
 		queryString := "SELECT any"
 		telemetryStore.Mock().
 			ExpectQuery(queryString).
-			WithArgs(nil, nil, nil, nil, nil, nil, nil, nil).
+			WithArgs(nil, nil, nil, nil, nil, nil, nil).
 			WillReturnRows(rows)
 
 		querier, mockMetadataStore := prepareQuerierForMetrics(t, telemetryStore)
@@ -839,7 +839,7 @@ func TestThresholdRuleTracesLink(t *testing.T) {
 		queryString := "SELECT any"
 		telemetryStore.Mock().
 			ExpectQuery(queryString).
-			WithArgs(nil, nil, nil, nil, nil, nil, nil).
+			WithArgs(nil, nil, nil, nil, nil).
 			WillReturnRows(rows)
 
 		querier := prepareQuerierForTraces(t, telemetryStore, keysMap)
@@ -957,7 +957,7 @@ func TestThresholdRuleLogsLink(t *testing.T) {
 		queryString := "SELECT any"
 		telemetryStore.Mock().
 			ExpectQuery(queryString).
-			WithArgs(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil).
+			WithArgs(nil, nil, nil, nil, nil, nil, nil, nil, nil).
 			WillReturnRows(rows)
 
 		querier := prepareQuerierForLogs(t, telemetryStore, keysMap)
@@ -1129,7 +1129,7 @@ func TestMultipleThresholdRule(t *testing.T) {
 		queryString := "SELECT any"
 		telemetryStore.Mock().
 			ExpectQuery(queryString).
-			WithArgs(nil, nil, nil, nil, nil, nil, nil, nil).
+			WithArgs(nil, nil, nil, nil, nil, nil, nil).
 			WillReturnRows(rows)
 
 		querier, mockMetadataStore := prepareQuerierForMetrics(t, telemetryStore)
@@ -1922,7 +1922,7 @@ func TestThresholdEval_RequireMinPoints(t *testing.T) {
 		queryString := "SELECT any"
 		telemetryStore.Mock().
 			ExpectQuery(queryString).
-			WithArgs(nil, nil, nil, nil, nil, nil, nil, nil).
+			WithArgs(nil, nil, nil, nil, nil, nil, nil).
 			WillReturnRows(rows)
 
 		querier, mockMetadataStore := prepareQuerierForMetrics(t, telemetryStore)

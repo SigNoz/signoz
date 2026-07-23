@@ -7,12 +7,14 @@ import {
 	Loader,
 	ScrollText,
 } from '@signozhq/icons';
-import type { DashboardLinkDTO } from 'api/generated/services/sigNoz.schemas';
+import logEvent from 'api/common/logEvent';
+import type { DashboardtypesLinkDTO } from 'api/generated/services/sigNoz.schemas';
 import { getAggregateColumnHeader } from 'container/QueryTable/Drilldown/drilldownUtils';
 import ContextMenu from 'periscope/components/ContextMenu';
 import type { DrilldownContext } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/drilldown';
 import { getDataLinks } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/drilldown/getDataLinks';
 import { resolvePanelContextLinks } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/drilldown/resolvePanelContextLinks';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { openInNewTab } from 'utils/navigation';
 
@@ -27,7 +29,7 @@ interface DrilldownAggregateMenuProps {
 	/** While dashboard variables resolve, the actions show a spinner and are disabled. */
 	isResolving?: boolean;
 	/** Panel's context links; resolved against the clicked point + variables here. */
-	links: DashboardLinkDTO[] | undefined;
+	links: DashboardtypesLinkDTO[] | undefined;
 	/** Whether the clicked point exposes group-by fields to bind to dashboard variables. */
 	canSetDashboardVariables: boolean;
 	onViewLogs: () => void;
@@ -72,6 +74,20 @@ function DrilldownAggregateMenu({
 		[context.filters],
 	);
 
+	const handleViewLogs = (): void => {
+		void logEvent(DashboardDetailEvents.DrilldownAction, {
+			action: 'viewLogs',
+		});
+		onViewLogs();
+	};
+
+	const handleViewTraces = (): void => {
+		void logEvent(DashboardDetailEvents.DrilldownAction, {
+			action: 'viewTraces',
+		});
+		onViewTraces();
+	};
+
 	return (
 		<>
 			<ContextMenu.Header>
@@ -104,7 +120,7 @@ function DrilldownAggregateMenu({
 						</span>
 					)
 				}
-				onClick={onViewLogs}
+				onClick={handleViewLogs}
 				disabled={isResolving}
 			>
 				<span data-testid="drilldown-view-logs">View in Logs</span>
@@ -119,7 +135,7 @@ function DrilldownAggregateMenu({
 						</span>
 					)
 				}
-				onClick={onViewTraces}
+				onClick={handleViewTraces}
 				disabled={isResolving}
 			>
 				<span data-testid="drilldown-view-traces">View in Traces</span>
@@ -139,6 +155,9 @@ function DrilldownAggregateMenu({
 					key={link.id}
 					icon={<Link size={16} color={context.seriesColor} />}
 					onClick={(): void => {
+						void logEvent(DashboardDetailEvents.DrilldownAction, {
+							action: 'contextLink',
+						});
 						openInNewTab(link.url);
 						onClose();
 					}}
@@ -151,6 +170,9 @@ function DrilldownAggregateMenu({
 					key={link.id}
 					icon={<Link size={16} color={context.seriesColor} />}
 					onClick={(): void => {
+						void logEvent(DashboardDetailEvents.DrilldownAction, {
+							action: 'contextLink',
+						});
 						openInNewTab(link.url);
 						onClose();
 					}}

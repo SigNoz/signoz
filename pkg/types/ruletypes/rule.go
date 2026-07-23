@@ -56,8 +56,8 @@ type RuleAlert struct {
 type RuleStore interface {
 	CreateRule(context.Context, *StorableRule, func(context.Context, valuer.UUID) error) (valuer.UUID, error)
 	EditRule(context.Context, *StorableRule, func(context.Context) error) error
-	DeleteRule(context.Context, valuer.UUID, func(context.Context) error) error
+	DeleteRule(context.Context, valuer.UUID, valuer.UUID, func(context.Context) error) error
 	GetStoredRules(context.Context, string) ([]*StorableRule, error)
-	GetStoredRule(context.Context, valuer.UUID) (*StorableRule, error)
+	GetStoredRule(context.Context, valuer.UUID, valuer.UUID) (*StorableRule, error)
 	GetStoredRulesByMetricName(context.Context, string, string) ([]RuleAlert, error)
 }

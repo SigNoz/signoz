@@ -7,13 +7,24 @@ import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
 import { K8sDetailsMetadataConfig } from '../Base/K8sBaseDetails';
-import { formatValueForExpression } from 'components/QueryBuilderV2/utils';
-import { INFRA_MONITORING_ATTR_KEYS } from '../constants';
+import {
+	getPodUtilizationByPodQueryPayloads,
+	INFRA_MONITORING_ATTR_KEYS,
+} from '../constants';
+import { SelectedItemParams } from '../hooks';
+import {
+	buildEventsExpression,
+	buildExpressionFromSelectedItemParams,
+	buildLogsTracesExpression,
+} from 'container/InfraMonitoringK8sV2/Base/utils';
 
 export const k8sStatefulSetGetSelectedItemExpression = (
-	selectedItemId: string,
+	params: SelectedItemParams,
 ): string =>
-	`${INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME} = ${formatValueForExpression(selectedItemId)}`;
+	buildExpressionFromSelectedItemParams(
+		params,
+		INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME,
+	);
 
 export const k8sStatefulSetDetailsMetadataConfig: K8sDetailsMetadataConfig<InframonitoringtypesStatefulSetRecordDTO>[] =
 	[
@@ -21,6 +32,11 @@ export const k8sStatefulSetDetailsMetadataConfig: K8sDetailsMetadataConfig<Infra
 			label: 'Statefulset Name',
 			getValue: (p): string =>
 				p.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME] ?? '',
+		},
+		{
+			label: 'Cluster Name',
+			getValue: (p): string =>
+				p.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] ?? '',
 		},
 		{
 			label: 'Namespace Name',
@@ -31,24 +47,25 @@ export const k8sStatefulSetDetailsMetadataConfig: K8sDetailsMetadataConfig<Infra
 
 export const k8sStatefulSetInitialEventsExpression = (
 	item: InframonitoringtypesStatefulSetRecordDTO,
-): string => {
-	const objectName = formatValueForExpression(
-		item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME] ?? '',
-	);
-	return `${INFRA_MONITORING_ATTR_KEYS.K8S_OBJECT_KIND} = 'StatefulSet' AND ${INFRA_MONITORING_ATTR_KEYS.K8S_OBJECT_NAME} = ${objectName}`;
-};
+): string =>
+	buildEventsExpression({
+		objectKind: 'StatefulSet',
+		objectName:
+			item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME] ?? '',
+		clusterName: item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME],
+		namespaceName: item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME],
+	});
 
 export const k8sStatefulSetInitialLogTracesExpression = (
 	item: InframonitoringtypesStatefulSetRecordDTO,
-): string => {
-	const statefulSetName = formatValueForExpression(
-		item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME] ?? '',
-	);
-	const namespaceName = formatValueForExpression(
-		item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ?? '',
-	);
-	return `${INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME} = ${statefulSetName} AND ${INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME} = ${namespaceName}`;
-};
+): string =>
+	buildLogsTracesExpression({
+		mainAttributeKey: INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME,
+		mainAttributeValue:
+			item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME],
+		clusterName: item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME],
+		namespaceName: item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME],
+	});
 
 export const k8sStatefulSetGetEntityName = (
 	item: InframonitoringtypesStatefulSetRecordDTO,
@@ -58,26 +75,37 @@ export const statefulSetWidgetInfo = [
 	{
 		title: 'CPU usage, request, limits',
 		yAxisUnit: '',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/statefulsets/#cpu-usage-request-limits',
 	},
 	{
 		title: 'CPU request, limit util (%)',
 		yAxisUnit: 'percentunit',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/statefulsets/#cpu-request-limit-utilization-',
 	},
 	{
 		title: 'Memory usage, request, limits',
 		yAxisUnit: 'bytes',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/statefulsets/#memory-usage-request-limits',
 	},
 	{
 		title: 'Memory request, limit util (%)',
 		yAxisUnit: 'percentunit',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/statefulsets/#memory-request-limit-utilization-',
 	},
 	{
 		title: 'Network IO',
 		yAxisUnit: 'binBps',
+		docPath: '/infrastructure-monitoring/kubernetes/statefulsets/#network-io',
 	},
 	{
 		title: 'Network errors count',
 		yAxisUnit: '',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/statefulsets/#network-errors-count',
 	},
 ];
 
@@ -85,54 +113,36 @@ export const getStatefulSetMetricsQueryPayload = (
 	statefulSet: InframonitoringtypesStatefulSetRecordDTO,
 	start: number,
 	end: number,
-	dotMetricsEnabled: boolean,
 ): GetQueryResultsProps[] => {
-	const k8sStatefulSetNameKey = dotMetricsEnabled
-		? INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME
-		: 'k8s_statefulset_name';
-	const k8sNamespaceNameKey = dotMetricsEnabled
-		? INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME
-		: 'k8s_namespace_name';
-	const k8sPodNameKey = dotMetricsEnabled ? 'k8s.pod.name' : 'k8s_pod_name';
+	const clusterName =
+		statefulSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] ?? '';
+	const namespaceName =
+		statefulSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ?? '';
 
-	const k8sPodCpuUtilKey = dotMetricsEnabled
-		? 'k8s.pod.cpu.usage'
-		: 'k8s_pod_cpu_usage';
-	const k8sContainerCpuRequestKey = dotMetricsEnabled
-		? 'k8s.container.cpu_request'
-		: 'k8s_container_cpu_request';
-	const k8sContainerCpuLimitKey = dotMetricsEnabled
-		? 'k8s.container.cpu_limit'
-		: 'k8s_container_cpu_limit';
-	const k8sPodCpuReqUtilKey = dotMetricsEnabled
-		? 'k8s.pod.cpu_request_utilization'
-		: 'k8s_pod_cpu_request_utilization';
-	const k8sPodCpuLimitUtilKey = dotMetricsEnabled
-		? 'k8s.pod.cpu_limit_utilization'
-		: 'k8s_pod_cpu_limit_utilization';
-
-	const k8sPodMemUsageKey = dotMetricsEnabled
-		? 'k8s.pod.memory.usage'
-		: 'k8s_pod_memory_usage';
-	const k8sContainerMemRequestKey = dotMetricsEnabled
-		? 'k8s.container.memory_request'
-		: 'k8s_container_memory_request';
-	const k8sContainerMemLimitKey = dotMetricsEnabled
-		? 'k8s.container.memory_limit'
-		: 'k8s_container_memory_limit';
-	const k8sPodMemReqUtilKey = dotMetricsEnabled
-		? 'k8s.pod.memory_request_utilization'
-		: 'k8s_pod_memory_request_utilization';
-	const k8sPodMemLimitUtilKey = dotMetricsEnabled
-		? 'k8s.pod.memory_limit_utilization'
-		: 'k8s_pod_memory_limit_utilization';
-
-	const k8sPodNetworkIoKey = dotMetricsEnabled
-		? 'k8s.pod.network.io'
-		: 'k8s_pod_network_io';
-	const k8sPodNetworkErrorsKey = dotMetricsEnabled
-		? 'k8s.pod.network.errors'
-		: 'k8s_pod_network_errors';
+	const filters = [
+		{
+			id: 'f2',
+			key: {
+				dataType: DataTypes.String,
+				id: 'k8s_namespace_name--string--tag--false',
+				key: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
+				type: 'tag',
+			},
+			op: '=',
+			value: namespaceName,
+		},
+		{
+			id: 'f3',
+			key: {
+				dataType: DataTypes.String,
+				id: 'k8s_cluster_name--string--tag--false',
+				key: INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME,
+				type: 'tag',
+			},
+			op: '=',
+			value: clusterName,
+		},
+	];
 
 	return [
 		{
@@ -145,7 +155,7 @@ export const getStatefulSetMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'cpu_usage',
-								key: k8sPodCpuUtilKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_USAGE,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -159,7 +169,7 @@ export const getStatefulSetMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'ss_name',
-											key: k8sStatefulSetNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -168,19 +178,7 @@ export const getStatefulSetMetricsQueryPayload = (
 												INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME
 											] ?? '',
 									},
-									{
-										id: 'f2',
-										key: {
-											dataType: DataTypes.String,
-											id: 'ns_name',
-											key: k8sNamespaceNameKey,
-											type: 'tag',
-										},
-										op: '=',
-										value:
-											statefulSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ??
-											'',
-									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -200,7 +198,7 @@ export const getStatefulSetMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'cpu_request',
-								key: k8sContainerCpuRequestKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_CONTAINER_CPU_REQUEST,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'latest',
@@ -214,7 +212,7 @@ export const getStatefulSetMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'pod_name',
-											key: k8sPodNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME,
 											type: 'tag',
 										},
 										op: 'contains',
@@ -223,19 +221,7 @@ export const getStatefulSetMetricsQueryPayload = (
 												INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME
 											] ?? '',
 									},
-									{
-										id: 'f2',
-										key: {
-											dataType: DataTypes.String,
-											id: 'ns_name',
-											key: k8sNamespaceNameKey,
-											type: 'tag',
-										},
-										op: '=',
-										value:
-											statefulSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ??
-											'',
-									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -255,7 +241,7 @@ export const getStatefulSetMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'cpu_limit',
-								key: k8sContainerCpuLimitKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_CONTAINER_CPU_LIMIT,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'latest',
@@ -269,7 +255,7 @@ export const getStatefulSetMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'pod_name',
-											key: k8sPodNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME,
 											type: 'tag',
 										},
 										op: 'contains',
@@ -278,19 +264,7 @@ export const getStatefulSetMetricsQueryPayload = (
 												INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME
 											] ?? '',
 									},
-									{
-										id: 'f2',
-										key: {
-											dataType: DataTypes.String,
-											id: 'ns_name',
-											key: k8sNamespaceNameKey,
-											type: 'tag',
-										},
-										op: '=',
-										value:
-											statefulSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ??
-											'',
-									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -330,7 +304,7 @@ export const getStatefulSetMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'cpu_req_util',
-								key: k8sPodCpuReqUtilKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_REQUEST_UTILIZATION,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -344,7 +318,7 @@ export const getStatefulSetMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'ss_name',
-											key: k8sStatefulSetNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -353,19 +327,7 @@ export const getStatefulSetMetricsQueryPayload = (
 												INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME
 											] ?? '',
 									},
-									{
-										id: 'f2',
-										key: {
-											dataType: DataTypes.String,
-											id: 'ns_name',
-											key: k8sNamespaceNameKey,
-											type: 'tag',
-										},
-										op: '=',
-										value:
-											statefulSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ??
-											'',
-									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -385,7 +347,7 @@ export const getStatefulSetMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'cpu_limit_util',
-								key: k8sPodCpuLimitUtilKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_LIMIT_UTILIZATION,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -399,7 +361,7 @@ export const getStatefulSetMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'ss_name',
-											key: k8sStatefulSetNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -408,19 +370,7 @@ export const getStatefulSetMetricsQueryPayload = (
 												INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME
 											] ?? '',
 									},
-									{
-										id: 'f2',
-										key: {
-											dataType: DataTypes.String,
-											id: 'ns_name',
-											key: k8sNamespaceNameKey,
-											type: 'tag',
-										},
-										op: '=',
-										value:
-											statefulSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ??
-											'',
-									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -460,7 +410,7 @@ export const getStatefulSetMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'mem_usage',
-								key: k8sPodMemUsageKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_MEMORY_USAGE,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -474,7 +424,7 @@ export const getStatefulSetMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'ss_name',
-											key: k8sStatefulSetNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -483,19 +433,7 @@ export const getStatefulSetMetricsQueryPayload = (
 												INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME
 											] ?? '',
 									},
-									{
-										id: 'f2',
-										key: {
-											dataType: DataTypes.String,
-											id: 'ns_name',
-											key: k8sNamespaceNameKey,
-											type: 'tag',
-										},
-										op: '=',
-										value:
-											statefulSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ??
-											'',
-									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -515,7 +453,7 @@ export const getStatefulSetMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'mem_request',
-								key: k8sContainerMemRequestKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_CONTAINER_MEMORY_REQUEST,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'latest',
@@ -525,11 +463,11 @@ export const getStatefulSetMetricsQueryPayload = (
 							filters: {
 								items: [
 									{
-										id: 'f3',
+										id: 'f1',
 										key: {
 											dataType: DataTypes.String,
 											id: 'pod_name',
-											key: k8sPodNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME,
 											type: 'tag',
 										},
 										op: 'contains',
@@ -538,19 +476,7 @@ export const getStatefulSetMetricsQueryPayload = (
 												INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME
 											] ?? '',
 									},
-									{
-										id: 'f2',
-										key: {
-											dataType: DataTypes.String,
-											id: 'ns_name',
-											key: k8sNamespaceNameKey,
-											type: 'tag',
-										},
-										op: '=',
-										value:
-											statefulSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ??
-											'',
-									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -570,7 +496,7 @@ export const getStatefulSetMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'mem_limit',
-								key: k8sContainerMemLimitKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_CONTAINER_MEMORY_LIMIT,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'latest',
@@ -584,7 +510,7 @@ export const getStatefulSetMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'pod_name',
-											key: k8sPodNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME,
 											type: 'tag',
 										},
 										op: 'contains',
@@ -593,19 +519,7 @@ export const getStatefulSetMetricsQueryPayload = (
 												INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME
 											] ?? '',
 									},
-									{
-										id: 'f2',
-										key: {
-											dataType: DataTypes.String,
-											id: 'ns_name',
-											key: k8sNamespaceNameKey,
-											type: 'tag',
-										},
-										op: '=',
-										value:
-											statefulSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ??
-											'',
-									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -645,7 +559,7 @@ export const getStatefulSetMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'mem_req_util',
-								key: k8sPodMemReqUtilKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_MEMORY_REQUEST_UTILIZATION,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -659,7 +573,7 @@ export const getStatefulSetMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'ss_name',
-											key: k8sStatefulSetNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -668,19 +582,7 @@ export const getStatefulSetMetricsQueryPayload = (
 												INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME
 											] ?? '',
 									},
-									{
-										id: 'f2',
-										key: {
-											dataType: DataTypes.String,
-											id: 'ns_name',
-											key: k8sNamespaceNameKey,
-											type: 'tag',
-										},
-										op: '=',
-										value:
-											statefulSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ??
-											'',
-									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -700,7 +602,7 @@ export const getStatefulSetMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'mem_limit_util',
-								key: k8sPodMemLimitUtilKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_MEMORY_LIMIT_UTILIZATION,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -714,7 +616,7 @@ export const getStatefulSetMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'ss_name',
-											key: k8sStatefulSetNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -723,19 +625,7 @@ export const getStatefulSetMetricsQueryPayload = (
 												INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME
 											] ?? '',
 									},
-									{
-										id: 'f2',
-										key: {
-											dataType: DataTypes.String,
-											id: 'ns_name',
-											key: k8sNamespaceNameKey,
-											type: 'tag',
-										},
-										op: '=',
-										value:
-											statefulSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ??
-											'',
-									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -775,7 +665,7 @@ export const getStatefulSetMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'net_io',
-								key: k8sPodNetworkIoKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_NETWORK_IO,
 								type: 'Sum',
 							},
 							aggregateOperator: 'rate',
@@ -789,7 +679,7 @@ export const getStatefulSetMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'ss_name',
-											key: k8sStatefulSetNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -798,19 +688,7 @@ export const getStatefulSetMetricsQueryPayload = (
 												INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME
 											] ?? '',
 									},
-									{
-										id: 'f2',
-										key: {
-											dataType: DataTypes.String,
-											id: 'ns_name',
-											key: k8sNamespaceNameKey,
-											type: 'tag',
-										},
-										op: '=',
-										value:
-											statefulSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ??
-											'',
-									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -863,7 +741,7 @@ export const getStatefulSetMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'net_err',
-								key: k8sPodNetworkErrorsKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_NETWORK_ERRORS,
 								type: 'Sum',
 							},
 							aggregateOperator: 'increase',
@@ -877,7 +755,7 @@ export const getStatefulSetMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'ss_name',
-											key: k8sStatefulSetNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -886,19 +764,7 @@ export const getStatefulSetMetricsQueryPayload = (
 												INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME
 											] ?? '',
 									},
-									{
-										id: 'f2',
-										key: {
-											dataType: DataTypes.String,
-											id: 'ns_name',
-											key: k8sNamespaceNameKey,
-											type: 'tag',
-										},
-										op: '=',
-										value:
-											statefulSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ??
-											'',
-									},
+									...filters,
 								],
 								op: 'AND',
 							},
@@ -942,4 +808,24 @@ export const getStatefulSetMetricsQueryPayload = (
 			end,
 		},
 	];
+};
+
+export const getStatefulSetPodMetricsQueryPayload = (
+	statefulSet: InframonitoringtypesStatefulSetRecordDTO,
+	start: number,
+	end: number,
+): GetQueryResultsProps[] => {
+	return getPodUtilizationByPodQueryPayloads(
+		{
+			workloadNameKey: INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME,
+			workloadNameValue:
+				statefulSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME] ?? '',
+			clusterName:
+				statefulSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] ?? '',
+			namespaceName:
+				statefulSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ?? '',
+		},
+		start,
+		end,
+	);
 };

@@ -390,6 +390,9 @@ def test_logs_time_series_count(
         {
             "key": {
                 "name": "host.name",
+                "signal": "",
+                "fieldContext": "",
+                "fieldDataType": "",
             },
             "value": "linux-001",
         }
@@ -411,6 +414,9 @@ def test_logs_time_series_count(
         {
             "key": {
                 "name": "host.name",
+                "signal": "",
+                "fieldContext": "",
+                "fieldDataType": "",
             },
             "value": "linux-000",
         }

@@ -11,14 +11,7 @@
       "desiredSuccessfulPods": 2,
       "activePods": 1,
       "failedPods": 0,
-      "successfulPods": 1,
-      "podCountsByPhase": {
-        "pending": 0,
-        "running": 2,
-        "succeeded": 0,
-        "failed": 0,
-        "unknown": 0
-      }
+      "successfulPods": 1
     },
     {
       "jobName": "acc-job-2",
@@ -31,14 +24,7 @@
       "desiredSuccessfulPods": 5,
       "activePods": 3,
       "failedPods": 1,
-      "successfulPods": 2,
-      "podCountsByPhase": {
-        "pending": 0,
-        "running": 3,
-        "succeeded": 0,
-        "failed": 0,
-        "unknown": 0
-      }
+      "successfulPods": 2
     }
   ]
 }

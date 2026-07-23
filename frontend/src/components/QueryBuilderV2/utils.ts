@@ -176,7 +176,9 @@ function formatSingleValueForFilter(
 		}
 
 		if (isQuoted(value)) {
-			return unquote(value);
+			// Unescape `\'` → `'` (inverse of formatSingleValue) so the round-trip doesn't
+			// double the backslash each pass.
+			return unquote(value).replace(/\\'/g, "'");
 		}
 	}
 

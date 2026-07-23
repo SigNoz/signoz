@@ -1,6 +1,8 @@
 import { useCallback, useState } from 'react';
 import type { Layout } from 'react-grid-layout';
 
+import logEvent from 'api/common/logEvent';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
@@ -78,6 +80,9 @@ export function usePersistLayout({ layoutIndex, items }: Params): Result {
 			if (!hasGeometryChanged(nextItems, items)) {
 				return;
 			}
+			// High-frequency (drag/resize stop) — rate-limited. Single handler can't tell
+			// drag from resize, so changeType is omitted.
+			void logEvent(DashboardDetailEvents.LayoutChanged, {}, 'track', true);
 			try {
 				setIsSaving(true);
 				await patchAsync([replaceSectionItemsOp(layoutIndex, nextItems)]);

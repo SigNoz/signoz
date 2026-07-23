@@ -1,5 +1,8 @@
 import type { DashboardtypesQueryDTO } from 'api/generated/services/sigNoz.schemas';
-import { textContainsVariableReference } from 'lib/dashboardVariables/variableReference';
+import {
+	containsAnyVariableReference,
+	textContainsVariableReference,
+} from 'lib/dashboardVariables/variableReference';
 
 import { toQueryEnvelopes } from './buildQueryRangeRequest';
 
@@ -44,4 +47,19 @@ export function getReferencedVariables(
 	return variableNames.filter((name) =>
 		texts.some((text) => textContainsVariableReference(text, name)),
 	);
+}
+
+/**
+ * Whether a panel's queries reference *any* variable, independent of the known
+ * variable set. Used to hold the panel until the variable fetch context is ready:
+ * before then the variable names aren't known, so firing would substitute nothing
+ * (dropping every `$var`) and the query would fail.
+ */
+export function queryReferencesAnyVariable(
+	queries: DashboardtypesQueryDTO[],
+): boolean {
+	if (queries.length === 0) {
+		return false;
+	}
+	return extractQueryTexts(queries).some(containsAnyVariableReference);
 }

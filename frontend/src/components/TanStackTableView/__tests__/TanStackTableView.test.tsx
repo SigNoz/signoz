@@ -614,6 +614,34 @@ describe('TanStackTableView Integration', () => {
 			);
 		});
 
+		it('calls onRowClick with object itemKey when getItemKey returns object', async () => {
+			type SelectionParams = { id: string; name: string };
+			const user = userEvent.setup();
+			const onRowClick = jest.fn<void, [unknown, SelectionParams]>();
+
+			renderTanStackTable<
+				(typeof import('./testUtils').defaultData)[0],
+				SelectionParams
+			>({
+				props: {
+					onRowClick,
+					getRowKey: (row) => row.id,
+					getItemKey: (row) => ({ id: row.id, name: row.name }),
+				},
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText('Item 1')).toBeInTheDocument();
+			});
+
+			await user.click(screen.getByText('Item 1'));
+
+			expect(onRowClick).toHaveBeenCalledWith(
+				expect.objectContaining({ id: '1', name: 'Item 1' }),
+				{ id: '1', name: 'Item 1' },
+			);
+		});
+
 		it('applies active class when isRowActive returns true', async () => {
 			renderTanStackTable({
 				props: {

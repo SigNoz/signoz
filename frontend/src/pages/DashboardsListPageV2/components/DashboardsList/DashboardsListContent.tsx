@@ -1,6 +1,9 @@
 import { useMemo } from 'react';
 import { Table } from 'antd';
 import type { TableProps } from 'antd/lib';
+import logEvent from 'api/common/logEvent';
+
+import { DashboardListEvents } from 'pages/DashboardsListPageV2/constants/events';
 
 import type { DashboardListItem } from '../../utils/helpers';
 import DashboardRow from '../DashboardRow/DashboardRow';
@@ -50,7 +53,10 @@ function DashboardsListContent({
 	const paginationConfig = total > pageSize && {
 		pageSize,
 		showSizeChanger: false,
-		onChange: onPageChange,
+		onChange: (pageNumber: number): void => {
+			void logEvent(DashboardListEvents.Paginated, { pageNumber });
+			onPageChange(pageNumber);
+		},
 		current: page,
 		total,
 		hideOnSinglePage: true,

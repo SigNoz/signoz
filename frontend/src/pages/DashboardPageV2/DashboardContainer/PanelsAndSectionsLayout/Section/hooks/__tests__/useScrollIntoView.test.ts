@@ -23,7 +23,7 @@ describe('useScrollIntoView', () => {
 
 		expect(scrollIntoView).toHaveBeenCalledWith({
 			behavior: 'smooth',
-			block: 'start',
+			block: 'center',
 		});
 		expect(useScrollIntoViewStore.getState().scrollTargetId).toBeNull();
 	});
@@ -38,7 +38,7 @@ describe('useScrollIntoView', () => {
 
 		expect(scrollIntoView).toHaveBeenCalledWith({
 			behavior: 'smooth',
-			block: 'start',
+			block: 'center',
 		});
 		expect(useScrollIntoViewStore.getState().scrollTargetId).toBeNull();
 	});
