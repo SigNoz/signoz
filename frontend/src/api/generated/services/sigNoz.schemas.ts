@@ -5742,29 +5742,6 @@ export interface InframonitoringtypesNodeCountsByReadinessDTO {
 	ready: number;
 }
 
-export interface InframonitoringtypesPodCountsByPhaseDTO {
-	/**
-	 * @type integer
-	 */
-	failed: number;
-	/**
-	 * @type integer
-	 */
-	pending: number;
-	/**
-	 * @type integer
-	 */
-	running: number;
-	/**
-	 * @type integer
-	 */
-	succeeded: number;
-	/**
-	 * @type integer
-	 */
-	unknown: number;
-}
-
 export interface InframonitoringtypesPodCountsByStatusDTO {
 	/**
 	 * @type integer
@@ -5874,7 +5851,6 @@ export interface InframonitoringtypesClusterRecordDTO {
 	 */
 	meta: InframonitoringtypesClusterRecordDTOMeta;
 	nodeCountsByReadiness: InframonitoringtypesNodeCountsByReadinessDTO;
-	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
 	podCountsByStatus: InframonitoringtypesPodCountsByStatusDTO;
 }
 
@@ -6150,7 +6126,6 @@ export interface InframonitoringtypesDaemonSetRecordDTO {
 	 * @type integer
 	 */
 	misscheduledNodes: number;
-	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
 	podCountsByStatus: InframonitoringtypesPodCountsByStatusDTO;
 	/**
 	 * @type integer
@@ -6232,7 +6207,6 @@ export interface InframonitoringtypesDeploymentRecordDTO {
 	 * @type object,null
 	 */
 	meta: InframonitoringtypesDeploymentRecordDTOMeta;
-	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
 	podCountsByStatus: InframonitoringtypesPodCountsByStatusDTO;
 }
 
@@ -6399,7 +6373,6 @@ export interface InframonitoringtypesJobRecordDTO {
 	 * @type object,null
 	 */
 	meta: InframonitoringtypesJobRecordDTOMeta;
-	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
 	podCountsByStatus: InframonitoringtypesPodCountsByStatusDTO;
 	/**
 	 * @type integer
@@ -6480,7 +6453,6 @@ export interface InframonitoringtypesNamespaceRecordDTO {
 	 * @type string
 	 */
 	namespaceName: string;
-	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
 	podCountsByStatus: InframonitoringtypesPodCountsByStatusDTO;
 }
 
@@ -6547,7 +6519,6 @@ export interface InframonitoringtypesNodeRecordDTO {
 	 * @type string
 	 */
 	nodeName: string;
-	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
 	podCountsByStatus: InframonitoringtypesPodCountsByStatusDTO;
 }
 
@@ -6568,14 +6539,6 @@ export interface InframonitoringtypesNodesDTO {
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 
-export enum InframonitoringtypesPodPhaseDTO {
-	pending = 'pending',
-	running = 'running',
-	succeeded = 'succeeded',
-	failed = 'failed',
-	unknown = 'unknown',
-	no_data = 'no_data',
-}
 export type InframonitoringtypesPodRecordDTOMetaAnyOf = {
 	[key: string]: string;
 };
@@ -6632,7 +6595,6 @@ export interface InframonitoringtypesPodRecordDTO {
 	 * @format double
 	 */
 	podCPURequest: number;
-	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
 	podCountsByStatus: InframonitoringtypesPodCountsByStatusDTO;
 	/**
 	 * @type number
@@ -6649,7 +6611,6 @@ export interface InframonitoringtypesPodRecordDTO {
 	 * @format double
 	 */
 	podMemoryRequest: number;
-	podPhase: InframonitoringtypesPodPhaseDTO;
 	/**
 	 * @type integer
 	 * @format int64
@@ -6999,7 +6960,6 @@ export interface InframonitoringtypesStatefulSetRecordDTO {
 	 * @type object,null
 	 */
 	meta: InframonitoringtypesStatefulSetRecordDTOMeta;
-	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
 	podCountsByStatus: InframonitoringtypesPodCountsByStatusDTO;
 	/**
 	 * @type number
