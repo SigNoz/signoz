@@ -313,6 +313,17 @@ watcher.
 go run ./cmd/reliability-agent slo \
   --config examples/checkout-slo.yaml \
   --output json
+
+# Emit SLO and multi-window burn metrics through OTLP/HTTP
+go run ./cmd/reliability-agent slo \
+  --config examples/checkout-slo.yaml \
+  --emit-otlp \
+  --otlp-endpoint localhost:4318
+
+# Idempotently generate the dashboard, channel, and burn alerts
+go run ./cmd/reliability-agent generate \
+  --config examples/checkout-slo.yaml \
+  --webhook-url http://your-alert-receiver/alerts
 ```
 
 The command uses the SigNoz v5 query API and the service-account key from the
@@ -409,23 +420,25 @@ Implemented:
 - backend, worker, AI-agent, and custom data kinds;
 - Track A rule evaluation and scoring;
 - live SigNoz log querying and normalization;
+- live SigNoz trace and metrics querying and normalization;
 - scheduled log audits;
 - blocker debounce, duplicate suppression, and recovery alerts;
 - console and webhook alert delivery;
 - live SigNoz SLO queries;
+- OTLP emission of SLO and telemetry-quality metrics;
+- idempotent SigNoz dashboard, notification-channel, and burn-alert generation;
+- multi-window multi-burn-rate evaluation;
 - SLI, target, error-budget, and burn-rate calculations;
 - safe `indeterminate` handling;
 - unit and end-to-end demo coverage.
 
 Not yet implemented:
 
-- live Track A trace and metric snapshot planners;
 - persistent profile, report, and alert storage;
 - automatic profile-to-PromQL planning for Track B;
 - native SigNoz Alertmanager notification integration;
-- dashboards for Track A reports and SLO results;
 - distributed scheduler coordination for multiple agent replicas.
 
-The current logs demo is fully functional. Other Track A signals can be tested
-by supplying normalized evidence to `POST /v1/audit` until their live source
-planners are added.
+The current logs, traces, and metrics source is available to `audit-watch` when
+the profile references those signals. The generated OTLP metrics and SigNoz
+resources require a running collector/API endpoint and appropriate credentials.

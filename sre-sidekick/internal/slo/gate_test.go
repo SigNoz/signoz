@@ -29,7 +29,7 @@ func TestMetricPresenceGateScopesServiceAndEnvironment(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !result.Trusted || result.Coverage != 1 {
+	if !result.QueryComplete || result.Coverage != 1 {
 		t.Fatalf("unexpected gate result: %+v", result)
 	}
 	for _, expected := range []string{"service_name=\"checkout-api\"", "environment=\"test\"", "region=\"local\""} {

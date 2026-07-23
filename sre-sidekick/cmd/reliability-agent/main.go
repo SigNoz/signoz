@@ -19,6 +19,7 @@ import (
 	"github.com/guruvedhanth-s/signoz/sre-sidekick/internal/api"
 	"github.com/guruvedhanth-s/signoz/sre-sidekick/internal/audit"
 	"github.com/guruvedhanth-s/signoz/sre-sidekick/internal/monitor"
+	"github.com/guruvedhanth-s/signoz/sre-sidekick/internal/otlp"
 	"github.com/guruvedhanth-s/signoz/sre-sidekick/internal/profile"
 	"github.com/guruvedhanth-s/signoz/sre-sidekick/internal/registry"
 	"github.com/guruvedhanth-s/signoz/sre-sidekick/internal/slo"
@@ -31,6 +32,8 @@ func main() {
 		switch os.Args[1] {
 		case "slo":
 			err = runSLO(os.Args[2:])
+		case "generate":
+			err = runGenerate(os.Args[2:])
 		case "audit-watch":
 			err = runAuditWatch(os.Args[2:])
 		default:
@@ -57,6 +60,8 @@ func runAuditWatch(args []string) error {
 	alertSeverity := fs.String("alert-severity", "blocker", "minimum failed finding severity that opens an alert")
 	failuresBeforeAlert := fs.Int("failures-before-alert", 2, "consecutive alertable failures required")
 	webhookURL := fs.String("webhook-url", "", "optional alert webhook URL")
+	emitOTLP := fs.Bool("emit-otlp", false, "emit telemetry audit metrics over OTLP")
+	otlpEndpoint := fs.String("otlp-endpoint", envOr("OTLP_ENDPOINT", "localhost:4318"), "OTLP metrics endpoint")
 	if err := fs.Parse(args); err != nil {
 		if err == flag.ErrHelp {
 			return nil
@@ -78,6 +83,14 @@ func runAuditWatch(args []string) error {
 		return fmt.Errorf("SigNoz API key is required; set SIGNOZ_API_KEY or use --api-key")
 	}
 	client := signoz.NewClient(*signozURL, *apiKey)
+	var emitter *otlp.Emitter
+	if *emitOTLP {
+		emitter, err = otlp.NewEmitter(context.Background(), *otlpEndpoint)
+		if err != nil {
+			return err
+		}
+		defer func() { _ = emitter.Shutdown(context.Background()) }()
+	}
 	sinks := alerting.MultiSink{&alerting.JSONSink{Writer: os.Stdout}}
 	if *webhookURL != "" {
 		sinks = append(sinks, alerting.WebhookSink{URL: *webhookURL})
@@ -85,7 +98,7 @@ func runAuditWatch(args []string) error {
 
 	runner := &monitor.Runner{
 		Profile:             p,
-		Source:              signoz.NewLogSource(client, *limit),
+		Source:              signoz.NewTelemetrySource(client, *limit),
 		Audit:               audit.Engine{},
 		Sink:                sinks,
 		Interval:            *interval,
@@ -93,6 +106,9 @@ func runAuditWatch(args []string) error {
 		AlertSeverity:       *alertSeverity,
 		FailuresBeforeAlert: *failuresBeforeAlert,
 		OnReport: func(report audit.Report) {
+			if emitter != nil {
+				emitter.EmitAudit(context.Background(), report)
+			}
 			slog.Info("track-a audit",
 				"service", report.Service,
 				"status", report.OverallStatus,
@@ -167,6 +183,16 @@ func runServer(args []string) {
 		"signoz_url", signozURL,
 		"authentication_enabled", *authToken != "",
 	)
+	serverContext, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	go func() {
+		<-serverContext.Done()
+		shutdownContext, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := server.Shutdown(shutdownContext); err != nil {
+			slog.Error("server shutdown", "error", err)
+		}
+	}()
 	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		slog.Error("server stopped", "error", err)
 		os.Exit(1)
@@ -179,6 +205,8 @@ func runSLO(args []string) error {
 	signozURL := fs.String("signoz-url", envOr("SIGNOZ_URL", "http://localhost:8080"), "SigNoz base URL")
 	apiKey := fs.String("api-key", os.Getenv("SIGNOZ_API_KEY"), "SigNoz service-account API key")
 	output := fs.String("output", "text", "output format: text or json")
+	emitOTLP := fs.Bool("emit-otlp", false, "emit SLO metrics over OTLP")
+	otlpEndpoint := fs.String("otlp-endpoint", envOr("OTLP_ENDPOINT", "localhost:4318"), "OTLP metrics endpoint")
 	if err := fs.Parse(args); err != nil {
 		if err == flag.ErrHelp {
 			return nil
@@ -197,17 +225,84 @@ func runSLO(args []string) error {
 	if err != nil {
 		return err
 	}
-	if *output == "json" {
-		return json.NewEncoder(os.Stdout).Encode(map[string]any{
-			"service":     cfg.Service,
-			"environment": cfg.Environment,
-			"reports":     reports,
-		})
-	}
-	if *output != "text" {
+	if *output != "text" && *output != "json" {
 		return fmt.Errorf("unsupported output format %q", *output)
 	}
-	printSLOReports(cfg, reports)
+	if *output == "json" {
+		if err := json.NewEncoder(os.Stdout).Encode(map[string]any{
+			"service": cfg.Service, "environment": cfg.Environment, "reports": reports,
+		}); err != nil {
+			return err
+		}
+	} else {
+		printSLOReports(cfg, reports)
+	}
+	if *emitOTLP {
+		emitter, emitErr := otlp.NewEmitter(context.Background(), *otlpEndpoint)
+		if emitErr != nil {
+			return emitErr
+		}
+		for _, report := range reports {
+			emitter.EmitSLO(context.Background(), report)
+		}
+		burns, burnErr := engine.EvaluateMultiWindow(context.Background(), cfg, time.Now(), slo.DefaultBurnTiers)
+		if burnErr != nil {
+			return burnErr
+		}
+		for _, burn := range burns {
+			emitter.EmitMultiWindow(context.Background(), burn)
+		}
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if emitErr := emitter.Shutdown(shutdownCtx); emitErr != nil {
+			return emitErr
+		}
+	}
+	return nil
+}
+
+func runGenerate(args []string) error {
+	fs := flag.NewFlagSet("generate", flag.ContinueOnError)
+	configPath := fs.String("config", "examples/checkout-slo.yaml", "SLO YAML path")
+	signozURL := fs.String("signoz-url", envOr("SIGNOZ_URL", "http://localhost:8080"), "SigNoz base URL")
+	apiKey := fs.String("api-key", os.Getenv("SIGNOZ_API_KEY"), "SigNoz service-account API key")
+	channelName := fs.String("channel", slo.DefaultChannelName, "SigNoz notification channel name")
+	webhookURL := fs.String("webhook-url", os.Getenv("ALERT_WEBHOOK_URL"), "webhook URL for generated SigNoz notification channel")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	cfg, err := slo.LoadConfig(*configPath)
+	if err != nil {
+		return err
+	}
+	client := signoz.NewClient(*signozURL, *apiKey)
+	ctx := context.Background()
+	id, created, err := client.GenerateDashboard(ctx, slo.BuildDashboard())
+	if err != nil {
+		return err
+	}
+	verb := "updated"
+	if created {
+		verb = "created"
+	}
+	fmt.Printf("%s SLO dashboard %q (%s)\n", verb, slo.DashboardTitle, id)
+	if err := client.EnsureChannel(ctx, *channelName, *webhookURL); err != nil {
+		return err
+	}
+	for _, definition := range cfg.SLOs {
+		for _, tier := range slo.DefaultBurnTiers {
+			rule := slo.BuildBurnRateRule(definition.Name, tier, *channelName, cfg.Service, cfg.Environment)
+			created, err := client.GenerateBurnRateAlert(ctx, slo.BurnRuleName(definition.Name, tier.Name), rule)
+			if err != nil {
+				return err
+			}
+			status := "exists"
+			if created {
+				status = "created"
+			}
+			fmt.Printf("burn-rate alert %q: %s\n", slo.BurnRuleName(definition.Name, tier.Name), status)
+		}
+	}
 	return nil
 }
 

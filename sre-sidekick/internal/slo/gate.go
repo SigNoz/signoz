@@ -44,7 +44,7 @@ func (g *MetricPresenceGate) Check(ctx context.Context, request GateRequest) (Ga
 		metrics = g.Expected
 	}
 	if len(metrics) == 0 {
-		return GateResult{Coverage: 1, QueryComplete: true, Trusted: true}, nil
+		return GateResult{Coverage: 1, QueryComplete: true}, nil
 	}
 	if g.Scalar == nil {
 		return GateResult{QueryComplete: false, Trusted: false, Reason: "scalar querier is not configured"}, nil
@@ -85,7 +85,6 @@ func (g *MetricPresenceGate) Check(ctx context.Context, request GateRequest) (Ga
 	return GateResult{
 		Coverage:      coverage,
 		QueryComplete: true,
-		Trusted:       true,
 		Reason:        fmt.Sprintf("%d of %d dependencies have data", present, len(metrics)),
 	}, nil
 }

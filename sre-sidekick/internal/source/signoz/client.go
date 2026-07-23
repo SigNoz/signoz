@@ -34,11 +34,15 @@ func (c *Client) QueryRange(ctx context.Context, request any, response any) erro
 }
 
 func (c *Client) postJSON(ctx context.Context, path string, request any, response any) error {
+	return c.requestJSON(ctx, http.MethodPost, path, request, response)
+}
+
+func (c *Client) requestJSON(ctx context.Context, method, path string, request any, response any) error {
 	body, err := json.Marshal(request)
 	if err != nil {
 		return fmt.Errorf("encode SigNoz request: %w", err)
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.BaseURL+path, bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(ctx, method, c.BaseURL+path, bytes.NewReader(body))
 	if err != nil {
 		return fmt.Errorf("create SigNoz request: %w", err)
 	}
@@ -67,4 +71,12 @@ func (c *Client) postJSON(ctx context.Context, path string, request any, respons
 		return fmt.Errorf("decode SigNoz response: %w", err)
 	}
 	return nil
+}
+
+func (c *Client) getJSON(ctx context.Context, path string, response any) error {
+	return c.requestJSON(ctx, http.MethodGet, path, nil, response)
+}
+
+func (c *Client) putJSON(ctx context.Context, path string, request any, response any) error {
+	return c.requestJSON(ctx, http.MethodPut, path, request, response)
 }
