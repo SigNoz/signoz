@@ -29,7 +29,7 @@ interface Props {
 	onSave: (name: string) => void;
 	onSaveChanges: () => void;
 	onReset: () => void;
-	onDelete: (id: string) => void;
+	onDelete: (id: string) => Promise<void>;
 	onRename: (id: string, name: string) => void;
 }
 
@@ -88,9 +88,11 @@ function ViewsRail({
 					</Typography.Title>
 				),
 				content: 'This removes the saved view. Your dashboards are not affected.',
-				onConfirm: (): void => {
+				// Return the delete promise so the modal's Delete button stays loading
+				// until the backend call settles, then closes — matching dashboard delete.
+				onConfirm: (): Promise<void> => {
 					void logEvent(DashboardListEvents.ViewDeleted, {});
-					onDelete(id);
+					return onDelete(id);
 				},
 			});
 		},
