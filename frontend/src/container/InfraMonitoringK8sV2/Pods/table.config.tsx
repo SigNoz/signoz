@@ -147,7 +147,7 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 	{
 		id: 'podAge',
 		header: (): React.ReactNode => (
-			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/pods#age">
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/pods#pod-age">
 				Age
 			</ColumnHeader>
 		),

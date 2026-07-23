@@ -2875,12 +2875,12 @@ export const hostWidgetInfo = [
 	{
 		title: 'CPU Usage',
 		yAxisUnit: 'percentunit',
-		docPath: '/infrastructure-monitoring/host-monitoring/#cpu-usage',
+		docPath: '/infrastructure-monitoring/host-monitoring/#cpu-usage-1',
 	},
 	{
 		title: 'Memory Usage',
 		yAxisUnit: 'bytes',
-		docPath: '/infrastructure-monitoring/host-monitoring/#memory-usage',
+		docPath: '/infrastructure-monitoring/host-monitoring/#memory-usage-1',
 	},
 	{
 		title: 'Disk Usage (%) by mountpoint',
