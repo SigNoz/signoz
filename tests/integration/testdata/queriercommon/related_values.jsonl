@@ -15,3 +15,4 @@
 {"data_source": "logs", "resource_attributes": {"k8s.cluster.name": "c1"}, "attributes": {"host.name": "host-attr-logs"}}
 {"data_source": "metrics", "resource_attributes": {"k8s.cluster.name": "c1", "host.name": "host-res-metrics"}}
 {"data_source": "metrics", "resource_attributes": {"k8s.cluster.name": "c1"}, "attributes": {"host.name": "host-attr-metrics"}}
+{"data_source": "traces", "resource_attributes": {"k8s.cluster.name": "c1", "host.name": "host-rest"}, "attributes": {"host.name": "host-attributes"}}

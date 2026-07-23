@@ -136,6 +136,16 @@ def seed_related_values(
             id="search_text_case_insensitive",
         ),
         pytest.param(
+            "traces",
+            "host.name",
+            "k8s.cluster.name = 'c1'",
+            "host",
+            # host.name is in both maps; the SELECT prefers the resource value,
+            # so only host-rest surfaces (host-attributes is shadowed).
+            {"host-rest"},
+            id="key_in_both_maps_resource_value_wins",
+        ),
+        pytest.param(
             "logs",
             "k8s.pod.name",
             "k8s.namespace.name != 'ns-a'",
