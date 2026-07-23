@@ -50,14 +50,12 @@ function DeleteActionItem({
 	const { mutate: runDelete } = useMutation({
 		mutationFn: () => deleteDashboardV2({ id: dashboardId }),
 		onSuccess: async () => {
-			toast.success(
-				t('dashboard:delete_dashboard_success', { name: dashboardName }),
-			);
 			void logEvent(DashboardListEvents.RowAction, {
 				action: 'delete',
 				dashboardId,
 			});
 			await invalidateListDashboardsForUserV2(queryClient);
+			toast.success('Dashboard deleted successfully');
 		},
 		onError: (error: APIError) => {
 			showErrorModal(error);
