@@ -45,9 +45,11 @@ export function parseNewPanelKind(
 
 /**
  * New-panel editor link that exports an explorer query into a V2 dashboard. Carries the
- * raw `Query` as `compositeQuery` encoded as the V1 link so `useGetCompositeQueryParam`
- * reads it identically (conversion happens in the editor). `null` when the panel type has
- * no V2 kind, so the caller skips the export instead of landing on an unrelated kind.
+ * raw `Query` as `compositeQuery` (conversion happens in the editor). `null` when the panel
+ * type has no V2 kind, so the caller skips the export instead of landing on an unrelated kind.
+ *
+ * Double-encoded on purpose: `useGetCompositeQueryParam` decodes twice, so a single encode
+ * would let a bare `%`/`+` (e.g. `ILIKE 'Inf%'`) break its second decode and drop the query.
  */
 export function buildExportPanelLink({
 	dashboardId,
@@ -68,7 +70,7 @@ export function buildExportPanelLink({
 	});
 	return `${path}${newPanelSearch(kind)}&${
 		QueryParams.compositeQuery
-	}=${encodeURIComponent(JSON.stringify(query))}`;
+	}=${encodeURIComponent(encodeURIComponent(JSON.stringify(query)))}`;
 }
 
 /** Target section index for a new panel, or undefined when unset/invalid. */
