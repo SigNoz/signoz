@@ -1436,6 +1436,11 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, orgID valuer.
 		sb.Where(sb.LE("unix_milli", fieldValueSelector.EndUnixMilli))
 	}
 
+	// scope to the requested signal's rows;
+	if fieldValueSelector.Signal != telemetrytypes.SignalUnspecified {
+		sb.Where(sb.E("data_source", fieldValueSelector.Signal.StringValue()))
+	}
+
 	if fieldValueSelector.Value != "" {
 		var conds []string
 		if fieldValueSelector.FieldContext != telemetrytypes.FieldContextAttribute &&
