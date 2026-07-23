@@ -6,6 +6,13 @@ import {
 	type Page,
 } from '@playwright/test';
 
+import {
+	detectPersona,
+	detectSettingsEnv,
+	type Persona,
+	type SettingsEnv,
+} from '../helpers/persona';
+
 export type User = { email: string; password: string };
 
 // Default user — admin from the pytest bootstrap (.env.local) or staging .env.
@@ -19,6 +26,11 @@ export const ADMIN: User = {
 // Held in memory only — no .auth/ dir, no JSON on disk.
 type StorageState = Awaited<ReturnType<BrowserContext['storageState']>>;
 const storageByUser = new Map<string, Promise<StorageState>>();
+
+// Per-worker persona/env caches by user email. Detection is constant for a
+// given backend + user, so it runs once per worker.
+const personaByUser = new Map<string, Promise<Persona>>();
+const envByUser = new Map<string, Promise<SettingsEnv>>();
 
 async function storageFor(browser: Browser, user: User): Promise<StorageState> {
 	const cached = storageByUser.get(user.email);
@@ -91,6 +103,10 @@ export const test = base.extend<{
 	 * storageState is held in memory and reused for all later requests.
 	 */
 	authedPage: Page;
+
+	persona: Persona;
+
+	env: SettingsEnv;
 }>({
 	user: [ADMIN, { option: true }],
 
@@ -111,6 +127,24 @@ export const test = base.extend<{
 		}
 		await use(page);
 		await ctx.close();
+	},
+
+	persona: async ({ authedPage, user }, use) => {
+		let task = personaByUser.get(user.email);
+		if (!task) {
+			task = detectPersona(authedPage);
+			personaByUser.set(user.email, task);
+		}
+		await use(await task);
+	},
+
+	env: async ({ authedPage, user }, use) => {
+		let task = envByUser.get(user.email);
+		if (!task) {
+			task = detectSettingsEnv(authedPage);
+			envByUser.set(user.email, task);
+		}
+		await use(await task);
 	},
 });
 
