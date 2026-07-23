@@ -95,6 +95,38 @@
 		max-height: none !important;
 		overflow: hidden !important;
 	}
+
+	// Let the first tag shrink and truncate so the layout stays [tag…][+N]. Without
+	// this the "+N" overflow item wins the row's space and the (longer) first tag
+	// gets offset/clipped — visible after switching a value from ALL to a subset.
+	:global(.ant-select-selection-overflow-item) {
+		min-width: 0;
+	}
+
+	:global(.ant-select-selection-item) {
+		min-width: 0;
+		overflow: hidden;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+	}
+
+	// The shared .custom-multiselect forces the search box to a 60px floor
+	// (min-width: 60px !important). In this narrow variable pill that reserved
+	// width is what offsets/clips the tag row, so collapse it here — the extra
+	// selectors out-specify the shared rule's !important. It still expands to fit
+	// what the user types while the dropdown is open.
+	:global(.ant-select-selector .ant-select-selection-search) {
+		min-width: 0 !important;
+		flex: 0 1 auto;
+	}
+
+	:global(
+		.ant-select-selector
+			.ant-select-selection-search
+			.ant-select-selection-search-input
+	) {
+		min-width: 0 !important;
+	}
 }
 
 .overflowTooltip {

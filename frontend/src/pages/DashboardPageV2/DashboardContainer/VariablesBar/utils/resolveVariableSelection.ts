@@ -184,3 +184,20 @@ export function configuredDefaultValue(
 	}
 	return configuredDefault(model.defaultValue);
 }
+
+/** Normalize a selection's value to an order-independent key of its members. */
+function valueSetKey(value: SelectedVariableValue): string {
+	const list = Array.isArray(value) ? value : value == null ? [] : [value];
+	return list.map(String).sort().join('||');
+}
+
+/** True when two selections carry the same ALL flag and the same value set. */
+export function areSelectionsEqual(
+	a: VariableSelection,
+	b: VariableSelection,
+): boolean {
+	return (
+		!!a.allSelected === !!b.allSelected &&
+		valueSetKey(a.value) === valueSetKey(b.value)
+	);
+}
