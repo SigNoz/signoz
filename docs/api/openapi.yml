@@ -2858,6 +2858,7 @@ components:
           $ref: '#/components/schemas/DashboardtypesDynamicVariableSignal'
       required:
       - name
+      - signal
       type: object
     DashboardtypesFillMode:
       enum:

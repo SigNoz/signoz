@@ -4668,12 +4668,18 @@ export type DashboardtypesVariableDefaultValueDTO = string | string[];
 export enum DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDynamicVariableSpecDTOKind {
 	'signoz/DynamicVariable' = 'signoz/DynamicVariable',
 }
+export enum DashboardtypesDynamicVariableSignalDTO {
+	traces = 'traces',
+	logs = 'logs',
+	metrics = 'metrics',
+	all = 'all',
+}
 export interface DashboardtypesDynamicVariableSpecDTO {
 	/**
 	 * @type string
 	 */
 	name: string;
-	signal?: TelemetrytypesSignalDTO;
+	signal: DashboardtypesDynamicVariableSignalDTO;
 }
 
 export interface DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDynamicVariableSpecDTO {
