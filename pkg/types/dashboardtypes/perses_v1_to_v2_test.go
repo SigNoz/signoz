@@ -829,6 +829,50 @@ func TestConvertV1WidgetQueryNormalizesV4FiltersAndPageSize(t *testing.T) {
 	assert.Equal(t, 50, spec.Limit, "pageSize backfills limit on a list panel")
 }
 
+// When a query carries both a v5 filter ({expression}) and the legacy filters
+// ({items, op}), the v5 filter wins and the legacy filters is dropped — matching
+// v1's UI, which only ever reads filter.expression.
+func TestConvertV1WidgetQueryPrefersV5FilterOverLegacyFilters(t *testing.T) {
+	widget := map[string]any{
+		"id":         "l-1",
+		"panelTypes": "list",
+		"query": map[string]any{
+			"queryType": "builder",
+			"builder": map[string]any{
+				"queryData": []any{
+					map[string]any{
+						"queryName":  "A",
+						"expression": "A",
+						"dataSource": "logs",
+						"filter":     map[string]any{"expression": "service.name = 'checkout'"},
+						"filters": map[string]any{
+							"op": "AND",
+							"items": []any{
+								map[string]any{
+									"key":   map[string]any{"key": "service.name", "dataType": "string", "type": "tag"},
+									"op":    "=",
+									"value": "frontend",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	queries := (&v1Decoder{}).convertV1WidgetQuery(widget, PanelKindList)
+	require.Len(t, queries, 1)
+
+	wrapper, ok := queries[0].Spec.Plugin.Spec.(*BuilderQuerySpec)
+	require.True(t, ok)
+	spec, ok := wrapper.Spec.(qb.QueryBuilderQuery[qb.LogAggregation])
+	require.True(t, ok, "list logs query should dispatch to LogAggregation, got %T", wrapper.Spec)
+
+	require.NotNil(t, spec.Filter)
+	assert.Equal(t, "service.name = 'checkout'", spec.Filter.Expression, "the v5 filter wins; the legacy filters ('frontend') is dropped")
+}
+
 func TestConvertV1WidgetQueryIgnoresPageSizeOnNonRowLimitPanel(t *testing.T) {
 	widget := map[string]any{
 		"id":         "b-1",
