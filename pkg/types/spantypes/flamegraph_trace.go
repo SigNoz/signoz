@@ -122,8 +122,7 @@ func (t *FlamegraphTrace) updateTimeRange(timestamp, durationNano uint64) {
 	}
 }
 
-// TimeRange returns the actual trace start and end computed from span timestamps
-// and durations (end = max(span_start + span_duration)), NOT from the summary table.
+// TimeRange returns the actual trace start and end computed from span timestamps.
 func (t *FlamegraphTrace) TimeRange() (start, end time.Time) {
 	return time.Unix(0, int64(t.startTime)), time.Unix(0, int64(t.endTime))
 }
