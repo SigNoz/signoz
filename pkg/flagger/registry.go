@@ -11,7 +11,6 @@ var (
 	FeatureUseMeterReporter       = featuretypes.MustNewName("use_meter_reporter")
 	FeatureUseJSONBody            = featuretypes.MustNewName("use_json_body")
 	FeatureUseFineGrainedAuthz    = featuretypes.MustNewName("use_fine_grained_authz")
-	FeatureUseDashboardV2         = featuretypes.MustNewName("use_dashboard_v2")
 	FeatureEnableAIObservability  = featuretypes.MustNewName("enable_ai_observability")
 	FeatureEnableMetricsReduction = featuretypes.MustNewName("enable_metrics_reduction")
 	FeatureUseInfraMonitoringV2   = featuretypes.MustNewName("use_infra_monitoring_v2")
@@ -80,14 +79,6 @@ func MustNewRegistry() featuretypes.Registry {
 			Kind:           featuretypes.KindBoolean,
 			Stage:          featuretypes.StageExperimental,
 			Description:    "Controls whether fine-grained authorization is enabled",
-			DefaultVariant: featuretypes.MustNewName("disabled"),
-			Variants:       featuretypes.NewBooleanVariants(),
-		},
-		&featuretypes.Feature{
-			Name:           FeatureUseDashboardV2,
-			Kind:           featuretypes.KindBoolean,
-			Stage:          featuretypes.StageExperimental,
-			Description:    "Controls whether dashboard v2 is enabled",
 			DefaultVariant: featuretypes.MustNewName("disabled"),
 			Variants:       featuretypes.NewBooleanVariants(),
 		},
