@@ -107,6 +107,18 @@ describe('reconcileWithOptions', () => {
 		).toStrictEqual({ value: ['a', 'b'], allSelected: false });
 	});
 
+	it('preserves a user-entered single value not in the options (freeform)', () => {
+		// A typed value that isn't among the fetched options must survive a refetch
+		// (e.g. a time-range change) rather than being reset to the default.
+		expect(
+			reconcileWithOptions(
+				model({ type: 'QUERY' }),
+				{ value: 'typed-value', allSelected: false },
+				['a', 'b'],
+			),
+		).toBeNull();
+	});
+
 	it('falls back to the configured default (else first) when invalid', () => {
 		expect(
 			reconcileWithOptions(
