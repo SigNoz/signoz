@@ -1,0 +1,13 @@
+// Align the alert icon with the title line (not the centre of the whole body),
+// so it stays put whether or not the description wraps to multiple lines.
+.deleteModal :global(.ant-modal-confirm-body) {
+	align-items: flex-start;
+}
+
+.icon {
+	color: var(--danger-background);
+	margin-inline-end: 12px;
+	// Nudge the icon down to optically centre it on the title's cap height.
+	margin-top: 2px;
+	flex-shrink: 0;
+}
