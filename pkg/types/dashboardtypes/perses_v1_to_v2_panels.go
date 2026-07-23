@@ -78,6 +78,9 @@ func (d *v1Decoder) convertV1Panels(raw any) map[string]*Panel {
 			// were defined. v1 renders nothing, so skip the widget silently.
 			continue
 		}
+		// v1 has no panel links; emit [] (not nil) so the required links field
+		// round-trips, rather than setting it in every panel constructor.
+		panel.Spec.Links = []Link{}
 		panels[id] = panel
 	}
 	return panels
