@@ -1,16 +1,10 @@
 import type {
 	DashboardtypesDashboardSpecDTOPanels,
-	DashboardtypesJSONPatchOperationDTO,
 	DashboardtypesQueryDTO,
 	Querybuildertypesv5BuilderQuerySpecDTO,
 	Querybuildertypesv5CompositeQueryDTO,
 	Querybuildertypesv5QueryEnvelopeBuilderDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import {
-	appendAndClause,
-	removeVariableFromExpression,
-} from 'components/QueryBuilderV2/utils';
-import { cloneDeep } from 'lodash-es';
 
 function clauseFor(attribute: string, variableName: string): string {
 	return `${attribute} IN $${variableName}`;
@@ -39,39 +33,6 @@ function forEachBuilderSpec(
 	}
 }
 
-function addClause(queries: DashboardtypesQueryDTO[], clause: string): boolean {
-	let changed = false;
-	forEachBuilderSpec(queries, (spec) => {
-		const existing = spec.filter?.expression?.trim();
-		// Idempotent: a repeated apply must not stack duplicate clauses.
-		if (existing?.includes(clause)) {
-			return;
-		}
-		spec.filter = { expression: appendAndClause(existing, clause) };
-		changed = true;
-	});
-	return changed;
-}
-
-function removeClause(
-	queries: DashboardtypesQueryDTO[],
-	variableName: string,
-): boolean {
-	let changed = false;
-	forEachBuilderSpec(queries, (spec) => {
-		const existing = spec.filter?.expression;
-		if (!existing) {
-			return;
-		}
-		const next = removeVariableFromExpression(existing, variableName);
-		if (next !== existing) {
-			spec.filter = { expression: next };
-			changed = true;
-		}
-	});
-	return changed;
-}
-
 function panelHasClause(
 	queries: DashboardtypesQueryDTO[],
 	clause: string,
@@ -83,74 +44,6 @@ function panelHasClause(
 		}
 	});
 	return has;
-}
-
-function replaceQueriesOp(
-	panelId: string,
-	queries: DashboardtypesQueryDTO[],
-): DashboardtypesJSONPatchOperationDTO {
-	return {
-		op: 'replace' as DashboardtypesJSONPatchOperationDTO['op'],
-		path: `/spec/panels/${panelId}/spec/queries`,
-		value: queries,
-	};
-}
-
-/** Add-only: inject the variable's filter into the given panels (default: all). */
-export function buildApplyVariableToPanelsPatch(
-	panels: DashboardtypesDashboardSpecDTOPanels,
-	attribute: string,
-	variableName: string,
-	targetPanelIds?: string[],
-): DashboardtypesJSONPatchOperationDTO[] {
-	if (!attribute || !variableName) {
-		return [];
-	}
-	const clause = clauseFor(attribute, variableName);
-	const ids = targetPanelIds ?? Object.keys(panels);
-
-	const ops: DashboardtypesJSONPatchOperationDTO[] = [];
-	ids.forEach((id) => {
-		const panel = panels[id];
-		if (!panel?.spec?.queries?.length) {
-			return;
-		}
-		const queries = cloneDeep(panel.spec.queries);
-		if (addClause(queries, clause)) {
-			ops.push(replaceQueriesOp(id, queries));
-		}
-	});
-	return ops;
-}
-
-/** Full sync: selected panels get the clause; every other panel has it removed. */
-export function buildSyncVariableToPanelsPatch(
-	panels: DashboardtypesDashboardSpecDTOPanels,
-	attribute: string,
-	variableName: string,
-	selectedPanelIds: string[],
-): DashboardtypesJSONPatchOperationDTO[] {
-	if (!attribute || !variableName) {
-		return [];
-	}
-	const clause = clauseFor(attribute, variableName);
-	const selected = new Set(selectedPanelIds);
-
-	const ops: DashboardtypesJSONPatchOperationDTO[] = [];
-	Object.keys(panels).forEach((id) => {
-		const panel = panels[id];
-		if (!panel?.spec?.queries?.length) {
-			return;
-		}
-		const queries = cloneDeep(panel.spec.queries);
-		const changed = selected.has(id)
-			? addClause(queries, clause)
-			: removeClause(queries, variableName);
-		if (changed) {
-			ops.push(replaceQueriesOp(id, queries));
-		}
-	});
-	return ops;
 }
 
 /** Panel ids whose queries currently reference the variable — pre-populates the picker. */

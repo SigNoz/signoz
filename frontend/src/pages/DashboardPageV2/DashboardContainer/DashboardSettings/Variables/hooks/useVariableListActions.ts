@@ -2,6 +2,7 @@ import {
 	type Dispatch,
 	type SetStateAction,
 	useCallback,
+	useMemo,
 	useState,
 } from 'react';
 import logEvent from 'api/common/logEvent';
@@ -24,6 +25,7 @@ import {
 import {
 	findApplyUsages,
 	findVariableUsages,
+	isVariableAppliedToAllPanels,
 	type VariableImpactMode,
 	type VariableUsage,
 } from '../utils/variableUsages';
@@ -40,6 +42,8 @@ export interface VariableImpact {
 	newName?: string;
 	usages: VariableUsage[];
 	nextVariables: VariableFormModel[];
+	/** Where an `apply` impact came from — drives the confirm analytics event. */
+	origin?: 'form' | 'applyToAll';
 }
 
 interface UseVariableListActionsParams {
@@ -64,6 +68,9 @@ interface UseVariableListActions {
 	handleMove: (from: number, to: number) => void;
 	requestDelete: (index: number) => void;
 	handleConfirmDelete: (index: number) => void;
+	requestApplyToAll: (index: number) => void;
+	/** Names of dynamic variables already applied to every panel (button disabled). */
+	appliedToAllNames: Set<string>;
 	handleImpactConfirm: (resolvedUsages: VariableUsage[]) => Promise<void>;
 }
 
@@ -210,6 +217,57 @@ export function useVariableListActions({
 		[dashboard, variables],
 	);
 
+	// "Apply to all": review the additive changes across every panel before applying.
+	const requestApplyToAll = useCallback(
+		(index: number): void => {
+			const variable = variables[index];
+			if (!variable || variable.type !== 'DYNAMIC' || !variable.dynamicAttribute) {
+				return;
+			}
+			const allPanelIds = Object.keys(dashboard.spec.panels ?? {});
+			const usages = findApplyUsages(
+				dashboard,
+				variable.dynamicAttribute,
+				variable.name,
+				variable.name,
+				allPanelIds,
+			);
+			if (usages.length === 0) {
+				return;
+			}
+			setImpact({
+				mode: 'apply',
+				variableName: variable.name,
+				newName: variable.name,
+				usages,
+				nextVariables: variables,
+				origin: 'applyToAll',
+			});
+		},
+		[dashboard, variables],
+	);
+
+	// A dynamic variable is "applied to all" when every panel query already
+	// references it — i.e. the apply review would be empty. Disables the button.
+	const appliedToAllNames = useMemo(() => {
+		const names = new Set<string>();
+		variables.forEach((variable) => {
+			if (variable.type !== 'DYNAMIC' || !variable.dynamicAttribute) {
+				return;
+			}
+			if (
+				isVariableAppliedToAllPanels(
+					dashboard,
+					variable.dynamicAttribute,
+					variable.name,
+				)
+			) {
+				names.add(variable.name);
+			}
+		});
+		return names;
+	}, [dashboard, variables]);
+
 	// Applies a resolved rename/delete: the variables array (rename/delete + edited
 	// variable queries) and each touched panel's queries, in one atomic patch.
 	const handleImpactConfirm = useCallback(
@@ -247,6 +305,11 @@ export function useVariableListActions({
 						hadReferences: true,
 						dashboardId,
 					});
+				} else if (impact.mode === 'apply' && impact.origin === 'applyToAll') {
+					void logEvent(DashboardDetailEvents.ApplyToAllConfirmed, {
+						variableType: 'dynamic',
+						dashboardId,
+					});
 				}
 			} catch {
 				let message: string;
@@ -273,6 +336,8 @@ export function useVariableListActions({
 		handleMove,
 		requestDelete,
 		handleConfirmDelete,
+		requestApplyToAll,
+		appliedToAllNames,
 		handleImpactConfirm,
 	};
 }
