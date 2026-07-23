@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1.13
+
 FROM golang:1.25-bookworm
 
 ARG OS="linux"
@@ -21,7 +23,8 @@ RUN set -eux; \
 
 COPY go.mod go.sum ./
 
-RUN go mod download
+RUN --mount=type=cache,target=/go/pkg/mod \
+	go mod download
 
 COPY ./cmd/ ./cmd/
 COPY ./ee/ ./ee/
@@ -29,7 +32,9 @@ COPY ./pkg/ ./pkg/
 COPY ./templates /root/templates
 
 COPY Makefile Makefile
-RUN TARGET_DIR=/root ARCHS=${TARGETARCH} ZEUS_URL=${ZEUSURL} LICENSE_URL=${ZEUSURL}/api/v1 make go-build-enterprise-race
+RUN --mount=type=cache,target=/go/pkg/mod \
+	--mount=type=cache,target=/root/.cache/go-build \
+	TARGET_DIR=/root ARCHS=${TARGETARCH} ZEUS_URL=${ZEUSURL} LICENSE_URL=${ZEUSURL}/api/v1 make go-build-enterprise-race
 RUN mv /root/linux-${TARGETARCH}/signoz /root/signoz
 
 RUN chmod 755 /root /root/signoz

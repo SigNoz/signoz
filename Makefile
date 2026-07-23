@@ -34,6 +34,8 @@ DOCKER_BUILD_ARCHS_ENTERPRISE 	= $(addprefix docker-build-enterprise-,$(ARCHS))
 DOCKERFILE_ENTERPRISE 			= $(SRC)/cmd/enterprise/Dockerfile
 DOCKER_REGISTRY_ENTERPRISE 		?= docker.io/signoz/signoz
 JS_BUILD_CONTEXT 				= $(SRC)/frontend
+DOCKER_BUILDX_PRUNE_FLAGS 		?= --force
+SIGNOZ_INTEGRATION_BUILD_CACHE_DIR 	?= /tmp/signoz-integration-buildx-cache
 
 ##############################################################
 # directories
@@ -210,7 +212,7 @@ py-lint: ## Run ruff check across the shared tests project
 
 .PHONY: py-test-setup
 py-test-setup: ## Bring up the shared SigNoz backend used by integration and e2e tests
-	@cd tests && uv run pytest --basetemp=./tmp/ -vv --reuse --capture=no integration/bootstrap/setup.py::test_setup
+	@cd tests && SIGNOZ_INTEGRATION_BUILD_CACHE_DIR=$(SIGNOZ_INTEGRATION_BUILD_CACHE_DIR) uv run pytest --basetemp=./tmp/ -vv --reuse --capture=no integration/bootstrap/setup.py::test_setup
 
 .PHONY: py-test-teardown
 py-test-teardown: ## Tear down the shared SigNoz backend
@@ -228,6 +230,21 @@ py-clean: ## Clear all pycache and pytest cache from tests directory recursively
 	@find tests -type f -name "*.pyc" -delete 2>/dev/null || true
 	@find tests -type f -name "*.pyo" -delete 2>/dev/null || true
 	@echo ">> python cache cleaned"
+
+.PHONY: py-docker-clean
+py-docker-clean: ## Remove Docker image and build caches used by python integration tests
+	@echo ">> removing SigNoz integration test image"
+	@docker image rm -f signoz:integration 2>/dev/null || true
+	@echo ">> removing local integration buildx cache directories"
+	@rm -rf $(SIGNOZ_INTEGRATION_BUILD_CACHE_DIR) $(SIGNOZ_INTEGRATION_BUILD_CACHE_DIR)-next
+	@echo ">> pruning docker buildx cache with flags: $(DOCKER_BUILDX_PRUNE_FLAGS)"
+	@docker buildx prune $(DOCKER_BUILDX_PRUNE_FLAGS)
+
+.PHONY: py-test-clean
+py-test-clean: ## Tear down python test stack and remove python/Docker test caches
+	@$(MAKE) py-test-teardown || true
+	@$(MAKE) py-clean
+	@$(MAKE) py-docker-clean
 
 
 ##############################################################
