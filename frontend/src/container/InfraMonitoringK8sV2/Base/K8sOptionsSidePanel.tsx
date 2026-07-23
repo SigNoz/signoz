@@ -2,6 +2,8 @@ import { ChangeEvent, ReactNode, useCallback, useMemo } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { DrawerWrapper } from '@signozhq/ui/drawer';
 import { Input } from '@signozhq/ui/input';
+import { Switch } from '@signozhq/ui/switch';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Check, Minus, Plus } from '@signozhq/icons';
 import {
 	hideColumn,
@@ -81,28 +83,20 @@ function K8sOptionsSidePanel<TData>({
 		(s) => s.setFontSize,
 	);
 
-	const addedColumns = useMemo(
+	const visibleColumnItems = useMemo(
 		() =>
 			columnPickerItems.filter(
-				(column) =>
-					!hiddenColumnIds.includes(column.id) &&
-					column.visibilityBehavior !== 'hidden-on-collapse',
+				(column) => column.visibilityBehavior !== 'hidden-on-collapse',
 			),
-		[columnPickerItems, hiddenColumnIds],
+		[columnPickerItems],
 	);
 
-	const hiddenColumns = useMemo(
-		() =>
-			columnPickerItems.filter((column) => hiddenColumnIds.includes(column.id)),
-		[columnPickerItems, hiddenColumnIds],
-	);
-
-	const handleRemoveColumn = (columnId: string): void => {
-		hideColumn(storageKey, columnId);
-	};
-
-	const handleAddColumn = (columnId: string): void => {
-		showColumn(storageKey, columnId);
+	const handleToggleColumn = (columnId: string, checked: boolean): void => {
+		if (checked) {
+			showColumn(storageKey, columnId);
+		} else {
+			hideColumn(storageKey, columnId);
+		}
 	};
 
 	const handleLineClampChange = useCallback(
@@ -187,49 +181,35 @@ function K8sOptionsSidePanel<TData>({
 
 			<div className={styles.sectionTitle}>
 				<Typography.Text size="sm" className={styles.sectionTitleText}>
-					Added Columns (Click to remove)
+					Columns
 				</Typography.Text>
 			</div>
 			<div className={styles.columnsList}>
-				{addedColumns.map((column) => (
-					<div className={styles.columnItem} key={column.id}>
-						<Button
-							variant="ghost"
-							color="none"
-							className={styles.columnItem}
+				{visibleColumnItems.map((column) => {
+					const isVisible = !hiddenColumnIds.includes(column.id);
+					const switchElement = (
+						<Switch
+							value={isVisible}
 							disabled={!column.canBeHidden}
-							data-testid={`remove-column-${column.id}`}
-							onClick={(): void => handleRemoveColumn(column.id)}
-						>
-							{column.label}
-						</Button>
-					</div>
-				))}
-			</div>
-
-			<div className={styles.horizontalDivider} />
-
-			<div className={styles.sectionTitle}>
-				<Typography.Text size="sm" className={styles.sectionTitleText}>
-					Other Columns (Click to add)
-				</Typography.Text>
-			</div>
-			<div className={styles.columnsList}>
-				{hiddenColumns.map((column) => (
-					<div className={styles.columnItem} key={column.id}>
-						<Button
-							variant="ghost"
-							color="none"
-							className={styles.columnItem}
-							data-can-be-added="true"
-							data-testid={`add-column-${column.id}`}
-							onClick={(): void => handleAddColumn(column.id)}
-							tabIndex={0}
-						>
-							{column.label}
-						</Button>
-					</div>
-				))}
+							data-testid={`toggle-column-${column.id}`}
+							onChange={(checked): void => handleToggleColumn(column.id, checked)}
+						/>
+					);
+					return (
+						<div className={styles.columnItem} key={column.id}>
+							<Typography.Text size="sm" className={styles.columnLabel}>
+								{column.label}
+							</Typography.Text>
+							{column.canBeHidden ? (
+								switchElement
+							) : (
+								<TooltipSimple title="Required column cannot be hidden" arrow>
+									{switchElement}
+								</TooltipSimple>
+							)}
+						</div>
+					);
+				})}
 			</div>
 		</>
 	);

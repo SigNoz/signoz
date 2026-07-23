@@ -83,12 +83,21 @@
 .columnItem {
 	display: flex;
 	align-items: center;
-	justify-content: flex-start !important;
-	width: 100%;
+	justify-content: space-between;
+	padding: var(--spacing-2) var(--spacing-8);
 
 	> span {
 		width: auto !important;
 	}
+
+	&:first-child {
+		padding-top: var(--spacing-8);
+	}
+}
+
+.columnLabel {
+	flex: 1;
+	text-align: left;
 }
 
 .horizontalDivider {
