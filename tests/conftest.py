@@ -16,6 +16,7 @@ pytest_plugins = [
     "fixtures.logs",
     "fixtures.traces",
     "fixtures.metrics",
+    "fixtures.metadata",
     "fixtures.meter",
     "fixtures.browser",
     "fixtures.keycloak",
