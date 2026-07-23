@@ -17,15 +17,6 @@ type groupHostStatusCounts struct {
 	Inactive int
 }
 
-// podPhaseCounts holds per-group pod counts bucketed by latest phase in window.
-type podPhaseCounts struct {
-	Pending   int
-	Running   int
-	Succeeded int
-	Failed    int
-	Unknown   int
-}
-
 // podStatusCounts holds per-group pod counts bucketed by latest kubectl-style
 // display status in window. Mirrors inframonitoringtypes.PodCountsByStatus.
 type podStatusCounts struct {

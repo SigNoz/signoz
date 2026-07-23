@@ -26,7 +26,7 @@ type DashboardSpec struct {
 	Layouts         []Layout                   `json:"layouts" required:"true" nullable:"false"`
 	Duration        common.DurationString      `json:"duration"`
 	RefreshInterval common.DurationString      `json:"refreshInterval"`
-	Links           []Link                     `json:"links,omitzero"`
+	Links           []Link                     `json:"links" required:"true" nullable:"false"`
 }
 
 // ══════════════════════════════════════════════
@@ -45,12 +45,25 @@ func (d *DashboardSpec) UnmarshalJSON(data []byte) error {
 	return d.Validate()
 }
 
+// validateLinks rejects a missing/null spec.links value: a typed client must
+// send [] rather than omitting links, so its value round-trips faithfully.
+// Panel links are the panel spec's concern, validated in validatePanels.
+func (d *DashboardSpec) validateLinks() error {
+	if d.Links == nil {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.links is required; send [] when there are no links")
+	}
+	return nil
+}
+
 // ══════════════════════════════════════════════
 // Cross-field validation
 // ══════════════════════════════════════════════
 
 func (d *DashboardSpec) Validate() error {
 	if err := d.Display.Validate("dashboard", "spec.display.name"); err != nil {
+		return err
+	}
+	if err := d.validateLinks(); err != nil {
 		return err
 	}
 	if err := d.validateVariables(); err != nil {
@@ -102,6 +115,9 @@ func (d *DashboardSpec) validatePanels() error {
 		}
 		path := fmt.Sprintf("spec.panels.%s", key)
 		if err := panel.Spec.Display.Validate("panel", path+".spec.display.name"); err != nil {
+			return err
+		}
+		if err := panel.Spec.validateLinks(path); err != nil {
 			return err
 		}
 		panelKind := panel.Spec.Plugin.Kind

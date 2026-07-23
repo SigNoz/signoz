@@ -15,6 +15,12 @@ const BASE_LEGEND_WIDTH = 16;
 const LEGEND_PADDING = 12;
 const LEGEND_LINE_HEIGHT = 28;
 
+// RIGHT legend is a vertical column with its own width budget (cap protects the donut).
+const MAX_RIGHT_LEGEND_WIDTH = 320;
+const RIGHT_LEGEND_WIDTH_RATIO = 0.4;
+// Column padding + copy button, not covered by the text-length estimate.
+const RIGHT_LEGEND_RESERVED_WIDTH = 40;
+
 /**
  * Calculates the average width of the legend items based on the labels of the series.
  * @param legends - The labels of the series.
@@ -42,7 +48,7 @@ export function calculateAverageLegendWidth(legends: string[]): number {
  * Implementation details (high level):
  * - Approximates legend item width from label text length, using a fixed average char width.
  * - RIGHT legend:
- *   - `legendWidth` is clamped between 150px and min(MAX_LEGEND_WIDTH, 30% of container width).
+ *   - `legendWidth` fits the longest label, clamped to [150px, min(MAX_RIGHT_LEGEND_WIDTH, 40% width)].
  *   - Chart width is `containerWidth - legendWidth`.
  * - BOTTOM legend:
  *   - Computes how many items fit per row, then uses at most 2 rows.
@@ -80,9 +86,22 @@ export function calculateChartDimensions({
 	const legendItemCount = seriesLabels.length;
 
 	if (legendConfig.position === LegendPosition.RIGHT) {
-		const maxRightLegendWidth = Math.min(MAX_LEGEND_WIDTH, containerWidth * 0.3);
+		// Size the column to the longest name (up to the cap) so it doesn't ellipsize.
+		const longestLabelLength = seriesLabels.reduce(
+			(max, label) => Math.max(max, label.length),
+			0,
+		);
+		const desiredLegendWidth =
+			BASE_LEGEND_WIDTH +
+			longestLabelLength * AVG_CHAR_WIDTH +
+			RIGHT_LEGEND_RESERVED_WIDTH;
+
+		const maxRightLegendWidth = Math.min(
+			MAX_RIGHT_LEGEND_WIDTH,
+			containerWidth * RIGHT_LEGEND_WIDTH_RATIO,
+		);
 		const rightLegendWidth = Math.min(
-			Math.max(150, approxLegendItemWidth),
+			Math.max(150, desiredLegendWidth),
 			maxRightLegendWidth,
 		);
 

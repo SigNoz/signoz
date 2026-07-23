@@ -153,13 +153,31 @@ func (d *v1Decoder) variablePluginFor(kind string, v map[string]any) VariablePlu
 			Spec: &CustomVariableSpec{CustomValue: customValue},
 		}
 	case "DYNAMIC":
-		spec := &DynamicVariableSpec{Name: d.readString(v, "dynamicVariablesAttribute")}
-		if signal := signalFromDataSource(v["dynamicVariablesSource"]); !signal.IsZero() {
-			spec.Signal = signal
+		return VariablePlugin{
+			Kind: VariableKindDynamic,
+			Spec: &DynamicVariableSpec{
+				Name:   d.readString(v, "dynamicVariablesAttribute"),
+				Signal: mapV1VariableSignal(v["dynamicVariablesSource"]),
+			},
 		}
-		return VariablePlugin{Kind: VariableKindDynamic, Spec: spec}
 	}
 	return VariablePlugin{}
+}
+
+// mapV1VariableSignal maps a v1 dynamicVariablesSource to a dynamic variable's
+// signal. v1 stores it capitalized ("Traces"), so match case-insensitively;
+// v1's "All telemetry" (and any unrecognized/empty source) means every signal.
+func mapV1VariableSignal(raw any) DynamicVariableSignal {
+	s, _ := raw.(string)
+	switch strings.ToLower(s) {
+	case "traces":
+		return DynamicVariableSignalTraces
+	case "logs":
+		return DynamicVariableSignalLogs
+	case "metrics":
+		return DynamicVariableSignalMetrics
+	}
+	return DynamicVariableSignalAll
 }
 
 // mapV1VariableDefault reads selectedValue/defaultValue, both polymorphic

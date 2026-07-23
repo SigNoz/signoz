@@ -10,13 +10,6 @@
         "ready": 2,
         "notReady": 0
       },
-      "podCountsByPhase": {
-        "pending": 0,
-        "running": 3,
-        "succeeded": 0,
-        "failed": 0,
-        "unknown": 0
-      },
       "counts": {
         "nodes": 2,
         "namespaces": 2,
@@ -35,13 +28,6 @@
       "nodeCountsByReadiness": {
         "ready": 3,
         "notReady": 0
-      },
-      "podCountsByPhase": {
-        "pending": 0,
-        "running": 3,
-        "succeeded": 0,
-        "failed": 0,
-        "unknown": 0
       },
       "counts": {
         "nodes": 3,

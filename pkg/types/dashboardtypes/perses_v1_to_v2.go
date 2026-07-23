@@ -61,6 +61,8 @@ func (storable StorableDashboard) ConvertV1ToV2() (result *DashboardV2, err erro
 		Variables: d.convertV1Variables(storable.Data["variables"]),
 		Panels:    panels,
 		Layouts:   d.convertV1Layouts(storable.Data, panels),
+		// v1 has no dashboard links; emit [] (not nil) so the required field round-trips.
+		Links: []Link{},
 	}
 
 	// marshal and unmarshal cycle to confirm full validation
