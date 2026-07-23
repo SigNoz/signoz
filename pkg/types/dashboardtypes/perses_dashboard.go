@@ -239,6 +239,9 @@ func (p *PostableDashboardV2) Validate() error {
 	if err := validateDashboardTags(p.Tags); err != nil {
 		return err
 	}
+	if err := p.Spec.validateLinksPresent(); err != nil {
+		return err
+	}
 	return p.Spec.Validate()
 }
 
@@ -407,6 +410,9 @@ func (u *UpdatableDashboardV2) Validate() error {
 		return err
 	}
 	if err := validateDashboardTags(u.Tags); err != nil {
+		return err
+	}
+	if err := u.Spec.validateLinksPresent(); err != nil {
 		return err
 	}
 	return u.Spec.Validate()

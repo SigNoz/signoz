@@ -209,6 +209,7 @@ def test_create_rejects_invalid_grid_layout(
             "kind": "Panel",
             "spec": {
                 "display": {"name": name},
+                "links": [],
                 "plugin": {"kind": "signoz/TablePanel", "spec": {}},
                 "queries": [
                     {
@@ -410,7 +411,7 @@ def test_update_missing_dashboard_returns_not_found(
         json={
             "schemaVersion": "v6",
             "name": "missing-dashboard",
-            "spec": {"display": {"name": "Missing Dashboard"}},
+            "spec": {"display": {"name": "Missing Dashboard"}, "links": []},
             "tags": [],
         },
         headers={"Authorization": f"Bearer {token}"},
@@ -535,7 +536,7 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
             json={
                 "schemaVersion": "v6",
                 "name": name,
-                "spec": {"display": {"name": display}},
+                "spec": {"display": {"name": display}, "links": []},
                 "tags": tags,
             },
             headers={"Authorization": f"Bearer {token}"},
@@ -897,7 +898,7 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
     update_body = {
         "schemaVersion": "v6",
         "name": "lc-alpha",
-        "spec": {"display": {"name": "Alpha Overview"}},
+        "spec": {"display": {"name": "Alpha Overview"}, "links": []},
         "tags": [
             {"key": "team", "value": "pulse"},
             {"key": "env", "value": "prod"},
@@ -941,7 +942,7 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
     beta_body = {
         "schemaVersion": "v6",
         "name": "lc-beta",
-        "spec": {"display": {"name": "Beta Overview"}},
+        "spec": {"display": {"name": "Beta Overview"}, "links": []},
         "tags": [{"key": "team", "value": "pulse"}, {"key": "env", "value": "dev"}],
     }
     response = requests.put(
@@ -1137,7 +1138,7 @@ def test_dashboard_v2_pin_limit(
             json={
                 "schemaVersion": "v6",
                 "name": f"pl-{i}",
-                "spec": {"display": {"name": f"Pin Limit {i}"}},
+                "spec": {"display": {"name": f"Pin Limit {i}"}, "links": []},
                 "tags": [],
             },
             headers={"Authorization": f"Bearer {token}"},
@@ -1235,7 +1236,7 @@ def test_dashboard_v2_like_escaping(
             json={
                 "schemaVersion": "v6",
                 "name": name,
-                "spec": {"display": {"name": display}},
+                "spec": {"display": {"name": display}, "links": []},
                 "tags": [],
             },
             headers={"Authorization": f"Bearer {token}"},
@@ -1326,11 +1327,13 @@ def test_dashboard_v2_get_by_metric_name(
             "name": "by-metric-builder",
             "spec": {
                 "display": {"name": "by-metric-builder"},
+                "links": [],
                 "panels": {
                     "p-builder": {
                         "kind": "Panel",
                         "spec": {
                             "display": {"name": "D1 builder target"},
+                            "links": [],
                             "plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
                             "queries": [
                                 {
@@ -1375,11 +1378,13 @@ def test_dashboard_v2_get_by_metric_name(
             "name": "by-metric-ch-promql",
             "spec": {
                 "display": {"name": "by-metric-ch-promql"},
+                "links": [],
                 "panels": {
                     "p-ch": {
                         "kind": "Panel",
                         "spec": {
                             "display": {"name": "D2 clickhouse target"},
+                            "links": [],
                             "plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
                             "queries": [
                                 {
@@ -1401,6 +1406,7 @@ def test_dashboard_v2_get_by_metric_name(
                         "kind": "Panel",
                         "spec": {
                             "display": {"name": "D2 promql target"},
+                            "links": [],
                             "plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
                             "queries": [
                                 {
@@ -1437,11 +1443,13 @@ def test_dashboard_v2_get_by_metric_name(
             "name": "by-metric-promql",
             "spec": {
                 "display": {"name": "by-metric-promql"},
+                "links": [],
                 "panels": {
                     "p-promql": {
                         "kind": "Panel",
                         "spec": {
                             "display": {"name": "D3 promql target"},
+                            "links": [],
                             "plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
                             "queries": [
                                 {
@@ -1480,11 +1488,13 @@ def test_dashboard_v2_get_by_metric_name(
             "name": "by-metric-false-positive",
             "spec": {
                 "display": {"name": "by-metric-false-positive"},
+                "links": [],
                 "panels": {
                     "p-builder": {
                         "kind": "Panel",
                         "spec": {
                             "display": {"name": f"{target_metric} builder"},
+                            "links": [],
                             "plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
                             "queries": [
                                 {
@@ -1513,6 +1523,7 @@ def test_dashboard_v2_get_by_metric_name(
                         "kind": "Panel",
                         "spec": {
                             "display": {"name": f"{target_metric} clickhouse"},
+                            "links": [],
                             "plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
                             "queries": [
                                 {
@@ -1534,6 +1545,7 @@ def test_dashboard_v2_get_by_metric_name(
                         "kind": "Panel",
                         "spec": {
                             "display": {"name": f"{target_metric} promql"},
+                            "links": [],
                             "plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
                             "queries": [
                                 {
@@ -1607,11 +1619,13 @@ def test_dashboard_v2_rejects_comma_separated_aggregation(
             "tags": [],
             "spec": {
                 "display": {"name": "Aggregation"},
+                "links": [],
                 "panels": {
                     "p-agg": {
                         "kind": "Panel",
                         "spec": {
                             "display": {"name": "agg"},
+                            "links": [],
                             "plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
                             "queries": [
                                 {
@@ -1763,6 +1777,7 @@ def test_dashboard_v2_roundtrip_preserves_zero_values(
                     "kind": "Panel",
                     "spec": {
                         "display": {"name": "timeseries"},
+                        "links": [],
                         "plugin": {
                             "kind": "signoz/TimeSeriesPanel",
                             "spec": {"thresholds": [{"value": 0, "color": "#c2780b"}]},
@@ -1785,6 +1800,7 @@ def test_dashboard_v2_roundtrip_preserves_zero_values(
                     "kind": "Panel",
                     "spec": {
                         "display": {"name": "promql"},
+                        "links": [],
                         "plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
                         "queries": [
                             {
@@ -1804,6 +1820,7 @@ def test_dashboard_v2_roundtrip_preserves_zero_values(
                     "kind": "Panel",
                     "spec": {
                         "display": {"name": "clickhouse"},
+                        "links": [],
                         "plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
                         "queries": [
                             {
@@ -1899,11 +1916,9 @@ def test_dashboard_v2_roundtrip_preserves_zero_values(
         for description, spec, key in absent_cases:
             assert key not in spec, description
 
-        # A panel with no links comes back with no links value (null or absent);
-        # either is fine for a typed client (an unset optional attribute stays
-        # unset), so this is not a drift. The explicit [] case above is what the
-        # fix guarantees round-trips.
-        assert panels["timeseries"]["spec"].get("links") is None, "unset panel links stays unset"
+        # links is a required, non-nullable field: an explicit [] round-trips as [],
+        # so a typed client always reads a concrete array (never null or absent).
+        assert panels["timeseries"]["spec"]["links"] == [], "panel links round-trip as []"
     finally:
         requests.delete(
             signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard_id}"),

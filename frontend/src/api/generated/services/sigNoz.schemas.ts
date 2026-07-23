@@ -4626,9 +4626,9 @@ export interface DashboardtypesQueryDTO {
 export interface DashboardtypesPanelSpecDTO {
 	display: DashboardtypesDisplayDTO;
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	links?: DashboardtypesLinkDTO[] | null;
+	links: DashboardtypesLinkDTO[];
 	plugin: DashboardtypesPanelPluginDTO;
 	/**
 	 * @type array
@@ -4815,9 +4815,9 @@ export interface DashboardtypesDashboardSpecDTO {
 	 */
 	layouts: DashboardtypesLayoutDTO[];
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	links?: DashboardtypesLinkDTO[] | null;
+	links: DashboardtypesLinkDTO[];
 	/**
 	 * @type object
 	 */

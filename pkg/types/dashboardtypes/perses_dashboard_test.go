@@ -1272,7 +1272,7 @@ func TestStorageRoundTrip(t *testing.T) {
 }
 
 func TestPostableDashboardV2GenerateNameFlag(t *testing.T) {
-	const validSpec = `"spec": {"panels": {}, "layouts": []}`
+	const validSpec = `"spec": {"panels": {}, "layouts": [], "links": []}`
 
 	tests := []struct {
 		scenario     string
@@ -1284,7 +1284,7 @@ func TestPostableDashboardV2GenerateNameFlag(t *testing.T) {
 	}{
 		{
 			scenario:    "flag true with display.name derives name on conversion",
-			body:        `{"schemaVersion":"` + SchemaVersion + `","generateName":true,"spec":{"display":{"name":"My Dashboard!"},"panels":{},"layouts":[]}}`,
+			body:        `{"schemaVersion":"` + SchemaVersion + `","generateName":true,"spec":{"display":{"name":"My Dashboard!"},"panels":{},"layouts":[],"links":[]}}`,
 			wantName:    "",
 			wantDisplay: "My Dashboard!",
 		},

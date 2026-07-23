@@ -49,6 +49,7 @@ export function createDefaultPanel(
 				spec: pluginSpec,
 			} as DashboardtypesPanelPluginDTO,
 			queries,
+			links: [],
 		},
 	};
 }

@@ -26,7 +26,7 @@ type DashboardSpec struct {
 	Layouts         []Layout                   `json:"layouts" required:"true" nullable:"false"`
 	Duration        common.DurationString      `json:"duration"`
 	RefreshInterval common.DurationString      `json:"refreshInterval"`
-	Links           []Link                     `json:"links,omitzero"`
+	Links           []Link                     `json:"links" required:"true" nullable:"false"`
 }
 
 // ══════════════════════════════════════════════
@@ -43,6 +43,24 @@ func (d *DashboardSpec) UnmarshalJSON(data []byte) error {
 	}
 	*d = DashboardSpec(tmp)
 	return d.Validate()
+}
+
+// validateLinksPresent enforces the required, non-nullable links field on the
+// create/update request paths: a missing/null links value (spec- or panel-level)
+// is rejected rather than silently defaulted, so a typed client's value round-trips
+// faithfully. Deliberately not part of Validate() — reads, clones and patches of
+// already-stored specs must not re-reject, and Validate() covers only cross-field
+// semantic checks (never required-field presence, matching its sibling slices).
+func (d *DashboardSpec) validateLinksPresent() error {
+	if d.Links == nil {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.links is required; send [] when there are no links")
+	}
+	for key, panel := range d.Panels {
+		if panel != nil && panel.Spec.Links == nil {
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.panels.%s.spec.links is required; send [] when there are no links", key)
+		}
+	}
+	return nil
 }
 
 // ══════════════════════════════════════════════
