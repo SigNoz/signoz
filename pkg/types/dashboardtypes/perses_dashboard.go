@@ -189,10 +189,6 @@ type DashboardV2MetadataBase struct {
 	Image         string `json:"image"`
 }
 
-// validateImage ensures `image` is a shape the UI can render: a bundled icon or
-// logo path (`/assets/Icons/<name>` or `/assets/Logos/<name>`) or a base64 image
-// data URI. Empty means "no image". URLs, markup and other strings are rejected
-// so they can't be persisted (they would only ever render as the fallback).
 func (m DashboardV2MetadataBase) validateImage() error {
 	if m.Image == "" {
 		return nil
