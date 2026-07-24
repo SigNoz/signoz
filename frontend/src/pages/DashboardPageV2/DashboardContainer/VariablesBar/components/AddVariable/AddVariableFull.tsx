@@ -16,7 +16,7 @@ function AddVariableFull(): JSX.Element {
 			variant="outlined"
 			color="secondary"
 			size="md"
-			className={styles.addVariable}
+			className={styles.addVariableNameWithIcon}
 			prefix={<Plus size={14} />}
 			testId="dashboard-variables-add"
 			onClick={(): void =>

@@ -53,19 +53,6 @@ function isAllDefault(
 	);
 }
 
-function isValidSingle(
-	value: SelectedVariableValue,
-	options: string[],
-): boolean {
-	return (
-		!Array.isArray(value) &&
-		value !== '' &&
-		value !== null &&
-		value !== undefined &&
-		options.includes(String(value))
-	);
-}
-
 /** The configured default (or first option) as a fresh selection. */
 function fillDefault(
 	model: VariableFormModel,
@@ -167,8 +154,17 @@ export function reconcileWithOptions(
 			: fillDefault(model, options);
 	}
 
-	if (!model.multiSelect && isValidSingle(current.value, options)) {
-		return null;
+	if (!model.multiSelect) {
+		// Preserve any non-empty single value across a refetch — including a user-typed
+		// value that isn't in the fetched options (freeform). Only fall back to the
+		// default/first option when there is no value yet, so e.g. a time-range change
+		// (which refetches options) never wipes a value the user didn't change.
+		const hasValue =
+			!Array.isArray(current.value) &&
+			current.value !== '' &&
+			current.value !== null &&
+			current.value !== undefined;
+		return hasValue ? null : fillDefault(model, options);
 	}
 	return fillDefault(model, options);
 }
@@ -187,4 +183,21 @@ export function configuredDefaultValue(
 		return textDefault(model);
 	}
 	return configuredDefault(model.defaultValue);
+}
+
+/** Normalize a selection's value to an order-independent key of its members. */
+function valueSetKey(value: SelectedVariableValue): string {
+	const list = Array.isArray(value) ? value : value == null ? [] : [value];
+	return list.map(String).sort().join('||');
+}
+
+/** True when two selections carry the same ALL flag and the same value set. */
+export function areSelectionsEqual(
+	a: VariableSelection,
+	b: VariableSelection,
+): boolean {
+	return (
+		!!a.allSelected === !!b.allSelected &&
+		valueSetKey(a.value) === valueSetKey(b.value)
+	);
 }

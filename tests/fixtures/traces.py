@@ -968,12 +968,27 @@ CORRUPT_RESOURCES: dict[str, Any] = {
     "http_method": "corrupt_data",
 }
 
+# A TYPE-CONSISTENT collision, distinct from CORRUPT_* (whose wrong-type values are
+# dropped by field-key resolution): a numeric span attribute named `duration_nano`
+# shares both the name AND a compatible type with the intrinsic duration_nano (UInt64)
+# column, so resolution unions it with the column into a multiIf. This exercises the
+# collision path that regressed with ClickHouse NO_COMMON_TYPE (386) — the intrinsic
+# column must still win. Kept out of CORRUPT_ATTRIBUTES because a type-consistent
+# collision changes raw-select output (the multiIf stringifies the value), which the
+# list tests assert against; only aggregation/filter tests opt into this variant.
+COLLISION_ATTRIBUTES: dict[str, Any] = {
+    "duration_nano": 1.0,  # numeric attr vs the numeric intrinsic (type-consistent)
+}
+
 
 def trace_noise(variant: str) -> tuple[dict[str, Any], dict[str, Any]]:
     """(extra_attributes, extra_resources) to merge into every span a traces test seeds, keyed by
-    variant. "clean" adds nothing; "corrupt" injects colliding intrinsic/calculated field names and
-    an attribute/resource collision so a test parametrized over both doubles as a
-    collision-robustness check. Returns fresh dicts so callers can mutate them safely."""
+    variant. "clean" adds nothing; "corrupt" injects wrong-type colliding intrinsic/calculated field
+    names (dropped by resolution, so results are unchanged); "collision" injects a type-consistent
+    numeric duration_nano attribute that unions into a multiIf, exercising collision resolution on
+    aggregation/filter paths. Returns fresh dicts so callers can mutate them safely."""
     if variant == "clean":
         return {}, {}
+    if variant == "collision":
+        return dict(COLLISION_ATTRIBUTES), {}
     return dict(CORRUPT_ATTRIBUTES), dict(CORRUPT_RESOURCES)

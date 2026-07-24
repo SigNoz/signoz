@@ -19,7 +19,7 @@ var clusterNameGroupByKey = qbtypes.GroupByKey{
 // Includes k8s.node.condition_ready and k8s.pod.phase so the response
 // short-circuits cleanly when a cluster doesn't ship those metrics — even
 // though they aren't part of the QB composite query (they're queried separately
-// via getPerGroupNodeConditionCounts and getPerGroupPodPhaseCounts).
+// via getPerGroupNodeConditionCounts and getPerGroupPodStatusCounts).
 var clustersTableMetricNamesList = []string{
 	"k8s.node.cpu.usage",
 	"k8s.node.allocatable_cpu",
@@ -98,9 +98,9 @@ var orderByToClustersQueryNames = map[string][]string{
 
 // newClustersTableListQuery builds the composite QB v5 request for the clusters list.
 // Cluster-scope metrics are derived by summing per-node metrics within the
-// group (default group: k8s.cluster.name). Node condition counts and pod phase
+// group (default group: k8s.cluster.name). Node condition counts and pod status
 // counts are derived separately via getPerGroupNodeConditionCounts and
-// getPerGroupPodPhaseCounts respectively (works for both list and grouped_list
+// getPerGroupPodStatusCounts respectively (works for both list and grouped_list
 // modes), so neither is included here. Query letters A/B/C/D mirror the v1
 // implementation and the v2 nodes list.
 func (m *module) newClustersTableListQuery() *qbtypes.QueryRangeRequest {

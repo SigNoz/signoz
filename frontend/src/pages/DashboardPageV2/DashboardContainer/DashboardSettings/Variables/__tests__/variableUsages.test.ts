@@ -4,7 +4,11 @@ import {
 	emptyVariableFormModel,
 	type VariableFormModel,
 } from '../variableFormModel';
-import { findVariableUsages } from '../utils/variableUsages';
+import {
+	findApplyUsages,
+	findVariableUsages,
+	isVariableAppliedToAllPanels,
+} from '../utils/variableUsages';
 
 // Identity adapter so `spec.variables` can be plain form models in the test.
 jest.mock('../variableAdapters', () => ({
@@ -94,5 +98,100 @@ describe('findVariableUsages', () => {
 
 	it('returns nothing for an unreferenced variable', () => {
 		expect(findVariableUsages(dash, 'nope', 'delete')).toStrictEqual([]);
+	});
+});
+
+describe('findApplyUsages', () => {
+	const dash = dashboard(
+		{
+			empty: builderPanel('Empty', ''),
+			ored: builderPanel('Ored', "a = 'x' OR b = 'y'"),
+			has: builderPanel('Has it', 'k8s.pod.name IN $pod'),
+			prom: promqlPanel('Prom', 'up'),
+			promRef: promqlPanel('Prom Ref', 'up{pod="$pod"}'),
+		},
+		[],
+	);
+
+	it('appends the clause to selected builder panels, parenthesising an OR', () => {
+		const usages = findApplyUsages(dash, 'k8s.pod.name', 'pod', 'pod', [
+			'empty',
+			'ored',
+		]);
+		const byId = Object.fromEntries(usages.map((u) => [u.id, u.resultingText]));
+		expect(byId['panel:empty:0']).toBe('k8s.pod.name IN $pod');
+		expect(byId['panel:ored:0']).toBe(
+			"(a = 'x' OR b = 'y') AND k8s.pod.name IN $pod",
+		);
+	});
+
+	it('skips a selected panel that already carries the clause (idempotent)', () => {
+		const usages = findApplyUsages(dash, 'k8s.pod.name', 'pod', 'pod', ['has']);
+		expect(usages).toStrictEqual([]);
+	});
+
+	it('removes the clause from an unselected builder panel that has it', () => {
+		const usages = findApplyUsages(dash, 'k8s.pod.name', 'pod', 'pod', ['empty']);
+		const has = usages.find((u) => u.id === 'panel:has:0');
+		expect(has?.resultingText).toBe('');
+	});
+
+	it('lists a selected PromQL panel as an editable, unchanged row', () => {
+		const usages = findApplyUsages(dash, 'k8s.pod.name', 'pod', 'pod', ['prom']);
+		const prom = usages.find((u) => u.id === 'panel:prom:0');
+		expect(prom?.kind).toBe('promql');
+		// Never auto-injected — the row defaults to the current text for manual edits.
+		expect(prom?.currentText).toBe('up');
+		expect(prom?.resultingText).toBe('up');
+	});
+
+	it('skips a selected non-builder panel that already references the variable', () => {
+		const usages = findApplyUsages(dash, 'k8s.pod.name', 'pod', 'pod', [
+			'promRef',
+		]);
+		expect(usages.some((u) => u.sourceId === 'promRef')).toBe(false);
+	});
+
+	it('never touches unselected non-builder panels', () => {
+		const usages = findApplyUsages(dash, 'k8s.pod.name', 'pod', 'pod', ['empty']);
+		expect(usages.some((u) => u.sourceId === 'prom')).toBe(false);
+		expect(usages.some((u) => u.sourceId === 'promRef')).toBe(false);
+	});
+
+	it('returns nothing when every selected query already references the variable', () => {
+		// The "applied to all" signal: builder carries the clause, PromQL references it.
+		const usages = findApplyUsages(dash, 'k8s.pod.name', 'pod', 'pod', [
+			'has',
+			'promRef',
+		]);
+		expect(usages).toStrictEqual([]);
+	});
+});
+
+describe('isVariableAppliedToAllPanels', () => {
+	it('is true only when every panel query references the variable', () => {
+		const covered = dashboard(
+			{
+				b: builderPanel('B', 'k8s.pod.name IN $pod'),
+				p: promqlPanel('P', 'up{pod="$pod"}'),
+			},
+			[],
+		);
+		expect(isVariableAppliedToAllPanels(covered, 'k8s.pod.name', 'pod')).toBe(
+			true,
+		);
+	});
+
+	it('is false when any panel query is missing the reference', () => {
+		const missing = dashboard(
+			{
+				b: builderPanel('B', 'k8s.pod.name IN $pod'),
+				p: promqlPanel('P', 'up'),
+			},
+			[],
+		);
+		expect(isVariableAppliedToAllPanels(missing, 'k8s.pod.name', 'pod')).toBe(
+			false,
+		);
 	});
 });

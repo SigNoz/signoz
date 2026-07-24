@@ -26,7 +26,6 @@ type ClusterRecord struct {
 	ClusterMemory            float64               `json:"clusterMemory" required:"true"`
 	ClusterMemoryAllocatable float64               `json:"clusterMemoryAllocatable" required:"true"`
 	NodeCountsByReadiness    NodeCountsByReadiness `json:"nodeCountsByReadiness" required:"true"`
-	PodCountsByPhase         PodCountsByPhase      `json:"podCountsByPhase" required:"true"`
 	PodCountsByStatus        PodCountsByStatus     `json:"podCountsByStatus" required:"true"`
 	Counts                   struct {
 		Nodes        int64 `json:"nodes" required:"true"`

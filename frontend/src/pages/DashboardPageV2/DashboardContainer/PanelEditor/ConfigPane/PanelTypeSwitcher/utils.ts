@@ -17,6 +17,7 @@ const SIGNAL_LABEL: Record<TelemetrytypesSignalDTO, string> = {
 	[TelemetrytypesSignalDTO.logs]: 'logs',
 	[TelemetrytypesSignalDTO.traces]: 'traces',
 	[TelemetrytypesSignalDTO.metrics]: 'metrics',
+	[TelemetrytypesSignalDTO['']]: '',
 };
 
 /**

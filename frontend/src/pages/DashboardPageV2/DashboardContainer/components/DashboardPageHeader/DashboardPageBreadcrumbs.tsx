@@ -14,6 +14,8 @@ import {
 	BreadcrumbSeparator,
 } from '@signozhq/ui/breadcrumb';
 
+import styles from './DashboardPageBreadcrumbs.module.scss';
+
 interface DashboardPageBreadcrumbsProps {
 	title: string;
 	image: string;
@@ -60,7 +62,9 @@ function DashboardPageBreadcrumbs({
 				<BreadcrumbSeparator>/</BreadcrumbSeparator>
 				<BreadcrumbItem>
 					<BreadcrumbLink icon={<img src={image} alt="dashboard-icon" />}>
-						{title}
+						<span className={styles.title} title={title}>
+							{title}
+						</span>
 					</BreadcrumbLink>
 				</BreadcrumbItem>
 			</BreadcrumbList>

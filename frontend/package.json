@@ -64,7 +64,7 @@
     "antd": "5.11.0",
     "antd-table-saveas-excel": "2.2.1",
     "antlr4": "4.13.2",
-    "axios": "1.16.0",
+    "axios": "1.18.0",
     "babel-jest": "^29.6.4",
     "chart.js": "3.9.1",
     "chartjs-adapter-date-fns": "^2.0.0",
@@ -74,7 +74,7 @@
     "crypto-js": "4.2.0",
     "d3-hierarchy": "3.1.2",
     "dayjs": "^1.10.7",
-    "dompurify": "3.4.11",
+    "dompurify": "3.4.12",
     "event-source-polyfill": "1.0.31",
     "eventemitter3": "5.0.1",
     "history": "4.10.1",
@@ -89,7 +89,7 @@
     "lodash-es": "^4.17.21",
     "motion": "12.4.13",
     "nuqs": "2.8.8",
-    "overlayscrollbars": "^2.8.1",
+    "overlayscrollbars": "^2.16.0",
     "overlayscrollbars-react": "^0.5.6",
     "papaparse": "5.4.1",
     "posthog-js": "1.298.0",
@@ -199,9 +199,9 @@
     "react-resizable": "3.0.4",
     "redux-mock-store": "1.5.4",
     "sass": "1.97.3",
-    "sharp": "0.34.5",
+    "sharp": "0.35.0",
     "stylelint": "17.7.0",
-    "svgo": "4.0.1",
+    "svgo": "4.0.2",
     "ts-jest": "29.4.9",
     "typescript-plugin-css-modules": "5.2.0",
     "use-sync-external-store": "1.6.0",
@@ -221,5 +221,18 @@
     "*.(scss|css)": [
       "stylelint"
     ]
+  },
+  "overrides": {
+    "@babel/core@<=7.29.0": ">=7.29.6 <8",
+    "@istanbuljs/load-nyc-config>js-yaml": ">=4.2.0 <5",
+    "cookie@<0.7.0": ">=0.7.1 <1",
+    "dompurify@<=3.4.10": ">=3.4.11 <4",
+    "esbuild@>=0.27.3 <0.28.1": ">=0.28.1 <0.29.0",
+    "js-cookie@<=3.0.5": ">=3.0.7 <4",
+    "js-yaml@>=4.0.0 <=4.1.1": ">=4.2.0 <5",
+    "prismjs@<1.30.0": ">=1.30.0 <2",
+    "react-router@>=6.7.0 <6.30.4": ">=6.30.4 <7",
+    "tmp@<0.2.6": ">=0.2.6 <0.3.0",
+    "yaml@>=1.0.0 <1.10.3": ">=1.10.3 <2"
   }
 }
