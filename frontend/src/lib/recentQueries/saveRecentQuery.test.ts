@@ -3,7 +3,10 @@ import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { validateQuery } from 'utils/queryValidationUtils';
 
 import * as store from './recentQueriesStore';
-import { saveRecentQuery } from './saveRecentQuery';
+import {
+	saveRecentQuery,
+	saveRecentQueryByExpression,
+} from './saveRecentQuery';
 
 jest.mock('utils/queryValidationUtils', () => ({
 	validateQuery: jest.fn(),
@@ -109,5 +112,76 @@ describe('saveRecentQuery', () => {
 		saveRecentQuery({});
 
 		expect(store.list('logs')).toHaveLength(0);
+	});
+});
+
+describe('saveRecentQueryByExpression', () => {
+	beforeEach(() => {
+		store.useRecentQueriesStore.setState({ buckets: {} });
+		localStorage.clear();
+		mockedValidateQuery.mockReturnValue({
+			isValid: true,
+			message: '',
+			errors: [],
+		});
+	});
+
+	it('saves a valid expression under the signal bucket', () => {
+		saveRecentQueryByExpression(DataSource.TRACES, "service.name = 'frontend'");
+
+		const entries = store.list('traces');
+		expect(entries).toHaveLength(1);
+		expect(entries[0].filter.expression).toBe("service.name = 'frontend'");
+	});
+
+	it('trims the expression before saving', () => {
+		saveRecentQueryByExpression(DataSource.METRICS, "  metric_name = 'cpu'  ");
+
+		const entries = store.list('metrics');
+		expect(entries).toHaveLength(1);
+		expect(entries[0].filter.expression).toBe("metric_name = 'cpu'");
+	});
+
+	it('saves under the provided source bucket', () => {
+		saveRecentQueryByExpression(
+			DataSource.LOGS,
+			"service.name = 'frontend'",
+			'meter',
+		);
+
+		expect(store.list('logs', 'meter')).toHaveLength(1);
+		expect(store.list('logs')).toHaveLength(0);
+	});
+
+	it('is a no-op for empty, whitespace-only, or nullish expressions', () => {
+		saveRecentQueryByExpression(DataSource.LOGS, '');
+		saveRecentQueryByExpression(DataSource.LOGS, '   ');
+		saveRecentQueryByExpression(DataSource.LOGS, null);
+		saveRecentQueryByExpression(DataSource.LOGS, undefined);
+
+		expect(store.list('logs')).toHaveLength(0);
+	});
+
+	it('does not save when validateQuery rejects the expression', () => {
+		mockedValidateQuery.mockReturnValue({
+			isValid: false,
+			message: 'bad',
+			errors: [],
+		});
+
+		saveRecentQueryByExpression(DataSource.LOGS, 'service.name =');
+
+		expect(store.list('logs')).toHaveLength(0);
+	});
+
+	it('is a no-op for unsupported data sources', () => {
+		saveRecentQueryByExpression(
+			'unknown' as IBuilderQuery['dataSource'],
+			"service.name = 'frontend'",
+		);
+
+		expect(store.list('logs')).toHaveLength(0);
+		expect(store.list('traces')).toHaveLength(0);
+		expect(store.list('metrics')).toHaveLength(0);
 	});
 });

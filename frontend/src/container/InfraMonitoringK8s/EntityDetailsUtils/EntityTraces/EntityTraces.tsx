@@ -27,6 +27,7 @@ import {
 } from 'container/TopNav/DateTimeSelectionV2/types';
 import { PER_PAGE_OPTIONS } from 'container/TracesExplorer/ListView/configs';
 import { TracesLoading } from 'container/TracesExplorer/TraceLoading/TraceLoading';
+import { saveRecentQueryByExpression } from 'lib/recentQueries/saveRecentQuery';
 import { useQueryState } from 'nuqs';
 import { DataSource } from 'types/common/queryBuilder';
 import { parseAsJsonNoValidate } from 'utils/nuqsParsers';
@@ -112,6 +113,7 @@ function EntityTracesContent({
 					: newUserExpression || '',
 			);
 			if (validation.isValid) {
+				saveRecentQueryByExpression(DataSource.TRACES, newUserExpression);
 				querySearchOnRun(newUserExpression || '');
 
 				logEvent(InfraMonitoringEvents.FilterApplied, {

@@ -22,6 +22,7 @@ import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants'
 import LoadingContainer from 'container/InfraMonitoringK8sV2/LoadingContainer';
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
 import { ChevronDown, ChevronRight } from '@signozhq/icons';
+import { saveRecentQueryByExpression } from 'lib/recentQueries/saveRecentQuery';
 import { useQueryState } from 'nuqs';
 import { DataSource } from 'types/common/queryBuilder';
 import { parseAsJsonNoValidate } from 'utils/nuqsParsers';
@@ -115,6 +116,7 @@ function EntityEventsContent({
 					: newUserExpression || '',
 			);
 			if (validation.isValid) {
+				saveRecentQueryByExpression(DataSource.LOGS, newUserExpression);
 				querySearchOnRun(newUserExpression || '');
 
 				void logEvent(InfraMonitoringEvents.FilterApplied, {

@@ -22,6 +22,7 @@ import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants'
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
 import { PER_PAGE_OPTIONS } from 'container/TracesExplorer/ListView/configs';
 import { TracesLoading } from 'container/TracesExplorer/TraceLoading/TraceLoading';
+import { saveRecentQueryByExpression } from 'lib/recentQueries/saveRecentQuery';
 import { useQueryState } from 'nuqs';
 import { DataSource } from 'types/common/queryBuilder';
 import { parseAsJsonNoValidate } from 'utils/nuqsParsers';
@@ -97,6 +98,7 @@ function EntityTracesContent({
 					: newUserExpression || '',
 			);
 			if (validation.isValid) {
+				saveRecentQueryByExpression(DataSource.TRACES, newUserExpression);
 				querySearchOnRun(newUserExpression || '');
 
 				void logEvent(InfraMonitoringEvents.FilterApplied, {
