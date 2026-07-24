@@ -81,7 +81,16 @@ export default function Dashboards({
 			.map((d) => ({
 				id: d.id,
 				title: d.data.title,
-				tags: d.data.tags ?? [],
+				// `data.tags` is typed as `string[]`, but some backend versions report
+				// `{key, value}` objects instead — rendering one directly as a Badge
+				// child crashes the page (React error #31), so normalize defensively.
+				tags: (d.data.tags ?? []).map((t) =>
+					typeof t === 'string'
+						? t
+						: [(t as { key: string }).key, (t as { value?: string }).value]
+								.filter(Boolean)
+								.join(':'),
+				),
 			}));
 	}, [isDashboardV2, v1List, v2List]);
 
