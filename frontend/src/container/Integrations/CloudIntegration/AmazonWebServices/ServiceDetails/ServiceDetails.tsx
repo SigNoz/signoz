@@ -46,14 +46,31 @@ const EMPTY_FORM_VALUES: ServiceConfigFormValues = {
 	s3BucketsByRegion: {},
 };
 
+function getIntegrationServiceConfig(
+	type: IntegrationType,
+	serviceDetailsData?: ServiceDetailsData,
+):
+	| { logs?: { enabled?: boolean }; metrics?: { enabled?: boolean } }
+	| undefined {
+	const config = serviceDetailsData?.cloudIntegrationService?.config;
+
+	if (type === IntegrationType.AWS_SERVICES) {
+		return config?.aws;
+	}
+	if (type === IntegrationType.GCP_SERVICES) {
+		return config?.gcp;
+	}
+	return config?.azure;
+}
+
 function getInitialFormValues(
 	type: IntegrationType,
 	serviceDetailsData?: ServiceDetailsData,
 ): ServiceConfigFormValues {
-	const integrationConfig =
-		type === IntegrationType.AWS_SERVICES
-			? serviceDetailsData?.cloudIntegrationService?.config?.aws
-			: serviceDetailsData?.cloudIntegrationService?.config?.azure;
+	const integrationConfig = getIntegrationServiceConfig(
+		type,
+		serviceDetailsData,
+	);
 
 	return {
 		logsEnabled: integrationConfig?.logs?.enabled || false,
@@ -98,16 +115,21 @@ function getServiceConfigPayload({
 		};
 	}
 
-	return {
-		azure: {
-			logs: {
-				enabled: isLogsSupported ? logsEnabled : false,
-			},
-			metrics: {
-				enabled: isMetricsSupported ? metricsEnabled : false,
-			},
+	// Azure and GCP share the same simple logs/metrics enable-flag shape.
+	const signalConfig = {
+		logs: {
+			enabled: isLogsSupported ? logsEnabled : false,
+		},
+		metrics: {
+			enabled: isMetricsSupported ? metricsEnabled : false,
 		},
 	};
+
+	if (type === IntegrationType.GCP_SERVICES) {
+		return { gcp: signalConfig };
+	}
+
+	return { azure: signalConfig };
 }
 
 function ServiceDetails({
@@ -163,10 +185,10 @@ function ServiceDetails({
 		? isAccountServiceLoading
 		: isReadOnlyServiceLoading;
 
-	const integrationConfig =
-		type === IntegrationType.AWS_SERVICES
-			? serviceDetailsData?.cloudIntegrationService?.config?.aws
-			: serviceDetailsData?.cloudIntegrationService?.config?.azure;
+	const integrationConfig = getIntegrationServiceConfig(
+		type,
+		serviceDetailsData,
+	);
 	const isServiceEnabledInPersistedConfig =
 		Boolean(integrationConfig?.logs?.enabled) ||
 		Boolean(integrationConfig?.metrics?.enabled);
