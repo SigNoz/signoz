@@ -11,6 +11,7 @@ import {
 	DraftMapper,
 } from 'container/LLMObservability/AttributeMapping/types';
 import { AttributeMappingEditor } from 'container/LLMObservability/AttributeMapping/hooks/useAttributeMappingEditor';
+import { useCanManageAttributeMapping } from 'container/LLMObservability/AttributeMapping/hooks/useCanManageAttributeMapping';
 import GroupHeader from './GroupHeader/GroupHeader';
 import GroupHeaderActions from './GroupHeaderActions/GroupHeaderActions';
 import GroupMappers from './GroupMappers/GroupMappers';
@@ -33,6 +34,7 @@ function MappingsTable({
 	const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
 	const [targetGroupId, setTargetGroupId] = useState<string | null>(null);
 	const drawer = useMapperFormDrawer();
+	const canManage = useCanManageAttributeMapping();
 
 	const { upsertMapper, removeMapper } = editor;
 
@@ -120,18 +122,20 @@ function MappingsTable({
 
 	return (
 		<div className={styles.tableWrapper}>
-			<div className={styles.toolbar}>
-				<Button
-					variant="link"
-					color="primary"
-					prefix={<Plus size={14} />}
-					onClick={onAddGroup}
-					testId="add-group-row"
-					disabled={editor.isLoading}
-				>
-					Add a new group
-				</Button>
-			</div>
+			{canManage && (
+				<div className={styles.toolbar}>
+					<Button
+						variant="solid"
+						color="primary"
+						prefix={<Plus size={14} />}
+						onClick={onAddGroup}
+						testId="add-group-row"
+						disabled={editor.isLoading}
+					>
+						Add a new group
+					</Button>
+				</div>
+			)}
 
 			{isEmpty ? (
 				<div className={styles.tableState} data-testid="mapper-groups-empty">
