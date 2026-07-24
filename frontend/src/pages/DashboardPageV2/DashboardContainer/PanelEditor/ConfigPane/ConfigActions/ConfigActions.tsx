@@ -1,4 +1,4 @@
-import { Bell } from '@signozhq/icons';
+import { Flame } from '@signozhq/icons';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/registry';
 import { useCreateAlertFromPanel } from 'pages/DashboardPageV2/DashboardContainer/PanelsAndSectionsLayout/Panel/hooks/useCreateAlertFromPanel';
@@ -38,7 +38,7 @@ function ConfigActions({
 				<div className={styles.list}>
 					<ConfigActionRow
 						testId="panel-editor-v2-create-alert"
-						icon={<Bell size={14} />}
+						icon={<Flame size={14} />}
 						label="Create alert"
 						onClick={(): void => createAlert(panel, panelId)}
 					/>

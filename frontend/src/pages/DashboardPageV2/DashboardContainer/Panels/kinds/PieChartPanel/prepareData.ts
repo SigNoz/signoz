@@ -1,5 +1,6 @@
 import { themeColors } from 'constants/theme';
 import type { PieSlice } from 'container/DashboardContainer/visualization/charts/types';
+import getLabelName from 'lib/getLabelName';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import type { PanelTable } from 'pages/DashboardPageV2/DashboardContainer/queryV5/types';
 
@@ -50,8 +51,11 @@ export function preparePieData({
 				let label: string;
 				if (hasMultipleValueColumns) {
 					label = groupLabel ? `${groupLabel} · ${column.name}` : column.name;
+				} else if (table.legend) {
+					// Apply the legend format ({{key}} → group-by value).
+					label = getLabelName(labels, table.queryName, table.legend);
 				} else {
-					label = groupLabel || table.legend || table.queryName || '';
+					label = groupLabel || table.queryName || '';
 				}
 
 				const color = customColors?.[label] ?? generateColor(label, colorMap);
