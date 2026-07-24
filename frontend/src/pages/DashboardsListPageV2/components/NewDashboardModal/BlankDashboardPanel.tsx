@@ -19,7 +19,7 @@ import TagKeyValueInput from 'components/TagKeyValueInput/TagKeyValueInput';
 import { keyValueStringsToTags } from '../../utils/helpers';
 
 import DashboardImagePicker from '../../../DashboardPageV2/DashboardContainer/DashboardSettings/Overview/DashboardImagePicker/DashboardImagePicker';
-import { Base64Icons } from '../../../DashboardPageV2/DashboardContainer/DashboardSettings/Overview/utils';
+import { DEFAULT_DASHBOARD_ICON_PATH } from 'container/DashboardContainer/dashboardIcons';
 import { DASHBOARD_NAME_MAX_LENGTH } from '../../../DashboardPageV2/DashboardContainer/constants';
 import styles from './NewDashboardModal.module.scss';
 
@@ -35,7 +35,7 @@ function BlankDashboardPanel({ onClose }: Props): JSX.Element {
 
 	const [name, setName] = useState(DEFAULT_NAME);
 	const [description, setDescription] = useState('');
-	const [image, setImage] = useState<string>(Base64Icons[0]);
+	const [image, setImage] = useState<string>(DEFAULT_DASHBOARD_ICON_PATH);
 	const [tags, setTags] = useState<string[]>([]);
 	const [submitting, setSubmitting] = useState(false);
 

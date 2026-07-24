@@ -7,7 +7,7 @@ import { CalendarClock, LockKeyhole, Pin, PinOff } from '@signozhq/icons';
 import cx from 'classnames';
 import logEvent from 'api/common/logEvent';
 import { generatePath } from 'react-router-dom';
-import { Base64Icons } from 'container/DashboardContainer/DashboardSettings/General/utils';
+import { resolveDashboardImage } from 'container/DashboardContainer/dashboardIcons';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -54,7 +54,7 @@ function DashboardRow({
 	const isPinned = !!dashboard.pinned;
 	const id = dashboard.id;
 	const name = dashboard.spec?.display?.name ?? '';
-	const image = dashboard.image || Base64Icons[0];
+	const image = resolveDashboardImage(dashboard.image);
 	const createdBy = dashboard.createdBy ?? '';
 	const updatedBy = dashboard.updatedBy ?? '';
 	const createdAt = dashboard.createdAt ?? '';
