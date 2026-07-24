@@ -1188,6 +1188,27 @@ func enrichWithIntrinsicMetricKeys(keys map[string][]*telemetrytypes.TelemetryFi
 	return keys
 }
 
+// enrichWithGenAIKeys adds keys that can be queried for GenAI signals, even though they have not been ingested yet.
+func enrichWithGenAIKeys(keys map[string][]*telemetrytypes.TelemetryFieldKey, selectors []*telemetrytypes.FieldKeySelector) map[string][]*telemetrytypes.TelemetryFieldKey {
+	for _, selector := range selectors {
+		if selector.Signal != telemetrytypes.SignalTraces && selector.Signal != telemetrytypes.SignalUnspecified {
+			continue
+		}
+		for name, def := range telemetrytypes.GenAIFieldDefinitions {
+			if len(keys[name]) > 0 {
+				continue // already resolved from ingested data
+			}
+			if !selectorMatchesIntrinsicField(selector, def) {
+				continue
+			}
+			keyCopy := def
+			keys[name] = []*telemetrytypes.TelemetryFieldKey{&keyCopy}
+		}
+	}
+
+	return keys
+}
+
 func selectorMatchesIntrinsicField(selector *telemetrytypes.FieldKeySelector, definition telemetrytypes.TelemetryFieldKey) bool {
 	if selector.FieldContext != telemetrytypes.FieldContextUnspecified && selector.FieldContext != definition.FieldContext {
 		return false
@@ -1273,6 +1294,9 @@ func (t *telemetryMetaStore) GetKeys(ctx context.Context, orgID valuer.UUID, fie
 
 	applyBackwardCompatibleKeys(mapOfKeys)
 	mapOfKeys = enrichWithIntrinsicMetricKeys(mapOfKeys, selectors)
+	if t.fl.BooleanOrEmpty(ctx, flagger.FeatureEnableAIObservability, featuretypes.NewFlaggerEvaluationContext(orgID)) {
+		mapOfKeys = enrichWithGenAIKeys(mapOfKeys, selectors)
+	}
 
 	return mapOfKeys, complete, nil
 }
@@ -1351,6 +1375,9 @@ func (t *telemetryMetaStore) GetKeysMulti(ctx context.Context, orgID valuer.UUID
 
 	applyBackwardCompatibleKeys(mapOfKeys)
 	mapOfKeys = enrichWithIntrinsicMetricKeys(mapOfKeys, fieldKeySelectors)
+	if t.fl.BooleanOrEmpty(ctx, flagger.FeatureEnableAIObservability, featuretypes.NewFlaggerEvaluationContext(orgID)) {
+		mapOfKeys = enrichWithGenAIKeys(mapOfKeys, fieldKeySelectors)
+	}
 
 	return mapOfKeys, complete, nil
 }

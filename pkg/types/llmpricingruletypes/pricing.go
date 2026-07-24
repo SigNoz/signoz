@@ -16,18 +16,10 @@ import (
 const (
 	LLMCostFeatureType agentConf.AgentFeatureType = "llm_pricing"
 
-	GenAIRequestModel                  = "gen_ai.request.model"
-	GenAIProviderName                  = "gen_ai.provider.name"
-	GenAIUsageInputTokens              = "gen_ai.usage.input_tokens"
-	GenAIUsageOutputTokens             = "gen_ai.usage.output_tokens"
-	GenAIUsageCacheReadInputTokens     = "gen_ai.usage.cache_read.input_tokens"
-	GenAIUsageCacheCreationInputTokens = "gen_ai.usage.cache_creation.input_tokens"
-
 	SignozGenAICostInput      = "_signoz.gen_ai.cost_input"
 	SignozGenAICostOutput     = "_signoz.gen_ai.cost_output"
 	SignozGenAICostCacheRead  = "_signoz.gen_ai.cost_cache_read"
 	SignozGenAICostCacheWrite = "_signoz.gen_ai.cost_cache_write"
-	SignozGenAITotalCost      = "_signoz.gen_ai.total_cost"
 )
 
 var (

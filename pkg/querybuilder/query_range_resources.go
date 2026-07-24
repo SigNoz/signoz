@@ -82,6 +82,10 @@ func resourcesForQuery(query gjson.Result, variables map[string]qbtypes.Variable
 	switch queryType {
 	case qbtypes.QueryTypeBuilder.StringValue(), qbtypes.QueryTypeSubQuery.StringValue():
 		return resourcesForBuilderQuery(queryType, query.Get("spec"), variables)
+	case qbtypes.QueryTypeBuilderAI.StringValue():
+		// An AI builder query is always a traces query; the signal is implied by the
+		// type (and may be absent from the payload), so pin the resource directly.
+		return builderQueryResourceRefs(queryType, coretypes.ResourceTelemetryResourceTraces, query.Get("spec"), variables)
 	case qbtypes.QueryTypePromQL.StringValue():
 		return []coretypes.ResourceWithID{{Resource: coretypes.ResourceTelemetryResourceMetrics, ID: typeWildcard}}, nil
 	case qbtypes.QueryTypeClickHouseSQL.StringValue():
@@ -103,7 +107,10 @@ func resourcesForBuilderQuery(queryType string, spec gjson.Result, variables map
 	if err != nil {
 		return nil, err
 	}
+	return builderQueryResourceRefs(queryType, resource, spec, variables)
+}
 
+func builderQueryResourceRefs(queryType string, resource coretypes.Resource, spec gjson.Result, variables map[string]qbtypes.VariableItem) ([]coretypes.ResourceWithID, error) {
 	ids, err := builderQuerySelectors(queryType, spec.Get("filter.expression").String(), variables)
 	if err != nil {
 		return nil, err

@@ -53,6 +53,7 @@ jobs:
           - queriermetrics
           - querierscalar
           - queriercommon
+          - querierai
           - rawexportdata
           - querierauthz
           - role

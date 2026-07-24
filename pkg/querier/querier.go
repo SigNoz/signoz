@@ -42,6 +42,7 @@ type querier struct {
 	metadataStore            telemetrytypes.MetadataStore
 	promEngine               prometheus.Prometheus
 	traceStmtBuilder         qbtypes.StatementBuilder[qbtypes.TraceAggregation]
+	aiTraceStmtBuilder       qbtypes.StatementBuilder[qbtypes.TraceAggregation]
 	logStmtBuilder           qbtypes.StatementBuilder[qbtypes.LogAggregation]
 	auditStmtBuilder         qbtypes.StatementBuilder[qbtypes.LogAggregation]
 	metricStmtBuilder        qbtypes.StatementBuilder[qbtypes.MetricAggregation]
@@ -61,6 +62,7 @@ func New(
 	metadataStore telemetrytypes.MetadataStore,
 	promEngine prometheus.Prometheus,
 	traceStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation],
+	aiTraceStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation],
 	logStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation],
 	auditStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation],
 	metricStmtBuilder qbtypes.StatementBuilder[qbtypes.MetricAggregation],
@@ -82,6 +84,7 @@ func New(
 		metadataStore:            metadataStore,
 		promEngine:               promEngine,
 		traceStmtBuilder:         traceStmtBuilder,
+		aiTraceStmtBuilder:       aiTraceStmtBuilder,
 		logStmtBuilder:           logStmtBuilder,
 		auditStmtBuilder:         auditStmtBuilder,
 		metricStmtBuilder:        metricStmtBuilder,
@@ -232,6 +235,16 @@ func (q *querier) buildQueries(
 			}
 			queries[traceOpQuery.Name] = toq
 			steps[traceOpQuery.Name] = traceOpQuery.StepInterval
+		case qbtypes.QueryTypeBuilderAI:
+			spec, ok := query.Spec.(qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation])
+			if !ok {
+				return nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid AI builder query spec %T", query.Spec)
+			}
+			spec.ShiftBy = extractShiftFromBuilderQuery(spec)
+			timeRange := adjustTimeRangeForShift(spec, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType)
+			bq := newBuilderQuery(q.logger, q.telemetryStore, orgID, q.aiTraceStmtBuilder, spec, timeRange, req.RequestType, tmplVars, builderConfig{})
+			queries[spec.Name] = bq
+			steps[spec.Name] = spec.StepInterval
 		case qbtypes.QueryTypeBuilder:
 			switch spec := query.Spec.(type) {
 			case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
@@ -298,6 +311,11 @@ func (q *querier) populateQBEvent(event *qbtypes.QBEvent, queries []qbtypes.Quer
 			case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
 				event.MetricsUsed = true
 			}
+		case qbtypes.QueryTypeBuilderAI:
+			filter := query.GetFilter()
+			event.FilterApplied = event.FilterApplied || (filter != nil && filter.Expression != "")
+			event.GroupByApplied = event.GroupByApplied || len(query.GetGroupBy()) > 0
+			event.TracesUsed = true
 		case qbtypes.QueryTypePromQL:
 			event.MetricsUsed = true
 		case qbtypes.QueryTypeTraceOperator:
@@ -860,7 +878,9 @@ func (q *querier) createRangedQuery(_ valuer.UUID, originalQuery qbtypes.Query, 
 		specCopy := qt.spec.Copy()
 		specCopy.ShiftBy = extractShiftFromBuilderQuery(specCopy)
 		adjustedTimeRange := adjustTimeRangeForShift(specCopy, timeRange, qt.kind)
-		return newBuilderQuery(q.logger, q.telemetryStore, qt.orgID, q.traceStmtBuilder, specCopy, adjustedTimeRange, qt.kind, qt.variables, builderConfig{})
+		// Reuse the statement builder the original query was created with, so an AI
+		// query keeps its AI builder without re-deriving it from the spec.
+		return newBuilderQuery(q.logger, q.telemetryStore, qt.orgID, qt.stmtBuilder, specCopy, adjustedTimeRange, qt.kind, qt.variables, builderConfig{})
 
 	case *builderQuery[qbtypes.LogAggregation]:
 		specCopy := qt.spec.Copy()
@@ -1217,6 +1237,8 @@ func (q *querier) adjustStepInterval(queries []qbtypes.QueryEnvelope, start, end
 			if qe.GetStepInterval().Seconds() == 0 {
 				qe.SetStepInterval(secondsStep(metricRecommended))
 			}
+		case qbtypes.QueryTypeBuilderAI:
+			clampStep(qe, traceLogRecommended, traceLogMin, &warnings)
 		case qbtypes.QueryTypeTraceOperator:
 			clampStep(qe, traceLogRecommended, traceLogMin, &warnings)
 		}

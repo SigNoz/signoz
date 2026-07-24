@@ -78,12 +78,15 @@ class BuilderQuery:
     signal: str
     name: str = "A"
     source: str | None = None
+    query_type: str = "builder_query"
     limit: int | None = None
     offset: int | None = None
     filter_expression: str | None = None
+    having_expression: str | None = None
     select_fields: list[TelemetryFieldKey] | None = None
     order: list[OrderBy] | None = None
     aggregations: list[Aggregation | MetricAggregation] | None = None
+    group_by: list[TelemetryFieldKey] | None = None
     step_interval: int | None = None
 
     def to_dict(self) -> dict:
@@ -99,16 +102,20 @@ class BuilderQuery:
             spec["offset"] = self.offset
         if self.filter_expression:
             spec["filter"] = {"expression": self.filter_expression}
+        if self.having_expression:
+            spec["having"] = {"expression": self.having_expression}
         if self.select_fields:
             spec["selectFields"] = [f.to_dict() for f in self.select_fields]
         if self.order:
             spec["order"] = [o.to_dict() if hasattr(o, "to_dict") else o for o in self.order]
         if self.aggregations:
             spec["aggregations"] = [agg.to_dict() if hasattr(agg, "to_dict") else agg for agg in self.aggregations]
+        if self.group_by:
+            spec["groupBy"] = [k.to_dict() for k in self.group_by]
         if self.step_interval is not None:
             spec["stepInterval"] = self.step_interval
 
-        return {"type": "builder_query", "spec": spec}
+        return {"type": self.query_type, "spec": spec}
 
 
 @dataclass

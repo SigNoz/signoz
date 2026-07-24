@@ -93,6 +93,20 @@ func TestQueryRangeResources(t *testing.T) {
 			},
 		},
 		{
+			name: "ai builder query maps to traces resource without a signal",
+			body: `{"compositeQuery":{"queries":[{"type":"builder_ai_query","spec":{"filter":{"expression":"signoz.workspace.key.id = 'checkout'"}}}]}}`,
+			expected: []coretypes.ResourceWithID{
+				{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "builder_ai_query/signoz.workspace.key.id/checkout"},
+			},
+		},
+		{
+			name: "ai builder query without filter is wildcard",
+			body: `{"compositeQuery":{"queries":[{"type":"builder_ai_query","spec":{}}]}}`,
+			expected: []coretypes.ResourceWithID{
+				{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "builder_ai_query/*"},
+			},
+		},
+		{
 			name: "promql is wildcard only",
 			body: `{"compositeQuery":{"queries":[{"type":"promql","spec":{"query":"up"}}]}}`,
 			expected: []coretypes.ResourceWithID{

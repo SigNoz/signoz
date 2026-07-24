@@ -9,11 +9,13 @@ import (
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/telemetryai"
 	"github.com/SigNoz/signoz/pkg/telemetryaudit"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrymetadata"
 	"github.com/SigNoz/signoz/pkg/telemetrymeter"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
+	"github.com/SigNoz/signoz/pkg/telemetryscopedtraces"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 )
@@ -90,6 +92,18 @@ func newProvider(
 		flagger,
 		cfg.SkipResourceFingerprint.Enabled,
 		cfg.SkipResourceFingerprint.Threshold,
+	)
+
+	// AI trace statement builder (builder_ai_query). The gen_ai gate/column keys are
+	// surfaced by the metadata store itself (enrichWithGenAIKeys), so queries work
+	// before any gen_ai metadata is ingested — no per-builder decoration needed.
+	// The standard trace builder doubles as the delegate for the span-list path.
+	aiTraceStmtBuilder := telemetryscopedtraces.NewScopedTraceStatementBuilder(
+		settings,
+		telemetryMetadataStore,
+		telemetryai.Scope(),
+		traceStmtBuilder,
+		flagger,
 	)
 
 	// Create trace operator statement builder
@@ -181,6 +195,7 @@ func newProvider(
 		telemetryMetadataStore,
 		prometheus,
 		traceStmtBuilder,
+		aiTraceStmtBuilder,
 		logStmtBuilder,
 		auditStmtBuilder,
 		metricStmtBuilder,

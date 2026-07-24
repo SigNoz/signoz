@@ -249,6 +249,7 @@ func (q *querier) buildPreviewProviders(
 func rendersStandaloneStatement(t qbtypes.QueryType) bool {
 	switch t {
 	case qbtypes.QueryTypeBuilder,
+		qbtypes.QueryTypeBuilderAI,
 		qbtypes.QueryTypePromQL,
 		qbtypes.QueryTypeClickHouseSQL,
 		qbtypes.QueryTypeTraceOperator:
