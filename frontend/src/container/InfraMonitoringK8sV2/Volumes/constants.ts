@@ -69,27 +69,29 @@ export const volumeWidgetInfo = [
 	{
 		title: 'Volume available',
 		yAxisUnit: 'bytes',
-		docPath: '/infrastructure-monitoring/kubernetes/volumes/#volume-available',
+		docPath: '/infrastructure-monitoring/kubernetes/volumes/#volume-available-1',
 	},
 	{
 		title: 'Volume capacity',
 		yAxisUnit: 'bytes',
-		docPath: '/infrastructure-monitoring/kubernetes/volumes/#volume-capacity',
+		docPath: '/infrastructure-monitoring/kubernetes/volumes/#volume-capacity-1',
 	},
 	{
 		title: 'Volume inodes used',
 		yAxisUnit: 'short',
-		docPath: '/infrastructure-monitoring/kubernetes/volumes/#volume-inodes-used',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/volumes/#volume-inodes-used-1',
 	},
 	{
 		title: 'Volume inodes',
 		yAxisUnit: 'short',
-		docPath: '/infrastructure-monitoring/kubernetes/volumes/#volume-inodes',
+		docPath: '/infrastructure-monitoring/kubernetes/volumes/#volume-inodes-1',
 	},
 	{
 		title: 'Volume inodes free',
 		yAxisUnit: 'short',
-		docPath: '/infrastructure-monitoring/kubernetes/volumes/#volume-inodes-free',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/volumes/#volume-inodes-free-1',
 	},
 ];
 
