@@ -12172,14 +12172,6 @@ export type GetSavedView200 = {
 export type UpdateSavedViewPathParameters = {
 	viewId: string;
 };
-export type UpdateSavedView200 = {
-	data: SavedviewtypesGettableSavedViewDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
 export type GetSessionContext200 = {
 	data: AuthtypesSessionContextDTO;
 	/**

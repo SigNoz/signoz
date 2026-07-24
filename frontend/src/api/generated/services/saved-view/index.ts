@@ -26,7 +26,6 @@ import type {
 	ListSavedViewsParams,
 	RenderErrorResponseDTO,
 	SavedviewtypesPostableSavedViewDTO,
-	UpdateSavedView200,
 	UpdateSavedViewPathParameters,
 } from '../sigNoz.schemas';
 
@@ -400,7 +399,7 @@ export const updateSavedView = (
 	savedviewtypesPostableSavedViewDTO?: BodyType<SavedviewtypesPostableSavedViewDTO>,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<UpdateSavedView200>({
+	return GeneratedAPIInstance<void>({
 		url: `/api/v2/saved_views/${viewId}`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },

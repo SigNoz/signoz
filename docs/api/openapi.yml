@@ -22872,18 +22872,6 @@ paths:
               $ref: '#/components/schemas/SavedviewtypesPostableSavedView'
       responses:
         "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/SavedviewtypesGettableSavedView'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
           description: OK
         "400":
           content:
