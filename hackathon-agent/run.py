@@ -13,7 +13,17 @@ import subprocess
 import time
 import os
 
-PYTHON = sys.executable
+def get_python_exe():
+    try:
+        subprocess.run([sys.executable, "-c", "import langchain_core, clickhouse_connect"], check=True, capture_output=True)
+        return sys.executable
+    except Exception:
+        miniconda_py = r"C:\users\sonis\miniconda3\python.exe"
+        if os.path.exists(miniconda_py):
+            return miniconda_py
+        return sys.executable
+
+PYTHON = get_python_exe()
 
 
 def run_worker(num_tasks: int = 5):
