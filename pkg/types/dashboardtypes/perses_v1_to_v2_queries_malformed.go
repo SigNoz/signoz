@@ -170,6 +170,41 @@ func aggregationOrderKey(query map[string]any) (string, bool) {
 	return expr, true
 }
 
+// backfillFormulaFields restores order/limit/having onto the formula's spec.
+// WrapInV5Envelope's formula branch emits only name/expression/disabled/legend/functions
+// and drops these three, even though QueryBuilderFormula supports them.
+func backfillFormulaFields(env, formula map[string]any) {
+	spec := env["spec"].(map[string]any)
+
+	// limit and having are already v5-shaped (the shape-safe migrator rewrites having),
+	// so copy them across unchanged.
+	if limit, ok := formula["limit"]; ok {
+		spec["limit"] = limit
+	}
+	if having, ok := formula["having"]; ok {
+		spec["having"] = having
+	}
+
+	// orderBy is still in the v4 shape ([{columnName, order}]); reshape each entry into
+	// the v5 order shape ([{key: {name}, direction}]).
+	orderBy, ok := formula["orderBy"].([]any)
+	if !ok {
+		return
+	}
+	order := make([]any, 0, len(orderBy))
+	for _, item := range orderBy {
+		ob, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+		order = append(order, map[string]any{
+			"key":       map[string]any{"name": ob["columnName"]},
+			"direction": ob["order"],
+		})
+	}
+	spec["order"] = order
+}
+
 // dropLegacyFilter removes a v4-shaped filter ({items, op}) stored under the v5
 // `filter` key. The v5 filter is {expression}; the migrator only rewrites the v4
 // `filters` key and skips when `filter` is present, so this stale shape would reach

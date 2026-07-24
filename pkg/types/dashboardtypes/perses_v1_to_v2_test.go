@@ -1078,6 +1078,185 @@ func TestConvertV1WidgetQueryPreservesCountAttributeOnV5(t *testing.T) {
 	}
 }
 
+// A v4 formula carries order/limit/having; WrapInV5Envelope's formula branch drops
+// them, so we backfill them onto the envelope.
+func TestConvertV1WidgetQueryPreservesFormulaOrderLimitHaving(t *testing.T) {
+	widget := map[string]any{
+		"id":         "g-1",
+		"panelTypes": "graph",
+		"query": map[string]any{
+			"queryType": "builder",
+			"builder": map[string]any{
+				"queryData": []any{
+					map[string]any{
+						"queryName":    "A",
+						"expression":   "A",
+						"dataSource":   "logs",
+						"aggregations": []any{map[string]any{"expression": "count()"}},
+					},
+				},
+				"queryFormulas": []any{
+					map[string]any{
+						"queryName":  "F1",
+						"expression": "A * 2",
+						"legend":     "twice",
+						"limit":      float64(10),
+						"orderBy":    []any{map[string]any{"columnName": "F1", "order": "desc"}},
+						"having":     map[string]any{"expression": "F1 > 5"},
+					},
+				},
+			},
+		},
+	}
+
+	queries := (&v1Decoder{}).convertV1WidgetQuery(widget, PanelKindTimeSeries)
+	require.Len(t, queries, 1)
+
+	composite, ok := queries[0].Spec.Plugin.Spec.(*CompositeQuerySpec)
+	require.True(t, ok, "multi-query widget should be a composite, got %T", queries[0].Spec.Plugin.Spec)
+
+	var formula qb.QueryBuilderFormula
+	found := false
+	for _, env := range composite.Queries {
+		if env.Type == qb.QueryTypeFormula {
+			formula, ok = env.Spec.(qb.QueryBuilderFormula)
+			require.True(t, ok, "formula spec should be QueryBuilderFormula, got %T", env.Spec)
+			found = true
+		}
+	}
+	require.True(t, found, "expected a formula query in the composite")
+
+	assert.Equal(t, "A * 2", formula.Expression)
+	assert.Equal(t, 10, formula.Limit, "formula limit must survive")
+	require.Len(t, formula.Order, 1, "formula order must survive")
+	assert.Equal(t, "F1", formula.Order[0].Key.Name)
+	require.NotNil(t, formula.Having, "formula having must survive")
+	assert.Equal(t, "F1 > 5", formula.Having.Expression)
+}
+
+// Every migratable field on a builder query must round-trip through convertV1WidgetQuery.
+func TestConvertV1WidgetQueryPreservesAllBuilderFields(t *testing.T) {
+	widget := map[string]any{
+		"id":         "b-1",
+		"panelTypes": "graph",
+		"query": map[string]any{
+			"queryType": "builder",
+			"builder": map[string]any{
+				"queryData": []any{
+					map[string]any{
+						"queryName":     "A",
+						"expression":    "A",
+						"dataSource":    "logs",
+						"disabled":      true,
+						"legend":        "my legend",
+						"aggregations":  []any{map[string]any{"expression": "count()"}},
+						"filter":        map[string]any{"expression": "service.name = 'checkout'"},
+						"groupBy":       []any{map[string]any{"key": "service.name", "dataType": "string", "type": "resource"}},
+						"orderBy":       []any{map[string]any{"columnName": "service.name", "dataType": "string", "type": "resource", "order": "asc"}},
+						"selectColumns": []any{map[string]any{"key": "body", "dataType": "string", "type": "tag"}},
+						"limit":         float64(100),
+						"offset":        float64(10),
+						"having":        map[string]any{"expression": "count() > 5"},
+						"functions":     []any{map[string]any{"name": "absolute"}},
+					},
+				},
+			},
+		},
+	}
+
+	queries := (&v1Decoder{}).convertV1WidgetQuery(widget, PanelKindTimeSeries)
+	require.Len(t, queries, 1)
+
+	wrapper, ok := queries[0].Spec.Plugin.Spec.(*BuilderQuerySpec)
+	require.True(t, ok)
+	spec, ok := wrapper.Spec.(qb.QueryBuilderQuery[qb.LogAggregation])
+	require.True(t, ok, "logs query should dispatch to LogAggregation, got %T", wrapper.Spec)
+
+	assert.True(t, spec.Disabled, "disabled")
+	assert.Equal(t, "my legend", spec.Legend, "legend")
+	require.Len(t, spec.Aggregations, 1, "aggregations")
+	assert.Equal(t, "count()", spec.Aggregations[0].Expression)
+	require.NotNil(t, spec.Filter, "filter")
+	assert.Equal(t, "service.name = 'checkout'", spec.Filter.Expression)
+	require.Len(t, spec.GroupBy, 1, "groupBy")
+	assert.Equal(t, "service.name", spec.GroupBy[0].Name)
+	require.Len(t, spec.Order, 1, "order")
+	assert.Equal(t, "service.name", spec.Order[0].Key.Name)
+	require.Len(t, spec.SelectFields, 1, "selectFields")
+	assert.Equal(t, "body", spec.SelectFields[0].Name)
+	assert.Equal(t, 100, spec.Limit, "limit")
+	assert.Equal(t, 10, spec.Offset, "offset")
+	require.NotNil(t, spec.Having, "having")
+	assert.Equal(t, "count() > 5", spec.Having.Expression)
+	require.Len(t, spec.Functions, 1, "functions")
+}
+
+// Every migratable field on a trace operator must round-trip through traceOperatorEnvelope.
+func TestConvertV1WidgetQueryPreservesAllTraceOperatorFields(t *testing.T) {
+	widget := map[string]any{
+		"id":         "t-1",
+		"panelTypes": "graph",
+		"query": map[string]any{
+			"queryType": "builder",
+			"builder": map[string]any{
+				"queryData": []any{
+					map[string]any{"queryName": "A", "expression": "A", "dataSource": "traces", "aggregations": []any{map[string]any{"expression": "count()"}}},
+					map[string]any{"queryName": "B", "expression": "B", "dataSource": "traces", "aggregations": []any{map[string]any{"expression": "count()"}}},
+				},
+				"queryTraceOperator": []any{
+					map[string]any{
+						"queryName":    "T1",
+						"expression":   "A => B",
+						"dataSource":   "traces",
+						"disabled":     true,
+						"legend":       "op legend",
+						"aggregations": []any{map[string]any{"expression": "count()"}},
+						"filter":       map[string]any{"expression": "service.name = 'checkout'"},
+						"groupBy":      []any{map[string]any{"key": "service.name", "dataType": "string", "type": "resource"}},
+						"orderBy":      []any{map[string]any{"columnName": "service.name", "dataType": "string", "type": "resource", "order": "asc"}},
+						"limit":        float64(100),
+						"offset":       float64(10),
+						"having":       map[string]any{"expression": "count() > 5"},
+					},
+				},
+			},
+		},
+	}
+
+	queries := (&v1Decoder{}).convertV1WidgetQuery(widget, PanelKindTimeSeries)
+	require.Len(t, queries, 1)
+
+	composite, ok := queries[0].Spec.Plugin.Spec.(*CompositeQuerySpec)
+	require.True(t, ok, "multi-query widget should be a composite, got %T", queries[0].Spec.Plugin.Spec)
+
+	var op qb.QueryBuilderTraceOperator
+	found := false
+	for _, env := range composite.Queries {
+		if env.Type == qb.QueryTypeTraceOperator {
+			op, ok = env.Spec.(qb.QueryBuilderTraceOperator)
+			require.True(t, ok, "trace-operator spec should be QueryBuilderTraceOperator, got %T", env.Spec)
+			found = true
+		}
+	}
+	require.True(t, found, "expected a trace-operator query in the composite")
+
+	assert.Equal(t, "A => B", op.Expression, "expression")
+	assert.True(t, op.Disabled, "disabled")
+	assert.Equal(t, "op legend", op.Legend, "legend")
+	require.Len(t, op.Aggregations, 1, "aggregations")
+	assert.Equal(t, "count()", op.Aggregations[0].Expression)
+	require.NotNil(t, op.Filter, "filter")
+	assert.Equal(t, "service.name = 'checkout'", op.Filter.Expression)
+	require.Len(t, op.GroupBy, 1, "groupBy")
+	assert.Equal(t, "service.name", op.GroupBy[0].Name)
+	require.Len(t, op.Order, 1, "order")
+	assert.Equal(t, "service.name", op.Order[0].Key.Name)
+	assert.Equal(t, 100, op.Limit, "limit")
+	assert.Equal(t, 10, op.Offset, "offset")
+	require.NotNil(t, op.Having, "having")
+	assert.Equal(t, "count() > 5", op.Having.Expression)
+}
+
 // A logs query with no aggregations and an orderBy of #SIGNOZ_VALUE: the value-order
 // key must be rewritten to the injected default aggregation (count()), which requires
 // normalizeOrderByKeys to run after ensureDefaultAggregation.

@@ -200,6 +200,7 @@ func (d *v1Decoder) collectV1QueryEnvelopes(widget map[string]any, panelKind Pan
 			normalizePreV5QueryData(f, widgetType)
 			name := d.readString(f, "queryName")
 			env := qb.WrapInV5Envelope(name, f, string(qb.QueryTypeFormula.StringValue()))
+			backfillFormulaFields(env, f)
 			// Drop a formula whose expression the validator rejects (blank/unparseable);
 			// v1 tolerated it but v2 fails the whole query. Reuse the real validator
 			// rather than reimplement it, as we do for functions.
