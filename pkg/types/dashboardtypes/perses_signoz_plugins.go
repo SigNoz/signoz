@@ -32,7 +32,49 @@ type DynamicVariableSpec struct {
 	// Name is the name of the attribute being fetched dynamically from the
 	// signal. This could be extended to a richer selector in the future.
 	Name   string                `json:"name" validate:"required" required:"true"`
-	Signal telemetrytypes.Signal `json:"signal"`
+	Signal DynamicVariableSignal `json:"signal" required:"true" nullable:"false"`
+}
+
+// DynamicVariableSignal is the telemetry signal a dynamic variable draws its
+// values from. Separate from telemetrytypes.Signal because it carries "all"
+// (values span every signal) rather than "" for an unpinned query signal.
+type DynamicVariableSignal struct{ valuer.String }
+
+var (
+	DynamicVariableSignalTraces  = DynamicVariableSignal{valuer.NewString("traces")}
+	DynamicVariableSignalLogs    = DynamicVariableSignal{valuer.NewString("logs")}
+	DynamicVariableSignalMetrics = DynamicVariableSignal{valuer.NewString("metrics")}
+	DynamicVariableSignalAll     = DynamicVariableSignal{valuer.NewString("all")} // default
+)
+
+func (DynamicVariableSignal) Enum() []any {
+	return []any{DynamicVariableSignalTraces, DynamicVariableSignalLogs, DynamicVariableSignalMetrics, DynamicVariableSignalAll}
+}
+
+func (s DynamicVariableSignal) ValueOrDefault() string {
+	if s.IsZero() {
+		return DynamicVariableSignalAll.StringValue()
+	}
+	return s.StringValue()
+}
+
+func (s DynamicVariableSignal) MarshalJSON() ([]byte, error) {
+	return json.Marshal(s.ValueOrDefault())
+}
+
+func (s *DynamicVariableSignal) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid signal: must be a string, one of `traces`, `logs`, `metrics`, or `all`")
+	}
+	sig := DynamicVariableSignal{valuer.NewString(v)}
+	switch sig {
+	case DynamicVariableSignalTraces, DynamicVariableSignalLogs, DynamicVariableSignalMetrics, DynamicVariableSignalAll:
+		*s = sig
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid signal %q: must be `traces`, `logs`, `metrics`, or `all`", v)
+	}
 }
 
 type QueryVariableSpec struct {
@@ -207,7 +249,7 @@ type HistogramBuckets struct {
 }
 
 type ListPanelSpec struct {
-	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitempty" validate:"dive"`
+	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitzero" validate:"dive"`
 }
 
 // ══════════════════════════════════════════════
@@ -252,14 +294,20 @@ type Legend struct {
 }
 
 type ThresholdWithLabel struct {
-	Value float64 `json:"value" validate:"required" required:"true"`
+	// Value is always present in the schema (required:"true"), but 0 is a legitimate
+	// threshold, so it drops validate:"required" — go-playground's required treats a
+	// zero float as unset and would wrongly reject value: 0.
+	Value float64 `json:"value" required:"true"`
 	Unit  string  `json:"unit"`
 	Color string  `json:"color" validate:"required" required:"true"`
 	Label string  `json:"label"`
 }
 
 type ComparisonThreshold struct {
-	Value    float64            `json:"value" validate:"required" required:"true"`
+	// Value is always present in the schema (required:"true"), but 0 is a legitimate
+	// threshold, so it drops validate:"required" — go-playground's required treats a
+	// zero float as unset and would wrongly reject value: 0.
+	Value    float64            `json:"value" required:"true"`
 	Operator ComparisonOperator `json:"operator"`
 	Unit     string             `json:"unit"`
 	Color    string             `json:"color" validate:"required" required:"true"`
@@ -310,10 +358,6 @@ func (t *TimePreference) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &v); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid timePreference: must be a string, one of `global_time`, `last_5_min`, `last_15_min`, `last_30_min`, `last_1_hr`, `last_6_hr`, `last_1_day`, `last_3_days`, `last_1_week`, or `last_1_month`")
 	}
-	if v == "" {
-		*t = TimePreferenceGlobalTime
-		return nil
-	}
 	tp := TimePreference{valuer.NewString(v)}
 	switch tp {
 	case TimePreferenceGlobalTime, TimePreferenceLast5Min, TimePreferenceLast15Min, TimePreferenceLast30Min, TimePreferenceLast1Hr, TimePreferenceLast6Hr, TimePreferenceLast1Day, TimePreferenceLast3Days, TimePreferenceLast1Week, TimePreferenceLast1Month:
@@ -350,10 +394,6 @@ func (l *LegendPosition) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid legend position: must be a string, one of `bottom` or `right`")
-	}
-	if v == "" {
-		*l = LegendPositionBottom
-		return nil
 	}
 	lp := LegendPosition{valuer.NewString(v)}
 	switch lp {
@@ -392,10 +432,6 @@ func (m *LegendMode) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &v); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid legend mode: must be a string, one of `list` or `table`")
 	}
-	if v == "" {
-		*m = LegendModeList
-		return nil
-	}
 	lm := LegendMode{valuer.NewString(v)}
 	switch lm {
 	case LegendModeList, LegendModeTable:
@@ -432,10 +468,6 @@ func (f *ThresholdFormat) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid threshold format: must be a string, one of `text` or `background`")
-	}
-	if v == "" {
-		*f = ThresholdFormatText
-		return nil
 	}
 	tf := ThresholdFormat{valuer.NewString(v)}
 	switch tf {
@@ -480,10 +512,6 @@ func (o *ComparisonOperator) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &v); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid comparison operator: must be a string, one of `above`, `below`, `above_or_equal`, `below_or_equal`, `equal`, or `not_equal`")
 	}
-	if v == "" {
-		*o = ComparisonOperatorAbove
-		return nil
-	}
 	co := ComparisonOperator{valuer.NewString(v)}
 	switch co {
 	case ComparisonOperatorAbove, ComparisonOperatorBelow, ComparisonOperatorAboveOrEqual, ComparisonOperatorBelowOrEqual,
@@ -524,10 +552,6 @@ func (li *LineInterpolation) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &v); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid line interpolation: must be a string, one of `linear`, `spline`, `step_after`, or `step_before`")
 	}
-	if v == "" {
-		*li = LineInterpolationSpline
-		return nil
-	}
 	val := LineInterpolation{valuer.NewString(v)}
 	switch val {
 	case LineInterpolationLinear, LineInterpolationSpline, LineInterpolationStepAfter, LineInterpolationStepBefore:
@@ -564,10 +588,6 @@ func (ls *LineStyle) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid line style: must be a string, one of `solid` or `dashed`")
-	}
-	if v == "" {
-		*ls = LineStyleSolid
-		return nil
 	}
 	val := LineStyle{valuer.NewString(v)}
 	switch val {
@@ -606,10 +626,6 @@ func (fm *FillMode) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid fill mode: must be a string, one of `solid`, `gradient`, or `none`")
-	}
-	if v == "" {
-		*fm = FillModeNone
-		return nil
 	}
 	val := FillMode{valuer.NewString(v)}
 	switch val {
@@ -698,10 +714,6 @@ func (p *PrecisionOption) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid precision option: must be `0`, `1`, `2`, `3`, `4`, or `full`")
-	}
-	if v == "" {
-		*p = PrecisionOption2
-		return nil
 	}
 	val := PrecisionOption{valuer.NewString(v)}
 	switch val {

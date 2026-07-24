@@ -1,6 +1,8 @@
 import { useCallback, useState } from 'react';
 
+import logEvent from 'api/common/logEvent';
 import type { DashboardtypesLayoutDTO } from 'api/generated/services/sigNoz.schemas';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
@@ -19,7 +21,7 @@ interface Params {
 }
 
 interface Result {
-	addSection: (title: string) => Promise<void>;
+	addSection: (title: string) => Promise<boolean>;
 	isSaving: boolean;
 }
 
@@ -36,10 +38,10 @@ export function useAddSection({ layouts }: Params): Result {
 	const setScrollTargetId = useScrollIntoViewStore((s) => s.setScrollTargetId);
 
 	const addSection = useCallback(
-		async (title: string): Promise<void> => {
+		async (title: string): Promise<boolean> => {
 			const trimmed = title.trim();
 			if (!dashboardId || !trimmed) {
-				return;
+				return false;
 			}
 			const isFirstSection = !layouts || layouts.length === 0;
 			const op = isFirstSection
@@ -48,12 +50,18 @@ export function useAddSection({ layouts }: Params): Result {
 			try {
 				setIsSaving(true);
 				await patchAsync([op]);
+				void logEvent(DashboardDetailEvents.SectionAction, {
+					action: 'add',
+					dashboardId,
+				});
 				// The new empty section is appended, so its layout index is the prior count;
 				// key it the way `getSectionStableId` does so it reveals itself on render.
 				const newIndex = isFirstSection ? 0 : layouts.length;
 				setScrollTargetId(getSectionStableId([], newIndex));
+				return true;
 			} catch (error) {
 				showErrorModal(error as APIError);
+				return false;
 			} finally {
 				setIsSaving(false);
 			}

@@ -1,5 +1,8 @@
 import { type MouseEvent, type ReactNode } from 'react';
 import { Badge } from '@signozhq/ui/badge';
+import cx from 'classnames';
+
+import styles from './TagBadge.module.scss';
 
 interface TagBadgeProps {
 	children: ReactNode;
@@ -22,7 +25,7 @@ function TagBadge({
 		<Badge
 			color="sienna"
 			variant="outline"
-			className={className}
+			className={cx(styles.static, className)}
 			closable={closable}
 			onClose={onClose}
 		>

@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import TagBadge from 'components/TagBadge/TagBadge';
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
@@ -12,6 +11,7 @@ import { Base64Icons } from 'container/DashboardContainer/DashboardSettings/Gene
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import { DashboardListEvents } from 'pages/DashboardsListPageV2/constants/events';
 import { useTimezone } from 'providers/Timezone';
 import { isModifierKeyPressed } from 'utils/app';
 
@@ -20,6 +20,7 @@ import { useDashboardViewsStore } from '../../store/useDashboardViewsStore';
 import type { DashboardListItem } from '../../utils/helpers';
 import { lastUpdatedLabel, tagsToStrings } from '../../utils/helpers';
 import ActionsPopover from '../ActionsPopover/ActionsPopover';
+import DashboardRowTags from './DashboardRowTags/DashboardRowTags';
 import LegacyDashboardDialog from '../LegacyDashboardDialog/LegacyDashboardDialog';
 
 import styles from './DashboardRow.module.scss';
@@ -97,6 +98,10 @@ function DashboardRow({
 			return;
 		}
 		togglePin(id, isPinned);
+		void logEvent(DashboardListEvents.DashboardPinned, {
+			pinned: !isPinned,
+			dashboardId: id,
+		});
 	};
 
 	const pinLabel = isPinned ? 'Unpin dashboard' : 'Pin dashboard';
@@ -124,7 +129,12 @@ function DashboardRow({
 				<div className={styles.titleWithAction}>
 					<div className={styles.titleBlock}>
 						{name.length > 50 ? (
-							<TooltipSimple title={name} side="bottom" disableHoverableContent>
+							<TooltipSimple
+								title={name}
+								side="bottom"
+								disableHoverableContent
+								tooltipContentProps={{ className: styles.nameTooltip }}
+							>
 								{titleLink}
 							</TooltipSimple>
 						) : (
@@ -142,18 +152,7 @@ function DashboardRow({
 						)}
 					</div>
 
-					<div className={styles.tagsWithActions}>
-						{tags.length > 0 && (
-							<div className={styles.tags}>
-								{tags.slice(0, 3).map((tag) => (
-									<TagBadge key={tag}>{tag}</TagBadge>
-								))}
-								{tags.length > 3 && (
-									<TagBadge key={tags[3]}>+{tags.length - 3}</TagBadge>
-								)}
-							</div>
-						)}
-					</div>
+					<DashboardRowTags tags={tags} />
 
 					{isLocked && (
 						<TooltipSimple

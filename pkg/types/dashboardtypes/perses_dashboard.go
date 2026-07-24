@@ -177,7 +177,7 @@ func nextCloneDisplayName(name string) string {
 
 type DashboardV2MetadataBase struct {
 	SchemaVersion string `json:"schemaVersion" required:"true"`
-	Image         string `json:"image,omitempty"`
+	Image         string `json:"image"`
 }
 
 // ════════════════════════════════════════════════════════════════════════
@@ -186,8 +186,8 @@ type DashboardV2MetadataBase struct {
 
 type PostableDashboardV2 struct {
 	DashboardV2MetadataBase
-	Name         string                 `json:"name,omitempty"`
-	GenerateName bool                   `json:"generateName,omitempty"`
+	Name         string                 `json:"name"`
+	GenerateName bool                   `json:"generateName"`
 	Tags         []tagtypes.PostableTag `json:"tags" required:"true"`
 	Spec         DashboardSpec          `json:"spec" required:"true"`
 }
