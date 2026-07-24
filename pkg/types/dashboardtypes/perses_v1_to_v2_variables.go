@@ -115,6 +115,12 @@ func (d *v1Decoder) convertV1Variable(v map[string]any) (Variable, bool) {
 			Plugin:          d.variablePluginFor(kind, v),
 			Name:            name,
 		}
+		// A single-select variable can't offer an "All" option: v2 rejects allowAllValue
+		// (and thus customAllValue) without allowMultiple. Drop them rather than fail.
+		if !listSpec.AllowMultiple {
+			listSpec.AllowAllValue = false
+			listSpec.CustomAllValue = ""
+		}
 		if dv := mapV1VariableDefault(v, listSpec.AllowMultiple); dv != nil {
 			listSpec.DefaultValue = dv
 		}

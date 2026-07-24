@@ -36,9 +36,10 @@ func normalizePreV5QueryData(query map[string]any, widgetType string) {
 	preV5Migrator.MigrateQueryDataShapeSafe(context.Background(), query, widgetType)
 	normalizePreV5LogTraceAggregations(query)
 	normalizeMetricAggregations(query)
-	normalizeOrderByKeys(query)
 	normalizeFunctionArgs(query)
 	dropInvalidFunctions(query)
+	// normalizeOrderByKeys runs in the caller, after ensureDefaultAggregation: a
+	// value-order key resolves against the aggregation that may have just been injected.
 }
 
 // dropInvalidFunctions removes any function the v5 validator would reject — an unknown
@@ -167,6 +168,41 @@ func aggregationOrderKey(query map[string]any) (string, bool) {
 		return "", false
 	}
 	return expr, true
+}
+
+// backfillFormulaFields restores order/limit/having onto the formula's spec.
+// WrapInV5Envelope's formula branch emits only name/expression/disabled/legend/functions
+// and drops these three, even though QueryBuilderFormula supports them.
+func backfillFormulaFields(env, formula map[string]any) {
+	spec := env["spec"].(map[string]any)
+
+	// limit and having are already v5-shaped (the shape-safe migrator rewrites having),
+	// so copy them across unchanged.
+	if limit, ok := formula["limit"]; ok {
+		spec["limit"] = limit
+	}
+	if having, ok := formula["having"]; ok {
+		spec["having"] = having
+	}
+
+	// orderBy is still in the v4 shape ([{columnName, order}]); reshape each entry into
+	// the v5 order shape ([{key: {name}, direction}]).
+	orderBy, ok := formula["orderBy"].([]any)
+	if !ok {
+		return
+	}
+	order := make([]any, 0, len(orderBy))
+	for _, item := range orderBy {
+		ob, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+		order = append(order, map[string]any{
+			"key":       map[string]any{"name": ob["columnName"]},
+			"direction": ob["order"],
+		})
+	}
+	spec["order"] = order
 }
 
 // dropLegacyFilter removes a v4-shaped filter ({items, op}) stored under the v5

@@ -518,20 +518,212 @@ func TestConvertValueWidgetToNumberPanel(t *testing.T) {
 	assert.Equal(t, ThresholdFormatBackground, spec.Thresholds[0].Format)
 }
 
-// TestConvertV1ThresholdFlagsUnknownOperator verifies an unrecognized threshold
-// comparison operator is recorded as a problem rather than silently defaulting
-// to ">".
-func TestConvertV1ThresholdFlagsUnknownOperator(t *testing.T) {
-	widget := map[string]any{
-		"id":         "val-1",
-		"panelTypes": "value",
-		"thresholds": []any{
-			map[string]any{"thresholdColor": "#fff", "thresholdOperator": "BOGUS", "thresholdValue": float64(1)},
+// mapV1ThresholdsWithLabel (graph, bar): color is required, label is optional.
+func TestMapV1ThresholdsWithLabel(t *testing.T) {
+	testCases := []struct {
+		scenario      string
+		thresholds    []any
+		expectedLen   int
+		expectedValue float64
+		expectedColor string
+		expectedLabel string
+	}{
+		{
+			scenario:      "color and label are kept",
+			thresholds:    []any{map[string]any{"thresholdValue": float64(90), "thresholdColor": "#f00", "thresholdLabel": "high"}},
+			expectedLen:   1,
+			expectedValue: 90,
+			expectedColor: "#f00",
+			expectedLabel: "high",
+		},
+		{
+			scenario:      "color without label is kept",
+			thresholds:    []any{map[string]any{"thresholdValue": float64(5), "thresholdColor": "#0f0"}},
+			expectedLen:   1,
+			expectedValue: 5,
+			expectedColor: "#0f0",
+			expectedLabel: "",
+		},
+		{
+			scenario:    "missing color is dropped",
+			thresholds:  []any{map[string]any{"thresholdValue": float64(1), "thresholdLabel": "x"}},
+			expectedLen: 0,
+		},
+		{
+			scenario:    "empty list yields nil",
+			thresholds:  []any{},
+			expectedLen: 0,
 		},
 	}
-	d := &v1Decoder{}
-	d.convertValueWidget(widget)
-	require.Error(t, d.errIfHasMalformedFields())
+
+	for _, testCase := range testCases {
+		t.Run(testCase.scenario, func(t *testing.T) {
+			out := (&v1Decoder{}).mapV1ThresholdsWithLabel(map[string]any{"thresholds": testCase.thresholds})
+			require.Len(t, out, testCase.expectedLen)
+			if testCase.expectedLen == 0 {
+				return
+			}
+			assert.Equal(t, testCase.expectedValue, out[0].Value)
+			assert.Equal(t, testCase.expectedColor, out[0].Color)
+			assert.Equal(t, testCase.expectedLabel, out[0].Label)
+		})
+	}
+}
+
+// mapV1ComparisonThresholds (value): color is required; operator and format are coerced.
+func TestMapV1ComparisonThresholds(t *testing.T) {
+	testCases := []struct {
+		scenario         string
+		thresholds       []any
+		expectedLen      int
+		expectedValue    float64
+		expectedOperator ComparisonOperator
+		expectedFormat   ThresholdFormat
+	}{
+		{
+			scenario:         "full threshold is kept",
+			thresholds:       []any{map[string]any{"thresholdValue": float64(100), "thresholdOperator": ">=", "thresholdColor": "#f00", "thresholdFormat": "Background", "thresholdUnit": "count"}},
+			expectedLen:      1,
+			expectedValue:    100,
+			expectedOperator: ComparisonOperatorAboveOrEqual,
+			expectedFormat:   ThresholdFormatBackground,
+		},
+		{
+			scenario:         "missing operator and format default",
+			thresholds:       []any{map[string]any{"thresholdValue": float64(0), "thresholdColor": "#f00"}},
+			expectedLen:      1,
+			expectedValue:    0,
+			expectedOperator: ComparisonOperatorAbove,
+			expectedFormat:   ThresholdFormatText,
+		},
+		{
+			scenario:    "missing color is dropped",
+			thresholds:  []any{map[string]any{"thresholdValue": float64(1), "thresholdOperator": ">"}},
+			expectedLen: 0,
+		},
+		{
+			scenario:    "empty list yields nil",
+			thresholds:  []any{},
+			expectedLen: 0,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.scenario, func(t *testing.T) {
+			out := (&v1Decoder{}).mapV1ComparisonThresholds(map[string]any{"thresholds": testCase.thresholds})
+			require.Len(t, out, testCase.expectedLen)
+			if testCase.expectedLen == 0 {
+				return
+			}
+			assert.Equal(t, testCase.expectedValue, out[0].Value)
+			assert.Equal(t, testCase.expectedOperator, out[0].Operator)
+			assert.Equal(t, testCase.expectedFormat, out[0].Format)
+		})
+	}
+}
+
+// mapV1TableThresholds (table): color and columnName (thresholdTableOptions) are both required.
+func TestMapV1TableThresholds(t *testing.T) {
+	testCases := []struct {
+		scenario           string
+		thresholds         []any
+		expectedLen        int
+		expectedColumnName string
+		expectedOperator   ComparisonOperator
+	}{
+		{
+			scenario:           "color and columnName are kept",
+			thresholds:         []any{map[string]any{"thresholdValue": float64(500), "thresholdColor": "#f00", "thresholdTableOptions": "latency", "thresholdOperator": "<"}},
+			expectedLen:        1,
+			expectedColumnName: "latency",
+			expectedOperator:   ComparisonOperatorBelow,
+		},
+		{
+			scenario:    "missing color is dropped",
+			thresholds:  []any{map[string]any{"thresholdValue": float64(1), "thresholdTableOptions": "latency"}},
+			expectedLen: 0,
+		},
+		{
+			scenario:    "missing columnName is dropped",
+			thresholds:  []any{map[string]any{"thresholdValue": float64(1), "thresholdColor": "#f00"}},
+			expectedLen: 0,
+		},
+		{
+			scenario:    "empty list yields nil",
+			thresholds:  []any{},
+			expectedLen: 0,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.scenario, func(t *testing.T) {
+			out := (&v1Decoder{}).mapV1TableThresholds(map[string]any{"thresholds": testCase.thresholds})
+			require.Len(t, out, testCase.expectedLen)
+			if testCase.expectedLen == 0 {
+				return
+			}
+			assert.Equal(t, testCase.expectedColumnName, out[0].ColumnName)
+			assert.Equal(t, testCase.expectedOperator, out[0].Operator)
+		})
+	}
+}
+
+// mapV1ComparisonOperator maps known spellings and defaults unknown/empty to "above"
+// without flagging (used by value and table thresholds).
+func TestMapV1ComparisonOperator(t *testing.T) {
+	testCases := []struct {
+		input    string
+		expected ComparisonOperator
+	}{
+		{">", ComparisonOperatorAbove},
+		{"gt", ComparisonOperatorAbove},
+		{">=", ComparisonOperatorAboveOrEqual},
+		{"gte", ComparisonOperatorAboveOrEqual},
+		{"<", ComparisonOperatorBelow},
+		{"lt", ComparisonOperatorBelow},
+		{"<=", ComparisonOperatorBelowOrEqual},
+		{"lte", ComparisonOperatorBelowOrEqual},
+		{"=", ComparisonOperatorEqual},
+		{"==", ComparisonOperatorEqual},
+		{"eq", ComparisonOperatorEqual},
+		{"!=", ComparisonOperatorNotEqual},
+		{"neq", ComparisonOperatorNotEqual},
+		{"empty", ComparisonOperatorAbove},
+		{"BOGUS", ComparisonOperatorAbove},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.input, func(t *testing.T) {
+			d := &v1Decoder{}
+			input := testCase.input
+			if input == "empty" {
+				input = ""
+			}
+			assert.Equal(t, testCase.expected, d.mapV1ComparisonOperator(input))
+			assert.NoError(t, d.errIfHasMalformedFields(), "operator mapping never flags malformed")
+		})
+	}
+}
+
+// mapV1ThresholdFormat coerces known values and defaults everything else (including a
+// non-string) to text.
+func TestMapV1ThresholdFormat(t *testing.T) {
+	testCases := []struct {
+		scenario string
+		input    any
+		expected ThresholdFormat
+	}{
+		{"background", "Background", ThresholdFormatBackground},
+		{"text", "text", ThresholdFormatText},
+		{"empty string defaults to text", "", ThresholdFormatText},
+		{"non-string number defaults to text", float64(0), ThresholdFormatText},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.scenario, func(t *testing.T) {
+			assert.Equal(t, testCase.expected, mapV1ThresholdFormat(testCase.input))
+		})
+	}
 }
 
 func TestConvertTableWidgetToTablePanel(t *testing.T) {
@@ -873,7 +1065,7 @@ func TestConvertV1WidgetQueryPrefersV5FilterOverLegacyFilters(t *testing.T) {
 	assert.Equal(t, "service.name = 'checkout'", spec.Filter.Expression, "the v5 filter wins; the legacy filters ('frontend') is dropped")
 }
 
-// An uppercase EXISTS op migrates to a bare EXISTS, not "host.name EXISTS ''".
+// An uppercase EXISTS op migrates to a bare EXISTS, not "host.name EXISTS ”".
 func TestConvertV1WidgetQueryNormalizesUppercaseExistsOp(t *testing.T) {
 	widget := map[string]any{
 		"id":         "l-1",
@@ -1018,6 +1210,281 @@ func TestConvertV1WidgetQueryRebuildsFlatLogsAggregation(t *testing.T) {
 
 	require.Len(t, spec.Aggregations, 1, "flat v4 logs fields should rebuild into one aggregation")
 	assert.Equal(t, "sum(bytes)", spec.Aggregations[0].Expression)
+}
+
+// The v5 shape-safe path preserves an explicit count(attribute) in aggregations[],
+// so no dashboardtypes-level normalization is needed for v5 dashboards. (The v4
+// full-migrate path clobbers it to count() — that needs a separate fix.)
+func TestConvertV1WidgetQueryPreservesCountAttributeOnV5(t *testing.T) {
+	testCases := []struct {
+		scenario           string
+		queryData          map[string]any
+		expectedExpression string
+	}{
+		{
+			scenario: "aggregations[] count(attribute) only",
+			queryData: map[string]any{
+				"queryName":    "A",
+				"expression":   "A",
+				"dataSource":   "logs",
+				"aggregations": []any{map[string]any{"expression": "count(service.name)"}},
+			},
+			expectedExpression: "count(service.name)",
+		},
+		{
+			scenario: "flat count+attr alongside aggregations[] count(attribute)",
+			queryData: map[string]any{
+				"queryName":          "A",
+				"expression":         "A",
+				"dataSource":         "logs",
+				"aggregateOperator":  "count",
+				"aggregateAttribute": map[string]any{"key": "service.name"},
+				"aggregations":       []any{map[string]any{"expression": "count(service.name)"}},
+			},
+			expectedExpression: "count(service.name)",
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.scenario, func(t *testing.T) {
+			widget := map[string]any{
+				"id":         "l-1",
+				"panelTypes": "graph",
+				"query": map[string]any{
+					"queryType": "builder",
+					"builder":   map[string]any{"queryData": []any{testCase.queryData}},
+				},
+			}
+
+			queries := (&v1Decoder{}).convertV1WidgetQuery(widget, PanelKindTimeSeries)
+			require.Len(t, queries, 1)
+
+			wrapper, ok := queries[0].Spec.Plugin.Spec.(*BuilderQuerySpec)
+			require.True(t, ok)
+			spec, ok := wrapper.Spec.(qb.QueryBuilderQuery[qb.LogAggregation])
+			require.True(t, ok, "logs query should dispatch to LogAggregation, got %T", wrapper.Spec)
+
+			require.Len(t, spec.Aggregations, 1)
+			assert.Equal(t, testCase.expectedExpression, spec.Aggregations[0].Expression)
+		})
+	}
+}
+
+// A v4 formula carries order/limit/having; WrapInV5Envelope's formula branch drops
+// them, so we backfill them onto the envelope.
+func TestConvertV1WidgetQueryPreservesFormulaOrderLimitHaving(t *testing.T) {
+	widget := map[string]any{
+		"id":         "g-1",
+		"panelTypes": "graph",
+		"query": map[string]any{
+			"queryType": "builder",
+			"builder": map[string]any{
+				"queryData": []any{
+					map[string]any{
+						"queryName":    "A",
+						"expression":   "A",
+						"dataSource":   "logs",
+						"aggregations": []any{map[string]any{"expression": "count()"}},
+					},
+				},
+				"queryFormulas": []any{
+					map[string]any{
+						"queryName":  "F1",
+						"expression": "A * 2",
+						"legend":     "twice",
+						"limit":      float64(10),
+						"orderBy":    []any{map[string]any{"columnName": "F1", "order": "desc"}},
+						"having":     map[string]any{"expression": "F1 > 5"},
+					},
+				},
+			},
+		},
+	}
+
+	queries := (&v1Decoder{}).convertV1WidgetQuery(widget, PanelKindTimeSeries)
+	require.Len(t, queries, 1)
+
+	composite, ok := queries[0].Spec.Plugin.Spec.(*CompositeQuerySpec)
+	require.True(t, ok, "multi-query widget should be a composite, got %T", queries[0].Spec.Plugin.Spec)
+
+	var formula qb.QueryBuilderFormula
+	found := false
+	for _, env := range composite.Queries {
+		if env.Type == qb.QueryTypeFormula {
+			formula, ok = env.Spec.(qb.QueryBuilderFormula)
+			require.True(t, ok, "formula spec should be QueryBuilderFormula, got %T", env.Spec)
+			found = true
+		}
+	}
+	require.True(t, found, "expected a formula query in the composite")
+
+	assert.Equal(t, "A * 2", formula.Expression)
+	assert.Equal(t, 10, formula.Limit, "formula limit must survive")
+	require.Len(t, formula.Order, 1, "formula order must survive")
+	assert.Equal(t, "F1", formula.Order[0].Key.Name)
+	require.NotNil(t, formula.Having, "formula having must survive")
+	assert.Equal(t, "F1 > 5", formula.Having.Expression)
+}
+
+// Every migratable field on a builder query must round-trip through convertV1WidgetQuery.
+func TestConvertV1WidgetQueryPreservesAllBuilderFields(t *testing.T) {
+	widget := map[string]any{
+		"id":         "b-1",
+		"panelTypes": "graph",
+		"query": map[string]any{
+			"queryType": "builder",
+			"builder": map[string]any{
+				"queryData": []any{
+					map[string]any{
+						"queryName":     "A",
+						"expression":    "A",
+						"dataSource":    "logs",
+						"disabled":      true,
+						"legend":        "my legend",
+						"aggregations":  []any{map[string]any{"expression": "count()"}},
+						"filter":        map[string]any{"expression": "service.name = 'checkout'"},
+						"groupBy":       []any{map[string]any{"key": "service.name", "dataType": "string", "type": "resource"}},
+						"orderBy":       []any{map[string]any{"columnName": "service.name", "dataType": "string", "type": "resource", "order": "asc"}},
+						"selectColumns": []any{map[string]any{"key": "body", "dataType": "string", "type": "tag"}},
+						"limit":         float64(100),
+						"offset":        float64(10),
+						"having":        map[string]any{"expression": "count() > 5"},
+						"functions":     []any{map[string]any{"name": "absolute"}},
+					},
+				},
+			},
+		},
+	}
+
+	queries := (&v1Decoder{}).convertV1WidgetQuery(widget, PanelKindTimeSeries)
+	require.Len(t, queries, 1)
+
+	wrapper, ok := queries[0].Spec.Plugin.Spec.(*BuilderQuerySpec)
+	require.True(t, ok)
+	spec, ok := wrapper.Spec.(qb.QueryBuilderQuery[qb.LogAggregation])
+	require.True(t, ok, "logs query should dispatch to LogAggregation, got %T", wrapper.Spec)
+
+	assert.True(t, spec.Disabled, "disabled")
+	assert.Equal(t, "my legend", spec.Legend, "legend")
+	require.Len(t, spec.Aggregations, 1, "aggregations")
+	assert.Equal(t, "count()", spec.Aggregations[0].Expression)
+	require.NotNil(t, spec.Filter, "filter")
+	assert.Equal(t, "service.name = 'checkout'", spec.Filter.Expression)
+	require.Len(t, spec.GroupBy, 1, "groupBy")
+	assert.Equal(t, "service.name", spec.GroupBy[0].Name)
+	require.Len(t, spec.Order, 1, "order")
+	assert.Equal(t, "service.name", spec.Order[0].Key.Name)
+	require.Len(t, spec.SelectFields, 1, "selectFields")
+	assert.Equal(t, "body", spec.SelectFields[0].Name)
+	assert.Equal(t, 100, spec.Limit, "limit")
+	assert.Equal(t, 10, spec.Offset, "offset")
+	require.NotNil(t, spec.Having, "having")
+	assert.Equal(t, "count() > 5", spec.Having.Expression)
+	require.Len(t, spec.Functions, 1, "functions")
+}
+
+// Every migratable field on a trace operator must round-trip through traceOperatorEnvelope.
+func TestConvertV1WidgetQueryPreservesAllTraceOperatorFields(t *testing.T) {
+	widget := map[string]any{
+		"id":         "t-1",
+		"panelTypes": "graph",
+		"query": map[string]any{
+			"queryType": "builder",
+			"builder": map[string]any{
+				"queryData": []any{
+					map[string]any{"queryName": "A", "expression": "A", "dataSource": "traces", "aggregations": []any{map[string]any{"expression": "count()"}}},
+					map[string]any{"queryName": "B", "expression": "B", "dataSource": "traces", "aggregations": []any{map[string]any{"expression": "count()"}}},
+				},
+				"queryTraceOperator": []any{
+					map[string]any{
+						"queryName":    "T1",
+						"expression":   "A => B",
+						"dataSource":   "traces",
+						"disabled":     true,
+						"legend":       "op legend",
+						"aggregations": []any{map[string]any{"expression": "count()"}},
+						"filter":       map[string]any{"expression": "service.name = 'checkout'"},
+						"groupBy":      []any{map[string]any{"key": "service.name", "dataType": "string", "type": "resource"}},
+						"orderBy":      []any{map[string]any{"columnName": "service.name", "dataType": "string", "type": "resource", "order": "asc"}},
+						"limit":        float64(100),
+						"offset":       float64(10),
+						"having":       map[string]any{"expression": "count() > 5"},
+					},
+				},
+			},
+		},
+	}
+
+	queries := (&v1Decoder{}).convertV1WidgetQuery(widget, PanelKindTimeSeries)
+	require.Len(t, queries, 1)
+
+	composite, ok := queries[0].Spec.Plugin.Spec.(*CompositeQuerySpec)
+	require.True(t, ok, "multi-query widget should be a composite, got %T", queries[0].Spec.Plugin.Spec)
+
+	var op qb.QueryBuilderTraceOperator
+	found := false
+	for _, env := range composite.Queries {
+		if env.Type == qb.QueryTypeTraceOperator {
+			op, ok = env.Spec.(qb.QueryBuilderTraceOperator)
+			require.True(t, ok, "trace-operator spec should be QueryBuilderTraceOperator, got %T", env.Spec)
+			found = true
+		}
+	}
+	require.True(t, found, "expected a trace-operator query in the composite")
+
+	assert.Equal(t, "A => B", op.Expression, "expression")
+	assert.True(t, op.Disabled, "disabled")
+	assert.Equal(t, "op legend", op.Legend, "legend")
+	require.Len(t, op.Aggregations, 1, "aggregations")
+	assert.Equal(t, "count()", op.Aggregations[0].Expression)
+	require.NotNil(t, op.Filter, "filter")
+	assert.Equal(t, "service.name = 'checkout'", op.Filter.Expression)
+	require.Len(t, op.GroupBy, 1, "groupBy")
+	assert.Equal(t, "service.name", op.GroupBy[0].Name)
+	require.Len(t, op.Order, 1, "order")
+	assert.Equal(t, "service.name", op.Order[0].Key.Name)
+	assert.Equal(t, 100, op.Limit, "limit")
+	assert.Equal(t, 10, op.Offset, "offset")
+	require.NotNil(t, op.Having, "having")
+	assert.Equal(t, "count() > 5", op.Having.Expression)
+}
+
+// A logs query with no aggregations and an orderBy of #SIGNOZ_VALUE: the value-order
+// key must be rewritten to the injected default aggregation (count()), which requires
+// normalizeOrderByKeys to run after ensureDefaultAggregation.
+func TestConvertV1WidgetQueryRewritesValueOrderKeyAfterDefaultAggregation(t *testing.T) {
+	widget := map[string]any{
+		"id":         "l-1",
+		"panelTypes": "graph",
+		"query": map[string]any{
+			"queryType": "builder",
+			"builder": map[string]any{
+				"queryData": []any{
+					map[string]any{
+						"queryName":  "A",
+						"expression": "A",
+						"dataSource": "logs",
+						"orderBy": []any{
+							map[string]any{"columnName": "#SIGNOZ_VALUE", "order": "desc"},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	queries := (&v1Decoder{}).convertV1WidgetQuery(widget, PanelKindTimeSeries)
+	require.Len(t, queries, 1)
+
+	wrapper, ok := queries[0].Spec.Plugin.Spec.(*BuilderQuerySpec)
+	require.True(t, ok)
+	spec, ok := wrapper.Spec.(qb.QueryBuilderQuery[qb.LogAggregation])
+	require.True(t, ok, "logs query should dispatch to LogAggregation, got %T", wrapper.Spec)
+
+	require.Len(t, spec.Aggregations, 1)
+	assert.Equal(t, "count()", spec.Aggregations[0].Expression)
+	require.Len(t, spec.Order, 1)
+	assert.Equal(t, "count()", spec.Order[0].Key.Name, "#SIGNOZ_VALUE resolves to the injected default aggregation")
 }
 
 func TestConvertV1WidgetQueryInjectsCountForNoopOnAggregationPanel(t *testing.T) {
@@ -1612,4 +2079,27 @@ func TestConvertV1VariablesDefaultFromSelectedSlice(t *testing.T) {
 	spec := vars[0].Spec.(*ListVariableSpec)
 	require.NotNil(t, spec.DefaultValue)
 	assert.Equal(t, []string{"foo", "bar"}, spec.DefaultValue.SliceValues)
+}
+
+// A single-select v1 variable can't offer an "All" option; the migration drops
+// allowAllValue (and customAllValue) so v2 validation accepts it.
+func TestConvertV1VariablesDropsAllOptionWhenSingleSelect(t *testing.T) {
+	raw := map[string]any{
+		"u-1": map[string]any{
+			"name":           "svc",
+			"type":           "QUERY",
+			"queryValue":     "SELECT 1",
+			"showALLOption":  true,
+			"multiSelect":    false,
+			"customAllValue": "*",
+		},
+	}
+	d := &v1Decoder{}
+	vars := d.convertV1Variables(raw)
+	require.NoError(t, d.errIfHasMalformedFields())
+	require.Len(t, vars, 1)
+	spec := vars[0].Spec.(*ListVariableSpec)
+	assert.False(t, spec.AllowMultiple)
+	assert.False(t, spec.AllowAllValue, "single-select drops the All option")
+	assert.Empty(t, spec.CustomAllValue, "customAllValue dropped with allowAllValue")
 }

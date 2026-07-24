@@ -100,13 +100,11 @@
 	flex-shrink: 0;
 }
 
-/* Flexes into the remaining space and clips so the ResizeObserver can measure
-   how many tags fit before collapsing the rest into a `+N` badge. */
+/* Fixed footprint (2 tags + `+N`): never shrinks, so a long title ellipsizes
+   around it rather than collapsing the tags. */
 .dashboardTags {
 	display: flex;
-	flex: 1 1 0;
+	flex: none;
 	align-items: center;
 	gap: 4px;
-	min-width: 0;
-	overflow: hidden;
 }

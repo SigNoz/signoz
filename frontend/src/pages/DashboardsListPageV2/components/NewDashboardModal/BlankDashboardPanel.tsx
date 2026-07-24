@@ -62,7 +62,6 @@ function BlankDashboardPanel({ onClose }: Props): JSX.Element {
 					layouts: [],
 					panels: {},
 					variables: [],
-					links: [],
 				},
 			});
 			void logEvent(DashboardListEvents.DashboardCreated, {

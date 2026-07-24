@@ -381,13 +381,13 @@ func (d *v1Decoder) mapV1ThresholdsWithLabel(w map[string]any) []ThresholdWithLa
 	out := make([]ThresholdWithLabel, 0, len(rawSlice))
 	for _, t := range rawSlice {
 		color := d.readString(t, "thresholdColor")
-		label := d.readString(t, "thresholdLabel")
-		if color == "" || label == "" {
-			// v2 ThresholdWithLabel requires both; drop entries that wouldn't validate.
+		if color == "" {
+			// Only color is required on ThresholdWithLabel; label is optional, so an
+			// unlabeled threshold must survive.
 			continue
 		}
 		value := d.readFloat(t, "thresholdValue")
-		out = append(out, ThresholdWithLabel{Value: value, Unit: d.readString(t, "thresholdUnit"), Color: color, Label: label})
+		out = append(out, ThresholdWithLabel{Value: value, Unit: d.readString(t, "thresholdUnit"), Color: color, Label: d.readString(t, "thresholdLabel")})
 	}
 	if len(out) == 0 {
 		return nil

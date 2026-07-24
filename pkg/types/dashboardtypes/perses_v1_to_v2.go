@@ -96,6 +96,12 @@ func (storable StorableDashboard) ConvertV1ToV2() (result *DashboardV2, err erro
 	}, nil
 }
 
+// V1Name derives the v2 name column from a v1 dashboard's title. Used to backfill the
+// name of a dashboard whose data fails to migrate, so it stays findable by name.
+func (storable StorableDashboard) V1Name() string {
+	return generateDashboardName(storable.Data.readString("title"))
+}
+
 // ══════════════════════════════════════════════
 // In-place migration (temporary)
 // ══════════════════════════════════════════════

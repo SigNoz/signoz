@@ -1,23 +1,16 @@
 import { type ChangeEvent, useCallback, useState } from 'react';
-import { Modal } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
-import {
-	Bookmark,
-	CircleAlert,
-	PenLine,
-	Plus,
-	Search,
-	Trash2,
-} from '@signozhq/icons';
+import { Bookmark, PenLine, Plus, Search, Trash2 } from '@signozhq/icons';
 import cx from 'classnames';
 
 import { DashboardListEvents } from 'pages/DashboardsListPageV2/constants/events';
 
 import type { SavedView } from '../../types';
 import { type BuiltinView } from '../../utils/views';
+import { useDeleteConfirm } from '../DeleteConfirmModal/useDeleteConfirm';
 import ViewNamePopover from './ViewNamePopover';
 
 import styles from './ViewsRail.module.scss';
@@ -36,7 +29,7 @@ interface Props {
 	onSave: (name: string) => void;
 	onSaveChanges: () => void;
 	onReset: () => void;
-	onDelete: (id: string) => void;
+	onDelete: (id: string) => Promise<void>;
 	onRename: (id: string, name: string) => void;
 }
 
@@ -68,7 +61,7 @@ function ViewsRail({
 	const [saveOpen, setSaveOpen] = useState(false);
 	const [renamingId, setRenamingId] = useState<string | null>(null);
 	const [query, setQuery] = useState('');
-	const [modal, contextHolder] = Modal.useModal();
+	const { contextHolder, confirmDelete } = useDeleteConfirm();
 
 	const q = query.trim().toLowerCase();
 	const matchesQuery = (label: string): boolean =>
@@ -84,9 +77,9 @@ function ViewsRail({
 	const noMatches =
 		!!q && personal.length === 0 && system.length === 0 && custom.length === 0;
 
-	const confirmDelete = useCallback(
+	const onConfirmDelete = useCallback(
 		(id: string, label: string): void => {
-			const { destroy } = modal.confirm({
+			confirmDelete({
 				title: (
 					<Typography.Title level={5}>
 						Delete the{' '}
@@ -95,27 +88,15 @@ function ViewsRail({
 					</Typography.Title>
 				),
 				content: 'This removes the saved view. Your dashboards are not affected.',
-				icon: (
-					<CircleAlert
-						style={{ color: 'var(--danger-background)', marginInlineEnd: '12px' }}
-						size="3xl"
-					/>
-				),
-				okText: 'Delete',
-				okButtonProps: {
-					danger: true,
-					onClick: (e): void => {
-						e.preventDefault();
-						e.stopPropagation();
-						void logEvent(DashboardListEvents.ViewDeleted, {});
-						onDelete(id);
-						destroy();
-					},
+				// Return the delete promise so the modal's Delete button stays loading
+				// until the backend call settles, then closes — matching dashboard delete.
+				onConfirm: (): Promise<void> => {
+					void logEvent(DashboardListEvents.ViewDeleted, {});
+					return onDelete(id);
 				},
-				centered: true,
 			});
 		},
-		[modal, onDelete],
+		[confirmDelete, onDelete],
 	);
 
 	const handleSaveAsView = (name: string): void => {
@@ -182,7 +163,7 @@ function ViewsRail({
 							title="Delete view"
 							onClick={(e): void => {
 								e.stopPropagation();
-								confirmDelete(row.id, row.label);
+								onConfirmDelete(row.id, row.label);
 							}}
 						>
 							<Trash2 size={12} />

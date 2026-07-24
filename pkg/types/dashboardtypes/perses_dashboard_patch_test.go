@@ -30,7 +30,7 @@ const basePostableJSON = `{
 				"spec": {
 					"name": "service",
 					"allowAllValue": true,
-					"allowMultiple": false,
+					"allowMultiple": true,
 					"plugin": {
 						"kind": "signoz/DynamicVariable",
 						"spec": {"name": "service.name", "signal": "metrics"}
