@@ -1,3 +1,11 @@
+// Clamp the dashboard icon so a custom base64 SVG (which may carry no intrinsic
+// size) can't balloon past the breadcrumb row.
+.icon {
+	width: 16px;
+	height: 16px;
+	object-fit: contain;
+}
+
 // Cap the dashboard-name segment so a long title ellipsizes on one line instead
 // of stretching the breadcrumb row.
 .title {
