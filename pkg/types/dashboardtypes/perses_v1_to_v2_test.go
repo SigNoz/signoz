@@ -873,7 +873,7 @@ func TestConvertV1WidgetQueryPrefersV5FilterOverLegacyFilters(t *testing.T) {
 	assert.Equal(t, "service.name = 'checkout'", spec.Filter.Expression, "the v5 filter wins; the legacy filters ('frontend') is dropped")
 }
 
-// An uppercase EXISTS op migrates to a bare EXISTS, not "host.name EXISTS ''".
+// An uppercase EXISTS op migrates to a bare EXISTS, not "host.name EXISTS ”".
 func TestConvertV1WidgetQueryNormalizesUppercaseExistsOp(t *testing.T) {
 	widget := map[string]any{
 		"id":         "l-1",
@@ -1076,6 +1076,44 @@ func TestConvertV1WidgetQueryPreservesCountAttributeOnV5(t *testing.T) {
 			assert.Equal(t, testCase.expectedExpression, spec.Aggregations[0].Expression)
 		})
 	}
+}
+
+// A logs query with no aggregations and an orderBy of #SIGNOZ_VALUE: the value-order
+// key must be rewritten to the injected default aggregation (count()), which requires
+// normalizeOrderByKeys to run after ensureDefaultAggregation.
+func TestConvertV1WidgetQueryRewritesValueOrderKeyAfterDefaultAggregation(t *testing.T) {
+	widget := map[string]any{
+		"id":         "l-1",
+		"panelTypes": "graph",
+		"query": map[string]any{
+			"queryType": "builder",
+			"builder": map[string]any{
+				"queryData": []any{
+					map[string]any{
+						"queryName":  "A",
+						"expression": "A",
+						"dataSource": "logs",
+						"orderBy": []any{
+							map[string]any{"columnName": "#SIGNOZ_VALUE", "order": "desc"},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	queries := (&v1Decoder{}).convertV1WidgetQuery(widget, PanelKindTimeSeries)
+	require.Len(t, queries, 1)
+
+	wrapper, ok := queries[0].Spec.Plugin.Spec.(*BuilderQuerySpec)
+	require.True(t, ok)
+	spec, ok := wrapper.Spec.(qb.QueryBuilderQuery[qb.LogAggregation])
+	require.True(t, ok, "logs query should dispatch to LogAggregation, got %T", wrapper.Spec)
+
+	require.Len(t, spec.Aggregations, 1)
+	assert.Equal(t, "count()", spec.Aggregations[0].Expression)
+	require.Len(t, spec.Order, 1)
+	assert.Equal(t, "count()", spec.Order[0].Key.Name, "#SIGNOZ_VALUE resolves to the injected default aggregation")
 }
 
 func TestConvertV1WidgetQueryInjectsCountForNoopOnAggregationPanel(t *testing.T) {

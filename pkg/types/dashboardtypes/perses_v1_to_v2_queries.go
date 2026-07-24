@@ -182,6 +182,9 @@ func (d *v1Decoder) collectV1QueryEnvelopes(widget map[string]any, panelKind Pan
 			if needsAggregation {
 				ensureDefaultAggregation(q)
 			}
+			// After the aggregation is settled (incl. an injected default), so a
+			// value-order key (#SIGNOZ_VALUE) can resolve against it.
+			normalizeOrderByKeys(q)
 		}
 		queries = dropUnrenderableQueries(queries)
 		for _, q := range queries {
@@ -214,6 +217,7 @@ func (d *v1Decoder) collectV1QueryEnvelopes(widget map[string]any, panelKind Pan
 			}
 			normalizePreV5QueryData(op, widgetType)
 			normalizePreV5GroupBy(op)
+			normalizeOrderByKeys(op)
 			name := d.readString(op, "queryName")
 			out = append(out, traceOperatorEnvelope(name, expression, op))
 		}

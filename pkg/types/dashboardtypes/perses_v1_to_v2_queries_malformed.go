@@ -36,9 +36,10 @@ func normalizePreV5QueryData(query map[string]any, widgetType string) {
 	preV5Migrator.MigrateQueryDataShapeSafe(context.Background(), query, widgetType)
 	normalizePreV5LogTraceAggregations(query)
 	normalizeMetricAggregations(query)
-	normalizeOrderByKeys(query)
 	normalizeFunctionArgs(query)
 	dropInvalidFunctions(query)
+	// normalizeOrderByKeys runs in the caller, after ensureDefaultAggregation: a
+	// value-order key resolves against the aggregation that may have just been injected.
 }
 
 // dropInvalidFunctions removes any function the v5 validator would reject — an unknown
