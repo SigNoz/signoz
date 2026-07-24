@@ -17,7 +17,7 @@
             "name": "project_id",
             "description": "GCP Project ID"
           },
-          "allowAllValue": true,
+          "allowAllValue": false,
           "allowMultiple": false,
           "customAllValue": "",
           "capturingRegexp": "",
@@ -39,7 +39,7 @@
             "name": "instance_id",
             "description": "Instance ID"
           },
-          "allowAllValue": true,
+          "allowAllValue": false,
           "allowMultiple": false,
           "customAllValue": "",
           "capturingRegexp": "",
@@ -158,6 +158,9 @@
                           "name": "F1",
                           "expression": "A * 100",
                           "disabled": false,
+                          "having": {
+                            "expression": ""
+                          },
                           "legend": "{{node_id}}/{{role}}/{{space}}"
                         }
                       }

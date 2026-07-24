@@ -682,6 +682,9 @@
                           "name": "F1",
                           "expression": "D/1024/1024/1024",
                           "disabled": false,
+                          "having": {
+                            "expression": ""
+                          },
                           "legend": "Table size (GB)"
                         }
                       }

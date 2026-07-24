@@ -22,7 +22,7 @@
             "name": "project_id",
             "description": "GCP Project ID"
           },
-          "allowAllValue": true,
+          "allowAllValue": false,
           "allowMultiple": false,
           "customAllValue": "",
           "capturingRegexp": "",

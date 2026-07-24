@@ -17,7 +17,7 @@
             "name": "Account",
             "description": ""
           },
-          "allowAllValue": true,
+          "allowAllValue": false,
           "allowMultiple": false,
           "customAllValue": "",
           "capturingRegexp": "",
@@ -39,7 +39,7 @@
             "name": "Region",
             "description": ""
           },
-          "allowAllValue": true,
+          "allowAllValue": false,
           "allowMultiple": false,
           "customAllValue": "",
           "capturingRegexp": "",
@@ -61,7 +61,7 @@
             "name": "Cluster",
             "description": ""
           },
-          "allowAllValue": true,
+          "allowAllValue": false,
           "allowMultiple": false,
           "customAllValue": "",
           "capturingRegexp": "",
@@ -83,7 +83,7 @@
             "name": "Service",
             "description": ""
           },
-          "allowAllValue": true,
+          "allowAllValue": false,
           "allowMultiple": false,
           "customAllValue": "",
           "capturingRegexp": "",

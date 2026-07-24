@@ -17,7 +17,7 @@
             "name": "azuremonitor.subscription_id",
             "description": "Subscription ID for your Azure Account"
           },
-          "allowAllValue": true,
+          "allowAllValue": false,
           "allowMultiple": false,
           "customAllValue": "",
           "capturingRegexp": "",
@@ -39,7 +39,7 @@
             "name": "name",
             "description": "App Service Name"
           },
-          "allowAllValue": true,
+          "allowAllValue": false,
           "allowMultiple": false,
           "customAllValue": "",
           "capturingRegexp": "",
