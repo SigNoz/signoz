@@ -1,6 +1,7 @@
 """Fixtures for cloud integration tests."""
 
 from collections.abc import Callable
+from dataclasses import dataclass, field
 from http import HTTPStatus
 
 import pytest
@@ -18,6 +19,29 @@ from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)
+
+
+# Per-provider config shape.
+@dataclass(frozen=True)
+class ProviderAccountSpec:
+    # provider slug used in the URL path and config key (e.g. "aws", "gcp").
+    provider: str
+    # params for the account created by default.
+    initial_params: dict
+    # params for the config an update (PUT) test sends.
+    updated_params: dict
+    # params -> the provider-keyed `config` block for a POST/PUT body.
+    build_config: Callable[[dict], dict]
+    # params -> the full config block the API is expected to return under
+    # config[provider] on GET/list. This may differ from what build_config sends:
+    # e.g. AWS accepts deploymentRegion on POST but the API does not echo it back.
+    expected_config: Callable[[dict], dict]
+    # id shown in parametrized test names; defaults to the provider slug.
+    id: str = field(default="")
+
+    def __post_init__(self) -> None:
+        if not self.id:
+            object.__setattr__(self, "id", self.provider)
 
 
 @pytest.fixture(scope="function")
@@ -97,19 +121,26 @@ def create_cloud_integration_account(
         cloud_provider: str = "aws",
         deployment_region: str = "us-east-1",
         regions: list[str] | None = None,
+        config: dict | None = None,
     ) -> dict:
-        if regions is None:
-            regions = ["us-east-1"]
-
-        endpoint = f"/api/v1/cloud_integrations/{cloud_provider}/accounts"
-
-        request_payload = {
-            "config": {
+        # `config`, when given, is the fully-formed provider-keyed config block
+        # (e.g. built via a ProviderAccountSpec.build_config) and is used as-is.
+        # Otherwise fall back to the AWS shape built from deployment_region/regions,
+        # preserving existing AWS callers.
+        if config is None:
+            if regions is None:
+                regions = ["us-east-1"]
+            config = {
                 cloud_provider: {
                     "deploymentRegion": deployment_region,
                     "regions": regions,
                 }
-            },
+            }
+
+        endpoint = f"/api/v1/cloud_integrations/{cloud_provider}/accounts"
+
+        request_payload = {
+            "config": config,
             "credentials": {
                 "sigNozApiURL": "https://test-deployment.test.signoz.cloud",
                 "sigNozApiKey": "test-api-key-789",

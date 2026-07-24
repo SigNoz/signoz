@@ -137,6 +137,13 @@ func NewAccountFromStorable(storableAccount *StorableCloudIntegration) (*Account
 			return nil, err
 		}
 		account.Config.Azure = azureConfig
+	case CloudProviderTypeGCP:
+		gcpConfig := new(GCPAccountConfig)
+		err := json.Unmarshal([]byte(storableAccount.Config), gcpConfig)
+		if err != nil {
+			return nil, err
+		}
+		account.Config.GCP = gcpConfig
 	}
 
 	if storableAccount.LastAgentReport != nil {
