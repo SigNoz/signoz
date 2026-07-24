@@ -1,4 +1,4 @@
-import {
+﻿import {
 	MouseEvent,
 	ReactNode,
 	useCallback,
@@ -282,7 +282,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 				.filter((item): item is SidebarItem => item !== undefined);
 		}
 
-		// No preference, or empty array → use defaults
+		// No preference, or empty array â†’ use defaults
 		return defaultMoreMenuItems.filter((item) => item.isPinned);
 	}, [userPreferences]);
 
@@ -482,6 +482,16 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		}
 	};
 
+	const getItemHref = useCallback(
+		(key: string): string => {
+			const params = new URLSearchParams(search);
+			const availableParams = routeConfig[key];
+			const queryString = getQueryString(availableParams || [], params);
+			return buildNavUrl(key, queryString);
+		},
+		[search],
+	);
+
 	const onClickHandler = useCallback(
 		(key: string, event: MouseEvent | null) => {
 			const params = new URLSearchParams(search);
@@ -664,7 +674,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		} else if (item.key === 'quick-search') {
 			openCmdK();
 		} else if (item.key === aiAssistantMenuItem.key) {
-			// Resume the active conversation when one exists — without this
+			// Resume the active conversation when one exists â€” without this
 			// every sidenav click hits `/ai-assistant/new` which the page
 			// resolves by spawning a fresh thread. Only fall back to /new
 			// when there's no active conversation to resume.
@@ -840,6 +850,11 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 						handleMenuItemClick(event, item);
 					}}
 					isPinned={isPinnedItem(item)}
+					href={
+						item.key !== 'quick-search' && item.key !== aiAssistantMenuItem.key
+						? getItemHref(String(item.key))
+						: undefined
+					}
 				/>
 			))}
 		</>
