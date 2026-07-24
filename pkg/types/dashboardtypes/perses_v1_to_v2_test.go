@@ -1020,6 +1020,64 @@ func TestConvertV1WidgetQueryRebuildsFlatLogsAggregation(t *testing.T) {
 	assert.Equal(t, "sum(bytes)", spec.Aggregations[0].Expression)
 }
 
+// The v5 shape-safe path preserves an explicit count(attribute) in aggregations[],
+// so no dashboardtypes-level normalization is needed for v5 dashboards. (The v4
+// full-migrate path clobbers it to count() — that needs a separate fix.)
+func TestConvertV1WidgetQueryPreservesCountAttributeOnV5(t *testing.T) {
+	testCases := []struct {
+		scenario           string
+		queryData          map[string]any
+		expectedExpression string
+	}{
+		{
+			scenario: "aggregations[] count(attribute) only",
+			queryData: map[string]any{
+				"queryName":    "A",
+				"expression":   "A",
+				"dataSource":   "logs",
+				"aggregations": []any{map[string]any{"expression": "count(service.name)"}},
+			},
+			expectedExpression: "count(service.name)",
+		},
+		{
+			scenario: "flat count+attr alongside aggregations[] count(attribute)",
+			queryData: map[string]any{
+				"queryName":          "A",
+				"expression":         "A",
+				"dataSource":         "logs",
+				"aggregateOperator":  "count",
+				"aggregateAttribute": map[string]any{"key": "service.name"},
+				"aggregations":       []any{map[string]any{"expression": "count(service.name)"}},
+			},
+			expectedExpression: "count(service.name)",
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.scenario, func(t *testing.T) {
+			widget := map[string]any{
+				"id":         "l-1",
+				"panelTypes": "graph",
+				"query": map[string]any{
+					"queryType": "builder",
+					"builder":   map[string]any{"queryData": []any{testCase.queryData}},
+				},
+			}
+
+			queries := (&v1Decoder{}).convertV1WidgetQuery(widget, PanelKindTimeSeries)
+			require.Len(t, queries, 1)
+
+			wrapper, ok := queries[0].Spec.Plugin.Spec.(*BuilderQuerySpec)
+			require.True(t, ok)
+			spec, ok := wrapper.Spec.(qb.QueryBuilderQuery[qb.LogAggregation])
+			require.True(t, ok, "logs query should dispatch to LogAggregation, got %T", wrapper.Spec)
+
+			require.Len(t, spec.Aggregations, 1)
+			assert.Equal(t, testCase.expectedExpression, spec.Aggregations[0].Expression)
+		})
+	}
+}
+
 func TestConvertV1WidgetQueryInjectsCountForNoopOnAggregationPanel(t *testing.T) {
 	// A logs query with the list-style "noop" operator placed on an aggregation
 	// panel (graph). createAggregationsShapeSafe drops noop, leaving no aggregation;
