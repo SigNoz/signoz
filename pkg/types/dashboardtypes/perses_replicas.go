@@ -39,16 +39,6 @@ func (d Display) Validate(label, path string) error {
 }
 
 // ══════════════════════════════════════════════
-// Datasource
-// ══════════════════════════════════════════════
-
-type DatasourceSpec struct {
-	Display *common.Display  `json:"display,omitempty"`
-	Default bool             `json:"default"`
-	Plugin  DatasourcePlugin `json:"plugin"`
-}
-
-// ══════════════════════════════════════════════
 // Panel
 // ══════════════════════════════════════════════
 
