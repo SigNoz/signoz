@@ -25,16 +25,15 @@ var (
 )
 
 // scopedTraceStatementBuilder builds a trace list scoped to one span category
-// (e.g. gen_ai spans). The query shape is fixed; BaseConditionProvider decides which
-// spans are in scope and ColumnProvider decides the per-trace columns, so a new
-// category only needs a new pair of providers.
+// (e.g. gen_ai spans). The query shape is fixed; the TraceScope decides which spans
+// are in scope and which per-trace columns to compute, so a new category only needs
+// a new scope.
 type scopedTraceStatementBuilder struct {
 	logger                    *slog.Logger
 	metadataStore             telemetrytypes.MetadataStore
 	fm                        qbtypes.FieldMapper
 	cb                        qbtypes.ConditionBuilder
-	baseCond                  BaseConditionProvider
-	columnProvider            ColumnProvider
+	scope                     TraceScope
 	traceStmtBuilder          qbtypes.StatementBuilder[qbtypes.TraceAggregation]
 	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation]
 }
@@ -48,8 +47,7 @@ var _ qbtypes.StatementBuilder[qbtypes.TraceAggregation] = (*scopedTraceStatemen
 func NewScopedTraceStatementBuilder(
 	settings factory.ProviderSettings,
 	metadataStore telemetrytypes.MetadataStore,
-	baseCond BaseConditionProvider,
-	columnProvider ColumnProvider,
+	scope TraceScope,
 	traceStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation],
 	fl flagger.Flagger,
 ) qbtypes.StatementBuilder[qbtypes.TraceAggregation] {
@@ -76,8 +74,7 @@ func NewScopedTraceStatementBuilder(
 		metadataStore:             metadataStore,
 		fm:                        fm,
 		cb:                        cb,
-		baseCond:                  baseCond,
-		columnProvider:            columnProvider,
+		scope:                     scope,
 		traceStmtBuilder:          traceStmtBuilder,
 		resourceFilterStmtBuilder: resourceFilterStmtBuilder,
 	}
@@ -112,7 +109,7 @@ func (b *scopedTraceStatementBuilder) buildDelegated(
 	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
 	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
-	gate := b.baseCond.FilterExpression()
+	gate := b.scope.FilterExpression
 	expr := gate
 	if query.Filter != nil && strings.TrimSpace(query.Filter.Expression) != "" {
 		expr = fmt.Sprintf("(%s) AND (%s)", gate, query.Filter.Expression)
@@ -290,10 +287,10 @@ func (b *scopedTraceStatementBuilder) resolverFieldKeys() []*telemetrytypes.Tele
 		seen[k.Name] = struct{}{}
 		out = append(out, k)
 	}
-	for _, k := range b.baseCond.FieldKeys() {
+	for _, k := range b.scope.FieldKeys {
 		add(k)
 	}
-	for _, c := range b.columnProvider.Columns() {
+	for _, c := range b.scope.Columns {
 		for _, k := range c.Expr.keys {
 			add(k)
 		}
@@ -304,7 +301,7 @@ func (b *scopedTraceStatementBuilder) resolverFieldKeys() []*telemetrytypes.Tele
 // resolveMask builds the per-span in-scope mask: OR of resolved EXISTS predicates
 // over the base condition's field keys.
 func (b *scopedTraceStatementBuilder) resolveMask(ctx context.Context, orgID valuer.UUID, start, end uint64, mapper *fieldMapper) (string, []any, error) {
-	fieldKeys := b.baseCond.FieldKeys()
+	fieldKeys := b.scope.FieldKeys
 	parts := make([]string, 0, len(fieldKeys))
 	var args []any
 	for _, key := range fieldKeys {
@@ -330,7 +327,7 @@ type resolvedColumn struct {
 // resolveColumns turns the declarative columns into SQL through the resolver, so all
 // attribute access goes through the field mapper / condition builder.
 func (b *scopedTraceStatementBuilder) resolveColumns(ctx context.Context, orgID valuer.UUID, start, end uint64, mapper *fieldMapper) ([]resolvedColumn, error) {
-	cols := b.columnProvider.Columns()
+	cols := b.scope.Columns
 	out := make([]resolvedColumn, 0, len(cols))
 	for _, c := range cols {
 		expr, args, err := c.Expr.render(ctx, orgID, start, end, mapper)
@@ -362,7 +359,7 @@ func (b *scopedTraceStatementBuilder) resolveListOrders(order []qbtypes.OrderBy,
 	}
 
 	if len(order) == 0 {
-		return []listOrder{{alias: b.columnProvider.DefaultOrderAlias(), direction: "DESC"}}, nil
+		return []listOrder{{alias: b.scope.DefaultOrderAlias, direction: "DESC"}}, nil
 	}
 
 	orders := make([]listOrder, 0, len(order))
@@ -548,7 +545,10 @@ func (b *scopedTraceStatementBuilder) buildMatchedCTE(start, end, startBucket, e
 			return "", nil, err
 		}
 		if hv != "" {
-			having = append(having, hv)
+			// hv carries user text with values inlined by the rewriter; escape it so a
+			// literal $ can't be read as an interpolation marker at Build time. The
+			// countIf entries above hold live placeholders and must stay unescaped.
+			having = append(having, sqlbuilder.Escape(hv))
 		}
 	}
 	if len(having) > 0 {
@@ -644,11 +644,14 @@ func summaryTable() string {
 }
 
 // aggregateAliasSet is every trace-level column alias, used to classify filter keys
-// as trace-level vs span-level.
+// as trace-level vs span-level. Derived from the scope's columns so a new column
+// can't be forgotten; SpanLevel columns are filtered span-level, so skip them.
 func (b *scopedTraceStatementBuilder) aggregateAliasSet() map[string]struct{} {
-	set := make(map[string]struct{}, len(b.columnProvider.AggregateAliases()))
-	for _, a := range b.columnProvider.AggregateAliases() {
-		set[a] = struct{}{}
+	set := make(map[string]struct{}, len(b.scope.Columns))
+	for _, c := range b.scope.Columns {
+		if !c.SpanLevel {
+			set[c.Alias] = struct{}{}
+		}
 	}
 	return set
 }

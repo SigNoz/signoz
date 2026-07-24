@@ -1,8 +1,6 @@
 package implinframonitoring
 
 import (
-	"slices"
-
 	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -51,11 +49,45 @@ var clusterCountAttrKeys = []string{
 }
 
 // clusterMetricNamesListForCounts is the metric universe for per-cluster distinct
-// counts. It unions the pod universe (carries namespace + workload owner labels)
-// with the cluster/node universe (carries k8s.node.name), so a single query can
-// count nodes, namespaces, and workloads per cluster. Overlapping pod
-// phase/status metrics are left in — harmless in a metric_name IN (...) list.
-var clusterMetricNamesListForCounts = slices.Concat(podsTableMetricNamesList, clustersTableMetricNamesList)
+// counts.
+var clusterMetricNamesListForCounts = []string{
+	// for nodes lookup
+	"k8s.node.cpu.usage",
+	"k8s.node.allocatable_cpu",
+	"k8s.node.memory.working_set",
+	"k8s.node.allocatable_memory",
+	"k8s.node.condition_ready",
+
+	// for daemonsets lookup
+	"k8s.daemonset.desired_scheduled_nodes",
+	"k8s.daemonset.current_scheduled_nodes",
+	"k8s.daemonset.ready_nodes",
+	"k8s.daemonset.misscheduled_nodes",
+
+	// for deployments lookup
+	"k8s.deployment.desired",
+	"k8s.deployment.available",
+
+	// for jobs lookup
+	"k8s.job.active_pods",
+	"k8s.job.failed_pods",
+	"k8s.job.successful_pods",
+	"k8s.job.desired_successful_pods",
+
+	// for statefulsets lookup
+	"k8s.statefulset.desired_pods",
+	"k8s.statefulset.current_pods",
+
+	// for namespaces and general lookup for all
+	"k8s.pod.cpu.usage",
+	"k8s.pod.cpu_request_utilization",
+	"k8s.pod.cpu_limit_utilization",
+	"k8s.pod.memory.working_set",
+	"k8s.pod.memory_request_utilization",
+	"k8s.pod.memory_limit_utilization",
+	"k8s.pod.phase",
+	"k8s.pod.status_reason",
+}
 
 var orderByToClustersQueryNames = map[string][]string{
 	inframonitoringtypes.ClustersOrderByCPU:               {"A"},

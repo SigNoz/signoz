@@ -79,28 +79,26 @@ func NewKeyNotFoundWarning(name string) string {
 // key is honored as-is; a bare key defaults to attribute context with the data type
 // inferred from the operand, or fanned out across string/number/bool without one.
 func SynthesizeKeys(field *telemetrytypes.TelemetryFieldKey, value any) []*telemetrytypes.TelemetryFieldKey {
-	base := *field
-	if base.FieldContext == telemetrytypes.FieldContextUnspecified {
-		base.FieldContext = telemetrytypes.FieldContextAttribute
+	fieldContext := field.FieldContext
+	if fieldContext == telemetrytypes.FieldContextUnspecified {
+		fieldContext = telemetrytypes.FieldContextAttribute
 	}
+	fieldDataType := field.FieldDataType
 	// Resource values are strings; pin the type so operand coercion applies.
-	if base.FieldContext == telemetrytypes.FieldContextResource &&
-		base.FieldDataType == telemetrytypes.FieldDataTypeUnspecified {
-		base.FieldDataType = telemetrytypes.FieldDataTypeString
+	if fieldContext == telemetrytypes.FieldContextResource &&
+		fieldDataType == telemetrytypes.FieldDataTypeUnspecified {
+		fieldDataType = telemetrytypes.FieldDataTypeString
 	}
 
 	// A set data type needs only one synthesized key.
-	if base.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
-		clone := base
-		return []*telemetrytypes.TelemetryFieldKey{&clone}
+	if fieldDataType != telemetrytypes.FieldDataTypeUnspecified {
+		return []*telemetrytypes.TelemetryFieldKey{telemetrytypes.NewTelemetryFieldKey(field.Name, fieldContext, fieldDataType)}
 	}
 
 	dataTypes := inferDataTypesFromOperand(value)
 	keys := make([]*telemetrytypes.TelemetryFieldKey, 0, len(dataTypes))
 	for _, dt := range dataTypes {
-		clone := base
-		clone.FieldDataType = dt
-		keys = append(keys, &clone)
+		keys = append(keys, telemetrytypes.NewTelemetryFieldKey(field.Name, fieldContext, dt))
 	}
 	return keys
 }

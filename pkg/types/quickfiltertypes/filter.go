@@ -191,7 +191,7 @@ func NewDefaultQuickFilter(orgID valuer.UUID) ([]*StorableQuickFilter, error) {
 		{"key": "host.name", "dataType": "float64", "type": "Sum"},
 	}
 
-	// AI observability (source=ai trace explorer): categorical gen_ai span attributes
+	// AI observability (builder_ai_query trace explorer): categorical gen_ai span attributes
 	// plus the usual service/environment/error narrowing. The per-trace aggregates
 	// (trace.output_tokens, …) are threshold filters with no value list, so they are
 	// not quick filters.

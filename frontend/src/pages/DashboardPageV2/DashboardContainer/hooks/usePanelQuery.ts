@@ -19,7 +19,10 @@ import {
 } from '../queryV5/buildQueryRangeRequest';
 import type { PanelPagination, PanelQueryData } from '../queryV5/types';
 import { getRawResults } from '../queryV5/v5ResponseData';
-import { getReferencedVariables } from '../queryV5/getReferencedVariables';
+import {
+	getReferencedVariables,
+	queryReferencesAnyVariable,
+} from '../queryV5/getReferencedVariables';
 import { getBuilderQueries } from '../Panels/utils/getBuilderQueries';
 import { PANEL_KIND_TO_PANEL_TYPE } from '../Panels/types/panelKind';
 import { selectResolvedVariables } from '../store/slices/variableSelectionSlice';
@@ -57,9 +60,9 @@ export interface PanelQueryTimeOverride {
 export interface UsePanelQueryResult {
 	/** Raw V5 fetch result — response + the request that produced it. */
 	data: PanelQueryData;
-	/** First fetch only (no cached data yet) — drives the full-panel loader. A background refetch does NOT set this; use `isFetching`. */
+	/** First fetch only (no cached data yet), OR waiting on an unresolved referenced variable — drives the full-panel loader. A background refetch does NOT set this; use `isFetching`. */
 	isLoading: boolean;
-	/** Any request in flight, including a background refetch over stale data — drives a "refreshing" affordance, never a blank panel. */
+	/** Any request in flight (including a background refetch over stale data), OR waiting on an unresolved referenced variable — drives the loader / "refreshing" affordance, never a blank panel. */
 	isFetching: boolean;
 	/** Showing a prior page's data (keepPreviousData) while the next page loads — list renderers swap in skeleton rows. */
 	isPreviousData: boolean;
@@ -131,6 +134,13 @@ export function usePanelQuery({
 		return getReferencedVariables(queries, allNames);
 	}, [queries, fetchContext]);
 
+	// Detected without the fetch context, so the gate below can hold even before it
+	// initializes.
+	const hasVariableReference = useMemo(
+		() => queryReferencesAnyVariable(queries),
+		[queries],
+	);
+
 	const scopedVariables = useMemo(() => {
 		const scoped: typeof variables = {};
 		referencedVariableNames.forEach((name) => {
@@ -141,11 +151,11 @@ export function usePanelQuery({
 		return scoped;
 	}, [variables, referencedVariableNames]);
 
-	// First-load gate: hold the panel in its loading state until every referenced
-	// variable has resolved a value.
-	const isWaitingOnVariable = useIsPanelWaitingOnVariable(
-		referencedVariableNames,
-	);
+	// Hold until referenced variables resolve; also hold before the context is ready
+	// (we can't yet know which variables to substitute, so firing would drop `$var`s).
+	const isWaitingOnVariable =
+		useIsPanelWaitingOnVariable(referencedVariableNames) ||
+		(hasVariableReference && !fetchContext);
 
 	// `visualization` exists only on variants that declare it — read via `in` narrowing over the
 	// generated union (no cast). `fillSpans` (TimeSeries/Bar only) → formatOptions.fillGaps.
@@ -309,8 +319,10 @@ export function usePanelQuery({
 
 	return {
 		data,
-		isLoading: response.isLoading,
-		isFetching: response.isFetching,
+		// A disabled (waiting-on-variable) query reports neither loading nor fetching, so
+		// fold the wait in — else the panel body falls through to "No data" mid-load.
+		isLoading: isWaitingOnVariable || response.isLoading,
+		isFetching: isWaitingOnVariable || response.isFetching,
 		isPreviousData: response.isPreviousData,
 		error: response.error ?? null,
 		refetch: response.refetch,

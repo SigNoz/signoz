@@ -220,6 +220,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewRemoveOrganizationTuplesFactory(sqlstore),
 		sqlmigration.NewAddRoleTransactionGroupsFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddTagUniqueIndexFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddTelemetryTuplesFactory(sqlstore),
 		sqlmigration.NewAddAiObservabilityQuickFiltersFactory(sqlstore),
 	)
 }

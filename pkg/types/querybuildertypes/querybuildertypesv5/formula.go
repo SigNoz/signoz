@@ -22,10 +22,10 @@ type QueryBuilderFormula struct {
 	// expression to apply to the query
 	Expression string `json:"expression"`
 
-	Disabled bool `json:"disabled,omitempty"`
+	Disabled bool `json:"disabled"`
 
 	// order by keys and directions
-	Order []OrderBy `json:"order,omitempty"`
+	Order []OrderBy `json:"order,omitzero"`
 
 	// limit the maximum number of rows to return
 	Limit int `json:"limit,omitempty"`
@@ -34,9 +34,9 @@ type QueryBuilderFormula struct {
 	Having *Having `json:"having,omitempty"`
 
 	// functions to apply to the formula result
-	Functions []Function `json:"functions,omitempty"`
+	Functions []Function `json:"functions,omitzero"`
 
-	Legend string `json:"legend,omitempty"`
+	Legend string `json:"legend"`
 }
 
 // Copy creates a deep copy of the QueryBuilderFormula.

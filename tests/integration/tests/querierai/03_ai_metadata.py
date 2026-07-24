@@ -1,5 +1,5 @@
 """
-Integration tests for the fields metadata API with source="ai".
+Integration tests for the fields metadata API with type="builder_ai_query".
 
 The metadata store serves two synthetic key sets for AI-enabled orgs (the suite's
 conftest boots SigNoz with the enable_ai_observability flag): the gen_ai semconv
@@ -23,8 +23,8 @@ AI_TRACE_AGGREGATES = {
     "input_tokens",
     "output_tokens",
     "total_tokens",
-    "estimated_cost_usd",
-    "max_llm_latency_ns",
+    "estimated_total_cost",
+    "max_llm_duration_nano",
     "last_activity_time",
 }
 
@@ -54,7 +54,7 @@ def test_ai_fields_trace_context_lists_only_aggregates(
     filterable aggregates — the ingested-key scan must not leak into it."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    keys = _get_keys(signoz, token, {"source": "ai", "fieldContext": "trace"})
+    keys = _get_keys(signoz, token, {"type": "builder_ai_query", "fieldContext": "trace"})
     assert set(keys.keys()) == AI_TRACE_AGGREGATES, keys
     assert _trace_context_names(keys) == AI_TRACE_AGGREGATES
 
@@ -68,7 +68,7 @@ def test_ai_fields_trace_prefix_search(
     suggests the matching aggregate."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    keys = _get_keys(signoz, token, {"source": "ai", "searchText": "trace.output"})
+    keys = _get_keys(signoz, token, {"type": "builder_ai_query", "searchText": "trace.output"})
     assert _trace_context_names(keys) == {"output_tokens"}, keys
 
 
@@ -81,19 +81,19 @@ def test_ai_fields_bare_prefix_suggests_both_classes(
     side — both served pre-ingestion for flag-enabled orgs."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    keys = _get_keys(signoz, token, {"source": "ai", "searchText": "output_tok"})
+    keys = _get_keys(signoz, token, {"type": "builder_ai_query", "searchText": "output_tok"})
     assert "output_tokens" in _trace_context_names(keys), keys
     assert "gen_ai.usage.output_tokens" in keys, keys
     assert any(k["fieldContext"] == "attribute" for k in keys["gen_ai.usage.output_tokens"])
 
 
-def test_ai_fields_aggregates_require_ai_source(
+def test_ai_fields_aggregates_require_ai_query_type(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
-    """Without source=ai the trace aggregates are not suggested; the gen_ai semconv
-    attributes still are (flag-gated, not source-gated)."""
+    """Without type=builder_ai_query the trace aggregates are not suggested; the gen_ai
+    semconv attributes still are (flag-gated, not query-type-gated)."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     keys = _get_keys(signoz, token, {"searchText": "output_tok"})

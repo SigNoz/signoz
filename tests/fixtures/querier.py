@@ -78,6 +78,7 @@ class BuilderQuery:
     signal: str
     name: str = "A"
     source: str | None = None
+    query_type: str = "builder_query"
     limit: int | None = None
     offset: int | None = None
     filter_expression: str | None = None
@@ -114,7 +115,7 @@ class BuilderQuery:
         if self.step_interval is not None:
             spec["stepInterval"] = self.step_interval
 
-        return {"type": "builder_query", "spec": spec}
+        return {"type": self.query_type, "spec": spec}
 
 
 @dataclass
@@ -579,6 +580,7 @@ def build_scalar_query(
     having_expression: str | None = None,
     step_interval: int = DEFAULT_STEP_INTERVAL,
     disabled: bool = False,
+    functions: list[dict] | None = None,
 ) -> dict:
     spec: dict[str, Any] = {
         "name": name,
@@ -606,7 +608,39 @@ def build_scalar_query(
     if having_expression:
         spec["having"] = {"expression": having_expression}
 
+    if functions:
+        spec["functions"] = functions
+
     return {"type": "builder_query", "spec": spec}
+
+
+def build_traces_scalar_query(
+    aggregations: list[dict],
+    *,
+    name: str = "A",
+    group_by: list[dict] | None = None,
+    order: list[dict] | None = None,
+    limit: int | None = None,
+    filter_expression: str | None = None,
+    having_expression: str | None = None,
+    step_interval: int = DEFAULT_STEP_INTERVAL,
+    disabled: bool = False,
+    functions: list[dict] | None = None,
+) -> dict:
+    """build_scalar_query pinned to the traces signal, with name defaulting to 'A'."""
+    return build_scalar_query(
+        name=name,
+        signal="traces",
+        aggregations=aggregations,
+        group_by=group_by,
+        order=order,
+        limit=limit,
+        filter_expression=filter_expression,
+        having_expression=having_expression,
+        step_interval=step_interval,
+        disabled=disabled,
+        functions=functions,
+    )
 
 
 def build_raw_query(

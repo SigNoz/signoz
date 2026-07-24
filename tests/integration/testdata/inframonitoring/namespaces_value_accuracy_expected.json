@@ -5,7 +5,7 @@
       "namespaceCPU": 1.0,
       "namespaceMemory": 200000000.0,
       "podCountsByPhase": {"pending": 0, "running": 2, "succeeded": 0, "failed": 0, "unknown": 0},
-      "counts": {"deployments": 2, "daemonSets": 0, "jobs": 0, "statefulSets": 0}
+      "counts": {"deployments": 2, "daemonSets": 1, "jobs": 1, "statefulSets": 0}
     },
     {
       "namespaceName": "acc-ns-2",

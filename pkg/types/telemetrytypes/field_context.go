@@ -186,5 +186,6 @@ func (FieldContext) Enum() []any {
 		FieldContextAttribute,
 		// FieldContextEvent,
 		FieldContextBody,
+		FieldContextUnspecified,
 	}
 }

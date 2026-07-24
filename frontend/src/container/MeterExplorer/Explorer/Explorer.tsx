@@ -13,12 +13,12 @@ import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapp
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
+import { ExportDashboard } from 'hooks/dashboard/useExportDashboards';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { Filter } from '@signozhq/icons';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
@@ -81,7 +81,7 @@ function Explorer(): JSX.Element {
 
 	const handleExport = useCallback(
 		(
-			dashboard: Dashboard | null,
+			dashboard: ExportDashboard | null,
 			_isNewDashboard?: boolean,
 			queryToExport?: Query,
 		): void => {

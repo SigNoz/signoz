@@ -5,7 +5,7 @@ import { DialogWrapper } from '@signozhq/ui/dialog';
 import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 import { Input } from 'antd';
-import type { DashboardLinkDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesLinkDTO } from 'api/generated/services/sigNoz.schemas';
 
 import type { UrlParam, VariableItem } from './types';
 import {
@@ -21,10 +21,10 @@ import styles from './ContextLinksSection.module.scss';
 interface ContextLinkDialogProps {
 	open: boolean;
 	/** The link being edited, or null when adding a new one. */
-	initialLink: DashboardLinkDTO | null;
+	initialLink: DashboardtypesLinkDTO | null;
 	variables: VariableItem[];
 	onOpenChange: (open: boolean) => void;
-	onSave: (link: DashboardLinkDTO) => void;
+	onSave: (link: DashboardtypesLinkDTO) => void;
 }
 
 const URL_ERROR = 'URL must start with http(s)://, /, or {{variable}}/';

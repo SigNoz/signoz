@@ -1480,34 +1480,3 @@ func TestMetricAggregationValidateForType(t *testing.T) {
 		})
 	}
 }
-
-func TestQueryBuilderQuery_ValidateSource(t *testing.T) {
-	cases := []struct {
-		name    string
-		signal  telemetrytypes.Signal
-		source  telemetrytypes.Source
-		wantErr bool
-	}{
-		{name: "ai source on traces", signal: telemetrytypes.SignalTraces, source: telemetrytypes.SourceAI},
-		{name: "ai source on logs rejected", signal: telemetrytypes.SignalLogs, source: telemetrytypes.SourceAI, wantErr: true},
-		{name: "ai source on metrics rejected", signal: telemetrytypes.SignalMetrics, source: telemetrytypes.SourceAI, wantErr: true},
-		{name: "ai source on unspecified signal rejected", signal: telemetrytypes.SignalUnspecified, source: telemetrytypes.SourceAI, wantErr: true},
-		{name: "no source on logs", signal: telemetrytypes.SignalLogs, source: telemetrytypes.SourceUnspecified},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			q := QueryBuilderQuery[TraceAggregation]{Signal: tc.signal, Source: tc.source}
-			err := q.validateSource()
-			if tc.wantErr && err == nil {
-				t.Errorf("expected error, got nil")
-			}
-			if !tc.wantErr && err != nil {
-				t.Errorf("expected no error, got: %v", err)
-			}
-			if tc.wantErr && !contains(err.Error(), "only supported for the traces signal") {
-				t.Errorf("unexpected error message: %v", err)
-			}
-		})
-	}
-}

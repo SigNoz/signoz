@@ -7,7 +7,7 @@ import {
 	getSupportedQueryTypes,
 	getSupportedSignals,
 	isPanelCombinationValid,
-	isQueryTypeSupported,
+	isQueryTypeSupportedByPanelKind,
 	isSignalSupported,
 	resolveQueryType,
 } from '../capabilities';
@@ -48,14 +48,24 @@ describe('panel capabilities guard', () => {
 		});
 
 		it('Table and Pie do not support PromQL', () => {
-			expect(isQueryTypeSupported('signoz/TablePanel', PROM)).toBe(false);
-			expect(isQueryTypeSupported('signoz/PieChartPanel', PROM)).toBe(false);
+			expect(isQueryTypeSupportedByPanelKind('signoz/TablePanel', PROM)).toBe(
+				false,
+			);
+			expect(isQueryTypeSupportedByPanelKind('signoz/PieChartPanel', PROM)).toBe(
+				false,
+			);
 		});
 
 		it('List only supports Query Builder', () => {
-			expect(isQueryTypeSupported('signoz/ListPanel', QUERY_BUILDER)).toBe(true);
-			expect(isQueryTypeSupported('signoz/ListPanel', CLICKHOUSE)).toBe(false);
-			expect(isQueryTypeSupported('signoz/ListPanel', PROM)).toBe(false);
+			expect(
+				isQueryTypeSupportedByPanelKind('signoz/ListPanel', QUERY_BUILDER),
+			).toBe(true);
+			expect(isQueryTypeSupportedByPanelKind('signoz/ListPanel', CLICKHOUSE)).toBe(
+				false,
+			);
+			expect(isQueryTypeSupportedByPanelKind('signoz/ListPanel', PROM)).toBe(
+				false,
+			);
 		});
 	});
 

@@ -81,7 +81,6 @@ func prepareQuerierForLogs(t *testing.T, telemetryStore telemetrystore.Telemetry
 		telemetrylogs.DefaultFullTextColumn,
 		logFieldMapper,
 		logConditionBuilder,
-		telemetrylogs.GetBodyJSONKey,
 		fl,
 	)
 	logStmtBuilder := telemetrylogs.NewLogQueryStatementBuilder(
@@ -91,7 +90,6 @@ func prepareQuerierForLogs(t *testing.T, telemetryStore telemetrystore.Telemetry
 		logConditionBuilder,
 		logAggExprRewriter,
 		telemetrylogs.DefaultFullTextColumn,
-		telemetrylogs.GetBodyJSONKey,
 		fl,
 		nil,
 		false,
@@ -135,7 +133,7 @@ func prepareQuerierForTraces(t *testing.T, telemetryStore telemetrystore.Telemet
 	traceConditionBuilder := telemetrytraces.NewConditionBuilder(traceFieldMapper)
 
 	fl := flaggertest.New(t)
-	traceAggExprRewriter := querybuilder.NewAggExprRewriter(providerSettings, nil, traceFieldMapper, traceConditionBuilder, nil, fl)
+	traceAggExprRewriter := querybuilder.NewAggExprRewriter(providerSettings, nil, traceFieldMapper, traceConditionBuilder, fl)
 	traceStmtBuilder := telemetrytraces.NewTraceQueryStatementBuilder(
 		providerSettings,
 		metadataStore,

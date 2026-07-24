@@ -6,6 +6,7 @@ import (
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -101,8 +102,10 @@ func (m *fieldMapper) ColumnExpressionFor(
 	orgID valuer.UUID,
 	tsStart, tsEnd uint64,
 	field *telemetrytypes.TelemetryFieldKey,
+	requiredDataType telemetrytypes.FieldDataType,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
+	resolved := field
 	fieldExpression, err := m.FieldFor(ctx, orgID, tsStart, tsEnd, field)
 	if errors.Is(err, qbtypes.ErrColumnNotFound) {
 		keysForField := keys[field.Name]
@@ -115,8 +118,29 @@ func (m *fieldMapper) ColumnExpressionFor(
 				return "", wrappedErr
 			}
 		} else {
+			resolved = keysForField[0]
 			fieldExpression, _ = m.FieldFor(ctx, orgID, tsStart, tsEnd, keysForField[0])
 		}
+	}
+
+	// Group-by/order (String) and aggregation (String/Float64): exists-guarded and coerced
+	// to requiredDataType, returned bare (the caller adds any alias). Raw select
+	// (Unspecified) returns the aliased column expression.
+	if requiredDataType != telemetrytypes.FieldDataTypeUnspecified {
+		var dummyValue any = ""
+		if requiredDataType == telemetrytypes.FieldDataTypeFloat64 {
+			dummyValue = 0.0
+		}
+		columns, err := m.getColumn(ctx, resolved)
+		if err != nil {
+			return "", err
+		}
+		guard, err := querybuilder.ExistsExpression(columns, resolved, tsStart, tsEnd, fieldExpression, true)
+		if err != nil {
+			return "", err
+		}
+		coerced, _ := querybuilder.DataTypeCollisionHandledFieldName(resolved, dummyValue, fieldExpression, qbtypes.FilterOperatorUnknown)
+		return fmt.Sprintf("multiIf(%s, %s, NULL)", guard, coerced), nil
 	}
 
 	return fmt.Sprintf("%s AS `%s`", sqlbuilder.Escape(fieldExpression), field.Name), nil

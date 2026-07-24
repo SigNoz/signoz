@@ -55,6 +55,7 @@ jobs:
           - queriercommon
           - querierai
           - rawexportdata
+          - querierauthz
           - role
           - rootuser
           - serviceaccount

@@ -2596,19 +2596,6 @@ components:
         repeatVariable:
           type: string
       type: object
-    DashboardLink:
-      properties:
-        name:
-          type: string
-        renderVariables:
-          type: boolean
-        targetBlank:
-          type: boolean
-        tooltip:
-          type: string
-        url:
-          type: string
-      type: object
     DashboardtypesAxes:
       properties:
         isLogScale:
@@ -2747,6 +2734,7 @@ components:
         datasources:
           additionalProperties:
             $ref: '#/components/schemas/DashboardtypesDatasourceSpec'
+          nullable: true
           type: object
         display:
           $ref: '#/components/schemas/DashboardtypesDisplay'
@@ -2758,7 +2746,8 @@ components:
           type: array
         links:
           items:
-            $ref: '#/components/schemas/DashboardLink'
+            $ref: '#/components/schemas/DashboardtypesLink'
+          nullable: true
           type: array
         panels:
           additionalProperties:
@@ -3029,6 +3018,19 @@ components:
       - solid
       - dashed
       type: string
+    DashboardtypesLink:
+      properties:
+        name:
+          type: string
+        renderVariables:
+          type: boolean
+        targetBlank:
+          type: boolean
+        tooltip:
+          type: string
+        url:
+          type: string
+      type: object
     DashboardtypesListOrder:
       enum:
       - asc
@@ -3039,6 +3041,7 @@ components:
         selectFields:
           items:
             $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          nullable: true
           type: array
       type: object
     DashboardtypesListSort:
@@ -3388,7 +3391,8 @@ components:
           $ref: '#/components/schemas/DashboardtypesDisplay'
         links:
           items:
-            $ref: '#/components/schemas/DashboardLink'
+            $ref: '#/components/schemas/DashboardtypesLink'
+          nullable: true
           type: array
         plugin:
           $ref: '#/components/schemas/DashboardtypesPanelPlugin'
@@ -6333,6 +6337,7 @@ components:
       - delta
       - cumulative
       - unspecified
+      - ""
       type: string
     MetrictypesTimeAggregation:
       enum:
@@ -6345,6 +6350,7 @@ components:
       - count_distinct
       - rate
       - increase
+      - ""
       type: string
     MetrictypesType:
       enum:
@@ -6552,6 +6558,7 @@ components:
         args:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5FunctionArg'
+          nullable: true
           type: array
         name:
           $ref: '#/components/schemas/Querybuildertypesv5FunctionName'
@@ -6722,6 +6729,7 @@ components:
         functions:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5Function'
+          nullable: true
           type: array
         having:
           $ref: '#/components/schemas/Querybuildertypesv5Having'
@@ -6734,6 +6742,7 @@ components:
         order:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+          nullable: true
           type: array
       type: object
     Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregation:
@@ -6741,6 +6750,7 @@ components:
         aggregations:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5LogAggregation'
+          nullable: true
           type: array
         cursor:
           type: string
@@ -6751,10 +6761,12 @@ components:
         functions:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5Function'
+          nullable: true
           type: array
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          nullable: true
           type: array
         having:
           $ref: '#/components/schemas/Querybuildertypesv5Having'
@@ -6771,14 +6783,17 @@ components:
         order:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+          nullable: true
           type: array
         secondaryAggregations:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5SecondaryAggregation'
+          nullable: true
           type: array
         selectFields:
           items:
             $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          nullable: true
           type: array
         signal:
           enum:
@@ -6796,6 +6811,7 @@ components:
         aggregations:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5MetricAggregation'
+          nullable: true
           type: array
         cursor:
           type: string
@@ -6806,10 +6822,12 @@ components:
         functions:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5Function'
+          nullable: true
           type: array
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          nullable: true
           type: array
         having:
           $ref: '#/components/schemas/Querybuildertypesv5Having'
@@ -6826,14 +6844,17 @@ components:
         order:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+          nullable: true
           type: array
         secondaryAggregations:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5SecondaryAggregation'
+          nullable: true
           type: array
         selectFields:
           items:
             $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          nullable: true
           type: array
         signal:
           enum:
@@ -6851,6 +6872,7 @@ components:
         aggregations:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5TraceAggregation'
+          nullable: true
           type: array
         cursor:
           type: string
@@ -6861,10 +6883,12 @@ components:
         functions:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5Function'
+          nullable: true
           type: array
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          nullable: true
           type: array
         having:
           $ref: '#/components/schemas/Querybuildertypesv5Having'
@@ -6881,14 +6905,17 @@ components:
         order:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+          nullable: true
           type: array
         secondaryAggregations:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5SecondaryAggregation'
+          nullable: true
           type: array
         selectFields:
           items:
             $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          nullable: true
           type: array
         signal:
           enum:
@@ -6906,6 +6933,7 @@ components:
         aggregations:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5TraceAggregation'
+          nullable: true
           type: array
         cursor:
           type: string
@@ -6918,10 +6946,12 @@ components:
         functions:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5Function'
+          nullable: true
           type: array
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          nullable: true
           type: array
         having:
           $ref: '#/components/schemas/Querybuildertypesv5Having'
@@ -6936,12 +6966,14 @@ components:
         order:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+          nullable: true
           type: array
         returnSpansFrom:
           type: string
         selectFields:
           items:
             $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          nullable: true
           type: array
         stepInterval:
           $ref: '#/components/schemas/Querybuildertypesv5Step'
@@ -6960,6 +6992,7 @@ components:
     Querybuildertypesv5QueryEnvelope:
       discriminator:
         mapping:
+          builder_ai_query: '#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilderAI'
           builder_formula: '#/components/schemas/Querybuildertypesv5QueryEnvelopeFormula'
           builder_query: '#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilder'
           builder_trace_operator: '#/components/schemas/Querybuildertypesv5QueryEnvelopeTraceOperator'
@@ -6968,6 +7001,7 @@ components:
         propertyName: type
       oneOf:
       - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilder'
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilderAI'
       - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeFormula'
       - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeTraceOperator'
       - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopePromQL'
@@ -6977,6 +7011,15 @@ components:
       properties:
         spec:
           $ref: '#/components/schemas/Querybuildertypesv5BuilderQuerySpec'
+        type:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+      required:
+      - type
+      type: object
+    Querybuildertypesv5QueryEnvelopeBuilderAI:
+      properties:
+        spec:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregation'
         type:
           $ref: '#/components/schemas/Querybuildertypesv5QueryType'
       required:
@@ -7095,6 +7138,7 @@ components:
     Querybuildertypesv5QueryType:
       enum:
       - builder_query
+      - builder_ai_query
       - builder_formula
       - builder_trace_operator
       - clickhouse_sql
@@ -7181,6 +7225,7 @@ components:
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          nullable: true
           type: array
         limit:
           type: integer
@@ -7189,6 +7234,7 @@ components:
         order:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+          nullable: true
           type: array
         stepInterval:
           $ref: '#/components/schemas/Querybuildertypesv5Step'
@@ -7571,6 +7617,7 @@ components:
         groupBy:
           items:
             type: string
+          nullable: true
           type: array
         newGroupEvalDelay:
           type: string
@@ -7642,6 +7689,7 @@ components:
         alertStates:
           items:
             $ref: '#/components/schemas/RuletypesAlertState'
+          nullable: true
           type: array
         enabled:
           type: boolean
@@ -8522,6 +8570,7 @@ components:
       - resource
       - attribute
       - body
+      - ""
       type: string
     TelemetrytypesFieldDataType:
       enum:
@@ -8530,6 +8579,7 @@ components:
       - float64
       - int64
       - number
+      - ""
       type: string
     TelemetrytypesGettableFieldKeys:
       properties:
@@ -8561,11 +8611,12 @@ components:
       - traces
       - logs
       - metrics
+      - ""
       type: string
     TelemetrytypesSource:
       enum:
       - meter
-      - ai
+      - ""
       type: string
     TelemetrytypesTelemetryFieldKey:
       properties:
@@ -11006,6 +11057,10 @@ paths:
         schema:
           $ref: '#/components/schemas/TelemetrytypesSource'
       - in: query
+        name: type
+        schema:
+          type: string
+      - in: query
         name: limit
         schema:
           type: integer
@@ -11094,6 +11149,10 @@ paths:
         name: source
         schema:
           $ref: '#/components/schemas/TelemetrytypesSource'
+      - in: query
+        name: type
+        schema:
+          type: string
       - in: query
         name: limit
         schema:
@@ -21147,6 +21206,10 @@ paths:
         schema:
           $ref: '#/components/schemas/TelemetrytypesSource'
       - in: query
+        name: type
+        schema:
+          type: string
+      - in: query
         name: limit
         schema:
           type: integer
@@ -21247,6 +21310,10 @@ paths:
         name: source
         schema:
           $ref: '#/components/schemas/TelemetrytypesSource'
+      - in: query
+        name: type
+        schema:
+          type: string
       - in: query
         name: limit
         schema:
@@ -24465,9 +24532,17 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       - tokenizer:
-        - VIEWER
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       summary: Query range
       tags:
       - querier
@@ -24534,9 +24609,17 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       - tokenizer:
-        - VIEWER
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       summary: Query range preview
       tags:
       - querier

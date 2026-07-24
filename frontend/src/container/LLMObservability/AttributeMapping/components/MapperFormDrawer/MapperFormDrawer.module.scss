@@ -1,0 +1,63 @@
+.form {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-10);
+	padding: var(--spacing-2) 0;
+}
+
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+}
+
+.label {
+	font-size: var(--font-size-xs);
+	font-weight: var(--font-weight-semibold);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--l3-foreground);
+}
+
+.labelHint {
+	font-weight: var(--font-weight-normal);
+	text-transform: none;
+	letter-spacing: normal;
+}
+
+.hint {
+	font-size: var(--font-size-xs);
+	color: var(--l3-foreground);
+}
+
+.fieldContext {
+	width: 200px;
+}
+
+.sources {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+}
+
+.error {
+	padding: var(--spacing-5) var(--spacing-6);
+	border-radius: var(--radius-2);
+	background: var(--callout-error-background);
+	color: var(--callout-error-title);
+	font-size: var(--periscope-font-size-base);
+}
+
+.footer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
+	gap: var(--spacing-4);
+}
+
+.footerActions {
+	display: flex;
+	gap: var(--spacing-4);
+	margin-left: auto;
+}

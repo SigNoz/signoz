@@ -30,12 +30,16 @@ const (
 )
 
 type TelemetryFieldKey struct {
-	Name          string        `json:"name" validate:"required" required:"true"`
-	Description   string        `json:"description,omitempty"`
-	Unit          string        `json:"unit,omitempty"`
-	Signal        Signal        `json:"signal,omitzero"`
-	FieldContext  FieldContext  `json:"fieldContext,omitzero"`
-	FieldDataType FieldDataType `json:"fieldDataType,omitzero"`
+	Name        string `json:"name" validate:"required" required:"true"`
+	Description string `json:"description,omitempty"`
+	Unit        string `json:"unit,omitempty"`
+	// signal/fieldContext/fieldDataType always serialize (empty included): the empty
+	// value is a first-class "unspecified / any" selection a client can set, so it
+	// must round-trip verbatim rather than be dropped. Their Enum()s include the
+	// empty member so the "" is a valid schema value.
+	Signal        Signal        `json:"signal"`
+	FieldContext  FieldContext  `json:"fieldContext"`
+	FieldDataType FieldDataType `json:"fieldDataType"`
 
 	JSONPlan     JSONAccessPlan               `json:"-"`
 	Indexes      []TelemetryFieldKeySkipIndex `json:"-"`
@@ -232,6 +236,7 @@ type FieldKeySelector struct {
 	EndUnixMilli      int64                  `json:"endUnixMilli"`
 	Signal            Signal                 `json:"signal"`
 	Source            Source                 `json:"source"`
+	QueryType         string                 `json:"queryType"`
 	FieldContext      FieldContext           `json:"fieldContext"`
 	FieldDataType     FieldDataType          `json:"fieldDataType"`
 	Name              string                 `json:"name"`
@@ -255,6 +260,7 @@ type GettableFieldKeys struct {
 type PostableFieldKeysParams struct {
 	Signal          Signal        `query:"signal"`
 	Source          Source        `query:"source"`
+	Type            string        `query:"type"`
 	Limit           int           `query:"limit"`
 	StartUnixMilli  int64         `query:"startUnixMilli"`
 	EndUnixMilli    int64         `query:"endUnixMilli"`
@@ -291,6 +297,7 @@ func NewFieldKeySelectorFromPostableFieldKeysParams(params PostableFieldKeysPara
 
 	req.Signal = params.Signal
 	req.Source = params.Source
+	req.QueryType = params.Type
 	req.FieldContext = params.FieldContext
 	req.FieldDataType = params.FieldDataType
 	req.SelectorMatchType = FieldSelectorMatchTypeFuzzy
@@ -354,6 +361,14 @@ func NewFieldValueSelectorFromPostableFieldValueParams(params PostableFieldValue
 	}
 
 	return fieldValueSelector
+}
+
+func NewTelemetryFieldKey(name string, fieldContext FieldContext, fieldDataType FieldDataType) *TelemetryFieldKey {
+	return &TelemetryFieldKey{
+		Name:          name,
+		FieldContext:  fieldContext,
+		FieldDataType: fieldDataType,
+	}
 }
 
 type TelemetryFieldKeySkipIndex struct {

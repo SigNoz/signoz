@@ -1200,7 +1200,7 @@ func enrichWithIntrinsicMetricKeys(keys map[string][]*telemetrytypes.TelemetryFi
 // enrichWithAITraceAggregateKeys adds keys that can be queried for AI trace aggregate signals.
 func enrichWithAITraceAggregateKeys(keys map[string][]*telemetrytypes.TelemetryFieldKey, selectors []*telemetrytypes.FieldKeySelector) map[string][]*telemetrytypes.TelemetryFieldKey {
 	for _, selector := range selectors {
-		if selector.Source != telemetrytypes.SourceAI {
+		if selector.QueryType != qbtypes.QueryTypeBuilderAI.StringValue() {
 			continue
 		}
 		if selector.Signal != telemetrytypes.SignalTraces && selector.Signal != telemetrytypes.SignalUnspecified {
@@ -1507,20 +1507,20 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, orgID valuer.
 
 			// search on attributes
 			key.FieldContext = telemetrytypes.FieldContextAttribute
-			attrConds, _, err := t.conditionBuilder.ConditionFor(ctx, orgID, 0, 0, key, []*telemetrytypes.TelemetryFieldKey{key}, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
+			attrConds, _, err := t.conditionBuilder.ConditionFor(ctx, orgID, 0, 0, key, map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {key}}, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
 			if err == nil {
 				conds = append(conds, attrConds...)
 			}
 
 			// search on resource
 			key.FieldContext = telemetrytypes.FieldContextResource
-			resourceConds, _, err := t.conditionBuilder.ConditionFor(ctx, orgID, 0, 0, key, []*telemetrytypes.TelemetryFieldKey{key}, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
+			resourceConds, _, err := t.conditionBuilder.ConditionFor(ctx, orgID, 0, 0, key, map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {key}}, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
 			if err == nil {
 				conds = append(conds, resourceConds...)
 			}
 			key.FieldContext = origContext
 		} else {
-			keyConds, _, err := t.conditionBuilder.ConditionFor(ctx, orgID, 0, 0, key, []*telemetrytypes.TelemetryFieldKey{key}, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
+			keyConds, _, err := t.conditionBuilder.ConditionFor(ctx, orgID, 0, 0, key, map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {key}}, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
 			if err == nil {
 				conds = append(conds, keyConds...)
 			}
