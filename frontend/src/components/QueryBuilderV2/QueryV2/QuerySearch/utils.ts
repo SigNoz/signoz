@@ -9,10 +9,44 @@ import type { SignalType } from 'types/api/v5/queryRange';
 import 'utils/timeUtils';
 
 import {
+	FIELD_CONTEXTS,
 	RECENT_COMPLETION_TYPE,
 	RECENTS_DISPLAY_CAP,
 	RECENTS_SECTION,
 } from './constants';
+
+export interface FieldContextPrefixMatch {
+	context: string;
+	remainder: string;
+}
+
+// This function checks if the text(query key) starts with a fieldContext
+// This util strictly checks that and returns context and remainder back.
+// This helps differentiate if the typed key was prefixed with a context or
+// was it an actual queryKey like (attribute.abc)
+export function getFieldContextPrefix(
+	text: string,
+): FieldContextPrefixMatch | null {
+	const lower = text.toLowerCase();
+	const context = FIELD_CONTEXTS.find((ctx) => lower.startsWith(`${ctx}.`));
+	return context ? { context, remainder: text.slice(context.length + 1) } : null;
+}
+
+// Keeps the first occurrence per label, preserving order. Key suggestions hold
+// one entry per (name, fieldContext, fieldDataType) variant; This means query builder
+// could show multiple labels and this avoids that.
+export function dedupeOptionsByLabel<T extends { label: string }>(
+	options: T[],
+): T[] {
+	const seen = new Set<string>();
+	return options.filter((option) => {
+		if (seen.has(option.label)) {
+			return false;
+		}
+		seen.add(option.label);
+		return true;
+	});
+}
 
 export function combineInitialAndUserExpression(
 	initial: string,

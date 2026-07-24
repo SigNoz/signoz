@@ -1,0 +1,10 @@
+// Cap the dashboard-name segment so a long title ellipsizes on one line instead
+// of stretching the breadcrumb row.
+.title {
+	display: inline-block;
+	max-width: 480px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	vertical-align: middle;
+}

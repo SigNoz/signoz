@@ -51,7 +51,7 @@ type QueryBuilderTraceOperator struct {
 	Order []OrderBy `json:"order,omitzero"`
 
 	Aggregations []TraceAggregation `json:"aggregations,omitzero"`
-	StepInterval Step               `json:"stepInterval,omitempty"`
+	StepInterval Step               `json:"stepInterval,omitzero"`
 	GroupBy      []GroupByKey       `json:"groupBy,omitzero"`
 
 	// having clause to apply to the aggregated query results

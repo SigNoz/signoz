@@ -67,7 +67,6 @@ def test_nodes_accuracy(
             "nodeName",
             "condition",
             "nodeCountsByReadiness",
-            "podCountsByPhase",
             "nodeCPU",
             "nodeCPUAllocatable",
             "nodeMemory",
@@ -78,8 +77,6 @@ def test_nodes_accuracy(
 
         for bucket in ("ready", "notReady"):
             assert bucket in record["nodeCountsByReadiness"]
-        for bucket in ("pending", "running", "succeeded", "failed", "unknown"):
-            assert bucket in record["podCountsByPhase"]
 
         assert record["meta"].get("k8s.node.name") == record["nodeName"]
         assert "k8s.node.uid" in record["meta"]
@@ -91,7 +88,6 @@ def test_nodes_accuracy(
             assert compare_values(record[field], exp[field], 1e-6), f"{record['nodeName']}.{field}: got {record[field]}, expected {exp[field]}"
         assert record["condition"] == exp["condition"]
         assert record["nodeCountsByReadiness"] == exp["nodeCountsByReadiness"]
-        assert record["podCountsByPhase"] == exp["podCountsByPhase"]
 
 
 @pytest.mark.parametrize(
@@ -216,6 +212,7 @@ def test_nodes_warnings(
             {"web-a-us-1", "web-b-us-1"},
             id="in_contains",
         ),
+        pytest.param("k8s.node.namee = 'web-a-us-1'", set(), id="unresolved_key"),
     ],
 )
 def test_nodes_filter(
@@ -272,7 +269,6 @@ def test_nodes_filter(
 @pytest.mark.parametrize(
     "expression,err_substr",
     [
-        pytest.param("k8s.node.namee = 'web-a-us-1'", "k8s.node.namee", id="bad_attr_name"),
         pytest.param("k8s.node.name =", None, id="trailing_op"),
         pytest.param("(k8s.node.name = 'web-a-us-1'", None, id="unclosed_paren"),
     ],
@@ -285,8 +281,8 @@ def test_nodes_filter_invalid(
     expression: str,
     err_substr,
 ) -> None:
-    """Invalid filter expressions (typo'd attribute key, malformed grammar) return
-    400 invalid_input with structured errors; bad attribute keys are named in them."""
+    """Malformed filter grammar (trailing operator, unclosed paren) returns
+    400 invalid_input with structured errors."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -452,77 +448,8 @@ def test_nodes_condition_grouped_mode(
     assert rec["condition"] == "no_data"
     # Aggregated condition counts across the cluster.
     assert rec["nodeCountsByReadiness"] == {"ready": 2, "notReady": 1}
-    # Pod-phase counts aggregated: 3 running pods (one per node).
-    assert rec["podCountsByPhase"]["running"] == 3
-    for other in ("pending", "succeeded", "failed", "unknown"):
-        assert rec["podCountsByPhase"][other] == 0
     # meta surfaces the groupBy key.
     assert rec["meta"].get("k8s.cluster.name") == "cluster-mixed"
-
-
-@pytest.mark.parametrize(
-    "dataset,node_name,filter_expr,expected_counts",
-    [
-        # Node hosts 3 running + 2 failed pods: phase buckets aggregate correctly.
-        pytest.param(
-            "nodes_pod_phases.jsonl",
-            "pp-n1",
-            None,
-            {"pending": 0, "running": 3, "succeeded": 0, "failed": 2, "unknown": 0},
-            id="mixed_phases",
-        ),
-        # Node with no pods: all-zero buckets, node still appears. Filter on the
-        # node to ignore the carrier phantom (see test_nodes_condition_latest_wins).
-        pytest.param(
-            "nodes_no_pods.jsonl",
-            "no-pod-n",
-            "k8s.node.name = 'no-pod-n'",
-            {"pending": 0, "running": 0, "succeeded": 0, "failed": 0, "unknown": 0},
-            id="no_pods",
-        ),
-    ],
-)
-def test_nodes_pod_phase_counts(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-    dataset: str,
-    node_name: str,
-    filter_expr,
-    expected_counts: dict,
-) -> None:
-    """podCountsByPhase per node aggregates the pods scheduled on it (k8s.pod.phase
-    joined via k8s.node.name). A node with no pods reports all-zero buckets and
-    still appears in the result."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        Metrics.load_from_file(
-            get_testdata_file_path(f"inframonitoring/{dataset}"),
-            base_time=now - timedelta(minutes=4),
-        )
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    body = {
-        "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-        "end": int(now.timestamp() * 1000),
-        "limit": 50,
-    }
-    if filter_expr is not None:
-        body["filter"] = {"expression": filter_expr}
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(ENDPOINT),
-        headers={"authorization": f"Bearer {token}"},
-        json=body,
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()["data"]
-    assert data["total"] == 1
-    rec = data["records"][0]
-    assert rec["nodeName"] == node_name
-    assert rec["podCountsByPhase"] == expected_counts
 
 
 @pytest.mark.parametrize(
@@ -533,10 +460,10 @@ def test_nodes_pod_phase_counts(
         pytest.param(
             "k8s.node.name",
             {
-                "gb-a-us": {"condition": "ready", "readiness": {"ready": 1, "notReady": 0}, "running": 1},
-                "gb-a-eu": {"condition": "ready", "readiness": {"ready": 1, "notReady": 0}, "running": 1},
-                "gb-b-us": {"condition": "ready", "readiness": {"ready": 1, "notReady": 0}, "running": 1},
-                "gb-b-eu": {"condition": "ready", "readiness": {"ready": 1, "notReady": 0}, "running": 1},
+                "gb-a-us": {"condition": "ready", "readiness": {"ready": 1, "notReady": 0}},
+                "gb-a-eu": {"condition": "ready", "readiness": {"ready": 1, "notReady": 0}},
+                "gb-b-us": {"condition": "ready", "readiness": {"ready": 1, "notReady": 0}},
+                "gb-b-eu": {"condition": "ready", "readiness": {"ready": 1, "notReady": 0}},
             },
             id="node_name",
         ),
@@ -545,8 +472,8 @@ def test_nodes_pod_phase_counts(
         pytest.param(
             "k8s.cluster.name",
             {
-                "gb-cluster-a": {"condition": "no_data", "readiness": {"ready": 2, "notReady": 0}, "running": 2},
-                "gb-cluster-b": {"condition": "no_data", "readiness": {"ready": 2, "notReady": 0}, "running": 2},
+                "gb-cluster-a": {"condition": "no_data", "readiness": {"ready": 2, "notReady": 0}},
+                "gb-cluster-b": {"condition": "no_data", "readiness": {"ready": 2, "notReady": 0}},
             },
             id="cluster",
         ),
@@ -560,9 +487,9 @@ def test_nodes_groupby(
     group_key: str,
     expected: dict,
 ) -> None:
-    """groupBy returns one record per distinct group with aggregated readiness
-    and pod-phase counts. nodeName is populated and condition is derived only
-    when grouping by k8s.node.name (nodes.go:69-76 list-vs-grouped branch)."""
+    """groupBy returns one record per distinct group with aggregated readiness.
+    nodeName is populated and condition is derived only when grouping by
+    k8s.node.name (nodes.go:69-76 list-vs-grouped branch)."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -603,7 +530,6 @@ def test_nodes_groupby(
         assert rec["nodeName"] == (group if group_key == "k8s.node.name" else "")
         assert rec["condition"] == exp["condition"]
         assert rec["nodeCountsByReadiness"] == exp["readiness"]
-        assert rec["podCountsByPhase"]["running"] == exp["running"]
         assert group_key in rec["meta"], rec["meta"]
 
 

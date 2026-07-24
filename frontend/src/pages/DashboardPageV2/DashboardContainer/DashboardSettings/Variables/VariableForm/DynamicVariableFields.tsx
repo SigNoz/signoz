@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Info } from '@signozhq/icons';
 import { Typography } from '@signozhq/ui/typography';
+import { DashboardtypesDynamicVariableSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import cx from 'classnames';
 // eslint-disable-next-line signoz/no-antd-components -- fixed-option signal picker
 import { Select } from 'antd';
@@ -14,17 +15,16 @@ import { isRetryableError } from 'utils/errorUtils';
 import {
 	DYNAMIC_SIGNAL_LABEL,
 	DYNAMIC_SIGNALS,
-	type DynamicSignalOption,
 	signalForApi,
 } from '../variableFormModel';
 import styles from './VariableForm.module.scss';
 
 interface DynamicVariableFieldsProps {
 	attribute: string;
-	signal: DynamicSignalOption;
+	signal: DashboardtypesDynamicVariableSignalDTO;
 	onChange: (patch: {
 		dynamicAttribute?: string;
-		dynamicSignal?: DynamicSignalOption;
+		dynamicSignal?: DashboardtypesDynamicVariableSignalDTO;
 	}) => void;
 	onPreview: (values: (string | number)[]) => void;
 	/** Inline error shown under the attribute field (e.g. duplicate attribute). */
@@ -117,7 +117,9 @@ function DynamicVariableFields({
 						value: s,
 					}))}
 					onChange={(value): void =>
-						onChange({ dynamicSignal: value as DynamicSignalOption })
+						onChange({
+							dynamicSignal: value as DashboardtypesDynamicVariableSignalDTO,
+						})
 					}
 					data-testid="variable-signal-select"
 				/>

@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Modal } from 'antd';
+import { Button } from '@signozhq/ui/button';
+import { DialogWrapper } from '@signozhq/ui/dialog';
 import { Input } from '@signozhq/ui/input';
 
 import { DASHBOARD_NAME_MAX_LENGTH } from '../../constants';
+import styles from './SectionTitleModal.module.scss';
 
 interface SectionTitleModalProps {
 	open: boolean;
@@ -17,7 +19,7 @@ interface SectionTitleModalProps {
 	onSubmit: (title: string) => void;
 }
 
-/** Title-entry modal shared by section create and rename. */
+/** Title-entry modal shared by section create and rename (mirrors RenameDashboardModal). */
 function SectionTitleModal({
 	open,
 	heading,
@@ -37,22 +39,51 @@ function SectionTitleModal({
 		}
 	}, [open, initialValue]);
 
+	// `!isSaving` also guards a second submit (e.g. a double Enter) while a request
+	// is in flight — otherwise two sections would be created.
+	const canSave = value.trim().length > 0 && !isSaving;
+
 	const submit = (): void => {
-		const trimmed = value.trim();
-		if (trimmed) {
-			onSubmit(trimmed);
+		if (!canSave) {
+			return;
 		}
+		onSubmit(value.trim());
 	};
 
 	return (
-		<Modal
-			open={open}
+		<DialogWrapper
 			title={heading}
-			onCancel={onClose}
-			onOk={submit}
-			okText={okText}
-			okButtonProps={{ disabled: isSaving || !value.trim() }}
-			destroyOnClose
+			open={open}
+			width="narrow"
+			onOpenChange={(next): void => {
+				if (!next) {
+					onClose();
+				}
+			}}
+			footer={
+				<div className={styles.footer}>
+					<Button
+						variant="ghost"
+						color="secondary"
+						size="md"
+						onClick={onClose}
+						testId="section-title-cancel"
+					>
+						Cancel
+					</Button>
+					<Button
+						variant="solid"
+						color="primary"
+						size="md"
+						disabled={!canSave}
+						loading={isSaving}
+						onClick={submit}
+						testId="section-title-submit"
+					>
+						{okText}
+					</Button>
+				</div>
+			}
 		>
 			<Input
 				testId="section-title-input"
@@ -62,13 +93,13 @@ function SectionTitleModal({
 				placeholder={placeholder}
 				onChange={(e): void => setValue(e.target.value)}
 				onKeyDown={(e): void => {
-					if (e.key === 'Enter') {
+					if (e.key === 'Enter' && canSave) {
 						e.preventDefault();
 						submit();
 					}
 				}}
 			/>
-		</Modal>
+		</DialogWrapper>
 	);
 }
 

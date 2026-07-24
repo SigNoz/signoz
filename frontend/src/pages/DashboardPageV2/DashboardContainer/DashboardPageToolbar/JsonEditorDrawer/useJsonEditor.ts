@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from '@signozhq/ui/sonner';
+import logEvent from 'api/common/logEvent';
 import { updateDashboardV2 } from 'api/generated/services/dashboard';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 import type {
 	DashboardtypesDashboardSpecDTO,
 	DashboardtypesGettableDashboardV2DTO,
@@ -10,6 +12,7 @@ import { toAPIError } from 'utils/errorUtils';
 
 import { dashboardToUpdatable } from './dashboardToUpdatable';
 import { findPanelLayoutIssues } from './danglingPanels';
+import { compactSpecLayouts } from '../../layoutCompaction';
 import { useDashboardStore } from '../../store/useDashboardStore';
 
 export interface JsonValidity {
@@ -44,15 +47,16 @@ interface Result {
 }
 
 /**
- * The editable, user-facing view: only `tags` and `spec`. Everything else
- * (id, orgId, name, timestamps, locked, schemaVersion, image, …) is redacted so it
- * can't be seen, copied, exported or edited; those keys are preserved on save (see `apply`).
+ * The editable, user-facing view: `spec`, `tags` and `image`, in that key order.
+ * Everything else (id, orgId, name, timestamps, locked, schemaVersion, …) is redacted
+ * so it can't be seen, copied, exported or edited; those keys are preserved on save.
  */
 const redact = (
 	dashboard: DashboardtypesGettableDashboardV2DTO,
-): Pick<DashboardtypesGettableDashboardV2DTO, 'tags' | 'spec'> => ({
-	tags: dashboard.tags,
+): Pick<DashboardtypesGettableDashboardV2DTO, 'spec' | 'tags' | 'image'> => ({
 	spec: dashboard.spec,
+	tags: dashboard.tags,
+	image: dashboard.image,
 });
 
 const serialize = (dashboard: DashboardtypesGettableDashboardV2DTO): string =>
@@ -140,14 +144,22 @@ export function useJsonEditor({
 	const format = useCallback((): void => {
 		try {
 			setDraft(JSON.stringify(JSON.parse(draft), null, 2));
+			void logEvent(DashboardDetailEvents.JsonEditorAction, {
+				action: 'format',
+				dashboardId,
+			});
 		} catch {
 			// Leave the draft untouched when it can't be parsed.
 		}
-	}, [draft]);
+	}, [draft, dashboardId]);
 
 	const reset = useCallback((): void => {
 		setDraft(appliedText);
-	}, [appliedText]);
+		void logEvent(DashboardDetailEvents.JsonEditorAction, {
+			action: 'reset',
+			dashboardId,
+		});
+	}, [appliedText, dashboardId]);
 
 	const apply = useCallback(async (): Promise<void> => {
 		if (readOnly || !validity.valid || !isDirty) {
@@ -157,12 +169,27 @@ export function useJsonEditor({
 			setIsSaving(true);
 			// The draft only carries name/tags/spec; overlay it on the current dashboard
 			// so the redacted fields (schemaVersion, image, …) are preserved on save.
-			const edited = JSON.parse(draft) as Record<string, unknown>;
+			const edited = JSON.parse(draft) as Pick<
+				DashboardtypesGettableDashboardV2DTO,
+				'spec' | 'tags' | 'image'
+			>;
+			// Snap hand-edited panel geometry to a non-overlapping layout so a JSON edit
+			// can't be rejected by the backend's no-overlap check (matches drag/resize).
+			if (edited.spec?.layouts) {
+				edited.spec = {
+					...edited.spec,
+					layouts: compactSpecLayouts(edited.spec.layouts),
+				};
+			}
 			await updateDashboardV2(
 				{ id: dashboardId },
 				dashboardToUpdatable({ ...dashboard, ...edited }),
 			);
 			toast.success('Dashboard updated');
+			void logEvent(DashboardDetailEvents.JsonEditorAction, {
+				action: 'apply',
+				dashboardId,
+			});
 			refetch();
 			onApplied();
 		} catch (error) {

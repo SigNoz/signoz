@@ -150,24 +150,6 @@ func TestPostablePods_Validate(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "orderBy with phase key is rejected",
-			req: &PostablePods{
-				Start:  1000,
-				End:    2000,
-				Limit:  100,
-				Offset: 0,
-				OrderBy: &qbtypes.OrderBy{
-					Key: qbtypes.OrderByKey{
-						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: "phase",
-						},
-					},
-					Direction: qbtypes.OrderDirectionDesc,
-				},
-			},
-			wantErr: true,
-		},
-		{
 			name: "orderBy with invalid key",
 			req: &PostablePods{
 				Start:  1000,

@@ -1,6 +1,9 @@
 import { useCallback } from 'react';
 import { toast } from '@signozhq/ui/sonner';
+import logEvent from 'api/common/logEvent';
 import { cloneDeep } from 'lodash-es';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
+import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
 import { v4 as uuid } from 'uuid';
 
 import { useOptimisticPatch } from '../../../hooks/useOptimisticPatch';
@@ -75,6 +78,12 @@ export function useClonePanel({
 			// rejection (the optimistic cache write + settle refetch handle state).
 			try {
 				await clone;
+				void logEvent(DashboardDetailEvents.PanelAction, {
+					action: 'clone',
+					panelType: PANEL_KIND_TO_PANEL_TYPE[source.panel.spec.plugin.kind],
+					panelId,
+					dashboardId,
+				});
 			} catch {
 				// no-op
 			}

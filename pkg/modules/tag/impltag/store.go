@@ -44,6 +44,7 @@ func (s *store) ListByResource(ctx context.Context, orgID valuer.UUID, kind core
 		Where("tr.kind = ?", kind).
 		Where("tr.resource_id = ?", resourceID).
 		Where("tag.org_id = ?", orgID).
+		OrderExpr("tr.rank ASC").
 		Scan(ctx)
 	if err != nil {
 		return nil, err
@@ -71,6 +72,7 @@ func (s *store) ListByResources(ctx context.Context, orgID valuer.UUID, kind cor
 		Where("tr.kind = ?", kind).
 		Where("tr.resource_id IN (?)", bun.In(resourceIDs)).
 		Where("tag.org_id = ?", orgID).
+		OrderExpr("tr.rank ASC").
 		Scan(ctx)
 	if err != nil {
 		return nil, err
@@ -112,11 +114,14 @@ func (s *store) CreateRelations(ctx context.Context, relations []*tagtypes.TagRe
 	if len(relations) == 0 {
 		return nil
 	}
+	// On re-link (same tag, same resource) overwrite rank with the incoming
+	// position, so a reordered tag set persists its new order.
 	_, err := s.sqlstore.
 		BunDBCtx(ctx).
 		NewInsert().
 		Model(&relations).
-		On("CONFLICT (kind, resource_id, tag_id) DO NOTHING").
+		On("CONFLICT (kind, resource_id, tag_id) DO UPDATE").
+		Set("rank = EXCLUDED.rank").
 		Exec(ctx)
 	return err
 }

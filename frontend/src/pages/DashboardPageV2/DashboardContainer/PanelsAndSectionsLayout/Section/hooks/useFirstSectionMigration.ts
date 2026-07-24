@@ -1,6 +1,8 @@
 import { useCallback, useState } from 'react';
 
+import logEvent from 'api/common/logEvent';
 import type { DashboardtypesJSONPatchOperationDTO } from 'api/generated/services/sigNoz.schemas';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
@@ -50,6 +52,9 @@ export function useFirstSectionMigration({ sections }: Params): Result {
 			try {
 				setIsSaving(true);
 				await patchAsync(ops);
+				void logEvent(DashboardDetailEvents.FirstSectionMigrationConfirmed, {
+					dashboardId,
+				});
 			} catch (error) {
 				showErrorModal(error as APIError);
 			} finally {

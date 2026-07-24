@@ -131,13 +131,16 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 		width: { min: 250 },
 		enableSort: false,
 		visibilityBehavior: 'hidden-on-collapse',
-		cell: ({ row }): React.ReactNode => {
+		cell: ({ row, rowId }): React.ReactNode => {
 			const podCountsByStatus = row.podCountsByStatus;
 			if (!podCountsByStatus) {
 				return <TanStackTable.Text>-</TanStackTable.Text>;
 			}
 			return (
-				<GroupedStatusCounts items={getPodStatusItems(row.podCountsByStatus)} />
+				<GroupedStatusCounts
+					items={getPodStatusItems(row.podCountsByStatus)}
+					rowId={rowId}
+				/>
 			);
 		},
 	},
@@ -171,7 +174,7 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.podRestarts,
-		width: { min: 100 },
+		width: { min: 140 },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
 			const restarts = value as number;

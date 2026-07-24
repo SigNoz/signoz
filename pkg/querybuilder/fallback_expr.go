@@ -181,6 +181,15 @@ func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, va
 			// dynamic array elements will be default casted to string
 			tblFieldName, value = castString(tblFieldName), toStrings(v)
 		}
+	case telemetrytypes.FieldDataTypeUnspecified:
+		if operator == qbtypes.FilterOperatorUnknown {
+			switch value.(type) {
+			case float32, float64, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, json.Number:
+				tblFieldName = accurateCastFloat(tblFieldName)
+			case string:
+				tblFieldName = castString(tblFieldName)
+			}
+		}
 	}
 	return tblFieldName, value
 }

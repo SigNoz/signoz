@@ -22,6 +22,22 @@ export interface ComparisonThresholdShape {
 	format?: DashboardtypesThresholdFormatDTO;
 }
 
+/** SigNoz threshold palette; single source of truth for the hex values. */
+export enum ThresholdColor {
+	RED = '#F1575F',
+	ORANGE = '#F5B225',
+	GREEN = '#2BB673',
+	BLUE = '#4E74F8',
+}
+
+/** Palette ordered most-dangerous first (preset order + alert-severity ranking). */
+export const THRESHOLD_COLOR_DANGER_ORDER: ThresholdColor[] = [
+	ThresholdColor.RED,
+	ThresholdColor.ORANGE,
+	ThresholdColor.GREEN,
+	ThresholdColor.BLUE,
+];
+
 /** Comparison operators a threshold can use, as evaluable symbols. */
 export type ThresholdComparisonOperator = '>' | '<' | '>=' | '<=' | '=' | '!=';
 

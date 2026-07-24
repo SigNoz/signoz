@@ -458,7 +458,9 @@ $custom-border-color: #2c3044;
 
 	.option-item {
 		padding: 8px 12px;
-		cursor: pointer;
+		// Not the whole row — only the checkbox and the action buttons get the
+		// pointer (set below), so inert areas don't look clickable.
+		cursor: default;
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
@@ -494,6 +496,13 @@ $custom-border-color: #2c3044;
 
 		.option-checkbox {
 			width: 100%;
+			cursor: default;
+
+			// The checkbox button is the only pointer target on the left; the label
+			// still toggles on click but keeps a default cursor.
+			> button {
+				cursor: pointer;
+			}
 
 			// @signozhq/ui Checkbox renders children inside a <label> that is
 			// content-sized by default. Make it fill the row (min-width: 0 lets it
@@ -535,9 +544,9 @@ $custom-border-color: #2c3044;
 				}
 			}
 
-			// Size the buttons to the row's resting content height (20px) and fully
-			// override antd's default 32px Button box, so revealing them on hover
-			// never changes the row height.
+			// "Only"/"All" is the primary action — a filled pill that reads as a
+			// button; "Toggle" is a secondary hint in plain text. Sized to the row's
+			// resting height so revealing them on hover never shifts it.
 			.only-btn,
 			.toggle-btn {
 				display: none;
@@ -545,14 +554,39 @@ $custom-border-color: #2c3044;
 				justify-content: center;
 				height: 18px;
 				min-height: 0;
-				padding: 0 6px;
 				font-size: 12px;
 				line-height: 1;
-				border: none;
 				box-shadow: none;
+			}
 
-				&:hover {
-					background-color: unset;
+			.only-btn {
+				padding: 4px 8px;
+				// Black interior + a visible border so the pill stands out clearly
+				// against the near-black row when revealed on hover.
+				border: 1px solid var(--l3-border);
+				border-radius: 3px;
+				background-color: var(--bg-ink-500, #0b0c0e);
+				color: var(--l1-foreground);
+				cursor: pointer;
+			}
+
+			.toggle-btn {
+				padding: 0 6px;
+				border: none;
+				background-color: transparent;
+				color: var(--l2-foreground);
+				cursor: pointer;
+			}
+
+			// Toggle appears over the checkbox area; "Only/All" takes over the row
+			// content and hides Toggle there (higher specificity wins).
+			&:hover {
+				.toggle-btn {
+					display: flex;
+				}
+
+				.option-badge {
+					display: none;
 				}
 			}
 
@@ -560,6 +594,7 @@ $custom-border-color: #2c3044;
 				.only-btn {
 					display: flex;
 				}
+
 				.toggle-btn {
 					display: none;
 				}
@@ -567,15 +602,6 @@ $custom-border-color: #2c3044;
 				.option-badge {
 					display: none;
 				}
-			}
-		}
-
-		.option-checkbox:hover {
-			.toggle-btn {
-				display: flex;
-			}
-			.option-badge {
-				display: none;
 			}
 		}
 	}

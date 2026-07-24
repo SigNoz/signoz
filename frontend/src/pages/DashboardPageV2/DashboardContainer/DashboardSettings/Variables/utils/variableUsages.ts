@@ -2,7 +2,10 @@ import type {
 	DashboardtypesGettableDashboardV2DTO,
 	Querybuildertypesv5QueryEnvelopeDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { removeVariableFromExpression } from 'components/QueryBuilderV2/utils';
+import {
+	appendAndClause,
+	removeVariableFromExpression,
+} from 'components/QueryBuilderV2/utils';
 import {
 	rewriteVariableReferences,
 	textContainsVariableReference,
@@ -18,8 +21,7 @@ export type VariableUsageKind =
 	| 'clickhouse'
 	| 'variable';
 
-/** Whether the impact is a rename (rewrite refs) or a delete (remove refs). */
-export type VariableImpactMode = 'rename' | 'delete';
+export type VariableImpactMode = 'rename' | 'delete' | 'apply';
 
 /**
  * One place a variable is referenced — a panel query's builder filter expression,
@@ -160,4 +162,119 @@ export function findVariableUsages(
 	});
 
 	return usages;
+}
+
+// `matchName` is the name in the current query text (the old name during a
+// simultaneous rename); `injectName` is written into newly added clauses. Equal
+// outside of a rename.
+export function findApplyUsages(
+	dashboard: DashboardtypesGettableDashboardV2DTO,
+	attribute: string,
+	injectName: string,
+	matchName: string,
+	selectedPanelIds: string[],
+): VariableUsage[] {
+	if (!attribute || !injectName) {
+		return [];
+	}
+	const clause = `${attribute} IN $${injectName}`;
+	const existingClause = `${attribute} IN $${matchName}`;
+	const selected = new Set(selectedPanelIds);
+	const usages: VariableUsage[] = [];
+
+	Object.entries(dashboard.spec.panels ?? {}).forEach(([panelId, panel]) => {
+		const queries = panel?.spec?.queries;
+		if (!queries?.length) {
+			return;
+		}
+		toQueryEnvelopes(queries).forEach((envelope, index) => {
+			const pushUsage = (
+				kind: VariableUsageKind,
+				currentText: string,
+				resultingText: string,
+			): void => {
+				usages.push({
+					id: `panel:${panelId}:${index}`,
+					sourceType: 'panel',
+					sourceId: panelId,
+					sourceLabel: panel.spec?.display?.name || panelId,
+					kind,
+					envelopeIndex: index,
+					currentText,
+					resultingText,
+				});
+			};
+
+			if (envelope.type === 'builder_query') {
+				const spec = envelope.spec as
+					| { filter?: { expression?: string } }
+					| undefined;
+				const current = spec?.filter?.expression ?? '';
+				if (selected.has(panelId)) {
+					// Already carries the clause (under either name) — a rename usage, if
+					// any, fixes the name; don't append a duplicate.
+					if (current.includes(clause) || current.includes(existingClause)) {
+						return;
+					}
+					pushUsage('builder', current, appendAndClause(current, clause));
+				} else {
+					const next = removeVariableFromExpression(current, matchName);
+					if (next !== current) {
+						pushUsage('builder', current, next);
+					}
+				}
+				return;
+			}
+
+			// PromQL/ClickHouse can't carry the managed clause — never auto-inject or
+			// remove. Selected panels still get an editable row defaulting to the
+			// current text, unless the query already references the variable.
+			if (!selected.has(panelId)) {
+				return;
+			}
+			const ref = envelopeReferenceText(envelope);
+			if (!ref) {
+				return;
+			}
+			if (
+				textContainsVariableReference(ref.text, injectName) ||
+				textContainsVariableReference(ref.text, matchName)
+			) {
+				return;
+			}
+			pushUsage(ref.kind, ref.text, ref.text);
+		});
+	});
+
+	return usages;
+}
+
+// Cheap yes/no check for the "Apply to all" disabled state: does every panel query
+// already reference the variable? Plain string checks — no ANTLR, no rewriting.
+export function isVariableAppliedToAllPanels(
+	dashboard: DashboardtypesGettableDashboardV2DTO,
+	attribute: string,
+	variableName: string,
+): boolean {
+	if (!attribute || !variableName) {
+		return false;
+	}
+	const clause = `${attribute} IN $${variableName}`;
+	const panels = dashboard.spec.panels ?? {};
+	return Object.values(panels).every((panel) => {
+		const queries = panel?.spec?.queries;
+		if (!queries?.length) {
+			return true;
+		}
+		return toQueryEnvelopes(queries).every((envelope) => {
+			if (envelope.type === 'builder_query') {
+				const spec = envelope.spec as
+					| { filter?: { expression?: string } }
+					| undefined;
+				return (spec?.filter?.expression ?? '').includes(clause);
+			}
+			const ref = envelopeReferenceText(envelope);
+			return ref ? textContainsVariableReference(ref.text, variableName) : true;
+		});
+	});
 }

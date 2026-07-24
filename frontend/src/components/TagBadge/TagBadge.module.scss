@@ -1,0 +1,11 @@
+.static {
+	// Tag chips are not interactive, but the @signozhq Badge darkens outline
+	// variants on hover — which reads as clickable. Pin the hover background to the
+	// resting background so hovering a plain tag produces no change.
+	--badge-outline-hover-background-color: var(
+		--badge-outline-background-color,
+		color-mix(in oklab, var(--badge-background) 10%, transparent)
+	);
+
+	cursor: default;
+}
