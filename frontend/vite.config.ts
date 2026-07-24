@@ -182,6 +182,57 @@ export default defineConfig(({ mode }): UserConfig => {
 			sourcemap: true,
 			outDir: 'build',
 			cssMinify: 'esbuild',
+			modulePreload: { polyfill: false },
+			chunkSizeWarningLimit: 800,
+			rolldownOptions: {
+				output: {
+					// React core is pinned first: Rolldown's recursive dependency
+					// capture otherwise hosts react inside unrelated vendor-* chunks.
+					// Remaining node_modules stay one chunk per package so cache
+					// invalidation is per-library instead of per-app-revision.
+					// https://vite.dev/guide/build#chunking-strategy
+					// https://rolldown.rs/in-depth/manual-code-splitting
+					advancedChunks: {
+						groups: [
+							{
+								name: 'vendor-react',
+								test: /[/\\]node_modules[/\\]react[/\\]/,
+							},
+							{
+								name: 'vendor-react-dom',
+								test: /[/\\]node_modules[/\\]react-dom[/\\]/,
+							},
+							{
+								name: 'vendor-scheduler',
+								test: /[/\\]node_modules[/\\]scheduler[/\\]/,
+							},
+							{
+								minSize: 12_000,
+								name(moduleId) {
+									if (!moduleId.includes('node_modules')) return;
+									const packagePathSegments = moduleId
+										.split('node_modules/')
+										.pop()
+										?.split('/');
+									if (
+										!packagePathSegments?.[0] ||
+										packagePathSegments[0].startsWith('.')
+									) {
+										return;
+									}
+									const packageName = packagePathSegments[0].startsWith('@')
+										? `${packagePathSegments[0]}/${packagePathSegments[1]}`
+										: packagePathSegments[0];
+									return `vendor-${packageName.replace('/', '-')}`;
+								},
+							},
+						],
+					},
+					chunkFileNames: 'assets/[name]-[hash].js',
+					entryFileNames: 'assets/[name]-[hash].js',
+					assetFileNames: 'assets/[name]-[hash][extname]',
+				},
+			},
 		},
 		server: {
 			open: true,
