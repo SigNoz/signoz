@@ -129,6 +129,28 @@ export function logInfraDrawerTimeRangeCustomizedEvent(
 	});
 }
 
+export function logInfraDrawerFilterCustomizedEvent(
+	entityType: string,
+	tab: 'metrics' | 'logs' | 'traces' | 'events' | 'pod_metrics',
+	expression: string,
+	filterSource: 'search' | 'logs',
+): void {
+	const expressionKeys = extractQueryPairs(expression?.trim() || '').map(
+		(pair) => pair.key,
+	);
+
+	if (expressionKeys.length === 0) {
+		return;
+	}
+
+	void logEvent('infra_drawer_filter_customized', {
+		entity_type: entityType,
+		tab,
+		expression_keys: [...new Set(expressionKeys)],
+		filter_source: filterSource,
+	});
+}
+
 export function logInfraGroupByCustomizedEvent(
 	entityType: string,
 	groupByKeysList: string[],

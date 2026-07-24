@@ -20,7 +20,10 @@ import {
 	combineInitialAndUserExpression,
 	getUserExpressionFromCombined,
 } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
-import { InfraMonitoringEvents } from 'constants/events';
+import {
+	InfraMonitoringEvents,
+	logInfraDrawerFilterCustomizedEvent,
+} from 'constants/events';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { FontSize } from 'container/OptionsMenu/types';
@@ -96,8 +99,10 @@ function EntityLogsContent({
 				: partExpression;
 
 			querySearchOnRun(newUser);
+
+			logInfraDrawerFilterCustomizedEvent(category, 'logs', newUser, 'logs');
 		},
-		[userExpression, querySearchOnRun, handleCloseLogDetail],
+		[userExpression, querySearchOnRun, handleCloseLogDetail, category],
 	);
 
 	const {
@@ -137,6 +142,13 @@ function EntityLogsContent({
 					category,
 					view: InfraMonitoringEvents.LogsView,
 				});
+
+				logInfraDrawerFilterCustomizedEvent(
+					category,
+					'logs',
+					newUserExpression || '',
+					'search',
+				);
 
 				refetch();
 			}
