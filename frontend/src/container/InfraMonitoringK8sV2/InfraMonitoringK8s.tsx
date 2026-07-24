@@ -5,6 +5,7 @@ import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import {
+	QuickFilterChangeEventData,
 	QuickFilterCheckboxUseFieldApis,
 	QuickFiltersSource,
 } from 'components/QuickFilters/types';
@@ -51,6 +52,7 @@ import {
 
 import styles from './InfraMonitoringK8s.module.scss';
 import {
+	logInfraFilterCustomizedEvent,
 	logInfraMonitoringListViewedEvent,
 	InfraMonitoringEvents,
 } from 'constants/events';
@@ -133,6 +135,18 @@ export default function InfraMonitoringK8s(): JSX.Element {
 	const handleFilterVisibilityChange = useCallback((): void => {
 		setShowFilters((show) => !show);
 	}, []);
+
+	const handleQuickFilterChange = useCallback(
+		(data: QuickFilterChangeEventData): void => {
+			logInfraFilterCustomizedEvent(
+				selectedCategory as InfraMonitoringEntity,
+				'quick_filter',
+				data.expression,
+				data.filterItemKeys,
+			);
+		},
+		[selectedCategory],
+	);
 
 	const categories = useMemo(
 		() => [
@@ -298,6 +312,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 												config={selectedCategoryConfig}
 												handleFilterVisibilityChange={handleFilterVisibilityChange}
 												useFieldApis={selectedCategoryUseFieldApis}
+												onQuickFilterChange={handleQuickFilterChange}
 											/>
 										)}
 									</div>

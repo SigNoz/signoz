@@ -1,5 +1,6 @@
 import logEvent from 'api/common/logEvent';
 import { getNavigationReferrer } from 'lib/navigation';
+import { extractQueryPairs } from 'utils/queryContextUtils';
 
 export enum Events {
 	UPDATE_GRAPH_VISIBILITY_STATE = 'UPDATE_GRAPH_VISIBILITY_STATE',
@@ -41,6 +42,31 @@ export enum InfraMonitoringEvents {
 	Pod = 'pod',
 	StatefulSet = 'statefulSet',
 	Volumes = 'volumes',
+}
+
+export function logInfraFilterCustomizedEvent(
+	entityType: string,
+	source: 'quick_filter' | 'search' | 'host_status_toggle',
+	expression: string,
+	extraKeys?: string[],
+): void {
+	const expressionKeys = extractQueryPairs(expression?.trim() || '').map(
+		(pair) => pair.key,
+	);
+
+	if (extraKeys) {
+		extraKeys.forEach((key) => expressionKeys.push(key));
+	}
+
+	if (expressionKeys.length === 0) {
+		return;
+	}
+
+	void logEvent('infra_filter_customized', {
+		entity_type: entityType,
+		source,
+		expression_keys: [...new Set(expressionKeys)],
+	});
 }
 
 export function logInfraMonitoringListViewedEvent(entity: string): void {

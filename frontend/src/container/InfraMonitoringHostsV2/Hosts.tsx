@@ -13,9 +13,13 @@ import {
 import { AxiosError } from 'axios';
 import APIError from 'types/api/error';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
-import { QuickFiltersSource } from 'components/QuickFilters/types';
+import {
+	QuickFilterChangeEventData,
+	QuickFiltersSource,
+} from 'components/QuickFilters/types';
 import {
 	InfraMonitoringEvents,
+	logInfraFilterCustomizedEvent,
 	logInfraMonitoringListViewedEvent,
 } from 'constants/events';
 import { initialQueriesMap } from 'constants/queryBuilder';
@@ -189,6 +193,19 @@ function Hosts(): JSX.Element {
 			hostInitialLogTracesExpression(host),
 		[],
 	);
+
+	const handleQuickFilterChange = useCallback(
+		(data: QuickFilterChangeEventData): void => {
+			logInfraFilterCustomizedEvent(
+				InfraMonitoringEntity.HOSTS,
+				'quick_filter',
+				data.expression,
+				data.filterItemKeys,
+			);
+		},
+		[],
+	);
+
 	const controlListPrefix = !showFilters ? (
 		<div className={styles.quickFiltersToggleContainer}>
 			<Button
@@ -203,7 +220,7 @@ function Hosts(): JSX.Element {
 	) : undefined;
 
 	useEffect(() => {
-		logInfraMonitoringListViewedEvent('hosts');
+		logInfraMonitoringListViewedEvent(InfraMonitoringEntity.HOSTS);
 	}, []);
 
 	return (
@@ -234,6 +251,7 @@ function Hosts(): JSX.Element {
 											startUnixMilli,
 											endUnixMilli,
 										}}
+										onQuickFilterChange={handleQuickFilterChange}
 									/>
 								</>
 							</OverlayScrollbar>

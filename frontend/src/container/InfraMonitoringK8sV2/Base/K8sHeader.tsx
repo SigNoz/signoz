@@ -2,7 +2,10 @@ import React, { useCallback, useMemo, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import logEvent from 'api/common/logEvent';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
-import { InfraMonitoringEvents } from 'constants/events';
+import {
+	InfraMonitoringEvents,
+	logInfraFilterCustomizedEvent,
+} from 'constants/events';
 import { QueryParams } from 'constants/query';
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
@@ -96,6 +99,8 @@ function K8sHeader({
 					page: InfraMonitoringEvents.ListPage,
 					category: entity,
 				});
+
+				logInfraFilterCustomizedEvent(entity, 'search', finalExpression);
 			}
 		},
 		[
