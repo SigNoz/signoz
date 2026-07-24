@@ -283,8 +283,10 @@ export function usePanelQuery({
 		[pageSize],
 	);
 
-	// Paging handles for raw/list panels. The backend sets `nextCursor` iff the page filled,
-	// so it's the authoritative has-more signal (there's no total count on the wire).
+	// Paging handles for raw/list panels. The backend only emits `nextCursor` on the
+	// timestamp-ordered window path (isWindowList); a non-timestamp sort falls back to plain
+	// offset paging with no cursor. So treat a full page as a has-more signal too — matching the
+	// offset heuristic the logs/traces explorers use (there's no total count on the wire).
 	const pagination = useMemo<PanelPagination | undefined>(() => {
 		if (!isPaginated) {
 			return undefined;
@@ -300,7 +302,7 @@ export function usePanelQuery({
 		return {
 			pageIndex: Math.floor(safeOffset / safePageSize),
 			canPrev: safeOffset > 0,
-			canNext: !!result?.nextCursor,
+			canNext: !!result?.nextCursor || (result?.rows?.length ?? 0) >= safePageSize,
 			goPrev,
 			goNext,
 			pageSize: safePageSize,
