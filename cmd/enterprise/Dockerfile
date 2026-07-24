@@ -1,4 +1,4 @@
-FROM alpine:3.20.3
+FROM alpine:3.24.1
 LABEL maintainer="signoz"
 WORKDIR /root
 
