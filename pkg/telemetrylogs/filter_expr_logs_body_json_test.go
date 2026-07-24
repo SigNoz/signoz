@@ -105,6 +105,23 @@ func TestFilterExprLogsBodyJSON(t *testing.T) {
 			expectedErrorContains: "",
 		},
 		{
+			// Big-int needle CAST to Array(Int64) to match the haystack (else 386).
+			category:              "json",
+			query:                 `hasAny(body.ids, ['9007199254740993', '9007199254740994'])`,
+			shouldPass:            true,
+			expectedQuery:         `WHERE (hasAny(JSONExtract(JSON_QUERY(body, '$."ids"[*]'), 'Array(Nullable(Int64))'), CAST(? AS Array(Int64))) OR ifNull((JSONExtract(JSON_VALUE(body, '$."ids"'), 'Nullable(Int64)') IN (?, ?) AND JSONType(body, 'ids') NOT IN ('Array', 'Object', 'Null')), false))`,
+			expectedArgs:          []any{[]any{int64(9007199254740993), int64(9007199254740994)}, int64(9007199254740993), int64(9007199254740994)},
+			expectedErrorContains: "",
+		},
+		{
+			category:              "json",
+			query:                 `hasAll(body.ids, ['9007199254740993', '9007199254740994'])`,
+			shouldPass:            true,
+			expectedQuery:         `WHERE (hasAll(JSONExtract(JSON_QUERY(body, '$."ids"[*]'), 'Array(Nullable(Int64))'), CAST(? AS Array(Int64))) OR ifNull(((JSONExtract(JSON_VALUE(body, '$."ids"'), 'Nullable(Int64)') = ? AND JSONExtract(JSON_VALUE(body, '$."ids"'), 'Nullable(Int64)') = ?) AND JSONType(body, 'ids') NOT IN ('Array', 'Object', 'Null')), false))`,
+			expectedArgs:          []any{[]any{int64(9007199254740993), int64(9007199254740994)}, int64(9007199254740993), int64(9007199254740994)},
+			expectedErrorContains: "",
+		},
+		{
 			category:              "json",
 			query:                 "body.message = hello",
 			shouldPass:            true,
