@@ -128,3 +128,13 @@ export function logInfraDrawerTimeRangeCustomizedEvent(
 		range_label: isCustomTimeRange(rangeLabel) ? 'custom' : rangeLabel,
 	});
 }
+
+export function logInfraGroupByCustomizedEvent(
+	entityType: string,
+	groupByKeysList: string[],
+): void {
+	void logEvent('infra_group_by_customized', {
+		entity_type: entityType,
+		group_by_keys_list: groupByKeysList,
+	});
+}

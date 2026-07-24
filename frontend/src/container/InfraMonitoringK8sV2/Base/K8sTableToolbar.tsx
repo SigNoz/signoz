@@ -4,7 +4,10 @@ import { Select } from 'antd';
 import { Download, SlidersVertical } from '@signozhq/icons';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import logEvent from 'api/common/logEvent';
-import { InfraMonitoringEvents } from 'constants/events';
+import {
+	InfraMonitoringEvents,
+	logInfraGroupByCustomizedEvent,
+} from 'constants/events';
 
 import { InfraMonitoringEntity } from '../constants';
 import {
@@ -17,6 +20,7 @@ import styles from './K8sTableToolbar.module.scss';
 
 interface K8sTableToolbarProps {
 	entity: InfraMonitoringEntity;
+	eventCategory: InfraMonitoringEvents;
 	leftFilters?: React.ReactNode;
 	onOpenOptionsDrawer: () => void;
 	onDownload?: () => void;
@@ -24,6 +28,7 @@ interface K8sTableToolbarProps {
 
 function K8sTableToolbar({
 	entity,
+	eventCategory,
 	leftFilters,
 	onOpenOptionsDrawer,
 	onDownload,
@@ -42,10 +47,12 @@ function K8sTableToolbar({
 			void logEvent(InfraMonitoringEvents.GroupByChanged, {
 				entity: InfraMonitoringEvents.K8sEntity,
 				page: InfraMonitoringEvents.ListPage,
-				category: InfraMonitoringEvents.Pod,
+				category: eventCategory,
 			});
+
+			logInfraGroupByCustomizedEvent(entity, value);
 		},
-		[setCurrentPage, setGroupBy],
+		[entity, eventCategory, setCurrentPage, setGroupBy],
 	);
 
 	return (

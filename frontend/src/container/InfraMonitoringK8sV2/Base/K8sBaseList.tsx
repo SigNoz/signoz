@@ -439,6 +439,7 @@ export function K8sBaseList<
 
 				<K8sTableToolbar
 					entity={entity}
+					eventCategory={eventCategory}
 					leftFilters={leftFilters}
 					onOpenOptionsDrawer={handleOpenOptionsDrawer}
 				/>
