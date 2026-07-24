@@ -71,3 +71,19 @@ export function resolveDashboardImage(image?: string | null): string {
 	}
 	return fallback;
 }
+
+/**
+ * Whether an `image` value is acceptable to store: a system icon path, a logo
+ * path, or a base64 image data URI. Empty means "no image" (uses the default)
+ * and is allowed. Rejects URLs, markup, and other free-form strings. Shape-only
+ * — a well-formed but unknown path still resolves to the fallback at render.
+ */
+export function isValidDashboardImage(image?: string | null): boolean {
+	if (!image) {
+		return true;
+	}
+	const hasKnownPrefix = PATH_LOOKUPS.some(
+		({ prefix }) => image.startsWith(prefix) && image.length > prefix.length,
+	);
+	return hasKnownPrefix || BASE64_IMAGE_REGEX.test(image);
+}

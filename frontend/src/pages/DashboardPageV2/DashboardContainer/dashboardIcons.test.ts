@@ -1,5 +1,6 @@
 import {
 	DEFAULT_DASHBOARD_ICON_PATH,
+	isValidDashboardImage,
 	resolveDashboardImage,
 	SYSTEM_ICON_PATHS,
 } from './dashboardIcons';
@@ -55,5 +56,28 @@ describe('system icon catalogue', () => {
 	it('defaults to the eight-ball icon', () => {
 		expect(DEFAULT_DASHBOARD_ICON_PATH).toBe('/assets/Icons/eight-ball');
 		expect(SYSTEM_ICON_PATHS).toContain(DEFAULT_DASHBOARD_ICON_PATH);
+	});
+});
+
+describe('isValidDashboardImage', () => {
+	it.each([
+		['icon path', '/assets/Icons/eight-ball'],
+		['unknown-but-well-formed icon path', '/assets/Icons/whatever'],
+		['logo path', '/assets/Logos/aws-dark'],
+		['base64 image', 'data:image/svg+xml;base64,PHN2Zz48L3N2Zz4='],
+		['empty (no image)', ''],
+	])('accepts %s', (_label, value) => {
+		expect(isValidDashboardImage(value)).toBe(true);
+	});
+
+	it.each([
+		['remote URL', 'http://evil.com/x.svg'],
+		['javascript URI', 'javascript:alert(1)'],
+		['non-image data URI', 'data:text/html;base64,PHNjcmlwdD4='],
+		['raw markup', '<svg onload=alert(1)>'],
+		['prefix with no name', '/assets/Icons/'],
+		['plain string', 'not-a-path'],
+	])('rejects %s', (_label, value) => {
+		expect(isValidDashboardImage(value)).toBe(false);
 	});
 });
