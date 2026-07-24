@@ -288,6 +288,14 @@ func (m *module) ConvertAllV1ToV2(ctx context.Context, orgID valuer.UUID) (*dash
 			item.Status = "failed"
 			item.Error = err.Error()
 			result.Failed++
+			// Backfill the name column from the v1 title even though the data couldn't
+			// migrate, so the dashboard stays findable by name. Only when it's unset, so a
+			// retry doesn't regenerate a different (randomly-suffixed) name. Best-effort.
+			if storable.Name == "" {
+				if nameErr := m.store.UpdateName(ctx, orgID, storable.ID, storable.V1Name()); nameErr != nil {
+					m.settings.Logger().ErrorContext(ctx, "failed to backfill name for unmigrated dashboard", "dashboard_id", storable.ID.String(), "error", nameErr)
+				}
+			}
 		} else {
 			item.Status = "migrated"
 			result.Migrated++
