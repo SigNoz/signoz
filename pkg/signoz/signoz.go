@@ -253,12 +253,40 @@ func New(
 		return nil, err
 	}
 
+	// Initialize telemetry metadata store
+	telemetryMetadataStore := telemetrymetadata.NewTelemetryMetaStore(
+		providerSettings,
+		telemetrystore,
+		telemetrytraces.DBName,
+		telemetrytraces.TagAttributesV2TableName,
+		telemetrytraces.SpanAttributesKeysTblName,
+		telemetrytraces.SpanIndexV3TableName,
+		telemetrymetrics.DBName,
+		telemetrymetrics.AttributesMetadataTableName,
+		telemetrymeter.DBName,
+		telemetrymeter.SamplesAgg1dTableName,
+		telemetrylogs.DBName,
+		telemetrylogs.LogsV2TableName,
+		telemetrylogs.TagAttributesV2TableName,
+		telemetrylogs.LogAttributeKeysTblName,
+		telemetrylogs.LogResourceKeysTblName,
+		telemetryaudit.DBName,
+		telemetryaudit.AuditLogsTableName,
+		telemetryaudit.TagAttributesTableName,
+		telemetryaudit.LogAttributeKeysTblName,
+		telemetryaudit.LogResourceKeysTblName,
+		telemetrymetadata.DBName,
+		telemetrymetadata.AttributesMetadataLocalTableName,
+		telemetrymetadata.ColumnEvolutionMetadataTableName,
+		flagger,
+	)
+
 	// Initialize querier from the available querier provider factories
 	querier, err := factory.NewProviderFromNamedMap(
 		ctx,
 		providerSettings,
 		config.Querier,
-		NewQuerierProviderFactories(telemetrystore, prometheus, cache, flagger),
+		NewQuerierProviderFactories(telemetrystore, telemetryMetadataStore, prometheus, cache, flagger),
 		config.Querier.Provider(),
 	)
 	if err != nil {
@@ -422,35 +450,6 @@ func New(
 	if err != nil {
 		return nil, err
 	}
-
-	// Initialize telemetry metadata store
-	// TODO: consolidate other telemetrymetadata.NewTelemetryMetaStore initializations to reuse this instance instead.
-	telemetryMetadataStore := telemetrymetadata.NewTelemetryMetaStore(
-		providerSettings,
-		telemetrystore,
-		telemetrytraces.DBName,
-		telemetrytraces.TagAttributesV2TableName,
-		telemetrytraces.SpanAttributesKeysTblName,
-		telemetrytraces.SpanIndexV3TableName,
-		telemetrymetrics.DBName,
-		telemetrymetrics.AttributesMetadataTableName,
-		telemetrymeter.DBName,
-		telemetrymeter.SamplesAgg1dTableName,
-		telemetrylogs.DBName,
-		telemetrylogs.LogsV2TableName,
-		telemetrylogs.TagAttributesV2TableName,
-		telemetrylogs.LogAttributeKeysTblName,
-		telemetrylogs.LogResourceKeysTblName,
-		telemetryaudit.DBName,
-		telemetryaudit.AuditLogsTableName,
-		telemetryaudit.TagAttributesTableName,
-		telemetryaudit.LogAttributeKeysTblName,
-		telemetryaudit.LogResourceKeysTblName,
-		telemetrymetadata.DBName,
-		telemetrymetadata.AttributesMetadataLocalTableName,
-		telemetrymetadata.ColumnEvolutionMetadataTableName,
-		flagger,
-	)
 
 	global, err := factory.NewProviderFromNamedMap(
 		ctx,

@@ -11,16 +11,17 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetryaudit"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
-	"github.com/SigNoz/signoz/pkg/telemetrymetadata"
 	"github.com/SigNoz/signoz/pkg/telemetrymeter"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
 // NewFactory creates a new factory for the signoz querier provider.
 func NewFactory(
 	telemetryStore telemetrystore.TelemetryStore,
+	telemetryMetadataStore telemetrytypes.MetadataStore,
 	prometheus prometheus.Prometheus,
 	cache cache.Cache,
 	flagger flagger.Flagger,
@@ -32,7 +33,7 @@ func NewFactory(
 			settings factory.ProviderSettings,
 			cfg querier.Config,
 		) (querier.Querier, error) {
-			return newProvider(ctx, settings, cfg, telemetryStore, prometheus, cache, flagger)
+			return newProvider(ctx, settings, cfg, telemetryStore, telemetryMetadataStore, prometheus, cache, flagger)
 		},
 	)
 }
@@ -42,38 +43,11 @@ func newProvider(
 	settings factory.ProviderSettings,
 	cfg querier.Config,
 	telemetryStore telemetrystore.TelemetryStore,
+	telemetryMetadataStore telemetrytypes.MetadataStore,
 	prometheus prometheus.Prometheus,
 	cache cache.Cache,
 	flagger flagger.Flagger,
 ) (querier.Querier, error) {
-
-	// Create telemetry metadata store
-	telemetryMetadataStore := telemetrymetadata.NewTelemetryMetaStore(
-		settings,
-		telemetryStore,
-		telemetrytraces.DBName,
-		telemetrytraces.TagAttributesV2TableName,
-		telemetrytraces.SpanAttributesKeysTblName,
-		telemetrytraces.SpanIndexV3TableName,
-		telemetrymetrics.DBName,
-		telemetrymetrics.AttributesMetadataTableName,
-		telemetrymeter.DBName,
-		telemetrymeter.SamplesAgg1dTableName,
-		telemetrylogs.DBName,
-		telemetrylogs.LogsV2TableName,
-		telemetrylogs.TagAttributesV2TableName,
-		telemetrylogs.LogAttributeKeysTblName,
-		telemetrylogs.LogResourceKeysTblName,
-		telemetryaudit.DBName,
-		telemetryaudit.AuditLogsTableName,
-		telemetryaudit.TagAttributesTableName,
-		telemetryaudit.LogAttributeKeysTblName,
-		telemetryaudit.LogResourceKeysTblName,
-		telemetrymetadata.DBName,
-		telemetrymetadata.AttributesMetadataLocalTableName,
-		telemetrymetadata.ColumnEvolutionMetadataTableName,
-		flagger,
-	)
 
 	// Create trace statement builder
 	traceFieldMapper := telemetrytraces.NewFieldMapper()

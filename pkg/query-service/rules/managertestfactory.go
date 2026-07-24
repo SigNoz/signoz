@@ -18,8 +18,14 @@ import (
 	"github.com/SigNoz/signoz/pkg/querier/signozquerier"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstoretest"
+	"github.com/SigNoz/signoz/pkg/telemetryaudit"
+	"github.com/SigNoz/signoz/pkg/telemetrylogs"
+	"github.com/SigNoz/signoz/pkg/telemetrymetadata"
+	"github.com/SigNoz/signoz/pkg/telemetrymeter"
+	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
+	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	"github.com/stretchr/testify/require"
 )
 
@@ -104,8 +110,36 @@ func NewTestManager(t *testing.T, testOpts *TestManagerOptions) *Manager {
 		t.Fatalf("failed to create flagger: %v", err)
 	}
 
-	// Create querier with test values
-	providerFactory := signozquerier.NewFactory(telemetryStore, prometheus, cache, flagger)
+	// Create querier with test values. A real telemetry metadata store is
+	// required so the querier can resolve metric metadata against the mock
+	// telemetry store during rule evaluation.
+	metadataStore := telemetrymetadata.NewTelemetryMetaStore(
+		providerSettings,
+		telemetryStore,
+		telemetrytraces.DBName,
+		telemetrytraces.TagAttributesV2TableName,
+		telemetrytraces.SpanAttributesKeysTblName,
+		telemetrytraces.SpanIndexV3TableName,
+		telemetrymetrics.DBName,
+		telemetrymetrics.AttributesMetadataTableName,
+		telemetrymeter.DBName,
+		telemetrymeter.SamplesAgg1dTableName,
+		telemetrylogs.DBName,
+		telemetrylogs.LogsV2TableName,
+		telemetrylogs.TagAttributesV2TableName,
+		telemetrylogs.LogAttributeKeysTblName,
+		telemetrylogs.LogResourceKeysTblName,
+		telemetryaudit.DBName,
+		telemetryaudit.AuditLogsTableName,
+		telemetryaudit.TagAttributesTableName,
+		telemetryaudit.LogAttributeKeysTblName,
+		telemetryaudit.LogResourceKeysTblName,
+		telemetrymetadata.DBName,
+		telemetrymetadata.AttributesMetadataLocalTableName,
+		telemetrymetadata.ColumnEvolutionMetadataTableName,
+		flagger,
+	)
+	providerFactory := signozquerier.NewFactory(telemetryStore, metadataStore, prometheus, cache, flagger)
 	mockQuerier, err := providerFactory.New(context.Background(), providerSettings, querier.Config{})
 	require.NoError(t, err)
 
