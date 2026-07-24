@@ -1,0 +1,4 @@
+{
+  "note": "Divergences of the CURRENT promql serving path from the upstream reference engine, enforced exactly by 01_upstream_corpus.py in both directions. These document shipped defects, not test debt: the dominant class is the v1 remote-read fetch injecting a synthetic 'fingerprint' label into every series (pkg/prometheus/clickhouseprometheus/json.go), which breaks without() grouping and default vector matching. Entries must be REMOVED as the serving path is fixed or swapped.",
+  "divergences": {}
+}

@@ -1,0 +1,2 @@
+# go build artifact (go run . is the supported entry)
+/promqltestcorpus

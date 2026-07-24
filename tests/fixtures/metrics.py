@@ -687,11 +687,17 @@ def insert_metrics_to_clickhouse(conn, metrics: list[Metrics]) -> None:
     Pure function so the seeder container can reuse the exact insert path
     used by the pytest fixture. `conn` is a clickhouse-connect Client.
     """
-    time_series_map: dict[int, MetricsTimeSeries] = {}
+    # One registration row per (series, hour bucket), unix_milli floored to
+    # the hour — the exporter's exact shape. Readers floor lookup windows to
+    # these buckets: skipping per-bucket re-registration or keeping raw
+    # mid-hour timestamps hides series in ways production never sees.
+    time_series_map: dict[tuple[int, int], MetricsTimeSeries] = {}
     for metric in metrics:
         fp = int(metric.time_series.fingerprint)
-        if fp not in time_series_map:
-            time_series_map[fp] = metric.time_series
+        hour_bucket = int(metric.time_series.unix_milli) // 3_600_000
+        if (fp, hour_bucket) not in time_series_map:
+            metric.time_series.unix_milli = np.int64(hour_bucket * 3_600_000)
+            time_series_map[(fp, hour_bucket)] = metric.time_series
 
     if len(time_series_map) > 0:
         conn.insert(
