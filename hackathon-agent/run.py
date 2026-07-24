@@ -13,15 +13,15 @@ import subprocess
 import time
 import os
 
-PYTHON = r"C:\users\sonis\miniconda3\python.exe"
+PYTHON = sys.executable
 
 
 def run_worker(num_tasks: int = 5):
     print("\n" + "=" * 60)
     print("  PHASE 1: WORKER AGENT")
-    print("  Running tasks (some will fail intentionally)")
+    print("  Running tasks")
     print("=" * 60)
-    subprocess.run([PYTHON, "worker.py", str(num_tasks)], cwd=os.path.dirname(__file__) or ".")
+    subprocess.run([PYTHON, "worker.py", str(num_tasks)], cwd=os.path.dirname(__file__) or ".", check=True)
 
 
 def run_overmind(num_cycles: int = 2):
@@ -29,7 +29,7 @@ def run_overmind(num_cycles: int = 2):
     print("  PHASE 2: OVERMIND AGENT")
     print("  Scanning SigNoz for failures and diagnosing...")
     print("=" * 60)
-    subprocess.run([PYTHON, "overmind.py", str(num_cycles)], cwd=os.path.dirname(__file__) or ".")
+    subprocess.run([PYTHON, "overmind.py", str(num_cycles)], cwd=os.path.dirname(__file__) or ".", check=True)
 
 
 def main():

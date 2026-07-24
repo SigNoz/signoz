@@ -32,34 +32,23 @@ class WorkerLLM(LLM):
     def _call(self, prompt: str, stop: Optional[List[str]] = None, **kwargs: Any) -> str:
         prompt_lower = prompt.lower()
 
-        # Route to appropriate tool based on the task
         if "user" in prompt_lower and ("status" in prompt_lower or "fetch" in prompt_lower or "data" in prompt_lower):
-            # Extract a user_id-like thing from the prompt
             user_id = "user_123"
             for word in prompt.split():
                 if word.startswith("'") and word.endswith("'"):
                     user_id = word.strip("'")
                     break
-            try:
-                result = fetch_user_data(user_id)
-                return f"I used the FetchUserData tool. Result: {result}"
-            except Exception as e:
-                raise e
+            result = fetch_user_data(user_id)
+            return f"I used the FetchUserData tool. Result: {result}"
 
         elif "search" in prompt_lower or "knowledge" in prompt_lower or "docs" in prompt_lower:
-            try:
-                result = search_knowledge_base(prompt[:50])
-                return f"I searched the knowledge base. Result: {result}"
-            except Exception as e:
-                raise e
+            result = search_knowledge_base(prompt[:50])
+            return f"I searched the knowledge base. Result: {result}"
 
         elif "billing" in prompt_lower or "invoice" in prompt_lower or "cost" in prompt_lower:
             account_id = "ACC-" + str(random.randint(1000, 9999))
-            try:
-                result = calculate_billing(account_id)
-                return f"I calculated billing. Result: {result}"
-            except Exception as e:
-                raise e
+            result = calculate_billing(account_id)
+            return f"I calculated billing. Result: {result}"
 
         else:
             return f"I analyzed the request: '{prompt[:80]}'. Based on my knowledge, the answer is: This is a general inquiry that has been processed successfully."
