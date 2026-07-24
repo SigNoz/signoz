@@ -8887,6 +8887,81 @@ export interface RuletypesRuleDTO {
 export enum RuletypesThresholdKindDTO {
 	basic = 'basic',
 }
+export enum SavedviewtypesPanelTypeDTO {
+	value = 'value',
+	graph = 'graph',
+	table = 'table',
+	list = 'list',
+	trace = 'trace',
+}
+export enum SavedviewtypesQueryTypeDTO {
+	builder = 'builder',
+	clickhouse_sql = 'clickhouse_sql',
+	promql = 'promql',
+}
+export interface SavedviewtypesCompositeQueryDTO {
+	panelType: SavedviewtypesPanelTypeDTO;
+	/**
+	 * @type array,null
+	 */
+	queries: Querybuildertypesv5QueryEnvelopeDTO[] | null;
+	queryType: SavedviewtypesQueryTypeDTO;
+}
+
+export enum SavedviewtypesSourcePageDTO {
+	traces = 'traces',
+	logs = 'logs',
+	metrics = 'metrics',
+	meter = 'meter',
+}
+export interface SavedviewtypesGettableSavedViewDTO {
+	compositeQuery: SavedviewtypesCompositeQueryDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt: string;
+	/**
+	 * @type string
+	 */
+	createdBy: string;
+	/**
+	 * @type string
+	 */
+	extraData: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	sourcePage: SavedviewtypesSourcePageDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt: string;
+	/**
+	 * @type string
+	 */
+	updatedBy: string;
+}
+
+export interface SavedviewtypesPostableSavedViewDTO {
+	compositeQuery: SavedviewtypesCompositeQueryDTO;
+	/**
+	 * @type string
+	 */
+	extraData: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	sourcePage: SavedviewtypesSourcePageDTO;
+}
+
 export interface ServiceaccounttypesDeprecatedPostableServiceAccountRoleDTO {
 	/**
 	 * @type string
@@ -12090,6 +12165,57 @@ export type TestRule200 = {
 	status: string;
 };
 
+export type ListSavedViewsParams = {
+	/**
+	 * @description undefined
+	 */
+	sourcePage?: SavedviewtypesSourcePageDTO;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	name?: string;
+};
+
+export type ListSavedViews200 = {
+	/**
+	 * @type array,null
+	 */
+	data: SavedviewtypesGettableSavedViewDTO[] | null;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateSavedView200 = {
+	/**
+	 * @type string,null
+	 */
+	data: string | null;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteSavedViewPathParameters = {
+	viewId: string;
+};
+export type GetSavedViewPathParameters = {
+	viewId: string;
+};
+export type GetSavedView200 = {
+	data: SavedviewtypesGettableSavedViewDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UpdateSavedViewPathParameters = {
+	viewId: string;
+};
 export type GetSessionContext200 = {
 	data: AuthtypesSessionContextDTO;
 	/**

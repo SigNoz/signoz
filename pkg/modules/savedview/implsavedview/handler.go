@@ -7,10 +7,11 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/savedviewtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
@@ -33,7 +34,7 @@ func (handler *handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var view v3.SavedView
+	var view savedviewtypes.PostableSavedView
 	if err := json.NewDecoder(r.Body).Decode(&view); err != nil {
 		render.Error(w, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to decode request body"))
 		return
@@ -95,7 +96,7 @@ func (handler *handler) Update(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to parse view id"))
 		return
 	}
-	var view v3.SavedView
+	var view savedviewtypes.UpdatableSavedView
 	if err := json.NewDecoder(r.Body).Decode(&view); err != nil {
 		render.Error(w, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to decode request body"))
 		return
@@ -112,7 +113,7 @@ func (handler *handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(w, http.StatusOK, view)
+	render.Success(w, http.StatusOK, nil)
 }
 
 func (handler *handler) Delete(w http.ResponseWriter, r *http.Request) {
@@ -151,11 +152,17 @@ func (handler *handler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sourcePage := r.URL.Query().Get("sourcePage")
-	name := r.URL.Query().Get("name")
-	category := r.URL.Query().Get("category")
+	params := new(savedviewtypes.ListSavedViewsParams)
+	if err := binding.Query.BindQuery(r.URL.Query(), params); err != nil {
+		render.Error(w, err)
+		return
+	}
+	if err := params.Validate(); err != nil {
+		render.Error(w, err)
+		return
+	}
 
-	queries, err := handler.module.GetViewsForFilters(r.Context(), claims.OrgID, sourcePage, name, category)
+	queries, err := handler.module.GetViewsForFilters(r.Context(), claims.OrgID, params.SourcePage, params.Name)
 	if err != nil {
 		render.Error(w, err)
 		return
