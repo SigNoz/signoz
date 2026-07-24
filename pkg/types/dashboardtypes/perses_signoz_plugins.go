@@ -179,21 +179,6 @@ func (PanelPluginKind) Enum() []any {
 	return []any{PanelKindTimeSeries, PanelKindBarChart, PanelKindNumber, PanelKindPieChart, PanelKindTable, PanelKindHistogram, PanelKindList}
 }
 
-type DatasourcePluginKind string
-
-const (
-	DatasourceKindSigNoz DatasourcePluginKind = "signoz/Datasource"
-)
-
-func (DatasourcePluginKind) Enum() []any {
-	return []any{DatasourceKindSigNoz}
-}
-
-// SigNozDatasourceSpec is the (empty) signoz/Datasource plugin spec. Naming the
-// type gives the variant a concrete, non-nullable spec schema instead of an
-// inline free-form one.
-type SigNozDatasourceSpec struct{}
-
 type TimeSeriesPanelSpec struct {
 	Visualization   TimeSeriesVisualization   `json:"visualization"`
 	Formatting      PanelFormatting           `json:"formatting"`

@@ -17,16 +17,17 @@ import (
 // DashboardSpec is the SigNoz dashboard v2 spec shape. It mirrors
 // dashboard.Spec (Perses) field-for-field, except every common.Plugin
 // occurrence is replaced with a typed SigNoz plugin whose OpenAPI schema is a
-// per-site discriminated oneOf.
+// per-site discriminated oneOf. Perses's datasources field is deliberately
+// dropped: SigNoz never reads it (queries carry their own signal/source), so
+// the drift test allowlists it as an intentional omission.
 type DashboardSpec struct {
-	Display         Display                    `json:"display" required:"true"`
-	Datasources     map[string]*DatasourceSpec `json:"datasources,omitzero"`
-	Variables       []Variable                 `json:"variables" required:"true" nullable:"false"`
-	Panels          map[string]*Panel          `json:"panels" required:"true" nullable:"false"`
-	Layouts         []Layout                   `json:"layouts" required:"true" nullable:"false"`
-	Duration        common.DurationString      `json:"duration"`
-	RefreshInterval common.DurationString      `json:"refreshInterval"`
-	Links           []Link                     `json:"links" required:"true" nullable:"false"`
+	Display         Display               `json:"display" required:"true"`
+	Variables       []Variable            `json:"variables" required:"true" nullable:"false"`
+	Panels          map[string]*Panel     `json:"panels" required:"true" nullable:"false"`
+	Layouts         []Layout              `json:"layouts" required:"true" nullable:"false"`
+	Duration        common.DurationString `json:"duration"`
+	RefreshInterval common.DurationString `json:"refreshInterval"`
+	Links           []Link                `json:"links,omitzero"`
 }
 
 // ══════════════════════════════════════════════
@@ -45,25 +46,12 @@ func (d *DashboardSpec) UnmarshalJSON(data []byte) error {
 	return d.Validate()
 }
 
-// validateLinks rejects a missing/null spec.links value: a typed client must
-// send [] rather than omitting links, so its value round-trips faithfully.
-// Panel links are the panel spec's concern, validated in validatePanels.
-func (d *DashboardSpec) validateLinks() error {
-	if d.Links == nil {
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.links is required; send [] when there are no links")
-	}
-	return nil
-}
-
 // ══════════════════════════════════════════════
 // Cross-field validation
 // ══════════════════════════════════════════════
 
 func (d *DashboardSpec) Validate() error {
 	if err := d.Display.Validate("dashboard", "spec.display.name"); err != nil {
-		return err
-	}
-	if err := d.validateLinks(); err != nil {
 		return err
 	}
 	if err := d.validateVariables(); err != nil {
@@ -115,9 +103,6 @@ func (d *DashboardSpec) validatePanels() error {
 		}
 		path := fmt.Sprintf("spec.panels.%s", key)
 		if err := panel.Spec.Display.Validate("panel", path+".spec.display.name"); err != nil {
-			return err
-		}
-		if err := panel.Spec.validateLinks(path); err != nil {
 			return err
 		}
 		panelKind := panel.Spec.Plugin.Kind

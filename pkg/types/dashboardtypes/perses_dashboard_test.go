@@ -44,7 +44,7 @@ func TestInvalidateNotAJSON(t *testing.T) {
 // TestUnmarshalErrorPreservesNestedMessage guards the wrap on dec.Decode in
 // DashboardSpec.UnmarshalJSON. The wrap stamps a consistent type/code on
 // decode failures, but must not smother the rich messages produced by nested
-// UnmarshalJSON methods (panel/query/variable/datasource plugin envelopes).
+// UnmarshalJSON methods (panel/query/variable plugin envelopes).
 func TestUnmarshalErrorPreservesNestedMessage(t *testing.T) {
 	data := []byte(`{
 		"panels": {
@@ -77,8 +77,8 @@ func TestUnmarshalErrorPreservesNestedMessage(t *testing.T) {
 }
 
 func TestValidateEmptySpec(t *testing.T) {
-	// no variables no panels
-	data := []byte(`{"links": []}`)
+	// no variables no panels no links
+	data := []byte(`{}`)
 	_, err := unmarshalDashboard(data)
 	assert.NoError(t, err, "expected valid")
 }
@@ -446,20 +446,6 @@ func TestInvalidateUnknownPluginKind(t *testing.T) {
 				"layouts": []
 			}`,
 			wantContain: "FakeVariable",
-		},
-		{
-			name: "unknown datasource plugin",
-			data: `{
-				"datasources": {
-					"ds1": {
-						"default": true,
-						"plugin": {"kind": "FakeDatasource", "spec": {}}
-					}
-				},
-				"links": [],
-				"layouts": []
-			}`,
-			wantContain: "FakeDatasource",
 		},
 	}
 
