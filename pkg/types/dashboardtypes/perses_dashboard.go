@@ -25,6 +25,15 @@ const (
 	dashboardNameSuffixLen = 8
 )
 
+const (
+	dashboardIconPathPrefix = "/assets/Icons/"
+	dashboardLogoPathPrefix = "/assets/Logos/"
+)
+
+// base64ImageDataURIRegex matches the only free-form image value we allow — a
+// base64 image data URI. Mirrors the frontend resolver's allow-list.
+var base64ImageDataURIRegex = regexp.MustCompile(`^data:image/(?:png|jpe?g|gif|webp|avif|svg\+xml);base64,[A-Za-z0-9+/]+={0,2}$`)
+
 type DSLKey string
 
 const (
@@ -174,17 +183,6 @@ func nextCloneDisplayName(name string) string {
 	}
 	return base + suffix
 }
-
-const (
-	dashboardIconPathPrefix = "/assets/Icons/"
-	dashboardLogoPathPrefix = "/assets/Logos/"
-)
-
-// base64ImageDataURIRegex matches the only free-form image value we allow — a
-// base64 image data URI. Mirrors the frontend resolver's allow-list.
-var base64ImageDataURIRegex = regexp.MustCompile(
-	`^data:image/(?:png|jpe?g|gif|webp|avif|svg\+xml);base64,[A-Za-z0-9+/]+={0,2}$`,
-)
 
 type DashboardV2MetadataBase struct {
 	SchemaVersion string `json:"schemaVersion" required:"true"`

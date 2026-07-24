@@ -16,12 +16,7 @@ func TestDashboardV2MetadataBaseValidateImage(t *testing.T) {
 		"data:image/png;base64,iVBORw0KGgo=",         // base64 png
 	}
 	for _, image := range valid {
-		assert.NoError(
-			t,
-			DashboardV2MetadataBase{Image: image}.validateImage(),
-			"expected %q to be accepted",
-			image,
-		)
+		assert.NoError(t, DashboardV2MetadataBase{Image: image}.validateImage(), "expected %q to be accepted", image)
 	}
 
 	invalid := []string{
@@ -34,11 +29,6 @@ func TestDashboardV2MetadataBaseValidateImage(t *testing.T) {
 		"not-a-path",                         // plain string
 	}
 	for _, image := range invalid {
-		assert.Error(
-			t,
-			DashboardV2MetadataBase{Image: image}.validateImage(),
-			"expected %q to be rejected",
-			image,
-		)
+		assert.Error(t, DashboardV2MetadataBase{Image: image}.validateImage(), "expected %q to be rejected", image)
 	}
 }

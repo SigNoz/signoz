@@ -160,7 +160,7 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 
 	t.Run("reject non-icon/logo image", func(t *testing.T) {
 		_, err := decode(t, `[{"op": "add", "path": "/image", "value": "https://example.com/img.png"}]`).Apply(base)
-		require.Error(t, err, "a URL image must be rejected")
+		assert.Error(t, err, "a URL image must be rejected")
 	})
 
 	t.Run("replace display name", func(t *testing.T) {
