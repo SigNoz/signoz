@@ -80,39 +80,49 @@ function TemplatesPanel(): JSX.Element {
 
 			{isCloudUser && (
 				<div className={styles.requestForm}>
-					<Input
-						className={styles.requestInput}
-						placeholder="Enter dashboard name..."
-						value={name}
-						testId="request-dashboard-name"
-						onChange={(e: ChangeEvent<HTMLInputElement>): void =>
-							setName(e.target.value)
-						}
-						onKeyDown={(e: KeyboardEvent<HTMLInputElement>): void => {
-							if (e.key === 'Enter') {
-								void handleRequest();
-							}
-						}}
-					/>
-					<Button
-						variant="solid"
-						color="primary"
-						size="md"
-						disabled={submitting || requestName.length === 0}
-						testId="request-dashboard-submit"
-						prefix={
-							submitting ? (
-								<LoaderCircle size={14} className={styles.spinner} />
-							) : (
-								<Check size={14} />
-							)
-						}
-						onClick={(): void => {
-							void handleRequest();
-						}}
+					<Typography
+						variant="text"
+						size="sm"
+						weight="semibold"
+						className={styles.requestHeader}
 					>
-						Submit
-					</Button>
+						Request a new template
+					</Typography>
+					<div className={styles.requestRow}>
+						<Input
+							className={styles.requestInput}
+							placeholder="Enter dashboard name..."
+							value={name}
+							testId="request-dashboard-name"
+							onChange={(e: ChangeEvent<HTMLInputElement>): void =>
+								setName(e.target.value)
+							}
+							onKeyDown={(e: KeyboardEvent<HTMLInputElement>): void => {
+								if (e.key === 'Enter') {
+									void handleRequest();
+								}
+							}}
+						/>
+						<Button
+							variant="solid"
+							color="primary"
+							size="md"
+							disabled={submitting || requestName.length === 0}
+							testId="request-dashboard-submit"
+							prefix={
+								submitting ? (
+									<LoaderCircle size={14} className={styles.spinner} />
+								) : (
+									<Check size={14} />
+								)
+							}
+							onClick={(): void => {
+								void handleRequest();
+							}}
+						>
+							Submit
+						</Button>
+					</div>
 				</div>
 			)}
 		</div>

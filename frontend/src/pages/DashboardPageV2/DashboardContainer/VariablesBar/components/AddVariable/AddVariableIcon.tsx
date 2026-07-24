@@ -19,7 +19,7 @@ function AddVariableIcon(): JSX.Element {
 				variant="outlined"
 				color="secondary"
 				size="icon"
-				className={styles.addVariable}
+				className={styles.addVariableIcon}
 				aria-label="Add variable"
 				testId="dashboard-variables-add"
 				onClick={(): void =>

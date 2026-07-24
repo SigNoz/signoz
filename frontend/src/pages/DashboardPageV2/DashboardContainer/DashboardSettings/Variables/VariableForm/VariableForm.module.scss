@@ -160,6 +160,26 @@
 	vertical-align: middle;
 }
 
+/* The full "Not Recommended" pill — hidden once the tab row gets tight so it
+   never forces horizontal scroll; the amber info icon takes over below. */
+.notRecommendedBadge {
+	margin-left: 4px;
+	vertical-align: middle;
+
+	@media (max-width: 1280px) {
+		display: none;
+	}
+}
+
+/* Amber info icon: always present, but the sole "not recommended" cue on small
+   screens (its tooltip carries the message + learn-more link). */
+.notRecommendedInfo {
+	display: inline-flex;
+	align-items: center;
+	margin-left: 4px;
+	vertical-align: middle;
+}
+
 /* Query */
 .queryContainer {
 	display: flex;

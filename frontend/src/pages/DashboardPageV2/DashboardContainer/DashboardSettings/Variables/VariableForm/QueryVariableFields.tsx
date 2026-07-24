@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
@@ -27,6 +27,7 @@ function QueryVariableFields({
 	onError,
 }: QueryVariableFieldsProps): JSX.Element {
 	const [isRunning, setIsRunning] = useState(false);
+	const hasAutoRun = useRef(false);
 
 	const runTest = async (): Promise<void> => {
 		setIsRunning(true);
@@ -58,6 +59,16 @@ function QueryVariableFields({
 			});
 		}
 	};
+
+	// Fetch options on load so the Default Value dropdown is populated without a
+	// manual Test Run — once, and only when there's a query to run.
+	useEffect(() => {
+		if (!hasAutoRun.current && queryValue) {
+			hasAutoRun.current = true;
+			void runTest();
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [queryValue]);
 
 	return (
 		<div className={styles.queryContainer}>
