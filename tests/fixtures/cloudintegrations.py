@@ -21,17 +21,7 @@ from fixtures.logger import setup_logger
 logger = setup_logger(__name__)
 
 
-# ---------------------------------------------------------------------------
-# Provider account specs
-#
-# Each cloud provider stores account config under a different shape (AWS uses
-# `regions`, GCP uses `deploymentProjectId`/`projectIds`, Azure uses
-# `resourceGroups`). A ProviderAccountSpec is the single source of truth for one
-# provider's config shape: how to build the POST/PUT `config` block, and how to
-# read back the value we assert on. Both `create_cloud_integration_account` and
-# the parametrized account tests consume these, so adding a new provider is one
-# new entry in PROVIDER_ACCOUNT_SPECS — no test-body changes required.
-# ---------------------------------------------------------------------------
+# Per-provider config shape.
 @dataclass(frozen=True)
 class ProviderAccountSpec:
     # provider slug used in the URL path and config key (e.g. "aws", "gcp").
