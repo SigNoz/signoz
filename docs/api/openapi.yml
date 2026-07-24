@@ -2748,6 +2748,7 @@ components:
         links:
           items:
             $ref: '#/components/schemas/DashboardtypesLink'
+          nullable: true
           type: array
         panels:
           additionalProperties:
@@ -2764,7 +2765,6 @@ components:
       - variables
       - panels
       - layouts
-      - links
       type: object
     DashboardtypesDashboardView:
       properties:
@@ -3401,6 +3401,7 @@ components:
         links:
           items:
             $ref: '#/components/schemas/DashboardtypesLink'
+          nullable: true
           type: array
         plugin:
           $ref: '#/components/schemas/DashboardtypesPanelPlugin'
@@ -3412,7 +3413,6 @@ components:
       - display
       - plugin
       - queries
-      - links
       type: object
     DashboardtypesPatchOp:
       enum:
