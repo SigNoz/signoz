@@ -11057,6 +11057,10 @@ paths:
         schema:
           $ref: '#/components/schemas/TelemetrytypesSource'
       - in: query
+        name: type
+        schema:
+          type: string
+      - in: query
         name: limit
         schema:
           type: integer
@@ -11145,6 +11149,10 @@ paths:
         name: source
         schema:
           $ref: '#/components/schemas/TelemetrytypesSource'
+      - in: query
+        name: type
+        schema:
+          type: string
       - in: query
         name: limit
         schema:
@@ -21198,6 +21206,10 @@ paths:
         schema:
           $ref: '#/components/schemas/TelemetrytypesSource'
       - in: query
+        name: type
+        schema:
+          type: string
+      - in: query
         name: limit
         schema:
           type: integer
@@ -21298,6 +21310,10 @@ paths:
         name: source
         schema:
           $ref: '#/components/schemas/TelemetrytypesSource'
+      - in: query
+        name: type
+        schema:
+          type: string
       - in: query
         name: limit
         schema:

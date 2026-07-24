@@ -64,3 +64,23 @@ func Scope() scopedtraces.TraceScope {
 		DefaultOrderAlias: "last_activity_time",
 	}
 }
+
+// TraceAggregateFieldKeys returns the filterable/orderable per-trace aggregate columns
+// as trace-context field keys; the metadata store surfaces them for builder_ai_query
+// key suggestions (`trace.` autocomplete in the filter bar and the order-by picker).
+func TraceAggregateFieldKeys() []*telemetrytypes.TelemetryFieldKey {
+	cols := Scope().Columns
+	keys := make([]*telemetrytypes.TelemetryFieldKey, 0, len(cols))
+	for _, c := range cols {
+		if !c.Orderable {
+			continue
+		}
+		keys = append(keys, &telemetrytypes.TelemetryFieldKey{
+			Name:          c.Alias,
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  telemetrytypes.FieldContextTrace,
+			FieldDataType: telemetrytypes.FieldDataTypeFloat64,
+		})
+	}
+	return keys
+}
