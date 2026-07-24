@@ -1,0 +1,19 @@
+{
+	"monitor_signup": "Monitore suas aplicações. Encontre o que está causando problemas.",
+	"version": "Versão",
+	"latest_version": "Última versão",
+	"current_version": "Versão atual",
+	"release_notes": "Notas de Lançamento",
+	"read_how_to_upgrade": "Leia as instruções de como atualizar",
+	"latest_version_signoz": "Você está usando a última versão do SigNoz.",
+	"stale_version": "Você está em uma versão antiga e pode estar perdendo as últimas funcionalidades. Recomendamos atualizar para a versão mais recente.",
+	"oops_something_went_wrong_version": "Ops.. encontramos problemas ao buscar informações da versão atualizada",
+	"n_a": "N/A",
+	"routes": {
+		"general": "Geral",
+		"alert_channels": "Canais de Alerta",
+		"all_errors": "Todas as Exceções",
+		"index_fields": "Campos de Índice",
+		"pipelines": "Pipelines"
+	}
+}
