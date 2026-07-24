@@ -1178,12 +1178,11 @@ def test_logs_json_body_hastoken_separator_needle_errors(
     export_json_types: Callable[[list[Logs]], None],
     needle: str,
 ) -> None:
-    """KNOWN BUG (currently 500) — same defect as the flag-off path. In JSON mode hasToken searches
-    body.message via ClickHouse hasToken(LOWER(body.message), LOWER(?)), which rejects a needle
-    containing whitespace or separator characters (`.`/`_`/`-`/space) with error code 36. The needle
-    is passed straight through, so the query fails at execution and the raw error surfaces as a 500
-    instead of a 400 / graceful fallback. Flip to 400 (or a fallback match) once the needle is
-    validated."""
+    """Same defect as the flag-off path. In JSON mode hasToken searches body.message via
+    ClickHouse hasToken(LOWER(body.message), LOWER(?)), which rejects a needle containing
+    whitespace or separator characters (`.`/`_`/`-`/space) with error code 36 at execution. The
+    needle is validated up front, so a multi-token needle is a clean 400 (hasToken matches a single
+    whole token) rather than a raw execution 500."""
     now = datetime.now(tz=UTC)
     logs = [
         Logs(timestamp=now - timedelta(seconds=1), resources={"service.name": "app-service"}, body_v2=json.dumps({"message": "client 192.168.1.1 user_id error-code production node"}), body_promoted="", severity_text="INFO"),
@@ -1199,8 +1198,8 @@ def test_logs_json_body_hastoken_separator_needle_errors(
         request_type=RequestType.RAW,
         queries=[build_raw_query("A", "logs", order=[build_order_by("timestamp")], limit=100, filter_expression=f"hasToken(body, '{needle}')")],
     )
-    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR, f"{needle}: expected 500, got {response.status_code}: {response.text}"
-    assert "Needle must not contain whitespace or separator characters" in response.text, response.text
+    assert response.status_code == HTTPStatus.BAD_REQUEST, f"{needle}: expected 400, got {response.status_code}: {response.text}"
+    assert "matches a single whole token" in response.text, response.text
 
 
 def test_logs_json_body_unregistered_path_warns(
