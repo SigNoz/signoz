@@ -137,6 +137,7 @@ export interface IBaseWidget {
 	legendPosition?: LegendPosition;
 	customLegendColors?: Record<string, string>;
 	contextLinks?: ContextLinksData;
+	heatmapColorPalette?: string;
 	lineInterpolation?: LineInterpolation;
 	showPoints?: boolean;
 	lineStyle?: LineStyle;

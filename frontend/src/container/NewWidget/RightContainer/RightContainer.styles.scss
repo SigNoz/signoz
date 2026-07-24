@@ -106,6 +106,18 @@
 
 		.log-scale,
 		.decimal-precision-selector,
+		.heatmap-color-palette-selector {
+			margin-top: 16px;
+			display: flex;
+			justify-content: space-between;
+			flex-direction: column;
+			gap: 8px;
+
+			.panel-type-select {
+				width: 100%;
+			}
+		}
+
 		.legend-position {
 			justify-content: space-between;
 		}

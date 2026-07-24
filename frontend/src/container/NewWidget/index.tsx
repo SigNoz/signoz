@@ -206,6 +206,9 @@ function NewWidget({
 	const [thresholds, setThresholds] = useState<ThresholdProps[]>(
 		selectedWidget?.thresholds || [],
 	);
+	const [heatmapColorPalette, setHeatmapColorPalette] = useState<string>(
+		selectedWidget?.heatmapColorPalette || 'default',
+	);
 	const [selectedNullZeroValue, setSelectedNullZeroValue] = useState<string>(
 		selectedWidget?.nullZeroValues || 'zero',
 	);
@@ -314,6 +317,7 @@ function NewWidget({
 				customLegendColors,
 				columnWidths: selectedWidget.columnWidths,
 				contextLinks,
+				heatmapColorPalette,
 			};
 		});
 	}, [
@@ -344,6 +348,7 @@ function NewWidget({
 		spanGaps,
 		customLegendColors,
 		contextLinks,
+		heatmapColorPalette,
 		selectedWidget.columnWidths,
 	]);
 
@@ -959,6 +964,8 @@ function NewWidget({
 							setContextLinks={setContextLinks}
 							enableDrillDown={enableDrillDown}
 							isNewDashboard={isNewDashboard}
+							heatmapColorPalette={heatmapColorPalette}
+							setHeatmapColorPalette={setHeatmapColorPalette}
 						/>
 					</ResizablePanel>
 				</ResizablePanelGroup>

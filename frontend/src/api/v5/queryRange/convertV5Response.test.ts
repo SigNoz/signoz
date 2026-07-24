@@ -115,6 +115,75 @@ describe('convertV5ResponseToLegacy', () => {
 		);
 	});
 
+	it('converts heatmap response: standard scalar values plus dedicated heatmapValues/bounds', () => {
+		const heatmap: TimeSeriesData = {
+			queryName: 'A',
+			aggregations: [
+				{
+					index: 0,
+					alias: '__result_0',
+					meta: {},
+					series: [
+						{
+							labels: [],
+							bounds: [0, 1, 2, 3],
+							values: [
+								{
+									timestamp: 1000,
+									value: 0,
+									values: [5, 10, 15],
+								} as unknown as TimeSeriesValue,
+								{
+									timestamp: 2000,
+									value: 0,
+									values: [8, 12, 18],
+								} as unknown as TimeSeriesValue,
+							],
+						} as unknown as TimeSeries,
+					],
+				},
+			],
+		};
+
+		const v5Data: QueryRangeResponseV5 = {
+			type: 'heatmap',
+			data: { results: [heatmap] },
+			meta: { rowsScanned: 0, bytesScanned: 0, durationMs: 0, stepIntervals: {} },
+		};
+
+		const params = makeBaseParams('heatmap', [
+			{
+				type: 'builder_query',
+				spec: {
+					name: 'A',
+					signal: 'traces',
+					stepInterval: 60,
+					disabled: false,
+					aggregations: [{ expression: 'heatmap(duration_nano, 10)' }],
+				},
+			},
+		]);
+
+		const input: SuccessResponse<MetricRangePayloadV5, QueryRangeRequestV5> =
+			makeBaseSuccess({ data: v5Data }, params);
+
+		const result = convertV5ResponseToLegacy(input, { A: 'A' }, false);
+
+		expect(result.payload.data.resultType).toBe('heatmap');
+		const series = result.payload.data.result[0].series?.[0];
+		// `values` keeps the standard scalar mapping, not the bucket arrays.
+		expect(series?.values).toStrictEqual([
+			{ timestamp: 1000, value: '0' },
+			{ timestamp: 2000, value: '0' },
+		]);
+		// Heatmap bucket data lives in its own field alongside `bounds`.
+		expect(series?.bounds).toStrictEqual([0, 1, 2, 3]);
+		expect(series?.heatmapValues).toStrictEqual([
+			{ timestamp: 1000, values: [5, 10, 15] },
+			{ timestamp: 2000, values: [8, 12, 18] },
+		]);
+	});
+
 	it('converts scalar to legacy table (formatForWeb=false) with names/ids resolved from aggregations', () => {
 		const scalar: ScalarData = {
 			columns: [
