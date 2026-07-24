@@ -1,6 +1,7 @@
 package savedviewtypes
 
 import (
+	"encoding/json"
 	"strings"
 	"time"
 
@@ -100,6 +101,60 @@ type StorableSavedView struct {
 	Tags       string     `json:"tags" bun:"tags,type:text"`
 	Data       string     `json:"data" bun:"data,type:text,notnull"`
 	ExtraData  string     `json:"extraData" bun:"extra_data,type:text"`
+}
+
+func NewStorableSavedView(orgID string, createdBy string, view PostableSavedView) (*StorableSavedView, error) {
+	data, err := json.Marshal(view.CompositeQuery)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error in marshalling explorer query data")
+	}
+
+	now := time.Now()
+	return &StorableSavedView{
+		Identifiable:  types.Identifiable{ID: valuer.GenerateUUID()},
+		TimeAuditable: types.TimeAuditable{CreatedAt: now, UpdatedAt: now},
+		UserAuditable: types.UserAuditable{CreatedBy: createdBy, UpdatedBy: createdBy},
+		OrgID:         orgID,
+		Name:          view.Name,
+		Category:      view.Category,
+		SourcePage:    view.SourcePage,
+		Tags:          strings.Join(view.Tags, ","),
+		Data:          string(data),
+		ExtraData:     view.ExtraData,
+	}, nil
+}
+
+func NewGettableSavedViewFromStorable(view *StorableSavedView) (*GettableSavedView, error) {
+	var compositeQuery CompositeQuery
+	if err := json.Unmarshal([]byte(view.Data), &compositeQuery); err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error in unmarshalling explorer query data")
+	}
+
+	return &GettableSavedView{
+		ID:             view.ID,
+		Name:           view.Name,
+		Category:       view.Category,
+		CreatedAt:      view.CreatedAt,
+		CreatedBy:      view.CreatedBy,
+		UpdatedAt:      view.UpdatedAt,
+		UpdatedBy:      view.UpdatedBy,
+		SourcePage:     view.SourcePage,
+		Tags:           strings.Split(view.Tags, ","),
+		CompositeQuery: &compositeQuery,
+		ExtraData:      view.ExtraData,
+	}, nil
+}
+
+func NewGettableSavedViewsFromStorable(views []*StorableSavedView) ([]*GettableSavedView, error) {
+	out := make([]*GettableSavedView, 0, len(views))
+	for _, view := range views {
+		gettable, err := NewGettableSavedViewFromStorable(view)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, gettable)
+	}
+	return out, nil
 }
 
 func NewStatsFromSavedViews(savedViews []*StorableSavedView) map[string]any {

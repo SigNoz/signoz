@@ -2,14 +2,10 @@ package implsavedview
 
 import (
 	"context"
-	"encoding/json"
-	"strings"
-	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/savedviewtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -24,7 +20,7 @@ func NewModule(sqlstore sqlstore.SQLStore) savedview.Module {
 }
 
 func (module *module) GetViewsForFilters(ctx context.Context, orgID string, sourcePage string, name string, category string) ([]*savedviewtypes.GettableSavedView, error) {
-	var views []savedviewtypes.StorableSavedView
+	var views []*savedviewtypes.StorableSavedView
 	var err error
 	if len(category) == 0 {
 		err = module.sqlstore.BunDB().NewSelect().Model(&views).Where("org_id = ? AND source_page = ? AND name LIKE ?", orgID, sourcePage, "%"+name+"%").Scan(ctx)
@@ -35,73 +31,25 @@ func (module *module) GetViewsForFilters(ctx context.Context, orgID string, sour
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error in getting saved views")
 	}
 
-	var savedViews []*savedviewtypes.GettableSavedView
-	for _, view := range views {
-		var compositeQuery savedviewtypes.CompositeQuery
-		err = json.Unmarshal([]byte(view.Data), &compositeQuery)
-		if err != nil {
-			return nil, errors.WrapInternalf(err, errors.CodeInternal, "error in unmarshalling explorer query data: %s", err.Error())
-		}
-		savedViews = append(savedViews, &savedviewtypes.GettableSavedView{
-			ID:             view.ID,
-			Name:           view.Name,
-			CreatedAt:      view.CreatedAt,
-			CreatedBy:      view.CreatedBy,
-			UpdatedAt:      view.UpdatedAt,
-			UpdatedBy:      view.UpdatedBy,
-			Tags:           strings.Split(view.Tags, ","),
-			SourcePage:     view.SourcePage,
-			CompositeQuery: &compositeQuery,
-			ExtraData:      view.ExtraData,
-		})
-	}
-	return savedViews, nil
+	return savedviewtypes.NewGettableSavedViewsFromStorable(views)
 }
 
 func (module *module) CreateView(ctx context.Context, orgID string, view savedviewtypes.PostableSavedView) (valuer.UUID, error) {
-	data, err := json.Marshal(view.CompositeQuery)
+	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
-		return valuer.UUID{}, errors.WrapInternalf(err, errors.CodeInternal, "error in marshalling explorer query data")
-	}
-
-	uuid := valuer.GenerateUUID()
-	createdAt := time.Now()
-	updatedAt := time.Now()
-
-	claims, errv2 := authtypes.ClaimsFromContext(ctx)
-	if errv2 != nil {
 		return valuer.UUID{}, errors.NewInternalf(errors.CodeInternal, "error in getting email from context")
 	}
 
-	createBy := claims.Email
-	updatedBy := claims.Email
-
-	dbView := savedviewtypes.StorableSavedView{
-		TimeAuditable: types.TimeAuditable{
-			CreatedAt: createdAt,
-			UpdatedAt: updatedAt,
-		},
-		UserAuditable: types.UserAuditable{
-			CreatedBy: createBy,
-			UpdatedBy: updatedBy,
-		},
-		OrgID: orgID,
-		Identifiable: types.Identifiable{
-			ID: uuid,
-		},
-		Name:       view.Name,
-		Category:   view.Category,
-		SourcePage: view.SourcePage,
-		Tags:       strings.Join(view.Tags, ","),
-		Data:       string(data),
-		ExtraData:  view.ExtraData,
+	dbView, err := savedviewtypes.NewStorableSavedView(orgID, claims.Email, view)
+	if err != nil {
+		return valuer.UUID{}, err
 	}
 
-	_, err = module.sqlstore.BunDB().NewInsert().Model(&dbView).Exec(ctx)
+	_, err = module.sqlstore.BunDB().NewInsert().Model(dbView).Exec(ctx)
 	if err != nil {
 		return valuer.UUID{}, errors.WrapInternalf(err, errors.CodeInternal, "error in creating saved view")
 	}
-	return uuid, nil
+	return dbView.ID, nil
 }
 
 func (module *module) GetView(ctx context.Context, orgID string, uuid valuer.UUID) (*savedviewtypes.GettableSavedView, error) {
@@ -111,44 +59,24 @@ func (module *module) GetView(ctx context.Context, orgID string, uuid valuer.UUI
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error in getting saved view")
 	}
 
-	var compositeQuery savedviewtypes.CompositeQuery
-	err = json.Unmarshal([]byte(view.Data), &compositeQuery)
-	if err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error in unmarshalling explorer query data")
-	}
-	return &savedviewtypes.GettableSavedView{
-		ID:             view.ID,
-		Name:           view.Name,
-		Category:       view.Category,
-		CreatedAt:      view.CreatedAt,
-		CreatedBy:      view.CreatedBy,
-		UpdatedAt:      view.UpdatedAt,
-		UpdatedBy:      view.UpdatedBy,
-		SourcePage:     view.SourcePage,
-		Tags:           strings.Split(view.Tags, ","),
-		CompositeQuery: &compositeQuery,
-		ExtraData:      view.ExtraData,
-	}, nil
+	return savedviewtypes.NewGettableSavedViewFromStorable(&view)
 }
 
 func (module *module) UpdateView(ctx context.Context, orgID string, uuid valuer.UUID, view savedviewtypes.UpdatableSavedView) error {
-	data, err := json.Marshal(view.CompositeQuery)
+	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
-		return errors.WrapInternalf(err, errors.CodeInternal, "error in marshalling explorer query data")
-	}
-
-	claims, errv2 := authtypes.ClaimsFromContext(ctx)
-	if errv2 != nil {
 		return errors.NewInternalf(errors.CodeInternal, "error in getting email from context")
 	}
 
-	updatedAt := time.Now()
-	updatedBy := claims.Email
+	dbView, err := savedviewtypes.NewStorableSavedView(orgID, claims.Email, view)
+	if err != nil {
+		return err
+	}
 
 	_, err = module.sqlstore.BunDB().NewUpdate().
 		Model(&savedviewtypes.StorableSavedView{}).
 		Set("updated_at = ?, updated_by = ?, name = ?, category = ?, source_page = ?, tags = ?, data = ?, extra_data = ?",
-			updatedAt, updatedBy, view.Name, view.Category, view.SourcePage, strings.Join(view.Tags, ","), data, view.ExtraData).
+			dbView.UpdatedAt, dbView.UpdatedBy, dbView.Name, dbView.Category, dbView.SourcePage, dbView.Tags, dbView.Data, dbView.ExtraData).
 		Where("id = ?", uuid.StringValue()).
 		Where("org_id = ?", orgID).
 		Exec(ctx)
