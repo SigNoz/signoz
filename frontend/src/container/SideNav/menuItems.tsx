@@ -322,6 +322,14 @@ export const defaultMoreMenuItems: SidebarItem[] = [
 		isEnabled: true,
 		itemKey: 'service-map',
 	},
+	{
+		key: ROUTES.NEURAL_OPTIMIZER,
+		label: 'AI Debugger',
+		icon: <Brain size={16} color="#00FF00" />,
+		isNew: true,
+		isEnabled: true,
+		itemKey: 'neural-optimizer',
+	},
 ];
 
 export const settingsNavSections: SettingsNavSection[] = [

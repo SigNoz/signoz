@@ -12,7 +12,8 @@ function generateChecksum(str, algorithm, encoding) {
 const result = {};
 
 glob.sync(`public/locales/**/*.json`).forEach((path) => {
-	const [_, lang] = path.split('public/locales');
+    const normalizedPath = path.replace(/\\/g, '/');
+	const [_, lang] = normalizedPath.split('public/locales');
 	const content = fs.readFileSync(path, { encoding: 'utf-8' });
 	result[lang.replace('.json', '')] = generateChecksum(content);
 });
