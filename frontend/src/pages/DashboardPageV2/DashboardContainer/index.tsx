@@ -14,7 +14,7 @@ import DashboardPageHeader from './components/DashboardPageHeader/DashboardPageH
 import LockedIndicator from './components/LockedIndicator/LockedIndicator';
 import DashboardChangedDialog from './components/DashboardChangedDialog/DashboardChangedDialog';
 import { useDashboardStaleCheck } from './hooks/useDashboardStaleCheck';
-import { Base64Icons } from './DashboardSettings/Overview/utils';
+import { resolveDashboardImage } from 'container/DashboardContainer/dashboardIcons';
 
 interface DashboardContainerProps {
 	dashboard: DashboardtypesGettableDashboardV2DTO;
@@ -26,7 +26,7 @@ function DashboardContainer({
 	refetch,
 }: DashboardContainerProps): JSX.Element {
 	const spec = dashboard.spec;
-	const image = dashboard.image || Base64Icons[0];
+	const image = resolveDashboardImage(dashboard.image);
 	const name = spec.display.name;
 
 	useEffect(() => {

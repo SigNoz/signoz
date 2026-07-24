@@ -13,7 +13,7 @@ import type {
 	DashboardtypesJSONPatchOperationDTO,
 	GetDashboardV2200,
 } from 'api/generated/services/sigNoz.schemas';
-import { Base64Icons } from 'container/DashboardContainer/DashboardSettings/General/utils';
+import { resolveDashboardImage } from 'container/DashboardContainer/dashboardIcons';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 import { useAppContext } from 'providers/App/App';
@@ -55,7 +55,7 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 
 	const title = dashboard.spec.display.name;
 	const description = dashboard.spec.display.description ?? '';
-	const image = dashboard.image || Base64Icons[0];
+	const image = resolveDashboardImage(dashboard.image);
 	const tags = useMemo(
 		() =>
 			(dashboard.tags ?? []).map((t) =>

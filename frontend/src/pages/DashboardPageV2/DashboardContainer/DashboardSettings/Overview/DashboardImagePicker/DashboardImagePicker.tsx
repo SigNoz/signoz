@@ -1,4 +1,3 @@
-import { useEffect, useMemo, useState } from 'react';
 import {
 	Select,
 	SelectContent,
@@ -6,13 +5,16 @@ import {
 	SelectTrigger,
 } from '@signozhq/ui/select';
 import cx from 'classnames';
-
-import { Base64Icons } from '../utils';
+import {
+	resolveDashboardImage,
+	SYSTEM_ICON_PATHS,
+} from 'container/DashboardContainer/dashboardIcons';
 
 import styles from './DashboardImagePicker.module.scss';
 
 interface Props {
-	// The selected image — one of the base64 icon data-URIs.
+	// The selected image — a system icon path (`/assets/Icons/<name>`) or, for
+	// dashboards imported with a custom icon, a legacy base64 data URI.
 	image: string;
 	onChange: (value: string) => void;
 	// Consumers set the trigger's border-radius (e.g. rounded-left when joined to
@@ -21,28 +23,15 @@ interface Props {
 }
 
 // Icon picker shared by the dashboard-details settings and the create-dashboard
-// modal so both choose from the same `Base64Icons` set.
+// modal so both choose from the same system icon set. A custom/legacy value is
+// kept as the first option so it stays selected and round-trips.
 function DashboardImagePicker({
 	image,
 	onChange,
 	triggerClassName,
 }: Props): JSX.Element {
-	// A custom image (pasted URL / base64 data-URI, not in the preset set) is kept as
-	// a selectable option for the picker's lifetime — without a matching option the
-	// trigger renders the raw value string and the image can't be re-selected.
-	const [customImages, setCustomImages] = useState<string[]>(() =>
-		image && !Base64Icons.includes(image) ? [image] : [],
-	);
-	useEffect(() => {
-		if (image && !Base64Icons.includes(image)) {
-			setCustomImages((prev) => (prev.includes(image) ? prev : [...prev, image]));
-		}
-	}, [image]);
-
-	const options = useMemo(
-		() => [...customImages, ...Base64Icons],
-		[customImages],
-	);
+	const isCustom = !!image && !SYSTEM_ICON_PATHS.includes(image);
+	const options = isCustom ? [image, ...SYSTEM_ICON_PATHS] : SYSTEM_ICON_PATHS;
 
 	return (
 		<Select value={image} onChange={(value): void => onChange(value as string)}>
@@ -50,7 +39,11 @@ function DashboardImagePicker({
 			<SelectContent className={styles.options} withPortal={false}>
 				{options.map((icon) => (
 					<SelectItem key={icon} value={icon} className={styles.item}>
-						<img src={icon} alt="dashboard-icon" className={styles.image} />
+						<img
+							src={resolveDashboardImage(icon)}
+							alt="dashboard-icon"
+							className={styles.image}
+						/>
 					</SelectItem>
 				))}
 			</SelectContent>

@@ -1,6 +1,5 @@
 import type { TagtypesPostableTagDTO } from 'api/generated/services/sigNoz.schemas';
 
-export { Base64Icons } from 'container/DashboardContainer/DashboardSettings/General/utils';
 export { parseKeyValueTag } from 'components/TagKeyValueInput/utils';
 
 // The tag editor is strictly key:value, so always render both sides — a
