@@ -10,7 +10,7 @@ import (
 )
 
 type Module interface {
-	GetViewsForFilters(ctx context.Context, orgID string, sourcePage string, name string, category string) ([]*savedviewtypes.GettableSavedView, error)
+	GetViewsForFilters(ctx context.Context, orgID string, params *savedviewtypes.ListSavedViewsParams) ([]*savedviewtypes.GettableSavedView, error)
 
 	CreateView(ctx context.Context, orgID string, view savedviewtypes.PostableSavedView) (valuer.UUID, error)
 

@@ -22632,10 +22632,6 @@ paths:
         name: name
         schema:
           type: string
-      - in: query
-        name: category
-        schema:
-          type: string
       responses:
         "200":
           content:

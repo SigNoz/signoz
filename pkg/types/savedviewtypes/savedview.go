@@ -80,7 +80,14 @@ func (p *PostableSavedView) Validate() error {
 type ListSavedViewsParams struct {
 	SourcePage SourcePage `query:"sourcePage"`
 	Name       string     `query:"name"`
-	Category   string     `query:"category"`
+}
+
+func (p *ListSavedViewsParams) Validate() error {
+	if p.SourcePage.IsZero() {
+		return nil
+	}
+
+	return p.SourcePage.Validate()
 }
 
 // StorableSavedView has CompositeQuery stored JSON-encoded in Data.

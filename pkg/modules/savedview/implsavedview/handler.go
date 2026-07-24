@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
@@ -157,11 +158,17 @@ func (handler *handler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sourcePage := r.URL.Query().Get("sourcePage")
-	name := r.URL.Query().Get("name")
-	category := r.URL.Query().Get("category")
+	params := new(savedviewtypes.ListSavedViewsParams)
+	if err := binding.Query.BindQuery(r.URL.Query(), params); err != nil {
+		render.Error(w, err)
+		return
+	}
+	if err := params.Validate(); err != nil {
+		render.Error(w, err)
+		return
+	}
 
-	queries, err := handler.module.GetViewsForFilters(r.Context(), claims.OrgID, sourcePage, name, category)
+	queries, err := handler.module.GetViewsForFilters(r.Context(), claims.OrgID, params)
 	if err != nil {
 		render.Error(w, err)
 		return
