@@ -7849,8 +7849,6 @@ components:
       type: object
     SavedviewtypesGettableSavedView:
       properties:
-        category:
-          type: string
         compositeQuery:
           $ref: '#/components/schemas/SavedviewtypesCompositeQuery'
         createdAt:
@@ -7866,11 +7864,6 @@ components:
           type: string
         sourcePage:
           $ref: '#/components/schemas/SavedviewtypesSourcePage'
-        tags:
-          items:
-            type: string
-          nullable: true
-          type: array
         updatedAt:
           format: date-time
           type: string
@@ -7879,13 +7872,11 @@ components:
       required:
       - id
       - name
-      - category
       - createdAt
       - createdBy
       - updatedAt
       - updatedBy
       - sourcePage
-      - tags
       - compositeQuery
       - extraData
       type: object
@@ -7899,8 +7890,6 @@ components:
       type: string
     SavedviewtypesPostableSavedView:
       properties:
-        category:
-          type: string
         compositeQuery:
           $ref: '#/components/schemas/SavedviewtypesCompositeQuery'
         extraData:
@@ -7909,16 +7898,9 @@ components:
           type: string
         sourcePage:
           $ref: '#/components/schemas/SavedviewtypesSourcePage'
-        tags:
-          items:
-            type: string
-          nullable: true
-          type: array
       required:
       - name
-      - category
       - sourcePage
-      - tags
       - compositeQuery
       - extraData
       type: object

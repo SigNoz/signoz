@@ -45,13 +45,11 @@ func (s SourcePage) Validate() error {
 type GettableSavedView struct {
 	ID             valuer.UUID     `json:"id" required:"true"`
 	Name           string          `json:"name" required:"true"`
-	Category       string          `json:"category" required:"true"`
 	CreatedAt      time.Time       `json:"createdAt" required:"true"`
 	CreatedBy      string          `json:"createdBy" required:"true"`
 	UpdatedAt      time.Time       `json:"updatedAt" required:"true"`
 	UpdatedBy      string          `json:"updatedBy" required:"true"`
 	SourcePage     SourcePage      `json:"sourcePage" required:"true"`
-	Tags           []string        `json:"tags" required:"true" nullable:"true"`
 	CompositeQuery *CompositeQuery `json:"compositeQuery" required:"true"`
 	// ExtraData is JSON encoded data used by frontend to store additional data
 	ExtraData string `json:"extraData" required:"true"`
@@ -59,9 +57,7 @@ type GettableSavedView struct {
 
 type PostableSavedView struct {
 	Name           string          `json:"name" required:"true"`
-	Category       string          `json:"category" required:"true"`
 	SourcePage     SourcePage      `json:"sourcePage" required:"true"`
-	Tags           []string        `json:"tags" required:"true" nullable:"true"`
 	CompositeQuery *CompositeQuery `json:"compositeQuery" required:"true"`
 	// ExtraData is JSON encoded data used by frontend to store additional data
 	ExtraData string `json:"extraData" required:"true"`
@@ -96,11 +92,13 @@ type StorableSavedView struct {
 	types.UserAuditable
 	OrgID      string     `json:"orgId" bun:"org_id,notnull"`
 	Name       string     `json:"name" bun:"name,type:text,notnull"`
-	Category   string     `json:"category" bun:"category,type:text,notnull"`
 	SourcePage SourcePage `json:"sourcePage" bun:"source_page,type:text,notnull"`
-	Tags       string     `json:"tags" bun:"tags,type:text"`
 	Data       string     `json:"data" bun:"data,type:text,notnull"`
 	ExtraData  string     `json:"extraData" bun:"extra_data,type:text"`
+	// TODO: deprecated, remove it
+	Category string `json:"category" bun:"category,type:text,notnull"`
+	// TODO: deprecated, remove it
+	Tags string `json:"tags" bun:"tags,type:text"`
 }
 
 func NewStorableSavedView(orgID string, createdBy string, updatedBy string, view PostableSavedView) (*StorableSavedView, error) {
@@ -116,9 +114,7 @@ func NewStorableSavedView(orgID string, createdBy string, updatedBy string, view
 		UserAuditable: types.UserAuditable{CreatedBy: createdBy, UpdatedBy: updatedBy},
 		OrgID:         orgID,
 		Name:          view.Name,
-		Category:      view.Category,
 		SourcePage:    view.SourcePage,
-		Tags:          strings.Join(view.Tags, ","),
 		Data:          string(data),
 		ExtraData:     view.ExtraData,
 	}, nil
@@ -133,13 +129,11 @@ func NewGettableSavedViewFromStorable(view *StorableSavedView) (*GettableSavedVi
 	return &GettableSavedView{
 		ID:             view.ID,
 		Name:           view.Name,
-		Category:       view.Category,
 		CreatedAt:      view.CreatedAt,
 		CreatedBy:      view.CreatedBy,
 		UpdatedAt:      view.UpdatedAt,
 		UpdatedBy:      view.UpdatedBy,
 		SourcePage:     view.SourcePage,
-		Tags:           strings.Split(view.Tags, ","),
 		CompositeQuery: &compositeQuery,
 		ExtraData:      view.ExtraData,
 	}, nil
