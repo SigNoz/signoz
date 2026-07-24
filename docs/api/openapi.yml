@@ -7865,7 +7865,7 @@ components:
         name:
           type: string
         sourcePage:
-          type: string
+          $ref: '#/components/schemas/SavedviewtypesSourcePage'
         tags:
           items:
             type: string
@@ -7908,7 +7908,7 @@ components:
         name:
           type: string
         sourcePage:
-          type: string
+          $ref: '#/components/schemas/SavedviewtypesSourcePage'
         tags:
           items:
             type: string
@@ -7927,6 +7927,13 @@ components:
       - builder
       - clickhouse_sql
       - promql
+      type: string
+    SavedviewtypesSourcePage:
+      enum:
+      - traces
+      - logs
+      - metrics
+      - meter
       type: string
     ServiceaccounttypesDeprecatedPostableServiceAccountRole:
       properties:
@@ -22638,7 +22645,7 @@ paths:
       - in: query
         name: sourcePage
         schema:
-          type: string
+          $ref: '#/components/schemas/SavedviewtypesSourcePage'
       - in: query
         name: name
         schema:
