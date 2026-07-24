@@ -40,7 +40,7 @@ func (module *module) CreateView(ctx context.Context, orgID string, view savedvi
 		return valuer.UUID{}, errors.NewInternalf(errors.CodeInternal, "error in getting email from context")
 	}
 
-	dbView, err := savedviewtypes.NewStorableSavedView(orgID, claims.Email, view)
+	dbView, err := savedviewtypes.NewStorableSavedView(orgID, claims.Email, claims.Email, view)
 	if err != nil {
 		return valuer.UUID{}, err
 	}
@@ -68,7 +68,7 @@ func (module *module) UpdateView(ctx context.Context, orgID string, uuid valuer.
 		return errors.NewInternalf(errors.CodeInternal, "error in getting email from context")
 	}
 
-	dbView, err := savedviewtypes.NewStorableSavedView(orgID, claims.Email, view)
+	dbView, err := savedviewtypes.NewStorableSavedView(orgID, claims.Email, claims.Email, view)
 	if err != nil {
 		return err
 	}

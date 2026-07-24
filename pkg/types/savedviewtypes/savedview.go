@@ -103,7 +103,7 @@ type StorableSavedView struct {
 	ExtraData  string     `json:"extraData" bun:"extra_data,type:text"`
 }
 
-func NewStorableSavedView(orgID string, createdBy string, view PostableSavedView) (*StorableSavedView, error) {
+func NewStorableSavedView(orgID string, createdBy string, updatedBy string, view PostableSavedView) (*StorableSavedView, error) {
 	data, err := json.Marshal(view.CompositeQuery)
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error in marshalling explorer query data")
@@ -113,7 +113,7 @@ func NewStorableSavedView(orgID string, createdBy string, view PostableSavedView
 	return &StorableSavedView{
 		Identifiable:  types.Identifiable{ID: valuer.GenerateUUID()},
 		TimeAuditable: types.TimeAuditable{CreatedAt: now, UpdatedAt: now},
-		UserAuditable: types.UserAuditable{CreatedBy: createdBy, UpdatedBy: createdBy},
+		UserAuditable: types.UserAuditable{CreatedBy: createdBy, UpdatedBy: updatedBy},
 		OrgID:         orgID,
 		Name:          view.Name,
 		Category:      view.Category,
