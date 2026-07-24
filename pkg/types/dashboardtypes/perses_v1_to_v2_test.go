@@ -518,20 +518,212 @@ func TestConvertValueWidgetToNumberPanel(t *testing.T) {
 	assert.Equal(t, ThresholdFormatBackground, spec.Thresholds[0].Format)
 }
 
-// TestConvertV1ThresholdFlagsUnknownOperator verifies an unrecognized threshold
-// comparison operator is recorded as a problem rather than silently defaulting
-// to ">".
-func TestConvertV1ThresholdFlagsUnknownOperator(t *testing.T) {
-	widget := map[string]any{
-		"id":         "val-1",
-		"panelTypes": "value",
-		"thresholds": []any{
-			map[string]any{"thresholdColor": "#fff", "thresholdOperator": "BOGUS", "thresholdValue": float64(1)},
+// mapV1ThresholdsWithLabel (graph, bar): color is required, label is optional.
+func TestMapV1ThresholdsWithLabel(t *testing.T) {
+	testCases := []struct {
+		scenario      string
+		thresholds    []any
+		expectedLen   int
+		expectedValue float64
+		expectedColor string
+		expectedLabel string
+	}{
+		{
+			scenario:      "color and label are kept",
+			thresholds:    []any{map[string]any{"thresholdValue": float64(90), "thresholdColor": "#f00", "thresholdLabel": "high"}},
+			expectedLen:   1,
+			expectedValue: 90,
+			expectedColor: "#f00",
+			expectedLabel: "high",
+		},
+		{
+			scenario:      "color without label is kept",
+			thresholds:    []any{map[string]any{"thresholdValue": float64(5), "thresholdColor": "#0f0"}},
+			expectedLen:   1,
+			expectedValue: 5,
+			expectedColor: "#0f0",
+			expectedLabel: "",
+		},
+		{
+			scenario:    "missing color is dropped",
+			thresholds:  []any{map[string]any{"thresholdValue": float64(1), "thresholdLabel": "x"}},
+			expectedLen: 0,
+		},
+		{
+			scenario:    "empty list yields nil",
+			thresholds:  []any{},
+			expectedLen: 0,
 		},
 	}
-	d := &v1Decoder{}
-	d.convertValueWidget(widget)
-	require.Error(t, d.errIfHasMalformedFields())
+
+	for _, testCase := range testCases {
+		t.Run(testCase.scenario, func(t *testing.T) {
+			out := (&v1Decoder{}).mapV1ThresholdsWithLabel(map[string]any{"thresholds": testCase.thresholds})
+			require.Len(t, out, testCase.expectedLen)
+			if testCase.expectedLen == 0 {
+				return
+			}
+			assert.Equal(t, testCase.expectedValue, out[0].Value)
+			assert.Equal(t, testCase.expectedColor, out[0].Color)
+			assert.Equal(t, testCase.expectedLabel, out[0].Label)
+		})
+	}
+}
+
+// mapV1ComparisonThresholds (value): color is required; operator and format are coerced.
+func TestMapV1ComparisonThresholds(t *testing.T) {
+	testCases := []struct {
+		scenario         string
+		thresholds       []any
+		expectedLen      int
+		expectedValue    float64
+		expectedOperator ComparisonOperator
+		expectedFormat   ThresholdFormat
+	}{
+		{
+			scenario:         "full threshold is kept",
+			thresholds:       []any{map[string]any{"thresholdValue": float64(100), "thresholdOperator": ">=", "thresholdColor": "#f00", "thresholdFormat": "Background", "thresholdUnit": "count"}},
+			expectedLen:      1,
+			expectedValue:    100,
+			expectedOperator: ComparisonOperatorAboveOrEqual,
+			expectedFormat:   ThresholdFormatBackground,
+		},
+		{
+			scenario:         "missing operator and format default",
+			thresholds:       []any{map[string]any{"thresholdValue": float64(0), "thresholdColor": "#f00"}},
+			expectedLen:      1,
+			expectedValue:    0,
+			expectedOperator: ComparisonOperatorAbove,
+			expectedFormat:   ThresholdFormatText,
+		},
+		{
+			scenario:    "missing color is dropped",
+			thresholds:  []any{map[string]any{"thresholdValue": float64(1), "thresholdOperator": ">"}},
+			expectedLen: 0,
+		},
+		{
+			scenario:    "empty list yields nil",
+			thresholds:  []any{},
+			expectedLen: 0,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.scenario, func(t *testing.T) {
+			out := (&v1Decoder{}).mapV1ComparisonThresholds(map[string]any{"thresholds": testCase.thresholds})
+			require.Len(t, out, testCase.expectedLen)
+			if testCase.expectedLen == 0 {
+				return
+			}
+			assert.Equal(t, testCase.expectedValue, out[0].Value)
+			assert.Equal(t, testCase.expectedOperator, out[0].Operator)
+			assert.Equal(t, testCase.expectedFormat, out[0].Format)
+		})
+	}
+}
+
+// mapV1TableThresholds (table): color and columnName (thresholdTableOptions) are both required.
+func TestMapV1TableThresholds(t *testing.T) {
+	testCases := []struct {
+		scenario           string
+		thresholds         []any
+		expectedLen        int
+		expectedColumnName string
+		expectedOperator   ComparisonOperator
+	}{
+		{
+			scenario:           "color and columnName are kept",
+			thresholds:         []any{map[string]any{"thresholdValue": float64(500), "thresholdColor": "#f00", "thresholdTableOptions": "latency", "thresholdOperator": "<"}},
+			expectedLen:        1,
+			expectedColumnName: "latency",
+			expectedOperator:   ComparisonOperatorBelow,
+		},
+		{
+			scenario:    "missing color is dropped",
+			thresholds:  []any{map[string]any{"thresholdValue": float64(1), "thresholdTableOptions": "latency"}},
+			expectedLen: 0,
+		},
+		{
+			scenario:    "missing columnName is dropped",
+			thresholds:  []any{map[string]any{"thresholdValue": float64(1), "thresholdColor": "#f00"}},
+			expectedLen: 0,
+		},
+		{
+			scenario:    "empty list yields nil",
+			thresholds:  []any{},
+			expectedLen: 0,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.scenario, func(t *testing.T) {
+			out := (&v1Decoder{}).mapV1TableThresholds(map[string]any{"thresholds": testCase.thresholds})
+			require.Len(t, out, testCase.expectedLen)
+			if testCase.expectedLen == 0 {
+				return
+			}
+			assert.Equal(t, testCase.expectedColumnName, out[0].ColumnName)
+			assert.Equal(t, testCase.expectedOperator, out[0].Operator)
+		})
+	}
+}
+
+// mapV1ComparisonOperator maps known spellings and defaults unknown/empty to "above"
+// without flagging (used by value and table thresholds).
+func TestMapV1ComparisonOperator(t *testing.T) {
+	testCases := []struct {
+		input    string
+		expected ComparisonOperator
+	}{
+		{">", ComparisonOperatorAbove},
+		{"gt", ComparisonOperatorAbove},
+		{">=", ComparisonOperatorAboveOrEqual},
+		{"gte", ComparisonOperatorAboveOrEqual},
+		{"<", ComparisonOperatorBelow},
+		{"lt", ComparisonOperatorBelow},
+		{"<=", ComparisonOperatorBelowOrEqual},
+		{"lte", ComparisonOperatorBelowOrEqual},
+		{"=", ComparisonOperatorEqual},
+		{"==", ComparisonOperatorEqual},
+		{"eq", ComparisonOperatorEqual},
+		{"!=", ComparisonOperatorNotEqual},
+		{"neq", ComparisonOperatorNotEqual},
+		{"empty", ComparisonOperatorAbove},
+		{"BOGUS", ComparisonOperatorAbove},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.input, func(t *testing.T) {
+			d := &v1Decoder{}
+			input := testCase.input
+			if input == "empty" {
+				input = ""
+			}
+			assert.Equal(t, testCase.expected, d.mapV1ComparisonOperator(input))
+			assert.NoError(t, d.errIfHasMalformedFields(), "operator mapping never flags malformed")
+		})
+	}
+}
+
+// mapV1ThresholdFormat coerces known values and defaults everything else (including a
+// non-string) to text.
+func TestMapV1ThresholdFormat(t *testing.T) {
+	testCases := []struct {
+		scenario string
+		input    any
+		expected ThresholdFormat
+	}{
+		{"background", "Background", ThresholdFormatBackground},
+		{"text", "text", ThresholdFormatText},
+		{"empty string defaults to text", "", ThresholdFormatText},
+		{"non-string number defaults to text", float64(0), ThresholdFormatText},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.scenario, func(t *testing.T) {
+			assert.Equal(t, testCase.expected, mapV1ThresholdFormat(testCase.input))
+		})
+	}
 }
 
 func TestConvertTableWidgetToTablePanel(t *testing.T) {
