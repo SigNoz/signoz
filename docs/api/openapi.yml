@@ -1592,13 +1592,6 @@ components:
       required:
       - config
       type: object
-    CommonDisplay:
-      properties:
-        description:
-          type: string
-        name:
-          type: string
-      type: object
     CommonJSONRef:
       properties:
         $ref:
@@ -2732,11 +2725,6 @@ components:
       type: object
     DashboardtypesDashboardSpec:
       properties:
-        datasources:
-          additionalProperties:
-            $ref: '#/components/schemas/DashboardtypesDatasourceSpec'
-          nullable: true
-          type: object
         display:
           $ref: '#/components/schemas/DashboardtypesDisplay'
         duration:
@@ -2800,39 +2788,6 @@ components:
           type: string
       required:
       - version
-      type: object
-    DashboardtypesDatasourcePlugin:
-      discriminator:
-        mapping:
-          signoz/Datasource: '#/components/schemas/DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpec'
-        propertyName: kind
-      oneOf:
-      - $ref: '#/components/schemas/DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpec'
-      type: object
-    DashboardtypesDatasourcePluginKind:
-      enum:
-      - signoz/Datasource
-      type: string
-    DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpec:
-      properties:
-        kind:
-          enum:
-          - signoz/Datasource
-          type: string
-        spec:
-          $ref: '#/components/schemas/DashboardtypesSigNozDatasourceSpec'
-      required:
-      - kind
-      - spec
-      type: object
-    DashboardtypesDatasourceSpec:
-      properties:
-        default:
-          type: boolean
-        display:
-          $ref: '#/components/schemas/CommonDisplay'
-        plugin:
-          $ref: '#/components/schemas/DashboardtypesDatasourcePlugin'
       type: object
     DashboardtypesDisplay:
       properties:
@@ -3609,8 +3564,6 @@ components:
           type: string
       required:
       - queryValue
-      type: object
-    DashboardtypesSigNozDatasourceSpec:
       type: object
     DashboardtypesSource:
       enum:

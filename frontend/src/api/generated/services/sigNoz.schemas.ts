@@ -3236,17 +3236,6 @@ export interface CloudintegrationtypesUpdatableServiceDTO {
 	config: CloudintegrationtypesServiceConfigDTO;
 }
 
-export interface CommonDisplayDTO {
-	/**
-	 * @type string
-	 */
-	description?: string;
-	/**
-	 * @type string
-	 */
-	name?: string;
-}
-
 export interface CommonJSONRefDTO {
 	/**
 	 * @type string
@@ -3989,44 +3978,6 @@ export interface DashboardtypesDashboardPanelRefDTO {
 	 */
 	panelName: string;
 }
-
-export enum DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpecDTOKind {
-	'signoz/Datasource' = 'signoz/Datasource',
-}
-export interface DashboardtypesSigNozDatasourceSpecDTO {
-	[key: string]: unknown;
-}
-
-export interface DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpecDTO {
-	/**
-	 * @enum signoz/Datasource
-	 * @type string
-	 */
-	kind: DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpecDTOKind;
-	spec: DashboardtypesSigNozDatasourceSpecDTO;
-}
-
-export type DashboardtypesDatasourcePluginDTO =
-	DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpecDTO;
-
-export interface DashboardtypesDatasourceSpecDTO {
-	/**
-	 * @type boolean
-	 */
-	default?: boolean;
-	display?: CommonDisplayDTO;
-	plugin?: DashboardtypesDatasourcePluginDTO;
-}
-
-export type DashboardtypesDashboardSpecDTODatasourcesAnyOf = {
-	[key: string]: DashboardtypesDatasourceSpecDTO;
-};
-
-/**
- * @nullable
- */
-export type DashboardtypesDashboardSpecDTODatasources =
-	DashboardtypesDashboardSpecDTODatasourcesAnyOf | null;
 
 export enum DashboardtypesPanelKindDTO {
 	Panel = 'Panel',
@@ -4807,10 +4758,6 @@ export type DashboardtypesVariableDTO =
 	| DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpecDTO;
 
 export interface DashboardtypesDashboardSpecDTO {
-	/**
-	 * @type object,null
-	 */
-	datasources?: DashboardtypesDashboardSpecDTODatasources;
 	display: DashboardtypesDisplayDTO;
 	/**
 	 * @type string
@@ -4886,9 +4833,6 @@ export interface DashboardtypesDashboardViewDTO {
 	updatedAt?: string;
 }
 
-export enum DashboardtypesDatasourcePluginKindDTO {
-	'signoz/Datasource' = 'signoz/Datasource',
-}
 export interface TagtypesGettableTagDTO {
 	/**
 	 * @type string
