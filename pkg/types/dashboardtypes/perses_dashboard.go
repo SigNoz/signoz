@@ -175,9 +175,38 @@ func nextCloneDisplayName(name string) string {
 	return base + suffix
 }
 
+const (
+	dashboardIconPathPrefix = "/assets/Icons/"
+	dashboardLogoPathPrefix = "/assets/Logos/"
+)
+
+// base64ImageDataURIRegex matches the only free-form image value we allow — a
+// base64 image data URI. Mirrors the frontend resolver's allow-list.
+var base64ImageDataURIRegex = regexp.MustCompile(
+	`^data:image/(?:png|jpe?g|gif|webp|avif|svg\+xml);base64,[A-Za-z0-9+/]+={0,2}$`,
+)
+
 type DashboardV2MetadataBase struct {
 	SchemaVersion string `json:"schemaVersion" required:"true"`
 	Image         string `json:"image"`
+}
+
+// validateImage ensures `image` is a shape the UI can render: a bundled icon or
+// logo path (`/assets/Icons/<name>` or `/assets/Logos/<name>`) or a base64 image
+// data URI. Empty means "no image". URLs, markup and other strings are rejected
+// so they can't be persisted (they would only ever render as the fallback).
+func (m DashboardV2MetadataBase) validateImage() error {
+	if m.Image == "" {
+		return nil
+	}
+	if (strings.HasPrefix(m.Image, dashboardIconPathPrefix) && len(m.Image) > len(dashboardIconPathPrefix)) ||
+		(strings.HasPrefix(m.Image, dashboardLogoPathPrefix) && len(m.Image) > len(dashboardLogoPathPrefix)) {
+		return nil
+	}
+	if base64ImageDataURIRegex.MatchString(m.Image) {
+		return nil
+	}
+	return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "image must be an %q or %q path, or a base64 image data URI", dashboardIconPathPrefix, dashboardLogoPathPrefix)
 }
 
 // ════════════════════════════════════════════════════════════════════════
@@ -237,6 +266,9 @@ func (p *PostableDashboardV2) Validate() error {
 		return err
 	}
 	if err := validateDashboardTags(p.Tags); err != nil {
+		return err
+	}
+	if err := p.validateImage(); err != nil {
 		return err
 	}
 	return p.Spec.Validate()
@@ -407,6 +439,9 @@ func (u *UpdatableDashboardV2) Validate() error {
 		return err
 	}
 	if err := validateDashboardTags(u.Tags); err != nil {
+		return err
+	}
+	if err := u.validateImage(); err != nil {
 		return err
 	}
 	return u.Spec.Validate()
