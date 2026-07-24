@@ -1,6 +1,7 @@
 import logEvent from 'api/common/logEvent';
 import { getNavigationReferrer } from 'lib/navigation';
 import { extractQueryPairs } from 'utils/queryContextUtils';
+import { isCustomTimeRange } from 'store/globalTime';
 
 export enum Events {
 	UPDATE_GRAPH_VISIBILITY_STATE = 'UPDATE_GRAPH_VISIBILITY_STATE',
@@ -75,5 +76,15 @@ export function logInfraMonitoringListViewedEvent(entity: string): void {
 	void logEvent('infra_list_viewed', {
 		entity,
 		referrer,
+	});
+}
+
+export function logInfraTimeRangeCustomizedEvent(
+	entityType: string,
+	rangeLabel: string,
+): void {
+	void logEvent('infra_time_range_customized', {
+		entity_type: entityType,
+		range_label: isCustomTimeRange(rangeLabel) ? 'custom' : rangeLabel,
 	});
 }

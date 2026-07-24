@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
@@ -8,7 +8,10 @@ import TanStackTable, {
 	useHiddenColumnIds,
 	useTableParams,
 } from 'components/TanStackTableView';
-import { InfraMonitoringEvents } from 'constants/events';
+import {
+	InfraMonitoringEvents,
+	logInfraTimeRangeCustomizedEvent,
+} from 'constants/events';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGlobalTimeStore } from 'store/globalTime';
 import { NANO_SECOND_MULTIPLIER } from 'store/globalTime/utils';
@@ -249,6 +252,14 @@ export function K8sBaseList<
 			total: totalCount,
 		});
 	}, [eventCategory, totalCount]);
+
+	const prevSelectedTimeRef = useRef(selectedTime);
+	useEffect(() => {
+		if (prevSelectedTimeRef.current !== selectedTime) {
+			logInfraTimeRangeCustomizedEvent(entity, selectedTime);
+			prevSelectedTimeRef.current = selectedTime;
+		}
+	}, [selectedTime, entity]);
 
 	const handleRowClick = useCallback(
 		(record: T, itemKey: TItemKey): void => {
