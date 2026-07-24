@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
 	"github.com/SigNoz/signoz/pkg/modules/tag/impltag"
+	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -15,15 +16,16 @@ import (
 )
 
 type migrateDashboardsV1ToV2 struct {
-	sqlstore sqlstore.SQLStore
-	settings factory.ProviderSettings
+	sqlstore  sqlstore.SQLStore
+	sqlschema sqlschema.SQLSchema
+	settings  factory.ProviderSettings
 }
 
-func NewMigrateDashboardsV1ToV2Factory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[SQLMigration, Config] {
+func NewMigrateDashboardsV1ToV2Factory(sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) factory.ProviderFactory[SQLMigration, Config] {
 	return factory.NewProviderFactory(
 		factory.MustNewName("migrate_dashboards_v1_to_v2"),
 		func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
-			return &migrateDashboardsV1ToV2{sqlstore: sqlstore, settings: ps}, nil
+			return &migrateDashboardsV1ToV2{sqlstore: sqlstore, sqlschema: sqlschema, settings: ps}, nil
 		},
 	)
 }
@@ -83,7 +85,27 @@ func (migration *migrateDashboardsV1ToV2) Up(ctx context.Context, db *bun.DB) er
 		}
 	}
 
-	return nil
+	// Every dashboard now has a name (migrated, or backfilled from the v1 title), so a
+	// v2 dashboard's (org_id, name) can be made unique.
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = tx.Rollback()
+	}()
+
+	sqls := migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{
+		TableName:   "dashboard",
+		ColumnNames: []sqlschema.ColumnName{"org_id", "name"},
+	})
+	for _, sql := range sqls {
+		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
 }
 
 func (migration *migrateDashboardsV1ToV2) Down(context.Context, *bun.DB) error {
