@@ -351,6 +351,23 @@ func (store *store) Update(ctx context.Context, orgID valuer.UUID, storableDashb
 	return nil
 }
 
+func (store *store) UpdateName(ctx context.Context, orgID valuer.UUID, id valuer.UUID, name string) error {
+	_, err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewUpdate().
+		Model((*dashboardtypes.StorableDashboard)(nil)).
+		Set("name = ?", name).
+		Where("id = ?", id).
+		Where("org_id = ?", orgID).
+		Exec(ctx)
+	if err != nil {
+		return store.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "dashboard with id %s doesn't exist", id)
+	}
+
+	return nil
+}
+
 func (store *store) UpdatePublic(ctx context.Context, storable *dashboardtypes.StorablePublicDashboard) error {
 	_, err := store.
 		sqlstore.
