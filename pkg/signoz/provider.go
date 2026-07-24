@@ -222,6 +222,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddTagUniqueIndexFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddTelemetryTuplesFactory(sqlstore),
 		sqlmigration.NewAddTagRelationRankFactory(sqlstore, sqlschema),
+		sqlmigration.NewMigrateDashboardsV1ToV2Factory(sqlstore, sqlschema),
 	)
 }
 
