@@ -7,6 +7,7 @@ import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
 import { useOptimisticPatch } from '../../../hooks/useOptimisticPatch';
+import { compactGridItems } from '../../../layoutCompaction';
 import { replaceSectionItemsOp } from '../../../patchOps';
 import { useDashboardStore } from '../../../store/useDashboardStore';
 import type { GridItem } from '../../../utils';
@@ -76,7 +77,9 @@ export function usePersistLayout({ layoutIndex, items }: Params): Result {
 			if (!dashboardId) {
 				return;
 			}
-			const nextItems = mergeRglLayout(rglLayout, items);
+			// Compact to the snapped, non-overlapping layout RGL shows on-screen, so
+			// the persisted geometry can never trip the backend's no-overlap check.
+			const nextItems = compactGridItems(mergeRglLayout(rglLayout, items));
 			if (!hasGeometryChanged(nextItems, items)) {
 				return;
 			}

@@ -101,8 +101,10 @@ function DashboardActions({
 
 	const handleCreateSection = useCallback(
 		async (title: string): Promise<void> => {
-			await addSection(title);
-			setIsNewSectionOpen(false);
+			const ok = await addSection(title);
+			if (ok) {
+				setIsNewSectionOpen(false);
+			}
 		},
 		[addSection],
 	);
