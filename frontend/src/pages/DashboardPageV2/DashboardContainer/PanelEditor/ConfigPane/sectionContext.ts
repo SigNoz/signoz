@@ -21,4 +21,6 @@ export interface SectionEditorContext {
 	stepInterval?: number;
 	/** Unit the selected metric was sent with; drives the unit selector's mismatch warning. */
 	metricUnit?: string;
+	/** An editor registers the handler its header action (e.g. a quick-add "+") triggers; `null` to clear. */
+	registerHeaderAction?: (handler: (() => void) | null) => void;
 }
