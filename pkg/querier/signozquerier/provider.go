@@ -15,6 +15,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrymetadata"
 	"github.com/SigNoz/signoz/pkg/telemetrymeter"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
+	"github.com/SigNoz/signoz/pkg/telemetryscopedtraces"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 )
@@ -97,9 +98,10 @@ func newProvider(
 	// surfaced by the metadata store itself (enrichWithGenAIKeys), so queries work
 	// before any gen_ai metadata is ingested — no per-builder decoration needed.
 	// The standard trace builder doubles as the delegate for the span-list path.
-	aiTraceStmtBuilder := telemetryai.NewAITraceStatementBuilder(
+	aiTraceStmtBuilder := telemetryscopedtraces.NewScopedTraceStatementBuilder(
 		settings,
 		telemetryMetadataStore,
+		telemetryai.Scope(),
 		traceStmtBuilder,
 		flagger,
 	)

@@ -10,47 +10,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-// This file is the extension surface of the scoped trace builder: the two contracts a
-// span category implements (base condition + columns) and the Aggregate constructors
-// the columns are declared with. All SQL rendering goes through the fieldMapper.
-
-// BaseConditionProvider defines which spans are in scope. It only declares the gate
-// (a filter expression + its field keys); the builder resolves the keys through the
-// field mapper, so attribute access stays materialization-aware.
-type BaseConditionProvider interface {
-	// FilterExpression is the grammar-level (EXISTS) gate, used on the delegated
-	// span-list path.
-	FilterExpression() string
-	// FieldKeys are the gate's keys, used to build the per-span mask
-	// (OR of resolved EXISTS conditions).
-	FieldKeys() []*telemetrytypes.TelemetryFieldKey
-}
-
-// ColumnProvider supplies the columns a trace list computes.
-type ColumnProvider interface {
-	Columns() []TraceColumn
-	// DefaultOrderAlias is sorted by (desc) when the query gives no order.
-	DefaultOrderAlias() string
-	// AggregateAliases are the computed per-trace column names, used to classify a
-	// filter key as trace-level vs span-level. Excludes SpanLevel columns.
-	AggregateAliases() []string
-}
-
-// TraceColumn is one per-trace output column.
-type TraceColumn struct {
-	// Alias must not reuse a physical span-index column name (e.g. duration_nano):
-	// ClickHouse resolves bare identifiers to same-SELECT aliases first, so any
-	// expression referencing that column would silently bind to the alias.
-	Alias string
-	// Orderable columns can be used in ORDER BY and the aggregate filter. All-span
-	// aggregates (span_count, trace_duration_nano, …) are display-only and set false.
-	Orderable bool
-	// SpanLevel columns surface a real span/resource attribute (service.name,
-	// input/output messages); a filter on them is applied span-level, so they are
-	// excluded from AggregateAliases.
-	SpanLevel bool
-	Expr      Aggregate
-}
+// This file holds the Aggregate constructors a TraceScope's columns are declared
+// with. All SQL rendering goes through the fieldMapper.
 
 // Aggregate renders one column's SQL through the fieldMapper and lists the attribute
 // keys it references so the builder can pre-fetch their metadata. Build one with the

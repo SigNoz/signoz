@@ -838,6 +838,6 @@ def test_ai_list_enrichment_values(
     assert data["input_tokens"] == 100, data
     assert data["output_tokens"] == 20, data
     assert data["total_tokens"] == 120, data  # input + output
-    assert data["estimated_cost_usd"] == pytest.approx(0.5), data
+    assert data["estimated_total_cost"] == pytest.approx(0.5), data
     assert data["error_count"] == 1, data  # the errored LLM span
-    assert data["max_llm_latency_ns"] > 0, data  # scoped max over LLM spans
+    assert data["max_llm_duration_nano"] > 0, data  # scoped max over LLM spans

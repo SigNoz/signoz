@@ -10,32 +10,6 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
-// CommonTraceColumns are domain-neutral columns any trace list can reuse. All
-// aggregate over every span, so none is Orderable.
-func CommonTraceColumns() []TraceColumn {
-	ts := IntrinsicSpanKey("timestamp")
-	duration := IntrinsicSpanKey("duration_nano")
-	name := IntrinsicSpanKey("name")
-	parentSpanID := IntrinsicSpanKey("parent_span_id")
-	serviceName := &telemetrytypes.TelemetryFieldKey{
-		Name:          "service.name",
-		Signal:        telemetrytypes.SignalTraces,
-		FieldContext:  telemetrytypes.FieldContextResource,
-		FieldDataType: telemetrytypes.FieldDataTypeString,
-	}
-	return []TraceColumn{
-		{Alias: "start_time", Expr: FieldReduce(AggMin, ts)},
-		{Alias: "end_time", Expr: FieldReduce(AggMax, ts)},
-		// Not plain "duration_nano": that name is the intrinsic span field, and an
-		// alias would shadow it — both in ClickHouse identifier resolution and in
-		// bare-name filter classification.
-		{Alias: "trace_duration_nano", Expr: TraceDuration(ts, duration)},
-		{Alias: "span_count", Expr: CountAll()},
-		{Alias: "root_span_name", Expr: FieldAnyWhere(name, parentSpanID, qbtypes.FilterOperatorEqual, "")},
-		{Alias: "service.name", SpanLevel: true, Expr: AnyValue(serviceName, telemetrytypes.FieldDataTypeString)},
-	}
-}
-
 // fieldMapper resolves aggregate-column SQL through the shared field mapper and
 // condition builder, following their method shapes (FieldFor / ConditionFor / …) so
 // column resolution reads like the other statement builders. keys is the fetched
