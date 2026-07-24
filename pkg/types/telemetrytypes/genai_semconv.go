@@ -3,10 +3,12 @@ package telemetrytypes
 // OpenTelemetry gen_ai semantic-convention attribute keys. Single source of truth
 // shared by the AI query builder and the LLM pricing pipeline.
 const (
-	GenAIRequestModel = "gen_ai.request.model"
-	GenAIToolName     = "gen_ai.tool.name"
-	GenAIAgentName    = "gen_ai.agent.name"
-	GenAIProviderName = "gen_ai.provider.name"
+	GenAIRequestModel  = "gen_ai.request.model"
+	GenAIResponseModel = "gen_ai.response.model"
+	GenAIOperationName = "gen_ai.operation.name"
+	GenAIToolName      = "gen_ai.tool.name"
+	GenAIAgentName     = "gen_ai.agent.name"
+	GenAIProviderName  = "gen_ai.provider.name"
 
 	GenAIUsageInputTokens              = "gen_ai.usage.input_tokens"
 	GenAIUsageOutputTokens             = "gen_ai.usage.output_tokens"
@@ -27,10 +29,12 @@ const (
 // resolve on a fresh install (mirrors intrinsic metric keys). String keys are the
 // gate; the usage keys are numeric.
 var GenAIFieldDefinitions = map[string]TelemetryFieldKey{
-	GenAIRequestModel: {Name: GenAIRequestModel, Signal: SignalTraces, FieldContext: FieldContextAttribute, FieldDataType: FieldDataTypeString},
-	GenAIToolName:     {Name: GenAIToolName, Signal: SignalTraces, FieldContext: FieldContextAttribute, FieldDataType: FieldDataTypeString},
-	GenAIAgentName:    {Name: GenAIAgentName, Signal: SignalTraces, FieldContext: FieldContextAttribute, FieldDataType: FieldDataTypeString},
-	GenAIProviderName: {Name: GenAIProviderName, Signal: SignalTraces, FieldContext: FieldContextAttribute, FieldDataType: FieldDataTypeString},
+	GenAIRequestModel:  {Name: GenAIRequestModel, Signal: SignalTraces, FieldContext: FieldContextAttribute, FieldDataType: FieldDataTypeString},
+	GenAIResponseModel: {Name: GenAIResponseModel, Signal: SignalTraces, FieldContext: FieldContextAttribute, FieldDataType: FieldDataTypeString},
+	GenAIOperationName: {Name: GenAIOperationName, Signal: SignalTraces, FieldContext: FieldContextAttribute, FieldDataType: FieldDataTypeString},
+	GenAIToolName:      {Name: GenAIToolName, Signal: SignalTraces, FieldContext: FieldContextAttribute, FieldDataType: FieldDataTypeString},
+	GenAIAgentName:     {Name: GenAIAgentName, Signal: SignalTraces, FieldContext: FieldContextAttribute, FieldDataType: FieldDataTypeString},
+	GenAIProviderName:  {Name: GenAIProviderName, Signal: SignalTraces, FieldContext: FieldContextAttribute, FieldDataType: FieldDataTypeString},
 
 	GenAIUsageInputTokens:              {Name: GenAIUsageInputTokens, Signal: SignalTraces, FieldContext: FieldContextAttribute, FieldDataType: FieldDataTypeFloat64},
 	GenAIUsageOutputTokens:             {Name: GenAIUsageOutputTokens, Signal: SignalTraces, FieldContext: FieldContextAttribute, FieldDataType: FieldDataTypeFloat64},

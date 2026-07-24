@@ -191,18 +191,27 @@ func NewDefaultQuickFilter(orgID valuer.UUID) ([]*StorableQuickFilter, error) {
 		{"key": "host.name", "dataType": "float64", "type": "Sum"},
 	}
 
-	// AI observability (builder_ai_query trace explorer): categorical gen_ai span attributes
-	// plus the usual service/environment/error narrowing. The per-trace aggregates
-	// (trace.output_tokens, …) are threshold filters with no value list, so they are
-	// not quick filters.
+	// AI observability (builder_ai_query trace explorer), grouped like the common LLM
+	// observability sidebars: core narrowing (error/env/service/operation kind), then
+	// the LLM identity (provider/model/tool/agent), then the per-trace aggregates
+	// (fieldContext trace) as numeric threshold filters — the range treatment
+	// duration_nano gets in the traces defaults.
 	aiObservabilityFilters := []map[string]interface{}{
-		{"key": telemetrytypes.GenAIRequestModel, "dataType": "string", "type": "tag"},
-		{"key": telemetrytypes.GenAIProviderName, "dataType": "string", "type": "tag"},
-		{"key": telemetrytypes.GenAIToolName, "dataType": "string", "type": "tag"},
-		{"key": telemetrytypes.GenAIAgentName, "dataType": "string", "type": "tag"},
+		{"key": "hasError", "dataType": "bool", "type": "tag"},
 		{"key": "deployment.environment", "dataType": "string", "type": "resource"},
 		{"key": "service.name", "dataType": "string", "type": "resource"},
-		{"key": "hasError", "dataType": "bool", "type": "tag"},
+		{"key": telemetrytypes.GenAIOperationName, "dataType": "string", "type": "tag"},
+		{"key": telemetrytypes.GenAIProviderName, "dataType": "string", "type": "tag"},
+		{"key": telemetrytypes.GenAIRequestModel, "dataType": "string", "type": "tag"},
+		{"key": telemetrytypes.GenAIToolName, "dataType": "string", "type": "tag"},
+		{"key": telemetrytypes.GenAIAgentName, "dataType": "string", "type": "tag"},
+		{"key": "estimated_total_cost", "dataType": "float64", "type": "trace"},
+		{"key": "input_tokens", "dataType": "float64", "type": "trace"},
+		{"key": "output_tokens", "dataType": "float64", "type": "trace"},
+		{"key": "total_tokens", "dataType": "float64", "type": "trace"},
+		{"key": "llm_call_count", "dataType": "float64", "type": "trace"},
+		{"key": "tool_call_count", "dataType": "float64", "type": "trace"},
+		{"key": "distinct_tool_count", "dataType": "float64", "type": "trace"},
 	}
 
 	tracesJSON, err := json.Marshal(tracesFilters)

@@ -36,13 +36,21 @@ func (migration *addAiObservabilityQuickFilters) Register(migrations *migrate.Mi
 func (migration *addAiObservabilityQuickFilters) Up(ctx context.Context, db *bun.DB) error {
 	// keep in sync with the ai_observability defaults in quickfiltertypes.NewDefaultQuickFilter
 	aiObservabilityFilters := []map[string]interface{}{
-		{"key": telemetrytypes.GenAIRequestModel, "dataType": "string", "type": "tag"},
-		{"key": telemetrytypes.GenAIProviderName, "dataType": "string", "type": "tag"},
-		{"key": telemetrytypes.GenAIToolName, "dataType": "string", "type": "tag"},
-		{"key": telemetrytypes.GenAIAgentName, "dataType": "string", "type": "tag"},
+		{"key": "hasError", "dataType": "bool", "type": "tag"},
 		{"key": "deployment.environment", "dataType": "string", "type": "resource"},
 		{"key": "service.name", "dataType": "string", "type": "resource"},
-		{"key": "hasError", "dataType": "bool", "type": "tag"},
+		{"key": telemetrytypes.GenAIOperationName, "dataType": "string", "type": "tag"},
+		{"key": telemetrytypes.GenAIProviderName, "dataType": "string", "type": "tag"},
+		{"key": telemetrytypes.GenAIRequestModel, "dataType": "string", "type": "tag"},
+		{"key": telemetrytypes.GenAIToolName, "dataType": "string", "type": "tag"},
+		{"key": telemetrytypes.GenAIAgentName, "dataType": "string", "type": "tag"},
+		{"key": "estimated_total_cost", "dataType": "float64", "type": "trace"},
+		{"key": "input_tokens", "dataType": "float64", "type": "trace"},
+		{"key": "output_tokens", "dataType": "float64", "type": "trace"},
+		{"key": "total_tokens", "dataType": "float64", "type": "trace"},
+		{"key": "llm_call_count", "dataType": "float64", "type": "trace"},
+		{"key": "tool_call_count", "dataType": "float64", "type": "trace"},
+		{"key": "distinct_tool_count", "dataType": "float64", "type": "trace"},
 	}
 
 	aiObservabilityJSON, err := json.Marshal(aiObservabilityFilters)
