@@ -8920,26 +8920,34 @@ export interface RuletypesRuleDTO {
 export enum RuletypesThresholdKindDTO {
 	basic = 'basic',
 }
+export enum SavedviewtypesPanelTypeDTO {
+	value = 'value',
+	graph = 'graph',
+	table = 'table',
+	list = 'list',
+	trace = 'trace',
+}
+export enum SavedviewtypesQueryTypeDTO {
+	builder = 'builder',
+	clickhouse_sql = 'clickhouse_sql',
+	promql = 'promql',
+}
 export interface SavedviewtypesCompositeQueryDTO {
-	/**
-	 * @type string
-	 */
-	panelType: string;
+	panelType: SavedviewtypesPanelTypeDTO;
 	/**
 	 * @type array,null
 	 */
 	queries: Querybuildertypesv5QueryEnvelopeDTO[] | null;
-	/**
-	 * @type string
-	 */
-	queryType: string;
+	queryType: SavedviewtypesQueryTypeDTO;
 }
 
+export enum SavedviewtypesSourcePageDTO {
+	traces = 'traces',
+	logs = 'logs',
+	metrics = 'metrics',
+	meter = 'meter',
+}
 export interface SavedviewtypesGettableSavedViewDTO {
-	/**
-	 * @type string
-	 */
-	category: string;
 	compositeQuery: SavedviewtypesCompositeQueryDTO;
 	/**
 	 * @type string
@@ -8962,14 +8970,7 @@ export interface SavedviewtypesGettableSavedViewDTO {
 	 * @type string
 	 */
 	name: string;
-	/**
-	 * @type string
-	 */
-	sourcePage: string;
-	/**
-	 * @type array,null
-	 */
-	tags: string[] | null;
+	sourcePage: SavedviewtypesSourcePageDTO;
 	/**
 	 * @type string
 	 * @format date-time
@@ -8982,10 +8983,6 @@ export interface SavedviewtypesGettableSavedViewDTO {
 }
 
 export interface SavedviewtypesPostableSavedViewDTO {
-	/**
-	 * @type string
-	 */
-	category: string;
 	compositeQuery: SavedviewtypesCompositeQueryDTO;
 	/**
 	 * @type string
@@ -8995,14 +8992,7 @@ export interface SavedviewtypesPostableSavedViewDTO {
 	 * @type string
 	 */
 	name: string;
-	/**
-	 * @type string
-	 */
-	sourcePage: string;
-	/**
-	 * @type array,null
-	 */
-	tags: string[] | null;
+	sourcePage: SavedviewtypesSourcePageDTO;
 }
 
 export interface ServiceaccounttypesDeprecatedPostableServiceAccountRoleDTO {
@@ -12133,20 +12123,14 @@ export type TestRule200 = {
 
 export type ListSavedViewsParams = {
 	/**
-	 * @type string
 	 * @description undefined
 	 */
-	sourcePage?: string;
+	sourcePage?: SavedviewtypesSourcePageDTO;
 	/**
 	 * @type string
 	 * @description undefined
 	 */
 	name?: string;
-	/**
-	 * @type string
-	 * @description undefined
-	 */
-	category?: string;
 };
 
 export type ListSavedViews200 = {
