@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ApiV3Instance } from 'api';
+import axios, { ApiV3Instance, ApiV5Instance } from 'api';
 import { OptimizerContainer, HeaderContainer, LiveStatusBadge, FeedGrid, FeedColumn, FeedCard, TerminalHeader, TerminalContent } from './styles';
 
 interface TraceLog {
@@ -19,13 +19,53 @@ const NeuralOptimizer = (): JSX.Element => {
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchTracesForService = async (serviceName: string): Promise<TraceLog[]> => {
-    try {
-      const end = Date.now();
-      const start = end - 60 * 60 * 1000; // last 60 mins
+    const endMs = Date.now();
+    const startMs = endMs - 24 * 60 * 60 * 1000; // last 24 hours to ensure we catch recent traces
 
-      const payload = {
-        start: start * 1000000,
-        end: end * 1000000,
+    // Attempt 1: Try V5 query_range
+    try {
+      const v5Payload = {
+        schemaVersion: 'v5',
+        start: startMs,
+        end: endMs,
+        requestType: 'trace',
+        compositeQuery: {
+          queries: [
+            {
+              type: 'builder_query',
+              spec: {
+                signal: 'traces',
+                filter: { expression: `serviceName == '${serviceName}'` },
+                order: [{ key: { name: 'timestamp' }, direction: 'desc' }],
+                limit: 15,
+              },
+            },
+          ],
+        },
+      };
+      const resV5 = await ApiV5Instance.post('/query_range', v5Payload);
+      const rows = resV5?.data?.data?.results?.[0]?.rows || resV5?.data?.data?.result?.[0]?.list || [];
+      if (rows.length > 0) {
+        return rows.map((row: any, idx: number) => ({
+          id: row.traceId || row.spanId || `${serviceName}-${idx}`,
+          timestamp: row.timestamp ? new Date(row.timestamp).getTime() : Date.now(),
+          serviceName,
+          name: row.name || row.spanName || row.data?.name || 'agent_task',
+          status: row.statusCode === 2 || row.hasError || row.data?.hasError ? 'error' : 'ok',
+          duration: row.durationMs || Math.floor((row.durationNano || 0) / 1000000) || 120,
+          isError: row.statusCode === 2 || row.hasError || row.data?.hasError || false,
+          attributes: row.tagMap || row.attributes || row.data?.tagMap || { 'service.name': serviceName },
+        }));
+      }
+    } catch {
+      // Ignore and try fallback
+    }
+
+    // Attempt 2: Try V3 query_range
+    try {
+      const v3Payload = {
+        start: startMs * 1000000,
+        end: endMs * 1000000,
         step: 60,
         compositeQuery: {
           queryType: 'builder',
@@ -51,24 +91,53 @@ const NeuralOptimizer = (): JSX.Element => {
           },
         },
       };
-
-      const response = await ApiV3Instance.post('/query_range', payload);
-      const rows = response?.data?.data?.result?.[0]?.list || response?.data?.payload?.list || [];
-
-      return rows.map((row: any, idx: number) => ({
-        id: row.traceId || row.spanId || `${serviceName}-${idx}`,
-        timestamp: row.timestamp ? Math.floor(row.timestamp / 1000000) : Date.now(),
-        serviceName,
-        name: row.name || row.spanName || 'agent_execution',
-        status: row.statusCode === 2 || row.hasError ? 'error' : 'ok',
-        duration: row.durationMs || Math.floor((row.durationNano || 0) / 1000000) || 120,
-        isError: row.statusCode === 2 || row.hasError || false,
-        attributes: row.tagMap || row.attributes || { 'service.name': serviceName },
-      }));
-    } catch (err) {
-      console.warn('Error fetching traces via ApiV3Instance:', err);
-      return [];
+      const resV3 = await ApiV3Instance.post('/query_range', v3Payload);
+      const rows = resV3?.data?.data?.result?.[0]?.list || resV3?.data?.payload?.list || [];
+      if (rows.length > 0) {
+        return rows.map((row: any, idx: number) => ({
+          id: row.traceId || row.spanId || `${serviceName}-${idx}`,
+          timestamp: row.timestamp ? Math.floor(row.timestamp / 1000000) : Date.now(),
+          serviceName,
+          name: row.name || row.spanName || 'agent_task',
+          status: row.statusCode === 2 || row.hasError ? 'error' : 'ok',
+          duration: row.durationMs || Math.floor((row.durationNano || 0) / 1000000) || 120,
+          isError: row.statusCode === 2 || row.hasError || false,
+          attributes: row.tagMap || row.attributes || { 'service.name': serviceName },
+        }));
+      }
+    } catch {
+      // Ignore and try fallback
     }
+
+    // Attempt 3: Try legacy /getFilteredSpans endpoint
+    try {
+      const legacyPayload = {
+        start: String(startMs * 1000000),
+        end: String(endMs * 1000000),
+        limit: 15,
+        offset: 0,
+        serviceName: [serviceName],
+        tags: [],
+      };
+      const resLegacy = await axios.post('/getFilteredSpans', legacyPayload);
+      const rows = resLegacy?.data?.spans || resLegacy?.data?.payload?.spans || [];
+      if (rows.length > 0) {
+        return rows.map((row: any, idx: number) => ({
+          id: row.traceId || row.spanId || `${serviceName}-${idx}`,
+          timestamp: row.timestamp ? Math.floor(row.timestamp / 1000000) : Date.now(),
+          serviceName,
+          name: row.operationName || row.name || 'agent_task',
+          status: row.statusCode === 'ERROR' || row.hasError ? 'error' : 'ok',
+          duration: row.durationMs || Math.floor((row.durationNano || 0) / 1000000) || 120,
+          isError: row.statusCode === 'ERROR' || row.hasError || false,
+          attributes: row.tagMap || row.attributes || { 'service.name': serviceName },
+        }));
+      }
+    } catch {
+      // Ignore
+    }
+
+    return [];
   };
 
   const fetchTraces = async () => {
