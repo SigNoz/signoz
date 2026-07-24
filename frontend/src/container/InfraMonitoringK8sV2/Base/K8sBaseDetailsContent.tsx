@@ -15,6 +15,7 @@ import { combineInitialAndUserExpression } from 'components/QueryBuilderV2/Query
 import {
 	InfraMonitoringEvents,
 	logInfraDrawerTabViewedEvent,
+	logInfraExplorerNavigatedEvent,
 } from 'constants/events';
 import { QueryParams } from 'constants/query';
 import {
@@ -46,6 +47,7 @@ import {
 
 import { EntityCountsSection } from './components/EntityCountsSection/EntityCountsSection';
 import { K8sBaseDetailsContentProps } from './types';
+import { getDrawerDurationMs } from './useDrawerLifecycleStore';
 
 import styles from '../EntityDetailsUtils/entityDetails.module.scss';
 
@@ -172,6 +174,16 @@ export default function K8sBaseDetailsContent<T>({
 			view: selectedView,
 		});
 
+		logInfraExplorerNavigatedEvent({
+			entityType: category,
+			destination:
+				selectedView === VIEW_TYPES.LOGS ? 'logs_explorer' : 'traces_explorer',
+			source: 'tab_cta_button',
+			tab: selectedView,
+			sourceKey: null,
+			drawerDurationMsAtNavigation: getDrawerDurationMs(),
+		});
+
 		if (selectedView === VIEW_TYPES.LOGS) {
 			const fullExpression = combineInitialAndUserExpression(
 				logsAndTracesInitialExpression,
@@ -276,6 +288,8 @@ export default function K8sBaseDetailsContent<T>({
 							selectedItem={selectedItem}
 							filterExpression={getCountsFilterExpression(entity)}
 							closeDrawer={handleClose}
+							entityType={category}
+							activeTab={selectedView}
 						/>
 					)}
 			</div>
@@ -389,6 +403,7 @@ export default function K8sBaseDetailsContent<T>({
 					getEntityQueryPayload={getEntityQueryPayload}
 					category={category}
 					queryKey={`${queryKeyPrefix}Metrics`}
+					view={VIEW_TYPES.METRICS}
 				/>
 			)}
 			{effectiveView === VIEW_TYPES.LOGS && (

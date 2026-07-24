@@ -3,6 +3,7 @@ import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import { Compass } from '@signozhq/icons';
 import { TextNoData } from '../../../components/TextNoData';
+import { logInfraExplorerNavigatedEvent } from 'constants/events';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
@@ -14,6 +15,7 @@ import {
 	INFRA_MONITORING_K8S_PARAMS_KEYS,
 	InfraMonitoringEntity,
 } from '../../../constants';
+import { getDrawerDurationMs } from '../../useDrawerLifecycleStore';
 import styles from './EntityCountsSection.module.scss';
 
 export interface EntityCountConfig<T> {
@@ -28,6 +30,8 @@ interface EntityCountsSectionProps<T> {
 	selectedItem: string;
 	filterExpression: string;
 	closeDrawer: () => void;
+	entityType: InfraMonitoringEntity;
+	activeTab: string;
 }
 
 export function EntityCountsSection<T>({
@@ -36,7 +40,21 @@ export function EntityCountsSection<T>({
 	selectedItem,
 	filterExpression,
 	closeDrawer,
+	entityType,
+	activeTab,
 }: EntityCountsSectionProps<T>): JSX.Element {
+	const handleCardNavigate = (cardLabel: string): void => {
+		logInfraExplorerNavigatedEvent({
+			entityType,
+			destination: 'k8s_list',
+			source: 'stats_card',
+			tab: activeTab,
+			sourceKey: cardLabel,
+			drawerDurationMsAtNavigation: getDrawerDurationMs(),
+		});
+		closeDrawer();
+	};
+
 	const buildNavigationUrl = (targetCategory: InfraMonitoringEntity): string => {
 		const defaultQuery = initialQueriesMap[DataSource.METRICS];
 
@@ -130,7 +148,7 @@ export function EntityCountsSection<T>({
 					)}
 					<Link
 						to={buildNavigationUrl(config.targetCategory)}
-						onClick={closeDrawer}
+						onClick={(): void => handleCardNavigate(config.label)}
 						data-testid={`navigate-${config.label.toLowerCase().replace(/\s+/g, '-')}`}
 					>
 						<TooltipSimple

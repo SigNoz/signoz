@@ -24,6 +24,7 @@ import LoadingContainer from '../LoadingContainer';
 
 import K8sBaseDetailsContent from './K8sBaseDetailsContent';
 import { K8sBaseDetailsProps } from './types';
+import { useDrawerLifecycleStore } from './useDrawerLifecycleStore';
 
 import styles from '../EntityDetailsUtils/entityDetails.module.scss';
 import { INFRA_MONITORING_DETAILS_CACHE_TIME } from 'constants/queryCacheTime';
@@ -140,6 +141,17 @@ export default function K8sBaseDetails<T>({
 		}
 		return getInitialEventsExpression(entity);
 	}, [entity, getInitialEventsExpression]);
+
+	const markDrawerOpened = useDrawerLifecycleStore((s) => s.markOpened);
+	const markDrawerClosed = useDrawerLifecycleStore((s) => s.markClosed);
+
+	useEffect(() => {
+		if (selectedItem) {
+			markDrawerOpened();
+		} else {
+			markDrawerClosed();
+		}
+	}, [selectedItem, markDrawerOpened, markDrawerClosed]);
 
 	const handleClose = useCallback((): void => {
 		setSelectedItemParams(null);

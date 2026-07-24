@@ -1,4 +1,5 @@
 import logEvent from 'api/common/logEvent';
+import type { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
 import { getNavigationReferrer } from 'lib/navigation';
 import { extractQueryPairs } from 'utils/queryContextUtils';
 import { isCustomTimeRange } from 'store/globalTime';
@@ -46,7 +47,7 @@ export enum InfraMonitoringEvents {
 }
 
 export function logInfraFilterCustomizedEvent(
-	entityType: string,
+	entityType: InfraMonitoringEntity,
 	source: 'quick_filter' | 'search' | 'host_status_toggle',
 	expression: string,
 	extraKeys?: string[],
@@ -70,7 +71,9 @@ export function logInfraFilterCustomizedEvent(
 	});
 }
 
-export function logInfraMonitoringListViewedEvent(entity: string): void {
+export function logInfraMonitoringListViewedEvent(
+	entity: InfraMonitoringEntity,
+): void {
 	const referrer = getNavigationReferrer();
 
 	void logEvent('infra_list_viewed', {
@@ -80,7 +83,7 @@ export function logInfraMonitoringListViewedEvent(entity: string): void {
 }
 
 export function logInfraTimeRangeCustomizedEvent(
-	entityType: string,
+	entityType: InfraMonitoringEntity,
 	rangeLabel: string,
 ): void {
 	void logEvent('infra_time_range_customized', {
@@ -90,7 +93,7 @@ export function logInfraTimeRangeCustomizedEvent(
 }
 
 export function logInfraColumnCustomizedEvent(
-	entityType: string,
+	entityType: InfraMonitoringEntity,
 	columnsList: string[],
 	fontSize: string,
 	maxLinesPerRow: number,
@@ -106,7 +109,7 @@ export function logInfraColumnCustomizedEvent(
 }
 
 export function logInfraColumnSortedEvent(
-	entityType: string,
+	entityType: InfraMonitoringEntity,
 	columnKey: string,
 	direction: 'asc' | 'desc',
 	source: 'list' | 'expanded',
@@ -120,7 +123,7 @@ export function logInfraColumnSortedEvent(
 }
 
 export function logInfraDrawerTimeRangeCustomizedEvent(
-	entityType: string,
+	entityType: InfraMonitoringEntity,
 	rangeLabel: string,
 ): void {
 	void logEvent('infra_drawer_time_range_customized', {
@@ -130,7 +133,7 @@ export function logInfraDrawerTimeRangeCustomizedEvent(
 }
 
 export function logInfraDrawerFilterCustomizedEvent(
-	entityType: string,
+	entityType: InfraMonitoringEntity,
 	tab: 'metrics' | 'logs' | 'traces' | 'events' | 'pod_metrics',
 	expression: string,
 	filterSource: 'search' | 'logs',
@@ -152,7 +155,7 @@ export function logInfraDrawerFilterCustomizedEvent(
 }
 
 export function logInfraGroupByCustomizedEvent(
-	entityType: string,
+	entityType: InfraMonitoringEntity,
 	groupByKeysList: string[],
 ): void {
 	void logEvent('infra_group_by_customized', {
@@ -162,7 +165,7 @@ export function logInfraGroupByCustomizedEvent(
 }
 
 export function logInfraDrawerTabViewedEvent(
-	entityType: string,
+	entityType: InfraMonitoringEntity,
 	tab: string,
 	isDefaultTab: boolean,
 ): void {
@@ -170,5 +173,27 @@ export function logInfraDrawerTabViewedEvent(
 		entity_type: entityType,
 		tab,
 		is_default_tab: isDefaultTab,
+	});
+}
+
+export function logInfraExplorerNavigatedEvent(params: {
+	entityType: InfraMonitoringEntity;
+	destination:
+		| 'metrics_explorer'
+		| 'logs_explorer'
+		| 'traces_explorer'
+		| 'k8s_list';
+	source: 'chart_compass_icon' | 'tab_cta_button' | 'stats_card';
+	tab: string;
+	sourceKey: string | null;
+	drawerDurationMsAtNavigation: number | null;
+}): void {
+	void logEvent('infra_explorer_navigated', {
+		entity_type: params.entityType,
+		destination: params.destination,
+		source: params.source,
+		tab: params.tab,
+		source_key: params.sourceKey,
+		drawer_duration_ms_at_navigation: params.drawerDurationMsAtNavigation,
 	});
 }

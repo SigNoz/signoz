@@ -12,6 +12,7 @@ interface ChartHeaderProps {
 	tooltip?: string;
 	metricsExplorerUrl?: string;
 	metricsExplorerTestId?: string;
+	onExploreClick?: () => void;
 }
 
 function ChartHeader({
@@ -20,6 +21,7 @@ function ChartHeader({
 	tooltip,
 	metricsExplorerUrl,
 	metricsExplorerTestId = 'open-metrics-explorer',
+	onExploreClick,
 }: ChartHeaderProps): JSX.Element {
 	const renderInfoIcon = (): React.ReactNode => {
 		if (docPath) {
@@ -71,6 +73,7 @@ function ChartHeader({
 						to={metricsExplorerUrl}
 						className={styles.metricsExplorerLink}
 						data-testid={metricsExplorerTestId}
+						onClick={onExploreClick}
 					>
 						<Compass size={14} />
 					</Link>
