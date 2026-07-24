@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from 'react-query';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import TanStackTable, {
+	SortState,
 	TableColumnDef,
 	useCalculatedPageSize,
 	useHiddenColumnIds,
@@ -10,6 +11,7 @@ import TanStackTable, {
 } from 'components/TanStackTableView';
 import {
 	InfraMonitoringEvents,
+	logInfraColumnSortedEvent,
 	logInfraTimeRangeCustomizedEvent,
 } from 'constants/events';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -389,6 +391,15 @@ export function K8sBaseList<
 		[isGroupedByAttribute],
 	);
 
+	const handleSort = useCallback(
+		(sort: SortState | null): void => {
+			if (sort) {
+				logInfraColumnSortedEvent(entity, sort.columnName, sort.order, 'list');
+			}
+		},
+		[entity],
+	);
+
 	const showTableLoadingState = isLoading;
 
 	const emptyTableMessage: React.ReactNode = renderEmptyState?.({
@@ -452,6 +463,7 @@ export function K8sBaseList<
 						getGroupKey={getGroupKeyFn}
 						onRowClick={handleRowClick}
 						onRowClickNewTab={handleRowClickNewTab}
+						onSort={handleSort}
 						renderExpandedRow={isGroupedByAttribute ? renderExpandedRow : undefined}
 						getRowCanExpand={isGroupedByAttribute ? getRowCanExpand : undefined}
 						className={cx(styles.k8SListTable)}

@@ -21,6 +21,7 @@ import { useGlobalTimeStore } from 'store/globalTime';
 import { NANO_SECOND_MULTIPLIER } from 'store/globalTime/utils';
 import { parseAsJsonNoValidate } from 'utils/nuqsParsers';
 
+import { logInfraColumnSortedEvent } from 'constants/events';
 import { InfraMonitoringEntity } from '../constants';
 import {
 	SelectedItemParams,
@@ -201,6 +202,15 @@ export function K8sExpandedRow<T, TItemKey = string>({
 		[setSelectedItemParams],
 	);
 
+	const handleSort = useCallback(
+		(sort: SortState | null): void => {
+			if (sort) {
+				logInfraColumnSortedEvent(entity, sort.columnName, sort.order, 'expanded');
+			}
+		},
+		[entity],
+	);
+
 	const handleViewAllClick = (): void => {
 		void setGroupBy([]);
 		void setCurrentPage(1);
@@ -267,6 +277,7 @@ export function K8sExpandedRow<T, TItemKey = string>({
 						getRowKey={getRowKey}
 						getItemKey={getItemKey}
 						onRowClick={handleRowClick}
+						onSort={handleSort}
 						enableQueryParams={{
 							orderBy: orderByParamKey,
 						}}

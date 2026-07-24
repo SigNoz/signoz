@@ -104,3 +104,17 @@ export function logInfraColumnCustomizedEvent(
 		source,
 	});
 }
+
+export function logInfraColumnSortedEvent(
+	entityType: string,
+	columnKey: string,
+	direction: 'asc' | 'desc',
+	source: 'list' | 'expanded',
+): void {
+	void logEvent('infra_column_sorted', {
+		entity_type: entityType,
+		column_key: columnKey,
+		direction,
+		source,
+	});
+}
