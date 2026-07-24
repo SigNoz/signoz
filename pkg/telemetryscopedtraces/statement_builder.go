@@ -35,6 +35,9 @@ type scopedTraceStatementBuilder struct {
 	cb                        qbtypes.ConditionBuilder
 	scope                     TraceScope
 	traceStmtBuilder          qbtypes.StatementBuilder[qbtypes.TraceAggregation]
+	// scopedDelegate is traceStmtBuilder's trace-scoping capability, resolved once at
+	// construction; nil when the delegate cannot constrain a query by trace ids.
+	scopedDelegate            traceScopedStatementBuilder
 	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation]
 }
 
@@ -69,6 +72,7 @@ func NewScopedTraceStatementBuilder(
 		fl,
 	)
 
+	scopedDelegate, _ := traceStmtBuilder.(traceScopedStatementBuilder)
 	return &scopedTraceStatementBuilder{
 		logger:                    scopedSettings.Logger(),
 		metadataStore:             metadataStore,
@@ -76,6 +80,7 @@ func NewScopedTraceStatementBuilder(
 		cb:                        cb,
 		scope:                     scope,
 		traceStmtBuilder:          traceStmtBuilder,
+		scopedDelegate:            scopedDelegate,
 		resourceFilterStmtBuilder: resourceFilterStmtBuilder,
 	}
 }
@@ -125,7 +130,7 @@ func substituteTraceLevelVariables(expr string, variables map[string]qbtypes.Var
 func (b *scopedTraceStatementBuilder) validateRawOrderKeys(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) error {
 	aliases := b.aggregateAliasSet()
 	for _, o := range query.Order {
-		name := strings.TrimPrefix(strings.TrimPrefix(o.Key.Name, "tracefield."), "trace.")
+		name := strings.TrimPrefix(o.Key.Name, "trace.")
 		if _, ok := aliases[name]; !ok {
 			continue
 		}
@@ -150,11 +155,6 @@ func (b *scopedTraceStatementBuilder) buildDelegated(
 ) (*qbtypes.Statement, error) {
 	spanExpr, traceExpr := "", ""
 	if query.Filter != nil && strings.TrimSpace(query.Filter.Expression) != "" {
-		// The legacy tracefield. spelling parses identically to trace.; only the
-		// user-facing form is supported here.
-		if strings.Contains(query.Filter.Expression, "tracefield.") {
-			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "\"tracefield.\" is not supported; use the \"trace.\" prefix")
-		}
 		var err error
 		spanExpr, traceExpr, err = querybuilder.SplitFilterForAggregates(query.Filter.Expression, b.aggregateAliasSet())
 		if err != nil {
@@ -180,21 +180,21 @@ func (b *scopedTraceStatementBuilder) buildDelegated(
 		return b.traceStmtBuilder.Build(ctx, orgID, start, end, requestType, gated, variables)
 	}
 
-	scoped, ok := b.traceStmtBuilder.(traceScopedStatementBuilder)
-	if !ok {
+	if b.scopedDelegate == nil {
 		return nil, errors.NewInternalf(errors.CodeInternal, "trace statement builder does not support trace-scoped queries")
 	}
-	scope, err := b.buildQualifiedStatement(ctx, orgID, querybuilder.ToNanoSecs(start), querybuilder.ToNanoSecs(end), traceExpr)
+	scope, err := b.buildTraceScopeStatement(ctx, orgID, querybuilder.ToNanoSecs(start), querybuilder.ToNanoSecs(end), traceExpr)
 	if err != nil {
 		return nil, err
 	}
-	return scoped.BuildTraceScoped(ctx, orgID, start, end, requestType, gated, variables, scope)
+	return b.scopedDelegate.BuildTraceScoped(ctx, orgID, start, end, requestType, gated, variables, scope)
 }
 
-// buildQualifiedStatement builds the __trace_scope statement: trace ids whose
-// window-clipped per-trace aggregates satisfy traceExpr, from one windowed,
-// mask-pruned GROUP BY trace_id scan. start/end are ns.
-func (b *scopedTraceStatementBuilder) buildQualifiedStatement(ctx context.Context, orgID valuer.UUID, start, end uint64, traceExpr string) (*qbtypes.Statement, error) {
+// buildTraceScopeStatement builds the __trace_scope statement: trace ids whose
+// window-clipped per-trace aggregates satisfy traceExpr, from the same aggregate scan
+// as the matched CTE, minus its span-filter widening, resource prune, ordering and
+// pagination. start/end are ns.
+func (b *scopedTraceStatementBuilder) buildTraceScopeStatement(ctx context.Context, orgID valuer.UUID, start, end uint64, traceExpr string) (*qbtypes.Statement, error) {
 	keys, err := b.fetchKeys(ctx, orgID)
 	if err != nil {
 		return nil, err
@@ -213,41 +213,14 @@ func (b *scopedTraceStatementBuilder) buildQualifiedStatement(ctx context.Contex
 	if err := validateAggregateFilter(traceExpr, orderableSet); err != nil {
 		return nil, err
 	}
-	having, err := b.buildHaving(traceExpr, orderableSet)
-	if err != nil {
-		return nil, err
-	}
 
 	startBucket := start/querybuilder.NsToSeconds - querybuilder.BucketAdjustment
 	endBucket := end / querybuilder.NsToSeconds
 
-	sb := sqlbuilder.NewSelectBuilder()
-	needed := neededMatchedAliases(nil, traceExpr, orderableSet)
-	selects := []string{"trace_id"}
-	for _, rc := range resolved {
-		if _, ok := needed[rc.alias]; !ok {
-			continue
-		}
-		colExpr, err := embedExpr(sb, rc.expr, rc.args)
-		if err != nil {
-			return nil, err
-		}
-		selects = append(selects, colExpr+" AS "+quoteAlias(rc.alias))
-	}
-	sb.Select(selects...)
-	sb.From(spanTable())
-	mask, err := embedExpr(sb, maskExpr, maskArgs)
+	sql, args, err := b.buildAggregateScan(start, end, startBucket, endBucket, resolved, nil, orderableSet, maskExpr, maskArgs, filterParts{havingExpr: traceExpr}, "", 0, 0)
 	if err != nil {
 		return nil, err
 	}
-	sb.Where(append(windowWhere(sb, start, end, startBucket, endBucket), mask)...)
-	sb.GroupBy("trace_id")
-	if strings.TrimSpace(having) != "" {
-		// having carries user text with values inlined by the rewriter; escape it so a
-		// literal $ can't be read as an interpolation marker at Build time.
-		sb.Having(sqlbuilder.Escape(having))
-	}
-	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 	return &qbtypes.Statement{Query: sql, Args: args}, nil
 }
 
@@ -327,10 +300,11 @@ func (b *scopedTraceStatementBuilder) buildTraceListQuery(
 	}
 
 	// matched → ranked → buckets → enrichment
-	matchedFrag, matchedArgs, err := b.buildMatchedCTE(start, end, startBucket, endBucket, resolved, orders, orderableSet, maskExpr, maskArgs, fp, resourcePred, limit, query.Offset)
+	matchedSQL, matchedArgs, err := b.buildAggregateScan(start, end, startBucket, endBucket, resolved, orders, orderableSet, maskExpr, maskArgs, fp, resourcePred, limit, query.Offset)
 	if err != nil {
 		return nil, err
 	}
+	matchedFrag := fmt.Sprintf("matched AS (%s)", matchedSQL)
 	rankedFrag, rankedArgs := b.buildRankedCTE(start, end)
 	bucketsFrag := buildBucketsCTE()
 	mainSQL, mainArgs := b.buildEnrichmentSelect(resolved, orders)
@@ -603,10 +577,12 @@ func (b *scopedTraceStatementBuilder) resolveSpanPredicate(ctx context.Context, 
 	return sqlbuilder.Escape(pred), args, prepared.Warnings, prepared.WarningsDocURL, nil
 }
 
-// buildMatchedCTE builds `matched`: the single windowed GROUP BY trace_id scan that
+// buildAggregateScan builds the windowed, mask-pruned GROUP BY trace_id scan that
 // fuses gate + span filter + HAVING + ORDER BY + LIMIT/OFFSET, selecting only the
-// aliases the ORDER BY / HAVING reference.
-func (b *scopedTraceStatementBuilder) buildMatchedCTE(start, end, startBucket, endBucket uint64, resolved []resolvedColumn, orders []listOrder, orderableSet map[string]struct{}, maskExpr string, maskArgs []any, fp filterParts, resourcePred string, limit, offset int) (string, []any, error) {
+// aliases the ORDER BY / HAVING reference. It backs both the `matched` CTE and the
+// __trace_scope statement; the latter passes no orders/resource prune/limit, which
+// leaves those clauses out.
+func (b *scopedTraceStatementBuilder) buildAggregateScan(start, end, startBucket, endBucket uint64, resolved []resolvedColumn, orders []listOrder, orderableSet map[string]struct{}, maskExpr string, maskArgs []any, fp filterParts, resourcePred string, limit, offset int) (string, []any, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 
 	// SELECT trace_id + only the aggregates ORDER BY / HAVING reference (as aliases).
@@ -679,14 +655,18 @@ func (b *scopedTraceStatementBuilder) buildMatchedCTE(start, end, startBucket, e
 		sb.Having(strings.Join(having, " AND "))
 	}
 
-	sb.OrderBy(orderClause(orders)...)
-	sb.Limit(limit)
+	if len(orders) > 0 {
+		sb.OrderBy(orderClause(orders)...)
+	}
+	if limit > 0 {
+		sb.Limit(limit)
+	}
 	if offset > 0 {
 		sb.Offset(offset)
 	}
 
 	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-	return fmt.Sprintf("matched AS (%s)", sql), args, nil
+	return sql, args, nil
 }
 
 // buildRankedCTE builds `ranked`: [start,end] bounds per matched trace, read from the
@@ -823,7 +803,7 @@ func traceAggregateNames(havingExpr string) []string {
 }
 
 // validateAggregateFilter rejects a trace-level filter referencing an aggregate not
-// computable in the matched pass (e.g. span_count, trace_duration_nano).
+// computable in the aggregate scan (e.g. span_count, trace_duration_nano).
 func validateAggregateFilter(havingExpr string, orderableSet map[string]struct{}) error {
 	if strings.TrimSpace(havingExpr) == "" {
 		return nil
@@ -836,7 +816,7 @@ func validateAggregateFilter(havingExpr string, orderableSet map[string]struct{}
 	for _, name := range traceAggregateNames(havingExpr) {
 		if _, ok := orderableSet[name]; !ok {
 			return errors.NewInvalidInputf(errors.CodeInvalidInput,
-				"aggregate %q cannot be used in the trace-list filter; filterable aggregates: %s", name, strings.Join(allowed, ", "))
+				"aggregate %q cannot be used in the filter; filterable aggregates: %s", name, strings.Join(allowed, ", "))
 		}
 	}
 	return nil

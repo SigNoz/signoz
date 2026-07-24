@@ -86,6 +86,11 @@ func (b *traceQueryStatementBuilder) BuildTraceScoped(
 	variables map[string]qbtypes.VariableItem,
 	traceScope *qbtypes.Statement,
 ) (*qbtypes.Statement, error) {
+	// The scope is wired into the list query only; reject other request types rather
+	// than silently dropping the constraint.
+	if requestType != qbtypes.RequestTypeRaw {
+		return nil, errors.NewInternalf(errors.CodeInternal, "trace-scoped build supports only the raw request type, got %s", requestType.StringValue())
+	}
 	scoped := *b
 	scoped.traceScope = traceScope
 	return scoped.Build(ctx, orgID, start, end, requestType, query, variables)

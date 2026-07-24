@@ -32,7 +32,7 @@ WITH __trace_scope AS (
       AND timestamp < '1747983448000000000'
       AND ts_bucket_start >= 1747945619
       AND ts_bucket_start <= 1747983448
-      AND (mapContains(attributes_string, 'gen_ai.request.model') OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name'))
+      AND ((mapContains(attributes_string, 'gen_ai.request.model') OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name')))
     GROUP BY trace_id
     HAVING output_tokens > 1000
 )
@@ -59,6 +59,27 @@ WHERE trace_id GLOBAL IN (SELECT trace_id FROM __trace_scope)
   AND ts_bucket_start <= 1747983448
 LIMIT 10
 `, stmt)
+}
+
+// A raw filter mixing a resource attribute with a trace-level condition: the resource
+// part flows through the delegate's fingerprint machinery (__resource_filter CTE),
+// the trace-level part becomes the __trace_scope qualification.
+func TestBuild_SpanList_ResourcePlusTraceFilter(t *testing.T) {
+	b := newTestBuilder(t)
+	stmt, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeRaw,
+		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+			Signal: telemetrytypes.SignalTraces,
+			Filter: &qbtypes.Filter{Expression: "resource.service.name = 'checkout' AND trace.output_tokens > 1000"},
+			Limit:  10,
+		}, nil)
+	require.NoError(t, err)
+
+	got := renderSQL(t, stmt)
+	require.Contains(t, got, "__resource_filter AS (")
+	require.Contains(t, got, "resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)")
+	require.Contains(t, got, "__trace_scope AS (")
+	require.Contains(t, got, "trace_id GLOBAL IN (SELECT trace_id FROM __trace_scope)")
+	require.Contains(t, got, "HAVING output_tokens > 1000")
 }
 
 // Without a trace-level condition nothing changes: the span list stays a single
@@ -110,8 +131,7 @@ func TestBuild_SpanList_TraceFilter_Validation(t *testing.T) {
 }
 
 // Variables in a trace-level condition on the span list get the trace list's
-// treatment: substituted as literals, __all__ drops the condition (no scope CTE),
-// and the legacy tracefield. spelling is rejected with a targeted error.
+// treatment: substituted as literals, __all__ drops the condition (no scope CTE).
 func TestBuild_SpanList_TraceFilter_Variables(t *testing.T) {
 	b := newTestBuilder(t)
 	build := func(expr string, vars map[string]qbtypes.VariableItem) (*qbtypes.Statement, error) {
@@ -132,7 +152,4 @@ func TestBuild_SpanList_TraceFilter_Variables(t *testing.T) {
 		map[string]qbtypes.VariableItem{"threshold": {Type: qbtypes.DynamicVariableType, Value: "__all__"}})
 	require.NoError(t, err)
 	require.NotContains(t, stmt.Query, "__trace_scope")
-
-	_, err = build("tracefield.output_tokens > 1000", nil)
-	require.ErrorContains(t, err, `"tracefield." is not supported`)
 }
