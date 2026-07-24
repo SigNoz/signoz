@@ -196,6 +196,70 @@ def test_create_rejects_long_display_name(
     assert response.json()["error"]["code"] == "dashboard_invalid_input"
     assert "spec.display.name: dashboard name must be at most 128 characters" in response.json()["error"]["message"]
 
+    # A grid layout title has its own, larger bound of 256 characters; one over
+    # must be rejected.
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={
+            "schemaVersion": "v6",
+            "name": "long-layout-title",
+            "spec": {
+                "display": {"name": "Long Layout Title"},
+                "links": [],
+                "layouts": [{"kind": "Grid", "spec": {"display": {"title": "x" * 257}, "items": []}}],
+            },
+        },
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.json()["error"]["code"] == "dashboard_invalid_input"
+    assert "spec.layouts[0].spec.display.title: layout name must be at most 256 characters" in response.json()["error"]["message"]
+
+
+def test_create_rejects_all_value_without_multiselect(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    # A list variable cannot offer an "all" value unless it also allows selecting
+    # multiple values — allowAllValue without allowMultiple must be rejected.
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={
+            "schemaVersion": "v6",
+            "name": "all-without-multi",
+            "spec": {
+                "display": {"name": "All Without Multi"},
+                "links": [],
+                "variables": [
+                    {
+                        "kind": "ListVariable",
+                        "spec": {
+                            "name": "svc",
+                            "allowAllValue": True,
+                            "allowMultiple": False,
+                            "plugin": {
+                                "kind": "signoz/DynamicVariable",
+                                "spec": {"name": "service.name", "signal": "metrics"},
+                            },
+                        },
+                    }
+                ],
+            },
+            "tags": [],
+        },
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.json()["error"]["code"] == "dashboard_invalid_input"
+    assert "allowAllValue cannot be set" in response.json()["error"]["message"]
+
 
 def test_create_rejects_invalid_grid_layout(
     signoz: SigNoz,
