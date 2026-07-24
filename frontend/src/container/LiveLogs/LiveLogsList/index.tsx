@@ -216,10 +216,13 @@ function LiveLogsList({
 									),
 								}) as CSSProperties
 							}
-							onRowClick={(log): void => {
-								handleSetActiveLog(log);
+							onRowClick={(log, _itemKey, { isActive }): void => {
+								if (isActive) {
+									handleCloseLogDetail();
+								} else {
+									handleSetActiveLog(log);
+								}
 							}}
-							onRowDeactivate={handleCloseLogDetail}
 							activeRowIndex={activeLogIndex}
 							renderRowActions={(log): ReactNode => (
 								<LogLinesActionButtons

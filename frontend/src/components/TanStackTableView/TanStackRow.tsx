@@ -33,7 +33,6 @@ function TanStackRowCellsInner<TData, TItemKey = string>({
 	// Stable references via destructuring, keep them as is
 	const onRowClick = context?.onRowClick;
 	const onRowClickNewTab = context?.onRowClickNewTab;
-	const onRowDeactivate = context?.onRowDeactivate;
 	const isRowActive = context?.isRowActive;
 	const getRowKeyData = context?.getRowKeyData;
 	const rowIndex = row.index;
@@ -51,22 +50,12 @@ function TanStackRowCellsInner<TData, TItemKey = string>({
 				return;
 			}
 
+			// The table does not decide open vs. close — it reports the click and
+			// the row's active state, and the consumer owns the routing.
 			const isActive = isRowActive?.(rowData) ?? false;
-			if (isActive && onRowDeactivate) {
-				onRowDeactivate();
-			} else {
-				onRowClick?.(rowData, itemKey);
-			}
+			onRowClick?.(rowData, itemKey, { isActive });
 		},
-		[
-			isRowActive,
-			onRowDeactivate,
-			onRowClick,
-			onRowClickNewTab,
-			rowData,
-			getRowKeyData,
-			rowIndex,
-		],
+		[isRowActive, onRowClick, onRowClickNewTab, rowData, getRowKeyData, rowIndex],
 	);
 
 	if (itemKind === 'expansion') {
@@ -120,7 +109,6 @@ function areRowCellsPropsEqual<TData>(
 		prev.columnVisibilityKey === next.columnVisibilityKey &&
 		prev.context?.onRowClick === next.context?.onRowClick &&
 		prev.context?.onRowClickNewTab === next.context?.onRowClickNewTab &&
-		prev.context?.onRowDeactivate === next.context?.onRowDeactivate &&
 		prev.context?.isRowActive === next.context?.isRowActive &&
 		prev.context?.getRowKeyData === next.context?.getRowKeyData &&
 		prev.context?.renderRowActions === next.context?.renderRowActions &&
