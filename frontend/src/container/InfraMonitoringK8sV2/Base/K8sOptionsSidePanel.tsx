@@ -9,13 +9,17 @@ import {
 	hideColumn,
 	showColumn,
 	TableColumnDef,
+	useColumnOrder,
 	useHiddenColumnIds,
 } from 'components/TanStackTableView';
+import { InfraMonitoringEntity } from '../constants';
 
 import {
 	FontSize,
 	useInfraMonitoringTablePreferencesStore,
 } from './useInfraMonitoringTablePreferencesStore';
+import { useLogEventForColumnCustomized } from './useLogEventForColumnCustomized';
+import { sortByColumnOrder } from './utils';
 
 import styles from './K8sOptionsSidePanel.module.scss';
 import { Typography } from '@signozhq/ui/typography';
@@ -56,17 +60,20 @@ function K8sOptionsSidePanel<TData>({
 	onClose,
 	columns,
 	storageKey,
+	entity,
 }: {
 	open: boolean;
 	onClose: () => void;
 	columns: TableColumnDef<TData>[];
 	storageKey: string;
+	entity: InfraMonitoringEntity;
 }): JSX.Element {
 	const columnPickerItems = useMemo(
 		() => toColumnPickerItems(columns),
 		[columns],
 	);
 	const hiddenColumnIds = useHiddenColumnIds(storageKey);
+	const columnOrder = useColumnOrder(storageKey);
 
 	const lineClamp = useInfraMonitoringTablePreferencesStore((s) => s.lineClamp);
 	const fontSize = useInfraMonitoringTablePreferencesStore((s) => s.fontSize);
@@ -90,6 +97,18 @@ function K8sOptionsSidePanel<TData>({
 			),
 		[columnPickerItems],
 	);
+
+	const orderedVisibleColumnItems = useMemo(
+		() => sortByColumnOrder(visibleColumnItems, (col) => col.id, columnOrder),
+		[visibleColumnItems, columnOrder],
+	);
+
+	useLogEventForColumnCustomized({
+		entity,
+		source: 'list',
+		storageKey,
+		columns,
+	});
 
 	const handleToggleColumn = (columnId: string, checked: boolean): void => {
 		if (checked) {
@@ -185,7 +204,7 @@ function K8sOptionsSidePanel<TData>({
 				</Typography.Text>
 			</div>
 			<div className={styles.columnsList}>
-				{visibleColumnItems.map((column) => {
+				{orderedVisibleColumnItems.map((column) => {
 					const isVisible = !hiddenColumnIds.includes(column.id);
 					const switchElement = (
 						<Switch

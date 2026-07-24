@@ -30,6 +30,7 @@ import {
 	useInfraMonitoringSelectedItemParams,
 } from '../hooks';
 import { K8sBaseFilters } from './types';
+import { useLogEventForColumnCustomized } from './useLogEventForColumnCustomized';
 import { useInfraMonitoringFontSize } from './useInfraMonitoringTablePreferencesStore';
 
 import styles from './K8sExpandedRow.module.scss';
@@ -106,6 +107,13 @@ export function K8sExpandedRow<T, TItemKey = string>({
 	}, [setOrderBy]);
 
 	const storageKey = `k8s-${entity}-columns-expanded`;
+
+	useLogEventForColumnCustomized({
+		entity,
+		source: 'expanded',
+		storageKey,
+		columns: tableColumns,
+	});
 
 	const expressionForRecord = useMemo(
 		() => buildExpressionFromGroupMeta(parentExpression || '', groupMeta),

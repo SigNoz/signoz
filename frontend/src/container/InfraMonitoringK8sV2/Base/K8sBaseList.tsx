@@ -481,6 +481,7 @@ export function K8sBaseList<
 				open={isOptionsDrawerOpen}
 				columns={tableColumns}
 				storageKey={columnStorageKey}
+				entity={entity}
 				onClose={handleCloseOptionsDrawer}
 			/>
 		</>

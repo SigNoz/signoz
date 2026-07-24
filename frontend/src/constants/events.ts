@@ -88,3 +88,19 @@ export function logInfraTimeRangeCustomizedEvent(
 		range_label: isCustomTimeRange(rangeLabel) ? 'custom' : rangeLabel,
 	});
 }
+
+export function logInfraColumnCustomizedEvent(
+	entityType: string,
+	columnsList: string[],
+	fontSize: string,
+	maxLinesPerRow: number,
+	source: 'list' | 'expanded',
+): void {
+	void logEvent('infra_column_customized', {
+		entity_type: entityType,
+		columns_list: columnsList,
+		font_size: fontSize,
+		max_lines_per_row: maxLinesPerRow,
+		source,
+	});
+}
