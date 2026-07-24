@@ -14,15 +14,16 @@ import type {
 	TelemetrytypesTelemetryFieldKeyDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import {
+	Antenna,
 	BarChart,
 	Columns3,
 	Hash,
-	Layers,
-	LayoutDashboard,
-	Link,
+	Link2,
 	Palette,
-	Ruler,
-	SlidersHorizontal,
+	PencilRuler,
+	Scale3D,
+	Signpost,
+	Wallpaper,
 } from '@signozhq/icons';
 
 // Derived from an actual icon component so the type stays exact (size is a
@@ -157,14 +158,14 @@ export type SectionConfig =
 // Per-section title + sidebar icon. Pure data; the editor component + spec lens
 // live in the ConfigPane section registry.
 export const SECTION_METADATA = {
-	[SectionKind.Formatting]: { title: 'Formatting & Units', icon: Hash },
-	[SectionKind.Axes]: { title: 'Axes', icon: Ruler },
-	[SectionKind.Legend]: { title: 'Legend', icon: Layers },
+	[SectionKind.Formatting]: { title: 'Formatting & Units', icon: PencilRuler },
+	[SectionKind.Axes]: { title: 'Axes', icon: Scale3D },
+	[SectionKind.Legend]: { title: 'Legend', icon: Signpost },
 	[SectionKind.ChartAppearance]: { title: 'Chart appearance', icon: Palette },
-	[SectionKind.Visualization]: { title: 'Visualization', icon: LayoutDashboard },
+	[SectionKind.Visualization]: { title: 'Visualization', icon: Wallpaper },
 	[SectionKind.Buckets]: { title: 'Histogram / Buckets', icon: BarChart },
-	[SectionKind.Thresholds]: { title: 'Thresholds', icon: SlidersHorizontal },
-	[SectionKind.ContextLinks]: { title: 'Context Links', icon: Link },
+	[SectionKind.Thresholds]: { title: 'Thresholds', icon: Antenna },
+	[SectionKind.ContextLinks]: { title: 'Context Links', icon: Link2 },
 	[SectionKind.Columns]: { title: 'Columns', icon: Columns3 },
 } as const satisfies Record<SectionKind, SectionMetadata>;
 
