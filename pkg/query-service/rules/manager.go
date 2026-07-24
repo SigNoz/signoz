@@ -260,7 +260,9 @@ func (m *Manager) initiate(ctx context.Context) error {
 			return err
 		}
 		if len(storedRules) == 0 {
-			return nil
+			// This org simply has no rules; move on to the next one. Returning
+			// here would abandon every remaining org's rules.
+			continue
 		}
 
 		for _, rec := range storedRules {
