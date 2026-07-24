@@ -128,12 +128,22 @@
 
 .requestForm {
 	display: flex;
-	gap: 8px;
+	flex-direction: column;
+	gap: 10px;
 	width: 100%;
 	max-width: 380px;
 	margin-top: 16px;
 	padding-top: 16px;
 	border-top: 1px solid var(--l2-border);
+}
+
+.requestHeader {
+	color: var(--l1-foreground);
+}
+
+.requestRow {
+	display: flex;
+	gap: 8px;
 }
 
 .requestInput {

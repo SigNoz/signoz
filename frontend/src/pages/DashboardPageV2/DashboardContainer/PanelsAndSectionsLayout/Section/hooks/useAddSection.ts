@@ -21,7 +21,7 @@ interface Params {
 }
 
 interface Result {
-	addSection: (title: string) => Promise<void>;
+	addSection: (title: string) => Promise<boolean>;
 	isSaving: boolean;
 }
 
@@ -38,10 +38,10 @@ export function useAddSection({ layouts }: Params): Result {
 	const setScrollTargetId = useScrollIntoViewStore((s) => s.setScrollTargetId);
 
 	const addSection = useCallback(
-		async (title: string): Promise<void> => {
+		async (title: string): Promise<boolean> => {
 			const trimmed = title.trim();
 			if (!dashboardId || !trimmed) {
-				return;
+				return false;
 			}
 			const isFirstSection = !layouts || layouts.length === 0;
 			const op = isFirstSection
@@ -58,8 +58,10 @@ export function useAddSection({ layouts }: Params): Result {
 				// key it the way `getSectionStableId` does so it reveals itself on render.
 				const newIndex = isFirstSection ? 0 : layouts.length;
 				setScrollTargetId(getSectionStableId([], newIndex));
+				return true;
 			} catch (error) {
 				showErrorModal(error as APIError);
+				return false;
 			} finally {
 				setIsSaving(false);
 			}

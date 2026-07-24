@@ -78,17 +78,7 @@ type PanelSpec struct {
 	Display Display     `json:"display" required:"true"`
 	Plugin  PanelPlugin `json:"plugin" required:"true"`
 	Queries []Query     `json:"queries" required:"true" nullable:"false"`
-	Links   []Link      `json:"links" required:"true" nullable:"false"`
-}
-
-// validateLinks rejects a missing/null links field, where path is the panel's
-// location (e.g. "spec.panels.<key>"). A typed client must send [] rather than
-// omitting links, so its value round-trips faithfully.
-func (s *PanelSpec) validateLinks(path string) error {
-	if s.Links == nil {
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s.spec.links is required; send [] when there are no links", path)
-	}
-	return nil
+	Links   []Link      `json:"links,omitzero"`
 }
 
 // Link replicates dashboard.Link (Perses) so its zero-valued fields survive the

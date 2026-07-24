@@ -49,7 +49,6 @@ export function createDefaultPanel(
 				spec: pluginSpec,
 			} as DashboardtypesPanelPluginDTO,
 			queries,
-			links: [],
 		},
 	};
 }
@@ -167,7 +166,7 @@ interface CreatePanelOpsArgs {
 const NEW_PANEL_SIZE = { width: 6, height: 6 };
 
 /** Columns in the section grid — mirrors `cols` on SectionGrid's GridLayout. */
-const GRID_COLS = 12;
+export const GRID_COLS = 12;
 
 /** Minimal placement fields shared by grid-item DTOs and flattened `GridItem`s. */
 type PlacedItem = Pick<DashboardGridItemDTO, 'x' | 'y' | 'width' | 'height'>;

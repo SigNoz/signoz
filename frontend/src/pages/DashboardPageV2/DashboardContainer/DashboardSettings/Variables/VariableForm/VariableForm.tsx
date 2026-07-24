@@ -130,6 +130,9 @@ function VariableForm({
 									value={selectedPanelIds}
 									onChange={(value): void => setSelectedPanelIds(value as string[])}
 									data-testid="variable-apply-panels"
+									// Resolve the closed-state tags to panel names (else they show the id).
+									showLabels
+									placement="topRight"
 								/>
 							</div>
 						</div>
@@ -215,7 +218,7 @@ function VariableForm({
 						variant="solid"
 						color="primary"
 						prefix={<Check size={14} />}
-						disabled={!!nameError || !!attributeError}
+						disabled={!!nameError || !!attributeError || isSaving}
 						loading={isSaving}
 						onClick={handleSave}
 						testId="variable-save"
