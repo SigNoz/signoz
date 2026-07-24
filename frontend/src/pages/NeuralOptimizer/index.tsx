@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'api';
+import { ApiV3Instance } from 'api';
 import { OptimizerContainer, HeaderContainer, LiveStatusBadge, FeedGrid, FeedColumn, FeedCard, TerminalHeader, TerminalContent } from './styles';
 
 interface TraceLog {
@@ -21,7 +21,7 @@ const NeuralOptimizer = (): JSX.Element => {
   const fetchTracesForService = async (serviceName: string): Promise<TraceLog[]> => {
     try {
       const end = Date.now();
-      const start = end - 30 * 60 * 1000; // last 30 mins
+      const start = end - 60 * 60 * 1000; // last 60 mins
 
       const payload = {
         start: start * 1000000,
@@ -52,7 +52,7 @@ const NeuralOptimizer = (): JSX.Element => {
         },
       };
 
-      const response = await axios.post('/query_range', payload);
+      const response = await ApiV3Instance.post('/query_range', payload);
       const rows = response?.data?.data?.result?.[0]?.list || response?.data?.payload?.list || [];
 
       return rows.map((row: any, idx: number) => ({
@@ -65,7 +65,8 @@ const NeuralOptimizer = (): JSX.Element => {
         isError: row.statusCode === 2 || row.hasError || false,
         attributes: row.tagMap || row.attributes || { 'service.name': serviceName },
       }));
-    } catch {
+    } catch (err) {
+      console.warn('Error fetching traces via ApiV3Instance:', err);
       return [];
     }
   };
