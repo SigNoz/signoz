@@ -24,6 +24,8 @@ jest.mock('api/generated/services/dashboard', () => ({
 	getGetDashboardV2QueryKey: jest.fn(() => ['/api/v2/dashboards/dash-1']),
 }));
 
+jest.mock('uuid', () => ({ v4: (): string => 'minted-panel-id' }));
+
 describe('usePanelEditorSave', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
@@ -44,7 +46,7 @@ describe('usePanelEditorSave', () => {
 			queries: [],
 		} as unknown as DashboardtypesPanelSpecDTO;
 
-		await result.current.save(spec);
+		const savedPanelId = await result.current.save(spec);
 
 		expect(mockPatchAsync).toHaveBeenCalledWith([
 			{
@@ -53,6 +55,25 @@ describe('usePanelEditorSave', () => {
 				value: spec,
 			},
 		]);
+		// Editing resolves with the panel's own id.
+		expect(savedPanelId).toBe('panel-9');
+	});
+
+	it('mints and resolves with a fresh id when creating a new panel', async () => {
+		const { result } = renderHook(() =>
+			usePanelEditorSave({ dashboardId: 'dash-1', panelId: 'new', isNew: true }),
+		);
+
+		const spec = {
+			display: { name: 'New panel' },
+			plugin: { kind: 'signoz/TimeSeriesPanel', spec: {} },
+			queries: [],
+		} as unknown as DashboardtypesPanelSpecDTO;
+
+		const savedPanelId = await result.current.save(spec);
+
+		expect(savedPanelId).toBe('minted-panel-id');
+		expect(mockPatchAsync).toHaveBeenCalled();
 	});
 
 	it('surfaces the patch in-flight state as isSaving', () => {

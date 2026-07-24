@@ -81,6 +81,7 @@ function FormattingSection({
 					<ColumnUnits
 						columns={tableColumns}
 						value={value?.columnUnits ?? {}}
+						metricUnit={metricUnit}
 						onChange={(columnUnits): void => onChange({ ...value, columnUnits })}
 					/>
 				</div>

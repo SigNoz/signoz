@@ -37,14 +37,62 @@
 	display: flex;
 	align-items: center;
 	gap: 8px;
-	flex-wrap: wrap;
+	// Keep the two dropdowns side by side; each is fixed-width so pills can't
+	// grow the trigger and wrap them onto separate lines.
+	flex-wrap: nowrap;
 }
 
-.chip {
-	font-size: var(--font-size-sm);
+.select {
+	flex: none;
+
+	// Match the search bar: near-black background, --l2-border border.
+	:global(.ant-select-selector) {
+		background-color: var(--l1-background) !important;
+		border-color: var(--l2-border) !important;
+	}
 }
 
-.chipActive {
-	border-color: var(--primary-background) !important;
-	color: var(--l1-foreground) !important;
+// The single-select (Updated) is compact; the multi-select (Created-by) is wider
+// to fit a truncated pill + "+N" + clear.
+.selectNarrow {
+	width: 140px;
+}
+
+.selectWide {
+	width: 240px;
+
+	// Keep the pills on one line and let the first pill shrink + ellipsis to fill
+	// the available width (antd sets `flex: none` on tags, so allow the pill to
+	// shrink; keep the "+N" count and the search area intact).
+	:global(.ant-select-selection-overflow) {
+		flex-wrap: nowrap;
+	}
+
+	:global(.ant-select-selection-overflow-item) {
+		flex-shrink: 1;
+		min-width: 0;
+	}
+
+	:global(.ant-select-selection-overflow-item-rest),
+	:global(.ant-select-selection-overflow-item-suffix) {
+		flex-shrink: 0;
+	}
+}
+
+// Created-by option: a presentational checkbox + label (antd handles the toggle).
+.creatorOption {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.creatorCheck {
+	flex-shrink: 0;
+	pointer-events: none;
+}
+
+.creatorLabel {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }

@@ -6,7 +6,6 @@ import (
 	"os"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/perses/spec/go/dashboard"
@@ -753,7 +752,7 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 						"spec": {
 							"plugin": {
 								"kind": "signoz/TimeSeriesPanel",
-								"spec": {"chartAppearance": {"spanGaps": {"fillLessThan": "notaduration"}}}
+								"spec": {"chartAppearance": {"spanGaps": {"fillOnlyBelow": true, "fillLessThan": "notaduration"}}}
 							}
 						}
 					}
@@ -1019,20 +1018,13 @@ func TestValidateRequiredFields(t *testing.T) {
 			data:        wrapVariable("signoz/CustomVariable", `{}`),
 			wantContain: "CustomValue",
 		},
-		{
-			name:        "ThresholdWithLabel missing value",
-			data:        wrapPanel("signoz/TimeSeriesPanel", `{"thresholds": [{"color": "Red", "label": "high"}]}`),
-			wantContain: "Value",
-		},
+		// Value is intentionally not validate:"required" — 0 is a legitimate threshold
+		// (go-playground's required rejects a zero float), so a missing/zero value is
+		// accepted and only Color remains required on these threshold structs.
 		{
 			name:        "ThresholdWithLabel missing color",
 			data:        wrapPanel("signoz/TimeSeriesPanel", `{"thresholds": [{"value": 100, "label": "high", "color": ""}]}`),
 			wantContain: "Color",
-		},
-		{
-			name:        "ComparisonThreshold missing value",
-			data:        wrapPanel("signoz/NumberPanel", `{"thresholds": [{"operator": "above", "format": "text", "color": "Red"}]}`),
-			wantContain: "Value",
 		},
 		{
 			name:        "ComparisonThreshold missing color",
@@ -1371,23 +1363,49 @@ func TestSpanGaps(t *testing.T) {
 	t.Run("defaults", func(t *testing.T) {
 		var sg SpanGaps
 		assert.False(t, sg.FillOnlyBelow, "expected FillOnlyBelow default false")
-		assert.True(t, sg.FillLessThan.IsZero(), "expected FillLessThan default zero")
+		assert.Empty(t, sg.FillLessThan, "expected FillLessThan default empty")
 	})
 
 	t.Run("fillOnlyBelow true", func(t *testing.T) {
-		sg := unmarshal(t, `{"fillOnlyBelow": true}`)
+		sg := unmarshal(t, `{"fillOnlyBelow": true, "fillLessThan": "5m"}`)
 		assert.True(t, sg.FillOnlyBelow)
 	})
 
-	t.Run("fillLessThan duration", func(t *testing.T) {
-		sg := unmarshal(t, `{"fillOnlyBelow": false, "fillLessThan": "5m"}`)
+	t.Run("fillLessThan ignored when fillOnlyBelow is false", func(t *testing.T) {
+		sg := unmarshal(t, `{"fillOnlyBelow": false, "fillLessThan": ""}`)
 		assert.False(t, sg.FillOnlyBelow)
-		assert.Equal(t, 5*time.Minute, sg.FillLessThan.Duration())
+		assert.Empty(t, sg.FillLessThan)
+	})
+
+	t.Run("fillLessThan duration", func(t *testing.T) {
+		sg := unmarshal(t, `{"fillOnlyBelow": true, "fillLessThan": "5m"}`)
+		assert.True(t, sg.FillOnlyBelow)
+		assert.Equal(t, "5m", sg.FillLessThan)
 	})
 
 	t.Run("fillLessThan compound duration", func(t *testing.T) {
-		sg := unmarshal(t, `{"fillLessThan": "1h30m"}`)
-		assert.Equal(t, 90*time.Minute, sg.FillLessThan.Duration())
+		sg := unmarshal(t, `{"fillOnlyBelow": true, "fillLessThan": "1h30m"}`)
+		assert.Equal(t, "1h30m", sg.FillLessThan)
+	})
+
+	t.Run("fillLessThan day duration", func(t *testing.T) {
+		sg := unmarshal(t, `{"fillOnlyBelow": true, "fillLessThan": "1d"}`)
+		assert.Equal(t, "1d", sg.FillLessThan)
+	})
+
+	t.Run("fillLessThan required when fillOnlyBelow is true", func(t *testing.T) {
+		var sg SpanGaps
+		require.Error(t, json.Unmarshal([]byte(`{"fillOnlyBelow": true}`), &sg))
+	})
+
+	t.Run("invalid fillLessThan rejected on unmarshal", func(t *testing.T) {
+		var sg SpanGaps
+		require.Error(t, json.Unmarshal([]byte(`{"fillOnlyBelow": true, "fillLessThan": "not-a-duration"}`), &sg))
+	})
+
+	t.Run("non-positive fillLessThan rejected on unmarshal", func(t *testing.T) {
+		var sg SpanGaps
+		require.Error(t, json.Unmarshal([]byte(`{"fillOnlyBelow": true, "fillLessThan": "0s"}`), &sg))
 	})
 }
 

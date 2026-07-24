@@ -2,6 +2,10 @@
 import { useSelector } from 'react-redux';
 import { act, renderHook } from '@testing-library/react';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	DASHBOARD_CACHE_TIME,
+	DASHBOARD_CACHE_TIME_ON_REFRESH_ENABLED,
+} from 'constants/queryCacheTime';
 
 import { usePanelQuery } from '../usePanelQuery';
 import { useGetQueryRangeV5 } from '../useGetQueryRangeV5';
@@ -430,6 +434,30 @@ describe('usePanelQuery', () => {
 			act(() => result.current.pagination?.setPageSize(0));
 			expect(result.current.pagination?.pageSize).toBe(25);
 			expect(result.current.pagination?.pageIndex).toBe(0);
+		});
+	});
+
+	describe('cacheTime (auto-refresh OOM guard)', () => {
+		const withAutoRefreshDisabled = (disabled: boolean): void => {
+			mockUseSelector.mockImplementation((selector: unknown) =>
+				(selector as (state: { globalTime: unknown }) => unknown)({
+					globalTime: { ...DEFAULT_GLOBAL_TIME, isAutoRefreshDisabled: disabled },
+				}),
+			);
+		};
+
+		it('caches for DASHBOARD_CACHE_TIME when auto-refresh is disabled', () => {
+			withAutoRefreshDisabled(true);
+			renderHook(() => usePanelQuery({ panel: builderPanel(), panelId: 'p1' }));
+			const [{ cacheTime }] = mockUseGetQueryRangeV5.mock.calls[0];
+			expect(cacheTime).toBe(DASHBOARD_CACHE_TIME);
+		});
+
+		it('drops cacheTime to 0 when auto-refresh is enabled', () => {
+			withAutoRefreshDisabled(false);
+			renderHook(() => usePanelQuery({ panel: builderPanel(), panelId: 'p1' }));
+			const [{ cacheTime }] = mockUseGetQueryRangeV5.mock.calls[0];
+			expect(cacheTime).toBe(DASHBOARD_CACHE_TIME_ON_REFRESH_ENABLED);
 		});
 	});
 });

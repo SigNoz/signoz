@@ -24,6 +24,12 @@
 }
 
 .headerZone {
+	// Sticks to the top of the scroll area so the heading + filters stay put while
+	// the results scroll beneath. Its own stacking context sits above the rows; the
+	// DSL suggestion popup (z-index 1000) still layers above everything.
+	position: sticky;
+	top: 0;
+	z-index: 5;
 	display: flex;
 	flex-direction: column;
 	gap: 14px;
@@ -50,7 +56,6 @@
 		:global(.ant-table-row:last-child)
 		:global(.ant-table-cell)
 		> div {
-		border-radius: 0 0 6px 6px;
 	}
 
 	:global(.ant-pagination-item) {

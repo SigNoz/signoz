@@ -122,6 +122,10 @@ type listedDashboardV2 struct {
 	Image         string                  `json:"image,omitempty"`
 	Tags          []*tagtypes.GettableTag `json:"tags" required:"true" nullable:"false"`
 	Spec          listedDashboardV2Spec   `json:"spec" required:"true"`
+	// Legacy marks a dashboard whose stored data is not yet in the v2 (perses)
+	// schema. Such rows are extracted best-effort from the v1 shape so the list
+	// still surfaces them; callers should route them to the legacy view.
+	Legacy bool `json:"legacy" required:"true"`
 }
 
 type listedDashboardV2Spec struct {
@@ -144,6 +148,41 @@ func newListedDashboardV2(v2 *DashboardV2) *listedDashboardV2 {
 	}
 }
 
+// newListedDashboardForList builds the list view for a single dashboard. A row
+// whose stored data is not in the v2 (perses) schema is extracted best-effort
+// from the v1 shape and flagged Legacy, so one legacy or malformed dashboard
+// can't fail the whole list.
+func newListedDashboardForList(storable *StorableDashboard, tags []*tagtypes.Tag) *listedDashboardV2 {
+	if v2, err := storable.ToDashboardV2(tags); err == nil {
+		return newListedDashboardV2(v2)
+	}
+	return newLegacyListedDashboardV2(storable, tags)
+}
+
+// newLegacyListedDashboardV2 pulls the display-relevant fields out of a v1
+// dashboard blob. Column-backed fields (name, source, timestamps, …) come
+// straight off the row; title/description/image/version are read leniently from
+// the untyped v1 data, defaulting to zero when absent or of the wrong type.
+func newLegacyListedDashboardV2(storable *StorableDashboard, tags []*tagtypes.Tag) *listedDashboardV2 {
+	return &listedDashboardV2{
+		Identifiable:  storable.Identifiable,
+		TimeAuditable: storable.TimeAuditable,
+		UserAuditable: storable.UserAuditable,
+		OrgID:         storable.OrgID,
+		Locked:        storable.Locked,
+		Source:        storable.Source,
+		SchemaVersion: storable.Data.readString("version"),
+		Name:          storable.Name,
+		Image:         storable.Data.readString("image"),
+		Tags:          tagtypes.NewGettableTagsFromTags(tags),
+		Spec: listedDashboardV2Spec{Display: Display{
+			Name:        storable.Data.readString("title"),
+			Description: storable.Data.readString("description"),
+		}},
+		Legacy: true,
+	}
+}
+
 type ListableDashboardV2 struct {
 	Dashboards       []*listedDashboardV2    `json:"dashboards" required:"true" nullable:"false"`
 	Total            int64                   `json:"total" required:"true"`
@@ -151,21 +190,17 @@ type ListableDashboardV2 struct {
 	ReservedKeywords []DSLKey                `json:"reservedKeywords" required:"true" nullable:"false"`
 }
 
-func NewListableDashboardV2(dashboards []*StorableDashboard, total int64, tagsByEntity map[valuer.UUID][]*tagtypes.Tag, allTags []*tagtypes.Tag) (*ListableDashboardV2, error) {
+func NewListableDashboardV2(dashboards []*StorableDashboard, total int64, tagsByEntity map[valuer.UUID][]*tagtypes.Tag, allTags []*tagtypes.Tag) *ListableDashboardV2 {
 	items := make([]*listedDashboardV2, len(dashboards))
 	for i, d := range dashboards {
-		v2, err := d.ToDashboardV2(tagsByEntity[d.ID])
-		if err != nil {
-			return nil, err
-		}
-		items[i] = newListedDashboardV2(v2)
+		items[i] = newListedDashboardForList(d, tagsByEntity[d.ID])
 	}
 	return &ListableDashboardV2{
 		Dashboards:       items,
 		Total:            total,
 		Tags:             tagtypes.NewGettableTagsFromTags(allTags),
 		ReservedKeywords: ReservedFilterKeys(),
-	}, nil
+	}
 }
 
 // listedDashboardForUserV2 is a listed dashboard plus the calling user's pin
@@ -190,15 +225,11 @@ type StorableDashboardWithPinInfo struct {
 	Pinned    bool
 }
 
-func NewListableDashboardForUserV2(rows []*StorableDashboardWithPinInfo, total int64, tagsByEntity map[valuer.UUID][]*tagtypes.Tag, allTags []*tagtypes.Tag) (*ListableDashboardForUserV2, error) {
+func NewListableDashboardForUserV2(rows []*StorableDashboardWithPinInfo, total int64, tagsByEntity map[valuer.UUID][]*tagtypes.Tag, allTags []*tagtypes.Tag) *ListableDashboardForUserV2 {
 	items := make([]*listedDashboardForUserV2, len(rows))
 	for i, r := range rows {
-		v2, err := r.Dashboard.ToDashboardV2(tagsByEntity[r.Dashboard.ID])
-		if err != nil {
-			return nil, err
-		}
 		items[i] = &listedDashboardForUserV2{
-			listedDashboardV2: *newListedDashboardV2(v2),
+			listedDashboardV2: *newListedDashboardForList(r.Dashboard, tagsByEntity[r.Dashboard.ID]),
 			Pinned:            r.Pinned,
 		}
 	}
@@ -207,5 +238,5 @@ func NewListableDashboardForUserV2(rows []*StorableDashboardWithPinInfo, total i
 		Total:            total,
 		Tags:             tagtypes.NewGettableTagsFromTags(allTags),
 		ReservedKeywords: ReservedFilterKeys(),
-	}, nil
+	}
 }

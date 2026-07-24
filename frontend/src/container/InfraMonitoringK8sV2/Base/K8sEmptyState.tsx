@@ -1,8 +1,4 @@
-import { useCallback } from 'react';
-import { Button } from '@signozhq/ui/button';
-import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import history from 'lib/history';
-import { LifeBuoy, TriangleAlert } from '@signozhq/icons';
+import ErrorContent from 'components/ErrorModal/components/ErrorContent';
 
 import emptyStateUrl from '@/assets/Icons/emptyState.svg';
 import eyesEmojiUrl from '@/assets/Images/eyesEmoji.svg';
@@ -11,34 +7,14 @@ import type { K8sBaseListEmptyStateContext } from './K8sBaseList';
 
 import styles from './K8sEmptyState.module.scss';
 
-export interface K8sListResponseMetadata {
-	sentAnyHostMetricsData?: boolean;
-	isSendingK8SAgentMetrics?: boolean;
-	endTimeBeforeRetention?: boolean;
-}
-
 type K8sEmptyStateProps = Partial<K8sBaseListEmptyStateContext>;
-
-const handleContactSupport = (isCloudUser: boolean): void => {
-	if (isCloudUser) {
-		history.push('/support');
-	} else {
-		window.open('https://signoz.io/slack', '_blank');
-	}
-};
 
 export function K8sEmptyState({
 	isError,
 	error,
 	isLoading,
-	rawData,
+	endTimeBeforeRetention,
 }: K8sEmptyStateProps): JSX.Element | null {
-	const { isCloudUser } = useGetTenantLicense();
-
-	const handleSupport = useCallback(() => {
-		handleContactSupport(isCloudUser);
-	}, [isCloudUser]);
-
 	if (isLoading) {
 		return null;
 	}
@@ -46,71 +22,21 @@ export function K8sEmptyState({
 	if (isError || error) {
 		return (
 			<div className={styles.container}>
-				<div className={styles.content}>
-					<TriangleAlert size={32} className={styles.errorIcon} />
-					<span className={styles.message}>
-						{error || 'An error occurred while fetching data.'}
-					</span>
-					<p>
-						Our team is getting on top to resolve this. Please reach out to support if
-						the issue persists.
-					</p>
-					<div className={styles.actions}>
-						<Button
-							onClick={handleSupport}
-							variant="solid"
-							color="secondary"
-							prefix={<LifeBuoy size={14} />}
-						>
-							Contact Support
-						</Button>
-					</div>
+				<div className={styles.errorContent}>
+					<ErrorContent
+						error={
+							error ?? {
+								code: 500,
+								message: 'An error occurred while fetching data.',
+							}
+						}
+					/>
 				</div>
 			</div>
 		);
 	}
 
-	const metadata = rawData as K8sListResponseMetadata | undefined;
-
-	if (metadata?.sentAnyHostMetricsData === false) {
-		return (
-			<div className={styles.container}>
-				<div className={styles.content}>
-					<img className={styles.eyesEmoji} src={eyesEmojiUrl} alt="eyes emoji" />
-					<div className={styles.noDataMessage}>
-						<h5 className={styles.title}>No host metrics data received yet</h5>
-						<span className={styles.message}>
-							Please refer to{' '}
-							<a
-								href="https://signoz.io/docs/infrastructure-monitoring/hostmetrics/"
-								target="_blank"
-								rel="noreferrer"
-							>
-								our documentation
-							</a>{' '}
-							to learn how to send host metrics.
-						</span>
-					</div>
-				</div>
-			</div>
-		);
-	}
-
-	if (metadata?.isSendingK8SAgentMetrics) {
-		return (
-			<div className={styles.container}>
-				<div className={styles.content}>
-					<img className={styles.eyesEmoji} src={eyesEmojiUrl} alt="eyes emoji" />
-					<span className={styles.message}>
-						To see K8s metrics, upgrade to the latest version of SigNoz k8s-infra
-						chart. Please contact support if you need help.
-					</span>
-				</div>
-			</div>
-		);
-	}
-
-	if (metadata?.endTimeBeforeRetention) {
+	if (endTimeBeforeRetention) {
 		return (
 			<div className={styles.container}>
 				<div className={styles.content}>

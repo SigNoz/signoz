@@ -2,9 +2,9 @@ import { useMemo } from 'react';
 import GridLayout, { WidthProvider, type Layout } from 'react-grid-layout';
 
 import type { DashboardSection } from '../../../utils';
-import Panel from '../../Panel/Panel';
 import { useDashboardStore } from '../../../store/useDashboardStore';
 import { usePersistLayout } from '../hooks/usePersistLayout';
+import SectionGridItem from './SectionGridItem';
 import styles from './SectionGrid.module.scss';
 
 const ResponsiveGridLayout = WidthProvider(GridLayout);
@@ -12,8 +12,6 @@ const ResponsiveGridLayout = WidthProvider(GridLayout);
 interface SectionGridProps {
 	items: DashboardSection['items'];
 	layoutIndex: number;
-	/** Forwarded to panels — true when the parent section is in the viewport. */
-	isVisible?: boolean;
 	/** All sections — layout context for the panel menu's move/delete actions. */
 	sections?: DashboardSection[];
 }
@@ -21,10 +19,10 @@ interface SectionGridProps {
 function SectionGrid({
 	items,
 	layoutIndex,
-	isVisible,
 	sections,
 }: SectionGridProps): JSX.Element {
 	const isEditable = useDashboardStore((s) => s.isEditable);
+
 	const rglLayout = useMemo<Layout[]>(
 		() =>
 			items.map((item) => ({
@@ -61,10 +59,9 @@ function SectionGrid({
 				// panel with no content.
 				<div key={item.id}>
 					{item.panel && (
-						<Panel
+						<SectionGridItem
 							panel={item.panel}
 							panelId={item.id}
-							isVisible={isVisible}
 							panelActions={
 								isEditable
 									? {

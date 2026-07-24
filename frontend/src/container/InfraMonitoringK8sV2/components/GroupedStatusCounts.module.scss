@@ -1,0 +1,56 @@
+.container {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.itemWrapper {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.separator {
+	width: 3px;
+	height: 14px;
+	border-radius: 1px;
+	flex-shrink: 0;
+}
+
+.valueWrapper {
+	min-width: 4ch;
+}
+
+.valueWrapperTooltip {
+	display: block;
+	width: fit-content;
+}
+
+.value {
+	font-variant-numeric: tabular-nums;
+	text-align: left;
+	cursor: default;
+	min-width: min-content;
+}
+
+.tooltipContent {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	min-width: 120px;
+}
+
+.tooltipHeader {
+	font-weight: 600;
+	margin-bottom: 2px;
+}
+
+.tooltipRow {
+	display: flex;
+	justify-content: space-between;
+	gap: 12px;
+}
+
+.tooltipValue {
+	font-variant-numeric: tabular-nums;
+}

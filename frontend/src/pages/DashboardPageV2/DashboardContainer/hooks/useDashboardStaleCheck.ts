@@ -1,65 +1,92 @@
-import { useCallback, useState } from 'react';
-import { useIsMutating, useQuery, useQueryClient } from 'react-query';
-import {
-	getDashboardV2,
-	getGetDashboardV2QueryKey,
-} from 'api/generated/services/dashboard';
-import type { GetDashboardV2200 } from 'api/generated/services/sigNoz.schemas';
+import { getDashboardV2 } from 'api/generated/services/dashboard';
+import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
+import { isEqual } from 'lodash-es';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useIsMutating } from 'react-query';
 
 interface UseDashboardStaleCheck {
-	// Server copy has a newer updatedAt than the loaded one, and not yet dismissed.
+	// Server copy is a newer version with different content, and not yet dismissed.
 	showPrompt: boolean;
 	reload: () => void;
 	dismiss: () => void;
 }
 
 /**
- * Detects when the open dashboard changed on the server (another tab/user) without
- * touching the render cache: a separate query (own key) refetches on window focus
- * and its updatedAt is compared to the loaded copy's. Guarded by in-flight
- * mutations so an optimistic save doesn't false-positive.
+ * Prompts when another tab/user changed the open dashboard. The page's own query is frozen
+ * (`staleTime: Infinity`), so we re-probe the server on tab/app return (not on first load) and
+ * prompt only when it's strictly newer AND its content (spec, tags, or lock state) differs from
+ * what we're viewing — so our own edits, which advance the render cache, don't trip it.
+ * In-flight mutations are skipped.
  */
 export function useDashboardStaleCheck(
-	dashboardId: string,
-	loadedUpdatedAt: string | undefined,
+	dashboard: DashboardtypesGettableDashboardV2DTO,
 	refetch: () => void,
 ): UseDashboardStaleCheck {
+	const {
+		id: dashboardId,
+		updatedAt: loadedUpdatedAt,
+		spec: loadedSpec,
+		tags: loadedTags,
+		locked: loadedLocked,
+	} = dashboard;
 	const isMutating = useIsMutating() > 0;
-	const queryClient = useQueryClient();
+	const [server, setServer] = useState<DashboardtypesGettableDashboardV2DTO>();
 	const [dismissedAt, setDismissedAt] = useState<string | null>(null);
 
-	const { data } = useQuery(
-		['dashboard-freshness', dashboardId],
-		({ signal }) => getDashboardV2({ id: dashboardId }, signal),
-		{
-			enabled: !!dashboardId,
-			refetchOnWindowFocus: true,
-			refetchOnMount: false,
-			retry: false,
-			// Seed from the already-loaded dashboard so mount makes no extra GET; the
-			// query only hits the network on a later window focus.
-			initialData: () =>
-				queryClient.getQueryData<GetDashboardV2200>(
-					getGetDashboardV2QueryKey({ id: dashboardId }),
-				),
-		},
+	useEffect(() => {
+		if (!dashboardId) {
+			return undefined;
+		}
+		const probe = async (): Promise<void> => {
+			// `visibilitychange` also fires on the hidden transition — only probe on return.
+			if (document.visibilityState !== 'visible') {
+				return;
+			}
+			try {
+				const response = await getDashboardV2({ id: dashboardId });
+				setServer(response.data);
+			} catch {
+				// A failed freshness probe must never surface to the viewer.
+			}
+		};
+		// `visibilitychange` catches tab switches; `focus` catches app/window switches.
+		document.addEventListener('visibilitychange', probe);
+		window.addEventListener('focus', probe);
+		return (): void => {
+			document.removeEventListener('visibilitychange', probe);
+			window.removeEventListener('focus', probe);
+		};
+	}, [dashboardId]);
+
+	const serverUpdatedAt = server?.updatedAt;
+
+	// Content the viewer cares about: panels/layout/variables (spec), tags, and lock state.
+	// Deep, order-independent so an optimistic patch's key reordering isn't read as a change.
+	const contentDiffers = useMemo(
+		() =>
+			!!server &&
+			(!isEqual(server.spec, loadedSpec) ||
+				!isEqual(server.tags, loadedTags) ||
+				server.locked !== loadedLocked),
+		[server, loadedSpec, loadedTags, loadedLocked],
 	);
 
-	const serverUpdatedAt = data?.data?.updatedAt;
 	const changed =
 		!isMutating &&
 		!!serverUpdatedAt &&
 		!!loadedUpdatedAt &&
-		serverUpdatedAt !== loadedUpdatedAt;
+		new Date(serverUpdatedAt).getTime() > new Date(loadedUpdatedAt).getTime() &&
+		contentDiffers;
 
 	const dismiss = useCallback(
 		(): void => setDismissedAt(serverUpdatedAt ?? null),
 		[serverUpdatedAt],
 	);
+	// Dismiss + refetch: close on click and pull the latest; a newer, different version re-prompts.
 	const reload = useCallback((): void => {
+		setDismissedAt(serverUpdatedAt ?? null);
 		refetch();
-		setDismissedAt(null);
-	}, [refetch]);
+	}, [refetch, serverUpdatedAt]);
 
 	return {
 		showPrompt: changed && serverUpdatedAt !== dismissedAt,

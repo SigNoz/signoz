@@ -17,7 +17,7 @@ export function ValidateColumnValueWrapper({
 	entity?: InfraMonitoringEntity;
 	attribute?: string;
 }): JSX.Element {
-	if (value === -1) {
+	if (value === -1 || Number.isNaN(value)) {
 		let element = <TanStackTable.Text>-</TanStackTable.Text>;
 		if (entity && attribute) {
 			element = (

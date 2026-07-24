@@ -1,7 +1,7 @@
 import * as roleApi from 'api/generated/services/role';
-import * as useAuthZModule from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { customRoleResponse } from 'mocks-server/__mockdata__/roles';
-import { mockUseAuthZGrantAll } from 'lib/authz/utils/authz-test-utils';
+import { server } from 'mocks-server/server';
+import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 import { render, screen } from 'tests/test-utils';
 
 import * as useRolePermissionsModule from '../../hooks/useRolePermissions';
@@ -16,13 +16,12 @@ import {
 
 describe('ViewRolePage - Edge Cases', () => {
 	beforeEach(() => {
-		jest
-			.spyOn(useAuthZModule, 'useAuthZ')
-			.mockImplementation(mockUseAuthZGrantAll);
+		server.use(setupAuthzAdmin());
 	});
 
 	afterEach(() => {
 		jest.restoreAllMocks();
+		server.resetHandlers();
 	});
 
 	it('shows fallback for missing description', async () => {
@@ -53,7 +52,7 @@ describe('ViewRolePage - Edge Cases', () => {
 		await expect(screen.findByText('Description')).resolves.toBeInTheDocument();
 	});
 
-	it('shows fallback for invalid timestamps', () => {
+	it('shows fallback for invalid timestamps', async () => {
 		jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
 			data: {
 				status: 'success',
@@ -79,11 +78,14 @@ describe('ViewRolePage - Edge Cases', () => {
 			initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 		});
 
+		await expect(
+			screen.findByTestId('view-role-page'),
+		).resolves.toBeInTheDocument();
 		const dashes = screen.getAllByText('—');
 		expect(dashes.length).toBeGreaterThanOrEqual(2);
 	});
 
-	it('shows fallback for undefined timestamps', () => {
+	it('shows fallback for undefined timestamps', async () => {
 		jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
 			data: {
 				status: 'success',
@@ -109,6 +111,9 @@ describe('ViewRolePage - Edge Cases', () => {
 			initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 		});
 
+		await expect(
+			screen.findByTestId('view-role-page'),
+		).resolves.toBeInTheDocument();
 		const dashes = screen.getAllByText('—');
 		expect(dashes.length).toBeGreaterThanOrEqual(2);
 	});

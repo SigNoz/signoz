@@ -1,9 +1,8 @@
 @use '../../../../../../styles/scrollbar' as *;
 
-.modal {
-	:global(.ant-modal-body) {
-		padding: 0px;
-	}
+.dialog[data-width] {
+	max-width: 85%;
+	width: 85%;
 }
 
 // Truncate a long panel name so the header stays on one line; the wrapping tooltip

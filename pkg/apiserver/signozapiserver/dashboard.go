@@ -466,6 +466,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		Summary:             "Get query range result (v2)",
 		Description:         "This endpoint returns query range results for a panel of a v2-shape public dashboard. The panel is addressed by its key in spec.panels.",
 		Request:             nil,
+		RequestQuery:        new(dashboardtypes.PublicWidgetQueryRangeParams),
 		RequestContentType:  "",
 		Response:            new(querybuildertypesv5.QueryRangeResponse),
 		ResponseContentType: "application/json",

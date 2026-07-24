@@ -98,7 +98,7 @@ func (s *store) CreateOrGet(ctx context.Context, tags []*tagtypes.Tag) ([]*tagty
 		BunDBCtx(ctx).
 		NewInsert().
 		Model(&tags).
-		// On("CONFLICT (org_id, kind, (LOWER(key)), (LOWER(value))) DO UPDATE").
+		On("CONFLICT (org_id, kind, (LOWER(key)), (LOWER(value))) DO UPDATE").
 		Set("key = tag.key").
 		Returning("*").
 		Scan(ctx)

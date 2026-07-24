@@ -7,4 +7,9 @@
 
 .dropdown {
 	width: 260px;
+	/* The dropdown portals to body; lift it above the query builder's antd
+	* popups (1050) so it stays clickable, incl. inside the View modal.
+	* TODO: remove after the antd -> @signozhq/ui migration
+	**/
+	z-index: 1100;
 }

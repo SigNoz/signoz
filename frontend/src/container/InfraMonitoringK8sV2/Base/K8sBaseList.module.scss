@@ -1,3 +1,10 @@
+.tableContainer {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	min-height: 0;
+}
+
 .emptyStateContainer {
 	display: flex;
 	flex: 1;
@@ -7,7 +14,6 @@
 }
 
 .k8SListTable {
-	padding-left: var(--spacing-2);
 	--tanstack-table-header-cell-bg: var(--l2-background);
 	--tanstack-table-header-cell-color: var(--l2-foreground);
 	--tanstack-table-cell-bg: var(--l2-background);
@@ -18,9 +24,12 @@
 	--tanstack-table-resize-handle-hover-bg: var(--l2-border);
 	--tanstack-table-row-height: 42px;
 
+	--tanstack-table-header-label-width: 100%;
+
 	--tanstack-cell-padding-top-override: 5px;
 	--tanstack-cell-padding-bottom-override: 5px;
-	--tanstack-cell-padding-left-override: 5px;
+	--tanstack-cell-header-padding-left-override: 5px;
+	--tanstack-cell-padding-left-override: 26px;
 	--tanstack-cell-padding-right-override: 5px;
 
 	--tanstack-expansion-first-col-padding-left: 30px;

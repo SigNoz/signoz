@@ -38,28 +38,32 @@ describe('ViewRolePage - Custom Role', () => {
 		).resolves.toBeInTheDocument();
 	});
 
-	it('shows Update button for custom roles', () => {
+	it('shows Update button for custom roles', async () => {
 		render(<ViewRolePage />, undefined, {
 			initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 		});
 
-		expect(screen.getByTestId('save-button')).toBeInTheDocument();
+		await expect(screen.findByTestId('save-button')).resolves.toBeInTheDocument();
 	});
 
-	it('shows Cancel button', () => {
+	it('shows Cancel button', async () => {
 		render(<ViewRolePage />, undefined, {
 			initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 		});
 
-		expect(screen.getByTestId('cancel-button')).toBeInTheDocument();
+		await expect(
+			screen.findByTestId('cancel-button'),
+		).resolves.toBeInTheDocument();
 	});
 
-	it('shows Delete button', () => {
+	it('shows Delete button', async () => {
 		render(<ViewRolePage />, undefined, {
 			initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 		});
 
-		expect(screen.getByTestId('delete-button')).toBeInTheDocument();
+		await expect(
+			screen.findByTestId('delete-button'),
+		).resolves.toBeInTheDocument();
 	});
 
 	it('renders created/updated timestamps labels', async () => {

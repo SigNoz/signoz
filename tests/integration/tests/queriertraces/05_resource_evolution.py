@@ -5,9 +5,11 @@ from http import HTTPStatus
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.querier import (
+    RequestType,
     assert_grouped_series,
+    build_aggregation,
     build_group_by_field,
-    build_logs_aggregation,
+    build_traces_scalar_query,
     get_resource_evolution_time,
     index_series_by_label,
     make_query_request,
@@ -50,20 +52,12 @@ def _query_grouped_trace_series(
         token,
         start_ms=int(start.timestamp() * 1000),
         end_ms=int(end.timestamp() * 1000),
-        request_type="time_series",
+        request_type=RequestType.TIME_SERIES,
         queries=[
-            {
-                "type": "builder_query",
-                "spec": {
-                    "name": "A",
-                    "signal": "traces",
-                    "stepInterval": 60,
-                    "disabled": False,
-                    "groupBy": [build_group_by_field(group_by)],
-                    "having": {"expression": ""},
-                    "aggregations": [build_logs_aggregation(aggregation)],
-                },
-            }
+            build_traces_scalar_query(
+                aggregations=[build_aggregation(aggregation)],
+                group_by=[build_group_by_field(group_by)],
+            )
         ],
     )
 

@@ -1,4 +1,7 @@
-import { DashboardtypesTimePreferenceDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	DashboardtypesPanelDTO,
+	DashboardtypesTimePreferenceDTO,
+} from 'api/generated/services/sigNoz.schemas';
 
 /** Absolute time window in epoch milliseconds — the V5 request's native unit. */
 export interface PanelTimeWindow {
@@ -64,6 +67,28 @@ const TIME_PREFERENCE_LABEL: Partial<
 		full: 'Last 1 month',
 	},
 };
+
+/** A panel's saved `visualization.timePreference`, or `undefined` when the kind has none. */
+export function getPanelTimePreference(
+	panel: DashboardtypesPanelDTO,
+): DashboardtypesTimePreferenceDTO | undefined {
+	const pluginSpec = panel.spec.plugin.spec;
+	if (pluginSpec && 'visualization' in pluginSpec) {
+		return pluginSpec.visualization?.timePreference;
+	}
+	return undefined;
+}
+
+/** True when the panel is locked to a fixed relative window, so it ignores the dashboard's ambient time. */
+export function panelHasFixedTimePreference(
+	panel: DashboardtypesPanelDTO,
+): boolean {
+	const timePreference = getPanelTimePreference(panel);
+	return (
+		timePreference !== undefined &&
+		timePreference !== DashboardtypesTimePreferenceDTO.global_time
+	);
+}
 
 export interface PanelTimePreferenceLabel {
 	/** Compact pill label, e.g. `6h`. */

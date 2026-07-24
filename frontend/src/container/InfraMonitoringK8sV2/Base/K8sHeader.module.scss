@@ -1,13 +1,14 @@
 .k8SListControls {
 	padding: var(--spacing-4);
 	display: flex;
-	justify-content: space-between;
-	align-items: center;
+	flex-direction: column;
+	align-items: stretch;
 	gap: var(--spacing-4);
+	width: 100%;
 
 	:global(.ant-select-selector) {
 		border-radius: 2px;
-		border: 1px solid var(--border) !important;
+		border: 1px solid var(--l2-border) !important;
 		background-color: var(--l2-background) !important;
 
 		input {
@@ -20,26 +21,79 @@
 	}
 }
 
-.k8SListControlsLeft {
-	flex: 1;
+.k8SListControlsRow {
 	display: flex;
-	align-items: center;
 	flex-wrap: wrap;
 	gap: var(--spacing-4);
+	width: 100%;
+	align-items: center;
+	justify-content: flex-end;
+}
 
-	.k8SQbSearchContainer {
-		flex: 1;
-		min-width: 240px;
-		max-width: 60%;
+.k8SQbSearchContainer {
+	width: 100%;
+}
+
+.k8SFiltersGroupByRow {
+	display: flex;
+	flex: 1 1 auto;
+	align-items: center;
+	justify-content: flex-end;
+	gap: var(--spacing-4);
+	min-width: 0;
+
+	@media (max-width: 1600px) {
+		flex: 1 1 100%;
+		order: 9;
 	}
 }
 
 .k8SAttributeSearchContainer {
-	flex: 1;
-	min-width: 240px;
-	max-width: 40%;
+	flex: 1 1 240px;
+	max-width: 400px;
 	display: flex;
 	align-items: center;
+}
+
+.k8SRunButton {
+	flex: 0 0 auto;
+}
+
+.k8SFiltersButton {
+	flex: 0 0 auto;
+}
+
+.k8SDateTimeSelection {
+	flex: 0 0 auto;
+	display: flex;
+	justify-content: flex-end;
+
+	--date-time-selector-border-color: var(--l2-border);
+
+	@media (max-width: 1200px) {
+		flex: 1 1 100%;
+		order: 10;
+	}
+
+	:global(.timeSelection-input) {
+		height: 32px;
+	}
+
+	:global(.ant-input-affix-wrapper) {
+		border-color: var(--l2-border);
+
+		&:hover {
+			border-color: var(--l2-border) !important;
+		}
+	}
+
+	:global(.refresh-actions .ant-form-item-control-input) {
+		&,
+		:global(.ant-btn) {
+			height: 30px;
+			min-height: unset;
+		}
+	}
 }
 
 .groupByLabel {
@@ -50,7 +104,7 @@
 	letter-spacing: -0.07px;
 
 	border-radius: 2px 0px 0px 2px;
-	border: 1px solid var(--border);
+	border: 1px solid var(--l2-border);
 	border-right: none;
 	border-top-right-radius: 0px;
 	border-bottom-right-radius: 0px;
@@ -64,6 +118,8 @@
 }
 
 .groupBySelect {
+	width: 100%;
+
 	:global(.ant-select-selector) {
 		border-left: none;
 		border-top-left-radius: 0px;

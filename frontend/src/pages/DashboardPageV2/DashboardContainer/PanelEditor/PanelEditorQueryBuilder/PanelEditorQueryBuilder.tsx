@@ -7,6 +7,7 @@ import {
 import { Color } from '@signozhq/design-tokens';
 import { Atom, Terminal } from '@signozhq/icons';
 import { Tabs } from 'antd';
+import cx from 'classnames';
 import { Typography } from '@signozhq/ui/typography';
 import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import PromQLIcon from 'assets/Dashboard/PromQl';
@@ -45,6 +46,8 @@ interface PanelEditorQueryBuilderProps {
 	onCancelQuery: () => void;
 	/** Optional content pinned below the builder (e.g. the List columns editor). */
 	footer?: ReactNode;
+	/** Pin the tabs + Run Query row to the top of the scroll area. Off in the View modal, which shares a scroll area with its own header. */
+	stickyHeader?: boolean;
 }
 
 /**
@@ -59,6 +62,7 @@ function PanelEditorQueryBuilder({
 	onStageRunQuery,
 	onCancelQuery,
 	footer,
+	stickyHeader = true,
 }: PanelEditorQueryBuilderProps): JSX.Element {
 	// The shared QueryBuilderV2 / list-view checks still speak the legacy PANEL_TYPES.
 	const panelType = PANEL_KIND_TO_PANEL_TYPE[panelKind];
@@ -156,7 +160,9 @@ function PanelEditorQueryBuilder({
 			<div className={styles.scrollArea}>
 				<Tabs
 					type="card"
-					className={styles.tabsContainer}
+					className={cx(styles.tabsContainer, {
+						[styles.stickyNav]: stickyHeader,
+					})}
 					activeKey={currentQuery.queryType}
 					onChange={handleQueryCategoryChange}
 					tabBarExtraContent={

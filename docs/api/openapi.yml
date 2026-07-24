@@ -543,6 +543,31 @@ components:
       required:
       - id
       type: object
+    AuthtypesGettableRole:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        description:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        orgId:
+          type: string
+        type:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - id
+      - name
+      - description
+      - type
+      - orgId
+      type: object
     AuthtypesGettableToken:
       properties:
         accessToken:
@@ -706,43 +731,6 @@ components:
           type: string
         orgId:
           type: string
-        type:
-          type: string
-        updatedAt:
-          format: date-time
-          type: string
-      required:
-      - id
-      - name
-      - description
-      - type
-      - orgId
-      type: object
-    AuthtypesRoleMapping:
-      properties:
-        defaultRole:
-          type: string
-        groupMappings:
-          additionalProperties:
-            type: string
-          nullable: true
-          type: object
-        useRoleAttribute:
-          type: boolean
-      type: object
-    AuthtypesRoleWithTransactionGroups:
-      properties:
-        createdAt:
-          format: date-time
-          type: string
-        description:
-          type: string
-        id:
-          type: string
-        name:
-          type: string
-        orgId:
-          type: string
         transactionGroups:
           $ref: '#/components/schemas/AuthtypesTransactionGroups'
         type:
@@ -757,6 +745,18 @@ components:
       - type
       - orgId
       - transactionGroups
+      type: object
+    AuthtypesRoleMapping:
+      properties:
+        defaultRole:
+          type: string
+        groupMappings:
+          additionalProperties:
+            type: string
+          nullable: true
+          type: object
+        useRoleAttribute:
+          type: boolean
       type: object
     AuthtypesSamlConfig:
       properties:
@@ -1494,7 +1494,7 @@ components:
       - cosmosdb
       - cassandradb
       - redis
-      - cloudsql
+      - cloudsql_postgres
       type: string
     CloudintegrationtypesServiceMetadata:
       properties:
@@ -2596,19 +2596,6 @@ components:
         repeatVariable:
           type: string
       type: object
-    DashboardLink:
-      properties:
-        name:
-          type: string
-        renderVariables:
-          type: boolean
-        targetBlank:
-          type: boolean
-        tooltip:
-          type: string
-        url:
-          type: string
-      type: object
     DashboardtypesAxes:
       properties:
         isLogScale:
@@ -2747,6 +2734,7 @@ components:
         datasources:
           additionalProperties:
             $ref: '#/components/schemas/DashboardtypesDatasourceSpec'
+          nullable: true
           type: object
         display:
           $ref: '#/components/schemas/DashboardtypesDisplay'
@@ -2758,7 +2746,8 @@ components:
           type: array
         links:
           items:
-            $ref: '#/components/schemas/DashboardLink'
+            $ref: '#/components/schemas/DashboardtypesLink'
+          nullable: true
           type: array
         panels:
           additionalProperties:
@@ -3029,6 +3018,19 @@ components:
       - solid
       - dashed
       type: string
+    DashboardtypesLink:
+      properties:
+        name:
+          type: string
+        renderVariables:
+          type: boolean
+        targetBlank:
+          type: boolean
+        tooltip:
+          type: string
+        url:
+          type: string
+      type: object
     DashboardtypesListOrder:
       enum:
       - asc
@@ -3039,6 +3041,7 @@ components:
         selectFields:
           items:
             $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          nullable: true
           type: array
       type: object
     DashboardtypesListSort:
@@ -3148,6 +3151,8 @@ components:
           type: string
         image:
           type: string
+        legacy:
+          type: boolean
         locked:
           type: boolean
         name:
@@ -3180,6 +3185,7 @@ components:
       - name
       - tags
       - spec
+      - legacy
       - pinned
       type: object
     DashboardtypesListedDashboardV2:
@@ -3193,6 +3199,8 @@ components:
           type: string
         image:
           type: string
+        legacy:
+          type: boolean
         locked:
           type: boolean
         name:
@@ -3223,6 +3231,7 @@ components:
       - name
       - tags
       - spec
+      - legacy
       type: object
     DashboardtypesListedDashboardV2Spec:
       properties:
@@ -3382,7 +3391,8 @@ components:
           $ref: '#/components/schemas/DashboardtypesDisplay'
         links:
           items:
-            $ref: '#/components/schemas/DashboardLink'
+            $ref: '#/components/schemas/DashboardtypesLink'
+          nullable: true
           type: array
         plugin:
           $ref: '#/components/schemas/DashboardtypesPanelPlugin'
@@ -4189,6 +4199,7 @@ components:
       - namespaces
       - clusters
       - volumes
+      - kube_containers
       type: string
     InframonitoringtypesChecks:
       properties:
@@ -4252,6 +4263,34 @@ components:
           type: number
         clusterName:
           type: string
+        counts:
+          properties:
+            daemonSets:
+              format: int64
+              type: integer
+            deployments:
+              format: int64
+              type: integer
+            jobs:
+              format: int64
+              type: integer
+            namespaces:
+              format: int64
+              type: integer
+            nodes:
+              format: int64
+              type: integer
+            statefulSets:
+              format: int64
+              type: integer
+          required:
+          - nodes
+          - namespaces
+          - deployments
+          - daemonSets
+          - jobs
+          - statefulSets
+          type: object
         meta:
           additionalProperties:
             type: string
@@ -4272,6 +4311,7 @@ components:
       - nodeCountsByReadiness
       - podCountsByPhase
       - podCountsByStatus
+      - counts
       - meta
       type: object
     InframonitoringtypesClusters:
@@ -4281,6 +4321,158 @@ components:
         records:
           items:
             $ref: '#/components/schemas/InframonitoringtypesClusterRecord'
+          type: array
+        total:
+          type: integer
+        type:
+          $ref: '#/components/schemas/InframonitoringtypesResponseType'
+        warning:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryWarnData'
+      required:
+      - type
+      - records
+      - total
+      - endTimeBeforeRetention
+      type: object
+    InframonitoringtypesContainerCountsByReady:
+      properties:
+        notReady:
+          type: integer
+        ready:
+          type: integer
+      required:
+      - ready
+      - notReady
+      type: object
+    InframonitoringtypesContainerCountsByStatus:
+      properties:
+        completed:
+          type: integer
+        containerCannotRun:
+          type: integer
+        containerCreating:
+          type: integer
+        crashLoopBackOff:
+          type: integer
+        createContainerConfigError:
+          type: integer
+        errImagePull:
+          type: integer
+        error:
+          type: integer
+        imagePullBackOff:
+          type: integer
+        oomKilled:
+          type: integer
+        running:
+          type: integer
+        terminated:
+          type: integer
+        unknown:
+          type: integer
+        waiting:
+          type: integer
+      required:
+      - running
+      - waiting
+      - terminated
+      - crashLoopBackOff
+      - imagePullBackOff
+      - errImagePull
+      - createContainerConfigError
+      - containerCreating
+      - oomKilled
+      - completed
+      - error
+      - containerCannotRun
+      - unknown
+      type: object
+    InframonitoringtypesContainerReady:
+      enum:
+      - ready
+      - not_ready
+      - no_data
+      type: string
+    InframonitoringtypesContainerRecord:
+      properties:
+        containerCountsByReady:
+          $ref: '#/components/schemas/InframonitoringtypesContainerCountsByReady'
+        containerCountsByStatus:
+          $ref: '#/components/schemas/InframonitoringtypesContainerCountsByStatus'
+        containerName:
+          type: string
+        cpu:
+          format: double
+          type: number
+        cpuLimitUtilization:
+          format: double
+          type: number
+        cpuRequestUtilization:
+          format: double
+          type: number
+        memory:
+          format: double
+          type: number
+        memoryLimitUtilization:
+          format: double
+          type: number
+        memoryRequestUtilization:
+          format: double
+          type: number
+        meta:
+          additionalProperties:
+            type: string
+          nullable: true
+          type: object
+        podUID:
+          type: string
+        ready:
+          $ref: '#/components/schemas/InframonitoringtypesContainerReady'
+        restarts:
+          format: int64
+          type: integer
+        status:
+          $ref: '#/components/schemas/InframonitoringtypesContainerStatus'
+      required:
+      - podUID
+      - containerName
+      - status
+      - containerCountsByStatus
+      - ready
+      - containerCountsByReady
+      - restarts
+      - cpu
+      - cpuRequestUtilization
+      - cpuLimitUtilization
+      - memory
+      - memoryRequestUtilization
+      - memoryLimitUtilization
+      - meta
+      type: object
+    InframonitoringtypesContainerStatus:
+      enum:
+      - running
+      - waiting
+      - terminated
+      - crashloopbackoff
+      - imagepullbackoff
+      - errimagepull
+      - createcontainerconfigerror
+      - containercreating
+      - oomkilled
+      - completed
+      - error
+      - containercannotrun
+      - unknown
+      - no_data
+      type: string
+    InframonitoringtypesContainers:
+      properties:
+        endTimeBeforeRetention:
+          type: boolean
+        records:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesContainerRecord'
           type: array
         total:
           type: integer
@@ -4325,10 +4517,14 @@ components:
             type: string
           nullable: true
           type: object
+        misscheduledNodes:
+          type: integer
         podCountsByPhase:
           $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
         podCountsByStatus:
           $ref: '#/components/schemas/InframonitoringtypesPodCountsByStatus'
+        readyNodes:
+          type: integer
       required:
       - daemonSetName
       - daemonSetCPU
@@ -4339,6 +4535,8 @@ components:
       - daemonSetMemoryLimit
       - desiredNodes
       - currentNodes
+      - readyNodes
+      - misscheduledNodes
       - podCountsByPhase
       - podCountsByStatus
       - meta
@@ -4635,6 +4833,26 @@ components:
       type: object
     InframonitoringtypesNamespaceRecord:
       properties:
+        counts:
+          properties:
+            daemonSets:
+              format: int64
+              type: integer
+            deployments:
+              format: int64
+              type: integer
+            jobs:
+              format: int64
+              type: integer
+            statefulSets:
+              format: int64
+              type: integer
+          required:
+          - deployments
+          - daemonSets
+          - jobs
+          - statefulSets
+          type: object
         meta:
           additionalProperties:
             type: string
@@ -4658,6 +4876,7 @@ components:
       - namespaceMemory
       - podCountsByPhase
       - podCountsByStatus
+      - counts
       - meta
       type: object
     InframonitoringtypesNamespaces:
@@ -4943,6 +5162,32 @@ components:
       - endTimeBeforeRetention
       type: object
     InframonitoringtypesPostableClusters:
+      properties:
+        end:
+          format: int64
+          type: integer
+        filter:
+          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+        groupBy:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          nullable: true
+          type: array
+        limit:
+          type: integer
+        offset:
+          type: integer
+        orderBy:
+          $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+        start:
+          format: int64
+          type: integer
+      required:
+      - start
+      - end
+      - limit
+      type: object
+    InframonitoringtypesPostableContainers:
       properties:
         end:
           format: int64
@@ -6092,6 +6337,7 @@ components:
       - delta
       - cumulative
       - unspecified
+      - ""
       type: string
     MetrictypesTimeAggregation:
       enum:
@@ -6104,6 +6350,7 @@ components:
       - count_distinct
       - rate
       - increase
+      - ""
       type: string
     MetrictypesType:
       enum:
@@ -6311,6 +6558,7 @@ components:
         args:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5FunctionArg'
+          nullable: true
           type: array
         name:
           $ref: '#/components/schemas/Querybuildertypesv5FunctionName'
@@ -6481,6 +6729,7 @@ components:
         functions:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5Function'
+          nullable: true
           type: array
         having:
           $ref: '#/components/schemas/Querybuildertypesv5Having'
@@ -6493,6 +6742,7 @@ components:
         order:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+          nullable: true
           type: array
       type: object
     Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregation:
@@ -6500,6 +6750,7 @@ components:
         aggregations:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5LogAggregation'
+          nullable: true
           type: array
         cursor:
           type: string
@@ -6510,10 +6761,12 @@ components:
         functions:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5Function'
+          nullable: true
           type: array
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          nullable: true
           type: array
         having:
           $ref: '#/components/schemas/Querybuildertypesv5Having'
@@ -6530,14 +6783,17 @@ components:
         order:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+          nullable: true
           type: array
         secondaryAggregations:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5SecondaryAggregation'
+          nullable: true
           type: array
         selectFields:
           items:
             $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          nullable: true
           type: array
         signal:
           enum:
@@ -6555,6 +6811,7 @@ components:
         aggregations:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5MetricAggregation'
+          nullable: true
           type: array
         cursor:
           type: string
@@ -6565,10 +6822,12 @@ components:
         functions:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5Function'
+          nullable: true
           type: array
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          nullable: true
           type: array
         having:
           $ref: '#/components/schemas/Querybuildertypesv5Having'
@@ -6585,14 +6844,17 @@ components:
         order:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+          nullable: true
           type: array
         secondaryAggregations:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5SecondaryAggregation'
+          nullable: true
           type: array
         selectFields:
           items:
             $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          nullable: true
           type: array
         signal:
           enum:
@@ -6610,6 +6872,7 @@ components:
         aggregations:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5TraceAggregation'
+          nullable: true
           type: array
         cursor:
           type: string
@@ -6620,10 +6883,12 @@ components:
         functions:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5Function'
+          nullable: true
           type: array
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          nullable: true
           type: array
         having:
           $ref: '#/components/schemas/Querybuildertypesv5Having'
@@ -6640,14 +6905,17 @@ components:
         order:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+          nullable: true
           type: array
         secondaryAggregations:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5SecondaryAggregation'
+          nullable: true
           type: array
         selectFields:
           items:
             $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          nullable: true
           type: array
         signal:
           enum:
@@ -6665,6 +6933,7 @@ components:
         aggregations:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5TraceAggregation'
+          nullable: true
           type: array
         cursor:
           type: string
@@ -6677,10 +6946,12 @@ components:
         functions:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5Function'
+          nullable: true
           type: array
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          nullable: true
           type: array
         having:
           $ref: '#/components/schemas/Querybuildertypesv5Having'
@@ -6695,12 +6966,14 @@ components:
         order:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+          nullable: true
           type: array
         returnSpansFrom:
           type: string
         selectFields:
           items:
             $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          nullable: true
           type: array
         stepInterval:
           $ref: '#/components/schemas/Querybuildertypesv5Step'
@@ -6719,6 +6992,7 @@ components:
     Querybuildertypesv5QueryEnvelope:
       discriminator:
         mapping:
+          builder_ai_query: '#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilderAI'
           builder_formula: '#/components/schemas/Querybuildertypesv5QueryEnvelopeFormula'
           builder_query: '#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilder'
           builder_trace_operator: '#/components/schemas/Querybuildertypesv5QueryEnvelopeTraceOperator'
@@ -6727,6 +7001,7 @@ components:
         propertyName: type
       oneOf:
       - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilder'
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilderAI'
       - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeFormula'
       - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeTraceOperator'
       - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopePromQL'
@@ -6736,6 +7011,15 @@ components:
       properties:
         spec:
           $ref: '#/components/schemas/Querybuildertypesv5BuilderQuerySpec'
+        type:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+      required:
+      - type
+      type: object
+    Querybuildertypesv5QueryEnvelopeBuilderAI:
+      properties:
+        spec:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregation'
         type:
           $ref: '#/components/schemas/Querybuildertypesv5QueryType'
       required:
@@ -6854,6 +7138,7 @@ components:
     Querybuildertypesv5QueryType:
       enum:
       - builder_query
+      - builder_ai_query
       - builder_formula
       - builder_trace_operator
       - clickhouse_sql
@@ -6940,6 +7225,7 @@ components:
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          nullable: true
           type: array
         limit:
           type: integer
@@ -6948,6 +7234,7 @@ components:
         order:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+          nullable: true
           type: array
         stepInterval:
           $ref: '#/components/schemas/Querybuildertypesv5Step'
@@ -7215,9 +7502,11 @@ components:
         op:
           $ref: '#/components/schemas/RuletypesCompareOperator'
         recoveryTarget:
+          format: double
           nullable: true
           type: number
         target:
+          format: double
           nullable: true
           type: number
         targetUnit:
@@ -7328,6 +7617,7 @@ components:
         groupBy:
           items:
             type: string
+          nullable: true
           type: array
         newGroupEvalDelay:
           type: string
@@ -7399,6 +7689,7 @@ components:
         alertStates:
           items:
             $ref: '#/components/schemas/RuletypesAlertState'
+          nullable: true
           type: array
         enabled:
           type: boolean
@@ -7501,6 +7792,7 @@ components:
         selectedQueryName:
           type: string
         target:
+          format: double
           nullable: true
           type: number
         targetUnit:
@@ -7804,6 +8096,15 @@ components:
       required:
       - items
       type: object
+    SpantypesGettableSpanMappers:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/SpantypesSpanMapper'
+          type: array
+      required:
+      - items
+      type: object
     SpantypesGettableTraceAggregations:
       properties:
         aggregations:
@@ -7956,7 +8257,7 @@ components:
           type: boolean
         fieldContext:
           $ref: '#/components/schemas/SpantypesFieldContext'
-        group_id:
+        groupId:
           type: string
         id:
           type: string
@@ -7969,7 +8270,7 @@ components:
           type: string
       required:
       - id
-      - group_id
+      - groupId
       - name
       - fieldContext
       - config
@@ -8269,6 +8570,7 @@ components:
       - resource
       - attribute
       - body
+      - ""
       type: string
     TelemetrytypesFieldDataType:
       enum:
@@ -8277,6 +8579,7 @@ components:
       - float64
       - int64
       - number
+      - ""
       type: string
     TelemetrytypesGettableFieldKeys:
       properties:
@@ -8308,11 +8611,12 @@ components:
       - traces
       - logs
       - metrics
+      - ""
       type: string
     TelemetrytypesSource:
       enum:
       - meter
-      - ai
+      - ""
       type: string
     TelemetrytypesTelemetryFieldKey:
       properties:
@@ -11829,7 +12133,7 @@ paths:
                 properties:
                   data:
                     items:
-                      $ref: '#/components/schemas/AuthtypesRole'
+                      $ref: '#/components/schemas/AuthtypesGettableRole'
                     type: array
                   status:
                     type: string
@@ -12013,7 +12317,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/AuthtypesRoleWithTransactionGroups'
+                    $ref: '#/components/schemas/AuthtypesRole'
                   status:
                     type: string
                 required:
@@ -13549,7 +13853,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/SpantypesGettableSpanMapperGroups'
+                    $ref: '#/components/schemas/SpantypesGettableSpanMappers'
                   status:
                     type: string
                 required:
@@ -15812,21 +16116,24 @@ paths:
         daemonSetCPULimit, daemonSetMemoryRequest, daemonSetMemoryLimit). Each row
         also reports the latest known node-level counters from kube-state-metrics:
         desiredNodes (k8s.daemonset.desired_scheduled_nodes, the number of nodes the
-        daemonset wants to run on) and currentNodes (k8s.daemonset.current_scheduled_nodes,
-        the number of nodes the daemonset currently runs on) — note these are node
-        counts, not pod counts. It also reports per-group podCountsByPhase ({ pending,
-        running, succeeded, failed, unknown } from each pod''s latest k8s.pod.phase
-        value). Each daemonset includes metadata attributes (k8s.daemonset.name, k8s.namespace.name,
-        k8s.cluster.name). The response type is ''list'' for the default k8s.daemonset.name
-        grouping or ''grouped_list'' for custom groupBy keys; in both modes every
-        row aggregates pods owned by daemonsets in the group. Supports filtering via
-        a filter expression, custom groupBy, ordering by cpu / cpu_request / cpu_limit
-        / memory / memory_request / memory_limit / desired_nodes / current_nodes,
+        daemonset wants to run on), currentNodes (k8s.daemonset.current_scheduled_nodes,
+        the number of nodes the daemonset currently runs on), readyNodes (k8s.daemonset.ready_nodes,
+        the number of nodes running at least one ready daemon pod) and misscheduledNodes
+        (k8s.daemonset.misscheduled_nodes, the number of nodes running the daemon
+        pod but not supposed to) — note these are node counts, not pod counts. It
+        also reports per-group podCountsByPhase ({ pending, running, succeeded, failed,
+        unknown } from each pod''s latest k8s.pod.phase value). Each daemonset includes
+        metadata attributes (k8s.daemonset.name, k8s.namespace.name, k8s.cluster.name).
+        The response type is ''list'' for the default k8s.daemonset.name grouping
+        or ''grouped_list'' for custom groupBy keys; in both modes every row aggregates
+        pods owned by daemonsets in the group. Supports filtering via a filter expression,
+        custom groupBy, ordering by cpu / cpu_request / cpu_limit / memory / memory_request
+        / memory_limit / desired_nodes / current_nodes / ready_nodes / misscheduled_nodes,
         and pagination via offset/limit. Also reports whether the requested time range
         falls before the data retention boundary. Numeric metric fields (daemonSetCPU,
         daemonSetCPURequest, daemonSetCPULimit, daemonSetMemory, daemonSetMemoryRequest,
-        daemonSetMemoryLimit, desiredNodes, currentNodes) return -1 as a sentinel
-        when no data is available for that field.'
+        daemonSetMemoryLimit, desiredNodes, currentNodes, readyNodes, misscheduledNodes)
+        return -1 as a sentinel when no data is available for that field.'
       operationId: ListDaemonSets
       requestBody:
         content:
@@ -16098,6 +16405,86 @@ paths:
       - tokenizer:
         - VIEWER
       summary: List Jobs for Infra Monitoring
+      tags:
+      - inframonitoring
+  /api/v2/infra_monitoring/kube_containers:
+    post:
+      deprecated: false
+      description: 'Returns a paginated list of Kubernetes containers with key kubeletstats
+        metrics: CPU usage (cores), CPU request/limit utilization, memory working
+        set, and memory request/limit utilization. Each container also reports health
+        signals from the k8s_cluster receiver: status (kubectl-style display status
+        derived from k8s.container.status.state + k8s.container.status.reason), restarts
+        (absolute count from k8s.container.restarts), and ready (ready/not_ready from
+        k8s.container.ready). The row identity is (k8s.pod.uid, k8s.container.name),
+        stable across container restarts. Each container includes metadata attributes
+        (k8s.container.name, k8s.pod.name, container.image.name, container.image.tag,
+        k8s.namespace.name, k8s.node.name, k8s.cluster.name, and workload owner such
+        as deployment/statefulset/daemonset/job). The response type is ''list'' for
+        the default (k8s.pod.uid, k8s.container.name) grouping (each row is one container
+        with its current status and ready state) or ''grouped_list'' for custom groupBy
+        keys (each row aggregates containers in the group with per-status counts under
+        containerCountsByStatus, per-readiness counts under containerCountsByReady,
+        and restarts as the group sum). Status requires the optional k8s.container.status.state
+        and k8s.container.status.reason metrics; when either is missing, status is
+        omitted and a warning is returned while restarts and ready are still computed.
+        Supports filtering via a filter expression, custom groupBy, ordering by any
+        of the six metrics (cpu, cpu_request, cpu_limit, memory, memory_request, memory_limit),
+        and pagination via offset/limit. Also reports whether the requested time range
+        falls before the data retention boundary. Numeric metric fields (cpu, cpuRequestUtilization,
+        cpuLimitUtilization, memory, memoryRequestUtilization, memoryLimitUtilization)
+        and restarts return -1 as a sentinel when no data is available for that field.'
+      operationId: ListContainers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InframonitoringtypesPostableContainers'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/InframonitoringtypesContainers'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List Kubernetes Containers for Infra Monitoring
       tags:
       - inframonitoring
   /api/v2/infra_monitoring/namespaces:
@@ -17910,6 +18297,16 @@ paths:
         public dashboard. The panel is addressed by its key in spec.panels.
       operationId: GetPublicDashboardPanelQueryRangeV2
       parameters:
+      - in: query
+        name: startTime
+        required: false
+        schema:
+          type: string
+      - in: query
+        name: endTime
+        required: false
+        schema:
+          type: string
       - in: path
         name: id
         required: true
@@ -24119,9 +24516,17 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       - tokenizer:
-        - VIEWER
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       summary: Query range
       tags:
       - querier
@@ -24188,9 +24593,17 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       - tokenizer:
-        - VIEWER
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       summary: Query range preview
       tags:
       - querier

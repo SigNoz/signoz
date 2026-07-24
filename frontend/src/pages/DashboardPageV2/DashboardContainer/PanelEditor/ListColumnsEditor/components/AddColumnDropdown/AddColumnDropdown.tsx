@@ -63,7 +63,7 @@ function AddColumnDropdown({
 					<Plus size={16} />
 				</Button>
 			</ComboboxTrigger>
-			<ComboboxContent arrow side="top" align="end" className={styles.dropdown}>
+			<ComboboxContent arrow side="bottom" align="end" className={styles.dropdown}>
 				<ComboboxCommand shouldFilter={false}>
 					<ComboboxInput
 						value={searchText}

@@ -14,7 +14,12 @@ import {
 import APIError from 'types/api/error';
 import { v4 as uuidv4 } from 'uuid';
 
-const K8S_EVENT_KEYS = ['k8s.object.kind', 'k8s.object.name'];
+import { INFRA_MONITORING_ATTR_KEYS } from '../../constants';
+
+const K8S_EVENT_KEYS = [
+	INFRA_MONITORING_ATTR_KEYS.K8S_OBJECT_KIND,
+	INFRA_MONITORING_ATTR_KEYS.K8S_OBJECT_NAME,
+];
 
 export function isEventsKeyNotFoundError(error: unknown): boolean {
 	if (!(error instanceof APIError)) {

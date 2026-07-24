@@ -1,6 +1,8 @@
+import ROUTES from 'constants/routes';
 import { getEmptyLogsListConfig } from 'container/LogsExplorerList/utils';
 import { server } from 'mocks-server/server';
 import { render, screen, userEvent } from 'tests/test-utils';
+import { ILog } from 'types/api/logs/log';
 
 import SpanLogs from '../SpanLogs';
 
@@ -82,8 +84,10 @@ jest.mock('providers/preferences/context/PreferenceContextProvider', () => ({
 	),
 }));
 
-// Mock OverlayScrollbar
+// Mock OverlayScrollbar (default export — needs __esModule for the interop
+// unwrap, otherwise the default import resolves to the module object).
 jest.mock('components/OverlayScrollbar/OverlayScrollbar', () => ({
+	__esModule: true,
 	default: ({ children }: any): JSX.Element => (
 		<div data-testid="overlay-scrollbar">{children}</div>
 	),
@@ -109,6 +113,13 @@ jest.mock(
 
 const TEST_TRACE_ID = 'test-trace-id';
 const TEST_SPAN_ID = 'test-span-id';
+
+const sampleLog = {
+	id: 'log-1',
+	body: 'sample log body',
+	timestamp: '1640995200000',
+	spanID: TEST_SPAN_ID,
+} as unknown as ILog;
 
 const defaultProps = {
 	traceId: TEST_TRACE_ID,
@@ -206,5 +217,23 @@ describe('SpanLogs', () => {
 		await user.click(logExplorerButton);
 
 		expect(mockHandleExplorerPageRedirect).toHaveBeenCalledTimes(1);
+	});
+
+	it('opens a new tab to Logs Explorer with the trace_id + span_id query when a log row is clicked', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+		render(<SpanLogs {...defaultProps} logs={[sampleLog]} />);
+
+		await user.click(screen.getByTestId(`raw-log-${sampleLog.id}`));
+
+		expect(mockWindowOpen).toHaveBeenCalledTimes(1);
+		const [url, target] = mockWindowOpen.mock.calls[0];
+		// Opens Logs Explorer in a new tab, filtered to this trace/span, and
+		// deep-links to the clicked log.
+		expect(url).toContain(ROUTES.LOGS_EXPLORER);
+		expect(url).toContain(TEST_TRACE_ID);
+		expect(url).toContain(TEST_SPAN_ID);
+		expect(url).toContain(sampleLog.id); // activeLogId
+		expect(target).toBe('_blank');
 	});
 });

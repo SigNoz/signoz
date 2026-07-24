@@ -1,15 +1,17 @@
 import { TooltipProvider } from '@signozhq/ui/tooltip';
 import userEvent from '@testing-library/user-event';
 import * as roleApi from 'api/generated/services/role';
-import * as useAuthZModule from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import {
 	customRoleResponse,
 	managedRoleResponse,
 } from 'mocks-server/__mockdata__/roles';
+import { server } from 'mocks-server/server';
+import { rest } from 'msw';
 import {
-	mockUseAuthZDenyAll,
-	mockUseAuthZGrantAll,
-	mockUseAuthZGrantByPrefix,
+	AUTHZ_CHECK_URL,
+	setupAuthzAdmin,
+	setupAuthzDenyAll,
+	setupAuthzGrantByPrefix,
 } from 'lib/authz/utils/authz-test-utils';
 import { render, screen, waitFor } from 'tests/test-utils';
 
@@ -25,25 +27,15 @@ import {
 	mockPermissionsData,
 } from './testUtils';
 
-const mockUseAuthZGrantReadDeleteDenied = mockUseAuthZGrantByPrefix(
-	'read',
-	'update',
-);
-const mockUseAuthZGrantReadUpdateDenied = mockUseAuthZGrantByPrefix(
-	'read',
-	'delete',
-);
-
 describe('ViewRolePage - AuthZ', () => {
 	afterEach(() => {
 		jest.restoreAllMocks();
+		server.resetHandlers();
 	});
 
 	describe('permission denied', () => {
 		it('shows permission denied page when read permission denied', async () => {
-			jest
-				.spyOn(useAuthZModule, 'useAuthZ')
-				.mockImplementation(mockUseAuthZDenyAll);
+			server.use(setupAuthzDenyAll());
 
 			jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
 				data: undefined,
@@ -63,10 +55,8 @@ describe('ViewRolePage - AuthZ', () => {
 	});
 
 	describe('update button visibility', () => {
-		it('enables Update button when update permission granted', () => {
-			jest
-				.spyOn(useAuthZModule, 'useAuthZ')
-				.mockImplementation(mockUseAuthZGrantAll);
+		it('enables Update button when update permission granted', async () => {
+			server.use(setupAuthzAdmin());
 
 			jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
 				data: customRoleResponse,
@@ -92,13 +82,13 @@ describe('ViewRolePage - AuthZ', () => {
 				},
 			);
 
-			expect(screen.getByTestId('save-button')).toBeInTheDocument();
+			await expect(
+				screen.findByTestId('save-button'),
+			).resolves.toBeInTheDocument();
 		});
 
-		it('disables Update button when update permission denied', () => {
-			jest
-				.spyOn(useAuthZModule, 'useAuthZ')
-				.mockImplementation(mockUseAuthZGrantReadUpdateDenied);
+		it('disables Update button when update permission denied', async () => {
+			server.use(setupAuthzGrantByPrefix('read', 'delete'));
 
 			jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
 				data: customRoleResponse,
@@ -124,13 +114,13 @@ describe('ViewRolePage - AuthZ', () => {
 				},
 			);
 
-			expect(screen.getByTestId('save-button')).toBeDisabled();
+			await waitFor(() => {
+				expect(screen.getByTestId('save-button')).toBeDisabled();
+			});
 		});
 
-		it('disables Update button when role is managed', () => {
-			jest
-				.spyOn(useAuthZModule, 'useAuthZ')
-				.mockImplementation(mockUseAuthZGrantAll);
+		it('disables Update button when role is managed', async () => {
+			server.use(setupAuthzAdmin());
 
 			jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
 				data: managedRoleResponse,
@@ -160,15 +150,15 @@ describe('ViewRolePage - AuthZ', () => {
 				},
 			);
 
-			expect(screen.getByTestId('save-button')).toBeDisabled();
+			await waitFor(() => {
+				expect(screen.getByTestId('save-button')).toBeDisabled();
+			});
 		});
 
 		it('shows managed role tooltip when update button hovered on managed role', async () => {
 			const user = userEvent.setup();
 
-			jest
-				.spyOn(useAuthZModule, 'useAuthZ')
-				.mockImplementation(mockUseAuthZGrantAll);
+			server.use(setupAuthzAdmin());
 
 			jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
 				data: managedRoleResponse,
@@ -198,7 +188,7 @@ describe('ViewRolePage - AuthZ', () => {
 				},
 			);
 
-			const updateButton = screen.getByTestId('save-button');
+			const updateButton = await screen.findByTestId('save-button');
 			await user.hover(updateButton);
 
 			await waitFor(() => {
@@ -208,12 +198,8 @@ describe('ViewRolePage - AuthZ', () => {
 			});
 		});
 
-		it('shows authorization tooltip when update permission denied', async () => {
-			const user = userEvent.setup();
-
-			jest
-				.spyOn(useAuthZModule, 'useAuthZ')
-				.mockImplementation(mockUseAuthZGrantReadUpdateDenied);
+		it('disables and shows denial attribute when update permission denied', async () => {
+			server.use(setupAuthzGrantByPrefix('read', 'delete'));
 
 			jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
 				data: customRoleResponse,
@@ -239,22 +225,17 @@ describe('ViewRolePage - AuthZ', () => {
 				},
 			);
 
-			const updateButton = screen.getByTestId('save-button');
-			await user.hover(updateButton);
-
 			await waitFor(() => {
-				expect(screen.getByRole('tooltip')).toHaveTextContent(
-					/You are not authorized to perform/,
-				);
+				const updateButton = screen.getByTestId('save-button');
+				expect(updateButton).toBeDisabled();
+				expect(updateButton).toHaveAttribute('data-denied-permissions');
 			});
 		});
 	});
 
 	describe('delete button visibility', () => {
-		it('disables Delete button when delete permission denied', () => {
-			jest
-				.spyOn(useAuthZModule, 'useAuthZ')
-				.mockImplementation(mockUseAuthZGrantReadDeleteDenied);
+		it('disables Delete button when delete permission denied', async () => {
+			server.use(setupAuthzGrantByPrefix('read', 'update'));
 
 			jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
 				data: customRoleResponse,
@@ -279,89 +260,82 @@ describe('ViewRolePage - AuthZ', () => {
 					initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 				},
 			);
-
-			expect(screen.getByTestId('delete-button')).toBeDisabled();
-		});
-
-		it('enables Delete button when delete permission granted', () => {
-			jest
-				.spyOn(useAuthZModule, 'useAuthZ')
-				.mockImplementation(mockUseAuthZGrantAll);
-
-			jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
-				data: customRoleResponse,
-				isLoading: false,
-				isError: false,
-				error: null,
-			} as ReturnType<typeof roleApi.useGetRole>);
-
-			jest.spyOn(useRolePermissionsModule, 'useRolePermissions').mockReturnValue({
-				data: mockPermissionsData,
-				isLoading: false,
-				isError: false,
-				error: null,
-			} as ReturnType<typeof useRolePermissionsModule.useRolePermissions>);
-
-			render(
-				<TooltipProvider>
-					<ViewRolePage />
-				</TooltipProvider>,
-				undefined,
-				{
-					initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
-				},
-			);
-
-			expect(screen.getByTestId('delete-button')).not.toBeDisabled();
-		});
-
-		it('shows permission denied tooltip when delete permission denied', async () => {
-			const user = userEvent.setup();
-
-			jest
-				.spyOn(useAuthZModule, 'useAuthZ')
-				.mockImplementation(mockUseAuthZGrantReadDeleteDenied);
-
-			jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
-				data: customRoleResponse,
-				isLoading: false,
-				isError: false,
-				error: null,
-			} as ReturnType<typeof roleApi.useGetRole>);
-
-			jest.spyOn(useRolePermissionsModule, 'useRolePermissions').mockReturnValue({
-				data: mockPermissionsData,
-				isLoading: false,
-				isError: false,
-				error: null,
-			} as ReturnType<typeof useRolePermissionsModule.useRolePermissions>);
-
-			render(
-				<TooltipProvider>
-					<ViewRolePage />
-				</TooltipProvider>,
-				undefined,
-				{
-					initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
-				},
-			);
-
-			const deleteButton = screen.getByTestId('delete-button');
-			await user.hover(deleteButton);
 
 			await waitFor(() => {
-				expect(screen.getByRole('tooltip')).toHaveTextContent(
-					'You do not have permission to delete this role',
-				);
+				expect(screen.getByTestId('delete-button')).toBeDisabled();
+			});
+		});
+
+		it('enables Delete button when delete permission granted', async () => {
+			server.use(setupAuthzAdmin());
+
+			jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
+				data: customRoleResponse,
+				isLoading: false,
+				isError: false,
+				error: null,
+			} as ReturnType<typeof roleApi.useGetRole>);
+
+			jest.spyOn(useRolePermissionsModule, 'useRolePermissions').mockReturnValue({
+				data: mockPermissionsData,
+				isLoading: false,
+				isError: false,
+				error: null,
+			} as ReturnType<typeof useRolePermissionsModule.useRolePermissions>);
+
+			render(
+				<TooltipProvider>
+					<ViewRolePage />
+				</TooltipProvider>,
+				undefined,
+				{
+					initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
+				},
+			);
+
+			await waitFor(() => {
+				expect(screen.getByTestId('delete-button')).not.toBeDisabled();
+			});
+		});
+
+		it('disables and shows denial attribute when delete permission denied', async () => {
+			server.use(setupAuthzGrantByPrefix('read', 'update'));
+
+			jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
+				data: customRoleResponse,
+				isLoading: false,
+				isError: false,
+				error: null,
+			} as ReturnType<typeof roleApi.useGetRole>);
+
+			jest.spyOn(useRolePermissionsModule, 'useRolePermissions').mockReturnValue({
+				data: mockPermissionsData,
+				isLoading: false,
+				isError: false,
+				error: null,
+			} as ReturnType<typeof useRolePermissionsModule.useRolePermissions>);
+
+			render(
+				<TooltipProvider>
+					<ViewRolePage />
+				</TooltipProvider>,
+				undefined,
+				{
+					initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
+				},
+			);
+
+			await waitFor(() => {
+				const deleteButton = screen.getByTestId('delete-button');
+				expect(deleteButton).toBeDisabled();
+				expect(deleteButton).toHaveAttribute('data-denied-permissions');
 			});
 		});
 
 		it('shows managed role tooltip when role is managed', async () => {
 			const user = userEvent.setup();
 
-			jest
-				.spyOn(useAuthZModule, 'useAuthZ')
-				.mockImplementation(mockUseAuthZGrantAll);
+			server.use(setupAuthzAdmin());
 
 			jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
 				data: managedRoleResponse,
@@ -391,7 +365,7 @@ describe('ViewRolePage - AuthZ', () => {
 				},
 			);
 
-			const deleteButton = screen.getByTestId('delete-button');
+			const deleteButton = await screen.findByTestId('delete-button');
 			await user.hover(deleteButton);
 
 			await waitFor(() => {
@@ -404,15 +378,9 @@ describe('ViewRolePage - AuthZ', () => {
 
 	describe('loading state', () => {
 		it('shows skeleton while checking permissions', () => {
-			jest.spyOn(useAuthZModule, 'useAuthZ').mockReturnValue({
-				isLoading: true,
-				isFetching: true,
-				error: null,
-				permissions: null,
-				allowed: false,
-				deniedPermissions: [],
-				refetchPermissions: jest.fn(),
-			});
+			server.use(
+				rest.post(AUTHZ_CHECK_URL, (_req, res, ctx) => res(ctx.delay('infinite'))),
+			);
 
 			jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
 				data: undefined,

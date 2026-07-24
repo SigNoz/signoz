@@ -89,6 +89,14 @@ function section(
 const TWO_TITLED_SECTIONS = [section(0, 'Overview'), section(1, 'Latency')];
 // Index 0 is the untitled root (free-flow) section; index 1 is a titled section.
 const TITLED_WITH_ROOT = [section(0, undefined), section(1, 'Latency')];
+// Untitled root plus two titled sections — exercises the multi-target submenu.
+const ROOT_AND_TWO_TITLED = [
+	section(0, undefined),
+	section(1, 'A'),
+	section(2, 'B'),
+];
+// Just the free-flow root: an ungrouped board with no sections to move between.
+const ONLY_ROOT = [section(0, undefined)];
 
 // Minimal panel — only its presence gates "Create Alerts"; the query→URL
 // translation it drives is covered by buildCreateAlertUrl's own tests.
@@ -111,7 +119,9 @@ const baseArgs = {
 	panelId: 'panel-1',
 	panel: mockPanel,
 	data: mockData,
-	panelActions: { currentLayoutIndex: 0, sections: TWO_TITLED_SECTIONS },
+	// Panel sits in a titled section with an untitled root present, so every
+	// action — including "Move to section" (→ Dashboard root) — is available.
+	panelActions: { currentLayoutIndex: 1, sections: TITLED_WITH_ROOT },
 };
 
 function itemKeys(result: ReturnType<typeof usePanelActionItems>): unknown[] {
@@ -210,7 +220,7 @@ describe('usePanelActionItems', () => {
 		]);
 	});
 
-	it('move is disabled when there is no other titled section to move to', () => {
+	it('hides "Move to section" when the only untitled section is not the root (index 0)', () => {
 		const { result } = renderHook(() =>
 			usePanelActionItems({
 				...baseArgs,
@@ -220,8 +230,8 @@ describe('usePanelActionItems', () => {
 				},
 			}),
 		);
-		const move = result.current.items.find((i) => 'key' in i && i.key === 'move');
-		expect(move).toMatchObject({ disabled: true });
+		// An untitled section only counts as the root at layoutIndex 0.
+		expect(itemKeys(result.current)).not.toContain('move');
 	});
 
 	it('edit opens the panel editor for this panel', () => {
@@ -233,14 +243,77 @@ describe('usePanelActionItems', () => {
 		expect(mockOpenEditor).toHaveBeenCalledWith('panel-1');
 	});
 
-	it('move targets call the mutation with from/to layout indexes', () => {
+	it('"Move to section" offers a single "Dashboard (root)" target', () => {
 		const { result } = renderHook(() => usePanelActionItems(baseArgs));
 		const move = result.current.items.find(
 			(i) => 'key' in i && i.key === 'move',
 		) as {
 			children: { key: string; onClick: () => void }[];
 		};
-		expect(move.children).toHaveLength(1);
+		expect(move.children.map((c) => c.key)).toStrictEqual(['move-to-root']);
+	});
+
+	it('the "Dashboard (root)" target moves the panel to the untitled root section', () => {
+		const { result } = renderHook(() => usePanelActionItems(baseArgs));
+		const move = result.current.items.find(
+			(i) => 'key' in i && i.key === 'move',
+		) as {
+			children: { onClick: () => void }[];
+		};
+		move.children[0].onClick();
+		expect(mockMovePanel).toHaveBeenCalledWith({
+			panelId: 'panel-1',
+			fromLayoutIndex: 1,
+			toLayoutIndex: 0,
+		});
+	});
+
+	it('an ungrouped panel (in the root) can move into each titled section', () => {
+		const { result } = renderHook(() =>
+			usePanelActionItems({
+				...baseArgs,
+				panelActions: { currentLayoutIndex: 0, sections: ROOT_AND_TWO_TITLED },
+			}),
+		);
+		const move = result.current.items.find(
+			(i) => 'key' in i && i.key === 'move',
+		) as { children: { key: string; label: string }[] };
+		expect(move.children.map((c) => c.key)).toStrictEqual(['move-1', 'move-2']);
+		expect(move.children.map((c) => c.label)).toStrictEqual(['A', 'B']);
+	});
+
+	it('a panel in a titled section can move to the root and the other titled sections', () => {
+		const { result } = renderHook(() =>
+			usePanelActionItems({
+				...baseArgs,
+				panelActions: { currentLayoutIndex: 1, sections: ROOT_AND_TWO_TITLED },
+			}),
+		);
+		const move = result.current.items.find(
+			(i) => 'key' in i && i.key === 'move',
+		) as { children: { key: string; label: string }[] };
+		// Root leads, then the other titled section — never the current one (A).
+		expect(move.children.map((c) => c.key)).toStrictEqual([
+			'move-to-root',
+			'move-2',
+		]);
+		expect(move.children.map((c) => c.label)).toStrictEqual([
+			'Dashboard (root)',
+			'B',
+		]);
+	});
+
+	it('moves between titled sections even when the board has no untitled root', () => {
+		const { result } = renderHook(() =>
+			usePanelActionItems({
+				...baseArgs,
+				panelActions: { currentLayoutIndex: 0, sections: TWO_TITLED_SECTIONS },
+			}),
+		);
+		const move = result.current.items.find(
+			(i) => 'key' in i && i.key === 'move',
+		) as { children: { key: string; onClick: () => void }[] };
+		expect(move.children.map((c) => c.key)).toStrictEqual(['move-1']);
 		move.children[0].onClick();
 		expect(mockMovePanel).toHaveBeenCalledWith({
 			panelId: 'panel-1',
@@ -249,47 +322,14 @@ describe('usePanelActionItems', () => {
 		});
 	});
 
-	it('offers "Move out of section" for a panel in a titled section when an untitled root exists', () => {
+	it('hides "Move to section" when the board has no sections (only the root)', () => {
 		const { result } = renderHook(() =>
 			usePanelActionItems({
 				...baseArgs,
-				panelActions: { currentLayoutIndex: 1, sections: TITLED_WITH_ROOT },
+				panelActions: { currentLayoutIndex: 0, sections: ONLY_ROOT },
 			}),
 		);
-		expect(itemKeys(result.current)).toContain('move-to-root');
-	});
-
-	it('"Move out of section" moves the panel to the untitled root section', () => {
-		const { result } = renderHook(() =>
-			usePanelActionItems({
-				...baseArgs,
-				panelActions: { currentLayoutIndex: 1, sections: TITLED_WITH_ROOT },
-			}),
-		);
-		const moveOut = result.current.items.find(
-			(i) => 'key' in i && i.key === 'move-to-root',
-		);
-		(moveOut as { onClick: () => void }).onClick();
-		expect(mockMovePanel).toHaveBeenCalledWith({
-			panelId: 'panel-1',
-			fromLayoutIndex: 1,
-			toLayoutIndex: 0,
-		});
-	});
-
-	it('hides "Move out of section" when the panel already sits in the root section', () => {
-		const { result } = renderHook(() =>
-			usePanelActionItems({
-				...baseArgs,
-				panelActions: { currentLayoutIndex: 0, sections: TITLED_WITH_ROOT },
-			}),
-		);
-		expect(itemKeys(result.current)).not.toContain('move-to-root');
-	});
-
-	it('hides "Move out of section" when every section is titled (no root)', () => {
-		const { result } = renderHook(() => usePanelActionItems(baseArgs));
-		expect(itemKeys(result.current)).not.toContain('move-to-root');
+		expect(itemKeys(result.current)).not.toContain('move');
 	});
 
 	it('delete defers to a confirmation: the item opens the dialog, confirm runs the mutation', async () => {
@@ -312,7 +352,7 @@ describe('usePanelActionItems', () => {
 		});
 		expect(mockDeletePanel).toHaveBeenCalledWith({
 			panelId: 'panel-1',
-			layoutIndex: 0,
+			layoutIndex: 1,
 		});
 		expect(result.current.deleteConfirm.open).toBe(false);
 	});
@@ -325,7 +365,7 @@ describe('usePanelActionItems', () => {
 		(clone as { onClick: () => void }).onClick();
 		expect(mockClonePanel).toHaveBeenCalledWith({
 			panelId: 'panel-1',
-			layoutIndex: 0,
+			layoutIndex: 1,
 		});
 	});
 

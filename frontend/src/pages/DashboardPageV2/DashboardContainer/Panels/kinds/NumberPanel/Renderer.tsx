@@ -130,6 +130,7 @@ function NumberPanelRenderer({
 					data-testid="number-panel-no-data"
 					isFetching={isFetching}
 					onRetry={refetch}
+					panel={panel}
 				/>
 			) : (
 				<ValueDisplay

@@ -13,11 +13,11 @@ import (
 // part (a WHERE over spans) and a trace-level part (a HAVING over per-trace
 // aggregates), splitting on the top-level AND.
 //
-// A key is trace-level when, with no explicit field context, its name is in
-// aggregateNames — written bare (`completion_tokens`) or with the user-facing `trace.`
-// prefix (`trace.completion_tokens`). Any explicit context (`span.`, `resource.`, …) is
-// span-level. Trace-level and span-level keys may be AND-combined (they run at different
-// query stages) but not OR-combined; an OR that mixes the two is an error.
+// A key is trace-level when it carries the trace field context (`trace.completion_tokens`)
+// or, with no context, its bare name is in aggregateNames. Any other explicit context
+// (`span.`, `resource.`, …) is span-level. Trace-level and span-level keys may be
+// AND-combined (they run at different query stages) but not OR-combined; an OR that
+// mixes the two is an error.
 //
 // Syntax errors are ignored here — each part is re-parsed downstream (PrepareWhereClause
 // for the span part, the HAVING rewriter for the trace part), which surface them.
@@ -114,26 +114,20 @@ func (s *filterSplitter) route(atom antlr.ParserRuleContext) {
 }
 
 // classifyKeys reports whether a subtree references trace-level and/or span-level keys.
-// A key is trace-level when it has no explicit field context and its name — after the
-// optional user-facing `trace.` prefix is stripped — is a known aggregate, or when it
-// carries the trace field context explicitly (`tracefield.`, which Normalize parses
-// into FieldContextTrace; no span field mapper resolves that context, so it can only
-// mean a trace-level aggregate — an unknown name is then rejected by the aggregate
-// validation with a targeted error instead of failing as an unknown span field). Any
-// other explicit context (`span.`, `resource.`, …) is span-level.
+// A key is trace-level when it carries the trace field context or, with no context,
+// its name is a known aggregate; an unknown name under the trace context stays
+// trace-level so the aggregate validation rejects it with a targeted error. Any other
+// explicit context (`span.`, `resource.`, …) is span-level.
 func classifyKeys(node antlr.Tree, aggregateNames map[string]struct{}) (isTrace, isSpan bool) {
 	kc, ok := node.(*grammar.KeyContext)
 	if ok {
 		key := telemetrytypes.GetFieldKeyFromKeyText(kc.GetText())
 		switch key.FieldContext {
-		case telemetrytypes.FieldContextUnspecified:
-			// `trace.` is the user-facing prefix for trace-level aggregates. It is not a
-			// registered field context, so it stays on the name; strip it before matching.
-			name := strings.TrimPrefix(key.Name, telemetrytypes.FieldContextTrace.StringValue()+".")
-			_, isTrace = aggregateNames[name]
-			isSpan = !isTrace
 		case telemetrytypes.FieldContextTrace:
 			isTrace = true
+		case telemetrytypes.FieldContextUnspecified:
+			_, isTrace = aggregateNames[key.Name]
+			isSpan = !isTrace
 		default:
 			isSpan = true
 		}

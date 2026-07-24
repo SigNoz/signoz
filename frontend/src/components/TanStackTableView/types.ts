@@ -24,17 +24,15 @@ export type TableCellContext<TData, TValue> = {
 	isExpanded: boolean;
 	canExpand: boolean;
 	toggleExpanded: () => void;
-	/** Business/selection key for the row */
-	itemKey: string;
 	/** Group metadata when row is part of a grouped view */
 	groupMeta?: Record<string, string>;
 };
 
-export type RowKeyData = {
+export type RowKeyData<TItemKey = string> = {
 	/** Final unique key (with duplicate suffix if needed) */
 	finalKey: string;
 	/** Business/selection key */
-	itemKey: string;
+	itemKey: TItemKey;
 	/** Group metadata */
 	groupMeta?: Record<string, string>;
 };
@@ -82,14 +80,14 @@ export type FlatItem<TData> =
 	| { kind: 'row'; row: TanStackRowType<TData> }
 	| { kind: 'expansion'; row: TanStackRowType<TData> };
 
-export type TableRowContext<TData> = {
+export type TableRowContext<TData, TItemKey = string> = {
 	getRowStyle?: (row: TData) => CSSProperties;
 	getRowClassName?: (row: TData) => string;
 	isRowActive?: (row: TData) => boolean;
 	renderRowActions?: (row: TData) => ReactNode;
-	onRowClick?: (row: TData, itemKey: string) => void;
+	onRowClick?: (row: TData, itemKey: TItemKey) => void;
 	/** Called when ctrl+click or cmd+click on a row */
-	onRowClickNewTab?: (row: TData, itemKey: string) => void;
+	onRowClickNewTab?: (row: TData, itemKey: TItemKey) => void;
 	onRowDeactivate?: () => void;
 	renderExpandedRow?: (
 		row: TData,
@@ -97,7 +95,7 @@ export type TableRowContext<TData> = {
 		groupMeta?: Record<string, string>,
 	) => ReactNode;
 	/** Get key data for a row by index */
-	getRowKeyData?: (index: number) => RowKeyData | undefined;
+	getRowKeyData?: (index: number) => RowKeyData<TItemKey> | undefined;
 	colCount: number;
 	isDarkMode?: boolean;
 	/** When set, primitive cell output (string/number/boolean) is wrapped with typography + line-clamp (see `plainTextCellLineClamp` on the table). */
@@ -147,7 +145,7 @@ export type TanstackTableQueryParamsConfig = {
 	expanded?: string;
 };
 
-export type TanStackTableProps<TData> = {
+export type TanStackTableProps<TData, TItemKey = string> = {
 	data: TData[];
 	columns: TableColumnDef<TData>[];
 	/** Storage key for column state persistence (visibility, sizing, ordering). When set, enables unified column management. */
@@ -172,7 +170,7 @@ export type TanStackTableProps<TData> = {
 	 * When set, enables automatic duplicate key detection and group-aware key composition. */
 	getRowKey?: (row: TData) => string;
 	/** Function to get the business/selection key. Defaults to getRowKey result. */
-	getItemKey?: (row: TData) => string;
+	getItemKey?: (row: TData) => TItemKey;
 	/** When set, enables group-aware key generation (prefixes rowKey with group values). */
 	groupBy?: Array<{ key: string }>;
 	/** Extract group metadata from a row. Required when groupBy is set. */
@@ -181,9 +179,9 @@ export type TanStackTableProps<TData> = {
 	getRowClassName?: (row: TData) => string;
 	isRowActive?: (row: TData) => boolean;
 	renderRowActions?: (row: TData) => ReactNode;
-	onRowClick?: (row: TData, itemKey: string) => void;
+	onRowClick?: (row: TData, itemKey: TItemKey) => void;
 	/** Called when ctrl+click or cmd+click on a row */
-	onRowClickNewTab?: (row: TData, itemKey: string) => void;
+	onRowClickNewTab?: (row: TData, itemKey: TItemKey) => void;
 	onRowDeactivate?: () => void;
 	activeRowIndex?: number;
 	renderExpandedRow?: (

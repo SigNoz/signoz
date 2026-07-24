@@ -2,6 +2,7 @@ import { renderHook } from '@testing-library/react';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
+import { preparePieData } from 'pages/DashboardPageV2/DashboardContainer/Panels/kinds/PieChartPanel/prepareData';
 import { resolveSeriesLabelV5 } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/resolveSeriesLabel';
 import type { PanelQueryData } from 'pages/DashboardPageV2/DashboardContainer/queryV5/types';
 import { flattenTimeSeries } from 'pages/DashboardPageV2/DashboardContainer/queryV5/v5ResponseData';
@@ -29,17 +30,35 @@ jest.mock(
 	() => ({
 		flattenTimeSeries: jest.fn(),
 		getTimeSeriesResults: jest.fn(() => []),
+		getScalarResults: jest.fn(() => []),
 	}),
+);
+jest.mock(
+	'pages/DashboardPageV2/DashboardContainer/queryV5/prepareScalarTables',
+	() => ({ prepareScalarTables: jest.fn(() => []) }),
+);
+jest.mock(
+	'pages/DashboardPageV2/DashboardContainer/Panels/kinds/PieChartPanel/prepareData',
+	() => ({ preparePieData: jest.fn(() => []) }),
 );
 
 const mockUseIsDarkMode = useIsDarkMode as unknown as jest.Mock;
 const mockFlatten = flattenTimeSeries as unknown as jest.Mock;
 const mockResolveLabel = resolveSeriesLabelV5 as unknown as jest.Mock;
 const mockGenerateColor = generateColor as unknown as jest.Mock;
+const mockPreparePie = preparePieData as unknown as jest.Mock;
 
 const PANEL = {
 	kind: 'Panel',
 	spec: { plugin: { kind: 'signoz/TimeSeriesPanel', spec: {} }, queries: [] },
+} as unknown as DashboardtypesPanelDTO;
+const PIE_PANEL = {
+	kind: 'Panel',
+	spec: { plugin: { kind: 'signoz/PieChartPanel', spec: {} }, queries: [] },
+} as unknown as DashboardtypesPanelDTO;
+const HISTOGRAM_PANEL = {
+	kind: 'Panel',
+	spec: { plugin: { kind: 'signoz/HistogramPanel', spec: {} }, queries: [] },
 } as unknown as DashboardtypesPanelDTO;
 const DATA = { response: {}, legendMap: {} } as unknown as PanelQueryData;
 
@@ -86,6 +105,32 @@ describe('useLegendSeries', () => {
 		expect(result.current).toStrictEqual([
 			{ label: 'a', defaultColor: 'color:a' },
 		]);
+	});
+
+	it('resolves histogram panels via the time-series path', () => {
+		mockFlatten.mockReturnValue(seriesWithLabels(['a', 'b']));
+		const { result } = renderHook(() => useLegendSeries(HISTOGRAM_PANEL, DATA));
+		expect(result.current).toStrictEqual([
+			{ label: 'a', defaultColor: 'color:a' },
+			{ label: 'b', defaultColor: 'color:b' },
+		]);
+		// The pie path must not run for a histogram panel.
+		expect(mockPreparePie).not.toHaveBeenCalled();
+	});
+
+	it('resolves pie panels from their scalar slices, deduped by label', () => {
+		mockPreparePie.mockReturnValue([
+			{ label: 'x', color: 'c1' },
+			{ label: 'y', color: 'c2' },
+			{ label: 'x', color: 'c1' },
+		]);
+		const { result } = renderHook(() => useLegendSeries(PIE_PANEL, DATA));
+		expect(result.current).toStrictEqual([
+			{ label: 'x', defaultColor: 'c1' },
+			{ label: 'y', defaultColor: 'c2' },
+		]);
+		// The time-series path must not run for a pie panel.
+		expect(mockFlatten).not.toHaveBeenCalled();
 	});
 
 	it('uses the dark palette in dark mode and the light palette otherwise', () => {

@@ -62,6 +62,13 @@ type queryEnvelopeBuilder struct {
 	Spec builderQuerySpec `json:"spec" description:"The builder query specification."`
 }
 
+// queryEnvelopeBuilderAI is the OpenAPI schema for a builder_ai_query QueryEnvelope.
+// The spec is always a traces builder query (the signal is implied by the type).
+type queryEnvelopeBuilderAI struct {
+	Type QueryType                           `json:"type" required:"true" description:"The type of the query."`
+	Spec QueryBuilderQuery[TraceAggregation] `json:"spec" description:"The AI builder query specification."`
+}
+
 // queryEnvelopeFormula is the OpenAPI schema for a QueryEnvelope with type=builder_formula.
 type queryEnvelopeFormula struct {
 	Type QueryType           `json:"type" required:"true" description:"The type of the query."`
@@ -100,6 +107,7 @@ var _ jsonschema.OneOfExposer = QueryEnvelope{}
 func (QueryEnvelope) JSONSchemaOneOf() []any {
 	return []any{
 		queryEnvelopeBuilder{},
+		queryEnvelopeBuilderAI{},
 		queryEnvelopeFormula{},
 		// queryEnvelopeJoin{}, // deferred — see commented queryEnvelopeJoin above
 		queryEnvelopeTraceOperator{},
@@ -120,6 +128,7 @@ func (QueryEnvelope) PrepareJSONSchema(s *jsonschema.Schema) error {
 		"propertyName": "type",
 		"mapping": map[string]string{
 			QueryTypeBuilder.StringValue():       "#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilder",
+			QueryTypeBuilderAI.StringValue():     "#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilderAI",
 			QueryTypeFormula.StringValue():       "#/components/schemas/Querybuildertypesv5QueryEnvelopeFormula",
 			QueryTypeTraceOperator.StringValue(): "#/components/schemas/Querybuildertypesv5QueryEnvelopeTraceOperator",
 			QueryTypePromQL.StringValue():        "#/components/schemas/Querybuildertypesv5QueryEnvelopePromQL",
@@ -148,6 +157,16 @@ func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 		if err != nil {
 			return err
 		}
+		q.Spec = spec
+
+	case QueryTypeBuilderAI:
+		// A dedicated AI query is always a traces builder query; the signal is
+		// implied by the type, so pin it rather than requiring the caller to send it.
+		var spec QueryBuilderQuery[TraceAggregation]
+		if err := json.Unmarshal(shadow.Spec, &spec); err != nil {
+			return err
+		}
+		spec.Signal = telemetrytypes.SignalTraces
 		q.Spec = spec
 
 	case QueryTypeFormula:
@@ -194,7 +213,7 @@ func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 			"unknown query type %q",
 			shadow.Type,
 		).WithAdditional(
-			"Valid query types are: builder_query, builder_sub_query, builder_formula, builder_join, builder_trace_operator, promql, clickhouse_sql",
+			"Valid query types are: builder_query, builder_ai_query, builder_sub_query, builder_formula, builder_join, builder_trace_operator, promql, clickhouse_sql",
 		).WithSuggestions(errors.NewValidReferences(errors.NounQueryTypes, QueryType{}.Enum()...))
 	}
 

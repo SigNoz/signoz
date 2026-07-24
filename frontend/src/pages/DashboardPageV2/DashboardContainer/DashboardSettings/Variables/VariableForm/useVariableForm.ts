@@ -4,7 +4,7 @@ import type { PayloadVariables } from 'types/api/dashboard/variables/query';
 
 import type { VariableSelectionMap } from '../../../VariablesBar/selectionTypes';
 import { useDashboardStore } from '../../../store/useDashboardStore';
-import { detectVariableCycle } from '../variableDependencies';
+import { detectVariableCycle } from '../utils/variableCycleDetection';
 import {
 	sortValuesByOrder,
 	type VariableFormModel,

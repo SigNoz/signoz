@@ -15,6 +15,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrymetadata"
 	"github.com/SigNoz/signoz/pkg/telemetrymeter"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
+	"github.com/SigNoz/signoz/pkg/telemetryscopedtraces"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 )
@@ -80,7 +81,7 @@ func newProvider(
 	traceFieldMapper := telemetrytraces.NewFieldMapper()
 	traceConditionBuilder := telemetrytraces.NewConditionBuilder(traceFieldMapper)
 
-	traceAggExprRewriter := querybuilder.NewAggExprRewriter(settings, nil, traceFieldMapper, traceConditionBuilder, nil, flagger)
+	traceAggExprRewriter := querybuilder.NewAggExprRewriter(settings, nil, traceFieldMapper, traceConditionBuilder, flagger)
 	traceStmtBuilder := telemetrytraces.NewTraceQueryStatementBuilder(
 		settings,
 		telemetryMetadataStore,
@@ -93,20 +94,16 @@ func newProvider(
 		cfg.SkipResourceFingerprint.Threshold,
 	)
 
-	// AI trace statement builder (source=ai). The gen_ai gate/column keys are
+	// AI trace statement builder (builder_ai_query). The gen_ai gate/column keys are
 	// surfaced by the metadata store itself (enrichWithGenAIKeys), so queries work
 	// before any gen_ai metadata is ingested — no per-builder decoration needed.
 	// The standard trace builder doubles as the delegate for the span-list path.
-	aiBaseCondition := telemetryai.NewGenAIBaseConditionProvider()
-	aiTraceStmtBuilder := telemetryai.NewAITraceStatementBuilder(
+	aiTraceStmtBuilder := telemetryscopedtraces.NewScopedTraceStatementBuilder(
 		settings,
 		telemetryMetadataStore,
-		aiBaseCondition,
+		telemetryai.Scope(),
 		traceStmtBuilder,
-		telemetryStore,
 		flagger,
-		cfg.SkipResourceFingerprint.Enabled,
-		cfg.SkipResourceFingerprint.Threshold,
 	)
 
 	// Create trace operator statement builder
@@ -128,7 +125,6 @@ func newProvider(
 		telemetrylogs.DefaultFullTextColumn,
 		logFieldMapper,
 		logConditionBuilder,
-		telemetrylogs.GetBodyJSONKey,
 		flagger,
 	)
 	logStmtBuilder := telemetrylogs.NewLogQueryStatementBuilder(
@@ -138,7 +134,6 @@ func newProvider(
 		logConditionBuilder,
 		logAggExprRewriter,
 		telemetrylogs.DefaultFullTextColumn,
-		telemetrylogs.GetBodyJSONKey,
 		flagger,
 		telemetryStore,
 		cfg.SkipResourceFingerprint.Enabled,
@@ -153,7 +148,6 @@ func newProvider(
 		telemetryaudit.DefaultFullTextColumn,
 		auditFieldMapper,
 		auditConditionBuilder,
-		nil,
 		flagger,
 	)
 	auditStmtBuilder := telemetryaudit.NewAuditQueryStatementBuilder(
@@ -163,7 +157,6 @@ func newProvider(
 		auditConditionBuilder,
 		auditAggExprRewriter,
 		telemetryaudit.DefaultFullTextColumn,
-		nil,
 		flagger,
 	)
 

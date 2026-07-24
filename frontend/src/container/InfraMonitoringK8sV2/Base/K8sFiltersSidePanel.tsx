@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { ReactNode, useMemo } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { DrawerWrapper } from '@signozhq/ui/drawer';
 import {
@@ -12,7 +12,7 @@ import styles from './K8sFiltersSidePanel.module.scss';
 
 type ColumnPickerItem = {
 	id: string;
-	label: string;
+	label: ReactNode;
 	canBeHidden: boolean;
 	visibilityBehavior:
 		| 'hidden-on-expand'
@@ -20,15 +20,16 @@ type ColumnPickerItem = {
 		| 'always-visible';
 };
 
-/**
- * Converts TableColumnDef to column picker item format
- */
+function renderHeader(header: string | (() => ReactNode)): ReactNode {
+	return typeof header === 'function' ? header() : header;
+}
+
 function toColumnPickerItems<T>(
 	columns: TableColumnDef<T>[],
 ): ColumnPickerItem[] {
 	return columns.map((col) => ({
 		id: col.id,
-		label: typeof col.header === 'string' ? col.header : col.id,
+		label: renderHeader(col.header),
 		canBeHidden: col.canBeHidden !== false && col.enableRemove !== false,
 		visibilityBehavior: col.visibilityBehavior ?? 'always-visible',
 	}));

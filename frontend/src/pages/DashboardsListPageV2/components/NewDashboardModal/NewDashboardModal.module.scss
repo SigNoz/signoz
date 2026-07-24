@@ -35,6 +35,28 @@
 	color: var(--danger-background);
 }
 
+// Title row: icon picker joined flush to the left of the name input.
+.titleRow {
+	display: flex;
+	gap: 4px;
+	align-items: center;
+
+	// The icon picker renders its dropdown inline (no portal); lift it above the
+	// description/tags fields below it.
+	:global([data-radix-popper-content-wrapper]) {
+		z-index: 1100 !important;
+	}
+}
+
+.imageTrigger {
+	border-radius: 2px 0 0 2px;
+}
+
+.titleInput {
+	flex: 1;
+	border-radius: 0 2px 2px 0;
+}
+
 .hint {
 	font-size: var(--font-size-xs);
 	color: var(--l3-foreground);
@@ -60,26 +82,62 @@
 	}
 }
 
-.cardName {
-	color: var(--l1-foreground);
+// "From a template" tab: a centered browse-and-request placeholder until the
+// templates BE lands. Fixed height matches .panel so switching tabs won't resize.
+.templatesPanel {
+	height: 460px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 12px;
+	padding: 6px 24px;
+	text-align: center;
+}
+
+.templatesIcon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 44px;
+	height: 44px;
+	margin-bottom: 4px;
+	border-radius: 10px;
+	color: var(--bg-robin-400);
+	background: var(--callout-primary-background);
+	border: 1px solid var(--callout-primary-border);
+}
+
+.templatesDesc {
+	max-width: 360px;
+}
+
+.browseLink {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	margin-top: 4px;
+	color: var(--bg-robin-400);
 	font-size: var(--font-size-sm);
 	font-weight: var(--font-weight-medium);
-}
 
-.cardDesc {
-	color: var(--l2-foreground);
-	font-size: var(--font-size-xs);
-	line-height: 1.45;
-}
-
-.requestRow {
-	border-top: 1px solid var(--l2-border);
-	padding-top: 12px;
-
-	:global(.request-entity-container) {
-		gap: 10px 16px;
-		padding: 14px 16px;
+	&:hover {
+		color: var(--bg-robin-300);
 	}
+}
+
+.requestForm {
+	display: flex;
+	gap: 8px;
+	width: 100%;
+	max-width: 380px;
+	margin-top: 16px;
+	padding-top: 16px;
+	border-top: 1px solid var(--l2-border);
+}
+
+.requestInput {
+	flex: 1;
 }
 
 .importHeader {
@@ -106,73 +164,6 @@
 
 .editorExpanded {
 	margin-top: 8px;
-}
-
-.templatesLayout {
-	display: flex;
-	gap: 12px;
-	flex: 1;
-	min-height: 0;
-}
-
-.templatesList {
-	flex: none;
-	width: 200px;
-	display: flex;
-	flex-direction: column;
-	gap: 4px;
-	overflow-y: auto;
-	padding-right: 4px;
-}
-
-.templateItem {
-	display: flex;
-	flex-direction: column;
-	gap: 2px;
-	padding: 8px 10px;
-	border: 1px solid transparent;
-	border-radius: 6px;
-	background: transparent;
-	text-align: left;
-	cursor: pointer;
-	transition:
-		background 0.12s,
-		border-color 0.12s;
-}
-
-.templateItem:hover {
-	background: var(--l2-background);
-}
-
-.templateItemActive {
-	background: var(--l2-background);
-	border-color: var(--primary-background);
-}
-
-.templateName {
-	color: var(--l1-foreground);
-	font-size: var(--font-size-sm);
-	font-weight: var(--font-weight-medium);
-}
-
-.templateCat {
-	color: var(--l3-foreground);
-	font-size: var(--font-size-xs);
-}
-
-.templatesPreview {
-	flex: 1;
-	min-width: 0;
-	display: flex;
-	flex-direction: column;
-	gap: 10px;
-}
-
-.previewHead {
-	display: flex;
-	align-items: flex-start;
-	justify-content: space-between;
-	gap: 12px;
 }
 
 .jsonError {

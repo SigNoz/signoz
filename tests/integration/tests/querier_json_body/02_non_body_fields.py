@@ -9,8 +9,8 @@ from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.logs import Logs
 from fixtures.querier import (
+    build_aggregation,
     build_group_by_field,
-    build_logs_aggregation,
     build_order_by,
     build_raw_query,
     build_scalar_query,
@@ -58,7 +58,7 @@ def _scalar(
     q = build_scalar_query(
         name=name,
         signal="logs",
-        aggregations=[build_logs_aggregation(aggregation)],
+        aggregations=[build_aggregation(aggregation)],
         filter_expression=expression,
         group_by=group_by,
         step_interval=60,

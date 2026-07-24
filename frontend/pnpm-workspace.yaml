@@ -1,6 +1,53 @@
-trustPolicy: no-downgrade
+blockExoticSubdeps: true
 minimumReleaseAge: 2880 # 2d
-minimumReleaseAgeStrict: true
 minimumReleaseAgeExclude:
  - '@signozhq/*'
-blockExoticSubdeps: true
+minimumReleaseAgeStrict: true
+# Security floors for vulnerable transitive deps. Where possible, targets are
+# capped to avoid crossing breaking versions (major; and minor for 0.x).
+# Some entries may still force a breaking bump when no safe release exists
+# within the consumer’s constraint—see per-entry notes.
+overrides:
+ # via: direct devDep @babel/core ^7.22.11 (+ babel plugin peers)
+ # remove: bump @babel/core in package.json to ^7.29.6
+ '@babel/core@<=7.29.0': '>=7.29.6 <8'
+ # via: jest > babel-plugin-istanbul > @istanbuljs/load-nyc-config@1.1.0 (js-yaml ^3.13.1)
+ # remove: blocked — 1.1.0 is latest and still depends on js-yaml 3.x
+ '@istanbuljs/load-nyc-config>js-yaml': '>=4.2.0 <5'
+ # via: msw@1.3.2 (devDep) > cookie ^0.4.2
+ # remove: upgrade msw to >=2 (ships cookie ^1). Do NOT open the cap: cookie >=1 is
+ # ESM-only and breaks msw under jest's CJS sandbox (kills every test suite)
+ cookie@<0.7.0: '>=0.7.1 <1'
+ # via: direct dep dompurify 3.4.0; @grafana/data@11.6.15 (3.4.0/3.2.4 exact);
+ #      @monaco-editor/react > monaco-editor@0.55.1 (3.2.7 exact)
+ # remove: bump direct dep to 3.4.11; @grafana/data (latest 13.1.0) and
+ #         monaco-editor (latest 0.55.1) still pin vulnerable versions — blocked
+ dompurify@<=3.4.10: '>=3.4.11 <4'
+ # via: rolldown-vite@7.3.1 (esbuild ^0.27.0); orval@8.9.1 (^0.27.4); ts-jest@29.4.9 (~0.27.4)
+ # remove: blocked on rolldown-vite (7.3.1 is latest, still ^0.27.0);
+ #         orval >=8.20.0 and ts-jest >=29.4.11 already fixed on their side
+ esbuild@>=0.27.3 <0.28.1: '>=0.28.1 <0.29.0'
+ # via: react-use@17.5.1 (direct, js-cookie ^2.2.1); @grafana/data > react-use@17.6.0
+ # remove: bump react-use to >=17.6.1 (js-cookie ^3); @grafana/data side blocked
+ js-cookie@<=3.0.5: '>=3.0.7 <4'
+ # via: @orval/core@8.9.1 (devDep, js-yaml 4.1.1 EXACT pin — not deletable);
+ #      json-schema-to-typescript@15 > @apidevtools/json-schema-ref-parser (^4.1.0)
+ # remove: upgrade orval to >=8.20.0 (drops js-yaml dependency entirely)
+ js-yaml@>=4.0.0 <=4.1.1: '>=4.2.0 <5'
+ # via: react-syntax-highlighter@15.5.0 (prismjs ^1.27.0 + refractor@3 ~1.27.0 tilde-pinned)
+ # remove: bump react-syntax-highlighter to >=16.1.1 (prismjs ^1.30.0, refractor@5)
+ prismjs@<1.30.0: '>=1.30.0 <2'
+ # via: direct dep react-router-dom-v5-compat@6.30.3 (react-router 6.30.3 exact)
+ # remove: bump react-router-dom-v5-compat to 6.30.4. Do NOT open the cap:
+ # react-router >=7 requires React 19 and breaks the app-wide CompatRouter
+ react-router@>=6.7.0 <6.30.4: '>=6.30.4 <7'
+ # via: msw@1.3.2 (devDep) > inquirer@8 > external-editor@3.1.0 (tmp ^0.0.33)
+ # remove: upgrade msw to >=2 (drops the inquirer/external-editor chain)
+ tmp@<0.2.6: '>=0.2.6 <0.3.0'
+ # via: jest > babel-plugin-macros > cosmiconfig@7 (yaml ^1.10.0);
+ #      typescript-plugin-css-modules > postcss-load-config@3 (^1.10.2)
+ # remove: blocked — babel-plugin-macros 3.1.0 (latest) still uses cosmiconfig@7
+ yaml@>=1.0.0 <1.10.3: '>=1.10.3 <2'
+trustPolicy: no-downgrade
+trustPolicyExclude:
+ - 'semver@6.3.1 || 5.7.2'

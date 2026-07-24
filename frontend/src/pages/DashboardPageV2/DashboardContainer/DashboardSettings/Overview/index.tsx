@@ -83,7 +83,18 @@ function Overview({ dashboard }: OverviewProps): JSX.Element {
 			);
 		}
 		if (updatedImage !== image) {
-			ops.push(replace('/image', updatedImage));
+			// `replace` fails when the image doesn't exist yet, so add it when the
+			// dashboard has none (`add` creates or replaces the member). Key off the
+			// raw stored value, not the `Base64Icons[0]`-defaulted local `image`.
+			ops.push(
+				op(
+					dashboard.image
+						? DashboardtypesPatchOpDTO.replace
+						: DashboardtypesPatchOpDTO.add,
+					'/image',
+					updatedImage,
+				),
+			);
 		}
 		if (!isEqual(updatedTags, tagsAsStrings)) {
 			ops.push(replace('/tags', stringsToTags(updatedTags)));
@@ -96,6 +107,7 @@ function Overview({ dashboard }: OverviewProps): JSX.Element {
 		description,
 		updatedImage,
 		image,
+		dashboard.image,
 		updatedTags,
 		tagsAsStrings,
 	]);

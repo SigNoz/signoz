@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import { listRolesSuccessResponse } from 'mocks-server/__mockdata__/roles';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
@@ -6,30 +5,6 @@ import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 
 import ServiceAccountDrawer from '../ServiceAccountDrawer';
-
-jest.mock('@signozhq/ui/drawer', () => ({
-	...jest.requireActual('@signozhq/ui/drawer'),
-	DrawerWrapper: ({
-		children,
-		footer,
-		open,
-	}: {
-		children?: ReactNode;
-		footer?: ReactNode;
-		open: boolean;
-	}): JSX.Element | null =>
-		open ? (
-			<div>
-				{children}
-				{footer}
-			</div>
-		) : null,
-}));
-
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
-	toast: { success: jest.fn(), error: jest.fn() },
-}));
 
 const ROLES_ENDPOINT = '*/api/v1/roles';
 const SA_KEYS_ENDPOINT = '*/api/v1/service_accounts/:id/keys';
@@ -247,21 +222,20 @@ describe('ServiceAccountDrawer', () => {
 			screen.getByRole('button', { name: /Delete Service Account/i }),
 		);
 
-		const dialog = await screen.findByRole('dialog', {
-			name: /Delete service account CI Bot/i,
-		});
-		expect(dialog).toBeInTheDocument();
+		await screen.findByTestId('delete-service-account-modal');
+		expect(
+			screen.getByTestId('delete-service-account-modal'),
+		).toBeInTheDocument();
 
-		const confirmBtns = screen.getAllByRole('button', { name: /^Delete$/i });
-		await user.click(confirmBtns[confirmBtns.length - 1]);
+		await user.click(screen.getByTestId('confirm-delete-btn'));
 
-		await waitFor(() => {
-			expect(deleteSpy).toHaveBeenCalled();
-		});
-
-		await waitFor(() => {
-			expect(screen.queryByDisplayValue('CI Bot')).not.toBeInTheDocument();
-		});
+		await waitFor(
+			() => {
+				expect(deleteSpy).toHaveBeenCalled();
+				expect(screen.queryByDisplayValue('CI Bot')).not.toBeInTheDocument();
+			},
+			{ timeout: 3000 },
+		);
 	});
 
 	it('deleted account shows read-only name, no Save button, no Delete button', async () => {

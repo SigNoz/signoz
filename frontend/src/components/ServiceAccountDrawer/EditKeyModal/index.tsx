@@ -175,6 +175,7 @@ function EditKeyModal({ keyItem }: EditKeyModalProps): JSX.Element {
 			}
 			showCloseButton={!isRevokeConfirmOpen}
 			disableOutsideClick={isErrorModalVisible}
+			testId="edit-key-modal"
 			footer={
 				isRevokeConfirmOpen ? (
 					<RevokeKeyFooter

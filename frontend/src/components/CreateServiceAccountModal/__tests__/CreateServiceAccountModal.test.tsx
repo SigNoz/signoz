@@ -1,13 +1,7 @@
 import { toast } from '@signozhq/ui/sonner';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
-import {
-	render,
-	screen,
-	userEvent,
-	waitFor,
-	waitForElementToBeRemoved,
-} from 'tests/test-utils';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import CreateServiceAccountModal from '../CreateServiceAccountModal';
 
@@ -89,7 +83,7 @@ describe('CreateServiceAccountModal', () => {
 
 		await waitFor(() => {
 			expect(
-				screen.queryByRole('dialog', { name: /New Service Account/i }),
+				screen.queryByTestId('create-service-account-modal'),
 			).not.toBeInTheDocument();
 		});
 	});
@@ -129,7 +123,7 @@ describe('CreateServiceAccountModal', () => {
 		});
 
 		expect(
-			screen.getByRole('dialog', { name: /New Service Account/i }),
+			screen.getByTestId('create-service-account-modal'),
 		).toBeInTheDocument();
 	});
 
@@ -137,15 +131,14 @@ describe('CreateServiceAccountModal', () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		renderModal();
 
-		const dialog = await screen.findByRole('dialog', {
-			name: /New Service Account/i,
-		});
+		await screen.findByTestId('create-service-account-modal');
 		await user.click(screen.getByRole('button', { name: /Cancel/i }));
 
-		await waitForElementToBeRemoved(dialog);
-		expect(
-			screen.queryByRole('dialog', { name: /New Service Account/i }),
-		).not.toBeInTheDocument();
+		await waitFor(() => {
+			expect(
+				screen.queryByTestId('create-service-account-modal'),
+			).not.toBeInTheDocument();
+		});
 	});
 
 	it('shows "Name is required" after clearing the name field', async () => {

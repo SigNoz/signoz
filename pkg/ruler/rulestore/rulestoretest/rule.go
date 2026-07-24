@@ -50,13 +50,13 @@ func (m *MockSQLRuleStore) EditRule(ctx context.Context, rule *ruletypes.Storabl
 }
 
 // DeleteRule implements ruletypes.RuleStore - delegates to underlying ruleStore to trigger SQL.
-func (m *MockSQLRuleStore) DeleteRule(ctx context.Context, id valuer.UUID, fn func(context.Context) error) error {
-	return m.ruleStore.DeleteRule(ctx, id, fn)
+func (m *MockSQLRuleStore) DeleteRule(ctx context.Context, orgID valuer.UUID, id valuer.UUID, fn func(context.Context) error) error {
+	return m.ruleStore.DeleteRule(ctx, orgID, id, fn)
 }
 
 // GetStoredRule implements ruletypes.RuleStore - delegates to underlying ruleStore to trigger SQL.
-func (m *MockSQLRuleStore) GetStoredRule(ctx context.Context, id valuer.UUID) (*ruletypes.StorableRule, error) {
-	return m.ruleStore.GetStoredRule(ctx, id)
+func (m *MockSQLRuleStore) GetStoredRule(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*ruletypes.StorableRule, error) {
+	return m.ruleStore.GetStoredRule(ctx, orgID, id)
 }
 
 // GetStoredRules implements ruletypes.RuleStore - delegates to underlying ruleStore to trigger SQL.
@@ -82,14 +82,14 @@ func (m *MockSQLRuleStore) ExpectCreateRule(rule *ruletypes.StorableRule) {
 
 // ExpectEditRule sets up SQL expectations for EditRule operation.
 func (m *MockSQLRuleStore) ExpectEditRule(rule *ruletypes.StorableRule) {
-	expectedPattern := `UPDATE "rule".+` + rule.UpdatedBy + `.+` + rule.OrgID + `.+WHERE \(id = '` + rule.ID.StringValue() + `'\)`
+	expectedPattern := `UPDATE "rule".+` + rule.UpdatedBy + `.+` + rule.OrgID + `.+WHERE \(org_id = '` + rule.OrgID + `'\) AND \(id = '` + rule.ID.StringValue() + `'\)`
 	m.mock.ExpectExec(expectedPattern).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 }
 
 // ExpectDeleteRule sets up SQL expectations for DeleteRule operation.
 func (m *MockSQLRuleStore) ExpectDeleteRule(ruleID valuer.UUID) {
-	expectedPattern := `DELETE FROM "rule".+WHERE \(id = '` + ruleID.StringValue() + `'\)`
+	expectedPattern := `DELETE FROM "rule".+WHERE \(org_id = '.+'\) AND \(id = '` + ruleID.StringValue() + `'\)`
 	m.mock.ExpectExec(expectedPattern).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 }
@@ -98,7 +98,7 @@ func (m *MockSQLRuleStore) ExpectDeleteRule(ruleID valuer.UUID) {
 func (m *MockSQLRuleStore) ExpectGetStoredRule(ruleID valuer.UUID, rule *ruletypes.StorableRule) {
 	rows := sqlmock.NewRows([]string{"id", "created_at", "updated_at", "created_by", "updated_by", "deleted", "data", "org_id"}).
 		AddRow(rule.ID, rule.CreatedAt, rule.UpdatedAt, rule.CreatedBy, rule.UpdatedBy, rule.Deleted, rule.Data, rule.OrgID)
-	expectedPattern := `SELECT (.+) FROM "rule".+WHERE \(id = '` + ruleID.StringValue() + `'\)`
+	expectedPattern := `SELECT (.+) FROM "rule".+WHERE \(org_id = '.+'\) AND \(id = '` + ruleID.StringValue() + `'\)`
 	m.mock.ExpectQuery(expectedPattern).
 		WillReturnRows(rows)
 }

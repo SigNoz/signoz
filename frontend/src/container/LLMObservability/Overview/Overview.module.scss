@@ -2,26 +2,11 @@
 	display: flex;
 	flex-direction: column;
 	gap: var(--spacing-8);
-	padding: var(--spacing-12) var(--spacing-16);
-}
-
-.pageHeader {
-	display: flex;
-	align-items: flex-start;
-	justify-content: space-between;
-	gap: var(--spacing-8);
-}
-
-.pageHeaderTitle {
-	.title {
-		margin: 0;
-		font-size: var(--font-size-xl);
-		font-weight: var(--font-weight-semibold);
-	}
-
-	.subtitle {
-		margin: var(--spacing-2) 0 0;
-		color: var(--text-vanilla-400);
-		font-size: var(--periscope-font-size-base);
+	padding: var(--spacing-0) var(--spacing-0);
+	//TODO: remove this once we have a proper dashboard page.
+	// The embedded V2 DashboardContainer renders its own page header (dashboard
+	// title + share/feedback chrome) removed it for now
+	:global([class*='dashboardPageHeader']) {
+		display: none;
 	}
 }

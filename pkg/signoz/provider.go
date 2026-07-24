@@ -218,6 +218,9 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewMigrateSSORoleMappingNamesFactory(sqlstore),
 		sqlmigration.NewAddMetricReductionRulesFactory(sqlstore, sqlschema),
 		sqlmigration.NewRemoveOrganizationTuplesFactory(sqlstore),
+		sqlmigration.NewAddRoleTransactionGroupsFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddTagUniqueIndexFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddTelemetryTuplesFactory(sqlstore),
 	)
 }
 

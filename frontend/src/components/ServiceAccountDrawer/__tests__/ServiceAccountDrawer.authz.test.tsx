@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import { listRolesSuccessResponse } from 'mocks-server/__mockdata__/roles';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
@@ -31,30 +30,6 @@ const activeAccountResponse = {
 	createdAt: '2026-01-01T00:00:00Z',
 	updatedAt: '2026-01-02T00:00:00Z',
 };
-
-jest.mock('@signozhq/ui/drawer', () => ({
-	...jest.requireActual('@signozhq/ui/drawer'),
-	DrawerWrapper: ({
-		children,
-		footer,
-		open,
-	}: {
-		children?: ReactNode;
-		footer?: ReactNode;
-		open: boolean;
-	}): JSX.Element | null =>
-		open ? (
-			<div>
-				{children}
-				{footer}
-			</div>
-		) : null,
-}));
-
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
-	toast: { success: jest.fn(), error: jest.fn() },
-}));
 
 function renderDrawer(
 	searchParams: Record<string, string> = { account: 'sa-1' },
@@ -118,7 +93,7 @@ describe('ServiceAccountDrawer — permissions', () => {
 		renderDrawer();
 
 		await waitFor(() => {
-			expect(screen.getByText(/serviceaccount:read/)).toBeInTheDocument();
+			expect(screen.getByText(/read:serviceaccount/)).toBeInTheDocument();
 		});
 	});
 
@@ -140,7 +115,7 @@ describe('ServiceAccountDrawer — permissions', () => {
 		fireEvent.click(screen.getByRole('radio', { name: /keys/i }));
 
 		await waitFor(() => {
-			expect(screen.getByText(/factor-api-key:list/)).toBeInTheDocument();
+			expect(screen.getByText(/list:factor-api-key/)).toBeInTheDocument();
 		});
 	});
 

@@ -1,36 +1,44 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
-import logEvent from 'api/common/logEvent';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
+import { listHosts } from 'api/generated/services/inframonitoring';
+import {
+	InframonitoringtypesHostRecordDTO,
+	InframonitoringtypesHostStatusDTO,
+	InframonitoringtypesResponseTypeDTO,
+	Querybuildertypesv5OrderDirectionDTO,
+	RenderErrorResponseDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import { AxiosError } from 'axios';
+import APIError from 'types/api/error';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource } from 'components/QuickFilters/types';
 import { InfraMonitoringEvents } from 'constants/events';
 import { FeatureKeys } from 'constants/features';
-import { LOCALSTORAGE } from 'constants/localStorage';
-import K8sBaseDetails from 'container/InfraMonitoringK8sV2/Base/K8sBaseDetails';
+import { initialQueriesMap } from 'constants/queryBuilder';
+import K8sBaseDetails, {
+	K8sDetailsFilters,
+} from 'container/InfraMonitoringK8sV2/Base/K8sBaseDetails';
 import { K8sBaseList } from 'container/InfraMonitoringK8sV2/Base/K8sBaseList';
+import StatusFilter from 'container/InfraMonitoringHostsV2/StatusFilter';
 import { K8sBaseFilters } from 'container/InfraMonitoringK8sV2/Base/types';
-import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
 import {
-	useInfraMonitoringFiltersK8s,
-	useInfraMonitoringPageListing,
-} from 'container/InfraMonitoringK8sV2/hooks';
+	InfraMonitoringEntity,
+	METRIC_NAMESPACE_BY_ENTITY,
+} from 'container/InfraMonitoringK8sV2/constants';
+import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
-import { ResizableBox } from 'periscope/components/ResizableBox';
-import usePanelWidth from 'periscope/components/ResizableBox/usePanelWidth';
 import { useAppContext } from 'providers/App/App';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
 
 import {
-	fetchHostEntityData,
-	fetchHostListData,
 	getHostMetricsQueryPayload,
 	hostDetailsMetadataConfig,
 	hostGetEntityName,
-	hostGetSelectedItemFilters,
-	hostInitialEventsFilter,
-	hostInitialLogTracesFilter,
+	hostGetSelectedItemExpression,
+	hostInitialEventsExpression,
+	hostInitialLogTracesExpression,
 	hostWidgetInfo,
 } from './constants';
 import {
@@ -42,101 +50,148 @@ import { getHostsQuickFiltersConfig } from './utils';
 
 import styles from './InfraMonitoringHosts.module.scss';
 import { ArrowUpToLine, Filter } from '@signozhq/icons';
-
-const QUICK_FILTERS_DEFAULT_WIDTH = 280;
-const QUICK_FILTERS_MIN_WIDTH = 240;
-const QUICK_FILTERS_MAX_WIDTH = 500;
+import { NANO_SECOND_MULTIPLIER, useGlobalTimeStore } from 'store/globalTime';
 
 function Hosts(): JSX.Element {
 	const [showFilters, setShowFilters] = useState(true);
-	const {
-		initialWidth: quickFiltersInitialWidth,
-		persistWidth: persistQuickFiltersWidth,
-	} = usePanelWidth({
-		storageKey: LOCALSTORAGE.QUICK_FILTERS_WIDTH_INFRA,
-		defaultWidth: QUICK_FILTERS_DEFAULT_WIDTH,
-		minWidth: QUICK_FILTERS_MIN_WIDTH,
-		maxWidth: QUICK_FILTERS_MAX_WIDTH,
-	});
-	const [, setCurrentPage] = useInfraMonitoringPageListing();
-	const [urlFilters, setUrlFilters] = useInfraMonitoringFiltersK8s();
+
+	const compositeQuery = useGetCompositeQueryParam();
+	const { redirectWithQueryBuilderData } = useQueryBuilder();
+	const isInitialized = useRef(false);
+
+	const selectedTime = useGlobalTimeStore((state) => state.selectedTime);
+	const getMinMaxTime = useGlobalTimeStore((state) => state.getMinMaxTime);
+	const { startUnixMilli, endUnixMilli } = useMemo(() => {
+		const { minTime, maxTime } = getMinMaxTime();
+		return {
+			startUnixMilli: Math.floor(minTime / NANO_SECOND_MULTIPLIER),
+			endUnixMilli: Math.floor(maxTime / NANO_SECOND_MULTIPLIER),
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [selectedTime, getMinMaxTime]);
+
+	useEffect(() => {
+		if (isInitialized.current) {
+			return;
+		}
+		isInitialized.current = true;
+
+		if (!compositeQuery) {
+			const defaultQuery = initialQueriesMap[DataSource.METRICS];
+			redirectWithQueryBuilderData({
+				...defaultQuery,
+				builder: {
+					...defaultQuery.builder,
+					queryData: defaultQuery.builder.queryData.map((query) => ({
+						...query,
+						filter: { expression: '' },
+						filters: { items: [], op: 'AND' as const },
+					})),
+				},
+			});
+		}
+	}, [compositeQuery, redirectWithQueryBuilderData]);
 
 	const { featureFlags } = useAppContext();
 	const dotMetricsEnabled =
 		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
 			?.active || false;
 
-	const { currentQuery } = useQueryBuilder();
-	const { handleChangeQueryData } = useQueryOperations({
-		index: 0,
-		query: currentQuery.builder.queryData[0],
-		entityVersion: '',
-	});
-
-	// Track previous urlFilters to only sync when the value actually changes
-	// (not when handleChangeQueryData changes due to query updates)
-	const prevUrlFiltersRef = useRef<string | null>(null);
-
-	useEffect(() => {
-		const currentFiltersJson = urlFilters ? JSON.stringify(urlFilters) : null;
-
-		// Only sync if urlFilters value has actually changed
-		if (prevUrlFiltersRef.current !== currentFiltersJson) {
-			prevUrlFiltersRef.current = currentFiltersJson;
-			// Sync filters to query builder, using empty filter when urlFilters is null
-			handleChangeQueryData('filters', urlFilters || { items: [], op: 'and' });
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [urlFilters]); // handleChangeQueryData intentionally omitted - we call the current version but don't re-run when it changes
-
 	const handleFilterVisibilityChange = (): void => {
 		setShowFilters(!showFilters);
 	};
 
-	const handleQuickFiltersChange = (query: Query): void => {
-		const filters = query.builder.queryData[0].filters;
-		// Nuqs batches these calls into a single URL update
-		// The useEffect will sync filters to query builder
-		setUrlFilters(filters || null);
-		setCurrentPage(1);
-		logEvent(InfraMonitoringEvents.FilterApplied, {
-			entity: InfraMonitoringEvents.HostEntity,
-			page: InfraMonitoringEvents.ListPage,
-		});
-	};
-
 	const fetchListData = useCallback(
 		async (filters: K8sBaseFilters, signal?: AbortSignal) => {
-			filters.orderBy ||= {
-				columnName: 'cpu',
-				order: 'desc',
-			};
+			try {
+				const response = await listHosts(
+					{
+						filter: {
+							expression: filters.filter.expression,
+							filterByStatus: filters.filter.filterByStatus
+								? (filters.filter.filterByStatus as InframonitoringtypesHostStatusDTO)
+								: undefined,
+						},
+						groupBy: filters.groupBy?.map((g) => ({ name: g.name })),
+						offset: filters.offset,
+						limit: filters.limit ?? 10,
+						start: filters.start,
+						end: filters.end,
+						orderBy: filters.orderBy
+							? {
+									key: { name: filters.orderBy.key.name },
+									direction:
+										filters.orderBy.direction === 'asc'
+											? Querybuildertypesv5OrderDirectionDTO.asc
+											: Querybuildertypesv5OrderDirectionDTO.desc,
+								}
+							: undefined,
+					},
+					signal,
+				);
 
-			return fetchHostListData(filters, signal);
+				const data = response.data;
+				return {
+					type:
+						data.type === InframonitoringtypesResponseTypeDTO.grouped_list
+							? ('grouped_list' as const)
+							: ('list' as const),
+					records: data.records,
+					total: data.total,
+					endTimeBeforeRetention: data.endTimeBeforeRetention,
+				};
+			} catch (error) {
+				return {
+					type: 'list' as const,
+					records: [] as InframonitoringtypesHostRecordDTO[],
+					total: 0,
+					error:
+						convertToApiError(error as AxiosError<RenderErrorResponseDTO>) ?? null,
+				};
+			}
 		},
 		[],
 	);
 
 	const fetchEntityData = useCallback(
 		async (
-			filters: Parameters<typeof fetchHostEntityData>[0],
+			filters: K8sDetailsFilters,
 			signal?: AbortSignal,
-		) => fetchHostEntityData(filters, signal),
+		): Promise<{
+			data: InframonitoringtypesHostRecordDTO | null;
+			error?: APIError | null;
+		}> => {
+			try {
+				const response = await listHosts(
+					{
+						filter: { expression: filters.filter.expression },
+						start: filters.start,
+						end: filters.end,
+						limit: 1,
+						offset: 0,
+					},
+					signal,
+				);
+
+				return {
+					data: response.data.records.length > 0 ? response.data.records[0] : null,
+				};
+			} catch (error) {
+				return {
+					data: null,
+					error:
+						convertToApiError(error as AxiosError<RenderErrorResponseDTO>) ?? null,
+				};
+			}
+		},
 		[],
 	);
 
-	const getSelectedItemFilters = useCallback(
-		(selectedItem: string) =>
-			hostGetSelectedItemFilters(selectedItem, dotMetricsEnabled),
+	const getInitialLogTracesExpression = useCallback(
+		(host: InframonitoringtypesHostRecordDTO) =>
+			hostInitialLogTracesExpression(host, dotMetricsEnabled),
 		[dotMetricsEnabled],
 	);
-
-	const getInitialLogTracesFilters = useCallback(
-		(host: import('api/infraMonitoring/getHostLists').HostData) =>
-			hostInitialLogTracesFilter(host, dotMetricsEnabled),
-		[dotMetricsEnabled],
-	);
-
 	const controlListPrefix = !showFilters ? (
 		<div className={styles.quickFiltersToggleContainer}>
 			<Button
@@ -155,18 +210,7 @@ function Hosts(): JSX.Element {
 			<div className={styles.infraMonitoringContainer}>
 				<div className={styles.infraContentRow}>
 					{showFilters && (
-						<ResizableBox
-							handle="right"
-							defaultWidth={QUICK_FILTERS_DEFAULT_WIDTH}
-							initialWidth={quickFiltersInitialWidth}
-							minWidth={QUICK_FILTERS_MIN_WIDTH}
-							maxWidth={QUICK_FILTERS_MAX_WIDTH}
-							onResize={persistQuickFiltersWidth}
-							resetToDefaultOnDoubleClick
-							withHandle
-							className={styles.quickFiltersContainer}
-							handleTestId="quick-filters-resize-handle"
-						>
+						<div className={styles.quickFiltersContainer}>
 							<div className={styles.quickFiltersContainerHeader}>
 								<Typography.Text>Filters</Typography.Text>
 								<Tooltip title="Collapse Filters">
@@ -181,17 +225,23 @@ function Hosts(): JSX.Element {
 								source={QuickFiltersSource.INFRA_MONITORING}
 								config={getHostsQuickFiltersConfig(dotMetricsEnabled)}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
-								onFilterChange={handleQuickFiltersChange}
+								useFieldApis={{
+									metricNamespace:
+										METRIC_NAMESPACE_BY_ENTITY[InfraMonitoringEntity.HOSTS],
+									startUnixMilli,
+									endUnixMilli,
+								}}
 							/>
-						</ResizableBox>
+						</div>
 					)}
 					<div
 						className={`${styles.listContainer}${
 							showFilters ? ` ${styles.listContainerFiltersVisible}` : ''
 						}`}
 					>
-						<K8sBaseList
+						<K8sBaseList<InframonitoringtypesHostRecordDTO>
 							controlListPrefix={controlListPrefix}
+							leftFilters={<StatusFilter />}
 							entity={InfraMonitoringEntity.HOSTS}
 							tableColumns={hostColumnsConfig}
 							fetchListData={fetchListData}
@@ -205,11 +255,11 @@ function Hosts(): JSX.Element {
 			<K8sBaseDetails
 				category={InfraMonitoringEntity.HOSTS}
 				eventCategory={InfraMonitoringEvents.HostEntity}
-				getSelectedItemFilters={getSelectedItemFilters}
+				getSelectedItemExpression={hostGetSelectedItemExpression}
 				fetchEntityData={fetchEntityData}
 				getEntityName={hostGetEntityName}
-				getInitialLogTracesFilters={getInitialLogTracesFilters}
-				getInitialEventsFilters={hostInitialEventsFilter}
+				getInitialLogTracesExpression={getInitialLogTracesExpression}
+				getInitialEventsExpression={hostInitialEventsExpression}
 				metadataConfig={hostDetailsMetadataConfig}
 				entityWidgetInfo={hostWidgetInfo}
 				getEntityQueryPayload={getHostMetricsQueryPayload}

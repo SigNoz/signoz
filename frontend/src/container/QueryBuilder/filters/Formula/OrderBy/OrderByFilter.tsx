@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Select, Spin } from 'antd';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { MetricAggregateOperator } from 'types/common/queryBuilder';
-import { popupContainer } from 'utils/selectPopupContainer';
+import { useSelectPopupContainer } from 'utils/selectPopupContainer';
 
 import { selectStyle } from '../../QueryBuilderSearch/config';
 import { OrderByProps } from './types';
@@ -13,6 +13,7 @@ function OrderByFilter({
 	onChange,
 	query,
 }: OrderByProps): JSX.Element {
+	const getPopupContainer = useSelectPopupContainer();
 	const {
 		debouncedSearchText,
 		createOptions,
@@ -64,7 +65,7 @@ function OrderByFilter({
 
 	return (
 		<Select
-			getPopupContainer={popupContainer}
+			getPopupContainer={getPopupContainer}
 			mode="tags"
 			style={selectStyle}
 			onSearch={handleSearchKeys}

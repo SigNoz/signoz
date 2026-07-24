@@ -7,19 +7,48 @@ import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
 import { Skeleton } from 'antd';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
-import PermissionDeniedFullPage from 'lib/authz/components/PermissionDeniedFullPage/PermissionDeniedFullPage';
 import ROUTES from 'constants/routes';
 import { useRolesFeatureGate } from 'hooks/useRolesFeatureGate';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { useNavigationBlocker } from 'hooks/useNavigationBlocker';
+import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
+import { withAuthZPage } from 'lib/authz/components/withAuthZ/withAuthZPage';
+import { RouterContext } from 'lib/authz/components/withAuthZ/withAuthZ';
+import {
+	buildRoleReadPermission,
+	buildRoleUpdatePermission,
+	RoleCreatePermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/role.permissions';
 import APIError from 'types/api/error';
 
 import PermissionEditor from './components/PermissionEditor';
 import { useCreateEditRolePageActions } from './useCreateEditRolePageActions';
-import { useNavigationBlocker } from 'hooks/useNavigationBlocker';
 
 import styles from './CreateEditRolePage.module.scss';
+import { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 
-function CreateEditRolePage(): JSX.Element {
+function authzCheckFn(
+	_props: object,
+	router: RouterContext,
+): BrandedPermission[] {
+	const match = router.matchPath<{ roleId: string }>(ROUTES.ROLE_DETAILS);
+	const roleId = match?.roleId ?? 'new';
+	const roleName = router.searchParams.get('name') ?? '';
+	const isCreateMode = roleId === 'new';
+
+	if (isCreateMode) {
+		return [RoleCreatePermission];
+	}
+	if (roleName) {
+		return [
+			buildRoleReadPermission(roleName),
+			buildRoleUpdatePermission(roleName),
+		];
+	}
+	return [];
+}
+
+function CreateEditRolePageContent(): JSX.Element {
 	const history = useHistory();
 	const { pathname } = useLocation();
 	const urlQuery = useUrlQuery();
@@ -47,9 +76,6 @@ function CreateEditRolePage(): JSX.Element {
 		saveError,
 		validationErrors,
 		isCreateMode,
-		hasRequiredPermission,
-		isAuthZLoading,
-		deniedPermission,
 		loadError,
 	} = useCreateEditRolePageActions(roleId, roleName);
 
@@ -80,10 +106,6 @@ function CreateEditRolePage(): JSX.Element {
 		roleId,
 		roleName,
 	]);
-
-	if (!hasRequiredPermission && !isAuthZLoading) {
-		return <PermissionDeniedFullPage permissionName={deniedPermission} />;
-	}
 
 	if (!isRolesEnabled && !isFeatureGateLoading) {
 		return (
@@ -127,7 +149,7 @@ function CreateEditRolePage(): JSX.Element {
 		);
 	}
 
-	if (isAuthZLoading || (isLoading && !isCreateMode) || isFeatureGateLoading) {
+	if ((isLoading && !isCreateMode) || isFeatureGateLoading) {
 		return (
 			<div className={styles.createEditRolePage}>
 				<Skeleton active paragraph={{ rows: 8 }} />
@@ -195,7 +217,12 @@ function CreateEditRolePage(): JSX.Element {
 							</Typography>
 						</div>
 					)}
-					<Button
+					<AuthZButton
+						checks={
+							isCreateMode
+								? [RoleCreatePermission]
+								: [buildRoleUpdatePermission(roleName)]
+						}
 						variant="solid"
 						color="primary"
 						onClick={handleSaveAndNavigate}
@@ -204,7 +231,7 @@ function CreateEditRolePage(): JSX.Element {
 						data-testid="save-button"
 					>
 						{isCreateMode ? 'Create role' : 'Save changes'}
-					</Button>
+					</AuthZButton>
 				</div>
 			</div>
 
@@ -290,4 +317,11 @@ function CreateEditRolePage(): JSX.Element {
 	);
 }
 
-export default CreateEditRolePage;
+export default withAuthZPage(CreateEditRolePageContent, {
+	checks: authzCheckFn,
+	fallbackOnLoading: (
+		<div className={styles.createEditRolePage}>
+			<Skeleton active paragraph={{ rows: 8 }} />
+		</div>
+	),
+});

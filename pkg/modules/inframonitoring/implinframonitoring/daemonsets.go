@@ -38,6 +38,8 @@ func buildDaemonSetRecords(
 			DaemonSetMemoryLimit:   -1,
 			DesiredNodes:           -1,
 			CurrentNodes:           -1,
+			ReadyNodes:             -1,
+			MisscheduledNodes:      -1,
 			Meta:                   map[string]string{},
 		}
 
@@ -65,6 +67,12 @@ func buildDaemonSetRecords(
 			}
 			if v, exists := metrics["I"]; exists {
 				record.CurrentNodes = int(v)
+			}
+			if v, exists := metrics["J"]; exists {
+				record.ReadyNodes = int(v)
+			}
+			if v, exists := metrics["K"]; exists {
+				record.MisscheduledNodes = int(v)
 			}
 		}
 

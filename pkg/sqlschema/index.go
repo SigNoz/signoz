@@ -1,6 +1,8 @@
 package sqlschema
 
 import (
+	"fmt"
+	"hash/fnv"
 	"slices"
 	"strings"
 
@@ -136,6 +138,121 @@ func (index *UniqueIndex) ToDropSQL(fmter SQLFormatter) []byte {
 	return sql
 }
 
+// UniqueIndexWithExpressions is a functional unique index: each key is a SQL
+// expression (e.g. LOWER(col)) emitted verbatim, so the caller owns its
+// well-formedness; plain columns go in as bare identifiers. The auto-generated
+// name uses a hash suffix (uq_t_<hash>) since expressions aren't valid
+// identifier fragments.
+//
+// Use this only when at least one key is a real expression: an all-identifier
+// key list reconstructs as a plain UniqueIndex on read-back and won't compare
+// equal — use UniqueIndex instead.
+type UniqueIndexWithExpressions struct {
+	TableName   TableName
+	Expressions []string
+	name        string
+}
+
+func (index *UniqueIndexWithExpressions) Name() string {
+	if index.name != "" {
+		return index.name
+	}
+
+	var b strings.Builder
+	b.WriteString(IndexTypeUnique.String())
+	b.WriteString("_")
+	b.WriteString(string(index.TableName))
+	b.WriteString("_")
+	hasher := fnv.New32a()
+	_, _ = hasher.Write([]byte(strings.Join(normalizeExpressions(index.Expressions), "\x00")))
+	fmt.Fprintf(&b, "%08x", hasher.Sum32())
+	return b.String()
+}
+
+func (index *UniqueIndexWithExpressions) Named(name string) Index {
+	copyOfExpressions := make([]string, len(index.Expressions))
+	copy(copyOfExpressions, index.Expressions)
+
+	return &UniqueIndexWithExpressions{
+		TableName:   index.TableName,
+		Expressions: copyOfExpressions,
+		name:        name,
+	}
+}
+
+func (index *UniqueIndexWithExpressions) IsNamed() bool {
+	return index.name != ""
+}
+
+func (*UniqueIndexWithExpressions) Type() IndexType {
+	return IndexTypeUnique
+}
+
+// Columns is nil: a functional index exposes no plain key columns.
+func (*UniqueIndexWithExpressions) Columns() []ColumnName {
+	return nil
+}
+
+func (index *UniqueIndexWithExpressions) Equals(other Index) bool {
+	otherIndex, ok := other.(*UniqueIndexWithExpressions)
+	if !ok {
+		return false
+	}
+
+	// Expressions are compared normalized so a declared `LOWER(x)` matches the
+	// `lower(x)` a backend renders on read-back.
+	return index.Name() == other.Name() && slices.Equal(normalizeExpressions(index.Expressions), normalizeExpressions(otherIndex.Expressions))
+}
+
+// normalizeExpressions canonicalizes each Expressions entry (case, whitespace,
+// redundant parens, identifier quoting) so a declared LOWER(x) matches the
+// lower(x) a backend renders on read-back. Reuses expressionNormalizer: an index key
+// is the same SQL grammar as a WHERE predicate. It does not handle opclass,
+// COLLATE, or ASC/DESC/NULLS suffixes: postgres strips them on read-back
+// (pg_get_indexdef), while sqlite keeps them verbatim, so an index declared with
+// one round-trips on sqlite but not on postgres.
+func normalizeExpressions(expressions []string) []string {
+	if len(expressions) == 0 {
+		return nil
+	}
+
+	normalized := make([]string, len(expressions))
+	for i, expression := range expressions {
+		normalized[i] = (&expressionNormalizer{input: expression, foldCase: true}).normalize()
+	}
+	return normalized
+}
+
+func (index *UniqueIndexWithExpressions) ToCreateSQL(fmter SQLFormatter) []byte {
+	sql := []byte{}
+
+	sql = append(sql, "CREATE UNIQUE INDEX IF NOT EXISTS "...)
+	sql = fmter.AppendIdent(sql, index.Name())
+	sql = append(sql, " ON "...)
+	sql = fmter.AppendIdent(sql, string(index.TableName))
+	sql = append(sql, " ("...)
+
+	for i, expr := range index.Expressions {
+		if i > 0 {
+			sql = append(sql, ", "...)
+		}
+		sql = append(sql, expr...)
+	}
+
+	sql = append(sql, ")"...)
+
+	return sql
+}
+
+func (index *UniqueIndexWithExpressions) ToDropSQL(fmter SQLFormatter) []byte {
+	sql := []byte{}
+
+	sql = append(sql, "DROP INDEX IF EXISTS "...)
+	sql = fmter.AppendIdent(sql, index.Name())
+
+	return sql
+}
+
 type PartialUniqueIndex struct {
 	TableName   TableName
 	ColumnNames []ColumnName
@@ -160,7 +277,7 @@ func (index *PartialUniqueIndex) Name() string {
 		b.WriteString(string(column))
 	}
 	b.WriteString("_")
-	b.WriteString((&whereNormalizer{input: index.Where}).hash())
+	b.WriteString((&expressionNormalizer{input: index.Where}).hash())
 	return b.String()
 }
 
@@ -198,7 +315,7 @@ func (index *PartialUniqueIndex) Equals(other Index) bool {
 		return false
 	}
 
-	return index.Name() == other.Name() && slices.Equal(index.Columns(), other.Columns()) && (&whereNormalizer{input: index.Where}).normalize() == (&whereNormalizer{input: otherPartial.Where}).normalize()
+	return index.Name() == other.Name() && slices.Equal(index.Columns(), other.Columns()) && (&expressionNormalizer{input: index.Where}).normalize() == (&expressionNormalizer{input: otherPartial.Where}).normalize()
 }
 
 func (index *PartialUniqueIndex) ToCreateSQL(fmter SQLFormatter) []byte {

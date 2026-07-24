@@ -11,23 +11,21 @@ import {
 	userEvent,
 } from 'tests/test-utils';
 import { FeatureKeys } from 'constants/features';
-import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import {
 	invalidLicense,
-	mockUseAuthZGrantAll,
+	setupAuthzAdmin,
+	setupAuthzDeny,
 } from 'lib/authz/utils/authz-test-utils';
+import { RoleListPermission } from 'lib/authz/hooks/useAuthZ/permissions/role.permissions';
 
 import RolesSettings from '../RolesSettings';
-
-jest.mock('lib/authz/hooks/useAuthZ/useAuthZ');
-const mockUseAuthZ = useAuthZ as jest.MockedFunction<typeof useAuthZ>;
 
 const rolesApiURL = 'http://localhost/api/v1/roles';
 
 describe('RolesSettings', () => {
 	beforeEach(() => {
-		mockUseAuthZ.mockImplementation(mockUseAuthZGrantAll);
 		server.use(
+			setupAuthzAdmin(),
 			rest.get(rolesApiURL, (_req, res, ctx) =>
 				res(ctx.status(200), ctx.json(listRolesSuccessResponse)),
 			),
@@ -35,7 +33,6 @@ describe('RolesSettings', () => {
 	});
 
 	afterEach(() => {
-		jest.clearAllMocks();
 		server.resetHandlers();
 	});
 
@@ -272,5 +269,19 @@ describe('RolesSettings', () => {
 		// In renderRow: name, description, updatedAt, createdAt.
 		// Total dashes expected: 2 (for both dates)
 		expect(dashFallback.length).toBeGreaterThanOrEqual(2);
+	});
+
+	it('disables search input when user lacks list permission', async () => {
+		server.use(
+			setupAuthzDeny(RoleListPermission),
+			rest.get(rolesApiURL, (_req, res, ctx) =>
+				res(ctx.status(200), ctx.json(listRolesSuccessResponse)),
+			),
+		);
+
+		render(<RolesSettings />);
+
+		const searchInput = await screen.findByPlaceholderText('Search for roles...');
+		expect(searchInput).toBeDisabled();
 	});
 });

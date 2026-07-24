@@ -4,26 +4,17 @@ import { Badge } from '@signozhq/ui/badge';
 import { Progress } from '@signozhq/ui/progress';
 import { Typography } from '@signozhq/ui/typography';
 import {
-	getHostLists,
-	HostData,
-	HostListPayload,
-} from 'api/infraMonitoring/getHostLists';
-import {
-	createFilterItem,
-	K8sDetailsFilters,
-	K8sDetailsMetadataConfig,
-} from 'container/InfraMonitoringK8sV2/Base/K8sBaseDetails';
-import { K8sBaseFilters } from 'container/InfraMonitoringK8sV2/Base/types';
+	InframonitoringtypesHostRecordDTO,
+	InframonitoringtypesHostStatusDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import { K8sDetailsMetadataConfig } from 'container/InfraMonitoringK8sV2/Base/K8sBaseDetails';
+import { formatValueForExpression } from 'components/QueryBuilderV2/utils';
+import { INFRA_MONITORING_ATTR_KEYS } from 'container/InfraMonitoringK8sV2/constants';
+import { SelectedItemParams } from 'container/InfraMonitoringK8sV2/hooks';
 import {
 	getHostQueryPayload,
 	hostWidgetInfo,
 } from 'container/LogDetailedView/InfraMetrics/constants';
-import {
-	TagFilter,
-	TagFilterItem,
-} from 'types/api/queryBuilder/queryBuilderData';
-
-import { getHostListsQuery } from './utils';
 
 import infraHostsStyles from './InfraMonitoringHosts.module.scss';
 
@@ -47,24 +38,32 @@ export function getMemoryProgressColor(percent: number): string {
 	return Color.BG_FOREST_500;
 }
 
-export const hostDetailsMetadataConfig: K8sDetailsMetadataConfig<HostData>[] = [
+export type HostDetailMetadataConfigType =
+	K8sDetailsMetadataConfig<InframonitoringtypesHostRecordDTO>;
+export const hostDetailsMetadataConfig: HostDetailMetadataConfigType[] = [
 	{
 		label: 'STATUS',
-		getValue: (h): string => (h.active ? 'ACTIVE' : 'INACTIVE'),
-		render: (value, h): React.ReactNode => (
-			<Badge
-				variant="outline"
-				className={`${infraHostsStyles.infraMonitoringTags} ${
-					h.active ? infraHostsStyles.tagsActive : infraHostsStyles.tagsInactive
-				}`}
-			>
-				{value}
-			</Badge>
-		),
+		getValue: (h): string =>
+			h.status === InframonitoringtypesHostStatusDTO.active
+				? 'ACTIVE'
+				: 'INACTIVE',
+		render: (value, h): React.ReactNode => {
+			const isActive = h.status === InframonitoringtypesHostStatusDTO.active;
+			return (
+				<Badge
+					variant="outline"
+					className={`${infraHostsStyles.infraMonitoringTags} ${
+						isActive ? infraHostsStyles.tagsActive : infraHostsStyles.tagsInactive
+					}`}
+				>
+					{value}
+				</Badge>
+			);
+		},
 	},
 	{
 		label: 'OPERATING SYSTEM',
-		getValue: (h): string => h.os || '-',
+		getValue: (h): string => h.meta?.['os.type'] || '-',
 		render: (value): React.ReactNode =>
 			value !== '-' ? (
 				<Badge variant="outline" className={infraHostsStyles.infraMonitoringTags}>
@@ -99,7 +98,7 @@ export const hostDetailsMetadataConfig: K8sDetailsMetadataConfig<HostData>[] = [
 ];
 
 export function getHostMetricsQueryPayload(
-	host: HostData,
+	host: InframonitoringtypesHostRecordDTO,
 	start: number,
 	end: number,
 	dotMetricsEnabled: boolean,
@@ -109,83 +108,28 @@ export function getHostMetricsQueryPayload(
 
 export { hostWidgetInfo };
 
-export function hostGetSelectedItemFilters(
-	selectedItem: string,
+export const hostGetSelectedItemExpression = (
+	params: SelectedItemParams,
+): string =>
+	`host.name = ${formatValueForExpression(params.selectedItem ?? '')}`;
+
+export function hostInitialLogTracesExpression(
+	host: InframonitoringtypesHostRecordDTO,
 	dotMetricsEnabled: boolean,
-): TagFilter {
-	const hostKey = dotMetricsEnabled ? 'host.name' : 'host_name';
-	return {
-		op: 'AND',
-		items: [createFilterItem(hostKey, selectedItem)],
-	};
+): string {
+	const hostKey = dotMetricsEnabled
+		? INFRA_MONITORING_ATTR_KEYS.HOST_NAME
+		: 'host_name';
+	const hostName = formatValueForExpression(host.hostName || '');
+	return `${hostKey} = ${hostName}`;
 }
 
-export function hostInitialLogTracesFilter(
-	host: HostData,
-	dotMetricsEnabled: boolean,
-): TagFilterItem[] {
-	const hostKey = dotMetricsEnabled ? 'host.name' : 'host_name';
-	return [createFilterItem(hostKey, host.hostName || '')];
+export function hostInitialEventsExpression(
+	_host: InframonitoringtypesHostRecordDTO,
+): string {
+	return '';
 }
 
-export function hostInitialEventsFilter(_host: HostData): TagFilterItem[] {
-	return [];
-}
-
-export const hostGetEntityName = (host: HostData): string => host.hostName;
-
-export async function fetchHostListData(
-	filters: K8sBaseFilters,
-	signal?: AbortSignal,
-): Promise<{
-	data: HostData[];
-	total: number;
-	error?: string | null;
-	rawData?: unknown;
-}> {
-	const baseQuery = getHostListsQuery();
-	const payload: HostListPayload = {
-		...baseQuery,
-		limit: filters.limit,
-		offset: filters.offset,
-		filters: filters.filters ?? { items: [], op: 'and' },
-		orderBy: filters.orderBy,
-		start: filters.start,
-		end: filters.end,
-		groupBy: filters.groupBy ?? [],
-	};
-
-	const response = await getHostLists(payload, signal);
-
-	return {
-		data: response.payload?.data?.records || [],
-		total: response.payload?.data?.total || 0,
-		error: response.error,
-		rawData: response.payload?.data,
-	};
-}
-
-export async function fetchHostEntityData(
-	filters: K8sDetailsFilters,
-	signal?: AbortSignal,
-): Promise<{ data: HostData | null; error?: string | null }> {
-	const response = await getHostLists(
-		{
-			...getHostListsQuery(),
-			filters: filters.filters,
-			start: filters.start,
-			end: filters.end,
-			limit: 1,
-			offset: 0,
-			groupBy: [],
-		},
-		signal,
-	);
-
-	const records = response.payload?.data?.records || [];
-
-	return {
-		data: records.length > 0 ? records[0] : null,
-		error: response.error,
-	};
-}
+export const hostGetEntityName = (
+	host: InframonitoringtypesHostRecordDTO,
+): string => host.hostName;

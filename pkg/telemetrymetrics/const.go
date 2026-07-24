@@ -3,7 +3,6 @@ package telemetrymetrics
 import "github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 
 var IntrinsicFields = []string{
-	"__normalized",
 	"temporality",
 	"metric_name",
 	"type",

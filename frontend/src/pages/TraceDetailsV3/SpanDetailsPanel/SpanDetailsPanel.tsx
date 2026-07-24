@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Badge } from '@signozhq/ui/badge';
 import {
 	TabsContent,
@@ -49,6 +49,7 @@ import DockModeSwitcher from './DockModeSwitcher';
 import { useSpanAttributeActions } from './hooks/useSpanAttributeActions';
 import { useTracePinnedFields } from './hooks/useTracePinnedFields';
 import Events from './Events/Events';
+import OpenInLogsExplorer from './SpanLogs/OpenInLogsExplorer';
 import SpanLogs from './SpanLogs/SpanLogs';
 import { useSpanContextLogs } from './SpanLogs/useSpanContextLogs';
 import SpanSummary from './SpanSummary';
@@ -68,6 +69,9 @@ interface SpanDetailsPanelProps {
 // dock, or a floating/right panel widened to match). ~right-dock max width.
 const WIDE_PANEL_BREAKPOINT = 720;
 
+// Context-log window padding around the span's trace time range.
+const FIVE_MINUTES_IN_MS = 5 * 60 * 1000;
+
 function SpanDetailsContent({
 	selectedSpan,
 	traceStartTime,
@@ -77,12 +81,15 @@ function SpanDetailsContent({
 	traceStartTime?: number;
 	traceEndTime?: number;
 }): JSX.Element {
-	const FIVE_MINUTES_IN_MS = 5 * 60 * 1000;
 	const [bodyRef, { width: bodyWidth }] = useMeasure<HTMLDivElement>();
 	const spanAttributeActions = useSpanAttributeActions();
 	const logTraceEvent = useTraceDetailLogEvent('v3', selectedSpan.trace_id);
+	// Tracked so the panel can render tab-specific chrome (the Logs footer)
+	// outside the scrolling tab content.
+	const [activeTab, setActiveTab] = useState('overview');
 	const handleTabChange = useCallback(
 		(tab: string): void => {
+			setActiveTab(tab);
 			logTraceEvent(TraceDetailEvents.SpanPanelTabChanged, {
 				[TraceDetailEventKeys.Tab]: tab,
 				[TraceDetailEventKeys.SpanId]: selectedSpan.span_id,
@@ -281,89 +288,99 @@ function SpanDetailsContent({
 	const eventsCount = selectedSpan.events?.length || 0;
 
 	return (
-		<div className={styles.panelBody} ref={bodyRef}>
-			{!isWide && <div className={styles.detailsSection}>{summary}</div>}
+		<>
+			<div className={styles.panelBody} ref={bodyRef}>
+				{!isWide && <div className={styles.detailsSection}>{summary}</div>}
 
-			<div className={styles.tabsSection}>
-				{/* Step 9: ContentTabs */}
-				<TabsRoot defaultValue="overview" onValueChange={handleTabChange}>
-					<TabsList variant="secondary">
-						<TabsTrigger value="overview" variant="secondary">
-							<Bookmark size={14} /> Overview
-						</TabsTrigger>
-						<TabsTrigger value="events" variant="secondary">
-							<ScrollText size={14} /> Events
-							{eventsCount > 0 && (
-								<Badge color="secondary" className={styles.eventsBadge}>
-									{eventsCount}
-								</Badge>
-							)}
-						</TabsTrigger>
-						<TabsTrigger value="logs" variant="secondary">
-							<List size={14} /> Logs
-						</TabsTrigger>
-						{infraMetadata && (
-							<TabsTrigger value="metrics" variant="secondary">
-								<ChartColumnBig size={14} /> Metrics
+				<div className={styles.tabsSection}>
+					{/* Step 9: ContentTabs */}
+					<TabsRoot defaultValue="overview" onValueChange={handleTabChange}>
+						<TabsList variant="secondary">
+							<TabsTrigger value="overview" variant="secondary">
+								<Bookmark size={14} /> Overview
 							</TabsTrigger>
-						)}
-					</TabsList>
+							<TabsTrigger value="events" variant="secondary">
+								<ScrollText size={14} /> Events
+								{eventsCount > 0 && (
+									<Badge color="secondary" className={styles.eventsBadge}>
+										{eventsCount}
+									</Badge>
+								)}
+							</TabsTrigger>
+							<TabsTrigger value="logs" variant="secondary">
+								<List size={14} /> Logs
+							</TabsTrigger>
+							{infraMetadata && (
+								<TabsTrigger value="metrics" variant="secondary">
+									<ChartColumnBig size={14} /> Metrics
+								</TabsTrigger>
+							)}
+						</TabsList>
 
-					<div className={styles.tabsScroll}>
-						<TabsContent value="overview">
-							{isWide && summary}
-							<DataViewer
-								data={spanDisplayData}
-								drawerKey="trace-details"
-								prettyViewProps={{
-									showPinned: true,
-									actions: prettyViewCustomActions,
-									visibleActions: VISIBLE_ACTIONS,
-									pinnedFieldsValue,
-									onPinnedFieldsChange,
-								}}
-							/>
-						</TabsContent>
-						<TabsContent value="events">
-							<Events
-								span={selectedSpan}
-								startTime={traceStartTime || 0}
-								isSearchVisible
-							/>
-						</TabsContent>
-						<TabsContent value="logs">
-							<SpanLogs
-								traceId={selectedSpan.trace_id}
-								spanId={selectedSpan.span_id}
-								timeRange={{
-									startTime: (traceStartTime || 0) - FIVE_MINUTES_IN_MS,
-									endTime: (traceEndTime || 0) + FIVE_MINUTES_IN_MS,
-								}}
-								logs={logs}
-								isLoading={isLogsLoading}
-								isError={isLogsError}
-								isFetching={isLogsFetching}
-								isLogSpanRelated={isLogSpanRelated}
-								handleExplorerPageRedirect={handleExplorerPageRedirect}
-								emptyStateConfig={!hasTraceIdLogs ? emptyLogsStateConfig : undefined}
-							/>
-						</TabsContent>
-						{infraMetadata && (
-							<TabsContent value="metrics">
-								<InfraMetrics
-									clusterName={infraMetadata.clusterName}
-									podName={infraMetadata.podName}
-									nodeName={infraMetadata.nodeName}
-									hostName={infraMetadata.hostName}
-									timestamp={infraMetadata.spanTimestamp}
-									dataSource={DataSource.TRACES}
+						<div className={styles.tabsScroll}>
+							<TabsContent value="overview">
+								{isWide && summary}
+								<DataViewer
+									data={spanDisplayData}
+									drawerKey="trace-details"
+									prettyViewProps={{
+										showPinned: true,
+										actions: prettyViewCustomActions,
+										visibleActions: VISIBLE_ACTIONS,
+										pinnedFieldsValue,
+										onPinnedFieldsChange,
+									}}
 								/>
 							</TabsContent>
-						)}
-					</div>
-				</TabsRoot>
+							<TabsContent value="events">
+								<Events
+									span={selectedSpan}
+									startTime={traceStartTime || 0}
+									isSearchVisible
+								/>
+							</TabsContent>
+							<TabsContent value="logs">
+								<SpanLogs
+									traceId={selectedSpan.trace_id}
+									spanId={selectedSpan.span_id}
+									timeRange={{
+										startTime: (traceStartTime || 0) - FIVE_MINUTES_IN_MS,
+										endTime: (traceEndTime || 0) + FIVE_MINUTES_IN_MS,
+									}}
+									logs={logs}
+									isLoading={isLogsLoading}
+									isError={isLogsError}
+									isFetching={isLogsFetching}
+									isLogSpanRelated={isLogSpanRelated}
+									handleExplorerPageRedirect={handleExplorerPageRedirect}
+									emptyStateConfig={!hasTraceIdLogs ? emptyLogsStateConfig : undefined}
+								/>
+							</TabsContent>
+							{infraMetadata && (
+								<TabsContent value="metrics">
+									<InfraMetrics
+										clusterName={infraMetadata.clusterName}
+										podName={infraMetadata.podName}
+										nodeName={infraMetadata.nodeName}
+										hostName={infraMetadata.hostName}
+										timestamp={infraMetadata.spanTimestamp}
+										dataSource={DataSource.TRACES}
+									/>
+								</TabsContent>
+							)}
+						</div>
+					</TabsRoot>
+				</div>
 			</div>
-		</div>
+
+			{/* Sibling of the scrolling panelBody, so it's a true fixed footer flush
+			    with the panel's bottom edge — always visible, never scrolls. */}
+			{activeTab === 'logs' && (
+				<div className={styles.logsFooter}>
+					<OpenInLogsExplorer onClick={handleExplorerPageRedirect} />
+				</div>
+			)}
+		</>
 	);
 }
 

@@ -9,17 +9,18 @@ type CheckType struct {
 }
 
 var (
-	CheckTypeHosts        = CheckType{valuer.NewString("hosts")}
-	CheckTypeProcesses    = CheckType{valuer.NewString("processes")}
-	CheckTypePods         = CheckType{valuer.NewString("pods")}
-	CheckTypeNodes        = CheckType{valuer.NewString("nodes")}
-	CheckTypeDeployments  = CheckType{valuer.NewString("deployments")}
-	CheckTypeDaemonsets   = CheckType{valuer.NewString("daemonsets")}
-	CheckTypeStatefulsets = CheckType{valuer.NewString("statefulsets")}
-	CheckTypeJobs         = CheckType{valuer.NewString("jobs")}
-	CheckTypeNamespaces   = CheckType{valuer.NewString("namespaces")}
-	CheckTypeClusters     = CheckType{valuer.NewString("clusters")}
-	CheckTypeVolumes      = CheckType{valuer.NewString("volumes")}
+	CheckTypeHosts          = CheckType{valuer.NewString("hosts")}
+	CheckTypeProcesses      = CheckType{valuer.NewString("processes")}
+	CheckTypePods           = CheckType{valuer.NewString("pods")}
+	CheckTypeNodes          = CheckType{valuer.NewString("nodes")}
+	CheckTypeDeployments    = CheckType{valuer.NewString("deployments")}
+	CheckTypeDaemonsets     = CheckType{valuer.NewString("daemonsets")}
+	CheckTypeStatefulsets   = CheckType{valuer.NewString("statefulsets")}
+	CheckTypeJobs           = CheckType{valuer.NewString("jobs")}
+	CheckTypeNamespaces     = CheckType{valuer.NewString("namespaces")}
+	CheckTypeClusters       = CheckType{valuer.NewString("clusters")}
+	CheckTypeVolumes        = CheckType{valuer.NewString("volumes")}
+	CheckTypeKubeContainers = CheckType{valuer.NewString("kube_containers")}
 )
 
 func (CheckType) Enum() []any {
@@ -35,6 +36,7 @@ func (CheckType) Enum() []any {
 		CheckTypeNamespaces,
 		CheckTypeClusters,
 		CheckTypeVolumes,
+		CheckTypeKubeContainers,
 	}
 }
 
@@ -50,6 +52,7 @@ var ValidCheckTypes = []CheckType{
 	CheckTypeNamespaces,
 	CheckTypeClusters,
 	CheckTypeVolumes,
+	CheckTypeKubeContainers,
 }
 
 // CheckComponentType tags each AssociatedComponent as either a receiver or a processor.

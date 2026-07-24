@@ -8,7 +8,7 @@ import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Pan
 import { resolveSignal } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/getBuilderQueries';
 import type { EQueryType } from 'types/common/dashboard';
 
-import type { LegendSeries } from '../hooks/useLegendSeries';
+import type { LegendSeries } from '../utils/legendSeries';
 import type { TableColumnOption } from '../hooks/useTableColumns';
 import ConfigActions from './ConfigActions/ConfigActions';
 import SectionSlot from './SectionSlot/SectionSlot';

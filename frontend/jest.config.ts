@@ -20,7 +20,7 @@ const config: Config.InitialOptions = {
 		'\\.module\\.mjs$': '<rootDir>/__mocks__/cssMock.ts',
 		'\\.md$': '<rootDir>/__mocks__/cssMock.ts',
 		'^uplot$': '<rootDir>/__mocks__/uplotMock.ts',
-		'^@signozhq/resizable$': '<rootDir>/__mocks__/resizableMock.tsx',
+		'^motion/react$': '<rootDir>/__mocks__/motionMock.tsx',
 		'^hooks/useSafeNavigate$': USE_SAFE_NAVIGATE_MOCK_PATH,
 		'^src/hooks/useSafeNavigate$': USE_SAFE_NAVIGATE_MOCK_PATH,
 		'^.*/useSafeNavigate$': USE_SAFE_NAVIGATE_MOCK_PATH,

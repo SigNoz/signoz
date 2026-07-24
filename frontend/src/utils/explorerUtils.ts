@@ -1,6 +1,8 @@
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import ROUTES from 'constants/routes';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 // Mapping between panel types and explorer views
 export const panelTypeToExplorerView: Record<PANEL_TYPES, ExplorerViews> = {
@@ -50,3 +52,36 @@ export const getExplorerViewFromUrl = (
 export const getExplorerViewForPanelType = (
 	panelType: PANEL_TYPES,
 ): ExplorerViews => panelTypeToExplorerView[panelType];
+
+export interface MetricsExplorerUrlParams {
+	query: Query;
+	relativeTime?: string;
+	startTimeMs?: number;
+	endTimeMs?: number;
+}
+
+export const getMetricsExplorerUrl = ({
+	query,
+	relativeTime,
+	startTimeMs,
+	endTimeMs,
+}: MetricsExplorerUrlParams): string => {
+	const params = new URLSearchParams();
+	params.set(
+		QueryParams.compositeQuery,
+		encodeURIComponent(JSON.stringify(query)),
+	);
+
+	if (relativeTime) {
+		params.set(QueryParams.relativeTime, relativeTime);
+	} else {
+		if (startTimeMs !== undefined) {
+			params.set(QueryParams.startTime, String(startTimeMs));
+		}
+		if (endTimeMs !== undefined) {
+			params.set(QueryParams.endTime, String(endTimeMs));
+		}
+	}
+
+	return `${ROUTES.METRICS_EXPLORER_EXPLORER}?${params.toString()}`;
+};

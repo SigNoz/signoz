@@ -1,24 +1,21 @@
 import { Route, Switch } from 'react-router-dom';
 import ROUTES from 'constants/routes';
 import { FeatureKeys } from 'constants/features';
-import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
+import { server } from 'mocks-server/server';
 import { defaultFeatureFlags, render, screen } from 'tests/test-utils';
 import {
 	invalidLicense,
-	mockUseAuthZGrantAll,
+	setupAuthzAdmin,
 } from 'lib/authz/utils/authz-test-utils';
 
 import CreateEditRolePage from '../CreateEditRolePage';
 
-jest.mock('lib/authz/hooks/useAuthZ/useAuthZ');
-const mockUseAuthZ = useAuthZ as jest.MockedFunction<typeof useAuthZ>;
-
 beforeEach(() => {
-	mockUseAuthZ.mockImplementation(mockUseAuthZGrantAll);
+	server.use(setupAuthzAdmin());
 });
 
 afterEach(() => {
-	jest.clearAllMocks();
+	server.resetHandlers();
 });
 
 function renderCreatePage(
@@ -71,7 +68,9 @@ describe('CreateEditRolePage - Feature Gate', () => {
 				),
 			});
 
-			expect(screen.getByTestId('feature-gate-error-banner')).toBeInTheDocument();
+			await expect(
+				screen.findByTestId('feature-gate-error-banner'),
+			).resolves.toBeInTheDocument();
 			await expect(
 				screen.findByText(/Custom roles feature is not available/i),
 			).resolves.toBeInTheDocument();
@@ -80,7 +79,9 @@ describe('CreateEditRolePage - Feature Gate', () => {
 		it('shows error when license is invalid', async () => {
 			renderCreatePage({ activeLicense: invalidLicense });
 
-			expect(screen.getByTestId('feature-gate-error-banner')).toBeInTheDocument();
+			await expect(
+				screen.findByTestId('feature-gate-error-banner'),
+			).resolves.toBeInTheDocument();
 			await expect(
 				screen.findByText(/Custom roles feature is not available/i),
 			).resolves.toBeInTheDocument();
@@ -92,16 +93,19 @@ describe('CreateEditRolePage - Feature Gate', () => {
 			await expect(screen.findByText('Create Role')).resolves.toBeInTheDocument();
 		});
 
-		it('shows back button when feature disabled', () => {
+		it('shows back button when feature disabled', async () => {
 			renderCreatePage({ activeLicense: invalidLicense });
 
-			expect(screen.getByTestId('cancel-button')).toBeInTheDocument();
+			await expect(
+				screen.findByTestId('cancel-button'),
+			).resolves.toBeInTheDocument();
 		});
 
-		it('back button is enabled when feature disabled', () => {
+		it('back button is enabled when feature disabled', async () => {
 			renderCreatePage({ activeLicense: invalidLicense });
 
-			expect(screen.getByTestId('cancel-button')).not.toBeDisabled();
+			const cancelButton = await screen.findByTestId('cancel-button');
+			expect(cancelButton).not.toBeDisabled();
 		});
 	});
 
@@ -118,7 +122,9 @@ describe('CreateEditRolePage - Feature Gate', () => {
 				),
 			});
 
-			expect(screen.getByTestId('feature-gate-error-banner')).toBeInTheDocument();
+			await expect(
+				screen.findByTestId('feature-gate-error-banner'),
+			).resolves.toBeInTheDocument();
 			await expect(
 				screen.findByText(/Custom roles feature is not available/i),
 			).resolves.toBeInTheDocument();
@@ -127,7 +133,9 @@ describe('CreateEditRolePage - Feature Gate', () => {
 		it('shows error when license is invalid', async () => {
 			renderEditPage(ROLE_ID, ROLE_NAME, { activeLicense: invalidLicense });
 
-			expect(screen.getByTestId('feature-gate-error-banner')).toBeInTheDocument();
+			await expect(
+				screen.findByTestId('feature-gate-error-banner'),
+			).resolves.toBeInTheDocument();
 			await expect(
 				screen.findByText(/Custom roles feature is not available/i),
 			).resolves.toBeInTheDocument();

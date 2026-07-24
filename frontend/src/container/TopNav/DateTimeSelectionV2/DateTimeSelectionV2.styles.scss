@@ -39,12 +39,13 @@
 		display: flex;
 		flex-direction: row;
 		border-radius: 2px;
-		border: 1px solid var(--l1-border);
+		border: 1px solid var(--date-time-selector-border-color, var(--l1-border));
 		background: var(--l3-background);
 		margin-left: 8px;
 
 		.refresh-btn {
-			border-right: 1px solid var(--l1-border);
+			border-right: 1px solid
+				var(--date-time-selector-border-color, var(--l1-border));
 		}
 		.ant-btn {
 			display: flex;
@@ -54,7 +55,7 @@
 			border: none;
 
 			&.active-tab {
-				background-color: var(--l1-border);
+				background-color: var(--date-time-selector-border-color, var(--l1-border));
 			}
 		}
 	}

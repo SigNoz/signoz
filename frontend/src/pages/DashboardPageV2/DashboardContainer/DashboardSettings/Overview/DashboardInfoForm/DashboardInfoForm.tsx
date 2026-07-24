@@ -1,17 +1,11 @@
 import { Dispatch, SetStateAction } from 'react';
 import { Input } from '@signozhq/ui/input';
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-} from '@signozhq/ui/select';
 import { Typography } from '@signozhq/ui/typography';
 // eslint-disable-next-line signoz/no-antd-components -- multiline TextArea has no @signozhq/ui equivalent yet
 import { Input as AntdInput } from 'antd';
 import TagKeyValueInput from 'components/TagKeyValueInput/TagKeyValueInput';
 
-import { Base64Icons } from '../utils';
+import DashboardImagePicker from '../DashboardImagePicker/DashboardImagePicker';
 import { DASHBOARD_NAME_MAX_LENGTH } from '../../../constants';
 import settingsStyles from '../../DashboardSettings.module.scss';
 import styles from './DashboardInfoForm.module.scss';
@@ -43,30 +37,11 @@ function DashboardInfoForm({
 				<div className={styles.infoItemContainer}>
 					<Typography className={styles.infoTitle}>Dashboard Name</Typography>
 					<section className={styles.nameIconInput}>
-						<Select
-							value={image}
-							onChange={(value): void => onImageChange(value as string)}
-						>
-							<SelectTrigger className={styles.dashboardImageInput} />
-							<SelectContent
-								className={styles.dashboardImageOptions}
-								withPortal={false}
-							>
-								{Base64Icons.map((icon) => (
-									<SelectItem
-										key={icon}
-										value={icon}
-										className={styles.dashboardImageSelectItem}
-									>
-										<img
-											src={icon}
-											alt="dashboard-icon"
-											className={styles.listItemImage}
-										/>
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
+						<DashboardImagePicker
+							image={image}
+							onChange={onImageChange}
+							triggerClassName={styles.dashboardImageInput}
+						/>
 
 						<Input
 							testId="dashboard-name"

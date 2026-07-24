@@ -10,6 +10,7 @@ import {
 	panelRef,
 } from '../../../patchOps';
 import { useDashboardStore } from '../../../store/useDashboardStore';
+import { useScrollIntoViewStore } from '../../../store/useScrollIntoViewStore';
 import type { DashboardSection } from '../../../utils';
 
 interface Params {
@@ -32,6 +33,7 @@ export function useClonePanel({
 }: Params): (args: ClonePanelArgs) => Promise<void> {
 	const dashboardId = useDashboardStore((s) => s.dashboardId);
 	const { patchAsync } = useOptimisticPatch();
+	const setScrollTargetId = useScrollIntoViewStore((s) => s.setScrollTargetId);
 
 	return useCallback(
 		async ({ panelId, layoutIndex }: ClonePanelArgs): Promise<void> => {
@@ -64,6 +66,9 @@ export function useClonePanel({
 				success: 'Panel cloned',
 				error: 'Failed to clone panel',
 				position: 'top-center',
+				duration: 2000,
+				// Defer the reveal to the toast's auto-close so the confirmation shows first.
+				onAutoClose: () => setScrollTargetId(newPanelId),
 			});
 
 			// toast.promise owns the error UX; swallow here to avoid an unhandled
@@ -74,6 +79,6 @@ export function useClonePanel({
 				// no-op
 			}
 		},
-		[sections, dashboardId, patchAsync],
+		[sections, dashboardId, patchAsync, setScrollTargetId],
 	);
 }

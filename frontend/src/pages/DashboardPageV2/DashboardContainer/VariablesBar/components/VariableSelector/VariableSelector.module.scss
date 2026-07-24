@@ -1,0 +1,105 @@
+.variableItem {
+	position: relative;
+	display: flex;
+	width: 160px;
+	flex-direction: column;
+	padding-top: 7px;
+}
+
+// Loading indicator: an indeterminate bar flush along the control's bottom edge,
+// full width and overlaying the border so it reads as the input's own edge rather
+// than a separate element. Non-interactive so the name/description stays hoverable.
+.loadingBar {
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	height: 2px;
+	overflow: hidden;
+	border-radius: 0 0 2px 2px;
+	background: color-mix(in srgb, var(--bg-robin-500) 20%, transparent);
+	pointer-events: none;
+}
+
+.loadingBar::after {
+	content: '';
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	width: 40%;
+	border-radius: 2px;
+	background: var(--bg-robin-500);
+	animation: variable-loading-slide 1.1s ease-in-out infinite;
+}
+
+@keyframes variable-loading-slide {
+	0% {
+		left: -40%;
+	}
+
+	100% {
+		left: 100%;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.loadingBar::after {
+		left: 0;
+		width: 100%;
+		animation: none;
+		opacity: 0.7;
+	}
+}
+
+.variableName {
+	--typography-text-display: flex;
+	position: absolute;
+	top: -3px;
+	left: 4px;
+	z-index: 1;
+	align-items: center;
+	gap: 5px;
+	// Equal left/right inset: left:8px in, and 8px reserved on the right (16 total),
+	// so a truncated name + info icon has matching space on both sides.
+	max-width: calc(100% - 10px);
+	overflow: hidden;
+	padding: 0 2px;
+	background-color: var(--l1-background);
+	color: var(--l2-foreground);
+	font-family: Inter;
+	font-size: 11px;
+	font-weight: 500;
+	line-height: 14px;
+}
+
+.name {
+	overflow: hidden;
+	min-width: 0;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.infoIcon {
+	display: inline-flex;
+	align-self: center;
+	flex-shrink: 0;
+	color: var(--l2-foreground);
+}
+
+.variableValue {
+	display: flex;
+	width: 100%;
+	height: 33px;
+	align-items: center;
+	border: 1px solid var(--l3-border);
+	border-radius: 2px;
+	background: var(--l2-background);
+	color: var(--l2-foreground);
+	font-size: 12px;
+
+	&:hover,
+	&:focus-within {
+		outline: 1px solid var(--bg-robin-400);
+	}
+}

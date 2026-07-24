@@ -74,6 +74,7 @@ def test_namespaces_accuracy(
             "namespaceCPU",
             "namespaceMemory",
             "podCountsByPhase",
+            "counts",
             "meta",
         ):
             assert field in record, f"missing {field} in {record!r}"
@@ -81,6 +82,9 @@ def test_namespaces_accuracy(
         for bucket in ("pending", "running", "succeeded", "failed", "unknown"):
             assert bucket in record["podCountsByPhase"]
             assert isinstance(record["podCountsByPhase"][bucket], int)
+        for bucket in ("deployments", "daemonSets", "jobs", "statefulSets"):
+            assert bucket in record["counts"]
+            assert isinstance(record["counts"][bucket], int)
 
         assert record["meta"].get("k8s.namespace.name") == record["namespaceName"]
         assert "k8s.cluster.name" in record["meta"]
@@ -90,6 +94,7 @@ def test_namespaces_accuracy(
         for field in ("namespaceCPU", "namespaceMemory"):
             assert compare_values(record[field], exp[field], 1e-6), f"{record['namespaceName']}.{field}: got {record[field]}, expected {exp[field]}"
         assert record["podCountsByPhase"] == exp["podCountsByPhase"]
+        assert record["counts"] == exp["counts"]
 
 
 @pytest.mark.parametrize(
@@ -210,6 +215,7 @@ def test_namespaces_warnings(
             {"web-a-prod", "web-b-prod"},
             id="in_contains",
         ),
+        pytest.param("k8s.namespace.namee = 'web-a-prod'", set(), id="unresolved_key"),
     ],
 )
 def test_namespaces_filter(
@@ -265,7 +271,6 @@ def test_namespaces_filter(
 @pytest.mark.parametrize(
     "expression,err_substr",
     [
-        pytest.param("k8s.namespace.namee = 'web-a-prod'", "k8s.namespace.namee", id="bad_attr_name"),
         pytest.param("k8s.namespace.name =", None, id="trailing_op"),
         pytest.param("(k8s.namespace.name = 'web-a-prod'", None, id="unclosed_paren"),
     ],
@@ -278,8 +283,8 @@ def test_namespaces_filter_invalid(
     expression: str,
     err_substr,
 ) -> None:
-    """Invalid filter expressions (typo'd attribute key, malformed grammar) return
-    400 invalid_input with structured errors; bad attribute keys are named in them."""
+    """Malformed filter grammar (trailing operator, unclosed paren) returns
+    400 invalid_input with structured errors."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(

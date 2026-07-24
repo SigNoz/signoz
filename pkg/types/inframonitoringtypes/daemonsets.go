@@ -26,6 +26,8 @@ type DaemonSetRecord struct {
 	DaemonSetMemoryLimit   float64           `json:"daemonSetMemoryLimit" required:"true"`
 	DesiredNodes           int               `json:"desiredNodes" required:"true"`
 	CurrentNodes           int               `json:"currentNodes" required:"true"`
+	ReadyNodes             int               `json:"readyNodes" required:"true"`
+	MisscheduledNodes      int               `json:"misscheduledNodes" required:"true"`
 	PodCountsByPhase       PodCountsByPhase  `json:"podCountsByPhase" required:"true"`
 	PodCountsByStatus      PodCountsByStatus `json:"podCountsByStatus" required:"true"`
 	Meta                   map[string]string `json:"meta" required:"true"`

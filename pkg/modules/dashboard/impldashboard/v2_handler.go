@@ -418,7 +418,13 @@ func (handler *handler) GetPublicWidgetQueryRangeV2(rw http.ResponseWriter, r *h
 		return
 	}
 
-	queryRangeResults, err := handler.module.GetPublicWidgetQueryRangeV2(ctx, id, panelKey, r.URL.Query().Get("startTime"), r.URL.Query().Get("endTime"))
+	params := new(dashboardtypes.PublicWidgetQueryRangeParams)
+	if err := binding.Query.BindQuery(r.URL.Query(), params); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	queryRangeResults, err := handler.module.GetPublicWidgetQueryRangeV2(ctx, id, panelKey, params.StartTime, params.EndTime)
 	if err != nil {
 		render.Error(rw, err)
 		return

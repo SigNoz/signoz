@@ -1,0 +1,103 @@
+.checkboxFilter {
+	display: flex;
+	flex-direction: column;
+	padding: var(--spacing-6);
+	gap: var(--spacing-6);
+	border-bottom: 1px solid var(--l1-border);
+}
+
+.search {
+	--input-background: var(--l2-background);
+	--input-hover-background: var(--l2-background);
+	--input-focus-background: var(--l2-background);
+	--input-border-color: var(--l2-border);
+	--input-focus-border-color: var(--l2-border);
+}
+
+.searchSpinner {
+	color: var(--l2-foreground);
+	animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+	from {
+		transform: rotate(0deg);
+	}
+
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+.values {
+	display: flex;
+	flex-direction: column;
+}
+
+.sectionValues {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+}
+
+.loadingValues {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: var(--spacing-6) 0;
+}
+
+.loadingMore {
+	align-self: center;
+}
+
+.noData {
+	align-self: center;
+}
+
+.showMore {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.showMoreText {
+	color: var(--accent-primary);
+	cursor: pointer;
+}
+
+.goToDocs {
+	display: flex;
+	flex-direction: column;
+	gap: 44px;
+}
+
+.goToDocsContainer {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-2);
+	margin-top: var(--spacing-2);
+}
+
+.goToDocsMessage {
+	color: var(--l2-foreground);
+	font-size: 14px;
+	line-height: 20px;
+	letter-spacing: -0.07px;
+}
+
+.goToDocsButton {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-2);
+	cursor: pointer;
+	margin: 0 0 var(--spacing-2);
+	padding: 0;
+}
+
+.goToDocsButtonText {
+	color: var(--bg-robin-400);
+	font-size: 14px;
+	line-height: 20px;
+	letter-spacing: -0.07px;
+}

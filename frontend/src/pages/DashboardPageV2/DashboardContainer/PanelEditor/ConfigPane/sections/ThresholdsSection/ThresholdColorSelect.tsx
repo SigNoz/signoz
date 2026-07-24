@@ -1,5 +1,6 @@
 import { ChevronDown } from '@signozhq/icons';
 import { ColorPicker } from 'antd';
+import { ThresholdColor } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/threshold';
 
 import styles from './ThresholdsSection.module.scss';
 
@@ -11,11 +12,11 @@ interface ThresholdColorSelectProps {
 
 // Named presets from the SigNoz palette (cherry / amber / forest / robin). They surface
 // as quick swatches in the picker; the full picker below covers any custom color.
-const PRESETS: { label: string; value: string }[] = [
-	{ label: 'Red', value: '#F1575F' },
-	{ label: 'Orange', value: '#F5B225' },
-	{ label: 'Green', value: '#2BB673' },
-	{ label: 'Blue', value: '#4E74F8' },
+const PRESETS: { label: string; value: ThresholdColor }[] = [
+	{ label: 'Red', value: ThresholdColor.RED },
+	{ label: 'Orange', value: ThresholdColor.ORANGE },
+	{ label: 'Green', value: ThresholdColor.GREEN },
+	{ label: 'Blue', value: ThresholdColor.BLUE },
 ];
 
 /**

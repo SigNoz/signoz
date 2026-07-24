@@ -1,5 +1,5 @@
 """
-Integration tests for source="ai" over the traces signal.
+Integration tests for query_type="builder_ai_query" over the traces signal.
 
 Data shape (generic OTel gen_ai semantic conventions):
   - a root span (no gen_ai attributes)
@@ -136,7 +136,7 @@ def test_ai_list_excludes_non_ai(
 
     query = BuilderQuery(
         signal="traces",
-        source="ai",
+        query_type="builder_ai_query",
         name="A",
         filter_expression=f"service.name = '{service}'",
         limit=10,
@@ -226,10 +226,10 @@ def test_ai_list_having_aggregate_filter(
     """
     Aggregate filter written in the SAME filter box: the span-level predicate narrows
     to the service, the trace-level `output_tokens > 100` keeps the large-token
-    trace and drops the small one (split internally into WHERE + HAVING). All three
-    spellings of a trace-level aggregate — bare, `trace.`, `tracefield.` — behave
-    identically (unit tests pin them to byte-identical SQL; this covers the wiring
-    once end-to-end). An output-only aggregate is rejected under any spelling.
+    trace and drops the small one (split internally into WHERE + HAVING). Both
+    spellings of a trace-level aggregate — bare and `trace.` — behave identically
+    (unit tests pin them to byte-identical SQL; this covers the wiring once
+    end-to-end). An output-only aggregate is rejected under either spelling.
     """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-having"
@@ -243,10 +243,10 @@ def test_ai_list_having_aggregate_filter(
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     start_ms, end_ms = _window_ms(now)
 
-    for spelling in ("output_tokens", "trace.output_tokens", "tracefield.output_tokens"):
+    for spelling in ("output_tokens", "trace.output_tokens"):
         query = BuilderQuery(
             signal="traces",
-            source="ai",
+            query_type="builder_ai_query",
             name="A",
             filter_expression=f"service.name = '{service}' AND {spelling} > 100",
             limit=10,
@@ -258,12 +258,12 @@ def test_ai_list_having_aggregate_filter(
         assert large_id in body, f"{spelling}: trace with 500 out-tokens should pass > 100"
         assert small_id not in body, f"{spelling}: trace with 20 out-tokens should be filtered out by HAVING"
 
-    # output-only aggregate gets the targeted rejection, also under the explicit context.
+    # output-only aggregate gets the targeted rejection.
     bad = BuilderQuery(
         signal="traces",
-        source="ai",
+        query_type="builder_ai_query",
         name="A",
-        filter_expression="tracefield.span_count > 3",
+        filter_expression="trace.span_count > 3",
         limit=10,
     )
     response = make_query_request(signoz, token, start_ms, end_ms, [bad.to_dict()], request_type="trace")
@@ -292,7 +292,7 @@ def test_ai_list_order_limit_offset(
     def page(offset: int) -> list[int]:
         query = BuilderQuery(
             signal="traces",
-            source="ai",
+            query_type="builder_ai_query",
             name="A",
             filter_expression=f"service.name = '{service}'",
             order=[OrderBy(key=TelemetryFieldKey(name="output_tokens"), direction="desc")],
@@ -324,7 +324,7 @@ def test_ai_span_list_limit(
 
     query = BuilderQuery(
         signal="traces",
-        source="ai",
+        query_type="builder_ai_query",
         name="A",
         filter_expression=f"service.name = '{service}'",
         limit=4,
@@ -354,7 +354,7 @@ def test_ai_span_list_excludes_non_gen_ai_spans(
 
     query = BuilderQuery(
         signal="traces",
-        source="ai",
+        query_type="builder_ai_query",
         name="A",
         filter_expression=f"service.name = '{service}'",
         select_fields=[TelemetryFieldKey(name="name", field_context="span")],
@@ -392,7 +392,7 @@ def test_ai_span_list_trace_level_filter(
 
     query = BuilderQuery(
         signal="traces",
-        source="ai",
+        query_type="builder_ai_query",
         name="A",
         filter_expression=f"service.name = '{service}' AND trace.output_tokens > 100",
         limit=10,
@@ -431,7 +431,7 @@ def test_ai_list_having_or_aggregates(
 
     query = BuilderQuery(
         signal="traces",
-        source="ai",
+        query_type="builder_ai_query",
         name="A",
         filter_expression=f"service.name = '{service}' AND (output_tokens > 100 OR input_tokens > 1000)",
         limit=10,
@@ -470,7 +470,7 @@ def test_ai_list_resource_filter_isolates_by_fingerprint(
 
     query = BuilderQuery(
         signal="traces",
-        source="ai",
+        query_type="builder_ai_query",
         name="A",
         filter_expression=(f"resource.service.name = '{service}' AND resource.deployment.environment = 'production'"),
         limit=10,
@@ -504,7 +504,7 @@ def test_ai_list_rejects_aggregate_or_span_filter(
     # aggregate OR span -> rejected
     bad = BuilderQuery(
         signal="traces",
-        source="ai",
+        query_type="builder_ai_query",
         name="A",
         limit=10,
         filter_expression=f"output_tokens > 1000 OR service.name = '{service}'",
@@ -516,7 +516,7 @@ def test_ai_list_rejects_aggregate_or_span_filter(
     # span OR span -> accepted (result content doesn't matter; just not an error)
     ok = BuilderQuery(
         signal="traces",
-        source="ai",
+        query_type="builder_ai_query",
         name="A",
         limit=10,
         filter_expression=f"service.name = '{service}' OR has_error = true",
@@ -554,7 +554,7 @@ def test_ai_list_nested_group_span_or_and_aggregate(
 
     query = BuilderQuery(
         signal="traces",
-        source="ai",
+        query_type="builder_ai_query",
         name="A",
         filter_expression=(f"service.name = '{service}' AND (has_error = true OR gen_ai.request.model = 'gpt-4o') AND total_tokens > 100"),
         limit=10,
@@ -580,7 +580,7 @@ def test_ai_list_rejects_unknown_aggregate_key(
 
     query = BuilderQuery(
         signal="traces",
-        source="ai",
+        query_type="builder_ai_query",
         name="A",
         limit=10,
         filter_expression="trace.bogus_tokens > 1",
@@ -601,7 +601,7 @@ def test_ai_list_rejects_order_by_span_attribute(
 
     query = BuilderQuery(
         signal="traces",
-        source="ai",
+        query_type="builder_ai_query",
         name="A",
         limit=5,
         order=[OrderBy(key=TelemetryFieldKey(name="service.name"), direction="asc")],
@@ -631,7 +631,7 @@ def test_ai_list_total_tokens_output_only(
 
     query = BuilderQuery(
         signal="traces",
-        source="ai",
+        query_type="builder_ai_query",
         name="A",
         filter_expression=f"service.name = '{service}'",
         limit=10,
@@ -667,7 +667,7 @@ def test_ai_list_variable_in_aggregate_filter(
 
     query = BuilderQuery(
         signal="traces",
-        source="ai",
+        query_type="builder_ai_query",
         name="A",
         filter_expression=f"service.name = '{service}' AND trace.output_tokens > $threshold",
         limit=10,
@@ -750,7 +750,7 @@ def test_ai_list_messages_first_input_last_output(
 
     query = BuilderQuery(
         signal="traces",
-        source="ai",
+        query_type="builder_ai_query",
         name="A",
         limit=10,
         filter_expression=f"service.name = '{service}'",
@@ -857,7 +857,7 @@ def test_ai_list_enrichment_values(
 
     query = BuilderQuery(
         signal="traces",
-        source="ai",
+        query_type="builder_ai_query",
         name="A",
         limit=10,
         filter_expression=f"service.name = '{service}'",
@@ -876,6 +876,6 @@ def test_ai_list_enrichment_values(
     assert data["input_tokens"] == 100, data
     assert data["output_tokens"] == 20, data
     assert data["total_tokens"] == 120, data  # input + output
-    assert data["estimated_cost_usd"] == pytest.approx(0.5), data
+    assert data["estimated_total_cost"] == pytest.approx(0.5), data
     assert data["error_count"] == 1, data  # the errored LLM span
-    assert data["max_llm_latency_ns"] > 0, data  # scoped max over LLM spans
+    assert data["max_llm_duration_nano"] > 0, data  # scoped max over LLM spans

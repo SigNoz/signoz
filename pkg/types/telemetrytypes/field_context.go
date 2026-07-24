@@ -76,6 +76,7 @@ var (
 		"log":        FieldContextLog,
 		"metric":     FieldContextMetric,
 		"tracefield": FieldContextTrace,
+		"trace":      FieldContextTrace,
 	}
 )
 
@@ -185,5 +186,6 @@ func (FieldContext) Enum() []any {
 		FieldContextAttribute,
 		// FieldContextEvent,
 		FieldContextBody,
+		FieldContextUnspecified,
 	}
 }

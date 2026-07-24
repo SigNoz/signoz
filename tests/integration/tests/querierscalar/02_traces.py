@@ -48,7 +48,7 @@ def build_traces_query(
     if aggregations is None:
         aggregations = ["count()"]
 
-    aggs = [querier.build_logs_aggregation(expr) for expr in aggregations]
+    aggs = [querier.build_aggregation(expr) for expr in aggregations]
     gb = [querier.build_group_by_field(f, "string", "resource") for f in group_by] if group_by else None
     order = [querier.build_order_by(name, direction) for name, direction in order_by] if order_by else None
 

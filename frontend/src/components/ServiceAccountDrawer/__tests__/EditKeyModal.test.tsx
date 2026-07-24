@@ -1,5 +1,6 @@
 import { toast } from '@signozhq/ui/sonner';
 import type { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
+import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
@@ -61,6 +62,7 @@ describe('EditKeyModal (URL-controlled)', () => {
 			rest.delete(SA_KEY_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
 			),
+			setupAuthzAdmin(),
 		);
 	});
 
@@ -71,9 +73,7 @@ describe('EditKeyModal (URL-controlled)', () => {
 	it('renders nothing when edit-key param is absent', () => {
 		renderModal(null, { account: 'sa-1' });
 
-		expect(
-			screen.queryByRole('dialog', { name: /Edit Key Details/i }),
-		).not.toBeInTheDocument();
+		expect(screen.queryByTestId('edit-key-modal')).not.toBeInTheDocument();
 	});
 
 	it('renders key data from prop when edit-key param is set', async () => {
@@ -100,9 +100,7 @@ describe('EditKeyModal (URL-controlled)', () => {
 		});
 
 		await waitFor(() => {
-			expect(
-				screen.queryByRole('dialog', { name: /Edit Key Details/i }),
-			).not.toBeInTheDocument();
+			expect(screen.queryByTestId('edit-key-modal')).not.toBeInTheDocument();
 		});
 	});
 
@@ -129,9 +127,7 @@ describe('EditKeyModal (URL-controlled)', () => {
 		expect(latestUrlUpdate.queryString).not.toContain('edit-key=');
 
 		await waitFor(() => {
-			expect(
-				screen.queryByRole('dialog', { name: /Edit Key Details/i }),
-			).not.toBeInTheDocument();
+			expect(screen.queryByTestId('edit-key-modal')).not.toBeInTheDocument();
 		});
 	});
 
@@ -143,9 +139,7 @@ describe('EditKeyModal (URL-controlled)', () => {
 		await user.click(screen.getByRole('button', { name: /Revoke Key/i }));
 
 		// Same dialog, now showing revoke confirmation
-		await expect(
-			screen.findByRole('dialog', { name: /Revoke Original Key Name/i }),
-		).resolves.toBeInTheDocument();
+		expect(screen.getByTestId('edit-key-modal')).toBeInTheDocument();
 		expect(
 			screen.getByText(/Revoking this key will permanently invalidate it/i),
 		).toBeInTheDocument();
@@ -168,9 +162,7 @@ describe('EditKeyModal (URL-controlled)', () => {
 		});
 
 		await waitFor(() => {
-			expect(
-				screen.queryByRole('dialog', { name: /Edit Key Details/i }),
-			).not.toBeInTheDocument();
+			expect(screen.queryByTestId('edit-key-modal')).not.toBeInTheDocument();
 		});
 	});
 });

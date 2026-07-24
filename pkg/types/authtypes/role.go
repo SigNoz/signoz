@@ -66,15 +66,20 @@ type Role struct {
 
 	types.Identifiable
 	types.TimeAuditable
-	Name        string        `bun:"name,type:string" json:"name" required:"true"`
-	Description string        `bun:"description,type:string"  json:"description" required:"true"`
-	Type        valuer.String `bun:"type,type:string" json:"type" required:"true"`
-	OrgID       valuer.UUID   `bun:"org_id,type:string" json:"orgId" required:"true"`
+	Name              string            `bun:"name,type:string" json:"name" required:"true"`
+	Description       string            `bun:"description,type:string"  json:"description" required:"true"`
+	Type              valuer.String     `bun:"type,type:string" json:"type" required:"true"`
+	OrgID             valuer.UUID       `bun:"org_id,type:string" json:"orgId" required:"true"`
+	TransactionGroups TransactionGroups `bun:"transaction_groups,nullzero,type:text" json:"transactionGroups" required:"true" nullable:"false"`
 }
 
-type RoleWithTransactionGroups struct {
-	*Role
-	TransactionGroups TransactionGroups `json:"transactionGroups" required:"true" nullable:"false"`
+type GettableRole struct {
+	types.Identifiable
+	types.TimeAuditable
+	Name        string        `json:"name" required:"true"`
+	Description string        `json:"description" required:"true"`
+	Type        valuer.String `json:"type" required:"true"`
+	OrgID       valuer.UUID   `json:"orgId" required:"true"`
 }
 
 type PostableRole struct {
@@ -88,7 +93,7 @@ type UpdatableRole struct {
 	TransactionGroups TransactionGroups `json:"transactionGroups" required:"true" nullable:"false"`
 }
 
-func NewRole(name, description string, roleType valuer.String, orgID valuer.UUID) *Role {
+func NewRole(name, description string, roleType valuer.String, orgID valuer.UUID, transactionGroups TransactionGroups) *Role {
 	return &Role{
 		Identifiable: types.Identifiable{
 			ID: valuer.GenerateUUID(),
@@ -97,37 +102,37 @@ func NewRole(name, description string, roleType valuer.String, orgID valuer.UUID
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		},
-		Name:        name,
-		Description: description,
-		Type:        roleType,
-		OrgID:       orgID,
-	}
-}
-
-func NewRoleWithTransactionGroups(name, description string, roleType valuer.String, orgID valuer.UUID, transactionGroups TransactionGroups) *RoleWithTransactionGroups {
-	role := NewRole(name, description, roleType, orgID)
-
-	return &RoleWithTransactionGroups{
-		Role:              role,
+		Name:              name,
+		Description:       description,
+		Type:              roleType,
+		OrgID:             orgID,
 		TransactionGroups: transactionGroups,
 	}
 }
 
-func MakeRoleWithTransactionGroups(role *Role, transactionGroups TransactionGroups) *RoleWithTransactionGroups {
-	return &RoleWithTransactionGroups{
-		Role:              role,
-		TransactionGroups: transactionGroups,
+func NewGettableRolesFromRoles(roles []*Role) []*GettableRole {
+	gettableRoles := make([]*GettableRole, len(roles))
+	for index, role := range roles {
+		gettableRoles[index] = &GettableRole{
+			Identifiable:  role.Identifiable,
+			TimeAuditable: role.TimeAuditable,
+			Name:          role.Name,
+			Description:   role.Description,
+			Type:          role.Type,
+			OrgID:         role.OrgID,
+		}
 	}
+
+	return gettableRoles
 }
 
 func NewManagedRoles(orgID valuer.UUID) []*Role {
 	return []*Role{
-		NewRole(SigNozAdminRoleName, SigNozAdminRoleDescription, RoleTypeManaged, orgID),
-		NewRole(SigNozEditorRoleName, SigNozEditorRoleDescription, RoleTypeManaged, orgID),
-		NewRole(SigNozViewerRoleName, SigNozViewerRoleDescription, RoleTypeManaged, orgID),
-		NewRole(SigNozAnonymousRoleName, SigNozAnonymousRoleDescription, RoleTypeManaged, orgID),
+		NewRole(SigNozAdminRoleName, SigNozAdminRoleDescription, RoleTypeManaged, orgID, NewTransactionGroupsFromTransactions(coretypes.ManagedRoleToTransactions[SigNozAdminRoleName])),
+		NewRole(SigNozEditorRoleName, SigNozEditorRoleDescription, RoleTypeManaged, orgID, NewTransactionGroupsFromTransactions(coretypes.ManagedRoleToTransactions[SigNozEditorRoleName])),
+		NewRole(SigNozViewerRoleName, SigNozViewerRoleDescription, RoleTypeManaged, orgID, NewTransactionGroupsFromTransactions(coretypes.ManagedRoleToTransactions[SigNozViewerRoleName])),
+		NewRole(SigNozAnonymousRoleName, SigNozAnonymousRoleDescription, RoleTypeManaged, orgID, NewTransactionGroupsFromTransactions(coretypes.ManagedRoleToTransactions[SigNozAnonymousRoleName])),
 	}
-
 }
 
 func NewStatsFromRoles(roles []*Role) map[string]any {
@@ -144,7 +149,7 @@ func NewStatsFromRoles(roles []*Role) map[string]any {
 	return stats
 }
 
-func (role *RoleWithTransactionGroups) Update(description string, transactionGroups TransactionGroups) error {
+func (role *Role) Update(description string, transactionGroups TransactionGroups) error {
 	err := role.ErrIfManaged()
 	if err != nil {
 		return err

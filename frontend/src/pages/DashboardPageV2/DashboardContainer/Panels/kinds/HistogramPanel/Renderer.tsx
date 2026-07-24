@@ -106,7 +106,7 @@ function HistogramPanelRenderer({
 			className={PanelStyles.panelContainer}
 		>
 			{flatSeries.length === 0 && (
-				<NoData isFetching={isFetching} onRetry={refetch} />
+				<NoData isFetching={isFetching} onRetry={refetch} panel={panel} />
 			)}
 			{flatSeries.length > 0 &&
 				containerDimensions.width > 0 &&

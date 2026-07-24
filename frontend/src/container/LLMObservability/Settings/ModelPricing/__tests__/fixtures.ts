@@ -2,14 +2,19 @@ import {
 	LlmpricingruletypesLLMPricingRuleCacheModeDTO as CacheModeDTO,
 	LlmpricingruletypesLLMPricingRuleUnitDTO as UnitDTO,
 	type ListLLMPricingRules200,
+	type ListUnmappedLLMModels200,
 } from 'api/generated/services/sigNoz.schemas';
 
-import type { PricingRule } from '../types';
+import type { PricingRule, UnpricedModel } from '../types';
 
 // Endpoint glob used by MSW handlers. The generated client hits a relative
 // `/api/v1/llm_pricing_rules`, so the `*` prefix matches regardless of base URL.
 export const LLM_PRICING_ENDPOINT = '*/api/v1/llm_pricing_rules';
 export const LLM_PRICING_RULE_ENDPOINT = '*/api/v1/llm_pricing_rules/:id';
+// Distinct path (extra segment), so it needs its own handler — the list glob
+// above does not match it.
+export const LLM_UNMAPPED_ENDPOINT =
+	'*/api/v1/llm_pricing_rules/unmapped_models';
 
 // Builds a valid pricing rule, with overrides merged shallowly. Pricing is
 // replaced wholesale when provided so callers can shape cache buckets freely.
@@ -59,6 +64,26 @@ export const mockRules: PricingRule[] = [
 		},
 	}),
 ];
+
+// Unpriced models seen in traces with no matching pricing rule.
+export const mockUnpricedModels: UnpricedModel[] = [
+	{ modelName: 'gpt-4o-mini-2024-07-18', provider: 'openai', spanCount: 18400 },
+	{
+		modelName: 'claude-3-7-sonnet-20250219',
+		provider: 'anthropic',
+		spanCount: 9200,
+	},
+];
+
+// Wraps unpriced models in the envelope the unmapped-models query reads.
+export function makeUnmappedResponse(
+	items: UnpricedModel[] = mockUnpricedModels,
+): ListUnmappedLLMModels200 {
+	return {
+		status: 'success',
+		data: { items },
+	};
+}
 
 // Wraps items in the list response envelope the list query reads
 // (`data.data.items` / `data.data.total`).

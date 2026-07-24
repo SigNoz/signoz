@@ -33,6 +33,11 @@ function DashboardContainer({
 		document.title = name;
 	}, [name]);
 
+	// Store is app-level and outlives the page: clear transient variable fetch state on
+	// unmount so the next visit doesn't inherit stale states / climbing cycle ids.
+	const resetVariableFetch = useDashboardStore((s) => s.resetVariableFetch);
+	useEffect(() => resetVariableFetch, [resetVariableFetch]);
+
 	const fullScreenHandle = useFullScreenHandle();
 
 	const { isLocked, canEditDashboard } = useDashboardEditGuard(dashboard);
@@ -55,11 +60,7 @@ function DashboardContainer({
 	// suggests them ($variable) in the panel editor and dashboards-page builder.
 	useSyncVariablesForSuggestions(dashboard);
 
-	const staleCheck = useDashboardStaleCheck(
-		dashboard.id,
-		dashboard.updatedAt,
-		refetch,
-	);
+	const staleCheck = useDashboardStaleCheck(dashboard, refetch);
 
 	// In full screen show only the sections and panels — the header/toolbar chrome
 	// is hidden for a clean presentation view (exit with Esc).
