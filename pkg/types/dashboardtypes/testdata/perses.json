@@ -22,7 +22,7 @@
                     "name": "serviceName"
                 },
                 "allowAllValue": true,
-                "allowMultiple": false,
+                "allowMultiple": true,
                 "sort": "none",
                 "plugin": {
                     "kind": "signoz/DynamicVariable",

@@ -2080,3 +2080,26 @@ func TestConvertV1VariablesDefaultFromSelectedSlice(t *testing.T) {
 	require.NotNil(t, spec.DefaultValue)
 	assert.Equal(t, []string{"foo", "bar"}, spec.DefaultValue.SliceValues)
 }
+
+// A single-select v1 variable can't offer an "All" option; the migration drops
+// allowAllValue (and customAllValue) so v2 validation accepts it.
+func TestConvertV1VariablesDropsAllOptionWhenSingleSelect(t *testing.T) {
+	raw := map[string]any{
+		"u-1": map[string]any{
+			"name":           "svc",
+			"type":           "QUERY",
+			"queryValue":     "SELECT 1",
+			"showALLOption":  true,
+			"multiSelect":    false,
+			"customAllValue": "*",
+		},
+	}
+	d := &v1Decoder{}
+	vars := d.convertV1Variables(raw)
+	require.NoError(t, d.errIfHasMalformedFields())
+	require.Len(t, vars, 1)
+	spec := vars[0].Spec.(*ListVariableSpec)
+	assert.False(t, spec.AllowMultiple)
+	assert.False(t, spec.AllowAllValue, "single-select drops the All option")
+	assert.Empty(t, spec.CustomAllValue, "customAllValue dropped with allowAllValue")
+}
