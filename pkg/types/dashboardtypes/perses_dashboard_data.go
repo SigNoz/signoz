@@ -17,16 +17,17 @@ import (
 // DashboardSpec is the SigNoz dashboard v2 spec shape. It mirrors
 // dashboard.Spec (Perses) field-for-field, except every common.Plugin
 // occurrence is replaced with a typed SigNoz plugin whose OpenAPI schema is a
-// per-site discriminated oneOf.
+// per-site discriminated oneOf. Perses's datasources field is deliberately
+// dropped: SigNoz never reads it (queries carry their own signal/source), so
+// the drift test allowlists it as an intentional omission.
 type DashboardSpec struct {
-	Display         Display                    `json:"display" required:"true"`
-	Datasources     map[string]*DatasourceSpec `json:"datasources,omitzero"`
-	Variables       []Variable                 `json:"variables" required:"true" nullable:"false"`
-	Panels          map[string]*Panel          `json:"panels" required:"true" nullable:"false"`
-	Layouts         []Layout                   `json:"layouts" required:"true" nullable:"false"`
-	Duration        common.DurationString      `json:"duration"`
-	RefreshInterval common.DurationString      `json:"refreshInterval"`
-	Links           []Link                     `json:"links,omitzero"`
+	Display         Display               `json:"display" required:"true"`
+	Variables       []Variable            `json:"variables" required:"true" nullable:"false"`
+	Panels          map[string]*Panel     `json:"panels" required:"true" nullable:"false"`
+	Layouts         []Layout              `json:"layouts" required:"true" nullable:"false"`
+	Duration        common.DurationString `json:"duration"`
+	RefreshInterval common.DurationString `json:"refreshInterval"`
+	Links           []Link                `json:"links,omitzero"`
 }
 
 // ══════════════════════════════════════════════

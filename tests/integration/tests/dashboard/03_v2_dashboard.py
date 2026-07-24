@@ -1772,8 +1772,8 @@ def test_dashboard_v2_roundtrip_preserves_zero_values(
 
     dashboard = {
         "schemaVersion": "v6",
-        # image (dashboard-level) and spec duration/refreshInterval/datasources
-        # each round-trip their zero value ("" / {}) rather than being dropped.
+        # image (dashboard-level) and spec duration/refreshInterval each
+        # round-trip their zero value ("") rather than being dropped.
         "image": "",
         "name": "roundtrip-zero-values",
         "tags": [],
@@ -1781,7 +1781,6 @@ def test_dashboard_v2_roundtrip_preserves_zero_values(
             "display": {"name": "Roundtrip Zero Values", "description": ""},
             "duration": "",
             "refreshInterval": "",
-            "datasources": {},
             "variables": [
                 # TextVariable: constant false must echo back (not be dropped).
                 {"kind": "TextVariable", "spec": {"display": {"name": "tv"}, "value": "x", "constant": False, "name": "tv"}},
@@ -1967,7 +1966,6 @@ def test_dashboard_v2_roundtrip_preserves_zero_values(
             ("dashboard image empty", result_data["image"], ""),
             ("spec duration empty", result_spec["duration"], ""),
             ("spec refreshInterval empty", result_spec["refreshInterval"], ""),
-            ("spec empty datasources round-trip", result_spec["datasources"], {}),
         ]
         for description, actual, expected in roundtrip_cases:
             assert actual == expected, description
