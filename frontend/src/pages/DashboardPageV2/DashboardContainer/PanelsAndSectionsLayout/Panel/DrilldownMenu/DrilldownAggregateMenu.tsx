@@ -8,7 +8,7 @@ import {
 	ScrollText,
 } from '@signozhq/icons';
 import logEvent from 'api/common/logEvent';
-import type { DashboardtypesLinkDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 import { getAggregateColumnHeader } from 'container/QueryTable/Drilldown/drilldownUtils';
 import ContextMenu from 'periscope/components/ContextMenu';
 import type { DrilldownContext } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/drilldown';
@@ -29,7 +29,7 @@ interface DrilldownAggregateMenuProps {
 	/** While dashboard variables resolve, the actions show a spinner and are disabled. */
 	isResolving?: boolean;
 	/** Panel's context links; resolved against the clicked point + variables here. */
-	links: DashboardtypesLinkDTO[] | undefined;
+	links: DashboardtypesPanelSpecDTO['links'];
 	/** Whether the clicked point exposes group-by fields to bind to dashboard variables. */
 	canSetDashboardVariables: boolean;
 	onViewLogs: () => void;
