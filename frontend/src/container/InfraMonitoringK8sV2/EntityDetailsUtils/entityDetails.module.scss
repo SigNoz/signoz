@@ -1,0 +1,103 @@
+.entityDetailDrawer {
+	border-color: var(--l2-border) !important;
+	background: var(--l2-background) !important;
+	box-shadow: -4px 10px 16px 2px var(--l1-shadow);
+
+	width: 70%;
+	// TODO(H4ad): Improve this in a component level
+	max-width: 70% !important;
+	overscroll-behavior: contain;
+
+	&:focus-visible,
+	&:focus {
+		outline: none;
+	}
+
+	[data-slot='drawer-header'] {
+		padding: var(--spacing-4) var(--spacing-8);
+		border-bottom: 1px solid var(--l1-border);
+		background: var(--l2-background);
+	}
+
+	[data-slot='drawer-description'] {
+		display: flex;
+		flex: 1;
+		flex-direction: column;
+		overflow-y: auto;
+		padding: var(--spacing-8);
+		margin: 0;
+		min-width: 900px;
+	}
+}
+
+.closeButton {
+	--button-padding: var(--spacing-2);
+}
+
+.title {
+	font-family: var(--periscope-font-family-mono);
+
+	--typography-margin: 0px var(--spacing-4) 0px 0px;
+}
+
+.entityDetailsEntity {
+	display: flex;
+	flex-direction: column;
+}
+
+.entityDetailsGrid {
+	display: flex;
+	flex-direction: column;
+}
+
+.labelsRow,
+.valuesRow {
+	display: grid;
+	grid-template-columns: 1.5fr 1.5fr 1.5fr 1.5fr;
+	gap: 30px;
+	align-items: center;
+}
+
+.labelsRow {
+	margin-bottom: var(--spacing-4);
+}
+
+.entityDetailsMetadataLabel {
+	letter-spacing: 0.44px;
+	text-transform: uppercase;
+}
+
+.entityDetailsMetadataValue {
+	font-family: var(--periscope-font-family-mono);
+}
+
+.viewsTabsContainer {
+	margin-top: 1.5rem;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+
+	[data-slot='toggle-group-item'] {
+		width: 114px;
+	}
+}
+
+.viewsTabs {
+	color: var(--l2-foreground);
+}
+
+.viewTitle {
+	display: flex;
+	gap: var(--margin-2);
+	align-items: center;
+	justify-content: center;
+}
+
+.compassButton {
+	width: 30px;
+	height: 30px;
+	border-radius: 2px;
+	border: 1px solid var(--l1-border);
+	background: var(--l3-background);
+	box-shadow: 0 0 8px 0 var(--l1-shadow);
+}

@@ -13,6 +13,8 @@ import {
 
 import { useEntityDetailsTime } from './useEntityDetailsTime';
 
+import styles from './EntityDateTimeSelector.module.scss';
+
 interface EntityDateTimeSelectorProps {
 	eventEntity: string;
 	category: InfraMonitoringEntity;
@@ -47,7 +49,7 @@ function EntityDateTimeSelector({
 	);
 
 	return (
-		<div className="entity-date-time-selector">
+		<div className={styles.container}>
 			{hasTimeChanged && (
 				<TooltipSimple title="Reset to list time" side="bottom">
 					<Button

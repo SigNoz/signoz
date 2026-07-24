@@ -10,8 +10,8 @@ import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
 import { formatBytes, getPodStatusItems } from '../commonUtils';
 import {
-	CellValueTooltip,
 	GroupedStatusCounts,
+	TextNoData,
 	ValidateColumnValueWrapper,
 } from '../components';
 import {
@@ -75,10 +75,9 @@ export const k8sClustersColumnsConfig: ClusterTableColumnConfig[] = [
 		enableMove: false,
 		pin: 'left',
 		visibilityBehavior: 'hidden-on-expand',
-		cell: ({ value }): React.ReactNode => {
-			const clusterName = value as string;
-			return <CellValueTooltip value={clusterName} />;
-		},
+		cell: ({ value }): React.ReactNode => (
+			<TanStackTable.Text>{value}</TanStackTable.Text>
+		),
 	},
 	{
 		id: 'nodeCountsByReadiness',
@@ -95,7 +94,7 @@ export const k8sClustersColumnsConfig: ClusterTableColumnConfig[] = [
 		enableSort: false,
 		cell: ({ row, rowId }): React.ReactNode => {
 			if (!row.nodeCountsByReadiness) {
-				return <TanStackTable.Text>-</TanStackTable.Text>;
+				return <TextNoData type="tanstack" />;
 			}
 
 			return (
@@ -133,7 +132,7 @@ export const k8sClustersColumnsConfig: ClusterTableColumnConfig[] = [
 		cell: ({ row, rowId }): React.ReactNode => {
 			const podCountsByStatus = row.podCountsByStatus;
 			if (!podCountsByStatus) {
-				return <TanStackTable.Text>-</TanStackTable.Text>;
+				return <TextNoData type="tanstack" />;
 			}
 			return (
 				<GroupedStatusCounts
@@ -147,8 +146,7 @@ export const k8sClustersColumnsConfig: ClusterTableColumnConfig[] = [
 		id: 'cpu',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/clusters#cpu-usage-cores">
-				CPU Usage
-				<br /> (cores)
+				CPU Usage (cores)
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.clusterCPU,
@@ -171,8 +169,7 @@ export const k8sClustersColumnsConfig: ClusterTableColumnConfig[] = [
 		id: 'cpu_allocatable',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/clusters#cpu-alloc-cores">
-				CPU Allocatable
-				<br /> (cores)
+				CPU Allocatable (cores)
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.clusterCPUAllocatable,
@@ -195,8 +192,7 @@ export const k8sClustersColumnsConfig: ClusterTableColumnConfig[] = [
 		id: 'memory',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/clusters#memory-usage-wss">
-				Memory Usage
-				<br /> (WSS)
+				Memory Usage (WSS)
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.clusterMemory,
@@ -219,8 +215,7 @@ export const k8sClustersColumnsConfig: ClusterTableColumnConfig[] = [
 		id: 'memory_allocatable',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/clusters#memory-allocatable">
-				Memory
-				<br /> Allocatable
+				Memory Allocatable
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.clusterMemoryAllocatable,

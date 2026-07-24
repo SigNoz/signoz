@@ -1,15 +1,17 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { useQuery } from 'react-query';
-import { Color, Spacing } from '@signozhq/design-tokens';
-import { X } from '@signozhq/icons';
+import { Copy, X } from '@signozhq/icons';
 import { Divider } from '@signozhq/ui/divider';
+import { Button } from '@signozhq/ui/button';
+import { DrawerWrapper, DrawerWrapperProps } from '@signozhq/ui/drawer';
+import { toast } from '@signozhq/ui/sonner';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
-import { Drawer } from 'antd';
+import { useCopyToClipboard } from 'hooks/useCopyToClipboard';
 import logEvent from 'api/common/logEvent';
 import ErrorContent from 'components/ErrorModal/components/ErrorContent';
 import APIError from 'types/api/error';
 import { InfraMonitoringEvents } from 'constants/events';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import {
 	GlobalTimeProvider,
 	NANO_SECOND_MULTIPLIER,
@@ -23,7 +25,8 @@ import LoadingContainer from '../LoadingContainer';
 import K8sBaseDetailsContent from './K8sBaseDetailsContent';
 import { K8sBaseDetailsProps } from './types';
 
-import '../EntityDetailsUtils/entityDetails.styles.scss';
+import styles from '../EntityDetailsUtils/entityDetails.module.scss';
+import { INFRA_MONITORING_DETAILS_CACHE_TIME } from 'constants/queryCacheTime';
 
 export type {
 	CustomTab,
@@ -33,6 +36,23 @@ export type {
 	K8sDetailsFilters,
 	K8sDetailsMetadataConfig,
 } from './types';
+
+// TODO(H4ad): Improve this on component level
+const DRAWER_TRANSITION = { duration: 0.3, ease: [0.25, 0.1, 0.25, 1] };
+const DRAWER_MOTION_PROPS = {
+	onOpenAutoFocus: (e: Event): void => e.preventDefault(),
+	initial: { opacity: 0, transform: 'translateX(100%)' },
+	animate: {
+		opacity: 1,
+		transform: 'translateX(0%)',
+		transition: DRAWER_TRANSITION,
+	},
+	exit: {
+		opacity: 0,
+		transform: 'translateX(100%)',
+		transition: DRAWER_TRANSITION,
+	},
+} as unknown as DrawerWrapperProps['drawerContentProps'];
 
 export default function K8sBaseDetails<T>({
 	category,
@@ -57,8 +77,6 @@ export default function K8sBaseDetails<T>({
 	const getAutoRefreshQueryKey = useGlobalTimeStore(
 		(s) => s.getAutoRefreshQueryKey,
 	);
-
-	const isDarkMode = useIsDarkMode();
 
 	const [selectedItemParams, setSelectedItemParams] =
 		useInfraMonitoringSelectedItemParams();
@@ -101,6 +119,8 @@ export default function K8sBaseDetails<T>({
 
 			return fetchEntityData({ filter: { expression }, start, end }, signal);
 		},
+		cacheTime: INFRA_MONITORING_DETAILS_CACHE_TIME,
+		staleTime: INFRA_MONITORING_DETAILS_CACHE_TIME,
 		enabled: !!selectedItem,
 	});
 
@@ -125,6 +145,24 @@ export default function K8sBaseDetails<T>({
 		setSelectedItemParams(null);
 	}, [setSelectedItemParams]);
 
+	const handleOpenChange = useCallback(
+		(open: boolean): void => {
+			if (!open) {
+				handleClose();
+			}
+		},
+		[handleClose],
+	);
+
+	const { copyToClipboard } = useCopyToClipboard();
+
+	const handleCopyId = useCallback((): void => {
+		if (selectedItem) {
+			copyToClipboard(selectedItem);
+			toast.success('ID copied to clipboard', { position: 'bottom-left' });
+		}
+	}, [copyToClipboard, selectedItem]);
+
 	const entityName = entity ? getEntityName(entity) : '';
 
 	useEffect(() => {
@@ -137,31 +175,49 @@ export default function K8sBaseDetails<T>({
 		}
 	}, [entity, eventCategory]);
 
+	// TODO(H4ad): Improve this on component level
+	// DrawerWrapper types `title` as string but renders any ReactNode.
+	const drawerTitle = (
+		<>
+			<Button
+				variant="ghost"
+				size="sm"
+				color="secondary"
+				onClick={handleClose}
+				data-testid="close-drawer-button"
+				className={styles.closeButton}
+				prefix={<X />}
+			/>
+			<Divider type="vertical" />
+			<Typography.Text className={styles.title}>
+				{entityName ||
+					((isEntityError || hasResponseError) && 'Failed to load entity details') ||
+					(isEntityLoading && 'Loading...') ||
+					'-'}
+			</Typography.Text>
+			<TooltipSimple title="Copy ID">
+				<Button
+					variant="ghost"
+					size="sm"
+					color="secondary"
+					onClick={handleCopyId}
+					data-testid="copy-id-button"
+				>
+					<Copy size={14} />
+				</Button>
+			</TooltipSimple>
+		</>
+	) as unknown as string;
+
 	return (
-		<Drawer
-			width="70%"
-			title={
-				<>
-					<Divider type="vertical" />
-					<Typography.Text className="title">
-						{entityName ||
-							((isEntityError || hasResponseError) &&
-								'Failed to load entity details') ||
-							(isEntityLoading && 'Loading...') ||
-							'-'}
-					</Typography.Text>
-				</>
-			}
-			placement="right"
-			onClose={handleClose}
+		<DrawerWrapper
 			open={!!selectedItem}
-			style={{
-				overscrollBehavior: 'contain',
-				background: isDarkMode ? Color.BG_INK_400 : Color.BG_VANILLA_100,
-			}}
-			className="entity-detail-drawer"
-			destroyOnClose
-			closeIcon={<X size={16} style={{ marginTop: Spacing.MARGIN_1 }} />}
+			onOpenChange={handleOpenChange}
+			direction="right"
+			title={drawerTitle}
+			showCloseButton={false}
+			drawerContentProps={DRAWER_MOTION_PROPS}
+			className={styles.entityDetailDrawer}
 		>
 			{(isEntityLoading || !selectedItem) && <LoadingContainer />}
 
@@ -210,6 +266,6 @@ export default function K8sBaseDetails<T>({
 					/>
 				</GlobalTimeProvider>
 			)}
-		</Drawer>
+		</DrawerWrapper>
 	);
 }

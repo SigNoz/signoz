@@ -197,8 +197,7 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 				tooltip="Excluding cache memory."
 				docPath="/infrastructure-monitoring/host-monitoring#memory-usage"
 			>
-				Memory Usage
-				<br /> (WSS)
+				Memory Usage (WSS)
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.memory,
@@ -214,6 +213,32 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 						attribute="memory metric"
 					>
 						<EntityProgressBar value={memory} type="memory" />
+					</ValidateColumnValueWrapper>
+				</div>
+			);
+		},
+	},
+	{
+		id: 'diskUsage',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/host-monitoring#disk-usage">
+				Disk Usage
+			</ColumnHeader>
+		),
+		accessorFn: (row): number => row.diskUsage,
+		width: { min: 200 },
+		enableSort: true,
+		cell: ({ value }): React.ReactNode => {
+			const diskUsage = value as number;
+
+			return (
+				<div className={styles.progressContainer}>
+					<ValidateColumnValueWrapper
+						value={diskUsage}
+						entity={InfraMonitoringEntity.HOSTS}
+						attribute="disk usage metric"
+					>
+						<EntityProgressBar value={diskUsage} type="disk" />
 					</ValidateColumnValueWrapper>
 				</div>
 			);
@@ -249,8 +274,7 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 		id: 'load15',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/host-monitoring#load-avg">
-				Load Avg
-				<br /> (15min)
+				Load Avg (15min)
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.load15,
@@ -267,32 +291,6 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 				>
 					<TanStackTable.Text>{load15.toFixed(2)}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
-			);
-		},
-	},
-	{
-		id: 'diskUsage',
-		header: (): React.ReactNode => (
-			<ColumnHeader docPath="/infrastructure-monitoring/host-monitoring#disk-usage">
-				Disk Usage
-			</ColumnHeader>
-		),
-		accessorFn: (row): number => row.diskUsage,
-		width: { min: 200 },
-		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
-			const diskUsage = value as number;
-
-			return (
-				<div className={styles.progressContainer}>
-					<ValidateColumnValueWrapper
-						value={diskUsage}
-						entity={InfraMonitoringEntity.HOSTS}
-						attribute="disk usage metric"
-					>
-						<EntityProgressBar value={diskUsage} type="disk" />
-					</ValidateColumnValueWrapper>
-				</div>
 			);
 		},
 	},

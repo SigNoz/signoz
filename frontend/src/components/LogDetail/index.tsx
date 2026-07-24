@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
-import { useSelector } from 'react-redux'; // old code, TODO: fix this correctly
-import { useCopyToClipboard, useLocation } from 'react-use';
+import { useCopyToClipboard } from 'react-use';
 import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button } from '@signozhq/ui/button';
 import { Drawer, Tooltip } from 'antd';
@@ -14,9 +13,6 @@ import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySear
 import { convertExpressionToFilters } from 'components/QueryBuilderV2/utils';
 import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { QueryParams } from 'constants/query';
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
-import ROUTES from 'constants/routes';
 import ContextView from 'container/LogDetailedView/ContextView/ContextView';
 import InfraMetrics from 'container/LogDetailedView/InfraMetrics/InfraMetrics';
 import Overview from 'container/LogDetailedView/Overview';
@@ -31,8 +27,6 @@ import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import createQueryParams from 'lib/createQueryParams';
 import { cloneDeep } from 'lodash-es';
 import {
 	ArrowDown,
@@ -50,12 +44,9 @@ import {
 } from '@signozhq/icons';
 import { JsonView } from 'periscope/components/JsonView';
 import { useAppContext } from 'providers/App/App';
-import { AppState } from 'store/reducers';
 import { ILogBody } from 'types/api/logs/log';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
-import { GlobalReducer } from 'types/reducer/globalTime';
-import { isModifierKeyPressed } from 'utils/app';
 
 import { RESOURCE_KEYS, VIEW_TYPES, VIEWS } from './constants';
 import { LogDetailInnerProps, LogDetailProps } from './LogDetail.interfaces';
@@ -75,6 +66,8 @@ function LogDetailInner({
 	logs,
 	onNavigateLog,
 	onScrollToLog,
+	handleOpenInExplorer,
+	getContainer,
 }: LogDetailInnerProps): JSX.Element {
 	const initialContextQuery = useInitialQuery(log);
 	const [contextQuery, setContextQuery] = useState<Query | undefined>(
@@ -91,7 +84,7 @@ function LogDetailInner({
 
 	const [filters, setFilters] = useState<TagFilter | null>(null);
 	const [isEdit, setIsEdit] = useState<boolean>(false);
-	const { stagedQuery, updateAllQueriesOperators } = useQueryBuilder();
+	const { stagedQuery } = useQueryBuilder();
 
 	// Handle clicks outside to close drawer, except on explicitly ignored regions
 	useEffect(() => {
@@ -186,11 +179,6 @@ function LogDetailInner({
 	});
 
 	const isDarkMode = useIsDarkMode();
-	const location = useLocation();
-	const { safeNavigate } = useSafeNavigate();
-	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
 
 	const { notifications } = useNotifications();
 
@@ -243,25 +231,6 @@ function LogDetailInner({
 		copyToClipboard(LogJsonData);
 		notifications.success({
 			message: 'Copied to clipboard',
-		});
-	};
-
-	// Go to logs explorer page with the log data
-	const handleOpenInExplorer = (e?: React.MouseEvent): void => {
-		const queryParams = {
-			[QueryParams.activeLogId]: `"${log?.id}"`,
-			[QueryParams.startTime]: minTime?.toString() || '',
-			[QueryParams.endTime]: maxTime?.toString() || '',
-			[QueryParams.compositeQuery]: JSON.stringify(
-				updateAllQueriesOperators(
-					initialQueriesMap[DataSource.LOGS],
-					PANEL_TYPES.LIST,
-					DataSource.LOGS,
-				),
-			),
-		};
-		safeNavigate(`${ROUTES.LOGS_EXPLORER}?${createQueryParams(queryParams)}`, {
-			newTab: !!e && isModifierKeyPressed(e),
 		});
 	};
 
@@ -333,13 +302,6 @@ function LogDetailInner({
 		}
 	};
 
-	// Only show when opened from infra monitoring page
-	const showOpenInExplorerBtn = useMemo(
-		() => location.pathname?.includes('/infrastructure-monitoring'),
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[],
-	);
-
 	const logType = log?.attributes_string?.log_level || LogType.INFO;
 	const currentLogIndex = logs ? logs.findIndex((l) => l.id === log.id) : -1;
 	const isPrevDisabled =
@@ -374,6 +336,7 @@ function LogDetailInner({
 			width="60%"
 			mask={false}
 			maskClosable={false}
+			getContainer={getContainer}
 			title={
 				<div className="log-detail-drawer__title" data-log-detail-ignore="true">
 					<div className="log-detail-drawer__title-left">
@@ -411,7 +374,7 @@ function LogDetailInner({
 								/>
 							</Tooltip>
 						</div>
-						{showOpenInExplorerBtn && (
+						{handleOpenInExplorer && (
 							<div>
 								<Button
 									variant="outlined"

@@ -6,7 +6,7 @@ import ColumnHeader from '../Base/ColumnHeader';
 import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
 import { formatBytes } from '../commonUtils';
-import { CellValueTooltip, ValidateColumnValueWrapper } from '../components';
+import { ValidateColumnValueWrapper } from '../components';
 import {
 	INFRA_MONITORING_ATTR_KEYS,
 	InfraMonitoringEntity,
@@ -79,10 +79,9 @@ export const k8sVolumesColumnsConfig: VolumeTableColumnConfig[] = [
 		enableMove: false,
 		pin: 'left',
 		visibilityBehavior: 'hidden-on-expand',
-		cell: ({ value }): React.ReactNode => {
-			const pvcName = value as string;
-			return <CellValueTooltip value={pvcName} />;
-		},
+		cell: ({ value }): React.ReactNode => (
+			<TanStackTable.Text>{value}</TanStackTable.Text>
+		),
 	},
 	{
 		id: 'namespaceName',
@@ -95,10 +94,9 @@ export const k8sVolumesColumnsConfig: VolumeTableColumnConfig[] = [
 			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 		width: { min: 220 },
 		enableSort: false,
-		cell: ({ value }): React.ReactNode => {
-			const namespaceName = value as string;
-			return <CellValueTooltip value={namespaceName} />;
-		},
+		cell: ({ value }): React.ReactNode => (
+			<TanStackTable.Text>{value}</TanStackTable.Text>
+		),
 	},
 	{
 		id: 'capacity',

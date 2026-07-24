@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as Sentry from '@sentry/react';
-import { Button, Tooltip } from 'antd';
+import { Button } from '@signozhq/ui/button';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import {
@@ -218,14 +219,15 @@ export default function InfraMonitoringK8s(): JSX.Element {
 			<>
 				{!showFilters && (
 					<div className={styles.k8SOpenQuickFilters}>
-						<Button
-							className="periscope-btn ghost"
-							type="text"
-							size="small"
-							onClick={handleFilterVisibilityChange}
-						>
-							<Filter size={14} />
-						</Button>
+						<TooltipSimple title="Open Filters" arrow side="left">
+							<Button
+								variant="ghost"
+								size="icon"
+								color="secondary"
+								onClick={handleFilterVisibilityChange}
+								prefix={<Filter size={14} />}
+							/>
+						</TooltipSimple>
 					</div>
 				)}
 			</>
@@ -246,13 +248,13 @@ export default function InfraMonitoringK8s(): JSX.Element {
 												Viewing · Resource
 											</Typography.Text>
 											<div className={styles.sectionLine} />
-											<Tooltip title="Collapse Filters">
+											<TooltipSimple title="Collapse Filters" arrow>
 												<ArrowUpToLine
 													style={{ transform: 'rotate(270deg)' }}
 													onClick={handleFilterVisibilityChange}
 													size="md"
 												/>
-											</Tooltip>
+											</TooltipSimple>
 										</div>
 										<div className={styles.categoryCard}>
 											<div className={styles.categoryList}>

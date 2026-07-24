@@ -8,8 +8,8 @@ import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
 import { formatBytes, getPodStatusItems } from '../commonUtils';
 import {
-	CellValueTooltip,
 	GroupedStatusCounts,
+	TextNoData,
 	ValidateColumnValueWrapper,
 } from '../components';
 import {
@@ -81,10 +81,9 @@ export const k8sNamespacesColumnsConfig: NamespaceTableColumnConfig[] = [
 		enableMove: false,
 		pin: 'left',
 		visibilityBehavior: 'hidden-on-expand',
-		cell: ({ value }): React.ReactNode => {
-			const namespaceName = value as string;
-			return <CellValueTooltip value={namespaceName} />;
-		},
+		cell: ({ value }): React.ReactNode => (
+			<TanStackTable.Text>{value}</TanStackTable.Text>
+		),
 	},
 	{
 		id: 'clusterName',
@@ -117,7 +116,7 @@ export const k8sNamespacesColumnsConfig: NamespaceTableColumnConfig[] = [
 		cell: ({ row, rowId }): React.ReactNode => {
 			const podCountsByStatus = row.podCountsByStatus;
 			if (!podCountsByStatus) {
-				return <TanStackTable.Text>-</TanStackTable.Text>;
+				return <TextNoData type="tanstack" />;
 			}
 			return (
 				<GroupedStatusCounts
