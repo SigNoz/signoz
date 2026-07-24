@@ -7834,14 +7834,14 @@ components:
     SavedviewtypesCompositeQuery:
       properties:
         panelType:
-          type: string
+          $ref: '#/components/schemas/SavedviewtypesPanelType'
         queries:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelope'
           nullable: true
           type: array
         queryType:
-          type: string
+          $ref: '#/components/schemas/SavedviewtypesQueryType'
       required:
       - panelType
       - queryType
@@ -7889,6 +7889,14 @@ components:
       - compositeQuery
       - extraData
       type: object
+    SavedviewtypesPanelType:
+      enum:
+      - value
+      - graph
+      - table
+      - list
+      - trace
+      type: string
     SavedviewtypesPostableSavedView:
       properties:
         category:
@@ -7914,6 +7922,12 @@ components:
       - compositeQuery
       - extraData
       type: object
+    SavedviewtypesQueryType:
+      enum:
+      - builder
+      - clickhouse_sql
+      - promql
+      type: string
     ServiceaccounttypesDeprecatedPostableServiceAccountRole:
       properties:
         id:
