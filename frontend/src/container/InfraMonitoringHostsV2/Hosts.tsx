@@ -14,7 +14,10 @@ import { AxiosError } from 'axios';
 import APIError from 'types/api/error';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource } from 'components/QuickFilters/types';
-import { InfraMonitoringEvents } from 'constants/events';
+import {
+	InfraMonitoringEvents,
+	logInfraMonitoringListViewedEvent,
+} from 'constants/events';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import K8sBaseDetails, {
 	K8sDetailsFilters,
@@ -198,6 +201,10 @@ function Hosts(): JSX.Element {
 			</Button>
 		</div>
 	) : undefined;
+
+	useEffect(() => {
+		logInfraMonitoringListViewedEvent('hosts');
+	}, []);
 
 	return (
 		<>

@@ -50,7 +50,10 @@ import {
 } from './hooks';
 
 import styles from './InfraMonitoringK8s.module.scss';
-import { InfraMonitoringEvents } from 'constants/events';
+import {
+	logInfraMonitoringListViewedEvent,
+	InfraMonitoringEvents,
+} from 'constants/events';
 import logEvent from 'api/common/logEvent';
 import { NANO_SECOND_MULTIPLIER, useGlobalTimeStore } from 'store/globalTime';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
@@ -121,6 +124,10 @@ export default function InfraMonitoringK8s(): JSX.Element {
 			category: selectedCategory,
 			view: InfraMonitoringEvents.QuickFiltersView,
 		});
+
+		// The category query param is a plain string; entities are validated by
+		// getEntityConfig before rendering
+		logInfraMonitoringListViewedEvent(selectedCategory as InfraMonitoringEntity);
 	}, [selectedCategory]);
 
 	const handleFilterVisibilityChange = useCallback((): void => {

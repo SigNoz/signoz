@@ -1,3 +1,6 @@
+import logEvent from 'api/common/logEvent';
+import { getNavigationReferrer } from 'lib/navigation';
+
 export enum Events {
 	UPDATE_GRAPH_VISIBILITY_STATE = 'UPDATE_GRAPH_VISIBILITY_STATE',
 	UPDATE_GRAPH_MANAGER_TABLE = 'UPDATE_GRAPH_MANAGER_TABLE',
@@ -38,4 +41,13 @@ export enum InfraMonitoringEvents {
 	Pod = 'pod',
 	StatefulSet = 'statefulSet',
 	Volumes = 'volumes',
+}
+
+export function logInfraMonitoringListViewedEvent(entity: string): void {
+	const referrer = getNavigationReferrer();
+
+	void logEvent('infra_list_viewed', {
+		entity,
+		referrer,
+	});
 }
