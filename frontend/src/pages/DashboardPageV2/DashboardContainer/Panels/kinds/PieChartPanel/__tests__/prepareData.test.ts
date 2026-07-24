@@ -58,6 +58,32 @@ describe('preparePieData', () => {
 		]);
 	});
 
+	it('substitutes a legend format template with the group-by values', () => {
+		const table = tableWith(
+			[
+				{
+					name: 'service.name',
+					queryName: 'A',
+					isValueColumn: false,
+					id: 'service.name',
+				},
+				{ name: 'count', queryName: 'A', isValueColumn: true, id: 'A' },
+			],
+			[
+				{ data: { 'service.name': 'adservice', A: 100 } },
+				{ data: { 'service.name': 'cartservice', A: 200 } },
+			],
+			{ legend: 'service.name = {{service.name}}' },
+		);
+
+		const slices = preparePieData(args([table]));
+
+		expect(slices.map((s) => s.label)).toStrictEqual([
+			'service.name = adservice',
+			'service.name = cartservice',
+		]);
+	});
+
 	it('prefixes the group when multiple value columns are grouped', () => {
 		const table = tableWith(
 			[
