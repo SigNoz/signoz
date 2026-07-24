@@ -1919,9 +1919,9 @@ def test_dashboard_v2_roundtrip_preserves_zero_values(
             assert key not in spec, description
 
         # links is optional: an explicit [] round-trips as [], while an omitted
-        # links is absent (never null) on read-back.
+        # links reads back as null.
         assert panels["timeseries"]["spec"]["links"] == [], "explicit panel links round-trip as []"
-        assert "links" not in panels["promql"]["spec"], "omitted panel links absent on read-back"
+        assert panels["promql"]["spec"]["links"] is None, "omitted panel links read back as null"
     finally:
         requests.delete(
             signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard_id}"),
