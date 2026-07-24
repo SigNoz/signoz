@@ -8,13 +8,56 @@ import requests
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license
 from fixtures.cloudintegrations import (
-    PROVIDER_ACCOUNT_SPECS,
     ProviderAccountSpec,
     simulate_agent_checkin,
 )
 from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)
+
+AWS_ACCOUNT_SPEC = ProviderAccountSpec(
+    provider="aws",
+    initial_params={"deployment_region": "us-east-1", "regions": ["us-east-1"]},
+    updated_params={"deployment_region": "us-east-1", "regions": ["us-east-1", "us-west-2", "eu-west-1"]},
+    # POST requires deploymentRegion (validated server-side); the GET response
+    # only echoes back `regions`, so expected_config omits deploymentRegion.
+    build_config=lambda p: {"aws": {"deploymentRegion": p["deployment_region"], "regions": p["regions"]}},
+    expected_config=lambda p: {"regions": p["regions"]},
+)
+
+GCP_ACCOUNT_SPEC = ProviderAccountSpec(
+    provider="gcp",
+    initial_params={
+        "deployment_project_id": "signoz-test-project",
+        "deployment_region": "us-central1",
+        "project_ids": ["signoz-test-project"],
+    },
+    updated_params={
+        "deployment_project_id": "signoz-test-project",
+        "deployment_region": "us-central1",
+        "project_ids": ["signoz-test-project", "signoz-test-project-2"],
+    },
+    # GCP echoes back all three fields on GET, so expected_config asserts every
+    # one round-trips (this is exactly the config the "list gcp accounts was
+    # missing config" fix restored).
+    build_config=lambda p: {
+        "gcp": {
+            "deploymentProjectId": p["deployment_project_id"],
+            "deploymentRegion": p["deployment_region"],
+            "projectIds": p["project_ids"],
+        }
+    },
+    expected_config=lambda p: {
+        "deploymentProjectId": p["deployment_project_id"],
+        "deploymentRegion": p["deployment_region"],
+        "projectIds": p["project_ids"],
+    },
+)
+
+# Providers covered by the parametrized account tests. Add a provider here (e.g.
+# an AZURE_ACCOUNT_SPEC with resourceGroups) to extend coverage without touching
+# any test body.
+PROVIDER_ACCOUNT_SPECS = [AWS_ACCOUNT_SPEC, GCP_ACCOUNT_SPEC]
 
 # Every account test runs once per provider in PROVIDER_ACCOUNT_SPECS. Each spec
 # owns its provider's config shape (build_config / expected_config), so the test
