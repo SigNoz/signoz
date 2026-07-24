@@ -34,10 +34,10 @@ class WorkerLLM(LLM):
 
         if "user" in prompt_lower and ("status" in prompt_lower or "fetch" in prompt_lower or "data" in prompt_lower):
             user_id = "user_123"
-            for word in prompt.split():
-                if word.startswith("'") and word.endswith("'"):
-                    user_id = word.strip("'")
-                    break
+            import re
+            match = re.search(r"['\"]([^'\"]+)['\"]", prompt)
+            if match:
+                user_id = match.group(1)
             result = fetch_user_data(user_id)
             return f"I used the FetchUserData tool. Result: {result}"
 
@@ -127,7 +127,7 @@ def main():
 
     # Step 2: Run tasks
     num_tasks = int(sys.argv[1]) if len(sys.argv) > 1 else 5
-    tasks_to_run = [random.choice(TASKS) for _ in range(num_tasks)]
+    tasks_to_run = [random.choice(TASKS[:3]) for _ in range(num_tasks - 1)] + [TASKS[3]]
 
     print(f"\n[worker] Starting {num_tasks} tasks...")
     results = []
