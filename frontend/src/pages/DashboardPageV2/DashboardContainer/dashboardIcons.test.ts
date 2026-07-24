@@ -5,13 +5,9 @@ import {
 	SYSTEM_ICON_PATHS,
 } from './dashboardIcons';
 
-// The glob-backed icon URL map is Vite-only, so stub it: path lookups then return
-// a stable value and the resolver's fallback is deterministic under jest.
-jest.mock('./iconAssets', () => ({
-	ICON_URLS: { 'eight-ball': 'mock-eight-ball-url' },
-	LOGO_URLS: { 'aws-dark': 'mock-logo-url' },
-}));
-
+// The glob-backed icon URL map is Vite-only; jest redirects it to a stub via
+// moduleNameMapper (see jest.config.ts), so path lookups return a stable value
+// and the resolver's fallback is deterministic under test.
 describe('resolveDashboardImage', () => {
 	const fallback = resolveDashboardImage(undefined);
 
