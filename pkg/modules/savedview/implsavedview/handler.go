@@ -168,7 +168,7 @@ func (handler *handler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries, err := handler.module.GetViewsForFilters(r.Context(), claims.OrgID, params)
+	queries, err := handler.module.GetViewsForFilters(r.Context(), claims.OrgID, params.SourcePage, params.Name)
 	if err != nil {
 		render.Error(w, err)
 		return

@@ -19,10 +19,10 @@ func NewModule(sqlstore sqlstore.SQLStore) savedview.Module {
 	return &module{sqlstore: sqlstore}
 }
 
-func (module *module) GetViewsForFilters(ctx context.Context, orgID string, params *savedviewtypes.ListSavedViewsParams) ([]*savedviewtypes.GettableSavedView, error) {
+func (module *module) GetViewsForFilters(ctx context.Context, orgID string, sourcePage savedviewtypes.SourcePage, name string) ([]*savedviewtypes.GettableSavedView, error) {
 	var views []*savedviewtypes.StorableSavedView
 	err := module.sqlstore.BunDB().NewSelect().Model(&views).
-		Where("org_id = ? AND source_page = ? AND name LIKE ?", orgID, params.SourcePage, "%"+params.Name+"%").
+		Where("org_id = ? AND source_page = ? AND name LIKE ?", orgID, sourcePage, "%"+name+"%").
 		Scan(ctx)
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error in getting saved views")
