@@ -134,7 +134,7 @@ func (c *conditionBuilder) ConditionFor(
 	sb *sqlbuilder.SelectBuilder,
 ) ([]string, []string, error) {
 
-	// has/hasAny/hasAll/hasToken are logs-body-only; reject for audit.
+	// has/hasAny/hasAll/hasToken/search are logs-only functions; reject for audit.
 	if err := querybuilder.NewFunctionUnsupportedError(operator); err != nil {
 		return nil, nil, err
 	}

@@ -29,10 +29,19 @@ type logQueryStatementBuilder struct {
 	fl                             flagger.Flagger
 	skipResourceFingerprintEnabled bool
 
-	fullTextColumn *telemetrytypes.TelemetryFieldKey
+	fullTextColumn    *telemetrytypes.TelemetryFieldKey
+	searchMaxScanRows int64
 }
 
 var _ qbtypes.StatementBuilder[qbtypes.LogAggregation] = (*logQueryStatementBuilder)(nil)
+
+type LogQueryStatementBuilderOption func(*logQueryStatementBuilder)
+
+// WithSearchMaxScanRows sets the estimated-rows budget the querier enforces for
+// search() statements (0 disables the gate).
+func WithSearchMaxScanRows(n int64) LogQueryStatementBuilderOption {
+	return func(b *logQueryStatementBuilder) { b.searchMaxScanRows = n }
+}
 
 func NewLogQueryStatementBuilder(
 	settings factory.ProviderSettings,
@@ -45,6 +54,7 @@ func NewLogQueryStatementBuilder(
 	telemetryStore telemetrystore.TelemetryStore,
 	skipResourceFingerprintEnable bool,
 	skipResourceFingerprintThreshold uint64,
+	opts ...LogQueryStatementBuilderOption,
 ) *logQueryStatementBuilder {
 	logsSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetrylogs")
 
@@ -61,7 +71,7 @@ func NewLogQueryStatementBuilder(
 		skipResourceFingerprintThreshold,
 	)
 
-	return &logQueryStatementBuilder{
+	b := &logQueryStatementBuilder{
 		logger:                         logsSettings.Logger(),
 		metadataStore:                  metadataStore,
 		fm:                             fieldMapper,
@@ -72,6 +82,10 @@ func NewLogQueryStatementBuilder(
 		skipResourceFingerprintEnabled: skipResourceFingerprintEnable,
 		fullTextColumn:                 fullTextColumn,
 	}
+	for _, opt := range opts {
+		opt(b)
+	}
+	return b
 }
 
 // Build builds a SQL query for logs based on the given parameters.
@@ -117,7 +131,21 @@ func (b *logQueryStatementBuilder) Build(
 	}
 
 	stmt.Warnings = append(stmt.Warnings, warnings...)
+	// The search flag is gated in the condition builder; here the advisory rides on
+	// the statement so the querier can enforce the scan budget from the CostGuard.
+	if stmt.CostGuard != nil && stmt.CostGuard.Warning != "" {
+		stmt.Warnings = append(stmt.Warnings, stmt.CostGuard.Warning)
+	}
 	return stmt, nil
+}
+
+// costGuardFor builds the cost guard for a scan-heavy (search()) statement,
+// pairing the advisory with the configured scan budget. Returns nil otherwise.
+func (b *logQueryStatementBuilder) costGuardFor(required bool) *qbtypes.CostGuard {
+	if !required {
+		return nil
+	}
+	return &qbtypes.CostGuard{Warning: querybuilder.SearchWarning, MaxScanRows: b.searchMaxScanRows}
 }
 
 func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation], bodyJSONEnabled bool) ([]*telemetrytypes.FieldKeySelector, []string) {
@@ -357,6 +385,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 		Args:           finalArgs,
 		Warnings:       preparedWhereClause.Warnings,
 		WarningsDocURL: preparedWhereClause.WarningsDocURL,
+		CostGuard:      b.costGuardFor(preparedWhereClause.RequiresCostGuard),
 	}
 
 	return stmt, nil
@@ -523,6 +552,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 		Args:           finalArgs,
 		Warnings:       preparedWhereClause.Warnings,
 		WarningsDocURL: preparedWhereClause.WarningsDocURL,
+		CostGuard:      b.costGuardFor(preparedWhereClause.RequiresCostGuard),
 	}
 
 	return stmt, nil
@@ -650,6 +680,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 		Args:           finalArgs,
 		Warnings:       preparedWhereClause.Warnings,
 		WarningsDocURL: preparedWhereClause.WarningsDocURL,
+		CostGuard:      b.costGuardFor(preparedWhereClause.RequiresCostGuard),
 	}
 
 	return stmt, nil

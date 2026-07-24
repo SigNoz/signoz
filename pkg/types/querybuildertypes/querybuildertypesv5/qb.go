@@ -57,6 +57,12 @@ type Statement struct {
 	Args           []any
 	Warnings       []string
 	WarningsDocURL string
+	CostGuard      *CostGuard
+}
+
+type CostGuard struct {
+	Warning     string
+	MaxScanRows int64
 }
 
 // StatementBuilder builds the query.

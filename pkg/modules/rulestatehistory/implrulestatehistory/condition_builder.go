@@ -35,7 +35,7 @@ func (c *conditionBuilder) ConditionFor(
 	sb *sqlbuilder.SelectBuilder,
 ) ([]string, []string, error) {
 
-	// has/hasAny/hasAll/hasToken are logs-body-only; reject for rule state history.
+	// has/hasAny/hasAll/hasToken/search are logs-only functions; reject for rule state history.
 	if err := querybuilder.NewFunctionUnsupportedError(operator); err != nil {
 		return nil, nil, err
 	}

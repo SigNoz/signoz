@@ -43,6 +43,8 @@ type filterExpressionVisitor struct {
 	keysWithWarnings map[string]bool
 	startNs          uint64
 	endNs            uint64
+
+	requiresCostGuard bool
 }
 
 type FilterExprVisitorOpts struct {
@@ -81,9 +83,10 @@ func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVis
 }
 
 type PreparedWhereClause struct {
-	WhereClause    *sqlbuilder.WhereClause
-	Warnings       []string
-	WarningsDocURL string
+	WhereClause       *sqlbuilder.WhereClause
+	Warnings          []string
+	WarningsDocURL    string
+	RequiresCostGuard bool
 }
 
 func (p PreparedWhereClause) IsEmpty() bool {
@@ -165,12 +168,12 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (PreparedWhere
 
 	// Return empty where clause so callers can skip the WHERE clause
 	if cond == "" || cond == SkipConditionLiteral {
-		return PreparedWhereClause{WhereClause: nil, Warnings: visitor.warnings, WarningsDocURL: visitor.mainWarnURL}, nil
+		return PreparedWhereClause{WhereClause: nil, Warnings: visitor.warnings, WarningsDocURL: visitor.mainWarnURL, RequiresCostGuard: visitor.requiresCostGuard}, nil
 	}
 
 	whereClause := sqlbuilder.NewWhereClause().AddWhereExpr(visitor.builder.Args, cond)
 
-	return PreparedWhereClause{WhereClause: whereClause, Warnings: visitor.warnings, WarningsDocURL: visitor.mainWarnURL}, nil
+	return PreparedWhereClause{WhereClause: whereClause, Warnings: visitor.warnings, WarningsDocURL: visitor.mainWarnURL, RequiresCostGuard: visitor.requiresCostGuard}, nil
 }
 
 // Visit dispatches to the specific visit method based on node type.
@@ -776,11 +779,79 @@ func normalizeFunctionValue(operator qbtypes.FilterOperator, functionName string
 	return valueParams, nil
 }
 
-// VisitSearchCall handles search('needle'). The search() function is parsed but
-// not yet implemented; reject it with a clear invalid-input error.
+// VisitSearchCall handles search('needle') and its scoped forms, e.g.
+// search('needle', body, resource). The first arg is the case-insensitive needle; the
+// rest are field-context scopes (bare or quoted). Emits one FilterOperatorSearch per
+// scope (none = keyless, covering every field) and ORs them.
 func (v *filterExpressionVisitor) VisitSearchCall(ctx *grammar.SearchCallContext) any {
-	v.errors = append(v.errors, "function `search` is not yet supported")
-	return ErrorConditionLiteral
+	// Flag scan-heavy so the statement builder attaches the cost guard.
+	v.requiresCostGuard = true
+
+	valueList := ctx.ValueList()
+	if valueList == nil {
+		v.errors = append(v.errors, "function `search` expects a needle, e.g. search('error')")
+		return ErrorConditionLiteral
+	}
+	params := valueList.AllValue()
+	if len(params) == 0 {
+		v.errors = append(v.errors, "function `search` expects a needle, e.g. search('error')")
+		return ErrorConditionLiteral
+	}
+
+	searchText, ok := searchParamText(params[0])
+	if !ok {
+		v.errors = append(v.errors, "function `search` expects a needle as its first argument, e.g. search('error')")
+		return ErrorConditionLiteral
+	}
+
+	var fieldContexts []telemetrytypes.FieldContext
+	if len(params) == 1 {
+		fieldContexts = []telemetrytypes.FieldContext{telemetrytypes.FieldContextUnspecified}
+	} else {
+		for _, p := range params[1:] {
+			scopeText, sok := searchParamText(p)
+			if !sok {
+				v.errors = append(v.errors, "function `search` expects each scope to be a context, e.g. search('error', body, resource)")
+				return ErrorConditionLiteral
+			}
+			fc, fok := telemetrytypes.FieldContextFromText(scopeText)
+			if !fok {
+				v.errors = append(v.errors, fmt.Sprintf("invalid search scope %q; expected a field context: body, attribute, resource, or log", scopeText))
+				return ErrorConditionLiteral
+			}
+			fieldContexts = append(fieldContexts, fc)
+		}
+	}
+
+	var conds []string
+	for _, fieldContext := range fieldContexts {
+		key := telemetrytypes.NewTelemetryFieldKey("", fieldContext, telemetrytypes.FieldDataTypeUnspecified)
+		scoped, cok := v.buildConditions(key, nil, qbtypes.FilterOperatorSearch, searchText)
+		if !cok {
+			return ErrorConditionLiteral
+		}
+		conds = append(conds, scoped...)
+	}
+	if len(conds) == 0 {
+		return SkipConditionLiteral
+	}
+	if len(conds) == 1 {
+		return conds[0]
+	}
+	return v.builder.Or(conds...)
+}
+
+// searchParamText returns the raw token text of a search() argument (quoted or bare),
+// not the visited value — so a bare word stays literal and search(1000000) doesn't
+// become "1e+06".
+func searchParamText(val grammar.IValueContext) (string, bool) {
+	if val == nil {
+		return "", false
+	}
+	if val.QUOTED_TEXT() != nil {
+		return trimQuotes(val.QUOTED_TEXT().GetText()), true
+	}
+	return val.GetText(), true
 }
 
 // VisitFunctionParamList handles the parameter list for function calls.

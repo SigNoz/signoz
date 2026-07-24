@@ -79,6 +79,14 @@ var (
 	}
 )
 
+// FieldContextFromText resolves a context word (e.g. "body", "resource") to its
+// FieldContext, applying the same aliases as key parsing (e.g. "tag" -> attribute). ok
+// is false for an unknown word, so callers can reject it instead of getting unspecified.
+func FieldContextFromText(text string) (FieldContext, bool) {
+	fc, ok := fieldContexts[strings.ToLower(strings.TrimSpace(text))]
+	return fc, ok
+}
+
 // UnmarshalJSON implements the json.Unmarshaler interface.
 func (f *FieldContext) UnmarshalJSON(data []byte) error {
 	var str string

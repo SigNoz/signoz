@@ -635,3 +635,37 @@ func (m *fieldMapper) existsExpressionFor(
 	}
 	return querybuilder.ExistsExpression(columns, key, tsStart, tsEnd, fieldExpression, exists)
 }
+
+// searchColumns is the single source of truth for the columns search() fans out
+// across, by field context. Body is body_v2 JSON when useJSONBody, else body string.
+func searchColumns(fieldContext telemetrytypes.FieldContext, useJSONBody bool) []*schema.Column {
+	switch fieldContext {
+	case telemetrytypes.FieldContextLog:
+		return []*schema.Column{
+			logsV2Columns[LogsV2SeverityTextColumn],
+			logsV2Columns[LogsV2TraceIDColumn],
+			logsV2Columns[LogsV2SpanIDColumn],
+		}
+	case telemetrytypes.FieldContextBody:
+		if useJSONBody {
+			return []*schema.Column{logsV2Columns[LogsV2BodyV2Column]}
+		}
+		return []*schema.Column{logsV2Columns[LogsV2BodyColumn]}
+	case telemetrytypes.FieldContextAttribute:
+		return []*schema.Column{
+			logsV2Columns[LogsV2AttributesStringColumn],
+			logsV2Columns[LogsV2AttributesNumberColumn],
+			logsV2Columns[LogsV2AttributesBoolColumn],
+		}
+	case telemetrytypes.FieldContextResource:
+		return []*schema.Column{
+			logsV2Columns[LogsV2ResourcesStringColumn],
+		}
+	default:
+		columns := searchColumns(telemetrytypes.FieldContextLog, useJSONBody)
+		columns = append(columns, searchColumns(telemetrytypes.FieldContextBody, useJSONBody)...)
+		columns = append(columns, searchColumns(telemetrytypes.FieldContextAttribute, useJSONBody)...)
+		columns = append(columns, searchColumns(telemetrytypes.FieldContextResource, useJSONBody)...)
+		return columns
+	}
+}
