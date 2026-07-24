@@ -20,9 +20,12 @@ import { linkifyText } from 'utils/linkifyText';
 import { openInNewTab } from 'utils/navigation';
 
 import styles from './DashboardInfo.module.scss';
-import { useVisibleTagCount } from './useVisibleTagCount';
 import { DASHBOARD_NAME_MAX_LENGTH } from '../../constants';
 import { useDashboardStore } from '../../store/useDashboardStore';
+
+// The tag cluster keeps a fixed footprint so a long title ellipsizes around it
+// instead of collapsing the tags: show up to two tags, then a `+N` overflow badge.
+const MAX_VISIBLE_TAGS = 2;
 
 interface DashboardInfoProps {
 	title: string;
@@ -68,10 +71,8 @@ function DashboardInfo({
 	const hasTags = tags.length > 0;
 	const hasDescription = !isEmpty(description);
 
-	const { containerRef, visibleCount } = useVisibleTagCount(tags);
-	const needsOverflow = tags.length > visibleCount;
-	const visibleTags = needsOverflow ? tags.slice(0, visibleCount) : tags;
-	const remainingTags = needsOverflow ? tags.slice(visibleCount) : [];
+	const visibleTags = tags.slice(0, MAX_VISIBLE_TAGS);
+	const remainingTags = tags.slice(MAX_VISIBLE_TAGS);
 
 	let lockTooltip: string;
 	if (onToggleLock) {
@@ -225,11 +226,7 @@ function DashboardInfo({
 			{hasTags && (
 				<>
 					<span className={styles.divider} />
-					<div
-						ref={containerRef}
-						className={styles.dashboardTags}
-						data-testid="dashboard-tags"
-					>
+					<div className={styles.dashboardTags} data-testid="dashboard-tags">
 						{visibleTags.map((tag) => (
 							<TagBadge key={tag}>{tag}</TagBadge>
 						))}

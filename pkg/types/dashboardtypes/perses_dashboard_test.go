@@ -91,7 +91,7 @@ func TestValidateOnlyVariables(t *testing.T) {
 				"spec": {
 					"name": "service",
 					"allowAllValue": true,
-					"allowMultiple": false,
+					"allowMultiple": true,
 					"plugin": {
 						"kind": "signoz/DynamicVariable",
 						"spec": {
@@ -235,6 +235,12 @@ func TestInvalidateListVariableCrossFields(t *testing.T) {
 		_, err := unmarshalDashboard(listVar(`"allowAllValue": false, "allowMultiple": false, "customAllValue": "*",`))
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "customAllValue cannot be set")
+	})
+
+	t.Run("allowAllValue without allowMultiple", func(t *testing.T) {
+		_, err := unmarshalDashboard(listVar(`"allowAllValue": true, "allowMultiple": false,`))
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "allowAllValue cannot be set")
 	})
 
 	t.Run("list defaultValue without allowMultiple", func(t *testing.T) {

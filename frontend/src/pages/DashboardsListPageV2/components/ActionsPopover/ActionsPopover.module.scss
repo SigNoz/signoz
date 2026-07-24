@@ -42,3 +42,8 @@
 .menuItemWrap button:disabled {
 	pointer-events: none;
 }
+
+.deleteName {
+	color: var(--danger-background);
+	font-weight: var(--font-weight-medium);
+}

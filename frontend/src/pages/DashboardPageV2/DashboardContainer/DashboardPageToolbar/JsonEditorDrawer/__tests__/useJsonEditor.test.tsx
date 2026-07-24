@@ -44,8 +44,12 @@ const dashboard = {
 	},
 } as unknown as DashboardtypesGettableDashboardV2DTO;
 
-// The editor only exposes `tags` and `spec`; every other key is redacted.
-const redacted = { tags: dashboard.tags, spec: dashboard.spec };
+// The editor exposes `spec`, `tags`, `image` (in that order); every other key is redacted.
+const redacted = {
+	spec: dashboard.spec,
+	tags: dashboard.tags,
+	image: dashboard.image,
+};
 const serialized = JSON.stringify(redacted, null, 2);
 
 describe('useJsonEditor', () => {
@@ -65,17 +69,18 @@ describe('useJsonEditor', () => {
 		expect(result.current.validity.lineCount).toBe(serialized.split('\n').length);
 	});
 
-	it('redacts server-owned keys from the editable draft', () => {
+	it('exposes spec/tags/image (in order) and redacts server-owned keys', () => {
 		const { result } = renderHook(() =>
 			useJsonEditor({ dashboard, isOpen: true, onApplied: jest.fn() }),
 		);
 
 		const parsed = JSON.parse(result.current.draft);
-		expect(Object.keys(parsed).sort()).toStrictEqual(['spec', 'tags']);
+		// Key order is intentional: spec, then tags, then image.
+		expect(Object.keys(parsed)).toStrictEqual(['spec', 'tags', 'image']);
+		expect(parsed.image).toBe('icon.png');
 		expect(parsed.id).toBeUndefined();
 		expect(parsed.name).toBeUndefined();
 		expect(parsed.schemaVersion).toBeUndefined();
-		expect(parsed.image).toBeUndefined();
 	});
 
 	it('flags invalid JSON with a line number and marks the draft dirty', () => {

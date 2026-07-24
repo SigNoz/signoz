@@ -245,6 +245,9 @@ func (s *ListVariableSpec) validate(path string) error {
 	if s.CustomAllValue != "" && !s.AllowAllValue {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s: customAllValue cannot be set if allowAllValue is not set to true", path)
 	}
+	if s.AllowAllValue && !s.AllowMultiple {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s: allowAllValue cannot be set if allowMultiple is not set to true", path)
+	}
 	if s.DefaultValue != nil && len(s.DefaultValue.SliceValues) > 0 && !s.AllowMultiple {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s: defaultValue cannot be a list if allowMultiple is not set to true", path)
 	}
