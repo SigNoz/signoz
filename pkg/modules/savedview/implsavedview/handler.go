@@ -113,13 +113,7 @@ func (handler *handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updated, err := handler.module.GetView(ctx, claims.OrgID, viewUUID)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	render.Success(w, http.StatusOK, updated)
+	render.Success(w, http.StatusOK, nil)
 }
 
 func (handler *handler) Delete(w http.ResponseWriter, r *http.Request) {

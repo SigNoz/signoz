@@ -70,7 +70,7 @@ func (module *module) UpdateView(ctx context.Context, orgID string, uuid valuer.
 		return err
 	}
 
-	_, err = module.sqlstore.BunDB().NewUpdate().
+	res, err := module.sqlstore.BunDB().NewUpdate().
 		Model(&savedviewtypes.StorableSavedView{}).
 		Set("updated_at = ?, updated_by = ?, name = ?, category = ?, source_page = ?, tags = ?, data = ?, extra_data = ?",
 			dbView.UpdatedAt, dbView.UpdatedBy, dbView.Name, dbView.Category, dbView.SourcePage, dbView.Tags, dbView.Data, dbView.ExtraData).
@@ -80,6 +80,15 @@ func (module *module) UpdateView(ctx context.Context, orgID string, uuid valuer.
 	if err != nil {
 		return errors.WrapInternalf(err, errors.CodeInternal, "error in updating saved view")
 	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return errors.WrapInternalf(err, errors.CodeInternal, "error in updating saved view")
+	}
+	if rowsAffected == 0 {
+		return errors.NewNotFoundf(savedviewtypes.ErrCodeSavedViewNotFound, "saved view %s not found", uuid.StringValue())
+	}
+
 	return nil
 }
 

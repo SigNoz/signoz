@@ -11,7 +11,10 @@ import (
 	"github.com/uptrace/bun"
 )
 
-var ErrCodeSavedViewInvalidInput = errors.MustNewCode("saved_view_invalid_input")
+var (
+	ErrCodeSavedViewInvalidInput = errors.MustNewCode("saved_view_invalid_input")
+	ErrCodeSavedViewNotFound     = errors.MustNewCode("saved_view_not_found")
+)
 
 type SourcePage struct {
 	valuer.String

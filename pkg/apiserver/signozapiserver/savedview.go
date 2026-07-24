@@ -70,7 +70,7 @@ func (provider *provider) addSavedViewRoutes(router *mux.Router) error {
 		Description:         "Replaces a saved view's name, tags, and query.",
 		Request:             new(savedviewtypes.UpdatableSavedView),
 		RequestContentType:  "application/json",
-		Response:            new(savedviewtypes.GettableSavedView),
+		Response:            nil,
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
