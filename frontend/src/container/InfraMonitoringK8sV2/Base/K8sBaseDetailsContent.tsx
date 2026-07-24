@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo } from 'react';
+import { Fragment, useEffect, useMemo, useRef } from 'react';
 import {
 	BarChart,
 	ChevronsLeftRight,
@@ -12,7 +12,10 @@ import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { combineInitialAndUserExpression } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
-import { InfraMonitoringEvents } from 'constants/events';
+import {
+	InfraMonitoringEvents,
+	logInfraDrawerTabViewedEvent,
+} from 'constants/events';
 import { QueryParams } from 'constants/query';
 import {
 	initialQueryBuilderFormValuesMap,
@@ -110,6 +113,17 @@ export default function K8sBaseDetailsContent<T>({
 
 	const effectiveView = hideDetailViewTabs ? VIEW_TYPES.METRICS : selectedView;
 
+	// Wait until the view is a valid tab so we don't log a pending value before
+	// the validation effect above corrects an out-of-scope query param
+	const hasLoggedDefaultTab = useRef(false);
+	useEffect(() => {
+		if (hasLoggedDefaultTab.current || !validTabs.includes(effectiveView)) {
+			return;
+		}
+		hasLoggedDefaultTab.current = true;
+		logInfraDrawerTabViewedEvent(category, effectiveView, true);
+	}, [validTabs, effectiveView, category]);
+
 	const [, setLogFiltersParam] = useInfraMonitoringLogFilters();
 	const [, setTracesFiltersParam] = useInfraMonitoringTracesFilters();
 	const [, setEventsFiltersParam] = useInfraMonitoringEventsFilters();
@@ -136,6 +150,7 @@ export default function K8sBaseDetailsContent<T>({
 			category: eventCategory,
 			view: value,
 		});
+		logInfraDrawerTabViewedEvent(category, value, false);
 	};
 
 	const handleExplorePagesRedirect = (): void => {

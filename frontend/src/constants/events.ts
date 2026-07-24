@@ -160,3 +160,15 @@ export function logInfraGroupByCustomizedEvent(
 		group_by_keys_list: groupByKeysList,
 	});
 }
+
+export function logInfraDrawerTabViewedEvent(
+	entityType: string,
+	tab: string,
+	isDefaultTab: boolean,
+): void {
+	void logEvent('infra_drawer_tab_viewed', {
+		entity_type: entityType,
+		tab,
+		is_default_tab: isDefaultTab,
+	});
+}
