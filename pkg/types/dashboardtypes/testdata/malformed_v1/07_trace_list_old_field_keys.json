@@ -1,0 +1,89 @@
+{
+  "id": "07_trace_list_old_field_keys",
+  "uuid": "07_trace_list_old_field_keys",
+  "title": "07 trace list selectedTracesFields old {key,...} + empty",
+  "description": "07 trace list selectedTracesFields old {key,...} + empty",
+  "tags": [
+    "malformed-fixture"
+  ],
+  "version": "v5",
+  "widgets": [
+    {
+      "id": "w1",
+      "title": "trace list fields",
+      "description": "trace list fields",
+      "panelTypes": "list",
+      "opacity": "1",
+      "nullZeroValues": "zero",
+      "timePreferance": "GLOBAL_TIME",
+      "softMin": null,
+      "softMax": null,
+      "selectedLogFields": null,
+      "selectedTracesFields": [
+        {
+          "key": "service.name",
+          "dataType": "string",
+          "type": "resource"
+        },
+        {
+          "key": "http.method",
+          "dataType": "string",
+          "type": "tag"
+        },
+        {
+          "key": "",
+          "dataType": "",
+          "type": ""
+        }
+      ],
+      "query": {
+        "queryType": "builder",
+        "builder": {
+          "queryData": [
+            {
+              "queryName": "A",
+              "expression": "A",
+              "dataSource": "traces",
+              "disabled": false,
+              "legend": "",
+              "stepInterval": 60,
+              "groupBy": [],
+              "orderBy": [
+                {
+                  "columnName": "timestamp",
+                  "order": "desc"
+                }
+              ],
+              "aggregations": [],
+              "filter": {
+                "expression": ""
+              },
+              "having": {
+                "expression": ""
+              },
+              "limit": null,
+              "functions": []
+            }
+          ],
+          "queryFormulas": []
+        },
+        "promql": [],
+        "clickhouse_sql": [],
+        "id": "w1-q"
+      }
+    }
+  ],
+  "layout": [
+    {
+      "i": "w1",
+      "x": 0,
+      "y": 0,
+      "w": 6,
+      "h": 6,
+      "moved": false,
+      "static": false
+    }
+  ],
+  "panelMap": {},
+  "variables": {}
+}

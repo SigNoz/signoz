@@ -1,0 +1,88 @@
+{
+  "id": "09_variable_dynamic_missing_attribute",
+  "uuid": "09_variable_dynamic_missing_attribute",
+  "title": "09 DYNAMIC missing dynamicVariablesAttribute",
+  "description": "09 DYNAMIC missing dynamicVariablesAttribute",
+  "tags": [
+    "malformed-fixture"
+  ],
+  "version": "v5",
+  "widgets": [
+    {
+      "id": "w1",
+      "title": "uses dyn var",
+      "description": "uses dyn var",
+      "panelTypes": "graph",
+      "opacity": "1",
+      "nullZeroValues": "zero",
+      "timePreferance": "GLOBAL_TIME",
+      "softMin": null,
+      "softMax": null,
+      "selectedLogFields": null,
+      "selectedTracesFields": null,
+      "query": {
+        "queryType": "builder",
+        "builder": {
+          "queryData": [
+            {
+              "queryName": "A",
+              "expression": "A",
+              "dataSource": "metrics",
+              "disabled": false,
+              "legend": "",
+              "stepInterval": 60,
+              "groupBy": [],
+              "orderBy": [],
+              "aggregations": [
+                {
+                  "metricName": "system.cpu.time",
+                  "temporality": "",
+                  "timeAggregation": "avg",
+                  "spaceAggregation": "sum",
+                  "reduceTo": "avg"
+                }
+              ],
+              "filter": {
+                "expression": ""
+              },
+              "having": {
+                "expression": ""
+              },
+              "limit": null,
+              "functions": []
+            }
+          ],
+          "queryFormulas": []
+        },
+        "promql": [],
+        "clickhouse_sql": [],
+        "id": "w1-q"
+      }
+    }
+  ],
+  "layout": [
+    {
+      "i": "w1",
+      "x": 0,
+      "y": 0,
+      "w": 6,
+      "h": 6,
+      "moved": false,
+      "static": false
+    }
+  ],
+  "panelMap": {},
+  "variables": {
+    "dyn": {
+      "id": "dyn",
+      "order": 0,
+      "type": "DYNAMIC",
+      "name": "node",
+      "description": "",
+      "dynamicVariablesSource": "Traces",
+      "sort": "DISABLED",
+      "multiSelect": true,
+      "showALLOption": true
+    }
+  }
+}

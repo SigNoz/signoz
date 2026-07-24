@@ -1,0 +1,174 @@
+{
+  "id": "12_layout_collapsed_ghost_child_bare_panelmap",
+  "uuid": "12_layout_collapsed_ghost_child_bare_panelmap",
+  "title": "12 collapsed ghost child + bare-array panelMap",
+  "description": "12 collapsed ghost child + bare-array panelMap",
+  "tags": [
+    "malformed-fixture"
+  ],
+  "version": "v5",
+  "widgets": [
+    {
+      "id": "row-1",
+      "panelTypes": "row",
+      "title": "Collapsed section",
+      "description": ""
+    },
+    {
+      "id": "p-1",
+      "title": "in collapsed",
+      "description": "in collapsed",
+      "panelTypes": "graph",
+      "opacity": "1",
+      "nullZeroValues": "zero",
+      "timePreferance": "GLOBAL_TIME",
+      "softMin": null,
+      "softMax": null,
+      "selectedLogFields": null,
+      "selectedTracesFields": null,
+      "query": {
+        "queryType": "builder",
+        "builder": {
+          "queryData": [
+            {
+              "queryName": "A",
+              "expression": "A",
+              "dataSource": "metrics",
+              "disabled": false,
+              "legend": "",
+              "stepInterval": 60,
+              "groupBy": [],
+              "orderBy": [],
+              "aggregations": [
+                {
+                  "metricName": "system.cpu.time",
+                  "temporality": "",
+                  "timeAggregation": "avg",
+                  "spaceAggregation": "sum",
+                  "reduceTo": "avg"
+                }
+              ],
+              "filter": {
+                "expression": ""
+              },
+              "having": {
+                "expression": ""
+              },
+              "limit": null,
+              "functions": []
+            }
+          ],
+          "queryFormulas": []
+        },
+        "promql": [],
+        "clickhouse_sql": [],
+        "id": "p-1-q"
+      }
+    },
+    {
+      "id": "row-2",
+      "panelTypes": "row",
+      "title": "Bare-array section",
+      "description": ""
+    },
+    {
+      "id": "p-2",
+      "title": "in bare-array",
+      "description": "in bare-array",
+      "panelTypes": "graph",
+      "opacity": "1",
+      "nullZeroValues": "zero",
+      "timePreferance": "GLOBAL_TIME",
+      "softMin": null,
+      "softMax": null,
+      "selectedLogFields": null,
+      "selectedTracesFields": null,
+      "query": {
+        "queryType": "builder",
+        "builder": {
+          "queryData": [
+            {
+              "queryName": "A",
+              "expression": "A",
+              "dataSource": "metrics",
+              "disabled": false,
+              "legend": "",
+              "stepInterval": 60,
+              "groupBy": [],
+              "orderBy": [],
+              "aggregations": [
+                {
+                  "metricName": "system.cpu.time",
+                  "temporality": "",
+                  "timeAggregation": "avg",
+                  "spaceAggregation": "sum",
+                  "reduceTo": "avg"
+                }
+              ],
+              "filter": {
+                "expression": ""
+              },
+              "having": {
+                "expression": ""
+              },
+              "limit": null,
+              "functions": []
+            }
+          ],
+          "queryFormulas": []
+        },
+        "promql": [],
+        "clickhouse_sql": [],
+        "id": "p-2-q"
+      }
+    }
+  ],
+  "layout": [
+    {
+      "i": "row-1",
+      "x": 0,
+      "y": 0,
+      "w": 12,
+      "h": 1
+    },
+    {
+      "i": "row-2",
+      "x": 0,
+      "y": 1,
+      "w": 12,
+      "h": 1
+    },
+    {
+      "i": "p-2",
+      "x": 0,
+      "y": 2,
+      "w": 6,
+      "h": 6
+    }
+  ],
+  "panelMap": {
+    "row-1": {
+      "collapsed": true,
+      "widgets": [
+        {
+          "i": "p-1",
+          "x": 0,
+          "y": 2,
+          "w": 6,
+          "h": 6
+        },
+        {
+          "i": "ghost",
+          "x": 6,
+          "y": 2,
+          "w": 6,
+          "h": 6
+        }
+      ]
+    },
+    "row-2": [
+      "p-2"
+    ]
+  },
+  "variables": {}
+}

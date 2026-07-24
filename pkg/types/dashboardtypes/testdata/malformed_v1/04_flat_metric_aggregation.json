@@ -1,0 +1,78 @@
+{
+  "id": "04_flat_metric_aggregation",
+  "uuid": "04_flat_metric_aggregation",
+  "title": "04 flat metric aggregation (v4)",
+  "description": "04 flat metric aggregation (v4)",
+  "tags": [
+    "malformed-fixture"
+  ],
+  "version": "v5",
+  "widgets": [
+    {
+      "id": "w1",
+      "title": "flat metric agg",
+      "description": "flat metric agg",
+      "panelTypes": "graph",
+      "opacity": "1",
+      "nullZeroValues": "zero",
+      "timePreferance": "GLOBAL_TIME",
+      "softMin": null,
+      "softMax": null,
+      "selectedLogFields": null,
+      "selectedTracesFields": null,
+      "query": {
+        "queryType": "builder",
+        "builder": {
+          "queryData": [
+            {
+              "queryName": "A",
+              "expression": "A",
+              "dataSource": "metrics",
+              "disabled": false,
+              "legend": "",
+              "stepInterval": 60,
+              "groupBy": [],
+              "orderBy": [],
+              "filter": {
+                "expression": ""
+              },
+              "having": {
+                "expression": ""
+              },
+              "limit": null,
+              "functions": [],
+              "aggregateOperator": "avg",
+              "aggregateAttribute": {
+                "key": "system.cpu.time",
+                "dataType": "float64",
+                "type": "",
+                "isColumn": true
+              },
+              "timeAggregation": "avg",
+              "spaceAggregation": "sum",
+              "temporality": "",
+              "reduceTo": "avg"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "promql": [],
+        "clickhouse_sql": [],
+        "id": "w1-q"
+      }
+    }
+  ],
+  "layout": [
+    {
+      "i": "w1",
+      "x": 0,
+      "y": 0,
+      "w": 6,
+      "h": 6,
+      "moved": false,
+      "static": false
+    }
+  ],
+  "panelMap": {},
+  "variables": {}
+}

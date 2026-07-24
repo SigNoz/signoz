@@ -68,6 +68,24 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		return err
 	}
 
+	// Temporary endpoint that migrates every dashboard in the org from v1 to v2 in place.
+	if err := router.Handle("/api/v2/dashboards/migrate_v1_to_v2", handler.New(provider.authzMiddleware.EditAccess(provider.dashboardHandler.ConvertAllV1ToV2), handler.OpenAPIDef{
+		ID:                  "MigrateAllDashboardsV1ToV2",
+		Tags:                []string{"dashboard"},
+		Summary:             "Migrate all dashboards (v1 → v2)",
+		Description:         "Temporary: migrates every dashboard in the caller's org from the v1 to the v2 schema in place, overwriting the stored data. Dashboards already in v2 are skipped. Returns the per-dashboard migration result.",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            new(dashboardtypes.V1ToV2MigrationResult),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusBadRequest},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+	})).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
 	if err := router.Handle("/api/v2/dashboards/{id}/clone", handler.New(provider.authzMiddleware.EditAccess(provider.dashboardHandler.CloneV2), handler.OpenAPIDef{
 		ID:                  "CloneDashboardV2",
 		Tags:                []string{"dashboard"},

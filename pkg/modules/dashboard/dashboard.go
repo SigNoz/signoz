@@ -134,6 +134,8 @@ type Handler interface {
 
 	CloneV2(http.ResponseWriter, *http.Request)
 
+	ConvertAllV1ToV2(http.ResponseWriter, *http.Request)
+
 	GetV2(http.ResponseWriter, *http.Request)
 
 	ListV2(http.ResponseWriter, *http.Request)

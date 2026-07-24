@@ -106,6 +106,30 @@ func (handler *handler) CloneV2(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusCreated, dashboard.ToGettableDashboardV2())
 }
 
+// ConvertAllV1ToV2 migrates every dashboard in the caller's org from the v1 to
+// the v2 schema in place and returns the per-dashboard results. Temporary
+// scaffolding for the schema migration.
+func (handler *handler) ConvertAllV1ToV2(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 60*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	result, err := handler.module.ConvertAllV1ToV2(ctx, orgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, result)
+}
+
 func (handler *handler) ListV2(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
