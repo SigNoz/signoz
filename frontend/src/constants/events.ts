@@ -118,3 +118,13 @@ export function logInfraColumnSortedEvent(
 		source,
 	});
 }
+
+export function logInfraDrawerTimeRangeCustomizedEvent(
+	entityType: string,
+	rangeLabel: string,
+): void {
+	void logEvent('infra_drawer_time_range_customized', {
+		entity_type: entityType,
+		range_label: isCustomTimeRange(rangeLabel) ? 'custom' : rangeLabel,
+	});
+}

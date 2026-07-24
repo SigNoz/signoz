@@ -3,7 +3,10 @@ import { Undo } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import logEvent from 'api/common/logEvent';
-import { InfraMonitoringEvents } from 'constants/events';
+import {
+	InfraMonitoringEvents,
+	logInfraDrawerTimeRangeCustomizedEvent,
+} from 'constants/events';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import {
@@ -43,6 +46,7 @@ function EntityDateTimeSelector({
 				view,
 				interval,
 			});
+			logInfraDrawerTimeRangeCustomizedEvent(category, interval);
 			handleTimeChange(interval, dateTimeRange);
 		},
 		[category, view, eventEntity, handleTimeChange],
