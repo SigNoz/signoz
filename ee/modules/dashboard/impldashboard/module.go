@@ -272,6 +272,10 @@ func (module *module) CloneV2(ctx context.Context, orgID valuer.UUID, createdBy 
 	return module.pkgDashboardModule.CloneV2(ctx, orgID, createdBy, creator, id)
 }
 
+func (module *module) ConvertAllV1ToV2(ctx context.Context, orgID valuer.UUID) (*dashboardtypes.V1ToV2MigrationResult, error) {
+	return module.pkgDashboardModule.ConvertAllV1ToV2(ctx, orgID)
+}
+
 func (module *module) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error) {
 	return module.pkgDashboardModule.GetV2(ctx, orgID, id)
 }

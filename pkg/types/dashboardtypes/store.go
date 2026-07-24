@@ -25,6 +25,10 @@ type Store interface {
 
 	Update(context.Context, valuer.UUID, *StorableDashboard) error
 
+	// UpdateName updates only the name column of a dashboard, leaving its data
+	// untouched — used to backfill the name of a dashboard whose data fails to migrate.
+	UpdateName(ctx context.Context, orgID valuer.UUID, id valuer.UUID, name string) error
+
 	UpdatePublic(context.Context, *StorablePublicDashboard) error
 
 	Delete(context.Context, valuer.UUID, valuer.UUID) error
