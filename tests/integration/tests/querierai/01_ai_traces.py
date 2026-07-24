@@ -369,6 +369,44 @@ def test_ai_span_list_excludes_non_gen_ai_spans(
     assert "POST /api/chat" not in names  # root span excluded
 
 
+def test_ai_span_list_trace_level_filter(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[list[Traces]], None],
+) -> None:
+    """
+    Span list (raw) with a trace-level condition: only gen_ai spans of traces whose
+    window-clipped aggregates qualify come back (the __trace_scope qualification on
+    the delegated path). Two traces with out-tokens 100 / 300: `trace.output_tokens
+    > 100` keeps only the large trace's LLM span.
+    """
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    service = "ai-it-spanlist-tracefilter"
+    small = _ai_trace(now=now, service=service, user="a", in_tokens=10, out_tokens=100, cost=0.1)
+    large = _ai_trace(now=now, service=service, user="b", in_tokens=30, out_tokens=300, cost=0.2)
+    insert_traces(small + large)
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    start_ms, end_ms = _window_ms(now)
+
+    query = BuilderQuery(
+        signal="traces",
+        query_type="builder_ai_query",
+        name="A",
+        filter_expression=f"service.name = '{service}' AND trace.output_tokens > 100",
+        limit=10,
+    )
+    resp = make_query_request(signoz, token, start_ms, end_ms, [query.to_dict()], request_type=RequestType.RAW)
+    assert resp.status_code == HTTPStatus.OK, resp.text
+
+    rows = resp.json()["data"]["data"]["results"][0]["rows"]
+    assert len(rows) == 1, f"expected only the large trace's LLM span, got {len(rows)} rows"
+    body = json.dumps(rows)
+    assert large[0].trace_id in body
+    assert small[0].trace_id not in body
+
+
 def test_ai_list_having_or_aggregates(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
