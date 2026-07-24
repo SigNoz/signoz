@@ -10,7 +10,7 @@ import {
 import { useMutation } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import {
 	closestCenter,
 	DndContext,
@@ -469,26 +469,28 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 
 	const isWorkspaceBlocked = trialInfo?.workSpaceBlock || false;
 
-	const onClickGetStarted = (event: MouseEvent): void => {
+	const onClickGetStarted = (): void => {
 		void logEvent('Sidebar: Menu clicked', {
 			menuRoute: ROUTES.GET_STARTED_WITH_CLOUD,
 			menuLabel: 'Get Started',
 		});
-
-		if (isModifierKeyPressed(event)) {
-			openInNewTab(ROUTES.GET_STARTED_WITH_CLOUD);
-		} else {
-			history.push(ROUTES.GET_STARTED_WITH_CLOUD);
-		}
 	};
 
-	const onClickHandler = useCallback(
-		(key: string, event: MouseEvent | null) => {
+	/** Compute the href for a generic nav item key, preserving relevant query params. */
+	const getNavItemUrl = useCallback(
+		(key: string): string => {
 			const params = new URLSearchParams(search);
 			const availableParams = routeConfig[key];
 
 			const queryString = getQueryString(availableParams || [], params);
-			const url = buildNavUrl(key, queryString);
+			return buildNavUrl(key, queryString);
+		},
+		[search],
+	);
+
+	const onClickHandler = useCallback(
+		(key: string, event: MouseEvent | null) => {
+			const url = getNavItemUrl(key);
 
 			if (pathname !== key) {
 				if (event && isModifierKeyPressed(event)) {
@@ -500,7 +502,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 				}
 			}
 		},
-		[pathname, search],
+		[pathname, getNavItemUrl],
 	);
 
 	const activeMenuKey = useMemo(
@@ -654,34 +656,41 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		? ROUTES.ORG_SETTINGS
 		: ROUTES.SETTINGS;
 
+	/**
+	 * Compute the href for a sidebar item.
+	 * Returns undefined for non-route actions (e.g. quick-search modal).
+	 */
+	const getNavItemHref = useCallback(
+		(item: SidebarItem): string | undefined => {
+			if (item.key === 'quick-search') {
+				// Opens a modal, not a route
+				return undefined;
+			}
+			if (item.key === ROUTES.SETTINGS) {
+				return settingsRoute;
+			}
+			if (item.key === aiAssistantMenuItem.key) {
+				return aiAssistantActiveConversationId
+					? ROUTES.AI_ASSISTANT.replace(
+							':conversationId',
+							aiAssistantActiveConversationId,
+						)
+					: String(aiAssistantMenuItem.key);
+			}
+			return getNavItemUrl(item.key as string);
+		},
+		[settingsRoute, aiAssistantActiveConversationId, getNavItemUrl],
+	);
+
 	const handleMenuItemClick = (event: MouseEvent, item: SidebarItem): void => {
-		if (item.key === ROUTES.SETTINGS) {
-			if (isModifierKeyPressed(event)) {
-				openInNewTab(settingsRoute);
-			} else {
-				history.push(settingsRoute);
-			}
-		} else if (item.key === 'quick-search') {
+		// Non-route actions: prevent Link navigation and handle imperatively
+		if (item.key === 'quick-search') {
+			event.preventDefault();
 			openCmdK();
-		} else if (item.key === aiAssistantMenuItem.key) {
-			// Resume the active conversation when one exists — without this
-			// every sidenav click hits `/ai-assistant/new` which the page
-			// resolves by spawning a fresh thread. Only fall back to /new
-			// when there's no active conversation to resume.
-			const aiPath = aiAssistantActiveConversationId
-				? ROUTES.AI_ASSISTANT.replace(
-						':conversationId',
-						aiAssistantActiveConversationId,
-					)
-				: aiAssistantMenuItem.key;
-			if (isModifierKeyPressed(event)) {
-				openInNewTab(aiPath);
-			} else {
-				history.push(aiPath);
-			}
-		} else if (item) {
-			onClickHandler(item?.key as string, event);
 		}
+		// For all route-based items, the <Link> handles navigation natively
+		// (including right-click, middle-click, Ctrl/Cmd+click).
+		// We only need to log the analytics event.
 		void logEvent('Sidebar V2: Menu clicked', {
 			menuRoute: item?.key,
 			menuLabel: item?.label,
@@ -840,6 +849,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 						handleMenuItemClick(event, item);
 					}}
 					isPinned={isPinnedItem(item)}
+					href={getNavItemHref(item)}
 				/>
 			))}
 		</>
@@ -1003,15 +1013,13 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 				<div className="brand-container">
 					<div className="brand">
 						<div className="brand-company-meta">
-							<div
+							<Link
+								to={getNavItemUrl(ROUTES.HOME)}
 								className="brand-logo"
-								onClick={(event: MouseEvent): void => {
-									// Current home page
-									onClickHandler(ROUTES.HOME, event);
-								}}
+								draggable={false}
 							>
 								<img src={signozBrandLogoUrl} alt="SigNoz" />
-							</div>
+							</Link>
 
 							{(licenseTag || currentVersion) && (
 								<div
@@ -1081,19 +1089,22 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 					<div className={cx('nav-top-section')} ref={navTopSectionRef}>
 						{isCloudUser && user?.role !== USER_ROLES.VIEWER && (
 							<div className="get-started-nav-items">
-								<Button
+								<Link
+									to={ROUTES.GET_STARTED_WITH_CLOUD}
 									className="get-started-btn"
-									disabled={isWorkspaceBlocked}
-									onClick={(event: MouseEvent): void => {
+									onClick={(event): void => {
 										if (isWorkspaceBlocked) {
+											event.preventDefault();
 											return;
 										}
-										onClickGetStarted(event);
+										onClickGetStarted();
 									}}
+									draggable={false}
+									aria-disabled={isWorkspaceBlocked}
 								>
 									<PackagePlus size={16} />
 									<div className="license tag nav-item-label"> New source </div>
-								</Button>
+								</Link>
 							</div>
 						)}
 

@@ -9,6 +9,18 @@
 	margin-bottom: 4px;
 	cursor: pointer;
 
+	// Reset anchor defaults when rendered as a <Link> (i.e. <a> tag)
+	text-decoration: none;
+	color: inherit;
+
+	&:hover,
+	&:focus,
+	&:active,
+	&:visited {
+		text-decoration: none;
+		color: inherit;
+	}
+
 	&.active {
 		.nav-item-active-marker {
 			background: var(--primary-background);
