@@ -123,6 +123,10 @@ func newPromqlQuery(
 }
 
 func (q *promqlQuery) Fingerprint() string {
+	if q.requestType != qbv5.RequestTypeTimeSeries {
+		return ""
+	}
+
 	query, err := q.renderVars(q.query.Query, q.vars, q.tr.From, q.tr.To)
 	if err != nil {
 		q.logger.ErrorContext(context.TODO(), "failed render template variables", slog.String("query", q.query.Query))
@@ -361,16 +365,37 @@ func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {
 
 	warnings, _ := res.Warnings.AsStrings(query, 10, 0)
 
-	return &qbv5.Result{
-		Type: q.requestType,
-		Value: &qbv5.TimeSeriesData{
-			QueryName: q.query.Name,
-			Aggregations: []*qbv5.AggregationBucket{
-				{
-					Series: series,
-				},
+	tsData := &qbv5.TimeSeriesData{
+		QueryName: q.query.Name,
+		Aggregations: []*qbv5.AggregationBucket{
+			{
+				Series: series,
 			},
 		},
+	}
+
+	var payload any = tsData
+	// Scalar requests must return scalar data; reduce each series to its
+	// last point. This approximates an instant query evaluated at the end
+	// of the window: the final range-eval step sees the same samples an
+	// instant query at that timestamp would, except a series that went
+	// stale mid-window still surfaces its most recent value instead of
+	// dropping out of the result.
+	// TODO(srikanthccv): "last" mirrors the instant-query semantics we
+	// have always followed for PromQL scalar requests, but it should be
+	// configurable on the PromQuery spec just like the builder reduceTo.
+	if q.requestType == qbv5.RequestTypeScalar {
+		for _, aggBucket := range tsData.Aggregations {
+			for i, s := range aggBucket.Series {
+				aggBucket.Series[i] = qbv5.FunctionReduceTo(s, qbv5.ReduceToLast)
+			}
+		}
+		payload = convertTimeSeriesDataToScalar(tsData, q.query.Name)
+	}
+
+	return &qbv5.Result{
+		Type:     q.requestType,
+		Value:    payload,
 		Warnings: warnings,
 		// TODO: map promql stats?
 	}, nil
