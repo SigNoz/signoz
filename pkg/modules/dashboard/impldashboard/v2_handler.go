@@ -1,16 +1,21 @@
 package impldashboard
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
+	"github.com/SigNoz/signoz/pkg/transition"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
+	"github.com/SigNoz/signoz/pkg/types/tagtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
@@ -27,10 +32,37 @@ func (handler *handler) CreateV2(rw http.ResponseWriter, r *http.Request) {
 
 	orgID := valuer.MustNewUUID(claims.OrgID)
 
-	var req dashboardtypes.PostableDashboardV2
-	if err := binding.JSON.BindBody(r.Body, &req); err != nil {
+	// Read the body ourselves (rather than binding straight from r.Body) so the
+	// raw bytes survive a failed bind for the v1 fallback below.
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
 		render.Error(rw, err)
 		return
+	}
+
+	var req dashboardtypes.PostableDashboardV2
+	if err := binding.JSON.BindBody(bytes.NewReader(body), &req); err != nil {
+		// Fallback: the body may be a legacy v1 dashboard. Migrate it to v2 (same
+		// v4→v5 + v1→v2 pass the bulk migration runs) and retry; if it isn't a
+		// convertible v1 payload either, surface the original v2 binding error.
+		var data map[string]any
+		if json.Unmarshal(body, &data) != nil {
+			render.Error(rw, err)
+			return
+		}
+		storable := dashboardtypes.StorableDashboard{Data: data, OrgID: orgID}
+		transition.NewDashboardMigrateV5(handler.providerSettings.Logger, nil, nil).Migrate(ctx, storable.Data)
+		v2, convErr := storable.ConvertV1ToV2()
+		if convErr != nil {
+			render.Error(rw, err)
+			return
+		}
+		req = dashboardtypes.PostableDashboardV2{
+			DashboardV2MetadataBase: v2.DashboardV2MetadataBase,
+			Name:                    v2.Name,
+			Tags:                    tagtypes.NewPostableTagsFromTags(v2.Tags),
+			Spec:                    v2.Spec,
+		}
 	}
 
 	dashboard, err := handler.module.CreateV2(ctx, orgID, claims.Email, valuer.MustNewUUID(claims.IdentityID()), dashboardtypes.SourceUser, req)
