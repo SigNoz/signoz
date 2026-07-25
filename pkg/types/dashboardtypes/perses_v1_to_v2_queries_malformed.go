@@ -33,6 +33,7 @@ var preV5Migrator = transition.NewDashboardMigrateV5(slog.New(slog.DiscardHandle
 func normalizePreV5QueryData(query map[string]any, widgetType string) {
 	dropLegacyFilter(query)
 	normalizeFilterItemOps(query)
+	foldReduceToIntoMetricAggregations(query)
 	preV5Migrator.MigrateQueryDataShapeSafe(context.Background(), query, widgetType)
 	normalizePreV5LogTraceAggregations(query)
 	normalizeMetricAggregations(query)
@@ -226,7 +227,7 @@ func dropLegacyFilter(query map[string]any) {
 
 // normalizeFilterItemOps lowercases exists/nexists filter ops (frontend stores them
 // uppercase) to the spelling transition's buildCondition (pkg/transition/migrate_common.go)
-// matches; otherwise it appends a spurious empty value ("svc EXISTS ''"). Value
+// matches; otherwise it appends a spurious empty value ("svc EXISTS ”"). Value
 // operators already round-trip via that switch's default case.
 func normalizeFilterItemOps(query map[string]any) {
 	filters, ok := query["filters"].(map[string]any)
@@ -299,6 +300,32 @@ func normalizeMetricAggregations(query map[string]any) {
 		sa, _ := agg["spaceAggregation"].(string)
 		if !(metrictypes.SpaceAggregation{String: valuer.NewString(sa)}).IsValid() {
 			agg["spaceAggregation"] = metrictypes.SpaceAggregationSum.StringValue()
+		}
+	}
+}
+
+// foldReduceToIntoMetricAggregations moves a metric query's top-level reduceTo onto
+// its existing aggregations[] (where v5 wants it), which the shared migrator only does
+// when building an aggregation from flat fields. Runs before it so the value survives.
+func foldReduceToIntoMetricAggregations(query map[string]any) {
+	if signalFromDataSource(query["dataSource"]) != telemetrytypes.SignalMetrics {
+		return
+	}
+	reduceTo, ok := query["reduceTo"].(string)
+	if !ok || reduceTo == "" {
+		return
+	}
+	aggs, ok := query["aggregations"].([]any)
+	if !ok || len(aggs) == 0 {
+		return
+	}
+	for _, a := range aggs {
+		agg, ok := a.(map[string]any)
+		if !ok {
+			continue
+		}
+		if _, exists := agg["reduceTo"]; !exists {
+			agg["reduceTo"] = reduceTo
 		}
 	}
 }
