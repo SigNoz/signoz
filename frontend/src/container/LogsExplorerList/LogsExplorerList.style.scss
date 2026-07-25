@@ -324,10 +324,6 @@
 	}
 }
 
-// Highlight for a URL-linked (activeLogId) row in table/Column format.
-// Global + lowest specificity so the table's own :hover/.tableRowActive
-// !important cell rules win when a linked row is also hovered or open.
-// --row-active-bg is set per-row on the <tr> via getRowStyle and inherits to cells.
 .logs-linked-row td {
 	background-color: var(--row-active-bg) !important;
 }

@@ -204,9 +204,6 @@ function LiveLogsList({
 							data={formattedLogs}
 							isLoading={false}
 							isRowActive={(log): boolean => log.id === activeLog?.id}
-							getRowClassName={(log): string =>
-								log.id === activeLogId ? 'logs-linked-row' : ''
-							}
 							getRowStyle={(log): CSSProperties =>
 								({
 									'--row-active-bg': getRowBackgroundColor(
