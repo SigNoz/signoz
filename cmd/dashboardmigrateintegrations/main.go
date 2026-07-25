@@ -56,6 +56,10 @@ type outcome struct {
 	relPath string
 	status  string // ok | skipped-v2 | convert-failed | validate-failed | read-failed | write-failed
 	detail  string
+	// iconReencoded is set when a percent-encoded inline SVG icon was rewritten to
+	// base64 (by the shared conversion) so it survives v2 validation instead of
+	// being dropped to the default.
+	iconReencoded bool
 }
 
 func main() {
@@ -108,12 +112,18 @@ func migrateOne(ctx context.Context, migrator interface {
 }, path, rel, outDir string) outcome {
 	raw, err := os.ReadFile(path)
 	if err != nil {
-		return outcome{rel, "read-failed", err.Error()}
+		return outcome{relPath: rel, status: "read-failed", detail: err.Error()}
 	}
 	var data map[string]any
 	if err := json.Unmarshal(raw, &data); err != nil {
-		return outcome{rel, "read-failed", err.Error()}
+		return outcome{relPath: rel, status: "read-failed", detail: err.Error()}
 	}
+
+	// The shared conversion re-encodes percent-encoded inline SVG icons to base64
+	// so they survive v2 validation; detect it here only to report which dashboards
+	// had their icon preserved.
+	origImage, _ := data["image"].(string)
+	_, iconReencoded := dashboardtypes.ReencodeInlineSVGImage(origImage)
 
 	storable := dashboardtypes.StorableDashboard{
 		Data:  dashboardtypes.StorableDashboardData(data),
@@ -122,7 +132,7 @@ func migrateOne(ctx context.Context, migrator interface {
 	storable.ID = valuer.GenerateUUID()
 
 	if storable.IsV2() {
-		return outcome{rel, "skipped-v2", "already v2 schema"}
+		return outcome{relPath: rel, status: "skipped-v2", detail: "already v2 schema"}
 	}
 
 	// v1→v2 assumes v5-shaped widget queries; run v4→v5 in place first.
@@ -130,12 +140,12 @@ func migrateOne(ctx context.Context, migrator interface {
 
 	v2, err := storable.ConvertV1ToV2()
 	if err != nil {
-		return outcome{rel, "convert-failed", err.Error()}
+		return outcome{relPath: rel, status: "convert-failed", detail: err.Error()}
 	}
 
 	out, err := marshalPostableV2(v2)
 	if err != nil {
-		return outcome{rel, "convert-failed", err.Error()}
+		return outcome{relPath: rel, status: "convert-failed", detail: err.Error()}
 	}
 
 	// Validate exactly as the import API does: unmarshal the JSON back. This both
@@ -144,7 +154,7 @@ func migrateOne(ctx context.Context, migrator interface {
 	// PostableDashboardV2.Validate (DisallowUnknownFields + spec validation).
 	var roundTrip dashboardtypes.PostableDashboardV2
 	if err := json.Unmarshal(out, &roundTrip); err != nil {
-		return outcome{rel, "validate-failed", err.Error()}
+		return outcome{relPath: rel, status: "validate-failed", detail: err.Error()}
 	}
 
 	// Overwrite in place by default; mirror into -out (same layout, same name) when set.
@@ -153,9 +163,9 @@ func migrateOne(ctx context.Context, migrator interface {
 		dst = filepath.Join(outDir, rel)
 	}
 	if err := writeFile(out, dst); err != nil {
-		return outcome{rel, "write-failed", err.Error()}
+		return outcome{relPath: rel, status: "write-failed", detail: err.Error()}
 	}
-	return outcome{rel, "ok", ""}
+	return outcome{relPath: rel, status: "ok", iconReencoded: iconReencoded}
 }
 
 // marshalPostableV2 renders the PostableDashboardV2 form (schemaVersion, image,
@@ -206,6 +216,21 @@ func report(outcomes []outcome) {
 		fmt.Printf("\n[%s] %s\n    %s\n", o.status, o.relPath, o.detail)
 	}
 	if !any {
+		fmt.Println("  none")
+	}
+
+	// Inline SVG icons preserved by re-encoding to base64 (would otherwise have
+	// been dropped to the default icon by v2 validation).
+	fmt.Printf("\n=== inline SVG icons re-encoded to base64 ===\n")
+	anyIcon := false
+	for _, o := range outcomes {
+		if !o.iconReencoded {
+			continue
+		}
+		anyIcon = true
+		fmt.Printf("  %s\n", o.relPath)
+	}
+	if !anyIcon {
 		fmt.Println("  none")
 	}
 }
