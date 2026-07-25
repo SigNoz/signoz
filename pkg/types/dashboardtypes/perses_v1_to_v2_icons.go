@@ -1,5 +1,11 @@
 package dashboardtypes
 
+import (
+	"encoding/base64"
+	"net/url"
+	"strings"
+)
+
 // v1 dashboards stored their `image` as one of a fixed set of base64 icon data
 // URIs. v2 references the same icons by a stable asset path (dashboardIconPathPrefix
 // + name). This maps each preset v1 base64 blob to its v2 icon path so a migrated
@@ -45,8 +51,37 @@ func resolveV1Image(image string) string {
 	if path, ok := v1Base64IconToAssetPath[image]; ok {
 		return path
 	}
+	if reencoded, ok := reencodeInlineSVGImage(image); ok {
+		image = reencoded
+	}
 	if (DashboardV2MetadataBase{Image: image}).validateImage() == nil {
 		return image
 	}
 	return defaultDashboardIconPath
+}
+
+// reencodeInlineSVGImage rewrites a percent-encoded inline SVG data URI into the
+// base64 form the v2 schema accepts, preserving an icon that would otherwise fail
+// validation. Returns (image, false) unchanged for anything else.
+func reencodeInlineSVGImage(image string) (string, bool) {
+	const mediaType = "data:image/svg+xml"
+	if !strings.HasPrefix(image, mediaType) {
+		return image, false
+	}
+	rest := image[len(mediaType):]
+	// The media type must be followed by its params/data separator, not more type
+	// text (guards against a longer type that merely shares this prefix).
+	if len(rest) == 0 || (rest[0] != ',' && rest[0] != ';') {
+		return image, false
+	}
+	params, encoded, found := strings.Cut(rest, ",")
+	// A base64 URI carries ";base64" before the comma and is already valid — leave it.
+	if !found || strings.Contains(params, "base64") {
+		return image, false
+	}
+	svg, err := url.PathUnescape(encoded)
+	if err != nil {
+		return image, false // malformed escaping — leave it; conversion falls back to the default icon
+	}
+	return "data:image/svg+xml;base64," + base64.StdEncoding.EncodeToString([]byte(svg)), true
 }
