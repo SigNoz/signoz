@@ -8,6 +8,11 @@
 
 .dashboardImage {
 	flex-shrink: 0;
+	// Fixed 16px box (matches the breadcrumb icon); object-fit keeps a custom
+	// base64 icon from distorting or ballooning past it.
+	width: 16px;
+	height: 16px;
+	object-fit: contain;
 }
 
 .dashboardTitle {
