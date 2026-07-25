@@ -429,6 +429,11 @@ func TestResolveV1Image(t *testing.T) {
 		assert.Equal(t, passthrough, resolveV1Image(passthrough))
 	}
 
+	// A percent-encoded inline SVG icon is preserved by re-encoding it to base64
+	// (the form v2 accepts) rather than being dropped to the default.
+	svgResolved := resolveV1Image("data:image/svg+xml,%3Csvg%2F%3E")
+	assert.Equal(t, "data:image/svg+xml;base64,PHN2Zy8+", svgResolved)
+
 	// A value that v2 would reject (a URL, a corrupt data URI) falls back to the
 	// default eight-ball icon rather than failing the dashboard migration.
 	for _, invalid := range []string{
@@ -437,6 +442,66 @@ func TestResolveV1Image(t *testing.T) {
 		"just-some-string",
 	} {
 		assert.Equal(t, "/assets/Icons/eight-ball", resolveV1Image(invalid))
+	}
+}
+
+func TestReencodeInlineSVGImage(t *testing.T) {
+	testCases := []struct {
+		scenario      string
+		image         string
+		wantRewritten bool
+		want          string
+	}{
+		{
+			scenario:      "percent-encoded inline svg",
+			image:         "data:image/svg+xml,%3Csvg%2F%3E",
+			wantRewritten: true,
+			want:          "data:image/svg+xml;base64,PHN2Zy8+",
+		},
+		{
+			scenario:      "percent-encoded inline svg with charset param",
+			image:         "data:image/svg+xml;charset=utf-8,%3Csvg%2F%3E",
+			wantRewritten: true,
+			want:          "data:image/svg+xml;base64,PHN2Zy8+",
+		},
+		{
+			scenario:      "already base64 svg is left unchanged",
+			image:         "data:image/svg+xml;base64,PHN2Zy8+",
+			wantRewritten: false,
+			want:          "data:image/svg+xml;base64,PHN2Zy8+",
+		},
+		{
+			scenario:      "non-svg data uri is left unchanged",
+			image:         "data:image/png,%89PNG",
+			wantRewritten: false,
+			want:          "data:image/png,%89PNG",
+		},
+		{
+			scenario:      "an icon path is left unchanged",
+			image:         "/assets/Icons/eight-ball",
+			wantRewritten: false,
+			want:          "/assets/Icons/eight-ball",
+		},
+		{
+			scenario:      "a longer media type merely sharing the svg prefix is left unchanged",
+			image:         "data:image/svg+xmlish,%3Csvg%2F%3E",
+			wantRewritten: false,
+			want:          "data:image/svg+xmlish,%3Csvg%2F%3E",
+		},
+		{
+			scenario:      "empty is left unchanged",
+			image:         "",
+			wantRewritten: false,
+			want:          "",
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.scenario, func(t *testing.T) {
+			got, rewritten := reencodeInlineSVGImage(testCase.image)
+			assert.Equal(t, testCase.wantRewritten, rewritten)
+			assert.Equal(t, testCase.want, got)
+		})
 	}
 }
 
@@ -457,6 +522,48 @@ func TestConvertV1ToV2ReplacesInvalidImage(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, dashboard)
 	assert.Equal(t, "/assets/Icons/eight-ball", dashboard.Image)
+}
+
+func TestFoldReduceToIntoMetricAggregations(t *testing.T) {
+	// A metric query's top-level reduceTo lands on its aggregation (where v5 wants it).
+	query := map[string]any{
+		"dataSource":   "metrics",
+		"reduceTo":     "sum",
+		"aggregations": []any{map[string]any{"metricName": "m", "spaceAggregation": "sum"}},
+	}
+	foldReduceToIntoMetricAggregations(query)
+	assert.Equal(t, "sum", query["aggregations"].([]any)[0].(map[string]any)["reduceTo"])
+
+	// An aggregation that already carries a reduceTo is not overwritten.
+	query = map[string]any{
+		"dataSource":   "metrics",
+		"reduceTo":     "sum",
+		"aggregations": []any{map[string]any{"metricName": "m", "reduceTo": "avg"}},
+	}
+	foldReduceToIntoMetricAggregations(query)
+	assert.Equal(t, "avg", query["aggregations"].([]any)[0].(map[string]any)["reduceTo"])
+}
+
+func TestMapV1SelectFieldsPicksBySignal(t *testing.T) {
+	d := &v1Decoder{}
+	// A list widget carrying both arrays; the query's signal must decide which wins.
+	widget := func(dataSource string) map[string]any {
+		return map[string]any{
+			"query": map[string]any{
+				"builder": map[string]any{"queryData": []any{map[string]any{"dataSource": dataSource}}},
+			},
+			"selectedLogFields":    []any{map[string]any{"name": "log_field"}},
+			"selectedTracesFields": []any{map[string]any{"name": "trace_field"}},
+		}
+	}
+
+	logs := d.mapV1SelectFields(widget("logs"))
+	require.Len(t, logs, 1)
+	assert.Equal(t, "log_field", logs[0].Name)
+
+	traces := d.mapV1SelectFields(widget("traces"))
+	require.Len(t, traces, 1)
+	assert.Equal(t, "trace_field", traces[0].Name)
 }
 
 func TestConvertV1ToV2RejectsAlreadyV2(t *testing.T) {
