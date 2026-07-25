@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
+	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/transition"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
@@ -121,7 +122,14 @@ func (handler *handler) ConvertAllV1ToV2(rw http.ResponseWriter, r *http.Request
 
 	orgID := valuer.MustNewUUID(claims.OrgID)
 
-	result, err := handler.module.ConvertAllV1ToV2(ctx, orgID)
+	// ConvertAllV1ToV2 is temporary scaffolding kept off the core Module interface,
+	// so reach it via the V1ToV2Migrator capability.
+	migrator, ok := handler.module.(dashboard.V1ToV2Migrator)
+	if !ok {
+		render.Error(rw, errors.Newf(errors.TypeInternal, errors.CodeInternal, "dashboard module does not support v1 to v2 conversion"))
+		return
+	}
+	result, err := migrator.ConvertAllV1ToV2(ctx, orgID)
 	if err != nil {
 		render.Error(rw, err)
 		return
