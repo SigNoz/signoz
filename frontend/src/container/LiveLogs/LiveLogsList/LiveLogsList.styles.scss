@@ -61,9 +61,6 @@
 	}
 }
 
-// Highlight for a URL-linked (activeLogId) row in table/Column format.
-// See LogsExplorerList.style.scss for rationale; duplicated so the rule is
-// present when the Live Logs page loads independently.
 .logs-linked-row td {
 	background-color: var(--row-active-bg) !important;
 }
