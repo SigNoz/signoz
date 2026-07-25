@@ -259,7 +259,7 @@ def run_overmind_loop(cycles: int = 3):
                     # Active Remediation (Closed-Loop Healing)
                     if diagnosis.get("fix_strategy") in ["RETRY_WITH_BACKOFF", "RETRY_AFTER_DELAY"]:
                         fixed_prompt = diagnosis.get("fixed_prompt", "Fetch user data for 'user_123'")
-                        print(f"\n  [overmind -> worker] ⚡ [HEALING INTERVENTION] Executing active remediation...")
+                        print(f"\n  [overmind -> worker] [HEALING INTERVENTION] Executing active remediation...")
                         print(f"  [overmind -> worker] Applying backoff delay (2s)...")
                         time.sleep(2)
 
@@ -267,7 +267,7 @@ def run_overmind_loop(cycles: int = 3):
                         worker_llm = WorkerLLM()
                         healed_task = f"[HEALED] {fixed_prompt}"
                         healed_result = run_single_task(worker_llm, tracer, healed_task, task_id=999)
-                        print(f"  [overmind -> worker] ✅ [REMEDIATION COMPLETE] Status: {healed_result.get('status')}")
+                        print(f"  [overmind -> worker] [REMEDIATION COMPLETE] Status: {healed_result.get('status')}")
 
         if cycle < cycles - 1:
             print(f"\n[overmind] Sleeping {OVERMIND_POLL_INTERVAL}s before next cycle...")
