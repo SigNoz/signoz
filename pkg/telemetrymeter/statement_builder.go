@@ -121,9 +121,8 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 
 	sb := sqlbuilder.NewSelectBuilder()
 
-	sb.SelectMore(fmt.Sprintf(
-		"toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(%d)) AS ts",
-		stepSec,
+	sb.SelectMore(fmt.Sprintf("%s AS ts",
+		querybuilder.TimeIntervalExpr("toDateTime(intDiv(unix_milli, 1000))", fmt.Sprintf("toIntervalSecond(%d)", stepSec), query.ShiftBy),
 	))
 	for _, g := range query.GroupBy {
 		col, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &g.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
@@ -209,9 +208,8 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDelta(
 	sb := sqlbuilder.NewSelectBuilder()
 
 	sb.Select("fingerprint")
-	sb.SelectMore(fmt.Sprintf(
-		"toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(%d)) AS ts",
-		stepSec,
+	sb.SelectMore(fmt.Sprintf("%s AS ts",
+		querybuilder.TimeIntervalExpr("toDateTime(intDiv(unix_milli, 1000))", fmt.Sprintf("toIntervalSecond(%d)", stepSec), query.ShiftBy),
 	))
 
 	for _, g := range query.GroupBy {
@@ -288,9 +286,8 @@ func (b *meterQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 
 	baseSb := sqlbuilder.NewSelectBuilder()
 	baseSb.Select("fingerprint")
-	baseSb.SelectMore(fmt.Sprintf(
-		"toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(%d)) AS ts",
-		stepSec,
+	baseSb.SelectMore(fmt.Sprintf("%s AS ts",
+		querybuilder.TimeIntervalExpr("toDateTime(intDiv(unix_milli, 1000))", fmt.Sprintf("toIntervalSecond(%d)", stepSec), query.ShiftBy),
 	))
 	for _, g := range query.GroupBy {
 		col, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &g.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
