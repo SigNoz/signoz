@@ -447,7 +447,7 @@ func New(
 		telemetryaudit.LogAttributeKeysTblName,
 		telemetryaudit.LogResourceKeysTblName,
 		telemetrymetadata.DBName,
-		telemetrymetadata.AttributesMetadataLocalTableName,
+		telemetrymetadata.AttributesMetadataTableName,
 		telemetrymetadata.ColumnEvolutionMetadataTableName,
 		flagger,
 	)
