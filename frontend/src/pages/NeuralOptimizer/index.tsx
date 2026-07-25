@@ -46,6 +46,44 @@ const extractRowsFromResponse = (obj: any): any[] => {
   return [];
 };
 
+const parseTimestamp = (val: any): number => {
+  if (!val) return Date.now();
+  if (typeof val === 'number') {
+    if (val > 1e14) return Math.floor(val / 1000000); // nanoseconds to ms
+    if (val > 1e11) return Math.floor(val); // milliseconds
+    return val * 1000;
+  }
+  const parsed = new Date(val).getTime();
+  return isNaN(parsed) ? Date.now() : parsed;
+};
+
+const parseDuration = (item: any): number => {
+  if (typeof item.durationMs === 'number') return Math.round(item.durationMs);
+  if (typeof item.durationNano === 'number') return Math.round(item.durationNano / 1000000);
+  if (typeof item.duration === 'number') return Math.round(item.duration);
+  return 0;
+};
+
+const parseAttributes = (item: any, serviceName: string): Record<string, string> => {
+  const rawTags = item.tagMap || item.attributes || item.tags || {};
+  const cleaned: Record<string, string> = {};
+
+  if (typeof rawTags === 'object' && rawTags !== null) {
+    Object.entries(rawTags).forEach(([k, v]) => {
+      // Exclude noisy internal SDK metadata
+      if (!k.startsWith('telemetry.sdk') && !k.startsWith('service.') && !k.startsWith('process.')) {
+        cleaned[k] = typeof v === 'object' ? JSON.stringify(v) : String(v);
+      }
+    });
+  }
+
+  if (Object.keys(cleaned).length === 0) {
+    cleaned['service'] = serviceName;
+  }
+
+  return cleaned;
+};
+
 const NeuralOptimizer = (): JSX.Element => {
   const [workerTraces, setWorkerTraces] = useState<TraceLog[]>([]);
   const [overmindTraces, setOvermindTraces] = useState<TraceLog[]>([]);
@@ -83,13 +121,13 @@ const NeuralOptimizer = (): JSX.Element => {
           const item = row.data || row;
           return {
             id: item.traceId || item.traceID || item.spanId || `${serviceName}-${idx}`,
-            timestamp: item.timestamp ? new Date(item.timestamp).getTime() : Date.now(),
+            timestamp: parseTimestamp(item.timestamp || row.timestamp),
             serviceName,
             name: item.name || item.spanName || item.operationName || 'agent_task',
             status: item.statusCode === 2 || item.statusCode === 'ERROR' || item.hasError ? 'error' : 'ok',
-            duration: item.durationMs || Math.floor((item.durationNano || 0) / 1000000) || 120,
+            duration: parseDuration(item),
             isError: item.statusCode === 2 || item.statusCode === 'ERROR' || item.hasError || false,
-            attributes: item.tagMap || item.attributes || { 'service.name': serviceName },
+            attributes: parseAttributes(item, serviceName),
           };
         });
       }
@@ -134,13 +172,13 @@ const NeuralOptimizer = (): JSX.Element => {
           const item = row.data || row;
           return {
             id: item.traceId || item.traceID || item.spanId || `${serviceName}-${idx}`,
-            timestamp: item.timestamp ? Math.floor(item.timestamp / 1000000) : Date.now(),
+            timestamp: parseTimestamp(item.timestamp || row.timestamp),
             serviceName,
             name: item.name || item.spanName || 'agent_task',
             status: item.statusCode === 2 || item.hasError ? 'error' : 'ok',
-            duration: item.durationMs || Math.floor((item.durationNano || 0) / 1000000) || 120,
+            duration: parseDuration(item),
             isError: item.statusCode === 2 || item.hasError || false,
-            attributes: item.tagMap || item.attributes || { 'service.name': serviceName },
+            attributes: parseAttributes(item, serviceName),
           };
         });
       }
@@ -165,13 +203,13 @@ const NeuralOptimizer = (): JSX.Element => {
           const item = row.data || row;
           return {
             id: item.traceId || item.traceID || item.spanId || `${serviceName}-${idx}`,
-            timestamp: item.timestamp ? Math.floor(item.timestamp / 1000000) : Date.now(),
+            timestamp: parseTimestamp(item.timestamp || row.timestamp),
             serviceName,
             name: item.operationName || item.name || 'agent_task',
             status: item.statusCode === 'ERROR' || item.hasError ? 'error' : 'ok',
-            duration: item.durationMs || Math.floor((item.durationNano || 0) / 1000000) || 120,
+            duration: parseDuration(item),
             isError: item.statusCode === 'ERROR' || item.hasError || false,
-            attributes: item.tagMap || item.attributes || { 'service.name': serviceName },
+            attributes: parseAttributes(item, serviceName),
           };
         });
       }
