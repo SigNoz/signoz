@@ -6539,16 +6539,6 @@ export interface InframonitoringtypesNodesDTO {
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 
-export type InframonitoringtypesPodRecordDTOMetaAnyOf = {
-	[key: string]: string;
-};
-
-/**
- * @nullable
- */
-export type InframonitoringtypesPodRecordDTOMeta =
-	InframonitoringtypesPodRecordDTOMetaAnyOf | null;
-
 export enum InframonitoringtypesPodStatusDTO {
 	pending = 'pending',
 	running = 'running',
@@ -6570,6 +6560,24 @@ export enum InframonitoringtypesPodStatusDTO {
 	unexpectedadmissionerror = 'unexpectedadmissionerror',
 	no_data = 'no_data',
 }
+export interface InframonitoringtypesPodFilterDTO {
+	/**
+	 * @type string
+	 */
+	expression?: string;
+	filterByPodStatus?: InframonitoringtypesPodStatusDTO;
+}
+
+export type InframonitoringtypesPodRecordDTOMetaAnyOf = {
+	[key: string]: string;
+};
+
+/**
+ * @nullable
+ */
+export type InframonitoringtypesPodRecordDTOMeta =
+	InframonitoringtypesPodRecordDTOMetaAnyOf | null;
+
 export interface InframonitoringtypesPodRecordDTO {
 	/**
 	 * @type object,null
@@ -6862,7 +6870,7 @@ export interface InframonitoringtypesPostablePodsDTO {
 	 * @format int64
 	 */
 	end: number;
-	filter?: Querybuildertypesv5FilterDTO;
+	filter?: InframonitoringtypesPodFilterDTO;
 	/**
 	 * @type array,null
 	 */

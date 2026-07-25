@@ -1,6 +1,10 @@
 package inframonitoringtypes
 
-import "github.com/SigNoz/signoz/pkg/valuer"
+import (
+	"slices"
+
+	"github.com/SigNoz/signoz/pkg/valuer"
+)
 
 // PodStatus is the kubectl-style pod display status, derived from
 // k8s.pod.phase + k8s.pod.status_reason + k8s.container.status.reason
@@ -64,6 +68,12 @@ func (PodStatus) Enum() []any {
 		PodStatusUnexpectedAdmissionError,
 		PodStatusNoData,
 	}
+}
+
+// IsFilterablePodStatus reports whether s is a concrete, user-filterable pod
+// status: any Enum() member except the no_data sentinel.
+func IsFilterablePodStatus(s PodStatus) bool {
+	return s != PodStatusNoData && slices.Contains((PodStatus{}).Enum(), any(s))
 }
 
 const PodNameAttrKey = "k8s.pod.name"

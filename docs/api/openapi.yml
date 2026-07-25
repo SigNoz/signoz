@@ -5025,6 +5025,13 @@ components:
       - shutdown
       - unexpectedAdmissionError
       type: object
+    InframonitoringtypesPodFilter:
+      properties:
+        expression:
+          type: string
+        filterByPodStatus:
+          $ref: '#/components/schemas/InframonitoringtypesPodStatus'
+      type: object
     InframonitoringtypesPodRecord:
       properties:
         meta:
@@ -5332,7 +5339,7 @@ components:
           format: int64
           type: integer
         filter:
-          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+          $ref: '#/components/schemas/InframonitoringtypesPodFilter'
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'

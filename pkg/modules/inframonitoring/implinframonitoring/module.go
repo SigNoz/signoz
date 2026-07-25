@@ -309,8 +309,10 @@ func (m *module) ListPods(ctx context.Context, orgID valuer.UUID, req *inframoni
 	}
 
 	filterExpr := ""
+	var podFilter *qbtypes.Filter
 	if req.Filter != nil {
 		filterExpr = req.Filter.Expression
+		podFilter = &req.Filter.Filter
 	}
 
 	fullQueryReq := buildFullQueryRequest(req.Start, req.End, filterExpr, req.GroupBy, pageGroups, m.newPodsTableListQuery())
@@ -331,12 +333,12 @@ func (m *module) ListPods(ctx context.Context, orgID valuer.UUID, req *inframoni
 	})
 	g.Go(func() error {
 		var err error
-		statusCounts, statusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		statusCounts, statusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, podFilter, req.GroupBy, pageGroups, inframonitoringtypes.PodStatus{})
 		return err
 	})
 	g.Go(func() error {
 		var err error
-		restartCounts, err = m.getPerGroupPodRestartCounts(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		restartCounts, err = m.getPerGroupPodRestartCounts(gCtx, orgID, req.Start, req.End, podFilter, req.GroupBy, pageGroups)
 		return err
 	})
 
@@ -538,7 +540,7 @@ func (m *module) ListNodes(ctx context.Context, orgID valuer.UUID, req *inframon
 	})
 	g.Go(func() error {
 		var err error
-		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups, inframonitoringtypes.PodStatus{})
 		return err
 	})
 
@@ -631,7 +633,7 @@ func (m *module) ListNamespaces(ctx context.Context, orgID valuer.UUID, req *inf
 	})
 	g.Go(func() error {
 		var err error
-		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups, inframonitoringtypes.PodStatus{})
 		return err
 	})
 	g.Go(func() error {
@@ -736,7 +738,7 @@ func (m *module) ListClusters(ctx context.Context, orgID valuer.UUID, req *infra
 	})
 	g.Go(func() error {
 		var err error
-		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups, inframonitoringtypes.PodStatus{})
 		return err
 	})
 	g.Go(func() error {
@@ -916,7 +918,7 @@ func (m *module) ListDeployments(ctx context.Context, orgID valuer.UUID, req *in
 	})
 	g.Go(func() error {
 		var err error
-		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups, inframonitoringtypes.PodStatus{})
 		return err
 	})
 
@@ -1015,7 +1017,7 @@ func (m *module) ListStatefulSets(ctx context.Context, orgID valuer.UUID, req *i
 	})
 	g.Go(func() error {
 		var err error
-		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups, inframonitoringtypes.PodStatus{})
 		return err
 	})
 
@@ -1114,7 +1116,7 @@ func (m *module) ListJobs(ctx context.Context, orgID valuer.UUID, req *inframoni
 	})
 	g.Go(func() error {
 		var err error
-		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups, inframonitoringtypes.PodStatus{})
 		return err
 	})
 
@@ -1213,7 +1215,7 @@ func (m *module) ListDaemonSets(ctx context.Context, orgID valuer.UUID, req *inf
 	})
 	g.Go(func() error {
 		var err error
-		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups, inframonitoringtypes.PodStatus{})
 		return err
 	})
 
