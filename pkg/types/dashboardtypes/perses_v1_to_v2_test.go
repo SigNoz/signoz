@@ -1,6 +1,7 @@
 package dashboardtypes
 
 import (
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -409,6 +410,53 @@ func TestConvertV1ToV2HappyPath(t *testing.T) {
 	require.Contains(t, dashboard.Spec.Panels, "panel-2")
 	assert.Equal(t, PanelKindTimeSeries, dashboard.Spec.Panels["panel-1"].Spec.Plugin.Kind)
 	assert.Equal(t, PanelKindTable, dashboard.Spec.Panels["panel-2"].Spec.Plugin.Kind)
+}
+
+func TestResolveV1Image(t *testing.T) {
+	// A real preset icon a v1 dashboard could store (the avocado icon, captured
+	// from the frontend picker) must migrate to the v2 avocado icon path.
+	avocadoBase64, err := os.ReadFile("testdata/v1_avocado_icon.txt")
+	require.NoError(t, err)
+	assert.Equal(t, "/assets/Icons/avocado", resolveV1Image(string(avocadoBase64)))
+
+	// Values already valid under the v2 schema are returned unchanged: a custom
+	// base64 upload, an already-migrated icon path, and empty ("no image").
+	for _, passthrough := range []string{
+		"",
+		"data:image/png;base64,customuploadblob",
+		"/assets/Icons/already-migrated",
+	} {
+		assert.Equal(t, passthrough, resolveV1Image(passthrough))
+	}
+
+	// A value that v2 would reject (a URL, a corrupt data URI) falls back to the
+	// default eight-ball icon rather than failing the dashboard migration.
+	for _, invalid := range []string{
+		"https://example.com/icon.png",
+		"data:image/svg+xml;base64,not valid base64!!",
+		"just-some-string",
+	} {
+		assert.Equal(t, "/assets/Icons/eight-ball", resolveV1Image(invalid))
+	}
+}
+
+func TestConvertV1ToV2ReplacesInvalidImage(t *testing.T) {
+	// An image v2 would reject must not sink the whole migration — it falls back
+	// to the default icon so the dashboard still converts.
+	storable := &StorableDashboard{
+		Identifiable: types.Identifiable{ID: valuer.GenerateUUID()},
+		OrgID:        valuer.GenerateUUID(),
+		Source:       SourceUser,
+		Data: StorableDashboardData{
+			"title": "Bad Image Dashboard",
+			"image": "https://example.com/icon.png",
+		},
+	}
+
+	dashboard, err := storable.ConvertV1ToV2()
+	require.NoError(t, err)
+	require.NotNil(t, dashboard)
+	assert.Equal(t, "/assets/Icons/eight-ball", dashboard.Image)
 }
 
 func TestConvertV1ToV2RejectsAlreadyV2(t *testing.T) {
