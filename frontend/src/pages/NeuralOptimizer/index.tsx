@@ -13,6 +13,39 @@ interface TraceLog {
   attributes: Record<string, string>;
 }
 
+const extractRowsFromResponse = (obj: any): any[] => {
+  if (!obj || typeof obj !== 'object') return [];
+  if (Array.isArray(obj)) return obj;
+
+  if (Array.isArray(obj.rows)) return obj.rows;
+  if (Array.isArray(obj.list)) return obj.list;
+  if (Array.isArray(obj.spans)) return obj.spans;
+
+  if (Array.isArray(obj.results)) {
+    for (const item of obj.results) {
+      const sub = extractRowsFromResponse(item);
+      if (sub.length > 0) return sub;
+    }
+  }
+  if (Array.isArray(obj.result)) {
+    for (const item of obj.result) {
+      const sub = extractRowsFromResponse(item);
+      if (sub.length > 0) return sub;
+    }
+  }
+
+  if (obj.data) {
+    const sub = extractRowsFromResponse(obj.data);
+    if (sub.length > 0) return sub;
+  }
+  if (obj.payload) {
+    const sub = extractRowsFromResponse(obj.payload);
+    if (sub.length > 0) return sub;
+  }
+
+  return [];
+};
+
 const NeuralOptimizer = (): JSX.Element => {
   const [workerTraces, setWorkerTraces] = useState<TraceLog[]>([]);
   const [overmindTraces, setOvermindTraces] = useState<TraceLog[]>([]);
@@ -20,7 +53,7 @@ const NeuralOptimizer = (): JSX.Element => {
 
   const fetchTracesForService = async (serviceName: string): Promise<TraceLog[]> => {
     const endMs = Date.now();
-    const startMs = endMs - 24 * 60 * 60 * 1000; // last 24 hours to ensure we catch recent traces
+    const startMs = endMs - 24 * 60 * 60 * 1000; // last 24 hours
 
     // Attempt 1: Try V5 query_range
     try {
@@ -44,21 +77,24 @@ const NeuralOptimizer = (): JSX.Element => {
         },
       };
       const resV5 = await ApiV5Instance.post('/query_range', v5Payload);
-      const rows = resV5?.data?.data?.results?.[0]?.rows || resV5?.data?.data?.result?.[0]?.list || [];
+      const rows = extractRowsFromResponse(resV5.data);
       if (rows.length > 0) {
-        return rows.map((row: any, idx: number) => ({
-          id: row.traceId || row.spanId || `${serviceName}-${idx}`,
-          timestamp: row.timestamp ? new Date(row.timestamp).getTime() : Date.now(),
-          serviceName,
-          name: row.name || row.spanName || row.data?.name || 'agent_task',
-          status: row.statusCode === 2 || row.hasError || row.data?.hasError ? 'error' : 'ok',
-          duration: row.durationMs || Math.floor((row.durationNano || 0) / 1000000) || 120,
-          isError: row.statusCode === 2 || row.hasError || row.data?.hasError || false,
-          attributes: row.tagMap || row.attributes || row.data?.tagMap || { 'service.name': serviceName },
-        }));
+        return rows.map((row: any, idx: number) => {
+          const item = row.data || row;
+          return {
+            id: item.traceId || item.traceID || item.spanId || `${serviceName}-${idx}`,
+            timestamp: item.timestamp ? new Date(item.timestamp).getTime() : Date.now(),
+            serviceName,
+            name: item.name || item.spanName || item.operationName || 'agent_task',
+            status: item.statusCode === 2 || item.statusCode === 'ERROR' || item.hasError ? 'error' : 'ok',
+            duration: item.durationMs || Math.floor((item.durationNano || 0) / 1000000) || 120,
+            isError: item.statusCode === 2 || item.statusCode === 'ERROR' || item.hasError || false,
+            attributes: item.tagMap || item.attributes || { 'service.name': serviceName },
+          };
+        });
       }
-    } catch {
-      // Ignore and try fallback
+    } catch (e) {
+      console.warn('V5 fetch error:', e);
     }
 
     // Attempt 2: Try V3 query_range
@@ -92,21 +128,24 @@ const NeuralOptimizer = (): JSX.Element => {
         },
       };
       const resV3 = await ApiV3Instance.post('/query_range', v3Payload);
-      const rows = resV3?.data?.data?.result?.[0]?.list || resV3?.data?.payload?.list || [];
+      const rows = extractRowsFromResponse(resV3.data);
       if (rows.length > 0) {
-        return rows.map((row: any, idx: number) => ({
-          id: row.traceId || row.spanId || `${serviceName}-${idx}`,
-          timestamp: row.timestamp ? Math.floor(row.timestamp / 1000000) : Date.now(),
-          serviceName,
-          name: row.name || row.spanName || 'agent_task',
-          status: row.statusCode === 2 || row.hasError ? 'error' : 'ok',
-          duration: row.durationMs || Math.floor((row.durationNano || 0) / 1000000) || 120,
-          isError: row.statusCode === 2 || row.hasError || false,
-          attributes: row.tagMap || row.attributes || { 'service.name': serviceName },
-        }));
+        return rows.map((row: any, idx: number) => {
+          const item = row.data || row;
+          return {
+            id: item.traceId || item.traceID || item.spanId || `${serviceName}-${idx}`,
+            timestamp: item.timestamp ? Math.floor(item.timestamp / 1000000) : Date.now(),
+            serviceName,
+            name: item.name || item.spanName || 'agent_task',
+            status: item.statusCode === 2 || item.hasError ? 'error' : 'ok',
+            duration: item.durationMs || Math.floor((item.durationNano || 0) / 1000000) || 120,
+            isError: item.statusCode === 2 || item.hasError || false,
+            attributes: item.tagMap || item.attributes || { 'service.name': serviceName },
+          };
+        });
       }
-    } catch {
-      // Ignore and try fallback
+    } catch (e) {
+      console.warn('V3 fetch error:', e);
     }
 
     // Attempt 3: Try legacy /getFilteredSpans endpoint
@@ -120,21 +159,24 @@ const NeuralOptimizer = (): JSX.Element => {
         tags: [],
       };
       const resLegacy = await axios.post('/getFilteredSpans', legacyPayload);
-      const rows = resLegacy?.data?.spans || resLegacy?.data?.payload?.spans || [];
+      const rows = extractRowsFromResponse(resLegacy.data);
       if (rows.length > 0) {
-        return rows.map((row: any, idx: number) => ({
-          id: row.traceId || row.spanId || `${serviceName}-${idx}`,
-          timestamp: row.timestamp ? Math.floor(row.timestamp / 1000000) : Date.now(),
-          serviceName,
-          name: row.operationName || row.name || 'agent_task',
-          status: row.statusCode === 'ERROR' || row.hasError ? 'error' : 'ok',
-          duration: row.durationMs || Math.floor((row.durationNano || 0) / 1000000) || 120,
-          isError: row.statusCode === 'ERROR' || row.hasError || false,
-          attributes: row.tagMap || row.attributes || { 'service.name': serviceName },
-        }));
+        return rows.map((row: any, idx: number) => {
+          const item = row.data || row;
+          return {
+            id: item.traceId || item.traceID || item.spanId || `${serviceName}-${idx}`,
+            timestamp: item.timestamp ? Math.floor(item.timestamp / 1000000) : Date.now(),
+            serviceName,
+            name: item.operationName || item.name || 'agent_task',
+            status: item.statusCode === 'ERROR' || item.hasError ? 'error' : 'ok',
+            duration: item.durationMs || Math.floor((item.durationNano || 0) / 1000000) || 120,
+            isError: item.statusCode === 'ERROR' || item.hasError || false,
+            attributes: item.tagMap || item.attributes || { 'service.name': serviceName },
+          };
+        });
       }
-    } catch {
-      // Ignore
+    } catch (e) {
+      console.warn('Legacy fetch error:', e);
     }
 
     return [];
