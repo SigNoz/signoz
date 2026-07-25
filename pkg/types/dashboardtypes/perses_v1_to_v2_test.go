@@ -530,6 +530,48 @@ func TestConvertV1ToV2ReplacesInvalidImage(t *testing.T) {
 	assert.Equal(t, "/assets/Icons/eight-ball", dashboard.Image)
 }
 
+func TestFoldReduceToIntoMetricAggregations(t *testing.T) {
+	// A metric query's top-level reduceTo lands on its aggregation (where v5 wants it).
+	query := map[string]any{
+		"dataSource":   "metrics",
+		"reduceTo":     "sum",
+		"aggregations": []any{map[string]any{"metricName": "m", "spaceAggregation": "sum"}},
+	}
+	foldReduceToIntoMetricAggregations(query)
+	assert.Equal(t, "sum", query["aggregations"].([]any)[0].(map[string]any)["reduceTo"])
+
+	// An aggregation that already carries a reduceTo is not overwritten.
+	query = map[string]any{
+		"dataSource":   "metrics",
+		"reduceTo":     "sum",
+		"aggregations": []any{map[string]any{"metricName": "m", "reduceTo": "avg"}},
+	}
+	foldReduceToIntoMetricAggregations(query)
+	assert.Equal(t, "avg", query["aggregations"].([]any)[0].(map[string]any)["reduceTo"])
+}
+
+func TestMapV1SelectFieldsPicksBySignal(t *testing.T) {
+	d := &v1Decoder{}
+	// A list widget carrying both arrays; the query's signal must decide which wins.
+	widget := func(dataSource string) map[string]any {
+		return map[string]any{
+			"query": map[string]any{
+				"builder": map[string]any{"queryData": []any{map[string]any{"dataSource": dataSource}}},
+			},
+			"selectedLogFields":    []any{map[string]any{"name": "log_field"}},
+			"selectedTracesFields": []any{map[string]any{"name": "trace_field"}},
+		}
+	}
+
+	logs := d.mapV1SelectFields(widget("logs"))
+	require.Len(t, logs, 1)
+	assert.Equal(t, "log_field", logs[0].Name)
+
+	traces := d.mapV1SelectFields(widget("traces"))
+	require.Len(t, traces, 1)
+	assert.Equal(t, "trace_field", traces[0].Name)
+}
+
 func TestConvertV1ToV2RejectsAlreadyV2(t *testing.T) {
 	storable := &StorableDashboard{
 		Identifiable: types.Identifiable{ID: valuer.GenerateUUID()},
