@@ -4,7 +4,9 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
 	"github.com/SigNoz/signoz/pkg/modules/tag/impltag"
 	"github.com/SigNoz/signoz/pkg/sqlschema"
@@ -54,6 +56,12 @@ func (migration *migrateDashboardsV1ToV2) Up(ctx context.Context, db *bun.DB) er
 		nil,
 		impltag.NewModule(impltag.NewStore(migration.sqlstore)),
 	)
+	// ConvertAllV1ToV2 is temporary scaffolding kept off the core Module interface,
+	// so reach it via the V1ToV2Migrator capability.
+	migrator, ok := dashboardModule.(dashboard.V1ToV2Migrator)
+	if !ok {
+		return errors.Newf(errors.TypeInternal, errors.CodeInternal, "dashboard module does not support v1 to v2 conversion")
+	}
 
 	logger := migration.settings.Logger
 	for _, id := range orgIDs {
@@ -62,7 +70,7 @@ func (migration *migrateDashboardsV1ToV2) Up(ctx context.Context, db *bun.DB) er
 			return err
 		}
 
-		result, err := dashboardModule.ConvertAllV1ToV2(ctx, orgID)
+		result, err := migrator.ConvertAllV1ToV2(ctx, orgID)
 		if err != nil {
 			return err
 		}
