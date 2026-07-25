@@ -61,7 +61,9 @@ function DashboardPageBreadcrumbs({
 				</BreadcrumbItem>
 				<BreadcrumbSeparator>/</BreadcrumbSeparator>
 				<BreadcrumbItem>
-					<BreadcrumbLink icon={<img src={image} alt="dashboard-icon" />}>
+					<BreadcrumbLink
+						icon={<img src={image} alt="dashboard-icon" className={styles.icon} />}
+					>
 						<span className={styles.title} title={title}>
 							{title}
 						</span>
