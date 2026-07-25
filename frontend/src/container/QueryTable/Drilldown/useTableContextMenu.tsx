@@ -51,13 +51,38 @@ export function useTableContextMenu({
 		onClose,
 	});
 
+	// For non-builder queries (ClickHouse) without value columns,
+	// treat GROUP columns as aggregate to enable context links
+	const isBuilderQuery = drilldownQuery?.queryType === 'builder';
+
+	const hasValueColumns = useMemo(
+		() =>
+			clickedData?.tableColumns?.some((col: any) => col.isValueColumn) ?? false,
+		[clickedData?.tableColumns],
+	);
+
+	const treatAsAggregate = useMemo(() => {
+		if (!clickedData) {
+			return false;
+		}
+
+		// 1. Standard Case: The column is explicitly marked as a value/measure
+		if (clickedData?.column?.isValueColumn) {
+			return true;
+		}
+
+		// 2. ClickHouse/PromQL Fallback: Since they lack metadata,
+		// we treat everything as an aggregate to enable Context Links.
+		return !isBuilderQuery && !hasValueColumns;
+	}, [clickedData, isBuilderQuery, hasValueColumns]);
+
 	const aggregateData = useMemo((): AggregateData | null => {
-		if (!clickedData?.column?.isValueColumn) {
+		if (!treatAsAggregate) {
 			return null;
 		}
 
 		return {
-			queryName: String(clickedData.column.queryName || ''),
+			queryName: String(clickedData?.column?.queryName || ''),
 			filters: getFiltersToAddToView(clickedData) || [],
 			timeRange: getTimeRangeFromQueryRangeRequest(queryRangeRequest) as {
 				startTime: number;
@@ -66,7 +91,7 @@ export function useTableContextMenu({
 		};
 		// queryRange causes infinite re-render
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [clickedData]);
+	}, [clickedData, treatAsAggregate]);
 
 	const { aggregateDrilldownConfig } = useAggregateDrilldown({
 		query: drilldownQuery,
@@ -84,9 +109,8 @@ export function useTableContextMenu({
 			return {};
 		}
 
-		const columnType = clickedData?.column?.isValueColumn
-			? ConfigType.AGGREGATE
-			: ConfigType.GROUP;
+		// For ClickHouse without value columns, treat as aggregate to show context links
+		const columnType = treatAsAggregate ? ConfigType.AGGREGATE : ConfigType.GROUP;
 
 		// Check if queryName is valid for drilldown
 		if (
@@ -100,7 +124,8 @@ export function useTableContextMenu({
 			case ConfigType.AGGREGATE:
 				return aggregateDrilldownConfig;
 			case ConfigType.GROUP:
-				return filterDrilldownConfig;
+				// Filter drilldown requires query builder metadata
+				return isBuilderQuery ? filterDrilldownConfig : {};
 			default:
 				return {};
 		}
@@ -110,6 +135,8 @@ export function useTableContextMenu({
 		coordinates,
 		aggregateDrilldownConfig,
 		aggregateData,
+		treatAsAggregate,
+		isBuilderQuery,
 	]);
 
 	return { menuItemsConfig };

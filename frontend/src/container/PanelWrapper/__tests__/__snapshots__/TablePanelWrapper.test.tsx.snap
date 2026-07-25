@@ -269,7 +269,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                           <div
                             class=""
                             role="button"
-                            tabindex="0"
+                            tabindex="-1"
                           >
                             <div>
                               <div
@@ -286,7 +286,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                           <div
                             class=""
                             role="button"
-                            tabindex="0"
+                            tabindex="-1"
                           >
                             <div>
                               <div
@@ -307,7 +307,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                           <div
                             class=""
                             role="button"
-                            tabindex="0"
+                            tabindex="-1"
                           >
                             <div>
                               <div
@@ -324,7 +324,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                           <div
                             class=""
                             role="button"
-                            tabindex="0"
+                            tabindex="-1"
                           >
                             <div>
                               <div
@@ -345,7 +345,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                           <div
                             class=""
                             role="button"
-                            tabindex="0"
+                            tabindex="-1"
                           >
                             <div>
                               <div
@@ -362,7 +362,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                           <div
                             class=""
                             role="button"
-                            tabindex="0"
+                            tabindex="-1"
                           >
                             <div>
                               <div
@@ -383,7 +383,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                           <div
                             class=""
                             role="button"
-                            tabindex="0"
+                            tabindex="-1"
                           >
                             <div>
                               <div
@@ -400,7 +400,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                           <div
                             class=""
                             role="button"
-                            tabindex="0"
+                            tabindex="-1"
                           >
                             <div>
                               <div
@@ -421,7 +421,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                           <div
                             class=""
                             role="button"
-                            tabindex="0"
+                            tabindex="-1"
                           >
                             <div>
                               <div
@@ -438,7 +438,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                           <div
                             class=""
                             role="button"
-                            tabindex="0"
+                            tabindex="-1"
                           >
                             <div>
                               <div
@@ -459,7 +459,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                           <div
                             class=""
                             role="button"
-                            tabindex="0"
+                            tabindex="-1"
                           >
                             <div>
                               <div
@@ -476,7 +476,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                           <div
                             class=""
                             role="button"
-                            tabindex="0"
+                            tabindex="-1"
                           >
                             <div>
                               <div
@@ -497,7 +497,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                           <div
                             class=""
                             role="button"
-                            tabindex="0"
+                            tabindex="-1"
                           >
                             <div>
                               <div
@@ -514,7 +514,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                           <div
                             class=""
                             role="button"
-                            tabindex="0"
+                            tabindex="-1"
                           >
                             <div>
                               <div
