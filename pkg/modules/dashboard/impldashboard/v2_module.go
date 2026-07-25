@@ -2,6 +2,7 @@ package impldashboard
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/transition"
@@ -293,7 +294,7 @@ func (m *module) ConvertAllV1ToV2(ctx context.Context, orgID valuer.UUID) (*dash
 			// retry doesn't regenerate a different (randomly-suffixed) name. Best-effort.
 			if storable.Name == "" {
 				if nameErr := m.store.UpdateName(ctx, orgID, storable.ID, storable.V1Name()); nameErr != nil {
-					m.settings.Logger().ErrorContext(ctx, "failed to backfill name for unmigrated dashboard", "dashboard_id", storable.ID.String(), "error", nameErr)
+					m.settings.Logger().ErrorContext(ctx, "failed to backfill name for unmigrated dashboard", slog.String("dashboard_id", storable.ID.String()), slog.Any("error", nameErr))
 				}
 			}
 		} else {
