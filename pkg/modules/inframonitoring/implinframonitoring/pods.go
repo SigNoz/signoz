@@ -150,9 +150,12 @@ func (m *module) getTopPodGroups(
 	orgID valuer.UUID,
 	req *inframonitoringtypes.PostablePods,
 	metadataMap map[string]map[string]string,
+	podStatusCountsMap map[string]podStatusCounts,
 ) ([]map[string]string, error) {
 	orderByKey := req.OrderBy.Key.Name
 	if orderByKey == inframonitoringtypes.PodNameAttrKey {
+		// metadataMap is already status-filtered by the caller, so the name
+		// branch needs no extra intersection.
 		return inframonitoringtypes.PaginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.PodNameAttrKey), nil
 	}
 	queryNamesForOrderBy := orderByToPodsQueryNames[orderByKey]
@@ -194,6 +197,10 @@ func (m *module) getTopPodGroups(
 	}
 
 	allMetricGroups := parseAndSortGroups(resp, rankingQueryName, req.GroupBy, req.OrderBy.Direction)
+	// When filtering by status, intersect the rankedGroup
+	if req.Filter != nil && !req.Filter.FilterByPodStatus.IsZero() {
+		allMetricGroups = intersectRankedGroups(allMetricGroups, podStatusCountsMap)
+	}
 	return paginateWithBackfill(allMetricGroups, metadataMap, req.GroupBy, req.Offset, req.Limit), nil
 }
 
