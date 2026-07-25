@@ -429,6 +429,11 @@ func TestResolveV1Image(t *testing.T) {
 		assert.Equal(t, passthrough, resolveV1Image(passthrough))
 	}
 
+	// A percent-encoded inline SVG icon is preserved by re-encoding it to base64
+	// (the form v2 accepts) rather than being dropped to the default.
+	svgResolved := resolveV1Image("data:image/svg+xml,%3Csvg%2F%3E")
+	assert.Equal(t, "data:image/svg+xml;base64,PHN2Zy8+", svgResolved)
+
 	// A value that v2 would reject (a URL, a corrupt data URI) falls back to the
 	// default eight-ball icon rather than failing the dashboard migration.
 	for _, invalid := range []string{
@@ -437,6 +442,66 @@ func TestResolveV1Image(t *testing.T) {
 		"just-some-string",
 	} {
 		assert.Equal(t, "/assets/Icons/eight-ball", resolveV1Image(invalid))
+	}
+}
+
+func TestReencodeInlineSVGImage(t *testing.T) {
+	testCases := []struct {
+		scenario      string
+		image         string
+		wantRewritten bool
+		want          string
+	}{
+		{
+			scenario:      "percent-encoded inline svg",
+			image:         "data:image/svg+xml,%3Csvg%2F%3E",
+			wantRewritten: true,
+			want:          "data:image/svg+xml;base64,PHN2Zy8+",
+		},
+		{
+			scenario:      "percent-encoded inline svg with charset param",
+			image:         "data:image/svg+xml;charset=utf-8,%3Csvg%2F%3E",
+			wantRewritten: true,
+			want:          "data:image/svg+xml;base64,PHN2Zy8+",
+		},
+		{
+			scenario:      "already base64 svg is left unchanged",
+			image:         "data:image/svg+xml;base64,PHN2Zy8+",
+			wantRewritten: false,
+			want:          "data:image/svg+xml;base64,PHN2Zy8+",
+		},
+		{
+			scenario:      "non-svg data uri is left unchanged",
+			image:         "data:image/png,%89PNG",
+			wantRewritten: false,
+			want:          "data:image/png,%89PNG",
+		},
+		{
+			scenario:      "an icon path is left unchanged",
+			image:         "/assets/Icons/eight-ball",
+			wantRewritten: false,
+			want:          "/assets/Icons/eight-ball",
+		},
+		{
+			scenario:      "a longer media type merely sharing the svg prefix is left unchanged",
+			image:         "data:image/svg+xmlish,%3Csvg%2F%3E",
+			wantRewritten: false,
+			want:          "data:image/svg+xmlish,%3Csvg%2F%3E",
+		},
+		{
+			scenario:      "empty is left unchanged",
+			image:         "",
+			wantRewritten: false,
+			want:          "",
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.scenario, func(t *testing.T) {
+			got, rewritten := reencodeInlineSVGImage(testCase.image)
+			assert.Equal(t, testCase.wantRewritten, rewritten)
+			assert.Equal(t, testCase.want, got)
+		})
 	}
 }
 
