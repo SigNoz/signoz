@@ -52,7 +52,7 @@ func (storable StorableDashboard) ConvertV1ToV2() (result *DashboardV2, err erro
 	d := &v1Decoder{}
 	title := d.readString(storable.Data, "title")
 	description := d.readString(storable.Data, "description")
-	image := resolveV1Image(d.readString(storable.Data, "image"))
+	image, _ := ResolveV1Image(d.readString(storable.Data, "image"))
 
 	sanitizeWidgetIDs(storable.Data)
 	panels := d.convertV1Panels(retainPlacedWidgets(storable.Data))

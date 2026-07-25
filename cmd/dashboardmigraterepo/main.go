@@ -41,6 +41,9 @@ type outcome struct {
 	relPath string
 	status  string // ok | skipped-v2 | convert-failed | validate-failed | read-failed
 	detail  string
+	// overriddenIcon holds the original v1 image when it failed v2 validation and
+	// was replaced with the default icon, so no dropped icon goes unreported.
+	overriddenIcon string
 }
 
 func main() {
@@ -103,11 +106,11 @@ func migrateOne(ctx context.Context, migrator interface {
 }, path, rel, outDir string) outcome {
 	raw, err := os.ReadFile(path)
 	if err != nil {
-		return outcome{rel, "read-failed", err.Error()}
+		return outcome{relPath: rel, status: "read-failed", detail: err.Error()}
 	}
 	var data map[string]any
 	if err := json.Unmarshal(raw, &data); err != nil {
-		return outcome{rel, "read-failed", err.Error()}
+		return outcome{relPath: rel, status: "read-failed", detail: err.Error()}
 	}
 
 	storable := dashboardtypes.StorableDashboard{
@@ -117,7 +120,7 @@ func migrateOne(ctx context.Context, migrator interface {
 	storable.ID = valuer.GenerateUUID()
 
 	if storable.IsV2() {
-		return outcome{rel, "skipped-v2", "already v2 schema"}
+		return outcome{relPath: rel, status: "skipped-v2", detail: "already v2 schema"}
 	}
 
 	// v1→v2 assumes v5-shaped widget queries; run v4→v5 in place first.
@@ -125,12 +128,12 @@ func migrateOne(ctx context.Context, migrator interface {
 
 	v2, err := storable.ConvertV1ToV2()
 	if err != nil {
-		return outcome{rel, "convert-failed", err.Error()}
+		return outcome{relPath: rel, status: "convert-failed", detail: err.Error()}
 	}
 
 	out, err := marshalPostableV2(v2)
 	if err != nil {
-		return outcome{rel, "convert-failed", err.Error()}
+		return outcome{relPath: rel, status: "convert-failed", detail: err.Error()}
 	}
 
 	// Validate exactly as the import API does: unmarshal the JSON back. This both
@@ -139,15 +142,24 @@ func migrateOne(ctx context.Context, migrator interface {
 	// PostableDashboardV2.Validate (DisallowUnknownFields + spec validation).
 	var roundTrip dashboardtypes.PostableDashboardV2
 	if err := json.Unmarshal(out, &roundTrip); err != nil {
-		return outcome{rel, "validate-failed", err.Error()}
+		return outcome{relPath: rel, status: "validate-failed", detail: err.Error()}
 	}
 
 	if outDir != "" {
 		if err := writeFile(out, rel, outDir); err != nil {
-			return outcome{rel, "write-failed", err.Error()}
+			return outcome{relPath: rel, status: "write-failed", detail: err.Error()}
 		}
 	}
-	return outcome{rel, "ok", ""}
+
+	// The conversion silently replaces an image that fails v2 validation with the
+	// default icon; capture the original so a dropped icon is reported, not lost.
+	result := outcome{relPath: rel, status: "ok"}
+	if origIcon, _ := storable.Data["image"].(string); origIcon != "" {
+		if _, overridden := dashboardtypes.ResolveV1Image(origIcon); overridden {
+			result.overriddenIcon = origIcon
+		}
+	}
+	return result
 }
 
 // marshalPostableV2 renders the PostableDashboardV2 form (schemaVersion, image,
@@ -200,4 +212,27 @@ func report(outcomes []outcome) {
 	if !any {
 		fmt.Println("  none")
 	}
+
+	// Icons dropped because the v1 image failed v2 validation — these migrated
+	// fine but lost their original icon to the default, so list them for review.
+	fmt.Printf("\n=== icons overridden (replaced with default) ===\n")
+	anyIcon := false
+	for _, o := range outcomes {
+		if o.overriddenIcon == "" {
+			continue
+		}
+		anyIcon = true
+		fmt.Printf("\n%s\n    %s\n", o.relPath, truncate(o.overriddenIcon, 100))
+	}
+	if !anyIcon {
+		fmt.Println("  none")
+	}
+}
+
+// truncate shortens a value for the report — v1 images can be multi-KB base64.
+func truncate(s string, max int) string {
+	if len(s) <= max {
+		return s
+	}
+	return s[:max] + fmt.Sprintf("… (%d chars)", len(s))
 }

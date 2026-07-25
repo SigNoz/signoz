@@ -417,26 +417,32 @@ func TestResolveV1Image(t *testing.T) {
 	// from the frontend picker) must migrate to the v2 avocado icon path.
 	avocadoBase64, err := os.ReadFile("testdata/v1_avocado_icon.txt")
 	require.NoError(t, err)
-	assert.Equal(t, "/assets/Icons/avocado", resolveV1Image(string(avocadoBase64)))
+	resolved, overridden := ResolveV1Image(string(avocadoBase64))
+	assert.Equal(t, "/assets/Icons/avocado", resolved)
+	assert.False(t, overridden)
 
-	// Values already valid under the v2 schema are returned unchanged: a custom
-	// base64 upload, an already-migrated icon path, and empty ("no image").
+	// Values already valid under the v2 schema are returned unchanged and not
+	// flagged: a custom base64 upload, an already-migrated icon path, empty.
 	for _, passthrough := range []string{
 		"",
 		"data:image/png;base64,customuploadblob",
 		"/assets/Icons/already-migrated",
 	} {
-		assert.Equal(t, passthrough, resolveV1Image(passthrough))
+		resolved, overridden := ResolveV1Image(passthrough)
+		assert.Equal(t, passthrough, resolved)
+		assert.False(t, overridden)
 	}
 
 	// A value that v2 would reject (a URL, a corrupt data URI) falls back to the
-	// default eight-ball icon rather than failing the dashboard migration.
+	// default eight-ball icon and is flagged as overridden.
 	for _, invalid := range []string{
 		"https://example.com/icon.png",
 		"data:image/svg+xml;base64,not valid base64!!",
 		"just-some-string",
 	} {
-		assert.Equal(t, "/assets/Icons/eight-ball", resolveV1Image(invalid))
+		resolved, overridden := ResolveV1Image(invalid)
+		assert.Equal(t, "/assets/Icons/eight-ball", resolved)
+		assert.True(t, overridden)
 	}
 }
 

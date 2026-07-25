@@ -36,17 +36,18 @@ var v1Base64IconToAssetPath = map[string]string{
 // fallback icon for a dashboard whose image can't be carried over as-is.
 const defaultDashboardIconPath = dashboardIconPathPrefix + "eight-ball"
 
-// resolveV1Image maps a v1 dashboard's `image` to a value valid under the v2 schema.
+// ResolveV1Image maps a v1 dashboard's `image` to a value valid under the v2 schema.
 // A preset base64 icon becomes its v2 icon path; a custom base64 upload or an empty
 // image (both valid v2) pass through. Anything else — a stale URL, a corrupt data
 // URI — would fail validation and sink the whole dashboard migration, so it falls
-// back to the default icon instead.
-func resolveV1Image(image string) string {
+// back to the default icon. overridden reports that fallback, so a migration run can
+// record which icons were dropped rather than lose them silently.
+func ResolveV1Image(image string) (resolved string, overridden bool) {
 	if path, ok := v1Base64IconToAssetPath[image]; ok {
-		return path
+		return path, false
 	}
 	if (DashboardV2MetadataBase{Image: image}).validateImage() == nil {
-		return image
+		return image, false
 	}
-	return defaultDashboardIconPath
+	return defaultDashboardIconPath, true
 }
