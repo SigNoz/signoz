@@ -61,7 +61,7 @@ func TestGetFirstSeenFromMetricMetadata(t *testing.T) {
 		telemetryaudit.LogAttributeKeysTblName,
 		telemetryaudit.LogResourceKeysTblName,
 		DBName,
-		AttributesMetadataLocalTableName,
+		AttributesMetadataTableName,
 		ColumnEvolutionMetadataTableName,
 		flaggertest.New(t),
 	)
