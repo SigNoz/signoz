@@ -550,8 +550,10 @@ func (m *module) ListNodes(ctx context.Context, orgID valuer.UUID, req *inframon
 	}
 
 	filterExpr := ""
+	var nodeFilter *qbtypes.Filter
 	if req.Filter != nil {
 		filterExpr = req.Filter.Expression
+		nodeFilter = &req.Filter.Filter
 	}
 
 	fullQueryReq := buildFullQueryRequest(req.Start, req.End, filterExpr, req.GroupBy, pageGroups, m.newNodesTableListQuery())
@@ -572,12 +574,12 @@ func (m *module) ListNodes(ctx context.Context, orgID valuer.UUID, req *inframon
 	})
 	g.Go(func() error {
 		var err error
-		nodeConditionCounts, err = m.getPerGroupNodeConditionCounts(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		nodeConditionCounts, err = m.getPerGroupNodeConditionCounts(gCtx, orgID, req.Start, req.End, nodeFilter, req.GroupBy, pageGroups)
 		return err
 	})
 	g.Go(func() error {
 		var err error
-		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups, inframonitoringtypes.PodStatus{})
+		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, nodeFilter, req.GroupBy, pageGroups, inframonitoringtypes.PodStatus{})
 		return err
 	})
 
@@ -648,8 +650,10 @@ func (m *module) ListNamespaces(ctx context.Context, orgID valuer.UUID, req *inf
 	}
 
 	filterExpr := ""
+	var namespaceFilter *qbtypes.Filter
 	if req.Filter != nil {
 		filterExpr = req.Filter.Expression
+		namespaceFilter = &req.Filter.Filter
 	}
 
 	fullQueryReq := buildFullQueryRequest(req.Start, req.End, filterExpr, req.GroupBy, pageGroups, m.newNamespacesTableListQuery())
@@ -670,12 +674,12 @@ func (m *module) ListNamespaces(ctx context.Context, orgID valuer.UUID, req *inf
 	})
 	g.Go(func() error {
 		var err error
-		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups, inframonitoringtypes.PodStatus{})
+		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, namespaceFilter, req.GroupBy, pageGroups, inframonitoringtypes.PodStatus{})
 		return err
 	})
 	g.Go(func() error {
 		var err error
-		resourceCounts, err = m.getPerGroupDistinctCounts(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups, namespaceCountAttrKeys, namespacesMetricNamesListForCounts)
+		resourceCounts, err = m.getPerGroupDistinctCounts(gCtx, orgID, req.Start, req.End, namespaceFilter, req.GroupBy, pageGroups, namespaceCountAttrKeys, namespacesMetricNamesListForCounts)
 		return err
 	})
 
@@ -745,8 +749,10 @@ func (m *module) ListClusters(ctx context.Context, orgID valuer.UUID, req *infra
 	}
 
 	filterExpr := ""
+	var clusterFilter *qbtypes.Filter
 	if req.Filter != nil {
 		filterExpr = req.Filter.Expression
+		clusterFilter = &req.Filter.Filter
 	}
 
 	fullQueryReq := buildFullQueryRequest(req.Start, req.End, filterExpr, req.GroupBy, pageGroups, m.newClustersTableListQuery())
@@ -770,17 +776,17 @@ func (m *module) ListClusters(ctx context.Context, orgID valuer.UUID, req *infra
 	})
 	g.Go(func() error {
 		var err error
-		nodeConditionCountsMap, err = m.getPerGroupNodeConditionCounts(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		nodeConditionCountsMap, err = m.getPerGroupNodeConditionCounts(gCtx, orgID, req.Start, req.End, clusterFilter, req.GroupBy, pageGroups)
 		return err
 	})
 	g.Go(func() error {
 		var err error
-		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups, inframonitoringtypes.PodStatus{})
+		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, clusterFilter, req.GroupBy, pageGroups, inframonitoringtypes.PodStatus{})
 		return err
 	})
 	g.Go(func() error {
 		var err error
-		resourceCounts, err = m.getPerGroupDistinctCounts(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups, clusterCountAttrKeys, clusterMetricNamesListForCounts)
+		resourceCounts, err = m.getPerGroupDistinctCounts(gCtx, orgID, req.Start, req.End, clusterFilter, req.GroupBy, pageGroups, clusterCountAttrKeys, clusterMetricNamesListForCounts)
 		return err
 	})
 
@@ -901,7 +907,7 @@ func (m *module) ListDeployments(ctx context.Context, orgID valuer.UUID, req *in
 
 	// Bake the deployments base filter into req.Filter so all downstream helpers pick it up.
 	if req.Filter == nil {
-		req.Filter = &qbtypes.Filter{}
+		req.Filter = &inframonitoringtypes.DeploymentFilter{}
 	}
 	req.Filter.Expression = mergeFilterExpressions(deploymentsBaseFilterExpr, req.Filter.Expression)
 
@@ -934,8 +940,10 @@ func (m *module) ListDeployments(ctx context.Context, orgID valuer.UUID, req *in
 	}
 
 	filterExpr := ""
+	var deploymentFilter *qbtypes.Filter
 	if req.Filter != nil {
 		filterExpr = req.Filter.Expression
+		deploymentFilter = &req.Filter.Filter
 	}
 
 	fullQueryReq := buildFullQueryRequest(req.Start, req.End, filterExpr, req.GroupBy, pageGroups, m.newDeploymentsTableListQuery())
@@ -955,7 +963,7 @@ func (m *module) ListDeployments(ctx context.Context, orgID valuer.UUID, req *in
 	})
 	g.Go(func() error {
 		var err error
-		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups, inframonitoringtypes.PodStatus{})
+		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, deploymentFilter, req.GroupBy, pageGroups, inframonitoringtypes.PodStatus{})
 		return err
 	})
 
@@ -998,7 +1006,7 @@ func (m *module) ListStatefulSets(ctx context.Context, orgID valuer.UUID, req *i
 
 	// Bake the workload base filter into req.Filter so all downstream helpers pick it up.
 	if req.Filter == nil {
-		req.Filter = &qbtypes.Filter{}
+		req.Filter = &inframonitoringtypes.StatefulSetFilter{}
 	}
 	req.Filter.Expression = mergeFilterExpressions(statefulSetsBaseFilterExpr, req.Filter.Expression)
 
@@ -1031,8 +1039,10 @@ func (m *module) ListStatefulSets(ctx context.Context, orgID valuer.UUID, req *i
 	}
 
 	filterExpr := ""
+	var statefulSetFilter *qbtypes.Filter
 	if req.Filter != nil {
 		filterExpr = req.Filter.Expression
+		statefulSetFilter = &req.Filter.Filter
 	}
 
 	fullQueryReq := buildFullQueryRequest(req.Start, req.End, filterExpr, req.GroupBy, pageGroups, m.newStatefulSetsTableListQuery())
@@ -1054,7 +1064,7 @@ func (m *module) ListStatefulSets(ctx context.Context, orgID valuer.UUID, req *i
 	})
 	g.Go(func() error {
 		var err error
-		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups, inframonitoringtypes.PodStatus{})
+		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, statefulSetFilter, req.GroupBy, pageGroups, inframonitoringtypes.PodStatus{})
 		return err
 	})
 
@@ -1097,7 +1107,7 @@ func (m *module) ListJobs(ctx context.Context, orgID valuer.UUID, req *inframoni
 
 	// Bake the jobs base filter into req.Filter so all downstream helpers pick it up.
 	if req.Filter == nil {
-		req.Filter = &qbtypes.Filter{}
+		req.Filter = &inframonitoringtypes.JobFilter{}
 	}
 	req.Filter.Expression = mergeFilterExpressions(jobsBaseFilterExpr, req.Filter.Expression)
 
@@ -1130,8 +1140,10 @@ func (m *module) ListJobs(ctx context.Context, orgID valuer.UUID, req *inframoni
 	}
 
 	filterExpr := ""
+	var jobFilter *qbtypes.Filter
 	if req.Filter != nil {
 		filterExpr = req.Filter.Expression
+		jobFilter = &req.Filter.Filter
 	}
 
 	fullQueryReq := buildFullQueryRequest(req.Start, req.End, filterExpr, req.GroupBy, pageGroups, m.newJobsTableListQuery())
@@ -1153,7 +1165,7 @@ func (m *module) ListJobs(ctx context.Context, orgID valuer.UUID, req *inframoni
 	})
 	g.Go(func() error {
 		var err error
-		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups, inframonitoringtypes.PodStatus{})
+		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, jobFilter, req.GroupBy, pageGroups, inframonitoringtypes.PodStatus{})
 		return err
 	})
 
@@ -1196,7 +1208,7 @@ func (m *module) ListDaemonSets(ctx context.Context, orgID valuer.UUID, req *inf
 
 	// Bake the workload base filter into req.Filter so all downstream helpers pick it up.
 	if req.Filter == nil {
-		req.Filter = &qbtypes.Filter{}
+		req.Filter = &inframonitoringtypes.DaemonSetFilter{}
 	}
 	req.Filter.Expression = mergeFilterExpressions(daemonSetsBaseFilterExpr, req.Filter.Expression)
 
@@ -1229,8 +1241,10 @@ func (m *module) ListDaemonSets(ctx context.Context, orgID valuer.UUID, req *inf
 	}
 
 	filterExpr := ""
+	var daemonSetFilter *qbtypes.Filter
 	if req.Filter != nil {
 		filterExpr = req.Filter.Expression
+		daemonSetFilter = &req.Filter.Filter
 	}
 
 	fullQueryReq := buildFullQueryRequest(req.Start, req.End, filterExpr, req.GroupBy, pageGroups, m.newDaemonSetsTableListQuery())
@@ -1252,7 +1266,7 @@ func (m *module) ListDaemonSets(ctx context.Context, orgID valuer.UUID, req *inf
 	})
 	g.Go(func() error {
 		var err error
-		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups, inframonitoringtypes.PodStatus{})
+		podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, daemonSetFilter, req.GroupBy, pageGroups, inframonitoringtypes.PodStatus{})
 		return err
 	})
 

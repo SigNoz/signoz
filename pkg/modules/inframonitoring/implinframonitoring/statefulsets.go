@@ -140,5 +140,9 @@ func (m *module) getStatefulSetsTableMetadata(ctx context.Context, orgID valuer.
 			nonGroupByAttrs = append(nonGroupByAttrs, key)
 		}
 	}
-	return m.getMetadata(ctx, orgID, statefulSetsTableMetricNamesList, req.GroupBy, nonGroupByAttrs, req.Filter, req.Start, req.End)
+	var filter *qbtypes.Filter
+	if req.Filter != nil {
+		filter = &req.Filter.Filter
+	}
+	return m.getMetadata(ctx, orgID, statefulSetsTableMetricNamesList, req.GroupBy, nonGroupByAttrs, filter, req.Start, req.End)
 }

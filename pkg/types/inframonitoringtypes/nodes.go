@@ -39,11 +39,18 @@ type NodeRecord struct {
 type PostableNodes struct {
 	Start   int64                `json:"start" required:"true"`
 	End     int64                `json:"end" required:"true"`
-	Filter  *qbtypes.Filter      `json:"filter"`
+	Filter  *NodeFilter          `json:"filter"`
 	GroupBy []qbtypes.GroupByKey `json:"groupBy"`
 	OrderBy *qbtypes.OrderBy     `json:"orderBy"`
 	Offset  int                  `json:"offset"`
 	Limit   int                  `json:"limit" required:"true"`
+}
+
+// NodeFilter is the attribute filter plus an optional secondary filter on the
+// derived pod display status (see PodStatus). Empty FilterByPodStatus = off.
+type NodeFilter struct {
+	qbtypes.Filter    `json:",inline"`
+	FilterByPodStatus PodStatus `json:"filterByPodStatus"`
 }
 
 // Validate ensures PostableNodes contains acceptable values.
@@ -83,6 +90,10 @@ func (req *PostableNodes) Validate() error {
 
 	if req.Offset < 0 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "offset cannot be negative")
+	}
+
+	if req.Filter != nil && !req.Filter.FilterByPodStatus.IsZero() && !IsFilterablePodStatus(req.Filter.FilterByPodStatus) {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid filter by pod status: %s", req.Filter.FilterByPodStatus)
 	}
 
 	if req.OrderBy != nil {

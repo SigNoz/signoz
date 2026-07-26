@@ -142,5 +142,9 @@ func (m *module) getClustersTableMetadata(ctx context.Context, orgID valuer.UUID
 			nonGroupByAttrs = append(nonGroupByAttrs, key)
 		}
 	}
-	return m.getMetadata(ctx, orgID, clustersTableMetricNamesList, req.GroupBy, nonGroupByAttrs, req.Filter, req.Start, req.End)
+	var filter *qbtypes.Filter
+	if req.Filter != nil {
+		filter = &req.Filter.Filter
+	}
+	return m.getMetadata(ctx, orgID, clustersTableMetricNamesList, req.GroupBy, nonGroupByAttrs, filter, req.Start, req.End)
 }

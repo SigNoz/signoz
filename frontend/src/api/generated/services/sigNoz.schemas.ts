@@ -5688,6 +5688,35 @@ export interface InframonitoringtypesChecksDTO {
 	type: InframonitoringtypesCheckTypeDTO;
 }
 
+export enum InframonitoringtypesPodStatusDTO {
+	pending = 'pending',
+	running = 'running',
+	failed = 'failed',
+	unknown = 'unknown',
+	crashloopbackoff = 'crashloopbackoff',
+	imagepullbackoff = 'imagepullbackoff',
+	errimagepull = 'errimagepull',
+	createcontainerconfigerror = 'createcontainerconfigerror',
+	containercreating = 'containercreating',
+	oomkilled = 'oomkilled',
+	completed = 'completed',
+	error = 'error',
+	containercannotrun = 'containercannotrun',
+	evicted = 'evicted',
+	nodeaffinity = 'nodeaffinity',
+	nodelost = 'nodelost',
+	shutdown = 'shutdown',
+	unexpectedadmissionerror = 'unexpectedadmissionerror',
+	no_data = 'no_data',
+}
+export interface InframonitoringtypesClusterFilterDTO {
+	/**
+	 * @type string
+	 */
+	expression?: string;
+	filterByPodStatus?: InframonitoringtypesPodStatusDTO;
+}
+
 export type InframonitoringtypesClusterRecordDTOCounts = {
 	/**
 	 * @type integer
@@ -6065,6 +6094,14 @@ export interface InframonitoringtypesContainersDTO {
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 
+export interface InframonitoringtypesDaemonSetFilterDTO {
+	/**
+	 * @type string
+	 */
+	expression?: string;
+	filterByPodStatus?: InframonitoringtypesPodStatusDTO;
+}
+
 export type InframonitoringtypesDaemonSetRecordDTOMetaAnyOf = {
 	[key: string]: string;
 };
@@ -6148,6 +6185,14 @@ export interface InframonitoringtypesDaemonSetsDTO {
 	total: number;
 	type: InframonitoringtypesResponseTypeDTO;
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
+}
+
+export interface InframonitoringtypesDeploymentFilterDTO {
+	/**
+	 * @type string
+	 */
+	expression?: string;
+	filterByPodStatus?: InframonitoringtypesPodStatusDTO;
 }
 
 export type InframonitoringtypesDeploymentRecordDTOMetaAnyOf = {
@@ -6312,6 +6357,14 @@ export interface InframonitoringtypesHostsDTO {
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 
+export interface InframonitoringtypesJobFilterDTO {
+	/**
+	 * @type string
+	 */
+	expression?: string;
+	filterByPodStatus?: InframonitoringtypesPodStatusDTO;
+}
+
 export type InframonitoringtypesJobRecordDTOMetaAnyOf = {
 	[key: string]: string;
 };
@@ -6397,6 +6450,14 @@ export interface InframonitoringtypesJobsDTO {
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 
+export interface InframonitoringtypesNamespaceFilterDTO {
+	/**
+	 * @type string
+	 */
+	expression?: string;
+	filterByPodStatus?: InframonitoringtypesPodStatusDTO;
+}
+
 export type InframonitoringtypesNamespaceRecordDTOCounts = {
 	/**
 	 * @type integer
@@ -6478,6 +6539,14 @@ export enum InframonitoringtypesNodeConditionDTO {
 	not_ready = 'not_ready',
 	no_data = 'no_data',
 }
+export interface InframonitoringtypesNodeFilterDTO {
+	/**
+	 * @type string
+	 */
+	expression?: string;
+	filterByPodStatus?: InframonitoringtypesPodStatusDTO;
+}
+
 export type InframonitoringtypesNodeRecordDTOMetaAnyOf = {
 	[key: string]: string;
 };
@@ -6539,27 +6608,6 @@ export interface InframonitoringtypesNodesDTO {
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 
-export enum InframonitoringtypesPodStatusDTO {
-	pending = 'pending',
-	running = 'running',
-	failed = 'failed',
-	unknown = 'unknown',
-	crashloopbackoff = 'crashloopbackoff',
-	imagepullbackoff = 'imagepullbackoff',
-	errimagepull = 'errimagepull',
-	createcontainerconfigerror = 'createcontainerconfigerror',
-	containercreating = 'containercreating',
-	oomkilled = 'oomkilled',
-	completed = 'completed',
-	error = 'error',
-	containercannotrun = 'containercannotrun',
-	evicted = 'evicted',
-	nodeaffinity = 'nodeaffinity',
-	nodelost = 'nodelost',
-	shutdown = 'shutdown',
-	unexpectedadmissionerror = 'unexpectedadmissionerror',
-	no_data = 'no_data',
-}
 export interface InframonitoringtypesPodFilterDTO {
 	/**
 	 * @type string
@@ -6654,7 +6702,7 @@ export interface InframonitoringtypesPostableClustersDTO {
 	 * @format int64
 	 */
 	end: number;
-	filter?: Querybuildertypesv5FilterDTO;
+	filter?: InframonitoringtypesClusterFilterDTO;
 	/**
 	 * @type array,null
 	 */
@@ -6708,7 +6756,7 @@ export interface InframonitoringtypesPostableDaemonSetsDTO {
 	 * @format int64
 	 */
 	end: number;
-	filter?: Querybuildertypesv5FilterDTO;
+	filter?: InframonitoringtypesDaemonSetFilterDTO;
 	/**
 	 * @type array,null
 	 */
@@ -6735,7 +6783,7 @@ export interface InframonitoringtypesPostableDeploymentsDTO {
 	 * @format int64
 	 */
 	end: number;
-	filter?: Querybuildertypesv5FilterDTO;
+	filter?: InframonitoringtypesDeploymentFilterDTO;
 	/**
 	 * @type array,null
 	 */
@@ -6789,7 +6837,7 @@ export interface InframonitoringtypesPostableJobsDTO {
 	 * @format int64
 	 */
 	end: number;
-	filter?: Querybuildertypesv5FilterDTO;
+	filter?: InframonitoringtypesJobFilterDTO;
 	/**
 	 * @type array,null
 	 */
@@ -6816,7 +6864,7 @@ export interface InframonitoringtypesPostableNamespacesDTO {
 	 * @format int64
 	 */
 	end: number;
-	filter?: Querybuildertypesv5FilterDTO;
+	filter?: InframonitoringtypesNamespaceFilterDTO;
 	/**
 	 * @type array,null
 	 */
@@ -6843,7 +6891,7 @@ export interface InframonitoringtypesPostableNodesDTO {
 	 * @format int64
 	 */
 	end: number;
-	filter?: Querybuildertypesv5FilterDTO;
+	filter?: InframonitoringtypesNodeFilterDTO;
 	/**
 	 * @type array,null
 	 */
@@ -6891,13 +6939,21 @@ export interface InframonitoringtypesPostablePodsDTO {
 	start: number;
 }
 
+export interface InframonitoringtypesStatefulSetFilterDTO {
+	/**
+	 * @type string
+	 */
+	expression?: string;
+	filterByPodStatus?: InframonitoringtypesPodStatusDTO;
+}
+
 export interface InframonitoringtypesPostableStatefulSetsDTO {
 	/**
 	 * @type integer
 	 * @format int64
 	 */
 	end: number;
-	filter?: Querybuildertypesv5FilterDTO;
+	filter?: InframonitoringtypesStatefulSetFilterDTO;
 	/**
 	 * @type array,null
 	 */

@@ -150,7 +150,11 @@ func (m *module) getNodesTableMetadata(ctx context.Context, orgID valuer.UUID, r
 			nonGroupByAttrs = append(nonGroupByAttrs, key)
 		}
 	}
-	return m.getMetadata(ctx, orgID, nodesTableMetricNamesList, req.GroupBy, nonGroupByAttrs, req.Filter, req.Start, req.End)
+	var filter *qbtypes.Filter
+	if req.Filter != nil {
+		filter = &req.Filter.Filter
+	}
+	return m.getMetadata(ctx, orgID, nodesTableMetricNamesList, req.GroupBy, nonGroupByAttrs, filter, req.Start, req.End)
 }
 
 // getPerGroupNodeConditionCounts computes per-group node counts bucketed by each
