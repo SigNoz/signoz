@@ -71,8 +71,8 @@ func (m *module) relatedLinkBuilderForRule(ctx context.Context, orgID valuer.UUI
 // change at unixMilli.
 // why are we subtracting 3 minutes?
 // the query range is calculated based on the rule's evalWindow and evalDelay
-// alerts have 2 minutes delay built in, so we need to subtract that from the start time
-// to get the correct query range
+// alerts have 2 minutes delay built in, so we need to subtract that from the
+// start time to get the correct query range.
 func (b *relatedLinkBuilder) queryWindow(unixMilli int64) (time.Time, time.Time) {
 	end := time.Unix(unixMilli/1000, 0)
 	return end.Add(-b.evalWindow - 3*time.Minute), end

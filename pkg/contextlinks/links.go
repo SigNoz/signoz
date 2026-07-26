@@ -116,7 +116,7 @@ func PrepareParamsForLogsV5(start, end time.Time, whereClause string) url.Values
 // BuilderQueryForSignal returns the filter expression and group-by keys of the
 // builder query for the given signal, or found=false when the composite query
 // has no builder query for it (e.g. PromQL or ClickHouse SQL alerts).
-// TODO(srikanthccv): re-visit this and support multiple queries
+// TODO(srikanthccv): re-visit this and support multiple queries.
 func BuilderQueryForSignal(queries []qbtypes.QueryEnvelope, signal telemetrytypes.Signal) (string, []qbtypes.GroupByKey, bool) {
 	switch signal {
 	case telemetrytypes.SignalLogs:
