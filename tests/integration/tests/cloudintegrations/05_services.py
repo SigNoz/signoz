@@ -567,11 +567,11 @@ def test_disable_metrics_deprovisions_dashboards(
 
     # Assertion 2: Dashboards listing API no longer contains the provisioned dashboard IDs
     list_response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/dashboards"),
+        signoz.self.host_configs["8080"].get("/api/v2/dashboards?limit=200"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=10,
     )
     assert list_response.status_code == HTTPStatus.OK, f"Expected 200 from dashboards list, got {list_response.status_code}: {list_response.text}"
 
-    listed_ids = {d["id"] for d in list_response.json()["data"]}
+    listed_ids = {d["id"] for d in list_response.json()["data"]["dashboards"]}
     assert not provisioned_ids & listed_ids, f"Provisioned dashboard IDs {provisioned_ids & listed_ids} still appear in dashboards list after disabling metrics"
