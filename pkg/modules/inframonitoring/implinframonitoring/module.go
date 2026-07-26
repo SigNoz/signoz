@@ -343,7 +343,7 @@ func (m *module) ListPods(ctx context.Context, orgID valuer.UUID, req *inframoni
 
 	resp.Total = len(metadataMap)
 
-	// keep is the status keyset (nil when not filtering); getTopPodGroups
+	// statusCounts is the status keyset (nil when not filtering); getTopPodGroups
 	// intersects the ranked groups against it before paginating.
 	pageGroups, err := m.getTopPodGroups(ctx, orgID, req, metadataMap, statusCounts)
 	if err != nil {
