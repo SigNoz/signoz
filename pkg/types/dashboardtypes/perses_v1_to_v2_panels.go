@@ -266,11 +266,27 @@ func (d *v1Decoder) legendFromWidget(w map[string]any) Legend {
 	}
 }
 
+// widgetBuilderSignal returns the signal of the widget's first builder query. Empty
+// for non-builder (promql/clickhouse) widgets, which have no per-signal selected fields.
+func (d *v1Decoder) widgetBuilderSignal(w map[string]any) telemetrytypes.Signal {
+	builder := d.readObject(d.readObject(w, "query"), "builder")
+	for _, q := range d.readObjects(builder, "queryData") {
+		return signalFromDataSource(q["dataSource"])
+	}
+	return telemetrytypes.Signal{}
+}
+
 func (d *v1Decoder) mapV1SelectFields(w map[string]any) []telemetrytypes.TelemetryFieldKey {
-	field := "selectedLogFields"
+	// Read the array matching the query's signal: traces and logs each keep their own
+	// selected columns, and a widget can carry a stale array for the other signal.
+	primary, fallback := "selectedLogFields", "selectedTracesFields"
+	if d.widgetBuilderSignal(w) == telemetrytypes.SignalTraces {
+		primary, fallback = "selectedTracesFields", "selectedLogFields"
+	}
+	field := primary
 	raw := d.readArray(w, field)
 	if len(raw) == 0 {
-		field = "selectedTracesFields"
+		field = fallback
 		raw = d.readArray(w, field)
 	}
 	if len(raw) == 0 {
