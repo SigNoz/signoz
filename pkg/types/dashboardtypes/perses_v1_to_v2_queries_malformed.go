@@ -30,12 +30,16 @@ var preV5Migrator = transition.NewDashboardMigrateV5(slog.New(slog.DiscardHandle
 
 // normalizePreV5QueryData upgrades one builder queryData/formula in place: the
 // shared migrator, then a reshape of any existing aggregations[] it leaves alone.
-func normalizePreV5QueryData(query map[string]any, widgetType string) {
+func normalizePreV5QueryData(query map[string]any, widgetType string, panelKind PanelPluginKind) {
 	dropLegacyFilter(query)
 	normalizeFilterItemOps(query)
+	foldReduceToIntoMetricAggregations(query)
 	preV5Migrator.MigrateQueryDataShapeSafe(context.Background(), query, widgetType)
 	normalizePreV5LogTraceAggregations(query)
 	normalizeMetricAggregations(query)
+	// After the migrator has built aggregations from flat fields and the reshape above
+	// has settled them; the caller's ensureDefaultAggregation only injects for logs/traces.
+	ensureMetricReduceTo(query, panelKind)
 	normalizeFunctionArgs(query)
 	dropInvalidFunctions(query)
 	// normalizeOrderByKeys runs in the caller, after ensureDefaultAggregation: a
@@ -226,7 +230,7 @@ func dropLegacyFilter(query map[string]any) {
 
 // normalizeFilterItemOps lowercases exists/nexists filter ops (frontend stores them
 // uppercase) to the spelling transition's buildCondition (pkg/transition/migrate_common.go)
-// matches; otherwise it appends a spurious empty value ("svc EXISTS ''"). Value
+// matches; otherwise it appends a spurious empty value ("svc EXISTS ”"). Value
 // operators already round-trip via that switch's default case.
 func normalizeFilterItemOps(query map[string]any) {
 	filters, ok := query["filters"].(map[string]any)
@@ -301,6 +305,77 @@ func normalizeMetricAggregations(query map[string]any) {
 			agg["spaceAggregation"] = metrictypes.SpaceAggregationSum.StringValue()
 		}
 	}
+}
+
+// foldReduceToIntoMetricAggregations moves a metric query's top-level reduceTo onto
+// its existing aggregations[] (where v5 wants it), which the shared migrator only does
+// when building an aggregation from flat fields. Runs before it so the value survives.
+func foldReduceToIntoMetricAggregations(query map[string]any) {
+	if signalFromDataSource(query["dataSource"]) != telemetrytypes.SignalMetrics {
+		return
+	}
+	reduceTo, ok := query["reduceTo"].(string)
+	if !ok || reduceTo == "" {
+		return
+	}
+	aggs, ok := query["aggregations"].([]any)
+	if !ok || len(aggs) == 0 {
+		return
+	}
+	for _, a := range aggs {
+		agg, ok := a.(map[string]any)
+		if !ok {
+			continue
+		}
+		if _, exists := agg["reduceTo"]; !exists {
+			agg["reduceTo"] = reduceTo
+		}
+	}
+}
+
+// ensureMetricReduceTo fills a metric aggregation's reduceTo on scalar panels, which
+// reject one without it (QueryBuilderQuery.Validate) where v1 never required it. The
+// shared migrator only derives a reduceTo for v3-shaped table widgets, so value/pie
+// panels and bodies already carrying aggregations[] arrive empty. A valid reduceTo is
+// left alone.
+func ensureMetricReduceTo(query map[string]any, panelKind PanelPluginKind) {
+	if requestTypeForPanel(panelKind) != qb.RequestTypeScalar {
+		return
+	}
+	if signalFromDataSource(query["dataSource"]) != telemetrytypes.SignalMetrics {
+		return
+	}
+	aggs, ok := query["aggregations"].([]any)
+	if !ok {
+		return
+	}
+	for _, a := range aggs {
+		agg, ok := a.(map[string]any)
+		if !ok {
+			continue
+		}
+		reduceTo, _ := agg["reduceTo"].(string)
+		if (qb.ReduceTo{String: valuer.NewString(reduceTo)}).IsValid() {
+			continue
+		}
+		agg["reduceTo"] = deriveReduceToForMetricAggregation(agg).StringValue()
+	}
+}
+
+// deriveReduceToForMetricAggregation reads the metric's kind off its aggregation: a
+// percentile space aggregation is a histogram, a rate/increase time aggregation is a
+// counter, anything else a gauge.
+func deriveReduceToForMetricAggregation(agg map[string]any) qb.ReduceTo {
+	spaceAgg, _ := agg["spaceAggregation"].(string)
+	if (metrictypes.SpaceAggregation{String: valuer.NewString(spaceAgg)}).IsPercentile() {
+		return qb.ReduceToAvg
+	}
+	timeAgg, _ := agg["timeAggregation"].(string)
+	switch (metrictypes.TimeAggregation{String: valuer.NewString(timeAgg)}) {
+	case metrictypes.TimeAggregationRate, metrictypes.TimeAggregationIncrease:
+		return qb.ReduceToSum
+	}
+	return qb.ReduceToLast
 }
 
 // normalizePreV5LogTraceAggregations reshapes an existing logs/traces aggregations[]
