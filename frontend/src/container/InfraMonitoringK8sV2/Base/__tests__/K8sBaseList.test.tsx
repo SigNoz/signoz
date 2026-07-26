@@ -175,8 +175,10 @@ function renderComponent<
 >({
 	queryParams,
 	onUrlUpdate,
+	detailsQueryKeyPrefix = 'testEntity',
 	...props
-}: K8sBaseListProps<T, TItemKey> & {
+}: Omit<K8sBaseListProps<T, TItemKey>, 'detailsQueryKeyPrefix'> & {
+	detailsQueryKeyPrefix?: string;
 	queryParams?: Record<string, string>;
 	onUrlUpdate?: OnUrlUpdateFunction;
 }) {
@@ -203,7 +205,10 @@ function renderComponent<
 										value={{ viewportHeight: 800, itemHeight: 50 }}
 									>
 										<TooltipProvider>
-											<K8sBaseList<T, TItemKey> {...props} />
+											<K8sBaseList<T, TItemKey>
+												{...props}
+												detailsQueryKeyPrefix={detailsQueryKeyPrefix}
+											/>
 										</TooltipProvider>
 									</VirtuosoMockContext.Provider>
 								</NuqsTestingAdapter>

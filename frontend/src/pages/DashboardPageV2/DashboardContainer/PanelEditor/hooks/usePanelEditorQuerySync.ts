@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import type {
 	DashboardtypesPanelDTO,
 	DashboardtypesPanelSpecDTO,
+	DashboardtypesQueryDTO,
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
@@ -27,6 +28,12 @@ interface UsePanelEditorQuerySyncArgs {
 	alwaysSerializeQuery?: boolean;
 	/** Signal to seed a new panel's builder with — the kind's first supported signal. */
 	signal?: TelemetrytypesSignalDTO;
+	/**
+	 * The persisted panel's queries — the dirty baseline. Distinct from `draft.spec.queries`,
+	 * which the builder seeds from and may carry unsaved edits handed off from View mode. Omit
+	 * for a new panel, where the seed query is the baseline.
+	 */
+	savedQueries?: DashboardtypesQueryDTO[];
 }
 
 interface UsePanelEditorQuerySyncApi {
@@ -53,43 +60,31 @@ export function usePanelEditorQuerySync({
 	refetch,
 	alwaysSerializeQuery = false,
 	signal,
+	savedQueries,
 }: UsePanelEditorQuerySyncArgs): UsePanelEditorQuerySyncApi {
 	const { currentQuery, stagedQuery, handleRunQuery } = useQueryBuilder();
 
-	// Saved queries, captured once: seed the builder and serve as the restore target.
-	const savedQueries = draft.spec.queries;
+	const draftQueries = draft.spec.queries;
 
-	// A new panel has no saved query: seed from the kind's first supported signal
-	// instead of letting `fromPerses` fall back to the metrics default (which List
-	// doesn't support).
+	// A new panel has no saved query: seed from the kind's first supported signal rather
+	// than `fromPerses`'s metrics default (which List doesn't support).
 	const seedQuery = useMemo(
 		() =>
-			savedQueries.length === 0 && signal
+			draftQueries.length === 0 && signal
 				? initialQueriesMap[signal]
-				: fromPerses(savedQueries, panelType),
-		[savedQueries, panelType, signal],
+				: fromPerses(draftQueries, panelType),
+		[draftQueries, panelType, signal],
 	);
-	// Force-reset the builder to the SAVED panel on first render only, discarding a
-	// stale URL query from a prior edit (else the QB/preview diverge and the dirty
-	// baseline is captured from the URL). After mount the URL syncs normally.
-	const isInitialRenderRef = useRef(true);
-	useShareBuilderUrl({
-		defaultValue: seedQuery,
-		forceReset: isInitialRenderRef.current,
-	});
-	useEffect(() => {
-		isInitialRenderRef.current = false;
-	}, []);
+	// No forceReset: seed the builder only when the URL carries no query, so an
+	// in-editor edit in the URL survives a refresh / browser Back-Forward.
+	useShareBuilderUrl({ defaultValue: seedQuery });
 
-	// Commit the live query into the draft (what the preview fetches). The dirty
-	// check compares against the SAVED query (`seedQuery`), not the URL-synced
-	// staged query, which can carry stale state across a refresh and read a real
-	// switch as "unchanged". Returns whether the draft changed.
+	// Commit the live query into the draft (what the preview fetches).
 	const commitQuery = useCallback(
 		(query: Query): boolean => {
 			const next = getIsQueryModified(query, seedQuery)
 				? toPerses(query, panelType)
-				: savedQueries;
+				: draftQueries;
 			// No-op guard at the V5 envelope level: equivalent wrappers (bare
 			// `signoz/BuilderQuery` vs `signoz/CompositeQuery`) unwrap to the same
 			// envelopes, so a structural compare would falsely dirty the draft.
@@ -100,7 +95,7 @@ export function usePanelEditorQuerySync({
 			setSpec({ ...draft.spec, queries: next });
 			return true;
 		},
-		[seedQuery, panelType, savedQueries, draft.spec, setSpec],
+		[seedQuery, panelType, draftQueries, draft.spec, setSpec],
 	);
 
 	// Latest query/commit, read by the structural-change effect without re-subscribing.
@@ -110,7 +105,7 @@ export function usePanelEditorQuerySync({
 	queryRef.current = currentQuery;
 
 	// Re-commit on a query-type/datasource switch so the preview refetches. Skip
-	// mount: the draft already holds the saved queries the builder is reset to.
+	// mount: the initial query is synced into the draft by the staged-query effect below.
 	const dataSources = useMemo(
 		() => (currentQuery.builder?.queryData ?? []).map((q) => q.dataSource),
 		[currentQuery.builder],
@@ -136,6 +131,15 @@ export function usePanelEditorQuerySync({
 		// eslint-disable-next-line react-hooks/exhaustive-deps -- structural change only
 	}, [currentQuery.queryType, dataSourceSignature]);
 
+	// Follow the staged (executed) query into the draft on a URL re-stage (mount
+	// hydration, browser Back/Forward) so the preview matches. Live edits touch only
+	// currentQuery, so they still wait for Run; commitQuery no-ops when unchanged.
+	useEffect(() => {
+		if (stagedQuery) {
+			commitRef.current(stagedQuery);
+		}
+	}, [stagedQuery]);
+
 	// Stage & Run / ⌘↵: stage, commit, and re-fetch when unchanged so it can be re-run.
 	const runQuery = useCallback((): void => {
 		handleRunQuery();
@@ -144,20 +148,29 @@ export function usePanelEditorQuerySync({
 		}
 	}, [handleRunQuery, commitQuery, currentQuery, refetch]);
 
-	// Dirty baseline: the builder's OWN normalized saved query (first non-null
-	// `stagedQuery` after the mount reset) — comparing builder-normalized to
-	// builder-normalized avoids serialization drift reading an untouched query as
-	// modified. In state (not a ref) so capture re-triggers `isQueryDirty`; captured
-	// once and never moved by Stage & Run, so it stays anchored to saved.
-	const [queryBaseline, setQueryBaseline] = useState<Query | null>(null);
-	useEffect(() => {
-		if (queryBaseline === null && stagedQuery) {
-			setQueryBaseline(stagedQuery);
-		}
-	}, [queryBaseline, stagedQuery]);
-
-	const isQueryDirty =
-		queryBaseline !== null && getIsQueryModified(currentQuery, queryBaseline);
+	// Dirty = the live query no longer serializes to the SAVED panel's query, compared at
+	// the V5 envelope level. Anchoring to `savedQueries` (not the builder-seed) keeps a
+	// handed-off / URL-restored edit reading as dirty; routing both sides through the same
+	// `fromPerses → toPerses` round-trip stops builder-added defaults (absent from an older
+	// stored query) reading an untouched panel as modified. New panel: fall back to seed.
+	const baselineEnvelopes = useMemo(
+		() =>
+			toQueryEnvelopes(
+				toPerses(
+					savedQueries ? fromPerses(savedQueries, panelType) : seedQuery,
+					panelType,
+				),
+			),
+		[savedQueries, seedQuery, panelType],
+	);
+	const isQueryDirty = useMemo(
+		() =>
+			!isEqual(
+				toQueryEnvelopes(toPerses(currentQuery, panelType)),
+				baselineEnvelopes,
+			),
+		[currentQuery, panelType, baselineEnvelopes],
+	);
 
 	const buildSaveSpec = useCallback(
 		(spec: DashboardtypesPanelSpecDTO): DashboardtypesPanelSpecDTO =>

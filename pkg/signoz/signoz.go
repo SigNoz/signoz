@@ -27,6 +27,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/authdomain/implauthdomain"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
+	"github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
 	"github.com/SigNoz/signoz/pkg/modules/metricreductionrule"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
@@ -276,12 +277,20 @@ func New(
 		return nil, err
 	}
 
+	// Initialize tag module — shared across modules that link entities to tags
+	// (currently dashboard; future: alerts, RBAC). Built once here and injected
+	// where needed.
+	tagModule := impltag.NewModule(impltag.NewStore(sqlstore))
+
+	// Dashboard store, injected into the migrations that reshape stored dashboards.
+	dashboardStore := impldashboard.NewStore(sqlstore)
+
 	// Run migrations on the sqlstore
 	sqlmigrations, err := sqlmigration.New(
 		ctx,
 		providerSettings,
 		config.SQLMigration,
-		NewSQLMigrationProviderFactories(sqlstore, sqlschema, telemetrystore, providerSettings),
+		NewSQLMigrationProviderFactories(sqlstore, sqlschema, telemetrystore, providerSettings, dashboardStore, tagModule),
 	)
 	if err != nil {
 		return nil, err
@@ -337,11 +346,6 @@ func New(
 
 	// Initialize query parser (needed for dashboard module)
 	queryParser := queryparser.New(providerSettings)
-
-	// Initialize tag module — shared across modules that link entities to tags
-	// (currently dashboard; future: alerts, RBAC). Built once here and injected
-	// where needed.
-	tagModule := impltag.NewModule(impltag.NewStore(sqlstore))
 
 	// Initialize dashboard module
 	dashboard := dashboardModuleCallback(sqlstore, providerSettings, analytics, orgGetter, queryParser, querier, licensing, tagModule)
@@ -447,7 +451,7 @@ func New(
 		telemetryaudit.LogAttributeKeysTblName,
 		telemetryaudit.LogResourceKeysTblName,
 		telemetrymetadata.DBName,
-		telemetrymetadata.AttributesMetadataLocalTableName,
+		telemetrymetadata.AttributesMetadataTableName,
 		telemetrymetadata.ColumnEvolutionMetadataTableName,
 		flagger,
 	)

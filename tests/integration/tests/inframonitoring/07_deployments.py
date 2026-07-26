@@ -24,7 +24,7 @@ def test_deployments_accuracy(
     insert_metrics,
 ) -> None:
     """Assert response shape/contract + exact per-deployment metric values,
-    replica counts, and phase counts against precomputed expected output.
+    replica counts against precomputed expected output.
 
     Locks in Sum vs Avg split across pod-level metrics
     (deployments_constants.go:79-198): A/D = SpaceAggregationSum across pods;
@@ -78,7 +78,6 @@ def test_deployments_accuracy(
             "deploymentMemoryLimit",
             "desiredPods",
             "availablePods",
-            "podCountsByPhase",
             "meta",
         ):
             assert field in record, f"missing {field} in {record!r}"
@@ -86,10 +85,6 @@ def test_deployments_accuracy(
         # ints (not floats) for replica counts.
         assert isinstance(record["desiredPods"], int)
         assert isinstance(record["availablePods"], int)
-
-        for bucket in ("pending", "running", "succeeded", "failed", "unknown"):
-            assert bucket in record["podCountsByPhase"]
-            assert isinstance(record["podCountsByPhase"][bucket], int)
 
         assert record["meta"].get("k8s.deployment.name") == record["deploymentName"]
         assert "k8s.namespace.name" in record["meta"]
@@ -108,7 +103,6 @@ def test_deployments_accuracy(
             assert compare_values(record[field], exp[field], 1e-6), f"{record['deploymentName']}.{field}: got {record[field]}, expected {exp[field]}"
         assert record["desiredPods"] == exp["desiredPods"]
         assert record["availablePods"] == exp["availablePods"]
-        assert record["podCountsByPhase"] == exp["podCountsByPhase"]
 
 
 @pytest.mark.parametrize(
@@ -242,6 +236,7 @@ def test_deployments_warnings(
             {"web-a-prod", "web-b-prod"},
             id="in_contains",
         ),
+        pytest.param("k8s.deployment.namee = 'web-a-prod'", set(), id="unresolved_key"),
     ],
 )
 def test_deployments_filter(
@@ -301,7 +296,6 @@ def test_deployments_filter(
 @pytest.mark.parametrize(
     "expression,err_substr",
     [
-        pytest.param("k8s.deployment.namee = 'web-a-prod'", "k8s.deployment.namee", id="bad_attr_name"),
         pytest.param("k8s.deployment.name =", None, id="trailing_op"),
         pytest.param("(k8s.deployment.name = 'web-a-prod'", None, id="unclosed_paren"),
     ],
@@ -314,8 +308,8 @@ def test_deployments_filter_invalid(
     expression: str,
     err_substr,
 ) -> None:
-    """Invalid filter expressions (typo'd attribute key, malformed grammar) return
-    400 invalid_input with structured errors; bad attribute keys are named in them."""
+    """Malformed filter grammar (trailing operator, unclosed paren) returns
+    400 invalid_input with structured errors."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -343,47 +337,6 @@ def test_deployments_filter_invalid(
     assert len(body["error"]["errors"]) > 0
     if err_substr is not None:
         assert any(err_substr in e["message"] for e in body["error"]["errors"]), f"{err_substr!r} not surfaced: {body['error']['errors']!r}"
-
-
-def test_deployments_pod_phase_aggregation(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-) -> None:
-    """Deployment with mixed pod phases: 4 Running + 1 Pending + 2 Failed."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/deployments_pod_phases.jsonl"),
-            base_time=now - timedelta(minutes=4),
-        )
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(ENDPOINT),
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-            "filter": {"expression": "k8s.deployment.name = 'pp-dep'"},
-        },
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()["data"]
-    assert data["total"] == 1
-    rec = data["records"][0]
-    assert rec["deploymentName"] == "pp-dep"
-    assert rec["podCountsByPhase"] == {
-        "pending": 1,
-        "running": 4,
-        "succeeded": 0,
-        "failed": 2,
-        "unknown": 0,
-    }
 
 
 def test_deployments_pod_status_aggregation(
@@ -423,8 +376,6 @@ def test_deployments_pod_status_aggregation(
     rec = data["records"][0]
     assert rec["deploymentName"] == "pp-dep"
     assert rec["podCountsByStatus"] == expected_status_counts(running=3, crashLoopBackOff=1, error=1, evicted=1, pending=1)
-    # Phase counts unchanged by the status enrichment.
-    assert rec["podCountsByPhase"] == {"pending": 1, "running": 4, "succeeded": 0, "failed": 2, "unknown": 0}
     # All status metrics present -> gate satisfied -> no status warning.
     assert all("Pod status could not be computed" not in w["message"] for w in get_all_warnings(response.json()))
 
@@ -436,7 +387,7 @@ def test_deployments_desired_available_counts(
     insert_metrics,
 ) -> None:
     """desired=5, available=3 from k8s.deployment.* metrics; only 2 Running pods seeded.
-    Distinguishes replica counts from phase counts (separate code paths)."""
+    Distinguishes replica counts from pod counts (separate code paths)."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -466,7 +417,6 @@ def test_deployments_desired_available_counts(
     assert isinstance(rec["availablePods"], int)
     assert rec["desiredPods"] == 5
     assert rec["availablePods"] == 3
-    assert rec["podCountsByPhase"]["running"] == 2
 
 
 def test_deployments_base_filter_drops_non_deployment_pods(
@@ -517,10 +467,6 @@ _GROUPBY_FLOAT_FIELDS = {
 }
 
 
-def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
-    return {"pending": pending, "running": running, "succeeded": succeeded, "failed": failed, "unknown": unknown}
-
-
 @pytest.mark.parametrize(
     "scenario",
     [
@@ -535,10 +481,10 @@ def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
                 "group_meta_keys": ["k8s.deployment.name"],
                 "expected_type": "grouped_list",
                 "groups": {
-                    "gb-dep-a1": {"deploymentName": "gb-dep-a1", "podCountsByPhase": _phase(running=1)},
-                    "gb-dep-a2": {"deploymentName": "gb-dep-a2", "podCountsByPhase": _phase(running=1)},
-                    "gb-dep-b1": {"deploymentName": "gb-dep-b1", "podCountsByPhase": _phase(running=1)},
-                    "gb-dep-b2": {"deploymentName": "gb-dep-b2", "podCountsByPhase": _phase(running=1)},
+                    "gb-dep-a1": {"deploymentName": "gb-dep-a1"},
+                    "gb-dep-a2": {"deploymentName": "gb-dep-a2"},
+                    "gb-dep-b1": {"deploymentName": "gb-dep-b1"},
+                    "gb-dep-b2": {"deploymentName": "gb-dep-b2"},
                 },
             },
             id="deployment_name",
@@ -553,8 +499,8 @@ def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
                 "group_meta_keys": ["k8s.namespace.name"],
                 "expected_type": "grouped_list",
                 "groups": {
-                    "gb-ns-a": {"deploymentName": "", "podCountsByPhase": _phase(running=2)},
-                    "gb-ns-b": {"deploymentName": "", "podCountsByPhase": _phase(running=2)},
+                    "gb-ns-a": {"deploymentName": ""},
+                    "gb-ns-b": {"deploymentName": ""},
                 },
             },
             id="namespace",
@@ -585,7 +531,6 @@ def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
                         "deploymentMemoryLimit": 0.7,
                         "desiredPods": 2,
                         "availablePods": 2,
-                        "podCountsByPhase": _phase(running=1),
                     },
                     ("dup-dep", "ns-y", "cluster-a"): {
                         "deploymentName": "dup-dep",
@@ -597,7 +542,6 @@ def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
                         "deploymentMemoryLimit": 0.3,
                         "desiredPods": 3,
                         "availablePods": 1,
-                        "podCountsByPhase": _phase(failed=1),
                     },
                     ("dup-dep", "ns-x", "cluster-b"): {
                         "deploymentName": "dup-dep",
@@ -609,7 +553,6 @@ def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
                         "deploymentMemoryLimit": 0.5,
                         "desiredPods": 4,
                         "availablePods": 4,
-                        "podCountsByPhase": _phase(running=1),
                     },
                     # empty-cluster group: k8s.cluster.name label absent on the source pods.
                     ("dup-dep", "ns-x", ""): {
@@ -622,7 +565,6 @@ def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
                         "deploymentMemoryLimit": 0.1,
                         "desiredPods": 1,
                         "availablePods": 0,
-                        "podCountsByPhase": _phase(pending=1),
                     },
                 },
             },

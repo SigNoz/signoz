@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { useQueryClient } from 'react-query';
 import { v4 as uuid } from 'uuid';
+import logEvent from 'api/common/logEvent';
 import { getGetDashboardV2QueryKey } from 'api/generated/services/dashboard';
 import {
 	type DashboardtypesJSONPatchOperationDTO,
@@ -9,6 +10,7 @@ import {
 	DashboardtypesPatchOpDTO,
 	type GetDashboardV2200,
 } from 'api/generated/services/sigNoz.schemas';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 
 import { useOptimisticPatch } from '../../hooks/useOptimisticPatch';
 import { createPanelOps } from '../../patchOps';
@@ -73,6 +75,12 @@ export function usePanelEditorSave({
 
 			// Optimistic cache write + settle refetch (replaces the manual invalidate).
 			await patchAsync(ops);
+			void logEvent(DashboardDetailEvents.PanelEditorSaved, {
+				panelType: spec.plugin.kind,
+				isNew,
+				dashboardId,
+				panelId: savedPanelId,
+			});
 			return savedPanelId;
 		},
 		[dashboardId, panelId, isNew, layoutIndex, patchAsync, queryClient],

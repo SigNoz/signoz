@@ -1197,13 +1197,11 @@ def test_logs_json_body_hastoken_separator_needle_errors(
     insert_logs: Callable[[list[Logs]], None],
     needle: str,
 ) -> None:
-    """KNOWN BUG (currently 500). hasToken maps to ClickHouse hasToken(LOWER(body), LOWER(?)),
-    which rejects a needle containing whitespace or separator characters (`.`/`_`/`-`/space) with
-    error code 36 ("Needle must not contain whitespace or separator characters"). The querier
-    passes the user needle straight through, so the query fails during execution and the raw CH
-    error surfaces as a 500 rather than a 400 / graceful fallback. Common needles like an IP,
-    `user_id` or a UUID hit this. Flip this to 400 (or a fallback match) once the needle is
-    validated."""
+    """hasToken maps to ClickHouse hasToken(LOWER(body), LOWER(?)), which rejects a needle
+    containing whitespace or separator characters (`.`/`_`/`-`/space) with error code 36 at
+    execution. The querier validates the needle up front and returns a clean 400 (hasToken matches
+    a single whole token) instead of letting the raw CH error surface as a 500. Common needles like
+    an IP, `user_id` or a UUID hit this."""
     now = datetime.now(tz=UTC)
     insert_logs(
         [
@@ -1219,8 +1217,8 @@ def test_logs_json_body_hastoken_separator_needle_errors(
         request_type=RequestType.RAW,
         queries=[build_raw_query("A", "logs", order=[build_order_by("timestamp")], limit=100, filter_expression=f"hasToken(body, '{needle}')")],
     )
-    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR, f"{needle}: expected 500, got {response.status_code}: {response.text}"
-    assert "Needle must not contain whitespace or separator characters" in response.text, response.text
+    assert response.status_code == HTTPStatus.BAD_REQUEST, f"{needle}: expected 400, got {response.status_code}: {response.text}"
+    assert "matches a single whole token" in response.text, response.text
 
 
 @pytest.mark.parametrize(
@@ -1230,20 +1228,18 @@ def test_logs_json_body_hastoken_separator_needle_errors(
         pytest.param("hasAll", id="hasall"),
     ],
 )
-def test_logs_json_body_hasany_hasall_large_quoted_int_errors(
+def test_logs_json_body_hasany_hasall_large_quoted_int_matches(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
     func: str,
 ) -> None:
-    """KNOWN BUG (currently 500). A quoted integer needle >= 2^32 in hasAny/hasAll fails with
-    ClickHouse code 386 ("no supertype for types UInt64, Int64") -> 500. The body array is
-    extracted as Array(Nullable(Int64)), but the needle array is bound as Array(UInt64) for values
-    that don't fit UInt32, and CH has no Int64/UInt64 supertype at the array-vs-array type level.
-    Single has() is unaffected because scalar-vs-array coercion is value-level (asserted below as a
-    contrast). When fixed (bind the needle array as Int64) this should return 200 with an exact
-    match like has()."""
+    """A quoted integer needle >= 2^32 in hasAny/hasAll used to 500: the body array is extracted as
+    Array(Nullable(Int64)) but the needle array bound as a concrete Array(UInt64), and CH has no
+    Int64/UInt64 supertype at the array-vs-array level (code 386). The needle array is now CAST to
+    Array(Int64) to match the extraction, so it returns 200 with an exact match like has() (asserted
+    below as a contrast)."""
     now = datetime.now(tz=UTC)
     insert_logs(
         [
@@ -1254,7 +1250,7 @@ def test_logs_json_body_hasany_hasall_large_quoted_int_errors(
     start_ms = int((now - timedelta(seconds=10)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
 
-    # hasAny/hasAll with a quoted big int (>= 2^32) -> 500 (no supertype).
+    # hasAny/hasAll with a quoted big int (>= 2^32) -> 200 with an exact match (needle CAST to Int64).
     response = make_query_request(
         signoz,
         token,
@@ -1263,7 +1259,8 @@ def test_logs_json_body_hasany_hasall_large_quoted_int_errors(
         request_type=RequestType.RAW,
         queries=[build_raw_query("A", "logs", order=[build_order_by("timestamp")], limit=100, filter_expression=f"{func}(body.id, ['9007199254740993'])")],
     )
-    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR, f"{func}: expected 500, got {response.status_code}: {response.text}"
+    assert response.status_code == HTTPStatus.OK, f"{func}: expected 200, got {response.status_code}: {response.text}"
+    assert len(get_rows(response)) == 1, f"{func} with a quoted big int should match exactly one log"
 
     # Contrast: single has() with the same quoted big int works (exact Int64 match, 1 row).
     response = make_query_request(

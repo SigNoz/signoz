@@ -89,7 +89,8 @@ func (c *conditionBuilder) conditionForArrayFunction(
 		for i, v := range list {
 			vals[i] = legacyCoerceNeedle(v, elemType)
 		}
-		arrayCond := fmt.Sprintf("%s(%s, %s)", operator.FunctionName(), arrayExpr, sb.Var(vals))
+		// Pin the needle array type to the haystack; scalar fallback below coerces value-level.
+		arrayCond := fmt.Sprintf("%s(%s, %s)", operator.FunctionName(), arrayExpr, castNeedleArray(elemType, sb.Var(vals)))
 		if !hasScalar {
 			return arrayCond, nil
 		}
@@ -113,6 +114,27 @@ func (c *conditionBuilder) conditionForArrayFunction(
 	return fmt.Sprintf("(%s OR ifNull(%s, false))", arrayCond, sb.And(sb.E(scalarExpr, typedNeedle), scalarGuard)), nil
 }
 
+// castNeedleArray pins an Int64 needle array to Array(Int64) so it matches the Array(Nullable(Int64))
+// haystack; without it a needle >= 2^32 binds as Array(UInt64) and hasAny/hasAll error (code 386).
+func castNeedleArray(elemType telemetrytypes.FieldDataType, arg string) string {
+	if elemType == telemetrytypes.FieldDataTypeInt64 {
+		return fmt.Sprintf("CAST(%s AS Array(Int64))", arg)
+	}
+	return arg
+}
+
+// firstTokenSeparator returns the first char of s that hasToken treats as a token separator
+// (anything other than an ASCII letter or digit), and whether one was found.
+func firstTokenSeparator(s string) (string, bool) {
+	for _, r := range s {
+		isAlphaNum := (r >= '0' && r <= '9') || (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z')
+		if !isAlphaNum {
+			return string(r), true
+		}
+	}
+	return "", false
+}
+
 // conditionForHasToken builds a hasToken full-text search over the body column, resolving the
 // column from the key name + use_json_body flag.
 func (c *conditionBuilder) conditionForHasToken(
@@ -129,9 +151,17 @@ func (c *conditionBuilder) conditionForHasToken(
 	}
 
 	// hasToken matches string tokens only.
-	if _, ok := needle.(string); !ok {
+	needleStr, ok := needle.(string)
+	if !ok {
 		return "", errors.NewInvalidInputf(errors.CodeInvalidInput,
 			"function `hasToken` expects value parameter to be a string").WithUrl(hasTokenFunctionDocURL)
+	}
+
+	// A multi-token needle makes CH hasToken error (code 36); reject up front as a 400. Both modes flow here.
+	if sep, found := firstTokenSeparator(needleStr); found {
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"function `hasToken` matches a single whole token, but %q contains the separator %q; use a substring filter (e.g. `body CONTAINS '%s'`) to search across separators",
+			needleStr, sep, needleStr).WithUrl(hasTokenFunctionDocURL)
 	}
 
 	bodyJSONEnabled := c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID))

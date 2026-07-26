@@ -127,6 +127,55 @@ func TestGetAllLevels(t *testing.T) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// TimeRange
+// ─────────────────────────────────────────────────────────────────────────────
+
+func TestTimeRange(t *testing.T) {
+	tests := []struct {
+		name      string
+		spans     []MinimalSpan
+		wantStart uint64 // nanoseconds since epoch
+		wantEnd   uint64 // nanoseconds since epoch (max of span_start + span_duration)
+	}{
+		{
+			// Single span: end must include duration, not just start.
+			name:      "single_span_end_includes_duration",
+			spans:     []MinimalSpan{mkMinimal("a", "", 1_000_000_000, 500_000_000)},
+			wantStart: 1_000_000_000,
+			wantEnd:   1_500_000_000,
+		},
+		{
+			// Two spans: end is the max of (start+duration) across all spans, not max(start).
+			name: "end_from_longest_span_not_latest_start",
+			spans: []MinimalSpan{
+				mkMinimal("a", "", 1_000_000_000, 1_000_000_000), // ends at 2_000_000_000
+				mkMinimal("b", "", 1_800_000_000, 100_000_000),   // ends at 1_900_000_000; starts later but ends sooner
+			},
+			wantStart: 1_000_000_000,
+			wantEnd:   2_000_000_000, // must NOT be 1_900_000_000 (max start + its duration)
+		},
+		{
+			// Missing parent: synthetic span must not influence TimeRange beyond its children.
+			name: "missing_parent_does_not_skew_range",
+			spans: []MinimalSpan{
+				mkMinimal("child", "ghost", 1_000_000_000, 200_000_000),
+			},
+			wantStart: 1_000_000_000,
+			wantEnd:   1_200_000_000,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			trace := NewFlamegraphTraceFromMinimal(tc.spans)
+			start, end := trace.TimeRange()
+			assert.Equal(t, tc.wantStart, uint64(start.UnixNano()), "start mismatch")
+			assert.Equal(t, tc.wantEnd, uint64(end.UnixNano()), "end mismatch")
+		})
+	}
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // GetSelectedLevels
 // ─────────────────────────────────────────────────────────────────────────────
 

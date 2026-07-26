@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
 import { DashboardCursorSync } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
@@ -17,7 +17,10 @@ import { useViewPanelMode } from './useViewPanelMode';
 import { useViewPanelTimeWindow } from './useViewPanelTimeWindow';
 import styles from './ViewPanelModal.module.scss';
 import logEvent from 'api/common/logEvent';
-import { DashboardEvents } from 'pages/DashboardPageV2/constants/events';
+import {
+	DashboardDetailEvents,
+	DashboardEvents,
+} from 'pages/DashboardPageV2/constants/events';
 
 interface ViewPanelModalContentProps {
 	panel: DashboardtypesPanelDTO;
@@ -85,6 +88,21 @@ function ViewPanelModalContent({
 	);
 	const openPanelEditor = useOpenPanelEditor();
 
+	// Modal drag-to-zoom is its own path (local window, not the grid's) — tag it distinctly.
+	const handleDragSelect = useCallback(
+		(start: number, end: number): void => {
+			if (Math.floor(start) !== Math.floor(end)) {
+				void logEvent(DashboardDetailEvents.PanelZoomed, {
+					context: 'viewModal',
+					panelType: draft.spec.plugin.kind,
+					panelId,
+				});
+			}
+			onDragSelect(start, end);
+		},
+		[onDragSelect, draft.spec.plugin.kind, panelId],
+	);
+
 	// Publish the modal's local extender for the nested no-data state; cleared on close.
 	const setViewPanelExtendWindow = useViewPanelStore(
 		(s) => s.setViewPanelExtendWindow,
@@ -104,7 +122,9 @@ function ViewPanelModalContent({
 		logEvent(DashboardEvents.SWITCH_TO_EDIT_MODE, {
 			panelId: panelId,
 		});
-		openPanelEditor(panelId, { editSpec: buildSaveSpec(draft.spec) });
+		openPanelEditor(panelId, {
+			handoffState: { editSpec: buildSaveSpec(draft.spec) },
+		});
 	};
 
 	return (
@@ -160,7 +180,7 @@ function ViewPanelModalContent({
 					isPreviousData={isPreviousData}
 					error={error}
 					refetch={refetch}
-					onDragSelect={onDragSelect}
+					onDragSelect={handleDragSelect}
 					pagination={pagination}
 					panelMode={PanelMode.STANDALONE_VIEW}
 					dashboardPreference={isolatedPreference}

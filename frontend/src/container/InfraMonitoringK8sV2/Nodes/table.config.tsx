@@ -98,7 +98,7 @@ export const k8sNodesColumnsConfig: NodeTableColumnConfig[] = [
 		accessorFn: (row): string => row.condition,
 		width: { min: 120 },
 		enableSort: false,
-		cell: ({ row, groupMeta }): React.ReactNode => {
+		cell: ({ row, groupMeta, rowId }): React.ReactNode => {
 			if (!groupMeta) {
 				const color =
 					NODE_CONDITION_COLORS[row.condition] || NODE_CONDITION_COLORS.no_data;
@@ -123,6 +123,7 @@ export const k8sNodesColumnsConfig: NodeTableColumnConfig[] = [
 							color: Color.BG_AMBER_500,
 						},
 					]}
+					rowId={rowId}
 				/>
 			);
 		},
@@ -138,13 +139,16 @@ export const k8sNodesColumnsConfig: NodeTableColumnConfig[] = [
 			row.podCountsByStatus,
 		width: { min: 250 },
 		enableSort: false,
-		cell: ({ row }): React.ReactNode => {
+		cell: ({ row, rowId }): React.ReactNode => {
 			const podCountsByStatus = row.podCountsByStatus;
 			if (!podCountsByStatus) {
 				return <TanStackTable.Text>-</TanStackTable.Text>;
 			}
 			return (
-				<GroupedStatusCounts items={getPodStatusItems(row.podCountsByStatus)} />
+				<GroupedStatusCounts
+					items={getPodStatusItems(row.podCountsByStatus)}
+					rowId={rowId}
+				/>
 			);
 		},
 	},
