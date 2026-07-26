@@ -428,14 +428,62 @@ func (m *module) ListContainers(ctx context.Context, orgID valuer.UUID, req *inf
 		return resp, nil
 	}
 
-	metadataMap, err := m.getContainersTableMetadata(ctx, orgID, req)
-	if err != nil {
+	var (
+		filterExpr              string
+		containerFilter         *qbtypes.Filter
+		filterByContainerStatus inframonitoringtypes.ContainerStatus
+		metadataMap             map[string]map[string]string
+		queryResp               *qbtypes.QueryRangeResponse
+		statusCounts            map[string]containerStatusCounts
+		statusWarning           *qbtypes.QueryWarnData
+		restartCounts           map[string]int64
+		readyCounts             map[string]containerReadyCounts
+	)
+
+	if req.Filter != nil {
+		filterExpr = req.Filter.Expression
+		containerFilter = &req.Filter.Filter
+		filterByContainerStatus = req.Filter.FilterByContainerStatus
+	}
+
+	// Metadata, plus a full-scope container status resolution when filtering by
+	// container status (pageGroups=nil spans all groups under the user filter).
+	// When not filtering, status is computed page-scoped in the fan-out below.
+	gUp, gUpCtx := errgroup.WithContext(ctx)
+	gUp.Go(func() error {
+		var err error
+		metadataMap, err = m.getContainersTableMetadata(gUpCtx, orgID, req)
+		return err
+	})
+	if !filterByContainerStatus.IsZero() {
+		gUp.Go(func() error {
+			var err error
+			statusCounts, statusWarning, err = m.getPerGroupContainerStatusCountsWithReqMetricChecks(gUpCtx, orgID, req.Start, req.End, containerFilter, req.GroupBy, nil, filterByContainerStatus)
+			return err
+		})
+	}
+	if err := gUp.Wait(); err != nil {
 		return nil, err
+	}
+
+	if !filterByContainerStatus.IsZero() {
+		// Required metric missing: can't derive status, so surface the warning
+		// and return empty rather than silently filtering everything out.
+		if statusWarning != nil {
+			resp.Warning = statusWarning
+			resp.Records = []inframonitoringtypes.ContainerRecord{}
+			resp.Total = 0
+			return resp, nil
+		}
+		// Secondary filter: keep only status-matching containers.
+		metadataMap = intersectMap(metadataMap, statusCounts)
 	}
 
 	resp.Total = len(metadataMap)
 
-	pageGroups, err := m.getTopContainerGroups(ctx, orgID, req, metadataMap)
+	// statusCounts is the status keyset (nil when not filtering); getTopContainerGroups
+	// intersects the ranked groups against it before paginating.
+	pageGroups, err := m.getTopContainerGroups(ctx, orgID, req, metadataMap, statusCounts)
 	if err != nil {
 		return nil, err
 	}
@@ -445,33 +493,13 @@ func (m *module) ListContainers(ctx context.Context, orgID valuer.UUID, req *inf
 		return resp, nil
 	}
 
-	filterExpr := ""
-	var containerFilter *qbtypes.Filter
-	if req.Filter != nil {
-		filterExpr = req.Filter.Expression
-		containerFilter = &req.Filter.Filter
-	}
-
 	fullQueryReq := buildFullQueryRequest(req.Start, req.End, filterExpr, req.GroupBy, pageGroups, m.newContainersTableListQuery())
-
-	var (
-		queryResp     *qbtypes.QueryRangeResponse
-		statusCounts  map[string]containerStatusCounts
-		statusWarning *qbtypes.QueryWarnData
-		restartCounts map[string]int64
-		readyCounts   map[string]containerReadyCounts
-	)
 
 	g, gCtx := errgroup.WithContext(ctx)
 
 	g.Go(func() error {
 		var err error
 		queryResp, err = m.querier.QueryRange(gCtx, orgID, fullQueryReq)
-		return err
-	})
-	g.Go(func() error {
-		var err error
-		statusCounts, statusWarning, err = m.getPerGroupContainerStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, containerFilter, req.GroupBy, pageGroups, inframonitoringtypes.ContainerStatus{})
 		return err
 	})
 	g.Go(func() error {
@@ -484,6 +512,15 @@ func (m *module) ListContainers(ctx context.Context, orgID valuer.UUID, req *inf
 		readyCounts, err = m.getPerGroupContainerReadyCounts(gCtx, orgID, req.Start, req.End, containerFilter, req.GroupBy, pageGroups)
 		return err
 	})
+	// When filtering, statusCounts already holds the full-scope map (a superset
+	// of the page); otherwise compute it page-scoped here.
+	if filterByContainerStatus.IsZero() {
+		g.Go(func() error {
+			var err error
+			statusCounts, statusWarning, err = m.getPerGroupContainerStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, containerFilter, req.GroupBy, pageGroups, inframonitoringtypes.ContainerStatus{})
+			return err
+		})
+	}
 
 	if err := g.Wait(); err != nil {
 		return nil, err

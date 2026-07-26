@@ -143,9 +143,12 @@ func (m *module) getTopContainerGroups(
 	orgID valuer.UUID,
 	req *inframonitoringtypes.PostableContainers,
 	metadataMap map[string]map[string]string,
+	containerStatusCountsMap map[string]containerStatusCounts,
 ) ([]map[string]string, error) {
 	orderByKey := req.OrderBy.Key.Name
 	if orderByKey == inframonitoringtypes.ContainerNameAttrKey {
+		// metadataMap is already status-filtered by the caller, so the name
+		// branch needs no extra intersection.
 		return inframonitoringtypes.PaginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.ContainerNameAttrKey), nil
 	}
 	queryNamesForOrderBy := orderByToContainersQueryNames[orderByKey]
@@ -187,6 +190,11 @@ func (m *module) getTopContainerGroups(
 	}
 
 	allMetricGroups := parseAndSortGroups(resp, rankingQueryName, req.GroupBy, req.OrderBy.Direction)
+	// When filtering by status, intersect the ranked groups against the keyset —
+	// an empty map (no container matched) must yield an empty page, not the full set.
+	if req.Filter != nil && !req.Filter.FilterByContainerStatus.IsZero() {
+		allMetricGroups = intersectRankedGroups(allMetricGroups, containerStatusCountsMap)
+	}
 	return paginateWithBackfill(allMetricGroups, metadataMap, req.GroupBy, req.Offset, req.Limit), nil
 }
 
