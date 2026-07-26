@@ -51,7 +51,7 @@ func resolveV1Image(image string) string {
 	if path, ok := v1Base64IconToAssetPath[image]; ok {
 		return path
 	}
-	if reencoded, ok := reencodeInlineSVGImage(image); ok {
+	if reencoded, ok := ReencodeInlineSVGImage(image); ok {
 		image = reencoded
 	}
 	if (DashboardV2MetadataBase{Image: image}).validateImage() == nil {
@@ -60,10 +60,10 @@ func resolveV1Image(image string) string {
 	return defaultDashboardIconPath
 }
 
-// reencodeInlineSVGImage rewrites a percent-encoded inline SVG data URI into the
+// ReencodeInlineSVGImage rewrites a percent-encoded inline SVG data URI into the
 // base64 form the v2 schema accepts, preserving an icon that would otherwise fail
 // validation. Returns (image, false) unchanged for anything else.
-func reencodeInlineSVGImage(image string) (string, bool) {
+func ReencodeInlineSVGImage(image string) (string, bool) {
 	const mediaType = "data:image/svg+xml"
 	if !strings.HasPrefix(image, mediaType) {
 		return image, false
