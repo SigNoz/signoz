@@ -103,6 +103,8 @@ export const metricsSpaceAggregationOperatorsByType = {
 
 export const mapOfQueryFilters: Record<DataSource, QueryAdditionalFilter[]> = {
 	metrics: [
+		{ text: 'Order by', field: 'orderBy' },
+		{ text: 'Limit', field: 'limit' },
 		{ text: 'Aggregation interval', field: 'stepInterval' },
 		{ text: 'Having', field: 'having' },
 	],

@@ -865,10 +865,26 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 			sb.Where(rewrittenExpr)
 		}
 	}
-	sb.OrderBy(querybuilder.GroupByKeys(query.GroupBy)...)
-	sb.OrderBy("ts")
+	if len(query.Order) > 0 {
+		for _, orderBy := range query.Order {
+			colName := orderBy.Key.Name
+			if colName == "value" {
+				sb.OrderBy(fmt.Sprintf("value %s", orderBy.Direction.StringValue()))
+			} else {
+				sb.OrderBy(fmt.Sprintf("`%s` %s", colName, orderBy.Direction.StringValue()))
+			}
+		}
+		sb.OrderBy("ts")
+	} else {
+		sb.OrderBy(querybuilder.GroupByKeys(query.GroupBy)...)
+		sb.OrderBy("ts")
+	}
 	if metricType == metrictypes.HistogramType && spaceAgg == metrictypes.SpaceAggregationCount && query.Aggregations[0].ComparisonSpaceAggregationParam == nil {
 		sb.OrderBy("toFloat64(le)")
+	}
+
+	if query.Limit > 0 {
+		sb.Limit(query.Limit)
 	}
 
 	q, a := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
