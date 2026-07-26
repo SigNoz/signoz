@@ -693,13 +693,17 @@ def build_metrics_aggregation(
     time_aggregation: str,
     space_aggregation: str,
     temporality: str = "cumulative",
+    reduce_to: str | None = None,
 ) -> dict:
-    return {
+    agg = {
         "metricName": metric_name,
         "temporality": temporality,
         "timeAggregation": time_aggregation,
         "spaceAggregation": space_aggregation,
     }
+    if reduce_to:
+        agg["reduceTo"] = reduce_to
+    return agg
 
 
 def get_scalar_table_data(response_json: dict) -> list[list[Any]]:

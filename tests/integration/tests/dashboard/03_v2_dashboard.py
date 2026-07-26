@@ -536,6 +536,77 @@ def test_pin_missing_dashboard_returns_not_found(
     assert response.status_code == HTTPStatus.NOT_FOUND
 
 
+def test_create_migrates_legacy_v1_dashboard(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    widget_id = str(uuid.uuid4())
+    v1_dashboard = {
+        "title": "Legacy Import",
+        "description": "posted as-is by the import flow",
+        "version": "v5",
+        "layout": [{"h": 6, "i": widget_id, "moved": False, "static": False, "w": 6, "x": 0, "y": 0}],
+        "uploadedGrafana": False,
+        "widgets": [
+            {
+                "description": "",
+                "id": widget_id,
+                "panelTypes": "graph",
+                "title": "Request rate",
+                "query": {
+                    "builder": {
+                        "queryData": [
+                            {
+                                "dataSource": "metrics",
+                                "disabled": False,
+                                "expression": "A",
+                                "queryName": "A",
+                                "stepInterval": 60,
+                                "aggregations": [
+                                    {
+                                        "metricName": "signoz_calls_total",
+                                        "temporality": None,
+                                        "timeAggregation": "rate",
+                                        "spaceAggregation": "sum",
+                                        "reduceTo": "avg",
+                                    }
+                                ],
+                                "filter": {"expression": ""},
+                            }
+                        ],
+                        "queryFormulas": [],
+                    },
+                    "clickhouse_sql": [{"disabled": False, "legend": "", "name": "A", "query": ""}],
+                    "promql": [{"disabled": False, "legend": "", "name": "A", "query": ""}],
+                    "queryType": "builder",
+                },
+            }
+        ],
+    }
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json=v1_dashboard,
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+
+    dashboard = response.json()["data"]
+    assert dashboard["spec"]["display"]["name"] == "Legacy Import"
+    assert len(dashboard["spec"]["panels"]) == 1, dashboard["spec"]["panels"]
+
+    delete_response = requests.delete(
+        signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard['id']}"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert delete_response.status_code == HTTPStatus.NO_CONTENT, delete_response.text
+
+
 # ─── lifecycle ───────────────────────────────────────────────────────────────
 # A single end-to-end flow through create → get → list/filter/sort → pin →
 # update → lock → delete.

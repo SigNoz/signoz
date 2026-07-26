@@ -544,6 +544,102 @@ func TestFoldReduceToIntoMetricAggregations(t *testing.T) {
 	assert.Equal(t, "avg", query["aggregations"].([]any)[0].(map[string]any)["reduceTo"])
 }
 
+func TestEnsureMetricReduceTo(t *testing.T) {
+	testCases := []struct {
+		scenario         string
+		panelKind        PanelPluginKind
+		queryData        map[string]any
+		expectedReduceTo any
+	}{
+		{
+			scenario:  "counter queried as a rate reduces to sum",
+			panelKind: PanelKindNumber,
+			queryData: map[string]any{
+				"dataSource":   "metrics",
+				"aggregations": []any{map[string]any{"metricName": "m", "timeAggregation": "rate", "spaceAggregation": "sum"}},
+			},
+			expectedReduceTo: "sum",
+		},
+		{
+			scenario:  "counter queried as an increase reduces to sum",
+			panelKind: PanelKindTable,
+			queryData: map[string]any{
+				"dataSource":   "metrics",
+				"aggregations": []any{map[string]any{"metricName": "m", "timeAggregation": "increase", "spaceAggregation": "sum"}},
+			},
+			expectedReduceTo: "sum",
+		},
+		{
+			scenario:  "percentile space aggregation marks a histogram and reduces to avg",
+			panelKind: PanelKindNumber,
+			queryData: map[string]any{
+				"dataSource":   "metrics",
+				"aggregations": []any{map[string]any{"metricName": "m", "timeAggregation": "rate", "spaceAggregation": "p95"}},
+			},
+			expectedReduceTo: "avg",
+		},
+		{
+			scenario:  "gauge reduces to last",
+			panelKind: PanelKindPieChart,
+			queryData: map[string]any{
+				"dataSource":   "metrics",
+				"aggregations": []any{map[string]any{"metricName": "m", "timeAggregation": "avg", "spaceAggregation": "avg"}},
+			},
+			expectedReduceTo: "last",
+		},
+		{
+			scenario:  "a reduceTo the author already chose survives",
+			panelKind: PanelKindNumber,
+			queryData: map[string]any{
+				"dataSource":   "metrics",
+				"aggregations": []any{map[string]any{"metricName": "m", "timeAggregation": "rate", "spaceAggregation": "sum", "reduceTo": "median"}},
+			},
+			expectedReduceTo: "median",
+		},
+		{
+			scenario:  "a reduceTo outside the enum is replaced",
+			panelKind: PanelKindNumber,
+			queryData: map[string]any{
+				"dataSource":   "metrics",
+				"aggregations": []any{map[string]any{"metricName": "m", "timeAggregation": "avg", "spaceAggregation": "sum", "reduceTo": "not-an-operator"}},
+			},
+			expectedReduceTo: "last",
+		},
+		{
+			scenario:  "a time series panel needs no reduceTo",
+			panelKind: PanelKindTimeSeries,
+			queryData: map[string]any{
+				"dataSource":   "metrics",
+				"aggregations": []any{map[string]any{"metricName": "m", "timeAggregation": "rate", "spaceAggregation": "sum"}},
+			},
+			expectedReduceTo: nil,
+		},
+		{
+			scenario:  "reduceTo is metrics-only, so a logs query is untouched",
+			panelKind: PanelKindNumber,
+			queryData: map[string]any{
+				"dataSource":   "logs",
+				"aggregations": []any{map[string]any{"expression": "count()"}},
+			},
+			expectedReduceTo: nil,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.scenario, func(t *testing.T) {
+			ensureMetricReduceTo(testCase.queryData, testCase.panelKind)
+
+			aggs, ok := testCase.queryData["aggregations"].([]any)
+			require.True(t, ok)
+			require.Len(t, aggs, 1)
+			agg, ok := aggs[0].(map[string]any)
+			require.True(t, ok)
+
+			assert.Equal(t, testCase.expectedReduceTo, agg["reduceTo"])
+		})
+	}
+}
+
 func TestMapV1SelectFieldsPicksBySignal(t *testing.T) {
 	d := &v1Decoder{}
 	// A list widget carrying both arrays; the query's signal must decide which wins.
