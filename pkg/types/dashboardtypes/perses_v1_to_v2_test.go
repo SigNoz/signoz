@@ -504,7 +504,7 @@ func TestReencodeInlineSVGImage(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.scenario, func(t *testing.T) {
-			got, rewritten := reencodeInlineSVGImage(testCase.image)
+			got, rewritten := ReencodeInlineSVGImage(testCase.image)
 			assert.Equal(t, testCase.wantRewritten, rewritten)
 			assert.Equal(t, testCase.want, got)
 		})
