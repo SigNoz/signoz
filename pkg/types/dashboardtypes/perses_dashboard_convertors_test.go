@@ -54,10 +54,12 @@ func newTestDashboardV2(t *testing.T, orgID valuer.UUID, source Source) *Dashboa
 							},
 						},
 					},
+					Links: []Link{},
 				},
 			},
 		},
 		Layouts: []Layout{},
+		Links:   []Link{},
 	}
 
 	return &DashboardV2{

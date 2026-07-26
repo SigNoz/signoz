@@ -1436,6 +1436,11 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, orgID valuer.
 		sb.Where(sb.LE("unix_milli", fieldValueSelector.EndUnixMilli))
 	}
 
+	// scope to the requested signal's rows;
+	if fieldValueSelector.Signal != telemetrytypes.SignalUnspecified {
+		sb.Where(sb.E("data_source", fieldValueSelector.Signal.StringValue()))
+	}
+
 	if fieldValueSelector.Value != "" {
 		var conds []string
 		if fieldValueSelector.FieldContext != telemetrytypes.FieldContextAttribute &&
@@ -1464,9 +1469,9 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, orgID valuer.
 		}
 
 		if len(conds) != 0 {
-			// see `expr` in condition_builder.go, if key doesn't exist we don't check for value
-			// hence, this is join of conditions on resource and attributes
-			sb.Where(sb.And(conds...))
+			// the key may sit in the resource or attribute map (or both), so OR the
+			// two conditions — match if the key's value in either map contains searchText.
+			sb.Where(sb.Or(conds...))
 		}
 	}
 
@@ -2323,7 +2328,7 @@ func (t *telemetryMetaStore) fetchTemporalityTypeForTable(ctx context.Context, t
 	types := make(map[string]metrictypes.Type)
 
 	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select("metric_name", "temporality", "any(type) AS type", "any(is_monotonic) as is_monotonic")
+	sb.Select("metric_name", "temporality", "any(type) AS type", "argMax(is_monotonic, unix_milli) as is_monotonic")
 	sb.From(t.metricsDBName + "." + tableName)
 	conds := []string{
 		sb.In("metric_name", metricNames),
@@ -2379,7 +2384,7 @@ func (t *telemetryMetaStore) fetchMeterSourceMetricsTemporalityAndType(ctx conte
 		"metric_name",
 		"argMax(temporality, unix_milli) as temporality",
 		"any(type) AS type",
-		"any(is_monotonic) as is_monotonic",
+		"argMax(is_monotonic, unix_milli) as is_monotonic",
 	).From(t.meterDBName + "." + t.meterFieldsTblName)
 
 	// Filter by metric names (in the temporality column due to data mix-up)

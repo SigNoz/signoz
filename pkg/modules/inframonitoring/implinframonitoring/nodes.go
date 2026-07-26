@@ -25,7 +25,6 @@ func buildNodeRecords(
 	groupBy []qbtypes.GroupByKey,
 	metadataMap map[string]map[string]string,
 	nodeConditionCounts map[string]nodeConditionCounts,
-	podPhaseCounts map[string]podPhaseCounts,
 	podStatusCounts map[string]podStatusCounts,
 ) []inframonitoringtypes.NodeRecord {
 	metricsMap := parseFullQueryResponse(resp, groupBy)
@@ -74,16 +73,6 @@ func buildNodeRecords(
 				case nodeConditionCountsForGroup.NotReady == 1:
 					record.Condition = inframonitoringtypes.NodeConditionNotReady
 				}
-			}
-		}
-
-		if podPhaseCountsForGroup, ok := podPhaseCounts[compositeKey]; ok {
-			record.PodCountsByPhase = inframonitoringtypes.PodCountsByPhase{
-				Pending:   podPhaseCountsForGroup.Pending,
-				Running:   podPhaseCountsForGroup.Running,
-				Succeeded: podPhaseCountsForGroup.Succeeded,
-				Failed:    podPhaseCountsForGroup.Failed,
-				Unknown:   podPhaseCountsForGroup.Unknown,
 			}
 		}
 

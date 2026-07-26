@@ -25,6 +25,15 @@ const (
 	dashboardNameSuffixLen = 8
 )
 
+const (
+	dashboardIconPathPrefix = "/assets/Icons/"
+	dashboardLogoPathPrefix = "/assets/Logos/"
+)
+
+// base64ImageDataURIRegex matches the only free-form image value we allow — a
+// base64 image data URI. Mirrors the frontend resolver's allow-list.
+var base64ImageDataURIRegex = regexp.MustCompile(`^data:image/(?:png|jpe?g|gif|webp|avif|svg\+xml);base64,[A-Za-z0-9+/]+={0,2}$`)
+
 type DSLKey string
 
 const (
@@ -180,14 +189,28 @@ type DashboardV2MetadataBase struct {
 	Image         string `json:"image"`
 }
 
+func (m DashboardV2MetadataBase) validateImage() error {
+	if m.Image == "" {
+		return nil
+	}
+	if (strings.HasPrefix(m.Image, dashboardIconPathPrefix) && len(m.Image) > len(dashboardIconPathPrefix)) ||
+		(strings.HasPrefix(m.Image, dashboardLogoPathPrefix) && len(m.Image) > len(dashboardLogoPathPrefix)) {
+		return nil
+	}
+	if base64ImageDataURIRegex.MatchString(m.Image) {
+		return nil
+	}
+	return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "image must be an %q or %q path, or a base64 image data URI", dashboardIconPathPrefix, dashboardLogoPathPrefix)
+}
+
 // ════════════════════════════════════════════════════════════════════════
 // Postable
 // ════════════════════════════════════════════════════════════════════════
 
 type PostableDashboardV2 struct {
 	DashboardV2MetadataBase
-	Name         string                 `json:"name,omitempty"`
-	GenerateName bool                   `json:"generateName,omitempty"`
+	Name         string                 `json:"name"`
+	GenerateName bool                   `json:"generateName"`
 	Tags         []tagtypes.PostableTag `json:"tags" required:"true"`
 	Spec         DashboardSpec          `json:"spec" required:"true"`
 }
@@ -237,6 +260,9 @@ func (p *PostableDashboardV2) Validate() error {
 		return err
 	}
 	if err := validateDashboardTags(p.Tags); err != nil {
+		return err
+	}
+	if err := p.validateImage(); err != nil {
 		return err
 	}
 	return p.Spec.Validate()
@@ -407,6 +433,9 @@ func (u *UpdatableDashboardV2) Validate() error {
 		return err
 	}
 	if err := validateDashboardTags(u.Tags); err != nil {
+		return err
+	}
+	if err := u.validateImage(); err != nil {
 		return err
 	}
 	return u.Spec.Validate()

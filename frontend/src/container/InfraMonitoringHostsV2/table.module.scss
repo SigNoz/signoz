@@ -13,14 +13,6 @@
 	text-align: right;
 }
 
-.memoryUsageHeader {
-	display: inline-flex;
-	align-items: center;
-	justify-content: flex-end;
-	gap: var(--spacing-2);
-	width: 100%;
-}
-
 .statusTag {
 	width: fit-content;
 	font-family: Inter, sans-serif;

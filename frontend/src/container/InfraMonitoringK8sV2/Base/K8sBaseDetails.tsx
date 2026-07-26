@@ -163,8 +163,9 @@ export default function K8sBaseDetails<T>({
 			destroyOnClose
 			closeIcon={<X size={16} style={{ marginTop: Spacing.MARGIN_1 }} />}
 		>
-			{isEntityLoading && <LoadingContainer />}
-			{(isEntityError || hasResponseError) && (
+			{(isEntityLoading || !selectedItem) && <LoadingContainer />}
+
+			{selectedItem && (isEntityError || hasResponseError) && (
 				<div className="entity-error-container">
 					<ErrorContent
 						error={
@@ -180,7 +181,7 @@ export default function K8sBaseDetails<T>({
 					/>
 				</div>
 			)}
-			{entity && !isEntityLoading && !hasResponseError && (
+			{selectedItem && entity && !isEntityLoading && !hasResponseError && (
 				<GlobalTimeProvider
 					inheritGlobalTime
 					enableUrlParams={{

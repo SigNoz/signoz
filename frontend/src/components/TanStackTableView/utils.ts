@@ -135,6 +135,7 @@ export function buildTanstackColumnDef<TData, TItemKey = string>(
 				value: getValue() as TData[any],
 				isActive: isRowActive?.(rowData) ?? false,
 				rowIndex: row.index,
+				rowId: row.id,
 				isExpanded: row.getIsExpanded(),
 				canExpand: row.getCanExpand(),
 				toggleExpanded: (): void => {

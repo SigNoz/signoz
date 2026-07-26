@@ -30,18 +30,26 @@ interface CreatePodMetricsTabParams<T> {
 		entity: T,
 		start: number,
 		end: number,
-		dotMetricsEnabled: boolean,
 	) => GetQueryResultsProps[];
 	queryKey: string;
 	category: InfraMonitoringEntity;
+	docBasePath?: string;
 }
 
 export function createPodMetricsTab<T>({
 	getQueryPayload,
 	queryKey,
 	category,
+	docBasePath,
 }: CreatePodMetricsTabParams<T>): CustomTab<T> {
 	const eventEntity = categoryToEventEntity[category];
+
+	const widgetInfo = docBasePath
+		? podUtilizationByPodWidgetInfo.map((widget) => ({
+				...widget,
+				docPath: widget.docPath ? `${docBasePath}${widget.docPath}` : undefined,
+			}))
+		: podUtilizationByPodWidgetInfo;
 
 	return {
 		key: VIEW_TYPES.POD_METRICS,
@@ -51,7 +59,7 @@ export function createPodMetricsTab<T>({
 			<EntityMetrics
 				entity={entity}
 				eventEntity={eventEntity}
-				entityWidgetInfo={podUtilizationByPodWidgetInfo}
+				entityWidgetInfo={widgetInfo}
 				getEntityQueryPayload={getQueryPayload}
 				queryKey={queryKey}
 				category={category}

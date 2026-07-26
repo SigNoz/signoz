@@ -1,5 +1,6 @@
 import { Box } from '@signozhq/icons';
 import { screen } from '@testing-library/react';
+import { InfraMonitoringEvents } from 'constants/events';
 import userEvent from '@testing-library/user-event';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { act, render, waitFor } from 'tests/test-utils';
@@ -31,7 +32,7 @@ const mockEntity: TestEntity = {
 function createBaseProps() {
 	return {
 		category: InfraMonitoringEntity.PODS,
-		eventCategory: 'Pod',
+		eventCategory: InfraMonitoringEvents.Pod,
 		getSelectedItemExpression: (): string => 'k8s.pod.name = "test-pod"',
 		fetchEntityData: jest
 			.fn()
