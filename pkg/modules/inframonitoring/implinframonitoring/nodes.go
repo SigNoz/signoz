@@ -96,9 +96,12 @@ func (m *module) getTopNodeGroups(
 	orgID valuer.UUID,
 	req *inframonitoringtypes.PostableNodes,
 	metadataMap map[string]map[string]string,
+	podStatusCountsMap map[string]podStatusCounts,
 ) ([]map[string]string, error) {
 	orderByKey := req.OrderBy.Key.Name
 	if orderByKey == inframonitoringtypes.NodeNameAttrKey {
+		// metadataMap is already status-filtered by the caller, so the name
+		// branch needs no extra intersection.
 		return inframonitoringtypes.PaginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.NodeNameAttrKey), nil
 	}
 	queryNamesForOrderBy := orderByToNodesQueryNames[orderByKey]
@@ -140,6 +143,11 @@ func (m *module) getTopNodeGroups(
 	}
 
 	allMetricGroups := parseAndSortGroups(resp, rankingQueryName, req.GroupBy, req.OrderBy.Direction)
+	// When filtering by status, intersect the ranked groups against the keyset —
+	// an empty map (no node matched) must yield an empty page, not the full set.
+	if req.Filter != nil && !req.Filter.FilterByPodStatus.IsZero() {
+		allMetricGroups = intersectRankedGroups(allMetricGroups, podStatusCountsMap)
+	}
 	return paginateWithBackfill(allMetricGroups, metadataMap, req.GroupBy, req.Offset, req.Limit), nil
 }
 
