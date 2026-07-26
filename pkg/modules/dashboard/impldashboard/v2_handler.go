@@ -41,20 +41,23 @@ func (handler *handler) CreateV2(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var shadow struct {
+		SchemaVersion string `json:"schemaVersion"`
+		Version       string `json:"version"`
+	}
+	_ = json.Unmarshal(body, &shadow)
+
 	var req dashboardtypes.PostableDashboardV2
-	if err := binding.JSON.BindBody(bytes.NewReader(body), &req); err != nil {
-		// Fallback: the body may be a legacy v1 dashboard. Migrate it to v2 (same
-		// v4→v5 + v1→v2 pass the bulk migration runs) and retry; if it isn't a
-		// convertible v1 payload either, surface the original v2 binding error.
+	if shadow.SchemaVersion == "" && shadow.Version != "" {
 		var data map[string]any
-		if json.Unmarshal(body, &data) != nil {
-			render.Error(rw, err)
+		if err := json.Unmarshal(body, &data); err != nil {
+			render.Error(rw, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "%s", err.Error()))
 			return
 		}
 		storable := dashboardtypes.StorableDashboard{Data: data, OrgID: orgID}
 		transition.NewDashboardMigrateV5(handler.providerSettings.Logger, nil, nil).Migrate(ctx, storable.Data)
-		v2, convErr := storable.ConvertV1ToV2()
-		if convErr != nil {
+		v2, err := storable.ConvertV1ToV2()
+		if err != nil {
 			render.Error(rw, err)
 			return
 		}
@@ -64,6 +67,9 @@ func (handler *handler) CreateV2(rw http.ResponseWriter, r *http.Request) {
 			Tags:                    tagtypes.NewPostableTagsFromTags(v2.Tags),
 			Spec:                    v2.Spec,
 		}
+	} else if err := binding.JSON.BindBody(bytes.NewReader(body), &req); err != nil {
+		render.Error(rw, err)
+		return
 	}
 
 	dashboard, err := handler.module.CreateV2(ctx, orgID, claims.Email, valuer.MustNewUUID(claims.IdentityID()), dashboardtypes.SourceUser, req)
