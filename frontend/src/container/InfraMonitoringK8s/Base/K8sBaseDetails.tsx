@@ -97,6 +97,8 @@ export interface K8sBaseDetailsProps<T> {
 	// Entity configuration
 	getEntityName: (entity: T) => string;
 	getInitialLogTracesFilters: (entity: T) => TagFilterItem[];
+	getInitialLogFilters?: (entity: T) => TagFilterItem[];
+	getInitialTracesFilters?: (entity: T) => TagFilterItem[];
 	getInitialEventsFilters: (entity: T) => TagFilterItem[];
 	metadataConfig: K8sDetailsMetadataConfig<T>[];
 	entityWidgetInfo: {
@@ -160,6 +162,8 @@ export default function K8sBaseDetails<T>({
 	fetchEntityData,
 	getEntityName,
 	getInitialLogTracesFilters,
+	getInitialLogFilters,
+	getInitialTracesFilters,
 	getInitialEventsFilters,
 	metadataConfig,
 	entityWidgetInfo,
@@ -219,16 +223,31 @@ export default function K8sBaseDetails<T>({
 	const entity = entityResponse?.data ?? null;
 	const hasResponseError = !!entityResponse?.error;
 
-	const logsAndTracesInitialExpression = useMemo(() => {
+	const logsInitialExpression = useMemo(() => {
 		if (!entity) {
 			return '';
 		}
+		const initialFilters =
+			getInitialLogFilters?.(entity) ?? getInitialLogTracesFilters(entity);
 		const primaryFiltersOnly = {
 			op: 'AND' as const,
-			items: getInitialLogTracesFilters(entity),
+			items: initialFilters,
 		};
 		return convertFiltersToExpression(primaryFiltersOnly).expression;
-	}, [entity, getInitialLogTracesFilters]);
+	}, [entity, getInitialLogFilters, getInitialLogTracesFilters]);
+
+	const tracesInitialExpression = useMemo(() => {
+		if (!entity) {
+			return '';
+		}
+		const initialFilters =
+			getInitialTracesFilters?.(entity) ?? getInitialLogTracesFilters(entity);
+		const primaryFiltersOnly = {
+			op: 'AND' as const,
+			items: initialFilters,
+		};
+		return convertFiltersToExpression(primaryFiltersOnly).expression;
+	}, [entity, getInitialLogTracesFilters, getInitialTracesFilters]);
 
 	const eventsInitialExpression = useMemo(() => {
 		if (!entity) {
@@ -383,7 +402,7 @@ export default function K8sBaseDetails<T>({
 
 		if (selectedView === VIEW_TYPES.LOGS) {
 			const fullExpression = combineInitialAndUserExpression(
-				logsAndTracesInitialExpression,
+				logsInitialExpression,
 				userLogsExpression || '',
 			);
 
@@ -408,7 +427,7 @@ export default function K8sBaseDetails<T>({
 			openInNewTab(`${ROUTES.LOGS_EXPLORER}?${urlQuery.toString()}`);
 		} else if (selectedView === VIEW_TYPES.TRACES) {
 			const fullExpression = combineInitialAndUserExpression(
-				logsAndTracesInitialExpression,
+				tracesInitialExpression,
 				userTracesExpression || '',
 			);
 
@@ -622,7 +641,7 @@ export default function K8sBaseDetails<T>({
 							selectedInterval={selectedInterval}
 							queryKey={`${queryKeyPrefix}Logs`}
 							category={category}
-							initialExpression={logsAndTracesInitialExpression}
+							initialExpression={logsInitialExpression}
 						/>
 					)}
 					{effectiveView === VIEW_TYPES.TRACES && (
@@ -633,7 +652,7 @@ export default function K8sBaseDetails<T>({
 							selectedInterval={selectedInterval}
 							queryKey={`${queryKeyPrefix}Traces`}
 							category={category}
-							initialExpression={logsAndTracesInitialExpression}
+							initialExpression={tracesInitialExpression}
 						/>
 					)}
 					{effectiveView === VIEW_TYPES.EVENTS && tabVisibility.showEvents && (

@@ -120,7 +120,11 @@ export function hostGetSelectedItemFilters(
 	};
 }
 
-export function hostInitialLogTracesFilter(
+export function hostInitialLogFilter(_host: HostData): TagFilterItem[] {
+	return [createFilterItem('hostname', '')];
+}
+
+export function hostInitialTracesFilter(
 	host: HostData,
 	dotMetricsEnabled: boolean,
 ): TagFilterItem[] {
