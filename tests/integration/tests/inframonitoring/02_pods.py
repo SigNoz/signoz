@@ -10,7 +10,11 @@ import requests
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.fs import get_testdata_file_path
-from fixtures.inframonitoring import STATUS_BUCKETS, STATUS_TO_BUCKET
+from fixtures.inframonitoring import (
+    STATUS_BUCKETS,
+    STATUS_TO_BUCKET,
+    expected_status_counts,
+)
 from fixtures.metrics import Metrics
 from fixtures.querier import compare_values, get_all_warnings
 from fixtures.time import parse_timestamp
@@ -592,6 +596,11 @@ def test_pods_orderby(  # pylint: disable=too-many-arguments,too-many-positional
             "is only allowed when groupBy is empty",
             id="orderby_podname_with_groupby",
         ),
+        pytest.param(
+            {"filter": {"filterByPodStatus": "Bogus"}},
+            "invalid filter by pod status",
+            id="filter_by_pod_status_invalid",
+        ),
     ],
 )
 def test_pods_validation_errors(
@@ -696,6 +705,42 @@ def test_pods_status_list_mode(
     for other in STATUS_BUCKETS:
         if other != bucket:
             assert rec["podCountsByStatus"][other] == 0, f"expected {other}=0 when status={expected_status}, got {rec['podCountsByStatus']}"
+
+    # filterByPodStatus (secondary filter, applied after status is assigned):
+    # matching status keeps the pod; a mismatched status filters it out. Wire
+    # value is case-insensitive (valuer lowercases).
+    for variant in (expected_status, expected_status.upper()):
+        matched = requests.post(
+            signoz.self.host_configs["8080"].get(ENDPOINT),
+            headers={"authorization": f"Bearer {token}"},
+            json={
+                "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+                "end": int(now.timestamp() * 1000),
+                "limit": 50,
+                "filter": {"expression": f"k8s.pod.name = '{pod_name}'", "filterByPodStatus": variant},
+            },
+            timeout=5,
+        )
+        assert matched.status_code == HTTPStatus.OK, matched.text
+        mdata = matched.json()["data"]
+        assert mdata["total"] == 1, f"filterByPodStatus={variant!r} should keep {pod_name}"
+        assert mdata["records"][0]["podCountsByStatus"][bucket] == 1
+
+    # None of the seeded pods resolves to plain Running -> a reliable mismatch.
+    mismatch = "running" if expected_status != "running" else "pending"
+    filtered_out = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": f"k8s.pod.name = '{pod_name}'", "filterByPodStatus": mismatch},
+        },
+        timeout=5,
+    )
+    assert filtered_out.status_code == HTTPStatus.OK, filtered_out.text
+    assert filtered_out.json()["data"]["total"] == 0, f"{pod_name} must be filtered out by filterByPodStatus={mismatch!r}"
 
 
 @pytest.mark.parametrize(
@@ -877,6 +922,41 @@ def test_pods_status_grouped_mode(
     )
     assert rec["podCountsByStatus"] == expected_counts
 
+    # filterByPodStatus in grouped mode: the group is kept because >=1 pod
+    # matches, and only the filtered bucket is populated (others zeroed).
+    running = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "groupBy": [{"name": "k8s.namespace.name", "fieldDataType": "string", "fieldContext": "resource"}],
+            "filter": {"filterByPodStatus": "running"},
+        },
+        timeout=5,
+    )
+    assert running.status_code == HTTPStatus.OK, running.text
+    rdata = running.json()["data"]
+    assert rdata["total"] == 1
+    assert rdata["records"][0]["podCountsByStatus"] == expected_status_counts(running=2)
+
+    # A status absent from the group -> group dropped, empty page.
+    absent = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "groupBy": [{"name": "k8s.namespace.name", "fieldDataType": "string", "fieldContext": "resource"}],
+            "filter": {"filterByPodStatus": "oomKilled"},
+        },
+        timeout=5,
+    )
+    assert absent.status_code == HTTPStatus.OK, absent.text
+    assert absent.json()["data"]["total"] == 0
+
 
 def test_pods_restarts_grouped_mode(
     signoz: types.SigNoz,
@@ -966,3 +1046,25 @@ def test_pods_status_missing_metric_warning(
     for bucket in STATUS_BUCKETS:
         assert rec["podCountsByStatus"][bucket] == 0, f"expected {bucket}=0 when gated off, got {rec['podCountsByStatus']}"
     assert rec["podRestarts"] == -1
+
+    # filterByPodStatus + missing status metric: the up-front gate surfaces the
+    # warning and returns an empty page (Total 0) instead of silently filtering
+    # everything out.
+    filtered = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": "k8s.pod.name = 'miss-p1'", "filterByPodStatus": "running"},
+        },
+        timeout=5,
+    )
+    assert filtered.status_code == HTTPStatus.OK, filtered.text
+    fdata = filtered.json()["data"]
+    assert fdata["total"] == 0
+    assert fdata["records"] == []
+    fwarn = fdata.get("warning") or {}
+    fmsgs = ([fwarn["message"]] if fwarn.get("message") else []) + [w["message"] for w in fwarn.get("warnings", [])]
+    assert any("Pod status could not be computed" in m for m in fmsgs), f"gate warning missing on filtered call: {fmsgs!r}"

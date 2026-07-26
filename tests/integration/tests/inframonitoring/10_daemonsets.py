@@ -10,6 +10,7 @@ import requests
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.fs import get_testdata_file_path
+from fixtures.inframonitoring import expected_status_counts
 from fixtures.metrics import Metrics
 from fixtures.querier import compare_values, get_all_warnings
 
@@ -334,6 +335,60 @@ def test_daemonsets_base_filter_drops_non_daemonset_pods(
     rec = data["records"][0]
     assert rec["daemonSetName"] == "nd-ds"
     assert all(r["daemonSetName"] != "" for r in data["records"])
+
+    # filterByPodStatus: nd-ds (nd-ds-p1 Running + nd-ds-p1-clbo CrashLoopBackOff)
+    # is kept when >=1 pod matches; counts reflect only the filtered status; an
+    # absent status yields an empty page. Metric aggregation stays undistorted.
+    unfiltered_cpu = rec["daemonSetCPU"]
+
+    running = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"filterByPodStatus": "running"},
+        },
+        timeout=5,
+    )
+    assert running.status_code == HTTPStatus.OK, running.text
+    rdata = running.json()["data"]
+    assert rdata["total"] == 1
+    rrec = rdata["records"][0]
+    assert rrec["daemonSetName"] == "nd-ds"
+    assert rrec["podCountsByStatus"] == expected_status_counts(running=1)
+    assert compare_values(rrec["daemonSetCPU"], unfiltered_cpu, 1e-6), "filterByPodStatus distorted daemonSetCPU"
+
+    clbo = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"filterByPodStatus": "CrashLoopBackOff"},
+        },
+        timeout=5,
+    )
+    assert clbo.status_code == HTTPStatus.OK, clbo.text
+    cdata = clbo.json()["data"]
+    assert cdata["total"] == 1
+    assert cdata["records"][0]["podCountsByStatus"] == expected_status_counts(crashLoopBackOff=1)
+
+    absent = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"filterByPodStatus": "pending"},
+        },
+        timeout=5,
+    )
+    assert absent.status_code == HTTPStatus.OK, absent.text
+    assert absent.json()["data"]["total"] == 0
 
 
 # Float record fields compared with tolerance; everything else compared with ==.
@@ -664,6 +719,11 @@ def test_daemonsets_orderby(  # pylint: disable=too-many-arguments,too-many-posi
             },
             "is only allowed when groupBy is empty",
             id="orderby_dsname_with_groupby",
+        ),
+        pytest.param(
+            {"filter": {"filterByPodStatus": "Bogus"}},
+            "invalid filter by pod status",
+            id="filter_by_pod_status_invalid",
         ),
     ],
 )

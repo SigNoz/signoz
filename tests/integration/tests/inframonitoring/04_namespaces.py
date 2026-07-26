@@ -10,6 +10,7 @@ import requests
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.fs import get_testdata_file_path
+from fixtures.inframonitoring import expected_status_counts
 from fixtures.metrics import Metrics
 from fixtures.querier import compare_values, get_all_warnings
 
@@ -309,6 +310,63 @@ def test_namespaces_filter_invalid(
         assert any(err_substr in e["message"] for e in body["error"]["errors"]), f"{err_substr!r} not surfaced: {body['error']['errors']!r}"
 
 
+def test_namespaces_filter_by_pod_status(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+) -> None:
+    """filterByPodStatus on namespaces: a namespace is kept when >=1 of its pods
+    matches the requested display status, and podCountsByStatus reflects only
+    that status (others 0); an absent status yields an empty page. Reuses
+    clusters_pod_phases.jsonl (carries k8s.namespace.name + full status metrics):
+    ns-x has running=3, crashLoopBackOff=1, error=1, evicted=1, pending=1."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/clusters_pod_phases.jsonl"),
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    for fbps, expected in (
+        ("running", expected_status_counts(running=3)),
+        ("CrashLoopBackOff", expected_status_counts(crashLoopBackOff=1)),
+    ):
+        resp = requests.post(
+            signoz.self.host_configs["8080"].get(ENDPOINT),
+            headers={"authorization": f"Bearer {token}"},
+            json={
+                "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+                "end": int(now.timestamp() * 1000),
+                "limit": 50,
+                "filter": {"filterByPodStatus": fbps},
+            },
+            timeout=5,
+        )
+        assert resp.status_code == HTTPStatus.OK, resp.text
+        data = resp.json()["data"]
+        assert data["total"] == 1
+        rec = data["records"][0]
+        assert rec["namespaceName"] == "ns-x"
+        assert rec["podCountsByStatus"] == expected
+
+    absent = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"filterByPodStatus": "completed"},
+        },
+        timeout=5,
+    )
+    assert absent.status_code == HTTPStatus.OK, absent.text
+    assert absent.json()["data"]["total"] == 0
+
+
 # Float record fields compared with tolerance; everything else compared with ==.
 _GROUPBY_FLOAT_FIELDS = {
     "namespaceCPU",
@@ -596,6 +654,11 @@ def test_namespaces_orderby(  # pylint: disable=too-many-arguments,too-many-posi
             },
             "is only allowed when groupBy is empty",
             id="orderby_nsname_with_groupby",
+        ),
+        pytest.param(
+            {"filter": {"filterByPodStatus": "Bogus"}},
+            "invalid filter by pod status",
+            id="filter_by_pod_status_invalid",
         ),
     ],
 )
