@@ -471,7 +471,7 @@ func (m *module) ListContainers(ctx context.Context, orgID valuer.UUID, req *inf
 	})
 	g.Go(func() error {
 		var err error
-		statusCounts, statusWarning, err = m.getPerGroupContainerStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, containerFilter, req.GroupBy, pageGroups)
+		statusCounts, statusWarning, err = m.getPerGroupContainerStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, containerFilter, req.GroupBy, pageGroups, inframonitoringtypes.ContainerStatus{})
 		return err
 	})
 	g.Go(func() error {
