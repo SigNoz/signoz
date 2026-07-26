@@ -97,6 +97,7 @@ func (m *module) getTopNodeGroups(
 	req *inframonitoringtypes.PostableNodes,
 	metadataMap map[string]map[string]string,
 	podStatusCountsMap map[string]podStatusCounts,
+	nodeConditionCountsMap map[string]nodeConditionCounts,
 ) ([]map[string]string, error) {
 	orderByKey := req.OrderBy.Key.Name
 	if orderByKey == inframonitoringtypes.NodeNameAttrKey {
@@ -143,10 +144,16 @@ func (m *module) getTopNodeGroups(
 	}
 
 	allMetricGroups := parseAndSortGroups(resp, rankingQueryName, req.GroupBy, req.OrderBy.Direction)
-	// When filtering by status, intersect the ranked groups against the keyset —
-	// an empty map (no node matched) must yield an empty page, not the full set.
-	if req.Filter != nil && !req.Filter.FilterByPodStatus.IsZero() {
-		allMetricGroups = intersectRankedGroups(allMetricGroups, podStatusCountsMap)
+	// When filtering by a secondary status, intersect the ranked groups against
+	// its keyset — an empty map (no match) must yield an empty page, not the full
+	// set. Both filters compose as AND.
+	if req.Filter != nil {
+		if !req.Filter.FilterByPodStatus.IsZero() {
+			allMetricGroups = intersectRankedGroups(allMetricGroups, podStatusCountsMap)
+		}
+		if !req.Filter.FilterByNodeReadiness.IsZero() {
+			allMetricGroups = intersectRankedGroups(allMetricGroups, nodeConditionCountsMap)
+		}
 	}
 	return paginateWithBackfill(allMetricGroups, metadataMap, req.GroupBy, req.Offset, req.Limit), nil
 }
