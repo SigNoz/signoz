@@ -20,6 +20,15 @@ type Config struct {
 type PostgresConfig struct {
 	// DSN is the database source name.
 	DSN string `mapstructure:"dsn"`
+	// SSLMode is the SSL mode for the connection. Valid values: disable, allow, prefer, require, verify-ca, verify-full.
+	// An empty value leaves SSL behaviour to the DSN.
+	SSLMode string `mapstructure:"ssl_mode"`
+	// SSLCert is the path to the client certificate. Used with SSLKey for mTLS.
+	SSLCert string `mapstructure:"ssl_cert"`
+	// SSLKey is the path to the client private key. Used with SSLCert for mTLS.
+	SSLKey string `mapstructure:"ssl_key"`
+	// SSLRootCert is the path to the CA certificate used to verify the server.
+	SSLRootCert string `mapstructure:"ssl_root_cert"`
 }
 
 type SqliteConfig struct {

@@ -2,7 +2,11 @@ package postgressqlstore
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"database/sql"
+	"net/url"
+	"os"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -50,6 +54,16 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	pgConfig, err := pgxpool.ParseConfig(config.Postgres.DSN)
 	if err != nil {
 		return nil, err
+	}
+
+	// Build TLS config from structured SSL fields if any are set. Empty SSL fields
+	// leave TLS handling to the DSN, preserving the prior behaviour.
+	if config.Postgres.SSLMode != "" || config.Postgres.SSLCert != "" || config.Postgres.SSLKey != "" || config.Postgres.SSLRootCert != "" {
+		tlsConfig, err := buildTLSConfig(config.Postgres)
+		if err != nil {
+			return nil, err
+		}
+		pgConfig.ConnConfig.TLSConfig = tlsConfig
 	}
 
 	// Set the maximum number of open connections
@@ -123,4 +137,50 @@ func (provider *provider) WrapAlreadyExistsErrf(err error, code errors.Code, for
 
 func (dialect *dialect) ToggleForeignKeyConstraint(ctx context.Context, bun *bun.DB, enable bool) error {
 	return nil
+}
+
+// buildTLSConfig builds a *tls.Config from the structured SSL fields on PostgresConfig.
+// An empty SSLMode ("disable", "allow", "prefer") returns nil to skip TLS.
+// SSLCert + SSLKey load an mTLS client identity. SSLRootCert adds a CA pool for
+// server verification. The host portion of the DSN is reused as ServerName.
+func buildTLSConfig(cfg sqlstore.PostgresConfig) (*tls.Config, error) {
+	switch cfg.SSLMode {
+	case "", "disable", "allow", "prefer":
+		return nil, nil
+	}
+
+	pool := x509.NewCertPool()
+	if cfg.SSLRootCert != "" {
+		caData, err := os.ReadFile(cfg.SSLRootCert)
+		if err != nil {
+			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to read ssl_root_cert %q", cfg.SSLRootCert)
+		}
+		if !pool.AppendCertsFromPEM(caData) {
+			return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "ssl_root_cert %q did not contain any valid PEM certificates", cfg.SSLRootCert)
+		}
+	}
+
+	var certs []tls.Certificate
+	if cfg.SSLCert != "" || cfg.SSLKey != "" {
+		if cfg.SSLCert == "" || cfg.SSLKey == "" {
+			return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "ssl_cert and ssl_key must be set together")
+		}
+		cert, err := tls.LoadX509KeyPair(cfg.SSLCert, cfg.SSLKey)
+		if err != nil {
+			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to load ssl_cert/ssl_key pair")
+		}
+		certs = []tls.Certificate{cert}
+	}
+
+	serverName := ""
+	if u, err := url.Parse(cfg.DSN); err == nil {
+		serverName = u.Hostname()
+	}
+
+	return &tls.Config{
+		RootCAs:      pool,
+		Certificates: certs,
+		ServerName:   serverName,
+		MinVersion:   tls.VersionTLS12,
+	}, nil
 }

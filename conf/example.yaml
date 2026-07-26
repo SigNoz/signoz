@@ -135,6 +135,18 @@ sqlstore:
     busy_timeout: 10s
     # The default transaction locking behavior. Supported values: deferred, immediate, exclusive.
     transaction_mode: immediate
+  # Postgres connection settings. The DSN is required. The optional ssl_* fields
+  # build a *tls.Config and override whatever sslmode the DSN carries, so the two
+  # should not be set inconsistently. Valid ssl_mode values: disable, allow, prefer,
+  # require, verify-ca, verify-full.
+  postgres:
+    # The DSN to use for the postgres connection. Accepts a URL (postgres://...)
+    # or key=value DSN. Example: postgres://signoz:signoz@localhost:5432/signoz
+    dsn:
+    # ssl_mode: require
+    # ssl_cert:
+    # ssl_key:
+    # ssl_root_cert:
 
 ##################### APIServer #####################
 apiserver:
