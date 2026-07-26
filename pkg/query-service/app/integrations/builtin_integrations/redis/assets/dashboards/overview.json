@@ -26,9 +26,6 @@
             "name": "host.name",
             "description": "List of hosts sending Redis metrics"
           },
-          "defaultValue": [
-            "Srikanths-MacBook-Pro.local"
-          ],
           "allowAllValue": true,
           "allowMultiple": true,
           "customAllValue": "",
