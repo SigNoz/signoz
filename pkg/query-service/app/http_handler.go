@@ -1078,75 +1078,11 @@ func prepareQuery(r *http.Request) (string, error) {
 }
 
 func (aH *APIHandler) Get(rw http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-	defer cancel()
-
-	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	id := mux.Vars(r)["id"]
-	if id == "" {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is missing in the path"))
-		return
-	}
-
-	dashboardID, err := valuer.NewUUID(id)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-	dashboard, err := aH.Signoz.Modules.Dashboard.Get(ctx, orgID, dashboardID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	gettableDashboard, err := dashboardtypes.NewGettableDashboardFromDashboard(dashboard)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	render.Success(rw, http.StatusOK, gettableDashboard)
+	render.Error(rw, dashboardtypes.NewV1DeprecatedError("get a dashboard with GET /api/v2/dashboards/{id}"))
 }
 
 func (aH *APIHandler) List(rw http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-	defer cancel()
-
-	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	dashboards, err := aH.Signoz.Modules.Dashboard.List(ctx, orgID)
-	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
-		render.Error(rw, err)
-		return
-	}
-
-	gettableDashboards, err := dashboardtypes.NewGettableDashboardsFromDashboards(dashboards)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-	render.Success(rw, http.StatusOK, gettableDashboards)
+	render.Error(rw, dashboardtypes.NewV1DeprecatedError("list dashboards with GET /api/v2/dashboards"))
 }
 
 func (aH *APIHandler) queryDashboardVarsV2(w http.ResponseWriter, r *http.Request) {

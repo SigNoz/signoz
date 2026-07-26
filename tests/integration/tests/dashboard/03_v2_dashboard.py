@@ -10,28 +10,29 @@ from fixtures.metrics import Metrics
 from fixtures.types import Operation, SigNoz
 
 BASE_URL = "/api/v2/dashboards"
-# v1 list returns every dashboard regardless of schema. v2 list converts each row
-# to the perses schema and 501s if any stored dashboard isn't perses-schema, so
-# listing for cleanup against a shared DB must go through v1.
-V1_BASE_URL = "/api/v1/dashboards"
+# MaxListLimit caps a single list page, so wiping a shared DB has to drain pages
+# until the list comes back empty.
+MAX_LIST_LIMIT = 200
 
 
 def _wipe_all_dashboards(signoz: SigNoz, token: str) -> None:
-    response = requests.get(
-        signoz.self.host_configs["8080"].get(V1_BASE_URL),
-        headers={"Authorization": f"Bearer {token}"},
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-    for dashboard in response.json()["data"]:
-        metadata = (dashboard.get("data") or {}).get("metadata") or {}
-        base = BASE_URL if metadata.get("schemaVersion") == "v6" else V1_BASE_URL
-        del_res = requests.delete(
-            signoz.self.host_configs["8080"].get(f"{base}/{dashboard['id']}"),
+    while True:
+        response = requests.get(
+            signoz.self.host_configs["8080"].get(f"{BASE_URL}?limit={MAX_LIST_LIMIT}"),
             headers={"Authorization": f"Bearer {token}"},
             timeout=5,
         )
-        assert del_res.status_code == HTTPStatus.NO_CONTENT, del_res.text
+        assert response.status_code == HTTPStatus.OK, response.text
+        dashboards = response.json()["data"]["dashboards"]
+        if not dashboards:
+            return
+        for dashboard in dashboards:
+            del_res = requests.delete(
+                signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard['id']}"),
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=5,
+            )
+            assert del_res.status_code == HTTPStatus.NO_CONTENT, del_res.text
 
 
 # ─── failure cases (create no dashboards) ────────────────────────────────────
