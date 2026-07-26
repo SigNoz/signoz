@@ -4260,6 +4260,8 @@ components:
       properties:
         expression:
           type: string
+        filterByNodeReadiness:
+          $ref: '#/components/schemas/InframonitoringtypesNodeCondition'
         filterByPodStatus:
           $ref: '#/components/schemas/InframonitoringtypesPodStatus'
       type: object
@@ -4948,6 +4950,8 @@ components:
       properties:
         expression:
           type: string
+        filterByNodeReadiness:
+          $ref: '#/components/schemas/InframonitoringtypesNodeCondition'
         filterByPodStatus:
           $ref: '#/components/schemas/InframonitoringtypesPodStatus'
       type: object

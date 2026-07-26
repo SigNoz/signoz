@@ -5688,6 +5688,11 @@ export interface InframonitoringtypesChecksDTO {
 	type: InframonitoringtypesCheckTypeDTO;
 }
 
+export enum InframonitoringtypesNodeConditionDTO {
+	ready = 'ready',
+	not_ready = 'not_ready',
+	no_data = 'no_data',
+}
 export enum InframonitoringtypesPodStatusDTO {
 	pending = 'pending',
 	running = 'running',
@@ -5714,6 +5719,7 @@ export interface InframonitoringtypesClusterFilterDTO {
 	 * @type string
 	 */
 	expression?: string;
+	filterByNodeReadiness?: InframonitoringtypesNodeConditionDTO;
 	filterByPodStatus?: InframonitoringtypesPodStatusDTO;
 }
 
@@ -6534,16 +6540,12 @@ export interface InframonitoringtypesNamespacesDTO {
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 
-export enum InframonitoringtypesNodeConditionDTO {
-	ready = 'ready',
-	not_ready = 'not_ready',
-	no_data = 'no_data',
-}
 export interface InframonitoringtypesNodeFilterDTO {
 	/**
 	 * @type string
 	 */
 	expression?: string;
+	filterByNodeReadiness?: InframonitoringtypesNodeConditionDTO;
 	filterByPodStatus?: InframonitoringtypesPodStatusDTO;
 }
 
