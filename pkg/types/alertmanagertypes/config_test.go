@@ -330,6 +330,120 @@ func TestSetGlobalConfigPreservesSMTPRequireTLS(t *testing.T) {
 	}
 }
 
+func newSMTPGlobalConfig() GlobalConfig {
+	return GlobalConfig{
+		SMTPFrom:         "alerts@example.com",
+		SMTPHello:        "example.com",
+		SMTPSmarthost:    config.HostPort{Host: "smtp.sendgrid.net", Port: "587"},
+		SMTPAuthUsername: "apikey",
+		SMTPAuthPassword: "operator-secret",
+		SMTPRequireTLS:   true,
+	}
+}
+
+func newEmailTestConfig(t *testing.T) *Config {
+	t.Helper()
+
+	cfg, err := NewDefaultConfig(
+		newSMTPGlobalConfig(),
+		RouteConfig{GroupInterval: time.Minute, GroupWait: time.Minute, RepeatInterval: time.Minute},
+		"1",
+	)
+	require.NoError(t, err)
+
+	receiver, err := NewReceiver(`{"name":"email-receiver","email_configs":[{"to":"team@example.com"}]}`)
+	require.NoError(t, err)
+	require.NoError(t, cfg.CreateReceiver(receiver))
+
+	return cfg
+}
+
+func TestStoreableConfigCarriesNoSMTPSettings(t *testing.T) {
+	cfg := newEmailTestConfig(t)
+
+	raw := cfg.StoreableConfig().Config
+	assert.NotContains(t, raw, "operator-secret")
+	assert.NotContains(t, raw, "smtp.sendgrid.net")
+	assert.NotContains(t, raw, "apikey")
+	assert.NotContains(t, raw, "alerts@example.com")
+
+	assert.Equal(t, "operator-secret", string(cfg.alertmanagerConfig.Global.SMTPAuthPassword))
+}
+
+func TestResolvedFillsEmailTransportFromGlobal(t *testing.T) {
+	cfg := newEmailTestConfig(t)
+
+	resolved, err := cfg.Resolved()
+	require.NoError(t, err)
+
+	receiver, err := resolved.GetReceiver("email-receiver")
+	require.NoError(t, err)
+	require.Len(t, receiver.EmailConfigs, 1)
+
+	got := receiver.EmailConfigs[0]
+	assert.Equal(t, "team@example.com", got.To)
+	assert.Equal(t, "smtp.sendgrid.net:587", got.Smarthost.String())
+	assert.Equal(t, "alerts@example.com", got.From)
+	assert.Equal(t, "apikey", got.AuthUsername)
+	assert.Equal(t, "operator-secret", string(got.AuthPassword))
+	require.NotNil(t, got.RequireTLS)
+	assert.True(t, *got.RequireTLS)
+
+	stored, err := cfg.GetReceiver("email-receiver")
+	require.NoError(t, err)
+	assert.Empty(t, stored.EmailConfigs[0].Smarthost.String())
+	assert.NotContains(t, cfg.StoreableConfig().Config, "operator-secret")
+}
+
+func TestStaleStoredSMTPSettingsAreReplacedOnLoad(t *testing.T) {
+	stored := &StoreableConfig{
+		Config: `{"global":{"resolve_timeout":"5m","smtp_from":"old@example.com","smtp_hello":"localhost","smtp_smarthost":"email-smtp.us-east-1.amazonaws.com:587","smtp_auth_username":"old-user","smtp_auth_password":"old-secret","smtp_require_tls":true},"route":{"receiver":"default-receiver","group_by":["ruleId"],"routes":[{"receiver":"email-receiver","continue":true,"matchers":["ruleId=~\"-1\""]}],"group_wait":"30s","group_interval":"5m","repeat_interval":"4h"},"receivers":[{"name":"default-receiver"},{"name":"email-receiver","email_configs":[{"send_resolved":false,"to":"team@example.com","from":"old@example.com","hello":"localhost","smarthost":"email-smtp.us-east-1.amazonaws.com:587","auth_username":"old-user","auth_password":"old-secret","require_tls":true}]}]}`,
+		OrgID:  "1",
+	}
+
+	cfg, err := NewConfigFromStoreableConfig(stored)
+	require.NoError(t, err)
+
+	loaded, err := cfg.GetReceiver("email-receiver")
+	require.NoError(t, err)
+	require.Len(t, loaded.EmailConfigs, 1)
+	assert.Empty(t, loaded.EmailConfigs[0].Smarthost.String())
+	assert.Empty(t, string(loaded.EmailConfigs[0].AuthPassword))
+
+	require.NoError(t, cfg.SetGlobalConfig(newSMTPGlobalConfig()))
+
+	resolved, err := cfg.Resolved()
+	require.NoError(t, err)
+
+	receiver, err := resolved.GetReceiver("email-receiver")
+	require.NoError(t, err)
+	got := receiver.EmailConfigs[0]
+	assert.Equal(t, "smtp.sendgrid.net:587", got.Smarthost.String())
+	assert.Equal(t, "operator-secret", string(got.AuthPassword))
+	assert.Equal(t, "alerts@example.com", got.From)
+
+	assert.NotContains(t, cfg.StoreableConfig().Config, "old-secret")
+	assert.NotContains(t, cfg.StoreableConfig().Config, "amazonaws.com")
+	assert.NotContains(t, cfg.StoreableConfig().Config, "operator-secret")
+}
+
+func TestCreateReceiverDoesNotMutateCaller(t *testing.T) {
+	cfg := newEmailTestConfig(t)
+
+	resolved, err := cfg.Resolved()
+	require.NoError(t, err)
+	receiver, err := resolved.GetReceiver("email-receiver")
+	require.NoError(t, err)
+	require.Equal(t, "smtp.sendgrid.net:587", receiver.EmailConfigs[0].Smarthost.String())
+
+	throwaway, err := cfg.CopyWithReset()
+	require.NoError(t, err)
+	require.NoError(t, throwaway.CreateReceiver(receiver))
+
+	assert.Equal(t, "smtp.sendgrid.net:587", receiver.EmailConfigs[0].Smarthost.String())
+	assert.Equal(t, "operator-secret", string(receiver.EmailConfigs[0].AuthPassword))
+}
+
 // Round-trip: create → serialize → reload → GetReceiver still has the configs.
 func TestConfigPreservesGoogleChatConfigs(t *testing.T) {
 	webhookURL, err := url.Parse("https://chat.googleapis.com/v1/spaces/test/messages")
