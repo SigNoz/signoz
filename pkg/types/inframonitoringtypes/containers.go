@@ -75,11 +75,19 @@ type ContainerRecord struct {
 type PostableContainers struct {
 	Start   int64                `json:"start" required:"true"`
 	End     int64                `json:"end" required:"true"`
-	Filter  *qbtypes.Filter      `json:"filter"`
+	Filter  *ContainerFilter     `json:"filter"`
 	GroupBy []qbtypes.GroupByKey `json:"groupBy"`
 	OrderBy *qbtypes.OrderBy     `json:"orderBy"`
 	Offset  int                  `json:"offset"`
 	Limit   int                  `json:"limit" required:"true"`
+}
+
+// ContainerFilter is the attribute filter plus an optional secondary filter on
+// the derived container display status (see ContainerStatus). Empty
+// FilterByContainerStatus = off.
+type ContainerFilter struct {
+	qbtypes.Filter          `json:",inline"`
+	FilterByContainerStatus ContainerStatus `json:"filterByContainerStatus"`
 }
 
 // Validate ensures PostableContainers contains acceptable values.
@@ -119,6 +127,10 @@ func (req *PostableContainers) Validate() error {
 
 	if req.Offset < 0 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "offset cannot be negative")
+	}
+
+	if req.Filter != nil && !req.Filter.FilterByContainerStatus.IsZero() && !IsFilterableContainerStatus(req.Filter.FilterByContainerStatus) {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid filter by container status: %s", req.Filter.FilterByContainerStatus)
 	}
 
 	if req.OrderBy != nil {

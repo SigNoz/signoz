@@ -446,8 +446,10 @@ func (m *module) ListContainers(ctx context.Context, orgID valuer.UUID, req *inf
 	}
 
 	filterExpr := ""
+	var containerFilter *qbtypes.Filter
 	if req.Filter != nil {
 		filterExpr = req.Filter.Expression
+		containerFilter = &req.Filter.Filter
 	}
 
 	fullQueryReq := buildFullQueryRequest(req.Start, req.End, filterExpr, req.GroupBy, pageGroups, m.newContainersTableListQuery())
@@ -469,17 +471,17 @@ func (m *module) ListContainers(ctx context.Context, orgID valuer.UUID, req *inf
 	})
 	g.Go(func() error {
 		var err error
-		statusCounts, statusWarning, err = m.getPerGroupContainerStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		statusCounts, statusWarning, err = m.getPerGroupContainerStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, containerFilter, req.GroupBy, pageGroups)
 		return err
 	})
 	g.Go(func() error {
 		var err error
-		restartCounts, err = m.getPerGroupContainerRestartCounts(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		restartCounts, err = m.getPerGroupContainerRestartCounts(gCtx, orgID, req.Start, req.End, containerFilter, req.GroupBy, pageGroups)
 		return err
 	})
 	g.Go(func() error {
 		var err error
-		readyCounts, err = m.getPerGroupContainerReadyCounts(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		readyCounts, err = m.getPerGroupContainerReadyCounts(gCtx, orgID, req.Start, req.End, containerFilter, req.GroupBy, pageGroups)
 		return err
 	})
 

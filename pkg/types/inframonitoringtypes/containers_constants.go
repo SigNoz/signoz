@@ -1,6 +1,10 @@
 package inframonitoringtypes
 
-import "github.com/SigNoz/signoz/pkg/valuer"
+import (
+	"slices"
+
+	"github.com/SigNoz/signoz/pkg/valuer"
+)
 
 // ContainerStatus is the kubectl-style display status of a container, derived
 // from k8s.container.status.state (base) + k8s.container.status.reason (overlay).
@@ -30,6 +34,12 @@ var (
 	// ContainerStatusNoData is the record default: no status data / metrics disabled.
 	ContainerStatusNoData = ContainerStatus{valuer.NewString("no_data")}
 )
+
+// IsFilterableContainerStatus reports whether c is a concrete, user-filterable
+// container status: any Enum() member except the no_data sentinel.
+func IsFilterableContainerStatus(c ContainerStatus) bool {
+	return c != ContainerStatusNoData && slices.Contains((ContainerStatus{}).Enum(), any(c))
+}
 
 func (ContainerStatus) Enum() []any {
 	return []any{

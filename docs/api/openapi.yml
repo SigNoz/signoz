@@ -4402,6 +4402,13 @@ components:
       - containerCannotRun
       - unknown
       type: object
+    InframonitoringtypesContainerFilter:
+      properties:
+        expression:
+          type: string
+        filterByContainerStatus:
+          $ref: '#/components/schemas/InframonitoringtypesContainerStatus'
+      type: object
     InframonitoringtypesContainerReady:
       enum:
       - ready
@@ -5203,7 +5210,7 @@ components:
           format: int64
           type: integer
         filter:
-          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+          $ref: '#/components/schemas/InframonitoringtypesContainerFilter'
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
