@@ -30,13 +30,11 @@ func NewHandler(module dashboard.Module, providerSettings factory.ProviderSettin
 }
 
 func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
-	render.Error(rw, dashboardtypes.NewV1DeprecatedError(
-		"create a dashboard with POST /api/v2/dashboards (schema: "+dashboardtypes.V2CreateDashboardSchemaLink+")"))
+	render.Error(rw, dashboardtypes.NewV1DeprecatedError("create a dashboard with POST /api/v2/dashboards"))
 }
 
 func (handler *handler) Update(rw http.ResponseWriter, r *http.Request) {
-	render.Error(rw, dashboardtypes.NewV1DeprecatedError(
-		"update a dashboard with PUT /api/v2/dashboards/{id} (schema: "+dashboardtypes.V2UpdateDashboardSchemaLink+"), or patch it with PATCH /api/v2/dashboards/{id} (schema: "+dashboardtypes.V2PatchDashboardSchemaLink+")"))
+	render.Error(rw, dashboardtypes.NewV1DeprecatedError("update a dashboard with PUT /api/v2/dashboards/{id}, or patch it with PATCH /api/v2/dashboards/{id}"))
 }
 
 func (handler *handler) LockUnlock(rw http.ResponseWriter, r *http.Request) {
