@@ -1,3 +1,4 @@
+import { isValidElement } from 'react';
 import { Tooltip } from 'antd';
 
 import TrimmedText from '../TrimmedText/TrimmedText';
@@ -13,6 +14,32 @@ type KeyValueLabelProps = {
 	onClick?: () => void;
 };
 
+/**
+ * badgeKey/badgeValue are typed as `string | ReactNode`, but callers have accidentally
+ * passed plain objects (e.g. an untyped API error/value) that satisfy that type yet
+ * aren't renderable, crashing the whole app with "Objects are not valid as a React
+ * child" (React error #31). Coerce anything that isn't a primitive or a valid element
+ * to a string instead of handing it to React as a child.
+ */
+function toRenderable(value: unknown): React.ReactNode {
+	if (
+		value === null ||
+		value === undefined ||
+		typeof value === 'string' ||
+		typeof value === 'number' ||
+		typeof value === 'boolean' ||
+		isValidElement(value)
+	) {
+		return value as React.ReactNode;
+	}
+
+	try {
+		return JSON.stringify(value);
+	} catch {
+		return String(value);
+	}
+}
+
 export default function KeyValueLabel({
 	badgeKey,
 	badgeValue,
@@ -24,13 +51,16 @@ export default function KeyValueLabel({
 		return null;
 	}
 
+	const safeBadgeKey = toRenderable(badgeKey);
+	const safeBadgeValue = toRenderable(badgeValue);
+
 	const renderValue = (): JSX.Element => {
-		if (typeof badgeValue !== 'string') {
-			return <div className="key-value-label__value">{badgeValue}</div>;
+		if (typeof safeBadgeValue !== 'string') {
+			return <div className="key-value-label__value">{safeBadgeValue}</div>;
 		}
 
 		return (
-			<Tooltip title={badgeValue}>
+			<Tooltip title={safeBadgeValue}>
 				<div
 					className={`key-value-label__value ${
 						onClick ? 'key-value-label__value--clickable' : ''
@@ -48,7 +78,7 @@ export default function KeyValueLabel({
 							: undefined
 					}
 				>
-					<TrimmedText text={badgeValue} maxCharacters={maxCharacters} />
+					<TrimmedText text={safeBadgeValue} maxCharacters={maxCharacters} />
 				</div>
 			</Tooltip>
 		);
@@ -57,10 +87,10 @@ export default function KeyValueLabel({
 	return (
 		<div className={`key-value-label key-value-label--${direction}`}>
 			<div className="key-value-label__key">
-				{typeof badgeKey === 'string' ? (
-					<TrimmedText text={badgeKey} maxCharacters={maxCharacters} />
+				{typeof safeBadgeKey === 'string' ? (
+					<TrimmedText text={safeBadgeKey} maxCharacters={maxCharacters} />
 				) : (
-					badgeKey
+					safeBadgeKey
 				)}
 			</div>
 			{renderValue()}
