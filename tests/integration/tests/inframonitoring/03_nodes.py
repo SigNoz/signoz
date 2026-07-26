@@ -369,6 +369,54 @@ def test_nodes_filter_by_pod_status(
     assert absent.status_code == HTTPStatus.OK, absent.text
     assert absent.json()["data"]["total"] == 0
 
+    # Combined filterByPodStatus + filterByNodeReadiness = AND. pp-node is Ready
+    # and runs pods -> kept when both match; dropped if either side has no match.
+    both_match = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"filterByPodStatus": "running", "filterByNodeReadiness": "ready"},
+        },
+        timeout=5,
+    )
+    assert both_match.status_code == HTTPStatus.OK, both_match.text
+    bdata = both_match.json()["data"]
+    assert bdata["total"] == 1
+    assert bdata["records"][0]["nodeName"] == "pp-node"
+
+    # readiness side fails (pp-node is not not_ready) -> dropped.
+    readiness_fails = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"filterByPodStatus": "running", "filterByNodeReadiness": "not_ready"},
+        },
+        timeout=5,
+    )
+    assert readiness_fails.status_code == HTTPStatus.OK, readiness_fails.text
+    assert readiness_fails.json()["data"]["total"] == 0
+
+    # pod-status side fails (no completed pod) -> dropped.
+    status_fails = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"filterByPodStatus": "completed", "filterByNodeReadiness": "ready"},
+        },
+        timeout=5,
+    )
+    assert status_fails.status_code == HTTPStatus.OK, status_fails.text
+    assert status_fails.json()["data"]["total"] == 0
+
 
 @pytest.mark.parametrize(
     "node_name,expected_condition",
@@ -417,6 +465,39 @@ def test_nodes_condition_list_mode(
         assert rec["nodeCountsByReadiness"] == {"ready": 1, "notReady": 0}
     else:
         assert rec["nodeCountsByReadiness"] == {"ready": 0, "notReady": 1}
+
+    # filterByNodeReadiness (secondary filter): matching readiness keeps the node,
+    # the opposite readiness filters it out.
+    matched = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": f"k8s.node.name = '{node_name}'", "filterByNodeReadiness": expected_condition},
+        },
+        timeout=5,
+    )
+    assert matched.status_code == HTTPStatus.OK, matched.text
+    mdata = matched.json()["data"]
+    assert mdata["total"] == 1
+    assert mdata["records"][0]["nodeName"] == node_name
+
+    opposite = "not_ready" if expected_condition == "ready" else "ready"
+    dropped = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": f"k8s.node.name = '{node_name}'", "filterByNodeReadiness": opposite},
+        },
+        timeout=5,
+    )
+    assert dropped.status_code == HTTPStatus.OK, dropped.text
+    assert dropped.json()["data"]["total"] == 0
 
 
 def test_nodes_condition_latest_wins(
@@ -508,6 +589,42 @@ def test_nodes_condition_grouped_mode(
     assert rec["nodeCountsByReadiness"] == {"ready": 2, "notReady": 1}
     # meta surfaces the groupBy key.
     assert rec["meta"].get("k8s.cluster.name") == "cluster-mixed"
+
+    # filterByNodeReadiness in grouped mode: the group is kept (>=1 matching
+    # node) and only the filtered bucket is populated.
+    ready = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "groupBy": [{"name": "k8s.cluster.name", "fieldDataType": "string", "fieldContext": "resource"}],
+            "filter": {"filterByNodeReadiness": "ready"},
+        },
+        timeout=5,
+    )
+    assert ready.status_code == HTTPStatus.OK, ready.text
+    rdata = ready.json()["data"]
+    assert rdata["total"] == 1
+    assert rdata["records"][0]["nodeCountsByReadiness"] == {"ready": 2, "notReady": 0}
+
+    not_ready = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "groupBy": [{"name": "k8s.cluster.name", "fieldDataType": "string", "fieldContext": "resource"}],
+            "filter": {"filterByNodeReadiness": "not_ready"},
+        },
+        timeout=5,
+    )
+    assert not_ready.status_code == HTTPStatus.OK, not_ready.text
+    ndata = not_ready.json()["data"]
+    assert ndata["total"] == 1
+    assert ndata["records"][0]["nodeCountsByReadiness"] == {"ready": 0, "notReady": 1}
 
 
 @pytest.mark.parametrize(
@@ -744,6 +861,16 @@ def test_nodes_orderby(  # pylint: disable=too-many-arguments,too-many-positiona
             {"filter": {"filterByPodStatus": "Bogus"}},
             "invalid filter by pod status",
             id="filter_by_pod_status_invalid",
+        ),
+        pytest.param(
+            {"filter": {"filterByNodeReadiness": "bogus"}},
+            "invalid filter by node readiness",
+            id="filter_by_node_readiness_invalid",
+        ),
+        pytest.param(
+            {"filter": {"filterByNodeReadiness": "notready"}},
+            "invalid filter by node readiness",
+            id="filter_by_node_readiness_missing_underscore",
         ),
     ],
 )
