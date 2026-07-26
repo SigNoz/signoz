@@ -37,6 +37,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/promote/implpromote"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/modules/session/implsession"
+	"github.com/SigNoz/signoz/pkg/modules/tag"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/pprof"
@@ -66,6 +67,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/tokenizer/opaquetokenizer"
 	"github.com/SigNoz/signoz/pkg/tokenizer/tokenizerstore/sqltokenizerstore"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/web"
@@ -118,6 +120,8 @@ func NewSQLMigrationProviderFactories(
 	sqlschema sqlschema.SQLSchema,
 	telemetryStore telemetrystore.TelemetryStore,
 	providerSettings factory.ProviderSettings,
+	dashboardStore dashboardtypes.Store,
+	tagModule tag.Module,
 ) factory.NamedMap[factory.ProviderFactory[sqlmigration.SQLMigration, sqlmigration.Config]] {
 	return factory.MustNewNamedMap(
 		sqlmigration.NewAddDataMigrationsFactory(),
@@ -222,7 +226,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddTagUniqueIndexFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddTelemetryTuplesFactory(sqlstore),
 		sqlmigration.NewAddTagRelationRankFactory(sqlstore, sqlschema),
-		sqlmigration.NewMigrateDashboardsV1ToV2Factory(sqlstore, sqlschema),
+		sqlmigration.NewMigrateDashboardsV1ToV2Factory(sqlschema, dashboardStore, tagModule),
 	)
 }
 

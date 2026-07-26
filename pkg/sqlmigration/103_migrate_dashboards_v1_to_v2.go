@@ -5,11 +5,8 @@ import (
 	"log/slog"
 
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
 	"github.com/SigNoz/signoz/pkg/modules/tag"
-	"github.com/SigNoz/signoz/pkg/modules/tag/impltag"
 	"github.com/SigNoz/signoz/pkg/sqlschema"
-	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/transition"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
@@ -21,16 +18,17 @@ import (
 )
 
 type migrateDashboardsV1ToV2 struct {
-	sqlstore  sqlstore.SQLStore
-	sqlschema sqlschema.SQLSchema
-	settings  factory.ProviderSettings
+	sqlschema      sqlschema.SQLSchema
+	dashboardStore dashboardtypes.Store
+	tagModule      tag.Module
+	settings       factory.ProviderSettings
 }
 
-func NewMigrateDashboardsV1ToV2Factory(sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) factory.ProviderFactory[SQLMigration, Config] {
+func NewMigrateDashboardsV1ToV2Factory(sqlschema sqlschema.SQLSchema, dashboardStore dashboardtypes.Store, tagModule tag.Module) factory.ProviderFactory[SQLMigration, Config] {
 	return factory.NewProviderFactory(
 		factory.MustNewName("migrate_dashboards_v1_to_v2"),
 		func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
-			return &migrateDashboardsV1ToV2{sqlstore: sqlstore, sqlschema: sqlschema, settings: ps}, nil
+			return &migrateDashboardsV1ToV2{sqlschema: sqlschema, dashboardStore: dashboardStore, tagModule: tagModule, settings: ps}, nil
 		},
 	)
 }
@@ -51,15 +49,12 @@ func (migration *migrateDashboardsV1ToV2) Up(ctx context.Context, db *bun.DB) er
 		return err
 	}
 
-	store := impldashboard.NewStore(migration.sqlstore)
-	tagModule := impltag.NewModule(impltag.NewStore(migration.sqlstore))
-
 	for _, id := range orgIDs {
 		orgID, err := valuer.NewUUID(id)
 		if err != nil {
 			return err
 		}
-		if err := migration.convertOrg(ctx, store, tagModule, orgID); err != nil {
+		if err := migration.convertOrg(ctx, orgID); err != nil {
 			return err
 		}
 	}
@@ -89,8 +84,8 @@ func (migration *migrateDashboardsV1ToV2) Up(ctx context.Context, db *bun.DB) er
 
 // convertOrg converts every v1 dashboard in the org, skipping v2 dashboards and
 // recording (not propagating) per-dashboard failures.
-func (migration *migrateDashboardsV1ToV2) convertOrg(ctx context.Context, store dashboardtypes.Store, tagModule tag.Module, orgID valuer.UUID) error {
-	storables, err := store.List(ctx, orgID)
+func (migration *migrateDashboardsV1ToV2) convertOrg(ctx context.Context, orgID valuer.UUID) error {
+	storables, err := migration.dashboardStore.List(ctx, orgID)
 	if err != nil {
 		return err
 	}
@@ -109,14 +104,14 @@ func (migration *migrateDashboardsV1ToV2) convertOrg(ctx context.Context, store 
 
 		v5.Migrate(ctx, storable.Data)
 
-		if err := convertOneDashboardV1ToV2(ctx, store, tagModule, orgID, storable); err != nil {
+		if err := convertOneDashboardV1ToV2(ctx, migration.dashboardStore, migration.tagModule, orgID, storable); err != nil {
 			failed++
 			logger.WarnContext(ctx, "failed to convert dashboard from v1 to v2", slog.String("org_id", orgID.String()), slog.String("dashboard_id", storable.ID.String()), slog.Any("error", err))
 			// Backfill the name column from the v1 title even though the data couldn't
 			// migrate, so the dashboard stays findable by name. Only when it's unset, so a
 			// retry doesn't regenerate a different (randomly-suffixed) name. Best-effort.
 			if storable.Name == "" {
-				if nameErr := store.UpdateName(ctx, orgID, storable.ID, storable.V1Name()); nameErr != nil {
+				if nameErr := migration.dashboardStore.UpdateName(ctx, orgID, storable.ID, storable.V1Name()); nameErr != nil {
 					logger.ErrorContext(ctx, "failed to backfill name for unmigrated dashboard", slog.String("dashboard_id", storable.ID.String()), slog.Any("error", nameErr))
 				}
 			}
