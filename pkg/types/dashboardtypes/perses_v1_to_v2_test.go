@@ -435,8 +435,9 @@ func TestResolveV1Image(t *testing.T) {
 
 	// A percent-encoded inline SVG icon is preserved by re-encoding it to base64
 	// (the form v2 accepts) rather than being dropped to the default.
-	svgResolved := resolveV1Image("data:image/svg+xml,%3Csvg%2F%3E")
+	svgResolved, svgOverridden := ResolveV1Image("data:image/svg+xml,%3Csvg%2F%3E")
 	assert.Equal(t, "data:image/svg+xml;base64,PHN2Zy8+", svgResolved)
+	assert.False(t, svgOverridden)
 
 	// A value that v2 would reject (a URL, a corrupt data URI) falls back to the
 	// default eight-ball icon and is flagged as overridden.

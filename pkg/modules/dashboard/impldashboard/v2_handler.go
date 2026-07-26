@@ -11,7 +11,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
-	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/transition"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
@@ -111,37 +110,6 @@ func (handler *handler) CloneV2(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	render.Success(rw, http.StatusCreated, dashboard.ToGettableDashboardV2())
-}
-
-// ConvertAllV1ToV2 migrates every dashboard in the caller's org from the v1 to
-// the v2 schema in place and returns the per-dashboard results. Temporary
-// scaffolding for the schema migration.
-func (handler *handler) ConvertAllV1ToV2(rw http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), 60*time.Second)
-	defer cancel()
-
-	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	orgID := valuer.MustNewUUID(claims.OrgID)
-
-	// ConvertAllV1ToV2 is temporary scaffolding kept off the core Module interface,
-	// so reach it via the V1ToV2Migrator capability.
-	migrator, ok := handler.module.(dashboard.V1ToV2Migrator)
-	if !ok {
-		render.Error(rw, errors.Newf(errors.TypeInternal, errors.CodeInternal, "dashboard module does not support v1 to v2 conversion"))
-		return
-	}
-	result, err := migrator.ConvertAllV1ToV2(ctx, orgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	render.Success(rw, http.StatusOK, result)
 }
 
 func (handler *handler) ListV2(rw http.ResponseWriter, r *http.Request) {

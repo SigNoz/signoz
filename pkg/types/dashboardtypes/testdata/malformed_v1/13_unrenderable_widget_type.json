@@ -1,8 +1,8 @@
 {
   "id": "13_unrenderable_widget_type",
   "uuid": "13_unrenderable_widget_type",
-  "title": "13 unrenderable widget type (whole-dashboard reject)",
-  "description": "13 unrenderable widget type (whole-dashboard reject)",
+  "title": "13 unrenderable widget type (widget skipped)",
+  "description": "13 unrenderable widget type (widget skipped)",
   "tags": [
     "malformed-fixture"
   ],

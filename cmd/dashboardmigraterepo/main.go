@@ -2,10 +2,11 @@
 // JSON file in the SigNoz dashboards repo (github.com/SigNoz/dashboards) to
 // surface conversion/validation gaps and emit the migrated v2 JSON.
 //
-// It mirrors the production pipeline (module.ConvertAllV1ToV2): run the v4→v5
-// widget-query migration in place, then StorableDashboard.ConvertV1ToV2, then
-// DashboardSpec.Validate. Nothing is written back to the input repo — outputs
-// go to -out so the result can be reviewed before staging a PR.
+// It mirrors the production pipeline (the 103_migrate_dashboards_v1_to_v2 SQL
+// migration): run the v4→v5 widget-query migration in place, then
+// StorableDashboard.ConvertV1ToV2, then DashboardSpec.Validate. Nothing is
+// written back to the input repo — outputs go to -out so the result can be
+// reviewed before staging a PR.
 //
 // Throwaway tooling for the schema migration; not part of the build.
 //
@@ -66,7 +67,7 @@ func main() {
 	}
 
 	ctx := context.Background()
-	// nil duplicate-key lists == the create path / ConvertAllV1ToV2 wiring.
+	// nil duplicate-key lists == the create path / SQL-migration wiring.
 	migrator := transition.NewDashboardMigrateV5(slog.New(slog.NewTextHandler(os.Stderr, nil)), nil, nil)
 
 	var outcomes []outcome
@@ -163,11 +164,14 @@ func migrateOne(ctx context.Context, migrator interface {
 }
 
 // marshalPostableV2 renders the PostableDashboardV2 form (schemaVersion, image,
-// name, tags, spec) — the shape the import API accepts.
+// generateName, tags, spec) — the shape the import API accepts. generateName is
+// set instead of a name so every import derives its own internal name from
+// spec.display.name; a name baked into the repo JSON would be reused verbatim by
+// every org importing it.
 func marshalPostableV2(v2 *dashboardtypes.DashboardV2) ([]byte, error) {
 	postable := dashboardtypes.PostableDashboardV2{
 		DashboardV2MetadataBase: v2.DashboardV2MetadataBase,
-		Name:                    v2.Name,
+		GenerateName:            true,
 		Tags:                    tagtypes.NewPostableTagsFromTags(v2.Tags),
 		Spec:                    v2.Spec,
 	}

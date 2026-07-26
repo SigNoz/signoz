@@ -45,8 +45,10 @@ var expectedFixtureOutcomes = map[string]string{
 	"10_layout_duplicate_i.json":                         outcomeOK,
 	"11_layout_orphan_entries.json":                      outcomeOK,
 	"12_layout_collapsed_ghost_child_bare_panelmap.json": outcomeOK,
-	"13_unrenderable_widget_type.json":                   outcomeConvertFail,
-	"14_layout_overlapping.json":                         outcomeOK,
+	// The EMPTY_WIDGET panel type is skipped silently and its layout entry dropped;
+	// the sibling graph widget still migrates (panels=1).
+	"13_unrenderable_widget_type.json": outcomeOK,
+	"14_layout_overlapping.json":       outcomeOK,
 }
 
 // TestMalformedV1FixturesMigrate migrates every fixture under testdata/malformed_v1

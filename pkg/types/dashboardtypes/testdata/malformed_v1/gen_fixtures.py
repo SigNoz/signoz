@@ -177,9 +177,9 @@ dash("12_layout_collapsed_ghost_child_bare_panelmap", "12 collapsed ghost child 
      widgets, layout, panelMap=panelMap)
 
 # 13 — an unrenderable widget type (EMPTY_WIDGET) with a layout entry. Expect:
-# the unknown panel type records a malformed-field note, so ConvertV1ToV2 rejects
-# the WHOLE dashboard (it never reaches the layout's dangling-ref handling).
-dash("13_unrenderable_widget_type", "13 unrenderable widget type (whole-dashboard reject)",
+# the unknown panel type is skipped silently (v1 can't render it either) and its
+# now-dangling layout entry is dropped, so the rest of the dashboard migrates.
+dash("13_unrenderable_widget_type", "13 unrenderable widget type (widget skipped)",
      [widget("w-real", "real", "graph", {"queryData": [metrics_qd()]}),
       widget("w-empty", "empty widget", "EMPTY_WIDGET", {"queryData": []})],
      grid("w-real", "w-empty"))

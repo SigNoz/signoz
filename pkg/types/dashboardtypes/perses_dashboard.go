@@ -209,8 +209,8 @@ func (m DashboardV2MetadataBase) validateImage() error {
 
 type PostableDashboardV2 struct {
 	DashboardV2MetadataBase
-	Name         string                 `json:"name"`
-	GenerateName bool                   `json:"generateName,omitempty"` // made false just in this branch cuz postable is being serialized
+	Name         string                 `json:"name,omitempty"` // omitted when generateName is set, which requires it to be empty
+	GenerateName bool                   `json:"generateName"`
 	Tags         []tagtypes.PostableTag `json:"tags" required:"true"`
 	Spec         DashboardSpec          `json:"spec" required:"true"`
 }
