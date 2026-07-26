@@ -607,7 +607,7 @@ func (m *module) ListNodes(ctx context.Context, orgID valuer.UUID, req *inframon
 	})
 	g.Go(func() error {
 		var err error
-		nodeConditionCounts, err = m.getPerGroupNodeConditionCounts(gCtx, orgID, req.Start, req.End, nodeFilter, req.GroupBy, pageGroups)
+		nodeConditionCounts, err = m.getPerGroupNodeConditionCounts(gCtx, orgID, req.Start, req.End, nodeFilter, req.GroupBy, pageGroups, inframonitoringtypes.NodeCondition{})
 		return err
 	})
 	// When filtering, podStatusCounts already holds the full-scope map (a superset
@@ -883,7 +883,7 @@ func (m *module) ListClusters(ctx context.Context, orgID valuer.UUID, req *infra
 	})
 	g.Go(func() error {
 		var err error
-		nodeConditionCountsMap, err = m.getPerGroupNodeConditionCounts(gCtx, orgID, req.Start, req.End, clusterFilter, req.GroupBy, pageGroups)
+		nodeConditionCountsMap, err = m.getPerGroupNodeConditionCounts(gCtx, orgID, req.Start, req.End, clusterFilter, req.GroupBy, pageGroups, inframonitoringtypes.NodeCondition{})
 		return err
 	})
 	g.Go(func() error {

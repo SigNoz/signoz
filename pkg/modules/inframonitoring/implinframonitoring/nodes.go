@@ -176,6 +176,21 @@ func (m *module) getNodesTableMetadata(ctx context.Context, orgID valuer.UUID, r
 //	countNodesPerCondition:  per-group uniqExactIf into ready/not_ready buckets.
 //
 // Groups absent from the result map have implicit zero counts (caller default).
+// nodeReadinessFilterClause returns the outer WHERE clause (and its arg) that
+// restricts latest_condition_per_node to a single readiness. condition_value is
+// numeric (1=Ready, 0=NotReady), so we map the enum to its int. Empty readiness
+// returns no clause.
+func nodeReadinessFilterClause(filterByNodeReadiness inframonitoringtypes.NodeCondition) (string, []any) {
+	if filterByNodeReadiness.IsZero() {
+		return "", nil
+	}
+	v := inframonitoringtypes.NodeConditionNumNotReady
+	if filterByNodeReadiness == inframonitoringtypes.NodeConditionReady {
+		v = inframonitoringtypes.NodeConditionNumReady
+	}
+	return " WHERE condition_value = ? ", []any{v}
+}
+
 func (m *module) getPerGroupNodeConditionCounts(
 	ctx context.Context,
 	orgID valuer.UUID,
@@ -183,8 +198,11 @@ func (m *module) getPerGroupNodeConditionCounts(
 	filter *qbtypes.Filter,
 	groupBy []qbtypes.GroupByKey,
 	pageGroups []map[string]string,
+	filterByNodeReadiness inframonitoringtypes.NodeCondition,
 ) (map[string]nodeConditionCounts, error) {
-	if len(pageGroups) == 0 || len(groupBy) == 0 {
+	// Empty pageGroups means "span all under user filter", allowed only in
+	// full-scope mode (filtering by readiness). Otherwise it's an empty page.
+	if len(groupBy) == 0 || (len(pageGroups) == 0 && filterByNodeReadiness.IsZero()) {
 		return map[string]nodeConditionCounts{}, nil
 	}
 
@@ -272,9 +290,12 @@ func (m *module) getPerGroupNodeConditionCounts(
 		fmt.Sprintf("uniqExactIf(node_name, condition_value = %d) AS ready_count", inframonitoringtypes.NodeConditionNumReady),
 		fmt.Sprintf("uniqExactIf(node_name, condition_value = %d) AS not_ready_count", inframonitoringtypes.NodeConditionNumNotReady),
 	)
+	// Push-down: keep only nodes whose readiness matches the requested one.
+	readinessWhereClause, readinessWhereArgs := nodeReadinessFilterClause(filterByNodeReadiness)
 	countNodesPerConditionSQL := fmt.Sprintf(
-		"SELECT %s FROM latest_condition_per_node GROUP BY %s",
+		"SELECT %s FROM latest_condition_per_node%s GROUP BY %s",
 		strings.Join(countNodesPerConditionSelectCols, ", "),
+		readinessWhereClause,
 		strings.Join(countNodesPerConditionGroupBy, ", "),
 	)
 
@@ -284,7 +305,7 @@ func (m *module) getPerGroupNodeConditionCounts(
 		fmt.Sprintf("latest_condition_per_node AS (%s)", latestConditionPerNodeSQL),
 	}
 	finalSQL := querybuilder.CombineCTEs(cteFragments) + countNodesPerConditionSQL
-	finalArgs := querybuilder.PrependArgs([][]any{timeSeriesFPsArgs, latestConditionPerNodeArgs}, nil)
+	finalArgs := querybuilder.PrependArgs([][]any{timeSeriesFPsArgs, latestConditionPerNodeArgs}, readinessWhereArgs)
 
 	rows, err := m.telemetryStore.ClickhouseDB().Query(ctx, finalSQL, finalArgs...)
 	if err != nil {
