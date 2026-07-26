@@ -1,5 +1,4 @@
 import { useHistory } from 'react-router-dom';
-import { FeatureKeys } from 'constants/features';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { MOCK_QUERY } from 'container/QueryTable/Drilldown/__tests__/mockTableData';
 import { ExportDashboard } from 'hooks/dashboard/useExportDashboards';
@@ -12,7 +11,6 @@ import {
 	userEvent,
 	waitFor,
 } from 'tests/test-utils';
-import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
@@ -48,54 +46,22 @@ const mockUseHistory = jest.mocked(useHistory);
 // Mock data
 const TEST_QUERY_ID = 'test-query-id';
 const TEST_DASHBOARD_ID = 'test-dashboard-id';
-const TEST_DASHBOARD_TITLE = 'Test Dashboard';
-const TEST_DASHBOARD_DESCRIPTION = 'Test Description';
-const TEST_TIMESTAMP = '2023-01-01T00:00:00Z';
 const TEST_DASHBOARD_TITLE_2 = 'Test Dashboard for Export';
 const NEW_DASHBOARD_ID = 'new-dashboard-id';
 
-// The export dialog is flag-aware (`use_dashboard_v2`): V1 talks to the legacy
-// dashboards API, V2 to the generated Perses-spec endpoints. The tests below run
-// against both contracts, so each path gets its own endpoints + response shapes.
-const V1_DASHBOARDS_ENDPOINT = '*/api/v1/dashboards';
+// The export dialog talks to the generated Perses-spec dashboard endpoints.
 const V2_LIST_ENDPOINT = '*/api/v2/users/me/dashboards';
 const V2_CREATE_ENDPOINT = '*/api/v2/dashboards';
 
-// V2 "create new dashboard" names the dashboard from the `new_dashboard_title`
-// i18n key; the test-utils react-i18next mock returns the key verbatim.
-const NEW_V2_DASHBOARD_TITLE = 'new_dashboard_title';
-
-const featureFlagsWithDashboardV2 = [
-	...defaultFeatureFlags,
-	{
-		name: FeatureKeys.USE_DASHBOARD_V2,
-		active: true,
-		usage: 0,
-		usage_limit: -1,
-		route: '',
-	},
-];
+// "Create new dashboard" names the dashboard from the `new_dashboard_title` i18n
+// key; the test-utils react-i18next mock returns the key verbatim.
+const NEW_DASHBOARD_TITLE = 'new_dashboard_title';
 
 // Use the existing mock query from the codebase
 const mockQuery: Query = {
 	...MOCK_QUERY,
 	id: TEST_QUERY_ID, // Override with our test ID
 } as Query;
-
-const createMockDashboard = (id: string = TEST_DASHBOARD_ID): Dashboard => ({
-	id,
-	data: {
-		title: TEST_DASHBOARD_TITLE,
-		description: TEST_DASHBOARD_DESCRIPTION,
-		tags: [],
-		layout: [],
-		variables: {},
-	},
-	createdAt: TEST_TIMESTAMP,
-	updatedAt: TEST_TIMESTAMP,
-	createdBy: 'test-user',
-	updatedBy: 'test-user',
-});
 
 const ADD_TO_DASHBOARD_BUTTON_NAME = /add to dashboard/i;
 
@@ -104,92 +70,40 @@ interface PickerDashboard {
 	title: string;
 }
 
-/**
- * Describes one dashboard-API contract (V1 or V2) the export dialog can run
- * against: the feature flags that select it, plus helpers that register the
- * matching MSW handlers so the same test body exercises either path.
- */
-interface ExportVariant {
-	name: string;
-	featureFlags: typeof defaultFeatureFlags;
-	/** Register the "list dashboards" endpoint the picker reads. */
-	mockDashboardList: (dashboards: PickerDashboard[]) => void;
-	/**
-	 * Register the "create dashboard" endpoint the "New dashboard" button hits.
-	 * Returns the title `onExport` should receive for the created dashboard.
-	 */
-	mockCreateDashboard: (id: string) => { expectedTitle: string };
+/** Register the "list dashboards" endpoint the picker reads. */
+function mockDashboardList(dashboards: PickerDashboard[]): void {
+	server.use(
+		rest.get(V2_LIST_ENDPOINT, (_req, res, ctx) =>
+			res(
+				ctx.status(200),
+				ctx.json({
+					status: 'success',
+					data: {
+						dashboards: dashboards.map(({ id, title }) => ({
+							id,
+							name: title,
+							spec: { display: { name: title } },
+						})),
+						reservedKeywords: [],
+					},
+				}),
+			),
+		),
+	);
 }
 
-const v1Variant: ExportVariant = {
-	name: 'V1',
-	featureFlags: defaultFeatureFlags,
-	mockDashboardList: (dashboards): void => {
-		server.use(
-			rest.get(V1_DASHBOARDS_ENDPOINT, (_req, res, ctx) =>
-				res(
-					ctx.status(200),
-					ctx.json({
-						data: dashboards.map(({ id, title }) => {
-							const dashboard = createMockDashboard(id);
-							dashboard.data.title = title;
-							return dashboard;
-						}),
-					}),
-				),
-			),
-		);
-	},
-	mockCreateDashboard: (id): { expectedTitle: string } => {
-		const dashboard = createMockDashboard(id);
-		server.use(
-			rest.post(V1_DASHBOARDS_ENDPOINT, (_req, res, ctx) =>
-				res(ctx.status(200), ctx.json({ data: dashboard })),
-			),
-		);
-		return { expectedTitle: dashboard.data.title ?? '' };
-	},
-};
-
-const v2Variant: ExportVariant = {
-	name: 'V2',
-	featureFlags: featureFlagsWithDashboardV2,
-	mockDashboardList: (dashboards): void => {
-		server.use(
-			rest.get(V2_LIST_ENDPOINT, (_req, res, ctx) =>
-				res(
-					ctx.status(200),
-					ctx.json({
-						status: 'success',
-						data: {
-							dashboards: dashboards.map(({ id, title }) => ({
-								id,
-								name: title,
-								spec: { display: { name: title } },
-							})),
-							reservedKeywords: [],
-						},
-					}),
-				),
-			),
-		);
-	},
-	mockCreateDashboard: (id): { expectedTitle: string } => {
-		server.use(
-			rest.post(V2_CREATE_ENDPOINT, (_req, res, ctx) =>
-				res(ctx.status(201), ctx.json({ status: 'success', data: { id } })),
-			),
-		);
-		return { expectedTitle: NEW_V2_DASHBOARD_TITLE };
-	},
-};
-
-const exportVariants: ExportVariant[] = [v1Variant, v2Variant];
+/** Register the "create dashboard" endpoint the "New dashboard" button hits. */
+function mockCreateDashboard(id: string): void {
+	server.use(
+		rest.post(V2_CREATE_ENDPOINT, (_req, res, ctx) =>
+			res(ctx.status(201), ctx.json({ status: 'success', data: { id } })),
+		),
+	);
+}
 
 // Helper function to render component with props
 const renderExplorerOptionWrapper = (
 	overrides = {},
-	featureFlags: typeof defaultFeatureFlags = defaultFeatureFlags,
 ): ReturnType<typeof render> => {
 	const props = {
 		disabled: false,
@@ -221,7 +135,7 @@ const renderExplorerOptionWrapper = (
 			signalSource={props.signalSource}
 		/>,
 		undefined,
-		{ appContextOverrides: { featureFlags } },
+		{ appContextOverrides: { featureFlags: defaultFeatureFlags } },
 	);
 };
 
@@ -264,222 +178,218 @@ describe('ExplorerOptionWrapper', () => {
 		expect(params.has('compositeQuery')).toBe(true);
 	});
 
-	describe.each(exportVariants)(
-		'onExport functionality [$name dashboards]',
-		({ featureFlags, mockDashboardList, mockCreateDashboard }) => {
-			it('should call onExport when New Dashboard button is clicked in export modal', async () => {
-				const user = userEvent.setup({ pointerEventsCheck: 0 });
-				const testOnExport = jest.fn() as jest.MockedFunction<
-					(
-						dashboard: ExportDashboard | null,
-						isNewDashboard?: boolean,
-						queryToExport?: Query,
-					) => void
-				>;
+	describe('onExport functionality', () => {
+		it('should call onExport when New Dashboard button is clicked in export modal', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const testOnExport = jest.fn() as jest.MockedFunction<
+				(
+					dashboard: ExportDashboard | null,
+					isNewDashboard?: boolean,
+					queryToExport?: Query,
+				) => void
+			>;
 
-				// Mock the dashboard creation API for the active contract.
-				const { expectedTitle } = mockCreateDashboard(NEW_DASHBOARD_ID);
+			mockCreateDashboard(NEW_DASHBOARD_ID);
 
-				renderExplorerOptionWrapper({ onExport: testOnExport }, featureFlags);
+			renderExplorerOptionWrapper({ onExport: testOnExport });
 
-				// Find and click the "Add to Dashboard" button
-				const addToDashboardButton = screen.getByRole('button', {
-					name: ADD_TO_DASHBOARD_BUTTON_NAME,
-				});
-				await user.click(addToDashboardButton);
+			// Find and click the "Add to Dashboard" button
+			const addToDashboardButton = screen.getByRole('button', {
+				name: ADD_TO_DASHBOARD_BUTTON_NAME,
+			});
+			await user.click(addToDashboardButton);
 
-				// Wait for the export modal to appear
-				await waitFor(() => {
-					expect(screen.getByRole('dialog')).toBeInTheDocument();
-				});
-
-				// Click the "New dashboard" button
-				const newDashboardButton = screen.getByTestId('export-panel-new-dashboard');
-				await user.click(newDashboardButton);
-
-				// Wait for the API call to complete and onExport to be called
-				await waitFor(() => {
-					expect(testOnExport).toHaveBeenCalledWith(
-						{ id: NEW_DASHBOARD_ID, title: expectedTitle },
-						true,
-					);
-				});
+			// Wait for the export modal to appear
+			await waitFor(() => {
+				expect(screen.getByRole('dialog')).toBeInTheDocument();
 			});
 
-			it('should call onExport when selecting existing dashboard and clicking Export button', async () => {
-				const user = userEvent.setup({ pointerEventsCheck: 0 });
-				const testOnExport = jest.fn() as jest.MockedFunction<
-					(
-						dashboard: ExportDashboard | null,
-						isNewDashboard?: boolean,
-						queryToExport?: Query,
-					) => void
-				>;
+			// Click the "New dashboard" button
+			const newDashboardButton = screen.getByTestId('export-panel-new-dashboard');
+			await user.click(newDashboardButton);
 
-				// Mock existing dashboards with unique titles
-				const dashboards: PickerDashboard[] = [
-					{ id: 'dashboard-1', title: 'Dashboard 1' },
-					{ id: 'dashboard-2', title: 'Dashboard 2' },
-				];
-				mockDashboardList(dashboards);
+			// Wait for the API call to complete and onExport to be called
+			await waitFor(() => {
+				expect(testOnExport).toHaveBeenCalledWith(
+					{ id: NEW_DASHBOARD_ID, title: NEW_DASHBOARD_TITLE },
+					true,
+				);
+			});
+		});
 
-				renderExplorerOptionWrapper({ onExport: testOnExport }, featureFlags);
+		it('should call onExport when selecting existing dashboard and clicking Export button', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const testOnExport = jest.fn() as jest.MockedFunction<
+				(
+					dashboard: ExportDashboard | null,
+					isNewDashboard?: boolean,
+					queryToExport?: Query,
+				) => void
+			>;
 
-				// Find and click the "Add to Dashboard" button
-				const addToDashboardButton = screen.getByRole('button', {
-					name: ADD_TO_DASHBOARD_BUTTON_NAME,
-				});
-				await user.click(addToDashboardButton);
+			// Mock existing dashboards with unique titles
+			const dashboards: PickerDashboard[] = [
+				{ id: 'dashboard-1', title: 'Dashboard 1' },
+				{ id: 'dashboard-2', title: 'Dashboard 2' },
+			];
+			mockDashboardList(dashboards);
 
-				// Wait for the export modal to appear
-				await waitFor(() => {
-					expect(screen.getByRole('dialog')).toBeInTheDocument();
-				});
+			renderExplorerOptionWrapper({ onExport: testOnExport });
 
-				// Wait for the dashboard select to render AND finish loading. antd
-				// disables the Select while the list request is in flight, and a click
-				// on a disabled combobox is a no-op — so sync on the ready (enabled)
-				// state before clicking.
-				const modal = screen.getByRole('dialog');
-				await waitFor(() => {
-					const combobox = modal.querySelector('[role="combobox"]');
-					expect(combobox).toBeTruthy();
-					expect(combobox).not.toBeDisabled();
-				});
+			// Find and click the "Add to Dashboard" button
+			const addToDashboardButton = screen.getByRole('button', {
+				name: ADD_TO_DASHBOARD_BUTTON_NAME,
+			});
+			await user.click(addToDashboardButton);
 
-				const dashboardSelect = modal.querySelector(
-					'[role="combobox"]',
-				) as HTMLElement;
-				expect(dashboardSelect).toBeInTheDocument();
-				await user.click(dashboardSelect);
-
-				// Wait for the dropdown options to appear and select the first dashboard
-				await waitFor(() => {
-					expect(screen.getByText(dashboards[0].title)).toBeInTheDocument();
-				});
-
-				// Click on the first dashboard option
-				const dashboardOption = screen.getByText(dashboards[0].title);
-				await user.click(dashboardOption);
-
-				// Wait for the selection to be made and the export button to be enabled
-				await waitFor(() => {
-					expect(screen.getByTestId('export-panel-export')).not.toBeDisabled();
-				});
-
-				// Click the export button
-				const exportButton = screen.getByTestId('export-panel-export');
-				await user.click(exportButton);
-
-				// Wait for onExport to be called with the selected dashboard
-				await waitFor(() => {
-					expect(testOnExport).toHaveBeenCalledWith(
-						{ id: dashboards[0].id, title: dashboards[0].title },
-						false,
-					);
-				});
+			// Wait for the export modal to appear
+			await waitFor(() => {
+				expect(screen.getByRole('dialog')).toBeInTheDocument();
 			});
 
-			it('should test actual handleExport function with generateExportToDashboardLink and verify useUpdateDashboard is NOT called', async () => {
-				const user = userEvent.setup({ pointerEventsCheck: 0 });
-
-				// Mock the safeNavigate function
-				const mockSafeNavigate = jest.fn();
-
-				// Get the mock mutate function to track calls
-				const mockMutate = mockUseUpdateDashboard().mutate as jest.MockedFunction<
-					(...args: unknown[]) => void
-				>;
-
-				const panelTypeParam = PANEL_TYPES.TIME_SERIES;
-				const widgetId = v4();
-				const query = mockQuery;
-
-				// Create a real handleExport function similar to LogsExplorerViews
-				// This should NOT call useUpdateDashboard (as per PR #8029)
-				const handleExport = (dashboard: ExportDashboard | null): void => {
-					if (!dashboard) {
-						return;
-					}
-
-					// Call the actual generateExportToDashboardLink function (not mocked)
-					const dashboardEditView = generateExportToDashboardLink({
-						query,
-						panelType: panelTypeParam,
-						dashboardId: dashboard.id,
-						widgetId,
-					});
-
-					// Simulate navigation
-					mockSafeNavigate(dashboardEditView);
-				};
-
-				// Mock existing dashboards
-				const dashboards: PickerDashboard[] = [
-					{ id: TEST_DASHBOARD_ID, title: TEST_DASHBOARD_TITLE_2 },
-				];
-				mockDashboardList(dashboards);
-
-				renderExplorerOptionWrapper({ onExport: handleExport }, featureFlags);
-
-				// Find and click the "Add to Dashboard" button
-				const addToDashboardButton = screen.getByRole('button', {
-					name: ADD_TO_DASHBOARD_BUTTON_NAME,
-				});
-				await user.click(addToDashboardButton);
-
-				// Wait for the export modal to appear
-				await waitFor(() => {
-					expect(screen.getByRole('dialog')).toBeInTheDocument();
-				});
-
-				// Wait for the dashboard select to render AND finish loading (see note above).
-				const modal = screen.getByRole('dialog');
-				await waitFor(() => {
-					const combobox = modal.querySelector('[role="combobox"]');
-					expect(combobox).toBeTruthy();
-					expect(combobox).not.toBeDisabled();
-				});
-
-				const dashboardSelect = modal.querySelector(
-					'[role="combobox"]',
-				) as HTMLElement;
-				expect(dashboardSelect).toBeInTheDocument();
-				await user.click(dashboardSelect);
-
-				// Wait for the dropdown options to appear and select the dashboard
-				await waitFor(() => {
-					expect(screen.getByText(dashboards[0].title)).toBeInTheDocument();
-				});
-
-				// Click on the dashboard option
-				const dashboardOption = screen.getByText(dashboards[0].title);
-				await user.click(dashboardOption);
-
-				// Wait for the selection to be made and the export button to be enabled
-				await waitFor(() => {
-					expect(screen.getByTestId('export-panel-export')).not.toBeDisabled();
-				});
-
-				// Click the export button
-				const exportButton = screen.getByTestId('export-panel-export');
-				await user.click(exportButton);
-
-				// Wait for the handleExport function to be called and navigation to occur
-				await waitFor(() => {
-					expect(mockSafeNavigate).toHaveBeenCalledTimes(1);
-					expect(mockSafeNavigate).toHaveBeenCalledWith(
-						`/dashboard/${TEST_DASHBOARD_ID}/new?graphType=${panelTypeParam}&widgetId=${widgetId}&compositeQuery=${encodeURIComponent(
-							JSON.stringify(query),
-						)}`,
-					);
-				});
-
-				// Assert that useUpdateDashboard was NOT called (as per PR #8029)
-				expect(mockMutate).not.toHaveBeenCalled();
+			// Wait for the dashboard select to render AND finish loading. antd
+			// disables the Select while the list request is in flight, and a click
+			// on a disabled combobox is a no-op — so sync on the ready (enabled)
+			// state before clicking.
+			const modal = screen.getByRole('dialog');
+			await waitFor(() => {
+				const combobox = modal.querySelector('[role="combobox"]');
+				expect(combobox).toBeTruthy();
+				expect(combobox).not.toBeDisabled();
 			});
-		},
-	);
+
+			const dashboardSelect = modal.querySelector(
+				'[role="combobox"]',
+			) as HTMLElement;
+			expect(dashboardSelect).toBeInTheDocument();
+			await user.click(dashboardSelect);
+
+			// Wait for the dropdown options to appear and select the first dashboard
+			await waitFor(() => {
+				expect(screen.getByText(dashboards[0].title)).toBeInTheDocument();
+			});
+
+			// Click on the first dashboard option
+			const dashboardOption = screen.getByText(dashboards[0].title);
+			await user.click(dashboardOption);
+
+			// Wait for the selection to be made and the export button to be enabled
+			await waitFor(() => {
+				expect(screen.getByTestId('export-panel-export')).not.toBeDisabled();
+			});
+
+			// Click the export button
+			const exportButton = screen.getByTestId('export-panel-export');
+			await user.click(exportButton);
+
+			// Wait for onExport to be called with the selected dashboard
+			await waitFor(() => {
+				expect(testOnExport).toHaveBeenCalledWith(
+					{ id: dashboards[0].id, title: dashboards[0].title },
+					false,
+				);
+			});
+		});
+
+		it('should test actual handleExport function with generateExportToDashboardLink and verify useUpdateDashboard is NOT called', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+			// Mock the safeNavigate function
+			const mockSafeNavigate = jest.fn();
+
+			// Get the mock mutate function to track calls
+			const mockMutate = mockUseUpdateDashboard().mutate as jest.MockedFunction<
+				(...args: unknown[]) => void
+			>;
+
+			const panelTypeParam = PANEL_TYPES.TIME_SERIES;
+			const widgetId = v4();
+			const query = mockQuery;
+
+			// Create a real handleExport function similar to LogsExplorerViews
+			// This should NOT call useUpdateDashboard (as per PR #8029)
+			const handleExport = (dashboard: ExportDashboard | null): void => {
+				if (!dashboard) {
+					return;
+				}
+
+				// Call the actual generateExportToDashboardLink function (not mocked)
+				const dashboardEditView = generateExportToDashboardLink({
+					query,
+					panelType: panelTypeParam,
+					dashboardId: dashboard.id,
+					widgetId,
+				});
+
+				// Simulate navigation
+				mockSafeNavigate(dashboardEditView);
+			};
+
+			// Mock existing dashboards
+			const dashboards: PickerDashboard[] = [
+				{ id: TEST_DASHBOARD_ID, title: TEST_DASHBOARD_TITLE_2 },
+			];
+			mockDashboardList(dashboards);
+
+			renderExplorerOptionWrapper({ onExport: handleExport });
+
+			// Find and click the "Add to Dashboard" button
+			const addToDashboardButton = screen.getByRole('button', {
+				name: ADD_TO_DASHBOARD_BUTTON_NAME,
+			});
+			await user.click(addToDashboardButton);
+
+			// Wait for the export modal to appear
+			await waitFor(() => {
+				expect(screen.getByRole('dialog')).toBeInTheDocument();
+			});
+
+			// Wait for the dashboard select to render AND finish loading (see note above).
+			const modal = screen.getByRole('dialog');
+			await waitFor(() => {
+				const combobox = modal.querySelector('[role="combobox"]');
+				expect(combobox).toBeTruthy();
+				expect(combobox).not.toBeDisabled();
+			});
+
+			const dashboardSelect = modal.querySelector(
+				'[role="combobox"]',
+			) as HTMLElement;
+			expect(dashboardSelect).toBeInTheDocument();
+			await user.click(dashboardSelect);
+
+			// Wait for the dropdown options to appear and select the dashboard
+			await waitFor(() => {
+				expect(screen.getByText(dashboards[0].title)).toBeInTheDocument();
+			});
+
+			// Click on the dashboard option
+			const dashboardOption = screen.getByText(dashboards[0].title);
+			await user.click(dashboardOption);
+
+			// Wait for the selection to be made and the export button to be enabled
+			await waitFor(() => {
+				expect(screen.getByTestId('export-panel-export')).not.toBeDisabled();
+			});
+
+			// Click the export button
+			const exportButton = screen.getByTestId('export-panel-export');
+			await user.click(exportButton);
+
+			// Wait for the handleExport function to be called and navigation to occur
+			await waitFor(() => {
+				expect(mockSafeNavigate).toHaveBeenCalledTimes(1);
+				expect(mockSafeNavigate).toHaveBeenCalledWith(
+					`/dashboard/${TEST_DASHBOARD_ID}/new?graphType=${panelTypeParam}&widgetId=${widgetId}&compositeQuery=${encodeURIComponent(
+						JSON.stringify(query),
+					)}`,
+				);
+			});
+
+			// Assert that useUpdateDashboard was NOT called (as per PR #8029)
+			expect(mockMutate).not.toHaveBeenCalled();
+		});
+	});
 
 	it('should not show export buttons when component is disabled', () => {
 		const testOnExport = jest.fn() as jest.MockedFunction<
