@@ -21,6 +21,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/statementbuilder"
+	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
@@ -34,6 +36,15 @@ import (
 var (
 	intervalWarn = "Query %s is requesting aggregation interval %v seconds, which is smaller than the minimum allowed interval of %v seconds for selected time range. Using the minimum instead"
 )
+
+// Querier interface defines the contract for querying data.
+type Querier interface {
+	QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest) (*qbtypes.QueryRangeResponse, error)
+	QueryRawStream(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest, client *qbtypes.RawStream)
+	statsreporter.StatsCollector
+	// QueryRangePreview validates and renders the queries without executing them.
+	QueryRangePreview(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest, opts qbtypes.QueryRangePreviewOptions) (*qbtypes.QueryRangePreviewResponse, error)
+}
 
 type querier struct {
 	logger                   *slog.Logger
@@ -60,12 +71,7 @@ func New(
 	telemetryStore telemetrystore.TelemetryStore,
 	metadataStore telemetrytypes.MetadataStore,
 	promEngine prometheus.Prometheus,
-	traceStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation],
-	logStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation],
-	auditStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation],
-	metricStmtBuilder qbtypes.StatementBuilder[qbtypes.MetricAggregation],
-	meterStmtBuilder qbtypes.StatementBuilder[qbtypes.MetricAggregation],
-	traceOperatorStmtBuilder qbtypes.TraceOperatorStatementBuilder,
+	builders *statementbuilder.Builders,
 	bucketCache BucketCache,
 	flagger flagger.Flagger,
 	logTraceIDWindowPadding time.Duration,
@@ -75,18 +81,21 @@ func New(
 	if maxConcurrentQueries <= 0 {
 		maxConcurrentQueries = DefaultMaxConcurrentQueries
 	}
+	if builders == nil {
+		builders = &statementbuilder.Builders{}
+	}
 	return &querier{
 		logger:                   querierSettings.Logger(),
 		fl:                       flagger,
 		telemetryStore:           telemetryStore,
 		metadataStore:            metadataStore,
 		promEngine:               promEngine,
-		traceStmtBuilder:         traceStmtBuilder,
-		logStmtBuilder:           logStmtBuilder,
-		auditStmtBuilder:         auditStmtBuilder,
-		metricStmtBuilder:        metricStmtBuilder,
-		meterStmtBuilder:         meterStmtBuilder,
-		traceOperatorStmtBuilder: traceOperatorStmtBuilder,
+		traceStmtBuilder:         builders.Trace,
+		logStmtBuilder:           builders.Log,
+		auditStmtBuilder:         builders.Audit,
+		metricStmtBuilder:        builders.Metric,
+		meterStmtBuilder:         builders.Meter,
+		traceOperatorStmtBuilder: builders.TraceOperator,
 		bucketCache:              bucketCache,
 		liveDataRefresh:          5 * time.Second,
 		builderConfig: builderConfig{

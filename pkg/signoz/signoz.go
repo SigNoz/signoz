@@ -48,14 +48,15 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlmigrator"
 	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/statementbuilder"
+	"github.com/SigNoz/signoz/pkg/statementbuilder/auditstatementbuilder"
+	"github.com/SigNoz/signoz/pkg/statementbuilder/logsstatementbuilder"
+	"github.com/SigNoz/signoz/pkg/statementbuilder/meterstatementbuilder"
+	"github.com/SigNoz/signoz/pkg/statementbuilder/metricsstatementbuilder"
+	"github.com/SigNoz/signoz/pkg/statementbuilder/tracesstatementbuilder"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
-	"github.com/SigNoz/signoz/pkg/telemetryaudit"
-	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrymetadata"
-	"github.com/SigNoz/signoz/pkg/telemetrymeter"
-	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	pkgtokenizer "github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -94,6 +95,61 @@ type SigNoz struct {
 	Gateway                gateway.Gateway
 	Auditor                auditor.Auditor
 	MeterReporter          meterreporter.Reporter
+}
+
+// newQueryStack assembles the query stack once: the shared telemetry metadata
+// store, the per-signal statement builders, and the bucket cache. The metadata
+// store is returned so callers can reuse the single instance downstream.
+func newQueryStack(
+	ctx context.Context,
+	settings factory.ProviderSettings,
+	config Config,
+	telemetryStore telemetrystore.TelemetryStore,
+	cache cache.Cache,
+	fl flagger.Flagger,
+) (telemetrytypes.MetadataStore, *statementbuilder.Builders, querier.BucketCache, error) {
+	metadataStore := telemetrymetadata.NewTelemetryMetaStore(settings, telemetryStore, fl)
+
+	// Composition root: build each per-signal statement-builder factory and assemble
+	// the Builders bundle. This is the only place that imports the concrete sub-packages.
+	cfg := config.StatementBuilder
+	traceStmtBuilder, err := tracesstatementbuilder.NewFactory(telemetryStore, metadataStore, fl).New(ctx, settings, cfg)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	traceOperatorStmtBuilder, err := tracesstatementbuilder.NewOperatorFactory(telemetryStore, metadataStore, fl).New(ctx, settings, cfg)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	logStmtBuilder, err := logsstatementbuilder.NewFactory(telemetryStore, metadataStore, fl).New(ctx, settings, cfg)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	auditStmtBuilder, err := auditstatementbuilder.NewFactory(metadataStore, fl).New(ctx, settings, cfg)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	metricStmtBuilder, err := metricsstatementbuilder.NewFactory(metadataStore, fl).New(ctx, settings, cfg)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	meterStmtBuilder, err := meterstatementbuilder.NewFactory(metadataStore, fl).New(ctx, settings, cfg)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	builders := &statementbuilder.Builders{
+		Trace:         traceStmtBuilder,
+		TraceOperator: traceOperatorStmtBuilder,
+		Log:           logStmtBuilder,
+		Audit:         auditStmtBuilder,
+		Metric:        metricStmtBuilder,
+		Meter:         meterStmtBuilder,
+	}
+
+	bucketCache := querier.NewBucketCache(settings, cache, config.Querier.CacheTTL, config.Querier.FluxInterval)
+
+	return metadataStore, builders, bucketCache, nil
 }
 
 func New(
@@ -254,12 +310,19 @@ func New(
 		return nil, err
 	}
 
+	// Assemble the query stack (metadata store, statement builders, bucket cache) once,
+	// and reuse the single metadata store everywhere downstream.
+	telemetryMetadataStore, builders, bucketCache, err := newQueryStack(ctx, providerSettings, config, telemetrystore, cache, flagger)
+	if err != nil {
+		return nil, err
+	}
+
 	// Initialize querier from the available querier provider factories
 	querier, err := factory.NewProviderFromNamedMap(
 		ctx,
 		providerSettings,
 		config.Querier,
-		NewQuerierProviderFactories(telemetrystore, prometheus, cache, flagger),
+		NewQuerierProviderFactories(telemetrystore, prometheus, telemetryMetadataStore, builders, bucketCache, flagger),
 		config.Querier.Provider(),
 	)
 	if err != nil {
@@ -426,35 +489,6 @@ func New(
 	if err != nil {
 		return nil, err
 	}
-
-	// Initialize telemetry metadata store
-	// TODO: consolidate other telemetrymetadata.NewTelemetryMetaStore initializations to reuse this instance instead.
-	telemetryMetadataStore := telemetrymetadata.NewTelemetryMetaStore(
-		providerSettings,
-		telemetrystore,
-		telemetrytraces.DBName,
-		telemetrytraces.TagAttributesV2TableName,
-		telemetrytraces.SpanAttributesKeysTblName,
-		telemetrytraces.SpanIndexV3TableName,
-		telemetrymetrics.DBName,
-		telemetrymetrics.AttributesMetadataTableName,
-		telemetrymeter.DBName,
-		telemetrymeter.SamplesAgg1dTableName,
-		telemetrylogs.DBName,
-		telemetrylogs.LogsV2TableName,
-		telemetrylogs.TagAttributesV2TableName,
-		telemetrylogs.LogAttributeKeysTblName,
-		telemetrylogs.LogResourceKeysTblName,
-		telemetryaudit.DBName,
-		telemetryaudit.AuditLogsTableName,
-		telemetryaudit.TagAttributesTableName,
-		telemetryaudit.LogAttributeKeysTblName,
-		telemetryaudit.LogResourceKeysTblName,
-		telemetrymetadata.DBName,
-		telemetrymetadata.AttributesMetadataTableName,
-		telemetrymetadata.ColumnEvolutionMetadataTableName,
-		flagger,
-	)
 
 	global, err := factory.NewProviderFromNamedMap(
 		ctx,
