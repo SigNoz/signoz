@@ -81,12 +81,7 @@ export type FlatItem<TData> =
 	| { kind: 'row'; row: TanStackRowType<TData> }
 	| { kind: 'expansion'; row: TanStackRowType<TData> };
 
-/**
- * State of a row at click time, passed as the third argument to `onRowClick`.
- * The consumer owns the open/close decision — e.g. `isActive ? close() : open()`.
- */
 export type RowClickContext = {
-	/** Whether the clicked row is currently active (per `isRowActive`). */
 	isActive: boolean;
 };
 
