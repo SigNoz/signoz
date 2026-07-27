@@ -8,6 +8,9 @@
 	:global(.ant-select) {
 		width: 100%;
 	}
+	:global(.ant-select-selector) {
+		border-color: var(--l2-border) !important;
+	}
 }
 
 // Stacked per-column unit pickers; each column keeps the standard field layout.

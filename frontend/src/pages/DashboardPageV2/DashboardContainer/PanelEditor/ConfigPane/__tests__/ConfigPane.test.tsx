@@ -1,19 +1,12 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { useState } from 'react';
 import type {
 	DashboardtypesPanelDTO,
 	DashboardtypesPanelSpecDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import { render, screen, userEvent } from 'tests/test-utils';
 import { EQueryType } from 'types/common/dashboard';
 
 import ConfigPane from '../ConfigPane';
-
-// The Actions group's hook navigates/logs; stub it so ConfigPane renders without a router.
-jest.mock(
-	'pages/DashboardPageV2/DashboardContainer/PanelsAndSectionsLayout/Panel/hooks/useCreateAlertFromPanel',
-	() => ({
-		useCreateAlertFromPanel: (): jest.Mock => jest.fn(),
-	}),
-);
 
 function spec(unit?: string): DashboardtypesPanelSpecDTO {
 	return {
@@ -40,7 +33,23 @@ function renderConfigPane(
 		panelId: 'panel-1',
 		...overrides,
 	};
-	render(<ConfigPane {...props} />);
+
+	// Stateful so typed edits feed back into the spec, as the panel editor owns it.
+	function Harness(): JSX.Element {
+		const [currentSpec, setCurrentSpec] = useState(props.spec);
+		return (
+			<ConfigPane
+				{...props}
+				spec={currentSpec}
+				onChangeSpec={(next): void => {
+					props.onChangeSpec(next);
+					setCurrentSpec(next);
+				}}
+			/>
+		);
+	}
+
+	render(<Harness />);
 	return props;
 }
 
@@ -54,14 +63,15 @@ describe('ConfigPane', () => {
 		);
 	});
 
-	it('reports title edits through onChangeSpec (into spec.display)', () => {
+	it('reports title edits through onChangeSpec (into spec.display)', async () => {
+		const user = userEvent.setup();
 		const { onChangeSpec } = renderConfigPane();
 
-		fireEvent.change(screen.getByTestId('panel-editor-v2-title'), {
-			target: { value: 'Memory' },
-		});
+		const title = screen.getByTestId('panel-editor-v2-title');
+		await user.clear(title);
+		await user.type(title, 'Memory');
 
-		expect(onChangeSpec).toHaveBeenCalledWith(
+		expect(onChangeSpec).toHaveBeenLastCalledWith(
 			expect.objectContaining({
 				display: { name: 'Memory', description: 'usage' },
 			}),
