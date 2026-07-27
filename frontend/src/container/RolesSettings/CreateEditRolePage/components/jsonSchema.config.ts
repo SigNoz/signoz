@@ -104,7 +104,9 @@ function buildResourceSnippets(): SnippetDef[] {
 	for (const resource of resources) {
 		const { kind, type, allowedVerbs } = resource;
 
-		snippets.push(createGrantAllPermissionSnippet(kind, allowedVerbs, type));
+		if (allowedVerbs.length > 1) {
+			snippets.push(createGrantAllPermissionSnippet(kind, allowedVerbs, type));
+		}
 
 		for (const verb of allowedVerbs) {
 			snippets.push(createGrantPermissionToVerbAndKind(kind, verb, type));
