@@ -9,6 +9,8 @@ import { selectVariablesExpanded } from '../store/slices/collapseSlice';
 import { useDashboardStore } from '../store/useDashboardStore';
 import AddVariableFull from './components/AddVariable/AddVariableFull';
 import AddVariableIcon from './components/AddVariable/AddVariableIcon';
+import { TOOLTIP_SCROLL_CONTENT_CLASS } from 'components/TooltipScrollArea/TooltipScrollArea';
+
 import HiddenVariablesTooltip from './components/HiddenVariablesTooltip/HiddenVariablesTooltip';
 import { useVariableSelection } from './hooks/useVariableSelection';
 import VariableSelector from './components/VariableSelector/VariableSelector';
@@ -113,6 +115,7 @@ function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 						) : (
 							<TooltipSimple
 								side="top"
+								tooltipContentProps={{ className: TOOLTIP_SCROLL_CONTENT_CLASS }}
 								title={
 									<HiddenVariablesTooltip
 										variables={hiddenVariables}

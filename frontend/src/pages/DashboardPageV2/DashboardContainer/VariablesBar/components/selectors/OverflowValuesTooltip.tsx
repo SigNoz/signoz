@@ -1,5 +1,7 @@
 import { TooltipSimple } from '@signozhq/ui/tooltip';
-import TooltipScrollArea from 'components/TooltipScrollArea/TooltipScrollArea';
+import TooltipScrollArea, {
+	TOOLTIP_SCROLL_CONTENT_CLASS,
+} from 'components/TooltipScrollArea/TooltipScrollArea';
 
 import styles from '../../VariablesBar.module.scss';
 
@@ -20,6 +22,7 @@ function OverflowValuesTooltip({
 		<TooltipSimple
 			side="top"
 			delayDuration={300}
+			tooltipContentProps={{ className: TOOLTIP_SCROLL_CONTENT_CLASS }}
 			title={
 				<TooltipScrollArea>
 					<ul className={styles.overflowValues}>
