@@ -50,6 +50,8 @@ function TanStackRowCellsInner<TData, TItemKey = string>({
 				return;
 			}
 
+			// The table does not decide open vs. close — it reports the click and
+			// the row's active state, and the consumer owns the routing.
 			const isActive = isRowActive?.(rowData) ?? false;
 			onRowClick?.(rowData, itemKey, { isActive });
 		},
