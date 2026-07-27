@@ -15,6 +15,7 @@ import PanelHeaderSearch from './PanelHeaderSearch';
 import PanelStatusPopover from '../PanelStatus/PanelStatusPopover';
 import {
 	panelStatusFromError,
+	panelStatusFromMultipleEnabledQueries,
 	panelStatusFromWarning,
 } from '../PanelStatus/utils';
 import styles from './PanelHeader.module.scss';
@@ -74,11 +75,24 @@ function PanelHeader({
 		[warning],
 	);
 
+	// Client-derived: warn a Number panel that has more than one enabled query (#9512).
+	const multiQueryWarningDetail = useMemo(
+		() => panelStatusFromMultipleEnabledQueries(panel),
+		[panel],
+	);
+
 	/**
 	 * Hide the entire header when there's no title, description, or status to show,
 	 * and the actions menu is suppressed (editor preview).
 	 */
-	if (!name && !description && !errorDetail && !warningDetail && hideActions) {
+	if (
+		!name &&
+		!description &&
+		!errorDetail &&
+		!warningDetail &&
+		!multiQueryWarningDetail &&
+		hideActions
+	) {
 		return <Fragment />;
 	}
 
@@ -123,6 +137,13 @@ function PanelHeader({
 				{errorDetail && <PanelStatusPopover variant="error" detail={errorDetail} />}
 				{warningDetail && (
 					<PanelStatusPopover variant="warning" detail={warningDetail} />
+				)}
+				{multiQueryWarningDetail && (
+					<PanelStatusPopover
+						variant="warning"
+						detail={multiQueryWarningDetail}
+						testId="panel-status-config-warning"
+					/>
 				)}
 				{/* Renders nothing when no action survives its gates (kind/role/context). */}
 				{!hideActions && (

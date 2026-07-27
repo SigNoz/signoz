@@ -17,6 +17,8 @@ const VARIANT_CONFIG: Record<
 interface PanelStatusPopoverProps {
 	variant: PanelStatusVariant;
 	detail: PanelStatusDetail;
+	/** Overrides the trigger's test id; defaults to `panel-status-<variant>`. */
+	testId?: string;
 }
 
 /**
@@ -26,6 +28,7 @@ interface PanelStatusPopoverProps {
 function PanelStatusPopover({
 	variant,
 	detail,
+	testId,
 }: PanelStatusPopoverProps): JSX.Element {
 	const { color, ariaLabel } = VARIANT_CONFIG[variant];
 	const Icon = variant === 'error' ? CircleX : TriangleAlert;
@@ -41,7 +44,7 @@ function PanelStatusPopover({
 			<span
 				className={styles.trigger}
 				aria-label={ariaLabel}
-				data-testid={`panel-status-${variant}`}
+				data-testid={testId ?? `panel-status-${variant}`}
 			>
 				<Icon size={16} color={color} />
 			</span>

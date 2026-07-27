@@ -203,9 +203,9 @@ def create_clickhouse(  # pylint: disable=too-many-arguments,too-many-positional
     pytestconfig: pytest.Config,
     cache_key: str = "clickhouse",
 ) -> types.TestContainerClickhouse:
-    coordinator = next(iter(keeper.container_configs.values()))
-
     def create() -> types.TestContainerClickhouse:
+        # Lazy: the keeper fixture is empty under --teardown (never created).
+        coordinator = next(iter(keeper.container_configs.values()))
         clickhouse_version = request.config.getoption("--clickhouse-version")
 
         container = ClickHouseContainer(
@@ -381,9 +381,10 @@ def create_clickhouse_cluster(  # pylint: disable=too-many-arguments,too-many-po
     migration goes through. Per-node containers are exposed via `nodes` so
     tests can assert shard-local state.
     """
-    coordinator = next(iter(keeper.container_configs.values()))
 
     def create() -> types.TestContainerClickhouse:
+        # Lazy: the keeper fixture is empty under --teardown (never created).
+        coordinator = next(iter(keeper.container_configs.values()))
         clickhouse_version = request.config.getoption("--clickhouse-version")
 
         # Unique aliases per creation: docker allows duplicate network aliases

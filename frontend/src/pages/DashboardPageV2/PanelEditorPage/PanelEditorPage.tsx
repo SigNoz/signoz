@@ -21,6 +21,7 @@ import {
 	parseNewPanelLayoutIndex,
 } from '../DashboardContainer/PanelEditor/newPanelRoute';
 import { useSyncVariablesForSuggestions } from '../DashboardContainer/hooks/useSyncVariablesForSuggestions';
+import { useTimeSearchParams } from '../DashboardContainer/hooks/useTimeSearchParams';
 import { createDefaultPanel } from '../DashboardContainer/patchOps';
 import { useDashboardStore } from '../DashboardContainer/store/useDashboardStore';
 import { useSeedVariableSelection } from '../DashboardContainer/VariablesBar/hooks/useSeedVariableSelection';
@@ -38,6 +39,7 @@ function PanelEditorPage(): JSX.Element {
 	}>();
 	const { search, state } = useLocation();
 	const { safeNavigate } = useSafeNavigate();
+	const timeSearch = useTimeSearchParams();
 
 	// Edits handed off from the View modal's drilldown — open the editor on these
 	// instead of the saved panel. Lost on refresh/new-tab, which falls back to saved.
@@ -105,10 +107,11 @@ function PanelEditorPage(): JSX.Element {
 	const layoutIndex = parseNewPanelLayoutIndex(search);
 
 	const backToDashboard = useCallback((): void => {
-		// Drop editor-only URL state (chiefly `compositeQuery`); the dashboard reads its
-		// variable selection from the persisted store, and time lives in Redux.
-		safeNavigate(generatePath(ROUTES.DASHBOARD, { dashboardId }));
-	}, [safeNavigate, dashboardId]);
+		// Drop editor-only URL state (variables come from the persisted store), but carry
+		// time so a custom range picked in the editor isn't reset to the dashboard default.
+		const path = generatePath(ROUTES.DASHBOARD, { dashboardId });
+		safeNavigate(timeSearch ? `${path}?${timeSearch}` : path);
+	}, [safeNavigate, dashboardId, timeSearch]);
 
 	if (isLoading) {
 		return <Spinner tip="Loading dashboard..." />;
@@ -137,6 +140,7 @@ function PanelEditorPage(): JSX.Element {
 			dashboardId={dashboardId}
 			panelId={panelId}
 			panel={panel}
+			savedPanel={existingPanel}
 			isNew={!!newKind}
 			layoutIndex={layoutIndex}
 			isEditable={isEditable}

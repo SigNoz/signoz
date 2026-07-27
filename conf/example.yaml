@@ -9,6 +9,11 @@ global:
   # the path component (e.g. /signoz in https://example.com/signoz) is used
   # as the base path for all HTTP routes (both API and web frontend).
   external_url: <unset>
+  # origins (scheme://host[:port], no path) allowed as login redirect targets. include
+  # the origin the signoz ui is served on. when not configured, redirect targets are
+  # not validated.
+  # allowed_origins:
+  #   - https://signoz.example.com
   # the url where the SigNoz backend receives telemetry data (traces, metrics, logs) from instrumented applications.
   ingestion_url: <unset>
   # the url of the SigNoz MCP server. when unset, the MCP settings page is hidden in the frontend.

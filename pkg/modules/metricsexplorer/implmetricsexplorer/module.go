@@ -87,7 +87,7 @@ func (m *module) listMeterMetrics(ctx context.Context, params *metricsexplorerty
 		"any(type) AS metric_type",
 		"any(unit) AS metric_unit",
 		"argMax(temporality, unix_milli) AS temporality",
-		"any(is_monotonic) AS is_monotonic",
+		"argMax(is_monotonic, unix_milli) AS is_monotonic",
 	)
 	sb.From(fmt.Sprintf("%s.%s", telemetrymeter.DBName, telemetrymeter.SamplesTableName))
 
@@ -775,7 +775,7 @@ func (m *module) fetchTimeseriesMetadata(ctx context.Context, orgID valuer.UUID,
 		"anyLast(type) AS metric_type",
 		"argMax(unit, unix_milli) AS metric_unit",
 		"anyLast(temporality) AS temporality",
-		"anyLast(is_monotonic) AS is_monotonic",
+		"argMax(is_monotonic, unix_milli) AS is_monotonic",
 	)
 	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.TimeseriesV4TableName))
 	sb.Where(sb.In("metric_name", args...))

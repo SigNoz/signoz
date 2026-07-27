@@ -1,3 +1,5 @@
+@use '../../../../../styles/scrollbar' as *;
+
 .config {
 	display: flex;
 	flex-direction: column;
@@ -6,33 +8,24 @@
 	background-color: var(--l1-background);
 	overflow-y: auto;
 	overflow-x: hidden;
+	padding-bottom: 44px;
 
-	//TODO: replace this with custom-scrollbar mixin
-	// Thin, unobtrusive scrollbar (replaces the chunky native bar).
-	$thumb: color-mix(in srgb, var(--bg-vanilla-100) 16%, transparent);
-
-	scrollbar-width: thin;
-	scrollbar-color: $thumb transparent;
-
-	&::-webkit-scrollbar {
-		width: 8px;
-	}
-
-	&::-webkit-scrollbar-track {
-		background: transparent;
-	}
-
-	&::-webkit-scrollbar-thumb {
-		background: $thumb;
-		border-radius: 999px;
-		border: 2px solid transparent;
-		background-clip: padding-box;
-	}
+	@include custom-scrollbar;
 }
 
 .heading {
-	margin-bottom: 18px;
-	padding: 16px 16px 0 16px;
+	padding: 16px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.marker {
+	display: inline-block;
+	width: 8px;
+	height: 4px;
+	border-radius: 20px;
+	background-color: var(--primary);
 }
 
 .title {
@@ -49,11 +42,10 @@
 
 .eyebrow {
 	display: block;
-	margin: 0 2px 10px;
 	font-size: 11px;
 	font-weight: 600;
+	padding: 16px;
 	letter-spacing: 0.06em;
-	text-transform: uppercase;
 	color: var(--l1-foreground);
 }
 
@@ -61,7 +53,7 @@
 	display: flex;
 	flex-direction: column;
 	gap: 16px;
-	padding: 0 16px;
+	padding: 16px;
 }
 
 .field {
@@ -71,20 +63,19 @@
 }
 
 .divider {
+	// flex-shrink:0 keeps the 1px line from collapsing to 0 once the pane
+	// content overflows and the flex column starts shrinking its children.
+	flex-shrink: 0;
 	height: 1px;
-	background: var(--l2-border);
-	margin: 18px 0;
-}
-
-.sectionsContainer {
-	padding: 0 16px;
+	background: var(--l1-border);
 }
 
 .sections {
 	display: flex;
 	flex-direction: column;
 
-	& > * + * {
-		border-top: 1px solid var(--l2-border);
+	& > * {
+		padding: 0 16px;
+		border-top: 1px solid var(--l1-border);
 	}
 }

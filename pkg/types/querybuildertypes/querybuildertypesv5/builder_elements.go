@@ -322,6 +322,10 @@ func (ReduceTo) Enum() []any {
 	}
 }
 
+func (r ReduceTo) IsValid() bool {
+	return slices.ContainsFunc(r.Enum(), func(v any) bool { return v == r })
+}
+
 // FunctionReduceTo applies the reduceTo operator to a time series and returns a new series with the reduced value
 // reduceTo can be one of: last, sum, avg, min, max, count, median
 // if reduceTo is not recognized, the function returns the original series.
@@ -613,7 +617,7 @@ func (o OrderBy) Copy() OrderBy {
 type SecondaryAggregation struct {
 	// stepInterval of the query
 	// if not set, it will use the step interval of the primary aggregation
-	StepInterval Step `json:"stepInterval,omitempty"`
+	StepInterval Step `json:"stepInterval,omitzero"`
 	// expression to aggregate. example: count(), sum(item_price), countIf(day > 10)
 	Expression string `json:"expression"`
 	// if any, it will be used as the alias of the aggregation in the result

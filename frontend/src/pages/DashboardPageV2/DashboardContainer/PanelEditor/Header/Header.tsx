@@ -4,7 +4,10 @@ import { Button } from '@signozhq/ui/button';
 import { DialogWrapper } from '@signozhq/ui/dialog';
 import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
+import logEvent from 'api/common/logEvent';
+import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import { useConfirmableAction } from 'hooks/useConfirmableAction';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 
 import DisabledControlTooltip from '../../components/DisabledControlTooltip/DisabledControlTooltip';
 import styles from './Header.module.scss';
@@ -32,7 +35,13 @@ function Header({
 	onClose,
 }: HeaderProps): JSX.Element {
 	const discard = useConfirmableAction(
-		useCallback(async (): Promise<void> => onClose(), [onClose]),
+		useCallback(async (): Promise<void> => {
+			// Only reachable after confirming a discard, which is gated on unsaved edits.
+			void logEvent(DashboardDetailEvents.PanelEditorDiscarded, {
+				wasDirty: true,
+			});
+			onClose();
+		}, [onClose]),
 	);
 
 	// Confirm before closing with unsaved edits; a pristine panel closes straight away.
@@ -59,6 +68,11 @@ function Header({
 				<Typography.Text>Configure panel</Typography.Text>
 			</div>
 			<div className={styles.actions}>
+				<HeaderRightSection
+					enableAnnouncements={false}
+					enableShare={false}
+					enableFeedback={false}
+				/>
 				{showSwitchToView && (
 					<Button
 						variant="outlined"

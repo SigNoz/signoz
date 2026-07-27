@@ -18,7 +18,7 @@
 	--dialog-footer-padding: var(--spacing-8) var(--spacing-12);
 
 	display: flex;
-	overflow-y: auto;
+	overflow: hidden;
 
 	// The drawer body — children render inside [data-slot='drawer-description']
 	// (this is the @signozhq drawer, not antd, so .ant-drawer-body was a no-op).
@@ -27,6 +27,8 @@
 		flex-direction: column;
 		gap: var(--spacing-12);
 		padding: var(--spacing-10) var(--spacing-12);
+		min-height: 0;
+		overflow-y: auto;
 	}
 
 	[data-slot='select-content'] {

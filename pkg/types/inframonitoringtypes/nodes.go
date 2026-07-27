@@ -27,7 +27,6 @@ type NodeRecord struct {
 	NodeName              string                `json:"nodeName" required:"true"`
 	Condition             NodeCondition         `json:"condition" required:"true"`
 	NodeCountsByReadiness NodeCountsByReadiness `json:"nodeCountsByReadiness" required:"true"`
-	PodCountsByPhase      PodCountsByPhase      `json:"podCountsByPhase" required:"true"`
 	PodCountsByStatus     PodCountsByStatus     `json:"podCountsByStatus" required:"true"`
 	NodeCPU               float64               `json:"nodeCPU" required:"true"`
 	NodeCPUAllocatable    float64               `json:"nodeCPUAllocatable" required:"true"`
