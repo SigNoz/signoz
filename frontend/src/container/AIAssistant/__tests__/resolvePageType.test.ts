@@ -17,6 +17,26 @@ describe('resolvePageType', () => {
 		expect(resolvePageType(pathname, '')).toBe(PageTypeDTO.dashboard_detail);
 	});
 
+	it('returns panel_edit on the V2 panel editor', () => {
+		const pathname = ROUTES.DASHBOARD_PANEL_EDITOR.replace(
+			':dashboardId',
+			'dash-123',
+		).replace(':panelId', 'panel-abc');
+
+		expect(resolvePageType(pathname, '')).toBe(PageTypeDTO.panel_edit);
+	});
+
+	it('returns dashboard_detail on the unsaved new-panel editor', () => {
+		const pathname = ROUTES.DASHBOARD_PANEL_EDITOR.replace(
+			':dashboardId',
+			'dash-123',
+		).replace(':panelId', 'new');
+
+		expect(resolvePageType(pathname, '?panelKind=TimeSeries')).toBe(
+			PageTypeDTO.dashboard_detail,
+		);
+	});
+
 	it('returns alerts_triggered on alert history without ruleId', () => {
 		expect(resolvePageType(ROUTES.ALERT_HISTORY, '')).toBe(
 			PageTypeDTO.alerts_triggered,

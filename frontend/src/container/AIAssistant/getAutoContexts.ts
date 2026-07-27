@@ -2,6 +2,7 @@ import type { MessageContext } from 'api/ai-assistant/chat';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { AlertListTabs } from 'pages/AlertList/types';
+import { NEW_PANEL_ID } from 'pages/DashboardPageV2/DashboardContainer/PanelEditor/newPanelRoute';
 import { matchPath } from 'react-router-dom';
 
 /**
@@ -29,6 +30,29 @@ export function getAutoContexts(
 	const sharedMetadata = collectSharedMetadata(params);
 
 	// ── Dashboards ────────────────────────────────────────────────────────────
+
+	// Panel editor (V2) — `/dashboard/:dashboardId/panel/:panelId`. An unsaved
+	// panel (`panel/new`) has no id to attach yet and the schema requires a
+	// non-empty `panel_edit.widgetId`, so it degrades to the dashboard context —
+	// the in-progress query still rides along in `sharedMetadata`.
+	const panelEditorMatch = matchPath<{ dashboardId: string; panelId: string }>(
+		pathname,
+		{ path: ROUTES.DASHBOARD_PANEL_EDITOR, exact: true },
+	);
+	if (panelEditorMatch) {
+		const { dashboardId, panelId } = panelEditorMatch.params;
+		const isNewPanel = panelId === NEW_PANEL_ID;
+		return [
+			{
+				source: 'auto',
+				type: 'dashboard',
+				resourceId: dashboardId,
+				metadata: isNewPanel
+					? { page: 'dashboard_detail', ...sharedMetadata }
+					: { page: 'panel_edit', widgetId: panelId, ...sharedMetadata },
+			},
+		];
+	}
 
 	// Widget edit (panel_edit) — `/dashboard/:dashboardId/:widgetId`.
 	const widgetMatch = matchPath<{ dashboardId: string; widgetId: string }>(
