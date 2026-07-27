@@ -117,8 +117,12 @@ def test_logs_aggregate_functions(
             float(np.percentile(latencies, 95)),  # p95(latency_ms)
             float(np.percentile(latencies, 99)),  # p99(latency_ms)
             sum(1 for latency in latencies if latency >= 25),  # countIf(latency_ms >= 25)
-            len(latencies) / rate_interval_seconds,  # rate()
-            sum(latencies) / rate_interval_seconds,  # rate_sum(latency_ms)
+            # Response floats are rounded to 3 decimals at or above 1 and to 3
+            # significant figures below it (roundToNonZeroDecimals). Every other
+            # value here is exact; the rates are the only ones that repeat, and
+            # they stay below 1 for this fixture, so mirror the latter form.
+            float(f"{len(latencies) / rate_interval_seconds:.3g}"),  # rate()
+            float(f"{sum(latencies) / rate_interval_seconds:.3g}"),  # rate_sum(latency_ms)
             len(set(endpoints)),  # count_distinct(endpoint)
         ]
         assert by_service[service] == pytest.approx(expected), f"{service}: {by_service[service]} != {expected}"
