@@ -182,7 +182,6 @@ export type TanStackTableProps<TData, TItemKey = string> = {
 	getGroupKey?: (row: TData) => Record<string, string>;
 	getRowStyle?: (row: TData) => CSSProperties;
 	getRowClassName?: (row: TData) => string;
-	/** Per-row `data-testid`, for locating a specific row in tests. */
 	getRowTestId?: (row: TData) => string;
 	isRowActive?: (row: TData) => boolean;
 	renderRowActions?: (row: TData) => ReactNode;
