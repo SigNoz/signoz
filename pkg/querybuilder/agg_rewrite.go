@@ -96,9 +96,9 @@ func (r *aggExprRewriter) Rewrite(
 	}
 
 	if visitor.isRate {
-		return fmt.Sprintf("%s/%d", sel.SelectItems[0].String(), rateInterval), visitor.chArgs, nil
+		return fmt.Sprintf("%s/%d", chparser.Format(sel.SelectItems[0]), rateInterval), visitor.chArgs, nil
 	}
-	return sel.SelectItems[0].String(), visitor.chArgs, nil
+	return chparser.Format(sel.SelectItems[0]), visitor.chArgs, nil
 }
 
 // RewriteMulti rewrites a slice of expressions.
@@ -207,7 +207,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 	// Handle *If functions with predicate + values
 	if aggFunc.FuncCombinator {
 		// Map the predicate (last argument)
-		origPred := args[len(args)-1].String()
+		origPred := chparser.Format(args[len(args)-1])
 		whereClause, err := PrepareWhereClause(
 			origPred,
 			FilterExprVisitorOpts{
@@ -242,7 +242,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 
 		// Map each value column argument
 		for i := 0; i < len(args)-1; i++ {
-			origVal := args[i].String()
+			origVal := chparser.Format(args[i])
 			fieldKey := telemetrytypes.GetFieldKeyFromKeyText(origVal)
 			expr, err := v.fieldMapper.ColumnExpressionFor(v.ctx, v.orgID, v.startNs, v.endNs, &fieldKey, dataType, v.fieldKeys)
 			if err != nil {
@@ -259,7 +259,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 	} else {
 		// Non-If functions: map every argument as a column/value
 		for i, arg := range args {
-			orig := arg.String()
+			orig := chparser.Format(arg)
 			fieldKey := telemetrytypes.GetFieldKeyFromKeyText(orig)
 			expr, err := v.fieldMapper.ColumnExpressionFor(v.ctx, v.orgID, v.startNs, v.endNs, &fieldKey, dataType, v.fieldKeys)
 			if err != nil {
