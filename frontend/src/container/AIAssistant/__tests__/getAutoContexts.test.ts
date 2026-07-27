@@ -190,7 +190,7 @@ describe('getAutoContexts', () => {
 		]);
 	});
 
-	it('falls back to dashboard detail on the unsaved new-panel editor', () => {
+	it('returns new panel context on the unsaved new-panel editor', () => {
 		const dashboardId = 'dash-123';
 		const pathname = ROUTES.DASHBOARD_PANEL_EDITOR.replace(
 			':dashboardId',
@@ -210,7 +210,7 @@ describe('getAutoContexts', () => {
 				type: 'dashboard',
 				resourceId: dashboardId,
 				metadata: {
-					page: 'dashboard_detail',
+					page: 'panel_create',
 					timeRange: { start: Number(startTime), end: Number(endTime) },
 				},
 			},

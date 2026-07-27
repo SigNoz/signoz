@@ -31,10 +31,8 @@ export function getAutoContexts(
 
 	// ── Dashboards ────────────────────────────────────────────────────────────
 
-	// Panel editor (V2) — `/dashboard/:dashboardId/panel/:panelId`. An unsaved
-	// panel (`panel/new`) has no id to attach yet and the schema requires a
-	// non-empty `panel_edit.widgetId`, so it degrades to the dashboard context —
-	// the in-progress query still rides along in `sharedMetadata`.
+	// Panel editor (V2). `panel/new` has no widget id yet and the schema requires
+	// a non-empty `panel_edit.widgetId`, so it reports `panel_create` instead.
 	const panelEditorMatch = matchPath<{ dashboardId: string; panelId: string }>(
 		pathname,
 		{ path: ROUTES.DASHBOARD_PANEL_EDITOR, exact: true },
@@ -48,28 +46,8 @@ export function getAutoContexts(
 				type: 'dashboard',
 				resourceId: dashboardId,
 				metadata: isNewPanel
-					? { page: 'dashboard_detail', ...sharedMetadata }
+					? { page: 'panel_create', ...sharedMetadata }
 					: { page: 'panel_edit', widgetId: panelId, ...sharedMetadata },
-			},
-		];
-	}
-
-	// Widget edit (panel_edit) — `/dashboard/:dashboardId/:widgetId`.
-	const widgetMatch = matchPath<{ dashboardId: string; widgetId: string }>(
-		pathname,
-		{ path: ROUTES.DASHBOARD_WIDGET, exact: true },
-	);
-	if (widgetMatch) {
-		return [
-			{
-				source: 'auto',
-				type: 'dashboard',
-				resourceId: widgetMatch.params.dashboardId,
-				metadata: {
-					page: 'panel_edit',
-					widgetId: widgetMatch.params.widgetId,
-					...sharedMetadata,
-				},
 			},
 		];
 	}

@@ -26,14 +26,16 @@ describe('resolvePageType', () => {
 		expect(resolvePageType(pathname, '')).toBe(PageTypeDTO.panel_edit);
 	});
 
-	it('returns dashboard_detail on the unsaved new-panel editor', () => {
+	// `panel_create` has no PageTypeDTO counterpart yet, so it reports
+	// `panel_edit` rather than degrading to `other`.
+	it('returns panel_edit on the unsaved new-panel editor', () => {
 		const pathname = ROUTES.DASHBOARD_PANEL_EDITOR.replace(
 			':dashboardId',
 			'dash-123',
 		).replace(':panelId', 'new');
 
 		expect(resolvePageType(pathname, '?panelKind=TimeSeries')).toBe(
-			PageTypeDTO.dashboard_detail,
+			PageTypeDTO.panel_edit,
 		);
 	});
 
