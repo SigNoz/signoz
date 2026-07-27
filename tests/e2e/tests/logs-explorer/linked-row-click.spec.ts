@@ -40,12 +40,9 @@ test.describe('Logs Explorer — linked row in Column format', () => {
 		await expect(highlightedLogsTableRows(linkedTab)).toHaveCount(1);
 		await expect(unhighlightedLogsTableRows(linkedTab).first()).toBeVisible();
 
-		// Nothing is open on arrival, so the click below is the *first* click — the
-		// only one the old code got wrong.
 		await expect(logDetailsDrawer(linkedTab)).toBeHidden();
 		await openLogDetailsFromRow(linkedRow);
 
-		// And it toggles: clicking the open row closes it again.
 		await clickRowFirstCell(linkedRow);
 		await expect(logDetailsDrawer(linkedTab)).toBeHidden();
 	});
