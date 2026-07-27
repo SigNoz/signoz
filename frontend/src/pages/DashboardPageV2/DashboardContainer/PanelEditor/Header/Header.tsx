@@ -5,6 +5,7 @@ import { DialogWrapper } from '@signozhq/ui/dialog';
 import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
+import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import { useConfirmableAction } from 'hooks/useConfirmableAction';
 import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 
@@ -67,6 +68,11 @@ function Header({
 				<Typography.Text>Configure panel</Typography.Text>
 			</div>
 			<div className={styles.actions}>
+				<HeaderRightSection
+					enableAnnouncements={false}
+					enableShare={false}
+					enableFeedback={false}
+				/>
 				{showSwitchToView && (
 					<Button
 						variant="outlined"

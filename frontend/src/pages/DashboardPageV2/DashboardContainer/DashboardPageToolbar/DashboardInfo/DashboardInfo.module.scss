@@ -113,3 +113,15 @@
 	align-items: center;
 	gap: 4px;
 }
+
+// Hidden tags revealed on hovering the `+N` badge: the same chips as inline, one per
+// line (easier to scan than a wrapped cloud) and width-capped so a long tag wraps
+// instead of stretching the tooltip off-screen.
+.overflowTags {
+	display: flex;
+	max-width: 360px;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 4px;
+	overflow-wrap: anywhere;
+}
