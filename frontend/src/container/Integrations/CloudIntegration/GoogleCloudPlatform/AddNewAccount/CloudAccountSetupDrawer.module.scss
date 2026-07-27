@@ -2,24 +2,20 @@
 	--dialog-header-padding: var(--spacing-10) var(--spacing-12);
 	--dialog-footer-padding: var(--spacing-8) var(--spacing-12);
 
-	// Fill every field with --l2-background (Input/ComboboxSimple default to transparent).
+	// Input and ComboboxSimple default to unfilled fields (transparent background,
+	// --border, --muted-foreground) and neither exposes a filled variant, so the
+	// drawer's filled treatment has to be set token by token. Focus borders are
+	// left at their per-component defaults.
 	--input-background: var(--l2-background);
 	--input-hover-background: var(--l2-background);
 	--input-focus-background: var(--l2-background);
-	--combobox-trigger-background-color: var(--l2-background);
-
-	// Text uses the brighter --l1-foreground, placeholders the duller --l3-foreground.
-	--input-foreground: var(--l1-foreground);
-	--input-placeholder-color: var(--l3-foreground);
-	--combobox-trigger-placeholder-color: var(--l3-foreground);
-
-	// Shared resting border (--l2-border) and text size; focus borders stay per-component.
 	--input-border-color: var(--l2-border);
 	--input-hover-border-color: var(--l2-border);
+	--input-foreground: var(--l1-foreground);
+	--input-placeholder-color: var(--l3-foreground);
+	--combobox-trigger-background-color: var(--l2-background);
 	--combobox-trigger-border-color: var(--l2-border);
-	--input-font-size: var(--periscope-font-size-base);
-	--combobox-trigger-font-size: var(--periscope-font-size-base);
-	--combobox-trigger-value-font-size: var(--periscope-font-size-base);
+	--combobox-trigger-placeholder-color: var(--l3-foreground);
 
 	// Bounded flex column so the header/footer stay put and only the body
 	// scrolls when content overflows.
