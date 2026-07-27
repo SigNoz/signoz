@@ -2,11 +2,13 @@ import { ReactElement } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { MemoryRouter, Route, Switch, useLocation } from 'react-router-dom';
 import { act, render, screen, waitFor } from '@testing-library/react';
+import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import ROUTES from 'constants/routes';
 import { AppContext } from 'providers/App/App';
 import { IAppContext, IUser } from 'providers/App/types';
+import { FeatureFlagProps } from 'types/api/features/getFeaturesFlags';
 import {
 	LicenseEvent,
 	LicensePlatform,
@@ -17,6 +19,7 @@ import {
 } from 'types/api/licensesV3/getActive';
 import { OrgPreference } from 'types/api/preferences/preference';
 import { ROLES, USER_ROLES } from 'types/roles';
+import { routeWithInitialAuthZSupport } from 'utils/permission';
 
 import PrivateRoute from '../Private';
 
@@ -178,6 +181,7 @@ function createMockAppContext(
 		isFetchingHosts: false,
 		isFetchingFeatureFlags: false,
 		isFetchingOrgPreferences: false,
+		isFetchingUserPreferences: false,
 		userFetchError: null,
 		activeLicenseFetchError: null,
 		hostsFetchError: null,
@@ -198,24 +202,74 @@ function createMockAppContext(
 	};
 }
 
+// Roles that no authz-aware route grants through the legacy routePermission table
+const DENIED_ROLES: ROLES[] = [
+	USER_ROLES.ANONYMOUS as ROLES,
+	USER_ROLES.AUTHOR as ROLES,
+];
+
+const PERMITTED_ROLES: ROLES[] = [
+	USER_ROLES.ADMIN as ROLES,
+	USER_ROLES.EDITOR as ROLES,
+	USER_ROLES.VIEWER as ROLES,
+];
+
+interface AuthzRouteCase {
+	path: string;
+	deniedRoles: ROLES[];
+	hasRouteDefinition?: false;
+}
+
+// Private.tsx reads the fine grained authz flag straight off the app context
+function createMockFeatureFlags(
+	isFineGrainedAuthzEnabled: boolean,
+): FeatureFlagProps[] {
+	return [
+		{
+			name: FeatureKeys.USE_FINE_GRAINED_AUTHZ,
+			active: isFineGrainedAuthzEnabled,
+			usage: 0,
+			usage_limit: -1,
+			route: '',
+		},
+	];
+}
+
 interface RenderPrivateRouteOptions {
 	initialRoute?: string;
 	appContext?: Partial<IAppContext>;
 	isCloudUser?: boolean;
+	isRolesEnabled?: boolean;
+	isFetchingFeatureFlags?: boolean;
 }
 
-function renderPrivateRoute(options: RenderPrivateRouteOptions = {}): void {
+// Re-renders the tree mounted by the last renderPrivateRoute call, keeping router
+// state. Used to assert what happens when context values flip between paints.
+let rerenderPrivateRoute: (
+	next?: RenderPrivateRouteOptions,
+) => void = (): void => {
+	throw new Error(
+		'renderPrivateRoute must be called before rerenderPrivateRoute',
+	);
+};
+
+function buildPrivateRouteTree(
+	options: RenderPrivateRouteOptions,
+): ReactElement {
 	const {
 		initialRoute = ROUTES.HOME,
 		appContext = {},
-		isCloudUser = true,
+		isRolesEnabled = false,
+		isFetchingFeatureFlags = false,
 	} = options;
 
-	mockIsCloudUser = isCloudUser;
+	const contextValue = createMockAppContext({
+		featureFlags: createMockFeatureFlags(isRolesEnabled),
+		isFetchingFeatureFlags,
+		...appContext,
+	});
 
-	const contextValue = createMockAppContext(appContext);
-
-	render(
+	return (
 		<QueryClientProvider client={queryClient}>
 			<MemoryRouter initialEntries={[initialRoute]}>
 				<AppContext.Provider value={contextValue}>
@@ -229,8 +283,19 @@ function renderPrivateRoute(options: RenderPrivateRouteOptions = {}): void {
 					</PrivateRoute>
 				</AppContext.Provider>
 			</MemoryRouter>
-		</QueryClientProvider>,
+		</QueryClientProvider>
 	);
+}
+
+function renderPrivateRoute(options: RenderPrivateRouteOptions = {}): void {
+	mockIsCloudUser = options.isCloudUser ?? true;
+
+	const { rerender } = render(buildPrivateRouteTree(options));
+
+	rerenderPrivateRoute = (next: RenderPrivateRouteOptions = {}): void => {
+		mockIsCloudUser = next.isCloudUser ?? options.isCloudUser ?? true;
+		rerender(buildPrivateRouteTree({ ...options, ...next }));
+	};
 }
 
 // Generic assertion helpers for navigation behavior
@@ -1432,6 +1497,25 @@ describe('PrivateRoute', () => {
 
 			assertStaysOnRoute(ROUTES.GET_STARTED_WITH_CLOUD);
 		});
+
+		it.each([...PERMITTED_ROLES, ...DENIED_ROLES])(
+			'should render the unauthorized page for a %s instead of bouncing off it',
+			(role) => {
+				// routePermission.UN_AUTHORIZED must grant every role: a role denied here
+				// is redirected to /un-authorized and then redirected away from it again,
+				// which loops until React bails out with a blank screen.
+				renderPrivateRoute({
+					initialRoute: ROUTES.UN_AUTHORIZED,
+					appContext: {
+						isLoggedIn: true,
+						user: createMockUser({ role }),
+					},
+				});
+
+				assertStaysOnRoute(ROUTES.UN_AUTHORIZED);
+				assertRendersChildren();
+			},
+		);
 	});
 
 	describe('Edge Cases', () => {
@@ -1474,6 +1558,317 @@ describe('PrivateRoute', () => {
 			});
 
 			await assertRedirectsTo(ROUTES.UN_AUTHORIZED);
+		});
+	});
+
+	describe('AuthZ Support (routeWithInitialAuthZSupport)', () => {
+		const AUTHZ_ROUTE_CASES: Record<
+			keyof typeof routeWithInitialAuthZSupport,
+			AuthzRouteCase
+		> = {
+			// Everything under /settings resolves to the non-exact SETTINGS route
+			SETTINGS: { path: ROUTES.SETTINGS, deniedRoles: DENIED_ROLES },
+			MY_SETTINGS: { path: ROUTES.MY_SETTINGS, deniedRoles: DENIED_ROLES },
+			ROLES_SETTINGS: { path: ROUTES.ROLES_SETTINGS, deniedRoles: DENIED_ROLES },
+			ROLE_CREATE: { path: ROUTES.ROLE_CREATE, deniedRoles: DENIED_ROLES },
+			ROLE_DETAILS: {
+				path: ROUTES.ROLE_DETAILS.replace(':roleId', 'role-id-1'),
+				deniedRoles: DENIED_ROLES,
+			},
+			ROLE_EDIT: {
+				path: ROUTES.ROLE_EDIT.replace(':roleId', 'role-id-1'),
+				deniedRoles: DENIED_ROLES,
+			},
+			SERVICE_ACCOUNTS_SETTINGS: {
+				path: ROUTES.SERVICE_ACCOUNTS_SETTINGS,
+				deniedRoles: DENIED_ROLES,
+			},
+			TRACES_EXPLORER: { path: ROUTES.TRACES_EXPLORER, deniedRoles: DENIED_ROLES },
+			TRACE: { path: ROUTES.TRACE, deniedRoles: DENIED_ROLES },
+			TRACE_DETAIL: {
+				path: ROUTES.TRACE_DETAIL.replace(':id', 'trace-id-1'),
+				deniedRoles: DENIED_ROLES,
+			},
+			TRACE_DETAIL_OLD: {
+				path: ROUTES.TRACE_DETAIL_OLD.replace(':id', 'trace-id-1'),
+				deniedRoles: DENIED_ROLES,
+			},
+			// LOGS and LOGS_EXPLORER share a path - matchPath resolves it to whichever
+			// route definition comes last, and both keys are authz-aware either way.
+			LOGS: { path: ROUTES.LOGS, deniedRoles: DENIED_ROLES },
+			LOGS_EXPLORER: { path: ROUTES.LOGS_EXPLORER, deniedRoles: DENIED_ROLES },
+			LIVE_LOGS: { path: ROUTES.LIVE_LOGS, deniedRoles: DENIED_ROLES },
+			OLD_LOGS_EXPLORER: {
+				path: ROUTES.OLD_LOGS_EXPLORER,
+				deniedRoles: DENIED_ROLES,
+			},
+			METRICS_EXPLORER: {
+				path: ROUTES.METRICS_EXPLORER,
+				deniedRoles: DENIED_ROLES,
+			},
+			METRICS_EXPLORER_EXPLORER: {
+				path: ROUTES.METRICS_EXPLORER_EXPLORER,
+				deniedRoles: DENIED_ROLES,
+			},
+			METRICS_EXPLORER_VOLUME_CONTROL: {
+				path: ROUTES.METRICS_EXPLORER_VOLUME_CONTROL,
+				deniedRoles: DENIED_ROLES,
+			},
+			METER: { path: ROUTES.METER, deniedRoles: DENIED_ROLES },
+			METER_EXPLORER: { path: ROUTES.METER_EXPLORER, deniedRoles: DENIED_ROLES },
+			// SUPPORT already grants ANONYMOUS in routePermission, so only AUTHOR
+			// exercises the redirect branch here.
+			SUPPORT: {
+				path: ROUTES.SUPPORT,
+				deniedRoles: [USER_ROLES.AUTHOR as ROLES],
+			},
+		};
+
+		const authzRouteEntries = Object.entries(AUTHZ_ROUTE_CASES) as [
+			string,
+			AuthzRouteCase,
+		][];
+
+		const authzRouteRolePairs: [string, string, ROLES][] = authzRouteEntries
+			.filter(([, testCase]) => testCase.hasRouteDefinition !== false)
+			.flatMap(([name, { path, deniedRoles }]) =>
+				deniedRoles.map((role): [string, string, ROLES] => [name, path, role]),
+			);
+
+		const unroutableAuthzCases: [string, string][] = authzRouteEntries
+			.filter(([, testCase]) => testCase.hasRouteDefinition === false)
+			.map(([name, { path }]) => [name, path]);
+
+		// Routes with no authz check just to test this code path with other routes as well
+		const NON_AUTHZ_ROUTE_CASES: [string, string, ROLES][] = [
+			['ALERTS_NEW', ROUTES.ALERTS_NEW, USER_ROLES.VIEWER as ROLES],
+			['LIST_LICENSES', ROUTES.LIST_LICENSES, USER_ROLES.EDITOR as ROLES],
+			['ONBOARDING', ROUTES.ONBOARDING, USER_ROLES.VIEWER as ROLES],
+			['APPLICATION', ROUTES.APPLICATION, USER_ROLES.ANONYMOUS as ROLES],
+			[
+				'METRICS_EXPLORER_VIEWS',
+				ROUTES.METRICS_EXPLORER_VIEWS,
+				USER_ROLES.ANONYMOUS as ROLES,
+			],
+		];
+
+		it.each(authzRouteRolePairs)(
+			'should not redirect %s (%s) for role %s while feature flags are loading',
+			(_name, path, role) => {
+				// While the feature-flags fetch is in flight the authz flag reads as false.
+				// Falling back to the legacy role check here would redirect to UN_AUTHORIZED
+				// permanently - nothing navigates back once the flags land.
+				renderPrivateRoute({
+					initialRoute: path,
+					appContext: {
+						isLoggedIn: true,
+						user: createMockUser({ role }),
+					},
+					isRolesEnabled: false,
+					isFetchingFeatureFlags: true,
+				});
+
+				assertStaysOnRoute(path);
+				assertRendersChildren();
+			},
+		);
+
+		it.each(authzRouteRolePairs)(
+			'should redirect %s (%s) for role %s once the flags resolve with authz off',
+			async (_name, path, role) => {
+				// Flags settled and the feature is off - legacy role check applies again.
+				// This is what proves the case above passes because of the fetching flag
+				// and not because the role was permitted all along.
+				renderPrivateRoute({
+					initialRoute: path,
+					appContext: {
+						isLoggedIn: true,
+						user: createMockUser({ role }),
+					},
+					isRolesEnabled: false,
+					isFetchingFeatureFlags: false,
+				});
+
+				await assertRedirectsTo(ROUTES.UN_AUTHORIZED);
+			},
+		);
+
+		it.each(authzRouteRolePairs)(
+			'should not redirect %s (%s) for role %s once the flags resolve with authz on',
+			(_name, path, role) => {
+				renderPrivateRoute({
+					initialRoute: path,
+					appContext: {
+						isLoggedIn: true,
+						user: createMockUser({ role }),
+					},
+					isRolesEnabled: true,
+					isFetchingFeatureFlags: false,
+				});
+
+				assertStaysOnRoute(path);
+				assertRendersChildren();
+			},
+		);
+
+		it.each(authzRouteRolePairs)(
+			'should keep rendering %s (%s) for role %s when the flags resolve with authz on',
+			(_name, path, role) => {
+				// The real sequence: flags in flight on first paint, then resolved with the
+				// feature on. Both paints must render the page - no redirect in between.
+				renderPrivateRoute({
+					initialRoute: path,
+					appContext: {
+						isLoggedIn: true,
+						user: createMockUser({ role }),
+					},
+					isRolesEnabled: false,
+					isFetchingFeatureFlags: true,
+				});
+
+				assertStaysOnRoute(path);
+
+				rerenderPrivateRoute({
+					isRolesEnabled: true,
+					isFetchingFeatureFlags: false,
+				});
+
+				assertStaysOnRoute(path);
+				assertRendersChildren();
+			},
+		);
+
+		it.each(PERMITTED_ROLES)(
+			'should not redirect a %s from an authz-aware route while feature flags are loading',
+			(role) => {
+				renderPrivateRoute({
+					initialRoute: ROUTES.LOGS_EXPLORER,
+					appContext: {
+						isLoggedIn: true,
+						user: createMockUser({ role }),
+					},
+					isRolesEnabled: false,
+					isFetchingFeatureFlags: true,
+				});
+
+				assertStaysOnRoute(ROUTES.LOGS_EXPLORER);
+				assertRendersChildren();
+			},
+		);
+
+		it.each(PERMITTED_ROLES)(
+			'should not redirect a %s from an authz-aware route with authz off',
+			(role) => {
+				// A role the legacy table already grants is unaffected by the feature flag.
+				renderPrivateRoute({
+					initialRoute: ROUTES.LOGS_EXPLORER,
+					appContext: {
+						isLoggedIn: true,
+						user: createMockUser({ role }),
+					},
+					isRolesEnabled: false,
+					isFetchingFeatureFlags: false,
+				});
+
+				assertStaysOnRoute(ROUTES.LOGS_EXPLORER);
+				assertRendersChildren();
+			},
+		);
+
+		it.each(NON_AUTHZ_ROUTE_CASES)(
+			'should still redirect %s (%s) for role %s while feature flags are loading',
+			async (_name, path, role) => {
+				renderPrivateRoute({
+					initialRoute: path,
+					appContext: {
+						isLoggedIn: true,
+						user: createMockUser({ role }),
+					},
+					isRolesEnabled: false,
+					isFetchingFeatureFlags: true,
+				});
+
+				await assertRedirectsTo(ROUTES.UN_AUTHORIZED);
+			},
+		);
+
+		it.each(NON_AUTHZ_ROUTE_CASES)(
+			'should still redirect %s (%s) for role %s once the flags resolve with authz on',
+			async (_name, path, role) => {
+				// Guards the `hasInitialAuthZSupport &&` half of the bypass: neither the
+				// enabled flag nor the fetching flag may leak into non-authz routes.
+				renderPrivateRoute({
+					initialRoute: path,
+					appContext: {
+						isLoggedIn: true,
+						user: createMockUser({ role }),
+					},
+					isRolesEnabled: true,
+					isFetchingFeatureFlags: false,
+				});
+
+				await assertRedirectsTo(ROUTES.UN_AUTHORIZED);
+			},
+		);
+
+		it.each(authzRouteRolePairs)(
+			'should still redirect unauthenticated users away from %s (%s) with role %s while loading',
+			async (_name, path, role) => {
+				// The loading bypass only relaxes the role check, never the login check.
+				renderPrivateRoute({
+					initialRoute: path,
+					appContext: {
+						isLoggedIn: false,
+						user: createMockUser({ role }),
+					},
+					isRolesEnabled: false,
+					isFetchingFeatureFlags: true,
+				});
+
+				await assertRedirectsTo(ROUTES.LOGIN);
+			},
+		);
+
+		it.each(unroutableAuthzCases)(
+			'should send a logged in user from %s (%s) home - no route definition matches it',
+			async (_name, path) => {
+				// The key is authz-aware but nothing in AppRoutes/routes.ts matches the
+				// path, so PrivateRoute treats it as unknown and the role check never runs.
+				// Pinned so that wiring a route up later shows here as a failing test.
+				renderPrivateRoute({
+					initialRoute: path,
+					appContext: {
+						isLoggedIn: true,
+						user: createMockUser({ role: USER_ROLES.VIEWER as ROLES }),
+					},
+					isRolesEnabled: true,
+					isFetchingFeatureFlags: false,
+				});
+
+				await assertRedirectsTo(ROUTES.HOME);
+			},
+		);
+
+		it('should still redirect to workspace locked from an authz-aware route while loading', async () => {
+			// Workspace guards run before the role check and must not be bypassed.
+			// VIEWER rather than a denied role: routePermission.WORKSPACE_LOCKED does not
+			// grant ANONYMOUS/AUTHOR, and the workspace guard sends them straight back,
+			// so a denied role loops between the two routes instead of settling.
+			renderPrivateRoute({
+				initialRoute: ROUTES.LOGS_EXPLORER,
+				appContext: {
+					isLoggedIn: true,
+					isFetchingActiveLicense: false,
+					activeLicense: createMockLicense({ platform: LicensePlatform.CLOUD }),
+					trialInfo: createMockTrialInfo({ workSpaceBlock: true }),
+					user: createMockUser({ role: USER_ROLES.VIEWER as ROLES }),
+				},
+				isCloudUser: true,
+				isRolesEnabled: false,
+				isFetchingFeatureFlags: true,
+			});
+
+			await assertRedirectsTo(ROUTES.WORKSPACE_LOCKED);
 		});
 	});
 

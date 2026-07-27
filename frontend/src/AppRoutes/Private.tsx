@@ -14,7 +14,10 @@ import { useAppContext } from 'providers/App/App';
 import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
 import { OrgPreference } from 'types/api/preferences/preference';
 import { USER_ROLES } from 'types/roles';
-import { routePermission } from 'utils/permission';
+import {
+	routePermission,
+	routeWithInitialAuthZSupport,
+} from 'utils/permission';
 
 import routes, {
 	LIST_LICENSES,
@@ -23,6 +26,7 @@ import routes, {
 	ROUTES_NOT_TO_BE_OVERRIDEN,
 	SUPPORT_ROUTE,
 } from './routes';
+import { FeatureKeys } from 'constants/features';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
@@ -37,11 +41,17 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		activeLicense,
 		isFetchingActiveLicense,
 		trialInfo,
+		featureFlags,
+		isFetchingFeatureFlags,
 	} = useAppContext();
 
 	const isAdmin = user.role === USER_ROLES.ADMIN;
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
 	const isAIObservabilityEnabled = useIsAIObservabilityEnabled();
+
+	const isFineGrainedAuthzEnabled =
+		featureFlags?.find((f) => f.name === FeatureKeys.USE_FINE_GRAINED_AUTHZ)
+			?.active ?? false;
 
 	const mapRoutes = useMemo(
 		() =>
@@ -226,7 +236,23 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		if (isPrivate) {
 			if (isLoggedInState) {
 				const route = routePermission[key];
-				if (route && route.find((e) => e === user.role) === undefined) {
+				const hasInitialAuthZSupport = Object.hasOwn(
+					routeWithInitialAuthZSupport,
+					key,
+				);
+				// While the flags are in flight `isFineGrainedAuthzEnabled` reads as false,
+				// and the redirect below is unrecoverable - the URL changes and nothing
+				// navigates back once the flags land. Authz-aware pages run their own
+				// permission checks, so defer to them instead of redirecting on a guess.
+				const bypassWhenSupportedByAuthZ =
+					hasInitialAuthZSupport &&
+					(isFineGrainedAuthzEnabled || isFetchingFeatureFlags);
+
+				if (
+					route &&
+					route.find((e) => e === user.role) === undefined &&
+					bypassWhenSupportedByAuthZ === false
+				) {
 					return <Redirect to={ROUTES.UN_AUTHORIZED} />;
 				}
 			} else {
