@@ -67,7 +67,26 @@ func TestPrepareQuery(t *testing.T) {
 				Query: "ALTER TABLE signoz_table DELETE where true",
 			},
 			expectedErr: true,
-			errMsg:      "operation alter table is not allowed",
+			errMsg:      "only SELECT statements are allowed in ClickHouse SQL queries",
+		},
+		{
+			name: "query smuggles a statement through a variable",
+			postData: &model.DashboardVars{
+				Query: "select * from table where id = {{.id}}",
+				Variables: map[string]interface{}{
+					"id": "1'; DROP TABLE signoz_table; --",
+				},
+			},
+			expectedErr: true,
+			errMsg:      "ClickHouse SQL must contain exactly one statement",
+		},
+		{
+			name: "query reads a system table",
+			postData: &model.DashboardVars{
+				Query: "SELECT name FROM system.users",
+			},
+			expectedErr: true,
+			errMsg:      "the ClickHouse system database is not allowed in SQL queries",
 		},
 		{
 			name: "query text produces template exec error",

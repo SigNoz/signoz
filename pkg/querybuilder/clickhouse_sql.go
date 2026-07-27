@@ -7,10 +7,16 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 )
 
+// internalDatabases hold server metadata, credentials and grants rather than telemetry.
+var internalDatabases = map[string]struct{}{
+	"system":             {},
+	"information_schema": {},
+}
+
 // ValidateReadOnlySelect rejects a user-authored ClickHouse statement unless it is a
-// single SELECT that neither reads through a table function nor lowers the readonly
-// setting. It must run on the rendered statement, since the substituted variable
-// values are user input too.
+// single SELECT that reads telemetry: no table function, no internal database and no
+// lowering of the readonly setting. It must run on the rendered statement, since the
+// substituted variable values are user input too.
 func ValidateReadOnlySelect(query string) (err error) {
 	// The parser panics on some malformed input rather than returning an error.
 	defer func() {
@@ -39,6 +45,14 @@ func ValidateReadOnlySelect(query string) (err error) {
 		case *chparser.TableFunctionExpr:
 			// Source table functions remain usable in ClickHouse read-only mode.
 			return errors.NewInvalidInputf(errors.CodeInvalidInput, "ClickHouse table functions are not allowed in SQL queries: %s", expr.Name.String())
+		case *chparser.TableIdentifier:
+			// Reading these is unaffected by ClickHouse read-only mode.
+			if expr.Database == nil {
+				return nil
+			}
+			if _, ok := internalDatabases[strings.ToLower(expr.Database.Name)]; ok {
+				return errors.NewInvalidInputf(errors.CodeInvalidInput, "the ClickHouse %s database is not allowed in SQL queries", expr.Database.Name)
+			}
 		case *chparser.SettingExpr:
 			// A query-level setting takes precedence over the context setting.
 			if strings.EqualFold(expr.Name.Name, "readonly") {

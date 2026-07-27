@@ -203,6 +203,61 @@ func TestValidateReadOnlySelect(t *testing.T) {
 			pass:  false,
 		},
 		{
+			name:  "SystemUsers_Invalid",
+			query: "SELECT * FROM system.users",
+			pass:  false,
+		},
+		{
+			name:  "SystemGrants_Invalid",
+			query: "SELECT * FROM system.grants",
+			pass:  false,
+		},
+		{
+			name:  "SystemQuoted_Invalid",
+			query: "SELECT count() FROM `system`.`tables`",
+			pass:  false,
+		},
+		{
+			name:  "SystemUppercase_Invalid",
+			query: "SELECT * FROM SYSTEM.USERS",
+			pass:  false,
+		},
+		{
+			name:  "SystemInSubquery_Invalid",
+			query: "SELECT * FROM (SELECT name FROM system.parts)",
+			pass:  false,
+		},
+		{
+			name:  "SystemInCommonTableExpression_Invalid",
+			query: "WITH c AS (SELECT * FROM system.query_log) SELECT * FROM c",
+			pass:  false,
+		},
+		{
+			name:  "SystemInJoin_Invalid",
+			query: "SELECT * FROM signoz_logs.distributed_logs_v2 AS l JOIN system.users AS u ON 1 = 1",
+			pass:  false,
+		},
+		{
+			name:  "SystemInUnion_Invalid",
+			query: "SELECT name FROM t UNION ALL SELECT name FROM system.tables",
+			pass:  false,
+		},
+		{
+			name:  "InformationSchema_Invalid",
+			query: "SELECT * FROM information_schema.tables",
+			pass:  false,
+		},
+		{
+			name:  "InformationSchemaUppercase_Invalid",
+			query: "SELECT * FROM INFORMATION_SCHEMA.COLUMNS",
+			pass:  false,
+		},
+		{
+			name:  "TableNamedSystemInTelemetryDatabase_Valid",
+			query: "SELECT * FROM signoz_logs.system",
+			pass:  true,
+		},
+		{
 			name:  "ReadonlySettingOverride_Invalid",
 			query: "SELECT * FROM t SETTINGS readonly = 0",
 			pass:  false,
