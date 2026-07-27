@@ -100,9 +100,22 @@ func (q *chSQLQuery) renderVars(query string, vars map[string]qbtypes.VariableIt
 	return newQuery.String(), nil
 }
 
+func (q *chSQLQuery) render() (string, error) {
+	rendered, err := q.renderVars(q.query.Query, q.vars, q.fromMS, q.toMS)
+	if err != nil {
+		return "", err
+	}
+
+	if err := querybuilder.ValidateReadOnlyClickHouseSQL(rendered); err != nil {
+		return "", err
+	}
+
+	return rendered, nil
+}
+
 // Statement renders the SQL without executing it, for the preview path.
 func (q *chSQLQuery) Statement(_ context.Context) (*qbtypes.Statement, error) {
-	rendered, err := q.renderVars(q.query.Query, q.vars, q.fromMS, q.toMS)
+	rendered, err := q.render()
 	if err != nil {
 		return nil, err
 	}
@@ -124,10 +137,12 @@ func (q *chSQLQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
 		elapsed += p.Elapsed
 	}))
 
-	query, err := q.renderVars(q.query.Query, q.vars, q.fromMS, q.toMS)
+	query, err := q.render()
 	if err != nil {
 		return nil, err
 	}
+
+	ctx = ctxtypes.SetClickhouseReadOnly(ctx)
 
 	rows, err := q.telemetryStore.ClickhouseDB().Query(ctx, query, q.args...)
 	if err != nil {

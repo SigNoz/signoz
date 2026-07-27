@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/modules/thirdpartyapi"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 
 	"log/slog"
@@ -1021,21 +1022,6 @@ func prepareQuery(r *http.Request) (string, error) {
 		return "", fmt.Errorf("query is required")
 	}
 
-	notAllowedOps := []string{
-		"alter table",
-		"drop table",
-		"truncate table",
-		"drop database",
-		"drop view",
-		"drop function",
-	}
-
-	for _, op := range notAllowedOps {
-		if strings.Contains(strings.ToLower(query), op) {
-			return "", fmt.Errorf("operation %s is not allowed", op)
-		}
-	}
-
 	vars := make(map[string]string)
 	for k, v := range postData.Variables {
 		vars[k] = metrics.FormattedValue(v)
@@ -1051,30 +1037,34 @@ func prepareQuery(r *http.Request) (string, error) {
 		return "", tmplErr
 	}
 
-	if !constants.IsDotMetricsEnabled {
-		return queryBuf.String(), nil
-	}
-
 	query = queryBuf.String()
 
-	// Now handle $var replacements (simple string replace)
-	keys := make([]string, 0, len(vars))
-	for k := range vars {
-		keys = append(keys, k)
+	if constants.IsDotMetricsEnabled {
+		// Now handle $var replacements (simple string replace)
+		keys := make([]string, 0, len(vars))
+		for k := range vars {
+			keys = append(keys, k)
+		}
+
+		sort.Slice(keys, func(i, j int) bool {
+			return len(keys[i]) > len(keys[j])
+		})
+
+		newQuery := query
+		for _, k := range keys {
+			placeholder := "$" + k
+			v := vars[k]
+			newQuery = strings.ReplaceAll(newQuery, placeholder, v)
+		}
+
+		query = newQuery
 	}
 
-	sort.Slice(keys, func(i, j int) bool {
-		return len(keys[i]) > len(keys[j])
-	})
-
-	newQuery := query
-	for _, k := range keys {
-		placeholder := "$" + k
-		v := vars[k]
-		newQuery = strings.ReplaceAll(newQuery, placeholder, v)
+	if err := querybuilder.ValidateReadOnlyClickHouseSQL(query); err != nil {
+		return "", err
 	}
 
-	return newQuery, nil
+	return query, nil
 }
 
 func (aH *APIHandler) Get(rw http.ResponseWriter, r *http.Request) {
@@ -1092,7 +1082,7 @@ func (aH *APIHandler) queryDashboardVarsV2(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	dashboardVars, err := aH.reader.QueryDashboardVars(r.Context(), query)
+	dashboardVars, err := aH.reader.QueryDashboardVars(ctxtypes.SetClickhouseReadOnly(r.Context()), query)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
