@@ -2,6 +2,7 @@ import type { MessageContext } from 'api/ai-assistant/chat';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { AlertListTabs } from 'pages/AlertList/types';
+import { NEW_PANEL_ID } from 'pages/DashboardPageV2/DashboardContainer/PanelEditor/newPanelRoute';
 import { matchPath } from 'react-router-dom';
 
 /**
@@ -30,22 +31,23 @@ export function getAutoContexts(
 
 	// ── Dashboards ────────────────────────────────────────────────────────────
 
-	// Widget edit (panel_edit) — `/dashboard/:dashboardId/:widgetId`.
-	const widgetMatch = matchPath<{ dashboardId: string; widgetId: string }>(
+	// Panel editor (V2). `panel/new` has no widget id yet and the schema requires
+	// a non-empty `panel_edit.widgetId`, so it reports `panel_create` instead.
+	const panelEditorMatch = matchPath<{ dashboardId: string; panelId: string }>(
 		pathname,
-		{ path: ROUTES.DASHBOARD_WIDGET, exact: true },
+		{ path: ROUTES.DASHBOARD_PANEL_EDITOR, exact: true },
 	);
-	if (widgetMatch) {
+	if (panelEditorMatch) {
+		const { dashboardId, panelId } = panelEditorMatch.params;
+		const isNewPanel = panelId === NEW_PANEL_ID;
 		return [
 			{
 				source: 'auto',
 				type: 'dashboard',
-				resourceId: widgetMatch.params.dashboardId,
-				metadata: {
-					page: 'panel_edit',
-					widgetId: widgetMatch.params.widgetId,
-					...sharedMetadata,
-				},
+				resourceId: dashboardId,
+				metadata: isNewPanel
+					? { page: 'panel_create', ...sharedMetadata }
+					: { page: 'panel_edit', widgetId: panelId, ...sharedMetadata },
 			},
 		];
 	}
