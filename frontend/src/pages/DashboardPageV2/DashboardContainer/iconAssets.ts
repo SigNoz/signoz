@@ -7,7 +7,7 @@
 // small ones as data URIs — they ship in the bundle and render with no network
 // call. Logos are a large, JSON-only catalogue, so `?url` keeps them as emitted
 // files fetched (and cached) on demand rather than bloating the bundle.
-const iconModules = import.meta.glob('../../../assets/Icons/**/*.svg', {
+const iconModules = import.meta.glob('../../../assets/Icons/**/*.{svg,png}', {
 	eager: true,
 	import: 'default',
 });
