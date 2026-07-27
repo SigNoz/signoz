@@ -20,12 +20,15 @@ from fixtures.querier import (
 # Numeric aggregation-function coverage for logs — the logs counterpart of
 # queriertraces/02_aggregation.py::test_traces_aggregate_functions. Logs querier
 # tests elsewhere only ever use count()/count_distinct(); here a grouped scalar
-# query computes sum / avg / min / max / p50 / p90 / p95 / p99 / countIf /
-# count_distinct over a numeric log attribute and asserts every value.
+# query computes sum / avg / min / max / p50 / p90 / p95 / p99 / countIf / rate /
+# rate_sum / count_distinct over a numeric log attribute and asserts every value.
 #
 # Log number attributes are stored as Float64, so aggregates come back as floats;
 # percentiles are matched with pytest.approx (ClickHouse quantile() and
 # numpy.percentile both linear-interpolate, but avoid ULP-level exact equality).
+#
+# The rate family divides by a window the caller does not otherwise see, so the
+# lookback is passed explicitly instead of taken from the request helper default.
 
 
 def test_logs_aggregate_functions(
@@ -41,11 +44,14 @@ def test_logs_aggregate_functions(
 
     Tests:
     A grouped scalar query computes count / sum / avg / min / max / p50 / p90 /
-    p95 / p99 over latency_ms, countIf over a numeric threshold, and
-    count_distinct over a string attribute — all matching values derived from the
-    inserted logs, ordered by count() desc.
+    p95 / p99 over latency_ms, countIf over a numeric threshold, rate and
+    rate_sum over the query window, and count_distinct over a string attribute —
+    all matching values derived from the inserted logs, ordered by count() desc.
     """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    # A scalar rate divides by the whole query window, so both sides agree on it.
+    lookback_minutes = 5
+    rate_interval_seconds = lookback_minutes * 60
     # (service, latency_ms, endpoint)
     specs = [
         ("svc-a", 10, "/x"),
@@ -80,12 +86,14 @@ def test_logs_aggregate_functions(
             build_aggregation("p95(latency_ms)", "p95_l"),
             build_aggregation("p99(latency_ms)", "p99_l"),
             build_aggregation("countIf(latency_ms >= 25)", "slow"),
+            build_aggregation("rate()", "rate_all"),
+            build_aggregation("rate_sum(latency_ms)", "rate_sum_l"),
             build_aggregation("count_distinct(endpoint)", "endpoints"),
         ],
         group_by=[build_group_by_field("service.name", "string", "resource")],
         order=[build_order_by("count()", "desc")],
     )
-    response = make_scalar_query_request(signoz, token, now, [query])
+    response = make_scalar_query_request(signoz, token, now, [query], lookback_minutes=lookback_minutes)
 
     assert response.status_code == HTTPStatus.OK, response.text
     data = get_scalar_table_data(response.json())
@@ -109,6 +117,12 @@ def test_logs_aggregate_functions(
             float(np.percentile(latencies, 95)),  # p95(latency_ms)
             float(np.percentile(latencies, 99)),  # p99(latency_ms)
             sum(1 for latency in latencies if latency >= 25),  # countIf(latency_ms >= 25)
+            # Response floats are rounded to 3 decimals at or above 1 and to 3
+            # significant figures below it (roundToNonZeroDecimals). Every other
+            # value here is exact; the rates are the only ones that repeat, and
+            # they stay below 1 for this fixture, so mirror the latter form.
+            float(f"{len(latencies) / rate_interval_seconds:.3g}"),  # rate()
+            float(f"{sum(latencies) / rate_interval_seconds:.3g}"),  # rate_sum(latency_ms)
             len(set(endpoints)),  # count_distinct(endpoint)
         ]
         assert by_service[service] == pytest.approx(expected), f"{service}: {by_service[service]} != {expected}"

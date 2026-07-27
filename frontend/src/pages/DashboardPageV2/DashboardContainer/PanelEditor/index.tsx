@@ -159,11 +159,12 @@ function PanelEditorContainer({
 		return section?.controls;
 	}, [panelDefinition]);
 
-	// A new panel is savable once it has a query to run — List auto-seeds one; other
-	// kinds open query-less, so there's nothing to save until the user builds one.
+	// New panels are savable once seeded with a query (List auto-seeds one). Read the
+	// seed `panel`, not the live `draft` — the staged-query sync commits the seed into
+	// the draft on open, which would falsely dirty an untouched query-less new panel.
 	const isDirty = useMemo(
-		() => isSpecDirty || isQueryDirty || (isNew && draft.spec.queries.length > 0),
-		[isSpecDirty, isQueryDirty, isNew, draft.spec.queries.length],
+		() => isSpecDirty || isQueryDirty || (isNew && panel.spec.queries.length > 0),
+		[isSpecDirty, isQueryDirty, isNew, panel.spec.queries.length],
 	);
 
 	const isListPanel = panelKind === 'signoz/ListPanel';
