@@ -7238,6 +7238,10 @@ components:
           $ref: '#/components/schemas/RuletypesAlertState'
         overallStateChanged:
           type: boolean
+        relatedLogsLink:
+          type: string
+        relatedTracesLink:
+          type: string
         ruleId:
           type: string
         ruleName:

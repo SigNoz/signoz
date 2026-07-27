@@ -1,16 +1,16 @@
 {
-  "alert": "threshold_equal_to_all_the_time",
+  "alert": "rule_state_history_logs",
   "ruleType": "threshold_rule",
-  "alertType": "METRIC_BASED_ALERT",
+  "alertType": "LOGS_BASED_ALERT",
   "condition": {
     "thresholds": {
       "kind": "basic",
       "spec": [
         {
           "name": "critical",
-          "target": 10,
-          "matchType": "all_the_times",
-          "op": "equal",
+          "target": 0,
+          "matchType": "at_least_once",
+          "op": "above",
           "channels": [
             "test channel"
           ]
@@ -25,12 +25,20 @@
           "type": "builder_query",
           "spec": {
             "name": "A",
-            "signal": "metrics",
+            "signal": "logs",
+            "filter": {
+              "expression": "body CONTAINS 'payment success'"
+            },
+            "groupBy": [
+              {
+                "name": "service.name",
+                "fieldContext": "resource",
+                "fieldDataType": "string"
+              }
+            ],
             "aggregations": [
               {
-                "metricName": "cpu_percent_threshold_equal_to_all_the_time",
-                "timeAggregation": "avg",
-                "spaceAggregation": "max"
+                "expression": "count()"
               }
             ]
           }
