@@ -2,6 +2,7 @@ import { renderHook, waitFor } from '@testing-library/react';
 import type {
 	DashboardtypesPanelDTO,
 	DashboardtypesQueryDTO,
+	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
@@ -88,6 +89,33 @@ describe('usePanelEditorQuerySync (real query builder)', () => {
 		// And stays clean (no late re-stage flips it dirty).
 		expect(result.current.isQueryDirty).toBe(false);
 	});
+
+	it.each([
+		[DataSource.METRICS, PANEL_TYPES.TIME_SERIES],
+		[DataSource.LOGS, PANEL_TYPES.TIME_SERIES],
+		[DataSource.TRACES, PANEL_TYPES.TIME_SERIES],
+		[DataSource.LOGS, PANEL_TYPES.LIST],
+	])(
+		'a NEW %s panel (%s, no savedQueries) is NOT query-dirty on mount',
+		async (ds, pt) => {
+			const { result } = renderHook(
+				() =>
+					usePanelEditorQuerySync({
+						draft: makePanel([]),
+						panelType: pt,
+						setSpec: jest.fn(),
+						refetch: jest.fn(),
+						alwaysSerializeQuery: true,
+						signal: ds as unknown as TelemetrytypesSignalDTO,
+						// savedQueries omitted — new panel.
+					}),
+				{ wrapper: AllTheProviders },
+			);
+
+			await waitFor(() => expect(result.current.isQueryDirty).toBe(false));
+			expect(result.current.isQueryDirty).toBe(false);
+		},
+	);
 
 	it('an untouched panel with a minimal/older stored query is NOT dirty (drift fix)', async () => {
 		// An older saved query carries only a few fields; the builder re-emits many more

@@ -174,11 +174,13 @@ const baseProps = {
 function setup(
 	panel: DashboardtypesPanelDTO,
 	overrides?: Partial<React.ComponentProps<typeof PanelEditorContainer>>,
-	draftOverrides?: { isSpecDirty?: boolean },
+	draftOverrides?: { isSpecDirty?: boolean; draft?: DashboardtypesPanelDTO },
 ): void {
+	// The live draft can diverge from the seed `panel`; default to the seed.
+	const draftPanel = draftOverrides?.draft ?? panel;
 	mockUseDraft.mockReturnValue({
-		draft: panel,
-		spec: panel.spec,
+		draft: draftPanel,
+		spec: draftPanel.spec,
 		setSpec: mockSetSpec,
 		isSpecDirty: draftOverrides?.isSpecDirty ?? false,
 	});
@@ -266,6 +268,23 @@ describe('PanelEditorContainer composition', () => {
 			expect.objectContaining({ alwaysSerializeQuery: true }),
 		);
 		// No query and no edits yet → nothing to save, so Save stays disabled.
+		expect(mockHeaderProps).toHaveBeenCalledWith(
+			expect.objectContaining({ isDirty: false }),
+		);
+	});
+
+	it('keeps a query-less new panel clean after the staged-query sync seeds its draft (regression)', () => {
+		// Staged-query sync populated the draft with the seed; dirty must read the seed
+		// `panel` (query-less), not the draft, else an untouched new panel reads dirty.
+		const committedDraft = makePanel('signoz/TimeSeriesPanel', [
+			{ spec: { plugin: { kind: 'signoz/CompositeQuery', spec: {} } } },
+		]);
+		setup(
+			makePanel('signoz/TimeSeriesPanel'),
+			{ isNew: true },
+			{ draft: committedDraft },
+		);
+
 		expect(mockHeaderProps).toHaveBeenCalledWith(
 			expect.objectContaining({ isDirty: false }),
 		);
