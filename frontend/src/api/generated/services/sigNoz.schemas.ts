@@ -8323,6 +8323,14 @@ export interface RulestatehistorytypesGettableRuleStateHistoryDTO {
 	/**
 	 * @type string
 	 */
+	relatedLogsLink?: string;
+	/**
+	 * @type string
+	 */
+	relatedTracesLink?: string;
+	/**
+	 * @type string
+	 */
 	ruleId: string;
 	/**
 	 * @type string
