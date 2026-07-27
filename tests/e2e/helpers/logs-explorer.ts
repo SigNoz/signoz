@@ -63,10 +63,6 @@ export function highlightedLogsTableRows(page: Page): Locator {
 	return logsTableRows(page).and(page.locator(`.${LINKED_ROW_CLASS}`));
 }
 
-/**
- * Rows without the highlight. `:not()` rather than `filter({ hasNot })` — the
- * latter tests descendants, and the class sits on the row element itself.
- */
 export function unhighlightedLogsTableRows(page: Page): Locator {
 	return page.locator(
 		`[data-testid^="${ROW_TEST_ID_PREFIX}"]:not(.${LINKED_ROW_CLASS})`,
@@ -108,7 +104,6 @@ function contextLogItems(page: Page): Locator {
 
 export async function openFirstContextLogInNewTab(page: Page): Promise<Page> {
 	const [newPage] = await Promise.all([
-		// Armed before the click: the tab can open before a sequential wait starts.
 		page.context().waitForEvent('page'),
 		contextLogItems(page).first().click(),
 	]);
