@@ -92,6 +92,7 @@ function TanStackTableInner<TData, TItemKey = string>(
 		getGroupKey,
 		getRowStyle,
 		getRowClassName,
+		getRowTestId,
 		isRowActive,
 		renderRowActions,
 		onRowClick,
@@ -377,6 +378,7 @@ function TanStackTableInner<TData, TItemKey = string>(
 		() => ({
 			getRowStyle,
 			getRowClassName,
+			getRowTestId,
 			isRowActive,
 			renderRowActions,
 			onRowClick,
@@ -394,6 +396,7 @@ function TanStackTableInner<TData, TItemKey = string>(
 		[
 			getRowStyle,
 			getRowClassName,
+			getRowTestId,
 			isRowActive,
 			renderRowActions,
 			onRowClick,

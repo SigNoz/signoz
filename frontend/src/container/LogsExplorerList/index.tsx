@@ -215,6 +215,7 @@ function LogsExplorerList({
 					getRowClassName={(log): string =>
 						log.id === activeLogId ? 'logs-linked-row' : ''
 					}
+					getRowTestId={(log): string => `logs-table-row-${log.id}`}
 					getRowStyle={(log): CSSProperties =>
 						({
 							'--row-active-bg': getRowBackgroundColor(

@@ -2,13 +2,18 @@ import { expect, type Locator, type Page } from '@playwright/test';
 
 import { dismissQuickFiltersAnnouncement } from './quick-filters';
 
-export const LOGS_EXPLORER_PATH = '/logs/logs-explorer';
+const LOGS_EXPLORER_PATH = '/logs/logs-explorer';
 
 const RELATIVE_TIME = '6h';
 
 const FORMAT_OPTIONS_TEST_ID = 'periscope-btn-format-options';
 
-export type LogsFormat = 'Raw' | 'Default' | 'Column';
+const ROW_TEST_ID_PREFIX = 'logs-table-row-';
+
+const LOG_DETAIL_DRAWER_TEST_ID = 'log-detail-drawer';
+export const LINKED_ROW_CLASS = 'logs-linked-row';
+
+type LogsFormat = 'Raw' | 'Default' | 'Column';
 
 const FORMAT_MODES: Record<LogsFormat, string> = {
 	Raw: 'raw',
@@ -47,15 +52,45 @@ export async function setLogsFormat(
 }
 
 export function logsTableRows(page: Page): Locator {
-	return page.locator('.logs-list-view-container tbody tr');
+	return page.locator(`[data-testid^="${ROW_TEST_ID_PREFIX}"]`);
+}
+
+export function logsTableRow(page: Page, logId: string): Locator {
+	return page.getByTestId(`${ROW_TEST_ID_PREFIX}${logId}`);
+}
+
+export function highlightedLogsTableRows(page: Page): Locator {
+	return logsTableRows(page).and(page.locator(`.${LINKED_ROW_CLASS}`));
+}
+
+/**
+ * Rows without the highlight. `:not()` rather than `filter({ hasNot })` — the
+ * latter tests descendants, and the class sits on the row element itself.
+ */
+export function unhighlightedLogsTableRows(page: Page): Locator {
+	return page.locator(
+		`[data-testid^="${ROW_TEST_ID_PREFIX}"]:not(.${LINKED_ROW_CLASS})`,
+	);
+}
+
+export function activeLogIdFromUrl(page: Page): string {
+	const value = new URL(page.url()).searchParams.get('activeLogId');
+	if (!value) {
+		throw new Error(`No activeLogId in URL: ${page.url()}`);
+	}
+	return value.replace(/"/g, '');
 }
 
 export function logDetailsDrawer(page: Page): Locator {
-	return page.locator('.log-detail-drawer__content');
+	return page.getByTestId(LOG_DETAIL_DRAWER_TEST_ID);
+}
+
+export async function clickRowFirstCell(row: Locator): Promise<void> {
+	await row.locator('td').first().click();
 }
 
 export async function openLogDetailsFromRow(row: Locator): Promise<void> {
-	await row.locator('td').first().click();
+	await clickRowFirstCell(row);
 	await expect(logDetailsDrawer(row.page())).toBeVisible();
 }
 
@@ -67,17 +102,15 @@ export async function openContextView(page: Page): Promise<void> {
 	await expect(contextLogItems(page).first()).toBeVisible();
 }
 
-export function contextLogItems(page: Page): Locator {
+function contextLogItems(page: Page): Locator {
 	return page.locator('.context-log-renderer__item');
 }
 
-export async function openContextLogInNewTab(
-	page: Page,
-	index = 0,
-): Promise<Page> {
+export async function openFirstContextLogInNewTab(page: Page): Promise<Page> {
 	const [newPage] = await Promise.all([
+		// Armed before the click: the tab can open before a sequential wait starts.
 		page.context().waitForEvent('page'),
-		contextLogItems(page).nth(index).click(),
+		contextLogItems(page).first().click(),
 	]);
 	await newPage.waitForLoadState();
 	return newPage;
