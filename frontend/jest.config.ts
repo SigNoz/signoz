@@ -15,12 +15,15 @@ const config: Config.InitialOptions = {
 	moduleNameMapper: {
 		'\\.(png|jpg|jpeg|gif|svg|webp|avif|ico|bmp|tiff)$':
 			'<rootDir>/__mocks__/fileMock.ts',
+		// The icon glob module uses `import.meta.glob` (Vite-only); jest can't parse
+		// it, so redirect any import of it to a stub.
+		'(^|/)iconAssets$': '<rootDir>/__mocks__/iconAssetsMock.ts',
 		'^@/(.*)$': '<rootDir>/src/$1',
 		'\\.(css|less|scss)$': '<rootDir>/__mocks__/cssMock.ts',
 		'\\.module\\.mjs$': '<rootDir>/__mocks__/cssMock.ts',
 		'\\.md$': '<rootDir>/__mocks__/cssMock.ts',
 		'^uplot$': '<rootDir>/__mocks__/uplotMock.ts',
-		'^@signozhq/resizable$': '<rootDir>/__mocks__/resizableMock.tsx',
+		'^motion/react$': '<rootDir>/__mocks__/motionMock.tsx',
 		'^hooks/useSafeNavigate$': USE_SAFE_NAVIGATE_MOCK_PATH,
 		'^src/hooks/useSafeNavigate$': USE_SAFE_NAVIGATE_MOCK_PATH,
 		'^.*/useSafeNavigate$': USE_SAFE_NAVIGATE_MOCK_PATH,
@@ -29,6 +32,7 @@ const config: Config.InitialOptions = {
 		'^constants/env$': '<rootDir>/__mocks__/env.ts',
 		'^src/constants/env$': '<rootDir>/__mocks__/env.ts',
 		'^@signozhq/icons$': '<rootDir>/__mocks__/signozhqIconsMock.tsx',
+		'^lib/env$': '<rootDir>/__mocks__/lib/env.ts',
 		'^test-mocks/(.*)$': '<rootDir>/__mocks__/$1',
 		'^react-syntax-highlighter/dist/esm/(.*)$':
 			'<rootDir>/node_modules/react-syntax-highlighter/dist/cjs/$1',

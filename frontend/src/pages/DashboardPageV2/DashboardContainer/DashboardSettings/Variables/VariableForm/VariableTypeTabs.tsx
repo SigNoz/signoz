@@ -1,3 +1,4 @@
+import { Color } from '@signozhq/design-tokens';
 import {
 	ClipboardType,
 	DatabaseZap,
@@ -67,20 +68,23 @@ function VariableTypeTabs(): JSX.Element {
 					>
 						<DatabaseZap size={14} />
 						Query
-						<Badge color="amber" className={styles.betaTag}>
+						{/* Wide screens: the full "Not Recommended" pill. */}
+						<Badge color="amber" className={styles.notRecommendedBadge}>
 							Not Recommended
 						</Badge>
+						{/* Small screens: an amber info icon stands in for the pill (keeps the
+						    tab row from overflowing), its tooltip carries the same message + link. */}
 						<span
-							className={styles.betaTag}
+							className={styles.notRecommendedInfo}
 							onClick={(e): void => e.stopPropagation()}
 							role="presentation"
 						>
 							<TextToolTip
-								text="Learn why we don't recommend"
+								text="Query variables can be slow and brittle, so they aren't recommended. Learn why"
 								url="https://signoz.io/docs/userguide/manage-variables/#why-avoid-clickhouse-query-variables"
 								urlText="here"
 								useFilledIcon={false}
-								outlinedIcon={<Info size={14} />}
+								outlinedIcon={<Info size={14} color={Color.BG_AMBER_600} />}
 							/>
 						</span>
 					</TabsTrigger>

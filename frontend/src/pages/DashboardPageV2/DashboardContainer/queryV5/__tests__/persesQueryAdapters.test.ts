@@ -111,6 +111,45 @@ describe('persesQueryAdapters', () => {
 			expect(result[0].kind).toBe('raw');
 			expect(result[0].spec.plugin.kind).toBe('signoz/BuilderQuery');
 		});
+
+		it('drops the pageSize-promoted limit for a List query with no user limit (so it pages server-side)', () => {
+			// pageSize with no user limit would otherwise be folded into the V5 limit.
+			const withPageSize: Query = {
+				...initialQueriesMap[DataSource.LOGS],
+				builder: {
+					...initialQueriesMap[DataSource.LOGS].builder,
+					queryData: [
+						{
+							...initialQueriesMap[DataSource.LOGS].builder.queryData[0],
+							limit: null,
+							pageSize: 100,
+						},
+					],
+				},
+			};
+
+			const result = toPerses(withPageSize, PANEL_TYPES.LIST);
+
+			const spec = result[0].spec.plugin.spec as { limit?: number };
+			expect(spec.limit).toBeUndefined();
+		});
+
+		it('keeps an explicit user limit on a List query (V1 parity: static, unpaged cap)', () => {
+			const withLimit: Query = {
+				...initialQueriesMap[DataSource.LOGS],
+				builder: {
+					...initialQueriesMap[DataSource.LOGS].builder,
+					queryData: [
+						{ ...initialQueriesMap[DataSource.LOGS].builder.queryData[0], limit: 50 },
+					],
+				},
+			};
+
+			const result = toPerses(withLimit, PANEL_TYPES.LIST);
+
+			const spec = result[0].spec.plugin.spec as { limit?: number };
+			expect(spec.limit).toBe(50);
+		});
 	});
 
 	describe('round-trip', () => {

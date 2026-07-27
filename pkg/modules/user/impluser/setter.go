@@ -914,27 +914,27 @@ func (module *setter) UpdateUserRoles(ctx context.Context, orgID, userID valuer.
 	})
 }
 
-func (module *setter) AddUserRole(ctx context.Context, orgID, userID valuer.UUID, roleName string) error {
+func (module *setter) AddUserRole(ctx context.Context, orgID, userID valuer.UUID, roleName string) (*authtypes.UserRole, error) {
 	existingUser, err := module.getter.GetUserByOrgIDAndID(ctx, orgID, userID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := existingUser.ErrIfRoot(); err != nil {
-		return errors.WithAdditionalf(err, "cannot add role for root user")
+		return nil, errors.WithAdditionalf(err, "cannot add role for root user")
 	}
 
 	if err := existingUser.ErrIfDeleted(); err != nil {
-		return errors.WithAdditionalf(err, "cannot add role for deleted user")
+		return nil, errors.WithAdditionalf(err, "cannot add role for deleted user")
 	}
 
 	// validate that the role name exists
 	foundRoles, err := module.authz.ListByOrgIDAndNames(ctx, orgID, []string{roleName})
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if len(foundRoles) != 1 {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "role name not found: %s", roleName)
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "role name not found: %s", roleName)
 	}
 
 	// grant via authz (additive, idempotent — OpenFGA uses OnDuplicate: "ignore")
@@ -944,18 +944,43 @@ func (module *setter) AddUserRole(ctx context.Context, orgID, userID valuer.UUID
 		[]string{roleName},
 		authtypes.MustNewSubject(coretypes.NewResourceUser(), existingUser.ID.StringValue(), existingUser.OrgID, nil),
 	); err != nil {
-		return err
+		return nil, err
 	}
 
 	// create user_role entry (swallow AlreadyExists for idempotency — DB has unique constraint on user_id+role_id)
-	userRoles := authtypes.NewUserRoles(userID, foundRoles)
-	if err := module.userRoleStore.CreateUserRoles(ctx, userRoles); err != nil {
+	userRole := authtypes.NewUserRoles(userID, foundRoles)[0]
+	if err := module.userRoleStore.CreateUserRoles(ctx, []*authtypes.UserRole{userRole}); err != nil {
 		if !errors.Ast(err, errors.TypeAlreadyExists) {
-			return err
+			return nil, err
+		}
+
+		existingUserRoles, err := module.getter.GetRolesByUserID(ctx, userID)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, existingUserRole := range existingUserRoles {
+			if existingUserRole.RoleID == foundRoles[0].ID {
+				userRole = existingUserRole
+				break
+			}
 		}
 	}
 
-	return module.tokenizer.DeleteIdentity(ctx, userID)
+	if err := module.tokenizer.DeleteIdentity(ctx, userID); err != nil {
+		return nil, err
+	}
+
+	return userRole, nil
+}
+
+func (module *setter) AddUserRoleByRoleID(ctx context.Context, orgID, userID valuer.UUID, roleID valuer.UUID) (*authtypes.UserRole, error) {
+	role, err := module.authz.Get(ctx, orgID, roleID)
+	if err != nil {
+		return nil, err
+	}
+
+	return module.AddUserRole(ctx, orgID, userID, role.Name)
 }
 
 func (module *setter) RemoveUserRole(ctx context.Context, orgID, userID valuer.UUID, roleID valuer.UUID) error {

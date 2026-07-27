@@ -1,12 +1,15 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import logEvent from 'api/common/logEvent';
 import { commaValuesParser } from 'lib/dashboardVariables/customCommaValuesParser';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 import type { PayloadVariables } from 'types/api/dashboard/variables/query';
 
 import type { VariableSelectionMap } from '../../../VariablesBar/selectionTypes';
 import { useDashboardStore } from '../../../store/useDashboardStore';
-import { detectVariableCycle } from '../variableDependencies';
+import { detectVariableCycle } from '../utils/variableCycleDetection';
 import {
 	sortValuesByOrder,
+	VARIABLE_TYPE_EVENT_LABEL,
 	type VariableFormModel,
 	type VariableType,
 } from '../variableFormModel';
@@ -46,8 +49,12 @@ export interface UseVariableForm {
 	handleSave: () => void;
 }
 
-const readDefaultValue = (model: VariableFormModel): string =>
-	((model.defaultValue as { value?: string })?.value ?? '') as string;
+// `defaultValue` is a string | string[] on the wire; the editor uses a single
+// string, so take the first when it's an array.
+const readDefaultValue = (model: VariableFormModel): string => {
+	const dv = model.defaultValue;
+	return Array.isArray(dv) ? (dv[0] ?? '') : (dv ?? '');
+};
 
 /** Form state, derivations and handlers for the variable editor. */
 export function useVariableForm({
@@ -84,6 +91,35 @@ export function useVariableForm({
 		() => sortValuesByOrder(rawPreview, model.sort) as (string | number)[],
 		[rawPreview, model.sort],
 	);
+
+	// QUERY: drop a now-invalid default when the user re-runs the query and the
+	// returned values actually change. The query preview is populated only by the
+	// manual "Test Run" (never on edit-open), so keying off `rawPreview` here is
+	// effectively "on run"; the signature guard skips a re-run that yields the same
+	// values so a still-valid default is left untouched. DYNAMIC/CUSTOM resets are
+	// handled in their change handlers instead (see below).
+	const lastQueryPreviewRef = useRef<string | null>(null);
+	useEffect(() => {
+		lastQueryPreviewRef.current = null;
+	}, [initial]);
+
+	useEffect(() => {
+		if (model.type !== 'QUERY' || rawPreview.length === 0) {
+			return;
+		}
+		const optionValues = rawPreview.map(String);
+		const signature = JSON.stringify(optionValues);
+		if (signature === lastQueryPreviewRef.current) {
+			return;
+		}
+
+		lastQueryPreviewRef.current = signature;
+
+		// Clear a now-invalid default; resolution falls back to the first option/ALL.
+		setDefaultValue((current) =>
+			current && !optionValues.includes(current) ? '' : current,
+		);
+	}, [rawPreview, model.type]);
 
 	const existingNames = useMemo(() => siblings.map((v) => v.name), [siblings]);
 
@@ -133,12 +169,28 @@ export function useVariableForm({
 
 	const onCustomChange = (value: string): void => {
 		set({ customValue: value });
-		setRawPreview(commaValuesParser(value));
+		const parsed = commaValuesParser(value);
+		setRawPreview(parsed);
+
+		const optionValues = parsed.map(String);
+		setDefaultValue((current) =>
+			current && !optionValues.includes(current) ? '' : current,
+		);
 	};
 
 	// In add mode, mirror the selected attribute into the name until the user
 	// edits the name themselves (matches the V1 dynamic-variable behaviour).
 	const onDynamicChange = (patch: Partial<VariableFormModel>): void => {
+		const attributeChanged =
+			patch.dynamicAttribute !== undefined &&
+			patch.dynamicAttribute !== model.dynamicAttribute;
+		const signalChanged =
+			patch.dynamicSignal !== undefined &&
+			patch.dynamicSignal !== model.dynamicSignal;
+		if (attributeChanged || signalChanged) {
+			setDefaultValue('');
+		}
+
 		if (isNew && !nameTouched && patch.dynamicAttribute) {
 			set({ ...patch, name: patch.dynamicAttribute });
 		} else {
@@ -163,6 +215,13 @@ export function useVariableForm({
 			return;
 		}
 		setCycleError(null);
+		void logEvent(DashboardDetailEvents.VariableSaved, {
+			variableType: VARIABLE_TYPE_EVENT_LABEL[next.type],
+			multiSelect: next.multiSelect,
+			hasAllOption: next.showAllOption,
+			isNew,
+			dashboardId,
+		});
 		onSave(next);
 	};
 

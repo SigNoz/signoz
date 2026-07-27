@@ -1,5 +1,6 @@
 import { ReactElement } from 'react';
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor, act } from '@testing-library/react';
+import { useQueryClient } from 'react-query';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { AllTheProviders } from 'tests/test-utils';
@@ -46,12 +47,16 @@ describe('useAuthZ', () => {
 
 		expect(result.current.isLoading).toBe(true);
 		expect(result.current.permissions).toBeNull();
+		expect(result.current.allowed).toBe(false);
+		expect(result.current.deniedPermissions).toStrictEqual([]);
 
 		await waitFor(() => {
 			expect(result.current.isLoading).toBe(false);
 		});
 
 		expect(result.current.permissions).toStrictEqual(expectedResponse);
+		expect(result.current.allowed).toBe(false);
+		expect(result.current.deniedPermissions).toStrictEqual([permission2]);
 	});
 
 	it('should return error and null permissions when API errors', async () => {
@@ -73,6 +78,89 @@ describe('useAuthZ', () => {
 
 		expect(result.current.error).not.toBeNull();
 		expect(result.current.permissions).toBeNull();
+		expect(result.current.allowed).toBe(false);
+		expect(result.current.deniedPermissions).toStrictEqual([]);
+	});
+
+	it('should set allowed to true when all permissions are granted', async () => {
+		const permission1 = buildPermission('read', 'role:*');
+		const permission2 = buildPermission('update', 'role:123');
+
+		server.use(
+			rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
+				const payload = await req.json();
+				return res(
+					ctx.status(200),
+					ctx.json(authzMockResponse(payload, [true, true])),
+				);
+			}),
+		);
+
+		const { result } = renderHook(() => useAuthZ([permission1, permission2]), {
+			wrapper,
+		});
+
+		await waitFor(() => {
+			expect(result.current.isLoading).toBe(false);
+		});
+
+		expect(result.current.allowed).toBe(true);
+		expect(result.current.deniedPermissions).toStrictEqual([]);
+	});
+
+	it('should collect all denied permissions when multiple are denied', async () => {
+		const permission1 = buildPermission('read', 'role:*');
+		const permission2 = buildPermission('update', 'role:123');
+
+		server.use(
+			rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
+				const payload = await req.json();
+				return res(
+					ctx.status(200),
+					ctx.json(authzMockResponse(payload, [false, false])),
+				);
+			}),
+		);
+
+		const { result } = renderHook(() => useAuthZ([permission1, permission2]), {
+			wrapper,
+		});
+
+		await waitFor(() => {
+			expect(result.current.isLoading).toBe(false);
+		});
+
+		expect(result.current.allowed).toBe(false);
+		expect(result.current.deniedPermissions).toStrictEqual([
+			permission1,
+			permission2,
+		]);
+	});
+
+	it('should not fetch when enabled is false', async () => {
+		let requestCount = 0;
+		const permission = buildPermission('read', 'role:*');
+
+		server.use(
+			rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
+				requestCount += 1;
+				const payload = await req.json();
+				return res(ctx.status(200), ctx.json(authzMockResponse(payload, [true])));
+			}),
+		);
+
+		const { result } = renderHook(
+			() => useAuthZ([permission], { enabled: false }),
+			{ wrapper },
+		);
+
+		await waitFor(() => {
+			expect(result.current.isLoading).toBe(false);
+		});
+
+		expect(requestCount).toBe(0);
+		expect(result.current.allowed).toBe(false);
+		expect(result.current.permissions).toStrictEqual({});
 	});
 
 	it('should refetch when permissions array changes', async () => {
@@ -472,5 +560,122 @@ describe('useAuthZ', () => {
 		});
 		expect(result1.current.permissions).not.toHaveProperty(permission2);
 		expect(result2.current.permissions).not.toHaveProperty(permission1);
+	});
+});
+
+describe('useAuthZ cache invalidation', () => {
+	it('should re-render with updated data when query is invalidated', async () => {
+		const permission = buildPermission('read', 'role:*');
+
+		let requestCount = 0;
+		let shouldGrant = true;
+
+		server.use(
+			rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
+				requestCount++;
+				const payload = await req.json();
+				return res(
+					ctx.status(200),
+					ctx.json(authzMockResponse(payload, [shouldGrant])),
+				);
+			}),
+		);
+
+		const { result } = renderHook(
+			() => {
+				const queryClient = useQueryClient();
+				const authz = useAuthZ([permission]);
+				return { authz, queryClient };
+			},
+			{ wrapper },
+		);
+
+		await waitFor(() => {
+			expect(result.current.authz.isLoading).toBe(false);
+		});
+
+		expect(requestCount).toBe(1);
+		expect(result.current.authz.allowed).toBe(true);
+		expect(result.current.authz.permissions).toStrictEqual({
+			[permission]: { isGranted: true },
+		});
+
+		// Change server response and reset query (forces refetch)
+		shouldGrant = false;
+
+		await act(async () => {
+			await result.current.queryClient.resetQueries(['authz', permission]);
+		});
+
+		await waitFor(() => {
+			expect(result.current.authz.allowed).toBe(false);
+		});
+
+		expect(requestCount).toBe(2);
+		expect(result.current.authz.permissions).toStrictEqual({
+			[permission]: { isGranted: false },
+		});
+	});
+
+	it('should re-render all components using the same permission when invalidated', async () => {
+		const permission = buildPermission('update', 'role:123');
+
+		let requestCount = 0;
+		let shouldGrant = true;
+
+		server.use(
+			rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
+				requestCount++;
+				const payload = await req.json();
+				return res(
+					ctx.status(200),
+					ctx.json(authzMockResponse(payload, [shouldGrant])),
+				);
+			}),
+		);
+
+		// Two separate hooks using the same permission
+		const { result: result1 } = renderHook(
+			() => {
+				const queryClient = useQueryClient();
+				const authz = useAuthZ([permission]);
+				return { authz, queryClient };
+			},
+			{ wrapper },
+		);
+
+		const { result: result2 } = renderHook(() => useAuthZ([permission]), {
+			wrapper,
+		});
+
+		await waitFor(() => {
+			expect(result1.current.authz.isLoading).toBe(false);
+			expect(result2.current.isLoading).toBe(false);
+		});
+
+		// Both should show granted, single batched request
+		expect(requestCount).toBe(1);
+		expect(result1.current.authz.allowed).toBe(true);
+		expect(result2.current.allowed).toBe(true);
+
+		// Change server response and reset query (forces refetch)
+		shouldGrant = false;
+
+		await act(async () => {
+			await result1.current.queryClient.resetQueries(['authz', permission]);
+		});
+
+		// Both hooks should update
+		await waitFor(() => {
+			expect(result1.current.authz.allowed).toBe(false);
+			expect(result2.current.allowed).toBe(false);
+		});
+
+		expect(result1.current.authz.permissions).toStrictEqual({
+			[permission]: { isGranted: false },
+		});
+		expect(result2.current.permissions).toStrictEqual({
+			[permission]: { isGranted: false },
+		});
 	});
 });

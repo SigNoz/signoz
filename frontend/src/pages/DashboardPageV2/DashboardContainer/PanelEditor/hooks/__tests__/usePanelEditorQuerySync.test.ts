@@ -95,6 +95,7 @@ describe('usePanelEditorQuerySync', () => {
 			draft?: DashboardtypesPanelDTO;
 			setSpec?: jest.Mock;
 			refetch?: jest.Mock;
+			savedQueries?: DashboardtypesPanelSpecDTO['queries'];
 		} = {},
 	): {
 		result: {
@@ -119,20 +120,22 @@ describe('usePanelEditorQuerySync', () => {
 				panelType: PANEL_TYPES.TIME_SERIES,
 				setSpec,
 				refetch,
+				savedQueries: opts.savedQueries,
 			}),
 		);
 		return { result, setSpec, refetch, rerender };
 	}
 
-	it('force-resets the builder to the saved queries on mount (discards stale URL)', () => {
+	it('seeds the builder from the draft queries on mount (URL query, when present, wins)', () => {
 		setup();
 		expect(mockFromPerses).toHaveBeenCalledWith(
 			SAVED_QUERIES,
 			PANEL_TYPES.TIME_SERIES,
 		);
+		// No forceReset: useShareBuilderUrl resets to the seed only when the URL carries
+		// no query, so an in-editor edit in the URL survives a refresh.
 		expect(mockUseShareBuilderUrl).toHaveBeenCalledWith({
 			defaultValue: SEED_V1,
-			forceReset: true,
 		});
 	});
 
@@ -247,11 +250,13 @@ describe('usePanelEditorQuerySync', () => {
 	});
 
 	describe('datasource switch', () => {
-		const withSource = (id: string, dataSource: string): Query =>
+		const withSource = (id: string, ...dataSources: string[]): Query =>
 			({
 				id,
 				queryType: 'builder',
-				builder: { queryData: [{ dataSource }] },
+				builder: {
+					queryData: dataSources.map((dataSource) => ({ dataSource })),
+				},
 			}) as unknown as Query;
 
 		it('commits the active query when a query datasource changes', () => {
@@ -286,46 +291,181 @@ describe('usePanelEditorQuerySync', () => {
 
 			expect(setSpec).not.toHaveBeenCalled();
 		});
+
+		it('does not commit when a query is added (the fresh query must not auto-run)', () => {
+			const state = builderState({ currentQuery: withSource('a', 'metrics') });
+			mockUseQueryBuilder.mockImplementation(() => state);
+			mockGetIsQueryModified.mockReturnValue(true);
+
+			const { setSpec, rerender } = setup();
+			setSpec.mockClear();
+
+			state.currentQuery = withSource('b', 'metrics', 'metrics');
+			rerender();
+
+			expect(setSpec).not.toHaveBeenCalled();
+		});
+
+		it('commits when a query is removed', () => {
+			const state = builderState({
+				currentQuery: withSource('a', 'metrics', 'logs'),
+			});
+			mockUseQueryBuilder.mockImplementation(() => state);
+			mockGetIsQueryModified.mockReturnValue(true);
+
+			const { setSpec, rerender } = setup();
+			setSpec.mockClear();
+
+			state.currentQuery = withSource('b', 'metrics');
+			rerender();
+
+			expect(setSpec).toHaveBeenCalledWith({
+				...makeDraft().spec,
+				queries: CONVERTED_QUERIES,
+			});
+		});
+
+		it('commits a datasource switch on a query added after mount', () => {
+			const state = builderState({ currentQuery: withSource('a', 'metrics') });
+			mockUseQueryBuilder.mockImplementation(() => state);
+			mockGetIsQueryModified.mockReturnValue(true);
+
+			const { setSpec, rerender } = setup();
+			setSpec.mockClear();
+
+			state.currentQuery = withSource('b', 'metrics', 'metrics');
+			rerender();
+			state.currentQuery = withSource('c', 'metrics', 'logs');
+			rerender();
+
+			expect(setSpec).toHaveBeenCalledWith({
+				...makeDraft().spec,
+				queries: CONVERTED_QUERIES,
+			});
+		});
+	});
+
+	describe('staged-query re-sync (browser back/forward)', () => {
+		it('commits the staged query into the draft when it re-stages', () => {
+			const state = builderState();
+			mockUseQueryBuilder.mockImplementation(() => state);
+
+			const { setSpec, rerender } = setup();
+			setSpec.mockClear();
+
+			// Browser Back re-stages a different query via initQueryBuilderData; the
+			// preview must follow it instead of keeping the last Run's result.
+			mockGetIsQueryModified.mockReturnValue(true);
+			state.stagedQuery = {
+				id: 'restaged',
+				queryType: 'builder',
+			} as unknown as Query;
+			rerender();
+
+			expect(setSpec).toHaveBeenCalledWith({
+				...makeDraft().spec,
+				queries: CONVERTED_QUERIES,
+			});
+		});
+
+		it('does not commit when only the live query changes (no re-stage)', () => {
+			const state = builderState({
+				currentQuery: { id: 'a', queryType: 'builder' } as Query,
+			});
+			mockUseQueryBuilder.mockImplementation(() => state);
+			mockGetIsQueryModified.mockReturnValue(true);
+
+			const { setSpec, rerender } = setup();
+			setSpec.mockClear();
+
+			// Live edit: currentQuery changes, staged query + structure unchanged.
+			state.currentQuery = { id: 'b', queryType: 'builder' } as Query;
+			rerender();
+
+			expect(setSpec).not.toHaveBeenCalled();
+		});
 	});
 
 	describe('query dirty + save', () => {
-		it('compares the live query against the builder baseline (first staged query), not the raw seed', () => {
-			mockGetIsQueryModified.mockReturnValue(true);
-			const { result } = setup();
+		// isQueryDirty compares the live query to the SAVED queries at the V5 envelope
+		// level (toQueryEnvelopes is mocked identity). Drive it via an input-sensitive
+		// toPerses so the envelope comparison — not getIsQueryModified — decides.
+		const SAVED_BASELINE = [{ id: 'saved-baseline' }] as unknown as NonNullable<
+			DashboardtypesPanelSpecDTO['queries']
+		>;
+		const EDITED_ENVELOPES = [
+			{ id: 'edited-envelopes' },
+		] as unknown as NonNullable<DashboardtypesPanelSpecDTO['queries']>;
+		const editedQuery = { id: 'edited', queryType: 'builder' } as Query;
+		const unchangedQuery = { id: 'unchanged', queryType: 'builder' } as Query;
 
-			// Baseline is the builder's own normalized staged query — immune to the
-			// raw-seed vs builder-normalized serialization drift.
-			expect(mockGetIsQueryModified).toHaveBeenCalledWith(
-				expect.anything(),
-				STAGED_V1,
+		beforeEach(() => {
+			mockToPerses.mockImplementation((query: Query) =>
+				query?.id === 'edited' ? EDITED_ENVELOPES : SAVED_BASELINE,
 			);
+		});
+
+		it('is query-dirty when the live query no longer serializes to the saved queries', () => {
+			mockUseQueryBuilder.mockReturnValue(
+				builderState({ currentQuery: editedQuery }),
+			);
+			const { result } = setup({ savedQueries: SAVED_BASELINE });
+
 			expect(result.current.isQueryDirty).toBe(true);
 		});
 
-		it('is not query-dirty when the live query matches the baseline', () => {
-			mockGetIsQueryModified.mockReturnValue(false);
-			const { result } = setup();
+		it('is not query-dirty when the live query still serializes to the saved queries', () => {
+			mockUseQueryBuilder.mockReturnValue(
+				builderState({ currentQuery: unchangedQuery }),
+			);
+			const { result } = setup({ savedQueries: SAVED_BASELINE });
 
 			expect(result.current.isQueryDirty).toBe(false);
 		});
 
 		it('buildSaveSpec bakes the live query in when dirty', () => {
-			mockGetIsQueryModified.mockReturnValue(true);
-			const { result } = setup();
+			mockUseQueryBuilder.mockReturnValue(
+				builderState({ currentQuery: editedQuery }),
+			);
+			const { result } = setup({ savedQueries: SAVED_BASELINE });
 			const { spec } = makeDraft();
 
 			expect(result.current.buildSaveSpec(spec)).toStrictEqual({
 				...spec,
-				queries: CONVERTED_QUERIES,
+				queries: EDITED_ENVELOPES,
 			});
 		});
 
 		it('buildSaveSpec returns the spec untouched when the query is unchanged', () => {
-			mockGetIsQueryModified.mockReturnValue(false);
-			const { result } = setup();
+			mockUseQueryBuilder.mockReturnValue(
+				builderState({ currentQuery: unchangedQuery }),
+			);
+			const { result } = setup({ savedQueries: SAVED_BASELINE });
 			const { spec } = makeDraft();
 
 			expect(result.current.buildSaveSpec(spec)).toBe(spec);
+		});
+
+		it('anchors the baseline to savedQueries, not the draft the builder seeds from (View handoff / refresh)', () => {
+			// The draft carries the View-mode edit (the builder seeds from it), but the
+			// baseline is the persisted panel: a live query equal to the edited draft
+			// still reads dirty against the saved queries.
+			mockUseQueryBuilder.mockReturnValue(
+				builderState({ currentQuery: editedQuery }),
+			);
+			const draft = makeDraft(EDITED_ENVELOPES);
+			const { result } = setup({ draft, savedQueries: SAVED_BASELINE });
+
+			expect(result.current.isQueryDirty).toBe(true);
+		});
+
+		it('falls back to the seed query as the baseline when there are no saved queries (new panel)', () => {
+			mockUseQueryBuilder.mockReturnValue(
+				builderState({ currentQuery: unchangedQuery }),
+			);
+			const { result } = setup();
+
+			expect(result.current.isQueryDirty).toBe(false);
 		});
 	});
 });

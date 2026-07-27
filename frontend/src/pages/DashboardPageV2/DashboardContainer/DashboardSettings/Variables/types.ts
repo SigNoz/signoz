@@ -6,6 +6,11 @@ export type EditingState =
 	| { type: 'edit'; index: number }
 	| null;
 
+export interface PanelOption {
+	label: string;
+	value: string;
+}
+
 export interface VariableFormProps {
 	initial: VariableFormModel;
 	/** The other variables (excluding this one), for uniqueness & cycle checks. */
@@ -13,6 +18,10 @@ export interface VariableFormProps {
 	/** True when adding a new variable (enables auto-naming from the attribute). */
 	isNew: boolean;
 	isSaving: boolean;
+	/** All panels, for the dynamic "apply to panels" picker. */
+	panelOptions: PanelOption[];
+	/** Panels this variable is already applied to — pre-checks the picker. */
+	appliedPanelIds: string[];
 	onClose: () => void;
-	onSave: (model: VariableFormModel) => void;
+	onSave: (model: VariableFormModel, selectedPanelIds: string[]) => void;
 }

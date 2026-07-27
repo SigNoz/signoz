@@ -6,6 +6,7 @@ import (
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -205,8 +206,8 @@ func TestConditionBuilder(t *testing.T) {
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-			cond, err := conditionBuilder.ConditionFor(context.Background(), 0, 0, tc.key, tc.op, tc.value, sb)
-			sb.Where(cond)
+			cond, _, err := conditionBuilder.ConditionFor(context.Background(), valuer.UUID{}, 0, 0, tc.key, map[string][]*telemetrytypes.TelemetryFieldKey{tc.key.Name: {tc.key}}, qbtypes.ConditionBuilderOptions{}, tc.op, tc.value, sb)
+			sb.Where(cond...)
 
 			if tc.expectedErr != nil {
 				assert.Error(t, err)

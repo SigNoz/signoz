@@ -1,6 +1,8 @@
+import { TanStackHoverTooltip } from './TanStackHoverTooltip';
 import { TanStackTableBase } from './TanStackTable';
 import TanStackTableText from './TanStackTableText';
 
+export * from './TanStackHoverTooltip';
 export * from './TanStackTableStateContext';
 export * from './types';
 export * from './useCalculatedPageSize';
@@ -120,6 +122,22 @@ export * from './useTableParams';
  *   getRowClassName={(row) => (row.severity === 'error' ? 'row-error' : '')}
  *   getRowStyle={(row) => (row.dimmed ? { opacity: 0.5 } : {})}
  *   renderRowActions={(row) => <Button size="small">Open</Button>}
+ * />
+ * ```
+ *
+ * @example Object itemKey — use generic `TItemKey` when selection needs compound keys.
+ * ```tsx
+ * type SelectionParams = { id: string; cluster: string; namespace: string };
+ *
+ * <TanStackTable<Row, SelectionParams>
+ *   data={data}
+ *   columns={columns}
+ *   getRowKey={(row) => row.uid}
+ *   getItemKey={(row) => ({ id: row.name, cluster: row.cluster, namespace: row.namespace })}
+ *   onRowClick={(row, itemKey) => {
+ *     // itemKey is typed as SelectionParams
+ *     setSelection(itemKey);
+ *   }}
  * />
  * ```
  *
@@ -258,6 +276,7 @@ export * from './useTableParams';
  */
 const TanStackTable = Object.assign(TanStackTableBase, {
 	Text: TanStackTableText,
+	HoverTooltip: TanStackHoverTooltip,
 });
 
 export default TanStackTable;

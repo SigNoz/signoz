@@ -71,7 +71,7 @@ func (module *module) ListV2(ctx context.Context, orgID valuer.UUID, params *das
 		return nil, err
 	}
 
-	return dashboardtypes.NewListableDashboardV2(dashboards, total, tagsByDashboard, allTags)
+	return dashboardtypes.NewListableDashboardV2(dashboards, total, tagsByDashboard, allTags), nil
 }
 
 func (module *module) ListForUserV2(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, params *dashboardtypes.ListDashboardsV2Params) (*dashboardtypes.ListableDashboardForUserV2, error) {
@@ -90,7 +90,7 @@ func (module *module) ListForUserV2(ctx context.Context, orgID valuer.UUID, user
 		return nil, err
 	}
 
-	return dashboardtypes.NewListableDashboardForUserV2(rows, total, tagsByDashboard, allTags)
+	return dashboardtypes.NewListableDashboardForUserV2(rows, total, tagsByDashboard, allTags), nil
 }
 
 func (module *module) fetchDashboardTags(ctx context.Context, orgID valuer.UUID, dashboardIDs []valuer.UUID) (map[valuer.UUID][]*tagtypes.Tag, []*tagtypes.Tag, error) {

@@ -30,7 +30,6 @@
 		padding: var(--spacing-5) var(--spacing-6);
 		border-radius: var(--radius-2);
 		border: 1px solid transparent;
-		background: var(--l3-background);
 		margin: 0;
 		width: 100%;
 		// Include padding + border in the 100% width so the card fits inside
@@ -67,14 +66,9 @@
 
 		// Radix RadioGroupItem renders <button data-state="checked|unchecked">.
 		// Use :has() to highlight the wrapper card when its inner button is checked.
-		&.sourceRadioAuto:has(button[data-state='checked']) {
+		&:has(button[data-state='checked']) {
 			background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
 			border-color: color-mix(in srgb, var(--accent-primary) 30%, transparent);
-		}
-
-		&.sourceRadioOverride:has(button[data-state='checked']) {
-			background: color-mix(in srgb, var(--accent-amber) 10%, transparent);
-			border-color: color-mix(in srgb, var(--accent-amber) 30%, transparent);
 		}
 
 		&:hover {

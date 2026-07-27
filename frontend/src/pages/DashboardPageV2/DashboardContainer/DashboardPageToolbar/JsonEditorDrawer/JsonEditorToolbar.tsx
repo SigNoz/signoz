@@ -5,6 +5,8 @@ import styles from './JsonEditorToolbar.module.scss';
 
 interface JsonEditorToolbarProps {
 	isDirty: boolean;
+	/** Locked/no-permission — Format and Reset (draft mutators) are disabled. */
+	readOnly?: boolean;
 	onFormat: () => void;
 	onCopy: () => void;
 	onDownload: () => void;
@@ -13,6 +15,7 @@ interface JsonEditorToolbarProps {
 
 function JsonEditorToolbar({
 	isDirty,
+	readOnly = false,
 	onFormat,
 	onCopy,
 	onDownload,
@@ -26,6 +29,7 @@ function JsonEditorToolbar({
 				size="sm"
 				prefix={<AlignLeft size={14} />}
 				testId="json-editor-format"
+				disabled={readOnly}
 				onClick={onFormat}
 			>
 				Format
@@ -57,7 +61,7 @@ function JsonEditorToolbar({
 				size="sm"
 				prefix={<RotateCcw size={14} />}
 				testId="json-editor-reset"
-				disabled={!isDirty}
+				disabled={readOnly || !isDirty}
 				onClick={onReset}
 			>
 				Reset

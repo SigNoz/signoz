@@ -89,15 +89,6 @@ func (ah *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 		Route:      "",
 	})
 
-	useDashboardV2 := ah.Signoz.Flagger.BooleanOrEmpty(ctx, flagger.FeatureUseDashboardV2, evalCtx)
-	featureSet = append(featureSet, &licensetypes.Feature{
-		Name:       valuer.NewString(flagger.FeatureUseDashboardV2.String()),
-		Active:     useDashboardV2,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	})
-
 	aiObservability := ah.Signoz.Flagger.BooleanOrEmpty(ctx, flagger.FeatureEnableAIObservability, evalCtx)
 	featureSet = append(featureSet, &licensetypes.Feature{
 		Name:       valuer.NewString(flagger.FeatureEnableAIObservability.String()),
@@ -111,6 +102,15 @@ func (ah *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 	featureSet = append(featureSet, &licensetypes.Feature{
 		Name:       valuer.NewString(flagger.FeatureEnableMetricsReduction.String()),
 		Active:     metricsReduction,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	})
+
+	infraMonitoringV2 := ah.Signoz.Flagger.BooleanOrEmpty(ctx, flagger.FeatureUseInfraMonitoringV2, evalCtx)
+	featureSet = append(featureSet, &licensetypes.Feature{
+		Name:       valuer.NewString(flagger.FeatureUseInfraMonitoringV2.String()),
+		Active:     infraMonitoringV2,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",

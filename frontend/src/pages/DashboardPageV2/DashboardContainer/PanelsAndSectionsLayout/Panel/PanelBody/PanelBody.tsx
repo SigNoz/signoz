@@ -1,11 +1,13 @@
-import { Spin } from 'antd';
-import { Loader, RotateCw, SquarePlus, TriangleAlert } from '@signozhq/icons';
+import { RotateCw, SquarePlus, TriangleAlert } from '@signozhq/icons';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
+import PanelLoader from 'pages/DashboardPageV2/DashboardContainer/Panels/components/PanelLoader/PanelLoader';
 import PanelMessage from 'pages/DashboardPageV2/DashboardContainer/Panels/components/PanelMessage/PanelMessage';
+import type { AnyPanelInteractionProps } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/interactions';
 import type { RenderablePanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelDefinition';
 import type { DashboardPreference } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/rendererProps';
 import { hasRunnableQueries } from 'pages/DashboardPageV2/DashboardContainer/queryV5/buildQueryRangeRequest';
+import { getResponseType } from 'pages/DashboardPageV2/DashboardContainer/queryV5/v5ResponseData';
 import type {
 	PanelPagination,
 	PanelQueryData,
@@ -21,6 +23,10 @@ interface PanelBodyProps {
 	panelId: string;
 	data: PanelQueryData;
 	isFetching: boolean;
+	/** Panel not yet scrolled into view — its fetch is deferred, so show the loader rather than NoData. */
+	isVisible?: boolean;
+	/** Showing a prior page's data while the next loads; forwarded so list renderers can show skeletons. */
+	isPreviousData?: boolean;
 	error: Error | null;
 	refetch: () => void;
 	onDragSelect: (start: number, end: number) => void;
@@ -32,6 +38,12 @@ interface PanelBodyProps {
 	searchTerm?: string;
 	/** Server-side paging handles — only consumed by raw/list renderers. */
 	pagination?: PanelPagination;
+	/** Close the standalone View modal — only consumed by the time-series/bar graph manager. */
+	onCloseStandaloneView?: () => void;
+	/** Opens the drill-down context menu; threaded to interactive renderers. */
+	onClick?: AnyPanelInteractionProps['onClick'];
+	/** Gate for the drill-down menu — kind supported and the panel has a builder query. */
+	enableDrillDown?: boolean;
 }
 
 /**
@@ -44,6 +56,8 @@ function PanelBody({
 	panelId,
 	data,
 	isFetching,
+	isVisible,
+	isPreviousData,
 	error,
 	refetch,
 	onDragSelect,
@@ -51,10 +65,15 @@ function PanelBody({
 	panelMode = PanelMode.DASHBOARD_VIEW,
 	searchTerm,
 	pagination,
+	onCloseStandaloneView,
+	onClick,
+	enableDrillDown = false,
 }: PanelBodyProps): JSX.Element {
-	// react-query keeps the previous response during refetches, so its presence is
-	// the "have something to show" signal — only fail hard when there's nothing.
-	const hasData = !!data.response;
+	// A retained response (keepPreviousData) counts as data only if its type matches the current
+	// request — else a prior panel kind's response (time_series → raw) flashes NoData on switch.
+	const hasData =
+		!!data.response &&
+		getResponseType(data.response) === data.requestPayload?.requestType;
 	const queries = panel.spec.queries;
 
 	// Not-configured panel: no runnable query, so nothing to error/load on.
@@ -89,29 +108,30 @@ function PanelBody({
 		);
 	}
 
-	if (isFetching) {
-		return (
-			<div className={styles.body} data-testid="panel-loading">
-				<Spin indicator={<Loader size={14} className="animate-spin" />} />
-			</div>
-		);
+	// Full-panel loader on first fetch or while the fetch is deferred (off-screen); a refetch
+	// over existing data keeps the renderer mounted, empty data loads via NoData.
+	if ((isFetching || isVisible === false) && !hasData) {
+		return <PanelLoader />;
 	}
 
 	return (
-		<div className={styles.chartContainer}>
+		<div className={styles.panelContainer}>
 			<panelDefinition.Renderer
 				panelId={panelId}
 				panel={panel}
 				data={data}
 				isFetching={isFetching}
+				isPreviousData={isPreviousData}
 				error={error}
 				refetch={refetch}
 				onDragSelect={onDragSelect}
 				panelMode={panelMode}
-				enableDrillDown={false}
+				enableDrillDown={enableDrillDown}
+				onClick={onClick}
 				dashboardPreference={dashboardPreference}
 				searchTerm={searchTerm}
 				pagination={pagination}
+				onCloseStandaloneView={onCloseStandaloneView}
 			/>
 		</div>
 	);

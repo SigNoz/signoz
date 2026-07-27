@@ -216,6 +216,11 @@ func (middleware *AuthZ) CheckResources(next http.HandlerFunc, roles ...string) 
 		}
 
 		for _, resource := range resolved {
+			if err := resource.Err(); err != nil {
+				render.Error(rw, err)
+				return
+			}
+
 			if err := middleware.checkResource(ctx, claims, orgID, resource.Verb(), resource.SourceResource(), resource.SourceIDs(), resource.SourceSelector(), roleSelectors); err != nil {
 				render.Error(rw, err)
 				return

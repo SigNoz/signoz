@@ -6,8 +6,10 @@ import (
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 
 	"golang.org/x/exp/maps"
@@ -51,7 +53,7 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 	return nil, qbtypes.ErrColumnNotFound
 }
 
-func (m *fieldMapper) FieldFor(ctx context.Context, _, _ uint64, key *telemetrytypes.TelemetryFieldKey) (string, error) {
+func (m *fieldMapper) FieldFor(ctx context.Context, _ valuer.UUID, _, _ uint64, key *telemetrytypes.TelemetryFieldKey) (string, error) {
 	columns, err := m.getColumn(ctx, key)
 	if err != nil {
 		return "", err
@@ -91,31 +93,61 @@ func (m *fieldMapper) FieldFor(ctx context.Context, _, _ uint64, key *telemetryt
 	return column.Name, nil
 }
 
-func (m *fieldMapper) ColumnFor(ctx context.Context, _, _ uint64, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
+func (m *fieldMapper) ColumnFor(ctx context.Context, _ valuer.UUID, _, _ uint64, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
 	return m.getColumn(ctx, key)
 }
 
 func (m *fieldMapper) ColumnExpressionFor(
 	ctx context.Context,
+	orgID valuer.UUID,
 	tsStart, tsEnd uint64,
 	field *telemetrytypes.TelemetryFieldKey,
+	requiredDataType telemetrytypes.FieldDataType,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
-	fieldExpression, err := m.FieldFor(ctx, tsStart, tsEnd, field)
+	resolved := field
+	fieldExpression, err := m.FieldFor(ctx, orgID, tsStart, tsEnd, field)
 	if errors.Is(err, qbtypes.ErrColumnNotFound) {
 		keysForField := keys[field.Name]
 		if len(keysForField) == 0 {
 			if _, ok := auditLogColumns[field.Name]; ok {
 				field.FieldContext = telemetrytypes.FieldContextLog
-				fieldExpression, _ = m.FieldFor(ctx, tsStart, tsEnd, field)
+				fieldExpression, _ = m.FieldFor(ctx, orgID, tsStart, tsEnd, field)
 			} else {
 				wrappedErr := errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name).WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(field.Name, errors.NounKeys, maps.Keys(keys))...)
 				return "", wrappedErr
 			}
 		} else {
-			fieldExpression, _ = m.FieldFor(ctx, tsStart, tsEnd, keysForField[0])
+			resolved = keysForField[0]
+			fieldExpression, _ = m.FieldFor(ctx, orgID, tsStart, tsEnd, keysForField[0])
 		}
 	}
 
+	// Group-by/order (String) and aggregation (String/Float64): exists-guarded and coerced
+	// to requiredDataType, returned bare (the caller adds any alias). Raw select
+	// (Unspecified) returns the aliased column expression.
+	if requiredDataType != telemetrytypes.FieldDataTypeUnspecified {
+		var dummyValue any = ""
+		if requiredDataType == telemetrytypes.FieldDataTypeFloat64 {
+			dummyValue = 0.0
+		}
+		columns, err := m.getColumn(ctx, resolved)
+		if err != nil {
+			return "", err
+		}
+		guard, err := querybuilder.ExistsExpression(columns, resolved, tsStart, tsEnd, fieldExpression, true)
+		if err != nil {
+			return "", err
+		}
+		coerced, _ := querybuilder.DataTypeCollisionHandledFieldName(resolved, dummyValue, fieldExpression, qbtypes.FilterOperatorUnknown)
+		return fmt.Sprintf("multiIf(%s, %s, NULL)", guard, coerced), nil
+	}
+
 	return fmt.Sprintf("%s AS `%s`", sqlbuilder.Escape(fieldExpression), field.Name), nil
+}
+
+// CandidateKeys returns nil: audit has no synthesize-on-unknown-key fallback, so an
+// unknown key stays unresolved and the caller errors.
+func (m *fieldMapper) CandidateKeys(_ context.Context, _ valuer.UUID, _ *telemetrytypes.TelemetryFieldKey, _ any, _ map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.TelemetryFieldKey {
+	return nil
 }

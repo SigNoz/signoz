@@ -10,11 +10,17 @@ import { Typography } from '@signozhq/ui/typography';
 import { Skeleton } from 'antd';
 import { useGetRole } from 'api/generated/services/role';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
-import PermissionDeniedFullPage from 'lib/authz/components/PermissionDeniedFullPage/PermissionDeniedFullPage';
 import { useDeleteRoleModal } from 'container/RolesSettings/DeleteRoleModal/useDeleteRoleModal';
-import { useRoleAuthZ } from 'container/RolesSettings/hooks/useRoleAuthZ';
+import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import { transformApiToRolePermissions } from 'container/RolesSettings/hooks/useRolePermissions';
 import { useRolesFeatureGate } from 'hooks/useRolesFeatureGate';
+import { withAuthZPage } from 'lib/authz/components/withAuthZ/withAuthZPage';
+import { RouterContext } from 'lib/authz/components/withAuthZ/withAuthZ';
+import {
+	buildRoleDeletePermission,
+	buildRoleReadPermission,
+	buildRoleUpdatePermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/role.permissions';
 import { useTimezone } from 'providers/Timezone';
 import APIError from 'types/api/error';
 import { RoleType } from 'types/roles';
@@ -27,7 +33,7 @@ import { useViewRolePageActions } from './useViewRolePageActions';
 
 import styles from './ViewRolePage.module.scss';
 
-function ViewRolePage(): JSX.Element {
+function ViewRolePageContent(): JSX.Element {
 	const { formatTimezoneAdjustedTimestampOptional } = useTimezone();
 	const { isRolesEnabled, isLoading: isFeatureGateLoading } =
 		useRolesFeatureGate();
@@ -45,26 +51,15 @@ function ViewRolePage(): JSX.Element {
 		handleTabChange,
 	} = useViewRolePageActions();
 
-	const {
-		hasReadPermission,
-		readRolePermission,
-		hasUpdatePermission,
-		updateRolePermission,
-		hasDeletePermission,
-		isAuthZLoading,
-	} = useRoleAuthZ(roleName);
-
 	const { data, isLoading, error } = useGetRole(
 		{ id: roleId ?? '' },
-		{ query: { enabled: !!roleId && hasReadPermission } },
+		{ query: { enabled: !!roleId } },
 	);
 	const role = data?.data;
 	const isManaged = role?.type === RoleType.MANAGED;
 
 	const {
 		isDeleteModalOpen,
-		isDeleteDisabled,
-		deleteDisabledReason,
 		deleteError,
 		handleOpenDeleteModal,
 		handleCloseDeleteModal,
@@ -72,7 +67,6 @@ function ViewRolePage(): JSX.Element {
 	} = useDeleteRoleModal({
 		roleId,
 		isManaged: isManaged ?? false,
-		hasDeletePermission,
 		onDeleteSuccess: handleCancel,
 	});
 
@@ -144,12 +138,6 @@ function ViewRolePage(): JSX.Element {
 		],
 	);
 
-	if (!hasReadPermission && !isAuthZLoading) {
-		return (
-			<PermissionDeniedFullPage permissionName={readRolePermission.object} />
-		);
-	}
-
 	if (!isRolesEnabled && !isFeatureGateLoading) {
 		return (
 			<div className={styles.viewRolePage} data-testid="view-role-page">
@@ -187,7 +175,7 @@ function ViewRolePage(): JSX.Element {
 		);
 	}
 
-	if (isAuthZLoading || isLoading || isFeatureGateLoading) {
+	if (isLoading || isFeatureGateLoading) {
 		return (
 			<div className={styles.viewRolePage}>
 				<Skeleton active paragraph={{ rows: 8 }} />
@@ -244,47 +232,55 @@ function ViewRolePage(): JSX.Element {
 				</div>
 
 				<div className={styles.viewRolePageActions}>
-					<TooltipSimple
-						title={isDeleteDisabled ? deleteDisabledReason : 'Open delete modal'}
-					>
-						<Button
+					{isManaged ? (
+						<TooltipSimple title="Managed roles cannot be deleted">
+							<Button
+								variant="link"
+								color="destructive"
+								disabled
+								data-testid="delete-button"
+								className={styles.deleteButton}
+							>
+								Delete
+							</Button>
+						</TooltipSimple>
+					) : (
+						<AuthZButton
+							checks={[buildRoleDeletePermission(roleName)]}
 							variant="link"
 							color="destructive"
 							onClick={handleOpenDeleteModal}
-							disabled={isDeleteDisabled}
 							data-testid="delete-button"
 							className={styles.deleteButton}
 						>
 							Delete
-						</Button>
-					</TooltipSimple>
+						</AuthZButton>
+					)}
 
 					<Divider type="vertical" />
 
-					<TooltipSimple
-						title={
-							isManaged
-								? 'Managed roles cannot be updated'
-								: hasUpdatePermission
-									? 'Open update page'
-									: `You are not authorized to perform ${updateRolePermission.object}`
-						}
-					>
-						<Button
+					{isManaged ? (
+						<TooltipSimple title="Managed roles cannot be updated">
+							<Button
+								variant="solid"
+								color="primary"
+								disabled
+								data-testid="save-button"
+							>
+								Update
+							</Button>
+						</TooltipSimple>
+					) : (
+						<AuthZButton
+							checks={[buildRoleUpdatePermission(roleName)]}
 							variant="solid"
 							color="primary"
 							data-testid="save-button"
-							disabled={isManaged || !hasUpdatePermission}
 							onClick={handleRedirectToUpdate}
-							style={
-								isManaged || !hasUpdatePermission
-									? { pointerEvents: 'auto' }
-									: undefined
-							}
 						>
 							Update
-						</Button>
-					</TooltipSimple>
+						</AuthZButton>
+					)}
 				</div>
 			</div>
 
@@ -336,4 +332,14 @@ function ViewRolePage(): JSX.Element {
 	);
 }
 
-export default ViewRolePage;
+export default withAuthZPage(ViewRolePageContent, {
+	checks: (_props: object, router: RouterContext) => {
+		const roleName = router.searchParams.get('name') ?? '';
+		return roleName ? [buildRoleReadPermission(roleName)] : [];
+	},
+	fallbackOnLoading: (
+		<div className={styles.viewRolePage}>
+			<Skeleton active paragraph={{ rows: 8 }} />
+		</div>
+	),
+});

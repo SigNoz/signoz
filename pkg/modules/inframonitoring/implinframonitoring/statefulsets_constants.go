@@ -19,10 +19,12 @@ var statefulSetNameGroupByKey = qbtypes.GroupByKey{
 
 // statefulSetsTableMetricNamesList drives the existence/retention check.
 // Includes k8s.pod.phase even though phase isn't part of the QB composite query —
-// it is queried separately via getPerGroupPodPhaseCounts, and we want the
+// it is queried separately via getPerGroupPodStatusCounts, and we want the
 // response to short-circuit cleanly when the phase metric is absent.
 var statefulSetsTableMetricNamesList = []string{
 	"k8s.pod.phase",
+	"k8s.pod.status_reason",
+	"k8s.container.status.reason",
 	"k8s.pod.cpu.usage",
 	"k8s.pod.cpu_request_utilization",
 	"k8s.pod.cpu_limit_utilization",

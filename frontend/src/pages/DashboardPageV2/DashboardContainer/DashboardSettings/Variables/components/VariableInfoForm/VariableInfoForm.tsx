@@ -4,6 +4,7 @@ import { Typography } from '@signozhq/ui/typography';
 import { Input as AntdInput } from 'antd';
 
 import styles from './VariableInfoForm.module.scss';
+import { DASHBOARD_NAME_MAX_LENGTH } from '../../../../constants';
 import variableFormStyles from '../../VariableForm/VariableForm.module.scss';
 
 interface VariableInfoFormProps {
@@ -30,6 +31,7 @@ function VariableInfoForm({
 					testId="variable-name"
 					className={styles.variableNameInput}
 					value={title}
+					maxLength={DASHBOARD_NAME_MAX_LENGTH}
 					onChange={(e): void => onTitleChange(e.target.value)}
 					placeholder="Unique name of the variable"
 				/>

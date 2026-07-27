@@ -89,8 +89,10 @@ const ROUTES = {
 	AI_ASSISTANT_BASE: '/ai-assistant',
 	AI_ASSISTANT_ICON_PREVIEW: '/ai-assistant-icon-preview',
 	MCP_SERVER: '/settings/mcp-server',
-	LLM_OBSERVABILITY_BASE: '/llm-observability',
-	LLM_OBSERVABILITY_MODEL_PRICING: '/llm-observability/settings/model-pricing',
+	AI_OBSERVABILITY_ATTRIBUTE_MAPPING: '/ai-observability/attribute-mapping',
+	AI_OBSERVABILITY_BASE: '/ai-observability',
+	AI_OBSERVABILITY_OVERVIEW: '/ai-observability/overview',
+	AI_OBSERVABILITY_CONFIGURATION: '/ai-observability/configuration',
 } as const;
 
 export default ROUTES;

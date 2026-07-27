@@ -2,10 +2,10 @@ import { type ChangeEvent, type KeyboardEvent, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
-import { X } from '@signozhq/icons';
 import cx from 'classnames';
 
-import { parseKeyValueTag } from './utils';
+import TagBadge from '../TagBadge/TagBadge';
+import { validateTag } from './utils';
 
 import styles from './TagKeyValueInput.module.scss';
 
@@ -43,16 +43,12 @@ function TagKeyValueInput({
 		if (!raw) {
 			return;
 		}
-		const normalized = parseKeyValueTag(raw);
-		if (!normalized) {
-			setError('Tags must be in key:value format (both sides required).');
+		const result = validateTag(raw, tags);
+		if ('error' in result) {
+			setError(result.error);
 			return;
 		}
-		if (tags.includes(normalized)) {
-			setError('This tag already exists.');
-			return;
-		}
-		onTagsChange([...tags, normalized]);
+		onTagsChange([...tags, result.tag]);
 		setInputValue('');
 		setError('');
 	};
@@ -65,7 +61,9 @@ function TagKeyValueInput({
 	};
 
 	const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>): void => {
-		if (e.key === 'Enter') {
+		// Plain Enter adds the tag; let Cmd/Ctrl+Enter pass through so a host form
+		// (e.g. a modal) can submit on it.
+		if (e.key === 'Enter' && !e.metaKey && !e.ctrlKey) {
 			e.preventDefault();
 			commit();
 		}
@@ -80,24 +78,35 @@ function TagKeyValueInput({
 	const cancelEdit = (): void => {
 		setEditIndex(-1);
 		setEditValue('');
+		setError('');
 	};
 
-	const commitEdit = (): void => {
-		const normalized = parseKeyValueTag(editValue);
-		// Drop into a no-op (revert) on invalid or duplicate edits rather than
-		// stranding the user in an un-exitable edit box.
-		if (normalized && !tags.some((t, i) => t === normalized && i !== editIndex)) {
-			onTagsChange(tags.map((t, i) => (i === editIndex ? normalized : t)));
+	const commitEdit = (revertOnInvalid = false): void => {
+		const result = validateTag(editValue, tags, editIndex);
+		if ('error' in result) {
+			if (revertOnInvalid) {
+				cancelEdit();
+			} else {
+				setError(result.error);
+			}
+			return;
 		}
+		onTagsChange(tags.map((t, i) => (i === editIndex ? result.tag : t)));
 		cancelEdit();
 	};
 
 	const handleEditKeyDown = (e: KeyboardEvent<HTMLInputElement>): void => {
-		if (e.key === 'Enter') {
+		// Plain Enter commits the edit; let Cmd/Ctrl+Enter pass through so a host
+		// form (e.g. a modal) can submit on it.
+		if (e.key === 'Enter' && !e.metaKey && !e.ctrlKey) {
 			e.preventDefault();
+			e.stopPropagation();
 			commitEdit();
 		} else if (e.key === 'Escape') {
+			// Contain Escape so it cancels the inline edit instead of bubbling up and
+			// closing the host drawer/modal.
 			e.preventDefault();
+			e.stopPropagation();
 			cancelEdit();
 		}
 	};
@@ -113,34 +122,33 @@ function TagKeyValueInput({
 							value={editValue}
 							autoFocus
 							testId={`${testId}-edit`}
-							onChange={(e: ChangeEvent<HTMLInputElement>): void =>
-								setEditValue(e.target.value)
-							}
+							onChange={(e: ChangeEvent<HTMLInputElement>): void => {
+								setEditValue(e.target.value);
+								if (error) {
+									setError('');
+								}
+							}}
 							onKeyDown={handleEditKeyDown}
-							onBlur={commitEdit}
+							onBlur={(): void => commitEdit(true)}
 						/>
 					) : (
-						<div key={tag} className={styles.tag} data-testid={`${testId}-chip`}>
+						<TagBadge
+							key={tag}
+							className={styles.tag}
+							closable
+							onClose={(): void => removeTag(tag)}
+						>
 							<Button
 								variant="ghost"
 								color="secondary"
 								className={styles.tagLabel}
 								title="Double-click to edit"
+								testId={`${testId}-chip`}
 								onDoubleClick={(): void => startEdit(index)}
 							>
 								{tag}
 							</Button>
-							<Button
-								variant="ghost"
-								color="secondary"
-								size="icon"
-								className={styles.remove}
-								aria-label={`Remove ${tag}`}
-								onClick={(): void => removeTag(tag)}
-							>
-								<X size={12} />
-							</Button>
-						</div>
+						</TagBadge>
 					),
 				)}
 				<Input

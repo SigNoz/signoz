@@ -1,9 +1,17 @@
 // Expanded state: a compact input that fits the header row.
 .input {
-	width: 180px;
+	width: min(100%, 320px);
+	height: 24px;
 }
 
 .clear {
 	--button-height: 18px;
+	--button-width: 18px;
 	--button-padding: 0;
+}
+
+.searchTrigger {
+	--button-width: 24px;
+	--button-height: 24px;
+	--button-padding: 4px;
 }

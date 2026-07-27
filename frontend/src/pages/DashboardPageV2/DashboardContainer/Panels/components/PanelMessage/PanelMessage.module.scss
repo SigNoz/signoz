@@ -1,16 +1,24 @@
+@use '../../../../../../styles/scrollbar' as *;
+
 // Centred, vertically-stacked panel state (no query / no data / error). Fills
-// the panel body below the header and centres its content both axes.
+// the panel body below the header and centres its content both axes. When the
+// panel is too small to fit icon + text + actions, it scrolls instead of
+// clipping the buttons at the edge (`safe center` keeps the top reachable).
 .message {
 	flex: 1;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	justify-content: center;
+	justify-content: safe center;
 	gap: 6px;
 	padding: 16px;
 	text-align: center;
 	min-height: 0;
 	min-width: 0;
+	overflow: auto;
+
+	// Match the shared panel scrollbar (chart legend, table/list panels).
+	@include custom-scrollbar;
 }
 
 // Muted glyph in a soft tinted disc so the icon reads as decorative chrome
@@ -45,6 +53,11 @@
 	overflow-wrap: anywhere;
 }
 
-.action {
+.actions {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 8px;
 	margin-top: 8px;
+	max-width: 100%;
 }

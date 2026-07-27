@@ -145,30 +145,40 @@
 	flex: none;
 }
 
-.itemAction {
-	// Blended ghost icon overlaid on the row's right edge — absolutely positioned
-	// so it never reserves layout space or affects the row height. Transparent so
-	// the row's hover background shows through; turns red only on its own hover.
+// Ghost action icons overlaid on the row's right edge — absolutely positioned so
+// they never reserve layout space or affect row height. Hidden until row hover,
+// and inert while hidden so they can't intercept clicks meant for the row.
+.itemActions {
 	position: absolute;
 	right: 6px;
 	top: 50%;
 	transform: translateY(-50%);
-	--button-height: 20px;
-	--button-padding: 0;
-	--button-border-radius: 4px;
-	--button-variant-ghost-color: var(--l3-foreground);
-	--button-variant-ghost-hover-background-color: var(--danger-background);
-	--button-variant-ghost-hover-color: var(--danger-color, #fff);
-	width: 20px;
-	height: 20px;
+	display: flex;
+	align-items: center;
+	gap: 2px;
 	opacity: 0;
-	// Hidden until row hover, and inert while hidden so it can't intercept clicks
-	// meant for the row.
 	pointer-events: none;
 	transition: opacity 0.1s;
 }
 
-.row:hover .itemAction {
+.itemAction {
+	--button-height: 20px;
+	--button-padding: 0;
+	--button-border-radius: 4px;
+	--button-variant-ghost-color: var(--l3-foreground);
+	--button-variant-ghost-hover-background-color: var(--l1-background);
+	--button-variant-ghost-hover-color: var(--l1-foreground);
+	width: 20px;
+	height: 20px;
+	flex: none;
+}
+
+.itemActionDanger {
+	--button-variant-ghost-hover-background-color: var(--danger-background);
+	--button-variant-ghost-hover-color: var(--danger-color, #fff);
+}
+
+.row:hover .itemActions {
 	opacity: 1;
 	pointer-events: auto;
 }

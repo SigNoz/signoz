@@ -49,6 +49,7 @@ const LIST_QUERIES = [{ id: 'list-q' }] as unknown as NonNullable<
 const TRANSFORMED = {
 	id: 'transformed',
 	queryType: 'builder',
+	builder: { queryData: [{ orderBy: [] }] },
 } as unknown as Query;
 const CONVERTED = [{ id: 'converted' }] as unknown as NonNullable<
 	DashboardtypesPanelSpecDTO['queries']
@@ -131,7 +132,39 @@ describe('usePanelTypeSwitch', () => {
 		expect(next.plugin.kind).toBe('signoz/ListPanel');
 		expect(next.plugin.spec).toBe(SWITCHED_SPEC);
 		expect(next.queries).toBe(CONVERTED);
-		expect(state.redirectWithQueryBuilderData).toHaveBeenCalledWith(TRANSFORMED);
+		const redirected = state.redirectWithQueryBuilderData.mock
+			.calls[0][0] as Query;
+		expect(redirected.builder.queryData[0].orderBy).toStrictEqual([
+			{ columnName: 'timestamp', order: 'desc' },
+		]);
+	});
+
+	it('seeds timestamp-desc Order By on every query when switching to a List panel', () => {
+		const setSpec = jest.fn();
+		mockUseQueryBuilder.mockReturnValue(
+			builderState({ id: 'ts-current', queryType: 'builder' } as Query),
+		);
+		mockHandleQueryChange.mockReturnValue({
+			id: 'transformed',
+			queryType: 'builder',
+			builder: { queryData: [{ orderBy: [] }, { orderBy: undefined }] },
+		} as unknown as Query);
+
+		const { result } = renderHook(() =>
+			usePanelTypeSwitch({
+				spec: makeSpec('signoz/TimeSeriesPanel', {}, TABLE_QUERIES),
+				panelType: PANEL_TYPES.TIME_SERIES,
+				setSpec,
+			}),
+		);
+		act(() => result.current.onChangePanelKind('signoz/ListPanel'));
+
+		const [persisted] = mockToPerses.mock.calls[0] as [Query];
+		persisted.builder.queryData.forEach((qd) => {
+			expect(qd.orderBy).toStrictEqual([
+				{ columnName: 'timestamp', order: 'desc' },
+			]);
+		});
 	});
 
 	it('coerces the query type when the new kind disallows it (promql → List)', () => {

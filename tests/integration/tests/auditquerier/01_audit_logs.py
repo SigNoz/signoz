@@ -9,7 +9,7 @@ from fixtures.audit import AuditLog
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.querier import (
     BuilderQuery,
-    build_logs_aggregation,
+    build_aggregation,
     build_order_by,
     build_scalar_query,
     make_query_request,
@@ -365,7 +365,7 @@ def test_audit_scalar_count_failures(
                 name="A",
                 signal="logs",
                 source="audit",
-                aggregations=[build_logs_aggregation("count()")],
+                aggregations=[build_aggregation("count()")],
                 filter_expression="signoz.audit.outcome = 'failure'",
             )
         ],

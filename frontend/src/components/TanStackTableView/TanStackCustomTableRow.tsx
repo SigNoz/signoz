@@ -1,7 +1,11 @@
-import { ComponentProps, memo } from 'react';
+import { ComponentProps, memo, useCallback, useLayoutEffect } from 'react';
 import { TableComponents } from 'react-virtuoso';
 import cx from 'classnames';
 
+import {
+	chromePerformanceTanstackTableBeginHover,
+	chromePerformanceMeasureTanstackTable,
+} from './perfDevtools';
 import TanStackRowCells from './TanStackRow';
 import {
 	useClearRowHovered,
@@ -10,24 +14,43 @@ import {
 import { FlatItem, TableRowContext } from './types';
 
 import tableStyles from './TanStackTable.module.scss';
+import { chromePerformanceNow } from 'lib/chromePerformanceDevTools';
 
-type VirtuosoTableRowProps<TData> = ComponentProps<
+type VirtuosoTableRowProps<TData, TItemKey = string> = ComponentProps<
 	NonNullable<
-		TableComponents<FlatItem<TData>, TableRowContext<TData>>['TableRow']
+		TableComponents<FlatItem<TData>, TableRowContext<TData, TItemKey>>['TableRow']
 	>
 >;
 
-function TanStackCustomTableRow<TData>({
+function TanStackCustomTableRow<TData, TItemKey = string>({
 	item,
 	context,
 	...props
-}: VirtuosoTableRowProps<TData>): JSX.Element {
+}: VirtuosoTableRowProps<TData, TItemKey>): JSX.Element {
+	const renderStart = chromePerformanceNow();
 	const rowId = item.row.id;
 	const rowData = item.row.original;
 
 	// Stable callbacks for hover state management
 	const setHovered = useSetRowHovered(rowId);
 	const clearHovered = useClearRowHovered(rowId);
+
+	const handleMouseEnter = useCallback((): void => {
+		chromePerformanceTanstackTableBeginHover(rowId);
+		setHovered();
+	}, [rowId, setHovered]);
+
+	useLayoutEffect(() => {
+		chromePerformanceMeasureTanstackTable('Row render', renderStart, {
+			track: 'Row render',
+			color: 'secondary',
+			tooltipText: 'Row render + commit',
+			properties: [
+				['rowId', rowId],
+				['kind', item.kind],
+			],
+		});
+	});
 
 	if (item.kind === 'expansion') {
 		return (
@@ -65,7 +88,7 @@ function TanStackCustomTableRow<TData>({
 			{...props}
 			className={rowClassName}
 			style={rowStyle}
-			onMouseEnter={setHovered}
+			onMouseEnter={handleMouseEnter}
 			onMouseLeave={clearHovered}
 		>
 			<TanStackRowCells
@@ -84,9 +107,9 @@ function TanStackCustomTableRow<TData>({
 // This looks overkill but ensures the table is stable and doesn't re-render on every change
 // If you add any new prop to context, remember to update this function
 // eslint-disable-next-line sonarjs/cognitive-complexity
-function areTableRowPropsEqual<TData>(
-	prev: Readonly<VirtuosoTableRowProps<TData>>,
-	next: Readonly<VirtuosoTableRowProps<TData>>,
+function areTableRowPropsEqual<TData, TItemKey = string>(
+	prev: Readonly<VirtuosoTableRowProps<TData, TItemKey>>,
+	next: Readonly<VirtuosoTableRowProps<TData, TItemKey>>,
 ): boolean {
 	if (prev.item.row.id !== next.item.row.id) {
 		return false;
@@ -141,7 +164,9 @@ function areTableRowPropsEqual<TData>(
 	return true;
 }
 
-export default memo(
-	TanStackCustomTableRow,
-	areTableRowPropsEqual,
-) as typeof TanStackCustomTableRow;
+export default memo(TanStackCustomTableRow, areTableRowPropsEqual as any) as <
+	TData,
+	TItemKey = string,
+>(
+	props: VirtuosoTableRowProps<TData, TItemKey>,
+) => JSX.Element;

@@ -14,6 +14,9 @@ import (
 type Getter interface {
 	// OnBeforeRoleDelete checks if any service accounts are assigned to the role and rejects deletion if so.
 	OnBeforeRoleDelete(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID, roleName string) error
+
+	// Gets a service account role by org id and id.
+	GetServiceAccountRole(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*serviceaccounttypes.ServiceAccountRole, error)
 }
 
 type Module interface {
@@ -35,11 +38,11 @@ type Module interface {
 	// Updates an existing service account
 	Update(context.Context, valuer.UUID, *serviceaccounttypes.ServiceAccount) error
 
-	// Assign a role to the service account. this is safe to retry
-	SetRole(context.Context, valuer.UUID, valuer.UUID, valuer.UUID) error
+	// Assign a role to the service account and returns the service account role. this is safe to retry
+	SetRole(context.Context, valuer.UUID, valuer.UUID, valuer.UUID) (*serviceaccounttypes.ServiceAccountRole, error)
 
-	// Assigns a role by name to service account, this is safe to retry
-	SetRoleByName(context.Context, valuer.UUID, valuer.UUID, string) error
+	// Assigns a role by name to service account and returns the service account role, this is safe to retry
+	SetRoleByName(context.Context, valuer.UUID, valuer.UUID, string) (*serviceaccounttypes.ServiceAccountRole, error)
 
 	// Revokes a role from service account, this is safe to retry
 	DeleteRole(context.Context, valuer.UUID, valuer.UUID, valuer.UUID) error
@@ -94,6 +97,12 @@ type Handler interface {
 	SetRole(http.ResponseWriter, *http.Request)
 
 	DeleteRole(http.ResponseWriter, *http.Request)
+
+	CreateServiceAccountRole(http.ResponseWriter, *http.Request)
+
+	GetServiceAccountRole(http.ResponseWriter, *http.Request)
+
+	DeleteServiceAccountRole(http.ResponseWriter, *http.Request)
 
 	Delete(http.ResponseWriter, *http.Request)
 

@@ -3,6 +3,7 @@ import { EQueryType } from 'types/common/dashboard';
 
 import {
 	buildVariableReferencePattern,
+	containsAnyVariableReference,
 	extractQueryTextStrings,
 	getVariableReferencesInQuery,
 	textContainsVariableReference,
@@ -446,5 +447,27 @@ describe('getVariableReferencesInQuery', () => {
 		};
 
 		expect(getVariableReferencesInQuery(query, [])).toStrictEqual([]);
+	});
+});
+
+describe('containsAnyVariableReference', () => {
+	it.each([
+		['SELECT count() FROM t WHERE service = $service.name', true],
+		['up{env="$deployment_environment"}', true],
+		['{{.service_name}}', true],
+		['{{ service_name }}', true],
+		['[[service_name]]', true],
+		['$_private', true],
+	])('detects a reference in %p', (text, expected) => {
+		expect(containsAnyVariableReference(text)).toBe(expected);
+	});
+
+	it.each([
+		['SELECT count() FROM t WHERE x = 1', false],
+		['rate(http_requests[$__interval])', false],
+		['SELECT $1 FROM t', false],
+		['', false],
+	])('does not falsely match %p', (text, expected) => {
+		expect(containsAnyVariableReference(text)).toBe(expected);
 	});
 });

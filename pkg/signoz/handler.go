@@ -123,7 +123,7 @@ func NewHandlers(
 		AuthzHandler:            signozauthzapi.NewHandler(authz),
 		ZeusHandler:             zeus.NewHandler(zeusService, licensing),
 		QuerierHandler:          querierHandler,
-		ServiceAccountHandler:   implserviceaccount.NewHandler(modules.ServiceAccount),
+		ServiceAccountHandler:   implserviceaccount.NewHandler(modules.ServiceAccount, modules.ServiceAccountGetter),
 		RegistryHandler:         registryHandler,
 		RuleStateHistory:        implrulestatehistory.NewHandler(modules.RuleStateHistory),
 		CloudIntegrationHandler: implcloudintegration.NewHandler(modules.CloudIntegration),

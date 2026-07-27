@@ -1,0 +1,7 @@
+.expandButtonContainer {
+	display: flex;
+
+	& > button {
+		margin-right: var(--spacing-4);
+	}
+}

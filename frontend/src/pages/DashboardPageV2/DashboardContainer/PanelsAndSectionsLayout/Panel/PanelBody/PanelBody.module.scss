@@ -1,18 +1,4 @@
-// Generic centred body — used by the loading indicator.
-.body {
-	flex: 1;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	padding: 12px;
-	color: var(--l2-foreground);
-	font-size: 12px;
-	text-align: center;
-}
-
-// Container for the rendered chart — fills the panel below the header and lets
-// the chart shrink (min-* 0) so it resizes with the grid cell.
-.chartContainer {
+.panelContainer {
 	flex: 1;
 	display: flex;
 	min-height: 0;

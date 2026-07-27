@@ -1,12 +1,19 @@
-import { useState } from 'react';
 import { ChevronLeft } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 import cx from 'classnames';
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
 import { useInlineOverflowCount } from 'hooks/useInlineOverflowCount';
 
-import { useVariableSelection } from './useVariableSelection';
-import VariableSelector from './VariableSelector';
+import { selectVariablesExpanded } from '../store/slices/collapseSlice';
+import { useDashboardStore } from '../store/useDashboardStore';
+import AddVariableFull from './components/AddVariable/AddVariableFull';
+import AddVariableIcon from './components/AddVariable/AddVariableIcon';
+import { TOOLTIP_SCROLL_CONTENT_CLASS } from 'components/TooltipScrollArea/TooltipScrollArea';
+
+import HiddenVariablesTooltip from './components/HiddenVariablesTooltip/HiddenVariablesTooltip';
+import { useVariableSelection } from './hooks/useVariableSelection';
+import VariableSelector from './components/VariableSelector/VariableSelector';
 import styles from './VariablesBar.module.scss';
 
 interface VariablesBarProps {
@@ -23,21 +30,52 @@ interface VariablesBarProps {
  * either way so auto-selection and option fetching keep driving the panels.
  */
 function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
-	const { variables, dependencyData, selection, setSelection } =
+	const dashboardId = dashboard.id ?? '';
+	const { variables, selection, setSelection, autoSelect } =
 		useVariableSelection(dashboard);
-	const [expanded, setExpanded] = useState(false);
+	const isEditable = useDashboardStore((s) => s.isEditable);
+	// Persisted per dashboard so the full/collapsed view survives reloads.
+	const expanded = useDashboardStore(selectVariablesExpanded(dashboardId));
+	const setVariablesExpanded = useDashboardStore((s) => s.setVariablesExpanded);
 	const { containerRef, visibleCount, overflowCount } = useInlineOverflowCount({
 		itemCount: variables.length,
 		gap: 8,
-		reserveWidth: 48,
+		// Reserve room for the "+N" trigger and the add "+" so both stay on one line.
+		reserveWidth: isEditable ? 112 : 48,
 		enabled: !expanded,
 	});
 
-	if (variables.length === 0) {
+	// Editors can add a variable even before any exist; viewers with no variables
+	// have nothing to show.
+	if (variables.length === 0 && !isEditable) {
 		return null;
 	}
 
 	const hasOverflow = overflowCount > 0;
+	const hiddenVariables =
+		!expanded && hasOverflow ? variables.slice(visibleCount) : [];
+
+	const moreButton = (
+		<Button
+			variant="outlined"
+			color="secondary"
+			size="md"
+			prefix={expanded ? <ChevronLeft size={14} /> : undefined}
+			aria-expanded={expanded}
+			testId="dashboard-variables-more"
+			onClick={(): void => setVariablesExpanded(dashboardId, !expanded)}
+		>
+			{expanded ? 'Less' : `+${overflowCount}`}
+		</Button>
+	);
+
+	if (variables.length === 0) {
+		return (
+			<div className={styles.bar} data-testid="dashboard-variables-bar">
+				<AddVariableFull />
+			</div>
+		);
+	}
 
 	return (
 		<div className={styles.bar} data-testid="dashboard-variables-bar">
@@ -57,7 +95,6 @@ function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 						<VariableSelector
 							variable={variable}
 							variables={variables}
-							parents={dependencyData.parentGraph[variable.name] ?? []}
 							selections={selection}
 							selection={
 								selection[variable.name] ?? {
@@ -66,23 +103,38 @@ function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 								}
 							}
 							onChange={(next): void => setSelection(variable.name, next)}
+							onAutoSelect={(next): void => autoSelect(variable.name, next)}
 						/>
 					</div>
 				))}
 
-				{hasOverflow && (
+				{(expanded || hasOverflow) && (
 					<span className={styles.moreButton}>
-						<Button
-							variant="outlined"
-							color="secondary"
-							size="md"
-							prefix={expanded ? <ChevronLeft size={14} /> : undefined}
-							aria-expanded={expanded}
-							testId="dashboard-variables-more"
-							onClick={(): void => setExpanded((prev) => !prev)}
-						>
-							{expanded ? 'Less' : `+${overflowCount}`}
-						</Button>
+						{expanded ? (
+							moreButton
+						) : (
+							<TooltipSimple
+								side="top"
+								tooltipContentProps={{ className: TOOLTIP_SCROLL_CONTENT_CLASS }}
+								title={
+									<HiddenVariablesTooltip
+										variables={hiddenVariables}
+										selections={selection}
+									/>
+								}
+							>
+								{moreButton}
+							</TooltipSimple>
+						)}
+					</span>
+				)}
+
+				{/* After the more/less trigger, in every state. Kept inline (not block)
+				    so the row still flows under the floated time selector, and always
+				    mounted so measuring never toggles it. */}
+				{isEditable && (
+					<span className={styles.addSlot}>
+						<AddVariableIcon />
 					</span>
 				)}
 			</div>

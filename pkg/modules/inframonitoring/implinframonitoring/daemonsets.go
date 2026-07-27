@@ -9,16 +9,15 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-// buildDaemonSetRecords assembles the page records. Pod phase counts come from
-// phaseCounts in both modes; every row is a group of pods (one daemonset in
-// list mode, an arbitrary roll-up in grouped_list mode), so there's no
-// per-row "current phase" concept.
+// buildDaemonSetRecords assembles the page records. Pod status counts come from
+// podStatusCounts in both modes; every row is a group of pods (one daemonset in
+// list mode, an arbitrary roll-up in grouped_list mode).
 func buildDaemonSetRecords(
 	resp *qbtypes.QueryRangeResponse,
 	pageGroups []map[string]string,
 	groupBy []qbtypes.GroupByKey,
 	metadataMap map[string]map[string]string,
-	phaseCounts map[string]podPhaseCounts,
+	podStatusCounts map[string]podStatusCounts,
 ) []inframonitoringtypes.DaemonSetRecord {
 	metricsMap := parseFullQueryResponse(resp, groupBy)
 
@@ -37,6 +36,8 @@ func buildDaemonSetRecords(
 			DaemonSetMemoryLimit:   -1,
 			DesiredNodes:           -1,
 			CurrentNodes:           -1,
+			ReadyNodes:             -1,
+			MisscheduledNodes:      -1,
 			Meta:                   map[string]string{},
 		}
 
@@ -65,16 +66,16 @@ func buildDaemonSetRecords(
 			if v, exists := metrics["I"]; exists {
 				record.CurrentNodes = int(v)
 			}
+			if v, exists := metrics["J"]; exists {
+				record.ReadyNodes = int(v)
+			}
+			if v, exists := metrics["K"]; exists {
+				record.MisscheduledNodes = int(v)
+			}
 		}
 
-		if phaseCountsForGroup, ok := phaseCounts[compositeKey]; ok {
-			record.PodCountsByPhase = inframonitoringtypes.PodCountsByPhase{
-				Pending:   phaseCountsForGroup.Pending,
-				Running:   phaseCountsForGroup.Running,
-				Succeeded: phaseCountsForGroup.Succeeded,
-				Failed:    phaseCountsForGroup.Failed,
-				Unknown:   phaseCountsForGroup.Unknown,
-			}
+		if podStatusCountsForGroup, ok := podStatusCounts[compositeKey]; ok {
+			record.PodCountsByStatus = podStatusCountsToResponse(podStatusCountsForGroup)
 		}
 
 		if attrs, ok := metadataMap[compositeKey]; ok {

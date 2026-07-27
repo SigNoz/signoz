@@ -20,6 +20,8 @@ interface PanelMessageProps {
 	description?: string;
 	/** Optional call-to-action (e.g. Retry). Omitted → no button. */
 	action?: PanelMessageAction;
+	/** Second call-to-action rendered beside `action` (e.g. Extend + Retry). */
+	secondaryAction?: PanelMessageAction;
 	/** `danger` tints the icon for failure states; `neutral` for empty states. */
 	tone?: 'neutral' | 'danger';
 	'data-testid'?: string;
@@ -34,9 +36,18 @@ function PanelMessage({
 	title,
 	description,
 	action,
+	secondaryAction,
 	tone = 'neutral',
 	'data-testid': testId,
 }: PanelMessageProps): JSX.Element {
+	const actions: Array<{ suffix: string; action: PanelMessageAction }> = [];
+	if (action) {
+		actions.push({ suffix: 'action', action });
+	}
+	if (secondaryAction) {
+		actions.push({ suffix: 'secondary-action', action: secondaryAction });
+	}
+
 	return (
 		<div className={styles.message} data-testid={testId}>
 			<div className={cx(styles.icon, { [styles.iconDanger]: tone === 'danger' })}>
@@ -48,18 +59,22 @@ function PanelMessage({
 					{description}
 				</Typography.Text>
 			)}
-			{action && (
-				<Button
-					variant="outlined"
-					color="secondary"
-					size="sm"
-					prefix={action.icon}
-					onClick={action.onClick}
-					className={styles.action}
-					data-testid={testId ? `${testId}-action` : undefined}
-				>
-					{action.label}
-				</Button>
+			{actions.length > 0 && (
+				<div className={styles.actions}>
+					{actions.map(({ suffix, action: item }) => (
+						<Button
+							key={suffix}
+							variant="outlined"
+							color="secondary"
+							size="sm"
+							prefix={item.icon}
+							onClick={item.onClick}
+							data-testid={testId ? `${testId}-${suffix}` : undefined}
+						>
+							{item.label}
+						</Button>
+					))}
+				</div>
 			)}
 		</div>
 	);

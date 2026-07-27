@@ -1,21 +1,18 @@
 import { Route, Switch } from 'react-router-dom';
 import ROUTES from 'constants/routes';
+import { server } from 'mocks-server/server';
 import { render, screen, userEvent, within } from 'tests/test-utils';
-import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
-import { mockUseAuthZGrantAll } from 'lib/authz/utils/authz-test-utils';
+import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 
 import CreateEditRolePage from '../CreateEditRolePage';
 import { TooltipProvider } from '@signozhq/ui/tooltip';
 
-jest.mock('lib/authz/hooks/useAuthZ/useAuthZ');
-const mockUseAuthZ = useAuthZ as jest.MockedFunction<typeof useAuthZ>;
-
 beforeEach(() => {
-	mockUseAuthZ.mockImplementation(mockUseAuthZGrantAll);
+	server.use(setupAuthzAdmin());
 });
 
 afterEach(() => {
-	jest.clearAllMocks();
+	server.resetHandlers();
 });
 
 function renderPage(): ReturnType<typeof render> {
@@ -37,13 +34,13 @@ function renderPage(): ReturnType<typeof render> {
 
 async function switchToJsonMode(): Promise<void> {
 	const user = userEvent.setup();
-	const jsonRadio = screen.getByTestId('permission-editor-mode-json');
+	const jsonRadio = await screen.findByTestId('permission-editor-mode-json');
 	await user.click(jsonRadio);
 }
 
 async function switchToInteractiveMode(): Promise<void> {
 	const user = userEvent.setup();
-	const interactiveRadio = screen.getByTestId(
+	const interactiveRadio = await screen.findByTestId(
 		'permission-editor-mode-interactive',
 	);
 	await user.click(interactiveRadio);

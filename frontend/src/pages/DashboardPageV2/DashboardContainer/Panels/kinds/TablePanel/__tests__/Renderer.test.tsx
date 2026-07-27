@@ -17,7 +17,10 @@ function panelWith(
 ): PanelOfKind<'signoz/TablePanel'> {
 	return {
 		kind: 'Panel',
-		spec: { plugin: { kind: 'signoz/TablePanel', spec } },
+		spec: {
+			display: { name: 'Table panel' },
+			plugin: { kind: 'signoz/TablePanel', spec },
+		},
 	} as unknown as PanelOfKind<'signoz/TablePanel'>;
 }
 

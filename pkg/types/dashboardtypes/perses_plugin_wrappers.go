@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/swaggest/jsonschema-go"
@@ -125,6 +126,34 @@ func (QueryPlugin) JSONSchemaOneOf() []any {
 	}
 }
 
+func (plugin QueryPlugin) buildV5CompositeQueryFromPlugin() (qb.CompositeQuery, error) {
+	switch spec := plugin.Spec.(type) {
+	case *qb.CompositeQuery:
+		if spec == nil {
+			return qb.CompositeQuery{}, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidWidgetQuery, "composite query is empty")
+		}
+		return *spec, nil
+	case *BuilderQuerySpec:
+		if spec == nil {
+			return qb.CompositeQuery{}, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidWidgetQuery, "builder query is empty")
+		}
+		return wrapEnvelope(qb.QueryTypeBuilder, spec.Spec), nil
+	case *qb.PromQuery:
+		return wrapEnvelope(qb.QueryTypePromQL, *spec), nil
+	case *qb.ClickHouseQuery:
+		return wrapEnvelope(qb.QueryTypeClickHouseSQL, *spec), nil
+	case *qb.QueryBuilderFormula:
+		return wrapEnvelope(qb.QueryTypeFormula, *spec), nil
+	case *qb.QueryBuilderTraceOperator:
+		return wrapEnvelope(qb.QueryTypeTraceOperator, *spec), nil
+	}
+	return qb.CompositeQuery{}, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidWidgetQuery, "unsupported query kind %q", plugin.Kind)
+}
+
+func wrapEnvelope(queryType qb.QueryType, spec any) qb.CompositeQuery {
+	return qb.CompositeQuery{Queries: []qb.QueryEnvelope{{Type: queryType, Spec: spec}}}
+}
+
 type QueryPluginVariant[S any] struct {
 	Kind string `json:"kind" required:"true"`
 	Spec S      `json:"spec" required:"true"`
@@ -187,54 +216,6 @@ func (v VariablePluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error 
 }
 
 // ══════════════════════════════════════════════
-// Datasource plugin
-// ══════════════════════════════════════════════
-
-type DatasourcePlugin struct {
-	Kind DatasourcePluginKind `json:"kind" required:"true"`
-	Spec any                  `json:"spec" required:"true"`
-}
-
-func (DatasourcePlugin) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return markDiscriminator(s, "kind", map[string]string{
-		string(DatasourceKindSigNoz): schemaRef("DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpec"),
-	})
-}
-
-func (p *DatasourcePlugin) UnmarshalJSON(data []byte) error {
-	kind, specJSON, err := extractKindAndSpec(data)
-	if err != nil {
-		return err
-	}
-	factory, ok := datasourcePluginSpecs[DatasourcePluginKind(kind)]
-	if !ok {
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "unknown datasource plugin kind %q; allowed values: %s", kind, allowedValuesForKind(slices.Sorted(maps.Keys(datasourcePluginSpecs))))
-	}
-	spec, err := decodeSpec(specJSON, factory(), kind)
-	if err != nil {
-		return err
-	}
-	p.Kind = DatasourcePluginKind(kind)
-	p.Spec = *spec
-	return nil
-}
-
-func (DatasourcePlugin) JSONSchemaOneOf() []any {
-	return []any{
-		DatasourcePluginVariant[SigNozDatasourceSpec]{Kind: string(DatasourceKindSigNoz)},
-	}
-}
-
-type DatasourcePluginVariant[S any] struct {
-	Kind string `json:"kind" required:"true"`
-	Spec S      `json:"spec" required:"true"`
-}
-
-func (v DatasourcePluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return restrictKindToOneValue(s, v.Kind)
-}
-
-// ══════════════════════════════════════════════
 // Helpers
 // ══════════════════════════════════════════════
 
@@ -261,10 +242,6 @@ var (
 		VariableKindQuery:   func() any { return new(QueryVariableSpec) },
 		VariableKindCustom:  func() any { return new(CustomVariableSpec) },
 	}
-	datasourcePluginSpecs = map[DatasourcePluginKind]func() any{
-		DatasourceKindSigNoz: func() any { return new(SigNozDatasourceSpec) },
-	}
-
 	allowedQueryKinds = map[PanelPluginKind][]QueryPluginKind{
 		PanelKindTimeSeries: {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
 		PanelKindBarChart:   {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},

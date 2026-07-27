@@ -2,6 +2,7 @@ import { EllipsisVertical } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { PanelQueryData } from 'pages/DashboardPageV2/DashboardContainer/queryV5/types';
 
 import ConfirmDeleteDialog from '../../../components/ConfirmDeleteDialog/ConfirmDeleteDialog';
 import type { PanelActionsConfig } from '../Panel';
@@ -10,8 +11,10 @@ import styles from './PanelActionsMenu.module.scss';
 
 interface PanelActionsMenuProps {
 	panelId: string;
-	/** The panel itself — its query seeds "Create Alerts". */
+	/** The panel itself — seeds "Create Alerts" and the download filename. */
 	panel: DashboardtypesPanelDTO;
+	/** The panel's query response — the source for "Download as CSV". */
+	data: PanelQueryData;
 	/** Layout context for move/delete — absent outside editable sectioned mode. */
 	panelActions?: PanelActionsConfig;
 }
@@ -24,11 +27,13 @@ interface PanelActionsMenuProps {
 function PanelActionsMenu({
 	panelId,
 	panel,
+	data,
 	panelActions,
 }: PanelActionsMenuProps): JSX.Element | null {
 	const { items, deleteConfirm } = usePanelActionItems({
 		panelId,
 		panel,
+		data,
 		panelActions,
 	});
 

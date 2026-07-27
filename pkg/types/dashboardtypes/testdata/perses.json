@@ -4,15 +4,6 @@
         "description": "Trying to cover as many concepts here as possible"
     },
     "duration": "1h",
-    "datasources": {
-        "SigNozDatasource": {
-            "default": true,
-            "plugin": {
-                "kind": "signoz/Datasource",
-                "spec": {}
-            }
-        }
-    },
     "variables": [
         {
             "kind": "ListVariable",
@@ -22,7 +13,7 @@
                     "name": "serviceName"
                 },
                 "allowAllValue": true,
-                "allowMultiple": false,
+                "allowMultiple": true,
                 "sort": "none",
                 "plugin": {
                     "kind": "signoz/DynamicVariable",
@@ -80,6 +71,7 @@
             }
         }
     ],
+    "links": [],
     "panels": {
         "24e2697b": {
             "kind": "Panel",
@@ -167,6 +159,7 @@
         "ff2f72f1": {
             "kind": "Panel",
             "spec": {
+                "links": [],
                 "display": {
                     "name": "fraction of calls",
                     "description": ""
@@ -253,6 +246,7 @@
         "011605e7": {
             "kind": "Panel",
             "spec": {
+                "links": [],
                 "display": {
                     "name": "total resp size"
                 },
@@ -304,6 +298,7 @@
         "e23516fc": {
             "kind": "Panel",
             "spec": {
+                "links": [],
                 "display": {
                     "name": "num traces for service"
                 },
@@ -359,6 +354,7 @@
         "130c8d6b": {
             "kind": "Panel",
             "spec": {
+                "links": [],
                 "display": {
                     "name": "num logs for service"
                 },
@@ -398,6 +394,7 @@
         "246f7c6d": {
             "kind": "Panel",
             "spec": {
+                "links": [],
                 "display": {
                     "name": "num traces for service per resp code"
                 },
@@ -451,6 +448,7 @@
         "21f7d4d0": {
             "kind": "Panel",
             "spec": {
+                "links": [],
                 "display": {
                     "name": "average latency per service"
                 },
@@ -493,6 +491,7 @@
         "ad5fd556": {
             "kind": "Panel",
             "spec": {
+                "links": [],
                 "display": {
                     "name": "logs from service"
                 },
@@ -557,6 +556,7 @@
         "f07b59ee": {
             "kind": "Panel",
             "spec": {
+                "links": [],
                 "display": {
                     "name": "response size buckets"
                 },
@@ -596,6 +596,7 @@
         "e1a41831": {
             "kind": "Panel",
             "spec": {
+                "links": [],
                 "display": {
                     "name": "trace operator",
                     "description": ""
@@ -652,6 +653,7 @@
                                             "type": "builder_trace_operator",
                                             "spec": {
                                                 "name": "T1",
+                                                "expression": "A => B",
                                                 "aggregations": [
                                                     {
                                                         "expression": "count()",
@@ -671,6 +673,7 @@
         "f0d70491": {
             "kind": "Panel",
             "spec": {
+                "links": [],
                 "display": {
                     "name": "no results in this promql",
                     "description": ""
@@ -712,6 +715,7 @@
         "0e6eb4ca": {
             "kind": "Panel",
             "spec": {
+                "links": [],
                 "display": {
                     "name": "no results in this promql",
                     "description": ""

@@ -1,7 +1,7 @@
 import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 
 import type { PanelKind } from '../../Panels/types/panelKind';
-import type { LegendSeries } from '../hooks/useLegendSeries';
+import type { LegendSeries } from '../utils/legendSeries';
 import type { TableColumnOption } from '../hooks/useTableColumns';
 import { EQueryType } from 'types/common/dashboard';
 
@@ -21,4 +21,6 @@ export interface SectionEditorContext {
 	stepInterval?: number;
 	/** Unit the selected metric was sent with; drives the unit selector's mismatch warning. */
 	metricUnit?: string;
+	/** An editor registers the handler its header action (e.g. a quick-add "+") triggers; `null` to clear. */
+	registerHeaderAction?: (handler: (() => void) | null) => void;
 }

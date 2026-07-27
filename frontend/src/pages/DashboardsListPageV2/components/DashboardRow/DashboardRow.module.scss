@@ -52,17 +52,33 @@
 	-webkit-line-clamp: 3;
 	-webkit-box-orient: vertical;
 	overflow: hidden;
+	overflow-wrap: anywhere;
 }
 
-.tagsWithActions {
-	display: flex;
+.legacyBadge {
+	flex: none;
+}
+
+.lockIcon {
+	display: inline-flex;
 	align-items: center;
-	flex: 0 1 auto;
-	min-width: 0;
-	justify-content: flex-end;
+	justify-content: center;
+	flex: none;
+	color: var(--l3-foreground);
 }
 
-.pinBtn {
+/* Wrap so the tooltip has a hoverable target even when the pin button is disabled
+   (a legacy dashboard can't be pinned). */
+.pinButtonWrap {
+	display: inline-flex;
+	flex: none;
+}
+
+.pinButtonWrap button:disabled {
+	pointer-events: none;
+}
+
+.pinButton {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -79,16 +95,16 @@
 		color 0.12s;
 }
 
-.row:hover .pinBtn {
+.row:hover .pinButton {
 	color: var(--l3-foreground);
 }
 
-.pinBtn:hover {
+.pinButton:hover {
 	background: var(--l1-background);
 	color: var(--bg-amber-500);
 }
 
-.pinBtnOn {
+.pinButtonOn {
 	color: var(--bg-amber-500);
 
 	svg {
@@ -96,32 +112,28 @@
 	}
 }
 
-.tags {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 8px;
-	justify-content: flex-end;
+/* Pinned rows show the filled pin by default; the unpin action only appears when
+   the pin button itself is hovered. */
+.pinnedIcon {
+	display: inline-flex;
 }
 
-.tag {
-	display: flex;
-	padding: 4px 8px;
-	justify-content: center;
-	align-items: center;
-	gap: 4px;
-	height: 28px;
-	border-radius: 20px;
-	border: 1px solid color-mix(in srgb, var(--bg-sienna-500) 20%, transparent);
-	background: color-mix(in srgb, var(--bg-sienna-500) 10%, transparent);
-	color: var(--bg-sienna-400);
-	text-align: center;
-	font-family: Inter;
-	font-size: var(--font-size-sm);
-	font-style: normal;
-	font-weight: var(--font-weight-normal);
-	line-height: 20px;
-	letter-spacing: -0.07px;
-	margin-inline-end: 0px;
+.unpinIcon {
+	display: none;
+}
+
+.pinButton:hover .pinnedIcon {
+	display: none;
+}
+
+.pinButton:hover .unpinIcon {
+	display: inline-flex;
+}
+
+// Cap the name tooltip so a long name wraps instead of spanning the page.
+.nameTooltip {
+	max-width: 480px;
+	overflow-wrap: break-word;
 }
 
 .details {
@@ -181,11 +193,4 @@
 	display: flex;
 	align-items: center;
 	gap: 6px;
-}
-
-:global(.titleTooltipOverlay) {
-	:global(.ant-tooltip-content) :global(.ant-tooltip-inner) {
-		max-height: 400px;
-		overflow: auto;
-	}
 }

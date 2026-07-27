@@ -1,10 +1,10 @@
 import { Route, Switch } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import * as roleApi from 'api/generated/services/role';
-import * as useAuthZModule from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { customRoleResponse } from 'mocks-server/__mockdata__/roles';
-import { mockUseAuthZGrantAll } from 'lib/authz/utils/authz-test-utils';
-import { render, screen } from 'tests/test-utils';
+import { server } from 'mocks-server/server';
+import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
+import { render, screen, waitFor } from 'tests/test-utils';
 
 import * as useRolePermissionsModule from '../../hooks/useRolePermissions';
 import ViewRolePage from '../ViewRolePage';
@@ -18,16 +18,15 @@ import {
 
 describe('ViewRolePage - Error State', () => {
 	beforeEach(() => {
-		jest
-			.spyOn(useAuthZModule, 'useAuthZ')
-			.mockImplementation(mockUseAuthZGrantAll);
+		server.use(setupAuthzAdmin());
 	});
 
 	afterEach(() => {
 		jest.restoreAllMocks();
+		server.resetHandlers();
 	});
 
-	it('displays error component when API has error but role data exists', () => {
+	it('displays error component when API has error but role data exists', async () => {
 		jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
 			data: customRoleResponse,
 			isLoading: false,
@@ -46,7 +45,9 @@ describe('ViewRolePage - Error State', () => {
 			initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 		});
 
-		expect(document.querySelector('.error-in-place')).toBeInTheDocument();
+		await waitFor(() => {
+			expect(document.querySelector('.error-in-place')).toBeInTheDocument();
+		});
 	});
 
 	it('displays error state with title when API fails without role data', async () => {
@@ -64,10 +65,12 @@ describe('ViewRolePage - Error State', () => {
 		await expect(
 			screen.findByText('Failed to load role'),
 		).resolves.toBeInTheDocument();
-		expect(document.querySelector('.error-in-place')).toBeInTheDocument();
+		await waitFor(() => {
+			expect(document.querySelector('.error-in-place')).toBeInTheDocument();
+		});
 	});
 
-	it('shows back button on error state', () => {
+	it('shows back button on error state', async () => {
 		jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
 			data: undefined,
 			isLoading: false,
@@ -79,7 +82,9 @@ describe('ViewRolePage - Error State', () => {
 			initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 		});
 
-		expect(screen.getByTestId('cancel-button')).toBeInTheDocument();
+		await expect(
+			screen.findByTestId('cancel-button'),
+		).resolves.toBeInTheDocument();
 	});
 
 	it('navigates to roles list when back button clicked on error state', async () => {
@@ -105,7 +110,7 @@ describe('ViewRolePage - Error State', () => {
 			{ initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME) },
 		);
 
-		const cancelButton = screen.getByTestId('cancel-button');
+		const cancelButton = await screen.findByTestId('cancel-button');
 		await user.click(cancelButton);
 
 		await expect(

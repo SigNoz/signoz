@@ -16,11 +16,13 @@ import { useDashboardStore } from 'pages/DashboardPageV2/DashboardContainer/stor
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import { deriveAlertPrefill } from '../utils/deriveAlertPrefill';
 import {
 	buildAlertUrl,
 	buildCreateAlertUrl,
 	readPanelUnit,
 } from '../utils/buildCreateAlertUrl';
+import { NANO_SECOND_MULTIPLIER } from '@/store/globalTime';
 
 /**
  * Callback that seeds the alert builder from a panel's query in a new tab (V1 parity
@@ -61,8 +63,8 @@ export function useCreateAlertFromPanel(): (
 			const request = buildQueryRangeRequest({
 				queries: panel.spec.queries,
 				panelType,
-				startMs: minTime / 1e6,
-				endMs: maxTime / 1e6,
+				startMs: Math.floor(minTime / NANO_SECOND_MULTIPLIER),
+				endMs: Math.floor(maxTime / NANO_SECOND_MULTIPLIER),
 				variables,
 			});
 
@@ -74,10 +76,12 @@ export function useCreateAlertFromPanel(): (
 							response.data.compositeQuery?.queries ?? [],
 							panelType,
 						);
+						const unit = readPanelUnit(panel.spec.plugin);
 						const url = buildAlertUrl(
 							query,
 							panelType,
-							readPanelUnit(panel.spec.plugin),
+							unit,
+							deriveAlertPrefill(panel, query, unit),
 						);
 						safeNavigate(url, { newTab: true });
 					},

@@ -51,6 +51,23 @@ const isBuilderQueryEnvelope = (
 ): boolean =>
 	envelope.type === Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query;
 
+/**
+ * Clears the V1 explorer's `pageSize`/`offset` before conversion — the shared mapper folds
+ * `pageSize` into the V5 `limit`, which usePanelQuery would read as a user cap and hide the
+ * pager. Dropped here, `limit` reflects only a real user limit and List panels page by default.
+ */
+const withoutExplorerPaging = (query: Query): Query => ({
+	...query,
+	builder: {
+		...query.builder,
+		queryData: query.builder.queryData.map((data) => ({
+			...data,
+			pageSize: undefined,
+			offset: undefined,
+		})),
+	},
+});
+
 export function deriveQueryType(
 	envelopes: Querybuildertypesv5QueryEnvelopeDTO[],
 ): EQueryType {
@@ -120,7 +137,11 @@ export function toPerses(
 	query: Query,
 	panelType: PANEL_TYPES,
 ): DashboardtypesQueryDTO[] {
-	const composite = mapCompositeQueryFromQuery(query, panelType);
+	// List panels page server-side via usePanelQuery, so drop the V1 explorer's paging
+	// fields before conversion — otherwise the shared mapper folds them into `limit`.
+	const source =
+		panelType === PANEL_TYPES.LIST ? withoutExplorerPaging(query) : query;
+	const composite = mapCompositeQueryFromQuery(source, panelType);
 	const envelopes = toGeneratedEnvelopes(composite.queries ?? []);
 
 	if (panelType === PANEL_TYPES.LIST) {

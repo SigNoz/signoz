@@ -311,6 +311,7 @@ function TimeSeries({
 									dataSource={DataSource.METRICS}
 									error={queries[index].error as APIError}
 									setWarning={setWarning}
+									allowExport
 								/>
 							</div>
 						);

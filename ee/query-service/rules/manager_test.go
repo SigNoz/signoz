@@ -240,16 +240,16 @@ func TestManager_TestNotification_SendUnmatched_PromRule(t *testing.T) {
 					mock := mockStore.Mock()
 
 					// Mock the fingerprint query (for Prometheus label matching)
+					// args: $1=metric_name (the __name__ matcher maps onto the column)
 					mock.ExpectQuery("SELECT fingerprint, any").
-						WithArgs("test_metric", "__name__", "test_metric").
+						WithArgs("test_metric").
 						WillReturnRows(fingerprintRows)
 
 					// Mock the samples query (for Prometheus metric data)
+					// args: metric_name IN (discovered names), subquery metric_name, start, end
 					mock.ExpectQuery("SELECT metric_name, fingerprint, unix_milli").
 						WithArgs(
 							"test_metric",
-							"test_metric",
-							"__name__",
 							"test_metric",
 							queryStart,
 							queryEnd,

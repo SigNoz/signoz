@@ -104,6 +104,25 @@ export function setupAuthzAllow(
 	});
 }
 
+/** Grants permissions that start with any of the given prefixes. */
+export function setupAuthzGrantByPrefix(...prefixes: string[]): RestHandler {
+	return rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
+		const payload = (await req.json()) as AuthtypesTransactionDTO[];
+		return res(
+			ctx.status(200),
+			ctx.json(
+				authzMockResponse(
+					payload,
+					payload.map((txn) => {
+						const perm = gettableTransactionToPermission(txn);
+						return prefixes.some((prefix) => perm.startsWith(prefix));
+					}),
+				),
+			),
+		);
+	});
+}
+
 export function buildLicense(
 	overrides?: Partial<LicenseResModel>,
 ): LicenseResModel {
@@ -149,6 +168,8 @@ export function mockUseAuthZGrantAll(
 		permissions: Object.fromEntries(
 			permissions.map((p) => [p, { isGranted: true }]),
 		) as UseAuthZResult['permissions'],
+		allowed: true,
+		deniedPermissions: [],
 		refetchPermissions: jest.fn(),
 	};
 }
@@ -164,6 +185,8 @@ export function mockUseAuthZDenyAll(
 		permissions: Object.fromEntries(
 			permissions.map((p) => [p, { isGranted: false }]),
 		) as UseAuthZResult['permissions'],
+		allowed: false,
+		deniedPermissions: permissions,
 		refetchPermissions: jest.fn(),
 	};
 }
@@ -174,16 +197,23 @@ export function mockUseAuthZGrantByPrefix(
 	permissions: BrandedPermission[],
 	options?: UseAuthZOptions,
 ) => UseAuthZResult {
-	return (permissions, _options) => ({
-		isLoading: false,
-		isFetching: false,
-		error: null,
-		permissions: Object.fromEntries(
-			permissions.map((p) => [
-				p,
-				{ isGranted: prefixes.some((prefix) => p.startsWith(prefix)) },
-			]),
-		) as UseAuthZResult['permissions'],
-		refetchPermissions: jest.fn(),
-	});
+	return (permissions, _options) => {
+		const denied = permissions.filter(
+			(p) => !prefixes.some((prefix) => p.startsWith(prefix)),
+		);
+		return {
+			isLoading: false,
+			isFetching: false,
+			error: null,
+			permissions: Object.fromEntries(
+				permissions.map((p) => [
+					p,
+					{ isGranted: prefixes.some((prefix) => p.startsWith(prefix)) },
+				]),
+			) as UseAuthZResult['permissions'],
+			allowed: denied.length === 0,
+			deniedPermissions: denied,
+			refetchPermissions: jest.fn(),
+		};
+	};
 }

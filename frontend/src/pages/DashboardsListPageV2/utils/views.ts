@@ -1,13 +1,13 @@
 // Built-in view catalogue + the pure logic that maps a view to how it
-// constrains the list. Views fall into three mechanisms:
-//   - snapshot:  selecting applies a filter snapshot (All, My dashboards, custom)
-//   - query:     contributes an extra server clause AND-ed with the chips (Locked)
+// constrains the list. Views fall into two mechanisms:
+//   - snapshot:  selecting applies a filter snapshot — some seed the search box
+//                with DSL (My dashboards → created_by; Locked → locked = true)
 //   - client:    constrains by a client-side id set (Favorites, Recently viewed)
 import { Clock, Layers, Lock, Pin, User } from '@signozhq/icons';
 
-import { DEFAULT_FILTER_STATE } from './filterQuery';
+import { createdByClause } from './filterQuery';
 import { BuiltinViewId } from '../types';
-import type { DashboardFilterState, ViewSection } from '../types';
+import type { ViewSection } from '../types';
 import type { DashboardListItem } from './helpers';
 
 // All @signozhq icons share this component type.
@@ -49,27 +49,25 @@ export const BUILTIN_VIEWS: BuiltinView[] = [
 export const isClientView = (id: string): boolean =>
 	id === BuiltinViewId.Pinned || id === BuiltinViewId.Recent;
 
-// Extra server query fragment a built-in view contributes (AND-ed with chips).
-export const builtinViewQuery = (id: string): string =>
-	id === BuiltinViewId.Locked ? 'locked = true' : '';
+// DSL the Locked view applies — visible and editable in the query box rather
+// than applied invisibly behind the scenes.
+export const LOCKED_QUERY = 'locked = true';
 
-// The canonical filter snapshot a built-in view applies when selected. `null`
-// for ids that aren't built-in (custom views carry their own snapshot).
-export const builtinViewSnapshot = (
+// The canonical query string a built-in view applies when selected. `null` for
+// ids that aren't built-in (custom views carry their own query).
+export const builtinViewQuery = (
 	id: string,
 	userEmail: string,
-): DashboardFilterState | null => {
+): string | null => {
 	switch (id) {
 		case BuiltinViewId.Mine:
-			return {
-				...DEFAULT_FILTER_STATE,
-				createdBy: userEmail ? [userEmail] : [],
-			};
+			return userEmail ? (createdByClause([userEmail]) ?? '') : '';
+		case BuiltinViewId.Locked:
+			return LOCKED_QUERY;
 		case BuiltinViewId.All:
 		case BuiltinViewId.Pinned:
 		case BuiltinViewId.Recent:
-		case BuiltinViewId.Locked:
-			return { ...DEFAULT_FILTER_STATE };
+			return '';
 		default:
 			return null;
 	}

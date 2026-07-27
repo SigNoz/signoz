@@ -13,6 +13,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/rulestatehistorytypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	sqlbuilder "github.com/huandu/go-sqlbuilder"
 )
 
@@ -102,7 +103,7 @@ func (s *store) GetLastSavedRuleStateHistory(ctx context.Context, ruleID string)
 	return history, nil
 }
 
-func (s *store) ReadRuleStateHistoryByRuleID(ctx context.Context, ruleID string, query *rulestatehistorytypes.Query) ([]rulestatehistorytypes.RuleStateHistory, uint64, error) {
+func (s *store) ReadRuleStateHistoryByRuleID(ctx context.Context, orgID valuer.UUID, ruleID string, query *rulestatehistorytypes.Query) ([]rulestatehistorytypes.RuleStateHistory, uint64, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select(
 		"rule_id",
@@ -119,7 +120,7 @@ func (s *store) ReadRuleStateHistoryByRuleID(ctx context.Context, ruleID string,
 	sb.From(historyTable())
 	s.applyBaseHistoryFilters(sb, ruleID, query)
 
-	whereClause, err := s.buildFilterClause(ctx, query.FilterExpression, query.Start, query.End)
+	whereClause, err := s.buildFilterClause(ctx, orgID, query.FilterExpression, query.Start, query.End)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -155,7 +156,7 @@ func (s *store) ReadRuleStateHistoryByRuleID(ctx context.Context, ruleID string,
 	return history, total, nil
 }
 
-func (s *store) ReadRuleStateHistoryFilterKeysByRuleID(ctx context.Context, ruleID string, query *rulestatehistorytypes.Query, search string, limit int64) (*telemetrytypes.GettableFieldKeys, error) {
+func (s *store) ReadRuleStateHistoryFilterKeysByRuleID(ctx context.Context, orgID valuer.UUID, ruleID string, query *rulestatehistorytypes.Query, search string, limit int64) (*telemetrytypes.GettableFieldKeys, error) {
 	if limit <= 0 {
 		limit = 50
 	}
@@ -172,7 +173,7 @@ func (s *store) ReadRuleStateHistoryFilterKeysByRuleID(ctx context.Context, rule
 		sb.Where(fmt.Sprintf("positionCaseInsensitiveUTF8(%s, %s) > 0", keyExpr, sb.Var(search)))
 	}
 
-	whereClause, err := s.buildFilterClause(ctx, query.FilterExpression, query.Start, query.End)
+	whereClause, err := s.buildFilterClause(ctx, orgID, query.FilterExpression, query.Start, query.End)
 	if err != nil {
 		return nil, err
 	}
@@ -226,7 +227,7 @@ func (s *store) ReadRuleStateHistoryFilterKeysByRuleID(ctx context.Context, rule
 	}, nil
 }
 
-func (s *store) ReadRuleStateHistoryFilterValuesByRuleID(ctx context.Context, ruleID string, key string, query *rulestatehistorytypes.Query, search string, limit int64) (*telemetrytypes.GettableFieldValues, error) {
+func (s *store) ReadRuleStateHistoryFilterValuesByRuleID(ctx context.Context, orgID valuer.UUID, ruleID string, key string, query *rulestatehistorytypes.Query, search string, limit int64) (*telemetrytypes.GettableFieldValues, error) {
 	if limit <= 0 {
 		limit = 50
 	}
@@ -244,7 +245,7 @@ func (s *store) ReadRuleStateHistoryFilterValuesByRuleID(ctx context.Context, ru
 		sb.Where(fmt.Sprintf("positionCaseInsensitiveUTF8(%s, %s) > 0", valExpr, sb.Var(search)))
 	}
 
-	whereClause, err := s.buildFilterClause(ctx, query.FilterExpression, query.Start, query.End)
+	whereClause, err := s.buildFilterClause(ctx, orgID, query.FilterExpression, query.Start, query.End)
 	if err != nil {
 		return nil, err
 	}
@@ -291,7 +292,7 @@ func (s *store) ReadRuleStateHistoryFilterValuesByRuleID(ctx context.Context, ru
 	}, nil
 }
 
-func (s *store) ReadRuleStateHistoryTopContributorsByRuleID(ctx context.Context, ruleID string, query *rulestatehistorytypes.Query) ([]rulestatehistorytypes.RuleStateHistoryContributor, error) {
+func (s *store) ReadRuleStateHistoryTopContributorsByRuleID(ctx context.Context, orgID valuer.UUID, ruleID string, query *rulestatehistorytypes.Query) ([]rulestatehistorytypes.RuleStateHistoryContributor, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select(
 		"fingerprint",
@@ -305,7 +306,7 @@ func (s *store) ReadRuleStateHistoryTopContributorsByRuleID(ctx context.Context,
 	sb.Where(sb.GE("unix_milli", query.Start))
 	sb.Where(sb.LT("unix_milli", query.End))
 
-	whereClause, err := s.buildFilterClause(ctx, query.FilterExpression, query.Start, query.End)
+	whereClause, err := s.buildFilterClause(ctx, orgID, query.FilterExpression, query.Start, query.End)
 	if err != nil {
 		return nil, err
 	}
@@ -472,7 +473,7 @@ func (s *store) querySeries(ctx context.Context, selectQuery string, args ...any
 	return series, nil
 }
 
-func (s *store) buildFilterClause(ctx context.Context, filter qbtypes.Filter, startMillis, endMillis int64) (*sqlbuilder.WhereClause, error) {
+func (s *store) buildFilterClause(ctx context.Context, orgID valuer.UUID, filter qbtypes.Filter, startMillis, endMillis int64) (*sqlbuilder.WhereClause, error) {
 	expression := strings.TrimSpace(filter.Expression)
 	if expression == "" {
 		return nil, nil //nolint:nilnil
@@ -483,7 +484,7 @@ func (s *store) buildFilterClause(ctx context.Context, filter qbtypes.Filter, st
 		selectors[i].SelectorMatchType = telemetrytypes.FieldSelectorMatchTypeExact
 	}
 
-	fieldKeys, _, err := s.telemetryMetadataStore.GetKeysMulti(ctx, selectors)
+	fieldKeys, _, err := s.telemetryMetadataStore.GetKeysMulti(ctx, orgID, selectors)
 	if err != nil || len(fieldKeys) == 0 {
 		fieldKeys = map[string][]*telemetrytypes.TelemetryFieldKey{}
 		for _, sel := range selectors {

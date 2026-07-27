@@ -1,0 +1,1149 @@
+{
+  "id": "llm-observability-overview",
+  "orgId": "",
+  "locked": true,
+  "name": "AI Observability Overview",
+  "schemaVersion": "v6",
+  "source": "system",
+  "tags": null,
+  "spec": {
+    "display": {
+      "name": "AI Observability Overview",
+      "description": "AI / LLM observability overview — cost, tokens, latency, errors, RED for tool calls, and time to first token. Scoped by model, environment and service (apply via the variable bar)."
+    },
+    "layouts": [
+      {
+        "kind": "Grid",
+        "spec": {
+          "items": [
+            {
+              "x": 0,
+              "y": 0,
+              "width": 3,
+              "height": 3,
+              "content": {
+                "$ref": "#/spec/panels/11111111-1111-1111-1111-111111111111"
+              }
+            },
+            {
+              "x": 3,
+              "y": 0,
+              "width": 3,
+              "height": 3,
+              "content": {
+                "$ref": "#/spec/panels/22222222-2222-2222-2222-222222222222"
+              }
+            },
+            {
+              "x": 6,
+              "y": 0,
+              "width": 2,
+              "height": 3,
+              "content": {
+                "$ref": "#/spec/panels/33333333-3333-3333-3333-333333333333"
+              }
+            },
+            {
+              "x": 8,
+              "y": 0,
+              "width": 2,
+              "height": 3,
+              "content": {
+                "$ref": "#/spec/panels/44444444-4444-4444-4444-444444444444"
+              }
+            },
+            {
+              "x": 10,
+              "y": 0,
+              "width": 2,
+              "height": 3,
+              "content": {
+                "$ref": "#/spec/panels/55555555-5555-5555-5555-555555555555"
+              }
+            },
+            {
+              "x": 0,
+              "y": 3,
+              "width": 6,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/66666666-6666-6666-6666-666666666666"
+              }
+            },
+            {
+              "x": 6,
+              "y": 3,
+              "width": 6,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/77777777-7777-7777-7777-777777777777"
+              }
+            },
+            {
+              "x": 0,
+              "y": 7,
+              "width": 6,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/88888888-8888-8888-8888-888888888888"
+              }
+            },
+            {
+              "x": 6,
+              "y": 7,
+              "width": 6,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/99999999-9999-9999-9999-999999999999"
+              }
+            },
+            {
+              "x": 0,
+              "y": 11,
+              "width": 4,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+              }
+            },
+            {
+              "x": 4,
+              "y": 11,
+              "width": 4,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+              }
+            },
+            {
+              "x": 8,
+              "y": 11,
+              "width": 4,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/cccccccc-cccc-cccc-cccc-cccccccccccc"
+              }
+            },
+            {
+              "x": 0,
+              "y": 15,
+              "width": 4,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/dddddddd-dddd-dddd-dddd-dddddddddddd"
+              }
+            },
+            {
+              "x": 4,
+              "y": 15,
+              "width": 4,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"
+              }
+            },
+            {
+              "x": 8,
+              "y": 15,
+              "width": 4,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/ffffffff-ffff-ffff-ffff-ffffffffffff"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "panels": {
+      "11111111-1111-1111-1111-111111111111": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Total cost",
+            "description": "Total LLM cost across all calls. Requires gen_ai.usage.cost attribute."
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "signal": "traces",
+                          "stepInterval": 60,
+                          "disabled": false,
+                          "filter": {
+                            "expression": ""
+                          },
+                          "having": {
+                            "expression": ""
+                          },
+                          "aggregations": [
+                            {
+                              "expression": "sum(gen_ai.usage.cost)"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "22222222-2222-2222-2222-222222222222": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Total tokens",
+            "description": "Sum of input + output tokens."
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "signal": "traces",
+                          "stepInterval": 60,
+                          "disabled": false,
+                          "filter": {
+                            "expression": ""
+                          },
+                          "having": {
+                            "expression": ""
+                          },
+                          "aggregations": [
+                            {
+                              "expression": "sum(gen_ai.usage.input_tokens)"
+                            },
+                            {
+                              "expression": "sum(gen_ai.usage.output_tokens)"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "33333333-3333-3333-3333-333333333333": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Avg latency (p95)",
+            "description": "p95 latency of LLM spans."
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "signal": "traces",
+                          "stepInterval": 60,
+                          "disabled": false,
+                          "filter": {
+                            "expression": "gen_ai.system != ''"
+                          },
+                          "having": {
+                            "expression": ""
+                          },
+                          "aggregations": [
+                            {
+                              "expression": "p95(duration_nano)"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "44444444-4444-4444-4444-444444444444": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Error rate",
+            "description": "Error rate as a percentage of total LLM calls."
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "signal": "traces",
+                          "stepInterval": 60,
+                          "disabled": false,
+                          "filter": {
+                            "expression": "gen_ai.system != ''"
+                          },
+                          "having": {
+                            "expression": ""
+                          },
+                          "aggregations": [
+                            {
+                              "expression": "countIf(has_error = true)"
+                            },
+                            {
+                              "expression": "count()"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "55555555-5555-5555-5555-555555555555": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "TTFT (p95)",
+            "description": "p95 time to first token."
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "signal": "traces",
+                          "stepInterval": 60,
+                          "disabled": false,
+                          "filter": {
+                            "expression": ""
+                          },
+                          "having": {
+                            "expression": ""
+                          },
+                          "aggregations": [
+                            {
+                              "expression": "p95(gen_ai.server.ttft)"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "66666666-6666-6666-6666-666666666666": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Cost over time",
+            "description": "Cost by model over time."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "legend": {
+                "position": "bottom"
+              },
+              "chartAppearance": {
+                "lineStyle": "solid",
+                "lineInterpolation": "spline",
+                "fillMode": "none"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "signal": "traces",
+                          "stepInterval": 60,
+                          "disabled": false,
+                          "filter": {
+                            "expression": ""
+                          },
+                          "groupBy": [
+                            {
+                              "name": "gen_ai.request.model",
+                              "fieldDataType": "string",
+                              "fieldContext": "tag"
+                            }
+                          ],
+                          "legend": "{{gen_ai.request.model}}",
+                          "having": {
+                            "expression": ""
+                          },
+                          "aggregations": [
+                            {
+                              "expression": "sum(gen_ai.usage.cost)"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "77777777-7777-7777-7777-777777777777": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Token usage over time",
+            "description": "Input vs output tokens over time."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "legend": {
+                "position": "bottom"
+              },
+              "chartAppearance": {
+                "lineStyle": "solid",
+                "lineInterpolation": "spline",
+                "fillMode": "none"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "signal": "traces",
+                          "stepInterval": 60,
+                          "disabled": false,
+                          "filter": {
+                            "expression": ""
+                          },
+                          "legend": "Input",
+                          "having": {
+                            "expression": ""
+                          },
+                          "aggregations": [
+                            {
+                              "expression": "sum(gen_ai.usage.input_tokens)"
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "B",
+                          "signal": "traces",
+                          "stepInterval": 60,
+                          "disabled": false,
+                          "filter": {
+                            "expression": ""
+                          },
+                          "legend": "Output",
+                          "having": {
+                            "expression": ""
+                          },
+                          "aggregations": [
+                            {
+                              "expression": "sum(gen_ai.usage.output_tokens)"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "88888888-8888-8888-8888-888888888888": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "LLM call latency percentiles",
+            "description": "p50, p90, p95, p99 latency by model."
+          },
+          "plugin": {
+            "kind": "signoz/TablePanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "signal": "traces",
+                          "stepInterval": 60,
+                          "disabled": false,
+                          "filter": {
+                            "expression": "gen_ai.system != ''"
+                          },
+                          "groupBy": [
+                            {
+                              "name": "gen_ai.request.model",
+                              "fieldDataType": "string",
+                              "fieldContext": "tag"
+                            }
+                          ],
+                          "legend": "{{gen_ai.request.model}}",
+                          "having": {
+                            "expression": ""
+                          },
+                          "aggregations": [
+                            {
+                              "expression": "p50(duration_nano)"
+                            },
+                            {
+                              "expression": "p90(duration_nano)"
+                            },
+                            {
+                              "expression": "p95(duration_nano)"
+                            },
+                            {
+                              "expression": "p99(duration_nano)"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "99999999-9999-9999-9999-999999999999": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "LLM call latency over time",
+            "description": "p95 latency trend by model."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "legend": {
+                "position": "bottom"
+              },
+              "chartAppearance": {
+                "lineStyle": "solid",
+                "lineInterpolation": "spline",
+                "fillMode": "none"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "signal": "traces",
+                          "stepInterval": 60,
+                          "disabled": false,
+                          "filter": {
+                            "expression": "gen_ai.system != ''"
+                          },
+                          "groupBy": [
+                            {
+                              "name": "gen_ai.request.model",
+                              "fieldDataType": "string",
+                              "fieldContext": "tag"
+                            }
+                          ],
+                          "legend": "{{gen_ai.request.model}}",
+                          "having": {
+                            "expression": ""
+                          },
+                          "aggregations": [
+                            {
+                              "expression": "p95(duration_nano)"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Error count",
+            "description": "Errors grouped by error type."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "legend": {
+                "position": "bottom"
+              },
+              "chartAppearance": {
+                "lineStyle": "solid",
+                "lineInterpolation": "spline",
+                "fillMode": "none"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "signal": "traces",
+                          "stepInterval": 60,
+                          "disabled": false,
+                          "filter": {
+                            "expression": "has_error = true AND gen_ai.system != ''"
+                          },
+                          "groupBy": [
+                            {
+                              "name": "gen_ai.error.type",
+                              "fieldDataType": "string",
+                              "fieldContext": "tag"
+                            }
+                          ],
+                          "legend": "{{gen_ai.error.type}}",
+                          "having": {
+                            "expression": ""
+                          },
+                          "aggregations": [
+                            {
+                              "expression": "count()"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Time to first token",
+            "description": "p95 TTFT by model."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "legend": {
+                "position": "bottom"
+              },
+              "chartAppearance": {
+                "lineStyle": "solid",
+                "lineInterpolation": "spline",
+                "fillMode": "none"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "signal": "traces",
+                          "stepInterval": 60,
+                          "disabled": false,
+                          "filter": {
+                            "expression": ""
+                          },
+                          "groupBy": [
+                            {
+                              "name": "gen_ai.request.model",
+                              "fieldDataType": "string",
+                              "fieldContext": "tag"
+                            }
+                          ],
+                          "legend": "{{gen_ai.request.model}}",
+                          "having": {
+                            "expression": ""
+                          },
+                          "aggregations": [
+                            {
+                              "expression": "p95(gen_ai.server.ttft)"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "cccccccc-cccc-cccc-cccc-cccccccccccc": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Top 10 span names",
+            "description": "Top span names by count across GenAI spans."
+          },
+          "plugin": {
+            "kind": "signoz/TablePanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "signal": "traces",
+                          "stepInterval": 60,
+                          "disabled": false,
+                          "filter": {
+                            "expression": "gen_ai.system != ''"
+                          },
+                          "groupBy": [
+                            {
+                              "name": "name",
+                              "fieldDataType": "string",
+                              "fieldContext": "tag"
+                            }
+                          ],
+                          "limit": 10,
+                          "order": [
+                            {
+                              "key": {
+                                "name": "count()"
+                              },
+                              "direction": "desc"
+                            }
+                          ],
+                          "legend": "{{name}}",
+                          "having": {
+                            "expression": ""
+                          },
+                          "aggregations": [
+                            {
+                              "expression": "count()"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "dddddddd-dddd-dddd-dddd-dddddddddddd": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Tool call rate",
+            "description": "Tool call rate per second."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "legend": {
+                "position": "bottom"
+              },
+              "chartAppearance": {
+                "lineStyle": "solid",
+                "lineInterpolation": "spline",
+                "fillMode": "none"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "signal": "traces",
+                          "stepInterval": 60,
+                          "disabled": false,
+                          "filter": {
+                            "expression": "name = 'execute_tool'"
+                          },
+                          "legend": "req/s",
+                          "having": {
+                            "expression": ""
+                          },
+                          "aggregations": [
+                            {
+                              "expression": "rate()"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Tool error rate",
+            "description": "Percentage of tool calls that errored."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "legend": {
+                "position": "bottom"
+              },
+              "chartAppearance": {
+                "lineStyle": "solid",
+                "lineInterpolation": "spline",
+                "fillMode": "none"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "signal": "traces",
+                          "stepInterval": 60,
+                          "disabled": false,
+                          "filter": {
+                            "expression": "name = 'execute_tool'"
+                          },
+                          "legend": "error %",
+                          "having": {
+                            "expression": ""
+                          },
+                          "aggregations": [
+                            {
+                              "expression": "countIf(has_error = true)"
+                            },
+                            {
+                              "expression": "count()"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "ffffffff-ffff-ffff-ffff-ffffffffffff": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Tool duration (p50)",
+            "description": "Median tool call duration."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "legend": {
+                "position": "bottom"
+              },
+              "chartAppearance": {
+                "lineStyle": "solid",
+                "lineInterpolation": "spline",
+                "fillMode": "none"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "signal": "traces",
+                          "stepInterval": 60,
+                          "disabled": false,
+                          "filter": {
+                            "expression": "name = 'execute_tool'"
+                          },
+                          "legend": "p50",
+                          "having": {
+                            "expression": ""
+                          },
+                          "aggregations": [
+                            {
+                              "expression": "p50(duration_nano)"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "variables": [
+      {
+        "kind": "ListVariable",
+        "spec": {
+          "name": "model",
+          "display": {
+            "name": "model",
+            "description": "LLM model"
+          },
+          "allowMultiple": true,
+          "allowAllValue": true,
+          "sort": "alphabetical-asc",
+          "plugin": {
+            "kind": "signoz/QueryVariable",
+            "spec": {
+              "queryValue": "SELECT DISTINCT attributes_string['gen_ai.request.model'] AS model FROM signoz_traces.distributed_signoz_index_v3 WHERE mapContains(attributes_string, 'gen_ai.request.model') AND timestamp >= now() - INTERVAL 1 DAY"
+            }
+          }
+        }
+      },
+      {
+        "kind": "ListVariable",
+        "spec": {
+          "name": "environment",
+          "display": {
+            "name": "environment",
+            "description": "Deployment environment"
+          },
+          "allowMultiple": true,
+          "allowAllValue": true,
+          "sort": "alphabetical-asc",
+          "plugin": {
+            "kind": "signoz/QueryVariable",
+            "spec": {
+              "queryValue": "SELECT DISTINCT resources_string['deployment.environment'] AS environment FROM signoz_traces.distributed_signoz_index_v3 WHERE mapContains(resources_string, 'deployment.environment') AND timestamp >= now() - INTERVAL 1 DAY"
+            }
+          }
+        }
+      },
+      {
+        "kind": "ListVariable",
+        "spec": {
+          "name": "service_name",
+          "display": {
+            "name": "service_name",
+            "description": "Service name"
+          },
+          "allowMultiple": true,
+          "allowAllValue": true,
+          "sort": "alphabetical-asc",
+          "plugin": {
+            "kind": "signoz/QueryVariable",
+            "spec": {
+              "queryValue": "SELECT DISTINCT resources_string['service.name'] AS service_name FROM signoz_traces.distributed_signoz_index_v3 WHERE mapContains(resources_string, 'service.name') AND timestamp >= now() - INTERVAL 1 DAY"
+            }
+          }
+        }
+      }
+    ]
+  }
+}

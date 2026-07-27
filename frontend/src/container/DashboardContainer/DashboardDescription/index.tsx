@@ -43,6 +43,7 @@ import { sortLayout } from 'providers/Dashboard/util';
 import { DashboardData } from 'types/api/dashboard/getAll';
 import { Props } from 'types/api/dashboard/update';
 import { ROLES, USER_ROLES } from 'types/roles';
+import { linkifyText } from 'utils/linkifyText';
 import { ComponentTypes } from 'utils/permission';
 import { v4 as uuid } from 'uuid';
 
@@ -515,7 +516,9 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 				</div>
 			)}
 			{!isEmpty(description) && (
-				<section className="dashboard-description-section">{description}</section>
+				<section className="dashboard-description-section">
+					{linkifyText(description ?? '')}
+				</section>
 			)}
 
 			{!isEmpty(dashboardVariables) && (

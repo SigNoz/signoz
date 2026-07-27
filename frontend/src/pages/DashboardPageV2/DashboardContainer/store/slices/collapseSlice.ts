@@ -11,6 +11,10 @@ import type { DashboardStore } from '../useDashboardStore';
 export interface CollapseSlice {
 	collapsed: Record<string, Record<string, boolean>>;
 	toggleSectionCollapse: (dashboardId: string, sectionId: string) => void;
+	// Whether the variables bar shows its full (expanded) list, per dashboard.
+	// Absent → collapsed (the default).
+	variablesExpanded: Record<string, boolean>;
+	setVariablesExpanded: (dashboardId: string, expanded: boolean) => void;
 }
 
 export const createCollapseSlice: StateCreator<
@@ -32,4 +36,17 @@ export const createCollapseSlice: StateCreator<
 			},
 		});
 	},
+	variablesExpanded: {},
+	setVariablesExpanded: (dashboardId, expanded): void => {
+		const { variablesExpanded } = get();
+		set({
+			variablesExpanded: { ...variablesExpanded, [dashboardId]: expanded },
+		});
+	},
 });
+
+/** Selector: is the variables bar expanded for this dashboard? Default collapsed. */
+export const selectVariablesExpanded =
+	(dashboardId: string) =>
+	(state: DashboardStore): boolean =>
+		Boolean(state.variablesExpanded[dashboardId]);

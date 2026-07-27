@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -28,7 +29,7 @@ func TestGetColumn(t *testing.T) {
 				Name:         "service.name",
 				FieldContext: telemetrytypes.FieldContextResource,
 			},
-			expectedCol:   []*schema.Column{logsV2Columns["resources_string"], logsV2Columns["resource"]},
+			expectedCol:   []*schema.Column{logsV2Columns["resource"], logsV2Columns["resources_string"]},
 			expectedError: nil,
 		},
 		{
@@ -171,7 +172,7 @@ func TestGetColumn(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			col, err := fm.ColumnFor(ctx, 0, 0, &tc.key)
+			col, err := fm.ColumnFor(ctx, valuer.UUID{}, 0, 0, &tc.key)
 
 			if tc.expectedError != nil {
 				assert.Equal(t, tc.expectedError, err)
@@ -277,7 +278,7 @@ func TestGetFieldKeyName(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			fl := flaggertest.New(t)
 			fm := NewFieldMapper(fl)
-			result, err := fm.FieldFor(ctx, 0, 0, &tc.key)
+			result, err := fm.FieldFor(ctx, valuer.UUID{}, 0, 0, &tc.key)
 
 			if tc.expectedError != nil {
 				assert.Equal(t, tc.expectedError, err)
@@ -524,7 +525,7 @@ func TestFieldForWithEvolutions(t *testing.T) {
 			tsEnd := uint64(tc.tsEndTime.UnixNano())
 			tc.key.Evolutions = tc.evolutions
 
-			result, err := fm.FieldFor(ctx, tsStart, tsEnd, tc.key)
+			result, err := fm.FieldFor(ctx, valuer.UUID{}, tsStart, tsEnd, tc.key)
 
 			if tc.expectedError != nil {
 				assert.Equal(t, tc.expectedError, err)
@@ -579,7 +580,7 @@ func TestFieldForWithMaterialized(t *testing.T) {
 			name:           "Multi evolution - both columns (JSON + materialized)",
 			start:          time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
 			end:            time.Date(2024, 4, 2, 0, 0, 0, 0, time.UTC),
-			expectedResult: "multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, `resource_string_service$$name_exists`==true, `resource_string_service$$name`, NULL)",
+			expectedResult: "multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, `resource_string_service$$name_exists`, `resource_string_service$$name`, NULL)",
 		},
 	}
 
@@ -590,7 +591,7 @@ func TestFieldForWithMaterialized(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			start := uint64(tc.start.UnixNano())
 			end := uint64(tc.end.UnixNano())
-			result, err := fm.FieldFor(ctx, start, end, materializedKey)
+			result, err := fm.FieldFor(ctx, valuer.UUID{}, start, end, materializedKey)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedResult, result)
 		})

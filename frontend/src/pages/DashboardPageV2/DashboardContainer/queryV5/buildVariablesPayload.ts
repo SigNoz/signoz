@@ -8,8 +8,8 @@ import type {
 	VariableFormModel,
 	VariableType,
 } from '../DashboardSettings/Variables/variableFormModel';
+import { configuredDefaultValue } from '../VariablesBar/utils/resolveVariableSelection';
 import type {
-	SelectedVariableValue,
 	VariableSelection,
 	VariableSelectionMap,
 } from '../VariablesBar/selectionTypes';
@@ -32,18 +32,6 @@ const VARIABLE_TYPE_TO_DTO: Record<
 	TEXT: Querybuildertypesv5VariableTypeDTO.text,
 	DYNAMIC: Querybuildertypesv5VariableTypeDTO.dynamic,
 };
-
-/** The variable's configured default, used when nothing is selected yet. */
-function configuredDefault(
-	definition: VariableFormModel,
-): SelectedVariableValue | undefined {
-	if (definition.type === 'TEXT') {
-		return definition.textValue || undefined;
-	}
-	return (
-		definition.defaultValue as { value?: SelectedVariableValue } | undefined
-	)?.value;
-}
 
 /**
  * Resolves the wire value for one variable: the dynamic "ALL" sentinel, else the
@@ -71,7 +59,7 @@ function resolveValue(
 		return selected as Querybuildertypesv5VariableItemDTOValue;
 	}
 
-	const fallback = configuredDefault(definition);
+	const fallback = configuredDefaultValue(definition);
 	return fallback == null
 		? undefined
 		: (fallback as Querybuildertypesv5VariableItemDTOValue);

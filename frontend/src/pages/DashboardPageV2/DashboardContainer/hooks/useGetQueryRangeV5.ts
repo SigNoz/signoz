@@ -11,6 +11,10 @@ export interface UseGetQueryRangeV5Args {
 	requestPayload: Querybuildertypesv5QueryRangeRequestDTO;
 	queryKey: unknown[];
 	enabled: boolean;
+	/** Retain prior data across a key change (list paging) so the table + pager stay mounted. */
+	keepPreviousData?: boolean;
+	/** Unused-entry TTL; callers drop to 0 under auto-refresh to bound cache growth (V1 parity). */
+	cacheTime?: number;
 }
 
 /**
@@ -18,7 +22,10 @@ export interface UseGetQueryRangeV5Args {
  * The retry callback gets the raw AxiosError this path rejects with (not yet normalized to
  * APIError — that happens later at the display boundary), so inspect it at the axios level.
  */
-function retryUnlessClientError(failureCount: number, error: Error): boolean {
+export function retryUnlessClientError(
+	failureCount: number,
+	error: Error,
+): boolean {
 	if (isAxiosError(error)) {
 		if (error.code === 'ERR_CANCELED') {
 			return false;
@@ -40,11 +47,18 @@ export function useGetQueryRangeV5({
 	requestPayload,
 	queryKey,
 	enabled,
+	keepPreviousData,
+	cacheTime,
 }: UseGetQueryRangeV5Args): UseQueryResult<QueryRangeV5200, Error> {
 	return useQuery<QueryRangeV5200, Error>({
 		queryKey,
 		queryFn: ({ signal }) => queryRangeV5(requestPayload, signal),
 		enabled,
 		retry: retryUnlessClientError,
+		keepPreviousData,
+		cacheTime,
+		// A resolved window is immutable per key, so a panel scrolled back into view
+		// serves cache instead of refetching; a key change or manual refetch still runs.
+		staleTime: Infinity,
 	});
 }

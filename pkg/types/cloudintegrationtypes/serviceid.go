@@ -41,7 +41,8 @@ var (
 	AzureServiceRedis                      = ServiceID{valuer.NewString("redis")}
 
 	// GCP services.
-	GCPServiceCloudSQL = ServiceID{valuer.NewString("cloudsql")}
+	GCPServiceCloudSQLPostgres = ServiceID{valuer.NewString("cloudsql_postgres")}
+	GCPServiceMemorystoreRedis = ServiceID{valuer.NewString("memorystore_redis")}
 )
 
 func (ServiceID) Enum() []any {
@@ -73,7 +74,8 @@ func (ServiceID) Enum() []any {
 		AzureServiceCosmosDB,
 		AzureServiceCassandraDB,
 		AzureServiceRedis,
-		GCPServiceCloudSQL,
+		GCPServiceCloudSQLPostgres,
+		GCPServiceMemorystoreRedis,
 	}
 }
 
@@ -111,7 +113,8 @@ var SupportedServices = map[CloudProviderType][]ServiceID{
 		AzureServiceRedis,
 	},
 	CloudProviderTypeGCP: {
-		GCPServiceCloudSQL,
+		GCPServiceCloudSQLPostgres,
+		GCPServiceMemorystoreRedis,
 	},
 }
 

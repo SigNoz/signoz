@@ -1,0 +1,35 @@
+.expandedTableContainer {
+	overflow-x: auto;
+}
+
+.expandedTable {
+	--tanstack-table-header-cell-bg: var(--l1-background);
+	--tanstack-table-header-cell-color: var(--l1-foreground);
+	--tanstack-table-cell-bg: var(--l1-background);
+	--tanstack-table-cell-color: var(--l1-foreground);
+	--tanstack-table-row-hover-bg: var(--l1-background-hover);
+	--tanstack-table-row-active-bg: var(--l1-background-active);
+	--tanstack-table-resize-handle-bg: var(--l1-background);
+	--tanstack-table-resize-handle-hover-bg: var(--l1-border);
+	--tanstack-table-row-height: 36px;
+
+	--tanstack-cell-padding-left-override: 15px;
+	--tanstack-cell-padding-right-override: 15px;
+
+	& [data-hide-expanded='true'] {
+		display: none;
+	}
+}
+
+.expandedTableFooter {
+	display: flex;
+	justify-content: flex-start;
+	gap: var(--spacing-4);
+	background-color: var(--l1-background);
+}
+
+.viewAllButton {
+	display: flex;
+	align-items: center;
+	margin: var(--spacing-4);
+}

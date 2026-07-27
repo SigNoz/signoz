@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo, useRef } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import EmptyWidget from 'container/GridCardLayout/EmptyWidget';
@@ -6,10 +6,11 @@ import WidgetGraphComponent from 'container/GridCardLayout/GridCard/WidgetGraphC
 import { populateMultipleResults } from 'container/NewWidget/LeftContainer/WidgetGraph/util';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import { isEqual } from 'lodash-es';
 import { Widgets } from 'types/api/dashboard/getAll';
-import { DataSource } from 'types/common/queryBuilder';
-import { getGraphType } from 'utils/getGraphType';
 import { getSortedSeriesData } from 'utils/getSortedSeriesData';
+
+import { getPublicPanelRequestData } from './utils';
 
 function Panel({
 	widget,
@@ -27,54 +28,27 @@ function Panel({
 	const graphRef = useRef<HTMLDivElement>(null);
 	const updatedQuery = widget?.query;
 
-	const requestData: GetQueryResultsProps = useMemo(() => {
-		if (widget.panelTypes !== PANEL_TYPES.LIST) {
-			return {
-				selectedTime: widget?.timePreferance,
-				graphType: getGraphType(widget.panelTypes),
+	// State (not memo) so LIST panels get a setRequestData — ListPanelWrapper
+	// renders nothing without one.
+	const [requestData, setRequestData] = useState<GetQueryResultsProps>(() =>
+		getPublicPanelRequestData({ widget, startTime, endTime }),
+	);
+
+	useEffect(() => {
+		if (!isEqual(updatedQuery, requestData.query)) {
+			setRequestData((prev) => ({
+				...prev,
 				query: updatedQuery,
-				variables: {}, // we are not supporting variables in public dashboards
-				fillGaps: widget.fillSpans,
-				formatForWeb: widget.panelTypes === PANEL_TYPES.TABLE,
-				start: startTime,
-				end: endTime,
-				originalGraphType: widget.panelTypes,
-			};
+			}));
 		}
-
-		const initialDataSource = updatedQuery.builder.queryData[0].dataSource;
-		const updatedQueryForList = {
-			...updatedQuery,
-			builder: {
-				...updatedQuery.builder,
-				queryData: updatedQuery.builder.queryData.map((qd, i) =>
-					i === 0 ? { ...qd, pageSize: 10 } : qd,
-				),
-			},
-		};
-
-		return {
-			query: updatedQueryForList,
-			graphType: PANEL_TYPES.LIST,
-			selectedTime: widget.timePreferance || 'GLOBAL_TIME',
-			tableParams: {
-				pagination: {
-					offset: 0,
-					limit: updatedQuery.builder.queryData[0].limit || 0,
-				},
-				// we do not need select columns in case of logs
-				selectColumns:
-					initialDataSource === DataSource.TRACES && widget.selectedTracesFields,
-			},
-			fillGaps: widget.fillSpans,
-			start: startTime,
-			end: endTime,
-		};
-	}, [widget, updatedQuery, startTime, endTime]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [updatedQuery]);
 
 	const queryResponse = useGetQueryRange(
 		{
 			...requestData,
+			start: startTime,
+			end: endTime,
 			originalGraphType: widget?.panelTypes,
 		},
 		ENTITY_VERSION_V5,
@@ -140,6 +114,8 @@ function Panel({
 					headerMenuList={[]}
 					isWarning={false}
 					isFetchingResponse={queryResponse.isFetching || queryResponse.isLoading}
+					setRequestData={setRequestData}
+					hidePagination
 					onDragSelect={onDragSelect}
 				/>
 			)}

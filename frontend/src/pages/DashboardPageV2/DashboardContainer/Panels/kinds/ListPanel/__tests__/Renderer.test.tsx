@@ -162,4 +162,18 @@ describe('ListPanelRenderer', () => {
 
 		expect(queryByTestId('list-panel-pager')).not.toBeInTheDocument();
 	});
+
+	it('swaps rows for skeletons while the next page loads (isPreviousData), keeping header + pager', () => {
+		const { getByText, queryByText, getByTestId, container } = renderPanel({
+			data: dataWith([{ data: { body: 'stale row' } }]),
+			pagination: makePagination({ canNext: true }),
+			isPreviousData: true,
+		});
+
+		expect(getByText('body')).toBeInTheDocument();
+		expect(getByTestId('list-panel-pager')).toBeInTheDocument();
+		// Stale page content is replaced by skeleton bars.
+		expect(queryByText('stale row')).not.toBeInTheDocument();
+		expect(container.querySelector('.ant-skeleton')).toBeInTheDocument();
+	});
 });

@@ -30,7 +30,7 @@ interface Props {
 	pageSize: number;
 	total: number;
 	onPageChange: (page: number) => void;
-	canAct: boolean;
+	canEdit: boolean;
 	showUpdatedAt: boolean;
 	showUpdatedBy: boolean;
 	loading: boolean;
@@ -55,7 +55,7 @@ function DashboardsResults({
 	pageSize,
 	total,
 	onPageChange,
-	canAct,
+	canEdit,
 	showUpdatedAt,
 	showUpdatedBy,
 	loading,
@@ -91,7 +91,7 @@ function DashboardsResults({
 				pageSize={pageSize}
 				total={total}
 				onPageChange={onPageChange}
-				canAct={canAct}
+				canEdit={canEdit}
 				showUpdatedAt={showUpdatedAt}
 				showUpdatedBy={showUpdatedBy}
 				loading={loading}

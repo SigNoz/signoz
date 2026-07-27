@@ -21,9 +21,10 @@ export const definition: PanelDefinition<'signoz/TablePanel'> = {
 		view: true,
 		edit: true,
 		clone: true,
-		download: true,
+		download: { csv: true, png: true, svg: true },
 		createAlert: false,
 		// V1 parity: only tables (and lists) expose the header search box.
 		search: true,
+		drilldown: true,
 	},
 };

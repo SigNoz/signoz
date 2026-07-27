@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import cx from 'classnames';
 import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import PanelBody from 'pages/DashboardPageV2/DashboardContainer/PanelsAndSectionsLayout/Panel/PanelBody/PanelBody';
 import PanelHeader from 'pages/DashboardPageV2/DashboardContainer/PanelsAndSectionsLayout/Panel/PanelHeader/PanelHeader';
+import type { AnyPanelInteractionProps } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/interactions';
 import type { RenderablePanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelDefinition';
 import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
+import type { DashboardPreference } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/rendererProps';
 import { getPanelQueryType } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/getPanelQueryType';
 import type {
 	PanelPagination,
@@ -23,6 +26,8 @@ interface PreviewPaneProps {
 	data: PanelQueryData;
 	/** Any fetch in flight — drives the header spinner and the body's loading state. */
 	isFetching: boolean;
+	/** Showing a prior page's data while the next loads; forwarded so the list shows skeleton rows. */
+	isPreviousData?: boolean;
 	error: Error | null;
 	/** Re-run the query (drives PanelBody's error-state retry). */
 	refetch: () => void;
@@ -30,6 +35,18 @@ interface PreviewPaneProps {
 	onDragSelect: (start: number, end: number) => void;
 	/** Server-side pager for raw/list panels; absent for non-paginated panels. */
 	pagination?: PanelPagination;
+	/** Render context — defaults to the editor's DASHBOARD_EDIT; the View modal passes STANDALONE_VIEW. */
+	panelMode?: PanelMode;
+	/** Hide the preview's top row entirely (query-type badge + time picker) — the View modal has its own header. */
+	hideHeader?: boolean;
+	/** Dashboard-wide preferences (cursor sync, …) forwarded to the body; the modal isolates cursor-sync. */
+	dashboardPreference?: DashboardPreference;
+	/** Close the standalone View modal — forwarded to the time-series/bar graph manager. */
+	onCloseStandaloneView?: () => void;
+	/** Opens the drill-down context menu; only the View modal wires it (the editor preview omits it). */
+	onClick?: AnyPanelInteractionProps['onClick'];
+	/** Arms the drill-down click on interactive renderers — the View modal enables it, the editor doesn't. */
+	enableDrillDown?: boolean;
 }
 
 /**
@@ -43,10 +60,17 @@ function PreviewPane({
 	panelDefinition,
 	data,
 	isFetching,
+	isPreviousData,
 	error,
 	refetch,
 	onDragSelect,
 	pagination,
+	panelMode = PanelMode.DASHBOARD_EDIT,
+	hideHeader = false,
+	dashboardPreference,
+	onCloseStandaloneView,
+	onClick,
+	enableDrillDown,
 }: PreviewPaneProps): JSX.Element {
 	const panelType = PANEL_KIND_TO_PANEL_TYPE[panel.spec.plugin.kind];
 	const queryType = getPanelQueryType(panel);
@@ -58,21 +82,28 @@ function PreviewPane({
 
 	return (
 		<div className={styles.preview}>
-			<div className={styles.header}>
-				<PlotTag
-					queryType={queryType}
-					panelType={panelType}
-					className={styles.queryType}
-				/>
-				<div className={styles.dateTimeSelector}>
-					<DateTimeSelectionV2 showAutoRefresh hideShareModal />
+			{!hideHeader && (
+				<div className={styles.header}>
+					<PlotTag
+						queryType={queryType}
+						panelType={panelType}
+						className={styles.queryType}
+					/>
+					<div className={styles.dateTimeSelector}>
+						<DateTimeSelectionV2 showAutoRefresh hideShareModal />
+					</div>
 				</div>
-			</div>
+			)}
 			<div className={styles.container}>
-				<div className={styles.surface}>
+				<div
+					className={cx(styles.surface, {
+						[styles.surfaceStacked]: panelMode === PanelMode.STANDALONE_VIEW,
+					})}
+				>
 					<PanelHeader
 						panelId={panelId}
 						panel={panel}
+						data={data}
 						isFetching={isFetching}
 						error={error}
 						warning={data.response?.data?.warning}
@@ -87,12 +118,17 @@ function PreviewPane({
 						panelId={panelId}
 						data={data}
 						isFetching={isFetching}
+						isPreviousData={isPreviousData}
 						error={error}
 						refetch={refetch}
 						onDragSelect={onDragSelect}
-						panelMode={PanelMode.DASHBOARD_EDIT}
+						panelMode={panelMode}
+						dashboardPreference={dashboardPreference}
 						searchTerm={searchable ? searchTerm : undefined}
 						pagination={pagination}
+						onCloseStandaloneView={onCloseStandaloneView}
+						onClick={onClick}
+						enableDrillDown={enableDrillDown}
 					/>
 				</div>
 			</div>

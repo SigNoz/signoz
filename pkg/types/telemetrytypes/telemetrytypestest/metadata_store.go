@@ -50,7 +50,7 @@ func (m *MockMetadataStore) SetStaticFields(intrinsicFields map[string]telemetry
 }
 
 // GetKeys returns a map of field keys types.TelemetryFieldKey by name.
-func (m *MockMetadataStore) GetKeys(ctx context.Context, fieldKeySelector *telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, bool, error) {
+func (m *MockMetadataStore) GetKeys(ctx context.Context, _ valuer.UUID, fieldKeySelector *telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, bool, error) {
 	setOfKeys := make(map[string]*telemetrytypes.TelemetryFieldKey)
 	result := make(map[string][]*telemetrytypes.TelemetryFieldKey)
 
@@ -91,13 +91,13 @@ func (m *MockMetadataStore) GetKeys(ctx context.Context, fieldKeySelector *telem
 }
 
 // GetKeysMulti applies multiple selectors and returns combined results.
-func (m *MockMetadataStore) GetKeysMulti(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, bool, error) {
+func (m *MockMetadataStore) GetKeysMulti(ctx context.Context, orgID valuer.UUID, fieldKeySelectors []*telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, bool, error) {
 	result := make(map[string][]*telemetrytypes.TelemetryFieldKey)
 
 	// Process each selector
 	for _, selector := range fieldKeySelectors {
 		selectorCopy := selector // Create a copy to avoid issues with pointer semantics
-		selectorResults, _, err := m.GetKeys(ctx, selectorCopy)
+		selectorResults, _, err := m.GetKeys(ctx, orgID, selectorCopy)
 		if err != nil {
 			return nil, false, err
 		}
@@ -131,7 +131,7 @@ func (m *MockMetadataStore) GetKeysMulti(ctx context.Context, fieldKeySelectors 
 }
 
 // GetKey returns a list of keys with the given name.
-func (m *MockMetadataStore) GetKey(ctx context.Context, fieldKeySelector *telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, error) {
+func (m *MockMetadataStore) GetKey(ctx context.Context, _ valuer.UUID, fieldKeySelector *telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, error) {
 	if fieldKeySelector == nil {
 		return nil, nil
 	}
@@ -164,7 +164,7 @@ func (m *MockMetadataStore) GetKey(ctx context.Context, fieldKeySelector *teleme
 }
 
 // GetRelatedValues returns a list of related values for the given key name and selection.
-func (m *MockMetadataStore) GetRelatedValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) ([]string, bool, error) {
+func (m *MockMetadataStore) GetRelatedValues(ctx context.Context, _ valuer.UUID, fieldValueSelector *telemetrytypes.FieldValueSelector) ([]string, bool, error) {
 	if fieldValueSelector == nil {
 		return nil, true, nil
 	}

@@ -1,4 +1,4 @@
-import { ReactElement, cloneElement, useMemo } from 'react';
+import { CSSProperties, ReactElement, cloneElement, useMemo } from 'react';
 import {
 	TooltipRoot,
 	TooltipContent,
@@ -10,6 +10,13 @@ import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { formatPermission } from 'lib/authz/hooks/useAuthZ/utils';
 import { useAppContext } from 'providers/App/App';
 import styles from './AuthZTooltip.module.scss';
+
+const DISABLED_STYLE: CSSProperties = {
+	pointerEvents: 'all',
+	cursor: 'not-allowed',
+};
+
+const noOp = (): void => {};
 
 interface AuthZTooltipProps {
 	checks: BrandedPermission[];
@@ -49,11 +56,13 @@ function AuthZTooltip({
 	}, [checks, permissions]);
 
 	if (shouldCheck && isLoading) {
-		return (
-			<span className={styles.wrapper}>
-				{cloneElement(children, { disabled: true })}
-			</span>
-		);
+		return cloneElement(children, {
+			disabled: true,
+			style: DISABLED_STYLE,
+			onClick: noOp,
+			onMouseDown: noOp,
+			onPointerDown: noOp,
+		});
 	}
 
 	if (!shouldCheck || deniedPermissions.length === 0) {
@@ -64,12 +73,14 @@ function AuthZTooltip({
 		<TooltipProvider>
 			<TooltipRoot>
 				<TooltipTrigger asChild>
-					<span
-						className={styles.wrapper}
-						data-denied-permissions={deniedPermissions.join(',')}
-					>
-						{cloneElement(children, { disabled: true })}
-					</span>
+					{cloneElement(children, {
+						disabled: true,
+						style: DISABLED_STYLE,
+						onClick: noOp,
+						onMouseDown: noOp,
+						onPointerDown: noOp,
+						'data-denied-permissions': deniedPermissions.join(','),
+					})}
 				</TooltipTrigger>
 				<TooltipContent className={styles.errorContent}>
 					{formatDeniedMessage(deniedPermissions, user.id, tooltipMessage)}

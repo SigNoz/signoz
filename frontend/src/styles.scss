@@ -839,6 +839,9 @@ body.ai-assistant-panel-open {
 	// design libraries.
 	--dropdown-menu-content-z-index: 1050;
 	--dropdown-menu-sub-content-z-index: 1050;
+
+	--internal-ant-border-color-focus: #3a52a8;
+	--internal-ant-border-color-hover: #6e8de8;
 }
 
 div[data-slot='callout'] {

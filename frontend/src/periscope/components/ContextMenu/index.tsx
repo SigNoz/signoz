@@ -107,6 +107,9 @@ export function ContextMenu({
 					}
 				}}
 				trigger="click"
+				// Anchor to body (like the backdrop), not the host container: a modal's
+				// transformed dialog would break `position: fixed` and trap the menu below it.
+				getPopupContainer={(): HTMLElement => document.body}
 				overlayStyle={{
 					position: 'fixed',
 					left: position.left,

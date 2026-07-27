@@ -21,8 +21,8 @@ jest.mock('api/generated/services/dashboard', () => ({
 
 jest.mock('../../store/useDashboardStore', () => ({
 	useDashboardStore: jest.fn(
-		(selector: (s: { dashboardId: string }) => unknown) =>
-			selector({ dashboardId: 'dash-1' }),
+		(selector: (s: { dashboardId: string; isEditable: boolean }) => unknown) =>
+			selector({ dashboardId: 'dash-1', isEditable: true }),
 	),
 }));
 

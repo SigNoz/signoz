@@ -7,6 +7,7 @@ import (
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 var (
@@ -20,6 +21,12 @@ var (
 type defaultFieldMapper struct{}
 
 var _ qbtypes.FieldMapper = (*defaultFieldMapper)(nil)
+
+// CandidateKeys returns nil: the resource filter has no attribute-map fallback, so a
+// context-missing key stays unresolved and the caller errors.
+func (m *defaultFieldMapper) CandidateKeys(_ context.Context, _ valuer.UUID, _ *telemetrytypes.TelemetryFieldKey, _ any, _ map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.TelemetryFieldKey {
+	return nil
+}
 
 func NewFieldMapper() *defaultFieldMapper {
 	return &defaultFieldMapper{}
@@ -41,6 +48,7 @@ func (m *defaultFieldMapper) getColumn(
 
 func (m *defaultFieldMapper) ColumnFor(
 	ctx context.Context,
+	_ valuer.UUID,
 	tsStart, tsEnd uint64,
 	key *telemetrytypes.TelemetryFieldKey,
 ) ([]*schema.Column, error) {
@@ -49,6 +57,7 @@ func (m *defaultFieldMapper) ColumnFor(
 
 func (m *defaultFieldMapper) FieldFor(
 	ctx context.Context,
+	_ valuer.UUID,
 	tsStart, tsEnd uint64,
 	key *telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
@@ -64,11 +73,13 @@ func (m *defaultFieldMapper) FieldFor(
 
 func (m *defaultFieldMapper) ColumnExpressionFor(
 	ctx context.Context,
+	orgID valuer.UUID,
 	tsStart, tsEnd uint64,
 	key *telemetrytypes.TelemetryFieldKey,
+	_ telemetrytypes.FieldDataType,
 	_ map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
-	fieldExpression, err := m.FieldFor(ctx, tsStart, tsEnd, key)
+	fieldExpression, err := m.FieldFor(ctx, orgID, tsStart, tsEnd, key)
 	if err != nil {
 		return "", err
 	}

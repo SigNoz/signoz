@@ -3,6 +3,7 @@ package postgressqlschema
 import (
 	"context"
 	"database/sql"
+	"log/slog"
 
 	"github.com/uptrace/bun"
 
@@ -214,6 +215,20 @@ WHERE
 }
 
 func (provider *provider) GetIndices(ctx context.Context, name sqlschema.TableName) ([]sqlschema.Index, error) {
+	// A key is one entry an index is built on: a column (plain) or an expression
+	// like lower(x) (functional). Returns one row per key of each non-constraint-
+	// backed index on the table, ordered by position. Keys are enumerated with
+	// generate_series over indnkeyatts (count of key columns, excluding non-key
+	// INCLUDE columns), so expression keys are covered too. Reconstruction uses:
+	//
+	//   index_name    | index the key belongs to
+	//   is_expression | true if the key is an expression, not a plain column
+	//   key_def       | rendered key text, e.g. org_id or lower(key)
+	//   column_name   | column name for plain keys; NULL for expression keys
+	//   predicate     | partial-index WHERE; NULL if not partial (same every row)
+	//
+	// table_name/unique/primary/column_position are carried over from the prior
+	// query (unique gates the loop, column_position orders the keys).
 	rows, err := provider.
 		sqlstore.
 		BunDB().
@@ -224,19 +239,21 @@ SELECT
     i.indisunique AS unique,
     i.indisprimary AS primary,
     a.attname AS column_name,
-    array_position(i.indkey, a.attnum) AS column_position,
+    n AS column_position,
+	(i.indkey[n - 1] = 0) AS is_expression,
+    pg_get_indexdef(i.indexrelid, n, true) AS key_def,
     pg_get_expr(i.indpred, i.indrelid) AS predicate
 FROM
     pg_index i
     LEFT JOIN pg_class ct ON ct.oid = i.indrelid
     LEFT JOIN pg_class ci ON ci.oid = i.indexrelid
-    LEFT JOIN pg_attribute a ON a.attrelid = ct.oid
     LEFT JOIN pg_constraint con ON con.conindid = i.indexrelid
+    CROSS JOIN generate_series(1, i.indnkeyatts) AS n
+    LEFT JOIN pg_attribute a ON a.attrelid = ct.oid AND a.attnum = i.indkey[n - 1]
 WHERE
-    a.attnum = ANY(i.indkey)
-    AND con.oid IS NULL
+    ct.relname = ?
     AND ct.relkind = 'r'
-    AND ct.relname = ?
+    AND con.oid IS NULL
 ORDER BY index_name, column_position`, string(name))
 	if err != nil {
 		return nil, provider.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "no indices for table (%s) found", name)
@@ -251,6 +268,10 @@ ORDER BY index_name, column_position`, string(name))
 	type indexEntry struct {
 		columns   []sqlschema.ColumnName
 		predicate *string
+		// keyDefs holds every key rendered by pg_get_indexdef, in key order; used
+		// for functional indexes where a key may be an expression like lower(x).
+		keyDefs       []string
+		hasExpression bool
 	}
 
 	uniqueIndicesMap := make(map[string]*indexEntry)
@@ -260,35 +281,61 @@ ORDER BY index_name, column_position`, string(name))
 			indexName  string
 			unique     bool
 			primary    bool
-			columnName string
-			// starts from 0 and is unused in this function, this is to ensure that the column names are in the correct order
+			columnName *string
+			// starts from 1 and is unused in this function, this is to ensure that the column names are in the correct order
 			columnPosition int
+			isExpression   bool
+			keyDef         string
 			predicate      *string
 		)
 
-		if err := rows.Scan(&tableName, &indexName, &unique, &primary, &columnName, &columnPosition, &predicate); err != nil {
+		if err := rows.Scan(&tableName, &indexName, &unique, &primary, &columnName, &columnPosition, &isExpression, &keyDef, &predicate); err != nil {
 			return nil, err
 		}
 
-		if unique {
-			if _, ok := uniqueIndicesMap[indexName]; !ok {
-				uniqueIndicesMap[indexName] = &indexEntry{
-					columns:   []sqlschema.ColumnName{sqlschema.ColumnName(columnName)},
-					predicate: predicate,
-				}
-			} else {
-				uniqueIndicesMap[indexName].columns = append(uniqueIndicesMap[indexName].columns, sqlschema.ColumnName(columnName))
-			}
+		if !unique {
+			continue
+		}
+
+		entry, ok := uniqueIndicesMap[indexName]
+		if !ok {
+			entry = &indexEntry{predicate: predicate}
+			uniqueIndicesMap[indexName] = entry
+		}
+
+		entry.keyDefs = append(entry.keyDefs, keyDef)
+		if isExpression {
+			entry.hasExpression = true
+		} else if columnName != nil {
+			entry.columns = append(entry.columns, sqlschema.ColumnName(*columnName))
 		}
 	}
 
 	indices := make([]sqlschema.Index, 0)
 	for indexName, entry := range uniqueIndicesMap {
+		// functional partial indexes aren't representable (PartialUniqueIndex has no
+		// expressions); skip rather than misrepresent.
+		if entry.hasExpression && entry.predicate != nil {
+			provider.settings.Logger().WarnContext(ctx, "skipping functional partial unique index; not representable by sqlschema", slog.String("index", indexName), slog.String("table", string(name)))
+			continue
+		}
+
 		if entry.predicate != nil {
 			index := &sqlschema.PartialUniqueIndex{
 				TableName:   name,
 				ColumnNames: entry.columns,
 				Where:       *entry.predicate,
+			}
+
+			if index.Name() == indexName {
+				indices = append(indices, index)
+			} else {
+				indices = append(indices, index.Named(indexName))
+			}
+		} else if entry.hasExpression {
+			index := &sqlschema.UniqueIndexWithExpressions{
+				TableName:   name,
+				Expressions: entry.keyDefs,
 			}
 
 			if index.Name() == indexName {

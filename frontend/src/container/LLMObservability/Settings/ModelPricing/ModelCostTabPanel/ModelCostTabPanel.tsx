@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { SelectSimple } from '@signozhq/ui/select';
-import { Typography } from '@signozhq/ui/typography';
 import { Plus, Search, X } from '@signozhq/icons';
 import { useListLLMPricingRules } from 'api/generated/services/llmpricingrules';
 import { type ListLLMPricingRulesParams } from 'api/generated/services/sigNoz.schemas';
@@ -160,12 +159,6 @@ function ModelCostTabPanel(): JSX.Element {
 				onEdit={drawer.openForEdit}
 				onDelete={deletion.requestDelete}
 			/>
-
-			<footer>
-				<Typography.Text color="muted" size="small">
-					All prices per 1M tokens (USD)
-				</Typography.Text>
-			</footer>
 
 			{drawer.isOpen && (
 				<ModelCostDrawer

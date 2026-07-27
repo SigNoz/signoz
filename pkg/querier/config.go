@@ -7,6 +7,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 )
 
+const DefaultMaxConcurrentQueries = 8
+
 type SkipResourceFingerprint struct {
 	Enabled bool `yaml:"enabled" mapstructure:"enabled"`
 	// If count of fingerprint is above threshold, skip the fingerprint subquery and filter on main table instead.
@@ -37,7 +39,7 @@ func newConfig() factory.Config {
 		// Default values
 		CacheTTL:             168 * time.Hour,
 		FluxInterval:         5 * time.Minute,
-		MaxConcurrentQueries: 4,
+		MaxConcurrentQueries: DefaultMaxConcurrentQueries,
 		SkipResourceFingerprint: SkipResourceFingerprint{
 			Enabled:   false,
 			Threshold: 100000,

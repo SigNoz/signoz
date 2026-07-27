@@ -43,4 +43,28 @@ describe('PanelMessage', () => {
 		fireEvent.click(button);
 		expect(onClick).toHaveBeenCalledTimes(1);
 	});
+
+	it('renders both actions side by side and wires each onClick', () => {
+		const onPrimary = jest.fn();
+		const onSecondary = jest.fn();
+		render(
+			<PanelMessage
+				icon={null}
+				title="No data in this time range"
+				action={{ label: 'Extend time range', onClick: onPrimary }}
+				secondaryAction={{ label: 'Retry', onClick: onSecondary }}
+				data-testid="panel-no-data"
+			/>,
+		);
+
+		const primary = screen.getByTestId('panel-no-data-action');
+		const secondary = screen.getByTestId('panel-no-data-secondary-action');
+		expect(primary).toHaveTextContent('Extend time range');
+		expect(secondary).toHaveTextContent('Retry');
+
+		fireEvent.click(primary);
+		fireEvent.click(secondary);
+		expect(onPrimary).toHaveBeenCalledTimes(1);
+		expect(onSecondary).toHaveBeenCalledTimes(1);
+	});
 });

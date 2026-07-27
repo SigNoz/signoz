@@ -1,0 +1,40 @@
+.source {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-3);
+}
+
+.sourceHandle {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: var(--spacing-2);
+	border: none;
+	background: transparent;
+	color: var(--l3-foreground);
+	cursor: grab;
+	touch-action: none;
+	user-select: none;
+
+	&:active {
+		cursor: grabbing;
+	}
+}
+
+.sourceIndex {
+	width: 20px;
+	text-align: center;
+	font-size: var(--font-size-xs);
+	color: var(--l3-foreground);
+}
+
+.sourceInput {
+	flex: 1;
+	min-width: 0;
+	font-family: 'Geist Mono', monospace;
+}
+
+.sourceSelect {
+	flex: 0 0 auto;
+	width: 120px;
+}

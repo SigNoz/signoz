@@ -1,10 +1,8 @@
 import { useCallback, useRef, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
-import { useCopyToClipboard } from 'react-use';
-import { ChevronsRight, Copy, Search, X } from '@signozhq/icons';
+import { ArrowRightFromLine, Search, X } from '@signozhq/icons';
 import { Switch } from '@signozhq/ui/switch';
 import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
-import { toast } from '@signozhq/ui/sonner';
 import { Button } from '@signozhq/ui/button';
 import {
 	TooltipRoot,
@@ -21,6 +19,7 @@ import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { uniqBy } from 'lodash-es';
 import NozButton from 'pages/TraceDetailsV3/TraceDetailsHeader/NozButton';
+import CopyButton from 'periscope/components/CopyButton/CopyButton';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import {
@@ -89,7 +88,6 @@ function Filters({
 	onExpand: () => void;
 	onCollapse: () => void;
 }): JSX.Element {
-	const [, setCopy] = useCopyToClipboard();
 	const [filters, setFilters] = useState<TagFilter>(
 		BASE_FILTER_QUERY.filters || { items: [], op: 'AND' },
 	);
@@ -301,20 +299,7 @@ function Filters({
 				<div className={styles.pillPopover}>
 					<div className={styles.pillPopoverHeader}>
 						<Typography.Text>Search query</Typography.Text>
-						<Button
-							variant="ghost"
-							size="icon"
-							color="secondary"
-							onClick={(): void => {
-								setCopy(expression);
-								toast.success('Copied to clipboard', {
-									richColors: false,
-									position: 'top-right',
-								});
-							}}
-						>
-							<Copy size={12} />
-						</Button>
+						<CopyButton value={expression} size={12} />
 					</div>
 					<div className={styles.pillPopoverExpression}>{expression}</div>
 				</div>
@@ -421,7 +406,7 @@ function Filters({
 										color="secondary"
 										onClick={onCollapse}
 									>
-										<ChevronsRight size={14} />
+										<ArrowRightFromLine size={14} />
 									</Button>
 								</TooltipTrigger>
 								<TooltipContent>Collapse filters</TooltipContent>

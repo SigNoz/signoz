@@ -1,0 +1,35 @@
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+}
+
+.label {
+	font-size: var(--font-size-xs);
+	font-weight: var(--font-weight-semibold);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--l3-foreground);
+}
+
+.labelHint {
+	font-weight: var(--font-weight-normal);
+	text-transform: none;
+	letter-spacing: normal;
+}
+
+.keys {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+}
+
+.keyRow {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-3);
+}
+
+.keyInput {
+	flex: 1;
+}

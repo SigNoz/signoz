@@ -77,14 +77,21 @@ describe('buildVariablesPayload', () => {
 		});
 	});
 
-	it('falls back to a list variable configured default when unselected', () => {
+	it('falls back to a string configured default when unselected', () => {
 		const definitions = [
-			variable('region', 'QUERY', {
-				defaultValue: { value: 'us-east' },
-			} as unknown as Partial<VariableFormModel>),
+			variable('region', 'QUERY', { defaultValue: 'us-east' }),
 		];
 		expect(buildVariablesPayload(definitions, {})).toStrictEqual({
 			region: { type: 'query', value: 'us-east' },
+		});
+	});
+
+	it('falls back to an array configured default when unselected', () => {
+		const definitions = [
+			variable('region', 'QUERY', { defaultValue: ['us-east', 'us-west'] }),
+		];
+		expect(buildVariablesPayload(definitions, {})).toStrictEqual({
+			region: { type: 'query', value: ['us-east', 'us-west'] },
 		});
 	});
 

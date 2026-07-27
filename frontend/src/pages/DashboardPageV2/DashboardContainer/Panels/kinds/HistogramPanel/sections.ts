@@ -9,7 +9,7 @@ export const sections: SectionConfig[] = [
 	},
 	{
 		kind: SectionKind.Legend,
-		controls: { position: true },
+		controls: { position: true, colors: true },
 		// Merging all queries collapses to one distribution with no legend.
 		isHidden: (spec): boolean =>
 			Boolean(
