@@ -11,7 +11,7 @@ import { useAccountSettingsDrawer } from 'hooks/integration/gcp/useAccountSettin
 
 import RemoveIntegrationAccount from '../../RemoveAccount/RemoveIntegrationAccount';
 
-import '../../AmazonWebServices/EditAccount/AccountSettingsModal.style.scss';
+import styles from './AccountSettingsDrawer.module.scss';
 
 interface AccountSettingsDrawerProps {
 	onClose: () => void;
@@ -44,7 +44,6 @@ function AccountSettingsDrawer({
 	return (
 		<DrawerWrapper
 			open={true}
-			className="account-settings-modal"
 			title="Account Settings"
 			direction="right"
 			showCloseButton
@@ -55,7 +54,7 @@ function AccountSettingsDrawer({
 			}}
 			width="wide"
 			footer={
-				<div className="account-settings-modal__footer">
+				<div className={styles.footer}>
 					<RemoveIntegrationAccount
 						accountId={account?.id}
 						onRemoveIntegrationAccountSuccess={(): void => {
@@ -88,48 +87,40 @@ function AccountSettingsDrawer({
 					projectIds: gcpConfig?.project_ids || [],
 				}}
 			>
-				<div className="account-settings-modal__body">
-					<div className="account-settings-modal__body-account-info">
-						<div className="account-settings-modal__body-account-info-connected-account-details">
-							<div className="account-settings-modal__body-account-info-connected-account-details-title">
-								Connected Account details
-							</div>
-							<div className="account-settings-modal__body-account-info-connected-account-details-account-id">
-								Account Name:{' '}
-								<span className="account-settings-modal__body-account-info-connected-account-details-account-id-account-id">
-									{account?.providerAccountId}
-								</span>
-							</div>
+				<div className={styles.body}>
+					<div className={styles.connectedAccountDetails}>
+						<div className={styles.connectedAccountDetailsTitle}>
+							Connected Account details
+						</div>
+						<div className={styles.accountId}>
+							Account Name:{' '}
+							<span className={styles.accountIdValue}>
+								{account?.providerAccountId}
+							</span>
 						</div>
 					</div>
 
 					{gcpConfig?.deployment_project_id && (
-						<div className="account-settings-modal__body-region-selector">
-							<div className="account-settings-modal__body-region-selector-title">
-								Deployment project ID
-							</div>
-							<div className="account-settings-modal__body-region-selector-description">
+						<div className={styles.regionSelector}>
+							<div className={styles.regionSelectorTitle}>Deployment project ID</div>
+							<div className={styles.regionSelectorDescription}>
 								{gcpConfig.deployment_project_id}
 							</div>
 						</div>
 					)}
 
 					{gcpConfig?.deployment_region && (
-						<div className="account-settings-modal__body-region-selector">
-							<div className="account-settings-modal__body-region-selector-title">
-								Deployment region
-							</div>
-							<div className="account-settings-modal__body-region-selector-description">
+						<div className={styles.regionSelector}>
+							<div className={styles.regionSelectorTitle}>Deployment region</div>
+							<div className={styles.regionSelectorDescription}>
 								{gcpConfig.deployment_region}
 							</div>
 						</div>
 					)}
 
-					<div className="account-settings-modal__body-region-selector">
-						<div className="account-settings-modal__body-region-selector-title">
-							Projects to monitor
-						</div>
-						<div className="account-settings-modal__body-region-selector-description">
+					<div className={styles.regionSelector}>
+						<div className={styles.regionSelectorTitle}>Projects to monitor</div>
+						<div className={styles.regionSelectorDescription}>
 							Update the GCP project IDs that should be monitored.
 						</div>
 
