@@ -67,6 +67,16 @@
 	vertical-align: bottom;
 }
 
+// The values behind a pill's `+N`, one bullet each, width-capped so a long value
+// wraps instead of stretching the tooltip off-screen.
+.overflowValues {
+	max-width: 360px;
+	margin: 0;
+	padding-left: 14px;
+	list-style: disc outside;
+	overflow-wrap: anywhere;
+}
+
 // Shared by the Text and value selectors: strips the antd control chrome so the
 // selector blends into the variable pill.
 .control {
