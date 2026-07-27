@@ -113,12 +113,17 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 		width: { min: 250 },
 		enableSort: false,
 		enableResize: true,
-		cell: ({ row }): React.ReactNode => {
+		cell: ({ row, rowId }): React.ReactNode => {
 			const podCountsByStatus = row.podCountsByStatus;
 			if (!podCountsByStatus) {
 				return <TanStackTable.Text>-</TanStackTable.Text>;
 			}
-			return <GroupedStatusCounts items={getPodStatusItems(podCountsByStatus)} />;
+			return (
+				<GroupedStatusCounts
+					items={getPodStatusItems(podCountsByStatus)}
+					rowId={rowId}
+				/>
+			);
 		},
 	},
 	{
@@ -132,7 +137,7 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 		width: { min: 210 },
 		enableSort: false,
 		enableResize: true,
-		cell: ({ row }): React.ReactNode => (
+		cell: ({ row, rowId }): React.ReactNode => (
 			<GroupedStatusCounts
 				items={[
 					{ value: row.activePods, label: 'Active', color: Color.BG_ROBIN_500 },
@@ -148,6 +153,7 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 						color: Color.BG_AMBER_500,
 					},
 				]}
+				rowId={rowId}
 			/>
 		),
 	},

@@ -1,9 +1,16 @@
-import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import type {
+	DashboardtypesPanelDTO,
+	Querybuildertypesv5QueryWarnDataDTO as WarningDTO,
+	RenderErrorResponseDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import type { AxiosError } from 'axios';
-import type { Querybuildertypesv5QueryWarnDataDTO as WarningDTO } from 'api/generated/services/sigNoz.schemas';
 import { StatusCodes } from 'http-status-codes';
 
-import { panelStatusFromError, panelStatusFromWarning } from '../utils';
+import {
+	panelStatusFromError,
+	panelStatusFromMultipleEnabledQueries,
+	panelStatusFromWarning,
+} from '../utils';
 
 // The query layer rejects with the raw AxiosError from the generated client
 // (it is not pre-converted to APIError), so the tests mirror that wire shape.
@@ -85,5 +92,64 @@ describe('panelStatusFromWarning', () => {
 			docsUrl: 'https://docs/warn',
 			messages: ['series A truncated'],
 		});
+	});
+});
+
+function panel(
+	kind: string,
+	envelopes: { disabled?: boolean }[],
+): DashboardtypesPanelDTO {
+	return {
+		spec: {
+			plugin: { kind, spec: {} },
+			queries: [
+				{
+					spec: {
+						plugin: {
+							kind: 'signoz/CompositeQuery',
+							spec: {
+								queries: envelopes.map(({ disabled }) => ({
+									type: 'builder_query',
+									spec: { disabled },
+								})),
+							},
+						},
+					},
+				},
+			],
+		},
+	} as unknown as DashboardtypesPanelDTO;
+}
+
+describe('panelStatusFromMultipleEnabledQueries', () => {
+	it('warns when a Number panel has more than one enabled query', () => {
+		const detail = panelStatusFromMultipleEnabledQueries(
+			panel('signoz/NumberPanel', [{}, {}]),
+		);
+		expect(detail).not.toBeNull();
+		expect(detail?.message).toMatch(/single value/i);
+		expect(detail?.messages).toHaveLength(1);
+	});
+
+	it('counts only enabled queries (a disabled second query is fine)', () => {
+		expect(
+			panelStatusFromMultipleEnabledQueries(
+				panel('signoz/NumberPanel', [{}, { disabled: true }]),
+			),
+		).toBeNull();
+	});
+
+	it('does not warn when a Number panel has a single enabled query', () => {
+		expect(
+			panelStatusFromMultipleEnabledQueries(panel('signoz/NumberPanel', [{}])),
+		).toBeNull();
+	});
+
+	it('does not warn for other panel kinds even with multiple enabled queries', () => {
+		expect(
+			panelStatusFromMultipleEnabledQueries(
+				panel('signoz/TimeSeriesPanel', [{}, {}]),
+			),
+		).toBeNull();
 	});
 });

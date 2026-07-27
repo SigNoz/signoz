@@ -1,4 +1,4 @@
-import { type MouseEvent, useMemo, useRef } from 'react';
+import { type MouseEvent, useCallback, useMemo, useRef } from 'react';
 import {
 	autocompletion,
 	closeCompletion,
@@ -14,6 +14,8 @@ import CodeMirror, {
 	Prec,
 	type ReactCodeMirrorRef,
 } from '@uiw/react-codemirror';
+import logEvent from 'api/common/logEvent';
+import { DashboardListEvents } from 'pages/DashboardsListPageV2/constants/events';
 import { getUserOperatingSystem, UserOperatingSystem } from 'utils/getUserOS';
 
 import type { SuggestionSource } from '../../utils/dslSuggestions';
@@ -83,8 +85,14 @@ function SearchBar({
 	// Refs so the (memoised, stable) extensions always see the latest values.
 	const sourceRef = useRef(source);
 	sourceRef.current = source;
-	const onSubmitRef = useRef(onSubmit);
-	onSubmitRef.current = onSubmit;
+	const handleSubmit = useCallback((): void => {
+		void logEvent(DashboardListEvents.SearchExecuted, {
+			hasQuery: !!value.trim(),
+		});
+		onSubmit();
+	}, [onSubmit, value]);
+	const onSubmitRef = useRef(handleSubmit);
+	onSubmitRef.current = handleSubmit;
 
 	const extensions = useMemo(
 		() => [
@@ -162,7 +170,7 @@ function SearchBar({
 					onMouseDown={(e: MouseEvent<HTMLButtonElement>): void => {
 						e.preventDefault();
 					}}
-					onClick={onSubmit}
+					onClick={handleSubmit}
 				>
 					{dirty && (
 						<span

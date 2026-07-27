@@ -26,7 +26,6 @@ type DeploymentRecord struct {
 	DeploymentMemoryLimit   float64           `json:"deploymentMemoryLimit" required:"true"`
 	DesiredPods             int               `json:"desiredPods" required:"true"`
 	AvailablePods           int               `json:"availablePods" required:"true"`
-	PodCountsByPhase        PodCountsByPhase  `json:"podCountsByPhase" required:"true"`
 	PodCountsByStatus       PodCountsByStatus `json:"podCountsByStatus" required:"true"`
 	Meta                    map[string]string `json:"meta" required:"true"`
 }

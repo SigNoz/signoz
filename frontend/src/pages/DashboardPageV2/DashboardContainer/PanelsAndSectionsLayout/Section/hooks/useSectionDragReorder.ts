@@ -9,7 +9,9 @@ import {
 } from '@dnd-kit/core';
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 
+import logEvent from 'api/common/logEvent';
 import type { DashboardtypesLayoutDTO } from 'api/generated/services/sigNoz.schemas';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
@@ -100,6 +102,10 @@ export function useSectionDragReorder({ sections, layouts }: Params): Result {
 
 			try {
 				await patchAsync([reorderLayoutsOp(newLayouts)]);
+				void logEvent(DashboardDetailEvents.SectionsReordered, {
+					sectionCount: newOrdered.length,
+					dashboardId,
+				});
 			} catch (error) {
 				setLocalOrderIds(null); // revert optimistic order on failure
 				showErrorModal(error as APIError);

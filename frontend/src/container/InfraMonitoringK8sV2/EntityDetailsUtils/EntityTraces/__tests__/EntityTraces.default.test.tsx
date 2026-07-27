@@ -34,10 +34,8 @@ describe('EntityTraces - Default Behavior', () => {
 	});
 
 	it('should pass time range to API (converted to milliseconds)', async () => {
-		const timeRange = { startTime: 1000, endTime: 2000 };
-
 		act(() => {
-			renderEntityTraces({ timeRange });
+			renderEntityTraces();
 		});
 
 		await waitFor(() => {
@@ -47,8 +45,8 @@ describe('EntityTraces - Default Behavior', () => {
 		verifyQueryPayload({
 			payload: capturedPayloads[0],
 			expectedTimeRange: {
-				start: timeRange.startTime * 1000,
-				end: timeRange.endTime * 1000,
+				start: 1 * 1000,
+				end: 2 * 1000,
 			},
 		});
 	});

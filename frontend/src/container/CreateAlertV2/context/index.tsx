@@ -168,6 +168,14 @@ export function CreateAlertProvider(
 	const yAxisUnitAppliedRef = useRef(false);
 
 	useEffect(() => {
+		// URL-declared prefill is a create-flow concern. In edit mode the alert
+		// state is owned by SET_INITIAL_STATE; running the RESET below would wipe
+		// the loaded thresholds each time the query builder rewrites location.search
+		// (which yields a fresh urlPrefill object and re-triggers this effect).
+		if (isEditMode) {
+			return;
+		}
+
 		setCreateAlertState({
 			slice: CreateAlertSlice.THRESHOLD,
 			action: {
@@ -235,7 +243,7 @@ export function CreateAlertProvider(
 				},
 			});
 		}
-	}, [alertType, urlPrefill, ruleNameFromURL, yAxisUnitFromURL]);
+	}, [alertType, urlPrefill, ruleNameFromURL, yAxisUnitFromURL, isEditMode]);
 
 	useEffect(() => {
 		if (isEditMode && initialAlertState) {

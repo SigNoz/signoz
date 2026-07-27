@@ -1,8 +1,17 @@
-import type { VariableFormModel } from '../../../DashboardSettings/Variables/variableFormModel';
+import { useMemo } from 'react';
+
+import {
+	VARIABLE_TYPE_EVENT_LABEL,
+	type VariableFormModel,
+} from '../../../DashboardSettings/Variables/variableFormModel';
 import type {
 	VariableSelection,
 	VariableSelectionMap,
 } from '../../selectionTypes';
+import {
+	reconcileWithOptions,
+	resolveDefaultSelection,
+} from '../../utils/resolveVariableSelection';
 import { useAutoSelect } from '../../hooks/useAutoSelect';
 import ValueSelector from './ValueSelector';
 import { useVariableOptions } from '../../hooks/useVariableOptions';
@@ -41,9 +50,16 @@ function VariableValueControl({
 
 	useAutoSelect(variable, options, selection, onAutoSelect);
 
+	// The selection to fall back to when the multi-select closes empty
+	const emptyFallback = useMemo<VariableSelection>(() => {
+		const seed = resolveDefaultSelection(variable);
+		return reconcileWithOptions(variable, seed, options) ?? seed;
+	}, [variable, options]);
+
 	return (
 		<ValueSelector
 			options={options}
+			variableType={VARIABLE_TYPE_EVENT_LABEL[variable.type]}
 			multiSelect={variable.multiSelect}
 			showAllOption={variable.showAllOption}
 			loading={loading}
@@ -51,6 +67,7 @@ function VariableValueControl({
 			onRetry={onRetry}
 			selection={selection}
 			onChange={onChange}
+			emptyFallback={emptyFallback}
 			testId={`variable-select-${variable.name}`}
 		/>
 	);

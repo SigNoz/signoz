@@ -1,6 +1,8 @@
+import { TanStackHoverTooltip } from './TanStackHoverTooltip';
 import { TanStackTableBase } from './TanStackTable';
 import TanStackTableText from './TanStackTableText';
 
+export * from './TanStackHoverTooltip';
 export * from './TanStackTableStateContext';
 export * from './types';
 export * from './useCalculatedPageSize';
@@ -274,6 +276,7 @@ export * from './useTableParams';
  */
 const TanStackTable = Object.assign(TanStackTableBase, {
 	Text: TanStackTableText,
+	HoverTooltip: TanStackHoverTooltip,
 });
 
 export default TanStackTable;

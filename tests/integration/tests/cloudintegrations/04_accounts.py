@@ -8,7 +8,6 @@ import requests
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license
 from fixtures.cloudintegrations import (
-    PROVIDER_ACCOUNT_SPECS,
     ProviderAccountSpec,
     simulate_agent_checkin,
 )
@@ -16,9 +15,42 @@ from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)
 
-# Every account test runs once per provider in PROVIDER_ACCOUNT_SPECS. Each spec
-# owns its provider's config shape (build_config / expected_config), so the test
-# bodies stay provider-agnostic and adding a provider needs no changes here.
+AWS_ACCOUNT_SPEC = ProviderAccountSpec(
+    provider="aws",
+    initial_params={"deployment_region": "us-east-1", "regions": ["us-east-1"]},
+    updated_params={"deployment_region": "us-east-1", "regions": ["us-east-1", "us-west-2", "eu-west-1"]},
+    build_config=lambda p: {"aws": {"deploymentRegion": p["deployment_region"], "regions": p["regions"]}},
+    expected_config=lambda p: {"regions": p["regions"]},
+)
+
+GCP_ACCOUNT_SPEC = ProviderAccountSpec(
+    provider="gcp",
+    initial_params={
+        "deployment_project_id": "signoz-test-project",
+        "deployment_region": "us-central1",
+        "project_ids": ["signoz-test-project"],
+    },
+    updated_params={
+        "deployment_project_id": "signoz-test-project",
+        "deployment_region": "us-central1",
+        "project_ids": ["signoz-test-project", "signoz-test-project-2"],
+    },
+    build_config=lambda p: {
+        "gcp": {
+            "deploymentProjectId": p["deployment_project_id"],
+            "deploymentRegion": p["deployment_region"],
+            "projectIds": p["project_ids"],
+        }
+    },
+    expected_config=lambda p: {
+        "deploymentProjectId": p["deployment_project_id"],
+        "deploymentRegion": p["deployment_region"],
+        "projectIds": p["project_ids"],
+    },
+)
+
+PROVIDER_ACCOUNT_SPECS = [AWS_ACCOUNT_SPEC, GCP_ACCOUNT_SPEC]
+
 provider_spec = pytest.mark.parametrize(
     "spec",
     PROVIDER_ACCOUNT_SPECS,

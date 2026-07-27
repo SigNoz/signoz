@@ -231,6 +231,7 @@ def test_volumes_warnings(
             {"data-ns-a-prod", "data-ns-b-prod"},
             id="in_contains",
         ),
+        pytest.param("k8s.persistentvolumeclaim.namee = 'data-ns-a-prod'", set(), id="unresolved_key"),
     ],
 )
 def test_volumes_filter(
@@ -289,11 +290,6 @@ def test_volumes_filter(
 @pytest.mark.parametrize(
     "expression,err_substr",
     [
-        pytest.param(
-            "k8s.persistentvolumeclaim.namee = 'data-ns-a-prod'",
-            "k8s.persistentvolumeclaim.namee",
-            id="bad_attr_name",
-        ),
         pytest.param("k8s.persistentvolumeclaim.name =", None, id="trailing_op"),
         pytest.param("(k8s.persistentvolumeclaim.name = 'data-ns-a-prod'", None, id="unclosed_paren"),
     ],
@@ -306,8 +302,8 @@ def test_volumes_filter_invalid(
     expression: str,
     err_substr,
 ) -> None:
-    """Invalid filter expressions (typo'd attribute key, malformed grammar) return
-    400 invalid_input with structured errors; bad attribute keys are named in them."""
+    """Malformed filter grammar (trailing operator, unclosed paren) returns
+    400 invalid_input with structured errors."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
