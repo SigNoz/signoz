@@ -3,7 +3,9 @@ package querybuilder
 import (
 	"testing"
 
+	chparser "github.com/AfterShip/clickhouse-sql-parser/parser"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestValidateReadOnlySelect(t *testing.T) {
@@ -60,6 +62,31 @@ func TestValidateReadOnlySelect(t *testing.T) {
 		{
 			name:  "Unparseable_Invalid",
 			query: "SELECT FROM WHERE",
+			pass:  false,
+		},
+		{
+			name:  "TerminatedBlockComment_Valid",
+			query: "SELECT /* keep me */ count() FROM t",
+			pass:  true,
+		},
+		{
+			name:  "BlockCommentMarkerInsideStringLiteral_Valid",
+			query: "SELECT count() FROM t WHERE body = '/* not a comment'",
+			pass:  true,
+		},
+		{
+			name:  "UnterminatedBlockComment_Invalid",
+			query: "SELECT /* unterminated",
+			pass:  false,
+		},
+		{
+			name:  "UnterminatedBlockCommentOnly_Invalid",
+			query: "/* x",
+			pass:  false,
+		},
+		{
+			name:  "UnterminatedBlockCommentAfterStatement_Invalid",
+			query: "SELECT 1 /* a /* nested",
 			pass:  false,
 		},
 		{
@@ -284,6 +311,36 @@ func TestValidateReadOnlySelect(t *testing.T) {
 			}
 
 			assert.Error(t, err)
+		})
+	}
+}
+
+// The parser panics on these instead of returning a parse error, so the recover has
+// to turn them into a rejection rather than take the process down.
+func TestValidateReadOnlySelectParserPanics(t *testing.T) {
+	testCases := []struct {
+		name  string
+		query string
+	}{
+		{
+			name:  "SettingWithoutValue_Invalid",
+			query: "SELECT * FROM t SETTINGS x =",
+		},
+		{
+			name:  "SettingWithoutValueAmongOthers_Invalid",
+			query: "SELECT * FROM t SETTINGS max_threads = 4, x =",
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			require.Panics(t, func() {
+				_, _ = chparser.NewParser(testCase.query).ParseStmts()
+			}, "input no longer panics the parser, so this case has stopped covering the recover")
+
+			assert.NotPanics(t, func() {
+				assert.Error(t, ValidateReadOnlySelect(testCase.query))
+			})
 		})
 	}
 }
