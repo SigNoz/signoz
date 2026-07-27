@@ -1,0 +1,17 @@
+@use '../../styles/scrollbar' as *;
+
+// How tall a hover reveal grows before its content starts scrolling.
+.scrollArea {
+	max-height: 480px;
+	overflow-y: auto;
+	// Keep the page behind the tooltip still once the list hits its end.
+	overscroll-behavior: contain;
+
+	// Always-visible thin scrollbar: a tooltip is transient, so an auto-hiding one
+	// would leave no hint that there is more below. Firefox has no ::-webkit rules,
+	// hence the standard properties alongside the mixin.
+	scrollbar-width: thin;
+	scrollbar-color: var(--l3-background) transparent;
+
+	@include custom-scrollbar;
+}
