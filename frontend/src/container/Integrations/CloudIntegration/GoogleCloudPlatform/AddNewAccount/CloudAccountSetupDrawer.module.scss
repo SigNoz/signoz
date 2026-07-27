@@ -2,20 +2,16 @@
 	--dialog-header-padding: var(--spacing-10) var(--spacing-12);
 	--dialog-footer-padding: var(--spacing-8) var(--spacing-12);
 
-	// Input and ComboboxSimple default to unfilled fields (transparent background,
-	// --border, --muted-foreground) and neither exposes a filled variant, so the
-	// drawer's filled treatment has to be set token by token. Focus borders are
-	// left at their per-component defaults.
-	--input-background: var(--l2-background);
-	--input-hover-background: var(--l2-background);
-	--input-focus-background: var(--l2-background);
+	// Input and ComboboxSimple default to --border borders, inherited text and
+	// --muted-foreground placeholders; the drawer wants the dimmer --l2-border with
+	// brighter values and duller placeholders. Backgrounds are left alone — both
+	// components default to transparent and every field sits on an --l2-background
+	// surface already. Focus borders stay at their per-component defaults.
 	--input-border-color: var(--l2-border);
 	--input-hover-border-color: var(--l2-border);
 	--input-foreground: var(--l1-foreground);
 	--input-placeholder-color: var(--l3-foreground);
-	--combobox-trigger-background-color: var(--l2-background);
 	--combobox-trigger-border-color: var(--l2-border);
-	--combobox-trigger-placeholder-color: var(--l3-foreground);
 
 	// Bounded flex column so the header/footer stay put and only the body
 	// scrolls when content overflows.
