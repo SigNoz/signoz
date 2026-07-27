@@ -7,41 +7,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 )
 
-// hasUnterminatedBlockComment reports whether the query ends inside a block comment.
-// The parser loops forever on one, so it cannot be left to ParseStmts to reject.
-func hasUnterminatedBlockComment(query string) bool {
-	for i := 0; i < len(query); i++ {
-		switch {
-		case query[i] == '\'', query[i] == '"', query[i] == '`':
-			quote := query[i]
-			for i++; i < len(query); i++ {
-				if query[i] == '\\' {
-					i++
-					continue
-				}
-				if query[i] == quote {
-					break
-				}
-			}
-		case strings.HasPrefix(query[i:], "--"):
-			newline := strings.IndexByte(query[i:], '\n')
-			if newline < 0 {
-				return false
-			}
-			i += newline
-		case strings.HasPrefix(query[i:], "/*"):
-			// ClickHouse block comments do not nest, so the first */ closes it.
-			end := strings.Index(query[i+2:], "*/")
-			if end < 0 {
-				return true
-			}
-			i += end + 3
-		}
-	}
-
-	return false
-}
-
 // internalDatabases hold server metadata, credentials and grants rather than telemetry.
 var internalDatabases = map[string]struct{}{
 	"system":             {},
@@ -53,16 +18,14 @@ var internalDatabases = map[string]struct{}{
 // lowering of the readonly setting. It must run on the rendered statement, since the
 // substituted variable values are user input too.
 func ValidateReadOnlySelect(query string) (err error) {
-	// The parser panics on some malformed input rather than returning an error.
+	// The parser has a history of panicking on malformed input rather than returning
+	// an error. No input is known to still do so, but this reaches user-authored SQL,
+	// so a regression must not take the process down.
 	defer func() {
 		if recovered := recover(); recovered != nil {
 			err = errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid ClickHouse SQL: %v", recovered)
 		}
 	}()
-
-	if hasUnterminatedBlockComment(query) {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid ClickHouse SQL: unterminated block comment")
-	}
 
 	stmts, parseErr := chparser.NewParser(query).ParseStmts()
 	if parseErr != nil {
@@ -83,7 +46,7 @@ func ValidateReadOnlySelect(query string) (err error) {
 		switch expr := node.(type) {
 		case *chparser.TableFunctionExpr:
 			// Source table functions remain usable in ClickHouse read-only mode.
-			return errors.NewInvalidInputf(errors.CodeInvalidInput, "ClickHouse table functions are not allowed in SQL queries: %s", expr.Name.String())
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "ClickHouse table functions are not allowed in SQL queries: %s", chparser.Format(expr.Name))
 		case *chparser.TableIdentifier:
 			// Reading these is unaffected by ClickHouse read-only mode.
 			if expr.Database == nil {
