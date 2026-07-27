@@ -32,7 +32,7 @@ def _labels_to_map(labels: list[dict]) -> dict[str, str]:
 
 def _parse_related_link(link: str) -> dict:
     params = urllib.parse.parse_qs(link)
-    for key in ("compositeQuery", "startTime", "endTime", "options"):
+    for key in ("compositeQuery", "startTime", "endTime"):
         assert key in params, f"related link is missing param {key}, link: {link}"
     return {
         "start": int(params["startTime"][0]),

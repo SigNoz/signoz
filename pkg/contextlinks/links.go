@@ -6,110 +6,45 @@ import (
 	"strconv"
 	"time"
 
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
+// PrepareParamsForTracesV5 returns the traces explorer query params for the
+// given range and filter; the traces explorer writes its time params in
+// nanoseconds.
 func PrepareParamsForTracesV5(start, end time.Time, whereClause string) url.Values {
-
-	// Traces list view expects time in nanoseconds
-	tr := URLShareableTimeRange{
-		Start:    start.UnixNano(),
-		End:      end.UnixNano(),
-		PageSize: 100,
-	}
-
-	options := URLShareableOptions{}
-
-	period, _ := json.Marshal(tr)
-
-	linkQuery := LinkQuery{
-		BuilderQuery: v3.BuilderQuery{
-			DataSource:         v3.DataSourceTraces,
-			QueryName:          "A",
-			AggregateOperator:  v3.AggregateOperatorNoOp,
-			AggregateAttribute: v3.AttributeKey{},
-			Expression:         "A",
-			Disabled:           false,
-			Having:             []v3.Having{},
-			StepInterval:       60,
-		},
-		Filter: &FilterExpression{Expression: whereClause},
-	}
-
-	urlData := URLShareableCompositeQuery{
-		QueryType: string(v3.QueryTypeBuilder),
-		Builder: URLShareableBuilderQuery{
-			QueryData: []LinkQuery{
-				linkQuery,
-			},
-			QueryFormulas: make([]string, 0),
-		},
-	}
-
-	data, _ := json.Marshal(urlData)
-	compositeQuery := url.QueryEscape(string(data))
-
-	optionsData, _ := json.Marshal(options)
-
-	params := url.Values{}
-	params.Set("compositeQuery", compositeQuery)
-	params.Set("timeRange", string(period))
-	params.Set("startTime", strconv.FormatInt(tr.Start, 10))
-	params.Set("endTime", strconv.FormatInt(tr.End, 10))
-	params.Set("options", string(optionsData))
-	return params
+	return prepareExplorerParams("traces", start.UnixNano(), end.UnixNano(), whereClause)
 }
 
+// PrepareParamsForLogsV5 returns the logs explorer query params for the given
+// range and filter; the logs explorer writes its time params in milliseconds.
 func PrepareParamsForLogsV5(start, end time.Time, whereClause string) url.Values {
+	return prepareExplorerParams("logs", start.UnixMilli(), end.UnixMilli(), whereClause)
+}
 
-	// Logs list view expects time in milliseconds
-	tr := URLShareableTimeRange{
-		Start:    start.UnixMilli(),
-		End:      end.UnixMilli(),
-		PageSize: 100,
-	}
-
-	options := URLShareableOptions{}
-
-	period, _ := json.Marshal(tr)
-
-	linkQuery := LinkQuery{
-		BuilderQuery: v3.BuilderQuery{
-			DataSource:         v3.DataSourceLogs,
-			QueryName:          "A",
-			AggregateOperator:  v3.AggregateOperatorNoOp,
-			AggregateAttribute: v3.AttributeKey{},
-			Expression:         "A",
-			Disabled:           false,
-			Having:             []v3.Having{},
-			StepInterval:       60,
-		},
-		Filter: &FilterExpression{Expression: whereClause},
-	}
-
+// prepareExplorerParams carries only the fields the explorer pages read; the
+// frontend fills in the rest of the query shape with defaults. compositeQuery
+// is query-escaped before being encoded into the params because the frontend
+// unconditionally decodes it twice.
+func prepareExplorerParams(dataSource string, start, end int64, whereClause string) url.Values {
 	urlData := URLShareableCompositeQuery{
-		QueryType: string(v3.QueryTypeBuilder),
+		QueryType: "builder",
 		Builder: URLShareableBuilderQuery{
-			QueryData: []LinkQuery{
-				linkQuery,
-			},
+			QueryData: []LinkQuery{{
+				DataSource: dataSource,
+				Filter:     &FilterExpression{Expression: whereClause},
+			}},
 			QueryFormulas: make([]string, 0),
 		},
 	}
 
 	data, _ := json.Marshal(urlData)
-	compositeQuery := url.QueryEscape(string(data))
-
-	optionsData, _ := json.Marshal(options)
 
 	params := url.Values{}
-	params.Set("compositeQuery", compositeQuery)
-	params.Set("timeRange", string(period))
-	params.Set("startTime", strconv.FormatInt(tr.Start, 10))
-	params.Set("endTime", strconv.FormatInt(tr.End, 10))
-	params.Set("options", string(optionsData))
+	params.Set("compositeQuery", url.QueryEscape(string(data)))
+	params.Set("startTime", strconv.FormatInt(start, 10))
+	params.Set("endTime", strconv.FormatInt(end, 10))
 	return params
 }
 
