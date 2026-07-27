@@ -227,7 +227,7 @@ export default function HostsListTable({
 			}}
 			scroll={{ x: true }}
 			loading={{
-				spinning: showTableLoadingState,
+				spinning: isFetching || isLoading,
 				indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
 			}}
 			tableLayout="fixed"
