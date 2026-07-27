@@ -111,6 +111,17 @@ function TelemetrySelectorWizard({
 		} cannot be key-scoped, so this grant always covers every query of this type.`;
 	}, [scopeMode, supportsKeyScoping, selectedQueryType]);
 
+	const trigger = (
+		<Button
+			variant="solid"
+			size="sm"
+			data-testid={`telemetry-wizard-trigger-${testId}`}
+		>
+			<Wand size={14} />
+			Wizard
+		</Button>
+	);
+
 	const footer = (
 		<>
 			<Button
@@ -138,16 +149,7 @@ function TelemetrySelectorWizard({
 			title="Add Telemetry Selector"
 			width="narrow"
 			testId={`telemetry-wizard-dialog-${testId}`}
-			trigger={
-				<Button
-					variant="solid"
-					size="sm"
-					data-testid={`telemetry-wizard-trigger-${testId}`}
-				>
-					<Wand size={14} />
-					Wizard
-				</Button>
-			}
+			trigger={trigger}
 			footer={footer}
 			className={styles.wizardDialog}
 		>
