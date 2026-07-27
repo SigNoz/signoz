@@ -23,10 +23,7 @@ func PrepareParamsForLogsV5(start, end time.Time, whereClause string) url.Values
 	return prepareExplorerParams("logs", start.UnixMilli(), end.UnixMilli(), whereClause)
 }
 
-// prepareExplorerParams carries only the fields the explorer pages read; the
-// frontend fills in the rest of the query shape with defaults. compositeQuery
-// is query-escaped before being encoded into the params because the frontend
-// unconditionally decodes it twice.
+// The end link is double encoded because otherwise a filter expression with `%` somewhere in it breaks.
 func prepareExplorerParams(dataSource string, start, end int64, whereClause string) url.Values {
 	urlData := URLShareableCompositeQuery{
 		QueryType: "builder",
