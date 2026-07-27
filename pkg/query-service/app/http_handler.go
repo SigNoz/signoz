@@ -1060,7 +1060,7 @@ func prepareQuery(r *http.Request) (string, error) {
 		query = newQuery
 	}
 
-	if err := querybuilder.ValidateReadOnlyClickHouseSQL(query); err != nil {
+	if err := querybuilder.ValidateReadOnlySelect(query); err != nil {
 		return "", err
 	}
 

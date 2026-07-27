@@ -7,11 +7,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 )
 
-// ValidateReadOnlyClickHouseSQL rejects a user-authored statement unless it is a
+// ValidateReadOnlySelect rejects a user-authored ClickHouse statement unless it is a
 // single SELECT that neither reads through a table function nor lowers the readonly
 // setting. It must run on the rendered statement, since the substituted variable
 // values are user input too.
-func ValidateReadOnlyClickHouseSQL(query string) (err error) {
+func ValidateReadOnlySelect(query string) (err error) {
 	// The parser panics on some malformed input rather than returning an error.
 	defer func() {
 		if recovered := recover(); recovered != nil {
@@ -21,7 +21,8 @@ func ValidateReadOnlyClickHouseSQL(query string) (err error) {
 
 	stmts, parseErr := chparser.NewParser(query).ParseStmts()
 	if parseErr != nil {
-		return errors.WrapInvalidInputf(parseErr, errors.CodeInvalidInput, "invalid ClickHouse SQL")
+		// The cause is carried in the message because the renderers drop the wrapped error.
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid ClickHouse SQL: %s", parseErr.Error())
 	}
 
 	if len(stmts) != 1 {
@@ -37,18 +38,11 @@ func ValidateReadOnlyClickHouseSQL(query string) (err error) {
 		switch expr := node.(type) {
 		case *chparser.TableFunctionExpr:
 			// Source table functions remain usable in ClickHouse read-only mode.
-			return errors.NewInvalidInputf(
-				errors.CodeInvalidInput,
-				"ClickHouse table functions are not allowed in SQL queries: %s",
-				expr.Name.String(),
-			)
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "ClickHouse table functions are not allowed in SQL queries: %s", expr.Name.String())
 		case *chparser.SettingExpr:
 			// A query-level setting takes precedence over the context setting.
 			if strings.EqualFold(expr.Name.Name, "readonly") {
-				return errors.NewInvalidInputf(
-					errors.CodeInvalidInput,
-					"the ClickHouse readonly setting cannot be overridden",
-				)
+				return errors.NewInvalidInputf(errors.CodeInvalidInput, "the ClickHouse readonly setting cannot be overridden")
 			}
 		}
 		return nil

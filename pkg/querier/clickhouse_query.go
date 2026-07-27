@@ -106,7 +106,7 @@ func (q *chSQLQuery) render() (string, error) {
 		return "", err
 	}
 
-	if err := querybuilder.ValidateReadOnlyClickHouseSQL(rendered); err != nil {
+	if err := querybuilder.ValidateReadOnlySelect(rendered); err != nil {
 		return "", err
 	}
 
