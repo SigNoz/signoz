@@ -1,4 +1,12 @@
-import { Bot, Key, Shield } from '@signozhq/icons';
+import {
+	Bot,
+	ChartLine,
+	DraftingCompass,
+	Gauge,
+	Key,
+	Logs,
+	Shield,
+} from '@signozhq/icons';
 
 import permissionsType from 'lib/authz/hooks/useAuthZ/permissions.type';
 import {
@@ -49,6 +57,34 @@ export const RESOURCE_PANELS: Record<AuthZResource, ResourcePanelConfig> = {
 		selectorPlaceholder:
 			'Type service account ID, separate multiple with comma or space',
 		docsAnchor: 'service-account',
+	},
+	logs: {
+		label: 'Logs',
+		description: 'Log data collected across the workspace.',
+		icon: Logs,
+		selectorPlaceholder: 'Type selector, separate multiple with comma or space',
+		docsAnchor: 'logs',
+	},
+	traces: {
+		label: 'Traces',
+		description: 'Distributed tracing data collected across the workspace.',
+		icon: DraftingCompass,
+		selectorPlaceholder: 'Type selector, separate multiple with comma or space',
+		docsAnchor: 'traces',
+	},
+	metrics: {
+		label: 'Metrics',
+		description: 'Metric data collected across the workspace.',
+		icon: ChartLine,
+		selectorPlaceholder: 'Type selector, separate multiple with comma or space',
+		docsAnchor: 'metrics',
+	},
+	'meter-metrics': {
+		label: 'Meter Metrics',
+		description: 'Usage metering data for the workspace.',
+		icon: Gauge,
+		selectorPlaceholder: 'Type selector, separate multiple with comma or space',
+		docsAnchor: 'meter-metrics',
 	},
 };
 

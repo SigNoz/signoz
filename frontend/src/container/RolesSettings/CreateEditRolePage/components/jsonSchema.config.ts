@@ -76,9 +76,10 @@ function createGrantPermissionAsReadonly(
 	return {
 		label: 'readonly',
 		insertText: resources
-			.filter(
-				(r) => r.allowedVerbs.includes('read') || r.allowedVerbs.includes('list'),
-			)
+			.filter((r) => {
+				const verbs: readonly string[] = r.allowedVerbs;
+				return verbs.includes('read') || verbs.includes('list');
+			})
 			.flatMap((r) => {
 				const verbs = r.allowedVerbs.filter((v) => v === 'read' || v === 'list');
 				return verbs.map(
