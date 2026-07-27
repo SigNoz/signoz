@@ -76,10 +76,33 @@ func TestRelatedLinkBuilderForRule(t *testing.T) {
 		builder := m.relatedLinkBuilderForRule(context.Background(), orgID, ruleID)
 		require.NotNil(t, builder)
 		assert.Equal(t, ruletypes.AlertTypeLogs, builder.alertType)
-		assert.Equal(t, 10*time.Minute, builder.evalWindow)
+		require.NotNil(t, builder.evaluation)
+		start, end := builder.evaluation.NextWindowFor(time.Unix(1785094740, 0))
+		assert.Equal(t, 10*time.Minute, end.Sub(start))
 		assert.Equal(t, "severity_text = 'ERROR'", builder.filterExpr)
 		require.Len(t, builder.groupBy, 1)
 		assert.Equal(t, "service.name", builder.groupBy[0].Name)
+	})
+
+	t.Run("v2alpha1 rule with evaluation envelope only", func(t *testing.T) {
+		m := &module{ruleStore: &fakeRuleStore{
+			data: `{
+				"alert": "Test", "version": "v5", "schemaVersion": "v2alpha1",
+				"alertType": "LOGS_BASED_ALERT",
+				"evaluation": {"kind": "rolling", "spec": {"evalWindow": "30m", "frequency": "1m"}},
+				"condition": {
+					"compositeQuery": {"queryType": "builder", "queries": [
+						{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "stepInterval": "5m", "aggregations": [{"expression": "count()"}]}}
+					]},
+					"target": 10.0, "matchType": "1", "op": "1"
+				}
+			}`,
+		}}
+
+		builder := m.relatedLinkBuilderForRule(context.Background(), orgID, ruleID)
+		require.NotNil(t, builder)
+		start, end := builder.evaluation.NextWindowFor(time.Unix(1785094740, 0))
+		assert.Equal(t, 30*time.Minute, end.Sub(start))
 	})
 
 	t.Run("traces rule", func(t *testing.T) {
@@ -107,13 +130,29 @@ func TestRelatedLinkBuilderForRule(t *testing.T) {
 }
 
 func TestRelatedLinkBuilderQueryWindow(t *testing.T) {
-	builder := &relatedLinkBuilder{evalWindow: 10 * time.Minute}
+	t.Run("rolling window", func(t *testing.T) {
+		builder := &relatedLinkBuilder{evaluation: ruletypes.RollingWindow{EvalWindow: valuer.MustParseTextDuration("10m")}}
 
-	unixMilli := time.Date(2026, 7, 20, 12, 0, 0, 0, time.UTC).UnixMilli()
-	start, end := builder.queryWindow(unixMilli)
+		unixMilli := time.Date(2026, 7, 20, 12, 0, 0, 0, time.UTC).UnixMilli()
+		start, end := builder.queryWindow(unixMilli)
 
-	assert.Equal(t, time.Unix(unixMilli/1000, 0), end)
-	assert.Equal(t, end.Add(-13*time.Minute), start)
+		assert.Equal(t, time.Unix(unixMilli/1000, 0), end)
+		assert.Equal(t, end.Add(-13*time.Minute), start)
+	})
+
+	t.Run("cumulative window", func(t *testing.T) {
+		minute := 0
+		builder := &relatedLinkBuilder{evaluation: ruletypes.CumulativeWindow{
+			Schedule: ruletypes.CumulativeSchedule{Type: ruletypes.ScheduleTypeHourly, Minute: &minute},
+			Timezone: "UTC",
+		}}
+
+		unixMilli := time.Date(2026, 7, 20, 12, 7, 30, 0, time.UTC).UnixMilli()
+		start, end := builder.queryWindow(unixMilli)
+
+		assert.Equal(t, time.Date(2026, 7, 20, 12, 7, 30, 0, time.UTC), end.UTC())
+		assert.Equal(t, time.Date(2026, 7, 20, 11, 57, 0, 0, time.UTC), start.UTC())
+	})
 }
 
 func TestRelatedLinkBuilderLinks(t *testing.T) {

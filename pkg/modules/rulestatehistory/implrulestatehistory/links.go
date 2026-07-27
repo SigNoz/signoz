@@ -18,7 +18,7 @@ import (
 // explorer with the context that produced it.
 type relatedLinkBuilder struct {
 	alertType  ruletypes.AlertType
-	evalWindow time.Duration
+	evaluation ruletypes.Evaluation
 	filterExpr string
 	groupBy    []qbtypes.GroupByKey
 }
@@ -48,12 +48,18 @@ func (m *module) relatedLinkBuilderForRule(ctx context.Context, orgID valuer.UUI
 		return nil
 	}
 
-	builder := &relatedLinkBuilder{
-		alertType:  rule.AlertType,
-		evalWindow: rule.EvalWindow.Duration(),
+	builder := &relatedLinkBuilder{alertType: rule.AlertType}
+	if rule.Evaluation != nil {
+		if evaluation, err := rule.Evaluation.GetEvaluation(); err == nil {
+			builder.evaluation = evaluation
+		}
 	}
-	if builder.evalWindow == 0 {
-		builder.evalWindow = 5 * time.Minute
+	if builder.evaluation == nil {
+		evalWindow := rule.EvalWindow
+		if evalWindow.IsZero() {
+			evalWindow = valuer.MustParseTextDuration("5m")
+		}
+		builder.evaluation = ruletypes.RollingWindow{EvalWindow: evalWindow}
 	}
 
 	signal := telemetrytypes.SignalLogs
@@ -70,12 +76,12 @@ func (m *module) relatedLinkBuilderForRule(ctx context.Context, orgID valuer.UUI
 // queryWindow returns the range the rule evaluated when it recorded a state
 // change at unixMilli.
 // why are we subtracting 3 minutes?
-// the query range is calculated based on the rule's evalWindow and evalDelay
-// alerts have 2 minutes delay built in, so we need to subtract that from the
-// start time to get the correct query range.
+// the query range is calculated based on the rule's evaluation window and
+// evalDelay; alerts have 2 minutes delay built in, so we need to subtract
+// that from the start time to get the correct query range.
 func (b *relatedLinkBuilder) queryWindow(unixMilli int64) (time.Time, time.Time) {
-	end := time.Unix(unixMilli/1000, 0)
-	return end.Add(-b.evalWindow - 3*time.Minute), end
+	start, end := b.evaluation.NextWindowFor(time.Unix(unixMilli/1000, 0))
+	return start.Add(-3 * time.Minute), end
 }
 
 // links returns the encoded logs and traces explorer query params for the
