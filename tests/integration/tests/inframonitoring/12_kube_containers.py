@@ -122,6 +122,54 @@ def test_kube_containers_status_health_and_base_set(
         else:
             assert rec["cpu"] == -1, f"{pod}: expected cpu -1 sentinel (base-set-only), got {rec['cpu']}"
 
+    # filterByContainerStatus (secondary filter): matching status keeps the
+    # container; a mismatched status filters it out. Wire value is
+    # case-insensitive (valuer lowercases): "running" == "Running".
+    crun_running = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": "k8s.pod.name = 'crun'", "filterByContainerStatus": "running"},
+        },
+        timeout=5,
+    )
+    assert crun_running.status_code == HTTPStatus.OK, crun_running.text
+    cr = crun_running.json()["data"]
+    assert cr["total"] == 1
+    assert cr["records"][0]["meta"]["k8s.pod.name"] == "crun"
+
+    cclo_clbo = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": "k8s.pod.name = 'cclo'", "filterByContainerStatus": "CrashLoopBackOff"},
+        },
+        timeout=5,
+    )
+    assert cclo_clbo.status_code == HTTPStatus.OK, cclo_clbo.text
+    assert cclo_clbo.json()["data"]["total"] == 1
+
+    # crun is Running, not CrashLoopBackOff -> filtered out.
+    crun_mismatch = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": "k8s.pod.name = 'crun'", "filterByContainerStatus": "CrashLoopBackOff"},
+        },
+        timeout=5,
+    )
+    assert crun_mismatch.status_code == HTTPStatus.OK, crun_mismatch.text
+    assert crun_mismatch.json()["data"]["total"] == 0
+
 
 def test_kube_containers_status_counts_grouped_mode(
     signoz: types.SigNoz,
@@ -166,6 +214,59 @@ def test_kube_containers_status_counts_grouped_mode(
     assert ns_b["completed"] == 1
     assert ns_b["oomKilled"] == 1
     assert by_ns["ns-b"]["containerCountsByReady"] == {"ready": 0, "notReady": 2}
+
+    # filterByContainerStatus in grouped mode: keep only groups with a matching
+    # container, only that bucket populated; a group with none is dropped.
+    running = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "groupBy": [{"name": "k8s.namespace.name", "fieldDataType": "string", "fieldContext": "resource"}],
+            "limit": 50,
+            "filter": {"filterByContainerStatus": "running"},
+        },
+        timeout=5,
+    )
+    assert running.status_code == HTTPStatus.OK, running.text
+    rdata = running.json()["data"]
+    # ns-a has running containers, ns-b has none -> only ns-a.
+    assert {r["meta"]["k8s.namespace.name"] for r in rdata["records"]} == {"ns-a"}
+    assert rdata["records"][0]["containerCountsByStatus"]["running"] == 2
+
+    oom = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "groupBy": [{"name": "k8s.namespace.name", "fieldDataType": "string", "fieldContext": "resource"}],
+            "limit": 50,
+            "filter": {"filterByContainerStatus": "OOMKilled"},
+        },
+        timeout=5,
+    )
+    assert oom.status_code == HTTPStatus.OK, oom.text
+    odata = oom.json()["data"]
+    assert {r["meta"]["k8s.namespace.name"] for r in odata["records"]} == {"ns-b"}
+    assert odata["records"][0]["containerCountsByStatus"]["oomKilled"] == 1
+
+    # A status absent from every group -> empty page.
+    absent = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "groupBy": [{"name": "k8s.namespace.name", "fieldDataType": "string", "fieldContext": "resource"}],
+            "limit": 50,
+            "filter": {"filterByContainerStatus": "Terminated"},
+        },
+        timeout=5,
+    )
+    assert absent.status_code == HTTPStatus.OK, absent.text
+    assert absent.json()["data"]["total"] == 0
 
 
 def test_kube_containers_status_recency(
@@ -285,6 +386,31 @@ def test_kube_containers_status_warning_missing_metrics(
     warnings = get_all_warnings(body)
     assert any("status.state" in w["message"] and "status.reason" in w["message"] for w in warnings), f"status warning naming the missing metrics not surfaced: {warnings!r}"
 
+    # filterByContainerStatus + missing status metrics: the up-front gate returns
+    # the warning and an empty page (Total 0) rather than silently filtering
+    # everything out.
+    filtered = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"filterByContainerStatus": "Running"},
+        },
+        timeout=5,
+    )
+    assert filtered.status_code == HTTPStatus.OK, filtered.text
+    fdata = filtered.json()["data"]
+    assert fdata["total"] == 0
+    assert fdata["records"] == []
+    # The gate warning on the filtered path is surfaced at the top-level
+    # warning.message (the up-front early return sets it directly); collect both
+    # that and any nested warnings.
+    fwarn = fdata.get("warning") or {}
+    fmsgs = ([fwarn["message"]] if fwarn.get("message") else []) + [w["message"] for w in fwarn.get("warnings", [])]
+    assert any("status.state" in m and "status.reason" in m for m in fmsgs), f"gate warning missing on filtered call: {fmsgs!r}"
+
 
 def test_kube_containers_filter(
     signoz: types.SigNoz,
@@ -399,6 +525,16 @@ def test_kube_containers_orderby_and_pagination(
             },
             "is only allowed when groupBy is empty",
             id="orderby_container_name_with_groupby",
+        ),
+        pytest.param(
+            {"filter": {"filterByContainerStatus": "bogus"}},
+            "invalid filter by container status",
+            id="filter_by_container_status_invalid",
+        ),
+        pytest.param(
+            {"filter": {"filterByContainerStatus": "no_data"}},
+            "invalid filter by container status",
+            id="filter_by_container_status_no_data",
         ),
     ],
 )
