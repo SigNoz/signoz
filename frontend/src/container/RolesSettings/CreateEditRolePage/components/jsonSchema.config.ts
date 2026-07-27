@@ -104,7 +104,12 @@ function buildResourceSnippets(): SnippetDef[] {
 	for (const resource of resources) {
 		const { kind, type, allowedVerbs } = resource;
 
-		snippets.push(createGrantAllPermissionSnippet(kind, allowedVerbs, type));
+		// If only one verb is supported, no point on add grant all
+		// that will only add one permission at time, just leave the verb snippet
+		// and it will look cleaner
+		if (allowedVerbs.length > 1) {
+			snippets.push(createGrantAllPermissionSnippet(kind, allowedVerbs, type));
+		}
 
 		for (const verb of allowedVerbs) {
 			snippets.push(createGrantPermissionToVerbAndKind(kind, verb, type));
