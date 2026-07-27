@@ -97,36 +97,7 @@ export const getVolumeMetricsQueryPayload = (
 	volume: InframonitoringtypesVolumeRecordDTO,
 	start: number,
 	end: number,
-	dotMetricsEnabled: boolean,
 ): GetQueryResultsProps[] => {
-	const k8sClusterNameKey = dotMetricsEnabled
-		? INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME
-		: 'k8s_cluster_name';
-	const k8sNamespaceNameKey = dotMetricsEnabled
-		? INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME
-		: 'k8s_namespace_name';
-	const k8sVolumeAvailableKey = dotMetricsEnabled
-		? INFRA_MONITORING_ATTR_KEYS.K8S_VOLUME_AVAILABLE
-		: 'k8s_volume_available';
-	const k8sVolumeCapacityKey = dotMetricsEnabled
-		? INFRA_MONITORING_ATTR_KEYS.K8S_VOLUME_CAPACITY
-		: 'k8s_volume_capacity';
-	const k8sVolumeInodesUsedKey = dotMetricsEnabled
-		? INFRA_MONITORING_ATTR_KEYS.K8S_VOLUME_INODES_USED
-		: 'k8s_volume_inodes_used';
-	const k8sVolumeInodesKey = dotMetricsEnabled
-		? INFRA_MONITORING_ATTR_KEYS.K8S_VOLUME_INODES
-		: 'k8s_volume_inodes';
-	const k8sVolumeInodesFreeKey = dotMetricsEnabled
-		? INFRA_MONITORING_ATTR_KEYS.K8S_VOLUME_INODES_FREE
-		: 'k8s_volume_inodes_free';
-	const k8sVolumeTypeKey = dotMetricsEnabled
-		? INFRA_MONITORING_ATTR_KEYS.K8S_VOLUME_TYPE
-		: 'k8s_volume_type';
-	const k8sPVCNameKey = dotMetricsEnabled
-		? INFRA_MONITORING_ATTR_KEYS.K8S_PERSISTENT_VOLUME_CLAIM_NAME
-		: 'k8s_persistentvolumeclaim_name';
-
 	return [
 		{
 			selectedTime: 'GLOBAL_TIME',
@@ -138,7 +109,7 @@ export const getVolumeMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_volume_available--float64--Gauge--true',
-								key: k8sVolumeAvailableKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_VOLUME_AVAILABLE,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -152,7 +123,7 @@ export const getVolumeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_cluster_name--string--tag--false',
-											key: k8sClusterNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -164,7 +135,7 @@ export const getVolumeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											key: k8sNamespaceNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
 											type: 'tag',
 										},
 										op: 'in',
@@ -177,7 +148,7 @@ export const getVolumeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_volume_type--string--tag--false',
-											key: k8sVolumeTypeKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_VOLUME_TYPE,
 											type: 'tag',
 										},
 										op: 'in',
@@ -188,7 +159,7 @@ export const getVolumeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_persistentvolumeclaim_name--string--tag--false',
-											key: k8sPVCNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_PERSISTENT_VOLUME_CLAIM_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -233,7 +204,7 @@ export const getVolumeMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_volume_capacity--float64--Gauge--true',
-								key: k8sVolumeCapacityKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_VOLUME_CAPACITY,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -247,7 +218,7 @@ export const getVolumeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_cluster_name--string--tag--false',
-											key: k8sClusterNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -259,7 +230,7 @@ export const getVolumeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											key: k8sNamespaceNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
 											type: 'tag',
 										},
 										op: 'in',
@@ -272,7 +243,7 @@ export const getVolumeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_volume_type--string--tag--false',
-											key: k8sVolumeTypeKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_VOLUME_TYPE,
 											type: 'tag',
 										},
 										op: 'in',
@@ -283,7 +254,7 @@ export const getVolumeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_persistentvolumeclaim_name--string--tag--false',
-											key: k8sPVCNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_PERSISTENT_VOLUME_CLAIM_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -328,7 +299,7 @@ export const getVolumeMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_volume_inodes_used--float64--Gauge--true',
-								key: k8sVolumeInodesUsedKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_VOLUME_INODES_USED,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -342,7 +313,7 @@ export const getVolumeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_cluster_name--string--tag--false',
-											key: k8sClusterNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -354,7 +325,7 @@ export const getVolumeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											key: k8sNamespaceNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
 											type: 'tag',
 										},
 										op: 'in',
@@ -367,7 +338,7 @@ export const getVolumeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_volume_type--string--tag--false',
-											key: k8sVolumeTypeKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_VOLUME_TYPE,
 											type: 'tag',
 										},
 										op: 'in',
@@ -378,7 +349,7 @@ export const getVolumeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_persistentvolumeclaim_name--string--tag--false',
-											key: k8sPVCNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_PERSISTENT_VOLUME_CLAIM_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -423,7 +394,7 @@ export const getVolumeMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_volume_inodes--float64--Gauge--true',
-								key: k8sVolumeInodesKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_VOLUME_INODES,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -437,7 +408,7 @@ export const getVolumeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_cluster_name--string--tag--false',
-											key: k8sClusterNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -449,7 +420,7 @@ export const getVolumeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											key: k8sNamespaceNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
 											type: 'tag',
 										},
 										op: 'in',
@@ -462,7 +433,7 @@ export const getVolumeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_volume_type--string--tag--false',
-											key: k8sVolumeTypeKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_VOLUME_TYPE,
 											type: 'tag',
 										},
 										op: 'in',
@@ -473,7 +444,7 @@ export const getVolumeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_persistentvolumeclaim_name--string--tag--false',
-											key: k8sPVCNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_PERSISTENT_VOLUME_CLAIM_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -518,7 +489,7 @@ export const getVolumeMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_volume_inodes_free--float64--Gauge--true',
-								key: k8sVolumeInodesFreeKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_VOLUME_INODES_FREE,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -532,7 +503,7 @@ export const getVolumeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_cluster_name--string--tag--false',
-											key: k8sClusterNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -544,7 +515,7 @@ export const getVolumeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_namespace_name--string--tag--false',
-											key: k8sNamespaceNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
 											type: 'tag',
 										},
 										op: 'in',
@@ -557,7 +528,7 @@ export const getVolumeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_volume_type--string--tag--false',
-											key: k8sVolumeTypeKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_VOLUME_TYPE,
 											type: 'tag',
 										},
 										op: 'in',
@@ -568,7 +539,7 @@ export const getVolumeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_persistentvolumeclaim_name--string--tag--false',
-											key: k8sPVCNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_PERSISTENT_VOLUME_CLAIM_NAME,
 											type: 'tag',
 										},
 										op: '=',

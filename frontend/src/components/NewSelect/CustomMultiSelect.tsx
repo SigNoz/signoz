@@ -713,6 +713,19 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 				}
 			};
 
+			// Row buttons select without letting the wrapping checkbox also toggle:
+			// stop propagation, run the selection, then drop the active/chip focus.
+			const selectFromButton = (
+				e: React.MouseEvent,
+				source: 'option' | 'checkbox',
+			): void => {
+				e.stopPropagation();
+				e.preventDefault();
+				handleItemSelection(source);
+				setActiveChipIndex(-1);
+				setActiveIndex(-1);
+			};
+
 			return (
 				<div
 					key={option.value || `option-${index}`}
@@ -726,13 +739,6 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 						selected: isSelected,
 						active: isActive,
 					})}
-					onClick={(e): void => {
-						e.stopPropagation();
-						e.preventDefault();
-						handleItemSelection('option');
-						setActiveChipIndex(-1);
-						setActiveIndex(-1);
-					}}
 					onKeyDown={(e): void => {
 						if ((e.key === 'Enter' || e.key === SPACEKEY) && isActive) {
 							e.stopPropagation();
@@ -752,13 +758,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 					<Checkbox
 						value={isSelected}
 						className="option-checkbox"
-						onClick={(e): void => {
-							e.stopPropagation();
-							e.preventDefault();
-							handleItemSelection('checkbox');
-							setActiveChipIndex(-1);
-							setActiveIndex(-1);
-						}}
+						onClick={(e): void => selectFromButton(e, 'checkbox')}
 					>
 						<div className="option-content">
 							<Typography.Text truncate={1} className="option-label-text">
@@ -768,11 +768,19 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 								<div className="option-badge">{capitalize(option.type)}</div>
 							)}
 							{option.value && ensureValidOption(option.value) && (
-								<Button type="text" className="only-btn">
+								<Button
+									type="text"
+									className="only-btn"
+									onClick={(e): void => selectFromButton(e, 'option')}
+								>
 									{currentToggleTagValue({ option: option.value })}
 								</Button>
 							)}
-							<Button type="text" className="toggle-btn">
+							<Button
+								type="text"
+								className="toggle-btn"
+								onClick={(e): void => selectFromButton(e, 'checkbox')}
+							>
 								Toggle
 							</Button>
 						</div>

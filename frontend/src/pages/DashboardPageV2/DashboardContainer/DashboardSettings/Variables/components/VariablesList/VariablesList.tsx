@@ -26,6 +26,8 @@ interface VariablesListProps {
 	onCancelDelete: () => void;
 	onMove: (from: number, to: number) => void;
 	onApplyToAll: (index: number) => void;
+	/** Names of dynamic variables already applied to every panel. */
+	appliedToAllNames: Set<string>;
 }
 
 function VariablesList({
@@ -38,6 +40,7 @@ function VariablesList({
 	onCancelDelete,
 	onMove,
 	onApplyToAll,
+	appliedToAllNames,
 }: VariablesListProps): JSX.Element {
 	const sensors = useSensors(
 		useSensor(PointerSensor, { activationConstraint: { distance: 1 } }),
@@ -82,6 +85,7 @@ function VariablesList({
 								onConfirmDelete={onConfirmDelete}
 								onCancelDelete={onCancelDelete}
 								onApplyToAll={onApplyToAll}
+								isAppliedToAll={appliedToAllNames.has(variable.name)}
 							/>
 						))}
 					</div>

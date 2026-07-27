@@ -18,10 +18,12 @@ import { useCopyToClipboard } from 'react-use';
 import logEvent from 'api/common/logEvent';
 import {
 	cloneDashboardV2,
+	getGetDashboardV2QueryKey,
 	invalidateListDashboardsForUserV2,
 	lockDashboardV2,
 	unlockDashboardV2,
 } from 'api/generated/services/dashboard';
+import type { GetDashboardV2200 } from 'api/generated/services/sigNoz.schemas';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { DashboardListEvents } from 'pages/DashboardsListPageV2/constants/events';
@@ -109,6 +111,17 @@ function ActionsPopover({
 				action: isLocked ? 'unlock' : 'lock',
 				dashboardId,
 			});
+			// Patch the detail-page cache too: it uses staleTime:Infinity +
+			// refetchOnMount:false, so without this, returning to the dashboard would
+			// still show the stale (pre-toggle) lock state.
+			const key = getGetDashboardV2QueryKey({ id: dashboardId });
+			const cached = queryClient.getQueryData<GetDashboardV2200>(key);
+			if (cached) {
+				queryClient.setQueryData<GetDashboardV2200>(key, {
+					...cached,
+					data: { ...cached.data, locked: !isLocked },
+				});
+			}
 			await invalidateListDashboardsForUserV2(queryClient);
 		},
 		onError: (error: APIError) => {

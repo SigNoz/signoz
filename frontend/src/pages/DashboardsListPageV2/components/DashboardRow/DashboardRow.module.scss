@@ -59,14 +59,6 @@
 	flex: none;
 }
 
-.tagsWithActions {
-	display: flex;
-	align-items: center;
-	flex: 0 1 auto;
-	min-width: 0;
-	justify-content: flex-end;
-}
-
 .lockIcon {
 	display: inline-flex;
 	align-items: center;
@@ -138,11 +130,10 @@
 	display: inline-flex;
 }
 
-.tags {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 8px;
-	justify-content: flex-end;
+// Cap the name tooltip so a long name wraps instead of spanning the page.
+.nameTooltip {
+	max-width: 480px;
+	overflow-wrap: break-word;
 }
 
 .details {

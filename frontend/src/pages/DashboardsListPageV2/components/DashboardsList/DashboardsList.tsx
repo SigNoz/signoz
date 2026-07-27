@@ -115,9 +115,9 @@ function DashboardsList(): JSX.Element {
 		void setPage(1);
 	}, [resetView, setPage]);
 	const handleRemoveView = useCallback(
-		(id: string): void => {
-			removeView(id);
+		(id: string): Promise<void> => {
 			void setPage(1);
+			return removeView(id);
 		},
 		[removeView, setPage],
 	);

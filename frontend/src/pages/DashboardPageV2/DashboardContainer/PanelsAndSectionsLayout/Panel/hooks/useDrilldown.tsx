@@ -19,6 +19,7 @@ import { buildAggregateData } from 'pages/DashboardPageV2/DashboardContainer/Pan
 import { getBuilderQueries } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/getBuilderQueries';
 import { getPanelQueryType } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/getPanelQueryType';
 import { fromPerses } from 'pages/DashboardPageV2/DashboardContainer/queryV5/persesQueryAdapters';
+import { dynamicSignalFromQuerySignal } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/drilldown/signal';
 import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 import { EQueryType } from 'types/common/dashboard';
 
@@ -163,7 +164,7 @@ export function useDrilldown(
 
 	const dashboardVariables = useDrilldownDashboardVariables({
 		filters: context?.filters ?? EMPTY_FILTERS,
-		signal: context?.signal,
+		signal: dynamicSignalFromQuerySignal(context?.signal),
 		onClose: handleClose,
 	});
 
@@ -221,7 +222,7 @@ export function useDrilldown(
 				context={context}
 				query={v1Query}
 				isResolving={isResolving}
-				links={panel.spec.links ?? undefined}
+				links={panel.spec.links}
 				canSetDashboardVariables={dashboardVariables.hasFieldVariables}
 				onViewLogs={(): void => navigate('view_logs')}
 				onViewTraces={(): void => navigate('view_traces')}

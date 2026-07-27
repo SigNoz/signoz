@@ -33,7 +33,7 @@ describe('preparePieData', () => {
 		]);
 	});
 
-	it('keeps one slice per group row for a single value column', () => {
+	it('serialises a single group-by column as {key="value"} (V1 parity)', () => {
 		const table = tableWith(
 			[
 				{
@@ -53,8 +53,33 @@ describe('preparePieData', () => {
 		const slices = preparePieData(args([table]));
 
 		expect(slices.map((s) => [s.label, s.value])).toStrictEqual([
-			['adservice', 100],
-			['cartservice', 200],
+			['{service.name="adservice"}', 100],
+			['{service.name="cartservice"}', 200],
+		]);
+	});
+
+	it('serialises a grouped metrics query as {direction="write"} (V1 parity)', () => {
+		const table = tableWith(
+			[
+				{
+					name: 'direction',
+					queryName: 'A',
+					isValueColumn: false,
+					id: 'direction',
+				},
+				{ name: 'A', queryName: 'A', isValueColumn: true, id: 'A' },
+			],
+			[
+				{ data: { direction: 'write', A: 3170000000 } },
+				{ data: { direction: 'read', A: 10000000 } },
+			],
+		);
+
+		const slices = preparePieData(args([table]));
+
+		expect(slices.map((s) => s.label)).toStrictEqual([
+			'{direction="write"}',
+			'{direction="read"}',
 		]);
 	});
 
