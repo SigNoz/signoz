@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
 import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 import {
 	type SectionConfig,
 	SectionKind,
 	ThresholdVariant,
 } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
+import { render, screen, userEvent } from 'tests/test-utils';
 
 import SectionSlot from '../SectionSlot';
 
@@ -57,10 +57,11 @@ describe('SectionSlot header action', () => {
 		expect(screen.getByText('High')).toBeInTheDocument();
 	});
 
-	it('expands the section and adds a threshold when the header "+" is clicked', () => {
+	it('expands the section and adds a threshold when the header "+" is clicked', async () => {
+		const user = userEvent.setup();
 		render(<Harness />);
 
-		fireEvent.click(screen.getByTestId('panel-editor-v2-add-threshold-header'));
+		await user.click(screen.getByTestId('panel-editor-v2-add-threshold-header'));
 
 		// Expanded, with a fresh row opened in edit mode.
 		expect(

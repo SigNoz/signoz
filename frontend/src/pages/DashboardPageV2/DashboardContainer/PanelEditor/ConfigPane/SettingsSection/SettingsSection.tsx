@@ -13,16 +13,13 @@ interface SettingsSectionProps {
 	/** Controlled open state; when set, the section defers to `onOpenChange`. */
 	open?: boolean;
 	onOpenChange?: (open: boolean) => void;
-	/** Generic slot rendered between the title and the chevron (e.g. a quick-add "+"). */
-	headerAction?: ReactNode;
+	/** Rendered between the title and the chevron. */
+	headerSlot?: ReactNode;
 	children: ReactNode;
 }
 
 /**
- * Collapsible container for one configuration section in the V2 panel editor's
- * ConfigPane. Header shows an icon tile (accented when expanded), the title, an optional
- * caller-provided action, and a rotating chevron; sections are separated by hairline
- * dividers (no surrounding boxes), matching the Configure-panel design.
+ * Collapsible container for one configuration section in the V2 panel editor's ConfigPane.
  */
 function SettingsSection({
 	title,
@@ -30,7 +27,7 @@ function SettingsSection({
 	defaultOpen = false,
 	open,
 	onOpenChange,
-	headerAction,
+	headerSlot,
 	children,
 }: SettingsSectionProps): JSX.Element {
 	const [internalOpen, setInternalOpen] = useState(defaultOpen);
@@ -64,7 +61,7 @@ function SettingsSection({
 					)}
 					<Typography.Text className={styles.title}>{title}</Typography.Text>
 				</button>
-				{headerAction}
+				{headerSlot}
 				<Button
 					type="button"
 					variant="ghost"
