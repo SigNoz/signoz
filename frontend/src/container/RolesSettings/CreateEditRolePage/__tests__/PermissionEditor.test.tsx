@@ -239,7 +239,9 @@ describe('PermissionEditor', () => {
 				await within(createToggle).findByText('Only selected');
 			await user.click(onlySelectedBtn);
 
-			expect(screen.getByTestId('item-input-selector')).toBeInTheDocument();
+			expect(
+				screen.getByTestId('item-input-selector-factor-api-key-read'),
+			).toBeInTheDocument();
 		});
 
 		it('adds item when typed and Enter pressed', async () => {
@@ -254,7 +256,9 @@ describe('PermissionEditor', () => {
 
 			await user.click(await within(createToggle).findByText('Only selected'));
 
-			const input = screen.getByTestId('item-input-selector-input');
+			const input = screen.getByTestId(
+				'item-input-selector-input-factor-api-key-read',
+			);
 			await user.type(input, 'api-key-001{enter}');
 
 			await expect(screen.findByText('api-key-001')).resolves.toBeInTheDocument();
@@ -272,10 +276,14 @@ describe('PermissionEditor', () => {
 
 			await user.click(await within(createToggle).findByText('Only selected'));
 
-			const input = screen.getByTestId('item-input-selector-input');
+			const input = screen.getByTestId(
+				'item-input-selector-input-factor-api-key-read',
+			);
 			await user.type(input, 'api-key-002');
 
-			const addBtn = screen.getByTestId('item-input-selector-add-btn');
+			const addBtn = screen.getByTestId(
+				'item-input-selector-add-btn-factor-api-key-read',
+			);
 			await user.click(addBtn);
 
 			await expect(screen.findByText('api-key-002')).resolves.toBeInTheDocument();
@@ -293,7 +301,9 @@ describe('PermissionEditor', () => {
 
 			await user.click(await within(createToggle).findByText('Only selected'));
 
-			const input = screen.getByTestId('item-input-selector-input');
+			const input = screen.getByTestId(
+				'item-input-selector-input-factor-api-key-read',
+			);
 			await user.type(input, 'key-a, key-b, key-c{enter}');
 
 			await expect(screen.findByText('key-a')).resolves.toBeInTheDocument();
@@ -313,7 +323,9 @@ describe('PermissionEditor', () => {
 
 			await user.click(await within(createToggle).findByText('Only selected'));
 
-			const input = screen.getByTestId('item-input-selector-input');
+			const input = screen.getByTestId(
+				'item-input-selector-input-factor-api-key-read',
+			);
 			await user.type(input, 'key-x key-y key-z{enter}');
 
 			await expect(screen.findByText('key-x')).resolves.toBeInTheDocument();
@@ -333,7 +345,9 @@ describe('PermissionEditor', () => {
 
 			await user.click(await within(createToggle).findByText('Only selected'));
 
-			const input = screen.getByTestId('item-input-selector-input');
+			const input = screen.getByTestId(
+				'item-input-selector-input-factor-api-key-read',
+			);
 			await user.type(input, 'same-key{enter}');
 			await user.type(input, 'same-key{enter}');
 
@@ -353,15 +367,133 @@ describe('PermissionEditor', () => {
 
 			await user.click(await within(createToggle).findByText('Only selected'));
 
-			const input = screen.getByTestId('item-input-selector-input');
+			const input = screen.getByTestId(
+				'item-input-selector-input-factor-api-key-read',
+			);
 			await user.type(input, 'removable-key{enter}');
 
-			const removeBtn = screen.getByRole('button', {
-				name: /remove removable-key/i,
+			const badge = await screen.findByTestId('item-badge-factor-api-key-read-0');
+			const removeBtn = within(badge).getByRole('button', {
+				name: 'Remove removable-key',
 			});
 			await user.click(removeBtn);
 
 			expect(screen.queryByText('removable-key')).not.toBeInTheDocument();
+		});
+
+		it('names each badge close button after the item it removes', async () => {
+			const user = userEvent.setup();
+			await renderPage();
+			await expandAllCards();
+
+			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
+			const readToggle = within(apiKeyCard).getByTestId(
+				'action-toggle-factor-api-key-read',
+			);
+			await user.click(await within(readToggle).findByText('Only selected'));
+
+			const input = screen.getByTestId(
+				'item-input-selector-input-factor-api-key-read',
+			);
+			await user.type(input, 'key-one key-two{enter}');
+
+			const firstBadge = await screen.findByTestId(
+				'item-badge-factor-api-key-read-0',
+			);
+			const secondBadge = screen.getByTestId('item-badge-factor-api-key-read-1');
+
+			expect(
+				within(firstBadge).getByRole('button', { name: 'Remove key-one' }),
+			).toBeInTheDocument();
+			expect(
+				within(secondBadge).getByRole('button', { name: 'Remove key-two' }),
+			).toBeInTheDocument();
+		});
+
+		it('exposes the full item value as a title so truncated badges stay readable', async () => {
+			const user = userEvent.setup();
+			await renderPage();
+			await expandAllCards();
+
+			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
+			const readToggle = within(apiKeyCard).getByTestId(
+				'action-toggle-factor-api-key-read',
+			);
+			await user.click(await within(readToggle).findByText('Only selected'));
+
+			const input = screen.getByTestId(
+				'item-input-selector-input-factor-api-key-read',
+			);
+			await user.type(input, 'a-very-long-api-key-identifier-000001{enter}');
+
+			const badge = await screen.findByTestId('item-badge-factor-api-key-read-0');
+			expect(
+				within(badge).getByTitle('a-very-long-api-key-identifier-000001'),
+			).toBeInTheDocument();
+		});
+
+		it('moves focus to the previous badge when closed with the keyboard', async () => {
+			const user = userEvent.setup();
+			await renderPage();
+			await expandAllCards();
+
+			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
+			const readToggle = within(apiKeyCard).getByTestId(
+				'action-toggle-factor-api-key-read',
+			);
+			await user.click(await within(readToggle).findByText('Only selected'));
+
+			const input = screen.getByTestId(
+				'item-input-selector-input-factor-api-key-read',
+			);
+			await user.type(input, 'key-one key-two{enter}');
+
+			const secondBadge = await screen.findByTestId(
+				'item-badge-factor-api-key-read-1',
+			);
+			within(secondBadge).getByRole('button', { name: 'Remove key-two' }).focus();
+
+			await user.keyboard('{Enter}');
+
+			await waitFor(() => {
+				const firstBadge = screen.getByTestId('item-badge-factor-api-key-read-0');
+				expect(
+					within(firstBadge).getByRole('button', { name: 'Remove key-one' }),
+				).toHaveFocus();
+			});
+		});
+
+		it('does not steal focus when a badge is closed with the mouse', async () => {
+			const user = userEvent.setup();
+			await renderPage();
+			await expandAllCards();
+
+			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
+			const readToggle = within(apiKeyCard).getByTestId(
+				'action-toggle-factor-api-key-read',
+			);
+			await user.click(await within(readToggle).findByText('Only selected'));
+
+			const input = screen.getByTestId(
+				'item-input-selector-input-factor-api-key-read',
+			);
+			await user.type(input, 'key-one key-two{enter}');
+
+			const secondBadge = await screen.findByTestId(
+				'item-badge-factor-api-key-read-1',
+			);
+			await user.click(
+				within(secondBadge).getByRole('button', { name: 'Remove key-two' }),
+			);
+
+			await waitFor(() => {
+				expect(screen.queryByText('key-two')).not.toBeInTheDocument();
+			});
+
+			const firstBadge = screen.getByTestId('item-badge-factor-api-key-read-0');
+			expect(
+				within(firstBadge).getByRole('button', { name: 'Remove key-one' }),
+			).not.toHaveFocus();
 		});
 
 		it('shows Add button disabled when input is empty', async () => {
@@ -376,7 +508,9 @@ describe('PermissionEditor', () => {
 
 			await user.click(await within(createToggle).findByText('Only selected'));
 
-			const addBtn = screen.getByTestId('item-input-selector-add-btn');
+			const addBtn = screen.getByTestId(
+				'item-input-selector-add-btn-factor-api-key-read',
+			);
 			expect(addBtn).toBeDisabled();
 		});
 	});
@@ -394,7 +528,9 @@ describe('PermissionEditor', () => {
 
 			await user.click(await within(createToggle).findByText('Only selected'));
 
-			const input = screen.getByTestId('item-input-selector-input');
+			const input = screen.getByTestId(
+				'item-input-selector-input-factor-api-key-read',
+			);
 			await user.type(input, 'will-be-cleared{enter}');
 
 			await user.click(await within(createToggle).findByText('All'));
@@ -416,7 +552,9 @@ describe('PermissionEditor', () => {
 
 			await user.click(await within(createToggle).findByText('Only selected'));
 
-			const input = screen.getByTestId('item-input-selector-input');
+			const input = screen.getByTestId(
+				'item-input-selector-input-factor-api-key-read',
+			);
 			await user.type(input, 'to-be-cleared{enter}');
 
 			await user.click(await within(createToggle).findByText('All'));
@@ -443,7 +581,9 @@ describe('PermissionEditor', () => {
 
 			await user.click(await within(createToggle).findByText('Only selected'));
 
-			const input = screen.getByTestId('item-input-selector-input');
+			const input = screen.getByTestId(
+				'item-input-selector-input-factor-api-key-read',
+			);
 			await user.type(input, 'preserved-key{enter}');
 
 			await user.click(await within(createToggle).findByText('None'));
@@ -455,7 +595,9 @@ describe('PermissionEditor', () => {
 				screen.findByText('preserved-key'),
 			).resolves.toBeInTheDocument();
 
-			expect(screen.getByTestId('item-input-selector')).toBeInTheDocument();
+			expect(
+				screen.getByTestId('item-input-selector-factor-api-key-read'),
+			).toBeInTheDocument();
 		});
 
 		it('does not show dialog when leaving Only Selected with no items', async () => {
@@ -628,6 +770,200 @@ describe('PermissionEditor', () => {
 			await waitFor(() => {
 				expect(screen.queryByTestId('save-error-banner')).not.toBeInTheDocument();
 			});
+		});
+	});
+
+	describe('TelemetrySelectorWizard', () => {
+		async function selectLogsOnlySelected(
+			user: ReturnType<typeof userEvent.setup>,
+		): Promise<void> {
+			await renderPage();
+			await expandAllCards();
+
+			const logsCard = screen.getByTestId('resource-card-logs');
+			const readToggle = within(logsCard).getByTestId('action-toggle-logs-read');
+			await user.click(await within(readToggle).findByText('Only selected'));
+		}
+
+		async function openLogsWizard(
+			user: ReturnType<typeof userEvent.setup>,
+		): Promise<void> {
+			await selectLogsOnlySelected(user);
+
+			await user.click(screen.getByTestId('telemetry-wizard-trigger-logs-read'));
+			await screen.findByTestId('telemetry-wizard-dialog-logs-read');
+		}
+
+		it('shows wizard button for telemetry resources', async () => {
+			const user = userEvent.setup();
+			await selectLogsOnlySelected(user);
+
+			expect(
+				screen.getByTestId('telemetry-wizard-trigger-logs-read'),
+			).toBeInTheDocument();
+		});
+
+		it('does not show wizard button for non-telemetry resources', async () => {
+			await renderPage();
+			await expandAllCards();
+
+			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
+			const readToggle = within(apiKeyCard).getByTestId(
+				'action-toggle-factor-api-key-read',
+			);
+
+			const user = userEvent.setup();
+			await user.click(await within(readToggle).findByText('Only selected'));
+
+			expect(
+				screen.queryByTestId('telemetry-wizard-trigger-logs-read'),
+			).not.toBeInTheDocument();
+		});
+
+		it('opens wizard dialog when trigger clicked', async () => {
+			const user = userEvent.setup();
+			await selectLogsOnlySelected(user);
+
+			await user.click(screen.getByTestId('telemetry-wizard-trigger-logs-read'));
+
+			await expect(
+				screen.findByTestId('telemetry-wizard-dialog-logs-read'),
+			).resolves.toBeInTheDocument();
+		});
+
+		it('adds selector with wildcard when scope is all', async () => {
+			const user = userEvent.setup();
+			await openLogsWizard(user);
+
+			await user.click(screen.getByTestId('wizard-add-btn-logs-read'));
+
+			await expect(
+				screen.findByText('builder_query/*'),
+			).resolves.toBeInTheDocument();
+		});
+
+		it('changes query type and adds appropriate selector', async () => {
+			const user = userEvent.setup();
+			await openLogsWizard(user);
+
+			await user.click(screen.getByTestId('wizard-query-type-select-logs-read'));
+			await user.click(await screen.findByText('PromQL'));
+
+			await user.click(screen.getByTestId('wizard-add-btn-logs-read'));
+
+			await expect(screen.findByText('promql/*')).resolves.toBeInTheDocument();
+		});
+
+		it('allows key scoping for supported query types', async () => {
+			const user = userEvent.setup();
+			await openLogsWizard(user);
+
+			const byKeyRadio = screen.getByLabelText('By key');
+			expect(byKeyRadio).not.toBeDisabled();
+
+			await user.click(byKeyRadio);
+
+			const valueInput = screen.getByTestId('wizard-value-input-logs-read');
+			expect(valueInput).not.toBeDisabled();
+
+			await user.type(valueInput, 'signoz.workspace.key.id/123');
+			await user.click(screen.getByTestId('wizard-add-btn-logs-read'));
+
+			await expect(
+				screen.findByText('builder_query/signoz.workspace.key.id/123'),
+			).resolves.toBeInTheDocument();
+		});
+
+		it('disables key scoping for unsupported query types', async () => {
+			const user = userEvent.setup();
+			await openLogsWizard(user);
+
+			await user.click(screen.getByTestId('wizard-query-type-select-logs-read'));
+			await user.click(await screen.findByText('PromQL'));
+
+			const byKeyRadio = screen.getByLabelText('By key');
+			expect(byKeyRadio).toBeDisabled();
+		});
+
+		it('closes dialog after adding selector', async () => {
+			const user = userEvent.setup();
+			await openLogsWizard(user);
+
+			await user.click(screen.getByTestId('wizard-add-btn-logs-read'));
+
+			await waitFor(() => {
+				expect(
+					screen.queryByTestId('telemetry-wizard-dialog-logs-read'),
+				).not.toBeInTheDocument();
+			});
+		});
+
+		it('does not add duplicate selectors', async () => {
+			const user = userEvent.setup();
+			await openLogsWizard(user);
+			await user.click(screen.getByTestId('wizard-add-btn-logs-read'));
+
+			await user.click(screen.getByTestId('telemetry-wizard-trigger-logs-read'));
+			await screen.findByTestId('telemetry-wizard-dialog-logs-read');
+			await user.click(screen.getByTestId('wizard-add-btn-logs-read'));
+
+			const badges = screen.getAllByText('builder_query/*');
+			expect(badges).toHaveLength(1);
+		});
+
+		it('resets wizard state when dialog is closed and reopened', async () => {
+			const user = userEvent.setup();
+			await openLogsWizard(user);
+
+			await user.click(screen.getByTestId('wizard-query-type-select-logs-read'));
+			await user.click(await screen.findByText('PromQL'));
+
+			await user.click(screen.getByRole('button', { name: /cancel/i }));
+
+			await waitFor(() => {
+				expect(
+					screen.queryByTestId('telemetry-wizard-dialog-logs-read'),
+				).not.toBeInTheDocument();
+			});
+
+			await user.click(screen.getByTestId('telemetry-wizard-trigger-logs-read'));
+			const selectTrigger = await screen.findByTestId(
+				'wizard-query-type-select-logs-read',
+			);
+
+			expect(within(selectTrigger).getByText('Builder Query')).toBeInTheDocument();
+		});
+
+		it('says the grant is unscoped when a key-scopable query type is set to All', async () => {
+			const user = userEvent.setup();
+			await openLogsWizard(user);
+
+			expect(screen.getByTestId('wizard-value-hint-logs-read')).toHaveTextContent(
+				"Scope is set to All, so this grant covers every query of this type. Switch to 'By key' to restrict it to one key.",
+			);
+		});
+
+		it('names the query type when that type cannot be key-scoped', async () => {
+			const user = userEvent.setup();
+			await openLogsWizard(user);
+
+			await user.click(screen.getByTestId('wizard-query-type-select-logs-read'));
+			await user.click(await screen.findByText('PromQL'));
+
+			expect(screen.getByTestId('wizard-value-hint-logs-read')).toHaveTextContent(
+				'PromQL cannot be key-scoped, so this grant always covers every query of this type.',
+			);
+		});
+
+		it('shows the key/value example once scoping by key', async () => {
+			const user = userEvent.setup();
+			await openLogsWizard(user);
+
+			await user.click(screen.getByLabelText('By key'));
+
+			expect(screen.getByTestId('wizard-value-hint-logs-read')).toHaveTextContent(
+				'Eg: signoz.workspace.key.id/123',
+			);
 		});
 	});
 });
