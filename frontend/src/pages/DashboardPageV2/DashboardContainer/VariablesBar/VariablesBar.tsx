@@ -9,27 +9,10 @@ import { selectVariablesExpanded } from '../store/slices/collapseSlice';
 import { useDashboardStore } from '../store/useDashboardStore';
 import AddVariableFull from './components/AddVariable/AddVariableFull';
 import AddVariableIcon from './components/AddVariable/AddVariableIcon';
-import type { VariableSelection } from './selectionTypes';
+import HiddenVariablesTooltip from './components/HiddenVariablesTooltip/HiddenVariablesTooltip';
 import { useVariableSelection } from './hooks/useVariableSelection';
 import VariableSelector from './components/VariableSelector/VariableSelector';
 import styles from './VariablesBar.module.scss';
-
-// Short display of a variable's current selection, for the collapsed +N tooltip.
-function formatSelection(selection: VariableSelection | undefined): string {
-	if (!selection) {
-		return '—';
-	}
-	if (selection.allSelected) {
-		return 'ALL';
-	}
-	const { value } = selection;
-	if (Array.isArray(value)) {
-		return value.length > 0 ? value.join(', ') : '—';
-	}
-	return value === '' || value === null || value === undefined
-		? '—'
-		: String(value);
-}
 
 interface VariablesBarProps {
 	dashboard: DashboardtypesGettableDashboardV2DTO;
@@ -131,14 +114,10 @@ function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 							<TooltipSimple
 								side="top"
 								title={
-									<div className={styles.overflowTooltip}>
-										{hiddenVariables.map((variable) => (
-											<div key={variable.name}>
-												<span className={styles.overflowName}>{variable.name}</span>:{' '}
-												{formatSelection(selection[variable.name])}
-											</div>
-										))}
-									</div>
+									<HiddenVariablesTooltip
+										variables={hiddenVariables}
+										selections={selection}
+									/>
 								}
 							>
 								{moreButton}
