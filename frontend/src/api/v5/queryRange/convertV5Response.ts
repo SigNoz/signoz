@@ -273,6 +273,19 @@ function convertScalarWithFormatForWeb(
 	});
 }
 
+function extractOnlyMessageBody(body: unknown): unknown {
+	const isJsonBody = body && typeof body === 'object' && !Array.isArray(body);
+	if (isJsonBody) {
+		const keys = Object.keys(body);
+		const hasOnlyMessageKey = keys.length === 1 && keys[0] === 'message';
+		if (hasOnlyMessageKey) {
+			const { message } = body as { message: unknown };
+			return typeof message === 'string' ? message : JSON.stringify(message);
+		}
+	}
+	return body;
+}
+
 /**
  * Converts V5 RawData to legacy format
  */
@@ -285,14 +298,22 @@ function convertRawData(
 		queryName: rawData.queryName,
 		legend: legendMap[rawData.queryName] || rawData.queryName,
 		series: null,
-		list: rawData.rows?.map((row) => ({
-			timestamp: row.timestamp,
-			data: {
+		list: rawData.rows?.map((row) => {
+			const data = {
 				// Map raw data to ILog structure - spread row.data first to include all properties
 				...row.data,
 				date: row.timestamp,
-			} as any,
-		})),
+			} as any;
+
+			if ('body' in row.data) {
+				data.body = extractOnlyMessageBody(row.data.body);
+			}
+
+			return {
+				timestamp: row.timestamp,
+				data,
+			};
+		}),
 		nextCursor: rawData.nextCursor,
 	};
 }
