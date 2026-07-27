@@ -46,6 +46,9 @@ const EMPTY_FORM_VALUES: ServiceConfigFormValues = {
 	s3BucketsByRegion: {},
 };
 
+const GCP_METRICS_INFO_TOOLTIP =
+	'These are suggested metrics for your OpenTelemetry Collector Configuration. The metrics you actually receive may vary based on the metrics listed in your collector config.';
+
 function getIntegrationServiceConfig(
 	type: IntegrationType,
 	serviceDetailsData?: ServiceDetailsData,
@@ -500,6 +503,11 @@ function ServiceDetails({
 				<CloudServiceDataCollected
 					logsData={serviceDetailsData?.dataCollected?.logs || []}
 					metricsData={serviceDetailsData?.dataCollected?.metrics || []}
+					metricsInfoTooltip={
+						type === IntegrationType.GCP_SERVICES
+							? GCP_METRICS_INFO_TOOLTIP
+							: undefined
+					}
 				/>
 			</div>
 		);
