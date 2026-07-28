@@ -1,6 +1,7 @@
 package querybuilder
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -134,6 +135,25 @@ func TestSplitFilterForAggregates(t *testing.T) {
 			span:  "NOT (service.name = 'x')",
 		},
 
+		// --- an explicit non-trace context escapes the aggregate-alias shadow -----
+		{
+			// a span attribute named like an aggregate stays reachable via `attribute.`.
+			name:  "attribute prefix on aggregate name routes span-level",
+			query: "attribute.completion_tokens > 5",
+			span:  "attribute.completion_tokens > 5",
+		},
+		{
+			name:  "span prefix on aggregate name routes span-level",
+			query: "span.completion_tokens > 5",
+			span:  "span.completion_tokens > 5",
+		},
+		{
+			name:   "prefixed attribute AND bare aggregate split across buckets",
+			query:  "attribute.completion_tokens > 5 AND completion_tokens > 1000",
+			span:   "attribute.completion_tokens > 5",
+			having: "completion_tokens > 1000",
+		},
+
 		// --- class-mixing is rejected in an OR group, a NOT group, or a nested OR -
 		{
 			name:    "agg OR span rejected",
@@ -150,12 +170,49 @@ func TestSplitFilterForAggregates(t *testing.T) {
 			query:   "service.name = 'x' AND (completion_tokens > 1000 OR kind_string = 'Client')",
 			wantErr: true,
 		},
+
+		// --- syntax errors are rejected, not silently dropped by error recovery ---
+		{
+			// recovery would yield an empty tree → both buckets empty → filter ignored.
+			name:    "lone paren rejected",
+			query:   ")",
+			wantErr: true,
+		},
+		{
+			name:    "unbalanced parens rejected",
+			query:   "((",
+			wantErr: true,
+		},
+		{
+			name:    "bare operator rejected",
+			query:   "AND",
+			wantErr: true,
+		},
+		{
+			// lexer-level error: recovery drops the whole expression.
+			name:    "unterminated quote rejected",
+			query:   "'unterminated",
+			wantErr: true,
+		},
+		{
+			// recovery would drop only the malformed atom and keep the rest — a
+			// partially applied filter with no error.
+			name:    "garbage atom alongside valid agg rejected",
+			query:   ") AND completion_tokens > 5",
+			wantErr: true,
+		},
+		{
+			name:    "missing value rejected",
+			query:   "completion_tokens >",
+			wantErr: true,
+		},
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			span, having, err := SplitFilterForAggregates(c.query, agg)
 			if c.wantErr {
+				fmt.Printf("query=%q → span=%q, having=%q, err=%v\n", c.query, span, having, err)
 				require.Error(t, err)
 				return
 			}

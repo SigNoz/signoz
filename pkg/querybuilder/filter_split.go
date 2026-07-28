@@ -18,16 +18,31 @@ import (
 // (`span.`, `resource.`, …) is span-level. Trace-level and span-level keys may be
 // AND-combined (they run at different query stages) but not OR-combined; an OR that
 // mixes the two is an error.
-//
-// Syntax errors are ignored here — each part is re-parsed downstream (PrepareWhereClause
-// for the span part, the HAVING rewriter for the trace part), which surface them.
 func SplitFilterForAggregates(query string, aggregateNames map[string]struct{}) (spanExpr string, havingExpr string, err error) {
 	if strings.TrimSpace(query) == "" {
 		return "", "", nil
 	}
 
+	tree, syntaxErrors := parseFilterQuery(query)
+	if len(syntaxErrors) > 0 {
+		combinedErrors := errors.Newf(
+			errors.TypeInvalidInput,
+			errors.CodeInvalidInput,
+			"Found %d syntax errors while parsing the filter expression.",
+			len(syntaxErrors),
+		)
+		additionals := make([]string, 0, len(syntaxErrors))
+		for _, syntaxError := range syntaxErrors {
+			if syntaxError.Error() != "" {
+				additionals = append(additionals, syntaxError.Error())
+			}
+		}
+		// TODO: add troubleshooting link to the filter query syntax guide once it's published.
+		return "", "", combinedErrors.WithAdditional(additionals...)
+	}
+
 	s := filterSplitter{query: []rune(query), aggregateNames: aggregateNames}
-	s.visit(parseFilterQuery(query))
+	s.visit(tree)
 
 	if s.mixed {
 		return "", "", errors.NewInvalidInputf(errors.CodeInvalidInput,
@@ -36,12 +51,19 @@ func SplitFilterForAggregates(query string, aggregateNames map[string]struct{}) 
 	return strings.Join(s.span, " AND "), strings.Join(s.having, " AND "), nil
 }
 
-func parseFilterQuery(query string) antlr.Tree {
+func parseFilterQuery(query string) (antlr.Tree, []*SyntaxErr) {
+	lexerErrorListener := NewErrorListener()
 	lexer := grammar.NewFilterQueryLexer(antlr.NewInputStream(query))
 	lexer.RemoveErrorListeners()
+	lexer.AddErrorListener(lexerErrorListener)
+
+	parserErrorListener := NewErrorListener()
 	parser := grammar.NewFilterQueryParser(antlr.NewCommonTokenStream(lexer, 0))
 	parser.RemoveErrorListeners()
-	return parser.Query()
+	parser.AddErrorListener(parserErrorListener)
+
+	tree := parser.Query()
+	return tree, append(lexerErrorListener.SyntaxErrors, parserErrorListener.SyntaxErrors...)
 }
 
 // filterSplitter walks the parse tree once, flattening the top-level AND chain and

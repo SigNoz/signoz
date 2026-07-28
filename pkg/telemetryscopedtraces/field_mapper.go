@@ -34,7 +34,7 @@ func (r *fieldMapper) FieldFor(ctx context.Context, orgID valuer.UUID, startNs, 
 	if err != nil {
 		return "", err
 	}
-	return sqlbuilder.Escape(expr), nil
+	return expr, nil
 }
 
 // ConditionFor returns a boolean predicate for key via the condition builder

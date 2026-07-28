@@ -847,6 +847,161 @@ func TestBuild_TraceList_SpanDurationFilterIsSpanLevel(t *testing.T) {
 	require.NotContains(t, got, "HAVING trace_duration_nano")
 }
 
+// A span attribute literally named like a trace aggregate alias is shadowed by the
+// alias in bare spelling, but stays reachable with an explicit context prefix:
+// `attribute.output_tokens` (and the forgiving `span.` spelling, which renders
+// byte-identical SQL) filters span-level on the org's attribute; the bare spelling
+// still rewrites to the aggregate HAVING even though metadata knows the colliding key.
+func TestBuild_FullSQL_TraceList_AliasAttributeCollision(t *testing.T) {
+	keys := otelKeysMap()
+	keys["output_tokens"] = []*telemetrytypes.TelemetryFieldKey{{
+		Name:          "output_tokens",
+		Signal:        telemetrytypes.SignalTraces,
+		FieldContext:  telemetrytypes.FieldContextAttribute,
+		FieldDataType: telemetrytypes.FieldDataTypeNumber,
+	}}
+	b := newTestBuilderWithKeys(t, keys)
+	build := func(expr string) *qbtypes.Statement {
+		stmt, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeTrace,
+			qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+				Signal: telemetrytypes.SignalTraces,
+				Filter: &qbtypes.Filter{Expression: expr},
+				Limit:  10,
+			}, nil)
+		require.NoError(t, err)
+		return stmt
+	}
+
+	attrStmt := build("attribute.output_tokens > 100")
+	requireSQLEqual(t, `
+WITH matched AS (
+    SELECT trace_id,
+        maxIf(timestamp, (mapContains(attributes_string, 'gen_ai.request.model') OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name'))) AS last_activity_time
+    FROM signoz_traces.distributed_signoz_index_v3
+    WHERE timestamp >= '1747947419000000000'
+      AND timestamp < '1747983448000000000'
+      AND ts_bucket_start >= 1747945619
+      AND ts_bucket_start <= 1747983448
+      AND ((mapContains(attributes_string, 'gen_ai.request.model') OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name'))
+        OR (toFloat64(attributes_number['output_tokens']) > 100 AND mapContains(attributes_number, 'output_tokens')))
+    GROUP BY trace_id
+    HAVING countIf((mapContains(attributes_string, 'gen_ai.request.model') OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name'))) > 0
+        AND countIf((toFloat64(attributes_number['output_tokens']) > 100 AND mapContains(attributes_number, 'output_tokens'))) > 0
+    ORDER BY last_activity_time DESC, trace_id DESC
+    LIMIT 10
+),
+ranked AS (
+    SELECT trace_id, min(start) AS t_start, max(end) AS t_end
+    FROM signoz_traces.distributed_trace_summary
+    WHERE trace_id GLOBAL IN (SELECT trace_id FROM matched)
+      AND end >= fromUnixTimestamp64Nano(1747947419000000000)
+      AND start < fromUnixTimestamp64Nano(1747983448000000000)
+    GROUP BY trace_id
+),
+buckets AS (
+    SELECT DISTINCT b AS ts_bucket
+    FROM ranked
+    ARRAY JOIN range(toUInt64(intDiv(toUnixTimestamp(t_start), 1800) * 1800 - 1800), toUInt64(intDiv(toUnixTimestamp(t_end), 1800) * 1800 + 1800), 1800) AS b
+)
+SELECT trace_id,
+    min(timestamp) AS start_time,
+    max(timestamp) AS end_time,
+    (max(toUnixTimestamp64Nano(timestamp) + duration_nano) - min(toUnixTimestamp64Nano(timestamp))) AS trace_duration_nano,
+    count() AS span_count,
+    anyIf(name, parent_span_id = '') AS root_span_name,
+    any(multiIf(multiIf(resource.`+"`service.name`"+` IS NOT NULL, resource.`+"`service.name`"+`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.`+"`service.name`"+` IS NOT NULL, resource.`+"`service.name`"+`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS `+"`service.name`"+`,
+    countIf(mapContains(attributes_string, 'gen_ai.request.model')) AS llm_call_count,
+    countIf(mapContains(attributes_string, 'gen_ai.tool.name')) AS tool_call_count,
+    uniqIf(multiIf(mapContains(attributes_string, 'gen_ai.tool.name'), attributes_string['gen_ai.tool.name'], NULL), mapContains(attributes_string, 'gen_ai.tool.name')) AS distinct_tool_count,
+    sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens'), toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)) AS input_tokens,
+    sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens'), toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens,
+    coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens'), toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)), 0) + coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens'), toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)), 0) AS total_tokens,
+    sum(multiIf(mapContains(attributes_number, '_signoz.gen_ai.total_cost'), toFloat64(attributes_number['_signoz.gen_ai.total_cost']), NULL)) AS estimated_total_cost,
+    maxIf(duration_nano, mapContains(attributes_string, 'gen_ai.request.model')) AS max_llm_duration_nano,
+    countIf(has_error = true) AS error_count,
+    maxIf(timestamp, (mapContains(attributes_string, 'gen_ai.request.model') OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name'))) AS last_activity_time,
+    argMinIf(multiIf(mapContains(attributes_string, 'gen_ai.input.messages'), attributes_string['gen_ai.input.messages'], NULL), timestamp, mapContains(attributes_string, 'gen_ai.input.messages')) AS input,
+    argMaxIf(multiIf(mapContains(attributes_string, 'gen_ai.output.messages'), attributes_string['gen_ai.output.messages'], NULL), timestamp, mapContains(attributes_string, 'gen_ai.output.messages')) AS output
+FROM signoz_traces.distributed_signoz_index_v3
+WHERE ts_bucket_start GLOBAL IN (SELECT ts_bucket FROM buckets)
+  AND trace_id GLOBAL IN (SELECT trace_id FROM ranked)
+GROUP BY trace_id
+ORDER BY last_activity_time DESC, trace_id DESC
+SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000
+`, attrStmt)
+
+	// attribute. matches the metadata key exactly — no warning.
+	require.Empty(t, attrStmt.Warnings)
+
+	// the forgiving span. spelling corrects to the same attribute — identical SQL —
+	// but the metadata lookup ran with the span context, so the correction is
+	// surfaced as a key-not-found warning.
+	spanStmt := build("span.output_tokens > 100")
+	require.Equal(t, renderSQL(t, attrStmt), renderSQL(t, spanStmt))
+	require.Len(t, spanStmt.Warnings, 1)
+	require.Contains(t, spanStmt.Warnings[0], "key `output_tokens` not found in metadata")
+
+	// bare spelling is claimed by the aggregate alias: no widened WHERE, no span
+	// countIf pair, no map access on the colliding key — just the alias HAVING.
+	bareStmt := build("output_tokens > 100")
+	require.Empty(t, bareStmt.Warnings)
+	requireSQLEqual(t, `
+WITH matched AS (
+    SELECT trace_id,
+        sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens'), toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens,
+        maxIf(timestamp, (mapContains(attributes_string, 'gen_ai.request.model') OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name'))) AS last_activity_time
+    FROM signoz_traces.distributed_signoz_index_v3
+    WHERE timestamp >= '1747947419000000000'
+      AND timestamp < '1747983448000000000'
+      AND ts_bucket_start >= 1747945619
+      AND ts_bucket_start <= 1747983448
+      AND ((mapContains(attributes_string, 'gen_ai.request.model') OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name')))
+    GROUP BY trace_id
+    HAVING output_tokens > 100
+    ORDER BY last_activity_time DESC, trace_id DESC
+    LIMIT 10
+),
+ranked AS (
+    SELECT trace_id, min(start) AS t_start, max(end) AS t_end
+    FROM signoz_traces.distributed_trace_summary
+    WHERE trace_id GLOBAL IN (SELECT trace_id FROM matched)
+      AND end >= fromUnixTimestamp64Nano(1747947419000000000)
+      AND start < fromUnixTimestamp64Nano(1747983448000000000)
+    GROUP BY trace_id
+),
+buckets AS (
+    SELECT DISTINCT b AS ts_bucket
+    FROM ranked
+    ARRAY JOIN range(toUInt64(intDiv(toUnixTimestamp(t_start), 1800) * 1800 - 1800), toUInt64(intDiv(toUnixTimestamp(t_end), 1800) * 1800 + 1800), 1800) AS b
+)
+SELECT trace_id,
+    min(timestamp) AS start_time,
+    max(timestamp) AS end_time,
+    (max(toUnixTimestamp64Nano(timestamp) + duration_nano) - min(toUnixTimestamp64Nano(timestamp))) AS trace_duration_nano,
+    count() AS span_count,
+    anyIf(name, parent_span_id = '') AS root_span_name,
+    any(multiIf(multiIf(resource.`+"`service.name`"+` IS NOT NULL, resource.`+"`service.name`"+`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.`+"`service.name`"+` IS NOT NULL, resource.`+"`service.name`"+`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS `+"`service.name`"+`,
+    countIf(mapContains(attributes_string, 'gen_ai.request.model')) AS llm_call_count,
+    countIf(mapContains(attributes_string, 'gen_ai.tool.name')) AS tool_call_count,
+    uniqIf(multiIf(mapContains(attributes_string, 'gen_ai.tool.name'), attributes_string['gen_ai.tool.name'], NULL), mapContains(attributes_string, 'gen_ai.tool.name')) AS distinct_tool_count,
+    sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens'), toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)) AS input_tokens,
+    sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens'), toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens,
+    coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens'), toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)), 0) + coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens'), toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)), 0) AS total_tokens,
+    sum(multiIf(mapContains(attributes_number, '_signoz.gen_ai.total_cost'), toFloat64(attributes_number['_signoz.gen_ai.total_cost']), NULL)) AS estimated_total_cost,
+    maxIf(duration_nano, mapContains(attributes_string, 'gen_ai.request.model')) AS max_llm_duration_nano,
+    countIf(has_error = true) AS error_count,
+    maxIf(timestamp, (mapContains(attributes_string, 'gen_ai.request.model') OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name'))) AS last_activity_time,
+    argMinIf(multiIf(mapContains(attributes_string, 'gen_ai.input.messages'), attributes_string['gen_ai.input.messages'], NULL), timestamp, mapContains(attributes_string, 'gen_ai.input.messages')) AS input,
+    argMaxIf(multiIf(mapContains(attributes_string, 'gen_ai.output.messages'), attributes_string['gen_ai.output.messages'], NULL), timestamp, mapContains(attributes_string, 'gen_ai.output.messages')) AS output
+FROM signoz_traces.distributed_signoz_index_v3
+WHERE ts_bucket_start GLOBAL IN (SELECT ts_bucket FROM buckets)
+  AND trace_id GLOBAL IN (SELECT trace_id FROM ranked)
+GROUP BY trace_id
+ORDER BY last_activity_time DESC, trace_id DESC
+SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000
+`, bareStmt)
+}
+
 // A HAVING referencing a non-aggregate column is rejected.
 func TestBuild_TraceList_Having_UnknownColumn(t *testing.T) {
 	b := newTestBuilder(t)
