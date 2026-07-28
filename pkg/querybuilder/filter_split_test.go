@@ -1,7 +1,6 @@
 package querybuilder
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -212,7 +211,6 @@ func TestSplitFilterForAggregates(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			span, having, err := SplitFilterForAggregates(c.query, agg)
 			if c.wantErr {
-				fmt.Printf("query=%q → span=%q, having=%q, err=%v\n", c.query, span, having, err)
 				require.Error(t, err)
 				return
 			}

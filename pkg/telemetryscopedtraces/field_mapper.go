@@ -30,11 +30,8 @@ func newFieldMapper(fm qbtypes.FieldMapper, cb qbtypes.ConditionBuilder, keys ma
 
 // FieldFor returns the column expression for key via the field mapper.
 func (r *fieldMapper) FieldFor(ctx context.Context, orgID valuer.UUID, startNs, endNs uint64, key *telemetrytypes.TelemetryFieldKey) (string, error) {
-	expr, err := r.fm.FieldFor(ctx, orgID, startNs, endNs, key)
-	if err != nil {
-		return "", err
-	}
-	return expr, nil
+	return r.fm.FieldFor(ctx, orgID, startNs, endNs, key)
+
 }
 
 // ConditionFor returns a boolean predicate for key via the condition builder
@@ -67,10 +64,10 @@ func (r *fieldMapper) ExistsFor(ctx context.Context, orgID valuer.UUID, startNs,
 	return r.ConditionFor(ctx, orgID, startNs, endNs, key, qbtypes.FilterOperatorExists, nil)
 }
 
-// ValueFor returns the value expression for an attribute key. The metadata variant
-// is preferred because it carries Materialized — a provider's static definition
-// never does, so a promoted attribute would otherwise fall back to map access.
+// ValueFor returns the value expression for an attribute key.
 func (r *fieldMapper) ValueFor(ctx context.Context, orgID valuer.UUID, startNs, endNs uint64, key *telemetrytypes.TelemetryFieldKey, dt telemetrytypes.FieldDataType) (string, []any, error) {
+	// The scope declares keys statically, so a key like service.name can have evolutions.
+	// this is added for the evolution.
 	if cands := r.keys[key.Name]; len(cands) > 0 {
 		key = cands[0]
 	}
