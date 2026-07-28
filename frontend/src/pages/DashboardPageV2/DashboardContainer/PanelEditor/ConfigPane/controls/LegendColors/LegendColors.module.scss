@@ -1,3 +1,5 @@
+@use '../../../../../../../styles/scrollbar' as *;
+
 .container {
 	display: flex;
 	flex-direction: column;
@@ -5,6 +7,7 @@
 }
 
 .list {
+	@include custom-scrollbar;
 	width: 100%;
 }
 

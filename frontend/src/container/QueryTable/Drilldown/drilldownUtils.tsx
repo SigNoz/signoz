@@ -3,6 +3,7 @@ import { convertFiltersToExpressionWithExistingQuery } from 'components/QueryBui
 import {
 	initialQueryBuilderFormValuesMap,
 	OPERATORS,
+	QUERY_BUILDER_OPERATORS_BY_TYPES,
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { isApmMetric } from 'container/PanelWrapper/utils';
@@ -54,12 +55,43 @@ export const getRoute = (key: string): string => {
 	}
 };
 
+/**
+ * A group-by's `dataType` comes from the field metadata, which reports a numeric as `number`
+ * (V5, what a saved V2 panel carries) or as `int64` / `float64` (V3) — all three are numeric.
+ */
+const NUMERIC_DATA_TYPES: string[] = [
+	DataTypes.Int64,
+	DataTypes.Float64,
+	'number',
+];
+
 export const isNumberDataType = (dataType: DataTypes | undefined): boolean => {
 	if (!dataType) {
 		return false;
 	}
-	return dataType === DataTypes.Int64 || dataType === DataTypes.Float64;
+	return NUMERIC_DATA_TYPES.includes(dataType);
 };
+
+/**
+ * `QUERY_BUILDER_OPERATORS_BY_TYPES` is keyed by the V3 data types, so the `number` a saved V2
+ * panel carries misses it — and a raw lookup returns `undefined`, which throws on the caller's
+ * `.filter`. Resolve through this table and fall back to the string set.
+ */
+const OPERATOR_DATA_TYPES: Record<
+	string,
+	keyof typeof QUERY_BUILDER_OPERATORS_BY_TYPES
+> = {
+	[DataTypes.String]: 'string',
+	[DataTypes.Int64]: 'int64',
+	[DataTypes.Float64]: 'float64',
+	[DataTypes.bool]: 'bool',
+	number: 'float64',
+};
+
+export const getOperatorsByDataType = (dataType?: string): string[] =>
+	QUERY_BUILDER_OPERATORS_BY_TYPES[
+		OPERATOR_DATA_TYPES[dataType ?? ''] ?? 'string'
+	];
 
 export interface FilterData {
 	filterKey: string;

@@ -1,5 +1,7 @@
 import { useCallback, useState } from 'react';
 
+import logEvent from 'api/common/logEvent';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
@@ -32,6 +34,10 @@ export function useRenameSection({ layoutIndex }: Params): Result {
 			try {
 				setIsSaving(true);
 				await patchAsync([renameSectionOp(layoutIndex, trimmed)]);
+				void logEvent(DashboardDetailEvents.SectionAction, {
+					action: 'rename',
+					dashboardId,
+				});
 				return true;
 			} catch (error) {
 				showErrorModal(error as APIError);

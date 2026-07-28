@@ -76,6 +76,9 @@ type RuleStateHistory struct {
 	Labels       LabelsString         `ch:"labels"`
 	Fingerprint  uint64               `ch:"fingerprint"`
 	Value        float64              `ch:"value"`
+
+	RelatedTracesLink string
+	RelatedLogsLink   string
 }
 
 type RuleStateHistoryContributor struct {

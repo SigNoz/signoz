@@ -2,6 +2,7 @@ import { renderHook, waitFor } from '@testing-library/react';
 import type {
 	DashboardtypesPanelDTO,
 	DashboardtypesQueryDTO,
+	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
@@ -9,7 +10,7 @@ import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { AllTheProviders } from 'tests/test-utils';
 
-import { toPerses } from '../../../queryV5/persesQueryAdapters';
+import { fromPerses, toPerses } from '../../../queryV5/persesQueryAdapters';
 import { usePanelEditorQuerySync } from '../usePanelEditorQuerySync';
 
 // Exercises the REAL query builder provider (not mocks) so the dirty check is
@@ -45,6 +46,28 @@ function makePanel(queries: DashboardtypesQueryDTO[]): DashboardtypesPanelDTO {
 	} as unknown as DashboardtypesPanelDTO;
 }
 
+/** Providers whose URL already carries `query` as the compositeQuery param (a mid-edit refresh). */
+function makeUrlWrapper(
+	query: Query,
+): ({ children }: { children: React.ReactNode }) => JSX.Element {
+	const params = new URLSearchParams();
+	params.set(
+		QueryParams.compositeQuery,
+		encodeURIComponent(JSON.stringify(query)),
+	);
+	return function UrlWrapper({
+		children,
+	}: {
+		children: React.ReactNode;
+	}): JSX.Element {
+		return (
+			<AllTheProviders initialRoute={`/?${params.toString()}`}>
+				{children}
+			</AllTheProviders>
+		);
+	};
+}
+
 describe('usePanelEditorQuerySync (real query builder)', () => {
 	it('an untouched existing panel is NOT query-dirty on mount', async () => {
 		const saved = makeSavedQueries();
@@ -66,6 +89,33 @@ describe('usePanelEditorQuerySync (real query builder)', () => {
 		// And stays clean (no late re-stage flips it dirty).
 		expect(result.current.isQueryDirty).toBe(false);
 	});
+
+	it.each([
+		[DataSource.METRICS, PANEL_TYPES.TIME_SERIES],
+		[DataSource.LOGS, PANEL_TYPES.TIME_SERIES],
+		[DataSource.TRACES, PANEL_TYPES.TIME_SERIES],
+		[DataSource.LOGS, PANEL_TYPES.LIST],
+	])(
+		'a NEW %s panel (%s, no savedQueries) is NOT query-dirty on mount',
+		async (ds, pt) => {
+			const { result } = renderHook(
+				() =>
+					usePanelEditorQuerySync({
+						draft: makePanel([]),
+						panelType: pt,
+						setSpec: jest.fn(),
+						refetch: jest.fn(),
+						alwaysSerializeQuery: true,
+						signal: ds as unknown as TelemetrytypesSignalDTO,
+						// savedQueries omitted — new panel.
+					}),
+				{ wrapper: AllTheProviders },
+			);
+
+			await waitFor(() => expect(result.current.isQueryDirty).toBe(false));
+			expect(result.current.isQueryDirty).toBe(false);
+		},
+	);
 
 	it('an untouched panel with a minimal/older stored query is NOT dirty (drift fix)', async () => {
 		// An older saved query carries only a few fields; the builder re-emits many more
@@ -112,6 +162,80 @@ describe('usePanelEditorQuerySync (real query builder)', () => {
 		expect(result.current.isQueryDirty).toBe(false);
 	});
 
+	it('a saved panel with no `having` is NOT dirty on mount (builder seeds an empty having)', async () => {
+		// Reproduces the reported bug: a panel saved as a bare signoz/BuilderQuery that never
+		// carried a `having`. On editor open the builder hydrates from the URL and
+		// prepareQueryBuilderData seeds an empty `{ expression: '' }`, so a verbatim envelope
+		// compare flags the untouched panel as dirty. Seed via the URL (not resetQuery) so the
+		// hydration path that synthesizes the having actually runs.
+		const savedNoHaving: DashboardtypesQueryDTO[] = [
+			{
+				kind: 'time_series',
+				spec: {
+					name: 'A',
+					plugin: {
+						kind: 'signoz/BuilderQuery',
+						spec: {
+							name: 'A',
+							signal: 'metrics',
+							source: '',
+							aggregations: [
+								{
+									metricName: 'signoz_latency.bucket',
+									temporality: 'delta',
+									timeAggregation: '',
+									spaceAggregation: 'p99',
+								},
+							],
+							disabled: false,
+							filter: { expression: 'service.name IN $service_name' },
+							groupBy: [
+								{
+									name: 'service.name',
+									signal: '',
+									fieldContext: 'resource',
+									fieldDataType: '',
+								},
+							],
+							order: [
+								{
+									key: {
+										name: '__result',
+										signal: '',
+										fieldContext: '',
+										fieldDataType: '',
+									},
+									direction: 'desc',
+								},
+							],
+							limit: 100,
+							legend: '',
+						},
+					},
+				},
+			},
+		] as unknown as DashboardtypesQueryDTO[];
+
+		// The editor puts the (having-less) seed query into the URL; the provider then hydrates
+		// from it, which is where the empty having is added.
+		const seededInUrl = fromPerses(savedNoHaving, panelType);
+
+		const { result } = renderHook(
+			() =>
+				usePanelEditorQuerySync({
+					draft: makePanel(savedNoHaving),
+					panelType,
+					setSpec: jest.fn(),
+					refetch: jest.fn(),
+					savedQueries: savedNoHaving,
+				}),
+			{ wrapper: makeUrlWrapper(seededInUrl) },
+		);
+
+		await waitFor(() => expect(result.current.isQueryDirty).toBe(false));
+		expect(result.current.isQueryDirty).toBe(false);
+	});
+
 	it('retains an in-editor query edit carried in the URL across a refresh (and reads dirty)', async () => {
 		// Simulate a refresh mid-edit: the saved panel is unchanged, but the URL still
 		// carries the last-run (edited) query. The builder must hydrate from the URL —
@@ -130,22 +254,7 @@ describe('usePanelEditorQuerySync (real query builder)', () => {
 				],
 			},
 		};
-		const params = new URLSearchParams();
-		params.set(
-			QueryParams.compositeQuery,
-			encodeURIComponent(JSON.stringify(editedInUrl)),
-		);
 		const setSpec = jest.fn();
-
-		const wrapper = ({
-			children,
-		}: {
-			children: React.ReactNode;
-		}): JSX.Element => (
-			<AllTheProviders initialRoute={`/?${params.toString()}`}>
-				{children}
-			</AllTheProviders>
-		);
 
 		const { result } = renderHook(
 			() =>
@@ -157,7 +266,7 @@ describe('usePanelEditorQuerySync (real query builder)', () => {
 					refetch: jest.fn(),
 					savedQueries: saved,
 				}),
-			{ wrapper },
+			{ wrapper: makeUrlWrapper(editedInUrl) },
 		);
 
 		// The URL edit is retained → dirty, and it's synced into the draft so the

@@ -6,6 +6,8 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import type { PanelEditorHandoffState } from '../PanelEditor/panelEditorHandoff';
 import { useDashboardStore } from '../store/useDashboardStore';
 import { useTimeSearchParams } from './useTimeSearchParams';
+import logEvent from '@/api/common/logEvent';
+import { DashboardDetailEvents } from '../../constants/events';
 
 interface OpenPanelEditorOptions {
 	handoffState?: PanelEditorHandoffState;
@@ -24,6 +26,11 @@ export function useOpenPanelEditor(): (
 
 	return useCallback(
 		(panelId: string, options?: OpenPanelEditorOptions): void => {
+			void logEvent(DashboardDetailEvents.PanelAction, {
+				action: 'edit',
+				panelId,
+				dashboardId,
+			});
 			const path = generatePath(ROUTES.DASHBOARD_PANEL_EDITOR, {
 				dashboardId,
 				panelId,
