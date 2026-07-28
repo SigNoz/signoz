@@ -12,13 +12,13 @@ import {
 	deleteDashboardV2,
 	invalidateListDashboardsForUserV2,
 } from 'api/generated/services/dashboard';
+import { useDeleteConfirm } from 'components/DeleteConfirmModal/useDeleteConfirm';
 import { DashboardListEvents } from 'pages/DashboardsListPageV2/constants/events';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 import { USER_ROLES } from 'types/roles';
 
-import { useDeleteConfirm } from '../DeleteConfirmModal/useDeleteConfirm';
 import styles from './ActionsPopover.module.scss';
 
 interface Props {
