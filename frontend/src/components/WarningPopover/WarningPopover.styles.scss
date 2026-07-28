@@ -17,7 +17,7 @@
 		display: flex;
 		align-items: flex-start;
 		justify-content: space-between;
-		gap: 16px;
+		gap: var(--spacing-8);
 		padding: 16px;
 	}
 
@@ -31,7 +31,7 @@
 		display: flex;
 		align-items: center;
 		flex-shrink: 0;
-		height: 24px;
+		height: var(--spacing-12);
 	}
 
 	&__summary-text {
