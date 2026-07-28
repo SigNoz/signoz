@@ -66,20 +66,20 @@ func newTestContext() context.Context {
 }
 
 // captureServer starts an httptest server that decodes the posted Google Chat
-// Message into got and replies with statusCode.
-func captureServer(t *testing.T, statusCode int, got *Message) *httptest.Server {
+// Message into got and replies 200.
+func captureServer(t *testing.T, got *Message) *httptest.Server {
 	t.Helper()
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if got != nil {
 			_ = json.NewDecoder(r.Body).Decode(got)
 		}
-		w.WriteHeader(statusCode)
+		w.WriteHeader(http.StatusOK)
 	}))
 }
 
 func TestGoogleChatSend(t *testing.T) {
 	var got Message
-	server := captureServer(t, http.StatusOK, &got)
+	server := captureServer(t, &got)
 	defer server.Close()
 
 	n := newTestNotifier(t, server.URL, `[{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}`, "")
@@ -93,7 +93,7 @@ func TestGoogleChatSend(t *testing.T) {
 
 func TestGoogleChatTitleAndBody(t *testing.T) {
 	var got Message
-	server := captureServer(t, http.StatusOK, &got)
+	server := captureServer(t, &got)
 	defer server.Close()
 
 	// static templates → assert the exact title\nbody join.
@@ -113,9 +113,21 @@ func TestGoogleChatRetryCodes(t *testing.T) {
 	}, tmpl, slog.New(slog.DiscardHandler), newTestTemplater(tmpl))
 	require.NoError(t, err)
 
-	for statusCode, expected := range test.RetryTests(test.DefaultRetryCodes()) {
-		actual, _ := n.retrier.Check(statusCode, nil)
-		require.Equal(t, expected, actual, "retry mismatch on status %d", statusCode)
+	cases := []struct {
+		code  int
+		retry bool
+	}{
+		{http.StatusOK, false},
+		{http.StatusBadRequest, false},         // 400: malformed payload, permanent
+		{http.StatusTooManyRequests, true},     // 429: rate limited, retry (our RetryCodes)
+		{http.StatusInternalServerError, true}, // 5xx: retry
+		{http.StatusServiceUnavailable, true},
+	}
+	for _, c := range cases {
+		t.Run(http.StatusText(c.code), func(t *testing.T) {
+			actual, _ := n.retrier.Check(c.code, nil)
+			require.Equal(t, c.retry, actual, "retry mismatch on status %d", c.code)
+		})
 	}
 }
 
@@ -128,28 +140,11 @@ func TestGoogleChatRedactedURL(t *testing.T) {
 	n, err := New(&alertmanagertypes.GoogleChatReceiverConfig{
 		HTTPConfig: &commoncfg.HTTPClientConfig{},
 		WebhookURL: &config.SecretURL{URL: u},
+		Title:      "alert", // non-empty so it reaches the POST (not the empty-text guard)
 	}, tmpl, slog.New(slog.DiscardHandler), newTestTemplater(tmpl))
 	require.NoError(t, err)
 
 	test.AssertNotifyLeaksNoSecret(ctx, t, n, u.String())
-}
-
-func TestSanitizeUTF8(t *testing.T) {
-	cases := []struct {
-		name string
-		in   string
-		want string
-	}{
-		{"valid ascii", "hello", "hello"},
-		{"valid multibyte", "héllo — 世界", "héllo — 世界"},
-		{"invalid byte replaced", "abc\xffdef", "abc�def"},
-		{"empty", "", ""},
-	}
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			require.Equal(t, c.want, sanitizeUTF8(c.in))
-		})
-	}
 }
 
 func TestTruncateToByteLimit(t *testing.T) {
@@ -228,7 +223,7 @@ func TestGoogleChatThreading(t *testing.T) {
 
 func TestGoogleChatCustomTemplateMarkdown(t *testing.T) {
 	var got Message
-	server := captureServer(t, http.StatusOK, &got)
+	server := captureServer(t, &got)
 	defer server.Close()
 
 	// Custom body template (standard markdown) supplied via annotation → the
@@ -248,4 +243,39 @@ func TestGoogleChatCustomTemplateMarkdown(t *testing.T) {
 	require.Contains(t, got.Text, "*bold*", "** should convert to *")
 	require.Contains(t, got.Text, "<https://x|link>", "[t](u) should convert to <u|t>")
 	require.NotContains(t, got.Text, "**bold**", "conversion must have happened")
+}
+
+func TestGoogleChatSerializedSizeUnderLimit(t *testing.T) {
+	var bodyLen int
+	var valid bool
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		raw, _ := io.ReadAll(r.Body)
+		bodyLen = len(raw)
+		valid = json.Valid(raw)
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	// Escaping-dense payload: <, >, & and newlines each expand under JSON
+	// encoding, so this is the shape that would push the serialized body over
+	// the limit if we measured the text bytes instead of the marshaled buffer.
+	dense := strings.Repeat("<https://example.com/a?x=1&y=2|link>\n", 2000)
+	n := newTestNotifier(t, server.URL, dense, "")
+	_, err := n.Notify(newTestContext(), newTestAlerts("Dense")...)
+
+	require.NoError(t, err)
+	require.True(t, valid, "posted body must be valid JSON")
+	require.LessOrEqual(t, bodyLen, maxMessageBytes, "serialized body must be within the limit")
+}
+
+func TestGoogleChatEmptyText(t *testing.T) {
+	server := captureServer(t, nil)
+	defer server.Close()
+
+	// Empty title and body templates → must not POST; fail non-retryably.
+	n := newTestNotifier(t, server.URL, "", "")
+	retry, err := n.Notify(newTestContext(), newTestAlerts("X")...)
+
+	require.Error(t, err)
+	require.False(t, retry)
 }

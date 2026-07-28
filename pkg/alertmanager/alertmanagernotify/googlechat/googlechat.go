@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"net/url"
 	"strings"
 	"unicode/utf8"
@@ -29,7 +30,7 @@ func New(conf *alertmanagertypes.GoogleChatReceiverConfig, t *template.Template,
 		tmpl:      t,
 		logger:    l,
 		client:    client,
-		retrier:   &notify.Retrier{},
+		retrier:   &notify.Retrier{RetryCodes: []int{http.StatusTooManyRequests}},
 		templater: templater,
 	}, nil
 }
@@ -53,15 +54,21 @@ func (n *Notifier) Notify(ctx context.Context, alerts ...*types.Alert) (bool, er
 	if c.body != "" {
 		text = fmt.Sprintf("%s\n%s", c.title, c.body)
 	}
-	text = sanitizeUTF8(text)
+	// Google Chat rejects a message with empty text and no cards. An empty
+	// render means a misconfigured title/text template, so fail loudly and
+	// non-retryably instead of sending a placeholder.
+	if text == "" {
+		return false, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "google chat message rendered empty; check the channel title/text templates")
+	}
 
 	msg := Message{Text: text}
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(msg); err != nil {
 		return false, err
 	}
-	// One-time truncation to Google Chat's payload limit. Note: heavy JSON
-	// escaping could leave the payload marginally over after re-encoding;
+	// Truncate to Google Chat's byte limit. We measure the serialized buffer and
+	// drop that many text bytes; each removed text byte drops >=1 serialized byte,
+	// so a single pass always lands the payload within the limit.
 	if buf.Len() > maxMessageBytes {
 		over := buf.Len() - maxMessageBytes
 		target := max(len(text)-over, 0)
@@ -135,24 +142,6 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) (c
 		body:          body,
 		isDefaultBody: result.IsDefaultBody,
 	}, nil
-}
-
-// sanitizeUTF8 replaces invalid UTF-8 byte sequences with the Unicode
-// replacement character so Google Chat does not reject the payload.
-func sanitizeUTF8(s string) string {
-	if utf8.ValidString(s) {
-		return s
-	}
-	var b strings.Builder
-	b.Grow(len(s))
-	for _, r := range s {
-		if r == utf8.RuneError {
-			b.WriteRune('�')
-		} else {
-			b.WriteRune(r)
-		}
-	}
-	return b.String()
 }
 
 // truncateToByteLimit trims s to at most maxBytes bytes on a rune boundary,
