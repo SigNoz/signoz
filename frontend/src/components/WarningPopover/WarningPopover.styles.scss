@@ -1,3 +1,7 @@
+.warning-popover-overlay {
+	--antd-arrow-background-color: var(--l2-background);
+}
+
 .warning-content {
 	display: flex;
 	flex-direction: column;
@@ -11,14 +15,23 @@
 
 	&__summary {
 		display: flex;
+		align-items: flex-start;
 		justify-content: space-between;
+		gap: 16px;
 		padding: 16px;
 	}
 
 	&__summary-left {
 		display: flex;
-		align-items: flex-end;
+		align-items: flex-start;
 		gap: 8px;
+	}
+
+	&__icon-wrapper {
+		display: flex;
+		align-items: center;
+		flex-shrink: 0;
+		height: 24px;
 	}
 
 	&__summary-text {
