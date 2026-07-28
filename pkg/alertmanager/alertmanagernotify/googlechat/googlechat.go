@@ -10,6 +10,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
@@ -83,9 +84,29 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) (c
 	if err != nil {
 		return content{}, err
 	}
+
+	title := result.Title
+	body := strings.Join(result.Body, "\n\n")
+
+	// Default templates are already authored in Google Chat dialect. Custom
+	// templates are standard markdown, so convert them. The templater only
+	// reports IsDefaultBody, so the title is gated on the body's default-ness.
+	if !result.IsDefaultBody {
+		if body != "" {
+			if body, err = markdownrenderer.RenderGoogleChatMarkdown(body); err != nil {
+				return content{}, err
+			}
+		}
+		if title != "" {
+			if title, err = markdownrenderer.RenderGoogleChatMarkdown(title); err != nil {
+				return content{}, err
+			}
+		}
+	}
+
 	return content{
-		title:         result.Title,
-		body:          strings.Join(result.Body, "\n\n"),
+		title:         title,
+		body:          body,
 		isDefaultBody: result.IsDefaultBody,
 	}, nil
 }
