@@ -9,7 +9,9 @@ import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
-import { LogType } from 'components/Logs/LogStateIndicator/LogStateIndicator';
+import LogStateIndicator, {
+	LogType,
+} from 'components/Logs/LogStateIndicator/LogStateIndicator';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
 import { convertExpressionToFilters } from 'components/QueryBuilderV2/utils';
 import { FeatureKeys } from 'constants/features';
@@ -27,6 +29,7 @@ import {
 } from 'container/LogDetailedView/utils';
 import useInitialQuery from 'container/LogsExplorerContext/useInitialQuery';
 import { useOptionsMenu } from 'container/OptionsMenu';
+import { FontSize } from 'container/OptionsMenu/types';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -57,8 +60,10 @@ import { DataSource, StringOperators } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { isModifierKeyPressed } from 'utils/app';
 
-import { RESOURCE_KEYS, VIEW_TYPES, VIEWS } from './constants';
+import { isLogDetailsV2, RESOURCE_KEYS, VIEW_TYPES, VIEWS } from './constants';
 import { LogDetailInnerProps, LogDetailProps } from './LogDetail.interfaces';
+import LogDetailsHeader from './LogDetailsHeader/LogDetailsHeader';
+import { useLogNavigation } from './LogDetailsHeader/useLogNavigation';
 
 import './LogDetails.styles.scss';
 
@@ -103,7 +108,8 @@ function LogDetailInner({
 				target.closest('[data-log-detail-ignore="true"]') ||
 				target.closest('.cm-tooltip-autocomplete') ||
 				target.closest('.drawer-popover') ||
-				target.closest('.query-status-popover')
+				target.closest('.query-status-popover') ||
+				target.closest('[data-radix-popper-content-wrapper]')
 			) {
 				return;
 			}
@@ -119,49 +125,30 @@ function LogDetailInner({
 		};
 	}, [onClose]);
 
-	// Keyboard navigation - handle up/down arrow keys
-	// Only listen when in OVERVIEW tab
-	// eslint-disable-next-line sonarjs/cognitive-complexity
+	const { goToPrev, goToNext, isPrevDisabled, isNextDisabled } =
+		useLogNavigation({
+			logs,
+			activeLogId: log.id,
+			onNavigateLog,
+			onScrollToLog,
+		});
+
+	// Keyboard navigation - handle up/down arrow keys. Only listen in the OVERVIEW
+	// tab so we don't hijack arrow keys from the JSON editor / context view.
 	useEffect(() => {
-		if (
-			!logs ||
-			!onNavigateLog ||
-			logs.length === 0 ||
-			selectedView !== VIEW_TYPES.OVERVIEW
-		) {
-			return;
+		if (selectedView !== VIEW_TYPES.OVERVIEW) {
+			return undefined;
 		}
 
 		const handleKeyDown = (e: KeyboardEvent): void => {
-			const currentIndex = logs.findIndex((l) => l.id === log.id);
-			if (currentIndex === -1) {
-				return;
-			}
-
 			if (e.key === 'ArrowUp') {
 				e.preventDefault();
 				e.stopPropagation();
-				// Navigate to previous log
-				if (currentIndex > 0) {
-					const prevLog = logs[currentIndex - 1];
-					onNavigateLog(prevLog);
-					// Trigger scroll to the log element
-					if (onScrollToLog) {
-						onScrollToLog(prevLog.id);
-					}
-				}
+				goToPrev();
 			} else if (e.key === 'ArrowDown') {
 				e.preventDefault();
 				e.stopPropagation();
-				// Navigate to next log
-				if (currentIndex < logs.length - 1) {
-					const nextLog = logs[currentIndex + 1];
-					onNavigateLog(nextLog);
-					// Trigger scroll to the log element
-					if (onScrollToLog) {
-						onScrollToLog(nextLog.id);
-					}
-				}
+				goToNext();
 			}
 		};
 
@@ -169,7 +156,7 @@ function LogDetailInner({
 		return (): void => {
 			document.removeEventListener('keydown', handleKeyDown);
 		};
-	}, [log.id, logs, onNavigateLog, onScrollToLog, selectedView]);
+	}, [selectedView, goToPrev, goToNext]);
 
 	const listQuery = useMemo(() => {
 		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) {
@@ -341,33 +328,6 @@ function LogDetailInner({
 	);
 
 	const logType = log?.attributes_string?.log_level || LogType.INFO;
-	const currentLogIndex = logs ? logs.findIndex((l) => l.id === log.id) : -1;
-	const isPrevDisabled =
-		!logs || !onNavigateLog || logs.length === 0 || currentLogIndex <= 0;
-	const isNextDisabled =
-		!logs ||
-		!onNavigateLog ||
-		logs.length === 0 ||
-		currentLogIndex === logs.length - 1;
-
-	type HandleNavigateLogParams = {
-		direction: 'next' | 'previous';
-	};
-
-	const handleNavigateLog = ({ direction }: HandleNavigateLogParams): void => {
-		if (!logs || !onNavigateLog || currentLogIndex === -1) {
-			return;
-		}
-		if (direction === 'previous' && !isPrevDisabled) {
-			const prevLog = logs[currentLogIndex - 1];
-			onNavigateLog(prevLog);
-			onScrollToLog?.(prevLog.id);
-		} else if (direction === 'next' && !isNextDisabled) {
-			const nextLog = logs[currentLogIndex + 1];
-			onNavigateLog(nextLog);
-			onScrollToLog?.(nextLog.id);
-		}
-	};
 
 	return (
 		<Drawer
@@ -375,57 +335,69 @@ function LogDetailInner({
 			mask={false}
 			maskClosable={false}
 			title={
-				<div className="log-detail-drawer__title" data-log-detail-ignore="true">
-					<div className="log-detail-drawer__title-left">
-						<Divider type="vertical" className={cx('log-type-indicator', LogType)} />
-						<Typography.Text className="title">Log details</Typography.Text>
-					</div>
-					<div className="log-detail-drawer__title-right">
-						<div className="log-arrows">
-							<Tooltip
-								title={isPrevDisabled ? '' : 'Move to previous log'}
-								placement="top"
-								mouseLeaveDelay={0}
-							>
-								<Button
-									variant="outlined"
-									color="secondary"
-									prefix={<ChevronUp size={14} />}
-									className="log-arrow-btn log-arrow-btn-up"
-									disabled={isPrevDisabled}
-									onClick={(): void => handleNavigateLog({ direction: 'previous' })}
-								/>
-							</Tooltip>
-							<Tooltip
-								title={isNextDisabled ? '' : 'Move to next log'}
-								placement="top"
-								mouseLeaveDelay={0}
-							>
-								<Button
-									variant="outlined"
-									color="secondary"
-									prefix={<ChevronDown size={14} />}
-									className="log-arrow-btn log-arrow-btn-down"
-									disabled={isNextDisabled}
-									onClick={(): void => handleNavigateLog({ direction: 'next' })}
-								/>
-							</Tooltip>
+				isLogDetailsV2 ? (
+					<LogDetailsHeader
+						log={log}
+						onNavigatePrev={goToPrev}
+						onNavigateNext={goToNext}
+						isPrevDisabled={isPrevDisabled}
+						isNextDisabled={isNextDisabled}
+						showOpenInExplorer={showOpenInExplorerBtn}
+						onOpenInExplorer={handleOpenInExplorer}
+					/>
+				) : (
+					<div className="log-detail-drawer__title" data-log-detail-ignore="true">
+						<div className="log-detail-drawer__title-left">
+							<Divider type="vertical" className={cx('log-type-indicator', LogType)} />
+							<Typography.Text className="title">Log details</Typography.Text>
 						</div>
-						{showOpenInExplorerBtn && (
-							<div>
-								<Button
-									variant="outlined"
-									color="secondary"
-									prefix={<Compass size={16} />}
-									className="open-in-explorer-btn"
-									onClick={handleOpenInExplorer}
+						<div className="log-detail-drawer__title-right">
+							<div className="log-arrows">
+								<Tooltip
+									title={isPrevDisabled ? '' : 'Move to previous log'}
+									placement="top"
+									mouseLeaveDelay={0}
 								>
-									Open in Explorer
-								</Button>
+									<Button
+										variant="outlined"
+										color="secondary"
+										prefix={<ChevronUp size={14} />}
+										className="log-arrow-btn log-arrow-btn-up"
+										disabled={isPrevDisabled}
+										onClick={goToPrev}
+									/>
+								</Tooltip>
+								<Tooltip
+									title={isNextDisabled ? '' : 'Move to next log'}
+									placement="top"
+									mouseLeaveDelay={0}
+								>
+									<Button
+										variant="outlined"
+										color="secondary"
+										prefix={<ChevronDown size={14} />}
+										className="log-arrow-btn log-arrow-btn-down"
+										disabled={isNextDisabled}
+										onClick={goToNext}
+									/>
+								</Tooltip>
 							</div>
-						)}
+							{showOpenInExplorerBtn && (
+								<div>
+									<Button
+										variant="outlined"
+										color="secondary"
+										prefix={<Compass size={16} />}
+										className="open-in-explorer-btn"
+										onClick={handleOpenInExplorer}
+									>
+										Open in Explorer
+									</Button>
+								</div>
+							)}
+						</div>
 					</div>
-				</div>
+				)
 			}
 			placement="right"
 			onClose={drawerCloseHandler}
@@ -440,7 +412,15 @@ function LogDetailInner({
 		>
 			<div className="log-detail-drawer__content" data-log-detail-ignore="true">
 				<div className="log-detail-drawer__log">
-					<Divider type="vertical" className={cx('log-type-indicator', logType)} />
+					{isLogDetailsV2 ? (
+						<LogStateIndicator
+							severityText={log.severity_text}
+							severityNumber={log.severity_number}
+							fontSize={options?.fontSize ?? FontSize.MEDIUM}
+						/>
+					) : (
+						<Divider type="vertical" className={cx('log-type-indicator', logType)} />
+					)}
 					<Tooltip
 						title={removeEscapeCharacters(logBody)}
 						placement="left"
@@ -516,22 +496,25 @@ function LogDetailInner({
 							</Tooltip>
 						)}
 
-						<Tooltip
-							title={selectedView === VIEW_TYPES.JSON ? 'Copy JSON' : 'Copy Log Link'}
-							placement="topLeft"
-							aria-label={
-								selectedView === VIEW_TYPES.JSON ? 'Copy JSON' : 'Copy Log Link'
-							}
-							mouseLeaveDelay={0}
-						>
-							<Button
-								variant="link"
-								color="secondary"
-								size="sm"
-								prefix={<Copy size={12} />}
-								onClick={selectedView === VIEW_TYPES.JSON ? handleJSONCopy : onLogCopy}
-							/>
-						</Tooltip>
+						{/* V2 moves copy actions into the header ⋯ menu */}
+						{!isLogDetailsV2 && (
+							<Tooltip
+								title={selectedView === VIEW_TYPES.JSON ? 'Copy JSON' : 'Copy Log Link'}
+								placement="topLeft"
+								aria-label={
+									selectedView === VIEW_TYPES.JSON ? 'Copy JSON' : 'Copy Log Link'
+								}
+								mouseLeaveDelay={0}
+							>
+								<Button
+									variant="link"
+									color="secondary"
+									size="sm"
+									prefix={<Copy size={12} />}
+									onClick={selectedView === VIEW_TYPES.JSON ? handleJSONCopy : onLogCopy}
+								/>
+							</Tooltip>
+						)}
 					</div>
 				</div>
 				{isFilterVisible && contextQuery?.builder.queryData[0] && (
