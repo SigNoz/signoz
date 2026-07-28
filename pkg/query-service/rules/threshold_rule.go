@@ -100,27 +100,12 @@ func (r *ThresholdRule) prepareParamsForLogs(ctx context.Context, ts time.Time, 
 		return nil
 	}
 
-	var q qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
-
-	for _, query := range r.ruleCondition.CompositeQuery.Queries {
-		if query.Type == qbtypes.QueryTypeBuilder {
-			switch spec := query.Spec.(type) {
-			case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
-				q = spec
-			}
-		}
-	}
-
-	if q.Signal != telemetrytypes.SignalLogs {
+	filterExpr, groupBy, found := contextlinks.BuilderQueryForSignal(r.ruleCondition.CompositeQuery.Queries, telemetrytypes.SignalLogs)
+	if !found {
 		return nil
 	}
 
-	filterExpr := ""
-	if q.Filter != nil && q.Filter.Expression != "" {
-		filterExpr = q.Filter.Expression
-	}
-
-	whereClause := contextlinks.PrepareFilterExpression(lbls.Map(), filterExpr, q.GroupBy)
+	whereClause := contextlinks.PrepareFilterExpression(lbls.Map(), filterExpr, groupBy)
 
 	return contextlinks.PrepareParamsForLogsV5(start, end, whereClause)
 }
@@ -140,27 +125,12 @@ func (r *ThresholdRule) prepareParamsForTraces(ctx context.Context, ts time.Time
 		return nil
 	}
 
-	var q qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]
-
-	for _, query := range r.ruleCondition.CompositeQuery.Queries {
-		if query.Type == qbtypes.QueryTypeBuilder {
-			switch spec := query.Spec.(type) {
-			case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
-				q = spec
-			}
-		}
-	}
-
-	if q.Signal != telemetrytypes.SignalTraces {
+	filterExpr, groupBy, found := contextlinks.BuilderQueryForSignal(r.ruleCondition.CompositeQuery.Queries, telemetrytypes.SignalTraces)
+	if !found {
 		return nil
 	}
 
-	filterExpr := ""
-	if q.Filter != nil && q.Filter.Expression != "" {
-		filterExpr = q.Filter.Expression
-	}
-
-	whereClause := contextlinks.PrepareFilterExpression(lbls.Map(), filterExpr, q.GroupBy)
+	whereClause := contextlinks.PrepareFilterExpression(lbls.Map(), filterExpr, groupBy)
 
 	return contextlinks.PrepareParamsForTracesV5(start, end, whereClause)
 }

@@ -180,6 +180,11 @@ func placedWidgetIDs(data StorableDashboardData) map[string]bool {
 		for _, e := range layout {
 			if m, ok := e.(map[string]any); ok {
 				if i, ok := m["i"].(string); ok && i != "" {
+					// A zero-width placement doesn't render in the v1 UI; treat it as
+					// unplaced so the widget is dropped rather than migrated invisibly.
+					if w, ok := m["w"].(float64); ok && w <= 0 {
+						continue
+					}
 					ids[i] = true
 				}
 			}
@@ -319,6 +324,9 @@ func compactGridItemsVertically(items []dashboard.GridItem) {
 		}
 		if l.X < 0 {
 			l.X = 0
+		}
+		if l.X+l.Width > gridColumnCount { // still overflows (wider than the grid) → clamp width so x+width = cols
+			l.Width = gridColumnCount - l.X
 		}
 		if l.Y < 0 {
 			l.Y = 0
