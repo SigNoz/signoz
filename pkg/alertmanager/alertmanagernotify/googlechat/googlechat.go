@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"strings"
 
@@ -47,7 +48,7 @@ func (n *Notifier) Notify(ctx context.Context, alerts ...*types.Alert) (bool, er
 	}
 	text := c.title
 	if c.body != "" {
-		text = c.title + "\n" + c.body
+		text = fmt.Sprintf("%s\n%s", c.title, c.body)
 	}
 
 	var buf bytes.Buffer
