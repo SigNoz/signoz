@@ -48,7 +48,7 @@ def test_metrics_group_by_context_collapse(
                 querier.build_scalar_query(
                     name="A",
                     signal="metrics",
-                    aggregations=[querier.build_metrics_aggregation(METRIC, "latest", "sum", "unspecified")],
+                    aggregations=[querier.build_metrics_aggregation(METRIC, "latest", "sum", "unspecified", reduce_to="last")],
                     group_by=[querier.build_group_by_field("region", "string", ctx)],
                 )
             ],
@@ -96,7 +96,7 @@ def test_metrics_filter_label_context(
                 querier.build_scalar_query(
                     name="A",
                     signal="metrics",
-                    aggregations=[querier.build_metrics_aggregation(METRIC, "latest", "sum", "unspecified")],
+                    aggregations=[querier.build_metrics_aggregation(METRIC, "latest", "sum", "unspecified", reduce_to="last")],
                     group_by=[querier.build_group_by_field("region", "string", "")],
                     filter_expression=expr,
                 )
@@ -116,7 +116,7 @@ def test_metrics_filter_label_context(
             querier.build_scalar_query(
                 name="A",
                 signal="metrics",
-                aggregations=[querier.build_metrics_aggregation(METRIC, "latest", "sum", "unspecified")],
+                aggregations=[querier.build_metrics_aggregation(METRIC, "latest", "sum", "unspecified", reduce_to="last")],
                 filter_expression='resource.region = "us"',
             )
         ],
@@ -157,7 +157,7 @@ def test_metrics_group_by_unknown_label(
             querier.build_scalar_query(
                 name="A",
                 signal="metrics",
-                aggregations=[querier.build_metrics_aggregation(METRIC, "latest", "sum", "unspecified")],
+                aggregations=[querier.build_metrics_aggregation(METRIC, "latest", "sum", "unspecified", reduce_to="last")],
                 group_by=[querier.build_group_by_field("does_not_exist_label", "string", "attribute")],
             )
         ],
@@ -201,7 +201,7 @@ def test_metrics_filter_unknown_label_matches_nothing(
             querier.build_scalar_query(
                 name="A",
                 signal="metrics",
-                aggregations=[querier.build_metrics_aggregation(METRIC, "latest", "sum", "unspecified")],
+                aggregations=[querier.build_metrics_aggregation(METRIC, "latest", "sum", "unspecified", reduce_to="last")],
                 filter_expression='does_not_exist_label = "x"',
             )
         ],
@@ -247,7 +247,7 @@ def test_metrics_full_text_filter_does_not_error(
                 querier.build_scalar_query(
                     name="A",
                     signal="metrics",
-                    aggregations=[querier.build_metrics_aggregation(METRIC, "latest", "sum", "unspecified")],
+                    aggregations=[querier.build_metrics_aggregation(METRIC, "latest", "sum", "unspecified", reduce_to="last")],
                     filter_expression=expr,
                 )
             ],

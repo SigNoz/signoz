@@ -10,28 +10,29 @@ from fixtures.metrics import Metrics
 from fixtures.types import Operation, SigNoz
 
 BASE_URL = "/api/v2/dashboards"
-# v1 list returns every dashboard regardless of schema. v2 list converts each row
-# to the perses schema and 501s if any stored dashboard isn't perses-schema, so
-# listing for cleanup against a shared DB must go through v1.
-V1_BASE_URL = "/api/v1/dashboards"
+# MaxListLimit caps a single list page, so wiping a shared DB has to drain pages
+# until the list comes back empty.
+MAX_LIST_LIMIT = 200
 
 
 def _wipe_all_dashboards(signoz: SigNoz, token: str) -> None:
-    response = requests.get(
-        signoz.self.host_configs["8080"].get(V1_BASE_URL),
-        headers={"Authorization": f"Bearer {token}"},
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-    for dashboard in response.json()["data"]:
-        metadata = (dashboard.get("data") or {}).get("metadata") or {}
-        base = BASE_URL if metadata.get("schemaVersion") == "v6" else V1_BASE_URL
-        del_res = requests.delete(
-            signoz.self.host_configs["8080"].get(f"{base}/{dashboard['id']}"),
+    while True:
+        response = requests.get(
+            signoz.self.host_configs["8080"].get(f"{BASE_URL}?limit={MAX_LIST_LIMIT}"),
             headers={"Authorization": f"Bearer {token}"},
             timeout=5,
         )
-        assert del_res.status_code == HTTPStatus.NO_CONTENT, del_res.text
+        assert response.status_code == HTTPStatus.OK, response.text
+        dashboards = response.json()["data"]["dashboards"]
+        if not dashboards:
+            return
+        for dashboard in dashboards:
+            del_res = requests.delete(
+                signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard['id']}"),
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=5,
+            )
+            assert del_res.status_code == HTTPStatus.NO_CONTENT, del_res.text
 
 
 # ─── failure cases (create no dashboards) ────────────────────────────────────
@@ -113,7 +114,7 @@ def test_create_rejects_unknown_field(
         json={
             "schemaVersion": "v6",
             "name": "rejects-unknown",
-            "spec": {"display": {"name": "Rejects Unknown"}},
+            "spec": {"display": {"name": "Rejects Unknown"}, "links": []},
             "tags": [],
             "unknownfield": "boom",
         },
@@ -196,6 +197,70 @@ def test_create_rejects_long_display_name(
     assert response.json()["error"]["code"] == "dashboard_invalid_input"
     assert "spec.display.name: dashboard name must be at most 128 characters" in response.json()["error"]["message"]
 
+    # A grid layout title has its own, larger bound of 256 characters; one over
+    # must be rejected.
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={
+            "schemaVersion": "v6",
+            "name": "long-layout-title",
+            "spec": {
+                "display": {"name": "Long Layout Title"},
+                "links": [],
+                "layouts": [{"kind": "Grid", "spec": {"display": {"title": "x" * 257}, "items": []}}],
+            },
+        },
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.json()["error"]["code"] == "dashboard_invalid_input"
+    assert "spec.layouts[0].spec.display.title: layout name must be at most 256 characters" in response.json()["error"]["message"]
+
+
+def test_create_rejects_all_value_without_multiselect(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    # A list variable cannot offer an "all" value unless it also allows selecting
+    # multiple values — allowAllValue without allowMultiple must be rejected.
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={
+            "schemaVersion": "v6",
+            "name": "all-without-multi",
+            "spec": {
+                "display": {"name": "All Without Multi"},
+                "links": [],
+                "variables": [
+                    {
+                        "kind": "ListVariable",
+                        "spec": {
+                            "name": "svc",
+                            "allowAllValue": True,
+                            "allowMultiple": False,
+                            "plugin": {
+                                "kind": "signoz/DynamicVariable",
+                                "spec": {"name": "service.name", "signal": "metrics"},
+                            },
+                        },
+                    }
+                ],
+            },
+            "tags": [],
+        },
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.json()["error"]["code"] == "dashboard_invalid_input"
+    assert "allowAllValue cannot be set" in response.json()["error"]["message"]
+
 
 def test_create_rejects_invalid_grid_layout(
     signoz: SigNoz,
@@ -209,6 +274,7 @@ def test_create_rejects_invalid_grid_layout(
             "kind": "Panel",
             "spec": {
                 "display": {"name": name},
+                "links": [],
                 "plugin": {"kind": "signoz/TablePanel", "spec": {}},
                 "queries": [
                     {
@@ -249,6 +315,7 @@ def test_create_rejects_invalid_grid_layout(
                         },
                     }
                 ],
+                "links": [],
             },
             "tags": [],
         },
@@ -280,6 +347,7 @@ def test_create_rejects_invalid_grid_layout(
                         },
                     }
                 ],
+                "links": [],
             },
             "tags": [],
         },
@@ -305,6 +373,7 @@ def test_create_rejects_invalid_grid_layout(
                         "spec": {"items": [{"x": 0, "y": 0, "width": 1, "height": 1} for _ in range(101)]},
                     }
                 ],
+                "links": [],
             },
             "tags": [],
         },
@@ -410,7 +479,7 @@ def test_update_missing_dashboard_returns_not_found(
         json={
             "schemaVersion": "v6",
             "name": "missing-dashboard",
-            "spec": {"display": {"name": "Missing Dashboard"}},
+            "spec": {"display": {"name": "Missing Dashboard"}, "links": []},
             "tags": [],
         },
         headers={"Authorization": f"Bearer {token}"},
@@ -466,6 +535,77 @@ def test_pin_missing_dashboard_returns_not_found(
     )
 
     assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+def test_create_migrates_legacy_v1_dashboard(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    widget_id = str(uuid.uuid4())
+    v1_dashboard = {
+        "title": "Legacy Import",
+        "description": "posted as-is by the import flow",
+        "version": "v5",
+        "layout": [{"h": 6, "i": widget_id, "moved": False, "static": False, "w": 6, "x": 0, "y": 0}],
+        "uploadedGrafana": False,
+        "widgets": [
+            {
+                "description": "",
+                "id": widget_id,
+                "panelTypes": "graph",
+                "title": "Request rate",
+                "query": {
+                    "builder": {
+                        "queryData": [
+                            {
+                                "dataSource": "metrics",
+                                "disabled": False,
+                                "expression": "A",
+                                "queryName": "A",
+                                "stepInterval": 60,
+                                "aggregations": [
+                                    {
+                                        "metricName": "signoz_calls_total",
+                                        "temporality": None,
+                                        "timeAggregation": "rate",
+                                        "spaceAggregation": "sum",
+                                        "reduceTo": "avg",
+                                    }
+                                ],
+                                "filter": {"expression": ""},
+                            }
+                        ],
+                        "queryFormulas": [],
+                    },
+                    "clickhouse_sql": [{"disabled": False, "legend": "", "name": "A", "query": ""}],
+                    "promql": [{"disabled": False, "legend": "", "name": "A", "query": ""}],
+                    "queryType": "builder",
+                },
+            }
+        ],
+    }
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json=v1_dashboard,
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+
+    dashboard = response.json()["data"]
+    assert dashboard["spec"]["display"]["name"] == "Legacy Import"
+    assert len(dashboard["spec"]["panels"]) == 1, dashboard["spec"]["panels"]
+
+    delete_response = requests.delete(
+        signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard['id']}"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert delete_response.status_code == HTTPStatus.NO_CONTENT, delete_response.text
 
 
 # ─── lifecycle ───────────────────────────────────────────────────────────────
@@ -535,7 +675,7 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
             json={
                 "schemaVersion": "v6",
                 "name": name,
-                "spec": {"display": {"name": display}},
+                "spec": {"display": {"name": display}, "links": []},
                 "tags": tags,
             },
             headers={"Authorization": f"Bearer {token}"},
@@ -570,7 +710,11 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
     assert alpha["schemaVersion"] == "v6"
     assert alpha["source"] == "user"
     assert alpha["locked"] is False
-    assert {"key": "team", "value": "pulse"} in alpha["tags"]
+    # tags round-trip in the order sent — no reordering, no drift
+    assert alpha["tags"] == [
+        {"key": "team", "value": "pulse"},
+        {"key": "env", "value": "prod"},
+    ]
 
     # ── stage 3: list everything ─────────────────────────────────────────────
     response = requests.get(
@@ -590,6 +734,13 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
         "Epsilon Metrics",
         "Zeta Overview",
     }
+    # per-dashboard tags also round-trip in the order sent
+    delta = next(d for d in body["data"]["dashboards"] if d["spec"]["display"]["name"] == "Delta Storage")
+    assert delta["tags"] == [
+        {"key": "team", "value": "storage"},
+        {"key": "env", "value": "dev"},
+        {"key": "tier", "value": "critical"},
+    ]
     # top-level tags = org-wide distinct tag set, sorted case-insensitively
     # by (key, value). Asserting the exact list (not a set) locks in the sort.
     assert body["data"]["tags"] == [
@@ -886,7 +1037,7 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
     update_body = {
         "schemaVersion": "v6",
         "name": "lc-alpha",
-        "spec": {"display": {"name": "Alpha Overview"}},
+        "spec": {"display": {"name": "Alpha Overview"}, "links": []},
         "tags": [
             {"key": "team", "value": "pulse"},
             {"key": "env", "value": "prod"},
@@ -930,7 +1081,7 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
     beta_body = {
         "schemaVersion": "v6",
         "name": "lc-beta",
-        "spec": {"display": {"name": "Beta Overview"}},
+        "spec": {"display": {"name": "Beta Overview"}, "links": []},
         "tags": [{"key": "team", "value": "pulse"}, {"key": "env", "value": "dev"}],
     }
     response = requests.put(
@@ -1013,6 +1164,99 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
     assert response.json()["data"]["id"] == clone["id"]
 
 
+def test_dashboard_v2_tag_order_round_trips(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    """Tags must round-trip in the order the client sent them across every write
+    path — create, update, patch — so GitOps/Terraform state never drifts."""
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    def tags_of(response: requests.Response) -> list[dict]:
+        return response.json()["data"]["tags"]
+
+    # ── create with tags in a deliberate order; "env" repeats with two values ─
+    created_order = [
+        {"key": "team", "value": "pulse"},
+        {"key": "env", "value": "prod"},
+        {"key": "env", "value": "staging"},
+        {"key": "tier", "value": "critical"},
+    ]
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={"schemaVersion": "v6", "name": "tag-order", "spec": {"display": {"name": "Tag Order"}, "links": []}, "tags": created_order},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    dashboard_id = response.json()["data"]["id"]
+    assert tags_of(response) == created_order
+
+    # ── get echoes the same order ────────────────────────────────────────────
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard_id}"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert tags_of(response) == created_order
+
+    # ── update reordered; the two "env" values land at non-adjacent positions ─
+    reordered = [
+        {"key": "tier", "value": "critical"},
+        {"key": "env", "value": "staging"},
+        {"key": "team", "value": "pulse"},
+        {"key": "env", "value": "prod"},
+    ]
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard_id}"),
+        json={"schemaVersion": "v6", "name": "tag-order", "spec": {"display": {"name": "Tag Order"}, "links": []}, "tags": reordered},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert tags_of(response) == reordered
+
+    # ── patch appends a new tag (a third "env" value); it lands at the end ────
+    response = requests.patch(
+        signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard_id}"),
+        json=[{"op": "add", "path": "/tags/-", "value": {"key": "env", "value": "dev"}}],
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert tags_of(response) == reordered + [{"key": "env", "value": "dev"}]
+
+    # ── update reorders everything and adds another new tag → all in the new order ─
+    # "env" now carries three interleaved values
+    new_order = [
+        {"key": "env", "value": "prod"},
+        {"key": "team", "value": "pulse"},
+        {"key": "env", "value": "dev"},
+        {"key": "tier", "value": "critical"},
+        {"key": "env", "value": "staging"},
+        {"key": "team", "value": "storage"},
+    ]
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard_id}"),
+        json={"schemaVersion": "v6", "name": "tag-order", "spec": {"display": {"name": "Tag Order"}, "links": []}, "tags": new_order},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert tags_of(response) == new_order
+
+    # ── and the final order persists on a fresh read ─────────────────────────
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard_id}"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert tags_of(response) == new_order
+
+
 def test_dashboard_v2_pin_limit(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
@@ -1033,7 +1277,7 @@ def test_dashboard_v2_pin_limit(
             json={
                 "schemaVersion": "v6",
                 "name": f"pl-{i}",
-                "spec": {"display": {"name": f"Pin Limit {i}"}},
+                "spec": {"display": {"name": f"Pin Limit {i}"}, "links": []},
                 "tags": [],
             },
             headers={"Authorization": f"Bearer {token}"},
@@ -1131,7 +1375,7 @@ def test_dashboard_v2_like_escaping(
             json={
                 "schemaVersion": "v6",
                 "name": name,
-                "spec": {"display": {"name": display}},
+                "spec": {"display": {"name": display}, "links": []},
                 "tags": [],
             },
             headers={"Authorization": f"Bearer {token}"},
@@ -1222,11 +1466,13 @@ def test_dashboard_v2_get_by_metric_name(
             "name": "by-metric-builder",
             "spec": {
                 "display": {"name": "by-metric-builder"},
+                "links": [],
                 "panels": {
                     "p-builder": {
                         "kind": "Panel",
                         "spec": {
                             "display": {"name": "D1 builder target"},
+                            "links": [],
                             "plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
                             "queries": [
                                 {
@@ -1271,11 +1517,13 @@ def test_dashboard_v2_get_by_metric_name(
             "name": "by-metric-ch-promql",
             "spec": {
                 "display": {"name": "by-metric-ch-promql"},
+                "links": [],
                 "panels": {
                     "p-ch": {
                         "kind": "Panel",
                         "spec": {
                             "display": {"name": "D2 clickhouse target"},
+                            "links": [],
                             "plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
                             "queries": [
                                 {
@@ -1297,6 +1545,7 @@ def test_dashboard_v2_get_by_metric_name(
                         "kind": "Panel",
                         "spec": {
                             "display": {"name": "D2 promql target"},
+                            "links": [],
                             "plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
                             "queries": [
                                 {
@@ -1333,11 +1582,13 @@ def test_dashboard_v2_get_by_metric_name(
             "name": "by-metric-promql",
             "spec": {
                 "display": {"name": "by-metric-promql"},
+                "links": [],
                 "panels": {
                     "p-promql": {
                         "kind": "Panel",
                         "spec": {
                             "display": {"name": "D3 promql target"},
+                            "links": [],
                             "plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
                             "queries": [
                                 {
@@ -1376,11 +1627,13 @@ def test_dashboard_v2_get_by_metric_name(
             "name": "by-metric-false-positive",
             "spec": {
                 "display": {"name": "by-metric-false-positive"},
+                "links": [],
                 "panels": {
                     "p-builder": {
                         "kind": "Panel",
                         "spec": {
                             "display": {"name": f"{target_metric} builder"},
+                            "links": [],
                             "plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
                             "queries": [
                                 {
@@ -1409,6 +1662,7 @@ def test_dashboard_v2_get_by_metric_name(
                         "kind": "Panel",
                         "spec": {
                             "display": {"name": f"{target_metric} clickhouse"},
+                            "links": [],
                             "plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
                             "queries": [
                                 {
@@ -1430,6 +1684,7 @@ def test_dashboard_v2_get_by_metric_name(
                         "kind": "Panel",
                         "spec": {
                             "display": {"name": f"{target_metric} promql"},
+                            "links": [],
                             "plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
                             "queries": [
                                 {
@@ -1503,11 +1758,13 @@ def test_dashboard_v2_rejects_comma_separated_aggregation(
             "tags": [],
             "spec": {
                 "display": {"name": "Aggregation"},
+                "links": [],
                 "panels": {
                     "p-agg": {
                         "kind": "Panel",
                         "spec": {
                             "display": {"name": "agg"},
+                            "links": [],
                             "plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
                             "queries": [
                                 {
@@ -1587,8 +1844,8 @@ def test_dashboard_v2_roundtrip_preserves_zero_values(
 
     dashboard = {
         "schemaVersion": "v6",
-        # image (dashboard-level) and spec duration/refreshInterval/datasources
-        # each round-trip their zero value ("" / {}) rather than being dropped.
+        # image (dashboard-level) and spec duration/refreshInterval each
+        # round-trip their zero value ("") rather than being dropped.
         "image": "",
         "name": "roundtrip-zero-values",
         "tags": [],
@@ -1596,7 +1853,6 @@ def test_dashboard_v2_roundtrip_preserves_zero_values(
             "display": {"name": "Roundtrip Zero Values", "description": ""},
             "duration": "",
             "refreshInterval": "",
-            "datasources": {},
             "variables": [
                 # TextVariable: constant false must echo back (not be dropped).
                 {"kind": "TextVariable", "spec": {"display": {"name": "tv"}, "value": "x", "constant": False, "name": "tv"}},
@@ -1659,6 +1915,7 @@ def test_dashboard_v2_roundtrip_preserves_zero_values(
                     "kind": "Panel",
                     "spec": {
                         "display": {"name": "timeseries"},
+                        "links": [],
                         "plugin": {
                             "kind": "signoz/TimeSeriesPanel",
                             "spec": {"thresholds": [{"value": 0, "color": "#c2780b"}]},
@@ -1700,6 +1957,7 @@ def test_dashboard_v2_roundtrip_preserves_zero_values(
                     "kind": "Panel",
                     "spec": {
                         "display": {"name": "clickhouse"},
+                        "links": [],
                         "plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
                         "queries": [
                             {
@@ -1780,7 +2038,6 @@ def test_dashboard_v2_roundtrip_preserves_zero_values(
             ("dashboard image empty", result_data["image"], ""),
             ("spec duration empty", result_spec["duration"], ""),
             ("spec refreshInterval empty", result_spec["refreshInterval"], ""),
-            ("spec empty datasources round-trip", result_spec["datasources"], {}),
         ]
         for description, actual, expected in roundtrip_cases:
             assert actual == expected, description
@@ -1795,11 +2052,10 @@ def test_dashboard_v2_roundtrip_preserves_zero_values(
         for description, spec, key in absent_cases:
             assert key not in spec, description
 
-        # A panel with no links comes back with no links value (null or absent);
-        # either is fine for a typed client (an unset optional attribute stays
-        # unset), so this is not a drift. The explicit [] case above is what the
-        # fix guarantees round-trips.
-        assert panels["timeseries"]["spec"].get("links") is None, "unset panel links stays unset"
+        # links is optional: an explicit [] round-trips as [], while an omitted
+        # links reads back as null.
+        assert panels["timeseries"]["spec"]["links"] == [], "explicit panel links round-trip as []"
+        assert panels["promql"]["spec"]["links"] is None, "omitted panel links read back as null"
     finally:
         requests.delete(
             signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard_id}"),
@@ -1851,6 +2107,7 @@ def test_dashboard_v2_omitted_enums_apply_defaults(
                                 },
                             }
                         ],
+                        "links": [],
                     },
                 },
                 "num": {
@@ -1872,9 +2129,11 @@ def test_dashboard_v2_omitted_enums_apply_defaults(
                                 },
                             }
                         ],
+                        "links": [],
                     },
                 },
             },
+            "links": [],
         },
     }
 

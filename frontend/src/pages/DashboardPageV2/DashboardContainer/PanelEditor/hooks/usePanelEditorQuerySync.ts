@@ -79,6 +79,11 @@ export function usePanelEditorQuerySync({
 	// in-editor edit in the URL survives a refresh / browser Back-Forward.
 	useShareBuilderUrl({ defaultValue: seedQuery });
 
+	// Frozen seed for the new-panel dirty baseline: Stage & Run commits the live query
+	// into `draft.spec.queries`, so re-reading `seedQuery` would drift the baseline onto
+	// the run query and Save would re-disable right after a run.
+	const initialSeedRef = useRef(seedQuery);
+
 	// Commit the live query into the draft (what the preview fetches).
 	const commitQuery = useCallback(
 		(query: Query): boolean => {
@@ -152,16 +157,19 @@ export function usePanelEditorQuerySync({
 	// the V5 envelope level. Anchoring to `savedQueries` (not the builder-seed) keeps a
 	// handed-off / URL-restored edit reading as dirty; routing both sides through the same
 	// `fromPerses → toPerses` round-trip stops builder-added defaults (absent from an older
-	// stored query) reading an untouched panel as modified. New panel: fall back to seed.
+	// stored query) reading an untouched panel as modified. New panel: fall back to the
+	// frozen initial seed (see `initialSeedRef`).
 	const baselineEnvelopes = useMemo(
 		() =>
 			toQueryEnvelopes(
 				toPerses(
-					savedQueries ? fromPerses(savedQueries, panelType) : seedQuery,
+					savedQueries
+						? fromPerses(savedQueries, panelType)
+						: initialSeedRef.current,
 					panelType,
 				),
 			),
-		[savedQueries, seedQuery, panelType],
+		[savedQueries, panelType],
 	);
 	const isQueryDirty = useMemo(
 		() =>

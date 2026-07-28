@@ -6,6 +6,8 @@ export enum TraceDetailEvents {
 	AnalyticsPanelToggled = 'Trace Detail: Analytics panel toggled',
 	AnalyticsTabChanged = 'Trace Detail: Analytics tab changed',
 	SpanPanelTabChanged = 'Trace Detail: Span panel tab changed',
+	DownloadTriggered = 'Trace Detail: Download triggered',
+	DownloadCancelled = 'Trace Detail: Download cancelled',
 }
 
 export enum TraceDetailEventKeys {
@@ -32,6 +34,8 @@ export enum TraceDetailEventKeys {
 	Tab = 'tab',
 	// Span panel tab changed
 	SpanId = 'spanId',
+	// Download triggered (reuses TotalSpansCount for trace size)
+	Format = 'format',
 }
 
 export type TraceDetailView = 'v2' | 'v3';

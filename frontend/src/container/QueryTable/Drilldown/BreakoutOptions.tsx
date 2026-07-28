@@ -4,11 +4,11 @@ import { Input } from '@signozhq/ui/input';
 import { Skeleton } from 'antd';
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
-import { QUERY_BUILDER_KEY_TYPES } from 'constants/antlrQueryConstants';
 import useDebounce from 'hooks/useDebounce';
 import { ContextMenu } from 'periscope/components/ContextMenu';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { MetricAggregation } from 'types/api/v5/queryRange';
+import { fieldDataTypeToDataType } from 'utils/fieldDataType';
 
 import { BreakoutOptionsProps } from './contextConfig';
 import { BreakoutAttributeType } from './types';
@@ -80,7 +80,7 @@ function BreakoutOptions({
 			keyArray.forEach((keyData) => {
 				transformedOptions.push({
 					key: keyData.name,
-					dataType: keyData.fieldDataType as QUERY_BUILDER_KEY_TYPES,
+					dataType: fieldDataTypeToDataType(keyData.fieldDataType),
 					type: '',
 				});
 			});

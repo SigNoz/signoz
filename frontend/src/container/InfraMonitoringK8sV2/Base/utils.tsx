@@ -9,33 +9,14 @@ import {
 import { SelectedItemParams } from 'container/InfraMonitoringK8sV2/hooks';
 import { INFRA_MONITORING_ATTR_KEYS } from 'container/InfraMonitoringK8sV2/constants';
 
-const dotToUnder: Record<string, string> = {
-	'os.type': 'os_type',
-	'host.name': 'host_name',
-	'deployment.environment': 'deployment_environment',
-	'k8s.node.name': 'k8s_node_name',
-	'k8s.cluster.name': 'k8s_cluster_name',
-	'k8s.node.uid': 'k8s_node_uid',
-	'k8s.cronjob.name': 'k8s_cronjob_name',
-	'k8s.daemonset.name': 'k8s_daemonset_name',
-	'k8s.deployment.name': 'k8s_deployment_name',
-	'k8s.job.name': 'k8s_job_name',
-	'k8s.namespace.name': 'k8s_namespace_name',
-	'k8s.pod.name': 'k8s_pod_name',
-	'k8s.pod.uid': 'k8s_pod_uid',
-	'k8s.statefulset.name': 'k8s_statefulset_name',
-	'k8s.persistentvolumeclaim.name': 'k8s_persistentvolumeclaim_name',
-};
-
 export function getGroupedByMeta<
 	T extends { meta?: Record<string, string> | null },
 >(itemData: T, groupBy: string[]): Record<string, string> {
 	const result: Record<string, string> = {};
 	const meta = itemData.meta ?? {};
 
-	groupBy.forEach((rawKey) => {
-		const metaKey = (dotToUnder[rawKey] ?? rawKey) as keyof typeof meta;
-		result[rawKey] = (meta[metaKey] || meta[rawKey]) ?? '';
+	groupBy.forEach((key) => {
+		result[key] = meta[key] ?? '';
 	});
 
 	return result;
@@ -47,9 +28,8 @@ export function getGroupByEl<
 	const groupByValues: string[] = [];
 	const meta = itemData.meta ?? {};
 
-	groupBy.forEach((rawKey) => {
-		const metaKey = (dotToUnder[rawKey] ?? rawKey) as keyof typeof meta;
-		const value = meta[metaKey] || meta[rawKey] || '<no-value>';
+	groupBy.forEach((key) => {
+		const value = meta[key] || '<no-value>';
 
 		groupByValues.push(value);
 	});

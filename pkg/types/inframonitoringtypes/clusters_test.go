@@ -222,24 +222,6 @@ func TestPostableClusters_Validate(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "orderBy with pod_phase key is rejected",
-			req: &PostableClusters{
-				Start:  1000,
-				End:    2000,
-				Limit:  100,
-				Offset: 0,
-				OrderBy: &qbtypes.OrderBy{
-					Key: qbtypes.OrderByKey{
-						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: "pod_phase",
-						},
-					},
-					Direction: qbtypes.OrderDirectionDesc,
-				},
-			},
-			wantErr: true,
-		},
-		{
 			name: "orderBy with invalid key",
 			req: &PostableClusters{
 				Start:  1000,

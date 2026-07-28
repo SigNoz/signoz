@@ -65,7 +65,7 @@ def test_pods_accuracy(
     insert_metrics,
 ) -> None:
     """Seed 2 pods x 7 metrics; assert response shape/contract + exact per-pod
-    metric values, podAge, and podCountsByPhase against precomputed expected
+    metric values, podAge, and podCountsByStatus against precomputed expected
     output. Locks in numerical determinism."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     start_time = now - timedelta(minutes=10)
@@ -120,8 +120,6 @@ def test_pods_accuracy(
             "podMemory",
             "podMemoryRequest",
             "podMemoryLimit",
-            "podPhase",
-            "podCountsByPhase",
             "podStatus",
             "podCountsByStatus",
             "podRestarts",
@@ -129,11 +127,6 @@ def test_pods_accuracy(
             "meta",
         ):
             assert field in record, f"missing {field} in {record!r}"
-
-        # Five phase buckets always present, integer-typed.
-        for bucket in ("pending", "running", "succeeded", "failed", "unknown"):
-            assert bucket in record["podCountsByPhase"], f"missing phase bucket {bucket} in {record['podCountsByPhase']!r}"
-            assert isinstance(record["podCountsByPhase"][bucket], int)
 
         # All status buckets always present, integer-typed.
         for bucket in STATUS_BUCKETS:
@@ -152,8 +145,6 @@ def test_pods_accuracy(
             "podMemoryLimit",
         ):
             assert compare_values(record[field], exp[field], 1e-9), f"{pod_name}.{field}: got {record[field]}, expected {exp[field]}"
-        assert record["podPhase"] == exp["podPhase"]
-        assert record["podCountsByPhase"] == exp["podCountsByPhase"]
         assert record["podStatus"] == exp["podStatus"], f"{pod_name}.podStatus: got {record['podStatus']}, expected {exp['podStatus']}"
         assert record["podCountsByStatus"] == exp["podCountsByStatus"], f"{pod_name}.podCountsByStatus mismatch: got {record['podCountsByStatus']}"
         assert record["podRestarts"] == exp["podRestarts"], f"{pod_name}.podRestarts: got {record['podRestarts']}, expected {exp['podRestarts']}"
@@ -392,167 +383,6 @@ def test_pods_filter_invalid(
         assert any(err_substr in e["message"] for e in body["error"]["errors"]), f"{err_substr!r} not surfaced: {body['error']['errors']!r}"
 
 
-# Pod names per phase, as seeded in pods_phases.jsonl.
-_PHASE_TO_POD_NAME = {
-    "pending": "pend-p",
-    "running": "run-p",
-    "succeeded": "succ-p",
-    "failed": "fail-p",
-    "unknown": "unk-p",
-}
-
-
-@pytest.mark.parametrize(
-    "phase_name",
-    [
-        pytest.param("pending", id="pending"),
-        pytest.param("running", id="running"),
-        pytest.param("succeeded", id="succeeded"),
-        pytest.param("failed", id="failed"),
-        pytest.param("unknown", id="unknown"),
-    ],
-)
-def test_pods_phase_counts_list_mode(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-    phase_name: str,
-) -> None:
-    """List mode (no groupBy): each pod's record carries podPhase derived from its
-    latest k8s.pod.phase sample, AND podCountsByPhase has exactly that bucket=1
-    with all others 0. Verifies the phase-derivation logic at pods.go:82-94.
-    """
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        _load_pods_metrics(
-            "inframonitoring/pods_phases.jsonl",
-            base_time=now - timedelta(minutes=4),
-        )
-    )
-
-    pod_name = _PHASE_TO_POD_NAME[phase_name]
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(ENDPOINT),
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-            "filter": {"expression": f"k8s.pod.name = '{pod_name}'"},
-        },
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()["data"]
-    assert data["total"] == 1
-    rec = data["records"][0]
-    assert rec["meta"]["k8s.pod.name"] == pod_name
-    assert rec["podPhase"] == phase_name
-    assert rec["podCountsByPhase"][phase_name] == 1
-    for other in {"pending", "running", "succeeded", "failed", "unknown"} - {phase_name}:
-        assert rec["podCountsByPhase"][other] == 0, f"expected {other}=0 when latest phase={phase_name}, got {rec['podCountsByPhase']}"
-
-
-def test_pods_phase_counts_latest_wins(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-) -> None:
-    """Pod with k8s.pod.phase transitioning pending->running across the window:
-    podPhase reflects the LATEST sample (running) via argMax, not the earliest.
-    """
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        _load_pods_metrics(
-            "inframonitoring/pods_phases_transition.jsonl",
-            base_time=now - timedelta(minutes=8),
-        )
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(ENDPOINT),
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=10)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-        },
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()["data"]
-    assert data["total"] == 1
-    rec = data["records"][0]
-    assert rec["meta"]["k8s.pod.name"] == "trans-p"
-    assert rec["podPhase"] == "running"
-    assert rec["podCountsByPhase"]["running"] == 1
-    assert rec["podCountsByPhase"]["pending"] == 0
-
-
-def test_pods_phase_counts_grouped_mode(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-) -> None:
-    """groupBy=[k8s.namespace.name] aggregates phase counts across all pods in
-    the group. podPhase becomes "no_data" because no single pod identifies the
-    group, and per-pod fields (podUID, podAge, meta) clear out.
-    Dataset: ns-mixed contains 3 running + 2 failed + 1 pending.
-    See pods.go:80-95 (list-vs-grouped phase handling).
-    """
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        _load_pods_metrics(
-            "inframonitoring/pods_phases_grouped.jsonl",
-            base_time=now - timedelta(minutes=4),
-        )
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(ENDPOINT),
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-            "groupBy": [
-                {
-                    "name": "k8s.namespace.name",
-                    "fieldDataType": "string",
-                    "fieldContext": "resource",
-                }
-            ],
-        },
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()["data"]
-    assert data["total"] == 1
-    rec = data["records"][0]
-
-    # Grouped-mode invariants: per-pod fields cleared, but meta surfaces the
-    # groupBy key so the client can identify the group.
-    assert rec["podUID"] == ""
-    assert rec["podAge"] == -1
-    assert rec["podPhase"] == "no_data"
-    assert rec["meta"].get("k8s.namespace.name") == "ns-mixed"
-
-    # Aggregated phase counts across the namespace.
-    assert rec["podCountsByPhase"] == {
-        "pending": 1,
-        "running": 3,
-        "succeeded": 0,
-        "failed": 2,
-        "unknown": 0,
-    }
-
-
 @pytest.mark.parametrize(
     "group_key,expected_groups",
     [
@@ -569,7 +399,7 @@ def test_pods_groupby(
     expected_groups: set,
 ) -> None:
     """groupBy aggregates 2 pods per group into one record. Per-pod identity
-    fields (uid, age, phase) are cleared, but meta must surface the groupBy
+    fields (uid, age, status) are cleared, but meta must surface the groupBy
     key so the client can identify each group.
     """
     now = datetime.now(tz=UTC).replace(microsecond=0)
@@ -606,15 +436,11 @@ def test_pods_groupby(
     groups_seen = set()
     for rec in data["records"]:
         assert rec["podUID"] == ""
-        assert rec["podPhase"] == "no_data"
+        assert rec["podStatus"] == "no_data"
         assert rec["podAge"] == -1
         # meta surfaces the groupBy key so the client can identify the group.
         assert group_key in rec["meta"], rec["meta"]
         groups_seen.add(rec["meta"][group_key])
-        # Each group has 2 running pods.
-        assert rec["podCountsByPhase"]["running"] == 2
-        for other in ("pending", "succeeded", "failed", "unknown"):
-            assert rec["podCountsByPhase"][other] == 0
     assert groups_seen == expected_groups
 
 
@@ -743,11 +569,6 @@ def test_pods_orderby(  # pylint: disable=too-many-arguments,too-many-positional
             {"orderBy": {"key": {"name": "bogus_col"}, "direction": "desc"}},
             "invalid order by key",
             id="orderby_invalid_key",
-        ),
-        pytest.param(
-            {"orderBy": {"key": {"name": "phase"}, "direction": "desc"}},
-            "invalid order by key",
-            id="orderby_phase_rejected",
         ),
         pytest.param(
             {"orderBy": {"key": {"name": "cpu"}, "direction": "up"}},

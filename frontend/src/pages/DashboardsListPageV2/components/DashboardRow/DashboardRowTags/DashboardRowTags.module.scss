@@ -1,0 +1,23 @@
+.tags {
+	display: flex;
+	flex: 0 1 auto;
+	min-width: 0;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 8px;
+}
+
+.extraTags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	max-width: 320px;
+}
+
+/* Recolor via the tooltip's own CSS variables so the arrow (whose fill reads
+   --tooltip-background) turns black along with the content. */
+.extraTagsTooltip {
+	--tooltip-background: var(--bg-ink-500, #0b0c0e);
+	--tooltip-border-color: var(--bg-ink-500, #0b0c0e);
+}
