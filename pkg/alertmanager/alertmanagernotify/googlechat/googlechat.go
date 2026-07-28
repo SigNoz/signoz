@@ -62,7 +62,6 @@ func (n *Notifier) Notify(ctx context.Context, alerts ...*types.Alert) (bool, er
 	}
 	// One-time truncation to Google Chat's payload limit. Note: heavy JSON
 	// escaping could leave the payload marginally over after re-encoding;
-	// loop-until-under hardening is deferred (see design-doc §4.2).
 	if buf.Len() > maxMessageBytes {
 		over := buf.Len() - maxMessageBytes
 		target := max(len(text)-over, 0)
