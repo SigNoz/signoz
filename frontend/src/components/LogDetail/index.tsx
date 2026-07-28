@@ -64,6 +64,7 @@ import { isLogDetailsV2, RESOURCE_KEYS, VIEW_TYPES, VIEWS } from './constants';
 import { LogDetailInnerProps, LogDetailProps } from './LogDetail.interfaces';
 import LogDetailsHeader from './LogDetailsHeader/LogDetailsHeader';
 import { useLogNavigation } from './LogDetailsHeader/useLogNavigation';
+import LogHighlights from './LogHighlights/LogHighlights';
 
 import './LogDetails.styles.scss';
 
@@ -431,6 +432,8 @@ function LogDetailInner({
 
 					<div className="log-overflow-shadow">&nbsp;</div>
 				</div>
+
+				{isLogDetailsV2 && <LogHighlights log={log} />}
 
 				<div className="tabs-and-search">
 					<ToggleGroupSimple

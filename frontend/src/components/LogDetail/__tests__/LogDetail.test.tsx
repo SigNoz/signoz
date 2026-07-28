@@ -119,6 +119,45 @@ describe('LogDetail drawer — header (isLogDetailsV2)', () => {
 		expect(screen.queryByText('Open in Explorer')).not.toBeInTheDocument();
 	});
 
+	it('renders Highlights for fields present on the log, omitting absent ones', () => {
+		const logWithMeta = {
+			...mockLog,
+			severity_text: 'ERROR',
+			trace_id: 'trace-abc',
+			resources_string: {
+				'service.name': 'checkout',
+				'deployment.environment': 'production',
+			},
+		} as unknown as ILog;
+
+		renderDrawer({ log: logWithMeta });
+
+		const highlights = screen.getByTestId('log-details-highlights');
+		expect(highlights).toHaveTextContent('SEVERITY');
+		expect(highlights).toHaveTextContent('ERROR');
+		expect(highlights).toHaveTextContent('SERVICE');
+		expect(highlights).toHaveTextContent('checkout');
+		expect(highlights).toHaveTextContent('ENVIRONMENT');
+		expect(highlights).toHaveTextContent('production');
+		expect(highlights).toHaveTextContent('TRACE ID');
+		// Absent fields are omitted (no namespace / span id on this log).
+		expect(highlights).not.toHaveTextContent('NAMESPACE');
+		expect(highlights).not.toHaveTextContent('SPAN ID');
+	});
+
+	it('links the trace id highlight to the trace detail in a new tab', () => {
+		const logWithTrace = {
+			...mockLog,
+			trace_id: 'trace-abc',
+		} as unknown as ILog;
+
+		renderDrawer({ log: logWithTrace });
+
+		const link = screen.getByRole('link', { name: 'trace-abc' });
+		expect(link).toHaveAttribute('target', '_blank');
+		expect(link.getAttribute('href')).toContain('/trace/trace-abc');
+	});
+
 	it('navigates to the next / previous log with the Down / Up arrow keys', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		const logs = [makeLog('log-0'), makeLog('log-1'), makeLog('log-2')];
