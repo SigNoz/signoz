@@ -89,16 +89,21 @@ export function getMetricDetailsQuery(
 	groupBy?: string,
 	limit?: number,
 	isMonotonic?: boolean,
+	temporality?: MetrictypesTemporalityDTO,
 ): Query {
 	let timeAggregation;
 	let spaceAggregation;
 	let aggregateOperator;
-	const isNonMonotonicSum =
-		metricType === MetrictypesTypeDTO.sum && isMonotonic === false;
+	// Monotonicity carries meaning only for cumulative sums; delta sums are
+	// counters regardless of monotonicity.
+	const isNonMonotonicCumulativeSum =
+		metricType === MetrictypesTypeDTO.sum &&
+		isMonotonic === false &&
+		temporality === MetrictypesTemporalityDTO.cumulative;
 
 	switch (metricType) {
 		case MetrictypesTypeDTO.sum:
-			if (isNonMonotonicSum) {
+			if (isNonMonotonicCumulativeSum) {
 				timeAggregation = 'avg';
 				spaceAggregation = 'avg';
 				aggregateOperator = 'avg';
@@ -131,7 +136,7 @@ export function getMetricDetailsQuery(
 			break;
 	}
 
-	const attributeType = toAttributeType(metricType, isMonotonic);
+	const attributeType = toAttributeType(metricType, isMonotonic, temporality);
 
 	return {
 		...initialQueriesMap[DataSource.METRICS],

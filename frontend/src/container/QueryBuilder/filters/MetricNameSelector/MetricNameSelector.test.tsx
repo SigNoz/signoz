@@ -8,6 +8,7 @@ import {
 } from '@testing-library/react';
 import {
 	MetricsexplorertypesListMetricDTO,
+	MetrictypesTemporalityDTO,
 	MetrictypesTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { ENTITY_VERSION_V5 } from 'constants/app';
@@ -70,7 +71,7 @@ function makeMetric(
 		type: MetrictypesTypeDTO.sum,
 		isMonotonic: true,
 		description: '',
-		temporality: 'cumulative' as never,
+		temporality: MetrictypesTemporalityDTO.cumulative,
 		unit: '',
 		...overrides,
 	};
@@ -393,12 +394,13 @@ describe('selecting a metric type updates the aggregation options', () => {
 		]);
 	});
 
-	it('non-monotonic Sum metric is treated as Gauge', () => {
+	it('non-monotonic cumulative Sum metric is treated as Gauge', () => {
 		returnMetrics([
 			makeMetric({
 				metricName: 'active_connections',
 				type: MetrictypesTypeDTO.sum,
 				isMonotonic: false,
+				temporality: MetrictypesTemporalityDTO.cumulative,
 			}),
 		]);
 
@@ -418,6 +420,36 @@ describe('selecting a metric type updates the aggregation options', () => {
 			'Max',
 			'Count',
 			'Count Distinct',
+		]);
+		expect(getOptionLabels('space-agg-options')).toStrictEqual([
+			'Sum',
+			'Avg',
+			'Min',
+			'Max',
+		]);
+	});
+
+	it('non-monotonic delta Sum metric remains a counter with Rate/Increase options', () => {
+		returnMetrics([
+			makeMetric({
+				metricName: 'gcp_reject_connections_count',
+				type: MetrictypesTypeDTO.sum,
+				isMonotonic: false,
+				temporality: MetrictypesTemporalityDTO.delta,
+			}),
+		]);
+
+		render(<MetricQueryHarness query={makeQuery()} />);
+
+		const input = screen.getByRole('combobox');
+		fireEvent.change(input, {
+			target: { value: 'gcp_reject_connections_count' },
+		});
+		fireEvent.blur(input);
+
+		expect(getOptionLabels('time-agg-options')).toStrictEqual([
+			'Rate',
+			'Increase',
 		]);
 		expect(getOptionLabels('space-agg-options')).toStrictEqual([
 			'Sum',

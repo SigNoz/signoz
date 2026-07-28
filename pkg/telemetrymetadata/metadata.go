@@ -2359,7 +2359,10 @@ func (t *telemetryMetaStore) fetchTemporalityTypeForTable(ctx context.Context, t
 		if temporality != metrictypes.Unknown {
 			temporalities[metricName] = append(temporalities[metricName], temporality)
 		}
-		if metricType == metrictypes.SumType && !isMonotonic {
+		// Monotonicity carries meaning only for cumulative sums: a non-monotonic
+		// cumulative sum is a gauge for all practical purposes. Delta sums are
+		// counters regardless of monotonicity.
+		if metricType == metrictypes.SumType && !isMonotonic && temporality == metrictypes.Cumulative {
 			metricType = metrictypes.GaugeType
 		}
 		types[metricName] = metricType
@@ -2412,7 +2415,9 @@ func (t *telemetryMetaStore) fetchMeterSourceMetricsTemporalityAndType(ctx conte
 		if err := rows.Scan(&metricName, &temporality, &metricType, &isMonotonic); err != nil {
 			return nil, nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to scan temporality result")
 		}
-		if metricType == metrictypes.SumType && !isMonotonic {
+		// Non-monotonic cumulative sums are treated as gauges; delta sums are
+		// counters regardless of monotonicity.
+		if metricType == metrictypes.SumType && !isMonotonic && temporality == metrictypes.Cumulative {
 			metricType = metrictypes.GaugeType
 		}
 		temporalities[metricName] = temporality
