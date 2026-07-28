@@ -100,22 +100,25 @@ func (q *chSQLQuery) renderVars(query string, vars map[string]qbtypes.VariableIt
 	return newQuery.String(), nil
 }
 
-func (q *chSQLQuery) render() (string, error) {
+func (q *chSQLQuery) render(ctx context.Context) (string, error) {
 	rendered, err := q.renderVars(q.query.Query, q.vars, q.fromMS, q.toMS)
 	if err != nil {
 		return "", err
 	}
 
+	// Logged rather than returned, because the parser has gaps against SQL ClickHouse
+	// accepts and rejecting on them would break working dashboards. The query rides along
+	// so that the parser gaps can be told apart from statements that break the rules.
 	if err := querybuilder.ValidateReadOnlySelect(rendered); err != nil {
-		return "", err
+		q.logger.WarnContext(ctx, "user-authored clickhouse sql did not validate", errors.Attr(err), slog.String("query", rendered))
 	}
 
 	return rendered, nil
 }
 
 // Statement renders the SQL without executing it, for the preview path.
-func (q *chSQLQuery) Statement(_ context.Context) (*qbtypes.Statement, error) {
-	rendered, err := q.render()
+func (q *chSQLQuery) Statement(ctx context.Context) (*qbtypes.Statement, error) {
+	rendered, err := q.render(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +140,7 @@ func (q *chSQLQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
 		elapsed += p.Elapsed
 	}))
 
-	query, err := q.render()
+	query, err := q.render(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -150,11 +153,11 @@ func (q *chSQLQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
 	}
 	defer rows.Close()
 
-	// TODO: map the errors from ClickHouse to our error types
 	payload, err := consume(rows, q.kind, nil, qbtypes.Step{}, q.query.Name)
 	if err != nil {
 		return nil, err
 	}
+
 	return &qbtypes.Result{
 		Type:  q.kind,
 		Value: payload,

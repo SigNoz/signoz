@@ -13,24 +13,24 @@ var internalDatabases = map[string]struct{}{
 	"information_schema": {},
 }
 
-// ValidateReadOnlySelect rejects a user-authored ClickHouse statement unless it is a
-// single SELECT that reads telemetry: no table function, no internal database and no
-// lowering of the readonly setting. It must run on the rendered statement, since the
-// substituted variable values are user input too.
+// The parser's grammar has gaps against SQL that ClickHouse itself accepts. See TestValidateReadOnlySelect_ShouldPassButFails.
+// Those statements are accepted as is for now and sent to ClickHouse.
 func ValidateReadOnlySelect(query string) (err error) {
 	// The parser has a history of panicking on malformed input rather than returning
 	// an error. No input is known to still do so, but this reaches user-authored SQL,
 	// so a regression must not take the process down.
 	defer func() {
 		if recovered := recover(); recovered != nil {
-			err = errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid ClickHouse SQL: %v", recovered)
+			err = errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid ClickHouse SQL (recovered): %v", recovered)
 		}
 	}()
 
 	stmts, parseErr := chparser.NewParser(query).ParseStmts()
 	if parseErr != nil {
-		// The cause is carried in the message because the renderers drop the wrapped error.
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid ClickHouse SQL: %s", parseErr.Error())
+		// Wrapped rather than formatted in, so that callers can recover the parser's
+		// *ParseError and read the position off it. The message repeats it because the
+		// renderers repeat the message and drop the cause.
+		return errors.WrapInvalidInputf(parseErr, errors.CodeInvalidInput, "invalid ClickHouse SQL: %s", parseErr.Error())
 	}
 
 	if len(stmts) != 1 {
@@ -52,6 +52,7 @@ func ValidateReadOnlySelect(query string) (err error) {
 			if expr.Database == nil {
 				return nil
 			}
+
 			if _, ok := internalDatabases[strings.ToLower(expr.Database.Name)]; ok {
 				return errors.NewInvalidInputf(errors.CodeInvalidInput, "the ClickHouse %s database is not allowed in SQL queries", expr.Database.Name)
 			}
