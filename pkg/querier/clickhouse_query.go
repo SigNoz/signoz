@@ -106,11 +106,10 @@ func (q *chSQLQuery) render(ctx context.Context) (string, error) {
 		return "", err
 	}
 
-	// Logged rather than returned, because the parser has gaps against SQL ClickHouse
-	// accepts and rejecting on them would break working dashboards. The query rides along
-	// so that the parser gaps can be told apart from statements that break the rules.
+	// Logged rather than returned, because the parser has gaps.
+	// TODO(@therealpandey): return error
 	if err := querybuilder.ValidateReadOnlySelect(rendered); err != nil {
-		q.logger.WarnContext(ctx, "user-authored clickhouse sql did not validate", errors.Attr(err), slog.String("query", rendered))
+		q.logger.WarnContext(ctx, "clickhouse_sql did not validate", errors.Attr(err), slog.String("query", rendered))
 	}
 
 	return rendered, nil

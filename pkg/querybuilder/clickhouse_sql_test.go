@@ -94,20 +94,14 @@ func TestValidateReadOnlySelect_Fail(t *testing.T) {
 	}
 }
 
-// Queries the parser cannot read. ClickHouse runs all of them, so each one is a dashboard
-// or an alert that the validator would break if it were enforced rather than logged.
-// Three parser gaps are responsible: `interval` used as a column name in ORDER BY, the
-// standard trim(BOTH ' ' FROM x) syntax, and a signed numeric literal written directly
-// after a closing bracket, which the lexer takes as one token instead of an operator and
-// a number. The last one goes away if a space is added after the operator.
+// Queries the parser cannot read. ClickHouse runs all of them.
 func TestValidateReadOnlySelect_ShouldPassButFails(t *testing.T) {
 	testCases := []struct {
 		name  string
 		query string
 		// The construct the parser stops after, which is the one it cannot read.
 		expectedStopsAfter string
-		// The same construct written so the parser accepts it. Asserted, so that a
-		// workaround recorded here cannot quietly stop being one.
+		// The same construct written so the parser accepts it.
 		fix string
 	}{
 		{
