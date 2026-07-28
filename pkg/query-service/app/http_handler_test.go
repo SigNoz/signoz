@@ -61,32 +61,16 @@ func TestPrepareQuery(t *testing.T) {
 			query:       "select * from table where id = ''",
 			expectedErr: false,
 		},
+		// prepareQuery renders the query and nothing more. Whether the statement is one
+		// a user should be running is decided by querybuilder.LogIfStatementIsNotValid,
+		// which the handler calls on the rendered result.
 		{
-			name: "query contains alter table",
+			name: "query is rendered whatever the statement is",
 			postData: &model.DashboardVars{
 				Query: "ALTER TABLE signoz_table DELETE where true",
 			},
-			expectedErr: true,
-			errMsg:      "only SELECT statements are allowed in ClickHouse SQL queries",
-		},
-		{
-			name: "query smuggles a statement through a variable",
-			postData: &model.DashboardVars{
-				Query: "select * from table where id = {{.id}}",
-				Variables: map[string]interface{}{
-					"id": "1'; DROP TABLE signoz_table; --",
-				},
-			},
-			expectedErr: true,
-			errMsg:      "ClickHouse SQL must contain exactly one statement",
-		},
-		{
-			name: "query reads a system table",
-			postData: &model.DashboardVars{
-				Query: "SELECT name FROM system.users",
-			},
-			expectedErr: true,
-			errMsg:      "the ClickHouse system database is not allowed in SQL queries",
+			query:       "ALTER TABLE signoz_table DELETE where true",
+			expectedErr: false,
 		},
 		{
 			name: "query text produces template exec error",

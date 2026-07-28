@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestValidateReadOnlySelect_Pass(t *testing.T) {
+func TestErrIfStatementIsNotValid_Pass(t *testing.T) {
 	testCases := []struct {
 		name  string
 		query string
@@ -39,13 +39,13 @@ func TestValidateReadOnlySelect_Pass(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			err := ValidateReadOnlySelect(testCase.query)
+			err := ErrIfStatementIsNotValid(testCase.query)
 			assert.NoError(t, err)
 		})
 	}
 }
 
-func TestValidateReadOnlySelect_Fail(t *testing.T) {
+func TestErrIfStatementIsNotValid_Fail(t *testing.T) {
 	testCases := []struct {
 		name  string
 		query string
@@ -88,14 +88,14 @@ func TestValidateReadOnlySelect_Fail(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			err := ValidateReadOnlySelect(testCase.query)
+			err := ErrIfStatementIsNotValid(testCase.query)
 			assert.Error(t, err)
 		})
 	}
 }
 
 // Queries the parser cannot read. ClickHouse runs all of them.
-func TestValidateReadOnlySelect_ShouldPassButFails(t *testing.T) {
+func TestErrIfStatementIsNotValid_ShouldPassButFails(t *testing.T) {
 	testCases := []struct {
 		name  string
 		query string
@@ -138,7 +138,7 @@ func TestValidateReadOnlySelect_ShouldPassButFails(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			err := ValidateReadOnlySelect(testCase.query)
+			err := ErrIfStatementIsNotValid(testCase.query)
 
 			var parseErr *chparser.ParseError
 			require.ErrorAs(t, err, &parseErr, "expected a parser failure rather than a rule violation")
@@ -148,7 +148,7 @@ func TestValidateReadOnlySelect_ShouldPassButFails(t *testing.T) {
 			consumed := testCase.query[:parseErr.Pos]
 			assert.Equal(t, testCase.expectedStopsAfter, consumed[max(0, len(consumed)-len(testCase.expectedStopsAfter)):])
 
-			assert.NoError(t, ValidateReadOnlySelect(testCase.fix))
+			assert.NoError(t, ErrIfStatementIsNotValid(testCase.fix))
 		})
 	}
 }

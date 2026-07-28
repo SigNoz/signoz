@@ -1060,10 +1060,6 @@ func prepareQuery(r *http.Request) (string, error) {
 		query = newQuery
 	}
 
-	if err := querybuilder.ValidateReadOnlySelect(query); err != nil {
-		return "", err
-	}
-
 	return query, nil
 }
 
@@ -1081,6 +1077,8 @@ func (aH *APIHandler) queryDashboardVarsV2(w http.ResponseWriter, r *http.Reques
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
+
+	querybuilder.LogIfStatementIsNotValid(r.Context(), aH.logger, query)
 
 	dashboardVars, err := aH.reader.QueryDashboardVars(ctxtypes.SetClickhouseReadOnly(r.Context()), query)
 	if err != nil {

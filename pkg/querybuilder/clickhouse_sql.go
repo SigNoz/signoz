@@ -1,6 +1,8 @@
 package querybuilder
 
 import (
+	"context"
+	"log/slog"
 	"strings"
 
 	chparser "github.com/AfterShip/clickhouse-sql-parser/parser"
@@ -13,8 +15,8 @@ var internalDatabases = map[string]struct{}{
 	"information_schema": {},
 }
 
-// The parser's grammar has gaps against SQL that ClickHouse itself accepts. See TestValidateReadOnlySelect_ShouldPassButFails.
-func ValidateReadOnlySelect(query string) (err error) {
+// The parser's grammar has gaps against SQL that ClickHouse itself accepts. See TestErrIfStatementIsNotValid_ShouldPassButFails.
+func ErrIfStatementIsNotValid(query string) (err error) {
 	defer func() {
 		// The parser has a history of panicking on malformed input rather than returning an error.
 		if recovered := recover(); recovered != nil {
@@ -64,4 +66,11 @@ func ValidateReadOnlySelect(query string) (err error) {
 	}}
 
 	return selectQuery.Accept(visitor)
+}
+
+// TODO(@therealpandey): remove this and move to ErrIfStatementIsNotValid.
+func LogIfStatementIsNotValid(ctx context.Context, logger *slog.Logger, query string) {
+	if err := ErrIfStatementIsNotValid(query); err != nil {
+		logger.WarnContext(ctx, "clickhouse sql is not valid", errors.Attr(err), slog.String("query", query))
+	}
 }
