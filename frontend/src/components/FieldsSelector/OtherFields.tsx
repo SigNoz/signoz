@@ -8,7 +8,6 @@ import { buildCompositeKey } from 'container/OptionsMenu/utils';
 import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
 import {
 	FieldContext,
-	FieldDataType,
 	SignalType,
 	TelemetryFieldKey,
 } from 'types/api/v5/queryRange';
@@ -55,7 +54,7 @@ function OtherFields({
 				key: buildCompositeKey(attr.name, attr.fieldContext as string),
 				signal: attr.signal as SignalType,
 				fieldContext: attr.fieldContext as FieldContext,
-				fieldDataType: attr.fieldDataType as FieldDataType,
+				fieldDataType: attr.fieldDataType,
 			}),
 		);
 		const addedIds = new Set(
