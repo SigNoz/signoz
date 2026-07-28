@@ -2,6 +2,29 @@ import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import APIError from 'types/api/error';
 
+// The wire shape these handlers can actually rely on. The generated
+// RenderErrorResponseDTO marks code/message/url/errors as required, but the
+// server omits any of them even on valid errors (e.g. a 400 with just a
+// message), so a present `error` object is all the guard can guarantee.
+type ErrorEnvelope = {
+	error: {
+		code?: string;
+		message?: string;
+		url?: string;
+		errors?: { message?: string }[];
+	};
+};
+
+function isErrorEnvelope(data: unknown): data is ErrorEnvelope {
+	return (
+		typeof data === 'object' &&
+		data !== null &&
+		'error' in data &&
+		typeof (data as ErrorEnvelope).error === 'object' &&
+		(data as ErrorEnvelope).error !== null
+	);
+}
+
 // @deprecated Use convertToApiError instead
 export function ErrorResponseHandlerForGeneratedAPIs(
 	error: AxiosError<RenderErrorResponseDTO>,
@@ -10,15 +33,29 @@ export function ErrorResponseHandlerForGeneratedAPIs(
 	// The request was made and the server responded with a status code
 	// that falls out of the range of 2xx
 	if (response) {
+		// The body isn't guaranteed to be an error envelope — e.g. a gateway 5xx
+		// with an HTML/empty body during a deploy. Verify the shape before reading
+		// it; otherwise synthesize a consistent error from the status.
+		const data: unknown = response.data;
+		if (isErrorEnvelope(data)) {
+			const { code, message, url, errors } = data.error;
+			throw new APIError({
+				httpStatusCode: response.status || 500,
+				error: {
+					code: code ?? '',
+					message: message ?? '',
+					url: url ?? '',
+					errors: (errors ?? []).map((e) => ({ message: e.message ?? '' })),
+				},
+			});
+		}
 		throw new APIError({
 			httpStatusCode: response.status || 500,
 			error: {
-				code: response.data.error.code,
-				message: response.data.error.message,
-				url: response.data.error.url ?? '',
-				errors: (response.data.error.errors ?? []).map((e) => ({
-					message: e.message ?? '',
-				})),
+				code: 'UPSTREAM_UNAVAILABLE',
+				message: error.message || 'Something went wrong',
+				url: '',
+				errors: [],
 			},
 		});
 	}

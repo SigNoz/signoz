@@ -42,7 +42,12 @@ export function toAPIError(
 	try {
 		ErrorResponseHandlerForGeneratedAPIs(error);
 	} catch (apiError) {
-		if (apiError instanceof APIError) {
+		// UPSTREAM_UNAVAILABLE means the handler couldn't find a backend error code
+		// (non-envelope body); prefer the caller's context-specific defaultMessage.
+		if (
+			apiError instanceof APIError &&
+			apiError.getErrorCode() !== 'UPSTREAM_UNAVAILABLE'
+		) {
 			return apiError;
 		}
 	}
