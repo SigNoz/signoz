@@ -12,7 +12,6 @@
 	&__summary {
 		display: flex;
 		justify-content: space-between;
-		gap: var(--spacing-8);
 		padding: 16px;
 	}
 
@@ -154,7 +153,7 @@
 		width: 2px;
 		height: 4px;
 		border-radius: 50px;
-		background: var(--l3-foreground);
+		background: var(--l1-border);
 	}
 
 	&__scroll-hint {
