@@ -108,6 +108,7 @@ export function getAppContextMockState(
 		isFetchingHosts: false,
 		isFetchingFeatureFlags: false,
 		isFetchingOrgPreferences: false,
+		isFetchingUserPreferences: false,
 		userFetchError: undefined,
 		activeLicenseFetchError: null,
 		hostsFetchError: undefined,
