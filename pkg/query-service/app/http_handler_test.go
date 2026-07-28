@@ -61,16 +61,13 @@ func TestPrepareQuery(t *testing.T) {
 			query:       "select * from table where id = ''",
 			expectedErr: false,
 		},
-		// prepareQuery renders the query and nothing more. Whether the statement is one
-		// a user should be running is decided by querybuilder.LogIfStatementIsNotValid,
-		// which the handler calls on the rendered result.
 		{
-			name: "query is rendered whatever the statement is",
+			name: "query contains alter table",
 			postData: &model.DashboardVars{
 				Query: "ALTER TABLE signoz_table DELETE where true",
 			},
-			query:       "ALTER TABLE signoz_table DELETE where true",
-			expectedErr: false,
+			expectedErr: true,
+			errMsg:      "operation alter table is not allowed",
 		},
 		{
 			name: "query text produces template exec error",

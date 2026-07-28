@@ -72,12 +72,6 @@ func (h *provider) BeforeQuery(ctx context.Context, _ *telemetrystore.QueryEvent
 		settings["result_overflow_mode"] = ctx.Value("result_overflow_mode")
 	}
 
-	// readonly = 2 allows reads and per-query setting changes, but no writes, DDL or
-	// SYSTEM statements, and ClickHouse refuses to lower it from within the statement.
-	if readOnly, ok := ctx.Value(ctxtypes.ClickhouseContextReadOnlyKey).(bool); ok && readOnly {
-		settings["readonly"] = 2
-	}
-
 	// TODO(srikanthccv): enable it when the "Cannot read all data" issue is fixed
 	// https://github.com/ClickHouse/ClickHouse/issues/82283
 	settings["secondary_indices_enable_bulk_filtering"] = false

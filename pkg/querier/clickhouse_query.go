@@ -140,8 +140,6 @@ func (q *chSQLQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
 		return nil, err
 	}
 
-	ctx = ctxtypes.SetClickhouseReadOnly(ctx)
-
 	rows, err := q.telemetryStore.ClickhouseDB().Query(ctx, query, q.args...)
 	if err != nil {
 		return nil, err

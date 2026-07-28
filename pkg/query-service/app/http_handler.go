@@ -1022,6 +1022,21 @@ func prepareQuery(r *http.Request) (string, error) {
 		return "", fmt.Errorf("query is required")
 	}
 
+	notAllowedOps := []string{
+		"alter table",
+		"drop table",
+		"truncate table",
+		"drop database",
+		"drop view",
+		"drop function",
+	}
+
+	for _, op := range notAllowedOps {
+		if strings.Contains(strings.ToLower(query), op) {
+			return "", fmt.Errorf("operation %s is not allowed", op)
+		}
+	}
+
 	vars := make(map[string]string)
 	for k, v := range postData.Variables {
 		vars[k] = metrics.FormattedValue(v)
@@ -1037,30 +1052,30 @@ func prepareQuery(r *http.Request) (string, error) {
 		return "", tmplErr
 	}
 
-	query = queryBuf.String()
-
-	if constants.IsDotMetricsEnabled {
-		// Now handle $var replacements (simple string replace)
-		keys := make([]string, 0, len(vars))
-		for k := range vars {
-			keys = append(keys, k)
-		}
-
-		sort.Slice(keys, func(i, j int) bool {
-			return len(keys[i]) > len(keys[j])
-		})
-
-		newQuery := query
-		for _, k := range keys {
-			placeholder := "$" + k
-			v := vars[k]
-			newQuery = strings.ReplaceAll(newQuery, placeholder, v)
-		}
-
-		query = newQuery
+	if !constants.IsDotMetricsEnabled {
+		return queryBuf.String(), nil
 	}
 
-	return query, nil
+	query = queryBuf.String()
+
+	// Now handle $var replacements (simple string replace)
+	keys := make([]string, 0, len(vars))
+	for k := range vars {
+		keys = append(keys, k)
+	}
+
+	sort.Slice(keys, func(i, j int) bool {
+		return len(keys[i]) > len(keys[j])
+	})
+
+	newQuery := query
+	for _, k := range keys {
+		placeholder := "$" + k
+		v := vars[k]
+		newQuery = strings.ReplaceAll(newQuery, placeholder, v)
+	}
+
+	return newQuery, nil
 }
 
 func (aH *APIHandler) Get(rw http.ResponseWriter, r *http.Request) {
@@ -1080,7 +1095,7 @@ func (aH *APIHandler) queryDashboardVarsV2(w http.ResponseWriter, r *http.Reques
 
 	querybuilder.LogIfStatementIsNotValid(r.Context(), aH.logger, query)
 
-	dashboardVars, err := aH.reader.QueryDashboardVars(ctxtypes.SetClickhouseReadOnly(r.Context()), query)
+	dashboardVars, err := aH.reader.QueryDashboardVars(r.Context(), query)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
