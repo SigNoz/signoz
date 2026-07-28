@@ -100,7 +100,7 @@
         "description": ""
       },
       {
-        "name": "compute.googleapis.com/instance/firewall/dropped_packets_count",
+        "name": "compute.googleapis.com/firewall/dropped_packets_count",
         "unit": "Count",
         "type": "Sum",
         "description": ""
