@@ -34,10 +34,19 @@ type IntegrationSummary struct {
 }
 
 type IntegrationAssets struct {
-	Logs       LogsAssets                             `json:"logs"`
-	Dashboards []dashboardtypes.StorableDashboardData `json:"dashboards"`
+	Logs       LogsAssets  `json:"logs"`
+	Dashboards []Dashboard `json:"dashboards"`
 
 	Alerts []ruletypes.PostableRule `json:"alerts"`
+}
+
+// Dashboard pairs a built-in dashboard's stable id with its v2 definition. The id
+// lives in integration.json alongside the definition file reference (mirroring the
+// cloud integration model) and drives the install slug, so it stays stable even
+// though the v2 definition blob no longer carries a top-level id.
+type Dashboard struct {
+	ID         string                             `json:"id"`
+	Definition dashboardtypes.PostableDashboardV2 `json:"definition"`
 }
 
 type LogsAssets struct {
@@ -417,23 +426,22 @@ func (m *Manager) provisionDashboards(
 ) error {
 	bareIntegrationID := strings.TrimPrefix(integrationID, "builtin-")
 	for _, dd := range integration.Assets.Dashboards {
-		dashID, _ := dd["id"].(string)
-		if dashID == "" {
+		if dd.ID == "" {
 			continue
 		}
-		slug := cloudintegrationtypes.InstalledIntegrationDashboardSlug(bareIntegrationID, dashID)
+		slug := cloudintegrationtypes.InstalledIntegrationDashboardSlug(bareIntegrationID, dd.ID)
 
 		existing, err := m.installedIntegrationsRepo.getIntegrationDashboardBySlug(ctx, orgID.StringValue(), slug)
 		if err == nil && existing != nil {
 			continue
 		}
 
-		createdDashboard, err := m.dashboardModule.Create(ctx, orgID, createdBy, creator, dashboardtypes.SourceIntegration, dashboardtypes.PostableDashboard(dd))
+		createdDashboard, err := m.dashboardModule.CreateV2(ctx, orgID, createdBy, creator, dashboardtypes.SourceIntegration, dd.Definition)
 		if err != nil {
 			return fmt.Errorf("could not create dashboard for slug %s: %w", slug, err)
 		}
 
-		row := cloudintegrationtypes.NewStorableIntegrationDashboard(createdDashboard.ID, cloudintegrationtypes.IntegrationDashboardInstalledIntegrationProvider, slug)
+		row := cloudintegrationtypes.NewStorableIntegrationDashboard(createdDashboard.ID.StringValue(), cloudintegrationtypes.IntegrationDashboardInstalledIntegrationProvider, slug)
 		if err := m.installedIntegrationsRepo.createIntegrationDashboard(ctx, row); err != nil {
 			return fmt.Errorf("could not create integration_dashboard row for slug %s: %w", slug, err)
 		}

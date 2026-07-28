@@ -8,7 +8,10 @@ import {
 // top-level `name` / `image` / `tags` / `schemaVersion`) or a bare spec — wrap
 // the latter with defaults so users can paste either shape that exists in the
 // wild (e.g. testdata/perses.json is a bare spec). The legacy nested
-// `{ metadata: { ... }, spec }` shape is also accepted and flattened.
+// `{ metadata: { ... }, spec }` shape is also accepted and flattened. A legacy
+// v1 dashboard (top-level `version`, no `spec`/`schemaVersion`) is posted
+// unchanged: the create endpoint migrates it to v2 server-side, and wrapping
+// it here would misdeclare it as a v6 spec.
 //
 // The backend requires `name` (immutable identifier); if the payload doesn't
 // carry one, fall back to `generateName: true` so the server assigns one.
@@ -16,6 +19,16 @@ export function normalizeToPostable(
 	parsed: Record<string, unknown>,
 ): DashboardtypesPostableDashboardV2DTO {
 	const hasSpec = 'spec' in parsed;
+
+	if (
+		!hasSpec &&
+		!('schemaVersion' in parsed) &&
+		typeof parsed.version === 'string' &&
+		parsed.version !== ''
+	) {
+		return parsed as unknown as DashboardtypesPostableDashboardV2DTO;
+	}
+
 	const legacyMeta = parsed.metadata as
 		| {
 				schemaVersion?: string;

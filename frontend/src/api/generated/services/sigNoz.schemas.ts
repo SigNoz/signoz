@@ -3236,17 +3236,6 @@ export interface CloudintegrationtypesUpdatableServiceDTO {
 	config: CloudintegrationtypesServiceConfigDTO;
 }
 
-export interface CommonDisplayDTO {
-	/**
-	 * @type string
-	 */
-	description?: string;
-	/**
-	 * @type string
-	 */
-	name?: string;
-}
-
 export interface CommonJSONRefDTO {
 	/**
 	 * @type string
@@ -3990,44 +3979,6 @@ export interface DashboardtypesDashboardPanelRefDTO {
 	panelName: string;
 }
 
-export enum DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpecDTOKind {
-	'signoz/Datasource' = 'signoz/Datasource',
-}
-export interface DashboardtypesSigNozDatasourceSpecDTO {
-	[key: string]: unknown;
-}
-
-export interface DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpecDTO {
-	/**
-	 * @enum signoz/Datasource
-	 * @type string
-	 */
-	kind: DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpecDTOKind;
-	spec: DashboardtypesSigNozDatasourceSpecDTO;
-}
-
-export type DashboardtypesDatasourcePluginDTO =
-	DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpecDTO;
-
-export interface DashboardtypesDatasourceSpecDTO {
-	/**
-	 * @type boolean
-	 */
-	default?: boolean;
-	display?: CommonDisplayDTO;
-	plugin?: DashboardtypesDatasourcePluginDTO;
-}
-
-export type DashboardtypesDashboardSpecDTODatasourcesAnyOf = {
-	[key: string]: DashboardtypesDatasourceSpecDTO;
-};
-
-/**
- * @nullable
- */
-export type DashboardtypesDashboardSpecDTODatasources =
-	DashboardtypesDashboardSpecDTODatasourcesAnyOf | null;
-
 export enum DashboardtypesPanelKindDTO {
 	Panel = 'Panel',
 }
@@ -4626,9 +4577,9 @@ export interface DashboardtypesQueryDTO {
 export interface DashboardtypesPanelSpecDTO {
 	display: DashboardtypesDisplayDTO;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	links: DashboardtypesLinkDTO[];
+	links?: DashboardtypesLinkDTO[] | null;
 	plugin: DashboardtypesPanelPluginDTO;
 	/**
 	 * @type array
@@ -4807,10 +4758,6 @@ export type DashboardtypesVariableDTO =
 	| DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpecDTO;
 
 export interface DashboardtypesDashboardSpecDTO {
-	/**
-	 * @type object,null
-	 */
-	datasources?: DashboardtypesDashboardSpecDTODatasources;
 	display: DashboardtypesDisplayDTO;
 	/**
 	 * @type string
@@ -4821,9 +4768,9 @@ export interface DashboardtypesDashboardSpecDTO {
 	 */
 	layouts: DashboardtypesLayoutDTO[];
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	links: DashboardtypesLinkDTO[];
+	links?: DashboardtypesLinkDTO[] | null;
 	/**
 	 * @type object
 	 */
@@ -4886,9 +4833,6 @@ export interface DashboardtypesDashboardViewDTO {
 	updatedAt?: string;
 }
 
-export enum DashboardtypesDatasourcePluginKindDTO {
-	'signoz/Datasource' = 'signoz/Datasource',
-}
 export interface TagtypesGettableTagDTO {
 	/**
 	 * @type string
@@ -8379,6 +8323,14 @@ export interface RulestatehistorytypesGettableRuleStateHistoryDTO {
 	/**
 	 * @type string
 	 */
+	relatedLogsLink?: string;
+	/**
+	 * @type string
+	 */
+	relatedTracesLink?: string;
+	/**
+	 * @type string
+	 */
 	ruleId: string;
 	/**
 	 * @type string
@@ -10252,14 +10204,6 @@ export type GetConnectionCredentials200 = {
 export type ListServicesMetadataPathParameters = {
 	cloudProvider: string;
 };
-export type ListServicesMetadataParams = {
-	/**
-	 * @type string
-	 * @description undefined
-	 */
-	cloud_integration_id?: string;
-};
-
 export type ListServicesMetadata200 = {
 	data: CloudintegrationtypesGettableServicesMetadataDTO;
 	/**
@@ -10272,14 +10216,6 @@ export type GetServicePathParameters = {
 	cloudProvider: string;
 	serviceId: string;
 };
-export type GetServiceParams = {
-	/**
-	 * @type string
-	 * @description undefined
-	 */
-	cloud_integration_id?: string;
-};
-
 export type GetService200 = {
 	data: CloudintegrationtypesServiceDTO;
 	/**

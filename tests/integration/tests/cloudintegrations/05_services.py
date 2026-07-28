@@ -31,7 +31,7 @@ def test_list_services_without_account(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
-    """List available services without specifying a cloud_integration_id."""
+    """List the cloud provider's supported services"""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     response = requests.get(
@@ -52,38 +52,6 @@ def test_list_services_without_account(
     assert "title" in service, "Service should have 'title' field"
     assert "icon" in service, "Service should have 'icon' field"
     assert "enabled" in service, "Service should have 'enabled' field"
-
-
-def test_list_services_with_account(
-    signoz: types.SigNoz,
-    create_user_admin: types.Operation,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    create_cloud_integration_account: Callable,
-) -> None:
-    """List services filtered to a specific account — all disabled by default."""
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    account = create_cloud_integration_account(admin_token, CLOUD_PROVIDER)
-    account_id = account["id"]
-
-    checkin = simulate_agent_checkin(signoz, admin_token, CLOUD_PROVIDER, account_id, str(uuid.uuid4()))
-    assert checkin.status_code == HTTPStatus.OK, f"Check-in failed: {checkin.text}"
-
-    response = requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/services?cloud_integration_id={account_id}"),
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=10,
-    )
-
-    assert response.status_code == HTTPStatus.OK, f"Expected 200, got {response.status_code}"
-
-    data = response.json()["data"]
-    assert "services" in data, "Response should contain 'services' field"
-    assert len(data["services"]) > 0, "services list should be non-empty"
-
-    for svc in data["services"]:
-        assert "enabled" in svc, "Each service should have 'enabled' field"
-        assert svc["enabled"] is False, f"Service {svc['id']} should be disabled before any config is set"
 
 
 EC2_SERVICE_ID = "ec2"
@@ -152,34 +120,6 @@ def test_get_service_details_without_account(
     assert "assets" in data, "Service should have 'assets'"
     assert isinstance(data["assets"]["dashboards"], list), "assets.dashboards should be a list"
     assert data["cloudIntegrationService"] is None, "cloudIntegrationService should be null without account context"
-
-
-def test_get_service_details_with_account(
-    signoz: types.SigNoz,
-    create_user_admin: types.Operation,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    create_cloud_integration_account: Callable,
-) -> None:
-    """Get service details with account context — cloudIntegrationService is null before first UpdateService."""
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    account = create_cloud_integration_account(admin_token, CLOUD_PROVIDER)
-    account_id = account["id"]
-
-    checkin = simulate_agent_checkin(signoz, admin_token, CLOUD_PROVIDER, account_id, str(uuid.uuid4()))
-    assert checkin.status_code == HTTPStatus.OK, f"Check-in failed: {checkin.text}"
-
-    response = requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/services/{SERVICE_ID}?cloud_integration_id={account_id}"),
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=10,
-    )
-
-    assert response.status_code == HTTPStatus.OK, f"Expected 200, got {response.status_code}"
-
-    data = response.json()["data"]
-    assert data["id"] == SERVICE_ID
-    assert data["cloudIntegrationService"] is None, "cloudIntegrationService should be null before any service config is set"
 
 
 def test_get_account_service(
@@ -252,7 +192,7 @@ def test_update_service_config(
     assert put_response.status_code == HTTPStatus.NO_CONTENT, f"Expected 204, got {put_response.status_code}: {put_response.text}"
 
     get_response = requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/services/{SERVICE_ID}?cloud_integration_id={account_id}"),
+        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts/{account_id}/services/{SERVICE_ID}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=10,
     )
@@ -302,7 +242,7 @@ def test_update_service_config_disable(
     assert r.status_code == HTTPStatus.NO_CONTENT, f"Disable failed: {r.status_code}: {r.text}"
 
     get_response = requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/services/{SERVICE_ID}?cloud_integration_id={account_id}"),
+        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts/{account_id}/services/{SERVICE_ID}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=10,
     )
@@ -355,7 +295,7 @@ def test_list_services_account_removed(
     get_token: Callable[[str, str], str],
     create_cloud_integration_account: Callable,
 ) -> None:
-    """List services with a cloud_integration_id for a deleted account returns 404."""
+    """List services for a deleted account returns 404."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     account = create_cloud_integration_account(admin_token, CLOUD_PROVIDER)
@@ -372,7 +312,7 @@ def test_list_services_account_removed(
     assert delete_response.status_code == HTTPStatus.NO_CONTENT, f"Expected 204 on delete, got {delete_response.status_code}"
 
     response = requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/services?cloud_integration_id={account_id}"),
+        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts/{account_id}/services"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=10,
     )
@@ -386,7 +326,7 @@ def test_get_service_details_account_removed(
     get_token: Callable[[str, str], str],
     create_cloud_integration_account: Callable,
 ) -> None:
-    """Get service details with a cloud_integration_id for a deleted account returns 404."""
+    """Get service details for a deleted account returns 404."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     account = create_cloud_integration_account(admin_token, CLOUD_PROVIDER)
@@ -403,7 +343,7 @@ def test_get_service_details_account_removed(
     assert delete_response.status_code == HTTPStatus.NO_CONTENT, f"Expected 204 on delete, got {delete_response.status_code}"
 
     response = requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/services/{SERVICE_ID}?cloud_integration_id={account_id}"),
+        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts/{account_id}/services/{SERVICE_ID}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=10,
     )
@@ -468,7 +408,7 @@ def test_enable_metrics_provisions_dashboards(
 
     # Assertion 1: GetService returns provisioned dashboard UUIDs
     get_svc_response = requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/services/{SERVICE_ID}?cloud_integration_id={account_id}"),
+        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts/{account_id}/services/{SERVICE_ID}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=10,
     )
@@ -533,7 +473,7 @@ def test_disable_metrics_deprovisions_dashboards(
 
     # Capture the provisioned dashboard IDs before disabling
     get_svc_response = requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/services/{SERVICE_ID}?cloud_integration_id={account_id}"),
+        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts/{account_id}/services/{SERVICE_ID}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=10,
     )
@@ -552,7 +492,7 @@ def test_disable_metrics_deprovisions_dashboards(
 
     # Assertion 1: GetService no longer returns UUID dashboard IDs
     get_svc_after = requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/services/{SERVICE_ID}?cloud_integration_id={account_id}"),
+        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts/{account_id}/services/{SERVICE_ID}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=10,
     )
@@ -567,11 +507,11 @@ def test_disable_metrics_deprovisions_dashboards(
 
     # Assertion 2: Dashboards listing API no longer contains the provisioned dashboard IDs
     list_response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/dashboards"),
+        signoz.self.host_configs["8080"].get("/api/v2/dashboards?limit=200"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=10,
     )
     assert list_response.status_code == HTTPStatus.OK, f"Expected 200 from dashboards list, got {list_response.status_code}: {list_response.text}"
 
-    listed_ids = {d["id"] for d in list_response.json()["data"]}
+    listed_ids = {d["id"] for d in list_response.json()["data"]["dashboards"]}
     assert not provisioned_ids & listed_ids, f"Provisioned dashboard IDs {provisioned_ids & listed_ids} still appear in dashboards list after disabling metrics"
