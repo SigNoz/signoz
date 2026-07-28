@@ -3,6 +3,7 @@ import { Color } from '@signozhq/design-tokens';
 import { Group } from '@visx/group';
 import { Pie as VisxPie } from '@visx/shape';
 import { defaultStyles, useTooltip, useTooltipInPortal } from '@visx/tooltip';
+import cx from 'classnames';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { useResizeObserver } from 'hooks/useDimensions';
 import Legend from 'lib/uPlotV2/components/Legend/Legend';
@@ -210,7 +211,9 @@ export default function Pie({
 				)}
 			</div>
 			<div
-				className={styles.pieChartLegend}
+				className={cx(styles.pieChartLegend, {
+					[styles.pieChartLegendRight]: isRightLegend,
+				})}
 				style={{
 					width: legendWidth,
 					height: legendHeight,

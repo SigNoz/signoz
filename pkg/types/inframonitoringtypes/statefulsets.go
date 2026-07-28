@@ -26,7 +26,6 @@ type StatefulSetRecord struct {
 	StatefulSetMemoryLimit   float64           `json:"statefulSetMemoryLimit" required:"true"`
 	DesiredPods              int               `json:"desiredPods" required:"true"`
 	CurrentPods              int               `json:"currentPods" required:"true"`
-	PodCountsByPhase         PodCountsByPhase  `json:"podCountsByPhase" required:"true"`
 	PodCountsByStatus        PodCountsByStatus `json:"podCountsByStatus" required:"true"`
 	Meta                     map[string]string `json:"meta" required:"true"`
 }

@@ -44,7 +44,7 @@ def build_metrics_query(
     order_by: list[tuple[str, str]] | None = None,
     limit: int | None = None,
 ) -> dict:
-    aggs = [querier.build_metrics_aggregation(metric_name, time_aggregation, space_aggregation, "unspecified")]
+    aggs = [querier.build_metrics_aggregation(metric_name, time_aggregation, space_aggregation, "unspecified", reduce_to="last")]
     gb = [querier.build_group_by_field(f, "string", "attribute") for f in group_by] if group_by else None
     order = [querier.build_order_by(name, direction) for name, direction in order_by] if order_by else None
 

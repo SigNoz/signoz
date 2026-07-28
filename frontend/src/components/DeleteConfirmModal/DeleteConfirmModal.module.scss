@@ -1,0 +1,11 @@
+// Vertically centre the alert icon against the confirm body, matching the v1
+// dashboard delete button.
+.deleteModal :global(.ant-modal-confirm-body) {
+	align-items: center;
+}
+
+.icon {
+	color: var(--danger-background);
+	margin-inline-end: 12px;
+	flex-shrink: 0;
+}

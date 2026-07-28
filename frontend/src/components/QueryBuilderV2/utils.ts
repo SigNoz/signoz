@@ -176,7 +176,9 @@ function formatSingleValueForFilter(
 		}
 
 		if (isQuoted(value)) {
-			return unquote(value);
+			// Unescape `\'` → `'` (inverse of formatSingleValue) so the round-trip doesn't
+			// double the backslash each pass.
+			return unquote(value).replace(/\\'/g, "'");
 		}
 	}
 
@@ -766,6 +768,34 @@ export const removeVariableFromExpression = (
 	}
 
 	return removeKeysFromExpression(expression, keysToRemove, `$${variableName}`);
+};
+
+// Appends `clause` as a top-level AND term, parenthesising the base only when it
+// has a top-level OR (AND binds tighter, so `a OR b AND c` would misbind).
+export const appendAndClause = (
+	expression: string | undefined,
+	clause: string,
+): string => {
+	const base = expression?.trim();
+	if (!base) {
+		return clause;
+	}
+
+	const chars = CharStreams.fromString(base);
+	const lexer = new FilterQueryLexer(chars);
+	lexer.removeErrorListeners();
+	const tokenStream = new CommonTokenStream(lexer);
+	const parser = new FilterQueryParser(tokenStream);
+	parser.removeErrorListeners();
+	const tree = parser.query();
+
+	if (parser.syntaxErrorsCount > 0) {
+		return `(${base}) AND ${clause}`;
+	}
+
+	const hasTopLevelOr =
+		tree.expression().orExpression().andExpression_list().length > 1;
+	return hasTopLevelOr ? `(${base}) AND ${clause}` : `${base} AND ${clause}`;
 };
 
 /**

@@ -8,6 +8,11 @@
 
 .dashboardImage {
 	flex-shrink: 0;
+	// Fixed 16px box (matches the breadcrumb icon); object-fit keeps a custom
+	// base64 icon from distorting or ballooning past it.
+	width: 16px;
+	height: 16px;
+	object-fit: contain;
 }
 
 .dashboardTitle {
@@ -100,13 +105,23 @@
 	flex-shrink: 0;
 }
 
-/* Flexes into the remaining space and clips so the ResizeObserver can measure
-   how many tags fit before collapsing the rest into a `+N` badge. */
+/* Fixed footprint (2 tags + `+N`): never shrinks, so a long title ellipsizes
+   around it rather than collapsing the tags. */
 .dashboardTags {
 	display: flex;
-	flex: 1 1 0;
+	flex: none;
 	align-items: center;
 	gap: 4px;
-	min-width: 0;
-	overflow: hidden;
+}
+
+// Hidden tags revealed on hovering the `+N` badge: the same chips as inline, one per
+// line (easier to scan than a wrapped cloud) and width-capped so a long tag wraps
+// instead of stretching the tooltip off-screen.
+.overflowTags {
+	display: flex;
+	max-width: 360px;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 4px;
+	overflow-wrap: anywhere;
 }
