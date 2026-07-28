@@ -14,6 +14,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
@@ -223,4 +224,28 @@ func TestGoogleChatThreading(t *testing.T) {
 		})
 	}
 	require.NotEqual(t, seen["rule a"], seen["rule b"], "distinct group keys must yield distinct threadKeys")
+}
+
+func TestGoogleChatCustomTemplateMarkdown(t *testing.T) {
+	var got Message
+	server := captureServer(t, http.StatusOK, &got)
+	defer server.Close()
+
+	// Custom body template (standard markdown) supplied via annotation → the
+	// !IsDefaultBody path must convert it to Google Chat dialect.
+	alerts := []*types.Alert{{
+		Alert: model.Alert{
+			Labels:      model.LabelSet{"alertname": "X"},
+			Annotations: model.LabelSet{ruletypes.AnnotationBodyTemplate: "**bold** and [link](https://x)"},
+			StartsAt:    time.Now(),
+			EndsAt:      time.Now().Add(time.Minute),
+		},
+	}}
+	n := newTestNotifier(t, server.URL, "Alert", "default body")
+	_, err := n.Notify(newTestContext(), alerts...)
+	require.NoError(t, err)
+
+	require.Contains(t, got.Text, "*bold*", "** should convert to *")
+	require.Contains(t, got.Text, "<https://x|link>", "[t](u) should convert to <u|t>")
+	require.NotContains(t, got.Text, "**bold**", "conversion must have happened")
 }
