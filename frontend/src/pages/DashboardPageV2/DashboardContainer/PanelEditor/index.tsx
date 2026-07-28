@@ -19,6 +19,7 @@ import {
 	SectionKind,
 } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
 import { getBuilderQueries } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/getBuilderQueries';
+import { toAPIError } from 'utils/errorUtils';
 
 import { getExecStats } from '../queryV5/v5ResponseData';
 import { usePanelInteractions } from '../PanelsAndSectionsLayout/Panel/hooks/usePanelInteractions';
@@ -159,9 +160,10 @@ function PanelEditorContainer({
 		return section?.controls;
 	}, [panelDefinition]);
 
-	// New panels are savable once seeded with a query (List auto-seeds one). Read the
-	// seed `panel`, not the live `draft` — the staged-query sync commits the seed into
-	// the draft on open, which would falsely dirty an untouched query-less new panel.
+	// Unsaved-edits flag driving the discard confirmation on close (Save is always
+	// enabled). Read the seed `panel`, not the live `draft` — the staged-query sync
+	// commits the seed into the draft on open, which would falsely dirty an untouched
+	// query-less new panel.
 	const isDirty = useMemo(
 		() => isSpecDirty || isQueryDirty || (isNew && panel.spec.queries.length > 0),
 		[isSpecDirty, isQueryDirty, isNew, panel.spec.queries.length],
@@ -236,10 +238,18 @@ function PanelEditorContainer({
 			const savedPanelId = await save(buildSaveSpec(draft.spec));
 			// Reveal the saved panel once the dashboard re-renders.
 			setScrollTargetId(savedPanelId);
-			toast.success('Panel saved');
+			toast.success('Panel saved', {
+				position: 'top-center',
+			});
 			onSaved();
-		} catch {
-			toast.error('Failed to save panel');
+		} catch (err) {
+			// Surface the server's failure message.
+			const apiError = toAPIError(err as Parameters<typeof toAPIError>[0]);
+			toast.error('Failed to save panel', {
+				description: apiError.getErrorMessage(),
+				position: 'top-center',
+				duration: 5000,
+			});
 		}
 	}, [isEditable, save, buildSaveSpec, draft.spec, setScrollTargetId, onSaved]);
 

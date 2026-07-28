@@ -13,6 +13,7 @@ import DisabledControlTooltip from '../../components/DisabledControlTooltip/Disa
 import styles from './Header.module.scss';
 
 interface HeaderProps {
+	/** Unsaved edits exist — gates the discard confirmation on close (not the Save button). */
 	isDirty: boolean;
 	isSaving: boolean;
 	showSwitchToView?: boolean;
@@ -88,7 +89,7 @@ function Header({
 						variant="solid"
 						color="primary"
 						data-testid="panel-editor-v2-save"
-						disabled={readOnly || !isDirty || isSaving}
+						disabled={readOnly || isSaving}
 						loading={!readOnly && isSaving}
 						onClick={readOnly ? undefined : onSave}
 					>
