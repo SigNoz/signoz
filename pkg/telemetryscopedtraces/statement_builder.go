@@ -395,12 +395,6 @@ type filterParts struct {
 // validates the trace-level part against the matched-pass aggregates.
 func (b *scopedTraceStatementBuilder) splitFilter(ctx context.Context, orgID valuer.UUID, query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation], classifySet, orderableSet map[string]struct{}, start, end uint64, variables map[string]qbtypes.VariableItem) (filterParts, error) {
 	var fp filterParts
-	// The legacy tracefield. spelling parses identically to trace.; only the
-	// user-facing form is supported here.
-	if (query.Filter != nil && strings.Contains(query.Filter.Expression, "tracefield.")) ||
-		(query.Having != nil && strings.Contains(query.Having.Expression, "tracefield.")) {
-		return fp, errors.NewInvalidInputf(errors.CodeInvalidInput, "\"tracefield.\" is not supported; use the \"trace.\" prefix")
-	}
 	if query.Filter != nil && strings.TrimSpace(query.Filter.Expression) != "" {
 		spanExpr, traceExpr, err := querybuilder.SplitFilterForAggregates(query.Filter.Expression, classifySet)
 		if err != nil {
@@ -619,7 +613,7 @@ func (b *scopedTraceStatementBuilder) buildEnrichmentSelect(resolved []resolvedC
 
 // buildHaving rewrites a trace-level HAVING expression to the matched-pass column
 // aliases. The rewriter matches raw key text, so the trace. form is mapped alongside
-// the bare name (the legacy tracefield. spelling is rejected upfront in splitFilter).
+// the bare name.
 func (b *scopedTraceStatementBuilder) buildHaving(havingExpr string, orderableSet map[string]struct{}) (string, error) {
 	columnMap := make(map[string]string, len(orderableSet)*2)
 	for a := range orderableSet {

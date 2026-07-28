@@ -816,7 +816,7 @@ func TestBuild_TraceList_OutputOnlyAggregateRejected(t *testing.T) {
 	_, err = b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeTrace,
 		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 			Signal: telemetrytypes.SignalTraces,
-			Order: []qbtypes.OrderBy{{Key: qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "trace_duration_nano"}}, Direction: qbtypes.OrderDirectionDesc}},
+			Order:  []qbtypes.OrderBy{{Key: qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "trace_duration_nano"}}, Direction: qbtypes.OrderDirectionDesc}},
 		}, nil)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "unsupported order key")
@@ -1076,9 +1076,10 @@ func TestBuild_TraceList_MultiVariantGateKey(t *testing.T) {
 }
 
 // `trace.` parses as the trace field context and marks a trace-level aggregate; the
-// legacy `tracefield.` spelling is explicitly rejected (filter and having alike), and
-// an output-only aggregate under the context gets the targeted rejection rather than
-// an unknown-span-field failure.
+// legacy `tracefield.` spelling routes trace-level too but is not a rewritable alias,
+// so the HAVING rewriter rejects it listing the valid references (filter and having
+// alike); and an output-only aggregate under the context gets the targeted rejection
+// rather than an unknown-span-field failure.
 func TestBuild_TraceList_TraceContextPrefix(t *testing.T) {
 	b := newTestBuilder(t)
 	build := func(q qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) (*qbtypes.Statement, error) {
@@ -1093,12 +1094,12 @@ func TestBuild_TraceList_TraceContextPrefix(t *testing.T) {
 	_, err = build(qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 		Filter: &qbtypes.Filter{Expression: "tracefield.output_tokens > 1000"}})
 	require.Error(t, err)
-	require.Contains(t, err.Error(), `use the "trace." prefix`)
+	require.Contains(t, err.Error(), "Invalid references in `Having` expression: [tracefield.output_tokens]")
 
 	_, err = build(qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 		Having: &qbtypes.Having{Expression: "tracefield.output_tokens > 1000"}})
 	require.Error(t, err)
-	require.Contains(t, err.Error(), `use the "trace." prefix`)
+	require.Contains(t, err.Error(), "Invalid references in `Having` expression: [tracefield.output_tokens]")
 
 	_, err = build(qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 		Filter: &qbtypes.Filter{Expression: "trace.span_count > 3"}})
