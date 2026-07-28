@@ -26,7 +26,6 @@ import routes, {
 	ROUTES_NOT_TO_BE_OVERRIDEN,
 	SUPPORT_ROUTE,
 } from './routes';
-import { FeatureKeys } from 'constants/features';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
@@ -41,18 +40,11 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		activeLicense,
 		isFetchingActiveLicense,
 		trialInfo,
-		featureFlags,
-		isFetchingFeatureFlags,
 	} = useAppContext();
 
 	const isAdmin = user.role === USER_ROLES.ADMIN;
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
 	const isAIObservabilityEnabled = useIsAIObservabilityEnabled();
-
-	const isFineGrainedAuthzEnabled =
-		featureFlags?.find((f) => f.name === FeatureKeys.USE_FINE_GRAINED_AUTHZ)
-			?.active ?? false;
-
 	const mapRoutes = useMemo(
 		() =>
 			new Map(
@@ -240,18 +232,11 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 					routeWithInitialAuthZSupport,
 					key,
 				);
-				// While the flags are in flight `isFineGrainedAuthzEnabled` reads as false,
-				// and the redirect below is unrecoverable - the URL changes and nothing
-				// navigates back once the flags land. Authz-aware pages run their own
-				// permission checks, so defer to them instead of redirecting on a guess.
-				const bypassWhenSupportedByAuthZ =
-					hasInitialAuthZSupport &&
-					(isFineGrainedAuthzEnabled || isFetchingFeatureFlags);
 
 				if (
 					route &&
 					route.find((e) => e === user.role) === undefined &&
-					bypassWhenSupportedByAuthZ === false
+					hasInitialAuthZSupport === false
 				) {
 					return <Redirect to={ROUTES.UN_AUTHORIZED} />;
 				}
