@@ -36,12 +36,8 @@ export function WarningContent({ warning }: WarningContentProps): JSX.Element {
 						</div>
 
 						<div className="warning-content__summary-text">
-							{warningCode && (
-								<h2 className="warning-content__warning-code">{warningCode}</h2>
-							)}
-							{warningMessage && (
-								<p className="warning-content__warning-message">{warningMessage}</p>
-							)}
+							<h2 className="warning-content__warning-code">{warningCode}</h2>
+							<p className="warning-content__warning-message">{warningMessage}</p>
 						</div>
 					</div>
 
