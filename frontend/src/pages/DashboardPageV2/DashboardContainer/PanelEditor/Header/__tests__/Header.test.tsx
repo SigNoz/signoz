@@ -86,4 +86,18 @@ describe('PanelEditor Header', () => {
 
 		expect(screen.getByTestId('panel-editor-v2-save')).toBeDisabled();
 	});
+
+	it('shows the Unsaved Changes badge only when there are unsaved edits', () => {
+		mockUseIsAIAssistantEnabled.mockReturnValue(false);
+
+		renderHeader({ isDirty: false });
+		expect(
+			screen.queryByTestId('panel-editor-v2-unsaved-badge'),
+		).not.toBeInTheDocument();
+
+		renderHeader({ isDirty: true });
+		expect(
+			screen.getByTestId('panel-editor-v2-unsaved-badge'),
+		).toBeInTheDocument();
+	});
 });

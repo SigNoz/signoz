@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { SolidAlertTriangle, X } from '@signozhq/icons';
+import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
 import { DialogWrapper } from '@signozhq/ui/dialog';
 import { Divider } from '@signozhq/ui/divider';
@@ -13,7 +14,7 @@ import DisabledControlTooltip from '../../components/DisabledControlTooltip/Disa
 import styles from './Header.module.scss';
 
 interface HeaderProps {
-	/** Unsaved edits exist — gates the discard confirmation on close (not the Save button). */
+	/** Unsaved edits exist — shows the "Unsaved Changes" badge and gates the discard confirmation on close (not the Save button). */
 	isDirty: boolean;
 	isSaving: boolean;
 	showSwitchToView?: boolean;
@@ -67,6 +68,11 @@ function Header({
 				/>
 				<Divider type="vertical" />
 				<Typography.Text>Configure panel</Typography.Text>
+				{isDirty && (
+					<Badge color="warning" data-testid="panel-editor-v2-unsaved-badge">
+						Unsaved Changes
+					</Badge>
+				)}
 			</div>
 			<div className={styles.actions}>
 				<HeaderRightSection
