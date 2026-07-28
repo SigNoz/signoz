@@ -101,6 +101,12 @@ jest.mock('@signozhq/ui/resizable', () => ({
 jest.mock('@signozhq/ui/sonner', () => ({
 	toast: { success: jest.fn(), error: jest.fn() },
 }));
+const mockShowErrorModal = jest.fn();
+jest.mock('providers/ErrorModalProvider', () => ({
+	useErrorModal: (): { showErrorModal: jest.Mock } => ({
+		showErrorModal: mockShowErrorModal,
+	}),
+}));
 
 // Children mocked to capture props (and expose a Save trigger / footer slot).
 const mockHeaderProps = jest.fn();
@@ -328,38 +334,22 @@ describe('PanelEditorContainer composition', () => {
 		expect(mockSave).toHaveBeenCalledWith(panel.spec);
 	});
 
-	it("surfaces the server's failure message in the toast description when a save fails", async () => {
-		mockSave.mockRejectedValueOnce({
+	it('surfaces a save failure through the error modal', async () => {
+		// The raw thrown value flows straight to the modal, which normalizes it to an
+		// APIError itself (that normalization is covered by ErrorModalProvider's tests).
+		const failure = {
 			response: {
 				status: 400,
 				data: { error: { code: 'INVALID', message: 'Panel name already exists' } },
 			},
-		});
+		};
+		mockSave.mockRejectedValueOnce(failure);
 		setup(makePanel('signoz/TimeSeriesPanel'));
 
 		await userEvent.click(screen.getByTestId('editor-save'));
 
-		await waitFor(() =>
-			expect(toast.error).toHaveBeenCalledWith(
-				'Failed to save panel',
-				expect.objectContaining({ description: 'Panel name already exists' }),
-			),
-		);
-	});
-
-	it('falls back to a generic description when the failure is unparseable', async () => {
-		// A response with no parseable error body → the generic fallback.
-		mockSave.mockRejectedValueOnce({ response: { status: 500, data: {} } });
-		setup(makePanel('signoz/TimeSeriesPanel'));
-
-		await userEvent.click(screen.getByTestId('editor-save'));
-
-		await waitFor(() =>
-			expect(toast.error).toHaveBeenCalledWith(
-				'Failed to save panel',
-				expect.objectContaining({ description: 'An unexpected error occurred.' }),
-			),
-		);
+		await waitFor(() => expect(mockShowErrorModal).toHaveBeenCalledWith(failure));
+		expect(toast.error).not.toHaveBeenCalled();
 	});
 
 	it('marks the saved panel to be scrolled into view on the dashboard', async () => {

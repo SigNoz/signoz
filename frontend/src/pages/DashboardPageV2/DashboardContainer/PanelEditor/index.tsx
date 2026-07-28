@@ -19,7 +19,7 @@ import {
 	SectionKind,
 } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
 import { getBuilderQueries } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/getBuilderQueries';
-import { toAPIError } from 'utils/errorUtils';
+import { useErrorModal } from 'providers/ErrorModalProvider';
 
 import { getExecStats } from '../queryV5/v5ResponseData';
 import { usePanelInteractions } from '../PanelsAndSectionsLayout/Panel/hooks/usePanelInteractions';
@@ -228,6 +228,7 @@ function PanelEditorContainer({
 	});
 
 	const setScrollTargetId = useScrollIntoViewStore((s) => s.setScrollTargetId);
+	const { showErrorModal } = useErrorModal();
 
 	const onSave = useCallback(async (): Promise<void> => {
 		if (!isEditable) {
@@ -243,15 +244,17 @@ function PanelEditorContainer({
 			});
 			onSaved();
 		} catch (err) {
-			// Surface the server's failure message.
-			const apiError = toAPIError(err as Parameters<typeof toAPIError>[0]);
-			toast.error('Failed to save panel', {
-				description: apiError.getErrorMessage(),
-				position: 'top-center',
-				duration: 5000,
-			});
+			showErrorModal(err);
 		}
-	}, [isEditable, save, buildSaveSpec, draft.spec, setScrollTargetId, onSaved]);
+	}, [
+		isEditable,
+		save,
+		buildSaveSpec,
+		draft.spec,
+		setScrollTargetId,
+		onSaved,
+		showErrorModal,
+	]);
 
 	// Leaving an existing panel's editor (without saving) still returns to it, so
 	// the dashboard lands on that panel rather than scrolled to the top. A new,
