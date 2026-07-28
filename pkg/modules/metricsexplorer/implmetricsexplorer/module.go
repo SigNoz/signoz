@@ -825,6 +825,7 @@ func (m *module) validateAndNormalizeMetricType(req *metricsexplorertypes.Update
 		if req.Temporality != metrictypes.Delta && req.Temporality != metrictypes.Cumulative {
 			return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid value for temporality")
 		}
+		// Cumulative gate already present here; metadata.go was aligned to match.
 		// Special case: if Sum is not monotonic and cumulative, convert to Gauge
 		if !req.IsMonotonic && req.Temporality == metrictypes.Cumulative {
 			req.Type = metrictypes.GaugeType
