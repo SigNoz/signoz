@@ -5,31 +5,15 @@ import (
 	"context"
 	"encoding/json"
 	"log/slog"
-	"net/http"
+	"strings"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 )
-
-const Integration = "googlechat"
-
-// Notifier implements notify.Notifier for Google Chat.
-type Notifier struct {
-	conf      *alertmanagertypes.GoogleChatReceiverConfig
-	tmpl      *template.Template
-	logger    *slog.Logger
-	client    *http.Client
-	retrier   *notify.Retrier
-	templater alertmanagertypes.Templater // stored for Phase 2 (templating); unused in Phase 1
-}
-
-// Message is the Google Chat webhook payload.
-type Message struct {
-	Text string `json:"text"`
-}
 
 func New(conf *alertmanagertypes.GoogleChatReceiverConfig, t *template.Template, l *slog.Logger, templater alertmanagertypes.Templater) (*Notifier, error) {
 	client, err := notify.NewClientWithTracing(*conf.HTTPConfig, Integration)
@@ -57,12 +41,13 @@ func (n *Notifier) Notify(ctx context.Context, alerts ...*types.Alert) (bool, er
 	}
 	n.logger.DebugContext(ctx, "sending google chat notification", slog.Any("group_key", key))
 
-	// Phase 1: render the title only via the upstream template helper.
-	data := notify.GetTemplateData(ctx, n.tmpl, alerts, n.logger)
-	tmpl := notify.TmplText(n.tmpl, data, &err)
-	text := tmpl(n.conf.Title)
+	c, err := n.prepareContent(ctx, alerts)
 	if err != nil {
 		return false, err
+	}
+	text := c.title
+	if c.body != "" {
+		text = c.title + "\n" + c.body
 	}
 
 	var buf bytes.Buffer
@@ -81,4 +66,25 @@ func (n *Notifier) Notify(ctx context.Context, alerts ...*types.Alert) (bool, er
 		return shouldRetry, notify.NewErrorWithReason(notify.GetFailureReasonFromStatusCode(resp.StatusCode), err)
 	}
 	return shouldRetry, err
+}
+
+// prepareContent expands the title and body templates. Custom templates (from
+// alert annotations) override the channel defaults; result.IsDefaultBody tells
+// whether the body came from the default template.
+func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) (content, error) {
+	customTitle, customBody := alertmanagertemplate.ExtractTemplatesFromAnnotations(alerts)
+	result, err := n.templater.Expand(ctx, alertmanagertypes.ExpandRequest{
+		TitleTemplate:        customTitle,
+		BodyTemplate:         customBody,
+		DefaultTitleTemplate: n.conf.Title,
+		DefaultBodyTemplate:  n.conf.Text,
+	}, alerts)
+	if err != nil {
+		return content{}, err
+	}
+	return content{
+		title:         result.Title,
+		body:          strings.Join(result.Body, "\n\n"),
+		isDefaultBody: result.IsDefaultBody,
+	}, nil
 }
