@@ -182,10 +182,11 @@ export const k8sNodesColumnsConfig: NodeTableColumnConfig[] = [
 		accessorFn: (row): number => row.nodeCPU,
 		width: { min: 160, default: 160 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const cpu = Number(value);
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={cpu}
 					entity={InfraMonitoringEntity.NODES}
 					attribute="CPU metric"
@@ -205,10 +206,11 @@ export const k8sNodesColumnsConfig: NodeTableColumnConfig[] = [
 		accessorFn: (row): number => row.nodeCPUAllocatable,
 		width: { min: 160, default: 190 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const cpuAllocatable = Number(value);
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={cpuAllocatable}
 					entity={InfraMonitoringEntity.NODES}
 					attribute="CPU allocatable metric"
@@ -228,10 +230,11 @@ export const k8sNodesColumnsConfig: NodeTableColumnConfig[] = [
 		accessorFn: (row): number => row.nodeMemory,
 		width: { min: 220, default: 220 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const memory = value as number;
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={memory}
 					entity={InfraMonitoringEntity.NODES}
 					attribute="memory metric"
@@ -251,10 +254,11 @@ export const k8sNodesColumnsConfig: NodeTableColumnConfig[] = [
 		accessorFn: (row): number => row.nodeMemoryAllocatable,
 		width: { min: 200, default: 200 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const memoryAllocatable = value as number;
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={memoryAllocatable}
 					entity={InfraMonitoringEntity.NODES}
 					attribute="memory allocatable metric"

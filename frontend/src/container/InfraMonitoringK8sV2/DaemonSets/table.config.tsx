@@ -183,10 +183,11 @@ export const k8sDaemonSetsColumnsConfig: DaemonSetTableColumnConfig[] = [
 		enableSort: true,
 		enableResize: true,
 		defaultVisibility: false,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const cpuRequest = value as number;
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={cpuRequest}
 					entity={InfraMonitoringEntity.DAEMONSETS}
 					attribute="CPU Request"
@@ -207,10 +208,11 @@ export const k8sDaemonSetsColumnsConfig: DaemonSetTableColumnConfig[] = [
 		width: { min: 160 },
 		enableSort: true,
 		enableResize: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const cpuLimit = value as number;
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={cpuLimit}
 					entity={InfraMonitoringEntity.DAEMONSETS}
 					attribute="CPU Limit"
@@ -232,10 +234,11 @@ export const k8sDaemonSetsColumnsConfig: DaemonSetTableColumnConfig[] = [
 		enableSort: true,
 		enableResize: true,
 		defaultVisibility: false,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const cpu = Number(value);
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={cpu}
 					entity={InfraMonitoringEntity.DAEMONSETS}
 					attribute="CPU metric"
@@ -257,10 +260,11 @@ export const k8sDaemonSetsColumnsConfig: DaemonSetTableColumnConfig[] = [
 		enableSort: true,
 		enableResize: true,
 		defaultVisibility: false,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const memoryRequest = value as number;
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={memoryRequest}
 					entity={InfraMonitoringEntity.DAEMONSETS}
 					attribute="Memory Request"
@@ -281,10 +285,11 @@ export const k8sDaemonSetsColumnsConfig: DaemonSetTableColumnConfig[] = [
 		width: { min: 190 },
 		enableSort: true,
 		enableResize: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const memoryLimit = value as number;
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={memoryLimit}
 					entity={InfraMonitoringEntity.DAEMONSETS}
 					attribute="Memory Limit"
@@ -305,10 +310,11 @@ export const k8sDaemonSetsColumnsConfig: DaemonSetTableColumnConfig[] = [
 		width: { min: 180 },
 		enableSort: true,
 		enableResize: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const memory = value as number;
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={memory}
 					entity={InfraMonitoringEntity.DAEMONSETS}
 					attribute="memory metric"
@@ -329,10 +335,11 @@ export const k8sDaemonSetsColumnsConfig: DaemonSetTableColumnConfig[] = [
 		width: { min: 140 },
 		enableSort: true,
 		defaultVisibility: false,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const readyNodes = value as number;
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={readyNodes}
 					entity={InfraMonitoringEntity.DAEMONSETS}
 					attribute="ready node"
@@ -353,10 +360,11 @@ export const k8sDaemonSetsColumnsConfig: DaemonSetTableColumnConfig[] = [
 		width: { min: 140 },
 		enableSort: true,
 		defaultVisibility: false,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const currentNodes = value as number;
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={currentNodes}
 					entity={InfraMonitoringEntity.DAEMONSETS}
 					attribute="current node"
@@ -377,10 +385,11 @@ export const k8sDaemonSetsColumnsConfig: DaemonSetTableColumnConfig[] = [
 		width: { min: 140 },
 		enableSort: true,
 		defaultVisibility: false,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const desiredNodes = value as number;
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={desiredNodes}
 					entity={InfraMonitoringEntity.DAEMONSETS}
 					attribute="desired node"
@@ -401,10 +410,11 @@ export const k8sDaemonSetsColumnsConfig: DaemonSetTableColumnConfig[] = [
 		width: { min: 140 },
 		enableSort: true,
 		defaultVisibility: false,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const misscheduledNodes = value as number;
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={misscheduledNodes}
 					entity={InfraMonitoringEntity.DAEMONSETS}
 					attribute="misscheduled node"

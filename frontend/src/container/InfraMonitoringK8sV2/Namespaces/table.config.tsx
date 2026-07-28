@@ -136,13 +136,14 @@ export const k8sNamespacesColumnsConfig: NamespaceTableColumnConfig[] = [
 		accessorFn: (row): number => row.namespaceCPU,
 		width: { min: 190 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const cpu = Number(value);
 			return (
 				<ValidateColumnValueWrapper
 					value={cpu}
 					entity={InfraMonitoringEntity.NAMESPACES}
 					attribute="CPU metric"
+					rowId={rowId}
 				>
 					<TanStackTable.Text>{cpu.toFixed(2)}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
@@ -159,13 +160,14 @@ export const k8sNamespacesColumnsConfig: NamespaceTableColumnConfig[] = [
 		accessorFn: (row): number => row.namespaceMemory,
 		width: { min: 220 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const memory = Number(value);
 			return (
 				<ValidateColumnValueWrapper
 					value={memory}
 					entity={InfraMonitoringEntity.NAMESPACES}
 					attribute="memory metric"
+					rowId={rowId}
 				>
 					<TanStackTable.Text>{formatBytes(memory)}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>

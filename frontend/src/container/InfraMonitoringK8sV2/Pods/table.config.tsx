@@ -1,6 +1,5 @@
 import { Container } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
 import {
 	InframonitoringtypesPodRecordDTO,
 	InframonitoringtypesPodStatusDTO,
@@ -26,7 +25,6 @@ import {
 	INFRA_MONITORING_ATTR_KEYS,
 	InfraMonitoringEntity,
 } from '../constants';
-import { Typography } from '@signozhq/ui/typography';
 import { formatAge } from 'utils/timeUtils';
 
 export function getK8sPodRowKey(pod: InframonitoringtypesPodRecordDTO): string {
@@ -154,16 +152,18 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 		accessorFn: (row): number => row.podAge,
 		width: { min: 100 },
 		enableSort: false,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const age = value as number;
-			if (age === -1) {
-				return (
-					<TooltipSimple title="No data">
-						<Typography.Text>-</Typography.Text>
-					</TooltipSimple>
-				);
-			}
-			return <TanStackTable.Text>{formatAge(age)}</TanStackTable.Text>;
+			return (
+				<ValidateColumnValueWrapper
+					rowId={rowId}
+					value={age}
+					entity={InfraMonitoringEntity.PODS}
+					attribute="age"
+				>
+					<TanStackTable.Text>{formatAge(age)}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
 		},
 	},
 	{
@@ -176,16 +176,18 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 		accessorFn: (row): number => row.podRestarts,
 		width: { min: 140 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const restarts = value as number;
-			if (restarts === -1) {
-				return (
-					<TooltipSimple title="No data">
-						<Typography.Text>-</Typography.Text>
-					</TooltipSimple>
-				);
-			}
-			return <TanStackTable.Text>{restarts}</TanStackTable.Text>;
+			return (
+				<ValidateColumnValueWrapper
+					rowId={rowId}
+					value={restarts}
+					entity={InfraMonitoringEntity.PODS}
+					attribute="Restarts"
+				>
+					<TanStackTable.Text>{restarts}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
 		},
 	},
 	{
@@ -199,10 +201,11 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 		width: { min: 210 },
 		enableSort: true,
 		defaultVisibility: false,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const cpuRequest = value as number;
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={cpuRequest}
 					entity={InfraMonitoringEntity.PODS}
 					attribute="CPU Request"
@@ -222,10 +225,11 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 		accessorFn: (row): number => row.podCPULimit,
 		width: { min: 220 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const cpuLimit = value as number;
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={cpuLimit}
 					entity={InfraMonitoringEntity.PODS}
 					attribute="CPU Limit"
@@ -245,10 +249,11 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 		accessorFn: (row): number => row.podCPU,
 		width: { min: 160 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const cpu = Number(value);
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={cpu}
 					entity={InfraMonitoringEntity.PODS}
 					attribute="CPU metric"
@@ -269,10 +274,11 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 		width: { min: 210 },
 		enableSort: true,
 		defaultVisibility: false,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const memoryRequest = value as number;
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={memoryRequest}
 					entity={InfraMonitoringEntity.PODS}
 					attribute="Memory Request"
@@ -292,10 +298,11 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 		accessorFn: (row): number => row.podMemoryLimit,
 		width: { min: 220 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const memoryLimit = value as number;
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={memoryLimit}
 					entity={InfraMonitoringEntity.PODS}
 					attribute="Memory Limit"
@@ -315,10 +322,11 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 		accessorFn: (row): number => row.podMemory,
 		width: { min: 210, default: '100%' },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const memory = value as number;
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={memory}
 					entity={InfraMonitoringEntity.PODS}
 					attribute="memory metric"

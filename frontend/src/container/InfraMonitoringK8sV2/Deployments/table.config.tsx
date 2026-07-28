@@ -171,10 +171,11 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<InframonitoringtypesDep
 			enableSort: true,
 			enableResize: true,
 			defaultVisibility: false,
-			cell: ({ value }): React.ReactNode => {
+			cell: ({ value, rowId }): React.ReactNode => {
 				const cpuRequest = value as number;
 				return (
 					<ValidateColumnValueWrapper
+						rowId={rowId}
 						value={cpuRequest}
 						entity={InfraMonitoringEntity.DEPLOYMENTS}
 						attribute="CPU Request"
@@ -195,10 +196,11 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<InframonitoringtypesDep
 			width: { min: 210 },
 			enableSort: true,
 			enableResize: true,
-			cell: ({ value }): React.ReactNode => {
+			cell: ({ value, rowId }): React.ReactNode => {
 				const cpuLimit = Number(value);
 				return (
 					<ValidateColumnValueWrapper
+						rowId={rowId}
 						value={cpuLimit}
 						entity={InfraMonitoringEntity.DEPLOYMENTS}
 						attribute="CPU Limit"
@@ -219,10 +221,11 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<InframonitoringtypesDep
 			width: { min: 160 },
 			enableSort: true,
 			enableResize: true,
-			cell: ({ value }): React.ReactNode => {
+			cell: ({ value, rowId }): React.ReactNode => {
 				const cpu = Number(value);
 				return (
 					<ValidateColumnValueWrapper
+						rowId={rowId}
 						value={cpu}
 						entity={InfraMonitoringEntity.DEPLOYMENTS}
 						attribute="CPU metric"
@@ -244,10 +247,11 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<InframonitoringtypesDep
 			enableSort: true,
 			enableResize: true,
 			defaultVisibility: false,
-			cell: ({ value }): React.ReactNode => {
+			cell: ({ value, rowId }): React.ReactNode => {
 				const memoryRequest = Number(value);
 				return (
 					<ValidateColumnValueWrapper
+						rowId={rowId}
 						value={memoryRequest}
 						entity={InfraMonitoringEntity.DEPLOYMENTS}
 						attribute="Memory Request"
@@ -268,10 +272,11 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<InframonitoringtypesDep
 			width: { min: 210 },
 			enableSort: true,
 			enableResize: true,
-			cell: ({ value }): React.ReactNode => {
+			cell: ({ value, rowId }): React.ReactNode => {
 				const memoryLimit = Number(value);
 				return (
 					<ValidateColumnValueWrapper
+						rowId={rowId}
 						value={memoryLimit}
 						entity={InfraMonitoringEntity.DEPLOYMENTS}
 						attribute="Memory Limit"
@@ -292,10 +297,11 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<InframonitoringtypesDep
 			width: { min: 180 },
 			enableSort: true,
 			enableResize: true,
-			cell: ({ value }): React.ReactNode => {
+			cell: ({ value, rowId }): React.ReactNode => {
 				const memory = value as number;
 				return (
 					<ValidateColumnValueWrapper
+						rowId={rowId}
 						value={memory}
 						entity={InfraMonitoringEntity.DEPLOYMENTS}
 						attribute="memory metric"
@@ -316,10 +322,11 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<InframonitoringtypesDep
 			width: { min: 120 },
 			enableSort: true,
 			defaultVisibility: false,
-			cell: ({ value }): React.ReactNode => {
+			cell: ({ value, rowId }): React.ReactNode => {
 				const availablePods = value as number;
 				return (
 					<ValidateColumnValueWrapper
+						rowId={rowId}
 						value={availablePods}
 						entity={InfraMonitoringEntity.DEPLOYMENTS}
 						attribute="available pod"
@@ -340,10 +347,11 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<InframonitoringtypesDep
 			width: { min: 120 },
 			enableSort: true,
 			defaultVisibility: false,
-			cell: ({ value }): React.ReactNode => {
+			cell: ({ value, rowId }): React.ReactNode => {
 				const desiredPods = value as number;
 				return (
 					<ValidateColumnValueWrapper
+						rowId={rowId}
 						value={desiredPods}
 						entity={InfraMonitoringEntity.DEPLOYMENTS}
 						attribute="desired pod"

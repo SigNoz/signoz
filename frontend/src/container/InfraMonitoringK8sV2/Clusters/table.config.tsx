@@ -152,10 +152,11 @@ export const k8sClustersColumnsConfig: ClusterTableColumnConfig[] = [
 		accessorFn: (row): number => row.clusterCPU,
 		width: { min: 160 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const cpu = Number(value);
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={cpu}
 					entity={InfraMonitoringEntity.CLUSTERS}
 					attribute="CPU metric"
@@ -175,10 +176,11 @@ export const k8sClustersColumnsConfig: ClusterTableColumnConfig[] = [
 		accessorFn: (row): number => row.clusterCPUAllocatable,
 		width: { min: 200 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const cpuAllocatable = Number(value);
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={cpuAllocatable}
 					entity={InfraMonitoringEntity.CLUSTERS}
 					attribute="CPU allocatable metric"
@@ -198,10 +200,11 @@ export const k8sClustersColumnsConfig: ClusterTableColumnConfig[] = [
 		accessorFn: (row): number => row.clusterMemory,
 		width: { min: 180 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const memory = value as number;
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={memory}
 					entity={InfraMonitoringEntity.CLUSTERS}
 					attribute="memory metric"
@@ -221,10 +224,11 @@ export const k8sClustersColumnsConfig: ClusterTableColumnConfig[] = [
 		accessorFn: (row): number => row.clusterMemoryAllocatable,
 		width: { min: 180 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const memoryAllocatable = value as number;
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={memoryAllocatable}
 					entity={InfraMonitoringEntity.CLUSTERS}
 					attribute="memory allocatable metric"

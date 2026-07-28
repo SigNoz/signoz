@@ -108,10 +108,11 @@ export const k8sVolumesColumnsConfig: VolumeTableColumnConfig[] = [
 		accessorFn: (row): number => row.volumeCapacity,
 		width: { min: 140 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const capacity = value as number;
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={capacity}
 					entity={InfraMonitoringEntity.VOLUMES}
 					attribute="capacity metric"
@@ -131,10 +132,11 @@ export const k8sVolumesColumnsConfig: VolumeTableColumnConfig[] = [
 		accessorFn: (row): number => row.volumeUsage,
 		width: { min: 140 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const usage = value as number;
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={usage}
 					entity={InfraMonitoringEntity.VOLUMES}
 					attribute="utilization metric"
@@ -154,10 +156,11 @@ export const k8sVolumesColumnsConfig: VolumeTableColumnConfig[] = [
 		accessorFn: (row): number => row.volumeAvailable,
 		width: { min: 140 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const available = value as number;
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={available}
 					entity={InfraMonitoringEntity.VOLUMES}
 					attribute="available metric"
@@ -177,10 +180,11 @@ export const k8sVolumesColumnsConfig: VolumeTableColumnConfig[] = [
 		accessorFn: (row): number => row.volumeInodes,
 		width: { min: 140 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const inodes = value as number;
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={inodes}
 					entity={InfraMonitoringEntity.VOLUMES}
 					attribute="inodes metric"
@@ -200,10 +204,11 @@ export const k8sVolumesColumnsConfig: VolumeTableColumnConfig[] = [
 		accessorFn: (row): number => row.volumeInodesUsed,
 		width: { min: 160 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const inodesUsed = value as number;
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={inodesUsed}
 					entity={InfraMonitoringEntity.VOLUMES}
 					attribute="inodes used metric"
@@ -223,10 +228,11 @@ export const k8sVolumesColumnsConfig: VolumeTableColumnConfig[] = [
 		accessorFn: (row): number => row.volumeInodesFree,
 		width: { min: 160 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const inodesFree = value as number;
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={inodesFree}
 					entity={InfraMonitoringEntity.VOLUMES}
 					attribute="inodes free metric"
