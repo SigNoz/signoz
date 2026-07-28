@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"net/url"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -51,13 +53,38 @@ func (n *Notifier) Notify(ctx context.Context, alerts ...*types.Alert) (bool, er
 	if c.body != "" {
 		text = fmt.Sprintf("%s\n%s", c.title, c.body)
 	}
+	text = sanitizeUTF8(text)
 
+	msg := Message{Text: text}
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(Message{Text: text}); err != nil {
+	if err := json.NewEncoder(&buf).Encode(msg); err != nil {
 		return false, err
 	}
+	// One-time truncation to Google Chat's payload limit. Note: heavy JSON
+	// escaping could leave the payload marginally over after re-encoding;
+	// loop-until-under hardening is deferred (see design-doc §4.2).
+	if buf.Len() > maxMessageBytes {
+		over := buf.Len() - maxMessageBytes
+		target := max(len(text)-over, 0)
+		msg.Text = truncateToByteLimit(text, target)
+		buf.Reset()
+		if err := json.NewEncoder(&buf).Encode(msg); err != nil {
+			return false, err
+		}
+	}
 
-	resp, err := notify.PostJSON(ctx, n.client, n.conf.WebhookURL.String(), &buf) //nolint:bodyclose
+	// Thread same-rule alerts together: threadKey is a stable hash of the
+	// alert group key. Changing a rule's grouping starts a new thread.
+	u, err := url.Parse(n.conf.WebhookURL.String())
+	if err != nil {
+		return false, errors.WrapInternalf(err, errors.CodeInternal, "parse google chat webhook url")
+	}
+	q := u.Query()
+	q.Set("threadKey", key.Hash())
+	q.Set("messageReplyOption", "REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD")
+	u.RawQuery = q.Encode()
+
+	resp, err := notify.PostJSON(ctx, n.client, u.String(), &buf) //nolint:bodyclose
 	if err != nil {
 		return true, notify.RedactURL(err)
 	}
@@ -109,4 +136,44 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) (c
 		body:          body,
 		isDefaultBody: result.IsDefaultBody,
 	}, nil
+}
+
+// sanitizeUTF8 replaces invalid UTF-8 byte sequences with the Unicode
+// replacement character so Google Chat does not reject the payload.
+func sanitizeUTF8(s string) string {
+	if utf8.ValidString(s) {
+		return s
+	}
+	var b strings.Builder
+	b.Grow(len(s))
+	for _, r := range s {
+		if r == utf8.RuneError {
+			b.WriteRune('�')
+		} else {
+			b.WriteRune(r)
+		}
+	}
+	return b.String()
+}
+
+// truncateToByteLimit trims s to at most maxBytes bytes on a rune boundary,
+// appending an ellipsis when it truncates.
+func truncateToByteLimit(s string, maxBytes int) string {
+	if len(s) <= maxBytes {
+		return s
+	}
+	const ellipsis = "..."
+	target := maxBytes - len(ellipsis)
+	if target <= 0 {
+		return ellipsis[:maxBytes]
+	}
+	truncated := s
+	for len(truncated) > target {
+		_, size := utf8.DecodeLastRuneInString(truncated)
+		if size == 0 {
+			break
+		}
+		truncated = truncated[:len(truncated)-size]
+	}
+	return truncated + ellipsis
 }

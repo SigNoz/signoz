@@ -3,10 +3,12 @@ package googlechat
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 	"time"
 
@@ -129,4 +131,96 @@ func TestGoogleChatRedactedURL(t *testing.T) {
 	require.NoError(t, err)
 
 	test.AssertNotifyLeaksNoSecret(ctx, t, n, u.String())
+}
+
+func TestSanitizeUTF8(t *testing.T) {
+	cases := []struct {
+		name string
+		in   string
+		want string
+	}{
+		{"valid ascii", "hello", "hello"},
+		{"valid multibyte", "héllo — 世界", "héllo — 世界"},
+		{"invalid byte replaced", "abc\xffdef", "abc�def"},
+		{"empty", "", ""},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			require.Equal(t, c.want, sanitizeUTF8(c.in))
+		})
+	}
+}
+
+func TestTruncateToByteLimit(t *testing.T) {
+	cases := []struct {
+		name    string
+		in      string
+		max     int
+		wantLen int    // upper bound on byte length of result
+		wantHas string // substring the result must contain (or "")
+	}{
+		{"under limit passthrough", "hello", 100, 5, "hello"},
+		{"over limit trims with ellipsis", strings.Repeat("a", 50), 10, 10, "..."},
+		{"exact limit passthrough", "hello", 5, 5, "hello"},
+		{"tiny limit", "hello", 2, 2, ""},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			got := truncateToByteLimit(c.in, c.max)
+			require.LessOrEqual(t, len(got), c.wantLen)
+			if c.wantHas != "" {
+				require.Contains(t, got, c.wantHas)
+			}
+		})
+	}
+}
+
+func TestGoogleChatMessageSizeLimit(t *testing.T) {
+	var bodyLen int
+	var valid bool
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		raw, _ := io.ReadAll(r.Body)
+		bodyLen = len(raw)
+		valid = json.Valid(raw)
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	// Huge plain-ASCII title so one-time truncation lands deterministically under the limit.
+	n := newTestNotifier(t, server.URL, strings.Repeat("A", 40000), "")
+	retry, err := n.Notify(newTestContext(), newTestAlerts("Big")...)
+
+	require.NoError(t, err)
+	require.False(t, retry)
+	require.True(t, valid, "posted body must be valid JSON")
+	require.LessOrEqual(t, bodyLen, maxMessageBytes, "posted body must be within the size limit")
+}
+
+func TestGoogleChatThreading(t *testing.T) {
+	var query url.Values
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		query = r.URL.Query()
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	cases := []struct{ name, groupKey string }{
+		{"rule a", "{ruleId=\"aaa\"}"},
+		{"rule b", "{ruleId=\"bbb\"}"},
+	}
+	seen := map[string]string{}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			n := newTestNotifier(t, server.URL, "T", "")
+			ctx := notify.WithGroupKey(context.Background(), c.groupKey)
+			_, err := n.Notify(ctx, newTestAlerts("X")...)
+			require.NoError(t, err)
+
+			require.Equal(t, "REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD", query.Get("messageReplyOption"))
+			threadKey := query.Get("threadKey")
+			require.Equal(t, notify.Key(c.groupKey).Hash(), threadKey, "threadKey must be the group key hash")
+			seen[c.name] = threadKey
+		})
+	}
+	require.NotEqual(t, seen["rule a"], seen["rule b"], "distinct group keys must yield distinct threadKeys")
 }

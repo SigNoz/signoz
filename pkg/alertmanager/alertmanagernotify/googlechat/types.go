@@ -9,7 +9,12 @@ import (
 	"github.com/prometheus/alertmanager/template"
 )
 
-const Integration = "googlechat"
+const (
+	Integration = "googlechat"
+	// maxMessageBytes is the Google Chat message payload limit.
+	// https://developers.google.com/chat/api/guides/message-formats/basic#maximum_size
+	maxMessageBytes = 32000
+)
 
 // Notifier implements notify.Notifier for Google Chat.
 type Notifier struct {
