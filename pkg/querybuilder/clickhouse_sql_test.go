@@ -30,10 +30,14 @@ func TestErrIfStatementIsNotValid_Pass(t *testing.T) {
 		{"TrailingUnterminatedBlockComment", "SELECT count() FROM t /* unterminated"},
 		// The rule keys on the database, not on the table name.
 		{"TableNamedSystemInTelemetryDatabase", "SELECT * FROM signoz_logs.system"},
-		{"SignedLiteralAfterClosingParen", "SELECT (toUnixTimestamp(now()) - 3600)*1000000000"},
+		{"SignedLiteralAfterClosingParenSpaced", "SELECT (toUnixTimestamp(now()) - 3600)*1000000000"},
 		// order by interval
 		{"OrderByInterval", "SELECT toStartOfInterval(timestamp, INTERVAL 1 MINUTE) AS interval ORDER BY interval"},
 		{"OrderByIntervalAndDirection", "SELECT toStartOfInterval(timestamp, INTERVAL 1 MINUTE) AS `interval` ORDER BY `interval` ASC"},
+		// Unspaced, so rejected until the parser stopped lexing a signed literal after a
+		// closing bracket. The spaced form above no longer needs to be spaced.
+		{"SignedLiteralAfterClosingParenUnspaced", "SELECT now() AS ts, toFloat64(count()) AS value FROM ( SELECT attributes_string['TableName'] AS T, attributes_string['MissingId'] AS M, max(fromUnixTimestamp64Nano(timestamp)) AS last_seen, dateDiff('minute', min(fromUnixTimestamp64Nano(timestamp)), max(fromUnixTimestamp64Nano(timestamp))) AS age_min FROM signoz_logs.distributed_logs_v2 WHERE body='missing_map_record' AND timestamp >= (toUnixTimestamp(now())-3600)*1000000000 GROUP BY T, M ) WHERE age_min >= 20 AND last_seen >= now() - toIntervalMinute(8)"},
+		{"SignedLiteralAfterClosingParenMinimal", "SELECT (1)-1"},
 		{"TrimFunction", "SELECT trimBoth('/api/endpoint/', '/');"},
 	}
 
@@ -121,18 +125,6 @@ func TestErrIfStatementIsNotValid_ShouldPassButFails(t *testing.T) {
 			query:              "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 5 MINUTE) AS interval, resources_string['host.name'] as host_name, toFloat64(countIf( lower(trim(BOTH ' ' FROM replaceOne( JSONExtractString(body, 'Action'), 'health_status: ', '' ))) IN ('unhealthy','starting','failing') )) as value FROM signoz_logs.distributed_logs_v2 WHERE timestamp BETWEEN 1784602320000000000 AND 1784602620000000000 AND ts_bucket_start BETWEEN 1784602320 - 300 AND 1784602620 AND JSONExtractString(body, 'Type') = 'container' AND JSONExtractString(body, 'Actor', 'Attributes', 'name') IS NOT NULL AND resources_string['host.name'] IS NOT NULL AND resources_string['host.name'] = 'aihub-nightly' GROUP BY interval, host_name ORDER BY interval, host_name",
 			expectedStopsAfter: "trim(BOTH '",
 			fix:                "SELECT trimBoth(replaceOne( JSONExtractString(body, 'Action'), 'health_status: ', '' ), ' ')",
-		},
-		{
-			name:               "SignedLiteralAfterClosingParen",
-			query:              "SELECT now() AS ts, toFloat64(count()) AS value FROM ( SELECT attributes_string['TableName'] AS T, attributes_string['MissingId'] AS M, max(fromUnixTimestamp64Nano(timestamp)) AS last_seen, dateDiff('minute', min(fromUnixTimestamp64Nano(timestamp)), max(fromUnixTimestamp64Nano(timestamp))) AS age_min FROM signoz_logs.distributed_logs_v2 WHERE body='missing_map_record' AND timestamp >= (toUnixTimestamp(now())-3600)*1000000000 GROUP BY T, M ) WHERE age_min >= 20 AND last_seen >= now() - toIntervalMinute(8)",
-			expectedStopsAfter: "(toUnixTimestamp(now())",
-			fix:                "SELECT (toUnixTimestamp(now()) - 3600) * 1000000000",
-		},
-		{
-			name:               "SignedLiteralAfterClosingParenMinimal",
-			query:              "SELECT (1)-1",
-			expectedStopsAfter: "(1)",
-			fix:                "SELECT (1) - 1",
 		},
 	}
 
