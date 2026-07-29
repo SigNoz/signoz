@@ -9,8 +9,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 )
 
-// One code per reason a statement is refused, so that the failures can be counted and
-// filtered by cause rather than by matching on the message.
 var (
 	CodeClickHouseSQLUnparseable        = errors.MustNewCode("clickhouse_sql_unparseable")
 	CodeClickHouseSQLNotSingleStatement = errors.MustNewCode("clickhouse_sql_not_single_statement")
