@@ -1496,6 +1496,7 @@ components:
       - redis
       - cloudsql_postgres
       - memorystore_redis
+      - computeengine
       type: string
     CloudintegrationtypesServiceMetadata:
       properties:
@@ -9934,14 +9935,9 @@ paths:
     get:
       deprecated: false
       description: This endpoint lists the services metadata for the specified cloud
-        provider
+        provider, without any account context.
       operationId: ListServicesMetadata
       parameters:
-      - in: query
-        name: cloud_integration_id
-        required: false
-        schema:
-          type: string
       - in: path
         name: cloud_provider
         required: true
@@ -9991,14 +9987,10 @@ paths:
   /api/v1/cloud_integrations/{cloud_provider}/services/{service_id}:
     get:
       deprecated: false
-      description: This endpoint gets a service for the specified cloud provider
+      description: This endpoint gets a service definition for the specified cloud
+        provider, without any account context.
       operationId: GetService
       parameters:
-      - in: query
-        name: cloud_integration_id
-        required: false
-        schema:
-          type: string
       - in: path
         name: cloud_provider
         required: true

@@ -22,7 +22,7 @@ type MockMetadataStore struct {
 	LogsJSONIndexes            []telemetrytypes.TelemetryFieldKeySkipIndex
 	ColumnEvolutionMetadataMap map[string][]*telemetrytypes.EvolutionEntry
 	LookupKeysMap              map[telemetrytypes.MetricMetadataLookupKey]int64
-	// StaticFields holds signal-specific intrinsic field definitions (e.g. telemetrylogs.IntrinsicFields).
+	// StaticFields holds signal-specific intrinsic field definitions (e.g. logstelemetryschema.IntrinsicFields).
 	StaticFields map[string]telemetrytypes.TelemetryFieldKey
 }
 
@@ -43,7 +43,7 @@ func NewMockMetadataStore() *MockMetadataStore {
 }
 
 // SetStaticFields sets the static fields for the mock metadata store.
-// Pass the signal-specific intrinsic fields (e.g. telemetrylogs.IntrinsicFields) so the mock
+// Pass the signal-specific intrinsic fields (e.g. logstelemetryschema.IntrinsicFields) so the mock
 // mirrors what the real metadata store does when injecting those definitions into key results.
 func (m *MockMetadataStore) SetStaticFields(intrinsicFields map[string]telemetrytypes.TelemetryFieldKey) {
 	m.StaticFields = intrinsicFields

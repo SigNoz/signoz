@@ -2815,6 +2815,7 @@ export enum CloudintegrationtypesServiceIDDTO {
 	redis = 'redis',
 	cloudsql_postgres = 'cloudsql_postgres',
 	memorystore_redis = 'memorystore_redis',
+	computeengine = 'computeengine',
 }
 export type CloudintegrationtypesCloudIntegrationServiceDTOAnyOf = {
 	/**
@@ -10204,14 +10205,6 @@ export type GetConnectionCredentials200 = {
 export type ListServicesMetadataPathParameters = {
 	cloudProvider: string;
 };
-export type ListServicesMetadataParams = {
-	/**
-	 * @type string
-	 * @description undefined
-	 */
-	cloud_integration_id?: string;
-};
-
 export type ListServicesMetadata200 = {
 	data: CloudintegrationtypesGettableServicesMetadataDTO;
 	/**
@@ -10224,14 +10217,6 @@ export type GetServicePathParameters = {
 	cloudProvider: string;
 	serviceId: string;
 };
-export type GetServiceParams = {
-	/**
-	 * @type string
-	 * @description undefined
-	 */
-	cloud_integration_id?: string;
-};
-
 export type GetService200 = {
 	data: CloudintegrationtypesServiceDTO;
 	/**

@@ -143,6 +143,12 @@ export default defineConfig(({ mode }): UserConfig => {
 		plugins,
 		resolve: {
 			alias: {
+				// @grafana/data imports bare CJS `lodash`, whose UMD footer checks for an
+				// AMD loader before assigning module.exports. Any third-party script that
+				// defines window.define.amd first leaves the bundled namespace empty, so
+				// every lodash method reached through it is undefined at runtime. lodash-es
+				// is the same version, real ESM, and tree-shakes.
+				lodash: 'lodash-es',
 				'@': resolve(__dirname, './src'),
 				utils: resolve(__dirname, './src/utils'),
 				types: resolve(__dirname, './src/types'),

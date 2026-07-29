@@ -44,10 +44,6 @@ type GettableServicesMetadata struct {
 	Services []*ServiceMetadata `json:"services" required:"true" nullable:"false"`
 }
 
-type ListServicesMetadataParams struct {
-	CloudIntegrationID valuer.UUID `query:"cloud_integration_id" required:"false"`
-}
-
 // Service represents a cloud integration service with its definition,
 // cloud integration service is non nil only when the service entry exists in DB with ANY config (enabled or disabled).
 type Service struct {
@@ -61,10 +57,6 @@ type Service struct {
 
 type ServiceAssets struct {
 	Dashboards []*ServiceDashboard `json:"dashboards" required:"true" nullable:"false"`
-}
-
-type GetServiceParams struct {
-	CloudIntegrationID valuer.UUID `query:"cloud_integration_id" required:"false"`
 }
 
 type UpdatableService struct {

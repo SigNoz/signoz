@@ -10,6 +10,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/tagtypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/perses/spec/go/dashboard"
 	"github.com/perses/spec/go/dashboard/variable"
@@ -1738,6 +1739,82 @@ func TestConvertV1WidgetQueryRewritesValueOrderKeyAfterDefaultAggregation(t *tes
 	assert.Equal(t, "count()", spec.Order[0].Key.Name, "#SIGNOZ_VALUE resolves to the injected default aggregation")
 }
 
+// A metric query ordering by a value alias the v5 validator rejects (here the raw
+// metric name, never enumerated anywhere) is rewritten to the canonical aggregation
+// key, while a genuine group-by order key is left alone. Guards the allowlist
+// approach: validity is derived from the query, not a hardcoded set of bad keys.
+func TestConvertV1WidgetQueryRewritesUnknownMetricValueOrderKey(t *testing.T) {
+	widget := map[string]any{
+		"id":         "m-1",
+		"panelTypes": "graph",
+		"query": map[string]any{
+			"queryType": "builder",
+			"builder": map[string]any{
+				"queryData": []any{
+					map[string]any{
+						"queryName":    "A",
+						"expression":   "A",
+						"dataSource":   "metrics",
+						"aggregations": []any{map[string]any{"metricName": "http_requests_total", "spaceAggregation": "sum"}},
+						"groupBy":      []any{map[string]any{"key": "service.name", "dataType": "string", "type": "resource"}},
+						"orderBy": []any{
+							map[string]any{"columnName": "http_requests_total", "order": "desc"},
+							map[string]any{"columnName": "service.name", "order": "asc"},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	queries := (&v1Decoder{}).convertV1WidgetQuery(widget, PanelKindTimeSeries)
+	require.Len(t, queries, 1)
+
+	wrapper, ok := queries[0].Spec.Plugin.Spec.(*BuilderQuerySpec)
+	require.True(t, ok)
+	spec, ok := wrapper.Spec.(qb.QueryBuilderQuery[qb.MetricAggregation])
+	require.True(t, ok, "metrics query should dispatch to MetricAggregation, got %T", wrapper.Spec)
+
+	require.Len(t, spec.Order, 2)
+	assert.Equal(t, "sum(http_requests_total)", spec.Order[0].Key.Name, "unknown value alias rewritten to the aggregation key")
+	assert.Equal(t, "service.name", spec.Order[1].Key.Name, "valid group-by order key left alone")
+}
+
+// A v1 meter query is dataSource "metrics" with a separate source "meter". The signal
+// maps to metrics, and the meter source must survive onto the v5 spec — otherwise the
+// panel migrates as a plain metrics query and reads the wrong data.
+func TestConvertV1WidgetQueryCarriesMeterSource(t *testing.T) {
+	widget := map[string]any{
+		"id":         "meter-1",
+		"panelTypes": "graph",
+		"query": map[string]any{
+			"queryType": "builder",
+			"builder": map[string]any{
+				"queryData": []any{
+					map[string]any{
+						"queryName":    "A",
+						"expression":   "A",
+						"dataSource":   "metrics",
+						"source":       "meter",
+						"aggregations": []any{map[string]any{"metricName": "signoz.meter.log.size", "spaceAggregation": "sum"}},
+					},
+				},
+			},
+		},
+	}
+
+	queries := (&v1Decoder{}).convertV1WidgetQuery(widget, PanelKindTimeSeries)
+	require.Len(t, queries, 1)
+
+	wrapper, ok := queries[0].Spec.Plugin.Spec.(*BuilderQuerySpec)
+	require.True(t, ok)
+	spec, ok := wrapper.Spec.(qb.QueryBuilderQuery[qb.MetricAggregation])
+	require.True(t, ok, "meter query should dispatch to MetricAggregation, got %T", wrapper.Spec)
+
+	assert.Equal(t, telemetrytypes.SignalMetrics, spec.Signal, "signal maps from dataSource")
+	assert.Equal(t, telemetrytypes.SourceMeter, spec.Source, "meter source carried onto the v5 spec")
+}
+
 func TestConvertV1WidgetQueryInjectsCountForNoopOnAggregationPanel(t *testing.T) {
 	// A logs query with the list-style "noop" operator placed on an aggregation
 	// panel (graph). createAggregationsShapeSafe drops noop, leaving no aggregation;
@@ -2084,6 +2161,26 @@ func TestConvertV1LayoutsClampsXBounds(t *testing.T) {
 	assert.Equal(t, 6, grid.Items[1].X) // x+w=16>12 shifted left to 12-6
 }
 
+func TestConvertV1LayoutsClampsOverwideWidth(t *testing.T) {
+	// A widget wider than the 12-col grid (e.g. carried over from a 24-col v1 grid)
+	// can't be shifted to fit, so its width is clamped so x+width = grid width —
+	// otherwise it overflows and v2 validation rejects it.
+	data := StorableDashboardData{
+		"widgets": []any{map[string]any{"id": "wide", "panelTypes": "graph", "query": singleLogsBuilderQuery()}},
+		"layout":  []any{map[string]any{"i": "wide", "x": float64(0), "y": float64(0), "w": float64(24), "h": float64(6)}},
+	}
+
+	d := &v1Decoder{}
+	layouts := d.convertV1Layouts(data, d.convertV1Panels(data["widgets"]))
+	require.NoError(t, d.errIfHasMalformedFields())
+	require.Len(t, layouts, 1)
+	grid, ok := layouts[0].Spec.(*dashboard.GridLayoutSpec)
+	require.True(t, ok)
+	require.Len(t, grid.Items, 1)
+	assert.Equal(t, 0, grid.Items[0].X)
+	assert.Equal(t, 12, grid.Items[0].Width) // w=24 clamped to 12 so x+width = 12
+}
+
 // TestConvertV1LayoutsToleratesNonObjectPanelMap covers templates that store
 // panelMap as {rowID: []widgetID} instead of the canonical {rowID: {widgets,
 // collapsed}}. The frontend reads such an entry as "not collapsed" (it accesses
@@ -2149,6 +2246,33 @@ func TestConvertV1LayoutsDropsEntryForUnrenderableWidget(t *testing.T) {
 	spec, ok := layouts[0].Spec.(*dashboard.GridLayoutSpec)
 	require.True(t, ok)
 	require.Len(t, spec.Items, 1, "e-1 has no panel → its layout entry is dropped, not emitted as a dangling ref")
+	assert.Equal(t, "#/spec/panels/p-1", spec.Items[0].Content.Ref)
+}
+
+func TestRetainPlacedWidgetsDropsZeroWidth(t *testing.T) {
+	// z-1 is placed with zero width, which the v1 UI doesn't render. It must be
+	// dropped entirely: no panel, and no dangling layout entry.
+	data := StorableDashboardData{
+		"widgets": []any{
+			map[string]any{"id": "p-1", "panelTypes": "graph", "query": singleLogsBuilderQuery()},
+			map[string]any{"id": "z-1", "panelTypes": "graph", "query": singleLogsBuilderQuery()},
+		},
+		"layout": []any{
+			map[string]any{"i": "p-1", "x": float64(0), "y": float64(0), "w": float64(6), "h": float64(6)},
+			map[string]any{"i": "z-1", "x": float64(6), "y": float64(0), "w": float64(0), "h": float64(6)},
+		},
+	}
+
+	d := &v1Decoder{}
+	panels := d.convertV1Panels(retainPlacedWidgets(data))
+	require.Contains(t, panels, "p-1")
+	require.NotContains(t, panels, "z-1", "a zero-width widget is not retained → no panel")
+
+	layouts := d.convertV1Layouts(data, panels)
+	require.Len(t, layouts, 1)
+	spec, ok := layouts[0].Spec.(*dashboard.GridLayoutSpec)
+	require.True(t, ok)
+	require.Len(t, spec.Items, 1, "the zero-width widget's layout entry is dropped too")
 	assert.Equal(t, "#/spec/panels/p-1", spec.Items[0].Content.Ref)
 }
 
