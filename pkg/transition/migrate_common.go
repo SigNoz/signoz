@@ -9,7 +9,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/SigNoz/signoz/pkg/telemetrytraces"
+	"github.com/SigNoz/signoz/pkg/telemetryschema/tracestelemetryschema"
 	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
@@ -436,16 +436,16 @@ func (mc *migrateCommon) groupByExistsExpr(queryData map[string]any) string {
 		}
 		expr = append(expr, fmt.Sprintf("%s EXISTS", key))
 
-		if _, ok := telemetrytraces.IntrinsicFields[key]; ok {
+		if _, ok := tracestelemetryschema.IntrinsicFields[key]; ok {
 			delete(item, "type")
 		}
-		if _, ok := telemetrytraces.CalculatedFields[key]; ok {
+		if _, ok := tracestelemetryschema.CalculatedFields[key]; ok {
 			delete(item, "type")
 		}
-		if _, ok := telemetrytraces.IntrinsicFieldsDeprecated[key]; ok {
+		if _, ok := tracestelemetryschema.IntrinsicFieldsDeprecated[key]; ok {
 			delete(item, "type")
 		}
-		if _, ok := telemetrytraces.CalculatedFieldsDeprecated[key]; ok {
+		if _, ok := tracestelemetryschema.CalculatedFieldsDeprecated[key]; ok {
 			delete(item, "type")
 		}
 	}
@@ -468,16 +468,16 @@ func (mc *migrateCommon) fixGroupBy(queryData map[string]any) bool {
 		if !ok {
 			continue
 		}
-		if _, ok := telemetrytraces.IntrinsicFields[key]; ok {
+		if _, ok := tracestelemetryschema.IntrinsicFields[key]; ok {
 			delete(item, "type")
 		}
-		if _, ok := telemetrytraces.CalculatedFields[key]; ok {
+		if _, ok := tracestelemetryschema.CalculatedFields[key]; ok {
 			delete(item, "type")
 		}
-		if _, ok := telemetrytraces.IntrinsicFieldsDeprecated[key]; ok {
+		if _, ok := tracestelemetryschema.IntrinsicFieldsDeprecated[key]; ok {
 			delete(item, "type")
 		}
-		if _, ok := telemetrytraces.CalculatedFieldsDeprecated[key]; ok {
+		if _, ok := tracestelemetryschema.CalculatedFieldsDeprecated[key]; ok {
 			delete(item, "type")
 		}
 	}
