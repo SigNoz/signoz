@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback } from 'react';
 import { Divider } from '@signozhq/ui/divider';
 import { Tabs } from '@signozhq/ui/tabs';
 import { useConfirmableAction } from 'hooks/useConfirmableAction';
@@ -12,17 +12,15 @@ import TestTab from './TestTab/TestTab';
 import { useAttributeMappingEditor } from './hooks/useAttributeMappingEditor';
 import { useGroupFormDrawer } from './components/GroupFormDrawer/hooks/useGroupFormDrawer';
 import { useTestSpanMapper } from './TestTab/useTestSpanMapper';
-import {
-	MAPPINGS_TAB_KEY,
-	TEST_TAB_DISABLED_LOAD_FAILED,
-	TEST_TAB_DISABLED_NO_GROUPS,
-	TEST_TAB_KEY,
-} from './constants';
+
+const MAPPINGS_TAB_KEY = 'attribute-mappings';
+const TEST_TAB_KEY = 'test';
 
 function LLMObservabilityAttributeMapping(): JSX.Element {
 	const editor = useAttributeMappingEditor();
 	const groupDrawer = useGroupFormDrawer();
-	const [activeTab, setActiveTab] = useState<string>(MAPPINGS_TAB_KEY);
+	// Owned here, not inside TestTab: the tabs unmount their inactive panel, so
+	// state living in TestTab would be wiped on every tab switch.
 	const spanTest = useTestSpanMapper(editor.snapshot, editor.groups);
 
 	const { discard } = editor;
@@ -39,19 +37,6 @@ function LLMObservabilityAttributeMapping(): JSX.Element {
 		groupDrawer.close();
 	}, [editor, groupDrawer]);
 
-	const testDisabledReason = useMemo((): string | null => {
-		if (editor.isLoading) {
-			return null;
-		}
-		if (editor.isError) {
-			return TEST_TAB_DISABLED_LOAD_FAILED;
-		}
-		if (editor.groups.length === 0) {
-			return TEST_TAB_DISABLED_NO_GROUPS;
-		}
-		return null;
-	}, [editor.isLoading, editor.isError, editor.groups.length]);
-
 	const tabItems = [
 		{
 			key: MAPPINGS_TAB_KEY,
@@ -67,16 +52,9 @@ function LLMObservabilityAttributeMapping(): JSX.Element {
 		{
 			key: TEST_TAB_KEY,
 			label: 'Test',
-			disabled: testDisabledReason !== null,
-			disabledReason: testDisabledReason ?? undefined,
 			children: <TestTab spanTest={spanTest} />,
 		},
 	];
-
-	const selectedTab =
-		activeTab === TEST_TAB_KEY && testDisabledReason !== null
-			? MAPPINGS_TAB_KEY
-			: activeTab;
 
 	return (
 		<div
@@ -99,8 +77,7 @@ function LLMObservabilityAttributeMapping(): JSX.Element {
 
 			<Tabs
 				testId="attribute-mapping-tabs"
-				value={selectedTab}
-				onChange={setActiveTab}
+				defaultValue={MAPPINGS_TAB_KEY}
 				items={tabItems}
 			/>
 			{groupDrawer.isOpen && (

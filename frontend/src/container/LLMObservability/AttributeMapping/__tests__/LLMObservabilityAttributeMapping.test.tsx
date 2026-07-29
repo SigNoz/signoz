@@ -113,38 +113,6 @@ describe('LLMObservabilityAttributeMapping', () => {
 		expect(screen.queryByTestId('discard-changes-btn')).not.toBeInTheDocument();
 	});
 
-	it('locks the test tab while there are no mapping groups', async () => {
-		server.use(
-			rest.get(GROUPS_ENDPOINT, (_req, res, ctx) =>
-				res(ctx.status(200), ctx.json(makeGroupsResponse([]))),
-			),
-		);
-		render(<LLMObservabilityAttributeMapping />);
-
-		await screen.findByTestId('mapper-groups-empty');
-		await waitFor(() =>
-			expect(screen.getByRole('tab', { name: /Test/ })).toBeDisabled(),
-		);
-	});
-
-	it('unlocks the test tab once a group is staged, before it is saved', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		server.use(
-			rest.get(GROUPS_ENDPOINT, (_req, res, ctx) =>
-				res(ctx.status(200), ctx.json(makeGroupsResponse([]))),
-			),
-		);
-		render(<LLMObservabilityAttributeMapping />);
-
-		await user.click(await screen.findByTestId('add-group-row'));
-		await user.type(await screen.findByTestId('group-form-name'), 'staged');
-		await user.click(screen.getByTestId('group-form-save'));
-
-		await waitFor(() =>
-			expect(screen.getByRole('tab', { name: /Test/ })).toBeEnabled(),
-		);
-	});
-
 	it('keeps the sample span input when switching away from the test tab and back', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(<LLMObservabilityAttributeMapping />);
