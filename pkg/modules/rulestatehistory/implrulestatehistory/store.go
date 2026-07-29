@@ -485,7 +485,7 @@ func (s *store) buildFilterClause(ctx context.Context, orgID valuer.UUID, filter
 	}
 
 	fieldKeys, _, err := s.telemetryMetadataStore.GetKeysMulti(ctx, orgID, selectors)
-	if err != nil {
+	if err != nil || fieldKeys == nil {
 		fieldKeys = map[string][]*telemetrytypes.TelemetryFieldKey{}
 	}
 	for _, sel := range selectors {
