@@ -1,30 +1,20 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
 	RenderErrorResponseDTO,
 	SpantypesSpanMapperTestSpanDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { useTestSpanMappers } from 'api/generated/services/spanmapper';
 import { AxiosError } from 'axios';
+import useDebounce from 'hooks/useDebounce';
 
 import { buildTestRequest, parseSpanInput } from './testPayload';
+import { getStoredSpanInput, setStoredSpanInput } from './spanInputStorage';
 import { DraftGroup } from '../types';
 
 export type TestTabAttributes = Record<string, unknown>;
 export type TestTabResource = Record<string, unknown>;
 
-export const SAMPLE_SPAN_JSON = `{
-  "attributes": {
-    "my_company.llm.input": "What is quantum computing?",
-    "llm.input_messages": "What is quantum computing?",
-    "gen_ai.request.model": "gpt-4",
-    "gen_ai.usage.total_tokens": 1250,
-    "gen_ai.content.completion": "Quantum computing leverages..."
-  },
-  "resource": {
-    "service.name": "llm-gateway",
-    "deployment.environment": "production"
-  }
-}`;
+const PERSIST_DEBOUNCE_MS = 500;
 
 function apiErrorMessage(error: unknown): string {
 	const axiosError = error as AxiosError<RenderErrorResponseDTO>;
@@ -51,7 +41,7 @@ export function useTestSpanMapper(
 	snapshot: DraftGroup[],
 	draft: DraftGroup[],
 ): UseTestSpanMapper {
-	const [input, setInput] = useState<string>(SAMPLE_SPAN_JSON);
+	const [input, setInput] = useState<string>(getStoredSpanInput);
 	const [error, setError] = useState<string | null>(null);
 	const [result, setResult] = useState<SpantypesSpanMapperTestSpanDTO[] | null>(
 		null,
@@ -64,6 +54,13 @@ export function useTestSpanMapper(
 
 	const { mutate, isLoading } = useTestSpanMappers();
 
+	const debouncedInput = useDebounce(input, PERSIST_DEBOUNCE_MS);
+	useEffect((): void => {
+		if (debouncedInput !== getStoredSpanInput()) {
+			setStoredSpanInput(debouncedInput);
+		}
+	}, [debouncedInput]);
+
 	const validationError = useMemo((): string | null => {
 		try {
 			parseSpanInput(input);
@@ -73,14 +70,20 @@ export function useTestSpanMapper(
 		}
 	}, [input]);
 
-	const run = useCallback((): void => {
+	const reset = useCallback((): void => {
 		setError(null);
+		setResult(null);
+		setTestedAttributes(null);
+		setTestedResource(null);
+	}, []);
+
+	const run = useCallback((): void => {
+		reset();
 
 		let body;
 		try {
 			body = buildTestRequest(snapshot, draft, input);
 		} catch (parseError) {
-			setResult(null);
 			setError(apiErrorMessage(parseError));
 			return;
 		}
@@ -104,14 +107,7 @@ export function useTestSpanMapper(
 				},
 			},
 		);
-	}, [snapshot, draft, input, mutate]);
-
-	const reset = useCallback((): void => {
-		setError(null);
-		setResult(null);
-		setTestedAttributes(null);
-		setTestedResource(null);
-	}, []);
+	}, [snapshot, draft, input, mutate, reset]);
 
 	return {
 		input,

@@ -322,6 +322,10 @@ func (ReduceTo) Enum() []any {
 	}
 }
 
+func (r ReduceTo) IsValid() bool {
+	return slices.ContainsFunc(r.Enum(), func(v any) bool { return v == r })
+}
+
 // FunctionReduceTo applies the reduceTo operator to a time series and returns a new series with the reduced value
 // reduceTo can be one of: last, sum, avg, min, max, count, median
 // if reduceTo is not recognized, the function returns the original series.

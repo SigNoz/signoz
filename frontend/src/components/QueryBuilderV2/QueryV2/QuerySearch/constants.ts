@@ -1,6 +1,16 @@
 export const RECENTS_SECTION = { name: 'Recent searches', rank: 1 } as const;
 export const SUGGESTIONS_SECTION = { name: 'Suggestions', rank: 2 } as const;
 
+// TODO: move to using TelemetrytypesFieldContextDTO when we migrate getKeySuggestions API (Part of https://github.com/SigNoz/engineering-pod/issues/5289)
+export const FIELD_CONTEXTS = [
+	'attribute',
+	'resource',
+	'span',
+	'body',
+	'log',
+	'metric',
+] as const;
+
 // Custom CodeMirror Completion.type for recent-query entries. Used to discriminate
 // recents from regular autocomplete completions in renderers and event handlers.
 export const RECENT_COMPLETION_TYPE = 'recent';

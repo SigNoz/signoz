@@ -10,16 +10,14 @@ import (
 )
 
 // buildClusterRecords assembles the page records. Node condition counts and
-// pod phase counts come from the respective per-group maps in both modes;
-// every row is a group of nodes+pods, so there's no per-row "current state"
-// concept (analogous to namespaces).
+// pod status counts come from the respective per-group maps in both modes;
+// every row is a group of nodes+pods (analogous to namespaces).
 func buildClusterRecords(
 	resp *qbtypes.QueryRangeResponse,
 	pageGroups []map[string]string,
 	groupBy []qbtypes.GroupByKey,
 	metadataMap map[string]map[string]string,
 	nodeConditionCountsMap map[string]nodeConditionCounts,
-	podPhaseCountsMap map[string]podPhaseCounts,
 	podStatusCounts map[string]podStatusCounts,
 	resourceCounts map[string]map[string]int64,
 ) []inframonitoringtypes.ClusterRecord {
@@ -58,16 +56,6 @@ func buildClusterRecords(
 			record.NodeCountsByReadiness = inframonitoringtypes.NodeCountsByReadiness{
 				Ready:    conditionCountsForGroup.Ready,
 				NotReady: conditionCountsForGroup.NotReady,
-			}
-		}
-
-		if phaseCountsForGroup, ok := podPhaseCountsMap[compositeKey]; ok {
-			record.PodCountsByPhase = inframonitoringtypes.PodCountsByPhase{
-				Pending:   phaseCountsForGroup.Pending,
-				Running:   phaseCountsForGroup.Running,
-				Succeeded: phaseCountsForGroup.Succeeded,
-				Failed:    phaseCountsForGroup.Failed,
-				Unknown:   phaseCountsForGroup.Unknown,
 			}
 		}
 

@@ -11,10 +11,17 @@ import styles from './LLMObservabilityAttributeMapping.module.scss';
 import TestTab from './TestTab/TestTab';
 import { useAttributeMappingEditor } from './hooks/useAttributeMappingEditor';
 import { useGroupFormDrawer } from './components/GroupFormDrawer/hooks/useGroupFormDrawer';
+import { useTestSpanMapper } from './TestTab/useTestSpanMapper';
+
+const MAPPINGS_TAB_KEY = 'attribute-mappings';
+const TEST_TAB_KEY = 'test';
 
 function LLMObservabilityAttributeMapping(): JSX.Element {
 	const editor = useAttributeMappingEditor();
 	const groupDrawer = useGroupFormDrawer();
+	// Owned here, not inside TestTab: the tabs unmount their inactive panel, so
+	// state living in TestTab would be wiped on every tab switch.
+	const spanTest = useTestSpanMapper(editor.snapshot, editor.groups);
 
 	const { discard } = editor;
 	// Discarding wipes the whole working copy, so gate it behind a confirm
@@ -32,7 +39,7 @@ function LLMObservabilityAttributeMapping(): JSX.Element {
 
 	const tabItems = [
 		{
-			key: 'attribute-mappings',
+			key: MAPPINGS_TAB_KEY,
 			label: 'Attribute Mappings',
 			children: (
 				<AttributeMappingsTab
@@ -43,9 +50,9 @@ function LLMObservabilityAttributeMapping(): JSX.Element {
 			),
 		},
 		{
-			key: 'test',
+			key: TEST_TAB_KEY,
 			label: 'Test',
-			children: <TestTab editor={editor} />,
+			children: <TestTab spanTest={spanTest} />,
 		},
 	];
 
@@ -70,7 +77,7 @@ function LLMObservabilityAttributeMapping(): JSX.Element {
 
 			<Tabs
 				testId="attribute-mapping-tabs"
-				defaultValue="attribute-mappings"
+				defaultValue={MAPPINGS_TAB_KEY}
 				items={tabItems}
 			/>
 			{groupDrawer.isOpen && (

@@ -1,6 +1,6 @@
 import { render, renderHook, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesDynamicVariableSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import type { FilterData } from 'container/QueryTable/Drilldown/drilldownUtils';
 
 import DrilldownDashboardVariablesMenu from '../DrilldownMenu/DrilldownDashboardVariablesMenu';
@@ -63,7 +63,6 @@ jest.mock(
 	'pages/DashboardPageV2/DashboardContainer/DashboardSettings/Variables/variableFormModel',
 	() => ({
 		emptyVariableFormModel: (): unknown => ({}),
-		DYNAMIC_SIGNAL_ALL: 'all',
 	}),
 );
 jest.mock('components/OverlayScrollbar/OverlayScrollbar', () => ({
@@ -84,7 +83,7 @@ function renderItems(): void {
 	const { result } = renderHook(() =>
 		useDrilldownDashboardVariables({
 			filters,
-			signal: TelemetrytypesSignalDTO.metrics,
+			signal: DashboardtypesDynamicVariableSignalDTO.metrics,
 			onClose: jest.fn(),
 		}),
 	);

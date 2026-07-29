@@ -26,8 +26,6 @@ import {
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { FeatureKeys } from '../../constants/features';
-import { useAppContext } from '../../providers/App/App';
 import { K8sDynamicList } from './Base/K8sDynamicList';
 import {
 	GetClustersQuickFiltersConfig,
@@ -128,69 +126,64 @@ export default function InfraMonitoringK8s(): JSX.Element {
 		setShowFilters((show) => !show);
 	}, []);
 
-	const { featureFlags } = useAppContext();
-	const dotMetricsEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
-			?.active || false;
-
 	const categories = useMemo(
 		() => [
 			{
 				key: K8sCategories.PODS,
 				label: 'Pods',
 				icon: <Container size={14} />,
-				config: GetPodsQuickFiltersConfig(dotMetricsEnabled),
+				config: GetPodsQuickFiltersConfig(),
 			},
 			{
 				key: K8sCategories.NODES,
 				label: 'Nodes',
 				icon: <Workflow size={14} />,
-				config: GetNodesQuickFiltersConfig(dotMetricsEnabled),
+				config: GetNodesQuickFiltersConfig(),
 			},
 			{
 				key: K8sCategories.NAMESPACES,
 				label: 'Namespaces',
 				icon: <FilePenLine size={14} />,
-				config: GetNamespaceQuickFiltersConfig(dotMetricsEnabled),
+				config: GetNamespaceQuickFiltersConfig(),
 			},
 			{
 				key: K8sCategories.CLUSTERS,
 				label: 'Clusters',
 				icon: <Boxes size={14} />,
-				config: GetClustersQuickFiltersConfig(dotMetricsEnabled),
+				config: GetClustersQuickFiltersConfig(),
 			},
 			{
 				key: K8sCategories.DEPLOYMENTS,
 				label: 'Deployments',
 				icon: <Computer size={14} />,
-				config: GetDeploymentsQuickFiltersConfig(dotMetricsEnabled),
+				config: GetDeploymentsQuickFiltersConfig(),
 			},
 			{
 				key: K8sCategories.JOBS,
 				label: 'Jobs',
 				icon: <Bolt size={14} />,
-				config: GetJobsQuickFiltersConfig(dotMetricsEnabled),
+				config: GetJobsQuickFiltersConfig(),
 			},
 			{
 				key: K8sCategories.DAEMONSETS,
 				label: 'DaemonSets',
 				icon: <Group size={14} />,
-				config: GetDaemonsetsQuickFiltersConfig(dotMetricsEnabled),
+				config: GetDaemonsetsQuickFiltersConfig(),
 			},
 			{
 				key: K8sCategories.STATEFULSETS,
 				label: 'StatefulSets',
 				icon: <ArrowUpDown size={14} />,
-				config: GetStatefulsetsQuickFiltersConfig(dotMetricsEnabled),
+				config: GetStatefulsetsQuickFiltersConfig(),
 			},
 			{
 				key: K8sCategories.VOLUMES,
 				label: 'Volumes',
 				icon: <HardDrive size={14} />,
-				config: GetVolumesQuickFiltersConfig(dotMetricsEnabled),
+				config: GetVolumesQuickFiltersConfig(),
 			},
 		],
-		[dotMetricsEnabled],
+		[],
 	);
 
 	const selectedCategoryConfig = useMemo(

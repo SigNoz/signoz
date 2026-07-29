@@ -13,8 +13,6 @@ import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import uPlot from 'uplot';
 
-import { FeatureKeys } from 'constants/features';
-import { useAppContext } from 'providers/App/App';
 import { getMetricsTableData, MetricsTableData } from './utils';
 
 export interface UseEntityMetricsParams<T> {
@@ -25,7 +23,6 @@ export interface UseEntityMetricsParams<T> {
 		entity: T,
 		start: number,
 		end: number,
-		dotMetricsEnabled: boolean,
 	) => GetQueryResultsProps[];
 	visibilities: boolean[];
 	category: InfraMonitoringEntity;
@@ -46,26 +43,9 @@ export function useEntityMetrics<T>({
 	visibilities,
 	category,
 }: UseEntityMetricsParams<T>): UseEntityMetricsResult {
-	const { featureFlags } = useAppContext();
-	const dotMetricsEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
-			?.active || false;
-
 	const queryPayloads = useMemo(
-		() =>
-			getEntityQueryPayload(
-				entity,
-				timeRange.startTime,
-				timeRange.endTime,
-				dotMetricsEnabled,
-			),
-		[
-			getEntityQueryPayload,
-			entity,
-			timeRange.startTime,
-			timeRange.endTime,
-			dotMetricsEnabled,
-		],
+		() => getEntityQueryPayload(entity, timeRange.startTime, timeRange.endTime),
+		[getEntityQueryPayload, entity, timeRange.startTime, timeRange.endTime],
 	);
 
 	const queries = useQueries(
