@@ -11,8 +11,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/statementbuilder"
 	"github.com/SigNoz/signoz/pkg/statementbuilder/resourcefilter"
+	"github.com/SigNoz/signoz/pkg/statementbuilder/tracesstatementbuilder"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/tracestelemetryschema"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -40,10 +43,34 @@ type scopedTraceStatementBuilder struct {
 
 var _ qbtypes.StatementBuilder[qbtypes.TraceAggregation] = (*scopedTraceStatementBuilder)(nil)
 
+// NewFactory returns a provider factory for a scoped trace statement builder. Unlike
+// the per-signal factories this package is domain-neutral, so the caller supplies the
+// factory name and the TraceScope (see aistatementbuilder for the gen_ai scope). Its
+// New delegates the span-list path to a trace statement builder built via the traces
+// factory — mirroring how the meter factory builds its own metrics builder.
+func NewFactory(
+	name factory.Name,
+	scope TraceScope,
+	telemetryStore telemetrystore.TelemetryStore,
+	metadataStore telemetrytypes.MetadataStore,
+	fl flagger.Flagger,
+) factory.ProviderFactory[qbtypes.StatementBuilder[qbtypes.TraceAggregation], statementbuilder.Config] {
+	return factory.NewProviderFactory(
+		name,
+		func(ctx context.Context, settings factory.ProviderSettings, cfg statementbuilder.Config) (qbtypes.StatementBuilder[qbtypes.TraceAggregation], error) {
+			traceStmtBuilder, err := tracesstatementbuilder.NewFactory(telemetryStore, metadataStore, fl).New(ctx, settings, cfg)
+			if err != nil {
+				return nil, err
+			}
+			return NewScopedTraceStatementBuilder(settings, metadataStore, scope, traceStmtBuilder, fl), nil
+		},
+	)
+}
+
 // NewScopedTraceStatementBuilder wires the generic trace-list builder. The field
 // mapper / condition builder are built here, not injected — the list always scans the
 // traces span index. traceStmtBuilder (the delegate for the span-list path) is
-// injected: the per-scope factory owns building it (see aistatementbuilder).
+// injected because NewFactory already builds the canonical instance.
 func NewScopedTraceStatementBuilder(
 	settings factory.ProviderSettings,
 	metadataStore telemetrytypes.MetadataStore,
