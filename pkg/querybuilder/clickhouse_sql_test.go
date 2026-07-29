@@ -36,6 +36,7 @@ func TestErrIfStatementIsNotValid_Pass(t *testing.T) {
 		{"OrderByIntervalAndDirection", "SELECT toStartOfInterval(timestamp, INTERVAL 1 MINUTE) AS `interval` ORDER BY `interval` ASC"},
 		// Unspaced, so rejected until the parser stopped lexing a signed literal after a
 		// closing bracket. The spaced form above no longer needs to be spaced.
+		// https://github.com/AfterShip/clickhouse-sql-parser/issues/286
 		{"SignedLiteralAfterClosingParenUnspaced", "SELECT now() AS ts, toFloat64(count()) AS value FROM ( SELECT attributes_string['TableName'] AS T, attributes_string['MissingId'] AS M, max(fromUnixTimestamp64Nano(timestamp)) AS last_seen, dateDiff('minute', min(fromUnixTimestamp64Nano(timestamp)), max(fromUnixTimestamp64Nano(timestamp))) AS age_min FROM signoz_logs.distributed_logs_v2 WHERE body='missing_map_record' AND timestamp >= (toUnixTimestamp(now())-3600)*1000000000 GROUP BY T, M ) WHERE age_min >= 20 AND last_seen >= now() - toIntervalMinute(8)"},
 		{"SignedLiteralAfterClosingParenMinimal", "SELECT (1)-1"},
 		{"TrimFunction", "SELECT trimBoth('/api/endpoint/', '/');"},
