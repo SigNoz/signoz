@@ -47,21 +47,29 @@ function AlertHeader({ alertDetails }: AlertHeaderProps): JSX.Element {
 		<div className="alert-info__info-wrapper">
 			<div className="top-section">
 				<div className="alert-title-wrapper">
-					<AlertState state={alertRuleState ?? state ?? ''} />
-					<div className="alert-title">
+					<div data-testid="alert-header-state">
+						<AlertState state={alertRuleState ?? state ?? ''} />
+					</div>
+					<div className="alert-title" data-testid="alert-header-title">
 						<LineClampedText text={displayName || ''} />
 					</div>
 				</div>
 			</div>
 			<div className="bottom-section">
-				{labels?.severity && <AlertSeverity severity={labels.severity} />}
+				{labels?.severity && (
+					<div data-testid="alert-header-severity">
+						<AlertSeverity severity={labels.severity} />
+					</div>
+				)}
 
 				{/* // TODO(shaheer): Get actual data when we are able to get alert firing from state from API */}
 				{/* <AlertStatus
 						status="firing"
 						timestamp={dayjs().subtract(1, 'd').valueOf()}
 					/> */}
-				<AlertLabels labels={labelsWithoutSeverity} />
+				<div data-testid="alert-header-labels">
+					<AlertLabels labels={labelsWithoutSeverity} />
+				</div>
 			</div>
 		</div>
 	);
