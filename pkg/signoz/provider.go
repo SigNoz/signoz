@@ -227,6 +227,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddTelemetryTuplesFactory(sqlstore),
 		sqlmigration.NewAddTagRelationRankFactory(sqlstore, sqlschema),
 		sqlmigration.NewMigrateDashboardsV1ToV2Factory(sqlstore, sqlschema, dashboardStore, tagModule),
+		sqlmigration.NewFillDashboardMeterSourceFactory(sqlstore, dashboardStore),
 	)
 }
 
