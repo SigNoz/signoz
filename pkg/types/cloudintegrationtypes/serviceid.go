@@ -45,6 +45,7 @@ var (
 	GCPServiceMemorystoreRedis = ServiceID{valuer.NewString("memorystore_redis")}
 	GCPServiceComputeEngine    = ServiceID{valuer.NewString("computeengine")}
 	GCPServiceGKE              = ServiceID{valuer.NewString("gke")}
+	GCPServiceCloudStorage     = ServiceID{valuer.NewString("cloudstorage")}
 )
 
 func (ServiceID) Enum() []any {
@@ -80,6 +81,7 @@ func (ServiceID) Enum() []any {
 		GCPServiceMemorystoreRedis,
 		GCPServiceComputeEngine,
 		GCPServiceGKE,
+		GCPServiceCloudStorage,
 	}
 }
 
@@ -121,6 +123,7 @@ var SupportedServices = map[CloudProviderType][]ServiceID{
 		GCPServiceMemorystoreRedis,
 		GCPServiceComputeEngine,
 		GCPServiceGKE,
+		GCPServiceCloudStorage,
 	},
 }
 

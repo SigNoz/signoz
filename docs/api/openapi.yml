@@ -1498,6 +1498,7 @@ components:
       - memorystore_redis
       - computeengine
       - gke
+      - cloudstorage
       type: string
     CloudintegrationtypesServiceMetadata:
       properties:

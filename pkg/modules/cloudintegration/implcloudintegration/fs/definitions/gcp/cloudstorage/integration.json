@@ -1,0 +1,82 @@
+{
+  "id": "cloudstorage",
+  "title": "GCP Cloud Storage",
+  "icon": "file://icon.svg",
+  "overview": "file://overview.md",
+  "supportedSignals": {
+    "metrics": true,
+    "logs": true
+  },
+  "dataCollected": {
+    "metrics": [
+      {
+        "name": "storage.googleapis.com/storage/v2/total_bytes",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Total size of all objects in the bucket, grouped by storage class and type."
+      },
+      {
+        "name": "storage.googleapis.com/storage/v2/total_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total number of objects and multipart-uploads per bucket, grouped by storage class and type."
+      },
+      {
+        "name": "storage.googleapis.com/storage/v2/deleted_bytes",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": "Count of deleted bytes per bucket, grouped by storage class."
+      },
+      {
+        "name": "storage.googleapis.com/api/request_count",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Count of API calls, grouped by the API method name and response code."
+      },
+      {
+        "name": "storage.googleapis.com/network/received_bytes_count",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": "Count of bytes received over the network, grouped by the API method name and response code."
+      },
+      {
+        "name": "storage.googleapis.com/network/sent_bytes_count",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": "Count of bytes sent over the network, grouped by the API method name and response code."
+      },
+      {
+        "name": "storage.googleapis.com/authn/authentication_count",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Count of HMAC/RSA signed requests, grouped by authentication method and response code."
+      },
+      {
+        "name": "storage.googleapis.com/authz/acl_based_object_access_count",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Count of requests that result in an object being granted access solely due to object ACLs."
+      },
+      {
+        "name": "storage.googleapis.com/authz/object_specific_acl_mutation_count",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Count of object-specific ACL mutations."
+      }
+    ],
+    "logs": []
+  },
+  "telemetryCollectionStrategy": {
+    "gcp": {}
+  },
+  "assets": {
+    "dashboards": [
+      {
+        "id": "overview",
+        "title": "GCP Cloud Storage Overview",
+        "description": "Overview of GCP Cloud Storage metrics",
+        "definition": "file://assets/dashboards/overview.json"
+      }
+    ]
+  }
+}
