@@ -189,9 +189,7 @@ func (d *v1Decoder) collectV1QueryEnvelopes(widget map[string]any, panelKind Pan
 		queries = dropUnrenderableQueries(queries)
 		for _, q := range queries {
 			name := d.readString(q, "queryName")
-			env := qb.WrapInV5Envelope(name, q, string(qb.QueryTypeBuilder.StringValue()))
-			carryQuerySource(env, q)
-			out = append(out, env)
+			out = append(out, qb.WrapInV5Envelope(name, q, string(qb.QueryTypeBuilder.StringValue())))
 			if signal.IsZero() {
 				signal = signalFromDataSource(q["dataSource"])
 			}
@@ -447,17 +445,4 @@ func signalFromDataSource(raw any) telemetrytypes.Signal {
 		return telemetrytypes.SignalMetrics
 	}
 	return telemetrytypes.Signal{}
-}
-
-// carryQuerySource copies a v1 builder query's meter source onto the v5 spec.
-// WrapInV5Envelope maps dataSource→signal but ignores the separate `source` field, so a
-// meter query (dataSource metrics + source "meter") would otherwise migrate as plain
-// metrics and read the wrong data. Only "meter" is carried through — the sole non-empty
-// source the v1 UI produces and v5 accepts; anything else stays unspecified.
-func carryQuerySource(env, query map[string]any) {
-	if source, _ := query["source"].(string); source == telemetrytypes.SourceMeter.StringValue() {
-		if spec, ok := env["spec"].(map[string]any); ok {
-			spec["source"] = source
-		}
-	}
 }
