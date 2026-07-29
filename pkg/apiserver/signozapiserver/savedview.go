@@ -11,11 +11,11 @@ import (
 )
 
 func (provider *provider) addSavedViewRoutes(router *mux.Router) error {
-	if err := router.Handle("/api/v2/saved_views", handler.New(provider.authzMiddleware.ViewAccess(provider.savedViewHandler.List), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/saved_views", handler.New(provider.authzMiddleware.ViewAccess(provider.savedViewHandler.ListV2), handler.OpenAPIDef{
 		ID:                  "ListSavedViews",
 		Tags:                []string{"saved_view"},
 		Summary:             "List saved views",
-		Description:         "Returns saved views for the calling user's org, optionally filtered by source page, name, and category.",
+		Description:         "Returns saved views for the calling user's org, optionally filtered by source page and name.",
 		Request:             nil,
 		RequestQuery:        new(savedviewtypes.ListSavedViewsParams),
 		RequestContentType:  "",
@@ -29,7 +29,7 @@ func (provider *provider) addSavedViewRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/saved_views", handler.New(provider.authzMiddleware.EditAccess(provider.savedViewHandler.Create), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/saved_views", handler.New(provider.authzMiddleware.EditAccess(provider.savedViewHandler.CreateV2), handler.OpenAPIDef{
 		ID:                  "CreateSavedView",
 		Tags:                []string{"saved_view"},
 		Summary:             "Create saved view",
@@ -46,7 +46,7 @@ func (provider *provider) addSavedViewRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/saved_views/{viewId}", handler.New(provider.authzMiddleware.ViewAccess(provider.savedViewHandler.Get), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/saved_views/{viewId}", handler.New(provider.authzMiddleware.ViewAccess(provider.savedViewHandler.GetV2), handler.OpenAPIDef{
 		ID:                  "GetSavedView",
 		Tags:                []string{"saved_view"},
 		Summary:             "Get saved view",
@@ -63,11 +63,11 @@ func (provider *provider) addSavedViewRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/saved_views/{viewId}", handler.New(provider.authzMiddleware.EditAccess(provider.savedViewHandler.Update), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/saved_views/{viewId}", handler.New(provider.authzMiddleware.EditAccess(provider.savedViewHandler.UpdateV2), handler.OpenAPIDef{
 		ID:                  "UpdateSavedView",
 		Tags:                []string{"saved_view"},
 		Summary:             "Update saved view",
-		Description:         "Replaces a saved view's name, tags, and query.",
+		Description:         "Replaces a saved view's name and query.",
 		Request:             new(savedviewtypes.UpdatableSavedView),
 		RequestContentType:  "application/json",
 		Response:            nil,

@@ -33,9 +33,22 @@ type Handler interface {
 	// Updates the saved view
 	Update(http.ResponseWriter, *http.Request)
 
-	// Deletes the saved view
+	// Deletes the saved view. Shared by both API generations -- delete has no
+	// request/response body to reshape.
 	Delete(http.ResponseWriter, *http.Request)
 
 	// Lists the saved views
 	List(http.ResponseWriter, *http.Request)
+
+	// CreateV2 is the /api/v2/saved_views typed-spec variant of Create.
+	CreateV2(http.ResponseWriter, *http.Request)
+
+	// GetV2 is the /api/v2/saved_views typed-spec variant of Get.
+	GetV2(http.ResponseWriter, *http.Request)
+
+	// UpdateV2 is the /api/v2/saved_views typed-spec variant of Update.
+	UpdateV2(http.ResponseWriter, *http.Request)
+
+	// ListV2 is the /api/v2/saved_views typed-spec variant of List.
+	ListV2(http.ResponseWriter, *http.Request)
 }

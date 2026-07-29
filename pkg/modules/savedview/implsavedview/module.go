@@ -28,7 +28,7 @@ func (module *module) GetViewsForFilters(ctx context.Context, orgID string, sour
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error in getting saved views")
 	}
 
-	return savedviewtypes.NewGettableSavedViewsFromStorable(views)
+	return savedviewtypes.NewGettableSavedViewsFromStorable(views), nil
 }
 
 func (module *module) CreateView(ctx context.Context, orgID string, view savedviewtypes.PostableSavedView) (valuer.UUID, error) {
@@ -37,10 +37,7 @@ func (module *module) CreateView(ctx context.Context, orgID string, view savedvi
 		return valuer.UUID{}, errors.NewInternalf(errors.CodeInternal, "error in getting email from context")
 	}
 
-	dbView, err := savedviewtypes.NewStorableSavedView(orgID, claims.Email, claims.Email, view)
-	if err != nil {
-		return valuer.UUID{}, err
-	}
+	dbView := savedviewtypes.NewStorableSavedView(orgID, claims.Email, claims.Email, view)
 
 	_, err = module.sqlstore.BunDB().NewInsert().Model(dbView).Exec(ctx)
 	if err != nil {
@@ -56,7 +53,7 @@ func (module *module) GetView(ctx context.Context, orgID string, uuid valuer.UUI
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error in getting saved view")
 	}
 
-	return savedviewtypes.NewGettableSavedViewFromStorable(&view)
+	return savedviewtypes.NewGettableSavedViewFromStorable(&view), nil
 }
 
 func (module *module) UpdateView(ctx context.Context, orgID string, uuid valuer.UUID, view savedviewtypes.UpdatableSavedView) error {
@@ -65,15 +62,12 @@ func (module *module) UpdateView(ctx context.Context, orgID string, uuid valuer.
 		return errors.NewInternalf(errors.CodeInternal, "error in getting email from context")
 	}
 
-	dbView, err := savedviewtypes.NewStorableSavedView(orgID, claims.Email, claims.Email, view)
-	if err != nil {
-		return err
-	}
+	dbView := savedviewtypes.NewStorableSavedView(orgID, claims.Email, claims.Email, view)
 
 	res, err := module.sqlstore.BunDB().NewUpdate().
 		Model(&savedviewtypes.StorableSavedView{}).
-		Set("updated_at = ?, updated_by = ?, name = ?, category = ?, source_page = ?, tags = ?, data = ?, extra_data = ?",
-			dbView.UpdatedAt, dbView.UpdatedBy, dbView.Name, dbView.Category, dbView.SourcePage, dbView.Tags, dbView.Data, dbView.ExtraData).
+		Set("updated_at = ?, updated_by = ?, name = ?, source_page = ?, data = ?",
+			dbView.UpdatedAt, dbView.UpdatedBy, dbView.Name, dbView.SourcePage, dbView.Data).
 		Where("id = ?", uuid.StringValue()).
 		Where("org_id = ?", orgID).
 		Exec(ctx)

@@ -1,7 +1,6 @@
 package savedviewtypes
 
 import (
-	"encoding/json"
 	"strings"
 	"time"
 
@@ -46,24 +45,20 @@ func (s SourcePage) Validate() error {
 }
 
 type GettableSavedView struct {
-	ID             valuer.UUID     `json:"id" required:"true"`
-	Name           string          `json:"name" required:"true"`
-	CreatedAt      time.Time       `json:"createdAt" required:"true"`
-	CreatedBy      string          `json:"createdBy" required:"true"`
-	UpdatedAt      time.Time       `json:"updatedAt" required:"true"`
-	UpdatedBy      string          `json:"updatedBy" required:"true"`
-	SourcePage     SourcePage      `json:"sourcePage" required:"true"`
-	CompositeQuery *CompositeQuery `json:"compositeQuery" required:"true"`
-	// ExtraData is JSON encoded data used by frontend to store additional data
-	ExtraData string `json:"extraData" required:"true"`
+	ID         valuer.UUID `json:"id" required:"true"`
+	Name       string      `json:"name" required:"true"`
+	CreatedAt  time.Time   `json:"createdAt" required:"true"`
+	CreatedBy  string      `json:"createdBy" required:"true"`
+	UpdatedAt  time.Time   `json:"updatedAt" required:"true"`
+	UpdatedBy  string      `json:"updatedBy" required:"true"`
+	SourcePage SourcePage  `json:"sourcePage" required:"true"`
+	SavedViewData
 }
 
 type PostableSavedView struct {
-	Name           string          `json:"name" required:"true"`
-	SourcePage     SourcePage      `json:"sourcePage" required:"true"`
-	CompositeQuery *CompositeQuery `json:"compositeQuery" required:"true"`
-	// ExtraData is JSON encoded data used by frontend to store additional data
-	ExtraData string `json:"extraData" required:"true"`
+	Name       string     `json:"name" required:"true"`
+	SourcePage SourcePage `json:"sourcePage" required:"true"`
+	SavedViewData
 }
 
 type UpdatableSavedView = PostableSavedView
@@ -73,11 +68,7 @@ func (p *PostableSavedView) Validate() error {
 		return err
 	}
 
-	if p.CompositeQuery == nil {
-		return errors.NewInvalidInputf(ErrCodeSavedViewInvalidInput, "composite query is required")
-	}
-
-	return p.CompositeQuery.Validate()
+	return p.SavedViewData.Validate()
 }
 
 type ListSavedViewsParams struct {
@@ -93,30 +84,21 @@ func (p *ListSavedViewsParams) Validate() error {
 	return p.SourcePage.Validate()
 }
 
-// StorableSavedView has CompositeQuery stored JSON-encoded in Data.
+// StorableSavedView has SavedViewData (schemaVersion + spec) stored
+// JSON-encoded in Data.
 type StorableSavedView struct {
 	bun.BaseModel `bun:"table:saved_views"`
 
 	types.Identifiable
 	types.TimeAuditable
 	types.UserAuditable
-	OrgID      string     `json:"orgId" bun:"org_id,notnull"`
-	Name       string     `json:"name" bun:"name,type:text,notnull"`
-	SourcePage SourcePage `json:"sourcePage" bun:"source_page,type:text,notnull"`
-	Data       string     `json:"data" bun:"data,type:text,notnull"`
-	ExtraData  string     `json:"extraData" bun:"extra_data,type:text"`
-	// TODO: deprecated, remove it
-	Category string `json:"category" bun:"category,type:text,notnull"`
-	// TODO: deprecated, remove it
-	Tags string `json:"tags" bun:"tags,type:text"`
+	OrgID      string        `json:"orgId" bun:"org_id,notnull"`
+	Name       string        `json:"name" bun:"name,type:text,notnull"`
+	SourcePage SourcePage    `json:"sourcePage" bun:"source_page,type:text,notnull"`
+	Data       SavedViewData `json:"data" bun:"data,type:text,notnull"`
 }
 
-func NewStorableSavedView(orgID string, createdBy string, updatedBy string, view PostableSavedView) (*StorableSavedView, error) {
-	data, err := json.Marshal(view.CompositeQuery)
-	if err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error in marshalling explorer query data")
-	}
-
+func NewStorableSavedView(orgID string, createdBy string, updatedBy string, view PostableSavedView) *StorableSavedView {
 	now := time.Now()
 	return &StorableSavedView{
 		Identifiable:  types.Identifiable{ID: valuer.GenerateUUID()},
@@ -125,40 +107,29 @@ func NewStorableSavedView(orgID string, createdBy string, updatedBy string, view
 		OrgID:         orgID,
 		Name:          view.Name,
 		SourcePage:    view.SourcePage,
-		Data:          string(data),
-		ExtraData:     view.ExtraData,
-	}, nil
-}
-
-func NewGettableSavedViewFromStorable(view *StorableSavedView) (*GettableSavedView, error) {
-	var compositeQuery CompositeQuery
-	if err := json.Unmarshal([]byte(view.Data), &compositeQuery); err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error in unmarshalling explorer query data")
+		Data:          view.SavedViewData,
 	}
-
-	return &GettableSavedView{
-		ID:             view.ID,
-		Name:           view.Name,
-		CreatedAt:      view.CreatedAt,
-		CreatedBy:      view.CreatedBy,
-		UpdatedAt:      view.UpdatedAt,
-		UpdatedBy:      view.UpdatedBy,
-		SourcePage:     view.SourcePage,
-		CompositeQuery: &compositeQuery,
-		ExtraData:      view.ExtraData,
-	}, nil
 }
 
-func NewGettableSavedViewsFromStorable(views []*StorableSavedView) ([]*GettableSavedView, error) {
+func NewGettableSavedViewFromStorable(view *StorableSavedView) *GettableSavedView {
+	return &GettableSavedView{
+		ID:            view.ID,
+		Name:          view.Name,
+		CreatedAt:     view.CreatedAt,
+		CreatedBy:     view.CreatedBy,
+		UpdatedAt:     view.UpdatedAt,
+		UpdatedBy:     view.UpdatedBy,
+		SourcePage:    view.SourcePage,
+		SavedViewData: view.Data,
+	}
+}
+
+func NewGettableSavedViewsFromStorable(views []*StorableSavedView) []*GettableSavedView {
 	out := make([]*GettableSavedView, 0, len(views))
 	for _, view := range views {
-		gettable, err := NewGettableSavedViewFromStorable(view)
-		if err != nil {
-			return nil, err
-		}
-		out = append(out, gettable)
+		out = append(out, NewGettableSavedViewFromStorable(view))
 	}
-	return out, nil
+	return out
 }
 
 func NewStatsFromSavedViews(savedViews []*StorableSavedView) map[string]any {

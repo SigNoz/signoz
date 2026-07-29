@@ -10,8 +10,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/savedviewtypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
@@ -24,6 +26,88 @@ func NewHandler(module savedview.Module) savedview.Handler {
 	return &handler{module: module}
 }
 
+// legacyExtraData mirrors the frontend's ad hoc extraData JSON shape
+// (frontend/src/container/ExplorerOptions/ExplorerOptions.tsx) so /api/v1
+// requests can be losslessly folded into the typed spec, and so /api/v1
+// responses can synthesize the same shape back for the legacy frontend.
+type legacyExtraData struct {
+	Color         string                             `json:"color,omitempty"`
+	SelectColumns []telemetrytypes.TelemetryFieldKey `json:"selectColumns,omitempty"`
+	Format        string                             `json:"format,omitempty"`
+	MaxLines      int                                `json:"maxLines,omitempty"`
+	FontSize      string                             `json:"fontSize,omitempty"`
+}
+
+func newPostableSavedViewFromLegacyView(v *v3.SavedView) savedviewtypes.PostableSavedView {
+	var legacy legacyExtraData
+	if v.ExtraData != "" {
+		// Best-effort: malformed/older extraData shapes never fail the request,
+		// they just leave selectedFields/display empty.
+		_ = json.Unmarshal([]byte(v.ExtraData), &legacy)
+	}
+
+	return savedviewtypes.PostableSavedView{
+		Name:       v.Name,
+		SourcePage: savedviewtypes.SourcePage{String: valuer.NewString(v.SourcePage)},
+		SavedViewData: savedviewtypes.SavedViewData{
+			SchemaVersion: savedviewtypes.SavedViewSchemaVersion,
+			Spec: savedviewtypes.SavedViewSpec{
+				PanelType:      savedviewtypes.PanelType{String: valuer.NewString(string(v.CompositeQuery.PanelType))},
+				Queries:        v.CompositeQuery.Queries,
+				SelectedFields: legacy.SelectColumns,
+				Display: savedviewtypes.Display{
+					MaxLines: legacy.MaxLines,
+					FontSize: legacy.FontSize,
+					Format:   legacy.Format,
+					Color:    legacy.Color,
+				},
+			},
+		},
+	}
+}
+
+func newLegacyViewFromGettable(v *savedviewtypes.GettableSavedView) (*v3.SavedView, error) {
+	extraData, err := json.Marshal(legacyExtraData{
+		Color:         v.Spec.Display.Color,
+		SelectColumns: v.Spec.SelectedFields,
+		Format:        v.Spec.Display.Format,
+		MaxLines:      v.Spec.Display.MaxLines,
+		FontSize:      v.Spec.Display.FontSize,
+	})
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error in marshalling extra data")
+	}
+
+	return &v3.SavedView{
+		ID:         v.ID,
+		Name:       v.Name,
+		CreatedAt:  v.CreatedAt,
+		CreatedBy:  v.CreatedBy,
+		UpdatedAt:  v.UpdatedAt,
+		UpdatedBy:  v.UpdatedBy,
+		SourcePage: v.SourcePage.StringValue(),
+		CompositeQuery: &v3.CompositeQuery{
+			PanelType: v3.PanelType(v.Spec.PanelType.StringValue()),
+			// Saved views are only ever created from the explorer's builder mode.
+			QueryType: v3.QueryTypeBuilder,
+			Queries:   v.Spec.Queries,
+		},
+		ExtraData: string(extraData),
+	}, nil
+}
+
+func newLegacyViewsFromGettable(views []*savedviewtypes.GettableSavedView) ([]*v3.SavedView, error) {
+	out := make([]*v3.SavedView, 0, len(views))
+	for _, view := range views {
+		legacyView, err := newLegacyViewFromGettable(view)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, legacyView)
+	}
+	return out, nil
+}
+
 func (handler *handler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -34,7 +118,7 @@ func (handler *handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var view savedviewtypes.PostableSavedView
+	var view v3.SavedView
 	if err := json.NewDecoder(r.Body).Decode(&view); err != nil {
 		render.Error(w, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to decode request body"))
 		return
@@ -45,7 +129,7 @@ func (handler *handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	uuid, err := handler.module.CreateView(ctx, claims.OrgID, view)
+	uuid, err := handler.module.CreateView(ctx, claims.OrgID, newPostableSavedViewFromLegacyView(&view))
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -77,7 +161,13 @@ func (handler *handler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(w, http.StatusOK, view)
+	legacyView, err := newLegacyViewFromGettable(view)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	render.Success(w, http.StatusOK, legacyView)
 }
 
 func (handler *handler) Update(w http.ResponseWriter, r *http.Request) {
@@ -96,7 +186,7 @@ func (handler *handler) Update(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to parse view id"))
 		return
 	}
-	var view savedviewtypes.UpdatableSavedView
+	var view v3.SavedView
 	if err := json.NewDecoder(r.Body).Decode(&view); err != nil {
 		render.Error(w, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to decode request body"))
 		return
@@ -107,13 +197,13 @@ func (handler *handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = handler.module.UpdateView(ctx, claims.OrgID, viewUUID, view)
+	err = handler.module.UpdateView(ctx, claims.OrgID, viewUUID, newPostableSavedViewFromLegacyView(&view))
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
 
-	render.Success(w, http.StatusOK, nil)
+	render.Success(w, http.StatusOK, view)
 }
 
 func (handler *handler) Delete(w http.ResponseWriter, r *http.Request) {
@@ -162,11 +252,17 @@ func (handler *handler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries, err := handler.module.GetViewsForFilters(r.Context(), claims.OrgID, params.SourcePage, params.Name)
+	views, err := handler.module.GetViewsForFilters(r.Context(), claims.OrgID, params.SourcePage, params.Name)
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
 
-	render.Success(w, http.StatusOK, queries)
+	legacyViews, err := newLegacyViewsFromGettable(views)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	render.Success(w, http.StatusOK, legacyViews)
 }
