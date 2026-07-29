@@ -370,6 +370,14 @@ type QueryRangeRequest struct {
 	// NoCache is a flag to disable caching for the request.
 	NoCache bool `json:"noCache,omitempty"`
 
+	// PromQLProvider serves this request's PromQL queries via the named
+	// prometheus provider ("clickhousev2") instead of the default — the same
+	// data read through a different implementation. It is set from the
+	// X-SigNoz-PromQL-Provider header by the API handler, never from the
+	// body: a rollout-scoped comparison hook for integration tests and
+	// support should not become part of the public request schema.
+	PromQLProvider string `json:"-"`
+
 	FormatOptions *FormatOptions `json:"formatOptions,omitempty"`
 }
 
