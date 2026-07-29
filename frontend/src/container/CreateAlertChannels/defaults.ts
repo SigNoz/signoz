@@ -38,9 +38,9 @@ export const SlackInitialConfig: Partial<SlackChannel> = {
 export const GoogleChatInitialConfig: Partial<GoogleChatChannel> = {
 	title: `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}`,
 	text: `{{ range .Alerts -}}
-*Alert:* {{ .Labels.alertname }}{{ if .Labels.severity }} ({{ .Labels.severity }}){{ end }}{{ if .Annotations.summary }}
-*Summary:* {{ .Annotations.summary }}{{ end }}{{ if .Annotations.description }}
-*Description:* {{ .Annotations.description }}{{ end }}
+**Alert:** {{ .Labels.alertname }}{{ if .Labels.severity }} ({{ .Labels.severity }}){{ end }}{{ if .Annotations.summary }}
+**Summary:** {{ .Annotations.summary }}{{ end }}{{ if .Annotations.description }}
+**Description:** {{ .Annotations.description }}{{ end }}
 {{ end }}`,
 };
 
