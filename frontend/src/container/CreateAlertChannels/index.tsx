@@ -14,16 +14,24 @@ import testPagerApi from 'api/channels/testPager';
 import testSlackApi from 'api/channels/testSlack';
 import testWebhookApi from 'api/channels/testWebhook';
 import logEvent from 'api/common/logEvent';
+import {
+	useCreateChannel,
+	useTestChannel,
+} from 'api/generated/services/channels';
+import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import { ErrorType } from 'api/generatedAPIInstance';
 import ROUTES from 'constants/routes';
 import FormAlertChannels from 'container/FormAlertChannels';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
+import { toAPIError } from 'utils/errorUtils';
 
 import {
 	ChannelType,
 	EmailChannel,
+	GoogleChatChannel,
 	MsTeamsChannel,
 	OpsgenieChannel,
 	PagerChannel,
@@ -33,10 +41,16 @@ import {
 } from './config';
 import {
 	EmailInitialConfig,
+	GoogleChatInitialConfig,
 	OpsgenieInitialConfig,
 	PagerInitialConfig,
+	SlackInitialConfig,
 } from './defaults';
-import { isChannelType } from './utils';
+import {
+	isChannelType,
+	isValidGoogleChatWebhookURL,
+	prepareGoogleChatRequest,
+} from './utils';
 
 import './CreateAlertChannels.styles.scss';
 
@@ -60,37 +74,21 @@ function CreateAlertChannels({
 				PagerChannel &
 				MsTeamsChannel &
 				OpsgenieChannel &
-				EmailChannel
+				EmailChannel &
+				GoogleChatChannel
 		>
-	>({
+	>(() => ({
 		send_resolved: true,
-		text: `{{ range .Alerts -}}
-     *Alert:* {{ .Labels.alertname }}{{ if .Labels.severity }} - {{ .Labels.severity }}{{ end }}
-
-     *Summary:* {{ .Annotations.summary }}
-     *Description:* {{ .Annotations.description }}
-     *RelatedLogs:* {{ if gt (len .Annotations.related_logs) 0 -}} View in <{{ .Annotations.related_logs }}|logs explorer> {{- end}}
-     *RelatedTraces:* {{ if gt (len .Annotations.related_traces) 0 -}} View in <{{ .Annotations.related_traces }}|traces explorer> {{- end}}
-
-     *Details:*
-       {{ range .Labels.SortedPairs }} • *{{ .Name }}:* {{ .Value }}
-       {{ end }}
-     {{ end }}`,
-		title: `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}
-     {{- if gt (len .CommonLabels) (len .GroupLabels) -}}
-       {{" "}}(
-       {{- with .CommonLabels.Remove .GroupLabels.Names }}
-         {{- range $index, $label := .SortedPairs -}}
-           {{ if $index }}, {{ end }}
-           {{- $label.Name }}="{{ $label.Value -}}"
-         {{- end }}
-       {{- end -}}
-       )
-     {{- end }}`,
-	});
+		...(preType === ChannelType.GoogleChat
+			? GoogleChatInitialConfig
+			: SlackInitialConfig),
+	}));
 	const [savingState, setSavingState] = useState<boolean>(false);
 	const [testingState, setTestingState] = useState<boolean>(false);
 	const { notifications } = useNotifications();
+
+	const { mutateAsync: createChannel } = useCreateChannel();
+	const { mutateAsync: testChannel } = useTestChannel();
 
 	const [type, setType] = useState<ChannelType>(preType);
 	const onTypeChangeHandler = useCallback(
@@ -121,8 +119,26 @@ function CreateAlertChannels({
 					...EmailInitialConfig,
 				}));
 			}
+
+			// google chat prefills its own title / description templates, so switching
+			// in or out of it has to swap the templates the form is showing
+			if (
+				currentType !== value &&
+				(value === ChannelType.GoogleChat || currentType === ChannelType.GoogleChat)
+			) {
+				const templates =
+					value === ChannelType.GoogleChat
+						? GoogleChatInitialConfig
+						: SlackInitialConfig;
+
+				setSelectedConfig((selectedConfig) => ({
+					...selectedConfig,
+					...templates,
+				}));
+				formInstance.setFieldsValue(templates);
+			}
 		},
-		[type, selectedConfig],
+		[type, selectedConfig, formInstance],
 	);
 
 	const prepareSlackRequest = useCallback(
@@ -407,6 +423,56 @@ function CreateAlertChannels({
 		showErrorModal,
 	]);
 
+	const validateGoogleChatConfig = useCallback((): boolean => {
+		if (!selectedConfig.webhook_url) {
+			notifications.error({
+				message: 'Error',
+				description: t('webhook_url_required'),
+			});
+			return false;
+		}
+
+		if (!isValidGoogleChatWebhookURL(selectedConfig.webhook_url)) {
+			notifications.error({
+				message: 'Error',
+				description: t('google_chat_webhook_url_invalid'),
+			});
+			return false;
+		}
+
+		return true;
+	}, [selectedConfig.webhook_url, notifications, t]);
+
+	const onGoogleChatHandler = useCallback(async () => {
+		if (!validateGoogleChatConfig()) {
+			return { status: 'failed', statusMessage: t('channel_creation_failed') };
+		}
+
+		setSavingState(true);
+
+		try {
+			await createChannel({ data: prepareGoogleChatRequest(selectedConfig) });
+			notifications.success({
+				message: 'Success',
+				description: t('channel_creation_done'),
+			});
+			history.replace(ROUTES.ALL_CHANNELS);
+			return { status: 'success', statusMessage: t('channel_creation_done') };
+		} catch (error) {
+			showErrorModal(toAPIError(error as ErrorType<RenderErrorResponseDTO>));
+			return { status: 'failed', statusMessage: t('channel_creation_failed') };
+		} finally {
+			setSavingState(false);
+		}
+	}, [
+		validateGoogleChatConfig,
+		createChannel,
+		selectedConfig,
+		notifications,
+		t,
+		showErrorModal,
+	]);
+
 	const onSaveHandler = useCallback(
 		async (value: ChannelType) => {
 			if (!selectedConfig.name) {
@@ -424,6 +490,7 @@ function CreateAlertChannels({
 				[ChannelType.Opsgenie]: onOpsgenieHandler,
 				[ChannelType.MsTeams]: onMsTeamsHandler,
 				[ChannelType.Email]: onEmailHandler,
+				[ChannelType.GoogleChat]: onGoogleChatHandler,
 			};
 
 			if (isChannelType(value)) {
@@ -455,6 +522,7 @@ function CreateAlertChannels({
 			onOpsgenieHandler,
 			onMsTeamsHandler,
 			onEmailHandler,
+			onGoogleChatHandler,
 			notifications,
 			t,
 		],
@@ -492,6 +560,13 @@ function CreateAlertChannels({
 						request = prepareEmailRequest();
 						await testEmail(request);
 						break;
+					case ChannelType.GoogleChat:
+						if (!validateGoogleChatConfig()) {
+							setTestingState(false);
+							return;
+						}
+						await testChannel({ data: prepareGoogleChatRequest(selectedConfig) });
+						break;
 					default:
 						notifications.error({
 							message: 'Error',
@@ -513,7 +588,11 @@ function CreateAlertChannels({
 					status: 'Test success',
 				});
 			} catch (error) {
-				showErrorModal(error as APIError);
+				showErrorModal(
+					error instanceof APIError
+						? error
+						: toAPIError(error as ErrorType<RenderErrorResponseDTO>),
+				);
 
 				logEvent('Alert Channel: Test notification', {
 					type: channelType,
@@ -535,6 +614,8 @@ function CreateAlertChannels({
 			prepareSlackRequest,
 			prepareMsTeamsRequest,
 			prepareEmailRequest,
+			validateGoogleChatConfig,
+			testChannel,
 			notifications,
 		],
 	);
