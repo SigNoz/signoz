@@ -11608,8 +11608,8 @@ paths:
     get:
       deprecated: false
       description: Returns models seen in the last hour of trace data (gen_ai.request.model)
-        that no pricing rule pattern matches, so the user can add them to an existing
-        rule or create a new one.
+        that no enabled pricing rule pattern matches, so the user can add them to
+        an existing rule or create a new one.
       operationId: ListUnmappedLLMModels
       responses:
         "200":
