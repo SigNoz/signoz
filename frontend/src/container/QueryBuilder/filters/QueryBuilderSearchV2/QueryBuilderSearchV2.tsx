@@ -756,8 +756,7 @@ function QueryBuilderSearchV2(
 
 			let operatorOptions;
 			if (currentFilterItem?.key?.dataType) {
-				// the lookup only covers the four scalars, so an array type
-				// or a `[]string` spelling finds nothing — fall back rather than throw
+				// Fallback to universal suggestions if no match found for currentFilter dataType
 				const operatorsForDataType =
 					QUERY_BUILDER_OPERATORS_BY_TYPES[
 						currentFilterItem.key
