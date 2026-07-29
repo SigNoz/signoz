@@ -21,7 +21,13 @@ export async function newAdminContext(
 				'(pytest bootstrap writes them to .env.local).',
 		);
 	}
-	const ctx = await browser.newContext();
+	// `browser.newContext()` only inherits `use.baseURL` while a *test* is in
+	// scope. Worker-scoped fixtures (and their teardown) run outside that, where
+	// a relative `page.goto('/login')` fails with "Cannot navigate to invalid
+	// URL" — so set the base URL explicitly.
+	const ctx = await browser.newContext({
+		baseURL: process.env.SIGNOZ_E2E_BASE_URL,
+	});
 	const page = await ctx.newPage();
 	await page.goto('/login?password=Y');
 	await page.getByTestId('email').fill(email);

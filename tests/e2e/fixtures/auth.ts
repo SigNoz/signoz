@@ -71,8 +71,16 @@ async function pinSidenav(page: Page): Promise<void> {
 		headers: { Authorization: `Bearer ${token}` },
 	});
 	if (!res.ok()) {
+		const text = await res.text();
+		// Two workers logging in at the same moment both insert the preference and
+		// the loser gets a 500 on `uq_user_preference_name_user_id`. The write it
+		// lost to set the same value, so the preference *is* pinned — treat the
+		// duplicate as success rather than failing an unrelated test.
+		if (text.includes('uq_user_preference_name_user_id')) {
+			return;
+		}
 		throw new Error(
-			`PUT /api/v1/user/preferences/sidenav_pinned ${res.status()}: ${await res.text()}`,
+			`PUT /api/v1/user/preferences/sidenav_pinned ${res.status()}: ${text}`,
 		);
 	}
 }
