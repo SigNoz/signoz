@@ -7,19 +7,18 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import styles from './TestTab.module.scss';
 import JsonEditorSkeleton from './JsonEditorSkeleton';
 import TestResult from './TestResult';
-import { AttributeMappingEditor } from '../hooks/useAttributeMappingEditor';
 import {
 	defineSignozJsonTheme,
 	SIGNOZ_JSON_THEME_DARK,
 	SIGNOZ_JSON_THEME_LIGHT,
 } from './jsonEditorTheme';
-import { useTestSpanMapper } from './useTestSpanMapper';
+import { UseTestSpanMapper } from './useTestSpanMapper';
 
 interface TestTabProps {
-	editor: AttributeMappingEditor;
+	spanTest: UseTestSpanMapper;
 }
 
-function TestTab({ editor }: TestTabProps): JSX.Element {
+function TestTab({ spanTest }: TestTabProps): JSX.Element {
 	const {
 		input,
 		setInput,
@@ -30,7 +29,7 @@ function TestTab({ editor }: TestTabProps): JSX.Element {
 		testedResource,
 		error,
 		validationError,
-	} = useTestSpanMapper(editor.snapshot, editor.groups);
+	} = spanTest;
 	const isDarkMode = useIsDarkMode();
 
 	function renderResults(): JSX.Element {

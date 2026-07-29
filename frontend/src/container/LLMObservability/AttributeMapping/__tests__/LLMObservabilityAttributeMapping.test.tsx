@@ -8,6 +8,25 @@ import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 jest.mock('lib/authz/hooks/useAuthZ/useAuthZ');
 const mockedUseAuthZ = useAuthZ as jest.MockedFunction<typeof useAuthZ>;
 
+// Monaco can't run in jsdom — stand in a textarea so the span input is editable.
+jest.mock('@monaco-editor/react', () => ({
+	__esModule: true,
+	default: ({
+		value,
+		onChange,
+	}: {
+		value: string;
+		onChange: (next?: string) => void;
+	}): JSX.Element => (
+		<textarea
+			aria-label="span-json-editor"
+			data-testid="span-json-editor"
+			value={value}
+			onChange={(event): void => onChange(event.target.value)}
+		/>
+	),
+}));
+
 import LLMObservabilityAttributeMapping from '../LLMObservabilityAttributeMapping';
 import { GROUPS_ENDPOINT, makeGroupsResponse, mockGroups } from './fixtures';
 
@@ -92,6 +111,58 @@ describe('LLMObservabilityAttributeMapping', () => {
 			expect(screen.getByTestId('group-enabled-group-1')).toBeChecked(),
 		);
 		expect(screen.queryByTestId('discard-changes-btn')).not.toBeInTheDocument();
+	});
+
+	it('locks the test tab while there are no mapping groups', async () => {
+		server.use(
+			rest.get(GROUPS_ENDPOINT, (_req, res, ctx) =>
+				res(ctx.status(200), ctx.json(makeGroupsResponse([]))),
+			),
+		);
+		render(<LLMObservabilityAttributeMapping />);
+
+		await screen.findByTestId('mapper-groups-empty');
+		await waitFor(() =>
+			expect(screen.getByRole('tab', { name: /Test/ })).toBeDisabled(),
+		);
+	});
+
+	it('unlocks the test tab once a group is staged, before it is saved', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		server.use(
+			rest.get(GROUPS_ENDPOINT, (_req, res, ctx) =>
+				res(ctx.status(200), ctx.json(makeGroupsResponse([]))),
+			),
+		);
+		render(<LLMObservabilityAttributeMapping />);
+
+		await user.click(await screen.findByTestId('add-group-row'));
+		await user.type(await screen.findByTestId('group-form-name'), 'staged');
+		await user.click(screen.getByTestId('group-form-save'));
+
+		await waitFor(() =>
+			expect(screen.getByRole('tab', { name: /Test/ })).toBeEnabled(),
+		);
+	});
+
+	it('keeps the sample span input when switching away from the test tab and back', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		render(<LLMObservabilityAttributeMapping />);
+
+		await user.click(screen.getByRole('tab', { name: 'Test' }));
+		const editor = await screen.findByTestId('span-json-editor');
+		await user.clear(editor);
+		await user.type(editor, '{{ "my.attr": 1 }');
+
+		await user.click(screen.getByRole('tab', { name: 'Attribute Mappings' }));
+		await screen.findByTestId('attribute-mappings-tab');
+		expect(screen.queryByTestId('span-json-editor')).not.toBeInTheDocument();
+
+		await user.click(screen.getByRole('tab', { name: 'Test' }));
+
+		await expect(screen.findByTestId('span-json-editor')).resolves.toHaveValue(
+			'{ "my.attr": 1 }',
+		);
 	});
 
 	it('keeps staged changes when the discard prompt is dismissed', async () => {
