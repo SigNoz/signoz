@@ -7,12 +7,12 @@ export const ALERT_STATUS: Record<RuletypesAlertStateDTO, number> & {
 	[RuletypesAlertStateDTO.firing]: 0,
 	[RuletypesAlertStateDTO.inactive]: 1,
 	normal: 1,
-	[RuletypesAlertStateDTO.pending]: 1,
-	[RuletypesAlertStateDTO.recovering]: 1,
-	'no-data': 2,
-	[RuletypesAlertStateDTO.nodata]: 2,
-	[RuletypesAlertStateDTO.disabled]: 3,
-	muted: 4,
+	[RuletypesAlertStateDTO.pending]: 2,
+	[RuletypesAlertStateDTO.recovering]: 2,
+	'no-data': 3,
+	[RuletypesAlertStateDTO.nodata]: 3,
+	[RuletypesAlertStateDTO.disabled]: 4,
+	muted: 5,
 };
 
 export const STATE_VS_COLOR: {
@@ -22,9 +22,10 @@ export const STATE_VS_COLOR: {
 	{
 		0: { stroke: Color.BG_CHERRY_500, fill: Color.BG_CHERRY_500 },
 		1: { stroke: Color.BG_FOREST_500, fill: Color.BG_FOREST_500 },
-		2: { stroke: Color.BG_SIENNA_400, fill: Color.BG_SIENNA_400 },
-		3: { stroke: Color.BG_VANILLA_400, fill: Color.BG_VANILLA_400 },
-		4: { stroke: Color.BG_INK_100, fill: Color.BG_INK_100 },
+		2: { stroke: Color.BG_AMBER_500, fill: Color.BG_AMBER_500 },
+		3: { stroke: Color.BG_SIENNA_400, fill: Color.BG_SIENNA_400 },
+		4: { stroke: Color.BG_VANILLA_400, fill: Color.BG_VANILLA_400 },
+		5: { stroke: Color.BG_INK_100, fill: Color.BG_INK_100 },
 	},
 ];
 
