@@ -1,6 +1,9 @@
 import CreateAlertChannels from 'container/CreateAlertChannels';
 import { ChannelType } from 'container/CreateAlertChannels/config';
+import { GoogleChatInitialConfig } from 'container/CreateAlertChannels/defaults';
 import {
+	googleChatDescriptionDefaultValue,
+	googleChatTitleDefaultValue,
 	opsGenieDescriptionDefaultValue,
 	opsGenieMessageDefaultValue,
 	opsGeniePriorityDefaultValue,
@@ -417,6 +420,100 @@ describe('Create Alert Channel', () => {
 				const descriptionTextArea = screen.getByTestId('description-textarea');
 
 				expect(descriptionTextArea).toHaveTextContent(slackDescriptionDefaultValue);
+			});
+		});
+		describe('Google Chat', () => {
+			const validWebhookUrl =
+				'https://chat.googleapis.com/v1/spaces/AAAA/messages?key=dummy_key&token=dummy_token';
+
+			beforeEach(() => {
+				render(<CreateAlertChannels preType={ChannelType.GoogleChat} />);
+			});
+
+			it('Should check if the selected item in the type dropdown has text "Google Chat"', () => {
+				expect(screen.getByText('Google Chat')).toBeInTheDocument();
+			});
+
+			it('Should check if Webhook URL label and input are displayed properly', () => {
+				testLabelInputAndHelpValue({
+					labelText: 'field_webhook_url',
+					testId: 'webhook-url-textbox',
+				});
+			});
+
+			it('Should check if Title contains the google chat template', () => {
+				expect(screen.getByTestId('title-textarea')).toHaveTextContent(
+					googleChatTitleDefaultValue,
+				);
+			});
+
+			it('Should check if Description contains the google chat template', () => {
+				expect(screen.getByTestId('description-textarea')).toHaveTextContent(
+					googleChatDescriptionDefaultValue,
+				);
+			});
+
+			it('Should check if saving with a webhook url outside chat.googleapis.com displays error notification', async () => {
+				fireEvent.change(screen.getByTestId('channel-name-textbox'), {
+					target: { value: 'gchat-channel' },
+				});
+				fireEvent.change(screen.getByTestId('webhook-url-textbox'), {
+					target: { value: 'https://example.com/webhook' },
+				});
+
+				fireEvent.click(
+					screen.getByRole('button', { name: 'button_save_channel' }),
+				);
+
+				await waitFor(() =>
+					expect(errorNotification).toHaveBeenCalledWith({
+						message: 'Error',
+						description: 'google_chat_webhook_url_invalid',
+					}),
+				);
+			});
+
+			it('Should check if saving sends a googlechat_configs payload', async () => {
+				let requestBody: unknown;
+				server.use(
+					rest.post('http://localhost/api/v1/channels', async (req, res, ctx) => {
+						requestBody = await req.json();
+						return res(
+							ctx.status(201),
+							ctx.json({ status: 'success', data: 'channel created' }),
+						);
+					}),
+				);
+
+				fireEvent.change(screen.getByTestId('channel-name-textbox'), {
+					target: { value: 'gchat-channel' },
+				});
+				fireEvent.change(screen.getByTestId('webhook-url-textbox'), {
+					target: { value: validWebhookUrl },
+				});
+
+				fireEvent.click(
+					screen.getByRole('button', { name: 'button_save_channel' }),
+				);
+
+				await waitFor(() =>
+					expect(successNotification).toHaveBeenCalledWith({
+						message: 'Success',
+						description: 'channel_creation_done',
+					}),
+				);
+
+				expect(requestBody).toStrictEqual({
+					name: 'gchat-channel',
+					googlechat_configs: [
+						{
+							webhook_url: validWebhookUrl,
+							title: GoogleChatInitialConfig.title,
+							text: GoogleChatInitialConfig.text,
+							send_resolved: true,
+						},
+					],
+				});
 			});
 		});
 	});
