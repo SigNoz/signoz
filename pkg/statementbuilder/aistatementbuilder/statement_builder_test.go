@@ -119,23 +119,6 @@ func newTestBuilderWithKeys(t *testing.T, keysMap map[string][]*telemetrytypes.T
 	return stmtBuilder
 }
 
-// ---------------------------------------------------------------------------
-// Full-query golden tests
-//
-// Each pins the WHOLE generated statement, with bound args inlined into the `?`
-// placeholders, as ONE self-contained literal — so a failure diff shows the entire
-// query and the expected SQL can be copied straight into a ClickHouse client. The
-// `want` strings are formatted for readability; the comparison is whitespace- and
-// backtick-insensitive (see normalizeSQL), so only the SQL tokens themselves matter.
-//
-// The four trace-list goldens cover the corners of how `matched` is assembled —
-// {no span filter, span filter} × {no aggregate filter, aggregate filter} — plus a
-// mixed filter + multi-key order, plus the delegated span list. Note `matched` selects
-// only the aggregates ORDER BY / HAVING reference; the rest appear only in enrichment.
-//
-// Run `go test ./pkg/statementbuilder/aistatementbuilder/ -run TestBuild_FullSQL -v` to also print each query.
-// ---------------------------------------------------------------------------
-
 // renderSQL substitutes bound args into the `?` placeholders so the whole statement
 // reads as one literal SQL string.
 func renderSQL(t *testing.T, stmt *qbtypes.Statement) string {
