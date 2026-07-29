@@ -1,4 +1,48 @@
-import { EmailChannel, OpsgenieChannel, PagerChannel } from './config';
+import {
+	EmailChannel,
+	GoogleChatChannel,
+	OpsgenieChannel,
+	PagerChannel,
+	SlackChannel,
+} from './config';
+
+// shared by slack and ms teams, both render the same title / description boxes
+export const SlackInitialConfig: Partial<SlackChannel> = {
+	text: `{{ range .Alerts -}}
+     *Alert:* {{ .Labels.alertname }}{{ if .Labels.severity }} - {{ .Labels.severity }}{{ end }}
+
+     *Summary:* {{ .Annotations.summary }}
+     *Description:* {{ .Annotations.description }}
+     *RelatedLogs:* {{ if gt (len .Annotations.related_logs) 0 -}} View in <{{ .Annotations.related_logs }}|logs explorer> {{- end}}
+     *RelatedTraces:* {{ if gt (len .Annotations.related_traces) 0 -}} View in <{{ .Annotations.related_traces }}|traces explorer> {{- end}}
+
+     *Details:*
+       {{ range .Labels.SortedPairs }} • *{{ .Name }}:* {{ .Value }}
+       {{ end }}
+     {{ end }}`,
+	title: `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}
+     {{- if gt (len .CommonLabels) (len .GroupLabels) -}}
+       {{" "}}(
+       {{- with .CommonLabels.Remove .GroupLabels.Names }}
+         {{- range $index, $label := .SortedPairs -}}
+           {{ if $index }}, {{ end }}
+           {{- $label.Name }}="{{ $label.Value -}}"
+         {{- end }}
+       {{- end -}}
+       )
+     {{- end }}`,
+};
+
+// mirrors DefaultGoogleChatReceiverConfig in pkg/types/alertmanagertypes/googlechat.go,
+// which the backend applies when title / text are left empty
+export const GoogleChatInitialConfig: Partial<GoogleChatChannel> = {
+	title: `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}`,
+	text: `{{ range .Alerts -}}
+*Alert:* {{ .Labels.alertname }}{{ if .Labels.severity }} ({{ .Labels.severity }}){{ end }}{{ if .Annotations.summary }}
+*Summary:* {{ .Annotations.summary }}{{ end }}{{ if .Annotations.description }}
+*Description:* {{ .Annotations.description }}{{ end }}
+{{ end }}`,
+};
 
 export const PagerInitialConfig: Partial<PagerChannel> = {
 	description: `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}
