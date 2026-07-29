@@ -93,6 +93,13 @@ export function validateSelector(selector: string): SelectorValidation {
 
 	if (parts.length < 3) {
 		if (parts.length === 2 && parts[1] !== ANY_RESOURCE_VALUE) {
+			if (!option.supportsKeyScoping) {
+				return {
+					message: `This query type does not support key scoping. Use ${option.id}/*`,
+					isError: false, // intentionally not an error
+				};
+			}
+
 			return {
 				message: `Use <query-type>/${ANY_RESOURCE_VALUE} or <query-type>/${SUPPORTED_GRANT_KEY}/<value>.`,
 				isError: false, // intentionally not an error
@@ -111,6 +118,13 @@ export function validateSelector(selector: string): SelectorValidation {
 		return {
 			message: `Allow every ${key} for ${option.label} queries.`,
 			isError: false,
+		};
+	}
+
+	if (!option.supportsKeyScoping) {
+		return {
+			message: `This query type does not support key scoping. Use ${option.id}/*`,
+			isError: false, // intentionally not an error
 		};
 	}
 

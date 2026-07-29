@@ -105,11 +105,12 @@ function TelemetrySelectorWizard({
 							<SelectValue>{selectedQueryType?.label}</SelectValue>
 						</SelectTrigger>
 						<SelectContent withPortal={false} className={styles.selectContent}>
-							{QUERY_TYPES.map((queryTypeOption) => (
+							{QUERY_TYPES.filter((queryTypeOption) =>
+								isQueryTypeAvailable(queryTypeOption, resource),
+							).map((queryTypeOption) => (
 								<SelectItem
 									key={queryTypeOption.id}
 									value={queryTypeOption.id}
-									disabled={!isQueryTypeAvailable(queryTypeOption, resource)}
 									testId={`wizard-query-type-option-${queryTypeOption.id}-${testId}`}
 								>
 									{queryTypeOption.label}
@@ -119,17 +120,19 @@ function TelemetrySelectorWizard({
 					</Select>
 				</div>
 
-				<div className={styles.wizardField}>
-					<Typography as="label" weight="medium">
-						Key
-					</Typography>
-					<Input
-						value={SUPPORTED_GRANT_KEY}
-						readOnly
-						disabled
-						testId={`wizard-key-input-${testId}`}
-					/>
-				</div>
+				{supportsKeyScoping && (
+					<div className={styles.wizardField}>
+						<Typography as="label" weight="medium">
+							Key
+						</Typography>
+						<Input
+							value={SUPPORTED_GRANT_KEY}
+							readOnly
+							disabled
+							testId={`wizard-key-input-${testId}`}
+						/>
+					</div>
+				)}
 
 				<div className={styles.wizardField}>
 					<Typography as="label" weight="medium">
@@ -156,7 +159,7 @@ function TelemetrySelectorWizard({
 							onChange={(checked): void => handleAnyResourceChange(checked === true)}
 							testId={`wizard-any-resource-checkbox-${testId}`}
 						>
-							Any resource
+							Any value
 						</Checkbox>
 					</div>
 				</div>

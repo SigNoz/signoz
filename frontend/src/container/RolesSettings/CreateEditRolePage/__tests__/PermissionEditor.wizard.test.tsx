@@ -106,28 +106,26 @@ describe('PermissionEditor - TelemetrySelectorWizard', () => {
 		expect(screen.queryByText('Builder Sub Query')).not.toBeInTheDocument();
 	});
 
-	it('disables PromQL for logs', async () => {
+	it('does not show PromQL for logs', async () => {
 		const user = userEvent.setup();
 		await openLogsWizard(user);
 
 		await user.click(screen.getByTestId('wizard-query-type-select-logs-read'));
 
-		const promqlOption = await screen.findByTestId(
-			'wizard-query-type-option-promql-logs-read',
-		);
-		expect(promqlOption).toHaveAttribute('aria-disabled', 'true');
+		expect(
+			screen.queryByTestId('wizard-query-type-option-promql-logs-read'),
+		).not.toBeInTheDocument();
 	});
 
-	it('disables PromQL for traces', async () => {
+	it('does not show PromQL for traces', async () => {
 		const user = userEvent.setup();
 		await openWizard(user, 'traces');
 
 		await user.click(screen.getByTestId('wizard-query-type-select-traces-read'));
 
-		const promqlOption = await screen.findByTestId(
-			'wizard-query-type-option-promql-traces-read',
-		);
-		expect(promqlOption).toHaveAttribute('aria-disabled', 'true');
+		expect(
+			screen.queryByTestId('wizard-query-type-option-promql-traces-read'),
+		).not.toBeInTheDocument();
 	});
 
 	it('allows PromQL for metrics', async () => {
@@ -153,6 +151,18 @@ describe('PermissionEditor - TelemetrySelectorWizard', () => {
 		expect(keyInput).toBeDisabled();
 	});
 
+	it('hides Key field for query types that do not support key scoping', async () => {
+		const user = userEvent.setup();
+		await openLogsWizard(user);
+
+		await user.click(screen.getByTestId('wizard-query-type-select-logs-read'));
+		await user.click(await screen.findByText('ClickHouse SQL'));
+
+		expect(
+			screen.queryByTestId('wizard-key-input-logs-read'),
+		).not.toBeInTheDocument();
+	});
+
 	it('adds a key-scoped selector when the value is filled', async () => {
 		const user = userEvent.setup();
 		await openLogsWizard(user);
@@ -174,7 +184,7 @@ describe('PermissionEditor - TelemetrySelectorWizard', () => {
 		const user = userEvent.setup();
 		await openLogsWizard(user);
 
-		await user.click(screen.getByLabelText('Any resource'));
+		await user.click(screen.getByLabelText('Any value'));
 
 		expect(screen.getByTestId('wizard-value-input-logs-read')).toHaveValue('*');
 
@@ -189,7 +199,7 @@ describe('PermissionEditor - TelemetrySelectorWizard', () => {
 		const user = userEvent.setup();
 		await openLogsWizard(user);
 
-		const anyResource = screen.getByLabelText('Any resource');
+		const anyResource = screen.getByLabelText('Any value');
 		await user.click(anyResource);
 		expect(anyResource).toBeChecked();
 
@@ -205,7 +215,7 @@ describe('PermissionEditor - TelemetrySelectorWizard', () => {
 
 		await user.type(screen.getByTestId('wizard-value-input-logs-read'), '*');
 
-		expect(screen.getByLabelText('Any resource')).toBeChecked();
+		expect(screen.getByLabelText('Any value')).toBeChecked();
 	});
 
 	it('disables value scoping for query types that do not support it', async () => {
@@ -216,7 +226,7 @@ describe('PermissionEditor - TelemetrySelectorWizard', () => {
 		await user.click(await screen.findByText('ClickHouse SQL'));
 
 		expect(screen.getByTestId('wizard-value-input-logs-read')).toBeDisabled();
-		expect(screen.getByLabelText('Any resource')).toBeDisabled();
+		expect(screen.getByLabelText('Any value')).toBeDisabled();
 	});
 
 	it('clears the value when switching to a query type without key scoping', async () => {
@@ -268,7 +278,7 @@ describe('PermissionEditor - TelemetrySelectorWizard', () => {
 		await user.clear(selectorInput);
 		await user.type(selectorInput, 'builder_query/signoz.workspace.key.id/*');
 
-		expect(screen.getByLabelText('Any resource')).toBeChecked();
+		expect(screen.getByLabelText('Any value')).toBeChecked();
 	});
 
 	it('keeps the key input hardcoded when the selector uses another key', async () => {
@@ -428,7 +438,7 @@ describe('PermissionEditor - TelemetrySelectorWizard', () => {
 		const user = userEvent.setup();
 		await openLogsWizard(user);
 
-		await user.click(screen.getByLabelText('Any resource'));
+		await user.click(screen.getByLabelText('Any value'));
 
 		expect(
 			screen.getByTestId('wizard-selector-hint-logs-read'),
