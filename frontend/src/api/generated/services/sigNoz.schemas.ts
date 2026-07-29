@@ -8920,25 +8920,23 @@ export interface RuletypesRuleDTO {
 export enum RuletypesThresholdKindDTO {
 	basic = 'basic',
 }
-export enum SavedviewtypesPanelTypeDTO {
-	value = 'value',
-	graph = 'graph',
-	table = 'table',
-	list = 'list',
-	trace = 'trace',
-}
-export enum SavedviewtypesQueryTypeDTO {
-	builder = 'builder',
-	clickhouse_sql = 'clickhouse_sql',
-	promql = 'promql',
-}
-export interface SavedviewtypesCompositeQueryDTO {
-	panelType: SavedviewtypesPanelTypeDTO;
+export interface SavedviewtypesDisplayDTO {
 	/**
-	 * @type array,null
+	 * @type string
 	 */
-	queries: Querybuildertypesv5QueryEnvelopeDTO[] | null;
-	queryType: SavedviewtypesQueryTypeDTO;
+	color?: string;
+	/**
+	 * @type string
+	 */
+	fontSize?: string;
+	/**
+	 * @type string
+	 */
+	format?: string;
+	/**
+	 * @type integer
+	 */
+	maxLines?: number;
 }
 
 export enum SavedviewtypesSourcePageDTO {
@@ -8947,8 +8945,27 @@ export enum SavedviewtypesSourcePageDTO {
 	metrics = 'metrics',
 	meter = 'meter',
 }
+export enum SavedviewtypesPanelTypeDTO {
+	value = 'value',
+	graph = 'graph',
+	table = 'table',
+	list = 'list',
+	trace = 'trace',
+}
+export interface SavedviewtypesSavedViewSpecDTO {
+	display?: SavedviewtypesDisplayDTO;
+	panelType: SavedviewtypesPanelTypeDTO;
+	/**
+	 * @type array,null
+	 */
+	queries: Querybuildertypesv5QueryEnvelopeDTO[] | null;
+	/**
+	 * @type array
+	 */
+	selectedFields?: TelemetrytypesTelemetryFieldKeyDTO[];
+}
+
 export interface SavedviewtypesGettableSavedViewDTO {
-	compositeQuery: SavedviewtypesCompositeQueryDTO;
 	/**
 	 * @type string
 	 * @format date-time
@@ -8961,16 +8978,17 @@ export interface SavedviewtypesGettableSavedViewDTO {
 	/**
 	 * @type string
 	 */
-	extraData: string;
-	/**
-	 * @type string
-	 */
 	id: string;
 	/**
 	 * @type string
 	 */
 	name: string;
+	/**
+	 * @type string
+	 */
+	schemaVersion: string;
 	sourcePage: SavedviewtypesSourcePageDTO;
+	spec: SavedviewtypesSavedViewSpecDTO;
 	/**
 	 * @type string
 	 * @format date-time
@@ -8983,16 +9001,16 @@ export interface SavedviewtypesGettableSavedViewDTO {
 }
 
 export interface SavedviewtypesPostableSavedViewDTO {
-	compositeQuery: SavedviewtypesCompositeQueryDTO;
-	/**
-	 * @type string
-	 */
-	extraData: string;
 	/**
 	 * @type string
 	 */
 	name: string;
+	/**
+	 * @type string
+	 */
+	schemaVersion: string;
 	sourcePage: SavedviewtypesSourcePageDTO;
+	spec: SavedviewtypesSavedViewSpecDTO;
 }
 
 export interface ServiceaccounttypesDeprecatedPostableServiceAccountRoleDTO {

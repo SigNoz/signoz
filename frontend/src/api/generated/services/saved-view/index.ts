@@ -33,7 +33,7 @@ import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
 
 /**
- * Returns saved views for the calling user's org, optionally filtered by source page, name, and category.
+ * Returns saved views, optionally filtered by source page and name.
  * @summary List saved views
  */
 export const listSavedViews = (
@@ -391,7 +391,7 @@ export const invalidateGetSavedView = async (
 };
 
 /**
- * Replaces a saved view's name, tags, and query.
+ * Replaces a saved view's name and query.
  * @summary Update saved view
  */
 export const updateSavedView = (
