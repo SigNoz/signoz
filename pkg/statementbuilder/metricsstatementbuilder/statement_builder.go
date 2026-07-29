@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/statementbuilder"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/metricstelemetryschema"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -39,6 +40,23 @@ type StatementBuilder struct {
 }
 
 var _ qbtypes.StatementBuilder[qbtypes.MetricAggregation] = (*StatementBuilder)(nil)
+
+// NewFactory returns a provider factory for the metrics statement builder. Its
+// New internalizes the FieldMapper and ConditionBuilder and yields the concrete
+// *StatementBuilder so the meter builder can reuse it.
+func NewFactory(
+	metadataStore telemetrytypes.MetadataStore,
+	fl flagger.Flagger,
+) factory.ProviderFactory[*StatementBuilder, statementbuilder.Config] {
+	return factory.NewProviderFactory(
+		factory.MustNewName("metrics"),
+		func(_ context.Context, settings factory.ProviderSettings, _ statementbuilder.Config) (*StatementBuilder, error) {
+			fm := metricstelemetryschema.NewFieldMapper()
+			cb := metricstelemetryschema.NewConditionBuilder(fm)
+			return NewMetricQueryStatementBuilder(settings, metadataStore, fm, cb, fl), nil
+		},
+	)
+}
 
 func NewMetricQueryStatementBuilder(
 	settings factory.ProviderSettings,

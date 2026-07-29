@@ -21,7 +21,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/statementbuilder"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
@@ -72,7 +71,13 @@ func New(
 	telemetryStore telemetrystore.TelemetryStore,
 	metadataStore telemetrytypes.MetadataStore,
 	promEngine prometheus.Prometheus,
-	builders *statementbuilder.Builders,
+	traceStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation],
+	aiTraceStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation],
+	logStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation],
+	auditStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation],
+	metricStmtBuilder qbtypes.StatementBuilder[qbtypes.MetricAggregation],
+	meterStmtBuilder qbtypes.StatementBuilder[qbtypes.MetricAggregation],
+	traceOperatorStmtBuilder qbtypes.TraceOperatorStatementBuilder,
 	bucketCache BucketCache,
 	flagger flagger.Flagger,
 	logTraceIDWindowPadding time.Duration,
@@ -82,22 +87,19 @@ func New(
 	if maxConcurrentQueries <= 0 {
 		maxConcurrentQueries = DefaultMaxConcurrentQueries
 	}
-	if builders == nil {
-		builders = &statementbuilder.Builders{}
-	}
 	return &querier{
 		logger:                   querierSettings.Logger(),
 		fl:                       flagger,
 		telemetryStore:           telemetryStore,
 		metadataStore:            metadataStore,
 		promEngine:               promEngine,
-		traceStmtBuilder:         builders.Trace,
-		aiTraceStmtBuilder:       builders.AITrace,
-		logStmtBuilder:           builders.Log,
-		auditStmtBuilder:         builders.Audit,
-		metricStmtBuilder:        builders.Metric,
-		meterStmtBuilder:         builders.Meter,
-		traceOperatorStmtBuilder: builders.TraceOperator,
+		traceStmtBuilder:         traceStmtBuilder,
+		aiTraceStmtBuilder:       aiTraceStmtBuilder,
+		logStmtBuilder:           logStmtBuilder,
+		auditStmtBuilder:         auditStmtBuilder,
+		metricStmtBuilder:        metricStmtBuilder,
+		meterStmtBuilder:         meterStmtBuilder,
+		traceOperatorStmtBuilder: traceOperatorStmtBuilder,
 		bucketCache:              bucketCache,
 		liveDataRefresh:          5 * time.Second,
 		builderConfig: builderConfig{

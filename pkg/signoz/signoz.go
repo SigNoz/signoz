@@ -48,7 +48,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlmigrator"
 	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/statementbuilder"
 	"github.com/SigNoz/signoz/pkg/statementbuilder/aistatementbuilder"
 	"github.com/SigNoz/signoz/pkg/statementbuilder/auditstatementbuilder"
 	"github.com/SigNoz/signoz/pkg/statementbuilder/logsstatementbuilder"
@@ -60,6 +59,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	pkgtokenizer "github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/zeus"
@@ -98,9 +98,11 @@ type SigNoz struct {
 	MeterReporter          meterreporter.Reporter
 }
 
-// newQueryStack assembles the query stack once: the shared telemetry metadata
-// store, the per-signal statement builders, and the bucket cache. The metadata
-// store is returned so callers can reuse the single instance downstream.
+// newQueryStack assembles the query stack once and returns, in order: the shared
+// telemetry metadata store (reused elsewhere in signoz.New), the per-signal
+// statement builders (trace, ai-trace, log, audit, metric, meter, trace-operator),
+// and the bucket cache. It is the only place that imports the concrete
+// statement-builder sub-packages.
 func newQueryStack(
 	ctx context.Context,
 	settings factory.ProviderSettings,
@@ -108,54 +110,53 @@ func newQueryStack(
 	telemetryStore telemetrystore.TelemetryStore,
 	cache cache.Cache,
 	fl flagger.Flagger,
-) (telemetrytypes.MetadataStore, *statementbuilder.Builders, querier.BucketCache, error) {
+) (
+	telemetrytypes.MetadataStore,
+	qbtypes.StatementBuilder[qbtypes.TraceAggregation],
+	qbtypes.StatementBuilder[qbtypes.TraceAggregation],
+	qbtypes.StatementBuilder[qbtypes.LogAggregation],
+	qbtypes.StatementBuilder[qbtypes.LogAggregation],
+	qbtypes.StatementBuilder[qbtypes.MetricAggregation],
+	qbtypes.StatementBuilder[qbtypes.MetricAggregation],
+	qbtypes.TraceOperatorStatementBuilder,
+	querier.BucketCache,
+	error,
+) {
 	metadataStore := telemetrymetadata.NewTelemetryMetaStore(settings, telemetryStore, fl)
 
-	// Composition root: build each per-signal statement-builder factory and assemble
-	// the Builders bundle. This is the only place that imports the concrete sub-packages.
 	cfg := config.StatementBuilder
 	traceStmtBuilder, err := tracesstatementbuilder.NewFactory(telemetryStore, metadataStore, fl).New(ctx, settings, cfg)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
 	}
 	aiTraceStmtBuilder, err := aistatementbuilder.NewFactory(telemetryStore, metadataStore, fl).New(ctx, settings, cfg)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
 	}
 	traceOperatorStmtBuilder, err := tracesstatementbuilder.NewOperatorFactory(telemetryStore, metadataStore, fl).New(ctx, settings, cfg)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
 	}
 	logStmtBuilder, err := logsstatementbuilder.NewFactory(telemetryStore, metadataStore, fl).New(ctx, settings, cfg)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
 	}
 	auditStmtBuilder, err := auditstatementbuilder.NewFactory(metadataStore, fl).New(ctx, settings, cfg)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
 	}
 	metricStmtBuilder, err := metricsstatementbuilder.NewFactory(metadataStore, fl).New(ctx, settings, cfg)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
 	}
 	meterStmtBuilder, err := meterstatementbuilder.NewFactory(metadataStore, fl).New(ctx, settings, cfg)
 	if err != nil {
-		return nil, nil, nil, err
-	}
-
-	builders := &statementbuilder.Builders{
-		Trace:         traceStmtBuilder,
-		AITrace:       aiTraceStmtBuilder,
-		TraceOperator: traceOperatorStmtBuilder,
-		Log:           logStmtBuilder,
-		Audit:         auditStmtBuilder,
-		Metric:        metricStmtBuilder,
-		Meter:         meterStmtBuilder,
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
 	}
 
 	bucketCache := querier.NewBucketCache(settings, cache, config.Querier.CacheTTL, config.Querier.FluxInterval)
 
-	return metadataStore, builders, bucketCache, nil
+	return metadataStore, traceStmtBuilder, aiTraceStmtBuilder, logStmtBuilder, auditStmtBuilder, metricStmtBuilder, meterStmtBuilder, traceOperatorStmtBuilder, bucketCache, nil
 }
 
 func New(
@@ -318,7 +319,7 @@ func New(
 
 	// Assemble the query stack (metadata store, statement builders, bucket cache) once,
 	// and reuse the single metadata store everywhere downstream.
-	telemetryMetadataStore, builders, bucketCache, err := newQueryStack(ctx, providerSettings, config, telemetrystore, cache, flagger)
+	telemetryMetadataStore, traceStmtBuilder, aiTraceStmtBuilder, logStmtBuilder, auditStmtBuilder, metricStmtBuilder, meterStmtBuilder, traceOperatorStmtBuilder, bucketCache, err := newQueryStack(ctx, providerSettings, config, telemetrystore, cache, flagger)
 	if err != nil {
 		return nil, err
 	}
@@ -328,7 +329,7 @@ func New(
 		ctx,
 		providerSettings,
 		config.Querier,
-		NewQuerierProviderFactories(telemetrystore, prometheus, telemetryMetadataStore, builders, bucketCache, flagger),
+		NewQuerierProviderFactories(telemetrystore, prometheus, telemetryMetadataStore, traceStmtBuilder, aiTraceStmtBuilder, logStmtBuilder, auditStmtBuilder, metricStmtBuilder, meterStmtBuilder, traceOperatorStmtBuilder, bucketCache, flagger),
 		config.Querier.Provider(),
 	)
 	if err != nil {

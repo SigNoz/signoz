@@ -11,7 +11,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
-	"github.com/SigNoz/signoz/pkg/statementbuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
@@ -49,7 +48,13 @@ func TestQueryRange_MetricTypeMissing(t *testing.T) {
 		nil, // telemetryStore
 		metadataStore,
 		nil,                // prometheus
-		nil,                // builders
+		nil,                // traceStmtBuilder
+		nil,                // aiTraceStmtBuilder
+		nil,                // logStmtBuilder
+		nil,                // auditStmtBuilder
+		nil,                // metricStmtBuilder
+		nil,                // meterStmtBuilder
+		nil,                // traceOperatorStmtBuilder
 		nil,                // bucketCache
 		flaggertest.New(t), // flagger
 		0,                  // logTraceIDWindowPadding
@@ -116,7 +121,13 @@ func TestQueryRange_MetricTypeFromStore(t *testing.T) {
 		telemetryStore,
 		metadataStore,
 		nil, // prometheus
-		&statementbuilder.Builders{Metric: &mockMetricStmtBuilder{}},
+		nil, // traceStmtBuilder
+		nil, // aiTraceStmtBuilder
+		nil, // logStmtBuilder
+		nil, // auditStmtBuilder
+		&mockMetricStmtBuilder{},
+		nil,                // meterStmtBuilder
+		nil,                // traceOperatorStmtBuilder
 		nil,                // bucketCache
 		flaggertest.New(t), // flagger
 		0,                  // logTraceIDWindowPadding

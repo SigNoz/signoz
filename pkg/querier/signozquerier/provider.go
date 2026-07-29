@@ -7,8 +7,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
-	"github.com/SigNoz/signoz/pkg/statementbuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
@@ -19,7 +19,13 @@ func NewFactory(
 	telemetryStore telemetrystore.TelemetryStore,
 	prometheus prometheus.Prometheus,
 	metadataStore telemetrytypes.MetadataStore,
-	builders *statementbuilder.Builders,
+	traceStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation],
+	aiTraceStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation],
+	logStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation],
+	auditStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation],
+	metricStmtBuilder qbtypes.StatementBuilder[qbtypes.MetricAggregation],
+	meterStmtBuilder qbtypes.StatementBuilder[qbtypes.MetricAggregation],
+	traceOperatorStmtBuilder qbtypes.TraceOperatorStatementBuilder,
 	bucketCache querier.BucketCache,
 	flagger flagger.Flagger,
 ) factory.ProviderFactory[querier.Querier, querier.Config] {
@@ -35,7 +41,13 @@ func NewFactory(
 				telemetryStore,
 				metadataStore,
 				prometheus,
-				builders,
+				traceStmtBuilder,
+				aiTraceStmtBuilder,
+				logStmtBuilder,
+				auditStmtBuilder,
+				metricStmtBuilder,
+				meterStmtBuilder,
+				traceOperatorStmtBuilder,
 				bucketCache,
 				flagger,
 				cfg.LogTraceIDWindowPadding,

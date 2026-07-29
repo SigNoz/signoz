@@ -40,7 +40,13 @@ func prepareQuerierForMetrics(t *testing.T, telemetryStore telemetrystore.Teleme
 		telemetryStore,
 		metadataStore,
 		nil, // prometheus
-		&statementbuilder.Builders{Metric: metricStmtBuilder},
+		nil, // traceStmtBuilder
+		nil, // aiTraceStmtBuilder
+		nil, // logStmtBuilder
+		nil, // auditStmtBuilder
+		metricStmtBuilder,
+		nil, // meterStmtBuilder
+		nil, // traceOperatorStmtBuilder
 		nil, // bucketCache
 		fl,
 		0,
@@ -69,7 +75,13 @@ func prepareQuerierForLogs(t *testing.T, telemetryStore telemetrystore.Telemetry
 		telemetryStore,
 		metadataStore,
 		nil, // prometheus
-		&statementbuilder.Builders{Log: logStmtBuilder},
+		nil, // traceStmtBuilder
+		nil, // aiTraceStmtBuilder
+		logStmtBuilder,
+		nil, // auditStmtBuilder
+		nil, // metricStmtBuilder
+		nil, // meterStmtBuilder
+		nil, // traceOperatorStmtBuilder
 		nil, // bucketCache
 		fl,
 		5*time.Minute, // logTraceIDWindowPadding
@@ -99,7 +111,13 @@ func prepareQuerierForTraces(t *testing.T, telemetryStore telemetrystore.Telemet
 		telemetryStore,
 		metadataStore,
 		nil, // prometheus
-		&statementbuilder.Builders{Trace: traceStmtBuilder},
+		traceStmtBuilder,
+		nil, // aiTraceStmtBuilder
+		nil, // logStmtBuilder
+		nil, // auditStmtBuilder
+		nil, // metricStmtBuilder
+		nil, // meterStmtBuilder
+		nil, // traceOperatorStmtBuilder
 		nil, // bucketCache
 		fl,
 		0,
