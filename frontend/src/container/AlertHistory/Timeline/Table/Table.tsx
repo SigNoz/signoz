@@ -56,10 +56,6 @@ function TimelineTableContent(): JSX.Element {
 		const response = data?.data;
 		const items: AlertRuleTimelineTableResponse[] | undefined =
 			response?.items?.map((item) => {
-				const itemWithLinks = item as typeof item & {
-					relatedLogsLink?: string;
-					relatedTracesLink?: string;
-				};
 				return {
 					ruleID: item.ruleId,
 					ruleName: item.ruleName,
@@ -71,8 +67,8 @@ function TimelineTableContent(): JSX.Element {
 					fingerprint: item.fingerprint,
 					value: item.value,
 					labels: labelsArrayToObject(item.labels),
-					relatedLogsLink: itemWithLinks.relatedLogsLink,
-					relatedTracesLink: itemWithLinks.relatedTracesLink,
+					relatedLogsLink: item.relatedLogsLink,
+					relatedTracesLink: item.relatedTracesLink,
 				};
 			});
 
@@ -133,7 +129,8 @@ function TimelineTableContent(): JSX.Element {
 
 	return (
 		<div className="timeline-table">
-			{!isLoadingKeys || hardcodedAttributeKeys ? (
+			{/* If we don't wait to have the keys, the QuerySearch will not render them at first usage */}
+			{!isLoadingKeys && hardcodedAttributeKeys ? (
 				<div className="timeline-table__filter">
 					<div className="timeline-table__filter-row">
 						<div className="timeline-table__filter-search">
