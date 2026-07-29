@@ -5,11 +5,7 @@ import {
 } from 'api/generated/services/rules';
 import { useAlertHistoryQueryParams } from 'pages/AlertDetails/hooks';
 import { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
-import {
-	dataTypeToKeyType,
-	dataTypeToSuggestionType,
-	fieldContextToSuggestionContext,
-} from 'container/AlertHistory/Timeline/Table/utils';
+import { fieldContextToSuggestionContext } from 'container/AlertHistory/Timeline/Table/utils';
 
 export interface AlertHistoryFilterSuggestions {
 	hardcodedAttributeKeys: QueryKeyDataSuggestionsProps[];
@@ -51,14 +47,17 @@ export function useAlertHistoryFilterSuggestions(
 			return [];
 		}
 		return Object.values(keys).flatMap((items) =>
-			items.map((item) => ({
-				label: item.name,
-				name: item.name,
-				type: dataTypeToSuggestionType(item.fieldDataType),
-				signal: 'logs' as const,
-				fieldDataType: dataTypeToKeyType(item.fieldDataType),
-				fieldContext: fieldContextToSuggestionContext(item.fieldContext),
-			})),
+			items.map(
+				(item) =>
+					({
+						label: item.name,
+						name: item.name,
+						type: item.fieldDataType || 'string',
+						signal: 'logs' as const,
+						fieldDataType: item.fieldDataType,
+						fieldContext: fieldContextToSuggestionContext(item.fieldContext),
+					}) satisfies QueryKeyDataSuggestionsProps,
+			),
 		);
 	}, [filterKeysData]);
 
