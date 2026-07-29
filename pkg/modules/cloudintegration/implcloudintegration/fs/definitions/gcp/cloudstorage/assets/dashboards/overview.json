@@ -348,7 +348,7 @@
                 "fillSpans": false
               },
               "formatting": {
-                "unit": "By",
+                "unit": "By/s",
                 "decimalPrecision": "2"
               },
               "chartAppearance": {
@@ -592,6 +592,12 @@
                     },
                     "groupBy": [
                       {
+                        "name": "bucket_name",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      },
+                      {
                         "name": "authentication_method",
                         "signal": "",
                         "fieldContext": "attribute",
@@ -615,7 +621,7 @@
                       "expression": ""
                     },
                     "functions": [],
-                    "legend": "{{authentication_method}}/{{method}} - {{response_code}}"
+                    "legend": "{{bucket_name}}/{{authentication_method}}/{{method}} - {{response_code}}"
                   }
                 }
               }
