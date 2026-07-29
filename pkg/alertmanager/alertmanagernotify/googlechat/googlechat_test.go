@@ -96,13 +96,45 @@ func TestGoogleChatTitleAndBody(t *testing.T) {
 	server := captureServer(t, &got)
 	defer server.Close()
 
-	// static templates → assert the exact title\nbody join.
 	n := newTestNotifier(t, server.URL, "TITLE", "BODY")
 	retry, err := n.Notify(newTestContext(), newTestAlerts("TestAlert")...)
 
 	require.NoError(t, err)
 	require.False(t, retry)
-	require.Equal(t, "TITLE\nBODY", got.Text)
+	// Title is the plain summary + card header; body lives in a card widget.
+	require.Equal(t, "TITLE", got.Text)
+	require.Equal(t, "TITLE", got.CardsV2[0].Card.Header.Title)
+	require.Contains(t, cardBody(t, got), "BODY")
+}
+
+// cardBody concatenates the text of all textParagraph widgets in the message.
+func cardBody(t *testing.T, m Message) string {
+	t.Helper()
+	require.NotEmpty(t, m.CardsV2)
+	var b strings.Builder
+	for _, s := range m.CardsV2[0].Card.Sections {
+		for _, w := range s.Widgets {
+			if w.TextParagraph != nil {
+				b.WriteString(w.TextParagraph.Text)
+				b.WriteByte('\n')
+			}
+		}
+	}
+	return b.String()
+}
+
+// cardButtons returns the buttons of the first buttonList widget.
+func cardButtons(t *testing.T, m Message) []button {
+	t.Helper()
+	require.NotEmpty(t, m.CardsV2)
+	for _, s := range m.CardsV2[0].Card.Sections {
+		for _, w := range s.Widgets {
+			if w.ButtonList != nil {
+				return w.ButtonList.Buttons
+			}
+		}
+	}
+	return nil
 }
 
 func TestGoogleChatRetryCodes(t *testing.T) {
@@ -240,9 +272,10 @@ func TestGoogleChatCustomTemplateMarkdown(t *testing.T) {
 	_, err := n.Notify(newTestContext(), alerts...)
 	require.NoError(t, err)
 
-	require.Contains(t, got.Text, "*bold*", "** should convert to *")
-	require.Contains(t, got.Text, "<https://x|link>", "[t](u) should convert to <u|t>")
-	require.NotContains(t, got.Text, "**bold**", "conversion must have happened")
+	// Custom body is standard markdown → converted to card HTML.
+	body := cardBody(t, got)
+	require.Contains(t, body, "<strong>bold</strong>", "** should convert to HTML bold")
+	require.Contains(t, body, `<a href="https://x">link</a>`, "[t](u) should convert to an HTML link")
 }
 
 func TestGoogleChatSerializedSizeUnderLimit(t *testing.T) {
@@ -278,4 +311,92 @@ func TestGoogleChatEmptyText(t *testing.T) {
 
 	require.Error(t, err)
 	require.False(t, retry)
+}
+
+func TestGoogleChatLinkButtons(t *testing.T) {
+	cases := []struct {
+		name        string
+		labels      model.LabelSet
+		annotations model.LabelSet
+		wantButtons map[string]string
+	}{
+		{
+			name: "all links present",
+			labels: model.LabelSet{
+				"alertname":               "X",
+				ruletypes.LabelRuleSource: "https://signoz.example/alerts/1",
+			},
+			annotations: model.LabelSet{
+				ruletypes.AnnotationRelatedLogs:   "https://signoz.example/logs",
+				ruletypes.AnnotationRelatedTraces: "https://signoz.example/traces",
+			},
+			wantButtons: map[string]string{
+				"Open in SigNoz":      "https://signoz.example/alerts/1",
+				"View Related Logs":   "https://signoz.example/logs",
+				"View Related Traces": "https://signoz.example/traces",
+			},
+		},
+		{
+			name:        "no links → no buttons",
+			labels:      model.LabelSet{"alertname": "X"},
+			annotations: model.LabelSet{"summary": "s"},
+			wantButtons: map[string]string{},
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			var got Message
+			server := captureServer(t, &got)
+			defer server.Close()
+
+			alerts := []*types.Alert{{Alert: model.Alert{
+				Labels:      c.labels,
+				Annotations: c.annotations,
+				StartsAt:    time.Now(),
+				EndsAt:      time.Now().Add(time.Minute),
+			}}}
+			n := newTestNotifier(t, server.URL, "T", "")
+			_, err := n.Notify(newTestContext(), alerts...)
+			require.NoError(t, err)
+
+			buttons := cardButtons(t, got)
+			require.Len(t, buttons, len(c.wantButtons))
+			for _, b := range buttons {
+				require.Equal(t, c.wantButtons[b.Text], b.OnClick.OpenLink.URL, "button %q", b.Text)
+			}
+		})
+	}
+}
+
+func TestGoogleChatStatusLine(t *testing.T) {
+	cases := []struct {
+		name     string
+		resolved bool
+		want     string
+	}{
+		{"firing", false, "🔴 FIRING"},
+		{"resolved", true, "🟢 RESOLVED"},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			var got Message
+			server := captureServer(t, &got)
+			defer server.Close()
+
+			endsAt := time.Now().Add(time.Minute)
+			if c.resolved {
+				endsAt = time.Now().Add(-time.Minute) // EndsAt in the past → resolved
+			}
+			alerts := []*types.Alert{{Alert: model.Alert{
+				Labels:   model.LabelSet{"alertname": "X"},
+				StartsAt: time.Now().Add(-2 * time.Minute),
+				EndsAt:   endsAt,
+			}}}
+			n := newTestNotifier(t, server.URL, "T", "")
+			_, err := n.Notify(newTestContext(), alerts...)
+			require.NoError(t, err)
+
+			require.Contains(t, cardBody(t, got), c.want)
+		})
+	}
 }

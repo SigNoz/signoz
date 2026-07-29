@@ -59,20 +59,27 @@ func (n *Notifier) Notify(ctx context.Context, alerts ...*types.Alert) (bool, er
 
 	status := statusLine(alerts)
 	buttons := linkButtons(alerts[0])
-	msg := buildMessage(c.title, status, c.body, buttons)
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(msg); err != nil {
+
+	// Serialized-size guard: keep the payload within Google Chat's byte limit by
+	// trimming the body first, then the title (which appears in both the summary
+	// and the card header). Buttons/status are small and bounded, so trimming the
+	// two text fields should always bring the payload under the limit.
+	title, body := c.title, c.body
+	buf, err := encodeMessage(buildMessage(title, status, body, buttons))
+	if err != nil {
 		return false, err
 	}
-	// Serialized-size guard: the card body is the large field, so measure the
-	// serialized buffer and trim that many body bytes. Each removed body byte
-	// drops >=1 serialized byte, so a single pass lands within the limit.
-	if buf.Len() > maxMessageBytes {
+	for buf.Len() > maxMessageBytes {
+		if body == "" && title == "" {
+			break
+		}
 		over := buf.Len() - maxMessageBytes
-		body := truncateToByteLimit(c.body, max(len(c.body)-over, 0))
-		msg = buildMessage(c.title, status, body, buttons)
-		buf.Reset()
-		if err := json.NewEncoder(&buf).Encode(msg); err != nil {
+		if body != "" {
+			body = truncateToByteLimit(body, max(len(body)-over, 0))
+		} else {
+			title = truncateToByteLimit(title, max(len(title)-over, 0))
+		}
+		if buf, err = encodeMessage(buildMessage(title, status, body, buttons)); err != nil {
 			return false, err
 		}
 	}
@@ -88,7 +95,7 @@ func (n *Notifier) Notify(ctx context.Context, alerts ...*types.Alert) (bool, er
 	q.Set("messageReplyOption", "REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD")
 	u.RawQuery = q.Encode()
 
-	resp, err := notify.PostJSON(ctx, n.client, u.String(), &buf) //nolint:bodyclose
+	resp, err := notify.PostJSON(ctx, n.client, u.String(), buf) //nolint:bodyclose
 	if err != nil {
 		return true, notify.RedactURL(err)
 	}
@@ -172,6 +179,14 @@ func buildMessage(title, statusHTML, bodyHTML string, buttons []button) Message 
 			},
 		}},
 	}
+}
+
+func encodeMessage(msg Message) (*bytes.Buffer, error) {
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(msg); err != nil {
+		return nil, err
+	}
+	return &buf, nil
 }
 
 // truncateToByteLimit trims s to at most maxBytes bytes on a rune boundary,
