@@ -238,6 +238,10 @@ describe('TableDrilldown Breakout Functionality', () => {
 		expect(aggregateQueryData.groupBy).toHaveLength(1);
 		expect(aggregateQueryData.groupBy[0].key).toBe('deployment.environment');
 
+		// The picked field's type travels with it — dropping it leaves the breakout query
+		// untyped, so a drilldown on its result can't tell a number from a string.
+		expect(aggregateQueryData.groupBy[0].dataType).toBe('string');
+
 		// Verify that orderBy has been cleared (as per getBreakoutQuery logic)
 		expect(aggregateQueryData.orderBy).toStrictEqual([]);
 

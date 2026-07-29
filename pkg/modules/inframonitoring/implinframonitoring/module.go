@@ -9,7 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/modules/inframonitoring"
 	"github.com/SigNoz/signoz/pkg/querier"
-	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
+	"github.com/SigNoz/signoz/pkg/telemetryschema/metricstelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
@@ -40,8 +40,8 @@ func NewModule(
 	providerSettings factory.ProviderSettings,
 	cfg inframonitoring.Config,
 ) inframonitoring.Module {
-	fieldMapper := telemetrymetrics.NewFieldMapper()
-	condBuilder := telemetrymetrics.NewConditionBuilder(fieldMapper)
+	fieldMapper := metricstelemetryschema.NewFieldMapper()
+	condBuilder := metricstelemetryschema.NewConditionBuilder(fieldMapper)
 	return &module{
 		telemetryStore:         telemetryStore,
 		telemetryMetadataStore: telemetryMetadataStore,

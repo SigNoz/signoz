@@ -18,6 +18,13 @@ import (
 	"github.com/SigNoz/signoz/pkg/querier/signozquerier"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstoretest"
+	"github.com/SigNoz/signoz/pkg/statementbuilder"
+	"github.com/SigNoz/signoz/pkg/statementbuilder/auditstatementbuilder"
+	"github.com/SigNoz/signoz/pkg/statementbuilder/logsstatementbuilder"
+	"github.com/SigNoz/signoz/pkg/statementbuilder/meterstatementbuilder"
+	"github.com/SigNoz/signoz/pkg/statementbuilder/metricsstatementbuilder"
+	"github.com/SigNoz/signoz/pkg/statementbuilder/tracesstatementbuilder"
+	"github.com/SigNoz/signoz/pkg/telemetrymetadata"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	"github.com/stretchr/testify/require"
@@ -105,7 +112,31 @@ func NewTestManager(t *testing.T, testOpts *TestManagerOptions) *Manager {
 	}
 
 	// Create querier with test values
-	providerFactory := signozquerier.NewFactory(telemetryStore, prometheus, cache, flagger)
+	metadataStore := telemetrymetadata.NewTelemetryMetaStore(providerSettings, telemetryStore, flagger)
+	cfg := statementbuilder.Config{}
+	ctx := context.Background()
+	traceStmtBuilder, err := tracesstatementbuilder.NewFactory(telemetryStore, metadataStore, flagger).New(ctx, providerSettings, cfg)
+	require.NoError(t, err)
+	traceOperatorStmtBuilder, err := tracesstatementbuilder.NewOperatorFactory(telemetryStore, metadataStore, flagger).New(ctx, providerSettings, cfg)
+	require.NoError(t, err)
+	logStmtBuilder, err := logsstatementbuilder.NewFactory(telemetryStore, metadataStore, flagger).New(ctx, providerSettings, cfg)
+	require.NoError(t, err)
+	auditStmtBuilder, err := auditstatementbuilder.NewFactory(metadataStore, flagger).New(ctx, providerSettings, cfg)
+	require.NoError(t, err)
+	metricStmtBuilder, err := metricsstatementbuilder.NewFactory(metadataStore, flagger).New(ctx, providerSettings, cfg)
+	require.NoError(t, err)
+	meterStmtBuilder, err := meterstatementbuilder.NewFactory(metadataStore, flagger).New(ctx, providerSettings, cfg)
+	require.NoError(t, err)
+	builders := &statementbuilder.Builders{
+		Trace:         traceStmtBuilder,
+		TraceOperator: traceOperatorStmtBuilder,
+		Log:           logStmtBuilder,
+		Audit:         auditStmtBuilder,
+		Metric:        metricStmtBuilder,
+		Meter:         meterStmtBuilder,
+	}
+	bucketCache := querier.NewBucketCache(providerSettings, cache, 0, 0)
+	providerFactory := signozquerier.NewFactory(telemetryStore, prometheus, metadataStore, builders, bucketCache, flagger)
 	mockQuerier, err := providerFactory.New(context.Background(), providerSettings, querier.Config{})
 	require.NoError(t, err)
 
