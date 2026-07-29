@@ -3,6 +3,8 @@ package querybuilder
 import (
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/errors"
+
 	chparser "github.com/AfterShip/clickhouse-sql-parser/parser"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -49,47 +51,51 @@ func TestErrIfStatementIsNotValid_Fail(t *testing.T) {
 	testCases := []struct {
 		name  string
 		query string
+		// The reason it is refused, so each rule keeps its own filterable code.
+		expectedCode errors.Code
 	}{
 		// Not a single statement, or not a statement at all.
-		{"Empty", ""},
-		{"UnterminatedBlockCommentOnly", "/* x"},
-		{"Unparseable", "SELECT FROM WHERE"},
-		{"MultipleStatements", "SELECT 1; DROP TABLE signoz_logs.logs_v2"},
+		{"Empty", "", CodeClickHouseSQLNotSingleStatement},
+		{"UnterminatedBlockCommentOnly", "/* x", CodeClickHouseSQLUnparseable},
+		{"Unparseable", "SELECT FROM WHERE", CodeClickHouseSQLUnparseable},
+		{"MultipleStatements", "SELECT 1; DROP TABLE signoz_logs.logs_v2", CodeClickHouseSQLNotSingleStatement},
 		// Parses, but is not a SELECT.
-		{"Drop", "DROP TABLE signoz_logs.logs_v2"},
-		{"Insert", "INSERT INTO signoz_logs.logs_v2 SELECT * FROM signoz_logs.logs_v2"},
-		{"AlterDelete", "ALTER TABLE signoz_logs.logs_v2 DELETE WHERE 1 = 1"},
-		{"CreateTable", "CREATE TABLE evil (a Int) ENGINE = Memory"},
-		{"Grant", "GRANT ALL ON *.* TO admin"},
-		{"Set", "SET readonly = 0"},
+		{"Drop", "DROP TABLE signoz_logs.logs_v2", CodeClickHouseSQLNotSelect},
+		{"Insert", "INSERT INTO signoz_logs.logs_v2 SELECT * FROM signoz_logs.logs_v2", CodeClickHouseSQLNotSelect},
+		{"AlterDelete", "ALTER TABLE signoz_logs.logs_v2 DELETE WHERE 1 = 1", CodeClickHouseSQLNotSelect},
+		{"CreateTable", "CREATE TABLE evil (a Int) ENGINE = Memory", CodeClickHouseSQLNotSelect},
+		{"Grant", "GRANT ALL ON *.* TO admin", CodeClickHouseSQLNotSelect},
+		{"Set", "SET readonly = 0", CodeClickHouseSQLNotSelect},
 		// These the parser rejects outright rather than classifying.
-		{"ShowGrants", "SHOW GRANTS"},
-		{"IntoOutfile", "SELECT * FROM t INTO OUTFILE '/tmp/x.csv'"},
+		{"ShowGrants", "SHOW GRANTS", CodeClickHouseSQLUnparseable},
+		{"IntoOutfile", "SELECT * FROM t INTO OUTFILE '/tmp/x.csv'", CodeClickHouseSQLUnparseable},
 		// Table functions, which read through something other than a telemetry table.
-		{"UrlTableFunction", "SELECT * FROM url('http://attacker.example/x', CSV, 'a String')"},
-		{"FileTableFunction", "SELECT * FROM file('/etc/passwd', CSV, 'a String')"},
-		{"ExecutableTableFunction", "SELECT * FROM executable('script.sh', CSV, 'a String')"},
-		{"TableFunctionInJoin", "SELECT * FROM t1 JOIN url('http://x', CSV, 'a String') u ON 1 = 1"},
-		{"TableFunctionInCommonTableExpression", "WITH c AS (SELECT * FROM url('http://x', CSV, 'a String')) SELECT * FROM c"},
-		{"TableFunctionInWhereSubquery", "SELECT * FROM t WHERE a IN (SELECT * FROM file('/etc/passwd', CSV, 'a String'))"},
-		{"TableFunctionInUnion", "SELECT * FROM t UNION ALL SELECT * FROM url('http://x', CSV, 'a String')"},
+		{"UrlTableFunction", "SELECT * FROM url('http://attacker.example/x', CSV, 'a String')", CodeClickHouseSQLTableFunction},
+		{"FileTableFunction", "SELECT * FROM file('/etc/passwd', CSV, 'a String')", CodeClickHouseSQLTableFunction},
+		{"ExecutableTableFunction", "SELECT * FROM executable('script.sh', CSV, 'a String')", CodeClickHouseSQLTableFunction},
+		{"TableFunctionInJoin", "SELECT * FROM t1 JOIN url('http://x', CSV, 'a String') u ON 1 = 1", CodeClickHouseSQLTableFunction},
+		{"TableFunctionInCommonTableExpression", "WITH c AS (SELECT * FROM url('http://x', CSV, 'a String')) SELECT * FROM c", CodeClickHouseSQLTableFunction},
+		{"TableFunctionInWhereSubquery", "SELECT * FROM t WHERE a IN (SELECT * FROM file('/etc/passwd', CSV, 'a String'))", CodeClickHouseSQLTableFunction},
+		{"TableFunctionInUnion", "SELECT * FROM t UNION ALL SELECT * FROM url('http://x', CSV, 'a String')", CodeClickHouseSQLTableFunction},
 		// Internal databases, which hold grants and server metadata rather than telemetry.
-		{"SystemUsers", "SELECT * FROM system.users"},
-		{"SystemUppercase", "SELECT * FROM SYSTEM.USERS"},
-		{"SystemQuoted", "SELECT count() FROM `system`.`tables`"},
-		{"SystemInSubquery", "SELECT * FROM (SELECT name FROM system.parts)"},
-		{"SystemInJoin", "SELECT * FROM signoz_logs.distributed_logs_v2 AS l JOIN system.users AS u ON 1 = 1"},
-		{"SystemInIntersect", "SELECT * FROM t INTERSECT SELECT * FROM system.users"},
-		{"InformationSchema", "SELECT * FROM information_schema.tables"},
+		{"SystemUsers", "SELECT * FROM system.users", CodeClickHouseSQLInternalDatabase},
+		{"SystemUppercase", "SELECT * FROM SYSTEM.USERS", CodeClickHouseSQLInternalDatabase},
+		{"SystemQuoted", "SELECT count() FROM `system`.`tables`", CodeClickHouseSQLInternalDatabase},
+		{"SystemInSubquery", "SELECT * FROM (SELECT name FROM system.parts)", CodeClickHouseSQLInternalDatabase},
+		{"SystemInJoin", "SELECT * FROM signoz_logs.distributed_logs_v2 AS l JOIN system.users AS u ON 1 = 1", CodeClickHouseSQLInternalDatabase},
+		{"SystemInIntersect", "SELECT * FROM t INTERSECT SELECT * FROM system.users", CodeClickHouseSQLInternalDatabase},
+		{"InformationSchema", "SELECT * FROM information_schema.tables", CodeClickHouseSQLInternalDatabase},
 		// A query-level setting takes precedence over the one the caller applies.
-		{"ReadonlySettingOverride", "SELECT * FROM t SETTINGS readonly = 0"},
-		{"ReadonlySettingOverrideAmongOthers", "SELECT * FROM t SETTINGS max_threads = 4, readonly = 0"},
+		{"ReadonlySettingOverride", "SELECT * FROM t SETTINGS readonly = 0", CodeClickHouseSQLReadonlyOverride},
+		{"ReadonlySettingOverrideAmongOthers", "SELECT * FROM t SETTINGS max_threads = 4, readonly = 0", CodeClickHouseSQLReadonlyOverride},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			err := ErrIfStatementIsNotValid(testCase.query)
+
 			assert.Error(t, err)
+			assert.True(t, errors.Asc(err, testCase.expectedCode), "expected code %s, got %v", testCase.expectedCode, err)
 		})
 	}
 }
