@@ -374,6 +374,7 @@ export function K8sBaseList<
 				extraQueryKeyParts={extraQueryKeyParts}
 				getRowKey={getRowKey}
 				getItemKey={getItemKey}
+				detailsQueryKeyPrefix={detailsQueryKeyPrefix}
 			/>
 		),
 		[
@@ -383,6 +384,7 @@ export function K8sBaseList<
 			getItemKey,
 			expandedRowColumns,
 			extraQueryKeyParts,
+			detailsQueryKeyPrefix,
 		],
 	);
 
