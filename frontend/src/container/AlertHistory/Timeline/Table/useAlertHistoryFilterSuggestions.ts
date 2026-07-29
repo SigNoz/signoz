@@ -3,7 +3,6 @@ import {
 	getRuleHistoryFilterValues,
 	useGetRuleHistoryFilterKeys,
 } from 'api/generated/services/rules';
-import { QUERY_BUILDER_KEY_TYPES } from 'constants/antlrQueryConstants';
 import { useAlertHistoryQueryParams } from 'pages/AlertDetails/hooks';
 import { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
 import {
@@ -11,24 +10,6 @@ import {
 	dataTypeToSuggestionType,
 	fieldContextToSuggestionContext,
 } from 'container/AlertHistory/Timeline/Table/utils';
-
-export const ALERT_HISTORY_FALLBACK_FILTER_KEYS: QueryKeyDataSuggestionsProps[] =
-	[
-		{
-			label: 'severity',
-			name: 'severity',
-			type: 'keyword',
-			signal: 'logs' as const,
-			fieldDataType: QUERY_BUILDER_KEY_TYPES.STRING,
-		},
-		{
-			label: 'threshold.name',
-			name: 'threshold.name',
-			type: 'keyword',
-			signal: 'logs' as const,
-			fieldDataType: QUERY_BUILDER_KEY_TYPES.STRING,
-		},
-	];
 
 export interface AlertHistoryFilterSuggestions {
 	hardcodedAttributeKeys: QueryKeyDataSuggestionsProps[];
@@ -64,7 +45,10 @@ export function useAlertHistoryFilterSuggestions(
 	const hardcodedAttributeKeys = useMemo((): QueryKeyDataSuggestionsProps[] => {
 		const keys = filterKeysData?.data?.keys;
 		if (!keys) {
-			return ALERT_HISTORY_FALLBACK_FILTER_KEYS;
+			// by default, when QuerySearch keys fails, we don't render fallback keys
+			// we just return empty to let user write whatever they want with no
+			// key suggestion
+			return [];
 		}
 		return Object.values(keys).flatMap((items) =>
 			items.map((item) => ({

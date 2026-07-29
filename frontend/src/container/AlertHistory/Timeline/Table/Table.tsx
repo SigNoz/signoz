@@ -1,5 +1,5 @@
 import { HTMLAttributes, useCallback, useMemo } from 'react';
-import { Button, Table } from 'antd';
+import { Button, Skeleton, Table } from 'antd';
 import { ChevronLeft, ChevronRight } from '@signozhq/icons';
 import logEvent from 'api/common/logEvent';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
@@ -151,7 +151,12 @@ function TimelineTableContent(): JSX.Element {
 					</div>
 				</div>
 			) : (
-				<div className="timeline-table__filter timeline-table__filter--loading" />
+				<div className="timeline-table__filter timeline-table__filter--loading">
+					<Skeleton.Input
+						className="timeline-table__filter--loading-skeleton"
+						active
+					/>
+				</div>
 			)}
 			<Table
 				rowKey={(row): string => `${row.fingerprint}-${row.value}-${row.unixMilli}`}
