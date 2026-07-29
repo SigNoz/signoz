@@ -116,9 +116,11 @@ export * from './useTableParams';
  *   getItemKey={(row) => row.id}
  *   isRowActive={(row) => row.id === selectedId}
  *   activeRowIndex={selectedIndex}
- *   onRowClick={(row, itemKey) => setSelectedId(itemKey)}
+ *   // The table reports the click + the row's active state; the consumer owns open/close.
+ *   onRowClick={(row, itemKey, { isActive }) =>
+ *     setSelectedId(isActive ? undefined : itemKey)
+ *   }
  *   onRowClickNewTab={(row, itemKey) => openInNewTab(itemKey)}
- *   onRowDeactivate={() => setSelectedId(undefined)}
  *   getRowClassName={(row) => (row.severity === 'error' ? 'row-error' : '')}
  *   getRowStyle={(row) => (row.dimmed ? { opacity: 0.5 } : {})}
  *   renderRowActions={(row) => <Button size="small">Open</Button>}
