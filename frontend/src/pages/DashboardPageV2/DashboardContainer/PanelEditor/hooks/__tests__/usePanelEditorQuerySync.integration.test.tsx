@@ -117,6 +117,49 @@ describe('usePanelEditorQuerySync (real query builder)', () => {
 		},
 	);
 
+	it('a NEW panel stays query-dirty after Stage & Run commits the edited query into the draft', async () => {
+		// Repro of the P0: new panel → edit → Run commits the query into the draft; the
+		// dirty baseline must not drift onto it, or Save re-disables.
+		const editedInUrl: Query = {
+			...initialQueriesMap[DataSource.METRICS],
+			id: 'edited-new-panel',
+			builder: {
+				...initialQueriesMap[DataSource.METRICS].builder,
+				queryData: [
+					{
+						...initialQueriesMap[DataSource.METRICS].builder.queryData[0],
+						legend: 'edited-legend',
+					},
+				],
+			},
+		};
+		const committed = toPerses(editedInUrl, panelType);
+
+		const { result, rerender } = renderHook(
+			({ draftQueries }: { draftQueries: DashboardtypesQueryDTO[] }) =>
+				usePanelEditorQuerySync({
+					draft: makePanel(draftQueries),
+					panelType,
+					setSpec: jest.fn(),
+					refetch: jest.fn(),
+					alwaysSerializeQuery: true,
+					signal: DataSource.METRICS as unknown as TelemetrytypesSignalDTO,
+					// savedQueries omitted — new panel.
+				}),
+			{
+				wrapper: makeUrlWrapper(editedInUrl),
+				initialProps: { draftQueries: [] as DashboardtypesQueryDTO[] },
+			},
+		);
+
+		// The edited query (from the URL) diverges from the seeded default → dirty.
+		await waitFor(() => expect(result.current.isQueryDirty).toBe(true));
+
+		// Stage & Run commits the edited query into the draft → must stay dirty.
+		rerender({ draftQueries: committed });
+		expect(result.current.isQueryDirty).toBe(true);
+	});
+
 	it('an untouched panel with a minimal/older stored query is NOT dirty (drift fix)', async () => {
 		// An older saved query carries only a few fields; the builder re-emits many more
 		// (source, stepInterval, filter, spaceAggregation, …). Comparing raw would read

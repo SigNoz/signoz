@@ -6,11 +6,11 @@ import { Typography } from '@signozhq/ui/typography';
 import { Bookmark, PenLine, Plus, Search, Trash2 } from '@signozhq/icons';
 import cx from 'classnames';
 
+import { useDeleteConfirm } from 'components/DeleteConfirmModal/useDeleteConfirm';
 import { DashboardListEvents } from 'pages/DashboardsListPageV2/constants/events';
 
 import type { SavedView } from '../../types';
 import { type BuiltinView } from '../../utils/views';
-import { useDeleteConfirm } from '../DeleteConfirmModal/useDeleteConfirm';
 import ViewNamePopover from './ViewNamePopover';
 
 import styles from './ViewsRail.module.scss';
