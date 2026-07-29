@@ -81,6 +81,7 @@ export const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 			return;
 		}
 
+		setIsHighlighted(true);
 		const timer = setTimeout(() => setIsHighlighted(false), HIGHLIGHTED_DELAY);
 
 		return (): void => {
