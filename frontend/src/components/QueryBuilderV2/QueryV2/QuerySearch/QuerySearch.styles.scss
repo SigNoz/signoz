@@ -116,8 +116,20 @@ $max-recents-shown: 5;
 				color-mix(in srgb, var(--card) 80%, transparent) 0%,
 				color-mix(in srgb, var(--card) 90%, transparent) 98.68%
 			) !important;
-			backdrop-filter: blur(20px);
 			box-sizing: border-box;
+			// backdrop-filter on pseudo to prevent blur leaking outside container
+			// only noticed on alerts-history for some reason
+			// so contain + ::before is required to avoid this issue
+			contain: paint;
+			&::before {
+				content: '';
+				position: absolute;
+				inset: 0;
+				backdrop-filter: blur(20px);
+				z-index: -1;
+				border-radius: inherit;
+				pointer-events: none;
+			}
 			font-family: 'Space Mono', monospace !important;
 			border: 1px solid var(--l1-border);
 			box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
