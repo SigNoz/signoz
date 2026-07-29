@@ -14,11 +14,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/telemetryaudit"
-	"github.com/SigNoz/signoz/pkg/telemetrylogs"
-	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
+	"github.com/SigNoz/signoz/pkg/telemetryschema/audittelemetryschema"
+	"github.com/SigNoz/signoz/pkg/telemetryschema/logstelemetryschema"
+	"github.com/SigNoz/signoz/pkg/telemetryschema/metertelemetryschema"
+	"github.com/SigNoz/signoz/pkg/telemetryschema/metricstelemetryschema"
+	"github.com/SigNoz/signoz/pkg/telemetryschema/tracestelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
@@ -77,27 +78,6 @@ func escapeForLike(s string) string {
 func NewTelemetryMetaStore(
 	settings factory.ProviderSettings,
 	telemetrystore telemetrystore.TelemetryStore,
-	tracesDBName string,
-	tracesFieldsTblName string,
-	spanAttributesKeysTblName string,
-	indexV3TblName string,
-	metricsDBName string,
-	metricsFieldsTblName string,
-	meterDBName string,
-	meterFieldsTblName string,
-	logsDBName string,
-	logsV2TblName string,
-	logsFieldsTblName string,
-	logAttributeKeysTblName string,
-	logResourceKeysTblName string,
-	auditDBName string,
-	auditLogsTblName string,
-	auditFieldsTblName string,
-	auditAttributeKeysTblName string,
-	auditResourceKeysTblName string,
-	relatedMetadataDBName string,
-	relatedMetadataTblName string,
-	columnEvolutionMetadataTblName string,
 	fl flagger.Flagger,
 ) telemetrytypes.MetadataStore {
 	metadataSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetrymetadata")
@@ -108,32 +88,32 @@ func NewTelemetryMetaStore(
 	t := &telemetryMetaStore{
 		logger:                         metadataSettings.Logger(),
 		telemetrystore:                 telemetrystore,
-		tracesDBName:                   tracesDBName,
-		tracesFieldsTblName:            tracesFieldsTblName,
-		spanAttributesKeysTblName:      spanAttributesKeysTblName,
-		indexV3TblName:                 indexV3TblName,
-		metricsDBName:                  metricsDBName,
-		metricsFieldsTblName:           metricsFieldsTblName,
-		meterDBName:                    meterDBName,
-		meterFieldsTblName:             meterFieldsTblName,
-		logsDBName:                     logsDBName,
-		logsV2TblName:                  logsV2TblName,
-		logsFieldsTblName:              logsFieldsTblName,
-		logAttributeKeysTblName:        logAttributeKeysTblName,
-		logResourceKeysTblName:         logResourceKeysTblName,
-		auditDBName:                    auditDBName,
-		auditLogsTblName:               auditLogsTblName,
-		auditFieldsTblName:             auditFieldsTblName,
-		auditAttributeKeysTblName:      auditAttributeKeysTblName,
-		auditResourceKeysTblName:       auditResourceKeysTblName,
-		relatedMetadataDBName:          relatedMetadataDBName,
-		relatedMetadataTblName:         relatedMetadataTblName,
-		columnEvolutionMetadataTblName: columnEvolutionMetadataTblName,
+		tracesDBName:                   tracestelemetryschema.DBName,
+		tracesFieldsTblName:            tracestelemetryschema.TagAttributesV2TableName,
+		spanAttributesKeysTblName:      tracestelemetryschema.SpanAttributesKeysTblName,
+		indexV3TblName:                 tracestelemetryschema.SpanIndexV3TableName,
+		metricsDBName:                  metricstelemetryschema.DBName,
+		metricsFieldsTblName:           metricstelemetryschema.AttributesMetadataTableName,
+		meterDBName:                    metertelemetryschema.DBName,
+		meterFieldsTblName:             metertelemetryschema.SamplesAgg1dTableName,
+		logsDBName:                     logstelemetryschema.DBName,
+		logsV2TblName:                  logstelemetryschema.LogsV2TableName,
+		logsFieldsTblName:              logstelemetryschema.TagAttributesV2TableName,
+		logAttributeKeysTblName:        logstelemetryschema.LogAttributeKeysTblName,
+		logResourceKeysTblName:         logstelemetryschema.LogResourceKeysTblName,
+		auditDBName:                    audittelemetryschema.DBName,
+		auditLogsTblName:               audittelemetryschema.AuditLogsTableName,
+		auditFieldsTblName:             audittelemetryschema.TagAttributesTableName,
+		auditAttributeKeysTblName:      audittelemetryschema.LogAttributeKeysTblName,
+		auditResourceKeysTblName:       audittelemetryschema.LogResourceKeysTblName,
+		relatedMetadataDBName:          DBName,
+		relatedMetadataTblName:         AttributesMetadataTableName,
+		columnEvolutionMetadataTblName: ColumnEvolutionMetadataTableName,
 		jsonColumnMetadata: map[telemetrytypes.Signal]map[telemetrytypes.FieldContext]telemetrytypes.JSONColumnMetadata{
 			telemetrytypes.SignalLogs: {
 				telemetrytypes.FieldContextBody: telemetrytypes.JSONColumnMetadata{
-					BaseColumn:     telemetrylogs.LogsV2BodyV2Column,
-					PromotedColumn: telemetrylogs.LogsV2BodyPromotedColumn,
+					BaseColumn:     logstelemetryschema.LogsV2BodyV2Column,
+					PromotedColumn: logstelemetryschema.LogsV2BodyPromotedColumn,
 				},
 			},
 		},
@@ -309,8 +289,8 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 	complete := rowCount <= limit
 
 	staticKeys := []string{"isRoot", "isEntryPoint"}
-	staticKeys = append(staticKeys, maps.Keys(telemetrytraces.IntrinsicFields)...)
-	staticKeys = append(staticKeys, maps.Keys(telemetrytraces.CalculatedFields)...)
+	staticKeys = append(staticKeys, maps.Keys(tracestelemetryschema.IntrinsicFields)...)
+	staticKeys = append(staticKeys, maps.Keys(tracestelemetryschema.CalculatedFields)...)
 
 	// Add matching intrinsic and matching calculated fields
 	// These don't count towards the limit
@@ -324,14 +304,14 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 		}
 
 		if found {
-			if field, exists := telemetrytraces.IntrinsicFields[key]; exists {
+			if field, exists := tracestelemetryschema.IntrinsicFields[key]; exists {
 				if _, added := mapOfKeys[field.Name+";"+field.FieldContext.StringValue()+";"+field.FieldDataType.StringValue()]; !added {
 					keys = append(keys, &field)
 				}
 				continue
 			}
 
-			if field, exists := telemetrytraces.CalculatedFields[key]; exists {
+			if field, exists := tracestelemetryschema.CalculatedFields[key]; exists {
 				if _, added := mapOfKeys[field.Name+";"+field.FieldContext.StringValue()+";"+field.FieldDataType.StringValue()]; !added {
 					keys = append(keys, &field)
 				}
@@ -656,7 +636,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, orgID valuer.UUID,
 	complete := rowCount <= limit
 
 	staticKeys := []string{}
-	staticKeys = append(staticKeys, maps.Keys(telemetrylogs.IntrinsicFields)...)
+	staticKeys = append(staticKeys, maps.Keys(logstelemetryschema.IntrinsicFields)...)
 
 	// Add matching intrinsic and matching calculated fields
 	// These don't count towards the limit
@@ -670,7 +650,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, orgID valuer.UUID,
 		}
 
 		if found {
-			if field, exists := telemetrylogs.IntrinsicFields[key]; exists {
+			if field, exists := logstelemetryschema.IntrinsicFields[key]; exists {
 				if _, added := mapOfKeys[field.Name+";"+field.FieldContext.StringValue()+";"+field.FieldDataType.StringValue()]; !added {
 					keys = append(keys, &field)
 				}
@@ -898,7 +878,7 @@ func (t *telemetryMetaStore) getAuditKeys(ctx context.Context, fieldKeySelectors
 	complete := rowCount <= limit
 
 	// Add intrinsic audit fields (same as logs intrinsics: body, severity_text, etc.)
-	staticKeys := maps.Keys(telemetryaudit.IntrinsicFields)
+	staticKeys := maps.Keys(audittelemetryschema.IntrinsicFields)
 	for _, key := range staticKeys {
 		found := false
 		for _, v := range searchTexts {
@@ -909,7 +889,7 @@ func (t *telemetryMetaStore) getAuditKeys(ctx context.Context, fieldKeySelectors
 		}
 
 		if found {
-			if field, exists := telemetryaudit.IntrinsicFields[key]; exists {
+			if field, exists := audittelemetryschema.IntrinsicFields[key]; exists {
 				if _, added := mapOfKeys[field.Name+";"+field.FieldContext.StringValue()+";"+field.FieldDataType.StringValue()]; !added {
 					keys = append(keys, &field)
 				}
@@ -1176,7 +1156,7 @@ func enrichWithIntrinsicMetricKeys(keys map[string][]*telemetrytypes.TelemetryFi
 			continue
 		}
 
-		for name, key := range telemetrymetrics.IntrinsicMetricFieldDefinitions {
+		for name, key := range metricstelemetryschema.IntrinsicMetricFieldDefinitions {
 			if !selectorMatchesIntrinsicField(selector, key) {
 				continue
 			}
@@ -1892,7 +1872,7 @@ func (t *telemetryMetaStore) getIntrinsicMetricFieldValues(ctx context.Context, 
 		instrumentationtypes.CodeNamespace:    "metadata",
 		instrumentationtypes.CodeFunctionName: "getIntrinsicMetricFieldValues",
 	})
-	key, ok := telemetrymetrics.IntrinsicMetricFieldDefinitions[fieldValueSelector.Name]
+	key, ok := metricstelemetryschema.IntrinsicMetricFieldDefinitions[fieldValueSelector.Name]
 	if !ok {
 		return &telemetrytypes.TelemetryFieldValues{}, nil
 	}
@@ -1922,18 +1902,18 @@ func (t *telemetryMetaStore) getIntrinsicMetricFieldValues(ctx context.Context, 
 		tableName  string
 		extraConds []string
 	}{
-		{telemetrymetrics.TimeseriesV41weekTableName, nil},
+		{metricstelemetryschema.TimeseriesV41weekTableName, nil},
 	}
 	if reductionEnabled {
 		sources = append(sources,
 			struct {
 				tableName  string
 				extraConds []string
-			}{telemetrymetrics.TimeseriesV4BufferTableName, []string{"is_reduced = false"}},
+			}{metricstelemetryschema.TimeseriesV4BufferTableName, []string{"is_reduced = false"}},
 			struct {
 				tableName  string
 				extraConds []string
-			}{telemetrymetrics.TimeseriesV4ReducedTableName, nil},
+			}{metricstelemetryschema.TimeseriesV4ReducedTableName, nil},
 		)
 	}
 
@@ -2262,7 +2242,7 @@ func (t *telemetryMetaStore) fetchMetricsTemporalityAndType(ctx context.Context,
 		instrumentationtypes.CodeNamespace:    "metadata",
 		instrumentationtypes.CodeFunctionName: "fetchMetricsTemporalityAndType",
 	})
-	adjustedStartTs, adjustedEndTs, tsTableName, _ := telemetrymetrics.WhichTSTableToUse(queryTimeRangeStartTs, queryTimeRangeEndTs, false, nil)
+	adjustedStartTs, adjustedEndTs, tsTableName, _ := metricstelemetryschema.WhichTSTableToUse(queryTimeRangeStartTs, queryTimeRangeEndTs, false, nil)
 
 	temporalities, types, err := t.fetchTemporalityTypeForTable(ctx, tsTableName, adjustedStartTs, adjustedEndTs, metricNames)
 	if err != nil {
@@ -2271,7 +2251,7 @@ func (t *telemetryMetaStore) fetchMetricsTemporalityAndType(ctx context.Context,
 
 	reduced := make(map[string]bool)
 	if reductionEnabled {
-		bufferTemporalities, bufferTypes, err := t.fetchTemporalityTypeForTable(ctx, telemetrymetrics.TimeseriesV4BufferTableName, adjustedStartTs, adjustedEndTs, metricNames, "is_reduced = false")
+		bufferTemporalities, bufferTypes, err := t.fetchTemporalityTypeForTable(ctx, metricstelemetryschema.TimeseriesV4BufferTableName, adjustedStartTs, adjustedEndTs, metricNames, "is_reduced = false")
 		if err != nil {
 			return nil, nil, nil, err
 		}
@@ -2284,7 +2264,7 @@ func (t *telemetryMetaStore) fetchMetricsTemporalityAndType(ctx context.Context,
 			}
 		}
 
-		reducedTemporalities, reducedTypes, err := t.fetchTemporalityTypeForTable(ctx, telemetrymetrics.TimeseriesV4ReducedTableName, adjustedStartTs, adjustedEndTs, metricNames)
+		reducedTemporalities, reducedTypes, err := t.fetchTemporalityTypeForTable(ctx, metricstelemetryschema.TimeseriesV4ReducedTableName, adjustedStartTs, adjustedEndTs, metricNames)
 		if err != nil {
 			return nil, nil, nil, err
 		}
@@ -2621,13 +2601,13 @@ func (t *telemetryMetaStore) GetFirstSeenFromMetricMetadata(ctx context.Context,
 }
 
 func (t *telemetryMetaStore) FetchLastSeenInfoMulti(ctx context.Context, orgID valuer.UUID, metricNames ...string) (map[string]int64, error) {
-	lastSeenInfo, err := t.fetchLastSeenInfoForTable(ctx, telemetrymetrics.TimeseriesV4TableName, metricNames)
+	lastSeenInfo, err := t.fetchLastSeenInfoForTable(ctx, metricstelemetryschema.TimeseriesV4TableName, metricNames)
 	if err != nil {
 		return nil, err
 	}
 
 	if t.fl.BooleanOrEmpty(ctx, flagger.FeatureEnableMetricsReduction, featuretypes.NewFlaggerEvaluationContext(orgID)) {
-		reducedLastSeen, err := t.fetchLastSeenInfoForTable(ctx, telemetrymetrics.TimeseriesV4ReducedTableName, metricNames)
+		reducedLastSeen, err := t.fetchLastSeenInfoForTable(ctx, metricstelemetryschema.TimeseriesV4ReducedTableName, metricNames)
 		if err != nil {
 			return nil, err
 		}
