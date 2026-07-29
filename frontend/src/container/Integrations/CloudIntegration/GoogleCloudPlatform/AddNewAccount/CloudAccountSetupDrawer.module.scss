@@ -1,0 +1,150 @@
+.setupDrawer {
+	--dialog-header-padding: var(--spacing-10) var(--spacing-12);
+	--dialog-footer-padding: var(--spacing-8) var(--spacing-12);
+
+	// Fill every field with --l2-background (Input/ComboboxSimple default to transparent).
+	--input-background: var(--l2-background);
+	--input-hover-background: var(--l2-background);
+	--input-focus-background: var(--l2-background);
+	--combobox-trigger-background-color: var(--l2-background);
+
+	// Text uses the brighter --l1-foreground, placeholders the duller --l3-foreground.
+	--input-foreground: var(--l1-foreground);
+	--input-placeholder-color: var(--l3-foreground);
+	--combobox-trigger-placeholder-color: var(--l3-foreground);
+
+	// Shared resting border (--l2-border) and text size; focus borders stay per-component.
+	--input-border-color: var(--l2-border);
+	--input-hover-border-color: var(--l2-border);
+	--combobox-trigger-border-color: var(--l2-border);
+	--input-font-size: var(--periscope-font-size-base);
+	--combobox-trigger-font-size: var(--periscope-font-size-base);
+	--combobox-trigger-value-font-size: var(--periscope-font-size-base);
+
+	// Bounded flex column so the header/footer stay put and only the body
+	// scrolls when content overflows.
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+
+	[data-slot='drawer-header'],
+	[data-slot='drawer-footer'] {
+		flex-shrink: 0;
+	}
+
+	// The drawer body renders inside [data-slot='drawer-description'] — this is
+	// the only region allowed to scroll.
+	[data-slot='drawer-description'] {
+		display: flex;
+		flex: 1 1 auto;
+		flex-direction: column;
+		gap: var(--spacing-10);
+		min-height: 0;
+		padding: var(--spacing-10) var(--spacing-12);
+		overflow-y: auto;
+	}
+
+	[data-slot='select-content'] {
+		width: var(--radix-select-trigger-width);
+	}
+
+	[data-slot='combobox-content'] {
+		z-index: 5;
+		background: var(--l1-background);
+		border: 1px solid var(--l2-border);
+		border-radius: var(--radius-2);
+	}
+
+	// Selected region value: bright, like every other field's text.
+	[data-slot='combobox-value'] {
+		color: var(--l1-foreground);
+	}
+
+	// Empty trigger (.regionEmpty, set from the RHF value): dull the placeholder text.
+	.regionEmpty [data-slot='combobox-value'] {
+		color: var(--l3-foreground);
+	}
+}
+
+.title {
+	h3 {
+		margin: 0;
+		font-size: var(--periscope-font-size-medium);
+		font-weight: var(--font-weight-semibold);
+	}
+}
+
+.footerContainer {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+	width: 100%;
+}
+
+.footer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
+	padding: 0;
+}
+
+.drawerSection {
+	composes: drawerSection from './shared.module.scss';
+}
+
+.mono {
+	composes: mono from './shared.module.scss';
+}
+
+.fullWidth {
+	width: 100%;
+}
+
+.fieldError {
+	composes: fieldError from './shared.module.scss';
+}
+
+.projectIdsSelect {
+	:global(.ant-select-selector) {
+		min-height: 36px;
+		background: var(--l2-background);
+		border: 1px solid var(--l2-border) !important;
+	}
+
+	&:hover :global(.ant-select-selector),
+	&:global(.ant-select-focused) :global(.ant-select-selector) {
+		border-color: var(--l2-border);
+		box-shadow: none;
+	}
+
+	// antd defaults to 14px; pin to 13px to line up with the Input/Combobox fields.
+	:global(.ant-select-selection-placeholder),
+	:global(.ant-select-selection-search-input),
+	:global(.ant-select-selection-item) {
+		font-size: var(--periscope-font-size-base);
+	}
+
+	:global(.ant-select-selection-placeholder) {
+		color: var(--l3-foreground);
+	}
+
+	:global(.ant-select-selection-search-input) {
+		color: var(--l1-foreground);
+	}
+
+	:global(.ant-select-selection-item) {
+		color: var(--l1-foreground);
+		background: var(--l2-background);
+		border: 1px solid var(--l2-border);
+		border-radius: var(--radius-2);
+	}
+
+	:global(.ant-select-selection-item-remove) {
+		color: var(--l3-foreground);
+
+		&:hover {
+			color: var(--l1-foreground);
+		}
+	}
+}
