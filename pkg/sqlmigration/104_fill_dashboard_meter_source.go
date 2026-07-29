@@ -15,9 +15,8 @@ import (
 	"github.com/uptrace/bun/migrate"
 )
 
-// meterMetricNames are the SigNoz meter metrics: a metrics query aggregating one of
-// these is a meter query. Spans what the frontend authors (log/span count and size,
-// metric datapoint count) plus the backend platform.active meter.
+// meterMetricNames are the SigNoz meter metrics; a metrics query aggregating one is a
+// meter query.
 var meterMetricNames = map[string]bool{
 	"signoz.meter.log.count":              true,
 	"signoz.meter.log.size":               true,
@@ -46,13 +45,9 @@ func (migration *fillDashboardMeterSource) Register(migrations *migrate.Migratio
 	return migrations.Register(migration.Up, migration.Down)
 }
 
-// Up restores the meter source on v2 dashboards mis-migrated by 103. That migration
-// mapped a v1 meter query (dataSource metrics + source "meter") to a plain metrics
-// query and dropped the source, so on clusters where 103 already ran those panels read
-// non-meter data. Every metrics builder query aggregating a meter metric has its source
-// set back to "meter". v1 dashboards are left alone — 103 now carries the source through
-// when it runs. Runs in a single transaction so a mid-run failure leaves every dashboard
-// untouched; a dashboard whose data can't be parsed as v2 is skipped.
+// Up resets the meter source that 103 dropped when converting v1 meter queries to v2:
+// every metrics query aggregating a meter metric is set back to source "meter". One
+// transaction; v1 (unparseable-as-v2) dashboards are skipped.
 func (migration *fillDashboardMeterSource) Up(ctx context.Context, _ *bun.DB) error {
 	return migration.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
 		var orgIDs []string
@@ -141,11 +136,9 @@ func fillMeterSource(spec *dashboardtypes.DashboardSpec) bool {
 	return changed
 }
 
-// setMeterSource sets the meter source when spec holds a metrics builder query
-// aggregating a meter metric. The assertion to QueryBuilderQuery[MetricAggregation] is
-// itself the metrics-signal check — only metrics queries decode to that type — and the
-// already-meter guard keeps repeated runs idempotent. The mutated value is written back
-// through the pointer, since a value inside an interface isn't addressable.
+// setMeterSource sets source "meter" on a metrics query aggregating a meter metric. The
+// type assertion doubles as the metrics-signal check; the already-meter guard keeps it
+// idempotent. Written back through the pointer, as an interface value isn't addressable.
 func setMeterSource(spec *any) bool {
 	query, ok := (*spec).(qb.QueryBuilderQuery[qb.MetricAggregation])
 	if !ok || query.Source == telemetrytypes.SourceMeter {
