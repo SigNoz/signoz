@@ -756,10 +756,15 @@ function QueryBuilderSearchV2(
 
 			let operatorOptions;
 			if (currentFilterItem?.key?.dataType) {
-				operatorOptions = QUERY_BUILDER_OPERATORS_BY_TYPES[
-					currentFilterItem.key
-						.dataType as keyof typeof QUERY_BUILDER_OPERATORS_BY_TYPES
-				].map((operator) => ({
+				// the lookup only covers the four scalars, so an array type
+				// or a `[]string` spelling finds nothing — fall back rather than throw
+				const operatorsForDataType =
+					QUERY_BUILDER_OPERATORS_BY_TYPES[
+						currentFilterItem.key
+							.dataType as keyof typeof QUERY_BUILDER_OPERATORS_BY_TYPES
+					] ?? QUERY_BUILDER_OPERATORS_BY_TYPES.universal;
+
+				operatorOptions = operatorsForDataType.map((operator) => ({
 					label: operator,
 					value: operator,
 				}));
