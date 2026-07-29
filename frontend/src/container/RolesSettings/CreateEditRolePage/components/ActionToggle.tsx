@@ -134,6 +134,7 @@ function ActionToggle({
 							prefixElement={
 								panel.selectorType === 'telemetryBuilder' ? (
 									<TelemetrySelectorWizard
+										resource={resource}
 										testId={selectorTestId}
 										onAdd={(selector): void => {
 											if (!selectedIds.includes(selector)) {

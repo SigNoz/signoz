@@ -1,13 +1,8 @@
-import { useCallback, useMemo, useState } from 'react';
 import { Wand } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
+import { Checkbox } from '@signozhq/ui/checkbox';
 import { DialogWrapper } from '@signozhq/ui/dialog';
 import { Input } from '@signozhq/ui/input';
-import {
-	RadioGroup,
-	RadioGroupItem,
-	RadioGroupLabel,
-} from '@signozhq/ui/radio-group';
 import {
 	Select,
 	SelectContent,
@@ -15,101 +10,48 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@signozhq/ui/select';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 
 import {
+	ANY_RESOURCE_VALUE,
 	QUERY_TYPES,
-	QueryTypeId,
-	ScopeMode,
-} from './TelemetrySelectorWizard.types';
+	SUPPORTED_GRANT_KEY,
+} from './TelemetrySelectorWizard.constants';
+import { isQueryTypeAvailable } from './TelemetrySelectorWizard.utils';
+import useTelemetrySelectorWizard from './useTelemetrySelectorWizard';
+
 import styles from './TelemetrySelectorWizard.module.scss';
+import { AuthZResource } from 'lib/authz/hooks/useAuthZ/types';
 
 interface TelemetrySelectorWizardProps {
 	onAdd: (selector: string) => void;
+	resource: AuthZResource;
 	testId: string;
 }
 
 function TelemetrySelectorWizard({
 	onAdd,
+	resource,
 	testId,
 }: TelemetrySelectorWizardProps): JSX.Element {
-	const [open, setOpen] = useState(false);
-	const [scopeMode, setScopeMode] = useState<ScopeMode>('all');
-	const [queryType, setQueryType] = useState<QueryTypeId>('builder_query');
-	const [keyValue, setKeyValue] = useState('');
-
-	const selectedQueryType = useMemo(
-		() => QUERY_TYPES.find((qt) => qt.id === queryType),
-		[queryType],
-	);
-
-	const canAdd = useMemo(() => {
-		if (scopeMode === 'all') {
-			return true;
-		}
-		return keyValue.trim().length > 0;
-	}, [scopeMode, keyValue]);
-
-	const handleScopeModeChange = useCallback((value: string): void => {
-		setScopeMode(value as ScopeMode);
-		if (value === 'all') {
-			setKeyValue('');
-		}
-	}, []);
-
-	const handleQueryTypeChange = useCallback((value: string | string[]): void => {
-		const selected = Array.isArray(value) ? value[0] : value;
-		setQueryType(selected as QueryTypeId);
-		if (!QUERY_TYPES.find((qt) => qt.id === selected)?.supportsKeyScoping) {
-			setScopeMode('all');
-			setKeyValue('');
-		}
-	}, []);
-
-	const handleKeyValueChange = useCallback(
-		(e: React.ChangeEvent<HTMLInputElement>): void => {
-			setKeyValue(e.target.value);
-		},
-		[],
-	);
-
-	const handleAdd = useCallback((): void => {
-		let selector: string;
-
-		if (scopeMode === 'all') {
-			selector = `${queryType}/*`;
-		} else {
-			selector = `${queryType}/${keyValue.trim()}`;
-		}
-
-		onAdd(selector);
-		setKeyValue('');
-		setOpen(false);
-	}, [scopeMode, queryType, keyValue, onAdd]);
-
-	const handleOpenChange = useCallback((nextOpen: boolean): void => {
-		setOpen(nextOpen);
-		if (!nextOpen) {
-			setScopeMode('all');
-			setQueryType('builder_query');
-			setKeyValue('');
-		}
-	}, []);
-
-	const supportsKeyScoping = selectedQueryType?.supportsKeyScoping ?? false;
-
-	const valueHint = useMemo(() => {
-		if (scopeMode === 'byKey') {
-			return 'Eg: signoz.workspace.key.id/123';
-		}
-		if (supportsKeyScoping) {
-			return "Scope is set to All, so this grant covers every query of this type. Switch to 'By key' to restrict it to one key.";
-		}
-		return `${
-			selectedQueryType?.label ?? 'This query type'
-		} cannot be key-scoped, so this grant always covers every query of this type.`;
-	}, [scopeMode, supportsKeyScoping, selectedQueryType]);
+	const {
+		open,
+		queryType,
+		selectedQueryType,
+		value,
+		selector,
+		isAnyResource,
+		supportsKeyScoping,
+		validation,
+		canAdd,
+		handleOpenChange,
+		handleQueryTypeChange,
+		handleValueChange,
+		handleAnyResourceChange,
+		handleSelectorChange,
+		handleAdd,
+		handleInputKeyDown,
+	} = useTelemetrySelectorWizard({ onAdd });
 
 	const trigger = (
 		<Button
@@ -146,8 +88,8 @@ function TelemetrySelectorWizard({
 		<DialogWrapper
 			open={open}
 			onOpenChange={handleOpenChange}
-			title="Add Telemetry Selector"
-			width="narrow"
+			title="Selector Wizard"
+			width="wide"
 			testId={`telemetry-wizard-dialog-${testId}`}
 			trigger={trigger}
 			footer={footer}
@@ -163,85 +105,78 @@ function TelemetrySelectorWizard({
 							<SelectValue>{selectedQueryType?.label}</SelectValue>
 						</SelectTrigger>
 						<SelectContent withPortal={false} className={styles.selectContent}>
-							{QUERY_TYPES.map((qt) => (
-								<SelectItem key={qt.id} value={qt.id}>
-									<div className={styles.selectItemContent}>
-										<span>{qt.label}</span>
-										<Typography size="small">{qt.description}</Typography>
-									</div>
+							{QUERY_TYPES.map((queryTypeOption) => (
+								<SelectItem
+									key={queryTypeOption.id}
+									value={queryTypeOption.id}
+									disabled={!isQueryTypeAvailable(queryTypeOption, resource)}
+									testId={`wizard-query-type-option-${queryTypeOption.id}-${testId}`}
+								>
+									{queryTypeOption.label}
 								</SelectItem>
 							))}
 						</SelectContent>
 					</Select>
-					{selectedQueryType && (
-						<Typography size="small" className={styles.queryTypeHint}>
-							{selectedQueryType.description}
-						</Typography>
-					)}
 				</div>
 
 				<div className={styles.wizardField}>
 					<Typography as="label" weight="medium">
-						Scope
+						Key
 					</Typography>
-					<RadioGroup
-						value={scopeMode}
-						onChange={handleScopeModeChange}
-						className={styles.wizardRadioGroup}
-						data-testid={`wizard-scope-radio-${testId}`}
-					>
-						<div className={styles.wizardRadioItem}>
-							<RadioGroupItem value="all" id="scope-all" />
-							<RadioGroupLabel htmlFor="scope-all">All (*)</RadioGroupLabel>
-						</div>
-						{supportsKeyScoping ? (
-							<div className={styles.wizardRadioItem}>
-								<RadioGroupItem value="byKey" id="scope-by-key" />
-								<RadioGroupLabel htmlFor="scope-by-key">By key</RadioGroupLabel>
-							</div>
-						) : (
-							<TooltipSimple
-								title="This query type does not support key scoping"
-								withPortal={false}
-								side="left"
-								arrow
-							>
-								<div className={styles.wizardRadioItem}>
-									<RadioGroupItem value="byKey" id="scope-by-key" disabled />
-									<RadioGroupLabel htmlFor="scope-by-key" data-disabled>
-										By key
-									</RadioGroupLabel>
-								</div>
-							</TooltipSimple>
-						)}
-					</RadioGroup>
+					<Input
+						value={SUPPORTED_GRANT_KEY}
+						readOnly
+						disabled
+						testId={`wizard-key-input-${testId}`}
+					/>
 				</div>
 
 				<div className={styles.wizardField}>
 					<Typography as="label" weight="medium">
 						Value
 					</Typography>
-					{scopeMode === 'all' ? (
-						<Input value="*" disabled data-testid={`wizard-value-input-${testId}`} />
-					) : (
+					<div className={styles.wizardValueRow}>
 						<Input
-							placeholder="Enter <key>/<value>"
-							value={keyValue}
-							onChange={handleKeyValueChange}
-							onKeyDown={(e): void => {
-								if (e.key === 'Enter' && canAdd) {
-									handleAdd();
-								}
-							}}
-							data-testid={`wizard-value-input-${testId}`}
+							className={styles.wizardValueInput}
+							placeholder={
+								supportsKeyScoping
+									? 'Value or leave empty to allow every query'
+									: ANY_RESOURCE_VALUE
+							}
+							value={value}
+							disabled={!supportsKeyScoping}
+							onChange={handleValueChange}
+							onKeyDown={handleInputKeyDown}
+							testId={`wizard-value-input-${testId}`}
 						/>
-					)}
+						<Checkbox
+							id={`wizard-any-resource-${testId}`}
+							value={isAnyResource}
+							disabled={!supportsKeyScoping}
+							onChange={(checked): void => handleAnyResourceChange(checked === true)}
+							testId={`wizard-any-resource-checkbox-${testId}`}
+						>
+							Any resource
+						</Checkbox>
+					</div>
+				</div>
+
+				<div className={styles.wizardField}>
+					<Typography as="label" weight="medium">
+						Selector
+					</Typography>
+					<Input
+						value={selector}
+						onChange={handleSelectorChange}
+						onKeyDown={handleInputKeyDown}
+						testId={`wizard-selector-input-${testId}`}
+					/>
 					<Typography.Text
 						size="small"
-						color="muted"
-						testId={`wizard-value-hint-${testId}`}
+						color={validation.isError ? 'danger' : 'muted'}
+						testId={`wizard-selector-hint-${testId}`}
 					>
-						{valueHint}
+						{validation.message}
 					</Typography.Text>
 				</div>
 			</div>

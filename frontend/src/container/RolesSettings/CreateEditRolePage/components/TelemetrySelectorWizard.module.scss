@@ -35,30 +35,18 @@
 	gap: var(--spacing-2);
 }
 
-.wizardRadioGroup {
+.wizardValueRow {
 	display: flex;
-	flex-direction: column;
+	align-items: center;
 	gap: var(--spacing-3);
 }
 
-.wizardRadioItem {
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-2);
+.wizardValueInput {
+	flex: 1;
+	min-width: 0;
 }
 
 .selectContent {
 	z-index: 10;
 	background-color: var(--l3-background);
-}
-
-.selectItemContent {
-	display: flex;
-	flex-direction: column;
-	gap: var(--spacing-1);
-	align-items: flex-start;
-}
-
-.queryTypeHint {
-	color: var(--muted-foreground);
 }

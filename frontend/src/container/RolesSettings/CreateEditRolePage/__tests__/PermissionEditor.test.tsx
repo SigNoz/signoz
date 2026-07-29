@@ -1,17 +1,8 @@
-import { Route, Switch } from 'react-router-dom';
-import ROUTES from 'constants/routes';
 import { server } from 'mocks-server/server';
-import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
+import { screen, userEvent, waitFor, within } from 'tests/test-utils';
 import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 
-import CreateEditRolePage from '../CreateEditRolePage';
-
-async function expandAllCards(): Promise<void> {
-	const user = userEvent.setup();
-	const expandButton = await screen.findByTestId('expand-all-button');
-	await user.click(expandButton);
-}
+import { expandAllCards, renderCreateRolePage } from './testUtils';
 
 beforeEach(() => {
 	server.use(setupAuthzAdmin());
@@ -21,35 +12,16 @@ afterEach(() => {
 	server.resetHandlers();
 });
 
-async function renderPage(): Promise<ReturnType<typeof render>> {
-	const result = render(
-		<TooltipProvider>
-			<Switch>
-				<Route path={ROUTES.ROLES_SETTINGS} exact>
-					<div data-testid="roles-list-redirect" />
-				</Route>
-				<Route path={ROUTES.ROLE_CREATE}>
-					<CreateEditRolePage />
-				</Route>
-			</Switch>
-		</TooltipProvider>,
-		undefined,
-		{ initialRoute: '/settings/roles/new' },
-	);
-	await screen.findByTestId('permission-editor');
-	return result;
-}
-
 describe('PermissionEditor', () => {
 	describe('mode toggle', () => {
 		it('renders permission editor with testId', async () => {
-			await renderPage();
+			await renderCreateRolePage();
 
 			expect(screen.getByTestId('permission-editor')).toBeInTheDocument();
 		});
 
 		it('defaults to interactive mode', async () => {
-			await renderPage();
+			await renderCreateRolePage();
 
 			const interactiveRadio = screen.getByTestId(
 				'permission-editor-mode-interactive',
@@ -59,7 +31,7 @@ describe('PermissionEditor', () => {
 
 		it('switches to JSON mode when clicked', async () => {
 			const user = userEvent.setup();
-			await renderPage();
+			await renderCreateRolePage();
 
 			const jsonRadio = screen.getByTestId('permission-editor-mode-json');
 			await user.click(jsonRadio);
@@ -70,7 +42,7 @@ describe('PermissionEditor', () => {
 
 		it('switches back to interactive mode', async () => {
 			const user = userEvent.setup();
-			await renderPage();
+			await renderCreateRolePage();
 
 			const jsonRadio = screen.getByTestId('permission-editor-mode-json');
 			await user.click(jsonRadio);
@@ -87,7 +59,7 @@ describe('PermissionEditor', () => {
 
 	describe('resource cards', () => {
 		it('renders all resource cards', async () => {
-			await renderPage();
+			await renderCreateRolePage();
 
 			expect(
 				screen.getByTestId('resource-card-factor-api-key'),
@@ -99,7 +71,7 @@ describe('PermissionEditor', () => {
 		});
 
 		it('resource cards are collapsed by default', async () => {
-			await renderPage();
+			await renderCreateRolePage();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
 			const header = within(apiKeyCard).getByTestId(
@@ -111,7 +83,7 @@ describe('PermissionEditor', () => {
 
 		it('expands resource card when header clicked', async () => {
 			const user = userEvent.setup();
-			await renderPage();
+			await renderCreateRolePage();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
 			const header = within(apiKeyCard).getByTestId(
@@ -125,7 +97,7 @@ describe('PermissionEditor', () => {
 
 		it('collapses expanded resource card when header clicked again', async () => {
 			const user = userEvent.setup();
-			await renderPage();
+			await renderCreateRolePage();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
 			const header = within(apiKeyCard).getByTestId(
@@ -139,7 +111,7 @@ describe('PermissionEditor', () => {
 		});
 
 		it('shows granted count in resource card header', async () => {
-			await renderPage();
+			await renderCreateRolePage();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
 			await expect(
@@ -150,7 +122,7 @@ describe('PermissionEditor', () => {
 
 	describe('action toggles', () => {
 		it('renders action toggles for each available action', async () => {
-			await renderPage();
+			await renderCreateRolePage();
 			await expandAllCards();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
@@ -169,7 +141,7 @@ describe('PermissionEditor', () => {
 		});
 
 		it('defaults all actions to None scope', async () => {
-			await renderPage();
+			await renderCreateRolePage();
 			await expandAllCards();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
@@ -187,7 +159,7 @@ describe('PermissionEditor', () => {
 
 		it('changes scope to All when clicked', async () => {
 			const user = userEvent.setup();
-			await renderPage();
+			await renderCreateRolePage();
 			await expandAllCards();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
@@ -208,7 +180,7 @@ describe('PermissionEditor', () => {
 
 		it('updates granted count when scope changed', async () => {
 			const user = userEvent.setup();
-			await renderPage();
+			await renderCreateRolePage();
 			await expandAllCards();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
@@ -227,7 +199,7 @@ describe('PermissionEditor', () => {
 	describe('Only Selected scope', () => {
 		it('shows item input selector when Only Selected is chosen', async () => {
 			const user = userEvent.setup();
-			await renderPage();
+			await renderCreateRolePage();
 			await expandAllCards();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
@@ -246,7 +218,7 @@ describe('PermissionEditor', () => {
 
 		it('adds item when typed and Enter pressed', async () => {
 			const user = userEvent.setup();
-			await renderPage();
+			await renderCreateRolePage();
 			await expandAllCards();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
@@ -266,7 +238,7 @@ describe('PermissionEditor', () => {
 
 		it('adds item when Add button clicked', async () => {
 			const user = userEvent.setup();
-			await renderPage();
+			await renderCreateRolePage();
 			await expandAllCards();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
@@ -291,7 +263,7 @@ describe('PermissionEditor', () => {
 
 		it('adds multiple items separated by comma', async () => {
 			const user = userEvent.setup();
-			await renderPage();
+			await renderCreateRolePage();
 			await expandAllCards();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
@@ -313,7 +285,7 @@ describe('PermissionEditor', () => {
 
 		it('adds multiple items separated by space', async () => {
 			const user = userEvent.setup();
-			await renderPage();
+			await renderCreateRolePage();
 			await expandAllCards();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
@@ -335,7 +307,7 @@ describe('PermissionEditor', () => {
 
 		it('does not add duplicate items', async () => {
 			const user = userEvent.setup();
-			await renderPage();
+			await renderCreateRolePage();
 			await expandAllCards();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
@@ -357,7 +329,7 @@ describe('PermissionEditor', () => {
 
 		it('removes item when X clicked', async () => {
 			const user = userEvent.setup();
-			await renderPage();
+			await renderCreateRolePage();
 			await expandAllCards();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
@@ -383,7 +355,7 @@ describe('PermissionEditor', () => {
 
 		it('names each badge close button after the item it removes', async () => {
 			const user = userEvent.setup();
-			await renderPage();
+			await renderCreateRolePage();
 			await expandAllCards();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
@@ -412,7 +384,7 @@ describe('PermissionEditor', () => {
 
 		it('exposes the full item value as a title so truncated badges stay readable', async () => {
 			const user = userEvent.setup();
-			await renderPage();
+			await renderCreateRolePage();
 			await expandAllCards();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
@@ -434,7 +406,7 @@ describe('PermissionEditor', () => {
 
 		it('moves focus to the previous badge when closed with the keyboard', async () => {
 			const user = userEvent.setup();
-			await renderPage();
+			await renderCreateRolePage();
 			await expandAllCards();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
@@ -465,7 +437,7 @@ describe('PermissionEditor', () => {
 
 		it('does not steal focus when a badge is closed with the mouse', async () => {
 			const user = userEvent.setup();
-			await renderPage();
+			await renderCreateRolePage();
 			await expandAllCards();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
@@ -498,7 +470,7 @@ describe('PermissionEditor', () => {
 
 		it('shows Add button disabled when input is empty', async () => {
 			const user = userEvent.setup();
-			await renderPage();
+			await renderCreateRolePage();
 			await expandAllCards();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
@@ -518,7 +490,7 @@ describe('PermissionEditor', () => {
 	describe('scope change confirmation dialog', () => {
 		it('shows confirm dialog when leaving Only Selected with items', async () => {
 			const user = userEvent.setup();
-			await renderPage();
+			await renderCreateRolePage();
 			await expandAllCards();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
@@ -542,7 +514,7 @@ describe('PermissionEditor', () => {
 
 		it('clears items when confirmed', async () => {
 			const user = userEvent.setup();
-			await renderPage();
+			await renderCreateRolePage();
 			await expandAllCards();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
@@ -571,7 +543,7 @@ describe('PermissionEditor', () => {
 
 		it('keeps items when cancelled', async () => {
 			const user = userEvent.setup();
-			await renderPage();
+			await renderCreateRolePage();
 			await expandAllCards();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
@@ -602,7 +574,7 @@ describe('PermissionEditor', () => {
 
 		it('does not show dialog when leaving Only Selected with no items', async () => {
 			const user = userEvent.setup();
-			await renderPage();
+			await renderCreateRolePage();
 			await expandAllCards();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
@@ -621,7 +593,7 @@ describe('PermissionEditor', () => {
 
 	describe('verbs without Only Selected option', () => {
 		it('does not show Only Selected for list verb', async () => {
-			await renderPage();
+			await renderCreateRolePage();
 			await expandAllCards();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
@@ -643,7 +615,7 @@ describe('PermissionEditor', () => {
 
 	describe('collapse/expand all resources', () => {
 		it('shows expand/collapse toggle group', async () => {
-			await renderPage();
+			await renderCreateRolePage();
 
 			expect(screen.getByTestId('toggle-all-group')).toBeInTheDocument();
 			expect(screen.getByTestId('expand-all-button')).toBeInTheDocument();
@@ -651,7 +623,7 @@ describe('PermissionEditor', () => {
 		});
 
 		it('expands all cards when expand button clicked', async () => {
-			await renderPage();
+			await renderCreateRolePage();
 			await expandAllCards();
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
@@ -665,7 +637,7 @@ describe('PermissionEditor', () => {
 	describe('resource card error states', () => {
 		it('shows error border on collapsed card with validation error', async () => {
 			const user = userEvent.setup();
-			await renderPage();
+			await renderCreateRolePage();
 
 			const nameInput = screen.getByTestId('role-name-input');
 			await user.type(nameInput, 'valid-role');
@@ -695,7 +667,7 @@ describe('PermissionEditor', () => {
 
 		it('hides error border when card is expanded', async () => {
 			const user = userEvent.setup();
-			await renderPage();
+			await renderCreateRolePage();
 
 			const nameInput = screen.getByTestId('role-name-input');
 			await user.type(nameInput, 'valid-role');
@@ -732,7 +704,7 @@ describe('PermissionEditor', () => {
 
 		it('clears validation error when permission is changed', async () => {
 			const user = userEvent.setup();
-			await renderPage();
+			await renderCreateRolePage();
 
 			const nameInput = screen.getByTestId('role-name-input');
 			await user.type(nameInput, 'valid-role');
@@ -770,200 +742,6 @@ describe('PermissionEditor', () => {
 			await waitFor(() => {
 				expect(screen.queryByTestId('save-error-banner')).not.toBeInTheDocument();
 			});
-		});
-	});
-
-	describe('TelemetrySelectorWizard', () => {
-		async function selectLogsOnlySelected(
-			user: ReturnType<typeof userEvent.setup>,
-		): Promise<void> {
-			await renderPage();
-			await expandAllCards();
-
-			const logsCard = screen.getByTestId('resource-card-logs');
-			const readToggle = within(logsCard).getByTestId('action-toggle-logs-read');
-			await user.click(await within(readToggle).findByText('Only selected'));
-		}
-
-		async function openLogsWizard(
-			user: ReturnType<typeof userEvent.setup>,
-		): Promise<void> {
-			await selectLogsOnlySelected(user);
-
-			await user.click(screen.getByTestId('telemetry-wizard-trigger-logs-read'));
-			await screen.findByTestId('telemetry-wizard-dialog-logs-read');
-		}
-
-		it('shows wizard button for telemetry resources', async () => {
-			const user = userEvent.setup();
-			await selectLogsOnlySelected(user);
-
-			expect(
-				screen.getByTestId('telemetry-wizard-trigger-logs-read'),
-			).toBeInTheDocument();
-		});
-
-		it('does not show wizard button for non-telemetry resources', async () => {
-			await renderPage();
-			await expandAllCards();
-
-			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
-			const readToggle = within(apiKeyCard).getByTestId(
-				'action-toggle-factor-api-key-read',
-			);
-
-			const user = userEvent.setup();
-			await user.click(await within(readToggle).findByText('Only selected'));
-
-			expect(
-				screen.queryByTestId('telemetry-wizard-trigger-logs-read'),
-			).not.toBeInTheDocument();
-		});
-
-		it('opens wizard dialog when trigger clicked', async () => {
-			const user = userEvent.setup();
-			await selectLogsOnlySelected(user);
-
-			await user.click(screen.getByTestId('telemetry-wizard-trigger-logs-read'));
-
-			await expect(
-				screen.findByTestId('telemetry-wizard-dialog-logs-read'),
-			).resolves.toBeInTheDocument();
-		});
-
-		it('adds selector with wildcard when scope is all', async () => {
-			const user = userEvent.setup();
-			await openLogsWizard(user);
-
-			await user.click(screen.getByTestId('wizard-add-btn-logs-read'));
-
-			await expect(
-				screen.findByText('builder_query/*'),
-			).resolves.toBeInTheDocument();
-		});
-
-		it('changes query type and adds appropriate selector', async () => {
-			const user = userEvent.setup();
-			await openLogsWizard(user);
-
-			await user.click(screen.getByTestId('wizard-query-type-select-logs-read'));
-			await user.click(await screen.findByText('PromQL'));
-
-			await user.click(screen.getByTestId('wizard-add-btn-logs-read'));
-
-			await expect(screen.findByText('promql/*')).resolves.toBeInTheDocument();
-		});
-
-		it('allows key scoping for supported query types', async () => {
-			const user = userEvent.setup();
-			await openLogsWizard(user);
-
-			const byKeyRadio = screen.getByLabelText('By key');
-			expect(byKeyRadio).not.toBeDisabled();
-
-			await user.click(byKeyRadio);
-
-			const valueInput = screen.getByTestId('wizard-value-input-logs-read');
-			expect(valueInput).not.toBeDisabled();
-
-			await user.type(valueInput, 'signoz.workspace.key.id/123');
-			await user.click(screen.getByTestId('wizard-add-btn-logs-read'));
-
-			await expect(
-				screen.findByText('builder_query/signoz.workspace.key.id/123'),
-			).resolves.toBeInTheDocument();
-		});
-
-		it('disables key scoping for unsupported query types', async () => {
-			const user = userEvent.setup();
-			await openLogsWizard(user);
-
-			await user.click(screen.getByTestId('wizard-query-type-select-logs-read'));
-			await user.click(await screen.findByText('PromQL'));
-
-			const byKeyRadio = screen.getByLabelText('By key');
-			expect(byKeyRadio).toBeDisabled();
-		});
-
-		it('closes dialog after adding selector', async () => {
-			const user = userEvent.setup();
-			await openLogsWizard(user);
-
-			await user.click(screen.getByTestId('wizard-add-btn-logs-read'));
-
-			await waitFor(() => {
-				expect(
-					screen.queryByTestId('telemetry-wizard-dialog-logs-read'),
-				).not.toBeInTheDocument();
-			});
-		});
-
-		it('does not add duplicate selectors', async () => {
-			const user = userEvent.setup();
-			await openLogsWizard(user);
-			await user.click(screen.getByTestId('wizard-add-btn-logs-read'));
-
-			await user.click(screen.getByTestId('telemetry-wizard-trigger-logs-read'));
-			await screen.findByTestId('telemetry-wizard-dialog-logs-read');
-			await user.click(screen.getByTestId('wizard-add-btn-logs-read'));
-
-			const badges = screen.getAllByText('builder_query/*');
-			expect(badges).toHaveLength(1);
-		});
-
-		it('resets wizard state when dialog is closed and reopened', async () => {
-			const user = userEvent.setup();
-			await openLogsWizard(user);
-
-			await user.click(screen.getByTestId('wizard-query-type-select-logs-read'));
-			await user.click(await screen.findByText('PromQL'));
-
-			await user.click(screen.getByRole('button', { name: /cancel/i }));
-
-			await waitFor(() => {
-				expect(
-					screen.queryByTestId('telemetry-wizard-dialog-logs-read'),
-				).not.toBeInTheDocument();
-			});
-
-			await user.click(screen.getByTestId('telemetry-wizard-trigger-logs-read'));
-			const selectTrigger = await screen.findByTestId(
-				'wizard-query-type-select-logs-read',
-			);
-
-			expect(within(selectTrigger).getByText('Builder Query')).toBeInTheDocument();
-		});
-
-		it('says the grant is unscoped when a key-scopable query type is set to All', async () => {
-			const user = userEvent.setup();
-			await openLogsWizard(user);
-
-			expect(screen.getByTestId('wizard-value-hint-logs-read')).toHaveTextContent(
-				"Scope is set to All, so this grant covers every query of this type. Switch to 'By key' to restrict it to one key.",
-			);
-		});
-
-		it('names the query type when that type cannot be key-scoped', async () => {
-			const user = userEvent.setup();
-			await openLogsWizard(user);
-
-			await user.click(screen.getByTestId('wizard-query-type-select-logs-read'));
-			await user.click(await screen.findByText('PromQL'));
-
-			expect(screen.getByTestId('wizard-value-hint-logs-read')).toHaveTextContent(
-				'PromQL cannot be key-scoped, so this grant always covers every query of this type.',
-			);
-		});
-
-		it('shows the key/value example once scoping by key', async () => {
-			const user = userEvent.setup();
-			await openLogsWizard(user);
-
-			await user.click(screen.getByLabelText('By key'));
-
-			expect(screen.getByTestId('wizard-value-hint-logs-read')).toHaveTextContent(
-				'Eg: signoz.workspace.key.id/123',
-			);
 		});
 	});
 });
