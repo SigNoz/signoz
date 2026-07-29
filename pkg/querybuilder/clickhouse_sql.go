@@ -10,6 +10,7 @@ import (
 )
 
 var (
+	CodeClickHouseSQLParserPanic        = errors.MustNewCode("clickhouse_sql_parser_panic")
 	CodeClickHouseSQLUnparseable        = errors.MustNewCode("clickhouse_sql_unparseable")
 	CodeClickHouseSQLNotSingleStatement = errors.MustNewCode("clickhouse_sql_not_single_statement")
 	CodeClickHouseSQLNotSelect          = errors.MustNewCode("clickhouse_sql_not_select")
@@ -29,7 +30,7 @@ func ErrIfStatementIsNotValid(query string) (err error) {
 	defer func() {
 		// The parser has a history of panicking on malformed input rather than returning an error.
 		if recovered := recover(); recovered != nil {
-			err = errors.NewInvalidInputf(CodeClickHouseSQLUnparseable, "invalid ClickHouse SQL (recovered): %v", recovered)
+			err = errors.NewInvalidInputf(CodeClickHouseSQLParserPanic, "invalid ClickHouse SQL (recovered): %v", recovered)
 		}
 	}()
 

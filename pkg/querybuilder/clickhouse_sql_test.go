@@ -49,9 +49,8 @@ func TestErrIfStatementIsNotValid_Pass(t *testing.T) {
 
 func TestErrIfStatementIsNotValid_Fail(t *testing.T) {
 	testCases := []struct {
-		name  string
-		query string
-		// The reason it is refused, so each rule keeps its own filterable code.
+		name         string
+		query        string
 		expectedCode errors.Code
 	}{
 		// Not a single statement, or not a statement at all.
