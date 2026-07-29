@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"net/url"
@@ -15,9 +14,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
+	"github.com/prometheus/common/model"
 )
 
 func New(conf *alertmanagertypes.GoogleChatReceiverConfig, t *template.Template, l *slog.Logger, templater alertmanagertypes.Templater) (*Notifier, error) {
@@ -50,29 +51,26 @@ func (n *Notifier) Notify(ctx context.Context, alerts ...*types.Alert) (bool, er
 	if err != nil {
 		return false, err
 	}
-	text := c.title
-	if c.body != "" {
-		text = fmt.Sprintf("%s\n%s", c.title, c.body)
-	}
-	// Google Chat rejects a message with empty text and no cards. An empty
-	// render means a misconfigured title/text template, so fail loudly and
-	// non-retryably instead of sending a placeholder.
-	if text == "" {
+	// Empty title AND body means a misconfigured template, so fail loudly and
+	// non-retryably instead of sending a card with no content.
+	if c.title == "" && c.body == "" {
 		return false, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "google chat message rendered empty; check the channel title/text templates")
 	}
 
-	msg := Message{Text: text}
+	status := statusLine(alerts)
+	buttons := linkButtons(alerts[0])
+	msg := buildMessage(c.title, status, c.body, buttons)
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(msg); err != nil {
 		return false, err
 	}
-	// Truncate to Google Chat's byte limit. We measure the serialized buffer and
-	// drop that many text bytes; each removed text byte drops >=1 serialized byte,
-	// so a single pass always lands the payload within the limit.
+	// Serialized-size guard: the card body is the large field, so measure the
+	// serialized buffer and trim that many body bytes. Each removed body byte
+	// drops >=1 serialized byte, so a single pass lands within the limit.
 	if buf.Len() > maxMessageBytes {
 		over := buf.Len() - maxMessageBytes
-		target := max(len(text)-over, 0)
-		msg.Text = truncateToByteLimit(text, target)
+		body := truncateToByteLimit(c.body, max(len(c.body)-over, 0))
+		msg = buildMessage(c.title, status, body, buttons)
 		buf.Reset()
 		if err := json.NewEncoder(&buf).Encode(msg); err != nil {
 			return false, err
@@ -104,8 +102,8 @@ func (n *Notifier) Notify(ctx context.Context, alerts ...*types.Alert) (bool, er
 }
 
 // prepareContent expands the title and body templates. Custom templates (from
-// alert annotations) override the channel defaults; result.IsDefaultBody tells
-// whether the body came from the default template.
+// alert annotations) override the channel defaults. The title is used as a plain
+// summary + card header; the body is converted to HTML for the card text widget.
 func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) (content, error) {
 	customTitle, customBody := alertmanagertemplate.ExtractTemplatesFromAnnotations(alerts)
 	result, err := n.templater.Expand(ctx, alertmanagertypes.ExpandRequest{
@@ -120,28 +118,60 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) (c
 
 	title := result.Title
 	body := strings.Join(result.Body, "\n\n")
-
-	// Default templates are already authored in Google Chat dialect. Custom
-	// templates are standard markdown, so convert them. The templater only
-	// reports IsDefaultBody, so the title is gated on the body's default-ness.
-	if !result.IsDefaultBody {
-		if body != "" {
-			if body, err = markdownrenderer.RenderGoogleChatMarkdown(body); err != nil {
-				return content{}, err
-			}
-		}
-		if title != "" {
-			if title, err = markdownrenderer.RenderGoogleChatMarkdown(title); err != nil {
-				return content{}, err
-			}
+	// The body goes into a card textParagraph, which renders HTML. Default and
+	// custom templates are both standard markdown, so convert uniformly.
+	if body != "" {
+		if body, err = markdownrenderer.RenderHTML(body); err != nil {
+			return content{}, err
 		}
 	}
 
-	return content{
-		title:         title,
-		body:          body,
-		isDefaultBody: result.IsDefaultBody,
-	}, nil
+	return content{title: title, body: body}, nil
+}
+
+// statusLine returns a colored firing/resolved banner for the card body.
+func statusLine(alerts []*types.Alert) string {
+	if types.Alerts(alerts...).Status() == model.AlertResolved {
+		return `<font color="#33a853"><b>🟢 RESOLVED</b></font>`
+	}
+	return `<font color="#d32f2f"><b>🔴 FIRING</b></font>`
+}
+
+// linkButtons builds openLink buttons from the rule/link data the ruler attaches
+// to every alert. Empty links are skipped.
+func linkButtons(alert *types.Alert) []button {
+	var buttons []button
+	add := func(text, u string) {
+		if u != "" {
+			buttons = append(buttons, button{Text: text, OnClick: onClick{OpenLink: openLink{URL: u}}})
+		}
+	}
+	add("Open in SigNoz", string(alert.Labels[ruletypes.LabelRuleSource]))
+	add("View Related Logs", string(alert.Annotations[ruletypes.AnnotationRelatedLogs]))
+	add("View Related Traces", string(alert.Annotations[ruletypes.AnnotationRelatedTraces]))
+	return buttons
+}
+
+// buildMessage assembles the text+card payload: a plain text summary plus a card
+// with a status banner, the body, and link buttons.
+func buildMessage(title, statusHTML, bodyHTML string, buttons []button) Message {
+	widgets := []widget{{TextParagraph: &textParagraph{Text: statusHTML}}}
+	if bodyHTML != "" {
+		widgets = append(widgets, widget{TextParagraph: &textParagraph{Text: bodyHTML}})
+	}
+	if len(buttons) > 0 {
+		widgets = append(widgets, widget{ButtonList: &buttonList{Buttons: buttons}})
+	}
+	return Message{
+		Text: title,
+		CardsV2: []cardWithID{{
+			CardID: "signoz-alert",
+			Card: card{
+				Header:   &cardHeader{Title: title},
+				Sections: []cardSection{{Widgets: widgets}},
+			},
+		}},
+	}
 }
 
 // truncateToByteLimit trims s to at most maxBytes bytes on a rune boundary,

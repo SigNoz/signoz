@@ -6,7 +6,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer/blockkit"
-	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer/googlechat"
 	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer/mrkdwn"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
@@ -33,11 +32,6 @@ var (
 			return goldmark.New(goldmark.WithExtensions(mrkdwn.Extender))
 		},
 	}
-	googlechatPool = sync.Pool{
-		New: func() any {
-			return goldmark.New(goldmark.WithExtensions(googlechat.Extender))
-		},
-	}
 )
 
 // RenderHTML converts markdown to HTML.
@@ -57,13 +51,6 @@ func RenderSlackMrkdwn(markdown string) (string, error) {
 	md := mrkdwnPool.Get().(goldmark.Markdown)
 	defer mrkdwnPool.Put(md)
 	return render(md, markdown, "Slack mrkdwn")
-}
-
-// RenderGoogleChatMarkdown converts markdown to Google Chat's webhook text format.
-func RenderGoogleChatMarkdown(markdown string) (string, error) {
-	md := googlechatPool.Get().(goldmark.Markdown)
-	defer googlechatPool.Put(md)
-	return render(md, markdown, "Google Chat")
 }
 
 func render(md goldmark.Markdown, markdown string, format string) (string, error) {

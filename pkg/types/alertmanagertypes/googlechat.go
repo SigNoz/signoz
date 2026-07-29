@@ -25,9 +25,9 @@ var DefaultGoogleChatReceiverConfig = GoogleChatReceiverConfig{
 	},
 	Title: `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}`,
 	Text: `{{ range .Alerts -}}
-*Alert:* {{ .Labels.alertname }}{{ if .Labels.severity }} ({{ .Labels.severity }}){{ end }}{{ if .Annotations.summary }}
-*Summary:* {{ .Annotations.summary }}{{ end }}{{ if .Annotations.description }}
-*Description:* {{ .Annotations.description }}{{ end }}
+**Alert:** {{ .Labels.alertname }}{{ if .Labels.severity }} ({{ .Labels.severity }}){{ end }}{{ if .Annotations.summary }}
+**Summary:** {{ .Annotations.summary }}{{ end }}{{ if .Annotations.description }}
+**Description:** {{ .Annotations.description }}{{ end }}
 {{ end }}`,
 }
 
