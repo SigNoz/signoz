@@ -13,10 +13,6 @@ import {
 	waitFor,
 } from 'tests/test-utils';
 
-// Monaco can't run in jsdom (it needs web workers), so swap it for a plain
-// textarea. TestTab reads its span JSON from React state (default
-// SAMPLE_SPAN_JSON), not from the editor DOM, so the stand-in doesn't affect
-// the run — it just lets the tab mount.
 jest.mock('@monaco-editor/react', () => ({
 	__esModule: true,
 	default: ({
@@ -35,7 +31,6 @@ jest.mock('@monaco-editor/react', () => ({
 	),
 }));
 
-// The header + editing controls are Admin-gated via useAuthZ; grant all.
 jest.mock('lib/authz/hooks/useAuthZ/useAuthZ');
 const mockedUseAuthZ = useAuthZ as jest.MockedFunction<typeof useAuthZ>;
 
@@ -49,9 +44,6 @@ import {
 	TEST_ENDPOINT,
 } from '../../__tests__/fixtures';
 
-// A transformed span as the backend would return it: every attribute from the
-// submitted sample span is unchanged except `gen_ai.content.prompt`, which the
-// mapper populated from a source key — so the diff marks it "added".
 const RESULT_SPAN = {
 	attributes: {
 		'my_company.llm.input': 'What is quantum computing?',
@@ -67,8 +59,6 @@ const RESULT_SPAN = {
 	},
 };
 
-// A span the user could have typed over the sample: valid, non-empty, and
-// distinguishable from SAMPLE_SPAN_JSON so persistence is observable.
 const EDITED_SPAN_JSON = `{
   "attributes": {
     "gen_ai.request.model": "claude-opus-5"
@@ -107,15 +97,12 @@ describe('TestTab — sample-span flow', () => {
 
 		render(<LLMObservabilityAttributeMapping />);
 
-		// Switch to the Test tab; before running, only the placeholder shows.
 		await user.click(screen.getByRole('tab', { name: 'Test' }));
 		const runBtn = await screen.findByTestId('run-test-button');
 		expect(screen.getByTestId('test-results-placeholder')).toBeInTheDocument();
 
 		await user.click(runBtn);
 
-		// The mocked response renders as a result card, and the mapper-populated
-		// attribute surfaces as an "added" ("populated") row.
 		await expect(
 			screen.findByTestId('test-results'),
 		).resolves.toBeInTheDocument();
@@ -156,19 +143,16 @@ describe('TestTab — sample-span flow', () => {
 		await user.click(screen.getByRole('tab', { name: 'Test' }));
 		await screen.findByTestId('run-test-button');
 
-		// With nothing stored, the editor opens on the built-in sample span.
 		expect(screen.getByTestId('monaco')).toHaveValue(SAMPLE_SPAN_JSON);
 
 		fireEvent.change(screen.getByTestId('monaco'), {
 			target: { value: EDITED_SPAN_JSON },
 		});
 
-		// Writes are debounced, so poll until the edit lands in local storage.
 		await waitFor(() => expect(get(SPAN_INPUT_KEY)).toBe(EDITED_SPAN_JSON), {
 			timeout: 2000,
 		});
 
-		// Remounting reads the stored span back instead of the sample.
 		unmount();
 		render(<LLMObservabilityAttributeMapping />);
 
@@ -186,13 +170,11 @@ describe('TestTab — sample-span flow', () => {
 		await user.click(screen.getByRole('tab', { name: 'Test' }));
 		const resetBtn = await screen.findByTestId('reset-template-button');
 
-		// A stored span means the input differs from the template, so reset is live.
 		expect(screen.getByTestId('monaco')).toHaveValue(EDITED_SPAN_JSON);
 		expect(resetBtn).toBeEnabled();
 
 		await user.click(resetBtn);
 
-		// Back to the template, storage dropped, and the action disables itself.
 		expect(screen.getByTestId('monaco')).toHaveValue(SAMPLE_SPAN_JSON);
 		expect(get(SPAN_INPUT_KEY)).toBeFalsy();
 		expect(resetBtn).toBeDisabled();

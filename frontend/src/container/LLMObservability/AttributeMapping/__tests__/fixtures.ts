@@ -73,8 +73,6 @@ export function makeMappersResponse(mappers: Mapper[]): {
 	return { status: 'ok', data: { items: mappers } };
 }
 
-// The test endpoint echoes back the transformed spans under `data.spans`
-// (see useTestSpanMapper: `response.data?.spans`).
 export function makeTestResponse(spans: TestSpan[]): {
 	status: string;
 	data: { spans: TestSpan[] };
