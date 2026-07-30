@@ -129,8 +129,19 @@ export function useVariableSelection(
 		if (names.length === 0 || !dashboardId) {
 			return;
 		}
-		setVariableValues(dashboardId, { ...selectionRef.current, ...fills });
-		enqueueDescendantsBatch(names);
+		// A fill can arrive already satisfied: a selector reconciles against the options
+		// on its first render, before the seed has committed, and the seed then resolves
+		// to the same value. Refresh only what actually moved, so a settled load ends
+		// without a write or a dependent refetch.
+		const current = selectionRef.current;
+		const changed = names.filter(
+			(name) => !current[name] || !areSelectionsEqual(fills[name], current[name]),
+		);
+		if (changed.length === 0) {
+			return;
+		}
+		setVariableValues(dashboardId, { ...current, ...fills });
+		enqueueDescendantsBatch(changed);
 	}, [dashboardId, setVariableValues, enqueueDescendantsBatch]);
 
 	const autoSelect = useCallback(

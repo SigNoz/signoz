@@ -131,9 +131,51 @@ describe('useSeedVariableSelection', () => {
 
 		renderHook(() => useSeedVariableSelection(dash));
 
+		// Custom options need no request, so ALL is materialized here rather than left as
+		// a flag for the post-fetch reconcile to expand.
 		expect(seededValue('d1', 'env')).toStrictEqual({
-			value: null,
+			value: ['a', 'b'],
 			allSelected: true,
+		});
+	});
+
+	it('materializes ALL for a custom variable so nothing has to reconcile it later', () => {
+		const dash = dashboard('d1', [
+			model({
+				name: 'env',
+				type: 'CUSTOM',
+				customValue: 'a,b,c',
+				multiSelect: true,
+				showAllOption: true,
+			}),
+		]);
+
+		renderHook(() => useSeedVariableSelection(dash));
+
+		expect(seededValue('d1', 'env')).toStrictEqual({
+			value: ['a', 'b', 'c'],
+			allSelected: true,
+		});
+	});
+
+	it('drops values a custom variable no longer offers, at seed time', () => {
+		useDashboardStore.getState().setVariableValues('d1', {
+			env: { value: ['a', 'gone'], allSelected: false },
+		});
+		const dash = dashboard('d1', [
+			model({
+				name: 'env',
+				type: 'CUSTOM',
+				customValue: 'a,b',
+				multiSelect: true,
+			}),
+		]);
+
+		renderHook(() => useSeedVariableSelection(dash));
+
+		expect(seededValue('d1', 'env')).toStrictEqual({
+			value: ['a'],
+			allSelected: false,
 		});
 	});
 

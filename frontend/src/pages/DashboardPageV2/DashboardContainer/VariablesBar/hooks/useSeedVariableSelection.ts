@@ -6,8 +6,10 @@ import { dtoToFormModel } from '../../DashboardSettings/Variables/variableAdapte
 import type { VariableFormModel } from '../../DashboardSettings/Variables/variableFormModel';
 import { selectVariableValues } from '../../store/slices/variableSelectionSlice';
 import { useDashboardStore } from '../../store/useDashboardStore';
+import { knownVariableOptions } from '../utils/knownVariableOptions';
 import {
 	areSelectionsEqual,
+	reconcileWithOptions,
 	resolveDefaultSelection,
 } from '../utils/resolveVariableSelection';
 import { hasUsableValue } from '../utils/selectionUtils';
@@ -41,6 +43,23 @@ function isSameSelection(
 			(name) => !!current[name] && areSelectionsEqual(seeded[name], current[name]),
 		)
 	);
+}
+
+/**
+ * A seeded value taken as far as it can go: for a variable whose options need no
+ * request, resolve against them now — ALL becomes the concrete array, values the list
+ * no longer offers are dropped. Left alone otherwise; the post-fetch reconcile does it
+ * once the options arrive.
+ */
+function resolveAgainstKnownOptions(
+	value: VariableSelection,
+	model: VariableFormModel,
+): VariableSelection {
+	const options = knownVariableOptions(model);
+	if (options.length === 0) {
+		return value;
+	}
+	return reconcileWithOptions(model, value, options) ?? value;
 }
 
 // The `__ALL__` sentinel only means "ALL" for variables that support it — a
@@ -95,19 +114,23 @@ export function useSeedVariableSelection(
 		variables.forEach((variable) => {
 			const urlValue = urlValues?.[variable.name];
 			const stored = selection[variable.name];
+			const seed = (value: VariableSelection): void => {
+				seeded[variable.name] = resolveAgainstKnownOptions(value, variable);
+			};
 			if (urlValue !== undefined) {
 				const fromUrl = fromUrlValue(urlValue, variable);
 				// When the URL carries only the ALL sentinel but the store already holds
 				// the materialized full-option array, reuse it — avoids the re-fetch +
 				// re-materialize round-trip (and its dependent-refetch cascade) on load.
-				seeded[variable.name] =
+				seed(
 					fromUrl.allSelected && stored?.allSelected && Array.isArray(stored.value)
 						? stored
-						: fromUrl;
+						: fromUrl,
+				);
 			} else if (stored && isStoredSelectionSet(stored, variable)) {
-				seeded[variable.name] = stored;
+				seed(stored);
 			} else {
-				seeded[variable.name] = resolveDefaultSelection(variable);
+				seed(resolveDefaultSelection(variable));
 			}
 		});
 		// This runs again whenever the spec's variable array changes identity — a refetch

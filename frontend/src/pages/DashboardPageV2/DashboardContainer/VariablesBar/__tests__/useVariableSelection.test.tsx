@@ -92,6 +92,42 @@ describe('useVariableSelection — setSelection', () => {
 		expect(svcCycleId()).toBe(afterFirstPick);
 	});
 
+	it('ignores an auto-fill that the store already satisfies', async () => {
+		const { result } = renderHook(() => useVariableSelection(dashboard));
+		act(() => {
+			result.current.setSelection('env', { value: ['a'], allSelected: false });
+		});
+		const before = svcCycleId();
+
+		// What a selector's first-render reconcile produces before the seed commits: a
+		// value the store then resolves to on its own.
+		await act(async () => {
+			result.current.autoSelect('env', { value: ['a'], allSelected: false });
+			await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+		});
+
+		expect(svcCycleId()).toBe(before);
+	});
+
+	it('still applies an auto-fill that changes the value', async () => {
+		const { result } = renderHook(() => useVariableSelection(dashboard));
+		act(() => {
+			result.current.setSelection('env', { value: ['a'], allSelected: false });
+		});
+		const before = svcCycleId();
+
+		await act(async () => {
+			result.current.autoSelect('env', { value: ['a', 'b'], allSelected: false });
+			await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+		});
+
+		expect(useDashboardStore.getState().variableValues.d1?.env).toStrictEqual({
+			value: ['a', 'b'],
+			allSelected: false,
+		});
+		expect(svcCycleId()).toBe(before + 1);
+	});
+
 	it('still cascades a genuine change', () => {
 		const { result } = renderHook(() => useVariableSelection(dashboard));
 
