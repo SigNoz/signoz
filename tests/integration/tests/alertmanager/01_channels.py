@@ -1,4 +1,3 @@
-import json
 import time
 import uuid
 from collections.abc import Callable
@@ -10,26 +9,15 @@ from sqlalchemy import text
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.logger import setup_logger
 from fixtures.maildev import (
     MAILDEV_INCOMING_PASS,
     SMTP_TEST_FROM,
     delete_all_mails,
     verify_email_received,
 )
-from fixtures.notification_channel import EMAIL_TRANSPORT_KEYS, send_test_notification
-
-logger = setup_logger(__name__)
+from fixtures.notification_channel import assert_email_channel_payload_clean, send_test_notification
 
 TIMEOUT = 10
-
-
-def channels_url(signoz: types.SigNoz, path: str = "") -> str:
-    return signoz.self.host_configs["8080"].get(f"/api/v1/channels{path}")
-
-
-def auth_headers(token: str) -> dict:
-    return {"Authorization": f"Bearer {token}"}
 
 
 CHANNEL_TYPE_CASES = [
@@ -98,37 +86,37 @@ def test_channel_crud(  # pylint: disable=too-many-arguments,too-many-positional
     name = f"crud-{channel_type}-{uuid.uuid4()}"
 
     config = {"name": name, **make_config(notification_channel)}
-    response = requests.post(channels_url(signoz), json=config, headers=auth_headers(token), timeout=TIMEOUT)
+    response = requests.post(signoz.self.host_configs["8080"].get("/api/v1/channels"), json=config, headers={"Authorization": f"Bearer {token}"}, timeout=TIMEOUT)
     assert response.status_code == HTTPStatus.CREATED, response.text
     created = response.json()["data"]
     channel_id = created["id"]
     assert created["name"] == name
     assert created["type"] == channel_type
 
-    response = requests.get(channels_url(signoz), headers=auth_headers(token), timeout=TIMEOUT)
+    response = requests.get(signoz.self.host_configs["8080"].get("/api/v1/channels"), headers={"Authorization": f"Bearer {token}"}, timeout=TIMEOUT)
     assert response.status_code == HTTPStatus.OK, response.text
     listed = {channel["name"]: channel for channel in response.json()["data"]}
     assert name in listed
     assert listed[name]["type"] == channel_type
 
-    response = requests.get(channels_url(signoz, f"/{channel_id}"), headers=auth_headers(token), timeout=TIMEOUT)
+    response = requests.get(signoz.self.host_configs["8080"].get(f"/api/v1/channels/{channel_id}"), headers={"Authorization": f"Bearer {token}"}, timeout=TIMEOUT)
     assert response.status_code == HTTPStatus.OK, response.text
     assert created_marker in response.json()["data"]["data"]
 
     updated_config = {"name": name, **make_updated_config(notification_channel)}
-    response = requests.put(channels_url(signoz, f"/{channel_id}"), json=updated_config, headers=auth_headers(token), timeout=TIMEOUT)
+    response = requests.put(signoz.self.host_configs["8080"].get(f"/api/v1/channels/{channel_id}"), json=updated_config, headers={"Authorization": f"Bearer {token}"}, timeout=TIMEOUT)
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
-    response = requests.get(channels_url(signoz, f"/{channel_id}"), headers=auth_headers(token), timeout=TIMEOUT)
+    response = requests.get(signoz.self.host_configs["8080"].get(f"/api/v1/channels/{channel_id}"), headers={"Authorization": f"Bearer {token}"}, timeout=TIMEOUT)
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]["data"]
     assert updated_marker in data
     assert created_marker not in data
 
-    response = requests.delete(channels_url(signoz, f"/{channel_id}"), headers=auth_headers(token), timeout=TIMEOUT)
+    response = requests.delete(signoz.self.host_configs["8080"].get(f"/api/v1/channels/{channel_id}"), headers={"Authorization": f"Bearer {token}"}, timeout=TIMEOUT)
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
-    response = requests.get(channels_url(signoz, f"/{channel_id}"), headers=auth_headers(token), timeout=TIMEOUT)
+    response = requests.get(signoz.self.host_configs["8080"].get(f"/api/v1/channels/{channel_id}"), headers={"Authorization": f"Bearer {token}"}, timeout=TIMEOUT)
     assert response.status_code == HTTPStatus.NOT_FOUND, response.text
 
 
@@ -144,9 +132,9 @@ def test_create_rejects_duplicate_name(
     create_notification_channel({"name": name, "email_configs": [{"to": "first@integration.test"}]})
 
     response = requests.post(
-        channels_url(signoz),
+        signoz.self.host_configs["8080"].get("/api/v1/channels"),
         json={"name": name, "email_configs": [{"to": "second@integration.test"}]},
-        headers=auth_headers(token),
+        headers={"Authorization": f"Bearer {token}"},
         timeout=TIMEOUT,
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
@@ -161,9 +149,9 @@ def test_create_rejects_channel_without_configs(
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     response = requests.post(
-        channels_url(signoz),
+        signoz.self.host_configs["8080"].get("/api/v1/channels"),
         json={"name": f"empty-{uuid.uuid4()}"},
-        headers=auth_headers(token),
+        headers={"Authorization": f"Bearer {token}"},
         timeout=TIMEOUT,
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
@@ -181,9 +169,9 @@ def test_update_rejects_name_change(
     channel_id = create_notification_channel({"name": name, "email_configs": [{"to": "rename@integration.test"}]})
 
     response = requests.put(
-        channels_url(signoz, f"/{channel_id}"),
+        signoz.self.host_configs["8080"].get(f"/api/v1/channels/{channel_id}"),
         json={"name": f"{name}-renamed", "email_configs": [{"to": "rename@integration.test"}]},
-        headers=auth_headers(token),
+        headers={"Authorization": f"Bearer {token}"},
         timeout=TIMEOUT,
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
@@ -191,19 +179,8 @@ def test_update_rejects_name_change(
 
 
 def test_channels_require_authentication(signoz: types.SigNoz) -> None:
-    response = requests.get(channels_url(signoz), timeout=TIMEOUT)
+    response = requests.get(signoz.self.host_configs["8080"].get("/api/v1/channels"), timeout=TIMEOUT)
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.text
-
-
-def assert_email_channel_payload_clean(payload: str) -> None:
-    receiver = json.loads(payload)
-    for email_config in receiver["email_configs"]:
-        transport_keys = set(email_config.keys()) & set(EMAIL_TRANSPORT_KEYS)
-        transport_keys -= {"smarthost"} if email_config.get("smarthost", "") == "" else set()
-        assert not transport_keys, f"email channel payload carries transport keys {transport_keys}: {payload}"
-
-    assert MAILDEV_INCOMING_PASS not in payload
-    assert SMTP_TEST_FROM not in payload
 
 
 def test_email_channel_never_stores_or_serves_smtp_settings(
@@ -230,12 +207,12 @@ def test_email_channel_never_stores_or_serves_smtp_settings(
         ],
     }
 
-    response = requests.post(channels_url(signoz), json=hostile_config, headers=auth_headers(token), timeout=TIMEOUT)
+    response = requests.post(signoz.self.host_configs["8080"].get("/api/v1/channels"), json=hostile_config, headers={"Authorization": f"Bearer {token}"}, timeout=TIMEOUT)
     assert response.status_code == HTTPStatus.CREATED, response.text
     created = response.json()["data"]
     assert_email_channel_payload_clean(created["data"])
 
-    response = requests.get(channels_url(signoz, f"/{created['id']}"), headers=auth_headers(token), timeout=TIMEOUT)
+    response = requests.get(signoz.self.host_configs["8080"].get(f"/api/v1/channels/{created['id']}"), headers={"Authorization": f"Bearer {token}"}, timeout=TIMEOUT)
     assert response.status_code == HTTPStatus.OK, response.text
     served = response.json()["data"]["data"]
     assert_email_channel_payload_clean(served)
@@ -244,7 +221,7 @@ def test_email_channel_never_stores_or_serves_smtp_settings(
     assert "smtp.attacker.test" not in served
     assert "tenant-posted-secret" not in served
 
-    response = requests.get(channels_url(signoz), headers=auth_headers(token), timeout=TIMEOUT)
+    response = requests.get(signoz.self.host_configs["8080"].get("/api/v1/channels"), headers={"Authorization": f"Bearer {token}"}, timeout=TIMEOUT)
     assert response.status_code == HTTPStatus.OK, response.text
     assert "tenant-posted-secret" not in response.text
     assert MAILDEV_INCOMING_PASS not in response.text

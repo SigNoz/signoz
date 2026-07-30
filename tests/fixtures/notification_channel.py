@@ -1,4 +1,5 @@
 # pylint: disable=line-too-long
+import json
 import time
 from collections.abc import Callable
 from http import HTTPStatus
@@ -13,6 +14,7 @@ from wiremock.testing.testcontainer import WireMockContainer
 from fixtures import reuse, types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.logger import setup_logger
+from fixtures.maildev import MAILDEV_INCOMING_PASS, SMTP_TEST_FROM
 
 logger = setup_logger(__name__)
 
@@ -31,6 +33,18 @@ EMAIL_TRANSPORT_KEYS = [
     "tls_config",
     "force_implicit_tls",
 ]
+
+
+def assert_email_channel_payload_clean(payload: str) -> None:
+    receiver = json.loads(payload)
+    for email_config in receiver["email_configs"]:
+        transport_keys = set(email_config.keys()) & set(EMAIL_TRANSPORT_KEYS)
+        transport_keys -= {"smarthost"} if email_config.get("smarthost", "") == "" else set()
+        assert not transport_keys, f"email channel payload carries transport keys {transport_keys}: {payload}"
+
+    assert MAILDEV_INCOMING_PASS not in payload
+    assert SMTP_TEST_FROM not in payload
+
 
 """
 Default notification channel configs shared across alertmanager tests.
