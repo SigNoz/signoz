@@ -6,7 +6,9 @@ Data shape (generic OTel gen_ai semantic conventions):
   - an LLM span carrying gen_ai.request.model (str) and numeric usage attributes
     (gen_ai.usage.input_tokens / output_tokens / cost) plus gen_ai.user.id
 Each test tags its spans with a unique service.name and filters on it, so tests do
-not interfere with each other's data.
+not interfere with each other's data. Builders shared across the suite (query window,
+ai_trace, ai_trace_mixed_spans) live in fixtures/querierai.py; one-off shapes are
+built right above the test that uses them.
 """
 
 import json
@@ -25,90 +27,13 @@ from fixtures.querier import (
     TelemetryFieldKey,
     make_query_request,
 )
+from fixtures.querierai import (
+    ai_trace,
+    ai_trace_mixed_spans,
+    query_window,
+    root_span,
+)
 from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCode
-
-
-def _ai_trace(
-    *,
-    now: datetime,
-    service: str,
-    user: str,
-    in_tokens: int | None,
-    out_tokens: int,
-    cost: float,
-    model: str = "gpt-4o-mini",
-    llm_duration_s: float = 1.0,
-    error: bool = False,
-    environment: str = "production",
-) -> list[Traces]:
-    """A minimal AI trace: root span + one LLM span with gen_ai attributes.
-    in_tokens=None omits the input-tokens attribute entirely (not zero)."""
-    trace_id = TraceIdGenerator.trace_id()
-    root_id = TraceIdGenerator.span_id()
-    llm_id = TraceIdGenerator.span_id()
-    resources = {"service.name": service, "deployment.environment": environment}
-
-    root = Traces(
-        timestamp=now - timedelta(seconds=5),
-        duration=timedelta(seconds=llm_duration_s + 0.1),
-        trace_id=trace_id,
-        span_id=root_id,
-        parent_span_id="",
-        name="POST /api/chat",
-        kind=TracesKind.SPAN_KIND_SERVER,
-        status_code=TracesStatusCode.STATUS_CODE_OK,
-        resources=resources,
-        attributes={"http.request.method": "POST"},
-    )
-    attributes = {
-        "gen_ai.request.model": model,
-        "gen_ai.system": "openai",
-        "gen_ai.user.id": user,
-        # numeric values land in attributes_number
-        "gen_ai.usage.output_tokens": out_tokens,
-        "_signoz.gen_ai.total_cost": cost,
-    }
-    if in_tokens is not None:
-        attributes["gen_ai.usage.input_tokens"] = in_tokens
-    llm = Traces(
-        timestamp=now - timedelta(seconds=4),
-        duration=timedelta(seconds=llm_duration_s),
-        trace_id=trace_id,
-        span_id=llm_id,
-        parent_span_id=root_id,
-        name="chat gpt-4o-mini",
-        kind=TracesKind.SPAN_KIND_CLIENT,
-        status_code=(TracesStatusCode.STATUS_CODE_ERROR if error else TracesStatusCode.STATUS_CODE_OK),
-        resources=resources,
-        attributes=attributes,
-    )
-    return [root, llm]
-
-
-def _non_ai_trace(*, now: datetime, service: str) -> list[Traces]:
-    """A plain HTTP trace with no gen_ai attributes; must be excluded by the AI gate."""
-    trace_id = TraceIdGenerator.trace_id()
-    span_id = TraceIdGenerator.span_id()
-    return [
-        Traces(
-            timestamp=now - timedelta(seconds=4),
-            duration=timedelta(seconds=1),
-            trace_id=trace_id,
-            span_id=span_id,
-            parent_span_id="",
-            name="GET /health",
-            kind=TracesKind.SPAN_KIND_SERVER,
-            status_code=TracesStatusCode.STATUS_CODE_OK,
-            resources={"service.name": service},
-            attributes={"http.request.method": "GET"},
-        )
-    ]
-
-
-def _window_ms(now: datetime) -> tuple[int, int]:
-    start_ms = int((now - timedelta(minutes=10)).timestamp() * 1000)
-    end_ms = int((now + timedelta(minutes=1)).timestamp() * 1000)
-    return start_ms, end_ms
 
 
 def test_ai_list_excludes_non_ai(
@@ -125,14 +50,20 @@ def test_ai_list_excludes_non_ai(
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-list"
 
-    ai = _ai_trace(now=now, service=service, user="alice", in_tokens=100, out_tokens=20, cost=0.5)
-    non_ai = _non_ai_trace(now=now, service=service)
+    ai = ai_trace(now=now, service=service, user="alice", in_tokens=100, out_tokens=20, cost=0.5)
+    # a lone root span, i.e. a trace with no gen_ai spans at all
+    non_ai = root_span(
+        now=now,
+        trace_id=TraceIdGenerator.trace_id(),
+        span_id=TraceIdGenerator.span_id(),
+        resources={"service.name": service},
+        duration_s=1,
+    )
     ai_trace_id = ai[0].trace_id
-    non_ai_trace_id = non_ai[0].trace_id
-    insert_traces(ai + non_ai)
+    insert_traces([*ai, non_ai])
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _window_ms(now)
+    start_ms, end_ms = query_window(now)
 
     query = BuilderQuery(
         signal="traces",
@@ -147,74 +78,7 @@ def test_ai_list_excludes_non_ai(
 
     body = json.dumps(response.json())
     assert ai_trace_id in body, f"expected AI trace {ai_trace_id} in list response"
-    assert non_ai_trace_id not in body, f"non-AI trace {non_ai_trace_id} should be excluded by the gate"
-
-
-def _ai_trace_mixed_spans(*, now: datetime, service: str, user: str) -> list[Traces]:
-    """
-    Root + one LLM span + one tool span + one agent span. The gate matches all three
-    child spans, but only the LLM span carries gen_ai.request.model.
-    """
-    trace_id = TraceIdGenerator.trace_id()
-    root_id = TraceIdGenerator.span_id()
-    resources = {"service.name": service, "deployment.environment": "production"}
-
-    def _span(name, kind, attributes, offset_s):
-        return Traces(
-            timestamp=now - timedelta(seconds=offset_s),
-            duration=timedelta(seconds=0.5),
-            trace_id=trace_id,
-            span_id=TraceIdGenerator.span_id(),
-            parent_span_id=root_id,
-            name=name,
-            kind=kind,
-            status_code=TracesStatusCode.STATUS_CODE_OK,
-            resources=resources,
-            attributes=attributes,
-        )
-
-    root = Traces(
-        timestamp=now - timedelta(seconds=5),
-        duration=timedelta(seconds=4),
-        trace_id=trace_id,
-        span_id=root_id,
-        parent_span_id="",
-        name="POST /api/chat",
-        kind=TracesKind.SPAN_KIND_SERVER,
-        status_code=TracesStatusCode.STATUS_CODE_OK,
-        resources=resources,
-        attributes={"http.request.method": "POST"},
-    )
-    llm = _span(
-        "chat gpt-4o-mini",
-        TracesKind.SPAN_KIND_CLIENT,
-        {
-            "gen_ai.request.model": "gpt-4o-mini",
-            "gen_ai.system": "openai",
-            "gen_ai.user.id": user,
-            "gen_ai.usage.input_tokens": 100,
-            "gen_ai.usage.output_tokens": 20,
-        },
-        4,
-    )
-    tool = _span(
-        "execute_tool",
-        TracesKind.SPAN_KIND_INTERNAL,
-        {
-            "gen_ai.tool.name": "get_weather",
-            "gen_ai.tool.type": "function",
-        },
-        3,
-    )
-    agent = _span(
-        "agent.step",
-        TracesKind.SPAN_KIND_INTERNAL,
-        {
-            "gen_ai.agent.name": "chat-agent",
-        },
-        2,
-    )
-    return [root, llm, tool, agent]
+    assert non_ai.trace_id not in body, f"non-AI trace {non_ai.trace_id} should be excluded by the gate"
 
 
 def test_ai_list_having_aggregate_filter(
@@ -234,14 +98,14 @@ def test_ai_list_having_aggregate_filter(
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-having"
 
-    small = _ai_trace(now=now, service=service, user="alice", in_tokens=10, out_tokens=20, cost=0.1)
-    large = _ai_trace(now=now, service=service, user="bob", in_tokens=10, out_tokens=500, cost=0.2)
+    small = ai_trace(now=now, service=service, user="alice", in_tokens=10, out_tokens=20, cost=0.1)
+    large = ai_trace(now=now, service=service, user="bob", in_tokens=10, out_tokens=500, cost=0.2)
     small_id = small[0].trace_id
     large_id = large[0].trace_id
     insert_traces(small + large)
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _window_ms(now)
+    start_ms, end_ms = query_window(now)
 
     for spelling in ("output_tokens", "trace.output_tokens"):
         query = BuilderQuery(
@@ -283,11 +147,11 @@ def test_ai_list_order_limit_offset(
 
     traces: list[Traces] = []
     for out in (100, 200, 300, 400, 500):
-        traces += _ai_trace(now=now, service=service, user="u", in_tokens=10, out_tokens=out, cost=0.1)
+        traces += ai_trace(now=now, service=service, user="u", in_tokens=10, out_tokens=out, cost=0.1)
     insert_traces(traces)
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _window_ms(now)
+    start_ms, end_ms = query_window(now)
 
     def page(offset: int) -> list[int]:
         query = BuilderQuery(
@@ -317,10 +181,10 @@ def test_ai_span_list_limit(
     """Span list honors limit (delegated raw path): 6 gen_ai spans available, capped to 4."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-spanlimit"
-    insert_traces(_ai_trace_mixed_spans(now=now, service=service, user="a") + _ai_trace_mixed_spans(now=now, service=service, user="b"))
+    insert_traces(ai_trace_mixed_spans(now=now, service=service, user="a") + ai_trace_mixed_spans(now=now, service=service, user="b"))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _window_ms(now)
+    start_ms, end_ms = query_window(now)
 
     query = BuilderQuery(
         signal="traces",
@@ -347,10 +211,10 @@ def test_ai_span_list_excludes_non_gen_ai_spans(
     """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-spanlist"
-    insert_traces(_ai_trace_mixed_spans(now=now, service=service, user="alice"))
+    insert_traces(ai_trace_mixed_spans(now=now, service=service, user="alice"))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _window_ms(now)
+    start_ms, end_ms = query_window(now)
 
     query = BuilderQuery(
         signal="traces",
@@ -383,13 +247,13 @@ def test_ai_list_having_or_aggregates(
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-having-or"
 
-    small = _ai_trace(now=now, service=service, user="a", in_tokens=10, out_tokens=20, cost=0.1)
-    large = _ai_trace(now=now, service=service, user="b", in_tokens=10, out_tokens=500, cost=0.2)
+    small = ai_trace(now=now, service=service, user="a", in_tokens=10, out_tokens=20, cost=0.1)
+    large = ai_trace(now=now, service=service, user="b", in_tokens=10, out_tokens=500, cost=0.2)
     small_id, large_id = small[0].trace_id, large[0].trace_id
     insert_traces(small + large)
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _window_ms(now)
+    start_ms, end_ms = query_window(now)
 
     query = BuilderQuery(
         signal="traces",
@@ -422,13 +286,13 @@ def test_ai_list_resource_filter_isolates_by_fingerprint(
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-resfilter"
 
-    prod = _ai_trace(now=now, service=service, user="a", in_tokens=10, out_tokens=20, cost=0.1, environment="production")
-    stag = _ai_trace(now=now, service=service, user="b", in_tokens=10, out_tokens=20, cost=0.1, environment="staging")
+    prod = ai_trace(now=now, service=service, user="a", in_tokens=10, out_tokens=20, cost=0.1, environment="production")
+    stag = ai_trace(now=now, service=service, user="b", in_tokens=10, out_tokens=20, cost=0.1, environment="staging")
     prod_id, stag_id = prod[0].trace_id, stag[0].trace_id
     insert_traces(prod + stag)
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _window_ms(now)
+    start_ms, end_ms = query_window(now)
 
     query = BuilderQuery(
         signal="traces",
@@ -459,9 +323,9 @@ def test_ai_list_rejects_aggregate_or_span_filter(
     service = "ai-it-orfilter"
     # seed a trace so service.name resolves as a known key in this window (resource
     # keys are discovered from ingested data).
-    insert_traces(_ai_trace(now=now, service=service, user="a", in_tokens=10, out_tokens=20, cost=0.1))
+    insert_traces(ai_trace(now=now, service=service, user="a", in_tokens=10, out_tokens=20, cost=0.1))
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _window_ms(now)
+    start_ms, end_ms = query_window(now)
 
     # aggregate OR span -> rejected
     bad = BuilderQuery(
@@ -506,13 +370,13 @@ def test_ai_list_nested_group_span_or_and_aggregate(
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-nested"
 
-    t_ok = _ai_trace(now=now, service=service, user="a", model="gpt-4o", in_tokens=10, out_tokens=500, cost=0.1)
-    t_or_miss = _ai_trace(now=now, service=service, user="b", model="gpt-4o-mini", in_tokens=10, out_tokens=500, cost=0.1)
-    t_agg_miss = _ai_trace(now=now, service=service, user="c", model="gpt-4o", in_tokens=10, out_tokens=20, cost=0.1)
+    t_ok = ai_trace(now=now, service=service, user="a", model="gpt-4o", in_tokens=10, out_tokens=500, cost=0.1)
+    t_or_miss = ai_trace(now=now, service=service, user="b", model="gpt-4o-mini", in_tokens=10, out_tokens=500, cost=0.1)
+    t_agg_miss = ai_trace(now=now, service=service, user="c", model="gpt-4o", in_tokens=10, out_tokens=20, cost=0.1)
     insert_traces(t_ok + t_or_miss + t_agg_miss)
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _window_ms(now)
+    start_ms, end_ms = query_window(now)
 
     query = BuilderQuery(
         signal="traces",
@@ -538,7 +402,7 @@ def test_ai_list_rejects_unknown_aggregate_key(
     """A trace-level filter on an unknown aggregate name is rejected, not silently run."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _window_ms(now)
+    start_ms, end_ms = query_window(now)
 
     query = BuilderQuery(
         signal="traces",
@@ -559,7 +423,7 @@ def test_ai_list_rejects_order_by_span_attribute(
     """Only gen_ai-scoped aggregates are orderable; ordering by a span/resource key errors."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _window_ms(now)
+    start_ms, end_ms = query_window(now)
 
     query = BuilderQuery(
         signal="traces",
@@ -586,10 +450,10 @@ def test_ai_list_total_tokens_output_only(
     """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-total-coalesce"
-    insert_traces(_ai_trace(now=now, service=service, user="a", in_tokens=None, out_tokens=300, cost=0.1))
+    insert_traces(ai_trace(now=now, service=service, user="a", in_tokens=None, out_tokens=300, cost=0.1))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _window_ms(now)
+    start_ms, end_ms = query_window(now)
 
     query = BuilderQuery(
         signal="traces",
@@ -619,13 +483,13 @@ def test_ai_list_variable_in_aggregate_filter(
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-having-var"
 
-    small = _ai_trace(now=now, service=service, user="a", in_tokens=10, out_tokens=20, cost=0.1)
-    large = _ai_trace(now=now, service=service, user="b", in_tokens=10, out_tokens=500, cost=0.2)
+    small = ai_trace(now=now, service=service, user="a", in_tokens=10, out_tokens=20, cost=0.1)
+    large = ai_trace(now=now, service=service, user="b", in_tokens=10, out_tokens=500, cost=0.2)
     small_id, large_id = small[0].trace_id, large[0].trace_id
     insert_traces(small + large)
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _window_ms(now)
+    start_ms, end_ms = query_window(now)
 
     query = BuilderQuery(
         signal="traces",
@@ -650,13 +514,23 @@ def test_ai_list_variable_in_aggregate_filter(
     assert small_id not in body
 
 
-def _ai_trace_two_llm(*, now: datetime, service: str) -> list[Traces]:
-    """Root + two LLM spans at different times, each with distinct input/output messages."""
+def test_ai_list_messages_first_input_last_output(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[list[Traces]], None],
+) -> None:
+    """
+    `input` is the FIRST LLM span's prompt (argMin over timestamp) and `output` is the
+    LAST LLM span's answer (argMax) — the question -> final-answer preview.
+    """
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    service = "ai-it-messages"
     trace_id = TraceIdGenerator.trace_id()
     root_id = TraceIdGenerator.span_id()
     resources = {"service.name": service}
 
-    def _llm(offset_s: float, prompt: str, answer: str) -> Traces:
+    def llm(offset_s: float, prompt: str, answer: str) -> Traces:
         return Traces(
             timestamp=now - timedelta(seconds=offset_s),
             duration=timedelta(seconds=1),
@@ -674,41 +548,18 @@ def _ai_trace_two_llm(*, now: datetime, service: str) -> list[Traces]:
             },
         )
 
-    root = Traces(
-        timestamp=now - timedelta(seconds=5),
-        duration=timedelta(seconds=4),
-        trace_id=trace_id,
-        span_id=root_id,
-        parent_span_id="",
-        name="POST /api/chat",
-        kind=TracesKind.SPAN_KIND_SERVER,
-        status_code=TracesStatusCode.STATUS_CODE_OK,
-        resources=resources,
-        attributes={"http.request.method": "POST"},
-    )
     # earlier call is the "first" (its input is the prompt), later call is the "last"
     # (its output is the final answer).
-    first = _llm(4, "first prompt", "first answer")
-    last = _llm(2, "second prompt", "second answer")
-    return [root, first, last]
-
-
-def test_ai_list_messages_first_input_last_output(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    insert_traces: Callable[[list[Traces]], None],
-) -> None:
-    """
-    `input` is the FIRST LLM span's prompt (argMin over timestamp) and `output` is the
-    LAST LLM span's answer (argMax) — the question -> final-answer preview.
-    """
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-    service = "ai-it-messages"
-    insert_traces(_ai_trace_two_llm(now=now, service=service))
+    insert_traces(
+        [
+            root_span(now=now, trace_id=trace_id, span_id=root_id, resources=resources, duration_s=4),
+            llm(4, "first prompt", "first answer"),
+            llm(2, "second prompt", "second answer"),
+        ]
+    )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _window_ms(now)
+    start_ms, end_ms = query_window(now)
 
     query = BuilderQuery(
         signal="traces",
@@ -727,18 +578,27 @@ def test_ai_list_messages_first_input_last_output(
     assert data["output"] == "second answer", f"output should be the latest call's answer: {data}"
 
 
-def _ai_trace_for_metrics(*, now: datetime, service: str) -> list[Traces]:
+def test_ai_list_enrichment_values(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[list[Traces]], None],
+) -> None:
     """
-    Root + one errored LLM span (tokens/cost) + three tool spans (two 'get_weather',
-    one 'get_time') + one agent span, so the derived per-trace metrics have distinct
-    expected values. The agent span is in the gen_ai gate but carries no request.model,
-    so it must NOT count toward llm_call_count (only span_count / last_activity_time).
+    End-to-end values of the derived per-trace columns (only integration can check that
+    ClickHouse computes uniqIf / sum+sum / countIf(predicate) correctly, not just that
+    the SQL is shaped right). One trace: root + 1 errored LLM + 3 tool spans
+    (get_weather x2, get_time x1) + 1 agent span. The tool and agent spans are in the
+    gen_ai gate but carry no request.model, so llm_call_count stays 1 while span_count
+    counts them all.
     """
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    service = "ai-it-metrics"
     trace_id = TraceIdGenerator.trace_id()
     root_id = TraceIdGenerator.span_id()
     resources = {"service.name": service}
 
-    def _tool(name: str, offset_s: float) -> Traces:
+    def tool(name: str, offset_s: float) -> Traces:
         return Traces(
             timestamp=now - timedelta(seconds=offset_s),
             duration=timedelta(seconds=0.2),
@@ -752,18 +612,6 @@ def _ai_trace_for_metrics(*, now: datetime, service: str) -> list[Traces]:
             attributes={"gen_ai.tool.name": name, "gen_ai.tool.type": "function"},
         )
 
-    root = Traces(
-        timestamp=now - timedelta(seconds=5),
-        duration=timedelta(seconds=4),
-        trace_id=trace_id,
-        span_id=root_id,
-        parent_span_id="",
-        name="POST /api/chat",
-        kind=TracesKind.SPAN_KIND_SERVER,
-        status_code=TracesStatusCode.STATUS_CODE_OK,
-        resources=resources,
-        attributes={"http.request.method": "POST"},
-    )
     llm = Traces(
         timestamp=now - timedelta(seconds=4),
         duration=timedelta(seconds=2),
@@ -793,29 +641,19 @@ def _ai_trace_for_metrics(*, now: datetime, service: str) -> list[Traces]:
         resources=resources,
         attributes={"gen_ai.agent.name": "chat-agent"},
     )
-    return [root, llm, _tool("get_weather", 3), _tool("get_weather", 2.5), _tool("get_time", 2), agent]
-
-
-def test_ai_list_enrichment_values(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    insert_traces: Callable[[list[Traces]], None],
-) -> None:
-    """
-    End-to-end values of the derived per-trace columns (only integration can check that
-    ClickHouse computes uniqIf / sum+sum / countIf(predicate) correctly, not just that
-    the SQL is shaped right). One trace: root + 1 errored LLM + 3 tool spans
-    (get_weather x2, get_time x1) + 1 agent span. The tool and agent spans are in the
-    gen_ai gate but carry no request.model, so llm_call_count stays 1 while span_count
-    counts them all.
-    """
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-    service = "ai-it-metrics"
-    insert_traces(_ai_trace_for_metrics(now=now, service=service))
+    insert_traces(
+        [
+            root_span(now=now, trace_id=trace_id, span_id=root_id, resources=resources, duration_s=4),
+            llm,
+            tool("get_weather", 3),
+            tool("get_weather", 2.5),
+            tool("get_time", 2),
+            agent,
+        ]
+    )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _window_ms(now)
+    start_ms, end_ms = query_window(now)
 
     query = BuilderQuery(
         signal="traces",
