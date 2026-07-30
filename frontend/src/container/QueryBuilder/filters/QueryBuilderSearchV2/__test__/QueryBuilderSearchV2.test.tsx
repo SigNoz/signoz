@@ -113,6 +113,14 @@ const mockAggregateKeysData = {
 				isJSON: IS_JSON_FALSE,
 				id: 'service.name--string--tag--false',
 			},
+			{
+				key: 'unmapped.attribute',
+				dataType: 'String' as unknown as DataTypes,
+				type: TYPE_TAG,
+				isColumn: IS_COLUMN_FALSE,
+				isJSON: IS_JSON_FALSE,
+				id: 'unmapped.attribute--String--tag--false',
+			},
 		],
 	},
 };
@@ -224,6 +232,45 @@ describe('Suggestion Key -> Operator -> Value Flow', () => {
 				]),
 			}),
 		);
+	});
+});
+
+describe('Operator suggestions for data types missing from the operators map', () => {
+	beforeEach(() => {
+		jest.clearAllMocks();
+	});
+
+	it('should fall back to universal operators for a non-canonical data type', async () => {
+		const { container } = renderWithContext();
+
+		const combobox = container.querySelector(
+			'.query-builder-search-v2 .ant-select-selection-search-input',
+		) as HTMLInputElement;
+
+		await act(async () => {
+			fireEvent.focus(combobox);
+			fireEvent.change(combobox, { target: { value: 'unmapped.' } });
+		});
+
+		await screen.findByRole('listbox');
+
+		const keyOption = await screen.findByText('unmapped.attribute');
+		await act(async () => {
+			fireEvent.click(keyOption);
+		});
+
+		expect(screen.getByText('=')).toBeInTheDocument();
+		expect(screen.getByText('!=')).toBeInTheDocument();
+		expect(screen.getByText('>')).toBeInTheDocument();
+		expect(screen.getByText('<')).toBeInTheDocument();
+
+		expect(screen.queryByText('REGEX')).not.toBeInTheDocument();
+
+		await act(async () => {
+			fireEvent.click(screen.getByText('='));
+		});
+
+		expect(combobox.value).toContain('unmapped.attribute =');
 	});
 });
 
