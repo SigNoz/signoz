@@ -611,6 +611,7 @@ describe('TanStackTableView Integration', () => {
 			expect(onRowClick).toHaveBeenCalledWith(
 				expect.objectContaining({ id: '1', name: 'Item 1' }),
 				'1',
+				{ isActive: false },
 			);
 		});
 
@@ -639,6 +640,7 @@ describe('TanStackTableView Integration', () => {
 			expect(onRowClick).toHaveBeenCalledWith(
 				expect.objectContaining({ id: '1', name: 'Item 1' }),
 				{ id: '1', name: 'Item 1' },
+				{ isActive: false },
 			);
 		});
 
@@ -659,15 +661,15 @@ describe('TanStackTableView Integration', () => {
 			expect(row).toHaveClass('tableRowActive');
 		});
 
-		it('calls onRowDeactivate when clicking active row', async () => {
+		it('calls onRowClick with isActive: true when clicking the active row', async () => {
+			// The consumer owns open/close routing — the table just reports the
+			// active state via the click context.
 			const user = userEvent.setup();
 			const onRowClick = jest.fn();
-			const onRowDeactivate = jest.fn();
 
 			renderTanStackTable({
 				props: {
 					onRowClick,
-					onRowDeactivate,
 					isRowActive: (row) => row.id === '1',
 				},
 			});
@@ -678,8 +680,11 @@ describe('TanStackTableView Integration', () => {
 
 			await user.click(screen.getByText('Item 1'));
 
-			expect(onRowDeactivate).toHaveBeenCalled();
-			expect(onRowClick).not.toHaveBeenCalled();
+			expect(onRowClick).toHaveBeenCalledWith(
+				expect.objectContaining({ id: '1' }),
+				expect.anything(),
+				{ isActive: true },
+			);
 		});
 
 		it('opens in new tab on ctrl+click', async () => {

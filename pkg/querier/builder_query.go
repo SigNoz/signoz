@@ -11,8 +11,8 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/telemetryschema/tracestelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -277,12 +277,12 @@ func (q *builderQuery[T]) narrowWindowByTraceID(ctx context.Context, fromMS, toM
 		return fromMS, toMS, true, ""
 	}
 
-	traceIDs, found := telemetrytraces.ExtractTraceIDsFromFilter(q.spec.Filter.Expression)
+	traceIDs, found := tracestelemetryschema.ExtractTraceIDsFromFilter(q.spec.Filter.Expression)
 	if !found || len(traceIDs) == 0 {
 		return fromMS, toMS, true, ""
 	}
 
-	finder := telemetrytraces.NewTraceTimeRangeFinder(q.telemetryStore)
+	finder := tracestelemetryschema.NewTraceTimeRangeFinder(q.telemetryStore)
 	traceStart, traceEnd, exists, err := finder.GetTraceTimeRangeMulti(ctx, traceIDs)
 	if err != nil {
 		return fromMS, toMS, true, ""

@@ -2,12 +2,13 @@ import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 // The prefill flow only depends on the context-picker data hooks resolving to
 // empty lists (so the empty state renders) — mock them to skip real fetches.
-jest.mock('hooks/dashboard/useGetAllDashboard', () => ({
-	useGetAllDashboard: (): unknown => ({
-		data: [],
+jest.mock('api/generated/services/dashboard', () => ({
+	useListDashboardsForUserV2: (): unknown => ({
+		data: undefined,
 		isLoading: false,
 		isError: false,
 	}),
+	getListDashboardsForUserV2QueryKey: (): string[] => ['dashboards'],
 }));
 
 jest.mock('api/generated/services/rules', () => ({

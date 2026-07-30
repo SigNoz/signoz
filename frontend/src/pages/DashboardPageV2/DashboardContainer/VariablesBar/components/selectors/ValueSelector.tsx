@@ -6,6 +6,7 @@ import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 
 import type { VariableSelection } from '../../selectionTypes';
 import { areSelectionsEqual } from '../../utils/resolveVariableSelection';
+import OverflowValuesTooltip from './OverflowValuesTooltip';
 import styles from '../../VariablesBar.module.scss';
 
 interface ValueSelectorProps {
@@ -97,7 +98,13 @@ function ValueSelector({
 				placeholder="Select value"
 				maxTagCount={1}
 				maxTagTextLength={10}
-				maxTagPlaceholder={(omitted): string => `+${omitted.length}`}
+				maxTagPlaceholder={(omitted): JSX.Element => (
+					<OverflowValuesTooltip
+						values={omitted.map((item) =>
+							typeof item.label === 'string' ? item.label : String(item.value ?? ''),
+						)}
+					/>
+				)}
 				// Offer ALL only once options load, else a concrete value reads as "all".
 				enableAllSelection={showAllOption && options.length > 0}
 				onDropdownVisibleChange={(open): void => {
