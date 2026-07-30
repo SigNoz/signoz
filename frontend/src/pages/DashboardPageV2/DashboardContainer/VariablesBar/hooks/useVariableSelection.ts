@@ -12,6 +12,7 @@ import type {
 	VariableSelection,
 	VariableSelectionMap,
 } from '../selectionTypes';
+import { areSelectionsEqual } from '../utils/resolveVariableSelection';
 import { useSeedVariableSelection } from './useSeedVariableSelection';
 
 /**
@@ -103,6 +104,10 @@ export function useVariableSelection(
 
 	const setSelection = useCallback(
 		(name: string, next: VariableSelection): void => {
+			const current = selectionRef.current[name];
+			if (current && areSelectionsEqual(next, current)) {
+				return;
+			}
 			setVariableValue(dashboardId, name, next);
 			enqueueDescendants(name);
 		},
