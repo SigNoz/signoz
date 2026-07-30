@@ -97,6 +97,83 @@ describe('useSeedVariableSelection', () => {
 		});
 	});
 
+	it('prefers the configured default over a stored empty text value', () => {
+		// Persisted from a session where the box was never filled — the default the
+		// definition carries must win, or the variable reads as unset forever.
+		useDashboardStore
+			.getState()
+			.setVariableValues('d1', { env: { value: '', allSelected: false } });
+		const dash = dashboard('d1', [
+			model({ name: 'env', type: 'TEXT', textValue: 'prod' }),
+		]);
+
+		renderHook(() => useSeedVariableSelection(dash));
+
+		expect(seededValue('d1', 'env')).toStrictEqual({
+			value: 'prod',
+			allSelected: false,
+		});
+	});
+
+	it('defaults an ALL-enabled multi-select to ALL over a stored empty array', () => {
+		useDashboardStore
+			.getState()
+			.setVariableValues('d1', { env: { value: [], allSelected: false } });
+		const dash = dashboard('d1', [
+			model({
+				name: 'env',
+				type: 'CUSTOM',
+				customValue: 'a,b',
+				multiSelect: true,
+				showAllOption: true,
+			}),
+		]);
+
+		renderHook(() => useSeedVariableSelection(dash));
+
+		expect(seededValue('d1', 'env')).toStrictEqual({
+			value: null,
+			allSelected: true,
+		});
+	});
+
+	it('keeps a stored ALL selection that has not materialized yet', () => {
+		useDashboardStore
+			.getState()
+			.setVariableValues('d1', { env: { value: null, allSelected: true } });
+		const dash = dashboard('d1', [
+			model({
+				name: 'env',
+				type: 'QUERY',
+				multiSelect: true,
+				showAllOption: true,
+				defaultValue: 'b',
+			}),
+		]);
+
+		renderHook(() => useSeedVariableSelection(dash));
+
+		expect(seededValue('d1', 'env')).toStrictEqual({
+			value: null,
+			allSelected: true,
+		});
+	});
+
+	it('does not rewrite the store when the effect re-runs with the same values', () => {
+		// A dashboard refetch or any spec edit hands back an equal-but-new variables array,
+		// re-running the seed. Writing an identical map would re-render every subscriber.
+		const variable = model({ name: 'env', type: 'TEXT', textValue: 'prod' });
+		const { rerender } = renderHook(
+			({ dash }) => useSeedVariableSelection(dash),
+			{ initialProps: { dash: dashboard('d1', [variable]) } },
+		);
+		const afterSeed = useDashboardStore.getState().variableValues;
+
+		rerender({ dash: dashboard('d1', [{ ...variable }]) });
+
+		expect(useDashboardStore.getState().variableValues).toBe(afterSeed);
+	});
+
 	it('initializes the fetch context with idle states for every variable', () => {
 		const dash = dashboard('d1', [
 			model({ name: 'env', type: 'TEXT' }),

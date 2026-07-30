@@ -6,7 +6,11 @@ import { dtoToFormModel } from '../../DashboardSettings/Variables/variableAdapte
 import type { VariableFormModel } from '../../DashboardSettings/Variables/variableFormModel';
 import { selectVariableValues } from '../../store/slices/variableSelectionSlice';
 import { useDashboardStore } from '../../store/useDashboardStore';
-import { resolveDefaultSelection } from '../utils/resolveVariableSelection';
+import {
+	areSelectionsEqual,
+	resolveDefaultSelection,
+} from '../utils/resolveVariableSelection';
+import { hasUsableValue } from '../utils/selectionUtils';
 import type {
 	SelectedVariableValue,
 	VariableSelection,
@@ -17,6 +21,27 @@ import {
 	type VariableFetchContext,
 } from '../utils/variableDependencies';
 import { ALL_SELECTED, variablesUrlParser } from '../utils/variablesUrlState';
+
+function isStoredSelectionSet(
+	stored: VariableSelection,
+	model: VariableFormModel,
+): boolean {
+	return !!stored.allSelected || hasUsableValue(stored, model.type);
+}
+
+/** Whether the seeded map matches, entry for entry, what the store already holds. */
+function isSameSelection(
+	seeded: VariableSelectionMap,
+	current: VariableSelectionMap,
+): boolean {
+	const names = Object.keys(seeded);
+	return (
+		names.length === Object.keys(current).length &&
+		names.every(
+			(name) => !!current[name] && areSelectionsEqual(seeded[name], current[name]),
+		)
+	);
+}
 
 // The `__ALL__` sentinel only means "ALL" for variables that support it — a
 // legitimate value of "__ALL__" (e.g. a text var) is taken literally.
@@ -79,13 +104,18 @@ export function useSeedVariableSelection(
 					fromUrl.allSelected && stored?.allSelected && Array.isArray(stored.value)
 						? stored
 						: fromUrl;
-			} else if (stored) {
+			} else if (stored && isStoredSelectionSet(stored, variable)) {
 				seeded[variable.name] = stored;
 			} else {
 				seeded[variable.name] = resolveDefaultSelection(variable);
 			}
 		});
-		setVariableValues(dashboardId, seeded);
+		// This runs again whenever the spec's variable array changes identity — a refetch
+		// or any spec edit — and writing an identical map would re-render every selection
+		// subscriber for nothing.
+		if (!isSameSelection(seeded, selection)) {
+			setVariableValues(dashboardId, seeded);
+		}
 
 		// Read-once: a share link's `?variables=` seeds the store, then the param is
 		// dropped so the store is the sole source of truth. Selection changes never
