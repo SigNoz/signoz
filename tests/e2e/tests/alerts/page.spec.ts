@@ -1,10 +1,5 @@
-import { expect, test } from '../../fixtures/auth';
-import {
-	ALERTS_LIST_PATH,
-	createEmailChannelViaApi,
-	deleteChannelViaApi,
-} from '../../helpers/alerts';
-import { newAdminContext } from '../../helpers/auth';
+import { expect, test } from '../../fixtures/alert-rules';
+import { ALERTS_LIST_PATH } from '../../helpers/alerts';
 import { watchConsole } from '../../helpers/common';
 
 // AL-* — the Alerts page shell: the four top-level tabs, how they map to
@@ -18,38 +13,6 @@ const TAB_NAMES = {
 	channels: /notification channels/i,
 	configuration: /configuration/i,
 };
-
-let channelId = '';
-let channelName = '';
-
-test.beforeAll(async ({ browser }) => {
-	// One channel so the Notification Channels tab has a row to render (AL-06).
-	const ctx = await newAdminContext(browser);
-	const page = await ctx.newPage();
-	try {
-		const channel = await createEmailChannelViaApi(
-			page,
-			`e2e-alerts-page-ch-${Date.now()}`,
-		);
-		channelId = channel.id;
-		channelName = channel.name;
-	} finally {
-		await ctx.close();
-	}
-});
-
-test.afterAll(async ({ browser }) => {
-	if (!channelId) {
-		return;
-	}
-	const ctx = await newAdminContext(browser);
-	const page = await ctx.newPage();
-	try {
-		await deleteChannelViaApi(page, channelId);
-	} finally {
-		await ctx.close();
-	}
-});
 
 test.describe('Alerts page shell', () => {
 	test('AL-01 all four top-level tabs render', async ({ authedPage: page }) => {
@@ -138,10 +101,14 @@ test.describe('Alerts page shell', () => {
 		expect(watch.failedResponses).toEqual([]);
 	});
 
-	test('AL-06 Notification Channels tab smoke', async ({ authedPage: page }) => {
+	test('AL-06 Notification Channels tab smoke', async ({
+		authedPage: page,
+		alertChannel,
+	}) => {
+		// The worker's channel gives this tab a row to render.
 		await page.goto(`${ALERTS_LIST_PATH}?tab=Channels`);
 
-		await expect(page.getByText(channelName)).toBeVisible();
+		await expect(page.getByText(alertChannel.name)).toBeVisible();
 		await expect(
 			page.getByRole('button', { name: /new alert channel/i }),
 		).toBeVisible();

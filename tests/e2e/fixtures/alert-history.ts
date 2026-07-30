@@ -1,4 +1,4 @@
-import type { Browser, Page } from '@playwright/test';
+import type { Browser } from '@playwright/test';
 
 import {
 	createEmailChannelViaApi,
@@ -14,10 +14,11 @@ import {
 	waitForTimelineEntries,
 	waitForTimelineStates,
 } from '../helpers/alerts';
-import { newAdminContext } from '../helpers/auth';
-import { expect, test as base } from './auth';
+import { expect, test as base, withAdminPage } from './alert-rules';
 
-// Worker-scoped alert-history fixtures.
+// Worker-scoped alert-history fixtures. Extends `alert-rules`, so a spec that
+// imports `test` from here also gets `alertChannel` / `alertList` / `ownedRules`
+// — the details specs need a history seed *and* their own throwaway rules.
 //
 // Every history row has to come from the ruler actually evaluating a rule (there
 // is no seeder endpoint for `rule_state_history_v0`), so each fixture pays a
@@ -84,22 +85,6 @@ export interface NoDataHistorySeed {
 export interface EmptyHistorySeed {
 	ruleId: string;
 	channelName: string;
-}
-
-// Run `body` on a throwaway admin page. Suite/worker hooks can't use the
-// test-scoped `authedPage`, and every API helper needs a page whose context
-// carries the admin storage state.
-async function withAdminPage<T>(
-	browser: Browser,
-	body: (page: Page) => Promise<T>,
-): Promise<T> {
-	const ctx = await newAdminContext(browser);
-	const page = await ctx.newPage();
-	try {
-		return await body(page);
-	} finally {
-		await ctx.close();
-	}
 }
 
 async function cleanup(

@@ -1,6 +1,12 @@
-import { expect, type Locator, type Page } from '@playwright/test';
+import {
+	expect,
+	type Locator,
+	type Page,
+	type Request,
+} from '@playwright/test';
 
-import { authToken, seederUrl } from './common';
+import { authToken, requestUrl, seederUrl } from './common';
+import { typeExpression } from './query-builder';
 
 // ─── Constants ───────────────────────────────────────────────────────────
 
@@ -17,6 +23,12 @@ export const TIMELINE_PAGE_SIZE = 20;
 
 /** The `relativeTime` the history page falls back to (`DEFAULT_TIME_RANGE`). */
 export const DEFAULT_RELATIVE_TIME = '30m';
+
+/**
+ * Page size the list specs pin in the URL, so the number of rendered rows never
+ * depends on the viewport height.
+ */
+export const ALERT_LIST_PAGE_SIZE = 10;
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -203,6 +215,45 @@ export async function gotoAlertOverview(
 	// Let post-load state updates flush so callers read the settled value.
 	// eslint-disable-next-line playwright/no-wait-for-timeout -- no DOM signal for the async settle
 	await page.waitForTimeout(500);
+}
+
+/**
+ * Open the alert details shell (Overview tab) for `ruleId` and wait until it has
+ * mounted. Unlike {@link gotoAlertOverview} this does **not** wait for the
+ * condition editor or the serialised query — use it for scenarios about the
+ * shell itself (header, tabs, actions menu) rather than the rule's contents.
+ */
+export async function gotoAlertDetails(
+	page: Page,
+	ruleId: string,
+): Promise<void> {
+	await page.goto(
+		`${ALERT_OVERVIEW_PATH}?ruleId=${ruleId}&relativeTime=${DEFAULT_RELATIVE_TIME}`,
+	);
+	await expect(page.getByTestId('alert-details-root')).toBeVisible();
+}
+
+/** Rows currently rendered in the alert-rules table body. */
+export function alertRuleRows(page: Page): Locator {
+	return page.locator('tbody tr');
+}
+
+/**
+ * Open the alert-rules list and wait until it has rows. `params` is merged into
+ * the query string (`search`, `page`, `orderBy`, …); `limit` defaults to
+ * {@link ALERT_LIST_PAGE_SIZE} so row counts are viewport-independent.
+ */
+export async function gotoAlertList(
+	page: Page,
+	params: Record<string, string> = {},
+): Promise<void> {
+	const query = new URLSearchParams({
+		limit: String(ALERT_LIST_PAGE_SIZE),
+		...params,
+	});
+	await page.goto(`${ALERTS_LIST_PATH}?${query.toString()}`);
+	await expect(page.getByTestId('list-alerts-search-input')).toBeVisible();
+	await expect(alertRuleRows(page).first()).toBeVisible();
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -731,17 +782,35 @@ export async function setRuleDisabledViaApi(
 /** Severities SEED-B cycles through, so list search/sort has more than one value. */
 export const SEED_B_SEVERITIES = ['critical', 'warning', 'info'] as const;
 
+export interface AlertRulesSeedOptions {
+	count: number;
+	channelName: string;
+	/** Rules are named `<namePrefix>-NN`. Keep it unique per batch. */
+	namePrefix?: string;
+	/**
+	 * Appended to both `team` label values. Every list spec seeds its own batch
+	 * and they run in parallel, so a bare `team: payments` would also match the
+	 * neighbouring batches — which is exactly what the label-search scenario
+	 * counts. Leave it empty only when nothing asserts an exact label count.
+	 */
+	teamSuffix?: string;
+}
+
 /**
  * SEED-B: `count` metric threshold rules sharing one channel. Severities cycle
  * through {@link SEED_B_SEVERITIES} and every rule carries a `team` label, so
  * the list's "Alert Name, Severity and Labels" search has hits *and* misses for
- * all three. Returns the ids in creation order.
+ * all three. Even-indexed rules are `platform`, odd ones `payments` — i.e. half
+ * the batch each. Returns the ids in creation order.
  */
 export async function seedAlertRules(
 	page: Page,
-	count: number,
-	channelName: string,
-	namePrefix = 'e2e-alert-list',
+	{
+		count,
+		channelName,
+		namePrefix = 'e2e-alert-list',
+		teamSuffix = '',
+	}: AlertRulesSeedOptions,
 ): Promise<string[]> {
 	const ids: string[] = [];
 	for (let i = 0; i < count; i += 1) {
@@ -754,7 +823,7 @@ export async function seedAlertRules(
 			channels: [channelName],
 			labels: {
 				severity: SEED_B_SEVERITIES[i % SEED_B_SEVERITIES.length],
-				team: i % 2 === 0 ? 'platform' : 'payments',
+				team: `${i % 2 === 0 ? 'platform' : 'payments'}${teamSuffix}`,
 			},
 		});
 		ids.push(id);
@@ -992,4 +1061,75 @@ export async function openTimelineRowActions(
 		.nth(index)
 		.getByTestId('timeline-row-actions')
 		.click();
+}
+
+// ─── History request matchers ──────────────────────────────────────────────
+
+/** The four v2 endpoints one history page load hits. */
+export const HISTORY_ENDPOINTS = [
+	'stats',
+	'timeline',
+	'top_contributors',
+	'overall_status',
+] as const;
+
+export type HistoryEndpoint = (typeof HISTORY_ENDPOINTS)[number];
+
+/** Match a request against one history endpoint, whatever the rule id. */
+export function isHistoryRequest(
+	request: Request,
+	endpoint: HistoryEndpoint,
+): boolean {
+	return new RegExp(`/api/v2/rules/[^/]+/history/${endpoint}`).test(
+		request.url(),
+	);
+}
+
+// ─── History interactions ──────────────────────────────────────────────────
+
+/** Apply a filter expression through the real editor + Run button. */
+export async function runFilterExpression(
+	page: Page,
+	expression: string,
+): Promise<void> {
+	await typeExpression(page, expression);
+	await page.getByRole('button', { name: /run query/i }).click();
+}
+
+/**
+ * Sort the timeline descending through the STATE header.
+ *
+ * The antd table is *uncontrolled* — it has `sorter: true` but no `sortOrder`,
+ * so its internal cycle is none → ascend → descend regardless of the `order`
+ * the hook already sends. Reaching `desc` therefore takes two clicks, and the
+ * first one only resets the page (asc is nuqs's default, so it writes no param).
+ */
+export async function sortTimelineDescending(page: Page): Promise<void> {
+	const header = page.getByRole('columnheader', { name: 'STATE' });
+	const descRequest = page.waitForRequest(
+		(req) =>
+			isHistoryRequest(req, 'timeline') &&
+			requestUrl(req).searchParams.get('order') === 'desc',
+	);
+	await header.click();
+	await header.click();
+	await descRequest;
+}
+
+/**
+ * Snapshot the LABELS cell of every rendered row. Scenarios that compare two
+ * snapshots taken at different times (page 1 vs page 2, one timezone vs
+ * another) cannot express that as a web-first assertion, so the read lives in a
+ * helper rather than inline in the test.
+ */
+export async function timelineRowLabels(page: Page): Promise<string[]> {
+	return timelineRows(page).getByTestId('timeline-row-labels').allInnerTexts();
+}
+
+/** Snapshot the first row's CREATED AT cell. See {@link timelineRowLabels}. */
+export async function firstTimelineRowCreatedAt(page: Page): Promise<string> {
+	return timelineRows(page)
+		.first()
+		.getByTestId('timeline-row-created-at')
+		.innerText();
 }

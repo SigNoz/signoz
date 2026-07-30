@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import type { Page, Request } from '@playwright/test';
 
 // Shared helpers used across feature-specific helper modules (dashboards,
 // trace-details, …). Keep this to genuinely cross-feature utilities.
@@ -100,6 +100,24 @@ export function watchConsole(
 		);
 	});
 	return watch;
+}
+
+// ─── Network capture ──────────────────────────────────────────────────────
+
+/**
+ * Every request the page issues from now on. Call **before** the first
+ * navigation — the returned array fills in as the page runs, so filter it at the
+ * end of the scenario ("endpoint called exactly once", "no legacy route used").
+ */
+export function collectRequests(page: Page): Request[] {
+	const requests: Request[] = [];
+	page.on('request', (request) => requests.push(request));
+	return requests;
+}
+
+/** A request's URL, parsed — the readable way to reach `searchParams`. */
+export function requestUrl(request: Request): URL {
+	return new URL(request.url());
 }
 
 // ─── Auth ────────────────────────────────────────────────────────────────
