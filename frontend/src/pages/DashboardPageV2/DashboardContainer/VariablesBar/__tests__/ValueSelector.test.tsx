@@ -111,4 +111,75 @@ describe('ValueSelector', () => {
 			).toBeNull();
 		});
 	});
+
+	describe('clearing', () => {
+		function clearIcon(): Element | null {
+			return document.querySelector('.ant-select-clear');
+		}
+
+		async function openDropdown(): Promise<void> {
+			const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+			const control = screen.getByTestId('variable-select-env');
+			await user.click(control.querySelector('input') as HTMLInputElement);
+		}
+
+		it('offers no clear icon while the list is closed', () => {
+			renderSelector({ value: VALUES, allSelected: false }, OPTIONS);
+
+			expect(clearIcon()).toBeNull();
+		});
+
+		it('offers it once the list is open', async () => {
+			renderSelector({ value: VALUES, allSelected: false }, OPTIONS);
+
+			await openDropdown();
+
+			expect(clearIcon()).not.toBeNull();
+		});
+
+		it('offers no clear icon while every option is selected', async () => {
+			// ALL is every option, so there is nothing to clear — and the shared control
+			// refuses to empty an ALL selection, which would leave the icon inert.
+			renderSelector({ value: OPTIONS, allSelected: true }, OPTIONS);
+
+			await openDropdown();
+
+			expect(clearIcon()).toBeNull();
+		});
+
+		it('empties the list and commits nothing until it closes', async () => {
+			const onChange = jest.fn();
+			const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+			render(
+				<TooltipProvider>
+					<ValueSelector
+						options={OPTIONS}
+						variableType="query"
+						multiSelect
+						showAllOption
+						selection={{ value: VALUES, allSelected: false }}
+						onChange={onChange}
+						emptyFallback={{ value: [OPTIONS[0]], allSelected: false }}
+						testId="variable-select-env"
+					/>
+				</TooltipProvider>,
+			);
+
+			await openDropdown();
+			await user.click(clearIcon() as Element);
+
+			expect(document.querySelectorAll('.ant-select-selection-item')).toHaveLength(
+				0,
+			);
+			expect(onChange).not.toHaveBeenCalled();
+
+			// Closing fills in whatever the variable should hold.
+			await user.keyboard('{Escape}');
+
+			expect(onChange).toHaveBeenCalledWith({
+				value: [OPTIONS[0]],
+				allSelected: false,
+			});
+		});
+	});
 });
