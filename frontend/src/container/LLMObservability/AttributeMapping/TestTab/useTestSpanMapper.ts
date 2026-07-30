@@ -8,7 +8,12 @@ import { AxiosError } from 'axios';
 import { debounce } from 'lodash-es';
 
 import { buildTestRequest, parseSpanInput } from './testPayload';
-import { getStoredSpanInput, setStoredSpanInput } from './spanInputStorage';
+import {
+	clearStoredSpanInput,
+	getStoredSpanInput,
+	SAMPLE_SPAN_JSON,
+	setStoredSpanInput,
+} from './spanInputStorage';
 import { DraftGroup } from '../types';
 
 export type TestTabAttributes = Record<string, unknown>;
@@ -29,6 +34,8 @@ export interface UseTestSpanMapper {
 	setInput: (value: string) => void;
 	run: () => void;
 	reset: () => void;
+	resetToTemplate: () => void;
+	isTemplateInput: boolean;
 	isRunning: boolean;
 	validationError: string | null;
 	result: SpantypesSpanMapperTestSpanDTO[] | null;
@@ -90,6 +97,15 @@ export function useTestSpanMapper(
 		setTestedResource(null);
 	}, []);
 
+	const resetToTemplate = useCallback((): void => {
+		persistInput.cancel();
+		clearStoredSpanInput();
+		setInputValue(SAMPLE_SPAN_JSON);
+		reset();
+	}, [persistInput, reset]);
+
+	const isTemplateInput = input.trim() === SAMPLE_SPAN_JSON;
+
 	const run = useCallback((): void => {
 		reset();
 
@@ -127,6 +143,8 @@ export function useTestSpanMapper(
 		setInput,
 		run,
 		reset,
+		resetToTemplate,
+		isTemplateInput,
 		isRunning: isLoading,
 		validationError,
 		result,

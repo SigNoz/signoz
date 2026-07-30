@@ -1,5 +1,5 @@
 import MEditor from '@monaco-editor/react';
-import { Play } from '@signozhq/icons';
+import { Play, RotateCcw } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Callout } from '@signozhq/ui/callout';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -23,6 +23,8 @@ function TestTab({ spanTest }: TestTabProps): JSX.Element {
 		input,
 		setInput,
 		run,
+		resetToTemplate,
+		isTemplateInput,
 		isRunning,
 		result,
 		testedAttributes,
@@ -84,17 +86,30 @@ function TestTab({ spanTest }: TestTabProps): JSX.Element {
 					</p>
 				</div>
 
-				<Button
-					testId="run-test-button"
-					variant="solid"
-					color="primary"
-					prefix={<Play size={14} />}
-					onClick={run}
-					loading={isRunning}
-					disabled={isRunning || validationError !== null}
-				>
-					Run Test
-				</Button>
+				<div className={styles.headerActions}>
+					<Button
+						testId="reset-template-button"
+						variant="outlined"
+						color="secondary"
+						prefix={<RotateCcw size={14} />}
+						onClick={resetToTemplate}
+						disabled={isTemplateInput}
+					>
+						Reset to Default Span
+					</Button>
+
+					<Button
+						testId="run-test-button"
+						variant="solid"
+						color="primary"
+						prefix={<Play size={14} />}
+						onClick={run}
+						loading={isRunning}
+						disabled={isRunning || validationError !== null}
+					>
+						Run Test
+					</Button>
+				</div>
 			</div>
 
 			<div className={styles.body}>
