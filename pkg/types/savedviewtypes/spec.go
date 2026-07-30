@@ -10,10 +10,7 @@ import (
 // SavedViewSchemaVersion is the only schemaVersion currently.
 const SavedViewSchemaVersion = "v2"
 
-// Display holds view-rendering preferences. Fields are always serialized
-// (no omitempty) so a zero value in a response can't be confused with an
-// omitted key -- e.g. an explicit maxLines:0 must round-trip as 0, not
-// silently disappear.
+// Display holds view-rendering preferences.
 type Display struct {
 	MaxLines int    `json:"maxLines"`
 	FontSize string `json:"fontSize"`

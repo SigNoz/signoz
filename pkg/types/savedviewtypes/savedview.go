@@ -42,7 +42,7 @@ type ListSavedViewsParams struct {
 
 // StorableSavedView has schemaVersion + spec stored JSON-encoded in Data.
 type StorableSavedView struct {
-	bun.BaseModel `bun:"table:saved_views"`
+	bun.BaseModel `bun:"table:saved_view"`
 
 	types.Identifiable
 	types.TimeAuditable

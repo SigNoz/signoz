@@ -26,7 +26,7 @@ func (migration *restructureSavedViewSpec) Register(migrations *migrate.Migratio
 	return migrations.Register(migration.Up, migration.Down)
 }
 
-// legacySavedViewCompositeQuery is the bare shape saved_views.data held
+// legacySavedViewCompositeQuery is the bare shape saved_view.data held
 // before this migration -- just the relevant fields of composite query.
 // Queries is kept as raw JSON since the migration only needs to relocate it, not interpret it.
 type legacySavedViewCompositeQuery struct {
@@ -124,10 +124,15 @@ func (migration *restructureSavedViewSpec) Up(ctx context.Context, db *bun.DB) e
 		}
 	}
 
-	for _, column := range []string{"extra_data", "category", "tags"} {
+	for _, column := range []string{"category", "tags"} {
 		if err := migration.store.Dialect().DropColumn(ctx, tx, "saved_views", column); err != nil {
 			return err
 		}
+	}
+
+	// matching the singular table-name convention.
+	if _, err := tx.ExecContext(ctx, "ALTER TABLE saved_views RENAME TO saved_view"); err != nil {
+		return err
 	}
 
 	return tx.Commit()
