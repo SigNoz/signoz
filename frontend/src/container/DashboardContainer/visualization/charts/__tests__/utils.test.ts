@@ -25,18 +25,50 @@ describe('calculateChartDimensions', () => {
 		});
 	});
 
-	it('RIGHT: reserves a side column capped at 30% of the width and keeps full height', () => {
+	it('RIGHT: reserves a side column capped at 320px / 40% of the width and keeps full height', () => {
 		const dims = calculateChartDimensions({
 			containerWidth: 1000,
 			containerHeight: 400,
 			legendConfig: { position: LegendPosition.RIGHT },
 			seriesLabels: labels(10, 40),
 		});
-		// 40-char labels approximate to 336px, capped at min(240, 30% of 1000).
-		expect(dims.legendWidth).toBe(240);
-		expect(dims.width).toBe(760);
+		expect(dims.legendWidth).toBe(320);
+		expect(dims.width).toBe(680);
 		expect(dims.height).toBe(400);
 		expect(dims.legendHeight).toBe(400);
+	});
+
+	it('RIGHT: sizes the column to the longest label when it fits under the cap', () => {
+		const dims = calculateChartDimensions({
+			containerWidth: 1000,
+			containerHeight: 400,
+			legendConfig: { position: LegendPosition.RIGHT },
+			seriesLabels: labels(5, 20),
+		});
+		expect(dims.legendWidth).toBe(216);
+		expect(dims.width).toBe(784);
+	});
+
+	it('RIGHT: never shrinks the column below the 150px floor', () => {
+		const dims = calculateChartDimensions({
+			containerWidth: 1000,
+			containerHeight: 400,
+			legendConfig: { position: LegendPosition.RIGHT },
+			seriesLabels: labels(3, 3),
+		});
+		expect(dims.legendWidth).toBe(150);
+		expect(dims.width).toBe(850);
+	});
+
+	it('RIGHT: on a narrow container the legend never takes more than 40% of the width', () => {
+		const dims = calculateChartDimensions({
+			containerWidth: 300,
+			containerHeight: 400,
+			legendConfig: { position: LegendPosition.RIGHT },
+			seriesLabels: labels(10, 40),
+		});
+		expect(dims.legendWidth).toBe(120);
+		expect(dims.width).toBe(180);
 	});
 
 	it('BOTTOM: a single row of items reserves one legend row', () => {

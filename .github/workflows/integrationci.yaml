@@ -54,10 +54,12 @@ jobs:
           - querierscalar
           - queriercommon
           - rawexportdata
+          - promqlconformance
           - querierauthz
           - role
           - rootuser
           - serviceaccount
+          - spanmapper
           - querier_json_body
           - querier_skip_resource_fingerprint
           - ttl

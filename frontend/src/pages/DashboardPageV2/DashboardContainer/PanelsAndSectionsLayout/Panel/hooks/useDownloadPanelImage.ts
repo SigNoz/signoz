@@ -1,5 +1,7 @@
 import { useCallback } from 'react';
 import { toast } from '@signozhq/ui/sonner';
+import logEvent from 'api/common/logEvent';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 
 import {
 	downloadElementAsImage,
@@ -37,6 +39,10 @@ export function useDownloadPanelImage(): UseDownloadPanelImage {
 			}
 			try {
 				await downloadElementAsImage(node, panelName, format);
+				void logEvent(DashboardDetailEvents.PanelExported, {
+					format,
+					panelId,
+				});
 			} catch {
 				toast.error('Could not download panel.', {
 					action: {

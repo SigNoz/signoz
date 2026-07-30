@@ -5,6 +5,7 @@ import {
 	useCallback,
 	useEffect,
 	useImperativeHandle,
+	useLayoutEffect,
 	useMemo,
 	useRef,
 } from 'react';
@@ -44,6 +45,7 @@ import {
 	TanStackTableHandle,
 	TanStackTableProps,
 } from './types';
+import { chromePerformanceMeasureTanstackTable } from './perfDevtools';
 import { useColumnDnd } from './useColumnDnd';
 import { useColumnHandlers } from './useColumnHandlers';
 import { useColumnState } from './useColumnState';
@@ -56,6 +58,7 @@ import { VirtuosoTableColGroup } from './VirtuosoTableColGroup';
 
 import tableStyles from './TanStackTable.module.scss';
 import viewStyles from './TanStackTableView.module.scss';
+import { chromePerformanceNow } from 'lib/chromePerformanceDevTools';
 
 const COLUMN_DND_AUTO_SCROLL = {
 	layoutShiftCompensation: false as const,
@@ -89,11 +92,11 @@ function TanStackTableInner<TData, TItemKey = string>(
 		getGroupKey,
 		getRowStyle,
 		getRowClassName,
+		getRowTestId,
 		isRowActive,
 		renderRowActions,
 		onRowClick,
 		onRowClickNewTab,
-		onRowDeactivate,
 		onSort,
 		activeRowIndex,
 		renderExpandedRow,
@@ -115,6 +118,8 @@ function TanStackTableInner<TData, TItemKey = string>(
 			'TanStackTable: Cannot use onEndReached with disableVirtualScroll. Infinite scroll requires virtualization.',
 		);
 	}
+
+	const renderStart = chromePerformanceNow();
 
 	const virtuosoRef = useRef<TableVirtuosoHandle | null>(null);
 	const isDarkMode = useIsDarkMode();
@@ -344,6 +349,19 @@ function TanStackTableInner<TData, TItemKey = string>(
 
 	const visibleColumnsCount = table.getVisibleFlatColumns().length;
 
+	useLayoutEffect(() => {
+		chromePerformanceMeasureTanstackTable('Table render', renderStart, {
+			track: 'Table render',
+			color: 'primary',
+			tooltipText: 'TanStackTable render + commit',
+			properties: [
+				['rows', String(flatItems.length)],
+				['columns', String(visibleColumnsCount)],
+				['loading', String(isLoading)],
+			],
+		});
+	});
+
 	const columnOrderKey = useMemo(() => columnIds.join(','), [columnIds]);
 	const columnVisibilityKey = useMemo(
 		() =>
@@ -360,11 +378,11 @@ function TanStackTableInner<TData, TItemKey = string>(
 		() => ({
 			getRowStyle,
 			getRowClassName,
+			getRowTestId,
 			isRowActive,
 			renderRowActions,
 			onRowClick,
 			onRowClickNewTab,
-			onRowDeactivate,
 			renderExpandedRow,
 			getRowKeyData,
 			colCount: visibleColumnsCount,
@@ -378,11 +396,11 @@ function TanStackTableInner<TData, TItemKey = string>(
 		[
 			getRowStyle,
 			getRowClassName,
+			getRowTestId,
 			isRowActive,
 			renderRowActions,
 			onRowClick,
 			onRowClickNewTab,
-			onRowDeactivate,
 			renderExpandedRow,
 			getRowKeyData,
 			visibleColumnsCount,

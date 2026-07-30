@@ -1,13 +1,13 @@
 import { useCallback, useMemo } from 'react';
 import { toast } from '@signozhq/ui/sonner';
-import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import logEvent from 'api/common/logEvent';
+import { DashboardtypesDynamicVariableSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import type { FilterData } from 'container/QueryTable/Drilldown/drilldownUtils';
 import {
 	dtoToFormModel,
 	formModelToDto,
 } from 'pages/DashboardPageV2/DashboardContainer/DashboardSettings/Variables/variableAdapters';
 import {
-	DYNAMIC_SIGNAL_ALL,
 	emptyVariableFormModel,
 	type VariableFormModel,
 } from 'pages/DashboardPageV2/DashboardContainer/DashboardSettings/Variables/variableFormModel';
@@ -17,12 +17,13 @@ import { useOptimisticPatch } from 'pages/DashboardPageV2/DashboardContainer/hoo
 import { selectVariableValues } from 'pages/DashboardPageV2/DashboardContainer/store/slices/variableSelectionSlice';
 import { useDashboardStore } from 'pages/DashboardPageV2/DashboardContainer/store/useDashboardStore';
 import type { VariableSelection } from 'pages/DashboardPageV2/DashboardContainer/VariablesBar/selectionTypes';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 
 interface UseDrilldownDashboardVariablesArgs {
 	/** Group-by field filters from the clicked point (empty when the click has no group-by). */
 	filters: FilterData[];
-	/** Clicked query's telemetry signal — seeds a created variable's `dynamicSignal`. */
-	signal?: TelemetrytypesSignalDTO;
+	/** Dynamic-variable signal derived from the clicked query — seeds a created variable's `dynamicSignal`. */
+	signal?: DashboardtypesDynamicVariableSignalDTO;
 	onClose: () => void;
 }
 
@@ -98,6 +99,10 @@ export function useDrilldownDashboardVariables({
 				toast.error(`Variable "${fieldName}" already exists`);
 				return;
 			}
+			void logEvent(DashboardDetailEvents.DrilldownAction, {
+				action: 'createVariable',
+				dashboardId,
+			});
 			const model: VariableFormModel = {
 				...emptyVariableFormModel(),
 				name: fieldName,
@@ -105,8 +110,7 @@ export function useDrilldownDashboardVariables({
 				type: 'DYNAMIC',
 				multiSelect: true,
 				dynamicAttribute: fieldName,
-				// `||` (not `??`): an empty "any" signal maps to All, same as unset.
-				dynamicSignal: signal || DYNAMIC_SIGNAL_ALL,
+				dynamicSignal: signal ?? DashboardtypesDynamicVariableSignalDTO.all,
 			};
 			try {
 				await patchAsync(
@@ -120,7 +124,15 @@ export function useDrilldownDashboardVariables({
 			}
 			onClose();
 		},
-		[existingNames, signal, variables, patchAsync, setSelection, onClose],
+		[
+			existingNames,
+			signal,
+			variables,
+			patchAsync,
+			setSelection,
+			onClose,
+			dashboardId,
+		],
 	);
 
 	const actions = useMemo<DrilldownVariableAction[]>(
@@ -156,6 +168,10 @@ export function useDrilldownDashboardVariables({
 						? DrilldownVariableActionKind.Unset
 						: DrilldownVariableActionKind.Set,
 					onClick: (): void => {
+						void logEvent(DashboardDetailEvents.DrilldownAction, {
+							action: 'setVariable',
+							dashboardId,
+						});
 						setSelection(existing.name, {
 							value: isSame ? cleared : assigned,
 							allSelected: false,
@@ -171,6 +187,7 @@ export function useDrilldownDashboardVariables({
 			setSelection,
 			handleCreate,
 			onClose,
+			dashboardId,
 		],
 	);
 

@@ -1,6 +1,8 @@
+import { TanStackHoverTooltip } from './TanStackHoverTooltip';
 import { TanStackTableBase } from './TanStackTable';
 import TanStackTableText from './TanStackTableText';
 
+export * from './TanStackHoverTooltip';
 export * from './TanStackTableStateContext';
 export * from './types';
 export * from './useCalculatedPageSize';
@@ -114,9 +116,11 @@ export * from './useTableParams';
  *   getItemKey={(row) => row.id}
  *   isRowActive={(row) => row.id === selectedId}
  *   activeRowIndex={selectedIndex}
- *   onRowClick={(row, itemKey) => setSelectedId(itemKey)}
+ *   // The table reports the click + the row's active state; the consumer owns open/close.
+ *   onRowClick={(row, itemKey, { isActive }) =>
+ *     setSelectedId(isActive ? undefined : itemKey)
+ *   }
  *   onRowClickNewTab={(row, itemKey) => openInNewTab(itemKey)}
- *   onRowDeactivate={() => setSelectedId(undefined)}
  *   getRowClassName={(row) => (row.severity === 'error' ? 'row-error' : '')}
  *   getRowStyle={(row) => (row.dimmed ? { opacity: 0.5 } : {})}
  *   renderRowActions={(row) => <Button size="small">Open</Button>}
@@ -274,6 +278,7 @@ export * from './useTableParams';
  */
 const TanStackTable = Object.assign(TanStackTableBase, {
 	Text: TanStackTableText,
+	HoverTooltip: TanStackHoverTooltip,
 });
 
 export default TanStackTable;

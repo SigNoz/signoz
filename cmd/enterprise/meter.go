@@ -2,9 +2,9 @@ package main
 
 import (
 	"github.com/SigNoz/signoz/pkg/metercollector"
-	"github.com/SigNoz/signoz/pkg/telemetrylogs"
-	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
-	"github.com/SigNoz/signoz/pkg/telemetrytraces"
+	"github.com/SigNoz/signoz/pkg/telemetryschema/logstelemetryschema"
+	"github.com/SigNoz/signoz/pkg/telemetryschema/metricstelemetryschema"
+	"github.com/SigNoz/signoz/pkg/telemetryschema/tracestelemetryschema"
 	"github.com/SigNoz/signoz/pkg/types/retentiontypes"
 	"github.com/SigNoz/signoz/pkg/types/zeustypes"
 )
@@ -25,8 +25,8 @@ var meterConfigs = []metercollector.Config{
 			Name:                 zeustypes.MeterLogSize,
 			Unit:                 zeustypes.MeterUnitBytes,
 			Aggregation:          zeustypes.MeterAggregationSum,
-			DBName:               telemetrylogs.DBName,
-			TableName:            telemetrylogs.LogsV2LocalTableName,
+			DBName:               logstelemetryschema.DBName,
+			TableName:            logstelemetryschema.LogsV2LocalTableName,
 			DefaultRetentionDays: retentiontypes.DefaultLogsRetentionDays,
 		},
 	},
@@ -36,8 +36,8 @@ var meterConfigs = []metercollector.Config{
 			Name:                 zeustypes.MeterSpanSize,
 			Unit:                 zeustypes.MeterUnitBytes,
 			Aggregation:          zeustypes.MeterAggregationSum,
-			DBName:               telemetrytraces.DBName,
-			TableName:            telemetrytraces.SpanIndexV3LocalTableName,
+			DBName:               tracestelemetryschema.DBName,
+			TableName:            tracestelemetryschema.SpanIndexV3LocalTableName,
 			DefaultRetentionDays: retentiontypes.DefaultTracesRetentionDays,
 		},
 	},
@@ -47,8 +47,8 @@ var meterConfigs = []metercollector.Config{
 			Name:                 zeustypes.MeterDatapointCount,
 			Unit:                 zeustypes.MeterUnitCount,
 			Aggregation:          zeustypes.MeterAggregationSum,
-			DBName:               telemetrymetrics.DBName,
-			TableName:            telemetrymetrics.SamplesV4LocalTableName,
+			DBName:               metricstelemetryschema.DBName,
+			TableName:            metricstelemetryschema.SamplesV4LocalTableName,
 			DefaultRetentionDays: retentiontypes.DefaultMetricsRetentionDays,
 		},
 	},

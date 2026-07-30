@@ -9,16 +9,14 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-// buildJobRecords assembles the page records. Pod phase counts come from
-// phaseCounts in both modes; every row is a group of pods (one job in
-// list mode, an arbitrary roll-up in grouped_list mode), so there's no
-// per-row "current phase" concept.
+// buildJobRecords assembles the page records. Pod status counts come from
+// podStatusCounts in both modes; every row is a group of pods (one job in
+// list mode, an arbitrary roll-up in grouped_list mode).
 func buildJobRecords(
 	resp *qbtypes.QueryRangeResponse,
 	pageGroups []map[string]string,
 	groupBy []qbtypes.GroupByKey,
 	metadataMap map[string]map[string]string,
-	phaseCounts map[string]podPhaseCounts,
 	podStatusCounts map[string]podStatusCounts,
 ) []inframonitoringtypes.JobRecord {
 	metricsMap := parseFullQueryResponse(resp, groupBy)
@@ -73,16 +71,6 @@ func buildJobRecords(
 			}
 			if v, exists := metrics["K"]; exists {
 				record.SuccessfulPods = int(v)
-			}
-		}
-
-		if phaseCountsForGroup, ok := phaseCounts[compositeKey]; ok {
-			record.PodCountsByPhase = inframonitoringtypes.PodCountsByPhase{
-				Pending:   phaseCountsForGroup.Pending,
-				Running:   phaseCountsForGroup.Running,
-				Succeeded: phaseCountsForGroup.Succeeded,
-				Failed:    phaseCountsForGroup.Failed,
-				Unknown:   phaseCountsForGroup.Unknown,
 			}
 		}
 

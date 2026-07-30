@@ -22,6 +22,13 @@ import (
 	"github.com/SigNoz/signoz/pkg/variables"
 )
 
+type Handler interface {
+	QueryRange(rw http.ResponseWriter, req *http.Request)
+	QueryRangePreview(rw http.ResponseWriter, req *http.Request)
+	QueryRawStream(rw http.ResponseWriter, req *http.Request)
+	ReplaceVariables(rw http.ResponseWriter, req *http.Request)
+}
+
 type handler struct {
 	set       factory.ProviderSettings
 	analytics analytics.Analytics

@@ -245,6 +245,7 @@ function K8sHeader<TData>({
 						showAutoRefresh={showAutoRefresh}
 						showRefreshText={false}
 						hideShareModal
+						defaultRelativeTime="30m"
 					/>
 				</div>
 
