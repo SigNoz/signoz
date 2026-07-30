@@ -137,6 +137,17 @@ func cardButtons(t *testing.T, m Message) []button {
 	return nil
 }
 
+func TestGoogleChatNilHTTPConfig(t *testing.T) {
+	// A nil HTTPConfig must fail cleanly, not panic on the *conf.HTTPConfig deref.
+	tmpl := test.CreateTmpl(t)
+	n, err := New(&alertmanagertypes.GoogleChatReceiverConfig{
+		HTTPConfig: nil,
+		WebhookURL: secretURLFromString(t, "https://chat.googleapis.com/v1/spaces/test/messages"),
+	}, tmpl, slog.New(slog.DiscardHandler), newTestTemplater(tmpl))
+	require.Error(t, err)
+	require.Nil(t, n)
+}
+
 func TestGoogleChatRetryCodes(t *testing.T) {
 	tmpl := test.CreateTmpl(t)
 	n, err := New(&alertmanagertypes.GoogleChatReceiverConfig{

@@ -22,6 +22,9 @@ import (
 )
 
 func New(conf *alertmanagertypes.GoogleChatReceiverConfig, t *template.Template, l *slog.Logger, templater alertmanagertypes.Templater) (*Notifier, error) {
+	if conf.HTTPConfig == nil {
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "google chat http_config is nil")
+	}
 	client, err := notify.NewClientWithTracing(*conf.HTTPConfig, Integration)
 	if err != nil {
 		return nil, err
