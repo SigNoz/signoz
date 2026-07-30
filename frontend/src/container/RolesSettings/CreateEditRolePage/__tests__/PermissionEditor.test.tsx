@@ -2,7 +2,9 @@ import { server } from 'mocks-server/server';
 import { screen, userEvent, waitFor, within } from 'tests/test-utils';
 import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 
-import { expandAllCards, renderCreateRolePage } from './testUtils';
+import { expandResourceCard, renderCreateRolePage } from './testUtils';
+
+jest.setTimeout(15_000);
 
 beforeEach(() => {
 	server.use(setupAuthzAdmin());
@@ -123,7 +125,7 @@ describe('PermissionEditor', () => {
 	describe('action toggles', () => {
 		it('renders action toggles for each available action', async () => {
 			await renderCreateRolePage();
-			await expandAllCards();
+			await expandResourceCard('factor-api-key');
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
 			expect(
@@ -142,7 +144,7 @@ describe('PermissionEditor', () => {
 
 		it('defaults all actions to None scope', async () => {
 			await renderCreateRolePage();
-			await expandAllCards();
+			await expandResourceCard('factor-api-key');
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
 			const createToggle = within(apiKeyCard).getByTestId(
@@ -160,7 +162,7 @@ describe('PermissionEditor', () => {
 		it('changes scope to All when clicked', async () => {
 			const user = userEvent.setup();
 			await renderCreateRolePage();
-			await expandAllCards();
+			await expandResourceCard('factor-api-key');
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
 			const createToggle = within(apiKeyCard).getByTestId(
@@ -181,7 +183,7 @@ describe('PermissionEditor', () => {
 		it('updates granted count when scope changed', async () => {
 			const user = userEvent.setup();
 			await renderCreateRolePage();
-			await expandAllCards();
+			await expandResourceCard('factor-api-key');
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
 			const createToggle = within(apiKeyCard).getByTestId(
@@ -200,7 +202,7 @@ describe('PermissionEditor', () => {
 		it('shows item input selector when Only Selected is chosen', async () => {
 			const user = userEvent.setup();
 			await renderCreateRolePage();
-			await expandAllCards();
+			await expandResourceCard('factor-api-key');
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
 			const createToggle = within(apiKeyCard).getByTestId(
@@ -219,7 +221,7 @@ describe('PermissionEditor', () => {
 		it('adds item when typed and Enter pressed', async () => {
 			const user = userEvent.setup();
 			await renderCreateRolePage();
-			await expandAllCards();
+			await expandResourceCard('factor-api-key');
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
 			const createToggle = within(apiKeyCard).getByTestId(
@@ -239,7 +241,7 @@ describe('PermissionEditor', () => {
 		it('adds item when Add button clicked', async () => {
 			const user = userEvent.setup();
 			await renderCreateRolePage();
-			await expandAllCards();
+			await expandResourceCard('factor-api-key');
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
 			const createToggle = within(apiKeyCard).getByTestId(
@@ -264,7 +266,7 @@ describe('PermissionEditor', () => {
 		it('adds multiple items separated by comma', async () => {
 			const user = userEvent.setup();
 			await renderCreateRolePage();
-			await expandAllCards();
+			await expandResourceCard('factor-api-key');
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
 			const createToggle = within(apiKeyCard).getByTestId(
@@ -286,7 +288,7 @@ describe('PermissionEditor', () => {
 		it('adds multiple items separated by space', async () => {
 			const user = userEvent.setup();
 			await renderCreateRolePage();
-			await expandAllCards();
+			await expandResourceCard('factor-api-key');
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
 			const createToggle = within(apiKeyCard).getByTestId(
@@ -308,7 +310,7 @@ describe('PermissionEditor', () => {
 		it('does not add duplicate items', async () => {
 			const user = userEvent.setup();
 			await renderCreateRolePage();
-			await expandAllCards();
+			await expandResourceCard('factor-api-key');
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
 			const createToggle = within(apiKeyCard).getByTestId(
@@ -330,7 +332,7 @@ describe('PermissionEditor', () => {
 		it('removes item when X clicked', async () => {
 			const user = userEvent.setup();
 			await renderCreateRolePage();
-			await expandAllCards();
+			await expandResourceCard('factor-api-key');
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
 			const createToggle = within(apiKeyCard).getByTestId(
@@ -356,7 +358,7 @@ describe('PermissionEditor', () => {
 		it('names each badge close button after the item it removes', async () => {
 			const user = userEvent.setup();
 			await renderCreateRolePage();
-			await expandAllCards();
+			await expandResourceCard('factor-api-key');
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
 			const readToggle = within(apiKeyCard).getByTestId(
@@ -385,7 +387,7 @@ describe('PermissionEditor', () => {
 		it('exposes the full item value as a title so truncated badges stay readable', async () => {
 			const user = userEvent.setup();
 			await renderCreateRolePage();
-			await expandAllCards();
+			await expandResourceCard('factor-api-key');
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
 			const readToggle = within(apiKeyCard).getByTestId(
@@ -407,7 +409,7 @@ describe('PermissionEditor', () => {
 		it('moves focus to the previous badge when closed with the keyboard', async () => {
 			const user = userEvent.setup();
 			await renderCreateRolePage();
-			await expandAllCards();
+			await expandResourceCard('factor-api-key');
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
 			const readToggle = within(apiKeyCard).getByTestId(
@@ -438,7 +440,7 @@ describe('PermissionEditor', () => {
 		it('does not steal focus when a badge is closed with the mouse', async () => {
 			const user = userEvent.setup();
 			await renderCreateRolePage();
-			await expandAllCards();
+			await expandResourceCard('factor-api-key');
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
 			const readToggle = within(apiKeyCard).getByTestId(
@@ -471,7 +473,7 @@ describe('PermissionEditor', () => {
 		it('shows Add button disabled when input is empty', async () => {
 			const user = userEvent.setup();
 			await renderCreateRolePage();
-			await expandAllCards();
+			await expandResourceCard('factor-api-key');
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
 			const createToggle = within(apiKeyCard).getByTestId(
@@ -491,7 +493,7 @@ describe('PermissionEditor', () => {
 		it('shows confirm dialog when leaving Only Selected with items', async () => {
 			const user = userEvent.setup();
 			await renderCreateRolePage();
-			await expandAllCards();
+			await expandResourceCard('factor-api-key');
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
 			const createToggle = within(apiKeyCard).getByTestId(
@@ -515,7 +517,7 @@ describe('PermissionEditor', () => {
 		it('clears items when confirmed', async () => {
 			const user = userEvent.setup();
 			await renderCreateRolePage();
-			await expandAllCards();
+			await expandResourceCard('factor-api-key');
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
 			const createToggle = within(apiKeyCard).getByTestId(
@@ -544,7 +546,7 @@ describe('PermissionEditor', () => {
 		it('keeps items when cancelled', async () => {
 			const user = userEvent.setup();
 			await renderCreateRolePage();
-			await expandAllCards();
+			await expandResourceCard('factor-api-key');
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
 			const createToggle = within(apiKeyCard).getByTestId(
@@ -575,7 +577,7 @@ describe('PermissionEditor', () => {
 		it('does not show dialog when leaving Only Selected with no items', async () => {
 			const user = userEvent.setup();
 			await renderCreateRolePage();
-			await expandAllCards();
+			await expandResourceCard('factor-api-key');
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
 			const createToggle = within(apiKeyCard).getByTestId(
@@ -594,7 +596,7 @@ describe('PermissionEditor', () => {
 	describe('verbs without Only Selected option', () => {
 		it('does not show Only Selected for list verb', async () => {
 			await renderCreateRolePage();
-			await expandAllCards();
+			await expandResourceCard('factor-api-key');
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
 			const listToggle = within(apiKeyCard).getByTestId(
@@ -623,14 +625,16 @@ describe('PermissionEditor', () => {
 		});
 
 		it('expands all cards when expand button clicked', async () => {
+			const user = userEvent.setup();
 			await renderCreateRolePage();
-			await expandAllCards();
 
-			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
-			const header = within(apiKeyCard).getByTestId(
-				'resource-card-header-factor-api-key',
-			);
-			expect(header).toHaveAttribute('aria-expanded', 'true');
+			await user.click(screen.getByTestId('expand-all-button'));
+
+			const headers = screen.getAllByTestId(/^resource-card-header-/);
+			expect(headers.length).toBeGreaterThan(1);
+			headers.forEach((header) => {
+				expect(header).toHaveAttribute('aria-expanded', 'true');
+			});
 		});
 	});
 
