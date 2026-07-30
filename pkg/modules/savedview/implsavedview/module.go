@@ -50,7 +50,7 @@ func (module *module) GetView(ctx context.Context, orgID string, uuid valuer.UUI
 	var view savedviewtypes.StorableSavedView
 	err := module.sqlstore.BunDB().NewSelect().Model(&view).Where("org_id = ? AND id = ?", orgID, uuid.StringValue()).Scan(ctx)
 	if err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error in getting saved view")
+		return nil, module.sqlstore.WrapNotFoundErrf(err, savedviewtypes.ErrCodeSavedViewNotFound, "saved view %s not found", uuid.StringValue())
 	}
 
 	return savedviewtypes.NewGettableSavedViewFromStorable(&view), nil
