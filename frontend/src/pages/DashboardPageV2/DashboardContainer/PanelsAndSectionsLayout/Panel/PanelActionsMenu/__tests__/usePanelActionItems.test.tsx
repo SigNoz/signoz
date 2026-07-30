@@ -240,7 +240,10 @@ describe('usePanelActionItems', () => {
 			(i) => 'key' in i && i.key === 'edit-panel',
 		);
 		(edit as { onClick: () => void }).onClick();
-		expect(mockOpenEditor).toHaveBeenCalledWith('panel-1');
+		// The panel rides along so its saved query lands in the editor URL.
+		expect(mockOpenEditor).toHaveBeenCalledWith('panel-1', {
+			panel: mockPanel,
+		});
 	});
 
 	it('"Move to section" offers a single "Dashboard (root)" target', () => {

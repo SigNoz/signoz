@@ -8,8 +8,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
-import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
-import { fromPerses } from 'pages/DashboardPageV2/DashboardContainer/queryV5/persesQueryAdapters';
+import { getPanelBuilderQuery } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/getPanelBuilderQuery';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { clearViewPanelHandoff } from '../ViewPanelModal/viewPanelHandoffStore';
@@ -17,7 +16,7 @@ import { clearViewPanelHandoff } from '../ViewPanelModal/viewPanelHandoffStore';
 export interface UseViewPanelApi {
 	/** Panel id currently expanded in the View modal; null when none is open. */
 	expandedPanelId: string | null;
-	/** Open the View modal on the saved panel (clears any leftover in-modal query/kind). */
+	/** Open the View modal on the saved panel, its query carried in `compositeQuery`. */
 	openView: (panelId: string, panel: DashboardtypesPanelDTO) => void;
 	/**
 	 * Open the View modal pre-seeded with a drilldown query + kind, persisted in the URL so it
@@ -34,8 +33,8 @@ export interface UseViewPanelApi {
 
 /**
  * Drives the panel View modal off the URL (V1 parity): `expandedWidgetId` holds the open
- * panel, and a drilldown additionally seeds `compositeQuery` + `graphType`. URL-backed state
- * is shareable, survives refresh, and the browser back-button closes it.
+ * panel and `compositeQuery` the query it opens on, which a drilldown retargets along with
+ * `graphType`. URL-backed state is shareable, survives refresh, and browser Back closes it.
  */
 export function useViewPanel(): UseViewPanelApi {
 	const { safeNavigate } = useSafeNavigate();
@@ -50,20 +49,18 @@ export function useViewPanel(): UseViewPanelApi {
 			// Copy before mutating: useUrlQuery returns a memoized instance.
 			const next = new URLSearchParams(urlQuery);
 			next.set(QueryParams.expandedWidgetId, panelId);
-			// Drop leftover in-modal query/kind + the editor's handoff so a plain View opens
-			// on the saved panel, not stale state the modal would otherwise hydrate from.
-			next.delete(QueryParams.compositeQuery);
+			// Only a drilldown retargets the panel type.
 			next.delete(QueryParams.graphType);
 			clearViewPanelHandoff();
-			// Before the modal mounts: its builder fields seed themselves on mount, so a
-			// later swap leaves them on the previously-viewed panel. Must be `resetQuery`
-			// — replacing one staged id with another re-anchors global time
-			// (`useSyncTimeOnStagedQueryChange`) and refetches the whole grid.
-			const v1Query = fromPerses(
-				panel.spec.queries,
-				PANEL_KIND_TO_PANEL_TYPE[panel.spec.plugin.kind],
+			const query = getPanelBuilderQuery(panel);
+			next.set(
+				QueryParams.compositeQuery,
+				encodeURIComponent(JSON.stringify(query)),
 			);
-			resetQuery(v1Query);
+			// The provider applies the URL in an effect, a tick after the builder's fields have
+			// mounted and read the query they keep. `resetQuery` — not `initQueryBuilderData`:
+			// swapping one staged id for another re-anchors global time and refetches the grid.
+			resetQuery(query);
 			void logEvent(DashboardDetailEvents.PanelViewed, { panelId });
 			safeNavigate(`${pathname}?${next.toString()}`);
 		},

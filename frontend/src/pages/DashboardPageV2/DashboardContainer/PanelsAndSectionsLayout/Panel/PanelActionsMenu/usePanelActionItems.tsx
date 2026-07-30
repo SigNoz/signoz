@@ -139,7 +139,7 @@ export function usePanelActionItems({
 				label: label('Edit panel'),
 				icon: <PenLine size={14} />,
 				disabled: isLocked,
-				onClick: (): void => openPanelEditor(panelId),
+				onClick: (): void => openPanelEditor(panelId, { panel }),
 			});
 		}
 		if (canEdit && canEditWidget && panelCapabilities.clone) {

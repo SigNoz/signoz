@@ -1,8 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { fromPerses } from 'pages/DashboardPageV2/DashboardContainer/queryV5/persesQueryAdapters';
@@ -116,6 +117,10 @@ function ModalBody({ panelId }: { panelId: string }): JSX.Element {
 	return <div data-testid="modal-body" />;
 }
 
+function SearchProbe(): JSX.Element {
+	return <div data-testid="search">{useLocation().search}</div>;
+}
+
 function StagedQueryProbe(): null {
 	const { stagedQuery } = useQueryBuilder();
 	if (stagedIds.at(-1) !== stagedQuery?.id) {
@@ -173,6 +178,7 @@ function Harness(): JSX.Element {
 				close
 			</button>
 			<StagedQueryProbe />
+			<SearchProbe />
 			{expandedPanelId && <ModalBody panelId={expandedPanelId} />}
 		</>
 	);
@@ -210,6 +216,21 @@ describe('useViewPanel', () => {
 
 		expect(renders.length).toBeGreaterThan(0);
 		expect(renders.every((r) => r.current === 'B')).toBe(true);
+	});
+
+	it("carries the opened panel's query in the URL", async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		renderHarness();
+
+		await user.click(screen.getByTestId('open-b'));
+
+		const search = new URLSearchParams(
+			screen.getByTestId('search').textContent ?? '',
+		);
+		expect(search.get(QueryParams.expandedWidgetId)).toBe('B');
+		const carried = search.get(QueryParams.compositeQuery);
+		expect(panelOf(decodeURIComponent(carried as string))).toBe('B');
+		expect(search.get(QueryParams.graphType)).toBeNull();
 	});
 
 	// The edit session commits any staged query on mount, so a staged query left over
