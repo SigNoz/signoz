@@ -151,7 +151,9 @@ describe('JsonEditor', () => {
 			);
 			await user.click(await within(readToggle).findByText('Only selected'));
 
-			const input = screen.getByTestId('item-input-selector-input');
+			const input = screen.getByTestId(
+				'item-input-selector-input-factor-api-key-read',
+			);
 			await user.type(input, 'test-key-123{enter}');
 
 			await switchToJsonMode();
