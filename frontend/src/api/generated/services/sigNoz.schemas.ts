@@ -8953,16 +8953,16 @@ export enum SavedviewtypesPanelTypeDTO {
 	trace = 'trace',
 }
 export interface SavedviewtypesSavedViewSpecDTO {
-	display?: SavedviewtypesDisplayDTO;
+	display: SavedviewtypesDisplayDTO;
 	panelType: SavedviewtypesPanelTypeDTO;
-	/**
-	 * @type array,null
-	 */
-	queries: Querybuildertypesv5QueryEnvelopeDTO[] | null;
 	/**
 	 * @type array
 	 */
-	selectedFields?: TelemetrytypesTelemetryFieldKeyDTO[];
+	queries: Querybuildertypesv5QueryEnvelopeDTO[];
+	/**
+	 * @type array
+	 */
+	selectedFields: TelemetrytypesTelemetryFieldKeyDTO[];
 }
 
 export interface SavedviewtypesGettableSavedViewDTO {

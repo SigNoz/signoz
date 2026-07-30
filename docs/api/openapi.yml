@@ -7908,7 +7908,6 @@ components:
         queries:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelope'
-          nullable: true
           type: array
         selectedFields:
           items:
@@ -7917,6 +7916,8 @@ components:
       required:
       - panelType
       - queries
+      - selectedFields
+      - display
       type: object
     SavedviewtypesSourcePage:
       enum:
