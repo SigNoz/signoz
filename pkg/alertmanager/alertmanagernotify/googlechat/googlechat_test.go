@@ -123,18 +123,26 @@ func cardBody(t *testing.T, m Message) string {
 	return b.String()
 }
 
-// cardButtons returns the buttons of the first buttonList widget.
+// cardButtons returns all buttons across every buttonList widget in the card.
 func cardButtons(t *testing.T, m Message) []button {
 	t.Helper()
 	require.NotEmpty(t, m.CardsV2)
+	var buttons []button
 	for _, s := range m.CardsV2[0].Card.Sections {
 		for _, w := range s.Widgets {
 			if w.ButtonList != nil {
-				return w.ButtonList.Buttons
+				buttons = append(buttons, w.ButtonList.Buttons...)
 			}
 		}
 	}
-	return nil
+	return buttons
+}
+
+// cardSectionCount returns the number of sections in the card.
+func cardSectionCount(t *testing.T, m Message) int {
+	t.Helper()
+	require.NotEmpty(t, m.CardsV2)
+	return len(m.CardsV2[0].Card.Sections)
 }
 
 func TestGoogleChatNilHTTPConfig(t *testing.T) {
@@ -366,7 +374,8 @@ func TestGoogleChatLinkButtons(t *testing.T) {
 				StartsAt:    time.Now(),
 				EndsAt:      time.Now().Add(time.Minute),
 			}}}
-			n := newTestNotifier(t, server.URL, "T", "")
+			// Non-empty body so the alert section (which carries related buttons) exists.
+			n := newTestNotifier(t, server.URL, "T", "an alert")
 			_, err := n.Notify(newTestContext(), alerts...)
 			require.NoError(t, err)
 
@@ -377,6 +386,93 @@ func TestGoogleChatLinkButtons(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGoogleChatMultiAlertSections(t *testing.T) {
+	var got Message
+	server := captureServer(t, &got)
+	defer server.Close()
+
+	// A per-alert custom body template yields one card section per alert, each
+	// with that alert's own related-link buttons, plus one shared SigNoz button.
+	mkAlert := func(pod, logs string) *types.Alert {
+		return &types.Alert{Alert: model.Alert{
+			Labels: model.LabelSet{
+				"alertname":               "X",
+				"pod":                     model.LabelValue(pod),
+				ruletypes.LabelRuleSource: "https://signoz.example/alerts/1",
+			},
+			Annotations: model.LabelSet{
+				ruletypes.AnnotationBodyTemplate: "an alert fired",
+				ruletypes.AnnotationRelatedLogs:  model.LabelValue(logs),
+			},
+			StartsAt: time.Now(),
+			EndsAt:   time.Now().Add(time.Minute),
+		}}
+	}
+	alerts := []*types.Alert{
+		mkAlert("pod-1", "https://signoz.example/logs?pod=pod-1"),
+		mkAlert("pod-2", "https://signoz.example/logs?pod=pod-2"),
+	}
+	n := newTestNotifier(t, server.URL, "T", "default body")
+	_, err := n.Notify(newTestContext(), alerts...)
+	require.NoError(t, err)
+
+	// banner + one section per alert + shared SigNoz footer.
+	require.Equal(t, 4, cardSectionCount(t, got))
+
+	sigNoz := 0
+	logsURLs := map[string]bool{}
+	for _, b := range cardButtons(t, got) {
+		switch b.Text {
+		case "Open in SigNoz":
+			sigNoz++
+		case "View Related Logs":
+			logsURLs[b.OnClick.OpenLink.URL] = true
+		}
+	}
+	require.Equal(t, 1, sigNoz, "SigNoz button must appear once (shared, per-rule)")
+	require.True(t, logsURLs["https://signoz.example/logs?pod=pod-1"], "pod-1's logs button")
+	require.True(t, logsURLs["https://signoz.example/logs?pod=pod-2"], "pod-2's logs button")
+}
+
+func TestGoogleChatSectionCap(t *testing.T) {
+	var got Message
+	server := captureServer(t, &got)
+	defer server.Close()
+
+	// 35 grouped alerts (custom body → per-alert bodies) exceed the 30 cap.
+	const total = 35
+	alerts := make([]*types.Alert, 0, total)
+	for range total {
+		alerts = append(alerts, &types.Alert{Alert: model.Alert{
+			Labels: model.LabelSet{
+				"alertname":               "X",
+				ruletypes.LabelRuleSource: "https://signoz.example/alerts/1",
+			},
+			Annotations: model.LabelSet{ruletypes.AnnotationBodyTemplate: "an alert fired"},
+			StartsAt:    time.Now(),
+			EndsAt:      time.Now().Add(time.Minute),
+		}})
+	}
+	n := newTestNotifier(t, server.URL, "T", "default body")
+	_, err := n.Notify(newTestContext(), alerts...)
+	require.NoError(t, err)
+
+	// banner + 30 alert sections + "+N more" note + shared SigNoz footer.
+	require.Equal(t, 1+maxAlertSections+1+1, cardSectionCount(t, got))
+
+	body := cardBody(t, got)
+	require.Contains(t, body, "5 more alerts", "overflow note must state the dropped count")
+
+	// The SigNoz footer must survive after the note (last section).
+	sigNoz := 0
+	for _, b := range cardButtons(t, got) {
+		if b.Text == "Open in SigNoz" {
+			sigNoz++
+		}
+	}
+	require.Equal(t, 1, sigNoz, "SigNoz footer must be present despite the cap")
 }
 
 func TestGoogleChatStatusLine(t *testing.T) {
