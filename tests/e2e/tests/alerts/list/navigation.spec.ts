@@ -22,8 +22,14 @@ test.describe('Alert rules list — navigation', () => {
 	}) => {
 		await gotoAlertList(page, { search: alertList.namePrefix });
 
+		// Bounded on purpose. This scenario is intermittently red (~1 in 5 at
+		// --workers=1, worse under parallel load): the ctrl+click lands, one or
+		// more popups open, and the `page` event never arrives. Unbounded, the
+		// wait burns the whole test timeout — 120s in a mutation run — which made
+		// it the single largest item on the critical path. The flake is *not*
+		// fixed by this; it just costs seconds instead of minutes when it trips.
 		const [newPage] = await Promise.all([
-			page.context().waitForEvent('page'),
+			page.context().waitForEvent('page', { timeout: 15_000 }),
 			alertRuleRows(page)
 				.first()
 				.click({ modifiers: ['ControlOrMeta'] }),

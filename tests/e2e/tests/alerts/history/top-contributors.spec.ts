@@ -22,6 +22,31 @@ test.describe('Alert history — top contributors', () => {
 		}
 	});
 
+	// AS-05 reads the `count/total` text, which a *different* column renders than
+	// the bar does. Dropping the `/ total * 100` scaling from the bar leaves that
+	// text untouched, so the width needs its own assertion. Radix surfaces the
+	// clamped percent as `aria-valuenow`.
+	test('AS-13 contributor bar width is the count as a percentage of the total', async ({
+		authedPage: page,
+		alertHistory,
+	}) => {
+		await gotoAlertHistory(page, alertHistory.ruleId);
+
+		const rows = page
+			.getByTestId('top-contributors-card')
+			.getByTestId('top-contributors-row');
+		await expect(rows).toHaveCount(3);
+
+		// Every SEED-A contributor fired exactly once out of `total`.
+		const percent = String((1 / alertHistory.total) * 100);
+		for (let i = 0; i < 3; i += 1) {
+			await expect(rows.nth(i).getByRole('progressbar')).toHaveAttribute(
+				'aria-valuenow',
+				percent,
+			);
+		}
+	});
+
 	test('AS-06 "View all" button only appears when more than 3 contributors', async ({
 		authedPage: page,
 		alertHistory,

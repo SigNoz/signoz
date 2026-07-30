@@ -242,10 +242,14 @@ export function alertRuleRows(page: Page): Locator {
  * Open the alert-rules list and wait until it has rows. `params` is merged into
  * the query string (`search`, `page`, `orderBy`, …); `limit` defaults to
  * {@link ALERT_LIST_PAGE_SIZE} so row counts are viewport-independent.
+ *
+ * Pass `expectRows: false` for scenarios whose filters are *meant* to match
+ * nothing — the row wait would otherwise fail before the assertion runs.
  */
 export async function gotoAlertList(
 	page: Page,
 	params: Record<string, string> = {},
+	{ expectRows = true }: { expectRows?: boolean } = {},
 ): Promise<void> {
 	const query = new URLSearchParams({
 		limit: String(ALERT_LIST_PAGE_SIZE),
@@ -253,7 +257,9 @@ export async function gotoAlertList(
 	});
 	await page.goto(`${ALERTS_LIST_PATH}?${query.toString()}`);
 	await expect(page.getByTestId('list-alerts-search-input')).toBeVisible();
-	await expect(alertRuleRows(page).first()).toBeVisible();
+	if (expectRows) {
+		await expect(alertRuleRows(page).first()).toBeVisible();
+	}
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

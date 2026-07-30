@@ -71,4 +71,43 @@ test.describe('Alert rules list — search', () => {
 
 		await expectFirstPage(page);
 	});
+
+	test('LR-19 state and severity filters intersect, they do not union', async ({
+		authedPage: page,
+		alertList,
+	}) => {
+		const perSeverity = alertList.count / SEED_B_SEVERITIES.length;
+		const scoped = { search: alertList.namePrefix };
+
+		// One filter kind: a third of the batch.
+		await gotoAlertList(page, {
+			...scoped,
+			alertRulesFilters: JSON.stringify(['severity:warning']),
+		});
+		await expect(alertRuleRows(page)).toHaveCount(perSeverity);
+		for (const row of await alertRuleRows(page).all()) {
+			await expect(row).toContainText('warning');
+		}
+
+		// Both kinds, both satisfied — seeded rules never fire, so they sit in
+		// `inactive`. The intersection is unchanged.
+		await gotoAlertList(page, {
+			...scoped,
+			alertRulesFilters: JSON.stringify(['severity:warning', 'state:inactive']),
+		});
+		await expect(alertRuleRows(page)).toHaveCount(perSeverity);
+
+		// Both kinds, only one satisfied. Under AND this is empty; under OR the
+		// severity match alone would still surface all `perSeverity` rules.
+		await gotoAlertList(
+			page,
+			{
+				...scoped,
+				alertRulesFilters: JSON.stringify(['severity:warning', 'state:firing']),
+			},
+			{ expectRows: false },
+		);
+		await expect(alertRuleRows(page)).toHaveCount(0);
+		await expect(page.getByText('No matching alert rules')).toBeVisible();
+	});
 });
