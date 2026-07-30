@@ -1,7 +1,9 @@
-import getLocalStorageApi from 'api/browser/localstorage/get';
-import removeLocalStorageApi from 'api/browser/localstorage/remove';
-import setLocalStorageApi from 'api/browser/localstorage/set';
+import get from 'api/browser/localstorage/get';
+import remove from 'api/browser/localstorage/remove';
+import set from 'api/browser/localstorage/set';
 import { LOCALSTORAGE } from 'constants/localStorage';
+
+import { parseSpanInput } from './testPayload';
 
 export const SAMPLE_SPAN_JSON = `{
   "attributes": {
@@ -17,17 +19,35 @@ export const SAMPLE_SPAN_JSON = `{
   }
 }`;
 
-export function getStoredSpanInput(): string {
-	const stored = getLocalStorageApi(
-		LOCALSTORAGE.LLM_ATTRIBUTE_MAPPING_TEST_SPAN,
+function hasNoSpanData(input: string): boolean {
+	let span;
+	try {
+		span = parseSpanInput(input);
+	} catch {
+		return false;
+	}
+	return (
+		Object.keys(span.attributes ?? {}).length === 0 &&
+		Object.keys(span.resource ?? {}).length === 0
 	);
-	return stored?.trim() ? stored : SAMPLE_SPAN_JSON;
+}
+
+export function getStoredSpanInput(): string {
+	const stored = get(LOCALSTORAGE.LLM_ATTRIBUTE_MAPPING_TEST_SPAN);
+	if (!stored?.trim() || hasNoSpanData(stored)) {
+		return SAMPLE_SPAN_JSON;
+	}
+	return stored;
 }
 
 export function setStoredSpanInput(value: string): void {
-	if (!value.trim()) {
-		removeLocalStorageApi(LOCALSTORAGE.LLM_ATTRIBUTE_MAPPING_TEST_SPAN);
+	if (!value.trim() || hasNoSpanData(value)) {
+		remove(LOCALSTORAGE.LLM_ATTRIBUTE_MAPPING_TEST_SPAN);
 		return;
 	}
-	setLocalStorageApi(LOCALSTORAGE.LLM_ATTRIBUTE_MAPPING_TEST_SPAN, value);
+	set(LOCALSTORAGE.LLM_ATTRIBUTE_MAPPING_TEST_SPAN, value);
+}
+
+export function clearStoredSpanInput(): void {
+	remove(LOCALSTORAGE.LLM_ATTRIBUTE_MAPPING_TEST_SPAN);
 }

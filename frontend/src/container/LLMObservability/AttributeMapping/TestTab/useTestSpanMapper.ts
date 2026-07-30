@@ -5,10 +5,15 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import { useTestSpanMappers } from 'api/generated/services/spanmapper';
 import { AxiosError } from 'axios';
-import useDebounce from 'hooks/useDebounce';
+import { debounce } from 'lodash-es';
 
 import { buildTestRequest, parseSpanInput } from './testPayload';
-import { getStoredSpanInput, setStoredSpanInput } from './spanInputStorage';
+import {
+	clearStoredSpanInput,
+	getStoredSpanInput,
+	SAMPLE_SPAN_JSON,
+	setStoredSpanInput,
+} from './spanInputStorage';
 import { DraftGroup } from '../types';
 
 export type TestTabAttributes = Record<string, unknown>;
@@ -29,6 +34,8 @@ export interface UseTestSpanMapper {
 	setInput: (value: string) => void;
 	run: () => void;
 	reset: () => void;
+	resetToTemplate: () => void;
+	isTemplateInput: boolean;
 	isRunning: boolean;
 	validationError: string | null;
 	result: SpantypesSpanMapperTestSpanDTO[] | null;
@@ -41,7 +48,7 @@ export function useTestSpanMapper(
 	snapshot: DraftGroup[],
 	draft: DraftGroup[],
 ): UseTestSpanMapper {
-	const [input, setInput] = useState<string>(getStoredSpanInput);
+	const [input, setInputValue] = useState<string>(getStoredSpanInput);
 	const [error, setError] = useState<string | null>(null);
 	const [result, setResult] = useState<SpantypesSpanMapperTestSpanDTO[] | null>(
 		null,
@@ -54,12 +61,25 @@ export function useTestSpanMapper(
 
 	const { mutate, isLoading } = useTestSpanMappers();
 
-	const debouncedInput = useDebounce(input, PERSIST_DEBOUNCE_MS);
-	useEffect((): void => {
-		if (debouncedInput !== getStoredSpanInput()) {
-			setStoredSpanInput(debouncedInput);
-		}
-	}, [debouncedInput]);
+	const persistInput = useMemo(
+		() => debounce(setStoredSpanInput, PERSIST_DEBOUNCE_MS),
+		[],
+	);
+
+	useEffect(
+		() => (): void => {
+			persistInput.flush();
+		},
+		[persistInput],
+	);
+
+	const setInput = useCallback(
+		(value: string): void => {
+			setInputValue(value);
+			persistInput(value);
+		},
+		[persistInput],
+	);
 
 	const validationError = useMemo((): string | null => {
 		try {
@@ -76,6 +96,15 @@ export function useTestSpanMapper(
 		setTestedAttributes(null);
 		setTestedResource(null);
 	}, []);
+
+	const resetToTemplate = useCallback((): void => {
+		persistInput.cancel();
+		clearStoredSpanInput();
+		setInputValue(SAMPLE_SPAN_JSON);
+		reset();
+	}, [persistInput, reset]);
+
+	const isTemplateInput = input.trim() === SAMPLE_SPAN_JSON;
 
 	const run = useCallback((): void => {
 		reset();
@@ -114,6 +143,8 @@ export function useTestSpanMapper(
 		setInput,
 		run,
 		reset,
+		resetToTemplate,
+		isTemplateInput,
 		isRunning: isLoading,
 		validationError,
 		result,

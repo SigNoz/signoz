@@ -19,8 +19,6 @@ const TEST_TAB_KEY = 'test';
 function LLMObservabilityAttributeMapping(): JSX.Element {
 	const editor = useAttributeMappingEditor();
 	const groupDrawer = useGroupFormDrawer();
-	// Owned here, not inside TestTab: the tabs unmount their inactive panel, so
-	// state living in TestTab would be wiped on every tab switch.
 	const spanTest = useTestSpanMapper(editor.snapshot, editor.groups);
 
 	const { discard } = editor;
