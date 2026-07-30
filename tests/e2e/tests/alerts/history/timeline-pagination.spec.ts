@@ -158,6 +158,9 @@ test.describe('Alert history — timeline pagination', () => {
 		await expect(timelineRows(page)).toHaveCount(
 			alertHistory.total - TIMELINE_PAGE_SIZE,
 		);
+		await expect(timelineFooterRange(page)).toHaveText(
+			`${TIMELINE_PAGE_SIZE + 1} — ${alertHistory.total} of ${alertHistory.total}`,
+		);
 		const pageTwo = await timelineRowLabels(page);
 
 		const union = new Set([...pageOne, ...pageTwo]);
