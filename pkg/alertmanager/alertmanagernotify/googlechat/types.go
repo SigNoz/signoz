@@ -86,8 +86,9 @@ type openLink struct {
 	URL string `json:"url"`
 }
 
-// content holds the rendered title and the per-alert HTML bodies for a Google
-// Chat message. bodies is positionally aligned with the alerts slice.
+// content holds the rendered title and the HTML bodies for a Google Chat message.
+// bodies is per-alert (positionally aligned with the alerts slice) for a custom
+// body template, but a single combined entry for the default template.
 type content struct {
 	title  string
 	bodies []string
