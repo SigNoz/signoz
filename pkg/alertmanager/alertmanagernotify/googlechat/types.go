@@ -14,6 +14,12 @@ const (
 	// maxMessageBytes is the Google Chat message payload limit.
 	// https://developers.google.com/chat/api/guides/message-formats/basic#maximum_size
 	maxMessageBytes = 32000
+	// maxAlertSections caps per-alert sections in a grouped card. Google Chat
+	// allows 100 widgets per card and silently drops the section that crosses
+	// that count and every section after it, so we cap well under the limit
+	// (~63 widgets worst case) and add a "+N more" note for the overflow.
+	// https://developers.google.com/workspace/chat/api/reference/rpc/google.apps.card.v1#card
+	maxAlertSections = 30
 )
 
 // Notifier implements notify.Notifier for Google Chat.
@@ -80,7 +86,10 @@ type openLink struct {
 	URL string `json:"url"`
 }
 
-// content holds the rendered title and body for a Google Chat message.
+// content holds the rendered title and the HTML bodies for a Google Chat message.
+// bodies is per-alert (positionally aligned with the alerts slice) for a custom
+// body template, but a single combined entry for the default template.
 type content struct {
-	title, body string
+	title  string
+	bodies []string
 }
