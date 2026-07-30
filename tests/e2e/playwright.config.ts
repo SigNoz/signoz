@@ -1,15 +1,36 @@
 import { defineConfig, devices } from '@playwright/test';
 import dotenv from 'dotenv';
+import fs from 'fs';
 import path from 'path';
 
-// .env holds user-provided defaults (staging creds).
-// .env.local is written by tests/e2e/bootstrap/setup.py when the pytest
-// lifecycle brings the backend up locally; override=true so local-backend
-// coordinates win over any stale .env values. Subprocess-injected env
-// (e.g. when pytest shells out to `pnpm test`) still takes priority —
-// dotenv doesn't touch vars that are already set in process.env.
-dotenv.config({ path: path.resolve(__dirname, '.env') });
-dotenv.config({ path: path.resolve(__dirname, '.env.local'), override: true });
+// Precedence, lowest to highest:
+//   .env        — user-provided defaults (staging creds)
+//   .env.local  — written by tests/e2e/bootstrap/setup.py when the pytest
+//                 lifecycle brings the backend up locally, so it must win over
+//                 any stale .env value
+//   the real environment — anything the caller exported on purpose, e.g.
+//                 `SIGNOZ_E2E_BASE_URL=http://127.0.0.1:3301 pnpm test` to run
+//                 against a locally served frontend, or the vars pytest injects
+//                 when it shells out to `pnpm test`.
+//
+// This is deliberately *not* `dotenv.config({ override: true })`: that flag
+// makes the file beat process.env, so an exported SIGNOZ_E2E_BASE_URL was
+// silently discarded and every run went to whatever .env.local pointed at.
+// Parsing by hand is the only way to get ".env.local beats .env" without also
+// getting ".env.local beats the caller".
+const exported = new Set(Object.keys(process.env));
+for (const file of ['.env', '.env.local']) {
+	const filePath = path.resolve(__dirname, file);
+	if (!fs.existsSync(filePath)) {
+		continue;
+	}
+	const parsed = dotenv.parse(fs.readFileSync(filePath));
+	for (const [key, value] of Object.entries(parsed)) {
+		if (!exported.has(key)) {
+			process.env[key] = value;
+		}
+	}
+}
 
 export default defineConfig({
 	testDir: './tests',

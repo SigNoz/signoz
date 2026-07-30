@@ -1,89 +1,11 @@
-import {
-	test as base,
-	expect,
-	type Browser,
-	type BrowserContext,
-	type Page,
-} from '@playwright/test';
+import { test as base, expect, type Page } from '@playwright/test';
 
-export type User = { email: string; password: string };
+import { ADMIN, storageStateFor, type User } from '../helpers/auth';
 
-// Default user — admin from the pytest bootstrap (.env.local) or staging .env.
-export const ADMIN: User = {
-	email: process.env.SIGNOZ_E2E_USERNAME!,
-	password: process.env.SIGNOZ_E2E_PASSWORD!,
-};
-
-// Per-worker storageState cache. One login per unique user per worker.
-// Promise-valued so concurrent requests share the same in-flight work.
-// Held in memory only — no .auth/ dir, no JSON on disk.
-type StorageState = Awaited<ReturnType<BrowserContext['storageState']>>;
-const storageByUser = new Map<string, Promise<StorageState>>();
-
-async function storageFor(browser: Browser, user: User): Promise<StorageState> {
-	const cached = storageByUser.get(user.email);
-	if (cached) {
-		return cached;
-	}
-
-	const task = (async () => {
-		const ctx = await browser.newContext();
-		const page = await ctx.newPage();
-		await login(page, user);
-		await pinSidenav(page);
-		const state = await ctx.storageState();
-		await ctx.close();
-		return state;
-	})();
-
-	storageByUser.set(user.email, task);
-	return task;
-}
-
-async function login(page: Page, user: User): Promise<void> {
-	if (!user.email || !user.password) {
-		throw new Error(
-			'User credentials missing. Set SIGNOZ_E2E_USERNAME / SIGNOZ_E2E_PASSWORD ' +
-				'(pytest bootstrap writes them to .env.local), or pass a User via test.use({ user: ... }).',
-		);
-	}
-	await page.goto('/login?password=Y');
-	await page.getByTestId('email').fill(user.email);
-	await page.getByTestId('initiate_login').click();
-	await page.getByTestId('password').fill(user.password);
-	await page.getByRole('button', { name: 'Sign in with Password' }).click();
-	// Post-login lands somewhere different depending on whether the org is
-	// licensed (onboarding flow on ENTERPRISE) or not (legacy "Hello there"
-	// welcome). Wait for URL to move off /login — whichever page follows
-	// is fine, each spec navigates to the feature under test anyway.
-	await page.waitForURL((url) => !url.pathname.startsWith('/login'));
-}
-
-// Pin the nav suite-wide: unpinned it flies out on hover and overlays content.
-// Server-side pref, so set once per user at login.
-async function pinSidenav(page: Page): Promise<void> {
-	const token = await page.evaluate(
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		() => (globalThis as any).localStorage.getItem('AUTH_TOKEN') || '',
-	);
-	const res = await page.request.put('/api/v1/user/preferences/sidenav_pinned', {
-		data: { value: true },
-		headers: { Authorization: `Bearer ${token}` },
-	});
-	if (!res.ok()) {
-		const text = await res.text();
-		// Two workers logging in at the same moment both insert the preference and
-		// the loser gets a 500 on `uq_user_preference_name_user_id`. The write it
-		// lost to set the same value, so the preference *is* pinned — treat the
-		// duplicate as success rather than failing an unrelated test.
-		if (text.includes('uq_user_preference_name_user_id')) {
-			return;
-		}
-		throw new Error(
-			`PUT /api/v1/user/preferences/sidenav_pinned ${res.status()}: ${text}`,
-		);
-	}
-}
+// The login flow and the per-worker session cache live in `helpers/auth.ts` so
+// worker-scoped fixtures and suite hooks share one login with this fixture.
+export { ADMIN };
+export type { User };
 
 export const test = base.extend<{
 	/**
@@ -103,7 +25,7 @@ export const test = base.extend<{
 	user: [ADMIN, { option: true }],
 
 	authedPage: async ({ browser, user }, use) => {
-		const storageState = await storageFor(browser, user);
+		const storageState = await storageStateFor(browser, user);
 		const ctx = await browser.newContext({ storageState });
 		const page = await ctx.newPage();
 		// Opt-in CPU throttling to reproduce GitHub-Linux-runner conditions on
