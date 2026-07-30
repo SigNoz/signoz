@@ -19,7 +19,7 @@ describe('PermissionDeniedCallout', () => {
 	it('renders multiple denied permissions', () => {
 		const deniedPermissions = [
 			buildPermission('read', buildObjectString('serviceaccount', '*')),
-			buildPermission('update', buildObjectString('role', 'admin')),
+			buildPermission('update', buildObjectString<'update'>('role', 'admin')),
 		];
 		render(<PermissionDeniedCallout deniedPermissions={deniedPermissions} />);
 

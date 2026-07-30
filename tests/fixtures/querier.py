@@ -199,6 +199,59 @@ def make_query_request(
     )
 
 
+def make_preview_query_request(
+    signoz: types.SigNoz,
+    token: str,
+    start_ms: int,
+    end_ms: int,
+    queries: list[dict],
+    *,
+    request_type: str = RequestType.TIME_SERIES,
+    format_options: dict | None = None,
+    variables: dict | None = None,
+    verbose: bool = True,
+    timeout: int = QUERY_TIMEOUT,
+) -> requests.Response:
+    """Dry-run the same payload as make_query_request against /query_range/preview.
+    Verbose (the default) renders the underlying ClickHouse statement per query."""
+    if format_options is None:
+        format_options = {"formatTableResultForUI": False, "fillGaps": False}
+
+    payload = {
+        "schemaVersion": "v1",
+        "start": start_ms,
+        "end": end_ms,
+        "requestType": request_type,
+        "compositeQuery": {"queries": queries},
+        "formatOptions": format_options,
+    }
+    if variables:
+        payload["variables"] = variables
+
+    return requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range/preview"),
+        params={"verbose": str(verbose).lower()},
+        timeout=timeout,
+        headers={"authorization": f"Bearer {token}"},
+        json=payload,
+    )
+
+
+def get_preview_statements(response: requests.Response, name: str) -> list[dict[str, Any]]:
+    """The rendered statements for the named query in a preview response."""
+    assert response.status_code == HTTPStatus.OK, response.text
+    preview = response.json()["data"]["compositeQuery"][name]
+    assert preview["valid"], f"preview for query {name} is invalid: {preview['error']}"
+    return preview["statements"]
+
+
+def get_preview_sql(response: requests.Response, name: str) -> str:
+    """The single rendered ClickHouse statement for the named query in a preview response."""
+    statements = get_preview_statements(response, name)
+    assert len(statements) == 1, f"expected 1 statement for query {name}, got {len(statements)}"
+    return statements[0]["db.statement.query"]
+
+
 def aligned_epoch(ago: timedelta, step_seconds: int = DEFAULT_STEP_INTERVAL) -> int:
     """Epoch seconds for `now - ago`, floored to a step boundary so seeded
     points land exactly on the query's toStartOfInterval buckets."""

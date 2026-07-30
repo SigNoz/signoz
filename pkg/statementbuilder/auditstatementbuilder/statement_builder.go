@@ -205,7 +205,7 @@ func (b *auditQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[st
 	}
 
 	for _, action := range actions {
-		b.logger.InfoContext(ctx, "key adjustment action", slog.String("action", action))
+		b.logger.DebugContext(ctx, "key adjustment action", slog.String("action", action))
 	}
 
 	return query
