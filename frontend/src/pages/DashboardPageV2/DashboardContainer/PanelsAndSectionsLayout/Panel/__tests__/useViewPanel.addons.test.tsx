@@ -226,7 +226,7 @@ const renderHarness = (): void => {
 // the field values these never recover from a context swap that lands after mount.
 describe('View modal, builder add-on rows', () => {
 	it('shows the opened panel add-ons, not the previous panel ones', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup({ pointerEventsCheck: 0, delay: null });
 		renderHarness();
 
 		await user.click(screen.getByTestId('open-grouped'));
@@ -240,7 +240,7 @@ describe('View modal, builder add-on rows', () => {
 	});
 
 	it('shows add-ons the opened panel has after a panel without them', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup({ pointerEventsCheck: 0, delay: null });
 		renderHarness();
 
 		await user.click(screen.getByTestId('open-plain'));
