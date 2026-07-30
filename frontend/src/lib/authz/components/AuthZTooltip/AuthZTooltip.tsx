@@ -75,10 +75,12 @@ function AuthZTooltip({
 		return children;
 	}
 
+	const childTestId = (children.props as { testId?: string }).testId;
+
 	return (
 		<TooltipProvider>
 			<TooltipRoot>
-				<TooltipTrigger asChild>
+				<TooltipTrigger asChild testId={childTestId}>
 					{cloneElement(children, {
 						disabled: true,
 						style: DISABLED_STYLE,
