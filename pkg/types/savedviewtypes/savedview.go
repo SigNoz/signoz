@@ -6,6 +6,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
@@ -111,6 +112,11 @@ func NewStorableSavedView(orgID string, createdBy string, updatedBy string, view
 }
 
 func NewGettableSavedViewFromStorable(view *StorableSavedView) *GettableSavedView {
+	data := view.Data
+	if data.Spec.SelectedFields == nil {
+		data.Spec.SelectedFields = []telemetrytypes.TelemetryFieldKey{}
+	}
+
 	return &GettableSavedView{
 		ID:            view.ID,
 		Name:          view.Name,
@@ -119,7 +125,7 @@ func NewGettableSavedViewFromStorable(view *StorableSavedView) *GettableSavedVie
 		UpdatedAt:     view.UpdatedAt,
 		UpdatedBy:     view.UpdatedBy,
 		SourcePage:    view.SourcePage,
-		SavedViewData: view.Data,
+		SavedViewData: data,
 	}
 }
 

@@ -10,20 +10,23 @@ import (
 // SavedViewSchemaVersion is the only schemaVersion currently.
 const SavedViewSchemaVersion = "v2"
 
-// Display holds view-rendering preferences.
+// Display holds view-rendering preferences. Fields are always serialized
+// (no omitempty) so a zero value in a response can't be confused with an
+// omitted key -- e.g. an explicit maxLines:0 must round-trip as 0, not
+// silently disappear.
 type Display struct {
-	MaxLines int    `json:"maxLines,omitempty"`
-	FontSize string `json:"fontSize,omitempty"`
-	Format   string `json:"format,omitempty"`
-	Color    string `json:"color,omitempty"`
+	MaxLines int    `json:"maxLines"`
+	FontSize string `json:"fontSize"`
+	Format   string `json:"format"`
+	Color    string `json:"color"`
 }
 
 // SavedViewSpec is the typed content of a saved view, mirroring the dashboardtypes v2 spec pattern.
 type SavedViewSpec struct {
 	PanelType      PanelType                          `json:"panelType" required:"true"`
-	Queries        []qbtypes.QueryEnvelope            `json:"queries" required:"true"`
-	SelectedFields []telemetrytypes.TelemetryFieldKey `json:"selectedFields,omitempty"`
-	Display        Display                            `json:"display,omitzero"`
+	Queries        []qbtypes.QueryEnvelope            `json:"queries" required:"true" nullable:"false"`
+	SelectedFields []telemetrytypes.TelemetryFieldKey `json:"selectedFields" required:"true" nullable:"false"`
+	Display        Display                            `json:"display" required:"true"`
 }
 
 // SavedViewData is what's persisted as saved view data.

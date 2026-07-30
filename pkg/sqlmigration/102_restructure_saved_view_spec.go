@@ -27,16 +27,14 @@ func (migration *restructureSavedViewSpec) Register(migrations *migrate.Migratio
 }
 
 // legacySavedViewCompositeQuery is the bare shape saved_views.data held
-// before this migration -- just the composite query, no schemaVersion/spec
-// envelope. Queries is kept as raw JSON since the migration only needs to
-// relocate it, not interpret it.
+// before this migration -- just the relevant fields of composite query.
+// Queries is kept as raw JSON since the migration only needs to relocate it, not interpret it.
 type legacySavedViewCompositeQuery struct {
 	PanelType string          `json:"panelType"`
 	Queries   json.RawMessage `json:"queries"`
 }
 
-// legacySavedViewExtraData mirrors the frontend's ad hoc extraData JSON shape
-// (frontend/src/container/ExplorerOptions/ExplorerOptions.tsx).
+// legacySavedViewExtraData mirrors the frontend defined extraData JSON shape.
 type legacySavedViewExtraData struct {
 	Color         string          `json:"color,omitempty"`
 	SelectColumns json.RawMessage `json:"selectColumns,omitempty"`
@@ -46,17 +44,17 @@ type legacySavedViewExtraData struct {
 }
 
 type savedViewDisplay struct {
-	MaxLines int    `json:"maxLines,omitempty"`
-	FontSize string `json:"fontSize,omitempty"`
-	Format   string `json:"format,omitempty"`
-	Color    string `json:"color,omitempty"`
+	MaxLines int    `json:"maxLines"`
+	FontSize string `json:"fontSize"`
+	Format   string `json:"format"`
+	Color    string `json:"color"`
 }
 
 type savedViewSpec struct {
 	PanelType      string           `json:"panelType"`
 	Queries        json.RawMessage  `json:"queries"`
-	SelectedFields json.RawMessage  `json:"selectedFields,omitempty"`
-	Display        savedViewDisplay `json:"display,omitzero"`
+	SelectedFields json.RawMessage  `json:"selectedFields"`
+	Display        savedViewDisplay `json:"display"`
 }
 
 type savedViewData struct {
@@ -88,13 +86,13 @@ func (migration *restructureSavedViewSpec) Up(ctx context.Context, db *bun.DB) e
 	for _, savedView := range savedViews {
 		var compositeQuery legacySavedViewCompositeQuery
 		if err := json.Unmarshal([]byte(savedView.Data), &compositeQuery); err != nil {
-			continue // invalid/empty JSON -- leave the row alone rather than fail the whole migration
+			continue // skip the row on error rather than fail the whole migration
 		}
 
 		var extraData legacySavedViewExtraData
 		if savedView.ExtraData != "" {
-			// Best-effort: malformed/older extraData shapes never fail the
-			// migration, they just leave selectedFields/display empty.
+			// best-effort: malformed/older extraData shapes never fail the migration,
+			// they just leave selectedFields/display empty.
 			_ = json.Unmarshal([]byte(savedView.ExtraData), &extraData)
 		}
 
