@@ -15,6 +15,43 @@ var (
 	ErrCodeSavedViewNotFound     = errors.MustNewCode("saved_view_not_found")
 )
 
+type GettableSavedView struct {
+	ID         valuer.UUID `json:"id" required:"true"`
+	Name       string      `json:"name" required:"true"`
+	CreatedAt  time.Time   `json:"createdAt" required:"true"`
+	CreatedBy  string      `json:"createdBy" required:"true"`
+	UpdatedAt  time.Time   `json:"updatedAt" required:"true"`
+	UpdatedBy  string      `json:"updatedBy" required:"true"`
+	SourcePage SourcePage  `json:"sourcePage" required:"true"`
+	SavedViewData
+}
+
+type PostableSavedView struct {
+	Name       string     `json:"name" required:"true"`
+	SourcePage SourcePage `json:"sourcePage" required:"true"`
+	SavedViewData
+}
+
+type UpdatableSavedView = PostableSavedView
+
+type ListSavedViewsParams struct {
+	SourcePage SourcePage `query:"sourcePage"`
+	Name       string     `query:"name"`
+}
+
+// StorableSavedView has schemaVersion + spec stored JSON-encoded in Data.
+type StorableSavedView struct {
+	bun.BaseModel `bun:"table:saved_views"`
+
+	types.Identifiable
+	types.TimeAuditable
+	types.UserAuditable
+	OrgID      string        `json:"orgId" bun:"org_id,notnull"`
+	Name       string        `json:"name" bun:"name,type:text,notnull"`
+	SourcePage SourcePage    `json:"sourcePage" bun:"source_page,type:text,notnull"`
+	Data       SavedViewData `json:"data" bun:"data,type:text,notnull"`
+}
+
 type SourcePage struct {
 	valuer.String
 }
@@ -44,25 +81,6 @@ func (s SourcePage) Validate() error {
 	}
 }
 
-type GettableSavedView struct {
-	ID         valuer.UUID `json:"id" required:"true"`
-	Name       string      `json:"name" required:"true"`
-	CreatedAt  time.Time   `json:"createdAt" required:"true"`
-	CreatedBy  string      `json:"createdBy" required:"true"`
-	UpdatedAt  time.Time   `json:"updatedAt" required:"true"`
-	UpdatedBy  string      `json:"updatedBy" required:"true"`
-	SourcePage SourcePage  `json:"sourcePage" required:"true"`
-	SavedViewData
-}
-
-type PostableSavedView struct {
-	Name       string     `json:"name" required:"true"`
-	SourcePage SourcePage `json:"sourcePage" required:"true"`
-	SavedViewData
-}
-
-type UpdatableSavedView = PostableSavedView
-
 func (p *PostableSavedView) Validate() error {
 	if err := p.SourcePage.Validate(); err != nil {
 		return err
@@ -71,31 +89,12 @@ func (p *PostableSavedView) Validate() error {
 	return p.SavedViewData.Validate()
 }
 
-type ListSavedViewsParams struct {
-	SourcePage SourcePage `query:"sourcePage"`
-	Name       string     `query:"name"`
-}
-
 func (p *ListSavedViewsParams) Validate() error {
 	if p.SourcePage.IsZero() {
 		return nil
 	}
 
 	return p.SourcePage.Validate()
-}
-
-// StorableSavedView has SavedViewData (schemaVersion + spec) stored
-// JSON-encoded in Data.
-type StorableSavedView struct {
-	bun.BaseModel `bun:"table:saved_views"`
-
-	types.Identifiable
-	types.TimeAuditable
-	types.UserAuditable
-	OrgID      string        `json:"orgId" bun:"org_id,notnull"`
-	Name       string        `json:"name" bun:"name,type:text,notnull"`
-	SourcePage SourcePage    `json:"sourcePage" bun:"source_page,type:text,notnull"`
-	Data       SavedViewData `json:"data" bun:"data,type:text,notnull"`
 }
 
 func NewStorableSavedView(orgID string, createdBy string, updatedBy string, view PostableSavedView) *StorableSavedView {

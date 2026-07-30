@@ -26,9 +26,7 @@ func NewHandler(module savedview.Module) savedview.Handler {
 	return &handler{module: module}
 }
 
-// legacyExtraData mirrors the frontend's ad hoc extraData JSON shape
-// (frontend/src/container/ExplorerOptions/ExplorerOptions.tsx) so /api/v1
-// requests can be losslessly folded into the typed spec, and so /api/v1
+// legacyExtraData mirrors the frontend's extraData JSON shape so /api/v1
 // responses can synthesize the same shape back for the legacy frontend.
 type legacyExtraData struct {
 	Color         string                             `json:"color,omitempty"`
@@ -41,8 +39,7 @@ type legacyExtraData struct {
 func newPostableSavedViewFromLegacyView(v *v3.SavedView) savedviewtypes.PostableSavedView {
 	var legacy legacyExtraData
 	if v.ExtraData != "" {
-		// Best-effort: malformed/older extraData shapes never fail the request,
-		// they just leave selectedFields/display empty.
+		// Best-effort: malformed/older extraData shapes never fail the request
 		_ = json.Unmarshal([]byte(v.ExtraData), &legacy)
 	}
 
