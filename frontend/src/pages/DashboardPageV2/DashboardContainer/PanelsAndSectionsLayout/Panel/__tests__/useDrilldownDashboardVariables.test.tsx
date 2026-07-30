@@ -1,6 +1,6 @@
 import { render, renderHook, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesDynamicVariableSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import type { FilterData } from 'container/QueryTable/Drilldown/drilldownUtils';
 
 import DrilldownDashboardVariablesMenu from '../DrilldownMenu/DrilldownDashboardVariablesMenu';
@@ -19,7 +19,6 @@ let mockSelectionMap: Record<string, { value: unknown; allSelected: boolean }> =
 	{};
 
 const mockSetVariableValue = jest.fn();
-const mockSetUrlValues = jest.fn();
 const mockPatchAsync = jest.fn().mockResolvedValue(undefined);
 
 const DYNAMIC_KIND = 'signoz/DynamicVariable';
@@ -64,19 +63,8 @@ jest.mock(
 	'pages/DashboardPageV2/DashboardContainer/DashboardSettings/Variables/variableFormModel',
 	() => ({
 		emptyVariableFormModel: (): unknown => ({}),
-		DYNAMIC_SIGNAL_ALL: 'all',
 	}),
 );
-jest.mock(
-	'pages/DashboardPageV2/DashboardContainer/VariablesBar/variablesUrlState',
-	() => ({
-		ALL_SELECTED: '__ALL__',
-		variablesUrlParser: { withOptions: (): unknown => ({}) },
-	}),
-);
-jest.mock('nuqs', () => ({
-	useQueryState: (): unknown => [null, mockSetUrlValues],
-}));
 jest.mock('components/OverlayScrollbar/OverlayScrollbar', () => ({
 	__esModule: true,
 	default: ({ children }: { children: React.ReactNode }): JSX.Element => (
@@ -95,7 +83,7 @@ function renderItems(): void {
 	const { result } = renderHook(() =>
 		useDrilldownDashboardVariables({
 			filters,
-			signal: TelemetrytypesSignalDTO.metrics,
+			signal: DashboardtypesDynamicVariableSignalDTO.metrics,
 			onClose: jest.fn(),
 		}),
 	);

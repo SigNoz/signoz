@@ -1,39 +1,50 @@
 import { useCallback } from 'react';
-import { generatePath, useLocation } from 'react-router-dom';
+import { generatePath } from 'react-router-dom';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 
 import type { PanelEditorHandoffState } from '../PanelEditor/panelEditorHandoff';
 import { useDashboardStore } from '../store/useDashboardStore';
-import { withVariablesSearch } from '../VariablesBar/variablesUrlState';
+import { useTimeSearchParams } from './useTimeSearchParams';
+import logEvent from '@/api/common/logEvent';
+import { DashboardDetailEvents } from '../../constants/events';
 
-/**
- * Returns a callback that opens the V2 panel editor by navigating to its full-page route
- * (`/dashboard/:dashboardId/panel/:panelId`). The dashboard id comes from the store, so any
- * caller can open the editor with just the panel id. The `?variables=` selection is carried
- * along (V1 parity) so it survives a refresh of the editor. The optional `handoffState` is
- * passed as router location state — the View modal uses it to hand its drilldown-edited spec
- * off to the editor (view → edit) so the editor opens on those edits rather than the saved
- * panel.
- */
+interface OpenPanelEditorOptions {
+	handoffState?: PanelEditorHandoffState;
+	/** Extra query merged into the editor URL (leading `?` optional). */
+	search?: string;
+}
+
+/** Opens the V2 panel editor, carrying the active time window in the URL. */
 export function useOpenPanelEditor(): (
 	panelId: string,
-	handoffState?: PanelEditorHandoffState,
+	options?: OpenPanelEditorOptions,
 ) => void {
 	const { safeNavigate } = useSafeNavigate();
-	const { search } = useLocation();
+	const timeSearch = useTimeSearchParams();
 	const dashboardId = useDashboardStore((s) => s.dashboardId);
 
 	return useCallback(
-		(panelId: string, handoffState?: PanelEditorHandoffState): void => {
+		(panelId: string, options?: OpenPanelEditorOptions): void => {
+			void logEvent(DashboardDetailEvents.PanelAction, {
+				action: 'edit',
+				panelId,
+				dashboardId,
+			});
+			const path = generatePath(ROUTES.DASHBOARD_PANEL_EDITOR, {
+				dashboardId,
+				panelId,
+			});
+			const params = new URLSearchParams(options?.search);
+			new URLSearchParams(timeSearch).forEach((value, key) => {
+				params.set(key, value);
+			});
+			const search = params.toString();
 			safeNavigate(
-				`${generatePath(ROUTES.DASHBOARD_PANEL_EDITOR, {
-					dashboardId,
-					panelId,
-				})}${withVariablesSearch('', search)}`,
-				handoffState ? { state: handoffState } : undefined,
+				search ? `${path}?${search}` : path,
+				options?.handoffState ? { state: options.handoffState } : undefined,
 			);
 		},
-		[safeNavigate, dashboardId, search],
+		[safeNavigate, dashboardId, timeSearch],
 	);
 }

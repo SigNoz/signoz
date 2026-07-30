@@ -460,6 +460,83 @@ func TestCompile_ComplexExamples(t *testing.T) {
 	})
 }
 
+func TestCompile_FreeText(t *testing.T) {
+	// freeTextSQL is the predicate every free-text query compiles to; only the
+	// bound pattern differs.
+	freeTextSQL := `
+		(
+		lower(COALESCE(json_extract("dashboard"."data", '$.spec.display.name'), '')) LIKE LOWER(?) ESCAPE '\'
+		OR lower(COALESCE(json_extract("dashboard"."data", '$.spec.display.description'), '')) LIKE LOWER(?) ESCAPE '\'
+		OR EXISTS (
+			SELECT 1 FROM tag_relation tr
+			JOIN tag t ON t.id = tr.tag_id
+			WHERE tr.kind = ? AND tr.resource_id = dashboard.id
+			AND (lower(COALESCE(t.key, '')) LIKE LOWER(?) ESCAPE '\' OR lower(COALESCE(t.value, '')) LIKE LOWER(?) ESCAPE '\')
+		))`
+	freeTextArgs := func(pattern string) []any {
+		return []any{pattern, pattern, kindArg, pattern, pattern}
+	}
+
+	runCompileCases(t, []compileCase{
+		{
+			subtestName:       "single bare word",
+			dslQueryToCompile: `payment`,
+			expectedSQL:       freeTextSQL,
+			expectedArgs:      freeTextArgs("%payment%"),
+		},
+		{
+			// consecutive words are implicit-AND per the grammar, so each is its
+			// own term; `"prod payment"` (below) is the way to match the phrase
+			subtestName:       "words are separate terms AND'd together",
+			dslQueryToCompile: `prod payment`,
+			expectedSQL:       "(" + freeTextSQL + " AND " + freeTextSQL + ")",
+			expectedArgs:      append(freeTextArgs("%prod%"), freeTextArgs("%payment%")...),
+		},
+		{
+			subtestName:       "a quoted token matches the whole phrase",
+			dslQueryToCompile: `"prod payment"`,
+			expectedSQL:       freeTextSQL,
+			expectedArgs:      freeTextArgs("%prod payment%"),
+		},
+		{
+			subtestName:       "quoting is the escape hatch for a DSL-like literal",
+			dslQueryToCompile: `"team = prod"`,
+			expectedSQL:       freeTextSQL,
+			expectedArgs:      freeTextArgs("%team = prod%"),
+		},
+		{
+			subtestName:       "LIKE wildcards in the term are escaped to match literally",
+			dslQueryToCompile: `"50%"`,
+			expectedSQL:       freeTextSQL,
+			expectedArgs:      freeTextArgs(`%50\%%`),
+		},
+		{
+			subtestName:       "surrounding whitespace is trimmed",
+			dslQueryToCompile: `   payment   `,
+			expectedSQL:       freeTextSQL,
+			expectedArgs:      freeTextArgs("%payment%"),
+		},
+		{
+			subtestName:       "free-text term composes with a comparison via AND",
+			dslQueryToCompile: `prod AND name CONTAINS 'signoz'`,
+			expectedSQL:       "(" + freeTextSQL + ` AND json_extract("dashboard"."data", '$.spec.display.name') LIKE ? ESCAPE '\')`,
+			expectedArgs:      append(freeTextArgs("%prod%"), "%signoz%"),
+		},
+		{
+			subtestName:       "free-text words compose with a comparison via OR",
+			dslQueryToCompile: `prod payment OR name = 'x'`,
+			expectedSQL:       "((" + freeTextSQL + " AND " + freeTextSQL + `) OR json_extract("dashboard"."data", '$.spec.display.name') = ?)`,
+			expectedArgs:      append(append(freeTextArgs("%prod%"), freeTextArgs("%payment%")...), "x"),
+		},
+		{
+			subtestName:       "NOT negates a free-text term",
+			dslQueryToCompile: `NOT payment`,
+			expectedSQL:       "NOT (" + freeTextSQL + ")",
+			expectedArgs:      freeTextArgs("%payment%"),
+		},
+	})
+}
+
 func TestCompile_Rejections(t *testing.T) {
 	runCompileCases(t, []compileCase{
 		{

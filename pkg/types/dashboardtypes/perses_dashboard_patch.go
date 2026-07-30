@@ -32,9 +32,9 @@ type JSONPatchOperation struct {
 	Op   PatchOp `json:"op" required:"true"`
 	Path string  `json:"path" required:"true" description:"JSON Pointer (RFC 6901) into the dashboard's postable shape — e.g. /spec/display/name, /spec/panels/<id>, /spec/panels/<id>/spec/queries/0, /tags/-."`
 	// `value` is required for add/replace/test.
-	Value any `json:"value,omitempty" description:"Value to add/replace/test against. The expected type depends on the path. Common shapes (see referenced schemas for the exact field set): /spec/panels/<id> takes a DashboardtypesPanel; /spec/panels/<id>/spec/queries/N (or /-) takes a DashboardtypesQuery; /spec/variables/N takes a DashboardtypesVariable; /spec/layouts/N takes a DashboardtypesLayout; /tags/N (or /-) takes a TagtypesPostableTag; /spec/display/name and other leaf string fields take a string. Required for add/replace/test; ignored for remove/move/copy."`
+	Value any `json:"value" description:"Value to add/replace/test against. The expected type depends on the path. Common shapes (see referenced schemas for the exact field set): /spec/panels/<id> takes a DashboardtypesPanel; /spec/panels/<id>/spec/queries/N (or /-) takes a DashboardtypesQuery; /spec/variables/N takes a DashboardtypesVariable; /spec/layouts/N takes a DashboardtypesLayout; /tags/N (or /-) takes a TagtypesPostableTag; /spec/display/name and other leaf string fields take a string. Required for add/replace/test; ignored for remove/move/copy."`
 	// `from` is required for move/copy.
-	From string `json:"from,omitempty" description:"Source JSON Pointer for move/copy ops; ignored for other ops."`
+	From string `json:"from" description:"Source JSON Pointer for move/copy ops; ignored for other ops."`
 }
 
 // PatchOp covers the six RFC 6902 JSON Patch verbs.

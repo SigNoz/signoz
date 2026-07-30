@@ -1,198 +1,117 @@
+import { InframonitoringtypesNodeRecordDTO } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
+import { formatValueForExpression } from 'components/QueryBuilderV2/utils';
 import {
-	createFilterItem,
-	K8sDetailsMetadataConfig,
-} from '../Base/K8sBaseDetails';
-import { QUERY_KEYS } from '../EntityDetailsUtils/utils';
-import { K8sNodeData } from './api';
+	buildEventsExpression,
+	buildLogsTracesExpression,
+} from 'container/InfraMonitoringK8sV2/Base/utils';
 
-export const k8sNodeGetSelectedItemFilters = (
-	selectedItemId: string,
-): TagFilter => {
-	return {
-		op: 'AND',
-		items: [
-			{
-				id: 'k8s_node_name',
-				key: {
-					key: 'k8s_node_name',
-					type: null,
-				},
-				op: '=',
-				value: selectedItemId,
-			},
-		],
-	};
-};
+import { K8sDetailsMetadataConfig } from '../Base/K8sBaseDetails';
+import { INFRA_MONITORING_ATTR_KEYS } from '../constants';
+import { SelectedItemParams } from '../hooks';
 
-export const k8sNodeDetailsMetadataConfig: K8sDetailsMetadataConfig<K8sNodeData>[] =
+export const k8sNodeGetSelectedItemExpression = (
+	params: SelectedItemParams,
+): string =>
+	`${INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME} = ${formatValueForExpression(params.selectedItem ?? '')}`;
+
+export const k8sNodeDetailsMetadataConfig: K8sDetailsMetadataConfig<InframonitoringtypesNodeRecordDTO>[] =
 	[
-		{ label: 'Node Name', getValue: (p): string => p.meta.k8s_node_name },
+		{ label: 'Node Name', getValue: (p): string => p.nodeName || '' },
 		{
 			label: 'Cluster Name',
-			getValue: (p): string => p.meta.k8s_cluster_name,
+			getValue: (p): string =>
+				p.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] || '',
 		},
 	];
 
-export const k8sNodeInitialFilters = [
-	QUERY_KEYS.K8S_NODE_NAME,
-	QUERY_KEYS.K8S_CLUSTER_NAME,
-];
+export const k8sNodeInitialEventsExpression = (
+	item: InframonitoringtypesNodeRecordDTO,
+): string =>
+	buildEventsExpression({
+		objectKind: 'Node',
+		objectName: item.nodeName || '',
+		clusterName: item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME],
+	});
 
-export const k8sNodeInitialEventsFilter = (
-	item: K8sNodeData,
-): ReturnType<typeof createFilterItem>[] => [
-	createFilterItem(QUERY_KEYS.K8S_OBJECT_KIND, 'Node'),
-	createFilterItem(QUERY_KEYS.K8S_OBJECT_NAME, item.meta.k8s_node_name),
-];
+export const k8sNodeInitialLogTracesExpression = (
+	item: InframonitoringtypesNodeRecordDTO,
+): string =>
+	buildLogsTracesExpression({
+		mainAttributeKey: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME,
+		mainAttributeValue: item.nodeName,
+		clusterName: item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME],
+	});
 
-export const k8sNodeInitialLogTracesFilter = (
-	item: K8sNodeData,
-): ReturnType<typeof createFilterItem>[] => [
-	createFilterItem(QUERY_KEYS.K8S_NODE_NAME, item.meta.k8s_node_name),
-	createFilterItem(QUERY_KEYS.K8S_CLUSTER_NAME, item.meta.k8s_cluster_name),
-];
-
-export const k8sNodeGetEntityName = (item: K8sNodeData): string =>
-	item.meta.k8s_node_name;
+export const k8sNodeGetEntityName = (
+	item: InframonitoringtypesNodeRecordDTO,
+): string => item.nodeName || '';
 
 export const nodeWidgetInfo = [
 	{
 		title: 'CPU Usage (cores)',
 		yAxisUnit: '',
+		docPath: '/infrastructure-monitoring/kubernetes/nodes/#cpu-usage-cores',
 	},
 	{
 		title: 'Memory Usage (bytes)',
 		yAxisUnit: 'bytes',
+		docPath: '/infrastructure-monitoring/kubernetes/nodes/#memory-usage-bytes',
 	},
 	{
 		title: 'CPU Usage (%)',
 		yAxisUnit: 'percentunit',
+		docPath: '/infrastructure-monitoring/kubernetes/nodes/#cpu-usage-',
 	},
 	{
 		title: 'Memory Usage (%)',
 		yAxisUnit: 'percentunit',
+		docPath: '/infrastructure-monitoring/kubernetes/nodes/#memory-usage-',
 	},
 	{
 		title: 'Pods by CPU (top 10)',
 		yAxisUnit: '',
+		docPath: '/infrastructure-monitoring/kubernetes/nodes/#pods-by-cpu-top-10',
 	},
 	{
 		title: 'Pods by Memory (top 10)',
 		yAxisUnit: 'bytes',
+		docPath: '/infrastructure-monitoring/kubernetes/nodes/#pods-by-memory-top-10',
 	},
 	{
 		title: 'Network error count',
 		yAxisUnit: '',
+		docPath: '/infrastructure-monitoring/kubernetes/nodes/#network-error-count',
 	},
 	{
 		title: 'Network IO rate',
 		yAxisUnit: 'binBps',
+		docPath: '/infrastructure-monitoring/kubernetes/nodes/#network-io-rate',
 	},
 	{
 		title: 'Filesystem usage (bytes)',
 		yAxisUnit: 'bytes',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/nodes/#filesystem-usage-bytes',
 	},
 	{
 		title: 'Filesystem usage (%)',
 		yAxisUnit: 'percentunit',
+		docPath: '/infrastructure-monitoring/kubernetes/nodes/#filesystem-usage-',
 	},
 ];
 
 export const getNodeMetricsQueryPayload = (
-	node: K8sNodeData,
+	node: InframonitoringtypesNodeRecordDTO,
 	start: number,
 	end: number,
-	dotMetricsEnabled: boolean,
 ): GetQueryResultsProps[] => {
-	const getKey = (dotKey: string, underscoreKey: string): string =>
-		dotMetricsEnabled ? dotKey : underscoreKey;
-	const k8sNodeCpuUtilizationKey = getKey(
-		'k8s.node.cpu.usage',
-		'k8s_node_cpu_usage',
-	);
-
-	const k8sNodeAllocatableCpuKey = getKey(
-		'k8s.node.allocatable_cpu',
-		'k8s_node_allocatable_cpu',
-	);
-
-	const k8sContainerCpuRequestKey = getKey(
-		'k8s.container.cpu_request',
-		'k8s_container_cpu_request',
-	);
-
-	const k8sNodeMemoryUsageKey = getKey(
-		'k8s.node.memory.usage',
-		'k8s_node_memory_usage',
-	);
-
-	const k8sNodeAllocatableMemoryKey = getKey(
-		'k8s.node.allocatable_memory',
-		'k8s_node_allocatable_memory',
-	);
-
-	const k8sContainerMemoryRequestKey = getKey(
-		'k8s.container.memory_request',
-		'k8s_container_memory_request',
-	);
-
-	const k8sNodeMemoryWorkingSetKey = getKey(
-		'k8s.node.memory.working_set',
-		'k8s_node_memory_working_set',
-	);
-
-	const k8sNodeMemoryRssKey = getKey(
-		'k8s.node.memory.rss',
-		'k8s_node_memory_rss',
-	);
-
-	const k8sPodCpuUtilizationKey = getKey(
-		'k8s.pod.cpu.usage',
-		'k8s_pod_cpu_usage',
-	);
-
-	const k8sPodMemoryUsageKey = getKey(
-		'k8s.pod.memory.usage',
-		'k8s_pod_memory_usage',
-	);
-
-	const k8sNodeNetworkErrorsKey = getKey(
-		'k8s.node.network.errors',
-		'k8s_node_network_errors',
-	);
-
-	const k8sNodeNetworkIoKey = getKey(
-		'k8s.node.network.io',
-		'k8s_node_network_io',
-	);
-
-	const k8sNodeFilesystemUsageKey = getKey(
-		'k8s.node.filesystem.usage',
-		'k8s_node_filesystem_usage',
-	);
-
-	const k8sNodeFilesystemCapacityKey = getKey(
-		'k8s.node.filesystem.capacity',
-		'k8s_node_filesystem_capacity',
-	);
-
-	const k8sNodeFilesystemAvailableKey = getKey(
-		'k8s.node.filesystem.available',
-		'k8s_node_filesystem_available',
-	);
-
-	const k8sNodeNameKey = getKey('k8s.node.name', 'k8s_node_name');
-
-	const k8sPodNameKey = getKey('k8s.pod.name', 'k8s_pod_name');
-
 	return [
 		{
 			selectedTime: 'GLOBAL_TIME',
@@ -204,7 +123,7 @@ export const getNodeMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_node_cpu_usage--float64--Gauge--true',
-								key: k8sNodeCpuUtilizationKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_CPU_USAGE,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -218,11 +137,11 @@ export const getNodeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_node_name--string--tag--false',
-											key: k8sNodeNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME,
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -243,7 +162,7 @@ export const getNodeMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_node_allocatable_cpu--float64--Gauge--true',
-								key: k8sNodeAllocatableCpuKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_ALLOCATABLE_CPU,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'latest',
@@ -257,11 +176,11 @@ export const getNodeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_node_name--string--tag--false',
-											key: k8sNodeNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME,
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -282,7 +201,7 @@ export const getNodeMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_container_cpu_request--float64--Gauge--true',
-								key: k8sContainerCpuRequestKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_CONTAINER_CPU_REQUEST,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'latest',
@@ -296,11 +215,11 @@ export const getNodeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_node_name--string--tag--false',
-											key: k8sNodeNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME,
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -321,7 +240,7 @@ export const getNodeMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_node_cpu_usage--float64--Gauge--true',
-								key: k8sNodeCpuUtilizationKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_CPU_USAGE,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'max',
@@ -335,11 +254,11 @@ export const getNodeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_node_name--string--tag--false',
-											key: k8sNodeNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME,
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -360,7 +279,7 @@ export const getNodeMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_node_cpu_usage--float64--Gauge--true',
-								key: k8sNodeCpuUtilizationKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_CPU_USAGE,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'min',
@@ -374,11 +293,11 @@ export const getNodeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_node_name--string--tag--false',
-											key: k8sNodeNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME,
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -433,7 +352,7 @@ export const getNodeMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_node_memory_usage--float64--Gauge--true',
-								key: k8sNodeMemoryUsageKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_MEMORY_USAGE,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -447,11 +366,11 @@ export const getNodeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_node_name--string--tag--false',
-											key: k8sNodeNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME,
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -472,7 +391,7 @@ export const getNodeMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_node_allocatable_memory--float64--Gauge--true',
-								key: k8sNodeAllocatableMemoryKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_ALLOCATABLE_MEMORY,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'latest',
@@ -486,11 +405,11 @@ export const getNodeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_node_name--string--tag--false',
-											key: k8sNodeNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME,
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -511,7 +430,7 @@ export const getNodeMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_container_memory_request--float64--Gauge--true',
-								key: k8sContainerMemoryRequestKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_CONTAINER_MEMORY_REQUEST,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'latest',
@@ -525,11 +444,11 @@ export const getNodeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_node_name--string--tag--false',
-											key: k8sNodeNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME,
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -550,7 +469,7 @@ export const getNodeMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_node_memory_usage--float64--Gauge--true',
-								key: k8sNodeMemoryUsageKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_MEMORY_USAGE,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'max',
@@ -564,11 +483,11 @@ export const getNodeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_node_name--string--tag--false',
-											key: k8sNodeNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME,
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -589,7 +508,7 @@ export const getNodeMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_node_memory_usage--float64--Gauge--true',
-								key: k8sNodeMemoryUsageKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_MEMORY_USAGE,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'min',
@@ -603,11 +522,11 @@ export const getNodeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_node_name--string--tag--false',
-											key: k8sNodeNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME,
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -628,7 +547,7 @@ export const getNodeMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_node_memory_working_set--float64--Gauge--true',
-								key: k8sNodeMemoryWorkingSetKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_MEMORY_WORKING_SET,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -642,11 +561,11 @@ export const getNodeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_node_name--string--tag--false',
-											key: k8sNodeNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME,
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -667,7 +586,7 @@ export const getNodeMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_node_memory_rss--float64--Gauge--true',
-								key: k8sNodeMemoryRssKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_MEMORY_RSS,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -681,11 +600,11 @@ export const getNodeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_node_name--string--tag--false',
-											key: k8sNodeNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME,
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -740,7 +659,7 @@ export const getNodeMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_node_cpu_usage--float64--Gauge--true',
-								key: k8sNodeCpuUtilizationKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_CPU_USAGE,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -754,11 +673,11 @@ export const getNodeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_node_name--string--tag--false',
-											key: k8sNodeNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME,
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -779,7 +698,7 @@ export const getNodeMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_node_allocatable_cpu--float64--Gauge--true',
-								key: k8sNodeAllocatableCpuKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_ALLOCATABLE_CPU,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'latest',
@@ -793,11 +712,11 @@ export const getNodeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_node_name--string--tag--false',
-											key: k8sNodeNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME,
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -818,7 +737,7 @@ export const getNodeMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_container_cpu_request--float64--Gauge--true',
-								key: k8sContainerCpuRequestKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_CONTAINER_CPU_REQUEST,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'latest',
@@ -832,11 +751,11 @@ export const getNodeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_node_name--string--tag--false',
-											key: k8sNodeNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME,
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -904,7 +823,7 @@ export const getNodeMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_node_memory_usage--float64--Gauge--true',
-								key: k8sNodeMemoryUsageKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_MEMORY_USAGE,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -918,11 +837,11 @@ export const getNodeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_node_name--string--tag--false',
-											key: k8sNodeNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME,
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -943,7 +862,7 @@ export const getNodeMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_node_allocatable_memory--float64--Gauge--true',
-								key: k8sNodeAllocatableMemoryKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_ALLOCATABLE_MEMORY,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'latest',
@@ -957,11 +876,11 @@ export const getNodeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_node_name--string--tag--false',
-											key: k8sNodeNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME,
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -982,7 +901,7 @@ export const getNodeMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_container_memory_request--float64--Gauge--true',
-								key: k8sContainerMemoryRequestKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_CONTAINER_MEMORY_REQUEST,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'latest',
@@ -996,11 +915,11 @@ export const getNodeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_node_name--string--tag--false',
-											key: k8sNodeNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME,
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -1068,7 +987,7 @@ export const getNodeMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_cpu_usage--float64--Gauge--true',
-								key: k8sPodCpuUtilizationKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_USAGE,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -1082,11 +1001,11 @@ export const getNodeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_node_name--string--tag--false',
-											key: k8sNodeNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME,
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -1096,12 +1015,12 @@ export const getNodeMetricsQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'k8s_pod_name--string--tag--false',
-									key: k8sPodNameKey,
+									key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME,
 									type: 'tag',
 								},
 							],
 							having: [],
-							legend: `{{${k8sPodNameKey}}}`,
+							legend: `{{${INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME}}}`,
 							limit: 10,
 							orderBy: [],
 							queryName: 'A',
@@ -1148,7 +1067,7 @@ export const getNodeMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_memory_usage--float64--Gauge--true',
-								key: k8sPodMemoryUsageKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_MEMORY_USAGE,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -1162,11 +1081,11 @@ export const getNodeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_node_name--string--tag--false',
-											key: k8sNodeNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME,
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -1176,12 +1095,12 @@ export const getNodeMetricsQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'k8s_pod_name--string--tag--false',
-									key: k8sPodNameKey,
+									key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME,
 									type: 'tag',
 								},
 							],
 							having: [],
-							legend: `{{${k8sPodNameKey}}}`,
+							legend: `{{${INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME}}}`,
 							limit: 10,
 							orderBy: [],
 							queryName: 'A',
@@ -1228,7 +1147,7 @@ export const getNodeMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_node_network_errors--float64--Sum--true',
-								key: k8sNodeNetworkErrorsKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NETWORK_ERRORS,
 								type: 'Sum',
 							},
 							aggregateOperator: 'increase',
@@ -1242,11 +1161,11 @@ export const getNodeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_node_name--string--tag--false',
-											key: k8sNodeNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME,
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -1314,7 +1233,7 @@ export const getNodeMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_node_network_io--float64--Sum--true',
-								key: k8sNodeNetworkIoKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NETWORK_IO,
 								type: 'Sum',
 							},
 							aggregateOperator: 'rate',
@@ -1328,11 +1247,11 @@ export const getNodeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_node_name--string--tag--false',
-											key: k8sNodeNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME,
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -1400,7 +1319,7 @@ export const getNodeMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_node_filesystem_usage--float64--Gauge--true',
-								key: k8sNodeFilesystemUsageKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_FILESYSTEM_USAGE,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -1414,11 +1333,11 @@ export const getNodeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_node_name--string--tag--false',
-											key: k8sNodeNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME,
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -1439,7 +1358,7 @@ export const getNodeMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_node_filesystem_capacity--float64--Gauge--true',
-								key: k8sNodeFilesystemCapacityKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_FILESYSTEM_CAPACITY,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -1453,11 +1372,11 @@ export const getNodeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_node_name--string--tag--false',
-											key: k8sNodeNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME,
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -1478,7 +1397,7 @@ export const getNodeMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_node_filesystem_available--float64--Gauge--true',
-								key: k8sNodeFilesystemAvailableKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_FILESYSTEM_AVAILABLE,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -1492,11 +1411,11 @@ export const getNodeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_node_name--string--tag--false',
-											key: k8sNodeNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME,
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -1551,7 +1470,7 @@ export const getNodeMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_node_filesystem_usage--float64--Gauge--true',
-								key: k8sNodeFilesystemUsageKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_FILESYSTEM_USAGE,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -1565,11 +1484,11 @@ export const getNodeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_node_name--string--tag--false',
-											key: k8sNodeNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME,
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',
@@ -1590,7 +1509,7 @@ export const getNodeMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_node_filesystem_capacity--float64--Gauge--true',
-								key: k8sNodeFilesystemCapacityKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_FILESYSTEM_CAPACITY,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -1604,11 +1523,11 @@ export const getNodeMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_node_name--string--tag--false',
-											key: k8sNodeNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME,
 											type: 'tag',
 										},
 										op: '=',
-										value: node.meta.k8s_node_name,
+										value: node.nodeName,
 									},
 								],
 								op: 'AND',

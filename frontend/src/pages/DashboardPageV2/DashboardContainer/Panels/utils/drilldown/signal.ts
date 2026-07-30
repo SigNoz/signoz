@@ -1,4 +1,7 @@
-import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	DashboardtypesDynamicVariableSignalDTO,
+	TelemetrytypesSignalDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import type { BuilderQuery } from 'types/api/v5/queryRange';
 
 /**
@@ -15,5 +18,25 @@ export function resolveDrilldownSignal(
 			return TelemetrytypesSignalDTO.traces;
 		default:
 			return TelemetrytypesSignalDTO.metrics;
+	}
+}
+
+/**
+ * Maps a clicked query's telemetry signal to a dynamic-variable signal (used
+ * when a drilldown seeds a new variable). Concrete signals map 1:1; an unset
+ * signal (no active drilldown) falls back to `all`.
+ */
+export function dynamicSignalFromQuerySignal(
+	signal?: TelemetrytypesSignalDTO,
+): DashboardtypesDynamicVariableSignalDTO {
+	switch (signal) {
+		case TelemetrytypesSignalDTO.traces:
+			return DashboardtypesDynamicVariableSignalDTO.traces;
+		case TelemetrytypesSignalDTO.logs:
+			return DashboardtypesDynamicVariableSignalDTO.logs;
+		case TelemetrytypesSignalDTO.metrics:
+			return DashboardtypesDynamicVariableSignalDTO.metrics;
+		default:
+			return DashboardtypesDynamicVariableSignalDTO.all;
 	}
 }

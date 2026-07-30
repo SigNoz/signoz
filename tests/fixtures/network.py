@@ -1,3 +1,5 @@
+import time
+
 import docker
 import docker.errors
 import pytest
@@ -23,12 +25,37 @@ def network(request: pytest.FixtureRequest, pytestconfig: pytest.Config) -> type
     def delete(nw: types.Network):
         client = docker.from_env()
         try:
-            client.networks.get(network_id=nw.id).remove()
+            network = client.networks.get(network_id=nw.id)
         except docker.errors.NotFound:
             logger.info(
                 "Skipping removal of Network, Network(%s) not found. Maybe it was manually removed?",
                 {"name": nw.name, "id": nw.id},
             )
+            return
+
+        # Docker detaches endpoints asynchronously, so the network can briefly
+        # report "has active endpoints" after its containers are gone. Retry,
+        # force-disconnecting any stragglers.
+        last_err: docker.errors.APIError | None = None
+        for _ in range(10):
+            try:
+                network.remove()
+                return
+            except docker.errors.NotFound:
+                return
+            except docker.errors.APIError as err:
+                if "has active endpoints" not in str(err):
+                    raise
+                last_err = err
+                network.reload()
+                for container_id in network.attrs.get("Containers") or {}:
+                    try:
+                        network.disconnect(container_id, force=True)
+                    except docker.errors.APIError:
+                        pass
+                time.sleep(1)
+
+        raise last_err
 
     def restore(existing: dict) -> types.Network:
         client = docker.from_env()

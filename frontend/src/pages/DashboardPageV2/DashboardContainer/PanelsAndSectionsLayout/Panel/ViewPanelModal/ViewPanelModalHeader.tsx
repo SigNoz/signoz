@@ -13,6 +13,7 @@ import type { PanelKind } from 'pages/DashboardPageV2/DashboardContainer/Panels/
 import type { EQueryType } from 'types/common/dashboard';
 
 import styles from './ViewPanelModal.module.scss';
+import { useDashboardStore } from 'pages/DashboardPageV2/DashboardContainer/store/useDashboardStore';
 
 interface ViewPanelModalHeaderProps {
 	selectedInterval: Time | CustomTimeType;
@@ -64,6 +65,10 @@ function ViewPanelModalHeader({
 	// Same capabilities-guarded options as the editor's PanelTypeSwitcher, so the two
 	// selectors disable the same kinds (e.g. List under PromQL, metrics-only kinds).
 	const panelTypeItems = usePanelTypeSelectItems({ queryType, signal });
+	const canEditDashboard = useDashboardStore((s) => s.canEditDashboard);
+	const isLocked = useDashboardStore((s) => s.isLocked);
+
+	const canSwitchToEdit = canEditDashboard && !isLocked;
 
 	return (
 		<div className={styles.toolbar}>
@@ -75,15 +80,17 @@ function ViewPanelModalHeader({
 					onChange={onChangePanelKind}
 				/>
 			</div>
-			<Button
-				variant="outlined"
-				color="secondary"
-				prefix={<PenLine />}
-				onClick={onSwitchToEdit}
-				data-testid="view-panel-switch-to-edit"
-			>
-				Switch to Edit Mode
-			</Button>
+			{canSwitchToEdit && (
+				<Button
+					variant="outlined"
+					color="secondary"
+					prefix={<PenLine />}
+					onClick={onSwitchToEdit}
+					data-testid="view-panel-switch-to-edit"
+				>
+					Switch to Edit Mode
+				</Button>
+			)}
 			<Button
 				variant="link"
 				color="primary"
@@ -106,8 +113,8 @@ function ViewPanelModalHeader({
 				/>
 				<Button
 					size="icon"
-					variant="solid"
-					color="primary"
+					variant="outlined"
+					color="secondary"
 					onClick={onRefresh}
 					disabled={isFetching}
 					aria-label="Refresh"

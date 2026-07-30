@@ -2,6 +2,10 @@
 import { useSelector } from 'react-redux';
 import { act, renderHook } from '@testing-library/react';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	DASHBOARD_CACHE_TIME,
+	DASHBOARD_CACHE_TIME_ON_REFRESH_ENABLED,
+} from 'constants/queryCacheTime';
 
 import { usePanelQuery } from '../usePanelQuery';
 import { useGetQueryRangeV5 } from '../useGetQueryRangeV5';
@@ -383,15 +387,23 @@ describe('usePanelQuery', () => {
 			expect(result.current.pagination?.canNext).toBe(false);
 		});
 
-		it('drives canNext from the response cursor, not the row count', () => {
-			// Full page but no cursor → backend says these are the last rows.
+		it('drives canNext from the cursor OR a full page (offset fallback for non-timestamp sorts)', () => {
+			// Full page, no cursor → the backend's offset path (a non-timestamp sort skips the
+			// window/cursor path), so a full page is the has-more signal.
 			withResponse(rawResponse(25));
-			const noCursor = renderHook(() =>
+			const fullPage = renderHook(() =>
 				usePanelQuery({ panel: listPanel({}), panelId: 'p1' }),
 			);
-			expect(noCursor.result.current.pagination?.canNext).toBe(false);
+			expect(fullPage.result.current.pagination?.canNext).toBe(true);
 
-			// Cursor present (even on a partial page) → more rows.
+			// Partial page, no cursor → the last page.
+			withResponse(rawResponse(3));
+			const partialPage = renderHook(() =>
+				usePanelQuery({ panel: listPanel({}), panelId: 'p1' }),
+			);
+			expect(partialPage.result.current.pagination?.canNext).toBe(false);
+
+			// Cursor present (even on a partial page) → more rows (timestamp window path).
 			withResponse(rawResponse(3, 'cursor-1'));
 			const withCursor = renderHook(() =>
 				usePanelQuery({ panel: listPanel({}), panelId: 'p1' }),
@@ -430,6 +442,30 @@ describe('usePanelQuery', () => {
 			act(() => result.current.pagination?.setPageSize(0));
 			expect(result.current.pagination?.pageSize).toBe(25);
 			expect(result.current.pagination?.pageIndex).toBe(0);
+		});
+	});
+
+	describe('cacheTime (auto-refresh OOM guard)', () => {
+		const withAutoRefreshDisabled = (disabled: boolean): void => {
+			mockUseSelector.mockImplementation((selector: unknown) =>
+				(selector as (state: { globalTime: unknown }) => unknown)({
+					globalTime: { ...DEFAULT_GLOBAL_TIME, isAutoRefreshDisabled: disabled },
+				}),
+			);
+		};
+
+		it('caches for DASHBOARD_CACHE_TIME when auto-refresh is disabled', () => {
+			withAutoRefreshDisabled(true);
+			renderHook(() => usePanelQuery({ panel: builderPanel(), panelId: 'p1' }));
+			const [{ cacheTime }] = mockUseGetQueryRangeV5.mock.calls[0];
+			expect(cacheTime).toBe(DASHBOARD_CACHE_TIME);
+		});
+
+		it('drops cacheTime to 0 when auto-refresh is enabled', () => {
+			withAutoRefreshDisabled(false);
+			renderHook(() => usePanelQuery({ panel: builderPanel(), panelId: 'p1' }));
+			const [{ cacheTime }] = mockUseGetQueryRangeV5.mock.calls[0];
+			expect(cacheTime).toBe(DASHBOARD_CACHE_TIME_ON_REFRESH_ENABLED);
 		});
 	});
 });

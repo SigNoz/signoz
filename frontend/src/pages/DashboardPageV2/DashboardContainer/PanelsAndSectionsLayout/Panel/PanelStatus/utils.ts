@@ -1,7 +1,11 @@
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
-import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import type {
+	DashboardtypesPanelDTO,
+	Querybuildertypesv5QueryWarnDataDTO as WarningDTO,
+	RenderErrorResponseDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import type { AxiosError } from 'axios';
-import type { Querybuildertypesv5QueryWarnDataDTO as WarningDTO } from 'api/generated/services/sigNoz.schemas';
+import { countEnabledQueries } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/countEnabledQueries';
 
 import type { PanelStatusDetail } from './types';
 
@@ -50,5 +54,27 @@ export function panelStatusFromWarning(
 		messages: (warning.warnings ?? [])
 			.map((w) => w.message)
 			.filter((message): message is string => Boolean(message)),
+	};
+}
+
+/**
+ * A Number panel renders only the first query's value, so more than one enabled
+ * query silently hides the rest. Warns for that case; null otherwise.
+ */
+export function panelStatusFromMultipleEnabledQueries(
+	panel: DashboardtypesPanelDTO,
+): PanelStatusDetail | null {
+	if (panel.spec.plugin.kind !== 'signoz/NumberPanel') {
+		return null;
+	}
+	if (countEnabledQueries(panel.spec.queries) <= 1) {
+		return null;
+	}
+	return {
+		message:
+			'This panel shows a single value, but more than one query is enabled.',
+		messages: [
+			"Disable the queries you don't want to display, keeping only the one whose value you want to show.",
+		],
 	};
 }

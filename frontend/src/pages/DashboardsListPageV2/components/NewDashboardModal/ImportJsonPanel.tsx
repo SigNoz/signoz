@@ -13,7 +13,10 @@ import { createDashboardV2 } from 'api/generated/services/dashboard';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useErrorModal } from 'providers/ErrorModalProvider';
+import { DashboardListEvents } from 'pages/DashboardsListPageV2/constants/events';
 import APIError from 'types/api/error';
+
+import { isValidDashboardImage } from 'pages/DashboardPageV2/DashboardContainer/dashboardIcons';
 
 import { normalizeToPostable } from './importUtils';
 import JsonEditor from './JsonEditor';
@@ -51,6 +54,7 @@ function ImportJsonPanel({ onClose }: Props): JSX.Element {
 				setIsUploadError(false);
 			} catch {
 				setIsUploadError(true);
+				void logEvent(DashboardListEvents.ImportFailed, { reason: 'parse' });
 			}
 		};
 		reader.readAsText(lastFile.originFileObj);
@@ -62,7 +66,20 @@ function ImportJsonPanel({ onClose }: Props): JSX.Element {
 			logEvent('Dashboard List V2: Import and next clicked', {});
 			const parsed = JSON.parse(editorValue) as Record<string, unknown>;
 			const payload = normalizeToPostable(parsed);
+			// Only an icon/logo path or a base64 image is a storable `image`; reject
+			// URLs/markup/other rather than import a value that won't render.
+			if (!isValidDashboardImage(payload.image)) {
+				setIsCreateError(true);
+				void logEvent(DashboardListEvents.ImportFailed, {
+					reason: 'invalid-image',
+				});
+				toast.error(
+					'Dashboard "image" must be an /assets/Icons or /assets/Logos path, or a base64 image',
+				);
+				return;
+			}
 			const response = await createDashboardV2(payload);
+			void logEvent(DashboardListEvents.DashboardCreated, { method: 'import' });
 			onClose();
 			safeNavigate(
 				generatePath(ROUTES.DASHBOARD, { dashboardId: response.data.id }),
@@ -70,6 +87,7 @@ function ImportJsonPanel({ onClose }: Props): JSX.Element {
 		} catch (error) {
 			showErrorModal(error as APIError);
 			setIsCreateError(true);
+			void logEvent(DashboardListEvents.ImportFailed, { reason: 'schema' });
 			toast.error(
 				error instanceof Error ? error.message : t('error_loading_json'),
 			);

@@ -13,6 +13,8 @@ export interface UseGetQueryRangeV5Args {
 	enabled: boolean;
 	/** Retain prior data across a key change (list paging) so the table + pager stay mounted. */
 	keepPreviousData?: boolean;
+	/** Unused-entry TTL; callers drop to 0 under auto-refresh to bound cache growth (V1 parity). */
+	cacheTime?: number;
 }
 
 /**
@@ -46,6 +48,7 @@ export function useGetQueryRangeV5({
 	queryKey,
 	enabled,
 	keepPreviousData,
+	cacheTime,
 }: UseGetQueryRangeV5Args): UseQueryResult<QueryRangeV5200, Error> {
 	return useQuery<QueryRangeV5200, Error>({
 		queryKey,
@@ -53,5 +56,9 @@ export function useGetQueryRangeV5({
 		enabled,
 		retry: retryUnlessClientError,
 		keepPreviousData,
+		cacheTime,
+		// A resolved window is immutable per key, so a panel scrolled back into view
+		// serves cache instead of refetching; a key change or manual refetch still runs.
+		staleTime: Infinity,
 	});
 }

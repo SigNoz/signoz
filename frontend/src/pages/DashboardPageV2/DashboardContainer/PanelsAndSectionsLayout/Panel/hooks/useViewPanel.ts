@@ -1,10 +1,14 @@
 import { useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
+import logEvent from 'api/common/logEvent';
 import { QueryParams } from 'constants/query';
 import type { PANEL_TYPES } from 'constants/queryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
+
+import { clearViewPanelHandoff } from '../ViewPanelModal/viewPanelHandoffStore';
 
 export interface UseViewPanelApi {
 	/** Panel id currently expanded in the View modal; null when none is open. */
@@ -41,10 +45,12 @@ export function useViewPanel(): UseViewPanelApi {
 			// Copy before mutating: useUrlQuery returns a memoized instance.
 			const next = new URLSearchParams(urlQuery);
 			next.set(QueryParams.expandedWidgetId, panelId);
-			// Drop any leftover in-modal query/kind so a plain View opens on the saved
-			// panel, not a stale URL query the modal would otherwise hydrate from.
+			// Drop leftover in-modal query/kind + the editor's handoff so a plain View opens
+			// on the saved panel, not stale state the modal would otherwise hydrate from.
 			next.delete(QueryParams.compositeQuery);
 			next.delete(QueryParams.graphType);
+			clearViewPanelHandoff();
+			void logEvent(DashboardDetailEvents.PanelViewed, { panelId });
 			safeNavigate(`${pathname}?${next.toString()}`);
 		},
 		[pathname, safeNavigate, urlQuery],
@@ -55,6 +61,8 @@ export function useViewPanel(): UseViewPanelApi {
 			const next = new URLSearchParams(urlQuery);
 			next.set(QueryParams.expandedWidgetId, panelId);
 			next.set(QueryParams.graphType, panelType);
+			// A grid drilldown opens on the saved panel, never a stale editor handoff.
+			clearViewPanelHandoff();
 			// Same encoding the query builder uses (see `useGetCompositeQueryParam`): the URL
 			// value is `encodeURIComponent(JSON.stringify(query))`, decoded once on read.
 			next.set(
@@ -73,6 +81,7 @@ export function useViewPanel(): UseViewPanelApi {
 		// (the in-modal query builder writes compositeQuery, V1 parity).
 		next.delete(QueryParams.compositeQuery);
 		next.delete(QueryParams.graphType);
+		clearViewPanelHandoff();
 		const search = next.toString();
 		safeNavigate(search ? `${pathname}?${search}` : pathname);
 	}, [pathname, safeNavigate, urlQuery]);

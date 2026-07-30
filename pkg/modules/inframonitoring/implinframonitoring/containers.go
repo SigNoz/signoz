@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
+	"github.com/SigNoz/signoz/pkg/telemetryschema/metricstelemetryschema"
 	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -208,6 +208,7 @@ func (m *module) getContainersTableMetadata(ctx context.Context, orgID valuer.UU
 // runs the query. The returned counts map is empty (never nil) when gated off.
 func (m *module) getPerGroupContainerStatusCountsWithReqMetricChecks(
 	ctx context.Context,
+	orgID valuer.UUID,
 	start, end int64,
 	filter *qbtypes.Filter,
 	groupBy []qbtypes.GroupByKey,
@@ -237,7 +238,7 @@ func (m *module) getPerGroupContainerStatusCountsWithReqMetricChecks(
 		return map[string]containerStatusCounts{}, warning, nil
 	}
 
-	counts, err := m.getPerGroupContainerStatusCounts(ctx, start, end, filter, groupBy, pageGroups)
+	counts, err := m.getPerGroupContainerStatusCounts(ctx, orgID, start, end, filter, groupBy, pageGroups)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -263,6 +264,7 @@ func (m *module) getPerGroupContainerStatusCountsWithReqMetricChecks(
 // Groups absent from the result map have implicit zero counts (caller default).
 func (m *module) getPerGroupContainerStatusCounts(
 	ctx context.Context,
+	orgID valuer.UUID,
 	start, end int64,
 	filter *qbtypes.Filter,
 	groupBy []qbtypes.GroupByKey,
@@ -279,7 +281,7 @@ func (m *module) getPerGroupContainerStatusCounts(
 	mergedFilterExpr := mergeFilterExpressions(userFilterExpr, buildPageGroupsFilterExpr(pageGroups))
 
 	samplesStartMs, flooredEndMs, tsAdjustedStart, _, localTimeSeriesTable, distributedSamplesTable, _ := alignedMetricWindow(start, end)
-	valueCol := telemetrymetrics.ValueColumnForSamplesTable(distributedSamplesTable)
+	valueCol := metricstelemetryschema.ValueColumnForSamplesTable(distributedSamplesTable)
 
 	// Built once; identical across the two fps CTEs (buildFilterClause hits the
 	// metadata store + parses the expression). AddWhereClause only reads it.
@@ -288,7 +290,7 @@ func (m *module) getPerGroupContainerStatusCounts(
 		err          error
 	)
 	if mergedFilterExpr != "" {
-		filterClause, err = m.buildFilterClause(ctx, &qbtypes.Filter{Expression: mergedFilterExpr}, start, end)
+		filterClause, err = m.buildFilterClause(ctx, orgID, &qbtypes.Filter{Expression: mergedFilterExpr}, start, end)
 		if err != nil {
 			return nil, err
 		}
@@ -308,7 +310,7 @@ func (m *module) getPerGroupContainerStatusCounts(
 		)
 	}
 	stateFps.Select(stateFpsCols...)
-	stateFps.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, localTimeSeriesTable))
+	stateFps.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, localTimeSeriesTable))
 	stateFps.Where(
 		stateFps.E("metric_name", containerStatusStateMetricName),
 		stateFps.GE("unix_milli", tsAdjustedStart),
@@ -340,7 +342,7 @@ func (m *module) getPerGroupContainerStatusCounts(
 	containerState.Select(containerStateCols...)
 	containerState.From(fmt.Sprintf(
 		"%s.%s AS samples INNER JOIN state_fps AS fps ON samples.fingerprint = fps.fingerprint",
-		telemetrymetrics.DBName, distributedSamplesTable,
+		metricstelemetryschema.DBName, distributedSamplesTable,
 	))
 	containerState.Where(
 		containerState.E("samples.metric_name", containerStatusStateMetricName),
@@ -359,7 +361,7 @@ func (m *module) getPerGroupContainerStatusCounts(
 		fmt.Sprintf("JSONExtractString(labels, %s) AS container_name", reasonFps.Var(containerNameAttrKey)),
 		fmt.Sprintf("JSONExtractString(labels, %s) AS reason", reasonFps.Var(containerStatusReasonAttrKey)),
 	)
-	reasonFps.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, localTimeSeriesTable))
+	reasonFps.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, localTimeSeriesTable))
 	reasonFps.Where(
 		reasonFps.E("metric_name", containerStatusReasonMetricName),
 		reasonFps.GE("unix_milli", tsAdjustedStart),
@@ -389,7 +391,7 @@ func (m *module) getPerGroupContainerStatusCounts(
 	)
 	reasonInner.From(fmt.Sprintf(
 		"%s.%s AS samples INNER JOIN reason_fps AS fps ON samples.fingerprint = fps.fingerprint",
-		telemetrymetrics.DBName, distributedSamplesTable,
+		metricstelemetryschema.DBName, distributedSamplesTable,
 	))
 	reasonInner.Where(
 		reasonInner.E("samples.metric_name", containerStatusReasonMetricName),
@@ -527,6 +529,7 @@ func (m *module) getPerGroupContainerStatusCounts(
 // Groups absent from the result map have no data (caller default).
 func (m *module) getPerGroupContainerRestartCounts(
 	ctx context.Context,
+	orgID valuer.UUID,
 	start, end int64,
 	filter *qbtypes.Filter,
 	groupBy []qbtypes.GroupByKey,
@@ -543,14 +546,14 @@ func (m *module) getPerGroupContainerRestartCounts(
 	mergedFilterExpr := mergeFilterExpressions(userFilterExpr, buildPageGroupsFilterExpr(pageGroups))
 
 	samplesStartMs, flooredEndMs, tsAdjustedStart, _, localTimeSeriesTable, distributedSamplesTable, _ := alignedMetricWindow(start, end)
-	valueCol := telemetrymetrics.ValueColumnForSamplesTable(distributedSamplesTable)
+	valueCol := metricstelemetryschema.ValueColumnForSamplesTable(distributedSamplesTable)
 
 	var (
 		filterClause *sqlbuilder.WhereClause
 		err          error
 	)
 	if mergedFilterExpr != "" {
-		filterClause, err = m.buildFilterClause(ctx, &qbtypes.Filter{Expression: mergedFilterExpr}, start, end)
+		filterClause, err = m.buildFilterClause(ctx, orgID, &qbtypes.Filter{Expression: mergedFilterExpr}, start, end)
 		if err != nil {
 			return nil, err
 		}
@@ -569,7 +572,7 @@ func (m *module) getPerGroupContainerRestartCounts(
 		)
 	}
 	restartFps.Select(restartFpsCols...)
-	restartFps.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, localTimeSeriesTable))
+	restartFps.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, localTimeSeriesTable))
 	restartFps.Where(
 		restartFps.E("metric_name", containerRestartsMetricName),
 		restartFps.GE("unix_milli", tsAdjustedStart),
@@ -599,7 +602,7 @@ func (m *module) getPerGroupContainerRestartCounts(
 	containerRestarts.Select(containerRestartsCols...)
 	containerRestarts.From(fmt.Sprintf(
 		"%s.%s AS samples INNER JOIN restart_fps AS fps ON samples.fingerprint = fps.fingerprint",
-		telemetrymetrics.DBName, distributedSamplesTable,
+		metricstelemetryschema.DBName, distributedSamplesTable,
 	))
 	containerRestarts.Where(
 		containerRestarts.E("samples.metric_name", containerRestartsMetricName),
@@ -670,6 +673,7 @@ func (m *module) getPerGroupContainerRestartCounts(
 // Groups absent from the result map have no data (caller default).
 func (m *module) getPerGroupContainerReadyCounts(
 	ctx context.Context,
+	orgID valuer.UUID,
 	start, end int64,
 	filter *qbtypes.Filter,
 	groupBy []qbtypes.GroupByKey,
@@ -686,14 +690,14 @@ func (m *module) getPerGroupContainerReadyCounts(
 	mergedFilterExpr := mergeFilterExpressions(userFilterExpr, buildPageGroupsFilterExpr(pageGroups))
 
 	samplesStartMs, flooredEndMs, tsAdjustedStart, _, localTimeSeriesTable, distributedSamplesTable, _ := alignedMetricWindow(start, end)
-	valueCol := telemetrymetrics.ValueColumnForSamplesTable(distributedSamplesTable)
+	valueCol := metricstelemetryschema.ValueColumnForSamplesTable(distributedSamplesTable)
 
 	var (
 		filterClause *sqlbuilder.WhereClause
 		err          error
 	)
 	if mergedFilterExpr != "" {
-		filterClause, err = m.buildFilterClause(ctx, &qbtypes.Filter{Expression: mergedFilterExpr}, start, end)
+		filterClause, err = m.buildFilterClause(ctx, orgID, &qbtypes.Filter{Expression: mergedFilterExpr}, start, end)
 		if err != nil {
 			return nil, err
 		}
@@ -712,7 +716,7 @@ func (m *module) getPerGroupContainerReadyCounts(
 		)
 	}
 	readyFps.Select(readyFpsCols...)
-	readyFps.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, localTimeSeriesTable))
+	readyFps.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, localTimeSeriesTable))
 	readyFps.Where(
 		readyFps.E("metric_name", containerReadyMetricName),
 		readyFps.GE("unix_milli", tsAdjustedStart),
@@ -742,7 +746,7 @@ func (m *module) getPerGroupContainerReadyCounts(
 	containerReady.Select(containerReadyCols...)
 	containerReady.From(fmt.Sprintf(
 		"%s.%s AS samples INNER JOIN ready_fps AS fps ON samples.fingerprint = fps.fingerprint",
-		telemetrymetrics.DBName, distributedSamplesTable,
+		metricstelemetryschema.DBName, distributedSamplesTable,
 	))
 	containerReady.Where(
 		containerReady.E("samples.metric_name", containerReadyMetricName),

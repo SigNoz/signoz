@@ -55,12 +55,8 @@
 	overflow-wrap: anywhere;
 }
 
-.tagsWithActions {
-	display: flex;
-	align-items: center;
-	flex: 0 1 auto;
-	min-width: 0;
-	justify-content: flex-end;
+.legacyBadge {
+	flex: none;
 }
 
 .lockIcon {
@@ -69,6 +65,17 @@
 	justify-content: center;
 	flex: none;
 	color: var(--l3-foreground);
+}
+
+/* Wrap so the tooltip has a hoverable target even when the pin button is disabled
+   (a legacy dashboard can't be pinned). */
+.pinButtonWrap {
+	display: inline-flex;
+	flex: none;
+}
+
+.pinButtonWrap button:disabled {
+	pointer-events: none;
 }
 
 .pinButton {
@@ -123,11 +130,10 @@
 	display: inline-flex;
 }
 
-.tags {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 8px;
-	justify-content: flex-end;
+// Cap the name tooltip so a long name wraps instead of spanning the page.
+.nameTooltip {
+	max-width: 480px;
+	overflow-wrap: break-word;
 }
 
 .details {

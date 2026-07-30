@@ -14,7 +14,7 @@ import {
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { MetricAggregation } from 'types/api/v5/queryRange';
 import { ExtendedSelectOption } from 'types/common/select';
-import { popupContainer } from 'utils/selectPopupContainer';
+import { useSelectPopupContainer } from 'utils/selectPopupContainer';
 
 import { selectStyle } from '../QueryBuilderSearch/config';
 import OptionRenderer from '../QueryBuilderSearch/OptionRenderer';
@@ -85,6 +85,7 @@ export const MetricNameSelector = memo(function MetricNameSelector({
 	signalSource,
 	'data-testid': dataTestId,
 }: MetricNameSelectorProps): JSX.Element {
+	const getPopupContainer = useSelectPopupContainer();
 	const currentMetricName =
 		(query.aggregations?.[0] as MetricAggregation)?.metricName ||
 		query.aggregateAttribute?.key ||
@@ -272,7 +273,7 @@ export const MetricNameSelector = memo(function MetricNameSelector({
 	return (
 		<AutoComplete
 			className="metric-name-selector"
-			getPopupContainer={popupContainer}
+			getPopupContainer={getPopupContainer}
 			style={selectStyle}
 			filterOption={false}
 			placeholder={placeholder}

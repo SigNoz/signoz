@@ -1,0 +1,24 @@
+.checkContainer {
+	padding: 0px var(--spacing-4) var(--spacing-4) var(--spacing-4);
+
+	position: relative;
+}
+
+.container {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	width: 100%;
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.entriesList {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}

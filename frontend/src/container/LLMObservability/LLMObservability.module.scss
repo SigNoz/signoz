@@ -4,4 +4,10 @@
 	height: 100%;
 	margin-top: var(--spacing-2);
 	margin-left: var(--spacing-2);
+	--tab-text-color: var(--l1-foreground);
+	--tab-active-text-color: var(--l1-foreground);
+	[role='tabpanel'] {
+		margin: 0;
+		padding: var(--spacing-0) var(--spacing-4);
+	}
 }

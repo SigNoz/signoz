@@ -10,6 +10,14 @@ import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import LLMObservability from '../LLMObservability';
 
+// The Overview tab renders the full V2 DashboardContainer (toolbar + date picker
+// call useNavigationType, which needs a data router this integration test doesn't
+// set up). These cases assert tab routing, not dashboard rendering, so stub it.
+jest.mock('pages/DashboardPageV2/DashboardContainer', () => ({
+	__esModule: true,
+	default: (): JSX.Element => <div data-testid="llm-overview-dashboard" />,
+}));
+
 function setupList(items = mockRules): void {
 	server.use(
 		rest.get(LLM_PRICING_ENDPOINT, (_req, res, ctx) =>
@@ -29,12 +37,12 @@ describe('LLMObservability (integration)', () => {
 
 	it('renders the overview panel and the tab bar on the overview route', () => {
 		render(<LLMObservability />, undefined, {
-			initialRoute: ROUTES.LLM_OBSERVABILITY_OVERVIEW,
+			initialRoute: ROUTES.AI_OBSERVABILITY_OVERVIEW,
 		});
 
 		expect(screen.getByTestId('llm-observability-tabs')).toBeInTheDocument();
 		expect(screen.getByTestId('llm-observability-overview')).toBeInTheDocument();
-		expect(screen.getByText('LLM Observability')).toBeInTheDocument();
+		expect(screen.getByTestId('llm-overview-dashboard')).toBeInTheDocument();
 		expect(screen.getByRole('tab', { name: 'Overview' })).toBeInTheDocument();
 		expect(
 			screen.getByRole('tab', { name: 'Model pricing' }),
@@ -47,32 +55,32 @@ describe('LLMObservability (integration)', () => {
 	it('navigates to the configuration route when the Model pricing tab is clicked', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(<LLMObservability />, undefined, {
-			initialRoute: ROUTES.LLM_OBSERVABILITY_OVERVIEW,
+			initialRoute: ROUTES.AI_OBSERVABILITY_OVERVIEW,
 		});
 
 		await user.click(screen.getByRole('tab', { name: 'Model pricing' }));
 
 		expect(safeNavigateMock).toHaveBeenCalledWith(
-			ROUTES.LLM_OBSERVABILITY_CONFIGURATION,
+			ROUTES.AI_OBSERVABILITY_CONFIGURATION,
 		);
 	});
 
 	it('navigates to the attribute mapping route when that tab is clicked', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(<LLMObservability />, undefined, {
-			initialRoute: ROUTES.LLM_OBSERVABILITY_OVERVIEW,
+			initialRoute: ROUTES.AI_OBSERVABILITY_OVERVIEW,
 		});
 
 		await user.click(screen.getByRole('tab', { name: 'Attribute Mapping' }));
 
 		expect(safeNavigateMock).toHaveBeenCalledWith(
-			ROUTES.LLM_OBSERVABILITY_ATTRIBUTE_MAPPING,
+			ROUTES.AI_OBSERVABILITY_ATTRIBUTE_MAPPING,
 		);
 	});
 
 	it('renders the attribute mapping page on the attribute mapping route', () => {
 		render(<LLMObservability />, undefined, {
-			initialRoute: ROUTES.LLM_OBSERVABILITY_ATTRIBUTE_MAPPING,
+			initialRoute: ROUTES.AI_OBSERVABILITY_ATTRIBUTE_MAPPING,
 		});
 
 		expect(
@@ -83,7 +91,7 @@ describe('LLMObservability (integration)', () => {
 	it('renders the model-pricing page on the configuration route', async () => {
 		setupList();
 		render(<LLMObservability />, undefined, {
-			initialRoute: ROUTES.LLM_OBSERVABILITY_CONFIGURATION,
+			initialRoute: ROUTES.AI_OBSERVABILITY_CONFIGURATION,
 		});
 
 		await waitFor(() =>

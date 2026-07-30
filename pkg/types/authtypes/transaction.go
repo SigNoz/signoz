@@ -1,10 +1,12 @@
 package authtypes
 
 import (
+	"database/sql/driver"
 	"encoding/json"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -70,6 +72,28 @@ func NewTransactionGroups(data []byte) (TransactionGroups, error) {
 	return groups, nil
 }
 
+func NewTransactionGroupsFromTransactions(transactions []coretypes.Transaction) TransactionGroups {
+	objectsByVerb := make(map[string][]*coretypes.Object)
+	for _, transaction := range transactions {
+		object := transaction.Object
+		objectsByVerb[transaction.Verb.StringValue()] = append(objectsByVerb[transaction.Verb.StringValue()], &object)
+	}
+
+	groups := make(TransactionGroups, 0)
+	for _, verb := range coretypes.Verbs {
+		objects := objectsByVerb[verb.StringValue()]
+		if len(objects) == 0 {
+			continue
+		}
+
+		for _, objectGroup := range coretypes.NewObjectGroupsFromObjects(objects) {
+			groups = append(groups, &TransactionGroup{Relation: Relation{Verb: verb}, ObjectGroup: *objectGroup})
+		}
+	}
+
+	return groups
+}
+
 func NewGettableTransaction(results []*TransactionWithAuthorization) []*GettableTransaction {
 	gettableTransactions := make([]*GettableTransaction, len(results))
 	for i, result := range results {
@@ -83,8 +107,38 @@ func NewGettableTransaction(results []*TransactionWithAuthorization) []*Gettable
 	return gettableTransactions
 }
 
-func (groups TransactionGroups) Diff(desired TransactionGroups) (additions, deletions TransactionGroups) {
-	return desired.subtract(groups), groups.subtract(desired)
+func (groups TransactionGroups) Value() (driver.Value, error) {
+	data, err := json.Marshal(groups)
+	if err != nil {
+		return nil, err
+	}
+
+	return string(data), nil
+}
+
+func (groups *TransactionGroups) Scan(value any) error {
+	if value == nil {
+		*groups = make(TransactionGroups, 0)
+		return nil
+	}
+
+	var data []byte
+	switch typed := value.(type) {
+	case string:
+		data = []byte(typed)
+	case []byte:
+		data = typed
+	default:
+		return errors.Newf(errors.TypeInternal, errors.CodeInternal, "unsupported type %T for transaction groups", value)
+	}
+
+	parsed, err := NewTransactionGroups(data)
+	if err != nil {
+		return errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, "failed to scan transactionGroups")
+	}
+
+	*groups = parsed
+	return nil
 }
 
 func (transaction *Transaction) UnmarshalJSON(data []byte) error {
@@ -111,51 +165,6 @@ func (transaction *Transaction) TransactionKey() string {
 	return transaction.Relation.StringValue() + ":" + transaction.Object.Resource.Type.StringValue() + ":" + transaction.Object.Resource.Kind.String()
 }
 
-func (groups TransactionGroups) subtract(other TransactionGroups) TransactionGroups {
-	otherSelectors := other.selectorSet()
-
-	order := make([]string, 0)
-	grouped := make(map[string]*TransactionGroup)
-	for _, group := range groups {
-		for _, selector := range group.ObjectGroup.Selectors {
-			if _, ok := otherSelectors[group.selectorKey(selector)]; ok {
-				continue
-			}
-
-			groupKey := group.Relation.StringValue() + "|" + group.ObjectGroup.Resource.String()
-			out, ok := grouped[groupKey]
-			if !ok {
-				out = &TransactionGroup{Relation: group.Relation, ObjectGroup: coretypes.ObjectGroup{Resource: group.ObjectGroup.Resource, Selectors: make([]coretypes.Selector, 0)}}
-				grouped[groupKey] = out
-				order = append(order, groupKey)
-			}
-			out.ObjectGroup.Selectors = append(out.ObjectGroup.Selectors, selector)
-		}
-	}
-
-	result := make(TransactionGroups, 0, len(order))
-	for _, key := range order {
-		result = append(result, grouped[key])
-	}
-
-	return result
-}
-
-func (groups TransactionGroups) selectorSet() map[string]struct{} {
-	set := make(map[string]struct{})
-	for _, group := range groups {
-		for _, selector := range group.ObjectGroup.Selectors {
-			set[group.selectorKey(selector)] = struct{}{}
-		}
-	}
-
-	return set
-}
-
-func (group *TransactionGroup) selectorKey(selector coretypes.Selector) string {
-	return group.Relation.StringValue() + "|" + group.ObjectGroup.Resource.String() + "|" + selector.String()
-}
-
 func newTransactionGroup(raw rawTransactionGroup, index int) (*TransactionGroup, error) {
 	verb, err := coretypes.NewVerb(raw.Relation)
 	if err != nil {
@@ -179,6 +188,13 @@ func newTransactionGroup(raw rawTransactionGroup, index int) (*TransactionGroup,
 
 	selectors := make([]coretypes.Selector, 0, len(raw.ObjectGroup.Selectors))
 	for selectorIndex, rawSelector := range raw.ObjectGroup.Selectors {
+		if resourceType.Equals(coretypes.TypeTelemetryResource) {
+			rawSelector, err = telemetrytypes.NewTelemetryGrantSelector(rawSelector)
+			if err != nil {
+				return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "transactionGroups[%d].objectGroup.selectors[%d]: %s", index, selectorIndex, err.Error())
+			}
+		}
+
 		selector, err := resourceType.Selector(rawSelector)
 		if err != nil {
 			return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "transactionGroups[%d].objectGroup.selectors[%d]: %s", index, selectorIndex, err.Error())

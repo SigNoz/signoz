@@ -130,7 +130,7 @@ func TestScalarData_MarshalJSON(t *testing.T) {
 					{4.0, 5.0, 6.0},
 				},
 			},
-			expected: `{"queryName":"test_query","columns":[{"name":"value","queryName":"test_query","aggregationIndex":0,"meta":{},"columnType":"aggregation"}],"data":[[1,2,3],[4,5,6]]}`,
+			expected: `{"queryName":"test_query","columns":[{"name":"value","signal":"","fieldContext":"","fieldDataType":"","queryName":"test_query","aggregationIndex":0,"meta":{},"columnType":"aggregation"}],"data":[[1,2,3],[4,5,6]]}`,
 		},
 		{
 			name: "scalar data with NaN",
@@ -149,7 +149,7 @@ func TestScalarData_MarshalJSON(t *testing.T) {
 					{math.Inf(1), 5.0, math.Inf(-1)},
 				},
 			},
-			expected: `{"queryName":"test_query","columns":[{"name":"value","queryName":"test_query","aggregationIndex":0,"meta":{},"columnType":"aggregation"}],"data":[[1,"NaN",3],["Inf",5,"-Inf"]]}`,
+			expected: `{"queryName":"test_query","columns":[{"name":"value","signal":"","fieldContext":"","fieldDataType":"","queryName":"test_query","aggregationIndex":0,"meta":{},"columnType":"aggregation"}],"data":[[1,"NaN",3],["Inf",5,"-Inf"]]}`,
 		},
 		{
 			name: "scalar data with mixed types",
@@ -168,7 +168,7 @@ func TestScalarData_MarshalJSON(t *testing.T) {
 					{nil, math.Inf(1), 3.14, false},
 				},
 			},
-			expected: `{"queryName":"test_query","columns":[{"name":"mixed","queryName":"test_query","aggregationIndex":0,"meta":{},"columnType":"aggregation"}],"data":[["string",42,"NaN",true],[null,"Inf",3.14,false]]}`,
+			expected: `{"queryName":"test_query","columns":[{"name":"mixed","signal":"","fieldContext":"","fieldDataType":"","queryName":"test_query","aggregationIndex":0,"meta":{},"columnType":"aggregation"}],"data":[["string",42,"NaN",true],[null,"Inf",3.14,false]]}`,
 		},
 		{
 			name: "scalar data with nested structures",
@@ -189,7 +189,7 @@ func TestScalarData_MarshalJSON(t *testing.T) {
 					},
 				},
 			},
-			expected: `{"queryName":"test_query","columns":[{"name":"nested","queryName":"test_query","aggregationIndex":0,"meta":{},"columnType":"aggregation"}],"data":[[{"count":10,"value":"NaN"},[1,"Inf",3]]]}`,
+			expected: `{"queryName":"test_query","columns":[{"name":"nested","signal":"","fieldContext":"","fieldDataType":"","queryName":"test_query","aggregationIndex":0,"meta":{},"columnType":"aggregation"}],"data":[[{"count":10,"value":"NaN"},[1,"Inf",3]]]}`,
 		},
 		{
 			name: "empty scalar data",
@@ -394,4 +394,37 @@ func TestRawData_MarshalJSON(t *testing.T) {
 			assert.JSONEq(t, tt.expected, string(got))
 		})
 	}
+}
+
+func TestRoundToNonZeroDecimals(t *testing.T) {
+	cases := []struct {
+		name string
+		in   float64
+		n    int
+		want float64
+	}{
+		{"whole number", 42, 3, 42},
+		{"ge one rounds to three decimals", 123.45678, 3, 123.457},
+		{"ge one rounds to two decimals", 123.45678, 2, 123.46},
+		{"trailing zeros trimmed", 1.5, 3, 1.5},
+		{"lt one keeps three significant digits", 0.0001234567, 3, 0.000123},
+		{"lt one keeps two significant digits", 0.0001234567, 2, 0.00012},
+		{"negative", -123.45678, 3, -123.457},
+		{"zero", 0, 3, 0},
+		// val*multiplier overflows to +Inf for near-max values (#12151).
+		{"near max stays finite", 1.6e308, 3, 1.6e308},
+		{"negative near max stays finite", -1.6e308, 3, -1.6e308},
+		// scale overflows to +Inf for subnormal values; Inf/Inf made NaN.
+		{"smallest subnormal stays finite", 5e-324, 3, 5e-324},
+		{"subnormal stays finite", 1e-310, 3, 1e-310},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.want, roundToNonZeroDecimals(tc.in, tc.n))
+		})
+	}
+
+	assert.True(t, math.IsNaN(roundToNonZeroDecimals(math.NaN(), 3)))
+	assert.Equal(t, math.Inf(1), roundToNonZeroDecimals(math.Inf(1), 3))
+	assert.Equal(t, math.Inf(-1), roundToNonZeroDecimals(math.Inf(-1), 3))
 }

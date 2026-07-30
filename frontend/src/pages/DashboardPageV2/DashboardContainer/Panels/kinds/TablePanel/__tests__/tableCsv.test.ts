@@ -64,6 +64,19 @@ describe('buildTableCsvRows', () => {
 
 		expect(rows).toStrictEqual([{ service: 'api', p99: 'n/a' }]);
 	});
+
+	it('exports empty value cells as n/a rather than 0', () => {
+		const rows = buildTableCsvRows({
+			table: {
+				...table,
+				rows: [{ data: { service: 'api', A: null } }],
+			},
+			columnUnits: { A: 'ms' },
+			decimalPrecision: undefined,
+		});
+
+		expect(rows).toStrictEqual([{ service: 'api', p99: 'n/a' }]);
+	});
 });
 
 describe('getTableCsvRows', () => {

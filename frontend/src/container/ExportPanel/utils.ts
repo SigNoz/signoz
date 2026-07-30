@@ -1,16 +1,10 @@
 import { SelectProps } from 'antd';
-import { Dashboard } from 'types/api/dashboard/getAll';
+import { ExportDashboard } from 'hooks/dashboard/useExportDashboards';
 
-export const getSelectOptions = (data: Dashboard[]): SelectProps['options'] =>
-	data.map(({ id, data }) => ({
-		label: data.title,
+export const getSelectOptions = (
+	data: ExportDashboard[],
+): SelectProps['options'] =>
+	data.map(({ id, title }) => ({
+		label: title,
 		value: id,
 	}));
-
-export const filterOptions: SelectProps['filterOption'] = (
-	input,
-	options,
-): boolean =>
-	(options?.label?.toString() ?? '')
-		?.toLowerCase()
-		.includes(input.toLowerCase());

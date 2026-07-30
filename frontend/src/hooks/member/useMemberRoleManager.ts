@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { useQueryClient } from 'react-query';
-import type { AuthtypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
+import type { AuthtypesGettableRoleDTO } from 'api/generated/services/sigNoz.schemas';
 import {
 	getGetRolesByUserIDQueryKey,
 	useGetRolesByUserID,
@@ -21,11 +21,11 @@ export interface MemberRoleUpdateFailure {
 }
 
 interface UseMemberRoleManagerResult {
-	currentRoles: AuthtypesRoleDTO[];
+	currentRoles: AuthtypesGettableRoleDTO[];
 	isLoading: boolean;
 	applyDiff: (
 		localRoleIds: string[],
-		availableRoles: AuthtypesRoleDTO[],
+		availableRoles: AuthtypesGettableRoleDTO[],
 	) => Promise<MemberRoleUpdateFailure[]>;
 }
 
@@ -40,7 +40,7 @@ export function useMemberRoleManager(
 		{ query: { enabled: !!userId && enabled } },
 	);
 
-	const currentRoles = useMemo<AuthtypesRoleDTO[]>(
+	const currentRoles = useMemo<AuthtypesGettableRoleDTO[]>(
 		() => data?.data ?? [],
 		[data?.data],
 	);
@@ -61,7 +61,7 @@ export function useMemberRoleManager(
 	const applyDiff = useCallback(
 		async (
 			localRoleIds: string[],
-			availableRoles: AuthtypesRoleDTO[],
+			availableRoles: AuthtypesGettableRoleDTO[],
 		): Promise<MemberRoleUpdateFailure[]> => {
 			const currentRoleIds = new Set(
 				currentRoles.map((r) => r.id).filter(Boolean),

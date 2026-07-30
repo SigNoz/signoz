@@ -30,8 +30,10 @@ import type {
 	RenderErrorResponseDTO,
 	SpantypesPostableSpanMapperDTO,
 	SpantypesPostableSpanMapperGroupDTO,
+	SpantypesPostableSpanMapperTestDTO,
 	SpantypesUpdatableSpanMapperDTO,
 	SpantypesUpdatableSpanMapperGroupDTO,
+	TestSpanMappers200,
 	UpdateSpanMapperGroupPathParameters,
 	UpdateSpanMapperPathParameters,
 } from '../sigNoz.schemas';
@@ -779,4 +781,87 @@ export const useUpdateSpanMapper = <
 	TContext
 > => {
 	return useMutation(getUpdateSpanMapperMutationOptions(options));
+};
+/**
+ * Tests how span mappers would transform sample spans
+ * @summary Test span mappers against sample spans
+ */
+export const testSpanMappers = (
+	spantypesPostableSpanMapperTestDTO?: BodyType<SpantypesPostableSpanMapperTestDTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<TestSpanMappers200>({
+		url: `/api/v1/span_mapper_groups/test`,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		data: spantypesPostableSpanMapperTestDTO,
+		signal,
+	});
+};
+
+export const getTestSpanMappersMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof testSpanMappers>>,
+		TError,
+		{ data?: BodyType<SpantypesPostableSpanMapperTestDTO> },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof testSpanMappers>>,
+	TError,
+	{ data?: BodyType<SpantypesPostableSpanMapperTestDTO> },
+	TContext
+> => {
+	const mutationKey = ['testSpanMappers'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof testSpanMappers>>,
+		{ data?: BodyType<SpantypesPostableSpanMapperTestDTO> }
+	> = (props) => {
+		const { data } = props ?? {};
+
+		return testSpanMappers(data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type TestSpanMappersMutationResult = NonNullable<
+	Awaited<ReturnType<typeof testSpanMappers>>
+>;
+export type TestSpanMappersMutationBody =
+	| BodyType<SpantypesPostableSpanMapperTestDTO>
+	| undefined;
+export type TestSpanMappersMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Test span mappers against sample spans
+ */
+export const useTestSpanMappers = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof testSpanMappers>>,
+		TError,
+		{ data?: BodyType<SpantypesPostableSpanMapperTestDTO> },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof testSpanMappers>>,
+	TError,
+	{ data?: BodyType<SpantypesPostableSpanMapperTestDTO> },
+	TContext
+> => {
+	return useMutation(getTestSpanMappersMutationOptions(options));
 };

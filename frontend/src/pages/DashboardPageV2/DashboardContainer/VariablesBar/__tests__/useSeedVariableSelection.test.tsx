@@ -6,7 +6,7 @@ import {
 	type VariableFormModel,
 } from '../../DashboardSettings/Variables/variableFormModel';
 import { useDashboardStore } from '../../store/useDashboardStore';
-import { useSeedVariableSelection } from '../useSeedVariableSelection';
+import { useSeedVariableSelection } from '../hooks/useSeedVariableSelection';
 
 const mockSetUrlValues = jest.fn();
 let mockUrlValues: Record<string, unknown> | null = null;
@@ -116,13 +116,17 @@ describe('useSeedVariableSelection', () => {
 		});
 	});
 
-	it('prunes URL entries for variables that no longer exist', () => {
+	it('seeds from the URL then clears it (read-once share link)', () => {
 		mockUrlValues = { env: 'prod', removed: 'stale' };
 		const dash = dashboard('d1', [model({ name: 'env', type: 'TEXT' })]);
 
 		renderHook(() => useSeedVariableSelection(dash));
 
-		expect(mockSetUrlValues).toHaveBeenCalledWith({ env: 'prod' });
+		expect(seededValue('d1', 'env')).toStrictEqual({
+			value: 'prod',
+			allSelected: false,
+		});
+		expect(mockSetUrlValues).toHaveBeenCalledWith(null);
 	});
 
 	it('writes nothing while the dashboard is still loading', () => {
