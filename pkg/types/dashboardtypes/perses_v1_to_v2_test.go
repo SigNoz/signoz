@@ -10,6 +10,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/tagtypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/perses/spec/go/dashboard"
 	"github.com/perses/spec/go/dashboard/variable"
@@ -1784,6 +1785,41 @@ func TestConvertV1WidgetQueryRewritesUnknownMetricValueOrderKey(t *testing.T) {
 	require.Len(t, spec.Order, 2)
 	assert.Equal(t, "sum(http_requests_total)", spec.Order[0].Key.Name, "unknown value alias rewritten to the aggregation key")
 	assert.Equal(t, "service.name", spec.Order[1].Key.Name, "valid group-by order key left alone")
+}
+
+// A v1 meter query is dataSource "metrics" with a separate source "meter". The signal
+// maps to metrics, and the meter source must survive onto the v5 spec — otherwise the
+// panel migrates as a plain metrics query and reads the wrong data.
+func TestConvertV1WidgetQueryCarriesMeterSource(t *testing.T) {
+	widget := map[string]any{
+		"id":         "meter-1",
+		"panelTypes": "graph",
+		"query": map[string]any{
+			"queryType": "builder",
+			"builder": map[string]any{
+				"queryData": []any{
+					map[string]any{
+						"queryName":    "A",
+						"expression":   "A",
+						"dataSource":   "metrics",
+						"source":       "meter",
+						"aggregations": []any{map[string]any{"metricName": "signoz.meter.log.size", "spaceAggregation": "sum"}},
+					},
+				},
+			},
+		},
+	}
+
+	queries := (&v1Decoder{}).convertV1WidgetQuery(widget, PanelKindTimeSeries)
+	require.Len(t, queries, 1)
+
+	wrapper, ok := queries[0].Spec.Plugin.Spec.(*BuilderQuerySpec)
+	require.True(t, ok)
+	spec, ok := wrapper.Spec.(qb.QueryBuilderQuery[qb.MetricAggregation])
+	require.True(t, ok, "meter query should dispatch to MetricAggregation, got %T", wrapper.Spec)
+
+	assert.Equal(t, telemetrytypes.SignalMetrics, spec.Signal, "signal maps from dataSource")
+	assert.Equal(t, telemetrytypes.SourceMeter, spec.Source, "meter source carried onto the v5 spec")
 }
 
 func TestConvertV1WidgetQueryInjectsCountForNoopOnAggregationPanel(t *testing.T) {
