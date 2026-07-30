@@ -1,4 +1,4 @@
-//TODO: remove this file onces the ai-o11y goes live
+# TODO: remove this file once ai-o11y goes live
 import pytest
 from testcontainers.core.container import Network
 
