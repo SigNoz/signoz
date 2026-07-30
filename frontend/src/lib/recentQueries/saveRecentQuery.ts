@@ -19,10 +19,6 @@ type CompositeWithBuilder = {
 	builder?: { queryData?: IBuilderQuery[] };
 };
 
-// Persists a single filter expression as a recent entry. For pages that run
-// searches outside the QueryBuilder provider (Metrics Summary, Infra
-// Monitoring entity tabs, Trace details filters). Call this only from
-// explicit user-driven Run triggers.
 export function saveRecentQueryByExpression(
 	dataSource: IBuilderQuery['dataSource'],
 	expression: string | null | undefined,
