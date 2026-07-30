@@ -436,6 +436,48 @@ func TestGoogleChatMultiAlertSections(t *testing.T) {
 	require.True(t, logsURLs["https://signoz.example/logs?pod=pod-2"], "pod-2's logs button")
 }
 
+func TestGoogleChatDefaultBodyGrouped(t *testing.T) {
+	var got Message
+	server := captureServer(t, &got)
+	defer server.Close()
+
+	// Default body template (no per-alert annotation): the templater combines all
+	// grouped alerts into ONE section, carrying only the first alert's buttons.
+	mkAlert := func(pod string) *types.Alert {
+		return &types.Alert{Alert: model.Alert{
+			Labels: model.LabelSet{
+				"alertname":               "X",
+				"pod":                     model.LabelValue(pod),
+				ruletypes.LabelRuleSource: "https://signoz.example/alerts/1",
+			},
+			Annotations: model.LabelSet{
+				ruletypes.AnnotationRelatedLogs: model.LabelValue("https://signoz.example/logs?pod=" + pod),
+			},
+			StartsAt: time.Now(),
+			EndsAt:   time.Now().Add(time.Minute),
+		}}
+	}
+	alerts := []*types.Alert{mkAlert("pod-1"), mkAlert("pod-2")}
+	n := newTestNotifier(t, server.URL, "T", "{{ range .Alerts }}pod {{ .Labels.pod }} {{ end }}")
+	_, err := n.Notify(newTestContext(), alerts...)
+	require.NoError(t, err)
+
+	// banner + one combined alert section + shared SigNoz footer = 3 sections.
+	require.Equal(t, 3, cardSectionCount(t, got))
+
+	body := cardBody(t, got)
+	require.Contains(t, body, "pod-1")
+	require.Contains(t, body, "pod-2", "default template combines all alerts into one section")
+
+	logs := 0
+	for _, b := range cardButtons(t, got) {
+		if b.Text == "View Related Logs" {
+			logs++
+		}
+	}
+	require.Equal(t, 1, logs, "default path surfaces only the first alert's related buttons")
+}
+
 func TestGoogleChatSectionCap(t *testing.T) {
 	var got Message
 	server := captureServer(t, &got)
