@@ -81,15 +81,19 @@ export type FlatItem<TData> =
 	| { kind: 'row'; row: TanStackRowType<TData> }
 	| { kind: 'expansion'; row: TanStackRowType<TData> };
 
+export type RowClickContext = {
+	isActive: boolean;
+};
+
 export type TableRowContext<TData, TItemKey = string> = {
 	getRowStyle?: (row: TData) => CSSProperties;
 	getRowClassName?: (row: TData) => string;
+	getRowTestId?: (row: TData) => string;
 	isRowActive?: (row: TData) => boolean;
 	renderRowActions?: (row: TData) => ReactNode;
-	onRowClick?: (row: TData, itemKey: TItemKey) => void;
+	onRowClick?: (row: TData, itemKey: TItemKey, context: RowClickContext) => void;
 	/** Called when ctrl+click or cmd+click on a row */
 	onRowClickNewTab?: (row: TData, itemKey: TItemKey) => void;
-	onRowDeactivate?: () => void;
 	renderExpandedRow?: (
 		row: TData,
 		rowKey: string,
@@ -178,12 +182,12 @@ export type TanStackTableProps<TData, TItemKey = string> = {
 	getGroupKey?: (row: TData) => Record<string, string>;
 	getRowStyle?: (row: TData) => CSSProperties;
 	getRowClassName?: (row: TData) => string;
+	getRowTestId?: (row: TData) => string;
 	isRowActive?: (row: TData) => boolean;
 	renderRowActions?: (row: TData) => ReactNode;
-	onRowClick?: (row: TData, itemKey: TItemKey) => void;
+	onRowClick?: (row: TData, itemKey: TItemKey, context: RowClickContext) => void;
 	/** Called when ctrl+click or cmd+click on a row */
 	onRowClickNewTab?: (row: TData, itemKey: TItemKey) => void;
-	onRowDeactivate?: () => void;
 	activeRowIndex?: number;
 	renderExpandedRow?: (
 		row: TData,

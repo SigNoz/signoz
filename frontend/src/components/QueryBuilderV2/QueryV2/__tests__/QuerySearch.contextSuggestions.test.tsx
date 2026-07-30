@@ -23,6 +23,13 @@ jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
 	}),
 }));
 
+// Shrink the suggestion-fetch debounce (300ms in prod) so these integration
+// tests aren't paced by it; coalescing semantics stay intact.
+jest.mock('../QuerySearch/constants', () => ({
+	...jest.requireActual('../QuerySearch/constants'),
+	SUGGESTION_FETCH_DEBOUNCE_MS: 30,
+}));
+
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => {
 	const handleRunQuery = jest.fn();
 	return {

@@ -23,6 +23,40 @@ export function buildPermission<R extends AuthZRelation>(
 	return `${relation}${PermissionSeparator}${object}` as BrandedPermission;
 }
 
+/**
+ * Builds an object string for use with `buildPermission`.
+ *
+ * ## Type Inference Behavior
+ *
+ * TypeScript infers `R` from `resource`. If a resource belongs to multiple relations,
+ * the return type becomes a union of all matching `AuthZObject` types.
+ *
+ * Example: 'role' is valid for 'read', 'update', 'delete', 'assignee'.
+ * Without explicit generic, return type = `AuthZObject<'read' | 'update' | 'delete' | 'assignee'>`.
+ *
+ * ## When to specify explicit generic
+ *
+ * **Needed** when resource belongs to multiple relations AND you pass result to `buildPermission`
+ * with a relation that has FEWER valid resources than others:
+ *
+ * ```ts
+ * // ERROR: 'read' includes telemetry resources, 'update' does not
+ * buildPermission('update', buildObjectString('role', 'admin'))
+ *
+ * // OK: explicit generic narrows return type
+ * buildPermission('update', buildObjectString<'update'>('role', 'admin'))
+ * ```
+ *
+ * **Not needed** when:
+ * - Resource only belongs to one relation in the constraint
+ * - Using with 'read' relation (widest type, accepts all)
+ * - Storing in a variable typed as `BrandedPermission` (already opaque)
+ *
+ * ```ts
+ * // OK: 'read' is widest, accepts union return type
+ * buildPermission('read', buildObjectString('role', 'admin'))
+ * ```
+ */
 export function buildObjectString<
 	R extends 'delete' | 'read' | 'update' | 'assignee',
 >(resource: ResourcesForRelation<R>, objectId: string): AuthZObject<R> {
