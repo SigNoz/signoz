@@ -394,7 +394,9 @@ describe('usePanelActionItems', () => {
 			(i) => 'key' in i && i.key === 'view-panel',
 		);
 		(view as { onClick: () => void }).onClick();
-		expect(mockOpenView).toHaveBeenCalledWith('panel-1');
+		// The panel goes along so the opener can seed the shared query builder before
+		// the modal mounts (otherwise it renders the previously-viewed panel's query).
+		expect(mockOpenView).toHaveBeenCalledWith('panel-1', baseArgs.panel);
 	});
 
 	it('create-alert seeds an alert from this panel', () => {

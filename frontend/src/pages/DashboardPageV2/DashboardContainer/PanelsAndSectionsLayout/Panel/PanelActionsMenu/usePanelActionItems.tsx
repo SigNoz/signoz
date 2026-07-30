@@ -130,7 +130,7 @@ export function usePanelActionItems({
 				key: 'view-panel',
 				label: 'View',
 				icon: <Fullscreen size={14} />,
-				onClick: (): void => openView(panelId),
+				onClick: (): void => openView(panelId, panel),
 			});
 		}
 		if (canEdit && canEditWidget && panelCapabilities.edit) {
