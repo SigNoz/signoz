@@ -2626,6 +2626,20 @@ func (r *ClickHouseReader) GetLogFields(ctx context.Context) (*model.GetFieldsRe
 	return &response, nil
 }
 
+// inClause builds a bind-parameter list ("?, ?, ...") for values together with
+// the matching argument slice. Values that originate from the API must be bound
+// this way instead of being concatenated into the statement, so that ClickHouse
+// escapes them.
+func inClause(values []string) (string, []any) {
+	placeholders := make([]string, len(values))
+	args := make([]any, len(values))
+	for i, value := range values {
+		placeholders[i] = "?"
+		args[i] = value
+	}
+	return strings.Join(placeholders, ", "), args
+}
+
 func (r *ClickHouseReader) GetLogFieldsFromNames(ctx context.Context, fieldNames []string) (*model.GetFieldsResponse, *model.ApiError) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalLogs.StringValue(),
@@ -2638,25 +2652,30 @@ func (r *ClickHouseReader) GetLogFieldsFromNames(ctx context.Context, fieldNames
 		Interesting: []model.Field{},
 	}
 
-	// get attribute keys
 	attributes := []model.Field{}
-	query := fmt.Sprintf("SELECT DISTINCT name, datatype from %s.%s where name in ('%s') group by name, datatype", r.logsDB, r.logsAttributeKeys, strings.Join(fieldNames, "','"))
-	err := r.db.Select(ctx, &attributes, query)
-	if err != nil {
-		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
-	}
-
-	// get resource keys
 	resources := []model.Field{}
-	query = fmt.Sprintf("SELECT DISTINCT name, datatype from %s.%s where name in ('%s') group by name, datatype", r.logsDB, r.logsResourceKeys, strings.Join(fieldNames, "','"))
-	err = r.db.Select(ctx, &resources, query)
-	if err != nil {
-		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
+
+	// fieldNames are taken from the query payload, so they are bound as
+	// parameters. An empty list matches nothing, same as before.
+	if len(fieldNames) > 0 {
+		in, args := inClause(fieldNames)
+
+		// get attribute keys
+		query := fmt.Sprintf("SELECT DISTINCT name, datatype from %s.%s where name in (%s) group by name, datatype", r.logsDB, r.logsAttributeKeys, in)
+		if err := r.db.Select(ctx, &attributes, query, args...); err != nil {
+			return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
+		}
+
+		// get resource keys
+		query = fmt.Sprintf("SELECT DISTINCT name, datatype from %s.%s where name in (%s) group by name, datatype", r.logsDB, r.logsResourceKeys, in)
+		if err := r.db.Select(ctx, &resources, query, args...); err != nil {
+			return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
+		}
 	}
 
 	statements := []model.ShowCreateTableStatement{}
-	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.logsDB, r.logsLocalTableName)
-	err = r.db.Select(ctx, &statements, query)
+	query := fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.logsDB, r.logsLocalTableName)
+	err := r.db.Select(ctx, &statements, query)
 	if err != nil {
 		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
 	}
@@ -4455,15 +4474,6 @@ func (r *ClickHouseReader) GetSpanAttributeKeysByNames(ctx context.Context, name
 	var rows driver.Rows
 	response := map[string]v3.AttributeKey{}
 
-	query = fmt.Sprintf("SELECT DISTINCT(tagKey), tagType, dataType FROM %s.%s where tagKey in ('%s')", r.TraceDB, r.spanAttributesKeysTable, strings.Join(names, "','"))
-
-	rows, err = r.db.Query(ctx, query)
-	if err != nil {
-		r.logger.Error("Error while executing query", errorsV2.Attr(err))
-		return nil, fmt.Errorf("error while executing query: %s", err.Error())
-	}
-	defer rows.Close()
-
 	statements := []model.ShowCreateTableStatement{}
 	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.TraceDB, r.traceTableName)
 	err = r.db.Select(ctx, &statements, query)
@@ -4471,22 +4481,36 @@ func (r *ClickHouseReader) GetSpanAttributeKeysByNames(ctx context.Context, name
 		return nil, fmt.Errorf("error while fetching trace schema: %s", err.Error())
 	}
 
-	var tagKey string
-	var dataType string
-	var tagType string
-	for rows.Next() {
-		if err := rows.Scan(&tagKey, &tagType, &dataType); err != nil {
-			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
-		}
-		key := v3.AttributeKey{
-			Key:      tagKey,
-			DataType: v3.AttributeKeyDataType(dataType),
-			Type:     v3.AttributeKeyType(tagType),
-			IsColumn: isColumn(statements[0].Statement, tagType, tagKey, dataType),
-		}
+	// names are taken from the query payload, so they are bound as parameters.
+	// An empty list matches nothing, same as before.
+	if len(names) > 0 {
+		in, args := inClause(names)
+		query = fmt.Sprintf("SELECT DISTINCT(tagKey), tagType, dataType FROM %s.%s where tagKey in (%s)", r.TraceDB, r.spanAttributesKeysTable, in)
 
-		name := tagKey + "##" + tagType + "##" + strings.ToLower(dataType)
-		response[name] = key
+		rows, err = r.db.Query(ctx, query, args...)
+		if err != nil {
+			r.logger.Error("Error while executing query", errorsV2.Attr(err))
+			return nil, fmt.Errorf("error while executing query: %s", err.Error())
+		}
+		defer rows.Close()
+
+		var tagKey string
+		var dataType string
+		var tagType string
+		for rows.Next() {
+			if err := rows.Scan(&tagKey, &tagType, &dataType); err != nil {
+				return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+			}
+			key := v3.AttributeKey{
+				Key:      tagKey,
+				DataType: v3.AttributeKeyDataType(dataType),
+				Type:     v3.AttributeKeyType(tagType),
+				IsColumn: isColumn(statements[0].Statement, tagType, tagKey, dataType),
+			}
+
+			name := tagKey + "##" + tagType + "##" + strings.ToLower(dataType)
+			response[name] = key
+		}
 	}
 
 	for _, key := range constants.StaticFieldsTraces {
@@ -4982,12 +5006,18 @@ func (r *ClickHouseReader) GetMinAndMaxTimestampForTraceID(ctx context.Context, 
 	})
 	var minTime, maxTime time.Time
 
-	query := fmt.Sprintf("SELECT min(timestamp), max(timestamp) FROM %s.%s WHERE traceID IN ('%s')",
-		r.TraceDB, r.SpansTable, strings.Join(traceID, "','"))
+	// traceID is taken from the query payload, so it is bound as parameters.
+	if len(traceID) == 0 {
+		return 0, 0, nil
+	}
+
+	in, args := inClause(traceID)
+	query := fmt.Sprintf("SELECT min(timestamp), max(timestamp) FROM %s.%s WHERE traceID IN (%s)",
+		r.TraceDB, r.SpansTable, in)
 
 	r.logger.Debug("GetMinAndMaxTimestampForTraceID", "query", query)
 
-	err := r.db.QueryRow(ctx, query).Scan(&minTime, &maxTime)
+	err := r.db.QueryRow(ctx, query, args...).Scan(&minTime, &maxTime)
 	if err != nil {
 		r.logger.Error("Error while executing query", errorsV2.Attr(err))
 		return 0, 0, err
@@ -5151,7 +5181,7 @@ func (r *ClickHouseReader) GetUpdatedMetricsMetadata(ctx context.Context, orgID 
 	// 2. Try updated_metrics_metadata table
 	var stillMissing []string
 	if len(missingMetrics) > 0 {
-		metricList := "'" + strings.Join(missingMetrics, "', '") + "'"
+		metricList, args := inClause(missingMetrics)
 		query := fmt.Sprintf(`SELECT
 						metric_name,
 						argMax(type, created_at) AS type,
@@ -5167,7 +5197,7 @@ func (r *ClickHouseReader) GetUpdatedMetricsMetadata(ctx context.Context, orgID 
 			metricList)
 
 		valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
-		rows, err := r.db.Query(valueCtx, query)
+		rows, err := r.db.Query(valueCtx, query, args...)
 		if err != nil {
 			return cachedMetadata, &model.ApiError{Typ: "ClickhouseErr", Err: fmt.Errorf("error querying metrics metadata: %v", err)}
 		}
@@ -5205,7 +5235,7 @@ func (r *ClickHouseReader) GetUpdatedMetricsMetadata(ctx context.Context, orgID 
 
 	// 3. Fallback: Try time_series_v4_1week table
 	if len(stillMissing) > 0 {
-		metricList := "'" + strings.Join(stillMissing, "', '") + "'"
+		metricList, args := inClause(stillMissing)
 		reductionEnabled := r.fl.BooleanOrEmpty(ctx, flagger.FeatureEnableMetricsReduction, featuretypes.NewFlaggerEvaluationContext(orgID))
 		var query string
 		if reductionEnabled {
@@ -5215,13 +5245,15 @@ func (r *ClickHouseReader) GetUpdatedMetricsMetadata(ctx context.Context, orgID 
 				UNION ALL
 				SELECT metric_name, type, description, temporality, is_monotonic, unit FROM %s.%s WHERE metric_name IN (%s)
 			)`, signozMetricDBName, signozTSTableNameV4, metricList, signozMetricDBName, signozTSTableNameV4Reduced, metricList)
+			// the list is bound twice, once per UNION arm
+			args = append(args, args...)
 		} else {
 			query = fmt.Sprintf(`SELECT DISTINCT metric_name, type, description, temporality, is_monotonic, unit
 			FROM %s.%s
 			WHERE metric_name IN (%s)`, signozMetricDBName, signozTSTableNameV4, metricList)
 		}
 		valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
-		rows, err := r.db.Query(valueCtx, query)
+		rows, err := r.db.Query(valueCtx, query, args...)
 		if err != nil {
 			return cachedMetadata, &model.ApiError{Typ: "ClickhouseErr", Err: fmt.Errorf("error querying time_series_v4 to get metrics metadata: %v", err)}
 		}
