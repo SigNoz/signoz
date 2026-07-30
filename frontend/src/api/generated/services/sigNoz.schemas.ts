@@ -2816,6 +2816,7 @@ export enum CloudintegrationtypesServiceIDDTO {
 	cloudsql_postgres = 'cloudsql_postgres',
 	memorystore_redis = 'memorystore_redis',
 	computeengine = 'computeengine',
+	gke = 'gke',
 }
 export type CloudintegrationtypesCloudIntegrationServiceDTOAnyOf = {
 	/**
