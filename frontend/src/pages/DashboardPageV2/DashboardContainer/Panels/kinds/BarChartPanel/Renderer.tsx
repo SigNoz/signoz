@@ -29,6 +29,7 @@ import { getBuilderQueries } from '../../utils/getBuilderQueries';
 import { getPanelTimeRange } from '../../utils/getPanelTimeRange';
 
 import { buildBarChartConfig } from './utils/buildConfig';
+import { sortSeriesByMeanDesc } from './utils/sortSeriesByMean';
 import { ChartClickData } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 
 function BarPanelRenderer({
@@ -68,9 +69,16 @@ function BarPanelRenderer({
 
 	const groupByPerQuery = useGroupByPerQuery(builderQueries);
 
+	// Sorted here, not per-consumer: aligned data, uPlot series and click attribution are all
+	// index-coupled to this list.
 	const flatSeries = useMemo(
 		() =>
-			flattenTimeSeries(getTimeSeriesResults(data.response), data.legendMap ?? {}),
+			sortSeriesByMeanDesc(
+				flattenTimeSeries(
+					getTimeSeriesResults(data.response),
+					data.legendMap ?? {},
+				),
+			),
 		[data.response, data.legendMap],
 	);
 
