@@ -6,7 +6,10 @@ import {
 } from '../../../helpers/alerts';
 
 test.describe('Alert rules list — pagination and sorting', () => {
-	test('LR-07 navigates between pages', async ({ authedPage: page, alertList }) => {
+	test('LR-07 navigates between pages', async ({
+		authedPage: page,
+		alertList,
+	}) => {
 		await gotoAlertList(page, { search: alertList.namePrefix });
 
 		await expect(page.getByTestId('pagination-total-count')).toContainText(
