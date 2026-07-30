@@ -87,4 +87,28 @@ describe('ValueSelector', () => {
 
 		expect(screen.getByText('ALL')).toBeInTheDocument();
 	});
+
+	describe('an ALL selection whose options are still loading', () => {
+		it('reads ALL, not the "Select value" placeholder', () => {
+			// Options arrive after the selection is known (first fetch, or a dynamic ALL,
+			// which carries no values at all) — the control must not read as unselected.
+			renderSelector({ value: null, allSelected: true }, [], true);
+
+			expect(
+				document.querySelector('.ant-select-selection-placeholder'),
+			).toHaveTextContent('ALL');
+		});
+
+		it('still shows concrete values while options load', () => {
+			renderSelector(
+				{ value: ['checkout-service-prod'], allSelected: false },
+				[],
+				true,
+			);
+
+			expect(
+				document.querySelector('.ant-select-selection-placeholder'),
+			).toBeNull();
+		});
+	});
 });

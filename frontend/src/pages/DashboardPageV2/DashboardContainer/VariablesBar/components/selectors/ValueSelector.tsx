@@ -54,6 +54,13 @@ function ValueSelector({
 		[selection, options],
 	);
 
+	// That "all" path needs the options, so an ALL selection whose options have not
+	// arrived yet has nothing to render and the control would read "Select value"
+	// while it spins — as if nothing were selected. Say ALL in that slot instead: the
+	// selection is known, only its options are pending. Display only, so it can never
+	// be committed as a value.
+	const isAllPendingOptions = selection.allSelected && options.length === 0;
+
 	// Buffer edits while the dropdown is open; the committed selection is shown
 	// when closed. This defers the dependent cascade to a single commit-on-close.
 	const [isOpen, setIsOpen] = useState(false);
@@ -95,7 +102,7 @@ function ValueSelector({
 				onRetry={onRetry}
 				showSearch
 				allowClear
-				placeholder="Select value"
+				placeholder={isAllPendingOptions ? 'ALL' : 'Select value'}
 				maxTagCount={1}
 				maxTagTextLength={10}
 				maxTagPlaceholder={(omitted): JSX.Element => (
