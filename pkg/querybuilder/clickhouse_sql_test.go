@@ -3,6 +3,8 @@ package querybuilder
 import (
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/errors"
+
 	chparser "github.com/AfterShip/clickhouse-sql-parser/parser"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -30,10 +32,15 @@ func TestErrIfStatementIsNotValid_Pass(t *testing.T) {
 		{"TrailingUnterminatedBlockComment", "SELECT count() FROM t /* unterminated"},
 		// The rule keys on the database, not on the table name.
 		{"TableNamedSystemInTelemetryDatabase", "SELECT * FROM signoz_logs.system"},
-		{"SignedLiteralAfterClosingParen", "SELECT (toUnixTimestamp(now()) - 3600)*1000000000"},
+		{"SignedLiteralAfterClosingParenSpaced", "SELECT (toUnixTimestamp(now()) - 3600)*1000000000"},
 		// order by interval
 		{"OrderByInterval", "SELECT toStartOfInterval(timestamp, INTERVAL 1 MINUTE) AS interval ORDER BY interval"},
 		{"OrderByIntervalAndDirection", "SELECT toStartOfInterval(timestamp, INTERVAL 1 MINUTE) AS `interval` ORDER BY `interval` ASC"},
+		// Unspaced, so rejected until the parser stopped lexing a signed literal after a
+		// closing bracket. The spaced form above no longer needs to be spaced.
+		// https://github.com/AfterShip/clickhouse-sql-parser/issues/286
+		{"SignedLiteralAfterClosingParenUnspaced", "SELECT now() AS ts, toFloat64(count()) AS value FROM ( SELECT attributes_string['TableName'] AS T, attributes_string['MissingId'] AS M, max(fromUnixTimestamp64Nano(timestamp)) AS last_seen, dateDiff('minute', min(fromUnixTimestamp64Nano(timestamp)), max(fromUnixTimestamp64Nano(timestamp))) AS age_min FROM signoz_logs.distributed_logs_v2 WHERE body='missing_map_record' AND timestamp >= (toUnixTimestamp(now())-3600)*1000000000 GROUP BY T, M ) WHERE age_min >= 20 AND last_seen >= now() - toIntervalMinute(8)"},
+		{"SignedLiteralAfterClosingParenMinimal", "SELECT (1)-1"},
 		{"TrimFunction", "SELECT trimBoth('/api/endpoint/', '/');"},
 	}
 
@@ -47,49 +54,52 @@ func TestErrIfStatementIsNotValid_Pass(t *testing.T) {
 
 func TestErrIfStatementIsNotValid_Fail(t *testing.T) {
 	testCases := []struct {
-		name  string
-		query string
+		name         string
+		query        string
+		expectedCode errors.Code
 	}{
 		// Not a single statement, or not a statement at all.
-		{"Empty", ""},
-		{"UnterminatedBlockCommentOnly", "/* x"},
-		{"Unparseable", "SELECT FROM WHERE"},
-		{"MultipleStatements", "SELECT 1; DROP TABLE signoz_logs.logs_v2"},
+		{"Empty", "", CodeClickHouseSQLNotSingleStatement},
+		{"UnterminatedBlockCommentOnly", "/* x", CodeClickHouseSQLUnparseable},
+		{"Unparseable", "SELECT FROM WHERE", CodeClickHouseSQLUnparseable},
+		{"MultipleStatements", "SELECT 1; DROP TABLE signoz_logs.logs_v2", CodeClickHouseSQLNotSingleStatement},
 		// Parses, but is not a SELECT.
-		{"Drop", "DROP TABLE signoz_logs.logs_v2"},
-		{"Insert", "INSERT INTO signoz_logs.logs_v2 SELECT * FROM signoz_logs.logs_v2"},
-		{"AlterDelete", "ALTER TABLE signoz_logs.logs_v2 DELETE WHERE 1 = 1"},
-		{"CreateTable", "CREATE TABLE evil (a Int) ENGINE = Memory"},
-		{"Grant", "GRANT ALL ON *.* TO admin"},
-		{"Set", "SET readonly = 0"},
+		{"Drop", "DROP TABLE signoz_logs.logs_v2", CodeClickHouseSQLNotSelect},
+		{"Insert", "INSERT INTO signoz_logs.logs_v2 SELECT * FROM signoz_logs.logs_v2", CodeClickHouseSQLNotSelect},
+		{"AlterDelete", "ALTER TABLE signoz_logs.logs_v2 DELETE WHERE 1 = 1", CodeClickHouseSQLNotSelect},
+		{"CreateTable", "CREATE TABLE evil (a Int) ENGINE = Memory", CodeClickHouseSQLNotSelect},
+		{"Grant", "GRANT ALL ON *.* TO admin", CodeClickHouseSQLNotSelect},
+		{"Set", "SET readonly = 0", CodeClickHouseSQLNotSelect},
 		// These the parser rejects outright rather than classifying.
-		{"ShowGrants", "SHOW GRANTS"},
-		{"IntoOutfile", "SELECT * FROM t INTO OUTFILE '/tmp/x.csv'"},
+		{"ShowGrants", "SHOW GRANTS", CodeClickHouseSQLUnparseable},
+		{"IntoOutfile", "SELECT * FROM t INTO OUTFILE '/tmp/x.csv'", CodeClickHouseSQLUnparseable},
 		// Table functions, which read through something other than a telemetry table.
-		{"UrlTableFunction", "SELECT * FROM url('http://attacker.example/x', CSV, 'a String')"},
-		{"FileTableFunction", "SELECT * FROM file('/etc/passwd', CSV, 'a String')"},
-		{"ExecutableTableFunction", "SELECT * FROM executable('script.sh', CSV, 'a String')"},
-		{"TableFunctionInJoin", "SELECT * FROM t1 JOIN url('http://x', CSV, 'a String') u ON 1 = 1"},
-		{"TableFunctionInCommonTableExpression", "WITH c AS (SELECT * FROM url('http://x', CSV, 'a String')) SELECT * FROM c"},
-		{"TableFunctionInWhereSubquery", "SELECT * FROM t WHERE a IN (SELECT * FROM file('/etc/passwd', CSV, 'a String'))"},
-		{"TableFunctionInUnion", "SELECT * FROM t UNION ALL SELECT * FROM url('http://x', CSV, 'a String')"},
+		{"UrlTableFunction", "SELECT * FROM url('http://attacker.example/x', CSV, 'a String')", CodeClickHouseSQLTableFunction},
+		{"FileTableFunction", "SELECT * FROM file('/etc/passwd', CSV, 'a String')", CodeClickHouseSQLTableFunction},
+		{"ExecutableTableFunction", "SELECT * FROM executable('script.sh', CSV, 'a String')", CodeClickHouseSQLTableFunction},
+		{"TableFunctionInJoin", "SELECT * FROM t1 JOIN url('http://x', CSV, 'a String') u ON 1 = 1", CodeClickHouseSQLTableFunction},
+		{"TableFunctionInCommonTableExpression", "WITH c AS (SELECT * FROM url('http://x', CSV, 'a String')) SELECT * FROM c", CodeClickHouseSQLTableFunction},
+		{"TableFunctionInWhereSubquery", "SELECT * FROM t WHERE a IN (SELECT * FROM file('/etc/passwd', CSV, 'a String'))", CodeClickHouseSQLTableFunction},
+		{"TableFunctionInUnion", "SELECT * FROM t UNION ALL SELECT * FROM url('http://x', CSV, 'a String')", CodeClickHouseSQLTableFunction},
 		// Internal databases, which hold grants and server metadata rather than telemetry.
-		{"SystemUsers", "SELECT * FROM system.users"},
-		{"SystemUppercase", "SELECT * FROM SYSTEM.USERS"},
-		{"SystemQuoted", "SELECT count() FROM `system`.`tables`"},
-		{"SystemInSubquery", "SELECT * FROM (SELECT name FROM system.parts)"},
-		{"SystemInJoin", "SELECT * FROM signoz_logs.distributed_logs_v2 AS l JOIN system.users AS u ON 1 = 1"},
-		{"SystemInIntersect", "SELECT * FROM t INTERSECT SELECT * FROM system.users"},
-		{"InformationSchema", "SELECT * FROM information_schema.tables"},
+		{"SystemUsers", "SELECT * FROM system.users", CodeClickHouseSQLInternalDatabase},
+		{"SystemUppercase", "SELECT * FROM SYSTEM.USERS", CodeClickHouseSQLInternalDatabase},
+		{"SystemQuoted", "SELECT count() FROM `system`.`tables`", CodeClickHouseSQLInternalDatabase},
+		{"SystemInSubquery", "SELECT * FROM (SELECT name FROM system.parts)", CodeClickHouseSQLInternalDatabase},
+		{"SystemInJoin", "SELECT * FROM signoz_logs.distributed_logs_v2 AS l JOIN system.users AS u ON 1 = 1", CodeClickHouseSQLInternalDatabase},
+		{"SystemInIntersect", "SELECT * FROM t INTERSECT SELECT * FROM system.users", CodeClickHouseSQLInternalDatabase},
+		{"InformationSchema", "SELECT * FROM information_schema.tables", CodeClickHouseSQLInternalDatabase},
 		// A query-level setting takes precedence over the one the caller applies.
-		{"ReadonlySettingOverride", "SELECT * FROM t SETTINGS readonly = 0"},
-		{"ReadonlySettingOverrideAmongOthers", "SELECT * FROM t SETTINGS max_threads = 4, readonly = 0"},
+		{"ReadonlySettingOverride", "SELECT * FROM t SETTINGS readonly = 0", CodeClickHouseSQLReadonlyOverride},
+		{"ReadonlySettingOverrideAmongOthers", "SELECT * FROM t SETTINGS max_threads = 4, readonly = 0", CodeClickHouseSQLReadonlyOverride},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			err := ErrIfStatementIsNotValid(testCase.query)
+
 			assert.Error(t, err)
+			assert.True(t, errors.Asc(err, testCase.expectedCode), "expected code %s, got %v", testCase.expectedCode, err)
 		})
 	}
 }
@@ -121,18 +131,6 @@ func TestErrIfStatementIsNotValid_ShouldPassButFails(t *testing.T) {
 			query:              "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 5 MINUTE) AS interval, resources_string['host.name'] as host_name, toFloat64(countIf( lower(trim(BOTH ' ' FROM replaceOne( JSONExtractString(body, 'Action'), 'health_status: ', '' ))) IN ('unhealthy','starting','failing') )) as value FROM signoz_logs.distributed_logs_v2 WHERE timestamp BETWEEN 1784602320000000000 AND 1784602620000000000 AND ts_bucket_start BETWEEN 1784602320 - 300 AND 1784602620 AND JSONExtractString(body, 'Type') = 'container' AND JSONExtractString(body, 'Actor', 'Attributes', 'name') IS NOT NULL AND resources_string['host.name'] IS NOT NULL AND resources_string['host.name'] = 'aihub-nightly' GROUP BY interval, host_name ORDER BY interval, host_name",
 			expectedStopsAfter: "trim(BOTH '",
 			fix:                "SELECT trimBoth(replaceOne( JSONExtractString(body, 'Action'), 'health_status: ', '' ), ' ')",
-		},
-		{
-			name:               "SignedLiteralAfterClosingParen",
-			query:              "SELECT now() AS ts, toFloat64(count()) AS value FROM ( SELECT attributes_string['TableName'] AS T, attributes_string['MissingId'] AS M, max(fromUnixTimestamp64Nano(timestamp)) AS last_seen, dateDiff('minute', min(fromUnixTimestamp64Nano(timestamp)), max(fromUnixTimestamp64Nano(timestamp))) AS age_min FROM signoz_logs.distributed_logs_v2 WHERE body='missing_map_record' AND timestamp >= (toUnixTimestamp(now())-3600)*1000000000 GROUP BY T, M ) WHERE age_min >= 20 AND last_seen >= now() - toIntervalMinute(8)",
-			expectedStopsAfter: "(toUnixTimestamp(now())",
-			fix:                "SELECT (toUnixTimestamp(now()) - 3600) * 1000000000",
-		},
-		{
-			name:               "SignedLiteralAfterClosingParenMinimal",
-			query:              "SELECT (1)-1",
-			expectedStopsAfter: "(1)",
-			fix:                "SELECT (1) - 1",
 		},
 	}
 

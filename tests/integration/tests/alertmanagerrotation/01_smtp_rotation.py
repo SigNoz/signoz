@@ -80,7 +80,7 @@ def stamp_legacy_transport(sqlstore: types.TestContainerSQL, channel_name: str) 
             {"config": json.dumps(config), "id": config_id},
         )
 
-        deleted = conn.execute(text("DELETE FROM migration WHERE name IN ('105', '105_scrub_email_channel_transport')"))
+        deleted = conn.execute(text("DELETE FROM migration WHERE name IN ('106', '106_scrub_email_channel_transport')"))
         assert deleted.rowcount == 1, "expected exactly one scrub migration record"
 
         conn.commit()
@@ -154,7 +154,7 @@ def test_smtp_rotation_applies_to_existing_channels(  # pylint: disable=too-many
 
     assert_stored_channel_clean(sqlstore, channel_name, recipient)
     with sqlstore.conn.connect() as conn:
-        replayed = conn.execute(text("SELECT count(*) FROM migration WHERE name IN ('105', '105_scrub_email_channel_transport')")).fetchone()[0]
+        replayed = conn.execute(text("SELECT count(*) FROM migration WHERE name IN ('106', '106_scrub_email_channel_transport')")).fetchone()[0]
         assert replayed == 1
 
     response = requests.get(
