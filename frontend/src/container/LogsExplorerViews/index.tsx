@@ -34,6 +34,7 @@ import LogsExplorerTable from 'container/LogsExplorerTable';
 import {
 	getExportQueryData,
 	getFrequencyChartData,
+	getListOrderBy,
 	getListQuery,
 	getQueryByPanelType,
 } from 'container/LogsExplorerViews/explorerUtils';
@@ -41,6 +42,7 @@ import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { ExportDashboard } from 'hooks/dashboard/useExportDashboards';
 import { useGetExportToDashboardLink } from 'hooks/dashboard/useGetExportToDashboardLink';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
+import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -111,7 +113,11 @@ function LogsExplorerViewsContainer({
 	const [queryId, setQueryId] = useState<string>(v4());
 	const [listChartQuery, setListChartQuery] = useState<Query | null>(null);
 
-	const [orderBy, setOrderBy] = useState<string>('timestamp:desc');
+	const compositeQuery = useGetCompositeQueryParam();
+
+	const [orderBy, setOrderBy] = useState<string>(() =>
+		getListOrderBy(compositeQuery),
+	);
 
 	const { yAxisUnit, onUnitChange } = useUrlYAxisUnit('');
 
