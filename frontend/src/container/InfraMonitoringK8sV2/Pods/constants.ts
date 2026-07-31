@@ -67,7 +67,7 @@ export const podWidgetInfo = [
 	{
 		title: 'CPU Usage (cores)',
 		yAxisUnit: '',
-		docPath: '/infrastructure-monitoring/kubernetes/pods/#cpu-usage-cores',
+		docPath: '/infrastructure-monitoring/kubernetes/pods/#cpu-usage-cores-1',
 	},
 	{
 		title: 'CPU Request, Limit Utilization',
