@@ -107,20 +107,4 @@ describe('PALETTE_V3 darken-pair table', () => {
 		const unique = new Set(darks);
 		expect(unique.size).toBe(PALETTE_V3.length);
 	});
-
-	it('prints the base→dark table for visual inspection', () => {
-		// eslint-disable-next-line no-console
-		console.log('\nPALETTE_V3 base → darkenHex(0.22) pairs:');
-		// eslint-disable-next-line no-console
-		console.log('idx  name          base     dark');
-		PALETTE_V3.forEach((hex, i) => {
-			const dark = darkenHex(hex, 0.22);
-			const name = (PALETTE_NAMES[i] ?? '').padEnd(13);
-			const idx = String(i).padStart(2, ' ');
-			// eslint-disable-next-line no-console
-			console.log(`${idx}   ${name} ${hex}  ${dark}`);
-		});
-		// Sentinel assertion so the test is not flagged as having none.
-		expect(PALETTE_V3).toHaveLength(28);
-	});
 });
