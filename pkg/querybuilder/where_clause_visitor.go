@@ -81,7 +81,10 @@ func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVis
 }
 
 type PreparedWhereClause struct {
-	WhereClause    *sqlbuilder.WhereClause
+	WhereClause *sqlbuilder.WhereClause
+	// Expr is the bare predicate in builder-internal format ($n markers bound to
+	// opts.Builder), embeddable outside a WHERE clause (e.g. inside countIf).
+	Expr           string
 	Warnings       []string
 	WarningsDocURL string
 }
@@ -170,7 +173,7 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (PreparedWhere
 
 	whereClause := sqlbuilder.NewWhereClause().AddWhereExpr(visitor.builder.Args, cond)
 
-	return PreparedWhereClause{WhereClause: whereClause, Warnings: visitor.warnings, WarningsDocURL: visitor.mainWarnURL}, nil
+	return PreparedWhereClause{WhereClause: whereClause, Expr: cond, Warnings: visitor.warnings, WarningsDocURL: visitor.mainWarnURL}, nil
 }
 
 // Visit dispatches to the specific visit method based on node type.

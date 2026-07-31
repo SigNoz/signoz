@@ -62,26 +62,26 @@ func NewFactory(
 			if err != nil {
 				return nil, err
 			}
-			return NewScopedTraceStatementBuilder(settings, metadataStore, scope, traceStmtBuilder, fl), nil
+			fm := tracestelemetryschema.NewFieldMapper()
+			cb := tracestelemetryschema.NewConditionBuilder(fm)
+			return NewScopedTraceStatementBuilder(settings, metadataStore, fm, cb, scope, traceStmtBuilder, fl), nil
 		},
 	)
 }
 
-// NewScopedTraceStatementBuilder wires the generic trace-list builder. The field
-// mapper / condition builder are built here, not injected — the list always scans the
-// traces span index. traceStmtBuilder (the delegate for the span-list path) is
-// injected because NewFactory already builds the canonical instance.
+// NewScopedTraceStatementBuilder wires the generic trace-list builder.
+// traceStmtBuilder (the delegate for the span-list path) is injected because
+// NewFactory already builds the canonical instance.
 func NewScopedTraceStatementBuilder(
 	settings factory.ProviderSettings,
 	metadataStore telemetrytypes.MetadataStore,
+	fieldMapper qbtypes.FieldMapper,
+	conditionBuilder qbtypes.ConditionBuilder,
 	scope TraceScope,
 	traceStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation],
 	fl flagger.Flagger,
 ) qbtypes.StatementBuilder[qbtypes.TraceAggregation] {
 	scopedSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/statementbuilder/scopedtracesstatementbuilder")
-
-	fm := tracestelemetryschema.NewFieldMapper()
-	cb := tracestelemetryschema.NewConditionBuilder(fm)
 
 	// Same resource-fingerprint prune as the standard trace builder — the list scans
 	// the same span index.
@@ -99,8 +99,8 @@ func NewScopedTraceStatementBuilder(
 	return &scopedTraceStatementBuilder{
 		logger:                    scopedSettings.Logger(),
 		metadataStore:             metadataStore,
-		fm:                        fm,
-		cb:                        cb,
+		fm:                        fieldMapper,
+		cb:                        conditionBuilder,
 		scope:                     scope,
 		traceStmtBuilder:          traceStmtBuilder,
 		resourceFilterStmtBuilder: resourceFilterStmtBuilder,
@@ -189,18 +189,20 @@ func (b *scopedTraceStatementBuilder) buildTraceListQuery(
 		limit = 100
 	}
 
-	// Resolve keys and columns once; all attribute access goes through the field mapper.
+	// Resolve keys once; all attribute access goes through the field mapper. Condition
+	// args bind into the builder an expression is embedded in, so the matched and
+	// enrichment passes each resolve against their own builder.
 	keys, err := b.fetchKeys(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
-	mapper := newFieldMapper(b.fm, b.cb, keys)
-	maskExpr, maskArgs, err := b.resolveMask(ctx, orgID, start, end, mapper)
+	matchedSB := sqlbuilder.NewSelectBuilder()
+	maskExpr, resolved, err := b.resolveFor(ctx, orgID, start, end, keys, matchedSB)
 	if err != nil {
 		return nil, err
 	}
-	mapper.maskExpr, mapper.maskArgs = maskExpr, maskArgs
-	resolved, err := b.resolveColumns(ctx, orgID, start, end, mapper)
+	enrichSB := sqlbuilder.NewSelectBuilder()
+	_, enrichResolved, err := b.resolveFor(ctx, orgID, start, end, keys, enrichSB)
 	if err != nil {
 		return nil, err
 	}
@@ -219,19 +221,28 @@ func (b *scopedTraceStatementBuilder) buildTraceListQuery(
 	}
 
 	// Split the user filter: span-level predicate + trace-level HAVING expression.
-	fp, err := b.splitFilter(ctx, orgID, query, b.aggregateAliasSet(), orderableSet, start, end, variables)
+	fp, err := b.splitFilter(ctx, orgID, query, b.aggregateAliasSet(), orderableSet, start, end, variables, matchedSB)
 	if err != nil {
 		return nil, err
 	}
 
 	// matched → ranked → buckets → enrichment
-	matchedFrag, matchedArgs, err := b.buildMatchedCTE(start, end, startBucket, endBucket, resolved, orders, orderableSet, maskExpr, maskArgs, fp, resourcePred, limit, query.Offset)
+	matchedFrag, matchedArgs, err := b.buildMatchedCTE(matchedSB, start, end, startBucket, endBucket, resolved, orders, orderableSet, maskExpr, fp, resourcePred, limit, query.Offset)
 	if err != nil {
 		return nil, err
 	}
 	rankedFrag, rankedArgs := b.buildRankedCTE(start, end)
-	bucketsFrag := buildBucketsCTE()
-	mainSQL, mainArgs := b.buildEnrichmentSelect(resolved, orders)
+
+	// buckets: the ts_bucket_start values the matched traces span, so the enrichment
+	// scan is primary-key pruned. No args.
+	adj := querybuilder.BucketAdjustment // 30-min bucket width in seconds
+	bucketsFrag := fmt.Sprintf("buckets AS (SELECT DISTINCT b AS ts_bucket FROM ranked "+
+		"ARRAY JOIN range("+
+		"toUInt64(intDiv(toUnixTimestamp(t_start), %d) * %d - %d), "+
+		"toUInt64(intDiv(toUnixTimestamp(t_end), %d) * %d + %d), "+
+		"%d) AS b)", adj, adj, adj, adj, adj, adj, adj)
+
+	mainSQL, mainArgs := b.buildEnrichmentSelect(enrichSB, enrichResolved, orders)
 
 	cteFragments := []string{matchedFrag, rankedFrag, bucketsFrag}
 	cteArgs := [][]any{matchedArgs, rankedArgs, nil}
@@ -325,43 +336,56 @@ func (b *scopedTraceStatementBuilder) resolverFieldKeys() []*telemetrytypes.Tele
 	return out
 }
 
-// resolveMask builds the per-span in-scope mask: OR of resolved EXISTS predicates
-// over the base condition's field keys.
-func (b *scopedTraceStatementBuilder) resolveMask(ctx context.Context, orgID valuer.UUID, start, end uint64, mapper *fieldMapper) (string, []any, error) {
-	fieldKeys := b.scope.FieldKeys
-	parts := make([]string, 0, len(fieldKeys))
-	var args []any
-	for _, key := range fieldKeys {
-		e, a, err := mapper.ExistsFor(ctx, orgID, start, end, key)
-		if err != nil {
-			return "", nil, err
-		}
-		parts = append(parts, e)
-		args = append(args, a...)
+// resolveFor renders the gate mask and every scope column with condition args bound
+// into sb, so the returned expressions embed anywhere in that builder.
+func (b *scopedTraceStatementBuilder) resolveFor(ctx context.Context, orgID valuer.UUID, start, end uint64, keys map[string][]*telemetrytypes.TelemetryFieldKey, sb *sqlbuilder.SelectBuilder) (string, []resolvedColumn, error) {
+	cols := newColumnResolver(b.fm, keys)
+	preds := newPredicateResolver(b.cb, keys, sb)
+	maskExpr, err := b.resolveMask(ctx, orgID, start, end, preds)
+	if err != nil {
+		return "", nil, err
 	}
-	return "(" + strings.Join(parts, " OR ") + ")", args, nil
+	preds.maskExpr = maskExpr
+	resolved, err := b.resolveColumns(ctx, orgID, start, end, cols, preds)
+	if err != nil {
+		return "", nil, err
+	}
+	return maskExpr, resolved, nil
 }
 
-// resolvedColumn is a column resolved to SQL via the field mapper; expr is escaped
-// once, ready to embed in an outer SELECT.
+// resolveMask builds the per-span in-scope mask: OR of resolved EXISTS predicates
+// over the base condition's field keys.
+func (b *scopedTraceStatementBuilder) resolveMask(ctx context.Context, orgID valuer.UUID, start, end uint64, preds *predicateResolver) (string, error) {
+	fieldKeys := b.scope.FieldKeys
+	parts := make([]string, 0, len(fieldKeys))
+	for _, key := range fieldKeys {
+		e, err := preds.ExistsFor(ctx, orgID, start, end, key)
+		if err != nil {
+			return "", err
+		}
+		parts = append(parts, e)
+	}
+	return "(" + strings.Join(parts, " OR ") + ")", nil
+}
+
+// resolvedColumn is a column resolved to SQL via the field mapper, ready to embed in
+// the builder it was resolved against.
 type resolvedColumn struct {
 	alias     string
 	expr      string
-	args      []any
 	orderable bool
 }
 
-// resolveColumns turns the declarative columns into SQL through the resolver, so all
+// resolveColumns turns the declarative columns into SQL through the resolvers, so all
 // attribute access goes through the field mapper / condition builder.
-func (b *scopedTraceStatementBuilder) resolveColumns(ctx context.Context, orgID valuer.UUID, start, end uint64, mapper *fieldMapper) ([]resolvedColumn, error) {
-	cols := b.scope.Columns
-	out := make([]resolvedColumn, 0, len(cols))
-	for _, c := range cols {
-		expr, args, err := c.Expr.render(ctx, orgID, start, end, mapper)
+func (b *scopedTraceStatementBuilder) resolveColumns(ctx context.Context, orgID valuer.UUID, start, end uint64, cols *columnResolver, preds *predicateResolver) ([]resolvedColumn, error) {
+	out := make([]resolvedColumn, 0, len(b.scope.Columns))
+	for _, c := range b.scope.Columns {
+		expr, err := c.Expr.render(ctx, orgID, start, end, cols, preds)
 		if err != nil {
 			return nil, err
 		}
-		out = append(out, resolvedColumn{alias: c.Alias, expr: expr, args: args, orderable: c.Orderable})
+		out = append(out, resolvedColumn{alias: c.Alias, expr: expr, orderable: c.Orderable})
 	}
 	return out, nil
 }
@@ -410,17 +434,16 @@ func (b *scopedTraceStatementBuilder) resolveListOrders(order []qbtypes.OrderBy,
 // trace-level HAVING expression.
 type filterParts struct {
 	spanPred      string
-	spanArgs      []any
 	hasSpanFilter bool
 	havingExpr    string
 	warnings      []string
 	warningsURL   string
 }
 
-// splitFilter splits query.Filter into a span-level predicate and a trace-level
-// HAVING expression (an explicit query.Having is ANDed onto the latter), then
-// validates the trace-level part against the matched-pass aggregates.
-func (b *scopedTraceStatementBuilder) splitFilter(ctx context.Context, orgID valuer.UUID, query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation], classifySet, orderableSet map[string]struct{}, start, end uint64, variables map[string]qbtypes.VariableItem) (filterParts, error) {
+// splitFilter splits query.Filter into a span-level predicate (args bound into sb)
+// and a trace-level HAVING expression (an explicit query.Having is ANDed onto the
+// latter), then validates the trace-level part against the matched-pass aggregates.
+func (b *scopedTraceStatementBuilder) splitFilter(ctx context.Context, orgID valuer.UUID, query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation], classifySet, orderableSet map[string]struct{}, start, end uint64, variables map[string]qbtypes.VariableItem, sb *sqlbuilder.SelectBuilder) (filterParts, error) {
 	var fp filterParts
 	if query.Filter != nil && strings.TrimSpace(query.Filter.Expression) != "" {
 		spanExpr, traceExpr, err := querybuilder.SplitFilterForAggregates(query.Filter.Expression, classifySet)
@@ -429,14 +452,14 @@ func (b *scopedTraceStatementBuilder) splitFilter(ctx context.Context, orgID val
 		}
 		fp.havingExpr = traceExpr
 		if strings.TrimSpace(spanExpr) != "" {
-			pred, args, warnings, url, err := b.resolveSpanPredicate(ctx, orgID, start, end, spanExpr, variables)
+			pred, warnings, url, err := b.resolveSpanPredicate(ctx, orgID, start, end, spanExpr, variables, sb)
 			if err != nil {
 				return fp, err
 			}
 			// pred is empty when the span-level keys were all resource attributes
 			// already handled by the __resource_filter CTE.
 			if strings.TrimSpace(pred) != "" {
-				fp.spanPred, fp.spanArgs, fp.hasSpanFilter = pred, args, true
+				fp.spanPred, fp.hasSpanFilter = pred, true
 			}
 			fp.warnings, fp.warningsURL = warnings, url
 		}
@@ -465,22 +488,24 @@ func (b *scopedTraceStatementBuilder) splitFilter(ctx context.Context, orgID val
 }
 
 // resolveSpanPredicate resolves a span-level filter expression to a bare boolean
-// SQL predicate + args via the field mapper.
-func (b *scopedTraceStatementBuilder) resolveSpanPredicate(ctx context.Context, orgID valuer.UUID, start, end uint64, expr string, variables map[string]qbtypes.VariableItem) (string, []any, []string, string, error) {
+// SQL predicate via the field mapper, args bound into sb.
+func (b *scopedTraceStatementBuilder) resolveSpanPredicate(ctx context.Context, orgID valuer.UUID, start, end uint64, expr string, variables map[string]qbtypes.VariableItem, sb *sqlbuilder.SelectBuilder) (string, []string, string, error) {
 	selectors := querybuilder.QueryStringToKeysSelectors(expr)
 	for i := range selectors {
 		selectors[i].Signal = telemetrytypes.SignalTraces
 	}
 	keys, _, err := b.metadataStore.GetKeysMulti(ctx, orgID, selectors)
 	if err != nil {
-		return "", nil, nil, "", err
+		return "", nil, "", err
 	}
 	prepared, err := querybuilder.PrepareWhereClause(expr, querybuilder.FilterExprVisitorOpts{
 		Context:          ctx,
+		OrgID:            orgID,
 		Logger:           b.logger,
 		FieldMapper:      b.fm,
 		ConditionBuilder: b.cb,
 		FieldKeys:        keys,
+		Builder:          sb,
 		// resource conditions are always handled by the __resource_filter CTE
 		SkipResourceFilter: true,
 		Variables:          variables,
@@ -488,24 +513,20 @@ func (b *scopedTraceStatementBuilder) resolveSpanPredicate(ctx context.Context, 
 		EndNs:              end,
 	})
 	if err != nil {
-		return "", nil, nil, "", err
+		return "", nil, "", err
 	}
 	if prepared.IsEmpty() {
-		return "", nil, nil, "", nil
+		return "", nil, "", nil
 	}
-	sb := sqlbuilder.NewSelectBuilder()
-	sb.AddWhereClause(prepared.WhereClause)
-	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-	pred := sql[strings.Index(sql, "WHERE ")+len("WHERE "):]
-	return sqlbuilder.Escape(pred), args, prepared.Warnings, prepared.WarningsDocURL, nil
+	return prepared.Expr, prepared.Warnings, prepared.WarningsDocURL, nil
 }
 
 // buildMatchedCTE builds `matched`: the single windowed GROUP BY trace_id scan that
 // fuses gate + span filter + HAVING + ORDER BY + LIMIT/OFFSET, selecting only the
-// aliases the ORDER BY / HAVING reference.
-func (b *scopedTraceStatementBuilder) buildMatchedCTE(start, end, startBucket, endBucket uint64, resolved []resolvedColumn, orders []listOrder, orderableSet map[string]struct{}, maskExpr string, maskArgs []any, fp filterParts, resourcePred string, limit, offset int) (string, []any, error) {
-	sb := sqlbuilder.NewSelectBuilder()
-
+// aliases the ORDER BY / HAVING reference. resolved, maskExpr and fp.spanPred carry
+// $n markers bound to sb, so each can appear several times (SELECT, WHERE, HAVING)
+// and every occurrence resolves to the same arg.
+func (b *scopedTraceStatementBuilder) buildMatchedCTE(sb *sqlbuilder.SelectBuilder, start, end, startBucket, endBucket uint64, resolved []resolvedColumn, orders []listOrder, orderableSet map[string]struct{}, maskExpr string, fp filterParts, resourcePred string, limit, offset int) (string, []any, error) {
 	// SELECT trace_id + only the aggregates ORDER BY / HAVING reference (as aliases).
 	needed := neededMatchedAliases(orders, fp.havingExpr, orderableSet)
 	selects := []string{"trace_id"}
@@ -513,32 +534,25 @@ func (b *scopedTraceStatementBuilder) buildMatchedCTE(start, end, startBucket, e
 		if _, ok := needed[rc.alias]; !ok {
 			continue
 		}
-		colExpr, err := embedExpr(sb, rc.expr, rc.args)
-		if err != nil {
-			return "", nil, err
-		}
-		selects = append(selects, colExpr+" AS "+quoteAlias(rc.alias))
+		selects = append(selects, rc.expr+" AS "+quoteAlias(rc.alias))
 	}
 	sb.Select(selects...)
-	sb.From(spanTable())
+	sb.From(fmt.Sprintf("%s.%s", tracestelemetryschema.DBName, tracestelemetryschema.SpanIndexV3TableName))
 
 	// WHERE: window + prune to in-scope spans, widened by the span filter so its
 	// spans survive for the countIf existence check below.
-	win := windowWhere(sb, start, end, startBucket, endBucket)
-	mask, err := embedExpr(sb, maskExpr, maskArgs)
-	if err != nil {
-		return "", nil, err
-	}
-	prune := "(" + mask
+	prune := "(" + maskExpr
 	if fp.hasSpanFilter {
-		spanPred, err := embedExpr(sb, fp.spanPred, fp.spanArgs)
-		if err != nil {
-			return "", nil, err
-		}
-		prune += " OR " + spanPred
+		prune += " OR " + fp.spanPred
 	}
 	prune += ")"
-	where := append(win, prune)
+	where := []string{
+		sb.GE("timestamp", fmt.Sprintf("%d", start)),
+		sb.L("timestamp", fmt.Sprintf("%d", end)),
+		sb.GE("ts_bucket_start", startBucket),
+		sb.LE("ts_bucket_start", endBucket),
+		prune,
+	}
 	if resourcePred != "" {
 		where = append(where, resourcePred)
 	}
@@ -549,26 +563,26 @@ func (b *scopedTraceStatementBuilder) buildMatchedCTE(start, end, startBucket, e
 	// widened by a span filter; otherwise the mask alone already enforces the gate.
 	var having []string
 	if fp.hasSpanFilter {
-		havingMask, err := embedExpr(sb, maskExpr, maskArgs)
-		if err != nil {
-			return "", nil, err
-		}
-		havingPred, err := embedExpr(sb, fp.spanPred, fp.spanArgs)
-		if err != nil {
-			return "", nil, err
-		}
-		having = append(having, "countIf("+havingMask+") > 0")
-		having = append(having, "countIf("+havingPred+") > 0")
+		having = append(having, "countIf("+maskExpr+") > 0")
+		having = append(having, "countIf("+fp.spanPred+") > 0")
 	}
 	if strings.TrimSpace(fp.havingExpr) != "" {
-		hv, err := b.buildHaving(fp.havingExpr, orderableSet)
+		// Rewrite the trace-level HAVING to the matched-pass column aliases. The
+		// rewriter matches raw key text, so the trace. form is mapped alongside the
+		// bare name.
+		columnMap := make(map[string]string, len(orderableSet)*2)
+		for a := range orderableSet {
+			columnMap[a] = quoteAlias(a)
+			columnMap[telemetrytypes.FieldContextTrace.StringValue()+"."+a] = quoteAlias(a)
+		}
+		hv, err := querybuilder.NewHavingExpressionRewriter().Rewrite(fp.havingExpr, columnMap)
 		if err != nil {
 			return "", nil, err
 		}
 		if hv != "" {
 			// hv carries user text with values inlined by the rewriter; escape it so a
-			// literal $ can't be read as an interpolation marker at Build time. The
-			// countIf entries above hold live placeholders and must stay unescaped.
+			// literal $ can't be read as an arg marker at Build time. The countIf
+			// entries above hold live $n markers and must stay unescaped.
 			having = append(having, sqlbuilder.Escape(hv))
 		}
 	}
@@ -591,7 +605,7 @@ func (b *scopedTraceStatementBuilder) buildMatchedCTE(start, end, startBucket, e
 func (b *scopedTraceStatementBuilder) buildRankedCTE(start, end uint64) (string, []any) {
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select("trace_id", "min(start) AS t_start", "max(end) AS t_end")
-	sb.From(summaryTable())
+	sb.From(fmt.Sprintf("%s.%s", tracestelemetryschema.DBName, tracestelemetryschema.TraceSummaryTableName))
 	sb.Where(
 		"trace_id GLOBAL IN (SELECT trace_id FROM matched)",
 		"end >= fromUnixTimestamp64Nano("+sb.Var(start)+")",
@@ -600,17 +614,6 @@ func (b *scopedTraceStatementBuilder) buildRankedCTE(start, end uint64) (string,
 	sb.GroupBy("trace_id")
 	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 	return fmt.Sprintf("ranked AS (%s)", sql), args
-}
-
-// buildBucketsCTE builds `buckets`: the ts_bucket_start values the matched traces
-// span, so the enrichment scan is primary-key pruned. No args.
-func buildBucketsCTE() string {
-	adj := querybuilder.BucketAdjustment // 30-min bucket width in seconds
-	return fmt.Sprintf("buckets AS (SELECT DISTINCT b AS ts_bucket FROM ranked "+
-		"ARRAY JOIN range("+
-		"toUInt64(intDiv(toUnixTimestamp(t_start), %d) * %d - %d), "+
-		"toUInt64(intDiv(toUnixTimestamp(t_end), %d) * %d + %d), "+
-		"%d) AS b)", adj, adj, adj, adj, adj, adj, adj)
 }
 
 // buildEnrichmentSelect builds the final SELECT: every per-trace column for the
@@ -623,45 +626,20 @@ func buildBucketsCTE() string {
 // (LIMIT/OFFSET runs only in matched); rows still sort by the values the user sees.
 // Ordering by matched's values instead would re-run the matched scan (ClickHouse
 // re-executes a CTE per reference) without fixing the visible cross-page artifact.
-func (b *scopedTraceStatementBuilder) buildEnrichmentSelect(resolved []resolvedColumn, orders []listOrder) (string, []any) {
-	sb := sqlbuilder.NewSelectBuilder()
-	selects, selectArgs := selectAllColumns(resolved)
+func (b *scopedTraceStatementBuilder) buildEnrichmentSelect(sb *sqlbuilder.SelectBuilder, resolved []resolvedColumn, orders []listOrder) (string, []any) {
+	selects := []string{"trace_id"}
+	for _, rc := range resolved {
+		selects = append(selects, rc.expr+" AS "+quoteAlias(rc.alias))
+	}
 	sb.Select(selects...)
-	sb.From(spanTable())
+	sb.From(fmt.Sprintf("%s.%s", tracestelemetryschema.DBName, tracestelemetryschema.SpanIndexV3TableName))
 	sb.Where(
 		"ts_bucket_start GLOBAL IN (SELECT ts_bucket FROM buckets)",
 		"trace_id GLOBAL IN (SELECT trace_id FROM ranked)",
 	)
 	sb.GroupBy("trace_id")
 	sb.OrderBy(orderClause(orders)...)
-	sql, builtArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-	return sql, append(append([]any{}, selectArgs...), builtArgs...)
-}
-
-// buildHaving rewrites a trace-level HAVING expression to the matched-pass column
-// aliases. The rewriter matches raw key text, so the trace. form is mapped alongside
-// the bare name.
-func (b *scopedTraceStatementBuilder) buildHaving(havingExpr string, orderableSet map[string]struct{}) (string, error) {
-	columnMap := make(map[string]string, len(orderableSet)*2)
-	for a := range orderableSet {
-		columnMap[a] = quoteAlias(a)
-		columnMap[telemetrytypes.FieldContextTrace.StringValue()+"."+a] = quoteAlias(a)
-	}
-	return querybuilder.NewHavingExpressionRewriter().Rewrite(havingExpr, columnMap)
-}
-
-// ---------------------------------------------------------------------------
-// Small shared SQL-builder utilities
-// ---------------------------------------------------------------------------
-
-// spanTable is the fully-qualified span index table.
-func spanTable() string {
-	return fmt.Sprintf("%s.%s", tracestelemetryschema.DBName, tracestelemetryschema.SpanIndexV3TableName)
-}
-
-// summaryTable is the fully-qualified trace-summary table.
-func summaryTable() string {
-	return fmt.Sprintf("%s.%s", tracestelemetryschema.DBName, tracestelemetryschema.TraceSummaryTableName)
+	return sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 }
 
 // aggregateAliasSet is every trace-level column alias, used to classify filter keys
@@ -739,39 +717,6 @@ func validateAggregateFilter(havingExpr string, orderableSet map[string]struct{}
 	return nil
 }
 
-// embedExpr inlines a resolved expr into sb, replacing each `?` placeholder with a
-// builder Var so the args are tracked in appearance order. Resolved exprs carry
-// values only as bound args, so every `?` is a placeholder; a count mismatch would
-// silently shift args into the wrong slots — error out instead.
-func embedExpr(sb *sqlbuilder.SelectBuilder, expr string, args []any) (string, error) {
-	if n := strings.Count(expr, "?"); n != len(args) {
-		return "", errors.NewInternalf(errors.CodeInternal,
-			"scoped trace builder: %d placeholders != %d args embedding %q", n, len(args), expr)
-	}
-	var out strings.Builder
-	ai := 0
-	for i := 0; i < len(expr); i++ {
-		if expr[i] == '?' {
-			out.WriteString(sb.Var(args[ai]))
-			ai++
-			continue
-		}
-		out.WriteByte(expr[i])
-	}
-	return out.String(), nil
-}
-
-// windowWhere binds the time-window predicates to sb and returns them so the caller
-// can add its own predicates in the same Where call.
-func windowWhere(sb *sqlbuilder.SelectBuilder, start, end, startBucket, endBucket uint64) []string {
-	return []string{
-		sb.GE("timestamp", fmt.Sprintf("%d", start)),
-		sb.L("timestamp", fmt.Sprintf("%d", end)),
-		sb.GE("ts_bucket_start", startBucket),
-		sb.LE("ts_bucket_start", endBucket),
-	}
-}
-
 // orderClause renders the ORDER BY terms plus the trace_id tiebreak.
 func orderClause(orders []listOrder) []string {
 	out := make([]string, 0, len(orders)+1)
@@ -779,18 +724,6 @@ func orderClause(orders []listOrder) []string {
 		out = append(out, fmt.Sprintf("%s %s", quoteAlias(o.alias), o.direction))
 	}
 	return append(out, "trace_id DESC")
-}
-
-// selectAllColumns renders `expr AS alias` for every resolved column, args in select
-// order.
-func selectAllColumns(resolved []resolvedColumn) ([]string, []any) {
-	selects := []string{"trace_id"}
-	var args []any
-	for _, rc := range resolved {
-		selects = append(selects, rc.expr+" AS "+quoteAlias(rc.alias))
-		args = append(args, rc.args...)
-	}
-	return selects, args
 }
 
 // quoteAlias backticks an alias containing characters special to the SQL builder.
