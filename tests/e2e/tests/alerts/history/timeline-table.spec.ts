@@ -95,6 +95,28 @@ test.describe('Alert history — timeline table', () => {
 		expect(page.url()).toContain('compositeQuery');
 	});
 
+	test('AT-15b row actions link navigates to traces explorer', async ({
+		authedPage: page,
+		tracesHistory,
+	}) => {
+		await gotoAlertHistory(page, tracesHistory.ruleId);
+
+		await timelineRows(page).first().getByTestId('timeline-row-actions').click();
+
+		// A traces rule yields a traces link only — the backend returns one or the
+		// other, never both, so "View Logs" must be absent.
+		const viewTraces = page.getByTestId('alert-popover-view-traces');
+		await expect(viewTraces).toBeVisible();
+		await expect(page.getByTestId('alert-popover-view-logs')).toHaveCount(0);
+		await viewTraces.click();
+
+		await expect(page).toHaveURL(/\/traces-explorer/);
+		const search = new URL(page.url()).searchParams;
+		expect(search.get('startTime')).toBeTruthy();
+		expect(search.get('endTime')).toBeTruthy();
+		expect(page.url()).toContain('compositeQuery');
+	});
+
 	test('AT-16 metrics rule rows show disabled action (no related links)', async ({
 		authedPage: page,
 		metricsHistory,

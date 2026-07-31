@@ -210,7 +210,11 @@ export async function gotoAlertOverview(
 	ruleId: string,
 ): Promise<void> {
 	await page.goto(`${ALERT_OVERVIEW_PATH}?ruleId=${ruleId}`);
-	await expect(page.getByTestId('threshold-value-input')).toBeVisible();
+	// `.first()` because a rule may have several thresholds, and the editor renders
+	// one input per threshold. Without it this is a strict-mode violation that only
+	// appears once the *second* row has rendered — i.e. a timing-dependent failure
+	// for multi-threshold rules.
+	await expect(page.getByTestId('threshold-value-input').first()).toBeVisible();
 	// The builder rewrites location.search shortly after load (adds compositeQuery).
 	await page.waitForURL(/compositeQuery=/, { timeout: 15_000 });
 	// Let post-load state updates flush so callers read the settled value.
@@ -1031,6 +1035,16 @@ export async function gotoAlertHistory(
 		);
 	}
 	await expect(table).toBeVisible();
+
+	// The `timeline-table` node is rendered by the first paint, *before* the
+	// timeline request settles — antd only overlays a spinner on it. Returning
+	// here would leave that request in flight, and the next
+	// `waitForHistoryResponse` in the spec would resolve with the page's own
+	// load instead of the response its interaction produced. Wait the spinner
+	// out so every caller starts from a quiet page.
+	await expect(page.locator('.timeline-table .ant-spin-spinning')).toHaveCount(
+		0,
+	);
 }
 
 // ─── Locators ──────────────────────────────────────────────────────────────
@@ -1094,16 +1108,26 @@ export function isHistoryRequest(
 
 /**
  * Wait for a history API response. Common pattern across history specs.
- * Optionally filter by HTTP status code.
+ *
+ * Optionally narrow by HTTP status code or by the `filterExpression` the
+ * request carried. The latter matters whenever a scenario reacts to *its own*
+ * request: the page's own load is still in flight when the spec starts typing,
+ * so an unqualified matcher happily resolves with that earlier response.
  */
 export function waitForHistoryResponse(
 	page: Page,
 	endpoint: HistoryEndpoint,
-	options?: { status?: number },
+	options?: { status?: number; filterExpression?: string },
 ): Promise<Response> {
 	return page.waitForResponse((res) => {
 		if (!isHistoryRequest(res.request(), endpoint)) return false;
 		if (options?.status !== undefined && res.status() !== options.status)
+			return false;
+		if (
+			options?.filterExpression !== undefined &&
+			(requestUrl(res.request()).searchParams.get('filterExpression') ?? '') !==
+				options.filterExpression
+		)
 			return false;
 		return true;
 	});

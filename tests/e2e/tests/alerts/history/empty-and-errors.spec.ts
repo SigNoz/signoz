@@ -23,7 +23,9 @@ test.describe('Alert history — error and empty states', () => {
 	}) => {
 		await gotoAlertHistory(page, alertHistory.ruleId);
 
-		const responsePromise = waitForHistoryResponse(page, 'timeline');
+		const responsePromise = waitForHistoryResponse(page, 'timeline', {
+			filterExpression: 'service.name =',
+		});
 		await runFilterExpression(page, 'service.name =');
 		const response = await responsePromise;
 		expect(response.status()).toBe(400);
@@ -32,13 +34,12 @@ test.describe('Alert history — error and empty states', () => {
 		await expect(error).toBeVisible();
 		await expect(error).toContainText(/syntax error/i);
 
+		const fixed = `service.name = '${alertHistory.services[7]}'`;
 		const fixResponsePromise = waitForHistoryResponse(page, 'timeline', {
 			status: 200,
+			filterExpression: fixed,
 		});
-		await runFilterExpression(
-			page,
-			`service.name = '${alertHistory.services[7]}'`,
-		);
+		await runFilterExpression(page, fixed);
 		await fixResponsePromise;
 		await expect(page.getByTestId('timeline-error')).toHaveCount(0);
 		await expect(timelineRows(page)).toHaveCount(1);
