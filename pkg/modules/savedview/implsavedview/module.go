@@ -20,7 +20,7 @@ func NewModule(sqlstore sqlstore.SQLStore) savedview.Module {
 }
 
 func (module *module) GetViewsForFilters(ctx context.Context, orgID string, sourcePage savedviewtypes.SourcePage, name string) ([]*savedviewtypes.GettableSavedView, error) {
-	var views []*savedviewtypes.StorableSavedView
+	var views []*savedviewtypes.SavedView
 	err := module.sqlstore.BunDB().NewSelect().Model(&views).
 		Where("org_id = ? AND source_page = ? AND name LIKE ?", orgID, sourcePage, "%"+name+"%").
 		Scan(ctx)
@@ -28,7 +28,7 @@ func (module *module) GetViewsForFilters(ctx context.Context, orgID string, sour
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error in getting saved views")
 	}
 
-	return savedviewtypes.NewGettableSavedViewsFromStorable(views), nil
+	return savedviewtypes.NewGettableSavedViewsFromSavedViews(views), nil
 }
 
 func (module *module) CreateView(ctx context.Context, orgID string, view savedviewtypes.PostableSavedView) (valuer.UUID, error) {
@@ -37,7 +37,7 @@ func (module *module) CreateView(ctx context.Context, orgID string, view savedvi
 		return valuer.UUID{}, errors.NewInternalf(errors.CodeInternal, "error in getting email from context")
 	}
 
-	dbView := savedviewtypes.NewStorableSavedView(orgID, claims.Email, claims.Email, view)
+	dbView := savedviewtypes.NewSavedView(orgID, claims.Email, claims.Email, view)
 
 	_, err = module.sqlstore.BunDB().NewInsert().Model(dbView).Exec(ctx)
 	if err != nil {
@@ -47,13 +47,13 @@ func (module *module) CreateView(ctx context.Context, orgID string, view savedvi
 }
 
 func (module *module) GetView(ctx context.Context, orgID string, uuid valuer.UUID) (*savedviewtypes.GettableSavedView, error) {
-	var view savedviewtypes.StorableSavedView
+	var view savedviewtypes.SavedView
 	err := module.sqlstore.BunDB().NewSelect().Model(&view).Where("org_id = ? AND id = ?", orgID, uuid.StringValue()).Scan(ctx)
 	if err != nil {
 		return nil, module.sqlstore.WrapNotFoundErrf(err, savedviewtypes.ErrCodeSavedViewNotFound, "saved view %s not found", uuid.StringValue())
 	}
 
-	return savedviewtypes.NewGettableSavedViewFromStorable(&view), nil
+	return savedviewtypes.NewGettableSavedViewFromSavedView(&view), nil
 }
 
 func (module *module) UpdateView(ctx context.Context, orgID string, uuid valuer.UUID, view savedviewtypes.UpdatableSavedView) error {
@@ -62,10 +62,10 @@ func (module *module) UpdateView(ctx context.Context, orgID string, uuid valuer.
 		return errors.NewInternalf(errors.CodeInternal, "error in getting email from context")
 	}
 
-	dbView := savedviewtypes.NewStorableSavedView(orgID, claims.Email, claims.Email, view)
+	dbView := savedviewtypes.NewSavedView(orgID, claims.Email, claims.Email, view)
 
 	res, err := module.sqlstore.BunDB().NewUpdate().
-		Model(&savedviewtypes.StorableSavedView{}).
+		Model(&savedviewtypes.SavedView{}).
 		Set("updated_at = ?, updated_by = ?, name = ?, source_page = ?, data = ?",
 			dbView.UpdatedAt, dbView.UpdatedBy, dbView.Name, dbView.SourcePage, dbView.Data).
 		Where("id = ?", uuid.StringValue()).
@@ -88,7 +88,7 @@ func (module *module) UpdateView(ctx context.Context, orgID string, uuid valuer.
 
 func (module *module) DeleteView(ctx context.Context, orgID string, uuid valuer.UUID) error {
 	res, err := module.sqlstore.BunDB().NewDelete().
-		Model(&savedviewtypes.StorableSavedView{}).
+		Model(&savedviewtypes.SavedView{}).
 		Where("id = ?", uuid.StringValue()).
 		Where("org_id = ?", orgID).
 		Exec(ctx)
@@ -108,7 +108,7 @@ func (module *module) DeleteView(ctx context.Context, orgID string, uuid valuer.
 }
 
 func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any, error) {
-	savedViews := []*savedviewtypes.StorableSavedView{}
+	savedViews := []*savedviewtypes.SavedView{}
 
 	err := module.
 		sqlstore.

@@ -82,26 +82,26 @@ func TestListSavedViewsParamsValidate(t *testing.T) {
 	})
 }
 
-func TestNewStorableSavedView(t *testing.T) {
+func TestNewSavedView(t *testing.T) {
 	orgID := valuer.GenerateUUID().StringValue()
 	view := validPostableSavedView()
 
-	storable := NewStorableSavedView(orgID, "creator@signoz.io", "updater@signoz.io", view)
+	savedView := NewSavedView(orgID, "creator@signoz.io", "updater@signoz.io", view)
 
-	assert.False(t, storable.ID.IsZero())
-	assert.Equal(t, orgID, storable.OrgID)
-	assert.Equal(t, "creator@signoz.io", storable.CreatedBy)
-	assert.Equal(t, "updater@signoz.io", storable.UpdatedBy)
-	assert.Equal(t, view.Name, storable.Name)
-	assert.Equal(t, view.SourcePage, storable.SourcePage)
-	assert.Equal(t, view.SavedViewData, storable.Data)
-	assert.False(t, storable.CreatedAt.IsZero())
-	assert.Equal(t, storable.CreatedAt, storable.UpdatedAt)
+	assert.False(t, savedView.ID.IsZero())
+	assert.Equal(t, orgID, savedView.OrgID)
+	assert.Equal(t, "creator@signoz.io", savedView.CreatedBy)
+	assert.Equal(t, "updater@signoz.io", savedView.UpdatedBy)
+	assert.Equal(t, view.Name, savedView.Name)
+	assert.Equal(t, view.SourcePage, savedView.SourcePage)
+	assert.Equal(t, view.SavedViewData, savedView.Data)
+	assert.False(t, savedView.CreatedAt.IsZero())
+	assert.Equal(t, savedView.CreatedAt, savedView.UpdatedAt)
 }
 
-func TestNewGettableSavedViewFromStorable(t *testing.T) {
+func TestNewGettableSavedViewFromSavedView(t *testing.T) {
 	t.Run("nil selected fields are normalized to an empty slice", func(t *testing.T) {
-		storable := &StorableSavedView{
+		savedView := &SavedView{
 			Name:       "my view",
 			SourcePage: SourcePageLogs,
 			Data: SavedViewData{
@@ -110,7 +110,7 @@ func TestNewGettableSavedViewFromStorable(t *testing.T) {
 			},
 		}
 
-		gettable := NewGettableSavedViewFromStorable(storable)
+		gettable := NewGettableSavedViewFromSavedView(savedView)
 
 		require.NotNil(t, gettable.Spec.SelectedFields)
 		assert.Empty(t, gettable.Spec.SelectedFields)
@@ -118,7 +118,7 @@ func TestNewGettableSavedViewFromStorable(t *testing.T) {
 
 	t.Run("existing selected fields are preserved", func(t *testing.T) {
 		fields := []telemetrytypes.TelemetryFieldKey{{Name: "service.name"}}
-		storable := &StorableSavedView{
+		savedView := &SavedView{
 			Name:       "my view",
 			SourcePage: SourcePageLogs,
 			Data: SavedViewData{
@@ -127,14 +127,14 @@ func TestNewGettableSavedViewFromStorable(t *testing.T) {
 			},
 		}
 
-		gettable := NewGettableSavedViewFromStorable(storable)
+		gettable := NewGettableSavedViewFromSavedView(savedView)
 
 		assert.Equal(t, fields, gettable.Spec.SelectedFields)
 	})
 
 	t.Run("all fields carried over", func(t *testing.T) {
 		now := time.Now()
-		storable := &StorableSavedView{
+		savedView := &SavedView{
 			Name:       "my view",
 			SourcePage: SourcePageTraces,
 			Data: SavedViewData{
@@ -142,28 +142,28 @@ func TestNewGettableSavedViewFromStorable(t *testing.T) {
 				Spec:          SavedViewSpec{PanelType: PanelTypeTable, Queries: validQueries()},
 			},
 		}
-		storable.ID = valuer.GenerateUUID()
-		storable.CreatedAt = now
-		storable.UpdatedAt = now
-		storable.CreatedBy = "creator@signoz.io"
-		storable.UpdatedBy = "updater@signoz.io"
+		savedView.ID = valuer.GenerateUUID()
+		savedView.CreatedAt = now
+		savedView.UpdatedAt = now
+		savedView.CreatedBy = "creator@signoz.io"
+		savedView.UpdatedBy = "updater@signoz.io"
 
-		gettable := NewGettableSavedViewFromStorable(storable)
+		gettable := NewGettableSavedViewFromSavedView(savedView)
 
-		assert.Equal(t, storable.ID, gettable.ID)
-		assert.Equal(t, storable.Name, gettable.Name)
-		assert.Equal(t, storable.CreatedAt, gettable.CreatedAt)
-		assert.Equal(t, storable.CreatedBy, gettable.CreatedBy)
-		assert.Equal(t, storable.UpdatedAt, gettable.UpdatedAt)
-		assert.Equal(t, storable.UpdatedBy, gettable.UpdatedBy)
-		assert.Equal(t, storable.SourcePage, gettable.SourcePage)
-		assert.Equal(t, storable.Data.SchemaVersion, gettable.SchemaVersion)
-		assert.Equal(t, storable.Data.Spec.PanelType, gettable.Spec.PanelType)
+		assert.Equal(t, savedView.ID, gettable.ID)
+		assert.Equal(t, savedView.Name, gettable.Name)
+		assert.Equal(t, savedView.CreatedAt, gettable.CreatedAt)
+		assert.Equal(t, savedView.CreatedBy, gettable.CreatedBy)
+		assert.Equal(t, savedView.UpdatedAt, gettable.UpdatedAt)
+		assert.Equal(t, savedView.UpdatedBy, gettable.UpdatedBy)
+		assert.Equal(t, savedView.SourcePage, gettable.SourcePage)
+		assert.Equal(t, savedView.Data.SchemaVersion, gettable.SchemaVersion)
+		assert.Equal(t, savedView.Data.Spec.PanelType, gettable.Spec.PanelType)
 	})
 }
 
 func TestNewStatsFromSavedViews(t *testing.T) {
-	views := []*StorableSavedView{
+	views := []*SavedView{
 		{SourcePage: SourcePageLogs},
 		{SourcePage: SourcePageLogs},
 		{SourcePage: SourcePageTraces},

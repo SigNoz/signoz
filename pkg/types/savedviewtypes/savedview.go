@@ -16,6 +16,24 @@ var (
 	ErrCodeSavedViewNotFound     = errors.MustNewCode("saved_view_not_found")
 )
 
+// SavedView is the core domain type; it also doubles as the storage row
+// (schemaVersion + spec stored JSON-encoded in Data). GettableSavedView is a
+// separate type, not an alias: bun only treats SavedViewData as a single
+// opaque "data" column when it's a named field, but the API response needs
+// schemaVersion/spec flattened to the top level -- those two requirements
+// can't be satisfied by the same field, so the two shapes genuinely diverge.
+type SavedView struct {
+	bun.BaseModel `bun:"table:saved_view"`
+
+	types.Identifiable
+	types.TimeAuditable
+	types.UserAuditable
+	OrgID      string        `json:"-" bun:"org_id,notnull"`
+	Name       string        `json:"name" bun:"name,type:text,notnull"`
+	SourcePage SourcePage    `json:"sourcePage" bun:"source_page,type:text,notnull"`
+	Data       SavedViewData `json:"-" bun:"data,type:text,notnull"`
+}
+
 type GettableSavedView struct {
 	ID         valuer.UUID `json:"id" required:"true"`
 	Name       string      `json:"name" required:"true"`
@@ -38,19 +56,6 @@ type UpdatableSavedView = PostableSavedView
 type ListSavedViewsParams struct {
 	SourcePage SourcePage `query:"sourcePage"`
 	Name       string     `query:"name"`
-}
-
-// StorableSavedView has schemaVersion + spec stored JSON-encoded in Data.
-type StorableSavedView struct {
-	bun.BaseModel `bun:"table:saved_view"`
-
-	types.Identifiable
-	types.TimeAuditable
-	types.UserAuditable
-	OrgID      string        `json:"orgId" bun:"org_id,notnull"`
-	Name       string        `json:"name" bun:"name,type:text,notnull"`
-	SourcePage SourcePage    `json:"sourcePage" bun:"source_page,type:text,notnull"`
-	Data       SavedViewData `json:"data" bun:"data,type:text,notnull"`
 }
 
 type SourcePage struct {
@@ -98,9 +103,9 @@ func (p *ListSavedViewsParams) Validate() error {
 	return p.SourcePage.Validate()
 }
 
-func NewStorableSavedView(orgID string, createdBy string, updatedBy string, view PostableSavedView) *StorableSavedView {
+func NewSavedView(orgID string, createdBy string, updatedBy string, view PostableSavedView) *SavedView {
 	now := time.Now()
-	return &StorableSavedView{
+	return &SavedView{
 		Identifiable:  types.Identifiable{ID: valuer.GenerateUUID()},
 		TimeAuditable: types.TimeAuditable{CreatedAt: now, UpdatedAt: now},
 		UserAuditable: types.UserAuditable{CreatedBy: createdBy, UpdatedBy: updatedBy},
@@ -111,7 +116,7 @@ func NewStorableSavedView(orgID string, createdBy string, updatedBy string, view
 	}
 }
 
-func NewGettableSavedViewFromStorable(view *StorableSavedView) *GettableSavedView {
+func NewGettableSavedViewFromSavedView(view *SavedView) *GettableSavedView {
 	data := view.Data
 	if data.Spec.SelectedFields == nil {
 		data.Spec.SelectedFields = []telemetrytypes.TelemetryFieldKey{}
@@ -129,15 +134,15 @@ func NewGettableSavedViewFromStorable(view *StorableSavedView) *GettableSavedVie
 	}
 }
 
-func NewGettableSavedViewsFromStorable(views []*StorableSavedView) []*GettableSavedView {
+func NewGettableSavedViewsFromSavedViews(views []*SavedView) []*GettableSavedView {
 	out := make([]*GettableSavedView, 0, len(views))
 	for _, view := range views {
-		out = append(out, NewGettableSavedViewFromStorable(view))
+		out = append(out, NewGettableSavedViewFromSavedView(view))
 	}
 	return out
 }
 
-func NewStatsFromSavedViews(savedViews []*StorableSavedView) map[string]any {
+func NewStatsFromSavedViews(savedViews []*SavedView) map[string]any {
 	stats := make(map[string]any)
 	for _, savedView := range savedViews {
 		key := "savedview.source." + strings.ToLower(savedView.SourcePage.StringValue()) + ".count"

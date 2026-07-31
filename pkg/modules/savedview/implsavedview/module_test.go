@@ -38,7 +38,7 @@ func newTestStore(t *testing.T) sqlstore.SQLStore {
 	require.NoError(t, err)
 
 	_, err = store.BunDB().NewCreateTable().
-		Model((*savedviewtypes.StorableSavedView)(nil)).
+		Model((*savedviewtypes.SavedView)(nil)).
 		IfNotExists().
 		Exec(context.Background())
 	require.NoError(t, err)
