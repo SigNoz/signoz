@@ -188,6 +188,71 @@ export default defineConfig(({ mode }): UserConfig => {
 			sourcemap: true,
 			outDir: 'build',
 			cssMinify: 'esbuild',
+			rollupOptions: {
+				output: {
+					// Split heavy third-party libraries into deliberate, named vendor
+					// chunks. This keeps the initial payload small and — just as
+					// importantly — gives the CI bundle-size budget stable chunk names
+					// to measure against, so a size regression maps to a specific
+					// dependency group instead of one opaque `vendor` blob.
+					// See docs/bundle-size-ci-proposal.md for the rationale.
+					manualChunks(id): string | undefined {
+						if (!id.includes('node_modules')) {
+							return undefined;
+						}
+						if (
+							/[\\/]node_modules[\\/](monaco-editor|@monaco-editor)[\\/]/.test(id)
+						) {
+							return 'vendor-monaco';
+						}
+						if (
+							/[\\/]node_modules[\\/](@codemirror|@lezer|@marijn|@uiw[\\/](react-codemirror|codemirror-theme))/.test(
+								id,
+							)
+						) {
+							return 'vendor-codemirror';
+						}
+						if (
+							/[\\/]node_modules[\\/](chart\.js|chartjs-|uplot|@visx|d3-hierarchy)/.test(
+								id,
+							)
+						) {
+							return 'vendor-charts';
+						}
+						if (/[\\/]node_modules[\\/](react-force-graph|d3-)/.test(id)) {
+							return 'vendor-graph';
+						}
+						if (/[\\/]node_modules[\\/](antd|@ant-design|rc-)/.test(id)) {
+							return 'vendor-antd';
+						}
+						if (
+							/[\\/]node_modules[\\/](react-dnd|dnd-core|@dnd-kit|react-beautiful-dnd|react-drag-listview)/.test(
+								id,
+							)
+						) {
+							return 'vendor-dnd';
+						}
+						if (/[\\/]node_modules[\\/]@sentry[\\/]/.test(id)) {
+							return 'vendor-sentry';
+						}
+						if (
+							/[\\/]node_modules[\\/](react-markdown|remark-|rehype-|micromark|mdast-|hast-|unified|unist-)/.test(
+								id,
+							)
+						) {
+							return 'vendor-markdown';
+						}
+						if (
+							/[\\/]node_modules[\\/](react|react-dom|react-router|react-router-dom|react-redux|redux|redux-thunk|history)[\\/]/.test(
+								id,
+							)
+						) {
+							return 'vendor-react';
+						}
+						return undefined;
+					},
+				},
+			},
 		},
 		server: {
 			open: true,

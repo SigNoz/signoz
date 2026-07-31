@@ -1,0 +1,50 @@
+[
+  {
+    "name": "entry (app shell)",
+    "path": "build/assets/index-*.js",
+    "gzip": true,
+    "limit": "660 kB"
+  },
+  {
+    "name": "vendor-antd",
+    "path": "build/assets/vendor-antd-*.js",
+    "gzip": true,
+    "limit": "790 kB"
+  },
+  {
+    "name": "vendor-codemirror",
+    "path": "build/assets/vendor-codemirror-*.js",
+    "gzip": true,
+    "limit": "180 kB"
+  },
+  {
+    "name": "vendor-charts",
+    "path": "build/assets/vendor-charts-*.js",
+    "gzip": true,
+    "limit": "127 kB"
+  },
+  {
+    "name": "vendor-markdown",
+    "path": "build/assets/vendor-markdown-*.js",
+    "gzip": true,
+    "limit": "103 kB"
+  },
+  {
+    "name": "vendor-dnd",
+    "path": "build/assets/vendor-dnd-*.js",
+    "gzip": true,
+    "limit": "73 kB"
+  },
+  {
+    "name": "vendor-graph",
+    "path": "build/assets/vendor-graph-*.js",
+    "gzip": true,
+    "limit": "65 kB"
+  },
+  {
+    "name": "vendor-sentry",
+    "path": "build/assets/vendor-sentry-*.js",
+    "gzip": true,
+    "limit": "53 kB"
+  }
+]
