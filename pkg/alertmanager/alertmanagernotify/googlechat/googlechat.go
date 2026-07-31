@@ -176,6 +176,9 @@ func (n *Notifier) Notify(ctx context.Context, alerts ...*types.Alert) (bool, er
 		} else if title != "" {
 			title = truncateToByteLimit(title, max(len(title)-over, 0))
 		} else {
+			// TODO: button URLs aren't trimmed, so many long-URL buttons could
+			// still overflow; drop trailing sections to fit once per-alert
+			// templating makes that reachable.
 			break
 		}
 		if buf, err = encodeMessage(buildMessage(title, status, capAlerts, bodies, remaining, footerAlert)); err != nil {
