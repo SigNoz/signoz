@@ -13,6 +13,7 @@ import { TOOLTIP_SCROLL_CONTENT_CLASS } from 'components/TooltipScrollArea/Toolt
 
 import HiddenVariablesTooltip from './components/HiddenVariablesTooltip/HiddenVariablesTooltip';
 import { useVariableSelection } from './hooks/useVariableSelection';
+import { resolveDefaultSelection } from './utils/resolveVariableSelection';
 import VariableSelector from './components/VariableSelector/VariableSelector';
 import styles from './VariablesBar.module.scss';
 
@@ -96,12 +97,10 @@ function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 							variable={variable}
 							variables={variables}
 							selections={selection}
-							selection={
-								selection[variable.name] ?? {
-									value: variable.multiSelect ? [] : '',
-									allSelected: false,
-								}
-							}
+							// Until the seed commits a selection, stand in the same default it will
+							// commit, through the one resolver — an empty stand-in reads as "nothing
+							// selected" to a control that snapshots it on mount.
+							selection={selection[variable.name] ?? resolveDefaultSelection(variable)}
 							onChange={(next): void => setSelection(variable.name, next)}
 							onAutoSelect={(next): void => autoSelect(variable.name, next)}
 						/>
