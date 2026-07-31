@@ -17,7 +17,9 @@ const (
 	// maxAlertSections caps per-alert sections in a grouped card. Google Chat
 	// allows 100 widgets per card and silently drops the section that crosses
 	// that count and every section after it, so we cap well under the limit
-	// (~63 widgets worst case) and add a "+N more" note for the overflow.
+	// and add a "+N more" note for the overflow. We could go onto increase this limit upto 49
+	// but anyway such a big message with 49 sections will not be much readable for a user
+	// who can instead click on open in signoz and inspect alerts there.
 	// https://developers.google.com/workspace/chat/api/reference/rpc/google.apps.card.v1#card
 	maxAlertSections = 30
 )
