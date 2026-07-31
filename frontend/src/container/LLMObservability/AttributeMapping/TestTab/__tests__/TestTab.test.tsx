@@ -82,11 +82,6 @@ describe('TestTab — sample-span flow', () => {
 		mockedUseAuthZ.mockImplementation(mockUseAuthZGrantAll);
 	});
 
-	afterEach(() => {
-		server.resetHandlers();
-		remove(SPAN_INPUT_KEY);
-	});
-
 	it('runs the sample span through the mappers and renders the populated result', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		server.use(
