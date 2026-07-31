@@ -1,6 +1,6 @@
 import { Route, Switch } from 'react-router-dom';
 import ROUTES from 'constants/routes';
-import { render, screen, userEvent } from 'tests/test-utils';
+import { render, screen, userEvent, within } from 'tests/test-utils';
 import { TooltipProvider } from '@signozhq/ui/tooltip';
 
 import CreateEditRolePage from '../CreateEditRolePage';
@@ -26,8 +26,10 @@ export async function renderCreateRolePage(): Promise<
 	return result;
 }
 
-export async function expandAllCards(): Promise<void> {
+export async function expandResourceCard(resourceId: string): Promise<void> {
 	const user = userEvent.setup();
-	const expandButton = await screen.findByTestId('expand-all-button');
-	await user.click(expandButton);
+	const card = await screen.findByTestId(`resource-card-${resourceId}`);
+	await user.click(
+		within(card).getByTestId(`resource-card-header-${resourceId}`),
+	);
 }

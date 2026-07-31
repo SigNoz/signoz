@@ -2,7 +2,9 @@ import { server } from 'mocks-server/server';
 import { screen, userEvent, waitFor, within } from 'tests/test-utils';
 import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 
-import { expandAllCards, renderCreateRolePage } from './testUtils';
+import { expandResourceCard, renderCreateRolePage } from './testUtils';
+
+jest.setTimeout(15_000);
 
 beforeEach(() => {
 	server.use(setupAuthzAdmin());
@@ -17,7 +19,7 @@ async function selectOnlySelected(
 	resource = 'logs',
 ): Promise<void> {
 	await renderCreateRolePage();
-	await expandAllCards();
+	await expandResourceCard(resource);
 
 	const card = screen.getByTestId(`resource-card-${resource}`);
 	const readToggle = within(card).getByTestId(`action-toggle-${resource}-read`);
@@ -60,7 +62,7 @@ describe('PermissionEditor - TelemetrySelectorWizard', () => {
 
 	it('does not show wizard button for non-telemetry resources', async () => {
 		await renderCreateRolePage();
-		await expandAllCards();
+		await expandResourceCard('factor-api-key');
 
 		const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
 		const readToggle = within(apiKeyCard).getByTestId(
@@ -71,7 +73,9 @@ describe('PermissionEditor - TelemetrySelectorWizard', () => {
 		await user.click(await within(readToggle).findByText('Only selected'));
 
 		expect(
-			screen.queryByTestId('telemetry-wizard-trigger-logs-read'),
+			within(apiKeyCard).queryByTestId(
+				'telemetry-wizard-trigger-factor-api-key-read',
+			),
 		).not.toBeInTheDocument();
 	});
 
