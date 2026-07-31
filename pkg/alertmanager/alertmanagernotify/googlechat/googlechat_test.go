@@ -388,6 +388,31 @@ func TestGoogleChatLinkButtons(t *testing.T) {
 	}
 }
 
+func TestGoogleChatFooterButtonSurvivesEmptyBody(t *testing.T) {
+	var got Message
+	server := captureServer(t, &got)
+	defer server.Close()
+
+	// Cleared Description (empty text template) → body renders empty while the
+	// title still renders. The per-rule "Open in SigNoz" button must survive.
+	alerts := []*types.Alert{{Alert: model.Alert{
+		Labels: model.LabelSet{
+			"alertname":               "X",
+			ruletypes.LabelRuleSource: "https://signoz.example/alerts/1",
+		},
+		StartsAt: time.Now(),
+		EndsAt:   time.Now().Add(time.Minute),
+	}}}
+	n := newTestNotifier(t, server.URL, "TITLE", "")
+	_, err := n.Notify(newTestContext(), alerts...)
+	require.NoError(t, err)
+
+	buttons := cardButtons(t, got)
+	require.Len(t, buttons, 1)
+	require.Equal(t, "Open in SigNoz", buttons[0].Text)
+	require.Equal(t, "https://signoz.example/alerts/1", buttons[0].OnClick.OpenLink.URL)
+}
+
 func TestGoogleChatMultiAlertSections(t *testing.T) {
 	var got Message
 	server := captureServer(t, &got)

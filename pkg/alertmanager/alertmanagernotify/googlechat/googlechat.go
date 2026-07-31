@@ -73,7 +73,14 @@ func (n *Notifier) Notify(ctx context.Context, alerts ...*types.Alert) (bool, er
 	// trimming the text fields always brings the payload under the limit.
 	title := c.title
 	bodies := append([]string(nil), capBodies...)
-	buf, err := encodeMessage(buildMessage(title, status, capAlerts, bodies, remaining))
+	// The shared "Open in SigNoz" button is per-rule (LabelRuleSource), so source
+	// it from the original first alert, not the capped set which is empty when no
+	// body renders.
+	var footerAlert *types.Alert
+	if len(alerts) > 0 {
+		footerAlert = alerts[0]
+	}
+	buf, err := encodeMessage(buildMessage(title, status, capAlerts, bodies, remaining, footerAlert))
 	if err != nil {
 		return false, err
 	}
@@ -86,7 +93,7 @@ func (n *Notifier) Notify(ctx context.Context, alerts ...*types.Alert) (bool, er
 		} else {
 			break
 		}
-		if buf, err = encodeMessage(buildMessage(title, status, capAlerts, bodies, remaining)); err != nil {
+		if buf, err = encodeMessage(buildMessage(title, status, capAlerts, bodies, remaining, footerAlert)); err != nil {
 			return false, err
 		}
 	}
@@ -208,8 +215,10 @@ func capAlertSections(alerts []*types.Alert, bodies []string) ([]*types.Alert, [
 // buildMessage assembles the text+card payload: a plain text summary plus a card
 // with a status banner, one section per alert (its body + related-link buttons),
 // an optional "+N more" note, and a shared "Open in SigNoz" footer button. The
-// alerts and bodies slices are the already-capped, aligned render set.
-func buildMessage(title, statusHTML string, alerts []*types.Alert, bodies []string, remaining int) Message {
+// alerts and bodies slices are the already-capped, aligned render set; footerAlert
+// is the original first alert, used for the per-rule footer button so it survives
+// even when no body renders.
+func buildMessage(title, statusHTML string, alerts []*types.Alert, bodies []string, remaining int, footerAlert *types.Alert) Message {
 	sections := []cardSection{{Widgets: []widget{{TextParagraph: &textParagraph{Text: statusHTML}}}}}
 
 	for i, body := range bodies {
@@ -230,8 +239,8 @@ func buildMessage(title, statusHTML string, alerts []*types.Alert, bodies []stri
 		sections = append(sections, cardSection{Widgets: []widget{{TextParagraph: &textParagraph{Text: note}}}})
 	}
 
-	if len(alerts) > 0 && alerts[0] != nil {
-		if btn := sigNozButton(alerts[0]); btn != nil {
+	if footerAlert != nil {
+		if btn := sigNozButton(footerAlert); btn != nil {
 			sections = append(sections, cardSection{Widgets: []widget{{ButtonList: &buttonList{Buttons: []button{*btn}}}}})
 		}
 	}
