@@ -77,7 +77,7 @@ func (module *module) UpdateView(ctx context.Context, orgID string, uuid valuer.
 
 	rowsAffected, err := res.RowsAffected()
 	if err != nil {
-		return errors.WrapInternalf(err, errors.CodeInternal, "error in updating saved view")
+		return errors.WrapInternalf(err, errors.CodeInternal, "error in verifying the updated saved view")
 	}
 	if rowsAffected == 0 {
 		return errors.NewNotFoundf(savedviewtypes.ErrCodeSavedViewNotFound, "saved view %s not found", uuid.StringValue())
