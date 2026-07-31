@@ -2,10 +2,7 @@ import { useCallback, useMemo, useRef } from 'react';
 import { UseQueryResult } from 'react-query';
 import { Skeleton } from 'antd';
 import cx from 'classnames';
-import {
-	InfraMonitoringEvents,
-	logInfraExplorerNavigatedEvent,
-} from 'constants/events';
+import { InfraMonitoringEvents } from 'constants/events';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import TimeSeries from 'container/DashboardContainer/visualization/charts/TimeSeries/TimeSeries';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
@@ -35,6 +32,7 @@ import { isKeyNotFoundError } from '../utils';
 
 import styles from './EntityMetrics.module.scss';
 import { MetricsTable } from './MetricsTable';
+import { logInfraExplorerNavigatedEvent } from 'container/InfraMonitoringK8sV2/Base/events';
 
 interface EntityMetricsProps<T> {
 	entity: T;

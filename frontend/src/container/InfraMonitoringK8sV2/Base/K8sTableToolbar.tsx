@@ -4,10 +4,7 @@ import { Select } from 'antd';
 import { Download, SlidersVertical } from '@signozhq/icons';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import logEvent from 'api/common/logEvent';
-import {
-	InfraMonitoringEvents,
-	logInfraGroupByCustomizedEvent,
-} from 'constants/events';
+import { InfraMonitoringEvents } from 'constants/events';
 
 import { InfraMonitoringEntity } from '../constants';
 import {
@@ -17,6 +14,7 @@ import {
 import { useInfraMonitoringGroupByData } from './useInfraMonitoringGroupByData';
 
 import styles from './K8sTableToolbar.module.scss';
+import { logInfraGroupByCustomizedEvent } from 'container/InfraMonitoringK8sV2/Base/events';
 
 interface K8sTableToolbarProps {
 	entity: InfraMonitoringEntity;

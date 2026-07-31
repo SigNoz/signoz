@@ -21,7 +21,6 @@ import { useGlobalTimeStore } from 'store/globalTime';
 import { NANO_SECOND_MULTIPLIER } from 'store/globalTime/utils';
 import { parseAsJsonNoValidate } from 'utils/nuqsParsers';
 
-import { logInfraColumnSortedEvent } from 'constants/events';
 import { InfraMonitoringEntity } from '../constants';
 import {
 	SelectedItemParams,
@@ -36,6 +35,7 @@ import { useInfraMonitoringFontSize } from './useInfraMonitoringTablePreferences
 
 import styles from './K8sExpandedRow.module.scss';
 import { buildExpressionFromGroupMeta } from './utils';
+import { logInfraColumnSortedEvent } from 'container/InfraMonitoringK8sV2/Base/events';
 
 const EXPANDED_ROW_LIMIT = 10;
 

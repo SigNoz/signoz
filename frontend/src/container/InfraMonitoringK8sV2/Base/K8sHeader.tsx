@@ -2,10 +2,7 @@ import React, { useCallback, useMemo, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import logEvent from 'api/common/logEvent';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
-import {
-	InfraMonitoringEvents,
-	logInfraFilterCustomizedEvent,
-} from 'constants/events';
+import { InfraMonitoringEvents } from 'constants/events';
 import { QueryParams } from 'constants/query';
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
@@ -24,6 +21,7 @@ import {
 import { useInfraMonitoringPageListing } from '../hooks';
 
 import styles from './K8sHeader.module.scss';
+import { logInfraFilterCustomizedEvent } from 'container/InfraMonitoringK8sV2/Base/events';
 
 interface K8sHeaderProps {
 	controlListPrefix?: React.ReactNode;

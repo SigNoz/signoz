@@ -9,11 +9,7 @@ import TanStackTable, {
 	useHiddenColumnIds,
 	useTableParams,
 } from 'components/TanStackTableView';
-import {
-	InfraMonitoringEvents,
-	logInfraColumnSortedEvent,
-	logInfraTimeRangeCustomizedEvent,
-} from 'constants/events';
+import { InfraMonitoringEvents } from 'constants/events';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGlobalTimeStore } from 'store/globalTime';
 import { NANO_SECOND_MULTIPLIER } from 'store/globalTime/utils';
@@ -48,6 +44,10 @@ import { K8sInstrumentationChecksCallout } from './components/K8sInstrumentation
 
 import styles from './K8sBaseList.module.scss';
 import cx from 'classnames';
+import {
+	logInfraColumnSortedEvent,
+	logInfraTimeRangeCustomizedEvent,
+} from 'container/InfraMonitoringK8sV2/Base/events';
 
 export type K8sBaseListEmptyStateContext = {
 	isError: boolean;

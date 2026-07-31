@@ -1,11 +1,11 @@
 /* eslint-disable no-restricted-syntax */
 import { act, renderHook } from '@testing-library/react';
 import { TableColumnDef, useColumnStore } from 'components/TanStackTableView';
-import { logInfraColumnCustomizedEvent } from 'constants/events';
 
 import { InfraMonitoringEntity } from '../../constants';
 import { useInfraMonitoringTablePreferencesStore } from '../useInfraMonitoringTablePreferencesStore';
 import { useLogEventForColumnCustomized } from '../useLogEventForColumnCustomized';
+import { logInfraColumnCustomizedEvent } from 'container/InfraMonitoringK8sV2/Base/events';
 
 jest.mock('constants/events', () => ({
 	logInfraColumnCustomizedEvent: jest.fn(),
