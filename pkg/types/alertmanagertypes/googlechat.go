@@ -40,12 +40,7 @@ func (c *GoogleChatReceiverConfig) UnmarshalYAML(unmarshal func(any) error) erro
 	if c.WebhookURL == nil {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "google chat webhook_url is required")
 	}
-	return validateGoogleChatWebhookURL(c.WebhookURL.String())
-}
-
-// validateGoogleChatWebhookURL validates the Google Chat webhook URL format.
-func validateGoogleChatWebhookURL(rawURL string) error {
-	u, err := url.Parse(rawURL)
+	u, err := url.Parse(c.WebhookURL.String())
 	if err != nil {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid google chat webhook_url: %v", err)
 	}

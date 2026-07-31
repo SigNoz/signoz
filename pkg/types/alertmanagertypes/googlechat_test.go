@@ -6,20 +6,20 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_validateGoogleChatWebhookURL(t *testing.T) {
+func TestNewReceiverGoogleChatWebhookURL(t *testing.T) {
 	cases := []struct {
 		name    string
-		url     string
+		config  string
 		wantErr bool
 	}{
-		{"valid", "https://chat.googleapis.com/v1/spaces/AAA/messages?key=k&token=t", false},
-		{"http scheme rejected", "http://chat.googleapis.com/v1/spaces/AAA/messages", true},
-		{"wrong host rejected", "https://example.com/v1/spaces/AAA/messages", true},
-		{"empty rejected", "", true},
+		{"valid", `{"name":"gc","googlechat_configs":[{"webhook_url":"https://chat.googleapis.com/v1/spaces/AAA/messages?key=k&token=t"}]}`, false},
+		{"http scheme rejected", `{"name":"gc","googlechat_configs":[{"webhook_url":"http://chat.googleapis.com/v1/spaces/x/messages"}]}`, true},
+		{"wrong host rejected", `{"name":"gc","googlechat_configs":[{"webhook_url":"https://example.com/x"}]}`, true},
+		{"missing webhook_url", `{"name":"gc","googlechat_configs":[{"title":"x"}]}`, true},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			err := validateGoogleChatWebhookURL(c.url)
+			_, err := NewReceiver(c.config)
 			if c.wantErr {
 				require.Error(t, err)
 			} else {
@@ -27,18 +27,4 @@ func Test_validateGoogleChatWebhookURL(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestNewReceiverGoogleChatRejectsBadURL(t *testing.T) {
-	// http scheme
-	_, err := NewReceiver(`{"name":"gc","googlechat_configs":[{"webhook_url":"http://chat.googleapis.com/v1/spaces/x/messages"}]}`)
-	require.Error(t, err)
-
-	// wrong host
-	_, err = NewReceiver(`{"name":"gc","googlechat_configs":[{"webhook_url":"https://example.com/x"}]}`)
-	require.Error(t, err)
-
-	// missing webhook_url
-	_, err = NewReceiver(`{"name":"gc","googlechat_configs":[{"title":"x"}]}`)
-	require.Error(t, err)
 }
