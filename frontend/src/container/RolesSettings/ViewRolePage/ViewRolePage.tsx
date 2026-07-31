@@ -5,21 +5,15 @@ import { Button } from '@signozhq/ui/button';
 import { Divider } from '@signozhq/ui/divider';
 import { RadioGroup, RadioGroupItem } from '@signozhq/ui/radio-group';
 import { Tabs } from '@signozhq/ui/tabs';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import { Skeleton } from 'antd';
 import { useGetRole } from 'api/generated/services/role';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import { useDeleteRoleModal } from 'container/RolesSettings/DeleteRoleModal/useDeleteRoleModal';
-import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import { transformApiToRolePermissions } from 'container/RolesSettings/hooks/useRolePermissions';
 import { useRolesFeatureGate } from 'hooks/useRolesFeatureGate';
 import { withAuthZContent } from 'lib/authz/components/withAuthZ/withAuthZContent';
-import {
-	buildRoleDeletePermission,
-	buildRoleReadPermission,
-	buildRoleUpdatePermission,
-} from 'lib/authz/hooks/useAuthZ/permissions/role.permissions';
+import { buildRoleReadPermission } from 'lib/authz/hooks/useAuthZ/permissions/role.permissions';
 import { useTimezone } from 'providers/Timezone';
 import APIError from 'types/api/error';
 import { RoleType } from 'types/roles';
@@ -31,6 +25,7 @@ import ReadOnlyJsonViewer from './ReadOnlyJsonViewer';
 import { useViewRolePageActions } from './useViewRolePageActions';
 
 import styles from './ViewRolePage.module.scss';
+import { ViewRolePageHeader } from 'container/RolesSettings/ViewRolePage/ViewRolePageHeader';
 
 interface ViewRoleContentProps {
 	roleId: string;
@@ -276,88 +271,6 @@ function ViewRolePage(): JSX.Element {
 		);
 	}
 
-	const renderDeleteButton = (): JSX.Element => {
-		if (isRoleLoading) {
-			return (
-				<Button
-					variant="link"
-					color="destructive"
-					disabled
-					data-testid="delete-button"
-					className={styles.deleteButton}
-				>
-					Delete
-				</Button>
-			);
-		}
-
-		if (isManaged) {
-			return (
-				<TooltipSimple title="Managed roles cannot be deleted">
-					<Button
-						variant="link"
-						color="destructive"
-						disabled
-						data-testid="delete-button"
-						className={styles.deleteButton}
-					>
-						Delete
-					</Button>
-				</TooltipSimple>
-			);
-		}
-
-		return (
-			<AuthZButton
-				checks={[buildRoleDeletePermission(roleName)]}
-				authZEnabled={!!roleName}
-				variant="link"
-				color="destructive"
-				onClick={handleOpenDeleteModal}
-				data-testid="delete-button"
-				className={styles.deleteButton}
-			>
-				Delete
-			</AuthZButton>
-		);
-	};
-
-	const renderUpdateButton = (): JSX.Element => {
-		if (isRoleLoading) {
-			return (
-				<Button variant="solid" color="primary" disabled data-testid="save-button">
-					Update
-				</Button>
-			);
-		}
-
-		if (isManaged) {
-			return (
-				<TooltipSimple title="Managed roles cannot be updated">
-					<Button variant="solid" color="primary" disabled data-testid="save-button">
-						Update
-					</Button>
-				</TooltipSimple>
-			);
-		}
-
-		return (
-			<AuthZButton
-				checks={[
-					buildRoleReadPermission(roleName),
-					buildRoleUpdatePermission(roleName),
-				]}
-				authZEnabled={!!roleName}
-				variant="solid"
-				color="primary"
-				data-testid="save-button"
-				onClick={handleRedirectToUpdate}
-			>
-				Update
-			</AuthZButton>
-		);
-	};
-
 	return (
 		<div className={styles.viewRolePage} data-testid="view-role-page">
 			<div className={styles.viewRolePageHeader}>
@@ -376,11 +289,13 @@ function ViewRolePage(): JSX.Element {
 					</Typography.Title>
 				</div>
 
-				<div className={styles.viewRolePageActions}>
-					{renderDeleteButton()}
-					<Divider type="vertical" />
-					{renderUpdateButton()}
-				</div>
+				<ViewRolePageHeader
+					isRoleLoading={isRoleLoading}
+					isManaged={isManaged}
+					roleName={roleName}
+					handleOpenDeleteModal={handleOpenDeleteModal}
+					handleRedirectToUpdate={handleRedirectToUpdate}
+				/>
 			</div>
 
 			{roleId && (
