@@ -1,3 +1,5 @@
+import { randomBytes } from 'crypto';
+
 import {
 	expect,
 	type Locator,
@@ -48,6 +50,54 @@ export interface ThresholdAlertSeed {
 	 * the things its search box matches on, so list specs set it explicitly.
 	 */
 	labels?: Record<string, string>;
+
+	// ── SEED-RV2 extras ─────────────────────────────────────────────────────
+	// Everything below exists so an *edit* spec can prove the form prefilled from
+	// the rule rather than from its own defaults. A prefill assertion against a
+	// value that equals `INITIAL_CREATE_ALERT_STATE` proves nothing, so each of
+	// these deliberately differs from the corresponding UI default.
+
+	/**
+	 * Replaces the single `critical` threshold. Use two or more to exercise the
+	 * multi-threshold prefill — and note the UI only reads `op`/`matchType` back
+	 * from `spec[0]` (coverage doc §9.4), so entries after the first should keep
+	 * them identical unless the test is *about* that defect.
+	 */
+	thresholds?: ThresholdSeedSpec[];
+	/** Go duration; UI default is `5m0s`, so pass something else. */
+	evalWindow?: string;
+	/** Go duration; UI default is `1m`, so pass something else. */
+	frequency?: string;
+	/**
+	 * `notificationSettings.groupBy`. The UI's group-by select only offers keys
+	 * that the *query* groups by (`MultipleNotifications.tsx:20-48`), so set
+	 * {@link ThresholdAlertSeed.queryGroupBy} to the same keys or the prefilled
+	 * value has no matching option.
+	 */
+	groupBy?: string[];
+	/** Attribute keys the query groups by. Also what unlocks the group-by select. */
+	queryGroupBy?: string[];
+	/** `notificationSettings.renotify`. UI default is `{enabled: false}`. */
+	renotify?: {
+		enabled: boolean;
+		/** Go duration; UI default is `30m`. */
+		interval: string;
+		alertStates: ('firing' | 'nodata')[];
+	};
+	/** `condition.alertOnAbsent` + `condition.absentFor` (minutes). */
+	alertOnAbsent?: { absentFor: number };
+	/** `condition.recoveryTarget` on the first threshold — see coverage doc §9.2. */
+	recoveryTarget?: number | null;
+}
+
+export interface ThresholdSeedSpec {
+	name: string;
+	target: number;
+	targetUnit?: string;
+	matchType?: string;
+	op?: string;
+	channels: string[];
+	recoveryTarget?: number | null;
 }
 
 // ─── Payload ─────────────────────────────────────────────────────────────
@@ -60,7 +110,27 @@ function buildThresholdRulePayload({
 	target,
 	channels,
 	labels,
+	thresholds,
+	evalWindow = '5m0s',
+	frequency = '1m',
+	groupBy = [],
+	queryGroupBy = [],
+	renotify = { enabled: false, interval: '30m', alertStates: [] },
+	alertOnAbsent,
+	recoveryTarget = null,
 }: ThresholdAlertSeed): Record<string, unknown> {
+	const thresholdSpec = (
+		thresholds ?? [{ name: 'critical', target, channels, recoveryTarget }]
+	).map((spec) => ({
+		name: spec.name,
+		target: spec.target,
+		targetUnit: spec.targetUnit ?? '',
+		recoveryTarget: spec.recoveryTarget ?? null,
+		matchType: spec.matchType ?? 'at_least_once',
+		op: spec.op ?? 'above',
+		channels: spec.channels,
+	}));
+
 	return {
 		alert: name,
 		alertType: 'METRIC_BASED_ALERT',
@@ -78,15 +148,18 @@ function buildThresholdRulePayload({
 		},
 		evaluation: {
 			kind: 'rolling',
-			spec: { evalWindow: '5m0s', frequency: '1m' },
+			spec: { evalWindow, frequency },
 		},
 		notificationSettings: {
-			groupBy: [],
-			renotify: { enabled: false, interval: '30m', alertStates: [] },
+			groupBy,
+			renotify,
 			usePolicy: false,
 		},
 		condition: {
 			selectedQueryName: 'A',
+			...(alertOnAbsent
+				? { alertOnAbsent: true, absentFor: alertOnAbsent.absentFor }
+				: {}),
 			compositeQuery: {
 				panelType: 'graph',
 				queryType: 'builder',
@@ -107,6 +180,15 @@ function buildThresholdRulePayload({
 							],
 							disabled: false,
 							filter: { expression: '' },
+							...(queryGroupBy.length > 0
+								? {
+										groupBy: queryGroupBy.map((key) => ({
+											name: key,
+											fieldContext: 'attribute',
+											fieldDataType: 'string',
+										})),
+									}
+								: {}),
 							having: { expression: '' },
 							legend: '',
 						},
@@ -115,17 +197,7 @@ function buildThresholdRulePayload({
 			},
 			thresholds: {
 				kind: 'basic',
-				spec: [
-					{
-						name: 'critical',
-						target,
-						targetUnit: '',
-						recoveryTarget: null,
-						matchType: 'at_least_once',
-						op: 'above',
-						channels,
-					},
-				],
+				spec: thresholdSpec,
 			},
 		},
 	};
@@ -303,6 +375,28 @@ export interface LogsAlertSeed {
 	alertOnAbsent?: boolean;
 	/** `condition.absentFor`, in minutes. */
 	absentFor?: number;
+
+	// ── SEED-RV1 extras ─────────────────────────────────────────────────────
+	// v1 only. Same reasoning as SEED-RV2's block: an `EV1-*` prefill assertion
+	// against the value the create form would have produced anyway proves nothing,
+	// so each of these exists to differ from `alertDefaults`
+	// (`container/CreateAlertRule/defaults.ts`).
+
+	/** `condition.target`. The v1 default is *absent*, so any number differs. */
+	target?: number;
+	/** `condition.op` as the legacy numeric string. `1` above, `2` below, … */
+	op?: string;
+	/** `condition.matchType`, same encoding. `1` at-least-once, `2` all-the-times. */
+	matchType?: string;
+}
+
+export interface TracesAlertSeed {
+	name: string;
+	/** Span name the rule matches on (`name = '<marker>'`). */
+	marker: string;
+	channels: string[];
+	evalWindow?: string;
+	frequency?: string;
 }
 
 export interface MetricAlertSeed {
@@ -333,6 +427,18 @@ export interface MetricsSeedOptions {
 	hosts: string[];
 	pointsPerHost?: number;
 	groupByKey?: string;
+}
+
+export interface TracesSeedOptions {
+	/** Span `name` the rule matches on. */
+	marker: string;
+	/** Number of distinct `service.name` values ⇒ number of timeline rows. */
+	services: number;
+	spansPerService?: number;
+	/** Oldest span age in seconds; spans spread from here up to `minAgeSeconds`. */
+	ageSeconds?: number;
+	minAgeSeconds?: number;
+	servicePrefix?: string;
 }
 
 /** One row of `GET /api/v2/rules/{id}/history/timeline`. */
@@ -381,6 +487,39 @@ function logsCompositeQuery(marker: string): Record<string, unknown> {
 					source: '',
 					disabled: false,
 					filter: { expression: `body CONTAINS '${marker}'` },
+					groupBy: [
+						{
+							name: 'service.name',
+							fieldContext: 'resource',
+							fieldDataType: 'string',
+						},
+					],
+					aggregations: [{ expression: 'count()' }],
+					having: { expression: '' },
+					legend: '',
+				},
+			},
+		],
+	};
+}
+
+// Same shape as the logs query, one signal over: the rule's signal is what
+// decides which related link the history rows carry (`links()` in
+// `pkg/modules/rulestatehistory/implrulestatehistory/links.go` returns *either*
+// a logs link *or* a traces link, never both).
+function tracesCompositeQuery(marker: string): Record<string, unknown> {
+	return {
+		panelType: 'graph',
+		queryType: 'builder',
+		queries: [
+			{
+				type: 'builder_query',
+				spec: {
+					name: 'A',
+					signal: 'traces',
+					source: '',
+					disabled: false,
+					filter: { expression: `name = '${marker}'` },
 					groupBy: [
 						{
 							name: 'service.name',
@@ -507,6 +646,9 @@ function v1RulePayload({
 	evalWindow,
 	frequency,
 	extraCondition,
+	target = 0,
+	op = '1',
+	matchType = '1',
 }: {
 	name: string;
 	alertType: string;
@@ -517,6 +659,9 @@ function v1RulePayload({
 	evalWindow: string;
 	frequency: string;
 	extraCondition?: Record<string, unknown>;
+	target?: number;
+	op?: string;
+	matchType?: string;
 }): Record<string, unknown> {
 	return {
 		alert: name,
@@ -531,9 +676,12 @@ function v1RulePayload({
 		annotations: ANNOTATIONS,
 		condition: {
 			selectedQueryName: 'A',
-			op: '1',
-			target: 0,
-			matchType: '1',
+			// Defaults match the history seeds' original shape — `target 0 / op above /
+			// matchType at_least_once` fires on the first evaluation that sees data — so
+			// overriding them is opt-in and cannot change what those seeds do.
+			op,
+			target,
+			matchType,
 			compositeQuery,
 			...extraCondition,
 		},
@@ -622,6 +770,51 @@ export async function seedAlertHistoryLogs(
 }
 
 /**
+ * Seed spans the traces history rule matches on — one root span per
+ * `service.name`, all sharing the span `name` marker. Returns the generated
+ * service names (⇒ one timeline row each), same contract as
+ * {@link seedAlertHistoryLogs}, and the same "seed immediately before creating
+ * the rule" rule applies.
+ */
+export async function seedAlertHistoryTraces(
+	page: Page,
+	{
+		marker,
+		services,
+		spansPerService = 2,
+		ageSeconds = 150,
+		minAgeSeconds = 30,
+		servicePrefix = 'e2e-aht-svc',
+	}: TracesSeedOptions,
+): Promise<string[]> {
+	const now = Date.now();
+	const span = Math.max(ageSeconds - minAgeSeconds, 1);
+	const serviceNames: string[] = [];
+	const spans: Record<string, unknown>[] = [];
+
+	for (let i = 0; i < services; i += 1) {
+		const service = `${servicePrefix}-${i}`;
+		serviceNames.push(service);
+		for (let s = 0; s < spansPerService; s += 1) {
+			const fraction = (i * spansPerService + s) / (services * spansPerService);
+			const offset = ageSeconds - Math.floor(fraction * span);
+			spans.push({
+				timestamp: new Date(now - offset * 1000).toISOString(),
+				trace_id: randomBytes(16).toString('hex'),
+				span_id: randomBytes(8).toString('hex'),
+				name: marker,
+				kind: 2,
+				duration: 'PT0.05S',
+				resources: { 'service.name': service },
+			});
+		}
+	}
+
+	await postToSeeder(page, '/telemetry/traces', spans);
+	return serviceNames;
+}
+
+/**
  * Seed a throwaway gauge the metrics rule alerts on. Cheaper than the logs
  * fixture (~10s to fire) and its history rows carry neither `relatedLogsLink`
  * nor `relatedTracesLink` — the "no links available" case.
@@ -692,6 +885,9 @@ export async function createLogsAlertViaApi(
 		extraLabels,
 		alertOnAbsent,
 		absentFor,
+		target,
+		op,
+		matchType,
 	}: LogsAlertSeed,
 ): Promise<string> {
 	const extraCondition =
@@ -708,11 +904,44 @@ export async function createLogsAlertViaApi(
 		evalWindow,
 		frequency,
 		extraCondition,
+		target,
+		op,
+		matchType,
 	};
 	return postRule(
 		page,
 		schema,
 		schema === 'v1' ? v1RulePayload(args) : v2RulePayload(args),
+	);
+}
+
+/**
+ * SEED-H's rule: traces-based over the seeded spans, grouped by `service.name`.
+ * Its history rows carry `relatedTracesLink` and an empty `relatedLogsLink`, so
+ * the popover offers "View Traces" only.
+ */
+export async function createTracesAlertViaApi(
+	page: Page,
+	{
+		name,
+		marker,
+		channels,
+		evalWindow = '5m0s',
+		frequency = '15s',
+	}: TracesAlertSeed,
+): Promise<string> {
+	return postRule(
+		page,
+		'v2',
+		v2RulePayload({
+			name,
+			alertType: 'TRACES_BASED_ALERT',
+			compositeQuery: tracesCompositeQuery(marker),
+			channels,
+			severity: 'critical',
+			evalWindow,
+			frequency,
+		}),
 	);
 }
 

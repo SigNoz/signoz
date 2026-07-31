@@ -5,11 +5,13 @@ import {
 	createLogsAlertViaApi,
 	createMetricAlertViaApi,
 	createNoDataAlertViaApi,
+	createTracesAlertViaApi,
 	deleteAlertViaApi,
 	deleteChannelViaApi,
 	readTimelineTotal,
 	seedAlertHistoryLogs,
 	seedAlertHistoryMetrics,
+	seedAlertHistoryTraces,
 	setRuleDisabledViaApi,
 	waitForTimelineEntries,
 	waitForTimelineStates,
@@ -39,6 +41,9 @@ const SEED_F_SERVICES = 3;
 /** SEED-E's group-by values ⇒ a 2-row history that fits on one page. */
 const SEED_E_HOSTS = ['host-0', 'host-1'];
 
+/** SEED-H seeds just enough services to prove the traces link; keeps the wait short. */
+const SEED_H_SERVICES = 3;
+
 /** Non-severity label on SEED-C, so the v1 header's labels row is non-empty. */
 export const SEED_C_TEAM_LABEL = 'e2e-platform';
 
@@ -63,6 +68,15 @@ export interface MetricsHistorySeed {
 	channelName: string;
 	metricName: string;
 	hosts: string[];
+	total: number;
+}
+
+export interface TracesHistorySeed {
+	ruleId: string;
+	channelName: string;
+	/** The span `name` the rule matches (`name = '<marker>'`). */
+	marker: string;
+	services: string[];
 	total: number;
 }
 
@@ -108,6 +122,7 @@ export const test = base.extend<
 	{
 		alertHistory: AlertHistorySeed;
 		metricsHistory: MetricsHistorySeed;
+		tracesHistory: TracesHistorySeed;
 		resolvedHistory: ResolvedHistorySeed;
 		noDataHistory: NoDataHistorySeed;
 		emptyHistory: EmptyHistorySeed;
@@ -231,6 +246,59 @@ export const test = base.extend<
 					channelName: channel.name,
 					metricName,
 					hosts: SEED_E_HOSTS,
+					total: await readTimelineTotal(page, ruleId),
+				};
+			});
+
+			await use(seed);
+
+			await cleanup(browser, { ruleIds: [ruleId], channelId });
+		},
+		{ scope: 'worker', timeout: 240_000 },
+	],
+
+	/**
+	 * SEED-H — a traces rule over seeded spans. The only fixture whose history
+	 * rows carry `relatedTracesLink`: the backend derives the link from the
+	 * rule's signal and returns either a logs link or a traces link, never both,
+	 * so the "View Traces" popover entry is unreachable from SEED-A.
+	 */
+	tracesHistory: [
+		async ({ browser }, use) => {
+			const stamp = Date.now();
+			const marker = `e2e-aht-span-${stamp}`;
+			let channelId = '';
+			let ruleId = '';
+
+			const seed = await withAdminPage(browser, async (page) => {
+				const channel = await createEmailChannelViaApi(
+					page,
+					`e2e-ah-traces-ch-${stamp}`,
+				);
+				channelId = channel.id;
+
+				const services = await seedAlertHistoryTraces(page, {
+					marker,
+					services: SEED_H_SERVICES,
+					servicePrefix: 'e2e-aht-svc',
+				});
+
+				ruleId = await createTracesAlertViaApi(page, {
+					name: `e2e-ah-traces-rule-${stamp}`,
+					marker,
+					channels: [channel.name],
+				});
+
+				await waitForTimelineEntries(page, ruleId, { min: SEED_H_SERVICES });
+				// Same reason as SEED-A: freeze before the eval window rolls past the
+				// seeded spans and the resolve wave doubles `total`.
+				await setRuleDisabledViaApi(page, ruleId, true);
+
+				return {
+					ruleId,
+					channelName: channel.name,
+					marker,
+					services,
 					total: await readTimelineTotal(page, ruleId),
 				};
 			});
