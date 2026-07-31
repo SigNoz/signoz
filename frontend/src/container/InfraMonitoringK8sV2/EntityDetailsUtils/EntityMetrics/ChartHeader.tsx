@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Compass, Info } from '@signozhq/icons';
-import { Tooltip } from 'antd';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 
 import styles from './ChartHeader.module.scss';
 
@@ -12,6 +12,7 @@ interface ChartHeaderProps {
 	tooltip?: string;
 	metricsExplorerUrl?: string;
 	metricsExplorerTestId?: string;
+	onExploreClick?: () => void;
 }
 
 function ChartHeader({
@@ -20,12 +21,13 @@ function ChartHeader({
 	tooltip,
 	metricsExplorerUrl,
 	metricsExplorerTestId = 'open-metrics-explorer',
+	onExploreClick,
 }: ChartHeaderProps): JSX.Element {
 	const renderInfoIcon = (): React.ReactNode => {
 		if (docPath) {
 			const tooltipTitle = tooltip || 'Not sure what this represents?';
 			return (
-				<Tooltip
+				<TooltipSimple
 					arrow
 					title={
 						<>
@@ -44,17 +46,17 @@ function ChartHeader({
 					<span className={styles.infoIcon} data-testid="chart-header-info-icon">
 						<Info size="md" />
 					</span>
-				</Tooltip>
+				</TooltipSimple>
 			);
 		}
 
 		if (tooltip) {
 			return (
-				<Tooltip title={tooltip}>
+				<TooltipSimple title={tooltip} arrow>
 					<span className={styles.infoIcon} data-testid="chart-header-info-icon">
 						<Info size="md" />
 					</span>
-				</Tooltip>
+				</TooltipSimple>
 			);
 		}
 
@@ -66,15 +68,16 @@ function ChartHeader({
 			<span className={styles.chartHeaderLabel}>{title}</span>
 			{renderInfoIcon()}
 			{metricsExplorerUrl && (
-				<Tooltip title="Open in Metrics Explorer">
+				<TooltipSimple title="Go to Metrics Explorer" arrow>
 					<Link
 						to={metricsExplorerUrl}
 						className={styles.metricsExplorerLink}
 						data-testid={metricsExplorerTestId}
+						onClick={onExploreClick}
 					>
 						<Compass size={14} />
 					</Link>
-				</Tooltip>
+				</TooltipSimple>
 			)}
 		</div>
 	);

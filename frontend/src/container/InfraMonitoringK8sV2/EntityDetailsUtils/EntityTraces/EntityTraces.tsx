@@ -16,7 +16,10 @@ import {
 	getUserExpressionFromCombined,
 } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
 import { ResizeTable } from 'components/ResizeTable';
-import { InfraMonitoringEvents } from 'constants/events';
+import {
+	InfraMonitoringEvents,
+	logInfraDrawerFilterCustomizedEvent,
+} from 'constants/events';
 import Controls from 'container/Controls';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
@@ -105,6 +108,13 @@ function EntityTracesContent({
 					category,
 					view: InfraMonitoringEvents.TracesView,
 				});
+
+				logInfraDrawerFilterCustomizedEvent(
+					category,
+					'traces',
+					newUserExpression || '',
+					'search',
+				);
 
 				refetch();
 			}
