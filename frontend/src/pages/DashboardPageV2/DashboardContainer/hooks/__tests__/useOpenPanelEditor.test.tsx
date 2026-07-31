@@ -1,5 +1,7 @@
 import { renderHook } from '@testing-library/react';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { NANO_SECOND_MULTIPLIER } from 'store/globalTime';
+import { EQueryType } from 'types/common/dashboard';
 
 import { useOpenPanelEditor } from '../useOpenPanelEditor';
 
@@ -79,6 +81,37 @@ describe('useOpenPanelEditor', () => {
 			'/dashboard/dash-1/panel/panel-9?relativeTime=1h',
 			{ state: handoffState },
 		);
+	});
+
+	it("carries the panel's saved query into the editor URL", () => {
+		mockGlobalTime = { selectedTime: '6h', minTime: 0, maxTime: 0 };
+		const panel = {
+			kind: 'Panel',
+			spec: {
+				display: { name: 'Panel A' },
+				plugin: { kind: 'signoz/TimeSeriesPanel', spec: {} },
+				queries: [
+					{
+						kind: 'time_series',
+						spec: {
+							plugin: {
+								kind: 'signoz/PromQLQuery',
+								spec: { name: 'A', query: 'up{job="alpha"}', disabled: false },
+							},
+						},
+					},
+				],
+			},
+		} as unknown as DashboardtypesPanelDTO;
+
+		const { result } = renderHook(() => useOpenPanelEditor());
+		result.current('panel-9', { panel });
+
+		const [url] = mockSafeNavigate.mock.calls[0];
+		const carried = new URLSearchParams(url.split('?')[1]).get('compositeQuery');
+		const parsed = JSON.parse(decodeURIComponent(carried as string));
+		expect(parsed.queryType).toBe(EQueryType.PROM);
+		expect(parsed.promql[0].query).toBe('up{job="alpha"}');
 	});
 
 	it('merges search with the time window (leading ? tolerated)', () => {

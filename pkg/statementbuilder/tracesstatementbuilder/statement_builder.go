@@ -127,8 +127,7 @@ func (b *traceQueryStatementBuilder) Build(
 	}
 
 	for _, action := range adjustTraceKeys(keys, &query, requestType) {
-		// TODO: change to debug level once we are confident about the behavior
-		b.logger.InfoContext(ctx, "key adjustment action", slog.String("action", action))
+		b.logger.DebugContext(ctx, "key adjustment action", slog.String("action", action))
 	}
 	// Create SQL builder
 	q := sqlbuilder.NewSelectBuilder()

@@ -1,0 +1,70 @@
+{
+  "id": "cloudstorage",
+  "title": "GCP Cloud Storage",
+  "icon": "file://icon.svg",
+  "overview": "file://overview.md",
+  "supportedSignals": {
+    "metrics": true,
+    "logs": true
+  },
+  "dataCollected": {
+    "metrics": [
+      {
+        "name": "storage.googleapis.com/storage/v2/total_bytes",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "storage.googleapis.com/storage/v2/total_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "storage.googleapis.com/storage/v2/deleted_bytes",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "storage.googleapis.com/api/request_count",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "storage.googleapis.com/network/received_bytes_count",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "storage.googleapis.com/network/sent_bytes_count",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "storage.googleapis.com/authn/authentication_count",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      }
+    ],
+    "logs": []
+  },
+  "telemetryCollectionStrategy": {
+    "gcp": {}
+  },
+  "assets": {
+    "dashboards": [
+      {
+        "id": "overview",
+        "title": "GCP Cloud Storage Overview",
+        "description": "Overview of GCP Cloud Storage metrics",
+        "definition": "file://assets/dashboards/overview.json"
+      }
+    ]
+  }
+}
