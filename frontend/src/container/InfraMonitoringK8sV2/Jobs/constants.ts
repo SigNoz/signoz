@@ -1,109 +1,142 @@
+import { InframonitoringtypesJobRecordDTO } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
+import { K8sDetailsMetadataConfig } from '../Base/K8sBaseDetails';
 import {
-	createFilterItem,
-	K8sDetailsMetadataConfig,
-} from '../Base/K8sBaseDetails';
-import { QUERY_KEYS } from '../EntityDetailsUtils/utils';
-import { K8sJobsData } from './api';
+	getPodUtilizationByPodQueryPayloads,
+	INFRA_MONITORING_ATTR_KEYS,
+} from '../constants';
+import { SelectedItemParams } from '../hooks';
+import {
+	buildEventsExpression,
+	buildExpressionFromSelectedItemParams,
+	buildLogsTracesExpression,
+} from 'container/InfraMonitoringK8sV2/Base/utils';
 
-export const k8sJobGetSelectedItemFilters = (
-	selectedItemId: string,
-): TagFilter => ({
-	op: 'AND',
-	items: [
-		{
-			id: 'k8s_job_name',
-			key: {
-				key: 'k8s_job_name',
-				type: null,
-			},
-			op: '=',
-			value: selectedItemId,
-		},
-	],
-});
+export const k8sJobGetSelectedItemExpression = (
+	params: SelectedItemParams,
+): string =>
+	buildExpressionFromSelectedItemParams(
+		params,
+		INFRA_MONITORING_ATTR_KEYS.K8S_JOB_NAME,
+	);
 
-export const k8sJobDetailsMetadataConfig: K8sDetailsMetadataConfig<K8sJobsData>[] =
+export const k8sJobDetailsMetadataConfig: K8sDetailsMetadataConfig<InframonitoringtypesJobRecordDTO>[] =
 	[
 		{
 			label: 'Job Name',
-			getValue: (p): string => p.meta.k8s_job_name,
+			getValue: (p): string =>
+				p.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_JOB_NAME] ?? '',
 		},
 		{
 			label: 'Cluster Name',
-			getValue: (p): string => p.meta.k8s_cluster_name,
+			getValue: (p): string =>
+				p.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] ?? '',
 		},
 		{
 			label: 'Namespace Name',
-			getValue: (p): string => p.meta.k8s_namespace_name,
+			getValue: (p): string =>
+				p.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ?? '',
 		},
 	];
 
-export const k8sJobInitialEventsFilter = (
-	item: K8sJobsData,
-): ReturnType<typeof createFilterItem>[] => [
-	createFilterItem(QUERY_KEYS.K8S_OBJECT_KIND, 'Job'),
-	createFilterItem(QUERY_KEYS.K8S_OBJECT_NAME, item.meta.k8s_job_name),
-];
+export const k8sJobInitialEventsExpression = (
+	item: InframonitoringtypesJobRecordDTO,
+): string =>
+	buildEventsExpression({
+		objectKind: 'Job',
+		objectName: item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_JOB_NAME] ?? '',
+		clusterName: item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME],
+		namespaceName: item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME],
+	});
 
-export const k8sJobInitialLogTracesFilter = (
-	item: K8sJobsData,
-): ReturnType<typeof createFilterItem>[] => [
-	createFilterItem(QUERY_KEYS.K8S_JOB_NAME, item.meta.k8s_job_name),
-	createFilterItem(QUERY_KEYS.K8S_NAMESPACE_NAME, item.meta.k8s_namespace_name),
-];
+export const k8sJobInitialLogTracesExpression = (
+	item: InframonitoringtypesJobRecordDTO,
+): string =>
+	buildLogsTracesExpression({
+		mainAttributeKey: INFRA_MONITORING_ATTR_KEYS.K8S_JOB_NAME,
+		mainAttributeValue: item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_JOB_NAME],
+		clusterName: item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME],
+		namespaceName: item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME],
+	});
 
-export const k8sJobGetEntityName = (item: K8sJobsData): string =>
-	item.meta.k8s_job_name;
+export const k8sJobGetEntityName = (
+	item: InframonitoringtypesJobRecordDTO,
+): string => item.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_JOB_NAME] ?? '';
 
 export const jobWidgetInfo = [
 	{
 		title: 'CPU usage',
 		yAxisUnit: '',
+		docPath: '/infrastructure-monitoring/kubernetes/jobs/#cpu-usage',
 	},
 	{
 		title: 'Memory Usage',
 		yAxisUnit: 'bytes',
+		docPath: '/infrastructure-monitoring/kubernetes/jobs/#memory-usage',
 	},
 	{
 		title: 'Network IO',
 		yAxisUnit: 'binBps',
+		docPath: '/infrastructure-monitoring/kubernetes/jobs/#network-io',
 	},
 	{
 		title: 'Network errors count',
 		yAxisUnit: '',
+		docPath: '/infrastructure-monitoring/kubernetes/jobs/#network-errors-count',
 	},
 ];
 
 export const getJobMetricsQueryPayload = (
-	job: K8sJobsData,
+	job: InframonitoringtypesJobRecordDTO,
 	start: number,
 	end: number,
-	dotMetricsEnabled: boolean,
 ): GetQueryResultsProps[] => {
-	const k8sPodCpuUtilizationKey = dotMetricsEnabled
-		? 'k8s.pod.cpu.usage'
-		: 'k8s_pod_cpu_usage';
-	const k8sPodMemoryUsageKey = dotMetricsEnabled
-		? 'k8s.pod.memory.usage'
-		: 'k8s_pod_memory_usage';
-	const k8sPodNetworkIoKey = dotMetricsEnabled
-		? 'k8s.pod.network.io'
-		: 'k8s_pod_network_io';
-	const k8sPodNetworkErrorsKey = dotMetricsEnabled
-		? 'k8s.pod.network.errors'
-		: 'k8s_pod_network_errors';
-	const k8sJobNameKey = dotMetricsEnabled ? 'k8s.job.name' : 'k8s_job_name';
-	const k8sNamespaceNameKey = dotMetricsEnabled
-		? 'k8s.namespace.name'
-		: 'k8s_namespace_name';
+	const clusterName =
+		job.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] ?? '';
+	const namespaceName =
+		job.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ?? '';
+
+	const filters = [
+		{
+			id: 'f1',
+			key: {
+				dataType: DataTypes.String,
+				id: 'k8s_job_name--string--tag--false',
+				key: INFRA_MONITORING_ATTR_KEYS.K8S_JOB_NAME,
+				type: 'tag',
+			},
+			op: '=',
+			value: job.jobName,
+		},
+		{
+			id: 'f2',
+			key: {
+				dataType: DataTypes.String,
+				id: 'k8s_cluster_name--string--tag--false',
+				key: INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME,
+				type: 'tag',
+			},
+			op: '=',
+			value: clusterName,
+		},
+		{
+			id: 'f3',
+			key: {
+				dataType: DataTypes.String,
+				id: 'k8s_namespace_name--string--tag--false',
+				key: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
+				type: 'tag',
+			},
+			op: '=',
+			value: namespaceName,
+		},
+	];
 
 	return [
 		{
@@ -116,7 +149,7 @@ export const getJobMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_cpu_usage--float64--Gauge--true',
-								key: k8sPodCpuUtilizationKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_USAGE,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -124,30 +157,7 @@ export const getJobMetricsQueryPayload = (
 							disabled: false,
 							expression: 'A',
 							filters: {
-								items: [
-									{
-										id: '6b59b690',
-										key: {
-											dataType: DataTypes.String,
-											id: 'k8s_job_name--string--tag--false',
-											key: k8sJobNameKey,
-											type: 'tag',
-										},
-										op: '=',
-										value: job.jobName,
-									},
-									{
-										id: '47b3adae',
-										key: {
-											dataType: DataTypes.String,
-											id: 'k8s_namespace_name--string--tag--false',
-											key: k8sNamespaceNameKey,
-											type: 'tag',
-										},
-										op: '=',
-										value: job.meta.k8s_namespace_name,
-									},
-								],
+								items: [...filters],
 								op: 'AND',
 							},
 							functions: [],
@@ -200,7 +210,7 @@ export const getJobMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_memory_usage--float64--Gauge--true',
-								key: k8sPodMemoryUsageKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_MEMORY_USAGE,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -208,30 +218,7 @@ export const getJobMetricsQueryPayload = (
 							disabled: false,
 							expression: 'A',
 							filters: {
-								items: [
-									{
-										id: '8c217f4d',
-										key: {
-											dataType: DataTypes.String,
-											id: 'k8s_job_name--string--tag--false',
-											key: k8sJobNameKey,
-											type: 'tag',
-										},
-										op: '=',
-										value: job.jobName,
-									},
-									{
-										id: '47b3adae',
-										key: {
-											dataType: DataTypes.String,
-											id: 'k8s_namespace_name--string--tag--false',
-											key: k8sNamespaceNameKey,
-											type: 'tag',
-										},
-										op: '=',
-										value: job.meta.k8s_namespace_name,
-									},
-								],
+								items: [...filters],
 								op: 'AND',
 							},
 							functions: [],
@@ -284,7 +271,7 @@ export const getJobMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_network_io--float64--Sum--true',
-								key: k8sPodNetworkIoKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_NETWORK_IO,
 								type: 'Sum',
 							},
 							aggregateOperator: 'rate',
@@ -292,30 +279,7 @@ export const getJobMetricsQueryPayload = (
 							disabled: false,
 							expression: 'A',
 							filters: {
-								items: [
-									{
-										id: '2bbf9d0c',
-										key: {
-											dataType: DataTypes.String,
-											id: 'k8s_job_name--string--tag--false',
-											key: k8sJobNameKey,
-											type: 'tag',
-										},
-										op: '=',
-										value: job.jobName,
-									},
-									{
-										id: '47b3adae',
-										key: {
-											dataType: DataTypes.String,
-											id: 'k8s_namespace_name--string--tag--false',
-											key: k8sNamespaceNameKey,
-											type: 'tag',
-										},
-										op: '=',
-										value: job.meta.k8s_namespace_name,
-									},
-								],
+								items: [...filters],
 								op: 'AND',
 							},
 							functions: [],
@@ -381,7 +345,7 @@ export const getJobMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_network_errors--float64--Sum--true',
-								key: k8sPodNetworkErrorsKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_NETWORK_ERRORS,
 								type: 'Sum',
 							},
 							aggregateOperator: 'increase',
@@ -389,30 +353,7 @@ export const getJobMetricsQueryPayload = (
 							disabled: false,
 							expression: 'A',
 							filters: {
-								items: [
-									{
-										id: '448e6cf7',
-										key: {
-											dataType: DataTypes.String,
-											id: 'k8s_job_name--string--tag--false',
-											key: k8sJobNameKey,
-											type: 'tag',
-										},
-										op: '=',
-										value: job.jobName,
-									},
-									{
-										id: '47b3adae',
-										key: {
-											dataType: DataTypes.String,
-											id: 'k8s_namespace_name--string--tag--false',
-											key: k8sNamespaceNameKey,
-											type: 'tag',
-										},
-										op: '=',
-										value: job.meta.k8s_namespace_name,
-									},
-								],
+								items: [...filters],
 								op: 'AND',
 							},
 							functions: [],
@@ -470,3 +411,20 @@ export const getJobMetricsQueryPayload = (
 		},
 	];
 };
+
+export const getJobPodMetricsQueryPayload = (
+	job: InframonitoringtypesJobRecordDTO,
+	start: number,
+	end: number,
+): GetQueryResultsProps[] =>
+	getPodUtilizationByPodQueryPayloads(
+		{
+			workloadNameKey: INFRA_MONITORING_ATTR_KEYS.K8S_JOB_NAME,
+			workloadNameValue: job.jobName ?? '',
+			clusterName: job.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] ?? '',
+			namespaceName:
+				job.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ?? '',
+		},
+		start,
+		end,
+	);

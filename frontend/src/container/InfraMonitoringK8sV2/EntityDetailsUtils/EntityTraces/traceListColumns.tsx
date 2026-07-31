@@ -2,6 +2,7 @@ import { TableColumnsType as ColumnsType } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
 import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
+import { TextNoData } from '../../components/TextNoData';
 import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
 import {
 	BlockLink,
@@ -89,8 +90,12 @@ export const getTraceListColumns = (
 				if (value === '') {
 					return (
 						<BlockLink to={getTraceLink(itemData)} openInNewTab>
-							<Typography data-testid={key} className={styles.cellText}>
-								N/A
+							<Typography
+								data-testid={key}
+								className={styles.cellText}
+								data-novalue="true"
+							>
+								-
 							</Typography>
 						</BlockLink>
 					);
@@ -102,7 +107,9 @@ export const getTraceListColumns = (
 					if (!httpMethod) {
 						return (
 							<BlockLink to={getTraceLink(itemData)} openInNewTab>
-								<Typography className={styles.cellText}>N/A</Typography>
+								<Typography className={styles.cellText} data-novalue="true">
+									-
+								</Typography>
 							</BlockLink>
 						);
 					}
@@ -129,9 +136,11 @@ export const getTraceListColumns = (
 					if (!isValidCode) {
 						return (
 							<BlockLink to={getTraceLink(itemData)} openInNewTab>
-								<Typography className={styles.cellText}>
-									{numericCode === 0 || !statusCode ? 'N/A' : statusCode}
-								</Typography>
+								{numericCode === 0 || !statusCode ? (
+									<TextNoData type="typography" className={styles.cellText} />
+								) : (
+									<Typography className={styles.cellText}>{statusCode}</Typography>
+								)}
 							</BlockLink>
 						);
 					}

@@ -1,0 +1,27 @@
+.mapToCell {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-1);
+	min-width: 0;
+}
+
+.mapToSelect {
+	width: 100%;
+	max-width: 280px;
+}
+
+.mapToDropdown {
+	width: 280px;
+}
+
+.skeletonList {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-3);
+	padding: var(--spacing-3) var(--spacing-4);
+}
+
+.skeletonRow {
+	display: block;
+	width: 100%;
+}

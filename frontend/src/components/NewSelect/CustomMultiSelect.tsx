@@ -20,6 +20,7 @@ import {
 import { Color } from '@signozhq/design-tokens';
 import { Button, Select } from 'antd';
 import { Checkbox } from '@signozhq/ui/checkbox';
+import { TooltipProvider, TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import TextToolTip from 'components/TextToolTip/TextToolTip';
@@ -33,6 +34,7 @@ import { CustomMultiSelectProps, CustomTagProps, OptionData } from './types';
 import {
 	ALL_SELECTED_VALUE,
 	filterOptionsBySearch,
+	findOptionLabelText,
 	handleScrollToBottom,
 	prioritizeOrAddOptionForMultiSelect,
 	SPACEKEY,
@@ -713,6 +715,19 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 				}
 			};
 
+			// Row buttons select without letting the wrapping checkbox also toggle:
+			// stop propagation, run the selection, then drop the active/chip focus.
+			const selectFromButton = (
+				e: React.MouseEvent,
+				source: 'option' | 'checkbox',
+			): void => {
+				e.stopPropagation();
+				e.preventDefault();
+				handleItemSelection(source);
+				setActiveChipIndex(-1);
+				setActiveIndex(-1);
+			};
+
 			return (
 				<div
 					key={option.value || `option-${index}`}
@@ -726,13 +741,6 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 						selected: isSelected,
 						active: isActive,
 					})}
-					onClick={(e): void => {
-						e.stopPropagation();
-						e.preventDefault();
-						handleItemSelection('option');
-						setActiveChipIndex(-1);
-						setActiveIndex(-1);
-					}}
 					onKeyDown={(e): void => {
 						if ((e.key === 'Enter' || e.key === SPACEKEY) && isActive) {
 							e.stopPropagation();
@@ -752,13 +760,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 					<Checkbox
 						value={isSelected}
 						className="option-checkbox"
-						onClick={(e): void => {
-							e.stopPropagation();
-							e.preventDefault();
-							handleItemSelection('checkbox');
-							setActiveChipIndex(-1);
-							setActiveIndex(-1);
-						}}
+						onClick={(e): void => selectFromButton(e, 'checkbox')}
 					>
 						<div className="option-content">
 							<Typography.Text truncate={1} className="option-label-text">
@@ -768,11 +770,19 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 								<div className="option-badge">{capitalize(option.type)}</div>
 							)}
 							{option.value && ensureValidOption(option.value) && (
-								<Button type="text" className="only-btn">
+								<Button
+									type="text"
+									className="only-btn"
+									onClick={(e): void => selectFromButton(e, 'option')}
+								>
 									{currentToggleTagValue({ option: option.value })}
 								</Button>
 							)}
-							<Button type="text" className="toggle-btn">
+							<Button
+								type="text"
+								className="toggle-btn"
+								onClick={(e): void => selectFromButton(e, 'checkbox')}
+							>
 								Toggle
 							</Button>
 						</div>
@@ -1929,7 +1939,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 					}
 				};
 
-				return (
+				const tag = (
 					<div
 						className={cx('ant-select-selection-item', {
 							'ant-select-selection-item-active': isActive,
@@ -1959,13 +1969,32 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 						)}
 					</div>
 				);
+
+				// `label` arrives already cut to maxTagTextLength, so the reveal reads the
+				// option's own text (falling back to the raw value for freeform tags).
+				return (
+					<TooltipSimple
+						side="top"
+						delayDuration={300}
+						title={findOptionLabelText(options, value)}
+					>
+						{tag}
+					</TooltipSimple>
+				);
 			}
 
 			// Fallback for safety, should not be reached
 			return <div />;
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[isAllSelected, activeChipIndex, selectedChips, selectedValues, maxTagCount],
+		[
+			isAllSelected,
+			activeChipIndex,
+			selectedChips,
+			selectedValues,
+			maxTagCount,
+			options,
+		],
 	);
 
 	// Simple onClear handler to prevent clearing ALL
@@ -1984,51 +2013,58 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 
 	// ===== Component Rendering =====
 	return (
-		<div
-			className={cx('custom-multiselect-wrapper', {
-				'all-selected': allOptionShown || isAllSelected,
-			})}
-		>
-			{(allOptionShown || isAllSelected) && !searchText && (
-				<div className="all-text">ALL</div>
-			)}
-			<Select
-				ref={selectRef}
-				className={cx('custom-multiselect', className, {
-					'has-selection': selectedChips.length > 0 && !isAllSelected,
-					'is-all-selected': isAllSelected,
+		// Self-provided so the per-tag tooltips work wherever this select is rendered,
+		// without every consumer having to sit under an app-level provider.
+		<TooltipProvider>
+			<div
+				className={cx('custom-multiselect-wrapper', {
+					'all-selected': allOptionShown || isAllSelected,
 				})}
-				placeholder={placeholder}
-				mode="multiple"
-				showSearch
-				filterOption={false}
-				onSearch={handleSearch}
-				value={displayValue}
-				onChange={(newValue): void => {
-					handleInternalChange(newValue, false);
-				}}
-				onClear={onClearHandler}
-				onDropdownVisibleChange={handleDropdownVisibleChange}
-				open={isOpen}
-				defaultActiveFirstOption={defaultActiveFirstOption}
-				popupMatchSelectWidth={dropdownMatchSelectWidth}
-				allowClear={allowClear}
-				getPopupContainer={getPopupContainer ?? popupContainer}
-				suffixIcon={<ChevronDown style={{ cursor: 'default' }} size="md" />}
-				dropdownRender={customDropdownRender}
-				menuItemSelectedIcon={null}
-				popupClassName={cx('custom-multiselect-dropdown-container', popupClassName)}
-				notFoundContent={<div className="empty-message">{noDataMessage}</div>}
-				onKeyDown={handleKeyDown}
-				tagRender={tagRender as any}
-				placement={placement}
-				listHeight={300}
-				searchValue={searchText}
-				maxTagTextLength={maxTagTextLength}
-				maxTagCount={isAllSelected ? undefined : maxTagCount}
-				{...rest}
-			/>
-		</div>
+			>
+				{(allOptionShown || isAllSelected) && !searchText && (
+					<div className="all-text">ALL</div>
+				)}
+				<Select
+					ref={selectRef}
+					className={cx('custom-multiselect', className, {
+						'has-selection': selectedChips.length > 0 && !isAllSelected,
+						'is-all-selected': isAllSelected,
+					})}
+					placeholder={placeholder}
+					mode="multiple"
+					showSearch
+					filterOption={false}
+					onSearch={handleSearch}
+					value={displayValue}
+					onChange={(newValue): void => {
+						handleInternalChange(newValue, false);
+					}}
+					onClear={onClearHandler}
+					onDropdownVisibleChange={handleDropdownVisibleChange}
+					open={isOpen}
+					defaultActiveFirstOption={defaultActiveFirstOption}
+					popupMatchSelectWidth={dropdownMatchSelectWidth}
+					allowClear={allowClear}
+					getPopupContainer={getPopupContainer ?? popupContainer}
+					suffixIcon={<ChevronDown style={{ cursor: 'default' }} size="md" />}
+					dropdownRender={customDropdownRender}
+					menuItemSelectedIcon={null}
+					popupClassName={cx(
+						'custom-multiselect-dropdown-container',
+						popupClassName,
+					)}
+					notFoundContent={<div className="empty-message">{noDataMessage}</div>}
+					onKeyDown={handleKeyDown}
+					tagRender={tagRender as any}
+					placement={placement}
+					listHeight={300}
+					searchValue={searchText}
+					maxTagTextLength={maxTagTextLength}
+					maxTagCount={isAllSelected ? undefined : maxTagCount}
+					{...rest}
+				/>
+			</div>
+		</TooltipProvider>
 	);
 };
 

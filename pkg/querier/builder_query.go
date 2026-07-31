@@ -11,12 +11,13 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/telemetryschema/tracestelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 const traceOutsideRangeWarn = "Query %s references a trace_id that exists between %s and %s (UTC) but lies outside the selected time range; adjust the time range to see results"
@@ -24,6 +25,7 @@ const traceOutsideRangeWarn = "Query %s references a trace_id that exists betwee
 type builderQuery[T any] struct {
 	logger         *slog.Logger
 	telemetryStore telemetrystore.TelemetryStore
+	orgID          valuer.UUID
 	stmtBuilder    qbtypes.StatementBuilder[T]
 	spec           qbtypes.QueryBuilderQuery[T]
 	variables      map[string]qbtypes.VariableItem
@@ -45,6 +47,7 @@ type builderConfig struct {
 func newBuilderQuery[T any](
 	logger *slog.Logger,
 	telemetryStore telemetrystore.TelemetryStore,
+	orgID valuer.UUID,
 	stmtBuilder qbtypes.StatementBuilder[T],
 	spec qbtypes.QueryBuilderQuery[T],
 	tr qbtypes.TimeRange,
@@ -55,6 +58,7 @@ func newBuilderQuery[T any](
 	return &builderQuery[T]{
 		logger:         logger,
 		telemetryStore: telemetryStore,
+		orgID:          orgID,
 		stmtBuilder:    stmtBuilder,
 		spec:           spec,
 		variables:      variables,
@@ -214,7 +218,7 @@ func (q *builderQuery[T]) isWindowList() bool {
 
 // Statement renders the SQL without executing it, for the preview path.
 func (q *builderQuery[T]) Statement(ctx context.Context) (*qbtypes.Statement, error) {
-	return q.stmtBuilder.Build(ctx, q.fromMS, q.toMS, q.kind, q.spec, q.variables)
+	return q.stmtBuilder.Build(ctx, q.orgID, q.fromMS, q.toMS, q.kind, q.spec, q.variables)
 }
 
 func (q *builderQuery[T]) Execute(ctx context.Context) (*qbtypes.Result, error) {
@@ -238,7 +242,7 @@ func (q *builderQuery[T]) Execute(ctx context.Context) (*qbtypes.Result, error) 
 		}
 	}
 
-	stmt, err := q.stmtBuilder.Build(ctx, fromMS, toMS, q.kind, q.spec, q.variables)
+	stmt, err := q.stmtBuilder.Build(ctx, q.orgID, fromMS, toMS, q.kind, q.spec, q.variables)
 	if err != nil {
 		return nil, err
 	}
@@ -273,12 +277,12 @@ func (q *builderQuery[T]) narrowWindowByTraceID(ctx context.Context, fromMS, toM
 		return fromMS, toMS, true, ""
 	}
 
-	traceIDs, found := telemetrytraces.ExtractTraceIDsFromFilter(q.spec.Filter.Expression)
+	traceIDs, found := tracestelemetryschema.ExtractTraceIDsFromFilter(q.spec.Filter.Expression)
 	if !found || len(traceIDs) == 0 {
 		return fromMS, toMS, true, ""
 	}
 
-	finder := telemetrytraces.NewTraceTimeRangeFinder(q.telemetryStore)
+	finder := tracestelemetryschema.NewTraceTimeRangeFinder(q.telemetryStore)
 	traceStart, traceEnd, exists, err := finder.GetTraceTimeRangeMulti(ctx, traceIDs)
 	if err != nil {
 		return fromMS, toMS, true, ""
@@ -491,7 +495,7 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 		q.spec.Offset = 0
 		q.spec.Limit = need
 
-		stmt, err := q.stmtBuilder.Build(ctx, r.fromNS/1e6, r.toNS/1e6, q.kind, q.spec, q.variables)
+		stmt, err := q.stmtBuilder.Build(ctx, q.orgID, r.fromNS/1e6, r.toNS/1e6, q.kind, q.spec, q.variables)
 		if err != nil {
 			return nil, err
 		}

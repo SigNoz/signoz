@@ -68,10 +68,10 @@ function ExtraPricingBuckets({
 		<div className={cx(styles.extraBucketsSection, styles.drawerSection)}>
 			<div className={styles.extraBucketsSectionHead}>
 				<Typography.Text as="span" size="small" color="muted">
-					Extra pricing buckets
+					Extra Pricing Buckets
 				</Typography.Text>
 				<Typography.Text as="span" size="small" color="muted">
-					optional
+					Optional
 				</Typography.Text>
 			</div>
 

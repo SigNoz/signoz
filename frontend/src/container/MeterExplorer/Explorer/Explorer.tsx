@@ -7,21 +7,18 @@ import cx from 'classnames';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
-import { LOCALSTORAGE } from 'constants/localStorage';
 import { initialQueryMeterWithType, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
+import { ExportDashboard } from 'hooks/dashboard/useExportDashboards';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { Filter } from '@signozhq/icons';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { ResizableBox } from 'periscope/components/ResizableBox';
-import usePanelWidth from 'periscope/components/ResizableBox/usePanelWidth';
-import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
@@ -32,10 +29,6 @@ import TimeSeries from './TimeSeries';
 import { splitQueryIntoOneChartPerQuery } from './utils';
 
 import './Explorer.styles.scss';
-
-const QUICK_FILTERS_DEFAULT_WIDTH = 280;
-const QUICK_FILTERS_MIN_WIDTH = 240;
-const QUICK_FILTERS_MAX_WIDTH = 500;
 
 function Explorer(): JSX.Element {
 	const {
@@ -61,16 +54,6 @@ function Explorer(): JSX.Element {
 	}, [queryClient]);
 
 	const [showQuickFilters, setShowQuickFilters] = useState(true);
-
-	const {
-		initialWidth: quickFiltersInitialWidth,
-		persistWidth: persistQuickFiltersWidth,
-	} = usePanelWidth({
-		storageKey: LOCALSTORAGE.QUICK_FILTERS_WIDTH_METER,
-		defaultWidth: QUICK_FILTERS_DEFAULT_WIDTH,
-		minWidth: QUICK_FILTERS_MIN_WIDTH,
-		maxWidth: QUICK_FILTERS_MAX_WIDTH,
-	});
 
 	const defaultQuery = useMemo(
 		() =>
@@ -98,7 +81,7 @@ function Explorer(): JSX.Element {
 
 	const handleExport = useCallback(
 		(
-			dashboard: Dashboard | null,
+			dashboard: ExportDashboard | null,
 			_isNewDashboard?: boolean,
 			queryToExport?: Query,
 		): void => {
@@ -144,19 +127,10 @@ function Explorer(): JSX.Element {
 					'quick-filters-open': showQuickFilters,
 				})}
 			>
-				<ResizableBox
-					handle="right"
-					defaultWidth={QUICK_FILTERS_DEFAULT_WIDTH}
-					initialWidth={quickFiltersInitialWidth}
-					minWidth={QUICK_FILTERS_MIN_WIDTH}
-					maxWidth={QUICK_FILTERS_MAX_WIDTH}
-					onResize={persistQuickFiltersWidth}
-					resetToDefaultOnDoubleClick
-					withHandle
+				<div
 					className={cx('meter-explorer-quick-filters-section', {
 						hidden: !showQuickFilters,
 					})}
-					handleTestId="quick-filters-resize-handle"
 				>
 					<QuickFilters
 						className="qf-meter-explorer"
@@ -168,7 +142,7 @@ function Explorer(): JSX.Element {
 							setShowQuickFilters(!showQuickFilters);
 						}}
 					/>
-				</ResizableBox>
+				</div>
 
 				<div className="meter-explorer-content-section">
 					<div className="meter-explorer-explore-content">

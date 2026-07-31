@@ -66,7 +66,7 @@ func MustNewObjectFromString(input string) *Object {
 		return &Object{Resource: resource, Selector: typed.MustSelector(orgParts[1])}
 	}
 
-	parts := strings.Split(input, "/")
+	parts := strings.SplitN(input, "/", 4)
 	if len(parts) != 4 {
 		panic(errors.Newf(errors.TypeInternal, errors.CodeInternal, "invalid input format: %s", input))
 	}

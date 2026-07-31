@@ -1,0 +1,56 @@
+.statusFilterContainer {
+	display: flex;
+	align-items: center;
+
+	--toggle-group-item-size: 100%;
+	--toggle-group-radius: 0px 2px 2px 0px;
+	--toggle-group-item-font-size: var(--periscope-font-size-base);
+}
+
+.statusLabel {
+	min-width: max-content;
+	font-size: var(--periscope-font-size-base);
+	font-weight: var(--periscope-font-weight-regular);
+	line-height: 18px;
+
+	border-radius: 2px 0px 0px 2px;
+	border: 1px solid var(--l2-border);
+	border-right: none;
+
+	display: flex;
+	height: 32px;
+	padding: var(--spacing-3) var(--spacing-3) var(--spacing-3) var(--spacing-4);
+	justify-content: center;
+	align-items: center;
+	gap: var(--spacing-2);
+}
+
+.statusToggleGroup {
+	height: 32px;
+}
+
+.statusToggleItem {
+	flex: unset;
+}
+
+.statusDot {
+	width: 8px;
+	height: 8px;
+	min-height: 8px;
+	min-width: 8px;
+	border-radius: 50%;
+	display: inline-block;
+}
+
+.allDot {
+	border: 1px solid var(--text-muted);
+	background-color: var(--bg-slate-100);
+}
+
+.activeDot {
+	background-color: var(--bg-forest-500);
+}
+
+.inactiveDot {
+	background-color: var(--bg-amber-500);
+}

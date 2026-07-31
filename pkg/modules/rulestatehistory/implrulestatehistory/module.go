@@ -9,34 +9,62 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/rulestatehistorytypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type module struct {
-	store rulestatehistorytypes.Store
+	store     rulestatehistorytypes.Store
+	ruleStore ruletypes.RuleStore
 }
 
-func NewModule(store rulestatehistorytypes.Store) rulestatehistory.Module {
-	return &module{store: store}
+func NewModule(store rulestatehistorytypes.Store, ruleStore ruletypes.RuleStore) rulestatehistory.Module {
+	return &module{store: store, ruleStore: ruleStore}
 }
 
 func (m *module) GetLastSavedRuleStateHistory(ctx context.Context, ruleID string) ([]rulestatehistorytypes.RuleStateHistory, error) {
 	return m.store.GetLastSavedRuleStateHistory(ctx, ruleID)
 }
 
-func (m *module) GetHistoryTimeline(ctx context.Context, ruleID string, query rulestatehistorytypes.Query) ([]rulestatehistorytypes.RuleStateHistory, uint64, error) {
-	return m.store.ReadRuleStateHistoryByRuleID(ctx, ruleID, &query)
+func (m *module) GetHistoryTimeline(ctx context.Context, orgID valuer.UUID, ruleID string, query rulestatehistorytypes.Query) ([]rulestatehistorytypes.RuleStateHistory, uint64, error) {
+	items, total, err := m.store.ReadRuleStateHistoryByRuleID(ctx, orgID, ruleID, &query)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	if builder := m.relatedLinkBuilderForRule(ctx, orgID, ruleID); builder != nil {
+		for idx := range items {
+			start, end := builder.queryWindow(items[idx].UnixMilli)
+			items[idx].RelatedLogsLink, items[idx].RelatedTracesLink = builder.links(items[idx].Labels, start, end)
+		}
+	}
+
+	return items, total, nil
 }
 
-func (m *module) GetHistoryFilterKeys(ctx context.Context, ruleID string, query rulestatehistorytypes.Query, search string, limit int64) (*telemetrytypes.GettableFieldKeys, error) {
-	return m.store.ReadRuleStateHistoryFilterKeysByRuleID(ctx, ruleID, &query, search, limit)
+func (m *module) GetHistoryFilterKeys(ctx context.Context, orgID valuer.UUID, ruleID string, query rulestatehistorytypes.Query, search string, limit int64) (*telemetrytypes.GettableFieldKeys, error) {
+	return m.store.ReadRuleStateHistoryFilterKeysByRuleID(ctx, orgID, ruleID, &query, search, limit)
 }
 
-func (m *module) GetHistoryFilterValues(ctx context.Context, ruleID string, key string, query rulestatehistorytypes.Query, search string, limit int64) (*telemetrytypes.GettableFieldValues, error) {
-	return m.store.ReadRuleStateHistoryFilterValuesByRuleID(ctx, ruleID, key, &query, search, limit)
+func (m *module) GetHistoryFilterValues(ctx context.Context, orgID valuer.UUID, ruleID string, key string, query rulestatehistorytypes.Query, search string, limit int64) (*telemetrytypes.GettableFieldValues, error) {
+	return m.store.ReadRuleStateHistoryFilterValuesByRuleID(ctx, orgID, ruleID, key, &query, search, limit)
 }
 
-func (m *module) GetHistoryContributors(ctx context.Context, ruleID string, query rulestatehistorytypes.Query) ([]rulestatehistorytypes.RuleStateHistoryContributor, error) {
-	return m.store.ReadRuleStateHistoryTopContributorsByRuleID(ctx, ruleID, &query)
+func (m *module) GetHistoryContributors(ctx context.Context, orgID valuer.UUID, ruleID string, query rulestatehistorytypes.Query) ([]rulestatehistorytypes.RuleStateHistoryContributor, error) {
+	contributors, err := m.store.ReadRuleStateHistoryTopContributorsByRuleID(ctx, orgID, ruleID, &query)
+	if err != nil {
+		return nil, err
+	}
+
+	if builder := m.relatedLinkBuilderForRule(ctx, orgID, ruleID); builder != nil {
+		// contributor counts aggregate the whole selected range, so the links
+		// span it too instead of a single evaluation window
+		start, end := time.UnixMilli(query.Start), time.UnixMilli(query.End)
+		for idx := range contributors {
+			contributors[idx].RelatedLogsLink, contributors[idx].RelatedTracesLink = builder.links(contributors[idx].Labels, start, end)
+		}
+	}
+
+	return contributors, nil
 }
 
 func (m *module) GetHistoryOverallStatus(ctx context.Context, ruleID string, query rulestatehistorytypes.Query) ([]rulestatehistorytypes.GettableRuleStateWindow, error) {

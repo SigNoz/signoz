@@ -55,6 +55,13 @@ func OneID(extractor ResourceIDExtractor) ResourceIDsExtractor {
 	}}
 }
 
+type ResourceWithID struct {
+	Resource Resource
+	ID       string
+}
+
+type ResourceExtractor func(ExtractorContext) ([]ResourceWithID, error)
+
 func PathParam(name string) ResourceIDExtractor {
 	return ResourceIDExtractor{Phase: PhaseRequest, Fn: func(ec ExtractorContext) (string, error) {
 		if ec.Request == nil {

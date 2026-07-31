@@ -134,6 +134,21 @@ function getFilter(queryData: IBuilderQuery): Filter {
 	};
 }
 
+/**
+ * Normalizes a builder query's `having` to the V5 shape, treating "no having filter" as absent.
+ * V4 stored it as an array; V5 expects `{ expression }`. An array (legacy), a nullish value, or a
+ * blank expression — the query builder seeds `{ expression: '' }` for an empty having — all mean
+ * "no having" and must serialize to `undefined`. Emitting an empty `{ expression: '' }` sends a
+ * no-op filter and, because a saved panel never carries one, reads an untouched panel as dirty.
+ */
+function normalizeHaving(having: unknown): Having | undefined {
+	if (having == null || Array.isArray(having)) {
+		return undefined;
+	}
+	const { expression } = having as Having;
+	return expression?.trim() ? (having as Having) : undefined;
+}
+
 function createBaseSpec(
 	queryData: IBuilderQuery,
 	requestType: RequestType,
@@ -181,12 +196,7 @@ function createBaseSpec(
 					)
 				: undefined,
 		legend: isEmpty(queryData.legend) ? undefined : queryData.legend,
-		// V4 uses having as array, V5 uses having as object with expression field
-		// If having is an array (V4 format), treat it as undefined for V5
-		having:
-			isEmpty(queryData.having) || Array.isArray(queryData.having)
-				? undefined
-				: (queryData?.having as Having),
+		having: normalizeHaving(queryData.having),
 		functions: isEmpty(queryData.functions)
 			? undefined
 			: queryData.functions.map((func: QueryFunction): QueryFunction => {
@@ -414,10 +424,7 @@ function createTraceOperatorBaseSpec(
 					)
 				: undefined,
 		legend: isEmpty(legend) ? undefined : legend,
-		// V4 uses having as array, V5 uses having as object with expression field
-		// If having is an array (V4 format), treat it as undefined for V5
-		having:
-			isEmpty(having) || Array.isArray(having) ? undefined : (having as Having),
+		having: normalizeHaving(having),
 		selectFields: isEmpty(nonEmptySelectColumns)
 			? undefined
 			: nonEmptySelectColumns?.map(

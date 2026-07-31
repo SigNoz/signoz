@@ -3,6 +3,7 @@ import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { Events } from 'constants/events';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 import { useDashboardCursorSyncMode } from 'hooks/dashboard/useDashboardCursorSyncMode';
 import { useSyncTooltipFilterMode } from 'hooks/dashboard/useSyncTooltipFilterMode';
 import {
@@ -25,6 +26,22 @@ function CrossPanelSync({ dashboardId }: CrossPanelSyncProps): JSX.Element {
 		useDashboardCursorSyncMode(dashboardId);
 	const [syncTooltipFilterMode, setSyncTooltipFilterMode] =
 		useSyncTooltipFilterMode(dashboardId);
+
+	const handleCursorSyncChange = (value: DashboardCursorSync): void => {
+		void logEvent(DashboardDetailEvents.CursorSyncChanged, {
+			mode: value,
+			dashboardId,
+		});
+		setCursorSyncMode(value);
+	};
+
+	const handleTooltipFilterModeChange = (value: SyncTooltipFilterMode): void => {
+		void logEvent(Events.TOOLTIP_SYNC_MODE_CHANGED, {
+			path: getAbsoluteUrl(window.location.pathname),
+			mode: value,
+		});
+		setSyncTooltipFilterMode(value);
+	};
 
 	return (
 		<div className={cx(settingsStyles.settingsCard, styles.crossPanelSyncGroup)}>
@@ -72,7 +89,7 @@ function CrossPanelSync({ dashboardId }: CrossPanelSyncProps): JSX.Element {
 				<SegmentedControl
 					testId="cursor-sync-mode"
 					value={cursorSyncMode}
-					onChange={setCursorSyncMode}
+					onChange={handleCursorSyncChange}
 					options={[
 						{ label: 'No Sync', value: DashboardCursorSync.None },
 						{ label: 'Crosshair', value: DashboardCursorSync.Crosshair },
@@ -96,13 +113,7 @@ function CrossPanelSync({ dashboardId }: CrossPanelSyncProps): JSX.Element {
 					<SegmentedControl
 						testId="sync-tooltip-filter-mode"
 						value={syncTooltipFilterMode}
-						onChange={(value): void => {
-							void logEvent(Events.TOOLTIP_SYNC_MODE_CHANGED, {
-								path: getAbsoluteUrl(window.location.pathname),
-								mode: value,
-							});
-							setSyncTooltipFilterMode(value);
-						}}
+						onChange={handleTooltipFilterModeChange}
 						options={[
 							{ label: 'All', value: SyncTooltipFilterMode.All },
 							{ label: 'Filtered', value: SyncTooltipFilterMode.Filtered },

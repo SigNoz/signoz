@@ -41,6 +41,7 @@ import type {
 	GetPublicDashboardDataV2200,
 	GetPublicDashboardDataV2PathParameters,
 	GetPublicDashboardPanelQueryRangeV2200,
+	GetPublicDashboardPanelQueryRangeV2Params,
 	GetPublicDashboardPanelQueryRangeV2PathParameters,
 	GetPublicDashboardPathParameters,
 	GetPublicDashboardWidgetQueryRange200,
@@ -1912,20 +1913,25 @@ export const invalidateGetPublicDashboardDataV2 = async (
  */
 export const getPublicDashboardPanelQueryRangeV2 = (
 	{ id, key }: GetPublicDashboardPanelQueryRangeV2PathParameters,
+	params?: GetPublicDashboardPanelQueryRangeV2Params,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<GetPublicDashboardPanelQueryRangeV2200>({
 		url: `/api/v2/public/dashboards/${id}/panels/${key}/query_range`,
 		method: 'GET',
+		params,
 		signal,
 	});
 };
 
-export const getGetPublicDashboardPanelQueryRangeV2QueryKey = ({
-	id,
-	key,
-}: GetPublicDashboardPanelQueryRangeV2PathParameters) => {
-	return [`/api/v2/public/dashboards/${id}/panels/${key}/query_range`] as const;
+export const getGetPublicDashboardPanelQueryRangeV2QueryKey = (
+	{ id, key }: GetPublicDashboardPanelQueryRangeV2PathParameters,
+	params?: GetPublicDashboardPanelQueryRangeV2Params,
+) => {
+	return [
+		`/api/v2/public/dashboards/${id}/panels/${key}/query_range`,
+		...(params ? [params] : []),
+	] as const;
 };
 
 export const getGetPublicDashboardPanelQueryRangeV2QueryOptions = <
@@ -1933,6 +1939,7 @@ export const getGetPublicDashboardPanelQueryRangeV2QueryOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id, key }: GetPublicDashboardPanelQueryRangeV2PathParameters,
+	params?: GetPublicDashboardPanelQueryRangeV2Params,
 	options?: {
 		query?: UseQueryOptions<
 			Awaited<ReturnType<typeof getPublicDashboardPanelQueryRangeV2>>,
@@ -1945,11 +1952,12 @@ export const getGetPublicDashboardPanelQueryRangeV2QueryOptions = <
 
 	const queryKey =
 		queryOptions?.queryKey ??
-		getGetPublicDashboardPanelQueryRangeV2QueryKey({ id, key });
+		getGetPublicDashboardPanelQueryRangeV2QueryKey({ id, key }, params);
 
 	const queryFn: QueryFunction<
 		Awaited<ReturnType<typeof getPublicDashboardPanelQueryRangeV2>>
-	> = ({ signal }) => getPublicDashboardPanelQueryRangeV2({ id, key }, signal);
+	> = ({ signal }) =>
+		getPublicDashboardPanelQueryRangeV2({ id, key }, params, signal);
 
 	return {
 		queryKey,
@@ -1978,6 +1986,7 @@ export function useGetPublicDashboardPanelQueryRangeV2<
 	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id, key }: GetPublicDashboardPanelQueryRangeV2PathParameters,
+	params?: GetPublicDashboardPanelQueryRangeV2Params,
 	options?: {
 		query?: UseQueryOptions<
 			Awaited<ReturnType<typeof getPublicDashboardPanelQueryRangeV2>>,
@@ -1988,6 +1997,7 @@ export function useGetPublicDashboardPanelQueryRangeV2<
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 	const queryOptions = getGetPublicDashboardPanelQueryRangeV2QueryOptions(
 		{ id, key },
+		params,
 		options,
 	);
 
@@ -2004,10 +2014,16 @@ export function useGetPublicDashboardPanelQueryRangeV2<
 export const invalidateGetPublicDashboardPanelQueryRangeV2 = async (
 	queryClient: QueryClient,
 	{ id, key }: GetPublicDashboardPanelQueryRangeV2PathParameters,
+	params?: GetPublicDashboardPanelQueryRangeV2Params,
 	options?: InvalidateOptions,
 ): Promise<QueryClient> => {
 	await queryClient.invalidateQueries(
-		{ queryKey: getGetPublicDashboardPanelQueryRangeV2QueryKey({ id, key }) },
+		{
+			queryKey: getGetPublicDashboardPanelQueryRangeV2QueryKey(
+				{ id, key },
+				params,
+			),
+		},
 		options,
 	);
 

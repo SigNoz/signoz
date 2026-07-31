@@ -1,11 +1,14 @@
 import { CalendarRange, Clock, RotateCw } from '@signozhq/icons';
+import logEvent from 'api/common/logEvent';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 
 import { panelHasFixedTimePreference } from '../../../hooks/resolvePanelTimeWindow';
 import {
 	selectViewPanelExtendWindow,
 	useViewPanelStore,
 } from '../../../store/useViewPanelStore';
+import { PANEL_KIND_TO_PANEL_TYPE } from '../../types/panelKind';
 import PanelLoader from '../PanelLoader/PanelLoader';
 import PanelMessage, { PanelMessageAction } from '../PanelMessage/PanelMessage';
 import { useExtendTimeWindow } from './useExtendTimeWindow';
@@ -50,17 +53,37 @@ function NoData({
 		return <PanelLoader />;
 	}
 
+	const panelType = panel
+		? PANEL_KIND_TO_PANEL_TYPE[panel.spec.plugin.kind]
+		: undefined;
+
 	const extendAction: PanelMessageAction | undefined =
 		activeExtend?.canExtend && activeExtend.actionLabel
 			? {
 					label: activeExtend.actionLabel,
-					onClick: activeExtend.extend,
+					onClick: (): void => {
+						void logEvent(DashboardDetailEvents.NoDataAction, {
+							action: 'extendTime',
+							panelType,
+						});
+						activeExtend.extend();
+					},
 					icon: <CalendarRange size={14} />,
 				}
 			: undefined;
 
 	const retryAction: PanelMessageAction | undefined = onRetry
-		? { label: 'Retry', onClick: onRetry, icon: <RotateCw size={14} /> }
+		? {
+				label: 'Retry',
+				onClick: (): void => {
+					void logEvent(DashboardDetailEvents.NoDataAction, {
+						action: 'retry',
+						panelType,
+					});
+					onRetry();
+				},
+				icon: <RotateCw size={14} />,
+			}
 		: undefined;
 
 	return (

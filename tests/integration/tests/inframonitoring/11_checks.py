@@ -83,7 +83,7 @@ SPECS = {
         "attrs": {KAP: ["k8s.deployment.name", "k8s.namespace.name"], RDP: ["k8s.cluster.name"]},
     },
     "daemonsets": {
-        "default": {KSR: ["k8s.pod.cpu.usage", "k8s.pod.memory.working_set"], KCR: ["k8s.pod.phase", "k8s.daemonset.desired_scheduled_nodes", "k8s.daemonset.current_scheduled_nodes"]},
+        "default": {KSR: ["k8s.pod.cpu.usage", "k8s.pod.memory.working_set"], KCR: ["k8s.pod.phase", "k8s.daemonset.desired_scheduled_nodes", "k8s.daemonset.current_scheduled_nodes", "k8s.daemonset.ready_nodes", "k8s.daemonset.misscheduled_nodes"]},
         "optional": {KSR: list(_PODS_OPT), KCR: list(_POD_STATUS_OPT)},
         "attrs": {KAP: ["k8s.daemonset.name", "k8s.namespace.name"], RDP: ["k8s.cluster.name"]},
     },

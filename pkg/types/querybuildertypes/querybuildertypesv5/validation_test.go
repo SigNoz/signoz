@@ -6,6 +6,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 func contains(s, substr string) bool {
@@ -762,6 +763,100 @@ func TestQueryRangeRequest_ValidateCompositeQuery(t *testing.T) {
 								Name:         "A",
 								Signal:       telemetrytypes.SignalLogs,
 								Aggregations: []LogAggregation{},
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "scalar request with metric query without reduceTo should return error",
+			request: QueryRangeRequest{
+				Start:       1640995200000,
+				End:         1640998800000,
+				RequestType: RequestTypeScalar,
+				CompositeQuery: CompositeQuery{
+					Queries: []QueryEnvelope{
+						{
+							Type: QueryTypeBuilder,
+							Spec: QueryBuilderQuery[MetricAggregation]{
+								Name:   "A",
+								Signal: telemetrytypes.SignalMetrics,
+								Aggregations: []MetricAggregation{
+									{MetricName: "test_metric", SpaceAggregation: metrictypes.SpaceAggregationSum},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: true,
+			errMsg:  "reduceTo is required",
+		},
+		{
+			name: "scalar request with metric query with invalid reduceTo should return error",
+			request: QueryRangeRequest{
+				Start:       1640995200000,
+				End:         1640998800000,
+				RequestType: RequestTypeScalar,
+				CompositeQuery: CompositeQuery{
+					Queries: []QueryEnvelope{
+						{
+							Type: QueryTypeBuilder,
+							Spec: QueryBuilderQuery[MetricAggregation]{
+								Name:   "A",
+								Signal: telemetrytypes.SignalMetrics,
+								Aggregations: []MetricAggregation{
+									{MetricName: "test_metric", SpaceAggregation: metrictypes.SpaceAggregationSum, ReduceTo: ReduceTo{valuer.NewString("p99")}},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: true,
+			errMsg:  "invalid reduceTo",
+		},
+		{
+			name: "scalar request with metric query with reduceTo should pass",
+			request: QueryRangeRequest{
+				Start:       1640995200000,
+				End:         1640998800000,
+				RequestType: RequestTypeScalar,
+				CompositeQuery: CompositeQuery{
+					Queries: []QueryEnvelope{
+						{
+							Type: QueryTypeBuilder,
+							Spec: QueryBuilderQuery[MetricAggregation]{
+								Name:   "A",
+								Signal: telemetrytypes.SignalMetrics,
+								Aggregations: []MetricAggregation{
+									{MetricName: "test_metric", SpaceAggregation: metrictypes.SpaceAggregationSum, ReduceTo: ReduceToLast},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "timeseries request with metric query without reduceTo should pass",
+			request: QueryRangeRequest{
+				Start:       1640995200000,
+				End:         1640998800000,
+				RequestType: RequestTypeTimeSeries,
+				CompositeQuery: CompositeQuery{
+					Queries: []QueryEnvelope{
+						{
+							Type: QueryTypeBuilder,
+							Spec: QueryBuilderQuery[MetricAggregation]{
+								Name:   "A",
+								Signal: telemetrytypes.SignalMetrics,
+								Aggregations: []MetricAggregation{
+									{MetricName: "test_metric", SpaceAggregation: metrictypes.SpaceAggregationSum},
+								},
 							},
 						},
 					},

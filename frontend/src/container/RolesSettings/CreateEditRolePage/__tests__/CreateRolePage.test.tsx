@@ -3,27 +3,22 @@ import ROUTES from 'constants/routes';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
-import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
-import { mockUseAuthZGrantAll } from 'lib/authz/utils/authz-test-utils';
+import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 
 import CreateEditRolePage from '../CreateEditRolePage';
-
-jest.mock('lib/authz/hooks/useAuthZ/useAuthZ');
-const mockUseAuthZ = useAuthZ as jest.MockedFunction<typeof useAuthZ>;
 
 const rolesApiBase = '*/api/v1/roles';
 
 beforeEach(() => {
-	mockUseAuthZ.mockImplementation(mockUseAuthZGrantAll);
+	server.use(setupAuthzAdmin());
 });
 
 afterEach(() => {
-	jest.clearAllMocks();
 	server.resetHandlers();
 });
 
-function renderCreatePage(): ReturnType<typeof render> {
-	return render(
+async function renderCreatePage(): Promise<ReturnType<typeof render>> {
+	const result = render(
 		<Switch>
 			<Route path={ROUTES.ROLES_SETTINGS} exact>
 				<div data-testid="roles-list-redirect" />
@@ -35,61 +30,63 @@ function renderCreatePage(): ReturnType<typeof render> {
 		undefined,
 		{ initialRoute: '/settings/roles/new' },
 	);
+	await screen.findByTestId('create-edit-role-page');
+	return result;
 }
 
 describe('CreateRolePage', () => {
 	describe('initial render', () => {
-		it('renders create role page with testId', () => {
-			renderCreatePage();
+		it('renders create role page with testId', async () => {
+			await renderCreatePage();
 
 			expect(screen.getByTestId('create-edit-role-page')).toBeInTheDocument();
 		});
 
-		it('shows breadcrumb with "Create role" as current page', () => {
-			renderCreatePage();
+		it('shows breadcrumb with "Create role" as current page', async () => {
+			await renderCreatePage();
 
 			const page = screen.getByTestId('create-edit-role-page');
 			const breadcrumbs = within(page).getAllByText('Create role');
 			expect(breadcrumbs.length).toBeGreaterThanOrEqual(1);
 		});
 
-		it('renders empty name input', () => {
-			renderCreatePage();
+		it('renders empty name input', async () => {
+			await renderCreatePage();
 
 			const nameInput = screen.getByTestId('role-name-input');
 			expect(nameInput).toHaveValue('');
 		});
 
-		it('renders empty description input', () => {
-			renderCreatePage();
+		it('renders empty description input', async () => {
+			await renderCreatePage();
 
 			const descInput = screen.getByTestId('role-description-input');
 			expect(descInput).toHaveValue('');
 		});
 
-		it('name input is enabled in create mode', () => {
-			renderCreatePage();
+		it('name input is enabled in create mode', async () => {
+			await renderCreatePage();
 
 			const nameInput = screen.getByTestId('role-name-input');
 			expect(nameInput).not.toBeDisabled();
 		});
 
-		it('save button shows "Create role" text', () => {
-			renderCreatePage();
+		it('save button shows "Create role" text', async () => {
+			await renderCreatePage();
 
 			const saveBtn = screen.getByTestId('save-button');
 			expect(saveBtn).toHaveTextContent('Create role');
 		});
 
-		it('save button is disabled when no changes', () => {
-			renderCreatePage();
+		it('save button is disabled when no changes', async () => {
+			await renderCreatePage();
 
 			const saveBtn = screen.getByTestId('save-button');
 			expect(saveBtn).toBeDisabled();
 		});
 
-		it('does not show unsaved indicator initially', () => {
-			renderCreatePage();
+		it('does not show unsaved indicator initially', async () => {
+			await renderCreatePage();
 
 			expect(screen.queryByText('Unsaved changes')).not.toBeInTheDocument();
 		});
@@ -98,7 +95,7 @@ describe('CreateRolePage', () => {
 	describe('form interactions', () => {
 		it('enables save button when name is entered', async () => {
 			const user = userEvent.setup();
-			renderCreatePage();
+			await renderCreatePage();
 
 			const nameInput = screen.getByTestId('role-name-input');
 			await user.type(nameInput, 'test-role');
@@ -109,7 +106,7 @@ describe('CreateRolePage', () => {
 
 		it('shows unsaved indicator when form modified', async () => {
 			const user = userEvent.setup();
-			renderCreatePage();
+			await renderCreatePage();
 
 			const nameInput = screen.getByTestId('role-name-input');
 			await user.type(nameInput, 'my-role');
@@ -121,7 +118,7 @@ describe('CreateRolePage', () => {
 
 		it('enables save button when description is entered', async () => {
 			const user = userEvent.setup();
-			renderCreatePage();
+			await renderCreatePage();
 
 			const descInput = screen.getByTestId('role-description-input');
 			await user.type(descInput, 'Some description');
@@ -134,7 +131,7 @@ describe('CreateRolePage', () => {
 	describe('cancel action', () => {
 		it('navigates to roles list on cancel', async () => {
 			const user = userEvent.setup();
-			renderCreatePage();
+			await renderCreatePage();
 
 			const cancelBtn = screen.getByTestId('cancel-button');
 			await user.click(cancelBtn);
@@ -163,7 +160,7 @@ describe('CreateRolePage', () => {
 			);
 
 			const user = userEvent.setup();
-			renderCreatePage();
+			await renderCreatePage();
 
 			const nameInput = screen.getByTestId('role-name-input');
 			await user.type(nameInput, 'my-custom-role');
@@ -200,7 +197,7 @@ describe('CreateRolePage', () => {
 			);
 
 			const user = userEvent.setup();
-			renderCreatePage();
+			await renderCreatePage();
 
 			const descInput = screen.getByTestId('role-description-input');
 			await user.type(descInput, 'Description only');
@@ -218,7 +215,7 @@ describe('CreateRolePage', () => {
 
 		it('shows error banner with "Role name is required" when saving with empty name', async () => {
 			const user = userEvent.setup();
-			renderCreatePage();
+			await renderCreatePage();
 
 			const descInput = screen.getByTestId('role-description-input');
 			await user.type(descInput, 'Description only');
@@ -237,7 +234,7 @@ describe('CreateRolePage', () => {
 
 		it('clears error banner when user starts typing in name field', async () => {
 			const user = userEvent.setup();
-			renderCreatePage();
+			await renderCreatePage();
 
 			const descInput = screen.getByTestId('role-description-input');
 			await user.type(descInput, 'Description only');
@@ -270,7 +267,7 @@ describe('CreateRolePage', () => {
 			);
 
 			const user = userEvent.setup();
-			renderCreatePage();
+			await renderCreatePage();
 
 			const nameInput = screen.getByTestId('role-name-input');
 			await user.type(nameInput, 'duplicate-role');
@@ -291,7 +288,7 @@ describe('CreateRolePage', () => {
 	describe('validation errors', () => {
 		it('shows validation error when Only Selected has no items', async () => {
 			const user = userEvent.setup();
-			renderCreatePage();
+			await renderCreatePage();
 
 			const nameInput = screen.getByTestId('role-name-input');
 			await user.type(nameInput, 'valid-role');

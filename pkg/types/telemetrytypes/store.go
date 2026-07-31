@@ -11,17 +11,17 @@ import (
 type MetadataStore interface {
 	// GetKeys returns a map of field keys types.TelemetryFieldKey by name, there can be multiple keys with the same name
 	// if they have different types or data types.
-	GetKeys(ctx context.Context, fieldKeySelector *FieldKeySelector) (map[string][]*TelemetryFieldKey, bool, error)
+	GetKeys(ctx context.Context, orgID valuer.UUID, fieldKeySelector *FieldKeySelector) (map[string][]*TelemetryFieldKey, bool, error)
 
 	// GetKeys but with any number of fieldKeySelectors.
-	GetKeysMulti(ctx context.Context, fieldKeySelectors []*FieldKeySelector) (map[string][]*TelemetryFieldKey, bool, error)
+	GetKeysMulti(ctx context.Context, orgID valuer.UUID, fieldKeySelectors []*FieldKeySelector) (map[string][]*TelemetryFieldKey, bool, error)
 
 	// GetKey returns a list of keys with the given name.
-	GetKey(ctx context.Context, fieldKeySelector *FieldKeySelector) ([]*TelemetryFieldKey, error)
+	GetKey(ctx context.Context, orgID valuer.UUID, fieldKeySelector *FieldKeySelector) ([]*TelemetryFieldKey, error)
 
 	// GetRelatedValues returns a list of related values for the given key name
 	// and the existing selection of keys.
-	GetRelatedValues(ctx context.Context, fieldValueSelector *FieldValueSelector) ([]string, bool, error)
+	GetRelatedValues(ctx context.Context, orgID valuer.UUID, fieldValueSelector *FieldValueSelector) ([]string, bool, error)
 
 	// GetAllValues returns a list of all values.
 	GetAllValues(ctx context.Context, orgID valuer.UUID, fieldValueSelector *FieldValueSelector) (*TelemetryFieldValues, bool, error)

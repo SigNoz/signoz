@@ -23,7 +23,7 @@ def test_daemonsets_accuracy(
     insert_metrics,
 ) -> None:
     """Assert response shape/contract + exact per-DS metric values, node
-    counts, and phase counts against precomputed expected output.
+    counts against precomputed expected output.
 
     Locks in Sum vs Avg split across pod-level metrics
     (daemonsets_constants.go:79-198): A/D = SpaceAggregationSum across pods;
@@ -77,7 +77,8 @@ def test_daemonsets_accuracy(
             "daemonSetMemoryLimit",
             "desiredNodes",
             "currentNodes",
-            "podCountsByPhase",
+            "readyNodes",
+            "misscheduledNodes",
             "meta",
         ):
             assert field in record, f"missing {field} in {record!r}"
@@ -85,10 +86,8 @@ def test_daemonsets_accuracy(
         # ints (not floats) for node counts.
         assert isinstance(record["desiredNodes"], int)
         assert isinstance(record["currentNodes"], int)
-
-        for bucket in ("pending", "running", "succeeded", "failed", "unknown"):
-            assert bucket in record["podCountsByPhase"]
-            assert isinstance(record["podCountsByPhase"][bucket], int)
+        assert isinstance(record["readyNodes"], int)
+        assert isinstance(record["misscheduledNodes"], int)
 
         assert record["meta"].get("k8s.daemonset.name") == record["daemonSetName"]
         assert "k8s.namespace.name" in record["meta"]
@@ -107,7 +106,8 @@ def test_daemonsets_accuracy(
             assert compare_values(record[field], exp[field], 1e-6), f"{record['daemonSetName']}.{field}: got {record[field]}, expected {exp[field]}"
         assert record["desiredNodes"] == exp["desiredNodes"]
         assert record["currentNodes"] == exp["currentNodes"]
-        assert record["podCountsByPhase"] == exp["podCountsByPhase"]
+        assert record["readyNodes"] == exp["readyNodes"]
+        assert record["misscheduledNodes"] == exp["misscheduledNodes"]
 
 
 @pytest.mark.parametrize(
@@ -156,6 +156,7 @@ def test_daemonsets_accuracy(
             {"logs-a-prod", "logs-b-prod"},
             id="in_contains",
         ),
+        pytest.param("k8s.daemonset.namee = 'logs-a-prod'", set(), id="unresolved_key"),
     ],
 )
 def test_daemonsets_filter(
@@ -215,7 +216,6 @@ def test_daemonsets_filter(
 @pytest.mark.parametrize(
     "expression,err_substr",
     [
-        pytest.param("k8s.daemonset.namee = 'logs-a-prod'", "k8s.daemonset.namee", id="bad_attr_name"),
         pytest.param("k8s.daemonset.name =", None, id="trailing_op"),
         pytest.param("(k8s.daemonset.name = 'logs-a-prod'", None, id="unclosed_paren"),
     ],
@@ -228,8 +228,8 @@ def test_daemonsets_filter_invalid(
     expression: str,
     err_substr,
 ) -> None:
-    """Invalid filter expressions (typo'd attribute key, malformed grammar) return
-    400 invalid_input with structured errors; bad attribute keys are named in them."""
+    """Malformed filter grammar (trailing operator, unclosed paren) returns
+    400 invalid_input with structured errors."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -259,47 +259,6 @@ def test_daemonsets_filter_invalid(
         assert any(err_substr in e["message"] for e in body["error"]["errors"]), f"{err_substr!r} not surfaced: {body['error']['errors']!r}"
 
 
-def test_daemonsets_pod_phase_aggregation(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-) -> None:
-    """DaemonSet with mixed pod phases: 4 Running + 1 Pending + 2 Failed."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/daemonsets_pod_phases.jsonl"),
-            base_time=now - timedelta(minutes=4),
-        )
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(ENDPOINT),
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-            "filter": {"expression": "k8s.daemonset.name = 'pp-ds'"},
-        },
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()["data"]
-    assert data["total"] == 1
-    rec = data["records"][0]
-    assert rec["daemonSetName"] == "pp-ds"
-    assert rec["podCountsByPhase"] == {
-        "pending": 1,
-        "running": 4,
-        "succeeded": 0,
-        "failed": 2,
-        "unknown": 0,
-    }
-
-
 def test_daemonsets_desired_current_counts(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
@@ -308,7 +267,7 @@ def test_daemonsets_desired_current_counts(
 ) -> None:
     """desired=5, current=3 from k8s.daemonset.* metrics; 2 Running pods seeded.
     Models node-scheduling lag (DS targets 5 nodes, 3 currently scheduled,
-    pod metrics from 2 of them only). Distinguishes node counts from phase counts."""
+    pod metrics from 2 of them only). Distinguishes node counts from pod counts."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -338,7 +297,6 @@ def test_daemonsets_desired_current_counts(
     assert isinstance(rec["currentNodes"], int)
     assert rec["desiredNodes"] == 5
     assert rec["currentNodes"] == 3
-    assert rec["podCountsByPhase"]["running"] == 2
 
 
 def test_daemonsets_base_filter_drops_non_daemonset_pods(
@@ -389,10 +347,6 @@ _GROUPBY_FLOAT_FIELDS = {
 }
 
 
-def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
-    return {"pending": pending, "running": running, "succeeded": succeeded, "failed": failed, "unknown": unknown}
-
-
 @pytest.mark.parametrize(
     "scenario",
     [
@@ -407,10 +361,10 @@ def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
                 "group_meta_keys": ["k8s.daemonset.name"],
                 "expected_type": "grouped_list",
                 "groups": {
-                    "gb-ds-a1": {"daemonSetName": "gb-ds-a1", "podCountsByPhase": _phase(running=1)},
-                    "gb-ds-a2": {"daemonSetName": "gb-ds-a2", "podCountsByPhase": _phase(running=1)},
-                    "gb-ds-b1": {"daemonSetName": "gb-ds-b1", "podCountsByPhase": _phase(running=1)},
-                    "gb-ds-b2": {"daemonSetName": "gb-ds-b2", "podCountsByPhase": _phase(running=1)},
+                    "gb-ds-a1": {"daemonSetName": "gb-ds-a1"},
+                    "gb-ds-a2": {"daemonSetName": "gb-ds-a2"},
+                    "gb-ds-b1": {"daemonSetName": "gb-ds-b1"},
+                    "gb-ds-b2": {"daemonSetName": "gb-ds-b2"},
                 },
             },
             id="daemonset_name",
@@ -425,8 +379,8 @@ def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
                 "group_meta_keys": ["k8s.namespace.name"],
                 "expected_type": "grouped_list",
                 "groups": {
-                    "gb-ns-a": {"daemonSetName": "", "podCountsByPhase": _phase(running=2)},
-                    "gb-ns-b": {"daemonSetName": "", "podCountsByPhase": _phase(running=2)},
+                    "gb-ns-a": {"daemonSetName": ""},
+                    "gb-ns-b": {"daemonSetName": ""},
                 },
             },
             id="namespace",
@@ -457,7 +411,6 @@ def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
                         "daemonSetMemoryLimit": 0.7,
                         "desiredNodes": 2,
                         "currentNodes": 2,
-                        "podCountsByPhase": _phase(running=1),
                     },
                     ("dup-ds", "ns-y", "cluster-a"): {
                         "daemonSetName": "dup-ds",
@@ -469,7 +422,6 @@ def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
                         "daemonSetMemoryLimit": 0.3,
                         "desiredNodes": 3,
                         "currentNodes": 1,
-                        "podCountsByPhase": _phase(failed=1),
                     },
                     ("dup-ds", "ns-x", "cluster-b"): {
                         "daemonSetName": "dup-ds",
@@ -481,7 +433,6 @@ def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
                         "daemonSetMemoryLimit": 0.5,
                         "desiredNodes": 4,
                         "currentNodes": 4,
-                        "podCountsByPhase": _phase(running=1),
                     },
                     # empty-cluster group: k8s.cluster.name label absent on the source pods.
                     ("dup-ds", "ns-x", ""): {
@@ -494,7 +445,6 @@ def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
                         "daemonSetMemoryLimit": 0.1,
                         "desiredNodes": 1,
                         "currentNodes": 0,
-                        "podCountsByPhase": _phase(pending=1),
                     },
                 },
             },
@@ -627,6 +577,8 @@ def test_daemonsets_pagination(
         pytest.param("memory_limit", "daemonSetMemoryLimit", id="memory_limit"),
         pytest.param("desired_nodes", "desiredNodes", id="desired_nodes"),
         pytest.param("current_nodes", "currentNodes", id="current_nodes"),
+        pytest.param("ready_nodes", "readyNodes", id="ready_nodes"),
+        pytest.param("misscheduled_nodes", "misscheduledNodes", id="misscheduled_nodes"),
         pytest.param("k8s.daemonset.name", "daemonSetName", id="daemonset_name"),
     ],
 )

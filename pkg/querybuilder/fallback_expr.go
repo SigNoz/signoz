@@ -1,125 +1,16 @@
 package querybuilder
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"math"
 	"reflect"
 	"regexp"
 	"strconv"
-	"strings"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/huandu/go-sqlbuilder"
-	"golang.org/x/exp/maps"
 )
-
-func CollisionHandledFinalExpr(
-	ctx context.Context,
-	startNs uint64,
-	endNs uint64,
-	field *telemetrytypes.TelemetryFieldKey,
-	fm qbtypes.FieldMapper,
-	cb qbtypes.ConditionBuilder,
-	keys map[string][]*telemetrytypes.TelemetryFieldKey,
-	requiredDataType telemetrytypes.FieldDataType,
-	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
-	bodyJSONEnabled bool,
-) (string, []any, error) {
-
-	if requiredDataType != telemetrytypes.FieldDataTypeString &&
-		requiredDataType != telemetrytypes.FieldDataTypeFloat64 {
-		return "", nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported data type %s", requiredDataType)
-	}
-
-	var dummyValue any
-	if requiredDataType == telemetrytypes.FieldDataTypeFloat64 {
-		dummyValue = 0.0
-	} else {
-		dummyValue = ""
-	}
-
-	var stmts []string
-	var allArgs []any
-
-	addCondition := func(key *telemetrytypes.TelemetryFieldKey) error {
-		sb := sqlbuilder.NewSelectBuilder()
-		conds, _, err := cb.ConditionFor(ctx, startNs, endNs, key, []*telemetrytypes.TelemetryFieldKey{key}, qbtypes.FilterOperatorExists, nil, sb)
-		if err != nil {
-			return err
-		}
-		sb.Where(conds[0])
-
-		expr, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-		expr = strings.TrimPrefix(expr, "WHERE ")
-		stmts = append(stmts, expr)
-		allArgs = append(allArgs, args...)
-		return nil
-	}
-
-	fieldExpression, fieldForErr := fm.FieldFor(ctx, startNs, endNs, field)
-	if errors.Is(fieldForErr, qbtypes.ErrColumnNotFound) {
-		// the key didn't have the right context to be added to the query
-		// we try to use the context we know of
-		keysForField := keys[field.Name]
-
-		if len(keysForField) == 0 {
-			// check if the key exists with {fieldContext}.{key}
-			// because the context could be legitimate prefix in user data, example `metric.max`
-			keyWithContext := fmt.Sprintf("%s.%s", field.FieldContext.StringValue(), field.Name)
-			if len(keys[keyWithContext]) > 0 {
-				keysForField = keys[keyWithContext]
-			}
-		}
-
-		if len(keysForField) == 0 {
-			// - the context is not provided
-			// - there are not keys for the field
-			// - it is not a static field
-			// - the next best thing to do is see if there is a typo
-			// and suggest a correction
-			wrappedErr := errors.WithSuggestiveAdditionalf(fieldForErr, errors.NewSuggestionsOnLevenshteinDistance(field.Name, errors.NounKeys, maps.Keys(keys)), "field `%s` not found", field.Name)
-			return "", nil, wrappedErr
-		} else {
-			for _, key := range keysForField {
-				err := addCondition(key)
-				if err != nil {
-					return "", nil, err
-				}
-				fieldExpression, _ = fm.FieldFor(ctx, startNs, endNs, key)
-				fieldExpression, _ = DataTypeCollisionHandledFieldName(key, dummyValue, fieldExpression, qbtypes.FilterOperatorUnknown)
-				stmts = append(stmts, fieldExpression)
-			}
-		}
-	} else {
-		err := addCondition(field)
-		if err != nil {
-			return "", nil, err
-		}
-
-		// first if condition covers the older tests and second if condition covers the array conditions
-		if !bodyJSONEnabled && field.FieldContext == telemetrytypes.FieldContextBody && jsonKeyToKey != nil {
-			return "", nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "Group by/Aggregation isn't available for the body column")
-		} else if strings.Contains(field.Name, telemetrytypes.ArraySep) || strings.Contains(field.Name, telemetrytypes.ArrayAnyIndex) {
-			return "", nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "Group by/Aggregation isn't available for the Array Paths: %s", field.Name)
-		} else {
-			fieldExpression, _ = DataTypeCollisionHandledFieldName(field, dummyValue, fieldExpression, qbtypes.FilterOperatorUnknown)
-		}
-
-		stmts = append(stmts, fieldExpression)
-	}
-
-	for idx := range stmts {
-		stmts[idx] = sqlbuilder.Escape(stmts[idx])
-	}
-
-	multiIfStmt := fmt.Sprintf("multiIf(%s, NULL)", strings.Join(stmts, ", "))
-
-	return multiIfStmt, allArgs, nil
-}
 
 func GroupByKeys(keys []qbtypes.GroupByKey) []string {
 	k := []string{}
@@ -262,6 +153,10 @@ func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, va
 			} else if hasString(v) {
 				tblFieldName, value = castString(tblFieldName), toStrings(v)
 			}
+		case bool:
+			// a bool can't equal a number; compare as strings (type-safe, matches
+			// nothing) instead of erroring with "Bad get: ... Float64" (CH 170).
+			tblFieldName, value = castString(tblFieldName), fmt.Sprintf("%t", v)
 		}
 
 	case telemetrytypes.FieldDataTypeBool,
@@ -285,6 +180,15 @@ func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, va
 		case []any:
 			// dynamic array elements will be default casted to string
 			tblFieldName, value = castString(tblFieldName), toStrings(v)
+		}
+	case telemetrytypes.FieldDataTypeUnspecified:
+		if operator == qbtypes.FilterOperatorUnknown {
+			switch value.(type) {
+			case float32, float64, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, json.Number:
+				tblFieldName = accurateCastFloat(tblFieldName)
+			case string:
+				tblFieldName = castString(tblFieldName)
+			}
 		}
 	}
 	return tblFieldName, value
