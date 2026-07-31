@@ -238,6 +238,24 @@ func TestConvertV1PanelsSkipsUnknownType(t *testing.T) {
 	require.NoError(t, d.errIfHasMalformedFields())
 }
 
+// TestConvertV1PanelsKeepsFirstOfDuplicateIDs verifies that when two widgets share
+// an id, the first is kept and later ones dropped — matching v1's widgets.find()
+// lookup, which returns the first match.
+func TestConvertV1PanelsKeepsFirstOfDuplicateIDs(t *testing.T) {
+	widgets := []any{
+		map[string]any{"id": "dup", "panelTypes": "graph", "title": "First", "query": singleLogsBuilderQuery()},
+		map[string]any{"id": "dup", "panelTypes": "graph", "title": "Second", "query": singleLogsBuilderQuery()},
+	}
+
+	d := &v1Decoder{}
+	panels := d.convertV1Panels(widgets)
+	require.NoError(t, d.errIfHasMalformedFields())
+
+	require.Len(t, panels, 1)
+	require.Contains(t, panels, "dup")
+	assert.Equal(t, "First", panels["dup"].Spec.Display.Name)
+}
+
 func TestConvertGraphWidgetToTimeSeriesPanel(t *testing.T) {
 	widget := map[string]any{
 		"id":                 "widget-1",
