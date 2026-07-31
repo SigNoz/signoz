@@ -34,11 +34,17 @@ var DefaultGoogleChatReceiverConfig = GoogleChatReceiverConfig{
 func (c *GoogleChatReceiverConfig) UnmarshalYAML(unmarshal func(any) error) error {
 	*c = DefaultGoogleChatReceiverConfig
 	type plain GoogleChatReceiverConfig
-	return unmarshal((*plain)(c))
+	if err := unmarshal((*plain)(c)); err != nil {
+		return err
+	}
+	if c.WebhookURL == nil {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "google chat webhook_url is required")
+	}
+	return validateGoogleChatWebhookURL(c.WebhookURL.String())
 }
 
-// ValidateGoogleChatWebhookURL validates the Google Chat webhook URL format.
-func ValidateGoogleChatWebhookURL(rawURL string) error {
+// validateGoogleChatWebhookURL validates the Google Chat webhook URL format.
+func validateGoogleChatWebhookURL(rawURL string) error {
 	u, err := url.Parse(rawURL)
 	if err != nil {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid google chat webhook_url: %v", err)

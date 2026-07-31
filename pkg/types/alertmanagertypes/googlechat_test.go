@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestValidateGoogleChatWebhookURL(t *testing.T) {
+func Test_validateGoogleChatWebhookURL(t *testing.T) {
 	cases := []struct {
 		name    string
 		url     string
@@ -19,7 +19,7 @@ func TestValidateGoogleChatWebhookURL(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			err := ValidateGoogleChatWebhookURL(c.url)
+			err := validateGoogleChatWebhookURL(c.url)
 			if c.wantErr {
 				require.Error(t, err)
 			} else {

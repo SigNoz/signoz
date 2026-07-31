@@ -40,26 +40,17 @@ func NewReceiver(input string) (*Receiver, error) {
 	receiver.Receiver = withDefaults
 
 	// Extend this block when adding another native notifier type.
+	// defaultedNotifierConfig triggers each config's UnmarshalYAML, which applies
+	// defaults and validates (e.g. the Google Chat webhook URL).
 	for i, gc := range receiver.GoogleChatConfigs {
 		defaulted, err := defaultedNotifierConfig(gc)
 		if err != nil {
-			return nil, err
-		}
-		if err := validateGoogleChatConfig(defaulted); err != nil {
 			return nil, err
 		}
 		receiver.GoogleChatConfigs[i] = defaulted
 	}
 
 	return receiver, nil
-}
-
-// validateGoogleChatConfig validates a Google Chat receiver configuration.
-func validateGoogleChatConfig(cfg *GoogleChatReceiverConfig) error {
-	if cfg.WebhookURL == nil {
-		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "google chat webhook_url is required")
-	}
-	return ValidateGoogleChatWebhookURL(cfg.WebhookURL.String())
 }
 
 func defaultedBaseReceiver(base *config.Receiver) (*config.Receiver, error) {
