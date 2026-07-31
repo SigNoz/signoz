@@ -7,6 +7,7 @@ import {
 	TIMELINE_PAGE_SIZE,
 	timelineFooterRange,
 	timelineRows,
+	waitForHistoryResponse,
 } from '../../../helpers/alerts';
 import { requestUrl } from '../../../helpers/common';
 import { typeExpression } from '../../../helpers/query-builder';
@@ -106,10 +107,12 @@ test.describe('Alert history — expression filter', () => {
 	}) => {
 		await gotoAlertHistory(page, alertHistory.ruleId, { page: '2' });
 
+		const responsePromise = waitForHistoryResponse(page, 'timeline');
 		await runFilterExpression(
 			page,
 			`service.name = '${alertHistory.services[0]}'`,
 		);
+		await responsePromise;
 
 		await expect(page).not.toHaveURL(/[?&]page=2/);
 		await expectFirstPage(page);
@@ -121,7 +124,9 @@ test.describe('Alert history — expression filter', () => {
 	}) => {
 		await gotoAlertHistory(page, alertHistory.ruleId);
 		const expression = `service.name = '${alertHistory.services[1]}'`;
+		const firstResponsePromise = waitForHistoryResponse(page, 'timeline');
 		await runFilterExpression(page, expression);
+		await firstResponsePromise;
 		await expect(timelineRows(page)).toHaveCount(1);
 
 		const requestPromise = page.waitForRequest((req) =>
@@ -167,24 +172,32 @@ test.describe('Alert history — expression filter', () => {
 	}) => {
 		await gotoAlertHistory(page, alertHistory.ruleId);
 
+		let responsePromise = waitForHistoryResponse(page, 'timeline');
 		await runFilterExpression(page, `threshold.name = 'critical'`);
+		await responsePromise;
 		await expect(timelineRows(page)).toHaveCount(TIMELINE_PAGE_SIZE);
 		await expect(timelineFooterRange(page)).toContainText(
 			`of ${alertHistory.total}`,
 		);
 
+		responsePromise = waitForHistoryResponse(page, 'timeline');
 		await runFilterExpression(page, `severity = 'critical'`);
+		await responsePromise;
 		await expect(timelineFooterRange(page)).toContainText(
 			`of ${alertHistory.total}`,
 		);
 
 		await gotoAlertHistory(page, alertHistory.ruleIdV1);
+		responsePromise = waitForHistoryResponse(page, 'timeline');
 		await runFilterExpression(page, `threshold.name = 'warning'`);
+		await responsePromise;
 		await expect(timelineFooterRange(page)).toContainText(
 			`of ${alertHistory.totalV1}`,
 		);
 
+		responsePromise = waitForHistoryResponse(page, 'timeline');
 		await runFilterExpression(page, `threshold.name = 'critical'`);
+		await responsePromise;
 		await expect(timelineRows(page)).toHaveCount(0);
 	});
 
@@ -194,9 +207,7 @@ test.describe('Alert history — expression filter', () => {
 	}) => {
 		await gotoAlertHistory(page, alertHistory.ruleId);
 
-		const responsePromise = page.waitForResponse((res) =>
-			isHistoryRequest(res.request(), 'timeline'),
-		);
+		const responsePromise = waitForHistoryResponse(page, 'timeline');
 		await runFilterExpression(page, `nonexistent.key = 'x'`);
 		const response = await responsePromise;
 
@@ -211,7 +222,9 @@ test.describe('Alert history — expression filter', () => {
 	}) => {
 		await gotoAlertHistory(page, alertHistory.ruleId);
 		const expression = `service.name = '${alertHistory.services[4]}'`;
+		const responsePromise = waitForHistoryResponse(page, 'timeline');
 		await runFilterExpression(page, expression);
+		await responsePromise;
 		await expect(timelineRows(page)).toHaveCount(1);
 		await expect(page).toHaveURL(/[?&]alertHistoryExpression=/);
 
@@ -251,10 +264,12 @@ test.describe('Alert history — expression filter', () => {
 		alertHistory,
 	}) => {
 		await gotoAlertHistory(page, alertHistory.ruleId);
+		const firstResponsePromise = waitForHistoryResponse(page, 'timeline');
 		await runFilterExpression(
 			page,
 			`service.name = '${alertHistory.services[6]}'`,
 		);
+		await firstResponsePromise;
 		await expect(timelineRows(page)).toHaveCount(1);
 
 		const requestPromise = page.waitForRequest((req) =>

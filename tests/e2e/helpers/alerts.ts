@@ -3,6 +3,7 @@ import {
 	type Locator,
 	type Page,
 	type Request,
+	type Response,
 } from '@playwright/test';
 
 import { authToken, requestUrl, seederUrl } from './common';
@@ -1089,6 +1090,23 @@ export function isHistoryRequest(
 	return new RegExp(`/api/v2/rules/[^/]+/history/${endpoint}`).test(
 		request.url(),
 	);
+}
+
+/**
+ * Wait for a history API response. Common pattern across history specs.
+ * Optionally filter by HTTP status code.
+ */
+export function waitForHistoryResponse(
+	page: Page,
+	endpoint: HistoryEndpoint,
+	options?: { status?: number },
+): Promise<Response> {
+	return page.waitForResponse((res) => {
+		if (!isHistoryRequest(res.request(), endpoint)) return false;
+		if (options?.status !== undefined && res.status() !== options.status)
+			return false;
+		return true;
+	});
 }
 
 // ─── History interactions ──────────────────────────────────────────────────

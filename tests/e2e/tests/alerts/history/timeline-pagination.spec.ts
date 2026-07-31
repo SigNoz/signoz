@@ -18,6 +18,7 @@ test.describe('Alert history — timeline pagination', () => {
 		alertHistory,
 	}) => {
 		await gotoAlertHistory(page, alertHistory.ruleId);
+		await expect(timelineRows(page).first()).toBeVisible();
 		const firstPageLabels = await timelineRowLabels(page);
 
 		const requestPromise = page.waitForRequest((req) =>
@@ -152,6 +153,7 @@ test.describe('Alert history — timeline pagination', () => {
 		alertHistory,
 	}) => {
 		await gotoAlertHistory(page, alertHistory.ruleId);
+		await expect(timelineRows(page).first()).toBeVisible();
 		const pageOne = await timelineRowLabels(page);
 
 		await page.getByTestId('timeline-next-page').click();

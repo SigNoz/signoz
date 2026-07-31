@@ -113,12 +113,14 @@ test.describe('Alert history — timeline table', () => {
 		alertHistory,
 	}) => {
 		await gotoAlertHistory(page, alertHistory.ruleId);
+		await expect(timelineRows(page).first()).toBeVisible();
 		const utcCell = await firstTimelineRowCreatedAt(page);
 
 		await page.addInitScript(() =>
 			localStorage.setItem('PREFERRED_TIMEZONE', 'Asia/Kolkata'),
 		);
 		await gotoAlertHistory(page, alertHistory.ruleId);
+		await expect(timelineRows(page).first()).toBeVisible();
 
 		expect(await firstTimelineRowCreatedAt(page)).not.toBe(utcCell);
 	});
@@ -129,6 +131,7 @@ test.describe('Alert history — timeline table', () => {
 		noDataHistory,
 	}) => {
 		await gotoAlertHistory(page, resolvedHistory.ruleId);
+		await expect(timelineRows(page).first()).toBeVisible();
 		const stateCells = timelineRows(page).getByTestId('timeline-row-state');
 		const labels = [...new Set(await stateCells.allInnerTexts())];
 		expect(labels).toContain('Firing');

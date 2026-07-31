@@ -4,6 +4,7 @@ import {
 	gotoAlertHistory,
 	isHistoryRequest,
 	timelineRows,
+	waitForHistoryResponse,
 } from '../../../helpers/alerts';
 import { requestUrl } from '../../../helpers/common';
 
@@ -75,7 +76,9 @@ test.describe('Alert history — state filter', () => {
 			expect(text).toBe('Resolved');
 		}
 
+		const responsePromise = waitForHistoryResponse(page, 'timeline');
 		await page.getByTestId('timeline-filter-fired').click();
+		await responsePromise;
 		await expect(timelineRows(page)).toHaveCount(resolvedHistory.firingCount);
 	});
 
@@ -99,7 +102,9 @@ test.describe('Alert history — state filter', () => {
 	}) => {
 		await gotoAlertHistory(page, alertHistory.ruleId, { page: '2' });
 
+		const responsePromise = waitForHistoryResponse(page, 'timeline');
 		await page.getByTestId('timeline-filter-fired').click();
+		await responsePromise;
 
 		await expect(page).not.toHaveURL(/[?&]page=2/);
 		await expectFirstPage(page);
