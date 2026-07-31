@@ -21,19 +21,16 @@ import { gotoAlertDetails } from '../../../helpers/alerts';
 // EV1-* — editing a rule whose `schemaVersion` is *not* `v2alpha1`.
 //
 // The classic form is what renders, inside the same details shell the v2 builder
-// uses: `container/EditRules/index.tsx:17-30` picks the form from the rule, so
-// there is no way to open a v1 rule in the v2 builder (and EV1-08 asserts the
-// reverse — editing never migrates the schema).
+// uses: `container/EditRules/index.tsx` picks the form from the rule, so there is no
+// way to open a v1 rule in the v2 builder (and EV1-08 asserts the reverse — editing
+// never migrates the schema).
 //
 // `gotoAlertOverview` cannot be used here: it waits for `threshold-value-input`,
 // which only the v2 builder renders.
-//
-// See `specs/alerts/alerts-create-edit-coverage.md` §5.5.
 
 /**
  * SEED-RV1 — every asserted field deliberately differs from `alertDefaults`, so a
  * passing prefill assertion cannot be satisfied by the create form's own defaults.
- * `target` in particular: the v1 create default is *absent*.
  */
 const SEED_RV1 = {
 	target: 73,
@@ -93,7 +90,7 @@ test.describe('Alert edit — v1 rule', () => {
 
 		const root = page.getByTestId('alert-details-root');
 		// The shell marks the schema on the root node, and only v2 rules get the
-		// `alert-details-v2` class (`AlertDetails.tsx:96-99`).
+		// `alert-details-v2` class.
 		await expect(root).toHaveAttribute('data-schema-version', 'v1');
 		await expect(root).not.toHaveClass(/alert-details-v2/);
 
@@ -102,7 +99,6 @@ test.describe('Alert edit — v1 rule', () => {
 		await expect(v1NameInput(page)).toBeVisible();
 		await expect(page.getByTestId('alert-name-input')).toHaveCount(0);
 
-		// Edit-mode labels and container class (`index.tsx:849-853, 970, 991-992`).
 		await expect(
 			page.locator('.form-alert-rules-container.edit-mode'),
 		).toBeVisible();
@@ -125,14 +121,13 @@ test.describe('Alert edit — v1 rule', () => {
 		await expect(v1DescriptionInput(page)).toHaveValue(SEEDED_DESCRIPTION);
 		await expect(v1SeveritySelect(page)).toContainText('Error');
 
-		// The four `RuleOptions` controls. These are the values CV1-14 writes, read back
-		// from the other side.
+		// The four `RuleOptions` controls — the values CV1-14 writes, read back from the
+		// other side.
 		await expect(v1ThresholdInput(page)).toHaveValue(String(SEED_RV1.target));
 		await expect(v1OperatorSelect(page)).toContainText('below');
 		await expect(v1MatchTypeSelect(page)).toContainText('all the times');
 		await expect(v1EvalWindowSelect(page)).toContainText('15 mins');
 
-		// Labels render as chips, severity included — the editor writes the whole map.
 		await expect(page.getByText('team: payments')).toBeVisible();
 	});
 
@@ -145,10 +140,9 @@ test.describe('Alert edit — v1 rule', () => {
 
 		await gotoAlertDetails(page, ruleId);
 
-		// `BasicInfo.tsx:66-73` reads `preferredChannels` *once*, on mount: a rule that
-		// names channels gets the switch **off** and the select filled. The seed always
-		// names one, so this is the populated branch — and the tag is counted rather than
-		// name-matched, since the select truncates at 10 characters.
+		// `BasicInfo.tsx` reads `preferredChannels` *once*, on mount: a rule that names
+		// channels gets the switch **off** and the select filled. The tag is counted
+		// rather than name-matched, since the select truncates at 10 characters.
 		await expect(v1BroadcastSwitch(page)).toHaveAttribute(
 			'aria-checked',
 			'false',
@@ -180,7 +174,7 @@ test.describe('Alert edit — v1 rule', () => {
 
 		// **`PUT /api/v2/rules/{id}`**, not `/api/v1/rules/{id}`: there is no v1 rules
 		// client in the frontend at all, so both forms share the endpoint and differ only
-		// in the body (coverage doc §2, Endpoints row).
+		// in the body.
 		expect(response.ok()).toBe(true);
 		const body = response.request().postDataJSON();
 		expect(body.condition.target).toBe(81);
@@ -191,7 +185,7 @@ test.describe('Alert edit — v1 rule', () => {
 		await expect(page.getByText('Rule edited successfully')).toBeVisible();
 		await page.waitForURL(/\/alerts(\?|$)/);
 		expect(new URL(page.url()).pathname).toBe('/alerts');
-		// `saveRule` strips exactly four params on the way out (`index.tsx:613-617`).
+		// `saveRule` strips exactly four params on the way out.
 		const params = new URL(page.url()).searchParams;
 		expect(params.get('ruleId')).toBeNull();
 		expect(params.get('compositeQuery')).toBeNull();
@@ -235,8 +229,8 @@ test.describe('Alert edit — v1 rule', () => {
 
 		// v1's `AlertHeader` renders the name as static text while the form renders it as
 		// an input; two sources for one value, so they are asserted together. Renaming
-		// through the header's modal is `AD-03`'s scenario — this row only pins that the
-		// two agree on load, which is the precondition that makes `AD-03` meaningful.
+		// through the header's modal is AD-03's scenario — this row pins the precondition
+		// that makes it meaningful.
 		await expect(page.getByTestId('alert-details-root')).toContainText(name);
 		await expect(v1NameInput(page)).toHaveValue(name);
 	});
@@ -247,9 +241,8 @@ test.describe('Alert edit — v1 rule', () => {
 	}) => {
 		const ruleId = await seedRv1(ownedRules, `e2e-ev1-alias-${Date.now()}`);
 
-		// Coverage doc §9.1: the alias is resolved by `AppRoutes/Private.tsx:86-107`
-		// before route matching, so `pages/EditRules` never renders standalone and there
-		// is no v1/v2 asymmetry — the premise pass 0 built CE-01/CE-02 on.
+		// The alias is resolved by `AppRoutes/Private.tsx` before route matching, so
+		// `pages/EditRules` never renders standalone and there is no v1/v2 asymmetry.
 		const watch = watchConsole(page);
 		await page.goto(`${ALERT_EDIT_PATH}?ruleId=${ruleId}`);
 
@@ -282,9 +275,9 @@ test.describe('Alert edit — v1 rule', () => {
 		]);
 		await page.waitForURL(/\/alerts(\?|$)/);
 
-		// §2.1: the classic form posts a v1 body and `pages/EditRules` picks the editor
-		// from the *stored* schema, so a saved v1 rule stays v1. Asserted from the API as
-		// well as the DOM — the UI could pick the right form off a cached response.
+		// The classic form posts a v1 body and `pages/EditRules` picks the editor from
+		// the *stored* schema, so a saved v1 rule stays v1. Asserted from the API as well
+		// as the DOM — the UI could pick the right form off a cached response.
 		const rule = await readRule(page, ruleId);
 		expect(rule.schemaVersion).not.toBe('v2alpha1');
 

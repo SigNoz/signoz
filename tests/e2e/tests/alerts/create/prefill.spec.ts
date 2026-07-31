@@ -17,21 +17,12 @@ import { gotoAlertOverview } from '../../../helpers/alerts';
 // CD-* — deep-link prefill.
 //
 // The contract is producer-agnostic (`context/resolveUrlAlertPrefill.ts`), but the
-// three producers do **not** write the same params, and that matters here:
-//
-//   `buildAlertUrl` (dashboards)  compositeQuery, panelTypes, version, source,
-//                                 and — only with a panel prefill — thresholds,
-//                                 matchType, compareOp
-//   `ExplorerOptions`             compositeQuery only
-//   `MultiIngestionSettings`      compositeQuery, thresholds, **ruleName**,
-//     (metering)                  **yAxisUnit**, matchType,
-//                                 **evaluationWindowPreset=meter**
-//
-// ⇒ `ruleName`, `yAxisUnit` and `evaluationWindowPreset` have exactly one producer
-// between them, so CD-04 and CD-05 drive the *metering* URL shape. Aiming them at a
-// dashboard URL would be testing a link nobody generates.
-//
-// See `specs/alerts/alerts-create-edit-coverage.md` §5.6.
+// three producers do **not** write the same params: dashboards
+// (`buildAlertUrl`) and the explorer only ever emit query/panel params, while
+// metering (`MultiIngestionSettings`) is the sole producer of `ruleName`,
+// `yAxisUnit` and `evaluationWindowPreset`. CD-04 and CD-05 therefore drive the
+// *metering* URL shape — aiming them at a dashboard URL would test a link nobody
+// generates.
 
 /**
  * A `compositeQuery` param harvested from the app itself.
@@ -39,8 +30,7 @@ import { gotoAlertOverview } from '../../../helpers/alerts';
  * Hand-writing the v5 envelope would be a second, drifting copy of the query
  * builder's serialiser — the thing these scenarios are *reading*, not testing. So
  * the builder is opened once, allowed to serialise its own default query into the
- * URL, and that exact value is reused as the deep link. What a real producer emits
- * is the same string: they all serialise `currentQuery` through the same helper.
+ * URL, and that exact value is reused as the deep link.
  */
 async function harvestCompositeQuery(
 	page: Page,
@@ -83,18 +73,17 @@ test.describe('Alert create — deep-link prefill', () => {
 		const compositeQuery = await harvestCompositeQuery(page, AlertType.LOGS);
 
 		// No `alertType` and no `ruleType` in this URL: both come from the query's data
-		// source through `ALERT_TYPE_VS_SOURCE_MAPPING` (`CreateAlertRule/index.tsx:52-59`).
-		// The presence of `compositeQuery` is also what skips the type-selection page
-		// (`:39-41`), so this one param decides two things at once.
+		// source through `ALERT_TYPE_VS_SOURCE_MAPPING`. The presence of
+		// `compositeQuery` is also what skips the type-selection page, so this one
+		// param decides two things at once.
 		await page.goto(prefillUrl({ compositeQuery }));
 
 		await expect(page.getByTestId('alert-name-input')).toBeVisible();
 
 		// Asserted on the *rendered* signal tab, not on the URL: the mapping only feeds
-		// the memo that picks the form (`CreateAlertRule/index.tsx:48-60`) — it does **not**
-		// write `alertType` back into the query string. So a deep link stays paramless
-		// while the builder behaves as a logs alert, and a spec waiting for
-		// `alertType=LOGS_BASED_ALERT` in the URL waits forever.
+		// the memo that picks the form — it does **not** write `alertType` back into the
+		// query string. So a spec waiting for `alertType=LOGS_BASED_ALERT` in the URL
+		// waits forever.
 		await expect(
 			page.locator('.list-view-tab.active-tab', {
 				has: page.getByTestId('logs-view'),
@@ -102,8 +91,8 @@ test.describe('Alert create — deep-link prefill', () => {
 		).toHaveCount(1);
 		expect(new URL(page.url()).searchParams.get('alertType')).toBeNull();
 
-		// The type-selection cards must not be on screen — that is the regression this
-		// guards, since a stale `compositeQuery` silently bypasses card selection.
+		// A stale `compositeQuery` silently bypasses card selection, so the cards must
+		// not be on screen.
 		await expect(page.locator('[data-testid^="alert-type-card-"]')).toHaveCount(
 			0,
 		);
@@ -140,7 +129,7 @@ test.describe('Alert create — deep-link prefill', () => {
 		);
 
 		// A malformed value is swallowed by `parseThresholds` and the form falls back to
-		// its own single `critical` row. Note this path also writes
+		// its own single `critical` row. That path also writes
 		// `console.error('Error parsing thresholds from URL:', …)`, which is why this
 		// scenario must never be paired with CE-07's clean-console assertion.
 		await page.goto(prefillUrl({ ...base, thresholds: 'not-json-at-all' }));
@@ -155,8 +144,7 @@ test.describe('Alert create — deep-link prefill', () => {
 	}) => {
 		// `avg` and `<` are aliases the *backend* accepts (`normalizeMatchType` /
 		// `normalizeOperator` mirror `pkg/types/ruletypes/{match,compare}.go`), not values
-		// the UI ever writes — so a producer or a hand-edited link can carry them and the
-		// sentence still has to read correctly.
+		// the UI ever writes — so a producer or a hand-edited link can carry them.
 		await page.goto(
 			prefillUrl({
 				alertType: AlertType.LOGS,
@@ -181,8 +169,7 @@ test.describe('Alert create — deep-link prefill', () => {
 		const ruleName =
 			'[ingestion][logs] e2e key has exceeded daily ingestion limit';
 
-		// The metering URL shape, verbatim from `MultiIngestionSettings.tsx:912-923` — the
-		// only producer of `ruleName` and `yAxisUnit`.
+		// The metering URL shape, verbatim from `MultiIngestionSettings.tsx`.
 		await page.goto(
 			prefillUrl({
 				compositeQuery,
@@ -203,16 +190,15 @@ test.describe('Alert create — deep-link prefill', () => {
 			page.getByTestId('threshold-unit-select').first(),
 		).not.toHaveClass(/ant-select-disabled/);
 
-		// Now the half that the `ruleNameAppliedRef` / `yAxisUnitAppliedRef` guards exist
-		// for. The prefill effect re-runs on *every* change to location.search, and the
-		// query builder rewrites it constantly — without the refs, a hand-edited name
-		// would be silently reverted to the URL's the next time that happened.
+		// Now the half the `ruleNameAppliedRef` / `yAxisUnitAppliedRef` guards exist for.
+		// The prefill effect re-runs on *every* change to location.search, and the query
+		// builder rewrites it constantly — without the refs, a hand-edited name would be
+		// silently reverted to the URL's the next time that happened.
 		const edited = 'e2e-cd-04-renamed-by-hand';
 		await page.getByTestId('alert-name-input').fill(edited);
 
 		// Switching the signal tab is a real user action that rewrites the URL *and*
-		// changes `alertType`, which is also in the effect's dependency list — so it
-		// re-runs the whole prefill block.
+		// changes `alertType`, which is also in the effect's dependency list.
 		await page.getByTestId('logs-view').click();
 		await page.waitForURL(/alertType=LOGS_BASED_ALERT/);
 
@@ -232,9 +218,9 @@ test.describe('Alert create — deep-link prefill', () => {
 			}),
 		);
 
-		// `SET_INITIAL_STATE_FOR_METER` (`context/utils.tsx:220-231`) is a *cumulative*
-		// window starting at midnight UTC — not one of the rolling presets — so the
-		// trigger button's whole text changes shape, type included.
+		// `SET_INITIAL_STATE_FOR_METER` is a *cumulative* window starting at midnight
+		// UTC — not one of the rolling presets — so the trigger button's whole text
+		// changes shape, type included.
 		await expect(evaluationSettingsButton(page)).toContainText('Cumulative');
 		await expect(evaluationSettingsButton(page)).toContainText(
 			'Current day, starting from 00:00:00 (UTC)',
@@ -263,10 +249,9 @@ test.describe('Alert create — deep-link prefill', () => {
 
 		await expect(page.getByTestId('threshold-value-input').first()).toBeVisible();
 
-		// The effect early-returns in edit mode (`context/index.tsx:175-177`). Without that
-		// return the `RESET` at the top of the block would wipe the loaded rule's
-		// thresholds every time the query builder rewrote location.search — this row is
-		// the regression guard for the comment written above it.
+		// The effect early-returns in edit mode. Without that return the `RESET` at the
+		// top of the block would wipe the loaded rule's thresholds every time the query
+		// builder rewrote location.search.
 		await expect(thresholdRows(page)).toHaveCount(1);
 		await expect(page.getByTestId('threshold-name-input')).toHaveValue(
 			'critical',

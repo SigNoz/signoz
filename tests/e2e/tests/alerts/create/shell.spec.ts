@@ -17,8 +17,6 @@ import {
 // CS-01 … CS-08 — the create *shell*: type selection, how a card click writes the
 // URL, the breadcrumb, the surrounding alerts tab bar, and the two ways to reach
 // the classic form. Nothing here saves a rule, so no scenario needs a channel.
-//
-// See `specs/alerts/alerts-create-edit-coverage.md` §5.1.
 
 test.describe('Alert create — shell & type selection', () => {
 	test('CS-01 bare /alerts/new lists exactly the expected alert-type cards', async ({
@@ -28,11 +26,9 @@ test.describe('Alert create — shell & type selection', () => {
 
 		await expect(page.getByText('Choose a type for the alert')).toBeVisible();
 
-		// The four stock signals are unconditional; anomaly is unshifted to the front
-		// when ANOMALY_DETECTION is active — and it *is* active on the
-		// pytest-bootstrapped stack, so the count is 5 here and 4 on a stack with the
-		// flag off. `expectAlertTypeCardSet` pins the exact set *and order* for
-		// whichever branch applies, so adding a sixth signal still fails.
+		// The four stock signals are unconditional; anomaly is added only when
+		// ANOMALY_DETECTION is active. `expectAlertTypeCardSet` pins the exact set *and
+		// order* for whichever branch applies, so adding a sixth signal still fails.
 		for (const type of STOCK_ALERT_TYPE_CARDS) {
 			await expect(alertTypeCard(page, type)).toBeVisible();
 		}
@@ -57,8 +53,6 @@ test.describe('Alert create — shell & type selection', () => {
 	}) => {
 		await gotoAlertTypeSelection(page);
 
-		// Gated on the same flag CS-01 measures. Active on the integration stack, so
-		// this normally runs; the skip keeps the row honest on a stack without it.
 		test.skip(
 			!(await hasAnomalyAlertTypeCard(page)),
 			'ANOMALY_DETECTION feature flag is inactive on this stack (see CS-01)',
@@ -91,8 +85,8 @@ test.describe('Alert create — shell & type selection', () => {
 		expect(params.get('ruleType')).toBe(RuleType.THRESHOLD);
 		expect(params.get('alertType')).toBe(AlertType.METRICS);
 
-		// The originating tab must stay on the selection page — a modifier click that
-		// *also* navigates in place is the regression this half guards.
+		// A modifier click that *also* navigates in place is the regression this half
+		// guards.
 		await expect(alertTypeCard(page, AlertType.METRICS)).toBeVisible();
 
 		await newTab.close();
@@ -110,8 +104,6 @@ test.describe('Alert create — shell & type selection', () => {
 		await alertTypeCard(page, AlertType.METRICS).click();
 		await expect(page.getByTestId('alert-name-input')).toBeVisible();
 
-		// `ALERT_TYPE_BREADCRUMB_TITLE` — singular "Metric-Based Alert", matching the
-		// singular in the URL enum value.
 		await expect(breadcrumb.getByText('Metric-Based Alert')).toBeVisible();
 
 		// The middle crumb is now navigable and goes back to bare /alerts/new.

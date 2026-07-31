@@ -17,27 +17,21 @@ import {
 } from '../../../helpers/alerts';
 import { watchConsole } from '../../../helpers/common';
 
-// CE-* — errors and edges that are not specific to one form.
-//
-// CE-01 and CE-02 live in `edit/edge.spec.ts`'s header comment as unreachable
-// (coverage doc §9.1). CE-05/CE-06 are v1-only validation and live with the v1
-// specs. CE-08 is unwritable in either direction and EV2-08 explains why.
-//
-// See `specs/alerts/alerts-create-edit-coverage.md` §5.7.
+// CE-* — errors and edges that are not specific to one form. CE-03 lives in
+// `edit/edge.spec.ts`; CE-05/CE-06 are v1-only validation and live with the v1
+// specs.
 
 test.describe('Alert create — errors and edges', () => {
 	test('CE-04 a server-side rejection opens the error modal and keeps the draft', async ({
 		authedPage: page,
 	}) => {
 		// A duplicate rule name is *not* rejected — the API happily creates two rules
-		// with the same `alert` (probed: both POSTs return 201), so the coverage doc's
-		// first suggestion cannot drive this row. A missing channel is rejected, with
+		// with the same `alert`. A missing channel is, with
 		// `400 invalid_input: channels: the following channels do not exist`.
 		//
-		// So the 4xx is produced by a real race rather than by a stub: the form is filled
-		// with a channel that exists, and the channel is deleted behind its back before
-		// the save. Nothing about the response is faked, which is what keeps this row
-		// inside the no-stubbing rule (§3.3).
+		// So the 4xx comes from a real race rather than a stub: the form is filled with
+		// a channel that exists, and the channel is deleted behind its back before the
+		// save. Nothing about the response is faked.
 		const channel = await createEmailChannelViaApi(
 			page,
 			`e2e-ce04-ch-${Date.now()}`,
@@ -58,14 +52,12 @@ test.describe('Alert create — errors and edges', () => {
 		]);
 		expect(response.status()).toBe(400);
 
-		// `Footer.tsx:51-58` funnels every save error into the shared error modal; v1
-		// does the same through `showErrorModal`. The modal is antd's, wrapped in
-		// `.error-modal__wrap` (`components/ErrorModal/ErrorModal.tsx:91`).
+		// Both forms funnel every save error into the shared error modal, which is
+		// antd's wrapped in `.error-modal__wrap`.
 		await expect(page.locator('.error-modal__wrap')).toBeVisible();
 		await expect(page.getByText(/do not exist/)).toBeVisible();
 
-		// The load-bearing half: a rejected save must not navigate, and must not lose
-		// what the user typed — otherwise the fix is "type it all again".
+		// A rejected save must not navigate, and must not lose what the user typed.
 		expect(new URL(page.url()).pathname).toBe('/alerts/new');
 		await page.getByTestId('close-button').click();
 		await expect(page.locator('.error-modal__wrap')).toBeHidden();
@@ -98,11 +90,6 @@ test.describe('Alert create — errors and edges', () => {
 		await gotoAlertDetails(page, v1Rule);
 		await expect(v1SaveButton(page)).toBeVisible();
 
-		// `FormAlertRules/index.tsx` used to render the global DOM `Element` as a React
-		// child (coverage doc §9.6) — dead code that logged "Functions are not valid as a
-		// React child" on every classic-form mount in a development build and was
-		// compiled out in production. It has been deleted, so this assertion is no longer
-		// build-dependent: it holds against the integration image *and* a dev server.
 		expect(watch.errors).toEqual([]);
 	});
 
@@ -111,10 +98,10 @@ test.describe('Alert create — errors and edges', () => {
 	}) => {
 		await gotoCreateAlertV2(page, { alertType: AlertType.LOGS });
 
-		// Coverage doc §9.7 — a **user-facing** bug: the footer is `position: fixed;
-		// left: 63px` (the *collapsed* rail width) while the nav is 240px wide whenever
-		// expanded, which is the default. Discard is the footer's left-most control, so
-		// the nav sits on top of it.
+		// 🐞 A user-facing bug: the footer is `position: fixed; left: 63px` (the
+		// *collapsed* rail width) while the nav is 240px wide whenever expanded, which
+		// is the default. Discard is the footer's left-most control, so the nav sits on
+		// top of it.
 		const box = await v2DiscardButton(page).boundingBox();
 		expect(box).not.toBeNull();
 		const covering = await elementAtPointClassName(
@@ -124,9 +111,9 @@ test.describe('Alert create — errors and edges', () => {
 		);
 		expect(covering).toMatch(/nav-item/);
 
-		// And the consequence, asserted rather than described: a real click cannot land.
-		// `{ force: true }` would not help either — it skips the actionability wait but
-		// still dispatches a mouse event at these coordinates, which the nav receives.
+		// And the consequence: a real click cannot land. `{ force: true }` would not
+		// help either — it skips the actionability wait but still dispatches a mouse
+		// event at these coordinates, which the nav receives.
 		await expect(v2DiscardButton(page).click({ timeout: 3_000 })).rejects.toThrow(
 			/intercepts pointer events/,
 		);

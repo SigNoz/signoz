@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 import dotenv from 'dotenv';
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 
 // Precedence, lowest to highest:
@@ -54,8 +55,17 @@ export default defineConfig({
 	// Retry on CI only
 	retries: process.env.CI ? 2 : 0,
 
-	// Workers
-	workers: process.env.CI ? 2 : undefined,
+	// Workers. Playwright's local default is `cpus / 2`, which on a 32-core box is
+	// 16 — and 16 is strictly worse than 6 here, because every worker's browser
+	// shares one SigNoz container: measured on `tests/alerts/{create,edit}` at
+	// `--repeat-each=3` (224 tests), 16 workers took 128 s with 3 failures while 6
+	// took 119 s with none. Past ~6 the extra workers only add queueing, which shows
+	// up as 4-6 s app mounts and save requests that outlive the test timeout — i.e.
+	// as flakes that look like product bugs. Capped rather than fixed at 6 so a
+	// 4-core laptop still gets `cpus / 2`.
+	workers: process.env.CI
+		? 2
+		: Math.max(1, Math.min(6, Math.floor(os.cpus().length / 2))),
 
 	// The SPA hydrates slowly on CI, so the 5s expect default fires mid-load.
 	expect: { timeout: 15_000 },

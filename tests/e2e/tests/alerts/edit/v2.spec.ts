@@ -23,8 +23,6 @@ import { watchConsole } from '../../../helpers/common';
 // which is the route the rules list's Edit action actually uses. EV2-12 is the
 // exception and the reason the distinction matters: the same editor reached
 // through `/alerts/edit` has no `CreateAlertProvider` above it.
-//
-// See `specs/alerts/alerts-create-edit-coverage.md` §5.4.
 
 /**
  * SEED-RV2 — a v2 rule whose every asserted field differs from the create-form
@@ -41,7 +39,7 @@ const SEED_RV2 = {
 	absentFor: 7,
 } as const;
 
-/** PUT for one specific rule. v1 and v2 share this endpoint (coverage doc §2). */
+/** PUT for one specific rule. v1 and v2 share this endpoint. */
 function isRuleUpdate(url: string, method: string, ruleId: string): boolean {
 	return method === 'PUT' && url.includes(`/api/v2/rules/${ruleId}`);
 }
@@ -61,10 +59,10 @@ test.describe('Alert edit — v2 rule', () => {
 		await expect(root).toHaveClass(/alert-details-v2/);
 		await expect(root).toHaveAttribute('data-schema-version', 'v2alpha1');
 
-		// `CreateAlertHeader.tsx:61` hides the whole tab bar in edit mode, which is
-		// what removes both the "New Alert Rule" chip and the classic-experience
-		// escape hatch. Asserting the escape hatch is absent is the load-bearing half:
-		// switching experiences mid-edit would silently drop the loaded rule.
+		// `CreateAlertHeader` hides the whole tab bar in edit mode, which removes both
+		// the "New Alert Rule" chip and the classic-experience escape hatch. The escape
+		// hatch matters: switching experiences mid-edit would silently drop the loaded
+		// rule.
 		await expect(page.getByTestId('alert-name-input')).toBeVisible();
 		await expect(page.getByText('New Alert Rule')).toBeHidden();
 		await expect(
@@ -132,9 +130,9 @@ test.describe('Alert edit — v2 rule', () => {
 			String(SEED_RV2.warningTarget),
 		);
 
-		// The condition sentence is rule-wide in the UI but per-threshold in the
-		// schema; the mapper reads it back from `spec[0]` only (coverage doc §9.4).
-		// Both seeded thresholds share op/matchType so this row stays about prefill.
+		// The condition sentence is rule-wide in the UI but per-threshold in the schema,
+		// and the mapper reads it back from `spec[0]` only. Both seeded thresholds share
+		// op/matchType so this row stays about prefill.
 		await expect(
 			page.getByTestId('alert-threshold-operator-select'),
 		).toContainText(ThresholdOperator.BELOW.label);
@@ -154,10 +152,9 @@ test.describe('Alert edit — v2 rule', () => {
 
 		await gotoAlertOverview(page, ruleId);
 
-		// Coverage doc §9.2: `showRecoveryThreshold` starts false and its only setter
-		// is commented out, so a seeded `recoveryTarget` has nowhere to land. This is
-		// a dead-UI guard — if either locator ever appears, the feature was finished
-		// and CV2-13/EV2-04 need rewriting rather than deleting.
+		// `showRecoveryThreshold` starts false and its only setter is commented out, so a
+		// seeded `recoveryTarget` has nowhere to land. If either locator ever appears the
+		// feature was finished, and CV2-13/EV2-04 need rewriting rather than deleting.
 		await expect(page.getByTestId('recovery-threshold-value-input')).toHaveCount(
 			0,
 		);
@@ -192,9 +189,9 @@ test.describe('Alert edit — v2 rule', () => {
 		await gotoAlertOverview(page, customRule);
 
 		// `getRollingWindowTimeframe` only recognises the seven presets; anything else
-		// becomes `custom`, and the label is then built from the parsed number + unit
-		// (`CreateAlertV2/utils.tsx:149-163`). So a rule created outside the UI with an
-		// odd window keeps its value — it just renders through the custom branch.
+		// becomes `custom`, and the label is then built from the parsed number + unit. So
+		// a rule created outside the UI with an odd window keeps its value — it just
+		// renders through the custom branch.
 		await expect(evaluationSettingsButton(page)).toContainText('Last 7 Minutes');
 		await openEvaluationSettings(page);
 		await expect(evaluationWindowOption(page, 'timeframe', 'custom')).toHaveClass(
@@ -218,11 +215,10 @@ test.describe('Alert edit — v2 rule', () => {
 		await gotoAlertOverview(page, ruleId);
 
 		// Every control in the block is `disabled={!reNotification.enabled}`, so "is it
-		// enabled" is a stronger read of the toggle than the Switch's own state — and it
-		// is the thing a user would notice.
+		// enabled" is a stronger read of the toggle than the Switch's own state.
 		const interval = page.getByTestId('repeat-notifications-time-input');
 		await expect(interval).toBeEnabled();
-		// `parseGoTime` splits the Go duration into value + unit (`utils.tsx:58-78`).
+		// `parseGoTime` splits the Go duration into value + unit.
 		await expect(interval).toHaveValue('2');
 		await expect(
 			page.getByTestId('repeat-notifications-unit-select'),
@@ -251,7 +247,7 @@ test.describe('Alert edit — v2 rule', () => {
 		await expect(tolerance).toHaveValue(String(SEED_RV2.absentFor));
 
 		// The sibling option was not seeded, so its input stays behind the
-		// `display: none` its container applies when the toggle is off. Asserted so a
+		// `display: none` its container applies when the toggle is off — asserted so a
 		// prefill that turned *every* advanced option on would still fail this row.
 		await expect(
 			page.getByTestId('enforce-minimum-datapoints-input'),
@@ -273,17 +269,13 @@ test.describe('Alert edit — v2 rule', () => {
 		await expect(evaluationCadenceInput(page)).toHaveValue('5');
 		await expect(evaluationCadenceUnitSelect(page)).toContainText('Minutes');
 
-		// Coverage doc §9.3. `getAdvancedOptionsStateFromAlertDef` hardcodes
-		// `mode: 'default'` (`utils.tsx:229-237`), and `EditCustomSchedule` mounts only
-		// when the mode is *not* default — so a schedule saved by any other client
-		// reopens as a plain interval and the next save persists the flattened value.
-		//
-		// The round-trip half of CE-08 cannot be written: the custom and rrule modes are
-		// unreachable from the UI (the "Add custom schedule" button is commented out,
-		// `EvaluationCadence.tsx:102-109`) *and* unrepresentable in the payload
-		// (`Footer/utils.tsx:108-203` only ever emits a duration `frequency`). There is
-		// no way in from either side, so this row asserts the flattening itself: the day
-		// the custom editor can mount, it fails, and that is the signal to write CE-08.
+		// `getAdvancedOptionsStateFromAlertDef` hardcodes `mode: 'default'`, and
+		// `EditCustomSchedule` mounts only when the mode is *not* default — so a schedule
+		// saved by any other client reopens as a plain interval and the next save
+		// persists the flattened value. The custom and rrule modes are unreachable from
+		// the UI (the "Add custom schedule" button is commented out) and unrepresentable
+		// in the payload, so the flattening itself is what this row asserts; the day the
+		// custom editor can mount, it fails.
 		await expect(page.locator('.edit-custom-schedule')).toHaveCount(0);
 	});
 
@@ -310,7 +302,7 @@ test.describe('Alert edit — v2 rule', () => {
 		const body = response.request().postDataJSON();
 		expect(body.condition.thresholds.spec[0].target).toBe(99);
 		// The mapper hardcodes the schema version on every save, so an edit of a v2 rule
-		// stays v2 — the half of §2.1 that is observable from the request.
+		// stays v2.
 		expect(body.schemaVersion).toBe('v2alpha1');
 		expect(body.alert).toBe(name);
 
@@ -318,8 +310,8 @@ test.describe('Alert edit — v2 rule', () => {
 		await page.waitForURL(/\/alerts(\?|$)/);
 		expect(new URL(page.url()).pathname).toBe('/alerts');
 
-		// Re-read rather than trust the toast: `Footer.tsx:141-144` invalidates the rule
-		// and list caches, and a stale cache would show the old value here.
+		// Re-read rather than trust the toast: the footer invalidates the rule and list
+		// caches, and a stale cache would show the old value here.
 		await gotoAlertOverview(page, ruleId);
 		await expect(page.getByTestId('threshold-value-input').first()).toHaveValue(
 			'99',
@@ -339,7 +331,7 @@ test.describe('Alert edit — v2 rule', () => {
 		await gotoAlertOverview(page, ruleId);
 		await page.getByTestId('alert-name-input').fill(renamed);
 
-		// `AD-03`/`AD-04` cover renaming through the details header's RenameModal, which
+		// AD-03/AD-04 cover renaming through the details header's RenameModal, which
 		// PATCHes on its own. This row is the other path: the editable header field is
 		// local state until the *Footer* saves it, so the assertion is on the PUT body.
 		const [response] = await Promise.all([
@@ -374,16 +366,14 @@ test.describe('Alert edit — v2 rule', () => {
 		});
 
 		await page.getByTestId('threshold-value-input').first().fill('999');
-		// Driven through dispatchEvent: the side navigation covers the button, so a
-		// real click cannot reach it — coverage doc §9.7, asserted by CE-09.
+		// dispatchEvent, not click — the side navigation covers the button (CE-09).
 		await v2ClickDiscard(page);
 		await page.waitForURL(/\/alerts(\?|$)/);
 
 		expect(sawPut).toBe(false);
 
-		// `discardAlertRule` also forces the *context's* alertType back to metrics
-		// (`context/index.tsx:257-262`). Harmless on the way out only if the stored
-		// rule is untouched, which is what this re-read proves.
+		// `discardAlertRule` also forces the *context's* alertType back to metrics, which
+		// is harmless on the way out only if the stored rule is untouched.
 		await gotoAlertOverview(page, ruleId);
 		await expect(page.getByTestId('threshold-value-input').first()).toHaveValue(
 			String(SEED_RV2.target),
@@ -400,16 +390,16 @@ test.describe('Alert edit — v2 rule', () => {
 			{ target: SEED_RV2.target },
 		);
 
-		// Coverage doc §9.1. Reading the components suggests this route should crash:
-		// `EditAlertV2` renders Footer/AlertCondition/NotificationSettings, all of which
-		// call `useCreateAlertState()`, and the only provider lives in
-		// `AlertDetails.tsx:89`. It does not crash, because `/alerts/edit` never renders
-		// `pages/EditRules` at all — `AppRoutes/Private.tsx:86-107` redirects the legacy
-		// alias to `/alerts/overview`, merging the search params, before route matching.
+		// Reading the components suggests this route should crash: `EditAlertV2` renders
+		// Footer/AlertCondition/NotificationSettings, all of which call
+		// `useCreateAlertState()`, and the only provider lives in `AlertDetails.tsx`. It
+		// does not crash, because `/alerts/edit` never renders `pages/EditRules` at all —
+		// `AppRoutes/Private.tsx` redirects the legacy alias to `/alerts/overview`,
+		// merging the search params, before route matching.
 		//
 		// Worth keeping despite being a redirect: the alias is linked from the AI
-		// assistant and Metrics Explorer, so a regression in `oldNewRoutesMapping`
-		// would break real product links.
+		// assistant and Metrics Explorer, so a regression in `oldNewRoutesMapping` would
+		// break real product links.
 		const watch = watchConsole(page);
 		await page.goto(`${ALERT_EDIT_PATH}?ruleId=${ruleId}`);
 

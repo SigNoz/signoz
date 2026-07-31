@@ -60,8 +60,8 @@ export interface ThresholdAlertSeed {
 	/**
 	 * Replaces the single `critical` threshold. Use two or more to exercise the
 	 * multi-threshold prefill — and note the UI only reads `op`/`matchType` back
-	 * from `spec[0]` (coverage doc §9.4), so entries after the first should keep
-	 * them identical unless the test is *about* that defect.
+	 * from `spec[0]`, so entries after the first should keep them identical unless
+	 * the test is *about* that defect.
 	 */
 	thresholds?: ThresholdSeedSpec[];
 	/** Go duration; UI default is `5m0s`, so pass something else. */
@@ -86,7 +86,7 @@ export interface ThresholdAlertSeed {
 	};
 	/** `condition.alertOnAbsent` + `condition.absentFor` (minutes). */
 	alertOnAbsent?: { absentFor: number };
-	/** `condition.recoveryTarget` on the first threshold — see coverage doc §9.2. */
+	/** `condition.recoveryTarget` on the first threshold — the UI never renders it. */
 	recoveryTarget?: number | null;
 }
 

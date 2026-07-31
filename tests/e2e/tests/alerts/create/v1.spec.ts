@@ -16,6 +16,7 @@ import {
 	v1MatchTypeSelect,
 	v1NameInput,
 	v1OperatorSelect,
+	v1SelectChannel,
 	v1SelectOption,
 	v1SelectQueryMode,
 	v1SeveritySelect,
@@ -37,8 +38,6 @@ import {
 //      !isChannelConfigurationValid || queryStatus === 'error'`, so a row that
 //      wants to reach the dialog has to satisfy the name *and* the channels first.
 //   3. Validation failures surface as antd **notifications**, not inline errors.
-//
-// See `specs/alerts/alerts-create-edit-coverage.md` §5.3.
 
 const VALIDATION = {
 	targetMissing: 'Please enter a threshold to proceed',
@@ -49,17 +48,12 @@ const VALIDATION = {
 /**
  * Alert type for every row that actually saves.
  *
- * This answers the coverage doc's §10 item 3 — "is the v1 save gated by
- * `queryStatus === 'error'` on a data-less stack?" — with a different question's
- * answer: the *client-side* gate never fires, but the **server** rejects a
- * metrics-based rule outright with
+ * A metrics-based rule is rejected by the **server** with
  * `400 invalid query 'A': metric name is required for aggregation #1`, because the
  * metrics default query has no metric selected and picking one is query-builder
- * territory (out of scope for this file, §1.2).
- *
- * A logs-based alert's default query is valid with no seeded data, which is the
- * same reason every `CV2-*` row uses one. Rows that assert on *rendering* stay
- * metrics-based, and so does CE-05 — PromQL is offered for metrics only.
+ * territory. A logs-based alert's default query is valid with no seeded data, which
+ * is the same reason every `CV2-*` row uses one. Rows that assert on *rendering*
+ * stay metrics-based, and so does CE-05 — PromQL is offered for metrics only.
  */
 const SAVEABLE = AlertType.LOGS;
 
@@ -70,7 +64,7 @@ function isRuleCreate(url: string, method: string): boolean {
 
 /**
  * Fill the minimum a v1 rule needs before Save stops being disabled: a name, a
- * channel and a threshold. Returns the name so the caller can assert on it.
+ * channel and a threshold.
  */
 async function fillMinimalV1Rule(
 	page: import('@playwright/test').Page,
@@ -78,7 +72,7 @@ async function fillMinimalV1Rule(
 ): Promise<void> {
 	await v1NameInput(page).fill(name);
 	await v1ThresholdInput(page).fill('5');
-	await v1SelectOption(page, v1ChannelSelect(page), channelName);
+	await v1SelectChannel(page, channelName);
 	await expect(v1SaveButton(page)).toBeEnabled();
 }
 
@@ -86,11 +80,9 @@ test.describe('Alert create — v1 classic form', () => {
 	test('CV1-01 the classic form renders its steps and the create-mode labels', async ({
 		authedPage: page,
 	}) => {
-		// Whether the detection-method step renders depends on the `ANOMALY_DETECTION`
-		// flag (`index.tsx:908-909`), the same flag CS-01 reads off the type-selection
-		// page. Read it there rather than assuming: it is **on** for the
-		// pytest-bootstrapped stack, which is the opposite of what the coverage doc
-		// originally recorded.
+		// Whether the detection-method step renders depends on `ANOMALY_DETECTION`, the
+		// same flag CS-01 reads off the type-selection page. Read it there rather than
+		// assuming, so this stays one unconditional assertion whichever way it falls.
 		await gotoAlertTypeSelection(page);
 		const anomalyEnabled =
 			(await alertTypeCard(page, AlertType.ANOMALY).count()) > 0;
@@ -106,13 +98,10 @@ test.describe('Alert create — v1 classic form', () => {
 		await expect(v1SaveButton(page)).toHaveText(/Create Rule/);
 		await expect(v1CancelButton(page)).toHaveText(/Cancel/);
 
-		// The three steps a stock stack always renders.
 		await expect(page.getByText('Define the metric')).toBeVisible();
 		await expect(page.getByText('Define Alert Conditions')).toBeVisible();
 		await expect(page.getByText('Alert Configuration')).toBeVisible();
 
-		// Computed rather than branched, so this stays a single unconditional assertion
-		// whichever way the flag falls.
 		await expect(page.locator('.detection-method-container')).toHaveCount(
 			anomalyEnabled ? 1 : 0,
 		);
@@ -123,11 +112,10 @@ test.describe('Alert create — v1 classic form', () => {
 	}) => {
 		await gotoCreateAlertV1(page, { alertType: AlertType.METRICS });
 
-		// Two defaults disagree: `alertDefaults.labels.severity` is `warning`
-		// (`CreateAlertRule/defaults.ts:55-57`) while the select's own `defaultValue` prop
-		// says `critical` (`BasicInfo.tsx:121`). The antd Form's `initialValues` wins, so
-		// what a user sees — and what the payload carries — is *warning*. Asserting the
-		// rendered value is the whole point of this row.
+		// Two defaults disagree: `alertDefaults.labels.severity` is `warning` while the
+		// select's own `defaultValue` prop says `critical`. The antd Form's
+		// `initialValues` wins, so what a user sees — and what the payload carries — is
+		// *warning*.
 		await expect(v1SeveritySelect(page)).toContainText('Warning');
 	});
 
@@ -139,14 +127,14 @@ test.describe('Alert create — v1 classic form', () => {
 
 		// Satisfy the other two gates first so the name is the only one left.
 		await v1ThresholdInput(page).fill('5');
-		await v1SelectOption(page, v1ChannelSelect(page), alertChannel.name);
+		await v1SelectChannel(page, alertChannel.name);
 		await expect(v1SaveButton(page)).toBeDisabled();
 		await expect(v1TestButton(page)).toBeDisabled();
 
-		// Coverage doc §9.5: `isAlertNameMissing` is `!formInstance.getFieldValue('alert')`
-		// read during render — not a subscription. It only ever looks fresh because
-		// `setAlertDef` re-renders on every keystroke, so the realistic failure is the
-		// *first* character. One character, no second keystroke, no blur.
+		// `isAlertNameMissing` is `!formInstance.getFieldValue('alert')` read during
+		// render — not a subscription. It only ever looks fresh because `setAlertDef`
+		// re-renders on every keystroke, so the realistic failure is the *first*
+		// character. One character, no second keystroke, no blur.
 		await v1NameInput(page).pressSequentially('a');
 		await expect(v1SaveButton(page)).toBeEnabled();
 		await expect(v1TestButton(page)).toBeEnabled();
@@ -160,16 +148,16 @@ test.describe('Alert create — v1 classic form', () => {
 		await v1NameInput(page).fill(`e2e-cv1-04-${Date.now()}`);
 		await v1ThresholdInput(page).fill('5');
 
-		// A new rule starts with the broadcast switch **off** and no preferred channels
-		// (`BasicInfo.tsx:66-73`), so `isChannelConfigurationValid` is false and there is
-		// no message anywhere — just a dead button. That silence is what this row pins.
+		// A new rule starts with the broadcast switch **off** and no preferred channels,
+		// so `isChannelConfigurationValid` is false and there is no message anywhere —
+		// just a dead button. That silence is what this row pins.
 		await expect(v1BroadcastSwitch(page)).toHaveAttribute(
 			'aria-checked',
 			'false',
 		);
 		await expect(v1SaveButton(page)).toBeDisabled();
 
-		await v1SelectOption(page, v1ChannelSelect(page), alertChannel.name);
+		await v1SelectChannel(page, alertChannel.name);
 		await expect(v1SaveButton(page)).toBeEnabled();
 	});
 
@@ -185,8 +173,8 @@ test.describe('Alert create — v1 classic form', () => {
 
 		await v1BroadcastSwitch(page).click();
 
-		// The select is unmounted, not disabled (`BasicInfo.tsx:210`), so "pick a channel"
-		// stops being possible rather than becoming optional.
+		// The select is unmounted, not disabled, so "pick a channel" stops being
+		// possible rather than becoming optional.
 		await expect(v1ChannelSelect(page)).toHaveCount(0);
 		await expect(v1SaveButton(page)).toBeEnabled();
 
@@ -199,16 +187,12 @@ test.describe('Alert create — v1 classic form', () => {
 
 		// 🐞 **"Alert all the configured channels" is broken end to end.**
 		//
-		// `preparePostData` blanks `preferredChannels` when `broadcastToAll` is set
-		// (`index.tsx:531`), but `toPostableRuleDTOFromAlertDef`
-		// (`types/api/alerts/convert.ts:97-116`) never copies `broadcastToAll` into the
-		// DTO — the key simply is not in the object it builds. The request therefore says
-		// "no channels, no broadcast", and the server refuses it with
-		// `400 at least one channel is required`.
-		//
-		// So this is not a silent-data-loss bug that shows up later: the switch makes the
-		// form **unsaveable**, with the failure surfacing as the generic error modal. The
-		// only working path in v1 is picking channels explicitly.
+		// `preparePostData` blanks `preferredChannels` when `broadcastToAll` is set, but
+		// `toPostableRuleDTOFromAlertDef` (`types/api/alerts/convert.ts`) never copies
+		// `broadcastToAll` into the DTO. The request therefore says "no channels, no
+		// broadcast", and the server refuses it with `400 at least one channel is
+		// required` — so the switch makes the form **unsaveable** rather than silently
+		// losing data later. The only working path in v1 is picking channels explicitly.
 		const body = response.request().postDataJSON();
 		expect(body.preferredChannels).toEqual([]);
 		expect(body.broadcastToAll).toBeUndefined();
@@ -227,28 +211,22 @@ test.describe('Alert create — v1 classic form', () => {
 	}) => {
 		await gotoCreateAlertV1(page, { alertType: SAVEABLE });
 		await v1NameInput(page).fill(`e2e-cv1-06-${Date.now()}`);
-		await v1SelectOption(page, v1ChannelSelect(page), alertChannel.name);
+		await v1SelectChannel(page, alertChannel.name);
 
-		// **Corrected from the coverage doc.** CV1-06 was specified as "clear the target,
-		// save, get *Please enter a threshold to proceed* from behind the dialog". That
-		// message cannot be reached from the UI at all:
+		// `Please enter a threshold to proceed` cannot be reached from the UI at all:
 		//
-		//   1. The field renders `0`, not empty — measured on metrics, logs and traces.
-		//   2. `RuleOptions`'s `onChange` writes `Number(value) || 0` (`RuleOptions.tsx:299`),
-		//      so clearing the input stores 0 rather than nothing.
-		//   3. `validateQBParams` guards `target !== 0 && !target` (`index.tsx:497-501`),
-		//      i.e. it *deliberately* treats 0 as a valid threshold.
+		//   1. The field renders `0`, not empty — on metrics, logs and traces alike.
+		//   2. `RuleOptions`'s `onChange` writes `Number(value) || 0`, so clearing the
+		//      input stores 0 rather than nothing.
+		//   3. `validateQBParams` guards `target !== 0 && !target`, i.e. it
+		//      *deliberately* treats 0 as a valid threshold.
 		//
-		// So the branch is dead code from the form's side, exactly like the two
-		// `pages/EditRules` error branches in §9.1. What follows asserts the reachable
-		// behaviour and pins each of the three links in that chain.
+		// What follows asserts the reachable behaviour and pins each link in that chain.
 		await expect(v1ThresholdInput(page)).toHaveValue('0');
 		await v1ThresholdInput(page).fill('');
 		await expect(v1SaveButton(page)).toBeEnabled();
 
 		await v1SaveButton(page).click();
-		// The dialog still gates the save — that half of the original row is real, and
-		// every v1 validation message that *can* fire sits behind it.
 		await expect(v1ConfirmDialog(page)).toBeVisible();
 
 		const [response] = await Promise.all([
@@ -281,8 +259,6 @@ test.describe('Alert create — v1 classic form', () => {
 		});
 
 		await v1SaveButton(page).click();
-		// The dialog names the query type it is about to save, which is the only place the
-		// form tells a user *what* is being persisted.
 		await expect(v1ConfirmDialog(page)).toContainText('Your alert built with');
 		await v1CancelSave(page);
 
@@ -309,8 +285,7 @@ test.describe('Alert create — v1 classic form', () => {
 		await ownedRules.register(response);
 
 		// The server's message is folded into the assertion: a v1 payload rejection is
-		// only diagnosable from its text, and a bare `expected 201, got 400` sends the
-		// next reader back to the network tab.
+		// only diagnosable from its text.
 		expect(response.status(), await response.text()).toBe(201);
 
 		// The endpoint is shared with v2 — there is no `/api/v1/rules` client in the
@@ -321,9 +296,7 @@ test.describe('Alert create — v1 classic form', () => {
 		// `4` is *in total*, not the `defaultMatchType` of `1` (*at least once*): the
 		// per-signal defaults disagree with the shared one. `logAlertDefaults`,
 		// `traceAlertDefaults` and `exceptionAlertDefaults` all hardcode `matchType: '4'`
-		// (`CreateAlertRule/defaults.ts:130,162,194`) while `alertDefaults` — metrics —
-		// uses `defaultMatchType`. Asserting the shared default here would only pass for
-		// a metrics rule, which this row cannot use.
+		// while `alertDefaults` — metrics — uses `defaultMatchType`.
 		expect(body.condition.matchType).toBe('4');
 		expect(body.evalWindow).toBe('5m0s');
 		expect(body.preferredChannels).toEqual([alertChannel.name]);
@@ -352,7 +325,7 @@ test.describe('Alert create — v1 classic form', () => {
 		await v1DescriptionInput(page).fill('raised by the e2e suite');
 
 		// The label editor is a two-phase input — key, ENTER, value, ENTER — sharing one
-		// field, and it writes the whole label map back, so `severity` has to survive it.
+		// field, and it writes the whole label map back.
 		const labels = page.getByTestId('alert-labels-input-v1');
 		await labels.fill('team');
 		await labels.press('Enter');
@@ -388,8 +361,8 @@ test.describe('Alert create — v1 classic form', () => {
 			channelName: alertChannel.name,
 		});
 
-		// `onTestRuleHandler` validates inline (`index.tsx:657-660`) — the confirm dialog
-		// is the *save* path only, so a spec that waits for it here hangs.
+		// `onTestRuleHandler` validates inline — the confirm dialog is the *save* path
+		// only, so a spec that waits for it here hangs.
 		const [response] = await Promise.all([
 			page.waitForResponse(
 				(r) =>
@@ -411,15 +384,14 @@ test.describe('Alert create — v1 classic form', () => {
 	test('CV1-12 with no channels the form is a dead end', async ({
 		authedPage: page,
 	}) => {
-		// SEED-CH1 again, on the form where the consequence is worst: v2 at least offers
-		// routing policies, v1 has no equivalent escape.
+		// v2 at least offers routing policies; v1 has no equivalent escape.
 		await stubNoChannels(page);
 		await gotoCreateAlertV1(page, { alertType: AlertType.METRICS });
 		await v1NameInput(page).fill(`e2e-cv1-12-${Date.now()}`);
 		await v1ThresholdInput(page).fill('5');
 
-		// `noChannels` disables the switch (`BasicInfo.tsx:204`), so the one control that
-		// could satisfy `isChannelConfigurationValid` without picking a channel is gone.
+		// `noChannels` disables the switch, so the one control that could satisfy
+		// `isChannelConfigurationValid` without picking a channel is gone.
 		await expect(v1BroadcastSwitch(page)).toBeDisabled();
 
 		// And the select that is still on screen offers nothing but a way out of the page.
@@ -453,8 +425,8 @@ test.describe('Alert create — v1 classic form', () => {
 			}
 		});
 
-		// v1's Cancel is a plain click — unlike v2's Discard, it is not covered by the
-		// side navigation (§9.7 is about the fixed footer, which v1 does not have).
+		// A plain click, unlike v2's Discard: v1 has no fixed footer for the side
+		// navigation to cover (CE-09).
 		await v1CancelButton(page).click();
 		await page.waitForURL(/\/alerts(\?|$)/);
 		expect(sawPost).toBe(false);
@@ -470,8 +442,8 @@ test.describe('Alert create — v1 classic form', () => {
 			channelName: alertChannel.name,
 		});
 
-		// PromQL is offered for metrics-based alerts only (`QuerySection.tsx`'s `items`
-		// array); the logs/traces/exceptions tab set has ClickHouse but no PromQL.
+		// PromQL is offered for metrics-based alerts only; the logs/traces/exceptions
+		// tab set has ClickHouse but no PromQL.
 		await v1SelectQueryMode(page, 'promql');
 
 		let sawPost = false;
@@ -493,10 +465,9 @@ test.describe('Alert create — v1 classic form', () => {
 		alertChannel,
 	}) => {
 		// Metrics-based, and not interchangeable with the logs form: `logAlertDefaults`
-		// ships a **prefilled** ClickHouse query — a whole `distributed_logs_v2` SELECT
-		// with a docs comment (`CreateAlertRule/defaults.ts:119`) — so on a logs alert the
-		// expression is never empty and `chquery_required` cannot fire. Only
-		// `alertDefaults` (metrics) starts with `query: ''`.
+		// ships a **prefilled** ClickHouse query, so on a logs alert the expression is
+		// never empty and `chquery_required` cannot fire. Only `alertDefaults` (metrics)
+		// starts with `query: ''`.
 		await gotoCreateAlertV1(page, { alertType: AlertType.METRICS });
 		await fillMinimalV1Rule(page, {
 			name: `e2e-ce06-${Date.now()}`,
@@ -524,9 +495,8 @@ test.describe('Alert create — v1 classic form', () => {
 		alertChannel,
 		ownedRules,
 	}) => {
-		// Not in the coverage doc's matrix: it is the write side of `EV1-02`'s prefill
-		// assertions, and without it a broken `RuleOptions` select would only be caught on
-		// the *edit* path.
+		// The write side of EV1-02's prefill assertions — without it a broken
+		// `RuleOptions` select would only be caught on the *edit* path.
 		await gotoCreateAlertV1(page, { alertType: SAVEABLE });
 		await fillMinimalV1Rule(page, {
 			name: `e2e-cv1-14-${Date.now()}`,

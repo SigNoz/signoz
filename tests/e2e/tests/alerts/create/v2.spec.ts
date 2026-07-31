@@ -26,12 +26,9 @@ import {
 // CV2-* — the v2 create builder.
 //
 // Every scenario uses a **logs**-based alert unless it says otherwise: its default
-// query is valid with no seeded metrics. Two rows are explicitly about what that
-// choice costs — CV2-12 (unit select) and CV2-16 (group-by select) are both gated
-// on query state a default logs query does not provide, and both assert the gate
-// rather than pretending it isn't there.
-//
-// See `specs/alerts/alerts-create-edit-coverage.md` §5.2.
+// query is valid with no seeded metrics. CV2-12 (unit select) and CV2-16 (group-by
+// select) are about what that choice costs — both are gated on query state a
+// default logs query does not provide, and both assert the gate.
 
 const VALIDATION = {
 	name: 'Please enter an alert name',
@@ -89,8 +86,7 @@ test.describe('Alert create — v2 builder', () => {
 		await page.getByTestId('alert-name-input').fill(`e2e-cv2-03-${Date.now()}`);
 		await selectThresholdChannel(page, 0, alertChannel.name);
 
-		// With a name and a channel the only remaining gate is the label, which is what
-		// makes this row a clean isolation of that branch.
+		// With a name and a channel the only remaining gate is the label.
 		await expect(v2SaveButton(page)).toBeEnabled();
 
 		await page.getByTestId('threshold-name-input').fill('');
@@ -130,12 +126,10 @@ test.describe('Alert create — v2 builder', () => {
 	}) => {
 		await gotoCreateAlertV2(page, { alertType: AlertType.LOGS });
 
-		// The group-by half of this scenario needs a query that already groups by
-		// something, which the default logs query does not — see the coverage doc's
-		// note. What *is* covered here is the mechanism, which pass 0 got wrong: both
-		// rejection branches in `LabelsInput` (duplicate key at :36-41, group-by key at
-		// :42-48) raise an antd **notification**, not an inline form error. Whichever
-		// branch fires, a spec looking for inline text fails.
+		// Both rejection branches in `LabelsInput` — duplicate key and group-by key —
+		// raise an antd **notification**, so a spec looking for inline text fails. Only
+		// the duplicate branch is reachable here: the group-by branch needs a query that
+		// already groups by something, which the default logs query does not.
 		await addAlertLabel(page, 'team', 'payments');
 		await expect(labelPill(page, 'team', 'payments')).toBeVisible();
 
@@ -203,8 +197,7 @@ test.describe('Alert create — v2 builder', () => {
 		await ownedRules.register(response);
 
 		// The UI models one operator per rule while the schema stores one per
-		// threshold, so a single change is fanned out across `spec[]`. Locking in the
-		// current design, not endorsing it — see coverage doc §9.4.
+		// threshold, so a single change is fanned out across `spec[]`.
 		const spec = response.request().postDataJSON().condition.thresholds.spec;
 		expect(spec).toHaveLength(2);
 		expect(spec.map((entry: { op: string }) => entry.op)).toEqual([
@@ -272,10 +265,8 @@ test.describe('Alert create — v2 builder', () => {
 		await gotoCreateAlertV2(page, { alertType: AlertType.LOGS });
 
 		// `disabled={units.length === 0}`, and `units` is derived from
-		// `alertState.yAxisUnit` via getCategoryByOptionId → getCategorySelectOptionByName.
-		// A logs alert carries no unit, so the control is dead on this path — which is
-		// why the coverage doc reassigns the "unit reaches targetUnit" half of this row
-		// to a metrics-based alert.
+		// `alertState.yAxisUnit`. A logs alert carries no unit, so the control is dead on
+		// this path — CD-04 covers a URL that does supply one.
 		const unitSelect = page.getByTestId('threshold-unit-select').first();
 		await expect(unitSelect).toHaveClass(/ant-select-disabled/);
 	});
@@ -285,8 +276,8 @@ test.describe('Alert create — v2 builder', () => {
 	}) => {
 		await gotoCreateAlertV2(page, { alertType: AlertType.LOGS });
 
-		// Coverage doc §9.2 — `showRecoveryThreshold` starts false and the only setter
-		// is commented out, so neither the input nor its remove button can appear.
+		// `showRecoveryThreshold` starts false and the only setter is commented out, so
+		// neither the input nor its remove button can appear.
 		await expect(page.getByTestId('recovery-threshold-value-input')).toHaveCount(
 			0,
 		);
@@ -331,9 +322,9 @@ test.describe('Alert create — v2 builder', () => {
 	test('CV2-18 with no channels the dropdown offers only a way to create one', async ({
 		authedPage: page,
 	}) => {
-		// SEED-CH1. The single deliberate network stub in the alerts suite — the
-		// justification is in `stubNoChannels`, and the state it produces is the one
-		// every fresh install starts in.
+		// The single deliberate network stub in the alerts suite — its justification is
+		// in `stubNoChannels`, and the state it produces is the one every fresh install
+		// starts in.
 		await stubNoChannels(page);
 		await gotoCreateAlertV2(page, { alertType: AlertType.LOGS });
 		await page.getByTestId('alert-name-input').fill(`e2e-cv2-18-${Date.now()}`);
@@ -373,9 +364,8 @@ test.describe('Alert create — v2 builder', () => {
 		await page.getByTestId('routing-policies-switch').click();
 
 		// The validator skips the channel check when `routingPolicies` is on, and the
-		// threshold row *removes* its channel select rather than disabling it
-		// (`ThresholdItem.tsx:118`) — so this is the one route to a saveable rule on a
-		// stack with no channels at all.
+		// threshold row *removes* its channel select rather than disabling it — so this
+		// is the one route to a saveable rule on a stack with no channels at all.
 		await expect(
 			page.getByTestId('threshold-notification-channel-select'),
 		).toHaveCount(0);
@@ -467,7 +457,7 @@ test.describe('Alert create — v2 builder', () => {
 			channels: [alertChannel.name],
 			targetUnit: '',
 		});
-		// The payload carries no recovery field at all — coverage doc §9.2, layer 2.
+		// The payload carries no recovery field at all — see CV2-13.
 		expect(body.condition.thresholds.spec[0]).not.toHaveProperty(
 			'recoveryTarget',
 		);
@@ -497,8 +487,8 @@ test.describe('Alert create — v2 builder', () => {
 		expect(response.ok()).toBe(true);
 
 		// `alertCount === 0` is an *error* toast, not a success one — the rule evaluated
-		// fine, it just did not fire. Asserting the success string here would pass for
-		// the wrong reason on a stack that happens to have matching data.
+		// fine, it just did not fire. Asserted permissively so a stack that happens to
+		// have matching data does not flip it.
 		await expect(
 			page.getByText(/No alerts found during the evaluation|sent successfully/),
 		).toBeVisible();
@@ -519,7 +509,7 @@ test.describe('Alert create — v2 builder', () => {
 			}
 		});
 
-		// dispatchEvent, not click — the nav covers the button. Coverage doc §9.7.
+		// dispatchEvent, not click — the side navigation covers the button (CE-09).
 		await v2ClickDiscard(page);
 		await page.waitForURL(/\/alerts(\?|$)/);
 		expect(sawPost).toBe(false);
@@ -541,7 +531,7 @@ test.describe('Alert create — v2 builder', () => {
 		// The in-flight window is a few milliseconds against a local stack, so it is
 		// widened by *delaying* the request — `route.continue()` still sends it to the
 		// real backend and the real 201 comes back, so nothing about the response is
-		// faked. This is timing, not the network stubbing §3.3 rules out.
+		// faked.
 		await page.route('**/api/v2/rules', async (route) => {
 			if (route.request().method() !== 'POST') {
 				await route.fallback();
