@@ -25,7 +25,7 @@ import ReadOnlyJsonViewer from './ReadOnlyJsonViewer';
 import { useViewRolePageActions } from './useViewRolePageActions';
 
 import styles from './ViewRolePage.module.scss';
-import { ViewRolePageHeader } from 'container/RolesSettings/ViewRolePage/ViewRolePageHeader';
+import { ViewRolePageHeaderActions } from 'container/RolesSettings/ViewRolePage/ViewRolePageHeaderActions';
 
 interface ViewRoleContentProps {
 	roleId: string;
@@ -289,7 +289,7 @@ function ViewRolePage(): JSX.Element {
 					</Typography.Title>
 				</div>
 
-				<ViewRolePageHeader
+				<ViewRolePageHeaderActions
 					isRoleLoading={isRoleLoading}
 					isManaged={isManaged}
 					roleName={roleName}

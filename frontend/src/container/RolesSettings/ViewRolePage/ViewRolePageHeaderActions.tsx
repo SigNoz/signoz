@@ -9,7 +9,7 @@ import {
 } from 'lib/authz/hooks/useAuthZ/permissions/role.permissions';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 
-export function ViewRolePageHeader({
+export function ViewRolePageHeaderActions({
 	isRoleLoading,
 	isManaged,
 	roleName,
