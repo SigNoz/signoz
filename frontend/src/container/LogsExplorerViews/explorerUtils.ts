@@ -13,8 +13,7 @@ import {
 import { Filter } from 'types/api/v5/queryRange';
 import { LogsAggregatorOperator } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
-
-export const DEFAULT_LIST_ORDER_BY = 'timestamp:desc';
+import { DEFAULT_LIST_ORDER_BY } from 'utils/explorerUtils';
 
 export const getListQuery = (
 	stagedQuery: Query | null,
@@ -24,18 +23,6 @@ export const getListQuery = (
 	}
 
 	return stagedQuery.builder.queryData[0] ?? null;
-};
-
-// Deep links carry the list order inside the compositeQuery param, so the list
-// view is seeded from it instead of always opening newest-first.
-export const getListOrderBy = (query: Query | null): string => {
-	const [orderBy] = query?.builder?.queryData?.[0]?.orderBy ?? [];
-
-	if (!orderBy?.columnName || !orderBy?.order) {
-		return DEFAULT_LIST_ORDER_BY;
-	}
-
-	return `${orderBy.columnName}:${orderBy.order.toLowerCase()}`;
 };
 
 export const getFrequencyChartData = (

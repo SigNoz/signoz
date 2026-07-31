@@ -34,7 +34,6 @@ import LogsExplorerTable from 'container/LogsExplorerTable';
 import {
 	getExportQueryData,
 	getFrequencyChartData,
-	getListOrderBy,
 	getListQuery,
 	getQueryByPanelType,
 } from 'container/LogsExplorerViews/explorerUtils';
@@ -60,6 +59,7 @@ import { QueryDataV3 } from 'types/api/widgets/getQuery';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 } from 'uuid';
+import { getListOrderBy } from 'utils/explorerUtils';
 
 import LogsActionsContainer from './LogsActionsContainer';
 

@@ -1,7 +1,7 @@
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { OrderByPayload, Query } from 'types/api/queryBuilder/queryBuilderData';
 
-import { DEFAULT_LIST_ORDER_BY, getListOrderBy } from '../explorerUtils';
+import { DEFAULT_LIST_ORDER_BY, getListOrderBy } from 'utils/explorerUtils';
 
 const buildQuery = (orderBy: OrderByPayload[]): Query => {
 	const baseQuery = initialQueriesMap.logs;
