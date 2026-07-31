@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { useQuery } from 'react-query';
+import { useCopyToClipboard } from 'react-use';
 import { Copy, X } from '@signozhq/icons';
 import { Divider } from '@signozhq/ui/divider';
 import { Button } from '@signozhq/ui/button';
@@ -7,7 +8,6 @@ import { DrawerWrapper, DrawerWrapperProps } from '@signozhq/ui/drawer';
 import { toast } from '@signozhq/ui/sonner';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
-import { useCopyToClipboard } from 'hooks/useCopyToClipboard';
 import logEvent from 'api/common/logEvent';
 import ErrorContent from 'components/ErrorModal/components/ErrorContent';
 import APIError from 'types/api/error';
@@ -166,7 +166,7 @@ export default function K8sBaseDetails<T>({
 		[handleClose],
 	);
 
-	const { copyToClipboard } = useCopyToClipboard();
+	const [, copyToClipboard] = useCopyToClipboard();
 
 	const handleCopyId = useCallback((): void => {
 		if (selectedItem) {
