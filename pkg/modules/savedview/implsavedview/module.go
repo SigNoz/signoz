@@ -87,14 +87,23 @@ func (module *module) UpdateView(ctx context.Context, orgID string, uuid valuer.
 }
 
 func (module *module) DeleteView(ctx context.Context, orgID string, uuid valuer.UUID) error {
-	_, err := module.sqlstore.BunDB().NewDelete().
+	res, err := module.sqlstore.BunDB().NewDelete().
 		Model(&savedviewtypes.StorableSavedView{}).
 		Where("id = ?", uuid.StringValue()).
 		Where("org_id = ?", orgID).
 		Exec(ctx)
 	if err != nil {
-		return errors.WrapInternalf(err, errors.CodeInternal, "error in deleting explorer query")
+		return errors.WrapInternalf(err, errors.CodeInternal, "error in deleting saved view")
 	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return errors.WrapInternalf(err, errors.CodeInternal, "error in verifying the deleted saved view")
+	}
+	if rowsAffected == 0 {
+		return errors.NewNotFoundf(savedviewtypes.ErrCodeSavedViewNotFound, "saved view %s not found", uuid.StringValue())
+	}
+
 	return nil
 }
 

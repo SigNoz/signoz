@@ -178,6 +178,33 @@ func TestModule_DeleteView(t *testing.T) {
 	require.Error(t, err, "deleted view should no longer be gettable")
 }
 
+func TestModule_DeleteView_NotFound(t *testing.T) {
+	store := newTestStore(t)
+	m := NewModule(store)
+
+	orgID := valuer.GenerateUUID().StringValue()
+	ctx := contextWithClaims(orgID, "someone@signoz.io")
+
+	err := m.DeleteView(ctx, orgID, valuer.GenerateUUID())
+	require.Error(t, err)
+	assert.True(t, errors.Ast(err, errors.TypeNotFound), "expected a not-found error, got %v", err)
+}
+
+func TestModule_DeleteView_ScopedToOrg(t *testing.T) {
+	store := newTestStore(t)
+	m := NewModule(store)
+
+	orgA := valuer.GenerateUUID().StringValue()
+	orgB := valuer.GenerateUUID().StringValue()
+
+	id, err := m.CreateView(contextWithClaims(orgA, "a@signoz.io"), orgA, testPostableSavedView("org a's view", savedviewtypes.SourcePageLogs))
+	require.NoError(t, err)
+
+	err = m.DeleteView(contextWithClaims(orgB, "b@signoz.io"), orgB, id)
+	require.Error(t, err, "org B must not be able to delete org A's view")
+	assert.True(t, errors.Ast(err, errors.TypeNotFound))
+}
+
 func TestModule_GetViewsForFilters(t *testing.T) {
 	store := newTestStore(t)
 	m := NewModule(store)
