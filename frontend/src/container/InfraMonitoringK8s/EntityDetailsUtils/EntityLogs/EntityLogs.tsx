@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useMemo, useRef } from 'react';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { Card } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -21,6 +21,9 @@ import {
 	getUserExpressionFromCombined,
 } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
 import { InfraMonitoringEvents } from 'constants/events';
+import { QueryParams } from 'constants/query';
+import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import ROUTES from 'constants/routes';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8s/constants';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { FontSize } from 'container/OptionsMenu/types';
@@ -33,9 +36,14 @@ import {
 import { getOldLogsOperatorFromNew } from 'hooks/logs/useActiveLog';
 import useLogDetailHandlers from 'hooks/logs/useLogDetailHandlers';
 import useScrollToLog from 'hooks/logs/useScrollToLog';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import createQueryParams from 'lib/createQueryParams';
 import { generateFilterQuery } from 'lib/logs/generateFilterQuery';
 import { ILog } from 'types/api/logs/log';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
+import { isModifierKeyPressed } from 'utils/app';
 import { validateQuery } from 'utils/queryValidationUtils';
 
 import EntityEmptyState from '../EntityEmptyState/EntityEmptyState';
@@ -134,7 +142,7 @@ function EntityLogsContent({
 			if (validation.isValid) {
 				querySearchOnRun(newUserExpression);
 
-				logEvent(InfraMonitoringEvents.FilterApplied, {
+				void logEvent(InfraMonitoringEvents.FilterApplied, {
 					entity: InfraMonitoringEvents.K8sEntity,
 					page: InfraMonitoringEvents.DetailedPage,
 					category,
@@ -161,6 +169,45 @@ function EntityLogsContent({
 		logs,
 		virtuosoRef,
 	});
+
+	const { updateAllQueriesOperators } = useQueryBuilder();
+	const { safeNavigate } = useSafeNavigate();
+
+	const handleOpenInExplorer = useCallback(
+		(e: React.MouseEvent<Element, MouseEvent>, log: ILog) => {
+			const baseQuery = updateAllQueriesOperators(
+				initialQueriesMap[DataSource.LOGS],
+				PANEL_TYPES.LIST,
+				DataSource.LOGS,
+			);
+
+			const queryParams = {
+				[QueryParams.activeLogId]: `"${log?.id}"`,
+				[QueryParams.startTime]: timeRange.startTime.toString(),
+				[QueryParams.endTime]: timeRange.endTime.toString(),
+				[QueryParams.compositeQuery]: JSON.stringify({
+					...baseQuery,
+					builder: {
+						...baseQuery.builder,
+						queryData: baseQuery.builder.queryData.map((item) => ({
+							...item,
+							filter: { expression },
+						})),
+					},
+				} satisfies Query),
+			};
+			safeNavigate(`${ROUTES.LOGS_EXPLORER}?${createQueryParams(queryParams)}`, {
+				newTab: !!e && isModifierKeyPressed(e),
+			});
+		},
+		[
+			timeRange.startTime,
+			timeRange.endTime,
+			expression,
+			safeNavigate,
+			updateAllQueriesOperators,
+		],
+	);
 
 	const getItemContent = useCallback(
 		(_: number, logToRender: ILog): JSX.Element => {
@@ -287,6 +334,7 @@ function EntityLogsContent({
 						onAddToQuery={onAddToQuery}
 						onClickActionItem={onAddToQuery}
 						onScrollToLog={handleScrollToLog}
+						handleOpenInExplorer={(e): void => handleOpenInExplorer(e, activeLog)}
 					/>
 				)}
 			</div>

@@ -49,6 +49,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		handleFilterVisibilityChange,
 		source,
 		onFilterChange,
+		onQuickFilterChange,
 		signal,
 		showFilterCollapse = true,
 		showQueryName = true,
@@ -305,6 +306,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 									source={source}
 									filter={filter}
 									onFilterChange={onFilterChange}
+									onQuickFilterChange={onQuickFilterChange}
 									useFieldApis={useFieldApis}
 								/>
 							) : (
@@ -313,6 +315,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 									source={source}
 									filter={filter}
 									onFilterChange={onFilterChange}
+									onQuickFilterChange={onQuickFilterChange}
 								/>
 							);
 						case FiltersType.DURATION:
@@ -333,6 +336,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 									source={source}
 									filter={filter}
 									onFilterChange={onFilterChange}
+									onQuickFilterChange={onQuickFilterChange}
 									useFieldApis={useFieldApis}
 								/>
 							) : (
@@ -341,6 +345,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 									source={source}
 									filter={filter}
 									onFilterChange={onFilterChange}
+									onQuickFilterChange={onQuickFilterChange}
 								/>
 							);
 					}

@@ -1,0 +1,65 @@
+.toolbar {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-3);
+	padding: 0px var(--spacing-4) var(--spacing-4) var(--spacing-4);
+	background: var(--l1-background);
+	border-bottom: 1px solid var(--l1-border);
+}
+
+.groupByContainer {
+	display: flex;
+	align-items: center;
+	min-width: 300px;
+	max-width: 400px;
+
+	:global(.ant-select-selector) {
+		border-radius: 2px;
+		border: 1px solid var(--l2-border) !important;
+		background-color: var(--l2-background) !important;
+
+		input {
+			font-size: 12px;
+		}
+
+		:global([data-slot='badge'] .ant-typography) {
+			font-size: 12px;
+		}
+	}
+}
+
+.groupByLabel {
+	min-width: max-content;
+
+	border-top-left-radius: 2px;
+	border-bottom-left-radius: 2px;
+
+	border: 1px solid var(--l2-border);
+	border-right: none;
+
+	display: flex;
+	height: 32px;
+	padding: var(--spacing-3) var(--spacing-3) var(--spacing-3) var(--spacing-4);
+	justify-content: center;
+	align-items: center;
+	gap: var(--spacing-2);
+}
+
+.groupBySelect {
+	width: 100%;
+
+	:global(.ant-select-selector) {
+		border-left: none;
+		border-top-left-radius: 0px !important;
+		border-bottom-left-radius: 0px !important;
+	}
+}
+
+.spacer {
+	flex: 1;
+}
+
+.toolbarButton {
+	flex-shrink: 0;
+	--button-padding: 0px;
+}

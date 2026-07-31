@@ -2,7 +2,6 @@ import React from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Badge } from '@signozhq/ui/badge';
 import { Progress } from '@signozhq/ui/progress';
-import { Typography } from '@signozhq/ui/typography';
 import {
 	InframonitoringtypesHostRecordDTO,
 	InframonitoringtypesHostStatusDTO,
@@ -10,6 +9,7 @@ import {
 import { K8sDetailsMetadataConfig } from 'container/InfraMonitoringK8sV2/Base/K8sBaseDetails';
 import { INFRA_MONITORING_ATTR_KEYS } from 'container/InfraMonitoringK8sV2/constants';
 import { formatValueForExpression } from 'components/QueryBuilderV2/utils';
+import { TextNoData } from 'container/InfraMonitoringK8sV2/components';
 import { SelectedItemParams } from 'container/InfraMonitoringK8sV2/hooks';
 import {
 	getHostQueryPayload,
@@ -70,7 +70,7 @@ export const hostDetailsMetadataConfig: HostDetailMetadataConfigType[] = [
 					{value}
 				</Badge>
 			) : (
-				<Typography.Text>-</Typography.Text>
+				<TextNoData type="typography" />
 			),
 	},
 	{
