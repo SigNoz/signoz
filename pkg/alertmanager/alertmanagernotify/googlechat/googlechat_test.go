@@ -17,6 +17,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/prometheus/alertmanager/config"
@@ -86,9 +87,9 @@ func TestGoogleChatSend(t *testing.T) {
 	retry, err := n.Notify(newTestContext(), newTestAlerts("TestAlert")...)
 
 	require.NoError(t, err)
-	require.False(t, retry)
-	require.Contains(t, got.Text, "FIRING")
-	require.Contains(t, got.Text, "TestAlert")
+	assert.False(t, retry)
+	assert.Contains(t, got.Text, "FIRING")
+	assert.Contains(t, got.Text, "TestAlert")
 }
 
 func TestGoogleChatTitleAndBody(t *testing.T) {
@@ -100,11 +101,12 @@ func TestGoogleChatTitleAndBody(t *testing.T) {
 	retry, err := n.Notify(newTestContext(), newTestAlerts("TestAlert")...)
 
 	require.NoError(t, err)
-	require.False(t, retry)
+	assert.False(t, retry)
 	// Title is the plain summary + card header; body lives in a card widget.
-	require.Equal(t, "TITLE", got.Text)
-	require.Equal(t, "TITLE", got.CardsV2[0].Card.Header.Title)
-	require.Contains(t, cardBody(t, got), "BODY")
+	assert.Equal(t, "TITLE", got.Text)
+	require.NotEmpty(t, got.CardsV2)
+	assert.Equal(t, "TITLE", got.CardsV2[0].Card.Header.Title)
+	assert.Contains(t, cardBody(t, got), "BODY")
 }
 
 // cardBody concatenates the text of all textParagraph widgets in the message.
@@ -153,7 +155,7 @@ func TestGoogleChatNilHTTPConfig(t *testing.T) {
 		WebhookURL: secretURLFromString(t, "https://chat.googleapis.com/v1/spaces/test/messages"),
 	}, tmpl, slog.New(slog.DiscardHandler), newTestTemplater(tmpl))
 	require.Error(t, err)
-	require.Nil(t, n)
+	assert.Nil(t, n)
 }
 
 func TestGoogleChatRetryCodes(t *testing.T) {
@@ -177,7 +179,7 @@ func TestGoogleChatRetryCodes(t *testing.T) {
 	for _, c := range cases {
 		t.Run(http.StatusText(c.code), func(t *testing.T) {
 			actual, _ := n.retrier.Check(c.code, nil)
-			require.Equal(t, c.retry, actual, "retry mismatch on status %d", c.code)
+			assert.Equal(t, c.retry, actual, "retry mismatch on status %d", c.code)
 		})
 	}
 }
@@ -214,9 +216,9 @@ func TestTruncateToByteLimit(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			got := truncateToByteLimit(c.in, c.max)
-			require.LessOrEqual(t, len(got), c.wantLen)
+			assert.LessOrEqual(t, len(got), c.wantLen)
 			if c.wantHas != "" {
-				require.Contains(t, got, c.wantHas)
+				assert.Contains(t, got, c.wantHas)
 			}
 		})
 	}
@@ -238,9 +240,9 @@ func TestGoogleChatMessageSizeLimit(t *testing.T) {
 	retry, err := n.Notify(newTestContext(), newTestAlerts("Big")...)
 
 	require.NoError(t, err)
-	require.False(t, retry)
-	require.True(t, valid, "posted body must be valid JSON")
-	require.LessOrEqual(t, bodyLen, maxMessageBytes, "posted body must be within the size limit")
+	assert.False(t, retry)
+	assert.True(t, valid, "posted body must be valid JSON")
+	assert.LessOrEqual(t, bodyLen, maxMessageBytes, "posted body must be within the size limit")
 }
 
 func TestGoogleChatThreading(t *testing.T) {
@@ -263,13 +265,13 @@ func TestGoogleChatThreading(t *testing.T) {
 			_, err := n.Notify(ctx, newTestAlerts("X")...)
 			require.NoError(t, err)
 
-			require.Equal(t, "REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD", query.Get("messageReplyOption"))
+			assert.Equal(t, "REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD", query.Get("messageReplyOption"))
 			threadKey := query.Get("threadKey")
-			require.Equal(t, notify.Key(c.groupKey).Hash(), threadKey, "threadKey must be the group key hash")
+			assert.Equal(t, notify.Key(c.groupKey).Hash(), threadKey, "threadKey must be the group key hash")
 			seen[c.name] = threadKey
 		})
 	}
-	require.NotEqual(t, seen["rule a"], seen["rule b"], "distinct group keys must yield distinct threadKeys")
+	assert.NotEqual(t, seen["rule a"], seen["rule b"], "distinct group keys must yield distinct threadKeys")
 }
 
 func TestGoogleChatCustomTemplateMarkdown(t *testing.T) {
@@ -293,8 +295,8 @@ func TestGoogleChatCustomTemplateMarkdown(t *testing.T) {
 
 	// Custom body is standard markdown → converted to card HTML.
 	body := cardBody(t, got)
-	require.Contains(t, body, "<strong>bold</strong>", "** should convert to HTML bold")
-	require.Contains(t, body, `<a href="https://x">link</a>`, "[t](u) should convert to an HTML link")
+	assert.Contains(t, body, "<strong>bold</strong>", "** should convert to HTML bold")
+	assert.Contains(t, body, `<a href="https://x">link</a>`, "[t](u) should convert to an HTML link")
 }
 
 func TestGoogleChatSerializedSizeUnderLimit(t *testing.T) {
@@ -316,8 +318,8 @@ func TestGoogleChatSerializedSizeUnderLimit(t *testing.T) {
 	_, err := n.Notify(newTestContext(), newTestAlerts("Dense")...)
 
 	require.NoError(t, err)
-	require.True(t, valid, "posted body must be valid JSON")
-	require.LessOrEqual(t, bodyLen, maxMessageBytes, "serialized body must be within the limit")
+	assert.True(t, valid, "posted body must be valid JSON")
+	assert.LessOrEqual(t, bodyLen, maxMessageBytes, "serialized body must be within the limit")
 }
 
 func TestGoogleChatEmptyText(t *testing.T) {
@@ -329,7 +331,7 @@ func TestGoogleChatEmptyText(t *testing.T) {
 	retry, err := n.Notify(newTestContext(), newTestAlerts("X")...)
 
 	require.Error(t, err)
-	require.False(t, retry)
+	assert.False(t, retry)
 }
 
 func TestGoogleChatLinkButtons(t *testing.T) {
@@ -380,9 +382,9 @@ func TestGoogleChatLinkButtons(t *testing.T) {
 			require.NoError(t, err)
 
 			buttons := cardButtons(t, got)
-			require.Len(t, buttons, len(c.wantButtons))
+			assert.Len(t, buttons, len(c.wantButtons))
 			for _, b := range buttons {
-				require.Equal(t, c.wantButtons[b.Text], b.OnClick.OpenLink.URL, "button %q", b.Text)
+				assert.Equal(t, c.wantButtons[b.Text], b.OnClick.OpenLink.URL, "button %q", b.Text)
 			}
 		})
 	}
@@ -409,8 +411,8 @@ func TestGoogleChatFooterButtonSurvivesEmptyBody(t *testing.T) {
 
 	buttons := cardButtons(t, got)
 	require.Len(t, buttons, 1)
-	require.Equal(t, "Open in SigNoz", buttons[0].Text)
-	require.Equal(t, "https://signoz.example/alerts/1", buttons[0].OnClick.OpenLink.URL)
+	assert.Equal(t, "Open in SigNoz", buttons[0].Text)
+	assert.Equal(t, "https://signoz.example/alerts/1", buttons[0].OnClick.OpenLink.URL)
 }
 
 func TestGoogleChatMultiAlertSections(t *testing.T) {
@@ -444,7 +446,7 @@ func TestGoogleChatMultiAlertSections(t *testing.T) {
 	require.NoError(t, err)
 
 	// banner + one section per alert + shared SigNoz footer.
-	require.Equal(t, 4, cardSectionCount(t, got))
+	assert.Equal(t, 4, cardSectionCount(t, got))
 
 	sigNoz := 0
 	logsURLs := map[string]bool{}
@@ -456,9 +458,9 @@ func TestGoogleChatMultiAlertSections(t *testing.T) {
 			logsURLs[b.OnClick.OpenLink.URL] = true
 		}
 	}
-	require.Equal(t, 1, sigNoz, "SigNoz button must appear once (shared, per-rule)")
-	require.True(t, logsURLs["https://signoz.example/logs?pod=pod-1"], "pod-1's logs button")
-	require.True(t, logsURLs["https://signoz.example/logs?pod=pod-2"], "pod-2's logs button")
+	assert.Equal(t, 1, sigNoz, "SigNoz button must appear once (shared, per-rule)")
+	assert.True(t, logsURLs["https://signoz.example/logs?pod=pod-1"], "pod-1's logs button")
+	assert.True(t, logsURLs["https://signoz.example/logs?pod=pod-2"], "pod-2's logs button")
 }
 
 func TestGoogleChatDefaultBodyGrouped(t *testing.T) {
@@ -488,11 +490,11 @@ func TestGoogleChatDefaultBodyGrouped(t *testing.T) {
 	require.NoError(t, err)
 
 	// banner + one combined alert section + shared SigNoz footer = 3 sections.
-	require.Equal(t, 3, cardSectionCount(t, got))
+	assert.Equal(t, 3, cardSectionCount(t, got))
 
 	body := cardBody(t, got)
-	require.Contains(t, body, "pod-1")
-	require.Contains(t, body, "pod-2", "default template combines all alerts into one section")
+	assert.Contains(t, body, "pod-1")
+	assert.Contains(t, body, "pod-2", "default template combines all alerts into one section")
 
 	logs := 0
 	for _, b := range cardButtons(t, got) {
@@ -500,7 +502,7 @@ func TestGoogleChatDefaultBodyGrouped(t *testing.T) {
 			logs++
 		}
 	}
-	require.Equal(t, 1, logs, "default path surfaces only the first alert's related buttons")
+	assert.Equal(t, 1, logs, "default path surfaces only the first alert's related buttons")
 }
 
 func TestGoogleChatSectionCap(t *testing.T) {
@@ -527,10 +529,10 @@ func TestGoogleChatSectionCap(t *testing.T) {
 	require.NoError(t, err)
 
 	// banner + 30 alert sections + "+N more" note + shared SigNoz footer.
-	require.Equal(t, 1+maxAlertSections+1+1, cardSectionCount(t, got))
+	assert.Equal(t, 1+maxAlertSections+1+1, cardSectionCount(t, got))
 
 	body := cardBody(t, got)
-	require.Contains(t, body, "5 more alerts", "overflow note must state the dropped count")
+	assert.Contains(t, body, "5 more alerts", "overflow note must state the dropped count")
 
 	// The SigNoz footer must survive after the note (last section).
 	sigNoz := 0
@@ -539,7 +541,7 @@ func TestGoogleChatSectionCap(t *testing.T) {
 			sigNoz++
 		}
 	}
-	require.Equal(t, 1, sigNoz, "SigNoz footer must be present despite the cap")
+	assert.Equal(t, 1, sigNoz, "SigNoz footer must be present despite the cap")
 }
 
 func TestGoogleChatStatusLine(t *testing.T) {
@@ -570,7 +572,7 @@ func TestGoogleChatStatusLine(t *testing.T) {
 			_, err := n.Notify(newTestContext(), alerts...)
 			require.NoError(t, err)
 
-			require.Contains(t, cardBody(t, got), c.want)
+			assert.Contains(t, cardBody(t, got), c.want)
 		})
 	}
 }
