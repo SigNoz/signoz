@@ -7,7 +7,7 @@ import { useInfraMonitoringTablePreferencesStore } from '../useInfraMonitoringTa
 import { useLogEventForColumnCustomized } from '../useLogEventForColumnCustomized';
 import { logInfraColumnCustomizedEvent } from 'container/InfraMonitoringK8sV2/Base/events';
 
-jest.mock('constants/events', () => ({
+jest.mock('container/InfraMonitoringK8sV2/Base/events', () => ({
 	logInfraColumnCustomizedEvent: jest.fn(),
 }));
 
