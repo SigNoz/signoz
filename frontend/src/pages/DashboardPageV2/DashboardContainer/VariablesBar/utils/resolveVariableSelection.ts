@@ -37,7 +37,7 @@ function firstConfiguredDefault(model: VariableFormModel): string | undefined {
 }
 
 /** A TEXT variable's default: its configured default, else its textValue (always a string). */
-function textDefault(model: VariableFormModel): string {
+export function textDefault(model: VariableFormModel): string {
 	return firstConfiguredDefault(model) ?? model.textValue;
 }
 
@@ -53,15 +53,31 @@ function isAllDefault(
 	);
 }
 
-/** The configured default (or first option) as a fresh selection. */
+/**
+ * The default selection for a variable with nothing usable selected: its configured
+ * default, else ALL for an ALL-enabled multi-select, else the first option.
+ */
 function fillDefault(
 	model: VariableFormModel,
 	options: string[],
 ): VariableSelection {
 	const fallback = firstConfiguredDefault(model);
-	const initial = fallback && options.includes(fallback) ? fallback : options[0];
+	if (fallback && options.includes(fallback)) {
+		return {
+			value: model.multiSelect ? [fallback] : fallback,
+			allSelected: false,
+		};
+	}
+
+	// No usable configured default: an ALL-enabled multi-select defaults to ALL, not
+	// to an arbitrary first option — the same default the seed applies (keep in sync
+	// with resolveDefaultSelection).
+	if (model.multiSelect && model.showAllOption) {
+		return materializeAll(model, options, null) ?? ALL_SELECTION;
+	}
+
 	return {
-		value: model.multiSelect ? [initial] : initial,
+		value: model.multiSelect ? [options[0]] : options[0],
 		allSelected: false,
 	};
 }

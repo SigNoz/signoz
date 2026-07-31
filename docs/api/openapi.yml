@@ -1496,6 +1496,9 @@ components:
       - redis
       - cloudsql_postgres
       - memorystore_redis
+      - computeengine
+      - gke
+      - cloudstorage
       type: string
     CloudintegrationtypesServiceMetadata:
       properties:

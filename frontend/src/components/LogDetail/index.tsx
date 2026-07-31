@@ -401,7 +401,11 @@ function LogDetailInner({
 			destroyOnClose
 			closeIcon={<X size={16} style={{ marginTop: Spacing.MARGIN_1 }} />}
 		>
-			<div className="log-detail-drawer__content" data-log-detail-ignore="true">
+			<div
+				className="log-detail-drawer__content"
+				data-log-detail-ignore="true"
+				data-testid="log-detail-drawer"
+			>
 				<div className="log-detail-drawer__log">
 					<Divider type="vertical" className={cx('log-type-indicator', logType)} />
 					<Tooltip
