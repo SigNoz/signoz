@@ -82,12 +82,6 @@ def pytest_addoption(parser: pytest.Parser):
         help="Build and run with web. Run pytest --basetemp=./tmp/ -vv --with-web src/bootstrap/setup::test_setup to setup your local dev environment with web.",
     )
     parser.addoption(
-        "--signoz-image",
-        action="store",
-        default="",
-        help="Use a prebuilt signoz image instead of building one.",
-    )
-    parser.addoption(
         "--sqlstore-provider",
         action="store",
         default="postgres",
