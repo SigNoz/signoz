@@ -60,6 +60,12 @@ uv run pytest --basetemp=./tmp/ -vv --reuse integration/tests/<suite>/
 
 The same applies to the e2e stack. `--rebuild` requires `--reuse` and cannot be combined with `--teardown` or `--clean`.
 
+Some suites define their own SigNoz variant in a suite-local `conftest.py` (`create_signoz(..., cache_key=...)` — e.g. `basepath`, `metricreduction`, `querier_json_body`). Those containers are not touched by `make py-test-setup`, which only rebuilds the default instance. For such suites, pass `--rebuild` on the suite run itself — it rebuilds every SigNoz variant the run instantiates:
+
+```bash
+uv run pytest --basetemp=./tmp/ -vv --reuse --rebuild integration/tests/<suite>/
+```
+
 ### Stopping the Test Environment
 
 When you're done writing integration tests, clean up the environment:
