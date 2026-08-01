@@ -61,9 +61,16 @@ func (provider *provider) Name() authtypes.IdentNProvider {
 	return authtypes.IdentNProviderTrustedHeader
 }
 
-// Test returns true when the configured email header is present on the request.
-// Test is intentionally cheap (header presence) — full email validation and the
-// user lookup happen in GetIdentity.
+// Test reports whether this provider should handle the request. It performs no
+// I/O and does not mutate the request.
+//
+// There is deliberately no check for bearer-token or API-key headers here. The
+// resolver registers this provider after the tokenizer and apikey resolvers and
+// returns the first whose Test passes, and their Test bodies read the same
+// configured header lists, so a request carrying either credential never
+// reaches this provider. Duplicating the check here would be unreachable when
+// those resolvers are enabled, and harmful when they are not, because the
+// header lists stay populated in config even when the resolver is off.
 func (provider *provider) Test(req *http.Request) bool {
 	return provider.extractEmail(req) != ""
 }
