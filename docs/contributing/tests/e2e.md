@@ -30,11 +30,11 @@ yarn install:browsers   # one-time Playwright browser install
 
 ### Starting the Test Environment
 
-To spin up the backend stack (SigNoz, ClickHouse, Postgres, Zookeeper, Zeus mock, gateway mock, seeder, migrator-with-web) and keep it running:
+To spin up the backend stack (SigNoz, ClickHouse, Postgres, ClickHouse Keeper, Zeus mock, gateway mock, seeder, migrator-with-web) and keep it running:
 
 ```bash
 cd tests
-uv run pytest --basetemp=./tmp/ -vv --reuse --with-web \
+uv run pytest --basetemp=./tmp/ -vv --reuse --rebuild --with-web \
   e2e/bootstrap/setup.py::test_setup
 ```
 
@@ -45,8 +45,13 @@ This command will:
 - Start the HTTP seeder container (`tests/seeder/` — exposing `/telemetry/{traces,logs,metrics}` POST + DELETE)
 - Write backend coordinates to `tests/e2e/.env.local` (loaded by `playwright.config.ts` via dotenv)
 - Keep containers running via the `--reuse` flag
+- Rebuild the SigNoz container from the current sources via the `--rebuild` flag
 
-The `--with-web` flag builds the frontend into the SigNoz container — required for E2E. The build takes ~4 mins on a cold start.
+The `--with-web` flag builds the frontend into the SigNoz container — required for E2E. The build takes ~4 mins on a cold start; later builds are incremental.
+
+### Rebuilding After Source Changes
+
+The `--with-web` image bakes the built frontend in, so neither backend nor frontend changes are picked up while `--reuse` keeps the container running. `--rebuild` fixes that for both: it kills the SigNoz container, rebuilds the image incrementally (go build cache + pnpm store — a frontend-only change rebuilds in about a minute), and starts a fresh one while databases, mocks, migrations, and the seeder stay reused. The setup command above passes it, so the iteration loop is: change code → re-run the setup command → re-run your specs. `--rebuild` requires `--reuse` and cannot be combined with `--teardown` or `--clean`.
 
 ### Stopping the Test Environment
 
@@ -281,13 +286,16 @@ The full `playwright.config.ts` is the source of truth. Common things to tweak:
 The same pytest flags integration tests expose work here, since E2E reuses the shared fixture graph:
 
 - `--reuse` — keep containers warm between runs (required for all iteration).
+- `--rebuild` — recreate the SigNoz container from the current sources (backend and, with `--with-web`, frontend) while the rest of the stack stays up. Requires `--reuse`.
 - `--teardown` — tear everything down.
+- `--clean` — prune the BuildKit cache mounts, forcing the next image build to start cold.
 - `--with-web` — build the frontend into the SigNoz container. **Required for E2E**; integration tests don't need it.
-- `--sqlstore-provider`, `--postgres-version`, `--clickhouse-version`, etc. — see `docs/contributing/integration.md`.
+- `--sqlstore-provider`, `--postgres-version`, `--clickhouse-version`, etc. — see `docs/contributing/tests/integration.md`.
 
 ## What should I remember?
 
-- **Always use the `--reuse` flag** when setting up the E2E stack. `--with-web` adds a ~4 min frontend build; you only want to pay that once.
+- **Always use the `--reuse` flag** when setting up the E2E stack. `--with-web` adds a ~4 min frontend build on a cold start; later builds are incremental.
+- **Changed backend or frontend code? Re-run the setup command** — it passes `--rebuild`, swapping the SigNoz container for one built from your current sources while the rest of the stack stays up.
 - **Don't teardown before setup.** `--reuse` correctly handles partially-set-up state, so chaining teardown → setup wastes time.
 - **Prefer UI-driven flows.** Playwright captures BE requests in the trace; a parallel `fetch` probe is almost always redundant. Drop to `page.request.*` only when the UI can't reach what you need.
 - **Use `page.waitForResponse` on UI clicks** to assert BE contracts — it still exercises the UI trigger path.
