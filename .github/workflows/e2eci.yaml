@@ -94,9 +94,9 @@ jobs:
               --mount=type=cache,target=/go/pkg/mod \
               --mount=type=cache,target=/pnpm/store \
               --mount=type=bind,target=/restored \
-              cp -a /restored/go-build/. /root/.cache/go-build/ && \
-              cp -a /restored/go-mod/. /go/pkg/mod/ && \
-              cp -a /restored/pnpm-store/. /pnpm/store/
+              tar -xf /restored/go-build.tar -C /root/.cache/go-build && \
+              tar -xf /restored/go-mod.tar -C /go/pkg/mod && \
+              tar -xf /restored/pnpm-store.tar -C /pnpm/store
           EOF
           docker build -f "$RUNNER_TEMP/inject.Dockerfile" "$RUNNER_TEMP/cacheci"
       - name: bring-up-stack
