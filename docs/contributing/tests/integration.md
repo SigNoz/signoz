@@ -37,23 +37,28 @@ make py-test-setup
 Under the hood this runs, from `tests/`:
 
 ```bash
-uv run pytest --basetemp=./tmp/ -vv --reuse integration/bootstrap/setup.py::test_setup
+uv run pytest --basetemp=./tmp/ -vv --reuse --rebuild --capture=no integration/bootstrap/setup.py::test_setup
 ```
 
 This command will:
-- Start all required services (ClickHouse, PostgreSQL, Zookeeper, SigNoz, Zeus mock, gateway mock)
+- Start all required services (ClickHouse, PostgreSQL, ClickHouse Keeper, SigNoz, Zeus mock, gateway mock)
 - Register an admin user
 - Keep containers running via the `--reuse` flag
+- Rebuild the SigNoz container from the current sources via the `--rebuild` flag
 
 ### Rebuilding After Source Changes
 
-`--reuse` keeps the running SigNoz container, which means backend source changes are not picked up. To rebuild the container from the current sources while reusing everything else (databases, mocks, migrations), pass `--rebuild` along with `--reuse`:
+`--reuse` keeps the running SigNoz container, which means backend source changes are not picked up. `--rebuild` fixes exactly that: it kills the existing SigNoz container, rebuilds the image (incremental — only changed packages recompile thanks to the build cache), and starts a fresh one, while everything else (databases, mocks, migrations) stays reused. `make py-test-setup` passes it by default, so the iteration loop is simply:
 
 ```bash
-uv run pytest --basetemp=./tmp/ -vv --reuse --rebuild integration/bootstrap/setup.py::test_setup
+make py-test-setup      # (re)build signoz from your current sources
+uv run pytest --basetemp=./tmp/ -vv --reuse integration/tests/<suite>/
+# ... edit backend code or tests ...
+make py-test-setup      # pick up the backend changes
+uv run pytest --basetemp=./tmp/ -vv --reuse integration/tests/<suite>/
 ```
 
-This kills the existing SigNoz container, rebuilds the image (incremental — only changed packages recompile thanks to the build cache), and starts a fresh one. This is the standard loop when iterating on backend code and tests together, and applies to the e2e stack as well. `--rebuild` requires `--reuse` and cannot be combined with `--teardown` or `--clean`.
+The same applies to the e2e stack. `--rebuild` requires `--reuse` and cannot be combined with `--teardown` or `--clean`.
 
 ### Stopping the Test Environment
 
@@ -66,7 +71,7 @@ make py-test-teardown
 Which runs:
 
 ```bash
-uv run pytest --basetemp=./tmp/ -vv --teardown integration/bootstrap/setup.py::test_teardown
+uv run pytest --basetemp=./tmp/ -vv --teardown --capture=no integration/bootstrap/setup.py::test_teardown
 ```
 
 This destroys the running integration test setup and cleans up resources.
@@ -119,7 +124,7 @@ tests/
 │       ├── passwordauthn/
 │       ├── querier/
 │       └── ...
-└── e2e/                     # Playwright suite (see docs/contributing/e2e.md)
+└── e2e/                     # Playwright suite (see docs/contributing/tests/e2e.md)
 ```
 
 Each test suite follows these principles:
@@ -244,9 +249,9 @@ Tests can be configured using pytest options:
 - `--sqlstore-provider` — Choose the SQL store provider (default: `postgres`)
 - `--sqlite-mode` — SQLite journal mode: `delete` or `wal` (default: `delete`). Only relevant when `--sqlstore-provider=sqlite`.
 - `--postgres-version` — PostgreSQL version (default: `15`)
-- `--clickhouse-version` — ClickHouse version (default: `25.5.6`)
-- `--zookeeper-version` — Zookeeper version (default: `3.7.1`)
-- `--schema-migrator-version` — SigNoz schema migrator version (default: `v0.144.2`)
+- `--clickhouse-version` — ClickHouse version, also used for ClickHouse Keeper (default: `25.12.5`)
+- `--schema-migrator-version` — SigNoz schema migrator version (default: `v0.144.6`)
+- `--with-web` — Build the frontend into the SigNoz image (required for e2e)
 
 Example:
 
@@ -259,6 +264,7 @@ uv run pytest --basetemp=./tmp/ -vv --reuse \
 ## What should I remember?
 
 - **Always use the `--reuse` flag** when setting up the environment or running tests to keep containers warm. Without it every run rebuilds the stack (~4 mins).
+- **Changed backend code? Re-run `make py-test-setup`** — it passes `--rebuild`, swapping the SigNoz container for one built from your current sources while the rest of the stack stays up.
 - **Use the `--teardown` flag** only when cleaning up — mixing `--teardown` with `--reuse` is a contradiction.
 - **Do not pre-emptively teardown before setup.** If the stack is partially up, `--reuse` picks up from wherever it is. `make py-test-teardown` then `make py-test-setup` wastes minutes.
 - **Follow the naming convention** with two-digit numeric prefixes (`01_`, `02_`) for ordered test execution within a suite.
@@ -267,5 +273,5 @@ uv run pytest --basetemp=./tmp/ -vv --reuse \
 - **Use descriptive test names** that clearly indicate what is being tested.
 - **Leverage fixtures** for common setup. The shared fixture package is at `tests/fixtures/` — reuse before adding new ones.
 - **Test both success and failure scenarios** (4xx / 5xx paths) to ensure robust functionality.
-- **Run `make py-fmt` and `make py-lint` before committing** Python changes — black + isort + autoflake + pylint.
+- **Run `make py-fmt` and `make py-lint` before committing** Python changes — ruff format + ruff check.
 - **`--sqlite-mode=wal` does not work on macOS.** The integration test environment runs SigNoz inside a Linux container with the SQLite database file mounted from the macOS host. WAL mode requires shared memory between connections, and connections crossing the VM boundary (macOS host ↔ Linux container) cannot share the WAL index, resulting in `SQLITE_IOERR_SHORT_READ`. WAL mode is tested in CI on Linux only.
