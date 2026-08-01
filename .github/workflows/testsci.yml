@@ -8,6 +8,11 @@ on:
     types:
       - labeled
 
+# The image embeds ZEUSURL=http://<alias>:8080 and the tests give the zeus
+# container the same alias; both derive from this single value.
+env:
+  ZEUS_NETWORK_ALIAS: zeus
+
 jobs:
   fmtlint:
     if: |
@@ -92,8 +97,8 @@ jobs:
           docker build -f "$RUNNER_TEMP/inject.Dockerfile" "$RUNNER_TEMP/cacheci"
       - name: build-push
         run: |
-          docker build -f cmd/enterprise/Dockerfile.integration --build-arg TARGETARCH=amd64 --build-arg ZEUSURL=http://zeus:8080 --tag ghcr.io/signoz/signoz-testsci:${{ github.run_id }} .
-          docker build -f cmd/enterprise/Dockerfile.with-web.integration --build-arg TARGETARCH=amd64 --build-arg ZEUSURL=http://zeus:8080 --tag ghcr.io/signoz/signoz-testsci:web-${{ github.run_id }} .
+          docker build -f cmd/enterprise/Dockerfile.integration --build-arg TARGETARCH=amd64 --build-arg ZEUSURL=http://${ZEUS_NETWORK_ALIAS}:8080 --tag ghcr.io/signoz/signoz-testsci:${{ github.run_id }} .
+          docker build -f cmd/enterprise/Dockerfile.with-web.integration --build-arg TARGETARCH=amd64 --build-arg ZEUSURL=http://${ZEUS_NETWORK_ALIAS}:8080 --tag ghcr.io/signoz/signoz-testsci:web-${{ github.run_id }} .
           docker push ghcr.io/signoz/signoz-testsci:${{ github.run_id }}
           docker push ghcr.io/signoz/signoz-testsci:web-${{ github.run_id }}
   integration:
@@ -198,7 +203,7 @@ jobs:
             --clickhouse-version ${{matrix.clickhouse-version}} \
             --schema-migrator-version ${{matrix.schema-migrator-version}} \
             --signoz-image ${{ needs.build.outputs.image }} \
-            --zeus-network-aliases
+            --zeus-network-alias ${ZEUS_NETWORK_ALIAS}
   e2e:
     needs: build
     strategy:
@@ -260,7 +265,7 @@ jobs:
             --basetemp=./tmp/ \
             -vv --reuse --with-web \
             --signoz-image ${{ needs.build.outputs.web-image }} \
-            --zeus-network-aliases \
+            --zeus-network-alias ${ZEUS_NETWORK_ALIAS} \
             e2e/bootstrap/setup.py::test_setup
       - name: playwright-test
         run: |
