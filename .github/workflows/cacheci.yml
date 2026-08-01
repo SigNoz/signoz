@@ -10,9 +10,11 @@ permissions:
   contents: read
   actions: write
 
+# Cancelling mid-rotation is safe: the sequential delete-then-save order
+# leaves at most one key missing at any moment.
 concurrency:
   group: cacheci
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   tests:
@@ -37,32 +39,36 @@ jobs:
               --mount=type=cache,target=/go/pkg/mod \
               --mount=type=cache,target=/pnpm/store \
               --mount=type=bind,target=/restored \
-              cp -a /restored/go-build/. /root/.cache/go-build/ && \
-              cp -a /restored/go-mod/. /go/pkg/mod/ && \
-              cp -a /restored/pnpm-store/. /pnpm/store/
+              tar -xf /restored/go-build.tar -C /root/.cache/go-build && \
+              tar -xf /restored/go-mod.tar -C /go/pkg/mod && \
+              tar -xf /restored/pnpm-store.tar -C /pnpm/store
           EOF
           docker build -f "$RUNNER_TEMP/inject.Dockerfile" "$RUNNER_TEMP/cacheci"
       - name: build
         run: |
           docker build -f cmd/enterprise/Dockerfile.integration --build-arg TARGETARCH=amd64 --build-arg ZEUSURL=http://zeus:8080 .
           docker build -f cmd/enterprise/Dockerfile.with-web.integration --build-arg TARGETARCH=amd64 --build-arg ZEUSURL=http://zeus:8080 .
+      # docker cp instead of --output type=local (the local exporter stalls on
+      # multi-GB outputs); tarballs instead of raw trees so the host never hits
+      # the permission and symlink semantics that broke docker cp.
       - name: extract
         run: |
           rm -rf "$RUNNER_TEMP/cacheci"
-          mkdir -p "$RUNNER_TEMP/extract-context"
+          mkdir -p "$RUNNER_TEMP/cacheci" "$RUNNER_TEMP/extract-context"
           cat > "$RUNNER_TEMP/extract.Dockerfile" <<'EOF'
-          FROM busybox:1.37 AS mounts
+          FROM busybox:1.37
           RUN --mount=type=cache,target=/root/.cache/go-build \
               --mount=type=cache,target=/go/pkg/mod \
               --mount=type=cache,target=/pnpm/store \
-              mkdir -p /out/go-build /out/go-mod /out/pnpm-store && \
-              cp -a /root/.cache/go-build/. /out/go-build/ && \
-              cp -a /go/pkg/mod/. /out/go-mod/ && \
-              cp -a /pnpm/store/. /out/pnpm-store/
-          FROM scratch
-          COPY --from=mounts /out/ /
+              mkdir -p /out && \
+              tar -cf /out/go-build.tar -C /root/.cache/go-build . && \
+              tar -cf /out/go-mod.tar -C /go/pkg/mod . && \
+              tar -cf /out/pnpm-store.tar -C /pnpm/store .
           EOF
-          docker build -f "$RUNNER_TEMP/extract.Dockerfile" --output "type=local,dest=$RUNNER_TEMP/cacheci" "$RUNNER_TEMP/extract-context"
+          docker build -f "$RUNNER_TEMP/extract.Dockerfile" -t cacheci-extract "$RUNNER_TEMP/extract-context"
+          id=$(docker create cacheci-extract)
+          docker cp "$id":/out/. "$RUNNER_TEMP/cacheci/"
+          docker rm "$id"
       # Fixed cache keys are immutable, so each key must be deleted before it
       # can be saved again. Rotating primary and secondary one after the other
       # keeps at least one key restorable for concurrent test runs.
