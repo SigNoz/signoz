@@ -1,0 +1,283 @@
+name: testsci
+
+on:
+  pull_request:
+    types:
+      - labeled
+  pull_request_target:
+    types:
+      - labeled
+
+jobs:
+  fmtlint:
+    if: |
+      ((github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
+      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))) && (contains(github.event.pull_request.labels.*.name, 'safe-to-integrate') || contains(github.event.pull_request.labels.*.name, 'safe-to-e2e'))
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.13
+      - name: uv
+        uses: astral-sh/setup-uv@v4
+      - name: node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+      - name: install-pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10
+      - name: install
+        run: |
+          cd tests && uv sync
+          cd e2e && pnpm install
+      - name: fmt
+        run: |
+          make py-fmt
+          git diff --exit-code -- tests/
+          cd tests/e2e && pnpm fmt:check
+      - name: lint
+        run: |
+          make py-lint
+          cd tests/e2e && pnpm lint
+  build:
+    if: |
+      ((github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
+      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))) && (contains(github.event.pull_request.labels.*.name, 'safe-to-integrate') || contains(github.event.pull_request.labels.*.name, 'safe-to-e2e'))
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+    outputs:
+      image: ghcr.io/signoz/signoz-testsci:${{ github.run_id }}
+      web-image: ghcr.io/signoz/signoz-testsci:web-${{ github.run_id }}
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: login
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      # Restore-only: the cacheci workflow owns cache saves. A miss just
+      # means a cold build.
+      - name: restore
+        id: restore
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/cacheci
+          key: tests-primary
+          restore-keys: |
+            tests-secondary
+      # Seed the BuildKit cache mounts from the restored directory; mirrors
+      # the extract step in cacheci.
+      - name: inject
+        if: steps.restore.outputs.cache-matched-key != ''
+        run: |
+          cat > "$RUNNER_TEMP/inject.Dockerfile" <<'EOF'
+          FROM busybox:1.37
+          RUN --mount=type=cache,target=/root/.cache/go-build \
+              --mount=type=cache,target=/go/pkg/mod \
+              --mount=type=cache,target=/pnpm/store \
+              --mount=type=bind,target=/restored \
+              cp -a /restored/go-build/. /root/.cache/go-build/ && \
+              cp -a /restored/go-mod/. /go/pkg/mod/ && \
+              cp -a /restored/pnpm-store/. /pnpm/store/
+          EOF
+          docker build -f "$RUNNER_TEMP/inject.Dockerfile" "$RUNNER_TEMP/cacheci"
+      - name: build-push
+        run: |
+          docker build -f cmd/enterprise/Dockerfile.integration --build-arg TARGETARCH=amd64 --build-arg ZEUSURL=http://zeus:8080 --tag ghcr.io/signoz/signoz-testsci:${{ github.run_id }} .
+          docker build -f cmd/enterprise/Dockerfile.with-web.integration --build-arg TARGETARCH=amd64 --build-arg ZEUSURL=http://zeus:8080 --tag ghcr.io/signoz/signoz-testsci:web-${{ github.run_id }} .
+          docker push ghcr.io/signoz/signoz-testsci:${{ github.run_id }}
+          docker push ghcr.io/signoz/signoz-testsci:web-${{ github.run_id }}
+  integration:
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        suite:
+          - alerts
+          - basepath
+          - callbackauthn
+          - cloudintegrations
+          - dashboard
+          - ingestionkeys
+          - inframonitoring
+          - logspipelines
+          - passwordauthn
+          - preference
+          - querierlogs
+          - queriertraces
+          - queriermetrics
+          - querierscalar
+          - queriercommon
+          - rawexportdata
+          - promqlconformance
+          - querierauthz
+          - role
+          - rootuser
+          - serviceaccount
+          - spanmapper
+          - querier_json_body
+          - querier_skip_resource_fingerprint
+          - ttl
+          - clickhousecluster
+          - metricreduction
+        sqlstore-provider:
+          - postgres
+          - sqlite
+        sqlite-mode:
+          - wal
+        clickhouse-version:
+          - 25.12.5
+        schema-migrator-version:
+          - v0.144.6
+        postgres-version:
+          - 15
+    if: |
+      ((github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
+      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))) && contains(github.event.pull_request.labels.*.name, 'safe-to-integrate')
+    runs-on: ubuntu-latest
+    permissions:
+      packages: read
+      contents: read
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.13
+      - name: uv
+        uses: astral-sh/setup-uv@v4
+      - name: install
+        run: |
+          cd tests && uv sync
+      - name: webdriver
+        if: matrix.suite == 'callbackauthn' || matrix.suite == 'basepath'
+        run: |
+          wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+          echo "deb http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee -a /etc/apt/sources.list.d/google-chrome.list
+          sudo apt-get update -qqy
+          sudo apt-get -qqy install google-chrome-stable
+          CHROME_VERSION=$(google-chrome-stable --version)
+          CHROME_FULL_VERSION=${CHROME_VERSION%%.*}
+          CHROME_MAJOR_VERSION=${CHROME_FULL_VERSION//[!0-9]}
+          sudo rm /etc/apt/sources.list.d/google-chrome.list
+          export CHROMEDRIVER_VERSION=`curl -s https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_${CHROME_MAJOR_VERSION%%.*}`
+          curl -L -O "https://storage.googleapis.com/chrome-for-testing-public/${CHROMEDRIVER_VERSION}/linux64/chromedriver-linux64.zip"
+          unzip chromedriver-linux64.zip
+          chmod +x chromedriver-linux64/chromedriver
+          sudo mv chromedriver-linux64/chromedriver /usr/local/bin/chromedriver
+          chromedriver -version
+          google-chrome-stable --version
+      - name: login
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: pull
+        run: |
+          docker pull ${{ needs.build.outputs.image }}
+      - name: run
+        run: |
+          cd tests && \
+            uv run pytest \
+            --basetemp=./tmp/ \
+            integration/tests/${{matrix.suite}} \
+            --sqlstore-provider ${{matrix.sqlstore-provider}} \
+            --sqlite-mode ${{matrix.sqlite-mode}} \
+            --postgres-version ${{matrix.postgres-version}} \
+            --clickhouse-version ${{matrix.clickhouse-version}} \
+            --schema-migrator-version ${{matrix.schema-migrator-version}} \
+            --signoz-image ${{ needs.build.outputs.image }} \
+            --network-aliases
+  e2e:
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        project:
+          - chromium
+    if: |
+      ((github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
+      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))) && contains(github.event.pull_request.labels.*.name, 'safe-to-e2e')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      packages: read
+      contents: read
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.13
+      - name: uv
+        uses: astral-sh/setup-uv@v4
+      - name: node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+      - name: install-pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10
+      - name: python-install
+        run: |
+          cd tests && uv sync
+      - name: pnpm-install
+        run: |
+          cd tests/e2e && pnpm install --frozen-lockfile
+      - name: playwright-browsers
+        run: |
+          docker create --name pw mcr.microsoft.com/playwright:v1.57.0-noble
+          docker cp pw:/ms-playwright "$RUNNER_TEMP/ms-playwright"
+          docker rm pw
+          echo "PLAYWRIGHT_BROWSERS_PATH=$RUNNER_TEMP/ms-playwright" >> "$GITHUB_ENV"
+          cd tests/e2e && pnpm playwright install-deps ${{ matrix.project }}
+      - name: login
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: pull
+        run: |
+          docker pull ${{ needs.build.outputs.web-image }}
+      - name: bring-up-stack
+        run: |
+          cd tests && \
+            uv run pytest \
+            --basetemp=./tmp/ \
+            -vv --reuse --with-web \
+            --signoz-image ${{ needs.build.outputs.web-image }} \
+            --network-aliases \
+            e2e/bootstrap/setup.py::test_setup
+      - name: playwright-test
+        run: |
+          cd tests/e2e && \
+            pnpm playwright test --project=${{ matrix.project }}
+      - name: teardown-stack
+        if: always()
+        run: |
+          cd tests && \
+            uv run pytest \
+            --basetemp=./tmp/ \
+            -vv --teardown \
+            e2e/bootstrap/setup.py::test_teardown
+      - name: upload-artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts-${{ matrix.project }}
+          path: tests/e2e/artifacts/
+          retention-days: 5
