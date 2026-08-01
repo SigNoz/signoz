@@ -31,8 +31,14 @@
       "pipelines": []
     },
     "dashboards": [
-      "file://assets/dashboards/overview.json",
-      "file://assets/dashboards/db_metrics_overview.json"
+      {
+        "id": "overview",
+        "definition": "file://assets/dashboards/overview.json"
+      },
+      {
+        "id": "db_metrics_overview",
+        "definition": "file://assets/dashboards/db_metrics_overview.json"
+      }
     ],
     "alerts": []
   },

@@ -6,6 +6,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/types/rulestatehistorytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 // Module defines the core operations for managing rule state history.
@@ -22,17 +23,20 @@ type Module interface {
 	GetHistoryStats(context.Context, string, rulestatehistorytypes.Query) (rulestatehistorytypes.GettableRuleStateHistoryStats, error)
 
 	// GetHistoryTimeline returns a time-ordered list of rule state history entries and a total count
-	// for the given query, suitable for paginated timeline views.
-	GetHistoryTimeline(context.Context, string, rulestatehistorytypes.Query) ([]rulestatehistorytypes.RuleStateHistory, uint64, error)
+	// for the given query, suitable for paginated timeline views. For logs/traces rules, each entry
+	// carries a related logs/traces explorer link scoped to the entry's labels and evaluation window.
+	GetHistoryTimeline(context.Context, valuer.UUID, string, rulestatehistorytypes.Query) ([]rulestatehistorytypes.RuleStateHistory, uint64, error)
 
 	// GetHistoryFilterKeys returns the available filter keys for rule state history queries.
-	GetHistoryFilterKeys(context.Context, string, rulestatehistorytypes.Query, string, int64) (*telemetrytypes.GettableFieldKeys, error)
+	GetHistoryFilterKeys(context.Context, valuer.UUID, string, rulestatehistorytypes.Query, string, int64) (*telemetrytypes.GettableFieldKeys, error)
 
 	// GetHistoryFilterValues returns the available values for a specific filter key in rule state history.
-	GetHistoryFilterValues(context.Context, string, string, rulestatehistorytypes.Query, string, int64) (*telemetrytypes.GettableFieldValues, error)
+	GetHistoryFilterValues(context.Context, valuer.UUID, string, string, rulestatehistorytypes.Query, string, int64) (*telemetrytypes.GettableFieldValues, error)
 
 	// GetHistoryContributors returns the top contributors to trigger alert, for the given query.
-	GetHistoryContributors(context.Context, string, rulestatehistorytypes.Query) ([]rulestatehistorytypes.RuleStateHistoryContributor, error)
+	// For logs/traces rules, each contributor carries a related logs/traces explorer link scoped
+	// to the contributor's labels and the queried range.
+	GetHistoryContributors(context.Context, valuer.UUID, string, rulestatehistorytypes.Query) ([]rulestatehistorytypes.RuleStateHistoryContributor, error)
 
 	// GetHistoryOverallStatus returns the overall status windows for rule state history,
 	// providing an aggregated view of rule health over time.

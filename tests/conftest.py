@@ -10,12 +10,13 @@ pytest_plugins = [
     "fixtures.postgres",
     "fixtures.sql",
     "fixtures.sqlite",
-    "fixtures.zookeeper",
+    "fixtures.keeper",
     "fixtures.signoz",
     "fixtures.audit",
     "fixtures.logs",
     "fixtures.traces",
     "fixtures.metrics",
+    "fixtures.metadata",
     "fixtures.meter",
     "fixtures.browser",
     "fixtures.keycloak",
@@ -71,18 +72,12 @@ def pytest_addoption(parser: pytest.Parser):
     parser.addoption(
         "--clickhouse-version",
         action="store",
-        default="25.5.6",
+        default="25.12.5",
         help="clickhouse version",
-    )
-    parser.addoption(
-        "--zookeeper-version",
-        action="store",
-        default="3.7.1",
-        help="zookeeper version",
     )
     parser.addoption(
         "--schema-migrator-version",
         action="store",
-        default="v0.144.3",
+        default="v0.144.6",
         help="schema migrator version",
     )

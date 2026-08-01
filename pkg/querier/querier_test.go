@@ -30,7 +30,7 @@ func (m *queryMatcherAny) Match(string, string) error { return nil }
 // and returns a fixed query string so the mock ClickHouse can match it.
 type mockMetricStmtBuilder struct{}
 
-func (m *mockMetricStmtBuilder) Build(_ context.Context, _, _ uint64, _ qbtypes.RequestType, _ qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation], _ map[string]qbtypes.VariableItem) (*qbtypes.Statement, error) {
+func (m *mockMetricStmtBuilder) Build(_ context.Context, _ valuer.UUID, _, _ uint64, _ qbtypes.RequestType, _ qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation], _ map[string]qbtypes.VariableItem) (*qbtypes.Statement, error) {
 	return &qbtypes.Statement{
 		Query: "SELECT ts, value FROM signoz_metrics",
 		Args:  nil,
@@ -119,17 +119,17 @@ func TestQueryRange_MetricTypeFromStore(t *testing.T) {
 		providerSettings,
 		telemetryStore,
 		metadataStore,
-		nil,                      // prometheus
-		nil,                      // traceStmtBuilder
-		nil,                      // logStmtBuilder
-		nil,                      // auditStmtBuilder
-		&mockMetricStmtBuilder{}, // metricStmtBuilder
-		nil,                      // meterStmtBuilder
-		nil,                      // traceOperatorStmtBuilder
-		nil,                      // bucketCache
-		flaggertest.New(t),       // flagger
-		0,                        // logTraceIDWindowPadding
-		0,                        // maxConcurrentQueries
+		nil, // prometheus
+		nil, // traceStmtBuilder
+		nil, // logStmtBuilder
+		nil, // auditStmtBuilder
+		&mockMetricStmtBuilder{},
+		nil,                // meterStmtBuilder
+		nil,                // traceOperatorStmtBuilder
+		nil,                // bucketCache
+		flaggertest.New(t), // flagger
+		0,                  // logTraceIDWindowPadding
+		0,                  // maxConcurrentQueries
 	)
 
 	req := &qbtypes.QueryRangeRequest{

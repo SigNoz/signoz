@@ -2,6 +2,8 @@ import { useState, type ChangeEvent, type KeyboardEvent } from 'react';
 import { Input } from '@signozhq/ui/input';
 import { Search, X } from '@signozhq/icons';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
+import logEvent from 'api/common/logEvent';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 
 import styles from './PanelHeaderSearch.module.scss';
 import { Button } from '@signozhq/ui/button';
@@ -32,6 +34,11 @@ function PanelHeaderSearch({
 	const clear = (): void => {
 		onChange('');
 		setExpanded(false);
+	};
+
+	const handleSearchChange = (e: ChangeEvent<HTMLInputElement>): void => {
+		onChange(e.target.value);
+		void logEvent(DashboardDetailEvents.PanelSearched, {}, 'track', true);
 	};
 
 	if (!expanded) {
@@ -76,9 +83,7 @@ function PanelHeaderSearch({
 					<X size={14} />
 				</Button>
 			}
-			onChange={(e: ChangeEvent<HTMLInputElement>): void =>
-				onChange(e.target.value)
-			}
+			onChange={handleSearchChange}
 			onBlur={collapseIfEmpty}
 			onKeyDown={(e: KeyboardEvent<HTMLInputElement>): void => {
 				if (e.key === 'Escape') {

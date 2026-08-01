@@ -6,7 +6,7 @@ import (
 
 	"github.com/SigNoz/signoz-otel-collector/constants"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/telemetrylogs"
+	"github.com/SigNoz/signoz/pkg/telemetryschema/logstelemetryschema"
 	"github.com/stretchr/testify/require"
 )
 
@@ -25,8 +25,8 @@ func TestBuildListLogsJSONIndexesQuery(t *testing.T) {
 			expectedSQL: "SELECT name, type_full, expr, granularity FROM clusterAllReplicas('test-cluster', system.data_skipping_indices) " +
 				"WHERE database = ? AND table = ? AND (LOWER(expr) LIKE LOWER(?) OR LOWER(expr) LIKE LOWER(?))",
 			expectedArgs: []any{
-				telemetrylogs.DBName,
-				telemetrylogs.LogsV2LocalTableName,
+				logstelemetryschema.DBName,
+				logstelemetryschema.LogsV2LocalTableName,
 				fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(constants.BodyV2ColumnPrefix)),
 				fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(constants.BodyPromotedColumnPrefix)),
 			},
@@ -38,8 +38,8 @@ func TestBuildListLogsJSONIndexesQuery(t *testing.T) {
 			expectedSQL: "SELECT name, type_full, expr, granularity FROM clusterAllReplicas('test-cluster', system.data_skipping_indices) " +
 				"WHERE database = ? AND table = ? AND (LOWER(expr) LIKE LOWER(?) OR LOWER(expr) LIKE LOWER(?)) AND (LOWER(replaceAll(expr, '`', '')) LIKE LOWER(?) OR LOWER(replaceAll(expr, '`', '')) LIKE LOWER(?))",
 			expectedArgs: []any{
-				telemetrylogs.DBName,
-				telemetrylogs.LogsV2LocalTableName,
+				logstelemetryschema.DBName,
+				logstelemetryschema.LogsV2LocalTableName,
 				fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(constants.BodyV2ColumnPrefix)),
 				fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(constants.BodyPromotedColumnPrefix)),
 				fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains("foo")),

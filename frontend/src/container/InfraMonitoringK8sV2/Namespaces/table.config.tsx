@@ -6,16 +6,17 @@ import { ExpandButtonWrapper } from 'container/InfraMonitoringK8sV2/components';
 import ColumnHeader from '../Base/ColumnHeader';
 import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
-import { formatBytes, getPodPhaseStatusItems } from '../commonUtils';
+import { formatBytes, getPodStatusItems } from '../commonUtils';
 import {
-	CellValueTooltip,
 	GroupedStatusCounts,
+	TextNoData,
 	ValidateColumnValueWrapper,
 } from '../components';
 import {
 	INFRA_MONITORING_ATTR_KEYS,
 	InfraMonitoringEntity,
 } from '../constants';
+import { SelectedItemParams } from '../hooks';
 
 export function getK8sNamespaceRowKey(
 	namespace: InframonitoringtypesNamespaceRecordDTO,
@@ -29,8 +30,15 @@ export function getK8sNamespaceRowKey(
 
 export function getK8sNamespaceItemKey(
 	namespace: InframonitoringtypesNamespaceRecordDTO,
-): string {
-	return namespace.namespaceName;
+): SelectedItemParams {
+	return {
+		selectedItem:
+			namespace.namespaceName ??
+			namespace.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] ??
+			null,
+		clusterName:
+			namespace.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] ?? null,
+	};
 }
 
 export type NamespaceTableColumnConfig =
@@ -73,14 +81,9 @@ export const k8sNamespacesColumnsConfig: NamespaceTableColumnConfig[] = [
 		enableMove: false,
 		pin: 'left',
 		visibilityBehavior: 'hidden-on-expand',
-		cell: ({ value }): React.ReactNode => {
-			const namespaceName = value as string;
-			return (
-				<CellValueTooltip value={namespaceName}>
-					<TanStackTable.Text>{namespaceName}</TanStackTable.Text>
-				</CellValueTooltip>
-			);
-		},
+		cell: ({ value }): React.ReactNode => (
+			<TanStackTable.Text>{value}</TanStackTable.Text>
+		),
 	},
 	{
 		id: 'clusterName',
@@ -98,25 +101,28 @@ export const k8sNamespacesColumnsConfig: NamespaceTableColumnConfig[] = [
 		),
 	},
 	{
-		id: 'podCountsByPhase',
+		id: 'podCountsByStatus',
 		header: (): React.ReactNode => (
-			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/namespaces#pod-counts-by-phase">
-				Pod Phases
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/namespaces#pod-counts-by-status">
+				Pod Status
 			</ColumnHeader>
 		),
 		accessorFn: (
 			row,
-		): InframonitoringtypesNamespaceRecordDTO['podCountsByPhase'] =>
-			row.podCountsByPhase,
+		): InframonitoringtypesNamespaceRecordDTO['podCountsByStatus'] =>
+			row.podCountsByStatus,
 		width: { min: 250 },
 		enableSort: false,
-		cell: ({ row }): React.ReactNode => {
-			const podCountsByPhase = row.podCountsByPhase;
-			if (!podCountsByPhase) {
-				return <TanStackTable.Text>-</TanStackTable.Text>;
+		cell: ({ row, rowId }): React.ReactNode => {
+			const podCountsByStatus = row.podCountsByStatus;
+			if (!podCountsByStatus) {
+				return <TextNoData type="tanstack" />;
 			}
 			return (
-				<GroupedStatusCounts items={getPodPhaseStatusItems(row.podCountsByPhase)} />
+				<GroupedStatusCounts
+					items={getPodStatusItems(row.podCountsByStatus)}
+					rowId={rowId}
+				/>
 			);
 		},
 	},
@@ -130,13 +136,14 @@ export const k8sNamespacesColumnsConfig: NamespaceTableColumnConfig[] = [
 		accessorFn: (row): number => row.namespaceCPU,
 		width: { min: 190 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const cpu = Number(value);
 			return (
 				<ValidateColumnValueWrapper
 					value={cpu}
 					entity={InfraMonitoringEntity.NAMESPACES}
 					attribute="CPU metric"
+					rowId={rowId}
 				>
 					<TanStackTable.Text>{cpu.toFixed(2)}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
@@ -153,13 +160,14 @@ export const k8sNamespacesColumnsConfig: NamespaceTableColumnConfig[] = [
 		accessorFn: (row): number => row.namespaceMemory,
 		width: { min: 220 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const memory = Number(value);
 			return (
 				<ValidateColumnValueWrapper
 					value={memory}
 					entity={InfraMonitoringEntity.NAMESPACES}
 					attribute="memory metric"
+					rowId={rowId}
 				>
 					<TanStackTable.Text>{formatBytes(memory)}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>

@@ -23,7 +23,10 @@ import {
 	type PanelQueryTimeOverride,
 	type UsePanelQueryResult,
 } from 'pages/DashboardPageV2/DashboardContainer/hooks/usePanelQuery';
+import { useDashboardStore } from 'pages/DashboardPageV2/DashboardContainer/store/useDashboardStore';
 import type { EQueryType } from 'types/common/dashboard';
+
+import { readViewPanelHandoff } from './viewPanelHandoffStore';
 
 interface UseViewPanelModeArgs {
 	panel: DashboardtypesPanelDTO;
@@ -77,25 +80,33 @@ export function useViewPanelMode({
 }: UseViewPanelModeArgs): UseViewPanelModeReturn {
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 
-	// Seed the draft from the URL (`compositeQuery` + `graphType`) when present, else the saved
-	// panel — mount-only, so a refresh re-seeds from the URL and in-modal edits survive (V1 parity).
-	const urlQuery = useGetCompositeQueryParam();
+	// Config edits from the editor's "Switch to View Mode" arrive via the handoff; the query
+	// still comes from the URL. Falls back to the saved panel for a plain grid "View".
+	const dashboardId = useDashboardStore((s) => s.dashboardId);
+	const baseSpec = useMemo<DashboardtypesPanelSpecDTO>(
+		() => readViewPanelHandoff(dashboardId, panelId) ?? panel.spec,
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only seed
+		[],
+	);
+
+	// Mount-only so a refresh re-seeds and in-modal edits survive (V1 parity).
+	const compositeQuery = useGetCompositeQueryParam();
 	const urlGraphType = useUrlQuery().get(
 		QueryParams.graphType,
 	) as PANEL_TYPES | null;
 	const initialPanel = useMemo<DashboardtypesPanelDTO>(
 		() =>
-			urlQuery
+			compositeQuery
 				? {
 						...panel,
 						spec: buildViewPanelSpec({
-							spec: panel.spec,
-							query: urlQuery,
+							spec: baseSpec,
+							query: compositeQuery,
 							panelType:
-								urlGraphType ?? PANEL_KIND_TO_PANEL_TYPE[panel.spec.plugin.kind],
+								urlGraphType ?? PANEL_KIND_TO_PANEL_TYPE[baseSpec.plugin.kind],
 						}),
 					}
-				: panel,
+				: { ...panel, spec: baseSpec },
 		// eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only seed from the URL
 		[],
 	);

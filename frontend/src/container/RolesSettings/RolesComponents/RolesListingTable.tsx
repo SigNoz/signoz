@@ -3,12 +3,12 @@ import { useHistory } from 'react-router-dom';
 import cx from 'classnames';
 import { Pagination, Skeleton } from 'antd';
 import { useListRoles } from 'api/generated/services/role';
-import { AuthtypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
+import { AuthtypesGettableRoleDTO } from 'api/generated/services/sigNoz.schemas';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import ROUTES from 'constants/routes';
 import { useRolesFeatureGate } from 'hooks/useRolesFeatureGate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { withAuthZPage } from 'lib/authz/components/withAuthZ/withAuthZPage';
+import { withAuthZContent } from 'lib/authz/components/withAuthZ/withAuthZContent';
 import { RoleListPermission } from 'lib/authz/hooks/useAuthZ/permissions/role.permissions';
 import LineClampedText from 'periscope/components/LineClampedText/LineClampedText';
 import { useTimezone } from 'providers/Timezone';
@@ -21,7 +21,7 @@ const PAGE_SIZE = 20;
 
 type DisplayItem =
 	| { type: 'section'; label: string; count?: number }
-	| { type: 'role'; role: AuthtypesRoleDTO };
+	| { type: 'role'; role: AuthtypesGettableRoleDTO };
 
 interface RolesListContentProps {
 	searchQuery: string;
@@ -176,7 +176,7 @@ function RolesListContent({ searchQuery }: RolesListContentProps): JSX.Element {
 		);
 	}
 
-	const renderRow = (role: AuthtypesRoleDTO): JSX.Element => (
+	const renderRow = (role: AuthtypesGettableRoleDTO): JSX.Element => (
 		<div
 			key={role.id}
 			className={cx(styles.tableRow, {
@@ -267,7 +267,7 @@ function RolesListContent({ searchQuery }: RolesListContentProps): JSX.Element {
 	);
 }
 
-export default withAuthZPage<RolesListContentProps>(RolesListContent, {
+export default withAuthZContent<RolesListContentProps>(RolesListContent, {
 	checks: [RoleListPermission],
 	fallbackOnLoading: (
 		<div className={styles.rolesListingTable}>

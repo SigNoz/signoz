@@ -5,6 +5,7 @@ import { TimeSeries, TimeSeriesData } from 'types/api/v5/queryRange';
 import { QueryData } from 'types/api/widgets/getQuery';
 
 import { SerializedTable } from './types';
+import { withUnit } from './withUnit';
 
 interface ExportTimeseriesDataArgs {
 	data: TimeSeriesData[];
@@ -96,11 +97,6 @@ function flatten(
 		});
 	});
 	return flat;
-}
-
-// Appends the y-axis unit to the value header: `value` → `value (ms)`.
-function withUnit(header: string, yAxisUnit?: string): string {
-	return yAxisUnit ? `${header} (${yAxisUnit})` : header;
 }
 
 function toIso(timestamp: number): string {

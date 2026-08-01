@@ -9,7 +9,7 @@ from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.logs import Logs
 from fixtures.querier import (
-    build_logs_aggregation,
+    build_aggregation,
     build_order_by,
     build_raw_query,
     build_scalar_query,
@@ -40,7 +40,7 @@ def _run_query_case(signoz: types.SigNoz, token: str, now: datetime, case: dict[
     else:
         aggregation = case.get("aggregation")
         if aggregation and not isinstance(aggregation, list):
-            aggregations = [build_logs_aggregation(aggregation)]
+            aggregations = [build_aggregation(aggregation)]
         elif aggregation:
             aggregations = aggregation
         else:

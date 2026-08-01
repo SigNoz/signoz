@@ -527,6 +527,13 @@
       ]
     },
     {
+      "type": "telemetryresource",
+      "kind": "meter-metrics",
+      "verbs": [
+        "read"
+      ]
+    },
+    {
       "type": "metaresource",
       "kind": "logs-field",
       "verbs": [
@@ -671,6 +678,13 @@
     {
       "type": "telemetryresource",
       "kind": "metrics",
+      "verbs": [
+        "read"
+      ]
+    },
+    {
+      "type": "telemetryresource",
+      "kind": "meter-metrics",
       "verbs": [
         "read"
       ]

@@ -20,6 +20,7 @@
 		.ant-table-cell {
 			border: 1px solid var(--l1-border);
 			background: var(--l2-background);
+			vertical-align: top;
 		}
 
 		.attribute-name {
@@ -33,12 +34,12 @@
 		.attribute-pin {
 			cursor: pointer;
 
-			padding: 0;
-			vertical-align: middle;
+			padding: 14px 8px 8px;
+			vertical-align: top;
 			text-align: center;
 
 			.log-attribute-pin {
-				padding: 8px;
+				padding: 0;
 
 				display: flex;
 				justify-content: center;

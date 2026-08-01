@@ -7,29 +7,15 @@ import { useInlineOverflowCount } from 'hooks/useInlineOverflowCount';
 
 import { selectVariablesExpanded } from '../store/slices/collapseSlice';
 import { useDashboardStore } from '../store/useDashboardStore';
-import AddVariableFull from './AddVariableFull';
-import AddVariableIcon from './AddVariableIcon';
-import type { VariableSelection } from './selectionTypes';
-import { useVariableSelection } from './useVariableSelection';
-import VariableSelector from './VariableSelector';
-import styles from './VariablesBar.module.scss';
+import AddVariableFull from './components/AddVariable/AddVariableFull';
+import AddVariableIcon from './components/AddVariable/AddVariableIcon';
+import { TOOLTIP_SCROLL_CONTENT_CLASS } from 'components/TooltipScrollArea/TooltipScrollArea';
 
-// Short display of a variable's current selection, for the collapsed +N tooltip.
-function formatSelection(selection: VariableSelection | undefined): string {
-	if (!selection) {
-		return '—';
-	}
-	if (selection.allSelected) {
-		return 'ALL';
-	}
-	const { value } = selection;
-	if (Array.isArray(value)) {
-		return value.length > 0 ? value.join(', ') : '—';
-	}
-	return value === '' || value === null || value === undefined
-		? '—'
-		: String(value);
-}
+import HiddenVariablesTooltip from './components/HiddenVariablesTooltip/HiddenVariablesTooltip';
+import { useVariableSelection } from './hooks/useVariableSelection';
+import { resolveDefaultSelection } from './utils/resolveVariableSelection';
+import VariableSelector from './components/VariableSelector/VariableSelector';
+import styles from './VariablesBar.module.scss';
 
 interface VariablesBarProps {
 	dashboard: DashboardtypesGettableDashboardV2DTO;
@@ -111,12 +97,10 @@ function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 							variable={variable}
 							variables={variables}
 							selections={selection}
-							selection={
-								selection[variable.name] ?? {
-									value: variable.multiSelect ? [] : '',
-									allSelected: false,
-								}
-							}
+							// Until the seed commits a selection, stand in the same default it will
+							// commit, through the one resolver — an empty stand-in reads as "nothing
+							// selected" to a control that snapshots it on mount.
+							selection={selection[variable.name] ?? resolveDefaultSelection(variable)}
 							onChange={(next): void => setSelection(variable.name, next)}
 							onAutoSelect={(next): void => autoSelect(variable.name, next)}
 						/>
@@ -130,15 +114,12 @@ function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 						) : (
 							<TooltipSimple
 								side="top"
+								tooltipContentProps={{ className: TOOLTIP_SCROLL_CONTENT_CLASS }}
 								title={
-									<div className={styles.overflowTooltip}>
-										{hiddenVariables.map((variable) => (
-											<div key={variable.name}>
-												<span className={styles.overflowName}>{variable.name}</span>:{' '}
-												{formatSelection(selection[variable.name])}
-											</div>
-										))}
-									</div>
+									<HiddenVariablesTooltip
+										variables={hiddenVariables}
+										selections={selection}
+									/>
 								}
 							>
 								{moreButton}

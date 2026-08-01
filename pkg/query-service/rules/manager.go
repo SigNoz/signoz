@@ -357,10 +357,7 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id valuer.UUID) 
 	if err != nil {
 		return err
 	}
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		return err
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 	parsedRule := ruletypes.PostableRule{}
 	err = json.Unmarshal([]byte(ruleStr), &parsedRule)
 	if err != nil {
@@ -372,7 +369,7 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id valuer.UUID) 
 	if err := m.validateChannels(ctx, claims.OrgID, &parsedRule); err != nil {
 		return err
 	}
-	existingRule, err := m.ruleStore.GetStoredRule(ctx, id)
+	existingRule, err := m.ruleStore.GetStoredRule(ctx, orgID, id)
 	if err != nil {
 		return err
 	}
@@ -485,17 +482,14 @@ func (m *Manager) DeleteRule(ctx context.Context, idStr string) error {
 		return err
 	}
 
-	_, err = m.ruleStore.GetStoredRule(ctx, id)
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	_, err = m.ruleStore.GetStoredRule(ctx, orgID, id)
 	if err != nil {
 		return err
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		return err
-	}
-
-	return m.ruleStore.DeleteRule(ctx, id, func(ctx context.Context) error {
+	return m.ruleStore.DeleteRule(ctx, orgID, id, func(ctx context.Context) error {
 		cfg, err := m.alertmanager.GetConfig(ctx, claims.OrgID)
 		if err != nil {
 			return err
@@ -886,7 +880,14 @@ func (m *Manager) ListRuleStates(ctx context.Context) (*ruletypes.GettableRules,
 }
 
 func (m *Manager) GetRule(ctx context.Context, id valuer.UUID) (*ruletypes.GettableRule, error) {
-	s, err := m.ruleStore.GetStoredRule(ctx, id)
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	s, err := m.ruleStore.GetStoredRule(ctx, orgID, id)
 	if err != nil {
 		return nil, err
 	}
@@ -951,15 +952,12 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, id valuer.UUID)
 		return nil, err
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		return nil, err
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	taskName := prepareTaskName(id.StringValue())
 
 	// retrieve rule from DB
-	storedJSON, err := m.ruleStore.GetStoredRule(ctx, id)
+	storedJSON, err := m.ruleStore.GetStoredRule(ctx, orgID, id)
 	if err != nil {
 		m.logger.ErrorContext(ctx, "failed to get stored rule with given id", slog.String("rule.id", id.StringValue()), errors.Attr(err))
 		return nil, err

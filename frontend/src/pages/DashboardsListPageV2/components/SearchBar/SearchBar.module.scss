@@ -1,70 +1,203 @@
 .wrapper {
 	position: relative;
 	width: 100%;
+
+	// --- CodeMirror internals, scoped to this component ---
+	:global(.cm-editor) {
+		background: transparent;
+		// The completion popup is an absolute child; keep it from being clipped.
+		overflow: visible;
+	}
+
+	// The query wraps (EditorView.lineWrapping), so no horizontal scrolling.
+	:global(.cm-scroller) {
+		overflow-x: hidden;
+	}
+
+	// DSL token colours.
+	:global(.cm-dsl-key) {
+		color: var(--bg-robin-400);
+	}
+
+	:global(.cm-dsl-op) {
+		color: var(--bg-vanilla-400);
+	}
+
+	:global(.cm-dsl-logic) {
+		color: var(--bg-sakura-400);
+		font-weight: var(--font-weight-medium);
+	}
+
+	:global(.cm-dsl-string) {
+		color: var(--bg-forest-400);
+	}
+
+	:global(.cm-dsl-value) {
+		color: var(--bg-amber-400);
+	}
+
+	// Completion popup — pinned to the input box (absolute, left:0/right:0) like the
+	// query builder's where-clause editor, not caret-anchored. A "SUGGESTIONS"
+	// header, a scrolling option list, and a keyboard-hint footer.
+	:global(.cm-tooltip.cm-tooltip-autocomplete) {
+		position: absolute !important;
+		top: calc(100% + 6px) !important;
+		left: 0 !important;
+		width: 100% !important;
+		z-index: 1000;
+		display: flex;
+		flex-direction: column;
+		padding: 0;
+		overflow: hidden;
+		border: 1px solid var(--l2-border);
+		border-radius: 6px;
+		background: var(--l1-background);
+		/* stylelint-disable-next-line local/prefer-css-variables -- dropdown shadow */
+		box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
+
+		&::before {
+			content: 'SUGGESTIONS';
+			padding: 12px 14px 8px;
+			font-size: 11px;
+			font-weight: var(--font-weight-medium);
+			line-height: 18px;
+			letter-spacing: 0.88px;
+			text-transform: uppercase;
+			color: var(--muted-foreground);
+		}
+
+		&::after {
+			content: '↑↓ to navigate · ↵ to apply · esc to dismiss';
+			padding: 10px 14px;
+			border-top: 1px solid var(--l1-border);
+			background: var(--l2-background);
+			font-size: var(--font-size-xs);
+			color: var(--l2-foreground);
+		}
+
+		& > ul {
+			flex: 1 1 auto;
+			// min-height:0 lets the list scroll inside the flex column instead of
+			// overflowing past the footer; width 100% so the scrollbar sits at the
+			// popup's right edge (CM otherwise caps the list width, leaving a gap).
+			min-height: 0;
+			width: 100% !important;
+			max-width: 100% !important;
+			max-height: 46vh;
+			margin: 0;
+			overflow-y: auto;
+
+			&::-webkit-scrollbar {
+				width: 6px;
+			}
+
+			&::-webkit-scrollbar-thumb {
+				border-radius: 10px;
+				background: var(--l3-background);
+			}
+
+			&::-webkit-scrollbar-track {
+				background: transparent;
+			}
+		}
+
+		& > ul > li {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 12px;
+			padding: 11px 14px;
+			color: var(--l2-foreground);
+			line-height: 20px;
+
+			&[aria-selected='true'] {
+				background: var(--l2-background);
+				color: var(--l1-foreground);
+			}
+		}
+	}
+
+	:global(.cm-tooltip-autocomplete .cm-completionLabel) {
+		flex: 1;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	// Right-aligned "field" / "tag" hint, as a pill (matches the QB type tags).
+	:global(.cm-tooltip-autocomplete .cm-completionDetail) {
+		flex-shrink: 0;
+		padding: 0 8px;
+		border-radius: 50px;
+		background: color-mix(in srgb, var(--l1-foreground) 10%, transparent);
+		font-style: normal;
+		font-size: var(--font-size-xs);
+		color: var(--l2-foreground);
+		text-transform: capitalize;
+	}
+
+	:global(.cm-completionIcon) {
+		display: none;
+	}
 }
 
-.input::placeholder {
-	color: var(--l3-foreground);
-}
-
-// Flatten the input's bottom corners while the dropdown is attached below it.
-.inputOpen {
-	border-bottom-left-radius: 0;
-	border-bottom-right-radius: 0;
-}
-
-.suggestions {
-	position: absolute;
-	top: 100%;
-	left: 0;
-	right: 0;
-	z-index: 1000;
-	display: flex;
-	flex-direction: column;
-	gap: 2px;
-	max-height: 260px;
-	overflow-y: auto;
-	padding: 4px;
+// Input-like shell. The lead icon and Run button overlay the editor (absolute) so
+// the editor — and its full-width completion popup — spans the whole box.
+.field {
+	position: relative;
 	border: 1px solid var(--l2-border);
-	border-top: none;
-	border-radius: 0 0 6px 6px;
+	border-radius: 6px;
 	background: var(--l1-background);
-	/* stylelint-disable-next-line local/prefer-css-variables -- matches the V2 dashboard dropdown shadow */
-	box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
+
+	&:focus-within {
+		border-color: var(--bg-robin-500);
+	}
 }
 
-.suggestion {
-	display: flex;
-	align-items: center;
-	padding: 8px 10px;
-	border: none;
-	border-radius: 4px;
-	background: transparent;
-	color: var(--l2-foreground);
-	font-family: 'Space Mono', monospace;
-	font-size: var(--font-size-sm);
-	text-align: left;
-	cursor: pointer;
-	transition: background 0.1s;
+.leadIcon {
+	position: absolute;
+	top: 11px;
+	left: 10px;
+	z-index: 1;
 }
 
-.suggestionActive {
-	background: var(--l2-background);
-	color: var(--l1-foreground);
+.editor {
+	width: 100%;
 }
 
 .submit {
+	position: absolute;
+	top: 5px;
+	right: 6px;
+	z-index: 1;
 	display: inline-flex;
 	align-items: center;
 	gap: 6px;
+	// Bordered light pill so "Run query ⌘↵" reads as an actionable button, not stray
+	// text.
+	padding: 3px 8px;
+	border-radius: 6px;
+	border: 1px solid var(--l2-border);
+	background: var(--l2-background);
 	color: var(--bg-vanilla-400);
 }
 
+// Unrun-changes indicator next to "Run query".
+.dirtyDot {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: var(--bg-robin-500);
+}
+
+// Keycap-styled shortcut so ⌘↵ reads as "press this", not decoration.
 .cmdHint {
 	display: inline-flex;
 	align-items: center;
-	gap: 2px;
-	padding: 2px 4px;
+	gap: 3px;
+	padding: 1px 5px;
 	border-radius: 4px;
+	border: 1px solid var(--l1-border);
 	background: var(--l2-background);
+	color: var(--bg-vanilla-400);
 }

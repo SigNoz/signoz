@@ -7,11 +7,11 @@ import { ExpandButtonWrapper } from 'container/InfraMonitoringK8sV2/components';
 import ColumnHeader from '../Base/ColumnHeader';
 import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
-import { formatBytes, getPodPhaseStatusItems } from '../commonUtils';
+import { formatBytes, getPodStatusItems } from '../commonUtils';
 import { INFRA_MONITORING_ATTR_KEYS } from '../constants';
 import {
-	CellValueTooltip,
 	GroupedStatusCounts,
+	TextNoData,
 	ValidateColumnValueWrapper,
 } from '../components';
 import { InfraMonitoringEntity } from '../constants';
@@ -83,14 +83,9 @@ export const k8sNodesColumnsConfig: NodeTableColumnConfig[] = [
 		enableMove: false,
 		pin: 'left',
 		visibilityBehavior: 'hidden-on-expand',
-		cell: ({ value }): React.ReactNode => {
-			const nodeName = value as string;
-			return (
-				<CellValueTooltip value={nodeName}>
-					<TanStackTable.Text>{nodeName}</TanStackTable.Text>
-				</CellValueTooltip>
-			);
-		},
+		cell: ({ value }): React.ReactNode => (
+			<TanStackTable.Text>{value}</TanStackTable.Text>
+		),
 	},
 	{
 		id: 'condition',
@@ -102,10 +97,15 @@ export const k8sNodesColumnsConfig: NodeTableColumnConfig[] = [
 		accessorFn: (row): string => row.condition,
 		width: { min: 120 },
 		enableSort: false,
-		cell: ({ row, groupMeta }): React.ReactNode => {
+		cell: ({ row, groupMeta, rowId }): React.ReactNode => {
 			if (!groupMeta) {
 				const color =
 					NODE_CONDITION_COLORS[row.condition] || NODE_CONDITION_COLORS.no_data;
+
+				if (color === NODE_CONDITION_COLORS.no_data) {
+					return <TextNoData type="tanstack" />;
+				}
+
 				return (
 					<Badge color={color} variant="outline">
 						{NODE_CONDITION_LABEL_MAP[row.condition] || 'Unknown'}
@@ -127,28 +127,32 @@ export const k8sNodesColumnsConfig: NodeTableColumnConfig[] = [
 							color: Color.BG_AMBER_500,
 						},
 					]}
+					rowId={rowId}
 				/>
 			);
 		},
 	},
 	{
-		id: 'podCountsByPhase',
+		id: 'podCountsByStatus',
 		header: (): React.ReactNode => (
-			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/nodes#pod-counts-by-phase">
-				Pod Phases
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/nodes#pod-counts-by-status">
+				Pod Status
 			</ColumnHeader>
 		),
-		accessorFn: (row): InframonitoringtypesNodeRecordDTO['podCountsByPhase'] =>
-			row.podCountsByPhase,
+		accessorFn: (row): InframonitoringtypesNodeRecordDTO['podCountsByStatus'] =>
+			row.podCountsByStatus,
 		width: { min: 250 },
 		enableSort: false,
-		cell: ({ row }): React.ReactNode => {
-			const podCountsByPhase = row.podCountsByPhase;
-			if (!podCountsByPhase) {
-				return <TanStackTable.Text>-</TanStackTable.Text>;
+		cell: ({ row, rowId }): React.ReactNode => {
+			const podCountsByStatus = row.podCountsByStatus;
+			if (!podCountsByStatus) {
+				return <TextNoData type="tanstack" />;
 			}
 			return (
-				<GroupedStatusCounts items={getPodPhaseStatusItems(row.podCountsByPhase)} />
+				<GroupedStatusCounts
+					items={getPodStatusItems(row.podCountsByStatus)}
+					rowId={rowId}
+				/>
 			);
 		},
 	},
@@ -172,17 +176,17 @@ export const k8sNodesColumnsConfig: NodeTableColumnConfig[] = [
 		id: 'cpu',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/nodes#cpu-usage-cores">
-				CPU Usage
-				<br /> (cores)
+				CPU Usage (cores)
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.nodeCPU,
 		width: { min: 160, default: 160 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const cpu = Number(value);
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={cpu}
 					entity={InfraMonitoringEntity.NODES}
 					attribute="CPU metric"
@@ -196,17 +200,17 @@ export const k8sNodesColumnsConfig: NodeTableColumnConfig[] = [
 		id: 'cpu_allocatable',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/nodes#cpu-alloc-cores">
-				CPU Allocatable
-				<br /> (cores)
+				CPU Allocatable (cores)
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.nodeCPUAllocatable,
 		width: { min: 160, default: 190 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const cpuAllocatable = Number(value);
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={cpuAllocatable}
 					entity={InfraMonitoringEntity.NODES}
 					attribute="CPU allocatable metric"
@@ -220,17 +224,17 @@ export const k8sNodesColumnsConfig: NodeTableColumnConfig[] = [
 		id: 'memory',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/nodes#memory-usage-wss">
-				Memory Usage
-				<br /> (WSS)
+				Memory Usage (WSS)
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.nodeMemory,
 		width: { min: 220, default: 220 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const memory = value as number;
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={memory}
 					entity={InfraMonitoringEntity.NODES}
 					attribute="memory metric"
@@ -244,17 +248,17 @@ export const k8sNodesColumnsConfig: NodeTableColumnConfig[] = [
 		id: 'memory_allocatable',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/nodes#memory-allocatable">
-				Memory
-				<br /> Allocatable
+				Memory Allocatable
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.nodeMemoryAllocatable,
 		width: { min: 200, default: 200 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const memoryAllocatable = value as number;
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={memoryAllocatable}
 					entity={InfraMonitoringEntity.NODES}
 					attribute="memory allocatable metric"

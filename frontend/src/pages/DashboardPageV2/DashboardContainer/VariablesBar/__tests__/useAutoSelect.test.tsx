@@ -5,7 +5,7 @@ import {
 	type VariableFormModel,
 } from '../../DashboardSettings/Variables/variableFormModel';
 import type { VariableSelection } from '../selectionTypes';
-import { useAutoSelect } from '../useAutoSelect';
+import { useAutoSelect } from '../hooks/useAutoSelect';
 
 function model(overrides: Partial<VariableFormModel>): VariableFormModel {
 	return { ...emptyVariableFormModel(), ...overrides };
@@ -59,6 +59,47 @@ describe('useAutoSelect', () => {
 			{ value: null, allSelected: true },
 		);
 		expect(next).toBeUndefined();
+	});
+
+	it('selects ALL for an ALL-enabled multi-select with nothing selected', () => {
+		const next = run(
+			model({ type: 'QUERY', multiSelect: true, showAllOption: true }),
+			['a', 'b'],
+			{ value: [], allSelected: false },
+		);
+		expect(next).toStrictEqual({ value: ['a', 'b'], allSelected: true });
+	});
+
+	it('falls back to ALL, not the first option, when every selected value is gone', () => {
+		const next = run(
+			model({ type: 'QUERY', multiSelect: true, showAllOption: true }),
+			['x', 'y'],
+			{ value: ['a', 'b'], allSelected: false },
+		);
+		expect(next).toStrictEqual({ value: ['x', 'y'], allSelected: true });
+	});
+
+	it('selects the ALL sentinel for an empty ALL-enabled dynamic multi-select', () => {
+		const next = run(
+			model({ type: 'DYNAMIC', multiSelect: true, showAllOption: true }),
+			['a', 'b'],
+			{ value: [], allSelected: false },
+		);
+		expect(next).toStrictEqual({ value: null, allSelected: true });
+	});
+
+	it('still honours a configured default over ALL', () => {
+		const next = run(
+			model({
+				type: 'QUERY',
+				multiSelect: true,
+				showAllOption: true,
+				defaultValue: 'b',
+			}),
+			['a', 'b'],
+			{ value: [], allSelected: false },
+		);
+		expect(next).toStrictEqual({ value: ['b'], allSelected: false });
 	});
 
 	it('keeps the still-valid subset of a multi-select when options re-scope', () => {

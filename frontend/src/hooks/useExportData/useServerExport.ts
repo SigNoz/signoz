@@ -19,6 +19,7 @@ interface ExportOptions {
 
 interface UseExportRawDataProps {
 	dataSource: DataSource;
+	panelType?: PANEL_TYPES;
 }
 
 interface UseExportRawDataReturn {
@@ -28,6 +29,7 @@ interface UseExportRawDataReturn {
 
 export function useExportRawData({
 	dataSource,
+	panelType = PANEL_TYPES.LIST,
 }: UseExportRawDataProps): UseExportRawDataReturn {
 	const [isDownloading, setIsDownloading] = useState<boolean>(false);
 
@@ -83,7 +85,7 @@ export function useExportRawData({
 
 				const { queryPayload } = prepareQueryRangePayloadV5({
 					query: exportQuery,
-					graphType: PANEL_TYPES.LIST,
+					graphType: panelType,
 					selectedTime: 'GLOBAL_TIME',
 					globalSelectedInterval,
 				});
@@ -96,7 +98,7 @@ export function useExportRawData({
 				setIsDownloading(false);
 			}
 		},
-		[stagedQuery, globalSelectedInterval, dataSource],
+		[stagedQuery, globalSelectedInterval, dataSource, panelType],
 	);
 
 	return { isDownloading, handleExportRawData };

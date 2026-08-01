@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/flagger"
-	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
+	"github.com/SigNoz/signoz/pkg/telemetryschema/metricstelemetryschema"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -64,7 +64,7 @@ func (m *module) getPerGroupHostStatusCounts(
 		var filterClause *sqlbuilder.WhereClause
 		if filterExpr != "" {
 			var err error
-			filterClause, err = m.buildFilterClause(ctx, &qbtypes.Filter{Expression: filterExpr}, req.Start, req.End)
+			filterClause, err = m.buildFilterClause(ctx, orgID, &qbtypes.Filter{Expression: filterExpr}, req.Start, req.End)
 			if err != nil {
 				return nil, err
 			}
@@ -72,7 +72,7 @@ func (m *module) getPerGroupHostStatusCounts(
 
 		rawSrc := sqlbuilder.NewSelectBuilder()
 		rawSrc.Select("labels")
-		rawSrc.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTimeSeriesTableName))
+		rawSrc.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, distributedTimeSeriesTableName))
 		rawSrc.Where(
 			rawSrc.In("metric_name", sqlbuilder.List(metricNames)),
 			rawSrc.GE("unix_milli", tsAdjustedStartMs),
@@ -85,7 +85,7 @@ func (m *module) getPerGroupHostStatusCounts(
 
 		reducedSrc := sqlbuilder.NewSelectBuilder()
 		reducedSrc.Select("labels")
-		reducedSrc.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.TimeseriesV4ReducedTableName))
+		reducedSrc.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, metricstelemetryschema.TimeseriesV4ReducedTableName))
 		reducedSrc.Where(
 			reducedSrc.In("metric_name", sqlbuilder.List(metricNames)),
 			reducedSrc.GE("unix_milli", tsAdjustedStartMs),
@@ -101,7 +101,7 @@ func (m *module) getPerGroupHostStatusCounts(
 
 		fpSB := m.buildSamplesTblFingerprintSubQuery(metricNames, localSamplesTable, samplesStartMs, flooredEndMs)
 
-		sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTimeSeriesTableName))
+		sb.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, distributedTimeSeriesTableName))
 		sb.Where(
 			sb.In("metric_name", sqlbuilder.List(metricNames)),
 			sb.GE("unix_milli", tsAdjustedStartMs),
@@ -110,7 +110,7 @@ func (m *module) getPerGroupHostStatusCounts(
 		)
 
 		if filterExpr != "" {
-			filterClause, err := m.buildFilterClause(ctx, &qbtypes.Filter{Expression: filterExpr}, req.Start, req.End)
+			filterClause, err := m.buildFilterClause(ctx, orgID, &qbtypes.Filter{Expression: filterExpr}, req.Start, req.End)
 			if err != nil {
 				return nil, err
 			}
@@ -357,7 +357,7 @@ func (m *module) getActiveHostsQuery(metricNames []string, hostNameAttr string, 
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Distinct()
 	sb.Select("attr_string_value")
-	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.AttributesMetadataTableName))
+	sb.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, metricstelemetryschema.AttributesMetadataTableName))
 	sb.Where(
 		sb.In("metric_name", sqlbuilder.List(metricNames)),
 		sb.E("attr_name", hostNameAttr),

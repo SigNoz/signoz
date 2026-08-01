@@ -137,6 +137,26 @@ async function toggleSection(row: ReturnType<Page['locator']>): Promise<void> {
 	});
 }
 
+// Poll a section to the target collapsed/expanded state, re-clicking if a
+// toggle is dropped under CI load. `name` has no regex metacharacters.
+async function setSectionCollapsed(
+	page: Page,
+	name: string,
+	collapsed: boolean,
+): Promise<void> {
+	const collapsedTitle = new RegExp(`^${name} \\(\\d+ widgets?\\)$`);
+	await expect(async () => {
+		const alreadyCollapsed = (await page.getByText(collapsedTitle).count()) > 0;
+		if (alreadyCollapsed === collapsed) {
+			return;
+		}
+		await toggleSection(
+			sectionRow(page, alreadyCollapsed ? collapsedTitle : name),
+		);
+		expect((await page.getByText(collapsedTitle).count()) > 0).toBe(collapsed);
+	}).toPass({ timeout: 30_000 });
+}
+
 /**
  * Click the settings (⋮) icon on a section header, bypassing the sidenav's
  * pointer-event interception via `dispatchEvent('click')` (same root cause
@@ -475,19 +495,19 @@ test.describe('Dashboard Detail — Sections', () => {
 	}) => {
 		await gotoApmDashboard(page);
 
-		await toggleSection(sectionRow(page, 'DB Metrics'));
+		await setSectionCollapsed(page, 'DB Metrics', true);
 		await expect(
 			page.getByText(/^DB Metrics \(\d+ widgets?\)$/).first(),
 		).toBeVisible();
 
-		await toggleSection(sectionRow(page, 'External calls'));
+		await setSectionCollapsed(page, 'External calls', true);
 		await expect(
 			page.getByText(/^External calls \(\d+ widgets?\)$/).first(),
 		).toBeVisible();
 
 		// Restore both so the test leaves no state behind.
-		await toggleSection(sectionRow(page, /^DB Metrics \(\d+ widgets?\)$/));
-		await toggleSection(sectionRow(page, /^External calls \(\d+ widgets?\)$/));
+		await setSectionCollapsed(page, 'DB Metrics', false);
+		await setSectionCollapsed(page, 'External calls', false);
 		await expect(page.getByText(/^DB Metrics \(\d+ widgets?\)$/)).toHaveCount(0);
 		await expect(page.getByText(/^External calls \(\d+ widgets?\)$/)).toHaveCount(
 			0,

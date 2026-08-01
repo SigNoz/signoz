@@ -23,7 +23,7 @@ def test_namespaces_accuracy(
     insert_metrics,
 ) -> None:
     """Seed 2 namespaces x 3 metrics; assert response shape/contract + exact
-    per-namespace metric values and podCountsByPhase.
+    per-namespace metric values.
 
     Tests v1-parity expectation: SpaceAggregationSum across pods within a
     namespace (pods_query.go A=cpu, D=memory both use Sum, namespaces.go:225
@@ -73,14 +73,14 @@ def test_namespaces_accuracy(
             "namespaceName",
             "namespaceCPU",
             "namespaceMemory",
-            "podCountsByPhase",
+            "counts",
             "meta",
         ):
             assert field in record, f"missing {field} in {record!r}"
 
-        for bucket in ("pending", "running", "succeeded", "failed", "unknown"):
-            assert bucket in record["podCountsByPhase"]
-            assert isinstance(record["podCountsByPhase"][bucket], int)
+        for bucket in ("deployments", "daemonSets", "jobs", "statefulSets"):
+            assert bucket in record["counts"]
+            assert isinstance(record["counts"][bucket], int)
 
         assert record["meta"].get("k8s.namespace.name") == record["namespaceName"]
         assert "k8s.cluster.name" in record["meta"]
@@ -89,7 +89,7 @@ def test_namespaces_accuracy(
         exp = exp_by_name[record["namespaceName"]]
         for field in ("namespaceCPU", "namespaceMemory"):
             assert compare_values(record[field], exp[field], 1e-6), f"{record['namespaceName']}.{field}: got {record[field]}, expected {exp[field]}"
-        assert record["podCountsByPhase"] == exp["podCountsByPhase"]
+        assert record["counts"] == exp["counts"]
 
 
 @pytest.mark.parametrize(
@@ -210,6 +210,7 @@ def test_namespaces_warnings(
             {"web-a-prod", "web-b-prod"},
             id="in_contains",
         ),
+        pytest.param("k8s.namespace.namee = 'web-a-prod'", set(), id="unresolved_key"),
     ],
 )
 def test_namespaces_filter(
@@ -265,7 +266,6 @@ def test_namespaces_filter(
 @pytest.mark.parametrize(
     "expression,err_substr",
     [
-        pytest.param("k8s.namespace.namee = 'web-a-prod'", "k8s.namespace.namee", id="bad_attr_name"),
         pytest.param("k8s.namespace.name =", None, id="trailing_op"),
         pytest.param("(k8s.namespace.name = 'web-a-prod'", None, id="unclosed_paren"),
     ],
@@ -278,8 +278,8 @@ def test_namespaces_filter_invalid(
     expression: str,
     err_substr,
 ) -> None:
-    """Invalid filter expressions (typo'd attribute key, malformed grammar) return
-    400 invalid_input with structured errors; bad attribute keys are named in them."""
+    """Malformed filter grammar (trailing operator, unclosed paren) returns
+    400 invalid_input with structured errors."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -309,57 +309,11 @@ def test_namespaces_filter_invalid(
         assert any(err_substr in e["message"] for e in body["error"]["errors"]), f"{err_substr!r} not surfaced: {body['error']['errors']!r}"
 
 
-def test_namespaces_pod_phase_aggregation(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-) -> None:
-    """Namespace with mixed pod phases: podCountsByPhase aggregates correctly.
-    Dataset: 4 running + 1 pending + 2 failed pods all in pp-ns."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/namespaces_pod_phases.jsonl"),
-            base_time=now - timedelta(minutes=4),
-        )
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(ENDPOINT),
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-            "filter": {"expression": "k8s.namespace.name = 'pp-ns'"},
-        },
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()["data"]
-    assert data["total"] == 1
-    rec = data["records"][0]
-    assert rec["namespaceName"] == "pp-ns"
-    assert rec["podCountsByPhase"] == {
-        "pending": 1,
-        "running": 4,
-        "succeeded": 0,
-        "failed": 2,
-        "unknown": 0,
-    }
-
-
 # Float record fields compared with tolerance; everything else compared with ==.
 _GROUPBY_FLOAT_FIELDS = {
     "namespaceCPU",
     "namespaceMemory",
 }
-
-
-def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
-    return {"pending": pending, "running": running, "succeeded": succeeded, "failed": failed, "unknown": unknown}
 
 
 @pytest.mark.parametrize(
@@ -376,10 +330,10 @@ def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
                 "group_meta_keys": ["k8s.namespace.name"],
                 "expected_type": "grouped_list",
                 "groups": {
-                    "gb-ns-1": {"namespaceName": "gb-ns-1", "podCountsByPhase": _phase(running=1)},
-                    "gb-ns-2": {"namespaceName": "gb-ns-2", "podCountsByPhase": _phase(running=1)},
-                    "gb-ns-3": {"namespaceName": "gb-ns-3", "podCountsByPhase": _phase(running=1)},
-                    "gb-ns-4": {"namespaceName": "gb-ns-4", "podCountsByPhase": _phase(running=1)},
+                    "gb-ns-1": {"namespaceName": "gb-ns-1"},
+                    "gb-ns-2": {"namespaceName": "gb-ns-2"},
+                    "gb-ns-3": {"namespaceName": "gb-ns-3"},
+                    "gb-ns-4": {"namespaceName": "gb-ns-4"},
                 },
             },
             id="namespace_name",
@@ -394,8 +348,8 @@ def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
                 "group_meta_keys": ["k8s.cluster.name"],
                 "expected_type": "grouped_list",
                 "groups": {
-                    "gb-cluster-a": {"namespaceName": "", "podCountsByPhase": _phase(running=2)},
-                    "gb-cluster-b": {"namespaceName": "", "podCountsByPhase": _phase(running=2)},
+                    "gb-cluster-a": {"namespaceName": ""},
+                    "gb-cluster-b": {"namespaceName": ""},
                 },
             },
             id="cluster",
@@ -420,20 +374,17 @@ def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
                         "namespaceName": "dup-ns",
                         "namespaceCPU": 0.3,
                         "namespaceMemory": 100000000.0,
-                        "podCountsByPhase": _phase(running=1),
                     },
                     ("dup-ns", "cluster-b"): {
                         "namespaceName": "dup-ns",
                         "namespaceCPU": 0.5,
                         "namespaceMemory": 300000000.0,
-                        "podCountsByPhase": _phase(failed=1),
                     },
                     # empty-cluster group: k8s.cluster.name label absent on the source pods.
                     ("dup-ns", ""): {
                         "namespaceName": "dup-ns",
                         "namespaceCPU": 0.1,
                         "namespaceMemory": 200000000.0,
-                        "podCountsByPhase": _phase(pending=1),
                     },
                 },
             },

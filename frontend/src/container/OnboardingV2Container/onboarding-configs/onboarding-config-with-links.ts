@@ -5319,6 +5319,24 @@ const onboardingConfigWithLinks = [
 		},
 	},
 	{
+		dataSource: 'temporal-cloud-metrics',
+		label: 'Temporal Cloud Metrics',
+		imgUrl: temporalUrl,
+		tags: ['metrics'],
+		module: 'metrics',
+		relatedSearchKeywords: [
+			'metrics',
+			'integrations',
+			'temporal',
+			'temporal cloud',
+			'temporal cloud metrics',
+			'temporal metrics',
+			'openmetrics',
+			'prometheus',
+		],
+		link: '/docs/integrations/temporal-cloud-metrics/',
+	},
+	{
 		dataSource: 'temporal',
 		label: 'Temporal',
 		imgUrl: temporalUrl,
@@ -5329,9 +5347,6 @@ const onboardingConfigWithLinks = [
 			'application performance monitoring',
 			'integrations',
 			'temporal',
-			'temporal cloud',
-			'temporal logs',
-			'temporal metrics',
 			'temporal traces',
 			'traces',
 			'tracing',
@@ -5340,12 +5355,6 @@ const onboardingConfigWithLinks = [
 			desc: 'What are you using ?',
 			type: 'select',
 			options: [
-				{
-					key: 'temporal-cloud',
-					label: 'Cloud Metrics',
-					imgUrl: temporalUrl,
-					link: '/docs/integrations/temporal-cloud-metrics/',
-				},
 				{
 					key: 'temporal-golang',
 					label: 'Go',
