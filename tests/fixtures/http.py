@@ -31,12 +31,13 @@ def zeus(
     def create() -> types.TestContainerDocker:
         container = WireMockContainer(image="wiremock/wiremock:2.35.1-1", secure=False)
         container.with_network(network)
-        if pytestconfig.getoption("--zeus-network-aliases"):
-            container.with_network_aliases("zeus")
+        network_alias = pytestconfig.getoption("--zeus-network-alias")
+        if network_alias:
+            container.with_network_aliases(network_alias)
         container.start()
 
-        if pytestconfig.getoption("--zeus-network-aliases"):
-            container_address = "zeus"
+        if network_alias:
+            container_address = network_alias
         else:
             container_address = container.get_wrapped_container().name
 

@@ -82,10 +82,10 @@ def pytest_addoption(parser: pytest.Parser):
         help="Build and run with web. Run pytest --basetemp=./tmp/ -vv --with-web src/bootstrap/setup::test_setup to setup your local dev environment with web.",
     )
     parser.addoption(
-        "--zeus-network-aliases",
-        action="store_true",
-        default=False,
-        help="Give the zeus WireMock container a fixed network alias (zeus) so the signoz image build args are deterministic; used by CI to share one image across jobs. Do not flip this option between runs of a --reuse environment: cached container configs would go stale.",
+        "--zeus-network-alias",
+        action="store",
+        default="",
+        help="Give the zeus WireMock container a fixed network alias (e.g. --zeus-network-alias zeus) so the signoz image build args are deterministic; used by CI to share one image across jobs. Do not flip this option between runs of a --reuse environment: cached container configs would go stale.",
     )
     parser.addoption(
         "--sqlstore-provider",
