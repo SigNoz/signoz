@@ -4,9 +4,8 @@ ARG OS="linux"
 ARG TARGETARCH
 ARG ZEUSURL
 
-# Build steps run as root; docker derives HOME from the build user rather
-# than declaring it in the image config. Declare it explicitly — every /root
-# in this file derives from it.
+# HOME comes from the build user, not the image config; declare it so the
+# /root paths below trace to it.
 ENV HOME=/root
 
 # This path is important for stacktraces
@@ -23,18 +22,13 @@ RUN set -eux; \
 	; \
 	rm -rf /var/lib/apt/lists/*
 
-# Go writes its build cache to GOCACHE ($HOME-derived) and its module cache
-# to GOMODCACHE ($GOPATH-derived). Pin both explicitly so the cache-mount
-# targets below always match where go actually reads and writes; keep the
-# literal mount targets in sync with these.
+# Keep the literal cache-mount targets below in sync with these. The caches
+# are shared with Dockerfile.with-web.integration (same target paths).
 ENV GOCACHE=$HOME/.cache/go-build
 ENV GOMODCACHE=$GOPATH/pkg/mod
 
 COPY go.mod go.sum ./
 
-# Cache mounts (BuildKit) keep the module and build caches alive across
-# builds, so a source change only recompiles the affected packages instead
-# of the whole tree.
 RUN --mount=type=cache,target=/go/pkg/mod \
 	go mod download
 
@@ -43,10 +37,9 @@ COPY ./ee/ ./ee/
 COPY ./pkg/ ./pkg/
 COPY ./templates /root/templates
 
-# The build command is embedded (instead of COPY Makefile + make
-# go-build-enterprise-race) so Makefile changes don't invalidate this layer.
-# The Makefile's git-derived ldflags (version, hash, branch, time) resolve to
-# empty in here anyway: .git is dockerignored.
+# Invoked directly instead of via make so Makefile changes don't invalidate
+# this layer; the Makefile's git-derived ldflags resolve to empty in here
+# anyway (.git is dockerignored).
 RUN --mount=type=cache,target=/go/pkg/mod \
 	--mount=type=cache,target=/root/.cache/go-build \
 	GOARCH=${TARGETARCH} GOOS=${OS} go build -C ./cmd/enterprise -race -tags timetzdata -o /root/signoz \

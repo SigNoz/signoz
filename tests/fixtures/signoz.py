@@ -53,10 +53,8 @@ def create_signoz(
         # rootdir (tests/).
         context = pytestconfig.rootpath.parent
 
-        # Build via the docker CLI: the integration Dockerfiles use BuildKit
-        # cache mounts, which docker-py (and therefore testcontainers'
-        # DockerImage) does not support. DOCKER_BUILDKIT=1 makes the CLI use
-        # BuildKit even on engines where it is not the default builder.
+        # The docker CLI is required: the Dockerfiles use BuildKit cache
+        # mounts, which docker-py does not support.
         subprocess.run(
             [
                 "docker",

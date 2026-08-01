@@ -46,9 +46,7 @@ def pytest_configure(config: pytest.Config):
 
 def pytest_sessionstart(session: pytest.Session):
     if session.config.getoption("--clean"):
-        # `docker builder prune` is used over `docker buildx prune` since it is
-        # always present when BuildKit is. The type filter keeps images and
-        # regular layer cache intact; only cache mounts are removed.
+        # The type filter removes only cache mounts, leaving images and layer cache intact.
         subprocess.run(["docker", "builder", "prune", "--force", "--filter", "type=exec.cachemount"], check=True)
 
 
