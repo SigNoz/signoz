@@ -213,6 +213,7 @@ def create_signoz(
         create=create,
         delete=delete,
         restore=restore,
+        rebuild=pytestconfig.getoption("--rebuild"),
     )
 
 

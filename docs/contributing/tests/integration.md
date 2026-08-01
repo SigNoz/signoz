@@ -45,6 +45,16 @@ This command will:
 - Register an admin user
 - Keep containers running via the `--reuse` flag
 
+### Rebuilding After Source Changes
+
+`--reuse` keeps the running SigNoz container, which means backend source changes are not picked up. To rebuild the container from the current sources while reusing everything else (databases, mocks, migrations), pass `--rebuild` along with `--reuse`:
+
+```bash
+uv run pytest --basetemp=./tmp/ -vv --reuse --rebuild integration/bootstrap/setup.py::test_setup
+```
+
+This kills the existing SigNoz container, rebuilds the image (incremental — only changed packages recompile thanks to the build cache), and starts a fresh one. This is the standard loop when iterating on backend code and tests together, and applies to the e2e stack as well. `--rebuild` requires `--reuse` and cannot be combined with `--teardown` or `--clean`.
+
 ### Stopping the Test Environment
 
 When you're done writing integration tests, clean up the environment:
