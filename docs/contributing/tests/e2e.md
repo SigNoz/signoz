@@ -288,7 +288,7 @@ The same pytest flags integration tests expose work here, since E2E reuses the s
 - `--reuse` — keep containers warm between runs (required for all iteration).
 - `--rebuild` — recreate the SigNoz container from the current sources (backend and, with `--with-web`, frontend) while the rest of the stack stays up. Requires `--reuse`.
 - `--teardown` — tear everything down.
-- `--clean` — prune the BuildKit cache mounts, forcing the next image build to start cold.
+- `--clean` — prune the docker build caches, forcing the next image build to start cold.
 - `--with-web` — build the frontend into the SigNoz container. **Required for E2E**; integration tests don't need it.
 - `--sqlstore-provider`, `--postgres-version`, `--clickhouse-version`, etc. — see `docs/contributing/tests/integration.md`.
 

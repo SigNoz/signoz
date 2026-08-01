@@ -90,7 +90,7 @@ The `signoz:integration` image build keeps its Go build and module caches in Bui
 uv run pytest --basetemp=./tmp/ -vv --teardown --clean integration/bootstrap/setup.py::test_teardown
 ```
 
-`--clean` runs `docker builder prune --force --filter type=exec.cachemount` at session start. The filter removes only cache mounts, leaving images and regular layer cache intact; note it prunes all BuildKit cache mounts on the host, not just SigNoz's. The flag composes with any invocation — passing it on a normal `--reuse` run simply makes the next image build start cold (~3–4 minutes instead of seconds).
+`--clean` prunes the docker build artifacts backing the incremental image build at session start, so the next build starts from a clean slate. Images and regular layer cache stay intact, but note the pruning is host-wide — it clears build caches for other projects too, not just SigNoz's. The flag composes with any invocation — passing it on a normal `--reuse` run simply makes the next image build start cold (~3–4 minutes instead of seconds).
 
 ## Understanding the Integration Test Framework
 
