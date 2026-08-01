@@ -198,7 +198,7 @@ jobs:
             --clickhouse-version ${{matrix.clickhouse-version}} \
             --schema-migrator-version ${{matrix.schema-migrator-version}} \
             --signoz-image ${{ needs.build.outputs.image }} \
-            --network-aliases
+            --zeus-network-aliases
   e2e:
     needs: build
     strategy:
@@ -260,7 +260,7 @@ jobs:
             --basetemp=./tmp/ \
             -vv --reuse --with-web \
             --signoz-image ${{ needs.build.outputs.web-image }} \
-            --network-aliases \
+            --zeus-network-aliases \
             e2e/bootstrap/setup.py::test_setup
       - name: playwright-test
         run: |
