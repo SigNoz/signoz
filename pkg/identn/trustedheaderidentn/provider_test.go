@@ -162,6 +162,15 @@ var _ user.Getter = (*fakeUserGetter)(nil)
 type fakeUserSetter struct {
 	createdUsers []*types.User
 	autoFail     bool
+	existing     []*types.User
+}
+
+// existing returns a pre-existing user for a matching email and org, mirroring
+// impluser.GetOrCreateUser, which short-circuits on
+// GetNonDeletedUserByEmailAndOrgID before creating anything.
+func (f *fakeUserSetter) withExisting(users ...*types.User) *fakeUserSetter {
+	f.existing = append(f.existing, users...)
+	return f
 }
 
 func (f *fakeUserSetter) CreateFirstUser(context.Context, *types.Organization, string, valuer.Email, string) (*types.User, error) {
@@ -179,6 +188,11 @@ func (f *fakeUserSetter) CreateUser(_ context.Context, u *types.User, _ ...user.
 func (f *fakeUserSetter) GetOrCreateUser(_ context.Context, u *types.User, _ ...user.CreateUserOption) (*types.User, error) {
 	if f.autoFail {
 		return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "get or create user failed")
+	}
+	for _, e := range f.existing {
+		if e.Email == u.Email && e.OrgID == u.OrgID {
+			return e, nil
+		}
 	}
 	f.createdUsers = append(f.createdUsers, u)
 	return u, nil
@@ -449,6 +463,32 @@ func TestGetIdentityRejectsRootUser(t *testing.T) {
 	userGetter := &fakeUserGetter{users: []*types.User{rootUser}}
 
 	p := newProvider(t, newConfig("X-Forwarded-Email", "", false), orgGetter, userGetter, &fakeUserSetter{})
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("X-Forwarded-Email", "root@example.com")
+
+	identity, err := p.GetIdentity(req)
+	require.Error(t, err)
+	assert.Nil(t, identity)
+}
+
+// The root user is filtered out of the lookup, so control reaches the
+// provisioning branch, where GetOrCreateUser finds the existing root record and
+// returns it. Without a post-create guard the provider mints an identity for
+// root, which always holds the admin role.
+func TestGetIdentityDoesNotProvisionIntoRootUser(t *testing.T) {
+	orgID := valuer.GenerateUUID()
+	email, err := valuer.NewEmail("root@example.com")
+	require.NoError(t, err)
+
+	rootUser, err := types.NewRootUser("Root", email, orgID)
+	require.NoError(t, err)
+
+	orgGetter := &fakeOrgGetter{orgs: []*types.Organization{{Identifiable: types.Identifiable{ID: orgID}, Name: "default"}}}
+	userGetter := &fakeUserGetter{users: []*types.User{rootUser}}
+	userSetter := (&fakeUserSetter{}).withExisting(rootUser)
+
+	p := newProvider(t, newConfig("X-Forwarded-Email", "", true), orgGetter, userGetter, userSetter)
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	req.Header.Set("X-Forwarded-Email", "root@example.com")

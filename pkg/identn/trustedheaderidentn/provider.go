@@ -152,6 +152,14 @@ func (provider *provider) GetIdentity(req *http.Request) (*authtypes.Identity, e
 		return nil, err
 	}
 
+	// GetOrCreateUser returns any pre-existing non-deleted record for this email
+	// and org, including root, in which case the Viewer role option above is
+	// never applied. implsession does the same check after provisioning an SSO
+	// user.
+	if err := createdUser.ErrIfRoot(); err != nil {
+		return nil, errors.WithAdditionalf(err, "root user can only authenticate via password")
+	}
+
 	return authtypes.NewPrincipalUserIdentity(
 		createdUser.ID,
 		createdUser.OrgID,
