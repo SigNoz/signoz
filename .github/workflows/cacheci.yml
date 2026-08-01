@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - main
+  # temporary: remove before merge
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -46,12 +50,14 @@ jobs:
         run: |
           docker build -f cmd/enterprise/Dockerfile.integration --build-arg TARGETARCH=amd64 --build-arg ZEUSURL=http://zeus:8080 .
           docker build -f cmd/enterprise/Dockerfile.with-web.integration --build-arg TARGETARCH=amd64 --build-arg ZEUSURL=http://zeus:8080 .
+      # docker cp instead of --output type=local: the local exporter stalls
+      # streaming multi-GB, high-file-count outputs back to the client.
       - name: extract
         run: |
           rm -rf "$RUNNER_TEMP/cacheci"
-          mkdir -p "$RUNNER_TEMP/extract-context"
+          mkdir -p "$RUNNER_TEMP/cacheci" "$RUNNER_TEMP/extract-context"
           cat > "$RUNNER_TEMP/extract.Dockerfile" <<'EOF'
-          FROM busybox:1.37 AS mounts
+          FROM busybox:1.37
           RUN --mount=type=cache,target=/root/.cache/go-build \
               --mount=type=cache,target=/go/pkg/mod \
               --mount=type=cache,target=/pnpm/store \
@@ -59,27 +65,36 @@ jobs:
               cp -a /root/.cache/go-build/. /out/go-build/ && \
               cp -a /go/pkg/mod/. /out/go-mod/ && \
               cp -a /pnpm/store/. /out/pnpm-store/
-          FROM scratch
-          COPY --from=mounts /out/ /
           EOF
-          docker build -f "$RUNNER_TEMP/extract.Dockerfile" --output "type=local,dest=$RUNNER_TEMP/cacheci" "$RUNNER_TEMP/extract-context"
+          docker build -f "$RUNNER_TEMP/extract.Dockerfile" -t cacheci-extract "$RUNNER_TEMP/extract-context"
+          id=$(docker create cacheci-extract)
+          docker cp "$id":/out/. "$RUNNER_TEMP/cacheci/"
+          docker rm "$id"
       # Fixed cache keys are immutable, so each key must be deleted before it
       # can be saved again. Rotating primary and secondary one after the other
       # keeps at least one key restorable for concurrent test runs.
       - name: delete-primary
+        # temporary: remove before merge
+        if: github.event_name != 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh cache delete tests-primary --repo "$GITHUB_REPOSITORY" || true
       - name: save-primary
+        # temporary: remove before merge
+        if: github.event_name != 'pull_request'
         uses: actions/cache/save@v4
         with:
           path: ${{ runner.temp }}/cacheci
           key: tests-primary
       - name: delete-secondary
+        # temporary: remove before merge
+        if: github.event_name != 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh cache delete tests-secondary --repo "$GITHUB_REPOSITORY" || true
       - name: save-secondary
+        # temporary: remove before merge
+        if: github.event_name != 'pull_request'
         uses: actions/cache/save@v4
         with:
           path: ${{ runner.temp }}/cacheci
