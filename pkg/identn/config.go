@@ -47,14 +47,14 @@ type TrustedHeaderConfig struct {
 	// forge identity by setting the header.
 	Enabled bool `mapstructure:"enabled"`
 
-	// EmailHeader is the request header that carries the authenticated user's email.
+	// EmailHeaders is the request header that carries the authenticated user's email.
 	// Defaults to "X-Forwarded-Email" (the de-facto convention for oauth2-proxy and
 	// similar). Authentik users typically set this to "X-Authentik-Email".
-	EmailHeader string `mapstructure:"email_header"`
+	EmailHeaders []string `mapstructure:"email_headers"`
 
-	// NameHeader is optional; used during auto-provisioning to populate the user's
+	// NameHeaders is optional; used during auto-provisioning to populate the user's
 	// display name. Falls back to the email local-part when not set or empty.
-	NameHeader string `mapstructure:"name_header"`
+	NameHeaders []string `mapstructure:"name_headers"`
 
 	// AutoProvision controls whether unknown emails get a user record auto-created
 	// with role Viewer in the request's organization. When false, requests with
@@ -80,8 +80,8 @@ func newConfig() factory.Config {
 			Enabled: false,
 		},
 		TrustedHeader: TrustedHeaderConfig{
-			Enabled:     false,
-			EmailHeader: "X-Forwarded-Email",
+			Enabled:      false,
+			EmailHeaders: []string{"X-Forwarded-Email"},
 		},
 	}
 }
@@ -97,8 +97,8 @@ func (c Config) Validate() error {
 		}
 	}
 
-	if c.TrustedHeader.Enabled && c.TrustedHeader.EmailHeader == "" {
-		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "identn::trusted_header::email_header is required when identn::trusted_header is enabled")
+	if c.TrustedHeader.Enabled && len(c.TrustedHeader.EmailHeaders) == 0 {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "identn::trusted_header::email_headers is required when identn::trusted_header is enabled")
 	}
 
 	return nil

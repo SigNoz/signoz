@@ -17,11 +17,13 @@ import (
 )
 
 var (
-	ErrCodeTrustedHeaderEmailMissing  = errors.MustNewCode("trusted_header_email_missing")
-	ErrCodeTrustedHeaderUserNotFound  = errors.MustNewCode("trusted_header_user_not_found")
-	ErrCodeTrustedHeaderNoOrg         = errors.MustNewCode("trusted_header_no_org")
-	ErrCodeTrustedHeaderMultipleOrgs  = errors.MustNewCode("trusted_header_multiple_orgs")
-	ErrCodeTrustedHeaderAmbiguousUser = errors.MustNewCode("trusted_header_ambiguous_user")
+	ErrCodeTrustedHeaderEmailMissing    = errors.MustNewCode("trusted_header_email_missing")
+	ErrCodeTrustedHeaderUserNotFound    = errors.MustNewCode("trusted_header_user_not_found")
+	ErrCodeTrustedHeaderNoOrg           = errors.MustNewCode("trusted_header_no_org")
+	ErrCodeTrustedHeaderMultipleOrgs    = errors.MustNewCode("trusted_header_multiple_orgs")
+	ErrCodeTrustedHeaderAmbiguousUser   = errors.MustNewCode("trusted_header_ambiguous_user")
+	ErrCodeTrustedHeaderAmbiguousHeader = errors.MustNewCode("trusted_header_ambiguous_header")
+	ErrCodeTrustedHeaderBlankHeader     = errors.MustNewCode("trusted_header_blank_header")
 )
 
 type provider struct {
@@ -72,7 +74,8 @@ func (provider *provider) Name() authtypes.IdentNProvider {
 // those resolvers are enabled, and harmful when they are not, because the
 // header lists stay populated in config even when the resolver is off.
 func (provider *provider) Test(req *http.Request) bool {
-	return provider.extractEmail(req) != ""
+	email, err := provider.extractEmail(req)
+	return err == nil && email != ""
 }
 
 // GetIdentity resolves the request to an authenticated identity using only
@@ -82,9 +85,13 @@ func (provider *provider) Test(req *http.Request) bool {
 func (provider *provider) GetIdentity(req *http.Request) (*authtypes.Identity, error) {
 	ctx := req.Context()
 
-	rawEmail := provider.extractEmail(req)
+	rawEmail, err := provider.extractEmail(req)
+	if err != nil {
+		return nil, err
+	}
+
 	if rawEmail == "" {
-		return nil, errors.New(errors.TypeUnauthenticated, ErrCodeTrustedHeaderEmailMissing, "trusted-header IdentN expected an email header but none was present")
+		return nil, errors.New(errors.TypeUnauthenticated, ErrCodeTrustedHeaderEmailMissing, "expected an email header but none was present")
 	}
 
 	email, err := valuer.NewEmail(rawEmail)
@@ -175,18 +182,49 @@ func (provider *provider) GetIdentity(req *http.Request) (*authtypes.Identity, e
 	), nil
 }
 
-// extractEmail reads the configured email header and trims whitespace.
-func (provider *provider) extractEmail(req *http.Request) string {
-	return strings.TrimSpace(req.Header.Get(provider.config.TrustedHeader.EmailHeader))
+// extractEmail reads the first configured email header that is present on the
+// request. A header carrying more than one value is refused: Header.Get would
+// return only the first, so a proxy that appends rather than replaces would
+// let a client-supplied value win. A header that is present but blank is also
+// refused rather than skipped: a blank identity header means the proxy failed
+// to authenticate the caller, and falling through to a later, less
+// authoritative header would let an attacker supply that one instead. Only a
+// header that is entirely absent falls through to the next configured header.
+func (provider *provider) extractEmail(req *http.Request) (string, error) {
+	for _, header := range provider.config.TrustedHeader.EmailHeaders {
+		values := req.Header.Values(header)
+		if len(values) == 0 {
+			continue
+		}
+
+		if len(values) > 1 {
+			return "", errors.Newf(errors.TypeUnauthenticated, ErrCodeTrustedHeaderAmbiguousHeader, "header carries %d values, expected exactly one", len(values)).
+				WithAdditional(header)
+		}
+
+		value := strings.TrimSpace(values[0])
+		if value == "" {
+			return "", errors.Newf(errors.TypeUnauthenticated, ErrCodeTrustedHeaderBlankHeader, "header is present but carries no value").
+				WithAdditional(header)
+		}
+
+		return value, nil
+	}
+
+	return "", nil
 }
 
-// extractDisplayName falls back through:
-//
-//  1. The configured NameHeader (when set and non-empty)
-//  2. The local-part of the email address
+// extractDisplayName falls back through the configured name headers and then the
+// local part of the email. A name header with several values is ignored rather
+// than fatal: it decides only a display string.
 func (provider *provider) extractDisplayName(req *http.Request, email valuer.Email) string {
-	if provider.config.TrustedHeader.NameHeader != "" {
-		if name := strings.TrimSpace(req.Header.Get(provider.config.TrustedHeader.NameHeader)); name != "" {
+	for _, header := range provider.config.TrustedHeader.NameHeaders {
+		values := req.Header.Values(header)
+		if len(values) != 1 {
+			continue
+		}
+
+		if name := strings.TrimSpace(values[0]); name != "" {
 			return name
 		}
 	}

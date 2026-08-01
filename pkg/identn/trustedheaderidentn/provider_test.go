@@ -265,11 +265,30 @@ func (f *fakeUserSetter) Collect(context.Context, valuer.UUID) (map[string]any, 
 var _ user.Setter = (*fakeUserSetter)(nil)
 
 func newConfig(emailHeader, nameHeader string, autoProvision bool) identn.Config {
+	cfg := identn.Config{
+		TrustedHeader: identn.TrustedHeaderConfig{
+			Enabled:       true,
+			EmailHeaders:  []string{emailHeader},
+			AutoProvision: autoProvision,
+		},
+	}
+
+	if nameHeader != "" {
+		cfg.TrustedHeader.NameHeaders = []string{nameHeader}
+	}
+
+	return cfg
+}
+
+// newConfigWithHeaders is like newConfig but accepts full header lists, so
+// tests can exercise multi-header fallback and precedence behaviour that a
+// single-header config cannot express.
+func newConfigWithHeaders(emailHeaders []string, nameHeaders []string, autoProvision bool) identn.Config {
 	return identn.Config{
 		TrustedHeader: identn.TrustedHeaderConfig{
 			Enabled:       true,
-			EmailHeader:   emailHeader,
-			NameHeader:    nameHeader,
+			EmailHeaders:  emailHeaders,
+			NameHeaders:   nameHeaders,
 			AutoProvision: autoProvision,
 		},
 	}
@@ -557,6 +576,143 @@ func TestGetIdentityRejectsPendingInviteUser(t *testing.T) {
 	identity, err := p.GetIdentity(req)
 	require.Error(t, err)
 	assert.Nil(t, identity)
+}
+
+// Header.Get returns only the first value. A proxy that appends rather than
+// replaces leaves the client's value ahead of the injected one, so the client
+// would choose the identity. Both emails below belong to real active users in
+// the same organization, so without the exactly-one rule this request resolves
+// successfully as the attacker.
+func TestGetIdentityRejectsDuplicateEmailHeaderValues(t *testing.T) {
+	orgID := valuer.GenerateUUID()
+
+	aliceEmail, err := valuer.NewEmail("alice@example.com")
+	require.NoError(t, err)
+	alice, err := types.NewUser("Alice", aliceEmail, orgID, types.UserStatusActive)
+	require.NoError(t, err)
+
+	attackerEmail, err := valuer.NewEmail("attacker@evil.example")
+	require.NoError(t, err)
+	attacker, err := types.NewUser("Attacker", attackerEmail, orgID, types.UserStatusActive)
+	require.NoError(t, err)
+
+	orgGetter := &fakeOrgGetter{orgs: []*types.Organization{{Identifiable: types.Identifiable{ID: orgID}, Name: "default"}}}
+	userGetter := &fakeUserGetter{users: []*types.User{alice, attacker}}
+
+	p := newProvider(t, newConfig("X-Forwarded-Email", "", false), orgGetter, userGetter, &fakeUserSetter{})
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Add("X-Forwarded-Email", "attacker@evil.example")
+	req.Header.Add("X-Forwarded-Email", "alice@example.com")
+
+	identity, err := p.GetIdentity(req)
+	require.Error(t, err)
+	assert.Nil(t, identity)
+	assert.True(t, errors.Asc(err, ErrCodeTrustedHeaderAmbiguousHeader))
+}
+
+// When the first configured email header is entirely absent from the
+// request, the resolver falls through to the next configured header.
+func TestGetIdentityFallsThroughToSecondEmailHeaderWhenFirstAbsent(t *testing.T) {
+	orgID := valuer.GenerateUUID()
+	email, err := valuer.NewEmail("alice@example.com")
+	require.NoError(t, err)
+
+	alice, err := types.NewUser("Alice", email, orgID, types.UserStatusActive)
+	require.NoError(t, err)
+
+	orgGetter := &fakeOrgGetter{orgs: []*types.Organization{{Identifiable: types.Identifiable{ID: orgID}, Name: "default"}}}
+	userGetter := &fakeUserGetter{users: []*types.User{alice}}
+
+	cfg := newConfigWithHeaders([]string{"X-Forwarded-Email", "X-Authentik-Email"}, nil, false)
+	p := newProvider(t, cfg, orgGetter, userGetter, &fakeUserSetter{})
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("X-Authentik-Email", "alice@example.com")
+
+	identity, err := p.GetIdentity(req)
+	require.NoError(t, err)
+	require.NotNil(t, identity)
+	assert.Equal(t, alice.ID, identity.UserID)
+}
+
+// A configured email header that is present but blank is a proxy that failed
+// to authenticate the caller, not a signal to try a less authoritative
+// header. This must be refused rather than falling through to
+// X-Authentik-Email, even though that header carries a real, active user's
+// email in this test.
+func TestGetIdentityRejectsBlankFirstEmailHeaderInsteadOfFallingThrough(t *testing.T) {
+	orgID := valuer.GenerateUUID()
+	email, err := valuer.NewEmail("alice@example.com")
+	require.NoError(t, err)
+
+	alice, err := types.NewUser("Alice", email, orgID, types.UserStatusActive)
+	require.NoError(t, err)
+
+	orgGetter := &fakeOrgGetter{orgs: []*types.Organization{{Identifiable: types.Identifiable{ID: orgID}, Name: "default"}}}
+	userGetter := &fakeUserGetter{users: []*types.User{alice}}
+
+	cfg := newConfigWithHeaders([]string{"X-Forwarded-Email", "X-Authentik-Email"}, nil, false)
+	p := newProvider(t, cfg, orgGetter, userGetter, &fakeUserSetter{})
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("X-Forwarded-Email", "   ")
+	req.Header.Set("X-Authentik-Email", "alice@example.com")
+
+	identity, err := p.GetIdentity(req)
+	require.Error(t, err)
+	assert.Nil(t, identity)
+	assert.True(t, errors.Asc(err, ErrCodeTrustedHeaderBlankHeader))
+}
+
+// When the first configured email header carries two values, the request is
+// refused before the second configured header is ever consulted.
+func TestGetIdentityRejectsDuplicateFirstEmailHeaderWithoutConsultingSecond(t *testing.T) {
+	orgID := valuer.GenerateUUID()
+	email, err := valuer.NewEmail("alice@example.com")
+	require.NoError(t, err)
+
+	alice, err := types.NewUser("Alice", email, orgID, types.UserStatusActive)
+	require.NoError(t, err)
+
+	orgGetter := &fakeOrgGetter{orgs: []*types.Organization{{Identifiable: types.Identifiable{ID: orgID}, Name: "default"}}}
+	userGetter := &fakeUserGetter{users: []*types.User{alice}}
+
+	cfg := newConfigWithHeaders([]string{"X-Forwarded-Email", "X-Authentik-Email"}, nil, false)
+	p := newProvider(t, cfg, orgGetter, userGetter, &fakeUserSetter{})
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Add("X-Forwarded-Email", "attacker@evil.example")
+	req.Header.Add("X-Forwarded-Email", "alice@example.com")
+	req.Header.Set("X-Authentik-Email", "alice@example.com")
+
+	identity, err := p.GetIdentity(req)
+	require.Error(t, err)
+	assert.Nil(t, identity)
+	assert.True(t, errors.Asc(err, ErrCodeTrustedHeaderAmbiguousHeader))
+}
+
+// A name header carrying more than one value is ignored rather than fatal,
+// so provisioning falls back to the email local part for the display name.
+func TestGetIdentityAutoProvisionUsesEmailLocalPartWhenNameHeaderHasMultipleValues(t *testing.T) {
+	orgID := valuer.GenerateUUID()
+	orgGetter := &fakeOrgGetter{orgs: []*types.Organization{{Identifiable: types.Identifiable{ID: orgID}, Name: "default"}}}
+	userSetter := &fakeUserSetter{}
+
+	cfg := newConfigWithHeaders([]string{"X-Forwarded-Email"}, []string{"X-Forwarded-User"}, true)
+	p := newProvider(t, cfg, orgGetter, &fakeUserGetter{}, userSetter)
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("X-Forwarded-Email", "newcomer@example.com")
+	req.Header.Add("X-Forwarded-User", "Newcomer Bob")
+	req.Header.Add("X-Forwarded-User", "Someone Else")
+
+	identity, err := p.GetIdentity(req)
+	require.NoError(t, err)
+	require.NotNil(t, identity)
+
+	require.Len(t, userSetter.createdUsers, 1)
+	assert.Equal(t, "newcomer", userSetter.createdUsers[0].DisplayName)
 }
 
 func TestGetIdentityErrorsWhenEmailMatchesUsersInTwoOrgs(t *testing.T) {
