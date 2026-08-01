@@ -5,7 +5,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -335,16 +337,33 @@ func TestProviderName(t *testing.T) {
 	assert.Equal(t, authtypes.IdentNProviderTrustedHeader, p.Name())
 }
 
-func TestNewRefusesJWTMode(t *testing.T) {
+// TestNewAcceptsJWTMode pins that jwt mode is a fully supported trust mode,
+// not a placeholder: New must construct a working provider from a valid jwt
+// config rather than refusing it. This replaces a now-obsolete assertion:
+// jwt mode used to be rejected outright at construction time before this
+// checker existed.
+func TestNewAcceptsJWTMode(t *testing.T) {
+	_, jwksURL, _ := newJWKSFixture(t)
+
 	cfg := identn.Config{
 		TrustedHeader: identn.TrustedHeaderConfig{
 			Enabled: true,
-			Trust:   identn.TrustConfig{Mode: identn.TrustModeJWT},
+			Trust: identn.TrustConfig{
+				Mode: identn.TrustModeJWT,
+				JWT: identn.JWTTrustConfig{
+					AssertionHeader: "Teleport-Jwt-Assertion",
+					JWKSURL:         jwksURL,
+					Issuer:          "https://teleport.example",
+					Audience:        "signoz",
+					IdentityClaim:   "sub",
+				},
+			},
 		},
 	}
 
-	_, err := New(context.Background(), instrumentationtest.New().ToProviderSettings(), cfg, &fakeOrgGetter{}, &fakeUserGetter{}, &fakeUserSetter{})
-	require.Error(t, err)
+	p, err := New(context.Background(), instrumentationtest.New().ToProviderSettings(), cfg, &fakeOrgGetter{}, &fakeUserGetter{}, &fakeUserSetter{})
+	require.NoError(t, err)
+	assert.NotNil(t, p)
 }
 
 func TestNewRefusesUnsetTrustMode(t *testing.T) {
@@ -871,4 +890,107 @@ func TestGetIdentityErrorsWhenEmailMatchesUsersInTwoOrgs(t *testing.T) {
 	require.Error(t, err)
 	assert.Nil(t, identity)
 	assert.True(t, errors.Ast(err, errors.TypeInvalidInput))
+}
+
+// TestJWTModeTestTrueButGetIdentityFailsOnGarbageAssertion pins a deliberate
+// asymmetry that is specific to jwt mode: Check (and therefore Test) only
+// counts assertion headers, since Test must stay free of I/O, so a request
+// carrying a garbage assertion still makes Test report true. The real
+// verification happens in Email, called only from GetIdentity, which must
+// then fail. That sequence is correct and must not be "fixed" by moving
+// signature verification into Check or Test.
+func TestJWTModeTestTrueButGetIdentityFailsOnGarbageAssertion(t *testing.T) {
+	_, jwksURL, _ := newJWKSFixture(t)
+
+	cfg := identn.Config{
+		TrustedHeader: identn.TrustedHeaderConfig{
+			Enabled: true,
+			Trust: identn.TrustConfig{
+				Mode: identn.TrustModeJWT,
+				JWT: identn.JWTTrustConfig{
+					AssertionHeader: "Teleport-Jwt-Assertion",
+					JWKSURL:         jwksURL,
+					Issuer:          "https://teleport.example",
+					Audience:        "signoz",
+					IdentityClaim:   "sub",
+				},
+			},
+		},
+	}
+
+	p := newProvider(t, cfg, &fakeOrgGetter{}, &fakeUserGetter{}, &fakeUserSetter{})
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("Teleport-Jwt-Assertion", "garbage")
+
+	assert.True(t, p.Test(req))
+
+	identity, err := p.GetIdentity(req)
+	assert.Error(t, err)
+	assert.Nil(t, identity)
+}
+
+// TestJWTModeIgnoresEmailHeadersEvenWhenRootMatches pins the defining
+// property of jwt mode: GetIdentity takes the identity only from the
+// verified assertion (trust.Email), and never consults EmailHeaders, even
+// when a client-supplied header on the very same request would resolve to a
+// different, more privileged user. Both alice (matching the assertion) and
+// root (matching the header) exist in the store, so if GetIdentity ever
+// preferred the header, this test would not silently pass as root (root is
+// filtered out of eligible users), but it would still fail, since
+// auto-provisioning is disabled and no non-root user would remain: the FIX 3
+// experiment in the task report demonstrates exactly that failure mode.
+func TestJWTModeIgnoresEmailHeadersEvenWhenRootMatches(t *testing.T) {
+	key, jwksURL, kid := newJWKSFixture(t)
+
+	orgID := valuer.GenerateUUID()
+
+	aliceEmail, err := valuer.NewEmail("alice@example.com")
+	require.NoError(t, err)
+	alice, err := types.NewUser("Alice", aliceEmail, orgID, types.UserStatusActive)
+	require.NoError(t, err)
+
+	rootEmail, err := valuer.NewEmail("root@example.com")
+	require.NoError(t, err)
+	rootUser, err := types.NewRootUser("Root", rootEmail, orgID)
+	require.NoError(t, err)
+
+	orgGetter := &fakeOrgGetter{orgs: []*types.Organization{{Identifiable: types.Identifiable{ID: orgID}, Name: "default"}}}
+	userGetter := &fakeUserGetter{users: []*types.User{alice, rootUser}}
+
+	cfg := identn.Config{
+		TrustedHeader: identn.TrustedHeaderConfig{
+			Enabled:      true,
+			EmailHeaders: []string{"X-Forwarded-Email"},
+			Trust: identn.TrustConfig{
+				Mode: identn.TrustModeJWT,
+				JWT: identn.JWTTrustConfig{
+					AssertionHeader: "Teleport-Jwt-Assertion",
+					JWKSURL:         jwksURL,
+					Issuer:          "https://teleport.example",
+					Audience:        "signoz",
+					IdentityClaim:   "sub",
+				},
+			},
+		},
+	}
+
+	p := newProvider(t, cfg, orgGetter, userGetter, &fakeUserSetter{})
+
+	assertion := signAssertion(t, key, kid, jwt.MapClaims{
+		"iss": "https://teleport.example",
+		"aud": "signoz",
+		"sub": "alice@example.com",
+		"exp": time.Now().Add(time.Minute).Unix(),
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("Teleport-Jwt-Assertion", assertion)
+	req.Header.Set("X-Forwarded-Email", "root@example.com")
+
+	identity, err := p.GetIdentity(req)
+	require.NoError(t, err)
+	require.NotNil(t, identity)
+	assert.Equal(t, alice.ID, identity.UserID)
+	assert.NotEqual(t, rootUser.ID, identity.UserID)
 }

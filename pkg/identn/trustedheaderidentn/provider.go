@@ -54,12 +54,18 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		"trusted-header identity provider is enabled; SigNoz must be deployed behind a reverse proxy that strips client-supplied identity headers, otherwise any client can forge identity",
 	)
 
+	if config.TrustedHeader.Trust.Mode == identn.TrustModeSecret {
+		settings.Logger().WarnContext(ctx,
+			"trusted-header identity provider is enabled in secret mode; the proxy secret is only as private as the pod that holds it, and any peer that learns it can assert any identity",
+		)
+	}
+
 	var checker trust
 	switch config.TrustedHeader.Trust.Mode {
 	case identn.TrustModeSecret:
 		checker = newSecretTrust(config.TrustedHeader.Trust.Secret)
 	case identn.TrustModeJWT:
-		return nil, errors.New(errors.TypeInvalidInput, ErrCodeTrustedHeaderUnsupportedMode, "identn::trusted_header::trust::mode jwt is not yet supported")
+		checker = newJWTTrust(ctx, config.TrustedHeader.Trust.JWT)
 	default:
 		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeTrustedHeaderUnsupportedMode, "identn::trusted_header::trust::mode %q is not supported", config.TrustedHeader.Trust.Mode.StringValue())
 	}
