@@ -40,38 +40,42 @@ def create_signoz(
         # Get the no-web flag
         with_web = pytestconfig.getoption("--with-web")
 
-        arch = platform.machine()
-        if arch == "x86_64":
-            arch = "amd64"
+        image = pytestconfig.getoption("--signoz-image")
+        if not image:
+            image = "signoz:integration"
 
-        # Build the image
-        dockerfile_path = "cmd/enterprise/Dockerfile.integration"
-        if with_web:
-            dockerfile_path = "cmd/enterprise/Dockerfile.with-web.integration"
+            arch = platform.machine()
+            if arch == "x86_64":
+                arch = "amd64"
 
-        # Docker build context is the repo root — one up from pytest's
-        # rootdir (tests/).
-        context = pytestconfig.rootpath.parent
+            # Build the image
+            dockerfile_path = "cmd/enterprise/Dockerfile.integration"
+            if with_web:
+                dockerfile_path = "cmd/enterprise/Dockerfile.with-web.integration"
 
-        # The docker CLI is required: the Dockerfiles use BuildKit cache
-        # mounts, which docker-py does not support.
-        subprocess.run(
-            [
-                "docker",
-                "build",
-                "--file",
-                str(context / dockerfile_path),
-                "--tag",
-                "signoz:integration",
-                "--build-arg",
-                f"TARGETARCH={arch}",
-                "--build-arg",
-                f"ZEUSURL={zeus.container_configs['8080'].base()}",
-                str(context),
-            ],
-            check=True,
-            env=os.environ | {"DOCKER_BUILDKIT": "1"},
-        )
+            # Docker build context is the repo root — one up from pytest's
+            # rootdir (tests/).
+            context = pytestconfig.rootpath.parent
+
+            # The docker CLI is required: the Dockerfiles use BuildKit cache
+            # mounts, which docker-py does not support.
+            subprocess.run(
+                [
+                    "docker",
+                    "build",
+                    "--file",
+                    str(context / dockerfile_path),
+                    "--tag",
+                    image,
+                    "--build-arg",
+                    f"TARGETARCH={arch}",
+                    "--build-arg",
+                    f"ZEUSURL={zeus.container_configs['8080'].base()}",
+                    str(context),
+                ],
+                check=True,
+                env=os.environ | {"DOCKER_BUILDKIT": "1"},
+            )
 
         env = (
             {
@@ -100,7 +104,7 @@ def create_signoz(
         if env_overrides:
             env = env | env_overrides
 
-        container = DockerContainer("signoz:integration")
+        container = DockerContainer(image)
         for k, v in env.items():
             container.with_env(k, v)
         container.with_exposed_ports(8080)
