@@ -58,13 +58,15 @@ jobs:
           mkdir -p "$RUNNER_TEMP/cacheci" "$RUNNER_TEMP/extract-context"
           cat > "$RUNNER_TEMP/extract.Dockerfile" <<'EOF'
           FROM busybox:1.37
+          # chmod: go's read-only modcache dirs break docker cp's unprivileged untar and later rm -rf on the host
           RUN --mount=type=cache,target=/root/.cache/go-build \
               --mount=type=cache,target=/go/pkg/mod \
               --mount=type=cache,target=/pnpm/store \
               mkdir -p /out/go-build /out/go-mod /out/pnpm-store && \
               cp -a /root/.cache/go-build/. /out/go-build/ && \
               cp -a /go/pkg/mod/. /out/go-mod/ && \
-              cp -a /pnpm/store/. /out/pnpm-store/
+              cp -a /pnpm/store/. /out/pnpm-store/ && \
+              chmod -R u+w /out
           EOF
           docker build -f "$RUNNER_TEMP/extract.Dockerfile" -t cacheci-extract "$RUNNER_TEMP/extract-context"
           id=$(docker create cacheci-extract)
