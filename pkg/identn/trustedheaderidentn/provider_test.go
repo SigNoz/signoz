@@ -497,3 +497,51 @@ func TestGetIdentityPicksNonRootWhenRootAndRegularShareEmail(t *testing.T) {
 		assert.Equal(t, regularOrgID, identity.OrgID)
 	}
 }
+
+func TestGetIdentityRejectsPendingInviteUser(t *testing.T) {
+	orgID := valuer.GenerateUUID()
+	email, err := valuer.NewEmail("alice@example.com")
+	require.NoError(t, err)
+
+	pending, err := types.NewUser("Alice", email, orgID, types.UserStatusPendingInvite)
+	require.NoError(t, err)
+
+	orgGetter := &fakeOrgGetter{orgs: []*types.Organization{{Identifiable: types.Identifiable{ID: orgID}, Name: "default"}}}
+	userGetter := &fakeUserGetter{users: []*types.User{pending}}
+
+	p := newProvider(t, newConfig("X-Forwarded-Email", "", false), orgGetter, userGetter, &fakeUserSetter{})
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("X-Forwarded-Email", "alice@example.com")
+
+	identity, err := p.GetIdentity(req)
+	require.Error(t, err)
+	assert.Nil(t, identity)
+}
+
+func TestGetIdentityErrorsWhenEmailMatchesUsersInTwoOrgs(t *testing.T) {
+	orgA, orgB := valuer.GenerateUUID(), valuer.GenerateUUID()
+	email, err := valuer.NewEmail("alice@example.com")
+	require.NoError(t, err)
+
+	userA, err := types.NewUser("Alice", email, orgA, types.UserStatusActive)
+	require.NoError(t, err)
+	userB, err := types.NewUser("Alice", email, orgB, types.UserStatusActive)
+	require.NoError(t, err)
+
+	orgGetter := &fakeOrgGetter{orgs: []*types.Organization{
+		{Identifiable: types.Identifiable{ID: orgA}, Name: "a"},
+		{Identifiable: types.Identifiable{ID: orgB}, Name: "b"},
+	}}
+	userGetter := &fakeUserGetter{users: []*types.User{userA, userB}}
+
+	p := newProvider(t, newConfig("X-Forwarded-Email", "", false), orgGetter, userGetter, &fakeUserSetter{})
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("X-Forwarded-Email", "alice@example.com")
+
+	identity, err := p.GetIdentity(req)
+	require.Error(t, err)
+	assert.Nil(t, identity)
+	assert.True(t, errors.Ast(err, errors.TypeInvalidInput))
+}

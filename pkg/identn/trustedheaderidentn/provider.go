@@ -17,9 +17,11 @@ import (
 )
 
 var (
-	ErrCodeTrustedHeaderEmailMissing = errors.MustNewCode("trusted_header_email_missing")
-	ErrCodeTrustedHeaderUserNotFound = errors.MustNewCode("trusted_header_user_not_found")
-	ErrCodeTrustedHeaderNoOrg        = errors.MustNewCode("trusted_header_no_org")
+	ErrCodeTrustedHeaderEmailMissing  = errors.MustNewCode("trusted_header_email_missing")
+	ErrCodeTrustedHeaderUserNotFound  = errors.MustNewCode("trusted_header_user_not_found")
+	ErrCodeTrustedHeaderNoOrg         = errors.MustNewCode("trusted_header_no_org")
+	ErrCodeTrustedHeaderMultipleOrgs  = errors.MustNewCode("trusted_header_multiple_orgs")
+	ErrCodeTrustedHeaderAmbiguousUser = errors.MustNewCode("trusted_header_ambiguous_user")
 )
 
 type provider struct {
@@ -102,24 +104,20 @@ func (provider *provider) GetIdentity(req *http.Request) (*authtypes.Identity, e
 		return nil, err
 	}
 
-	// Drop ineligible users — deleted ones (soft-deleted accounts) and root users.
-	// Root users are filtered (not hard-failed on first encounter) because
-	// ListUsersByEmailAndOrgIDs has no guaranteed ordering: in a multi-org
-	// installation where the same email exists in multiple orgs, hard-failing
-	// on `users[0]` being root would non-deterministically block a valid
-	// non-root user that happens to come later in the slice.
-	//
-	// Root users are deliberately not authenticatable via trusted headers
-	// (matches the SAML/OIDC posture) — treating them as "not a match" here
-	// keeps the resolver consistent.
+	// Deleted, root and pending-invite users are not authenticatable through a
+	// trusted header. Root can only authenticate by password. A pending invite
+	// has not proved control of the mailbox, and GetOrCreateUser would activate
+	// it as a side effect while resetting the role an admin chose.
 	users = slices.DeleteFunc(users, func(u *types.User) bool {
-		return u.ErrIfDeleted() != nil || u.ErrIfRoot() != nil
+		return u.ErrIfDeleted() != nil || u.ErrIfRoot() != nil || u.ErrIfPending() != nil
 	})
 
-	if len(users) > 0 {
-		// Pick the first remaining match. Multi-org installations should pin
-		// the user to a specific org via the proxy or a separate header in a
-		// future enhancement.
+	if len(users) > 1 {
+		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeTrustedHeaderAmbiguousUser, "email resolves to %d eligible users across owned organizations", len(users)).
+			WithAdditional("the unique index on users is (email, org_id), so an email can exist in more than one organization; pin the organization instead of relying on lookup order")
+	}
+
+	if len(users) == 1 {
 		matched := users[0]
 
 		return authtypes.NewPrincipalUserIdentity(
@@ -138,7 +136,7 @@ func (provider *provider) GetIdentity(req *http.Request) (*authtypes.Identity, e
 	// We refuse to guess when multiple orgs exist — operators must disable
 	// AutoProvision or pin a single org.
 	if len(orgs) > 1 {
-		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeTrustedHeaderNoOrg, "trusted-header auto-provisioning is not supported with multiple organizations (found %d)", len(orgs))
+		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeTrustedHeaderMultipleOrgs, "auto-provisioning is not supported with multiple organizations (found %d)", len(orgs))
 	}
 
 	orgID := orgs[0].ID
