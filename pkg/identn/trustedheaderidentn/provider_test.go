@@ -264,12 +264,19 @@ func (f *fakeUserSetter) Collect(context.Context, valuer.UUID) (map[string]any, 
 
 var _ user.Setter = (*fakeUserSetter)(nil)
 
+const testSecretHeader = "X-Proxy-Auth"
+const testSecretValue = "test-proxy-secret"
+
 func newConfig(emailHeader, nameHeader string, autoProvision bool) identn.Config {
 	cfg := identn.Config{
 		TrustedHeader: identn.TrustedHeaderConfig{
 			Enabled:       true,
 			EmailHeaders:  []string{emailHeader},
 			AutoProvision: autoProvision,
+			Trust: identn.TrustConfig{
+				Mode:   identn.TrustModeSecret,
+				Secret: identn.SecretTrustConfig{Header: testSecretHeader, Value: testSecretValue},
+			},
 		},
 	}
 
@@ -290,8 +297,27 @@ func newConfigWithHeaders(emailHeaders []string, nameHeaders []string, autoProvi
 			EmailHeaders:  emailHeaders,
 			NameHeaders:   nameHeaders,
 			AutoProvision: autoProvision,
+			Trust: identn.TrustConfig{
+				Mode:   identn.TrustModeSecret,
+				Secret: identn.SecretTrustConfig{Header: testSecretHeader, Value: testSecretValue},
+			},
 		},
 	}
+}
+
+// newTrustedRequest builds a request that already satisfies the trust check,
+// so tests can focus on identity resolution. header names which request
+// header the email is set under; it must match the provider's configured
+// email header, since a mismatch here would silently exercise the "header
+// absent" path instead of the one the test intends. Tests exercising
+// multi-value or multi-header setups build the request directly instead.
+func newTrustedRequest(header, email string) *http.Request {
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set(testSecretHeader, testSecretValue)
+	if email != "" {
+		req.Header.Set(header, email)
+	}
+	return req
 }
 
 func newProvider(t *testing.T, cfg identn.Config, orgGetter organization.Getter, userGetter user.Getter, userSetter user.Setter) identn.IdentN {
@@ -309,11 +335,98 @@ func TestProviderName(t *testing.T) {
 	assert.Equal(t, authtypes.IdentNProviderTrustedHeader, p.Name())
 }
 
-func TestTestReturnsTrueWhenHeaderPresent(t *testing.T) {
+func TestNewRefusesJWTMode(t *testing.T) {
+	cfg := identn.Config{
+		TrustedHeader: identn.TrustedHeaderConfig{
+			Enabled: true,
+			Trust:   identn.TrustConfig{Mode: identn.TrustModeJWT},
+		},
+	}
+
+	_, err := New(context.Background(), instrumentationtest.New().ToProviderSettings(), cfg, &fakeOrgGetter{}, &fakeUserGetter{}, &fakeUserSetter{})
+	require.Error(t, err)
+}
+
+func TestNewRefusesUnsetTrustMode(t *testing.T) {
+	cfg := identn.Config{
+		TrustedHeader: identn.TrustedHeaderConfig{
+			Enabled: true,
+		},
+	}
+
+	_, err := New(context.Background(), instrumentationtest.New().ToProviderSettings(), cfg, &fakeOrgGetter{}, &fakeUserGetter{}, &fakeUserSetter{})
+	require.Error(t, err)
+}
+
+// The following six tests pin down that Test actually consults the trust
+// checker and the peer allowlist rather than only the email header. Deleting
+// the provider.trust.Check call from Test, or the peerAllowed call, must make
+// at least one of these fail; that experiment is recorded in the task report.
+func TestTestReturnsFalseWhenSecretHeaderAbsent(t *testing.T) {
 	p := newProvider(t, newConfig("X-Forwarded-Email", "", false), &fakeOrgGetter{}, &fakeUserGetter{}, &fakeUserSetter{})
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	req.Header.Set("X-Forwarded-Email", "alice@example.com")
+
+	assert.False(t, p.Test(req))
+}
+
+func TestTestReturnsFalseWhenSecretWrong(t *testing.T) {
+	p := newProvider(t, newConfig("X-Forwarded-Email", "", false), &fakeOrgGetter{}, &fakeUserGetter{}, &fakeUserSetter{})
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("X-Forwarded-Email", "alice@example.com")
+	req.Header.Set(testSecretHeader, "wrong-value")
+
+	assert.False(t, p.Test(req))
+}
+
+func TestTestReturnsFalseWhenSecretHeaderDuplicated(t *testing.T) {
+	p := newProvider(t, newConfig("X-Forwarded-Email", "", false), &fakeOrgGetter{}, &fakeUserGetter{}, &fakeUserSetter{})
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("X-Forwarded-Email", "alice@example.com")
+	req.Header.Add(testSecretHeader, testSecretValue)
+	req.Header.Add(testSecretHeader, testSecretValue)
+
+	assert.False(t, p.Test(req))
+}
+
+func TestTestReturnsFalseWhenPeerOutsideTrustedProxies(t *testing.T) {
+	cfg := newConfig("X-Forwarded-Email", "", false)
+	cfg.TrustedHeader.TrustedProxies = []string{"10.0.0.0/24"}
+	p := newProvider(t, cfg, &fakeOrgGetter{}, &fakeUserGetter{}, &fakeUserSetter{})
+
+	req := newTrustedRequest("X-Forwarded-Email", "alice@example.com")
+	req.RemoteAddr = "192.168.1.5:12345"
+
+	assert.False(t, p.Test(req))
+}
+
+func TestTestReturnsTrueWhenPeerInsideTrustedProxies(t *testing.T) {
+	cfg := newConfig("X-Forwarded-Email", "", false)
+	cfg.TrustedHeader.TrustedProxies = []string{"10.0.0.0/24"}
+	p := newProvider(t, cfg, &fakeOrgGetter{}, &fakeUserGetter{}, &fakeUserSetter{})
+
+	req := newTrustedRequest("X-Forwarded-Email", "alice@example.com")
+	req.RemoteAddr = "10.0.0.5:12345"
+
+	assert.True(t, p.Test(req))
+}
+
+func TestTestReturnsTrueWhenTrustedProxiesEmptyRegardlessOfPeer(t *testing.T) {
+	p := newProvider(t, newConfig("X-Forwarded-Email", "", false), &fakeOrgGetter{}, &fakeUserGetter{}, &fakeUserSetter{})
+
+	req := newTrustedRequest("X-Forwarded-Email", "alice@example.com")
+	req.RemoteAddr = "203.0.113.7:54321"
+
+	assert.True(t, p.Test(req))
+}
+
+func TestTestReturnsTrueWhenHeaderPresent(t *testing.T) {
+	p := newProvider(t, newConfig("X-Forwarded-Email", "", false), &fakeOrgGetter{}, &fakeUserGetter{}, &fakeUserSetter{})
+
+	req := newTrustedRequest("X-Forwarded-Email", "alice@example.com")
 
 	assert.True(t, p.Test(req))
 }
@@ -321,7 +434,7 @@ func TestTestReturnsTrueWhenHeaderPresent(t *testing.T) {
 func TestTestReturnsFalseWhenHeaderMissing(t *testing.T) {
 	p := newProvider(t, newConfig("X-Forwarded-Email", "", false), &fakeOrgGetter{}, &fakeUserGetter{}, &fakeUserSetter{})
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := newTrustedRequest("X-Forwarded-Email", "")
 
 	assert.False(t, p.Test(req))
 }
@@ -329,7 +442,7 @@ func TestTestReturnsFalseWhenHeaderMissing(t *testing.T) {
 func TestTestReturnsFalseWhenHeaderBlank(t *testing.T) {
 	p := newProvider(t, newConfig("X-Forwarded-Email", "", false), &fakeOrgGetter{}, &fakeUserGetter{}, &fakeUserSetter{})
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := newTrustedRequest("X-Forwarded-Email", "")
 	req.Header.Set("X-Forwarded-Email", "   ")
 
 	assert.False(t, p.Test(req))
@@ -349,8 +462,7 @@ func TestGetIdentityReturnsExistingUser(t *testing.T) {
 
 	p := newProvider(t, newConfig("X-Forwarded-Email", "", false), orgGetter, userGetter, userSetter)
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.Header.Set("X-Forwarded-Email", "alice@example.com")
+	req := newTrustedRequest("X-Forwarded-Email", "alice@example.com")
 
 	identity, err := p.GetIdentity(req)
 	require.NoError(t, err)
@@ -364,10 +476,35 @@ func TestGetIdentityReturnsExistingUser(t *testing.T) {
 	assert.Empty(t, userSetter.createdUsers, "expected no auto-provisioned users")
 }
 
+// GetIdentity must not rely on Test having already run: even a fully valid,
+// known email must be refused if the request never proved it came from the
+// trusted proxy.
+func TestGetIdentityRefusesRequestWithoutSecret(t *testing.T) {
+	orgID := valuer.GenerateUUID()
+	email, err := valuer.NewEmail("alice@example.com")
+	require.NoError(t, err)
+
+	existing, err := types.NewUser("Alice", email, orgID, types.UserStatusActive)
+	require.NoError(t, err)
+
+	orgGetter := &fakeOrgGetter{orgs: []*types.Organization{{Identifiable: types.Identifiable{ID: orgID}, Name: "default"}}}
+	userGetter := &fakeUserGetter{users: []*types.User{existing}}
+
+	p := newProvider(t, newConfig("X-Forwarded-Email", "", false), orgGetter, userGetter, &fakeUserSetter{})
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("X-Forwarded-Email", "alice@example.com")
+
+	identity, err := p.GetIdentity(req)
+	require.Error(t, err)
+	assert.Nil(t, identity)
+	assert.True(t, errors.Asc(err, ErrCodeTrustedHeaderUntrusted))
+}
+
 func TestGetIdentityErrorsWhenHeaderMissing(t *testing.T) {
 	p := newProvider(t, newConfig("X-Forwarded-Email", "", false), &fakeOrgGetter{}, &fakeUserGetter{}, &fakeUserSetter{})
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := newTrustedRequest("X-Forwarded-Email", "")
 
 	identity, err := p.GetIdentity(req)
 	require.Error(t, err)
@@ -378,8 +515,7 @@ func TestGetIdentityErrorsWhenHeaderMissing(t *testing.T) {
 func TestGetIdentityErrorsWhenEmailInvalid(t *testing.T) {
 	p := newProvider(t, newConfig("X-Forwarded-Email", "", false), &fakeOrgGetter{}, &fakeUserGetter{}, &fakeUserSetter{})
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.Header.Set("X-Forwarded-Email", "not-an-email")
+	req := newTrustedRequest("X-Forwarded-Email", "not-an-email")
 
 	identity, err := p.GetIdentity(req)
 	require.Error(t, err)
@@ -392,8 +528,7 @@ func TestGetIdentityErrorsWhenUserUnknownAndAutoProvisionDisabled(t *testing.T) 
 
 	p := newProvider(t, newConfig("X-Forwarded-Email", "", false), orgGetter, &fakeUserGetter{}, &fakeUserSetter{})
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.Header.Set("X-Forwarded-Email", "ghost@example.com")
+	req := newTrustedRequest("X-Forwarded-Email", "ghost@example.com")
 
 	identity, err := p.GetIdentity(req)
 	require.Error(t, err)
@@ -408,8 +543,7 @@ func TestGetIdentityAutoProvisionsWhenEnabled(t *testing.T) {
 
 	p := newProvider(t, newConfig("X-Forwarded-Email", "X-Forwarded-User", true), orgGetter, &fakeUserGetter{}, userSetter)
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.Header.Set("X-Forwarded-Email", "newcomer@example.com")
+	req := newTrustedRequest("X-Forwarded-Email", "newcomer@example.com")
 	req.Header.Set("X-Forwarded-User", "Newcomer Bob")
 
 	identity, err := p.GetIdentity(req)
@@ -431,8 +565,7 @@ func TestGetIdentityAutoProvisionUsesEmailLocalPartWhenNoNameHeader(t *testing.T
 
 	p := newProvider(t, newConfig("X-Forwarded-Email", "", true), orgGetter, &fakeUserGetter{}, userSetter)
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.Header.Set("X-Forwarded-Email", "carol@example.com")
+	req := newTrustedRequest("X-Forwarded-Email", "carol@example.com")
 
 	_, err := p.GetIdentity(req)
 	require.NoError(t, err)
@@ -451,8 +584,7 @@ func TestGetIdentityRefusesAutoProvisionWithMultipleOrgs(t *testing.T) {
 
 	p := newProvider(t, newConfig("X-Forwarded-Email", "", true), orgGetter, &fakeUserGetter{}, &fakeUserSetter{})
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.Header.Set("X-Forwarded-Email", "newcomer@example.com")
+	req := newTrustedRequest("X-Forwarded-Email", "newcomer@example.com")
 
 	identity, err := p.GetIdentity(req)
 	require.Error(t, err)
@@ -462,8 +594,7 @@ func TestGetIdentityRefusesAutoProvisionWithMultipleOrgs(t *testing.T) {
 func TestGetIdentityErrorsWhenNoOrganization(t *testing.T) {
 	p := newProvider(t, newConfig("X-Forwarded-Email", "", true), &fakeOrgGetter{}, &fakeUserGetter{}, &fakeUserSetter{})
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.Header.Set("X-Forwarded-Email", "alice@example.com")
+	req := newTrustedRequest("X-Forwarded-Email", "alice@example.com")
 
 	identity, err := p.GetIdentity(req)
 	require.Error(t, err)
@@ -483,8 +614,7 @@ func TestGetIdentityRejectsRootUser(t *testing.T) {
 
 	p := newProvider(t, newConfig("X-Forwarded-Email", "", false), orgGetter, userGetter, &fakeUserSetter{})
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.Header.Set("X-Forwarded-Email", "root@example.com")
+	req := newTrustedRequest("X-Forwarded-Email", "root@example.com")
 
 	identity, err := p.GetIdentity(req)
 	require.Error(t, err)
@@ -509,8 +639,7 @@ func TestGetIdentityDoesNotProvisionIntoRootUser(t *testing.T) {
 
 	p := newProvider(t, newConfig("X-Forwarded-Email", "", true), orgGetter, userGetter, userSetter)
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.Header.Set("X-Forwarded-Email", "root@example.com")
+	req := newTrustedRequest("X-Forwarded-Email", "root@example.com")
 
 	identity, err := p.GetIdentity(req)
 	require.Error(t, err)
@@ -546,8 +675,7 @@ func TestGetIdentityPicksNonRootWhenRootAndRegularShareEmail(t *testing.T) {
 		userGetter := &fakeUserGetter{users: ordering}
 		p := newProvider(t, newConfig("X-Forwarded-Email", "", false), orgGetter, userGetter, &fakeUserSetter{})
 
-		req := httptest.NewRequest(http.MethodGet, "/", nil)
-		req.Header.Set("X-Forwarded-Email", "shared@example.com")
+		req := newTrustedRequest("X-Forwarded-Email", "shared@example.com")
 
 		identity, err := p.GetIdentity(req)
 		require.NoError(t, err)
@@ -570,8 +698,7 @@ func TestGetIdentityRejectsPendingInviteUser(t *testing.T) {
 
 	p := newProvider(t, newConfig("X-Forwarded-Email", "", false), orgGetter, userGetter, &fakeUserSetter{})
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.Header.Set("X-Forwarded-Email", "alice@example.com")
+	req := newTrustedRequest("X-Forwarded-Email", "alice@example.com")
 
 	identity, err := p.GetIdentity(req)
 	require.Error(t, err)
@@ -602,6 +729,7 @@ func TestGetIdentityRejectsDuplicateEmailHeaderValues(t *testing.T) {
 	p := newProvider(t, newConfig("X-Forwarded-Email", "", false), orgGetter, userGetter, &fakeUserSetter{})
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set(testSecretHeader, testSecretValue)
 	req.Header.Add("X-Forwarded-Email", "attacker@evil.example")
 	req.Header.Add("X-Forwarded-Email", "alice@example.com")
 
@@ -628,6 +756,7 @@ func TestGetIdentityFallsThroughToSecondEmailHeaderWhenFirstAbsent(t *testing.T)
 	p := newProvider(t, cfg, orgGetter, userGetter, &fakeUserSetter{})
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set(testSecretHeader, testSecretValue)
 	req.Header.Set("X-Authentik-Email", "alice@example.com")
 
 	identity, err := p.GetIdentity(req)
@@ -656,6 +785,7 @@ func TestGetIdentityRejectsBlankFirstEmailHeaderInsteadOfFallingThrough(t *testi
 	p := newProvider(t, cfg, orgGetter, userGetter, &fakeUserSetter{})
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set(testSecretHeader, testSecretValue)
 	req.Header.Set("X-Forwarded-Email", "   ")
 	req.Header.Set("X-Authentik-Email", "alice@example.com")
 
@@ -682,6 +812,7 @@ func TestGetIdentityRejectsDuplicateFirstEmailHeaderWithoutConsultingSecond(t *t
 	p := newProvider(t, cfg, orgGetter, userGetter, &fakeUserSetter{})
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set(testSecretHeader, testSecretValue)
 	req.Header.Add("X-Forwarded-Email", "attacker@evil.example")
 	req.Header.Add("X-Forwarded-Email", "alice@example.com")
 	req.Header.Set("X-Authentik-Email", "alice@example.com")
@@ -703,6 +834,7 @@ func TestGetIdentityAutoProvisionUsesEmailLocalPartWhenNameHeaderHasMultipleValu
 	p := newProvider(t, cfg, orgGetter, &fakeUserGetter{}, userSetter)
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set(testSecretHeader, testSecretValue)
 	req.Header.Set("X-Forwarded-Email", "newcomer@example.com")
 	req.Header.Add("X-Forwarded-User", "Newcomer Bob")
 	req.Header.Add("X-Forwarded-User", "Someone Else")
@@ -733,8 +865,7 @@ func TestGetIdentityErrorsWhenEmailMatchesUsersInTwoOrgs(t *testing.T) {
 
 	p := newProvider(t, newConfig("X-Forwarded-Email", "", false), orgGetter, userGetter, &fakeUserSetter{})
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.Header.Set("X-Forwarded-Email", "alice@example.com")
+	req := newTrustedRequest("X-Forwarded-Email", "alice@example.com")
 
 	identity, err := p.GetIdentity(req)
 	require.Error(t, err)

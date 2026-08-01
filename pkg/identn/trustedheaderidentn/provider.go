@@ -2,6 +2,7 @@ package trustedheaderidentn
 
 import (
 	"context"
+	"net"
 	"net/http"
 	"slices"
 	"strings"
@@ -24,14 +25,17 @@ var (
 	ErrCodeTrustedHeaderAmbiguousUser   = errors.MustNewCode("trusted_header_ambiguous_user")
 	ErrCodeTrustedHeaderAmbiguousHeader = errors.MustNewCode("trusted_header_ambiguous_header")
 	ErrCodeTrustedHeaderBlankHeader     = errors.MustNewCode("trusted_header_blank_header")
+	ErrCodeTrustedHeaderUnsupportedMode = errors.MustNewCode("trusted_header_unsupported_trust_mode")
 )
 
 type provider struct {
-	config     identn.Config
-	settings   factory.ScopedProviderSettings
-	orgGetter  organization.Getter
-	userGetter user.Getter
-	userSetter user.Setter
+	config         identn.Config
+	settings       factory.ScopedProviderSettings
+	orgGetter      organization.Getter
+	userGetter     user.Getter
+	userSetter     user.Setter
+	trust          trust
+	trustedProxies []*net.IPNet
 }
 
 func NewFactory(orgGetter organization.Getter, userGetter user.Getter, userSetter user.Setter) factory.ProviderFactory[identn.IdentN, identn.Config] {
@@ -50,12 +54,35 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		"trusted-header identity provider is enabled; SigNoz must be deployed behind a reverse proxy that strips client-supplied identity headers, otherwise any client can forge identity",
 	)
 
+	var checker trust
+	switch config.TrustedHeader.Trust.Mode {
+	case identn.TrustModeSecret:
+		checker = newSecretTrust(config.TrustedHeader.Trust.Secret)
+	case identn.TrustModeJWT:
+		return nil, errors.New(errors.TypeInvalidInput, ErrCodeTrustedHeaderUnsupportedMode, "identn::trusted_header::trust::mode jwt is not yet supported")
+	default:
+		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeTrustedHeaderUnsupportedMode, "identn::trusted_header::trust::mode %q is not supported", config.TrustedHeader.Trust.Mode.StringValue())
+	}
+
+	// Parsed once here, rather than per request, since config validation
+	// already guarantees every entry parses as a CIDR.
+	trustedProxies := make([]*net.IPNet, 0, len(config.TrustedHeader.TrustedProxies))
+	for _, cidr := range config.TrustedHeader.TrustedProxies {
+		_, network, err := net.ParseCIDR(cidr)
+		if err != nil {
+			return nil, err
+		}
+		trustedProxies = append(trustedProxies, network)
+	}
+
 	return &provider{
-		config:     config,
-		settings:   settings,
-		orgGetter:  orgGetter,
-		userGetter: userGetter,
-		userSetter: userSetter,
+		config:         config,
+		settings:       settings,
+		orgGetter:      orgGetter,
+		userGetter:     userGetter,
+		userSetter:     userSetter,
+		trust:          checker,
+		trustedProxies: trustedProxies,
 	}, nil
 }
 
@@ -73,9 +100,55 @@ func (provider *provider) Name() authtypes.IdentNProvider {
 // reaches this provider. Duplicating the check here would be unreachable when
 // those resolvers are enabled, and harmful when they are not, because the
 // header lists stay populated in config even when the resolver is off.
+//
+// Provenance is established first: the peer address must be allowed, and then
+// the configured trust check (a proxy secret today; a verified JWT assertion
+// in a later change) must pass. Only once the request is trusted does this
+// look at identity at all.
 func (provider *provider) Test(req *http.Request) bool {
+	if !provider.peerAllowed(req) {
+		return false
+	}
+
+	if err := provider.trust.Check(req); err != nil {
+		return false
+	}
+
+	// When the proof carries the identity, Check having passed is enough to claim
+	// the request. Verifying the assertion itself would mean network I/O, which
+	// this method must not do; that happens in GetIdentity.
+	if provider.trust.CarriesIdentity() {
+		return true
+	}
+
 	email, err := provider.extractEmail(req)
 	return err == nil && email != ""
+}
+
+// peerAllowed matches the immediate TCP peer against the configured CIDRs. It
+// deliberately ignores X-Forwarded-For, which a client controls.
+func (provider *provider) peerAllowed(req *http.Request) bool {
+	if len(provider.trustedProxies) == 0 {
+		return true
+	}
+
+	host, _, err := net.SplitHostPort(req.RemoteAddr)
+	if err != nil {
+		host = req.RemoteAddr
+	}
+
+	addr := net.ParseIP(host)
+	if addr == nil {
+		return false
+	}
+
+	for _, network := range provider.trustedProxies {
+		if network.Contains(addr) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // GetIdentity resolves the request to an authenticated identity using only
@@ -85,9 +158,28 @@ func (provider *provider) Test(req *http.Request) bool {
 func (provider *provider) GetIdentity(req *http.Request) (*authtypes.Identity, error) {
 	ctx := req.Context()
 
-	rawEmail, err := provider.extractEmail(req)
-	if err != nil {
+	// GetIdentity is reached only after the resolver's Test has already called
+	// Check, but that is a property of how the resolver is wired today, not a
+	// contract Test or GetIdentity enforce on each other. Test is a
+	// provider-selection predicate on an exported interface, not an
+	// authorization boundary, so provenance is verified again here rather than
+	// relying on caller discipline.
+	if err := provider.trust.Check(req); err != nil {
 		return nil, err
+	}
+
+	var rawEmail string
+	var err error
+	if provider.trust.CarriesIdentity() {
+		rawEmail, err = provider.trust.Email(req)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		rawEmail, err = provider.extractEmail(req)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if rawEmail == "" {

@@ -407,6 +407,40 @@ identn:
   impersonation:
     # toggle impersonation identN, when enabled, all requests will impersonate the root user
     enabled: false
+  trusted_header:
+    # toggle trusted-header identN. When enabled, identity comes from a fronting
+    # identity-aware proxy. Cannot be enabled together with impersonation.
+    enabled: false
+    trust:
+      # how proxy provenance is established. Required when enabled.
+      # "jwt": verify a signed assertion against a JWKS endpoint. Recommended:
+      #   it is the only mode an attacker with network access cannot forge.
+      # "secret": require a secret header, compared in constant time. Weaker,
+      #   because anything that can read the pod spec can read the secret.
+      mode: ""
+      jwt:
+        assertion_header: Teleport-Jwt-Assertion
+        jwks_url: ""
+        issuer: ""
+        audience: ""
+        identity_claim: sub
+      secret:
+        header: ""
+        value: ""
+    # headers carrying the authenticated user's email. Ignored in jwt mode.
+    email_headers:
+      - X-Forwarded-Email
+    # optional headers setting a display name when provisioning
+    name_headers: []
+    # create a Viewer for an unknown email. Note that Viewer can run raw
+    # ClickHouse SQL, so this is not a small grant.
+    auto_provision: false
+    # optional peer CIDR allowlist. Defence in depth only: in Kubernetes every
+    # pod shares the pod CIDR, so this cannot distinguish the proxy from any
+    # other pod. Never rely on it as the only control.
+    trusted_proxies: []
+    # where the UI sends a user on logout, so the proxy session ends too
+    logout_redirect_url: ""
 
 ##################### Service Account #####################
 serviceaccount:
