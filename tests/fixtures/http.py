@@ -31,11 +31,11 @@ def zeus(
     def create() -> types.TestContainerDocker:
         container = WireMockContainer(image="wiremock/wiremock:2.35.1-1", secure=False)
         container.with_network(network)
-        if pytestconfig.getoption("--network-aliases"):
+        if pytestconfig.getoption("--zeus-network-aliases"):
             container.with_network_aliases("zeus")
         container.start()
 
-        if pytestconfig.getoption("--network-aliases"):
+        if pytestconfig.getoption("--zeus-network-aliases"):
             container_address = "zeus"
         else:
             container_address = container.get_wrapped_container().name
@@ -91,14 +91,7 @@ def gateway(
         container = WireMockContainer(image="wiremock/wiremock:2.35.1-1", secure=False)
         container.with_exposed_ports(8080)
         container.with_network(network)
-        if pytestconfig.getoption("--network-aliases"):
-            container.with_network_aliases("gateway")
         container.start()
-
-        if pytestconfig.getoption("--network-aliases"):
-            container_address = "gateway"
-        else:
-            container_address = container.get_wrapped_container().name
 
         return types.TestContainerDocker(
             id=container.get_wrapped_container().id,
@@ -109,7 +102,7 @@ def gateway(
                     container.get_exposed_port(8080),
                 )
             },
-            container_configs={"8080": types.TestContainerUrlConfig("http", container_address, 8080)},
+            container_configs={"8080": types.TestContainerUrlConfig("http", container.get_wrapped_container().name, 8080)},
         )
 
     def delete(container: types.TestContainerDocker):

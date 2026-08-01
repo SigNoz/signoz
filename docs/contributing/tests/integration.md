@@ -258,7 +258,7 @@ Tests can be configured using pytest options:
 - `--clickhouse-version` — ClickHouse version, also used for ClickHouse Keeper (default: `25.12.5`)
 - `--schema-migrator-version` — SigNoz schema migrator version (default: `v0.144.6`)
 - `--with-web` — Build the frontend into the SigNoz image (required for e2e)
-- `--network-aliases` — Give the WireMock containers fixed network aliases (`zeus`, `gateway`) so the SigNoz image build args are deterministic; used by CI to share one image across jobs. Don't flip it between runs of a `--reuse` environment (cached container configs would go stale).
+- `--zeus-network-aliases` — Give the zeus WireMock container a fixed network alias (`zeus`) so the SigNoz image build args are deterministic; used by CI to share one image across jobs. Don't flip it between runs of a `--reuse` environment (cached container configs would go stale).
 
 Example:
 
