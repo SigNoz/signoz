@@ -1,3 +1,5 @@
+import subprocess
+
 import pytest
 
 pytest_plugins = [
@@ -32,6 +34,14 @@ pytest_plugins = [
 ]
 
 
+def pytest_sessionstart(session: pytest.Session):
+    if session.config.getoption("--clean"):
+        # `docker builder prune` is used over `docker buildx prune` since it is
+        # always present when BuildKit is. The type filter keeps images and
+        # regular layer cache intact; only cache mounts are removed.
+        subprocess.run(["docker", "builder", "prune", "--force", "--filter", "type=exec.cachemount"], check=True)
+
+
 def pytest_addoption(parser: pytest.Parser):
     parser.addoption(
         "--reuse",
@@ -44,6 +54,12 @@ def pytest_addoption(parser: pytest.Parser):
         action="store_true",
         default=False,
         help="Teardown environment. Run pytest --basetemp=./tmp/ -vv --teardown src/bootstrap/setup::test_teardown to teardown your local dev environment.",
+    )
+    parser.addoption(
+        "--clean",
+        action="store_true",
+        default=False,
+        help="Prune the BuildKit cache mounts (go build and module caches) used by the signoz image build, forcing the next build to start cold. Combine with --teardown to reset everything: pytest --basetemp=./tmp/ -vv --teardown --clean integration/bootstrap/setup.py::test_teardown.",
     )
     parser.addoption(
         "--with-web",

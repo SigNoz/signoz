@@ -61,6 +61,16 @@ uv run pytest --basetemp=./tmp/ -vv --teardown integration/bootstrap/setup.py::t
 
 This destroys the running integration test setup and cleans up resources.
 
+### Cleaning the Image Build Cache
+
+The `signoz:integration` image build keeps its Go build and module caches in BuildKit cache mounts, so rebuilds only recompile what changed. These caches survive `--teardown` (they belong to the Docker builder, not to any container). If a cache ever needs to be nuked — suspected corruption, disk pressure, or to force a genuinely cold build — pass the `--clean` flag:
+
+```bash
+uv run pytest --basetemp=./tmp/ -vv --teardown --clean integration/bootstrap/setup.py::test_teardown
+```
+
+`--clean` runs `docker builder prune --force --filter type=exec.cachemount` at session start. The filter removes only cache mounts, leaving images and regular layer cache intact; note it prunes all BuildKit cache mounts on the host, not just SigNoz's. The flag composes with any invocation — passing it on a normal `--reuse` run simply makes the next image build start cold (~3–4 minutes instead of seconds).
+
 ## Understanding the Integration Test Framework
 
 Python and pytest form the foundation of the integration testing framework. Testcontainers are used to spin up disposable integration environments. WireMock is used to spin up **test doubles** of external services (Zeus cloud API, gateway, etc.).
