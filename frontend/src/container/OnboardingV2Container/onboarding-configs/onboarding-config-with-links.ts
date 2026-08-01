@@ -3946,7 +3946,7 @@ const onboardingConfigWithLinks = [
 		label: 'Cohere',
 		imgUrl: cohereUrl,
 		tags: ['LLM Monitoring'],
-		module: 'metrics',
+		module: 'apm',
 		relatedSearchKeywords: [
 			'cohere',
 			'cohere api',
@@ -3972,7 +3972,7 @@ const onboardingConfigWithLinks = [
 		label: 'Langflow',
 		imgUrl: langflowUrl,
 		tags: ['LLM Monitoring'],
-		module: 'metrics',
+		module: 'apm',
 		relatedSearchKeywords: [
 			'langflow',
 			'langflow logs',
