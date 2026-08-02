@@ -18,6 +18,7 @@ import { useGetMyUser } from 'api/generated/services/users';
 import listOrgPreferences from 'api/v1/org/preferences/list';
 import { clearAuthStorage } from 'utils/clearAuthStorage';
 import { getIsNoAuthMode, setNoAuthMode } from 'utils/noAuthMode';
+import { setProxyAuthMode } from 'utils/proxyAuthMode';
 import listUserPreferences from 'api/v1/user/preferences/list';
 import getUserVersion from 'api/v1/version/get';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -101,6 +102,8 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 
 		const impersonationEnabled =
 			globalConfigData?.data?.identN?.impersonation?.enabled === true;
+		const trustedHeaderEnabled =
+			globalConfigData?.data?.identN?.trustedHeader?.enabled === true;
 
 		if (impersonationEnabled) {
 			clearAuthStorage();
@@ -108,8 +111,17 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			setLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN, 'true');
 			setNoAuthMode(true);
 			setIsLoggedIn(true);
+		} else if (trustedHeaderEnabled) {
+			// The proxy authenticates every request, so there is no login form to
+			// show. Tokens are left alone: a password session may still be active
+			// and must keep rotating.
+			setProxyAuthMode(true);
+			setNoAuthMode(false);
+			setLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN, 'true');
+			setIsLoggedIn(true);
 		} else {
 			setNoAuthMode(false);
+			setProxyAuthMode(false);
 		}
 
 		setIsPreflightLoading(false);
