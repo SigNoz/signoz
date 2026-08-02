@@ -413,6 +413,8 @@ identn:
     # The API port must not be reachable except through that proxy: the
     # provider trusts the header on any request that passes the trust check
     # below, direct access bypasses the proxy's authentication entirely.
+    # An organization must already exist. Identity is resolved within the
+    # existing organizations, so finish first-time setup before enabling this.
     enabled: false
     trust:
       # how proxy provenance is established. Required when enabled.
@@ -439,12 +441,20 @@ identn:
         header: ""
         value: ""
     # headers carrying the authenticated user's email. Ignored in jwt mode.
+    # The proxy must overwrite or strip every header named here on inbound
+    # requests. Teleport passes through any header not named in that
+    # application's rewrite.headers, and in secret mode a passed-through
+    # header lets anyone already authenticated at the proxy assert someone
+    # else's email. The provider refuses a header sent more than once, which
+    # catches a proxy that appends but not one that passes through.
     email_headers:
       - X-Forwarded-Email
     # optional headers setting a display name when provisioning
     name_headers: []
     # create a Viewer for an unknown email. Note that Viewer can run raw
-    # ClickHouse SQL, so this is not a small grant.
+    # ClickHouse SQL, so this is not a small grant. In secret mode nothing
+    # vouches for the email beyond the secret itself, so anyone holding the
+    # secret can mint Viewers without limit.
     auto_provision: false
     # optional peer CIDR allowlist. Defence in depth only: in Kubernetes every
     # pod shares the pod CIDR, so this cannot distinguish the proxy from any
