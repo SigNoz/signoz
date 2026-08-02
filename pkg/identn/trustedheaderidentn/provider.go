@@ -109,9 +109,9 @@ func (provider *provider) Name() authtypes.IdentNProvider {
 // header lists stay populated in config even when the resolver is off.
 //
 // Provenance is established first: the peer address must be allowed, and then
-// the configured trust check (a proxy secret today; a verified JWT assertion
-// in a later change) must pass. Only once the request is trusted does this
-// look at identity at all.
+// the configured trust check (a proxy secret or a verified JWT assertion,
+// depending on trust.mode) must pass. Only once the request is trusted does
+// this look at identity at all.
 func (provider *provider) Test(req *http.Request) bool {
 	if !provider.peerAllowed(req) {
 		return false
@@ -169,8 +169,10 @@ func (provider *provider) GetIdentity(req *http.Request) (*authtypes.Identity, e
 	// Check, but that is a property of how the resolver is wired today, not a
 	// contract Test or GetIdentity enforce on each other. Test is a
 	// provider-selection predicate on an exported interface, not an
-	// authorization boundary, so provenance is verified again here rather than
-	// relying on caller discipline.
+	// authorization boundary, so the trust check specifically is re-run here
+	// rather than relying on caller discipline. peerAllowed is not re-checked:
+	// it depends only on req.RemoteAddr, which cannot change between Test and
+	// GetIdentity within a single request.
 	if err := provider.trust.Check(req); err != nil {
 		return nil, err
 	}
@@ -224,9 +226,9 @@ func (provider *provider) GetIdentity(req *http.Request) (*authtypes.Identity, e
 	// pkg/sqlmigration/067_add_status_user.go) is a partial unique index on
 	// (email, org_id) WHERE status != 'deleted', so a soft-deleted row sits
 	// outside that constraint entirely and a freshly created active row for
-	// the same email and org never collides with it. GetOrCreateUser's own
-	// lookup (GetNonDeletedUserByEmailAndOrgID) also excludes deleted rows, so
-	// it cannot adopt one either; a plain CreateUser follows and succeeds.
+	// the same email and org never collides with it. CreateUser performs no
+	// lookup of its own before inserting, so a deleted row is never even a
+	// candidate to adopt; the insert below simply succeeds against the index.
 	// Filtering deleted users here is purely to keep them out of the
 	// ambiguous/matched counting below; it does not, by itself, need to block
 	// provisioning.
@@ -237,14 +239,15 @@ func (provider *provider) GetIdentity(req *http.Request) (*authtypes.Identity, e
 	// Root and pending-invite users are not authenticatable through a trusted
 	// header: root can only authenticate by password, and a pending invite
 	// has not proved control of the mailbox. Unlike a deleted user, they still
-	// occupy the live (org_id, email, deleted_at=zero) slot, so if control
-	// reached the auto-provisioning branch below, GetOrCreateUser would find
-	// and silently adopt one of these records instead of creating a new one:
-	// for a pending invite that means activatePendingUser flips it active and
-	// re-grants only Viewer, discarding whatever role an admin chose; for
-	// root it would go on to mint an admin-privileged identity. ineligible
-	// counts how many such records were filtered, so that case can be told
-	// apart from "no user found at all" below.
+	// occupy the live (org_id, email, deleted_at=zero) slot, so without this
+	// filter they would come back from ListUsersByEmailAndOrgIDs and be handed
+	// straight out as the matched identity in the len(users) == 1 branch
+	// below: for a pending invite that means treating an unconfirmed invite as
+	// an authenticated session without ever activating it or granting it a
+	// role, and for root it means minting an admin-privileged identity that
+	// bypasses the password check entirely. ineligible counts how many such
+	// records were filtered, so that case can be told apart from "no user
+	// found at all" below.
 	ineligible := 0
 	users = slices.DeleteFunc(users, func(u *types.User) bool {
 		if u.ErrIfRoot() != nil || u.ErrIfPending() != nil {
@@ -272,13 +275,16 @@ func (provider *provider) GetIdentity(req *http.Request) (*authtypes.Identity, e
 
 	// The address is already known but not eligible (root or pending). Refuse
 	// outright rather than falling through to auto-provisioning, which would
-	// otherwise read as "nobody here, safe to create" and let GetOrCreateUser
-	// adopt the existing record. This applies regardless of AutoProvision:
-	// with it off, "no user found" would also have been misleading, since a
-	// user does exist for this email.
+	// otherwise read as "nobody here, safe to create" and attempt to insert a
+	// second row for this email and org: CreateUser does no lookup of its
+	// own, so that insert would fail only after the fact, on the partial
+	// unique index, as an opaque constraint violation instead of this
+	// explicit refusal. This applies regardless of AutoProvision: with it
+	// off, "no user found" would also have been misleading, since a user does
+	// exist for this email.
 	if ineligible > 0 {
 		return nil, errors.Newf(errors.TypeUnauthenticated, ErrCodeTrustedHeaderUserNotEligible, "email %q matches an existing user that cannot authenticate through a trusted header", email.StringValue()).
-			WithAdditional("the user is root or has a pending invite; auto-provisioning is refused because GetOrCreateUser would otherwise adopt that record instead of creating a new one")
+			WithAdditional("the user is root or has a pending invite; auto-provisioning is refused up front rather than attempting an insert that would only fail later on the unique (email, org_id) constraint")
 	}
 
 	if !provider.config.TrustedHeader.AutoProvision {

@@ -98,9 +98,9 @@ def test_auto_provision_true_root_email_still_rejected_and_creates_nothing(
     get_token_auto_provision: Callable[[str, str], str],
 ) -> None:
     """With auto_provision:true, asserting the root user's email is still
-    rejected: GetOrCreateUser would otherwise find and return the existing
-    root record, so the provider must refuse it explicitly rather than
-    minting an admin-privileged identity. No new user is created for it.
+    rejected: the root record is filtered from the matched set and counted as
+    ineligible, so the provider refuses up front rather than minting an
+    admin-privileged identity. No new user is created for it.
     Depends on `signoz_auto_provision_ready` so root is actually reconciled
     by the time this runs, which is what makes the rejection prove the
     root-specific filter rather than a mere "email matches nobody yet"."""
@@ -126,9 +126,10 @@ def test_pending_invite_email_rejected_and_invite_remains_pending(
     get_token_auto_provision: Callable[[str, str], str],
 ) -> None:
     """A pending-invite user's email is rejected, and the invite is left
-    untouched: it does not get silently activated (with its role reset to
-    Viewer) as a side effect of GetOrCreateUser, even though auto_provision
-    is on and GetOrCreateUser would otherwise happily reactivate it."""
+    untouched, even though auto_provision is on. This is the escalation this
+    suite found: the invite used to be adopted by the provisioning branch,
+    which activated it and reset its role to Viewer, authenticating someone
+    who had never proved control of the mailbox."""
     admin_token = get_token_auto_provision(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     pending_email = "trustedheader-pending-invite@integration.test"

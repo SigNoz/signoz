@@ -26,7 +26,9 @@ var (
 // trust establishes that a request genuinely came from the trusted proxy.
 type trust interface {
 	// Check returns nil when the request carries acceptable proof of provenance.
-	// It must be free of I/O, because it is called from Test.
+	// It must be free of I/O, because it is called from Test, and GetIdentity
+	// also calls it directly, on the request's own goroutine, before doing any
+	// of its own I/O.
 	Check(req *http.Request) error
 
 	// CarriesIdentity reports whether the proof itself carries the user's
