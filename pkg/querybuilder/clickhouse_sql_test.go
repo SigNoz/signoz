@@ -126,3 +126,70 @@ func TestErrIfStatementIsNotValid_Fail(t *testing.T) {
 		})
 	}
 }
+
+// Queries ClickHouse runs that this rejects anyway. Each is a known false positive.
+func TestErrIfStatementIsNotValid_ShouldPassButFails(t *testing.T) {
+	testCases := []struct {
+		name         string
+		query        string
+		expectedCode errors.Code
+	}{
+		{
+			// numbers() generates rows rather than reading through anything, so the blanket
+			// table-function rule is stricter here than the threat it exists for. This shape
+			// builds a dense interval axis to CROSS JOIN against, and is the only rejection
+			// left in the saved production corpus.
+			name: "NumbersTableFunction",
+			query: `SELECT
+			  intervals.interval AS interval,
+			  active.cluster AS cluster,
+			  toFloat64(if(ts_data.has_data = 0, 0, 1)) AS value
+			FROM (
+			  SELECT DISTINCT
+			    JSONExtractString(labels, 'k8s.cluster.name') AS cluster
+			  FROM signoz_metrics.distributed_time_series_v4
+			  WHERE metric_name = 'benchmark_average_processing_time.max'
+			    AND unix_milli >= toUnixTimestamp(now() - INTERVAL 30 DAY) * 1000
+			  HAVING cluster != ''
+			) AS active
+			CROSS JOIN (
+			  SELECT toStartOfInterval(
+			    toDateTime(toUnixTimestamp(now() - INTERVAL 30 MINUTE) + number * 60),
+			    INTERVAL 1 MINUTE
+			  ) AS interval
+			  FROM numbers(31)
+			) AS intervals
+			LEFT JOIN (
+			  SELECT
+			    toStartOfInterval(
+			      toDateTime(intDiv(s.unix_milli, 1000)),
+			      INTERVAL 1 MINUTE
+			    ) AS interval,
+			    JSONExtractString(ts.labels, 'k8s.cluster.name') AS cluster,
+			    1 AS has_data
+			  FROM signoz_metrics.distributed_samples_v4 s
+			  INNER JOIN (
+			    SELECT DISTINCT fingerprint, labels
+			    FROM signoz_metrics.distributed_time_series_v4
+			    WHERE metric_name = 'benchmark_average_processing_time.max'
+			  ) AS ts ON s.fingerprint = ts.fingerprint
+			  WHERE s.metric_name = 'benchmark_average_processing_time.max'
+			    AND s.unix_milli >= toUnixTimestamp(now() - INTERVAL 30 MINUTE) * 1000
+			  GROUP BY interval, cluster
+			) AS ts_data
+			  ON active.cluster = ts_data.cluster
+			  AND intervals.interval = ts_data.interval
+			ORDER BY interval ASC`,
+			expectedCode: CodeClickHouseSQLTableFunction,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			err := ErrIfStatementIsNotValid(testCase.query)
+
+			assert.Error(t, err)
+			assert.True(t, errors.Asc(err, testCase.expectedCode), "expected code %s, got %v", testCase.expectedCode, err)
+		})
+	}
+}
