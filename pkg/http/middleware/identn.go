@@ -54,14 +54,6 @@ func (m *IdentN) Wrap(next http.Handler) http.Handler {
 			// appends it as %!(EXTRA string=...). The code is a static constant
 			// and is what an operator actually needs to tell a rejected
 			// assertion from a missing credential.
-			// Only the code is logged, never the message. Provider errors are
-			// built in store layers that interpolate the credential into the
-			// message: the api key store formats the raw key into
-			// "api key with key: %s doesn't exist.", and the tokenizer store
-			// passes the access token to a format string with no verb, so fmt
-			// appends it as %!(EXTRA string=...). The code is a static constant
-			// and is what an operator actually needs to tell a rejected
-			// assertion from a missing credential.
 			_, code, _, _, _, _ := errors.Unwrapb(err)
 			m.logger.WarnContext(r.Context(), "failed to resolve identity",
 				slog.String("identn_provider", idn.Name().StringValue()),

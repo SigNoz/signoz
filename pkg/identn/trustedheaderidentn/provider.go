@@ -286,7 +286,7 @@ func (provider *provider) GetIdentity(req *http.Request) (*authtypes.Identity, e
 	}
 
 	// Auto-provision: create the user with Viewer role in the (only) org.
-	// We refuse to guess when multiple orgs exist — operators must disable
+	// We refuse to guess when multiple orgs exist, operators must disable
 	// AutoProvision or pin a single org.
 	if len(orgs) > 1 {
 		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeTrustedHeaderMultipleOrgs, "auto-provisioning is not supported with multiple organizations (found %d)", len(orgs))

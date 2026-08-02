@@ -116,15 +116,15 @@ func (f *fakeUserGetter) CountByOrgID(context.Context, valuer.UUID) (int64, erro
 }
 
 func (f *fakeUserGetter) CountByOrgIDAndStatuses(context.Context, valuer.UUID, []string) (map[valuer.String]int64, error) {
-	return nil, nil
+	return nil, errors.New(errors.TypeNotFound, errors.CodeNotFound, "not implemented")
 }
 
 func (f *fakeUserGetter) GetFactorPasswordByUserID(context.Context, valuer.UUID) (*types.FactorPassword, error) {
-	return nil, nil
+	return nil, errors.New(errors.TypeNotFound, errors.CodeNotFound, "not implemented")
 }
 
 func (f *fakeUserGetter) GetResetPasswordTokenByOrgIDAndUserID(context.Context, valuer.UUID, valuer.UUID) (*types.ResetPasswordToken, error) {
-	return nil, nil
+	return nil, errors.New(errors.TypeNotFound, errors.CodeNotFound, "not implemented")
 }
 
 func (f *fakeUserGetter) GetNonDeletedUserByEmailAndOrgID(_ context.Context, email valuer.Email, orgID valuer.UUID) (*types.User, error) {
@@ -149,7 +149,7 @@ func (f *fakeUserGetter) OnBeforeRoleDelete(context.Context, valuer.UUID, valuer
 }
 
 func (f *fakeUserGetter) GetUserRoleByOrgIDAndID(context.Context, valuer.UUID, valuer.UUID) (*authtypes.UserRole, error) {
-	return nil, nil
+	return nil, errors.New(errors.TypeNotFound, errors.CodeNotFound, "not implemented")
 }
 
 func (f *fakeUserGetter) VerifyResetPasswordToken(context.Context, string) error {
@@ -160,7 +160,7 @@ var _ user.Getter = (*fakeUserGetter)(nil)
 
 // fakeUserSetter records the users passed to CreateUser.
 //
-// Most methods are stubs returning nil/zero — they exist purely to satisfy the
+// Most methods are stubs returning nil/zero: they exist purely to satisfy the
 // user.Setter interface. Only CreateUser is exercised by these tests;
 // GetIdentity no longer calls GetOrCreateUser (see provider.go), so that
 // method is kept only to satisfy the interface and is not used to model any
@@ -184,7 +184,7 @@ func (f *fakeUserSetter) withExisting(users ...*types.User) *fakeUserSetter {
 }
 
 func (f *fakeUserSetter) CreateFirstUser(context.Context, *types.Organization, string, valuer.Email, string) (*types.User, error) {
-	return nil, nil
+	return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "not implemented")
 }
 
 func (f *fakeUserSetter) CreateUser(_ context.Context, u *types.User, _ ...user.CreateUserOption) error {
@@ -205,7 +205,7 @@ func (f *fakeUserSetter) GetOrCreateUser(context.Context, *types.User, ...user.C
 }
 
 func (f *fakeUserSetter) GetOrCreateResetPasswordToken(context.Context, valuer.UUID) (*types.ResetPasswordToken, error) {
-	return nil, nil
+	return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "not implemented")
 }
 
 func (f *fakeUserSetter) UpdatePasswordByResetPasswordToken(context.Context, string, string) error {
@@ -221,11 +221,11 @@ func (f *fakeUserSetter) ForgotPassword(context.Context, valuer.UUID, valuer.Ema
 }
 
 func (f *fakeUserSetter) UpdateUserDeprecated(context.Context, valuer.UUID, string, *types.DeprecatedUser) (*types.DeprecatedUser, error) {
-	return nil, nil
+	return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "not implemented")
 }
 
 func (f *fakeUserSetter) UpdateUser(context.Context, valuer.UUID, valuer.UUID, *types.UpdatableUser) (*types.User, error) {
-	return nil, nil
+	return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "not implemented")
 }
 
 func (f *fakeUserSetter) UpdateAnyUserDeprecated(context.Context, valuer.UUID, *types.DeprecatedUser) error {
@@ -249,15 +249,15 @@ func (f *fakeUserSetter) UpdateUserRoles(context.Context, valuer.UUID, valuer.UU
 }
 
 func (f *fakeUserSetter) CreatePendingInviteUser(context.Context, valuer.UUID, valuer.Email, string, *types.User, ...user.CreateUserOption) (*types.User, error) {
-	return nil, nil
+	return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "not implemented")
 }
 
 func (f *fakeUserSetter) AddUserRole(context.Context, valuer.UUID, valuer.UUID, string) (*authtypes.UserRole, error) {
-	return nil, nil
+	return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "not implemented")
 }
 
 func (f *fakeUserSetter) AddUserRoleByRoleID(context.Context, valuer.UUID, valuer.UUID, valuer.UUID) (*authtypes.UserRole, error) {
-	return nil, nil
+	return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "not implemented")
 }
 
 func (f *fakeUserSetter) RemoveUserRole(context.Context, valuer.UUID, valuer.UUID, valuer.UUID) error {
@@ -265,7 +265,7 @@ func (f *fakeUserSetter) RemoveUserRole(context.Context, valuer.UUID, valuer.UUI
 }
 
 func (f *fakeUserSetter) Collect(context.Context, valuer.UUID) (map[string]any, error) {
-	return nil, nil
+	return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "not implemented")
 }
 
 var _ user.Setter = (*fakeUserSetter)(nil)
@@ -316,7 +316,13 @@ func newConfigWithHeaders(emailHeaders []string, nameHeaders []string, autoProvi
 // header the email is set under; it must match the provider's configured
 // email header, since a mismatch here would silently exercise the "header
 // absent" path instead of the one the test intends. Tests exercising
-// multi-value or multi-header setups build the request directly instead.
+// multi-value or multi-header setups build the request directly instead, so
+// every current caller happens to pass "X-Forwarded-Email". header stays a
+// parameter anyway: hardcoding it here would silently break the first test
+// that configures a different single email header, exactly the mismatch this
+// function exists to prevent (see above).
+//
+//nolint:unparam // kept to prevent a silent header mismatch; see comment above
 func newTrustedRequest(header, email string) *http.Request {
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	req.Header.Set(testSecretHeader, testSecretValue)
@@ -335,8 +341,11 @@ func newProvider(t *testing.T, cfg identn.Config, orgGetter organization.Getter,
 	return p
 }
 
+// The email header below is deliberately not X-Forwarded-Email: Name() never
+// looks at the request, so this pins that newConfig's emailHeader is honored
+// verbatim regardless of which header an operator configures.
 func TestProviderName(t *testing.T) {
-	p := newProvider(t, newConfig("X-Forwarded-Email", "", false), &fakeOrgGetter{}, &fakeUserGetter{}, &fakeUserSetter{})
+	p := newProvider(t, newConfig("X-Custom-Auth-Email", "", false), &fakeOrgGetter{}, &fakeUserGetter{}, &fakeUserSetter{})
 
 	assert.Equal(t, authtypes.IdentNProviderTrustedHeader, p.Name())
 }
@@ -677,7 +686,7 @@ func TestGetIdentityDoesNotProvisionIntoRootUser(t *testing.T) {
 
 // Multi-org case: when ListUsersByEmailAndOrgIDs returns both a root user
 // and a regular user for the same email, the resolver must skip the root
-// and pick the non-root regardless of slice order — DB query order is not
+// and pick the non-root regardless of slice order - DB query order is not
 // guaranteed.
 func TestGetIdentityPicksNonRootWhenRootAndRegularShareEmail(t *testing.T) {
 	rootOrgID := valuer.GenerateUUID()
