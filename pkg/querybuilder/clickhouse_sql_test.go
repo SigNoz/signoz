@@ -54,6 +54,16 @@ func TestErrIfStatementIsNotValid_Pass(t *testing.T) {
 		{"StandardTrimSyntax", "SELECT trim(BOTH ' ' FROM body) FROM t"},
 		{"StandardSubstringSyntax", "SELECT substring(body FROM 2 FOR 3) FROM t"},
 		{"StandardOverlaySyntax", "SELECT overlay(body PLACING 'x' FROM 2) FROM t"},
+		// Row generators compute their rows from their arguments, so they read through
+		// nothing. This is the shape production uses them for: a dense interval axis to
+		// CROSS JOIN a sparse series against.
+		{"NumbersTableFunction", "SELECT intervals.interval AS interval, active.cluster AS cluster, toFloat64(if(ts_data.has_data = 0, 0, 1)) AS value FROM ( SELECT DISTINCT JSONExtractString(labels, 'k8s.cluster.name') AS cluster FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name = 'my_metric' AND unix_milli >= toUnixTimestamp(now() - INTERVAL 30 DAY) * 1000 HAVING cluster != '' ) AS active CROSS JOIN ( SELECT toStartOfInterval( toDateTime(toUnixTimestamp(now() - INTERVAL 30 MINUTE) + number * 60), INTERVAL 1 MINUTE ) AS interval FROM numbers(31) ) AS intervals LEFT JOIN ( SELECT toStartOfInterval( toDateTime(intDiv(s.unix_milli, 1000)), INTERVAL 1 MINUTE ) AS interval, JSONExtractString(ts.labels, 'k8s.cluster.name') AS cluster, 1 AS has_data FROM signoz_metrics.distributed_samples_v4 s INNER JOIN ( SELECT DISTINCT fingerprint, labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name = 'my_metric' ) AS ts ON s.fingerprint = ts.fingerprint WHERE s.metric_name = 'my_metric' AND s.unix_milli >= toUnixTimestamp(now() - INTERVAL 30 MINUTE) * 1000 GROUP BY interval, cluster ) AS ts_data ON active.cluster = ts_data.cluster AND intervals.interval = ts_data.interval ORDER BY interval ASC"},
+		{"NumbersMtTableFunction", "SELECT * FROM numbers_mt(31)"},
+		{"ZerosTableFunction", "SELECT * FROM zeros(31)"},
+		{"ZerosMtTableFunction", "SELECT * FROM zeros_mt(31)"},
+		{"GenerateSeriesTableFunction", "SELECT * FROM generateSeries(1, 10)"},
+		{"GenerateSeriesSnakeCaseTableFunction", "SELECT * FROM generate_series(1, 10)"},
+		{"GeneratorTableFunctionUppercase", "SELECT * FROM NUMBERS(31)"},
 	}
 
 	for _, testCase := range testCases {
@@ -104,6 +114,18 @@ func TestErrIfStatementIsNotValid_Fail(t *testing.T) {
 		{"TableFunctionInCommonTableExpression", "WITH c AS (SELECT * FROM url('http://x', CSV, 'a String')) SELECT * FROM c", CodeClickHouseSQLTableFunction},
 		{"TableFunctionInWhereSubquery", "SELECT * FROM t WHERE a IN (SELECT * FROM file('/etc/passwd', CSV, 'a String'))", CodeClickHouseSQLTableFunction},
 		{"TableFunctionInUnion", "SELECT * FROM t UNION ALL SELECT * FROM url('http://x', CSV, 'a String')", CodeClickHouseSQLTableFunction},
+		// These reach the internal databases without ever naming one, so the table-function
+		// rule is the only thing that sees them.
+		{"MergeTableFunction", "SELECT * FROM merge('system', '.*')", CodeClickHouseSQLTableFunction},
+		{"RemoteTableFunction", "SELECT * FROM remote('other-host', 'system.users')", CodeClickHouseSQLTableFunction},
+		{"ClusterTableFunction", "SELECT * FROM cluster('c', 'system.users')", CodeClickHouseSQLTableFunction},
+		// Pure, but excluded: generateRandom streams rows the arguments do not bound, and
+		// values has no use here that an array literal does not already cover.
+		{"GenerateRandomTableFunction", "SELECT * FROM generateRandom('a UInt64')", CodeClickHouseSQLTableFunction},
+		{"ValuesTableFunction", "SELECT * FROM values('a UInt64', 1, 2)", CodeClickHouseSQLTableFunction},
+		// Arguments are visited before the table function itself, so allowing a generator does
+		// not give anyone a wrapper to smuggle a read through.
+		{"InternalDatabaseInsideAllowedTableFunction", "SELECT * FROM numbers((SELECT count() FROM system.users))", CodeClickHouseSQLInternalDatabase},
 		// Internal databases, which hold grants and server metadata rather than telemetry.
 		{"SystemUsers", "SELECT * FROM system.users", CodeClickHouseSQLInternalDatabase},
 		{"SystemUppercase", "SELECT * FROM SYSTEM.USERS", CodeClickHouseSQLInternalDatabase},
@@ -115,32 +137,6 @@ func TestErrIfStatementIsNotValid_Fail(t *testing.T) {
 		// A query-level setting takes precedence over the one the caller applies.
 		{"ReadonlySettingOverride", "SELECT * FROM t SETTINGS readonly = 0", CodeClickHouseSQLReadonlyOverride},
 		{"ReadonlySettingOverrideAmongOthers", "SELECT * FROM t SETTINGS max_threads = 4, readonly = 0", CodeClickHouseSQLReadonlyOverride},
-	}
-
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			err := ErrIfStatementIsNotValid(testCase.query)
-
-			assert.Error(t, err)
-			assert.True(t, errors.Asc(err, testCase.expectedCode), "expected code %s, got %v", testCase.expectedCode, err)
-		})
-	}
-}
-
-// Queries ClickHouse runs that this rejects anyway. Each is a known false positive.
-func TestErrIfStatementIsNotValid_ShouldPassButFails(t *testing.T) {
-	testCases := []struct {
-		name         string
-		query        string
-		expectedCode errors.Code
-	}{
-		{
-			// numbers() generates rows rather than reading through anything, so the blanket
-			// table-function rule is stricter here than the threat it exists for.
-			name:         "NumbersTableFunction",
-			query:        "SELECT intervals.interval AS interval, active.cluster AS cluster, toFloat64(if(ts_data.has_data = 0, 0, 1)) AS value FROM ( SELECT DISTINCT JSONExtractString(labels, 'k8s.cluster.name') AS cluster FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name = 'my_metric' AND unix_milli >= toUnixTimestamp(now() - INTERVAL 30 DAY) * 1000 HAVING cluster != '' ) AS active CROSS JOIN ( SELECT toStartOfInterval( toDateTime(toUnixTimestamp(now() - INTERVAL 30 MINUTE) + number * 60), INTERVAL 1 MINUTE ) AS interval FROM numbers(31) ) AS intervals LEFT JOIN ( SELECT toStartOfInterval( toDateTime(intDiv(s.unix_milli, 1000)), INTERVAL 1 MINUTE ) AS interval, JSONExtractString(ts.labels, 'k8s.cluster.name') AS cluster, 1 AS has_data FROM signoz_metrics.distributed_samples_v4 s INNER JOIN ( SELECT DISTINCT fingerprint, labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name = 'my_metric' ) AS ts ON s.fingerprint = ts.fingerprint WHERE s.metric_name = 'my_metric' AND s.unix_milli >= toUnixTimestamp(now() - INTERVAL 30 MINUTE) * 1000 GROUP BY interval, cluster ) AS ts_data ON active.cluster = ts_data.cluster AND intervals.interval = ts_data.interval ORDER BY interval ASC",
-			expectedCode: CodeClickHouseSQLTableFunction,
-		},
 	}
 
 	for _, testCase := range testCases {
