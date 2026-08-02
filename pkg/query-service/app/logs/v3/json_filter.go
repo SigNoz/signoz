@@ -59,13 +59,26 @@ var jsonLogOperators = map[v3.FilterOperator]string{
 	v3.FilterOperatorNotHas:          "NOT has(%s, %s)",
 }
 
+// escapeJSONPathKey sanitises a user-supplied JSON key segment so it cannot
+// break out of the surrounding single-quoted ClickHouse JSON path literal.
+// The key is later placed inside '$.key1.key2', so any ' or \ inside the
+// key would terminate the string literal and allow SQL injection. Stripping
+// those characters is the safe option since they are not valid in JSON
+// object keys anyway.
+func escapeJSONPathKey(s string) string {
+	s = strings.ReplaceAll(s, `\`, "")
+	s = strings.ReplaceAll(s, `'`, "")
+	return s
+}
+
 func GetPath(keyArr []string) string {
 	path := []string{}
 	for i := 0; i < len(keyArr); i++ {
-		if strings.HasSuffix(keyArr[i], "[*]") {
-			path = append(path, "\""+strings.TrimSuffix(keyArr[i], "[*]")+"\""+"[*]")
+		key := escapeJSONPathKey(keyArr[i])
+		if strings.HasSuffix(key, "[*]") {
+			path = append(path, "\""+strings.TrimSuffix(key, "[*]")+"\""+"[*]")
 		} else {
-			path = append(path, "\""+keyArr[i]+"\"")
+			path = append(path, "\""+key+"\"")
 		}
 	}
 	return strings.Join(path, ".")
