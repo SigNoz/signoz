@@ -5068,8 +5068,21 @@ func (r *ClickHouseReader) GetMinAndMaxTimestampForTraceID(ctx context.Context, 
 	})
 	var minTime, maxTime time.Time
 
+	// traceID comes from a user-supplied dashboard filter; validate each
+	// entry is a hex string of the correct length before interpolating it
+	// into the SQL literal. traceID is a 32-char lowercase hex value.
+	validTraceIDs := make([]string, 0, len(traceID))
+	for _, id := range traceID {
+		if len(id) == 32 && isLowerHex(id) {
+			validTraceIDs = append(validTraceIDs, id)
+		}
+	}
+	if len(validTraceIDs) == 0 {
+		return 0, 0, nil
+	}
+
 	query := fmt.Sprintf("SELECT min(timestamp), max(timestamp) FROM %s.%s WHERE traceID IN ('%s')",
-		r.TraceDB, r.SpansTable, strings.Join(traceID, "','"))
+		r.TraceDB, r.SpansTable, strings.Join(validTraceIDs, "','"))
 
 	r.logger.Debug("GetMinAndMaxTimestampForTraceID", "query", query)
 
@@ -5556,4 +5569,20 @@ func (r *ClickHouseReader) GetNormalizedStatus(
 	}
 
 	return result, nil
+}
+
+// isLowerHex reports whether s is non-empty and contains only characters in
+// [0-9a-f]. Used to validate traceID / spanID user input before it is
+// interpolated into SQL — anything else would either be invalid input or a
+// potential injection attempt.
+func isLowerHex(s string) bool {
+	if s == "" {
+		return false
+	}
+	for _, r := range s {
+		if !(r >= '0' && r <= '9') && !(r >= 'a' && r <= 'f') {
+			return false
+		}
+	}
+	return true
 }
