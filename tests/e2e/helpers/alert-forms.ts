@@ -244,8 +244,9 @@ export function v2DiscardButton(page: Page): Locator {
  * delegated handler fires normally — verified: the page navigates to `/alerts`.
  *
  * This is a workaround for a **product** bug, not for a flaky test.
- * `create/edge.spec.ts` CE-09 asserts the obstruction directly, so when the
- * footer is fixed that scenario fails and this helper can go back to `.click()`.
+ * `create/edge.spec.ts` CE-09 is the skipped scenario that asserts the fixed
+ * behaviour; unskipping it and reverting this helper to `.click()` belong in the
+ * same commit as the fix.
  */
 export async function v2ClickDiscard(page: Page): Promise<void> {
 	await v2DiscardButton(page).dispatchEvent('click');
@@ -253,8 +254,8 @@ export async function v2ClickDiscard(page: Page): Promise<void> {
 
 /**
  * Whether the side navigation currently overlaps a point — the mechanism behind
- * {@link v2ClickDiscard}. Used by the scenario that pins the bug so the
- * workaround above never becomes invisible.
+ * {@link v2ClickDiscard}. Used by CE-09, which asserts the *absence* of that
+ * overlap and is skipped until the footer is fixed.
  */
 export async function elementAtPointClassName(
 	page: Page,
