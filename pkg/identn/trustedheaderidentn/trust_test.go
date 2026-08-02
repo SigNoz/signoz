@@ -1,6 +1,7 @@
 package trustedheaderidentn
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
@@ -8,6 +9,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
+	"log/slog"
 	"math/big"
 	"net/http"
 	"net/http/httptest"
@@ -125,13 +127,45 @@ func signAssertion(t *testing.T, key *rsa.PrivateKey, kid string, claims jwt.Map
 func newTestJWTTrust(t *testing.T, jwksURL string) *jwtTrust {
 	t.Helper()
 
-	return newJWTTrust(context.Background(), identn.JWTTrustConfig{
+	checker, _ := newTestJWTTrustWithLogs(t, jwksURL)
+
+	return checker
+}
+
+// newTestJWTTrustWithLogs also returns the checker's log output, so a test can
+// assert on what an operator would actually see.
+func newTestJWTTrustWithLogs(t *testing.T, jwksURL string) (*jwtTrust, *bytes.Buffer) {
+	t.Helper()
+
+	logs := &bytes.Buffer{}
+
+	checker := newJWTTrust(context.Background(), slog.New(slog.NewTextHandler(logs, nil)), identn.JWTTrustConfig{
 		AssertionHeader: "Teleport-Jwt-Assertion",
 		JWKSURL:         jwksURL,
 		Issuer:          "https://teleport.example",
 		Audience:        "signoz",
 		IdentityClaim:   "sub",
 	})
+
+	return checker, logs
+}
+
+// Every verification failure reaches the caller as the same opaque code, so
+// this log line is the only thing that separates a forged assertion from a
+// JWKS endpoint the operator cannot reach. It has to carry the reason, not
+// just the fact.
+func TestJWTTrustLogsWhyVerificationFailed(t *testing.T) {
+	checker, logs := newTestJWTTrustWithLogs(t, "http://127.0.0.1:1/jwks.json")
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("Teleport-Jwt-Assertion", "not.a.jwt")
+
+	_, err := checker.Email(req)
+	require.Error(t, err)
+	assert.True(t, errors.Asc(err, ErrCodeTrustedHeaderUntrusted))
+
+	assert.Contains(t, logs.String(), "trusted-header assertion did not verify")
+	assert.Contains(t, logs.String(), "error=")
 }
 
 func TestJWTTrustAcceptsValidAssertion(t *testing.T) {

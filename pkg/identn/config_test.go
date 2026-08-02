@@ -106,6 +106,21 @@ func TestValidateRejectsJWTAssertionHeaderWithUnderscore(t *testing.T) {
 	require.Error(t, c.Validate())
 }
 
+// An empty assertion header used to pass validation and then refuse every
+// request at the trust check, since Header.Values("") matches nothing, with no
+// error anywhere that named the cause.
+func TestValidateRejectsEmptyJWTAssertionHeader(t *testing.T) {
+	c := newTestConfig()
+	c.TrustedHeader.Enabled = true
+	c.TrustedHeader.Trust.Mode = TrustModeJWT
+	c.TrustedHeader.Trust.JWT.JWKSURL = "https://idp.internal/keys"
+	c.TrustedHeader.Trust.JWT.Issuer = "issuer"
+	c.TrustedHeader.Trust.JWT.Audience = "audience"
+	c.TrustedHeader.Trust.JWT.AssertionHeader = ""
+
+	require.Error(t, c.Validate())
+}
+
 // url.Parse accepts almost anything, including a bare host-and-path string
 // with no scheme, so the check must additionally require an absolute URL
 // with a host rather than trusting url.Parse to fail on its own.

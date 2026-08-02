@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/json"
+	"log/slog"
 	"math"
 	"net/http"
 	"slices"
@@ -105,6 +106,7 @@ const jwksFetchTimeout = 10 * time.Second
 // them forge one.
 type jwtTrust struct {
 	config identn.JWTTrustConfig
+	logger *slog.Logger
 	keySet *oidc.RemoteKeySet
 }
 
@@ -116,11 +118,12 @@ type jwtTrust struct {
 // What ctx does carry, through oidc.ClientContext, is the HTTP client used
 // for every fetch; that client has jwksFetchTimeout set precisely because
 // the context mechanism cannot bound the fetch itself.
-func newJWTTrust(ctx context.Context, config identn.JWTTrustConfig) *jwtTrust {
+func newJWTTrust(ctx context.Context, logger *slog.Logger, config identn.JWTTrustConfig) *jwtTrust {
 	client := &http.Client{Timeout: jwksFetchTimeout}
 
 	return &jwtTrust{
 		config: config,
+		logger: logger,
 		// JWKS refetch amplification: a kid miss or a signature that fails to
 		// verify against the cached keys makes RemoteKeySet refetch the whole
 		// set with no negative caching. In practice this is bounded to about
@@ -172,15 +175,19 @@ func (t *jwtTrust) Email(req *http.Request) (string, error) {
 	// key as an HMAC secret is rejected here, before any key is ever tried.
 	payload, err := t.keySet.VerifySignature(req.Context(), values[0])
 	if err != nil {
-		// err.Error() is deliberately not attached. It can echo the attacker's
-		// own unbounded "alg" header value verbatim, and, on a JWKS fetch
-		// failure, go-oidc formats the endpoint's raw response body into the
-		// error with %s (oidc/jwks.go), which could carry an internal error
-		// page or stack trace from the JWKS endpoint into what would
-		// otherwise be a client-facing authentication error. If the fetch
-		// itself needs to be diagnosable, that belongs in a separate log line
-		// that says the fetch failed without echoing the body, not smuggled
-		// into this error.
+		// err.Error() is logged rather than attached to the returned error. It
+		// can echo the caller's own "alg" header value, and on a JWKS fetch
+		// failure go-oidc formats the endpoint's raw response body into it with
+		// %s (oidc/jwks.go), which could carry an internal error page or a
+		// stack trace. None of that belongs in a client-facing authentication
+		// error. It does belong in the operator's log: a typo'd jwks_url, a
+		// firewalled endpoint, a rotated key and a forged assertion all reach
+		// the caller as this one error code, and this line is the only thing
+		// that tells them apart.
+		t.logger.WarnContext(req.Context(), "trusted-header assertion did not verify",
+			slog.String("error", err.Error()),
+		)
+
 		return "", errors.New(errors.TypeUnauthenticated, ErrCodeTrustedHeaderUntrusted, "assertion signature is not valid")
 	}
 

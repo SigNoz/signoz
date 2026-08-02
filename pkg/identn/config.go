@@ -184,8 +184,11 @@ func (c Config) Validate() error {
 				return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "identn::trusted_header::email_headers is required in secret mode")
 			}
 		case TrustModeJWT:
-			if c.TrustedHeader.Trust.JWT.JWKSURL == "" || c.TrustedHeader.Trust.JWT.Issuer == "" || c.TrustedHeader.Trust.JWT.Audience == "" {
-				return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "identn::trusted_header::trust::jwt requires jwks_url, issuer and audience")
+			// An empty assertion_header is not merely incomplete config: the
+			// trust check reads the header by name, and Header.Values("") never
+			// matches, so every request would be refused with nothing to say why.
+			if c.TrustedHeader.Trust.JWT.AssertionHeader == "" || c.TrustedHeader.Trust.JWT.JWKSURL == "" || c.TrustedHeader.Trust.JWT.Issuer == "" || c.TrustedHeader.Trust.JWT.Audience == "" {
+				return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "identn::trusted_header::trust::jwt requires assertion_header, jwks_url, issuer and audience")
 			}
 
 			parsedJWKSURL, err := url.Parse(c.TrustedHeader.Trust.JWT.JWKSURL)

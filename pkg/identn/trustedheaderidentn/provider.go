@@ -66,7 +66,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	case identn.TrustModeSecret:
 		checker = newSecretTrust(config.TrustedHeader.Trust.Secret)
 	case identn.TrustModeJWT:
-		checker = newJWTTrust(ctx, config.TrustedHeader.Trust.JWT)
+		checker = newJWTTrust(ctx, settings.Logger(), config.TrustedHeader.Trust.JWT)
 	default:
 		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeTrustedHeaderUnsupportedMode, "identn::trusted_header::trust::mode %q is not supported", config.TrustedHeader.Trust.Mode.StringValue())
 	}
