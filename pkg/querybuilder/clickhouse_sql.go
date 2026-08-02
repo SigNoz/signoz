@@ -3,6 +3,8 @@ package querybuilder
 import (
 	"context"
 	"log/slog"
+	"maps"
+	"slices"
 	"strings"
 
 	chparser "github.com/AfterShip/clickhouse-sql-parser/parser"
@@ -27,18 +29,19 @@ var internalDatabases = map[string]struct{}{
 
 // generatorTableFunctions compute their rows from their arguments alone. They open no file or socket, reach no other host, and name no table, database or dictionary, so none of them can read through anything the rules here exist to protect. Can be used to build a dense axis to join a sparse series against. Every other table function is refused.
 //
+// Keyed by the lowercased name so that matching is case-insensitive, valued by the spelling to name it back to the caller.
+//
 // TODO(@therealpandey): take a deployment level allow list on top of this, so an operator can permit more without a release.
-var generatorTableFunctions = map[string]struct{}{
-	"numbers":         {},
-	"numbers_mt":      {},
-	"zeros":           {},
-	"zeros_mt":        {},
-	"generateseries":  {},
-	"generate_series": {},
+var generatorTableFunctions = map[string]string{
+	"numbers":         "numbers",
+	"numbers_mt":      "numbers_mt",
+	"zeros":           "zeros",
+	"zeros_mt":        "zeros_mt",
+	"generateseries":  "generateSeries",
+	"generate_series": "generate_series",
 }
 
-// The keys above lowercased for matching, spelled here as a caller would write them. Kept in step by TestGeneratorTableFunctionsMessageMatchesSet.
-const generatorTableFunctionsMessage = "allowed table functions are numbers, numbers_mt, zeros, zeros_mt, generateSeries, generate_series"
+var generatorTableFunctionsMessage = "allowed table functions are " + strings.Join(slices.Sorted(maps.Values(generatorTableFunctions)), ", ")
 
 // The parser's grammar has gaps against SQL that ClickHouse itself accepts.
 func ErrIfStatementIsNotValid(query string) (err error) {

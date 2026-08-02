@@ -1,14 +1,12 @@
 package querybuilder
 
 import (
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestErrIfStatementIsNotValid_Pass(t *testing.T) {
@@ -153,20 +151,5 @@ func TestErrIfStatementIsNotValid_Fail(t *testing.T) {
 			assert.Error(t, err)
 			assert.True(t, errors.Asc(err, testCase.expectedCode), "expected code %s, got %v", testCase.expectedCode, err)
 		})
-	}
-}
-
-// The message names the allowed table functions as a caller would write them, so it cannot
-// be derived from the lowercased keys it describes.
-func TestGeneratorTableFunctionsMessageMatchesSet(t *testing.T) {
-	_, listed, found := strings.Cut(generatorTableFunctionsMessage, "allowed table functions are ")
-	require.True(t, found, "message no longer carries a list")
-
-	names := strings.Split(listed, ", ")
-	assert.Len(t, names, len(generatorTableFunctions))
-
-	for _, name := range names {
-		_, ok := generatorTableFunctions[strings.ToLower(name)]
-		assert.True(t, ok, "%s is named in the message but is not allowed", name)
 	}
 }
