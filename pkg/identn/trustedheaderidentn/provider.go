@@ -300,23 +300,26 @@ func (provider *provider) GetIdentity(req *http.Request) (*authtypes.Identity, e
 		return nil, err
 	}
 
-	createdUser, err := provider.userSetter.GetOrCreateUser(ctx, newUser, user.WithRoleNames([]string{authtypes.SigNozViewerRoleName}))
-	if err != nil {
+	// CreateUser is used here, not GetOrCreateUser. The ineligible check above
+	// and this insert are not atomic: a pending invite (or any other
+	// non-deleted row for this email and org) can appear in the window between
+	// them, invisible to that check. GetOrCreateUser would silently adopt such
+	// a row through GetNonDeletedUserByEmailAndOrgID, reopening the very
+	// pending-invite escalation the ineligible guard exists to close. CreateUser
+	// has no adoption path at all, so a concurrent row instead collides with
+	// the partial unique index on (email, org_id) WHERE status != 'deleted'
+	// (pkg/sqlmigration/076_drop_user_deleted_at.go) and the insert fails: the
+	// race fails closed rather than escalating. This also makes it impossible
+	// for provisioning to ever hand back a pre-existing root record, so there
+	// is no post-create root check to perform here.
+	if err := provider.userSetter.CreateUser(ctx, newUser, user.WithRoleNames([]string{authtypes.SigNozViewerRoleName})); err != nil {
 		return nil, err
 	}
 
-	// GetOrCreateUser returns any pre-existing non-deleted record for this email
-	// and org, including root, in which case the Viewer role option above is
-	// never applied. implsession does the same check after provisioning an SSO
-	// user.
-	if err := createdUser.ErrIfRoot(); err != nil {
-		return nil, errors.WithAdditionalf(err, "root user can only authenticate via password")
-	}
-
 	return authtypes.NewPrincipalUserIdentity(
-		createdUser.ID,
-		createdUser.OrgID,
-		createdUser.Email,
+		newUser.ID,
+		newUser.OrgID,
+		newUser.Email,
 		authtypes.IdentNProviderTrustedHeader,
 	), nil
 }

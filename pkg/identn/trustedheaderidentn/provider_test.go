@@ -2,6 +2,7 @@ package trustedheaderidentn
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -157,19 +158,26 @@ func (f *fakeUserGetter) VerifyResetPasswordToken(context.Context, string) error
 
 var _ user.Getter = (*fakeUserGetter)(nil)
 
-// fakeUserSetter records the last user passed to GetOrCreateUser.
+// fakeUserSetter records the users passed to CreateUser.
 //
 // Most methods are stubs returning nil/zero — they exist purely to satisfy the
-// user.Setter interface. Only GetOrCreateUser is exercised by these tests.
+// user.Setter interface. Only CreateUser is exercised by these tests;
+// GetIdentity no longer calls GetOrCreateUser (see provider.go), so that
+// method is kept only to satisfy the interface and is not used to model any
+// behaviour here.
 type fakeUserSetter struct {
 	createdUsers []*types.User
 	autoFail     bool
 	existing     []*types.User
 }
 
-// existing returns a pre-existing user for a matching email and org, mirroring
-// impluser.GetOrCreateUser, which short-circuits on
-// GetNonDeletedUserByEmailAndOrgID before creating anything.
+// withExisting primes the fake with a non-deleted row that already occupies
+// the (email, org_id) slot a later CreateUser call will try to insert into.
+// It models the partial unique index on (email, org_id) WHERE status !=
+// 'deleted' (pkg/sqlmigration/076_drop_user_deleted_at.go): a real INSERT
+// colliding with that index fails, so CreateUser below returns an error
+// instead of creating anything, rather than adopting the existing row the way
+// GetOrCreateUser once did.
 func (f *fakeUserSetter) withExisting(users ...*types.User) *fakeUserSetter {
 	f.existing = append(f.existing, users...)
 	return f
@@ -183,21 +191,17 @@ func (f *fakeUserSetter) CreateUser(_ context.Context, u *types.User, _ ...user.
 	if f.autoFail {
 		return errors.New(errors.TypeInternal, errors.CodeInternal, "create user failed")
 	}
+	for _, e := range f.existing {
+		if e.Email == u.Email && e.OrgID == u.OrgID && e.ErrIfDeleted() == nil {
+			return errors.New(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "a non-deleted user already exists for this email and org")
+		}
+	}
 	f.createdUsers = append(f.createdUsers, u)
 	return nil
 }
 
-func (f *fakeUserSetter) GetOrCreateUser(_ context.Context, u *types.User, _ ...user.CreateUserOption) (*types.User, error) {
-	if f.autoFail {
-		return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "get or create user failed")
-	}
-	for _, e := range f.existing {
-		if e.Email == u.Email && e.OrgID == u.OrgID {
-			return e, nil
-		}
-	}
-	f.createdUsers = append(f.createdUsers, u)
-	return u, nil
+func (f *fakeUserSetter) GetOrCreateUser(context.Context, *types.User, ...user.CreateUserOption) (*types.User, error) {
+	return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "GetOrCreateUser is not used by the trusted-header provider and is not modelled by this fake")
 }
 
 func (f *fakeUserSetter) GetOrCreateResetPasswordToken(context.Context, valuer.UUID) (*types.ResetPasswordToken, error) {
@@ -640,10 +644,14 @@ func TestGetIdentityRejectsRootUser(t *testing.T) {
 	assert.Nil(t, identity)
 }
 
-// The root user is filtered out of the lookup, so control reaches the
-// provisioning branch, where GetOrCreateUser finds the existing root record and
-// returns it. Without a post-create guard the provider mints an identity for
-// root, which always holds the admin role.
+// The root user is filtered out by the ineligible guard before the
+// auto-provisioning branch is ever reached, even with AutoProvision enabled,
+// so this test no longer exercises CreateUser at all: it pins the same
+// refusal as TestGetIdentityRejectsRootUser, but confirms it holds regardless
+// of AutoProvision. This used to describe GetOrCreateUser adopting the
+// existing root record after a post-create check; that check was removed
+// because CreateUser (unlike GetOrCreateUser) has no adoption path and so can
+// never hand back a pre-existing record for the provider to inspect.
 func TestGetIdentityDoesNotProvisionIntoRootUser(t *testing.T) {
 	orgID := valuer.GenerateUUID()
 	email, err := valuer.NewEmail("root@example.com")
@@ -654,7 +662,7 @@ func TestGetIdentityDoesNotProvisionIntoRootUser(t *testing.T) {
 
 	orgGetter := &fakeOrgGetter{orgs: []*types.Organization{{Identifiable: types.Identifiable{ID: orgID}, Name: "default"}}}
 	userGetter := &fakeUserGetter{users: []*types.User{rootUser}}
-	userSetter := (&fakeUserSetter{}).withExisting(rootUser)
+	userSetter := &fakeUserSetter{}
 
 	p := newProvider(t, newConfig("X-Forwarded-Email", "", true), orgGetter, userGetter, userSetter)
 
@@ -663,6 +671,8 @@ func TestGetIdentityDoesNotProvisionIntoRootUser(t *testing.T) {
 	identity, err := p.GetIdentity(req)
 	require.Error(t, err)
 	assert.Nil(t, identity)
+	assert.True(t, errors.Asc(err, ErrCodeTrustedHeaderUserNotEligible))
+	assert.Empty(t, userSetter.createdUsers, "auto-provisioning must not run for a known ineligible user")
 }
 
 // Multi-org case: when ListUsersByEmailAndOrgIDs returns both a root user
@@ -728,12 +738,13 @@ func TestGetIdentityRejectsPendingInviteUser(t *testing.T) {
 // escalation TestGetIdentityRejectsPendingInviteUser could not reach: that
 // test runs with autoProvision=false, so it never exercises the provisioning
 // branch. With autoProvision=true, a pending user is still filtered out of
-// the matched set, so control used to fall through to auto-provisioning
-// believing no user existed. GetOrCreateUser (primed here via withExisting to
-// mirror GetNonDeletedUserByEmailAndOrgID finding the pending row) would then
-// adopt that record, activating it and re-granting only Viewer, discarding
-// whatever role an admin actually chose. The fix refuses this outright instead
-// of reaching GetOrCreateUser at all.
+// the matched set, so without the ineligible guard control would fall
+// through to auto-provisioning believing no user existed. Here the pending
+// row is visible to ListUsersByEmailAndOrgIDs, so the ineligible guard itself
+// is what refuses the request before CreateUser is ever called; the
+// narrower case where the pending row is invisible to that lookup but
+// present by the time CreateUser runs is pinned separately by
+// TestGetIdentityFailsClosedWhenPendingInviteAppearsBetweenLookupAndCreate.
 func TestGetIdentityRejectsPendingInviteUserEvenWithAutoProvision(t *testing.T) {
 	orgID := valuer.GenerateUUID()
 	email, err := valuer.NewEmail("alice@example.com")
@@ -744,7 +755,7 @@ func TestGetIdentityRejectsPendingInviteUserEvenWithAutoProvision(t *testing.T) 
 
 	orgGetter := &fakeOrgGetter{orgs: []*types.Organization{{Identifiable: types.Identifiable{ID: orgID}, Name: "default"}}}
 	userGetter := &fakeUserGetter{users: []*types.User{pending}}
-	userSetter := (&fakeUserSetter{}).withExisting(pending)
+	userSetter := &fakeUserSetter{}
 
 	p := newProvider(t, newConfig("X-Forwarded-Email", "", true), orgGetter, userGetter, userSetter)
 
@@ -755,6 +766,44 @@ func TestGetIdentityRejectsPendingInviteUserEvenWithAutoProvision(t *testing.T) 
 	assert.Nil(t, identity)
 	assert.True(t, errors.Asc(err, ErrCodeTrustedHeaderUserNotEligible))
 	assert.Empty(t, userSetter.createdUsers, "auto-provisioning must not run for a known ineligible user")
+}
+
+// TestGetIdentityFailsClosedWhenPendingInviteAppearsBetweenLookupAndCreate is
+// the regression test for the TOCTOU race: the ineligible guard reads the
+// world once, through ListUsersByEmailAndOrgIDs, and CreateUser acts on it
+// much later. An invite created inside that window is invisible to the
+// guard, so unlike the test above, userGetter here returns no users at all
+// (the read sees nothing), yet a pending row for the same email and org
+// already exists by the time CreateUser runs, modelled with withExisting.
+// GetOrCreateUser would have silently adopted that row and activated it;
+// CreateUser has no adoption path, so the fake's conflict simulation (a
+// stand-in for the partial unique index on (email, org_id) WHERE status !=
+// 'deleted') must surface as an error instead, and no identity may be
+// returned.
+func TestGetIdentityFailsClosedWhenPendingInviteAppearsBetweenLookupAndCreate(t *testing.T) {
+	orgID := valuer.GenerateUUID()
+	email, err := valuer.NewEmail("alice@example.com")
+	require.NoError(t, err)
+
+	pending, err := types.NewUser("Alice", email, orgID, types.UserStatusPendingInvite)
+	require.NoError(t, err)
+
+	orgGetter := &fakeOrgGetter{orgs: []*types.Organization{{Identifiable: types.Identifiable{ID: orgID}, Name: "default"}}}
+	// The invite is absent here: the lookup this request performs runs before
+	// the concurrent invite is created, so it sees nothing for this email.
+	userGetter := &fakeUserGetter{}
+	// But by the time CreateUser runs, the row already exists, exactly as it
+	// would in the real store after the concurrent invite committed.
+	userSetter := (&fakeUserSetter{}).withExisting(pending)
+
+	p := newProvider(t, newConfig("X-Forwarded-Email", "", true), orgGetter, userGetter, userSetter)
+
+	req := newTrustedRequest("X-Forwarded-Email", "alice@example.com")
+
+	identity, err := p.GetIdentity(req)
+	require.Error(t, err)
+	assert.Nil(t, identity)
+	assert.Empty(t, userSetter.createdUsers, "the race must fail closed instead of adopting the concurrently created invite")
 }
 
 // TestGetIdentityRejectsDeletedUser pins that a deleted user's email cannot
@@ -785,11 +834,13 @@ func TestGetIdentityRejectsDeletedUser(t *testing.T) {
 
 // TestGetIdentityAutoProvisionsFreshUserWhenOnlyMatchIsDeleted is the mirror
 // of TestGetIdentityRejectsPendingInviteUserEvenWithAutoProvision: a deleted
-// user is not "known but ineligible" the way root and pending are.
-// GetOrCreateUser looks up through GetNonDeletedUserByEmailAndOrgID, which
-// filters on status != deleted (pkg/modules/user/impluser/store.go), so it
-// cannot adopt a deleted row; auto-provisioning must still go on to create a
-// brand new user for this email rather than being refused.
+// user is not "known but ineligible" the way root and pending are, so it is
+// filtered out of the matched set without being counted, and provisioning
+// must proceed. A deleted row sits outside the partial unique index on
+// (email, org_id) WHERE status != 'deleted' (see
+// pkg/sqlmigration/076_drop_user_deleted_at.go), so CreateUser's insert for
+// this email and org never collides with it; a brand new user is created
+// rather than the request being refused or the deleted row adopted.
 func TestGetIdentityAutoProvisionsFreshUserWhenOnlyMatchIsDeleted(t *testing.T) {
 	orgID := valuer.GenerateUUID()
 	email, err := valuer.NewEmail("alice@example.com")
@@ -811,6 +862,44 @@ func TestGetIdentityAutoProvisionsFreshUserWhenOnlyMatchIsDeleted(t *testing.T) 
 	require.NotNil(t, identity)
 	assert.NotEqual(t, deleted.ID, identity.UserID)
 	assert.Len(t, userSetter.createdUsers, 1, "a fresh user should be created rather than the deleted record being adopted")
+}
+
+// TestGetIdentityRejectsMixedDeletedAndPendingUsersForSameEmailAndOrg pins a
+// combination the partial unique index on (email, org_id) WHERE status !=
+// 'deleted' explicitly permits: a deleted row and a pending row can coexist
+// for the same email and org, since only the pending row occupies the live
+// slot the index protects. ListUsersByEmailAndOrgIDs returns both;
+// ErrIfDeleted drops the deleted one uncounted, and the pending one is
+// dropped by the root/pending pass and counted as ineligible, so the request
+// must still be refused with user_not_eligible and nothing created,
+// regardless of AutoProvision.
+func TestGetIdentityRejectsMixedDeletedAndPendingUsersForSameEmailAndOrg(t *testing.T) {
+	for _, autoProvision := range []bool{false, true} {
+		t.Run(fmt.Sprintf("autoProvision=%v", autoProvision), func(t *testing.T) {
+			orgID := valuer.GenerateUUID()
+			email, err := valuer.NewEmail("alice@example.com")
+			require.NoError(t, err)
+
+			deleted, err := types.NewUser("Alice", email, orgID, types.UserStatusDeleted)
+			require.NoError(t, err)
+			pending, err := types.NewUser("Alice", email, orgID, types.UserStatusPendingInvite)
+			require.NoError(t, err)
+
+			orgGetter := &fakeOrgGetter{orgs: []*types.Organization{{Identifiable: types.Identifiable{ID: orgID}, Name: "default"}}}
+			userGetter := &fakeUserGetter{users: []*types.User{deleted, pending}}
+			userSetter := &fakeUserSetter{}
+
+			p := newProvider(t, newConfig("X-Forwarded-Email", "", autoProvision), orgGetter, userGetter, userSetter)
+
+			req := newTrustedRequest("X-Forwarded-Email", "alice@example.com")
+
+			identity, err := p.GetIdentity(req)
+			require.Error(t, err)
+			assert.Nil(t, identity)
+			assert.True(t, errors.Asc(err, ErrCodeTrustedHeaderUserNotEligible))
+			assert.Empty(t, userSetter.createdUsers, "no user should be created for a mixed deleted/pending pair")
+		})
+	}
 }
 
 // Header.Get returns only the first value. A proxy that appends rather than
