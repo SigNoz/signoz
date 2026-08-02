@@ -724,6 +724,95 @@ func TestGetIdentityRejectsPendingInviteUser(t *testing.T) {
 	assert.Nil(t, identity)
 }
 
+// TestGetIdentityRejectsPendingInviteUserEvenWithAutoProvision pins the
+// escalation TestGetIdentityRejectsPendingInviteUser could not reach: that
+// test runs with autoProvision=false, so it never exercises the provisioning
+// branch. With autoProvision=true, a pending user is still filtered out of
+// the matched set, so control used to fall through to auto-provisioning
+// believing no user existed. GetOrCreateUser (primed here via withExisting to
+// mirror GetNonDeletedUserByEmailAndOrgID finding the pending row) would then
+// adopt that record, activating it and re-granting only Viewer, discarding
+// whatever role an admin actually chose. The fix refuses this outright instead
+// of reaching GetOrCreateUser at all.
+func TestGetIdentityRejectsPendingInviteUserEvenWithAutoProvision(t *testing.T) {
+	orgID := valuer.GenerateUUID()
+	email, err := valuer.NewEmail("alice@example.com")
+	require.NoError(t, err)
+
+	pending, err := types.NewUser("Alice", email, orgID, types.UserStatusPendingInvite)
+	require.NoError(t, err)
+
+	orgGetter := &fakeOrgGetter{orgs: []*types.Organization{{Identifiable: types.Identifiable{ID: orgID}, Name: "default"}}}
+	userGetter := &fakeUserGetter{users: []*types.User{pending}}
+	userSetter := (&fakeUserSetter{}).withExisting(pending)
+
+	p := newProvider(t, newConfig("X-Forwarded-Email", "", true), orgGetter, userGetter, userSetter)
+
+	req := newTrustedRequest("X-Forwarded-Email", "alice@example.com")
+
+	identity, err := p.GetIdentity(req)
+	require.Error(t, err)
+	assert.Nil(t, identity)
+	assert.True(t, errors.Asc(err, ErrCodeTrustedHeaderUserNotEligible))
+	assert.Empty(t, userSetter.createdUsers, "auto-provisioning must not run for a known ineligible user")
+}
+
+// TestGetIdentityRejectsDeletedUser pins that a deleted user's email cannot
+// authenticate. ListUsersByEmailAndOrgIDs (pkg/modules/user/impluser/store.go)
+// applies no status filter at all, so the only thing keeping a deleted record
+// out of the matched set is the in-provider ErrIfDeleted check; this test
+// exists because nothing previously asserted that check directly, which is
+// exactly why a prior edit could drop it unnoticed.
+func TestGetIdentityRejectsDeletedUser(t *testing.T) {
+	orgID := valuer.GenerateUUID()
+	email, err := valuer.NewEmail("alice@example.com")
+	require.NoError(t, err)
+
+	deleted, err := types.NewUser("Alice", email, orgID, types.UserStatusDeleted)
+	require.NoError(t, err)
+
+	orgGetter := &fakeOrgGetter{orgs: []*types.Organization{{Identifiable: types.Identifiable{ID: orgID}, Name: "default"}}}
+	userGetter := &fakeUserGetter{users: []*types.User{deleted}}
+
+	p := newProvider(t, newConfig("X-Forwarded-Email", "", false), orgGetter, userGetter, &fakeUserSetter{})
+
+	req := newTrustedRequest("X-Forwarded-Email", "alice@example.com")
+
+	identity, err := p.GetIdentity(req)
+	require.Error(t, err)
+	assert.Nil(t, identity)
+}
+
+// TestGetIdentityAutoProvisionsFreshUserWhenOnlyMatchIsDeleted is the mirror
+// of TestGetIdentityRejectsPendingInviteUserEvenWithAutoProvision: a deleted
+// user is not "known but ineligible" the way root and pending are.
+// GetOrCreateUser looks up through GetNonDeletedUserByEmailAndOrgID, which
+// filters on status != deleted (pkg/modules/user/impluser/store.go), so it
+// cannot adopt a deleted row; auto-provisioning must still go on to create a
+// brand new user for this email rather than being refused.
+func TestGetIdentityAutoProvisionsFreshUserWhenOnlyMatchIsDeleted(t *testing.T) {
+	orgID := valuer.GenerateUUID()
+	email, err := valuer.NewEmail("alice@example.com")
+	require.NoError(t, err)
+
+	deleted, err := types.NewUser("Alice", email, orgID, types.UserStatusDeleted)
+	require.NoError(t, err)
+
+	orgGetter := &fakeOrgGetter{orgs: []*types.Organization{{Identifiable: types.Identifiable{ID: orgID}, Name: "default"}}}
+	userGetter := &fakeUserGetter{users: []*types.User{deleted}}
+	userSetter := &fakeUserSetter{}
+
+	p := newProvider(t, newConfig("X-Forwarded-Email", "", true), orgGetter, userGetter, userSetter)
+
+	req := newTrustedRequest("X-Forwarded-Email", "alice@example.com")
+
+	identity, err := p.GetIdentity(req)
+	require.NoError(t, err)
+	require.NotNil(t, identity)
+	assert.NotEqual(t, deleted.ID, identity.UserID)
+	assert.Len(t, userSetter.createdUsers, 1, "a fresh user should be created rather than the deleted record being adopted")
+}
+
 // Header.Get returns only the first value. A proxy that appends rather than
 // replaces leaves the client's value ahead of the injected one, so the client
 // would choose the identity. Both emails below belong to real active users in

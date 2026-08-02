@@ -26,6 +26,7 @@ var (
 	ErrCodeTrustedHeaderAmbiguousHeader = errors.MustNewCode("trusted_header_ambiguous_header")
 	ErrCodeTrustedHeaderBlankHeader     = errors.MustNewCode("trusted_header_blank_header")
 	ErrCodeTrustedHeaderUnsupportedMode = errors.MustNewCode("trusted_header_unsupported_trust_mode")
+	ErrCodeTrustedHeaderUserNotEligible = errors.MustNewCode("trusted_header_user_not_eligible")
 )
 
 type provider struct {
@@ -216,12 +217,41 @@ func (provider *provider) GetIdentity(req *http.Request) (*authtypes.Identity, e
 		return nil, err
 	}
 
-	// Deleted, root and pending-invite users are not authenticatable through a
-	// trusted header. Root can only authenticate by password. A pending invite
-	// has not proved control of the mailbox, and GetOrCreateUser would activate
-	// it as a side effect while resetting the role an admin chose.
+	// Deleted users are gone: the email is free to re-provision as a brand
+	// new user. The live constraint on users (see
+	// pkg/sqlmigration/076_drop_user_deleted_at.go, which superseded an
+	// earlier (org_id, email, deleted_at) index from
+	// pkg/sqlmigration/067_add_status_user.go) is a partial unique index on
+	// (email, org_id) WHERE status != 'deleted', so a soft-deleted row sits
+	// outside that constraint entirely and a freshly created active row for
+	// the same email and org never collides with it. GetOrCreateUser's own
+	// lookup (GetNonDeletedUserByEmailAndOrgID) also excludes deleted rows, so
+	// it cannot adopt one either; a plain CreateUser follows and succeeds.
+	// Filtering deleted users here is purely to keep them out of the
+	// ambiguous/matched counting below; it does not, by itself, need to block
+	// provisioning.
 	users = slices.DeleteFunc(users, func(u *types.User) bool {
-		return u.ErrIfDeleted() != nil || u.ErrIfRoot() != nil || u.ErrIfPending() != nil
+		return u.ErrIfDeleted() != nil
+	})
+
+	// Root and pending-invite users are not authenticatable through a trusted
+	// header: root can only authenticate by password, and a pending invite
+	// has not proved control of the mailbox. Unlike a deleted user, they still
+	// occupy the live (org_id, email, deleted_at=zero) slot, so if control
+	// reached the auto-provisioning branch below, GetOrCreateUser would find
+	// and silently adopt one of these records instead of creating a new one:
+	// for a pending invite that means activatePendingUser flips it active and
+	// re-grants only Viewer, discarding whatever role an admin chose; for
+	// root it would go on to mint an admin-privileged identity. ineligible
+	// counts how many such records were filtered, so that case can be told
+	// apart from "no user found at all" below.
+	ineligible := 0
+	users = slices.DeleteFunc(users, func(u *types.User) bool {
+		if u.ErrIfRoot() != nil || u.ErrIfPending() != nil {
+			ineligible++
+			return true
+		}
+		return false
 	})
 
 	if len(users) > 1 {
@@ -238,6 +268,17 @@ func (provider *provider) GetIdentity(req *http.Request) (*authtypes.Identity, e
 			matched.Email,
 			authtypes.IdentNProviderTrustedHeader,
 		), nil
+	}
+
+	// The address is already known but not eligible (root or pending). Refuse
+	// outright rather than falling through to auto-provisioning, which would
+	// otherwise read as "nobody here, safe to create" and let GetOrCreateUser
+	// adopt the existing record. This applies regardless of AutoProvision:
+	// with it off, "no user found" would also have been misleading, since a
+	// user does exist for this email.
+	if ineligible > 0 {
+		return nil, errors.Newf(errors.TypeUnauthenticated, ErrCodeTrustedHeaderUserNotEligible, "email %q matches an existing user that cannot authenticate through a trusted header", email.StringValue()).
+			WithAdditional("the user is root or has a pending invite; auto-provisioning is refused because GetOrCreateUser would otherwise adopt that record instead of creating a new one")
 	}
 
 	if !provider.config.TrustedHeader.AutoProvision {
