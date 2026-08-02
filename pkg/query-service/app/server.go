@@ -141,6 +141,10 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 	r := NewRouter()
 
 	r.Use(middleware.NewRecovery(s.signoz.Instrumentation.Logger()).Wrap)
+	// Limit request body size to prevent memory-exhaustion DoS from
+	// arbitrarily large JSON bodies. 8 MiB is enough for the largest
+	// dashboard payload seen in practice and small enough to bound memory.
+	r.Use(middleware.MaxBytes(8 << 20).Wrap)
 	r.Use(otelmux.Middleware(
 		"apiserver",
 		otelmux.WithMeterProvider(s.signoz.Instrumentation.MeterProvider()),
