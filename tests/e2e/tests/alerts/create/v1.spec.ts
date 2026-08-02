@@ -161,7 +161,25 @@ test.describe('Alert create — v1 classic form', () => {
 		await expect(v1SaveButton(page)).toBeEnabled();
 	});
 
-	test('CV1-05 🐞 broadcast-to-all cannot be saved at all', async ({
+	// TODO: enable once the `broadcastToAll` bug is fixed.
+	//
+	// 🐞 **"Alert all the configured channels" is broken end to end**, so this row
+	// asserts the *intended* behaviour and fails today:
+	//
+	//   1. `BasicInfo`'s switch sets `alertDef.broadcastToAll` and unmounts the
+	//      channel select, so no channel can be picked while it is on.
+	//   2. `preparePostData` blanks `preferredChannels` when `broadcastToAll` is set
+	//      (`FormAlertRules/index.tsx`).
+	//   3. `toPostableRuleDTOFromAlertDef` (`types/api/alerts/convert.ts`) **never
+	//      copies `broadcastToAll`** into the DTO.
+	//
+	// The request therefore says "no channels, no broadcast" and the server answers
+	// `400 at least one channel is required`, which surfaces as the generic error
+	// modal. Observed live: `body.broadcastToAll === undefined`, status `400`,
+	// `.error-modal__wrap` visible, still on `/alerts/new`.
+	//
+	// The fix is to send the field (or to delete the switch). When it lands, unskip.
+	test.skip('CV1-05 broadcast-to-all saves the rule with the broadcast flag', async ({
 		authedPage: page,
 		alertChannel,
 		ownedRules,
@@ -174,7 +192,8 @@ test.describe('Alert create — v1 classic form', () => {
 		await v1BroadcastSwitch(page).click();
 
 		// The select is unmounted, not disabled, so "pick a channel" stops being
-		// possible rather than becoming optional.
+		// possible rather than becoming optional — the switch has to carry the intent
+		// on its own.
 		await expect(v1ChannelSelect(page)).toHaveCount(0);
 		await expect(v1SaveButton(page)).toBeEnabled();
 
@@ -185,23 +204,17 @@ test.describe('Alert create — v1 classic form', () => {
 		]);
 		await ownedRules.register(response);
 
-		// 🐞 **"Alert all the configured channels" is broken end to end.**
-		//
-		// `preparePostData` blanks `preferredChannels` when `broadcastToAll` is set, but
-		// `toPostableRuleDTOFromAlertDef` (`types/api/alerts/convert.ts`) never copies
-		// `broadcastToAll` into the DTO. The request therefore says "no channels, no
-		// broadcast", and the server refuses it with `400 at least one channel is
-		// required` — so the switch makes the form **unsaveable** rather than silently
-		// losing data later. The only working path in v1 is picking channels explicitly.
+		// The broadcast intent must survive the DTO conversion: an empty channel list
+		// is only valid when the flag that replaces it is present.
 		const body = response.request().postDataJSON();
+		expect(body.broadcastToAll).toBe(true);
 		expect(body.preferredChannels).toEqual([]);
-		expect(body.broadcastToAll).toBeUndefined();
 
-		expect(response.status()).toBe(400);
-		expect(await response.text()).toContain('at least one channel is required');
-		await expect(page.locator('.error-modal__wrap')).toBeVisible();
-		// Still on the form — nothing was created, so there is nothing to clean up.
-		expect(new URL(page.url()).pathname).toBe('/alerts/new');
+		expect(response.status(), await response.text()).toBe(201);
+		await expect(page.locator('.error-modal__wrap')).toBeHidden();
+		await expect(page.getByText('Rule created successfully')).toBeVisible();
+		await page.waitForURL(/\/alerts(\?|$)/);
+		expect(new URL(page.url()).pathname).toBe('/alerts');
 	});
 
 	test('CV1-06 a cleared threshold is coerced to 0, so the required-threshold branch is dead', async ({

@@ -93,15 +93,33 @@ test.describe('Alert create — errors and edges', () => {
 		expect(watch.errors).toEqual([]);
 	});
 
-	test('CE-09 the side navigation covers the v2 Discard button', async ({
+	// TODO: enable once the covered-Discard bug is fixed, and revert
+	// `v2ClickDiscard` (`helpers/alert-forms.ts`) to a plain `.click()` in the same
+	// commit — CV2-22 and EV2-11 both go through it.
+	//
+	// 🐞 **A user cannot discard an alert draft.** The footer is
+	// `position: fixed; left: 63px` — the *collapsed* nav rail width — while the side
+	// navigation is 240px wide whenever expanded, which is the default (pinned for a
+	// fresh admin) and also happens transiently on hover when unpinned. Discard is the
+	// footer's left-most control, so the nav sits on top of it and wins the stacking
+	// contest despite the footer's `z-index: 1000`.
+	//
+	// Observed live: `document.elementFromPoint` at the button's centre returns the
+	// nav's `.nav-item-data`, and `page.click()` fails with
+	// *"div.nav-item-data … intercepts pointer events"*. `{ force: true }` does not
+	// help — it skips the actionability wait but still delivers a real mouse event at
+	// those coordinates. Only `dispatchEvent('click')` gets through, which proves the
+	// handler is fine and the defect is purely pointer delivery.
+	//
+	// Fix is one of: make the footer's `left` follow the nav's actual width, move
+	// Discard to the right-hand group, or lift the footer out of the nav's stacking
+	// context.
+	test.skip('CE-09 the v2 Discard button is clickable', async ({
 		authedPage: page,
 	}) => {
 		await gotoCreateAlertV2(page, { alertType: AlertType.LOGS });
 
-		// 🐞 A user-facing bug: the footer is `position: fixed; left: 63px` (the
-		// *collapsed* rail width) while the nav is 240px wide whenever expanded, which
-		// is the default. Discard is the footer's left-most control, so the nav sits on
-		// top of it.
+		// Nothing from the side navigation may sit over the button's centre.
 		const box = await v2DiscardButton(page).boundingBox();
 		expect(box).not.toBeNull();
 		const covering = await elementAtPointClassName(
@@ -109,17 +127,11 @@ test.describe('Alert create — errors and edges', () => {
 			box!.x + box!.width / 2,
 			box!.y + box!.height / 2,
 		);
-		expect(covering).toMatch(/nav-item/);
+		expect(covering).not.toMatch(/nav-item/);
 
-		// And the consequence: a real click cannot land. `{ force: true }` would not
-		// help either — it skips the actionability wait but still dispatches a mouse
-		// event at these coordinates, which the nav receives.
-		await expect(v2DiscardButton(page).click({ timeout: 3_000 })).rejects.toThrow(
-			/intercepts pointer events/,
-		);
-
-		// This row exists so `v2ClickDiscard`'s `dispatchEvent` workaround cannot rot
-		// silently: when the footer is fixed, this test fails, and that failure is the
-		// signal to put the plain `.click()` back in the helper.
+		// And the consequence that matters: a real click lands and leaves the form.
+		await v2DiscardButton(page).click({ timeout: 3_000 });
+		await page.waitForURL(/\/alerts(\?|$)/);
+		expect(new URL(page.url()).pathname).toBe('/alerts');
 	});
 });
