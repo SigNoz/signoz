@@ -2,6 +2,7 @@ package querybuilder
 
 import (
 	"testing"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 
@@ -45,6 +46,12 @@ func TestErrIfStatementIsNotValid_Pass(t *testing.T) {
 		{"OrderByUnquotedIntervalDesc", "SELECT toStartOfInterval(timestamp, INTERVAL 1 MINUTE) AS interval FROM t GROUP BY interval ORDER BY interval DESC"},
 		{"UnquotedIntervalInGroupByTuple", "SELECT a FROM t GROUP BY (`service.name`, `service.version`, interval)"},
 		{"UnquotedIntervalProductionQuery", "SELECT toStartOfInterval(timestamp, INTERVAL 1 MINUTE) AS interval, resource_string_service$$name AS `service.name`, attributes_string['http.route'] AS `http.route`, quantile(0.95)(duration_nano) / 1000000000 AS value FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_string_service$$name = 'svc-a' AND resources_string['deployment.environment'] = 'dev' AND attributes_string['http.route'] = '/v1' AND http_method = 'POST' AND timestamp BETWEEN toDateTime(1784601720) AND toDateTime(1784602620) AND ts_bucket_start BETWEEN 1784601720 - 1800 AND 1784602620 GROUP BY `service.name`, `http.route`, interval ORDER BY interval ASC"},
+		// Separating the two readings of INTERVAL needs backtracking, which is exponential in
+		// the number of terms unless the parser remembers the offsets it has already failed
+		// at. Around 25 terms is where losing that memoisation stops being slow and starts
+		// hanging, so this sits just past it and the loop below bounds how long it may take.
+		// https://github.com/AfterShip/clickhouse-sql-parser/pull/296#issuecomment-5150316367
+		{"UnquotedIntervalRepeatedThirtyTimes", "SELECT interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval AS total FROM t WHERE interval > 0 ORDER BY interval ASC"},
 		// Unspaced, so rejected until the parser stopped lexing a signed literal after a
 		// closing bracket. The spaced form above no longer needs to be spaced.
 		// https://github.com/AfterShip/clickhouse-sql-parser/issues/286
@@ -60,8 +67,19 @@ func TestErrIfStatementIsNotValid_Pass(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			err := ErrIfStatementIsNotValid(testCase.query)
-			assert.NoError(t, err)
+			// Bounded rather than called directly, because a parser that backtracks without
+			// memoising fails by hanging rather than by returning. Every case here parses in
+			// under a millisecond, so the bound only has to be far enough clear of that to
+			// not go off on a loaded CI runner.
+			errC := make(chan error, 1)
+			go func() { errC <- ErrIfStatementIsNotValid(testCase.query) }()
+
+			select {
+			case err := <-errC:
+				assert.NoError(t, err)
+			case <-time.After(10 * time.Second):
+				t.Fatal("timed out, which means the parser is no longer bounding its backtracking")
+			}
 		})
 	}
 }
