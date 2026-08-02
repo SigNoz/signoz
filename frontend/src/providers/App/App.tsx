@@ -18,7 +18,7 @@ import { useGetMyUser } from 'api/generated/services/users';
 import listOrgPreferences from 'api/v1/org/preferences/list';
 import { clearAuthStorage } from 'utils/clearAuthStorage';
 import { getIsNoAuthMode, setNoAuthMode } from 'utils/noAuthMode';
-import { setProxyAuthMode } from 'utils/proxyAuthMode';
+import { setProxyAuthMode, setProxyLogoutUrl } from 'utils/proxyAuthMode';
 import listUserPreferences from 'api/v1/user/preferences/list';
 import getUserVersion from 'api/v1/version/get';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -116,12 +116,16 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			// show. Tokens are left alone: a password session may still be active
 			// and must keep rotating.
 			setProxyAuthMode(true);
+			setProxyLogoutUrl(
+				globalConfigData?.data?.identN?.trustedHeader?.logoutRedirectUrl ?? '',
+			);
 			setNoAuthMode(false);
 			setLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN, 'true');
 			setIsLoggedIn(true);
 		} else {
 			setNoAuthMode(false);
 			setProxyAuthMode(false);
+			setProxyLogoutUrl('');
 		}
 
 		setIsPreflightLoading(false);

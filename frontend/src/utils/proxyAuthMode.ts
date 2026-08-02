@@ -10,3 +10,15 @@ export const setProxyAuthMode = (value: boolean): void => {
 };
 
 export const getIsProxyAuthMode = (): boolean => _isProxyAuthMode;
+
+// The proxy's sign-out endpoint, when configured. Logout is a plain module
+// function outside React, so it cannot read react-query state directly; the
+// preflight effect populates this singleton the same way it populates
+// _isProxyAuthMode above.
+let _proxyLogoutUrl = '';
+
+export const setProxyLogoutUrl = (value: string): void => {
+	_proxyLogoutUrl = value;
+};
+
+export const getProxyLogoutUrl = (): string => _proxyLogoutUrl;
