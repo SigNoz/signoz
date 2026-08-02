@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
-import { Info, Plus, X } from '@signozhq/icons';
+import { Info, Plus } from '@signozhq/icons';
+import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
@@ -15,8 +16,10 @@ export interface ItemInputSelectorProps {
 	placeholder: string;
 	selectedIds: string[];
 	onChange: (ids: string[]) => void;
+	testId: string;
 	docsAnchor?: string;
 	hasError?: boolean;
+	prefixElement?: React.ReactNode;
 }
 
 function parseInputValues(input: string): string[] {
@@ -30,11 +33,13 @@ function ItemInputSelector({
 	placeholder,
 	selectedIds,
 	onChange,
+	testId,
 	docsAnchor = 'role',
 	hasError = false,
+	prefixElement,
 }: ItemInputSelectorProps): JSX.Element {
 	const [inputValue, setInputValue] = useState('');
-	const footerRef = useRef<HTMLDivElement>(null);
+	const badgesRef = useRef<HTMLDivElement>(null);
 
 	const addValues = useCallback(
 		(input: string): void => {
@@ -87,26 +92,24 @@ function ItemInputSelector({
 		[selectedIds, onChange],
 	);
 
-	const handleBadgeKeyDown = useCallback(
-		(
-			e: React.KeyboardEvent<HTMLButtonElement>,
-			itemId: string,
-			index: number,
-		): void => {
-			if (e.key !== 'Enter' && e.key !== ' ') {
-				return;
-			}
-
+	const handleBadgeClose = useCallback(
+		(e: React.MouseEvent, itemId: string, index: number): void => {
 			e.preventDefault();
 			handleRemove(itemId);
 
+			// Activating a button via Enter/Space reports detail 0;
+			// a real click reports 1 or more
+			// Only trigger focus when using keyboard
+			const isKeyboardActivation = e.detail === 0;
+
+			if (!isKeyboardActivation) {
+				return;
+			}
+
 			const targetIndex = index > 0 ? index - 1 : 0;
 			requestAnimationFrame(() => {
-				const buttons = footerRef.current?.querySelectorAll('button');
-				const targetButton = buttons?.[targetIndex] as
-					| HTMLButtonElement
-					| undefined;
-				targetButton?.focus();
+				const buttons = badgesRef.current?.querySelectorAll('button');
+				buttons?.[targetIndex]?.focus();
 			});
 		},
 		[handleRemove],
@@ -120,7 +123,7 @@ function ItemInputSelector({
 				styles.itemInputSelector,
 				showError ? styles.itemInputSelectorError : '',
 			)}
-			data-testid="item-input-selector"
+			data-testid={`item-input-selector-${testId}`}
 		>
 			<Input
 				placeholder={placeholder}
@@ -128,14 +131,15 @@ function ItemInputSelector({
 				onChange={handleInputChange}
 				onKeyDown={handleInputKeyDown}
 				onBlur={handleInputBlur}
-				data-testid="item-input-selector-input"
+				data-testid={`item-input-selector-input-${testId}`}
+				prefix={prefixElement}
 				suffix={
 					<Button
 						variant="solid"
 						size="sm"
 						onClick={handleAddClick}
 						disabled={!inputValue.trim()}
-						data-testid="item-input-selector-add-btn"
+						data-testid={`item-input-selector-add-btn-${testId}`}
 					>
 						<Plus size={14} />
 						Add
@@ -144,28 +148,22 @@ function ItemInputSelector({
 			/>
 
 			{selectedIds.length > 0 ? (
-				<div ref={footerRef} className={styles.itemInputSelectorFooter}>
-					<div className={styles.itemInputSelectorBadges}>
+				<div className={styles.itemInputSelectorFooter}>
+					<div ref={badgesRef} className={styles.itemInputSelectorBadges}>
 						{selectedIds.map((id, index) => (
-							<span key={id} className={styles.itemInputSelectorBadge} title={id}>
-								<Typography
-									as="span"
-									size="small"
-									truncate={1}
-									className={styles.itemInputSelectorBadgeLabel}
-								>
+							<Badge
+								key={id}
+								color="secondary"
+								className={styles.itemInputSelectorBadge}
+								testId={`item-badge-${testId}-${index}`}
+								closable
+								closeAriaLabel={`Remove ${id}`}
+								onClose={(e): void => handleBadgeClose(e, id, index)}
+							>
+								<Typography as="span" size="small" truncate={1} title={id}>
 									{id}
 								</Typography>
-								<button
-									type="button"
-									className={styles.itemInputSelectorBadgeRemove}
-									onClick={(): void => handleRemove(id)}
-									onKeyDown={(e): void => handleBadgeKeyDown(e, id, index)}
-									aria-label={`Remove ${id}`}
-								>
-									<X size={10} />
-								</button>
-							</span>
+							</Badge>
 						))}
 					</div>
 					<TooltipSimple

@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as Sentry from '@sentry/react';
-import { Button, Tooltip } from 'antd';
+import { Button } from '@signozhq/ui/button';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import {
+	QuickFilterChangeEventData,
 	QuickFilterCheckboxUseFieldApis,
 	QuickFiltersSource,
 } from 'components/QuickFilters/types';
@@ -26,8 +28,6 @@ import {
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { FeatureKeys } from '../../constants/features';
-import { useAppContext } from '../../providers/App/App';
 import { K8sDynamicList } from './Base/K8sDynamicList';
 import {
 	GetClustersQuickFiltersConfig,
@@ -51,7 +51,11 @@ import {
 } from './hooks';
 
 import styles from './InfraMonitoringK8s.module.scss';
-import { InfraMonitoringEvents } from 'constants/events';
+import {
+	logInfraFilterCustomizedEvent,
+	logInfraMonitoringListViewedEvent,
+	InfraMonitoringEvents,
+} from 'constants/events';
 import logEvent from 'api/common/logEvent';
 import { NANO_SECOND_MULTIPLIER, useGlobalTimeStore } from 'store/globalTime';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
@@ -122,16 +126,27 @@ export default function InfraMonitoringK8s(): JSX.Element {
 			category: selectedCategory,
 			view: InfraMonitoringEvents.QuickFiltersView,
 		});
+
+		// The category query param is a plain string; entities are validated by
+		// getEntityConfig before rendering
+		logInfraMonitoringListViewedEvent(selectedCategory as InfraMonitoringEntity);
 	}, [selectedCategory]);
 
 	const handleFilterVisibilityChange = useCallback((): void => {
 		setShowFilters((show) => !show);
 	}, []);
 
-	const { featureFlags } = useAppContext();
-	const dotMetricsEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
-			?.active || false;
+	const handleQuickFilterChange = useCallback(
+		(data: QuickFilterChangeEventData): void => {
+			logInfraFilterCustomizedEvent(
+				selectedCategory as InfraMonitoringEntity,
+				'quick_filter',
+				data.expression,
+				data.filterItemKeys,
+			);
+		},
+		[selectedCategory],
+	);
 
 	const categories = useMemo(
 		() => [
@@ -139,58 +154,58 @@ export default function InfraMonitoringK8s(): JSX.Element {
 				key: K8sCategories.PODS,
 				label: 'Pods',
 				icon: <Container size={14} />,
-				config: GetPodsQuickFiltersConfig(dotMetricsEnabled),
+				config: GetPodsQuickFiltersConfig(),
 			},
 			{
 				key: K8sCategories.NODES,
 				label: 'Nodes',
 				icon: <Workflow size={14} />,
-				config: GetNodesQuickFiltersConfig(dotMetricsEnabled),
+				config: GetNodesQuickFiltersConfig(),
 			},
 			{
 				key: K8sCategories.NAMESPACES,
 				label: 'Namespaces',
 				icon: <FilePenLine size={14} />,
-				config: GetNamespaceQuickFiltersConfig(dotMetricsEnabled),
+				config: GetNamespaceQuickFiltersConfig(),
 			},
 			{
 				key: K8sCategories.CLUSTERS,
 				label: 'Clusters',
 				icon: <Boxes size={14} />,
-				config: GetClustersQuickFiltersConfig(dotMetricsEnabled),
+				config: GetClustersQuickFiltersConfig(),
 			},
 			{
 				key: K8sCategories.DEPLOYMENTS,
 				label: 'Deployments',
 				icon: <Computer size={14} />,
-				config: GetDeploymentsQuickFiltersConfig(dotMetricsEnabled),
+				config: GetDeploymentsQuickFiltersConfig(),
 			},
 			{
 				key: K8sCategories.JOBS,
 				label: 'Jobs',
 				icon: <Bolt size={14} />,
-				config: GetJobsQuickFiltersConfig(dotMetricsEnabled),
+				config: GetJobsQuickFiltersConfig(),
 			},
 			{
 				key: K8sCategories.DAEMONSETS,
 				label: 'DaemonSets',
 				icon: <Group size={14} />,
-				config: GetDaemonsetsQuickFiltersConfig(dotMetricsEnabled),
+				config: GetDaemonsetsQuickFiltersConfig(),
 			},
 			{
 				key: K8sCategories.STATEFULSETS,
 				label: 'StatefulSets',
 				icon: <ArrowUpDown size={14} />,
-				config: GetStatefulsetsQuickFiltersConfig(dotMetricsEnabled),
+				config: GetStatefulsetsQuickFiltersConfig(),
 			},
 			{
 				key: K8sCategories.VOLUMES,
 				label: 'Volumes',
 				icon: <HardDrive size={14} />,
-				config: GetVolumesQuickFiltersConfig(dotMetricsEnabled),
+				config: GetVolumesQuickFiltersConfig(),
 			},
 		],
-		[dotMetricsEnabled],
+		[],
 	);
 
 	const selectedCategoryConfig = useMemo(
@@ -225,14 +240,15 @@ export default function InfraMonitoringK8s(): JSX.Element {
 			<>
 				{!showFilters && (
 					<div className={styles.k8SOpenQuickFilters}>
-						<Button
-							className="periscope-btn ghost"
-							type="text"
-							size="small"
-							onClick={handleFilterVisibilityChange}
-						>
-							<Filter size={14} />
-						</Button>
+						<TooltipSimple title="Open Filters" arrow side="left">
+							<Button
+								variant="ghost"
+								size="icon"
+								color="secondary"
+								onClick={handleFilterVisibilityChange}
+								prefix={<Filter size={14} />}
+							/>
+						</TooltipSimple>
 					</div>
 				)}
 			</>
@@ -253,13 +269,13 @@ export default function InfraMonitoringK8s(): JSX.Element {
 												Viewing · Resource
 											</Typography.Text>
 											<div className={styles.sectionLine} />
-											<Tooltip title="Collapse Filters">
+											<TooltipSimple title="Collapse Filters" arrow>
 												<ArrowUpToLine
 													style={{ transform: 'rotate(270deg)' }}
 													onClick={handleFilterVisibilityChange}
 													size="md"
 												/>
-											</Tooltip>
+											</TooltipSimple>
 										</div>
 										<div className={styles.categoryCard}>
 											<div className={styles.categoryList}>
@@ -296,6 +312,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 												config={selectedCategoryConfig}
 												handleFilterVisibilityChange={handleFilterVisibilityChange}
 												useFieldApis={selectedCategoryUseFieldApis}
+												onQuickFilterChange={handleQuickFilterChange}
 											/>
 										)}
 									</div>

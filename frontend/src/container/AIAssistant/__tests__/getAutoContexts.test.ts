@@ -167,6 +167,56 @@ describe('getAutoContexts', () => {
 		]);
 	});
 
+	it('returns panel edit context on the V2 panel editor', () => {
+		const dashboardId = 'dash-123';
+		const panelId = 'panel-abc';
+		const pathname = ROUTES.DASHBOARD_PANEL_EDITOR.replace(
+			':dashboardId',
+			dashboardId,
+		).replace(':panelId', panelId);
+
+		const contexts = getAutoContexts(pathname, '');
+
+		expect(contexts).toStrictEqual([
+			{
+				source: 'auto',
+				type: 'dashboard',
+				resourceId: dashboardId,
+				metadata: {
+					page: 'panel_edit',
+					widgetId: panelId,
+				},
+			},
+		]);
+	});
+
+	it('returns new panel context on the unsaved new-panel editor', () => {
+		const dashboardId = 'dash-123';
+		const pathname = ROUTES.DASHBOARD_PANEL_EDITOR.replace(
+			':dashboardId',
+			dashboardId,
+		).replace(':panelId', 'new');
+		const startTime = '1700000000000';
+		const endTime = '1700003600000';
+
+		const contexts = getAutoContexts(
+			pathname,
+			`?panelKind=TimeSeries&${QueryParams.startTime}=${startTime}&${QueryParams.endTime}=${endTime}`,
+		);
+
+		expect(contexts).toStrictEqual([
+			{
+				source: 'auto',
+				type: 'dashboard',
+				resourceId: dashboardId,
+				metadata: {
+					page: 'panel_create',
+					timeRange: { start: Number(startTime), end: Number(endTime) },
+				},
+			},
+		]);
+	});
+
 	it('returns empty array on alert overview without ruleId', () => {
 		const contexts = getAutoContexts(ROUTES.ALERT_OVERVIEW, '');
 

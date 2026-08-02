@@ -46,7 +46,7 @@ export interface UseSavedViewsResult {
 	isLoading: boolean;
 	createView: (input: SavedViewInput) => Promise<SavedView | null>;
 	updateView: (id: string, input: SavedViewInput) => void;
-	deleteView: (id: string) => void;
+	deleteView: (id: string) => Promise<void>;
 }
 
 // Org-shared saved views, backed by the Views API. Exposes the list plus
@@ -127,9 +127,8 @@ export function useSavedViews(): UseSavedViewsResult {
 	);
 
 	const deleteView = useCallback(
-		(id: string): void => {
-			deleteMutation.mutate({ pathParams: { id } });
-		},
+		(id: string): Promise<void> =>
+			deleteMutation.mutateAsync({ pathParams: { id } }).then(() => undefined),
 		[deleteMutation],
 	);
 

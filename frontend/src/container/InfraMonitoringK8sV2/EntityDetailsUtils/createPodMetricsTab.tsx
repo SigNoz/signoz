@@ -30,7 +30,6 @@ interface CreatePodMetricsTabParams<T> {
 		entity: T,
 		start: number,
 		end: number,
-		dotMetricsEnabled: boolean,
 	) => GetQueryResultsProps[];
 	queryKey: string;
 	category: InfraMonitoringEntity;
@@ -64,6 +63,7 @@ export function createPodMetricsTab<T>({
 				getEntityQueryPayload={getQueryPayload}
 				queryKey={queryKey}
 				category={category}
+				view={VIEW_TYPES.POD_METRICS}
 			/>
 		),
 	};

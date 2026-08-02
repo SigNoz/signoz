@@ -203,6 +203,8 @@ func (v *filterExpressionVisitor) Visit(tree antlr.ParseTree) any {
 		return v.VisitValueList(t)
 	case *grammar.FullTextContext:
 		return v.VisitFullText(t)
+	case *grammar.SearchCallContext:
+		return v.VisitSearchCall(t)
 	case *grammar.FunctionCallContext:
 		return v.VisitFunctionCall(t)
 	case *grammar.FunctionParamListContext:
@@ -317,6 +319,8 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 		return v.Visit(ctx.Comparison())
 	} else if ctx.FunctionCall() != nil {
 		return v.Visit(ctx.FunctionCall())
+	} else if ctx.SearchCall() != nil {
+		return v.Visit(ctx.SearchCall())
 	} else if ctx.FullText() != nil {
 		return v.Visit(ctx.FullText())
 	}
@@ -770,6 +774,13 @@ func normalizeFunctionValue(operator qbtypes.FilterOperator, functionName string
 		return []any{values}, nil
 	}
 	return valueParams, nil
+}
+
+// VisitSearchCall handles search('needle'). The search() function is parsed but
+// not yet implemented; reject it with a clear invalid-input error.
+func (v *filterExpressionVisitor) VisitSearchCall(ctx *grammar.SearchCallContext) any {
+	v.errors = append(v.errors, "function `search` is not yet supported")
+	return ErrorConditionLiteral
 }
 
 // VisitFunctionParamList handles the parameter list for function calls.

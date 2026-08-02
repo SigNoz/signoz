@@ -756,10 +756,14 @@ function QueryBuilderSearchV2(
 
 			let operatorOptions;
 			if (currentFilterItem?.key?.dataType) {
-				operatorOptions = QUERY_BUILDER_OPERATORS_BY_TYPES[
-					currentFilterItem.key
-						.dataType as keyof typeof QUERY_BUILDER_OPERATORS_BY_TYPES
-				].map((operator) => ({
+				// Fallback to universal suggestions if no match found for currentFilter dataType
+				const operatorsForDataType =
+					QUERY_BUILDER_OPERATORS_BY_TYPES[
+						currentFilterItem.key
+							.dataType as keyof typeof QUERY_BUILDER_OPERATORS_BY_TYPES
+					] ?? QUERY_BUILDER_OPERATORS_BY_TYPES.universal;
+
+				operatorOptions = operatorsForDataType.map((operator) => ({
 					label: operator,
 					value: operator,
 				}));

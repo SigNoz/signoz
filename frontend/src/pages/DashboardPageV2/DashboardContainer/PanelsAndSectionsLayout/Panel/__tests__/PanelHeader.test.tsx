@@ -41,6 +41,40 @@ function makePanel(overrides?: {
 	} as unknown as DashboardtypesPanelDTO;
 }
 
+// Blank name so the editor-preview guard test relies on the warning alone.
+function makePanelWithQueries(
+	kind: string,
+	enabled: number,
+	disabled = 0,
+): DashboardtypesPanelDTO {
+	const envelope = (isDisabled: boolean): unknown => ({
+		type: 'builder_query',
+		spec: { disabled: isDisabled },
+	});
+	return {
+		kind: 'Panel',
+		spec: {
+			display: { name: '' },
+			plugin: { kind, spec: {} },
+			queries: [
+				{
+					spec: {
+						plugin: {
+							kind: 'signoz/CompositeQuery',
+							spec: {
+								queries: [
+									...Array.from({ length: enabled }, () => envelope(false)),
+									...Array.from({ length: disabled }, () => envelope(true)),
+								],
+							},
+						},
+					},
+				},
+			],
+		},
+	} as unknown as DashboardtypesPanelDTO;
+}
+
 const baseProps = {
 	panel: makePanel(),
 	panelId: 'panel-1',
@@ -98,6 +132,53 @@ describe('PanelHeader status indicators', () => {
 		renderWithProvider(<PanelHeader {...baseProps} />);
 		expect(screen.queryByTestId('panel-status-error')).not.toBeInTheDocument();
 		expect(screen.queryByTestId('panel-status-warning')).not.toBeInTheDocument();
+	});
+});
+
+describe('PanelHeader multi-query config warning (issue #9512)', () => {
+	it('warns when a Number panel has more than one enabled query', () => {
+		renderWithProvider(
+			<PanelHeader
+				{...baseProps}
+				panel={makePanelWithQueries('signoz/NumberPanel', 2)}
+			/>,
+		);
+		expect(screen.getByTestId('panel-status-config-warning')).toBeInTheDocument();
+	});
+
+	it('does not warn when only one query is enabled (others disabled)', () => {
+		renderWithProvider(
+			<PanelHeader
+				{...baseProps}
+				panel={makePanelWithQueries('signoz/NumberPanel', 1, 2)}
+			/>,
+		);
+		expect(
+			screen.queryByTestId('panel-status-config-warning'),
+		).not.toBeInTheDocument();
+	});
+
+	it('does not warn for non-Number panels with multiple enabled queries', () => {
+		renderWithProvider(
+			<PanelHeader
+				{...baseProps}
+				panel={makePanelWithQueries('signoz/TimeSeriesPanel', 3)}
+			/>,
+		);
+		expect(
+			screen.queryByTestId('panel-status-config-warning'),
+		).not.toBeInTheDocument();
+	});
+
+	it('shows the warning in the editor preview (hideActions, no title)', () => {
+		renderWithProvider(
+			<PanelHeader
+				{...baseProps}
+				panel={makePanelWithQueries('signoz/NumberPanel', 2)}
+				hideActions
+			/>,
+		);
+		expect(screen.getByTestId('panel-status-config-warning')).toBeInTheDocument();
 	});
 });
 

@@ -70,7 +70,6 @@ export type GetEntityQueryPayload<T> = (
 	entity: T,
 	start: number,
 	end: number,
-	dotMetricsEnabled: boolean,
 ) => GetQueryResultsProps[];
 
 export interface K8sDetailsTabsConfig {

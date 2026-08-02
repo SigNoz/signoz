@@ -20,7 +20,6 @@ type NamespaceRecord struct {
 	NamespaceName     string            `json:"namespaceName" required:"true"`
 	NamespaceCPU      float64           `json:"namespaceCPU" required:"true"`
 	NamespaceMemory   float64           `json:"namespaceMemory" required:"true"`
-	PodCountsByPhase  PodCountsByPhase  `json:"podCountsByPhase" required:"true"`
 	PodCountsByStatus PodCountsByStatus `json:"podCountsByStatus" required:"true"`
 	Counts            struct {
 		Deployments  int64 `json:"deployments" required:"true"`

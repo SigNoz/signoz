@@ -78,6 +78,7 @@ type validationConfig struct {
 	skipSelectFieldValidation      bool
 	skipGroupByValidation          bool
 	withTimestampGroupByValidation bool
+	withReduceToValidation         bool
 }
 
 func applyValidationOptions(opts []ValidationOption) validationConfig {
@@ -140,6 +141,15 @@ func WithSkipGroupByValidation() ValidationOption {
 func WithTimestampGroupByValidation() ValidationOption {
 	return func(cfg *validationConfig) {
 		cfg.withTimestampGroupByValidation = true
+	}
+}
+
+// WithReduceToValidation enables validation that metric aggregations carry a
+// valid reduceTo operator. Used for scalar request types, where the time
+// series produced by a metric query must be reduced to a single value.
+func WithReduceToValidation() ValidationOption {
+	return func(cfg *validationConfig) {
+		cfg.withReduceToValidation = true
 	}
 }
 
@@ -277,6 +287,29 @@ func (q *QueryBuilderQuery[T]) validateAggregations(cfg validationConfig) error 
 					errors.TypeInvalidInput,
 					errors.CodeInvalidInput,
 					"invalid space aggregation, should be one of the following: [`sum`, `avg`, `min`, `max`, `count`, `p50`, `p75`, `p90`, `p95`, `p99`]",
+				)
+			}
+			if cfg.withReduceToValidation && !v.ReduceTo.IsValid() {
+				aggId := fmt.Sprintf("aggregation #%d", i+1)
+				if q.Name != "" {
+					aggId = fmt.Sprintf("aggregation #%d in query '%s'", i+1, q.Name)
+				}
+				if v.ReduceTo == ReduceToUnknown {
+					return errors.NewInvalidInputf(
+						errors.CodeInvalidInput,
+						"reduceTo is required for %s for the scalar request type",
+						aggId,
+					).WithAdditional(
+						"Metric queries produce a time series; scalar requests must specify how to reduce it to a single value. Valid values are: sum, count, avg, min, max, last, median",
+					)
+				}
+				return errors.NewInvalidInputf(
+					errors.CodeInvalidInput,
+					"invalid reduceTo `%s` for %s",
+					v.ReduceTo.StringValue(),
+					aggId,
+				).WithAdditional(
+					"Valid values are: sum, count, avg, min, max, last, median",
 				)
 			}
 		case TraceAggregation:
@@ -790,7 +823,7 @@ func GetValidationOptions(requestType RequestType) []ValidationOption {
 	case RequestTypeTimeSeries:
 		return []ValidationOption{WithSkipSelectFieldValidation(), WithTimestampGroupByValidation()}
 	case RequestTypeScalar:
-		return []ValidationOption{WithSkipSelectFieldValidation()}
+		return []ValidationOption{WithSkipSelectFieldValidation(), WithReduceToValidation()}
 	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace:
 		return []ValidationOption{WithSkipAggregationValidation(), WithSkipHavingValidation(), WithSkipAggregationOrderBy(), WithSkipGroupByValidation()}
 	default:
