@@ -3418,9 +3418,13 @@ func (r *ClickHouseReader) GetLatestReceivedMetric(
 	}
 
 	for label, val := range labelValues {
+		// label and val both come from the dashboard filter and are
+		// interpolated into a single-quoted ClickHouse SQL literal. Escape
+		// ' and \ to prevent SQL injection.
 		whereClauseParts = append(
 			whereClauseParts,
-			fmt.Sprintf(`JSONExtractString(labels, '%s') = '%s'`, label, val),
+			fmt.Sprintf(`JSONExtractString(labels, '%s') = '%s'`,
+				utils.QuoteEscapedString(label), utils.QuoteEscapedString(val)),
 		)
 	}
 
@@ -3717,13 +3721,17 @@ func (r *ClickHouseReader) FetchRelatedValues(ctx context.Context, req *v3.Filte
 	whereClause := strings.Join(andConditions, " AND ")
 
 	var selectColumn string
+	// req.FilterAttributeKey is user-supplied. Escape the single quote and
+	// backslash so a malicious key like x']FROM system.tables-- cannot
+	// terminate the ClickHouse map index literal and inject SQL.
+	safeAttrKey := utils.QuoteEscapedString(req.FilterAttributeKey)
 	switch req.TagType {
 	case v3.TagTypeResource:
-		selectColumn = "resource_attributes" + "['" + req.FilterAttributeKey + "']"
+		selectColumn = "resource_attributes" + "['" + safeAttrKey + "']"
 	case v3.TagTypeTag:
-		selectColumn = "attributes" + "['" + req.FilterAttributeKey + "']"
+		selectColumn = "attributes" + "['" + safeAttrKey + "']"
 	default:
-		selectColumn = "attributes" + "['" + req.FilterAttributeKey + "']"
+		selectColumn = "attributes" + "['" + safeAttrKey + "']"
 	}
 
 	filterSubQuery := fmt.Sprintf(
@@ -4659,39 +4667,42 @@ func (r *ClickHouseReader) ReadRuleStateHistoryByRuleID(
 				toFormat = fmt.Sprintf("%%%s%%", toFormat)
 			}
 			fmtVal := utils.ClickHouseFormattedValue(toFormat)
+			// item.Key.Key is user-supplied; escape it to prevent SQL
+			// injection before embedding inside a single-quoted literal.
+			safeKey := utils.QuoteEscapedString(item.Key.Key)
 			switch op {
 			case v3.FilterOperatorEqual:
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') = %s", item.Key.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') = %s", safeKey, fmtVal))
 			case v3.FilterOperatorNotEqual:
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') != %s", item.Key.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') != %s", safeKey, fmtVal))
 			case v3.FilterOperatorIn:
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') IN %s", item.Key.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') IN %s", safeKey, fmtVal))
 			case v3.FilterOperatorNotIn:
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') NOT IN %s", item.Key.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') NOT IN %s", safeKey, fmtVal))
 			case v3.FilterOperatorLike:
-				conditions = append(conditions, fmt.Sprintf("like(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("like(JSONExtractString(labels, '%s'), %s)", safeKey, fmtVal))
 			case v3.FilterOperatorNotLike:
-				conditions = append(conditions, fmt.Sprintf("notLike(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("notLike(JSONExtractString(labels, '%s'), %s)", safeKey, fmtVal))
 			case v3.FilterOperatorRegex:
-				conditions = append(conditions, fmt.Sprintf("match(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("match(JSONExtractString(labels, '%s'), %s)", safeKey, fmtVal))
 			case v3.FilterOperatorNotRegex:
-				conditions = append(conditions, fmt.Sprintf("not match(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("not match(JSONExtractString(labels, '%s'), %s)", safeKey, fmtVal))
 			case v3.FilterOperatorGreaterThan:
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') > %s", item.Key.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') > %s", safeKey, fmtVal))
 			case v3.FilterOperatorGreaterThanOrEq:
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') >= %s", item.Key.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') >= %s", safeKey, fmtVal))
 			case v3.FilterOperatorLessThan:
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') < %s", item.Key.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') < %s", safeKey, fmtVal))
 			case v3.FilterOperatorLessThanOrEq:
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') <= %s", item.Key.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') <= %s", safeKey, fmtVal))
 			case v3.FilterOperatorContains:
-				conditions = append(conditions, fmt.Sprintf("like(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("like(JSONExtractString(labels, '%s'), %s)", safeKey, fmtVal))
 			case v3.FilterOperatorNotContains:
-				conditions = append(conditions, fmt.Sprintf("notLike(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("notLike(JSONExtractString(labels, '%s'), %s)", safeKey, fmtVal))
 			case v3.FilterOperatorExists:
-				conditions = append(conditions, fmt.Sprintf("has(JSONExtractKeys(labels), '%s')", item.Key.Key))
+				conditions = append(conditions, fmt.Sprintf("has(JSONExtractKeys(labels), '%s')", safeKey))
 			case v3.FilterOperatorNotExists:
-				conditions = append(conditions, fmt.Sprintf("not has(JSONExtractKeys(labels), '%s')", item.Key.Key))
+				conditions = append(conditions, fmt.Sprintf("not has(JSONExtractKeys(labels), '%s')", safeKey))
 			default:
 				return nil, fmt.Errorf("unsupported filter operator")
 			}
