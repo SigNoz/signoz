@@ -29,8 +29,7 @@ test.describe('Notification channels — edit', () => {
 			await Promise.all([
 				page.waitForResponse(
 					(r) =>
-						r.url().includes('/api/v1/channels') &&
-						r.request().method() === 'PUT',
+						r.url().includes('/api/v1/channels') && r.request().method() === 'PUT',
 				),
 				page.getByTestId('save-channel-button').click(),
 			]);
