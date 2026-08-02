@@ -20,8 +20,7 @@ func TestErrIfStatementIsNotValid_Pass(t *testing.T) {
 		{"CommonTableExpression", "WITH t AS (SELECT fingerprint FROM signoz_metrics.time_series_v4) SELECT * FROM t"},
 		{"Join", "SELECT * FROM t1 LEFT JOIN t2 ON t1.a = t2.b"},
 		{"GlobalIn", "SELECT a FROM t WHERE a GLOBAL IN (SELECT b FROM t2)"},
-		// GLOBAL parsed only when the join type was omitted, and only before IN.
-		// https://github.com/AfterShip/clickhouse-sql-parser/pull/293
+		// GLOBAL parsed only when the join type was omitted, and only before IN. https://github.com/AfterShip/clickhouse-sql-parser/pull/293
 		{"GlobalLeftJoin", "SELECT * FROM t1 GLOBAL LEFT JOIN t2 ON t1.a = t2.a"},
 		{"GlobalNotIn", "SELECT a FROM t WHERE a GLOBAL NOT IN (SELECT b FROM t2)"},
 		{"Union", "SELECT * FROM t UNION ALL SELECT * FROM t2"},
@@ -40,16 +39,12 @@ func TestErrIfStatementIsNotValid_Pass(t *testing.T) {
 		{"OrderByInterval", "SELECT toStartOfInterval(timestamp, INTERVAL 1 MINUTE) AS interval ORDER BY interval"},
 		{"OrderByIntervalAndDirection", "SELECT toStartOfInterval(timestamp, INTERVAL 1 MINUTE) AS `interval` ORDER BY `interval` ASC"},
 		// `interval` is a unit keyword, so unquoting it was rejected everywhere the parser
-		// expected a plain identifier. This was 86% of the queries production traffic
-		// rejected. https://github.com/AfterShip/clickhouse-sql-parser/pull/296
+		// expected a plain identifier. https://github.com/AfterShip/clickhouse-sql-parser/pull/296
 		{"OrderByUnquotedIntervalAsc", "SELECT toStartOfInterval(timestamp, INTERVAL 1 MINUTE) AS interval FROM t GROUP BY interval ORDER BY interval ASC"},
 		{"OrderByUnquotedIntervalDesc", "SELECT toStartOfInterval(timestamp, INTERVAL 1 MINUTE) AS interval FROM t GROUP BY interval ORDER BY interval DESC"},
 		{"UnquotedIntervalInGroupByTuple", "SELECT a FROM t GROUP BY (`service.name`, `service.version`, interval)"},
 		{"UnquotedIntervalProductionQuery", "SELECT toStartOfInterval(timestamp, INTERVAL 1 MINUTE) AS interval, resource_string_service$$name AS `service.name`, attributes_string['http.route'] AS `http.route`, quantile(0.95)(duration_nano) / 1000000000 AS value FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_string_service$$name = 'svc-a' AND resources_string['deployment.environment'] = 'dev' AND attributes_string['http.route'] = '/v1' AND http_method = 'POST' AND timestamp BETWEEN toDateTime(1784601720) AND toDateTime(1784602620) AND ts_bucket_start BETWEEN 1784601720 - 1800 AND 1784602620 GROUP BY `service.name`, `http.route`, interval ORDER BY interval ASC"},
-		// Separating the two readings of INTERVAL needs backtracking, which is exponential in
-		// the number of terms unless the parser remembers the offsets it has already failed
-		// at. Around 25 terms is where losing that memoisation stops being slow and starts
-		// hanging, so this sits just past it and the loop below bounds how long it may take.
+		// Separating the two readings of INTERVAL needs backtracking as per the current implementation which could have performance regressions.
 		// https://github.com/AfterShip/clickhouse-sql-parser/pull/296#issuecomment-5150316367
 		{"UnquotedIntervalRepeatedThirtyTimes", "SELECT interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval AS total FROM t WHERE interval > 0 ORDER BY interval ASC"},
 		// Unspaced, so rejected until the parser stopped lexing a signed literal after a
@@ -58,8 +53,7 @@ func TestErrIfStatementIsNotValid_Pass(t *testing.T) {
 		{"SignedLiteralAfterClosingParenUnspaced", "SELECT now() AS ts, toFloat64(count()) AS value FROM ( SELECT attributes_string['TableName'] AS T, attributes_string['MissingId'] AS M, max(fromUnixTimestamp64Nano(timestamp)) AS last_seen, dateDiff('minute', min(fromUnixTimestamp64Nano(timestamp)), max(fromUnixTimestamp64Nano(timestamp))) AS age_min FROM signoz_logs.distributed_logs_v2 WHERE body='missing_map_record' AND timestamp >= (toUnixTimestamp(now())-3600)*1000000000 GROUP BY T, M ) WHERE age_min >= 20 AND last_seen >= now() - toIntervalMinute(8)"},
 		{"SignedLiteralAfterClosingParenMinimal", "SELECT (1)-1"},
 		{"TrimFunction", "SELECT trimBoth('/api/endpoint/', '/');"},
-		// The SQL-standard keyword-separated argument forms, which took commas only.
-		// https://github.com/AfterShip/clickhouse-sql-parser/pull/290
+		// The SQL-standard keyword-separated argument forms, which took commas only. https://github.com/AfterShip/clickhouse-sql-parser/pull/290
 		{"StandardTrimSyntax", "SELECT trim(BOTH ' ' FROM body) FROM t"},
 		{"StandardSubstringSyntax", "SELECT substring(body FROM 2 FOR 3) FROM t"},
 		{"StandardOverlaySyntax", "SELECT overlay(body PLACING 'x' FROM 2) FROM t"},
@@ -67,10 +61,8 @@ func TestErrIfStatementIsNotValid_Pass(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			// Bounded rather than called directly, because a parser that backtracks without
-			// memoising fails by hanging rather than by returning. Every case here parses in
-			// under a millisecond, so the bound only has to be far enough clear of that to
-			// not go off on a loaded CI runner.
+			// Bounded rather than called directly: a parser that backtracks without memoising
+			// hangs instead of returning. Every case here parses in well under a millisecond.
 			errC := make(chan error, 1)
 			go func() { errC <- ErrIfStatementIsNotValid(testCase.query) }()
 
@@ -78,7 +70,7 @@ func TestErrIfStatementIsNotValid_Pass(t *testing.T) {
 			case err := <-errC:
 				assert.NoError(t, err)
 			case <-time.After(10 * time.Second):
-				t.Fatal("timed out, which means the parser is no longer bounding its backtracking")
+				assert.Fail(t, "timed out, which means the parser is no longer bounding its backtracking")
 			}
 		})
 	}
@@ -102,8 +94,7 @@ func TestErrIfStatementIsNotValid_Fail(t *testing.T) {
 		{"CreateTable", "CREATE TABLE evil (a Int) ENGINE = Memory", CodeClickHouseSQLNotSelect},
 		{"Grant", "GRANT ALL ON *.* TO admin", CodeClickHouseSQLNotSelect},
 		{"Set", "SET readonly = 0", CodeClickHouseSQLNotSelect},
-		// The parser still dereferences nil on a DEFAULT expression it cannot read, so the
-		// recover is what turns this into a rejection rather than a crash.
+		// The parser still dereferences nil on a DEFAULT expression it cannot read, so the recover is what turns this into a rejection rather than a crash.
 		{"UnparseableDefaultExpression", "CREATE TABLE t (a String DEFAULT foo(b FROM 2)) ENGINE = Memory", CodeClickHouseSQLParserPanic},
 		// These the parser rejects outright rather than classifying.
 		{"ShowGrants", "SHOW GRANTS", CodeClickHouseSQLUnparseable},
