@@ -46,14 +46,19 @@ export const RuleType = {
 } as const;
 
 /**
- * `AlertThresholdOperator` (`CreateAlertV2/context/types.ts:97-103`) and its
- * dropdown labels (`context/constants.ts:123-128`).
+ * `AlertThresholdOperator` (`CreateAlertV2/context/types.ts:97-105`) and its
+ * dropdown labels (`context/constants.ts:123-137`).
+ *
+ * Threshold-alert operators only. Anomaly alerts render a different, shorter
+ * list (`ANOMALY_THRESHOLD_OPERATOR_OPTIONS`) with relabelled entries.
  */
 export const ThresholdOperator = {
 	ABOVE: { value: 'above', label: 'ABOVE' },
 	BELOW: { value: 'below', label: 'BELOW' },
 	EQUAL_TO: { value: 'equal', label: 'EQUAL TO' },
 	NOT_EQUAL_TO: { value: 'not_equal', label: 'NOT EQUAL TO' },
+	ABOVE_OR_EQUAL_TO: { value: 'above_or_equal', label: 'ABOVE OR EQUAL TO' },
+	BELOW_OR_EQUAL_TO: { value: 'below_or_equal', label: 'BELOW OR EQUAL TO' },
 } as const;
 
 /**
