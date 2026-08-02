@@ -1,12 +1,14 @@
 package querybuilder
 
 import (
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestErrIfStatementIsNotValid_Pass(t *testing.T) {
@@ -54,9 +56,7 @@ func TestErrIfStatementIsNotValid_Pass(t *testing.T) {
 		{"StandardTrimSyntax", "SELECT trim(BOTH ' ' FROM body) FROM t"},
 		{"StandardSubstringSyntax", "SELECT substring(body FROM 2 FOR 3) FROM t"},
 		{"StandardOverlaySyntax", "SELECT overlay(body PLACING 'x' FROM 2) FROM t"},
-		// Row generators compute their rows from their arguments, so they read through
-		// nothing. This is the shape production uses them for: a dense interval axis to
-		// CROSS JOIN a sparse series against.
+		// Row generators compute their rows from their arguments, so they read through nothing. This is the shape they get used for: a dense interval axis to CROSS JOIN a sparse series against.
 		{"NumbersTableFunction", "SELECT intervals.interval AS interval, active.cluster AS cluster, toFloat64(if(ts_data.has_data = 0, 0, 1)) AS value FROM ( SELECT DISTINCT JSONExtractString(labels, 'k8s.cluster.name') AS cluster FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name = 'my_metric' AND unix_milli >= toUnixTimestamp(now() - INTERVAL 30 DAY) * 1000 HAVING cluster != '' ) AS active CROSS JOIN ( SELECT toStartOfInterval( toDateTime(toUnixTimestamp(now() - INTERVAL 30 MINUTE) + number * 60), INTERVAL 1 MINUTE ) AS interval FROM numbers(31) ) AS intervals LEFT JOIN ( SELECT toStartOfInterval( toDateTime(intDiv(s.unix_milli, 1000)), INTERVAL 1 MINUTE ) AS interval, JSONExtractString(ts.labels, 'k8s.cluster.name') AS cluster, 1 AS has_data FROM signoz_metrics.distributed_samples_v4 s INNER JOIN ( SELECT DISTINCT fingerprint, labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name = 'my_metric' ) AS ts ON s.fingerprint = ts.fingerprint WHERE s.metric_name = 'my_metric' AND s.unix_milli >= toUnixTimestamp(now() - INTERVAL 30 MINUTE) * 1000 GROUP BY interval, cluster ) AS ts_data ON active.cluster = ts_data.cluster AND intervals.interval = ts_data.interval ORDER BY interval ASC"},
 		{"NumbersMtTableFunction", "SELECT * FROM numbers_mt(31)"},
 		{"ZerosTableFunction", "SELECT * FROM zeros(31)"},
@@ -64,6 +64,11 @@ func TestErrIfStatementIsNotValid_Pass(t *testing.T) {
 		{"GenerateSeriesTableFunction", "SELECT * FROM generateSeries(1, 10)"},
 		{"GenerateSeriesSnakeCaseTableFunction", "SELECT * FROM generate_series(1, 10)"},
 		{"GeneratorTableFunctionUppercase", "SELECT * FROM NUMBERS(31)"},
+		{"GeneratorTableFunctionParenthesisedArgument", "SELECT * FROM NUMBERS((31))"},
+		{"GeneratorTableFunctionInJoin", "SELECT * FROM signoz_logs.distributed_logs_v2 AS l CROSS JOIN numbers(31) AS n"},
+		{"GeneratorTableFunctionInCommonTableExpression", "WITH axis AS (SELECT number FROM numbers(31)) SELECT * FROM axis"},
+		{"GeneratorTableFunctionInWhereSubquery", "SELECT * FROM t WHERE a IN (SELECT number FROM numbers(31))"},
+		{"GeneratorTableFunctionInUnion", "SELECT number FROM numbers(31) UNION ALL SELECT number FROM zeros(31)"},
 	}
 
 	for _, testCase := range testCases {
@@ -114,18 +119,20 @@ func TestErrIfStatementIsNotValid_Fail(t *testing.T) {
 		{"TableFunctionInCommonTableExpression", "WITH c AS (SELECT * FROM url('http://x', CSV, 'a String')) SELECT * FROM c", CodeClickHouseSQLTableFunction},
 		{"TableFunctionInWhereSubquery", "SELECT * FROM t WHERE a IN (SELECT * FROM file('/etc/passwd', CSV, 'a String'))", CodeClickHouseSQLTableFunction},
 		{"TableFunctionInUnion", "SELECT * FROM t UNION ALL SELECT * FROM url('http://x', CSV, 'a String')", CodeClickHouseSQLTableFunction},
-		// These reach the internal databases without ever naming one, so the table-function
-		// rule is the only thing that sees them.
+		// These reach the internal databases without ever naming one, so the table-function rule is the only thing that sees them.
 		{"MergeTableFunction", "SELECT * FROM merge('system', '.*')", CodeClickHouseSQLTableFunction},
 		{"RemoteTableFunction", "SELECT * FROM remote('other-host', 'system.users')", CodeClickHouseSQLTableFunction},
 		{"ClusterTableFunction", "SELECT * FROM cluster('c', 'system.users')", CodeClickHouseSQLTableFunction},
-		// Pure, but excluded: generateRandom streams rows the arguments do not bound, and
-		// values has no use here that an array literal does not already cover.
+		// Pure, but excluded: generateRandom streams rows the arguments do not bound, and values has no use here that an array literal does not already cover.
 		{"GenerateRandomTableFunction", "SELECT * FROM generateRandom('a UInt64')", CodeClickHouseSQLTableFunction},
 		{"ValuesTableFunction", "SELECT * FROM values('a UInt64', 1, 2)", CodeClickHouseSQLTableFunction},
-		// Arguments are visited before the table function itself, so allowing a generator does
-		// not give anyone a wrapper to smuggle a read through.
+		// Arguments are visited before the table function itself, so allowing a generator does not give anyone a wrapper to smuggle a read through.
 		{"InternalDatabaseInsideAllowedTableFunction", "SELECT * FROM numbers((SELECT count() FROM system.users))", CodeClickHouseSQLInternalDatabase},
+		{"InternalDatabaseJoinedOntoAllowedTableFunction", "SELECT * FROM numbers(31) AS n JOIN system.users AS u ON 1 = 1", CodeClickHouseSQLInternalDatabase},
+		{"InternalDatabaseUnionedWithAllowedTableFunction", "SELECT number FROM numbers(31) UNION ALL SELECT name FROM system.users", CodeClickHouseSQLInternalDatabase},
+		{"RefusedTableFunctionJoinedOntoAllowedTableFunction", "SELECT * FROM numbers(31) AS n JOIN url('http://x', CSV, 'a String') AS u ON 1 = 1", CodeClickHouseSQLTableFunction},
+		{"RefusedTableFunctionInsideAllowedTableFunction", "SELECT * FROM numbers((SELECT count() FROM file('/etc/passwd', CSV, 'a String')))", CodeClickHouseSQLTableFunction},
+		{"InternalDatabaseInsideAllowedTableFunctionCommonTableExpression", "WITH axis AS (SELECT * FROM numbers((SELECT count() FROM system.users))) SELECT * FROM axis", CodeClickHouseSQLInternalDatabase},
 		// Internal databases, which hold grants and server metadata rather than telemetry.
 		{"SystemUsers", "SELECT * FROM system.users", CodeClickHouseSQLInternalDatabase},
 		{"SystemUppercase", "SELECT * FROM SYSTEM.USERS", CodeClickHouseSQLInternalDatabase},
@@ -146,5 +153,20 @@ func TestErrIfStatementIsNotValid_Fail(t *testing.T) {
 			assert.Error(t, err)
 			assert.True(t, errors.Asc(err, testCase.expectedCode), "expected code %s, got %v", testCase.expectedCode, err)
 		})
+	}
+}
+
+// The message names the allowed table functions as a caller would write them, so it cannot
+// be derived from the lowercased keys it describes.
+func TestGeneratorTableFunctionsMessageMatchesSet(t *testing.T) {
+	_, listed, found := strings.Cut(generatorTableFunctionsMessage, "allowed table functions are ")
+	require.True(t, found, "message no longer carries a list")
+
+	names := strings.Split(listed, ", ")
+	assert.Len(t, names, len(generatorTableFunctions))
+
+	for _, name := range names {
+		_, ok := generatorTableFunctions[strings.ToLower(name)]
+		assert.True(t, ok, "%s is named in the message but is not allowed", name)
 	}
 }

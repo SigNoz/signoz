@@ -25,19 +25,9 @@ var internalDatabases = map[string]struct{}{
 	"information_schema": {},
 }
 
-// generatorTableFunctions compute their rows from their arguments alone. They open no file
-// or socket, reach no other host, and name no table, database or dictionary, so none of
-// them can read through anything the rules here exist to protect. Dashboards use them to
-// build a dense axis to join a sparse series against.
+// generatorTableFunctions compute their rows from their arguments alone. They open no file or socket, reach no other host, and name no table, database or dictionary, so none of them can read through anything the rules here exist to protect. Can be used to build a dense axis to join a sparse series against. Every other table function is refused.
 //
-// Every other table function is refused. Most read through something, and a few reach the
-// internal databases without ever naming them: merge('system', '.*'), remote('h',
-// 'system.users') and cluster() all produce no TableIdentifier for the rule below to catch.
-//
-// TODO(@therealpandey): take a deployment level allow list on top of this, so an operator
-// can permit more without a release. It has to stay server configuration rather than an API
-// or per organization setting, since this rule is what stops a viewer from reading through
-// the querier's ClickHouse credentials.
+// TODO(@therealpandey): take a deployment level allow list on top of this, so an operator can permit more without a release.
 var generatorTableFunctions = map[string]struct{}{
 	"numbers":         {},
 	"numbers_mt":      {},
@@ -46,6 +36,9 @@ var generatorTableFunctions = map[string]struct{}{
 	"generateseries":  {},
 	"generate_series": {},
 }
+
+// The keys above lowercased for matching, spelled here as a caller would write them. Kept in step by TestGeneratorTableFunctionsMessageMatchesSet.
+const generatorTableFunctionsMessage = "allowed table functions are numbers, numbers_mt, zeros, zeros_mt, generateSeries, generate_series"
 
 // The parser's grammar has gaps against SQL that ClickHouse itself accepts.
 func ErrIfStatementIsNotValid(query string) (err error) {
@@ -82,7 +75,9 @@ func ErrIfStatementIsNotValid(query string) (err error) {
 				return nil
 			}
 
-			return errors.NewInvalidInputf(CodeClickHouseSQLTableFunction, "ClickHouse table functions are not allowed in SQL queries: %s", name)
+			return errors.
+				NewInvalidInputf(CodeClickHouseSQLTableFunction, "ClickHouse table functions are not allowed in SQL queries: %s", name).
+				WithAdditional(generatorTableFunctionsMessage)
 
 		case *chparser.TableIdentifier:
 			// Reading these is unaffected by ClickHouse read-only mode.
