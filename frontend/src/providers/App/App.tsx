@@ -18,6 +18,7 @@ import { useGetMyUser } from 'api/generated/services/users';
 import listOrgPreferences from 'api/v1/org/preferences/list';
 import { clearAuthStorage } from 'utils/clearAuthStorage';
 import { getIsNoAuthMode, setNoAuthMode } from 'utils/noAuthMode';
+import { markPreflightComplete } from 'utils/preflight';
 import { setProxyAuthMode, setProxyLogoutUrl } from 'utils/proxyAuthMode';
 import listUserPreferences from 'api/v1/user/preferences/list';
 import getUserVersion from 'api/v1/version/get';
@@ -127,6 +128,10 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			setProxyAuthMode(false);
 			setProxyLogoutUrl('');
 		}
+
+		// Releases the response interceptor's 401 path, which cannot decide whether
+		// there is a session to rotate until the flags above are set.
+		markPreflightComplete();
 
 		setIsPreflightLoading(false);
 	}, [globalConfigData, isFetchingGlobalConfig]);

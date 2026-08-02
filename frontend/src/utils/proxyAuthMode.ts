@@ -6,13 +6,13 @@
 //
 // This is set by the preflight effect in providers/App/App.tsx, which waits on
 // the global config, while the protected queries are gated only on isLoggedIn,
-// read synchronously from localStorage. A 401 arriving before the effect runs
-// therefore still sees false and takes the rotate-then-logout path. The bounce
-// that path can cause needs _proxyLogoutUrl below, which the same effect sets,
-// so in that window Logout falls through to the login route instead, and the
-// login page skips its form once the config lands. noAuthMode has the same
-// window; closing it means sequencing those queries behind preflight, which is
-// a change to shared behaviour rather than to this feature.
+// read synchronously from localStorage. A 401 can therefore reach the response
+// interceptor before the effect has run, when this still reads its false
+// default. The interceptor closes that window by awaiting utils/preflight
+// before it reads either mode flag; see the comment there. Without that wait a
+// 401 during startup rotates, fails, logs out, and with _proxyLogoutUrl set
+// bounces through the proxy's sign-out page and back in, which is a loop
+// wherever the proxy can re-authenticate silently.
 let _isProxyAuthMode = false;
 
 export const setProxyAuthMode = (value: boolean): void => {
