@@ -209,8 +209,8 @@ py-lint: ## Run ruff check across the shared tests project
 	@cd tests && uv run ruff check --fix .
 
 .PHONY: py-test-setup
-py-test-setup: ## Bring up the shared SigNoz backend used by integration and e2e tests
-	@cd tests && uv run pytest --basetemp=./tmp/ -vv --reuse --capture=no integration/bootstrap/setup.py::test_setup
+py-test-setup: ## Bring up the shared SigNoz backend used by integration and e2e tests, rebuilding signoz from the current sources
+	@cd tests && uv run pytest --basetemp=./tmp/ -vv --reuse --rebuild --capture=no integration/bootstrap/setup.py::test_setup
 
 .PHONY: py-test-teardown
 py-test-teardown: ## Tear down the shared SigNoz backend

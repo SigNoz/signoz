@@ -191,17 +191,12 @@ func (m *module) ListHosts(ctx context.Context, orgID valuer.UUID, req *inframon
 		return resp, nil
 	}
 
-	metadataMap, err := m.getHostsTableMetadata(ctx, orgID, req)
+	pageGroups, metadataMap, err := m.getTopHostGroupsAndMetadata(ctx, orgID, req)
 	if err != nil {
 		return nil, err
 	}
 
 	resp.Total = len(metadataMap)
-
-	pageGroups, err := m.getTopHostGroups(ctx, orgID, req, metadataMap)
-	if err != nil {
-		return nil, err
-	}
 
 	if len(pageGroups) == 0 {
 		resp.Records = []inframonitoringtypes.HostRecord{}
@@ -291,17 +286,12 @@ func (m *module) ListPods(ctx context.Context, orgID valuer.UUID, req *inframoni
 		return resp, nil
 	}
 
-	metadataMap, err := m.getPodsTableMetadata(ctx, orgID, req)
+	pageGroups, metadataMap, err := m.getTopPodGroupsAndMetadata(ctx, orgID, req)
 	if err != nil {
 		return nil, err
 	}
 
 	resp.Total = len(metadataMap)
-
-	pageGroups, err := m.getTopPodGroups(ctx, orgID, req, metadataMap)
-	if err != nil {
-		return nil, err
-	}
 
 	if len(pageGroups) == 0 {
 		resp.Records = []inframonitoringtypes.PodRecord{}
@@ -389,17 +379,12 @@ func (m *module) ListContainers(ctx context.Context, orgID valuer.UUID, req *inf
 		return resp, nil
 	}
 
-	metadataMap, err := m.getContainersTableMetadata(ctx, orgID, req)
+	pageGroups, metadataMap, err := m.getTopContainerGroupsAndMetadata(ctx, orgID, req)
 	if err != nil {
 		return nil, err
 	}
 
 	resp.Total = len(metadataMap)
-
-	pageGroups, err := m.getTopContainerGroups(ctx, orgID, req, metadataMap)
-	if err != nil {
-		return nil, err
-	}
 
 	if len(pageGroups) == 0 {
 		resp.Records = []inframonitoringtypes.ContainerRecord{}
@@ -493,17 +478,12 @@ func (m *module) ListNodes(ctx context.Context, orgID valuer.UUID, req *inframon
 		return resp, nil
 	}
 
-	metadataMap, err := m.getNodesTableMetadata(ctx, orgID, req)
+	pageGroups, metadataMap, err := m.getTopNodeGroupsAndMetadata(ctx, orgID, req)
 	if err != nil {
 		return nil, err
 	}
 
 	resp.Total = len(metadataMap)
-
-	pageGroups, err := m.getTopNodeGroups(ctx, orgID, req, metadataMap)
-	if err != nil {
-		return nil, err
-	}
 
 	if len(pageGroups) == 0 {
 		resp.Records = []inframonitoringtypes.NodeRecord{}
@@ -591,17 +571,12 @@ func (m *module) ListNamespaces(ctx context.Context, orgID valuer.UUID, req *inf
 		return resp, nil
 	}
 
-	metadataMap, err := m.getNamespacesTableMetadata(ctx, orgID, req)
+	pageGroups, metadataMap, err := m.getTopNamespaceGroupsAndMetadata(ctx, orgID, req)
 	if err != nil {
 		return nil, err
 	}
 
 	resp.Total = len(metadataMap)
-
-	pageGroups, err := m.getTopNamespaceGroups(ctx, orgID, req, metadataMap)
-	if err != nil {
-		return nil, err
-	}
 
 	if len(pageGroups) == 0 {
 		resp.Records = []inframonitoringtypes.NamespaceRecord{}
@@ -688,17 +663,12 @@ func (m *module) ListClusters(ctx context.Context, orgID valuer.UUID, req *infra
 		return resp, nil
 	}
 
-	metadataMap, err := m.getClustersTableMetadata(ctx, orgID, req)
+	pageGroups, metadataMap, err := m.getTopClusterGroupsAndMetadata(ctx, orgID, req)
 	if err != nil {
 		return nil, err
 	}
 
 	resp.Total = len(metadataMap)
-
-	pageGroups, err := m.getTopClusterGroups(ctx, orgID, req, metadataMap)
-	if err != nil {
-		return nil, err
-	}
 
 	if len(pageGroups) == 0 {
 		resp.Records = []inframonitoringtypes.ClusterRecord{}
@@ -799,17 +769,12 @@ func (m *module) ListVolumes(ctx context.Context, orgID valuer.UUID, req *infram
 		return resp, nil
 	}
 
-	metadataMap, err := m.getVolumesTableMetadata(ctx, orgID, req)
+	pageGroups, metadataMap, err := m.getTopVolumeGroupsAndMetadata(ctx, orgID, req)
 	if err != nil {
 		return nil, err
 	}
 
 	resp.Total = len(metadataMap)
-
-	pageGroups, err := m.getTopVolumeGroups(ctx, orgID, req, metadataMap)
-	if err != nil {
-		return nil, err
-	}
 
 	if len(pageGroups) == 0 {
 		resp.Records = []inframonitoringtypes.VolumeRecord{}
@@ -877,17 +842,12 @@ func (m *module) ListDeployments(ctx context.Context, orgID valuer.UUID, req *in
 		return resp, nil
 	}
 
-	metadataMap, err := m.getDeploymentsTableMetadata(ctx, orgID, req)
+	pageGroups, metadataMap, err := m.getTopDeploymentGroupsAndMetadata(ctx, orgID, req)
 	if err != nil {
 		return nil, err
 	}
 
 	resp.Total = len(metadataMap)
-
-	pageGroups, err := m.getTopDeploymentGroups(ctx, orgID, req, metadataMap)
-	if err != nil {
-		return nil, err
-	}
 
 	if len(pageGroups) == 0 {
 		resp.Records = []inframonitoringtypes.DeploymentRecord{}
@@ -974,17 +934,12 @@ func (m *module) ListStatefulSets(ctx context.Context, orgID valuer.UUID, req *i
 		return resp, nil
 	}
 
-	metadataMap, err := m.getStatefulSetsTableMetadata(ctx, orgID, req)
+	pageGroups, metadataMap, err := m.getTopStatefulSetGroupsAndMetadata(ctx, orgID, req)
 	if err != nil {
 		return nil, err
 	}
 
 	resp.Total = len(metadataMap)
-
-	pageGroups, err := m.getTopStatefulSetGroups(ctx, orgID, req, metadataMap)
-	if err != nil {
-		return nil, err
-	}
 
 	if len(pageGroups) == 0 {
 		resp.Records = []inframonitoringtypes.StatefulSetRecord{}
@@ -1073,17 +1028,12 @@ func (m *module) ListJobs(ctx context.Context, orgID valuer.UUID, req *inframoni
 		return resp, nil
 	}
 
-	metadataMap, err := m.getJobsTableMetadata(ctx, orgID, req)
+	pageGroups, metadataMap, err := m.getTopJobGroupsAndMetadata(ctx, orgID, req)
 	if err != nil {
 		return nil, err
 	}
 
 	resp.Total = len(metadataMap)
-
-	pageGroups, err := m.getTopJobGroups(ctx, orgID, req, metadataMap)
-	if err != nil {
-		return nil, err
-	}
 
 	if len(pageGroups) == 0 {
 		resp.Records = []inframonitoringtypes.JobRecord{}
@@ -1172,17 +1122,12 @@ func (m *module) ListDaemonSets(ctx context.Context, orgID valuer.UUID, req *inf
 		return resp, nil
 	}
 
-	metadataMap, err := m.getDaemonSetsTableMetadata(ctx, orgID, req)
+	pageGroups, metadataMap, err := m.getTopDaemonSetGroupsAndMetadata(ctx, orgID, req)
 	if err != nil {
 		return nil, err
 	}
 
 	resp.Total = len(metadataMap)
-
-	pageGroups, err := m.getTopDaemonSetGroups(ctx, orgID, req, metadataMap)
-	if err != nil {
-		return nil, err
-	}
 
 	if len(pageGroups) == 0 {
 		resp.Records = []inframonitoringtypes.DaemonSetRecord{}
