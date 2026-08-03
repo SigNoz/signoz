@@ -65,6 +65,10 @@ def test_delta_nonmonotonic_sum_rate_and_increase(
             for ts in time_series
             for minute in range(20)
         ],
+        # Decoy last_60s rows: WhichReducedSamplesTableToUse reads this table only
+        # if the metric is (mis)classified as a Gauge. The 999.0 values are chosen
+        # to differ from the sum_60s result, so a regression that treats this delta
+        # sum as a Gauge makes the assertion below fail instead of silently passing.
         last_samples=[
             MetricsReducedSampleLast60s(
                 metric_name=metric_name,
