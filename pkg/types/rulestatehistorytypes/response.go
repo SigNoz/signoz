@@ -22,6 +22,8 @@ type GettableRuleStateHistory struct {
 	Labels              []*qbtypes.Label     `json:"labels" required:"true"`
 	Fingerprint         uint64               `json:"fingerprint" required:"true"`
 	Value               float64              `json:"value" required:"true"`
+	RelatedTracesLink   string               `json:"relatedTracesLink,omitempty"`
+	RelatedLogsLink     string               `json:"relatedLogsLink,omitempty"`
 }
 
 type GettableRuleStateHistoryContributor struct {

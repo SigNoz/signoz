@@ -7,6 +7,7 @@ import { Typography } from '@signozhq/ui/typography';
 import { PermissionScope } from '../../types';
 import { getResourcePanel } from '../../permissions.config';
 import ItemInputSelector from './ItemInputSelector';
+import TelemetrySelectorWizard from './TelemetrySelectorWizard';
 
 import styles from './ActionToggle.module.scss';
 import { AuthZResource, AuthZVerb } from 'lib/authz/hooks/useAuthZ/types';
@@ -39,10 +40,13 @@ function ActionToggle({
 	onSelectedIdsChange,
 	hasError = false,
 }: ActionToggleProps): JSX.Element {
+	const panel = getResourcePanel(resource);
+
 	const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
 	const [pendingScope, setPendingScope] = useState<PermissionScope | null>(null);
 
 	const displayLabel = getActionLabel(action);
+	const selectorTestId = `${resource}-${action}`;
 
 	const scopeItems: Array<{ value: PermissionScope; label: string }> =
 		useMemo(() => {
@@ -121,11 +125,25 @@ function ActionToggle({
 						<Divider />
 
 						<ItemInputSelector
-							placeholder={getResourcePanel(resource).selectorPlaceholder}
+							placeholder={panel.selectorPlaceholder}
 							selectedIds={selectedIds}
 							onChange={onSelectedIdsChange}
-							docsAnchor={getResourcePanel(resource).docsAnchor}
+							testId={selectorTestId}
+							docsAnchor={panel.docsAnchor}
 							hasError={hasError}
+							prefixElement={
+								panel.selectorType === 'telemetryBuilder' ? (
+									<TelemetrySelectorWizard
+										resource={resource}
+										testId={selectorTestId}
+										onAdd={(selector): void => {
+											if (!selectedIds.includes(selector)) {
+												onSelectedIdsChange([...selectedIds, selector]);
+											}
+										}}
+									/>
+								) : null
+							}
 						/>
 					</div>
 				)}

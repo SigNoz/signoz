@@ -20,6 +20,9 @@ import { linkifyText } from 'utils/linkifyText';
 import { openInNewTab } from 'utils/navigation';
 
 import styles from './DashboardInfo.module.scss';
+import { TOOLTIP_SCROLL_CONTENT_CLASS } from 'components/TooltipScrollArea/TooltipScrollArea';
+
+import TagsOverflowTooltip from './TagsOverflowTooltip';
 import { DASHBOARD_NAME_MAX_LENGTH } from '../../constants';
 import { useDashboardStore } from '../../store/useDashboardStore';
 
@@ -231,7 +234,10 @@ function DashboardInfo({
 							<TagBadge key={tag}>{tag}</TagBadge>
 						))}
 						{remainingTags.length > 0 && (
-							<TooltipSimple title={remainingTags.join(', ')}>
+							<TooltipSimple
+								title={<TagsOverflowTooltip tags={remainingTags} />}
+								tooltipContentProps={{ className: TOOLTIP_SCROLL_CONTENT_CLASS }}
+							>
 								<span data-testid="dashboard-tags-overflow">
 									<TagBadge>+{remainingTags.length}</TagBadge>
 								</span>

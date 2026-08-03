@@ -1,4 +1,6 @@
+import os
 import platform
+import subprocess
 import time
 from http import HTTPStatus
 from os import path
@@ -8,7 +10,6 @@ import docker.errors
 import pytest
 import requests
 from testcontainers.core.container import DockerContainer, Network
-from testcontainers.core.image import DockerImage
 
 from fixtures import reuse, types
 from fixtures.logger import setup_logger
@@ -50,17 +51,27 @@ def create_signoz(
 
         # Docker build context is the repo root — one up from pytest's
         # rootdir (tests/).
-        self = DockerImage(
-            path=str(pytestconfig.rootpath.parent),
-            dockerfile_path=dockerfile_path,
-            tag="signoz:integration",
-            buildargs={
-                "TARGETARCH": arch,
-                "ZEUSURL": zeus.container_configs["8080"].base(),
-            },
-        )
+        context = pytestconfig.rootpath.parent
 
-        self.build()
+        # The docker CLI is required: the Dockerfiles use BuildKit cache
+        # mounts, which docker-py does not support.
+        subprocess.run(
+            [
+                "docker",
+                "build",
+                "--file",
+                str(context / dockerfile_path),
+                "--tag",
+                "signoz:integration",
+                "--build-arg",
+                f"TARGETARCH={arch}",
+                "--build-arg",
+                f"ZEUSURL={zeus.container_configs['8080'].base()}",
+                str(context),
+            ],
+            check=True,
+            env=os.environ | {"DOCKER_BUILDKIT": "1"},
+        )
 
         env = (
             {
@@ -200,6 +211,7 @@ def create_signoz(
         create=create,
         delete=delete,
         restore=restore,
+        rebuild=pytestconfig.getoption("--rebuild"),
     )
 
 

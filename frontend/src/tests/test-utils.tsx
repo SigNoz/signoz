@@ -242,6 +242,7 @@ export function getAppContextMock(
 		userPreferences: [],
 		updateUserPreferenceInContext: jest.fn(),
 		isFetchingOrgPreferences: false,
+		isFetchingUserPreferences: false,
 		orgPreferencesFetchError: null,
 		isLoggedIn: true,
 		isPreflightLoading: false,
