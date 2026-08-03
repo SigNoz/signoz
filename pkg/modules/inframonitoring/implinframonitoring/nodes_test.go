@@ -2,46 +2,67 @@ package implinframonitoring
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
+	"github.com/huandu/go-sqlbuilder"
 )
 
-func TestNodeReadinessFilterClause(t *testing.T) {
+func TestApplyNodeReadinessFilter(t *testing.T) {
 	tests := []struct {
-		name       string
-		readiness  inframonitoringtypes.NodeCondition
-		wantClause string
-		wantArgs   []any
+		name      string
+		readiness []inframonitoringtypes.NodeCondition
+		wantWhere bool
+		wantArgs  []any
 	}{
 		{
-			name:       "empty readiness yields no clause",
-			readiness:  inframonitoringtypes.NodeCondition{},
-			wantClause: "",
-			wantArgs:   nil,
+			name:      "empty set yields no clause",
+			readiness: nil,
+			wantWhere: false,
+			wantArgs:  nil,
 		},
 		{
-			name:       "ready maps to 1",
-			readiness:  inframonitoringtypes.NodeConditionReady,
-			wantClause: " WHERE condition_value = ? ",
-			wantArgs:   []any{inframonitoringtypes.NodeConditionNumReady},
+			name:      "ready maps to 1 via IN",
+			readiness: []inframonitoringtypes.NodeCondition{inframonitoringtypes.NodeConditionReady},
+			wantWhere: true,
+			wantArgs:  []any{inframonitoringtypes.NodeConditionNumReady},
 		},
 		{
-			name:       "not_ready maps to 0",
-			readiness:  inframonitoringtypes.NodeConditionNotReady,
-			wantClause: " WHERE condition_value = ? ",
-			wantArgs:   []any{inframonitoringtypes.NodeConditionNumNotReady},
+			name:      "not_ready maps to 0 via IN",
+			readiness: []inframonitoringtypes.NodeCondition{inframonitoringtypes.NodeConditionNotReady},
+			wantWhere: true,
+			wantArgs:  []any{inframonitoringtypes.NodeConditionNumNotReady},
+		},
+		{
+			name: "multiple conditions map to their ints via IN",
+			readiness: []inframonitoringtypes.NodeCondition{
+				inframonitoringtypes.NodeConditionReady,
+				inframonitoringtypes.NodeConditionNotReady,
+			},
+			wantWhere: true,
+			wantArgs:  []any{inframonitoringtypes.NodeConditionNumReady, inframonitoringtypes.NodeConditionNumNotReady},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotClause, gotArgs := nodeReadinessFilterClause(tt.readiness)
-			if gotClause != tt.wantClause {
-				t.Errorf("nodeReadinessFilterClause(%v) clause = %q, want %q", tt.readiness, gotClause, tt.wantClause)
+			cb := sqlbuilder.NewSelectBuilder()
+			cb.Select("node_name")
+			cb.From("latest_condition_per_node")
+			applyNodeReadinessFilter(cb, tt.readiness)
+			sql, args := cb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+			hasWhere := strings.Contains(sql, "condition_value IN (")
+			if hasWhere != tt.wantWhere {
+				t.Errorf("applyNodeReadinessFilter(%v) sql = %q, wantWhere = %v", tt.readiness, sql, tt.wantWhere)
 			}
-			if !reflect.DeepEqual(gotArgs, tt.wantArgs) {
-				t.Errorf("nodeReadinessFilterClause(%v) args = %v, want %v", tt.readiness, gotArgs, tt.wantArgs)
+			if len(tt.wantArgs) == 0 {
+				if len(args) != 0 {
+					t.Errorf("applyNodeReadinessFilter(%v) args = %v, want none", tt.readiness, args)
+				}
+			} else if !reflect.DeepEqual(args, tt.wantArgs) {
+				t.Errorf("applyNodeReadinessFilter(%v) args = %v, want %v", tt.readiness, args, tt.wantArgs)
 			}
 		})
 	}

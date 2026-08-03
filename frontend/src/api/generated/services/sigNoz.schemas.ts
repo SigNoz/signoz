@@ -5666,7 +5666,10 @@ export interface InframonitoringtypesClusterFilterDTO {
 	 * @type string
 	 */
 	expression?: string;
-	filterByNodeReadiness?: InframonitoringtypesNodeConditionDTO;
+	/**
+	 * @type array,null
+	 */
+	filterByNodeReadiness?: InframonitoringtypesNodeConditionDTO[] | null;
 	/**
 	 * @type array,null
 	 */
@@ -6507,7 +6510,10 @@ export interface InframonitoringtypesNodeFilterDTO {
 	 * @type string
 	 */
 	expression?: string;
-	filterByNodeReadiness?: InframonitoringtypesNodeConditionDTO;
+	/**
+	 * @type array,null
+	 */
+	filterByNodeReadiness?: InframonitoringtypesNodeConditionDTO[] | null;
 	/**
 	 * @type array,null
 	 */

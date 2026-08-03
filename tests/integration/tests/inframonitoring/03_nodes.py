@@ -382,7 +382,7 @@ def test_nodes_filter_by_pod_status(
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
-            "filter": {"filterByPodStatus": "running", "filterByNodeReadiness": "ready"},
+            "filter": {"filterByPodStatus": ["running"], "filterByNodeReadiness": ["ready"]},
         },
         timeout=5,
     )
@@ -399,7 +399,7 @@ def test_nodes_filter_by_pod_status(
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
-            "filter": {"filterByPodStatus": "running", "filterByNodeReadiness": "not_ready"},
+            "filter": {"filterByPodStatus": ["running"], "filterByNodeReadiness": ["not_ready"]},
         },
         timeout=5,
     )
@@ -414,7 +414,7 @@ def test_nodes_filter_by_pod_status(
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
-            "filter": {"filterByPodStatus": "completed", "filterByNodeReadiness": "ready"},
+            "filter": {"filterByPodStatus": ["completed"], "filterByNodeReadiness": ["ready"]},
         },
         timeout=5,
     )
@@ -479,7 +479,7 @@ def test_nodes_condition_list_mode(
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
-            "filter": {"expression": f"k8s.node.name = '{node_name}'", "filterByNodeReadiness": expected_condition},
+            "filter": {"expression": f"k8s.node.name = '{node_name}'", "filterByNodeReadiness": [expected_condition]},
         },
         timeout=5,
     )
@@ -489,6 +489,23 @@ def test_nodes_condition_list_mode(
     assert mdata["records"][0]["nodeName"] == node_name
 
     opposite = "not_ready" if expected_condition == "ready" else "ready"
+
+    # Multi-select is OR: a set containing the node's condition keeps it even
+    # alongside the opposite readiness.
+    or_keep = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": f"k8s.node.name = '{node_name}'", "filterByNodeReadiness": [expected_condition, opposite]},
+        },
+        timeout=5,
+    )
+    assert or_keep.status_code == HTTPStatus.OK, or_keep.text
+    assert or_keep.json()["data"]["total"] == 1, f"multi-select should keep {node_name}"
+
     dropped = requests.post(
         signoz.self.host_configs["8080"].get(ENDPOINT),
         headers={"authorization": f"Bearer {token}"},
@@ -496,7 +513,7 @@ def test_nodes_condition_list_mode(
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
-            "filter": {"expression": f"k8s.node.name = '{node_name}'", "filterByNodeReadiness": opposite},
+            "filter": {"expression": f"k8s.node.name = '{node_name}'", "filterByNodeReadiness": [opposite]},
         },
         timeout=5,
     )
@@ -604,7 +621,7 @@ def test_nodes_condition_grouped_mode(
             "end": int(now.timestamp() * 1000),
             "limit": 50,
             "groupBy": [{"name": "k8s.cluster.name", "fieldDataType": "string", "fieldContext": "resource"}],
-            "filter": {"filterByNodeReadiness": "ready"},
+            "filter": {"filterByNodeReadiness": ["ready"]},
         },
         timeout=5,
     )
@@ -621,7 +638,7 @@ def test_nodes_condition_grouped_mode(
             "end": int(now.timestamp() * 1000),
             "limit": 50,
             "groupBy": [{"name": "k8s.cluster.name", "fieldDataType": "string", "fieldContext": "resource"}],
-            "filter": {"filterByNodeReadiness": "not_ready"},
+            "filter": {"filterByNodeReadiness": ["not_ready"]},
         },
         timeout=5,
     )
@@ -629,6 +646,24 @@ def test_nodes_condition_grouped_mode(
     ndata = not_ready.json()["data"]
     assert ndata["total"] == 1
     assert ndata["records"][0]["nodeCountsByReadiness"] == {"ready": 0, "notReady": 1}
+
+    # Multi-select is OR: both buckets populated (union) for the kept group.
+    both = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "groupBy": [{"name": "k8s.cluster.name", "fieldDataType": "string", "fieldContext": "resource"}],
+            "filter": {"filterByNodeReadiness": ["ready", "not_ready"]},
+        },
+        timeout=5,
+    )
+    assert both.status_code == HTTPStatus.OK, both.text
+    bdata = both.json()["data"]
+    assert bdata["total"] == 1
+    assert bdata["records"][0]["nodeCountsByReadiness"] == {"ready": 2, "notReady": 1}
 
 
 @pytest.mark.parametrize(
@@ -867,12 +902,12 @@ def test_nodes_orderby(  # pylint: disable=too-many-arguments,too-many-positiona
             id="filter_by_pod_status_invalid",
         ),
         pytest.param(
-            {"filter": {"filterByNodeReadiness": "bogus"}},
+            {"filter": {"filterByNodeReadiness": ["bogus"]}},
             "invalid filter by node readiness",
             id="filter_by_node_readiness_invalid",
         ),
         pytest.param(
-            {"filter": {"filterByNodeReadiness": "notready"}},
+            {"filter": {"filterByNodeReadiness": ["notready"]}},
             "invalid filter by node readiness",
             id="filter_by_node_readiness_missing_underscore",
         ),

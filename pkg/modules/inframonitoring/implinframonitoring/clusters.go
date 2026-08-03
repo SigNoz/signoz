@@ -102,7 +102,7 @@ func (m *module) getTopClusterGroupsAndMetadata(
 		nodeConditionCounts   map[string]nodeConditionCounts
 		filter                *qbtypes.Filter
 		filterByPodStatus     []inframonitoringtypes.PodStatus
-		filterByNodeReadiness inframonitoringtypes.NodeCondition
+		filterByNodeReadiness []inframonitoringtypes.NodeCondition
 	)
 
 	orderByKey = req.OrderBy.Key.Name
@@ -132,7 +132,7 @@ func (m *module) getTopClusterGroupsAndMetadata(
 		})
 	}
 
-	if !filterByNodeReadiness.IsZero() {
+	if len(filterByNodeReadiness) != 0 {
 		g.Go(func() error {
 			var err error
 			nodeConditionCounts, err = m.getPerGroupNodeConditionCounts(gCtx, orgID, req.Start, req.End, filter, req.GroupBy, nil, filterByNodeReadiness)
@@ -150,7 +150,7 @@ func (m *module) getTopClusterGroupsAndMetadata(
 		if len(filterByPodStatus) != 0 {
 			metadataMap = intersectMap(metadataMap, statusCounts)
 		}
-		if !filterByNodeReadiness.IsZero() {
+		if len(filterByNodeReadiness) != 0 {
 			metadataMap = intersectMap(metadataMap, nodeConditionCounts)
 		}
 		pageGroups := inframonitoringtypes.PaginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.ClusterNameAttrKey)
@@ -210,7 +210,7 @@ func (m *module) getTopClusterGroupsAndMetadata(
 		allMetricGroups = intersectRankedGroups(allMetricGroups, statusCounts)
 		metadataMap = intersectMap(metadataMap, statusCounts)
 	}
-	if !filterByNodeReadiness.IsZero() {
+	if len(filterByNodeReadiness) != 0 {
 		allMetricGroups = intersectRankedGroups(allMetricGroups, nodeConditionCounts)
 		metadataMap = intersectMap(metadataMap, nodeConditionCounts)
 	}

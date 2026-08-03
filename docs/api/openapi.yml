@@ -4217,7 +4217,10 @@ components:
         expression:
           type: string
         filterByNodeReadiness:
-          $ref: '#/components/schemas/InframonitoringtypesNodeCondition'
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesNodeCondition'
+          nullable: true
+          type: array
         filterByPodStatus:
           items:
             $ref: '#/components/schemas/InframonitoringtypesPodStatus'
@@ -4922,7 +4925,10 @@ components:
         expression:
           type: string
         filterByNodeReadiness:
-          $ref: '#/components/schemas/InframonitoringtypesNodeCondition'
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesNodeCondition'
+          nullable: true
+          type: array
         filterByPodStatus:
           items:
             $ref: '#/components/schemas/InframonitoringtypesPodStatus'

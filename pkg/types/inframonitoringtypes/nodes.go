@@ -48,11 +48,11 @@ type PostableNodes struct {
 
 // NodeFilter is the attribute filter plus an optional secondary filter on the
 // derived pod display status(es) (see PodStatus; matches any listed, OR) and node
-// readiness (see NodeCondition). Empty FilterByPodStatus / FilterByNodeReadiness = off.
+// readiness (see NodeCondition; matches any listed, OR). Empty FilterByPodStatus / FilterByNodeReadiness = off.
 type NodeFilter struct {
 	qbtypes.Filter        `json:",inline"`
-	FilterByPodStatus     []PodStatus   `json:"filterByPodStatus"`
-	FilterByNodeReadiness NodeCondition `json:"filterByNodeReadiness"`
+	FilterByPodStatus     []PodStatus     `json:"filterByPodStatus"`
+	FilterByNodeReadiness []NodeCondition `json:"filterByNodeReadiness"`
 }
 
 // Validate ensures PostableNodes contains acceptable values.
@@ -102,8 +102,12 @@ func (req *PostableNodes) Validate() error {
 		}
 	}
 
-	if req.Filter != nil && !req.Filter.FilterByNodeReadiness.IsZero() && !IsFilterableNodeCondition(req.Filter.FilterByNodeReadiness) {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid filter by node readiness: %s", req.Filter.FilterByNodeReadiness)
+	if req.Filter != nil {
+		for _, c := range req.Filter.FilterByNodeReadiness {
+			if !IsFilterableNodeCondition(c) {
+				return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid filter by node readiness: %s", c)
+			}
+		}
 	}
 
 	if req.OrderBy != nil {

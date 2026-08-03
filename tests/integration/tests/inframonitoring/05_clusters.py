@@ -372,7 +372,7 @@ def test_clusters_node_readiness_aggregation(
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
-            "filter": {"expression": "k8s.cluster.name = 'rn-cluster'", "filterByNodeReadiness": "ready"},
+            "filter": {"expression": "k8s.cluster.name = 'rn-cluster'", "filterByNodeReadiness": ["ready"]},
         },
         timeout=5,
     )
@@ -386,12 +386,27 @@ def test_clusters_node_readiness_aggregation(
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
-            "filter": {"expression": "k8s.cluster.name = 'rn-cluster'", "filterByNodeReadiness": "not_ready"},
+            "filter": {"expression": "k8s.cluster.name = 'rn-cluster'", "filterByNodeReadiness": ["not_ready"]},
         },
         timeout=5,
     )
     assert not_ready.status_code == HTTPStatus.OK, not_ready.text
     assert not_ready.json()["data"]["records"][0]["nodeCountsByReadiness"] == {"ready": 0, "notReady": 2}
+
+    # Multi-select is OR: both buckets populated (union) for the kept cluster.
+    both = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": "k8s.cluster.name = 'rn-cluster'", "filterByNodeReadiness": ["ready", "not_ready"]},
+        },
+        timeout=5,
+    )
+    assert both.status_code == HTTPStatus.OK, both.text
+    assert both.json()["data"]["records"][0]["nodeCountsByReadiness"] == {"ready": 3, "notReady": 2}
 
 
 def test_clusters_pod_status_aggregation(
@@ -483,7 +498,7 @@ def test_clusters_pod_status_aggregation(
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
-            "filter": {"expression": "k8s.cluster.name = 'pp-cluster'", "filterByPodStatus": "running", "filterByNodeReadiness": "ready"},
+            "filter": {"expression": "k8s.cluster.name = 'pp-cluster'", "filterByPodStatus": ["running"], "filterByNodeReadiness": ["ready"]},
         },
         timeout=5,
     )
@@ -501,7 +516,7 @@ def test_clusters_pod_status_aggregation(
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
-            "filter": {"expression": "k8s.cluster.name = 'pp-cluster'", "filterByPodStatus": "running", "filterByNodeReadiness": "not_ready"},
+            "filter": {"expression": "k8s.cluster.name = 'pp-cluster'", "filterByPodStatus": ["running"], "filterByNodeReadiness": ["not_ready"]},
         },
         timeout=5,
     )
@@ -516,7 +531,7 @@ def test_clusters_pod_status_aggregation(
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
-            "filter": {"expression": "k8s.cluster.name = 'pp-cluster'", "filterByPodStatus": "completed", "filterByNodeReadiness": "ready"},
+            "filter": {"expression": "k8s.cluster.name = 'pp-cluster'", "filterByPodStatus": ["completed"], "filterByNodeReadiness": ["ready"]},
         },
         timeout=5,
     )
@@ -754,12 +769,12 @@ def test_clusters_orderby(  # pylint: disable=too-many-arguments,too-many-positi
             id="filter_by_pod_status_invalid",
         ),
         pytest.param(
-            {"filter": {"filterByNodeReadiness": "bogus"}},
+            {"filter": {"filterByNodeReadiness": ["bogus"]}},
             "invalid filter by node readiness",
             id="filter_by_node_readiness_invalid",
         ),
         pytest.param(
-            {"filter": {"filterByNodeReadiness": "notready"}},
+            {"filter": {"filterByNodeReadiness": ["notready"]}},
             "invalid filter by node readiness",
             id="filter_by_node_readiness_missing_underscore",
         ),

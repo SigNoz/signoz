@@ -499,7 +499,7 @@ func (m *module) ListNodes(ctx context.Context, orgID valuer.UUID, req *inframon
 		filterExpr            string
 		nodeFilter            *qbtypes.Filter
 		filterByPodStatus     []inframonitoringtypes.PodStatus
-		filterByNodeReadiness inframonitoringtypes.NodeCondition
+		filterByNodeReadiness []inframonitoringtypes.NodeCondition
 		queryResp             *qbtypes.QueryRangeResponse
 	)
 
@@ -544,10 +544,10 @@ func (m *module) ListNodes(ctx context.Context, orgID valuer.UUID, req *inframon
 	})
 	// When filtering by readiness, nodeConditionCounts already holds the full-scope
 	// map (a superset of the page); otherwise compute it page-scoped here.
-	if filterByNodeReadiness.IsZero() {
+	if len(filterByNodeReadiness) == 0 {
 		g.Go(func() error {
 			var err error
-			nodeConditionCounts, err = m.getPerGroupNodeConditionCounts(gCtx, orgID, req.Start, req.End, nodeFilter, req.GroupBy, pageGroups, inframonitoringtypes.NodeCondition{})
+			nodeConditionCounts, err = m.getPerGroupNodeConditionCounts(gCtx, orgID, req.Start, req.End, nodeFilter, req.GroupBy, pageGroups, nil)
 			return err
 		})
 	}
@@ -723,7 +723,7 @@ func (m *module) ListClusters(ctx context.Context, orgID valuer.UUID, req *infra
 		filterExpr             string
 		clusterFilter          *qbtypes.Filter
 		filterByPodStatus      []inframonitoringtypes.PodStatus
-		filterByNodeReadiness  inframonitoringtypes.NodeCondition
+		filterByNodeReadiness  []inframonitoringtypes.NodeCondition
 		queryResp              *qbtypes.QueryRangeResponse
 		nodeConditionCountsMap map[string]nodeConditionCounts
 		resourceCounts         map[string]map[string]int64
@@ -770,10 +770,10 @@ func (m *module) ListClusters(ctx context.Context, orgID valuer.UUID, req *infra
 	})
 	// When filtering by readiness, nodeConditionCountsMap already holds the
 	// full-scope map (a superset of the page); otherwise compute it page-scoped here.
-	if filterByNodeReadiness.IsZero() {
+	if len(filterByNodeReadiness) == 0 {
 		g.Go(func() error {
 			var err error
-			nodeConditionCountsMap, err = m.getPerGroupNodeConditionCounts(gCtx, orgID, req.Start, req.End, clusterFilter, req.GroupBy, pageGroups, inframonitoringtypes.NodeCondition{})
+			nodeConditionCountsMap, err = m.getPerGroupNodeConditionCounts(gCtx, orgID, req.Start, req.End, clusterFilter, req.GroupBy, pageGroups, nil)
 			return err
 		})
 	}
