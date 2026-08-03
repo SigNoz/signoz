@@ -1,6 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { deserialize } from 'lib/compositeQuery/serializer';
 import {
 	clearViewPanelHandoff,
 	readViewPanelHandoff,
@@ -56,11 +57,7 @@ describe('useSwitchToViewMode', () => {
 		expect(target.pathname).toBe('/dashboard/dash-1');
 		expect(target.searchParams.get('expandedWidgetId')).toBe('panel-1');
 		expect(target.searchParams.get('graphType')).toBe(PANEL_TYPES.TIME_SERIES);
-		expect(
-			JSON.parse(
-				decodeURIComponent(target.searchParams.get('compositeQuery') || ''),
-			),
-		).toStrictEqual(query);
+		expect(deserialize(target.searchParams)).toStrictEqual(query);
 	});
 
 	it('stashes the live draft spec in the sessionStorage handoff, not the URL', () => {

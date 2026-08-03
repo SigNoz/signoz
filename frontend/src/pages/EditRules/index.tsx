@@ -15,6 +15,7 @@ import EditRulesContainer from 'container/EditRules';
 import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { clearSerializedParams } from 'lib/compositeQuery/serializer';
 import history from 'lib/history';
 import {
 	NEW_ALERT_SCHEMA_VERSION,
@@ -49,7 +50,7 @@ function EditRules(): JSX.Element {
 	const { notifications } = useNotifications();
 
 	const clickHandler = (): void => {
-		params.delete(QueryParams.compositeQuery);
+		clearSerializedParams(params);
 		params.delete(QueryParams.panelTypes);
 		params.delete(QueryParams.ruleId);
 		params.delete(QueryParams.relativeTime);

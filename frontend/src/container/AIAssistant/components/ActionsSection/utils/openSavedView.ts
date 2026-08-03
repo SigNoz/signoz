@@ -2,6 +2,10 @@ import { getAllViews } from 'api/saveView/getAllViews';
 import { getViewById } from 'api/saveView/getViewById';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import {
+	applySerializedParams,
+	serialize,
+} from 'lib/compositeQuery/serializer';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { SOURCEPAGE_VS_ROUTES } from 'pages/SaveView/constants';
 import { ViewProps } from 'types/api/saveViews/types';
@@ -75,10 +79,7 @@ export function buildExplorerNavigationUrl(
 	searchParams: Record<string, unknown>,
 ): string {
 	const params = new URLSearchParams();
-	params.set(
-		QueryParams.compositeQuery,
-		encodeURIComponent(JSON.stringify(query)),
-	);
+	applySerializedParams(serialize(query), params);
 	Object.entries(searchParams).forEach(([key, value]) => {
 		params.set(key, JSON.stringify(value));
 	});

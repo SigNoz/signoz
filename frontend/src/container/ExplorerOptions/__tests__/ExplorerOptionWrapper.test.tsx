@@ -3,6 +3,7 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { MOCK_QUERY } from 'container/QueryTable/Drilldown/__tests__/mockTableData';
 import { ExportDashboard } from 'hooks/dashboard/useExportDashboards';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
+import { serialize } from 'lib/compositeQuery/serializer';
 import { rest, server } from 'mocks-server/server';
 import {
 	defaultFeatureFlags,
@@ -380,9 +381,9 @@ describe('ExplorerOptionWrapper', () => {
 			await waitFor(() => {
 				expect(mockSafeNavigate).toHaveBeenCalledTimes(1);
 				expect(mockSafeNavigate).toHaveBeenCalledWith(
-					`/dashboard/${TEST_DASHBOARD_ID}/new?graphType=${panelTypeParam}&widgetId=${widgetId}&compositeQuery=${encodeURIComponent(
-						JSON.stringify(query),
-					)}`,
+					`/dashboard/${TEST_DASHBOARD_ID}/new?graphType=${panelTypeParam}&widgetId=${widgetId}&${serialize(
+						query,
+					).toString()}`,
 				);
 			});
 

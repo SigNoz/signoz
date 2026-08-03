@@ -6,6 +6,10 @@ import { sanitizeDefaultAlertQuery } from 'container/EditAlertV2/utils';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useTableRowClick } from 'hooks/useTableRowClick';
 import useUrlQuery from 'hooks/useUrlQuery';
+import {
+	applySerializedParams,
+	serialize,
+} from 'lib/compositeQuery/serializer';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { toCompositeMetricQuery } from 'types/api/alerts/convert';
 import { isModifierKeyPressed } from 'utils/app';
@@ -31,10 +35,7 @@ export function useAlertRulesHandlers(
 				mapQueryDataFromApi(toCompositeMetricQuery(rule.condition.compositeQuery)),
 				rule.alertType,
 			);
-			params.set(
-				QueryParams.compositeQuery,
-				encodeURIComponent(JSON.stringify(compositeQuery)),
-			);
+			applySerializedParams(serialize(compositeQuery), params);
 
 			const panelType = rule.condition.compositeQuery.panelType;
 			if (panelType) {

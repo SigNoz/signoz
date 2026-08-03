@@ -34,6 +34,7 @@ import useGetYAxisUnit from 'hooks/useGetYAxisUnit';
 import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { clearSerializedParams } from 'lib/compositeQuery/serializer';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
 import { isEmpty, isEqual } from 'lodash-es';
@@ -384,7 +385,7 @@ function FormAlertRules({
 
 	const onCancelHandler = useCallback(
 		(e?: React.MouseEvent) => {
-			urlQuery.delete(QueryParams.compositeQuery);
+			clearSerializedParams(urlQuery);
 			urlQuery.delete(QueryParams.panelTypes);
 			urlQuery.delete(QueryParams.ruleId);
 			urlQuery.delete(QueryParams.relativeTime);
@@ -610,7 +611,7 @@ function FormAlertRules({
 				`${ruleId}`,
 			]);
 
-			urlQuery.delete(QueryParams.compositeQuery);
+			clearSerializedParams(urlQuery);
 			urlQuery.delete(QueryParams.panelTypes);
 			urlQuery.delete(QueryParams.ruleId);
 			urlQuery.delete(QueryParams.relativeTime);

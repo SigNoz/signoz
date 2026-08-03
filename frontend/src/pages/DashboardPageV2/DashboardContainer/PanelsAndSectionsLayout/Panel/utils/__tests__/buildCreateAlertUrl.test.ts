@@ -3,6 +3,7 @@ import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { deserialize } from 'lib/compositeQuery/serializer';
 import { fromPerses } from 'pages/DashboardPageV2/DashboardContainer/queryV5/persesQueryAdapters';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
@@ -73,32 +74,25 @@ describe('buildCreateAlertUrl', () => {
 		expect(params.get(QueryParams.source)).toBe('dashboards');
 	});
 
-	it('encodes the translated query as the compositeQuery param', () => {
+	it('serializes the translated query into the URL', () => {
 		const params = parse(buildCreateAlertUrl(makePanel()));
 
-		const raw = params.get(QueryParams.compositeQuery);
-		expect(raw).toBeTruthy();
-		const decoded = JSON.parse(decodeURIComponent(raw as string));
-		expect(decoded.queryType).toBe(EQueryType.QUERY_BUILDER);
-		expect(decoded.id).toBe('q1');
+		const decoded = deserialize(params);
+		expect(decoded).not.toBeNull();
+		expect(decoded?.queryType).toBe(EQueryType.QUERY_BUILDER);
+		expect(decoded?.id).toBe('q1');
 	});
 
 	it('carries the panel formatting unit onto the alert query when set', () => {
 		const params = parse(buildCreateAlertUrl(makePanel({ unit: 'bytes' })));
 
-		const decoded = JSON.parse(
-			decodeURIComponent(params.get(QueryParams.compositeQuery) as string),
-		);
-		expect(decoded.unit).toBe('bytes');
+		expect(deserialize(params)?.unit).toBe('bytes');
 	});
 
 	it('leaves the query unit unset when the panel has no formatting unit', () => {
 		const params = parse(buildCreateAlertUrl(makePanel()));
 
-		const decoded = JSON.parse(
-			decodeURIComponent(params.get(QueryParams.compositeQuery) as string),
-		);
-		expect(decoded.unit).toBeUndefined();
+		expect(deserialize(params)?.unit).toBeUndefined();
 	});
 
 	it('omits the alert-condition params when the panel has no reduceTo or thresholds', () => {

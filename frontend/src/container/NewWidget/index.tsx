@@ -33,6 +33,7 @@ import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { serializeToParams } from 'lib/compositeQuery/serializer';
 import createQueryParams from 'lib/createQueryParams';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { getDashboardVariables } from 'lib/dashboardVariables/getDashboardVariables';
@@ -791,9 +792,7 @@ function NewWidget({
 		const queryParams = {
 			[QueryParams.expandedWidgetId]: widgetId,
 			[QueryParams.graphType]: graphType,
-			[QueryParams.compositeQuery]: encodeURIComponent(
-				JSON.stringify(currentQuery),
-			),
+			...serializeToParams(currentQuery),
 			[QueryParams.variables]: variables,
 		};
 

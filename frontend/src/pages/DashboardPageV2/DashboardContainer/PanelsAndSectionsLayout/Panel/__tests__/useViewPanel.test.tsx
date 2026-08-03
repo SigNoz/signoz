@@ -6,6 +6,7 @@ import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schem
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { deserialize } from 'lib/compositeQuery/serializer';
 import { fromPerses } from 'pages/DashboardPageV2/DashboardContainer/queryV5/persesQueryAdapters';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -228,8 +229,7 @@ describe('useViewPanel', () => {
 			screen.getByTestId('search').textContent ?? '',
 		);
 		expect(search.get(QueryParams.expandedWidgetId)).toBe('B');
-		const carried = search.get(QueryParams.compositeQuery);
-		expect(panelOf(decodeURIComponent(carried as string))).toBe('B');
+		expect(panelOf(JSON.stringify(deserialize(search)))).toBe('B');
 		expect(search.get(QueryParams.graphType)).toBeNull();
 	});
 

@@ -38,6 +38,7 @@ import useLogDetailHandlers from 'hooks/logs/useLogDetailHandlers';
 import useScrollToLog from 'hooks/logs/useScrollToLog';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import { serializeToParams } from 'lib/compositeQuery/serializer';
 import createQueryParams from 'lib/createQueryParams';
 import { generateFilterQuery } from 'lib/logs/generateFilterQuery';
 import { ILog } from 'types/api/logs/log';
@@ -185,7 +186,7 @@ function EntityLogsContent({
 				[QueryParams.activeLogId]: `"${log?.id}"`,
 				[QueryParams.startTime]: timeRange.startTime.toString(),
 				[QueryParams.endTime]: timeRange.endTime.toString(),
-				[QueryParams.compositeQuery]: JSON.stringify({
+				...serializeToParams({
 					...baseQuery,
 					builder: {
 						...baseQuery.builder,

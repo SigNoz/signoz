@@ -21,6 +21,10 @@ import InfraMetrics from 'container/LogDetailedView/InfraMetrics/InfraMetrics';
 import { getEmptyLogsListConfig } from 'container/LogsExplorerList/utils';
 import dayjs from 'dayjs';
 import {
+	applySerializedParams,
+	serialize,
+} from 'lib/compositeQuery/serializer';
+import {
 	TraceDetailEventKeys,
 	TraceDetailEvents,
 } from 'pages/TraceDetailsV3/events';
@@ -240,7 +244,7 @@ function SpanDetailsContent({
 		};
 
 		const searchParams = new URLSearchParams();
-		searchParams.set(QueryParams.compositeQuery, JSON.stringify(compositeQuery));
+		applySerializedParams(serialize(compositeQuery as any), searchParams);
 		searchParams.set(QueryParams.startTime, startTimeMs.toString());
 		searchParams.set(QueryParams.endTime, endTimeMs.toString());
 

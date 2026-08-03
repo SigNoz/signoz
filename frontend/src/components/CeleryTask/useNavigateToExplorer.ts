@@ -6,6 +6,10 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import useUpdatedQuery from 'container/GridCardLayout/useResolveQuery';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import {
+	applySerializedParams,
+	serialize,
+} from 'lib/compositeQuery/serializer';
 import { useNotifications } from 'hooks/useNotifications';
 import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { AppState } from 'store/reducers';
@@ -124,15 +128,13 @@ export function useNavigateToExplorer(): (
 					});
 			}
 
-			const JSONCompositeQuery = encodeURIComponent(JSON.stringify(preparedQuery));
+			applySerializedParams(serialize(preparedQuery), urlParams);
 
 			const basePath =
 				dataSource === DataSource.TRACES
 					? ROUTES.TRACES_EXPLORER
 					: ROUTES.LOGS_EXPLORER;
-			const newExplorerPath = `${basePath}?${urlParams.toString()}&${
-				QueryParams.compositeQuery
-			}=${JSONCompositeQuery}`;
+			const newExplorerPath = `${basePath}?${urlParams.toString()}`;
 
 			window.open(withBasePath(newExplorerPath), sameTab ? '_self' : '_blank');
 		},
