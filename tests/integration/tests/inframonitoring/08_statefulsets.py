@@ -341,7 +341,7 @@ def test_statefulsets_base_filter_drops_non_statefulset_pods(
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
-            "filter": {"filterByPodStatus": "running"},
+            "filter": {"filterByPodStatus": ["running"]},
         },
         timeout=5,
     )
@@ -360,7 +360,7 @@ def test_statefulsets_base_filter_drops_non_statefulset_pods(
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
-            "filter": {"filterByPodStatus": "CrashLoopBackOff"},
+            "filter": {"filterByPodStatus": ["CrashLoopBackOff"]},
         },
         timeout=5,
     )
@@ -369,19 +369,36 @@ def test_statefulsets_base_filter_drops_non_statefulset_pods(
     assert cdata["total"] == 1
     assert cdata["records"][0]["podCountsByStatus"] == expected_status_counts(crashLoopBackOff=1)
 
-    absent = requests.post(
+    # Multi-select is OR: both requested buckets populated (union), others zeroed.
+    multi = requests.post(
         signoz.self.host_configs["8080"].get(ENDPOINT),
         headers={"authorization": f"Bearer {token}"},
         json={
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
-            "filter": {"filterByPodStatus": "pending"},
+            "filter": {"filterByPodStatus": ["running", "CrashLoopBackOff"]},
         },
         timeout=5,
     )
-    assert absent.status_code == HTTPStatus.OK, absent.text
-    assert absent.json()["data"]["total"] == 0
+    assert multi.status_code == HTTPStatus.OK, multi.text
+    assert multi.json()["data"]["records"][0]["podCountsByStatus"] == expected_status_counts(running=1, crashLoopBackOff=1)
+
+    # A set fully absent from the group -> empty page (single and multi-select).
+    for fbps in (["pending"], ["pending", "oomKilled"]):
+        absent = requests.post(
+            signoz.self.host_configs["8080"].get(ENDPOINT),
+            headers={"authorization": f"Bearer {token}"},
+            json={
+                "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+                "end": int(now.timestamp() * 1000),
+                "limit": 50,
+                "filter": {"filterByPodStatus": fbps},
+            },
+            timeout=5,
+        )
+        assert absent.status_code == HTTPStatus.OK, absent.text
+        assert absent.json()["data"]["total"] == 0, f"group must be dropped by filterByPodStatus={fbps!r}"
 
 
 # Float record fields compared with tolerance; everything else compared with ==.
@@ -713,7 +730,7 @@ def test_statefulsets_orderby(  # pylint: disable=too-many-arguments,too-many-po
             id="orderby_ssname_with_groupby",
         ),
         pytest.param(
-            {"filter": {"filterByPodStatus": "Bogus"}},
+            {"filter": {"filterByPodStatus": ["Bogus"]}},
             "invalid filter by pod status",
             id="filter_by_pod_status_invalid",
         ),
