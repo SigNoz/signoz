@@ -428,3 +428,111 @@ func TestRoundToNonZeroDecimals(t *testing.T) {
 	assert.Equal(t, math.Inf(1), roundToNonZeroDecimals(math.Inf(1), 3))
 	assert.Equal(t, math.Inf(-1), roundToNonZeroDecimals(math.Inf(-1), 3))
 }
+
+func TestTimeSeriesValueUnmarshalJSONNonFinite(t *testing.T) {
+	cases := []struct {
+		description   string
+		encoded       string
+		expectedValue float64
+		expectError   bool
+	}{
+		{
+			description:   "finite value decodes as a number",
+			encoded:       `{"timestamp":1000,"value":1.5}`,
+			expectedValue: 1.5,
+		},
+		{
+			description:   "NaN sentinel decodes back to NaN",
+			encoded:       `{"timestamp":1000,"value":"NaN"}`,
+			expectedValue: math.NaN(),
+		},
+		{
+			description:   "Inf sentinel decodes back to positive infinity",
+			encoded:       `{"timestamp":1000,"value":"Inf"}`,
+			expectedValue: math.Inf(1),
+		},
+		{
+			description:   "negative Inf sentinel decodes back to negative infinity",
+			encoded:       `{"timestamp":1000,"value":"-Inf"}`,
+			expectedValue: math.Inf(-1),
+		},
+		{
+			description:   "null decodes to zero",
+			encoded:       `{"timestamp":1000,"value":null}`,
+			expectedValue: 0,
+		},
+		{
+			description: "an unrecognized string is still an error",
+			encoded:     `{"timestamp":1000,"value":"banana"}`,
+			expectError: true,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.description, func(t *testing.T) {
+			var got TimeSeriesValue
+			err := json.Unmarshal([]byte(c.encoded), &got)
+			if c.expectError {
+				assert.Error(t, err)
+				return
+			}
+			assert.NoError(t, err)
+			assert.EqualValues(t, 1000, got.Timestamp)
+			if math.IsNaN(c.expectedValue) {
+				assert.True(t, math.IsNaN(got.Value))
+				return
+			}
+			assert.Equal(t, c.expectedValue, got.Value)
+		})
+	}
+}
+
+func TestTimeSeriesValueRoundTripsNonFiniteValues(t *testing.T) {
+	original := &TimeSeries{
+		Labels: []*Label{
+			{Key: telemetrytypes.TelemetryFieldKey{Name: "job_name"}, Value: "dbBloatMonitorJob"},
+		},
+		Values: []*TimeSeriesValue{
+			{Timestamp: 1000, Value: 11.524},
+			{Timestamp: 2000, Value: math.NaN()},
+			{Timestamp: 3000, Value: math.Inf(1)},
+			{Timestamp: 4000, Value: math.Inf(-1)},
+			{Timestamp: 5000, Value: 456.7},
+		},
+	}
+
+	encoded, err := json.Marshal(original)
+	assert.NoError(t, err)
+
+	var decoded *TimeSeries
+	err = json.Unmarshal(encoded, &decoded)
+	assert.NoError(t, err, "a response containing non-finite values must survive the round trip")
+	assert.Len(t, decoded.Values, 5)
+	assert.Equal(t, 11.524, decoded.Values[0].Value)
+	assert.True(t, math.IsNaN(decoded.Values[1].Value))
+	assert.True(t, math.IsInf(decoded.Values[2].Value, 1))
+	assert.True(t, math.IsInf(decoded.Values[3].Value, -1))
+	assert.Equal(t, 456.7, decoded.Values[4].Value)
+}
+
+func TestTimeSeriesValueRoundTripsHeatmapValues(t *testing.T) {
+	original := &TimeSeriesValue{
+		Timestamp: 1000,
+		Value:     2.5,
+		Values:    []float64{1.5, math.NaN(), 3.5},
+		Bucket:    &Bucket{Step: 10},
+	}
+
+	encoded, err := json.Marshal(original)
+	assert.NoError(t, err)
+
+	var decoded TimeSeriesValue
+	err = json.Unmarshal(encoded, &decoded)
+	assert.NoError(t, err)
+	assert.Equal(t, 2.5, decoded.Value)
+	assert.Len(t, decoded.Values, 3)
+	assert.Equal(t, 1.5, decoded.Values[0])
+	assert.True(t, math.IsNaN(decoded.Values[1]))
+	assert.Equal(t, 3.5, decoded.Values[2])
+	assert.Equal(t, float64(10), decoded.Bucket.Step)
+}

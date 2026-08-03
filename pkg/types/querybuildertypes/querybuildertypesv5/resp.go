@@ -469,6 +469,70 @@ func (r RawRow) MarshalJSON() ([]byte, error) {
 	})
 }
 
+// parseFloatOrNonFinite decodes a JSON number, or a sentinel string
+// MarshalJSON emits in place of a non-finite float.
+func parseFloatOrNonFinite(raw json.RawMessage) (float64, error) {
+	if len(raw) == 0 || string(raw) == "null" {
+		return 0, nil
+	}
+
+	var f float64
+	if err := json.Unmarshal(raw, &f); err == nil {
+		return f, nil
+	}
+
+	var s string
+	if err := json.Unmarshal(raw, &s); err != nil {
+		return 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "value %s is neither a number nor a non-finite sentinel", raw)
+	}
+	switch s {
+	case "NaN":
+		return math.NaN(), nil
+	case "Inf", "+Inf":
+		return math.Inf(1), nil
+	case "-Inf":
+		return math.Inf(-1), nil
+	default:
+		return 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "unrecognized non-finite value %q", s)
+	}
+}
+
+// UnmarshalJSON mirrors MarshalJSON, which renders non-finite floats as
+// "NaN"/"Inf"/"-Inf" (see sanitizeValue). The bucket cache serializes through
+// this type, so a value it cannot read costs it the whole entry.
+func (t *TimeSeriesValue) UnmarshalJSON(data []byte) error {
+	type Alias TimeSeriesValue
+	aux := struct {
+		*Alias
+		Value  json.RawMessage   `json:"value"`
+		Values []json.RawMessage `json:"values,omitempty"`
+	}{
+		Alias: (*Alias)(t),
+	}
+
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	value, err := parseFloatOrNonFinite(aux.Value)
+	if err != nil {
+		return err
+	}
+	t.Value = value
+
+	if aux.Values == nil {
+		t.Values = nil
+		return nil
+	}
+	t.Values = make([]float64, len(aux.Values))
+	for idx, raw := range aux.Values {
+		if t.Values[idx], err = parseFloatOrNonFinite(raw); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (t TimeSeriesValue) MarshalJSON() ([]byte, error) {
 	type Alias TimeSeriesValue
 

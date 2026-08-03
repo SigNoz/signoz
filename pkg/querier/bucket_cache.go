@@ -77,23 +77,21 @@ func (bc *bucketCache) GetMissRanges(
 	// Extract step interval if this is a builder query
 	stepMs := uint64(step.Milliseconds())
 
+	// Only decoded buckets count as covered; an unreadable one has to be
+	// re-queried or its span silently returns nothing.
+	readable := bc.discardUnreadableBuckets(ctx, bc.filterRelevantBuckets(data.Buckets, startMs, endMs))
+
 	// Find missing ranges with step alignment
-	missing = bc.findMissingRangesWithStep(data.Buckets, startMs, endMs, stepMs)
+	missing = bc.findMissingRangesWithStep(extractCachedBuckets(readable), startMs, endMs, stepMs)
 	bc.logger.DebugContext(ctx, "missing ranges", slog.Any("missing", missing), slog.Uint64("step", stepMs))
 
 	// If no cached data overlaps with requested range, return empty result
-	if len(data.Buckets) == 0 {
-		return nil, missing
-	}
-
-	// Extract relevant buckets and merge them
-	relevantBuckets := bc.filterRelevantBuckets(data.Buckets, startMs, endMs)
-	if len(relevantBuckets) == 0 {
+	if len(readable) == 0 {
 		return nil, missing
 	}
 
 	// Merge buckets into a single result
-	mergedResult := bc.mergeBuckets(ctx, relevantBuckets, data.Warnings)
+	mergedResult := bc.mergeBuckets(readable, data.Warnings)
 
 	// Filter the merged result to only include values within the requested time range
 	mergedResult = bc.filterResultToTimeRange(mergedResult, startMs, endMs)
@@ -431,41 +429,73 @@ func (bc *bucketCache) filterRelevantBuckets(buckets []*qbtypes.CachedBucket, st
 	return relevant
 }
 
+// readableBucket pairs a cached bucket with its decoded payload.
+type readableBucket struct {
+	bucket *qbtypes.CachedBucket
+	data   *qbtypes.TimeSeriesData
+}
+
+// extractCachedBuckets returns the bucket metadata, for coverage checks.
+func extractCachedBuckets(readable []readableBucket) []*qbtypes.CachedBucket {
+	buckets := make([]*qbtypes.CachedBucket, 0, len(readable))
+	for _, r := range readable {
+		buckets = append(buckets, r.bucket)
+	}
+	return buckets
+}
+
+// discardUnreadableBuckets decodes each bucket and drops the ones that fail.
+// Only time series is ever cached, so any other type counts as unreadable.
+func (bc *bucketCache) discardUnreadableBuckets(ctx context.Context, buckets []*qbtypes.CachedBucket) []readableBucket {
+	readable := make([]readableBucket, 0, len(buckets))
+	for _, bucket := range buckets {
+		if bucket.Type != qbtypes.RequestTypeTimeSeries {
+			bc.logger.WarnContext(ctx, "discarding cached bucket of uncacheable type",
+				slog.String("type", bucket.Type.StringValue()),
+				slog.Uint64("start", bucket.StartMs),
+				slog.Uint64("end", bucket.EndMs))
+			continue
+		}
+		var tsData *qbtypes.TimeSeriesData
+		if err := json.Unmarshal(bucket.Value, &tsData); err != nil {
+			bc.logger.ErrorContext(ctx, "discarding unreadable cached bucket; its range will be re-queried",
+				errors.Attr(err),
+				slog.Uint64("start", bucket.StartMs),
+				slog.Uint64("end", bucket.EndMs))
+			continue
+		}
+		readable = append(readable, readableBucket{bucket: bucket, data: tsData})
+	}
+	return readable
+}
+
 // mergeBuckets combines multiple cached buckets into a single result.
-func (bc *bucketCache) mergeBuckets(ctx context.Context, buckets []*qbtypes.CachedBucket, warnings []string) *qbtypes.Result {
+func (bc *bucketCache) mergeBuckets(buckets []readableBucket, warnings []string) *qbtypes.Result {
 	if len(buckets) == 0 {
 		return &qbtypes.Result{}
 	}
 
 	// All buckets should have the same type
-	resultType := buckets[0].Type
+	resultType := buckets[0].bucket.Type
 
 	// Aggregate stats
 	var totalStats qbtypes.ExecStats
-	for _, bucket := range buckets {
-		totalStats.RowsScanned += bucket.Stats.RowsScanned
-		totalStats.BytesScanned += bucket.Stats.BytesScanned
-		totalStats.DurationMS += bucket.Stats.DurationMS
-	}
-
-	// Merge values based on type
-	var mergedValue any
-	switch resultType {
-	case qbtypes.RequestTypeTimeSeries:
-		mergedValue = bc.mergeTimeSeriesValues(ctx, buckets)
-		// Raw and Scalar types are not cached, so no merge needed
+	for _, b := range buckets {
+		totalStats.RowsScanned += b.bucket.Stats.RowsScanned
+		totalStats.BytesScanned += b.bucket.Stats.BytesScanned
+		totalStats.DurationMS += b.bucket.Stats.DurationMS
 	}
 
 	return &qbtypes.Result{
 		Type:     resultType,
-		Value:    mergedValue,
+		Value:    bc.mergeTimeSeriesValues(buckets),
 		Stats:    totalStats,
 		Warnings: warnings,
 	}
 }
 
 // mergeTimeSeriesValues merges time series data from multiple buckets.
-func (bc *bucketCache) mergeTimeSeriesValues(ctx context.Context, buckets []*qbtypes.CachedBucket) *qbtypes.TimeSeriesData {
+func (bc *bucketCache) mergeTimeSeriesValues(buckets []readableBucket) *qbtypes.TimeSeriesData {
 	// Estimate capacity based on bucket count
 	estimatedSeries := len(buckets) * 10
 
@@ -476,14 +506,8 @@ func (bc *bucketCache) mergeTimeSeriesValues(ctx context.Context, buckets []*qbt
 	}
 	seriesMap := make(map[seriesKey]*qbtypes.TimeSeries, estimatedSeries)
 
-	for _, bucket := range buckets {
-		var tsData *qbtypes.TimeSeriesData
-		if err := json.Unmarshal(bucket.Value, &tsData); err != nil {
-			bc.logger.ErrorContext(ctx, "failed to unmarshal time series data", errors.Attr(err))
-			continue
-		}
-
-		for _, aggBucket := range tsData.Aggregations {
+	for _, b := range buckets {
+		for _, aggBucket := range b.data.Aggregations {
 			for _, series := range aggBucket.Series {
 				// Create series key from labels
 				key := seriesKey{
