@@ -55,7 +55,7 @@ def test_metrics_scalar_space_aggregations(
     query = build_scalar_query(
         name="A",
         signal="metrics",
-        aggregations=[build_metrics_aggregation("test.metric", "latest", space_aggregation, "unspecified")],
+        aggregations=[build_metrics_aggregation("test.metric", "latest", space_aggregation, "unspecified", reduce_to="last")],
     )
     response = make_scalar_query_request(signoz, token, now, [query])
 
@@ -96,7 +96,7 @@ def test_metrics_scalar_having(
     query = build_scalar_query(
         name="A",
         signal="metrics",
-        aggregations=[build_metrics_aggregation("test.metric", "latest", "sum", "unspecified")],
+        aggregations=[build_metrics_aggregation("test.metric", "latest", "sum", "unspecified", reduce_to="last")],
         group_by=[build_group_by_field("service.name", "string", "attribute")],
         having_expression=having_expression,
     )

@@ -3,15 +3,6 @@
         "name": "NV dashboard with sections",
         "description": ""
     },
-    "datasources": {
-        "SigNozDatasource": {
-            "default": true,
-            "plugin": {
-                "kind": "signoz/Datasource",
-                "spec": {}
-            }
-        }
-    },
     "links": [],
     "panels": {
         "b424e23b": {

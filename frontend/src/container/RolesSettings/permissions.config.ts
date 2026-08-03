@@ -1,4 +1,12 @@
-import { Bot, Key, Shield } from '@signozhq/icons';
+import {
+	Bot,
+	ChartLine,
+	DraftingCompass,
+	Gauge,
+	Key,
+	Logs,
+	Shield,
+} from '@signozhq/icons';
 
 import permissionsType from 'lib/authz/hooks/useAuthZ/permissions.type';
 import {
@@ -14,12 +22,15 @@ type IconComponent = typeof Shield;
 
 const OBJECT_SCOPED_VERB_SET = new Set<string>(OBJECT_SCOPED_VERBS);
 
+export type SelectorType = 'input' | 'telemetryBuilder';
+
 export interface ResourcePanelConfig {
 	label: string;
 	description: string;
 	icon: IconComponent;
 	selectorPlaceholder: string;
 	docsAnchor: string;
+	selectorType?: SelectorType;
 }
 
 /**
@@ -49,6 +60,42 @@ export const RESOURCE_PANELS: Record<AuthZResource, ResourcePanelConfig> = {
 		selectorPlaceholder:
 			'Type service account ID, separate multiple with comma or space',
 		docsAnchor: 'service-account',
+	},
+	logs: {
+		label: 'Logs',
+		description: 'Log data collected across the workspace.',
+		icon: Logs,
+		selectorPlaceholder:
+			'Enter selector as <query-type>/<key>/<value> or <query-type>/* or use wizard...',
+		docsAnchor: 'logs',
+		selectorType: 'telemetryBuilder',
+	},
+	traces: {
+		label: 'Traces',
+		description: 'Distributed tracing data collected across the workspace.',
+		icon: DraftingCompass,
+		selectorPlaceholder:
+			'Enter selector as <query-type>/<key>/<value> or <query-type>/* or use wizard...',
+		docsAnchor: 'traces',
+		selectorType: 'telemetryBuilder',
+	},
+	metrics: {
+		label: 'Metrics',
+		description: 'Metric data collected across the workspace.',
+		icon: ChartLine,
+		selectorPlaceholder:
+			'Enter selector as <query-type>/<key>/<value> or <query-type>/* or use wizard...',
+		docsAnchor: 'metrics',
+		selectorType: 'telemetryBuilder',
+	},
+	'meter-metrics': {
+		label: 'Meter Metrics',
+		description: 'Usage metering data for the workspace.',
+		icon: Gauge,
+		selectorPlaceholder:
+			'Enter selector as <query-type>/<key>/<value> or <query-type>/* or use wizard...',
+		docsAnchor: 'meter-metrics',
+		selectorType: 'telemetryBuilder',
 	},
 };
 

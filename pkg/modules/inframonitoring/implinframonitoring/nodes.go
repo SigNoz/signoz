@@ -7,11 +7,12 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
+	"github.com/SigNoz/signoz/pkg/telemetryschema/metricstelemetryschema"
 	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
+	"golang.org/x/sync/errgroup"
 )
 
 // buildNodeRecords assembles the page records. Condition counts come from
@@ -91,19 +92,64 @@ func buildNodeRecords(
 	return records
 }
 
-func (m *module) getTopNodeGroups(
+// getTopNodeGroupsAndMetadata concurrently fetches metadata + the ordering-metric
+// ranking (plus the full-scope pod-status keyset when filtering, to intersect both).
+func (m *module) getTopNodeGroupsAndMetadata(
 	ctx context.Context,
 	orgID valuer.UUID,
 	req *inframonitoringtypes.PostableNodes,
-	metadataMap map[string]map[string]string,
-	podStatusCountsMap map[string]podStatusCounts,
-) ([]map[string]string, error) {
-	orderByKey := req.OrderBy.Key.Name
-	if orderByKey == inframonitoringtypes.NodeNameAttrKey {
-		// metadataMap is already status-filtered by the caller, so the name
-		// branch needs no extra intersection.
-		return inframonitoringtypes.PaginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.NodeNameAttrKey), nil
+) ([]map[string]string, map[string]map[string]string, map[string]podStatusCounts, *qbtypes.QueryWarnData, error) {
+
+	var (
+		orderByKey        string
+		metadataMap       map[string]map[string]string
+		allMetricGroups   []rankedGroup
+		statusCounts      map[string]podStatusCounts
+		statusWarning     *qbtypes.QueryWarnData
+		filter            *qbtypes.Filter
+		filterByPodStatus inframonitoringtypes.PodStatus
+	)
+
+	orderByKey = req.OrderBy.Key.Name
+
+	// When filtering by pod status, resolve the full-scope status keyset
+	// concurrently (pageGroups=nil spans all groups under the user filter) so it
+	// can intersect metadata + ranked groups below.
+	if req.Filter != nil {
+		filter = &req.Filter.Filter
+		filterByPodStatus = req.Filter.FilterByPodStatus
 	}
+
+	g, gCtx := errgroup.WithContext(ctx)
+
+	g.Go(func() error {
+		var err error
+		metadataMap, err = m.getNodesTableMetadata(gCtx, orgID, req)
+		return err
+	})
+
+	if !filterByPodStatus.IsZero() {
+		g.Go(func() error {
+			var err error
+			statusCounts, statusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, filter, req.GroupBy, nil, filterByPodStatus)
+			return err
+		})
+	}
+
+	if orderByKey == inframonitoringtypes.NodeNameAttrKey {
+		if err := g.Wait(); err != nil {
+			return nil, nil, nil, nil, err
+		}
+		// Secondary filter: keep only status-matching groups. A missing metric
+		// yields an empty statusCounts, so this correctly empties the result
+		// (the caller also surfaces the warning).
+		if !filterByPodStatus.IsZero() {
+			metadataMap = intersectMap(metadataMap, statusCounts)
+		}
+		pageGroups := inframonitoringtypes.PaginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.NodeNameAttrKey)
+		return pageGroups, metadataMap, statusCounts, statusWarning, nil
+	}
+
 	queryNamesForOrderBy := orderByToNodesQueryNames[orderByKey]
 	rankingQueryName := queryNamesForOrderBy[len(queryNamesForOrderBy)-1]
 
@@ -137,18 +183,29 @@ func (m *module) getTopNodeGroups(
 		topReq.CompositeQuery.Queries = append(topReq.CompositeQuery.Queries, copied)
 	}
 
-	resp, err := m.querier.QueryRange(ctx, orgID, topReq)
-	if err != nil {
-		return nil, err
+	g.Go(func() error {
+		resp, err := m.querier.QueryRange(gCtx, orgID, topReq)
+		if err != nil {
+			return err
+		}
+		allMetricGroups = parseAndSortGroups(resp, rankingQueryName, req.GroupBy, req.OrderBy.Direction)
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
+		return nil, nil, nil, nil, err
 	}
 
-	allMetricGroups := parseAndSortGroups(resp, rankingQueryName, req.GroupBy, req.OrderBy.Direction)
-	// When filtering by status, intersect the ranked groups against the keyset —
-	// an empty map (no node matched) must yield an empty page, not the full set.
-	if req.Filter != nil && !req.Filter.FilterByPodStatus.IsZero() {
-		allMetricGroups = intersectRankedGroups(allMetricGroups, podStatusCountsMap)
+	// Secondary filter: intersect ranked groups + metadata with the status keyset.
+	// A missing metric yields an empty statusCounts, correctly emptying the result
+	// (the caller also surfaces the warning).
+	if !filterByPodStatus.IsZero() {
+		allMetricGroups = intersectRankedGroups(allMetricGroups, statusCounts)
+		metadataMap = intersectMap(metadataMap, statusCounts)
 	}
-	return paginateWithBackfill(allMetricGroups, metadataMap, req.GroupBy, req.Offset, req.Limit), nil
+
+	pageGroups := paginateWithBackfill(allMetricGroups, metadataMap, req.GroupBy, req.Offset, req.Limit)
+	return pageGroups, metadataMap, statusCounts, statusWarning, nil
 }
 
 func (m *module) getNodesTableMetadata(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableNodes) (map[string]map[string]string, error) {
@@ -198,7 +255,7 @@ func (m *module) getPerGroupNodeConditionCounts(
 
 	// Step-floor bounds + resolve tables in one shot to match QB v5 querier.
 	samplesStartMs, flooredEndMs, tsAdjustedStartMs, _, localTimeSeriesTable, distributedSamplesTable, _ := alignedMetricWindow(start, end)
-	valueCol := telemetrymetrics.ValueColumnForSamplesTable(distributedSamplesTable)
+	valueCol := metricstelemetryschema.ValueColumnForSamplesTable(distributedSamplesTable)
 
 	// ----- timeSeriesFPs -----
 	timeSeriesFPs := sqlbuilder.NewSelectBuilder()
@@ -212,7 +269,7 @@ func (m *module) getPerGroupNodeConditionCounts(
 		)
 	}
 	timeSeriesFPs.Select(timeSeriesFPsSelectCols...)
-	timeSeriesFPs.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, localTimeSeriesTable))
+	timeSeriesFPs.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, localTimeSeriesTable))
 	timeSeriesFPs.Where(
 		timeSeriesFPs.E("metric_name", nodeConditionMetricName),
 		timeSeriesFPs.GE("unix_milli", tsAdjustedStartMs),
@@ -249,7 +306,7 @@ func (m *module) getPerGroupNodeConditionCounts(
 	latestConditionPerNode.Select(latestConditionPerNodeSelectCols...)
 	latestConditionPerNode.From(fmt.Sprintf(
 		"%s.%s AS samples INNER JOIN time_series_fps AS tsfp ON samples.fingerprint = tsfp.fingerprint",
-		telemetrymetrics.DBName, distributedSamplesTable,
+		metricstelemetryschema.DBName, distributedSamplesTable,
 	))
 	latestConditionPerNode.Where(
 		latestConditionPerNode.E("samples.metric_name", nodeConditionMetricName),

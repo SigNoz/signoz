@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"golang.org/x/sync/errgroup"
 )
 
 // buildDaemonSetRecords assembles the page records. Pod status counts come from
@@ -89,19 +90,64 @@ func buildDaemonSetRecords(
 	return records
 }
 
-func (m *module) getTopDaemonSetGroups(
+// getTopDaemonSetGroupsAndMetadata concurrently fetches metadata + the ordering-metric
+// ranking (plus the full-scope pod-status keyset when filtering, to intersect both).
+func (m *module) getTopDaemonSetGroupsAndMetadata(
 	ctx context.Context,
 	orgID valuer.UUID,
 	req *inframonitoringtypes.PostableDaemonSets,
-	metadataMap map[string]map[string]string,
-	podStatusCountsMap map[string]podStatusCounts,
-) ([]map[string]string, error) {
-	orderByKey := req.OrderBy.Key.Name
-	if orderByKey == inframonitoringtypes.DaemonSetNameAttrKey {
-		// metadataMap is already status-filtered by the caller, so the name
-		// branch needs no extra intersection.
-		return inframonitoringtypes.PaginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.DaemonSetNameAttrKey), nil
+) ([]map[string]string, map[string]map[string]string, map[string]podStatusCounts, *qbtypes.QueryWarnData, error) {
+
+	var (
+		orderByKey        string
+		metadataMap       map[string]map[string]string
+		allMetricGroups   []rankedGroup
+		statusCounts      map[string]podStatusCounts
+		statusWarning     *qbtypes.QueryWarnData
+		filter            *qbtypes.Filter
+		filterByPodStatus inframonitoringtypes.PodStatus
+	)
+
+	orderByKey = req.OrderBy.Key.Name
+
+	// When filtering by pod status, resolve the full-scope status keyset
+	// concurrently (pageGroups=nil spans all groups under the user filter) so it
+	// can intersect metadata + ranked groups below.
+	if req.Filter != nil {
+		filter = &req.Filter.Filter
+		filterByPodStatus = req.Filter.FilterByPodStatus
 	}
+
+	g, gCtx := errgroup.WithContext(ctx)
+
+	g.Go(func() error {
+		var err error
+		metadataMap, err = m.getDaemonSetsTableMetadata(gCtx, orgID, req)
+		return err
+	})
+
+	if !filterByPodStatus.IsZero() {
+		g.Go(func() error {
+			var err error
+			statusCounts, statusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, filter, req.GroupBy, nil, filterByPodStatus)
+			return err
+		})
+	}
+
+	if orderByKey == inframonitoringtypes.DaemonSetNameAttrKey {
+		if err := g.Wait(); err != nil {
+			return nil, nil, nil, nil, err
+		}
+		// Secondary filter: keep only status-matching groups. A missing metric
+		// yields an empty statusCounts, so this correctly empties the result
+		// (the caller also surfaces the warning).
+		if !filterByPodStatus.IsZero() {
+			metadataMap = intersectMap(metadataMap, statusCounts)
+		}
+		pageGroups := inframonitoringtypes.PaginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.DaemonSetNameAttrKey)
+		return pageGroups, metadataMap, statusCounts, statusWarning, nil
+	}
+
 	queryNamesForOrderBy := orderByToDaemonSetsQueryNames[orderByKey]
 	rankingQueryName := queryNamesForOrderBy[len(queryNamesForOrderBy)-1]
 
@@ -135,18 +181,29 @@ func (m *module) getTopDaemonSetGroups(
 		topReq.CompositeQuery.Queries = append(topReq.CompositeQuery.Queries, copied)
 	}
 
-	resp, err := m.querier.QueryRange(ctx, orgID, topReq)
-	if err != nil {
-		return nil, err
+	g.Go(func() error {
+		resp, err := m.querier.QueryRange(gCtx, orgID, topReq)
+		if err != nil {
+			return err
+		}
+		allMetricGroups = parseAndSortGroups(resp, rankingQueryName, req.GroupBy, req.OrderBy.Direction)
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
+		return nil, nil, nil, nil, err
 	}
 
-	allMetricGroups := parseAndSortGroups(resp, rankingQueryName, req.GroupBy, req.OrderBy.Direction)
-	// When filtering by status, intersect the ranked groups against the keyset —
-	// an empty map (no group matched) must yield an empty page, not the full set.
-	if req.Filter != nil && !req.Filter.FilterByPodStatus.IsZero() {
-		allMetricGroups = intersectRankedGroups(allMetricGroups, podStatusCountsMap)
+	// Secondary filter: intersect ranked groups + metadata with the status keyset.
+	// A missing metric yields an empty statusCounts, correctly emptying the result
+	// (the caller also surfaces the warning).
+	if !filterByPodStatus.IsZero() {
+		allMetricGroups = intersectRankedGroups(allMetricGroups, statusCounts)
+		metadataMap = intersectMap(metadataMap, statusCounts)
 	}
-	return paginateWithBackfill(allMetricGroups, metadataMap, req.GroupBy, req.Offset, req.Limit), nil
+
+	pageGroups := paginateWithBackfill(allMetricGroups, metadataMap, req.GroupBy, req.Offset, req.Limit)
+	return pageGroups, metadataMap, statusCounts, statusWarning, nil
 }
 
 func (m *module) getDaemonSetsTableMetadata(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableDaemonSets) (map[string]map[string]string, error) {

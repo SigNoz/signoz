@@ -1,2375 +1,1216 @@
 {
-  "description": "GCP Memorystore Redis Overview dashboard",
+  "schemaVersion": "v6",
   "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNHB4IiBoZWlnaHQ9IjI0cHgiIHZpZXdCb3g9IjAgMCAyNCAyNCI+PGRlZnM+PHN0eWxlPi5jbHMtMSwuY2xzLTR7ZmlsbDojNjY5ZGY2O30uY2xzLTJ7ZmlsbDojNDI4NWY0O30uY2xzLTIsLmNscy0zLC5jbHMtNHtmaWxsLXJ1bGU6ZXZlbm9kZDt9LmNscy0ze2ZpbGw6I2FlY2JmYTt9PC9zdHlsZT48L2RlZnM+PHRpdGxlPkljb25fMjRweF9NZW1vcnlTdG9yZV9Db2xvcjwvdGl0bGU+PGcgZGF0YS1uYW1lPSJQcm9kdWN0IEljb25zIj48ZyA+PHJlY3QgY2xhc3M9ImNscy0xIiB4PSIyIiB5PSIzLjk0IiB3aWR0aD0iMy4zMyIgaGVpZ2h0PSIyLjU4Ii8+PHJlY3QgY2xhc3M9ImNscy0xIiB4PSIyIiB5PSI4LjQ1IiB3aWR0aD0iMy4zMyIgaGVpZ2h0PSIyLjU4Ii8+PHJlY3QgY2xhc3M9ImNscy0xIiB4PSIyIiB5PSIxMi45NyIgd2lkdGg9IjMuMzMiIGhlaWdodD0iMi41OCIvPjxyZWN0IGNsYXNzPSJjbHMtMSIgeD0iMiIgeT0iMTcuNDgiIHdpZHRoPSIzLjMzIiBoZWlnaHQ9IjIuNTgiLz48cmVjdCBjbGFzcz0iY2xzLTEiIHg9IjE4LjY3IiB5PSIzLjk0IiB3aWR0aD0iMy4zMyIgaGVpZ2h0PSIyLjU4Ii8+PHJlY3QgY2xhc3M9ImNscy0xIiB4PSIxOC42NyIgeT0iOC40NSIgd2lkdGg9IjMuMzMiIGhlaWdodD0iMi41OCIvPjxyZWN0IGNsYXNzPSJjbHMtMSIgeD0iMTguNjciIHk9IjEyLjk3IiB3aWR0aD0iMy4zMyIgaGVpZ2h0PSIyLjU4Ii8+PHJlY3QgY2xhc3M9ImNscy0xIiB4PSIxOC42NyIgeT0iMTcuNDgiIHdpZHRoPSIzLjMzIiBoZWlnaHQ9IjIuNTgiLz48cG9seWdvbiBjbGFzcz0iY2xzLTIiIHBvaW50cz0iMjEuMzMgNi41MiAxOC42NyA2LjUyIDE4LjY3IDMuOTQgMjEuMzMgNi41MiIvPjxwb2x5Z29uIGNsYXNzPSJjbHMtMiIgcG9pbnRzPSIyMS4zMyAxMS4wMyAxOC42NyAxMS4wMyAxOC42NyA4LjQ1IDIxLjMzIDExLjAzIi8+PHBvbHlnb24gY2xhc3M9ImNscy0yIiBwb2ludHM9IjIxLjMzIDE1LjU1IDE4LjY3IDE1LjU1IDE4LjY3IDEyLjk3IDIxLjMzIDE1LjU1Ii8+PHBvbHlnb24gY2xhc3M9ImNscy0yIiBwb2ludHM9IjIxLjMzIDIwLjA3IDE4LjY3IDIwLjA3IDE4LjY3IDE3LjQ4IDIxLjMzIDIwLjA3Ii8+PHBhdGggY2xhc3M9ImNscy0zIiBkPSJNNS4zMywyMkgxOC42N1YySDUuMzNabTYtOUg4bDQuNjctNy43NFYxMUgxNmwtNC42Nyw3Ljc0WiIvPjxwb2x5Z29uIGNsYXNzPSJjbHMtNCIgcG9pbnRzPSIxMS4zMyAyMiAxMS4zMyAxOC43NyAxNiAxMS4wMyAxMi42NyAxMS4wMyAxMi42NyAyIDE4LjY3IDIgMTguNjcgMjIgMTEuMzMgMjIiLz48L2c+PC9nPjwvc3ZnPg==",
-  "layout": [
-    {
-      "h": 1,
-      "i": "f98108ac-f843-4005-8d2f-817388b29617",
-      "maxH": 1,
-      "minH": 1,
-      "minW": 12,
-      "moved": false,
-      "static": false,
-      "w": 12,
-      "x": 0,
-      "y": 0
-    },
-    {
-      "h": 6,
-      "i": "cacab28d-fb1a-433a-9f07-6cbbea58a596",
-      "moved": false,
-      "static": false,
-      "w": 2,
-      "x": 0,
-      "y": 1
-    },
-    {
-      "h": 6,
-      "i": "698e64b9-c00b-4fdb-bc12-2203ca4dc0fd",
-      "moved": false,
-      "static": false,
-      "w": 5,
-      "x": 2,
-      "y": 1
-    },
-    {
-      "h": 6,
-      "i": "6d77f2b5-587e-4201-85ba-0f776ec643c4",
-      "moved": false,
-      "static": false,
-      "w": 5,
-      "x": 7,
-      "y": 1
-    },
-    {
-      "h": 6,
-      "i": "5d2e13cb-4a6e-4713-b5a3-4f38b2c43a18",
-      "moved": false,
-      "static": false,
-      "w": 6,
-      "x": 0,
-      "y": 7
-    },
-    {
-      "h": 6,
-      "i": "a3b10c5c-a23e-43c7-9623-be06dfbc7278",
-      "moved": false,
-      "static": false,
-      "w": 6,
-      "x": 6,
-      "y": 7
-    },
-    {
-      "h": 6,
-      "i": "a313e14c-e6fd-49ad-9d1c-4f3e6e882cbe",
-      "moved": false,
-      "static": false,
-      "w": 6,
-      "x": 0,
-      "y": 13
-    },
-    {
-      "h": 6,
-      "i": "7b88e733-1794-4a61-b4d6-65e5fc05a30f",
-      "moved": false,
-      "static": false,
-      "w": 6,
-      "x": 6,
-      "y": 13
-    },
-    {
-      "h": 1,
-      "i": "33fa99cf-cb8c-40e6-82e5-aeb50b53a060",
-      "maxH": 1,
-      "minH": 1,
-      "minW": 12,
-      "moved": false,
-      "static": false,
-      "w": 12,
-      "x": 0,
-      "y": 19
-    },
-    {
-      "h": 6,
-      "i": "b7b7b3aa-0125-4592-a1a8-1d86a6c542d0",
-      "moved": false,
-      "static": false,
-      "w": 6,
-      "x": 0,
-      "y": 38
-    },
-    {
-      "h": 6,
-      "i": "cc33bc5d-8da6-46bb-9cfe-fb8eaa66d533",
-      "moved": false,
-      "static": false,
-      "w": 6,
-      "x": 6,
-      "y": 38
-    },
-    {
-      "h": 6,
-      "i": "8d3ddc72-5c29-4cf8-bef0-9c2b28f0728e",
-      "moved": false,
-      "static": false,
-      "w": 6,
-      "x": 0,
-      "y": 44
-    },
-    {
-      "h": 6,
-      "i": "db17bdb1-2c8a-465d-aa9a-f70822e86188",
-      "moved": false,
-      "static": false,
-      "w": 6,
-      "x": 6,
-      "y": 44
-    }
-  ],
-  "panelMap": {
-    "33fa99cf-cb8c-40e6-82e5-aeb50b53a060": {
-      "collapsed": false,
-      "widgets": [
-        {
-          "h": 6,
-          "i": "b7b7b3aa-0125-4592-a1a8-1d86a6c542d0",
-          "moved": false,
-          "static": false,
-          "w": 6,
-          "x": 0,
-          "y": 38
-        },
-        {
-          "h": 6,
-          "i": "cc33bc5d-8da6-46bb-9cfe-fb8eaa66d533",
-          "moved": false,
-          "static": false,
-          "w": 6,
-          "x": 6,
-          "y": 38
-        },
-        {
-          "h": 6,
-          "i": "8d3ddc72-5c29-4cf8-bef0-9c2b28f0728e",
-          "moved": false,
-          "static": false,
-          "w": 6,
-          "x": 0,
-          "y": 44
-        },
-        {
-          "h": 6,
-          "i": "db17bdb1-2c8a-465d-aa9a-f70822e86188",
-          "moved": false,
-          "static": false,
-          "w": 6,
-          "x": 6,
-          "y": 44
-        }
-      ]
-    },
-    "f98108ac-f843-4005-8d2f-817388b29617": {
-      "collapsed": false,
-      "widgets": [
-        {
-          "h": 6,
-          "i": "cacab28d-fb1a-433a-9f07-6cbbea58a596",
-          "moved": false,
-          "static": false,
-          "w": 2,
-          "x": 0,
-          "y": 1
-        },
-        {
-          "h": 6,
-          "i": "698e64b9-c00b-4fdb-bc12-2203ca4dc0fd",
-          "moved": false,
-          "static": false,
-          "w": 5,
-          "x": 2,
-          "y": 1
-        },
-        {
-          "h": 6,
-          "i": "6d77f2b5-587e-4201-85ba-0f776ec643c4",
-          "moved": false,
-          "static": false,
-          "w": 5,
-          "x": 7,
-          "y": 1
-        },
-        {
-          "h": 6,
-          "i": "5d2e13cb-4a6e-4713-b5a3-4f38b2c43a18",
-          "moved": false,
-          "static": false,
-          "w": 6,
-          "x": 0,
-          "y": 7
-        },
-        {
-          "h": 6,
-          "i": "a3b10c5c-a23e-43c7-9623-be06dfbc7278",
-          "moved": false,
-          "static": false,
-          "w": 6,
-          "x": 6,
-          "y": 7
-        },
-        {
-          "h": 6,
-          "i": "a313e14c-e6fd-49ad-9d1c-4f3e6e882cbe",
-          "moved": false,
-          "static": false,
-          "w": 6,
-          "x": 0,
-          "y": 13
-        },
-        {
-          "h": 6,
-          "i": "7b88e733-1794-4a61-b4d6-65e5fc05a30f",
-          "moved": false,
-          "static": false,
-          "w": 6,
-          "x": 6,
-          "y": 13
-        }
-      ]
-    }
-  },
+  "name": "",
+  "generateName": true,
   "tags": [],
-  "title": "Signoz GCP Memorystore Redis overview",
-  "uploadedGrafana": false,
-  "uuid": "019f85e9-3846-7dc9-9bce-b626b8a3eaff",
-  "variables": {
-    "650b757d-2d3b-4929-8bfd-e5c5fb90a5f9": {
-      "allSelected": false,
-      "customValue": "",
-      "defaultValue": "",
-      "description": "Instance ID",
-      "dynamicVariablesAttribute": "instance_id",
-      "dynamicVariablesSource": "Metrics",
-      "haveCustomValuesSelected": false,
-      "id": "650b757d-2d3b-4929-8bfd-e5c5fb90a5f9",
-      "modificationUUID": "b4fec3d9-b821-41b7-ad77-b56f7bfdd051",
-      "multiSelect": false,
-      "name": "instance_id",
-      "order": 1,
-      "queryValue": "",
-      "showALLOption": true,
-      "sort": "DISABLED",
-      "textboxValue": "",
-      "type": "DYNAMIC"
+  "spec": {
+    "display": {
+      "name": "Signoz GCP Memorystore Redis overview",
+      "description": "GCP Memorystore Redis Overview dashboard"
     },
-    "dabcf41a-4121-4a03-8738-927576cc90bf": {
-      "allSelected": false,
-      "customValue": "",
-      "defaultValue": "",
-      "description": "GCP Project ID",
-      "dynamicVariablesAttribute": "project_id",
-      "dynamicVariablesSource": "Metrics",
-      "haveCustomValuesSelected": false,
-      "id": "dabcf41a-4121-4a03-8738-927576cc90bf",
-      "key": "dabcf41a-4121-4a03-8738-927576cc90bf",
-      "modificationUUID": "ae57b6eb-54ad-4dc3-bac6-0b4480821265",
-      "multiSelect": false,
-      "name": "project_id",
-      "order": 0,
-      "queryValue": "",
-      "showALLOption": true,
-      "sort": "DISABLED",
-      "textboxValue": "",
-      "type": "DYNAMIC"
-    }
-  },
-  "version": "v5",
-  "widgets": [
-    {
-      "bucketCount": 30,
-      "bucketWidth": 0,
-      "columnUnits": {},
-      "contextLinks": {
-        "linksData": []
+    "variables": [
+      {
+        "kind": "ListVariable",
+        "spec": {
+          "display": {
+            "name": "project_id",
+            "description": "GCP Project ID"
+          },
+          "allowAllValue": false,
+          "allowMultiple": false,
+          "customAllValue": "",
+          "capturingRegexp": "",
+          "sort": "none",
+          "plugin": {
+            "kind": "signoz/DynamicVariable",
+            "spec": {
+              "name": "project_id",
+              "signal": "metrics"
+            }
+          },
+          "name": "project_id"
+        }
       },
-      "customLegendColors": {},
-      "decimalPrecision": 2,
-      "description": "This metric indicates the uptime of the running Redis server process.",
-      "fillMode": "none",
-      "fillSpans": false,
-      "id": "cacab28d-fb1a-433a-9f07-6cbbea58a596",
-      "isLogScale": false,
-      "legendPosition": "bottom",
-      "lineInterpolation": "spline",
-      "lineStyle": "solid",
-      "mergeAllActiveQueries": false,
-      "nullZeroValues": "zero",
-      "opacity": "1",
-      "panelTypes": "value",
-      "query": {
-        "builder": {
-          "queryData": [
-            {
-              "aggregations": [
-                {
-                  "metricName": "redis.googleapis.com/server/uptime",
-                  "reduceTo": "avg",
-                  "spaceAggregation": "avg",
-                  "temporality": "",
-                  "timeAggregation": "latest"
-                }
-              ],
-              "dataSource": "metrics",
-              "disabled": false,
-              "expression": "A",
-              "filter": {
-                "expression": "project_id = $project_id AND instance_id in $instance_id AND gcp.resource_type = 'redis_instance' "
+      {
+        "kind": "ListVariable",
+        "spec": {
+          "display": {
+            "name": "instance_id",
+            "description": "Instance ID"
+          },
+          "allowAllValue": false,
+          "allowMultiple": false,
+          "customAllValue": "",
+          "capturingRegexp": "",
+          "sort": "none",
+          "plugin": {
+            "kind": "signoz/DynamicVariable",
+            "spec": {
+              "name": "instance_id",
+              "signal": "metrics"
+            }
+          },
+          "name": "instance_id"
+        }
+      }
+    ],
+    "panels": {
+      "5d2e13cb-4a6e-4713-b5a3-4f38b2c43a18": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "% Main Thread CPU Utilisation",
+            "description": "% CPU utilisation calculated by rate at which CPU-seconds are consumed by the Redis server main thread, broken down by system/user space."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
               },
-              "filters": {
-                "items": [
-                  {
-                    "id": "c628683e-dee7-426d-85e8-56f5b45d8526",
-                    "key": {
-                      "dataType": "string",
-                      "id": "instance_id--string--",
-                      "key": "instance_id",
-                      "type": ""
-                    },
-                    "op": "IN",
-                    "value": "$instance_id"
-                  },
-                  {
-                    "id": "916bc393-0ccc-4bf6-acd6-fd8cfd7a2c8e",
-                    "key": {
-                      "id": "project_id",
-                      "key": "project_id",
-                      "type": ""
-                    },
-                    "op": "=",
-                    "value": "$project_id"
-                  },
-                  {
-                    "id": "514debe3-8548-4d98-b4f5-5f2a8a40a8a3",
-                    "key": {
-                      "id": "gcp.resource_type",
-                      "key": "gcp.resource_type",
-                      "type": ""
-                    },
-                    "op": "=",
-                    "value": "redis_instance"
+              "formatting": {
+                "unit": "%",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "signal": "metrics",
+                          "source": "",
+                          "aggregations": [
+                            {
+                              "metricName": "redis.googleapis.com/stats/cpu_utilization_main_thread",
+                              "temporality": "",
+                              "timeAggregation": "rate",
+                              "spaceAggregation": "sum",
+                              "reduceTo": "avg"
+                            }
+                          ],
+                          "disabled": true,
+                          "filter": {
+                            "expression": "project_id = $project_id AND instance_id in $instance_id AND gcp.resource_type = 'redis_instance'"
+                          },
+                          "groupBy": [
+                            {
+                              "name": "node_id",
+                              "signal": "",
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string"
+                            },
+                            {
+                              "name": "role",
+                              "signal": "",
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string"
+                            },
+                            {
+                              "name": "space",
+                              "signal": "",
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string"
+                            }
+                          ],
+                          "order": [],
+                          "having": {
+                            "expression": ""
+                          },
+                          "functions": [],
+                          "legend": "{{node_id}}/{{role}}/{{space}}"
+                        }
+                      },
+                      {
+                        "type": "builder_formula",
+                        "spec": {
+                          "name": "F1",
+                          "expression": "A * 100",
+                          "disabled": false,
+                          "having": {
+                            "expression": ""
+                          },
+                          "legend": "{{node_id}}/{{role}}/{{space}}"
+                        }
+                      }
+                    ]
                   }
-                ],
-                "op": "AND"
-              },
-              "functions": [],
-              "groupBy": [],
-              "having": {
-                "expression": ""
-              },
-              "legend": "",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "A",
-              "source": "",
-              "stepInterval": null
+                }
+              }
             }
           ],
-          "queryFormulas": [],
-          "queryTraceOperator": []
-        },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "id": "ea1a52ce-3542-4b27-8201-2951ac0c7378",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "queryType": "builder",
-        "unit": ""
-      },
-      "selectedLogFields": [
-        {
-          "dataType": "",
-          "fieldContext": "log",
-          "fieldDataType": "",
-          "isIndexed": false,
-          "name": "timestamp",
-          "signal": "logs",
-          "type": "log"
-        },
-        {
-          "dataType": "",
-          "fieldContext": "log",
-          "fieldDataType": "",
-          "isIndexed": false,
-          "name": "body",
-          "signal": "logs",
-          "type": "log"
+          "links": []
         }
-      ],
-      "selectedTracesFields": [
-        {
-          "fieldContext": "resource",
-          "fieldDataType": "string",
-          "name": "service.name",
-          "signal": "traces"
-        },
-        {
-          "fieldContext": "span",
-          "fieldDataType": "string",
-          "name": "name",
-          "signal": "traces"
-        },
-        {
-          "fieldContext": "span",
-          "fieldDataType": "",
-          "name": "duration_nano",
-          "signal": "traces"
-        },
-        {
-          "fieldContext": "span",
-          "fieldDataType": "",
-          "name": "http_method",
-          "signal": "traces"
-        },
-        {
-          "fieldContext": "span",
-          "fieldDataType": "",
-          "name": "response_status_code",
-          "signal": "traces"
-        }
-      ],
-      "showPoints": false,
-      "softMax": 0,
-      "softMin": 0,
-      "spanGaps": true,
-      "stackedBarChart": false,
-      "thresholds": [],
-      "timePreferance": "GLOBAL_TIME",
-      "title": "Server Uptime",
-      "yAxisUnit": "s"
-    },
-    {
-      "bucketCount": 30,
-      "bucketWidth": 0,
-      "columnUnits": {},
-      "contextLinks": {
-        "linksData": []
       },
-      "customLegendColors": {},
-      "decimalPrecision": 3,
-      "description": "This metric shows the current memory usage of an instance that's expressed as a ratio of its maximum memory limit.",
-      "fillMode": "none",
-      "fillSpans": false,
-      "id": "698e64b9-c00b-4fdb-bc12-2203ca4dc0fd",
-      "isLogScale": false,
-      "legendPosition": "bottom",
-      "lineInterpolation": "spline",
-      "lineStyle": "solid",
-      "mergeAllActiveQueries": false,
-      "nullZeroValues": "zero",
-      "opacity": "1",
-      "panelTypes": "graph",
-      "query": {
-        "builder": {
-          "queryData": [
-            {
-              "aggregations": [
-                {
-                  "metricName": "redis.googleapis.com/stats/memory/usage_ratio",
-                  "reduceTo": "avg",
-                  "spaceAggregation": "max",
-                  "temporality": "",
-                  "timeAggregation": "max"
-                }
-              ],
-              "dataSource": "metrics",
-              "disabled": false,
-              "expression": "A",
-              "filter": {
-                "expression": "project_id = $project_id AND instance_id in $instance_id AND gcp.resource_type = 'redis_instance' "
+      "698e64b9-c00b-4fdb-bc12-2203ca4dc0fd": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Memory Usage Ratio",
+            "description": "This metric shows the current memory usage of an instance that's expressed as a ratio of its maximum memory limit."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
               },
-              "filters": {
-                "items": [
-                  {
-                    "id": "c628683e-dee7-426d-85e8-56f5b45d8526",
-                    "key": {
-                      "dataType": "string",
-                      "id": "instance_id--string--",
-                      "key": "instance_id",
-                      "type": ""
+              "formatting": {
+                "unit": "1",
+                "decimalPrecision": "3"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "redis.googleapis.com/stats/memory/usage_ratio",
+                        "temporality": "",
+                        "timeAggregation": "max",
+                        "spaceAggregation": "max",
+                        "reduceTo": "avg"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "project_id = $project_id AND instance_id in $instance_id AND gcp.resource_type = 'redis_instance' "
                     },
-                    "op": "IN",
-                    "value": "$instance_id"
-                  },
-                  {
-                    "id": "54b5dd62-a7d7-47c8-99de-98f87bacd56c",
-                    "key": {
-                      "id": "project_id",
-                      "key": "project_id",
-                      "type": ""
+                    "groupBy": [
+                      {
+                        "name": "role",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": ""
+                      },
+                      {
+                        "name": "node_id",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": ""
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
                     },
-                    "op": "=",
-                    "value": "$project_id"
-                  },
-                  {
-                    "id": "aa8df5d0-e35b-4c34-b491-20a72ec1806e",
-                    "key": {
-                      "id": "gcp.resource_type",
-                      "key": "gcp.resource_type",
-                      "type": ""
-                    },
-                    "op": "=",
-                    "value": "redis_instance"
+                    "functions": [],
+                    "legend": "{{node_id}}/{{role}}"
                   }
-                ],
-                "op": "AND"
-              },
-              "functions": [],
-              "groupBy": [
-                {
-                  "dataType": "",
-                  "id": "role----",
-                  "key": "role",
-                  "type": ""
-                },
-                {
-                  "dataType": "",
-                  "id": "node_id----",
-                  "key": "node_id",
-                  "type": ""
                 }
-              ],
-              "having": {
-                "expression": ""
-              },
-              "legend": "{{node_id}}/{{role}}",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "A",
-              "source": "",
-              "stepInterval": null
+              }
             }
           ],
-          "queryFormulas": [],
-          "queryTraceOperator": []
-        },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "id": "30c41512-61a8-4a40-980e-36639cc77186",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "queryType": "builder",
-        "unit": ""
-      },
-      "selectedLogFields": [
-        {
-          "dataType": "",
-          "fieldContext": "log",
-          "fieldDataType": "",
-          "isIndexed": false,
-          "name": "timestamp",
-          "signal": "logs",
-          "type": "log"
-        },
-        {
-          "dataType": "",
-          "fieldContext": "log",
-          "fieldDataType": "",
-          "isIndexed": false,
-          "name": "body",
-          "signal": "logs",
-          "type": "log"
+          "links": []
         }
-      ],
-      "selectedTracesFields": [
-        {
-          "fieldContext": "resource",
-          "fieldDataType": "string",
-          "name": "service.name",
-          "signal": "traces"
-        },
-        {
-          "fieldContext": "span",
-          "fieldDataType": "string",
-          "name": "name",
-          "signal": "traces"
-        },
-        {
-          "fieldContext": "span",
-          "fieldDataType": "",
-          "name": "duration_nano",
-          "signal": "traces"
-        },
-        {
-          "fieldContext": "span",
-          "fieldDataType": "",
-          "name": "http_method",
-          "signal": "traces"
-        },
-        {
-          "fieldContext": "span",
-          "fieldDataType": "",
-          "name": "response_status_code",
-          "signal": "traces"
-        }
-      ],
-      "showPoints": false,
-      "softMax": 0,
-      "softMin": 0,
-      "spanGaps": true,
-      "stackedBarChart": false,
-      "thresholds": [],
-      "timePreferance": "GLOBAL_TIME",
-      "title": "Memory Usage Ratio",
-      "yAxisUnit": "1"
-    },
-    {
-      "bucketCount": 30,
-      "bucketWidth": 0,
-      "columnUnits": {},
-      "contextLinks": {
-        "linksData": []
       },
-      "customLegendColors": {},
-      "decimalPrecision": 2,
-      "description": "This metric represents the amount of memory that's in use, expressed as a ratio of the total memory that's available for the system.",
-      "fillMode": "none",
-      "fillSpans": false,
-      "id": "6d77f2b5-587e-4201-85ba-0f776ec643c4",
-      "isLogScale": false,
-      "legendPosition": "bottom",
-      "lineInterpolation": "spline",
-      "lineStyle": "solid",
-      "mergeAllActiveQueries": false,
-      "nullZeroValues": "zero",
-      "opacity": "1",
-      "panelTypes": "graph",
-      "query": {
-        "builder": {
-          "queryData": [
-            {
-              "aggregations": [
-                {
-                  "metricName": "redis.googleapis.com/stats/memory/system_memory_usage_ratio",
-                  "reduceTo": "avg",
-                  "spaceAggregation": "max",
-                  "temporality": "",
-                  "timeAggregation": "max"
-                }
-              ],
-              "dataSource": "metrics",
-              "disabled": false,
-              "expression": "A",
-              "filter": {
-                "expression": "project_id = $project_id AND instance_id in $instance_id AND gcp.resource_type = 'redis_instance' "
+      "6d77f2b5-587e-4201-85ba-0f776ec643c4": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "System Memory Usage Ratio",
+            "description": "This metric represents the amount of memory that's in use, expressed as a ratio of the total memory that's available for the system."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
               },
-              "filters": {
-                "items": [
-                  {
-                    "id": "c628683e-dee7-426d-85e8-56f5b45d8526",
-                    "key": {
-                      "dataType": "string",
-                      "id": "instance_id--string--",
-                      "key": "instance_id",
-                      "type": ""
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "redis.googleapis.com/stats/memory/system_memory_usage_ratio",
+                        "temporality": "",
+                        "timeAggregation": "max",
+                        "spaceAggregation": "max",
+                        "reduceTo": "avg"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "project_id = $project_id AND instance_id in $instance_id AND gcp.resource_type = 'redis_instance' "
                     },
-                    "op": "IN",
-                    "value": "$instance_id"
-                  },
-                  {
-                    "id": "87540f6b-219c-4a0f-a3a5-d8a79db6380e",
-                    "key": {
-                      "id": "project_id",
-                      "key": "project_id",
-                      "type": ""
+                    "groupBy": [
+                      {
+                        "name": "node_id",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "role",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
                     },
-                    "op": "=",
-                    "value": "$project_id"
-                  },
-                  {
-                    "id": "e23aeeb4-3553-47a6-be5e-ae9768f4907f",
-                    "key": {
-                      "id": "gcp.resource_type",
-                      "key": "gcp.resource_type",
-                      "type": ""
-                    },
-                    "op": "=",
-                    "value": "redis_instance"
+                    "functions": [],
+                    "legend": "{{node_id}}/{{role}}"
                   }
-                ],
-                "op": "AND"
-              },
-              "functions": [],
-              "groupBy": [
-                {
-                  "dataType": "string",
-                  "id": "node_id--string--tag",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "node_id",
-                  "type": "tag"
-                },
-                {
-                  "dataType": "string",
-                  "id": "role--string--tag",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "role",
-                  "type": "tag"
                 }
-              ],
-              "having": {
-                "expression": ""
-              },
-              "legend": "{{node_id}}/{{role}}",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "A",
-              "source": "",
-              "stepInterval": null
+              }
             }
           ],
-          "queryFormulas": [],
-          "queryTraceOperator": []
-        },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "id": "1bd422fa-df0d-418e-b7c3-81ed5e7b9143",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "queryType": "builder",
-        "unit": ""
-      },
-      "selectedLogFields": [
-        {
-          "dataType": "",
-          "fieldContext": "log",
-          "fieldDataType": "",
-          "isIndexed": false,
-          "name": "timestamp",
-          "signal": "logs",
-          "type": "log"
-        },
-        {
-          "dataType": "",
-          "fieldContext": "log",
-          "fieldDataType": "",
-          "isIndexed": false,
-          "name": "body",
-          "signal": "logs",
-          "type": "log"
+          "links": []
         }
-      ],
-      "selectedTracesFields": [
-        {
-          "fieldContext": "resource",
-          "fieldDataType": "string",
-          "name": "service.name",
-          "signal": "traces"
-        },
-        {
-          "fieldContext": "span",
-          "fieldDataType": "string",
-          "name": "name",
-          "signal": "traces"
-        },
-        {
-          "fieldContext": "span",
-          "fieldDataType": "",
-          "name": "duration_nano",
-          "signal": "traces"
-        },
-        {
-          "fieldContext": "span",
-          "fieldDataType": "",
-          "name": "http_method",
-          "signal": "traces"
-        },
-        {
-          "fieldContext": "span",
-          "fieldDataType": "",
-          "name": "response_status_code",
-          "signal": "traces"
-        }
-      ],
-      "showPoints": false,
-      "softMax": 0,
-      "softMin": 0,
-      "spanGaps": true,
-      "stackedBarChart": false,
-      "thresholds": [],
-      "timePreferance": "GLOBAL_TIME",
-      "title": "System Memory Usage Ratio",
-      "yAxisUnit": "none"
-    },
-    {
-      "bucketCount": 30,
-      "bucketWidth": 0,
-      "columnUnits": {},
-      "contextLinks": {
-        "linksData": []
       },
-      "customLegendColors": {},
-      "decimalPrecision": 2,
-      "description": "% CPU utilisation calculated by rate at which CPU-seconds are consumed by the Redis server main thread, broken down by system/user space.",
-      "fillMode": "none",
-      "fillSpans": false,
-      "id": "5d2e13cb-4a6e-4713-b5a3-4f38b2c43a18",
-      "isLogScale": false,
-      "legendPosition": "bottom",
-      "lineInterpolation": "spline",
-      "lineStyle": "solid",
-      "mergeAllActiveQueries": false,
-      "nullZeroValues": "zero",
-      "opacity": "1",
-      "panelTypes": "graph",
-      "query": {
-        "builder": {
-          "queryData": [
-            {
-              "aggregations": [
-                {
-                  "metricName": "redis.googleapis.com/stats/cpu_utilization_main_thread",
-                  "reduceTo": "avg",
-                  "spaceAggregation": "sum",
-                  "temporality": "",
-                  "timeAggregation": "rate"
-                }
-              ],
-              "dataSource": "metrics",
-              "disabled": true,
-              "expression": "A",
-              "filter": {
-                "expression": "project_id = $project_id AND instance_id in $instance_id AND gcp.resource_type = 'redis_instance'"
+      "7b88e733-1794-4a61-b4d6-65e5fc05a30f": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Number of Keys",
+            "description": "This metric shows the ratio of successful Redis database calls (hits) to the total number of calls (hits plus misses)"
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
               },
-              "functions": [],
-              "groupBy": [
-                {
-                  "dataType": "string",
-                  "id": "node_id--string--tag",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "node_id",
-                  "type": "tag"
-                },
-                {
-                  "dataType": "string",
-                  "id": "role--string--tag",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "role",
-                  "type": "tag"
-                },
-                {
-                  "dataType": "string",
-                  "id": "space--string--tag",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "space",
-                  "type": "tag"
-                }
-              ],
-              "having": {
-                "expression": ""
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "2"
               },
-              "legend": "{{node_id}}/{{role}}/{{space}}",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "A",
-              "source": "",
-              "stepInterval": 0
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
             }
-          ],
-          "queryFormulas": [
+          },
+          "queries": [
             {
-              "disabled": false,
-              "expression": "A * 100",
-              "legend": "{{node_id}}/{{role}}/{{space}}",
-              "queryName": "F1"
-            }
-          ],
-          "queryTraceOperator": []
-        },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "id": "e6941cde-486e-4566-9896-e7fcb67d1979",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "queryType": "builder",
-        "unit": ""
-      },
-      "selectedLogFields": [
-        {
-          "dataType": "",
-          "fieldContext": "log",
-          "fieldDataType": "",
-          "isIndexed": false,
-          "name": "timestamp",
-          "signal": "logs",
-          "type": "log"
-        },
-        {
-          "dataType": "",
-          "fieldContext": "log",
-          "fieldDataType": "",
-          "isIndexed": false,
-          "name": "body",
-          "signal": "logs",
-          "type": "log"
-        }
-      ],
-      "selectedTracesFields": [
-        {
-          "fieldContext": "resource",
-          "fieldDataType": "string",
-          "name": "service.name",
-          "signal": "traces"
-        },
-        {
-          "fieldContext": "span",
-          "fieldDataType": "string",
-          "name": "name",
-          "signal": "traces"
-        },
-        {
-          "fieldContext": "span",
-          "fieldDataType": "",
-          "name": "duration_nano",
-          "signal": "traces"
-        },
-        {
-          "fieldContext": "span",
-          "fieldDataType": "",
-          "name": "http_method",
-          "signal": "traces"
-        },
-        {
-          "fieldContext": "span",
-          "fieldDataType": "",
-          "name": "response_status_code",
-          "signal": "traces"
-        }
-      ],
-      "showPoints": false,
-      "softMax": 0,
-      "softMin": 0,
-      "spanGaps": true,
-      "stackedBarChart": false,
-      "thresholds": [],
-      "timePreferance": "GLOBAL_TIME",
-      "title": "% Main Thread CPU Utilisation",
-      "yAxisUnit": "%"
-    },
-    {
-      "bucketCount": 30,
-      "bucketWidth": 0,
-      "columnUnits": {},
-      "contextLinks": {
-        "linksData": []
-      },
-      "customLegendColors": {},
-      "decimalPrecision": 2,
-      "description": "This metric displays the number of clients that are connected to an instance.",
-      "fillMode": "none",
-      "fillSpans": false,
-      "id": "a3b10c5c-a23e-43c7-9623-be06dfbc7278",
-      "isLogScale": false,
-      "legendPosition": "bottom",
-      "lineInterpolation": "spline",
-      "lineStyle": "solid",
-      "mergeAllActiveQueries": false,
-      "nullZeroValues": "zero",
-      "opacity": "1",
-      "panelTypes": "graph",
-      "query": {
-        "builder": {
-          "queryData": [
-            {
-              "aggregations": [
-                {
-                  "metricName": "redis.googleapis.com/clients/connected",
-                  "reduceTo": "avg",
-                  "spaceAggregation": "sum",
-                  "temporality": "",
-                  "timeAggregation": "max"
-                }
-              ],
-              "dataSource": "metrics",
-              "disabled": false,
-              "expression": "A",
-              "filter": {
-                "expression": "project_id = $project_id AND instance_id in $instance_id AND gcp.resource_type = 'redis_instance' "
-              },
-              "filters": {
-                "items": [
-                  {
-                    "id": "c628683e-dee7-426d-85e8-56f5b45d8526",
-                    "key": {
-                      "dataType": "string",
-                      "id": "instance_id--string--",
-                      "key": "instance_id",
-                      "type": ""
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "redis.googleapis.com/keyspace/keys",
+                        "temporality": "",
+                        "timeAggregation": "max",
+                        "spaceAggregation": "sum",
+                        "reduceTo": "avg"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "project_id = $project_id AND instance_id in $instance_id AND gcp.resource_type = 'redis_instance'"
                     },
-                    "op": "IN",
-                    "value": "$instance_id"
-                  },
-                  {
-                    "id": "89ab7aab-5fb1-4f6b-acd2-e5185cc1a697",
-                    "key": {
-                      "id": "project_id",
-                      "key": "project_id",
-                      "type": ""
+                    "groupBy": [
+                      {
+                        "name": "role",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "node_id",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
                     },
-                    "op": "=",
-                    "value": "$project_id"
-                  },
-                  {
-                    "id": "819bcd66-bad0-4294-898a-059b8cfa3607",
-                    "key": {
-                      "id": "gcp.resource_type",
-                      "key": "gcp.resource_type",
-                      "type": ""
-                    },
-                    "op": "=",
-                    "value": "redis_instance"
+                    "functions": [],
+                    "legend": "{{node_id}}/{{role}}"
                   }
-                ],
-                "op": "AND"
-              },
-              "functions": [],
-              "groupBy": [
-                {
-                  "dataType": "string",
-                  "id": "role--string--tag",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "role",
-                  "type": "tag"
-                },
-                {
-                  "dataType": "string",
-                  "id": "node_id--string--tag",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "node_id",
-                  "type": "tag"
                 }
-              ],
-              "having": {
-                "expression": ""
-              },
-              "legend": "{{node_id}}/{{role}}",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "A",
-              "source": "",
-              "stepInterval": null
+              }
             }
           ],
-          "queryFormulas": [],
-          "queryTraceOperator": []
-        },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "id": "c5818001-6951-43c7-b271-6507b47feac6",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "queryType": "builder",
-        "unit": ""
-      },
-      "selectedLogFields": [
-        {
-          "dataType": "",
-          "fieldContext": "log",
-          "fieldDataType": "",
-          "isIndexed": false,
-          "name": "timestamp",
-          "signal": "logs",
-          "type": "log"
-        },
-        {
-          "dataType": "",
-          "fieldContext": "log",
-          "fieldDataType": "",
-          "isIndexed": false,
-          "name": "body",
-          "signal": "logs",
-          "type": "log"
+          "links": []
         }
-      ],
-      "selectedTracesFields": [
-        {
-          "fieldContext": "resource",
-          "fieldDataType": "string",
-          "name": "service.name",
-          "signal": "traces"
-        },
-        {
-          "fieldContext": "span",
-          "fieldDataType": "string",
-          "name": "name",
-          "signal": "traces"
-        },
-        {
-          "fieldContext": "span",
-          "fieldDataType": "",
-          "name": "duration_nano",
-          "signal": "traces"
-        },
-        {
-          "fieldContext": "span",
-          "fieldDataType": "",
-          "name": "http_method",
-          "signal": "traces"
-        },
-        {
-          "fieldContext": "span",
-          "fieldDataType": "",
-          "name": "response_status_code",
-          "signal": "traces"
-        }
-      ],
-      "showPoints": false,
-      "softMax": 0,
-      "softMin": 0,
-      "spanGaps": true,
-      "stackedBarChart": false,
-      "thresholds": [],
-      "timePreferance": "GLOBAL_TIME",
-      "title": "Connected Clients",
-      "yAxisUnit": "none"
-    },
-    {
-      "bucketCount": 30,
-      "bucketWidth": 0,
-      "columnUnits": {},
-      "contextLinks": {
-        "linksData": []
       },
-      "customLegendColors": {},
-      "decimalPrecision": 2,
-      "description": "This metric shows the ratio of successful Redis database calls (hits) to the total number of calls (hits plus misses)",
-      "fillMode": "none",
-      "fillSpans": false,
-      "id": "a313e14c-e6fd-49ad-9d1c-4f3e6e882cbe",
-      "isLogScale": false,
-      "legendPosition": "bottom",
-      "lineInterpolation": "spline",
-      "lineStyle": "solid",
-      "mergeAllActiveQueries": false,
-      "nullZeroValues": "zero",
-      "opacity": "1",
-      "panelTypes": "graph",
-      "query": {
-        "builder": {
-          "queryData": [
+      "8d3ddc72-5c29-4cf8-bef0-9c2b28f0728e": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Blocked Clients",
+            "description": "This metric tracks the number of client connections that are waiting for data to become available because blocking commands are running in an instance."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "{count}",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
             {
-              "aggregations": [
-                {
-                  "metricName": "redis.googleapis.com/stats/cache_hit_ratio",
-                  "reduceTo": "avg",
-                  "spaceAggregation": "sum",
-                  "temporality": "",
-                  "timeAggregation": "max"
-                }
-              ],
-              "dataSource": "metrics",
-              "disabled": false,
-              "expression": "A",
-              "filter": {
-                "expression": "project_id = $project_id AND instance_id in $instance_id AND gcp.resource_type = 'redis_instance'"
-              },
-              "filters": {
-                "items": [
-                  {
-                    "id": "c628683e-dee7-426d-85e8-56f5b45d8526",
-                    "key": {
-                      "dataType": "string",
-                      "id": "instance_id--string--",
-                      "key": "instance_id",
-                      "type": ""
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "redis.googleapis.com/clients/blocked",
+                        "temporality": "",
+                        "timeAggregation": "max",
+                        "spaceAggregation": "sum",
+                        "reduceTo": "avg"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "project_id = $project_id AND instance_id in $instance_id AND gcp.resource_type = 'redis_instance'"
                     },
-                    "op": "IN",
-                    "value": "$instance_id"
-                  },
-                  {
-                    "id": "be1f2d82-fb6c-40e5-8e6b-b48a4ac5b029",
-                    "key": {
-                      "id": "project_id",
-                      "key": "project_id",
-                      "type": ""
+                    "groupBy": [
+                      {
+                        "name": "node_id",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "role",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
                     },
-                    "op": "=",
-                    "value": "$project_id"
-                  },
-                  {
-                    "id": "b4d3b0b5-4660-43a9-96af-ddcced9cb084",
-                    "key": {
-                      "id": "gcp.resource_type",
-                      "key": "gcp.resource_type",
-                      "type": ""
-                    },
-                    "op": "=",
-                    "value": "redis_instance"
+                    "functions": [],
+                    "legend": "{{node_id}}/{{role}}"
                   }
-                ],
-                "op": "AND"
-              },
-              "functions": [],
-              "groupBy": [
-                {
-                  "dataType": "string",
-                  "id": "role--string--tag",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "role",
-                  "type": "tag"
-                },
-                {
-                  "dataType": "string",
-                  "id": "node_id--string--tag",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "node_id",
-                  "type": "tag"
                 }
-              ],
-              "having": {
-                "expression": ""
-              },
-              "legend": "{{node_id}}/{{role}}",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "A",
-              "source": "",
-              "stepInterval": null
+              }
             }
           ],
-          "queryFormulas": [],
-          "queryTraceOperator": []
-        },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "id": "ede76053-11bc-4065-bfe5-239b4ac0aa5f",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "queryType": "builder",
-        "unit": ""
-      },
-      "selectedLogFields": [
-        {
-          "dataType": "",
-          "fieldContext": "log",
-          "fieldDataType": "",
-          "isIndexed": false,
-          "name": "timestamp",
-          "signal": "logs",
-          "type": "log"
-        },
-        {
-          "dataType": "",
-          "fieldContext": "log",
-          "fieldDataType": "",
-          "isIndexed": false,
-          "name": "body",
-          "signal": "logs",
-          "type": "log"
+          "links": []
         }
-      ],
-      "selectedTracesFields": [
-        {
-          "fieldContext": "resource",
-          "fieldDataType": "string",
-          "name": "service.name",
-          "signal": "traces"
-        },
-        {
-          "fieldContext": "span",
-          "fieldDataType": "string",
-          "name": "name",
-          "signal": "traces"
-        },
-        {
-          "fieldContext": "span",
-          "fieldDataType": "",
-          "name": "duration_nano",
-          "signal": "traces"
-        },
-        {
-          "fieldContext": "span",
-          "fieldDataType": "",
-          "name": "http_method",
-          "signal": "traces"
-        },
-        {
-          "fieldContext": "span",
-          "fieldDataType": "",
-          "name": "response_status_code",
-          "signal": "traces"
-        }
-      ],
-      "showPoints": false,
-      "softMax": 0,
-      "softMin": 0,
-      "spanGaps": true,
-      "stackedBarChart": false,
-      "thresholds": [],
-      "timePreferance": "GLOBAL_TIME",
-      "title": "Cache Hit ratio",
-      "yAxisUnit": "none"
-    },
-    {
-      "bucketCount": 30,
-      "bucketWidth": 0,
-      "columnUnits": {},
-      "contextLinks": {
-        "linksData": []
       },
-      "customLegendColors": {},
-      "decimalPrecision": 2,
-      "description": "This metric shows the ratio of successful Redis database calls (hits) to the total number of calls (hits plus misses)",
-      "fillMode": "none",
-      "fillSpans": false,
-      "id": "7b88e733-1794-4a61-b4d6-65e5fc05a30f",
-      "isLogScale": false,
-      "legendPosition": "bottom",
-      "lineInterpolation": "spline",
-      "lineStyle": "solid",
-      "mergeAllActiveQueries": false,
-      "nullZeroValues": "zero",
-      "opacity": "1",
-      "panelTypes": "graph",
-      "query": {
-        "builder": {
-          "queryData": [
+      "a313e14c-e6fd-49ad-9d1c-4f3e6e882cbe": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Cache Hit ratio",
+            "description": "This metric shows the ratio of successful Redis database calls (hits) to the total number of calls (hits plus misses)"
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
             {
-              "aggregations": [
-                {
-                  "metricName": "redis.googleapis.com/keyspace/keys",
-                  "reduceTo": "avg",
-                  "spaceAggregation": "sum",
-                  "temporality": "",
-                  "timeAggregation": "max"
-                }
-              ],
-              "dataSource": "metrics",
-              "disabled": false,
-              "expression": "A",
-              "filter": {
-                "expression": "project_id = $project_id AND instance_id in $instance_id AND gcp.resource_type = 'redis_instance'"
-              },
-              "filters": {
-                "items": [
-                  {
-                    "id": "c628683e-dee7-426d-85e8-56f5b45d8526",
-                    "key": {
-                      "dataType": "string",
-                      "id": "instance_id--string--",
-                      "key": "instance_id",
-                      "type": ""
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "redis.googleapis.com/stats/cache_hit_ratio",
+                        "temporality": "",
+                        "timeAggregation": "max",
+                        "spaceAggregation": "sum",
+                        "reduceTo": "avg"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "project_id = $project_id AND instance_id in $instance_id AND gcp.resource_type = 'redis_instance'"
                     },
-                    "op": "IN",
-                    "value": "$instance_id"
-                  },
-                  {
-                    "id": "88d44668-0e98-4478-abc2-7f40fc3d6ffc",
-                    "key": {
-                      "id": "project_id",
-                      "key": "project_id",
-                      "type": ""
+                    "groupBy": [
+                      {
+                        "name": "role",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "node_id",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
                     },
-                    "op": "=",
-                    "value": "$project_id"
-                  },
-                  {
-                    "id": "77459073-7bdc-4b11-af7c-107922450fa8",
-                    "key": {
-                      "id": "gcp.resource_type",
-                      "key": "gcp.resource_type",
-                      "type": ""
-                    },
-                    "op": "=",
-                    "value": "redis_instance"
+                    "functions": [],
+                    "legend": "{{node_id}}/{{role}}"
                   }
-                ],
-                "op": "AND"
-              },
-              "functions": [],
-              "groupBy": [
-                {
-                  "dataType": "string",
-                  "id": "role--string--tag",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "role",
-                  "type": "tag"
-                },
-                {
-                  "dataType": "string",
-                  "id": "node_id--string--tag",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "node_id",
-                  "type": "tag"
                 }
-              ],
-              "having": {
-                "expression": ""
-              },
-              "legend": "{{node_id}}/{{role}}",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "A",
-              "source": "",
-              "stepInterval": null
+              }
             }
           ],
-          "queryFormulas": [],
-          "queryTraceOperator": []
-        },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "id": "3d49f1b0-381c-4c74-80aa-bca364e4b9d1",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "queryType": "builder",
-        "unit": ""
-      },
-      "selectedLogFields": [
-        {
-          "dataType": "",
-          "fieldContext": "log",
-          "fieldDataType": "",
-          "isIndexed": false,
-          "name": "timestamp",
-          "signal": "logs",
-          "type": "log"
-        },
-        {
-          "dataType": "",
-          "fieldContext": "log",
-          "fieldDataType": "",
-          "isIndexed": false,
-          "name": "body",
-          "signal": "logs",
-          "type": "log"
+          "links": []
         }
-      ],
-      "selectedTracesFields": [
-        {
-          "fieldContext": "resource",
-          "fieldDataType": "string",
-          "name": "service.name",
-          "signal": "traces"
-        },
-        {
-          "fieldContext": "span",
-          "fieldDataType": "string",
-          "name": "name",
-          "signal": "traces"
-        },
-        {
-          "fieldContext": "span",
-          "fieldDataType": "",
-          "name": "duration_nano",
-          "signal": "traces"
-        },
-        {
-          "fieldContext": "span",
-          "fieldDataType": "",
-          "name": "http_method",
-          "signal": "traces"
-        },
-        {
-          "fieldContext": "span",
-          "fieldDataType": "",
-          "name": "response_status_code",
-          "signal": "traces"
-        }
-      ],
-      "showPoints": false,
-      "softMax": 0,
-      "softMin": 0,
-      "spanGaps": true,
-      "stackedBarChart": false,
-      "thresholds": [],
-      "timePreferance": "GLOBAL_TIME",
-      "title": "Number of Keys",
-      "yAxisUnit": "none"
-    },
-    {
-      "description": "",
-      "id": "f98108ac-f843-4005-8d2f-817388b29617",
-      "panelTypes": "row",
-      "title": "Health And Keys"
-    },
-    {
-      "description": "",
-      "id": "33fa99cf-cb8c-40e6-82e5-aeb50b53a060",
-      "panelTypes": "row",
-      "title": "Client related"
-    },
-    {
-      "bucketCount": 30,
-      "bucketWidth": 0,
-      "columnUnits": {},
-      "contextLinks": {
-        "linksData": []
       },
-      "customLegendColors": {},
-      "decimalPrecision": 2,
-      "description": "This metric represents the average time spent for each Redis command call over one minute. This time is measured in microseconds.",
-      "fillMode": "none",
-      "fillSpans": false,
-      "id": "b7b7b3aa-0125-4592-a1a8-1d86a6c542d0",
-      "isLogScale": false,
-      "legendPosition": "bottom",
-      "lineInterpolation": "spline",
-      "lineStyle": "solid",
-      "mergeAllActiveQueries": false,
-      "nullZeroValues": "zero",
-      "opacity": "1",
-      "panelTypes": "graph",
-      "query": {
-        "builder": {
-          "queryData": [
+      "a3b10c5c-a23e-43c7-9623-be06dfbc7278": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Connected Clients",
+            "description": "This metric displays the number of clients that are connected to an instance."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
             {
-              "aggregations": [
-                {
-                  "metricName": "redis.googleapis.com/commands/usec_per_call",
-                  "reduceTo": "avg",
-                  "spaceAggregation": "sum",
-                  "temporality": "",
-                  "timeAggregation": "max"
-                }
-              ],
-              "dataSource": "metrics",
-              "disabled": false,
-              "expression": "A",
-              "filter": {
-                "expression": "project_id = $project_id AND instance_id in $instance_id AND gcp.resource_type = 'redis_instance'"
-              },
-              "filters": {
-                "items": [
-                  {
-                    "id": "c628683e-dee7-426d-85e8-56f5b45d8526",
-                    "key": {
-                      "dataType": "string",
-                      "id": "instance_id--string--",
-                      "key": "instance_id",
-                      "type": ""
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "redis.googleapis.com/clients/connected",
+                        "temporality": "",
+                        "timeAggregation": "max",
+                        "spaceAggregation": "sum",
+                        "reduceTo": "avg"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "project_id = $project_id AND instance_id in $instance_id AND gcp.resource_type = 'redis_instance' "
                     },
-                    "op": "IN",
-                    "value": "$instance_id"
-                  },
-                  {
-                    "id": "ff97a4d3-7b1a-449e-b8a8-500bff65eecb",
-                    "key": {
-                      "id": "project_id",
-                      "key": "project_id",
-                      "type": ""
+                    "groupBy": [
+                      {
+                        "name": "role",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "node_id",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
                     },
-                    "op": "=",
-                    "value": "$project_id"
-                  },
-                  {
-                    "id": "bb368c09-67d6-4443-ba66-a9d936df1c0c",
-                    "key": {
-                      "id": "gcp.resource_type",
-                      "key": "gcp.resource_type",
-                      "type": ""
-                    },
-                    "op": "=",
-                    "value": "redis_instance"
+                    "functions": [],
+                    "legend": "{{node_id}}/{{role}}"
                   }
-                ],
-                "op": "AND"
-              },
-              "functions": [],
-              "groupBy": [
-                {
-                  "dataType": "string",
-                  "id": "role--string--tag",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "role",
-                  "type": "tag"
-                },
-                {
-                  "dataType": "string",
-                  "id": "node_id--string--tag",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "node_id",
-                  "type": "tag"
-                },
-                {
-                  "dataType": "string",
-                  "id": "cmd--string--tag",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "cmd",
-                  "type": "tag"
                 }
-              ],
-              "having": {
-                "expression": ""
-              },
-              "legend": "{{node_id}}/{{role}}/{{cmd}}",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "A",
-              "source": "",
-              "stepInterval": null
+              }
             }
           ],
-          "queryFormulas": [],
-          "queryTraceOperator": []
-        },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "id": "dd88cb71-0c35-4ed6-9b4c-9fbb7a87a0fd",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "queryType": "builder",
-        "unit": ""
-      },
-      "selectedLogFields": [
-        {
-          "dataType": "",
-          "fieldContext": "log",
-          "fieldDataType": "",
-          "isIndexed": false,
-          "name": "timestamp",
-          "signal": "logs",
-          "type": "log"
-        },
-        {
-          "dataType": "",
-          "fieldContext": "log",
-          "fieldDataType": "",
-          "isIndexed": false,
-          "name": "body",
-          "signal": "logs",
-          "type": "log"
+          "links": []
         }
-      ],
-      "selectedTracesFields": [
-        {
-          "fieldContext": "resource",
-          "fieldDataType": "string",
-          "name": "service.name",
-          "signal": "traces"
-        },
-        {
-          "fieldContext": "span",
-          "fieldDataType": "string",
-          "name": "name",
-          "signal": "traces"
-        },
-        {
-          "fieldContext": "span",
-          "fieldDataType": "",
-          "name": "duration_nano",
-          "signal": "traces"
-        },
-        {
-          "fieldContext": "span",
-          "fieldDataType": "",
-          "name": "http_method",
-          "signal": "traces"
-        },
-        {
-          "fieldContext": "span",
-          "fieldDataType": "",
-          "name": "response_status_code",
-          "signal": "traces"
-        }
-      ],
-      "showPoints": false,
-      "softMax": 0,
-      "softMin": 0,
-      "spanGaps": true,
-      "stackedBarChart": false,
-      "thresholds": [],
-      "timePreferance": "GLOBAL_TIME",
-      "title": "Time per Call",
-      "yAxisUnit": "us"
-    },
-    {
-      "bucketCount": 30,
-      "bucketWidth": 0,
-      "columnUnits": {},
-      "contextLinks": {
-        "linksData": []
       },
-      "customLegendColors": {},
-      "decimalPrecision": 2,
-      "description": "This metric measures the number of Redis commands that are run each minute on a primary instance. These include all open source Redis commands, including SET , GET, and HSET .",
-      "fillMode": "none",
-      "fillSpans": false,
-      "id": "cc33bc5d-8da6-46bb-9cfe-fb8eaa66d533",
-      "isLogScale": false,
-      "legendPosition": "bottom",
-      "lineInterpolation": "spline",
-      "lineStyle": "solid",
-      "mergeAllActiveQueries": false,
-      "nullZeroValues": "zero",
-      "opacity": "1",
-      "panelTypes": "graph",
-      "query": {
-        "builder": {
-          "queryData": [
+      "b7b7b3aa-0125-4592-a1a8-1d86a6c542d0": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Time per Call",
+            "description": "This metric represents the average time spent for each Redis command call over one minute. This time is measured in microseconds."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "us",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
             {
-              "aggregations": [
-                {
-                  "metricName": "redis.googleapis.com/commands/calls",
-                  "reduceTo": "avg",
-                  "spaceAggregation": "sum",
-                  "temporality": "",
-                  "timeAggregation": "max"
-                }
-              ],
-              "dataSource": "metrics",
-              "disabled": false,
-              "expression": "A",
-              "filter": {
-                "expression": "project_id = $project_id AND instance_id in $instance_id AND gcp.resource_type = 'redis_instance'"
-              },
-              "filters": {
-                "items": [
-                  {
-                    "id": "c628683e-dee7-426d-85e8-56f5b45d8526",
-                    "key": {
-                      "dataType": "string",
-                      "id": "instance_id--string--",
-                      "key": "instance_id",
-                      "type": ""
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "redis.googleapis.com/commands/usec_per_call",
+                        "temporality": "",
+                        "timeAggregation": "max",
+                        "spaceAggregation": "sum",
+                        "reduceTo": "avg"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "project_id = $project_id AND instance_id in $instance_id AND gcp.resource_type = 'redis_instance'"
                     },
-                    "op": "IN",
-                    "value": "$instance_id"
-                  },
-                  {
-                    "id": "16e1a390-ac0c-4509-b1b0-fda9a5fd8d98",
-                    "key": {
-                      "id": "project_id",
-                      "key": "project_id",
-                      "type": ""
+                    "groupBy": [
+                      {
+                        "name": "role",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "node_id",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "cmd",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
                     },
-                    "op": "=",
-                    "value": "$project_id"
-                  },
-                  {
-                    "id": "1b279cc2-981f-4c6f-8104-4f458230b0ad",
-                    "key": {
-                      "id": "gcp.resource_type",
-                      "key": "gcp.resource_type",
-                      "type": ""
-                    },
-                    "op": "=",
-                    "value": "redis_instance"
+                    "functions": [],
+                    "legend": "{{node_id}}/{{role}}/{{cmd}}"
                   }
-                ],
-                "op": "AND"
-              },
-              "functions": [],
-              "groupBy": [
-                {
-                  "dataType": "string",
-                  "id": "node_id--string--tag",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "node_id",
-                  "type": "tag"
-                },
-                {
-                  "dataType": "string",
-                  "id": "cmd--string--tag",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "cmd",
-                  "type": "tag"
-                },
-                {
-                  "dataType": "string",
-                  "id": "role--string--tag",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "role",
-                  "type": "tag"
                 }
-              ],
-              "having": {
-                "expression": ""
-              },
-              "legend": "{{node_id}}/{{role}}/{{cmd}}",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "A",
-              "source": "",
-              "stepInterval": null
+              }
             }
           ],
-          "queryFormulas": [],
-          "queryTraceOperator": []
-        },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "id": "c5b8eac4-0a2a-4a24-8533-5bd4c300df05",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "queryType": "builder",
-        "unit": ""
-      },
-      "selectedLogFields": [
-        {
-          "dataType": "",
-          "fieldContext": "log",
-          "fieldDataType": "",
-          "isIndexed": false,
-          "name": "timestamp",
-          "signal": "logs",
-          "type": "log"
-        },
-        {
-          "dataType": "",
-          "fieldContext": "log",
-          "fieldDataType": "",
-          "isIndexed": false,
-          "name": "body",
-          "signal": "logs",
-          "type": "log"
+          "links": []
         }
-      ],
-      "selectedTracesFields": [
-        {
-          "fieldContext": "resource",
-          "fieldDataType": "string",
-          "name": "service.name",
-          "signal": "traces"
-        },
-        {
-          "fieldContext": "span",
-          "fieldDataType": "string",
-          "name": "name",
-          "signal": "traces"
-        },
-        {
-          "fieldContext": "span",
-          "fieldDataType": "",
-          "name": "duration_nano",
-          "signal": "traces"
-        },
-        {
-          "fieldContext": "span",
-          "fieldDataType": "",
-          "name": "http_method",
-          "signal": "traces"
-        },
-        {
-          "fieldContext": "span",
-          "fieldDataType": "",
-          "name": "response_status_code",
-          "signal": "traces"
-        }
-      ],
-      "showPoints": false,
-      "softMax": 0,
-      "softMin": 0,
-      "spanGaps": true,
-      "stackedBarChart": false,
-      "thresholds": [],
-      "timePreferance": "GLOBAL_TIME",
-      "title": "Number of Calls",
-      "yAxisUnit": "{count}"
-    },
-    {
-      "bucketCount": 30,
-      "bucketWidth": 0,
-      "columnUnits": {},
-      "contextLinks": {
-        "linksData": []
       },
-      "customLegendColors": {},
-      "decimalPrecision": 2,
-      "description": "This metric tracks the number of client connections that are waiting for data to become available because blocking commands are running in an instance.",
-      "fillMode": "none",
-      "fillSpans": false,
-      "id": "8d3ddc72-5c29-4cf8-bef0-9c2b28f0728e",
-      "isLogScale": false,
-      "legendPosition": "bottom",
-      "lineInterpolation": "spline",
-      "lineStyle": "solid",
-      "mergeAllActiveQueries": false,
-      "nullZeroValues": "zero",
-      "opacity": "1",
-      "panelTypes": "graph",
-      "query": {
-        "builder": {
-          "queryData": [
+      "cacab28d-fb1a-433a-9f07-6cbbea58a596": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Server Uptime",
+            "description": "This metric indicates the uptime of the running Redis server process."
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "s",
+                "decimalPrecision": "2"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
             {
-              "aggregations": [
-                {
-                  "metricName": "redis.googleapis.com/clients/blocked",
-                  "reduceTo": "avg",
-                  "spaceAggregation": "sum",
-                  "temporality": "",
-                  "timeAggregation": "max"
-                }
-              ],
-              "dataSource": "metrics",
-              "disabled": false,
-              "expression": "A",
-              "filter": {
-                "expression": "project_id = $project_id AND instance_id in $instance_id AND gcp.resource_type = 'redis_instance'"
-              },
-              "filters": {
-                "items": [
-                  {
-                    "id": "c628683e-dee7-426d-85e8-56f5b45d8526",
-                    "key": {
-                      "dataType": "string",
-                      "id": "instance_id--string--",
-                      "key": "instance_id",
-                      "type": ""
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "redis.googleapis.com/server/uptime",
+                        "temporality": "",
+                        "timeAggregation": "latest",
+                        "spaceAggregation": "avg",
+                        "reduceTo": "avg"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "project_id = $project_id AND instance_id in $instance_id AND gcp.resource_type = 'redis_instance' "
                     },
-                    "op": "IN",
-                    "value": "$instance_id"
-                  },
-                  {
-                    "id": "8c6f8869-ea37-4abb-94f0-1b071257b50f",
-                    "key": {
-                      "id": "project_id",
-                      "key": "project_id",
-                      "type": ""
+                    "groupBy": [],
+                    "order": [],
+                    "having": {
+                      "expression": ""
                     },
-                    "op": "=",
-                    "value": "$project_id"
-                  },
-                  {
-                    "id": "af86ab17-f922-45ea-9e8d-54aaa3775406",
-                    "key": {
-                      "id": "gcp.resource_type",
-                      "key": "gcp.resource_type",
-                      "type": ""
-                    },
-                    "op": "=",
-                    "value": "redis_instance"
+                    "functions": [],
+                    "legend": ""
                   }
-                ],
-                "op": "AND"
-              },
-              "functions": [],
-              "groupBy": [
-                {
-                  "dataType": "string",
-                  "id": "node_id--string--tag",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "node_id",
-                  "type": "tag"
-                },
-                {
-                  "dataType": "string",
-                  "id": "role--string--tag",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "role",
-                  "type": "tag"
                 }
-              ],
-              "having": {
-                "expression": ""
-              },
-              "legend": "{{node_id}}/{{role}}",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "A",
-              "source": "",
-              "stepInterval": null
+              }
             }
           ],
-          "queryFormulas": [],
-          "queryTraceOperator": []
-        },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "id": "616ea487-998d-4748-9ba7-08de477ce194",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "queryType": "builder",
-        "unit": ""
-      },
-      "selectedLogFields": [
-        {
-          "dataType": "",
-          "fieldContext": "log",
-          "fieldDataType": "",
-          "isIndexed": false,
-          "name": "timestamp",
-          "signal": "logs",
-          "type": "log"
-        },
-        {
-          "dataType": "",
-          "fieldContext": "log",
-          "fieldDataType": "",
-          "isIndexed": false,
-          "name": "body",
-          "signal": "logs",
-          "type": "log"
+          "links": []
         }
-      ],
-      "selectedTracesFields": [
-        {
-          "fieldContext": "resource",
-          "fieldDataType": "string",
-          "name": "service.name",
-          "signal": "traces"
-        },
-        {
-          "fieldContext": "span",
-          "fieldDataType": "string",
-          "name": "name",
-          "signal": "traces"
-        },
-        {
-          "fieldContext": "span",
-          "fieldDataType": "",
-          "name": "duration_nano",
-          "signal": "traces"
-        },
-        {
-          "fieldContext": "span",
-          "fieldDataType": "",
-          "name": "http_method",
-          "signal": "traces"
-        },
-        {
-          "fieldContext": "span",
-          "fieldDataType": "",
-          "name": "response_status_code",
-          "signal": "traces"
-        }
-      ],
-      "showPoints": false,
-      "softMax": 0,
-      "softMin": 0,
-      "spanGaps": true,
-      "stackedBarChart": false,
-      "thresholds": [],
-      "timePreferance": "GLOBAL_TIME",
-      "title": "Blocked Clients",
-      "yAxisUnit": "{count}"
-    },
-    {
-      "bucketCount": 30,
-      "bucketWidth": 0,
-      "columnUnits": {},
-      "contextLinks": {
-        "linksData": []
       },
-      "customLegendColors": {},
-      "decimalPrecision": 2,
-      "description": "This metric tracks the number of connection attempts that an instance rejects because of the following reasons:\n\nThe maxclients limit: the server reaches the maximum allowed number of concurrent client connections.\nMemory pressure: the instance rejects new connections because of high memory utilization.",
-      "fillMode": "none",
-      "fillSpans": false,
-      "id": "db17bdb1-2c8a-465d-aa9a-f70822e86188",
-      "isLogScale": false,
-      "legendPosition": "bottom",
-      "lineInterpolation": "spline",
-      "lineStyle": "solid",
-      "mergeAllActiveQueries": false,
-      "nullZeroValues": "zero",
-      "opacity": "1",
-      "panelTypes": "graph",
-      "query": {
-        "builder": {
-          "queryData": [
+      "cc33bc5d-8da6-46bb-9cfe-fb8eaa66d533": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Number of Calls",
+            "description": "This metric measures the number of Redis commands that are run each minute on a primary instance. These include all open source Redis commands, including SET , GET, and HSET ."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "{count}",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
             {
-              "aggregations": [
-                {
-                  "metricName": "redis.googleapis.com/stats/reject_connections_count",
-                  "reduceTo": "avg",
-                  "spaceAggregation": "avg",
-                  "temporality": "",
-                  "timeAggregation": "avg"
-                }
-              ],
-              "dataSource": "metrics",
-              "disabled": false,
-              "expression": "A",
-              "filter": {
-                "expression": "project_id = $project_id AND instance_id in $instance_id AND gcp.resource_type = 'redis_instance'"
-              },
-              "filters": {
-                "items": [
-                  {
-                    "id": "c628683e-dee7-426d-85e8-56f5b45d8526",
-                    "key": {
-                      "dataType": "string",
-                      "id": "instance_id--string--",
-                      "key": "instance_id",
-                      "type": ""
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "redis.googleapis.com/commands/calls",
+                        "temporality": "",
+                        "timeAggregation": "max",
+                        "spaceAggregation": "sum",
+                        "reduceTo": "avg"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "project_id = $project_id AND instance_id in $instance_id AND gcp.resource_type = 'redis_instance'"
                     },
-                    "op": "IN",
-                    "value": "$instance_id"
-                  },
-                  {
-                    "id": "5879529f-d15d-441d-8ae8-ddf883042164",
-                    "key": {
-                      "id": "project_id",
-                      "key": "project_id",
-                      "type": ""
+                    "groupBy": [
+                      {
+                        "name": "node_id",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "cmd",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "role",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
                     },
-                    "op": "=",
-                    "value": "$project_id"
-                  },
-                  {
-                    "id": "9c901e2d-45ea-4551-b737-7d495b9fde7b",
-                    "key": {
-                      "id": "gcp.resource_type",
-                      "key": "gcp.resource_type",
-                      "type": ""
-                    },
-                    "op": "=",
-                    "value": "redis_instance"
+                    "functions": [],
+                    "legend": "{{node_id}}/{{role}}/{{cmd}}"
                   }
-                ],
-                "op": "AND"
-              },
-              "functions": [],
-              "groupBy": [
-                {
-                  "dataType": "string",
-                  "id": "role--string--tag",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "role",
-                  "type": "tag"
-                },
-                {
-                  "dataType": "string",
-                  "id": "node_id--string--tag",
-                  "isColumn": false,
-                  "isJSON": false,
-                  "key": "node_id",
-                  "type": "tag"
                 }
-              ],
-              "having": {
-                "expression": ""
-              },
-              "legend": "{{node_id}}/{{role}}",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "A",
-              "source": "",
-              "stepInterval": null
+              }
             }
           ],
-          "queryFormulas": [],
-          "queryTraceOperator": []
-        },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "id": "d13a02ee-ee2a-4f4f-80b7-f0b72a9fee74",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "queryType": "builder",
-        "unit": ""
+          "links": []
+        }
       },
-      "selectedLogFields": [
-        {
-          "dataType": "",
-          "fieldContext": "log",
-          "fieldDataType": "",
-          "isIndexed": false,
-          "name": "timestamp",
-          "signal": "logs",
-          "type": "log"
-        },
-        {
-          "dataType": "",
-          "fieldContext": "log",
-          "fieldDataType": "",
-          "isIndexed": false,
-          "name": "body",
-          "signal": "logs",
-          "type": "log"
+      "db17bdb1-2c8a-465d-aa9a-f70822e86188": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Rejected Connections",
+            "description": "This metric tracks the number of connection attempts that an instance rejects because of the following reasons:\n\nThe maxclients limit: the server reaches the maximum allowed number of concurrent client connections.\nMemory pressure: the instance rejects new connections because of high memory utilization."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "redis.googleapis.com/stats/reject_connections_count",
+                        "temporality": "",
+                        "timeAggregation": "avg",
+                        "spaceAggregation": "avg",
+                        "reduceTo": "avg"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "project_id = $project_id AND instance_id in $instance_id AND gcp.resource_type = 'redis_instance'"
+                    },
+                    "groupBy": [
+                      {
+                        "name": "role",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "node_id",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{node_id}}/{{role}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
         }
-      ],
-      "selectedTracesFields": [
-        {
-          "fieldContext": "resource",
-          "fieldDataType": "string",
-          "name": "service.name",
-          "signal": "traces"
-        },
-        {
-          "fieldContext": "span",
-          "fieldDataType": "string",
-          "name": "name",
-          "signal": "traces"
-        },
-        {
-          "fieldContext": "span",
-          "fieldDataType": "",
-          "name": "duration_nano",
-          "signal": "traces"
-        },
-        {
-          "fieldContext": "span",
-          "fieldDataType": "",
-          "name": "http_method",
-          "signal": "traces"
-        },
-        {
-          "fieldContext": "span",
-          "fieldDataType": "",
-          "name": "response_status_code",
-          "signal": "traces"
+      }
+    },
+    "layouts": [
+      {
+        "kind": "Grid",
+        "spec": {
+          "display": {
+            "title": "Health And Keys",
+            "collapse": {
+              "open": true
+            }
+          },
+          "items": [
+            {
+              "x": 0,
+              "y": 0,
+              "width": 2,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/cacab28d-fb1a-433a-9f07-6cbbea58a596"
+              }
+            },
+            {
+              "x": 2,
+              "y": 0,
+              "width": 5,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/698e64b9-c00b-4fdb-bc12-2203ca4dc0fd"
+              }
+            },
+            {
+              "x": 7,
+              "y": 0,
+              "width": 5,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/6d77f2b5-587e-4201-85ba-0f776ec643c4"
+              }
+            },
+            {
+              "x": 0,
+              "y": 6,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/5d2e13cb-4a6e-4713-b5a3-4f38b2c43a18"
+              }
+            },
+            {
+              "x": 6,
+              "y": 6,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/a3b10c5c-a23e-43c7-9623-be06dfbc7278"
+              }
+            },
+            {
+              "x": 0,
+              "y": 12,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/a313e14c-e6fd-49ad-9d1c-4f3e6e882cbe"
+              }
+            },
+            {
+              "x": 6,
+              "y": 12,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/7b88e733-1794-4a61-b4d6-65e5fc05a30f"
+              }
+            }
+          ]
         }
-      ],
-      "showPoints": false,
-      "softMax": 0,
-      "softMin": 0,
-      "spanGaps": true,
-      "stackedBarChart": false,
-      "thresholds": [],
-      "timePreferance": "GLOBAL_TIME",
-      "title": "Rejected Connections",
-      "yAxisUnit": "none"
-    }
-  ]
+      },
+      {
+        "kind": "Grid",
+        "spec": {
+          "display": {
+            "title": "Client related",
+            "collapse": {
+              "open": true
+            }
+          },
+          "items": [
+            {
+              "x": 0,
+              "y": 0,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/b7b7b3aa-0125-4592-a1a8-1d86a6c542d0"
+              }
+            },
+            {
+              "x": 6,
+              "y": 0,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/cc33bc5d-8da6-46bb-9cfe-fb8eaa66d533"
+              }
+            },
+            {
+              "x": 0,
+              "y": 6,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/8d3ddc72-5c29-4cf8-bef0-9c2b28f0728e"
+              }
+            },
+            {
+              "x": 6,
+              "y": 6,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/db17bdb1-2c8a-465d-aa9a-f70822e86188"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "duration": "",
+    "refreshInterval": "",
+    "links": []
+  }
 }

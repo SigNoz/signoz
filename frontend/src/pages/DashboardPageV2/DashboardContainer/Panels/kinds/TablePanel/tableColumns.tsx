@@ -18,6 +18,17 @@ import styles from './TablePanel.module.scss';
 /** A prepared scalar-table row flattened for the antd Table, with the antd key. */
 export type TableRowData = Record<string, unknown> & { key: number };
 
+const NA_TEXT = 'n/a';
+
+// Empty cells (null/undefined/'') aren't numbers: `Number(null)` is 0, which
+// would render/colour/sort an empty cell as a real zero.
+function toCellNumber(raw: unknown): number {
+	if (raw == null || raw === '') {
+		return NaN;
+	}
+	return Number(raw);
+}
+
 /**
  * Groups table thresholds by the column they target, mapping each onto the
  * V2-native `PanelThreshold` consumed by `resolveActiveThreshold`. A column with
@@ -43,6 +54,9 @@ export function formatTableCellText(
 	unit: string | undefined,
 	decimalPrecision?: PrecisionOption,
 ): string {
+	if (raw == null || raw === '') {
+		return NA_TEXT;
+	}
 	if (!col.isValueColumn) {
 		return coerceToString(raw);
 	}
@@ -56,15 +70,17 @@ export function formatTableCellText(
 // Sort comparator: numeric when both cells parse as numbers (value columns and
 // numeric group keys), otherwise a locale string compare. Nullish sorts last.
 function compareCells(a: unknown, b: unknown): number {
-	const aNum = Number(a);
-	const bNum = Number(b);
+	const aNum = toCellNumber(a);
+	const bNum = toCellNumber(b);
 	if (Number.isFinite(aNum) && Number.isFinite(bNum)) {
 		return aNum - bNum;
 	}
-	if (a == null) {
-		return b == null ? 0 : 1;
+	const aEmpty = a == null || a === '';
+	const bEmpty = b == null || b === '';
+	if (aEmpty) {
+		return bEmpty ? 0 : 1;
 	}
-	if (b == null) {
+	if (bEmpty) {
 		return -1;
 	}
 	return coerceToString(a).localeCompare(coerceToString(b));
@@ -113,7 +129,7 @@ export function buildTableColumns({
 				compareCells(a[key], b[key]),
 			render: (raw: unknown): React.ReactNode => {
 				const text = formatTableCellText(col, raw, unit, decimalPrecision);
-				const num = Number(raw);
+				const num = toCellNumber(raw);
 				if (
 					!col.isValueColumn ||
 					colThresholds.length === 0 ||
@@ -131,7 +147,7 @@ export function buildTableColumns({
 				const cellProps: React.HTMLAttributes<HTMLElement> = {};
 
 				if (col.isValueColumn && colThresholds.length > 0) {
-					const num = Number(record[key]);
+					const num = toCellNumber(record[key]);
 					if (Number.isFinite(num)) {
 						const { threshold } = resolveActiveThreshold(colThresholds, num, unit);
 						if (threshold?.format === 'background') {

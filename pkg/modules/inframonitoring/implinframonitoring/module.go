@@ -9,7 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/modules/inframonitoring"
 	"github.com/SigNoz/signoz/pkg/querier"
-	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
+	"github.com/SigNoz/signoz/pkg/telemetryschema/metricstelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
@@ -40,8 +40,8 @@ func NewModule(
 	providerSettings factory.ProviderSettings,
 	cfg inframonitoring.Config,
 ) inframonitoring.Module {
-	fieldMapper := telemetrymetrics.NewFieldMapper()
-	condBuilder := telemetrymetrics.NewConditionBuilder(fieldMapper)
+	fieldMapper := metricstelemetryschema.NewFieldMapper()
+	condBuilder := metricstelemetryschema.NewConditionBuilder(fieldMapper)
 	return &module{
 		telemetryStore:         telemetryStore,
 		telemetryMetadataStore: telemetryMetadataStore,
@@ -191,17 +191,12 @@ func (m *module) ListHosts(ctx context.Context, orgID valuer.UUID, req *inframon
 		return resp, nil
 	}
 
-	metadataMap, err := m.getHostsTableMetadata(ctx, orgID, req)
+	pageGroups, metadataMap, err := m.getTopHostGroupsAndMetadata(ctx, orgID, req)
 	if err != nil {
 		return nil, err
 	}
 
 	resp.Total = len(metadataMap)
-
-	pageGroups, err := m.getTopHostGroups(ctx, orgID, req, metadataMap)
-	if err != nil {
-		return nil, err
-	}
 
 	if len(pageGroups) == 0 {
 		resp.Records = []inframonitoringtypes.HostRecord{}
@@ -292,13 +287,10 @@ func (m *module) ListPods(ctx context.Context, orgID valuer.UUID, req *inframoni
 	}
 
 	var (
+		filterExpr        string
 		podFilter         *qbtypes.Filter
 		filterByPodStatus inframonitoringtypes.PodStatus
-		filterExpr        string
-		metadataMap       map[string]map[string]string
 		queryResp         *qbtypes.QueryRangeResponse
-		statusCounts      map[string]podStatusCounts
-		statusWarning     *qbtypes.QueryWarnData
 		restartCounts     map[string]int64
 	)
 
@@ -308,47 +300,23 @@ func (m *module) ListPods(ctx context.Context, orgID valuer.UUID, req *inframoni
 		filterByPodStatus = req.Filter.FilterByPodStatus
 	}
 
-	// Metadata, plus a full-scope status resolution when filtering by pod status
-	// (pageGroups=nil spans all groups under the user filter). When not filtering,
-	// status is computed page-scoped in the fan-out below.
-	gUp, gUpCtx := errgroup.WithContext(ctx)
-	gUp.Go(func() error {
-		var err error
-		metadataMap, err = m.getPodsTableMetadata(gUpCtx, orgID, req)
-		return err
-	})
-	if !filterByPodStatus.IsZero() {
-		gUp.Go(func() error {
-			var err error
-			statusCounts, statusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gUpCtx, orgID, req.Start, req.End, podFilter, req.GroupBy, nil, filterByPodStatus)
-			return err
-		})
-	}
-	if err := gUp.Wait(); err != nil {
-		return nil, err
-	}
-
-	if !filterByPodStatus.IsZero() {
-		// Required metric missing: can't derive status, so surface the warning
-		// and return empty rather than silently filtering everything out.
-		if statusWarning != nil {
-			resp.Warning = statusWarning
-			resp.Records = []inframonitoringtypes.PodRecord{}
-			resp.Total = 0
-			return resp, nil
-		}
-		// Secondary filter: keep only groups with a status-matching pod.
-		metadataMap = intersectMap(metadataMap, statusCounts)
-	}
-
-	resp.Total = len(metadataMap)
-
-	// statusCounts is the status keyset (nil when not filtering); getTopPodGroups
-	// intersects the ranked groups against it before paginating.
-	pageGroups, err := m.getTopPodGroups(ctx, orgID, req, metadataMap, statusCounts)
+	// getTopPodGroupsAndMetadata fetches metadata + ranking (+ full-scope pod
+	// status when filtering) concurrently, intersecting metadata/ranked groups
+	// against the status keyset. It returns the keyset + its warning.
+	pageGroups, metadataMap, statusCounts, statusWarning, err := m.getTopPodGroupsAndMetadata(ctx, orgID, req)
 	if err != nil {
 		return nil, err
 	}
+
+	// Required metric missing while filtering: surface the warning + empty result.
+	if !filterByPodStatus.IsZero() && statusWarning != nil {
+		resp.Warning = statusWarning
+		resp.Records = []inframonitoringtypes.PodRecord{}
+		resp.Total = 0
+		return resp, nil
+	}
+
+	resp.Total = len(metadataMap)
 
 	if len(pageGroups) == 0 {
 		resp.Records = []inframonitoringtypes.PodRecord{}
@@ -428,17 +396,12 @@ func (m *module) ListContainers(ctx context.Context, orgID valuer.UUID, req *inf
 		return resp, nil
 	}
 
-	metadataMap, err := m.getContainersTableMetadata(ctx, orgID, req)
+	pageGroups, metadataMap, err := m.getTopContainerGroupsAndMetadata(ctx, orgID, req)
 	if err != nil {
 		return nil, err
 	}
 
 	resp.Total = len(metadataMap)
-
-	pageGroups, err := m.getTopContainerGroups(ctx, orgID, req, metadataMap)
-	if err != nil {
-		return nil, err
-	}
 
 	if len(pageGroups) == 0 {
 		resp.Records = []inframonitoringtypes.ContainerRecord{}
@@ -533,14 +496,11 @@ func (m *module) ListNodes(ctx context.Context, orgID valuer.UUID, req *inframon
 	}
 
 	var (
+		filterExpr          string
 		nodeFilter          *qbtypes.Filter
 		filterByPodStatus   inframonitoringtypes.PodStatus
-		filterExpr          string
-		metadataMap         map[string]map[string]string
 		queryResp           *qbtypes.QueryRangeResponse
 		nodeConditionCounts map[string]nodeConditionCounts
-		podStatusCounts     map[string]podStatusCounts
-		podStatusWarning    *qbtypes.QueryWarnData
 	)
 
 	if req.Filter != nil {
@@ -549,47 +509,23 @@ func (m *module) ListNodes(ctx context.Context, orgID valuer.UUID, req *inframon
 		filterByPodStatus = req.Filter.FilterByPodStatus
 	}
 
-	// Metadata, plus a full-scope pod status resolution when filtering by pod
-	// status (pageGroups=nil spans all groups under the user filter). When not
-	// filtering, status is computed page-scoped in the fan-out below.
-	gUp, gUpCtx := errgroup.WithContext(ctx)
-	gUp.Go(func() error {
-		var err error
-		metadataMap, err = m.getNodesTableMetadata(gUpCtx, orgID, req)
-		return err
-	})
-	if !filterByPodStatus.IsZero() {
-		gUp.Go(func() error {
-			var err error
-			podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gUpCtx, orgID, req.Start, req.End, nodeFilter, req.GroupBy, nil, filterByPodStatus)
-			return err
-		})
-	}
-	if err := gUp.Wait(); err != nil {
-		return nil, err
-	}
-
-	if !filterByPodStatus.IsZero() {
-		// Required metric missing: can't derive status, so surface the warning
-		// and return empty rather than silently filtering everything out.
-		if podStatusWarning != nil {
-			resp.Warning = podStatusWarning
-			resp.Records = []inframonitoringtypes.NodeRecord{}
-			resp.Total = 0
-			return resp, nil
-		}
-		// Secondary filter: keep only nodes with a status-matching pod.
-		metadataMap = intersectMap(metadataMap, podStatusCounts)
-	}
-
-	resp.Total = len(metadataMap)
-
-	// podStatusCounts is the status keyset (nil when not filtering); getTopNodeGroups
-	// intersects the ranked groups against it before paginating.
-	pageGroups, err := m.getTopNodeGroups(ctx, orgID, req, metadataMap, podStatusCounts)
+	// getTopNodeGroupsAndMetadata fetches metadata + ranking (+ full-scope pod
+	// status when filtering) concurrently, intersecting metadata/ranked groups
+	// against the status keyset. It returns the keyset + its warning.
+	pageGroups, metadataMap, podStatusCounts, podStatusWarning, err := m.getTopNodeGroupsAndMetadata(ctx, orgID, req)
 	if err != nil {
 		return nil, err
 	}
+
+	// Required metric missing while filtering: surface the warning + empty result.
+	if !filterByPodStatus.IsZero() && podStatusWarning != nil {
+		resp.Warning = podStatusWarning
+		resp.Records = []inframonitoringtypes.NodeRecord{}
+		resp.Total = 0
+		return resp, nil
+	}
+
+	resp.Total = len(metadataMap)
 
 	if len(pageGroups) == 0 {
 		resp.Records = []inframonitoringtypes.NodeRecord{}
@@ -670,13 +606,10 @@ func (m *module) ListNamespaces(ctx context.Context, orgID valuer.UUID, req *inf
 	}
 
 	var (
+		filterExpr        string
 		namespaceFilter   *qbtypes.Filter
 		filterByPodStatus inframonitoringtypes.PodStatus
-		filterExpr        string
-		metadataMap       map[string]map[string]string
 		queryResp         *qbtypes.QueryRangeResponse
-		podStatusCounts   map[string]podStatusCounts
-		podStatusWarning  *qbtypes.QueryWarnData
 		resourceCounts    map[string]map[string]int64
 	)
 
@@ -686,47 +619,23 @@ func (m *module) ListNamespaces(ctx context.Context, orgID valuer.UUID, req *inf
 		filterByPodStatus = req.Filter.FilterByPodStatus
 	}
 
-	// Metadata, plus a full-scope pod status resolution when filtering by pod
-	// status (pageGroups=nil spans all groups under the user filter). When not
-	// filtering, status is computed page-scoped in the fan-out below.
-	gUp, gUpCtx := errgroup.WithContext(ctx)
-	gUp.Go(func() error {
-		var err error
-		metadataMap, err = m.getNamespacesTableMetadata(gUpCtx, orgID, req)
-		return err
-	})
-	if !filterByPodStatus.IsZero() {
-		gUp.Go(func() error {
-			var err error
-			podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gUpCtx, orgID, req.Start, req.End, namespaceFilter, req.GroupBy, nil, filterByPodStatus)
-			return err
-		})
-	}
-	if err := gUp.Wait(); err != nil {
-		return nil, err
-	}
-
-	if !filterByPodStatus.IsZero() {
-		// Required metric missing: can't derive status, so surface the warning
-		// and return empty rather than silently filtering everything out.
-		if podStatusWarning != nil {
-			resp.Warning = podStatusWarning
-			resp.Records = []inframonitoringtypes.NamespaceRecord{}
-			resp.Total = 0
-			return resp, nil
-		}
-		// Secondary filter: keep only namespaces with a status-matching pod.
-		metadataMap = intersectMap(metadataMap, podStatusCounts)
-	}
-
-	resp.Total = len(metadataMap)
-
-	// podStatusCounts is the status keyset (nil when not filtering); getTopNamespaceGroups
-	// intersects the ranked groups against it before paginating.
-	pageGroups, err := m.getTopNamespaceGroups(ctx, orgID, req, metadataMap, podStatusCounts)
+	// getTopNamespaceGroupsAndMetadata fetches metadata + ranking (+ full-scope pod
+	// status when filtering) concurrently, intersecting metadata/ranked groups
+	// against the status keyset. It returns the keyset + its warning.
+	pageGroups, metadataMap, podStatusCounts, podStatusWarning, err := m.getTopNamespaceGroupsAndMetadata(ctx, orgID, req)
 	if err != nil {
 		return nil, err
 	}
+
+	// Required metric missing while filtering: surface the warning + empty result.
+	if !filterByPodStatus.IsZero() && podStatusWarning != nil {
+		resp.Warning = podStatusWarning
+		resp.Records = []inframonitoringtypes.NamespaceRecord{}
+		resp.Total = 0
+		return resp, nil
+	}
+
+	resp.Total = len(metadataMap)
 
 	if len(pageGroups) == 0 {
 		resp.Records = []inframonitoringtypes.NamespaceRecord{}
@@ -805,17 +714,12 @@ func (m *module) ListClusters(ctx context.Context, orgID valuer.UUID, req *infra
 		return resp, nil
 	}
 
-	// With default groupBy [k8s.cluster.name], counts are bucketed per cluster;
-	// with a custom groupBy, they aggregate across clusters in that group.
 	var (
+		filterExpr             string
 		clusterFilter          *qbtypes.Filter
 		filterByPodStatus      inframonitoringtypes.PodStatus
-		filterExpr             string
-		metadataMap            map[string]map[string]string
 		queryResp              *qbtypes.QueryRangeResponse
 		nodeConditionCountsMap map[string]nodeConditionCounts
-		podStatusCounts        map[string]podStatusCounts
-		podStatusWarning       *qbtypes.QueryWarnData
 		resourceCounts         map[string]map[string]int64
 	)
 
@@ -825,47 +729,23 @@ func (m *module) ListClusters(ctx context.Context, orgID valuer.UUID, req *infra
 		filterByPodStatus = req.Filter.FilterByPodStatus
 	}
 
-	// Metadata, plus a full-scope pod status resolution when filtering by pod
-	// status (pageGroups=nil spans all groups under the user filter). When not
-	// filtering, status is computed page-scoped in the fan-out below.
-	gUp, gUpCtx := errgroup.WithContext(ctx)
-	gUp.Go(func() error {
-		var err error
-		metadataMap, err = m.getClustersTableMetadata(gUpCtx, orgID, req)
-		return err
-	})
-	if !filterByPodStatus.IsZero() {
-		gUp.Go(func() error {
-			var err error
-			podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gUpCtx, orgID, req.Start, req.End, clusterFilter, req.GroupBy, nil, filterByPodStatus)
-			return err
-		})
-	}
-	if err := gUp.Wait(); err != nil {
-		return nil, err
-	}
-
-	if !filterByPodStatus.IsZero() {
-		// Required metric missing: can't derive status, so surface the warning
-		// and return empty rather than silently filtering everything out.
-		if podStatusWarning != nil {
-			resp.Warning = podStatusWarning
-			resp.Records = []inframonitoringtypes.ClusterRecord{}
-			resp.Total = 0
-			return resp, nil
-		}
-		// Secondary filter: keep only clusters with a status-matching pod.
-		metadataMap = intersectMap(metadataMap, podStatusCounts)
-	}
-
-	resp.Total = len(metadataMap)
-
-	// podStatusCounts is the status keyset (nil when not filtering); getTopClusterGroups
-	// intersects the ranked groups against it before paginating.
-	pageGroups, err := m.getTopClusterGroups(ctx, orgID, req, metadataMap, podStatusCounts)
+	// getTopClusterGroupsAndMetadata fetches metadata + ranking (+ full-scope pod
+	// status when filtering) concurrently, intersecting metadata/ranked groups
+	// against the status keyset. It returns the keyset + its warning.
+	pageGroups, metadataMap, podStatusCounts, podStatusWarning, err := m.getTopClusterGroupsAndMetadata(ctx, orgID, req)
 	if err != nil {
 		return nil, err
 	}
+
+	// Required metric missing while filtering: surface the warning + empty result.
+	if !filterByPodStatus.IsZero() && podStatusWarning != nil {
+		resp.Warning = podStatusWarning
+		resp.Records = []inframonitoringtypes.ClusterRecord{}
+		resp.Total = 0
+		return resp, nil
+	}
+
+	resp.Total = len(metadataMap)
 
 	if len(pageGroups) == 0 {
 		resp.Records = []inframonitoringtypes.ClusterRecord{}
@@ -955,17 +835,12 @@ func (m *module) ListVolumes(ctx context.Context, orgID valuer.UUID, req *infram
 		return resp, nil
 	}
 
-	metadataMap, err := m.getVolumesTableMetadata(ctx, orgID, req)
+	pageGroups, metadataMap, err := m.getTopVolumeGroupsAndMetadata(ctx, orgID, req)
 	if err != nil {
 		return nil, err
 	}
 
 	resp.Total = len(metadataMap)
-
-	pageGroups, err := m.getTopVolumeGroups(ctx, orgID, req, metadataMap)
-	if err != nil {
-		return nil, err
-	}
 
 	if len(pageGroups) == 0 {
 		resp.Records = []inframonitoringtypes.VolumeRecord{}
@@ -1034,13 +909,10 @@ func (m *module) ListDeployments(ctx context.Context, orgID valuer.UUID, req *in
 	}
 
 	var (
+		filterExpr        string
 		deploymentFilter  *qbtypes.Filter
 		filterByPodStatus inframonitoringtypes.PodStatus
-		filterExpr        string
-		metadataMap       map[string]map[string]string
 		queryResp         *qbtypes.QueryRangeResponse
-		podStatusCounts   map[string]podStatusCounts
-		podStatusWarning  *qbtypes.QueryWarnData
 	)
 
 	if req.Filter != nil {
@@ -1049,47 +921,23 @@ func (m *module) ListDeployments(ctx context.Context, orgID valuer.UUID, req *in
 		filterByPodStatus = req.Filter.FilterByPodStatus
 	}
 
-	// Metadata, plus a full-scope pod status resolution when filtering by pod
-	// status (pageGroups=nil spans all groups under the user filter). When not
-	// filtering, status is computed page-scoped in the fan-out below.
-	gUp, gUpCtx := errgroup.WithContext(ctx)
-	gUp.Go(func() error {
-		var err error
-		metadataMap, err = m.getDeploymentsTableMetadata(gUpCtx, orgID, req)
-		return err
-	})
-	if !filterByPodStatus.IsZero() {
-		gUp.Go(func() error {
-			var err error
-			podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gUpCtx, orgID, req.Start, req.End, deploymentFilter, req.GroupBy, nil, filterByPodStatus)
-			return err
-		})
-	}
-	if err := gUp.Wait(); err != nil {
-		return nil, err
-	}
-
-	if !filterByPodStatus.IsZero() {
-		// Required metric missing: can't derive status, so surface the warning
-		// and return empty rather than silently filtering everything out.
-		if podStatusWarning != nil {
-			resp.Warning = podStatusWarning
-			resp.Records = []inframonitoringtypes.DeploymentRecord{}
-			resp.Total = 0
-			return resp, nil
-		}
-		// Secondary filter: keep only deployments with a status-matching pod.
-		metadataMap = intersectMap(metadataMap, podStatusCounts)
-	}
-
-	resp.Total = len(metadataMap)
-
-	// podStatusCounts is the status keyset (nil when not filtering); getTopDeploymentGroups
-	// intersects the ranked groups against it before paginating.
-	pageGroups, err := m.getTopDeploymentGroups(ctx, orgID, req, metadataMap, podStatusCounts)
+	// getTopDeploymentGroupsAndMetadata fetches metadata + ranking (+ full-scope pod
+	// status when filtering) concurrently, intersecting metadata/ranked groups
+	// against the status keyset. It returns the keyset + its warning.
+	pageGroups, metadataMap, podStatusCounts, podStatusWarning, err := m.getTopDeploymentGroupsAndMetadata(ctx, orgID, req)
 	if err != nil {
 		return nil, err
 	}
+
+	// Required metric missing while filtering: surface the warning + empty result.
+	if !filterByPodStatus.IsZero() && podStatusWarning != nil {
+		resp.Warning = podStatusWarning
+		resp.Records = []inframonitoringtypes.DeploymentRecord{}
+		resp.Total = 0
+		return resp, nil
+	}
+
+	resp.Total = len(metadataMap)
 
 	if len(pageGroups) == 0 {
 		resp.Records = []inframonitoringtypes.DeploymentRecord{}
@@ -1170,13 +1018,10 @@ func (m *module) ListStatefulSets(ctx context.Context, orgID valuer.UUID, req *i
 	}
 
 	var (
+		filterExpr        string
 		statefulSetFilter *qbtypes.Filter
 		filterByPodStatus inframonitoringtypes.PodStatus
-		filterExpr        string
-		metadataMap       map[string]map[string]string
 		queryResp         *qbtypes.QueryRangeResponse
-		podStatusCounts   map[string]podStatusCounts
-		podStatusWarning  *qbtypes.QueryWarnData
 	)
 
 	if req.Filter != nil {
@@ -1185,47 +1030,23 @@ func (m *module) ListStatefulSets(ctx context.Context, orgID valuer.UUID, req *i
 		filterByPodStatus = req.Filter.FilterByPodStatus
 	}
 
-	// Metadata, plus a full-scope pod status resolution when filtering by pod
-	// status (pageGroups=nil spans all groups under the user filter). When not
-	// filtering, status is computed page-scoped in the fan-out below.
-	gUp, gUpCtx := errgroup.WithContext(ctx)
-	gUp.Go(func() error {
-		var err error
-		metadataMap, err = m.getStatefulSetsTableMetadata(gUpCtx, orgID, req)
-		return err
-	})
-	if !filterByPodStatus.IsZero() {
-		gUp.Go(func() error {
-			var err error
-			podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gUpCtx, orgID, req.Start, req.End, statefulSetFilter, req.GroupBy, nil, filterByPodStatus)
-			return err
-		})
-	}
-	if err := gUp.Wait(); err != nil {
-		return nil, err
-	}
-
-	if !filterByPodStatus.IsZero() {
-		// Required metric missing: can't derive status, so surface the warning
-		// and return empty rather than silently filtering everything out.
-		if podStatusWarning != nil {
-			resp.Warning = podStatusWarning
-			resp.Records = []inframonitoringtypes.StatefulSetRecord{}
-			resp.Total = 0
-			return resp, nil
-		}
-		// Secondary filter: keep only statefulsets with a status-matching pod.
-		metadataMap = intersectMap(metadataMap, podStatusCounts)
-	}
-
-	resp.Total = len(metadataMap)
-
-	// podStatusCounts is the status keyset (nil when not filtering); getTopStatefulSetGroups
-	// intersects the ranked groups against it before paginating.
-	pageGroups, err := m.getTopStatefulSetGroups(ctx, orgID, req, metadataMap, podStatusCounts)
+	// getTopStatefulSetGroupsAndMetadata fetches metadata + ranking (+ full-scope pod
+	// status when filtering) concurrently, intersecting metadata/ranked groups
+	// against the status keyset. It returns the keyset + its warning.
+	pageGroups, metadataMap, podStatusCounts, podStatusWarning, err := m.getTopStatefulSetGroupsAndMetadata(ctx, orgID, req)
 	if err != nil {
 		return nil, err
 	}
+
+	// Required metric missing while filtering: surface the warning + empty result.
+	if !filterByPodStatus.IsZero() && podStatusWarning != nil {
+		resp.Warning = podStatusWarning
+		resp.Records = []inframonitoringtypes.StatefulSetRecord{}
+		resp.Total = 0
+		return resp, nil
+	}
+
+	resp.Total = len(metadataMap)
 
 	if len(pageGroups) == 0 {
 		resp.Records = []inframonitoringtypes.StatefulSetRecord{}
@@ -1306,13 +1127,10 @@ func (m *module) ListJobs(ctx context.Context, orgID valuer.UUID, req *inframoni
 	}
 
 	var (
+		filterExpr        string
 		jobFilter         *qbtypes.Filter
 		filterByPodStatus inframonitoringtypes.PodStatus
-		filterExpr        string
-		metadataMap       map[string]map[string]string
 		queryResp         *qbtypes.QueryRangeResponse
-		podStatusCounts   map[string]podStatusCounts
-		podStatusWarning  *qbtypes.QueryWarnData
 	)
 
 	if req.Filter != nil {
@@ -1321,47 +1139,23 @@ func (m *module) ListJobs(ctx context.Context, orgID valuer.UUID, req *inframoni
 		filterByPodStatus = req.Filter.FilterByPodStatus
 	}
 
-	// Metadata, plus a full-scope pod status resolution when filtering by pod
-	// status (pageGroups=nil spans all groups under the user filter). When not
-	// filtering, status is computed page-scoped in the fan-out below.
-	gUp, gUpCtx := errgroup.WithContext(ctx)
-	gUp.Go(func() error {
-		var err error
-		metadataMap, err = m.getJobsTableMetadata(gUpCtx, orgID, req)
-		return err
-	})
-	if !filterByPodStatus.IsZero() {
-		gUp.Go(func() error {
-			var err error
-			podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gUpCtx, orgID, req.Start, req.End, jobFilter, req.GroupBy, nil, filterByPodStatus)
-			return err
-		})
-	}
-	if err := gUp.Wait(); err != nil {
-		return nil, err
-	}
-
-	if !filterByPodStatus.IsZero() {
-		// Required metric missing: can't derive status, so surface the warning
-		// and return empty rather than silently filtering everything out.
-		if podStatusWarning != nil {
-			resp.Warning = podStatusWarning
-			resp.Records = []inframonitoringtypes.JobRecord{}
-			resp.Total = 0
-			return resp, nil
-		}
-		// Secondary filter: keep only jobs with a status-matching pod.
-		metadataMap = intersectMap(metadataMap, podStatusCounts)
-	}
-
-	resp.Total = len(metadataMap)
-
-	// podStatusCounts is the status keyset (nil when not filtering); getTopJobGroups
-	// intersects the ranked groups against it before paginating.
-	pageGroups, err := m.getTopJobGroups(ctx, orgID, req, metadataMap, podStatusCounts)
+	// getTopJobGroupsAndMetadata fetches metadata + ranking (+ full-scope pod
+	// status when filtering) concurrently, intersecting metadata/ranked groups
+	// against the status keyset. It returns the keyset + its warning.
+	pageGroups, metadataMap, podStatusCounts, podStatusWarning, err := m.getTopJobGroupsAndMetadata(ctx, orgID, req)
 	if err != nil {
 		return nil, err
 	}
+
+	// Required metric missing while filtering: surface the warning + empty result.
+	if !filterByPodStatus.IsZero() && podStatusWarning != nil {
+		resp.Warning = podStatusWarning
+		resp.Records = []inframonitoringtypes.JobRecord{}
+		resp.Total = 0
+		return resp, nil
+	}
+
+	resp.Total = len(metadataMap)
 
 	if len(pageGroups) == 0 {
 		resp.Records = []inframonitoringtypes.JobRecord{}
@@ -1442,13 +1236,10 @@ func (m *module) ListDaemonSets(ctx context.Context, orgID valuer.UUID, req *inf
 	}
 
 	var (
+		filterExpr        string
 		daemonSetFilter   *qbtypes.Filter
 		filterByPodStatus inframonitoringtypes.PodStatus
-		filterExpr        string
-		metadataMap       map[string]map[string]string
 		queryResp         *qbtypes.QueryRangeResponse
-		podStatusCounts   map[string]podStatusCounts
-		podStatusWarning  *qbtypes.QueryWarnData
 	)
 
 	if req.Filter != nil {
@@ -1457,47 +1248,23 @@ func (m *module) ListDaemonSets(ctx context.Context, orgID valuer.UUID, req *inf
 		filterByPodStatus = req.Filter.FilterByPodStatus
 	}
 
-	// Metadata, plus a full-scope pod status resolution when filtering by pod
-	// status (pageGroups=nil spans all groups under the user filter). When not
-	// filtering, status is computed page-scoped in the fan-out below.
-	gUp, gUpCtx := errgroup.WithContext(ctx)
-	gUp.Go(func() error {
-		var err error
-		metadataMap, err = m.getDaemonSetsTableMetadata(gUpCtx, orgID, req)
-		return err
-	})
-	if !filterByPodStatus.IsZero() {
-		gUp.Go(func() error {
-			var err error
-			podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gUpCtx, orgID, req.Start, req.End, daemonSetFilter, req.GroupBy, nil, filterByPodStatus)
-			return err
-		})
-	}
-	if err := gUp.Wait(); err != nil {
-		return nil, err
-	}
-
-	if !filterByPodStatus.IsZero() {
-		// Required metric missing: can't derive status, so surface the warning
-		// and return empty rather than silently filtering everything out.
-		if podStatusWarning != nil {
-			resp.Warning = podStatusWarning
-			resp.Records = []inframonitoringtypes.DaemonSetRecord{}
-			resp.Total = 0
-			return resp, nil
-		}
-		// Secondary filter: keep only daemonsets with a status-matching pod.
-		metadataMap = intersectMap(metadataMap, podStatusCounts)
-	}
-
-	resp.Total = len(metadataMap)
-
-	// podStatusCounts is the status keyset (nil when not filtering); getTopDaemonSetGroups
-	// intersects the ranked groups against it before paginating.
-	pageGroups, err := m.getTopDaemonSetGroups(ctx, orgID, req, metadataMap, podStatusCounts)
+	// getTopDaemonSetGroupsAndMetadata fetches metadata + ranking (+ full-scope pod
+	// status when filtering) concurrently, intersecting metadata/ranked groups
+	// against the status keyset. It returns the keyset + its warning.
+	pageGroups, metadataMap, podStatusCounts, podStatusWarning, err := m.getTopDaemonSetGroupsAndMetadata(ctx, orgID, req)
 	if err != nil {
 		return nil, err
 	}
+
+	// Required metric missing while filtering: surface the warning + empty result.
+	if !filterByPodStatus.IsZero() && podStatusWarning != nil {
+		resp.Warning = podStatusWarning
+		resp.Records = []inframonitoringtypes.DaemonSetRecord{}
+		resp.Total = 0
+		return resp, nil
+	}
+
+	resp.Total = len(metadataMap)
 
 	if len(pageGroups) == 0 {
 		resp.Records = []inframonitoringtypes.DaemonSetRecord{}
