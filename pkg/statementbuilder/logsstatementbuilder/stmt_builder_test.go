@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/statementbuilder"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/logstelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
@@ -231,8 +232,7 @@ func TestStatementBuilderTimeSeries(t *testing.T) {
 		logstelemetryschema.DefaultFullTextColumn,
 		fl,
 		nil,
-		false,
-		100000,
+		statementbuilder.Config{SkipResourceFingerprint: statementbuilder.SkipResourceFingerprint{Enabled: false, Threshold: 100000}},
 	)
 
 	for _, c := range cases {
@@ -374,8 +374,7 @@ func TestStatementBuilderListQuery(t *testing.T) {
 		logstelemetryschema.DefaultFullTextColumn,
 		fl,
 		nil,
-		false,
-		100000,
+		statementbuilder.Config{SkipResourceFingerprint: statementbuilder.SkipResourceFingerprint{Enabled: false, Threshold: 100000}},
 	)
 
 	for _, c := range cases {
@@ -525,8 +524,7 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 		logstelemetryschema.DefaultFullTextColumn,
 		fl,
 		nil,
-		false,
-		100000,
+		statementbuilder.Config{SkipResourceFingerprint: statementbuilder.SkipResourceFingerprint{Enabled: false, Threshold: 100000}},
 	)
 
 	for _, c := range cases {
@@ -603,8 +601,7 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 		logstelemetryschema.DefaultFullTextColumn,
 		fl,
 		nil,
-		false,
-		100000,
+		statementbuilder.Config{SkipResourceFingerprint: statementbuilder.SkipResourceFingerprint{Enabled: false, Threshold: 100000}},
 	)
 
 	for _, c := range cases {
@@ -700,8 +697,7 @@ func TestStatementBuilderListQueryServiceCollision(t *testing.T) {
 		logstelemetryschema.DefaultFullTextColumn,
 		fl,
 		nil,
-		false,
-		100000,
+		statementbuilder.Config{SkipResourceFingerprint: statementbuilder.SkipResourceFingerprint{Enabled: false, Threshold: 100000}},
 	)
 
 	for _, c := range cases {
@@ -926,8 +922,7 @@ func TestAdjustKey(t *testing.T) {
 		logstelemetryschema.DefaultFullTextColumn,
 		fl,
 		nil,
-		false,
-		100000,
+		statementbuilder.Config{SkipResourceFingerprint: statementbuilder.SkipResourceFingerprint{Enabled: false, Threshold: 100000}},
 	)
 
 	for _, c := range cases {
@@ -1073,8 +1068,7 @@ func TestStmtBuilderBodyField(t *testing.T) {
 				logstelemetryschema.DefaultFullTextColumn,
 				fl,
 				nil,
-				false,
-				100000,
+				statementbuilder.Config{SkipResourceFingerprint: statementbuilder.SkipResourceFingerprint{Enabled: false, Threshold: 100000}},
 			)
 
 			q, err := statementBuilder.Build(context.Background(), valuer.UUID{}, 1747947419000, 1747983448000, c.requestType, c.query, nil)
@@ -1174,8 +1168,7 @@ func TestStmtBuilderBodyFullTextSearch(t *testing.T) {
 				logstelemetryschema.DefaultFullTextColumn,
 				fl,
 				nil,
-				false,
-				100000,
+				statementbuilder.Config{SkipResourceFingerprint: statementbuilder.SkipResourceFingerprint{Enabled: false, Threshold: 100000}},
 			)
 
 			q, err := statementBuilder.Build(context.Background(), valuer.UUID{}, 1747947419000, 1747983448000, c.requestType, c.query, nil)
@@ -1296,7 +1289,6 @@ func newSkipResourceFingerprintLogsBuilder(
 		logstelemetryschema.DefaultFullTextColumn,
 		fl,
 		telemetryStore,
-		skipEnable,
-		threshold,
+		statementbuilder.Config{SkipResourceFingerprint: statementbuilder.SkipResourceFingerprint{Enabled: skipEnable, Threshold: threshold}},
 	)
 }

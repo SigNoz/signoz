@@ -101,7 +101,7 @@ func (m *module) getTopClusterGroupsAndMetadata(
 		statusWarning         *qbtypes.QueryWarnData
 		nodeConditionCounts   map[string]nodeConditionCounts
 		filter                *qbtypes.Filter
-		filterByPodStatus     inframonitoringtypes.PodStatus
+		filterByPodStatus     []inframonitoringtypes.PodStatus
 		filterByNodeReadiness inframonitoringtypes.NodeCondition
 	)
 
@@ -124,7 +124,7 @@ func (m *module) getTopClusterGroupsAndMetadata(
 		return err
 	})
 
-	if !filterByPodStatus.IsZero() {
+	if len(filterByPodStatus) != 0 {
 		g.Go(func() error {
 			var err error
 			statusCounts, statusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, filter, req.GroupBy, nil, filterByPodStatus)
@@ -147,7 +147,7 @@ func (m *module) getTopClusterGroupsAndMetadata(
 		// Secondary filter: keep only status/readiness-matching groups. A missing
 		// metric yields an empty statusCounts, so this correctly empties the result
 		// (the caller also surfaces the warning). Filters compose as AND.
-		if !filterByPodStatus.IsZero() {
+		if len(filterByPodStatus) != 0 {
 			metadataMap = intersectMap(metadataMap, statusCounts)
 		}
 		if !filterByNodeReadiness.IsZero() {
@@ -206,7 +206,7 @@ func (m *module) getTopClusterGroupsAndMetadata(
 	// Secondary filter: intersect ranked groups + metadata with the status/readiness
 	// keyset. A missing metric yields an empty keyset, correctly emptying the result
 	// (the caller also surfaces the warning). Filters compose as AND.
-	if !filterByPodStatus.IsZero() {
+	if len(filterByPodStatus) != 0 {
 		allMetricGroups = intersectRankedGroups(allMetricGroups, statusCounts)
 		metadataMap = intersectMap(metadataMap, statusCounts)
 	}

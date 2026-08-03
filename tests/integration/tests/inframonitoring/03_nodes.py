@@ -333,9 +333,11 @@ def test_nodes_filter_by_pod_status(
     )
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
+    # Multi-select is OR -> the union of requested buckets (others zeroed).
     for fbps, expected in (
-        ("running", expected_status_counts(running=3)),
-        ("CrashLoopBackOff", expected_status_counts(crashLoopBackOff=1)),
+        (["running"], expected_status_counts(running=3)),
+        (["CrashLoopBackOff"], expected_status_counts(crashLoopBackOff=1)),
+        (["running", "CrashLoopBackOff"], expected_status_counts(running=3, crashLoopBackOff=1)),
     ):
         resp = requests.post(
             signoz.self.host_configs["8080"].get(ENDPOINT),
@@ -355,19 +357,21 @@ def test_nodes_filter_by_pod_status(
         assert rec["nodeName"] == "pp-node"
         assert rec["podCountsByStatus"] == expected
 
-    absent = requests.post(
-        signoz.self.host_configs["8080"].get(ENDPOINT),
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-            "filter": {"filterByPodStatus": "completed"},
-        },
-        timeout=5,
-    )
-    assert absent.status_code == HTTPStatus.OK, absent.text
-    assert absent.json()["data"]["total"] == 0
+    # A set fully absent from the node -> empty page (single and multi).
+    for fbps in (["completed"], ["completed", "oomKilled"]):
+        absent = requests.post(
+            signoz.self.host_configs["8080"].get(ENDPOINT),
+            headers={"authorization": f"Bearer {token}"},
+            json={
+                "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+                "end": int(now.timestamp() * 1000),
+                "limit": 50,
+                "filter": {"filterByPodStatus": fbps},
+            },
+            timeout=5,
+        )
+        assert absent.status_code == HTTPStatus.OK, absent.text
+        assert absent.json()["data"]["total"] == 0, f"node must be dropped by filterByPodStatus={fbps!r}"
 
     # Combined filterByPodStatus + filterByNodeReadiness = AND. pp-node is Ready
     # and runs pods -> kept when both match; dropped if either side has no match.
@@ -858,7 +862,7 @@ def test_nodes_orderby(  # pylint: disable=too-many-arguments,too-many-positiona
             id="orderby_nodename_with_groupby",
         ),
         pytest.param(
-            {"filter": {"filterByPodStatus": "Bogus"}},
+            {"filter": {"filterByPodStatus": ["Bogus"]}},
             "invalid filter by pod status",
             id="filter_by_pod_status_invalid",
         ),

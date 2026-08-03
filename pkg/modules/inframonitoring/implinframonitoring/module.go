@@ -289,7 +289,7 @@ func (m *module) ListPods(ctx context.Context, orgID valuer.UUID, req *inframoni
 	var (
 		filterExpr        string
 		podFilter         *qbtypes.Filter
-		filterByPodStatus inframonitoringtypes.PodStatus
+		filterByPodStatus []inframonitoringtypes.PodStatus
 		queryResp         *qbtypes.QueryRangeResponse
 		restartCounts     map[string]int64
 	)
@@ -309,7 +309,7 @@ func (m *module) ListPods(ctx context.Context, orgID valuer.UUID, req *inframoni
 	}
 
 	// Required metric missing while filtering: surface the warning + empty result.
-	if !filterByPodStatus.IsZero() && statusWarning != nil {
+	if len(filterByPodStatus) != 0 && statusWarning != nil {
 		resp.Warning = statusWarning
 		resp.Records = []inframonitoringtypes.PodRecord{}
 		resp.Total = 0
@@ -339,10 +339,10 @@ func (m *module) ListPods(ctx context.Context, orgID valuer.UUID, req *inframoni
 	})
 	// When filtering, statusCounts already holds the full-scope map (a superset
 	// of the page); otherwise compute it page-scoped here.
-	if filterByPodStatus.IsZero() {
+	if len(filterByPodStatus) == 0 {
 		g.Go(func() error {
 			var err error
-			statusCounts, statusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, podFilter, req.GroupBy, pageGroups, inframonitoringtypes.PodStatus{})
+			statusCounts, statusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, podFilter, req.GroupBy, pageGroups, nil)
 			return err
 		})
 	}
@@ -498,7 +498,7 @@ func (m *module) ListNodes(ctx context.Context, orgID valuer.UUID, req *inframon
 	var (
 		filterExpr            string
 		nodeFilter            *qbtypes.Filter
-		filterByPodStatus     inframonitoringtypes.PodStatus
+		filterByPodStatus     []inframonitoringtypes.PodStatus
 		filterByNodeReadiness inframonitoringtypes.NodeCondition
 		queryResp             *qbtypes.QueryRangeResponse
 	)
@@ -519,7 +519,7 @@ func (m *module) ListNodes(ctx context.Context, orgID valuer.UUID, req *inframon
 	}
 
 	// Required metric missing while filtering: surface the warning + empty result.
-	if !filterByPodStatus.IsZero() && podStatusWarning != nil {
+	if len(filterByPodStatus) != 0 && podStatusWarning != nil {
 		resp.Warning = podStatusWarning
 		resp.Records = []inframonitoringtypes.NodeRecord{}
 		resp.Total = 0
@@ -553,10 +553,10 @@ func (m *module) ListNodes(ctx context.Context, orgID valuer.UUID, req *inframon
 	}
 	// When filtering by pod status, podStatusCounts already holds the full-scope
 	// map; otherwise compute it page-scoped here.
-	if filterByPodStatus.IsZero() {
+	if len(filterByPodStatus) == 0 {
 		g.Go(func() error {
 			var err error
-			podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, nodeFilter, req.GroupBy, pageGroups, inframonitoringtypes.PodStatus{})
+			podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, nodeFilter, req.GroupBy, pageGroups, nil)
 			return err
 		})
 	}
@@ -613,7 +613,7 @@ func (m *module) ListNamespaces(ctx context.Context, orgID valuer.UUID, req *inf
 	var (
 		filterExpr        string
 		namespaceFilter   *qbtypes.Filter
-		filterByPodStatus inframonitoringtypes.PodStatus
+		filterByPodStatus []inframonitoringtypes.PodStatus
 		queryResp         *qbtypes.QueryRangeResponse
 		resourceCounts    map[string]map[string]int64
 	)
@@ -633,7 +633,7 @@ func (m *module) ListNamespaces(ctx context.Context, orgID valuer.UUID, req *inf
 	}
 
 	// Required metric missing while filtering: surface the warning + empty result.
-	if !filterByPodStatus.IsZero() && podStatusWarning != nil {
+	if len(filterByPodStatus) != 0 && podStatusWarning != nil {
 		resp.Warning = podStatusWarning
 		resp.Records = []inframonitoringtypes.NamespaceRecord{}
 		resp.Total = 0
@@ -663,10 +663,10 @@ func (m *module) ListNamespaces(ctx context.Context, orgID valuer.UUID, req *inf
 	})
 	// When filtering, podStatusCounts already holds the full-scope map (a superset
 	// of the page); otherwise compute it page-scoped here.
-	if filterByPodStatus.IsZero() {
+	if len(filterByPodStatus) == 0 {
 		g.Go(func() error {
 			var err error
-			podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, namespaceFilter, req.GroupBy, pageGroups, inframonitoringtypes.PodStatus{})
+			podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, namespaceFilter, req.GroupBy, pageGroups, nil)
 			return err
 		})
 	}
@@ -722,7 +722,7 @@ func (m *module) ListClusters(ctx context.Context, orgID valuer.UUID, req *infra
 	var (
 		filterExpr             string
 		clusterFilter          *qbtypes.Filter
-		filterByPodStatus      inframonitoringtypes.PodStatus
+		filterByPodStatus      []inframonitoringtypes.PodStatus
 		filterByNodeReadiness  inframonitoringtypes.NodeCondition
 		queryResp              *qbtypes.QueryRangeResponse
 		nodeConditionCountsMap map[string]nodeConditionCounts
@@ -745,7 +745,7 @@ func (m *module) ListClusters(ctx context.Context, orgID valuer.UUID, req *infra
 	}
 
 	// Required metric missing while filtering: surface the warning + empty result.
-	if !filterByPodStatus.IsZero() && podStatusWarning != nil {
+	if len(filterByPodStatus) != 0 && podStatusWarning != nil {
 		resp.Warning = podStatusWarning
 		resp.Records = []inframonitoringtypes.ClusterRecord{}
 		resp.Total = 0
@@ -784,10 +784,10 @@ func (m *module) ListClusters(ctx context.Context, orgID valuer.UUID, req *infra
 	})
 	// When filtering by pod status, podStatusCounts already holds the full-scope
 	// map; otherwise compute it page-scoped here.
-	if filterByPodStatus.IsZero() {
+	if len(filterByPodStatus) == 0 {
 		g.Go(func() error {
 			var err error
-			podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, clusterFilter, req.GroupBy, pageGroups, inframonitoringtypes.PodStatus{})
+			podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, clusterFilter, req.GroupBy, pageGroups, nil)
 			return err
 		})
 	}
@@ -922,7 +922,7 @@ func (m *module) ListDeployments(ctx context.Context, orgID valuer.UUID, req *in
 	var (
 		filterExpr        string
 		deploymentFilter  *qbtypes.Filter
-		filterByPodStatus inframonitoringtypes.PodStatus
+		filterByPodStatus []inframonitoringtypes.PodStatus
 		queryResp         *qbtypes.QueryRangeResponse
 	)
 
@@ -941,7 +941,7 @@ func (m *module) ListDeployments(ctx context.Context, orgID valuer.UUID, req *in
 	}
 
 	// Required metric missing while filtering: surface the warning + empty result.
-	if !filterByPodStatus.IsZero() && podStatusWarning != nil {
+	if len(filterByPodStatus) != 0 && podStatusWarning != nil {
 		resp.Warning = podStatusWarning
 		resp.Records = []inframonitoringtypes.DeploymentRecord{}
 		resp.Total = 0
@@ -966,10 +966,10 @@ func (m *module) ListDeployments(ctx context.Context, orgID valuer.UUID, req *in
 	})
 	// When filtering, podStatusCounts already holds the full-scope map (a superset
 	// of the page); otherwise compute it page-scoped here.
-	if filterByPodStatus.IsZero() {
+	if len(filterByPodStatus) == 0 {
 		g.Go(func() error {
 			var err error
-			podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, deploymentFilter, req.GroupBy, pageGroups, inframonitoringtypes.PodStatus{})
+			podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, deploymentFilter, req.GroupBy, pageGroups, nil)
 			return err
 		})
 	}
@@ -1031,7 +1031,7 @@ func (m *module) ListStatefulSets(ctx context.Context, orgID valuer.UUID, req *i
 	var (
 		filterExpr        string
 		statefulSetFilter *qbtypes.Filter
-		filterByPodStatus inframonitoringtypes.PodStatus
+		filterByPodStatus []inframonitoringtypes.PodStatus
 		queryResp         *qbtypes.QueryRangeResponse
 	)
 
@@ -1050,7 +1050,7 @@ func (m *module) ListStatefulSets(ctx context.Context, orgID valuer.UUID, req *i
 	}
 
 	// Required metric missing while filtering: surface the warning + empty result.
-	if !filterByPodStatus.IsZero() && podStatusWarning != nil {
+	if len(filterByPodStatus) != 0 && podStatusWarning != nil {
 		resp.Warning = podStatusWarning
 		resp.Records = []inframonitoringtypes.StatefulSetRecord{}
 		resp.Total = 0
@@ -1075,10 +1075,10 @@ func (m *module) ListStatefulSets(ctx context.Context, orgID valuer.UUID, req *i
 	})
 	// When filtering, podStatusCounts already holds the full-scope map (a superset
 	// of the page); otherwise compute it page-scoped here.
-	if filterByPodStatus.IsZero() {
+	if len(filterByPodStatus) == 0 {
 		g.Go(func() error {
 			var err error
-			podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, statefulSetFilter, req.GroupBy, pageGroups, inframonitoringtypes.PodStatus{})
+			podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, statefulSetFilter, req.GroupBy, pageGroups, nil)
 			return err
 		})
 	}
@@ -1140,7 +1140,7 @@ func (m *module) ListJobs(ctx context.Context, orgID valuer.UUID, req *inframoni
 	var (
 		filterExpr        string
 		jobFilter         *qbtypes.Filter
-		filterByPodStatus inframonitoringtypes.PodStatus
+		filterByPodStatus []inframonitoringtypes.PodStatus
 		queryResp         *qbtypes.QueryRangeResponse
 	)
 
@@ -1159,7 +1159,7 @@ func (m *module) ListJobs(ctx context.Context, orgID valuer.UUID, req *inframoni
 	}
 
 	// Required metric missing while filtering: surface the warning + empty result.
-	if !filterByPodStatus.IsZero() && podStatusWarning != nil {
+	if len(filterByPodStatus) != 0 && podStatusWarning != nil {
 		resp.Warning = podStatusWarning
 		resp.Records = []inframonitoringtypes.JobRecord{}
 		resp.Total = 0
@@ -1184,10 +1184,10 @@ func (m *module) ListJobs(ctx context.Context, orgID valuer.UUID, req *inframoni
 	})
 	// When filtering, podStatusCounts already holds the full-scope map (a superset
 	// of the page); otherwise compute it page-scoped here.
-	if filterByPodStatus.IsZero() {
+	if len(filterByPodStatus) == 0 {
 		g.Go(func() error {
 			var err error
-			podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, jobFilter, req.GroupBy, pageGroups, inframonitoringtypes.PodStatus{})
+			podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, jobFilter, req.GroupBy, pageGroups, nil)
 			return err
 		})
 	}
@@ -1249,7 +1249,7 @@ func (m *module) ListDaemonSets(ctx context.Context, orgID valuer.UUID, req *inf
 	var (
 		filterExpr        string
 		daemonSetFilter   *qbtypes.Filter
-		filterByPodStatus inframonitoringtypes.PodStatus
+		filterByPodStatus []inframonitoringtypes.PodStatus
 		queryResp         *qbtypes.QueryRangeResponse
 	)
 
@@ -1268,7 +1268,7 @@ func (m *module) ListDaemonSets(ctx context.Context, orgID valuer.UUID, req *inf
 	}
 
 	// Required metric missing while filtering: surface the warning + empty result.
-	if !filterByPodStatus.IsZero() && podStatusWarning != nil {
+	if len(filterByPodStatus) != 0 && podStatusWarning != nil {
 		resp.Warning = podStatusWarning
 		resp.Records = []inframonitoringtypes.DaemonSetRecord{}
 		resp.Total = 0
@@ -1293,10 +1293,10 @@ func (m *module) ListDaemonSets(ctx context.Context, orgID valuer.UUID, req *inf
 	})
 	// When filtering, podStatusCounts already holds the full-scope map (a superset
 	// of the page); otherwise compute it page-scoped here.
-	if filterByPodStatus.IsZero() {
+	if len(filterByPodStatus) == 0 {
 		g.Go(func() error {
 			var err error
-			podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, daemonSetFilter, req.GroupBy, pageGroups, inframonitoringtypes.PodStatus{})
+			podStatusCounts, podStatusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, daemonSetFilter, req.GroupBy, pageGroups, nil)
 			return err
 		})
 	}

@@ -2,7 +2,6 @@ package statementbuilder
 
 import (
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/factory"
 )
 
 // SkipResourceFingerprint configures when the resource fingerprint subquery is skipped in favor of main-table filtering.
@@ -18,12 +17,7 @@ type Config struct {
 	SkipResourceFingerprint SkipResourceFingerprint `yaml:"skip_resource_fingerprint" mapstructure:"skip_resource_fingerprint"`
 }
 
-// NewConfigFactory creates a new config factory for the statement builders.
-func NewConfigFactory() factory.ConfigFactory {
-	return factory.NewConfigFactory(factory.MustNewName("statementbuilder"), newConfig)
-}
-
-func newConfig() factory.Config {
+func NewConfig() Config {
 	return Config{
 		SkipResourceFingerprint: SkipResourceFingerprint{
 			Enabled:   false,
