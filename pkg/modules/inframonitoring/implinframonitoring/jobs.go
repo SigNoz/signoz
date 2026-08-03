@@ -105,7 +105,7 @@ func (m *module) getTopJobGroupsAndMetadata(
 		statusCounts      map[string]podStatusCounts
 		statusWarning     *qbtypes.QueryWarnData
 		filter            *qbtypes.Filter
-		filterByPodStatus inframonitoringtypes.PodStatus
+		filterByPodStatus []inframonitoringtypes.PodStatus
 	)
 
 	orderByKey = req.OrderBy.Key.Name
@@ -126,7 +126,7 @@ func (m *module) getTopJobGroupsAndMetadata(
 		return err
 	})
 
-	if !filterByPodStatus.IsZero() {
+	if len(filterByPodStatus) != 0 {
 		g.Go(func() error {
 			var err error
 			statusCounts, statusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, filter, req.GroupBy, nil, filterByPodStatus)
@@ -141,7 +141,7 @@ func (m *module) getTopJobGroupsAndMetadata(
 		// Secondary filter: keep only status-matching groups. A missing metric
 		// yields an empty statusCounts, so this correctly empties the result
 		// (the caller also surfaces the warning).
-		if !filterByPodStatus.IsZero() {
+		if len(filterByPodStatus) != 0 {
 			metadataMap = intersectMap(metadataMap, statusCounts)
 		}
 		pageGroups := inframonitoringtypes.PaginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.JobNameAttrKey)
@@ -197,7 +197,7 @@ func (m *module) getTopJobGroupsAndMetadata(
 	// Secondary filter: intersect ranked groups + metadata with the status keyset.
 	// A missing metric yields an empty statusCounts, correctly emptying the result
 	// (the caller also surfaces the warning).
-	if !filterByPodStatus.IsZero() {
+	if len(filterByPodStatus) != 0 {
 		allMetricGroups = intersectRankedGroups(allMetricGroups, statusCounts)
 		metadataMap = intersectMap(metadataMap, statusCounts)
 	}

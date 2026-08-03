@@ -42,10 +42,10 @@ type PostableDeployments struct {
 }
 
 // DeploymentFilter is the attribute filter plus an optional secondary filter on the
-// derived pod display status (see PodStatus). Empty FilterByPodStatus = off.
+// derived pod display status(es) (see PodStatus); matches any listed (OR). Empty = off.
 type DeploymentFilter struct {
 	qbtypes.Filter    `json:",inline"`
-	FilterByPodStatus PodStatus `json:"filterByPodStatus"`
+	FilterByPodStatus []PodStatus `json:"filterByPodStatus"`
 }
 
 // Validate ensures PostableDeployments contains acceptable values.
@@ -87,8 +87,12 @@ func (req *PostableDeployments) Validate() error {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "offset cannot be negative")
 	}
 
-	if req.Filter != nil && !req.Filter.FilterByPodStatus.IsZero() && !IsFilterablePodStatus(req.Filter.FilterByPodStatus) {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid filter by pod status: %s", req.Filter.FilterByPodStatus)
+	if req.Filter != nil {
+		for _, s := range req.Filter.FilterByPodStatus {
+			if !IsFilterablePodStatus(s) {
+				return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid filter by pod status: %s", s)
+			}
+		}
 	}
 
 	if req.OrderBy != nil {

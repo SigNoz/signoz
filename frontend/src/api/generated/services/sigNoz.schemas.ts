@@ -5661,7 +5661,10 @@ export interface InframonitoringtypesClusterFilterDTO {
 	 * @type string
 	 */
 	expression?: string;
-	filterByPodStatus?: InframonitoringtypesPodStatusDTO;
+	/**
+	 * @type array,null
+	 */
+	filterByPodStatus?: InframonitoringtypesPodStatusDTO[] | null;
 }
 
 export type InframonitoringtypesClusterRecordDTOCounts = {
@@ -6046,7 +6049,10 @@ export interface InframonitoringtypesDaemonSetFilterDTO {
 	 * @type string
 	 */
 	expression?: string;
-	filterByPodStatus?: InframonitoringtypesPodStatusDTO;
+	/**
+	 * @type array,null
+	 */
+	filterByPodStatus?: InframonitoringtypesPodStatusDTO[] | null;
 }
 
 export type InframonitoringtypesDaemonSetRecordDTOMetaAnyOf = {
@@ -6139,7 +6145,10 @@ export interface InframonitoringtypesDeploymentFilterDTO {
 	 * @type string
 	 */
 	expression?: string;
-	filterByPodStatus?: InframonitoringtypesPodStatusDTO;
+	/**
+	 * @type array,null
+	 */
+	filterByPodStatus?: InframonitoringtypesPodStatusDTO[] | null;
 }
 
 export type InframonitoringtypesDeploymentRecordDTOMetaAnyOf = {
@@ -6309,7 +6318,10 @@ export interface InframonitoringtypesJobFilterDTO {
 	 * @type string
 	 */
 	expression?: string;
-	filterByPodStatus?: InframonitoringtypesPodStatusDTO;
+	/**
+	 * @type array,null
+	 */
+	filterByPodStatus?: InframonitoringtypesPodStatusDTO[] | null;
 }
 
 export type InframonitoringtypesJobRecordDTOMetaAnyOf = {
@@ -6402,7 +6414,10 @@ export interface InframonitoringtypesNamespaceFilterDTO {
 	 * @type string
 	 */
 	expression?: string;
-	filterByPodStatus?: InframonitoringtypesPodStatusDTO;
+	/**
+	 * @type array,null
+	 */
+	filterByPodStatus?: InframonitoringtypesPodStatusDTO[] | null;
 }
 
 export type InframonitoringtypesNamespaceRecordDTOCounts = {
@@ -6491,7 +6506,10 @@ export interface InframonitoringtypesNodeFilterDTO {
 	 * @type string
 	 */
 	expression?: string;
-	filterByPodStatus?: InframonitoringtypesPodStatusDTO;
+	/**
+	 * @type array,null
+	 */
+	filterByPodStatus?: InframonitoringtypesPodStatusDTO[] | null;
 }
 
 export type InframonitoringtypesNodeRecordDTOMetaAnyOf = {
@@ -6560,7 +6578,10 @@ export interface InframonitoringtypesPodFilterDTO {
 	 * @type string
 	 */
 	expression?: string;
-	filterByPodStatus?: InframonitoringtypesPodStatusDTO;
+	/**
+	 * @type array,null
+	 */
+	filterByPodStatus?: InframonitoringtypesPodStatusDTO[] | null;
 }
 
 export type InframonitoringtypesPodRecordDTOMetaAnyOf = {
@@ -6891,7 +6912,10 @@ export interface InframonitoringtypesStatefulSetFilterDTO {
 	 * @type string
 	 */
 	expression?: string;
-	filterByPodStatus?: InframonitoringtypesPodStatusDTO;
+	/**
+	 * @type array,null
+	 */
+	filterByPodStatus?: InframonitoringtypesPodStatusDTO[] | null;
 }
 
 export interface InframonitoringtypesPostableStatefulSetsDTO {

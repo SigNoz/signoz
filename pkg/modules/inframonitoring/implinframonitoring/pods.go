@@ -161,7 +161,7 @@ func (m *module) getTopPodGroupsAndMetadata(
 		statusCounts      map[string]podStatusCounts
 		statusWarning     *qbtypes.QueryWarnData
 		filter            *qbtypes.Filter
-		filterByPodStatus inframonitoringtypes.PodStatus
+		filterByPodStatus []inframonitoringtypes.PodStatus
 	)
 
 	orderByKey = req.OrderBy.Key.Name
@@ -182,7 +182,7 @@ func (m *module) getTopPodGroupsAndMetadata(
 		return err
 	})
 
-	if !filterByPodStatus.IsZero() {
+	if len(filterByPodStatus) != 0 {
 		g.Go(func() error {
 			var err error
 			statusCounts, statusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, filter, req.GroupBy, nil, filterByPodStatus)
@@ -197,7 +197,7 @@ func (m *module) getTopPodGroupsAndMetadata(
 		// Secondary filter: keep only status-matching groups. A missing metric
 		// yields an empty statusCounts, so this correctly empties the result
 		// (the caller also surfaces the warning).
-		if !filterByPodStatus.IsZero() {
+		if len(filterByPodStatus) != 0 {
 			metadataMap = intersectMap(metadataMap, statusCounts)
 		}
 		pageGroups := inframonitoringtypes.PaginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.PodNameAttrKey)
@@ -253,7 +253,7 @@ func (m *module) getTopPodGroupsAndMetadata(
 	// Secondary filter: intersect ranked groups + metadata with the status keyset.
 	// A missing metric yields an empty statusCounts, correctly emptying the result
 	// (the caller also surfaces the warning).
-	if !filterByPodStatus.IsZero() {
+	if len(filterByPodStatus) != 0 {
 		allMetricGroups = intersectRankedGroups(allMetricGroups, statusCounts)
 		metadataMap = intersectMap(metadataMap, statusCounts)
 	}
@@ -288,7 +288,7 @@ func (m *module) getPerGroupPodStatusCountsWithReqMetricChecks(
 	filter *qbtypes.Filter,
 	groupBy []qbtypes.GroupByKey,
 	pageGroups []map[string]string,
-	filterByPodStatus inframonitoringtypes.PodStatus,
+	filterByPodStatus []inframonitoringtypes.PodStatus,
 ) (map[string]podStatusCounts, *qbtypes.QueryWarnData, error) {
 	present, err := m.getMetricsExistence(ctx, podStatusMetricNamesList)
 	if err != nil {
@@ -321,15 +321,19 @@ func (m *module) getPerGroupPodStatusCountsWithReqMetricChecks(
 	return counts, nil, nil
 }
 
-// podStatusFilterClause returns the outer WHERE clause (and its arg) that
-// restricts pod_status to a single display status. valuer lowercases the wire
-// value while display_status is kubectl-cased, so we compare lower() on both.
-// Empty status returns no clause.
-func podStatusFilterClause(filterByPodStatus inframonitoringtypes.PodStatus) (string, []any) {
-	if filterByPodStatus.IsZero() {
-		return "", nil
+// applyPodStatusFilter adds the display-status push-down (lower(display_status)
+// IN (...)) to the outer count builder. valuer lowercases the wire value while
+// display_status is kubectl-cased, so we compare lower() on both. No-op when the
+// requested set is empty.
+func applyPodStatusFilter(cb *sqlbuilder.SelectBuilder, filterByPodStatus []inframonitoringtypes.PodStatus) {
+	if len(filterByPodStatus) == 0 {
+		return
 	}
-	return " WHERE lower(display_status) = ? ", []any{filterByPodStatus.StringValue()}
+	vals := make([]string, len(filterByPodStatus))
+	for i, s := range filterByPodStatus {
+		vals[i] = s.StringValue()
+	}
+	cb.Where(cb.In("lower(display_status)", sqlbuilder.List(vals)))
 }
 
 // getPerGroupPodStatusCounts computes per-group pod counts bucketed by each
@@ -352,15 +356,21 @@ func (m *module) getPerGroupPodStatusCounts(
 	filter *qbtypes.Filter,
 	groupBy []qbtypes.GroupByKey,
 	pageGroups []map[string]string,
-	filterByPodStatus inframonitoringtypes.PodStatus,
+	filterByPodStatus []inframonitoringtypes.PodStatus,
 ) (map[string]podStatusCounts, error) {
 	// return early if no group by or (no pagegroups provided plus no filterBystatus given for a full scan)
-	if len(groupBy) == 0 || (len(pageGroups) == 0 && filterByPodStatus.IsZero()) {
+	if len(groupBy) == 0 || (len(pageGroups) == 0 && len(filterByPodStatus) == 0) {
 		return map[string]podStatusCounts{}, nil
 	}
 
+	var (
+		filterClause   *sqlbuilder.WhereClause
+		err            error
+		userFilterExpr string
+	)
+
 	// Merge user filter with page-groups IN clauses.
-	userFilterExpr := ""
+	userFilterExpr = ""
 	if filter != nil {
 		userFilterExpr = filter.Expression
 	}
@@ -373,10 +383,7 @@ func (m *module) getPerGroupPodStatusCounts(
 	// CTEs, and buildFilterClause hits the metadata store + parses the
 	// expression, so we don't want to repeat it per CTE. AddWhereClause only
 	// reads the clause, so the same instance is safe to attach to each builder.
-	var (
-		filterClause *sqlbuilder.WhereClause
-		err          error
-	)
+
 	if mergedFilterExpr != "" {
 		filterClause, err = m.buildFilterClause(ctx, orgID, &qbtypes.Filter{Expression: mergedFilterExpr}, start, end)
 		if err != nil {
@@ -591,14 +598,15 @@ func (m *module) getPerGroupPodStatusCounts(
 		countGroupBy = append(countGroupBy, col)
 	}
 	countSelectCols = append(countSelectCols, statusCountCols...)
-	// Push-down: keep only pods whose display status matches the requested one.
-	statusWhereClause, statusWhereArgs := podStatusFilterClause(filterByPodStatus)
-	countSQL := fmt.Sprintf(
-		"SELECT %s FROM pod_status%s GROUP BY %s",
-		strings.Join(countSelectCols, ", "),
-		statusWhereClause,
-		strings.Join(countGroupBy, ", "),
-	)
+
+	// Outer count query. Built with sqlbuilder so the status push-down uses a
+	// proper IN (keep only pods whose display status is in the requested set).
+	countBuilder := sqlbuilder.NewSelectBuilder()
+	countBuilder.Select(countSelectCols...)
+	countBuilder.From("pod_status")
+	applyPodStatusFilter(countBuilder, filterByPodStatus)
+	countBuilder.GroupBy(countGroupBy...)
+	countSQL, countArgs := countBuilder.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	// Combine CTEs + outer. Arg order mirrors CTE declaration order.
 	cteFragments := []string{
@@ -615,7 +623,7 @@ func (m *module) getPerGroupPodStatusCounts(
 		phaseFpsArgs, phasePerPodArgs,
 		podReasonFpsArgs, podReasonPerPodArgs,
 		containerReasonFpsArgs, containerInnerArgs,
-	}, statusWhereArgs)
+	}, countArgs)
 
 	rows, err := m.telemetryStore.ClickhouseDB().Query(ctx, finalSQL, finalArgs...)
 	if err != nil {

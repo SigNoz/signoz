@@ -2,46 +2,61 @@ package implinframonitoring
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
+	"github.com/huandu/go-sqlbuilder"
 )
 
-func TestPodStatusFilterClause(t *testing.T) {
+func TestApplyPodStatusFilter(t *testing.T) {
 	tests := []struct {
-		name       string
-		status     inframonitoringtypes.PodStatus
-		wantClause string
-		wantArgs   []any
+		name      string
+		statuses  []inframonitoringtypes.PodStatus
+		wantWhere bool
+		wantArgs  []any
 	}{
 		{
-			name:       "empty status yields no clause",
-			status:     inframonitoringtypes.PodStatus{},
-			wantClause: "",
-			wantArgs:   nil,
+			name:      "empty set yields no clause",
+			statuses:  nil,
+			wantWhere: false,
+			wantArgs:  nil,
 		},
 		{
-			name:       "crashloopbackoff pushes lowercased arg",
-			status:     inframonitoringtypes.PodStatusCrashLoopBackOff,
-			wantClause: " WHERE lower(display_status) = ? ",
-			wantArgs:   []any{"crashloopbackoff"},
+			name:      "single status pushes lowercased arg via IN",
+			statuses:  []inframonitoringtypes.PodStatus{inframonitoringtypes.PodStatusRunning},
+			wantWhere: true,
+			wantArgs:  []any{"running"},
 		},
 		{
-			name:       "running pushes lowercased arg",
-			status:     inframonitoringtypes.PodStatusRunning,
-			wantClause: " WHERE lower(display_status) = ? ",
-			wantArgs:   []any{"running"},
+			name: "multiple statuses push lowercased args via IN",
+			statuses: []inframonitoringtypes.PodStatus{
+				inframonitoringtypes.PodStatusRunning,
+				inframonitoringtypes.PodStatusCrashLoopBackOff,
+			},
+			wantWhere: true,
+			wantArgs:  []any{"running", "crashloopbackoff"},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotClause, gotArgs := podStatusFilterClause(tt.status)
-			if gotClause != tt.wantClause {
-				t.Errorf("podStatusFilterClause(%v) clause = %q, want %q", tt.status, gotClause, tt.wantClause)
+			cb := sqlbuilder.NewSelectBuilder()
+			cb.Select("pod_uid")
+			cb.From("pod_status")
+			applyPodStatusFilter(cb, tt.statuses)
+			sql, args := cb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+			hasWhere := strings.Contains(sql, "lower(display_status) IN (")
+			if hasWhere != tt.wantWhere {
+				t.Errorf("applyPodStatusFilter(%v) sql = %q, wantWhere = %v", tt.statuses, sql, tt.wantWhere)
 			}
-			if !reflect.DeepEqual(gotArgs, tt.wantArgs) {
-				t.Errorf("podStatusFilterClause(%v) args = %v, want %v", tt.status, gotArgs, tt.wantArgs)
+			if len(tt.wantArgs) == 0 {
+				if len(args) != 0 {
+					t.Errorf("applyPodStatusFilter(%v) args = %v, want none", tt.statuses, args)
+				}
+			} else if !reflect.DeepEqual(args, tt.wantArgs) {
+				t.Errorf("applyPodStatusFilter(%v) args = %v, want %v", tt.statuses, args, tt.wantArgs)
 			}
 		})
 	}
