@@ -62,7 +62,7 @@ func NewFactory(
 			aggExprRewriter := querybuilder.NewAggExprRewriter(settings, logstelemetryschema.DefaultFullTextColumn, fm, cb, fl)
 			return NewLogQueryStatementBuilder(
 				settings, metadataStore, fm, cb, aggExprRewriter, logstelemetryschema.DefaultFullTextColumn,
-				fl, telemetryStore, cfg.SkipResourceFingerprint.Enabled, cfg.SkipResourceFingerprint.Threshold,
+				fl, telemetryStore, cfg,
 			), nil
 		},
 	)
@@ -77,8 +77,7 @@ func NewLogQueryStatementBuilder(
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
 	fl flagger.Flagger,
 	telemetryStore telemetrystore.TelemetryStore,
-	skipResourceFingerprintEnable bool,
-	skipResourceFingerprintThreshold uint64,
+	cfg statementbuilder.Config,
 ) *logQueryStatementBuilder {
 	logsSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetryschema/logstelemetryschema")
 
@@ -92,7 +91,7 @@ func NewLogQueryStatementBuilder(
 		fullTextColumn,
 		fl,
 		telemetryStore,
-		skipResourceFingerprintThreshold,
+		cfg.SkipResourceFingerprint.Threshold,
 	)
 
 	return &logQueryStatementBuilder{
@@ -103,7 +102,7 @@ func NewLogQueryStatementBuilder(
 		resourceFilterResolver:         resourceFilterResolver,
 		aggExprRewriter:                aggExprRewriter,
 		fl:                             fl,
-		skipResourceFingerprintEnabled: skipResourceFingerprintEnable,
+		skipResourceFingerprintEnabled: cfg.SkipResourceFingerprint.Enabled,
 		fullTextColumn:                 fullTextColumn,
 	}
 }
