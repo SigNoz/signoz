@@ -3016,7 +3016,6 @@ func (r *ClickHouseReader) GetMetricAggregateAttributes(ctx context.Context, org
 		temporality := string(metadata.Temporality)
 		isMonotonic := metadata.IsMonotonic
 
-		// Cumulative gate already present here; metadata.go was aligned to match.
 		// Non-monotonic cumulative sums are treated as gauges
 		if typ == "Sum" && !isMonotonic && temporality == string(v3.Cumulative) {
 			typ = "Gauge"
@@ -3075,7 +3074,6 @@ func (r *ClickHouseReader) GetMeterAggregateAttributes(ctx context.Context, orgI
 			return nil, fmt.Errorf("error while scanning meter name: %s", err.Error())
 		}
 
-		// Cumulative gate already present here; metadata.go was aligned to match.
 		// Non-monotonic cumulative sums are treated as gauges
 		if typ == "Sum" && !isMonotonic && temporality == string(v3.Cumulative) {
 			typ = "Gauge"
