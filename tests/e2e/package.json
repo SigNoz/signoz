@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "preinstall": "npx only-allow pnpm",
-    "env:start": "cd .. && uv run pytest --basetemp=./tmp/ -vv --reuse --with-web e2e/bootstrap/setup.py::test_setup",
-    "env:stop": "cd .. && uv run pytest --basetemp=./tmp/ -vv --teardown e2e/bootstrap/setup.py::test_teardown",
+    "env:start": "cd .. && uv run pytest --basetemp=./tmp/ -vv --reuse --rebuild --capture=no --with-web e2e/bootstrap/setup.py::test_setup",
+    "env:stop": "cd .. && uv run pytest --basetemp=./tmp/ -vv --teardown --capture=no e2e/bootstrap/setup.py::test_teardown",
     "env:clean": "rm -rf ../tmp ../.pytest_cache .env.local artifacts && echo 'Cleaned. Run docker container prune if needed.'",
     "test": "playwright test",
     "test:local": "pnpm env:start && pnpm test",
