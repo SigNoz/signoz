@@ -122,7 +122,7 @@ func newQueryStack(
 ) {
 	metadataStore := telemetrymetadata.NewTelemetryMetaStore(settings, telemetryStore, fl)
 
-	cfg := config.StatementBuilder
+	cfg := config.Querier.Config
 	traceStmtBuilder, err := tracesstatementbuilder.NewFactory(telemetryStore, metadataStore, fl).New(ctx, settings, cfg)
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, nil, nil, err
