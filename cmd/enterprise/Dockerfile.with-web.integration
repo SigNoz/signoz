@@ -61,11 +61,10 @@ COPY ./templates /root/templates
 
 # Invoked directly instead of via make so Makefile changes don't invalidate
 # this layer; the Makefile's git-derived ldflags resolve to empty in here
-# anyway (.git is dockerignored). Built without -race: this image backs the
-# e2e suite, where the race detector's slowdown causes test flakiness.
+# anyway (.git is dockerignored).
 RUN --mount=type=cache,target=/go/pkg/mod \
 	--mount=type=cache,target=/root/.cache/go-build \
-	GOARCH=${TARGETARCH} GOOS=${OS} go build -C ./cmd/enterprise -tags timetzdata -o /root/signoz \
+	GOARCH=${TARGETARCH} GOOS=${OS} go build -C ./cmd/enterprise -race -tags timetzdata -o /root/signoz \
 	-ldflags "-s -w \
 		-X github.com/SigNoz/signoz/pkg/version.version=integration \
 		-X github.com/SigNoz/signoz/pkg/version.variant=enterprise \
