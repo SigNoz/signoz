@@ -231,6 +231,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewMigrateDashboardsV1ToV2Factory(sqlstore, sqlschema, dashboardStore, tagModule),
 		sqlmigration.NewFillDashboardMeterSourceFactory(sqlstore, dashboardStore),
 		sqlmigration.NewUpdateRoleTransactionGroupsFactory(),
+		sqlmigration.NewFillDashboardSpecCollectionsFactory(sqlstore, dashboardStore),
 	)
 }
 
