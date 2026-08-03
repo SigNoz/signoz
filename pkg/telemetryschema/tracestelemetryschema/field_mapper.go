@@ -382,7 +382,13 @@ func (m *fieldMapper) ColumnExpressionFor(
 			if err != nil {
 				return "", err
 			}
-			coerced, _ := querybuilder.DataTypeCollisionHandledFieldName(key, dummyValue, value, qbtypes.FilterOperatorUnknown)
+			coerced := value
+			// a time column keeps its native type; coercing it would yield seconds
+			if temporal, err := m.columnIsTemporal(ctx, startNs, endNs, key); err != nil {
+				return "", err
+			} else if !temporal {
+				coerced, _ = querybuilder.DataTypeCollisionHandledFieldName(key, dummyValue, value, qbtypes.FilterOperatorUnknown)
+			}
 			stmts = append(stmts, guard, coerced)
 		}
 		return fmt.Sprintf("multiIf(%s, NULL)", strings.Join(stmts, ", ")), nil
@@ -421,6 +427,20 @@ func (m *fieldMapper) ColumnExpressionFor(
 	return fmt.Sprintf("multiIf(%s, NULL)", strings.Join(args, ", ")), nil
 }
 
+// columnIsTemporal reports whether key resolves to a single time column, after evolution
+// selection. Multiple columns mean an attribute-map union, which is never temporal.
+func (m *fieldMapper) columnIsTemporal(ctx context.Context, startNs, endNs uint64, key *telemetrytypes.TelemetryFieldKey) (bool, error) {
+	columns, err := m.getColumn(ctx, startNs, endNs, key)
+	if err != nil {
+		return false, err
+	}
+	newColumns, _, err := qbtypes.SelectEvolutionsForColumns(columns, key.Evolutions, startNs, endNs)
+	if err != nil {
+		return false, err
+	}
+	return len(newColumns) == 1 && querybuilder.ColumnIsTemporal(newColumns[0]), nil
+}
+
 // columnMatchesDataType reports whether a metadata field's data type is consistent with a
 // column's ClickHouse type. A bare key's column is only unioned with same-named metadata
 // keys that could be the same field; a string attribute named `timestamp` is corrupt
@@ -432,9 +452,11 @@ func columnMatchesDataType(col *schema.Column, dt telemetrytypes.FieldDataType) 
 	switch col.Type.GetType() {
 	case schema.ColumnTypeEnumBool:
 		return dt == telemetrytypes.FieldDataTypeBool
+	case schema.ColumnTypeEnumDateTime64:
+		return false
 	case schema.ColumnTypeEnumUInt64, schema.ColumnTypeEnumUInt32,
 		schema.ColumnTypeEnumInt8, schema.ColumnTypeEnumInt16,
-		schema.ColumnTypeEnumFloat64, schema.ColumnTypeEnumDateTime64:
+		schema.ColumnTypeEnumFloat64:
 		return dt == telemetrytypes.FieldDataTypeInt64 ||
 			dt == telemetrytypes.FieldDataTypeFloat64 ||
 			dt == telemetrytypes.FieldDataTypeNumber
