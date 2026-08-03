@@ -7,6 +7,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/prometheus/prometheustest"
 	qbv5 "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/stretchr/testify/assert"
 )
@@ -439,4 +440,16 @@ func TestQuotedMetricOutsideBracesPattern(t *testing.T) {
 			}
 		})
 	}
+}
+
+// A pinned request must not share cache entries with default serving: a
+// cached default result would satisfy the pin without running the pinned
+// provider.
+func TestFingerprint_PinnedProviderBypassesCache(t *testing.T) {
+	q := &promqlQuery{
+		logger: slog.Default(),
+		query:  qbv5.PromQuery{Query: "up"},
+		opts:   promqlOptions{serve: &prometheustest.Provider{}},
+	}
+	assert.Empty(t, q.Fingerprint())
 }
