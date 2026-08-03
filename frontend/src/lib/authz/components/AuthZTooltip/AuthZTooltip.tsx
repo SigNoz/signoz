@@ -1,8 +1,8 @@
-import { CSSProperties, ReactElement, cloneElement, useMemo } from 'react';
+import { cloneElement, CSSProperties, ReactElement, useMemo } from 'react';
 import {
-	TooltipRoot,
 	TooltipContent,
 	TooltipProvider,
+	TooltipRoot,
 	TooltipTrigger,
 } from '@signozhq/ui/tooltip';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
@@ -23,6 +23,11 @@ interface AuthZTooltipProps {
 	children: ReactElement;
 	enabled?: boolean;
 	tooltipMessage?: string;
+	/**
+	 * Set this false when this button is used inside a modal/drawer of signozhq/ui,
+	 * otherwise the tooltip will not have the correct z-index
+	 */
+	withPortal?: false;
 }
 
 function formatDeniedMessage(
@@ -42,6 +47,7 @@ function AuthZTooltip({
 	children,
 	enabled = true,
 	tooltipMessage,
+	withPortal,
 }: AuthZTooltipProps): JSX.Element {
 	const { user } = useAppContext();
 	const shouldCheck = enabled && checks.length > 0;
@@ -69,10 +75,12 @@ function AuthZTooltip({
 		return children;
 	}
 
+	const childTestId = (children.props as { testId?: string }).testId;
+
 	return (
 		<TooltipProvider>
 			<TooltipRoot>
-				<TooltipTrigger asChild>
+				<TooltipTrigger asChild testId={childTestId}>
 					{cloneElement(children, {
 						disabled: true,
 						style: DISABLED_STYLE,
@@ -82,7 +90,7 @@ function AuthZTooltip({
 						'data-denied-permissions': deniedPermissions.join(','),
 					})}
 				</TooltipTrigger>
-				<TooltipContent className={styles.errorContent}>
+				<TooltipContent className={styles.errorContent} withPortal={withPortal}>
 					{formatDeniedMessage(deniedPermissions, user.id, tooltipMessage)}
 				</TooltipContent>
 			</TooltipRoot>

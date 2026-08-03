@@ -119,17 +119,17 @@ func TestQueryRange_MetricTypeFromStore(t *testing.T) {
 		providerSettings,
 		telemetryStore,
 		metadataStore,
-		nil,                      // prometheus
-		nil,                      // traceStmtBuilder
-		nil,                      // logStmtBuilder
-		nil,                      // auditStmtBuilder
-		&mockMetricStmtBuilder{}, // metricStmtBuilder
-		nil,                      // meterStmtBuilder
-		nil,                      // traceOperatorStmtBuilder
-		nil,                      // bucketCache
-		flaggertest.New(t),       // flagger
-		0,                        // logTraceIDWindowPadding
-		0,                        // maxConcurrentQueries
+		nil, // prometheus
+		nil, // traceStmtBuilder
+		nil, // logStmtBuilder
+		nil, // auditStmtBuilder
+		&mockMetricStmtBuilder{},
+		nil,                // meterStmtBuilder
+		nil,                // traceOperatorStmtBuilder
+		nil,                // bucketCache
+		flaggertest.New(t), // flagger
+		0,                  // logTraceIDWindowPadding
+		0,                  // maxConcurrentQueries
 	)
 
 	req := &qbtypes.QueryRangeRequest{

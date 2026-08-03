@@ -133,9 +133,14 @@ export function formModelToDto(
 			name: model.name,
 			display,
 			allowMultiple: model.multiSelect,
-			// Dynamic variables always expose the aggregate "ALL" entry (matches V1,
-			// which forced showALLOption true on save); other types respect the toggle.
-			allowAllValue: model.type === 'DYNAMIC' ? true : model.showAllOption,
+			// Dynamic variables always expose the aggregate "ALL" entry (matches V1, which
+			// forced showALLOption true on save); other types respect the toggle. Either
+			// way it needs multi-select — ALL is a set of values, and the API rejects the
+			// flag without it, which used to make a single-select dynamic variable
+			// unsaveable and blocked every other edit to the dashboard with it.
+			allowAllValue:
+				model.multiSelect &&
+				(model.type === 'DYNAMIC' ? true : model.showAllOption),
 			// model.sort is already a Perses sort token (`none` / `alphabetical-*`).
 			sort: model.sort,
 			defaultValue: model.defaultValue,

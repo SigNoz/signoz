@@ -1,6 +1,8 @@
+import { useMemo } from 'react';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useGetAlertRuleDetailsTimelineGraphData } from 'pages/AlertDetails/hooks';
 import DataStateRenderer from 'periscope/components/DataStateRenderer/DataStateRenderer';
+import { AlertRuleTimelineGraphResponse } from 'types/api/alerts/def';
 
 import Graph from '../Graph/Graph';
 
@@ -18,26 +20,16 @@ function GraphWrapper({
 	const { isLoading, isRefetching, isError, data, isValidRuleId, ruleId } =
 		useGetAlertRuleDetailsTimelineGraphData();
 
-	// TODO(shaheer): uncomment when the API is ready for
-	// const { startTime } = useAlertHistoryQueryParams();
-
-	// const [isVerticalGraph, setIsVerticalGraph] = useState(false);
-
-	// useEffect(() => {
-	// 	const checkVerticalGraph = (): void => {
-	// 		if (startTime) {
-	// 			const startTimeDate = dayjs(Number(startTime));
-	// 			const twentyFourHoursAgo = dayjs().subtract(
-	// 				HORIZONTAL_GRAPH_HOURS_THRESHOLD,
-	// 				DAYJS_MANIPULATE_TYPES.HOUR,
-	// 			);
-
-	// 			setIsVerticalGraph(startTimeDate.isBefore(twentyFourHoursAgo));
-	// 		}
-	// 	};
-
-	// 	checkVerticalGraph();
-	// }, [startTime]);
+	const adaptedData = useMemo((): AlertRuleTimelineGraphResponse[] | null => {
+		if (!data?.data) {
+			return null;
+		}
+		return data.data.map((item) => ({
+			start: item.start,
+			end: item.end,
+			state: item.state as AlertRuleTimelineGraphResponse['state'],
+		}));
+	}, [data?.data]);
 
 	return (
 		<div className="timeline-graph">
@@ -49,7 +41,7 @@ function GraphWrapper({
 					isLoading={isLoading}
 					isError={isError || !isValidRuleId || !ruleId}
 					isRefetching={isRefetching}
-					data={data?.payload?.data || null}
+					data={adaptedData}
 				>
 					{(data): JSX.Element => <Graph type="horizontal" data={data} />}
 				</DataStateRenderer>

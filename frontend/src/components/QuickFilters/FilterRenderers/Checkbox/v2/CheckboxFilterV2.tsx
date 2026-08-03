@@ -5,6 +5,7 @@ import { Typography } from '@signozhq/ui/typography';
 import { LoaderCircle } from '@signozhq/icons';
 import {
 	IQuickFiltersConfig,
+	QuickFilterChangeEventData,
 	QuickFilterCheckboxUseFieldApis,
 	QuickFiltersSource,
 } from 'components/QuickFilters/types';
@@ -33,13 +34,15 @@ interface CheckboxFilterV2Props {
 	filter: IQuickFiltersConfig;
 	source: QuickFiltersSource;
 	onFilterChange?: (query: Query) => void;
+	onQuickFilterChange?: (data: QuickFilterChangeEventData) => void;
 	useFieldApis: QuickFilterCheckboxUseFieldApis;
 }
 
 export default function CheckboxFilterV2(
 	props: CheckboxFilterV2Props,
 ): JSX.Element {
-	const { source, filter, onFilterChange, useFieldApis } = props;
+	const { source, filter, onFilterChange, onQuickFilterChange, useFieldApis } =
+		props;
 	const [searchText, setSearchText] = useState<string>('');
 	const [userToggleState, setUserToggleState] = useState<boolean | null>(null);
 
@@ -103,6 +106,7 @@ export default function CheckboxFilterV2(
 		attributeValues,
 		activeQueryIndex,
 		onFilterChange,
+		onQuickFilterChange,
 	});
 
 	const setSearchTextDebounced = useDebouncedFn((...args) => {

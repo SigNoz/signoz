@@ -1,6 +1,8 @@
 import base64
 import json
 import time
+import urllib.parse
+import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
@@ -56,6 +58,97 @@ def create_alert_rule(signoz: types.SigNoz, get_token: Callable[[str, str], str]
             _delete_alert_rule(rule_id)
         except Exception as e:  # pylint: disable=broad-exception-caught
             logger.error("Error deleting rule: %s", {"rule_id": rule_id, "error": e})
+
+
+@pytest.fixture(name="create_alert_rule_with_channel", scope="function")
+def create_alert_rule_with_channel(
+    notification_channel: types.TestContainerDocker,
+    create_webhook_notification_channel: Callable[[str, str, dict, bool], str],
+    create_alert_rule: Callable[[dict], str],
+) -> Callable[[str], str]:
+    """Creates the rule from the given testdata path with a throwaway webhook channel."""
+
+    def _create_alert_rule_with_channel(rule_path: str) -> str:
+        channel_name = str(uuid.uuid4())
+        create_webhook_notification_channel(
+            channel_name=channel_name,
+            webhook_url=notification_channel.container_configs["8080"].get(f"/alert/{channel_name}"),
+            http_config={},
+            send_resolved=False,
+        )
+
+        with open(get_testdata_file_path(rule_path), encoding="utf-8") as f:
+            rule_data = json.loads(f.read())
+        update_rule_channel_name(rule_data, channel_name)
+        return create_alert_rule(rule_data)
+
+    return _create_alert_rule_with_channel
+
+
+def labels_to_map(labels: list[dict]) -> dict[str, str]:
+    """Converts the label list shape of the v2 rule history APIs to a plain map."""
+    return {label["key"]["name"]: label["value"] for label in labels or []}
+
+
+def parse_related_link(link: str) -> dict:
+    """Parses the query params of a related logs/traces explorer link."""
+    params = urllib.parse.parse_qs(link)
+    for key in ("compositeQuery", "startTime", "endTime"):
+        assert key in params, f"related link is missing param {key}, link: {link}"
+    return {
+        "start": int(params["startTime"][0]),
+        "end": int(params["endTime"][0]),
+        # the compositeQuery value is query-escaped before being encoded into
+        # the params, so it needs one more unquote than the other params
+        "composite_query": json.loads(urllib.parse.unquote_plus(params["compositeQuery"][0])),
+    }
+
+
+def assert_related_link_query(link: dict, data_source: str, expression_pieces: list[str]) -> None:
+    query_data = link["composite_query"]["builder"]["queryData"]
+    assert len(query_data) == 1
+    assert query_data[0]["dataSource"] == data_source
+    expression = query_data[0]["filter"]["expression"]
+    for piece in expression_pieces:
+        assert piece in expression, f"expected {piece} in link filter expression: {expression}"
+
+
+def wait_for_firing_timeline_entry(signoz: types.SigNoz, token: str, rule_id: str, start_ms: int, wait_seconds: int = 60) -> tuple[dict, int]:
+    """Polls the v2 timeline API until the rule records a firing entry.
+
+    Rules in the alert scenarios evaluate every 15s and their data is set up to
+    fire on the first evaluation, so the default wait leaves plenty of slack.
+    Returns the firing entry and the end of the queried range.
+    """
+    deadline = time.time() + wait_seconds
+    items = []
+    while time.time() < deadline:
+        end_ms = int(datetime.now(tz=UTC).timestamp() * 1000) + 60_000
+        response = requests.get(
+            signoz.self.host_configs["8080"].get(f"/api/v2/rules/{rule_id}/history/timeline"),
+            params={"start": start_ms, "end": end_ms, "limit": 50, "order": "desc"},
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.OK, f"Failed to get rule history timeline, api returned {response.status_code} with response: {response.text}"
+        items = response.json()["data"]["items"] or []
+        firing = [item for item in items if item["state"] == "firing"]
+        if len(firing) > 0:
+            return (firing[0], end_ms)
+        time.sleep(2)
+
+    raise AssertionError(f"No firing entry recorded in rule state history within {wait_seconds}s, items: {items}")
+
+
+def get_rule_history_top_contributors(signoz: types.SigNoz, token: str, rule_id: str, start_ms: int, end_ms: int) -> list[dict]:
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"/api/v2/rules/{rule_id}/history/top_contributors"),
+        params={"start": start_ms, "end": end_ms},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, f"Failed to get rule history top contributors, api returned {response.status_code} with response: {response.text}"
+    return response.json()["data"] or []
 
 
 @pytest.fixture(name="insert_alert_data", scope="function")

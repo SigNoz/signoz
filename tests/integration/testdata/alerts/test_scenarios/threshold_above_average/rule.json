@@ -9,8 +9,8 @@
         {
           "name": "critical",
           "target": 1,
-          "matchType": "3",
-          "op": "1",
+          "matchType": "on_average",
+          "op": "above",
           "channels": [
             "test channel"
           ],

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import {
@@ -63,7 +63,10 @@ type ThresholdsSectionProps = {
 	/** `variant` picks the row editor + element shape; defaults to `label`. */
 	controls?: { variant?: ThresholdVariant };
 	onChange: (next: AnyThreshold[]) => void;
-} & Pick<SectionEditorContext, 'yAxisUnit' | 'tableColumns'>;
+} & Pick<
+	SectionEditorContext,
+	'yAxisUnit' | 'tableColumns' | 'registerHeaderAction'
+>;
 
 /**
  * Edits the `thresholds` slice for every panel kind. All variants share the same
@@ -77,6 +80,7 @@ function ThresholdsSection({
 	onChange,
 	yAxisUnit,
 	tableColumns = [],
+	registerHeaderAction,
 }: ThresholdsSectionProps): JSX.Element {
 	const variant = controls?.variant ?? ThresholdVariant.LABEL;
 	const thresholds = value ?? [];
@@ -93,12 +97,17 @@ function ThresholdsSection({
 			onChange(thresholds.map((t, i) => (i === index ? next : t)));
 		};
 
-	const addThreshold = (): void => {
-		const nextIndex = thresholds.length;
-		onChange([...thresholds, defaultThreshold(variant, tableColumns)]);
-		setEditingIndex(nextIndex);
-		setUnsavedIndex(nextIndex);
-	};
+	const addThreshold = useCallback((): void => {
+		const current = value ?? [];
+		onChange([...current, defaultThreshold(variant, tableColumns)]);
+		setEditingIndex(current.length);
+		setUnsavedIndex(current.length);
+	}, [value, onChange, variant, tableColumns]);
+
+	useEffect(() => {
+		registerHeaderAction?.(addThreshold);
+		return (): void => registerHeaderAction?.(null);
+	}, [registerHeaderAction, addThreshold]);
 
 	const beginEdit = (index: number): void => {
 		editSnapshot.current = thresholds[index] ?? null;

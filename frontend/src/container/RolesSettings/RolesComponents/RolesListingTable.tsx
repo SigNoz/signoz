@@ -8,7 +8,7 @@ import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import ROUTES from 'constants/routes';
 import { useRolesFeatureGate } from 'hooks/useRolesFeatureGate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { withAuthZPage } from 'lib/authz/components/withAuthZ/withAuthZPage';
+import { withAuthZContent } from 'lib/authz/components/withAuthZ/withAuthZContent';
 import { RoleListPermission } from 'lib/authz/hooks/useAuthZ/permissions/role.permissions';
 import LineClampedText from 'periscope/components/LineClampedText/LineClampedText';
 import { useTimezone } from 'providers/Timezone';
@@ -267,7 +267,7 @@ function RolesListContent({ searchQuery }: RolesListContentProps): JSX.Element {
 	);
 }
 
-export default withAuthZPage<RolesListContentProps>(RolesListContent, {
+export default withAuthZContent<RolesListContentProps>(RolesListContent, {
 	checks: [RoleListPermission],
 	fallbackOnLoading: (
 		<div className={styles.rolesListingTable}>
