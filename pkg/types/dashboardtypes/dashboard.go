@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
@@ -176,67 +177,73 @@ func NewGettableDashboardFromDashboard(dashboard *Dashboard) (*GettableDashboard
 	}, nil
 }
 
+const (
+	statKeyDashboardCount    = "dashboard.count"
+	statKeyPanelCount        = "dashboard.panels.count"
+	statKeyPanelTracesCount  = "dashboard.panels.traces.count"
+	statKeyPanelMetricsCount = "dashboard.panels.metrics.count"
+	statKeyPanelLogsCount    = "dashboard.panels.logs.count"
+)
+
+// panelSignalStatKeys maps a builder query's signal to the stat it contributes
+// to. Signal-less queries (promql, clickhouse sql, formulas) count towards the
+// panel total only.
+var panelSignalStatKeys = map[telemetrytypes.Signal]string{
+	telemetrytypes.SignalTraces:  statKeyPanelTracesCount,
+	telemetrytypes.SignalMetrics: statKeyPanelMetricsCount,
+	telemetrytypes.SignalLogs:    statKeyPanelLogsCount,
+}
+
 func NewStatsFromStorableDashboards(dashboards []*StorableDashboard) map[string]any {
-	stats := make(map[string]any)
-	stats["dashboard.panels.count"] = int64(0)
-	stats["dashboard.panels.traces.count"] = int64(0)
-	stats["dashboard.panels.metrics.count"] = int64(0)
-	stats["dashboard.panels.logs.count"] = int64(0)
+	stats := map[string]any{
+		statKeyPanelCount:        int64(0),
+		statKeyPanelTracesCount:  int64(0),
+		statKeyPanelMetricsCount: int64(0),
+		statKeyPanelLogsCount:    int64(0),
+	}
 	for _, dashboard := range dashboards {
 		addStatsFromStorableDashboard(dashboard, stats)
 	}
 
-	stats["dashboard.count"] = int64(len(dashboards))
+	stats[statKeyDashboardCount] = int64(len(dashboards))
 	return stats
 }
 
+// addStatsFromStorableDashboard counts the panels and per-signal queries of a v2
+// dashboard. Rows that do not decode as v2 contribute to dashboard.count only.
 func addStatsFromStorableDashboard(dashboard *StorableDashboard, stats map[string]any) {
-	if dashboard.Data == nil {
+	if dashboard == nil {
 		return
 	}
 
-	if dashboard.Data["widgets"] == nil {
+	dashboardV2, err := dashboard.ToDashboardV2(nil)
+	if err != nil {
 		return
 	}
 
-	widgets, ok := dashboard.Data["widgets"]
-	if !ok {
-		return
-	}
+	for _, panel := range dashboardV2.Spec.Panels {
+		if panel == nil {
+			continue
+		}
+		incrementStat(stats, statKeyPanelCount)
 
-	data, ok := widgets.([]interface{})
-	if !ok {
-		return
-	}
-
-	for _, widget := range data {
-		sData, ok := widget.(map[string]interface{})
-		if ok && sData["query"] != nil {
-			stats["dashboard.panels.count"] = stats["dashboard.panels.count"].(int64) + 1
-			query, ok := sData["query"].(map[string]interface{})
-			if ok && query["queryType"] == "builder" && query["builder"] != nil {
-				builderData, ok := query["builder"].(map[string]interface{})
-				if ok && builderData["queryData"] != nil {
-					builderQueryData, ok := builderData["queryData"].([]interface{})
-					if ok {
-						for _, queryData := range builderQueryData {
-							data, ok := queryData.(map[string]interface{})
-							if ok {
-								switch data["dataSource"] {
-								case "traces":
-									stats["dashboard.panels.traces.count"] = stats["dashboard.panels.traces.count"].(int64) + 1
-								case "metrics":
-									stats["dashboard.panels.metrics.count"] = stats["dashboard.panels.metrics.count"].(int64) + 1
-								case "logs":
-									stats["dashboard.panels.logs.count"] = stats["dashboard.panels.logs.count"].(int64) + 1
-								}
-							}
-						}
-					}
+		for _, query := range panel.Spec.Queries {
+			composite, err := query.Spec.Plugin.buildV5CompositeQueryFromPlugin()
+			if err != nil {
+				continue
+			}
+			for _, envelope := range composite.Queries {
+				if key, ok := panelSignalStatKeys[envelope.GetSignal()]; ok {
+					incrementStat(stats, key)
 				}
 			}
 		}
 	}
+}
+
+func incrementStat(stats map[string]any, key string) {
+	count, _ := stats[key].(int64)
+	stats[key] = count + 1
 }
 
 func (storableDashboardData *StorableDashboardData) GetWidgetIds() []string {
