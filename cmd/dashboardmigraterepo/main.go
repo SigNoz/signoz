@@ -1,12 +1,17 @@
-// Command dashboardmigraterepo runs the v1→v2 dashboard migration over every
-// JSON file in the SigNoz dashboards repo (github.com/SigNoz/dashboards) to
-// surface conversion/validation gaps and emit the migrated v2 JSON.
+// Command dashboardmigraterepo runs the v1→v2 dashboard migration over the
+// SigNoz dashboards repo (github.com/SigNoz/dashboards) to surface
+// conversion/validation gaps and emit the migrated v2 JSON.
+//
+// The repo keeps each dashboard's v1 JSON in a "v1" subfolder and its v2 form
+// alongside that folder (foo/v1/bar.json → foo/bar.json), so only files
+// directly inside a v1 folder are read, and each one is written to the same
+// basename one level up. Folders without a v1 subfolder are left alone.
 //
 // It mirrors the production pipeline (the 103_migrate_dashboards_v1_to_v2 SQL
 // migration): run the v4→v5 widget-query migration in place, then
-// StorableDashboard.ConvertV1ToV2, then DashboardSpec.Validate. Nothing is
-// written back to the input repo — outputs go to -out so the result can be
-// reviewed before staging a PR.
+// StorableDashboard.ConvertV1ToV2, then DashboardSpec.Validate. The v1 inputs
+// are never touched; set -out to a scratch directory to review the result
+// before overwriting the repo's v2 files in place.
 //
 // Throwaway tooling for the schema migration; not part of the build.
 //
@@ -49,7 +54,7 @@ type outcome struct {
 
 func main() {
 	inDir := flag.String("in", os.Getenv("DASHBOARDS_IN"), "dashboards repo root to scan for v1 JSON (default $DASHBOARDS_IN)")
-	outDir := flag.String("out", os.Getenv("DASHBOARDS_OUT"), "directory to write migrated v2 JSON (mirrors -in layout); empty = don't write, report only. Set equal to -in to overwrite in place (default $DASHBOARDS_OUT)")
+	outDir := flag.String("out", os.Getenv("DASHBOARDS_OUT"), "directory to write migrated v2 JSON (mirrors -in layout, minus the v1 folder); empty = don't write, report only. Set equal to -in to overwrite the repo's v2 files in place (default $DASHBOARDS_OUT)")
 	only := flag.String("only", os.Getenv("DASHBOARDS_ONLY"), "restrict the scan to this subfolder of -in (e.g. redis); empty = whole repo (default $DASHBOARDS_ONLY)")
 	flag.Parse()
 
@@ -71,26 +76,45 @@ func main() {
 	migrator := transition.NewDashboardMigrateV5(slog.New(slog.NewTextHandler(os.Stderr, nil)), nil, nil)
 
 	var outcomes []outcome
+	folders := folderIndex{}
 	err := filepath.WalkDir(walkRoot, func(path string, dirEntry fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
+		rel, _ := filepath.Rel(*inDir, path)
+
 		if dirEntry.IsDir() {
-			// Skip VCS and image/asset directories — never dashboards.
-			if name := dirEntry.Name(); name == ".git" || name == ".github" || name == "assets" {
+			// Skip VCS and image/asset directories — never dashboards, and counting
+			// them would inflate the folder tally.
+			if name := dirEntry.Name(); name == ".git" || name == ".github" || name == "assets" || name == "images" {
 				return fs.SkipDir
+			}
+			if dirEntry.Name() == v1Dir {
+				folders.ensure(filepath.Dir(path)).hasV1 = true
+				return nil
+			}
+			// Register every other directory so a folder still counts when it holds
+			// no dashboards at all (e.g. aws-rds, a parent of two dashboard folders).
+			// rel == "." is the scan root itself, not a dashboard folder.
+			if rel != "." {
+				folders.ensure(path)
 			}
 			return nil
 		}
 		if !strings.HasSuffix(path, ".json") {
 			return nil
 		}
-		// Skip our own migrated outputs from a prior run.
-		if strings.HasSuffix(path, "-perses.json") {
+
+		parent := filepath.Dir(path)
+		// Only v1 sources are migrated; a JSON file anywhere else is either an
+		// already-migrated v2 sibling or a dashboard in a folder the repo hasn't
+		// split into a v1 folder yet.
+		if filepath.Base(parent) != v1Dir {
+			folders.ensure(parent).looseDashboards++
 			return nil
 		}
 
-		rel, _ := filepath.Rel(*inDir, path)
+		folders.ensure(filepath.Dir(parent)).v1Dashboards++
 		outcomes = append(outcomes, migrateOne(ctx, migrator, path, rel, *outDir))
 		return nil
 	})
@@ -99,7 +123,34 @@ func main() {
 		os.Exit(1)
 	}
 
-	report(outcomes)
+	report(outcomes, folders)
+}
+
+// v1Dir is the dashboards-repo folder holding a dashboard's v1 JSON; the
+// migrated v2 JSON lives one level up, next to that folder.
+const v1Dir = "v1"
+
+// folderStats counts the dashboards a single folder owns. v1Dashboards and
+// looseDashboards are disjoint: the former sit inside the folder's v1
+// subfolder, the latter directly in the folder — which for a folder with a v1
+// subfolder means the migrated v2 siblings, and for one without means
+// dashboards this command leaves alone.
+type folderStats struct {
+	hasV1           bool
+	v1Dashboards    int
+	looseDashboards int
+}
+
+// folderIndex accumulates per-folder stats during the walk, keyed by path.
+type folderIndex map[string]*folderStats
+
+func (index folderIndex) ensure(path string) *folderStats {
+	stats, ok := index[path]
+	if !ok {
+		stats = &folderStats{}
+		index[path] = stats
+	}
+	return stats
 }
 
 func migrateOne(ctx context.Context, migrator interface {
@@ -178,18 +229,18 @@ func marshalPostableV2(v2 *dashboardtypes.DashboardV2) ([]byte, error) {
 	return json.MarshalIndent(postable, "", "  ")
 }
 
-// writeFile writes the migrated JSON alongside the original with a "-perses"
-// suffix (foo.json → foo-perses.json), leaving the v1 file untouched.
+// writeFile writes the migrated JSON to the v1 source's sibling one level above
+// the v1 folder, keeping the basename (foo/v1/bar.json → foo/bar.json), so an
+// -out equal to -in replaces the repo's v2 file and leaves the v1 file untouched.
 func writeFile(out []byte, rel, outDir string) error {
-	rel = strings.TrimSuffix(rel, ".json") + "-perses.json"
-	dst := filepath.Join(outDir, rel)
+	dst := filepath.Join(outDir, filepath.Dir(filepath.Dir(rel)), filepath.Base(rel))
 	if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
 		return err
 	}
 	return os.WriteFile(dst, out, 0o644)
 }
 
-func report(outcomes []outcome) {
+func report(outcomes []outcome, folders folderIndex) {
 	sort.Slice(outcomes, func(i, j int) bool { return outcomes[i].relPath < outcomes[j].relPath })
 
 	counts := map[string]int{}
@@ -197,7 +248,13 @@ func report(outcomes []outcome) {
 		counts[o.status]++
 	}
 
-	fmt.Printf("\n=== %d dashboards ===\n", len(outcomes))
+	withV1, withoutV1, dashboardsWithV1, dashboardsWithoutV1 := summarizeFolders(folders)
+	fmt.Printf("\n=== folders ===\n")
+	fmt.Printf("  %-24s %4d\n", "total", withV1+withoutV1)
+	fmt.Printf("  %-24s %4d   %d dashboards\n", "with a "+v1Dir+" folder", withV1, dashboardsWithV1)
+	fmt.Printf("  %-24s %4d   %d dashboards (skipped)\n", "without a "+v1Dir+" folder", withoutV1, dashboardsWithoutV1)
+
+	fmt.Printf("\n=== %d dashboards migrated ===\n", len(outcomes))
 	for _, status := range []string{"ok", "skipped-v2", "convert-failed", "validate-failed", "read-failed", "write-failed"} {
 		if counts[status] > 0 {
 			fmt.Printf("  %-16s %d\n", status, counts[status])
@@ -231,6 +288,23 @@ func report(outcomes []outcome) {
 	if !anyIcon {
 		fmt.Println("  none")
 	}
+}
+
+// summarizeFolders splits the scanned folders into those that carry a v1
+// subfolder and those that don't, with the dashboard count on each side. Only
+// dashboards in a v1 folder are migrated, so the second count is what this
+// command left untouched.
+func summarizeFolders(folders folderIndex) (withV1, withoutV1, dashboardsWithV1, dashboardsWithoutV1 int) {
+	for _, stats := range folders {
+		if stats.hasV1 {
+			withV1++
+			dashboardsWithV1 += stats.v1Dashboards
+			continue
+		}
+		withoutV1++
+		dashboardsWithoutV1 += stats.looseDashboards
+	}
+	return withV1, withoutV1, dashboardsWithV1, dashboardsWithoutV1
 }
 
 // truncate shortens a value for the report — v1 images can be multi-KB base64.
