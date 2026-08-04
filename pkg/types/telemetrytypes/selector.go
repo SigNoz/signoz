@@ -10,6 +10,7 @@ const wildcardSelector = "*"
 
 var telemetryGrantQueryTypes = map[string]bool{
 	"builder_query":     true,
+	"builder_ai_query":  true,
 	"builder_sub_query": true,
 	"promql":            false,
 	"clickhouse_sql":    false,
