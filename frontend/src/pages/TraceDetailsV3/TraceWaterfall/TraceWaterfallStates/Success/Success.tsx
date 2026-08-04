@@ -690,7 +690,11 @@ function Success(props: ISuccessProps): JSX.Element {
 				urlQuery.set('spanId', span?.span_id);
 			}
 
-			safeNavigate({ search: urlQuery.toString() });
+			// Replace (not push) so switching between spans within the same trace
+			// doesn't stack a history entry per click. This keeps the entry the user
+			// arrived from (e.g. the Traces Explorer) as the back target instead of
+			// walking back through every span they inspected.
+			safeNavigate({ search: urlQuery.toString() }, { replace: true });
 		},
 		[setSelectedSpan, urlQuery, safeNavigate],
 	);

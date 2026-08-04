@@ -80,7 +80,10 @@ function TraceDetailsV3(): JSX.Element {
 
 	const handleSpanDetailsClose = useCallback((): void => {
 		urlQuery.delete('spanId');
-		safeNavigate({ search: urlQuery.toString() });
+		// Replace (not push) so closing the span panel doesn't add a history entry,
+		// staying consistent with span selection and keeping the entry the user
+		// arrived from as the back target.
+		safeNavigate({ search: urlQuery.toString() }, { replace: true });
 	}, [urlQuery, safeNavigate]);
 
 	const handleFilteredSpansChange = useCallback(
