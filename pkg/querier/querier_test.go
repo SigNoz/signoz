@@ -50,6 +50,7 @@ func TestQueryRange_MetricTypeMissing(t *testing.T) {
 		nil,                // prometheus
 		nil,                // promV2
 		nil,                // traceStmtBuilder
+		nil,                // aiTraceStmtBuilder
 		nil,                // logStmtBuilder
 		nil,                // auditStmtBuilder
 		nil,                // metricStmtBuilder
@@ -123,6 +124,7 @@ func TestQueryRange_MetricTypeFromStore(t *testing.T) {
 		nil, // prometheus
 		nil, // promV2
 		nil, // traceStmtBuilder
+		nil, // aiTraceStmtBuilder
 		nil, // logStmtBuilder
 		nil, // auditStmtBuilder
 		&mockMetricStmtBuilder{},
