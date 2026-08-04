@@ -260,10 +260,13 @@ function TracesExplorer(): JSX.Element {
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<div className="trace-explorer-page">
 				<Card className="filter" hidden={!isOpen}>
+					{/* POC: AI Observability quick filters — signal hits /filters/ai_observability
+					    and key/value suggestions send type=builder_ai_query */}
 					<QuickFilters
 						className="qf-traces-explorer"
-						source={QuickFiltersSource.TRACES_EXPLORER}
-						signal={SignalType.TRACES}
+						source={QuickFiltersSource.AI_OBSERVABILITY}
+						signal={SignalType.AI_OBSERVABILITY}
+						showQueryName={false}
 						handleFilterVisibilityChange={(): void => {
 							setOpen(!isOpen);
 						}}

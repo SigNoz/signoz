@@ -24,6 +24,8 @@ export enum SignalType {
 	API_MONITORING = 'api_monitoring',
 	EXCEPTIONS = 'exceptions',
 	METER_EXPLORER = 'meter',
+	// POC: AI Observability explorer — maps to GET /orgs/me/filters/ai_observability
+	AI_OBSERVABILITY = 'ai_observability',
 }
 
 /**
@@ -68,6 +70,8 @@ export enum QuickFiltersSource {
 	API_MONITORING = 'api-monitoring',
 	EXCEPTIONS = 'exceptions',
 	METER_EXPLORER = 'meter',
+	// POC: AI Observability explorer surface
+	AI_OBSERVABILITY = 'ai-observability',
 }
 
 /**

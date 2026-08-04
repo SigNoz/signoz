@@ -7,4 +7,6 @@ export const SIGNAL_DATA_SOURCE_MAP = {
 	[SignalType.EXCEPTIONS]: DataSource.TRACES,
 	[SignalType.API_MONITORING]: DataSource.TRACES,
 	[SignalType.METER_EXPLORER]: DataSource.METRICS,
+	// POC: AI quick filters still resolve attribute keys against traces
+	[SignalType.AI_OBSERVABILITY]: DataSource.TRACES,
 };
