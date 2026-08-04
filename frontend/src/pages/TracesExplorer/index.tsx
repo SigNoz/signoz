@@ -17,6 +17,7 @@ import { usePageActions } from 'container/AIAssistant/pageActions/usePageActions
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import LeftToolbarActions from 'container/QueryBuilder/components/ToolbarActions/LeftToolbarActions';
+import { AI_TRACE_VIEW_COLUMN_SELECTION } from 'container/AIObservability/TraceView/aiTraceViewColumns';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import Toolbar from 'container/Toolbar/Toolbar';
 import {
@@ -330,6 +331,10 @@ function TracesExplorer(): JSX.Element {
 									setWarning={setWarning}
 									setIsLoadingQueries={setIsLoadingQueries}
 									queryKeyRef={listQueryKeyRef}
+									// DEMO ONLY — surfaces the AI Observability column set here because
+									// the AI Explorer does not exist yet. Drop this prop (and the import)
+									// to return Trace View to its five base columns.
+									columnSelection={AI_TRACE_VIEW_COLUMN_SELECTION}
 								/>
 							</div>
 						)}
