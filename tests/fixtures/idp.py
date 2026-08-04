@@ -7,6 +7,7 @@ import pytest
 import requests
 from keycloak import KeycloakAdmin
 from selenium import webdriver
+from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
@@ -370,11 +371,20 @@ def idp_login(driver: webdriver.Chrome) -> Callable[[str, str], None]:
         password_field.send_keys(password)
 
         # Click the login button
+        login_url = driver.current_url
         login_button = wait.until(EC.element_to_be_clickable((By.ID, "kc-login")))
         login_button.click()
 
-        # Wait till kc-login element has vanished from the page, which means that a redirection is taking place.
-        wait.until(EC.invisibility_of_element((By.ID, "kc-login")))
+        # Wait till the browser has navigated off the login page, which means that a redirection is taking place.
+        # The button is looked up afresh on every poll instead of reusing the clicked element: mid-navigation the
+        # old node detaches and chrome reports that as a bare WebDriverException, not a stale element reference.
+        def _left_login_page(drv: webdriver.Chrome) -> bool:
+            try:
+                return drv.current_url != login_url and not drv.find_elements(By.ID, "kc-login")
+            except WebDriverException:
+                return False
+
+        wait.until(_left_login_page)
 
     return _idp_login
 
