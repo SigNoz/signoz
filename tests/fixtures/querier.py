@@ -168,6 +168,7 @@ def make_query_request(
     variables: dict | None = None,
     no_cache: bool = True,
     timeout: int = QUERY_TIMEOUT,
+    headers: dict | None = None,
 ) -> requests.Response:
     if format_options is None:
         format_options = {"formatTableResultForUI": False, "fillGaps": False}
@@ -187,7 +188,7 @@ def make_query_request(
     return requests.post(
         signoz.self.host_configs["8080"].get("/api/v5/query_range"),
         timeout=timeout,
-        headers={"authorization": f"Bearer {token}"},
+        headers={"authorization": f"Bearer {token}", **(headers or {})},
         json=payload,
     )
 

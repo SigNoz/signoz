@@ -2303,6 +2303,15 @@ func unionTemporalities(existing, additional []metrictypes.Temporality) []metric
 	return existing
 }
 
+// resolveMetricType applies the non-monotonic-cumulative-sum-as-gauge rule.
+// Monotonicity is only meaningful for cumulative sums; delta sums always stay Sum.
+func resolveMetricType(metricType metrictypes.Type, isMonotonic bool, temporality metrictypes.Temporality) metrictypes.Type {
+	if metricType == metrictypes.SumType && !isMonotonic && temporality == metrictypes.Cumulative {
+		return metrictypes.GaugeType
+	}
+	return metricType
+}
+
 func (t *telemetryMetaStore) fetchTemporalityTypeForTable(ctx context.Context, tableName string, adjustedStartTs, adjustedEndTs uint64, metricNames []string, extraConds ...string) (map[string][]metrictypes.Temporality, map[string]metrictypes.Type, error) {
 	temporalities := make(map[string][]metrictypes.Temporality)
 	types := make(map[string]metrictypes.Type)
@@ -2339,9 +2348,7 @@ func (t *telemetryMetaStore) fetchTemporalityTypeForTable(ctx context.Context, t
 		if temporality != metrictypes.Unknown {
 			temporalities[metricName] = append(temporalities[metricName], temporality)
 		}
-		if metricType == metrictypes.SumType && !isMonotonic {
-			metricType = metrictypes.GaugeType
-		}
+		metricType = resolveMetricType(metricType, isMonotonic, temporality)
 		types[metricName] = metricType
 	}
 	if err := rows.Err(); err != nil {
@@ -2392,9 +2399,7 @@ func (t *telemetryMetaStore) fetchMeterSourceMetricsTemporalityAndType(ctx conte
 		if err := rows.Scan(&metricName, &temporality, &metricType, &isMonotonic); err != nil {
 			return nil, nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to scan temporality result")
 		}
-		if metricType == metrictypes.SumType && !isMonotonic {
-			metricType = metrictypes.GaugeType
-		}
+		metricType = resolveMetricType(metricType, isMonotonic, temporality)
 		temporalities[metricName] = temporality
 		types[metricName] = metricType
 	}

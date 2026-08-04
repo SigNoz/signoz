@@ -137,8 +137,8 @@ func filterqueryParserInit() {
 		0, 0, 191, 19, 1, 0, 0, 0, 192, 190, 1, 0, 0, 0, 193, 194, 7, 2, 0, 0,
 		194, 21, 1, 0, 0, 0, 195, 196, 7, 3, 0, 0, 196, 197, 5, 1, 0, 0, 197, 198,
 		3, 26, 13, 0, 198, 199, 5, 2, 0, 0, 199, 23, 1, 0, 0, 0, 200, 201, 5, 27,
-		0, 0, 201, 202, 5, 1, 0, 0, 202, 203, 3, 26, 13, 0, 203, 204, 5, 2, 0,
-		0, 204, 25, 1, 0, 0, 0, 205, 210, 3, 28, 14, 0, 206, 207, 5, 5, 0, 0, 207,
+		0, 0, 201, 202, 5, 1, 0, 0, 202, 203, 3, 18, 9, 0, 203, 204, 5, 2, 0, 0,
+		204, 25, 1, 0, 0, 0, 205, 210, 3, 28, 14, 0, 206, 207, 5, 5, 0, 0, 207,
 		209, 3, 28, 14, 0, 208, 206, 1, 0, 0, 0, 209, 212, 1, 0, 0, 0, 210, 208,
 		1, 0, 0, 0, 210, 211, 1, 0, 0, 0, 211, 27, 1, 0, 0, 0, 212, 210, 1, 0,
 		0, 0, 213, 217, 3, 34, 17, 0, 214, 217, 3, 32, 16, 0, 215, 217, 3, 30,
@@ -2945,7 +2945,7 @@ type ISearchCallContext interface {
 	// Getter signatures
 	SEARCH() antlr.TerminalNode
 	LPAREN() antlr.TerminalNode
-	FunctionParamList() IFunctionParamListContext
+	ValueList() IValueListContext
 	RPAREN() antlr.TerminalNode
 
 	// IsSearchCallContext differentiates from other interfaces.
@@ -2992,10 +2992,10 @@ func (s *SearchCallContext) LPAREN() antlr.TerminalNode {
 	return s.GetToken(FilterQueryParserLPAREN, 0)
 }
 
-func (s *SearchCallContext) FunctionParamList() IFunctionParamListContext {
+func (s *SearchCallContext) ValueList() IValueListContext {
 	var t antlr.RuleContext
 	for _, ctx := range s.GetChildren() {
-		if _, ok := ctx.(IFunctionParamListContext); ok {
+		if _, ok := ctx.(IValueListContext); ok {
 			t = ctx.(antlr.RuleContext)
 			break
 		}
@@ -3005,7 +3005,7 @@ func (s *SearchCallContext) FunctionParamList() IFunctionParamListContext {
 		return nil
 	}
 
-	return t.(IFunctionParamListContext)
+	return t.(IValueListContext)
 }
 
 func (s *SearchCallContext) RPAREN() antlr.TerminalNode {
@@ -3064,7 +3064,7 @@ func (p *FilterQueryParser) SearchCall() (localctx ISearchCallContext) {
 	}
 	{
 		p.SetState(202)
-		p.FunctionParamList()
+		p.ValueList()
 	}
 	{
 		p.SetState(203)
