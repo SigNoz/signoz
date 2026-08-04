@@ -49,10 +49,11 @@ func statsPanel(queriesJSON string) string {
 	}`
 }
 
-func statsBuilderQuery(name, signal string) string {
+// A panel holds a single query, so its name never matters to the assertions.
+func statsBuilderQuery(signal string) string {
 	return `{
 		"kind": "time_series",
-		"spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": ` + statsBuilderQuerySpec(name, signal) + `}}
+		"spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": ` + statsBuilderQuerySpec("A", signal) + `}}
 	}`
 }
 
@@ -66,9 +67,9 @@ func statsBuilderQuerySpec(name, signal string) string {
 
 func TestNewStatsFromStorableDashboardsCountsV2Panels(t *testing.T) {
 	dashboard := newStatsStorableV2(t, `
-		"p1": `+statsPanel(statsBuilderQuery("A", "logs"))+`,
-		"p2": `+statsPanel(statsBuilderQuery("A", "metrics"))+`,
-		"p3": `+statsPanel(statsBuilderQuery("A", "traces"))+`
+		"p1": `+statsPanel(statsBuilderQuery("logs"))+`,
+		"p2": `+statsPanel(statsBuilderQuery("metrics"))+`,
+		"p3": `+statsPanel(statsBuilderQuery("traces"))+`
 	`)
 
 	stats := NewStatsFromStorableDashboards([]*StorableDashboard{dashboard})
@@ -117,10 +118,10 @@ func TestNewStatsFromStorableDashboardsIgnoresSignallessQueries(t *testing.T) {
 }
 
 func TestNewStatsFromStorableDashboardsAggregatesAcrossDashboards(t *testing.T) {
-	first := newStatsStorableV2(t, `"p1": `+statsPanel(statsBuilderQuery("A", "logs")))
+	first := newStatsStorableV2(t, `"p1": `+statsPanel(statsBuilderQuery("logs")))
 	second := newStatsStorableV2(t, `
-		"p1": `+statsPanel(statsBuilderQuery("A", "logs"))+`,
-		"p2": `+statsPanel(statsBuilderQuery("A", "traces"))+`
+		"p1": `+statsPanel(statsBuilderQuery("logs"))+`,
+		"p2": `+statsPanel(statsBuilderQuery("traces"))+`
 	`)
 
 	stats := NewStatsFromStorableDashboards([]*StorableDashboard{first, second})
