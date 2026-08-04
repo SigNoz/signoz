@@ -34,15 +34,26 @@ import DOCLINKS from 'utils/docLinks';
 
 import TraceExplorerControls from '../Controls';
 import { TracesLoading } from '../TraceLoading/TraceLoading';
-import { getTraceViewColumns, PER_PAGE_OPTIONS } from './configs';
+import {
+	BASE_TRACE_VIEW_COLUMNS,
+	buildTraceViewColumns,
+	PER_PAGE_OPTIONS,
+} from './configs';
 import { ActionsContainer, Container } from './styles';
-import useTraceViewColumns from './useTraceViewColumns';
+import useTraceViewColumns, {
+	TraceViewColumnSelection,
+} from './useTraceViewColumns';
 
 interface TracesViewProps {
 	isFilterApplied: boolean;
 	setWarning: Dispatch<SetStateAction<Warning | undefined>>;
 	setIsLoadingQueries: Dispatch<SetStateAction<boolean>>;
 	queryKeyRef?: MutableRefObject<any>;
+	/**
+	 * Opt in to user-editable columns. Omit for the base root-span columns with
+	 * no Options → Edit columns picker.
+	 */
+	columnSelection?: TraceViewColumnSelection;
 }
 
 function TracesView({
@@ -50,6 +61,7 @@ function TracesView({
 	setWarning,
 	setIsLoadingQueries,
 	queryKeyRef,
+	columnSelection,
 }: TracesViewProps): JSX.Element {
 	const { stagedQuery, panelType } = useQueryBuilder();
 
@@ -63,23 +75,30 @@ function TracesView({
 		QueryParams.pagination,
 	);
 
-	// POC: own column visibility — not useOptionsMenu (would collide with List View)
-	const { visibleKeys, selectedFields, availableFields, onFieldsChange } =
-		useTraceViewColumns();
+	// Column visibility is owned here rather than by useOptionsMenu, whose
+	// TRACES_LIST_OPTIONS storage is already claimed by List View.
+	const { visibleColumns, selectedFields, availableFields, onFieldsChange } =
+		useTraceViewColumns(columnSelection);
 
 	const fieldsSelectorConfig = useMemo(
-		() => ({
-			fieldsSelector: {
-				value: selectedFields,
-				onFieldsChange,
-			},
-		}),
-		[selectedFields, onFieldsChange],
+		() =>
+			columnSelection
+				? {
+						fieldsSelector: {
+							value: selectedFields,
+							onFieldsChange,
+						},
+					}
+				: null,
+		[columnSelection, selectedFields, onFieldsChange],
 	);
 
-	const visibleColumns = useMemo(
-		() => getTraceViewColumns(visibleKeys),
-		[visibleKeys],
+	const tableColumns = useMemo(
+		() =>
+			buildTraceViewColumns(
+				columnSelection ? visibleColumns : BASE_TRACE_VIEW_COLUMNS,
+			),
+		[columnSelection, visibleColumns],
 	);
 
 	const transformedQuery = useMemo(
@@ -96,7 +115,8 @@ function TracesView({
 			stagedQuery,
 			panelType,
 			paginationQueryData,
-			// POC D5: column visibility is client-side — do NOT put visibleKeys in queryKey
+			// Column visibility is deliberately absent: it is client-side only, and
+			// this array doubles as the parent's cancelQueries handle.
 		],
 		[
 			globalSelectedTime,
@@ -121,8 +141,8 @@ function TracesView({
 			params: {
 				dataSource: 'traces',
 			},
-			// POC D5: never send selectColumns — backend returns all columns;
-			// visibility is client-side so toggling is refetch-free.
+			// No selectColumns: the backend returns all columns and visibility is
+			// resolved client-side, so toggling a column is refetch-free.
 			tableParams: {
 				pagination: paginationQueryData,
 			},
@@ -186,7 +206,7 @@ function TracesView({
 							totalCount={responseData?.length || 0}
 							perPageOptions={PER_PAGE_OPTIONS}
 							config={fieldsSelectorConfig}
-							availableFields={availableFields}
+							availableFields={columnSelection ? availableFields : undefined}
 						/>
 					</div>
 				</ActionsContainer>
@@ -215,7 +235,7 @@ function TracesView({
 			{(tableData || []).length !== 0 && (
 				<ResizeTable
 					loading={isLoading}
-					columns={visibleColumns}
+					columns={tableColumns}
 					tableLayout="fixed"
 					dataSource={tableData}
 					scroll={{ x: true }}
@@ -228,6 +248,7 @@ function TracesView({
 
 TracesView.defaultProps = {
 	queryKeyRef: undefined,
+	columnSelection: undefined,
 };
 
 export default memo(TracesView);

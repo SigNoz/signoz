@@ -21,7 +21,10 @@ interface OtherFieldsProps {
 	addedFields: TelemetryFieldKey[];
 	onAdd: (field: TelemetryFieldKey) => void;
 	isAtLimit: boolean;
-	/** When set, skip the keys API and filter this whitelist instead. */
+	/**
+	 * Caller-supplied field list. When provided, key discovery is skipped and
+	 * these are filtered locally by the search term instead.
+	 */
 	availableFields?: TelemetryFieldKey[];
 }
 

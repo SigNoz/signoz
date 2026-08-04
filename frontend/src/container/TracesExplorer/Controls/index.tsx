@@ -32,13 +32,15 @@ function TraceExplorerControls({
 		<div className={styles.container}>
 			{config?.fieldsSelector && (
 				<>
-					<div
+					<button
+						type="button"
 						className={styles.optionsTrigger}
 						onClick={(): void => setIsFieldsSelectorOpen(true)}
+						data-testid="trace-view-options-trigger"
 					>
 						{t('options_menu.options')}
 						<Settings size="md" />
-					</div>
+					</button>
 					<FieldsSelector
 						isOpen={isFieldsSelectorOpen}
 						title="Edit columns"
@@ -72,7 +74,7 @@ type TraceExplorerControlsProps = Pick<
 > & {
 	config?: OptionsMenuConfig | null;
 	showSizeChanger?: boolean;
-	/** POC: whitelist for FieldsSelector (skips unscoped key fetch). */
+	/** Forwarded to FieldsSelector — see `availableFields` there. */
 	availableFields?: TelemetryFieldKey[];
 };
 

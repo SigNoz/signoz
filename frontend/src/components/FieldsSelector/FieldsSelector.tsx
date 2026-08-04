@@ -32,8 +32,10 @@ interface FieldsSelectorProps {
 	height?: number;
 	defaultPosition?: { x: number; y: number };
 	/**
-	 * POC / AI Trace View: when set, Other Fields lists this whitelist instead of
-	 * fetching unscoped keys from the API.
+	 * Caller-supplied field list. When provided, Other Fields offers exactly
+	 * these and key discovery is skipped — use it when the set of selectable
+	 * fields is known up front rather than fetched. Omit to discover keys from
+	 * the API for `signal`.
 	 */
 	availableFields?: TelemetryFieldKey[];
 }
