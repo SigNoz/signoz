@@ -13,8 +13,6 @@ var (
 	FeatureUseFineGrainedAuthz    = featuretypes.MustNewName("use_fine_grained_authz")
 	FeatureEnableAIObservability  = featuretypes.MustNewName("enable_ai_observability")
 	FeatureEnableMetricsReduction = featuretypes.MustNewName("enable_metrics_reduction")
-	FeatureUseInfraMonitoringV2   = featuretypes.MustNewName("use_infra_monitoring_v2")
-
 	FeatureUsePrometheusClickhouseV2 = featuretypes.MustNewName("use_prometheus_clickhouse_v2")
 )
 
@@ -97,14 +95,6 @@ func MustNewRegistry() featuretypes.Registry {
 			Kind:           featuretypes.KindBoolean,
 			Stage:          featuretypes.StageExperimental,
 			Description:    "Controls whether metrics cardinality reduction (buffer/reduced tables) is read by the querier",
-			DefaultVariant: featuretypes.MustNewName("disabled"),
-			Variants:       featuretypes.NewBooleanVariants(),
-		},
-		&featuretypes.Feature{
-			Name:           FeatureUseInfraMonitoringV2,
-			Kind:           featuretypes.KindBoolean,
-			Stage:          featuretypes.StageExperimental,
-			Description:    "Controls whether infra monitoring v2 is enabled",
 			DefaultVariant: featuretypes.MustNewName("disabled"),
 			Variants:       featuretypes.NewBooleanVariants(),
 		},
