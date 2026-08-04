@@ -371,20 +371,20 @@ def idp_login(driver: webdriver.Chrome) -> Callable[[str, str], None]:
         password_field.send_keys(password)
 
         # Click the login button
-        login_url = driver.current_url
+        idp_host = urlparse(driver.current_url).netloc
         login_button = wait.until(EC.element_to_be_clickable((By.ID, "kc-login")))
         login_button.click()
 
-        # Wait till the browser has navigated off the login page, which means that a redirection is taking place.
-        # The button is looked up afresh on every poll instead of reusing the clicked element: mid-navigation the
-        # old node detaches and chrome reports that as a bare WebDriverException, not a stale element reference.
-        def _left_login_page(drv: webdriver.Chrome) -> bool:
+        # Wait till the browser has left the idp host — not just the login page: keycloak's SAML flow inserts an
+        # auto-submitting interstitial on the idp whose POST is what creates the user in signoz. The button is
+        # re-queried per poll; a mid-navigation WebDriverException (detached node) just retries the poll.
+        def _left_idp(drv: webdriver.Chrome) -> bool:
             try:
-                return drv.current_url != login_url and not drv.find_elements(By.ID, "kc-login")
+                return urlparse(drv.current_url).netloc != idp_host and not drv.find_elements(By.ID, "kc-login")
             except WebDriverException:
                 return False
 
-        wait.until(_left_login_page)
+        wait.until(_left_idp)
 
     return _idp_login
 
