@@ -161,14 +161,16 @@ func inferDataTypesFromList(values []any) []telemetrytypes.FieldDataType {
 	return out
 }
 
-// NewFunctionUnsupportedError returns the error for a has/hasAny/hasAll/hasToken operator
-// on a builder that doesn't support it (logs body only), or nil for other operators.
+// NewFunctionUnsupportedError returns the error for a has/hasAny/hasAll/hasToken/search
+// operator on a builder that doesn't support it (logs only), or nil for other operators.
 func NewFunctionUnsupportedError(operator qbtypes.FilterOperator) error {
 	switch operator {
 	case qbtypes.FilterOperatorHasToken:
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "function `hasToken` only supports body field as first parameter").WithUrl(hasTokenFunctionDocURL)
 	case qbtypes.FilterOperatorHas, qbtypes.FilterOperatorHasAny, qbtypes.FilterOperatorHasAll:
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "function `%s` supports only body JSON search", operator.FunctionName()).WithUrl(functionBodyJSONSearchDocURL)
+	case qbtypes.FilterOperatorSearch:
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "function `search` is only supported for logs")
 	default:
 		return nil
 	}

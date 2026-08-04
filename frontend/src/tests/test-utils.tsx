@@ -150,13 +150,6 @@ export const defaultFeatureFlags = [
 		usage_limit: -1,
 		route: '',
 	},
-	{
-		name: FeatureKeys.USE_FINE_GRAINED_AUTHZ,
-		active: true,
-		usage: 0,
-		usage_limit: -1,
-		route: '',
-	},
 ];
 
 export function getAppContextMock(

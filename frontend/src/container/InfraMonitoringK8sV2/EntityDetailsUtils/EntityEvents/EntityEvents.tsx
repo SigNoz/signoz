@@ -38,6 +38,7 @@ import { getEntityEventsQueryPayload, isEventsKeyNotFoundError } from './utils';
 
 import styles from './EntityEvents.module.scss';
 import { useTimezone } from 'providers/Timezone';
+import { logInfraDrawerFilterCustomizedEvent } from 'container/InfraMonitoringK8sV2/EntityDetailsUtils/events';
 
 interface EventDataType {
 	key: string;
@@ -123,6 +124,13 @@ function EntityEventsContent({
 					category,
 					view: InfraMonitoringEvents.EventsView,
 				});
+
+				logInfraDrawerFilterCustomizedEvent(
+					category,
+					'events',
+					newUserExpression || '',
+					'search',
+				);
 
 				refetch();
 			}

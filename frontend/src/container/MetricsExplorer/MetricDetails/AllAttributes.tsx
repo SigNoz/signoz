@@ -33,6 +33,7 @@ function AllAttributes({
 	metricName,
 	metricType,
 	isMonotonic,
+	temporality,
 	minTime,
 	maxTime,
 }: AllAttributesProps): JSX.Element {
@@ -71,6 +72,7 @@ function AllAttributes({
 				groupBy,
 				limit,
 				isMonotonic,
+				temporality,
 			);
 			handleExplorerTabChange(
 				PANEL_TYPES.TIME_SERIES,
@@ -89,7 +91,7 @@ function AllAttributes({
 				[MetricsExplorerEventKeys.AttributeKey]: groupBy,
 			});
 		},
-		[metricName, metricType, isMonotonic, handleExplorerTabChange],
+		[metricName, metricType, isMonotonic, temporality, handleExplorerTabChange],
 	);
 
 	const goToMetricsExploreWithAppliedAttribute = useCallback(
@@ -101,6 +103,7 @@ function AllAttributes({
 				undefined,
 				undefined,
 				isMonotonic,
+				temporality,
 			);
 			handleExplorerTabChange(
 				PANEL_TYPES.TIME_SERIES,
@@ -120,7 +123,7 @@ function AllAttributes({
 				[MetricsExplorerEventKeys.AttributeValue]: value,
 			});
 		},
-		[metricName, metricType, isMonotonic, handleExplorerTabChange],
+		[metricName, metricType, isMonotonic, temporality, handleExplorerTabChange],
 	);
 
 	const handleKeyMenuItemClick = useCallback(

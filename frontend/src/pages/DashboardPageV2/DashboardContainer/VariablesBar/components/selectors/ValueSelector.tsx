@@ -54,10 +54,25 @@ function ValueSelector({
 		[selection, options],
 	);
 
+	// That "all" path needs the options, so an ALL selection whose options have not
+	// arrived yet has nothing to render and the control would read "Select value"
+	// while it spins — as if nothing were selected. Say ALL in that slot instead: the
+	// selection is known, only its options are pending. Display only, so it can never
+	// be committed as a value.
+	const isAllPendingOptions = selection.allSelected && options.length === 0;
+
 	// Buffer edits while the dropdown is open; the committed selection is shown
 	// when closed. This defers the dependent cascade to a single commit-on-close.
 	const [isOpen, setIsOpen] = useState(false);
 	const [draft, setDraft] = useState<string[]>(committedValues);
+
+	// ALL is every option, so there is nothing to clear — and the shared control refuses
+	// to empty an ALL selection anyway, which would leave the icon inert. Unchecking ALL
+	// in the list is the way out of it.
+	const draftIsAll =
+		showAllOption &&
+		options.length > 0 &&
+		options.every((option) => draft.includes(option));
 
 	const commit = (values: string[]): void => {
 		// CustomMultiSelect emits the full value set when ALL is picked.
@@ -94,8 +109,11 @@ function ValueSelector({
 				errorMessage={errorMessage}
 				onRetry={onRetry}
 				showSearch
-				allowClear
-				placeholder="Select value"
+				// Clearing belongs to the open list: on the closed control the icon would
+				// appear on hover, in a row of variable pills, for an action whose result is
+				// not visible.
+				allowClear={isOpen && !draftIsAll}
+				placeholder={isAllPendingOptions ? 'ALL' : 'Select value'}
 				maxTagCount={1}
 				maxTagTextLength={10}
 				maxTagPlaceholder={(omitted): JSX.Element => (
@@ -129,12 +147,10 @@ function ValueSelector({
 					void logEvent(DashboardDetailEvents.VariableMultiSelectCleared, {
 						variableType,
 					});
+					// Empties the list, committing nothing. Closing resolves an empty draft
+					// to whatever the variable should hold — its configured default, else ALL
+					// where it offers one, else the first option.
 					setDraft([]);
-					// A clear on the closed control falls back to the default immediately;
-					// while open it just empties the draft (committed on close).
-					if (!isOpen) {
-						onChange(emptyFallback);
-					}
 				}}
 			/>
 		);

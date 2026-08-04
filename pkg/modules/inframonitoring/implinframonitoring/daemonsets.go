@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"golang.org/x/sync/errgroup"
 )
 
 // buildDaemonSetRecords assembles the page records. Pod status counts come from
@@ -89,16 +90,36 @@ func buildDaemonSetRecords(
 	return records
 }
 
-func (m *module) getTopDaemonSetGroups(
+func (m *module) getTopDaemonSetGroupsAndMetadata(
 	ctx context.Context,
 	orgID valuer.UUID,
 	req *inframonitoringtypes.PostableDaemonSets,
-	metadataMap map[string]map[string]string,
-) ([]map[string]string, error) {
-	orderByKey := req.OrderBy.Key.Name
+) ([]map[string]string, map[string]map[string]string, error) {
+
+	var (
+		orderByKey      string
+		metadataMap     map[string]map[string]string
+		allMetricGroups []rankedGroup
+	)
+
+	orderByKey = req.OrderBy.Key.Name
+
+	g, gCtx := errgroup.WithContext(ctx)
+
+	g.Go(func() error {
+		var err error
+		metadataMap, err = m.getDaemonSetsTableMetadata(gCtx, orgID, req)
+		return err
+	})
+
 	if orderByKey == inframonitoringtypes.DaemonSetNameAttrKey {
-		return inframonitoringtypes.PaginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.DaemonSetNameAttrKey), nil
+		if err := g.Wait(); err != nil {
+			return nil, nil, err
+		}
+		pageGroups := inframonitoringtypes.PaginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.DaemonSetNameAttrKey)
+		return pageGroups, metadataMap, nil
 	}
+
 	queryNamesForOrderBy := orderByToDaemonSetsQueryNames[orderByKey]
 	rankingQueryName := queryNamesForOrderBy[len(queryNamesForOrderBy)-1]
 
@@ -132,13 +153,20 @@ func (m *module) getTopDaemonSetGroups(
 		topReq.CompositeQuery.Queries = append(topReq.CompositeQuery.Queries, copied)
 	}
 
-	resp, err := m.querier.QueryRange(ctx, orgID, topReq)
-	if err != nil {
-		return nil, err
+	g.Go(func() error {
+		resp, err := m.querier.QueryRange(gCtx, orgID, topReq)
+		if err != nil {
+			return err
+		}
+		allMetricGroups = parseAndSortGroups(resp, rankingQueryName, req.GroupBy, req.OrderBy.Direction)
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
+		return nil, nil, err
 	}
 
-	allMetricGroups := parseAndSortGroups(resp, rankingQueryName, req.GroupBy, req.OrderBy.Direction)
-	return paginateWithBackfill(allMetricGroups, metadataMap, req.GroupBy, req.Offset, req.Limit), nil
+	return paginateWithBackfill(allMetricGroups, metadataMap, req.GroupBy, req.Offset, req.Limit), metadataMap, nil
 }
 
 func (m *module) getDaemonSetsTableMetadata(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableDaemonSets) (map[string]map[string]string, error) {

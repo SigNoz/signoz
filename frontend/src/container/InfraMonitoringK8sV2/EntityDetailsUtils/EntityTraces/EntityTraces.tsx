@@ -38,6 +38,7 @@ import { getEntityTracesQueryPayload } from './utils';
 
 import styles from './EntityTraces.module.scss';
 import { useTimezone } from 'providers/Timezone';
+import { logInfraDrawerFilterCustomizedEvent } from 'container/InfraMonitoringK8sV2/EntityDetailsUtils/events';
 
 interface Props {
 	eventEntity: string;
@@ -105,6 +106,13 @@ function EntityTracesContent({
 					category,
 					view: InfraMonitoringEvents.TracesView,
 				});
+
+				logInfraDrawerFilterCustomizedEvent(
+					category,
+					'traces',
+					newUserExpression || '',
+					'search',
+				);
 
 				refetch();
 			}

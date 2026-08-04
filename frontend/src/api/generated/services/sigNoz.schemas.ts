@@ -8479,6 +8479,8 @@ export enum RuletypesCompareOperatorDTO {
 	below = 'below',
 	equal = 'equal',
 	not_equal = 'not_equal',
+	above_or_equal = 'above_or_equal',
+	below_or_equal = 'below_or_equal',
 	outside_bounds = 'outside_bounds',
 }
 export interface RuletypesBasicRuleThresholdDTO {
@@ -11255,6 +11257,17 @@ export type UnlockDashboardV2PathParameters = {
 export type LockDashboardV2PathParameters = {
 	id: string;
 };
+export type MigrateDashboardV2PathParameters = {
+	id: string;
+};
+export type MigrateDashboardV2200 = {
+	data: DashboardtypesGettableDashboardV2DTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type GetFeatures200 = {
 	/**
 	 * @type array

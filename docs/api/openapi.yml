@@ -7430,6 +7430,8 @@ components:
       - below
       - equal
       - not_equal
+      - above_or_equal
+      - below_or_equal
       - outside_bounds
       type: string
     RuletypesCumulativeSchedule:
@@ -15565,6 +15567,72 @@ paths:
       - tokenizer:
         - EDITOR
       summary: Lock dashboard (v2)
+      tags:
+      - dashboard
+  /api/v2/dashboards/{id}/migrate:
+    post:
+      deprecated: false
+      description: 'This endpoint retries the v1→v2 (Perses) migration on a dashboard
+        still stored in the v1 schema and returns the v2-shape result. It is idempotent:
+        a dashboard already in the v2 schema is returned unchanged.'
+      operationId: MigrateDashboardV2
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardtypesGettableDashboardV2'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Migrate dashboard to v2
       tags:
       - dashboard
   /api/v2/factor_password/forgot:

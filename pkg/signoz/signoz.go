@@ -40,6 +40,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/tag/impltag"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/prometheus/clickhouseprometheusv2"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/ruler"
@@ -122,7 +123,7 @@ func newQueryStack(
 ) {
 	metadataStore := telemetrymetadata.NewTelemetryMetaStore(settings, telemetryStore, fl)
 
-	cfg := config.StatementBuilder
+	cfg := config.Querier.Config
 	traceStmtBuilder, err := tracesstatementbuilder.NewFactory(telemetryStore, metadataStore, fl).New(ctx, settings, cfg)
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, nil, nil, err
@@ -299,6 +300,11 @@ func New(
 
 	retentionGetter := implretention.NewGetter(implretention.NewStore(sqlstore))
 
+	// promV2 is the clickhousev2 provider handed to the querier for shadow
+	// comparison and pinned serving (declared before the serving provider,
+	// whose variable shadows the package name below).
+	var promV2 prometheus.Prometheus
+
 	// Initialize prometheus from the available prometheus provider factories
 	prometheus, err := factory.NewProviderFromNamedMap(
 		ctx,
@@ -309,6 +315,23 @@ func New(
 	)
 	if err != nil {
 		return nil, err
+	}
+
+	// With the default provider, also stand up the clickhousev2 provider for
+	// the querier: PromQL queries shadow-compare against it behind the
+	// use_prometheus_clickhouse_v2 flag (see pkg/querier/promql_shadow.go).
+	// It never serves by default. An explicit
+	// prometheus::provider: clickhousev2 makes v2 the serving provider
+	// outright, so there is nothing to compare against.
+	if config.Prometheus.Provider() == "clickhouse" {
+		v2Config := config.Prometheus
+		// The v2 engine only evaluates shadow and pinned queries; disable its
+		// active query tracker so two trackers never share a file.
+		v2Config.ActiveQueryTrackerConfig.Enabled = false
+		promV2, err = clickhouseprometheusv2.New(ctx, providerSettings, v2Config, telemetrystore)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// Assemble the query stack (metadata store, statement builders, bucket cache) once,
@@ -323,7 +346,7 @@ func New(
 		ctx,
 		providerSettings,
 		config.Querier,
-		NewQuerierProviderFactories(telemetrystore, prometheus, telemetryMetadataStore, traceStmtBuilder, logStmtBuilder, auditStmtBuilder, metricStmtBuilder, meterStmtBuilder, traceOperatorStmtBuilder, bucketCache, flagger),
+		NewQuerierProviderFactories(telemetrystore, prometheus, promV2, telemetryMetadataStore, traceStmtBuilder, logStmtBuilder, auditStmtBuilder, metricStmtBuilder, meterStmtBuilder, traceOperatorStmtBuilder, bucketCache, flagger),
 		config.Querier.Provider(),
 	)
 	if err != nil {
