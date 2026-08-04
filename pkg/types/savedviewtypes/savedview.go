@@ -6,7 +6,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
@@ -16,12 +15,11 @@ var (
 	ErrCodeSavedViewNotFound     = errors.MustNewCode("saved_view_not_found")
 )
 
-// SavedView is the core domain type; it also doubles as the storage row
-// (schemaVersion + spec stored JSON-encoded in Data). GettableSavedView is a
-// separate type, not an alias: bun only treats SavedViewData as a single
-// opaque "data" column when it's a named field, but the API response needs
-// schemaVersion/spec flattened to the top level -- those two requirements
-// can't be satisfied by the same field, so the two shapes genuinely diverge.
+// SavedView is the core domain type. It also doubles as the API response
+// type: Data is a named field, so bun stores it as a single opaque "data"
+// column while json nests it under a "data" key in responses too, mirroring
+// dashboardtypes.DashboardView's use of the same named-field trick for the
+// same reason.
 type SavedView struct {
 	bun.BaseModel `bun:"table:saved_view"`
 
@@ -31,24 +29,13 @@ type SavedView struct {
 	OrgID      string        `json:"-" bun:"org_id,notnull"`
 	Name       string        `json:"name" bun:"name,type:text,notnull"`
 	SourcePage SourcePage    `json:"sourcePage" bun:"source_page,type:text,notnull"`
-	Data       SavedViewData `json:"-" bun:"data,type:text,notnull"`
-}
-
-type GettableSavedView struct {
-	ID         valuer.UUID `json:"id" required:"true"`
-	Name       string      `json:"name" required:"true"`
-	CreatedAt  time.Time   `json:"createdAt" required:"true"`
-	CreatedBy  string      `json:"createdBy" required:"true"`
-	UpdatedAt  time.Time   `json:"updatedAt" required:"true"`
-	UpdatedBy  string      `json:"updatedBy" required:"true"`
-	SourcePage SourcePage  `json:"sourcePage" required:"true"`
-	SavedViewData
+	Data       SavedViewData `json:"data" bun:"data,type:text,notnull"`
 }
 
 type PostableSavedView struct {
-	Name       string     `json:"name" required:"true"`
-	SourcePage SourcePage `json:"sourcePage" required:"true"`
-	SavedViewData
+	Name       string        `json:"name" required:"true"`
+	SourcePage SourcePage    `json:"sourcePage" required:"true"`
+	Data       SavedViewData `json:"data" required:"true"`
 }
 
 type UpdatableSavedView = PostableSavedView
@@ -92,7 +79,7 @@ func (p *PostableSavedView) Validate() error {
 		return err
 	}
 
-	return p.SavedViewData.Validate()
+	return p.Data.Validate()
 }
 
 func (p *ListSavedViewsParams) Validate() error {
@@ -112,34 +99,8 @@ func NewSavedView(orgID string, createdBy string, updatedBy string, view Postabl
 		OrgID:         orgID,
 		Name:          view.Name,
 		SourcePage:    view.SourcePage,
-		Data:          view.SavedViewData,
+		Data:          view.Data,
 	}
-}
-
-func NewGettableSavedViewFromSavedView(view *SavedView) *GettableSavedView {
-	data := view.Data
-	if data.Spec.SelectedFields == nil {
-		data.Spec.SelectedFields = []telemetrytypes.TelemetryFieldKey{}
-	}
-
-	return &GettableSavedView{
-		ID:            view.ID,
-		Name:          view.Name,
-		CreatedAt:     view.CreatedAt,
-		CreatedBy:     view.CreatedBy,
-		UpdatedAt:     view.UpdatedAt,
-		UpdatedBy:     view.UpdatedBy,
-		SourcePage:    view.SourcePage,
-		SavedViewData: data,
-	}
-}
-
-func NewGettableSavedViewsFromSavedViews(views []*SavedView) []*GettableSavedView {
-	out := make([]*GettableSavedView, 0, len(views))
-	for _, view := range views {
-		out = append(out, NewGettableSavedViewFromSavedView(view))
-	}
-	return out
 }
 
 func NewStatsFromSavedViews(savedViews []*SavedView) map[string]any {

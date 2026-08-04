@@ -45,7 +45,7 @@ func newPostableSavedViewFromLegacyView(v *v3.SavedView) savedviewtypes.Postable
 	return savedviewtypes.PostableSavedView{
 		Name:       v.Name,
 		SourcePage: savedviewtypes.SourcePage{String: valuer.NewString(v.SourcePage)},
-		SavedViewData: savedviewtypes.SavedViewData{
+		Data: savedviewtypes.SavedViewData{
 			SchemaVersion: savedviewtypes.SavedViewSchemaVersion,
 			Spec: savedviewtypes.SavedViewSpec{
 				PanelType:      savedviewtypes.PanelType{String: valuer.NewString(string(v.CompositeQuery.PanelType))},
@@ -62,13 +62,13 @@ func newPostableSavedViewFromLegacyView(v *v3.SavedView) savedviewtypes.Postable
 	}
 }
 
-func newLegacyViewFromGettable(v *savedviewtypes.GettableSavedView) (*v3.SavedView, error) {
+func newLegacyViewFromSavedView(v *savedviewtypes.SavedView) (*v3.SavedView, error) {
 	extraData, err := json.Marshal(legacyExtraData{
-		Color:         v.Spec.Display.Color,
-		SelectColumns: v.Spec.SelectedFields,
-		Format:        v.Spec.Display.Format,
-		MaxLines:      v.Spec.Display.MaxLines,
-		FontSize:      v.Spec.Display.FontSize,
+		Color:         v.Data.Spec.Display.Color,
+		SelectColumns: v.Data.Spec.SelectedFields,
+		Format:        v.Data.Spec.Display.Format,
+		MaxLines:      v.Data.Spec.Display.MaxLines,
+		FontSize:      v.Data.Spec.Display.FontSize,
 	})
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error in marshalling extra data")
@@ -83,19 +83,19 @@ func newLegacyViewFromGettable(v *savedviewtypes.GettableSavedView) (*v3.SavedVi
 		UpdatedBy:  v.UpdatedBy,
 		SourcePage: v.SourcePage.StringValue(),
 		CompositeQuery: &v3.CompositeQuery{
-			PanelType: v3.PanelType(v.Spec.PanelType.StringValue()),
+			PanelType: v3.PanelType(v.Data.Spec.PanelType.StringValue()),
 			// Saved views are only ever created from the explorer's builder mode.
 			QueryType: v3.QueryTypeBuilder,
-			Queries:   v.Spec.Queries,
+			Queries:   v.Data.Spec.Queries,
 		},
 		ExtraData: string(extraData),
 	}, nil
 }
 
-func newLegacyViewsFromGettable(views []*savedviewtypes.GettableSavedView) ([]*v3.SavedView, error) {
+func newLegacyViewsFromSavedViews(views []*savedviewtypes.SavedView) ([]*v3.SavedView, error) {
 	out := make([]*v3.SavedView, 0, len(views))
 	for _, view := range views {
-		legacyView, err := newLegacyViewFromGettable(view)
+		legacyView, err := newLegacyViewFromSavedView(view)
 		if err != nil {
 			return nil, err
 		}
@@ -157,7 +157,7 @@ func (handler *handler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	legacyView, err := newLegacyViewFromGettable(view)
+	legacyView, err := newLegacyViewFromSavedView(view)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -247,7 +247,7 @@ func (handler *handler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	legacyViews, err := newLegacyViewsFromGettable(views)
+	legacyViews, err := newLegacyViewsFromSavedViews(views)
 	if err != nil {
 		render.Error(w, err)
 		return

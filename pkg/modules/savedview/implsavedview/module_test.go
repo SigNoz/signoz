@@ -20,7 +20,7 @@ func testPostableSavedView(name string, sourcePage savedviewtypes.SourcePage) sa
 	return savedviewtypes.PostableSavedView{
 		Name:       name,
 		SourcePage: sourcePage,
-		SavedViewData: savedviewtypes.SavedViewData{
+		Data: savedviewtypes.SavedViewData{
 			SchemaVersion: savedviewtypes.SavedViewSchemaVersion,
 			Spec: savedviewtypes.SavedViewSpec{
 				PanelType: savedviewtypes.PanelTypeGraph,
@@ -74,7 +74,7 @@ func TestModule_CreateAndGetView(t *testing.T) {
 	assert.Equal(t, savedviewtypes.SourcePageLogs, got.SourcePage)
 	assert.Equal(t, "creator@signoz.io", got.CreatedBy)
 	assert.Equal(t, "creator@signoz.io", got.UpdatedBy)
-	assert.Equal(t, savedviewtypes.PanelTypeGraph, got.Spec.PanelType)
+	assert.Equal(t, savedviewtypes.PanelTypeGraph, got.Data.Spec.PanelType)
 
 	require.NoError(t, store.AssertExpectations())
 }
@@ -119,7 +119,7 @@ func TestModule_UpdateView(t *testing.T) {
 	id := valuer.GenerateUUID()
 
 	updated := testPostableSavedView("renamed", savedviewtypes.SourcePageTraces)
-	updated.Spec.PanelType = savedviewtypes.PanelTypeTable
+	updated.Data.Spec.PanelType = savedviewtypes.PanelTypeTable
 
 	store.ExpectUpdate(orgID, id, 1)
 	require.NoError(t, m.UpdateView(contextWithClaims(orgID, "updater@signoz.io"), orgID, id, updated))
@@ -130,7 +130,7 @@ func TestModule_UpdateView(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "renamed", got.Name)
 	assert.Equal(t, savedviewtypes.SourcePageTraces, got.SourcePage)
-	assert.Equal(t, savedviewtypes.PanelTypeTable, got.Spec.PanelType)
+	assert.Equal(t, savedviewtypes.PanelTypeTable, got.Data.Spec.PanelType)
 	assert.Equal(t, "updater@signoz.io", got.UpdatedBy)
 
 	require.NoError(t, store.AssertExpectations())

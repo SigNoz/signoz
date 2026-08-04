@@ -39,12 +39,14 @@ def _body(
     return {
         "name": name,
         "sourcePage": source_page,
-        "schemaVersion": "v2",
-        "spec": {
-            "panelType": panel_type,
-            "queries": [_query(disabled=disabled, legend=legend)],
-            "selectedFields": [] if selected_fields is None else selected_fields,
-            "display": {"maxLines": max_lines, "fontSize": font_size, "format": fmt, "color": color},
+        "data": {
+            "schemaVersion": "v2",
+            "spec": {
+                "panelType": panel_type,
+                "queries": [_query(disabled=disabled, legend=legend)],
+                "selectedFields": [] if selected_fields is None else selected_fields,
+                "display": {"maxLines": max_lines, "fontSize": font_size, "format": fmt, "color": color},
+            },
         },
     }
 
@@ -60,7 +62,7 @@ def test_create_rejects_wrong_schema_version(
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     body = _body()
-    body["schemaVersion"] = "v9"
+    body["data"]["schemaVersion"] = "v9"
     response = requests.post(
         signoz.self.host_configs["8080"].get(BASE_URL),
         json=body,
@@ -81,7 +83,7 @@ def test_create_rejects_invalid_panel_type(
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     body = _body()
-    body["spec"]["panelType"] = "bogus"
+    body["data"]["spec"]["panelType"] = "bogus"
     response = requests.post(
         signoz.self.host_configs["8080"].get(BASE_URL),
         json=body,
@@ -101,7 +103,7 @@ def test_create_rejects_empty_queries(
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     body = _body()
-    body["spec"]["queries"] = []
+    body["data"]["spec"]["queries"] = []
     response = requests.post(
         signoz.self.host_configs["8080"].get(BASE_URL),
         json=body,
@@ -274,7 +276,7 @@ def test_saved_view_lifecycle(
         assert got["id"] == view_id
         assert got["name"] == "lc-logs-overview"
         assert got["sourcePage"] == "logs"
-        assert got["spec"]["panelType"] == "table"
+        assert got["data"]["spec"]["panelType"] == "table"
 
         # ── list filters by sourcePage and name ──────────────────────────────
         response = requests.get(
@@ -313,7 +315,7 @@ def test_saved_view_lifecycle(
         updated = response.json()["data"]
         assert updated["name"] == "lc-logs-renamed"
         assert updated["sourcePage"] == "metrics"
-        assert updated["spec"]["panelType"] == "graph"
+        assert updated["data"]["spec"]["panelType"] == "graph"
     finally:
         requests.delete(
             signoz.self.host_configs["8080"].get(f"{BASE_URL}/{view_id}"),
@@ -373,7 +375,7 @@ def test_create_roundtrip_preserves_zero_values(
             timeout=5,
         )
         assert response.status_code == HTTPStatus.OK, response.text
-        spec = response.json()["data"]["spec"]
+        spec = response.json()["data"]["data"]["spec"]
         query = spec["queries"][0]["spec"]
 
         cases = [
@@ -404,7 +406,7 @@ def test_selected_fields_omitted_on_create_reads_back_as_empty_list_not_null(
     headers = {"Authorization": f"Bearer {token}"}
 
     body = _body(name="omitted-selected-fields")
-    del body["spec"]["selectedFields"]
+    del body["data"]["spec"]["selectedFields"]
     response = requests.post(
         signoz.self.host_configs["8080"].get(BASE_URL),
         json=body,
@@ -421,7 +423,7 @@ def test_selected_fields_omitted_on_create_reads_back_as_empty_list_not_null(
             timeout=5,
         )
         assert response.status_code == HTTPStatus.OK, response.text
-        assert response.json()["data"]["spec"]["selectedFields"] == []
+        assert response.json()["data"]["data"]["spec"]["selectedFields"] == []
     finally:
         requests.delete(
             signoz.self.host_configs["8080"].get(f"{BASE_URL}/{view_id}"),
@@ -469,7 +471,7 @@ def test_update_does_not_corrupt_zero_values(
             timeout=5,
         )
         assert response.status_code == HTTPStatus.OK, response.text
-        spec = response.json()["data"]["spec"]
+        spec = response.json()["data"]["data"]["spec"]
         assert spec["display"]["maxLines"] == 25
         # signal/fieldContext/fieldDataType always serialize on TelemetryFieldKey
         # (no omitempty -- see pkg/types/telemetrytypes/field.go), so an entry sent
@@ -502,7 +504,7 @@ def test_update_does_not_corrupt_zero_values(
             timeout=5,
         )
         assert response.status_code == HTTPStatus.OK, response.text
-        spec = response.json()["data"]["spec"]
+        spec = response.json()["data"]["data"]["spec"]
         query = spec["queries"][0]["spec"]
 
         cases = [

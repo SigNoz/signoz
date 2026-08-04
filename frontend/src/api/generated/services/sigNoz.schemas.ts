@@ -8861,12 +8861,6 @@ export interface SavedviewtypesDisplayDTO {
 	maxLines?: number;
 }
 
-export enum SavedviewtypesSourcePageDTO {
-	traces = 'traces',
-	logs = 'logs',
-	metrics = 'metrics',
-	meter = 'meter',
-}
 export enum SavedviewtypesPanelTypeDTO {
 	value = 'value',
 	graph = 'graph',
@@ -8887,16 +8881,40 @@ export interface SavedviewtypesSavedViewSpecDTO {
 	selectedFields: TelemetrytypesTelemetryFieldKeyDTO[];
 }
 
-export interface SavedviewtypesGettableSavedViewDTO {
+export interface SavedviewtypesSavedViewDataDTO {
+	/**
+	 * @type string
+	 */
+	schemaVersion: string;
+	spec: SavedviewtypesSavedViewSpecDTO;
+}
+
+export enum SavedviewtypesSourcePageDTO {
+	traces = 'traces',
+	logs = 'logs',
+	metrics = 'metrics',
+	meter = 'meter',
+}
+export interface SavedviewtypesPostableSavedViewDTO {
+	data: SavedviewtypesSavedViewDataDTO;
+	/**
+	 * @type string
+	 */
+	name: string;
+	sourcePage: SavedviewtypesSourcePageDTO;
+}
+
+export interface SavedviewtypesSavedViewDTO {
 	/**
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt: string;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
-	createdBy: string;
+	createdBy?: string;
+	data?: SavedviewtypesSavedViewDataDTO;
 	/**
 	 * @type string
 	 */
@@ -8904,35 +8922,17 @@ export interface SavedviewtypesGettableSavedViewDTO {
 	/**
 	 * @type string
 	 */
-	name: string;
-	/**
-	 * @type string
-	 */
-	schemaVersion: string;
-	sourcePage: SavedviewtypesSourcePageDTO;
-	spec: SavedviewtypesSavedViewSpecDTO;
+	name?: string;
+	sourcePage?: SavedviewtypesSourcePageDTO;
 	/**
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt: string;
+	updatedAt?: string;
 	/**
 	 * @type string
 	 */
-	updatedBy: string;
-}
-
-export interface SavedviewtypesPostableSavedViewDTO {
-	/**
-	 * @type string
-	 */
-	name: string;
-	/**
-	 * @type string
-	 */
-	schemaVersion: string;
-	sourcePage: SavedviewtypesSourcePageDTO;
-	spec: SavedviewtypesSavedViewSpecDTO;
+	updatedBy?: string;
 }
 
 export interface ServiceaccounttypesDeprecatedPostableServiceAccountRoleDTO {
@@ -12138,7 +12138,7 @@ export type ListSavedViews200 = {
 	/**
 	 * @type array,null
 	 */
-	data: SavedviewtypesGettableSavedViewDTO[] | null;
+	data: SavedviewtypesSavedViewDTO[] | null;
 	/**
 	 * @type string
 	 */
@@ -12163,7 +12163,7 @@ export type GetSavedViewPathParameters = {
 	viewId: string;
 };
 export type GetSavedView200 = {
-	data: SavedviewtypesGettableSavedViewDTO;
+	data: SavedviewtypesSavedViewDTO;
 	/**
 	 * @type string
 	 */

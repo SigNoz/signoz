@@ -7756,39 +7756,6 @@ components:
         maxLines:
           type: integer
       type: object
-    SavedviewtypesGettableSavedView:
-      properties:
-        createdAt:
-          format: date-time
-          type: string
-        createdBy:
-          type: string
-        id:
-          type: string
-        name:
-          type: string
-        schemaVersion:
-          type: string
-        sourcePage:
-          $ref: '#/components/schemas/SavedviewtypesSourcePage'
-        spec:
-          $ref: '#/components/schemas/SavedviewtypesSavedViewSpec'
-        updatedAt:
-          format: date-time
-          type: string
-        updatedBy:
-          type: string
-      required:
-      - id
-      - name
-      - createdAt
-      - createdBy
-      - updatedAt
-      - updatedBy
-      - sourcePage
-      - schemaVersion
-      - spec
-      type: object
     SavedviewtypesPanelType:
       enum:
       - value
@@ -7799,17 +7766,47 @@ components:
       type: string
     SavedviewtypesPostableSavedView:
       properties:
+        data:
+          $ref: '#/components/schemas/SavedviewtypesSavedViewData'
         name:
-          type: string
-        schemaVersion:
           type: string
         sourcePage:
           $ref: '#/components/schemas/SavedviewtypesSourcePage'
-        spec:
-          $ref: '#/components/schemas/SavedviewtypesSavedViewSpec'
       required:
       - name
       - sourcePage
+      - data
+      type: object
+    SavedviewtypesSavedView:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        createdBy:
+          type: string
+        data:
+          $ref: '#/components/schemas/SavedviewtypesSavedViewData'
+        id:
+          type: string
+        name:
+          type: string
+        sourcePage:
+          $ref: '#/components/schemas/SavedviewtypesSourcePage'
+        updatedAt:
+          format: date-time
+          type: string
+        updatedBy:
+          type: string
+      required:
+      - id
+      type: object
+    SavedviewtypesSavedViewData:
+      properties:
+        schemaVersion:
+          type: string
+        spec:
+          $ref: '#/components/schemas/SavedviewtypesSavedViewSpec'
+      required:
       - schemaVersion
       - spec
       type: object
@@ -22694,7 +22691,7 @@ paths:
                 properties:
                   data:
                     items:
-                      $ref: '#/components/schemas/SavedviewtypesGettableSavedView'
+                      $ref: '#/components/schemas/SavedviewtypesSavedView'
                     nullable: true
                     type: array
                   status:
@@ -22863,7 +22860,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/SavedviewtypesGettableSavedView'
+                    $ref: '#/components/schemas/SavedviewtypesSavedView'
                   status:
                     type: string
                 required:

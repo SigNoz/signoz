@@ -2,19 +2,16 @@ package savedviewtypes
 
 import (
 	"testing"
-	"time"
 
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func validPostableSavedView() PostableSavedView {
 	return PostableSavedView{
 		Name:       "my view",
 		SourcePage: SourcePageLogs,
-		SavedViewData: SavedViewData{
+		Data: SavedViewData{
 			SchemaVersion: SavedViewSchemaVersion,
 			Spec:          SavedViewSpec{PanelType: PanelTypeGraph, Queries: validQueries()},
 		},
@@ -60,7 +57,7 @@ func TestPostableSavedViewValidate(t *testing.T) {
 
 	t.Run("invalid saved view data is rejected", func(t *testing.T) {
 		view := validPostableSavedView()
-		view.SchemaVersion = "v1"
+		view.Data.SchemaVersion = "v1"
 		assert.Error(t, view.Validate())
 	})
 }
@@ -94,72 +91,9 @@ func TestNewSavedView(t *testing.T) {
 	assert.Equal(t, "updater@signoz.io", savedView.UpdatedBy)
 	assert.Equal(t, view.Name, savedView.Name)
 	assert.Equal(t, view.SourcePage, savedView.SourcePage)
-	assert.Equal(t, view.SavedViewData, savedView.Data)
+	assert.Equal(t, view.Data, savedView.Data)
 	assert.False(t, savedView.CreatedAt.IsZero())
 	assert.Equal(t, savedView.CreatedAt, savedView.UpdatedAt)
-}
-
-func TestNewGettableSavedViewFromSavedView(t *testing.T) {
-	t.Run("nil selected fields are normalized to an empty slice", func(t *testing.T) {
-		savedView := &SavedView{
-			Name:       "my view",
-			SourcePage: SourcePageLogs,
-			Data: SavedViewData{
-				SchemaVersion: SavedViewSchemaVersion,
-				Spec:          SavedViewSpec{PanelType: PanelTypeGraph, Queries: validQueries(), SelectedFields: nil},
-			},
-		}
-
-		gettable := NewGettableSavedViewFromSavedView(savedView)
-
-		require.NotNil(t, gettable.Spec.SelectedFields)
-		assert.Empty(t, gettable.Spec.SelectedFields)
-	})
-
-	t.Run("existing selected fields are preserved", func(t *testing.T) {
-		fields := []telemetrytypes.TelemetryFieldKey{{Name: "service.name"}}
-		savedView := &SavedView{
-			Name:       "my view",
-			SourcePage: SourcePageLogs,
-			Data: SavedViewData{
-				SchemaVersion: SavedViewSchemaVersion,
-				Spec:          SavedViewSpec{PanelType: PanelTypeGraph, Queries: validQueries(), SelectedFields: fields},
-			},
-		}
-
-		gettable := NewGettableSavedViewFromSavedView(savedView)
-
-		assert.Equal(t, fields, gettable.Spec.SelectedFields)
-	})
-
-	t.Run("all fields carried over", func(t *testing.T) {
-		now := time.Now()
-		savedView := &SavedView{
-			Name:       "my view",
-			SourcePage: SourcePageTraces,
-			Data: SavedViewData{
-				SchemaVersion: SavedViewSchemaVersion,
-				Spec:          SavedViewSpec{PanelType: PanelTypeTable, Queries: validQueries()},
-			},
-		}
-		savedView.ID = valuer.GenerateUUID()
-		savedView.CreatedAt = now
-		savedView.UpdatedAt = now
-		savedView.CreatedBy = "creator@signoz.io"
-		savedView.UpdatedBy = "updater@signoz.io"
-
-		gettable := NewGettableSavedViewFromSavedView(savedView)
-
-		assert.Equal(t, savedView.ID, gettable.ID)
-		assert.Equal(t, savedView.Name, gettable.Name)
-		assert.Equal(t, savedView.CreatedAt, gettable.CreatedAt)
-		assert.Equal(t, savedView.CreatedBy, gettable.CreatedBy)
-		assert.Equal(t, savedView.UpdatedAt, gettable.UpdatedAt)
-		assert.Equal(t, savedView.UpdatedBy, gettable.UpdatedBy)
-		assert.Equal(t, savedView.SourcePage, gettable.SourcePage)
-		assert.Equal(t, savedView.Data.SchemaVersion, gettable.SchemaVersion)
-		assert.Equal(t, savedView.Data.Spec.PanelType, gettable.Spec.PanelType)
-	})
 }
 
 func TestNewStatsFromSavedViews(t *testing.T) {

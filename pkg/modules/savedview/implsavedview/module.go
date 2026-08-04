@@ -18,13 +18,8 @@ func NewModule(store savedviewtypes.Store) savedview.Module {
 	return &module{store: store}
 }
 
-func (module *module) GetViewsForFilters(ctx context.Context, orgID string, sourcePage savedviewtypes.SourcePage, name string) ([]*savedviewtypes.GettableSavedView, error) {
-	views, err := module.store.List(ctx, orgID, sourcePage, name)
-	if err != nil {
-		return nil, err
-	}
-
-	return savedviewtypes.NewGettableSavedViewsFromSavedViews(views), nil
+func (module *module) GetViewsForFilters(ctx context.Context, orgID string, sourcePage savedviewtypes.SourcePage, name string) ([]*savedviewtypes.SavedView, error) {
+	return module.store.List(ctx, orgID, sourcePage, name)
 }
 
 func (module *module) CreateView(ctx context.Context, orgID string, view savedviewtypes.PostableSavedView) (valuer.UUID, error) {
@@ -41,13 +36,8 @@ func (module *module) CreateView(ctx context.Context, orgID string, view savedvi
 	return dbView.ID, nil
 }
 
-func (module *module) GetView(ctx context.Context, orgID string, uuid valuer.UUID) (*savedviewtypes.GettableSavedView, error) {
-	view, err := module.store.Get(ctx, orgID, uuid)
-	if err != nil {
-		return nil, err
-	}
-
-	return savedviewtypes.NewGettableSavedViewFromSavedView(view), nil
+func (module *module) GetView(ctx context.Context, orgID string, uuid valuer.UUID) (*savedviewtypes.SavedView, error) {
+	return module.store.Get(ctx, orgID, uuid)
 }
 
 func (module *module) UpdateView(ctx context.Context, orgID string, uuid valuer.UUID, view savedviewtypes.UpdatableSavedView) error {
