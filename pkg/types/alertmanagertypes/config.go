@@ -117,6 +117,11 @@ func NewConfigFromStoreableConfig(sc *StoreableConfig) (*Config, error) {
 		return nil, err
 	}
 
+	// It must be replaced with an empty, non-nil global, upstream swaps nil for
+	// DefaultGlobalConfig, which would let a path that skips SetGlobalConfig pass
+	// validation and fail silently at delivery instead of failing fast here.
+	alertmanagerConfig.Global = &config.GlobalConfig{}
+
 	return &Config{
 		alertmanagerConfig: alertmanagerConfig,
 		customConfigs:      customConfigs,
@@ -190,7 +195,7 @@ func extendedReceivers(c *config.Config, customConfigs map[string]customReceiver
 
 func newRawFromConfig(c *config.Config, customConfigs map[string]customReceiverConfigs) []byte {
 	persistable := *c
-	persistable.Global = persistableGlobal(c.Global)
+	persistable.Global = nil
 
 	b, err := json.Marshal(storedConfig{Config: &persistable, Receivers: extendedReceivers(c, customConfigs)})
 	if err != nil {
@@ -199,28 +204,6 @@ func newRawFromConfig(c *config.Config, customConfigs map[string]customReceiverC
 	}
 
 	return b
-}
-
-func persistableGlobal(g *config.GlobalConfig) *config.GlobalConfig {
-	if g == nil {
-		return nil
-	}
-
-	stripped := *g
-	stripped.SMTPFrom = ""
-	stripped.SMTPHello = ""
-	stripped.SMTPSmarthost = config.HostPort{}
-	stripped.SMTPAuthUsername = ""
-	stripped.SMTPAuthPassword = ""
-	stripped.SMTPAuthPasswordFile = ""
-	stripped.SMTPAuthSecret = ""
-	stripped.SMTPAuthSecretFile = ""
-	stripped.SMTPAuthIdentity = ""
-	stripped.SMTPRequireTLS = false
-	stripped.SMTPTLSConfig = nil
-	stripped.SMTPForceImplicitTLS = nil
-
-	return &stripped
 }
 
 func newConfigHash(s string) [16]byte {

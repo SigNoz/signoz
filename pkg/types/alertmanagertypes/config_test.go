@@ -370,6 +370,36 @@ func TestStoreableConfigCarriesNoSMTPSettings(t *testing.T) {
 	assert.Equal(t, "operator-secret", string(cfg.alertmanagerConfig.Global.SMTPAuthPassword))
 }
 
+func TestStoreableConfigCarriesNoGlobal(t *testing.T) {
+	cfg := newEmailTestConfig(t)
+
+	stored := map[string]json.RawMessage{}
+	require.NoError(t, json.Unmarshal([]byte(cfg.StoreableConfig().Config), &stored))
+	assert.NotContains(t, stored, "global")
+}
+
+func TestSetGlobalConfigDoesNotChangeStoreableHash(t *testing.T) {
+	cfg := newEmailTestConfig(t)
+	hash := cfg.StoreableConfig().Hash
+
+	require.NoError(t, cfg.SetGlobalConfig(GlobalConfig{SMTPSmarthost: config.HostPort{Host: "smtp.other.net", Port: "2525"}, SMTPAuthPassword: "rotated-secret"}))
+
+	assert.Equal(t, hash, cfg.StoreableConfig().Hash)
+	assert.NotContains(t, cfg.StoreableConfig().Config, "rotated-secret")
+}
+
+func TestNewConfigFromStoreableConfigDiscardsStoredGlobal(t *testing.T) {
+	stored := &StoreableConfig{
+		Config: `{"global":{"resolve_timeout":"5m","smtp_smarthost":"email-smtp.us-east-1.amazonaws.com:587","smtp_auth_password":"old-secret","slack_api_url":"https://hooks.slack.com/services/T/B/X"},"route":{"receiver":"default-receiver"},"receivers":[{"name":"default-receiver"}]}`,
+		OrgID:  "1",
+	}
+
+	cfg, err := NewConfigFromStoreableConfig(stored)
+	require.NoError(t, err)
+
+	assert.Equal(t, &config.GlobalConfig{}, cfg.alertmanagerConfig.Global)
+}
+
 func TestResolvedFillsEmailTransportFromGlobal(t *testing.T) {
 	cfg := newEmailTestConfig(t)
 

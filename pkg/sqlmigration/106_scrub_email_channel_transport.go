@@ -124,7 +124,8 @@ func (migration *scrubEmailChannelTransport) scrubConfigs(ctx context.Context, t
 			if deleteKeys(global, globalSMTPKeys) {
 				newGlobal, err := json.Marshal(global)
 				if err != nil {
-					return err
+					migration.logger.WarnContext(ctx, "skipping alertmanager config, cannot marshal global", slog.String("config_id", row.ID), errors.Attr(err))
+					continue
 				}
 				cfg["global"] = newGlobal
 				changed = true
@@ -139,18 +140,25 @@ func (migration *scrubEmailChannelTransport) scrubConfigs(ctx context.Context, t
 			}
 
 			receiversChanged := false
+			unreadable := false
 			for _, receiver := range receivers {
 				scrubbed, err := scrubEmailConfigs(receiver)
 				if err != nil {
-					return err
+					migration.logger.WarnContext(ctx, "skipping alertmanager config with unreadable email configs", slog.String("config_id", row.ID), errors.Attr(err))
+					unreadable = true
+					break
 				}
 				receiversChanged = receiversChanged || scrubbed
+			}
+			if unreadable {
+				continue
 			}
 
 			if receiversChanged {
 				newReceivers, err := json.Marshal(receivers)
 				if err != nil {
-					return err
+					migration.logger.WarnContext(ctx, "skipping alertmanager config, cannot marshal receivers", slog.String("config_id", row.ID), errors.Attr(err))
+					continue
 				}
 				cfg["receivers"] = newReceivers
 				changed = true
@@ -163,7 +171,8 @@ func (migration *scrubEmailChannelTransport) scrubConfigs(ctx context.Context, t
 
 		newConfig, err := json.Marshal(cfg)
 		if err != nil {
-			return err
+			migration.logger.WarnContext(ctx, "skipping alertmanager config, cannot marshal config", slog.String("config_id", row.ID), errors.Attr(err))
+			continue
 		}
 
 		if _, err := tx.NewUpdate().
@@ -194,7 +203,8 @@ func (migration *scrubEmailChannelTransport) scrubChannels(ctx context.Context, 
 
 		scrubbed, err := scrubEmailConfigs(receiver)
 		if err != nil {
-			return err
+			migration.logger.WarnContext(ctx, "skipping notification channel with unreadable email configs", slog.String("channel_id", row.ID), errors.Attr(err))
+			continue
 		}
 		if !scrubbed {
 			continue
@@ -202,7 +212,8 @@ func (migration *scrubEmailChannelTransport) scrubChannels(ctx context.Context, 
 
 		newData, err := json.Marshal(receiver)
 		if err != nil {
-			return err
+			migration.logger.WarnContext(ctx, "skipping notification channel, cannot marshal data", slog.String("channel_id", row.ID), errors.Attr(err))
+			continue
 		}
 
 		if _, err := tx.NewUpdate().
