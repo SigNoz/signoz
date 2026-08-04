@@ -128,7 +128,7 @@ func NewTestManager(t *testing.T, testOpts *TestManagerOptions) *Manager {
 	meterStmtBuilder, err := meterstatementbuilder.NewFactory(metadataStore, flagger).New(ctx, providerSettings, cfg)
 	require.NoError(t, err)
 	bucketCache := querier.NewBucketCache(providerSettings, cache, 0, 0)
-	providerFactory := signozquerier.NewFactory(telemetryStore, prometheus, metadataStore, traceStmtBuilder, logStmtBuilder, auditStmtBuilder, metricStmtBuilder, meterStmtBuilder, traceOperatorStmtBuilder, bucketCache, flagger)
+	providerFactory := signozquerier.NewFactory(telemetryStore, prometheus, nil, metadataStore, traceStmtBuilder, logStmtBuilder, auditStmtBuilder, metricStmtBuilder, meterStmtBuilder, traceOperatorStmtBuilder, bucketCache, flagger)
 	mockQuerier, err := providerFactory.New(context.Background(), providerSettings, querier.Config{})
 	require.NoError(t, err)
 

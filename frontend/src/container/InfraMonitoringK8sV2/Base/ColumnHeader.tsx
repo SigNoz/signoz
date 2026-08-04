@@ -8,7 +8,6 @@ const DOCS_BASE_URL = `${process.env.DOCS_BASE_URL}/docs`;
 
 interface ColumnHeaderProps {
 	children?: React.ReactNode;
-	title?: string;
 	docPath?: string;
 	tooltip?: string;
 	className?: string;
@@ -16,7 +15,6 @@ interface ColumnHeaderProps {
 
 function ColumnHeader({
 	children,
-	title,
 	docPath,
 	tooltip,
 	className,
@@ -24,16 +22,6 @@ function ColumnHeader({
 	const renderContent = (): React.ReactNode => {
 		if (children) {
 			return children;
-		}
-
-		if (title) {
-			const parts = title.split('\n');
-			return parts.map((part, index) => (
-				<div key={`${part}-${index}`}>
-					{part}
-					{index < parts.length - 1 && <br />}
-				</div>
-			));
 		}
 
 		return null;

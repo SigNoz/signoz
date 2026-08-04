@@ -9,9 +9,9 @@ import K8sGroupCell from '../Base/K8sGroupCell';
 import { SelectedItemParams } from '../hooks';
 import { formatBytes, getPodStatusItems } from '../commonUtils';
 import {
-	CellValueTooltip,
 	EntityProgressBar,
 	GroupedStatusCounts,
+	TextNoData,
 	ValidateColumnValueWrapper,
 } from '../components';
 import {
@@ -79,10 +79,9 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 		enableMove: false,
 		pin: 'left',
 		visibilityBehavior: 'hidden-on-expand',
-		cell: ({ value }): React.ReactNode => {
-			const jobName = value as string;
-			return <CellValueTooltip value={jobName} />;
-		},
+		cell: ({ value }): React.ReactNode => (
+			<TanStackTable.Text>{value}</TanStackTable.Text>
+		),
 	},
 	{
 		id: 'namespaceName',
@@ -96,10 +95,9 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 		width: { min: 160 },
 		enableSort: false,
 		enableResize: true,
-		cell: ({ value }): React.ReactNode => {
-			const namespaceName = value as string;
-			return <CellValueTooltip value={namespaceName} />;
-		},
+		cell: ({ value }): React.ReactNode => (
+			<TanStackTable.Text>{value}</TanStackTable.Text>
+		),
 	},
 	{
 		id: 'pod_counts_by_status',
@@ -116,7 +114,7 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 		cell: ({ row, rowId }): React.ReactNode => {
 			const podCountsByStatus = row.podCountsByStatus;
 			if (!podCountsByStatus) {
-				return <TanStackTable.Text>-</TanStackTable.Text>;
+				return <TextNoData type="tanstack" />;
 			}
 			return (
 				<GroupedStatusCounts
@@ -129,7 +127,7 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 	{
 		id: 'completion',
 		header: (): React.ReactNode => (
-			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/jobs#completion">
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/jobs#completions">
 				Completions
 			</ColumnHeader>
 		),
@@ -161,8 +159,7 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 		id: 'cpu_request',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/jobs#cpu-req-usage-">
-				CPU Request
-				<br /> Usage (%)
+				CPU Request Usage (%)
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.jobCPURequest,
@@ -170,13 +167,14 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 		enableSort: true,
 		enableResize: true,
 		defaultVisibility: false,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const cpuRequest = value as number;
 			return (
 				<ValidateColumnValueWrapper
 					value={cpuRequest}
 					entity={InfraMonitoringEntity.JOBS}
 					attribute="CPU Request"
+					rowId={rowId}
 				>
 					<EntityProgressBar value={cpuRequest} type="request" />
 				</ValidateColumnValueWrapper>
@@ -187,21 +185,21 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 		id: 'cpu_limit',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/jobs#cpu-limit-usage-">
-				CPU Limit
-				<br /> Usage (%)
+				CPU Limit Usage (%)
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.jobCPULimit,
 		width: { min: 200, default: 200 },
 		enableSort: true,
 		enableResize: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const cpuLimit = value as number;
 			return (
 				<ValidateColumnValueWrapper
 					value={cpuLimit}
 					entity={InfraMonitoringEntity.JOBS}
 					attribute="CPU Limit"
+					rowId={rowId}
 				>
 					<EntityProgressBar value={cpuLimit} type="limit" />
 				</ValidateColumnValueWrapper>
@@ -212,21 +210,21 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 		id: 'cpu',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/jobs#cpu-usage-cores">
-				CPU Usage
-				<br /> (cores)
+				CPU Usage (cores)
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.jobCPU,
 		width: { min: 160 },
 		enableSort: true,
 		enableResize: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const cpu = Number(value);
 			return (
 				<ValidateColumnValueWrapper
 					value={cpu}
 					entity={InfraMonitoringEntity.JOBS}
 					attribute="CPU metric"
+					rowId={rowId}
 				>
 					<TanStackTable.Text>{cpu.toFixed(2)}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
@@ -237,8 +235,7 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 		id: 'memory_request',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/jobs#mem-req-usage-">
-				Memory Request
-				<br /> Usage (%)
+				Memory Request Usage (%)
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.jobMemoryRequest,
@@ -246,13 +243,14 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 		enableSort: true,
 		enableResize: true,
 		defaultVisibility: false,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const memoryRequest = value as number;
 			return (
 				<ValidateColumnValueWrapper
 					value={memoryRequest}
 					entity={InfraMonitoringEntity.JOBS}
 					attribute="Memory Request"
+					rowId={rowId}
 				>
 					<EntityProgressBar value={memoryRequest} type="request" />
 				</ValidateColumnValueWrapper>
@@ -263,21 +261,21 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 		id: 'memory_limit',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/jobs#mem-limit-usage-">
-				Memory Limit
-				<br /> Usage (%)
+				Memory Limit Usage (%)
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.jobMemoryLimit,
 		width: { min: 180 },
 		enableSort: true,
 		enableResize: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const memoryLimit = value as number;
 			return (
 				<ValidateColumnValueWrapper
 					value={memoryLimit}
 					entity={InfraMonitoringEntity.JOBS}
 					attribute="Memory Limit"
+					rowId={rowId}
 				>
 					<EntityProgressBar value={memoryLimit} type="limit" />
 				</ValidateColumnValueWrapper>
@@ -288,21 +286,21 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 		id: 'memory',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/jobs#mem-usage-wss">
-				Memory Usage
-				<br /> (WSS)
+				Memory Usage (WSS)
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.jobMemory,
 		width: { min: 160 },
 		enableSort: true,
 		enableResize: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const memory = value as number;
 			return (
 				<ValidateColumnValueWrapper
 					value={memory}
 					entity={InfraMonitoringEntity.JOBS}
 					attribute="memory metric"
+					rowId={rowId}
 				>
 					<TanStackTable.Text>{formatBytes(memory)}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
@@ -320,13 +318,14 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 		width: { min: 100 },
 		enableSort: true,
 		defaultVisibility: false,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const activePods = value as number;
 			return (
 				<ValidateColumnValueWrapper
 					value={activePods}
 					entity={InfraMonitoringEntity.JOBS}
 					attribute="active pod"
+					rowId={rowId}
 				>
 					<TanStackTable.Text>{activePods}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
@@ -344,13 +343,14 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 		width: { min: 100 },
 		enableSort: true,
 		defaultVisibility: false,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const failedPods = value as number;
 			return (
 				<ValidateColumnValueWrapper
 					value={failedPods}
 					entity={InfraMonitoringEntity.JOBS}
 					attribute="failed pod"
+					rowId={rowId}
 				>
 					<TanStackTable.Text>{failedPods}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
@@ -368,13 +368,14 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 		width: { min: 120 },
 		enableSort: true,
 		defaultVisibility: false,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const successfulPods = value as number;
 			return (
 				<ValidateColumnValueWrapper
 					value={successfulPods}
 					entity={InfraMonitoringEntity.JOBS}
 					attribute="successful pod"
+					rowId={rowId}
 				>
 					<TanStackTable.Text>{successfulPods}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
@@ -392,13 +393,14 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 		width: { min: 160 },
 		enableSort: true,
 		defaultVisibility: false,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const desiredSuccessfulPods = value as number;
 			return (
 				<ValidateColumnValueWrapper
 					value={desiredSuccessfulPods}
 					entity={InfraMonitoringEntity.JOBS}
 					attribute="desired successful pod"
+					rowId={rowId}
 				>
 					<TanStackTable.Text>{desiredSuccessfulPods}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
