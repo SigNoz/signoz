@@ -9,6 +9,7 @@ import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
 import { getGroupByEl } from 'container/InfraMonitoringK8sV2/Base/utils';
 import {
 	EntityProgressBar,
+	EntityProgressThresholds,
 	ExpandButtonWrapper,
 	GroupedStatusCounts,
 	ValidateColumnValueWrapper,
@@ -168,7 +169,10 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 	{
 		id: 'cpu',
 		header: (): React.ReactNode => (
-			<ColumnHeader docPath="/infrastructure-monitoring/host-monitoring#cpu-usage">
+			<ColumnHeader
+				docPath="/infrastructure-monitoring/host-monitoring#cpu-usage"
+				tooltip={<EntityProgressThresholds type="cpu" />}
+			>
 				CPU Usage
 			</ColumnHeader>
 		),
@@ -195,7 +199,9 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 		id: 'memory',
 		header: (): React.ReactNode => (
 			<ColumnHeader
-				tooltip="Excluding cache memory."
+				tooltip={
+					<EntityProgressThresholds type="memory" note="Excluding cache memory." />
+				}
 				docPath="/infrastructure-monitoring/host-monitoring#memory-usage"
 			>
 				Memory Usage (WSS)
@@ -223,7 +229,10 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 	{
 		id: 'disk_usage',
 		header: (): React.ReactNode => (
-			<ColumnHeader docPath="/infrastructure-monitoring/host-monitoring#disk-usage">
+			<ColumnHeader
+				docPath="/infrastructure-monitoring/host-monitoring#disk-usage"
+				tooltip={<EntityProgressThresholds type="disk" />}
+			>
 				Disk Usage
 			</ColumnHeader>
 		),

@@ -10,6 +10,7 @@ import { SelectedItemParams } from '../hooks';
 import { formatBytes, getPodStatusItems } from '../commonUtils';
 import {
 	EntityProgressBar,
+	EntityProgressThresholds,
 	GroupedStatusCounts,
 	TextNoData,
 	ValidateColumnValueWrapper,
@@ -158,7 +159,10 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 	{
 		id: 'cpu_request',
 		header: (): React.ReactNode => (
-			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/jobs#cpu-req-usage-">
+			<ColumnHeader
+				docPath="/infrastructure-monitoring/kubernetes/jobs#cpu-req-usage-"
+				tooltip={<EntityProgressThresholds type="cpu-request" />}
+			>
 				CPU Request Usage (%)
 			</ColumnHeader>
 		),
@@ -176,7 +180,7 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 					attribute="CPU Request"
 					rowId={rowId}
 				>
-					<EntityProgressBar value={cpuRequest} type="request" />
+					<EntityProgressBar value={cpuRequest} type="cpu-request" />
 				</ValidateColumnValueWrapper>
 			);
 		},
@@ -184,7 +188,10 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 	{
 		id: 'cpu_limit',
 		header: (): React.ReactNode => (
-			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/jobs#cpu-limit-usage-">
+			<ColumnHeader
+				docPath="/infrastructure-monitoring/kubernetes/jobs#cpu-limit-usage-"
+				tooltip={<EntityProgressThresholds type="cpu-limit" />}
+			>
 				CPU Limit Usage (%)
 			</ColumnHeader>
 		),
@@ -201,7 +208,7 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 					attribute="CPU Limit"
 					rowId={rowId}
 				>
-					<EntityProgressBar value={cpuLimit} type="limit" />
+					<EntityProgressBar value={cpuLimit} type="cpu-limit" />
 				</ValidateColumnValueWrapper>
 			);
 		},
@@ -234,7 +241,10 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 	{
 		id: 'memory_request',
 		header: (): React.ReactNode => (
-			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/jobs#mem-req-usage-">
+			<ColumnHeader
+				docPath="/infrastructure-monitoring/kubernetes/jobs#mem-req-usage-"
+				tooltip={<EntityProgressThresholds type="memory-request" />}
+			>
 				Memory Request Usage (%)
 			</ColumnHeader>
 		),
@@ -252,7 +262,7 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 					attribute="Memory Request"
 					rowId={rowId}
 				>
-					<EntityProgressBar value={memoryRequest} type="request" />
+					<EntityProgressBar value={memoryRequest} type="memory-request" />
 				</ValidateColumnValueWrapper>
 			);
 		},
@@ -260,7 +270,10 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 	{
 		id: 'memory_limit',
 		header: (): React.ReactNode => (
-			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/jobs#mem-limit-usage-">
+			<ColumnHeader
+				docPath="/infrastructure-monitoring/kubernetes/jobs#mem-limit-usage-"
+				tooltip={<EntityProgressThresholds type="memory-limit" />}
+			>
 				Memory Limit Usage (%)
 			</ColumnHeader>
 		),
@@ -277,7 +290,7 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 					attribute="Memory Limit"
 					rowId={rowId}
 				>
-					<EntityProgressBar value={memoryLimit} type="limit" />
+					<EntityProgressBar value={memoryLimit} type="memory-limit" />
 				</ValidateColumnValueWrapper>
 			);
 		},
