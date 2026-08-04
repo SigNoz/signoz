@@ -84,8 +84,8 @@ func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVis
 
 type PreparedWhereClause struct {
 	WhereClause *sqlbuilder.WhereClause
-	// Expr is the bare predicate in builder-internal format ($n markers bound to
-	// opts.Builder), embeddable outside a WHERE clause (e.g. inside countIf).
+	// Expr is the bare predicate ($n markers bound to opts.Builder), embeddable
+	// outside a WHERE clause (e.g. inside countIf).
 	Expr              string
 	Warnings          []string
 	WarningsDocURL    string

@@ -46,17 +46,14 @@ func TestSplitFilterForAggregates(t *testing.T) {
 			having: "trace.completion_tokens > 1000",
 		},
 		{
-			// an unknown name under the trace context still routes trace-level, so the
-			// aggregate validation rejects it with a targeted error instead of the span
-			// path failing on an unknown field.
+			// routes trace-level so aggregate validation rejects it with a targeted error
 			name:   "unknown aggregate under trace context stays trace-level",
 			query:  "trace.not_an_aggregate > 1000",
 			having: "trace.not_an_aggregate > 1000",
 		},
 
 		{
-			// ANTLR token offsets are rune indices; slicing must not shift after a
-			// multi-byte char (this used to truncate 1000 → 100).
+			// ANTLR token offsets are rune indices; slicing must not shift after a multi-byte char
 			name:   "unicode value before the split",
 			query:  "service.name = 'héllo' AND completion_tokens > 1000",
 			span:   "service.name = 'héllo'",
@@ -195,8 +192,7 @@ func TestSplitFilterForAggregates(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			// recovery would drop only the malformed atom and keep the rest — a
-			// partially applied filter with no error.
+			// recovery would keep the rest — a partially applied filter with no error
 			name:    "garbage atom alongside valid agg rejected",
 			query:   ") AND completion_tokens > 5",
 			wantErr: true,

@@ -941,8 +941,7 @@ func (q *querier) createRangedQuery(_ valuer.UUID, originalQuery qbtypes.Query, 
 		specCopy := qt.spec.Copy()
 		specCopy.ShiftBy = extractShiftFromBuilderQuery(specCopy)
 		adjustedTimeRange := adjustTimeRangeForShift(specCopy, timeRange, qt.kind)
-		// Reuse the statement builder the original query was created with, so an AI
-		// query keeps its AI builder without re-deriving it from the spec.
+		// reuse the original query's statement builder so an AI query keeps its AI builder
 		return newBuilderQuery(q.logger, q.telemetryStore, qt.orgID, qt.stmtBuilder, specCopy, adjustedTimeRange, qt.kind, qt.variables, builderConfig{})
 
 	case *builderQuery[qbtypes.LogAggregation]:

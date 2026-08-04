@@ -1,14 +1,8 @@
 """
 Integration tests for query_type="builder_ai_query" over the traces signal.
 
-Data shape (generic OTel gen_ai semantic conventions):
-  - a root span (no gen_ai attributes)
-  - an LLM span carrying gen_ai.request.model (str) and numeric usage attributes
-    (gen_ai.usage.input_tokens / output_tokens / cost) plus gen_ai.user.id
 Each test tags its spans with a unique service.name and filters on it, so tests do
-not interfere with each other's data. Builders shared across the suite (query window,
-ai_trace, ai_trace_mixed_spans) live in fixtures/querierai.py; one-off shapes are
-built right above the test that uses them.
+not interfere with each other's data. Shared builders live in fixtures/querierai.py.
 """
 
 import json
@@ -42,11 +36,7 @@ def test_ai_list_excludes_non_ai(
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
-    """
-    Trace-list panel (requestType="trace"): returns AI traces and excludes the
-    non-AI trace. Asserts on the raw response payload to stay agnostic to the exact
-    row schema.
-    """
+    """Trace list returns AI traces and excludes the non-AI trace."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-list"
 
@@ -87,14 +77,8 @@ def test_ai_list_having_aggregate_filter(
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
-    """
-    Aggregate filter written in the SAME filter box: the span-level predicate narrows
-    to the service, the trace-level `output_tokens > 100` keeps the large-token
-    trace and drops the small one (split internally into WHERE + HAVING). Both
-    spellings of a trace-level aggregate — bare and `trace.` — behave identically
-    (unit tests pin them to byte-identical SQL; this covers the wiring once
-    end-to-end). An output-only aggregate is rejected under either spelling.
-    """
+    """Span + aggregate condition in one filter box splits into WHERE + HAVING; bare
+    and `trace.` spellings behave identically; an output-only aggregate is rejected."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-having"
 
@@ -205,10 +189,7 @@ def test_ai_span_list_excludes_non_gen_ai_spans(
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
-    """
-    Span list (requestType=raw): returns only the gen_ai spans (LLM/tool/agent); the
-    root span of the same trace (no gen_ai attributes) is excluded by the span-level gate.
-    """
+    """Span list (raw) returns only gen_ai spans; the root span is excluded by the gate."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-spanlist"
     insert_traces(ai_trace_mixed_spans(now=now, service=service, user="alice"))
@@ -239,11 +220,8 @@ def test_ai_list_having_or_aggregates(
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
-    """
-    Two trace-level aggregates OR-ed within the filter box (regression guard for OR-group
-    whitespace handling): output_tokens > 100 OR input_tokens > 1000 keeps only the
-    large-output trace (input_tokens is 10 for both, so that branch never matches).
-    """
+    """Two trace-level aggregates OR-ed in the filter box (regression guard for
+    OR-group whitespace handling)."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-having-or"
 
@@ -276,13 +254,8 @@ def test_ai_list_resource_filter_isolates_by_fingerprint(
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
-    """
-    A resource attribute in the filter is pulled into the __resource_filter fingerprint
-    CTE (see maybeAttachResourceFilter). Two traces on the same service but different
-    deployment.environment: `resource.deployment.environment = 'production'` must keep
-    the production trace and drop the staging one — the fingerprint prune isolates by
-    the resource, not by any span attribute.
-    """
+    """A resource attribute in the filter routes into the fingerprint CTE: the
+    production trace is kept, the staging one dropped."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-resfilter"
 
@@ -315,10 +288,7 @@ def test_ai_list_rejects_aggregate_or_span_filter(
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
-    """
-    Aggregate (HAVING) columns may not be OR-ed with span-level keys in the trace
-    list; a span-OR-span filter is fine.
-    """
+    """Aggregate columns may not be OR-ed with span-level keys; span OR span is fine."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-orfilter"
     # seed a trace so service.name resolves as a known key in this window (resource
@@ -357,16 +327,9 @@ def test_ai_list_nested_group_span_or_and_aggregate(
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
-    """
-    A complex filter that mixes all three routing paths in one expression:
-        service.name = X AND (has_error = true OR gen_ai.request.model = 'gpt-4o') AND total_tokens > 100
-    The nested (span OR span) group must not flatten (precedence), the span predicates
-    go to WHERE as a trace-existence check, and the new `total_tokens` aggregate goes to
-    HAVING. Three traces isolate each discriminator:
-      - t_ok:      gpt-4o, out=500 -> OR matches (model) AND total_tokens>100  -> IN
-      - t_or_miss: gpt-4o-mini, out=500 -> OR fails (no error, wrong model)    -> OUT
-      - t_agg_miss: gpt-4o, out=20  -> OR matches but total_tokens<=100         -> OUT
-    """
+    """service.name = X AND (has_error = true OR gen_ai.request.model = 'gpt-4o') AND
+    total_tokens > 100: the nested OR group must not flatten, span predicates go to
+    WHERE, the aggregate to HAVING."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-nested"
 
@@ -443,11 +406,8 @@ def test_ai_list_total_tokens_output_only(
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
-    """
-    A trace whose LLM span carries only output tokens (no input-tokens attribute at
-    all) must still total: total_tokens is coalesce(sum(in),0)+coalesce(sum(out),0),
-    since sum over an absent attribute is NULL and NULL + n = NULL in ClickHouse.
-    """
+    """A trace with only output tokens must still total: sum over an absent attribute
+    is NULL and NULL + n = NULL, hence the coalesce."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-total-coalesce"
     insert_traces(ai_trace(now=now, service=service, user="a", in_tokens=None, out_tokens=300, cost=0.1))
@@ -520,10 +480,7 @@ def test_ai_list_messages_first_input_last_output(
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
-    """
-    `input` is the FIRST LLM span's prompt (argMin over timestamp) and `output` is the
-    LAST LLM span's answer (argMax) — the question -> final-answer preview.
-    """
+    """`input` is the first LLM span's prompt, `output` the last LLM span's answer."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-messages"
     trace_id = TraceIdGenerator.trace_id()
@@ -584,14 +541,8 @@ def test_ai_list_enrichment_values(
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
-    """
-    End-to-end values of the derived per-trace columns (only integration can check that
-    ClickHouse computes uniqIf / sum+sum / countIf(predicate) correctly, not just that
-    the SQL is shaped right). One trace: root + 1 errored LLM + 3 tool spans
-    (get_weather x2, get_time x1) + 1 agent span. The tool and agent spans are in the
-    gen_ai gate but carry no request.model, so llm_call_count stays 1 while span_count
-    counts them all.
-    """
+    """End-to-end values of the derived per-trace columns. One trace: root + 1 errored
+    LLM + 3 tool spans (get_weather x2, get_time x1) + 1 agent span."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-metrics"
     trace_id = TraceIdGenerator.trace_id()

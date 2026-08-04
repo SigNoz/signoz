@@ -12,12 +12,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-// NewFactory returns a provider factory for the AI trace statement builder
-// (builder_ai_query): the gen_ai Scope paired with the domain-neutral scoped-trace
-// topology, which owns the query construction.
-//
-// The gen_ai gate/column keys are surfaced by the metadata store itself
-// (enrichWithGenAIKeys), so queries work before any gen_ai metadata is ingested.
+// NewFactory returns the provider factory for builder_ai_query: the gen_ai Scope
+// paired with the domain-neutral scoped-trace builder.
 func NewFactory(
 	telemetryStore telemetrystore.TelemetryStore,
 	metadataStore telemetrytypes.MetadataStore,
@@ -27,9 +23,7 @@ func NewFactory(
 }
 
 // Scope describes gen_ai for the scoped trace builder: an AI trace has >=1 gen_ai
-// LLM, tool, or agent span, and its list adds AI/LLM per-trace metrics on top of the
-// common columns. This package holds only gen_ai domain knowledge; the query
-// topology lives in scopedtracesstatementbuilder.
+// LLM, tool, or agent span, and its list adds AI/LLM per-trace metrics.
 func Scope() scopedtraces.TraceScope {
 	gateKeyNames := []string{telemetrytypes.GenAIRequestModel, telemetrytypes.GenAIToolName, telemetrytypes.GenAIAgentName}
 	gateExprs := make([]string, 0, len(gateKeyNames))

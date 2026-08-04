@@ -1,9 +1,6 @@
 """
-Trace builders for the querierai suite (query_type="builder_ai_query").
-
-Every builder pins its spans a few seconds before the given `now` so
-`query_window(now)` covers them, and tags them with the caller's service name so
-tests do not interfere with each other's data.
+Trace builders for the querierai suite. Every builder pins its spans a few seconds
+before the given `now` so `query_window(now)` covers them.
 """
 
 from datetime import datetime, timedelta
@@ -20,8 +17,8 @@ def query_window(now: datetime) -> tuple[int, int]:
 
 
 def root_span(*, now: datetime, trace_id: str, span_id: str, resources: dict[str, str], duration_s: float) -> Traces:
-    """The non-gen_ai entry span every AI trace hangs off. On its own (no gen_ai
-    children) it is exactly the trace the AI gate must exclude."""
+    """The non-gen_ai entry span every AI trace hangs off; alone, it is a trace the
+    AI gate must exclude."""
     return Traces(
         timestamp=now - timedelta(seconds=5),
         duration=timedelta(seconds=duration_s),
@@ -83,10 +80,7 @@ def ai_trace(
 
 
 def ai_trace_mixed_spans(*, now: datetime, service: str, user: str) -> list[Traces]:
-    """
-    Root + one LLM span + one tool span + one agent span. The gate matches all three
-    child spans, but only the LLM span carries gen_ai.request.model.
-    """
+    """Root + LLM + tool + agent spans; only the LLM span carries gen_ai.request.model."""
     trace_id = TraceIdGenerator.trace_id()
     root_id = TraceIdGenerator.span_id()
     resources = {"service.name": service, "deployment.environment": "production"}

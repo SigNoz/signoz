@@ -160,8 +160,7 @@ func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 		q.Spec = spec
 
 	case QueryTypeBuilderAI:
-		// A dedicated AI query is always a traces builder query; the signal is
-		// implied by the type, so pin it rather than requiring the caller to send it.
+		// the signal is implied by the type, so pin it
 		var spec QueryBuilderQuery[TraceAggregation]
 		if err := json.Unmarshal(shadow.Spec, &spec); err != nil {
 			return err

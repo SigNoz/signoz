@@ -15,11 +15,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// otelKeysMap seeds the OpenTelemetry gen_ai semantic-convention keys the AI
-// queries reference, so the metadata-backed field resolution succeeds in tests.
+// otelKeysMap seeds the gen_ai semconv keys the AI queries reference.
 func otelKeysMap() map[string][]*telemetrytypes.TelemetryFieldKey {
 	strKey := func(name string) *telemetrytypes.TelemetryFieldKey {
 		return &telemetrytypes.TelemetryFieldKey{
@@ -40,14 +40,13 @@ func otelKeysMap() map[string][]*telemetrytypes.TelemetryFieldKey {
 
 	m := make(map[string][]*telemetrytypes.TelemetryFieldKey)
 
-	// gen_ai semconv keys sourced from the single source of truth, mirroring what the
-	// production metadata store surfaces via enrichWithGenAIKeys.
+	// mirrors what enrichWithGenAIKeys surfaces in production
 	for name, def := range telemetrytypes.GenAIFieldDefinitions {
 		keyCopy := def
 		m[name] = []*telemetrytypes.TelemetryFieldKey{&keyCopy}
 	}
 
-	// Extra keys these tests reference that aren't gen_ai semconv definitions.
+	// keys referenced by tests that aren't gen_ai semconv definitions
 	m["gen_ai.user.id"] = []*telemetrytypes.TelemetryFieldKey{strKey("gen_ai.user.id")}
 	m["_signoz.gen_ai.total_cost"] = []*telemetrytypes.TelemetryFieldKey{numKey("_signoz.gen_ai.total_cost")}
 	m["gen_ai.usage.cached_input_tokens"] = []*telemetrytypes.TelemetryFieldKey{numKey("gen_ai.usage.cached_input_tokens")}
@@ -57,9 +56,7 @@ func otelKeysMap() map[string][]*telemetrytypes.TelemetryFieldKey {
 		FieldContext:  telemetrytypes.FieldContextSpan,
 		FieldDataType: telemetrytypes.FieldDataTypeBool,
 	}}
-	// service.name carries the resource-column evolutions like production metadata, so
-	// the rendered value expression prefers the JSON resource column over the legacy
-	// map (matching the standard traces builder tests).
+	// resource-column evolutions so the value expression prefers the JSON resource column
 	m["service.name"] = []*telemetrytypes.TelemetryFieldKey{{
 		Name:          "service.name",
 		Signal:        telemetrytypes.SignalTraces,
@@ -70,9 +67,8 @@ func otelKeysMap() map[string][]*telemetrytypes.TelemetryFieldKey {
 	return m
 }
 
-// resourceEvolutions is the canonical resource-column timeline: the legacy
-// resources_string map at epoch 0 and the JSON resource column released inside the
-// test window (mirrors telemetrytraces' mockEvolutionData).
+// resourceEvolutions: legacy resources_string map at epoch 0, JSON resource column
+// released inside the test window.
 func resourceEvolutions() []*telemetrytypes.EvolutionEntry {
 	return []*telemetrytypes.EvolutionEntry{
 		{
@@ -104,9 +100,6 @@ func newTestBuilder(t *testing.T) qbtypes.StatementBuilder[qbtypes.TraceAggregat
 	return newTestBuilderWithKeys(t, otelKeysMap())
 }
 
-// newTestBuilderWithKeys builds the AI statement builder through its production
-// factory. The gen_ai keys are seeded via keysMap here; in production the metadata
-// store surfaces them itself (enrichWithGenAIKeys).
 func newTestBuilderWithKeys(t *testing.T, keysMap map[string][]*telemetrytypes.TelemetryFieldKey) qbtypes.StatementBuilder[qbtypes.TraceAggregation] {
 	t.Helper()
 	settings := instrumentationtest.New().ToProviderSettings()
@@ -119,8 +112,7 @@ func newTestBuilderWithKeys(t *testing.T, keysMap map[string][]*telemetrytypes.T
 	return stmtBuilder
 }
 
-// renderSQL substitutes bound args into the `?` placeholders so the whole statement
-// reads as one literal SQL string.
+// renderSQL substitutes bound args into the `?` placeholders.
 func renderSQL(t *testing.T, stmt *qbtypes.Statement) string {
 	t.Helper()
 	var b strings.Builder
@@ -134,7 +126,7 @@ func renderSQL(t *testing.T, stmt *qbtypes.Statement) string {
 		}
 		b.WriteByte(stmt.Query[i])
 	}
-	require.Equal(t, len(stmt.Args), argi, "arg count does not match number of placeholders")
+	assert.Equal(t, len(stmt.Args), argi, "arg count does not match number of placeholders")
 	return b.String()
 }
 
@@ -145,11 +137,8 @@ func formatArg(a any) string {
 	return fmt.Sprintf("%v", a)
 }
 
-// normalizeSQL makes the comparison insensitive to formatting: it drops identifier
-// backticks, collapses whitespace runs to a single space, and removes spaces directly
-// inside parentheses. This lets the golden strings be freely indented/wrapped (and
-// written as Go raw literals, which cannot contain backticks) — only the SQL tokens
-// and their order matter.
+// normalizeSQL drops backticks, collapses whitespace, and removes spaces inside
+// parens so golden strings can be freely wrapped as raw literals.
 func normalizeSQL(s string) string {
 	s = strings.Join(strings.Fields(strings.ReplaceAll(s, "`", "")), " ")
 	s = strings.ReplaceAll(s, "( ", "(")
@@ -157,15 +146,14 @@ func normalizeSQL(s string) string {
 	return s
 }
 
-func requireSQLEqual(t *testing.T, want string, stmt *qbtypes.Statement) {
+func assertSQLEqual(t *testing.T, want string, stmt *qbtypes.Statement) {
 	t.Helper()
 	got := renderSQL(t, stmt)
 	t.Logf("\n%s", got)
-	require.Equal(t, normalizeSQL(want), normalizeSQL(got))
+	assert.Equal(t, normalizeSQL(want), normalizeSQL(got))
 }
 
-// No filter: matched selects only the default order key (last_activity_time), WHERE is
-// just window + gate mask, no HAVING.
+// No filter: WHERE is just window + gate mask, no HAVING.
 func TestBuild_FullSQL_TraceList_NoFilter(t *testing.T) {
 	b := newTestBuilder(t)
 	stmt, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeTrace,
@@ -174,7 +162,7 @@ func TestBuild_FullSQL_TraceList_NoFilter(t *testing.T) {
 		}, nil)
 	require.NoError(t, err)
 
-	requireSQLEqual(t, `
+	assertSQLEqual(t, `
 WITH matched AS (
     SELECT trace_id,
         maxIf(timestamp, (mapContains(attributes_string, 'gen_ai.request.model') OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name'))) AS last_activity_time
@@ -229,12 +217,8 @@ SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000
 `, stmt)
 }
 
-// Promotion: a materialized gen_ai attribute must resolve to its materialized column
-// everywhere it appears — gate mask, countIf/scoped existence, and value columns —
-// while un-promoted attributes stay in the attributes map, so one query mixes both
-// forms. Here gen_ai.request.model and gen_ai.usage.input_tokens are materialized:
-// the gate/llm_call_count/max_llm_latency use `..._exists`, input_tokens/total_tokens
-// use the materialized value column, and tool/output_tokens/cost/messages stay in the map.
+// A materialized gen_ai attribute resolves to its materialized column everywhere it
+// appears; un-promoted attributes stay in the attributes map within the same query.
 func TestBuild_FullSQL_TraceList_MaterializedColumns(t *testing.T) {
 	keys := otelKeysMap()
 	for _, name := range []string{"gen_ai.request.model", "gen_ai.usage.input_tokens"} {
@@ -249,7 +233,7 @@ func TestBuild_FullSQL_TraceList_MaterializedColumns(t *testing.T) {
 		}, nil)
 	require.NoError(t, err)
 
-	requireSQLEqual(t, `
+	assertSQLEqual(t, `
 WITH matched AS (
     SELECT trace_id,
         maxIf(timestamp, (attribute_string_gen_ai$$request$$model_exists OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name'))) AS last_activity_time
@@ -304,10 +288,9 @@ SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000
 `, stmt)
 }
 
-// Span-level AND trace-level filter, order by the aggregate, pagination. matched selects
-// only output_tokens (the sole aggregate referenced by both ORDER BY and HAVING) — not
-// input_tokens/llm_call_count/last_activity_time. The span predicate widens the WHERE
-// prune and becomes a countIf(...) > 0 existence check alongside the gate countIf.
+// Span-level AND trace-level filter with order + pagination: matched selects only the
+// aggregates ORDER BY/HAVING reference; the span predicate widens the WHERE prune and
+// becomes a countIf existence check.
 func TestBuild_FullSQL_TraceList_SpanAndTraceFilter(t *testing.T) {
 	b := newTestBuilder(t)
 	stmt, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeTrace,
@@ -319,7 +302,7 @@ func TestBuild_FullSQL_TraceList_SpanAndTraceFilter(t *testing.T) {
 		}, nil)
 	require.NoError(t, err)
 
-	requireSQLEqual(t, `
+	assertSQLEqual(t, `
 WITH matched AS (
     SELECT trace_id,
         sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens'), toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens
@@ -378,9 +361,8 @@ SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000
 `, stmt)
 }
 
-// Aggregate-only filter (no span filter). WHERE prune is NOT widened, there is no
-// gate/span countIf, just the aggregate HAVING. `trace.output_tokens` rewrites to the
-// output_tokens alias. matched selects output_tokens (HAVING) + last_activity_time (default order).
+// Aggregate-only filter: WHERE prune not widened, no gate/span countIf, just the
+// aggregate HAVING; `trace.output_tokens` rewrites to the alias.
 func TestBuild_FullSQL_TraceList_AggregateFilterOnly(t *testing.T) {
 	b := newTestBuilder(t)
 	stmt, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeTrace,
@@ -391,7 +373,7 @@ func TestBuild_FullSQL_TraceList_AggregateFilterOnly(t *testing.T) {
 		}, nil)
 	require.NoError(t, err)
 
-	requireSQLEqual(t, `
+	assertSQLEqual(t, `
 WITH matched AS (
     SELECT trace_id,
         sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens'), toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens,
@@ -448,9 +430,8 @@ SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000
 `, stmt)
 }
 
-// Span-only filter (no aggregate filter). WHERE is widened; HAVING has the gate + span
-// countIf pair but no trailing aggregate. `has_error = true` resolves to a
-// materialized-column predicate (not a map access). matched selects only the default order key.
+// Span-only filter: WHERE widened; HAVING has the gate + span countIf pair but no
+// trailing aggregate.
 func TestBuild_FullSQL_TraceList_SpanFilterOnly(t *testing.T) {
 	b := newTestBuilder(t)
 	stmt, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeTrace,
@@ -461,7 +442,7 @@ func TestBuild_FullSQL_TraceList_SpanFilterOnly(t *testing.T) {
 		}, nil)
 	require.NoError(t, err)
 
-	requireSQLEqual(t, `
+	assertSQLEqual(t, `
 WITH matched AS (
     SELECT trace_id,
         maxIf(timestamp, (mapContains(attributes_string, 'gen_ai.request.model') OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name'))) AS last_activity_time
@@ -519,11 +500,8 @@ SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000
 `, stmt)
 }
 
-// Resource filter: a resource attribute in the filter is pulled into a __resource_filter
-// CTE (fingerprints matching the resource condition), and the `matched` scan is narrowed
-// by `resource_fingerprint GLOBAL IN (…)`. The resource key is dropped from the span
-// predicate (skipResourceFilter), so here there is no span-level existence check — the
-// prune stays the gate mask and the whole match is scoped to the resource fingerprints.
+// Resource filter: routed into the __resource_filter CTE narrowing the matched scan
+// by fingerprint, and dropped from the span predicate — no span-level existence check.
 func TestBuild_FullSQL_TraceList_ResourceFilter(t *testing.T) {
 	b := newTestBuilder(t)
 	stmt, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeTrace,
@@ -534,7 +512,7 @@ func TestBuild_FullSQL_TraceList_ResourceFilter(t *testing.T) {
 		}, nil)
 	require.NoError(t, err)
 
-	requireSQLEqual(t, `
+	assertSQLEqual(t, `
 WITH __resource_filter AS (
     SELECT fingerprint
     FROM signoz_traces.distributed_traces_v3_resource
@@ -598,9 +576,8 @@ SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000
 `, stmt)
 }
 
-// Mixed filter (two span predicates AND'd into one existence check + an aggregate) with
-// a two-key order on different aggregates than the filter. matched selects input_tokens
-// + last_activity_time (ORDER BY) and output_tokens (HAVING) — three of four; llm_call_count is not.
+// Mixed span + aggregate filter with a two-key order: matched selects only the
+// ORDER BY and HAVING aggregates.
 func TestBuild_FullSQL_TraceList_MixedFiltersMultiOrder(t *testing.T) {
 	b := newTestBuilder(t)
 	stmt, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeTrace,
@@ -615,7 +592,7 @@ func TestBuild_FullSQL_TraceList_MixedFiltersMultiOrder(t *testing.T) {
 		}, nil)
 	require.NoError(t, err)
 
-	requireSQLEqual(t, `
+	assertSQLEqual(t, `
 WITH matched AS (
     SELECT trace_id,
         sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens'), toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)) AS input_tokens,
@@ -676,9 +653,8 @@ SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000
 `, stmt)
 }
 
-// Span list (requestType raw): delegated to the traces builder with the gate ANDed
-// into the user filter, so only gen_ai spans matching the filter come back. Standard
-// span columns, single SELECT (no CTE pipeline).
+// Span list (raw): delegated to the traces builder with the gate ANDed into the
+// user filter.
 func TestBuild_FullSQL_SpanList_Raw(t *testing.T) {
 	b := newTestBuilder(t)
 	stmt, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeRaw,
@@ -689,7 +665,7 @@ func TestBuild_FullSQL_SpanList_Raw(t *testing.T) {
 		}, nil)
 	require.NoError(t, err)
 
-	requireSQLEqual(t, `
+	assertSQLEqual(t, `
 SELECT timestamp AS __SELECT_KEY_0_timestamp, trace_id AS __SELECT_KEY_1_trace_id, span_id AS __SELECT_KEY_2_span_id,
     trace_state AS __SELECT_KEY_3_trace_state, parent_span_id AS __SELECT_KEY_4_parent_span_id, flags AS __SELECT_KEY_5_flags,
     name AS __SELECT_KEY_6_name, kind AS __SELECT_KEY_7_kind, kind_string AS __SELECT_KEY_8_kind_string, duration_nano AS __SELECT_KEY_9_duration_nano,
@@ -718,10 +694,8 @@ LIMIT 10
 // Behavior / branch tests not covered by the goldens above
 // ---------------------------------------------------------------------------
 
-// A filter mixing a resource attribute with a span-level and an aggregate condition:
-// the resource key routes into __resource_filter (fingerprint prune), the span key stays
-// as a countIf existence check, and the aggregate becomes a HAVING — all AND-combined.
-// service.name (resource context) comes from otelKeysMap.
+// Resource + span + aggregate filter: fingerprint prune, countIf existence check, and
+// HAVING respectively, all AND-combined.
 func TestBuild_TraceList_ResourcePlusSpanPlusAggregateFilter(t *testing.T) {
 	b := newTestBuilder(t)
 	stmt, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeTrace,
@@ -733,19 +707,12 @@ func TestBuild_TraceList_ResourcePlusSpanPlusAggregateFilter(t *testing.T) {
 	require.NoError(t, err)
 
 	got := renderSQL(t, stmt)
-	// resource condition -> fingerprint CTE + prune, not filtered on the span index
-	// (the service.name output column still reads the resource map, hence the = form).
-	require.Contains(t, got, "__resource_filter AS (")
-	require.Contains(t, got, "resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)")
-	require.NotContains(t, got, "resources_string['service.name'] = 'checkout'")
-	// span condition -> existence check in matched HAVING.
-	require.Contains(t, got, "countIf(has_error = true) > 0")
-	// aggregate condition -> HAVING on the matched aggregate alias.
-	require.Contains(t, got, "output_tokens")
+	assert.Contains(t, got, "__resource_filter AS (")
+	assert.Contains(t, got, "resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)")
+	assert.NotContains(t, got, "resources_string['service.name'] = 'checkout'")
+	assert.Contains(t, got, "countIf(has_error = true) > 0")
+	assert.Contains(t, got, "output_tokens")
 }
-
-// The resolver-unset (nil) fallback is covered in pkg/statementbuilder/scopedtracesstatementbuilder, which
-// can construct that builder state directly.
 
 // Trace-level and span-level predicates may not be OR-combined.
 func TestBuild_TraceList_TraceOrSpanMixRejected(t *testing.T) {
@@ -757,36 +724,32 @@ func TestBuild_TraceList_TraceOrSpanMixRejected(t *testing.T) {
 	}
 	_, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeTrace, query, nil)
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "cannot be combined")
+	assert.Contains(t, err.Error(), "cannot be combined")
 }
 
 // An output-only aggregate (span_count / trace_duration_nano) can be displayed but not
-// used in the aggregate filter or ORDER BY — it is not computable in the matched pass.
+// filtered or ordered on — it is not computable in the matched pass.
 func TestBuild_TraceList_OutputOnlyAggregateRejected(t *testing.T) {
 	b := newTestBuilder(t)
 
-	// filter by span_count -> rejected
 	_, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeTrace,
 		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 			Signal: telemetrytypes.SignalTraces,
 			Filter: &qbtypes.Filter{Expression: "span_count > 3"},
 		}, nil)
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "span_count")
+	assert.Contains(t, err.Error(), "span_count")
 
-	// order by trace_duration_nano -> rejected
 	_, err = b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeTrace,
 		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 			Signal: telemetrytypes.SignalTraces,
 			Order:  []qbtypes.OrderBy{{Key: qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "trace_duration_nano"}}, Direction: qbtypes.OrderDirectionDesc}},
 		}, nil)
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "unsupported order key")
+	assert.Contains(t, err.Error(), "unsupported order key")
 }
 
-// duration_nano no longer names an aggregate (the trace column is trace_duration_nano),
-// so a bare filter on it is span-level like everywhere else in the product: the trace
-// matches when any span exceeds the duration.
+// A bare duration_nano filter is span-level (the trace column is trace_duration_nano).
 func TestBuild_TraceList_SpanDurationFilterIsSpanLevel(t *testing.T) {
 	keys := otelKeysMap()
 	keys["duration_nano"] = []*telemetrytypes.TelemetryFieldKey{{
@@ -805,15 +768,12 @@ func TestBuild_TraceList_SpanDurationFilterIsSpanLevel(t *testing.T) {
 	require.NoError(t, err)
 
 	got := renderSQL(t, stmt)
-	require.Contains(t, got, "countIf(duration_nano > 1000000) > 0")
-	require.NotContains(t, got, "HAVING trace_duration_nano")
+	assert.Contains(t, got, "countIf(duration_nano > 1000000) > 0")
+	assert.NotContains(t, got, "HAVING trace_duration_nano")
 }
 
-// A span attribute literally named like a trace aggregate alias is shadowed by the
-// alias in bare spelling, but stays reachable with an explicit context prefix:
-// `attribute.output_tokens` (and the forgiving `span.` spelling, which renders
-// byte-identical SQL) filters span-level on the org's attribute; the bare spelling
-// still rewrites to the aggregate HAVING even though metadata knows the colliding key.
+// A span attribute named like an aggregate alias is shadowed in bare spelling but
+// stays reachable via an explicit context prefix (`attribute.` / `span.`).
 func TestBuild_FullSQL_TraceList_AliasAttributeCollision(t *testing.T) {
 	keys := otelKeysMap()
 	keys["output_tokens"] = []*telemetrytypes.TelemetryFieldKey{{
@@ -835,7 +795,7 @@ func TestBuild_FullSQL_TraceList_AliasAttributeCollision(t *testing.T) {
 	}
 
 	attrStmt := build("attribute.output_tokens > 100")
-	requireSQLEqual(t, `
+	assertSQLEqual(t, `
 WITH matched AS (
     SELECT trace_id,
         maxIf(timestamp, (mapContains(attributes_string, 'gen_ai.request.model') OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name'))) AS last_activity_time
@@ -892,22 +852,19 @@ ORDER BY last_activity_time DESC, trace_id DESC
 SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000
 `, attrStmt)
 
-	// attribute. matches the metadata key exactly — no warning.
-	require.Empty(t, attrStmt.Warnings)
+	assert.Empty(t, attrStmt.Warnings)
 
-	// the forgiving span. spelling corrects to the same attribute — identical SQL —
-	// but the metadata lookup ran with the span context, so the correction is
-	// surfaced as a key-not-found warning.
+	// span. corrects to the same attribute (identical SQL) but the span-context
+	// metadata lookup misses, surfacing a key-not-found warning.
 	spanStmt := build("span.output_tokens > 100")
-	require.Equal(t, renderSQL(t, attrStmt), renderSQL(t, spanStmt))
+	assert.Equal(t, renderSQL(t, attrStmt), renderSQL(t, spanStmt))
 	require.Len(t, spanStmt.Warnings, 1)
-	require.Contains(t, spanStmt.Warnings[0], "key `output_tokens` not found in metadata")
+	assert.Contains(t, spanStmt.Warnings[0], "key `output_tokens` not found in metadata")
 
-	// bare spelling is claimed by the aggregate alias: no widened WHERE, no span
-	// countIf pair, no map access on the colliding key — just the alias HAVING.
+	// bare spelling is claimed by the aggregate alias
 	bareStmt := build("output_tokens > 100")
-	require.Empty(t, bareStmt.Warnings)
-	requireSQLEqual(t, `
+	assert.Empty(t, bareStmt.Warnings)
+	assertSQLEqual(t, `
 WITH matched AS (
     SELECT trace_id,
         sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens'), toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens,
@@ -987,7 +944,7 @@ func TestBuild_TraceList_UnsupportedOrderKey(t *testing.T) {
 	}
 	_, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeTrace, query, nil)
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "unsupported order key")
+	assert.Contains(t, err.Error(), "unsupported order key")
 }
 
 // With no limit set, the builder applies the default of 100.
@@ -998,8 +955,8 @@ func TestBuild_TraceList_DefaultLimit(t *testing.T) {
 	}
 	stmt, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeTrace, query, nil)
 	require.NoError(t, err)
-	require.Contains(t, stmt.Query, "LIMIT ?")
-	require.Contains(t, stmt.Args, 100)
+	assert.Contains(t, stmt.Query, "LIMIT ?")
+	assert.Contains(t, stmt.Args, 100)
 }
 
 // Only trace list and span list (raw) are supported; distribution is not.
@@ -1015,9 +972,8 @@ func TestBuild_UnsupportedRequestType(t *testing.T) {
 	require.ErrorIs(t, err, scopedtraces.ErrUnsupportedRequestType)
 }
 
-// A gate key ingested under several data types (e.g. string + number from a
-// misbehaving SDK) contributes ALL variants to the mask, OR-combined — not just
-// the first — matching the standard visitor's EXISTS handling.
+// A gate key ingested under several data types contributes all variants to the
+// mask, OR-combined.
 func TestBuild_TraceList_MultiVariantGateKey(t *testing.T) {
 	keys := otelKeysMap()
 	keys[telemetrytypes.GenAIToolName] = append(keys[telemetrytypes.GenAIToolName], &telemetrytypes.TelemetryFieldKey{
@@ -1034,14 +990,11 @@ func TestBuild_TraceList_MultiVariantGateKey(t *testing.T) {
 	require.NoError(t, err)
 
 	got := renderSQL(t, stmt)
-	require.Contains(t, got, "mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_number, 'gen_ai.tool.name')")
+	assert.Contains(t, got, "mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_number, 'gen_ai.tool.name')")
 }
 
-// `trace.` parses as the trace field context and marks a trace-level aggregate; the
-// legacy `tracefield.` spelling routes trace-level too but is not a rewritable alias,
-// so the HAVING rewriter rejects it listing the valid references (filter and having
-// alike); and an output-only aggregate under the context gets the targeted rejection
-// rather than an unknown-span-field failure.
+// `trace.` marks a trace-level aggregate; `tracefield.` routes trace-level too but is
+// not a rewritable alias, so the HAVING rewriter rejects it.
 func TestBuild_TraceList_TraceContextPrefix(t *testing.T) {
 	b := newTestBuilder(t)
 	build := func(q qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) (*qbtypes.Statement, error) {
@@ -1056,21 +1009,20 @@ func TestBuild_TraceList_TraceContextPrefix(t *testing.T) {
 	_, err = build(qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 		Filter: &qbtypes.Filter{Expression: "tracefield.output_tokens > 1000"}})
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "Invalid references in `Having` expression: [tracefield.output_tokens]")
+	assert.Contains(t, err.Error(), "Invalid references in `Having` expression: [tracefield.output_tokens]")
 
 	_, err = build(qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 		Having: &qbtypes.Having{Expression: "tracefield.output_tokens > 1000"}})
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "Invalid references in `Having` expression: [tracefield.output_tokens]")
+	assert.Contains(t, err.Error(), "Invalid references in `Having` expression: [tracefield.output_tokens]")
 
 	_, err = build(qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 		Filter: &qbtypes.Filter{Expression: "trace.span_count > 3"}})
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "cannot be used")
+	assert.Contains(t, err.Error(), "cannot be used")
 }
 
-// Query variables in a trace-level condition are substituted into the HAVING (the
-// span path binds them via PrepareWhereClause; the HAVING is a text rewrite).
+// Query variables in a trace-level condition are substituted into the HAVING.
 func TestBuild_TraceList_VariableInAggregateFilter(t *testing.T) {
 	b := newTestBuilder(t)
 	build := func(expr string, vars map[string]qbtypes.VariableItem) (*qbtypes.Statement, error) {
@@ -1086,19 +1038,19 @@ func TestBuild_TraceList_VariableInAggregateFilter(t *testing.T) {
 	stmt, err := build("trace.output_tokens > $threshold",
 		map[string]qbtypes.VariableItem{"threshold": {Value: 700}})
 	require.NoError(t, err)
-	require.Contains(t, stmt.Query, "HAVING output_tokens > 700")
+	assert.Contains(t, stmt.Query, "HAVING output_tokens > 700")
 
 	// list variable with IN
 	stmt, err = build("trace.llm_call_count IN $counts",
 		map[string]qbtypes.VariableItem{"counts": {Value: []any{1, 2}}})
 	require.NoError(t, err)
-	require.Contains(t, stmt.Query, "HAVING llm_call_count IN")
+	assert.Contains(t, stmt.Query, "HAVING llm_call_count IN")
 
 	// dynamic __all__ -> condition dropped, no HAVING at all
 	stmt, err = build("trace.output_tokens > $threshold",
 		map[string]qbtypes.VariableItem{"threshold": {Type: qbtypes.DynamicVariableType, Value: "__all__"}})
 	require.NoError(t, err)
-	require.NotContains(t, stmt.Query, "HAVING")
+	assert.NotContains(t, stmt.Query, "HAVING")
 
 	// unresolved variable -> rejected, not compared as a literal
 	_, err = build("trace.output_tokens > $missing", map[string]qbtypes.VariableItem{"other": {Value: 1}})

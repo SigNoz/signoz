@@ -11,10 +11,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-// This file holds the Aggregate constructors a TraceScope's columns are declared
-// with. All SQL rendering goes through the resolvers: columns/values via the
-// columnResolver, predicates via the predicateResolver.
-
 // Aggregate renders one column's SQL through the resolvers and lists the attribute
 // keys it references so the builder can pre-fetch their metadata. Build one with the
 // constructors below; the zero value is not usable.
@@ -23,8 +19,7 @@ type Aggregate struct {
 	render func(ctx context.Context, orgID valuer.UUID, startNs, endNs uint64, cols *columnResolver, preds *predicateResolver) (expr string, err error)
 }
 
-// IntrinsicSpanKey references an intrinsic span-index field (timestamp, name, …) by
-// its canonical name; the field mapper resolves it to the physical column.
+// IntrinsicSpanKey references an intrinsic span-index field (timestamp, name, …).
 func IntrinsicSpanKey(name string) *telemetrytypes.TelemetryFieldKey {
 	return &telemetrytypes.TelemetryFieldKey{
 		Name:         name,
@@ -187,9 +182,8 @@ func UniqCount(valueKey *telemetrytypes.TelemetryFieldKey, dt telemetrytypes.Fie
 	}}
 }
 
-// SumOfKeys renders coalesce(sum(<v1>), 0) + coalesce(sum(<v2>), 0) + … over several
-// numeric attributes. Coalesced because a key absent from every span sums to NULL and
-// NULL + n = NULL — a trace with only output tokens would otherwise total NULL.
+// SumOfKeys renders coalesce(sum(<v1>), 0) + coalesce(sum(<v2>), 0) + …; coalesced
+// because a key absent from every span sums to NULL and NULL + n = NULL.
 func SumOfKeys(dt telemetrytypes.FieldDataType, valueKeys ...*telemetrytypes.TelemetryFieldKey) Aggregate {
 	return Aggregate{keys: valueKeys, render: func(ctx context.Context, orgID valuer.UUID, startNs, endNs uint64, cols *columnResolver, _ *predicateResolver) (string, error) {
 		parts := make([]string, 0, len(valueKeys))
