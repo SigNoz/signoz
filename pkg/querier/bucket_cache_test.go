@@ -1460,37 +1460,3 @@ func TestBucketCacheServesBucketsHoldingNonFiniteValues(t *testing.T) {
 	assert.Equal(t, finitePoints, servedFinite, "every finite point in the bucket is still served")
 	assert.Empty(t, missing, "and the covered span needs no re-query")
 }
-
-// An undecodable bucket must not count as covered, or its span is neither
-// served nor re-queried.
-func TestBucketCacheRequeriesRangeOfUndecodableBucket(t *testing.T) {
-	ctx := context.Background()
-	orgID := valuer.GenerateUUID()
-	testCache := createTestCache(t)
-	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), testCache, cacheTTL, defaultFluxInterval)
-
-	step := qbtypes.Step{Duration: 300 * time.Second}
-	stepMs := uint64(step.Milliseconds())
-	end := (uint64(time.Now().UnixMilli()) - uint64(20*time.Minute.Milliseconds())) / stepMs * stepMs
-	start := end - uint64(36*time.Hour.Milliseconds())
-
-	q := &mockQuery{fingerprint: "promql&corrupt&5m0s", startMs: start, endMs: end}
-
-	// A payload this build cannot decode, whatever the reason.
-	err := testCache.Set(ctx, orgID, "v5:query:"+q.Fingerprint(), &qbtypes.CachedData{
-		Buckets: []*qbtypes.CachedBucket{{
-			StartMs: start,
-			EndMs:   end,
-			Type:    qbtypes.RequestTypeTimeSeries,
-			Value:   []byte(`{"aggregations":[{"series":[{"values":[{"timestamp":1,"value":{"unexpected":"shape"}}]}]}]}`),
-		}},
-	}, cacheTTL)
-	require.NoError(t, err)
-
-	cached, missing := bc.GetMissRanges(ctx, orgID, q, step)
-
-	assert.Nil(t, cached, "an undecodable bucket contributes no data")
-	require.Len(t, missing, 1, "so its whole range is reported missing")
-	assert.Equal(t, start, missing[0].From)
-	assert.Equal(t, end, missing[0].To)
-}

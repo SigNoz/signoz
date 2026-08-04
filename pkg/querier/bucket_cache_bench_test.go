@@ -167,8 +167,7 @@ func BenchmarkBucketCache_MergeTimeSeriesValues(b *testing.B) {
 			b.ReportAllocs()
 
 			for i := 0; i < b.N; i++ {
-				// Decode and merge, matching what a cache read does.
-				result := bc.mergeTimeSeriesValues(bc.discardUnreadableBuckets(context.Background(), buckets))
+				result := bc.mergeTimeSeriesValues(context.Background(), buckets)
 				_ = result
 			}
 		})
