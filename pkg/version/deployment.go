@@ -62,9 +62,26 @@ func detectMode() string {
 		return "kubernetes"
 	}
 
+	// Check the container environment variable, set by some container managers (podman does, docker does not)
+	switch os.Getenv("container") {
+	case "podman":
+		return "podman"
+	case "docker":
+		return "docker"
+	}
+
+	// Check for container manager marker files, Podman must come before Docker — mirrors systemd's detect_container to avoid mistaking another container manager for docker
+	if _, err := os.Stat("/run/.containerenv"); err == nil {
+		return "podman"
+	}
+	if _, err := os.Stat("/.dockerenv"); err == nil {
+		return "docker"
+	}
+
 	// Check if running in a container and identify the runtime
+	cgroupData := ""
 	if data, err := os.ReadFile("/proc/self/cgroup"); err == nil {
-		cgroupData := string(data)
+		cgroupData = string(data)
 		switch {
 		case strings.Contains(cgroupData, "docker"):
 			return "docker"
@@ -74,6 +91,19 @@ func detectMode() string {
 			return "podman"
 		case strings.Contains(cgroupData, "crio"):
 			return "cri-o"
+		}
+	}
+
+	// Check mount points when the cgroup path is namespaced away ("0::/"), Docker must come before containerd — docker's containerd snapshotter leaves io.containerd paths in plain docker containers
+	if strings.TrimSpace(cgroupData) == "0::/" {
+		if data, err := os.ReadFile("/proc/self/mountinfo"); err == nil {
+			mountData := string(data)
+			switch {
+			case strings.Contains(mountData, "/docker/containers/"):
+				return "docker"
+			case strings.Contains(mountData, "io.containerd"):
+				return "containerd"
+			}
 		}
 	}
 
