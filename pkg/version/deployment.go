@@ -1,6 +1,7 @@
 package version
 
 import (
+	"bytes"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -226,8 +227,9 @@ func detectPlatform() string {
 	}
 
 	// IBM metadata (requires token handshake)
-	if req, err := http.NewRequest(http.MethodPut, "http://169.254.169.254/instance_identity/v1/token?version=2022-03-08", strings.NewReader(`{"expires_in": 3600}`)); err == nil {
+	if req, err := http.NewRequest(http.MethodPut, "http://169.254.169.254/instance_identity/v1/token?version=2022-03-08", bytes.NewReader([]byte(`{"expires_in": 3600}`))); err == nil {
 		req.Header.Add("Metadata-Flavor", "ibm")
+		req.Header.Add("Content-Type", "application/json")
 		if resp, err := client.Do(req); err == nil {
 			resp.Body.Close()
 			if resp.StatusCode == 200 {
