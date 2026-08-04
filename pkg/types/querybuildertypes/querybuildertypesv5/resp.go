@@ -469,8 +469,56 @@ func (r RawRow) MarshalJSON() ([]byte, error) {
 	})
 }
 
-// parseFloatOrNonFinite decodes a JSON number, or a sentinel string
-// MarshalJSON emits in place of a non-finite float.
+func (t TimeSeriesValue) MarshalJSON() ([]byte, error) {
+	type Alias TimeSeriesValue
+
+	var sanitizedValues any
+	if t.Values != nil {
+		sanitizedValues = sanitizeValue(t.Values)
+		// If original was empty slice, ensure we return empty slice not nil
+		if len(t.Values) == 0 {
+			sanitizedValues = []any{}
+		}
+	}
+
+	return json.Marshal(&struct {
+		*Alias
+		Value  any `json:"value"`
+		Values any `json:"values,omitempty"`
+	}{
+		Alias:  (*Alias)(&t),
+		Value:  sanitizeValue(t.Value),
+		Values: sanitizedValues,
+	})
+}
+
+// UnmarshalJSON inverts MarshalJSON, which renders non-finite floats as the
+// strings "NaN"/"Inf"/"-Inf". The bucket cache serializes through this type,
+// so a value it cannot read back costs it the whole cached entry.
+func (t *TimeSeriesValue) UnmarshalJSON(data []byte) error {
+	type Alias TimeSeriesValue
+
+	aux := &struct {
+		*Alias
+		Value  json.RawMessage   `json:"value"`
+		Values []json.RawMessage `json:"values,omitempty"`
+	}{
+		Alias: (*Alias)(t),
+	}
+	if err := json.Unmarshal(data, aux); err != nil {
+		return err
+	}
+
+	var err error
+	if t.Value, err = parseFloatOrNonFinite(aux.Value); err != nil {
+		return err
+	}
+	t.Values, err = parseFloatsOrNonFinite(aux.Values)
+	return err
+}
+
+// parseFloatOrNonFinite inverts sanitizeValue for one float: a JSON number, or
+// a sentinel string standing in for a value JSON cannot represent.
 func parseFloatOrNonFinite(raw json.RawMessage) (float64, error) {
 	if len(raw) == 0 || string(raw) == "null" {
 		return 0, nil
@@ -497,63 +545,20 @@ func parseFloatOrNonFinite(raw json.RawMessage) (float64, error) {
 	}
 }
 
-// UnmarshalJSON mirrors MarshalJSON, which renders non-finite floats as
-// "NaN"/"Inf"/"-Inf" (see sanitizeValue). The bucket cache serializes through
-// this type, so a value it cannot read costs it the whole entry.
-func (t *TimeSeriesValue) UnmarshalJSON(data []byte) error {
-	type Alias TimeSeriesValue
-	aux := struct {
-		*Alias
-		Value  json.RawMessage   `json:"value"`
-		Values []json.RawMessage `json:"values,omitempty"`
-	}{
-		Alias: (*Alias)(t),
+// parseFloatsOrNonFinite does the same for Values, keeping the nil/empty
+// distinction MarshalJSON preserves.
+func parseFloatsOrNonFinite(raw []json.RawMessage) ([]float64, error) {
+	if raw == nil {
+		return nil, nil
 	}
-
-	if err := json.Unmarshal(data, &aux); err != nil {
-		return err
-	}
-
-	value, err := parseFloatOrNonFinite(aux.Value)
-	if err != nil {
-		return err
-	}
-	t.Value = value
-
-	if aux.Values == nil {
-		t.Values = nil
-		return nil
-	}
-	t.Values = make([]float64, len(aux.Values))
-	for idx, raw := range aux.Values {
-		if t.Values[idx], err = parseFloatOrNonFinite(raw); err != nil {
-			return err
+	values := make([]float64, len(raw))
+	for idx := range raw {
+		var err error
+		if values[idx], err = parseFloatOrNonFinite(raw[idx]); err != nil {
+			return nil, err
 		}
 	}
-	return nil
-}
-
-func (t TimeSeriesValue) MarshalJSON() ([]byte, error) {
-	type Alias TimeSeriesValue
-
-	var sanitizedValues any
-	if t.Values != nil {
-		sanitizedValues = sanitizeValue(t.Values)
-		// If original was empty slice, ensure we return empty slice not nil
-		if len(t.Values) == 0 {
-			sanitizedValues = []any{}
-		}
-	}
-
-	return json.Marshal(&struct {
-		*Alias
-		Value  any `json:"value"`
-		Values any `json:"values,omitempty"`
-	}{
-		Alias:  (*Alias)(&t),
-		Value:  sanitizeValue(t.Value),
-		Values: sanitizedValues,
-	})
+	return values, nil
 }
 
 func (r RawData) MarshalJSON() ([]byte, error) {
