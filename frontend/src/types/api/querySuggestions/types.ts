@@ -30,11 +30,13 @@ export interface QueryKeySuggestionsResponseProps {
 export interface QueryKeyRequestProps {
 	signal: 'traces' | 'logs' | 'metrics';
 	searchText: string;
-	fieldContext?: 'resource' | 'scope' | 'attribute' | 'span';
+	fieldContext?: 'resource' | 'scope' | 'attribute' | 'span' | 'trace';
 	fieldDataType?: FieldDataType;
 	metricName?: string;
 	metricNamespace?: string;
 	signalSource?: 'meter' | '';
+	/** POC / AI O11y: e.g. 'builder_ai_query' — forwarded as `type` on /fields/keys */
+	type?: string;
 }
 
 export interface QueryKeyValueSuggestionsProps {
@@ -53,6 +55,8 @@ export interface QueryKeyValueRequestProps {
 	searchText: string;
 	signalSource?: 'meter' | '';
 	metricName?: string;
+	/** POC / AI O11y: e.g. 'builder_ai_query' — forwarded as `type` on /fields/values */
+	type?: string;
 }
 
 export type SignalType = 'traces' | 'logs' | 'metrics';
