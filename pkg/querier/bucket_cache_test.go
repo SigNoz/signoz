@@ -1404,59 +1404,75 @@ func TestBucketCache_NoCache(t *testing.T) {
 }
 
 // A promql ratio yields NaN wherever the denominator is zero. If those do not
-// survive the cache, every good point in the same bucket is lost with them.
-func TestBucketCacheServesBucketsHoldingNonFiniteValues(t *testing.T) {
+// survive the cache, every finite point in the same bucket is lost with them.
+func TestBucketCacheNonFiniteValues(t *testing.T) {
+	bc := createTestBucketCache(t)
 	ctx := context.Background()
-	orgID := valuer.GenerateUUID()
-	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), createTestCache(t), cacheTTL, defaultFluxInterval)
+	orgID := valuer.UUID{}
 
-	step := qbtypes.Step{Duration: 300 * time.Second}
-	stepMs := uint64(step.Milliseconds())
-	end := (uint64(time.Now().UnixMilli()) - uint64(20*time.Minute.Milliseconds())) / stepMs * stepMs
-	start := end - uint64(36*time.Hour.Milliseconds())
+	// Keep the whole window before the flux boundary, aligned to the step, so
+	// all of it is cacheable and the bucket covers the request exactly.
+	fluxBoundary := (uint64(time.Now().UnixMilli()) - uint64(defaultFluxInterval.Milliseconds())) / 1000 * 1000
 
-	series := &qbtypes.TimeSeries{
-		Labels: []*qbtypes.Label{{
-			Key:   telemetrytypes.TelemetryFieldKey{Name: "job_name"},
-			Value: "dbBloatMonitorJob",
-		}},
-	}
-	finitePoints := 0
-	for ts := start; ts < end; ts += stepMs {
-		value := 11.524
-		if (ts/stepMs)%7 == 0 {
-			value = math.NaN()
-		} else {
-			finitePoints++
-		}
-		series.Values = append(series.Values, &qbtypes.TimeSeriesValue{Timestamp: int64(ts), Value: value})
+	query := &mockQuery{
+		fingerprint: "test-nonfinite-query",
+		startMs:     fluxBoundary - 10000,
+		endMs:       fluxBoundary - 5000,
 	}
 
-	q := &mockQuery{fingerprint: "promql&ratio&5m0s", startMs: start, endMs: end}
-	bc.Put(ctx, orgID, q, step, &qbtypes.Result{
+	// A mix of finite and non-finite values, as a ratio with zero denominators
+	// produces.
+	result := &qbtypes.Result{
 		Type: qbtypes.RequestTypeTimeSeries,
 		Value: &qbtypes.TimeSeriesData{
-			QueryName:    "A",
-			Aggregations: []*qbtypes.AggregationBucket{{Series: []*qbtypes.TimeSeries{series}}},
+			QueryName: "A",
+			Aggregations: []*qbtypes.AggregationBucket{
+				{
+					Series: []*qbtypes.TimeSeries{
+						{
+							Labels: []*qbtypes.Label{
+								{Key: telemetrytypes.TelemetryFieldKey{Name: "job_name"}, Value: "dbBloatMonitorJob"},
+							},
+							Values: []*qbtypes.TimeSeriesValue{
+								{Timestamp: int64(fluxBoundary - 9000), Value: 11.5},
+								{Timestamp: int64(fluxBoundary - 8000), Value: math.NaN()},
+								{Timestamp: int64(fluxBoundary - 7000), Value: 12.5},
+								{Timestamp: int64(fluxBoundary - 6000), Value: math.Inf(1)},
+							},
+						},
+					},
+				},
+			},
 		},
-	})
-
-	cached, missing := bc.GetMissRanges(ctx, orgID, q, step)
-	require.NotNil(t, cached)
-
-	servedFinite := 0
-	tsData, ok := cached.Value.(*qbtypes.TimeSeriesData)
-	require.True(t, ok)
-	for _, agg := range tsData.Aggregations {
-		for _, s := range agg.Series {
-			for _, v := range s.Values {
-				if !math.IsNaN(v.Value) {
-					servedFinite++
-				}
-			}
-		}
+		Stats: qbtypes.ExecStats{
+			RowsScanned:  100,
+			BytesScanned: 1000,
+			DurationMS:   10,
+		},
 	}
 
-	assert.Equal(t, finitePoints, servedFinite, "every finite point in the bucket is still served")
-	assert.Empty(t, missing, "and the covered span needs no re-query")
+	// Put the result
+	bc.Put(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, result)
+
+	// Retrieve cached data
+	cached, missing := bc.GetMissRanges(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond})
+
+	// Should have cached data
+	assert.NotNil(t, cached)
+
+	tsData, ok := cached.Value.(*qbtypes.TimeSeriesData)
+	require.True(t, ok)
+	require.Len(t, tsData.Aggregations, 1)
+	require.Len(t, tsData.Aggregations[0].Series, 1)
+
+	// Every value comes back, the non-finite ones included
+	series := tsData.Aggregations[0].Series[0]
+	require.Len(t, series.Values, 4)
+	assert.Equal(t, float64(11.5), series.Values[0].Value)
+	assert.True(t, math.IsNaN(series.Values[1].Value))
+	assert.Equal(t, float64(12.5), series.Values[2].Value)
+	assert.True(t, math.IsInf(series.Values[3].Value, 1))
+
+	// The bucket covers the request, so nothing needs re-querying
+	assert.Empty(t, missing)
 }

@@ -515,7 +515,7 @@ func TestTimeSeriesValueRoundTripsNonFiniteValues(t *testing.T) {
 	assert.Equal(t, 456.7, decoded.Values[4].Value)
 }
 
-func TestTimeSeriesValueRoundTripsHeatmapValues(t *testing.T) {
+func TestTimeSeriesValueRoundTripsValuesSlice(t *testing.T) {
 	original := &TimeSeriesValue{
 		Timestamp: 1000,
 		Value:     2.5,
