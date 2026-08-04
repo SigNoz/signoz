@@ -29,7 +29,7 @@ export const slackDescriptionDefaultValue = `{{ range .Alerts -}} *Alert:* {{ .L
 
 export const googleChatTitleDefaultValue = `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}`;
 
-export const googleChatDescriptionDefaultValue = `{{ range .Alerts -}} *Alert:* {{ .Labels.alertname }}{{ if .Labels.severity }} ({{ .Labels.severity }}){{ end }}{{ if .Annotations.summary }} *Summary:* {{ .Annotations.summary }}{{ end }}{{ if .Annotations.description }} *Description:* {{ .Annotations.description }}{{ end }} {{ end }}`;
+export const googleChatDescriptionDefaultValue = `{{ range .Alerts -}} **Alert:** {{ .Labels.alertname }}{{ if .Labels.severity }} ({{ .Labels.severity }}){{ end }}{{ if .Annotations.summary }} **Summary:** {{ .Annotations.summary }}{{ end }}{{ if .Annotations.description }} **Description:** {{ .Annotations.description }}{{ end }} {{ end }}`;
 
 export const editSlackDescriptionDefaultValue = `{{ range .Alerts -}} *Alert:* {{ .Labels.alertname }}{{ if .Labels.severity }} - {{ .Labels.severity }}{{ end }} dummy_summary *Summary:* {{ .Annotations.summary }} *Description:* {{ .Annotations.description }} *Details:* {{ range .Labels.SortedPairs }} • *{{ .Name }}:* {{ .Value }} {{ end }} {{ end }}`;
 
