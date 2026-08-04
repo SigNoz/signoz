@@ -114,6 +114,8 @@ func detectPlatform() string {
 		return "nomad"
 	case os.Getenv("CONTAINER_APP_HOSTNAME") != "":
 		return "aca"
+	case os.Getenv("FLY_APP_NAME") != "":
+		return "flyio"
 	}
 
 	// Try to detect cloud provider through metadata endpoints
@@ -125,6 +127,16 @@ func detectPlatform() string {
 			resp.Body.Close()
 			if resp.StatusCode == 200 {
 				return "vultr"
+			}
+		}
+	}
+
+	// OpenStack metadata (OVHcloud and other OpenStack providers), Must come before AWS Detection — OpenStack exposes an EC2-compatible endpoint, causing false AWS detection.
+	if req, err := http.NewRequest(http.MethodGet, "http://169.254.169.254/openstack", nil); err == nil {
+		if resp, err := client.Do(req); err == nil {
+			resp.Body.Close()
+			if resp.StatusCode == 200 {
+				return "openstack"
 			}
 		}
 	}
@@ -177,6 +189,59 @@ func detectPlatform() string {
 			resp.Body.Close()
 			if resp.StatusCode == 200 {
 				return "hetzner"
+			}
+		}
+	}
+
+	// Oracle metadata
+	if req, err := http.NewRequest(http.MethodGet, "http://169.254.169.254/opc/v2/instance/", nil); err == nil {
+		req.Header.Add("Authorization", "Bearer Oracle")
+		if resp, err := client.Do(req); err == nil {
+			resp.Body.Close()
+			if resp.StatusCode == 200 {
+				return "oracle"
+			}
+		}
+	}
+
+	// Alibaba metadata
+	if req, err := http.NewRequest(http.MethodGet, "http://100.100.100.200/latest/meta-data/", nil); err == nil {
+		if resp, err := client.Do(req); err == nil {
+			resp.Body.Close()
+			if resp.StatusCode == 200 {
+				return "alibaba"
+			}
+		}
+	}
+
+	// Akamai (Linode) metadata (requires token handshake)
+	if req, err := http.NewRequest(http.MethodPut, "http://169.254.169.254/v1/token", nil); err == nil {
+		req.Header.Add("Metadata-Token-Expiry-Seconds", "3600")
+		if resp, err := client.Do(req); err == nil {
+			resp.Body.Close()
+			if resp.StatusCode == 200 {
+				return "akamai"
+			}
+		}
+	}
+
+	// IBM metadata (requires token handshake)
+	if req, err := http.NewRequest(http.MethodPut, "http://169.254.169.254/instance_identity/v1/token?version=2022-03-08", strings.NewReader(`{"expires_in": 3600}`)); err == nil {
+		req.Header.Add("Metadata-Flavor", "ibm")
+		if resp, err := client.Do(req); err == nil {
+			resp.Body.Close()
+			if resp.StatusCode == 200 {
+				return "ibm"
+			}
+		}
+	}
+
+	// Scaleway metadata
+	if req, err := http.NewRequest(http.MethodGet, "http://169.254.42.42/conf", nil); err == nil {
+		if resp, err := client.Do(req); err == nil {
+			resp.Body.Close()
+			if resp.StatusCode == 200 {
+				return "scaleway"
 			}
 		}
 	}
