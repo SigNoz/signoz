@@ -9,6 +9,18 @@ import { ListItem } from 'types/api/widgets/getQuery';
 
 export const PER_PAGE_OPTIONS: number[] = [10, ...DEFAULT_PER_PAGE_OPTIONS];
 
+/** Query type whose keys are trace-level AI aggregates. */
+export const AI_QUERY_TYPE = 'builder_ai_query';
+
+/**
+ * Order by defaults, kept inside Trace View for now — a row here is a whole
+ * trace, so most-recent-activity is the sensible landing sort and only
+ * trace-level fields are sortable. The dropdown seeds its first option from the
+ * same key, so the two cannot disagree. Revisit if a caller needs to override.
+ */
+export const DEFAULT_TRACE_VIEW_ORDER_BY = 'last_activity_time:desc';
+export const TRACE_VIEW_ORDER_BY_FIELD_CONTEXT = 'trace';
+
 /**
  * One Trace View column: the telemetry field it reads, its header, and how the
  * cell renders. Callers own their column sets — Trace View has no knowledge of
