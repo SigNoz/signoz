@@ -24,6 +24,7 @@ export enum SignalType {
 	API_MONITORING = 'api_monitoring',
 	EXCEPTIONS = 'exceptions',
 	METER_EXPLORER = 'meter',
+	AI_OBSERVABILITY = 'ai_observability',
 }
 
 /**
@@ -68,6 +69,7 @@ export enum QuickFiltersSource {
 	API_MONITORING = 'api-monitoring',
 	EXCEPTIONS = 'exceptions',
 	METER_EXPLORER = 'meter',
+	AI_OBSERVABILITY = 'ai-observability',
 }
 
 /**
