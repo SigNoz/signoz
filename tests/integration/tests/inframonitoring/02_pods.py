@@ -494,6 +494,95 @@ def test_pods_pagination(
     assert set(seen_pods) == {f"page-p{i}" for i in range(1, K + 1)}
 
 
+def test_pods_filter_pagination_and_ordering(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+) -> None:
+    """filterByPodStatus composed with pagination + name ordering. The full-scope
+    status keyset is resolved before slicing, so total reflects the full matched
+    set and pages stay disjoint + complete on both the metric-ordering branch
+    (paginateWithBackfill) and the name-ordering branch (PaginateMetadataByName).
+    crashloopbackoff matches 4 pods in pods_phases.jsonl: clbo-a, clbo-b, run-p, unk-p."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        _load_pods_metrics(
+            "inframonitoring/pods_phases.jsonl",
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    start = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end = int(now.timestamp() * 1000)
+    matched = {"clbo-a", "clbo-b", "run-p", "unk-p"}
+
+    # Metric-ordering branch (default cpu order): total is invariant across a paged
+    # walk and the pages are disjoint + cover the full matched set.
+    seen: list[str] = []
+    totals: set[int] = set()
+    for offset in (0, 2, 4):
+        resp = requests.post(
+            signoz.self.host_configs["8080"].get(ENDPOINT),
+            headers={"authorization": f"Bearer {token}"},
+            json={
+                "start": start,
+                "end": end,
+                "limit": 2,
+                "offset": offset,
+                "filter": {"filterByPodStatus": ["crashloopbackoff"]},
+            },
+            timeout=5,
+        )
+        assert resp.status_code == HTTPStatus.OK, resp.text
+        data = resp.json()["data"]
+        totals.add(data["total"])
+        assert len(data["records"]) == max(0, min(2, 4 - offset)), f"offset={offset}: {data['records']!r}"
+        seen.extend(r["meta"]["k8s.pod.name"] for r in data["records"])
+    assert totals == {4}, f"total not invariant under filter+pagination: {totals}"
+    assert len(seen) == 4, f"pages overlapped: {seen}"
+    assert set(seen) == matched
+
+    # Name-ordering branch (orderBy k8s.pod.name asc, groupBy empty): the filtered
+    # set is returned in name order; total is the full matched count.
+    ordered = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": start,
+            "end": end,
+            "limit": 50,
+            "filter": {"filterByPodStatus": ["crashloopbackoff"]},
+            "orderBy": {"key": {"name": "k8s.pod.name"}, "direction": "asc"},
+        },
+        timeout=5,
+    )
+    assert ordered.status_code == HTTPStatus.OK, ordered.text
+    odata = ordered.json()["data"]
+    assert odata["total"] == 4
+    assert [r["meta"]["k8s.pod.name"] for r in odata["records"]] == ["clbo-a", "clbo-b", "run-p", "unk-p"]
+
+    # Second page of the name branch: PaginateMetadataByName slices the filtered set
+    # correctly (offset past the first 2 matched -> the last 2), total unchanged.
+    page2 = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": start,
+            "end": end,
+            "limit": 2,
+            "offset": 2,
+            "filter": {"filterByPodStatus": ["crashloopbackoff"]},
+            "orderBy": {"key": {"name": "k8s.pod.name"}, "direction": "asc"},
+        },
+        timeout=5,
+    )
+    assert page2.status_code == HTTPStatus.OK, page2.text
+    p2 = page2.json()["data"]
+    assert p2["total"] == 4
+    assert [r["meta"]["k8s.pod.name"] for r in p2["records"]] == ["run-p", "unk-p"]
+
+
 # orderBy keys per pods_constants.go:42-48 (snake_case request keys, camelCase
 # response fields). k8s.pod.name sorts via the metadata-name branch
 # (PaginateMetadataByName) and is only allowed when groupBy is empty.
